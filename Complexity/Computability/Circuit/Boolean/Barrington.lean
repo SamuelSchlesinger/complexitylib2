@@ -31,7 +31,8 @@ when both arguments are true. A disjunction is the negation of the conjunction o
 
 Conversely, whether a branching program of width `w`, a program over `Function.End (Fin w)`, maps
 `a` to `b` is a formula of depth `O(log w · log L)`: split the program in halves and take the
-disjunction over the middle values (`MonoidProgram.entryFormula`). So a branching program of width
+disjunction over the middle values (`MonoidProgram.entryFormulaMul`), recursively along a balanced
+tree (`MonoidProgram.entryFormula`, by `List.balancedFold`). So a branching program of width
 `w` and length `L` is a formula of depth `(⌈log₂ w⌉ + 1) ⌈log₂ L⌉ + ⌈log₂ w⌉`
 (`MonoidProgram.exists_formula`), with negations only at the leaves, and constant-width
 polynomial-length branching programs and logarithmic-depth formulas compute the same functions.
@@ -40,6 +41,8 @@ polynomial-length branching programs and logarithmic-depth formulas compute the 
 
 * `Cslib.BranchingPrograms.MonoidProgram.entryFormula`: the formula saying that a branching
   program maps `a` to `b`.
+* `Cslib.BranchingPrograms.MonoidProgram.entryFormulaMul`: the formulas of a program from those of
+  its two halves.
 
 ## Main results
 
@@ -184,91 +187,66 @@ def Instruction.entryFormula (ι : Instruction n (Function.End (Fin w))) (a b : 
   unfold entryFormula
   cases decide (ι.ifFalse a = b) <;> cases decide (ι.ifTrue a = b) <;> simp
 
-/-- The formula saying that a list of instructions of a width-`w` branching program maps `a` to
-`b`, by splitting the list in halves. -/
-def entryFormulaList (l : List (Instruction n (Function.End (Fin w)))) (a b : Fin w) :
-    Formula signature n :=
-  match h : l with
-  | [] => .const (decide (a = b))
-  | [ι] => ι.entryFormula a b
-  | _ :: _ :: _ =>
-    Formula.orList ((List.finRange w).map fun c =>
-      (entryFormulaList (l.drop (l.length / 2)) a c).and
-        (entryFormulaList (l.take (l.length / 2)) c b))
-termination_by l.length
-decreasing_by
-  all_goals subst h; simp only [List.length_take, List.length_drop, List.length_cons]; omega
-
-private theorem eval_entryFormulaList (l : List (Instruction n (Function.End (Fin w))))
-    (a b : Fin w) (x : BitString n) :
-    (entryFormulaList l a b).eval interpretation x =
-      decide (((l.map (·.eval x)).prod : Function.End (Fin w)) a = b) := by
-  induction h : l.length using Nat.strong_induction_on generalizing l a b with
-  | _ k ih =>
-  match l with
-  | [] =>
-    simp only [entryFormulaList, Formula.eval_const, List.map_nil, List.prod_nil]
-    rfl
-  | [ι] => simp [entryFormulaList]
-  | ι :: κ :: l =>
-    rw [entryFormulaList, Formula.eval_orList]
-    have hlen₁ : (List.take ((ι :: κ :: l).length / 2) (ι :: κ :: l)).length < k := by
-      simp only [List.length_take, List.length_cons] at h ⊢; omega
-    have hlen₂ : (List.drop ((ι :: κ :: l).length / 2) (ι :: κ :: l)).length < k := by
-      simp only [List.length_drop, List.length_cons] at h ⊢; omega
-    have hprod : ((ι :: κ :: l).map (·.eval x)).prod =
-        ((List.take ((ι :: κ :: l).length / 2) (ι :: κ :: l)).map (·.eval x)).prod *
-          ((List.drop ((ι :: κ :: l).length / 2) (ι :: κ :: l)).map (·.eval x)).prod := by
-      rw [← List.prod_append, ← List.map_append, List.take_append_drop]
-    simp only [List.any_map, Function.comp_def, Formula.eval_and, ih _ hlen₁ _ _ _ rfl,
-      ih _ hlen₂ _ _ _ rfl]
-    rw [hprod, Bool.eq_iff_iff, List.any_eq_true, decide_eq_true_iff]
-    simp only [List.mem_finRange, true_and, Bool.and_eq_true, decide_eq_true_eq]
-    exact ⟨fun ⟨c, hc, hcb⟩ => by subst hc; exact hcb, fun h => ⟨_, rfl, h⟩⟩
-
-private theorem depthWith_entryFormulaList_le (l : List (Instruction n (Function.End (Fin w))))
-    (a b : Fin w) :
-    (entryFormulaList l a b).depthWith binaryCost ≤ (Nat.clog 2 w + 1) * Nat.clog 2 l.length := by
-  induction h : l.length using Nat.strong_induction_on generalizing l a b with
-  | _ k ih =>
-  match l with
-  | [] => simp [entryFormulaList]
-  | [ι] => simp [entryFormulaList]
-  | ι :: κ :: l =>
-    rw [entryFormulaList, h]
-    have hk : 2 ≤ k := by simp only [List.length_cons] at h; omega
-    have hlen₁ : (List.take (k / 2) (ι :: κ :: l)).length ≤ (k + 2 - 1) / 2 := by
-      simp only [List.length_take, List.length_cons] at h ⊢; omega
-    have hlen₂ : (List.drop (k / 2) (ι :: κ :: l)).length ≤ (k + 2 - 1) / 2 := by
-      simp only [List.length_drop, List.length_cons] at h ⊢; omega
-    refine (Formula.depthWith_binaryCost_orList_le _ (d := (Nat.clog 2 w + 1) *
-      Nat.clog 2 ((k + 2 - 1) / 2) + 1) fun F hF => ?_).trans ?_
-    · obtain ⟨c, -, rfl⟩ := List.mem_map.1 hF
-      rw [Formula.depthWith_and, binaryCost_and]
-      refine Nat.add_le_add_right (max_le ?_ ?_) 1
-      · exact (ih _ (by simp only [List.length_drop, List.length_cons] at h ⊢; omega) _ _ _
-          rfl).trans (Nat.mul_le_mul_left _ (Nat.clog_mono_right 2 hlen₂))
-      · exact (ih _ (by simp only [List.length_take, List.length_cons] at h ⊢; omega) _ _ _
-          rfl).trans (Nat.mul_le_mul_left _ (Nat.clog_mono_right 2 hlen₁))
-    · rw [List.length_map, List.length_finRange, Nat.clog_of_two_le (by decide) hk, Nat.mul_succ]
-      omega
 
 namespace MonoidProgram
 
+/-- The formulas saying that two pieces of a branching program of width `w`, run one after the
+other, map `a` to `b`, from the formulas `u` and `v` of the two pieces: the second piece, which
+acts first, maps `a` to some `c` that the first piece maps to `b`. -/
+def entryFormulaMul (u v : Fin w → Fin w → Formula signature n) (a b : Fin w) :
+    Formula signature n :=
+  Formula.orList ((List.finRange w).map fun c => (v a c).and (u c b))
+
 /-- The formula saying that a branching program of width `w` maps `a` to `b`: split the program in
-halves, and say that the second half maps `a` to some `c` that the first half maps to `b`. -/
+halves, and say that the second half maps `a` to some `c` that the first half maps to `b`
+(`List.balancedFold`). -/
 def entryFormula (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w) :
     Formula signature n :=
-  entryFormulaList P.toList a b
+  P.toList.balancedFold entryFormulaMul (fun a b => .const (decide (a = b)))
+    Instruction.entryFormula a b
 
 @[simp] theorem eval_entryFormula (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w)
     (x : BitString n) :
     (P.entryFormula a b).eval interpretation x = decide ((P.eval x) a = b) := by
-  rw [entryFormula, eval_entryFormulaList, eval_eq_prod]
+  rw [eval_eq_prod, entryFormula]
+  revert a b
+  refine List.balancedFold_induction (op := entryFormulaMul)
+    (e := fun a b => .const (decide (a = b))) (f := Instruction.entryFormula)
+    (p := fun l (T : Fin w → Fin w → Formula signature n) =>
+      ∀ a b, (T a b).eval interpretation x =
+        decide (((l.map (·.eval x)).prod : Function.End (Fin w)) a = b))
+    (fun a b => by simp; rfl) (fun ι a b => by simp) (fun l₁ l₂ u v _ _ hu hv a b => ?_) P.toList
+  rw [entryFormulaMul, Formula.eval_orList, List.map_append, List.prod_append, Bool.eq_iff_iff,
+    List.any_eq_true, decide_eq_true_iff]
+  simp only [List.mem_map, List.mem_finRange, true_and, exists_exists_eq_and, Formula.eval_and,
+    hu, hv, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨fun ⟨c, hc, hcb⟩ => by subst hc; exact hcb, fun h => ⟨_, rfl, h⟩⟩
 
 theorem depthWith_entryFormula_le (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w) :
-    (P.entryFormula a b).depthWith binaryCost ≤ (Nat.clog 2 w + 1) * Nat.clog 2 P.length :=
-  depthWith_entryFormulaList_le _ a b
+    (P.entryFormula a b).depthWith binaryCost ≤ (Nat.clog 2 w + 1) * Nat.clog 2 P.length := by
+  let d (T : Fin w → Fin w → Formula signature n) : ℕ :=
+    Finset.univ.sup fun ab : Fin w × Fin w => (T ab.1 ab.2).depthWith binaryCost
+  have hd (T : Fin w → Fin w → Formula signature n) (a b : Fin w) :
+      (T a b).depthWith binaryCost ≤ d T :=
+    Finset.le_sup (f := fun ab : Fin w × Fin w => (T ab.1 ab.2).depthWith binaryCost)
+      (Finset.mem_univ (a, b))
+  have hop (u v : Fin w → Fin w → Formula signature n) :
+      d (entryFormulaMul u v) ≤ max (d u) (d v) + (Nat.clog 2 w + 1) := by
+    refine Finset.sup_le fun ab _ => (Formula.depthWith_binaryCost_orList_le (d := max (d u)
+      (d v) + 1) fun F hF => ?_).trans ?_
+    · obtain ⟨c, -, rfl⟩ := List.mem_map.1 hF
+      rw [Formula.depthWith_and, binaryCost_and]
+      have := hd u c ab.2
+      have := hd v ab.1 c
+      omega
+    · rw [List.length_map, List.length_finRange]
+      omega
+  have := List.apply_balancedFold_le d hop (l := P.toList) (D := 0)
+    (e := fun a b => .const (decide (a = b))) (f := Instruction.entryFormula)
+    (fun ι _ => Finset.sup_le fun ab _ => (Instruction.depthWith_entryFormula ι ab.1 ab.2).le)
+    (fun _ => Finset.sup_le fun ab _ => by simp)
+  rw [zero_add] at this
+  exact (hd _ a b).trans this
 
 /-- **Branching programs give formulas.** A branching program of width `w` and length `L`, started
 at `a` and accepting at the states of `acc`, is computed by a De Morgan formula of depth at most
@@ -281,7 +259,7 @@ theorem exists_formula (P : MonoidProgram n (Function.End (Fin w))) (a : Fin w)
   refine ⟨Formula.orList (acc.toList.map (P.entryFormula a)), fun x => ?_, ?_⟩
   · rw [Formula.eval_orList, Bool.eq_iff_iff, List.any_eq_true, decide_eq_true_iff]
     simp
-  · refine (Formula.depthWith_binaryCost_orList_le _ fun F hF => ?_).trans (Nat.add_le_add_left
+  · refine (Formula.depthWith_binaryCost_orList_le fun F hF => ?_).trans (Nat.add_le_add_left
       (Nat.clog_mono_right 2 (by simpa using acc.card_le_univ)) _)
     obtain ⟨b, -, rfl⟩ := List.mem_map.1 hF
     exact depthWith_entryFormula_le P a b
@@ -308,7 +286,7 @@ theorem Computes.exists_formula {P : MonoidProgram n (Perm (Fin w))} {σ : Perm 
     · simp only [↓reduceIte, iff_true]
       obtain ⟨a, ha⟩ := not_forall.1 fun h => hσ (Perm.ext h)
       exact ⟨a, σ a, fun h => ha h.symm, rfl⟩
-  · refine (Formula.depthWith_binaryCost_orList_le _ fun F hF => ?_).trans (Nat.add_le_add_left
+  · refine (Formula.depthWith_binaryCost_orList_le fun F hF => ?_).trans (Nat.add_le_add_left
       (Nat.clog_mono_right 2 ?_) _)
     · obtain ⟨p, -, rfl⟩ := List.mem_map.1 hF
       simpa [Q] using depthWith_entryFormula_le Q p.1 p.2

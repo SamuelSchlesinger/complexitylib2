@@ -8,10 +8,12 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Pi
+public import Complexity.Foundations.Data.List.BalancedFold
 public import Cslib.Computability.Circuit.Homomorphism
 public import Cslib.Computability.Circuit.Synthesis
 public import Mathlib.Data.Finset.Lattice.Fold
 public import Mathlib.Data.Finset.Piecewise
+public import Mathlib.Data.Fin.VecNotation
 public import Mathlib.Logic.Function.DependsOn
 public import Mathlib.Order.SetNotation
 import Mathlib.Algebra.BigOperators.Fin
@@ -38,7 +40,9 @@ included. A formula of depth `d` with operations of arity at most `r` has at mos
 its depth (`Formula.toCircuit`). Counting only the leaves labelled by inputs of a set `Y`
 (`Formula.leafSizeIn`) splits the leaf size among disjoint blocks of inputs
 (`Formula.sum_leafSizeIn_le_leafSize`), and a formula with no leaf in `Y` depends only on the
-inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
+inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`). An operation of arity two
+folds a list of `k` formulas into a balanced tree (`Formula.balanced`, by `List.balancedFold`) of
+depth `⌈log₂ k⌉` above them, the usual way to replace a gate of unbounded fan-in.
 
 ## Main definitions
 
@@ -49,6 +53,8 @@ inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
   the depth.
 * `Cslib.Circuits.Formula.leafSizeIn`: the number of input leaves in a set of inputs.
 * `Cslib.Circuits.Formula.depthWith`: the depth when each operation costs a given number of levels.
+* `Cslib.Circuits.Formula.gate₂`, `Cslib.Circuits.Formula.balanced`: an operation of arity two
+  applied to two formulas, and the balanced tree of such an operation over a list of formulas.
 * `Cslib.Circuits.Formula.bind`: substitution of formulas for the inputs; `Formula.rename`
   renames the inputs, and `Formula.lift` and `Formula.substLast` add an input and substitute for
   it.
@@ -60,6 +66,8 @@ inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
 * `Cslib.Circuits.Formula.leafSize_le_pow_depth`, `Cslib.Circuits.Formula.leafSize_le`: leaf size
   under bounded fan-in.
 * `Cslib.Circuits.Formula.size_lt_pow_depth`: size under bounded fan-in.
+* `Cslib.Circuits.Formula.size_balanced_add_one`, `Cslib.Circuits.Formula.depthWith_balanced_le`:
+  a balanced tree over `k ≥ 1` formulas adds `k - 1` nodes and `⌈log₂ k⌉` levels.
 * `Cslib.Circuits.Formula.Computes.toCircuit`, `Cslib.Circuits.Formula.size_toCircuit`,
   `Cslib.Circuits.Formula.depth_toCircuit_le`: a formula is a circuit computing the same function,
   of the same size and at most the same depth.
@@ -326,6 +334,102 @@ theorem depthWith_mono {cost cost' : σ.Op → ℕ} (h : ∀ op, cost op ≤ cos
   | input i => rfl
   | gate op args ih =>
     exact Nat.add_le_add (Finset.sup_mono_fun fun j _ => ih j) (h op)
+
+/-! ### Balanced trees -/
+
+section Balanced
+
+/-- An operation of arity two applied to two formulas. -/
+def gate₂ (op : σ.Op) (hop : σ.Arity op = 2) (F G : Formula σ n) : Formula σ n :=
+  gate op fun j => ![F, G] (j.cast hop)
+
+variable {op : σ.Op} {hop : σ.Arity op = 2}
+
+private theorem apply_vecCons_two {M N : Type*} (g : M → N) (a b : M) (i : Fin 2) :
+    g (![a, b] i) = ![g a, g b] i := by
+  match i with
+  | 0 => rfl
+  | 1 => rfl
+
+@[simp] theorem eval_gate₂ (I : Interpretation σ U) (F G : Formula σ n) (x : Fin n → U) :
+    (gate₂ op hop F G).eval I x = I op fun j => ![F.eval I x, G.eval I x] (j.cast hop) := by
+  rw [gate₂, eval_gate]
+  exact congrArg (I op) (funext fun j => apply_vecCons_two (eval · I x) F G _)
+
+private theorem sum_cast_two {k : ℕ} (h : k = 2) (a b : ℕ) :
+    ∑ j : Fin k, ![a, b] (j.cast h) = a + b := by
+  subst h
+  simp [Fin.sum_univ_two]
+
+private theorem sup_cast_two {k : ℕ} (h : k = 2) (a b : ℕ) :
+    (Finset.univ.sup fun j : Fin k => ![a, b] (j.cast h)) = max a b := by
+  subst h
+  simp [Fin.univ_succ]
+
+@[simp] theorem size_gate₂ (F G : Formula σ n) :
+    (gate₂ op hop F G).size = F.size + G.size + 1 := by
+  rw [gate₂, size_gate, ← sum_cast_two hop F.size G.size]
+  simp only [apply_vecCons_two size]
+
+@[simp] theorem leafSize_gate₂ (F G : Formula σ n) :
+    (gate₂ op hop F G).leafSize = F.leafSize + G.leafSize := by
+  rw [gate₂, leafSize_gate, ← sum_cast_two hop]
+  simp only [apply_vecCons_two leafSize]
+
+@[simp] theorem depthWith_gate₂ (cost : σ.Op → ℕ) (F G : Formula σ n) :
+    (gate₂ op hop F G).depthWith cost = max (F.depthWith cost) (G.depthWith cost) + cost op := by
+  rw [gate₂, depthWith_gate, ← sup_cast_two hop]
+  simp only [apply_vecCons_two (depthWith cost)]
+
+/-- The balanced tree of an operation of arity two over a list of formulas
+(`List.balancedFold`): `unit` for the empty list, the formula for a singleton, and for `k ≥ 2`
+formulas the operation applied to the trees of the first `⌊k / 2⌋` formulas and of the others. -/
+def balanced (op : σ.Op) (hop : σ.Arity op = 2) (unit : Formula σ n) (l : List (Formula σ n)) :
+    Formula σ n :=
+  l.balancedFold (gate₂ op hop) unit id
+
+@[simp] theorem balanced_nil (unit : Formula σ n) : balanced op hop unit [] = unit :=
+  List.balancedFold_nil
+
+@[simp] theorem balanced_singleton (unit F : Formula σ n) : balanced op hop unit [F] = F :=
+  List.balancedFold_singleton F
+
+/-- A balanced tree evaluates to the balanced fold of the values of its formulas. -/
+theorem eval_balanced (I : Interpretation σ U) (unit : Formula σ n) (l : List (Formula σ n))
+    (x : Fin n → U) :
+    (balanced op hop unit l).eval I x =
+      l.balancedFold (fun a b => I op fun j => ![a, b] (j.cast hop)) (unit.eval I x)
+        (·.eval I x) :=
+  List.balancedFold_hom (·.eval I x) (fun F G => eval_gate₂ I F G x) l
+
+/-- A balanced tree over `k ≥ 1` formulas has `k - 1` operation nodes besides theirs. -/
+theorem size_balanced_add_one (unit : Formula σ n) {l : List (Formula σ n)} (hl : l ≠ []) :
+    (balanced op hop unit l).size + 1 = (l.map size).sum + l.length := by
+  refine List.balancedFold_induction (p := fun (l : List (Formula σ n)) (F : Formula σ n) =>
+      l ≠ [] → F.size + 1 = (l.map size).sum + l.length) (fun h => absurd rfl h)
+    (fun F _ => by simp)
+    (fun l₁ l₂ F G h₁ h₂ hF hG _ => ?_) l hl
+  have := hF h₁
+  have := hG h₂
+  simp only [size_gate₂, List.map_append, List.sum_append, List.length_append]
+  omega
+
+/-- A balanced tree over `k ≥ 1` formulas has their leaves. -/
+theorem leafSize_balanced (unit : Formula σ n) {l : List (Formula σ n)} (hl : l ≠ []) :
+    (balanced op hop unit l).leafSize = (l.map leafSize).sum := by
+  refine List.balancedFold_induction (p := fun (l : List (Formula σ n)) (F : Formula σ n) =>
+      l ≠ [] → F.leafSize = (l.map leafSize).sum) (fun h => absurd rfl h) (fun F _ => by simp)
+    (fun l₁ l₂ F G h₁ h₂ hF hG _ => ?_) l hl
+  simp only [leafSize_gate₂, List.map_append, List.sum_append, hF h₁, hG h₂]
+
+/-- A balanced tree is deeper than its formulas by `⌈log₂⌉` of their number times the cost of the
+operation; `unit` only matters for the empty list. -/
+theorem depthWith_balanced_le {cost : σ.Op → ℕ} (unit : Formula σ n) {l : List (Formula σ n)}
+    {d : ℕ} (hl : ∀ F ∈ l, F.depthWith cost ≤ d) (hunit : l = [] → unit.depthWith cost ≤ d) :
+    (balanced op hop unit l).depthWith cost ≤ d + cost op * Nat.clog 2 l.length :=
+  List.apply_balancedFold_le (depthWith cost) (fun F G => (depthWith_gate₂ cost F G).le) hl hunit
+
+end Balanced
 
 /-- A formula is synthesized with one gate for each operation node. -/
 theorem synthesis_eval (I : Interpretation σ U) (F : Formula σ n) :

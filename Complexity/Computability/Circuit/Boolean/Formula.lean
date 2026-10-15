@@ -29,15 +29,15 @@ formulas are at least as strong as for formulas whose negations sit at the leave
   `Cslib.Circuits.Formula.or`: De Morgan formulas built from constants and smaller formulas.
 * `Cslib.Circuits.Formula.xor`: the exclusive or `(F ∧ ¬G) ∨ (¬F ∧ G)`.
 * `Cslib.Circuits.Formula.orList`, `Cslib.Circuits.Formula.andList`: the disjunction and the
-  conjunction of a list of formulas as balanced trees.
+  conjunction of a list of formulas as balanced trees of binary gates (`Formula.balanced`).
 * `Cslib.Circuits.Boolean.formulaDepth`: the least depth of a De Morgan formula for a function,
   with negations and constants free.
 
 ## Main results
 
 * `Cslib.Circuits.Formula.size_orList_add_one`, `Cslib.Circuits.Formula.depthWith_orList_le`,
-  `Cslib.Circuits.Formula.size_andList`, `Cslib.Circuits.Formula.depthWith_andList_le`: a balanced
-  tree of `k` formulas adds `O(k)` nodes and `⌈log₂ k⌉` levels.
+  `Cslib.Circuits.Formula.size_andList_add_one`, `Cslib.Circuits.Formula.depthWith_andList_le`: a
+  balanced tree of `k ≥ 1` formulas adds `k - 1` nodes and `⌈log₂ k⌉` levels.
 * `Cslib.Circuits.Formula.exists_computes`: every Boolean function has a De Morgan formula.
 * `Cslib.Circuits.Boolean.exists_computes_depthWith_eq_formulaDepth`: some formula attains the
   formula depth.
@@ -160,146 +160,91 @@ def xor : Formula signature n :=
     (F.or G).depthWith cost = max (F.depthWith cost) (G.depthWith cost) + cost .or := by
   simp [or, Fin.univ_succ]
 
-/-- The disjunction of a list of De Morgan formulas, as a balanced tree. -/
+/-- A conjunction is the binary node of `.and`. -/
+@[simp] theorem gate₂_and : gate₂ (σ := signature) .and rfl F G = F.and G :=
+  rfl
+
+/-- A disjunction is the binary node of `.or`. -/
+@[simp] theorem gate₂_or : gate₂ (σ := signature) .or rfl F G = F.or G :=
+  rfl
+
+/-- The disjunction of a list of De Morgan formulas, as a balanced tree (`Formula.balanced`); the
+constant `false` for no formulas. -/
 def orList (l : List (Formula signature n)) : Formula signature n :=
-  match h : l with
-  | [] => const false
-  | [F] => F
-  | _ :: _ :: _ =>
-    (orList (l.take (l.length / 2))).or (orList (l.drop (l.length / 2)))
-termination_by l.length
-decreasing_by
-  all_goals subst h; simp only [List.length_take, List.length_drop, List.length_cons]; omega
+  balanced .or rfl (const false) l
+
+/-- The conjunction of a list of De Morgan formulas, as a balanced tree (`Formula.balanced`); the
+constant `true` for no formulas. -/
+def andList (l : List (Formula signature n)) : Formula signature n :=
+  balanced .and rfl (const true) l
 
 @[simp] theorem eval_orList (l : List (Formula signature n)) :
     (orList l).eval interpretation x = l.any fun F => F.eval interpretation x := by
-  induction h : l.length using Nat.strong_induction_on generalizing l with
-  | _ k ih =>
-  match l with
-  | [] => simp [orList]
-  | [F] => simp [orList]
-  | F :: G :: l =>
-    rw [orList, eval_or,
-      ih _ (by simp only [List.length_take, List.length_cons] at h ⊢; omega) _ rfl,
-      ih _ (by simp only [List.length_drop, List.length_cons] at h ⊢; omega) _ rfl,
-      ← List.any_append, List.take_append_drop]
-
-/-- The disjunction of no formulas is the constant `false`. -/
-@[simp] theorem orList_nil : orList ([] : List (Formula signature n)) = const false := by
-  rw [orList]
-
-/-- The disjunction of one formula is that formula. -/
-@[simp] theorem orList_singleton : orList [F] = F := by
-  rw [orList]
-
-/-- A balanced disjunction of `k ≥ 1` formulas has `k - 1` operation nodes besides theirs. -/
-theorem size_orList_add_one {l : List (Formula signature n)} (hl : l ≠ []) :
-    (orList l).size + 1 = (l.map size).sum + l.length := by
-  induction h : l.length using Nat.strong_induction_on generalizing l with
-  | _ k ih =>
-  match l with
-  | [] => exact absurd rfl hl
-  | [F] => simp only [List.length_singleton] at h; simp [← h]
-  | F :: G :: l =>
-    rw [orList, h, size_or]
-    have hk : l.length + 2 = k := by simpa only [List.length_cons] using h
-    have h₁ := ih (k / 2) (by omega) (l := List.take (k / 2) (F :: G :: l))
-      (by simp only [ne_eq, List.take_eq_nil_iff, reduceCtorEq, or_false]; omega)
-      (by simp only [List.length_take, List.length_cons]; omega)
-    have h₂ := ih (k - k / 2) (by omega) (l := List.drop (k / 2) (F :: G :: l))
-      (by simp only [ne_eq, List.drop_eq_nil_iff, List.length_cons]; omega)
-      (by simp only [List.length_drop, List.length_cons]; omega)
-    have hsum := List.sum_take_add_sum_drop ((F :: G :: l).map size) (k / 2)
-    rw [← List.map_take, ← List.map_drop] at hsum
-    omega
-
-/-- A balanced disjunction is deeper than its disjuncts by `⌈log₂⌉` of their number times the
-cost of a disjunction; the disjunction of no formulas is a constant. -/
-theorem depthWith_orList_le {cost : Op → ℕ} (l : List (Formula signature n)) {d : ℕ}
-    (hl : ∀ F ∈ l, F.depthWith cost ≤ d) :
-    (orList l).depthWith cost ≤ max d (cost (.const false)) + cost .or * Nat.clog 2 l.length := by
-  induction h : l.length using Nat.strong_induction_on generalizing l with
-  | _ k ih =>
-  match l with
-  | [] =>
-    rw [orList_nil, depthWith_const]
-    omega
-  | [F] =>
-    rw [orList_singleton]
-    exact (hl F (List.mem_singleton_self F)).trans ((le_max_left _ _).trans (Nat.le_add_right _ _))
-  | F :: G :: l =>
-    rw [orList, h]
-    have hk : 2 ≤ k := by simp only [List.length_cons] at h; omega
-    have hlen₁ : (List.take (k / 2) (F :: G :: l)).length ≤ (k + 2 - 1) / 2 := by
-      simp only [List.length_take, List.length_cons] at h ⊢; omega
-    have hlen₂ : (List.drop (k / 2) (F :: G :: l)).length ≤ (k + 2 - 1) / 2 := by
-      simp only [List.length_drop, List.length_cons] at h ⊢; omega
-    have h₁ := ih _ (by simp only [List.length_take, List.length_cons] at h ⊢; omega)
-      (List.take (k / 2) (F :: G :: l)) (fun F hF => hl F (List.mem_of_mem_take hF)) rfl
-    have h₂ := ih _ (by simp only [List.length_drop, List.length_cons] at h ⊢; omega)
-      (List.drop (k / 2) (F :: G :: l)) (fun F hF => hl F (List.mem_of_mem_drop hF)) rfl
-    have hm₁ := Nat.mul_le_mul_left (cost .or) (Nat.clog_mono_right 2 hlen₁)
-    have hm₂ := Nat.mul_le_mul_left (cost .or) (Nat.clog_mono_right 2 hlen₂)
-    rw [depthWith_or, Nat.clog_of_two_le (by decide) hk, Nat.mul_succ]
-    omega
-
-/-- A balanced disjunction is deeper than its disjuncts by `⌈log₂⌉` of their number; the
-disjunction of no formulas is a constant, of depth one. -/
-theorem depth_orList_le (l : List (Formula signature n)) {d : ℕ} (hl : ∀ F ∈ l, F.depth ≤ d) :
-    (orList l).depth ≤ max d 1 + Nat.clog 2 l.length := by
-  simpa using depthWith_orList_le (cost := 1) l (by simpa using hl)
-
-/-- With negations and constants free, a balanced disjunction is deeper than its disjuncts by
-`⌈log₂⌉` of their number. -/
-theorem depthWith_binaryCost_orList_le (l : List (Formula signature n)) {d : ℕ}
-    (hl : ∀ F ∈ l, F.depthWith binaryCost ≤ d) :
-    (orList l).depthWith binaryCost ≤ d + Nat.clog 2 l.length := by
-  simpa using depthWith_orList_le l hl
-
-/-- The conjunction of a list of De Morgan formulas, as a balanced tree of disjunctions under
-negations. -/
-def andList (l : List (Formula signature n)) : Formula signature n :=
-  (orList (l.map not)).not
+  rw [orList, eval_balanced]
+  change l.balancedFold (· || ·) false _ = _
+  rw [List.balancedFold_eq_foldr]
+  induction l <;> simp_all
 
 @[simp] theorem eval_andList (l : List (Formula signature n)) :
     (andList l).eval interpretation x = l.all fun F => F.eval interpretation x := by
-  simp [andList, List.any_map, Function.comp_def, ← List.not_all_eq_any_not]
+  rw [andList, eval_balanced]
+  change l.balancedFold (· && ·) true _ = _
+  rw [List.balancedFold_eq_foldr]
+  induction l <;> simp_all
 
-/-- A balanced conjunction of `k ≥ 1` formulas has `2 k` operation nodes besides theirs: `k`
-negations below a balanced disjunction of `k - 1` nodes, and one above it. -/
-theorem size_andList {l : List (Formula signature n)} (hl : l ≠ []) :
-    (andList l).size = (l.map size).sum + 2 * l.length := by
-  have h := size_orList_add_one (l := l.map not) (by simpa using hl)
-  have hsum : ((l.map not).map size).sum = (l.map size).sum + l.length := by
-    simp [Function.comp_def, List.sum_map_add]
-  rw [List.length_map] at h
-  rw [andList, size_not]
-  omega
+/-- The disjunction of no formulas is the constant `false`. -/
+@[simp] theorem orList_nil : orList ([] : List (Formula signature n)) = const false :=
+  balanced_nil _
 
-/-- A balanced conjunction is a balanced disjunction between two layers of negations. -/
-theorem depthWith_andList_le {cost : Op → ℕ} (l : List (Formula signature n)) {d : ℕ}
-    (hl : ∀ F ∈ l, F.depthWith cost ≤ d) :
-    (andList l).depthWith cost ≤
-      max (d + cost .not) (cost (.const false)) + cost .or * Nat.clog 2 l.length + cost .not := by
-  rw [andList, depthWith_not, ← List.length_map (f := not)]
-  refine Nat.add_le_add_right (depthWith_orList_le _ fun F hF => ?_) _
-  obtain ⟨G, hG, rfl⟩ := List.mem_map.1 hF
-  simpa using hl G hG
+/-- The disjunction of one formula is that formula. -/
+@[simp] theorem orList_singleton : orList [F] = F :=
+  balanced_singleton _ F
 
-/-- A balanced conjunction is deeper than its conjuncts by `⌈log₂⌉` of their number and two
-negations. -/
-theorem depth_andList_le (l : List (Formula signature n)) {d : ℕ} (hl : ∀ F ∈ l, F.depth ≤ d) :
-    (andList l).depth ≤ d + Nat.clog 2 l.length + 2 := by
-  have h := depthWith_andList_le (cost := 1) l (by simpa using hl)
-  simp only [depthWith_one, Pi.one_apply, one_mul] at h
-  omega
+/-- The conjunction of no formulas is the constant `true`. -/
+@[simp] theorem andList_nil : andList ([] : List (Formula signature n)) = const true :=
+  balanced_nil _
+
+/-- The conjunction of one formula is that formula. -/
+@[simp] theorem andList_singleton : andList [F] = F :=
+  balanced_singleton _ F
+
+/-- A balanced disjunction of `k ≥ 1` formulas has `k - 1` operation nodes besides theirs. -/
+theorem size_orList_add_one {l : List (Formula signature n)} (hl : l ≠ []) :
+    (orList l).size + 1 = (l.map size).sum + l.length :=
+  size_balanced_add_one _ hl
+
+/-- A balanced conjunction of `k ≥ 1` formulas has `k - 1` operation nodes besides theirs. -/
+theorem size_andList_add_one {l : List (Formula signature n)} (hl : l ≠ []) :
+    (andList l).size + 1 = (l.map size).sum + l.length :=
+  size_balanced_add_one _ hl
+
+/-- A balanced disjunction is deeper than its disjuncts by `⌈log₂⌉` of their number times the
+cost of a disjunction; the disjunction of no formulas is a constant. -/
+theorem depthWith_orList_le {cost : Op → ℕ} {l : List (Formula signature n)} {d : ℕ}
+    (hl : ∀ F ∈ l, F.depthWith cost ≤ d) (hnil : l = [] → cost (.const false) ≤ d) :
+    (orList l).depthWith cost ≤ d + cost .or * Nat.clog 2 l.length :=
+  depthWith_balanced_le _ hl fun h => (depthWith_const cost false).trans_le (hnil h)
+
+/-- A balanced conjunction is deeper than its conjuncts by `⌈log₂⌉` of their number times the
+cost of a conjunction; the conjunction of no formulas is a constant. -/
+theorem depthWith_andList_le {cost : Op → ℕ} {l : List (Formula signature n)} {d : ℕ}
+    (hl : ∀ F ∈ l, F.depthWith cost ≤ d) (hnil : l = [] → cost (.const true) ≤ d) :
+    (andList l).depthWith cost ≤ d + cost .and * Nat.clog 2 l.length :=
+  depthWith_balanced_le _ hl fun h => (depthWith_const cost true).trans_le (hnil h)
+
+/-- With negations and constants free, a balanced disjunction is deeper than its disjuncts by
+`⌈log₂⌉` of their number. -/
+theorem depthWith_binaryCost_orList_le {l : List (Formula signature n)} {d : ℕ}
+    (hl : ∀ F ∈ l, F.depthWith binaryCost ≤ d) :
+    (orList l).depthWith binaryCost ≤ d + Nat.clog 2 l.length := by
+  simpa using depthWith_orList_le hl fun _ => (binaryCost_const false).trans_le (Nat.zero_le d)
 
 /-- With negations and constants free, a balanced conjunction is deeper than its conjuncts by
 `⌈log₂⌉` of their number. -/
-theorem depthWith_binaryCost_andList_le (l : List (Formula signature n)) {d : ℕ}
+theorem depthWith_binaryCost_andList_le {l : List (Formula signature n)} {d : ℕ}
     (hl : ∀ F ∈ l, F.depthWith binaryCost ≤ d) :
     (andList l).depthWith binaryCost ≤ d + Nat.clog 2 l.length := by
-  simpa using depthWith_andList_le l hl
+  simpa using depthWith_andList_le hl fun _ => (binaryCost_const true).trans_le (Nat.zero_le d)
 
 /-- The literal of bit `i` that is true at `z`. -/
 def literal (z : BitString n) (i : Fin n) : Formula signature n :=

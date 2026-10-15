@@ -189,10 +189,12 @@ public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Finset.Expect
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
+public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.Div
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
+public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
 public import Complexity.Foundations.Relation.InductiveCounting

@@ -12,19 +12,20 @@ public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.SimulationDepth
 import Complexity.Computability.Circuit.Simulation
+import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 
 /-!
 # Simulating unbounded fan-in with fan-in two
 
 A disjunction of `k ≥ 1` arguments is a balanced tree of `k - 1` disjunctions of fan-in two, of
-depth `⌈log₂ k⌉` (`Formula.size_orList_add_one`, `Formula.depth_orList_le`), and a conjunction is
-such a tree between negations. Replacing every gate of a circuit over the unbounded fan-in basis
-by such a tree gives a De Morgan circuit for the same function. A gate may read one wire many
-times, so its fan-in is not bounded by the size of the circuit; but a conjunction or a disjunction
-keeps its value when it reads each of its wires once, so every circuit with `n` inputs and `s`
-gates has an equivalent circuit of the same size and no larger depth whose gates have fan-in at
-most `n + s` (`Unbounded.dedup`). Replacing its gates gives a De Morgan circuit with
-`O(s (n + s))` gates and depth `O(d log (n + s))` (`Unbounded.exists_deMorgan_simulation`).
+depth `⌈log₂ k⌉` (`Formula.size_orList_add_one`, `Formula.depthWith_orList_le`), and so is a
+conjunction. Replacing every gate of a circuit over the unbounded fan-in basis by such a tree
+gives a De Morgan circuit for the same function. A gate may read one wire many times, so its
+fan-in is not bounded by the size of the circuit; but a conjunction or a disjunction keeps its
+value when it reads each of its wires once, so every circuit with `n` inputs and `s` gates has an
+equivalent circuit of the same size and no larger depth whose gates have fan-in at most `n + s`
+(`Unbounded.dedup`). Replacing its gates gives a De Morgan circuit with at most `s (n + s)` gates
+and depth at most `max 1 ⌈log₂ (n + s)⌉ · d` (`Unbounded.exists_deMorgan_simulation`).
 
 For circuits of polynomial size `log (n + s)` is `O(log n)`, so polynomial-size circuits of depth
 `O((log n) ^ i)` and unbounded fan-in become polynomial-size circuits of fan-in two and depth
@@ -45,7 +46,7 @@ For circuits of polynomial size `log (n + s)` is `O(log n)`, so polynomial-size 
   and the size, makes no gate deeper, and bounds the fan-in by the number of inputs and gates.
 * `Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation`: a circuit of unbounded fan-in
   with `n` inputs, `s` gates and depth `d` has an equivalent De Morgan circuit with at most
-  `s (2 (n + s) + 2)` gates and depth at most `(⌈log₂ (n + s)⌉ + 2) d`.
+  `s (n + s)` gates and depth at most `max 1 ⌈log₂ (n + s)⌉ · d`.
 * `Cslib.Circuits.Boolean.AC_subset_NC_succ`: **ACⁱ ⊆ NCⁱ⁺¹**.
 * `Cslib.Circuits.Boolean.AC0_subset_NC_one`: **AC⁰ ⊆ NC¹**.
 * `Cslib.Circuits.Boolean.iUnion_NC_eq_iUnion_AC`: **NC = AC**.
@@ -191,111 +192,102 @@ theorem Op.computes_deMorganFormula (op : Op) :
       List.any_eq_true]
     simp
 
-/-- The De Morgan formula of an operation of `k` arguments has at most `2 k + 2` nodes. -/
-theorem Op.size_deMorganFormula_le (op : Op) : op.deMorganFormula.size ≤ 2 * op.arity + 2 := by
+/-- The De Morgan formula of an operation of `k` arguments has at most `max 1 k` nodes: one
+negation, a constant for no arguments, and `k - 1` binary gates for `k ≥ 1` arguments. -/
+theorem Op.size_deMorganFormula_le (op : Op) : op.deMorganFormula.size ≤ max 1 op.arity := by
   cases op with
   | not => simp [deMorganFormula]
   | and k =>
     rcases k.eq_zero_or_pos with rfl | hk
-    · simp [deMorganFormula, Formula.andList]
-    · rw [deMorganFormula, Formula.size_andList (by simpa using hk.ne')]
-      simp [List.sum_ofFn]
+    · simp [deMorganFormula]
+    · have := Formula.size_andList_add_one
+        (l := List.ofFn (Formula.input (σ := Boolean.signature) (n := k))) (by simpa using hk.ne')
+      simp only [List.map_ofFn, List.sum_ofFn, Function.comp_apply, Formula.size_input,
+        Finset.sum_const_zero, List.length_ofFn, zero_add] at this
+      exact (le_max_right 1 k).trans' (by rw [deMorganFormula]; omega)
   | or k =>
-    change (Formula.orList (List.ofFn Formula.input)).size ≤ 2 * k + 2
     rcases k.eq_zero_or_pos with rfl | hk
-    · simp
+    · simp [deMorganFormula]
     · have := Formula.size_orList_add_one
         (l := List.ofFn (Formula.input (σ := Boolean.signature) (n := k))) (by simpa using hk.ne')
       simp only [List.map_ofFn, List.sum_ofFn, Function.comp_apply, Formula.size_input,
-        Finset.sum_const_zero, List.length_ofFn] at this
-      omega
+        Finset.sum_const_zero, List.length_ofFn, zero_add] at this
+      exact (le_max_right 1 k).trans' (by rw [deMorganFormula]; omega)
 
-/-- The De Morgan formula of an operation of `k` arguments has depth at most `⌈log₂ k⌉ + 2`. -/
+/-- The De Morgan formula of an operation of `k` arguments has depth at most `max 1 ⌈log₂ k⌉`:
+one for a negation or a constant, and `⌈log₂ k⌉` for a balanced tree of `k ≥ 1` arguments. -/
 theorem Op.depth_deMorganFormula_le (op : Op) :
-    op.deMorganFormula.depth ≤ Nat.clog 2 op.arity + 2 := by
+    op.deMorganFormula.depth ≤ max 1 (Nat.clog 2 op.arity) := by
   cases op with
   | not => simp [deMorganFormula]
   | and k =>
-    have := Formula.depth_andList_le (List.ofFn (Formula.input (σ := Boolean.signature) (n := k)))
-      (d := 0) (by simp)
-    rw [List.length_ofFn, zero_add] at this
-    exact this
+    rcases k.eq_zero_or_pos with rfl | hk
+    · simp [deMorganFormula]
+    · have := Formula.depthWith_andList_le (cost := 1)
+        (l := List.ofFn (Formula.input (σ := Boolean.signature) (n := k))) (d := 0) (by simp)
+        (by simpa using hk.ne')
+      simp only [Formula.depthWith_one, List.length_ofFn, Pi.one_apply, one_mul,
+        zero_add] at this
+      exact this.trans (le_max_right _ _)
   | or k =>
-    have := Formula.depth_orList_le (List.ofFn (Formula.input (σ := Boolean.signature) (n := k)))
-      (d := 0) (by simp)
-    rw [List.length_ofFn] at this
-    change (Formula.orList (List.ofFn Formula.input)).depth ≤ Nat.clog 2 k + 2
-    omega
+    rcases k.eq_zero_or_pos with rfl | hk
+    · simp [deMorganFormula]
+    · have := Formula.depthWith_orList_le (cost := 1)
+        (l := List.ofFn (Formula.input (σ := Boolean.signature) (n := k))) (d := 0) (by simp)
+        (by simpa using hk.ne')
+      simp only [Formula.depthWith_one, List.length_ofFn, Pi.one_apply, one_mul,
+        zero_add] at this
+      exact this.trans (le_max_right _ _)
 
 /-! ### Simulation -/
 
 /-- **Fan-in two simulates unbounded fan-in** [Arora and Barak, Section 6.7][AroraBarak09]: a
 circuit of unbounded fan-in with `n` inputs, `s` gates and depth `d` has an equivalent De Morgan
-circuit with at most `s (2 (n + s) + 2)` gates and depth at most `(⌈log₂ (n + s)⌉ + 2) d`. Its
-gates are first made to read every wire once (`dedup`), and then replaced by balanced trees. -/
+circuit with at most `s (n + s)` gates and depth at most `max 1 ⌈log₂ (n + s)⌉ · d`. Its gates are
+first made to read every wire once (`dedup`), and then replaced by balanced trees. -/
 theorem exists_deMorgan_simulation (C : Circuit signature n m) :
     ∃ D : Circuit Boolean.signature n m, D.eval Boolean.interpretation = C.eval interpretation ∧
-      D.size ≤ C.size * (2 * (n + C.size) + 2) ∧
-      D.depth ≤ (Nat.clog 2 (n + C.size) + 2) * C.depth := by
+      D.size ≤ C.size * (n + C.size) ∧
+      D.depth ≤ max 1 (Nat.clog 2 (n + C.size)) * C.depth := by
   refine ⟨(dedup C).simulate fun op => op.deMorganFormula.toCircuit, ?_, ?_, ?_⟩
   · rw [Circuit.eval_simulate _ _ fun op => (Op.computes_deMorganFormula op).toCircuit, eval_dedup]
   · rw [Circuit.size_simulate, Program.cost_eq_sum]
-    refine (Finset.sum_le_sum (g := fun _ => 2 * (n + C.size) + 2) fun k _ => ?_).trans_eq
+    refine (Finset.sum_le_sum (g := fun _ => n + C.size) fun k _ => ?_).trans_eq
       (by rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul, size_dedup])
     rw [Formula.size_toCircuit]
+    have hk : 1 ≤ n + C.size := by have := k.pos; simp only [size_dedup] at this; omega
     exact (Op.size_deMorganFormula_le _).trans
-      (Nat.add_le_add_right (Nat.mul_le_mul_left 2 (arity_lines_dedup_le C k)) 2)
+      (max_le hk (arity_lines_dedup_le C k))
   · refine (Circuit.depth_simulate_le _ _).trans
       ((Circuit.depthWith_le_mul_depth _ fun k => ?_).trans
         (Nat.mul_le_mul_left _ (depth_dedup_le C)))
     exact (Formula.depth_toCircuit_le _).trans ((Op.depth_deMorganFormula_le _).trans
-      (Nat.add_le_add_right (Nat.clog_mono_right 2 (arity_lines_dedup_le C k)) 2))
+      (max_le_max le_rfl (Nat.clog_mono_right 2 (arity_lines_dedup_le C k))))
 
 end Unbounded
 
 /-! ### ACⁱ ⊆ NCⁱ⁺¹ -/
-
-/-- With `t ≤ a (n + 1) ^ e` gates, the depth of the balanced trees is `O(log n)`. -/
-private theorem clog_add_add_two_le {a e n t : ℕ} (ht : t ≤ a * (n + 1) ^ e) :
-    Nat.clog 2 (n + t) + 2 ≤ (a + e + 4) * (Nat.log 2 n + 1) := by
-  set L := Nat.log 2 n + 1
-  have hL : 1 ≤ L := Nat.le_add_left 1 _
-  have hn : n + 1 ≤ 2 ^ L := Nat.lt_pow_succ_log_self one_lt_two n
-  have h₁ : n + t ≤ (a + 1) * (n + 1) ^ (e + 1) := by
-    have h : n + 1 ≤ (n + 1) ^ (e + 1) := Nat.le_self_pow (by omega) _
-    have h' : a * (n + 1) ^ e ≤ a * (n + 1) ^ (e + 1) :=
-      Nat.mul_le_mul_left a (Nat.pow_le_pow_right (by omega) (by omega))
-    rw [add_mul, one_mul]
-    omega
-  have h₂ : a + 1 ≤ 2 ^ ((a + 1) * L) :=
-    Nat.lt_two_pow_self.le.trans (Nat.pow_le_pow_right two_pos (Nat.le_mul_of_pos_right _ hL))
-  have h₃ : (n + 1) ^ (e + 1) ≤ 2 ^ (L * (e + 1)) := by
-    rw [pow_mul]
-    exact Nat.pow_le_pow_left hn _
-  have h₄ : n + t ≤ 2 ^ ((a + e + 2) * L) :=
-    calc n + t ≤ (a + 1) * (n + 1) ^ (e + 1) := h₁
-      _ ≤ 2 ^ ((a + 1) * L) * 2 ^ (L * (e + 1)) := Nat.mul_le_mul h₂ h₃
-      _ = 2 ^ ((a + e + 2) * L) := by rw [← pow_add]; congr 1; ring
-  have h₅ := Nat.clog_le_of_le_pow h₄
-  have h₆ : (a + e + 4) * L = (a + e + 2) * L + 2 * L := by ring
-  omega
 
 /-- **ACⁱ ⊆ NCⁱ⁺¹** [Arora and Barak, Section 6.7][AroraBarak09], [Vollmer, Chapter 4][Vollmer1999]:
 polynomial-size circuits of depth `O((log n) ^ i)` and unbounded fan-in are simulated by
 polynomial-size circuits of depth `O((log n) ^ (i + 1))` and fan-in two. -/
 theorem AC_subset_NC_succ (i : ℕ) : AC i ⊆ NC (i + 1) := by
   rintro L ⟨c, s, hs, hC⟩
-  obtain ⟨a, e, hse⟩ := polynomiallyBounded_iff_le.1 hs
-  refine ⟨c * (a + e + 4), fun n => s n * (2 * (n + s n) + 2), by fun_prop, fun n => ?_⟩
+  obtain ⟨e, he⟩ := PolynomiallyBounded.exists_clog_le_mul_log (s := fun n => n + s n)
+    (by fun_prop)
+  refine ⟨c * (e + 1), fun n => s n * (n + s n), by fun_prop, fun n => ?_⟩
   obtain ⟨C, hCc, hCd, hCs⟩ := hC n
   obtain ⟨D, hDe, hDs, hDd⟩ := Unbounded.exists_deMorgan_simulation C
   refine ⟨D, fun x => (congrFun hDe x).trans (hCc x), ?_, ?_⟩
-  · calc D.depth ≤ (Nat.clog 2 (n + C.size) + 2) * C.depth := hDd
-      _ ≤ ((a + e + 4) * (Nat.log 2 n + 1)) * (c * (Nat.log 2 n + 1) ^ i) :=
-          Nat.mul_le_mul (clog_add_add_two_le (hCs.trans (hse n))) hCd
-      _ = c * (a + e + 4) * (Nat.log 2 n + 1) ^ (i + 1) := by ring
-  · calc D.size ≤ C.size * (2 * (n + C.size) + 2) := hDs
-      _ ≤ s n * (2 * (n + s n) + 2) := by gcongr
+  · have hlog : max 1 (Nat.clog 2 (n + C.size)) ≤ (e + 1) * (Nat.log 2 n + 1) := by
+      have := (Nat.clog_mono_right 2 (Nat.add_le_add_left hCs n)).trans (he n)
+      rw [add_one_mul]
+      exact max_le (Nat.le_add_left_of_le (Nat.le_add_left 1 _)) (this.trans (Nat.le_add_right _ _))
+    calc D.depth ≤ max 1 (Nat.clog 2 (n + C.size)) * C.depth := hDd
+      _ ≤ ((e + 1) * (Nat.log 2 n + 1)) * (c * (Nat.log 2 n + 1) ^ i) := Nat.mul_le_mul hlog hCd
+      _ = c * (e + 1) * (Nat.log 2 n + 1) ^ (i + 1) := by ring
+  · calc D.size ≤ C.size * (n + C.size) := hDs
+      _ ≤ s n * (n + s n) := by gcongr
 
 /-- **AC⁰ ⊆ NC¹.** -/
 theorem AC0_subset_NC_one : AC0 ⊆ NC 1 :=

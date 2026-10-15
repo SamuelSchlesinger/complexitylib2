@@ -12,6 +12,7 @@ public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
 import Complexity.Computability.Circuit.Boolean.NegationNormalForm
 import Complexity.Computability.Circuit.Unfolding
+import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 import Mathlib.GroupTheory.Perm.ViaEmbedding
 import Mathlib.Tactic.Ring
 
@@ -69,36 +70,6 @@ namespace Cslib.Circuits.Boolean
 open Equiv Equiv.Perm Cslib.BranchingPrograms
 
 variable {L : Language Bool}
-
-/-! ### Logarithms of polynomial bounds -/
-
-/-- `2 ^ (c (⌊log₂ n⌋ + 1))` is polynomially bounded: it is at most `2 ^ c (n + 1) ^ c`. -/
-private theorem polynomiallyBounded_two_pow_mul_log (c : ℕ) :
-    PolynomiallyBounded fun n => 2 ^ (c * (Nat.log 2 n + 1)) := by
-  refine PolynomiallyBounded.of_forall_le (2 ^ c) c fun n => ?_
-  have h : 2 ^ Nat.log 2 n ≤ n + 1 := by
-    rcases Nat.eq_zero_or_pos n with rfl | hn
-    · simp
-    · exact (Nat.pow_log_le_self 2 hn.ne').trans (Nat.le_succ n)
-  calc 2 ^ (c * (Nat.log 2 n + 1)) = 2 ^ c * (2 ^ Nat.log 2 n) ^ c := by
-        rw [mul_add, mul_one, pow_add, mul_comm c, pow_mul, mul_comm]
-    _ ≤ 2 ^ c * (n + 1) ^ c := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left h c)
-
-/-- The binary logarithm of a polynomially bounded function is at most `e (⌊log₂ n⌋ + 1)`. -/
-private theorem exists_clog_le_mul_log {s : ℕ → ℕ} (hs : PolynomiallyBounded s) :
-    ∃ e, ∀ n, Nat.clog 2 (s n) ≤ e * (Nat.log 2 n + 1) := by
-  obtain ⟨a, d, h⟩ := polynomiallyBounded_iff_le.1 hs
-  refine ⟨a + d, fun n => (Nat.clog_le_iff_le_pow one_lt_two).2 ?_⟩
-  calc s n ≤ a * (n + 1) ^ d := h n
-    _ ≤ 2 ^ a * (2 ^ (Nat.log 2 n + 1)) ^ d :=
-        Nat.mul_le_mul Nat.lt_two_pow_self.le
-          (Nat.pow_le_pow_left (Nat.lt_pow_succ_log_self one_lt_two n) d)
-    _ = 2 ^ (a + d * (Nat.log 2 n + 1)) := by
-        rw [← pow_mul, ← pow_add, mul_comm (Nat.log 2 n + 1)]
-    _ ≤ 2 ^ ((a + d) * (Nat.log 2 n + 1)) := by
-        refine Nat.pow_le_pow_right two_pos ?_
-        rw [add_mul]
-        exact Nat.add_le_add_right (Nat.le_mul_of_pos_right a (Nat.succ_pos _)) _
 
 /-! ### NC¹ as logarithmic formula depth -/
 
@@ -178,7 +149,7 @@ theorem polyLength_subset_NC_one (M : Type*) [Monoid M] [Finite M] : PolyLength 
   classical
   rintro L ⟨s, hs, hP⟩
   obtain ⟨k, ⟨e⟩⟩ := Finite.exists_equiv_fin M
-  obtain ⟨a, ha⟩ := exists_clog_le_mul_log hs
+  obtain ⟨a, ha⟩ := hs.exists_clog_le_mul_log
   refine mem_NC_one_iff_formulaDepth_le.2 ⟨(Nat.clog 2 k + 1) * a + Nat.clog 2 k, fun n => ?_⟩
   obtain ⟨P, S, hPS, hlen⟩ := hP n
   obtain ⟨F, hF, hd⟩ := (P.map (leftMulEnd e)).exists_formula (e 1)
