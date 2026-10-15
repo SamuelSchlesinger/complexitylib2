@@ -371,6 +371,27 @@ theorem card_solutions_le_of_not_containsSubcube (k : ℕ) (hk : 1 ≤ k) {ε : 
 
 end ClauseSet
 
+/-- **Formulas without large subcubes of solutions have few solutions**: for every width `k ≥ 1`
+and every `ε > 0` there is a constant `C` such that every formula in conjunctive normal form of
+width `k` over `N` variables whose solutions contain no subcube of dimension `D` has at most
+`2 ^ ((1 - 1 / k + ε) N + C D)` solutions. -/
+theorem CNF.card_filter_eval_le_of_not_containsSubcube (k : ℕ) (hk : 1 ≤ k) {ε : ℝ}
+    (hε : 0 < ε) :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ (N : ℕ) (φ : CNF (Fin N)) (D : ℕ), (∀ c ∈ φ, c.length ≤ k) →
+      ¬ ContainsSubcube {x : BitString N | φ.eval x = true} D →
+      (#{x : BitString N | φ.eval x = true} : ℝ) ≤ 2 ^ ((1 - 1 / (k : ℝ) + ε) * N + C * D) := by
+  obtain ⟨C, hC, h⟩ := ClauseSet.card_solutions_le_of_not_containsSubcube k hk hε
+  refine ⟨C, hC, fun N φ D hφ hfree => ?_⟩
+  have hsol : φ.toClauseSet.solutions = ({x | φ.eval x = true} : Finset (BitString N)) := by
+    ext x
+    simp [CNF.sat_toClauseSet_iff]
+  rw [← hsol]
+  refine h N φ.toClauseSet D (fun C hC => ?_) ?_
+  · obtain ⟨c, hc, hle⟩ := CNF.exists_card_le_of_mem_toClauseSet hC
+    exact hle.trans (hφ c hc)
+  · rw [hsol, coe_filter]
+    simpa using hfree
+
 end Logic.PL
 
 end Cslib

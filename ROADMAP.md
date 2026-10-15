@@ -277,7 +277,8 @@ which is attained when `k ∣ n`, and by its weighted version (PPZ's Lemma 5) an
 parity has at least `2 ^ (√n - 1)` CNFs and distinct clauses together, PPZ's Theorem 6 up to the
 factor `n ^ (1 / 4)` (`Logics/Propositional/Parity/DepthThree.lean`, beyond v1). With both lemmas, a width-`k` CNF
 whose solutions contain no subcube of dimension `D` has at most `2 ^ ((1 - 1 / k + ε) N + C D)`
-solutions (`Logics/Propositional/ClauseSet/SubcubeFree.lean`).
+solutions (`Logics/Propositional/ClauseSet/SubcubeFree.lean`), so subcube dispersers need
+`Σ₃^k ≥ 2 ^ ((1 / k - ε) n)` (`Logics/Propositional/SigmaThree.lean`).
 
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
 `Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):

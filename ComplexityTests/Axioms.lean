@@ -712,4 +712,10 @@ info: 'Cslib.Logic.PL.ClauseSet.card_solutions_le_of_not_containsSubcube' depend
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.ClauseSet.card_solutions_le_of_not_containsSubcube
 
+/--
+info: 'Cslib.Logic.PL.eventually_two_rpow_le_sigmaThreeSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.eventually_two_rpow_le_sigmaThreeSize
+
 end ComplexityTests.Axioms

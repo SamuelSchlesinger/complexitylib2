@@ -159,3 +159,4 @@ public import Complexity.Logics.Propositional.DNF
 public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.Parity.DepthThree
 public import Complexity.Logics.Propositional.Resolution
+public import Complexity.Logics.Propositional.SigmaThree
