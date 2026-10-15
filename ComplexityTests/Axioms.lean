@@ -610,4 +610,10 @@ info: 'Cslib.Logic.PL.CNF.sparsification' depends on axioms: [propext, Classical
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.sparsification
 
+/--
+info: 'exists_pow_le_card_mul_sum_choose' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_pow_le_card_mul_sum_choose
+
 end ComplexityTests.Axioms

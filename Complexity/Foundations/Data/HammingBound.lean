@@ -15,7 +15,7 @@ import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Powerset
 
 /-!
-# Hamming balls and the Hamming bound
+# Hamming balls, the Hamming bound and the Gilbert–Varshamov bound
 
 The words `∀ i, β i` at Hamming distance exactly `r` from a word `x` are obtained by choosing the
 `r` positions where they differ and a different letter at each, so there are
@@ -25,7 +25,12 @@ alphabet of `q` letters at each of `n` positions this is `C(n, r) (q - 1) ^ r`
 distinct words are at distance more than `2 r` are disjoint, so the code has at most `q ^ n / V`
 words, where `V` is the size of a ball: the **Hamming bound**
 (`card_mul_card_filter_hammingDist_le_le_prod`, `card_mul_sum_choose_le_of_two_mul_lt_hammingDist`)
-[Hamming1950], [MacWilliams and Sloane, Chapter 1, Theorem 6][MacWilliamsSloane1977].
+[Hamming1950], [MacWilliams and Sloane, Chapter 1, Theorem 6][MacWilliamsSloane1977]. Conversely,
+the balls of radius `d - 1` around a largest code of minimum distance `d` cover every word, so some
+code of minimum distance `d` has at least `q ^ n / V` words, where `V` is the size of a ball of
+radius `d - 1`: the **Gilbert–Varshamov bound**
+(`exists_prod_le_card_mul_card_filter_hammingDist_lt`, `exists_pow_le_card_mul_sum_choose`)
+[Gilbert1952].
 
 ## Main results
 
@@ -34,10 +39,13 @@ words, where `V` is the size of a ball: the **Hamming bound**
 * `card_mul_card_filter_hammingDist_le_le_prod`: the Hamming bound.
 * `card_mul_sum_choose_le_of_two_mul_lt_hammingDist`: the Hamming bound over a `q`-letter
   alphabet.
+* `exists_prod_le_card_mul_card_filter_hammingDist_lt`: the Gilbert–Varshamov bound.
+* `exists_pow_le_card_mul_sum_choose`: the Gilbert–Varshamov bound over a `q`-letter alphabet.
 
 ## References
 
 * [R. W. Hamming, *Error detecting and error correcting codes*][Hamming1950]
+* [E. N. Gilbert, *A comparison of signalling alphabets*][Gilbert1952]
 * [F. J. MacWilliams, N. J. A. Sloane, *The Theory of Error-Correcting Codes*]
   [MacWilliamsSloane1977]
 -/
@@ -144,3 +152,68 @@ theorem card_mul_sum_choose_le_of_two_mul_lt_hammingDist {q : ℕ}
   rwa [card_filter_hammingDist_le_eq_sum, sum_congr rfl fun j _ =>
     card_filter_hammingDist_eq_choose_mul_pow hq x₀ j, prod_congr rfl fun i _ => hq i,
     prod_const, card_univ] at h
+
+/-- The balls of radius less than `d ≥ 1` all have the size of the ball of radius `d - 1`. -/
+private theorem card_filter_hammingDist_lt_eq_sum {d : ℕ} (hd : 0 < d) (x : ∀ i, β i) :
+    #{y : ∀ i, β i | hammingDist x y < d} =
+      ∑ j ∈ range d, #{y : ∀ i, β i | hammingDist x y = j} := by
+  simp only [Nat.lt_iff_le_pred hd, card_filter_hammingDist_le_eq_sum, Nat.sub_add_cancel hd]
+
+/-- **The Gilbert–Varshamov bound** [Gilbert1952]: for `d ≥ 1` there is a code whose distinct
+words are at distance at least `d` and which has at least `∏ i, |β i| / V` words, where `V` is the
+size of a ball of radius `d - 1`. A largest such code works: its balls of radius `d - 1` cover every
+word, since a word at distance at least `d` from every codeword could be added to it. -/
+theorem exists_prod_le_card_mul_card_filter_hammingDist_lt {d : ℕ} (hd : 0 < d) (x₀ : ∀ i, β i) :
+    ∃ C : Finset (∀ i, β i), (C : Set (∀ i, β i)).Pairwise (fun x y => d ≤ hammingDist x y) ∧
+      ∏ i, Fintype.card (β i) ≤ #C * #{y : ∀ i, β i | hammingDist x₀ y < d} := by
+  classical
+  -- a largest code of minimum distance `d`
+  obtain ⟨C, hC, hmax⟩ := (univ.filter fun C : Finset (∀ i, β i) =>
+      (C : Set (∀ i, β i)).Pairwise fun x y => d ≤ hammingDist x y).exists_max_image card
+    ⟨∅, by simp⟩
+  have hCd := (mem_filter.1 hC).2
+  refine ⟨C, hCd, ?_⟩
+  -- its balls of radius `d - 1` cover every word
+  have hcover : (univ : Finset (∀ i, β i)) ⊆ C.biUnion fun x => {y | hammingDist x y < d} := by
+    intro y _
+    by_contra hy
+    simp only [mem_biUnion, mem_filter, mem_univ, true_and, not_exists, not_and, not_lt] at hy
+    have hyC : y ∉ C := fun h => by simpa [hd.ne'] using hy y h
+    have hins : ((insert y C : Finset (∀ i, β i)) : Set (∀ i, β i)).Pairwise
+        fun x y => d ≤ hammingDist x y := by
+      rw [coe_insert]
+      exact hCd.insert fun x hx _ => ⟨by rw [hammingDist_comm]; exact hy x hx, hy x hx⟩
+    have := hmax _ (mem_filter.2 ⟨mem_univ _, hins⟩)
+    rw [card_insert_of_notMem hyC] at this
+    omega
+  have hsize (x : ∀ i, β i) : #{y : ∀ i, β i | hammingDist x y < d} =
+      #{y : ∀ i, β i | hammingDist x₀ y < d} := by
+    simp only [card_filter_hammingDist_lt_eq_sum hd, card_filter_hammingDist_eq]
+  calc ∏ i, Fintype.card (β i)
+      = #(univ : Finset (∀ i, β i)) := by rw [card_univ, Fintype.card_pi]
+    _ ≤ #(C.biUnion fun x => {y : ∀ i, β i | hammingDist x y < d}) := card_le_card hcover
+    _ ≤ ∑ x ∈ C, #{y : ∀ i, β i | hammingDist x y < d} := card_biUnion_le
+    _ = #C * #{y : ∀ i, β i | hammingDist x₀ y < d} := by
+        rw [sum_congr rfl fun x _ => hsize x, sum_const, smul_eq_mul]
+
+omit [DecidableEq ι] in
+/-- **The Gilbert–Varshamov bound** [Gilbert1952] over a `q`-letter alphabet at each of `n`
+positions: for `d ≥ 1` there is a code whose distinct words are at distance at least `d` and which
+has at least `q ^ n / V` words, where `V = ∑_{j < d} C(n, j) (q - 1) ^ j` is the size of a ball of
+radius `d - 1`. -/
+theorem exists_pow_le_card_mul_sum_choose {q : ℕ} (hq : ∀ i, Fintype.card (β i) = q) {d : ℕ}
+    (hd : 0 < d) :
+    ∃ C : Finset (∀ i, β i), (C : Set (∀ i, β i)).Pairwise (fun x y => d ≤ hammingDist x y) ∧
+      q ^ Fintype.card ι ≤ #C * ∑ j ∈ range d, (Fintype.card ι).choose j * (q - 1) ^ j := by
+  classical
+  have hprod : ∏ i, Fintype.card (β i) = q ^ Fintype.card ι := by
+    rw [prod_congr rfl fun i _ => hq i, prod_const, card_univ]
+  rcases isEmpty_or_nonempty (∀ i, β i) with hempty | hne
+  · refine ⟨∅, by simp, ?_⟩
+    rw [← hprod, ← Fintype.card_pi, Fintype.card_eq_zero]
+    exact Nat.zero_le _
+  obtain ⟨x₀⟩ := hne
+  obtain ⟨C, hCd, hC⟩ := exists_prod_le_card_mul_card_filter_hammingDist_lt hd x₀
+  refine ⟨C, hCd, ?_⟩
+  rwa [card_filter_hammingDist_lt_eq_sum hd, sum_congr rfl fun j _ =>
+    card_filter_hammingDist_eq_choose_mul_pow hq x₀ j, hprod] at hC
