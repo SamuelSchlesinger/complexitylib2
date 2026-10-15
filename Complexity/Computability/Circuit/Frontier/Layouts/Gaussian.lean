@@ -58,6 +58,9 @@ width at most `(p_ρ + O(δ) + O(ε) + O(1/T ^ 2)) h`.
   loopless multigraphs whose vertices have three edges.
 * `Cslib.Circuits.Frontier.Gaussian.cubicLayoutBound_gaussian`: the cubic layout bound with
   coefficient `gaussianCoefficient`.
+* `Cslib.Circuits.Frontier.Gaussian.exists_ncard_edgeCut_le`: large cubic multigraphs have
+  bisections, and more generally sets of any size, cut off by at most
+  `(gaussianCoefficient + ξ) |V|` edges.
 * `Cslib.Circuits.Frontier.layoutBound_gaussian`: the layout hypothesis for maximum degree three
   with coefficient `2 gaussianCoefficient`.
 
@@ -176,6 +179,22 @@ theorem exists_width_le_gaussianCoefficient {ξ : ℝ} (hξ : 0 < ξ) :
 theorem cubicLayoutBound_gaussian : CubicLayoutBound gaussianCoefficient := fun _ hξ =>
   (exists_width_le_gaussianCoefficient hξ).imp fun _ h V E _ _ G hloop _ h3 hN =>
     h V E G hloop h3 hN
+
+/-- **Bisections of cubic multigraphs.** For every `ξ > 0`, every large enough loopless multigraph
+whose vertices have three edges each, parallel edges allowed, has for every `k ≤ |V|` a set of `k`
+vertices cut off by at most `(p + ξ) |V|` edges, where `p = (3/(2π)) arccos((1 + 2√2)/4)` is
+`gaussianCoefficient`: take the first `k` vertices of a Gaussian layout. In particular its
+bisection width is at most `(p + ξ) |V|`, with `p ≈ 0.1404`. -/
+theorem exists_ncard_edgeCut_le {ξ : ℝ} (hξ : 0 < ξ) :
+    ∃ N₀ : ℕ, ∀ (V E : Type*) [Finite V] [Finite E] (G : Multigraph V E), G.Loopless →
+      (∀ v, (G.incidenceSet v).ncard = 3) → N₀ < Nat.card V → ∀ k ≤ Nat.card V,
+        ∃ L : Set V, L.ncard = k ∧
+          ((G.edgeCut L).ncard : ℝ) ≤ (gaussianCoefficient + ξ) * Nat.card V := by
+  obtain ⟨N₀, hN₀⟩ := exists_width_le_gaussianCoefficient hξ
+  refine ⟨N₀, fun V E _ _ G hloop h3 hN k hk => ?_⟩
+  obtain ⟨σ, hσ⟩ := hN₀ V E G hloop h3 hN
+  exact ⟨σ.initial k, σ.ncard_initial hk,
+    (Nat.cast_le.mpr (G.ncard_frontier_le_width σ k)).trans hσ⟩
 
 end Cslib.Circuits.Frontier.Gaussian
 

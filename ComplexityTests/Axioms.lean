@@ -2499,4 +2499,10 @@ info: 'Cslib.Circuits.Frontier.eventually_four_sub_mul_lt_innerSize' depends on 
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.eventually_four_sub_mul_lt_innerSize
 
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.exists_ncard_edgeCut_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.exists_ncard_edgeCut_le
+
 end ComplexityTests.Axioms

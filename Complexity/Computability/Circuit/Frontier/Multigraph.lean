@@ -237,6 +237,15 @@ theorem initial_succ {t : ℕ} (ht : t < Nat.card V) :
   simp only [mem_initial, mem_insert_iff, Equiv.eq_symm_apply, Fin.ext_iff]
   omega
 
+/-- The first `t ≤ |V|` vertices of a layout are `t` vertices. -/
+theorem ncard_initial {t : ℕ} (ht : t ≤ Nat.card V) : (π.initial t).ncard = t := by
+  have : π.initial t = range (π.symm ∘ Fin.castLE ht) := by
+    ext v
+    simp only [mem_initial, mem_range]
+    exact ⟨fun h => ⟨⟨π v, h⟩, by simp [Fin.castLE]⟩, by rintro ⟨j, rfl⟩; simp⟩
+  rw [this, ncard_range_of_injective (π.symm.injective.comp (Fin.castLE_injective ht)),
+    Nat.card_eq_fintype_card, Fintype.card_fin]
+
 end Layout
 
 namespace Multigraph
