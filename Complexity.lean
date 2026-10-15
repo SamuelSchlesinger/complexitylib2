@@ -17,6 +17,7 @@ public import Complexity.Computability.Circuit.Boolean.HastadCounting
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko
+public import Complexity.Computability.Circuit.Boolean.LMN
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
 public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.ModGates

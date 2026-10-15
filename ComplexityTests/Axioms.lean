@@ -592,4 +592,10 @@ info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shall
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shallow_le
 
+/--
+info: 'Cslib.Circuits.Boolean.sum_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.sum_fourierCoeff_sq_le
+
 end ComplexityTests.Axioms
