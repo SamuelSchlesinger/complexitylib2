@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate
+-- upstream: candidate (additions to `Circuit/Program.lean` and `Circuit/Depth.lean`)
 
 public import Complexity.Computability.Circuit.Depth
 

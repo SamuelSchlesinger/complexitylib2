@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Cslib.Computability.Circuit.Depth
+public import Complexity.Computability.Circuit.MapLines
 
 /-!
 # Translating circuits between signatures
@@ -111,14 +111,14 @@ variable (φ : σ.Hom τ)
 def Line.mapOp (line : Line σ n g) : Line τ n g :=
   ⟨φ line.op, fun a => line.wires (Fin.cast (φ.arity_eq line.op) a)⟩
 
-/-- The program performing `φ op` in place of each operation `op`. -/
-def Program.mapOp : {g : ℕ} → Program σ n g → Program τ n g
-  | _, .empty => .empty
-  | _, .gate p line => .gate (p.mapOp) (line.mapOp φ)
+/-- The program performing `φ op` in place of each operation `op`: its lines translated by
+`Line.mapOp`. -/
+def Program.mapOp (p : Program σ n g) : Program τ n g :=
+  p.mapLines (Line.mapOp φ)
 
 /-- The circuit performing `φ op` in place of each operation `op`. -/
 def Circuit.mapOp (c : Circuit σ n m) : Circuit τ n m :=
-  ⟨c.program.mapOp φ, c.outputs⟩
+  c.mapLines (Line.mapOp φ)
 
 variable {φ}
 
@@ -164,12 +164,15 @@ theorem Program.mapOp_comp (ψ : τ.Hom υ) (p : Program σ n g) :
   | gate p line ih => rw [mapOp_gate, ih, Line.mapOp_comp, mapOp_gate, mapOp_gate]
 
 @[simp] theorem Circuit.mapOp_id (c : Circuit σ n m) : c.mapOp (Signature.Hom.id σ) = c := by
-  simp [Circuit.mapOp]
+  show (⟨c.program.mapOp _, c.outputs⟩ : Circuit σ n m) = c
+  rw [Program.mapOp_id]
 
 /-- Translating a circuit along a composition translates it twice. -/
 theorem Circuit.mapOp_comp (ψ : τ.Hom υ) (c : Circuit σ n m) :
     c.mapOp (ψ.comp φ) = (c.mapOp φ).mapOp ψ := by
-  simp only [Circuit.mapOp, Program.mapOp_comp]
+  show (⟨c.program.mapOp (ψ.comp φ), c.outputs⟩ : Circuit υ n m) =
+    ⟨(c.program.mapOp φ).mapOp ψ, c.outputs⟩
+  rw [Program.mapOp_comp]
 
 @[simp] theorem Circuit.size_mapOp (c : Circuit σ n m) : (c.mapOp φ).size = c.size :=
   rfl
@@ -191,34 +194,28 @@ theorem Program.depths_mapOp (p : Program σ n g) : (p.mapOp φ).depths = p.dept
     funext k
     induction k using Fin.lastCases with
     | last =>
-      simp only [Program.mapOp, Program.depths_gate_last, Program.wireDepths, ih, Line.depth_mapOp]
-    | cast k => simp only [Program.mapOp, Program.depths_gate_castSucc, ih]
+      simp only [Program.mapOp_gate, Program.depths_gate_last, Program.wireDepths, ih,
+        Line.depth_mapOp]
+    | cast k => simp only [Program.mapOp_gate, Program.depths_gate_castSucc, ih]
 
 @[simp] theorem Circuit.depth_mapOp (c : Circuit σ n m) : (c.mapOp φ).depth = c.depth := by
-  simp only [Circuit.depth, Circuit.outputDepths, Circuit.mapOp, Program.wireDepths,
-    Program.depths_mapOp]
+  show Fin.foldl m (fun depth k => max depth ((c.program.mapOp φ).wireDepths (c.outputs k))) 0 =
+    Fin.foldl m (fun depth k => max depth (c.program.wireDepths (c.outputs k))) 0
+  simp only [Program.wireDepths, Program.depths_mapOp]
 
 variable {I : Interpretation σ U} {J : Interpretation τ U}
 
 /-- The translated program computes the same gate values along a meaning-preserving map. -/
 theorem Program.eval_mapOp [hφ : φ.Preserves I J] (p : Program σ n g) (x : Fin n → U) :
-    (p.mapOp φ).eval J x = p.eval I x := by
-  induction p with
-  | empty => funext k; exact k.elim0
-  | gate p line ih =>
-    funext k
-    induction k using Fin.lastCases with
-    | last =>
-      rw [Program.mapOp, Program.eval_gate_last, Program.eval_gate_last, ih]
-      exact hφ.interpret_eq line.op (Wire.elim x (p.eval I x) ∘ line.wires)
-    | cast k => rw [Program.mapOp, Program.eval_gate_castSucc, Program.eval_gate_castSucc, ih]
+    (p.mapOp φ).eval J x = p.eval I x :=
+  p.eval_mapLines (f := Line.mapOp φ)
+    (fun line x gates => hφ.interpret_eq line.op (Wire.elim x gates ∘ line.wires)) x
 
 /-- **The translated circuit computes the same function** along a meaning-preserving map. -/
-theorem Circuit.eval_mapOp [φ.Preserves I J] (c : Circuit σ n m) (x : Fin n → U) :
-    (c.mapOp φ).eval J x = c.eval I x := by
-  funext o
-  simp only [Circuit.eval, Circuit.mapOp, Function.comp_apply, Program.trace]
-  rw [Program.eval_mapOp (I := I)]
+theorem Circuit.eval_mapOp [hφ : φ.Preserves I J] (c : Circuit σ n m) (x : Fin n → U) :
+    (c.mapOp φ).eval J x = c.eval I x :=
+  congrFun (c.eval_mapLines (f := Line.mapOp φ)
+    (fun line x gates => hφ.interpret_eq line.op (Wire.elim x gates ∘ line.wires))) x
 
 /-- A circuit translated along a meaning-preserving map computes what the circuit computes. -/
 theorem Circuit.Computes.mapOp [φ.Preserves I J] {c : Circuit σ n m}
