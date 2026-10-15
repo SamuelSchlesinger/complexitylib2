@@ -143,6 +143,8 @@ public import Complexity.Computability.PCP.Composition
 public import Complexity.Computability.PCP.ConstraintGraph
 public import Complexity.Computability.PCP.DegreeReduction
 public import Complexity.Computability.PCP.LocalTest
+public import Complexity.Computability.PCP.Power
+public import Complexity.Computability.PCP.PoweringBound
 public import Complexity.Computability.PCP.Preprocess
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
