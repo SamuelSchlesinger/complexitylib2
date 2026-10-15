@@ -10,6 +10,7 @@ import Complexity.Computability.Circuit.Boolean.Khrapchenko
 import Complexity.Computability.Circuit.Boolean.LMN
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
 import Complexity.Computability.Circuit.Boolean.Smolensky
+import Mathlib.FieldTheory.Finite.GaloisField
 import Complexity.Computability.Circuit.Boolean.TC0
 import Complexity.Computability.Circuit.Boolean.TopDown
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
@@ -697,5 +698,20 @@ example : (Threshold.parityCircuit 5).program.cost Threshold.thresholdCost = 6 �
   ⟨Threshold.cost_parityCircuit, Threshold.size_parityCircuit⟩
 
 end ThresholdParity
+
+section SmolenskyField
+
+open Cslib.Circuits Cslib.Circuits.Boolean
+
+open Classical in
+/-- Smolensky's approximation applies over the field of order `9`, not only over `ZMod 3`. -/
+example {n ℓ : ℕ} (hℓ : 1 ≤ ℓ) (C : Circuit Unbounded.extSignature n 1) :
+    ∃ Q ∈ BitString.lowDegree (GaloisField 3 2) (Fin n) (((3 - 1) * ℓ) ^ C.depth),
+      #(univ.filter fun x => Q x ≠
+        BitString.bitVal (GaloisField 3 2) (C.eval (Unbounded.extInterpretation (modGate 3)) x 0)) *
+        2 ^ ℓ ≤ C.size * 2 ^ n :=
+  Smolensky.exists_lowDegree_approx hℓ C
+
+end SmolenskyField
 
 end ComplexityTests.NonVacuity

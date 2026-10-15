@@ -20,11 +20,13 @@ import Mathlib.Tactic.Ring
 /-!
 # Smolensky's gate approximators
 
-Over `ZMod p` for a prime `p`, every gate of the AC⁰[p] basis has a polynomial approximator that
-multiplies degrees by at most `(p - 1) ℓ`:
+Over a commutative ring `F` of prime characteristic `p`, such as `ZMod p` or the fields of order
+`p ^ k` in which Smolensky works [Smolensky1987], every gate of the AC⁰[p] basis has a polynomial
+approximator that multiplies degrees by at most `(p - 1) ℓ`:
 
-* `MOD_p` of `u₁, …, u_m` is exactly `(∑ uᵢ) ^ (p - 1)`, since nonzero elements of `ZMod p` have
-  `(p - 1)`-st power `1` (`modApprox`);
+* `MOD_p` of bits `u₁, …, u_m` is exactly `(∑ uᵢ) ^ (p - 1)`, since the sum is the image of the
+  count in the prime field `ZMod p`, where nonzero elements have `(p - 1)`-st power `1`
+  (`natCast_pow_eq_bitVal`, `modApprox`);
 * OR of `u₁, …, u_m` is approximated by `1 - ∏_{j < ℓ} (1 - (∑_{i ∈ T j} uᵢ) ^ (p - 1))` for a tuple
   `T` of `ℓ` sets of arguments (`orApprox`), and AND is its De Morgan dual;
 * negation is exactly `1 - u`.
@@ -33,10 +35,13 @@ For a nonzero Boolean vector, adding or removing a true coordinate changes the c
 one, so at most half of the sets have a count divisible by `p`, and at most a `2 ^ (-ℓ)` fraction of
 the tuples err (`card_orApprox_wrong_mul_le`). Double counting over the inputs gives, for every
 gate and every way its arguments depend on the input, an approximator that errs on at most
-`2 ^ n / 2 ^ ℓ` inputs (`exists_gate_approx`) [Razborov1987], [Smolensky1987].
+`2 ^ n / 2 ^ ℓ` inputs (`exists_gate_approx`) [Razborov1987], [Smolensky1987],
+[Jukna, Chapter 12][Jukna2012].
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.Smolensky.natCast_pow_eq_bitVal`: Fermat's little theorem for counts in
+  characteristic `p`.
 * `Cslib.Circuits.Boolean.Smolensky.exists_gate_approx`: the gate approximators.
 
 ## References
@@ -45,6 +50,7 @@ gate and every way its arguments depend on the input, an approximator that errs 
   logical addition*][Razborov1987]
 * [R. Smolensky, *Algebraic methods in the theory of lower bounds for Boolean circuit
   complexity*][Smolensky1987]
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
 -/
 
 @[expose] public section
@@ -53,81 +59,69 @@ namespace Cslib.Circuits.Boolean.Smolensky
 
 open Finset BitString
 
-variable {p : ℕ} [Fact p.Prime] {n m ℓ : ℕ}
+variable {F : Type*} [CommRing F] {n m ℓ : ℕ}
 
-/-- The OR approximator for a tuple `T` of `ℓ` sets of arguments. -/
-def orApprox (T : Fin ℓ → Finset (Fin m)) (u : Fin m → ZMod p) : ZMod p :=
+section Approximators
+
+variable (p : ℕ)
+
+/-- The OR approximator of characteristic `p` for a tuple `T` of `ℓ` sets of arguments. -/
+def orApprox (T : Fin ℓ → Finset (Fin m)) (u : Fin m → F) : F :=
   1 - ∏ j, (1 - (∑ i ∈ T j, u i) ^ (p - 1))
 
 /-- The AND approximator, the De Morgan dual of `orApprox`. -/
-def andApprox (T : Fin ℓ → Finset (Fin m)) (u : Fin m → ZMod p) : ZMod p :=
-  1 - orApprox T fun i => 1 - u i
+def andApprox (T : Fin ℓ → Finset (Fin m)) (u : Fin m → F) : F :=
+  1 - orApprox p T fun i => 1 - u i
 
-/-- The exact `MOD_p` polynomial. -/
-def modApprox (u : Fin m → ZMod p) : ZMod p :=
+/-- The `MOD_p` polynomial, exact in characteristic `p`. -/
+def modApprox (u : Fin m → F) : F :=
   (∑ i, u i) ^ (p - 1)
 
-theorem orApprox_comp_mem {D : ℕ} (T : Fin ℓ → Finset (Fin m)) {v : Fin m → BitString n → ZMod p}
-    (hv : ∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) :
-    (fun x => orApprox T fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) (ℓ * ((p - 1) * D)) := by
-  have hfun : (fun x => orApprox T fun k => v k x) = 1 - ∏ j, (1 - (∑ i ∈ T j, v i) ^ (p - 1)) := by
+theorem orApprox_comp_mem {D : ℕ} (T : Fin ℓ → Finset (Fin m)) {v : Fin m → BitString n → F}
+    (hv : ∀ k, v k ∈ lowDegree F (Fin n) D) :
+    (fun x => orApprox p T fun k => v k x) ∈ lowDegree F (Fin n) (ℓ * ((p - 1) * D)) := by
+  have hfun : (fun x => orApprox p T fun k => v k x) =
+      1 - ∏ j, (1 - (∑ i ∈ T j, v i) ^ (p - 1)) := by
     funext x
     simp only [orApprox, Pi.sub_apply, Pi.one_apply, Finset.prod_apply, Pi.pow_apply,
       Finset.sum_apply]
   rw [hfun]
   refine one_sub_mem_lowDegree ?_
-  have h := prod_mem_lowDegree (R := ZMod p) (ι := Fin n) univ (a := (p - 1) * D)
+  have h := prod_mem_lowDegree (R := F) (ι := Fin n) univ (a := (p - 1) * D)
     (f := fun j => 1 - (∑ i ∈ T j, v i) ^ (p - 1)) fun j _ =>
       one_sub_mem_lowDegree (pow_mem_lowDegree (sum_mem_lowDegree _ fun i _ => hv i) (p - 1))
   rwa [card_univ, Fintype.card_fin] at h
 
-theorem andApprox_comp_mem {D : ℕ} (T : Fin ℓ → Finset (Fin m)) {v : Fin m → BitString n → ZMod p}
-    (hv : ∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) :
-    (fun x => andApprox T fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) (ℓ * ((p - 1) * D)) := by
-  have hmem := orApprox_comp_mem T (v := fun k => 1 - v k) fun k => one_sub_mem_lowDegree (hv k)
-  have hfun : (fun x => andApprox T fun k => v k x) =
-      1 - fun x => orApprox T fun k => (1 - v k) x := by
+theorem andApprox_comp_mem {D : ℕ} (T : Fin ℓ → Finset (Fin m)) {v : Fin m → BitString n → F}
+    (hv : ∀ k, v k ∈ lowDegree F (Fin n) D) :
+    (fun x => andApprox p T fun k => v k x) ∈ lowDegree F (Fin n) (ℓ * ((p - 1) * D)) := by
+  have hmem := orApprox_comp_mem p T (v := fun k => 1 - v k) fun k =>
+    one_sub_mem_lowDegree (hv k)
+  have hfun : (fun x => andApprox p T fun k => v k x) =
+      1 - fun x => orApprox p T fun k => (1 - v k) x := by
     funext x
     simp [andApprox]
   rw [hfun]
   exact one_sub_mem_lowDegree hmem
 
-theorem modApprox_comp_mem {D : ℕ} {v : Fin m → BitString n → ZMod p}
-    (hv : ∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) :
-    (fun x => modApprox fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) ((p - 1) * D) := by
-  have hfun : (fun x => modApprox fun k => v k x) = (∑ i, v i) ^ (p - 1) := by
+theorem modApprox_comp_mem {D : ℕ} {v : Fin m → BitString n → F}
+    (hv : ∀ k, v k ∈ lowDegree F (Fin n) D) :
+    (fun x => modApprox p fun k => v k x) ∈ lowDegree F (Fin n) ((p - 1) * D) := by
+  have hfun : (fun x => modApprox p fun k => v k x) = (∑ i, v i) ^ (p - 1) := by
     funext x
     simp [modApprox, Finset.sum_apply]
   rw [hfun]
   exact pow_mem_lowDegree (sum_mem_lowDegree _ fun i _ => hv i) (p - 1)
 
-/-! ### Exactness on bits -/
+end Approximators
+
+/-! ### Sums of bits -/
 
 /-- A sum of bits is their count. -/
 theorem sum_bitVal (S : Finset (Fin m)) (u : Fin m → Bool) :
-    ∑ i ∈ S, bitVal (ZMod p) (u i) = (#(S.filter fun i => u i = true) : ZMod p) := by
+    ∑ i ∈ S, bitVal F (u i) = (#(S.filter fun i => u i = true) : F) := by
   rw [Finset.card_filter, Nat.cast_sum]
   exact Finset.sum_congr rfl fun i _ => by cases u i <;> simp [bitVal]
-
-/-- The `(p - 1)`-st power of a count is whether the count is not divisible by `p`. -/
-theorem natCast_pow_eq_bitVal (c : ℕ) :
-    (c : ZMod p) ^ (p - 1) = bitVal (ZMod p) (decide (c % p ≠ 0)) := by
-  have hp := (Fact.out : p.Prime).two_le
-  by_cases hc : c % p = 0
-  · have : (c : ZMod p) = 0 := (ZMod.natCast_eq_zero_iff c p).2 (Nat.dvd_of_mod_eq_zero hc)
-    rw [this, zero_pow (by omega)]
-    simp [hc, bitVal]
-  · rw [ZMod.pow_card_sub_one_eq_one fun h => hc (Nat.mod_eq_zero_of_dvd
-      ((ZMod.natCast_eq_zero_iff c p).1 h))]
-    simp [hc, bitVal]
-
-/-- The `MOD_p` polynomial is exact on bits. -/
-theorem modApprox_bitVal (u : Fin m → Bool) :
-    modApprox (fun i => bitVal (ZMod p) (u i)) = bitVal (ZMod p) (modGate p m u) := by
-  rw [modApprox, sum_bitVal, natCast_pow_eq_bitVal]
-  rfl
-
-/-! ### Counting erring tuples -/
 
 /-- Toggle one coordinate in a set. -/
 private def toggle (k : Fin m) (S : Finset (Fin m)) : Finset (Fin m) :=
@@ -139,11 +133,12 @@ private theorem toggle_toggle (k : Fin m) (S : Finset (Fin m)) : toggle k (toggl
   · simp [hk, Finset.insert_erase hk]
   · simp [hk, Finset.erase_insert hk]
 
-/-- If some coordinate is true, at most half of the sets have a count divisible by `p`. -/
-theorem two_mul_card_sum_eq_zero_le (u : Fin m → Bool) {k : Fin m} (hk : u k = true) :
-    2 * #(univ.filter fun S : Finset (Fin m) => ∑ i ∈ S, bitVal (ZMod p) (u i) = 0) ≤ 2 ^ m := by
-  set Z := univ.filter fun S : Finset (Fin m) => ∑ i ∈ S, bitVal (ZMod p) (u i) = 0
-  set NZ := univ.filter fun S : Finset (Fin m) => ¬∑ i ∈ S, bitVal (ZMod p) (u i) = 0
+/-- If some coordinate is true, at most half of the sets have a sum of bits equal to zero. -/
+theorem two_mul_card_sum_eq_zero_le [Nontrivial F] [DecidableEq F] (u : Fin m → Bool) {k : Fin m}
+    (hk : u k = true) :
+    2 * #(univ.filter fun S : Finset (Fin m) => ∑ i ∈ S, bitVal F (u i) = 0) ≤ 2 ^ m := by
+  set Z := univ.filter fun S : Finset (Fin m) => ∑ i ∈ S, bitVal F (u i) = 0
+  set NZ := univ.filter fun S : Finset (Fin m) => ¬∑ i ∈ S, bitVal F (u i) = 0
   have htotal : #Z + #NZ = 2 ^ m := by
     rw [Finset.card_filter_add_card_filter_not, Finset.card_univ, Fintype.card_finset,
       Fintype.card_fin]
@@ -159,30 +154,66 @@ theorem two_mul_card_sum_eq_zero_le (u : Fin m → Bool) {k : Fin m} (hk : u k =
     · simpa only [toggle_toggle] using congrArg (toggle k) hST
   omega
 
-theorem orApprox_bitVal_of_exists (T : Fin ℓ → Finset (Fin m)) (u : Fin m → Bool)
-    (hT : ∃ j, ∑ i ∈ T j, bitVal (ZMod p) (u i) ≠ 0) :
-    orApprox T (fun i => bitVal (ZMod p) (u i)) = 1 := by
-  obtain ⟨j, hj⟩ := hT
-  unfold orApprox
-  rw [Finset.prod_eq_zero (Finset.mem_univ j)
-    (by rw [ZMod.pow_card_sub_one_eq_one hj, sub_self]), sub_zero]
+/-! ### Exactness in characteristic `p` -/
+
+variable {p : ℕ} [Fact p.Prime]
 
 theorem orApprox_bitVal_of_forall_false (T : Fin ℓ → Finset (Fin m)) (u : Fin m → Bool)
-    (hu : ∀ i, u i = false) : orApprox T (fun i => bitVal (ZMod p) (u i)) = 0 := by
+    (hu : ∀ i, u i = false) : orApprox p T (fun i => bitVal F (u i)) = 0 := by
   have hp := (Fact.out : p.Prime).two_le
   simp [orApprox, hu, bitVal, zero_pow (show p - 1 ≠ 0 by omega)]
+
+variable [CharP F p]
+
+/-- The `(p - 1)`-st power of a count is whether the count is not divisible by `p`: in
+characteristic `p` the count is the image of its residue in `ZMod p`, where Fermat's little
+theorem applies. -/
+theorem natCast_pow_eq_bitVal (c : ℕ) :
+    (c : F) ^ (p - 1) = bitVal F (decide (c % p ≠ 0)) := by
+  have hp := (Fact.out : p.Prime).two_le
+  by_cases hc : c % p = 0
+  · rw [(CharP.cast_eq_zero_iff F p c).2 (Nat.dvd_of_mod_eq_zero hc), zero_pow (by omega)]
+    simp [hc, bitVal]
+  · have h := congrArg (ZMod.castHom (dvd_refl p) F) (ZMod.pow_card_sub_one_eq_one
+      fun h => hc (Nat.mod_eq_zero_of_dvd ((ZMod.natCast_eq_zero_iff c p).1 h)))
+    rw [map_pow, map_natCast, map_one] at h
+    simp [h, hc, bitVal]
+
+/-- In characteristic `p`, the `(p - 1)`-st power of a nonzero count is `1`. -/
+theorem natCast_pow_eq_one {c : ℕ} (hc : (c : F) ≠ 0) : (c : F) ^ (p - 1) = 1 := by
+  have h : c % p ≠ 0 := fun h => hc ((CharP.cast_eq_zero_iff F p c).2 (Nat.dvd_of_mod_eq_zero h))
+  simp [natCast_pow_eq_bitVal, h, bitVal]
+
+/-- The `MOD_p` polynomial is exact on bits. -/
+theorem modApprox_bitVal (u : Fin m → Bool) :
+    modApprox p (fun i => bitVal F (u i)) = bitVal F (modGate p m u) := by
+  rw [modApprox, sum_bitVal, natCast_pow_eq_bitVal]
+  rfl
+
+theorem orApprox_bitVal_of_exists (T : Fin ℓ → Finset (Fin m)) (u : Fin m → Bool)
+    (hT : ∃ j, ∑ i ∈ T j, bitVal F (u i) ≠ 0) :
+    orApprox p T (fun i => bitVal F (u i)) = 1 := by
+  obtain ⟨j, hj⟩ := hT
+  rw [sum_bitVal] at hj
+  unfold orApprox
+  rw [Finset.prod_eq_zero (Finset.mem_univ j)
+    (by rw [sum_bitVal, natCast_pow_eq_one hj, sub_self]), sub_zero]
+
+/-! ### Counting erring tuples -/
+
+variable [DecidableEq F]
 
 /-- At most a `2 ^ (-ℓ)` fraction of the tuples make the OR approximator err on a fixed Boolean
 vector. -/
 theorem card_orApprox_wrong_mul_le (u : Fin m → Bool) :
-    #(univ.filter fun T : Fin ℓ → Finset (Fin m) => orApprox T (fun i => bitVal (ZMod p) (u i)) ≠
-        bitVal (ZMod p) (decide (∃ j, u j = true))) * 2 ^ ℓ ≤ (2 ^ m) ^ ℓ := by
+    #(univ.filter fun T : Fin ℓ → Finset (Fin m) => orApprox p T (fun i => bitVal F (u i)) ≠
+        bitVal F (decide (∃ j, u j = true))) * 2 ^ ℓ ≤ (2 ^ m) ^ ℓ := by
   by_cases hex : ∃ k, u k = true
   · obtain ⟨k, hk⟩ := hex
-    set Z := univ.filter fun S : Finset (Fin m) => ∑ i ∈ S, bitVal (ZMod p) (u i) = 0
+    set Z := univ.filter fun S : Finset (Fin m) => ∑ i ∈ S, bitVal F (u i) = 0
     have hsub : (univ.filter fun T : Fin ℓ → Finset (Fin m) =>
-        orApprox T (fun i => bitVal (ZMod p) (u i)) ≠
-          bitVal (ZMod p) (decide (∃ j, u j = true))) ⊆ Fintype.piFinset fun _ => Z := by
+        orApprox p T (fun i => bitVal F (u i)) ≠
+          bitVal F (decide (∃ j, u j = true))) ⊆ Fintype.piFinset fun _ => Z := by
       intro T hT
       simp only [mem_filter, mem_univ, true_and, show (∃ j, u j = true) from ⟨k, hk⟩,
         decide_true] at hT
@@ -195,7 +226,9 @@ theorem card_orApprox_wrong_mul_le (u : Fin m → Bool) :
           Nat.mul_le_mul_right _ (card_le_card hsub)
       _ = (2 * #Z) ^ ℓ := by
           rw [Fintype.card_piFinset, prod_const, card_univ, Fintype.card_fin, mul_pow, mul_comm]
-      _ ≤ (2 ^ m) ^ ℓ := Nat.pow_le_pow_left (two_mul_card_sum_eq_zero_le u hk) ℓ
+      _ ≤ (2 ^ m) ^ ℓ := by
+          have : Nontrivial F := CharP.nontrivial_of_char_ne_one (Fact.out : p.Prime).ne_one
+          exact Nat.pow_le_pow_left (two_mul_card_sum_eq_zero_le u hk) ℓ
   · push Not at hex
     have hu : ∀ i, u i = false := fun i => by simpa using hex i
     rw [filter_false_of_mem fun T _ => by
@@ -207,11 +240,11 @@ theorem card_orApprox_wrong_mul_le (u : Fin m → Bool) :
 OR approximator err on at most `2 ^ n / 2 ^ ℓ` inputs. -/
 theorem exists_orApprox (u : BitString n → Fin m → Bool) :
     ∃ T : Fin ℓ → Finset (Fin m),
-      #(univ.filter fun x => orApprox T (fun i => bitVal (ZMod p) (u x i)) ≠
-          bitVal (ZMod p) (decide (∃ j, u x j = true))) * 2 ^ ℓ ≤ 2 ^ n := by
+      #(univ.filter fun x => orApprox p T (fun i => bitVal F (u x i)) ≠
+          bitVal F (decide (∃ j, u x j = true))) * 2 ^ ℓ ≤ 2 ^ n := by
   classical
   let Wrong : (Fin ℓ → Finset (Fin m)) → BitString n → Prop := fun T x =>
-    orApprox T (fun i => bitVal (ZMod p) (u x i)) ≠ bitVal (ZMod p) (decide (∃ j, u x j = true))
+    orApprox p T (fun i => bitVal F (u x i)) ≠ bitVal F (decide (∃ j, u x j = true))
   have hsum : ∑ T, #(univ.filter fun x => Wrong T x) * 2 ^ ℓ ≤
       ∑ _T : Fin ℓ → Finset (Fin m), 2 ^ n := by
     calc ∑ T, #(univ.filter fun x => Wrong T x) * 2 ^ ℓ =
@@ -227,17 +260,17 @@ theorem exists_orApprox (u : BitString n → Fin m → Bool) :
   obtain ⟨T, _, hT⟩ := exists_le_of_sum_le univ_nonempty hsum
   exact ⟨T, hT⟩
 
-/-- **Gate approximators.** For every operation of the AC⁰[p] basis and every way `u` its
-arguments depend on the input, some approximator multiplies degrees by at most `(p - 1) ℓ` and errs
-on at most `2 ^ n / 2 ^ ℓ` inputs. -/
+/-- **Gate approximators.** Over a commutative ring `F` of characteristic `p`, for every operation
+of the AC⁰[p] basis and every way `u` its arguments depend on the input, some approximator
+multiplies degrees by at most `(p - 1) ℓ` and errs on at most `2 ^ n / 2 ^ ℓ` inputs. -/
 theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
     (u : BitString n → Fin (Unbounded.extSignature.Arity op) → Bool) :
-    ∃ A : (Fin (Unbounded.extSignature.Arity op) → ZMod p) → ZMod p,
-      (∀ (D : ℕ) (v : Fin (Unbounded.extSignature.Arity op) → BitString n → ZMod p),
-        (∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) →
-          (fun x => A fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) ((p - 1) * ℓ * D)) ∧
-      #(univ.filter fun x => A (fun k => bitVal (ZMod p) (u x k)) ≠
-          bitVal (ZMod p) (Unbounded.extInterpretation (modGate p) op (u x))) * 2 ^ ℓ ≤ 2 ^ n := by
+    ∃ A : (Fin (Unbounded.extSignature.Arity op) → F) → F,
+      (∀ (D : ℕ) (v : Fin (Unbounded.extSignature.Arity op) → BitString n → F),
+        (∀ k, v k ∈ lowDegree F (Fin n) D) →
+          (fun x => A fun k => v k x) ∈ lowDegree F (Fin n) ((p - 1) * ℓ * D)) ∧
+      #(univ.filter fun x => A (fun k => bitVal F (u x k)) ≠
+          bitVal F (Unbounded.extInterpretation (modGate p) op (u x))) * 2 ^ ℓ ≤ 2 ^ n := by
   have hp := (Fact.out : p.Prime).two_le
   have hdeg : ∀ D : ℕ, ℓ * ((p - 1) * D) = (p - 1) * ℓ * D := fun D => by ring
   cases op with
@@ -252,11 +285,11 @@ theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
           simp [Unbounded.extInterpretation, Unbounded.interpretation, bitVal_not]]
         simp
     | or m =>
-      obtain ⟨T, hT⟩ := exists_orApprox (p := p) (ℓ := ℓ) u
-      exact ⟨orApprox T, fun D v hv => hdeg D ▸ orApprox_comp_mem T hv, hT⟩
+      obtain ⟨T, hT⟩ := exists_orApprox (F := F) (p := p) (ℓ := ℓ) u
+      exact ⟨orApprox p T, fun D v hv => hdeg D ▸ orApprox_comp_mem p T hv, hT⟩
     | and m =>
-      obtain ⟨T, hT⟩ := exists_orApprox (p := p) (ℓ := ℓ) fun x k => !u x k
-      refine ⟨andApprox T, fun D v hv => hdeg D ▸ andApprox_comp_mem T hv, ?_⟩
+      obtain ⟨T, hT⟩ := exists_orApprox (F := F) (p := p) (ℓ := ℓ) fun x k => !u x k
+      refine ⟨andApprox p T, fun D v hv => hdeg D ▸ andApprox_comp_mem p T hv, ?_⟩
       convert hT using 4 with x
       simp only [andApprox, bitVal_not, Unbounded.extInterpretation, Unbounded.interpretation,
         ne_eq]
@@ -266,8 +299,8 @@ theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
           simp,
         bitVal_not, sub_right_inj]
   | gate m =>
-    refine ⟨modApprox, fun D v hv => lowDegree_mono (Nat.mul_le_mul_right D
-      (Nat.le_mul_of_pos_right _ (by omega))) (modApprox_comp_mem hv), ?_⟩
+    refine ⟨modApprox p, fun D v hv => lowDegree_mono (Nat.mul_le_mul_right D
+      (Nat.le_mul_of_pos_right _ (by omega))) (modApprox_comp_mem p hv), ?_⟩
     rw [filter_false_of_mem fun x _ => by
       rw [modApprox_bitVal]
       simp [Unbounded.extInterpretation]]

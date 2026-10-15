@@ -22,10 +22,10 @@ tradeoff (`two_mul_two_pow_le_size_of_computes_parity`): a circuit of depth `d` 
 parity of `n` bits has size at least `2 ^ ℓ · 2 / 5` whenever `100 (((p - 1) ℓ) ^ d + 1)² ≤ n + 1`,
 so size `2 ^ Ω(n ^ (1 / (2 d)))` for fixed `d` and `p`.
 
-The circuit agrees with a function of degree at most `((p - 1) ℓ) ^ d` over `ZMod p` on all but
-`size · 2 ^ n / 2 ^ ℓ` inputs (`exists_lowDegree_approx`), while such a function agrees with parity
-on at most `6 / 10` of the inputs (`BitString.card_agree_parity_le`,
-`ten_mul_card_filter_card_le_le`).
+The circuit agrees with a function of degree at most `((p - 1) ℓ) ^ d` over `ZMod p` (or any
+commutative ring of characteristic `p`) on all but `size · 2 ^ n / 2 ^ ℓ` inputs
+(`exists_lowDegree_approx`), while such a function agrees with parity on at most `6 / 10` of the
+inputs (`BitString.card_agree_parity_le`, `ten_mul_card_filter_card_le_le`).
 
 ## Main results
 
@@ -63,7 +63,7 @@ theorem two_mul_two_pow_le_size_of_computes_parity (hp2 : p ≠ 2)
     (hn : 100 * (((p - 1) * ℓ) ^ C.depth + 1) ^ 2 ≤ n + 1) : 2 * 2 ^ ℓ ≤ 5 * C.size := by
   classical
   let _ := invertibleTwo hp2
-  obtain ⟨Q, hQ, herr⟩ := exists_lowDegree_approx (p := p) hℓ C
+  obtain ⟨Q, hQ, herr⟩ := exists_lowDegree_approx (F := ZMod p) hℓ C
   have heval : ∀ x, C.eval (Unbounded.extInterpretation (modGate p)) x 0 = parity n x := fun x =>
     congrFun (hC x) 0
   simp only [heval] at herr

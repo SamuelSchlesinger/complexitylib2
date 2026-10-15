@@ -15,7 +15,8 @@ public import Complexity.Computability.Circuit.Program
 # Smolensky's approximation of circuits
 
 A circuit of the AC⁰[p] basis of depth `d` agrees with a function of degree at most
-`((p - 1) ℓ) ^ d` over `ZMod p` on all but `size · 2 ^ n / 2 ^ ℓ` inputs
+`((p - 1) ℓ) ^ d` over any commutative ring `F` of characteristic `p`, such as `ZMod p` or a
+finite field of order `p ^ k`, on all but `size · 2 ^ n / 2 ^ ℓ` inputs
 (`exists_lowDegree_approx`) [Razborov1987], [Smolensky1987].
 
 The circuit is evaluated on pairs: the true function computed by a wire, and its approximant
@@ -43,45 +44,50 @@ namespace Cslib.Circuits.Boolean.Smolensky
 
 open Finset BitString
 
-variable {p : ℕ} [Fact p.Prime] {n ℓ : ℕ}
+variable {F : Type*} [CommRing F] {p : ℕ} {n ℓ : ℕ}
 
+/-- The inputs as pairs: the input bit and its value in `F`. -/
+def inputPair (i : Fin n) : (BitString n → Bool) × (BitString n → F) :=
+  (fun x => x i, fun x => bitVal F (x i))
+
+variable [DecidableEq F] [Fact p.Prime] [CharP F p]
+
+variable (F p) in
 /-- The gate approximator chosen by `exists_gate_approx` for an operation whose arguments depend on
 the input as `u`. -/
 noncomputable def gateApprox (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
     (u : BitString n → Fin (Unbounded.extSignature.Arity op) → Bool) :
-    (Fin (Unbounded.extSignature.Arity op) → ZMod p) → ZMod p :=
-  Classical.choose (exists_gate_approx (p := p) hℓ op u)
+    (Fin (Unbounded.extSignature.Arity op) → F) → F :=
+  Classical.choose (exists_gate_approx (F := F) (p := p) hℓ op u)
 
+variable (F p) in
 theorem gateApprox_spec (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
     (u : BitString n → Fin (Unbounded.extSignature.Arity op) → Bool) :
-    (∀ (D : ℕ) (v : Fin (Unbounded.extSignature.Arity op) → BitString n → ZMod p),
-      (∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) →
-        (fun x => gateApprox hℓ op u fun k => v k x) ∈
-          lowDegree (ZMod p) (Fin n) ((p - 1) * ℓ * D)) ∧
-      #(univ.filter fun x => gateApprox hℓ op u (fun k => bitVal (ZMod p) (u x k)) ≠
-          bitVal (ZMod p) (Unbounded.extInterpretation (modGate p) op (u x))) * 2 ^ ℓ ≤ 2 ^ n :=
-  Classical.choose_spec (exists_gate_approx (p := p) hℓ op u)
+    (∀ (D : ℕ) (v : Fin (Unbounded.extSignature.Arity op) → BitString n → F),
+      (∀ k, v k ∈ lowDegree F (Fin n) D) →
+        (fun x => gateApprox F p hℓ op u fun k => v k x) ∈
+          lowDegree F (Fin n) ((p - 1) * ℓ * D)) ∧
+      #(univ.filter fun x => gateApprox F p hℓ op u (fun k => bitVal F (u x k)) ≠
+          bitVal F (Unbounded.extInterpretation (modGate p) op (u x))) * 2 ^ ℓ ≤ 2 ^ n :=
+  Classical.choose_spec (exists_gate_approx (F := F) (p := p) hℓ op u)
 
+variable (F p) in
 /-- The interpretation on pairs of a true function and its approximant. -/
 noncomputable def pairInterpretation (hℓ : 1 ≤ ℓ) :
-    Interpretation Unbounded.extSignature ((BitString n → Bool) × (BitString n → ZMod p)) :=
+    Interpretation Unbounded.extSignature ((BitString n → Bool) × (BitString n → F)) :=
   fun op args => (fun x => Unbounded.extInterpretation (modGate p) op fun a => (args a).1 x,
-    fun x => gateApprox hℓ op (fun x a => (args a).1 x) fun a => (args a).2 x)
-
-/-- The inputs as pairs: the input bit and its value in `ZMod p`. -/
-def inputPair (i : Fin n) : (BitString n → Bool) × (BitString n → ZMod p) :=
-  (fun x => x i, fun x => bitVal (ZMod p) (x i))
+    fun x => gateApprox F p hℓ op (fun x a => (args a).1 x) fun a => (args a).2 x)
 
 variable {g : ℕ} (hℓ : 1 ≤ ℓ) (P : Program Unbounded.extSignature n g)
 
 /-- The true functions of the pair evaluation are the gate functions of the program. -/
 theorem fst_trace_pair (w : Wire n g) (x : BitString n) :
-    (P.trace (pairInterpretation (p := p) hℓ) inputPair w).1 x =
+    (P.trace (pairInterpretation F p hℓ) inputPair w).1 x =
       P.trace (Unbounded.extInterpretation (modGate p)) x w := by
   -- the first components form a homomorphism to the pointwise interpretation, then evaluate at `x`
   let pointwise : Interpretation Unbounded.extSignature (BitString n → Bool) :=
     fun op args x => Unbounded.extInterpretation (modGate p) op fun a => args a x
-  let h₁ : Homomorphism (pairInterpretation (p := p) hℓ) pointwise := ⟨Prod.fst, fun _ _ => rfl⟩
+  let h₁ : Homomorphism (pairInterpretation F p hℓ) pointwise := ⟨Prod.fst, fun _ _ => rfl⟩
   let h₂ : Homomorphism pointwise (Unbounded.extInterpretation (modGate p)) :=
     ⟨fun f => f x, fun _ _ => rfl⟩
   cases w with
@@ -93,87 +99,88 @@ theorem fst_trace_pair (w : Wire n g) (x : BitString n) :
 
 /-- The pair at a gate is its operation applied to the pairs at its wires. -/
 theorem trace_pair_gate (k : Fin g) :
-    P.trace (pairInterpretation (p := p) hℓ) inputPair (.gate k) =
-      pairInterpretation hℓ (P.lines k).op fun a =>
-        P.trace (pairInterpretation hℓ) inputPair ((P.lines k).wires a) :=
-  (P.lines_eval (pairInterpretation hℓ) inputPair k).symm
+    P.trace (pairInterpretation F p hℓ) inputPair (.gate k) =
+      pairInterpretation F p hℓ (P.lines k).op fun a =>
+        P.trace (pairInterpretation F p hℓ) inputPair ((P.lines k).wires a) :=
+  (P.lines_eval (pairInterpretation F p hℓ) inputPair k).symm
 
 /-- **Degrees of the approximants**: at most `((p - 1) ℓ) ^ depth`. -/
 theorem snd_trace_pair_mem (w : Wire n g) :
-    (P.trace (pairInterpretation (p := p) hℓ) inputPair w).2 ∈
-      lowDegree (ZMod p) (Fin n) (((p - 1) * ℓ) ^ P.wireDepths w) := by
+    (P.trace (pairInterpretation F p hℓ) inputPair w).2 ∈
+      lowDegree F (Fin n) (((p - 1) * ℓ) ^ P.wireDepths w) := by
   have hp := (Fact.out : p.Prime).two_le
   have hbase : 1 ≤ (p - 1) * ℓ := Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by omega) (by omega))
-  refine P.wire_induction (P := fun w => (P.trace (pairInterpretation (p := p) hℓ) inputPair w).2 ∈
-    lowDegree (ZMod p) (Fin n) (((p - 1) * ℓ) ^ P.wireDepths w)) (fun i => ?_) (fun k ih => ?_) w
+  refine P.wire_induction (P := fun w => (P.trace (pairInterpretation F p hℓ) inputPair w).2 ∈
+    lowDegree F (Fin n) (((p - 1) * ℓ) ^ P.wireDepths w)) (fun i => ?_) (fun k ih => ?_) w
   · simp only [Program.wireDepths_input, pow_zero]
     exact bitVal_mem_lowDegree i
   · rw [trace_pair_gate, Program.wireDepths_gateWire]
     have hpos := P.depths_pos k
-    have hdeg := (gateApprox_spec (p := p) hℓ (P.lines k).op (fun x a =>
-      (P.trace (pairInterpretation (p := p) hℓ) inputPair ((P.lines k).wires a)).1 x)).1
+    have hdeg := (gateApprox_spec F p hℓ (P.lines k).op (fun x a =>
+      (P.trace (pairInterpretation F p hℓ) inputPair ((P.lines k).wires a)).1 x)).1
       (((p - 1) * ℓ) ^ (P.depths k - 1)) _ fun a => lowDegree_mono
         (Nat.pow_le_pow_right hbase (by have := P.wireDepths_lines_lt k a; omega)) (ih a)
     rw [show P.depths k = (P.depths k - 1) + 1 by omega, pow_succ']
     exact hdeg
 
+variable (F p) in
 /-- The inputs on which the approximator chosen for gate `k` errs on its true arguments. -/
 noncomputable def errorSet (k : Fin g) : Finset (BitString n) :=
-  univ.filter fun x => gateApprox (p := p) hℓ (P.lines k).op
-      (fun x a => (P.trace (pairInterpretation (p := p) hℓ) inputPair ((P.lines k).wires a)).1 x)
-      (fun a => bitVal (ZMod p)
-        ((P.trace (pairInterpretation (p := p) hℓ) inputPair ((P.lines k).wires a)).1 x)) ≠
-    bitVal (ZMod p) (Unbounded.extInterpretation (modGate p) (P.lines k).op
-      (fun a => (P.trace (pairInterpretation (p := p) hℓ) inputPair ((P.lines k).wires a)).1 x))
+  univ.filter fun x => gateApprox F p hℓ (P.lines k).op
+      (fun x a => (P.trace (pairInterpretation F p hℓ) inputPair ((P.lines k).wires a)).1 x)
+      (fun a => bitVal F
+        ((P.trace (pairInterpretation F p hℓ) inputPair ((P.lines k).wires a)).1 x)) ≠
+    bitVal F (Unbounded.extInterpretation (modGate p) (P.lines k).op
+      (fun a => (P.trace (pairInterpretation F p hℓ) inputPair ((P.lines k).wires a)).1 x))
 
-theorem card_errorSet_mul_le (k : Fin g) : #(errorSet (p := p) hℓ P k) * 2 ^ ℓ ≤ 2 ^ n :=
-  (gateApprox_spec (p := p) hℓ (P.lines k).op _).2
+theorem card_errorSet_mul_le (k : Fin g) : #(errorSet F p hℓ P k) * 2 ^ ℓ ≤ 2 ^ n :=
+  (gateApprox_spec F p hℓ (P.lines k).op _).2
 
 /-- **Exactness of the approximants** where no gate approximator errs. -/
-theorem snd_trace_pair_eq {x : BitString n} (hx : ∀ k, x ∉ errorSet (p := p) hℓ P k)
+theorem snd_trace_pair_eq {x : BitString n} (hx : ∀ k, x ∉ errorSet F p hℓ P k)
     (w : Wire n g) :
-    (P.trace (pairInterpretation (p := p) hℓ) inputPair w).2 x =
-      bitVal (ZMod p) ((P.trace (pairInterpretation (p := p) hℓ) inputPair w).1 x) := by
+    (P.trace (pairInterpretation F p hℓ) inputPair w).2 x =
+      bitVal F ((P.trace (pairInterpretation F p hℓ) inputPair w).1 x) := by
   refine P.wire_induction (P := fun w =>
-    (P.trace (pairInterpretation (p := p) hℓ) inputPair w).2 x =
-    bitVal (ZMod p) ((P.trace (pairInterpretation (p := p) hℓ) inputPair w).1 x)) (fun i => rfl)
+    (P.trace (pairInterpretation F p hℓ) inputPair w).2 x =
+    bitVal F ((P.trace (pairInterpretation F p hℓ) inputPair w).1 x)) (fun i => rfl)
     (fun k ih => ?_) w
   rw [trace_pair_gate]
   have := hx k
   simp only [errorSet, mem_filter, mem_univ, true_and, not_not] at this
-  change gateApprox (p := p) hℓ (P.lines k).op _ (fun a => (P.trace
-    (pairInterpretation (p := p) hℓ) inputPair ((P.lines k).wires a)).2 x) = _
+  change gateApprox F p hℓ (P.lines k).op _ (fun a => (P.trace
+    (pairInterpretation F p hℓ) inputPair ((P.lines k).wires a)).2 x) = _
   simp only [ih]
   exact this
 
 /-- **Smolensky's approximation theorem.** A circuit of the AC⁰[p] basis of depth `d` agrees with a
-function of degree at most `((p - 1) ℓ) ^ d` over `ZMod p` on all but `size · 2 ^ n / 2 ^ ℓ`
-inputs, for every `ℓ ≥ 1`. -/
+function of degree at most `((p - 1) ℓ) ^ d` over a commutative ring `F` of characteristic `p` on
+all but `size · 2 ^ n / 2 ^ ℓ` inputs, for every `ℓ ≥ 1`. -/
 theorem exists_lowDegree_approx (hℓ : 1 ≤ ℓ) (C : Circuit Unbounded.extSignature n 1) :
-    ∃ Q ∈ lowDegree (ZMod p) (Fin n) (((p - 1) * ℓ) ^ C.depth),
+    ∃ Q ∈ lowDegree F (Fin n) (((p - 1) * ℓ) ^ C.depth),
       #(univ.filter fun x =>
-        Q x ≠ bitVal (ZMod p) (C.eval (Unbounded.extInterpretation (modGate p)) x 0)) *
+        Q x ≠ bitVal F (C.eval (Unbounded.extInterpretation (modGate p)) x 0)) *
         2 ^ ℓ ≤ C.size * 2 ^ n := by
   classical
   have hp := (Fact.out : p.Prime).two_le
   have hbase : 1 ≤ (p - 1) * ℓ := Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by omega) (by omega))
-  refine ⟨(C.program.trace (pairInterpretation (p := p) hℓ) inputPair (C.outputs 0)).2,
+  refine ⟨(C.program.trace (pairInterpretation F p hℓ) inputPair (C.outputs 0)).2,
     lowDegree_mono (Nat.pow_le_pow_right hbase (C.outputDepths_le_depth 0))
       (snd_trace_pair_mem hℓ C.program _), ?_⟩
   -- the inputs where the approximant errs are inputs where some gate approximator errs
   have hsub : (univ.filter fun x =>
-      (C.program.trace (pairInterpretation (p := p) hℓ) inputPair (C.outputs 0)).2 x ≠
-        bitVal (ZMod p) (C.eval (Unbounded.extInterpretation (modGate p)) x 0)) ⊆
-      univ.biUnion (errorSet hℓ C.program) := fun x hx => by
+      (C.program.trace (pairInterpretation F p hℓ) inputPair (C.outputs 0)).2 x ≠
+        bitVal F (C.eval (Unbounded.extInterpretation (modGate p)) x 0)) ⊆
+      univ.biUnion (errorSet F p hℓ C.program) := fun x hx => by
     rw [mem_filter] at hx
     by_contra hno
     simp only [mem_biUnion, mem_univ, true_and, not_exists] at hno
     exact hx.2 ((snd_trace_pair_eq hℓ C.program hno _).trans (by
       rw [fst_trace_pair]
       rfl))
-  calc _ ≤ #(univ.biUnion (errorSet (p := p) hℓ C.program)) * 2 ^ ℓ :=
+  calc _ ≤ #(univ.biUnion (errorSet F p hℓ C.program)) * 2 ^ ℓ :=
         Nat.mul_le_mul_right _ (card_le_card hsub)
-    _ ≤ (∑ k, #(errorSet (p := p) hℓ C.program k)) * 2 ^ ℓ :=
+    _ ≤ (∑ k, #(errorSet F p hℓ C.program k)) * 2 ^ ℓ :=
         Nat.mul_le_mul_right _ card_biUnion_le
     _ ≤ ∑ _k : Fin C.size, 2 ^ n := by
         rw [sum_mul]
