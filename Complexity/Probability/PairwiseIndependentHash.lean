@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Algebra.Order.Field.Basic
 public import Mathlib.Data.Finset.Density
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Data.Finset.Prod
@@ -102,23 +103,6 @@ structure IsPairwiseIndependentHash (h : ι → X → Y) : Prop where
   dens_filter_apply_eq_and_apply_eq {x₁ x₂ : X} (hx : x₁ ≠ x₂) (y₁ y₂ : Y) :
     dens {i | h i x₁ = y₁ ∧ h i x₂ = y₂} = ((Fintype.card Y : ℚ≥0) ^ 2)⁻¹
 
-/-- The probability of an event is the expectation of its indicator. -/
-private theorem expect_ite_eq_dens [Semifield 𝕜] [CharZero 𝕜] (p : ι → Prop) [DecidablePred p] :
-    𝔼 i, (if p i then 1 else 0 : 𝕜) = (dens {i | p i} : 𝕜) := by
-  rw [Fintype.expect_eq_sum_div_card, sum_boole, nnratCast_dens]
-
-/-- **Markov's inequality** for a uniform average: a nonnegative function is at least `a` with
-probability at most its average divided by `a`. -/
-private theorem mul_dens_filter_le_expect [Field 𝕜] [LinearOrder 𝕜] [IsStrictOrderedRing 𝕜]
-    {f : ι → 𝕜} (hf : ∀ i, 0 ≤ f i) (a : 𝕜) :
-    a * (dens {i | a ≤ f i} : 𝕜) ≤ 𝔼 i, f i := by
-  rw [← expect_ite_eq_dens, mul_expect]
-  refine expect_le_expect fun i _ => ?_
-  split_ifs with hi
-  · rwa [mul_one]
-  · rw [mul_zero]
-    exact hf i
-
 omit [Fintype Y] in
 /-- `S` hits `y` exactly when the cell of `y` is nonempty. -/
 private theorem mem_image_iff_card_filter_pos (f : X → Y) (S : Finset X) (y : Y) :
@@ -172,7 +156,7 @@ theorem expect_card_filter_apply_eq [Semifield 𝕜] [CharZero 𝕜] (hh : IsPai
     𝔼 i, (#{x ∈ S | h i x = y} : 𝕜) = #S / Fintype.card Y := by
   simp only [card_filter, Nat.cast_sum, Nat.cast_ite, Nat.cast_one, Nat.cast_zero]
   rw [expect_sum_comm]
-  simp only [expect_ite_eq_dens, hh.dens_filter_apply_eq, NNRat.cast_inv, NNRat.cast_natCast,
+  simp only [Fintype.expect_boole, hh.dens_filter_apply_eq, NNRat.cast_inv, NNRat.cast_natCast,
     sum_const, nsmul_eq_mul, div_eq_mul_inv]
 
 /-- **The second factorial moment of the cell size**: `N (N - 1)`, the number of ordered pairs of
@@ -194,7 +178,7 @@ theorem expect_card_filter_mul_card_filter_sub_one [Field 𝕜] [CharZero 𝕜]
   have hpair : ∀ p ∈ S.offDiag, 𝔼 i, (if h i p.1 = y ∧ h i p.2 = y then 1 else 0 : 𝕜) =
       ((Fintype.card Y : 𝕜) ^ 2)⁻¹ := by
     intro p hp
-    rw [expect_ite_eq_dens, hh.dens_filter_apply_eq_and_apply_eq (mem_offDiag.1 hp).2.2,
+    rw [Fintype.expect_boole, hh.dens_filter_apply_eq_and_apply_eq (mem_offDiag.1 hp).2.2,
       NNRat.cast_inv, NNRat.cast_pow, NNRat.cast_natCast]
   simp only [hcell]
   rw [expect_sum_comm, sum_congr rfl hpair, sum_const, nsmul_eq_mul, offDiag_card,
@@ -235,7 +219,7 @@ theorem dens_filter_le_abs_sub_le [Field 𝕜] [LinearOrder 𝕜] [IsStrictOrder
     (hh : IsPairwiseIndependentHash h) (S : Finset X) (y : Y) {ε : 𝕜} (hε : 0 < ε) :
     (dens {i | ε ≤ |(#{x ∈ S | h i x = y} : 𝕜) - #S / Fintype.card Y|} : 𝕜) ≤
       #S / Fintype.card Y / ε ^ 2 := by
-  have hmarkov := mul_dens_filter_le_expect
+  have hmarkov := Fintype.mul_dens_filter_le_expect
     (f := fun i => ((#{x ∈ S | h i x = y} : 𝕜) - #S / Fintype.card Y) ^ 2)
     (fun _ => sq_nonneg _) (ε ^ 2)
   simp only [sq_le_sq, abs_of_pos hε] at hmarkov
@@ -247,7 +231,7 @@ theorem dens_filter_le_abs_sub_le [Field 𝕜] [LinearOrder 𝕜] [IsStrictOrder
 theorem dens_filter_mem_image_le (hh : IsPairwiseIndependentHash h) (S : Finset X) (y : Y) :
     dens {i | y ∈ S.image (h i)} ≤ #S / Fintype.card Y := by
   calc dens {i | y ∈ S.image (h i)} = 𝔼 i, (if y ∈ S.image (h i) then 1 else 0 : ℚ≥0) := by
-        rw [expect_ite_eq_dens, NNRat.cast_id]
+        rw [Fintype.expect_boole, NNRat.cast_id]
     _ ≤ 𝔼 i, (#{x ∈ S | h i x = y} : ℚ≥0) := by
         refine expect_le_expect fun i _ => ?_
         split_ifs with hi
@@ -311,7 +295,7 @@ theorem sub_le_dens_filter_mem_image [Field 𝕜] [LinearOrder 𝕜] [IsStrictOr
         refine expect_le_expect fun i _ => ?_
         simp only [mem_image_iff_card_filter_pos]
         exact natCast_sub_mul_sub_one_div_two_le _
-    _ = _ := expect_ite_eq_dens _
+    _ = _ := Fintype.expect_boole _
 
 /-- **The set lower bound protocol** of Goldwasser and Sipser: if `2 #S ≤ |Y|`, then `S` hits `y`
 with probability at least three quarters of the mean cell size `#S / |Y|`
@@ -344,7 +328,7 @@ theorem sub_le_dens_filter_card_filter_eq_one [Field 𝕜] [LinearOrder 𝕜] [I
           hh.expect_card_filter_mul_card_filter_sub_one]
     _ ≤ 𝔼 i, (if #{x ∈ S | h i x = y} = 1 then 1 else 0 : 𝕜) :=
         expect_le_expect fun i _ => natCast_sub_mul_sub_one_le _
-    _ = _ := expect_ite_eq_dens _
+    _ = _ := Fintype.expect_boole _
 
 /-- **The Valiant–Vazirani lemma**: if `|Y| ≤ 4 #S ≤ 2 |Y|`, then exactly one element of `S` hits
 `y` with probability at least `3 / 16` [Arora and Barak, Section 17.4][AroraBarak09]. -/

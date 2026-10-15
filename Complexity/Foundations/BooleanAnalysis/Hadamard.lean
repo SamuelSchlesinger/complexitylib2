@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Linearity
 public import Mathlib.Data.Matrix.Mul
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -76,11 +77,6 @@ open scoped BigOperators
 
 variable {n : ℕ}
 
-/-- The uniform probability of an event on the cube is its density. -/
-private theorem expect_boole_eq_card_div (P : BitString n → Prop) [DecidablePred P] :
-    𝔼 y, (if P y then (1 : ℝ) else 0) = #{y | P y} / 2 ^ n := by
-  simp [expect_eq_sum_div_card, sum_boole]
-
 /-! ### Self-correction -/
 
 /-- The self-corrected read of `f` at `x` with randomness `y`: the exclusive or of `f y` and
@@ -131,7 +127,8 @@ theorem one_sub_two_mul_le_expect_selfCorrect {f : BooleanFunction n} {S : Finse
     exact_mod_cast (card_filter_add_card_filter_not (s := univ)
       fun y : BitString n => selfCorrect f x y = parityOn S x).trans (by simp)
   rw [div_le_iff₀ hpos] at h
-  rw [expect_boole_eq_card_div, le_div_iff₀ hpos]
+  rw [Fintype.expect_boole, nnratCast_dens, BitString.card_eq, Nat.cast_pow, Nat.cast_ofNat,
+    le_div_iff₀ hpos]
   linarith
 
 /-! ### The Hadamard code -/

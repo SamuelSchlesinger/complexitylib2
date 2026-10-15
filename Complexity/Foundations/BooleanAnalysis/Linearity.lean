@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Convolution
 public import Mathlib.InformationTheory.Hamming
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
 
@@ -145,13 +146,11 @@ theorem expect_boole_eq_one_div_two_of_map_add {f : BooleanFunction n}
     (hf : ∀ x y, f (x + y) = (f x ^^ f y)) (h : ∃ x, f x = true) :
     𝔼 x, (if f x = true then (1 : ℝ) else 0) = 1 / 2 := by
   obtain ⟨S, rfl⟩ := exists_eq_parityOn_iff.2 hf
-  have hS : S ≠ ∅ := by
+  have hS : S.Nonempty := by
+    rw [nonempty_iff_ne_empty]
     rintro rfl
     simp at h
-  have hb (b : Bool) : (if b = true then (1 : ℝ) else 0) = 1 / 2 - 1 / 2 * signVal b := by
-    cases b <;> norm_num
-  simp only [hb, ← chi_eq_signVal_parityOn, expect_sub_distrib, ← mul_expect, expect_chi, hS,
-    ite_false, Fintype.expect_const]
+  rw [Fintype.expect_boole, dens_filter_parityOn_eq hS]
   norm_num
 
 /-! ### The Blum–Luby–Rubinfeld test -/

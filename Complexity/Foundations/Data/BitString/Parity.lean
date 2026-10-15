@@ -7,10 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Cslib.Foundations.Data.BitString
+public import Complexity.Foundations.Data.BitString.Basic
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
-public import Mathlib.Algebra.Ring.BooleanRing
+public import Mathlib.Algebra.Group.Hom.Defs
 public import Mathlib.Data.Finset.Card
+public import Mathlib.Data.Finset.Density
 public import Mathlib.Data.Finset.Union
 public import Mathlib.Data.Fintype.Basic
 public import Mathlib.Data.Fintype.Pi
@@ -18,6 +19,7 @@ public import Mathlib.Logic.Function.Const
 public import Mathlib.Logic.Function.DependsOn
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.BigOperators
+import Mathlib.GroupTheory.Index
 
 /-!
 # The parity function
@@ -25,26 +27,29 @@ import Mathlib.Data.Fintype.BigOperators
 `parityOn s x` says whether an odd number of the bits of `x` in `s` are true, and `parity n` is the
 parity of all `n` bits.
 
-Bits form the two-element Boolean ring (Mathlib's `BooleanRing Bool`), in which `a + b = (a ^^ b)`
-and `a * b = (a && b)`, so bit strings form an additive group under coordinatewise exclusive or:
-`(x + y) i = (x i ^^ y i)`. Throughout, bit strings are added with `+`, while single bits, such as
-the values of Boolean functions, are combined with `^^`. In this ring the parity on `s` is the sum
-of the bits in `s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`) and is
-additive (`parityOn_add`). Flipping one of the bits negates the parity (`parityOn_update_not`), so
-the parity of a nonempty set of bits is not constant and depends on each of them.
+In the Boolean ring `Bool`, where `a + b = (a ^^ b)`, the parity on `s` is the sum of the bits in
+`s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`) and is additive for
+the coordinatewise sum of bit strings (`parityOn_add`, bundled as `parityOnAddMonoidHom`). Bit
+strings are added with `+` and single bits with `^^`, as in
+`Complexity.Foundations.Data.BitString.Basic`. Flipping one of the bits negates the parity
+(`parityOn_update_not`), so the parity of a nonempty set of bits is not constant and depends on
+each of them; being additive, it then takes each value on exactly half of the inputs
+(`card_filter_parityOn_eq`).
 
 ## Main definitions
 
-* `Cslib.parityOn`: the parity of the bits in a set.
+* `Cslib.parityOn`: the parity of the bits in a set, and `Cslib.parityOnAddMonoidHom` the same as
+  an additive map.
 * `Cslib.parity`: the parity of all bits.
 
 ## Main results
 
-* `Cslib.BitString.add_self`: every bit string is its own negative.
 * `Cslib.parityOn_eq_sum`: the parity is the sum of the bits in the Boolean ring.
 * `Cslib.parityOn_union`, `Cslib.parityOn_biUnion`: the parity of a disjoint union.
 * `Cslib.parityOn_add`: parities are linear.
 * `Cslib.parity_update_not`: flipping any bit flips the parity.
+* `Cslib.card_filter_parityOn_eq`, `Cslib.dens_filter_parityOn_eq`: the parity on a nonempty set
+  takes each value on half of the inputs.
 * `Cslib.card_filter_parity_eq_true`: parity of `n ≥ 1` bits is true on `2 ^ (n - 1)` inputs.
 -/
 
@@ -55,20 +60,6 @@ namespace Cslib
 open Finset Function
 
 variable {n : ℕ}
-
-namespace BitString
-
-/-- A bit string added to itself gives zero. -/
-@[simp] protected theorem add_self (x : BitString n) : x + x = 0 :=
-  funext fun i => Bool.xor_self (x i)
-
-@[simp] protected theorem add_cancel_left (x y : BitString n) : x + (x + y) = y := by
-  rw [← add_assoc, BitString.add_self, zero_add]
-
-@[simp] protected theorem add_cancel_right (x y : BitString n) : x + y + y = x := by
-  rw [add_assoc, BitString.add_self, add_zero]
-
-end BitString
 
 /-- The parity of the bits of `x` in `s`: whether an odd number of them are true. -/
 def parityOn (s : Finset (Fin n)) (x : BitString n) : Bool :=
@@ -152,29 +143,62 @@ theorem parity_update_not (x : BitString n) (i : Fin n) :
     parity n (update x i !x i) = !parity n x :=
   parityOn_update_not (mem_univ i) x
 
-/-- Parity of `n ≥ 1` bits is true on as many inputs as it is false: flipping the first bit
-exchanges them. -/
-theorem card_filter_parity_eq_true_eq (hn : 1 ≤ n) :
-    #{x : BitString n | parity n x = true} = #{x : BitString n | parity n x = false} := by
-  refine card_nbij' (fun x => update x ⟨0, hn⟩ !x ⟨0, hn⟩) (fun x => update x ⟨0, hn⟩ !x ⟨0, hn⟩)
-    (fun x hx => ?_) (fun x hx => ?_) (fun x _ => by simp) (fun x _ => by simp)
-  · simpa [parity_update_not] using hx
-  · simpa [parity_update_not] using hx
+/-- The parity on `s`, as an additive map from bit strings to bits. -/
+def parityOnAddMonoidHom (s : Finset (Fin n)) : BitString n →+ Bool where
+  toFun := parityOn s
+  map_zero' := by
+    rw [parityOn_eq_sum]
+    exact sum_const_zero
+  map_add' := parityOn_add s
+
+@[simp] theorem parityOnAddMonoidHom_apply (s : Finset (Fin n)) (x : BitString n) :
+    parityOnAddMonoidHom s x = parityOn s x :=
+  rfl
+
+/-- **Parities of nonempty sets are balanced**: the parity on a nonempty set of bits takes each
+value on half of the inputs. Being additive, it has fibers of equal size. -/
+theorem card_filter_parityOn_eq (hs : s.Nonempty) (b : Bool) :
+    #{x : BitString n | parityOn s x = b} = 2 ^ (n - 1) := by
+  obtain ⟨i, hi⟩ := hs
+  have hrange (c : Bool) : c ∈ Set.range (parityOnAddMonoidHom s) := by
+    cases c
+    · exact ⟨0, map_zero _⟩
+    · have h0 : parityOn s 0 = false := map_zero (parityOnAddMonoidHom s)
+      have h := parityOn_update_not hi 0
+      rw [h0] at h
+      exact ⟨_, h⟩
+  have hfib (c : Bool) : #{x : BitString n | parityOn s x = c} =
+      #{x : BitString n | parityOn s x = b} :=
+    AddMonoidHom.card_fiber_eq_of_mem_range _ (hrange c) (hrange b)
+  have htotal := card_filter_add_card_filter_not (s := (univ : Finset (BitString n)))
+    fun x => parityOn s x = true
+  simp only [Bool.not_eq_true, card_univ, BitString.card_eq, hfib] at htotal
+  have : 2 ^ n = 2 * 2 ^ (n - 1) := by
+    rw [← pow_succ']
+    congr 1
+    have := i.pos
+    omega
+  omega
+
+/-- **Parities of nonempty sets are balanced**: the parity on a nonempty set of bits takes each
+value with probability one half at a uniformly random input. -/
+theorem dens_filter_parityOn_eq (hs : s.Nonempty) (b : Bool) :
+    dens {x : BitString n | parityOn s x = b} = 2⁻¹ := by
+  obtain ⟨i, hi⟩ := hs
+  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by have := i.pos; omega⟩
+  rw [dens_eq_card_div_card, card_filter_parityOn_eq ⟨i, hi⟩ b, BitString.card_eq,
+    Nat.add_sub_cancel, pow_succ, Nat.cast_mul, Nat.cast_ofNat,
+    div_mul_cancel_left₀ (by positivity)]
 
 /-- Parity of `n ≥ 1` bits is true on half of the inputs. -/
 theorem card_filter_parity_eq_true (hn : 1 ≤ n) :
-    #{x : BitString n | parity n x = true} = 2 ^ (n - 1) := by
-  have htotal := card_filter_add_card_filter_not (s := (univ : Finset (BitString n)))
-    (fun x => parity n x = true)
-  simp only [Bool.not_eq_true, card_univ, Fintype.card_fun, Fintype.card_bool,
-    Fintype.card_fin, ← card_filter_parity_eq_true_eq hn] at htotal
-  have : 2 ^ n = 2 * 2 ^ (n - 1) := by rw [← pow_succ']; congr 1; omega
-  omega
+    #{x : BitString n | parity n x = true} = 2 ^ (n - 1) :=
+  card_filter_parityOn_eq ⟨⟨0, hn⟩, mem_univ _⟩ true
 
 /-- Parity of `n ≥ 1` bits is false on half of the inputs. -/
 theorem card_filter_parity_eq_false (hn : 1 ≤ n) :
-    #{x : BitString n | parity n x = false} = 2 ^ (n - 1) := by
-  rw [← card_filter_parity_eq_true_eq hn, card_filter_parity_eq_true hn]
+    #{x : BitString n | parity n x = false} = 2 ^ (n - 1) :=
+  card_filter_parityOn_eq ⟨⟨0, hn⟩, mem_univ _⟩ false
 
 /-- The parity, possibly negated, depends on each of its bits. -/
 theorem not_dependsOn_parityOn (hi : i ∈ s) (c : Bool) :

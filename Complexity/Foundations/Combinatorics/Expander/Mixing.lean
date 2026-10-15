@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Basic
 public import Mathlib.Analysis.Real.Sqrt
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Positivity
@@ -145,18 +146,18 @@ section Sets
 variable [DecidableEq V]
 
 /-- The expectation of an indicator function is the density of the set. -/
-private theorem expect_ite_mem (S : Finset V) :
+private theorem expect_boole_mem (S : Finset V) :
     𝔼 v, (if v ∈ S then (1 : ℝ) else 0) = #S / Fintype.card V := by
-  rw [Fintype.expect_eq_sum_div_card, sum_boole, filter_mem_eq_inter, univ_inter]
+  rw [Fintype.expect_boole, nnratCast_dens, filter_mem_eq_inter, univ_inter]
 
 /-- An indicator function is its own square. -/
-private theorem expect_ite_mem_sq (S : Finset V) :
+private theorem expect_boole_mem_sq (S : Finset V) :
     𝔼 v, (if v ∈ S then (1 : ℝ) else 0) ^ 2 = #S / Fintype.card V := by
-  simp only [ite_pow, one_pow, zero_pow two_ne_zero, expect_ite_mem]
+  simp only [ite_pow, one_pow, zero_pow two_ne_zero, expect_boole_mem]
 
 /-- The correlation of the indicator function of `S` with the walk operator applied to that of `T`
 is the proportion of the darts from `S` to `T`. -/
-private theorem expect_ite_mem_mul_walk (S T : Finset V) :
+private theorem expect_boole_mem_mul_walk (S T : Finset V) :
     𝔼 v, (if v ∈ S then (1 : ℝ) else 0) * G.walk (fun w ↦ if w ∈ T then 1 else 0) v =
       #(G.interedges S T) / (Fintype.card V * Fintype.card D) := by
   simp only [walk_apply, mul_expect]
@@ -188,8 +189,8 @@ theorem abs_card_interedges_sub_le (S T : Finset V) :
   have hd : (0 : ℝ) < Fintype.card D := Nat.cast_pos.2 Fintype.card_pos
   have h := G.sq_expect_mul_walk_pow_sub_le 1 (fun v ↦ if v ∈ S then 1 else 0)
     (fun v ↦ if v ∈ T then 1 else 0)
-  rw [pow_one, mul_one, expect_ite_mem_mul_walk, expect_ite_mem, expect_ite_mem,
-    expect_ite_mem_sq, expect_ite_mem_sq] at h
+  rw [pow_one, mul_one, expect_boole_mem_mul_walk, expect_boole_mem, expect_boole_mem,
+    expect_boole_mem_sq, expect_boole_mem_sq] at h
   have := G.spectralExpansion_nonneg
   refine abs_le_of_sq_le_sq ?_ (by positivity)
   rw [div_pow, mul_pow, mul_pow, Real.sq_sqrt (by positivity), card_compl_eq, card_compl_eq]
@@ -246,8 +247,8 @@ theorem le_card_interedges_compl_of_expect_mul_walk_le {μ : ℝ}
     (fun v ↦ if v ∈ S then 1 else 0)
   rw [pow_one] at hc
   rw [← add_sub_cancel_left ((𝔼 v, if v ∈ S then (1 : ℝ) else 0) * 𝔼 v, if v ∈ S then 1 else 0)
-    (𝔼 v, _ * G.walk _ v), ← hc, expect_sub_expect_sq, expect_ite_mem_mul_walk, expect_ite_mem,
-    expect_ite_mem_sq] at h
+    (𝔼 v, _ * G.walk _ v), ← hc, expect_sub_expect_sq, expect_boole_mem_mul_walk, expect_boole_mem,
+    expect_boole_mem_sq] at h
   have he : (#(G.interedges S S) : ℝ) + #(G.interedges S Sᶜ) = #S * Fintype.card D := by
     exact_mod_cast G.card_interedges_add_card_interedges_compl S S
   rw [card_compl_eq, div_le_iff₀ hn]

@@ -29,7 +29,9 @@ universal₂ classes of Wegman and Carter [WegmanCarter1981].
 * **The shift criterion**: the difference is uniformly distributed as soon as each of its
   translates is realized by a permutation of the keys
   (`Cslib.Probability.isPairwiseIndependentHash_add_of_shift`), since a permutation preserves
-  the uniform distribution of the key (`Cslib.Probability.dens_filter_eq_of_shift`).
+  the uniform distribution of the key (`Cslib.Probability.dens_filter_eq_of_shift`). For an
+  additive map, whose translates are realized by translations of the keys, this is Mathlib's
+  `AddMonoidHom.card_fiber_eq_of_mem_range`.
 * When `g` depends additively on its key, translating the key by `k₀` shifts the difference by
   its value at `k₀`, so it suffices that the difference take every value
   (`Cslib.Probability.isPairwiseIndependentHash_add_of_surjective`).
