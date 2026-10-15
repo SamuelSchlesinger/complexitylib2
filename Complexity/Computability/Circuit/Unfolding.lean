@@ -104,16 +104,6 @@ def Program.wireFormula (p : Program σ n g) : Wire n g → Formula σ n :=
     (w : Wire n g) (x : Fin n → U) : (p.wireFormula w).eval I x = p.trace I x w := by
   cases w <;> simp [trace]
 
-/-- Folding `max` over the values of `f`, from `init`, gives the larger of `init` and their
-supremum. -/
-private theorem foldl_max_eq (f : Fin m → ℕ) (init : ℕ) :
-    Fin.foldl m (fun acc i => max acc (f i)) init = max init (Finset.univ.sup f) := by
-  induction m generalizing init with
-  | zero => simp
-  | succ m ih =>
-    rw [Fin.foldl_succ, ih, Fin.univ_succ, Finset.sup_cons, Finset.sup_map]
-    simp [max_assoc, Function.comp_def]
-
 /-- The formula of a gate is as deep as the gate, whatever each operation costs. -/
 @[simp] theorem Program.depthWith_gateFormula (cost : σ.Op → ℕ) (p : Program σ n g)
     (k : Fin g) : (p.gateFormula k).depthWith cost = p.depthsWith cost k := by
@@ -124,8 +114,8 @@ private theorem foldl_max_eq (f : Fin m → ℕ) (init : ℕ) :
       cases w <;> simp [ih]
     induction k using Fin.lastCases with
     | last =>
-      rw [gateFormula_gate_last, Formula.depthWith_gate, depthsWith_gate_last, Line.depthWith,
-        foldl_max_eq, Nat.zero_max]
+      rw [gateFormula_gate_last, Formula.depthWith_gate, depthsWith_gate_last,
+        Line.depthWith_eq_sup]
       simp only [hw]
     | cast k => rw [gateFormula_gate_castSucc, depthsWith_gate_castSucc, ih]
 

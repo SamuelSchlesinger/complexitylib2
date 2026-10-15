@@ -343,6 +343,11 @@ theorem depthWith_mono {cost cost' : σ.Op → ℕ} (h : ∀ op, cost op ≤ cos
   | gate op args ih =>
     exact Nat.add_le_add (Finset.sup_mono_fun fun j _ => ih j) (h op)
 
+/-- Costs of at most one never make a formula deeper. -/
+theorem depthWith_le_depth {cost : σ.Op → ℕ} (hcost : ∀ op, cost op ≤ 1) (F : Formula σ n) :
+    F.depthWith cost ≤ F.depth :=
+  (F.depthWith_mono (cost' := 1) hcost).trans_eq F.depthWith_one
+
 /-! ### Balanced trees -/
 
 section Balanced

@@ -191,21 +191,11 @@ theorem Line.depth_mapOp (line : Line σ n g) (depths : Wire n g → ℕ) :
         (Fin.cast (φ.arity_eq line.op).symm a))
 
 /-- The translated program has the same gate depths. -/
-theorem Program.depths_mapOp (p : Program σ n g) : (p.mapOp φ).depths = p.depths := by
-  induction p with
-  | empty => funext k; exact k.elim0
-  | gate p line ih =>
-    funext k
-    induction k using Fin.lastCases with
-    | last =>
-      simp only [Program.mapOp_gate, Program.depths_gate_last, Program.wireDepths, ih,
-        Line.depth_mapOp]
-    | cast k => simp only [Program.mapOp_gate, Program.depths_gate_castSucc, ih]
+theorem Program.depths_mapOp (p : Program σ n g) : (p.mapOp φ).depths = p.depths :=
+  p.depths_mapLines Line.depth_mapOp
 
-@[simp] theorem Circuit.depth_mapOp (c : Circuit σ n m) : (c.mapOp φ).depth = c.depth := by
-  change Fin.foldl m (fun depth k => max depth ((c.program.mapOp φ).wireDepths (c.outputs k))) 0 =
-    Fin.foldl m (fun depth k => max depth (c.program.wireDepths (c.outputs k))) 0
-  simp only [Program.wireDepths, Program.depths_mapOp]
+@[simp] theorem Circuit.depth_mapOp (c : Circuit σ n m) : (c.mapOp φ).depth = c.depth :=
+  c.depth_mapLines Line.depth_mapOp
 
 variable {I : Interpretation σ U} {J : Interpretation τ U}
 

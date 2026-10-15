@@ -85,7 +85,7 @@ theorem mem_NC_one_iff_formulaDepth_le :
     obtain ⟨C, hCc, hCd, -⟩ := hC n
     calc formulaDepth (L.slice n) ≤ (C.toFormula 0).depthWith binaryCost :=
           formulaDepth_le (hCc.toFormula 0)
-      _ ≤ (C.toFormula 0).depth := (C.toFormula 0).depthWith_binaryCost_le_depth
+      _ ≤ (C.toFormula 0).depth := (C.toFormula 0).depthWith_le_depth binaryCost_le_one
       _ ≤ C.depth := C.depth_toFormula_le 0
       _ ≤ c * (Nat.log 2 n + 1) := hCd
   · rintro ⟨c, hc⟩

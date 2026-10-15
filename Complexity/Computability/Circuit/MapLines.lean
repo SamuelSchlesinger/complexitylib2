@@ -16,7 +16,8 @@ public import Complexity.Computability.Circuit.Depth
 one signature to lines over another that keeps the number of earlier gates, so the program keeps
 its shape and its size. If `f` keeps the value of every line, the transformed program computes the
 same gate values (`Program.eval_mapLines`), and if `f` never makes a line deeper, no gate becomes
-deeper (`Program.depths_mapLines_le`). Translating the operations along a map of signatures
+deeper (`Program.depths_mapLines_le`); if it keeps the depth of every line, it keeps the depth of
+every gate (`Program.depths_mapLines`). Translating the operations along a map of signatures
 (`Program.mapOp`) is the special case changing only the operations; removing repeated arguments
 of idempotent gates is another.
 
@@ -31,6 +32,8 @@ of idempotent gates is another.
   lines that keep their values keeps the function computed.
 * `Cslib.Circuits.Program.depths_mapLines_le`, `Cslib.Circuits.Circuit.depth_mapLines_le`:
   transforming lines that get no deeper keeps the depth bounded.
+* `Cslib.Circuits.Program.depths_mapLines`, `Cslib.Circuits.Circuit.depth_mapLines`: transforming
+  lines that keep their depth keeps the depth.
 -/
 
 @[expose] public section
@@ -138,5 +141,37 @@ theorem Circuit.depth_mapLines_le (c : Circuit σ n m) : (c.mapLines f).depth �
     (c.program.wireDepths_mapLines_le hf (c.outputs j)).trans (c.outputDepths_le_depth j)
 
 end depth
+
+section depth_eq
+
+variable (hf : ∀ {g : ℕ} (line : Line σ n g) (depths : Wire n g → ℕ),
+  (f line).depth depths = line.depth depths)
+include hf
+
+/-- Transforming lines that keep their depth keeps the depth of every gate. -/
+theorem Program.depths_mapLines (p : Program σ n g) : (p.mapLines f).depths = p.depths := by
+  induction p with
+  | empty => funext k; exact k.elim0
+  | gate p line ih =>
+    funext k
+    induction k using Fin.lastCases with
+    | last => simp only [mapLines_gate, depths_gate_last, wireDepths, ih, hf]
+    | cast k => simp only [mapLines_gate, depths_gate_castSucc, ih]
+
+/-- Transforming lines that keep their depth keeps the depth of every wire. -/
+theorem Program.wireDepths_mapLines (p : Program σ n g) :
+    (p.mapLines f).wireDepths = p.wireDepths := by
+  simp only [wireDepths, p.depths_mapLines hf]
+
+/-- Transforming lines that keep their depth keeps the depth of every output. -/
+theorem Circuit.outputDepths_mapLines (c : Circuit σ n m) :
+    (c.mapLines f).outputDepths = c.outputDepths :=
+  funext fun j => congrFun (c.program.wireDepths_mapLines hf) (c.outputs j)
+
+/-- **Transforming lines that keep their depth keeps the depth.** -/
+theorem Circuit.depth_mapLines (c : Circuit σ n m) : (c.mapLines f).depth = c.depth := by
+  rw [Circuit.depth, Circuit.depth, c.outputDepths_mapLines hf]
+
+end depth_eq
 
 end Cslib.Circuits

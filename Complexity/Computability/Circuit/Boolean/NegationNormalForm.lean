@@ -19,8 +19,7 @@ negations and evaluating negated constants, gives a formula in *negation normal 
 included, and is at most one more than the number of AND and OR gates on a path of the original
 formula (`Formula.depth_nnf_le`). So the depth of a function with negations and constants free,
 `Boolean.formulaDepth`, and its depth with every gate counted differ by at most one
-(`Formula.depthWith_binaryCost_le_depth`,
-`Boolean.exists_computes_depth_le_formulaDepth_add_one`).
+(`Formula.depthWith_le_depth`, `Boolean.exists_computes_depth_le_formulaDepth_add_one`).
 
 ## Main definitions
 
@@ -93,11 +92,6 @@ theorem Formula.depth_nnf_le (F : Formula signature n) (b : Bool) :
       have h₁ := ih 1 b
       cases b <;> simp only [nnf, ← depthWith_one, depthWith_and, depthWith_or] <;>
         simp [Fin.univ_succ] at h₀ h₁ ⊢ <;> omega
-
-/-- The depth with negations and constants free is at most the depth. -/
-theorem Formula.depthWith_binaryCost_le_depth (F : Formula signature n) :
-    F.depthWith binaryCost ≤ F.depth :=
-  (F.depthWith_mono (cost' := 1) binaryCost_le_one).trans_eq F.depthWith_one
 
 /-- Every Boolean function has a De Morgan formula whose depth, counting every gate, is at most
 its formula depth plus one. -/
