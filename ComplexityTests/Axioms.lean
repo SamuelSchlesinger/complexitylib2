@@ -2613,4 +2613,22 @@ info: 'Cslib.Circuits.Boolean.Threshold.parity_mem_constDepth' depends on axioms
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Threshold.parity_mem_constDepth
 
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.degreeCoefficient_four' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.degreeCoefficient_four
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_degreeCoefficient_lt_mul_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_degreeCoefficient_lt_mul_innerSize
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_seven_div_two_lt_two_mul_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_seven_div_two_lt_two_mul_innerSize
+
 end ComplexityTests.Axioms
