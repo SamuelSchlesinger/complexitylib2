@@ -19,12 +19,14 @@ import Mathlib.Tactic.Ring
 Let the special gates of a program `p` have a ledger in `M`, and let `p` accept the inputs whose
 value at a wire `o` lies in a set `Acc`. Erase the special gates. A wire is *live*
 (`Frontier.Live`) if it is an input or an ordinary gate of positive arity; the others are
-constants, among them the placeholders. The *live circuit* (`Frontier.liveCircuit`) is the erased
-program with every live wire as an output. For a guess `m ∈ M`, the constraint network of the
-live circuit accepting every value (`Frontier.Ledger.network`) is satisfied exactly by the run
-with guess `m`; its graph and its sites do not depend on `m`.
+constants of the erased program, among them the constants replacing the special gates. The
+*live circuit* (`Frontier.liveCircuit`) is the erased program with every live wire as an output.
+For a guess `m ∈ M`, the constraint network of the live circuit accepting every value
+(`Frontier.Ledger.network`) is satisfied exactly by the run with guess `m`. Its graph and its
+sites do not depend on `m`: they make up the *live network* (`Frontier.liveNetwork`), which has no
+constraints and serves for the frontiers, components and inputs read of every guess.
 
-**The ledger sweep** (`Frontier.Ledger.sweep`) is the sweep along a layout
+**The ledger sweep** (`Frontier.Ledger.sweep`) is the sweep along a layout of the live network
 (`Frontier.Network.frontierSweep`) whose extra message has two parts: the product `m` of the
 contributions of the true run (its consistent guess) and the product of the contributions of the
 wires whose vertices come first (the *ledger so far*). Two inputs with the same message can be
@@ -44,6 +46,7 @@ its component (`Frontier.Ledger.exists_ncard_le`).
 
 * `Cslib.Circuits.Frontier.Live`: the live wires of a program with erased special gates.
 * `Cslib.Circuits.Frontier.liveCircuit`: the erased program with every live wire as an output.
+* `Cslib.Circuits.Frontier.liveNetwork`: its graph and sites, as a network without constraints.
 * `Cslib.Circuits.Frontier.Ledger.network`: its constraint network on a guess.
 * `Cslib.Circuits.Frontier.Ledger.sweep`: the sweep of a program with a ledger.
 
@@ -69,11 +72,11 @@ variable {σ : Signature.{v}} {n s : ℕ} {U : Type*}
 
 /-! ### The live circuit -/
 
-variable (p : Program σ n s) (special : ℕ → Prop)
+variable (p : Program σ n s) (special : Fin s → Prop)
 
 /-- A wire is *live*, once the special gates of `p` are erased, when it is an input or an
 ordinary gate of positive arity. The other wires are constants of the erased program: the
-placeholders of the special gates and the gates of arity zero. -/
+constants replacing the special gates and the gates of arity zero. -/
 def Live : Wire n s → Prop
   | .input _ => True
   | .gate g => ¬special g ∧ σ.Arity (p.lines g).op ≠ 0
@@ -83,9 +86,20 @@ variable [DecidablePred special]
 /-- The *live circuit*: the program `p` with its special gates erased, and with every live wire
 as an output. -/
 noncomputable def liveCircuit :
-    Circuit (guessSignature σ) n (Nat.card {w // Live p special w}) where
-  program := erase special p
+    Circuit (σ.withConstants {g // special g}) n (Nat.card {w // Live p special w}) where
+  program := p.eraseGates special
   outputs i := ((Finite.equivFin {w // Live p special w}).symm i).1
+
+/-- The *live network*: the graph of the live circuit and the sites of its inputs, without
+constraints. It does not depend on a ledger or a guess; its frontiers, components and inputs read
+are those of the network of the live circuit on every guess (`Frontier.Ledger.network`). -/
+noncomputable def liveNetwork (U : Type*) :
+    Network U (Fin n) (Compiler.Vertex (liveCircuit p special))
+      (Compiler.Edge (liveCircuit p special)) where
+  toMultigraph := Compiler.graph (liveCircuit p special)
+  site := Compiler.site (liveCircuit p special)
+  Constraint _ _ _ := True
+  constraint_congr _ _ _ _ _ _ _ h := h
 
 variable {p special}
 
@@ -102,8 +116,8 @@ theorem reach_input (i : Fin n) : Compiler.Reach (liveCircuit p special) (.input
 
 /-- The inner gates of the live circuit are the ordinary inner gates. -/
 theorem innerSize_liveCircuit :
-    (liveCircuit p special).innerSize = (p.innerGates.filter fun g : Fin s => ¬special g).card := by
-  rw [Circuit.innerSize, ← innerGates_erase]
+    (liveCircuit p special).innerSize = (p.innerGates.filter fun g => ¬special g).card := by
+  rw [Circuit.innerSize, ← Program.innerGates_eraseGates]
   rfl
 
 /-- There are at most `n + s'` live wires, where `s'` counts the ordinary inner gates. -/
@@ -111,20 +125,17 @@ theorem card_live_le :
     Nat.card {w // Live p special w} ≤ n + (liveCircuit p special).innerSize := by
   rw [innerSize_liveCircuit, ← Nat.card_eq_finsetCard]
   calc Nat.card {w // Live p special w}
-      ≤ Nat.card (Fin n ⊕ ↥(p.innerGates.filter fun g : Fin s => ¬special g)) := by
+      ≤ Nat.card (Fin n ⊕ ↥(p.innerGates.filter fun g => ¬special g)) := by
         refine Nat.card_le_card_of_injective (fun w => match w with
           | ⟨.input i, _⟩ => .inl i
           | ⟨.gate g, h⟩ => .inr ⟨g, Finset.mem_filter.2 ⟨Program.mem_innerGates.2 h.2, h.1⟩⟩) ?_
         rintro ⟨w | w, hw⟩ ⟨w' | w', hw'⟩ h <;> simp_all
-    _ = n + Nat.card ↥(p.innerGates.filter fun g : Fin s => ¬special g) := by
+    _ = n + Nat.card ↥(p.innerGates.filter fun g => ¬special g) := by
         rw [Nat.card_sum, Nat.card_eq_fintype_card (α := Fin n), Fintype.card_fin]
 
-/-- The live circuit reads every input. -/
-theorem read_network_liveCircuit (J : Interpretation (guessSignature σ) U)
-    (Acc : Fin (Nat.card {w // Live p special w}) → Set U) :
-    (Compiler.network (liveCircuit p special) J Acc).read = univ := by
-  rw [Compiler.read_network]
-  exact eq_univ_of_forall reach_input
+/-- The live network reads every input. -/
+theorem read_liveNetwork : (liveNetwork p special U).read = univ :=
+  eq_univ_of_forall fun i => ⟨_, mem_univ _, Compiler.site_of_reach (reach_input i)⟩
 
 /-- When there are inputs, the graph of the live circuit has a vertex. -/
 theorem card_vertex_liveCircuit_pos (hn : 0 < n) :
@@ -142,12 +153,12 @@ namespace Ledger
 variable {I : Interpretation σ U} {M : Type*} [CommMonoid M] (L : Ledger special p I M)
 
 /-- The constraint network of the live circuit on the guess `m`, accepting every value. Its
-satisfying assignments are the runs with guess `m`. Its graph is `Compiler.graph` of the live
-circuit and its sites are those of the live circuit, whatever the guess. -/
+satisfying assignments are the runs with guess `m`. Its graph and its sites are those of the live
+network, whatever the guess. -/
 noncomputable abbrev network (m : M) :
     Network U (Fin n) (Compiler.Vertex (liveCircuit p special))
       (Compiler.Edge (liveCircuit p special)) :=
-  Compiler.network (liveCircuit p special) (guessInterpretation I (L.readout m)) fun _ => univ
+  Compiler.network (liveCircuit p special) (I.withConstants (L.readout m)) fun _ => univ
 
 /-- The run with guess `m` satisfies the network on the guess `m`. -/
 theorem satisfies_network (m : M) (x : Fin n → U) :
@@ -169,13 +180,12 @@ theorem run_eq_of_not_reach (m : M) {w : Wire n s}
   cases w with
   | input i => exact absurd trivial hlive
   | gate g =>
-    rw [run_gate, run_gate]
     by_cases hs : special g
-    · simp only [hs, ↓reduceIte]
+    · rw [L.run_gate_of_special m x hs, L.run_gate_of_special m y hs]
     · have h0 : σ.Arity (p.lines g).op = 0 := by
         by_contra h
         exact hlive ⟨hs, h⟩
-      simp only [hs, ↓reduceIte]
+      rw [L.run_gate_of_not_special m x hs, L.run_gate_of_not_special m y hs]
       congr 1
       funext a
       have := a.isLt
@@ -191,10 +201,11 @@ theorem mem_of_splice {o : Wire n s} {Acc : Set U}
     {P : Set (Compiler.Vertex (liveCircuit p special))} {x y z : Fin n → U}
     (hx : p.trace I x o ∈ Acc) (hy : p.trace I y o ∈ Acc)
     (hm : L.total (p.trace I x) = L.total (p.trace I y))
-    (hpart : L.ledgerOn (wiresIn P) (p.trace I x) = L.ledgerOn (wiresIn P) (p.trace I y))
+    (hpart : L.totalOn (wiresIn P) (p.trace I x) = L.totalOn (wiresIn P) (p.trace I y))
     (hcut : EqOn (fun e => p.trace I x e.signal.1) (fun e => p.trace I y e.signal.1)
-      ((Compiler.graph (liveCircuit p special)).edgeCut P))
-    (hzx : EqOn z x ((L.network 1).readIn P)) (hzy : EqOn z y ((L.network 1).readIn P)ᶜ) :
+      ((liveNetwork p special U).edgeCut P))
+    (hzx : EqOn z x ((liveNetwork p special U).readIn P))
+    (hzy : EqOn z y ((liveNetwork p special U).readIn P)ᶜ) :
     p.trace I z o ∈ Acc := by
   have hαx := L.satisfies_network (L.total (p.trace I x)) x
   rw [L.run_total_trace, hm] at hαx
@@ -225,9 +236,9 @@ theorem mem_of_splice {o : Wire n s} {Acc : Set U}
     rw [L.total_eq_mul (wiresIn P)]
     conv_rhs => rw [← hmdef, L.total_eq_mul (wiresIn P) (p.trace I y)]
     congr 1
-    · rw [← hpart, ledgerOn, ledgerOn]
+    · rw [← hpart, totalOn, totalOn]
       exact Finset.prod_congr rfl fun w hw => by rw [(hwire w).1 (by simpa using hw)]
-    · rw [ledgerOn, ledgerOn]
+    · rw [totalOn, totalOn]
       exact Finset.prod_congr rfl fun w hw => by rw [(hwire w).2 (by simpa using hw)]
   rw [← L.run_eq_trace htotal]
   by_cases ho : o ∈ wiresIn P
@@ -239,9 +250,9 @@ theorem mem_of_splice {o : Wire n s} {Acc : Set U}
 /-- **Locality inside a closed set.** For a fixed guess, the values of the run on the edges at a
 closed set of vertices `W` depend only on the inputs read in `W`. -/
 theorem run_eq_of_eqOn_readIn (m : M) {W : Set (Compiler.Vertex (liveCircuit p special))}
-    (hW : (Compiler.graph (liveCircuit p special)).edgeCut W = ∅) {x x' : Fin n → U}
-    (hxx' : EqOn x x' ((L.network 1).readIn W)) {e : Compiler.Edge (liveCircuit p special)}
-    (he : e ∈ (Compiler.graph (liveCircuit p special)).touching W) :
+    (hW : (liveNetwork p special U).edgeCut W = ∅) {x x' : Fin n → U}
+    (hxx' : EqOn x x' ((liveNetwork p special U).readIn W))
+    {e : Compiler.Edge (liveCircuit p special)} (he : e ∈ (liveNetwork p special U).touching W) :
     L.run m x e.signal.1 = L.run m x' e.signal.1 := by
   have hW' : (L.network m).edgeCut W = ∅ := hW
   obtain ⟨γ, hγ, hγx, -⟩ := (L.satisfies_network m x).splice (L.satisfies_network m x')
@@ -259,15 +270,14 @@ variable (o : Wire n s) (Acc : Set U) (π : Layout (Compiler.Vertex (liveCircuit
 vertices. After the last vertex it is trivial. -/
 noncomputable def extra (t : ℕ) (x : Fin n → U) : M × M :=
   if t ≤ Nat.card (Compiler.Vertex (liveCircuit p special)) then
-    (L.total (p.trace I x), L.ledgerOn (wiresIn (π.initial t)) (p.trace I x))
+    (L.total (p.trace I x), L.totalOn (wiresIn (π.initial t)) (p.trace I x))
   else (1, 1)
 
-/-- **The sweep of a program with a ledger**, along a layout of the graph of its live circuit:
-the frontier sweep of the values of the run, whose extra message is the guess and the ledger so
-far. -/
+/-- **The sweep of a program with a ledger**, along a layout of its live network: the frontier
+sweep of the values of the run, whose extra message is the guess and the ledger so far. -/
 noncomputable def sweep : Sweep {x | p.trace I x o ∈ Acc}
     ((M × M) × (Compiler.Edge (liveCircuit p special) → Option U)) :=
-  (L.network 1).frontierSweep π (fun x e => p.trace I x e.signal.1) (L.extra π)
+  (liveNetwork p special U).frontierSweep π (fun x e => p.trace I x e.signal.1) (L.extra π)
     (fun _ _ _ _ => by simp [extra])
     fun t ht x hx y hy hxy hval z hzx hzy => by
       simp only [extra, ht, ↓reduceIte, Prod.mk.injEq] at hxy
@@ -280,8 +290,8 @@ theorem ncard_extra_le [Finite U] [Finite M] (t : ℕ) :
     ((fun x => (L.extra π t x, L.extra π (t + 1) x)) '' {x | p.trace I x o ∈ Acc}).ncard ≤
       Nat.card M ^ 3 := by
   calc _ ≤ ((fun x => (L.total (p.trace I x),
-        L.ledgerOn (wiresIn (π.initial t)) (p.trace I x),
-        L.ledgerOn (wiresIn (π.initial (t + 1))) (p.trace I x))) ''
+        L.totalOn (wiresIn (π.initial t)) (p.trace I x),
+        L.totalOn (wiresIn (π.initial (t + 1))) (p.trace I x))) ''
           {x | p.trace I x o ∈ Acc}).ncard := by
         refine ncard_image_le_ncard_image_of_factorsThrough (toFinite _) fun x _ y _ hxy => ?_
         simp only [Prod.mk.injEq] at hxy
@@ -294,9 +304,11 @@ values on the two frontiers, and the input read at the vertex processed. -/
 theorem ncard_transition_le_width [Finite U] [Finite M] {t : ℕ}
     (ht : t < Nat.card (Compiler.Vertex (liveCircuit p special))) :
     ((L.sweep o Acc π).transition t '' {x | p.trace I x o ∈ Acc}).ncard ≤
-      Nat.card M ^ 3 * Nat.card U ^ (((L.network 1).frontier π t ∪
-        (L.network 1).frontier π (t + 1)).ncard + ((L.network 1).readAt (π.symm ⟨t, ht⟩)).ncard) :=
-  ((L.network 1).ncard_transition_le ht).trans (Nat.mul_le_mul_right _ (L.ncard_extra_le π t))
+      Nat.card M ^ 3 * Nat.card U ^ (((liveNetwork p special U).frontier π t ∪
+        (liveNetwork p special U).frontier π (t + 1)).ncard +
+          ((liveNetwork p special U).readAt (π.symm ⟨t, ht⟩)).ncard) :=
+  ((liveNetwork p special U).ncard_transition_le ht).trans
+    (Nat.mul_le_mul_right _ (L.ncard_extra_le π t))
 
 /-- **Transitions inside a closed set.** If the vertex processed at step `t` lies in a closed
 set `W` whose edges contain both frontiers of the step, a transition is determined by the guess,
@@ -304,12 +316,12 @@ the two ledgers, and the inputs read in `W`. -/
 theorem ncard_transition_le_readIn [Finite U] [Finite M] {t : ℕ}
     (ht : t < Nat.card (Compiler.Vertex (liveCircuit p special)))
     {W : Set (Compiler.Vertex (liveCircuit p special))}
-    (hW : (Compiler.graph (liveCircuit p special)).edgeCut W = ∅) (hv : π.symm ⟨t, ht⟩ ∈ W)
-    (hC : (L.network 1).frontier π t ∪ (L.network 1).frontier π (t + 1) ⊆
-      (L.network 1).touching W) :
+    (hW : (liveNetwork p special U).edgeCut W = ∅) (hv : π.symm ⟨t, ht⟩ ∈ W)
+    (hC : (liveNetwork p special U).frontier π t ∪ (liveNetwork p special U).frontier π (t + 1) ⊆
+      (liveNetwork p special U).touching W) :
     ((L.sweep o Acc π).transition t '' {x | p.trace I x o ∈ Acc}).ncard ≤
-      Nat.card M ^ 3 * Nat.card U ^ ((L.network 1).readIn W).ncard := by
-  set Q := (L.network 1).readIn W
+      Nat.card M ^ 3 * Nat.card U ^ ((liveNetwork p special U).readIn W).ncard := by
+  set Q := (liveNetwork p special U).readIn W
   have h := (L.sweep o Acc π).ncard_transition_le_of_factorsThrough (t := t) (D := Q → U)
     (fun x => (L.extra π t x, L.extra π (t + 1) x)) (fun x => Q.domRestrict x)
     fun x _ y _ h₀ hg => by
@@ -321,7 +333,7 @@ theorem ncard_transition_le_readIn [Finite U] [Finite M] {t : ℕ}
         exact this.1
       -- The values on the edges at `W` depend only on the guess and the inputs read in `W`.
       have hval : EqOn (fun e => p.trace I x e.signal.1) (fun e => p.trace I y e.signal.1)
-          ((L.network 1).touching W) := fun e he => by
+          ((liveNetwork p special U).touching W) := fun e he => by
         change p.trace I x e.signal.1 = p.trace I y e.signal.1
         rw [← L.run_total_trace x, ← L.run_total_trace y, ← hm]
         exact L.run_eq_of_eqOn_readIn _ hW hg he
@@ -329,7 +341,7 @@ theorem ncard_transition_le_readIn [Finite U] [Finite M] {t : ℕ}
         Network.frontierValues_eq_iff, domRestrict_eq_domRestrict_iff]
       refine ⟨⟨h₀.1, hval.mono (subset_union_left.trans hC)⟩,
         ⟨h₀.2, hval.mono (subset_union_right.trans hC)⟩, fun i hi => hg ?_⟩
-      exact ⟨_, hv, (L.network 1).revealedBy_succ_diff_subset π ht hi⟩
+      exact ⟨_, hv, (liveNetwork p special U).revealedBy_succ_diff_subset π ht hi⟩
   refine h.trans (Nat.mul_le_mul (L.ncard_extra_le π t) ?_)
   rw [Nat.card_fun, Nat.card_coe_set_eq]
 
@@ -342,11 +354,12 @@ theorem ncard_transition_last_le [Finite U] [Finite M] :
       {x | p.trace I x o ∈ Acc}).ncard ≤
       ((fun x => (L.extra π (Nat.card (Compiler.Vertex (liveCircuit p special))) x,
         L.extra π (Nat.card (Compiler.Vertex (liveCircuit p special)) + 1) x)) ''
-          {x | p.trace I x o ∈ Acc}).ncard * Nat.card U ^ (L.network 1).readᶜ.ncard :=
-    (L.network 1).ncard_transition_last_le
+          {x | p.trace I x o ∈ Acc}).ncard * Nat.card U ^ (liveNetwork p special U).readᶜ.ncard :=
+    (liveNetwork p special U).ncard_transition_last_le
   replace h := h.trans (Nat.mul_le_mul_right _ (L.ncard_extra_le π _))
-  rwa [read_network_liveCircuit, compl_univ, ncard_empty, pow_zero, mul_one] at h
+  rwa [read_liveNetwork, compl_univ, ncard_empty, pow_zero, mul_one] at h
 
+include L in
 /-- **Counting along a layout of the components.** Suppose that, at each step of a layout, the
 frontiers lie among the edges of the component of the vertex processed. Then some step `t`
 bounds the set accepted by `p` by `(K - 1) ^ 2 (|V| + 1) |M| ^ 3 q ^ e`, where `q = |U|` and the
@@ -357,23 +370,25 @@ theorem exists_ncard_le [Finite U] [Nonempty U] [Finite M] {K : ℕ}
     (hK : K ≤ {x | p.trace I x o ∈ Acc}.ncard)
     (hV : 0 < Nat.card (Compiler.Vertex (liveCircuit p special)))
     (hC : ∀ t (ht : t < Nat.card (Compiler.Vertex (liveCircuit p special))),
-      (L.network 1).frontier π t ∪ (L.network 1).frontier π (t + 1) ⊆
-        (L.network 1).touching ((L.network 1).component (π.symm ⟨t, ht⟩))) :
+      (liveNetwork p special U).frontier π t ∪ (liveNetwork p special U).frontier π (t + 1) ⊆
+        (liveNetwork p special U).touching
+          ((liveNetwork p special U).component (π.symm ⟨t, ht⟩))) :
     ∃ t, ∃ ht : t < Nat.card (Compiler.Vertex (liveCircuit p special)),
       {x | p.trace I x o ∈ Acc}.ncard ≤
         (K - 1) ^ 2 * (Nat.card (Compiler.Vertex (liveCircuit p special)) + 1) *
-          Nat.card M ^ 3 * Nat.card U ^ min (((L.network 1).frontier π t ∪
-            (L.network 1).frontier π (t + 1)).ncard +
-              ((L.network 1).readAt (π.symm ⟨t, ht⟩)).ncard)
-            ((L.network 1).readIn ((L.network 1).component (π.symm ⟨t, ht⟩))).ncard := by
+          Nat.card M ^ 3 * Nat.card U ^ min (((liveNetwork p special U).frontier π t ∪
+            (liveNetwork p special U).frontier π (t + 1)).ncard +
+              ((liveNetwork p special U).readAt (π.symm ⟨t, ht⟩)).ncard)
+            ((liveNetwork p special U).readIn
+              ((liveNetwork p special U).component (π.symm ⟨t, ht⟩))).ncard := by
   set S := {x | p.trace I x o ∈ Acc}
   set N := Nat.card (Compiler.Vertex (liveCircuit p special))
+  set G := liveNetwork p special U
   have hq : 1 ≤ Nat.card U := Nat.card_pos
   -- The exponent at each step: the smaller of its width and the inputs of its component.
   let f : ℕ → ℕ := fun t => if ht : t < N then
-    min (((L.network 1).frontier π t ∪ (L.network 1).frontier π (t + 1)).ncard +
-      ((L.network 1).readAt (π.symm ⟨t, ht⟩)).ncard)
-      ((L.network 1).readIn ((L.network 1).component (π.symm ⟨t, ht⟩))).ncard else 0
+    min ((G.frontier π t ∪ G.frontier π (t + 1)).ncard + (G.readAt (π.symm ⟨t, ht⟩)).ncard)
+      (G.readIn (G.component (π.symm ⟨t, ht⟩))).ncard else 0
   obtain ⟨t, htmem, hmax⟩ := Finset.exists_max_image (Finset.range N) f
     ⟨0, Finset.mem_range.mpr hV⟩
   have ht : t < N := Finset.mem_range.mp htmem
@@ -385,23 +400,20 @@ theorem exists_ncard_le [Finite U] [Nonempty U] [Finite M] {K : ℕ}
     · calc ((L.sweep o Acc π).transition t' '' S).ncard
           ≤ Nat.card M ^ 3 * Nat.card U ^ f t' := by
             simp only [f, ht', ↓reduceDIte]
-            rcases min_cases (((L.network 1).frontier π t' ∪
-                (L.network 1).frontier π (t' + 1)).ncard +
-                ((L.network 1).readAt (π.symm ⟨t', ht'⟩)).ncard)
-              ((L.network 1).readIn ((L.network 1).component (π.symm ⟨t', ht'⟩))).ncard with
+            rcases min_cases ((G.frontier π t' ∪ G.frontier π (t' + 1)).ncard +
+                (G.readAt (π.symm ⟨t', ht'⟩)).ncard)
+              (G.readIn (G.component (π.symm ⟨t', ht'⟩))).ncard with
               ⟨h, -⟩ | ⟨h, -⟩ <;> rw [h]
             · exact L.ncard_transition_le_width π ht'
-            · exact L.ncard_transition_le_readIn π ht'
-                ((L.network 1).edgeCut_component _) ((L.network 1).mem_component_self _)
-                (hC t' ht')
+            · exact L.ncard_transition_le_readIn π ht' (G.edgeCut_component _)
+                (G.mem_component_self _) (hC t' ht')
         _ ≤ Nat.card M ^ 3 * Nat.card U ^ f t :=
             Nat.mul_le_mul_left _ (Nat.pow_le_pow_right hq (hmax t' (Finset.mem_range.mpr ht')))
     · obtain rfl : t' = N := by have := Finset.mem_range.mp ht'mem; omega
       exact (L.ncard_transition_last_le π).trans
         (Nat.le_mul_of_pos_right _ (pow_pos (by omega) _))
-  have hft : f t = min (((L.network 1).frontier π t ∪
-      (L.network 1).frontier π (t + 1)).ncard + ((L.network 1).readAt (π.symm ⟨t, ht⟩)).ncard)
-      ((L.network 1).readIn ((L.network 1).component (π.symm ⟨t, ht⟩))).ncard := by
+  have hft : f t = min ((G.frontier π t ∪ G.frontier π (t + 1)).ncard +
+      (G.readAt (π.symm ⟨t, ht⟩)).ncard) (G.readIn (G.component (π.symm ⟨t, ht⟩))).ncard := by
     simp only [f, ht, ↓reduceDIte]
   calc S.ncard ≤ (K - 1) ^ 2 * ∑ t ∈ Finset.range (N + 1),
         ((L.sweep o Acc π).transition t '' S).ncard := (L.sweep o Acc π).ncard_le hfree hK

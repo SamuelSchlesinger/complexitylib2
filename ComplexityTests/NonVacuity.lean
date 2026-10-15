@@ -583,10 +583,10 @@ section FrontierLedger
 open Cslib.Circuits Cslib.Circuits.Frontier
 
 /-- The ledger hypothesis can be met: every AC⁰ program has a ledger for all of its gates. -/
-example {n s : ℕ} (p : Program Boolean.Unbounded.signature n s) :
-    Nonempty (Ledger (fun _ => True) p Boolean.Unbounded.interpretation
-      ({_g : Fin s // True} → ZMod 2)) :=
-  exists_ledger_of_aggregates p _ _ _ fun _ _ => aggregates_unbounded _
+noncomputable example {n s : ℕ} (p : Program Boolean.Unbounded.signature n s) :
+    Ledger (fun _ : Fin s => True) p Boolean.Unbounded.interpretation
+      ({_g : Fin s // True} → ZMod 2) :=
+  Ledger.ofAggregates fun _ _ => aggregates_unbounded _
 
 end FrontierLedger
 

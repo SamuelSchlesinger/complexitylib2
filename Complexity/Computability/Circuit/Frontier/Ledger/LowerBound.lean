@@ -7,10 +7,10 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+import Complexity.Computability.Circuit.Frontier.Layouts.Components
 public import Complexity.Computability.Circuit.Frontier.Ledger.Aggregate
 public import Complexity.Computability.Circuit.Frontier.Ledger.Sweep
 public import Complexity.Computability.Circuit.Frontier.LowerBound
-import Complexity.Computability.Circuit.Frontier.Layouts.Components
 import Mathlib.Tactic.Ring
 
 /-!
@@ -29,12 +29,12 @@ Constants and special gates are free; the ledger contributes only to the subline
 coefficient of the frontier method survives a sublinear amount of unbounded fan-in. For instance,
 `k` special gates that aggregate in a fixed finite commutative monoid `T`, such as unbounded AND,
 OR, parity, or counts modulo a fixed `m`, have a ledger with `log |M| = k log |T|`
-(`Cslib.Circuits.Frontier.exists_ledger_of_aggregates`), so `k = o(n)` such gates are allowed
+(`Cslib.Circuits.Frontier.Ledger.ofAggregates`), so `k = o(n)` such gates are allowed
 (`eventually_lt_mul_card_of_aggregates`). With the layout hypothesis of coefficient one
 (`Cslib.Circuits.Frontier.layoutBound_one`) the bounds are unconditional:
 `(r - 1) s > (2 - ε) n` (`Cslib.Circuits.Frontier.Ledger.Unconditional`).
 
-**Proof.** Erase the special gates and lay out the graph of the live circuit (the erased program
+**Proof.** Erase the special gates and lay out the live network (the graph of the erased program
 with every live wire as an output), one connected component after another
 (`Cslib.Circuits.Frontier.LayoutBound.exists_layout_componentwise`). Sweep the program along this
 layout with the ledger in the messages (`Cslib.Circuits.Frontier.Ledger.sweep`). At each step the
@@ -45,7 +45,8 @@ almost all `n` inputs and whose frontier is wide, up to `2 log |M|` and the usua
 `(r - 1) s + 1` minus the number of inputs it reads
 (`Cslib.Circuits.Frontier.Compiler.cycleRankOn_add_ncard_readIn_le`), so `W` alone has the
 demand and the supply of a connected graph, and the comparison of demand and supply
-(`Cslib.Circuits.Frontier.eventually_lt_of_demand`) finishes the proof.
+(`Cslib.Circuits.Frontier.eventually_lt_of_frontier`, with the ledger in its sublinear slack)
+finishes the proof.
 
 ## Main results
 
@@ -80,43 +81,24 @@ theorem eventually_lt_mul_card_of_ledger {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA 
       fun n => (n : ℝ))
     {β : ℕ → ℝ} (hβ : β =o[atTop] fun n => (n : ℝ)) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
-      (c : Circuit σ n 1) (special : ℕ → Prop) [DecidablePred special] (M : Type w)
+      (c : Circuit σ n 1) (special : Fin c.size → Prop) [DecidablePred special] (M : Type w)
       [CommMonoid M] [Finite M],
-        (∀ g : Fin c.size, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
+        (∀ g, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
         Ledger special c.program I M → Real.log (Nat.card M) ≤ β n → c.Decides I Acc (S n) →
           (1 + 1 / A - ε) * n <
-            (r - 1) * (c.program.innerGates.filter fun g : Fin c.size => ¬special g).card := by
+            (r - 1) * (c.program.innerGates.filter fun g => ¬special g).card := by
   set q := Nat.card U
   have hq : (1 : ℝ) < q := by exact_mod_cast Finite.one_lt_card
   have h2 : 0 < Real.log 2 := Real.log_pos one_lt_two
   have hL2 : Real.log 2 ≤ Real.log q :=
     Real.log_le_log two_pos (by exact_mod_cast Finite.one_lt_card)
-  -- The constant bounding the size of the graph and the logarithms of its size.
-  set κ : ℝ := 7 + (A + 2) / Real.log 2
-  have hκ : 0 ≤ κ := by positivity
-  -- The error of the problem: the density defect, the threshold, the ledger, and constants.
-  set e : ℕ → ℝ := fun n => (n - Real.logb q (S n).ncard) + 2 * Real.logb q (K n) +
-    3 * (β n / Real.log 2) + (r + 3)
-  have he : e =o[atTop] fun n => (n : ℝ) := by
-    have h1 := isLittleO_sub_logb_ncard hdense
-    have h2 : (fun n : ℕ => 2 * Real.logb q (K n)) =o[atTop] fun n => (n : ℝ) :=
-      (hK.const_mul_left (2 / Real.log q)).congr_left fun n => by
-        simp only [Real.logb]
-        ring
-    have h3 : (fun n : ℕ => 3 * (β n / Real.log 2)) =o[atTop] fun n => (n : ℝ) :=
-      (hβ.const_mul_left (3 / Real.log 2)).congr_left fun n => by ring
-    have h4 : (fun _ : ℕ => ((r : ℝ) + 3)) =o[atTop] fun n => (n : ℝ) :=
-      isLittleO_const_left.mpr
-        (Or.inr (tendsto_norm_atTop_atTop.comp tendsto_natCast_atTop_atTop))
-    exact ((h1.add h2).add h3).add h4
-  obtain ⟨η₀, hη₀, H⟩ := eventually_lt_of_demand hA hκ hε
-  set η := min η₀ 1
-  have hη : 0 < η := lt_min hη₀ one_pos
-  have hη1 : η ≤ 1 := min_le_right _ _
+  -- The ledger costs three products in `M`, at most `3 β(n) / log 2` symbols.
+  have hβ' : (fun n => 3 * (β n / Real.log 2)) =o[atTop] fun n => (n : ℝ) :=
+    (hβ.const_mul_left (3 / Real.log 2)).congr_left fun n => by ring
+  obtain ⟨η, hη, H⟩ := eventually_lt_of_frontier hA (r + 2) hK hdense hβ' hε
   obtain ⟨C, hC⟩ := hlayout.exists_layout_componentwise hη
-  filter_upwards [H η hη (min_le_left _ _) C e he, hfree,
-    eventually_card_mul_sq_le_ncard hfree hK hdense, eventually_ge_atTop 1] with
-    n hn hfreen hbign hn1
+  filter_upwards [H C, hfree, eventually_card_mul_sq_le_ncard hfree hK hdense,
+    eventually_ge_atTop 1] with n hn hfreen hbign hn1
   intro σ I Acc c special _ M _ _ hfan L hM hS
   -- The set decided by the circuit is the set accepted by its program at its output.
   set o := c.outputs 0
@@ -128,19 +110,19 @@ theorem eventually_lt_mul_card_of_ledger {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA 
   have hKS : K n ≤ {x | c.program.trace I x o ∈ Acc}.ncard :=
     (Nat.le_mul_of_pos_left _ Nat.card_pos).trans
       ((Nat.mul_le_mul_left _ (Nat.le_self_pow two_ne_zero _)).trans hbign)
-  -- Lay out the graph of the live circuit one component after another.
+  -- Lay out the live network one component after another.
   set lc := liveCircuit c.program special
   set V := Nat.card (Compiler.Vertex lc)
-  set N := L.network 1
-  have hfan' : lc.FanInAtMost r := fanInAtMost_erase c.program hfan
+  set N := liveNetwork c.program special U
+  have hfan' : lc.FanInAtMost r := (Program.fanInAtMost_eraseGates_iff (special := special)).2 hfan
   obtain ⟨π, hπ⟩ := hC _ _ (Compiler.graph lc) Compiler.loopless (Compiler.maxDegreeLE hr hfan')
   obtain ⟨t, ht, hcount⟩ := L.exists_ncard_le π hfreen hKS (card_vertex_liveCircuit_pos hn1)
     fun t ht => union_subset (hπ t ht t le_rfl (by omega)).1 (hπ t ht (t + 1) (by omega) le_rfl).1
-  -- The quantities of the comparison.
+  -- The quantities of the comparison: the component `W` of the vertex processed at step `t`, the
+  -- width `a` of the step and the inputs `nW` read in `W`.
   set W := N.component (π.symm ⟨t, ht⟩)
-  set se := (c.program.innerGates.filter fun g : Fin c.size => ¬special g).card
+  set se := (c.program.innerGates.filter fun g => ¬special g).card
   have hse : lc.innerSize = se := innerSize_liveCircuit
-  set B := (A + η) * N.cycleRankOn W + η * V + C
   set a := (N.frontier π t ∪ N.frontier π (t + 1)).ncard + (N.readAt (π.symm ⟨t, ht⟩)).ncard
   set nW := (N.readIn W).ncard
   set s : ℝ := (((r - 1) * se : ℕ) : ℝ)
@@ -148,27 +130,25 @@ theorem eventually_lt_mul_card_of_ledger {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA 
     simp only [s]
     rw [Nat.cast_mul, Nat.cast_sub (by omega), Nat.cast_one]
   -- The width of the step is at most its first frontier and the edges of the vertex processed.
-  have ha : (a : ℝ) ≤ B + (r + 2) := by
+  have ha : (a : ℝ) ≤ (N.frontier π t).ncard + (r + 2) := by
     have hU : (N.frontier π t ∪ N.frontier π (t + 1)).ncard ≤ (N.frontier π t).ncard + (r + 1) :=
       (ncard_le_ncard (union_subset subset_union_left (N.frontier_succ_subset π ht))
         (toFinite _)).trans ((ncard_union_le _ _).trans
           (Nat.add_le_add_left (Compiler.maxDegreeLE hr hfan' _) _))
-    have hR : (N.readAt (π.symm ⟨t, ht⟩)).ncard ≤ 1 := Compiler.ncard_readAt_le _ _ _
-    have hF : ((N.frontier π t).ncard : ℝ) ≤ B := (hπ t ht t le_rfl (by omega)).2
-    have : (a : ℝ) ≤ (N.frontier π t).ncard + (r + 2) := by
-      have : a ≤ (N.frontier π t).ncard + (r + 2) := by simp only [a]; omega
-      exact_mod_cast this
-    linarith
+    have hR : (N.readAt (π.symm ⟨t, ht⟩)).ncard ≤ 1 :=
+      Compiler.ncard_readAt_le (I.withConstants (L.readout 1)) (fun _ => univ) _
+    have : a ≤ (N.frontier π t).ncard + (r + 2) := by simp only [a]; omega
+    exact_mod_cast this
   -- The cycle rank of the component and the inputs it reads.
   have hρ : (N.cycleRankOn W : ℝ) + nW ≤ s + 1 := by
-    have h := Compiler.cycleRankOn_add_ncard_readIn_le (guessInterpretation I (L.readout 1))
+    have h := Compiler.cycleRankOn_add_ncard_readIn_le (I.withConstants (L.readout 1))
       (fun _ => univ) hfan' (N.edgeCut_component (π.symm ⟨t, ht⟩))
       (N.ncard_component_le_ncard_touching_add_one (π.symm ⟨t, ht⟩))
     rw [hse] at h
     simp only [s]
     exact_mod_cast h
-  -- The size of the graph.
-  have hV : (V : ℝ) ≤ κ * (n + s + 1) := by
+  -- The size of the graph: at most `2 r s' + 3 (n + s')` vertices for `s'` ordinary inner gates.
+  have hV : (V : ℝ) ≤ 7 * s + 3 * n + 3 := by
     have h := Compiler.card_vertex_le hfan'
     have hlive := card_live_le (p := c.program) (special := special)
     rw [hse] at h hlive
@@ -177,11 +157,8 @@ theorem eventually_lt_mul_card_of_ledger {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA 
       have := Nat.mul_le_mul_right se h7
       simp only [V]
       nlinarith
-    have hV7 : (V : ℝ) ≤ 7 * s + 3 * n := by simp only [s]; exact_mod_cast this
-    have hs0 : 0 ≤ s := Nat.cast_nonneg _
-    have hκ7 : 7 ≤ κ := by simp only [κ]; linarith [show 0 ≤ (A + 2) / Real.log 2 by positivity]
-    have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg _
-    nlinarith
+    have : (V : ℝ) ≤ 7 * s + 3 * n := by simp only [s]; exact_mod_cast this
+    linarith
   -- Take logarithms in the counting bound.
   have hMpos : 0 < Nat.card M := Nat.card_pos
   have hcount' : ({x | c.program.trace I x o ∈ Acc}.ncard : ℝ) ≤
@@ -206,42 +183,23 @@ theorem eventually_lt_mul_card_of_ledger {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA 
           push_cast
           ring
   rw [← hSeq] at hlogS
-  -- Bound the logarithms of the graph and of the ledger.
-  have hV0 : (0 : ℝ) ≤ V := Nat.cast_nonneg _
-  have hlog0 : 0 ≤ Real.log (V + 1) := Real.log_nonneg (by linarith)
-  have hlogV0 : 0 ≤ Real.logb q (V + 1) := Real.logb_nonneg hq (by linarith)
-  have hlogV : (A + η + 1) * Real.logb q (V + 1) ≤ κ * Real.log (V + 1) := by
-    have h1 : Real.logb q (V + 1) ≤ Real.log (V + 1) / Real.log 2 :=
-      div_le_div_of_nonneg_left hlog0 h2 hL2
-    calc (A + η + 1) * Real.logb q (V + 1) ≤ (A + 2) * (Real.log (V + 1) / Real.log 2) :=
-          mul_le_mul (by linarith) h1 hlogV0 (by linarith)
-      _ ≤ κ * Real.log (V + 1) := by
-          rw [mul_div_assoc', div_eq_mul_inv, mul_comm, ← mul_assoc]
-          refine mul_le_mul_of_nonneg_right ?_ hlog0
-          simp only [κ]
-          rw [div_eq_inv_mul]
-          linarith
-  have hlogM : Real.logb q (Nat.card M) ≤ β n / Real.log 2 := by
+  -- The logarithms of the threshold and of the ledger.
+  have hlogM : 3 * Real.logb q (Nat.card M) ≤ 3 * (β n / Real.log 2) := by
     have h0 : 0 ≤ Real.log (Nat.card M) :=
       Real.log_nonneg (by exact_mod_cast Nat.one_le_iff_ne_zero.mpr hMpos.ne')
-    exact (div_le_div_of_nonneg_left h0 h2 hL2).trans (div_le_div_of_nonneg_right hM h2.le)
+    have h1 : Real.logb q (Nat.card M) ≤ β n / Real.log 2 :=
+      (div_le_div_of_nonneg_left h0 h2 hL2).trans (div_le_div_of_nonneg_right hM h2.le)
+    linarith
   have hlogK : 0 ≤ Real.logb q (K n) := Real.logb_nonneg hq (by exact_mod_cast hK1)
   have hmin1 : ((min a nW : ℕ) : ℝ) ≤ a := by exact_mod_cast min_le_left a nW
   have hmin2 : ((min a nW : ℕ) : ℝ) ≤ nW := by exact_mod_cast min_le_right a nW
-  -- Compare the supply of the component, less the logarithm of the graph, with the demand.
-  set w := B - (A + η) * Real.logb q (V + 1)
   rw [← hs]
-  refine hn s V w (Nat.cast_nonneg _) hV0 hV ?_ ?_
-  · -- The demand: the frontier of the component is wide.
-    simp only [e, w]
-    nlinarith
-  · -- The supply: the component reads almost all inputs, so its cycle rank is small.
-    have hρ' : (N.cycleRankOn W : ℝ) ≤ s - n + e n + Real.logb q (V + 1) := by
-      simp only [e]
-      linarith
-    have := mul_le_mul_of_nonneg_left hρ' (by linarith : 0 ≤ A + η)
-    simp only [w, B]
-    nlinarith
+  refine hn s V (N.cycleRankOn W) (N.frontier π t).ncard (Nat.cast_nonneg _) (Nat.cast_nonneg _)
+    hV ?_ ?_ (hπ t ht t le_rfl (by omega)).2
+  · -- The component reads almost all inputs, so its cycle rank is small.
+    linarith
+  · -- Some frontier is wide.
+    linarith
 
 /-- **The frontier lower bound with aggregate gates.** Under the hypotheses of
 `eventually_lt_mul_card_of_ledger`, for every `ε > 0` and all large `n`, every circuit deciding
@@ -256,19 +214,18 @@ theorem eventually_lt_mul_card_of_aggregates {r : ℕ} (hr : 2 ≤ r) {A : ℝ} 
       fun n => (n : ℝ))
     {β : ℕ → ℝ} (hβ : β =o[atTop] fun n => (n : ℝ)) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
-      (c : Circuit σ n 1) (special : ℕ → Prop) [DecidablePred special] (T : Type w)
+      (c : Circuit σ n 1) (special : Fin c.size → Prop) [DecidablePred special] (T : Type w)
       [CommMonoid T] [Finite T],
-        (∀ g : Fin c.size, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
-        (∀ g : Fin c.size, special g → Aggregates (I (c.program.lines g).op) T) →
-        Nat.card {g : Fin c.size // special g} * Real.log (Nat.card T) ≤ β n →
+        (∀ g, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
+        (∀ g, special g → Aggregates (I (c.program.lines g).op) T) →
+        Nat.card {g // special g} * Real.log (Nat.card T) ≤ β n →
         c.Decides I Acc (S n) →
           (1 + 1 / A - ε) * n <
-            (r - 1) * (c.program.innerGates.filter fun g : Fin c.size => ¬special g).card := by
+            (r - 1) * (c.program.innerGates.filter fun g => ¬special g).card := by
   filter_upwards [eventually_lt_mul_card_of_ledger.{u, v, w} hr hA hlayout hfree hK hdense hβ hε]
     with n hn
   intro σ I Acc c special _ T _ _ hfan hagg hk hS
-  obtain ⟨L⟩ := exists_ledger_of_aggregates c.program I special T hagg
-  refine hn σ I Acc c special _ hfan L ?_ hS
+  refine hn σ I Acc c special _ hfan (Ledger.ofAggregates hagg) ?_ hS
   rw [Nat.card_fun, Nat.cast_pow, Real.log_pow]
   exact hk
 

@@ -61,12 +61,11 @@ theorem eventually_two_sub_mul_lt_mul_card_of_ledger {r : ℕ} (hr : 2 ≤ r)
       fun n => (n : ℝ))
     {β : ℕ → ℝ} (hβ : β =o[atTop] fun n => (n : ℝ)) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
-      (c : Circuit σ n 1) (special : ℕ → Prop) [DecidablePred special] (M : Type w)
+      (c : Circuit σ n 1) (special : Fin c.size → Prop) [DecidablePred special] (M : Type w)
       [CommMonoid M] [Finite M],
-        (∀ g : Fin c.size, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
+        (∀ g, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
         Ledger special c.program I M → Real.log (Nat.card M) ≤ β n → c.Decides I Acc (S n) →
-          (2 - ε) * n <
-            (r - 1) * (c.program.innerGates.filter fun g : Fin c.size => ¬special g).card := by
+          (2 - ε) * n < (r - 1) * (c.program.innerGates.filter fun g => ¬special g).card := by
   simpa only [div_one, one_add_one_eq_two] using
     eventually_lt_mul_card_of_ledger.{u, v, w} hr one_pos (layoutBound_one (r + 1)) hfree hK
       hdense hβ hε
@@ -83,14 +82,13 @@ theorem eventually_two_sub_mul_lt_mul_card_of_aggregates {r : ℕ} (hr : 2 ≤ r
       fun n => (n : ℝ))
     {β : ℕ → ℝ} (hβ : β =o[atTop] fun n => (n : ℝ)) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
-      (c : Circuit σ n 1) (special : ℕ → Prop) [DecidablePred special] (T : Type w)
+      (c : Circuit σ n 1) (special : Fin c.size → Prop) [DecidablePred special] (T : Type w)
       [CommMonoid T] [Finite T],
-        (∀ g : Fin c.size, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
-        (∀ g : Fin c.size, special g → Aggregates (I (c.program.lines g).op) T) →
-        Nat.card {g : Fin c.size // special g} * Real.log (Nat.card T) ≤ β n →
+        (∀ g, ¬special g → σ.Arity (c.program.lines g).op ≤ r) →
+        (∀ g, special g → Aggregates (I (c.program.lines g).op) T) →
+        Nat.card {g // special g} * Real.log (Nat.card T) ≤ β n →
         c.Decides I Acc (S n) →
-          (2 - ε) * n <
-            (r - 1) * (c.program.innerGates.filter fun g : Fin c.size => ¬special g).card := by
+          (2 - ε) * n < (r - 1) * (c.program.innerGates.filter fun g => ¬special g).card := by
   simpa only [div_one, one_add_one_eq_two] using
     eventually_lt_mul_card_of_aggregates.{u, v, w} hr one_pos (layoutBound_one (r + 1)) hfree hK
       hdense hβ hε

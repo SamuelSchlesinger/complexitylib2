@@ -2440,10 +2440,10 @@ info: 'Cslib.Circuits.Frontier.Ledger.run_total_trace' depends on axioms: [prope
 #print axioms Cslib.Circuits.Frontier.Ledger.run_total_trace
 
 /--
-info: 'Cslib.Circuits.Frontier.exists_ledger_of_aggregates' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Frontier.Ledger.ofAggregates' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Frontier.exists_ledger_of_aggregates
+#print axioms Cslib.Circuits.Frontier.Ledger.ofAggregates
 
 /--
 info: 'Cslib.Circuits.Frontier.aggregates_unbounded' depends on axioms: [propext, Classical.choice, Quot.sound]

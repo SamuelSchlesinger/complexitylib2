@@ -25,18 +25,18 @@ arguments) aggregates in `ZMod 2` under multiplication, and every function of th
 arguments modulo `m`, such as parity and `MOD_m`, aggregates in `ZMod m` under addition.
 
 If every special gate of a program aggregates in `T`, the special gates have a ledger in the
-monoid `T ^ k` of functions from the `k` special gates to `T`
-(`Frontier.exists_ledger_of_aggregates`): the contribution of a wire to a special gate is the
-product of its contributions to the argument slots of that gate that read it. So `k` aggregate
-gates cost `k log |T|` in the frontier lower bound.
+monoid `T ^ k` of functions from the `k` special gates to `T` (`Frontier.Ledger.ofAggregates`):
+the contribution of a wire to a special gate is the product of its contributions to the argument
+slots of that gate that read it. So `k` aggregate gates cost `k log |T|` in the frontier lower
+bound.
 
 ## Main definitions
 
 * `Cslib.Circuits.Frontier.Aggregates f T`: the operation `f` aggregates in `T`.
+* `Cslib.Circuits.Frontier.Ledger.ofAggregates`: the ledger of aggregate gates.
 
 ## Main results
 
-* `Cslib.Circuits.Frontier.exists_ledger_of_aggregates`: aggregate gates have a ledger.
 * `Cslib.Circuits.Frontier.aggregates_unbounded`: the operations of the Boolean basis of
   unbounded fan-in aggregate in `ZMod 2`.
 * `Cslib.Circuits.Frontier.aggregates_countMod`: functions of the number of true arguments
@@ -56,31 +56,24 @@ off a product of contributions of its arguments. -/
 def Aggregates {k : ℕ} (f : (Fin k → U) → U) (T : Type*) [CommMonoid T] : Prop :=
   ∃ (φ : Fin k → U → T) (ψ : T → U), ∀ x, f x = ψ (∏ i, φ i (x i))
 
+open Classical in
 /-- **Aggregate gates have a ledger.** If every special gate of a program aggregates in `T`,
-the special gates have a ledger in the monoid of functions from the special gates to `T`. -/
-theorem exists_ledger_of_aggregates [Nonempty U] {σ : Signature.{v}} {n s : ℕ}
-    (p : Program σ n s) (I : Interpretation σ U) (special : ℕ → Prop)
-    (T : Type*) [CommMonoid T] (h : ∀ g : Fin s, special g → Aggregates (I (p.lines g).op) T) :
-    Nonempty (Ledger special p I ({g : Fin s // special g} → T)) := by
-  classical
-  choose φ ψ hφψ using h
-  refine ⟨{
-    -- A wire contributes to a special gate the product of its contributions to the slots of
-    -- that gate that read it.
-    contribution := fun w u g => ∏ a with (p.lines g).wires a = w, φ g g.2 a u
-    -- The special gate numbered `k` reads off its own coordinate; the other numbers are never
-    -- consulted.
-    readout := fun m k =>
-      if hk : k < s then
-        if hs : special k then ψ ⟨k, hk⟩ hs (m ⟨⟨k, hk⟩, hs⟩) else Classical.arbitrary U
-      else Classical.arbitrary U
-    readout_prod := fun v g hg => ?_ }⟩
-  simp only [g.isLt, hg, ↓reduceDIte, Fin.eta, Finset.prod_apply, hφψ g hg]
-  refine congrArg (ψ g hg) ?_
-  -- Group the slots of `g` by the wire they read.
-  rw [← Finset.prod_fiberwise Finset.univ (p.lines g).wires]
-  refine Finset.prod_congr rfl fun w _ => Finset.prod_congr rfl fun a ha => ?_
-  rw [(Finset.mem_filter.1 ha).2]
+the special gates have a ledger in the monoid of functions from the special gates to `T`: a wire
+contributes to a special gate the product of its contributions to the slots of that gate that read
+it, and each special gate reads off its own coordinate. -/
+noncomputable def Ledger.ofAggregates {σ : Signature.{v}} {n s : ℕ} {special : Fin s → Prop}
+    {p : Program σ n s} {I : Interpretation σ U} {T : Type*} [CommMonoid T]
+    (h : ∀ g : Fin s, special g → Aggregates (I (p.lines g).op) T) :
+    Ledger special p I ({g // special g} → T) where
+  contribution w u g := ∏ a with (p.lines g).wires a = w, (h g g.2).choose a u
+  readout m g := (h g g.2).choose_spec.choose (m g)
+  readout_prod v g := by
+    simp only [Finset.prod_apply, (h g g.2).choose_spec.choose_spec]
+    refine congrArg (h g g.2).choose_spec.choose ?_
+    -- Group the slots of `g` by the wire they read.
+    rw [← Finset.prod_fiberwise Finset.univ (p.lines g).wires]
+    refine Finset.prod_congr rfl fun w _ => Finset.prod_congr rfl fun a ha => ?_
+    rw [(Finset.mem_filter.1 ha).2]
 
 /-- **The Boolean basis of unbounded fan-in aggregates.** Negation, conjunction and disjunction
 of any number of arguments aggregate in `ZMod 2` under multiplication: a conjunction is the

@@ -60,6 +60,7 @@ public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Depth
+public import Complexity.Computability.Circuit.Erase
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.Circuit.Frontier.AverageCase
