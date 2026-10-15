@@ -20,8 +20,8 @@ import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 
 **The theorem of Lecomte and Ramakrishnan** [LecomteRamakrishnan2026, Theorems 1 and 2]: for every
 depth `d ≥ 2` there is a constant `C` such that every symmetric Boolean function of `n` bits (one
-depending only on the number of true bits, `IsSymmetric`), majority among them, has alternating
-formulas of depth `d` with at most `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates
+depending only on the number of true bits, `BooleanFunction.IsSymmetric`), majority among them, has
+alternating formulas of depth `d` with at most `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates
 (`AltFormula.exists_of_isSymmetric`), so circuits over the unbounded fan-in basis of depth `d + 1`
 with at most `n` more gates (`Unbounded.exists_circuit_of_isSymmetric`), negations included. For
 depth three this is `2 ^ (C √n)`. The exponent is optimal for majority, by Korten's top-down bound
@@ -39,11 +39,6 @@ Each shifted comparison of two class weights is a symmetric function of their bi
 one class, on `2 (n / mᵢ + 1) ≤ (4 k) ^ (d + 1)` bits, so it has size `2 ^ (C_{d-1} 4 k)` at depth
 `d + 1` by induction (`exists_pairComparison`), and the comparisons of one test merge into one gate
 layer.
-
-## Main definitions
-
-* `Cslib.Circuits.Boolean.IsSymmetric`: Boolean functions depending only on the number of true
-  bits.
 
 ## Main results
 
@@ -64,33 +59,9 @@ layer.
 
 namespace Cslib.Circuits.Boolean
 
-open Finset ShallowSymmetric
+open Finset ShallowSymmetric BitString BooleanFunction
 
 variable {n : ℕ}
-
-/-- A Boolean function is *symmetric* when it depends only on the number of true bits. -/
-def IsSymmetric (f : BitString n → Bool) : Prop :=
-  ∀ x y, weight x = weight y → f x = f y
-
-/-- A symmetric function factors through the number of true bits. -/
-theorem IsSymmetric.exists_eq_comp_weight {f : BitString n → Bool} (hf : IsSymmetric f) :
-    ∃ a : ℕ → Bool, ∀ x, a (weight x) = f x := by
-  classical
-  refine ⟨fun w => decide (∃ x, weight x = w ∧ f x = true), fun x => Bool.eq_iff_iff.2 ?_⟩
-  simp only [decide_eq_true_eq]
-  exact ⟨fun ⟨y, hy, hfy⟩ => hf y x hy ▸ hfy, fun hx => ⟨x, rfl, hx⟩⟩
-
-/-- The number of true bits, as a weight. -/
-theorem weight_eq_card (x : BitString n) : weight x = #{i | x i = true} := by
-  rw [weight, card_filter]
-  exact sum_congr rfl fun i _ => by cases x i <;> rfl
-
-/-- Threshold functions, and so majority, are symmetric. -/
-theorem isSymmetric_threshold (j : ℕ) : IsSymmetric (threshold n j) := fun x y h => by
-  simp only [threshold, ← weight_eq_card, h]
-
-theorem isSymmetric_majority : IsSymmetric (majority n) :=
-  isSymmetric_threshold _
 
 namespace ShallowSymmetric
 

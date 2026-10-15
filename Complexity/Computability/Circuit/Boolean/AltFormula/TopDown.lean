@@ -250,12 +250,12 @@ theorem two_rpow_lt_size_of_eval_eq_majority {d : ℕ} (hd : 2 ≤ d) :
   have hP := solvesKW_kwProtocol hf ⟨0, le_of_max_le_right hn⟩
   -- a protocol for majority gives one for strict majority
   have hneg (z : BitString n) :
-      (!majority n fun i => !z i) = BooleanAnalysis.strictMajority z := by
-    simpa using (Unbounded.strictMajority_not fun i => !z i).symm
+      (!majority n fun i => !z i) = strictMajority n z := by
+    simpa using (strictMajority_not fun i => !z i).symm
   have hQ : ((kwProtocol (size f) ⟨0, le_of_max_le_right hn⟩ op f false).swapPlayers.comap
-      fun x i => !x i).SolvesKW BooleanAnalysis.strictMajority := fun x y hx hy =>
+      fun x i => !x i).SolvesKW (strictMajority n) := fun x y hx hy =>
     hP.swapPlayers.comap_not x y ((hneg x).trans hx) ((hneg y).trans hy)
-  have h := two_rpow_lt_card_of_solvesKW (f := fun _ => BooleanAnalysis.strictMajority) hN
+  have h := two_rpow_lt_card_of_solvesKW (f := strictMajority) hN
     (le_of_max_le_left hn) (by simp; omega) _ hQ
   simp only [Fintype.card_sum, Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h
   push_cast at h

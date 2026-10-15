@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Foundations.Data.BitString.Weight
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Finset.Powerset
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
@@ -46,68 +47,20 @@ Karchmer–Wigderson game of strict majority on `n` bits for large `n`
 
 /-! ### Hamming layers and the initial majority deficit
 
-Strict majority uses the library predicate `strictMajority`, so a tie
-is false. The two layers at weights `n/2` and `n/2+1` straddle its threshold.
+Strict majority (`strictMajority`) is false at a tie, so the two layers at weights `n / 2` and
+`n / 2 + 1` straddle its threshold.
 -/
 
 
 namespace Cslib.BooleanAnalysis
 
+open BitString
+
 open Finset
-
-/-- The number of true coordinates. -/
-def popCount {n : ℕ} (x : Fin n → Bool) : ℕ :=
-  #{i | x i = true}
-
-/-- Strict majority: more than half of the coordinates are true, so a tie is false. -/
-def strictMajority {n : ℕ} (x : Fin n → Bool) : Bool :=
-  decide (n < 2 * popCount x)
-
-theorem popCount_le {n : ℕ} (x : Fin n → Bool) : popCount x ≤ n :=
-  (card_filter_le _ _).trans_eq (card_fin n)
-
-theorem strictMajority_eq_true_iff {n : ℕ} (x : Fin n → Bool) :
-    strictMajority x = true ↔ n / 2 < popCount x := by
-  simp only [strictMajority, decide_eq_true_eq]
-  omega
-
-theorem strictMajority_eq_false_iff {n : ℕ} (x : Fin n → Bool) :
-    strictMajority x = false ↔ popCount x ≤ n / 2 := by
-  simp only [strictMajority, decide_eq_false_iff_not]
-  omega
-
-theorem popCount_not {n : ℕ} (x : Fin n → Bool) : popCount (fun i => !x i) = n - popCount x := by
-  have h := card_filter_add_card_filter_not (s := (univ : Finset (Fin n)))
-    (fun i => x i = true)
-  simp only [card_univ, Fintype.card_fin] at h
-  have : popCount (fun i => !x i) = #{i | ¬ x i = true} := by
-    simp [popCount]
-  rw [this, popCount]
-  omega
-
-/-- The words with `r` true coordinates number `C(n, r)`. -/
-theorem card_filter_popCount_eq (n r : ℕ) :
-    #{x : Fin n → Bool | popCount x = r} = n.choose r := by
-  refine (?_ : #{x : Fin n → Bool | popCount x = r} =
-    #(powersetCard r (univ : Finset (Fin n)))).trans
-      (by rw [card_powersetCard, card_univ, Fintype.card_fin])
-  refine card_nbij' (fun x => ({i | x i = true} : Finset (Fin n))) (fun s i => decide (i ∈ s))
-    (fun x hx => ?_)
-    (fun s hs => ?_) (fun x _ => ?_) (fun s _ => ?_)
-  · exact mem_powersetCard.2 ⟨subset_univ _, (mem_filter.1 hx).2⟩
-  · refine mem_filter.2 ⟨mem_univ _, ?_⟩
-    rw [← (mem_powersetCard.1 hs).2, popCount]
-    congr 1
-    ext i
-    simp
-  · funext i
-    simp
-  · ext i
-    simp
 
 /-- The Boolean vectors with exactly `r` true coordinates. -/
 def weightLayer (n r : ℕ) : Finset (Fin n → Bool) :=
-  univ.filter fun x => popCount x = r
+  univ.filter fun x => weight x = r
 
 /-- A common deficit and density-limit bound for the two majority boundary layers.
 The logarithmic term bounds their entropy deficit; `128` bounds the mask size. -/
@@ -125,6 +78,8 @@ the exponent `1/(d-1)` in a `d`-round communication lower bound.
 
 
 namespace Cslib.BooleanAnalysis
+
+open BitString
 
 open Filter Asymptotics
 
@@ -162,6 +117,8 @@ end Cslib.BooleanAnalysis
 
 namespace Cslib.Communication
 
+open BitString
+
 theorem finite_budget_with_deficit_of_cost {n d : ℕ} (hd : 0 < d) {m k : ℝ}
     (hm : 0 ≤ m) (hk : 0 ≤ k)
     (hcost : m ≤ (n : ℝ) ^ ((d : ℝ)⁻¹) / (128 * (32768 * (194 : ℝ) ^ d)))
@@ -188,7 +145,7 @@ theorem finite_budget_with_deficit_of_cost {n d : ℕ} (hd : 0 < d) {m k : ℝ}
 
 end Cslib.Communication
 
-/-! ### The two layers surrounding the strictMajority threshold
+/-! ### The two layers around the threshold of strict majority
 
 The largest binomial coefficient is at least `2^n/(n+1)`, and its upper
 neighbor is at least half as large. This gives a logarithmic entropy
@@ -197,6 +154,8 @@ deficit for both boundary layers, for even as well as odd input sizes.
 
 
 namespace Cslib.BooleanAnalysis
+
+open BitString
 
 open Finset
 open scoped BigOperators
@@ -226,12 +185,12 @@ theorem weightLayer_deficit {n r : ℕ} (hr : r ≤ n)
     (hcard : 2 ^ n ≤ (2 * (n + 1)) * n.choose r) :
     (weightLayer n r).Nonempty ∧ uniformDeficit (weightLayer n r) ≤ majorityDeficitBound n := by
   have hne : (weightLayer n r).Nonempty := by
-    rw [← card_pos, weightLayer, card_filter_popCount_eq]
+    rw [← card_pos, weightLayer, card_filter_weight_eq]
     exact Nat.choose_pos hr
   refine ⟨hne, ?_⟩
   have hd : uniformDeficit (weightLayer n r) ≤ Real.logb 2 (2 * ((n : ℝ) + 1)) := by
     apply (uniformDeficit_le_iff hne).mpr
-    simp only [Fintype.card_fin, weightLayer, card_filter_popCount_eq]
+    simp only [Fintype.card_fin, weightLayer, card_filter_weight_eq]
     rw [Real.rpow_sub (by norm_num), Real.rpow_natCast,
       Real.rpow_logb (by norm_num) (by norm_num) (by positivity)]
     apply (div_le_iff₀ (by positivity)).mpr
@@ -250,29 +209,6 @@ theorem majority_layers_deficit {n : ℕ} (hn : 2 ≤ n) :
   · exact weightLayer_deficit (by omega) (by nlinarith)
   · exact weightLayer_deficit (by omega) (by nlinarith)
 
-theorem popCount_update_true {n : ℕ} (x : Fin n → Bool) (i : Fin n) (hi : x i = false) :
-    popCount (Function.update x i true) = popCount x + 1 := by
-  have he : univ.filter (fun j => Function.update x i true j = true) =
-      insert i (univ.filter (fun j => x j = true)) := by
-    ext j
-    by_cases hj : j = i
-    · subst hj; simp
-    · simp [hj]
-  rw [popCount, he, card_insert_of_notMem]
-  · rfl
-  · simp [hi]
-
-theorem popCount_update_false {n : ℕ} (x : Fin n → Bool) (i : Fin n) (hi : x i = true) :
-    popCount (Function.update x i false) + 1 = popCount x := by
-  have he : univ.filter (fun j => Function.update x i false j = true) =
-      (univ.filter (fun j => x j = true)).erase i := by
-    ext j
-    by_cases hj : j = i
-    · subst hj; simp
-    · simp [hj]
-  rw [popCount, he]
-  exact card_erase_add_one (by simp [hi])
-
 end Cslib.BooleanAnalysis
 
 /-! ### Density limits from many single-bit neighbors
@@ -282,22 +218,22 @@ probability at least `8/9`. Its expected size is `16`, so the probability
 that it has more than `128` coordinates is at most `1/8`. A selected
 single-bit neighbor then gives fiber density at least `2^(-128)`.
 
-Applying this to the two middle Hamming layers initializes Korten's
-top-down adversary for strictMajority. This is an extension of his parity
-initialization in ECCC TR26-221 (2026),
-https://eccc.weizmann.ac.il/report/2026/221/.
+Applying this to the two middle Hamming layers initializes Korten's top-down adversary for strict
+majority, extending his initialization for parity [Korten2026].
 -/
 
 
 namespace Cslib.BooleanAnalysis
 
+open BitString
+
 open Finset
 open scoped BigOperators
 
-theorem bernoulliAverage_popCount {n : ℕ} (p : ℝ) :
-    bernoulliAverage p (fun P : Fin n → Bool => (popCount P : ℝ)) = n * p := by
-  have he (P : Fin n → Bool) : (popCount P : ℝ) = ∑ i, if P i then (1 : ℝ) else 0 := by
-    simp [popCount]
+theorem bernoulliAverage_weight {n : ℕ} (p : ℝ) :
+    bernoulliAverage p (fun P : Fin n → Bool => (weight P : ℝ)) = n * p := by
+  have he (P : Fin n → Bool) : (weight P : ℝ) = ∑ i, if P i then (1 : ℝ) else 0 := by
+    simp [weight]
   unfold bernoulliAverage
   simp_rw [he, mul_sum]
   rw [sum_comm]
@@ -309,7 +245,7 @@ theorem bernoulliAverage_popCount {n : ℕ} (p : ℝ) :
 theorem bernoulliAverage_hits {n : ℕ} (p : ℝ) (s : Fin n → Bool) :
     bernoulliAverage p (fun P : Fin n → Bool =>
       if ∃ i, s i = true ∧ P i = true then (1 : ℝ) else 0) =
-        1 - (1 - p) ^ popCount s := by
+        1 - (1 - p) ^ weight s := by
   let f (P : {i // s i = true} → Bool) : ℝ := if ∃ i, P i = true then 1 else 0
   calc
     _ = bernoulliAverage p (fun P : Fin n → Bool => f (fun i => P i)) := by
@@ -318,12 +254,12 @@ theorem bernoulliAverage_hits {n : ℕ} (p : ℝ) (s : Fin n → Bool) :
       simp [f]
     _ = bernoulliAverage p f := bernoulliAverage_restrict p s f
     _ = _ := by
-      simpa only [f, Fintype.card_subtype, popCount] using
+      simpa only [f, Fintype.card_subtype, weight] using
         bernoulliAverage_nonempty (ι := {i // s i = true}) p
 
 theorem coordinateDensity_of_neighbor {n : ℕ} (X : Finset (Fin n → Bool))
     (P x : Fin n → Bool) (i : Fin n) (hi : P i = true)
-    (hx : Function.update x i (!x i) ∈ X) (hsmall : popCount P ≤ 128) :
+    (hx : Function.update x i (!x i) ∈ X) (hsmall : weight P ≤ 128) :
     (2 : ℝ) ^ (-(128 : ℝ)) ≤ coordinateDensity X P x := by
   have he : completePattern P x (fun j => Function.update x i (!x i) j) =
       Function.update x i (!x i) := by
@@ -339,7 +275,7 @@ theorem coordinateDensity_of_neighbor {n : ℕ} (X : Finset (Fin n → Bool))
   unfold coordinateDensity
   rw [Fintype.card_subtype]
   change (2 : ℝ) ^ (-(128 : ℝ)) ≤
-    (coordinateFiber X P x).card / (2 : ℝ) ^ popCount P
+    (coordinateFiber X P x).card / (2 : ℝ) ^ weight P
   apply (le_div_iff₀ (by positivity)).mpr
   have hpw := pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 2) hsmall
   calc
@@ -349,7 +285,7 @@ theorem coordinateDensity_of_neighbor {n : ℕ} (X : Finset (Fin n → Bool))
     _ ≤ _ := hc
 
 theorem isDensityLimit_of_many_neighbors {n : ℕ} (hn : 16 ≤ n)
-    (X : Finset (Fin n → Bool)) (x s : Fin n → Bool) (hs : n ≤ 2 * popCount s)
+    (X : Finset (Fin n → Bool)) (x s : Fin n → Bool) (hs : n ≤ 2 * weight s)
     (hneighbor : ∀ i, s i = true → Function.update x i (!x i) ∈ X) :
     IsDensityLimit X (16 / n) 128 x := by
   let p : ℝ := 16 / n
@@ -357,33 +293,33 @@ theorem isDensityLimit_of_many_neighbors {n : ℕ} (hn : 16 ≤ n)
   have hp : 0 ≤ p := by dsimp [p]; positivity
   have hp' : p ≤ 1 := (div_le_one hnpos).mpr (by exact_mod_cast hn)
   have hmean : (n : ℝ) * p = 16 := by dsimp [p]; field_simp
-  have hs' : (n : ℝ) ≤ 2 * popCount s := by exact_mod_cast hs
-  have hhit : 8 ≤ (popCount s : ℝ) * p := by
+  have hs' : (n : ℝ) ≤ 2 * weight s := by exact_mod_cast hs
+  have hhit : 8 ≤ (weight s : ℝ) * p := by
     nlinarith [mul_le_mul_of_nonneg_right hs' hp]
-  have hnone : (1 - p) ^ popCount s ≤ 1 / 9 := by
-    have hh := one_sub_pow_bound hp' (popCount s)
-    have hnon : 0 ≤ (1 - p) ^ popCount s := pow_nonneg (sub_nonneg.mpr hp') _
+  have hnone : (1 - p) ^ weight s ≤ 1 / 9 := by
+    have hh := one_sub_pow_bound hp' (weight s)
+    have hnon : 0 ≤ (1 - p) ^ weight s := pow_nonneg (sub_nonneg.mpr hp') _
     nlinarith
   have hpoint (P : Fin n → Bool) :
       (if ∃ i, s i = true ∧ P i = true then (1 : ℝ) else 0) -
-        (1 / 128) * (popCount P : ℝ) ≤
+        (1 / 128) * (weight P : ℝ) ≤
       if (2 : ℝ) ^ (-(128 : ℝ)) ≤ coordinateDensity X P x then 1 else 0 := by
     by_cases hhit : ∃ i, s i = true ∧ P i = true
     · rw [ite_eq_left hhit]
-      by_cases hsmall : popCount P ≤ 128
+      by_cases hsmall : weight P ≤ 128
       · obtain ⟨i, hi, hPi⟩ := hhit
         rw [ite_eq_left
           (coordinateDensity_of_neighbor X P x i hPi (hneighbor i hi) hsmall)]
-        have := Nat.cast_nonneg (α := ℝ) (popCount P)
+        have := Nat.cast_nonneg (α := ℝ) (weight P)
         linarith
-      · have hlarge : (128 : ℝ) < popCount P := by exact_mod_cast (Nat.lt_of_not_ge hsmall)
+      · have hlarge : (128 : ℝ) < weight P := by exact_mod_cast (Nat.lt_of_not_ge hsmall)
         split_ifs <;> linarith
     · rw [ite_eq_right hhit]
-      have := Nat.cast_nonneg (α := ℝ) (popCount P)
+      have := Nat.cast_nonneg (α := ℝ) (weight P)
       split_ifs <;> linarith
   have hh := bernoulliAverage_mono hp hp' hpoint
   rw [bernoulliAverage_sub, bernoulliAverage_hits,
-    bernoulliAverage_mul, bernoulliAverage_popCount, hmean] at hh
+    bernoulliAverage_mul, bernoulliAverage_weight, hmean] at hh
   unfold IsDensityLimit
   change (3 : ℝ) / 4 ≤ bernoulliAverage p _
   linarith
@@ -397,43 +333,37 @@ theorem majority_layers_limits {n : ℕ} (hn : 16 ≤ n) :
   have hp : (16 : ℝ) / n ≤ 1 := (div_le_one hnpos).mpr (by exact_mod_cast hn)
   constructor
   · intro x hx
-    have hx' : popCount x = n / 2 := (mem_filter.mp hx).2
+    have hx' : weight x = n / 2 := (mem_filter.mp hx).2
     have hl := isDensityLimit_of_many_neighbors hn (weightLayer n (n / 2 + 1)) x
-      (fun i => !x i) (by rw [popCount_not, hx']; omega) ?_
+      (fun i => !x i) (by rw [weight_not, Fintype.card_fin, hx']; omega) ?_
     · exact hl.mono_deficit (by positivity) hp (le_majorityDeficitBound n)
     intro i hi
     have hi' : x i = false := by simpa using hi
     simp only [weightLayer, mem_filter, mem_univ, true_and, hi', Bool.not_false]
-    rw [popCount_update_true x i hi', hx']
+    rw [weight_update_true hi', hx']
   · intro y hy
-    have hy' : popCount y = n / 2 + 1 := (mem_filter.mp hy).2
+    have hy' : weight y = n / 2 + 1 := (mem_filter.mp hy).2
     have hl := isDensityLimit_of_many_neighbors hn (weightLayer n (n / 2)) y
       y (by rw [hy']; omega) ?_
     · exact hl.mono_deficit (by positivity) hp (le_majorityDeficitBound n)
     intro i hi
-    have hc := popCount_update_false y i hi
+    have hc := weight_update_false hi
     simp only [weightLayer, mem_filter, mem_univ, true_and, hi, Bool.not_true]
     omega
 
 end Cslib.BooleanAnalysis
 
-/-! ### Top-down communication, wire, and gate lower bounds for strictMajority
+/-! ### The communication lower bound for strict majority
 
-Initialize the generalized bilateral density adversary with the two
-majority boundary layers. Their logarithmic entropy loss is absorbed by
-the power-law budget. The circuit-to-protocol translations then give the
-wire bound, the exponential gate bound, and the superpolynomial gate bound
-at every fixed depth for unbounded De Morgan circuits with free input
-negations (via the shared glue in `TopDown.Internal.GateBounds`).
-
-This extends the argument of Oliver Korten, *Top-Down Lower Bounds for
-All Depths*, ECCC TR26-221 (2026),
-https://eccc.weizmann.ac.il/report/2026/221/. His Theorem 3 states the
-parity case; the strictMajority initialization is proved here.
+The bilateral density adversary starts from the two layers around the threshold, and the power-law
+budget absorbs their logarithmic entropy deficit. This extends the argument of Korten
+[Korten2026], whose Theorem 3 is the case of parity.
 -/
 
 
 namespace Cslib.Communication.RoundProtocol
+
+open BitString
 
 open Cslib.BooleanAnalysis Finset
 
@@ -442,7 +372,7 @@ variable {M : Type*} [Fintype M]
 theorem not_solves_majority_finite {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
     {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m)
     (hsize : 64 * (32768 * (194 : ℝ) ^ d * (m + majorityDeficitBound n)) ^ d ≤ (n : ℝ)) :
-    ¬ P.SolvesKW strictMajority := by
+    ¬ P.SolvesKW (strictMajority n) := by
   have hk := le_majorityDeficitBound n
   have hC : 1 ≤ 32768 * (194 : ℝ) ^ d * (m + majorityDeficitBound n) := by
     have hh : 1 ≤ (194 : ℝ) ^ d := one_le_pow₀ (by norm_num)
@@ -461,11 +391,11 @@ theorem not_solves_majority_finite {n d : ℕ} (P : RoundProtocol (Fin n) M (d +
     (show (0 : ℝ) < 16 / n by positivity) hX.1 hY.1 hX.2 hY.2 hleft hright hbudget
   intro x hx y hy
   apply hsol x y
-  · apply (strictMajority_eq_false_iff x).mpr
+  · apply strictMajority_eq_false_iff.mpr
     exact ((mem_filter.mp hx).2).le
-  · apply (strictMajority_eq_true_iff y).mpr
+  · apply strictMajority_eq_true_iff.mpr
     have := (mem_filter.mp hy).2
-    change popCount y = n / 2 + 1 at this
+    change weight y = n / 2 + 1 at this
     omega
 
 end Cslib.Communication.RoundProtocol
@@ -474,6 +404,8 @@ universe u
 
 namespace Cslib.Communication
 
+open BitString
+
 open Cslib.BooleanAnalysis
 
 theorem majority_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ rounds) :
@@ -481,7 +413,7 @@ theorem majority_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ round
       ∀ {M : Type u} [Fintype M] (m : ℝ), 0 ≤ m →
         (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m →
         m ≤ ε * (n : ℝ) ^ (((rounds - 1 : ℕ) : ℝ)⁻¹) →
-        ∀ P : RoundProtocol (Fin n) M rounds, ¬ P.SolvesKW strictMajority := by
+        ∀ P : RoundProtocol (Fin n) M rounds, ¬ P.SolvesKW (strictMajority n) := by
   obtain ⟨d, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (show rounds ≠ 0 by omega)
   have hd : 0 < d := by omega
   let ε : ℝ := 1 / (128 * (32768 * (194 : ℝ) ^ d))

@@ -32,7 +32,7 @@ Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file de
 | `Complexity.Computability.Circuit.Boolean.PPolyHard` | same path | candidate | a language outside `P/poly`, from upstream Shannon |
 | `Complexity.Computability.Complexity.Problems.{IndependentSet,Clique}` | same paths | candidate | Karp's `SAT ≤ IndependentSet` and `IndependentSet ≤ Clique`, correctness (polynomial time open) |
 | `Complexity.Computability.Circuit.Boolean.Synthesis`, `Complexity.Computability.Languages.Slice` | additions to the upstream files of the same name | candidate | congruence and quantifier lemmas for `Synthesis`; slices of `⊥`, `⊤`, complement, union, intersection |
-| `Complexity.Computability.Circuit.Boolean.Threshold` | same path | candidate | threshold and majority functions with quadratic synthesis cost |
+| `Complexity.Computability.Circuit.Boolean.Threshold` | same path | candidate | quadratic synthesis cost of the threshold functions |
 | `Complexity.Computability.Circuit.Complexity` | addition to `Cslib/Computability/Circuit/Complexity.lean` | candidate | complexity of computing `m` functions side by side |
 | `Complexity.Computability.Circuit.Boolean.Substitution` | same path | candidate | substituting variables and constants for inputs costs at most two gates |
 | `Complexity.Computability.Circuit.Approximation` | same path | candidate | the approximation method over straight-line programs, using upstream `Program.cost` (port of v1 `Algebraic`) |
@@ -103,6 +103,7 @@ Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file de
 | `Complexity.Foundations.Data.Nat.PolynomialBound.Exponential` | addition to `Foundations/Data/Nat/PolynomialBound.lean` | candidate | polynomially bounded functions are eventually below `2 ^ n` |
 | `Complexity.Computability.Circuit.Boolean.BinaryCost` | same path | candidate | the binary-gate cost of De Morgan programs (Jukna's measure with free negations) |
 | `Complexity.Foundations.Data.BitString.Parity` | same path | candidate | the parity function on bit strings and its basic facts |
+| `Complexity.Foundations.Data.BitString.Weight` | same path | candidate | the Hamming weight of a Boolean vector, threshold, majority and strict majority, and symmetric Boolean functions (`BooleanFunction.IsSymmetric`); the one weight used by Khrapchenko, Lecomte–Ramakrishnan and Korten's majority bound |
 | `Complexity.Computability.Circuit.Boolean.Parity` | same path | candidate | De Morgan circuits for parity with `3 n` binary and `4 n` gates in all |
 | `Complexity.Computability.Circuit.Boolean.GateElimination` | same path | candidate | Schnorr's bound: parity needs `3 (n - 1)` binary gates, exactly; gate elimination by counting nonredundant gates under partial assignments, without circuit surgery (v1 needed about 6k lines of De Morgan infrastructure) |
 | `Complexity.Computability.Circuit.Formula` | same path | candidate | formulas over a signature (trees of operations), evaluation, homomorphisms, leaf size, size, depth, leaf-size bounds under bounded fan-in, formulas as circuits (`toCircuit`: same function and size, no deeper), substitution for inputs (`bind`, `lift`, `substLast`); open review items: an `Equiv` with `PFunctor.FreeM`, a formula complexity measure |

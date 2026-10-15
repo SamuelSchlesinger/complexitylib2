@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.ShiftTest
-public import Cslib.Foundations.Data.BitString
+public import Complexity.Foundations.Data.BitString.Weight
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Data.Nat.GCD.BigOperators
 import Mathlib.Data.Fintype.BigOperators
@@ -28,23 +28,7 @@ difference of block weights into a symmetric function.
 
 namespace Cslib.Circuits.Boolean.ShallowSymmetric
 
-open Finset
-
-/-- Hamming weight on any finite set of coordinates. -/
-def weight {ι : Type*} [Fintype ι] (x : ι → Bool) : ℕ := ∑ i, (x i).toNat
-
-theorem weight_le {ι : Type*} [Fintype ι] (x : ι → Bool) :
-    weight x ≤ Fintype.card ι := by
-  calc
-    weight x ≤ ∑ _i : ι, 1 := sum_le_sum fun i _ => Bool.toNat_le (x i)
-    _ = _ := by simp
-
-/-- Complementary strings have weights adding to their length. -/
-theorem weight_not_add {ι : Type*} [Fintype ι] (x : ι → Bool) :
-    weight (fun i => !(x i)) + weight x = Fintype.card ι := by
-  rw [weight, weight, ← sum_add_distrib]
-  have h (i : ι) : (!x i).toNat + (x i).toNat = 1 := by cases x i <;> rfl
-  simp only [h, sum_const, card_univ, smul_eq_mul, mul_one]
+open Finset BitString
 
 /-- The weight of a partition block. -/
 def blockWeight {ι G : Type*} [Fintype ι] [DecidableEq G]
@@ -54,7 +38,7 @@ def blockWeight {ι G : Type*} [Fintype ι] [DecidableEq G]
 /-- Summing the block weights recovers the total weight. -/
 theorem sum_blockWeight {ι G : Type*} [Fintype ι] [Fintype G] [DecidableEq G]
     (block : ι → G) (x : ι → Bool) : ∑ a, blockWeight block x a = weight x := by
-  unfold blockWeight weight
+  simp only [blockWeight, weight_eq_sum_toNat]
   rw [← Fintype.sum_sigma']
   exact Fintype.sum_equiv (Equiv.sigmaFiberEquiv block) _ _ (fun _ => rfl)
 
@@ -85,8 +69,7 @@ theorem weight_pair_not_add {ι κ : Type*} [Fintype ι] [Fintype κ]
     (x : ι → Bool) (y : κ → Bool) :
     weight (Sum.elim x (fun j => !(y j))) + weight y =
       weight x + Fintype.card κ := by
-  simp only [weight, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr]
-  exact (Nat.add_assoc _ _ _).trans (congrArg (weight x + ·) (weight_not_add y))
+  rw [weight_sum_elim, Nat.add_assoc, weight_not_add]
 
 /-- Pairwise coprime modular equalities combine into equality modulo the product. -/
 theorem modEq_prod {ι : Type*} [Fintype ι] (k : ι → ℕ)

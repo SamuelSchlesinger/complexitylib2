@@ -9,6 +9,7 @@ module
 
 public import Cslib.Computability.Circuit.Boolean.Synthesis
 public import Cslib.Computability.Circuit.Boolean.Complexity
+public import Complexity.Foundations.Data.BitString.Weight
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 import Mathlib.Algebra.Group.Nat.Defs
@@ -29,15 +30,13 @@ size `O(k ^ 2)` on top of them.
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.atLeast`: the counting functions.
-* `Cslib.Circuits.Boolean.threshold`: the threshold function `Th^m_j` on `m` variables.
-* `Cslib.Circuits.Boolean.majority`: the majority function, the threshold `Th^m_⌈m/2⌉`.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.synthesis_atLeastUpTo`: all counting functions for `i ≤ k`.
 * `Cslib.Circuits.Boolean.synthesis_atLeast`: one threshold function, within `O(k ^ 2)` gates.
-* `Cslib.Circuits.Boolean.complexity_threshold_le`: the threshold functions on `m` variables have
-  circuits with `O(m ^ 2)` gates.
+* `Cslib.Circuits.Boolean.complexity_threshold_le`: the threshold functions `Cslib.threshold` on
+  `m` variables have circuits with `O(m ^ 2)` gates.
 -/
 
 @[expose] public section
@@ -124,19 +123,10 @@ theorem synthesis_atLeast {s : Set (BooleanFunction n)} {k j : ℕ} (hf : ∀ i 
   (synthesis_atLeastUpTo f k hf k le_rfl).mono Set.Subset.rfl
     (Set.singleton_subset_iff.2 ⟨k, le_rfl, j, hj, rfl⟩) le_rfl
 
-/-- The threshold function on `m` variables: at least `j` of them are true. -/
-def threshold (m j : ℕ) : BooleanFunction m :=
-  fun y => decide (j ≤ (Finset.univ.filter fun i => y i = true).card)
-
-/-- The majority function on `m` bits: whether at least half of them are true, that is, the
-threshold function `Th^m_⌈m/2⌉`. -/
-def majority (m : ℕ) : BooleanFunction m :=
-  threshold m ((m + 1) / 2)
-
 theorem atLeast_eq_threshold (m j : ℕ) :
     atLeast (fun l y => if h : l < m then y ⟨l, h⟩ else false) m j = threshold m j := by
   funext y
-  simp only [atLeast, threshold]
+  simp only [atLeast, threshold, BitString.weight]
   congr 2
   rw [Finset.card_filter, Finset.card_filter,
     ← Fin.sum_univ_eq_sum_range (fun l => if (if h : l < m then y ⟨l, h⟩ else false) = true then 1
@@ -152,8 +142,9 @@ theorem complexity_threshold_le (m j : ℕ) :
         inputs m := fun l hl => ⟨⟨l, hl⟩, funext fun y => by simp [hl]⟩
     exact (synthesis_atLeast _ hg hj).complexity_le
   · have : threshold m j = fun _ => false := funext fun y => by
-      have := Finset.card_le_univ (Finset.univ.filter fun i : Fin m => y i = true)
-      simp only [threshold, Fintype.card_fin, decide_eq_false_iff_not, not_le] at this ⊢
+      have := BitString.weight_le y
+      rw [Fintype.card_fin] at this
+      rw [← Bool.not_eq_true, threshold_eq_true_iff]
       omega
     rw [this]
     exact (Synthesis.const false).complexity_le.trans (by omega)

@@ -26,6 +26,7 @@ by one OR layer.
 
 namespace Cslib.Circuits.Boolean.ShallowSymmetric
 
+open BitString
 
 /-- Lift a symmetric synthesis bound to one modular comparison of two blocks. -/
 theorem exists_pairComparison {n k d B M : ℕ}
@@ -61,6 +62,7 @@ theorem exists_pairComparison {n k d B M : ℕ}
   let z : Fin m → Bool := fun u => (select u).2.xor (x (select u).1)
   have hz : weight z = weight (Sum.elim (fun u : I => x u.1)
       (fun u : J => !(x u.1))) := by
+    rw [weight_eq_sum_toNat, weight_eq_sum_toNat]
     apply Fintype.sum_equiv e
     intro u
     dsimp [z, select]

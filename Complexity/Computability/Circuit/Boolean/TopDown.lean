@@ -303,24 +303,13 @@ theorem two_rpow_lt_add_size_of_computes_parity {d : ℕ} (hd : 2 ≤ d) :
 `two_rpow_lt_add_size_of_computes_parity` holds for strict majority. -/
 theorem two_rpow_lt_add_size_of_computes_strictMajority {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
-      C.Computes interpretation (single BooleanAnalysis.strictMajority) →
+      C.Computes interpretation (single (strictMajority n)) →
       C.depthWith Op.andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
   obtain ⟨ε, hε, N, hN⟩ := majority_communication_lower_bound.{0} d hd
   exact ⟨ε, hε, max N 1, fun n hn C hC hCd =>
-    two_rpow_lt_add_size_of_not_solvesKW (f := fun _ => BooleanAnalysis.strictMajority) hN hn
+    two_rpow_lt_add_size_of_not_solvesKW (f := strictMajority) hN hn
       (exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd)⟩
-
-/-- Strict majority of the negated bits is the negation of majority: fewer than half of the bits
-are true exactly when not at least half of them are. -/
-theorem strictMajority_not (x : BitString n) :
-    BooleanAnalysis.strictMajority (fun i => !x i) = !majority n x := by
-  have h := BooleanAnalysis.popCount_not x
-  have hle := BooleanAnalysis.popCount_le x
-  have hmaj : majority n x = decide ((n + 1) / 2 ≤ BooleanAnalysis.popCount x) := rfl
-  rw [hmaj, BooleanAnalysis.strictMajority, h, Bool.eq_iff_iff]
-  simp only [decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not, not_le]
-  omega
 
 /-- **Korten's bound for majority**, extending [Korten2026]: the bound of
 `two_rpow_lt_add_size_of_computes_parity` holds for majority. A protocol for majority gives one
@@ -332,10 +321,10 @@ theorem two_rpow_lt_add_size_of_computes_majority {d : ℕ} (hd : 2 ≤ d) :
   obtain ⟨ε, hε, N, hN⟩ := majority_communication_lower_bound.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
   obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
-  refine two_rpow_lt_add_size_of_not_solvesKW (f := fun _ => BooleanAnalysis.strictMajority) hN
+  refine two_rpow_lt_add_size_of_not_solvesKW (f := strictMajority) hN
     hn ⟨P.swapPlayers.comap fun x i => !x i, ?_⟩
   have h := hP.swapPlayers.comap_not
-  have hneg (z : BitString n) : (!majority n fun i => !z i) = BooleanAnalysis.strictMajority z := by
+  have hneg (z : BitString n) : (!majority n fun i => !z i) = strictMajority n z := by
     simpa using (strictMajority_not fun i => !z i).symm
   exact fun x y hx hy => h x y ((hneg x).trans hx) ((hneg y).trans hy)
 

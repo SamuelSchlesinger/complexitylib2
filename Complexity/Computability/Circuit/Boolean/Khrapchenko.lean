@@ -300,9 +300,9 @@ theorem mul_le_leafSize_of_computes_threshold {k : ℕ} {F : Formula signature n
   · simp [show n + 1 - k = 0 by omega]
   rw [mul_comm, show n + 1 - k = n - (k - 1) by omega]
   refine F.mul_le_leafSize (A := weight k) (B := weight (k - 1))
-    (fun a ha => (hF a).trans (by simp [threshold, (mem_filter.1 ha).2]))
+    (fun a ha => (hF a).trans (by simp [threshold_apply, (mem_filter.1 ha).2]))
     (fun b hb => (hF b).trans (by
-      simp only [threshold, (mem_filter.1 hb).2, decide_eq_false_iff_not, not_le]; omega))
+      simp only [threshold_apply, (mem_filter.1 hb).2, decide_eq_false_iff_not, not_le]; omega))
     (weight_nonempty hkn) (fun a ha => le_card_neighbors_weight_pred ha) fun b hb => ?_
   have := le_card_neighbors_weight_succ hb
   rwa [Nat.sub_add_cancel hk] at this

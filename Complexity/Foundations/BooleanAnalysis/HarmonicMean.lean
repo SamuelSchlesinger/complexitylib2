@@ -23,24 +23,38 @@ import Mathlib.Tactic.FunProp
 /-!
 # Korten's harmonic mean transform
 
-This module formalizes Definition 5, Lemmas 11--12, and Corollary 1 of [Korten2026].
+The harmonic mean of a nonnegative function on a finite type (`harmonicMean`), zero as soon as a
+value is zero, has a variational formula: it is the least energy `𝔼 (f w ^ 2)` of a nonnegative
+weight `w` of mean one [Korten, Lemma 11][Korten2026] (`harmonicMean_variational`). The harmonic
+mean transform of a function on the cube (`harmonicTransform`, [Korten, Definition 5][Korten2026])
+averages a function over the coordinates outside a selected set and takes the harmonic mean over the
+selected ones. It is the harmonic mean of the projections to the selected coordinates
+(`harmonicTransform_eq_harmonicMean_coordinateMarginal`), and it is antitone in the selected set.
+Korten's inequality bounds the expected square root of a function by the expected square root of its
+transform at a random set containing each coordinate with probability `1 / 4`
+[Korten, Lemma 12][Korten2026] (`expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform`), which
+gives the sampling estimate in the proof of Lemma 10 (`harmonicTransform_good_probability`). The
+sparse sampling conclusion of Lemma 10 is in `Complexity.Foundations.BooleanAnalysis.LightPatterns`.
 
-`harmonicMean_variational` works on any nonempty finite type. The coordinate
-transform uses Boolean membership functions for sets and real nonnegative
-densities. `harmonicTransform_eq_harmonicMean_coordinateMarginal` identifies
-the convenient full-cube representation with the harmonic mean over actual
-projected patterns. Zero entries give harmonic mean zero, as in the paper.
+## Main definitions
 
-`expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform` is Lemma 12, including
-dimension zero. `harmonicTransform_good_probability` supplies the intermediate
-1/4-sampling estimate in the proof of Lemma 10, using a density bound `B` in
-place of `2 ^ k`. The sparse-sampling conclusion and pattern count of Lemma 10
-are proved in `Complexity.Foundations.BooleanAnalysis.LightPatterns`, which feeds the
-mirror-set argument of `Complexity.Foundations.BooleanAnalysis.MirrorSets`. The top-down
-communication and circuit lower bounds of Theorem 3 are
-`Complexity.KarchmerWigderson.parity_communication_lower_bound` and
-`Complexity.Circuit.parity_wire_lower_bound` in
-`Complexitylib.Circuits.KarchmerWigderson.TopDown`.
+* `Cslib.BooleanAnalysis.harmonicMean`: the harmonic mean on a finite type.
+* `Cslib.BooleanAnalysis.projectionAverage`, `Cslib.BooleanAnalysis.coordinateMarginal`: averages
+  over the coordinates outside a selected set.
+* `Cslib.BooleanAnalysis.harmonicTransform`: Korten's harmonic mean transform.
+
+## Main results
+
+* `Cslib.BooleanAnalysis.harmonicMean_variational`: the variational formula.
+* `Cslib.BooleanAnalysis.harmonicTransform_antitone`: the transform is antitone in the selected
+  set.
+* `Cslib.BooleanAnalysis.expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform`: Korten's
+  inequality.
+* `Cslib.BooleanAnalysis.harmonicTransform_good_probability`: the sampling estimate of Lemma 10.
+
+## References
+
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
 -/
 
 @[expose] public section
@@ -92,12 +106,11 @@ noncomputable def harmonicTransform {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 end Cslib.BooleanAnalysis
 
-/-! ### Finite harmonic mean: proof internals
+/-! ### The variational formula
 
-The variational formula of Korten (2026), Lemma 11, is proved for every
-nonempty finite type. Completing the square gives the lower bound, and an
-explicit weight attains it, including when an entry vanishes.
--/
+The variational formula [Korten, Lemma 11][Korten2026] holds on every nonempty finite type.
+Completing the square gives the lower bound, and an explicit weight attains it, including when an
+entry vanishes. -/
 
 
 namespace Cslib.BooleanAnalysis
@@ -638,12 +651,10 @@ theorem harmonicTransform_le_expect {n : ℕ} {f : (Fin n → Bool) → ℝ}
 
 end Cslib.BooleanAnalysis
 
-/-! ### Korten's harmonic mean inequality: proof internals
+/-! ### Korten's harmonic mean inequality
 
-Lemma 12 of *Top-Down Lower Bounds for All Depths* (2026). The scalar
-inequality is followed by induction on dimension using concavity of the
-harmonic mean. No strict-positivity assumption is needed.
--/
+The inequality [Korten, Lemma 12][Korten2026] follows from a scalar inequality by induction on the
+dimension, using concavity of the harmonic mean. No strict-positivity assumption is needed. -/
 
 
 namespace Cslib.BooleanAnalysis
