@@ -12,6 +12,7 @@ public import Complexity.Computability.Circuit.Boolean.NegationNormalForm
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Mathlib.Algebra.Group.Action.End
 public import Mathlib.GroupTheory.Perm.Basic
+public import Mathlib.GroupTheory.SpecificGroups.Alternating
 import Mathlib.Data.List.ProdSigma
 import Mathlib.Tactic.Ring
 
@@ -30,7 +31,11 @@ or the identity (`Instruction.cond i σ 1`). A negation `σ⁻¹`-computes its a
 by `σ`. For a conjunction, `σ` is the commutator `α β α⁻¹ β⁻¹` of two `5`-cycles
 (`Equiv.Perm.IsFiveCycle.exists_commutator`); running the programs for the arguments with `α` and
 `β`, then their inverses, gives `σ` exactly when both arguments are true. A disjunction is the
-negation of the conjunction of the negations.
+negation of the conjunction of the negations. This works in any group with a set of elements
+closed under inverses in which every element is a commutator of two of them
+(`Formula.exists_monoidProgram_computes_of_forall_commutator`). Five-cycles are even, so the
+programs select only elements of the alternating group `A₅`
+(`Formula.exists_monoidProgram_alternatingGroup_computes`).
 
 Conversely, whether a branching program of width `w`, a program over `Function.End (Fin w)`, maps
 `a` to `b` is a formula of depth `O(log w · log L)`: split the program in halves and take the
@@ -49,7 +54,11 @@ polynomial-length branching programs and logarithmic-depth formulas compute the 
 
 ## Main results
 
-* `Cslib.Circuits.Formula.exists_monoidProgram_computes`: Barrington's theorem.
+* `Cslib.Circuits.Formula.exists_monoidProgram_computes_of_forall_commutator`: Barrington's
+  construction in a group.
+* `Cslib.Circuits.Formula.exists_monoidProgram_computes`,
+  `Cslib.Circuits.Formula.exists_monoidProgram_alternatingGroup_computes`: Barrington's theorem,
+  with programs over `S₅` and over `A₅`.
 * `Cslib.BranchingPrograms.MonoidProgram.exists_formula`: branching programs give formulas of
   logarithmic depth.
 * `Cslib.BranchingPrograms.MonoidProgram.Computes.exists_formula`: so do permutation branching
@@ -74,12 +83,14 @@ namespace Cslib.Circuits.Formula
 
 open MonoidProgram
 
-/-- **Barrington's theorem.** For every `5`-cycle `σ`, a De Morgan formula of depth `d`, with
-negations and constants free, has a permutation branching program of width `5` and length at most
-`4 ^ d` that `σ`-computes it. -/
-theorem exists_monoidProgram_computes [NeZero n] (F : Formula signature n) {σ : Perm (Fin 5)}
-    (hσ : IsFiveCycle σ) :
-    ∃ P : MonoidProgram (Fin n) Bool (Perm (Fin 5)), P.length ≤ 4 ^ F.depthWith binaryCost ∧
+/-- **Barrington's construction** in a group `G`. Let `C` be a set of elements of `G`, closed
+under inverses, in which every element is the commutator of two elements of `C`. For every
+`σ ∈ C`, a De Morgan formula of depth `d`, with negations and constants free, has a program over
+`G` of length at most `4 ^ d` that `σ`-computes it. -/
+theorem exists_monoidProgram_computes_of_forall_commutator {G : Type*} [Group G] {C : Set G}
+    (hinv : ∀ σ ∈ C, σ⁻¹ ∈ C) (hcomm : ∀ σ ∈ C, ∃ α ∈ C, ∃ β ∈ C, α * β * α⁻¹ * β⁻¹ = σ)
+    [NeZero n] (F : Formula signature n) {σ : G} (hσ : σ ∈ C) :
+    ∃ P : MonoidProgram (Fin n) Bool G, P.length ≤ 4 ^ F.depthWith binaryCost ∧
       P.Computes σ (F.eval interpretation) := by
   induction F generalizing σ with
   | input i =>
@@ -92,13 +103,13 @@ theorem exists_monoidProgram_computes [NeZero n] (F : Formula signature n) {σ :
       · exact ⟨1, by simp, fun x => by simp [interpretation]⟩
       · exact ⟨FreeMonoid.of (.const 0 σ), by simp, fun x => by simp [interpretation]⟩
     | not =>
-      obtain ⟨P, hlen, hP⟩ := ih 0 hσ.inv
+      obtain ⟨P, hlen, hP⟩ := ih 0 (hinv σ hσ)
       refine ⟨mulLeft σ P, (length_mulLeft σ P).trans_le (max_le ?_ (hlen.trans ?_)),
         fun x => (hP.not x).trans (by simp [interpretation])⟩
       · exact Nat.one_le_pow _ _ (by decide)
       · exact Nat.pow_le_pow_right (by decide) (by simp)
     | and =>
-      obtain ⟨α, β, hα, hβ, rfl⟩ := hσ.exists_commutator
+      obtain ⟨α, hα, β, hβ, rfl⟩ := hcomm σ hσ
       obtain ⟨P, hPlen, hP⟩ := ih 0 hα
       obtain ⟨Q, hQlen, hQ⟩ := ih 1 hβ
       refine ⟨P * Q * P.inv * Q.inv, ?_, fun x => (hP.and hQ x).trans rfl⟩
@@ -117,9 +128,9 @@ theorem exists_monoidProgram_computes [NeZero n] (F : Formula signature n) {σ :
         _ = 4 ^ (D + 1) := by ring
         _ = 4 ^ (gate (σ := signature) Op.and args).depthWith binaryCost := by rw [hd]
     | or =>
-      obtain ⟨α, β, hα, hβ, hαβ⟩ := hσ.inv.exists_commutator
-      obtain ⟨P, hPlen, hP⟩ := ih 0 hα.inv
-      obtain ⟨Q, hQlen, hQ⟩ := ih 1 hβ.inv
+      obtain ⟨α, hα, β, hβ, hαβ⟩ := hcomm σ⁻¹ (hinv σ hσ)
+      obtain ⟨P, hPlen, hP⟩ := ih 0 (hinv α hα)
+      obtain ⟨Q, hQlen, hQ⟩ := ih 1 (hinv β hβ)
       let R := mulLeft α P * mulLeft β Q * (mulLeft α P).inv * (mulLeft β Q).inv
       have hR : R.Computes σ⁻¹ fun x => !(args 0).eval interpretation x &&
           !(args 1).eval interpretation x := by
@@ -146,6 +157,32 @@ theorem exists_monoidProgram_computes [NeZero n] (F : Formula signature n) {σ :
       · rw [hR.not x]
         simp [interpretation]
 
+/-- **Barrington's theorem.** For every `5`-cycle `σ`, a De Morgan formula of depth `d`, with
+negations and constants free, has a permutation branching program of width `5` and length at most
+`4 ^ d` that `σ`-computes it. -/
+theorem exists_monoidProgram_computes [NeZero n] (F : Formula signature n) {σ : Perm (Fin 5)}
+    (hσ : IsFiveCycle σ) :
+    ∃ P : MonoidProgram (Fin n) Bool (Perm (Fin 5)), P.length ≤ 4 ^ F.depthWith binaryCost ∧
+      P.Computes σ (F.eval interpretation) :=
+  F.exists_monoidProgram_computes_of_forall_commutator (C := {σ | IsFiveCycle σ})
+    (fun _ h => h.inv) (fun _ h => by
+      obtain ⟨α, β, hα, hβ, h⟩ := h.exists_commutator
+      exact ⟨α, hα, β, hβ, h⟩) hσ
+
+/-- **Barrington's theorem in `A₅`.** For every `5`-cycle `σ`, a De Morgan formula of depth `d`,
+with negations and constants free, is `σ`-computed by a program of length at most `4 ^ d` over the
+alternating group `A₅`: five-cycles are even. -/
+theorem exists_monoidProgram_alternatingGroup_computes [NeZero n] (F : Formula signature n)
+    {σ : alternatingGroup (Fin 5)} (hσ : IsFiveCycle (σ : Perm (Fin 5))) :
+    ∃ P : MonoidProgram (Fin n) Bool (alternatingGroup (Fin 5)),
+      P.length ≤ 4 ^ F.depthWith binaryCost ∧ P.Computes σ (F.eval interpretation) :=
+  F.exists_monoidProgram_computes_of_forall_commutator
+    (C := {σ : alternatingGroup (Fin 5) | IsFiveCycle (σ : Perm (Fin 5))})
+    (fun _ h => by simpa using h.inv) (fun _ h => by
+      obtain ⟨α, β, hα, hβ, h⟩ := h.exists_commutator
+      exact ⟨⟨α, hα.mem_alternatingGroup⟩, hα, ⟨β, hβ.mem_alternatingGroup⟩, hβ,
+        Subtype.ext (by simpa using h)⟩) hσ
+
 end Cslib.Circuits.Formula
 
 namespace Cslib.Circuits.Boolean
@@ -158,6 +195,16 @@ theorem exists_monoidProgram_computes_of_formulaDepth [NeZero n]
       P.length ≤ 4 ^ formulaDepth f ∧ P.Computes σ f := by
   obtain ⟨F, hF, hd⟩ := exists_computes_depthWith_eq_formulaDepth f
   obtain ⟨P, hlen, hP⟩ := F.exists_monoidProgram_computes hσ
+  exact ⟨P, hd ▸ hlen, fun x => (hP x).trans (by rw [hF x])⟩
+
+/-- A function of formula depth `d` is `σ`-computed, for every `5`-cycle `σ`, by a program over the
+alternating group `A₅` of length at most `4 ^ d`. -/
+theorem exists_monoidProgram_alternatingGroup_computes_of_formulaDepth [NeZero n]
+    (f : BooleanFunction n) {σ : alternatingGroup (Fin 5)} (hσ : IsFiveCycle (σ : Perm (Fin 5))) :
+    ∃ P : MonoidProgram (Fin n) Bool (alternatingGroup (Fin 5)),
+      P.length ≤ 4 ^ formulaDepth f ∧ P.Computes σ f := by
+  obtain ⟨F, hF, hd⟩ := exists_computes_depthWith_eq_formulaDepth f
+  obtain ⟨P, hlen, hP⟩ := F.exists_monoidProgram_alternatingGroup_computes hσ
   exact ⟨P, hd ▸ hlen, fun x => (hP x).trans (by rw [hF x])⟩
 
 end Cslib.Circuits.Boolean

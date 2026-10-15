@@ -34,8 +34,10 @@ length `4 ^ O(log n)`, a polynomial, that `σ`-computes it for any `5`-cycle `σ
 monoid `M` is a branching program of width `|M|`, through the action of `M` on itself by left
 multiplication, and so a formula of depth logarithmic in its length [BarringtonTherien1988]: the
 languages of polynomial-length programs over a finite monoid are in NC¹
-(`Boolean.polyLength_subset_NC_one`). So NC¹ is the class of languages of polynomial-length
-programs over any finite monoid into which `Equiv.Perm (Fin 5)` embeds
+(`Boolean.polyLength_subset_NC_one`). Five-cycles are even, so the programs of Barrington's
+theorem are programs over the alternating group `A₅`
+(`Boolean.NC_one_eq_polyLength_alternatingGroup`), and NC¹ is the class of languages of
+polynomial-length programs over any finite monoid into which `A₅` embeds
 (`Boolean.NC_one_eq_polyLength_of_injective`), for instance of polynomial-length permutation
 branching programs, and of polynomial-length branching programs, of any fixed width `w ≥ 5`
 (`Boolean.NC_one_eq_polyLength_perm`, `Boolean.NC_one_eq_polyLength_end`). The classes of
@@ -47,10 +49,12 @@ nonuniform.
 * `Cslib.Circuits.Boolean.mem_NC_one_iff_formulaDepth_le`: NC¹ is logarithmic formula depth.
 * `Cslib.Circuits.Boolean.exists_monoidProgram_computes_of_mem_NC_one`: Barrington's theorem for
   the languages of NC¹.
-* `Cslib.Circuits.Boolean.NC_one_subset_polyLength`,
-  `Cslib.Circuits.Boolean.polyLength_subset_NC_one`: the two inclusions.
-* `Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm_five`: Barrington's theorem as a class
-  equality.
+* `Cslib.Circuits.Boolean.NC_one_subset_polyLength_alternatingGroup`,
+  `Cslib.Circuits.Boolean.NC_one_subset_polyLength`,
+  `Cslib.Circuits.Boolean.polyLength_subset_NC_one`: the inclusions.
+* `Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm_five`,
+  `Cslib.Circuits.Boolean.NC_one_eq_polyLength_alternatingGroup`: Barrington's theorem as a class
+  equality, over `S₅` and over `A₅`.
 * `Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm`,
   `Cslib.Circuits.Boolean.NC_one_eq_polyLength_end`: bounded-width branching programs of
   polynomial length decide exactly the languages of NC¹.
@@ -120,17 +124,28 @@ theorem exists_monoidProgram_computes_of_mem_NC_one (hL : L ∈ NC 1) :
         Nat.pow_le_pow_right (by decide) (hc n)
     _ = 2 ^ (2 * c * (Nat.log 2 n + 1)) := by rw [mul_assoc, pow_mul 2 2]; rfl
 
-/-- **NC¹ is decided by polynomial-length permutation branching programs of width `5`.** -/
-theorem NC_one_subset_polyLength : NC 1 ⊆ PolyLength Bool (Perm (Fin 5)) := by
+/-- **NC¹ is decided by polynomial-length programs over the alternating group `A₅`.** -/
+theorem NC_one_subset_polyLength_alternatingGroup :
+    NC 1 ⊆ PolyLength Bool (alternatingGroup (Fin 5)) := by
   intro L hL
-  obtain ⟨s, hs, hP⟩ := exists_monoidProgram_computes_of_mem_NC_one hL
+  obtain ⟨c, hc⟩ := mem_NC_one_iff_formulaDepth_le.1 hL
   have hσ : IsFiveCycle ([0, 1, 2, 3, 4] : List (Fin 5)).formPerm :=
     isFiveCycle_formPerm (by decide) rfl
-  refine ⟨s, hs, fun n => ?_⟩
+  refine ⟨fun n => 2 ^ (2 * c * (Nat.log 2 n + 1)), polynomiallyBounded_two_pow_mul_log _,
+    fun n => ?_⟩
   rcases n with _ | n
   · exact ⟨1, _, MonoidProgram.decides_one _, by simp⟩
-  · obtain ⟨P, hlen, hPc⟩ := hP (n + 1) _ hσ
-    exact ⟨P, _, hPc.decides hσ.ne_one, hlen⟩
+  · obtain ⟨P, hlen, hPc⟩ := exists_monoidProgram_alternatingGroup_computes_of_formulaDepth
+      (L.slice (n + 1)) (σ := ⟨_, hσ.mem_alternatingGroup⟩) hσ
+    refine ⟨P, _, hPc.decides fun h => hσ.ne_one (congrArg Subtype.val h), hlen.trans ?_⟩
+    calc 4 ^ formulaDepth (L.slice (n + 1)) ≤ 4 ^ (c * (Nat.log 2 (n + 1) + 1)) :=
+          Nat.pow_le_pow_right (by decide) (hc (n + 1))
+      _ = 2 ^ (2 * c * (Nat.log 2 (n + 1) + 1)) := by rw [mul_assoc, pow_mul 2 2]; rfl
+
+/-- **NC¹ is decided by polynomial-length permutation branching programs of width `5`.** -/
+theorem NC_one_subset_polyLength : NC 1 ⊆ PolyLength Bool (Perm (Fin 5)) :=
+  NC_one_subset_polyLength_alternatingGroup.trans
+    (PolyLength.subset_of_injective (alternatingGroup (Fin 5)).subtype_injective)
 
 /-- Left multiplication of a monoid on itself, transported to `Fin k` along a bijection. -/
 private def leftMulEnd {M : Type*} [Monoid M] {k : ℕ} (e : M ≃ Fin k) :
@@ -173,16 +188,24 @@ theorem NC_one_eq_polyLength_perm_five : NC 1 = PolyLength Bool (Perm (Fin 5)) :
   NC_one_subset_polyLength.antisymm (polyLength_subset_NC_one _)
 
 /-- NC¹ is the class of languages decided by polynomial-length programs over any finite monoid
-into which `Equiv.Perm (Fin 5)` embeds. -/
+into which the alternating group `A₅` embeds. -/
 theorem NC_one_eq_polyLength_of_injective {M : Type*} [Monoid M] [Finite M]
-    {φ : Perm (Fin 5) →* M} (hφ : Function.Injective φ) : NC 1 = PolyLength Bool M :=
-  (NC_one_subset_polyLength.trans (PolyLength.subset_of_injective hφ)).antisymm
+    {φ : alternatingGroup (Fin 5) →* M} (hφ : Function.Injective φ) : NC 1 = PolyLength Bool M :=
+  (NC_one_subset_polyLength_alternatingGroup.trans (PolyLength.subset_of_injective hφ)).antisymm
     (polyLength_subset_NC_one M)
+
+/-- **Barrington's theorem over `A₅`** [Barrington1989]: NC¹ is the class of languages decided by
+polynomial-length programs over the alternating group `A₅`. -/
+theorem NC_one_eq_polyLength_alternatingGroup :
+    NC 1 = PolyLength Bool (alternatingGroup (Fin 5)) :=
+  NC_one_eq_polyLength_of_injective (φ := MonoidHom.id _) Function.injective_id
 
 /-- For every `w ≥ 5`, NC¹ is the class of languages decided by permutation branching programs of
 width `w` and polynomial length, the programs over `Equiv.Perm (Fin w)`. -/
 theorem NC_one_eq_polyLength_perm {w : ℕ} (hw : 5 ≤ w) : NC 1 = PolyLength Bool (Perm (Fin w)) :=
-  NC_one_eq_polyLength_of_injective (viaEmbeddingHom_injective (Fin.castLEEmb hw))
+  NC_one_eq_polyLength_of_injective
+    (φ := (viaEmbeddingHom (Fin.castLEEmb hw)).comp (alternatingGroup (Fin 5)).subtype)
+    ((viaEmbeddingHom_injective _).comp (alternatingGroup (Fin 5)).subtype_injective)
 
 /-- **Bounded-width branching programs of polynomial length decide exactly the languages of NC¹**
 [Barrington1989]: for every `w ≥ 5`, NC¹ is the class of languages decided by branching programs
@@ -192,7 +215,8 @@ theorem NC_one_eq_polyLength_end {w : ℕ} (hw : 5 ≤ w) :
   have : Finite (Function.End (Fin w)) := inferInstanceAs (Finite (Fin w → Fin w))
   have hφ : Function.Injective (MulAction.toEndHom (M := Perm (Fin w)) (α := Fin w)) :=
     fun σ τ h => Equiv.ext fun i => congrFun h i
-  exact NC_one_eq_polyLength_of_injective (φ := MulAction.toEndHom.comp
-    (viaEmbeddingHom (Fin.castLEEmb hw))) (hφ.comp (viaEmbeddingHom_injective _))
+  exact NC_one_eq_polyLength_of_injective (φ := (MulAction.toEndHom.comp
+    (viaEmbeddingHom (Fin.castLEEmb hw))).comp (alternatingGroup (Fin 5)).subtype)
+    ((hφ.comp (viaEmbeddingHom_injective _)).comp (alternatingGroup (Fin 5)).subtype_injective)
 
 end Cslib.Circuits.Boolean

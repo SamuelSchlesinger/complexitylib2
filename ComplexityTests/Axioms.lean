@@ -875,6 +875,12 @@ info: 'Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm_five' depends on axioms:
 #print axioms Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm_five
 
 /--
+info: 'Cslib.Circuits.Boolean.NC_one_eq_polyLength_alternatingGroup' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.NC_one_eq_polyLength_alternatingGroup
+
+/--
 info: 'Cslib.Circuits.Boolean.NC_one_eq_polyLength_end' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

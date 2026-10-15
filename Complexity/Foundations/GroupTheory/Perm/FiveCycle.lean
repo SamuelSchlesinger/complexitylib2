@@ -9,6 +9,7 @@ module
 
 public import Cslib.Init
 public import Mathlib.GroupTheory.Perm.Cycle.Type
+public import Mathlib.GroupTheory.SpecificGroups.Alternating
 import Mathlib.GroupTheory.Perm.Cycle.Concrete
 import Mathlib.Tactic.Group
 
@@ -16,9 +17,10 @@ import Mathlib.Tactic.Group
 # Five-cycles
 
 A five-cycle is a permutation of cycle type `{5}` (`Equiv.Perm.IsFiveCycle`), defined like
-Mathlib's `Equiv.Perm.IsThreeCycle`. All five-cycles are conjugate
-(`Equiv.Perm.IsFiveCycle.isConj`), and in `Fin 5` every five-cycle is a commutator of two
-five-cycles (`Equiv.Perm.IsFiveCycle.exists_commutator`), the fact behind Barrington's theorem.
+Mathlib's `Equiv.Perm.IsThreeCycle`. Five-cycles are even (`Equiv.Perm.IsFiveCycle.sign`), all
+five-cycles are conjugate (`Equiv.Perm.IsFiveCycle.isConj`), and in `Fin 5` every five-cycle is a
+commutator of two five-cycles (`Equiv.Perm.IsFiveCycle.exists_commutator`), the fact behind
+Barrington's theorem.
 
 ## Main definitions
 
@@ -26,6 +28,7 @@ five-cycles (`Equiv.Perm.IsFiveCycle.exists_commutator`), the fact behind Barrin
 
 ## Main results
 
+* `Equiv.Perm.IsFiveCycle.mem_alternatingGroup`: five-cycles are even.
 * `Equiv.Perm.IsFiveCycle.exists_commutator`: every five-cycle of `Fin 5` is the commutator of two
   five-cycles.
 -/
@@ -56,6 +59,14 @@ theorem inv (h : IsFiveCycle σ) : IsFiveCycle σ⁻¹ := by
 
 @[simp] theorem inv_iff : IsFiveCycle σ⁻¹ ↔ IsFiveCycle σ :=
   ⟨by simpa using inv (σ := σ⁻¹), inv⟩
+
+theorem sign (h : IsFiveCycle σ) : sign σ = 1 := by
+  rw [Equiv.Perm.sign_of_cycleType, h.cycleType]
+  rfl
+
+/-- Five-cycles are even. -/
+theorem mem_alternatingGroup (h : IsFiveCycle σ) : σ ∈ alternatingGroup α :=
+  Perm.mem_alternatingGroup.mpr h.sign
 
 theorem conj (h : IsFiveCycle σ) (ρ : Perm α) : IsFiveCycle (ρ * σ * ρ⁻¹) := by
   rwa [IsFiveCycle, cycleType_conj]
