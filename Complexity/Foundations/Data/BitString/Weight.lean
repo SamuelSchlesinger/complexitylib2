@@ -161,6 +161,32 @@ theorem threshold_eq_true_iff {j : ℕ} {x : BitString n} :
     threshold n j x = true ↔ j ≤ weight x := by
   simp [threshold]
 
+/-- With cutoff `0`, the threshold function is the constant `true`. -/
+@[simp] theorem threshold_zero_right (x : BitString n) : threshold n 0 x = true :=
+  threshold_eq_true_iff.2 (Nat.zero_le _)
+
+/-- With a cutoff above `n`, the threshold function is the constant `false`. -/
+theorem threshold_eq_false_of_lt {j : ℕ} (h : n < j) (x : BitString n) :
+    threshold n j x = false := by
+  have : weight x ≤ n := by simpa using weight_le x
+  rw [← Bool.not_eq_true, threshold_eq_true_iff]
+  omega
+
+/-- With cutoff `1`, the threshold function is the disjunction. -/
+theorem threshold_one_right (x : BitString n) : threshold n 1 x = decide (∃ i, x i = true) := by
+  rw [Bool.eq_iff_iff, threshold_eq_true_iff, decide_eq_true_iff, weight, one_le_card,
+    filter_nonempty_iff]
+  simp
+
+/-- With cutoff `n`, the threshold function is the conjunction. -/
+theorem threshold_self (x : BitString n) : threshold n n x = decide (∀ i, x i = true) := by
+  have h : weight x ≤ n := by simpa using weight_le x
+  have key : #{i | x i = true} = n ↔ ({i | x i = true} : Finset (Fin n)) = univ := by
+    rw [← card_eq_iff_eq_univ, Fintype.card_fin]
+  rw [Bool.eq_iff_iff, threshold_eq_true_iff, decide_eq_true_iff,
+    show n ≤ weight x ↔ weight x = n by omega, weight, key, filter_eq_self]
+  simp
+
 theorem majority_eq_true_iff {x : BitString n} :
     majority n x = true ↔ (n + 1) / 2 ≤ weight x :=
   threshold_eq_true_iff

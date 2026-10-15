@@ -52,6 +52,8 @@ public import Complexity.Computability.Circuit.Boolean.Substitution
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Boolean.TC0
 public import Complexity.Computability.Circuit.Boolean.Threshold
+public import Complexity.Computability.Circuit.Boolean.ThresholdGates
+public import Complexity.Computability.Circuit.Boolean.ThresholdGates.Parity
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Clique

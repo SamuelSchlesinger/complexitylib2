@@ -2601,4 +2601,16 @@ info: 'Cslib.Circuits.Frontier.averageCaseBound_four' depends on axioms: [propex
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.averageCaseBound_four
 
+/--
+info: 'Cslib.Circuits.Boolean.Threshold.exists_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Threshold.exists_computes_parity
+
+/--
+info: 'Cslib.Circuits.Boolean.Threshold.parity_mem_constDepth' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Threshold.parity_mem_constDepth
+
 end ComplexityTests.Axioms

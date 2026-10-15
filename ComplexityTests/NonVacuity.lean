@@ -29,6 +29,7 @@ import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 import Complexity.Computability.Circuit.Frontier.Decomposable
 import Complexity.Computability.Circuit.Frontier.FanInTwo
+import Complexity.Computability.Circuit.Boolean.ThresholdGates.Parity
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.GapTheorem
 import Complexity.Computability.PCP.Preprocess
@@ -667,5 +668,21 @@ example : ∃ N₀ : ℕ, ∀ m : ℕ, N₀ < 2 * m → ∃ σ : Layout (Fin m �
     (by simpa [mul_comm] using hm)⟩
 
 end FrontierGaussian
+
+section ThresholdParity
+
+open Cslib.Circuits Cslib.Circuits.Boolean
+
+/-- The parity circuit over threshold gates evaluates correctly on an input, by computation. -/
+example : (Threshold.parityCircuit 4).eval Threshold.interpretation ![true, false, true, true] 0 =
+    true := by
+  decide
+
+/-- Its counts: `n + 1` threshold gates and `n + n / 2 + 1` gates in all. -/
+example : (Threshold.parityCircuit 5).program.cost Threshold.thresholdCost = 6 ∧
+    (Threshold.parityCircuit 5).size = 8 :=
+  ⟨Threshold.cost_parityCircuit, Threshold.size_parityCircuit⟩
+
+end ThresholdParity
 
 end ComplexityTests.NonVacuity
