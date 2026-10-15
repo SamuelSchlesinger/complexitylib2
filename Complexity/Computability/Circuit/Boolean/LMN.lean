@@ -41,6 +41,8 @@ one otherwise (Parseval), and the restriction is deep with probability at most `
 ## Main results
 
 * `Cslib.Circuits.Boolean.sum_fourierCoeff_sq_le`: the Linial–Mansour–Nisan theorem.
+* `Cslib.Circuits.Boolean.two_pow_le_two_mul_size_of_computes_parity`: parity needs many gates
+  in constant depth, from LMN.
 * `Cslib.Circuits.Boolean.Restriction.sum_card_filter_outside`: drawing a set `J` of `ℓ`
   coordinates and a word `z` and fixing the coordinates outside `J` to `z` draws every
   restriction with `ℓ` free bits `2 ^ ℓ` times.
@@ -274,5 +276,32 @@ theorem sum_fourierCoeff_sq_le {f : BooleanFunction n} {C : Circuit Unbounded.si
         _ = C.size * N * 2 ^ n := by rw [h2n]
     exact le_of_mul_le_mul_right h4 hpown
   nlinarith
+
+/-- All the Fourier weight of parity, read as `±1`, is on the set of all coordinates. -/
+theorem fourierCoeff_signVal_parity (U : Finset (Fin n)) :
+    fourierCoeff (fun x => signVal (parity n x)) U = if U = univ then 1 else 0 := by
+  have h : (fun x => signVal (parity n x)) = fun x => chi univ x :=
+    funext fun x => (chi_eq_signVal_parityOn univ x).symm
+  rw [h, fourierCoeff, expect_chi_mul_chi]
+  exact if_congr eq_comm rfl rfl
+
+/-- **Parity needs many gates in constant depth**, from the Linial–Mansour–Nisan theorem: all its
+Fourier weight is on the set of all `n` coordinates, so a circuit of depth `d` for it has at least
+`2 ^ (s - 1)` gates whenever `s ≥ 2`, `s (16 s + 1) ^ d ≤ n` and
+`max 8 (2 s) ≤ ⌊n / (16 s + 1) ^ d⌋`. -/
+theorem two_pow_le_two_mul_size_of_computes_parity {C : Circuit Unbounded.signature n 1}
+    (hC : C.Computes Unbounded.interpretation (single (parity n))) {s : ℕ} (hs : 2 ≤ s)
+    (hn : s * (16 * s + 1) ^ C.depth ≤ n) (hℓ : max 8 (2 * s) ≤ n / (16 * s + 1) ^ C.depth) :
+    (2 : ℝ) ^ s ≤ 2 * C.size := by
+  have h := sum_fourierCoeff_sq_le hC hs hn (k := n)
+    (by rw [mul_comm]; exact Nat.mul_le_mul_left _ hℓ)
+  have hone : ∑ U with n ≤ #U, fourierCoeff (fun x => signVal (parity n x)) U ^ 2 = 1 := by
+    rw [sum_eq_single_of_mem univ (by simp) fun U hU hne => ?_]
+    · simp [fourierCoeff_signVal_parity]
+    · have : U = univ := eq_univ_of_card U (le_antisymm (card_le_univ U |>.trans_eq (by simp))
+        (by simpa using (mem_filter.1 hU).2))
+      exact absurd this hne
+  rw [hone, le_div_iff₀ (by positivity)] at h
+  linarith
 
 end Cslib.Circuits.Boolean
