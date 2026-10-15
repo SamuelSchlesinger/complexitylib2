@@ -192,7 +192,7 @@ it, tidiness is an implementation detail: classes can be stated over upstream's 
 and `Logics/Propositional/DNF.lean`), counting version by Razborov's encoding: if every term of a DNF
 has at most `k` literals, at most `#R(ℓ - s) (4k)^s` of the restrictions leaving `ℓ` variables free
 leave it with decision tree complexity at least `s`, where `#R(m) = (n choose m) 2 ^ (n - m)`
-(`Cslib.Logic.PL.DNF.card_switching_le`, `Cslib.Circuits.Boolean.Restriction.card_withFree`).
+(`Cslib.Logic.PL.DNF.card_switching_le`, `Cslib.BitString.PartialAssignment.card_withFree`).
 The encoding is an explicit pair of functions with `decode ∘ encode = id`
 (`Cslib.Logic.PL.DNF.decode_encode`). Both hold among the extensions of any restriction.
 
