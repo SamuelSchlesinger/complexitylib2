@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Computability.Communication.Protocol
 public import Mathlib.Data.Finset.Defs
 
 /-!
@@ -26,10 +27,17 @@ an alphabet of size `w`.
 Exchanging the speakers exchanges the inputs (`RoundProtocol.run_swapPlayers`), so it solves the
 game of the negated function (`RoundProtocol.SolvesKW.swapPlayers`).
 
+Following Korten, `SolvesKW f` gives Alice the input where `f` is false. The Karchmer–Wigderson
+theorem for formulas (`Circuits.Boolean.formulaDepth_eq_ecomplexity`) uses the bit protocols of
+`Protocol` and gives Alice the input where `f` is true. A bit protocol of depth at most `d` is a
+round protocol with `d` messages of one bit (`RoundProtocol.ofProtocol`), and exchanging the
+players translates between the two conventions (`RoundProtocol.solvesKW_swapPlayers_ofProtocol`).
+
 ## Main definitions
 
 * `Cslib.Communication.RoundProtocol`: protocols with at most `d` messages from `M`.
 * `Cslib.Communication.RoundProtocol.Solves`, `Cslib.Communication.RoundProtocol.SolvesKW`.
+* `Cslib.Communication.RoundProtocol.ofProtocol`: a bit protocol as a round protocol.
 
 ## References
 
@@ -122,6 +130,47 @@ theorem SolvesKW.comap_not {d : ℕ} {P : RoundProtocol ι M d} {f : (ι → Boo
   rw [run_comap]
   intro hxy
   exact h _ _ hx hy (by simp [hxy])
+
+/-- A bit protocol of depth at most `d` naming a coordinate, as a round protocol with `d`
+messages of one bit. -/
+def ofProtocol : (p : Protocol (ι → Bool) (ι → Bool) ι) → (d : ℕ) → p.depth ≤ d →
+    RoundProtocol ι Bool d
+  | .output i, _, _ => .answer i
+  | .alice _ _ _, 0, h => absurd h (by simp)
+  | .alice send p₀ p₁, d + 1, h => .alice send fun b =>
+    cond b (ofProtocol p₁ d (by simp at h; omega)) (ofProtocol p₀ d (by simp at h; omega))
+  | .bob _ _ _, 0, h => absurd h (by simp)
+  | .bob send p₀ p₁, d + 1, h => .bob send fun b =>
+    cond b (ofProtocol p₁ d (by simp at h; omega)) (ofProtocol p₀ d (by simp at h; omega))
+
+@[simp] theorem run_ofProtocol : ∀ (p : Protocol (ι → Bool) (ι → Bool) ι) (d : ℕ)
+    (h : p.depth ≤ d) (x y : ι → Bool), (ofProtocol p d h).run x y = p.run x y
+  | .output _, _, _, _, _ => rfl
+  | .alice _ _ _, 0, h, _, _ => absurd h (by simp)
+  | .alice send p₀ p₁, d + 1, h, x, y => by
+    change (cond (send x) (ofProtocol p₁ d _) (ofProtocol p₀ d _)).run x y =
+      cond (send x) (p₁.run x y) (p₀.run x y)
+    cases send x
+    · exact run_ofProtocol p₀ d _ x y
+    · exact run_ofProtocol p₁ d _ x y
+  | .bob _ _ _, 0, h, _, _ => absurd h (by simp)
+  | .bob send p₀ p₁, d + 1, h, x, y => by
+    change (cond (send y) (ofProtocol p₁ d _) (ofProtocol p₀ d _)).run x y =
+      cond (send y) (p₁.run x y) (p₀.run x y)
+    cases send y
+    · exact run_ofProtocol p₀ d _ x y
+    · exact run_ofProtocol p₁ d _ x y
+
+/-- A bit protocol for the Karchmer–Wigderson game of `f` with Alice holding the input where `f` is
+true gives, with the players exchanged, a round protocol solving `SolvesKW f` with one bit per
+message. -/
+theorem solvesKW_swapPlayers_ofProtocol {f : (ι → Bool) → Bool}
+    {p : Protocol (ι → Bool) (ι → Bool) ι}
+    (hp : p.Solves (fun x y i => x i ≠ y i) {x | f x = true} {y | f y = false}) (d : ℕ)
+    (h : p.depth ≤ d) : (ofProtocol p d h).swapPlayers.SolvesKW f := by
+  intro x y hx hy
+  rw [run_swapPlayers, run_ofProtocol]
+  exact (hp y hy x hx).symm
 
 end RoundProtocol
 

@@ -58,7 +58,6 @@ namespace Cslib.Communication
 open BitString
 open Finset
 open Filter Asymptotics
-open scoped BigOperators
 open Cslib.BooleanAnalysis
 
 /-- The Boolean vectors with exactly `r` true coordinates. -/

@@ -61,21 +61,21 @@ def witness : AltOp → Bool
   | .and => false
   | .or => true
 
-/-- The position of a child of `fs` whose value under the dual operation is `b` on `x`, or `0`. -/
-noncomputable def childIndex {d : ℕ} (op : AltOp) (fs : List (AltFormula n d)) (b : Bool)
-    (x : BitString n) : ℕ :=
-  open scoped Classical in
-  if h : ∃ j : Fin fs.length, eval op (fs.get j) x = b then (Classical.choose h).val else 0
+/-- The position of the first child of `fs` whose value with root `op` is `b` on `x`, or `0`. -/
+def childIndex {d : ℕ} (op : AltOp) (fs : List (AltFormula n d)) (b : Bool) (x : BitString n) :
+    ℕ :=
+  match Fin.find? fun j : Fin fs.length => eval op (fs.get j) x == b with
+  | some j => j.val
+  | none => 0
 
-/-- A literal of the clause or term `ls` whose value is `b` on `x`, or `i₀`. -/
-noncomputable def childLiteral (i₀ : Fin n) (ls : List (Literal (Fin n))) (b : Bool)
-    (x : BitString n) : Literal (Fin n) :=
-  open scoped Classical in
-  if h : ∃ l ∈ ls, Literal.eval x l = b then Classical.choose h else (i₀, true)
+/-- The first literal of the clause or term `ls` whose value is `b` on `x`, or `(i₀, true)`. -/
+def childLiteral (i₀ : Fin n) (ls : List (Literal (Fin n))) (b : Bool) (x : BitString n) :
+    Literal (Fin n) :=
+  (ls.find? fun l => Literal.eval x l == b).getD (i₀, true)
 
 /-- The Karchmer–Wigderson protocol of an alternating formula with root `op`, when Alice's input
 makes it `s`, with messages a child position below `S + 1` or a literal. -/
-noncomputable def kwProtocol (S : ℕ) (i₀ : Fin n) :
+def kwProtocol (S : ℕ) (i₀ : Fin n) :
     {d : ℕ} → AltOp → AltFormula n d → Bool →
       RoundProtocol (Fin n) (Fin (S + 1) ⊕ Literal (Fin n)) d
   | 0, _, l, _ => .answer l.1
@@ -92,14 +92,24 @@ noncomputable def kwProtocol (S : ℕ) (i₀ : Fin n) :
 
 theorem childIndex_spec {d : ℕ} {op : AltOp} {fs : List (AltFormula n d)} {b : Bool}
     {x : BitString n} (h : ∃ j : Fin fs.length, eval op (fs.get j) x = b) :
-    ∃ j : Fin fs.length, childIndex op fs b x = j ∧ eval op (fs.get j) x = b :=
-  ⟨Classical.choose h, by simp only [childIndex, h, ↓reduceDIte], Classical.choose_spec h⟩
+    ∃ j : Fin fs.length, childIndex op fs b x = j ∧ eval op (fs.get j) x = b := by
+  unfold childIndex
+  cases hf : Fin.find? fun j : Fin fs.length => eval op (fs.get j) x == b with
+  | none =>
+    obtain ⟨j, hj⟩ := h
+    exact absurd hj (by simpa using Fin.find?_eq_none_iff.1 hf j)
+  | some j => exact ⟨j, rfl, by simpa using Fin.eq_true_of_find?_eq_some hf⟩
 
 theorem childLiteral_spec {i₀ : Fin n} {ls : List (Literal (Fin n))} {b : Bool}
     {x : BitString n} (h : ∃ l ∈ ls, Literal.eval x l = b) :
     childLiteral i₀ ls b x ∈ ls ∧ Literal.eval x (childLiteral i₀ ls b x) = b := by
-  simp only [childLiteral, h, ↓reduceDIte]
-  exact Classical.choose_spec h
+  unfold childLiteral
+  cases hf : ls.find? fun l => Literal.eval x l == b with
+  | none =>
+    obtain ⟨l, hl, hlb⟩ := h
+    exact absurd hlb (by simpa using List.find?_eq_none.1 hf l hl)
+  | some l =>
+    exact ⟨List.mem_of_find?_eq_some hf, by simpa using List.find?_some hf⟩
 
 theorem one_le_size {d : ℕ} (f : AltFormula n (d + 1)) : 1 ≤ size f := by
   simp [size]

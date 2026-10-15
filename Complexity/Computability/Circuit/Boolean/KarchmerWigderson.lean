@@ -28,6 +28,10 @@ names its bit. Conversely a protocol gives a formula (`Protocol.kwFormula`), wit
 Alice's nodes, an AND at each of Bob's, and at each leaf the literal that separates the inputs of
 the two players that reach it, so with negations only at the leaves.
 
+The round protocols of Korten's top-down lower bounds give Alice the input where `f` is false
+instead (`Communication.RoundProtocol.SolvesKW`); exchanging the players translates
+(`Communication.RoundProtocol.solvesKW_swapPlayers_ofProtocol`).
+
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.DiffersAt`: the Karchmer–Wigderson relation.

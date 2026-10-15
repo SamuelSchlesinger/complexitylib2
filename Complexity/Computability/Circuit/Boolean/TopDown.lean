@@ -67,20 +67,22 @@ open Cslib.Communication
 
 variable {n g : ℕ}
 
-/-- A wire among the arguments of gate `k` that is `b` on the input `x`, if there is one. -/
-noncomputable def argWith (p : Program signature n g) (k : Fin g) (b : Bool) (x : BitString n) :
-    Wire n g :=
-  open scoped Classical in
-  if h : ∃ a, p.trace interpretation x ((p.lines k).wires a) = b then
-    (p.lines k).wires (Classical.choose h)
-  else .gate k
+/-- The first argument wire of gate `k` that is `b` on the input `x`, if there is one. -/
+def argWith (p : Program signature n g) (k : Fin g) (b : Bool) (x : BitString n) : Wire n g :=
+  match Fin.find? fun a => p.trace interpretation x ((p.lines k).wires a) == b with
+  | some a => (p.lines k).wires a
+  | none => .gate k
 
 theorem argWith_spec {p : Program signature n g} {k : Fin g} {b : Bool} {x : BitString n}
     (h : ∃ a, p.trace interpretation x ((p.lines k).wires a) = b) :
     ∃ a, argWith p k b x = (p.lines k).wires a ∧
       p.trace interpretation x ((p.lines k).wires a) = b := by
-  refine ⟨Classical.choose h, ?_, Classical.choose_spec h⟩
-  simp only [argWith, h, ↓reduceDIte]
+  unfold argWith
+  cases hf : Fin.find? fun a => p.trace interpretation x ((p.lines k).wires a) == b with
+  | none =>
+    obtain ⟨a, ha⟩ := h
+    simpa [ha] using Fin.find?_eq_none_iff.1 hf a
+  | some a => exact ⟨a, rfl, by simpa using Fin.eq_true_of_find?_eq_some hf⟩
 
 /-- The first argument wire of gate `k`, or the input `i₀` if it has none. -/
 def firstArg (p : Program signature n g) (i₀ : Fin n) (k : Fin g) : Wire n g :=
@@ -105,7 +107,7 @@ where `w` is `s`, Bob one where it is `!s`. At a conjunction the player whose in
 names an argument false there, at a disjunction the player whose input makes it true names an
 argument true there, and a negation exchanges the roles. The default coordinate `i₀` is the answer
 when the budget runs out. -/
-noncomputable def kwProtocol (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (w : Wire n g)
+def kwProtocol (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (w : Wire n g)
     (s : Bool) : RoundProtocol (Fin n) (Wire n g) d :=
   match w with
   | .input i => .answer i
