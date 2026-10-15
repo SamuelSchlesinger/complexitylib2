@@ -55,11 +55,10 @@ theorem Program.wireDepths_simulateRenaming_le (p : Program σ n g)
     set cost : σ.Op → ℕ := fun op => (impl op).depth
     refine Wire.lastCases ?_ (fun w => ?_) w
     · simp only [Wire.Renaming.apply_gate, Wire.Renaming.skipLast_gates_last]
-      rw [Program.wireDepthsWith_gate, Program.depthsWith_gate_last]
+      rw [Program.wireDepthsWith_gateWire, Program.depthsWith_gate_last]
       have h₀ := line.wireDepth_add_le_depthWith cost (q.wireDepthsWith cost)
-      have hc : (impl line.op).depth ≤ line.depthWith cost (q.wireDepthsWith cost) := by
-        unfold Line.depthWith
-        exact Nat.le_add_right _ _
+      have hc : (impl line.op).depth ≤ line.depthWith cost (q.wireDepthsWith cost) :=
+        line.cost_le_depthWith cost _
       have hD (a : Fin (σ.Arity line.op)) :
           (q.simulate impl).1.wireDepths (((q.simulate impl).2 ∘ line.wires) a) ≤
             line.depthWith cost (q.wireDepthsWith cost) - (impl line.op).depth := by

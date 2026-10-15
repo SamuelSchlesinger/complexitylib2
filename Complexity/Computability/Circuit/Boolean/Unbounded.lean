@@ -79,8 +79,8 @@ def interpretation : Interpretation signature Bool
   rfl
 
 /-- The cost of an operation in the AND/OR depth: negations are free. With these costs,
-`Circuit.depthWith` counts the conjunctions and disjunctions along a path, the usual depth of AC⁰
-circuits, in which negations sit at the inputs. -/
+`Circuit.depthWith` is the largest number of conjunctions and disjunctions on a path, the usual
+depth of AC⁰ circuits, in which negations sit at the inputs. -/
 def Op.andOrCost : Op → ℕ
   | .not => 0
   | .and _ => 1

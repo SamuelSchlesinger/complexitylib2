@@ -153,22 +153,25 @@ theorem eval_thresholdCircuitOfMajority
     (hM : M.Computes I (single (majority (n + (n + 2))))) {k : ℕ} (hk : k ≤ n + 1)
     (x : BitString n) : (thresholdCircuitOfMajority φ M k).eval I x 0 = threshold n k x := by
   rw [thresholdCircuitOfMajority, Circuit.eval_comp, hM, eval_padCircuit]
-  simp only [single, majority, threshold_apply, Fin.card_filter_append (· = true),
-    decide_eq_true_eq, Fin.card_filter_val_lt]
-  rw [show (n + (n + 2) + 1) / 2 = n + 1 by omega, decide_eq_decide]
+  simp only [single, majority, threshold_apply]
+  rw [Bool.eq_iff_iff]
+  simp only [decide_eq_true_eq]
+  simp only [BitString.weight, Fin.card_filter_append (· = true), decide_eq_true_eq,
+    Fin.card_filter_val_lt]
+  rw [show (n + (n + 2) + 1) / 2 = n + 1 by omega]
   omega
 
 /-- The circuit for "exactly `k`" decides whether exactly `k` bits are true. -/
 theorem eval_exactlyCircuitOfMajority {k : ℕ} (hk : k ≤ n) (x : BitString n) :
-    (exactlyCircuitOfMajority φ M k).eval I x 0 = decide (#{i | x i = true} = k) := by
+    (exactlyCircuitOfMajority φ M k).eval I x 0 = decide (BitString.weight x = k) := by
   rw [exactlyCircuitOfMajority, eval_binCircuit_and, eval_notCircuit,
     eval_thresholdCircuitOfMajority hM (by omega), eval_thresholdCircuitOfMajority hM (by omega)]
   simp only [threshold_apply]
-  by_cases h : #{i | x i = true} = k
+  by_cases h : BitString.weight x = k
   · simp [h]
   · rcases Nat.lt_or_gt_of_ne h with h' | h'
-    · simp [h, show ¬ k ≤ #{i | x i = true} by omega]
-    · simp [h, show k ≤ #{i | x i = true} by omega, show k + 1 ≤ #{i | x i = true} by omega]
+    · simp [h, show ¬ k ≤ BitString.weight x by omega]
+    · simp [h, show k ≤ BitString.weight x by omega, show k + 1 ≤ BitString.weight x by omega]
 
 /-- The parity circuit computes parity. -/
 theorem computes_parityCircuitOfMajority :
@@ -178,9 +181,9 @@ theorem computes_parityCircuitOfMajority :
   rw [parityCircuitOfMajority, Circuit.eval_comp,
     Circuit.eval_mapOp (I := Unbounded.interpretation), Circuit.eval_oneGate, Circuit.eval_pi]
   simp only [single, interpretation_or, id]
-  set c := #{i | x i = true}
-  have hc : c ≤ n := (card_filter_le _ _).trans (by simp)
-  rw [parity, parityOn, Bool.eq_iff_iff, decide_eq_true_iff, decide_eq_true_iff]
+  set c := BitString.weight x
+  have hc : c ≤ n := by simpa using BitString.weight_le x
+  rw [parity_eq_decide_weight, Bool.eq_iff_iff, decide_eq_true_iff, decide_eq_true_iff]
   constructor
   · rintro ⟨k, hk⟩
     split_ifs at hk with hodd

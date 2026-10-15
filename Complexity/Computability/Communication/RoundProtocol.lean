@@ -21,8 +21,8 @@ transcript. It *solves* the game on a rectangle `X × Y` when, for every `x ∈ 
 `y ∈ Y` held by Bob, the inputs differ at the named coordinate (`RoundProtocol.Solves`), and the
 game of a Boolean function `f` when this holds with `f x = false` and `f y = true`
 (`RoundProtocol.SolvesKW`). This is the model of the top-down lower bounds of Korten
-[Korten2026], in which a circuit of depth `d` with `w` wires gives a protocol with `d` messages from
-an alphabet of size `w`.
+[Korten2026], in which a circuit of AND/OR depth `d` with `w` wires gives a protocol with `d`
+messages from an alphabet of size `w`.
 
 Exchanging the speakers exchanges the inputs (`RoundProtocol.run_swapPlayers`), so it solves the
 game of the negated function (`RoundProtocol.SolvesKW.swapPlayers`).
@@ -30,14 +30,22 @@ game of the negated function (`RoundProtocol.SolvesKW.swapPlayers`).
 Following Korten, `SolvesKW f` gives Alice the input where `f` is false. The Karchmer–Wigderson
 theorem for formulas (`Circuits.Boolean.formulaDepth_eq_ecomplexity`) uses the bit protocols of
 `Protocol` and gives Alice the input where `f` is true. A bit protocol of depth at most `d` is a
-round protocol with `d` messages of one bit (`RoundProtocol.ofProtocol`), and exchanging the
-players translates between the two conventions (`RoundProtocol.solvesKW_swapPlayers_ofProtocol`).
+round protocol with `d` messages of one bit (`RoundProtocol.ofProtocol`), and it solves the game
+of the negated function in Korten's convention (`RoundProtocol.solvesKW_not_ofProtocol`), so of
+`f` after exchanging the players (`RoundProtocol.solvesKW_swapPlayers_ofProtocol`).
 
 ## Main definitions
 
 * `Cslib.Communication.RoundProtocol`: protocols with at most `d` messages from `M`.
 * `Cslib.Communication.RoundProtocol.Solves`, `Cslib.Communication.RoundProtocol.SolvesKW`.
 * `Cslib.Communication.RoundProtocol.ofProtocol`: a bit protocol as a round protocol.
+
+## Main results
+
+* `Cslib.Communication.RoundProtocol.run_swapPlayers`,
+  `Cslib.Communication.RoundProtocol.run_comap`: exchanging the players and relabelling the inputs.
+* `Cslib.Communication.RoundProtocol.run_ofProtocol`,
+  `Cslib.Communication.RoundProtocol.solvesKW_not_ofProtocol`: bit protocols as round protocols.
 
 ## References
 
@@ -162,15 +170,22 @@ def ofProtocol : (p : Protocol (ι → Bool) (ι → Bool) ι) → (d : ℕ) →
     · exact run_ofProtocol p₁ d _ x y
 
 /-- A bit protocol for the Karchmer–Wigderson game of `f` with Alice holding the input where `f` is
+true solves, as a round protocol, the game of the negation of `f` in Korten's convention. -/
+theorem solvesKW_not_ofProtocol {f : (ι → Bool) → Bool} {p : Protocol (ι → Bool) (ι → Bool) ι}
+    (hp : p.Solves (fun x y i => x i ≠ y i) {x | f x = true} {y | f y = false}) (d : ℕ)
+    (h : p.depth ≤ d) : (ofProtocol p d h).SolvesKW fun x => !f x := by
+  intro x y hx hy
+  rw [run_ofProtocol]
+  exact hp x (by simpa using hx) y (by simpa using hy)
+
+/-- A bit protocol for the Karchmer–Wigderson game of `f` with Alice holding the input where `f` is
 true gives, with the players exchanged, a round protocol solving `SolvesKW f` with one bit per
 message. -/
 theorem solvesKW_swapPlayers_ofProtocol {f : (ι → Bool) → Bool}
     {p : Protocol (ι → Bool) (ι → Bool) ι}
     (hp : p.Solves (fun x y i => x i ≠ y i) {x | f x = true} {y | f y = false}) (d : ℕ)
     (h : p.depth ≤ d) : (ofProtocol p d h).swapPlayers.SolvesKW f := by
-  intro x y hx hy
-  rw [run_swapPlayers, run_ofProtocol]
-  exact (hp y hy x hx).symm
+  simpa using (solvesKW_not_ofProtocol hp d h).swapPlayers
 
 end RoundProtocol
 

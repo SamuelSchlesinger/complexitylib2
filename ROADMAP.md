@@ -92,8 +92,8 @@ language is not in `P/poly` (from upstream Shannon), and Karp's reductions `SAT 
 and `IndependentSet ≤ Clique` are correct (their polynomial time awaits the calculus).
 The simulation is stated over `Turing.MultiTapeTM.Feature` (`MultiTape/Feature.lean`): finite
 observations of a configuration with one lemma per kind describing how a step changes it, meant
-to be shared with the Cook–Levin tableau. `Threshold.lean` gives threshold and majority functions
-with quadratic synthesis cost, the ingredient for amplification in `BPP ⊆ P/poly`. A non-vacuity
+to be shared with the Cook–Levin tableau. `Threshold.lean` synthesises the threshold and majority functions (defined with the Hamming
+weight in `Foundations/Data/BitString/Weight.lean`) with quadratic cost, the ingredient for amplification in `BPP ⊆ P/poly`. A non-vacuity
 test builds a constant machine and checks that `P encBits` and the hypothesis of `P ⊆ P/poly` are
 inhabited.
 

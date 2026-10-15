@@ -16,7 +16,7 @@ import Mathlib.Algebra.BigOperators.Fin
 
 `Circuit.pi cs` runs the single-output circuits `cs j` on the same inputs and lists their outputs
 (`Circuit.eval_pi`); its size is the sum of their sizes (`Circuit.size_pi`) and its depth the
-largest of their depths (`Circuit.depth_pi_le`).
+largest of their depths (`Circuit.depth_pi_le`), also with costs (`Circuit.depthWith_pi_le`).
 
 ## Main definitions
 
@@ -28,6 +28,8 @@ largest of their depths (`Circuit.depth_pi_le`).
 * `Cslib.Circuits.Circuit.eval_pi`, `Cslib.Circuits.Circuit.size_pi`,
   `Cslib.Circuits.Circuit.depth_pi_le`: the function, size and depth of circuits side by side.
 * `Cslib.Circuits.Circuit.depth_oneGate`: one gate has depth one.
+* `Cslib.Circuits.Circuit.depthWith_pi_le`, `Cslib.Circuits.Circuit.depthWith_oneGate`: the same
+  for depths with costs.
 -/
 
 @[expose] public section
@@ -62,15 +64,6 @@ def pi : {m : ℕ} → (Fin m → Circuit σ n 1) → Circuit σ n m
   | succ m ih =>
     rw [pi, size_append, ih, Fin.sum_univ_castSucc]
 
-/-- The depth of `pi cs` is at most the largest depth. -/
-theorem depth_pi_le {m : ℕ} (cs : Fin m → Circuit σ n 1) {D : ℕ} (h : ∀ j, (cs j).depth ≤ D) :
-    (pi cs).depth ≤ D := by
-  induction m with
-  | zero => simp [pi]
-  | succ m ih =>
-    rw [pi]
-    exact (depth_append_le _ _).trans (max_le (ih _ fun j => h _) (h _))
-
 /-- With costs, the depth of `pi cs` is at most the largest depth. -/
 theorem depthWith_pi_le (cost : σ.Op → ℕ) {m : ℕ} (cs : Fin m → Circuit σ n 1) {D : ℕ}
     (h : ∀ j, (cs j).depthWith cost ≤ D) : (pi cs).depthWith cost ≤ D := by
@@ -92,13 +85,6 @@ def oneGate (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) : Circuit σ n 1 :
     (oneGate op args).size = 1 :=
   rfl
 
-@[simp] theorem depth_oneGate (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) :
-    (oneGate op args).depth = 1 :=
-  le_antisymm
-    ((depth_le_iff _).2 fun _ => (Line.depth_le_add_one_iff _ _ (d := 0)).2 fun _ => le_rfl)
-    (((oneGate op args).program.depths_pos (0 : Fin 1)).trans_le
-      ((oneGate op args).outputDepths_le_depth 0))
-
 /-- With costs, one gate has the depth of its cost. -/
 @[simp] theorem depthWith_oneGate (cost : σ.Op → ℕ) (op : σ.Op)
     (args : Fin (σ.Arity op) → Fin n) : (oneGate op args).depthWith cost = cost op := by
@@ -106,5 +92,16 @@ def oneGate (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) : Circuit σ n 1 :
   · exact (Line.depthWith_eq_cost cost _ fun _ => rfl).le
   · exact (Line.depthWith_eq_cost cost _ fun _ => rfl).symm.le.trans
       ((oneGate op args).wireDepthsWith_outputs_le_depthWith cost 0)
+
+/-- The depth of `pi cs` is at most the largest depth. -/
+theorem depth_pi_le {m : ℕ} (cs : Fin m → Circuit σ n 1) {D : ℕ} (h : ∀ j, (cs j).depth ≤ D) :
+    (pi cs).depth ≤ D := by
+  simpa only [Circuit.depthWith_one] using
+    depthWith_pi_le 1 cs fun j => by simpa only [Circuit.depthWith_one] using h j
+
+/-- One gate has depth one. -/
+@[simp] theorem depth_oneGate (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) :
+    (oneGate op args).depth = 1 := by
+  simpa only [Circuit.depthWith_one, Pi.one_apply] using depthWith_oneGate 1 op args
 
 end Cslib.Circuits.Circuit

@@ -731,10 +731,10 @@ info: 'Cslib.Circuits.Boolean.AltFormula.exists_majority' depends on axioms: [pr
 #print axioms Cslib.Circuits.Boolean.AltFormula.exists_majority
 
 /--
-info: 'Cslib.Communication.majority_communication_lower_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Communication.strictMajority_communication_lower_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Communication.majority_communication_lower_bound
+#print axioms Cslib.Communication.strictMajority_communication_lower_bound
 
 /--
 info: 'Cslib.BooleanAnalysis.exists_mirror_set' depends on axioms: [propext, Classical.choice, Quot.sound]

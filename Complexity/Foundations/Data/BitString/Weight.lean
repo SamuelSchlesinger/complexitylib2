@@ -27,14 +27,14 @@ functions. A Boolean function is *symmetric* when it depends only on the weight 
 
 ## Main definitions
 
-* `Cslib.BitString.weight`: the number of true coordinates.
+* `Cslib.BitString.weight`: the number of true coordinates, and `Cslib.BitString.weightLayer` the
+  strings of a given weight.
 * `Cslib.threshold`, `Cslib.majority`, `Cslib.strictMajority`: threshold functions.
 * `Cslib.BooleanFunction.IsSymmetric`: Boolean functions depending only on the weight.
 
 ## Main results
 
-* `Cslib.BitString.card_filter_weight_eq`: there are `n.choose r` strings of `n` bits of weight
-  `r`.
+* `Cslib.BitString.card_weightLayer`: there are `n.choose k` strings of `n` bits of weight `k`.
 * `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
 * `Cslib.isSymmetric_threshold`, `Cslib.isSymmetric_parity`: threshold functions and parity are
   symmetric.
@@ -116,6 +116,24 @@ theorem card_filter_weight_eq (n r : ℕ) :
   · ext i
     simp
 
+/-- The weight of `x` as a number of true coordinates. -/
+theorem weight_eq_card_subtype (x : ι → Bool) : weight x = Fintype.card {i // x i = true} :=
+  (Fintype.card_subtype _).symm
+
+/-- The *layer* of weight `k` of the cube: the strings of `n` bits with `k` true bits. -/
+def weightLayer (n k : ℕ) : Finset (BitString n) :=
+  {x | weight x = k}
+
+@[simp] theorem mem_weightLayer {n k : ℕ} {x : BitString n} : x ∈ weightLayer n k ↔ weight x = k :=
+  by simp [weightLayer]
+
+/-- The layer of weight `k` has `n.choose k` strings. -/
+theorem card_weightLayer (n k : ℕ) : #(weightLayer n k) = n.choose k :=
+  card_filter_weight_eq n k
+
+theorem weightLayer_nonempty {n k : ℕ} (hk : k ≤ n) : (weightLayer n k).Nonempty :=
+  card_pos.1 (by rw [card_weightLayer]; exact Nat.choose_pos hk)
+
 end BitString
 
 open BitString
@@ -136,8 +154,7 @@ tie is false. It is the threshold function `Th^n_{⌊n/2⌋+1}`. -/
 def strictMajority (n : ℕ) : BooleanFunction n :=
   threshold n (n / 2 + 1)
 
-theorem threshold_apply (j : ℕ) (x : BitString n) :
-    threshold n j x = decide (j ≤ #{i | x i = true}) :=
+theorem threshold_apply (j : ℕ) (x : BitString n) : threshold n j x = decide (j ≤ weight x) :=
   rfl
 
 theorem threshold_eq_true_iff {j : ℕ} {x : BitString n} :
@@ -192,6 +209,10 @@ theorem isSymmetric_majority : (majority n).IsSymmetric :=
 
 theorem isSymmetric_strictMajority : (strictMajority n).IsSymmetric :=
   isSymmetric_threshold _
+
+/-- Parity is the parity of the weight. -/
+theorem parity_eq_decide_weight (x : BitString n) : parity n x = decide (weight x % 2 = 1) :=
+  rfl
 
 /-- Parity is symmetric. -/
 theorem isSymmetric_parity : (parity n).IsSymmetric := fun x y h => by

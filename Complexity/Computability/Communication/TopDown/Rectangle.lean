@@ -75,7 +75,7 @@ theorem DensityRectangle.not_separated {X Y : Finset (ι → Bool)} {p k : ℝ}
     exact hsep x hx y hy he
 
 /-- **One message keeps a density rectangle**: if Alice sends one of at most `2 ^ m` messages, some
-message leaves a density rectangle of rate `p'` and deficit `k'`, for `k' ≥ 194 k`,
+message leaves a density rectangle of rate `p'` and deficit `k'`, for `k ≥ 1`, `k' ≥ 194 k`,
 `k' ≥ 2 k + 2 + m` and `32768 k p ≤ p' ≤ 1 / 4`. -/
 theorem DensityRectangle.select_left_message {M : Type*} [Fintype M]
     {X Y : Finset (ι → Bool)} {p p' k k' m : ℝ} (h : DensityRectangle X Y p k)

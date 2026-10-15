@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Majority
-public import Complexity.Computability.Circuit.Boolean.Threshold
+public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Computability.Circuit.Depth
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 
@@ -266,27 +266,14 @@ theorem exists_roundProtocol_of_computes {C : Circuit signature n 1} {f : BitStr
     ((C.wireDepthsWith_outputs_le_depthWith _ 0).trans hd) x y
     ((hval x).trans hx) ((hval y).trans hy)
 
-/-- **A communication lower bound gives a circuit lower bound**: if, for `n ≥ N`, no protocol with
-`d` messages of at most `ε n ^ (1 / (d - 1))` bits solves the game of `f n`, then circuits of
-AND/OR depth at most `d` computing `f n` have `n + g > 2 ^ (ε n ^ (1 / (d - 1)))`. -/
-theorem two_rpow_lt_add_size_of_not_solvesKW {f : ∀ n, BitString n → Bool} {d N : ℕ} {ε : ℝ}
-    (hN : ∀ n : ℕ, N ≤ n → ∀ {M : Type} [Fintype M] (m : ℝ), 0 ≤ m →
-      (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m → m ≤ ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹) →
-      ∀ P : RoundProtocol (Fin n) M d, ¬ P.SolvesKW (f n))
-    {n : ℕ} (hn : max N 1 ≤ n) {C : Circuit signature n 1}
-    (hC : ∃ P : RoundProtocol (Fin n) (Wire n C.size) d, P.SolvesKW (f n)) :
-    (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
-  have hn1 : 1 ≤ n := le_of_max_le_right hn
-  obtain ⟨P, hP⟩ := hC
-  by_contra hle
-  push Not at hle
-  have hpos : (0 : ℝ) < n + C.size := by positivity
-  have hcard : (Fintype.card (Wire n C.size) : ℝ) = n + C.size := by simp
-  refine hN n (le_of_max_le_left hn) (Real.logb 2 (n + C.size))
-    (Real.logb_nonneg one_lt_two
-      (le_add_of_le_of_nonneg (by exact_mod_cast hn1) (Nat.cast_nonneg _)))
-    (by rw [hcard, Real.rpow_logb two_pos (by norm_num) hpos])
-    ((Real.logb_le_iff_le_rpow one_lt_two hpos).2 hle) P hP
+/-- A protocol for `f` with messages from the wires of a circuit bounds its size: if no protocol
+over an alphabet of at most `2 ^ x` letters solves the game of `f`, then `2 ^ x < n + g`. -/
+private theorem two_rpow_lt_add_size {f : BitString n → Bool} {d : ℕ} {x : ℝ}
+    (h : ∀ P : RoundProtocol (Fin n) (Wire n g) d,
+      (Fintype.card (Wire n g) : ℝ) ≤ (2 : ℝ) ^ x → ¬ P.SolvesKW f)
+    {P : RoundProtocol (Fin n) (Wire n g) d} (hP : P.SolvesKW f) : (2 : ℝ) ^ x < n + g := by
+  have hcard : (Fintype.card (Wire n g) : ℝ) = n + g := by simp
+  exact hcard ▸ lt_of_not_ge fun hle => h P hle hP
 
 /-- **Korten's theorem** [Korten, Theorem 3][Korten2026]: for every depth `d ≥ 2` there is `ε > 0`
 such that, for all large `n`, a circuit over the unbounded fan-in basis of AND/OR depth at most `d`
@@ -297,9 +284,9 @@ theorem two_rpow_lt_add_size_of_computes_parity {d : ℕ} (hd : 2 ≤ d) :
       C.Computes interpretation (single (parity n)) → C.depthWith Op.andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
   obtain ⟨ε, hε, N, hN⟩ := parity_communication_lower_bound.{0} d hd
-  exact ⟨ε, hε, max N 1, fun n hn C hC hCd =>
-    two_rpow_lt_add_size_of_not_solvesKW (f := parity) hN hn
-      (exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd)⟩
+  refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
+  obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
+  exact two_rpow_lt_add_size (fun P h => hN n (le_of_max_le_left hn) h P) hP
 
 /-- **Korten's bound for strict majority**, extending [Korten2026]: the bound of
 `two_rpow_lt_add_size_of_computes_parity` holds for strict majority. -/
@@ -308,10 +295,10 @@ theorem two_rpow_lt_add_size_of_computes_strictMajority {d : ℕ} (hd : 2 ≤ d)
       C.Computes interpretation (single (strictMajority n)) →
       C.depthWith Op.andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
-  obtain ⟨ε, hε, N, hN⟩ := majority_communication_lower_bound.{0} d hd
-  exact ⟨ε, hε, max N 1, fun n hn C hC hCd =>
-    two_rpow_lt_add_size_of_not_solvesKW (f := strictMajority) hN hn
-      (exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd)⟩
+  obtain ⟨ε, hε, N, hN⟩ := strictMajority_communication_lower_bound.{0} d hd
+  refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
+  obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
+  exact two_rpow_lt_add_size (fun P h => hN n (le_of_max_le_left hn) h P) hP
 
 /-- **Korten's bound for majority**, extending [Korten2026]: the bound of
 `two_rpow_lt_add_size_of_computes_parity` holds for majority. A protocol for majority gives one
@@ -320,15 +307,14 @@ theorem two_rpow_lt_add_size_of_computes_majority {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
       C.Computes interpretation (single (majority n)) → C.depthWith Op.andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
-  obtain ⟨ε, hε, N, hN⟩ := majority_communication_lower_bound.{0} d hd
+  obtain ⟨ε, hε, N, hN⟩ := strictMajority_communication_lower_bound.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
   obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
-  refine two_rpow_lt_add_size_of_not_solvesKW (f := strictMajority) hN
-    hn ⟨P.swapPlayers.comap fun x i => !x i, ?_⟩
-  have h := hP.swapPlayers.comap_not
   have hneg (z : BitString n) : (!majority n fun i => !z i) = strictMajority n z := by
     simpa using (strictMajority_not fun i => !z i).symm
-  exact fun x y hx hy => h x y ((hneg x).trans hx) ((hneg y).trans hy)
+  refine two_rpow_lt_add_size (P := P.swapPlayers.comap fun x i => !x i)
+    (fun P h => hN n (le_of_max_le_left hn) h P) fun x y hx hy => ?_
+  exact hP.swapPlayers.comap_not x y ((hneg x).trans hx) ((hneg y).trans hy)
 
 /-- Polynomials are eventually below `2 ^ (ε n ^ r)` for `r, ε > 0`. -/
 private theorem exists_add_pow_le_two_rpow {r ε : ℝ} (hr : 0 < r) (hε : 0 < ε) (k : ℕ) :

@@ -10,18 +10,21 @@ module
 public import Cslib.Computability.Circuit.Depth
 
 /-!
-# Depths along program lines
+# Depths along program lines, and depths with costs
 
 Every wire read by a gate is shallower than the gate (`Program.wireDepths_lines_lt`), which is what
 makes induction on depth go through for programs.
 
 The depth with costs (`Circuit.depthWith cost`) charges `cost op` for a gate of operation `op`
-instead of one. Unit costs give `Circuit.depth` (`Circuit.depthWith_one`); with free negations it
-is the AND/OR depth of circuits over the unbounded fan-in basis, the depth of AC⁰ circuits.
+instead of one, so it is the largest total cost of the gates on a path to an output. Unit costs
+give `Circuit.depth` (`Circuit.depthWith_one`). With free negations it is the largest number of
+AND and OR gates on a path in a circuit over the unbounded fan-in basis, the depth of AC⁰ circuits
+with negations at the inputs.
 
 ## Main definitions
 
-* `Cslib.Circuits.Program.depthsWith`, `Cslib.Circuits.Circuit.depthWith`: depth with costs.
+* `Cslib.Circuits.Line.depthWith`, `Cslib.Circuits.Program.depthsWith`,
+  `Cslib.Circuits.Program.wireDepthsWith`, `Cslib.Circuits.Circuit.depthWith`: depths with costs.
 
 ## Main results
 
@@ -30,6 +33,9 @@ is the AND/OR depth of circuits over the unbounded fan-in basis, the depth of AC
 * `Cslib.Circuits.Program.depths_pos`: gates have positive depth.
 * `Cslib.Circuits.Program.wireDepthsWith_lines_add_le`: with costs, the wires a gate reads are
   shallower than it by at least its cost.
+* `Cslib.Circuits.Circuit.depthWith_one`: unit costs give the depth.
+* `Cslib.Circuits.Circuit.depthWith_le_iff`, `Cslib.Circuits.Circuit.depthWith_mono`: bounds, and
+  monotonicity in the costs.
 * `Cslib.Circuits.Circuit.depthWith_le_depth`: costs of at most one never increase the depth.
 -/
 
@@ -74,9 +80,9 @@ theorem Program.depths_pos (p : Program σ n g) (k : Fin g) : 0 < p.depths k :=
 
 /-! ### Depth with costs
 
-The depth of a wire when each operation `op` costs `cost op` instead of one: with negations
-costing nothing, the depth of a circuit over the unbounded fan-in basis is its number of
-alternating AND and OR layers. -/
+The depth of a wire when each operation `op` costs `cost op` instead of one: the largest total
+cost of the gates on a path to the wire. With negations costing nothing, it is the largest number
+of AND and OR gates on a path, the depth of AC⁰ circuits with negations at the inputs. -/
 
 private theorem foldl_max_le_iff {m : ℕ} (f : Fin m → ℕ) (initial bound : ℕ) :
     Fin.foldl m (fun acc i => max acc (f i)) initial ≤ bound ↔
@@ -93,8 +99,13 @@ private theorem le_foldl_max {m : ℕ} (f : Fin m → ℕ) (initial : ℕ) (j : 
 
 /-- The depth of a line when its operation costs `cost op`. -/
 def Line.depthWith (cost : σ.Op → ℕ) (line : Line σ n g) (wireDepths : Wire n g → ℕ) : ℕ :=
-  cost line.op +
-    Fin.foldl (σ.Arity line.op) (fun depth k => max depth (wireDepths (line.wires k))) 0
+  Fin.foldl (σ.Arity line.op) (fun depth k => max depth (wireDepths (line.wires k))) 0 +
+    cost line.op
+
+/-- A line is at least as deep as its cost. -/
+theorem Line.cost_le_depthWith (cost : σ.Op → ℕ) (line : Line σ n g) (depths : Wire n g → ℕ) :
+    cost line.op ≤ line.depthWith cost depths :=
+  Nat.le_add_left _ _
 
 /-- A line is at least as deep as every wire it reads plus its cost. -/
 theorem Line.wireDepth_add_le_depthWith (cost : σ.Op → ℕ) (line : Line σ n g)
@@ -139,7 +150,7 @@ theorem Line.depthWith_eq_cost (cost : σ.Op → ℕ) (line : Line σ n g) {dept
 theorem Line.depthWith_mono {cost cost' : σ.Op → ℕ} (hcost : ∀ op, cost op ≤ cost' op)
     {depths depths' : Wire n g → ℕ} (hdepths : ∀ w, depths w ≤ depths' w) (line : Line σ n g) :
     line.depthWith cost depths ≤ line.depthWith cost' depths' :=
-  Nat.add_le_add (hcost _) (foldl_max_mono fun _ => hdepths _)
+  Nat.add_le_add (foldl_max_mono fun _ => hdepths _) (hcost _)
 
 /-- The depth of every gate of a program when each operation `op` costs `cost op`. -/
 def Program.depthsWith (cost : σ.Op → ℕ) {g : ℕ} : Program σ n g → Fin g → ℕ
@@ -155,7 +166,7 @@ def Program.wireDepthsWith (cost : σ.Op → ℕ) (p : Program σ n g) : Wire n 
 @[simp] theorem Program.wireDepthsWith_input (cost : σ.Op → ℕ) (p : Program σ n g) (i : Fin n) :
     p.wireDepthsWith cost (.input i) = 0 := rfl
 
-@[simp] theorem Program.wireDepthsWith_gate (cost : σ.Op → ℕ) (p : Program σ n g) (k : Fin g) :
+@[simp] theorem Program.wireDepthsWith_gateWire (cost : σ.Op → ℕ) (p : Program σ n g) (k : Fin g) :
     p.wireDepthsWith cost (.gate k) = p.depthsWith cost k := rfl
 
 @[simp] theorem Program.depthsWith_gate_last (cost : σ.Op → ℕ) (p : Program σ n g)
@@ -194,7 +205,7 @@ theorem Program.depthsWith_eq_depthWith_lines (cost : σ.Op → ℕ) (p : Progra
 /-- A gate is at least as deep as its cost. -/
 theorem Program.cost_le_depthsWith (cost : σ.Op → ℕ) (p : Program σ n g) (k : Fin g) :
     cost (p.lines k).op ≤ p.depthsWith cost k :=
-  p.depthsWith_eq_depthWith_lines cost k ▸ Nat.le_add_right _ _
+  p.depthsWith_eq_depthWith_lines cost k ▸ (p.lines k).cost_le_depthWith cost _
 
 /-- With unit costs, `Program.depthsWith` is `Program.depths`. -/
 @[simp] theorem Program.depthsWith_one (p : Program σ n g) :
@@ -260,6 +271,14 @@ theorem Circuit.wireDepthsWith_outputs_le_depthWith (cost : σ.Op → ℕ) {m : 
 theorem Circuit.depthWith_mono {cost cost' : σ.Op → ℕ} (hcost : ∀ op, cost op ≤ cost' op)
     {m : ℕ} (c : Circuit σ n m) : c.depthWith cost ≤ c.depthWith cost' :=
   foldl_max_mono fun _ => c.program.wireDepthsWith_mono hcost _
+
+@[simp] theorem Circuit.depthWith_wiring (cost : σ.Op → ℕ) {m : ℕ} (select : Fin m → Fin n) :
+    (Circuit.wiring σ select).depthWith cost = 0 :=
+  Nat.eq_zero_of_le_zero <| (Circuit.depthWith_le_iff cost _).2 fun _ => le_rfl
+
+@[simp] theorem Circuit.depthWith_zero_outputs (cost : σ.Op → ℕ) (c : Circuit σ n 0) :
+    c.depthWith cost = 0 :=
+  rfl
 
 /-- Costs of at most one never increase the depth. -/
 theorem Circuit.depthWith_le_depth {cost : σ.Op → ℕ} (hcost : ∀ op, cost op ≤ 1) {m : ℕ}

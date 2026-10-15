@@ -84,7 +84,7 @@ theorem not_solves_density {d : ℕ} (P : RoundProtocol ι M d)
         (fun i hi => hcap (i + 1) (by omega)) hnew.swap hchild
 
 /-- Korten's adversary with explicit parameters: a protocol with `d` messages of at most `m` bits
-does not separate a density rectangle of rate `p` and deficit `k ≥ m + 1` when
+does not separate a density rectangle of rate `p` and deficit `k ≥ max 1 (m + 1)` when
 `(32768 · 194 ^ d k) ^ d p ≤ 1 / 4`. -/
 theorem not_solves_bounded_density {d : ℕ} (P : RoundProtocol ι M d)
     {X Y : Finset (ι → Bool)} {m k p : ℝ}
@@ -124,9 +124,10 @@ theorem not_solves_bounded_density {d : ℕ} (P : RoundProtocol ι M d)
     exact (mul_le_mul_of_nonneg_right (pow_le_pow_right₀ hC hi) hp).trans hbudget
   · simpa only [K, B, pow_zero, one_mul] using h
 
-/-- **Korten's adversary from mutual limits**: if `X` and `Y` are nonempty of deficit at most `k`
-and their points are `(p, k)`-limits of each other, then a protocol with `d + 1` messages of at
-most `m` bits does not separate them when `(32768 · 194 ^ d (m + k)) ^ d p ≤ 1 / 4`. -/
+/-- **Korten's adversary from mutual limits**: if `X` and `Y` are nonempty of deficit at most
+`k ≥ 1` and their points are `(p, k)`-limits of each other for a rate `p > 0`, then a protocol with
+`d + 1` messages of at most `m ≥ 0` bits does not separate them when
+`(32768 · 194 ^ d (m + k)) ^ d p ≤ 1 / 4`. -/
 theorem not_solves_bilateral_density {d : ℕ} (P : RoundProtocol ι M (d + 1))
     {X Y : Finset (ι → Bool)} {m p k : ℝ}
     (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m) (hk : 1 ≤ k) (hp : 0 < p)

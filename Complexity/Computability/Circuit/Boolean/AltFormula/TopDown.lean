@@ -18,9 +18,11 @@ An alternating formula gives a Karchmer–Wigderson protocol with one message pe
 false there, at a disjunction the player whose input makes it true names an argument true there,
 and at the bottom the named literal separates the inputs. Negations are free, so a formula of
 depth `d` with `S` gates gives a protocol with `d` messages from an alphabet of `S + 1 + 2 n`
-symbols (`AltFormula.kwProtocol_solves`). By Korten's bounds [Korten2026], alternating formulas of
-depth `d` for parity or majority have `S + 2 n + 1 > 2 ^ (ε n ^ (1 / (d - 1)))` for large `n`
-(`AltFormula.two_rpow_lt_size_of_eval_eq_majority`), so the theorem of Lecomte and Ramakrishnan
+symbols (`AltFormula.kwProtocol_solves`). By Korten's bound for parity
+[Korten, Theorem 3][Korten2026] and its extension to majority, alternating formulas of depth `d`
+for parity or majority have `S + 2 n + 1 > 2 ^ (ε n ^ (1 / (d - 1)))` for large `n`
+(`AltFormula.two_rpow_lt_size_of_eval_eq_parity`,
+`AltFormula.two_rpow_lt_size_of_eval_eq_majority`), so the theorem of Lecomte and Ramakrishnan
 (`AltFormula.exists_majority`) is optimal for majority up to the constant in the exponent.
 
 ## Main definitions
@@ -211,22 +213,6 @@ theorem kwProtocol_solves (S : ℕ) (i₀ : Fin n) : ∀ {d : ℕ} (op : AltOp) 
       exact kwProtocol_solves S i₀ op.dual (fs.get j) (hchild j) s x y
         (by rw [hjx, ← hw, Bool.not_not]) (hw ▸ hjy)
 
-/-- A communication lower bound for `f n` bounds the alphabet of every protocol for it. -/
-private theorem two_rpow_lt_card_of_solvesKW {f : ∀ n, BitString n → Bool} {d N : ℕ} {ε : ℝ}
-    (hN : ∀ n : ℕ, N ≤ n → ∀ {M : Type} [Fintype M] (m : ℝ), 0 ≤ m →
-      (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m → m ≤ ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹) →
-      ∀ P : RoundProtocol (Fin n) M d, ¬ P.SolvesKW (f n))
-    {n : ℕ} (hn : N ≤ n) {M : Type} [Fintype M] (hM : 1 ≤ Fintype.card M)
-    (P : RoundProtocol (Fin n) M d) (hP : P.SolvesKW (f n)) :
-    (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < Fintype.card M := by
-  by_contra hle
-  push Not at hle
-  have hpos : (0 : ℝ) < Fintype.card M := by exact_mod_cast hM
-  exact hN n hn (Real.logb 2 (Fintype.card M))
-    (Real.logb_nonneg one_lt_two (by exact_mod_cast hM))
-    (by rw [Real.rpow_logb two_pos (by norm_num) hpos])
-    ((Real.logb_le_iff_le_rpow one_lt_two hpos).2 hle) P hP
-
 /-- An alternating formula computing `g` gives a protocol for it. -/
 private theorem solvesKW_kwProtocol {d : ℕ} {op : AltOp} {f : AltFormula n d}
     {g : BitString n → Bool} (hf : ∀ x, eval op f x = g x) (i₀ : Fin n) :
@@ -242,20 +228,20 @@ theorem two_rpow_lt_size_of_eval_eq_parity {d : ℕ} (hd : 2 ≤ d) :
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < size f + 2 * n + 1 := by
   obtain ⟨ε, hε, N, hN⟩ := parity_communication_lower_bound.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn op f hf => ?_⟩
-  have h := two_rpow_lt_card_of_solvesKW (f := parity) hN (le_of_max_le_left hn)
-    (by simp; omega) _ (solvesKW_kwProtocol hf ⟨0, le_of_max_le_right hn⟩)
+  have h := lt_of_not_ge fun hle => hN n (le_of_max_le_left hn) hle _
+    (solvesKW_kwProtocol hf ⟨0, le_of_max_le_right hn⟩)
   simp only [Fintype.card_sum, Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h
   push_cast at h
   linarith
 
-/-- **Korten's theorem for alternating formulas, for majority**: the bound of
+/-- **Korten's bound for alternating formulas, for majority**, extending [Korten2026]: the bound of
 `two_rpow_lt_size_of_eval_eq_parity` holds for majority, so the theorem of Lecomte and
 Ramakrishnan (`exists_majority`) is optimal up to the constant in the exponent. -/
 theorem two_rpow_lt_size_of_eval_eq_majority {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ (op : AltOp) (f : AltFormula n d),
       (∀ x, eval op f x = majority n x) →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < size f + 2 * n + 1 := by
-  obtain ⟨ε, hε, N, hN⟩ := majority_communication_lower_bound.{0} d hd
+  obtain ⟨ε, hε, N, hN⟩ := strictMajority_communication_lower_bound.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn op f hf => ?_⟩
   have hP := solvesKW_kwProtocol hf ⟨0, le_of_max_le_right hn⟩
   -- a protocol for majority gives one for strict majority
@@ -265,8 +251,7 @@ theorem two_rpow_lt_size_of_eval_eq_majority {d : ℕ} (hd : 2 ≤ d) :
   have hQ : ((kwProtocol (size f) ⟨0, le_of_max_le_right hn⟩ op f false).swapPlayers.comap
       fun x i => !x i).SolvesKW (strictMajority n) := fun x y hx hy =>
     hP.swapPlayers.comap_not x y ((hneg x).trans hx) ((hneg y).trans hy)
-  have h := two_rpow_lt_card_of_solvesKW (f := strictMajority) hN
-    (le_of_max_le_left hn) (by simp; omega) _ hQ
+  have h := lt_of_not_ge fun hle => hN n (le_of_max_le_left hn) hle _ hQ
   simp only [Fintype.card_sum, Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h
   push_cast at h
   linarith

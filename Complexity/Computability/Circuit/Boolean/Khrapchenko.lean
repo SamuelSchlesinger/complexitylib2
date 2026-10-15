@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.Parity
-public import Complexity.Computability.Circuit.Boolean.Threshold
+public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Hamming
 public import Mathlib.Data.Nat.Log
 import Mathlib.Algebra.BigOperators.Fin
@@ -231,64 +231,35 @@ private theorem injOn_update {a : BitString n} {s : Set (Fin n)} {v : Fin n → 
 
 /-! ### Threshold functions -/
 
-private theorem filter_update_true (a : BitString n) (i : Fin n) :
-    (univ.filter fun j => update a i true j = true) =
-      insert i (univ.filter fun j => a j = true) := by
-  ext j
-  by_cases hj : j = i
-  · subst hj
-    simp
-  · simp [hj]
-
-private theorem filter_update_false (a : BitString n) (i : Fin n) :
-    (univ.filter fun j => update a i false j = true) =
-      (univ.filter fun j => a j = true).erase i := by
-  ext j
-  by_cases hj : j = i
-  · subst hj
-    simp
-  · simp [hj]
-
-/-- The inputs with exactly `k` true bits. -/
-private def weight (k : ℕ) : Finset (BitString n) :=
-  univ.filter fun x => #(univ.filter fun j => x j = true) = k
-
-private theorem le_card_neighbors_weight_pred {k : ℕ} {a : BitString n} (ha : a ∈ weight k) :
-    k ≤ #{b ∈ weight (k - 1) | hammingDist a b = 1} := by
-  have ha' : #(univ.filter fun j => a j = true) = k := (mem_filter.1 ha).2
+private theorem le_card_neighbors_weight_pred {k : ℕ} {a : BitString n}
+    (ha : a ∈ BitString.weightLayer n k) :
+    k ≤ #{b ∈ BitString.weightLayer n (k - 1) | hammingDist a b = 1} := by
+  have ha' : BitString.weight a = k := BitString.mem_weightLayer.1 ha
   calc k = #(univ.filter fun j => a j = true) := ha'.symm
     _ ≤ _ := card_le_card_of_injOn (fun i => update a i false) (fun i hi => by
         have hai : a i = true := (mem_filter.1 hi).2
-        simp only [weight, coe_filter, mem_filter, mem_univ, true_and, Set.mem_ofPred_eq]
+        simp only [coe_filter, BitString.mem_weightLayer, Set.mem_ofPred_eq]
         refine ⟨?_, hammingDist_update_of_ne (by simp [hai])⟩
-        rw [filter_update_false, card_erase_of_mem (s := univ.filter fun j => a j = true)
-          (by simp [hai]), ha'])
+        have := BitString.weight_update_false hai
+        omega)
       (injOn_update fun i hi => by simp [(mem_filter.1 hi).2])
 
-private theorem le_card_neighbors_weight_succ {k : ℕ} {b : BitString n} (hb : b ∈ weight k) :
-    n - k ≤ #{a ∈ weight (k + 1) | hammingDist b a = 1} := by
-  have hb' : #(univ.filter fun j => b j = true) = k := (mem_filter.1 hb).2
+private theorem le_card_neighbors_weight_succ {k : ℕ} {b : BitString n}
+    (hb : b ∈ BitString.weightLayer n k) :
+    n - k ≤ #{a ∈ BitString.weightLayer n (k + 1) | hammingDist b a = 1} := by
+  have hb' : BitString.weight b = k := BitString.mem_weightLayer.1 hb
   have hz : #(univ.filter fun j => ¬b j = true) = n - k := by
-    have := card_filter_add_card_filter_not (s := (univ : Finset (Fin n))) fun j => b j = true
-    rw [card_univ, Fintype.card_fin, hb'] at this
-    omega
+    have := BitString.weight_not b
+    simp only [Fintype.card_fin, hb'] at this
+    rw [← this, BitString.weight]
+    simp
   calc n - k = #(univ.filter fun j => ¬b j = true) := hz.symm
     _ ≤ _ := card_le_card_of_injOn (fun i => update b i true) (fun i hi => by
         have hbi : b i = false := by simpa using (mem_filter.1 hi).2
-        simp only [weight, coe_filter, mem_filter, mem_univ, true_and, Set.mem_ofPred_eq]
+        simp only [coe_filter, BitString.mem_weightLayer, Set.mem_ofPred_eq]
         refine ⟨?_, hammingDist_update_of_ne (by simp [hbi])⟩
-        rw [filter_update_true, card_insert_of_notMem (by simp [hbi]), hb'])
+        rw [BitString.weight_update_true hbi, hb'])
       (injOn_update fun i hi => by simpa using (mem_filter.1 hi).2)
-
-private theorem weight_nonempty {k : ℕ} (hk : k ≤ n) :
-    (weight k : Finset (BitString n)).Nonempty := by
-  refine ⟨fun j => decide ((j : ℕ) < k), mem_filter.2 ⟨mem_univ _, ?_⟩⟩
-  have : (univ.filter fun j : Fin n => decide ((j : ℕ) < k) = true) =
-      (univ : Finset (Fin k)).map (Fin.castLEEmb hk) := by
-    ext j
-    simp only [decide_eq_true_eq, mem_filter, mem_univ, true_and, mem_map, Fin.castLEEmb_apply]
-    exact ⟨fun h => ⟨⟨j, h⟩, rfl⟩, fun ⟨i, hi⟩ => hi ▸ i.isLt⟩
-  rw [this, card_map, card_univ, Fintype.card_fin]
 
 /-- **Khrapchenko's bound for threshold functions.** A De Morgan formula computing "at least `k` of
 the `n` bits are true" has leaf size at least `k (n + 1 - k)`. -/
@@ -299,11 +270,15 @@ theorem mul_le_leafSize_of_computes_threshold {k : ℕ} {F : Formula signature n
   rcases lt_or_ge n k with hkn | hkn
   · simp [show n + 1 - k = 0 by omega]
   rw [mul_comm, show n + 1 - k = n - (k - 1) by omega]
-  refine F.mul_le_leafSize (A := weight k) (B := weight (k - 1))
-    (fun a ha => (hF a).trans (by simp [threshold_apply, (mem_filter.1 ha).2]))
+  refine F.mul_le_leafSize (A := BitString.weightLayer n k)
+    (B := BitString.weightLayer n (k - 1))
+    (fun a ha => (hF a).trans (by simp [threshold_apply, BitString.mem_weightLayer.1 ha]))
     (fun b hb => (hF b).trans (by
-      simp only [threshold_apply, (mem_filter.1 hb).2, decide_eq_false_iff_not, not_le]; omega))
-    (weight_nonempty hkn) (fun a ha => le_card_neighbors_weight_pred ha) fun b hb => ?_
+      simp only [threshold_apply, BitString.mem_weightLayer.1 hb, decide_eq_false_iff_not,
+        not_le]
+      omega))
+    (BitString.weightLayer_nonempty hkn) (fun a ha => le_card_neighbors_weight_pred ha)
+    fun b hb => ?_
   have := le_card_neighbors_weight_succ hb
   rwa [Nat.sub_add_cancel hk] at this
 

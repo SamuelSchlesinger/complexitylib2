@@ -433,16 +433,6 @@ theorem Computes.toCircuit {I : Interpretation σ U} {F : Formula σ n} {f : (Fi
     rw [toCircuit, Circuit.size_comp, Circuit.size_pi, Circuit.size_oneGate, size_gate]
     simp only [ih]
 
-/-- The circuit of a formula is no deeper than the formula. -/
-theorem depth_toCircuit_le (F : Formula σ n) : F.toCircuit.depth ≤ F.depth := by
-  induction F with
-  | input i => simp [toCircuit]
-  | gate op args ih =>
-    rw [toCircuit, depth_gate, add_comm]
-    exact (Circuit.depth_comp_le _ _).trans (Nat.add_le_add ((Circuit.depth_oneGate _ _).le)
-      (Circuit.depth_pi_le _ fun a => (ih a).trans (Finset.le_sup (f := fun a => (args a).depth)
-        (Finset.mem_univ a))))
-
 /-- With costs, the circuit of a formula is no deeper than the formula. -/
 theorem depthWith_toCircuit_le (cost : σ.Op → ℕ) (F : Formula σ n) :
     F.toCircuit.depthWith cost ≤ F.depthWith cost := by
@@ -453,6 +443,10 @@ theorem depthWith_toCircuit_le (cost : σ.Op → ℕ) (F : Formula σ n) :
     exact (Circuit.depthWith_comp_le _ _ _).trans (Nat.add_le_add
       (Circuit.depthWith_oneGate _ _ _).le (Circuit.depthWith_pi_le _ _ fun a => (ih a).trans
         (Finset.le_sup (f := fun a => (args a).depthWith cost) (Finset.mem_univ a))))
+
+/-- The circuit of a formula is no deeper than the formula. -/
+theorem depth_toCircuit_le (F : Formula σ n) : F.toCircuit.depth ≤ F.depth := by
+  simpa only [Circuit.depthWith_one, depthWith_one] using depthWith_toCircuit_le 1 F
 
 end Formula
 

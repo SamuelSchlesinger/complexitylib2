@@ -91,7 +91,7 @@ theorem exists_complexity_le_of_boundedError (S : Set (Fin n → Bool))
   have hc := hω ⟨x, hx⟩
   simp only at hc
   change threshold _ _ (fun i => F (Fin.append x (ω i))) = g x
-  rw [threshold_apply, Bool.eq_iff_iff, decide_eq_true_iff]
+  rw [threshold_apply, BitString.weight, Bool.eq_iff_iff, decide_eq_true_iff]
   cases hgx : g x
   · have e : (univ.filter fun i => F (Fin.append x (ω i)) = true) =
         univ \ univ.filter fun i => ω i ∈ univ.filter fun r => F (Fin.append x r) = g x := by
@@ -145,7 +145,8 @@ theorem exists_complexity_le_of_oneSidedError (S : Set (Fin n → Bool))
   refine ⟨fun x => threshold (n + 1) 1 fun i => F (Fin.append x (ω i)), fun x hx => ?_,
     complexity_le_of_eq_threshold F _ ω fun _ => rfl⟩
   change threshold _ _ (fun i => F (Fin.append x (ω i))) = g x
-  rw [threshold_apply, Bool.eq_iff_iff, decide_eq_true_iff, Nat.one_le_iff_ne_zero, Ne,
+  rw [threshold_apply, BitString.weight, Bool.eq_iff_iff, decide_eq_true_iff,
+    Nat.one_le_iff_ne_zero, Ne,
     card_eq_zero, filter_eq_empty_iff]
   push Not
   constructor

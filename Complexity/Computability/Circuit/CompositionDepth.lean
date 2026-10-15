@@ -39,49 +39,6 @@ namespace Program
 
 variable (P : Program σ n g₁) (feed : Fin k → Wire n g₁)
 
-/-- Continuing a program does not change the depths of its wires. -/
-@[simp] theorem wireDepths_append_castAdd (q : Program σ k g₂) (w : Wire n g₁) :
-    (P.append feed q).wireDepths (w.castAdd g₂) = P.wireDepths w := by
-  induction q with
-  | empty => cases w <;> rfl
-  | gate q line ih =>
-    cases w with
-    | input i => rfl
-    | gate j =>
-      exact (Program.wireDepths_gate_castSucc _ _ (Wire.gate (j.castAdd _))).trans ih
-
-/-- A wire of the continuation is at most as deep as in the continuation alone, plus the depth of
-the wires feeding it. -/
-theorem wireDepths_append_appendedWire_le {D : ℕ} (hD : ∀ i, P.wireDepths (feed i) ≤ D)
-    (q : Program σ k g₂) (w : Wire k g₂) :
-    (P.append feed q).wireDepths (appendedWire feed w) ≤ q.wireDepths w + D := by
-  induction q with
-  | empty =>
-    cases w with
-    | input i => exact (wireDepths_append_castAdd P feed .empty (feed i)).trans_le (by
-        simpa using hD i)
-    | gate j => exact j.elim0
-  | gate q line ih =>
-    cases w with
-    | input i =>
-      refine (wireDepths_append_castAdd P feed _ (feed i)).trans_le ?_
-      simpa using hD i
-    | gate j =>
-      refine Fin.lastCases ?_ (fun j => ?_) j
-      · change ((P.append feed q).gate (line.mapWires (appendedWire feed))).depths
-          (Fin.last _) ≤ (q.gate line).depths (Fin.last _) + D
-        rw [Program.depths_gate_last, Program.depths_gate_last]
-        have hpos := line.depth_pos q.wireDepths
-        refine le_trans ((Line.depth_le_add_one_iff _ _ (d := line.depth q.wireDepths - 1 + D)).2
-          fun a => ?_) (by omega)
-        have := line.wireDepth_lt_depth q.wireDepths a
-        exact (ih (line.wires a)).trans (by omega)
-      · change ((P.append feed q).gate (line.mapWires (appendedWire feed))).wireDepths
-          (Wire.castSucc (Wire.gate (Fin.natAdd g₁ j))) ≤
-          (q.gate line).wireDepths (Wire.castSucc (Wire.gate j)) + D
-        rw [Program.wireDepths_gate_castSucc, Program.wireDepths_gate_castSucc]
-        exact ih (.gate j)
-
 /-- Continuing a program does not change the depths with costs of its wires. -/
 @[simp] theorem wireDepthsWith_append_castAdd (cost : σ.Op → ℕ) (q : Program σ k g₂)
     (w : Wire n g₁) :
@@ -124,6 +81,19 @@ theorem wireDepthsWith_append_appendedWire_le (cost : σ.Op → ℕ) {D : ℕ}
         rw [Program.wireDepthsWith_gate_castSucc, Program.wireDepthsWith_gate_castSucc]
         exact ih (.gate j)
 
+/-- Continuing a program does not change the depths of its wires. -/
+@[simp] theorem wireDepths_append_castAdd (q : Program σ k g₂) (w : Wire n g₁) :
+    (P.append feed q).wireDepths (w.castAdd g₂) = P.wireDepths w := by
+  simpa only [Program.wireDepthsWith_one] using wireDepthsWith_append_castAdd P feed 1 q w
+
+/-- A wire of the continuation is at most as deep as in the continuation alone, plus the depth of
+the wires feeding it. -/
+theorem wireDepths_append_appendedWire_le {D : ℕ} (hD : ∀ i, P.wireDepths (feed i) ≤ D)
+    (q : Program σ k g₂) (w : Wire k g₂) :
+    (P.append feed q).wireDepths (appendedWire feed w) ≤ q.wireDepths w + D := by
+  simpa only [Program.wireDepthsWith_one] using
+    wireDepthsWith_append_appendedWire_le P feed 1 (by simpa only [Program.wireDepthsWith_one]) q w
+
 end Program
 
 namespace Circuit
@@ -135,30 +105,6 @@ namespace Circuit
 @[simp] theorem outputs_append_natAdd (c : Circuit σ n m) (d : Circuit σ n p) (o : Fin p) :
     (c.append d).outputs (Fin.natAdd m o) = Program.appendedWire Wire.input (d.outputs o) :=
   Fin.append_right _ _ o
-
-/-- **Sequential composition adds depths.** -/
-theorem depth_comp_le (d : Circuit σ m p) (c : Circuit σ n m) :
-    (d.comp c).depth ≤ d.depth + c.depth :=
-  (Circuit.depth_le_iff _).2 fun o =>
-    (Program.wireDepths_append_appendedWire_le c.program c.outputs
-      (fun i => c.outputDepths_le_depth i) d.program (d.outputs o)).trans
-      (Nat.add_le_add_right (d.outputDepths_le_depth o) _)
-
-/-- **Parallel composition takes the larger depth.** -/
-theorem depth_append_le (c : Circuit σ n m) (d : Circuit σ n p) :
-    (c.append d).depth ≤ max c.depth d.depth := by
-  refine (Circuit.depth_le_iff _).2 fun o => ?_
-  induction o using Fin.addCases with
-  | left o =>
-    change (c.program.append Wire.input d.program).wireDepths ((c.append d).outputs _) ≤ _
-    rw [outputs_append_castAdd, Program.wireDepths_append_castAdd]
-    exact (c.outputDepths_le_depth o).trans (le_max_left _ _)
-  | right o =>
-    change (c.program.append Wire.input d.program).wireDepths ((c.append d).outputs _) ≤ _
-    rw [outputs_append_natAdd]
-    exact (Program.wireDepths_append_appendedWire_le c.program Wire.input (D := 0)
-      (fun i => le_rfl) d.program (d.outputs o)).trans
-      ((d.outputDepths_le_depth o).trans (le_max_right _ _))
 
 /-- **Sequential composition adds depths with costs.** -/
 theorem depthWith_comp_le (cost : σ.Op → ℕ) (d : Circuit σ m p) (c : Circuit σ n m) :
@@ -185,6 +131,16 @@ theorem depthWith_append_le (cost : σ.Op → ℕ) (c : Circuit σ n m) (d : Cir
     exact (Program.wireDepthsWith_append_appendedWire_le c.program Wire.input cost (D := 0)
       (fun i => le_rfl) d.program (d.outputs o)).trans
       ((d.wireDepthsWith_outputs_le_depthWith cost o).trans (le_max_right _ _))
+
+/-- **Sequential composition adds depths.** -/
+theorem depth_comp_le (d : Circuit σ m p) (c : Circuit σ n m) :
+    (d.comp c).depth ≤ d.depth + c.depth := by
+  simpa only [Circuit.depthWith_one] using depthWith_comp_le 1 d c
+
+/-- **Parallel composition takes the larger depth.** -/
+theorem depth_append_le (c : Circuit σ n m) (d : Circuit σ n p) :
+    (c.append d).depth ≤ max c.depth d.depth := by
+  simpa only [Circuit.depthWith_one] using depthWith_append_le 1 c d
 
 end Circuit
 

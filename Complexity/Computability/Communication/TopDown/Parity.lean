@@ -20,13 +20,13 @@ full, since flipping a free coordinate exchanges them; a mask of rate `4 / n` is
 probability at least `3 / 4`, so each class consists of `(4 / n, 1)`-limits of the other. Korten's
 adversary then shows that no protocol with `d + 1` messages of `m` bits solves the
 Karchmer–Wigderson game of parity once `16 (32768 · 194 ^ d (m + 1)) ^ d ≤ n`
-(`RoundProtocol.not_solves_parity_finite`), so protocols with `d` messages need
+(`RoundProtocol.not_solvesKW_parity`), so protocols with `d` messages need
 `Ω(n ^ (1 / (d - 1)))` bits [Korten, Theorem 3][Korten2026]
 (`parity_communication_lower_bound`).
 
 ## Main results
 
-* `Cslib.Communication.RoundProtocol.not_solves_parity_finite`: the bound with explicit
+* `Cslib.Communication.RoundProtocol.not_solvesKW_parity`: the bound with explicit
   constants.
 * `Cslib.Communication.parity_communication_lower_bound`: Korten's lower bound.
 
@@ -133,7 +133,7 @@ private theorem not_solves_parity_classes {n d : ℕ} (P : RoundProtocol (Fin n)
 /-- **Korten's bound for parity, with explicit constants**: no protocol with `d + 1` messages of at
 most `m` bits solves the Karchmer–Wigderson game of parity on `n` bits when
 `16 (32768 · 194 ^ d (m + 1)) ^ d ≤ n`. -/
-theorem not_solves_parity_finite {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
+theorem not_solvesKW_parity {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
     {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m)
     (hsize : 16 * (32768 * (194 : ℝ) ^ d * (m + 1)) ^ d ≤ (n : ℝ)) :
     ¬ P.SolvesKW (parity n) := by
@@ -175,22 +175,23 @@ private theorem finite_budget_of_cost {n d : ℕ} (hd : 0 < d)
 
 universe u in
 /-- **Korten's communication lower bound for parity** [Korten, Theorem 3][Korten2026]: for every
-`d ≥ 2` there is `ε > 0` such that, for all large `n`, no protocol with `d` messages of at most
-`ε n ^ (1 / (d - 1))` bits solves the Karchmer–Wigderson game of parity on `n` bits. -/
+`d ≥ 2` there is `ε > 0` such that, for all large `n`, no protocol with `d` messages from an
+alphabet of at most `2 ^ (ε n ^ (1 / (d - 1)))` letters solves the Karchmer–Wigderson game of parity
+on `n` bits. -/
 theorem parity_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ rounds) :
-    ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n →
-      ∀ {M : Type u} [Fintype M] (m : ℝ), 0 ≤ m →
-        (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m →
-        m ≤ ε * (n : ℝ) ^ (((rounds - 1 : ℕ) : ℝ)⁻¹) →
+    ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ {M : Type u} [Fintype M],
+      (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ (ε * (n : ℝ) ^ (((rounds - 1 : ℕ) : ℝ)⁻¹)) →
         ∀ P : RoundProtocol (Fin n) M rounds, ¬ P.SolvesKW (parity n) := by
-  classical
   obtain ⟨d, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (show rounds ≠ 0 by omega)
   have hd : 0 < d := by omega
   let ε : ℝ := 1 / (32 * (32768 * (194 : ℝ) ^ d))
-  refine ⟨ε, by dsimp [ε]; positivity, (32 * (32768 * 194 ^ d)) ^ d, ?_⟩
-  intro n hn M _ m hm hM hcost P
-  have hc : m ≤ (n : ℝ) ^ ((d : ℝ)⁻¹) / (32 * (32768 * (194 : ℝ) ^ d)) := by
-    simpa only [ε, Nat.succ_sub_one, one_div, div_eq_mul_inv, mul_comm, one_mul] using hcost
-  exact P.not_solves_parity_finite hM hm (finite_budget_of_cost hd hn hm hc)
+  have hε : 0 < ε := by dsimp [ε]; positivity
+  refine ⟨ε, hε, (32 * (32768 * 194 ^ d)) ^ d, fun n hn M _ hM P => ?_⟩
+  have hm : 0 ≤ ε * (n : ℝ) ^ (((d + 1 - 1 : ℕ) : ℝ)⁻¹) := by positivity
+  have hc : ε * (n : ℝ) ^ (((d + 1 - 1 : ℕ) : ℝ)⁻¹) ≤
+      (n : ℝ) ^ ((d : ℝ)⁻¹) / (32 * (32768 * (194 : ℝ) ^ d)) := by
+    simp only [ε, Nat.add_sub_cancel]
+    exact le_of_eq (by ring)
+  exact P.not_solvesKW_parity hM hm (finite_budget_of_cost hd hn hm hc)
 
 end Cslib.Communication

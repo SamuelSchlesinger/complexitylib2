@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Construction
-public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
@@ -28,18 +27,20 @@ is `2 ^ (C √n)`. The exponent is optimal for majority, by Korten's top-down bo
 formulas (`AltFormula.two_rpow_lt_size_of_eval_eq_majority`) and for circuits of AND/OR depth `d`
 (`Unbounded.two_rpow_lt_add_size_of_computes_majority`).
 
-The proof is by induction on the depth: at depth `d + 2` and for `n ≤ k ^ (d + 1)` inputs, symmetric
-functions have size `2 ^ (C_d k)` (`exists_symmetric_altFormula`). A symmetric function is an OR
-over the accepted weights `t` of the exact-weight tests `#x = t`. Split the inputs into `r = d + 2`
-residue classes modulo each of `r` pairwise coprime moduli `mᵢ ≈ k` with product above `n`. The
-weight is `t` exactly when, modulo each `mᵢ`, the class weights sum to `t`; that holds exactly when
-some shifts `s`, summing to `∑ a - t`, make the shifted class weights pairwise distinct
-(`ShiftTest`), and a random such shift works with probability about `e ^ (-mᵢ)`, so
+The proof is by induction on the depth: at depth `d + 2`, symmetric functions of at most
+`k ^ (d + 1)` bits have alternating formulas with `2 ^ (C_d k)` gates
+(`exists_symmetric_altFormula`), and depth two is a normal form. For the step to depth `d + 3` and
+`n ≤ k ^ (d + 2)` bits, a symmetric function is an OR over the accepted weights `t` of the
+exact-weight tests `#x = t`. Choose `d + 2` pairwise coprime moduli `mᵢ` between `k` and `C k`
+with product above `n` (`exists_moduli`), and split the inputs into the `mᵢ` residue classes modulo
+each `mᵢ`. The weight is `t` exactly when, modulo each `mᵢ`, the class weights sum to `t`; that
+holds exactly when some shifts `s`, summing to `∑ a - t`, make the shifted class weights pairwise
+distinct (`ShiftTest`), and a random shift works with probability at least `3 ^ (-mᵢ)`, so
 `3 ^ ∑ mᵢ (n + 1)` shifts cover every input of weight `t` (`exists_simultaneous_shiftTest_cover`).
 Each shifted comparison of two class weights is a symmetric function of their bits after negating
-one class, on `2 (n / mᵢ + 1) ≤ (4 k) ^ (d + 1)` bits, so it has size `2 ^ (C_{d-1} 4 k)` at depth
-`d + 1` by induction (`exists_pairComparison`), and the comparisons of one test merge into one gate
-layer.
+one class, on `2 (n / mᵢ + 1) ≤ (4 k) ^ (d + 1)` bits, so it has `2 ^ (C_d · 4 k)` gates at depth
+`d + 2` by induction (`exists_pairComparison`), and the comparisons of one test merge into one
+gate layer.
 
 ## Main results
 
@@ -162,8 +163,8 @@ theorem exists_of_isSymmetric_depth_three :
       ∃ g : AltFormula n 3, (size g : ℝ) ≤ 2 ^ (C * √(n : ℝ)) ∧ ∀ x, eval op g x = f x := by
   simpa [Real.sqrt_eq_rpow] using exists_of_isSymmetric (d := 3) (by omega)
 
-/-- Majority has alternating formulas of depth `d ≥ 2` with at most `2 ^ (C n ^ (1 / (d - 1)))`
-gates. -/
+/-- Majority of `n ≥ 1` bits has alternating formulas of depth `d ≥ 2` with at most
+`2 ^ (C n ^ (1 / (d - 1)))` gates. -/
 theorem exists_majority {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ op : AltOp,
       ∃ g : AltFormula n d, (size g : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) ∧

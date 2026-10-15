@@ -344,7 +344,7 @@ theorem depth_literalsCircuit_le (n : ℕ) : (literalsCircuit n).depth ≤ 1 :=
 theorem depthWith_literalsCircuit (n : ℕ) :
     (literalsCircuit n).depthWith Unbounded.Op.andOrCost = 0 :=
   Nat.eq_zero_of_le_zero <| (Circuit.depthWith_append_le _ _ _).trans <| max_le
-    ((Circuit.depthWith_le_iff _ _).2 fun _ => le_rfl)
+    (Circuit.depthWith_wiring _ _).le
     (Circuit.depthWith_pi_le _ _ fun _ => (Circuit.depthWith_oneGate _ _ _).le)
 
 /-- **Alternating formulas are circuits**: an alternating formula of depth `d` computing `f`
