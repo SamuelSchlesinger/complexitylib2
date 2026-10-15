@@ -936,4 +936,34 @@ info: 'Cslib.Probability.ApproximateCounting.three_quarters_le_dens_filter_affin
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.ApproximateCounting.three_quarters_le_dens_filter_affineHashEstimate
 
+/--
+info: 'Cslib.RotationMap.spectralExpansion_le_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_le_iff
+
+/--
+info: 'Cslib.RotationMap.abs_card_interedges_sub_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.abs_card_interedges_sub_le
+
+/--
+info: 'Cslib.RotationMap.abs_card_interedges_sub_le_mul_sqrt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.abs_card_interedges_sub_le_mul_sqrt
+
+/--
+info: 'Cslib.RotationMap.le_card_interedges_compl' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.le_card_interedges_compl
+
+/--
+info: 'Cslib.RotationMap.exists_isSimple_toSimpleGraph_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.exists_isSimple_toSimpleGraph_eq
+
 end ComplexityTests.Axioms
