@@ -228,7 +228,7 @@ formulas for inputs (`Formula.bind`, `Formula.substLast`).
 
 **Fourier analysis on the Boolean cube** (`Foundations/BooleanAnalysis/Fourier.lean`, from v1's
 `BooleanAnalysis/FourierExpansion` without its inner-product-space type synonym): characters
-`χ_S` on cslib's `BitString`, orthonormality under Mathlib's `𝔼`, the Fourier expansion and
+`χ_S` on `ι → Bool`, orthonormality under Mathlib's `𝔼`, the Fourier expansion and
 uniqueness of coefficients, Plancherel and Parseval. Decision trees of depth `d` have Fourier
 degree at most `d` (`DecisionTree/Fourier.lean`), the first step towards Linial–Mansour–Nisan
 over the switching lemma.
