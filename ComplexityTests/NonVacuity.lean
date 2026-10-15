@@ -20,6 +20,8 @@ import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Foundations.Combinatorics.Expander.Family
 import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Logics.SecondOrder.Coloring
+import Complexity.Computability.PCP.Preprocess
+import Complexity.Computability.PCP.ThreeSAT
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -244,5 +246,22 @@ example :
   simp at this
 
 end SecondOrder
+
+section PCP
+
+open Cslib.PCP Cslib.Logic.PL
+
+/-- The whole first layer of Dinur's proof applies: an unsatisfiable formula gives a preprocessed
+constraint graph of positive value. -/
+example (φ : CNF ℕ) (hφ : φ = [[(0, true)], [(0, false)]]) :
+    0 < (ConstraintGraph.ofCNF φ).preprocess.toConstraintGraph.unsatVal := by
+  subst hφ
+  have h : 0 < (ConstraintGraph.ofCNF ([[(0, true)], [(0, false)]] : CNF ℕ)).unsatVal := by
+    rw [ConstraintGraph.unsatVal_pos_iff, ConstraintGraph.satisfiable_ofCNF_iff _ (by simp)]
+    rintro ⟨σ, hσ⟩
+    simp [CNF.eval, Clause.eval, Literal.eval] at hσ
+  exact lt_of_lt_of_le (by positivity) (ConstraintGraph.le_unsatVal_preprocess _)
+
+end PCP
 
 end ComplexityTests.NonVacuity

@@ -1556,4 +1556,64 @@ info: 'Cslib.RotationMap.card_filter_killTime_eq_and_splitWalk' depends on axiom
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.card_filter_killTime_eq_and_splitWalk
 
+/--
+info: 'Cslib.PCP.ConstraintGraph.exists_unsatFrac_eq_unsatVal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.exists_unsatFrac_eq_unsatVal
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.unsatVal_eq_zero_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.unsatVal_eq_zero_iff
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.card_mul_unsatVal_add_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.card_mul_unsatVal_add_le
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.unsatVal_map' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.unsatVal_map
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.satisfiable_ofCNF_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.satisfiable_ofCNF_iff
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_ofCNF' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_ofCNF
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_degreeReduce' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_degreeReduce
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.spectralExpansion_preprocess_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.spectralExpansion_preprocess_le
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.satisfiable_preprocess_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.satisfiable_preprocess_iff
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess
+
 end ComplexityTests.Axioms

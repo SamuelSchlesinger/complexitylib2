@@ -131,6 +131,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequen
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Shadow
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
+public import Complexity.Computability.PCP.ConstraintGraph
+public import Complexity.Computability.PCP.DegreeReduction
+public import Complexity.Computability.PCP.Preprocess
+public import Complexity.Computability.PCP.RegularConstraintGraph
+public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit
