@@ -27,6 +27,7 @@ import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
 import Complexity.Computability.PCP.Composition
+import Complexity.Computability.PCP.PoweringBound
 import Complexity.Foundations.Relation.InductiveCounting
 import Mathlib.Tactic.FinCases
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
@@ -361,6 +362,21 @@ example : 0 < (⟨fun _ ↦ (), fun _ ↦ (), fun _ (a b : Bool) ↦ a ≠ b⟩ 
 /-- The honest proof passes the Hadamard assignment tester with probability one. -/
 example : (hadamardTester (k := 2) (· = ·)).acceptProb (HadamardTester.honestProof ![0, 0]) = 1 :=
   HadamardTester.acceptProb_honestProof rfl
+
+/-- Powering an unsatisfiable regular constraint graph whose spectral expansion is below one gives a
+graph of positive value. -/
+example {V D α : Type*} [Fintype V] [Fintype D] [Fintype α] [Nonempty α]
+    (R : RegularConstraintGraph V D α) (hR : ¬ R.toConstraintGraph.Satisfiable)
+    (hl : R.graph.spectralExpansion < 1) :
+    0 < (R.power (4 * Fintype.card α * (2 - 1)) 2).toConstraintGraph.unsatVal := by
+  refine lt_of_lt_of_le ?_ (R.le_unsatVal_power _ 2 le_rfl rfl le_rfl hl)
+  have h₀ := (R.toConstraintGraph.unsatVal_pos_iff).2 hR
+  have hl' : 0 < 1 - R.graph.spectralExpansion := sub_pos.2 hl
+  have hα : (1 : ℝ) ≤ Fintype.card α := by exact_mod_cast Fintype.card_pos
+  apply mul_pos
+  · norm_num
+    positivity
+  · exact lt_min h₀ (by positivity)
 
 end Composition
 

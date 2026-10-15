@@ -1875,4 +1875,46 @@ info: 'Cslib.PCP.ConstraintGraph.card_edges_compose' depends on axioms: [propext
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.ConstraintGraph.card_edges_compose
 
+/--
+info: 'Cslib.PCP.RegularConstraintGraph.satisfiable_power_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.satisfiable_power_iff
+
+/--
+info: 'Cslib.PCP.RegularConstraintGraph.not_satisfies_of_hit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.not_satisfies_of_hit
+
+/--
+info: 'Cslib.PCP.RegularConstraintGraph.le_expect_numHits' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.le_expect_numHits
+
+/--
+info: 'Cslib.PCP.RegularConstraintGraph.expect_numHits_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.expect_numHits_sq_le
+
+/--
+info: 'Cslib.PCP.RegularConstraintGraph.le_unsatFrac_power' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.le_unsatFrac_power
+
+/--
+info: 'Cslib.PCP.RegularConstraintGraph.le_unsatVal_power' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.le_unsatVal_power
+
+/--
+info: 'Cslib.RotationMap.neighbor_pow_take_rot_killedPow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.neighbor_pow_take_rot_killedPow
+
 end ComplexityTests.Axioms
