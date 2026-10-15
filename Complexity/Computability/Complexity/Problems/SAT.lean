@@ -1,0 +1,99 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
+public import Complexity.Logics.Propositional.CNF
+
+/-!
+# The satisfiability problem
+
+`SAT` is the set of satisfiable formulas in conjunctive normal form over variables numbered by `ℕ`,
+encoded as lists of lists of literals with the framed encodings of lists and pairs
+(`Cslib.Complexity.encCNF`).
+
+The Cook–Levin theorem says that `SAT` is `NP`-complete [Arora and Barak, Theorem
+2.10][AroraBarak09]. Its correctness parts are proved here (`SAT.isVerifier`) and in `CookLevin/`
+(`reduce_mem_SAT_iff`); the polynomial-time bounds on the verifier and the reduction need the
+closure properties of `Turing.MultiTapeTM.ComputableTidilyInPolyTime`, which are not yet in cslib.
+
+## Main definitions
+
+* `Cslib.Complexity.SAT`, `Cslib.Complexity.encCNF`.
+* `Cslib.Complexity.SAT.verifier`: evaluation of a formula under the assignment a certificate
+  describes.
+
+## Main results
+
+* `Cslib.Complexity.SAT.isVerifier`: the verifier is correct, with certificates as long as the
+  encoded formula.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+-/
+
+@[expose] public section
+
+namespace Cslib.Complexity
+
+open Cslib.Logic.PL Turing.MultiTapeTM
+
+/-- The satisfiable CNF formulas over variables numbered by natural numbers. -/
+def SAT : Set (CNF ℕ) := {φ | φ.Satisfiable}
+
+theorem mem_SAT {φ : CNF ℕ} : φ ∈ SAT ↔ φ.Satisfiable := Iff.rfl
+
+/-- Formulas encoded as lists of clauses, clauses as lists of literals, and a literal `(v, b)` as
+the framed binary digits of `v` followed by `b`. -/
+def encCNF : CNF ℕ ↪ List Bool := encList (encList (encPair encNat encBool))
+
+namespace SAT
+
+/-! ### The verifier -/
+
+/-- The assignment described by a certificate `w` for `φ`: each variable takes the bit of `w` at
+the position of its first occurrence in `φ`. Variables are numbered arbitrarily, so a certificate
+cannot simply list the values of variables `0, 1, 2, …`; it lists them in order of occurrence
+instead, which needs at most as many bits as `φ` has literals. -/
+def assignment (φ : CNF ℕ) (w : List Bool) (v : ℕ) : Bool := w.getD (φ.vars.idxOf v) false
+
+/-- The verifier for `SAT`: evaluate the formula under the assignment the certificate describes. -/
+def verifier (x : CNF ℕ × List Bool) : Bool := x.1.eval (assignment x.1 x.2)
+
+/-- A formula has no more literals than the length of its encoding. -/
+theorem length_vars_le (φ : CNF ℕ) : φ.vars.length ≤ (encCNF φ).length := by
+  rw [CNF.length_vars]
+  calc (φ.map List.length).sum
+      ≤ (φ.map fun c => (encList (encPair encNat encBool) c).length).sum :=
+        List.sum_le_sum fun c _ => length_le_length_encList _ c
+    _ ≤ (encCNF φ).length := sum_length_le_length_encList _ φ
+
+/-- `SAT.verifier` verifies `SAT` with certificates as long as the encoded formula. -/
+theorem isVerifier : IsVerifier encCNF Polynomial.X verifier SAT := by
+  intro φ
+  simp only [mem_SAT, Polynomial.eval_X, verifier]
+  constructor
+  · rintro ⟨τ, hτ⟩
+    refine ⟨φ.vars.map τ ++ List.replicate ((encCNF φ).length - φ.vars.length) false, ?_, ?_⟩
+    · simp [Nat.add_sub_cancel' (length_vars_le φ)]
+    · rw [CNF.eval_congr fun v hv => ?_]
+      · exact hτ
+      · have hlt : φ.vars.idxOf v < φ.vars.length := List.idxOf_lt_length_iff.2 hv
+        have hlt' : φ.vars.idxOf v < (φ.vars.map τ).length := by simpa using hlt
+        rw [assignment, List.getD_eq_getElem?_getD, List.getElem?_append_left hlt',
+          List.getElem?_map, List.getElem?_eq_getElem hlt, List.getElem_idxOf hlt]
+        rfl
+  · rintro ⟨w, -, hw⟩
+    exact ⟨_, hw⟩
+
+end SAT
+
+end Cslib.Complexity

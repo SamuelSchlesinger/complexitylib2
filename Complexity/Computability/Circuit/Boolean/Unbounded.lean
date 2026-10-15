@@ -1,0 +1,87 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Circuit.Formula
+
+/-!
+# Boolean formulas with unbounded fan-in
+
+The basis of AC⁰: negation, and conjunctions and disjunctions of any number of arguments. Formulas
+over this basis (`Cslib.Circuits.Formula Unbounded.signature n`) of constant depth are the setting
+of Håstad's lower bound for parity. The conjunction and the disjunction of no arguments are the
+constants `true` and `false`.
+
+## Main definitions
+
+* `Cslib.Circuits.Boolean.Unbounded.signature`: negation, and conjunction and disjunction of every
+  arity.
+* `Cslib.Circuits.Boolean.Unbounded.interpretation`: their Boolean meaning.
+-/
+
+@[expose] public section
+
+namespace Cslib.Circuits.Boolean.Unbounded
+
+/-- Negation, and conjunction and disjunction of `m` arguments for every `m`. -/
+inductive Op where
+  /-- Negation. -/
+  | not
+  /-- Conjunction of `m` arguments. -/
+  | and (m : ℕ)
+  /-- Disjunction of `m` arguments. -/
+  | or (m : ℕ)
+  deriving DecidableEq
+
+/-- The arity of an operation. -/
+abbrev Op.arity : Op → ℕ
+  | .not => 1
+  | .and m => m
+  | .or m => m
+
+/-- The signature of negation and of conjunction and disjunction of unbounded fan-in. It is
+reducible, so that case analysis on its operations sees their arities. -/
+abbrev signature : Signature :=
+  ⟨Op, Op.arity⟩
+
+/-- The Boolean meaning of the operations. -/
+def interpretation : Interpretation signature Bool
+  | .not, x => !x (0 : Fin 1)
+  | .and _, x => decide (∀ j, x j = true)
+  | .or _, x => decide (∃ j, x j = true)
+
+@[simp] theorem interpretation_not (x : Fin 1 → Bool) :
+    interpretation .not x = !x 0 :=
+  rfl
+
+@[simp] theorem interpretation_and (m : ℕ) (x : Fin m → Bool) :
+    interpretation (.and m) x = decide (∀ j, x j = true) :=
+  rfl
+
+@[simp] theorem interpretation_or (m : ℕ) (x : Fin m → Bool) :
+    interpretation (.or m) x = decide (∃ j, x j = true) :=
+  rfl
+
+variable {n : ℕ}
+
+@[simp] theorem eval_gate_not (args : Fin 1 → Formula signature n) (x : Fin n → Bool) :
+    (Formula.gate (Op.not : signature.Op) args).eval interpretation x =
+      !(args 0).eval interpretation x :=
+  rfl
+
+@[simp] theorem eval_gate_and {m : ℕ} (args : Fin m → Formula signature n) (x : Fin n → Bool) :
+    (Formula.gate (Op.and m : signature.Op) args).eval interpretation x =
+      decide (∀ j, (args j).eval interpretation x = true) :=
+  rfl
+
+@[simp] theorem eval_gate_or {m : ℕ} (args : Fin m → Formula signature n) (x : Fin n → Bool) :
+    (Formula.gate (Op.or m : signature.Op) args).eval interpretation x =
+      decide (∃ j, (args j).eval interpretation x = true) :=
+  rfl
+
+end Cslib.Circuits.Boolean.Unbounded
