@@ -604,4 +604,10 @@ info: 'Cslib.Logic.PL.CNF.sum_two_rpow_card_isolated_div_le' depends on axioms: 
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.sum_two_rpow_card_isolated_div_le
 
+/--
+info: 'Cslib.Logic.PL.CNF.sparsification' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.sparsification
+
 end ComplexityTests.Axioms

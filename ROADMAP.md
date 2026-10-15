@@ -249,6 +249,16 @@ degree, and a Chebyshev bound for random subsets (`Foundations/Combinatorics/Hyp
 
 **Resolution** (`Logics/Propositional/Resolution.lean`): soundness and refutation completeness.
 
+**Exponential-time SAT combinatorics.** The satisfiability coding lemma of Paturi, Pudlák and Zane
+(`Logics/Propositional/CNF/Coding.lean`): a solution isolated in `ι` directions of a width-`k`
+formula is coded in `N - ι / k` bits on average over orders, so `∑ₓ 2 ^ (ι(x) / k) ≤ 2 ^ N`. The
+**sparsification lemma** of Impagliazzo, Paturi and Zane (`Logics/Propositional/ClauseSet/
+Sparsification.lean`, over clause sets in `ClauseSet/Basic.lean`, with the proof of Calabro,
+Impagliazzo and Paturi in `ClauseSet/Sparsification/{Step,Path,Tree,Bounds,Asymptotics}.lean`):
+every width-`k` CNF over `N` variables is the disjunction of at most `2 ^ (ε N)` width-`k` CNFs in
+which every variable occurs in at most `c(k, ε)` clauses. Normal forms of parity have at least
+`2 ^ (n - 1)` terms (`Circuit/Boolean/NormalFormParity.lean`).
+
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
 `Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
 for every odd prime `p`, a depth-`d` circuit with `MOD_p` gates computing parity has size at least
