@@ -80,6 +80,15 @@ lake exe checkInitImports
 - Watch for vacuous hypotheses: when a structure bundles bounds, provide at least one instance in
   the test suite.
 
+## Review cycle
+
+- Every batch of new or refactored modules gets an independent cslib-style review (naming, API,
+  duplication, placement, documentation) before or soon after it lands on `main`.
+- Every batch also gets a Codex correctness review (`codex-companion.mjs adversarial-review`):
+  are the statements true and as the docstrings claim, are hypotheses satisfiable and
+  non-vacuous, do definitions match the cited literature. Codex only reviews; fixes are written
+  here.
+
 ## Design commitments (do not re-litigate casually)
 
 - Base pin is upstream cslib `main` at a SHA; never a fork.
