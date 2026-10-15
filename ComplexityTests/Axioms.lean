@@ -706,4 +706,10 @@ info: 'Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_majority' depend
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_majority
 
+/--
+info: 'Cslib.Logic.PL.ClauseSet.card_solutions_le_of_not_containsSubcube' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.ClauseSet.card_solutions_le_of_not_containsSubcube
+
 end ComplexityTests.Axioms

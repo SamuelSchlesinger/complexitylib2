@@ -275,7 +275,9 @@ input, so those of parity have at least `2 ^ (n - 1)` terms (`Logics/Proposition
 By the coding lemma, an OR of width-`k` CNFs for parity has at least `2 ^ (n / k - 1)` of them,
 which is attained when `k ∣ n`, and by its weighted version (PPZ's Lemma 5) any OR of CNFs for
 parity has at least `2 ^ (√n - 1)` CNFs and distinct clauses together, PPZ's Theorem 6 up to the
-factor `n ^ (1 / 4)` (`Logics/Propositional/Parity/DepthThree.lean`, beyond v1).
+factor `n ^ (1 / 4)` (`Logics/Propositional/Parity/DepthThree.lean`, beyond v1). With both lemmas, a width-`k` CNF
+whose solutions contain no subcube of dimension `D` has at most `2 ^ ((1 - 1 / k + ε) N + C D)`
+solutions (`Logics/Propositional/ClauseSet/SubcubeFree.lean`).
 
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
 `Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
