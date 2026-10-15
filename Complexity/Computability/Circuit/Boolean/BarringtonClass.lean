@@ -152,7 +152,7 @@ theorem polyLength_subset_NC_one (M : Type*) [Monoid M] [Finite M] : PolyLength 
   obtain ⟨a, ha⟩ := hs.exists_clog_le_mul_log
   refine mem_NC_one_iff_formulaDepth_le.2 ⟨(Nat.clog 2 k + 1) * a + Nat.clog 2 k, fun n => ?_⟩
   obtain ⟨P, S, hPS, hlen⟩ := hP n
-  obtain ⟨F, hF, hd⟩ := (P.map (leftMulEnd e)).exists_formula (e 1)
+  obtain ⟨F, hF, hd, -⟩ := (P.map (leftMulEnd e)).exists_formula (e 1)
     (Finset.univ.filter fun i => e.symm i ∈ S)
   have hFc : F.Computes interpretation (L.slice n) := fun x => by
     rw [hF x, Bool.eq_iff_iff, decide_eq_true_iff, hPS x]

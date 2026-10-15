@@ -14,7 +14,8 @@ public import Complexity.Computability.Circuit.Boolean.Formula
 
 Pushing the negations of a De Morgan formula to the inputs by De Morgan's laws, cancelling double
 negations and evaluating negated constants, gives a formula in *negation normal form*
-(`Formula.nnf`). It computes the same function (`Formula.eval_nnf`) with the same leaves
+(`Formula.nnf`), with negations only directly on inputs (`Formula.IsNNF`, `Formula.isNNF_nnf`).
+It computes the same function (`Formula.eval_nnf`) with the same leaves
 (`Formula.leafSize_nnf`) [Jukna, Chapter 6][Jukna2012]. Its depth counts every gate, negations
 included, and is at most one more than the number of AND and OR gates on a path of the original
 formula (`Formula.depth_nnf_le`). So the depth of a function with negations and constants free,
@@ -23,11 +24,13 @@ formula (`Formula.depth_nnf_le`). So the depth of a function with negations and 
 
 ## Main definitions
 
+* `Cslib.Circuits.Formula.IsNNF`: formulas whose negations apply directly to inputs.
 * `Cslib.Circuits.Formula.nnf`: the negation normal form of a De Morgan formula or of its
   negation.
 
 ## Main results
 
+* `Cslib.Circuits.Formula.isNNF_nnf`: the negation normal form is in negation normal form.
 * `Cslib.Circuits.Formula.eval_nnf`, `Cslib.Circuits.Formula.leafSize_nnf`: the negation normal
   form computes the same function with the same leaves.
 * `Cslib.Circuits.Formula.depth_nnf_le`: its depth is at most one more than the depth with
@@ -60,6 +63,53 @@ def Formula.nnf : Formula signature n → Bool → Formula signature n
   | gate .and args, true => (nnf (args 0) true).or (nnf (args 1) true)
   | gate .or args, false => (nnf (args 0) false).or (nnf (args 1) false)
   | gate .or args, true => (nnf (args 0) true).and (nnf (args 1) true)
+
+/-- A De Morgan formula is in *negation normal form* when its negations apply directly to inputs:
+it is built from inputs, negated inputs and constants by conjunctions and disjunctions. -/
+inductive Formula.IsNNF : Formula signature n → Prop
+  /-- An input. -/
+  | input (i : Fin n) : (input i).IsNNF
+  /-- A negated input. -/
+  | not_input (i : Fin n) : (input i).not.IsNNF
+  /-- A constant. -/
+  | const (b : Bool) : (const b).IsNNF
+  /-- A conjunction of formulas in negation normal form. -/
+  | and {F G : Formula signature n} : F.IsNNF → G.IsNNF → (F.and G).IsNNF
+  /-- A disjunction of formulas in negation normal form. -/
+  | or {F G : Formula signature n} : F.IsNNF → G.IsNNF → (F.or G).IsNNF
+
+/-- A balanced disjunction of formulas in negation normal form is in negation normal form. -/
+theorem Formula.IsNNF.orList {l : List (Formula signature n)} (hl : ∀ F ∈ l, F.IsNNF) :
+    (orList l).IsNNF :=
+  List.balancedFold_induction (p := fun l (F : Formula signature n) => (∀ G ∈ l, G.IsNNF) → F.IsNNF)
+    (fun _ => .const false) (fun F h => h F (List.mem_singleton_self F))
+    (fun _ _ _ _ _ _ h₁ h₂ h => .or (h₁ fun G hG => h G (List.mem_append_left _ hG))
+      (h₂ fun G hG => h G (List.mem_append_right _ hG))) l hl
+
+/-- A balanced conjunction of formulas in negation normal form is in negation normal form. -/
+theorem Formula.IsNNF.andList {l : List (Formula signature n)} (hl : ∀ F ∈ l, F.IsNNF) :
+    (andList l).IsNNF :=
+  List.balancedFold_induction (p := fun l (F : Formula signature n) => (∀ G ∈ l, G.IsNNF) → F.IsNNF)
+    (fun _ => .const true) (fun F h => h F (List.mem_singleton_self F))
+    (fun _ _ _ _ _ _ h₁ h₂ h => .and (h₁ fun G hG => h G (List.mem_append_left _ hG))
+      (h₂ fun G hG => h G (List.mem_append_right _ hG))) l hl
+
+/-- The negation normal form is in negation normal form. -/
+theorem Formula.isNNF_nnf (F : Formula signature n) (b : Bool) : (F.nnf b).IsNNF := by
+  induction F generalizing b with
+  | input i => cases b <;> simp only [nnf] <;> constructor
+  | gate op args ih =>
+    cases op with
+    | const c => exact .const _
+    | not => exact ih 0 _
+    | and =>
+      cases b
+      · exact .and (ih 0 _) (ih 1 _)
+      · exact .or (ih 0 _) (ih 1 _)
+    | or =>
+      cases b
+      · exact .or (ih 0 _) (ih 1 _)
+      · exact .and (ih 0 _) (ih 1 _)
 
 /-- The negation normal form computes the formula, negated when `b` is true. -/
 @[simp] theorem Formula.eval_nnf (F : Formula signature n) (b : Bool) (x : BitString n) :
