@@ -95,12 +95,10 @@ public import Complexity.Computability.Circuit.Frontier.Layouts.Support
 public import Complexity.Computability.Circuit.Frontier.Layouts.VertexGaussian
 public import Complexity.Computability.Circuit.Frontier.Ledger.Aggregate
 public import Complexity.Computability.Circuit.Frontier.Ledger.Basic
-public import Complexity.Computability.Circuit.Frontier.Ledger.Count
 public import Complexity.Computability.Circuit.Frontier.Ledger.LowerBound
 public import Complexity.Computability.Circuit.Frontier.Ledger.Sweep
 public import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 public import Complexity.Computability.Circuit.Frontier.Linear.Basis
-public import Complexity.Computability.Circuit.Frontier.Linear.Cut
 public import Complexity.Computability.Circuit.Frontier.Linear.Linearize
 public import Complexity.Computability.Circuit.Frontier.Linear.LowerBound
 public import Complexity.Computability.Circuit.Frontier.Linear.TotallyRegular
@@ -269,6 +267,7 @@ public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.ListDecoding
+public import Complexity.Foundations.Data.Nat.Card
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.Div
 public import Complexity.Foundations.Data.Nat.Log

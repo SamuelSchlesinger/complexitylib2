@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Frontier.Ledger.Aggregate
-public import Complexity.Computability.Circuit.Frontier.Ledger.Count
 public import Complexity.Computability.Circuit.Frontier.Ledger.Sweep
 public import Complexity.Computability.Circuit.Frontier.LowerBound
 import Complexity.Computability.Circuit.Frontier.Layouts.Components

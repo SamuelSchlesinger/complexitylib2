@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Frontier.Demand
-public import Complexity.Computability.Circuit.Frontier.Linear.Cut
+public import Complexity.Computability.Circuit.Frontier.Compiler
 public import Complexity.Computability.Circuit.Frontier.Linear.Linearize
 public import Complexity.Computability.Circuit.Frontier.Linear.TotallyRegular
 

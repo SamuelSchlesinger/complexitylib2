@@ -13,6 +13,7 @@ public import Mathlib.Basic.Finite.Sigma
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.SetTheory.Cardinal.NatCard
 import Complexity.Computability.Circuit.Program
+import Complexity.Foundations.Data.Nat.Card
 
 /-!
 # Compiling a circuit into a constraint network
@@ -55,6 +56,14 @@ is unique, and along any layout the read-once branching program of the network
 (`Cslib.Circuits.Frontier.Network.branchingProgram`) is unambiguous
 (`Compiler.unambiguous_branchingProgram`).
 
+**Outputs across a cut.** A circuit with many outputs computes a function; its network
+accepts every value at every output. If the runs of the circuit on two inputs `x` and `y` agree
+on the edge cut of a set of vertices `P`, the separator lemma splices them: on an input that reads
+like `x` at `P` and like `y` elsewhere, the outputs held in `P` are those of `x` and the others
+are those of `y` (`Compiler.eval_splice`). Cutting along the connected component of an output
+vertex shows that an output depending on an input is joined to the vertex of that input
+(`Compiler.exists_reachable_of_eval_ne`).
+
 **Counting.** With `C` consumers, `W` signals and `m` outputs, the graph has `2 C` edges and
 `W + C + m` vertices, so its cycle rank is `C - W - m + 1`: the number of argument slots minus
 the number of signals, plus one. A gate of arity `k` has `k` slots, so it contributes `k - 1` to
@@ -62,7 +71,9 @@ the cycle rank, and a reachable input contributes `-1`. Hence, when the graph is
 cycle rank is at most `(r - 1) s + 1 - |read|` for `s` gates of positive arity and fan-in at most
 `r` (`Compiler.cycleRank_add_ncard_read_le`). Gates of arity zero, the constants, only lower the
 cycle rank, so the count charges only the *inner* gates (`Circuit.innerSize`). Sharing creates
-cycles; gates create local constraints.
+cycles; gates create local constraints. The count holds inside every closed set of vertices, for
+instance a connected component (`Compiler.cycleRankOn_add_ncard_readIn_le`), and the count of
+the whole graph is its case for the set of all vertices.
 
 ## Main definitions
 
@@ -74,12 +85,20 @@ cycles; gates create local constraints.
 * `Cslib.Circuits.Frontier.Compiler.satisfies_iff`, `Compiler.accepted_network`: exactness.
 * `Cslib.Circuits.Frontier.Compiler.unambiguous_branchingProgram`: the branching program of every
   layout is unambiguous.
+* `Cslib.Circuits.Frontier.Compiler.eval_splice`: outputs across a cut.
 * `Cslib.Circuits.Frontier.Compiler.loopless`, `Compiler.connected`: the graph is loopless, and
   connected when the circuit has one output.
+* `Cslib.Circuits.Frontier.Compiler.connected_of_reachable`,
+  `Cslib.Circuits.Frontier.Compiler.exists_reachable_of_eval_ne`: connectivity from a common
+  vertex; an output depending on an input is joined to its vertex.
 * `Cslib.Circuits.Frontier.Compiler.maxDegreeLE`: for fan-in at most `r ≥ 2`, the degrees are at
   most `r + 1`; for fan-in two the graph is subcubic.
 * `Cslib.Circuits.Frontier.Compiler.cycleRank_add_ncard_read_le`: the cycle rank and the number
   of inputs read add up to at most `(r - 1) s + 1`, where `s` counts the inner gates.
+* `Cslib.Circuits.Frontier.Compiler.readIn_network`: the inputs read in a set of vertices.
+* `Cslib.Circuits.Frontier.Compiler.ncard_touching_add_ncard_readIn_le`,
+  `Cslib.Circuits.Frontier.Compiler.cycleRankOn_add_ncard_readIn_le`: the count inside a closed
+  set of vertices.
 * `Cslib.Circuits.Frontier.Compiler.card_vertex_le`: there are at most `2 r s + 3 m` vertices.
 -/
 
@@ -479,6 +498,38 @@ theorem unambiguous_branchingProgram (π : Layout (Vertex c)) :
     ((network c I Acc).branchingProgram π).Unambiguous :=
   (network c I Acc).unambiguous_branchingProgram π fun _ _ _ => satisfies_unique
 
+/-! ### Outputs across a cut -/
+
+/-- **Outputs across a cut.** In the network of a circuit computing a function, let the runs on
+two inputs `x` and `y` agree on the edge cut of a set of vertices `P`, and let `z` read like `x`
+at `P` and like `y` elsewhere. Then the outputs of `z` are those of `x` at the output vertices in
+`P`, and those of `y` at the others. -/
+theorem eval_splice {P : Set (Vertex c)} {x y z : Fin n → U}
+    (hcut : ∀ e ∈ (graph c).edgeCut P,
+      c.program.trace I x e.signal.1 = c.program.trace I y e.signal.1)
+    (hzx : EqOn z x ((network c I fun _ => univ).readIn P))
+    (hzy : EqOn z y ((network c I fun _ => univ).readIn P)ᶜ) (o : Fin m) :
+    (Vertex.output o ∈ P → c.eval I z o = c.eval I x o) ∧
+      (Vertex.output o ∉ P → c.eval I z o = c.eval I y o) := by
+  have hx : (network c I fun _ => univ).Satisfies x fun e => c.program.trace I x e.signal.1 :=
+    satisfies_trace fun _ => mem_univ _
+  have hy : (network c I fun _ => univ).Satisfies y fun e => c.program.trace I y e.signal.1 :=
+    satisfies_trace fun _ => mem_univ _
+  obtain ⟨γ, hγ, hγx, hγy⟩ := hx.splice hy hcut hzx hzy
+  -- Every value at the output `o` is read off the edge delivering it.
+  have hval : ∀ v, c.program.trace I v (outEdge c o).signal.1 = c.eval I v o := fun v => by
+    rw [signal_deliverEdge]
+    rfl
+  have htgt : (network c I fun _ => univ).tgt (outEdge c o) = .output o := tgt_deliverEdge _
+  rw [← hval z, ← eq_trace hγ, ← hval x, ← hval y]
+  refine ⟨fun ho => hγx (Or.inr (htgt ▸ ho)), fun ho => ?_⟩
+  by_cases ht : outEdge c o ∈ (network c I fun _ => univ).touching P
+  · -- The edge reaches into `P` from outside, so it lies on the cut.
+    have hsrc : src (outEdge c o) ∈ P := ht.resolve_right fun h => ho (htgt ▸ h)
+    refine (hγx ht).trans (hcut _ ?_)
+    exact fun h => ho (htgt ▸ h.mp hsrc)
+  · exact hγy ht
+
 /-! ### The shape of the graph -/
 
 /-- The graph has no loops. -/
@@ -611,11 +662,41 @@ theorem exists_reachable_output (v : Vertex c) :
     exact ⟨o, (reachable_junction j).trans ho⟩
   | output o => exact ⟨o, .refl _⟩
 
-/-- **The graph of a circuit with one output is connected.** -/
-theorem connected (c : Circuit σ n 1) : (graph c).toSimpleGraph.Connected := by
-  refine (SimpleGraph.connected_iff_exists_forall_reachable _).mpr ⟨.output 0, fun v => ?_⟩
+/-- **The graph is connected** when some vertex is joined to every output vertex. -/
+theorem connected_of_reachable {v₀ : Vertex c}
+    (h : ∀ o, (graph c).toSimpleGraph.Reachable v₀ (.output o)) :
+    (graph c).toSimpleGraph.Connected := by
+  refine (SimpleGraph.connected_iff_exists_forall_reachable _).mpr ⟨v₀, fun v => ?_⟩
   obtain ⟨o, ho⟩ := exists_reachable_output v
-  exact (Subsingleton.elim o 0 ▸ ho).symm
+  exact (h o).trans ho.symm
+
+/-- **The graph of a circuit with one output is connected.** -/
+theorem connected (c : Circuit σ n 1) : (graph c).toSimpleGraph.Connected :=
+  connected_of_reachable (v₀ := .output 0) fun o => Subsingleton.elim (0 : Fin 1) o ▸ .refl _
+
+/-- **An output depending on an input is joined to it.** If changing only the input `i` changes
+the output `o` of a circuit, then the input `i` is read by its network, and its vertex is joined
+to the vertex of the output `o`. -/
+theorem exists_reachable_of_eval_ne {o : Fin m} {i : Fin n} {x y : Fin n → U}
+    (hxy : ∀ k, k ≠ i → x k = y k) (hne : c.eval I x o ≠ c.eval I y o) :
+    ∃ hi : Reach c (.input i),
+      (graph c).toSimpleGraph.Reachable (.signal ⟨.input i, hi⟩) (.output o) := by
+  -- Cut along the connected component of the output vertex: its edge cut is empty.
+  set P : Set (Vertex c) := {v | (graph c).toSimpleGraph.Reachable v (.output o)}
+  by_contra! h
+  have hcut : ∀ e ∈ (graph c).edgeCut P,
+      c.program.trace I x e.signal.1 = c.program.trace I y e.signal.1 := by
+    intro e he
+    have hst := (graph c).reachable_src_tgt e
+    exact absurd ⟨fun hs => hst.symm.trans hs, fun ht => hst.trans ht⟩ he
+  have hi : i ∉ (network c I fun _ => univ).readIn P := by
+    rintro ⟨v, hv, hiv⟩
+    obtain ⟨hi, rfl⟩ := site_eq_some hiv
+    exact h hi hv
+  refine hne (eval_splice hcut (z := y) (fun k hk => (hxy k ?_).symm) (fun _ _ => rfl) o
+    |>.1 (SimpleGraph.Reachable.refl _)).symm
+  rintro rfl
+  exact hi hk
 
 /-! ### Counting -/
 
@@ -634,6 +715,17 @@ theorem ncard_readAt_le (v : Vertex c) : ((network c I Acc).readAt v).ncard ≤ 
   obtain ⟨_, h⟩ := site_eq_some hi'
   exact Wire.input.inj (congrArg Subtype.val (Vertex.signal.inj h))
 
+/-- The inputs read in a set of vertices are the reachable inputs whose vertex lies in it. -/
+theorem readIn_network (W : Set (Vertex c)) :
+    (network c I Acc).readIn W = {i | ∃ hi : Reach c (.input i), .signal ⟨.input i, hi⟩ ∈ W} := by
+  ext i
+  constructor
+  · rintro ⟨v, hv, hi⟩
+    obtain ⟨hr, rfl⟩ := site_eq_some hi
+    exact ⟨hr, hv⟩
+  · rintro ⟨hi, hv⟩
+    exact ⟨_, hv, site_of_reach hi⟩
+
 /-- Signals are reachable inputs and reachable gates. -/
 def signalEquiv :
     Signal c ≃ {i : Fin n // Reach c (.input i)} ⊕ {g : Fin c.size // Reach c (.gate g)} where
@@ -651,33 +743,42 @@ variable (c) in
 abbrev InnerGate : Type :=
   {g : Fin c.size // Reach c (.gate g) ∧ σ.Arity (c.program.lines g).op ≠ 0}
 
+variable (c) in
+/-- The reachable inner gates whose vertex lies in `W`. -/
+abbrev InnerGateIn (W : Set (Vertex c)) : Type :=
+  {g : InnerGate c // Vertex.signal ⟨.gate g.1, g.2.1⟩ ∈ W}
+
 /-- The reachable inner gates are inner gates. -/
 theorem card_innerGate_le : Nat.card (InnerGate c) ≤ c.innerSize := by
   rw [Circuit.innerSize, ← Nat.card_eq_finsetCard]
   exact Nat.card_le_card_of_injective (fun g => ⟨g.1, Program.mem_innerGates.mpr g.2.2⟩)
     fun _ _ h => Subtype.ext (congrArg Subtype.val h :)
 
-/-- There are at most `r` slots per reachable inner gate; constant gates have none. -/
-theorem card_slot_le {r : ℕ} (hfan : c.FanInAtMost r) :
-    Nat.card (Slot c) ≤ r * Nat.card (InnerGate c) := by
-  calc Nat.card (Slot c)
-      ≤ Nat.card (InnerGate c × Fin r) := by
-        refine Nat.card_le_card_of_injective
-          (fun a => (⟨a.1.1, a.2, Nat.pos_iff_ne_zero.mp (Nat.zero_lt_of_lt a.1.2.isLt)⟩,
-            ⟨a.1.2.val, a.1.2.isLt.trans_le (Program.fanInAtMost_iff.mp hfan a.1.1)⟩)) ?_
-        rintro ⟨⟨g, a⟩, hg⟩ ⟨⟨g', a'⟩, hg'⟩ h
-        simp only [Prod.mk.injEq, Subtype.mk.injEq, Fin.mk.injEq] at h
-        obtain ⟨rfl, haa'⟩ := h
-        obtain rfl : a = a' := Fin.ext haa'
-        rfl
-    _ = r * Nat.card (InnerGate c) := by
-        rw [Nat.card_prod, Nat.card_eq_fintype_card (α := Fin r), Fintype.card_fin, mul_comm]
+/-- The reachable inner gates in `W` are inner gates. -/
+theorem card_innerGateIn_le (W : Set (Vertex c)) : Nat.card (InnerGateIn c W) ≤ c.innerSize :=
+  (Finite.card_subtype_le _).trans card_innerGate_le
 
 /-- There are at least as many reachable gates as reachable inner gates. -/
 theorem card_innerGate_le_card_gate :
     Nat.card (InnerGate c) ≤ Nat.card {g : Fin c.size // Reach c (.gate g)} :=
   Nat.card_le_card_of_injective (fun g => ⟨g.1, g.2.1⟩) fun _ _ h =>
     Subtype.ext (congrArg Subtype.val h :)
+
+/-- There are at most `r` slots per reachable inner gate in `W`; constant gates have none. -/
+theorem card_slot_le {r : ℕ} (hfan : c.FanInAtMost r) (W : Set (Vertex c)) :
+    Nat.card {t : Slot c // owner (.inl t) ∈ W} ≤ r * Nat.card (InnerGateIn c W) := by
+  calc Nat.card {t : Slot c // owner (.inl t) ∈ W}
+      ≤ Nat.card (InnerGateIn c W × Fin r) := by
+        refine Nat.card_le_card_of_injective
+          (fun t => (⟨⟨t.1.1.1, t.1.2, Nat.pos_iff_ne_zero.mp (Nat.zero_lt_of_lt t.1.1.2.isLt)⟩,
+            t.2⟩, ⟨t.1.1.2.val,
+              t.1.1.2.isLt.trans_le (Program.fanInAtMost_iff.mp hfan t.1.1.1)⟩)) ?_
+        rintro ⟨⟨⟨g, a⟩, hg⟩, hgW⟩ ⟨⟨⟨g', a'⟩, hg'⟩, hgW'⟩ h
+        obtain rfl : g = g' := congrArg (fun x => x.1.1.1) h
+        obtain rfl : a = a' := Fin.ext (congrArg (fun x => x.2.val) h)
+        rfl
+    _ = r * Nat.card (InnerGateIn c W) := by
+        rw [Nat.card_prod, Nat.card_eq_fintype_card (α := Fin r), Fintype.card_fin, mul_comm]
 
 /-- There are two edges per consumer. -/
 theorem card_edge : Nat.card (Edge c) = 2 * Nat.card (Consumer c) := by
@@ -699,30 +800,110 @@ theorem card_signal_le_card_consumer : Nat.card (Signal c) ≤ Nat.card (Consume
   exact Nat.card_le_card_of_injective (fun w => ⟨w, ⟨0, fanout_pos w⟩⟩) fun w w' h =>
     congrArg Sigma.fst h
 
-/-- **The edge count.** For fan-in at most `r`, the edges of the graph and the inputs read by
-the network number at most `(r - 1) s` more than the vertices, where `s` counts the inner
-gates. -/
-theorem card_edge_add_ncard_read_le {r : ℕ} (hfan : c.FanInAtMost r) :
-    Nat.card (Edge c) + (network c I Acc).read.ncard ≤
-      Nat.card (Vertex c) + (r - 1) * c.innerSize := by
-  have hread :
-      (network c I Acc).read.ncard = Nat.card {i : Fin n // Reach c (.input i)} := by
-    rw [read_network, ← Nat.card_coe_set_eq]
-    rfl
-  have hsig := Nat.card_congr (signalEquiv (c := c))
-  rw [Nat.card_sum] at hsig
-  have hcons := card_consumer (c := c)
-  have hslot := card_slot_le hfan
-  have hinner := card_innerGate_le_card_gate (c := c)
-  -- `r G ≤ (r - 1) G + G`, for `G` the number of reachable inner gates.
-  have hr : r * Nat.card (InnerGate c) ≤
-      (r - 1) * Nat.card (InnerGate c) + Nat.card (InnerGate c) := by
+/-! ### Counting inside a closed set of vertices
+
+Let `W` be a closed set of vertices, one with no edge leaving it. The edges at `W` are the feed
+and deliver edges of the junctions in `W`; the junctions in `W` are those of the consumers whose
+owner is in `W`, that is, the slots of the gates in `W` and the outputs in `W`; and the vertices
+of `W` are its signals, junctions, and outputs. A circuit with several outputs may have a
+disconnected graph, and the count applies to each component. -/
+
+/-- The vertices of `W` are its signals, its junctions, and its outputs. -/
+private theorem ncard_eq_add (W : Set (Vertex c)) :
+    W.ncard = Nat.card {w // Vertex.signal w ∈ W} + Nat.card {j // Vertex.junction j ∈ W} +
+      Nat.card {o // Vertex.output o ∈ W} := by
+  rw [← Nat.card_coe_set_eq, add_assoc]
+  exact (Nat.card_subtype_eq_add Vertex.equiv _).trans
+    (congrArg _ (Nat.card_subtype_eq_add (Equiv.refl _) _))
+
+/-- The edges at a closed set `W` are the feed and deliver edges of the junctions in `W`. -/
+private theorem ncard_touching_eq {W : Set (Vertex c)} (hW : (graph c).edgeCut W = ∅) :
+    ((graph c).touching W).ncard = 2 * Nat.card {j // Vertex.junction j ∈ W} := by
+  have hW := (graph c).edgeCut_eq_empty_iff.1 hW
+  rw [← Nat.card_coe_set_eq, Nat.card_subtype_eq_add Edge.equiv, two_mul]
+  congr 1 <;> refine Nat.card_congr (Equiv.subtypeEquivRight fun j => ?_)
+  · -- The feed edge of `j` ends at `j`.
+    exact or_iff_right_of_imp (hW (.feed j)).1
+  · -- The deliver edge of `j` starts at `j`.
+    exact or_iff_left_of_imp (hW (.deliver j)).2
+
+/-- The junctions in a closed set `W` are those of the consumers whose owner is in `W`: the
+slots of the gates in `W` and the outputs in `W`. -/
+private theorem card_junction_eq {W : Set (Vertex c)} (hW : (graph c).edgeCut W = ∅) :
+    Nat.card {j // Vertex.junction j ∈ W} =
+      Nat.card {t : Slot c // owner (.inl t) ∈ W} + Nat.card {o // Vertex.output o ∈ W} := by
+  -- The deliver edge of a junction joins it to the owner of its consumer.
+  have hJ (j : Junction c) : Vertex.junction j ∈ W ↔ owner (junctionEquiv c j) ∈ W :=
+    (graph c).edgeCut_eq_empty_iff.1 hW (.deliver j)
+  rw [Nat.card_congr ((junctionEquiv c).subtypeEquiv (q := fun t => owner t ∈ W) hJ)]
+  exact Nat.card_subtype_eq_add (Equiv.refl _) _
+
+/-- The signals in `W` include the inputs read in `W` and the reachable inner gates in `W`. -/
+private theorem ncard_readIn_add_card_le (W : Set (Vertex c)) :
+    ((network c I Acc).readIn W).ncard + Nat.card (InnerGateIn c W) ≤
+      Nat.card {w // Vertex.signal w ∈ W} := by
+  have hread : ((network c I Acc).readIn W).ncard =
+      Nat.card {i : {i // Reach c (.input i)} // Vertex.signal ⟨.input i.1, i.2⟩ ∈ W} := by
+    rw [readIn_network, ← Nat.card_coe_set_eq]
+    exact Nat.card_congr (Equiv.subtypeSubtypeEquivSubtypeExists _
+      fun i : {i // Reach c (.input i)} => Vertex.signal ⟨.input i.1, i.2⟩ ∈ W).symm
+  rw [Nat.card_subtype_eq_add signalEquiv, hread]
+  refine Nat.add_le_add le_rfl ?_
+  exact Nat.card_le_card_of_injective (fun g => ⟨⟨g.1.1, g.1.2.1⟩, g.2⟩) fun _ _ h =>
+    Subtype.ext (Subtype.ext (congrArg (fun g => g.1.1) h))
+
+/-- **The count inside a closed set, gate by gate.** For fan-in at most `r`, the edges at a
+closed set of vertices `W` and the inputs read in `W` number at most `(r - 1) s_W` more than the
+vertices of `W`, where `s_W` counts the reachable inner gates in `W`. -/
+theorem ncard_touching_add_ncard_readIn_le_card_innerGateIn {r : ℕ} (hfan : c.FanInAtMost r)
+    {W : Set (Vertex c)} (hW : (graph c).edgeCut W = ∅) :
+    ((graph c).touching W).ncard + ((network c I Acc).readIn W).ncard ≤
+      W.ncard + (r - 1) * Nat.card (InnerGateIn c W) := by
+  have hE := ncard_touching_eq hW
+  have hJ := card_junction_eq hW
+  have hV := ncard_eq_add W
+  have hslot := card_slot_le hfan W
+  have hsig := ncard_readIn_add_card_le I Acc W
+  have hr : r * Nat.card (InnerGateIn c W) ≤
+      (r - 1) * Nat.card (InnerGateIn c W) + Nat.card (InnerGateIn c W) := by
     rcases r with _ | r
     · simp
     · simp [add_mul]
-  have hrs := Nat.mul_le_mul_left (r - 1) (card_innerGate_le (c := c))
-  rw [hread, card_edge, card_vertex]
   omega
+
+/-- **The count inside a closed set.** For fan-in at most `r`, the edges at a closed set of
+vertices `W` and the inputs read in `W` number at most `(r - 1) s` more than the vertices of `W`,
+where `s` counts the inner gates. -/
+theorem ncard_touching_add_ncard_readIn_le {r : ℕ} (hfan : c.FanInAtMost r)
+    {W : Set (Vertex c)} (hW : (graph c).edgeCut W = ∅) :
+    ((graph c).touching W).ncard + ((network c I Acc).readIn W).ncard ≤
+      W.ncard + (r - 1) * c.innerSize :=
+  (ncard_touching_add_ncard_readIn_le_card_innerGateIn I Acc hfan hW).trans
+    (Nat.add_le_add_left (Nat.mul_le_mul_left _ (card_innerGateIn_le W)) _)
+
+/-- **The cycle rank of a closed set.** For fan-in at most `r`, the cycle rank of a closed set of
+vertices `W` with at least `|W| - 1` edges, for instance a connected component, and the number of
+inputs read in `W` add up to at most `(r - 1) s + 1`, where `s` counts the inner gates. -/
+theorem cycleRankOn_add_ncard_readIn_le {r : ℕ} (hfan : c.FanInAtMost r)
+    {W : Set (Vertex c)} (hW : (graph c).edgeCut W = ∅)
+    (hconn : W.ncard ≤ ((graph c).touching W).ncard + 1) :
+    (graph c).cycleRankOn W + ((network c I Acc).readIn W).ncard ≤ (r - 1) * c.innerSize + 1 := by
+  have := ncard_touching_add_ncard_readIn_le I Acc hfan hW
+  unfold Multigraph.cycleRankOn
+  omega
+
+/-! ### Counting in the whole graph -/
+
+/-- **The edge count.** For fan-in at most `r`, the edges of the graph and the inputs read by
+the network number at most `(r - 1) s` more than the vertices, where `s` counts the inner
+gates. This is the count inside the closed set of all vertices. -/
+theorem card_edge_add_ncard_read_le {r : ℕ} (hfan : c.FanInAtMost r) :
+    Nat.card (Edge c) + (network c I Acc).read.ncard ≤
+      Nat.card (Vertex c) + (r - 1) * c.innerSize := by
+  have h := ncard_touching_add_ncard_readIn_le I Acc hfan (graph c).edgeCut_univ
+  have htouch : (graph c).touching univ = univ := eq_univ_of_forall fun _ => Or.inl (mem_univ _)
+  rw [htouch, ncard_univ, ncard_univ] at h
+  exact h
 
 /-- **The cycle rank.** For fan-in at most `r`, if the graph is connected (as it is for one
 output), its cycle rank and the number of inputs read by the network add up to at most
@@ -740,10 +921,10 @@ the inner gates and `m` the outputs. -/
 theorem card_vertex_le {r : ℕ} (hfan : c.FanInAtMost r) :
     Nat.card (Vertex c) ≤ 2 * r * c.innerSize + 3 * m := by
   have hcons := card_consumer (c := c)
-  have hslot := card_slot_le hfan
+  have hslot : Nat.card (Slot c) ≤ r * c.innerSize := by
+    have h := (card_slot_le hfan univ).trans (Nat.mul_le_mul_left r (card_innerGateIn_le univ))
+    rwa [Nat.card_congr (Equiv.subtypeUnivEquiv fun t => mem_univ (owner (.inl t)))] at h
   have := card_signal_le_card_consumer (c := c)
-  have hrs : r * Nat.card (InnerGate c) ≤ r * c.innerSize :=
-    Nat.mul_le_mul_left r (card_innerGate_le (c := c))
   rw [card_vertex, mul_assoc]
   omega
 
