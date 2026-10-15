@@ -83,6 +83,7 @@ variable {φ} [φ.Preserves interpretation I]
 @[simp] theorem size_constCircuit (b : Bool) : (constCircuit (n := n) φ b).size = 1 := by
   cases b <;> rfl
 
+/-- A constant has depth at most one. -/
 theorem depth_constCircuit_le (b : Bool) : (constCircuit (n := n) φ b).depth ≤ 1 := by
   cases b <;> simp [constCircuit]
 
@@ -94,6 +95,7 @@ theorem depth_constCircuit_le (b : Bool) : (constCircuit (n := n) φ b).depth �
 @[simp] theorem size_notCircuit (C : Circuit σ n 1) : (notCircuit φ C).size = C.size + 1 := by
   rw [notCircuit, Circuit.size_comp, Circuit.size_mapOp, Circuit.size_oneGate, add_comm]
 
+/-- A negation adds one to the depth. -/
 theorem depth_notCircuit_le (C : Circuit σ n 1) : (notCircuit φ C).depth ≤ C.depth + 1 := by
   refine (Circuit.depth_comp_le _ _).trans ?_
   rw [Circuit.depth_mapOp, Circuit.depth_oneGate, add_comm]
@@ -127,6 +129,7 @@ theorem eval_binCircuit (op : Op) (h : op.arity = 2) (C D : Circuit σ n 1) (x :
   rw [binCircuit, Circuit.size_comp, Circuit.size_append, Circuit.size_mapOp,
     Circuit.size_oneGate, add_comm]
 
+/-- A gate of two arguments adds one to the larger depth. -/
 theorem depth_binCircuit_le (op : Op) (h : op.arity = 2) (C D : Circuit σ n 1) :
     (binCircuit φ op h C D).depth ≤ max C.depth D.depth + 1 := by
   refine (Circuit.depth_comp_le _ _).trans ?_

@@ -83,6 +83,7 @@ def comp (ψ : τ.Hom υ) (φ : σ.Hom τ) : σ.Hom υ :=
 @[simp] theorem comp_id (φ : σ.Hom τ) : φ.comp (Hom.id σ) = φ :=
   rfl
 
+/-- Composition of maps of signatures is associative. -/
 theorem comp_assoc {ω : Signature} (χ : υ.Hom ω) (ψ : τ.Hom υ) (φ : σ.Hom τ) :
     (χ.comp ψ).comp φ = χ.comp (ψ.comp φ) :=
   rfl
@@ -96,6 +97,7 @@ class Preserves (φ : σ.Hom τ) (I : Interpretation σ U) (J : Interpretation �
 instance preserves_id (I : Interpretation σ U) : (Hom.id σ).Preserves I I :=
   ⟨fun _ _ => rfl⟩
 
+/-- A composition of meaning-preserving maps preserves meaning. -/
 theorem Preserves.comp {I : Interpretation σ U} {J : Interpretation τ U}
     {K : Interpretation υ U} {ψ : τ.Hom υ} {φ : σ.Hom τ} (hψ : ψ.Preserves J K)
     (hφ : φ.Preserves I J) : (ψ.comp φ).Preserves I K :=
@@ -144,6 +146,7 @@ variable {φ}
 @[simp] theorem Line.mapOp_id (line : Line σ n g) : line.mapOp (Signature.Hom.id σ) = line :=
   rfl
 
+/-- Translating a line along a composition translates it twice. -/
 theorem Line.mapOp_comp (ψ : τ.Hom υ) (line : Line σ n g) :
     line.mapOp (ψ.comp φ) = (line.mapOp φ).mapOp ψ :=
   rfl
@@ -153,6 +156,7 @@ theorem Line.mapOp_comp (ψ : τ.Hom υ) (line : Line σ n g) :
   | empty => rfl
   | gate p line ih => rw [mapOp_gate, ih, Line.mapOp_id]
 
+/-- Translating a program along a composition translates it twice. -/
 theorem Program.mapOp_comp (ψ : τ.Hom υ) (p : Program σ n g) :
     p.mapOp (ψ.comp φ) = (p.mapOp φ).mapOp ψ := by
   induction p with
@@ -162,6 +166,7 @@ theorem Program.mapOp_comp (ψ : τ.Hom υ) (p : Program σ n g) :
 @[simp] theorem Circuit.mapOp_id (c : Circuit σ n m) : c.mapOp (Signature.Hom.id σ) = c := by
   simp [Circuit.mapOp]
 
+/-- Translating a circuit along a composition translates it twice. -/
 theorem Circuit.mapOp_comp (ψ : τ.Hom υ) (c : Circuit σ n m) :
     c.mapOp (ψ.comp φ) = (c.mapOp φ).mapOp ψ := by
   simp only [Circuit.mapOp, Program.mapOp_comp]

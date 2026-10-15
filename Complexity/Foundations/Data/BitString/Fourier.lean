@@ -11,6 +11,7 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Powerset
+public import Mathlib.Algebra.Module.LinearMap.Defs
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.BigOperators
@@ -30,17 +31,22 @@ coefficients (**Plancherel**, `BitString.expect_mul_eq_sum_fourierCoeff_mul`), s
 coefficients of a function with values `±1` sum to one (`BitString.sum_fourierCoeff_sq_signVal`)
 [O'Donnell, Chapter 1][ODonnell2014].
 
+The coefficients are named `BitString.fourierCoeff`; Mathlib's root `fourierCoeff` is the Fourier
+coefficient on the circle, so the name is meant to be used qualified.
+
 ## Main definitions
 
 * `Cslib.BitString.signVal`: a bit as a sign, `false ↦ 1` and `true ↦ -1`.
 * `Cslib.BitString.chi`: the character of a set of coordinates.
-* `Cslib.BitString.fourierCoeff`: the Fourier coefficient of a real function on the cube.
+* `Cslib.BitString.fourierCoeff`: the Fourier coefficient of a real function on the cube, and
+  `Cslib.BitString.fourierCoeffₗ` the same as a linear map.
 
 ## Main results
 
 * `Cslib.BitString.expect_chi_mul_chi`: the characters are orthonormal.
 * `Cslib.BitString.sum_fourierCoeff_mul_chi`: the Fourier expansion.
-* `Cslib.BitString.fourierCoeff_sum_mul_chi`: uniqueness of the Fourier coefficients.
+* `Cslib.BitString.fourierCoeff_sum_mul_chi`, `Cslib.BitString.fourierCoeff_injective`:
+  uniqueness of the Fourier coefficients.
 * `Cslib.BitString.expect_mul_eq_sum_fourierCoeff_mul`: Plancherel's identity.
 * `Cslib.BitString.sum_fourierCoeff_sq_signVal`: Parseval's identity for functions with values
   `±1`.
@@ -70,9 +76,11 @@ def signVal (b : Bool) : ℝ :=
 @[simp] theorem signVal_not (b : Bool) : signVal (!b) = -signVal b := by
   cases b <;> simp
 
+/-- A sign squares to one. -/
 theorem signVal_mul_self (b : Bool) : signVal b * signVal b = 1 := by
   cases b <;> simp
 
+/-- The product of two signs records whether the bits agree. -/
 theorem signVal_mul_signVal (a b : Bool) : signVal a * signVal b = if a = b then 1 else -1 := by
   cases a <;> cases b <;> simp
 
@@ -92,6 +100,7 @@ theorem chi_eq_signVal_parityOn (S : Finset (Fin n)) (x : BitString n) :
     rw [chi, prod_insert hi, ← chi, ih, parityOn_insert hi]
     cases x i <;> simp
 
+/-- The character as a product over all coordinates. -/
 theorem chi_eq_prod_univ (S : Finset (Fin n)) (x : BitString n) :
     chi S x = ∏ i, if i ∈ S then signVal (x i) else 1 := by
   rw [prod_ite_mem, univ_inter, chi]
@@ -140,18 +149,22 @@ theorem sum_chi_mul_chi (x y : BitString n) :
 noncomputable def fourierCoeff (f : BitString n → ℝ) (S : Finset (Fin n)) : ℝ :=
   𝔼 x, f x * chi S x
 
+/-- The Fourier coefficient as a normalised sum. -/
 theorem fourierCoeff_eq_sum (f : BitString n → ℝ) (S : Finset (Fin n)) :
     fourierCoeff f S = (∑ x, f x * chi S x) / 2 ^ n := by
   simp [fourierCoeff, expect_eq_sum_div_card]
 
+/-- The Fourier coefficients are additive. -/
 theorem fourierCoeff_add (f g : BitString n → ℝ) (S : Finset (Fin n)) :
     fourierCoeff (fun x => f x + g x) S = fourierCoeff f S + fourierCoeff g S := by
   simp only [fourierCoeff, add_mul, expect_add_distrib]
 
+/-- The Fourier coefficients commute with subtraction. -/
 theorem fourierCoeff_sub (f g : BitString n → ℝ) (S : Finset (Fin n)) :
     fourierCoeff (fun x => f x - g x) S = fourierCoeff f S - fourierCoeff g S := by
   simp only [fourierCoeff, sub_mul, expect_sub_distrib]
 
+/-- The Fourier coefficients commute with scaling. -/
 theorem fourierCoeff_const_mul (c : ℝ) (f : BitString n → ℝ) (S : Finset (Fin n)) :
     fourierCoeff (fun x => c * f x) S = c * fourierCoeff f S := by
   simp only [fourierCoeff, mul_assoc, mul_expect]
@@ -161,6 +174,7 @@ theorem fourierCoeff_chi_mul (T : Finset (Fin n)) (f : BitString n → ℝ) (S :
     fourierCoeff (fun x => chi T x * f x) S = fourierCoeff f (symmDiff T S) := by
   simp only [fourierCoeff, ← chi_mul_chi, mul_comm (chi T _), mul_assoc]
 
+/-- The characters of nonempty sets have expectation zero. -/
 theorem expect_chi (S : Finset (Fin n)) : 𝔼 x, chi S x = if S = ∅ then 1 else 0 := by
   simpa using expect_chi_mul_chi S ∅
 
@@ -192,12 +206,20 @@ theorem fourierCoeff_sum_mul_chi (c : Finset (Fin n) → ℝ) (T : Finset (Fin n
   simp only [← mul_expect, expect_chi_mul_chi, mul_ite, mul_one, mul_zero, sum_ite_eq',
     mem_univ, ite_true]
 
-/-- Two functions with the same Fourier coefficients are equal. -/
-theorem eq_of_fourierCoeff_eq {f g : BitString n → ℝ}
-    (h : ∀ S, fourierCoeff f S = fourierCoeff g S) : f = g := by
+/-- A function is determined by its Fourier coefficients. -/
+theorem fourierCoeff_injective : Function.Injective (fourierCoeff (n := n)) := fun f g h => by
   funext x
-  rw [← sum_fourierCoeff_mul_chi f, ← sum_fourierCoeff_mul_chi g]
-  simp only [h]
+  rw [← sum_fourierCoeff_mul_chi f, ← sum_fourierCoeff_mul_chi g, h]
+
+/-- The Fourier coefficient on `S`, as a linear map. -/
+noncomputable def fourierCoeffₗ (S : Finset (Fin n)) : (BitString n → ℝ) →ₗ[ℝ] ℝ where
+  toFun f := fourierCoeff f S
+  map_add' f g := fourierCoeff_add f g S
+  map_smul' c f := fourierCoeff_const_mul c f S
+
+@[simp] theorem fourierCoeffₗ_apply (S : Finset (Fin n)) (f : BitString n → ℝ) :
+    fourierCoeffₗ S f = fourierCoeff f S :=
+  rfl
 
 /-- **Plancherel's identity**: the expectation of a product is the sum of the products of the
 Fourier coefficients. -/

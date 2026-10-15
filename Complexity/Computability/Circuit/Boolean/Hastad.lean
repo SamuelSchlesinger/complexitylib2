@@ -191,14 +191,13 @@ private theorem stage_count {S m ℓ s : ℕ} (hS : S < 2 ^ s) (hs : 1 ≤ s) (h
         ring_nf
     _ ≤ m.choose ℓ * (m - ℓ + 1) ^ s := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hle s)
 
+open scoped Classical in
 /-- **The switching step for one operation.** If the arguments of an operation are shallow under
 `ρ`, few extensions of `ρ` leave it deep. -/
-theorem card_filter_not_shallow_le {f : BitString n → Bool}
-    [DecidablePred fun ρ' : Restriction n => Shallow s ρ' f]
-    {op : Op} {args : Fin op.arity → BitString n → Bool} (h : ∀ j, Shallow s ρ (args j))
-    (hf : f = fun x => interpretation op fun j => args j x) (ℓ : ℕ) :
-    #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' f} ≤ #(ρ.extensions (ℓ - s)) * (4 * s) ^ s := by
-  subst hf
+theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString n → Bool}
+    (h : ∀ j, Shallow s ρ (args j)) (ℓ : ℕ) :
+    #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
+      #(ρ.extensions (ℓ - s)) * (4 * s) ^ s := by
   by_cases hop : op = .not
   · subst hop
     have hG : Shallow s ρ fun x => interpretation .not fun j => args j x := (h 0).not
@@ -234,7 +233,7 @@ theorem exists_extension_shallow (T : Finset (BitString n → Bool)) (hT : #T < 
       _ ≤ #T * (#(ρ.extensions (ℓ - s)) * (4 * s) ^ s) := by
         refine (sum_le_card_nsmul T _ _ fun f hf => ?_).trans_eq (smul_eq_mul _ _)
         obtain ⟨op, args, hargs, rfl⟩ := hgate f hf
-        exact card_filter_not_shallow_le hargs rfl ℓ
+        exact card_filter_not_shallow_le hargs ℓ
       _ < #(ρ.extensions ℓ) := by
         rw [Restriction.card_extensions, Restriction.card_extensions]
         exact stage_count hT hs hsℓ hℓ
@@ -265,7 +264,7 @@ variable {g : ℕ}
 /-- **One stage, for programs.** If every gate of depth at most `j` is shallow under `ρ` and there
 are fewer than `2 ^ s` gates, some extension of `ρ` leaving `ℓ` bits free makes every gate of
 depth at most `j + 1` shallow. -/
-theorem exists_stage {p : Program signature n g} (hs : 2 ≤ s) (hg : g < 2 ^ s) {j : ℕ}
+private theorem exists_stage {p : Program signature n g} (hs : 2 ≤ s) (hg : g < 2 ^ s) {j : ℕ}
     (hρ : ∀ k, p.depths k ≤ j → Shallow s ρ fun x => p.eval interpretation x k) {ℓ : ℕ}
     (hsℓ : s ≤ ℓ) (hℓ : (16 * s + 1) * ℓ ≤ #ρ.free) :
     ∃ ρ' ∈ ρ.extensions ℓ, ∀ k, p.depths k ≤ j + 1 →

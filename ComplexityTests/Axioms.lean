@@ -389,10 +389,10 @@ info: 'Cslib.Circuits.Boolean.Restriction.card_extensions' depends on axioms: [p
 #print axioms Cslib.Circuits.Boolean.Restriction.card_extensions
 
 /--
-info: 'Cslib.Circuits.Boolean.Unbounded.exists_stage' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.Unbounded.exists_extension_shallow' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.exists_stage
+#print axioms Cslib.Circuits.Boolean.Unbounded.exists_extension_shallow
 
 /--
 info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]

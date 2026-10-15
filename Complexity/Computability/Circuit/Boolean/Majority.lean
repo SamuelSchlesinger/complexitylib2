@@ -74,27 +74,33 @@ def parityCircuitOfMajority (M : Circuit σ (n + (n + 2)) 1) : Circuit σ n 1 :=
 
 variable {φ} {M : Circuit σ (n + (n + 2)) 1}
 
+/-- Padding costs one gate per constant. -/
 theorem size_padCircuit (a : ℕ) : (padCircuit φ n a).size = n + 2 := by
   simp [padCircuit]
 
+/-- Padding has depth at most one. -/
 theorem depth_padCircuit_le (a : ℕ) : (padCircuit φ n a).depth ≤ 1 :=
   (Circuit.depth_append_le _ _).trans
     (max_le (by simp) (Circuit.depth_pi_le _ fun _ => depth_constCircuit_le _))
 
+/-- A threshold costs the padding and the majority circuit. -/
 theorem size_thresholdCircuitOfMajority (k : ℕ) :
     (thresholdCircuitOfMajority φ M k).size = n + 2 + M.size := by
   rw [thresholdCircuitOfMajority, Circuit.size_comp, size_padCircuit]
 
+/-- A threshold is one deeper than the majority circuit. -/
 theorem depth_thresholdCircuitOfMajority_le (k : ℕ) :
     (thresholdCircuitOfMajority φ M k).depth ≤ M.depth + 1 :=
   (Circuit.depth_comp_le _ _).trans (Nat.add_le_add_left (depth_padCircuit_le _) _)
 
+/-- "Exactly `k`" costs two thresholds and two gates. -/
 theorem size_exactlyCircuitOfMajority (k : ℕ) :
     (exactlyCircuitOfMajority φ M k).size = 2 * (n + 2 + M.size) + 2 := by
   rw [exactlyCircuitOfMajority, size_binCircuit, size_notCircuit,
     size_thresholdCircuitOfMajority, size_thresholdCircuitOfMajority]
   ring
 
+/-- "Exactly `k`" is three deeper than the majority circuit. -/
 theorem depth_exactlyCircuitOfMajority_le (k : ℕ) :
     (exactlyCircuitOfMajority φ M k).depth ≤ M.depth + 3 :=
   (depth_binCircuit_le _ _ _ _).trans (by
@@ -103,6 +109,7 @@ theorem depth_exactlyCircuitOfMajority_le (k : ℕ) :
       (Nat.add_le_add_right (depth_thresholdCircuitOfMajority_le (φ := φ) (M := M) (k + 1)) 1)
     omega)
 
+/-- Parity costs `n + 1` circuits for "exactly `k`" and one disjunction. -/
 theorem size_parityCircuitOfMajority_le :
     (parityCircuitOfMajority φ M).size ≤ 1 + (n + 1) * (2 * (n + 2 + M.size) + 2) := by
   rw [parityCircuitOfMajority, Circuit.size_comp, Circuit.size_pi, Circuit.size_mapOp,
@@ -114,6 +121,7 @@ theorem size_parityCircuitOfMajority_le :
   · rw [size_constCircuit]
     omega
 
+/-- Parity is four deeper than the majority circuit. -/
 theorem depth_parityCircuitOfMajority_le : (parityCircuitOfMajority φ M).depth ≤ M.depth + 4 :=
   (Circuit.depth_comp_le _ _).trans (by
     have := Circuit.depth_pi_le (fun k : Fin (n + 1) =>

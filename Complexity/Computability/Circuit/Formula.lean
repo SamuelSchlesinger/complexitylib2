@@ -48,8 +48,9 @@ inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
   the depth.
 * `Cslib.Circuits.Formula.leafSizeIn`: the number of input leaves in a set of inputs.
 * `Cslib.Circuits.Formula.depthWith`: the depth when each operation costs a given number of levels.
-* `Cslib.Circuits.Formula.bind`: substitution of formulas for the inputs; `Formula.lift` and
-  `Formula.substLast` add an input and substitute for it.
+* `Cslib.Circuits.Formula.bind`: substitution of formulas for the inputs; `Formula.rename`
+  renames the inputs, and `Formula.lift` and `Formula.substLast` add an input and substitute for
+  it.
 * `Cslib.Circuits.Formula.toCircuit`: a formula as a single-output circuit.
 
 ## Main results
@@ -114,6 +115,7 @@ theorem map_eval {I₁ : Interpretation σ U} {I₂ : Interpretation σ V} (h : 
 def Computes (F : Formula σ n) (I : Interpretation σ U) (f : (Fin n → U) → U) : Prop :=
   ∀ x, F.eval I x = f x
 
+/-- A formula computes `f` exactly when its evaluation is `f`. -/
 theorem computes_iff {F : Formula σ n} {I : Interpretation σ U} {f : (Fin n → U) → U} :
     F.Computes I f ↔ F.eval I = f :=
   funext_iff.symm
@@ -231,6 +233,7 @@ theorem sum_leafSizeIn_le_leafSize {ι : Type*} {s : Finset ι} {Y : ι → Fins
   | input i => simp
   | gate op args ih => simp [ih]
 
+/-- The leaves in a set of inputs are at most all leaves. -/
 theorem leafSizeIn_le_leafSize (Y : Finset (Fin n)) (F : Formula σ n) :
     F.leafSizeIn Y ≤ F.leafSize := by
   simpa using F.sum_leafSizeIn_le_leafSize (s := {Y}) (Y := id) (by simp)
@@ -259,15 +262,9 @@ theorem eval_piecewise_eq_of_leafSizeIn_eq_zero {Y : Finset (Fin n)} {F : Formul
 
 /-- A formula without input leaves computes a constant. -/
 theorem eval_eq_of_leafSize_eq_zero {F : Formula σ n} (hF : F.leafSize = 0) (I : Interpretation σ U)
-    (x y : Fin n → U) : F.eval I x = F.eval I y := by
-  induction F with
-  | input i => simp at hF
-  | gate op args ih =>
-    rw [leafSize_gate, Finset.sum_eq_zero_iff] at hF
-    simp only [eval_gate]
-    congr 1
-    funext j
-    exact ih j (hF j (Finset.mem_univ j))
+    (x y : Fin n → U) : F.eval I x = F.eval I y :=
+  DependsOn.empty (by
+    simpa using dependsOn_eval_of_leafSizeIn_eq_zero (Y := Finset.univ) (by simpa using hF) I) x y
 
 /-- The depth when an operation node costs `cost op` levels instead of one: `depthWith 1` is the
 depth, and charging nothing for negations gives the depth of formulas with free negations. -/
@@ -332,8 +329,8 @@ variable {m : ℕ}
   | input i => rfl
   | gate op args ih => simp only [gate_bind, ih]
 
-theorem bind_bind {k : ℕ} (F : Formula σ n) (s : Fin n → Formula σ m) (t : Fin m → Formula σ k) :
-    (F.bind s).bind t = F.bind fun i => (s i).bind t := by
+@[simp] theorem bind_assoc {k : ℕ} (F : Formula σ n) (s : Fin n → Formula σ m)
+    (t : Fin m → Formula σ k) : (F.bind s).bind t = F.bind fun i => (s i).bind t := by
   induction F with
   | input i => rfl
   | gate op args ih => simp only [gate_bind, ih]
@@ -347,27 +344,39 @@ theorem leafSize_bind_le {s : Fin n → Formula σ m} (hs : ∀ i, (s i).leafSiz
     rw [gate_bind, leafSize_gate, leafSize_gate]
     exact Finset.sum_le_sum fun j _ => ih j
 
+/-- The formula reading input `f i` where `F` reads input `i`. -/
+def rename (f : Fin n → Fin m) (F : Formula σ n) : Formula σ m :=
+  F.bind fun i => input (f i)
+
+@[simp] theorem eval_rename (I : Interpretation σ U) (f : Fin n → Fin m) (F : Formula σ n)
+    (x : Fin m → U) : (F.rename f).eval I x = F.eval I (x ∘ f) := by
+  simp [rename, Function.comp_def]
+
 /-- Renaming the inputs keeps the leaf size. -/
-@[simp] theorem leafSize_bind_input (F : Formula σ n) (f : Fin n → Fin m) :
-    (F.bind fun i => input (f i)).leafSize = F.leafSize := by
+@[simp] theorem leafSize_rename (f : Fin n → Fin m) (F : Formula σ n) :
+    (F.rename f).leafSize = F.leafSize := by
   induction F with
   | input i => rfl
-  | gate op args ih => simp only [gate_bind, leafSize_gate, ih]
+  | gate op args ih => simp only [rename, gate_bind, leafSize_gate] at ih ⊢; simp only [ih]
+
+@[simp] theorem rename_rename {k : ℕ} (f : Fin n → Fin m) (g : Fin m → Fin k) (F : Formula σ n) :
+    (F.rename f).rename g = F.rename (g ∘ f) := by
+  simp [rename]
 
 /-- A formula on `n` inputs as one on `n + 1` inputs that ignores the last. -/
 def lift (F : Formula σ n) : Formula σ (n + 1) :=
-  F.bind fun i => input i.castSucc
+  F.rename Fin.castSucc
 
 /-- `C` with the formula `K` in place of its last input. -/
 def substLast (C : Formula σ (n + 1)) (K : Formula σ n) : Formula σ n :=
   C.bind (Fin.snoc (α := fun _ => Formula σ n) input K)
 
 @[simp] theorem eval_lift (I : Interpretation σ U) (F : Formula σ n) (y : Fin (n + 1) → U) :
-    F.lift.eval I y = F.eval I fun i => y i.castSucc := by
-  simp [lift]
+    F.lift.eval I y = F.eval I fun i => y i.castSucc :=
+  eval_rename I _ F y
 
 @[simp] theorem leafSize_lift (F : Formula σ n) : F.lift.leafSize = F.leafSize :=
-  leafSize_bind_input F _
+  leafSize_rename _ F
 
 @[simp] theorem eval_substLast (I : Interpretation σ U) (C : Formula σ (n + 1)) (K : Formula σ n)
     (x : Fin n → U) : (C.substLast K).eval I x = C.eval I (Fin.snoc x (K.eval I x)) := by
@@ -379,11 +388,16 @@ def substLast (C : Formula σ (n + 1)) (K : Formula σ n) : Formula σ n :=
   | cast i => simp
 
 @[simp] theorem lift_substLast (F : Formula σ n) (K : Formula σ n) : F.lift.substLast K = F := by
-  simp [lift, substLast, bind_bind]
+  simp [lift, rename, substLast]
 
 @[simp] theorem input_last_substLast (K : Formula σ n) : (input (Fin.last n)).substLast K = K := by
   simp [substLast]
 
+@[simp] theorem input_castSucc_substLast (i : Fin n) (K : Formula σ n) :
+    (input i.castSucc).substLast K = input i := by
+  simp [substLast]
+
+/-- Substituting into an operation node substitutes into its arguments. -/
 theorem gate_substLast (op : σ.Op) (args : Fin (σ.Arity op) → Formula σ (n + 1))
     (K : Formula σ n) : (gate op args).substLast K = gate op fun j => (args j).substLast K :=
   rfl
