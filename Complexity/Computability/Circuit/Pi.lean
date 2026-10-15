@@ -90,8 +90,4 @@ def oneGate (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) : Circuit σ n 1 :
     (((oneGate op args).program.depths_pos (0 : Fin 1)).trans_le
       ((oneGate op args).outputDepths_le_depth 0))
 
-theorem depth_oneGate_le (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) :
-    (oneGate op args).depth ≤ 1 :=
-  (depth_oneGate op args).le
-
 end Cslib.Circuits.Circuit

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.MapOp
-public import Complexity.Computability.Languages.Slice
+public import Cslib.Computability.Languages.Slice
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
 /-!

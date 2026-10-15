@@ -503,16 +503,16 @@ info: 'Cslib.Circuits.Boolean.Smolensky.TC0_not_subset_AC0Mod' depends on axioms
 #print axioms Cslib.Circuits.Boolean.Smolensky.TC0_not_subset_AC0Mod
 
 /--
-info: 'Cslib.Circuits.Formula.exists_depthWith_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.exists_formula_depthWith_le_four_mul_clog' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Formula.exists_depthWith_le
+#print axioms Cslib.Circuits.Boolean.exists_formula_depthWith_le_four_mul_clog
 
 /--
-info: 'Cslib.Circuits.Formula.leafSize_le_two_pow_depthWith' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.leafSize_le_two_pow_depthWith_binaryCost' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Formula.leafSize_le_two_pow_depthWith
+#print axioms Cslib.Circuits.Boolean.leafSize_le_two_pow_depthWith_binaryCost
 
 /--
 info: 'Cslib.Circuits.Boolean.formulaDepth_le_four_mul_clog' depends on axioms: [propext, Classical.choice, Quot.sound]

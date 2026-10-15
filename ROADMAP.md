@@ -221,7 +221,7 @@ translation of circuits in `Circuit/MapOp.lean`). With majority gates added to t
 
 **Spira's theorem** (`Circuit/Boolean/Spira.lean`): every De Morgan formula with `L` leaves has
 an equivalent formula with at most `4 ⌈log₂ L⌉` AND and OR gates on every path
-(`Cslib.Circuits.Formula.exists_depthWith_le`), and conversely `L ≤ 2 ^ depth`, so formula depth
+(`Cslib.Circuits.Boolean.exists_formula_depthWith_le_four_mul_clog`), and conversely `L ≤ 2 ^ depth`, so formula depth
 and the logarithm of formula size agree up to a factor of four. The split at a subformula with a
 third to two thirds of the leaves is stated for any basis of fan-in two, over substitution of
 formulas for inputs (`Formula.bind`, `Formula.substLast`).

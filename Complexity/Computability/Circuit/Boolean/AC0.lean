@@ -8,7 +8,11 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
-public import Complexity.Computability.Circuit.Boolean.Hastad
+public import Complexity.Computability.Circuit.Boolean.Unbounded
+public import Complexity.Computability.Circuit.Pi
+public import Complexity.Foundations.Data.BitString.Parity
+import Complexity.Computability.Circuit.Boolean.Hastad
+import Complexity.Computability.Languages.Slice
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
@@ -87,7 +91,7 @@ def constCircuit : Bool → Circuit signature n 1
   cases b <;> rfl
 
 theorem depth_constCircuit_le (b : Bool) : (constCircuit (n := n) b).depth ≤ 1 := by
-  cases b <;> exact Circuit.depth_oneGate_le _ _
+  cases b <;> exact (Circuit.depth_oneGate _ _).le
 
 /-- The circuit `C` followed by a negation. -/
 def notCircuit (C : Circuit signature n 1) : Circuit signature n 1 :=
@@ -101,7 +105,7 @@ def notCircuit (C : Circuit signature n 1) : Circuit signature n 1 :=
   rw [notCircuit, Circuit.size_comp, Circuit.size_oneGate, add_comm]
 
 theorem depth_notCircuit_le (C : Circuit signature n 1) : (notCircuit C).depth ≤ C.depth + 1 := by
-  have := Circuit.depth_oneGate_le (σ := signature) (n := 1) Op.not fun _ => 0
+  have := (Circuit.depth_oneGate (σ := signature) (n := 1) Op.not fun _ => 0).le
   exact (Circuit.depth_comp_le _ _).trans (by omega)
 
 /-- The circuits `C` and `D` side by side, followed by a gate `op` of two arguments. -/
@@ -140,7 +144,7 @@ theorem eval_binCircuit (op : Op) (h : op.arity = 2) (C D : Circuit signature n 
 
 theorem depth_binCircuit_le (op : Op) (h : op.arity = 2) (C D : Circuit signature n 1) :
     (binCircuit op h C D).depth ≤ max C.depth D.depth + 1 := by
-  have := Circuit.depth_oneGate_le (σ := signature) op fun a => Fin.cast h a
+  have := (Circuit.depth_oneGate (σ := signature) op fun a => Fin.cast h a).le
   have := Circuit.depth_append_le C D
   exact (Circuit.depth_comp_le _ _).trans (by omega)
 

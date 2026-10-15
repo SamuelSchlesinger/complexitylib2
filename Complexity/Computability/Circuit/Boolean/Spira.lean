@@ -17,10 +17,12 @@ import Mathlib.Tactic.Ring
 
 **Spira's theorem** [Spira1971], [Jukna, Chapter 6][Jukna2012]: every De Morgan formula with
 `L` leaves has an equivalent formula with at most `4 ⌈log₂ L⌉` AND and OR gates on every path
-(`Formula.exists_depthWith_le`). Conversely a formula with at most `d` AND and OR gates on every
-path has at most `2 ^ d` leaves (`Formula.leafSize_le_two_pow_depthWith`), so the formula depth of
-a function and the logarithm of its formula leaf size agree up to a constant factor
-(`Boolean.formulaDepth_le_four_mul_clog`).
+(`Boolean.exists_formula_depthWith_le_four_mul_clog`). Conversely a formula with at most `d` AND
+and OR gates on every path has at most `2 ^ d` leaves
+(`Boolean.leafSize_le_two_pow_depthWith_binaryCost`). So the formula depth of a function is at most
+four times the logarithm of the leaf size of any formula for it
+(`Boolean.formulaDepth_le_four_mul_clog`), and some formula for it has at most `2` to the formula
+depth leaves (`Boolean.exists_computes_leafSize_le_two_pow_formulaDepth`).
 
 The proof splits a formula `F` with `L` leaves at a subformula `G` with between `L / 3` and
 `2 L / 3` leaves, found by walking from the root towards the argument with the most leaves
@@ -32,10 +34,11 @@ leaves and is balanced recursively, at the cost of two AND and OR gates per leve
 
 * `Cslib.Circuits.Formula.exists_split`: a subformula with between a third and two thirds of the
   leaves, and its context.
-* `Cslib.Circuits.Formula.exists_depthWith_le`: Spira's theorem.
-* `Cslib.Circuits.Formula.leafSize_le_two_pow_depthWith`: the converse bound.
-* `Cslib.Circuits.Boolean.formulaDepth_le_four_mul_clog`: the formula depth is at most
-  `4 ⌈log₂ L⌉` for a formula with `L` leaves.
+* `Cslib.Circuits.Boolean.exists_formula_depthWith_le_four_mul_clog`: Spira's theorem.
+* `Cslib.Circuits.Boolean.leafSize_le_two_pow_depthWith_binaryCost`: the converse bound.
+* `Cslib.Circuits.Boolean.formulaDepth_le_four_mul_clog`,
+  `Cslib.Circuits.Boolean.exists_computes_leafSize_le_two_pow_formulaDepth`: formula depth and the
+  logarithm of formula leaf size agree up to a factor of four.
 
 ## References
 
@@ -55,17 +58,16 @@ variable {n : ℕ}
 
 section Split
 
-variable {σ : Signature} {U : Type*}
+variable {σ : Signature}
 
 /-- **A balanced split.** In a formula over a basis of fan-in at most two with more than `2 L / 3`
 leaves, for `L ≥ 2`, walking towards the argument with the most leaves reaches a subformula `G`
 with more than `L / 3` and at most `2 L / 3` leaves. The rest of the formula is a context `C`
-with one hole, its last input: plugging the value of `G` into `C` computes the formula, and
-plugging a formula `K` into `C` replaces the leaves of `G` by those of `K`. -/
-theorem exists_split (hσ : ∀ op, σ.Arity op ≤ 2) {L : ℕ} (hL : 2 ≤ L) (I : Interpretation σ U)
-    (H : Formula σ n) (hH : 2 * L < 3 * H.leafSize) :
-    ∃ (G : Formula σ n) (C : Formula σ (n + 1)),
-      (∀ x, H.eval I x = C.eval I (Fin.snoc x (G.eval I x))) ∧
+with one hole, its last input: plugging `G` into `C` gives back the formula, and plugging a
+formula `K` into `C` replaces the leaves of `G` by those of `K`. -/
+theorem exists_split (hσ : ∀ op, σ.Arity op ≤ 2) {L : ℕ} (hL : 2 ≤ L) (H : Formula σ n)
+    (hH : 2 * L < 3 * H.leafSize) :
+    ∃ (G : Formula σ n) (C : Formula σ (n + 1)), C.substLast G = H ∧
       L < 3 * G.leafSize ∧ 3 * G.leafSize ≤ 2 * L ∧
       ∀ K, (C.substLast K).leafSize + G.leafSize = H.leafSize + K.leafSize := by
   induction H with
@@ -85,22 +87,20 @@ theorem exists_split (hσ : ∀ op, σ.Arity op ≤ 2) {L : ℕ} (hL : 2 ≤ L) 
         rw [card_univ, Fintype.card_fin, smul_eq_mul]
         exact Nat.mul_le_mul_right _ (hσ op))
     -- stop at it, or keep walking
-    obtain ⟨G, C, heval, h₁, h₂, hls⟩ : ∃ (G : Formula σ n) (C : Formula σ (n + 1)),
-        (∀ x, (args a).eval I x = C.eval I (Fin.snoc x (G.eval I x))) ∧
-        L < 3 * G.leafSize ∧ 3 * G.leafSize ≤ 2 * L ∧
+    obtain ⟨G, C, hC, h₁, h₂, hls⟩ : ∃ (G : Formula σ n) (C : Formula σ (n + 1)),
+        C.substLast G = args a ∧ L < 3 * G.leafSize ∧ 3 * G.leafSize ≤ 2 * L ∧
         ∀ K, (C.substLast K).leafSize + G.leafSize = (args a).leafSize + K.leafSize := by
       by_cases hA : 2 * L < 3 * (args a).leafSize
       · exact ih a hA
-      · exact ⟨args a, input (Fin.last n), fun x => by simp, by omega, by omega,
+      · exact ⟨args a, input (Fin.last n), input_last_substLast _, by omega, by omega,
           fun K => by rw [input_last_substLast, add_comm]⟩
-    refine ⟨G, gate op (Function.update (fun j => (args j).lift) a C), fun x => ?_, h₁, h₂,
-      fun K => ?_⟩
-    · simp only [eval_gate]
+    refine ⟨G, gate op (Function.update (fun j => (args j).lift) a C), ?_, h₁, h₂, fun K => ?_⟩
+    · rw [gate_substLast]
       congr 1
       funext j
       by_cases hj : j = a
       · subst hj
-        simp [heval]
+        simpa using hC
       · simp [Function.update_of_ne hj]
     · have hsum : (fun j => ((Function.update (fun j => (args j).lift) a C j).substLast
             K).leafSize) =
@@ -117,25 +117,31 @@ theorem exists_split (hσ : ∀ op, σ.Arity op ≤ 2) {L : ℕ} (hL : 2 ≤ L) 
 
 end Split
 
-open Boolean
+end Formula
+
+namespace Boolean
+
+open Finset Formula
+
+variable {n : ℕ}
 
 /-- `G` followed by the one-bit function `g`, without adding AND or OR gates: a constant, `G`, or
 its negation. -/
-def postcomp (G : Formula signature n) (g : Bool → Bool) : Formula signature n :=
+private def postcomp (G : Formula signature n) (g : Bool → Bool) : Formula signature n :=
   if g false = g true then const (g false) else if g true then G else G.not
 
-@[simp] theorem eval_postcomp (G : Formula signature n) (g : Bool → Bool) (x : BitString n) :
-    (G.postcomp g).eval interpretation x = g (G.eval interpretation x) := by
+private theorem eval_postcomp (G : Formula signature n) (g : Bool → Bool) (x : BitString n) :
+    (postcomp G g).eval interpretation x = g (G.eval interpretation x) := by
   cases h₀ : g false <;> cases h₁ : g true <;> cases hG : G.eval interpretation x <;>
     simp [postcomp, h₀, h₁, hG]
 
-theorem depthWith_postcomp_le (G : Formula signature n) (g : Bool → Bool) :
-    (G.postcomp g).depthWith binaryCost ≤ G.depthWith binaryCost := by
+private theorem depthWith_postcomp_le (G : Formula signature n) (g : Bool → Bool) :
+    (postcomp G g).depthWith binaryCost ≤ G.depthWith binaryCost := by
   unfold postcomp
   split_ifs <;> simp
 
 /-- A formula with at most one leaf has an equivalent formula without AND or OR gates. -/
-theorem exists_depthWith_eq_zero (F : Formula signature n) (hF : F.leafSize ≤ 1) :
+private theorem exists_depthWith_eq_zero (F : Formula signature n) (hF : F.leafSize ≤ 1) :
     ∃ G : Formula signature n, (∀ x, G.eval interpretation x = F.eval interpretation x) ∧
       G.depthWith binaryCost = 0 := by
   induction F with
@@ -152,7 +158,7 @@ theorem exists_depthWith_eq_zero (F : Formula signature n) (hF : F.leafSize ≤ 
     have hrest : ∀ j ≠ b, (args j).leafSize = 0 := fun j hj =>
       sum_eq_zero_iff.1 hrest' j (by simp [hj])
     obtain ⟨G, hG, hd⟩ := ih b (by omega)
-    refine ⟨G.postcomp fun v => interpretation op
+    refine ⟨postcomp G fun v => interpretation op
       (Function.update (fun j => (args j).eval interpretation fun _ => false) b v),
       fun x => ?_, Nat.le_zero.1 ((depthWith_postcomp_le _ _).trans hd.le)⟩
     rw [eval_postcomp, hG, eval_gate]
@@ -177,8 +183,8 @@ private theorem exists_depthWith_le_two_mul (k : ℕ) (F : Formula signature n)
     by_cases hL : F.leafSize ≤ 1
     · obtain ⟨G, hG, hd⟩ := exists_depthWith_eq_zero F hL
       exact ⟨G, hG, by omega⟩
-    obtain ⟨G, C, heval, h₁, h₂, hls⟩ := exists_split (fun op => by cases op <;> simp)
-      (L := F.leafSize) (by omega) interpretation F (by omega)
+    obtain ⟨G, C, hC, h₁, h₂, hls⟩ := exists_split (fun op => by cases op <;> simp)
+      (L := F.leafSize) (by omega) F (by omega)
     -- a third of the leaves less is small enough for `k`
     have shrink : ∀ m, 3 * m ≤ 2 * F.leafSize → 2 ^ k * m ≤ 3 ^ k := fun m hm => by
       refine Nat.le_of_mul_le_mul_left (?_ : 3 * (2 ^ k * m) ≤ 3 * 3 ^ k) (by decide)
@@ -193,7 +199,8 @@ private theorem exists_depthWith_le_two_mul (k : ℕ) (F : Formula signature n)
     obtain ⟨C₁, hC₁, hC₁d⟩ := ih _ (hfill true)
     obtain ⟨C₀, hC₀, hC₀d⟩ := ih _ (hfill false)
     refine ⟨(G'.and C₁).or (G'.not.and C₀), fun x => ?_, ?_⟩
-    · simp only [heval, eval_or, eval_and, eval_not, hG', hC₁, hC₀, eval_substLast, eval_const]
+    · rw [← hC]
+      simp only [eval_or, eval_and, eval_not, hG', hC₁, hC₀, eval_substLast, eval_const]
       cases G.eval interpretation x <;> simp
     · simp only [depthWith_or, depthWith_and, depthWith_not, binaryCost_and, binaryCost_or,
         binaryCost_not]
@@ -201,7 +208,7 @@ private theorem exists_depthWith_le_two_mul (k : ℕ) (F : Formula signature n)
 
 /-- **Spira's theorem.** Every De Morgan formula with `L` leaves has an equivalent formula with at
 most `4 ⌈log₂ L⌉` AND and OR gates on every path. -/
-theorem exists_depthWith_le (F : Formula signature n) :
+theorem exists_formula_depthWith_le_four_mul_clog (F : Formula signature n) :
     ∃ G : Formula signature n, (∀ x, G.eval interpretation x = F.eval interpretation x) ∧
       G.depthWith binaryCost ≤ 4 * Nat.clog 2 F.leafSize := by
   set j := Nat.clog 2 F.leafSize
@@ -215,7 +222,7 @@ theorem exists_depthWith_le (F : Formula signature n) :
 
 /-- A De Morgan formula with at most `d` AND and OR gates on every path has at most `2 ^ d`
 leaves. -/
-theorem leafSize_le_two_pow_depthWith (F : Formula signature n) :
+theorem leafSize_le_two_pow_depthWith_binaryCost (F : Formula signature n) :
     F.leafSize ≤ 2 ^ F.depthWith binaryCost := by
   induction F with
   | input i => simp
@@ -233,18 +240,19 @@ theorem leafSize_le_two_pow_depthWith (F : Formula signature n) :
       rw [Fin.sum_univ_two, pow_succ, mul_two]
       exact Nat.add_le_add (hle _) (hle _)
 
-end Formula
-
-namespace Boolean
-
-variable {n : ℕ}
-
 /-- The formula depth of a function is at most `4 ⌈log₂ L⌉` for every formula with `L` leaves
 computing it. -/
 theorem formulaDepth_le_four_mul_clog {f : BooleanFunction n} {F : Formula signature n}
     (hF : F.Computes interpretation f) : formulaDepth f ≤ 4 * Nat.clog 2 F.leafSize := by
-  obtain ⟨G, hG, hd⟩ := F.exists_depthWith_le
+  obtain ⟨G, hG, hd⟩ := exists_formula_depthWith_le_four_mul_clog F
   exact (formulaDepth_le fun x => (hG x).trans (hF x)).trans hd
+
+/-- Conversely, some formula for a function has at most `2 ^ d` leaves, where `d` is its formula
+depth. -/
+theorem exists_computes_leafSize_le_two_pow_formulaDepth (f : BooleanFunction n) :
+    ∃ F : Formula signature n, F.Computes interpretation f ∧ F.leafSize ≤ 2 ^ formulaDepth f := by
+  obtain ⟨F, hF, hd⟩ := exists_computes_depthWith_eq_formulaDepth f
+  exact ⟨F, hF, hd ▸ leafSize_le_two_pow_depthWith_binaryCost F⟩
 
 end Boolean
 

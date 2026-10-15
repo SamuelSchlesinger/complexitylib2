@@ -63,7 +63,9 @@ theorem fourierCoeff_eq_zero_of_depth_lt (g : β → ℝ) (t : DecisionTree (Fin
         (1 / 2 : ℝ) * (g (t₀.eval x) + g (t₁.eval x)) +
           chi {i} x * ((1 / 2 : ℝ) * (g (t₀.eval x) - g (t₁.eval x))) := by
       funext x
-      cases hx : x i <;> simp [chi, hx] <;> ring
+      cases hx : x i <;>
+        simp only [eval_node, chi, prod_singleton, hx, signVal_false, signVal_true, Bool.cond_false,
+          Bool.cond_true] <;> ring
     have hi := card_le_card_symmDiff_singleton_add_one i S
     rw [h, fourierCoeff_add, fourierCoeff_const_mul, fourierCoeff_add, fourierCoeff_chi_mul,
       fourierCoeff_const_mul, fourierCoeff_sub, ih₀ (by omega), ih₁ (by omega), ih₀ (by omega),

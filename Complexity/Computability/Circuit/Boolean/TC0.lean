@@ -77,7 +77,7 @@ theorem AC0_subset_TC0 : Unbounded.AC0 ⊆ TC0 :=
 /-- **Majority is in TC⁰**: it is a single gate. -/
 theorem majority_mem_TC0 : Language.ofSlices majority ∈ TC0 := by
   refine ⟨1, fun _ => 1, by fun_prop, fun n => ⟨Circuit.oneGate (σ := signature) (.maj n) id,
-    fun x => ?_, Circuit.depth_oneGate_le _ _, le_rfl⟩⟩
+    fun x => ?_, (Circuit.depth_oneGate _ _).le, le_rfl⟩⟩
   funext j
   rw [Language.slice_ofSlices]
   rfl

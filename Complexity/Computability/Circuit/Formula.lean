@@ -57,7 +57,7 @@ inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
 * `Cslib.Circuits.Formula.map_eval`: evaluation commutes with homomorphisms.
 * `Cslib.Circuits.Formula.leafSize_le_pow_depth`, `Cslib.Circuits.Formula.leafSize_le`: leaf size
   under bounded fan-in.
-* `Cslib.Circuits.Formula.computes_toCircuit`, `Cslib.Circuits.Formula.size_toCircuit`,
+* `Cslib.Circuits.Formula.Computes.toCircuit`, `Cslib.Circuits.Formula.size_toCircuit`,
   `Cslib.Circuits.Formula.depth_toCircuit_le`: a formula is a circuit computing the same function,
   of the same size and at most the same depth.
 
@@ -404,6 +404,7 @@ def toCircuit : Formula σ n → Circuit σ n 1
     rw [toCircuit, Circuit.eval_comp, Circuit.eval_oneGate, Circuit.eval_pi, eval_gate]
     exact congrArg (I op) (funext fun a => ih a 0)
 
+/-- The circuit of a formula computes what the formula computes. -/
 theorem Computes.toCircuit {I : Interpretation σ U} {F : Formula σ n} {f : (Fin n → U) → U}
     (hF : F.Computes I f) : F.toCircuit.Computes I (single f) := fun x => by
   funext j
@@ -424,7 +425,7 @@ theorem depth_toCircuit_le (F : Formula σ n) : F.toCircuit.depth ≤ F.depth :=
   | input i => simp [toCircuit]
   | gate op args ih =>
     rw [toCircuit, depth_gate, add_comm]
-    exact (Circuit.depth_comp_le _ _).trans (Nat.add_le_add (Circuit.depth_oneGate_le _ _)
+    exact (Circuit.depth_comp_le _ _).trans (Nat.add_le_add ((Circuit.depth_oneGate _ _).le)
       (Circuit.depth_pi_le _ fun a => (ih a).trans (Finset.le_sup (f := fun a => (args a).depth)
         (Finset.mem_univ a))))
 

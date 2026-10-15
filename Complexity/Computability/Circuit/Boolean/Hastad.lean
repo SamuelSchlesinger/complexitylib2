@@ -8,12 +8,12 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Unbounded
-public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.DecisionTree.Parity
 public import Complexity.Computability.DecisionTree.Restrict
 public import Complexity.Computability.DecisionTree.Switching
-public import Complexity.Foundations.Data.Nat.Choose
+import Complexity.Computability.Circuit.Depth
+import Complexity.Foundations.Data.Nat.Choose
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
 
@@ -82,7 +82,7 @@ theorem Shallow.mono {f : BitString n → Bool} (hf : Shallow s ρ f) (h : ρ'.E
   refine lt_of_le_of_lt ?_ hf
   have : DecisionTree.complexity (fun x => f (ρ.fill (ρ'.fill x))) ≤
       DecisionTree.complexity fun y => f (ρ.fill y) :=
-    complexity_restrict_le ρ' fun y => f (ρ.fill y)
+    complexity_comp_fill_le ρ' fun y => f (ρ.fill y)
   simpa only [Restriction.fill_fill_of_extends h] using this
 
 /-- The input bits are shallow. -/
@@ -91,7 +91,7 @@ theorem shallow_proj (hs : 2 ≤ s) (ρ : Restriction n) (i : Fin n) :
   have h₁ : DecisionTree.complexity (fun x : BitString n => x i) ≤ 1 :=
     DecisionTree.complexity_le_iff.2 ⟨DecisionTree.node i (.leaf false) (.leaf true),
       fun x => by cases h : x i <;> simp [h], by simp⟩
-  exact lt_of_le_of_lt ((complexity_restrict_le ρ fun x : BitString n => x i).trans h₁)
+  exact lt_of_le_of_lt ((complexity_comp_fill_le ρ fun x : BitString n => x i).trans h₁)
     (by omega)
 
 /-- The negation of a shallow function is shallow. -/

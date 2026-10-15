@@ -14,7 +14,7 @@ public import Complexity.Computability.DecisionTree.NormalForm
 
 Fixing some variables can only make a function easier to compute by decision trees: answering the
 fixed queries in a tree for `f` gives a tree for the restricted function that is no deeper
-(`DecisionTree.restrict`, `DecisionTree.complexity_restrict_le`). Post-processing the output does
+(`DecisionTree.restrict`, `DecisionTree.complexity_comp_fill_le`). Post-processing the output does
 not make it harder either (`DecisionTree.complexity_comp_le`), and post-processing by an injective
 map, such as negation, does not change it (`DecisionTree.complexity_comp_of_injective`).
 
@@ -24,7 +24,7 @@ map, such as negation, does not change it (`DecisionTree.complexity_comp_of_inje
 
 ## Main results
 
-* `Cslib.DecisionTree.complexity_restrict_le`: restricting does not raise decision tree
+* `Cslib.DecisionTree.complexity_comp_fill_le`: restricting does not raise decision tree
   complexity.
 * `Cslib.DecisionTree.complexity_comp_of_injective`: post-processing by an injective map preserves
   decision tree complexity.
@@ -67,7 +67,7 @@ theorem depth_restrict_le (ρ : ι → Option Bool) (t : DecisionTree ι β) :
 variable [Finite ι]
 
 /-- **Restricting does not raise decision tree complexity.** -/
-theorem complexity_restrict_le (ρ : ι → Option Bool) (f : (ι → Bool) → β) :
+theorem complexity_comp_fill_le (ρ : ι → Option Bool) (f : (ι → Bool) → β) :
     complexity (fun x => f fun i => (ρ i).getD (x i)) ≤ complexity f := by
   obtain ⟨t, ht, hd⟩ := exists_computes_depth_eq_complexity f
   refine (complexity_le_depth (t := t.restrict ρ) fun x => ?_).trans

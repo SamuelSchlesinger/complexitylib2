@@ -24,6 +24,7 @@ namespace Fin
 
 open Finset
 
+/-- The entries of `Fin.append x y` satisfying `P` are those of `x` and those of `y`. -/
 theorem card_filter_append {α : Type*} {m p : ℕ} (P : α → Prop) [DecidablePred P] (x : Fin m → α)
     (y : Fin p → α) :
     #{i | P (Fin.append x y i)} = #{i | P (x i)} + #{j | P (y j)} := by
