@@ -359,8 +359,9 @@ Its proofs (`infra/`) are complete; its statements came from a Codex-generated l
 restated from Katz–Lindell rather than copied. Queued from it, after the Yao and hashing ports:
 PRGs from one-way permutations with a hard-core bit and length extension (Theorems 8.6 and 8.7),
 Blum–Micali (Exercise 8.10), PRGs give one-way functions (Proposition 8.27), closure of
-computational indistinguishability under repetition, strongly universal hash families
-(Exercises 4.24–4.26), and pairwise-independent tail and birthday bounds. Goldreich–Levin, the
+computational indistinguishability under repetition, and pairwise-independent tail and birthday
+bounds. Done: strongly universal hash families, the shift criterion and Toeplitz hashing
+(Exercises 4.24–4.26, `Probability/PairwiseIndependentHash/{Shift,Toeplitz}`). Goldreich–Levin, the
 switching lemma and Luby–Rackoff are planned as cslib PRs by the katz-lindell authors, so they
 wait on coordination.
 
