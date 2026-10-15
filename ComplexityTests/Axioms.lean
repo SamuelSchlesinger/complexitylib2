@@ -1226,4 +1226,64 @@ info: 'Cslib.Probability.ApproximateCounting.one_sub_inv_two_pow_le_dens_filter_
 open Cslib.Probability.ApproximateCounting in
 #print axioms one_sub_inv_two_pow_le_dens_filter_affineRelativeHashEstimate
 
+/--
+info: 'Cslib.RotationMap.walk_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.walk_pow
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_pow
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_tensor_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_tensor_le
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_tensor' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_tensor
+
+/--
+info: 'Cslib.RotationMap.walk_zigzag' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.walk_zigzag
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_zigzag_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_zigzag_le
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_zigzag_le_one_sub' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_zigzag_le_one_sub
+
+/--
+info: 'Cslib.RotationMap.walk_balancedReplacement' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.walk_balancedReplacement
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_balancedReplacement_pow_three_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_balancedReplacement_pow_three_le
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_balancedReplacement_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_balancedReplacement_le
+
 end ComplexityTests.Axioms

@@ -1,0 +1,211 @@
+/-
+Copyright (c) 2026 Bolton Bailey, Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Bolton Bailey, Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Foundations.Combinatorics.Expander.Basic
+import Mathlib.Algebra.Order.BigOperators.Expect
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
+
+/-!
+# Powers of rotation maps
+
+The `t`-th power `G ^ t` of a `D`-regular multigraph `G` has an edge for every walk of length `t`
+in `G` [ReingoldVadhanWigderson2002, Section 2.3] [AroraBarak09, Section 21.3]. Its labels are the
+`t`-tuples of labels of `G`, and its rotation map follows the walk and reverses it, so that the
+labels at the far end describe the walk back. A step of the random walk on `G ^ t` is `t` steps of
+the random walk on `G`: the walk operator of `G ^ t` is the `t`-th power of that of `G`, and
+`λ(G ^ t) = λ(G) ^ t` for `t ≠ 0`.
+
+The bound `λ(G ^ t) ≤ λ(G) ^ t` holds as for any operator norm. For the reverse inequality, which
+spectral theory would give at once, the second moments `a s = 𝔼 v, (G.walk ^ s) f v ^ 2` along the
+walk from a function `f` are log-convex, as the walk operator is self-adjoint, so that
+`a 0 * a 1 ^ t ≤ a 0 ^ t * a t`.
+
+## Main definitions
+
+* `Cslib.RotationMap.powRot`: the rotation map of the walks of length `t`.
+* `Cslib.RotationMap.pow`: the `t`-th power `G ^ t`, with labels `Fin t → D`.
+
+## Main results
+
+* `Cslib.RotationMap.powRot_involutive`: reversing a walk twice gives it back.
+* `Cslib.RotationMap.walk_pow`: the walk operator of `G ^ t` is the `t`-th power of that of `G`.
+* `Cslib.RotationMap.spectralExpansion_pow_le`, `Cslib.RotationMap.spectralExpansion_pow`:
+  `λ(G ^ t) ≤ λ(G) ^ t`, with equality for `t ≠ 0`.
+
+## References
+
+* [O. Reingold, S. Vadhan, A. Wigderson, *Entropy waves, the zig-zag graph product, and new
+  constant-degree expanders*][ReingoldVadhanWigderson2002]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+-/
+
+@[expose] public section
+
+namespace Cslib.RotationMap
+
+open Finset
+open scoped BigOperators
+
+variable {V D : Type*} (G : RotationMap V D)
+
+/-- The rotation map of the walks of length `t` in `G` [ReingoldVadhanWigderson2002, Section 2.3]:
+`G.powRot t (v, k) = (w, ℓ)` when the walk from `v` along the labels `k 0, …, k (t - 1)` ends at
+`w`, and `ℓ` lists the labels of its edges at their far ends, from the last edge back to the
+first, so that `ℓ` labels the reverse walk from `w` to `v`. -/
+def powRot : (t : ℕ) → V × (Fin t → D) → V × (Fin t → D)
+  | 0, p => p
+  | t + 1, p =>
+    let q := G.rot (p.1, p.2 0)
+    let r := powRot t (q.1, Fin.tail p.2)
+    (r.1, Fin.snoc r.2 q.2)
+
+/-- A walk of length `t + 1` is a first step followed by a walk of length `t`. -/
+private theorem powRot_succ (t : ℕ) (p : V × (Fin (t + 1) → D)) :
+    G.powRot (t + 1) p =
+      ((G.powRot t ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).1,
+        Fin.snoc (G.powRot t ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).2 (G.rot (p.1, p.2 0)).2) :=
+  rfl
+
+/-- A walk of length `t + 1` is a walk of length `t` followed by a last step. -/
+private theorem powRot_succ' (t : ℕ) (v : V) (k : Fin (t + 1) → D) :
+    G.powRot (t + 1) (v, k) =
+      ((G.rot ((G.powRot t (v, Fin.init k)).1, k (Fin.last t))).1,
+        Fin.cons (G.rot ((G.powRot t (v, Fin.init k)).1, k (Fin.last t))).2
+          (G.powRot t (v, Fin.init k)).2) := by
+  induction t generalizing v with
+  | zero =>
+    refine Prod.ext rfl (funext fun i ↦ ?_)
+    rw [Fin.fin_one_eq_zero i]
+    rfl
+  | succ t ih =>
+    rw [powRot_succ, ih, powRot_succ G t (v, Fin.init k)]
+    simp only [Fin.tail_init_eq_init_tail, Fin.cons_snoc_eq_snoc_cons]
+    rfl
+
+/-- Reversing a walk twice returns the original walk. -/
+theorem powRot_involutive : ∀ t, Function.Involutive (G.powRot t)
+  | 0 => fun _ ↦ rfl
+  | t + 1 => fun p ↦ by
+    rw [powRot_succ G t p, powRot_succ']
+    simp [Fin.init_snoc, Fin.snoc_last, powRot_involutive t _]
+
+/-- The **`t`-th power** `G ^ t` [ReingoldVadhanWigderson2002, Section 2.3]: the multigraph on the
+same vertices with an edge for every walk of length `t` in `G`, labelled by the labels of its
+steps. -/
+def pow (t : ℕ) : RotationMap V (Fin t → D) where
+  rot := G.powRot t
+  rot_involutive := G.powRot_involutive t
+
+/-- In `G ^ 0`, every edge is a self-loop. -/
+@[simp]
+theorem neighbor_pow_zero (v : V) (k : Fin 0 → D) : (G.pow 0).neighbor v k = v :=
+  rfl
+
+/-- In `G ^ (t + 1)`, the walk along `k` takes the edge `k 0` and then the walk along the remaining
+labels. -/
+theorem neighbor_pow_succ (t : ℕ) (v : V) (k : Fin (t + 1) → D) :
+    (G.pow (t + 1)).neighbor v k = (G.pow t).neighbor (G.neighbor v (k 0)) (Fin.tail k) :=
+  rfl
+
+variable [Fintype D]
+
+/-- The walk operator of `G ^ t` is the `t`-th power of that of `G`. -/
+theorem walk_pow (t : ℕ) : (G.pow t).walk = G.walk ^ t := by
+  induction t with
+  | zero => exact LinearMap.ext fun f ↦ funext fun v ↦ by simp [walk_apply]
+  | succ t ih =>
+    refine LinearMap.ext fun f ↦ funext fun v ↦ ?_
+    rw [pow_succ', Module.End.mul_apply, ← ih, walk_apply, walk_apply]
+    simp only [neighbor_pow_succ, walk_apply]
+    -- a tuple of `t + 1` labels is a first label and a tuple of `t` labels
+    refine (Fintype.expect_equiv (Fin.consEquiv fun _ ↦ D).symm _
+      (fun p ↦ f ((G.pow t).neighbor (G.neighbor v p.1) p.2)) fun _ ↦ rfl).trans ?_
+    rw [← univ_product_univ, expect_product]
+
+variable [Fintype V]
+
+/-- The spectral expansion of `G ^ t` is at most `λ(G) ^ t`
+[ReingoldVadhanWigderson2002, Proposition 2.3]. -/
+theorem spectralExpansion_pow_le (t : ℕ) :
+    (G.pow t).spectralExpansion ≤ G.spectralExpansion ^ t := by
+  refine spectralExpansion_le (pow_nonneg G.spectralExpansion_nonneg t) fun f hf ↦ ?_
+  rw [walk_pow, ← pow_mul, mul_comm t]
+  exact G.expect_walk_pow_sq_le_spectralExpansion_pow_mul hf t
+
+/-- A nonnegative log-convex sequence grows at least geometrically with the ratio of its first two
+terms: `a 0 * a 1 ^ t ≤ a 0 ^ t * a t`. -/
+private theorem mul_pow_le_pow_mul_of_sq_le_mul {a : ℕ → ℝ} (ha : ∀ s, 0 ≤ a s)
+    (h : ∀ s, a (s + 1) ^ 2 ≤ a s * a (s + 2)) (t : ℕ) : a 0 * a 1 ^ t ≤ a 0 ^ t * a t := by
+  have hmono (s : ℕ) : a 1 * a s ≤ a 0 * a (s + 1) := by
+    induction s with
+    | zero => rw [mul_comm]
+    | succ s ih =>
+      rcases (ha (s + 1)).eq_or_lt with h0 | hpos
+      · rw [← h0, mul_zero]
+        exact mul_nonneg (ha 0) (ha _)
+      · refine le_of_mul_le_mul_left ?_ hpos
+        calc a (s + 1) * (a 1 * a (s + 1)) = a 1 * a (s + 1) ^ 2 := by ring
+          _ ≤ a 1 * (a s * a (s + 2)) := mul_le_mul_of_nonneg_left (h s) (ha 1)
+          _ = a 1 * a s * a (s + 2) := by ring
+          _ ≤ a 0 * a (s + 1) * a (s + 2) := mul_le_mul_of_nonneg_right ih (ha _)
+          _ = a (s + 1) * (a 0 * a (s + 1 + 1)) := by ring
+  induction t with
+  | zero => simp
+  | succ t ih =>
+    calc a 0 * a 1 ^ (t + 1) = a 1 * (a 0 * a 1 ^ t) := by ring
+      _ ≤ a 1 * (a 0 ^ t * a t) := mul_le_mul_of_nonneg_left ih (ha 1)
+      _ = a 0 ^ t * (a 1 * a t) := by ring
+      _ ≤ a 0 ^ t * (a 0 * a (t + 1)) :=
+        mul_le_mul_of_nonneg_left (hmono t) (pow_nonneg (ha 0) t)
+      _ = a 0 ^ (t + 1) * a (t + 1) := by ring
+
+/-- The second moments along the walk from a function are log-convex. -/
+private theorem sq_expect_walk_pow_succ_sq_le (f : V → ℝ) (s : ℕ) :
+    (𝔼 v, (G.walk ^ (s + 1)) f v ^ 2) ^ 2 ≤
+      (𝔼 v, (G.walk ^ s) f v ^ 2) * 𝔼 v, (G.walk ^ (s + 2)) f v ^ 2 := by
+  have h : 𝔼 v, (G.walk ^ (s + 1)) f v ^ 2 =
+      𝔼 v, (G.walk ^ s) f v * (G.walk ^ (s + 2)) f v := by
+    rw [show s + 2 = s + 1 + 1 from rfl, pow_succ' _ (s + 1), pow_succ' _ s]
+    simp only [Module.End.mul_apply, sq]
+    exact (G.expect_mul_walk_comm _ _).symm
+  rw [h]
+  exact expect_mul_sq_le_sq_mul_sq _ _ _
+
+/-- The spectral expansion of `G ^ t` is `λ(G) ^ t`, for `t ≠ 0`
+[ReingoldVadhanWigderson2002, Proposition 2.3]. -/
+theorem spectralExpansion_pow {t : ℕ} (ht : t ≠ 0) :
+    (G.pow t).spectralExpansion = G.spectralExpansion ^ t := by
+  refine (G.spectralExpansion_pow_le t).antisymm ?_
+  have hc := (G.pow t).spectralExpansion_nonneg
+  suffices h : G.spectralExpansion ≤ (G.pow t).spectralExpansion ^ (t⁻¹ : ℝ) by
+    calc G.spectralExpansion ^ t ≤ ((G.pow t).spectralExpansion ^ (t⁻¹ : ℝ)) ^ t := by
+          have := G.spectralExpansion_nonneg
+          gcongr
+      _ = _ := Real.rpow_inv_natCast_pow hc ht
+  refine spectralExpansion_le (by positivity) fun f hf ↦ ?_
+  -- the second moments along the walk from `f` grow at least geometrically
+  have key := mul_pow_le_pow_mul_of_sq_le_mul (a := fun s ↦ 𝔼 v, (G.walk ^ s) f v ^ 2)
+    (fun s ↦ expect_nonneg fun v _ ↦ sq_nonneg _) (G.sq_expect_walk_pow_succ_sq_le f) t
+  have hat := (G.pow t).expect_walk_sq_le_spectralExpansion_sq_mul hf
+  simp only [pow_zero, pow_one, Module.End.one_apply] at key
+  rw [walk_pow] at hat
+  have h₀ : 0 ≤ 𝔼 v, f v ^ 2 := expect_nonneg fun v _ ↦ sq_nonneg (f v)
+  rcases h₀.eq_or_lt with h0 | hpos
+  · rw [← h0, mul_zero]
+    exact h0 ▸ G.expect_walk_sq_le f
+  refine (pow_le_pow_iff_left₀ (expect_nonneg fun v _ ↦ sq_nonneg _) (by positivity) ht).1 ?_
+  rw [mul_pow, ← pow_mul, mul_comm 2 t, pow_mul, Real.rpow_inv_natCast_pow hc ht]
+  refine le_of_mul_le_mul_left ?_ hpos
+  calc
+    _ ≤ (𝔼 v, f v ^ 2) ^ t * ((G.pow t).spectralExpansion ^ 2 * 𝔼 v, f v ^ 2) :=
+      key.trans (mul_le_mul_of_nonneg_left hat (pow_nonneg h₀ t))
+    _ = _ := by ring
+
+
+end Cslib.RotationMap
