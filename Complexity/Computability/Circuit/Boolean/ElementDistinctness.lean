@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
-public import Mathlib.Logic.Equiv.Fin.Basic
+public import Complexity.Foundations.Data.BitString.Block
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Algebra.Group.Action.Defs
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -48,36 +48,11 @@ size about `m ^ 2 log₂ m / 4`, which is of order `n ^ 2 / log n`.
 namespace Cslib.Circuits.Boolean
 
 open Finset
+open BitString (block blockBits block_piecewise pairwiseDisjoint_blockBits)
 
 variable {m k t : ℕ}
 
 namespace ElementDistinctness
-
-/-- The `i`-th block of `k` bits of an input of `m` blocks. -/
-def block (x : BitString (m * k)) (i : Fin m) : Fin k → Bool :=
-  fun b => x (finProdFinEquiv (i, b))
-
-/-- The bits of the `i`-th block of `k` bits. -/
-def blockBits (k : ℕ) (i : Fin m) : Finset (Fin (m * k)) :=
-  univ.filter fun p => (finProdFinEquiv.symm p).1 = i
-
-theorem pairwiseDisjoint_blockBits (k : ℕ) :
-    ((univ : Finset (Fin m)) : Set (Fin m)).PairwiseDisjoint (blockBits k) :=
-  fun _ _ _ _ hij => disjoint_left.2 fun _ hi hj =>
-    hij ((mem_filter.1 hi).2.symm.trans (mem_filter.1 hj).2)
-
-theorem block_piecewise (i : Fin m) (x z : BitString (m * k)) (j : Fin m) :
-    block ((blockBits k i).piecewise x z) j = if j = i then block x j else block z j := by
-  funext b
-  have hmem : finProdFinEquiv (j, b) ∈ blockBits k j :=
-    mem_filter.2 ⟨mem_univ _, by rw [Equiv.symm_apply_apply]⟩
-  by_cases hj : j = i
-  · subst hj
-    simp only [block, ↓reduceIte, Finset.piecewise_eq_of_mem _ _ _ hmem]
-  · have hmem' : finProdFinEquiv (j, b) ∉ blockBits k i := fun h => hj (by
-      have := (mem_filter.1 h).2
-      rwa [Equiv.symm_apply_apply] at this)
-    simp only [block, hj, ↓reduceIte, Finset.piecewise_eq_of_notMem _ _ _ hmem']
 
 /-- `t` bits naming a position `j < 2 ^ t`. -/
 private def tag (t j : ℕ) : Fin t → Bool :=

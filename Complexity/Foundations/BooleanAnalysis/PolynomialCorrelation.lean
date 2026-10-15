@@ -14,6 +14,7 @@ public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Data.ZMod.Defs
 public import Mathlib.Logic.Equiv.Fin.Basic
 import Complexity.Foundations.Combinatorics.CentralBinomial
+import Complexity.Foundations.Data.BitString.Block
 import Complexity.Foundations.BooleanAnalysis.Linearity
 import Mathlib.Algebra.CharP.Two
 import Mathlib.Algebra.Field.ZMod
@@ -242,10 +243,6 @@ end Counting
 section Blocks
 
 variable {k m : ℕ}
-
-/-- The `i`-th block of `ℓ` consecutive bits of a string of `k * ℓ` bits. -/
-private def block {ℓ : ℕ} (x : BitString (k * ℓ)) (i : Fin k) : BitString ℓ :=
-  fun j => x (finProdFinEquiv (i, j))
 
 /-- The majority of `2 m + 1` bits, in `ZMod 2`. -/
 private def majVal (y : BitString (2 * m + 1)) : ZMod 2 :=
