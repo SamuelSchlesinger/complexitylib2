@@ -20,7 +20,8 @@ There are `2 ^ n` strings of `n` bits (`BitString.card_eq`), numbered `0, …, 2
 their bits as binary digits, least significant first (`BitString.equivFin`).
 
 Bits form the two-element Boolean ring (Mathlib's `BooleanRing Bool`), in which `a + b = (a ^^ b)`
-and `a * b = (a && b)`, so bit strings form an additive group under coordinatewise exclusive or:
+and `a * b = (a && b)`, so bit strings `ι → Bool` form an additive group under coordinatewise
+exclusive or:
 `(x + y) i = (x i ^^ y i)` holds by definition. Every bit string is its own negative
 (`BitString.add_self`). Translating by a fixed string is the permutation `Equiv.addLeft x`.
 
@@ -54,14 +55,16 @@ the least significant bit first. -/
 def equivFin : BitString n ≃ Fin (2 ^ n) :=
   (Equiv.arrowCongr (Equiv.refl (Fin n)) finTwoEquiv.symm).trans finFunctionFinEquiv
 
+variable {ι : Type*}
+
 /-- A bit string added to itself gives zero. -/
-@[simp] protected theorem add_self (x : BitString n) : x + x = 0 :=
+@[simp] protected theorem add_self (x : ι → Bool) : x + x = 0 :=
   funext fun i => Bool.xor_self (x i)
 
-@[simp] protected theorem add_cancel_left (x y : BitString n) : x + (x + y) = y := by
+@[simp] protected theorem add_cancel_left (x y : ι → Bool) : x + (x + y) = y := by
   rw [← add_assoc, BitString.add_self, zero_add]
 
-@[simp] protected theorem add_cancel_right (x y : BitString n) : x + y + y = x := by
+@[simp] protected theorem add_cancel_right (x y : ι → Bool) : x + y + y = x := by
   rw [add_assoc, BitString.add_self, add_zero]
 
 end Cslib.BitString

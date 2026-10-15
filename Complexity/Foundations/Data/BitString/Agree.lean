@@ -15,7 +15,7 @@ import Mathlib.Data.Fintype.BigOperators
 /-!
 # Words agreeing off a set of positions
 
-The words of `n` bits agreeing with a word `x` outside a set `F` of positions are free exactly on
+The words `ι → Bool` agreeing with a word `x` outside a set `F` of positions are free exactly on
 `F`, so there are `2 ^ |F|` of them (`BitString.card_filter_forall_notMem_eq`).
 -/
 
@@ -25,12 +25,13 @@ namespace Cslib.BitString
 
 open Finset
 
-variable {n : ℕ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- The words agreeing with `x` outside `F` number `2 ^ |F|`. -/
-theorem card_filter_forall_notMem_eq (F : Finset (Fin n)) (x : BitString n) :
-    #{y : BitString n | ∀ i ∉ F, y i = x i} = 2 ^ #F := by
-  have h : ({y : BitString n | ∀ i ∉ F, y i = x i} : Finset _) =
+theorem card_filter_forall_notMem_eq (F : Finset ι) (x : ι → Bool)
+    [DecidablePred fun y : ι → Bool => ∀ i ∉ F, y i = x i] :
+    #{y : ι → Bool | ∀ i ∉ F, y i = x i} = 2 ^ #F := by
+  have h : ({y : ι → Bool | ∀ i ∉ F, y i = x i} : Finset _) =
       Fintype.piFinset fun i => if i ∈ F then univ else {x i} := by
     ext y
     simp only [mem_filter, mem_univ, true_and, Fintype.mem_piFinset]

@@ -93,7 +93,7 @@ variable {R : Type*} [CommRing R] {n : ℕ}
 /-- **Interpolation on a Hamming ball**: every function agrees on the strings of weight at most `D`
 with a function of degree at most `D`. -/
 theorem exists_mem_lowDegree_forall_weight_le_eq (D : ℕ) (f : BitString n → R) :
-    ∃ q ∈ lowDegree R n D, ∀ x, weight x ≤ D → q x = f x := by
+    ∃ q ∈ lowDegree R (Fin n) D, ∀ x, weight x ≤ D → q x = f x := by
   have hf := mem_lowDegree_self f
   induction hf using Submodule.span_induction with
   | mem g hg =>
@@ -117,7 +117,7 @@ majority read as `0` or `1` in `R` and `q` and `r` of degree at most `m`. The fu
 interpolates on the strings of weight at most `m`, where the majority is false, and `r` on the
 others, which are the negations of the former [Chattopadhyay et al., Section 2.1][CHLLTV2026]. -/
 theorem exists_eq_add_majority_mul {m : ℕ} (f : BitString (2 * m + 1) → R) :
-    ∃ q ∈ lowDegree R (2 * m + 1) m, ∃ r ∈ lowDegree R (2 * m + 1) m,
+    ∃ q ∈ lowDegree R (Fin (2 * m + 1)) m, ∃ r ∈ lowDegree R (Fin (2 * m + 1)) m,
       ∀ x, f x = q x + bitVal R (majority (2 * m + 1) x) * r x := by
   obtain ⟨q, hq, hqf⟩ := exists_mem_lowDegree_forall_weight_le_eq m f
   obtain ⟨r, hr, hrf⟩ := exists_mem_lowDegree_forall_weight_le_eq m
@@ -292,12 +292,12 @@ private theorem atomSpan_mono {w w' : ℕ} (h : w ≤ w') : atomSpan m w ≤ ato
 private theorem atomSpan_eq_top : atomSpan m (m + 1) = ⊤ := by
   refine eq_top_iff.2 fun f _ => ?_
   obtain ⟨q, hq, r, hr, hf⟩ := exists_eq_add_majority_mul (R := ZMod 2) f
-  have hlow : lowDegree (ZMod 2) (2 * m + 1) m ≤ atomSpan m (m + 1) := by
+  have hlow : lowDegree (ZMod 2) (Fin (2 * m + 1)) m ≤ atomSpan m (m + 1) := by
     refine Submodule.span_le.2 ?_
     rintro _ ⟨A, hA, rfl⟩
     exact Submodule.subset_span
       ⟨(A, false), ⟨hA, by simpa [atomWeight] using Nat.le_succ_of_le hA⟩, atom_false A⟩
-  have hmaj : lowDegree (ZMod 2) (2 * m + 1) m ≤
+  have hmaj : lowDegree (ZMod 2) (Fin (2 * m + 1)) m ≤
       (atomSpan m (m + 1)).comap (LinearMap.mulLeft (ZMod 2) majVal) := by
     refine Submodule.span_le.2 ?_
     rintro _ ⟨A, hA, rfl⟩
@@ -414,9 +414,9 @@ private theorem monomial_mul_mem_genSpan (S : Finset (Fin (k * (2 * m + 1)))) {r
 /-- **The multiplication lemma**: multiplying by a function of degree at most `d` raises the
 weight by at most `d` [Chattopadhyay et al., Lemma 2.2][CHLLTV2026]. -/
 private theorem mul_mem_genSpan {d r : ℕ} {P f : BitString (k * (2 * m + 1)) → ZMod 2}
-    (hP : P ∈ lowDegree (ZMod 2) (k * (2 * m + 1)) d) (hf : f ∈ genSpan k m r) :
+    (hP : P ∈ lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d) (hf : f ∈ genSpan k m r) :
     P * f ∈ genSpan k m (r + d) := by
-  suffices h : lowDegree (ZMod 2) (k * (2 * m + 1)) d ≤
+  suffices h : lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d ≤
       (genSpan k m (r + d)).comap (LinearMap.mulRight (ZMod 2) f) from h hP
   refine Submodule.span_le.2 ?_
   rintro _ ⟨S, hS, rfl⟩
@@ -450,7 +450,8 @@ private theorem bitVal_xorMajority (x : BitString (k * (2 * m + 1))) :
 every function agrees with a combination of products in which the first block whose monomial has
 at most `m - d` bits does not carry its majority [Chattopadhyay et al., Lemma 2.3][CHLLTV2026]. -/
 private theorem exists_mem_span_firstFlagUnset_eq {d : ℕ}
-    {P : BitString (k * (2 * m + 1)) → ZMod 2} (hP : P ∈ lowDegree (ZMod 2) (k * (2 * m + 1)) d)
+    {P : BitString (k * (2 * m + 1)) → ZMod 2}
+    (hP : P ∈ lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d)
     {E : Finset (BitString (k * (2 * m + 1)))} (hE : ∀ x ∈ E, P x = ∑ i, majVal (block x i))
     (f : BitString (k * (2 * m + 1)) → ZMod 2) :
     ∃ g ∈ Submodule.span (ZMod 2) (gen '' {a | (∀ i, (a i).1.card ≤ m) ∧
@@ -553,7 +554,8 @@ which `P` agrees with the exclusive or of the majorities of the blocks is at mos
 `2 ^ (k (2 m + 1)) + (2 N) ^ k`, where `N` is the number of sets `A` of bits of a block with
 `m - d < |A| ≤ m` [Chattopadhyay et al., Section 2.3][CHLLTV2026]. -/
 theorem two_mul_card_agree_xorMajority_le {k m d : ℕ}
-    {P : BitString (k * (2 * m + 1)) → ZMod 2} (hP : P ∈ lowDegree (ZMod 2) (k * (2 * m + 1)) d) :
+    {P : BitString (k * (2 * m + 1)) → ZMod 2}
+    (hP : P ∈ lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d) :
     2 * #{x | P x = bitVal (ZMod 2) (xorMajority k (2 * m + 1) x)} ≤
       2 ^ (k * (2 * m + 1)) +
         (2 * #{A : Finset (Fin (2 * m + 1)) | A.card ≤ m ∧ m < A.card + d}) ^ k := by
@@ -612,7 +614,7 @@ private theorem abs_expect_signVal_mul_le_of_two_mul_card_le {n : ℕ} {f p : Bo
   have key : 1 - 2 * (hammingDist f p : ℝ) / 2 ^ n = (2 * #{x | p x = f x} - 2 ^ n) / 2 ^ n := by
     rw [eq_div_iff hpos.ne', sub_mul, div_mul_cancel₀ _ hpos.ne', one_mul, ← hd]
     linarith
-  rw [expect_signVal_mul_signVal, key, abs_div, abs_of_pos hpos]
+  rw [expect_signVal_mul_signVal, Fintype.card_fin, key, abs_div, abs_of_pos hpos]
   exact div_le_div_of_nonneg_right (abs_le.2 ⟨by linarith, by linarith⟩) hpos.le
 
 /-- **The correlation bound by the middle band**: for a Boolean function `p` of degree at most `d`
@@ -622,7 +624,7 @@ value, where `N` is the number of sets `A` of bits of a block with `m - d < |A| 
 [Chattopadhyay et al., Section 2.3][CHLLTV2026]. -/
 theorem abs_expect_signVal_xorMajority_mul_signVal_le_card {k m d : ℕ}
     {p : BooleanFunction (k * (2 * m + 1))}
-    (hp : (fun x => bitVal (ZMod 2) (p x)) ∈ lowDegree (ZMod 2) (k * (2 * m + 1)) d) :
+    (hp : (fun x => bitVal (ZMod 2) (p x)) ∈ lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d) :
     |𝔼 x, signVal (xorMajority k (2 * m + 1) x) * signVal (p x)| ≤
       (2 * #{A : Finset (Fin (2 * m + 1)) | A.card ≤ m ∧ m < A.card + d} /
         2 ^ (2 * m + 1)) ^ k := by
@@ -682,7 +684,7 @@ degree at most `d` over `ZMod 2`, read as signs, is at most `(2 d / √ℓ) ^ k`
 [Chattopadhyay et al., Theorem 1.1][CHLLTV2026]. -/
 theorem abs_expect_signVal_xorMajority_mul_signVal_le {k ℓ d : ℕ} (hℓ : Odd ℓ)
     {p : BooleanFunction (k * ℓ)}
-    (hp : (fun x => bitVal (ZMod 2) (p x)) ∈ lowDegree (ZMod 2) (k * ℓ) d) :
+    (hp : (fun x => bitVal (ZMod 2) (p x)) ∈ lowDegree (ZMod 2) (Fin (k * ℓ)) d) :
     |𝔼 x, signVal (xorMajority k ℓ x) * signVal (p x)| ≤ (2 * d / √ℓ) ^ k := by
   obtain ⟨m, rfl⟩ := hℓ
   refine (abs_expect_signVal_xorMajority_mul_signVal_le_card hp).trans

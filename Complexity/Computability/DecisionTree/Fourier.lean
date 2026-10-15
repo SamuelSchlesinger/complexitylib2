@@ -36,10 +36,11 @@ namespace Cslib.DecisionTree
 
 open Finset BitString
 
-variable {n : ℕ} {β : Type*}
+variable {ι β : Type*} [Fintype ι] [DecidableEq ι]
 
+omit [Fintype ι] in
 /-- Toggling one coordinate changes the size of a set by at most one. -/
-private theorem card_le_card_symmDiff_singleton_add_one (i : Fin n) (S : Finset (Fin n)) :
+private theorem card_le_card_symmDiff_singleton_add_one (i : ι) (S : Finset ι) :
     #S ≤ #(symmDiff {i} S) + 1 := by
   refine (card_le_card fun j hj => ?_).trans (card_union_le _ {i})
   by_cases hji : j = i
@@ -48,8 +49,8 @@ private theorem card_le_card_symmDiff_singleton_add_one (i : Fin n) (S : Finset 
 
 /-- **Decision trees have low Fourier degree**: a function of the output of a decision tree of
 depth `d` has no Fourier weight on sets of more than `d` coordinates. -/
-theorem fourierCoeff_eq_zero_of_depth_lt (g : β → ℝ) (t : DecisionTree (Fin n) β)
-    {S : Finset (Fin n)} (hS : t.depth < #S) : fourierCoeff (fun x => g (t.eval x)) S = 0 := by
+theorem fourierCoeff_eq_zero_of_depth_lt (g : β → ℝ) (t : DecisionTree ι β)
+    {S : Finset ι} (hS : t.depth < #S) : fourierCoeff (fun x => g (t.eval x)) S = 0 := by
   induction t generalizing S with
   | leaf b =>
     have hne : S ≠ ∅ := by

@@ -8,19 +8,18 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Hadamard
-public import Mathlib.Logic.Equiv.Fin.Basic
+public import Mathlib.Data.Matrix.Mul
 import Mathlib.Algebra.Order.BigOperators.Expect
-import Mathlib.Data.Matrix.Mul
 import Mathlib.Tactic.Linarith
 
 /-!
 # Testing quadratic equations with the Hadamard code
 
-A system of quadratic equations over the two-element field in the unknowns `x : BitString n` can
-be written as `⟨x ⊗ x, A e⟩ = b e` for `e : Fin m`, where `x ⊗ x` is the tensor product of `x`
-with itself (`BitString.tensor`), indexed by pairs of coordinates through `finProdFinEquiv`, and
-`⟨·, ·⟩` is the inner product modulo two, the dot product in the Boolean ring `Bool`. Bit strings
-add coordinatewise in the same ring, and the tensor product is bilinear
+A system of quadratic equations over the two-element field in the unknowns `x : ι → Bool` can be
+written as `⟨x ⊗ x, A e⟩ = b e` for `e : κ`, where `x ⊗ x : ι × ι → Bool` is the tensor product
+of `x` with itself (`BitString.tensor`, the outer product `Matrix.vecMulVec x x` read on pairs of
+coordinates), and `⟨·, ·⟩` is the inner product modulo two, the dot product in the Boolean ring
+`Bool`. Bit strings add coordinatewise in the same ring, and the tensor product is bilinear
 (`BitString.tensor_add_left`, `BitString.tensor_add_right`). A proof that the system has a
 solution `x` consists of two tables: the Hadamard encodings `f` of `x` and `g` of `x ⊗ x`. Since
 `⟨x ⊗ x, y ⊗ z⟩ = ⟨x, y⟩ ⟨x, z⟩` (`BitString.hadamardCode_tensor_tensor`), the tables can be
@@ -78,57 +77,57 @@ namespace Cslib.BitString
 open Finset
 open scoped BigOperators
 
-variable {m n N : ℕ}
+variable {ι κ : Type*}
 
 /-! ### Tensor products -/
 
-/-- The tensor product of bit strings `x` and `y`: its bit at the position of `(i, j)` under
-`finProdFinEquiv` is `x i && y j`. -/
-def tensor (x : BitString m) (y : BitString n) : BitString (m * n) :=
-  fun k => x (finProdFinEquiv.symm k).1 && y (finProdFinEquiv.symm k).2
+/-- The tensor product of bit strings `x` and `y`: the outer product `Matrix.vecMulVec x y` in the
+Boolean ring `Bool`, read on pairs of coordinates, so its bit at `(i, j)` is `x i && y j`. -/
+def tensor (x : ι → Bool) (y : κ → Bool) : ι × κ → Bool :=
+  Function.uncurry (Matrix.vecMulVec x y)
 
-/-- The bit of `x ⊗ y` at the position of `(i, j)` is `x i && y j`. -/
-@[simp] theorem tensor_finProdFinEquiv (x : BitString m) (y : BitString n) (i : Fin m)
-    (j : Fin n) : tensor x y (finProdFinEquiv (i, j)) = (x i && y j) := by
-  simp [tensor]
+/-- The bit of `x ⊗ y` at `(i, j)` is `x i && y j`. -/
+@[simp] theorem tensor_apply (x : ι → Bool) (y : κ → Bool) (p : ι × κ) :
+    tensor x y p = (x p.1 && y p.2) :=
+  rfl
 
 /-- The tensor product is linear in its first argument. -/
-theorem tensor_add_left (x x' : BitString m) (y : BitString n) :
+theorem tensor_add_left (x x' : ι → Bool) (y : κ → Bool) :
     tensor (x + x') y = tensor x y + tensor x' y :=
-  funext fun _ => Bool.and_xor_distrib_right _ _ _
+  congrArg Function.uncurry (Matrix.add_vecMulVec x x' y)
 
 /-- The tensor product is linear in its second argument. -/
-theorem tensor_add_right (x : BitString m) (y y' : BitString n) :
+theorem tensor_add_right (x : ι → Bool) (y y' : κ → Bool) :
     tensor x (y + y') = tensor x y + tensor x y' :=
-  funext fun _ => Bool.and_xor_distrib_left _ _ _
+  congrArg Function.uncurry (Matrix.vecMulVec_add x y y')
 
 /-- The tensor product of two unit vectors is a unit vector. -/
-theorem tensor_decide_eq (i : Fin m) (j : Fin n) :
+theorem tensor_decide_eq [DecidableEq ι] [DecidableEq κ] (i : ι) (j : κ) :
     tensor (fun i' => decide (i' = i)) (fun j' => decide (j' = j)) =
-      fun k => decide (k = finProdFinEquiv (i, j)) := by
-  funext k
-  obtain ⟨⟨i', j'⟩, rfl⟩ := finProdFinEquiv.surjective k
-  simp
+      fun k => decide (k = (i, j)) := by
+  funext ⟨i', j'⟩
+  simp [Prod.ext_iff]
+
+variable [Fintype ι] [Fintype κ]
 
 /-- **The inner product of tensor products is the product of the inner products**:
 `⟨x ⊗ y, a ⊗ b⟩ = ⟨x, a⟩ ⟨y, b⟩`. -/
-theorem hadamardCode_tensor_tensor (x a : BitString m) (y b : BitString n) :
+theorem hadamardCode_tensor_tensor (x a : ι → Bool) (y b : κ → Bool) :
     hadamardCode (tensor x y) (tensor a b) = (hadamardCode x a && hadamardCode y b) := by
   rw [← Bool.mul_eq_and, hadamardCode_apply, hadamardCode_apply, hadamardCode_apply, dotProduct,
-    dotProduct, dotProduct, sum_mul_sum, ← Fintype.sum_prod_type',
-    ← finProdFinEquiv.symm.sum_comp]
+    dotProduct, dotProduct, sum_mul_sum, ← Fintype.sum_prod_type']
   refine Fintype.sum_congr _ _ fun p => ?_
-  simp only [tensor, ← Bool.mul_eq_and]
+  simp only [tensor_apply, ← Bool.mul_eq_and]
   ring
+
+variable [DecidableEq ι] [DecidableEq κ]
 
 /-- **A nonzero bilinear form is nonzero on a quarter of the pairs**: if `M` is not all `false`,
 then `⟨M, y ⊗ z⟩ = 1` with probability at least `1/4` over uniformly random `y` and `z`. -/
-theorem one_div_four_le_expect_hadamardCode_tensor {M : BitString (m * n)}
-    (hM : ∃ k, M k = true) :
+theorem one_div_four_le_expect_hadamardCode_tensor {M : ι × κ → Bool} (hM : ∃ k, M k = true) :
     1 / 4 ≤ 𝔼 y, 𝔼 z, if hadamardCode M (tensor y z) = true then (1 : ℝ) else 0 := by
-  obtain ⟨k, hk⟩ := hM
-  obtain ⟨⟨i, j⟩, rfl⟩ := finProdFinEquiv.surjective k
-  have hrow (y : BitString m) :
+  obtain ⟨⟨i, j⟩, hk⟩ := hM
+  have hrow (y : ι → Bool) :
       1 / 2 * (if hadamardCode M (tensor y fun j' => decide (j' = j)) = true then 1 else 0) ≤
         𝔼 z, if hadamardCode M (tensor y z) = true then (1 : ℝ) else 0 := by
     split_ifs with hy
@@ -167,8 +166,8 @@ private theorem boole_le_add_one_sub₃ {A F G₁ G₂ G₃ : Prop} [Decidable A
 
 /-- A read that is correct with probability at least `1 - δ` for every input is wrong with
 probability at most `δ` on average. -/
-private theorem expect_expect_one_sub_le {ι κ : Type*} [Fintype ι] [Nonempty ι] [Fintype κ]
-    [Nonempty κ] {c : ι → κ → ℝ} {δ : ℝ} (h : ∀ i, 1 - δ ≤ 𝔼 j, c i j) :
+private theorem expect_expect_one_sub_le {α β : Type*} [Fintype α] [Nonempty α] [Fintype β]
+    [Nonempty β] {c : α → β → ℝ} {δ : ℝ} (h : ∀ i, 1 - δ ≤ 𝔼 j, c i j) :
     𝔼 i, 𝔼 j, (1 - c i j) ≤ δ :=
   expect_le univ_nonempty fun i _ => by
     rw [expect_sub_distrib, Fintype.expect_const]
@@ -180,32 +179,31 @@ private theorem expect_expect_one_sub_le {ι κ : Type*} [Fintype ι] [Nonempty 
 independent uniformly random `y`, `z`, `r`, `s` and `t`, that the self-corrected read of `g` at
 `y ⊗ z` with randomness `t` is the product of the self-corrected reads of `f` at `y` with
 randomness `r` and at `z` with randomness `s`. -/
-noncomputable def tensorTestAcceptance (f : BooleanFunction n) (g : BooleanFunction (n * n)) :
-    ℝ :=
+noncomputable def tensorTestAcceptance (f : (ι → Bool) → Bool) (g : (ι × ι → Bool) → Bool) : ℝ :=
   𝔼 y, 𝔼 z, 𝔼 r, 𝔼 s, 𝔼 t,
     if selfCorrect g (tensor y z) t = (selfCorrect f y r && selfCorrect f z s) then 1 else 0
 
 /-- **Completeness of the tensor test**: the encodings of `x` and of `x ⊗ x` pass it with
 probability one. -/
-@[simp] theorem tensorTestAcceptance_hadamardCode (x : BitString n) :
+@[simp] theorem tensorTestAcceptance_hadamardCode (x : ι → Bool) :
     tensorTestAcceptance (hadamardCode x) (hadamardCode (tensor x x)) = 1 := by
   simp [tensorTestAcceptance, hadamardCode_tensor_tensor]
 
 /-- **Soundness of the tensor test**: if `f` and `g` are within relative distances `ε` and `ε'`
 of the encodings of `x` and of `w`, and the test accepts with probability more than
 `3/4 + 4ε + 2ε'`, then `w = x ⊗ x`. -/
-theorem eq_tensor_of_lt_tensorTestAcceptance {f : BooleanFunction n}
-    {g : BooleanFunction (n * n)} {x : BitString n} {w : BitString (n * n)} {ε ε' : ℝ}
-    (hf : (hammingDist f (hadamardCode x) : ℝ) / 2 ^ n ≤ ε)
-    (hg : (hammingDist g (hadamardCode w) : ℝ) / 2 ^ (n * n) ≤ ε')
+theorem eq_tensor_of_lt_tensorTestAcceptance {f : (ι → Bool) → Bool}
+    {g : (ι × ι → Bool) → Bool} {x : ι → Bool} {w : ι × ι → Bool} {ε ε' : ℝ}
+    (hf : (hammingDist f (hadamardCode x) : ℝ) / 2 ^ Fintype.card ι ≤ ε)
+    (hg : (hammingDist g (hadamardCode w) : ℝ) / 2 ^ Fintype.card (ι × ι) ≤ ε')
     (h : 3 / 4 + (4 * ε + 2 * ε') < tensorTestAcceptance f g) : w = tensor x x := by
   by_contra hw
   -- The test made on the codewords themselves, and the events that the reads are correct.
-  set D : BitString n → BitString n → ℝ := fun y z =>
+  set D : (ι → Bool) → (ι → Bool) → ℝ := fun y z =>
     if hadamardCode w (tensor y z) = (hadamardCode x y && hadamardCode x z) then 1 else 0
-  set c : BitString n → BitString n → ℝ := fun y r =>
+  set c : (ι → Bool) → (ι → Bool) → ℝ := fun y r =>
     if selfCorrect f y r = hadamardCode x y then 1 else 0
-  set c' : BitString n → BitString n → BitString (n * n) → ℝ := fun y z t =>
+  set c' : (ι → Bool) → (ι → Bool) → (ι × ι → Bool) → ℝ := fun y z t =>
     if selfCorrect g (tensor y z) t = hadamardCode w (tensor y z) then 1 else 0
   have hD : 𝔼 y, 𝔼 z, D y z ≤ 3 / 4 := by
     have hM : ∃ k, (w + tensor x x) k = true := by
@@ -215,7 +213,7 @@ theorem eq_tensor_of_lt_tensorTestAcceptance {f : BooleanFunction n}
       revert hk
       simp only [Pi.add_apply, Bool.add_eq_xor]
       cases w k <;> cases tensor x x k <;> simp
-    have hpt (y z : BitString n) : D y z =
+    have hpt (y z : ι → Bool) : D y z =
         1 - if hadamardCode (w + tensor x x) (tensor y z) = true then 1 else 0 := by
       simp only [D, hadamardCode_add_left, hadamardCode_tensor_tensor]
       cases hadamardCode w (tensor y z) <;> cases (hadamardCode x y && hadamardCode x z) <;>
@@ -237,10 +235,10 @@ theorem eq_tensor_of_lt_tensorTestAcceptance {f : BooleanFunction n}
 
 /-! ### The equation test -/
 
+omit [DecidableEq ι] [DecidableEq κ] in
 /-- The inner product of `w` with the sum of the `A e` for the `e` with `k e = true` is the sum of
 the inner products of `w` with those `A e`. -/
-private theorem hadamardCode_hadamardCode (w : BitString N) (k : BitString m)
-    (A : Fin m → BitString N) :
+private theorem hadamardCode_hadamardCode (w : ι → Bool) (k : κ → Bool) (A : κ → ι → Bool) :
     hadamardCode w (fun j => hadamardCode k fun e => A e j) =
       hadamardCode k fun e => hadamardCode w (A e) := by
   simp only [hadamardCode_apply]
@@ -252,31 +250,31 @@ private theorem hadamardCode_hadamardCode (w : BitString N) (k : BitString m)
 `⟨w, A e⟩ = b e` in `w`: the probability, over independent uniformly random `k` and `t`, that the
 self-corrected read of `g` at the sum of the `A e` for the `e` with `k e = true`, with randomness
 `t`, is the sum of the corresponding `b e`. -/
-noncomputable def equationTestAcceptance (g : BooleanFunction N) (A : Fin m → BitString N)
-    (b : BitString m) : ℝ :=
+noncomputable def equationTestAcceptance (g : (ι → Bool) → Bool) (A : κ → ι → Bool)
+    (b : κ → Bool) : ℝ :=
   𝔼 k, 𝔼 t,
     if selfCorrect g (fun j => hadamardCode k fun e => A e j) t = hadamardCode k b then 1 else 0
 
 /-- **Completeness of the equation test**: the encoding of a solution of the equations passes it
 with probability one. -/
-theorem equationTestAcceptance_hadamardCode {A : Fin m → BitString N} {b : BitString m}
-    {w : BitString N} (h : ∀ e, hadamardCode w (A e) = b e) :
+theorem equationTestAcceptance_hadamardCode {A : κ → ι → Bool} {b : κ → Bool} {w : ι → Bool}
+    (h : ∀ e, hadamardCode w (A e) = b e) :
     equationTestAcceptance (hadamardCode w) A b = 1 := by
   simp [equationTestAcceptance, hadamardCode_hadamardCode, h]
 
 /-- **Soundness of the equation test**: if `g` is within relative distance `ε` of the encoding of
 `w`, and the test accepts with probability more than `1/2 + 2ε`, then `w` solves the
 equations. -/
-theorem hadamardCode_eq_of_lt_equationTestAcceptance {g : BooleanFunction N}
-    {A : Fin m → BitString N} {b : BitString m} {w : BitString N} {ε : ℝ}
-    (hg : (hammingDist g (hadamardCode w) : ℝ) / 2 ^ N ≤ ε)
-    (h : 1 / 2 + 2 * ε < equationTestAcceptance g A b) (e : Fin m) :
+theorem hadamardCode_eq_of_lt_equationTestAcceptance {g : (ι → Bool) → Bool}
+    {A : κ → ι → Bool} {b : κ → Bool} {w : ι → Bool} {ε : ℝ}
+    (hg : (hammingDist g (hadamardCode w) : ℝ) / 2 ^ Fintype.card ι ≤ ε)
+    (h : 1 / 2 + 2 * ε < equationTestAcceptance g A b) (e : κ) :
     hadamardCode w (A e) = b e := by
   by_contra he
   -- The test made on the codeword itself, and the event that the read is correct.
-  set D : BitString m → ℝ := fun k =>
+  set D : (κ → Bool) → ℝ := fun k =>
     if hadamardCode w (fun j => hadamardCode k fun e' => A e' j) = hadamardCode k b then 1 else 0
-  set c : BitString m → BitString N → ℝ := fun k t =>
+  set c : (κ → Bool) → (ι → Bool) → ℝ := fun k t =>
     if selfCorrect g (fun j => hadamardCode k fun e' => A e' j) t =
       hadamardCode w (fun j => hadamardCode k fun e' => A e' j) then 1 else 0
   have hD : 𝔼 k, D k = 1 / 2 := by
@@ -284,7 +282,7 @@ theorem hadamardCode_eq_of_lt_equationTestAcceptance {g : BooleanFunction N}
     have hv : ∃ k, hadamardCode ((fun e' => hadamardCode w (A e')) + b) k = true :=
       ⟨fun e' => decide (e' = e), by
         simpa [hadamardCode_apply_decide_eq, Bool.add_eq_xor] using he⟩
-    have hpt (k : BitString m) : D k =
+    have hpt (k : κ → Bool) : D k =
         1 - if hadamardCode ((fun e' => hadamardCode w (A e')) + b) k = true then 1 else 0 := by
       simp only [D]
       rw [hadamardCode_hadamardCode, hadamardCode_comm _ k, hadamardCode_add]
@@ -308,12 +306,12 @@ linearity test with probabilities at least `1 - ε` and `1 - ε'`, the tensor te
 more than `3/4 + 4ε + 2ε'`, and the equation test for `A` and `b` with probability more than
 `1/2 + 2ε'`, then `f` is within relative distance `ε` of the encoding of a solution `x` of the
 quadratic equations `⟨x ⊗ x, A e⟩ = b e`. -/
-theorem exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance {f : BooleanFunction n}
-    {g : BooleanFunction (n * n)} {A : Fin m → BitString (n * n)} {b : BitString m} {ε ε' : ℝ}
+theorem exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance {f : (ι → Bool) → Bool}
+    {g : (ι × ι → Bool) → Bool} {A : κ → ι × ι → Bool} {b : κ → Bool} {ε ε' : ℝ}
     (hf : 1 - ε ≤ blrAcceptance f) (hg : 1 - ε' ≤ blrAcceptance g)
     (htensor : 3 / 4 + (4 * ε + 2 * ε') < tensorTestAcceptance f g)
     (hequation : 1 / 2 + 2 * ε' < equationTestAcceptance g A b) :
-    ∃ x, (hammingDist f (hadamardCode x) : ℝ) / 2 ^ n ≤ ε ∧
+    ∃ x, (hammingDist f (hadamardCode x) : ℝ) / 2 ^ Fintype.card ι ≤ ε ∧
       ∀ e, hadamardCode (tensor x x) (A e) = b e := by
   obtain ⟨x, hx⟩ := exists_hammingDist_hadamardCode_le_of_le_blrAcceptance hf
   obtain ⟨w, hw⟩ := exists_hammingDist_hadamardCode_le_of_le_blrAcceptance hg

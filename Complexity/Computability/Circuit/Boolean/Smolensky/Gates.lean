@@ -68,22 +68,22 @@ def modApprox (u : Fin m → ZMod p) : ZMod p :=
   (∑ i, u i) ^ (p - 1)
 
 theorem orApprox_comp_mem {D : ℕ} (T : Fin ℓ → Finset (Fin m)) {v : Fin m → BitString n → ZMod p}
-    (hv : ∀ k, v k ∈ lowDegree (ZMod p) n D) :
-    (fun x => orApprox T fun k => v k x) ∈ lowDegree (ZMod p) n (ℓ * ((p - 1) * D)) := by
+    (hv : ∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) :
+    (fun x => orApprox T fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) (ℓ * ((p - 1) * D)) := by
   have hfun : (fun x => orApprox T fun k => v k x) = 1 - ∏ j, (1 - (∑ i ∈ T j, v i) ^ (p - 1)) := by
     funext x
     simp only [orApprox, Pi.sub_apply, Pi.one_apply, Finset.prod_apply, Pi.pow_apply,
       Finset.sum_apply]
   rw [hfun]
   refine one_sub_mem_lowDegree ?_
-  have h := prod_mem_lowDegree (R := ZMod p) (n := n) univ (a := (p - 1) * D)
+  have h := prod_mem_lowDegree (R := ZMod p) (ι := Fin n) univ (a := (p - 1) * D)
     (f := fun j => 1 - (∑ i ∈ T j, v i) ^ (p - 1)) fun j _ =>
       one_sub_mem_lowDegree (pow_mem_lowDegree (sum_mem_lowDegree _ fun i _ => hv i) (p - 1))
   rwa [card_univ, Fintype.card_fin] at h
 
 theorem andApprox_comp_mem {D : ℕ} (T : Fin ℓ → Finset (Fin m)) {v : Fin m → BitString n → ZMod p}
-    (hv : ∀ k, v k ∈ lowDegree (ZMod p) n D) :
-    (fun x => andApprox T fun k => v k x) ∈ lowDegree (ZMod p) n (ℓ * ((p - 1) * D)) := by
+    (hv : ∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) :
+    (fun x => andApprox T fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) (ℓ * ((p - 1) * D)) := by
   have hmem := orApprox_comp_mem T (v := fun k => 1 - v k) fun k => one_sub_mem_lowDegree (hv k)
   have hfun : (fun x => andApprox T fun k => v k x) =
       1 - fun x => orApprox T fun k => (1 - v k) x := by
@@ -93,8 +93,8 @@ theorem andApprox_comp_mem {D : ℕ} (T : Fin ℓ → Finset (Fin m)) {v : Fin m
   exact one_sub_mem_lowDegree hmem
 
 theorem modApprox_comp_mem {D : ℕ} {v : Fin m → BitString n → ZMod p}
-    (hv : ∀ k, v k ∈ lowDegree (ZMod p) n D) :
-    (fun x => modApprox fun k => v k x) ∈ lowDegree (ZMod p) n ((p - 1) * D) := by
+    (hv : ∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) :
+    (fun x => modApprox fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) ((p - 1) * D) := by
   have hfun : (fun x => modApprox fun k => v k x) = (∑ i, v i) ^ (p - 1) := by
     funext x
     simp [modApprox, Finset.sum_apply]
@@ -234,8 +234,8 @@ theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
     (u : BitString n → Fin (Unbounded.extSignature.Arity op) → Bool) :
     ∃ A : (Fin (Unbounded.extSignature.Arity op) → ZMod p) → ZMod p,
       (∀ (D : ℕ) (v : Fin (Unbounded.extSignature.Arity op) → BitString n → ZMod p),
-        (∀ k, v k ∈ lowDegree (ZMod p) n D) →
-          (fun x => A fun k => v k x) ∈ lowDegree (ZMod p) n ((p - 1) * ℓ * D)) ∧
+        (∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) →
+          (fun x => A fun k => v k x) ∈ lowDegree (ZMod p) (Fin n) ((p - 1) * ℓ * D)) ∧
       #(univ.filter fun x => A (fun k => bitVal (ZMod p) (u x k)) ≠
           bitVal (ZMod p) (Unbounded.extInterpretation (modGate p) op (u x))) * 2 ^ ℓ ≤ 2 ^ n := by
   have hp := (Fact.out : p.Prime).two_le

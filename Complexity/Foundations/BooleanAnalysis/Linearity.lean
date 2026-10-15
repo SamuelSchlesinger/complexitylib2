@@ -65,21 +65,23 @@ namespace Cslib.BitString
 open Finset
 open scoped BigOperators
 
-variable {n : ℕ}
+variable {ι : Type*}
 
 /-! ### Linear functions -/
 
 /-- **The linear Boolean functions are the parities**: a Boolean function turns sums of bit
 strings into the exclusive or of its values exactly when it is the parity of some set of
 coordinates [O'Donnell, Definition 1.28][ODonnell2014]. -/
-theorem exists_eq_parityOn_iff {f : BooleanFunction n} :
+theorem exists_eq_parityOn_iff [Finite ι] {f : (ι → Bool) → Bool} :
     (∃ S, f = parityOn S) ↔ ∀ x y, f (x + y) = (f x ^^ f y) := by
+  classical
+  have := Fintype.ofFinite ι
   refine ⟨?_, fun hf => ?_⟩
   · rintro ⟨S, rfl⟩
     exact parityOn_add S
   -- `a i` is the value of `f` at the unit vector of `i`.
-  set a : BitString n := fun i => f fun j => decide (j = i)
-  have hT (T : Finset (Fin n)) : f (fun j => decide (j ∈ T)) = parityOn T a := by
+  set a : ι → Bool := fun i => f fun j => decide (j = i)
+  have hT (T : Finset ι) : f (fun j => decide (j ∈ T)) = parityOn T a := by
     induction T using Finset.induction_on with
     | empty =>
       have h0 := hf 0 0
@@ -95,19 +97,21 @@ theorem exists_eq_parityOn_iff {f : BooleanFunction n} :
           simp [hi, Bool.add_eq_xor]
         · simp [hj, Bool.add_eq_xor]
       rw [h, hf, ih, parityOn_insert hi]
-  refine ⟨({i | a i = true} : Finset (Fin n)), funext fun x => ?_⟩
-  calc f x = f fun j => decide (j ∈ ({j | x j = true} : Finset (Fin n))) := by simp
+  refine ⟨({i | a i = true} : Finset ι), funext fun x => ?_⟩
+  calc f x = f fun j => decide (j ∈ ({j | x j = true} : Finset ι)) := by simp
     _ = parityOn {j | x j = true} a := hT _
     _ = parityOn {i | a i = true} x := by simp only [parityOn, filter_filter, and_comm]
+
+variable [Fintype ι] [DecidableEq ι]
 
 /-! ### Distance between parities -/
 
 /-- **Distinct parities differ on half of the inputs.** -/
-theorem two_mul_hammingDist_parityOn {S T : Finset (Fin n)} (h : S ≠ T) :
-    2 * hammingDist (parityOn S) (parityOn T) = 2 ^ n := by
+theorem two_mul_hammingDist_parityOn {S T : Finset ι} (h : S ≠ T) :
+    2 * hammingDist (parityOn S) (parityOn T) = 2 ^ Fintype.card ι := by
   have hcorr := expect_signVal_mul_signVal (parityOn S) (parityOn T)
   simp only [← chi_eq_signVal_parityOn, expect_chi_mul_chi, h, ite_false] at hcorr
-  have : (2 * hammingDist (parityOn S) (parityOn T) : ℝ) = 2 ^ n := by
+  have : (2 * hammingDist (parityOn S) (parityOn T) : ℝ) = 2 ^ Fintype.card ι := by
     rw [mul_div_assoc] at hcorr
     field_simp at hcorr
     linarith
@@ -116,7 +120,7 @@ theorem two_mul_hammingDist_parityOn {S T : Finset (Fin n)} (h : S ≠ T) :
 /-- **Nonzero linear functions are balanced**: a Boolean function that turns sums of bit strings
 into the exclusive or of its values, and is not constantly `false`, takes the value `true` with
 probability one half at a uniformly random input. -/
-theorem expect_boole_eq_one_div_two_of_map_add {f : BooleanFunction n}
+theorem expect_boole_eq_one_div_two_of_map_add {f : (ι → Bool) → Bool}
     (hf : ∀ x y, f (x + y) = (f x ^^ f y)) (h : ∃ x, f x = true) :
     𝔼 x, (if f x = true then (1 : ℝ) else 0) = 1 / 2 := by
   obtain ⟨S, rfl⟩ := exists_eq_parityOn_iff.2 hf
@@ -131,14 +135,14 @@ theorem expect_boole_eq_one_div_two_of_map_add {f : BooleanFunction n}
 
 /-- The acceptance probability of the Blum–Luby–Rubinfeld linearity test on `f`: the probability,
 over independent uniformly random bit strings `x` and `y`, that `(f x ^^ f y) = f (x + y)`. -/
-noncomputable def blrAcceptance (f : BooleanFunction n) : ℝ :=
+noncomputable def blrAcceptance (f : (ι → Bool) → Bool) : ℝ :=
   𝔼 x, 𝔼 y, if (f x ^^ f y) = f (x + y) then 1 else 0
 
 /-- **The acceptance probability of the BLR test**: reading `f` as signs, the test accepts with
 probability `1/2 + 1/2 ∑_S F̂(S)³`. -/
-theorem blrAcceptance_eq_sum_fourierCoeff_pow_three (f : BooleanFunction n) :
+theorem blrAcceptance_eq_sum_fourierCoeff_pow_three (f : (ι → Bool) → Bool) :
     blrAcceptance f = 1 / 2 + 1 / 2 * ∑ S, fourierCoeff (fun x => signVal (f x)) S ^ 3 := by
-  set F : BitString n → ℝ := fun x => signVal (f x)
+  set F : (ι → Bool) → ℝ := fun x => signVal (f x)
   have hind (a b c : Bool) : (if (a ^^ b) = c then (1 : ℝ) else 0) =
       1 / 2 + 1 / 2 * (signVal a * (signVal b * signVal c)) := by
     cases a <;> cases b <;> cases c <;> norm_num
@@ -153,14 +157,15 @@ theorem blrAcceptance_eq_sum_fourierCoeff_pow_three (f : BooleanFunction n) :
         simp only [fourierCoeff_convolution, pow_three]
 
 /-- **Completeness of the BLR test**: parities pass with probability one. -/
-theorem blrAcceptance_parityOn (S : Finset (Fin n)) : blrAcceptance (parityOn S) = 1 := by
+theorem blrAcceptance_parityOn (S : Finset ι) : blrAcceptance (parityOn S) = 1 := by
   simp [blrAcceptance, parityOn_add]
 
 /-- **Soundness of the BLR test**: if the test accepts `f` with probability at least `1 - ε`,
 then `f` differs from some parity on at most an `ε` fraction of the inputs
 [O'Donnell, Theorem 1.30][ODonnell2014]. -/
-theorem exists_hammingDist_parityOn_le_of_le_blrAcceptance {f : BooleanFunction n} {ε : ℝ}
-    (h : 1 - ε ≤ blrAcceptance f) : ∃ S, (hammingDist f (parityOn S) : ℝ) / 2 ^ n ≤ ε := by
+theorem exists_hammingDist_parityOn_le_of_le_blrAcceptance {f : (ι → Bool) → Bool} {ε : ℝ}
+    (h : 1 - ε ≤ blrAcceptance f) :
+    ∃ S, (hammingDist f (parityOn S) : ℝ) / 2 ^ Fintype.card ι ≤ ε := by
   rw [blrAcceptance_eq_sum_fourierCoeff_pow_three] at h
   set c := fourierCoeff fun x => signVal (f x)
   obtain ⟨S, -, hS⟩ := exists_max_image univ c univ_nonempty
@@ -170,7 +175,8 @@ theorem exists_hammingDist_parityOn_le_of_le_blrAcceptance {f : BooleanFunction 
         rw [pow_succ, mul_comm]
         exact mul_le_mul_of_nonneg_right (hS T (mem_univ T)) (sq_nonneg _)
     _ = c S := by rw [← mul_sum, sum_fourierCoeff_sq_signVal, mul_one]
-  have hcS : c S = 1 - 2 * hammingDist f (parityOn S) / 2 ^ n := fourierCoeff_signVal f S
+  have hcS : c S = 1 - 2 * hammingDist f (parityOn S) / 2 ^ Fintype.card ι :=
+    fourierCoeff_signVal f S
   rw [mul_div_assoc] at hcS
   linarith
 

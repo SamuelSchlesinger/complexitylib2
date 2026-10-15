@@ -24,8 +24,8 @@ import Mathlib.GroupTheory.Index
 /-!
 # The parity function
 
-`parityOn s x` says whether an odd number of the bits of `x` in `s` are true, and `parity n` is the
-parity of all `n` bits.
+`parityOn s x` says whether an odd number of the bits of `x : ι → Bool` in `s` are true, and
+`parity n` is the parity of all `n` bits.
 
 In the Boolean ring `Bool`, where `a + b = (a ^^ b)`, the parity on `s` is the sum of the bits in
 `s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`) and is additive for
@@ -59,17 +59,15 @@ namespace Cslib
 
 open Finset Function
 
-variable {n : ℕ}
+variable {ι : Type*}
 
 /-- The parity of the bits of `x` in `s`: whether an odd number of them are true. -/
-def parityOn (s : Finset (Fin n)) (x : BitString n) : Bool :=
+def parityOn (s : Finset ι) (x : ι → Bool) : Bool :=
   decide (#{i ∈ s | x i = true} % 2 = 1)
 
 /-- The parity function on `n` bits. -/
 def parity (n : ℕ) : BooleanFunction n :=
   parityOn univ
-
-variable {s t : Finset (Fin n)} {i : Fin n}
 
 /-- A natural number, read in the Boolean ring, is its parity. -/
 private theorem natCast_bool (k : ℕ) : (k : Bool) = decide (k % 2 = 1) := by
@@ -81,84 +79,92 @@ private theorem natCast_bool (k : ℕ) : (k : Bool) = decide (k % 2 = 1) := by
       simp [h, Nat.succ_mod_two_eq_one_iff, Bool.one_eq_true]
 
 /-- **The parity is the sum of the bits** in the Boolean ring `Bool`. -/
-theorem parityOn_eq_sum (s : Finset (Fin n)) (x : BitString n) : parityOn s x = ∑ i ∈ s, x i := by
+theorem parityOn_eq_sum (s : Finset ι) (x : ι → Bool) : parityOn s x = ∑ i ∈ s, x i := by
   have h (b : Bool) : b = if b = true then 1 else 0 := by cases b <;> rfl
   rw [sum_congr rfl fun i _ => h (x i), sum_boole, natCast_bool]
   rfl
 
-@[simp] theorem parityOn_empty (x : BitString n) : parityOn ∅ x = false := by
+@[simp] theorem parityOn_empty (x : ι → Bool) : parityOn ∅ x = false := by
   rw [parityOn_eq_sum, sum_empty]
   rfl
 
 /-- The parity on `s` only reads the bits in `s`. -/
-theorem parityOn_congr {x y : BitString n} (h : ∀ j ∈ s, x j = y j) :
+theorem parityOn_congr {s : Finset ι} {x y : ι → Bool} (h : ∀ j ∈ s, x j = y j) :
     parityOn s x = parityOn s y := by
   simp only [parityOn_eq_sum]
   exact sum_congr rfl h
 
-theorem parityOn_insert (hi : i ∉ s) (x : BitString n) :
-    parityOn (insert i s) x = (x i ^^ parityOn s x) := by
-  simp only [parityOn_eq_sum]
-  exact sum_insert hi
-
-theorem parityOn_eq_xor_erase (hi : i ∈ s) (x : BitString n) :
-    parityOn s x = (x i ^^ parityOn (s.erase i) x) := by
-  simp only [parityOn_eq_sum]
-  exact (add_sum_erase s x hi).symm
-
-theorem parityOn_update_of_notMem (hi : i ∉ s) (x : BitString n) (b : Bool) :
-    parityOn s (update x i b) = parityOn s x :=
-  parityOn_congr fun _ hj => update_of_ne (ne_of_mem_of_not_mem hj hi) _ _
-
-/-- The parity of a disjoint union is the exclusive or of the parities. -/
-theorem parityOn_union (h : Disjoint s t) (x : BitString n) :
-    parityOn (s ∪ t) x = (parityOn s x ^^ parityOn t x) := by
-  simp only [parityOn_eq_sum]
-  exact sum_union h
-
-/-- The parity of a union of pairwise disjoint blocks is the parity of the parities of the
-blocks. -/
-theorem parityOn_biUnion {m : ℕ} {S : Finset (Fin m)} {B : Fin m → Finset (Fin n)}
-    (hB : (S : Set (Fin m)).PairwiseDisjoint B) (x : BitString n) :
-    parityOn (S.biUnion B) x = parityOn S fun j => parityOn (B j) x := by
-  simp only [parityOn_eq_sum]
-  exact sum_biUnion hB
-
 /-- **Parities are linear**: the parity of a sum of bit strings is the exclusive or of the
 parities. -/
-theorem parityOn_add (S : Finset (Fin n)) (x y : BitString n) :
+theorem parityOn_add (S : Finset ι) (x y : ι → Bool) :
     parityOn S (x + y) = (parityOn S x ^^ parityOn S y) := by
   simp only [parityOn_eq_sum]
   exact sum_add_distrib
 
-/-- Flipping one of the bits negates the parity. -/
-theorem parityOn_update_not (hi : i ∈ s) (x : BitString n) :
-    parityOn s (update x i !x i) = !parityOn s x := by
-  rw [parityOn_eq_xor_erase hi, parityOn_eq_xor_erase hi, update_self,
-    parityOn_update_of_notMem (notMem_erase i s)]
-  cases x i <;> simp
-
-/-- Flipping any bit flips the parity. -/
-theorem parity_update_not (x : BitString n) (i : Fin n) :
-    parity n (update x i !x i) = !parity n x :=
-  parityOn_update_not (mem_univ i) x
-
 /-- The parity on `s`, as an additive map from bit strings to bits. -/
-def parityOnAddMonoidHom (s : Finset (Fin n)) : BitString n →+ Bool where
+def parityOnAddMonoidHom (s : Finset ι) : (ι → Bool) →+ Bool where
   toFun := parityOn s
   map_zero' := by
     rw [parityOn_eq_sum]
     exact sum_const_zero
   map_add' := parityOn_add s
 
-@[simp] theorem parityOnAddMonoidHom_apply (s : Finset (Fin n)) (x : BitString n) :
+@[simp] theorem parityOnAddMonoidHom_apply (s : Finset ι) (x : ι → Bool) :
     parityOnAddMonoidHom s x = parityOn s x :=
   rfl
+
+section DecidableEq
+
+variable [DecidableEq ι] {s t : Finset ι} {i : ι}
+
+theorem parityOn_insert (hi : i ∉ s) (x : ι → Bool) :
+    parityOn (insert i s) x = (x i ^^ parityOn s x) := by
+  simp only [parityOn_eq_sum]
+  exact sum_insert hi
+
+theorem parityOn_eq_xor_erase (hi : i ∈ s) (x : ι → Bool) :
+    parityOn s x = (x i ^^ parityOn (s.erase i) x) := by
+  simp only [parityOn_eq_sum]
+  exact (add_sum_erase s x hi).symm
+
+theorem parityOn_update_of_notMem (hi : i ∉ s) (x : ι → Bool) (b : Bool) :
+    parityOn s (update x i b) = parityOn s x :=
+  parityOn_congr fun _ hj => update_of_ne (ne_of_mem_of_not_mem hj hi) _ _
+
+/-- The parity of a disjoint union is the exclusive or of the parities. -/
+theorem parityOn_union (h : Disjoint s t) (x : ι → Bool) :
+    parityOn (s ∪ t) x = (parityOn s x ^^ parityOn t x) := by
+  simp only [parityOn_eq_sum]
+  exact sum_union h
+
+/-- The parity of a union of pairwise disjoint blocks is the parity of the parities of the
+blocks. -/
+theorem parityOn_biUnion {κ : Type*} {S : Finset κ} {B : κ → Finset ι}
+    (hB : (S : Set κ).PairwiseDisjoint B) (x : ι → Bool) :
+    parityOn (S.biUnion B) x = parityOn S fun j => parityOn (B j) x := by
+  simp only [parityOn_eq_sum]
+  exact sum_biUnion hB
+
+/-- Flipping one of the bits negates the parity. -/
+theorem parityOn_update_not (hi : i ∈ s) (x : ι → Bool) :
+    parityOn s (update x i !x i) = !parityOn s x := by
+  rw [parityOn_eq_xor_erase hi, parityOn_eq_xor_erase hi, update_self,
+    parityOn_update_of_notMem (notMem_erase i s)]
+  cases x i <;> simp
+
+/-- Flipping any bit flips the parity. -/
+theorem parity_update_not {n : ℕ} (x : BitString n) (i : Fin n) :
+    parity n (update x i !x i) = !parity n x :=
+  parityOn_update_not (mem_univ i) x
+
+section Fintype
+
+variable [Fintype ι]
 
 /-- **Parities of nonempty sets are balanced**: the parity on a nonempty set of bits takes each
 value on half of the inputs. Being additive, it has fibers of equal size. -/
 theorem card_filter_parityOn_eq (hs : s.Nonempty) (b : Bool) :
-    #{x : BitString n | parityOn s x = b} = 2 ^ (n - 1) := by
+    #{x : ι → Bool | parityOn s x = b} = 2 ^ (Fintype.card ι - 1) := by
   obtain ⟨i, hi⟩ := hs
   have hrange (c : Bool) : c ∈ Set.range (parityOnAddMonoidHom s) := by
     cases c
@@ -167,42 +173,53 @@ theorem card_filter_parityOn_eq (hs : s.Nonempty) (b : Bool) :
       have h := parityOn_update_not hi 0
       rw [h0] at h
       exact ⟨_, h⟩
-  have hfib (c : Bool) : #{x : BitString n | parityOn s x = c} =
-      #{x : BitString n | parityOn s x = b} :=
+  have hfib (c : Bool) : #{x : ι → Bool | parityOn s x = c} =
+      #{x : ι → Bool | parityOn s x = b} :=
     AddMonoidHom.card_fiber_eq_of_mem_range _ (hrange c) (hrange b)
-  have htotal := card_filter_add_card_filter_not (s := (univ : Finset (BitString n)))
+  have htotal := card_filter_add_card_filter_not (s := (univ : Finset (ι → Bool)))
     fun x => parityOn s x = true
-  simp only [Bool.not_eq_true, card_univ, BitString.card_eq, hfib] at htotal
-  have : 2 ^ n = 2 * 2 ^ (n - 1) := by
+  simp only [Bool.not_eq_true, card_univ, Fintype.card_fun, Fintype.card_bool, hfib] at htotal
+  have : 2 ^ Fintype.card ι = 2 * 2 ^ (Fintype.card ι - 1) := by
     rw [← pow_succ']
     congr 1
-    have := i.pos
+    have := Fintype.card_pos_iff.2 ⟨i⟩
     omega
   omega
 
 /-- **Parities of nonempty sets are balanced**: the parity on a nonempty set of bits takes each
 value with probability one half at a uniformly random input. -/
 theorem dens_filter_parityOn_eq (hs : s.Nonempty) (b : Bool) :
-    dens {x : BitString n | parityOn s x = b} = 2⁻¹ := by
+    dens {x : ι → Bool | parityOn s x = b} = 2⁻¹ := by
   obtain ⟨i, hi⟩ := hs
-  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by have := i.pos; omega⟩
-  rw [dens_eq_card_div_card, card_filter_parityOn_eq ⟨i, hi⟩ b, BitString.card_eq,
-    Nat.add_sub_cancel, pow_succ, Nat.cast_mul, Nat.cast_ofNat,
+  have hcard : 2 ^ Fintype.card ι = 2 * 2 ^ (Fintype.card ι - 1) := by
+    rw [← pow_succ']
+    congr 1
+    have := Fintype.card_pos_iff.2 ⟨i⟩
+    omega
+  rw [dens_eq_card_div_card, card_filter_parityOn_eq ⟨i, hi⟩ b, Fintype.card_fun,
+    Fintype.card_bool, hcard, Nat.cast_mul, Nat.cast_ofNat, mul_comm,
     div_mul_cancel_left₀ (by positivity)]
 
+end Fintype
+
+end DecidableEq
+
 /-- Parity of `n ≥ 1` bits is true on half of the inputs. -/
-theorem card_filter_parity_eq_true (hn : 1 ≤ n) :
-    #{x : BitString n | parity n x = true} = 2 ^ (n - 1) :=
-  card_filter_parityOn_eq ⟨⟨0, hn⟩, mem_univ _⟩ true
+theorem card_filter_parity_eq_true {n : ℕ} (hn : 1 ≤ n) :
+    #{x : BitString n | parity n x = true} = 2 ^ (n - 1) := by
+  rw [parity, card_filter_parityOn_eq ⟨⟨0, hn⟩, mem_univ _⟩ true, Fintype.card_fin]
 
 /-- Parity of `n ≥ 1` bits is false on half of the inputs. -/
-theorem card_filter_parity_eq_false (hn : 1 ≤ n) :
-    #{x : BitString n | parity n x = false} = 2 ^ (n - 1) :=
-  card_filter_parityOn_eq ⟨⟨0, hn⟩, mem_univ _⟩ false
+theorem card_filter_parity_eq_false {n : ℕ} (hn : 1 ≤ n) :
+    #{x : BitString n | parity n x = false} = 2 ^ (n - 1) := by
+  rw [parity, card_filter_parityOn_eq ⟨⟨0, hn⟩, mem_univ _⟩ false, Fintype.card_fin]
+
+variable {s : Finset ι} {i : ι}
 
 /-- The parity, possibly negated, depends on each of its bits. -/
 theorem not_dependsOn_parityOn (hi : i ∈ s) (c : Bool) :
     ¬DependsOn (fun x => c ^^ parityOn s x) {i}ᶜ := fun h => by
+  classical
   have h' := h (x := update (fun _ => false) i true) (y := fun _ => false) fun j hj =>
     update_of_ne (by simpa using hj) _ _
   have := parityOn_update_not hi (fun _ => false)

@@ -11,6 +11,7 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Data.Fintype.Sum
 public import Mathlib.Data.Nat.Choose.Basic
+public import Mathlib.InformationTheory.Hamming
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Powerset
@@ -18,7 +19,9 @@ import Mathlib.Data.Fintype.Powerset
 /-!
 # Hamming weight and symmetric Boolean functions
 
-The weight of a Boolean vector is its number of true coordinates (`BitString.weight`). The
+The weight of a Boolean vector is its number of true coordinates (`BitString.weight`), Mathlib's
+Hamming norm with `false` as `0` (`BitString.weight_eq_hammingNorm`), so the Hamming distance of two
+bit strings is the weight of their sum (`BitString.hammingDist_eq_weight_add`). The
 threshold function `threshold n j` says that at least `j` of `n` bits are true, and majority
 (`majority`, at least half) and strict majority (`strictMajority`, more than half) are threshold
 functions. A Boolean function is *symmetric* when it depends only on the weight of its input
@@ -34,6 +37,8 @@ functions. A Boolean function is *symmetric* when it depends only on the weight 
 
 ## Main results
 
+* `Cslib.BitString.weight_eq_hammingNorm`, `Cslib.BitString.hammingDist_eq_weight_add`: the
+  weight is the Hamming norm.
 * `Cslib.BitString.card_weightLayer`: there are `n.choose k` strings of `n` bits of weight `k`.
 * `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
 * `Cslib.isSymmetric_threshold`, `Cslib.isSymmetric_parity`: threshold functions and parity are
@@ -57,6 +62,15 @@ def weight (x : ι → Bool) : ℕ :=
 theorem weight_eq_sum_toNat (x : ι → Bool) : weight x = ∑ i, (x i).toNat := by
   rw [weight, card_filter]
   exact sum_congr rfl fun i _ => by cases x i <;> rfl
+
+/-- The weight is Mathlib's Hamming norm, the bit `false` being `0`. -/
+theorem weight_eq_hammingNorm (x : ι → Bool) : weight x = hammingNorm x := by
+  simp only [weight, hammingNorm, Bool.zero_eq_false, ne_eq, Bool.not_eq_false]
+
+/-- The Hamming distance between two bit strings is the weight of their sum. -/
+theorem hammingDist_eq_weight_add (x y : ι → Bool) : hammingDist x y = weight (x + y) := by
+  rw [hammingDist_eq_hammingNorm, weight_eq_hammingNorm]
+  exact congrArg hammingNorm (funext fun i => BooleanRing.sub_eq_add (x i) (y i))
 
 theorem weight_le (x : ι → Bool) : weight x ≤ Fintype.card ι :=
   card_filter_le _ _

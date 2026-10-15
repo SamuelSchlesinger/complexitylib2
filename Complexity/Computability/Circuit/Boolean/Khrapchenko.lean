@@ -303,7 +303,8 @@ theorem sq_le_leafSize_of_computes_parity {F : Formula signature n}
   · simp
   have hne : (univ.filter fun b : BitString n => parity n b = true).Nonempty := by
     by_contra h
-    refine not_isConst_parityOn (s := univ) ⟨⟨0, hn⟩, mem_univ _⟩ false fun x y => ?_
+    refine not_isConst_parityOn (s := (univ : Finset (Fin n))) ⟨⟨0, hn⟩, mem_univ _⟩ false
+      fun x y => ?_
     have hx : parity n x = false := Bool.not_eq_true _ ▸ fun h' => h ⟨x, by simpa using h'⟩
     have hy : parity n y = false := Bool.not_eq_true _ ▸ fun h' => h ⟨y, by simpa using h'⟩
     simp only [Bool.false_xor]
@@ -342,7 +343,7 @@ def parityFormula : (k o : ℕ) → o + 2 ^ k ≤ n → Formula signature n
 
 theorem eval_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) (x : BitString n) :
     (parityFormula k o h).eval interpretation x =
-      parityOn {i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k} x := by
+      parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k} : Finset (Fin n)) x := by
   induction k generalizing o with
   | zero =>
     have : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ 0} : Finset (Fin n)) =

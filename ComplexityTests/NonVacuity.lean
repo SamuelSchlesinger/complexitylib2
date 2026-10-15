@@ -173,12 +173,18 @@ example {α : Type} (enc : α ↪ List Bool) :
       (fun a => 2 * ((enc a).length + 1) + 3 * 0 + c) (fun _ => c * (0 + 1)) :=
   computableInTimeAndSpace_id.exists_computableTidilyInTimeAndSpace
 
+/-- The Fourier analysis of the cube applies to any finite index type: on the cube `Bool → Bool`,
+the character of a nonempty set sums to zero. -/
+example : ∑ x : Bool → Bool, BitString.chi {true} x = 0 := by
+  simp [BitString.sum_chi]
+
 /-- The hypotheses of the soundness of the Hadamard tester can be met: the honest tables for a
 solution pass every test with probability one. -/
-example {n m : ℕ} (x : Cslib.BitString n) (A : Fin m → Cslib.BitString (n * n))
-    (b : Cslib.BitString m)
+example {ι κ : Type} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ] (x : ι → Bool)
+    (A : κ → ι × ι → Bool) (b : κ → Bool)
     (h : ∀ e, BitString.hadamardCode (BitString.tensor x x) (A e) = b e) :
-    ∃ x', (hammingDist (BitString.hadamardCode x) (BitString.hadamardCode x') : ℝ) / 2 ^ n ≤ 0 ∧
+    ∃ x', (hammingDist (BitString.hadamardCode x) (BitString.hadamardCode x') : ℝ) /
+        2 ^ Fintype.card ι ≤ 0 ∧
       ∀ e, BitString.hadamardCode (BitString.tensor x' x') (A e) = b e :=
   BitString.exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance
     (g := BitString.hadamardCode (BitString.tensor x x)) (ε := 0) (ε' := 0)
@@ -450,7 +456,8 @@ example : 0 < (⟨fun _ ↦ (), fun _ ↦ (), fun _ (a b : Bool) ↦ a ≠ b⟩ 
   linarith
 
 /-- The honest proof passes the Hadamard assignment tester with probability one. -/
-example : (hadamardTester (k := 2) (· = ·)).acceptProb (HadamardTester.honestProof ![0, 0]) = 1 :=
+example :
+    (hadamardTester (α := Fin 2) (· = ·)).acceptProb (HadamardTester.honestProof ![0, 0]) = 1 :=
   HadamardTester.acceptProb_honestProof rfl
 
 /-- Powering an unsatisfiable regular constraint graph whose spectral expansion is below one gives a

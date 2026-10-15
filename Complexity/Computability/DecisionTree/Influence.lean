@@ -39,12 +39,12 @@ namespace Cslib.DecisionTree
 open Finset BitString
 open scoped BigOperators
 
-variable {n : ℕ} {β : Type*}
+variable {ι β : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- **Decision trees of depth `d` have total influence at most `d`**: a Boolean function of the
 output of a decision tree of depth `d`, read as signs, has Fourier weight only on sets of at most
 `d` coordinates, and its squared coefficients sum to one. -/
-theorem totalInfluence_le_depth (g : β → Bool) (t : DecisionTree (Fin n) β) :
+theorem totalInfluence_le_depth (g : β → Bool) (t : DecisionTree ι β) :
     totalInfluence (fun x => signVal (g (t.eval x))) ≤ t.depth := by
   rw [totalInfluence_eq_sum_card_mul_fourierCoeff_sq]
   calc ∑ S, (#S : ℝ) * fourierCoeff (fun x => signVal (g (t.eval x))) S ^ 2

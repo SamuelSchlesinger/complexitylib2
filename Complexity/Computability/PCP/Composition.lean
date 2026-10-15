@@ -21,8 +21,8 @@ brings the alphabet back to a fixed one, losing a constant factor of the value t
 on the alphabet being reduced: that independence is what lets powering win.
 
 Composition replaces every edge `e` of a constraint graph `G` over a finite alphabet `α` by the
-Hadamard assignment tester of its constraint (`Complexity.Computability.PCP.AssignmentTester`), the
-labels being numbered by `Fintype.equivFin α`. The testers of all the edges share the tables of the
+Hadamard assignment tester of its constraint (`Complexity.Computability.PCP.AssignmentTester`), on
+the labels in `α` themselves. The testers of all the edges share the tables of the
 vertices: the composed proof holds, for every vertex, a table that is supposedly the long code of
 its label, and for every edge, the linear and quadratic tables of its tester. The composed test
 (`ConstraintGraph.composeTest`) runs the tester of a uniformly random edge on the tables of the ends
@@ -81,36 +81,40 @@ namespace ConstraintGraph
 
 variable {V E α : Type*}
 
-/-- The positions of a composed proof, for vertices `V`, edges `E` and labels numbered in `Fin k`:
-the bit `inl (v, r)` of the table of the vertex `v` at `r`, and the bit `inr (e, y)` of the tables
-of the tester of the edge `e` at the position `y` of its linear or quadratic table. -/
-abbrev ComposePos (V E : Type*) (k : ℕ) : Type _ :=
-  (V × BitString k) ⊕ (E × (BitString (2 * k) ⊕ BitString (2 * k * (2 * k))))
+/-- The positions of a composed proof, for vertices `V`, edges `E` and labels in `α`: the bit
+`inl (v, r)` of the table of the vertex `v` at `r`, and the bit `inr (e, y)` of the tables of the
+tester of the edge `e` at the position `y` of its linear or quadratic table. -/
+abbrev ComposePos (V E α : Type*) : Type _ :=
+  (V × (α → Bool)) ⊕ (E × ((Fin 2 × α → Bool) ⊕ ((Fin 2 × α) × (Fin 2 × α) → Bool)))
+
+/-- The positions of a composed proof are finitely many. The instance is assembled from those of
+the recurring factors, which keeps instance synthesis within its default size limit. -/
+instance [Fintype V] [Fintype E] [Fintype α] [DecidableEq α] : Fintype (ComposePos V E α) :=
+  letI : Fintype (Fin 2 × α → Bool) := inferInstance
+  letI : Fintype ((Fin 2 × α) × (Fin 2 × α) → Bool) := inferInstance
+  inferInstanceAs (Fintype (_ ⊕ _))
 
 /-! ### Decoding the long code -/
 
 section Decode
 
-variable [Fintype α] [Nonempty α]
+variable [Fintype α] [DecidableEq α] [Nonempty α]
 
 open Classical in
-/-- The label decoded from a table `T`: the label whose long code, under the numbering
-`Fintype.equivFin α` of the labels, is within relative distance `1/4` of `T`, if there is one (it is
-then unique, `decodeLabel_eq`), and an arbitrary label otherwise. -/
-noncomputable def decodeLabel (T : BooleanFunction (Fintype.card α)) : α :=
-  if h : ∃ a : α, (hammingDist T (longCode (Fintype.equivFin α a)) : ℝ) / 2 ^ Fintype.card α < 1 / 4
+/-- The label decoded from a table `T`: the label whose long code is within relative distance `1/4`
+of `T`, if there is one (it is then unique, `decodeLabel_eq`), and an arbitrary label otherwise. -/
+noncomputable def decodeLabel (T : (α → Bool) → Bool) : α :=
+  if h : ∃ a : α, (hammingDist T (longCode a) : ℝ) / 2 ^ Fintype.card α < 1 / 4
   then h.choose else Classical.arbitrary α
 
 /-- **Unique decoding**: a table within relative distance `1/4` of the long code of a label decodes
 to that label. -/
-theorem decodeLabel_eq {T : BooleanFunction (Fintype.card α)} {a : α}
-    (h : (hammingDist T (longCode (Fintype.equivFin α a)) : ℝ) / 2 ^ Fintype.card α < 1 / 4) :
+theorem decodeLabel_eq {T : (α → Bool) → Bool} {a : α}
+    (h : (hammingDist T (longCode a) : ℝ) / 2 ^ Fintype.card α < 1 / 4) :
     decodeLabel T = a := by
-  have hex : ∃ a : α,
-      (hammingDist T (longCode (Fintype.equivFin α a)) : ℝ) / 2 ^ Fintype.card α < 1 / 4 :=
-    ⟨a, h⟩
+  have hex : ∃ a : α, (hammingDist T (longCode a) : ℝ) / 2 ^ Fintype.card α < 1 / 4 := ⟨a, h⟩
   rw [decodeLabel, dite_eq_left hex]
-  exact (Fintype.equivFin α).injective (eq_of_hammingDist_longCode_lt hex.choose_spec h)
+  exact eq_of_hammingDist_longCode_lt hex.choose_spec h
 
 end Decode
 
@@ -140,31 +144,25 @@ theorem ends_zero (e : E) : G.ends e 0 = G.src e :=
 theorem ends_one (e : E) : G.ends e 1 = G.dst e :=
   rfl
 
-variable [Fintype α]
-
-/-- The constraint of the edge `e` on the labels numbered by `Fintype.equivFin α`. -/
-def edgeConstraint (e : E) (a b : Fin (Fintype.card α)) : Prop :=
-  G.rel e ((Fintype.equivFin α).symm a) ((Fintype.equivFin α).symm b)
+variable [Fintype α] [DecidableEq α]
 
 /-- Where the tester of the edge `e` reads in a composed proof: the table of its end `b` is the
 table of the vertex `G.ends e b`, and its linear and quadratic tables are those of `e`. -/
-def testerPos (e : E) : Pos (Fintype.card α) → ComposePos V E (Fintype.card α) :=
+def testerPos (e : E) : Pos α → ComposePos V E α :=
   Sum.elim (fun p ↦ .inl (G.ends e p.1, p.2)) fun y ↦ .inr (e, y)
 
 /-- The **composed test** [Dinur, Section 3.3][Dinur2007]: on a uniformly random edge `e`, run the
 Hadamard assignment tester of the constraint of `e` on the tables of the ends of `e` and the tables
 of its tester. -/
-noncomputable def composeTest :
-    LocalTest (ComposePos V E (Fintype.card α)) (E × Rand (Fintype.card α)) Query
-      Bool :=
-  LocalTest.mix fun e ↦ (hadamardTester (G.edgeConstraint e)).map (G.testerPos e)
+noncomputable def composeTest : LocalTest (ComposePos V E α) (E × Rand α) Query Bool :=
+  LocalTest.mix fun e ↦ (hadamardTester (G.rel e)).map (G.testerPos e)
 
 /-- The **composed constraint graph** [Dinur, Section 3.3][Dinur2007]: the constraint graph of the
 composed test, over the alphabet `Bool × (HadamardTester.Query → Bool)`, which does not depend on
 `α`. -/
 noncomputable def compose :
-    ConstraintGraph (ComposePos V E (Fintype.card α) ⊕ E × Rand (Fintype.card α))
-      ((E × Rand (Fintype.card α)) × Query) (Bool × (Query → Bool)) :=
+    ConstraintGraph (ComposePos V E α ⊕ E × Rand α) ((E × Rand α) × Query)
+      (Bool × (Query → Bool)) :=
   G.composeTest.toConstraintGraph
 
 /-! ### Completeness -/
@@ -172,25 +170,22 @@ noncomputable def compose :
 /-- The **honest composed proof** of a labelling `σ` of `G`: the long code of the label of every
 vertex as its table, and the honest proof of the labels of its ends as the tables of the tester of
 every edge. -/
-noncomputable def composeProof (σ : V → α) : ComposePos V E (Fintype.card α) → Bool :=
-  Sum.elim (fun p ↦ longCode (Fintype.equivFin α (σ p.1)) p.2)
-    fun q ↦ honestProof (fun b ↦ Fintype.equivFin α (σ (G.ends q.1 b))) (.inr q.2)
+noncomputable def composeProof (σ : V → α) : ComposePos V E α → Bool :=
+  Sum.elim (fun p ↦ longCode (σ p.1) p.2) fun q ↦ honestProof (fun b ↦ σ (G.ends q.1 b)) (.inr q.2)
 
 /-- The tester of the edge `e` reads in the honest composed proof the honest proof of the labels of
 the ends of `e`. -/
 theorem composeProof_comp_testerPos (σ : V → α) (e : E) :
-    G.composeProof σ ∘ G.testerPos e =
-      honestProof fun b ↦ Fintype.equivFin α (σ (G.ends e b)) := by
+    G.composeProof σ ∘ G.testerPos e = honestProof fun b ↦ σ (G.ends e b) := by
   funext p
   rcases p with ⟨b, r⟩ | y <;> rfl
 
 /-- The composed test passes the honest composed proof of `σ` on every random string of the edges
 satisfied by `σ`. -/
 theorem passes_composeTest_composeProof {σ : V → α} {e : E} (he : G.Satisfies σ e)
-    (ω : Rand (Fintype.card α)) : G.composeTest.Passes (G.composeProof σ) (e, ω) := by
+    (ω : Rand α) : G.composeTest.Passes (G.composeProof σ) (e, ω) := by
   rw [composeTest, LocalTest.passes_mix, LocalTest.passes_map, composeProof_comp_testerPos]
-  refine passes_honestProof ?_ ω
-  simpa [edgeConstraint, Satisfies] using he
+  exact passes_honestProof he ω
 
 /-- **Completeness of composition** [Dinur, Lemma 3.6][Dinur2007]: if `G` is satisfiable, so is
 the composed graph. -/
@@ -216,17 +211,17 @@ theorem unsatFrac_compose_labellingOf_le [Fintype E] (σ : V → α) (γ : Bool)
   · have : IsEmpty E := Fintype.card_eq_zero_iff.1 hE
     simp [unsatFrac]
   have hE' : (0 : ℝ) < Fintype.card E := by exact_mod_cast hE
-  have hR : (0 : ℝ) < Fintype.card (Rand (Fintype.card α)) := by
+  have hR : (0 : ℝ) < Fintype.card (Rand α) := by
     exact_mod_cast Fintype.card_pos
   have hQ : (0 : ℝ) < Fintype.card Query := by exact_mod_cast Fintype.card_pos
   rw [unsatFrac, unsatFrac, Fintype.card_prod, Fintype.card_prod]
   push_cast
   rw [div_le_div_iff₀ (mul_pos (mul_pos hE' hR) hQ) hE']
   have hcard' : (#(G.compose.unsatEdges A) : ℝ) ≤ #(G.unsatEdges σ) *
-      Fintype.card (Rand (Fintype.card α)) * Fintype.card Query := by
+      Fintype.card (Rand α) * Fintype.card Query := by
     exact_mod_cast hcard
   calc (#(G.compose.unsatEdges A) : ℝ) * Fintype.card E
-      ≤ #(G.unsatEdges σ) * Fintype.card (Rand (Fintype.card α)) *
+      ≤ #(G.unsatEdges σ) * Fintype.card (Rand α) *
           Fintype.card Query * Fintype.card E := by gcongr
     _ = _ := by ring
 
@@ -244,21 +239,19 @@ variable [Nonempty α]
 
 /-- The labelling of `G` decoded from a composed proof `π`: every vertex gets the label decoded from
 its table. -/
-noncomputable def decodeLabelling (π : ComposePos V E (Fintype.card α) → Bool) (v : V) : α :=
+noncomputable def decodeLabelling (π : ComposePos V E α → Bool) (v : V) : α :=
   decodeLabel fun r ↦ π (.inl (v, r))
 
 /-- **A violated edge makes its tester reject**: if the labelling decoded from a composed proof `π`
 violates the edge `e`, the tester of `e` rejects `π` with probability at least `1/28`. -/
 theorem one_div_le_one_sub_acceptProb_of_not_satisfies
-    {π : ComposePos V E (Fintype.card α) → Bool} {e : E}
-    (he : ¬ G.Satisfies (decodeLabelling π) e) :
-    1 / 28 ≤ 1 - (hadamardTester (G.edgeConstraint e)).acceptProb (π ∘ G.testerPos e) := by
+    {π : ComposePos V E α → Bool} {e : E} (he : ¬ G.Satisfies (decodeLabelling π) e) :
+    1 / 28 ≤ 1 - (hadamardTester (G.rel e)).acceptProb (π ∘ G.testerPos e) := by
   by_contra! hρ
   obtain ⟨τ, hτ, hd⟩ := exists_inputDist_le_of_le_acceptProb hρ (by linarith)
-  have hdec (b : Fin 2) : decodeLabelling π (G.ends e b) = (Fintype.equivFin α).symm (τ b) := by
-    apply decodeLabel_eq
-    rw [Equiv.apply_symm_apply]
-    exact (hammingDist_inputTable_div_le (π ∘ G.testerPos e) τ b).trans_lt (by linarith)
+  have hdec (b : Fin 2) : decodeLabelling π (G.ends e b) = τ b :=
+    decodeLabel_eq ((hammingDist_inputTable_div_le (π ∘ G.testerPos e) τ b).trans_lt
+      (by linarith))
   apply he
   change G.rel e (decodeLabelling π (G.ends e 0)) (decodeLabelling π (G.ends e 1))
   rw [hdec, hdec]
@@ -268,8 +261,7 @@ theorem one_div_le_one_sub_acceptProb_of_not_satisfies
 violates a proportion of the edges at least `1/476` times the proportion of the edges of `G`
 violated by the labelling decoded from it. -/
 theorem unsatFrac_decodeLabelling_le [Fintype E]
-    (A : ComposePos V E (Fintype.card α) ⊕ E × Rand (Fintype.card α) →
-      Bool × (Query → Bool)) :
+    (A : ComposePos V E α ⊕ E × Rand α → Bool × (Query → Bool)) :
     G.unsatFrac (decodeLabelling (LocalTest.proofOf A)) ≤ 476 * G.compose.unsatFrac A := by
   classical
   rcases isEmpty_or_nonempty E with hE | hE
@@ -314,7 +306,7 @@ end Soundness
 /-- **The size of the composed graph**: every edge of `G` gives `17 · 2 ^ (20 k² + 15 k + 3)` edges,
 where `k = |α|`, a constant depending only on the alphabet. -/
 theorem card_edges_compose [Fintype E] :
-    Fintype.card ((E × Rand (Fintype.card α)) × Query) =
+    Fintype.card ((E × Rand α) × Query) =
       17 * 2 ^ (20 * Fintype.card α ^ 2 + 15 * Fintype.card α + 3) * Fintype.card E := by
   rw [Fintype.card_prod, Fintype.card_prod, card_rand, card_query]
   ring
@@ -322,12 +314,13 @@ theorem card_edges_compose [Fintype E] :
 /-- The composed graph has a vertex for each position of the table of every vertex of `G`, and for
 each position of the tables of the tester of every edge and each random string of that tester. -/
 theorem card_vertices_compose [Fintype V] [Fintype E] :
-    Fintype.card (ComposePos V E (Fintype.card α) ⊕ E × Rand (Fintype.card α)) =
+    Fintype.card (ComposePos V E α ⊕ E × Rand α) =
       2 ^ Fintype.card α * Fintype.card V + (2 ^ (2 * Fintype.card α) +
         2 ^ (4 * Fintype.card α ^ 2) + 2 ^ (20 * Fintype.card α ^ 2 + 15 * Fintype.card α + 3)) *
         Fintype.card E := by
   rw [Fintype.card_sum, Fintype.card_prod E, card_rand]
-  simp only [Fintype.card_sum, Fintype.card_prod, BitString.card_eq]
+  simp only [Fintype.card_sum, Fintype.card_prod, Fintype.card_fun, Fintype.card_bool,
+    Fintype.card_fin]
   ring
 
 /-- The alphabet of the composed graph has `2 ^ 18` symbols. -/

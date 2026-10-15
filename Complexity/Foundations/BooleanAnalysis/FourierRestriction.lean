@@ -43,11 +43,12 @@ namespace Cslib.BitString
 open Finset
 open scoped BigOperators
 
-variable {n : ℕ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
+omit [Fintype ι] in
 /-- A character at a point with the coordinates outside `J` replaced splits into the characters
 of the parts of `U` inside and outside `J`. -/
-theorem chi_piecewise (U J : Finset (Fin n)) (x z : BitString n) :
+theorem chi_piecewise (U J : Finset ι) (x z : ι → Bool) :
     chi U (J.piecewise x z) = chi (U ∩ J) x * chi (U \ J) z := by
   rw [chi, ← prod_filter_mul_prod_filter_not U (· ∈ J), filter_mem_eq_inter, ← sdiff_eq_filter,
     chi, chi]
@@ -58,11 +59,11 @@ theorem chi_piecewise (U J : Finset (Fin n)) (x z : BitString n) :
 /-- **The Fourier coefficients of a restriction**: the coefficient on `S` sums the coefficients
 of `f` on the sets meeting `J` in `S`, each multiplied by the character of its part outside `J`
 at `z`. -/
-theorem fourierCoeff_piecewise (f : BitString n → ℝ) (J : Finset (Fin n)) (z : BitString n)
-    (S : Finset (Fin n)) :
+theorem fourierCoeff_piecewise (f : (ι → Bool) → ℝ) (J : Finset ι) (z : ι → Bool)
+    (S : Finset ι) :
     fourierCoeff (fun x => f (J.piecewise x z)) S =
       ∑ U with U ∩ J = S, fourierCoeff f U * chi (U \ J) z := by
-  have h (x : BitString n) : f (J.piecewise x z) =
+  have h (x : ι → Bool) : f (J.piecewise x z) =
       ∑ U, (fourierCoeff f U * chi (U \ J) z) * chi (U ∩ J) x := by
     rw [← sum_fourierCoeff_mul_chi f (J.piecewise x z)]
     exact sum_congr rfl fun U _ => by rw [chi_piecewise]; ring
@@ -75,10 +76,10 @@ theorem fourierCoeff_piecewise (f : BitString n → ℝ) (J : Finset (Fin n)) (z
 
 /-- Averaged over the fixed bits, the squared coefficient of a restriction on `S` is the weight of
 `f` on the sets meeting `J` in `S`. -/
-theorem expect_fourierCoeff_piecewise_sq (f : BitString n → ℝ) (J S : Finset (Fin n)) :
+theorem expect_fourierCoeff_piecewise_sq (f : (ι → Bool) → ℝ) (J S : Finset ι) :
     𝔼 z, fourierCoeff (fun x => f (J.piecewise x z)) S ^ 2 =
       ∑ U with U ∩ J = S, fourierCoeff f U ^ 2 := by
-  have key (U V : Finset (Fin n)) :
+  have key (U V : Finset ι) :
       𝔼 z, fourierCoeff f U * chi (U \ J) z * (fourierCoeff f V * chi (V \ J) z) =
         fourierCoeff f U * fourierCoeff f V * if U \ J = V \ J then 1 else 0 := by
     rw [← expect_chi_mul_chi, mul_expect]
@@ -96,7 +97,7 @@ theorem expect_fourierCoeff_piecewise_sq (f : BitString n → ℝ) (J S : Finset
 /-- **The expected weight of a restriction above a degree**: averaged over the fixed bits, the
 Fourier weight of the restriction on sets of at least `m` coordinates is the weight of `f` on the
 sets meeting `J` in at least `m` coordinates. -/
-theorem expect_sum_fourierCoeff_piecewise_sq (f : BitString n → ℝ) (J : Finset (Fin n)) (m : ℕ) :
+theorem expect_sum_fourierCoeff_piecewise_sq (f : (ι → Bool) → ℝ) (J : Finset ι) (m : ℕ) :
     𝔼 z, ∑ S with m ≤ #S, fourierCoeff (fun x => f (J.piecewise x z)) S ^ 2 =
       ∑ U with m ≤ #(U ∩ J), fourierCoeff f U ^ 2 := by
   rw [expect_sum_comm]

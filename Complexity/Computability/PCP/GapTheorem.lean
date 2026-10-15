@@ -148,7 +148,7 @@ edges. -/
 theorem card_edges_cnfGraph : Fintype.card (cnfGraph φ).E = 24684 * 2 ^ 1403 * φ.length := by
   rw [Fintype.card_congr' (α := (cnfGraph φ).E)
     (β := ((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) ×
-      Rand (Fintype.card (Fin 3 → Bool))) × Query) rfl,
+      Rand (Fin 3 → Bool)) × Query) rfl,
     card_edges_compose, card_cnfAlphabet, show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]
   generalize 2 ^ 1403 = c
@@ -160,8 +160,8 @@ theorem card_vertices_cnfGraph :
     Fintype.card (cnfGraph φ).V = (1536 + 1452 * (2 ^ 16 + 2 ^ 256 + 2 ^ 1403)) * φ.length := by
   rw [Fintype.card_congr' (α := (cnfGraph φ).V)
     (β := ComposePos ((Fin φ.length × Fin 3) × Bool)
-      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) (Fintype.card (Fin 3 → Bool)) ⊕
-      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) × Rand (Fintype.card (Fin 3 → Bool)))
+      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) (Fin 3 → Bool) ⊕
+      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) × Rand (Fin 3 → Bool))
     rfl, card_vertices_compose, card_cnfAlphabet, show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl,
     show 4 * 8 ^ 2 = 256 from rfl, show 2 * 8 = 16 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]

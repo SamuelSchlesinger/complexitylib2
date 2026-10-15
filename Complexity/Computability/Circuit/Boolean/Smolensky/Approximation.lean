@@ -55,8 +55,9 @@ noncomputable def gateApprox (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
 theorem gateApprox_spec (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
     (u : BitString n → Fin (Unbounded.extSignature.Arity op) → Bool) :
     (∀ (D : ℕ) (v : Fin (Unbounded.extSignature.Arity op) → BitString n → ZMod p),
-      (∀ k, v k ∈ lowDegree (ZMod p) n D) →
-        (fun x => gateApprox hℓ op u fun k => v k x) ∈ lowDegree (ZMod p) n ((p - 1) * ℓ * D)) ∧
+      (∀ k, v k ∈ lowDegree (ZMod p) (Fin n) D) →
+        (fun x => gateApprox hℓ op u fun k => v k x) ∈
+          lowDegree (ZMod p) (Fin n) ((p - 1) * ℓ * D)) ∧
       #(univ.filter fun x => gateApprox hℓ op u (fun k => bitVal (ZMod p) (u x k)) ≠
           bitVal (ZMod p) (Unbounded.extInterpretation (modGate p) op (u x))) * 2 ^ ℓ ≤ 2 ^ n :=
   Classical.choose_spec (exists_gate_approx (p := p) hℓ op u)
@@ -100,11 +101,11 @@ theorem trace_pair_gate (k : Fin g) :
 /-- **Degrees of the approximants**: at most `((p - 1) ℓ) ^ depth`. -/
 theorem snd_trace_pair_mem (w : Wire n g) :
     (P.trace (pairInterpretation (p := p) hℓ) inputPair w).2 ∈
-      lowDegree (ZMod p) n (((p - 1) * ℓ) ^ P.wireDepths w) := by
+      lowDegree (ZMod p) (Fin n) (((p - 1) * ℓ) ^ P.wireDepths w) := by
   have hp := (Fact.out : p.Prime).two_le
   have hbase : 1 ≤ (p - 1) * ℓ := Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by omega) (by omega))
   refine P.wire_induction (P := fun w => (P.trace (pairInterpretation (p := p) hℓ) inputPair w).2 ∈
-    lowDegree (ZMod p) n (((p - 1) * ℓ) ^ P.wireDepths w)) (fun i => ?_) (fun k ih => ?_) w
+    lowDegree (ZMod p) (Fin n) (((p - 1) * ℓ) ^ P.wireDepths w)) (fun i => ?_) (fun k ih => ?_) w
   · simp only [Program.wireDepths_input, pow_zero]
     exact bitVal_mem_lowDegree i
   · rw [trace_pair_gate, Program.wireDepths_gateWire]
@@ -149,7 +150,7 @@ theorem snd_trace_pair_eq {x : BitString n} (hx : ∀ k, x ∉ errorSet (p := p)
 function of degree at most `((p - 1) ℓ) ^ d` over `ZMod p` on all but `size · 2 ^ n / 2 ^ ℓ`
 inputs, for every `ℓ ≥ 1`. -/
 theorem exists_lowDegree_approx (hℓ : 1 ≤ ℓ) (C : Circuit Unbounded.extSignature n 1) :
-    ∃ Q ∈ lowDegree (ZMod p) n (((p - 1) * ℓ) ^ C.depth),
+    ∃ Q ∈ lowDegree (ZMod p) (Fin n) (((p - 1) * ℓ) ^ C.depth),
       #(univ.filter fun x =>
         Q x ≠ bitVal (ZMod p) (C.eval (Unbounded.extInterpretation (modGate p)) x 0)) *
         2 ^ ℓ ≤ C.size * 2 ^ n := by

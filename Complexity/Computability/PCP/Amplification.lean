@@ -99,15 +99,27 @@ abbrev AmplifyDart (E : Type*) (T q : ℕ) : Type _ :=
   (E × Bool) × (Fin T → PreprocessLabel) × (Fin T → Fin q)
 
 /-- The vertices of the amplification round: those of the composed constraint graph of the powered
-one, whose alphabet `WalkLabels PreprocessLabel T → α` is numbered by its size. -/
-abbrev AmplifyVertex (E α : Type*) [Fintype α] (T q : ℕ) : Type _ :=
-  ComposePos (E × Bool) (AmplifyDart E T q) (Fintype.card (WalkLabels PreprocessLabel T → α)) ⊕
-    AmplifyDart E T q × Rand (Fintype.card (WalkLabels PreprocessLabel T → α))
+one, whose alphabet is `WalkLabels PreprocessLabel T → α`. -/
+abbrev AmplifyVertex (E α : Type*) (T q : ℕ) : Type _ :=
+  ComposePos (E × Bool) (AmplifyDart E T q) (WalkLabels PreprocessLabel T → α) ⊕
+    AmplifyDart E T q × Rand (WalkLabels PreprocessLabel T → α)
 
 /-- The edges of the amplification round: those of the composed constraint graph of the powered
 one. -/
-abbrev AmplifyEdge (E α : Type*) [Fintype α] (T q : ℕ) : Type _ :=
-  (AmplifyDart E T q × Rand (Fintype.card (WalkLabels PreprocessLabel T → α))) × Query
+abbrev AmplifyEdge (E α : Type*) (T q : ℕ) : Type _ :=
+  (AmplifyDart E T q × Rand (WalkLabels PreprocessLabel T → α)) × Query
+
+/- The instances on the vertices and edges of the round are assembled once for any alphabet, so
+that those of the round over a concrete alphabet stay below the size limit of instance
+synthesis. -/
+
+instance {E α : Type*} [Fintype E] [Fintype α] [DecidableEq α] {T q : ℕ} :
+    Fintype (AmplifyVertex E α T q) :=
+  inferInstanceAs (Fintype (_ ⊕ _))
+
+instance {E α : Type*} [Fintype E] [Fintype α] [DecidableEq α] {T q : ℕ} :
+    Fintype (AmplifyEdge E α T q) :=
+  inferInstanceAs (Fintype (_ × _))
 
 section Round
 
@@ -116,16 +128,16 @@ variable {V E α : Type*} [Fintype E] [DecidableEq V] (G : ConstraintGraph V E �
 /-- **The amplification round** [Dinur, Theorem 4.1][Dinur2007]: preprocessing, then powering
 along killed walks truncated at `T` steps and killed at rate `q`, then composition back to the
 alphabet `Bool × (HadamardTester.Query → Bool)`. -/
-noncomputable def amplify (T q : ℕ) [NeZero q] [Fintype α] :
+noncomputable def amplify (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
     ConstraintGraph (AmplifyVertex E α T q) (AmplifyEdge E α T q) (Bool × (Query → Bool)) :=
   (G.preprocess.power T q).toConstraintGraph.compose
 
 /-- The amplification round is preprocessing, then powering, then composition. -/
-theorem amplify_eq (T q : ℕ) [NeZero q] [Fintype α] :
+theorem amplify_eq (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
     G.amplify T q = (G.preprocess.power T q).toConstraintGraph.compose :=
   rfl
 
-variable [Fintype α] [Nonempty α] {T q : ℕ} [NeZero q]
+variable [Fintype α] [DecidableEq α] [Nonempty α] {T q : ℕ} [NeZero q]
 
 /-- **The amplification round preserves satisfiability**, for walks of at least one step and a
 killing rate `q ≥ 2`. -/
@@ -211,7 +223,7 @@ theorem card_amplifyDart :
 
 /-- **The size of the amplification round**: every edge of the original graph gives
 `amplifyVertexFactor |α| T q` vertices. Its vertices play no role. -/
-theorem card_vertices_amplify :
+theorem card_vertices_amplify [DecidableEq α] :
     Fintype.card (AmplifyVertex E α T q) =
       amplifyVertexFactor (Fintype.card α) T q * Fintype.card E := by
   rw [card_vertices_compose, card_amplifyDart, card_walkLabels_preprocessLabel, Fintype.card_prod,
@@ -220,7 +232,7 @@ theorem card_vertices_amplify :
 
 /-- **The size of the amplification round**: every edge of the original graph gives
 `amplifyEdgeFactor |α| T q` edges. -/
-theorem card_edges_amplify :
+theorem card_edges_amplify [DecidableEq α] :
     Fintype.card (AmplifyEdge E α T q) =
       amplifyEdgeFactor (Fintype.card α) T q * Fintype.card E := by
   rw [card_edges_compose, card_amplifyDart, card_walkLabels_preprocessLabel, amplifyEdgeFactor]
