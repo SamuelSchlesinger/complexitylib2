@@ -351,12 +351,12 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure (Bolton Bailey) | done: constraint graphs, the 3-SAT reduction, degree reduction and preprocessing (`Computability/PCP/`), walks and killed walks (`Expander/{Walk,KilledWalk}`); next: powering (killed walks, moments), the assignment tester, composition |
 | Multi-tape to single-tape simulation, time `O((T + n)²)` | `Models/TuringMachine/SingleTape` | queued (machine level, over upstream `MultiTapeTM`) |
 | Machine-relative Kolmogorov complexity, incompressibility, invariance | `Metacomplexity/Kolmogorov/**` | done (`Computability/Kolmogorov/`); the universal-machine complexity waits for crei's UTM |
-| Nisan–Wigderson sampling layer and the Kt step | `Metacomplexity/NisanWigderson/Reconstruction/**`, `ListDecoding` | after Kolmogorov |
+| Nisan–Wigderson sampling layer and the Kt step | `Metacomplexity/NisanWigderson/Reconstruction/**`, `ListDecoding` | in progress |
 | Second-order logic, FO interpretations and reductions, order independence | `DescriptiveComplexity/{SecondOrder,Interpretation,…}` | done (`Logics/{FirstOrder,SecondOrder}`); order-invariant queries and congruences open |
-| Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | queued |
+| Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | in progress |
 | Finite cores of Savitch and of inductive counting | `Classes/Containments/Internal/ReachIn`, `InductiveCounting`, `CountingCert` | done (`Foundations/Relation/`) |
 | Depth-two threshold circuit for parity | `Circuits/Threshold/Parity` | queued |
-| Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | multi-batch, later |
+| Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | batch 1 in progress (rectangles, sweeps, layouts, networks, demand); then the compiler and reduction, then the layout bounds |
 | Class-level results (Savitch, hierarchies, `PH ⊆ PSPACE`, Sipser–Lautemann, Cobham, `PCP = NP`, RAM-P = P, …) | `Classes/**`, `Models/**` | blocked on the polynomial-time calculus |
 
 The class-level forms of the time hierarchy, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE`, Sipser–Lautemann
