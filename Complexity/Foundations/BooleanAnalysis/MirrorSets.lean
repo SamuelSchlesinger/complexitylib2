@@ -15,21 +15,38 @@ import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 
 /-!
-# The improved mirror-set argument
+# Korten's mirror sets
 
-The improved mirror-set argument from Korten's paper [Korten2026]. Combining Lemmas 4 and 10 with
-the conditional sampling law and a guided distribution gives `improved_mirror_set`, with explicit
-constants `32768` and `194`. The subsequent bounded-round communication argument is separate. -/
+A point `x` is a `(p, k)`-limit of a set `Y` of masks (`IsDensityLimit`) when, with probability at
+least `3 / 4` over a random mask `P` of rate `p`, the fiber of `Y` over the coordinates of `x`
+outside `P` has density at least `2 ^ (-k)`. If every point of a set `X` of deficit at most `k`
+is a `(p, k)`-limit of `Y`, then `Y` has a nonempty subset of deficit at most `2 k + 2` all of
+whose points are `(32768 k p, 194 k)`-limits of `X` (`exists_mirror_set`). This is Korten's
+mirror-set argument [Korten, Sections 3 and 4][Korten2026], with the light-patterns lemma, the
+entropy lemma for fibers and the conditional sampling law, and with a guiding distribution in
+place of fixed-size guiding sets.
+
+## Main definitions
+
+* `Cslib.BooleanAnalysis.IsDensityLimit`: density limits [Korten, Definition 2][Korten2026].
+* `Cslib.BooleanAnalysis.guidingDensity`, `Cslib.BooleanAnalysis.guidedAverage`: the guiding
+  distribution.
+
+## Main results
+
+* `Cslib.BooleanAnalysis.exists_mirror_set`: the mirror-set lemma.
+
+## References
+
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
+-/
 
 @[expose] public section
 
-/-! ### Density limit points for top-down lower bounds
-
-Definition 2 of [Korten2026]. -/
-
-
 namespace Cslib.BooleanAnalysis
 
+open Finset
+open scoped BigOperators
 
 /-- A `(p,k)`-limit point of `Y`: with probability at least `3/4`, the
 rate-`p` coordinate fiber over `x` has density at least `2^(-k)` in `Y`. -/
@@ -37,8 +54,6 @@ def IsDensityLimit {ι : Type*} [Fintype ι] [DecidableEq ι]
     (Y : Finset (ι → Bool)) (p k : ℝ) (x : ι → Bool) : Prop :=
   3 / 4 ≤ bernoulliAverage p
     (fun P => if (2 : ℝ) ^ (-k) ≤ coordinateDensity Y P x then (1 : ℝ) else 0)
-
-end Cslib.BooleanAnalysis
 
 /-! ### Completion density in Korten's improved mirror-set argument
 
@@ -49,11 +64,7 @@ for the fraction of first-stage modifications with low completion density.
 Source: [Korten, Sections 3--4][Korten2026]. The explicit constants here are `q = 32768*k*p` and
 completion deficit `194*k`. -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
+section
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
@@ -129,7 +140,7 @@ theorem coordinateFiber_light_patterns (X : Finset (ι → Bool)) (hX : X.Nonemp
     by_cases hd : uniformDeficit (coordinateFiber X s x) ≤ 64 * k
     · simp only [hd, true_and, ite_true, mul_one]
       have hne := coordinateFiber_nonempty s hx
-      have ht := improved_light_patterns_density
+      have ht := bernoulliAverage_few_light_patterns_density
         (fun z => mul_nonneg (by positivity : (0 : ℝ) ≤ 2 ^ Fintype.card {i // s i = true})
           (uniformMass_nonneg (coordinateFiber X s x) z))
         (expect_uniformDensity hne) (show (1 : ℝ) ≤ 64 * k by linarith)
@@ -211,7 +222,7 @@ theorem fiber_completion_density_union (X : Finset (ι → Bool)) (P Q x : ι �
       (2 : ℝ) ^ (-194 * k) then (1 : ℝ) else 0)]
   exact ht
 
-theorem bad_modifications_probability_aux (X : Finset (ι → Bool)) (hX : X.Nonempty)
+private theorem bad_modifications_probability_of_rate (X : Finset (ι → Bool)) (hX : X.Nonempty)
     {k p q r : ℝ} (hk : 1 ≤ k) (hdef : uniformDeficit X ≤ k)
     (hp : 0 ≤ p) (hp' : p ≤ 1) (hq : 0 ≤ q) (hq' : q ≤ 1)
     (hr : 0 ≤ r) (hr' : r ≤ 1 / (32768 * k))
@@ -266,10 +277,10 @@ theorem mirror_bad_modifications_probability (X : Finset (ι → Bool)) (hX : X.
     refine hb.2.1.trans_eq ?_
     rw [hq]
     field_simp
-  exact bad_modifications_probability_aux X hX hk hdef hp.le (hpq.trans hq1) hqp.le hq1
+  exact bad_modifications_probability_of_rate X hX hk hdef hp.le (hpq.trans hq1) hqp.le hq1
     hb.1 hr (by field_simp)
 
-end Cslib.BooleanAnalysis
+end
 
 /-! ### Guided distributions and the improved mirror set
 
@@ -284,11 +295,7 @@ of deficit at most `2*k+2`, with `q = 32768*k*p`.
 
 Source: [Korten, Sections 3--4][Korten2026]. -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
+section
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
@@ -540,11 +547,10 @@ theorem guidedAverage_mirror_mass (X Y : Finset (ι → Bool)) (hX : X.Nonempty)
     simpa only [bad, neg_mul] using guidedAverage_bad_completion X Y hX hk hdef hp hq hq'
   linarith
 
-/-- Improved strong mirror-set lemma, combining Korten's Section 3 argument
-with Lemma 10. A set of `(p,k)`-limits with deficit at most `k` yields a
-nonempty mirror subset of deficit at most `2*k+2`, all of whose points are
-`(32768*k*p,194*k)`-limits in the reverse direction. -/
-theorem improved_mirror_set (X Y : Finset (ι → Bool)) (hX : X.Nonempty)
+/-- **The mirror-set lemma** [Korten, Sections 3 and 4][Korten2026]: if every point of a set `X`
+of deficit at most `k` is a `(p, k)`-limit of `Y`, then `Y` has a nonempty subset of deficit at
+most `2 k + 2` all of whose points are `(32768 k p, 194 k)`-limits of `X`. -/
+theorem exists_mirror_set (X Y : Finset (ι → Bool)) (hX : X.Nonempty)
     {k p q : ℝ} (hk : 1 ≤ k) (hdef : uniformDeficit X ≤ k) (hp : 0 < p)
     (hq : q = 32768 * k * p) (hq' : q ≤ 1 / 2)
     (hlim : ∀ x ∈ X, IsDensityLimit Y p k x) :
@@ -582,13 +588,6 @@ theorem improved_mirror_set (X Y : Finset (ι → Bool)) (hX : X.Nonempty)
   exact ⟨A, filter_subset _ _, hA, (uniformDeficit_le_iff hA).mpr hcard,
     fun y hy => (mem_filter.mp hy).2⟩
 
-end Cslib.BooleanAnalysis
-
-
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
+end
 
 end Cslib.BooleanAnalysis

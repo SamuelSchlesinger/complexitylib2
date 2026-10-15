@@ -297,7 +297,7 @@ theorem isDensityLimit_of_many_neighbors {n : ℕ} (hn : 16 ≤ n)
   have hhit : 8 ≤ (weight s : ℝ) * p := by
     nlinarith [mul_le_mul_of_nonneg_right hs' hp]
   have hnone : (1 - p) ^ weight s ≤ 1 / 9 := by
-    have hh := one_sub_pow_bound hp' (weight s)
+    have hh := one_sub_pow_mul_one_add_mul_le_one hp' (weight s)
     have hnon : 0 ≤ (1 - p) ^ weight s := pow_nonneg (sub_nonneg.mpr hp') _
     nlinarith
   have hpoint (P : Fin n → Bool) :

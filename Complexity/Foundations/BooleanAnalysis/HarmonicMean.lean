@@ -73,20 +73,25 @@ on the full cube gives each projected pattern the same multiplicity, so this is
 the uniform average over projected patterns. All expectations are finite sums.
 -/
 
-
 namespace Cslib.BooleanAnalysis
 
 open scoped BigOperators
+open Finset
 
 /-- The uniform harmonic mean, with value zero whenever an entry is zero. -/
 noncomputable def harmonicMean {α : Type*} [Fintype α] (f : α → ℝ) : ℝ :=
   if ∃ x, f x = 0 then 0 else (𝔼 x, (f x)⁻¹)⁻¹
 
+/-- A zero entry makes the harmonic mean zero: inside the average, `0⁻¹` counts as `∞` rather than
+as Lean's `0⁻¹ = 0`. -/
+theorem harmonicMean_eq_zero_of_exists {α : Type*} [Fintype α] {f : α → ℝ}
+    (hf : ∃ x, f x = 0) : harmonicMean f = 0 := by
+  rw [harmonicMean, ite_eq_left hf]
+
 /-- Average over the unselected coordinates, keeping the selected bits of `x`. -/
 noncomputable def projectionAverage {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (f : (ι → Bool) → ℝ) (selected x : ι → Bool) : ℝ := by
-  classical
-  exact 𝔼 y : ι → Bool, f (fun i => if selected i then x i else y i)
+    (f : (ι → Bool) → ℝ) (selected x : ι → Bool) : ℝ :=
+  𝔼 y : ι → Bool, f (fun i => if selected i then x i else y i)
 
 /-- The marginal on actual selected-coordinate patterns, obtained by uniformly
 averaging over their completions. For a normalized density `f`, this is the
@@ -99,12 +104,8 @@ noncomputable def coordinateMarginal {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- Korten's harmonic mean transform (Definition 5), represented on the full cube. -/
 noncomputable def harmonicTransform {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (f : (ι → Bool) → ℝ) (selected : ι → Bool) : ℝ := by
-  classical
-  exact harmonicMean (projectionAverage f selected)
-
-
-end Cslib.BooleanAnalysis
+    (f : (ι → Bool) → ℝ) (selected : ι → Bool) : ℝ :=
+  harmonicMean (projectionAverage f selected)
 
 /-! ### The variational formula
 
@@ -112,11 +113,7 @@ The variational formula [Korten, Lemma 11][Korten2026] holds on every nonempty f
 Completing the square gives the lower bound, and an explicit weight attains it, including when an
 entry vanishes. -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
+section
 
 variable {α : Type*} [Fintype α] [Nonempty α]
 
@@ -267,11 +264,11 @@ theorem harmonicMean_average {β : Type*} [Fintype β]
     _ = _ := he
 
 omit [Nonempty α] in
-theorem expect_pair {β : Type*} [Fintype β] (f : α × β → ℝ) :
+private theorem expect_univ_prod {β : Type*} [Fintype β] (f : α × β → ℝ) :
     (𝔼 x, f x) = 𝔼 a, 𝔼 b, f (a, b) := by
   simpa only [univ_product_univ] using expect_product univ univ f
 
-theorem expect_bool (f : Bool → ℝ) :
+private theorem expect_univ_bool (f : Bool → ℝ) :
     (𝔼 b, f b) = (f false + f true) / 2 := by
   rw [Fintype.expect_eq_sum_div_card, Fintype.sum_bool]
   simp only [Fintype.card_bool, Nat.cast_ofNat]
@@ -302,7 +299,7 @@ theorem harmonicMean_pair {f : Bool → α → ℝ} (hf : ∀ b x, 0 ≤ f b x) 
     have hn : f b x ≠ 0 := fun h => hz ⟨(b, x), h⟩
     exact lt_of_le_of_ne (hf b x) hn.symm
   simp only [harmonicMean, ite_eq_right hz, ite_eq_right h0, ite_eq_right h1]
-  rw [expect_pair, expect_bool]
+  rw [expect_univ_prod, expect_univ_bool]
   have hsum := add_pos (hp false) (hp true)
   field_simp [ne_of_gt (hp false), ne_of_gt (hp true), ne_of_gt hsum]
   simpa only [one_div, add_comm] using (div_self (ne_of_gt hsum)).symm
@@ -338,16 +335,13 @@ theorem harmonicMean_light_fraction_le {f : α → ℝ} (hf : ∀ x, 0 ≤ f x)
     _ ≤ b * (1 / a) := mul_le_mul_of_nonneg_left hinv hb
     _ = _ := by ring
 
-end Cslib.BooleanAnalysis
+end
 
 /-! ### Reindexing coordinate projections
 
 Transport the harmonic transform along an equivalence of finite coordinate
 types. This lets results proved by induction on `Fin n` apply inside fibers.
 -/
-
-
-namespace Cslib.BooleanAnalysis
 
 theorem projectionAverage_reindex {ι κ : Type*} [Fintype ι] [Fintype κ]
     [DecidableEq ι] [DecidableEq κ] (e : ι ≃ κ) (f : (κ → Bool) → ℝ)
@@ -368,19 +362,13 @@ theorem harmonicTransform_reindex {ι κ : Type*} [Fintype ι] [Fintype κ]
   simp_rw [projectionAverage_reindex e f s]
   exact harmonicMean_equiv (Equiv.arrowCongr e (Equiv.refl Bool)) _
 
-end Cslib.BooleanAnalysis
-
 /-! ### Marginal semantics of the harmonic mean transform
 
 Splitting the cube into selected and unselected coordinates identifies the
 full-cube representation with the paper's averages on projected patterns.
 -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
+section
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
@@ -396,7 +384,7 @@ theorem projectionAverage_eq_coordinateMarginal
     funext i
     by_cases hi : selected i = true <;> simp [e, Equiv.piEquivPiSubtypeProd, hi]
   unfold projectionAverage
-  rw [← Fintype.expect_equiv e.symm _ _ he, expect_pair]
+  rw [← Fintype.expect_equiv e.symm _ _ he, expect_univ_prod]
   exact Fintype.expect_const (ι := {i // selected i = true} → Bool)
     (coordinateMarginal f selected (fun i => x i))
 
@@ -405,7 +393,7 @@ theorem expect_coordinateMarginal (f : (ι → Bool) → ℝ) (selected : ι →
     (𝔼 z, coordinateMarginal f selected z) = 𝔼 x, f x := by
   let e := Equiv.piEquivPiSubtypeProd (fun i => selected i = true) (fun _ => Bool)
   rw [← Fintype.expect_equiv e.symm (fun z => f (e.symm z)) f (fun _ => rfl),
-    expect_pair]
+    expect_univ_prod]
   rfl
 
 /-- The transform agrees with Definition 5 on the actual projected cube;
@@ -423,26 +411,20 @@ theorem harmonicTransform_eq_harmonicMean_coordinateMarginal
     simp [e, Equiv.piEquivPiSubtypeProd, i.property]
   rw [harmonicTransform, ← harmonicMean_equiv e.symm]
   simp_rw [he]
-  simp [harmonicMean, expect_pair]
+  simp [harmonicMean, expect_univ_prod]
 
-end Cslib.BooleanAnalysis
+end
 
 /-! ### Coordinate splitting for the harmonic mean transform
 
 Finite product calculations used in the induction in Korten's Lemma 12.
 -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
-
-theorem expect_cons {n : ℕ} (f : (Fin (n + 1) → Bool) → ℝ) :
+private theorem expect_univ_fin_cons {n : ℕ} (f : (Fin (n + 1) → Bool) → ℝ) :
     (𝔼 x, f x) = ((𝔼 x, f (Fin.cons false x)) + (𝔼 x, f (Fin.cons true x))) / 2 := by
   rw [← Fintype.expect_equiv (Fin.consEquiv (fun _ : Fin (n + 1) => Bool))
     (fun x => f (Fin.cons x.1 x.2)) f (fun _ => rfl)]
-  rw [expect_pair, expect_bool]
+  rw [expect_univ_prod, expect_univ_bool]
 
 theorem projectionAverage_nonneg {ι : Type*} [Fintype ι] [DecidableEq ι]
     {f : (ι → Bool) → ℝ} (hf : ∀ x, 0 ≤ f x) (selected x : ι → Bool) :
@@ -481,7 +463,7 @@ theorem projectionAverage_cons_false {n : ℕ}
     funext i
     refine Fin.cases ?_ (fun j => ?_) i <;> simp
   unfold projectionAverage
-  rw [expect_cons]
+  rw [expect_univ_fin_cons]
   simp_rw [hm]
   rw [← expect_div, expect_add_distrib]
 
@@ -496,7 +478,7 @@ theorem projectionAverage_cons_true {n : ℕ}
     funext i
     refine Fin.cases ?_ (fun j => ?_) i <;> simp
   unfold projectionAverage
-  rw [expect_cons]
+  rw [expect_univ_fin_cons]
   simp_rw [hm]
   ring
 
@@ -511,7 +493,7 @@ theorem harmonicTransform_cons_false {n : ℕ}
   change harmonicMean (fun x : Bool × (Fin n → Bool) =>
     projectionAverage f (Fin.cons false selected) (Fin.cons x.1 x.2)) = _
   simp_rw [projectionAverage_cons_false]
-  simp [harmonicMean, expect_pair]
+  simp [harmonicMean, expect_univ_prod]
 
 theorem harmonicTransform_cons_true {n : ℕ}
     {f : (Fin (n + 1) → Bool) → ℝ} (hf : ∀ x, 0 ≤ f x) (selected : Fin n → Bool) :
@@ -546,19 +528,11 @@ theorem harmonicTransform_midpoint {ι : Type*} [Fintype ι] [DecidableEq ι]
   dsimp [harmonicTransform]
   linarith
 
-end Cslib.BooleanAnalysis
-
 /-! ### Order properties of the harmonic mean transform
 
 The three parts of Corollary 1 in Korten (2026): concavity, decrease under
 revealing more coordinates, and the upper bound by the ordinary mean.
 -/
-
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
 
 theorem harmonicPair_le_midpoint {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) :
     2 * a * b / (a + b) ≤ (a + b) / 2 := by
@@ -597,18 +571,18 @@ theorem harmonicTransform_concave {ι : Type*} [Fintype ι] [DecidableEq ι]
   exact harmonicMean_concave (projectionAverage_nonneg hf selected)
     (projectionAverage_nonneg hg selected) ht ht'
 
-/-- Corollary 1(2): revealing more coordinates decreases the harmonic transform.
-The hypothesis is inclusion of the two sets represented by Boolean masks. -/
+/-- Selecting more coordinates decreases the harmonic transform
+[Korten, Corollary 1][Korten2026]. -/
 theorem harmonicTransform_antitone {n : ℕ} {f : (Fin n → Bool) → ℝ}
-    (hf : ∀ x, 0 ≤ f x) {r s : Fin n → Bool}
-    (hrs : ∀ i, r i = true → s i = true) : harmonicTransform f s ≤ harmonicTransform f r := by
+    (hf : ∀ x, 0 ≤ f x) : Antitone (harmonicTransform f) := by
+  intro r s hrs
   induction n with
   | zero => exact le_of_eq (congrArg (harmonicTransform f) (Subsingleton.elim _ _))
   | succ n ih =>
     obtain ⟨⟨rb, r⟩, rfl⟩ := (Fin.consEquiv (fun _ : Fin (n + 1) => Bool)).surjective r
     obtain ⟨⟨sb, s⟩, rfl⟩ := (Fin.consEquiv (fun _ : Fin (n + 1) => Bool)).surjective s
     change harmonicTransform f (Fin.cons sb s) ≤ harmonicTransform f (Fin.cons rb r)
-    have htail : ∀ i, r i = true → s i = true := fun i => hrs i.succ
+    have htail : r ≤ s := fun i => hrs i.succ
     have h0 := fun x => hf (Fin.cons false x)
     have h1 := fun x => hf (Fin.cons true x)
     have havg : ∀ x, 0 ≤ (f (Fin.cons false x) + f (Fin.cons true x)) / 2 :=
@@ -620,8 +594,7 @@ theorem harmonicTransform_antitone {n : ℕ} {f : (Fin n → Bool) → ℝ}
       exact (harmonicPair_le_midpoint (harmonicTransform_nonneg h0 s)
         (harmonicTransform_nonneg h1 s)).trans
         ((harmonicTransform_midpoint h0 h1 s).trans (ih havg htail))
-    · have h := hrs 0 rfl
-      contradiction
+    · exact absurd (hrs 0) (by simp)
     · rw [harmonicTransform_cons_true hf, harmonicTransform_cons_true hf]
       exact harmonicPair_mono (harmonicTransform_nonneg h0 s)
         (harmonicTransform_nonneg h1 s) (ih h0 htail) (ih h1 htail)
@@ -647,20 +620,12 @@ theorem harmonicTransform_le_expect {n : ℕ} {f : (Fin n → Bool) → ℝ}
     (hf : ∀ x, 0 ≤ f x) (selected : Fin n → Bool) :
     harmonicTransform f selected ≤ 𝔼 x, f x := by
   rw [← harmonicTransform_empty f]
-  exact harmonicTransform_antitone hf (by simp)
-
-end Cslib.BooleanAnalysis
+  exact harmonicTransform_antitone hf fun _ => Bool.false_le _
 
 /-! ### Korten's harmonic mean inequality
 
 The inequality [Korten, Lemma 12][Korten2026] follows from a scalar inequality by induction on the
 dimension, using concavity of the harmonic mean. No strict-positivity assumption is needed. -/
-
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
 
 theorem harmonicMean_sqrt_pair {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) :
     (Real.sqrt a + Real.sqrt b) / 2 ≤
@@ -714,7 +679,7 @@ theorem expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform {n : ℕ}
       rw [harmonicTransform_cons_true hf]
       dsimp [f0, f1] at hb hc ⊢
       linarith
-    rw [expect_cons]
+    rw [expect_univ_fin_cons]
     calc
       _ ≤ 1 / 2 * bernoulliAverage (1 / 4) (fun s => Real.sqrt (harmonicTransform f0 s)) +
           1 / 2 * bernoulliAverage (1 / 4) (fun s => Real.sqrt (harmonicTransform f1 s)) := by
@@ -734,20 +699,12 @@ theorem expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform {n : ℕ}
         norm_num
         rfl
 
-end Cslib.BooleanAnalysis
-
 /-! ### Dense distributions and good coordinate projections
 
 The first probability estimate in the proof of Korten's Lemma 10, before
 transference to a sparse coordinate set. We use a pointwise density bound `B`
 instead of writing it as `2 ^ k`.
 -/
-
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
 
 /-- Intermediate estimate in the proof of Lemma 10: a normalized density bounded
 by `B` has harmonic transform at least `1 / (4 * B)` with probability at least
@@ -798,27 +755,7 @@ theorem harmonicTransform_good_probability {n : ℕ}
   have ha' : 2 * a = 1 / Real.sqrt B := by dsimp [a]; field_simp
   linarith
 
-end Cslib.BooleanAnalysis
-
-
-
-namespace Cslib.BooleanAnalysis
-
-open scoped BigOperators
-
-section Mean
-
-variable {α : Type*} [Fintype α]
-
-/-- A zero entry makes the harmonic mean zero, implementing `0⁻¹ = ∞`
-inside the average rather than Lean's real inverse at zero. -/
-theorem harmonicMean_eq_zero_of_exists {f : α → ℝ} (hf : ∃ x, f x = 0) :
-    harmonicMean f = 0 := by
-  rw [harmonicMean, ite_eq_left hf]
-
-variable [Nonempty α]
-
-end Mean
+/-! ### Consequences for the projections -/
 
 section Projection
 

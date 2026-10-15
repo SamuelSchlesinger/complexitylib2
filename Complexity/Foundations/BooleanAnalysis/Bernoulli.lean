@@ -13,6 +13,7 @@ public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Order.UpperLower.Basic
+public import Mathlib.Algebra.Order.Group.Indicator
 import Mathlib.Data.Bool.Basic
 import Mathlib.Data.Fin.VecNotation
 import Mathlib.Algebra.BigOperators.Fin
@@ -25,51 +26,58 @@ import Mathlib.Tactic.Ring
 /-!
 # Bernoulli coordinate sampling and transference
 
-Boolean masks represent subsets of coordinates, ordered by inclusion. Increasing the sampling rate
-decreases expectations of antitone functions. Unions of independently sampled masks yield the
-downward-closed transference principle used in Section 4 of [Korten2026]. Korten attributes this
-principle to Yufei Zhao, *Probabilistic Methods in Combinatorics*, Lemma 4.3.7. -/
+A Boolean mask `selected : ι → Bool` is a set of coordinates. Selecting each coordinate
+independently with probability `p` gives it the weight `bernoulliWeight p selected`, and
+`bernoulliAverage p f` is the expectation of `f` over the random mask, a finite sum. Increasing the
+rate decreases the expectation of an antitone function (`bernoulliAverage_bias_antitone`), and the
+union of independent masks of rates `p` and `q` has rate `p + q - p q` (`bernoulliAverage_union`).
+For a lower set `A` of masks, so the probability of `A` at rate `q` is at most its probability at
+rate `p` to the power `h` when `h p ≤ q` (`bernoulliAverage_lowerSet_pow_le`): this is the
+transference principle of Section 4 of [Korten2026], which Korten attributes to Zhao
+(*Probabilistic Methods in Combinatorics*, Lemma 4.3.7). In particular the probability at a small
+rate `r` is at least the probability at rate `1 / 4` to the power `5 r`
+(`bernoulliAverage_lowerSet_transfer`).
 
-@[expose] public section
+## Main definitions
 
-/-! ### Finite Bernoulli coordinate sampling
+* `Cslib.BooleanAnalysis.bernoulliWeight`: the probability of a mask.
+* `Cslib.BooleanAnalysis.bernoulliAverage`: the expectation over a random mask.
 
-Boolean masks represent coordinate sets. Product weights describe independent
-coordinate inclusion with a common parameter, using finite real sums.
+## Main results
+
+* `Cslib.BooleanAnalysis.bernoulliAverage_coordinate`,
+  `Cslib.BooleanAnalysis.bernoulliAverage_nonempty`: the probability that a coordinate is
+  selected, and that some coordinate is.
+* `Cslib.BooleanAnalysis.bernoulliAverage_bias_antitone`: antitone functions have smaller
+  expectations at larger rates.
+* `Cslib.BooleanAnalysis.bernoulliAverage_union`: unions of independent masks.
+* `Cslib.BooleanAnalysis.bernoulliAverage_lowerSet_pow_le`,
+  `Cslib.BooleanAnalysis.bernoulliAverage_lowerSet_transfer`: transference for lower sets.
+
+## References
+
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
 -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open scoped BigOperators
-
-/-- Product Bernoulli weight of a coordinate set with inclusion parameter `p`. -/
-noncomputable def bernoulliWeight {ι : Type*} [Fintype ι]
-    (p : ℝ) (selected : ι → Bool) : ℝ :=
-  ∏ i, if selected i then p else 1 - p
-
-/-- Finite expectation over independently selected coordinates. It is a probability
-expectation when `0 ≤ p ≤ 1`. -/
-noncomputable def bernoulliAverage {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (p : ℝ) (f : (ι → Bool) → ℝ) : ℝ := by
-  classical
-  exact ∑ selected, bernoulliWeight p selected * f selected
-
-end Cslib.BooleanAnalysis
-
-/-! ### Product sampling and downward-closed transference
-
-Union of independent coordinate sets and iteration prove the transfer principle used in Section 4 of
-[Korten2026]. Korten credits the principle to Yufei Zhao, *Probabilistic Methods in Combinatorics*,
-Lemma 4.3.7. This proof includes the zero sampling rate. -/
-
+@[expose] public section
 
 namespace Cslib.BooleanAnalysis
 
 open Finset
 open scoped BigOperators
 
-theorem sum_cons {n : ℕ} (f : (Fin (n + 1) → Bool) → ℝ) :
+/-- The probability of the mask `selected` when each coordinate is selected independently with
+probability `p`. -/
+noncomputable def bernoulliWeight {ι : Type*} [Fintype ι] (p : ℝ) (selected : ι → Bool) : ℝ :=
+  ∏ i, if selected i then p else 1 - p
+
+/-- The expectation of `f` over a random mask selecting each coordinate independently with
+probability `p`. It is a probability expectation when `0 ≤ p ≤ 1`. -/
+noncomputable def bernoulliAverage {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ)
+    (f : (ι → Bool) → ℝ) : ℝ :=
+  ∑ selected, bernoulliWeight p selected * f selected
+
+private theorem sum_cons {n : ℕ} (f : (Fin (n + 1) → Bool) → ℝ) :
     (∑ x, f x) = (∑ x, f (Fin.cons false x)) + ∑ x, f (Fin.cons true x) := by
   rw [← (Fin.consEquiv (fun _ : Fin (n + 1) => Bool)).sum_comp f]
   rw [Fintype.sum_prod_type, Fintype.sum_bool]
@@ -95,7 +103,6 @@ theorem bernoulliAverage_cons {n : ℕ} (p : ℝ)
 theorem bernoulliAverage_mono {ι : Type*} [Fintype ι] [DecidableEq ι]
     {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1) {f g : (ι → Bool) → ℝ}
     (hfg : ∀ x, f x ≤ g x) : bernoulliAverage p f ≤ bernoulliAverage p g := by
-  classical
   apply sum_le_sum
   intro x _
   apply mul_le_mul_of_nonneg_left (hfg x)
@@ -109,7 +116,6 @@ theorem bernoulliAverage_mono {ι : Type*} [Fintype ι] [DecidableEq ι]
 for every `p`; they are nonnegative when `p ∈ [0, 1]`. -/
 theorem bernoulliAverage_const {ι : Type*} [Fintype ι] [DecidableEq ι] (p c : ℝ) :
     bernoulliAverage p (fun _ : ι → Bool => c) = c := by
-  classical
   unfold bernoulliAverage bernoulliWeight
   rw [← sum_mul, ← Fintype.prod_sum (fun (_ : ι) (b : Bool) => if b then p else 1 - p)]
   simp
@@ -233,71 +239,58 @@ theorem bernoulliAverage_mul {ι : Type*} [Fintype ι] [DecidableEq ι]
     bernoulliAverage p (fun x => a * f x) = a * bernoulliAverage p f := by
   simpa using bernoulliAverage_linear p a 0 f f
 
-open scoped Classical in
-theorem bernoulliAverage_indicator_bounds {n : ℕ} (A : Set (Fin n → Bool))
-    {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1) :
-    0 ≤ bernoulliAverage p (fun x => if x ∈ A then (1 : ℝ) else 0) ∧
-      bernoulliAverage p (fun x => if x ∈ A then (1 : ℝ) else 0) ≤ 1 := by
-  classical
+/-- The probability of a set of masks is between zero and one. -/
+theorem bernoulliAverage_indicator_bounds {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (A : Set (ι → Bool)) {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1) :
+    0 ≤ bernoulliAverage p (A.indicator 1) ∧ bernoulliAverage p (A.indicator 1) ≤ 1 := by
   constructor
-  · simpa only [bernoulliAverage_const] using
-      bernoulliAverage_mono hp hp'
-        (f := fun _ => 0) (g := fun x => if x ∈ A then 1 else 0)
-        (by intro x; split_ifs <;> norm_num)
-  · simpa only [bernoulliAverage_const] using
-      bernoulliAverage_mono hp hp'
-        (f := fun x => if x ∈ A then 1 else 0) (g := fun _ => 1)
-        (by intro x; split_ifs <;> norm_num)
+  · simpa only [bernoulliAverage_const] using bernoulliAverage_mono hp hp' (f := fun _ => 0)
+      (g := A.indicator 1) fun x => Set.indicator_nonneg (fun _ _ => zero_le_one) x
+  · simpa only [bernoulliAverage_const] using bernoulliAverage_mono hp hp' (f := A.indicator 1)
+      (g := fun _ => 1) fun x => Set.indicator_le_self' (fun _ _ => zero_le_one) x
 
-open scoped Classical in
-theorem lowerSet_indicator_antitone {n : ℕ} {A : Set (Fin n → Bool)}
-    (hA : IsLowerSet A) : Antitone (fun x => if x ∈ A then (1 : ℝ) else 0) := by
-  classical
+/-- The indicator of a lower set is antitone. -/
+theorem _root_.IsLowerSet.antitone_indicator_one {α : Type*} [Preorder α] {A : Set α}
+    (hA : IsLowerSet A) : Antitone (A.indicator (1 : α → ℝ)) := by
   intro r s hrs
   by_cases hs : s ∈ A
-  · simp only [ite_eq_left hs, ite_eq_left (hA hrs hs), le_refl]
-  · simp only [ite_eq_right hs]
-    split_ifs <;> norm_num
+  · rw [Set.indicator_of_mem hs, Set.indicator_of_mem (hA hrs hs)]
+    exact le_rfl
+  · rw [Set.indicator_of_notMem hs]
+    exact Set.indicator_nonneg (fun _ _ => zero_le_one) r
 
-open scoped Classical in
-theorem bernoulliAverage_lowerSet_union {n : ℕ} {A : Set (Fin n → Bool)}
-    (hA : IsLowerSet A)
+/-- The union of independent masks of rates `p` and `q` lies in a lower set only if both masks do,
+so the probability of a lower set at rate `p + q - p q` is at most the product of its
+probabilities at rates `p` and `q`. -/
+theorem bernoulliAverage_lowerSet_union {n : ℕ} {A : Set (Fin n → Bool)} (hA : IsLowerSet A)
     {p q : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1) (hq : 0 ≤ q) (hq' : q ≤ 1) :
-    bernoulliAverage (p + q - p * q) (fun x => if x ∈ A then (1 : ℝ) else 0) ≤
-      bernoulliAverage p (fun x => if x ∈ A then (1 : ℝ) else 0) *
-        bernoulliAverage q (fun x => if x ∈ A then (1 : ℝ) else 0) := by
-  classical
+    bernoulliAverage (p + q - p * q) (A.indicator 1) ≤
+      bernoulliAverage p (A.indicator 1) * bernoulliAverage q (A.indicator 1) := by
   have hpoint (r s : Fin n → Bool) :
-      (if (fun i => r i || s i) ∈ A then (1 : ℝ) else 0) ≤
-        (if r ∈ A then (1 : ℝ) else 0) * (if s ∈ A then (1 : ℝ) else 0) := by
+      A.indicator (1 : (Fin n → Bool) → ℝ) (fun i => r i || s i) ≤
+        A.indicator 1 r * A.indicator 1 s := by
     by_cases hu : (fun i => r i || s i) ∈ A
-    · have hr := hA (fun i => Bool.left_le_or (r i) (s i)) hu
-      have hs := hA (fun i => Bool.right_le_or (r i) (s i)) hu
-      simp [hu, hr, hs]
-    · simp only [ite_eq_right hu]
-      positivity
+    · rw [Set.indicator_of_mem hu, Set.indicator_of_mem (hA (fun i => Bool.left_le_or _ _) hu),
+        Set.indicator_of_mem (hA (fun i => Bool.right_le_or _ _) hu)]
+      simp
+    · rw [Set.indicator_of_notMem hu]
+      exact mul_nonneg (Set.indicator_nonneg (fun _ _ => zero_le_one) r)
+        (Set.indicator_nonneg (fun _ _ => zero_le_one) s)
   rw [← bernoulliAverage_union]
   calc
     _ ≤ bernoulliAverage p (fun r => bernoulliAverage q (fun s =>
-        (if r ∈ A then (1 : ℝ) else 0) * (if s ∈ A then (1 : ℝ) else 0))) :=
-      bernoulliAverage_mono hp hp' fun r =>
-        bernoulliAverage_mono hq hq' (hpoint r)
+        A.indicator (1 : (Fin n → Bool) → ℝ) r * A.indicator 1 s)) :=
+      bernoulliAverage_mono hp hp' fun r => bernoulliAverage_mono hq hq' (hpoint r)
     _ = _ := by
       simp_rw [bernoulliAverage_mul]
       simp only [bernoulliAverage, ← mul_assoc, sum_mul]
 
-open scoped Classical in
-/-- Integer repetition form of downward-closed transference. If `h` independent
-rate-`p` masks have union rate at most `q`, membership at rate `q` forces every
-mask to belong to the downward-closed family. The hypothesis `h * p ≤ q`
-bounds that union rate. No nonemptiness assumption is needed. -/
-theorem bernoulliAverage_lowerSet_pow_le {n : ℕ} {A : Set (Fin n → Bool)}
-    (hA : IsLowerSet A)
-    {p q : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1) (hq : q ≤ 1)
-    (h : ℕ) (hh : (h : ℝ) * p ≤ q) :
-    bernoulliAverage q (fun x => if x ∈ A then (1 : ℝ) else 0) ≤
-      bernoulliAverage p (fun x => if x ∈ A then (1 : ℝ) else 0) ^ h := by
-  classical
+/-- **Transference for lower sets**, with an integer number of repetitions: if `h` independent
+masks of rate `p` have a union of rate at most `q` (`h p ≤ q`), then the probability of a lower set
+at rate `q` is at most the `h`-th power of its probability at rate `p`. -/
+theorem bernoulliAverage_lowerSet_pow_le {n : ℕ} {A : Set (Fin n → Bool)} (hA : IsLowerSet A)
+    {p q : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1) (hq : q ≤ 1) (h : ℕ) (hh : (h : ℝ) * p ≤ q) :
+    bernoulliAverage q (A.indicator 1) ≤ bernoulliAverage p (A.indicator 1) ^ h := by
   let u (j : ℕ) : ℝ := 1 - (1 - p) ^ j
   have hu (j : ℕ) : 0 ≤ u j ∧ u j ≤ 1 := by
     constructor
@@ -315,8 +308,7 @@ theorem bernoulliAverage_lowerSet_pow_le {n : ℕ} {A : Set (Fin n → Bool)}
       rw [hs, Nat.cast_succ]
       nlinarith [mul_nonneg hp (hu j).1]
   have hi (j : ℕ) :
-      bernoulliAverage (u j) (fun x => if x ∈ A then (1 : ℝ) else 0) ≤
-        bernoulliAverage p (fun x => if x ∈ A then (1 : ℝ) else 0) ^ j := by
+      bernoulliAverage (u j) (A.indicator 1) ≤ bernoulliAverage p (A.indicator 1) ^ j := by
     induction j with
     | zero =>
       simpa only [pow_zero] using (bernoulliAverage_indicator_bounds A (hu 0).1 (hu 0).2).2
@@ -324,7 +316,7 @@ theorem bernoulliAverage_lowerSet_pow_le {n : ℕ} {A : Set (Fin n → Bool)}
       rw [hs, pow_succ']
       exact (bernoulliAverage_lowerSet_union hA hp hp' (hu j).1 (hu j).2).trans
         (mul_le_mul_of_nonneg_left ih (bernoulliAverage_indicator_bounds A hp hp').1)
-  exact (bernoulliAverage_bias_antitone (lowerSet_indicator_antitone hA)
+  exact (bernoulliAverage_bias_antitone hA.antitone_indicator_one
     (hu h).1 ((hb h).trans hh) hq).trans (hi h)
 
 /-- Sampling at rate zero selects the empty coordinate set. -/
@@ -342,17 +334,17 @@ theorem bernoulliAverage_zero {n : ℕ} (f : (Fin n → Bool) → ℝ) :
     funext i
     refine Fin.cases ?_ (fun j => ?_) i <;> rfl
 
-open scoped Classical in
-/-- The `1/4`-to-sparse transfer inequality used in Korten's Lemma 10.
-Nonemptiness covers the endpoint `r = 0`, where the right side is one. -/
+/-- **Transference for lower sets** at a small rate `r ≤ 1 / 20`: the probability of a nonempty
+lower set at rate `r` is at least its probability at rate `1 / 4` to the power `5 r`, as in the
+proof of [Korten, Lemma 10][Korten2026]. Nonemptiness covers `r = 0`, where the right side is
+one. -/
 theorem bernoulliAverage_lowerSet_transfer {n : ℕ} {A : Set (Fin n → Bool)}
     (hA : IsLowerSet A) (hA' : A.Nonempty) {r : ℝ} (hr : 0 ≤ r) (hr' : r ≤ 1 / 20) :
-    (bernoulliAverage (1 / 4) (fun x => if x ∈ A then (1 : ℝ) else 0)) ^ (5 * r) ≤
-      bernoulliAverage r (fun x => if x ∈ A then (1 : ℝ) else 0) := by
+    bernoulliAverage (1 / 4) (A.indicator 1) ^ (5 * r) ≤ bernoulliAverage r (A.indicator 1) := by
   rcases hr.eq_or_lt with rfl | hr
   · obtain ⟨s, hs⟩ := hA'
     have hz : (fun _ => false) ∈ A := hA (fun i => Bool.false_le (s i)) hs
-    simp [bernoulliAverage_zero, hz]
+    simp [bernoulliAverage_zero, Set.indicator_of_mem hz]
   let h := ⌊1 / (4 * r)⌋₊
   have hr1 : r ≤ 1 := by linarith
   have hmul : (1 / (4 * r)) * r = 1 / 4 := by field_simp
@@ -374,8 +366,7 @@ theorem bernoulliAverage_lowerSet_transfer {n : ℕ} {A : Set (Fin n → Bool)}
   have hbase := bernoulliAverage_indicator_bounds A
     (by norm_num : (0 : ℝ) ≤ 1 / 4) (by norm_num)
   calc
-    _ ≤ (bernoulliAverage (1 / 4) (fun x => if x ∈ A then (1 : ℝ) else 0)) ^
-        (h : ℝ)⁻¹ :=
+    _ ≤ bernoulliAverage (1 / 4) (A.indicator 1) ^ (h : ℝ)⁻¹ :=
       Real.rpow_le_rpow_of_exponent_ge' hbase.1 hbase.2 (by positivity) hinv
     _ ≤ _ := by
       apply (Real.rpow_inv_le_iff_of_pos hbase.1
@@ -398,5 +389,61 @@ theorem bernoulliAverage_sub {ι : Type*} [Fintype ι] [DecidableEq ι]
   simpa only [one_mul, neg_one_mul, sub_eq_add_neg] using
     bernoulliAverage_linear p 1 (-1) f g
 
+/-- A coordinate is selected with probability `p`. -/
+theorem bernoulliAverage_coordinate {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ) (i : ι) :
+    bernoulliAverage p (fun s : ι → Bool => if s i then (1 : ℝ) else 0) = p := by
+  let e := Equiv.piSplitAt i (fun _ : ι => Bool)
+  have hw (s : ι → Bool) : bernoulliWeight p s =
+      (if s i then p else 1 - p) * bernoulliWeight p (fun j : {j // j ≠ i} => s j) := by
+    exact Fintype.prod_eq_mul_prod_subtype_ne (fun j => if s j then p else 1 - p) i
+  unfold bernoulliAverage
+  rw [← e.symm.sum_comp (fun s => bernoulliWeight p s * (if s i then (1 : ℝ) else 0))]
+  simp_rw [hw]
+  have hleft (z : Bool × ({j // j ≠ i} → Bool)) : e.symm z i = z.1 := by
+    simp [e, Equiv.piSplitAt]
+  have hright (z : Bool × ({j // j ≠ i} → Bool)) :
+      (fun j : {j // j ≠ i} => e.symm z j) = z.2 := by
+    funext j
+    simp [e, Equiv.piSplitAt, j.property]
+  simp_rw [hleft, hright]
+  rw [Fintype.sum_prod_type, Fintype.sum_bool]
+  simp only [Bool.false_eq_true, ite_true, ite_false, mul_one, mul_zero,
+    sum_const_zero, add_zero, ← mul_sum]
+  have hs : (∑ s : {j // j ≠ i} → Bool, bernoulliWeight p s) = 1 := by
+    simpa [bernoulliAverage] using bernoulliAverage_const (ι := {j // j ≠ i}) p 1
+  rw [hs, mul_one]
+
+/-- A mask is nonempty with probability `1 - (1 - p) ^ |ι|`. -/
+theorem bernoulliAverage_nonempty {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ) :
+    bernoulliAverage p (fun P : ι → Bool => if ∃ i, P i = true then (1 : ℝ) else 0) =
+      1 - (1 - p) ^ Fintype.card ι := by
+  have he (P : ι → Bool) : (if ∃ i, P i = true then (1 : ℝ) else 0) =
+      1 - (if P = (fun _ => false) then 1 else 0) := by
+    by_cases h : ∃ i, P i = true
+    · have hn : P ≠ fun _ => false := by
+        intro hn
+        obtain ⟨i, hi⟩ := h
+        simp [hn] at hi
+      simp [h, hn]
+    · have hn : P = fun _ => false := by
+        funext i
+        have hi : P i ≠ true := fun hi => h ⟨i, hi⟩
+        simpa using hi
+      simp [hn]
+  simp_rw [he, bernoulliAverage_sub, bernoulliAverage_const]
+  congr 1
+  simp [bernoulliAverage, bernoulliWeight]
+
+/-- A form of Bernoulli's inequality: `(1 - p) ^ n (1 + n p) ≤ 1` for `p ≤ 1`. It bounds the
+probability `(1 - p) ^ n` that a mask of rate `p` misses `n` coordinates. -/
+theorem _root_.one_sub_pow_mul_one_add_mul_le_one {p : ℝ} (hp : p ≤ 1) (n : ℕ) :
+    (1 - p) ^ n * (1 + (n : ℝ) * p) ≤ 1 := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [pow_succ, Nat.cast_succ]
+    have hnon := mul_nonneg (pow_nonneg (sub_nonneg.mpr hp) n)
+      (mul_nonneg (show (0 : ℝ) ≤ n + 1 by positivity) (sq_nonneg p))
+    nlinarith
 
 end Cslib.BooleanAnalysis

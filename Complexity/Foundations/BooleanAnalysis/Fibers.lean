@@ -16,32 +16,41 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
 import Mathlib.Logic.Equiv.Prod
+import Mathlib.Analysis.SpecialFunctions.Log.NegMulLog
 
 /-!
-# Korten's conditional-fiber entropy lemma
+# Korten's entropy lemma for coordinate fibers
 
-Lemma 4 of [Korten2026].
+The min-entropy deficit of a nonempty set `X` of masks is `|ι| - log₂ |X|` (`uniformDeficit`).
+Fixing the coordinates of a point `x` outside a set `s` of coordinates leaves the fiber of `X`
+over `x`, a set of patterns on `s` (`coordinateFiber`). Conditioning on the coordinates outside
+`s` does not increase the average deficit [Korten, Lemma 4][Korten2026]
+(`expect_uniformDeficit_coordinateFiber`), so by Markov's inequality most points of `X` have
+fibers of small deficit (`coordinateFiber_good_probability`). The density of `X` relative to the
+uniform distribution (`uniformDensity`) connects deficits to the pointwise bounds of the
+light-patterns lemma.
 
-For a nonempty cube subset `X`, conditioning on the coordinates outside `s`
-does not increase its average uniform min-entropy deficit. The fiber is
-represented on the selected-coordinate cube, and `card_coordinateFiber`
-identifies it with the full-cube set of points agreeing outside `s`.
+## Main definitions
 
-`coordinateFiber_good_probability` is the `63/64` consequence used in the
-mirror-set argument. The uniform-mass API connects a deficit bound to the
-pointwise probability bound required by the light-patterns lemma.
+* `Cslib.BooleanAnalysis.uniformMass`, `Cslib.BooleanAnalysis.uniformDensity`: the uniform
+  distribution on a set, and its density.
+* `Cslib.BooleanAnalysis.uniformDeficit`: the min-entropy deficit of a set.
+* `Cslib.BooleanAnalysis.coordinateFiber`, `Cslib.BooleanAnalysis.coordinateDensity`: the fiber
+  of a set over the coordinates outside `s`, and its density.
+
+## Main results
+
+* `Cslib.BooleanAnalysis.expect_uniformDeficit_coordinateFiber`: Korten's entropy lemma.
+* `Cslib.BooleanAnalysis.coordinateFiber_good_probability`: most fibers have small deficit.
+* `Cslib.BooleanAnalysis.coordinateDensity_eq_expect`: the density of a fiber is the probability
+  that resampling the coordinates in `s` lands in the set.
+
+## References
+
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
 -/
 
 @[expose] public section
-
-/-! ### Uniform entropy deficits and coordinate fibers
-
-Definitions for Lemma 4 and the mirror-set argument in [Korten2026].
-
-A fiber is a set of patterns on the free coordinates, so its deficit is
-measured in that smaller cube. Logarithms in deficits are base two.
--/
-
 
 namespace Cslib.BooleanAnalysis
 
@@ -86,49 +95,21 @@ noncomputable def uniformDensity {ι : Type*} [Fintype ι]
     (X : Finset (ι → Bool)) (x : ι → Bool) : ℝ :=
   (2 : ℝ) ^ Fintype.card ι * uniformMass X x
 
-end Cslib.BooleanAnalysis
+/-- The log-sum inequality, from Jensen's inequality for `x log x`. -/
+private theorem sum_mul_log_ge {β : Type*} [Fintype β] [Nonempty β] {m : β → ℝ}
+    (hm : ∀ b, 0 ≤ m b) :
+    (∑ b, m b) * Real.log ((∑ b, m b) / Fintype.card β) ≤ ∑ b, m b * Real.log (m b) := by
+  have hc : (0 : ℝ) < Fintype.card β := by exact_mod_cast Fintype.card_pos
+  have h := Real.convexOn_mul_log.map_sum_le (t := univ) (w := fun _ => (Fintype.card β : ℝ)⁻¹)
+    (p := m) (fun _ _ => by positivity) (by simp [card_univ]) (fun b _ => hm b)
+  simp only [smul_eq_mul, ← mul_sum] at h
+  rw [show (Fintype.card β : ℝ)⁻¹ * ∑ b, m b = (∑ b, m b) / Fintype.card β by ring] at h
+  have h2 := mul_le_mul_of_nonneg_left h hc.le
+  rwa [← mul_assoc, mul_div_cancel₀ _ hc.ne', ← mul_assoc, mul_inv_cancel₀ hc.ne', one_mul] at h2
 
-/-! ### Conditional-fiber entropy estimates
-
-A finite log-sum inequality proves Korten's entropy lemma (Lemma 4).
-A bijection with the full-cube fiber verifies the dimension convention.
-Markov's inequality gives the `63/64` good-fiber estimate needed in the
-improved mirror-set argument.
--/
-
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
-
-theorem mul_log_tangent {a c : ℝ} (ha : 0 ≤ a) (hc : 0 < c) :
-    a * Real.log c + a - c ≤ a * Real.log a := by
-  rcases ha.eq_or_lt with rfl | ha
-  · simp only [zero_mul, zero_add, zero_sub]
-    linarith
-  have h := mul_le_mul_of_nonneg_left
-    (Real.log_le_sub_one_of_pos (div_pos hc ha)) ha.le
-  rw [Real.log_div hc.ne' ha.ne'] at h
-  have he : a * (c / a) = c := by field_simp
-  nlinarith
-
-theorem sum_mul_log_ge {β : Type*} [Fintype β] [Nonempty β]
-    {m : β → ℝ} (hm : ∀ b, 0 ≤ m b) (hpos : 0 < ∑ b, m b) :
-    (∑ b, m b) * Real.log ((∑ b, m b) / Fintype.card β) ≤
-      ∑ b, m b * Real.log (m b) := by
-  let c := (∑ b, m b) / Fintype.card β
-  have hB : (0 : ℝ) < Fintype.card β := by exact_mod_cast Fintype.card_pos
-  have hc : 0 < c := div_pos hpos hB
-  have h := sum_le_sum (s := univ) (fun b _ => mul_log_tangent (hm b) hc)
-  simp only [sum_sub_distrib, sum_add_distrib, ← sum_mul, sum_const, card_univ,
-    nsmul_eq_mul] at h
-  have he : (Fintype.card β : ℝ) * c = ∑ b, m b := by dsimp [c]; field_simp
-  rw [he] at h
-  simpa only [add_sub_cancel_right] using h
-
-open scoped Classical in
-theorem expect_log_card_fiber {α β : Type*} [Fintype β] [Nonempty β]
+/-- The logarithm of the size of the fiber of a uniform point of `X` under a map to `β` is on
+average at least `log |X| - log |β|`. -/
+theorem expect_log_card_fiber {α β : Type*} [Fintype β] [Nonempty β] [DecidableEq β]
     (X : Finset α) (hX : X.Nonempty) (g : α → β) :
     Real.log X.card - Real.log (Fintype.card β) ≤
       𝔼 x ∈ X, Real.log (X.filter (fun y => g y = g x)).card := by
@@ -139,7 +120,7 @@ theorem expect_log_card_fiber {α β : Type*} [Fintype β] [Nonempty β]
       (f := g) (by intro x hx; exact mem_univ _) ).symm
   have hN : (0 : ℝ) < X.card := by exact_mod_cast card_pos.mpr hX
   have hB : (0 : ℝ) < Fintype.card β := by exact_mod_cast Fintype.card_pos
-  have h := sum_mul_log_ge (m := m) (by intro b; dsimp [m]; positivity) (by simpa [hsum])
+  have h := sum_mul_log_ge (m := m) (by intro b; dsimp [m]; positivity)
   rw [hsum, Real.log_div hN.ne' hB.ne'] at h
   have he : (∑ x ∈ X, Real.log (X.filter (fun y => g y = g x)).card) =
       ∑ b, m b * Real.log (m b) := by
@@ -307,20 +288,9 @@ theorem uniformMass_le_rpow {ι : Type*} [Fintype ι]
       ring
     _ ≤ _ := Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
 
-end Cslib.BooleanAnalysis
+/-! ### Densities and resampling -/
 
-/-! ### Density and coordinate-resampling identities
-
-Uniform cube densities normalize probability masses. Completing a selected
-pattern identifies the fraction of a fiber with its resampling probability.
-These identities connect Korten's entropy and light-patterns lemmas.
--/
-
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
+section Resampling
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
@@ -387,14 +357,7 @@ theorem uniformDensity_eq_deficit {X : Finset (ι → Bool)} (hX : X.Nonempty)
     ring
   · simp [uniformDensity, uniformMass, hz]
 
-end Cslib.BooleanAnalysis
-
-
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
+end Resampling
 
 /-- Uniform masses are nonnegative, including for the empty set. -/
 theorem uniformMass_nonneg {α : Type*} [DecidableEq α] (X : Finset α) (x : α) :

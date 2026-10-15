@@ -12,33 +12,34 @@ public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 import Mathlib.Tactic.Linarith
 
 /-!
-# Conditional sampling inside a coordinate union
+# Conditional sampling inside a union of masks
 
-Let `P` and `Q` be independent Bernoulli masks with rates `p` and `q`.
-Their union has rate `p + q - p*q`. Conditional on that union `S`, the mask
-`P \ Q` has independent coordinates inside `S`, with rate
-`r = p*(1-q)/(p+q-p*q)`. The theorems express this law as equality of finite
-expectations, avoiding conditioning on zero-probability events.
+Let `P` and `Q` be independent random masks of rates `p` and `q`. Their union `S` has rate
+`p + q - p q`, and conditionally on `S`, the difference `P \ Q` selects each coordinate of `S`
+independently with rate `r = p (1 - q) / (p + q - p q)` (`bernoulliAverage_union_difference`).
+The law is stated as an equality of finite expectations, with `(p + q - p q) r = p (1 - q)`, so it
+avoids conditioning on events of probability zero and covers degenerate rates. This is the
+coordinate-sampling step of Korten's mirror-set argument [Korten2026].
 
-This is the coordinate-sampling step in Korten's mirror-set proof [Korten2026].
+## Main results
+
+* `Cslib.BooleanAnalysis.bernoulliAverage_union_difference`: the joint law of `P ∪ Q` and
+  `P \ Q`.
+* `Cslib.BooleanAnalysis.bernoulliAverage_union_difference_subtype`: the same, with the difference
+  as a mask on the coordinates of the union.
+* `Cslib.BooleanAnalysis.conditionalSamplingRate_bounds`: the conditional rate is a probability,
+  at most `p / q`.
+
+## References
+
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
 -/
 
 @[expose] public section
 
-/-! ### Joint sampling of a union and a difference
-
-Finite product proof of the conditional sampling law used in the mirror-set argument of
-[Korten2026].
-
-The algebraic law is stated with `(p + q - p*q)*r = p*(1-q)`, so it also
-covers degenerate rates. The subtype version samples only inside the union.
--/
-
-
 namespace Cslib.BooleanAnalysis
 
-
-theorem bernoulliAverage_union_difference_fin {n : ℕ} (p q r : ℝ)
+private theorem bernoulliAverage_union_difference_fin {n : ℕ} (p q r : ℝ)
     (hr : (p + q - p * q) * r = p * (1 - q))
     (f : (Fin n → Bool) → (Fin n → Bool) → ℝ) :
     bernoulliAverage p (fun P => bernoulliAverage q (fun Q =>
@@ -75,8 +76,9 @@ theorem bernoulliAverage_union_difference_fin {n : ℕ} (p q r : ℝ)
       bernoulliAverage (p + q - p * q) (fun S => bernoulliAverage r (fun T =>
         f (Fin.cons true S) (Fin.cons false (fun i => S i && T i))))) * hr
 
-/-- Joint law of `P ∪ Q` and `P \ Q`, with the difference represented as a
-mask on the full coordinate set. The product identity includes degenerate rates. -/
+/-- **The joint law of `P ∪ Q` and `P \ Q`**: for independent masks `P` and `Q` of rates `p` and
+`q`, the union and the difference are distributed as a mask `S` of rate `p + q - p q` and the
+part inside `S` of an independent mask of rate `r`, when `(p + q - p q) r = p (1 - q)`. -/
 theorem bernoulliAverage_union_difference {ι : Type*} [Fintype ι] [DecidableEq ι]
     (p q r : ℝ)
     (hr : (p + q - p * q) * r = p * (1 - q))
@@ -92,8 +94,8 @@ theorem bernoulliAverage_union_difference {ι : Type*} [Fintype ι] [DecidableEq
   exact bernoulliAverage_union_difference_fin p q r hr (fun S R =>
     f (fun i => S (e.symm i)) (fun i => R (e.symm i)))
 
-/-- For `p ≥ 0` and `0 < q ≤ 1`, the conditional difference rate is a
-probability and is at most `p/q`. -/
+/-- For `p ≥ 0` and `0 < q ≤ 1`, the conditional rate of the difference is a probability, at most
+`p / q`. -/
 theorem conditionalSamplingRate_bounds {p q : ℝ} (hp : 0 ≤ p) (hq : 0 < q) (hq' : q ≤ 1) :
     0 ≤ p * (1 - q) / (p + q - p * q) ∧
       p * (1 - q) / (p + q - p * q) ≤ p / q ∧
@@ -106,8 +108,8 @@ theorem conditionalSamplingRate_bounds {p q : ℝ} (hp : 0 ≤ p) (hq : 0 < q) (
   · apply (div_le_one htheta).mpr
     linarith
 
-/-- Conditional product law on the selected-coordinate subtype. The test
-function may depend on the union and its smaller coordinate type. -/
+/-- The joint law of `P ∪ Q` and `P \ Q`, with the difference as a mask on the coordinates of the
+union. -/
 theorem bernoulliAverage_union_difference_subtype {ι : Type*} [Fintype ι] [DecidableEq ι]
     (p q r : ℝ)
     (hr : (p + q - p * q) * r = p * (1 - q))
@@ -127,11 +129,5 @@ theorem bernoulliAverage_union_difference_subtype {ι : Type*} [Fintype ι] [Dec
     simp only [i.property, Bool.true_and]
   simp_rw [he]
   exact bernoulliAverage_restrict r S (f S)
-
-end Cslib.BooleanAnalysis
-
-
-
-namespace Cslib.BooleanAnalysis
 
 end Cslib.BooleanAnalysis

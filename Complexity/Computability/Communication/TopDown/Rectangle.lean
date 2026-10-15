@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Communication.TopDown.Defs
 public import Complexity.Foundations.BooleanAnalysis.MirrorSets
-public import Complexity.Computability.Communication.TopDown.Sampling
+public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 import Mathlib.Combinatorics.Pigeonhole
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
@@ -158,7 +158,7 @@ theorem DensityRectangle.select_left_message {M : Type*} [Fintype M]
     have hqpos : 0 < q := by dsimp [q]; positivity
     have hqp : q ≤ p' :=
       (mul_le_mul_of_nonneg_left hrp (show 0 ≤ 32768 * k by positivity)).trans hscale
-    obtain ⟨Z, hZX, hZ, hdef, hlim⟩ := improved_mirror_set Y X hY hk hdY hr rfl
+    obtain ⟨Z, hZX, hZ, hdef, hlim⟩ := exists_mirror_set Y X hY hk hdY hr rfl
       (show q ≤ 1 / 2 by linarith) hl
     apply hselect Z hZX hZ (by linarith) q hqpos hqp
     intro z hz
