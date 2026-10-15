@@ -105,10 +105,10 @@ theorem fst_lt_of_mem_stageCode {x : BitString n} {W : List (Fin n)}
     · exact ih (fun w hw => hW w (by simp [hw])) he
 
 /-- A restriction falsifies more terms than any restriction it extends. -/
-theorem falsifiedBy_mono {ρ θ : Restriction n} (h : θ.Extends ρ)
-    (ht : t.falsifiedBy ρ = true) : t.falsifiedBy θ = true := by
-  obtain ⟨l, hl, hρ⟩ := falsifiedBy_eq_true_iff.1 ht
-  exact falsifiedBy_eq_true_iff.2 ⟨l, hl, h _ _ hρ⟩
+theorem FalsifiedBy.mono {ρ θ : Restriction n} (ht : t.FalsifiedBy ρ) (h : θ.Extends ρ) :
+    t.FalsifiedBy θ :=
+  let ⟨l, hl, hρ⟩ := ht
+  ⟨l, hl, h _ _ hρ⟩
 
 end Term
 
@@ -128,8 +128,8 @@ theorem exists_firstTerm_of_queried_ne_nil (h : F.queried ρ ≠ []) :
 theorem mem_of_firstTerm_eq_some (ht : F.firstTerm ρ = some t) : t ∈ F :=
   List.mem_of_find?_eq_some ht
 
-theorem falsifiedBy_of_firstTerm_eq_some (ht : F.firstTerm ρ = some t) :
-    t.falsifiedBy ρ = false := by
+theorem not_falsifiedBy_of_firstTerm_eq_some (ht : F.firstTerm ρ = some t) :
+    ¬ t.FalsifiedBy ρ := by
   simpa using List.find?_some ht
 
 theorem nodup_queried (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) : (F.queried ρ).Nodup := by
@@ -149,12 +149,12 @@ theorem mem_map_fst_of_mem_queried (ht : F.firstTerm ρ = some t) {v : Fin n}
 /-- Extending a restriction keeps its first term not falsified, as long as that term stays
 unfalsified. -/
 theorem firstTerm_eq_of_extends (ht : F.firstTerm ρ = some t) (h : θ.Extends ρ)
-    (hθ : t.falsifiedBy θ = false) :
+    (hθ : ¬ t.FalsifiedBy θ) :
     F.firstTerm θ = some t := by
   rw [firstTerm, List.find?_eq_some_iff_append] at ht ⊢
   obtain ⟨-, as, bs, rfl, has⟩ := ht
   refine ⟨by simp [hθ], as, bs, rfl, fun a ha => ?_⟩
-  simpa using Term.falsifiedBy_mono h (by simpa using has a ha)
+  simpa using (show a.FalsifiedBy ρ by simpa using has a ha).mono h
 
 /-- Fixing some queried variables to the values satisfying the first term keeps it first, in any
 extension leaving the other queried variables free. -/
@@ -166,8 +166,7 @@ theorem firstTerm_assign_satisfying (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup)
   refine firstTerm_eq_of_extends ht (fun i b hi => ?_) ?_
   · have : i ∉ W := fun hiW => by simp [hfree i hiW] at hi
     simpa [this] using h i b hi
-  · have hρ := falsifiedBy_of_firstTerm_eq_some ht
-    rw [Bool.eq_false_iff, ne_eq, Term.falsifiedBy_eq_true_iff]
+  · have hρ := not_falsifiedBy_of_firstTerm_eq_some ht
     rintro ⟨l, hl, hθ⟩
     by_cases hlW : l.1 ∈ W
     · simp [hlW, Term.satisfying_of_mem (hF t (mem_of_firstTerm_eq_some ht)) hl] at hθ
@@ -180,7 +179,7 @@ theorem firstTerm_assign_satisfying (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup)
         simp [hW _ hq hlW] at hθ
       | some c =>
         rw [h _ _ hρl] at hθ
-        exact absurd (Term.falsifiedBy_eq_true_iff.2 ⟨l, hl, hθ ▸ hρl⟩) (by simp [hρ])
+        exact hρ ⟨l, hl, hθ ▸ hρl⟩
 
 variable (F)
 
@@ -242,8 +241,6 @@ theorem encode_of_lt (h : F.queried ρ ≠ []) {s : ℕ} (hs : (F.queried ρ).le
 theorem encode_extends (s : ℕ) (ρ : Restriction n) (x : BitString n) :
     (F.encode s ρ x).1.Extends ρ := by
   intro i b hi
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing s ρ with
-  | _ k ih =>
   have hiV : i ∉ (F.queried ρ).toFinset := fun hiV => by
     simp [free_of_mem_queried (List.mem_toFinset.1 hiV)] at hi
   by_cases h : F.queried ρ = []
@@ -257,7 +254,9 @@ theorem encode_extends (s : ℕ) (ρ : Restriction n) (x : BitString n) :
   · rw [encode_of_lt h (by omega)]
     dsimp only
     rw [Restriction.assign_of_notMem hiV,
-      ih _ (hk ▸ card_free_assign_lt h x) _ _ (by simp [hiV, hi]) rfl]
+      encode_extends _ (ρ.assign (F.queried ρ).toFinset x) x i b (by simp [hiV, hi])]
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt h x
 
 /-- One step of the decoder: set the variable at position `j` of the current term to `b`. -/
 theorem decodeAux_cons {cur : Option (Term (Fin n))} {θ : Restriction n} {t : Term (Fin n)}
@@ -327,11 +326,9 @@ private theorem encode_assign_eq (s : ℕ) (x : BitString n) {i : Fin n}
 
 /-- Decoding the encoding of a restriction with a query path of length at least `s` gives the
 restriction back, freeing the accumulated variables `Q`. -/
-theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {s : ℕ} {x : BitString n}
-    (hs : s ≤ F.pathLength ρ x) (Q : Finset (Fin n)) :
+theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : Restriction n} {s : ℕ}
+    {x : BitString n} (hs : s ≤ F.pathLength ρ x) (Q : Finset (Fin n)) :
     F.decodeAux none (F.encode s ρ x).1 Q (F.encode s ρ x).2 = ρ.unassign Q := by
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing s ρ Q with
-  | _ k ih =>
   by_cases h : F.queried ρ = []
   · rw [encode_of_queried_eq_nil h]
     rfl
@@ -362,10 +359,12 @@ theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {s : ℕ} {x
         (fun _ hv => hv) (fun _ hv hv' => absurd hv hv'),
       Option.getD_some, decodeAux_stageCode htV h, Restriction.assign_assign,
       Restriction.assign_eq_self fun i hi => encode_assign_eq _ x hi,
-      ih _ (hk ▸ card_free_assign_lt h x) (by
+      decodeAux_encode hF (ρ := ρ.assign (F.queried ρ).toFinset x) (by
         rw [pathLength_of_queried_ne_nil h] at hs
-        omega) _ rfl]
+        omega)]
     exact Restriction.unassign_union_assign toFinset_queried_subset_free x
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt h x
 
 /-- **Razborov's decoding.** The encoding of a restriction with a query path of length at least
 `s` determines the restriction. -/
@@ -374,39 +373,36 @@ theorem decode_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {s : ℕ} {x : 
   rw [decode, decodeAux_encode hF hs, Restriction.unassign_empty]
 
 /-- The encoding fixes `s` more variables. -/
-theorem card_free_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {s : ℕ} {x : BitString n}
-    (hs : s ≤ F.pathLength ρ x) : #(F.encode s ρ x).1.free = #ρ.free - s := by
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing s ρ with
-  | _ k ih =>
+theorem card_free_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : Restriction n} {s : ℕ}
+    {x : BitString n} (hs : s ≤ F.pathLength ρ x) : #(F.encode s ρ x).1.free = #ρ.free - s := by
   by_cases h : F.queried ρ = []
   · rw [pathLength_of_queried_eq_nil h] at hs
     rw [encode_of_queried_eq_nil h, Nat.le_zero.1 hs, Nat.sub_zero]
-    exact hk
   have hnd := nodup_queried (ρ := ρ) hF
   by_cases hsV : s ≤ (F.queried ρ).length
   · rw [encode_of_le h hsV]
     dsimp only
     rw [Restriction.free_assign, card_sdiff_of_subset (toFinset_take_queried_subset_free s),
       List.toFinset_card_of_nodup ((List.take_sublist _ _).nodup hnd), List.length_take,
-      min_eq_left hsV, hk]
+      min_eq_left hsV]
   · rw [encode_of_lt h (by omega)]
     dsimp only
     have hlen := (List.toFinset_card_of_nodup hnd).symm.trans_le
       (card_le_card (toFinset_queried_subset_free (ρ := ρ)))
     rw [Restriction.free_assign, sdiff_eq_self_of_disjoint (disjoint_left.2 fun i hi hiV => by
         simp [Restriction.mem_free, encode_assign_eq _ x hiV] at hi),
-      ih _ (hk ▸ card_free_assign_lt h x) (by
+      card_free_encode hF (ρ := ρ.assign (F.queried ρ).toFinset x) (by
         rw [pathLength_of_queried_ne_nil h] at hs
-        omega) rfl,
+        omega),
       Restriction.free_assign, card_sdiff_of_subset toFinset_queried_subset_free,
       List.toFinset_card_of_nodup hnd]
     omega
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt h x
 
 /-- The code of a query path of length at least `s` has length `s`. -/
-theorem length_encode {s : ℕ} {x : BitString n} (hs : s ≤ F.pathLength ρ x) :
-    (F.encode s ρ x).2.length = s := by
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing s ρ with
-  | _ k ih =>
+theorem length_encode {ρ : Restriction n} {s : ℕ} {x : BitString n}
+    (hs : s ≤ F.pathLength ρ x) : (F.encode s ρ x).2.length = s := by
   by_cases h : F.queried ρ = []
   · rw [pathLength_of_queried_eq_nil h] at hs
     rw [encode_of_queried_eq_nil h, Nat.le_zero.1 hs]
@@ -416,16 +412,17 @@ theorem length_encode {s : ℕ} {x : BitString n} (hs : s ≤ F.pathLength ρ x)
     simp [hsV]
   · rw [encode_of_lt h (by omega)]
     dsimp only
-    rw [List.length_append, Term.length_stageCode, ih _ (hk ▸ card_free_assign_lt h x) (by
+    rw [List.length_append, Term.length_stageCode,
+      length_encode (ρ := ρ.assign (F.queried ρ).toFinset x) (by
         rw [pathLength_of_queried_ne_nil h] at hs
-        omega) rfl]
+        omega)]
     omega
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt h x
 
 /-- The positions recorded in a code are positions in terms of at most `k` literals. -/
 theorem fst_lt_of_mem_encode {k : ℕ} (hF : ∀ t ∈ F, t.length ≤ k) (s : ℕ) (ρ : Restriction n)
     (x : BitString n) {e : ℕ × Bool × Bool} (he : e ∈ (F.encode s ρ x).2) : e.1 < k := by
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing s ρ with
-  | _ m ih =>
   by_cases h : F.queried ρ = []
   · rw [encode_of_queried_eq_nil h] at he
     simp at he
@@ -439,7 +436,9 @@ theorem fst_lt_of_mem_encode {k : ℕ} (hF : ∀ t ∈ F, t.length ≤ k) (s : �
   · rw [encode_of_lt h (by omega), ht, Option.getD_some] at he
     rcases List.mem_append.1 he with he | he
     · exact (Term.fst_lt_of_mem_stageCode htV he).trans_le htk
-    · exact ih _ (hk ▸ card_free_assign_lt h x) _ _ he rfl
+    · exact fst_lt_of_mem_encode hF _ (ρ.assign (F.queried ρ).toFinset x) x he
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt h x
 
 /-- The codes of length `s` over positions below `k`. -/
 private theorem mem_image_ofFn {k s : ℕ} {c : List (ℕ × Bool × Bool)} (hc : c.length = s)

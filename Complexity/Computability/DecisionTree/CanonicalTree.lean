@@ -51,8 +51,11 @@ variable {n : ℕ}
 namespace Term
 
 /-- The restriction `ρ` falsifies the term `t`: it fixes one of its variables to the other value. -/
-def falsifiedBy (t : Term (Fin n)) (ρ : Restriction n) : Bool :=
-  t.any fun l => ρ l.1 == some !l.2
+def FalsifiedBy (t : Term (Fin n)) (ρ : Restriction n) : Prop :=
+  ∃ l ∈ t, ρ l.1 = some !l.2
+
+instance (t : Term (Fin n)) (ρ : Restriction n) : Decidable (t.FalsifiedBy ρ) :=
+  inferInstanceAs (Decidable (∃ l ∈ t, _))
 
 /-- The variables of the term `t` left free by `ρ`, in order. -/
 def freeVars (t : Term (Fin n)) (ρ : Restriction n) : List (Fin n) :=
@@ -60,22 +63,19 @@ def freeVars (t : Term (Fin n)) (ρ : Restriction n) : List (Fin n) :=
 
 variable {t : Term (Fin n)} {ρ : Restriction n}
 
-theorem falsifiedBy_eq_true_iff : t.falsifiedBy ρ = true ↔ ∃ l ∈ t, ρ l.1 = some !l.2 := by
-  simp [falsifiedBy]
-
 theorem mem_freeVars {v : Fin n} : v ∈ t.freeVars ρ ↔ ∃ b, (v, b) ∈ t ∧ ρ v = none := by
   simp [freeVars, Option.isNone_iff_eq_none]
 
 /-- A falsified term is false on every input filled from the restriction. -/
-theorem eval_fill_of_falsifiedBy (h : t.falsifiedBy ρ = true) (x : BitString n) :
+theorem eval_fill_of_falsifiedBy (h : t.FalsifiedBy ρ) (x : BitString n) :
     Term.eval (ρ.fill x) t = false := by
-  obtain ⟨l, hl, hρ⟩ := falsifiedBy_eq_true_iff.1 h
+  obtain ⟨l, hl, hρ⟩ := h
   rw [Bool.eq_false_iff, ne_eq, Term.eval_eq_true_iff, not_forall]
   exact ⟨l, fun h' => by simpa [Restriction.fill_of_eq_some hρ] using h' hl⟩
 
 /-- A term that is not falsified and has no free variable is true on every input filled from the
 restriction. -/
-theorem eval_fill_of_freeVars_eq_nil (h : t.falsifiedBy ρ = false) (hV : t.freeVars ρ = [])
+theorem eval_fill_of_freeVars_eq_nil (h : ¬ t.FalsifiedBy ρ) (hV : t.freeVars ρ = [])
     (x : BitString n) : Term.eval (ρ.fill x) t = true := by
   rw [Term.eval_eq_true_iff]
   intro l hl
@@ -84,7 +84,7 @@ theorem eval_fill_of_freeVars_eq_nil (h : t.falsifiedBy ρ = false) (hV : t.free
   | some b =>
     rw [Restriction.fill_of_eq_some hρ]
     by_contra hb
-    exact absurd (falsifiedBy_eq_true_iff.2 ⟨l, hl, Bool.eq_not_iff.2 hb ▸ hρ⟩) (by simp [h])
+    exact h ⟨l, hl, Bool.eq_not_iff.2 hb ▸ hρ⟩
 
 end Term
 
@@ -94,7 +94,7 @@ variable (F : DNF (Fin n))
 
 /-- The first term of `F` not falsified by `ρ`. -/
 def firstTerm (ρ : Restriction n) : Option (Term (Fin n)) :=
-  F.find? fun t => !t.falsifiedBy ρ
+  F.find? fun t => !decide (t.FalsifiedBy ρ)
 
 /-- The variables queried at `ρ`: the free variables of the first term not falsified by `ρ`. -/
 def queried (ρ : Restriction n) : List (Fin n) :=
@@ -128,7 +128,7 @@ theorem eval_fill_of_queried_eq_nil (h : F.queried ρ = []) (x : BitString n) :
   | some t =>
     simp only [hf, Option.map_some, Option.getD_some] at h
     have ht := List.mem_of_find?_eq_some hf
-    have hnf : t.falsifiedBy ρ = false := by simpa using List.find?_some hf
+    have hnf : ¬ t.FalsifiedBy ρ := by simpa using List.find?_some hf
     rw [Option.isSome_some, DNF.eval_eq_true_iff]
     exact ⟨t, ht, Term.eval_fill_of_freeVars_eq_nil hnf h x⟩
 
@@ -183,21 +183,19 @@ theorem pathLength_of_queried_ne_nil (h : F.queried ρ ≠ []) (x : BitString n)
 /-- The canonical tree computes the formula restricted by `ρ`. -/
 theorem eval_canonicalTree (ρ : Restriction n) (x : BitString n) :
     (F.canonicalTree ρ).eval x = DNF.eval (ρ.fill x) F := by
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing ρ with
-  | _ k ih =>
   by_cases h : F.queried ρ = []
   · rw [canonicalTree_of_queried_eq_nil h, eval_leaf, eval_fill_of_queried_eq_nil h,
       eval_fill_of_queried_eq_nil h]
   · rw [canonicalTree_of_queried_ne_nil h, eval_graft,
-      ih _ (hk ▸ card_free_assign_lt h _) _ rfl]
+      eval_canonicalTree _ x]
     exact congrArg (DNF.eval · F) (Restriction.fill_assign toFinset_queried_subset_free
       fun i hi => by simp [List.mem_toFinset.1 hi])
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt h _
 
 /-- The query path depends only on the free bits of the input. -/
-theorem pathLength_congr {x y : BitString n} (h : ∀ i ∈ ρ.free, x i = y i) :
+theorem pathLength_congr {ρ : Restriction n} {x y : BitString n} (h : ∀ i ∈ ρ.free, x i = y i) :
     F.pathLength ρ x = F.pathLength ρ y := by
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing ρ with
-  | _ k ih =>
   by_cases hq : F.queried ρ = []
   · rw [pathLength_of_queried_eq_nil hq, pathLength_of_queried_eq_nil hq]
   · have hassign : ρ.assign (F.queried ρ).toFinset x = ρ.assign (F.queried ρ).toFinset y := by
@@ -206,15 +204,15 @@ theorem pathLength_congr {x y : BitString n} (h : ∀ i ∈ ρ.free, x i = y i) 
       · simp [hi, h i (toFinset_queried_subset_free hi)]
       · simp [hi]
     rw [pathLength_of_queried_ne_nil hq, pathLength_of_queried_ne_nil hq, hassign,
-      ih _ (hk ▸ card_free_assign_lt hq y) (fun i hi => h i (by
+      pathLength_congr (ρ := ρ.assign (F.queried ρ).toFinset y) fun i hi => h i (by
         rw [Restriction.free_assign] at hi
-        exact (mem_sdiff.1 hi).1)) rfl]
+        exact (mem_sdiff.1 hi).1)]
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt hq y
 
 /-- The canonical tree is no deeper than its longest query path. -/
 theorem depth_canonicalTree_le (ρ : Restriction n) :
     (F.canonicalTree ρ).depth ≤ univ.sup (F.pathLength ρ) := by
-  induction hk : #ρ.free using Nat.strong_induction_on generalizing ρ with
-  | _ k ih =>
   by_cases h : F.queried ρ = []
   · simp [canonicalTree_of_queried_eq_nil h]
   rw [canonicalTree_of_queried_ne_nil h]
@@ -224,7 +222,7 @@ theorem depth_canonicalTree_le (ρ : Restriction n) :
       ((pathLength_of_queried_ne_nil h _).symm ▸ Nat.le_add_right _ _)
   refine (depth_graft_le V _ _ (d := univ.sup (F.pathLength ρ) - V.length) fun a => ?_).trans
     (by omega)
-  refine (ih _ (hk ▸ card_free_assign_lt h a) _ rfl).trans ?_
+  refine (depth_canonicalTree_le (ρ.assign V.toFinset a)).trans ?_
   obtain ⟨y, -, hy⟩ := exists_mem_eq_sup univ univ_nonempty
     (F.pathLength (ρ.assign V.toFinset a))
   rw [hy]
@@ -240,6 +238,8 @@ theorem depth_canonicalTree_le (ρ : Restriction n) :
     simp [x, show i ∉ V from fun h' => (mem_sdiff.1 hi).2 (List.mem_toFinset.2 h')]
   have := le_sup (f := F.pathLength ρ) (mem_univ x)
   omega
+termination_by #ρ.free
+decreasing_by exact card_free_assign_lt h a
 
 /-- If every query path is shorter than `s`, the restricted formula has decision tree depth less
 than `s`. -/
