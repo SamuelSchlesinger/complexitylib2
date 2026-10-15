@@ -26,7 +26,8 @@ the error. This is the next-bit theorem usually credited to Yao; the proof follo
 The proof is a hybrid argument. The `k`-th hybrid gives a test the first `k` bits of a generated
 output followed by uniform bits. Running the test on the `0`-th hybrid is the ideal experiment of
 Attack Game 3.1 and running it on the `m`-th is the real experiment, so the difference of the two
-acceptance probabilities telescopes into the gaps between adjacent hybrids. The predictor for bit
+acceptance probabilities telescopes into the gaps between adjacent hybrids; the hybrids and the
+telescoping hold for outputs over any finite alphabet. The predictor for bit
 `i` built from a test pads the first `i` bits with a uniform candidate bit and uniform later bits,
 runs the test, and keeps the candidate if the test accepts and flips it otherwise. By the
 distinguisher/predictor lemma [Boneh and Shoup, Lemma 3.5][BonehShoup2023] it is correct with
@@ -165,70 +166,71 @@ end Uniform
 
 section Hybrid
 
-variable {Seed : Type*} [Fintype Seed] [Nonempty Seed] {m : ℕ}
+variable {Seed α : Type*} [Fintype Seed] [Nonempty Seed] [Fintype α] [Nonempty α] {m : ℕ}
 
-/-- The `k`-th hybrid: the first `k` bits of the generator's output on a uniform seed, followed by
-independent uniform bits. It is Hybrid `m - k` of [Boneh and Shoup, Section 3.5.][BonehShoup2023] -/
-noncomputable def Generator.hybridDist (G : Generator Seed (Fin m → Bool)) (k : ℕ) :
-    PMF (Fin m → Bool) :=
+/-- The `k`-th hybrid: the first `k` symbols of the generator's output on a uniform seed, followed
+by independent uniform symbols. It is Hybrid `m - k` of
+[Boneh and Shoup, Section 3.5.][BonehShoup2023] -/
+noncomputable def Generator.hybridDist (G : Generator Seed (Fin m → α)) (k : ℕ) :
+    PMF (Fin m → α) :=
   G.outputDist.bind fun y =>
-    (uniformOfFintype (Fin m → Bool)).map fun z j => if (j : ℕ) < k then y j else z j
+    (uniformOfFintype (Fin m → α)).map fun z j => if (j : ℕ) < k then y j else z j
 
 /-- The `0`-th hybrid is uniform. -/
 @[simp]
-theorem Generator.hybridDist_zero (G : Generator Seed (Fin m → Bool)) :
-    G.hybridDist 0 = uniformOfFintype (Fin m → Bool) := by
+theorem Generator.hybridDist_zero (G : Generator Seed (Fin m → α)) :
+    G.hybridDist 0 = uniformOfFintype (Fin m → α) := by
   simp only [Generator.hybridDist, Nat.not_lt_zero, ite_false, PMF.bind_const]
   exact PMF.map_id _
 
 /-- The `k`-th hybrid with `m ≤ k` is the output distribution of the generator. -/
-theorem Generator.hybridDist_of_le (G : Generator Seed (Fin m → Bool)) {k : ℕ} (hk : m ≤ k) :
+theorem Generator.hybridDist_of_le (G : Generator Seed (Fin m → α)) {k : ℕ} (hk : m ≤ k) :
     G.hybridDist k = G.outputDist := by
-  have h (y : Fin m → Bool) :
-      (fun (z : Fin m → Bool) (j : Fin m) => if (j : ℕ) < k then y j else z j) =
+  have h (y : Fin m → α) :
+      (fun (z : Fin m → α) (j : Fin m) => if (j : ℕ) < k then y j else z j) =
         Function.const _ y := by
     funext z j
     simp [j.isLt.trans_le hk]
   simp only [Generator.hybridDist, h, PMF.map_const, PMF.bind_pure]
 
 /-- Run a test on the `k`-th hybrid. -/
-noncomputable def Generator.hybridExperiment (G : Generator Seed (Fin m → Bool))
-    (adversary : Adversary (Fin m → Bool)) (k : ℕ) : PMF Bool :=
+noncomputable def Generator.hybridExperiment (G : Generator Seed (Fin m → α))
+    (adversary : Adversary (Fin m → α)) (k : ℕ) : PMF Bool :=
   (G.hybridDist k).bind adversary
 
 /-- A test run on the `0`-th hybrid is the ideal experiment of Attack Game 3.1. -/
 @[simp]
-theorem Generator.hybridExperiment_zero (G : Generator Seed (Fin m → Bool))
-    (adversary : Adversary (Fin m → Bool)) :
+theorem Generator.hybridExperiment_zero (G : Generator Seed (Fin m → α))
+    (adversary : Adversary (Fin m → α)) :
     G.hybridExperiment adversary 0 = idealExperiment adversary := by
   rw [Generator.hybridExperiment, Generator.hybridDist_zero, idealExperiment]
 
 /-- A test run on the `k`-th hybrid with `m ≤ k` is the real experiment of Attack Game 3.1. -/
-theorem Generator.hybridExperiment_of_le (G : Generator Seed (Fin m → Bool))
-    (adversary : Adversary (Fin m → Bool)) {k : ℕ} (hk : m ≤ k) :
+theorem Generator.hybridExperiment_of_le (G : Generator Seed (Fin m → α))
+    (adversary : Adversary (Fin m → α)) {k : ℕ} (hk : m ≤ k) :
     G.hybridExperiment adversary k = G.realExperiment adversary := by
   rw [Generator.hybridExperiment, G.hybridDist_of_le hk, Generator.realExperiment]
 
-private theorem Generator.hybridExperiment_eq_bind (G : Generator Seed (Fin m → Bool))
-    (adversary : Adversary (Fin m → Bool)) (k : ℕ) :
+private theorem Generator.hybridExperiment_eq_bind (G : Generator Seed (Fin m → α))
+    (adversary : Adversary (Fin m → α)) (k : ℕ) :
     G.hybridExperiment adversary k = G.outputDist.bind fun y =>
-      (uniformOfFintype (Fin m → Bool)).bind fun z =>
+      (uniformOfFintype (Fin m → α)).bind fun z =>
         adversary fun j => if (j : ℕ) < k then y j else z j := by
   simp only [Generator.hybridExperiment, Generator.hybridDist, PMF.bind_bind, PMF.bind_map]
   rfl
 
 /-- The `i`-th hybrid gap of a test: the probability that it accepts the `(i + 1)`-st hybrid
-minus the probability that it accepts the `i`-th, in which bit `i` is uniform instead of
+minus the probability that it accepts the `i`-th, in which symbol `i` is uniform instead of
 generated. -/
-noncomputable def Generator.hybridGap (G : Generator Seed (Fin m → Bool))
-    (adversary : Adversary (Fin m → Bool)) (i : Fin m) : ℝ :=
+noncomputable def Generator.hybridGap (G : Generator Seed (Fin m → α))
+    (adversary : Adversary (Fin m → α)) (i : Fin m) : ℝ :=
   (G.hybridExperiment adversary ((i : ℕ) + 1) true).toReal -
     (G.hybridExperiment adversary i true).toReal
 
 /-- The hybrid gaps of a test telescope to the probability that it accepts in the real experiment
 minus the probability that it accepts in the ideal experiment. -/
-theorem Generator.sum_hybridGap (G : Generator Seed (Fin m → Bool))
-    (adversary : Adversary (Fin m → Bool)) :
+theorem Generator.sum_hybridGap (G : Generator Seed (Fin m → α))
+    (adversary : Adversary (Fin m → α)) :
     ∑ i, G.hybridGap adversary i =
       (G.realExperiment adversary true).toReal - (idealExperiment adversary true).toReal := by
   rw [← G.hybridExperiment_of_le adversary le_rfl, ← G.hybridExperiment_zero adversary]
@@ -239,8 +241,8 @@ theorem Generator.sum_hybridGap (G : Generator Seed (Fin m → Bool))
 /-- **The hybrid argument.** If `0 < m` and a test accepts in the real experiment with probability
 at least `ε` more than in the ideal experiment, then one of its hybrid gaps is at least
 `ε / m`. -/
-theorem Generator.exists_div_le_hybridGap (G : Generator Seed (Fin m → Bool))
-    (adversary : Adversary (Fin m → Bool)) (hm : 0 < m) {ε : ℝ}
+theorem Generator.exists_div_le_hybridGap (G : Generator Seed (Fin m → α))
+    (adversary : Adversary (Fin m → α)) (hm : 0 < m) {ε : ℝ}
     (hε : ε ≤ (G.realExperiment adversary true).toReal -
       (idealExperiment adversary true).toReal) :
     ∃ i, ε / m ≤ G.hybridGap adversary i := by
