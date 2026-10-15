@@ -418,6 +418,8 @@ theorem sum_card_filter_extensions (P : Restriction n → Prop) [DecidablePred P
 
 end Restriction
 
+variable {n : ℕ}
+
 /-- The subfunctions of `f` on the bits `Y`: for each assignment `z` of the other bits, the
 function that reads the bits in `Y` from its input and the other bits from `z`. -/
 def subfunctions (f : BooleanFunction n) (Y : Finset (Fin n)) : Finset (BooleanFunction n) :=

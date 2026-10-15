@@ -147,7 +147,7 @@ instance [DecidableEq State] (cfg : Cfg k Bool State input) :
     inferInstanceAs (Decidable (_ = _))
   | .sit _ => inferInstanceAs (Decidable (_ ∧ _ ∧ _))
 
-variable {cfg : Cfg k Bool State input}
+variable {cfg : Cfg k Bool State input} {i : Fin k}
 
 @[simp] theorem holds_state {q : Option State} : (state q).Holds cfg ↔ cfg.state = q := Iff.rfl
 @[simp] theorem holds_inPos {j : ℕ} :
