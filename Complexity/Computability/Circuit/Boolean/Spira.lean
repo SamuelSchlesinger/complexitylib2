@@ -183,7 +183,7 @@ private theorem exists_depthWith_le_two_mul (k : ℕ) (F : Formula signature n)
     by_cases hL : F.leafSize ≤ 1
     · obtain ⟨G, hG, hd⟩ := exists_depthWith_eq_zero F hL
       exact ⟨G, hG, by omega⟩
-    obtain ⟨G, C, hC, h₁, h₂, hls⟩ := exists_split (fun op => by cases op <;> simp)
+    obtain ⟨G, C, hC, h₁, h₂, hls⟩ := exists_split Boolean.arity_le_two
       (L := F.leafSize) (by omega) F (by omega)
     -- a third of the leaves less is small enough for `k`
     have shrink : ∀ m, 3 * m ≤ 2 * F.leafSize → 2 ^ k * m ≤ 3 ^ k := fun m hm => by

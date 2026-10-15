@@ -22,9 +22,10 @@ import Mathlib.Data.Nat.Bitwise
 different (`elementDistinctness`). With blocks of `2 t` bits and `m ≤ 2 ^ t`, it has at least
 `2 ^ (t (m - 1))` subfunctions on each block: give the other blocks the values `(j, wⱼ)`, tagged by
 their position `j`, and each choice of the `wⱼ` is told apart by its own set of forbidden values
-for the remaining block. Nechiporuk's bound then shows that a De Morgan formula for it of leaf size
-`L` has `m (m - 1) t ≤ 4 L + m` (`mul_le_leafSize_of_computes_elementDistinctness`)
-[Nechiporuk1966], [Jukna, Section 6.5][Jukna2012]. Taking `t = ⌈log₂ m⌉`
+for the remaining block. Nechiporuk's bound then shows that a formula for it of leaf size `L` over
+any basis of fan-in at most two, such as the full binary basis, has `m (m - 1) t ≤ 4 L + m`
+(`mul_le_leafSize_of_computes_elementDistinctness`) [Nechiporuk1966],
+[Jukna, Section 6.5][Jukna2012]. Taking `t = ⌈log₂ m⌉`
 (`mul_clog_le_leafSize_of_computes_elementDistinctness`), the `n = 2 m ⌈log₂ m⌉` bits need leaf
 size about `m ^ 2 log₂ m / 4`, which is of order `n ^ 2 / log n`.
 
@@ -143,14 +144,15 @@ theorem two_pow_le_card_subfunctions_elementDistinctness (hm : m ≤ 2 ^ t) (i :
   rw [← hcard, ← card_univ]
   exact card_le_card_of_injOn g (fun u _ => mem_subfunctions.2 ⟨tagged (w u), rfl⟩) hinj
 
-/-- **Nechiporuk's bound for element distinctness.** For `m ≤ 2 ^ t`, a De Morgan formula deciding
-whether `m` blocks of `2 t` bits are pairwise different has leaf size `L` with
-`m (m - 1) t ≤ 4 L + m`. -/
-theorem mul_le_leafSize_of_computes_elementDistinctness (hm : m ≤ 2 ^ t)
-    {F : Formula signature (m * (t + t))}
-    (hF : F.Computes interpretation (elementDistinctness m (t + t))) :
+/-- **Nechiporuk's bound for element distinctness.** For `m ≤ 2 ^ t`, a formula over a basis of
+fan-in at most two deciding whether `m` blocks of `2 t` bits are pairwise different has leaf size
+`L` with `m (m - 1) t ≤ 4 L + m`. -/
+theorem mul_le_leafSize_of_computes_elementDistinctness {σ : Signature}
+    (harity : ∀ op, σ.Arity op ≤ 2) {I : Interpretation σ Bool} (hm : m ≤ 2 ^ t)
+    {F : Formula σ (m * (t + t))} (hF : F.Computes I (elementDistinctness m (t + t))) :
     m * (m - 1) * t ≤ 4 * F.leafSize + m := by
-  have h := sum_clog_card_subfunctions_le hF (s := univ) (pairwiseDisjoint_blockBits (t + t))
+  have h := sum_clog_card_subfunctions_le harity hF (s := univ)
+    (pairwiseDisjoint_blockBits (t + t))
   rw [card_univ, Fintype.card_fin] at h
   calc m * (m - 1) * t = ∑ _i : Fin m, t * (m - 1) := by
         rw [sum_const, card_univ, Fintype.card_fin, smul_eq_mul, mul_comm t, mul_assoc]
@@ -159,12 +161,13 @@ theorem mul_le_leafSize_of_computes_elementDistinctness (hm : m ≤ 2 ^ t)
           (Nat.clog_mono_right 2 (two_pow_le_card_subfunctions_elementDistinctness hm i))
     _ ≤ 4 * F.leafSize + m := h
 
-/-- With blocks of `2 ⌈log₂ m⌉` bits, a De Morgan formula for element distinctness of `m` blocks
-has leaf size `L` with `m (m - 1) ⌈log₂ m⌉ ≤ 4 L + m`. -/
-theorem mul_clog_le_leafSize_of_computes_elementDistinctness
-    {F : Formula signature (m * (Nat.clog 2 m + Nat.clog 2 m))}
-    (hF : F.Computes interpretation (elementDistinctness m (Nat.clog 2 m + Nat.clog 2 m))) :
+/-- With blocks of `2 ⌈log₂ m⌉` bits, a formula over a basis of fan-in at most two for element
+distinctness of `m` blocks has leaf size `L` with `m (m - 1) ⌈log₂ m⌉ ≤ 4 L + m`. -/
+theorem mul_clog_le_leafSize_of_computes_elementDistinctness {σ : Signature}
+    (harity : ∀ op, σ.Arity op ≤ 2) {I : Interpretation σ Bool}
+    {F : Formula σ (m * (Nat.clog 2 m + Nat.clog 2 m))}
+    (hF : F.Computes I (elementDistinctness m (Nat.clog 2 m + Nat.clog 2 m))) :
     m * (m - 1) * Nat.clog 2 m ≤ 4 * F.leafSize + m :=
-  mul_le_leafSize_of_computes_elementDistinctness (Nat.le_pow_clog (by decide) m) hF
+  mul_le_leafSize_of_computes_elementDistinctness harity (Nat.le_pow_clog (by decide) m) hF
 
 end Cslib.Circuits.Boolean

@@ -41,6 +41,7 @@ formulas are at least as strong as for formulas whose negations sit at the leave
 * `Cslib.Circuits.Formula.exists_computes`: every Boolean function has a De Morgan formula.
 * `Cslib.Circuits.Boolean.exists_computes_depthWith_eq_formulaDepth`: some formula attains the
   formula depth.
+* `Cslib.Circuits.Boolean.arity_le_two`: the De Morgan basis has fan-in at most two.
 
 ## References
 
@@ -278,6 +279,10 @@ theorem exists_computes (f : BooleanFunction n) :
 end Formula
 
 namespace Boolean
+
+/-- The De Morgan basis has fan-in at most two. -/
+theorem arity_le_two (op : Op) : signature.Arity op ≤ 2 := by
+  cases op <;> simp
 
 variable {n : ℕ} {f : BooleanFunction n}
 

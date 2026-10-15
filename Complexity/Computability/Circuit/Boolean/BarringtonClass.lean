@@ -99,7 +99,7 @@ theorem mem_NC_one_iff_formulaDepth_le :
       omega
     refine ⟨F.toCircuit, hF.toCircuit, F.depth_toCircuit_le.trans hd', ?_⟩
     rw [F.size_toCircuit]
-    exact (F.size_lt_pow_depth (fun op => by cases op <;> simp) le_rfl).le.trans
+    exact (F.size_lt_pow_depth Boolean.arity_le_two le_rfl).le.trans
       (Nat.pow_le_pow_right two_pos hd')
 
 /-! ### Barrington's theorem -/
