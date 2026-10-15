@@ -2397,4 +2397,106 @@ info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_card_of_aggregates'
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_card_of_aggregates
 
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.exists_width_le_of_edgeScore' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.exists_width_le_of_edgeScore
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.exists_width_le_of_vertexScore' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.exists_width_le_of_vertexScore
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.core_density' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.core_density
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.Compression.Saturated.mul_card_external_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.Compression.Saturated.mul_card_external_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.measureReal_straddleEvent_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.measureReal_straddleEvent_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.exists_good_sample' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.exists_good_sample
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.circuitCoefficient_ge_456' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.circuitCoefficient_ge_456
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.exists_width_le_gaussianCoefficient' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.exists_width_le_gaussianCoefficient
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.cubicLayoutBound_gaussian' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.cubicLayoutBound_gaussian
+
+/--
+info: 'Cslib.Circuits.Frontier.layoutBound_gaussian' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.layoutBound_gaussian
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.exists_width_le_vertexCoefficient' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.exists_width_le_vertexCoefficient
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.degreeCoefficient_three_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.degreeCoefficient_three_le
+
+/--
+info: 'Cslib.Circuits.Frontier.layoutBound_degree' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.layoutBound_degree
+
+/--
+info: 'Cslib.Circuits.Frontier.layoutBound_one_third' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.layoutBound_one_third
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_innerSize
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_114_div_25_sub_mul_lt_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_114_div_25_sub_mul_lt_innerSize
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_four_sub_mul_lt_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_four_sub_mul_lt_innerSize
+
 end ComplexityTests.Axioms

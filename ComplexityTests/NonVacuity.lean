@@ -28,6 +28,7 @@ import Complexity.Computability.Circuit.Frontier.Unconditional
 import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 import Complexity.Computability.Circuit.Frontier.Decomposable
+import Complexity.Computability.Circuit.Frontier.FanInTwo
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.GapTheorem
 import Complexity.Computability.PCP.Preprocess
@@ -591,5 +592,36 @@ example : conjunctionDAG.accepted = {x | x 0 = true ∧ x 1 = true} := by
   exact Fin.forall_fin_two
 
 end FrontierDecomposable
+
+section FrontierGaussian
+
+open Cslib.Circuits.Frontier
+
+/-- `m` disjoint theta graphs, each two vertices joined by three parallel edges. -/
+def thetaGraphs (m : ℕ) : Multigraph (Fin m × Bool) (Fin m × Fin 3) :=
+  ⟨fun e => (e.1, false), fun e => (e.1, true)⟩
+
+theorem thetaGraphs_loopless (m : ℕ) : (thetaGraphs m).Loopless :=
+  fun e h => by simp [thetaGraphs] at h
+
+theorem ncard_incidenceSet_thetaGraphs (m : ℕ) (v : Fin m × Bool) :
+    ((thetaGraphs m).incidenceSet v).ncard = 3 := by
+  obtain ⟨i, b⟩ := v
+  have : (thetaGraphs m).incidenceSet (i, b) = Set.range fun j : Fin 3 => (i, j) := by
+    ext ⟨i', j⟩
+    cases b <;> simp [thetaGraphs, Multigraph.mem_incidenceSet, eq_comm]
+  rw [this, Set.ncard_range_of_injective fun j j' h => by simpa using h]
+  simp
+
+/-- The hypotheses of the Gaussian layouts of cubic multigraphs can be met in every size, and
+large theta graphs get layouts of width at most `(p + 1)` times their number of vertices. -/
+example : ∃ N₀ : ℕ, ∀ m : ℕ, N₀ < 2 * m → ∃ σ : Layout (Fin m × Bool),
+    ((thetaGraphs m).width σ : ℝ) ≤
+      (Gaussian.gaussianCoefficient + 1) * Nat.card (Fin m × Bool) := by
+  obtain ⟨N₀, hN₀⟩ := Gaussian.exists_width_le_gaussianCoefficient one_pos
+  exact ⟨N₀, fun m hm => hN₀ _ _ _ (thetaGraphs_loopless m) (ncard_incidenceSet_thetaGraphs m)
+    (by simpa [mul_comm] using hm)⟩
+
+end FrontierGaussian
 
 end ComplexityTests.NonVacuity
