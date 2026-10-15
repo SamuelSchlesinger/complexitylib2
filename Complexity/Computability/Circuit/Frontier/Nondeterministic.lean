@@ -32,8 +32,8 @@ circuits, uniformly in the number of witness inputs:
 `(r - 1) s > (1 + 1/A - ε) n`
 
 under the layout hypothesis `LayoutBound (r + 1) A`
-(`eventually_lt_mul_innerSize_nondeterministic`), and `(r - 1) s > (2 - ε) n` unconditionally
-(`eventually_two_sub_mul_lt_mul_innerSize_nondeterministic`).
+(`eventually_lt_mul_innerSize_of_nondeterministicDecides`), and `(r - 1) s > (2 - ε) n`
+unconditionally (`eventually_two_sub_mul_lt_mul_innerSize_of_nondeterministicDecides`).
 
 ## Main definitions
 
@@ -47,10 +47,10 @@ under the layout hypothesis `LayoutBound (r + 1) A`
 * `Cslib.Circuits.Frontier.Compiler.accepted_hiddenNetwork`: exactness of the hidden network.
 * `Cslib.Circuits.Frontier.exists_graph_of_nondeterministicDecides`: the reduction theorem for
   nondeterministic circuits.
-* `Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_nondeterministic`: the frontier lower bound
-  for nondeterministic circuits, conditional on the layout hypothesis.
-* `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_innerSize_nondeterministic`: the
-  unconditional frontier lower bound for nondeterministic circuits.
+* `Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_of_nondeterministicDecides`: the frontier
+  lower bound for nondeterministic circuits, conditional on the layout hypothesis.
+* `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_innerSize_of_nondeterministicDecides`:
+  the unconditional frontier lower bound for nondeterministic circuits.
 -/
 
 @[expose] public section
@@ -236,8 +236,9 @@ hypothesis for maximum degree `r + 1` with coefficient `A > 0`. Let `S_n ⊆ U^n
 every circuit of fan-in at most `r` with any number `k` of witness inputs deciding `S_n`
 nondeterministically, over any basis and interpretation on `U`, has `s` inner gates with
 `(r - 1) s > (1 + 1/A - ε) n`. -/
-theorem eventually_lt_mul_innerSize_nondeterministic {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
-    (hlayout : LayoutBound (r + 1) A) (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
+theorem eventually_lt_mul_innerSize_of_nondeterministicDecides {r : ℕ} (hr : 2 ≤ r) {A : ℝ}
+    (hA : 0 < A) (hlayout : LayoutBound (r + 1) A)
+    (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
     (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
     (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
       fun n => (n : ℝ))
@@ -254,12 +255,12 @@ theorem eventually_lt_mul_innerSize_nondeterministic {r : ℕ} (hr : 2 ≤ r) {A
 
 /-- **The frontier lower bound for nondeterministic circuits of fan-in two.** Assume the layout
 hypothesis for subcubic graphs with coefficient `A > 0`. Under the hypotheses of
-`eventually_lt_mul_innerSize_nondeterministic`, for every `ε > 0` and all large `n`, every
-circuit of fan-in at most two with any number of witness inputs deciding `S_n`
+`eventually_lt_mul_innerSize_of_nondeterministicDecides`, for every `ε > 0` and all large `n`,
+every circuit of fan-in at most two with any number of witness inputs deciding `S_n`
 nondeterministically, over any basis and interpretation on `U`, has more than `(1 + 1/A - ε) n`
 inner gates. -/
-theorem eventually_lt_innerSize_nondeterministic {A : ℝ} (hA : 0 < A) (hlayout : LayoutBound 3 A)
-    (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
+theorem eventually_lt_innerSize_of_nondeterministicDecides {A : ℝ} (hA : 0 < A)
+    (hlayout : LayoutBound 3 A) (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
     (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
     (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
       fun n => (n : ℝ))
@@ -267,8 +268,8 @@ theorem eventually_lt_innerSize_nondeterministic {A : ℝ} (hA : 0 < A) (hlayout
     ∀ᶠ n in atTop, ∀ (k : ℕ) (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
       (c : Circuit σ (n + k) 1), c.FanInAtMost 2 → c.NondeterministicDecides I Acc (S n) →
         (1 + 1 / A - ε) * n < c.innerSize := by
-  filter_upwards [eventually_lt_mul_innerSize_nondeterministic le_rfl hA hlayout hfree hK hdense
-    hε] with n hn
+  filter_upwards [eventually_lt_mul_innerSize_of_nondeterministicDecides le_rfl hA hlayout hfree hK
+    hdense hε] with n hn
   intro k σ I Acc c hfan hS
   simpa only [Nat.cast_ofNat, show (2 : ℝ) - 1 = 1 by norm_num, one_mul] using
     hn k σ I Acc c hfan hS
@@ -279,7 +280,7 @@ with `log K_n = o(n)` and `n log |U| - log |S_n| = o(n)`. Then for every `ε > 0
 `n`, every circuit of fan-in at most `r` with any number of witness inputs deciding `S_n`
 nondeterministically, over any basis and interpretation on `U`, has `s` inner gates with
 `(r - 1) s > (2 - ε) n`. -/
-theorem eventually_two_sub_mul_lt_mul_innerSize_nondeterministic {r : ℕ} (hr : 2 ≤ r)
+theorem eventually_two_sub_mul_lt_mul_innerSize_of_nondeterministicDecides {r : ℕ} (hr : 2 ≤ r)
     (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
     (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
     (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
@@ -289,15 +290,15 @@ theorem eventually_two_sub_mul_lt_mul_innerSize_nondeterministic {r : ℕ} (hr :
       (c : Circuit σ (n + k) 1), c.FanInAtMost r → c.NondeterministicDecides I Acc (S n) →
         (2 - ε) * n < (r - 1) * c.innerSize := by
   simpa only [div_one, one_add_one_eq_two] using
-    eventually_lt_mul_innerSize_nondeterministic hr one_pos (layoutBound_one (r + 1)) hfree hK
-      hdense hε
+    eventually_lt_mul_innerSize_of_nondeterministicDecides hr one_pos (layoutBound_one (r + 1))
+      hfree hK hdense hε
 
 /-- **The unconditional frontier lower bound for nondeterministic circuits of fan-in two.** Under
-the hypotheses of `eventually_two_sub_mul_lt_mul_innerSize_nondeterministic`, for every `ε > 0`
-and all large `n`, every circuit of fan-in at most two with any number of witness inputs deciding
-`S_n` nondeterministically, over any basis and interpretation on `U`, has more than `(2 - ε) n`
-inner gates. -/
-theorem eventually_two_sub_mul_lt_innerSize_nondeterministic
+the hypotheses of `eventually_two_sub_mul_lt_mul_innerSize_of_nondeterministicDecides`, for every
+`ε > 0` and all large `n`, every circuit of fan-in at most two with any number of witness inputs
+deciding `S_n` nondeterministically, over any basis and interpretation on `U`, has more than
+`(2 - ε) n` inner gates. -/
+theorem eventually_two_sub_mul_lt_innerSize_of_nondeterministicDecides
     (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
     (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
     (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
@@ -307,6 +308,7 @@ theorem eventually_two_sub_mul_lt_innerSize_nondeterministic
       (c : Circuit σ (n + k) 1), c.FanInAtMost 2 → c.NondeterministicDecides I Acc (S n) →
         (2 - ε) * n < c.innerSize := by
   simpa only [div_one, one_add_one_eq_two] using
-    eventually_lt_innerSize_nondeterministic one_pos (layoutBound_one 3) hfree hK hdense hε
+    eventually_lt_innerSize_of_nondeterministicDecides one_pos (layoutBound_one 3) hfree hK hdense
+      hε
 
 end Cslib.Circuits.Frontier

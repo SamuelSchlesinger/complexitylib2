@@ -2290,16 +2290,16 @@ info: 'Cslib.Circuits.Frontier.exists_graph_of_nondeterministicDecides' depends 
 #print axioms Cslib.Circuits.Frontier.exists_graph_of_nondeterministicDecides
 
 /--
-info: 'Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_nondeterministic' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_of_nondeterministicDecides' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_nondeterministic
+#print axioms Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_of_nondeterministicDecides
 
 /--
-info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_nondeterministic' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_of_nondeterministicDecides' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_nondeterministic
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_of_nondeterministicDecides
 
 /--
 info: 'Cslib.Circuits.DecomposableDAG.ncard_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
