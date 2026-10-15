@@ -1616,4 +1616,52 @@ info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess' depends on axioms: [pro
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess
 
+/--
+info: 'Relation.relatesWithinSteps_add_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.relatesWithinSteps_add_iff
+
+/--
+info: 'Relation.relatesWithinSteps_two_pow_succ_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.relatesWithinSteps_two_pow_succ_iff
+
+/--
+info: 'Relation.reflTransGen_iff_relatesWithinSteps_two_pow_clog' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.reflTransGen_iff_relatesWithinSteps_two_pow_clog
+
+/--
+info: 'Relation.reachableWithin_eq_of_card_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.reachableWithin_eq_of_card_le
+
+/--
+info: 'Relation.IsRoundList.mem_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.IsRoundList.mem_iff
+
+/--
+info: 'Relation.exists_isRoundList' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.exists_isRoundList
+
+/--
+info: 'Relation.not_relatesWithinSteps_succ_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.not_relatesWithinSteps_succ_iff
+
+/--
+info: 'Relation.not_reflTransGen_iff_exists_isRoundList' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Relation.not_reflTransGen_iff_exists_isRoundList
+
 end ComplexityTests.Axioms

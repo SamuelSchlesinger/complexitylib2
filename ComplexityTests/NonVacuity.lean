@@ -22,6 +22,8 @@ import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
+import Complexity.Foundations.Relation.InductiveCounting
+import Mathlib.Tactic.FinCases
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -263,5 +265,26 @@ example (φ : CNF ℕ) (hφ : φ = [[(0, true)], [(0, false)]]) :
   exact lt_of_lt_of_le (by positivity) (ConstraintGraph.le_unsatVal_preprocess _)
 
 end PCP
+
+/-- A round list certifies unreachability: on `Fin 3` with the successor relation, `0` is not
+reachable from `1`, certified by the list `[1, 2]` of everything reachable within two steps. -/
+example : ¬ Relation.ReflTransGen (fun i j : Fin 3 => j.val = i.val + 1) 1 0 := by
+  open Relation in
+  have hsub : reachableWithin (fun i j : Fin 3 => j.val = i.val + 1) 1 2 ⊆ {1, 2} := by
+    intro j hj
+    have hle : (1 : Fin 3).val ≤ j.val := by
+      induction (mem_reachableWithin.mp hj).reflTransGen with
+      | refl => exact le_rfl
+      | tail _ h ih => omega
+    fin_cases j <;> simp_all
+  open Relation in
+  refine (not_reflTransGen_iff_exists_isRoundList (N := 2) (by simp)).mpr
+    ⟨[1, 2], ⟨by decide, ?_, ?_⟩, by decide⟩
+  · simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+    exact ⟨Relation.RelatesWithinSteps.refl 1 |>.mono (by omega),
+      (Relation.RelatesWithinSteps.single (by decide)).mono (by omega)⟩
+  · refine (Set.encard_le_encard hsub).trans ?_
+    rw [Set.encard_pair (by decide)]
+    simp
 
 end ComplexityTests.NonVacuity

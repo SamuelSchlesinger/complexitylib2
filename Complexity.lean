@@ -193,6 +193,8 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
+public import Complexity.Foundations.Relation.InductiveCounting
+public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Init
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction

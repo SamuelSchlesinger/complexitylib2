@@ -354,7 +354,7 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Nisan–Wigderson sampling layer and the Kt step | `Metacomplexity/NisanWigderson/Reconstruction/**`, `ListDecoding` | after Kolmogorov |
 | Second-order logic, FO interpretations and reductions, order independence | `DescriptiveComplexity/{SecondOrder,Interpretation,…}` | done (`Logics/{FirstOrder,SecondOrder}`); order-invariant queries and congruences open |
 | Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | queued |
-| Finite cores of Savitch and of inductive counting | `Classes/Containments/Internal/ReachIn`, `InductiveCounting`, `CountingCert` | queued |
+| Finite cores of Savitch and of inductive counting | `Classes/Containments/Internal/ReachIn`, `InductiveCounting`, `CountingCert` | done (`Foundations/Relation/`) |
 | Depth-two threshold circuit for parity | `Circuits/Threshold/Parity` | queued |
 | Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | multi-batch, later |
 | Class-level results (Savitch, hierarchies, `PH ⊆ PSPACE`, Sipser–Lautemann, Cobham, `PCP = NP`, RAM-P = P, …) | `Classes/**`, `Models/**` | blocked on the polynomial-time calculus |
