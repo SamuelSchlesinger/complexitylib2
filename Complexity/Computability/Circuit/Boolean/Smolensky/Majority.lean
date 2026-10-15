@@ -14,7 +14,7 @@ public import Complexity.Computability.Circuit.Boolean.TC0
 # Majority is not in AC⁰[p], and TC⁰ is not contained in AC⁰[p]
 
 The AC⁰[p] basis contains the unbounded fan-in basis, so parity reduces to majority there in
-constant depth (`Unbounded.parity_mem_of_majority_mem`). As parity is not in AC⁰[p] for an odd
+constant depth (`ConstDepth.parity_mem_of_majority_mem`). As parity is not in AC⁰[p] for an odd
 prime `p` (`parity_notMem_AC0Mod`), neither is majority, and since majority is in TC⁰,
 **TC⁰ is not contained in AC⁰[p]** [Razborov1987], [Smolensky1987].
 
@@ -38,12 +38,11 @@ namespace Cslib.Circuits.Boolean.Smolensky
 variable {p : ℕ} [Fact p.Prime]
 
 /-- **Majority is not in AC⁰[p]** for an odd prime `p`. -/
-theorem majority_notMem_AC0Mod (hp2 : p ≠ 2) : Language.ofSlices majority ∉ ModBasis.AC0Mod p :=
-  fun h => parity_notMem_AC0Mod hp2
-    (Unbounded.parity_mem_of_majority_mem (φ := ModBasis.ofUnbounded) (fun _ _ => rfl) h)
+theorem majority_notMem_AC0Mod (hp2 : p ≠ 2) : Language.ofSlices majority ∉ AC0Mod p :=
+  fun h => parity_notMem_AC0Mod hp2 (ConstDepth.parity_mem_of_majority_mem Unbounded.toExt h)
 
 /-- **TC⁰ is not contained in AC⁰[p]** for an odd prime `p`. -/
-theorem TC0_not_subset_AC0Mod (hp2 : p ≠ 2) : ¬ MajorityBasis.TC0 ⊆ ModBasis.AC0Mod p :=
-  fun h => majority_notMem_AC0Mod hp2 (h MajorityBasis.majority_mem_TC0)
+theorem TC0_not_subset_AC0Mod (hp2 : p ≠ 2) : ¬ TC0 ⊆ AC0Mod p :=
+  fun h => majority_notMem_AC0Mod hp2 (h majority_mem_TC0)
 
 end Cslib.Circuits.Boolean.Smolensky

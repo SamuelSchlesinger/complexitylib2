@@ -7,8 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Init
-public import Cslib.Computability.Circuit.Basic
+public import Complexity.Computability.Circuit.MapOp
+public import Cslib.Foundations.Data.BitString
 
 /-!
 # The Boolean basis with unbounded fan-in
@@ -17,11 +17,18 @@ The basis of AC⁰: negation, and conjunctions and disjunctions of any number of
 and formulas over this basis of constant depth are the setting of Håstad's lower bound for parity.
 The conjunction and the disjunction of no arguments are the constants `true` and `false`.
 
+Adding one gate of every arity, computing a given family of Boolean functions `g`, gives the
+bases of TC⁰ (majority gates) and AC⁰[q] (`MOD_q` gates): `extSignature` and
+`extInterpretation g`, into which the unbounded fan-in basis maps by `toExt`.
+
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.Unbounded.signature`: negation, and conjunction and disjunction of every
   arity.
 * `Cslib.Circuits.Boolean.Unbounded.interpretation`: their Boolean meaning.
+* `Cslib.Circuits.Boolean.Unbounded.extSignature`,
+  `Cslib.Circuits.Boolean.Unbounded.extInterpretation`: the basis with one extra gate of every
+  arity.
 -/
 
 @[expose] public section
@@ -66,5 +73,45 @@ def interpretation : Interpretation signature Bool
 @[simp] theorem interpretation_or (m : ℕ) (x : Fin m → Bool) :
     interpretation (.or m) x = decide (∃ j, x j = true) :=
   rfl
+
+/-- The operations of the unbounded fan-in basis, and one extra gate of every arity. -/
+inductive ExtOp where
+  /-- An operation of the unbounded fan-in basis. -/
+  | ac (op : Op)
+  /-- The extra gate of `m` arguments. -/
+  | gate (m : ℕ)
+  deriving DecidableEq
+
+/-- The arity of an operation of the extended basis. -/
+abbrev ExtOp.arity : ExtOp → ℕ
+  | .ac op => op.arity
+  | .gate m => m
+
+/-- The signature of the unbounded fan-in basis with one extra gate of every arity. It is
+reducible, so that case analysis on its operations sees their arities. -/
+abbrev extSignature : Signature :=
+  ⟨ExtOp, ExtOp.arity⟩
+
+/-- The Boolean meaning of the extended basis, with the extra gate of `m` arguments computing
+`g m`. -/
+def extInterpretation (g : ∀ m, BooleanFunction m) : Interpretation extSignature Bool
+  | .ac op, x => interpretation op x
+  | .gate m, x => g m x
+
+@[simp] theorem extInterpretation_ac (g : ∀ m, BooleanFunction m) (op : Op)
+    (x : Fin op.arity → Bool) : extInterpretation g (.ac op) x = interpretation op x :=
+  rfl
+
+@[simp] theorem extInterpretation_gate (g : ∀ m, BooleanFunction m) (m : ℕ) (x : Fin m → Bool) :
+    extInterpretation g (.gate m) x = g m x :=
+  rfl
+
+/-- The unbounded fan-in basis inside its extension. -/
+def toExt : signature.Hom extSignature :=
+  ⟨ExtOp.ac, fun _ => rfl⟩
+
+instance preserves_toExt (g : ∀ m, BooleanFunction m) :
+    toExt.Preserves interpretation (extInterpretation g) :=
+  ⟨fun _ _ => rfl⟩
 
 end Cslib.Circuits.Boolean.Unbounded

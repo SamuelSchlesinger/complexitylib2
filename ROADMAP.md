@@ -206,7 +206,7 @@ disjunctions of any arity that computes the parity of `n` bits has at least `2 ^
 complexity below `s`, a gate one level up is then a narrow DNF up to negation, and the switching
 lemma with a union bound over the gates gives the next stage. Formulas get the same bound through
 `Formula.toCircuit` (same function and size, no deeper), and **parity is not in AC⁰**
-(`Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0`, `Circuit/Boolean/AC0.lean`), with AC⁰ defined
+(`Cslib.Circuits.Boolean.parity_notMem_AC0`, `Circuit/Boolean/AC0.lean`), with AC⁰ defined
 over cslib circuits of
 polynomially bounded size and constant depth. AC⁰ is closed under the Boolean operations, and
 **majority is not in AC⁰** (`Circuit/Boolean/Majority.lean`): padding the input with constants
@@ -217,7 +217,7 @@ class `ConstDepth I` of polynomial-size constant-depth circuits over a basis `I`
 (`Circuit/Boolean/ConstDepth.lean`), monotone along maps of bases (`Signature.Hom`, with the
 translation of circuits in `Circuit/MapOp.lean`). With majority gates added to the basis
 (`Circuit/Boolean/TC0.lean`), majority is one gate, so **AC⁰ ⊊ TC⁰**
-(`Cslib.Circuits.Boolean.MajorityBasis.AC0_ssubset_TC0`).
+(`Cslib.Circuits.Boolean.AC0_ssubset_TC0`).
 
 **Spira's theorem** (`Circuit/Boolean/Spira.lean`): every De Morgan formula with `L` leaves has
 an equivalent formula with at most `4 ⌈log₂ L⌉` AND and OR gates on every path
@@ -241,7 +241,7 @@ for every odd prime `p`, a depth-`d` circuit with `MOD_p` gates computing parity
 true function and its low-degree approximant, so each gate's approximator is chosen for its true
 arguments without dependent recursion over the program. Generalises v1's `p = 3`. The reduction of
 parity to majority is stated over every basis containing the unbounded fan-in basis
-(`Unbounded.parity_mem_of_majority_mem`), so parity ∈ TC⁰, majority ∉ AC⁰[p], and
+(`ConstDepth.parity_mem_of_majority_mem`), so parity ∈ TC⁰, majority ∉ AC⁰[p], and
 **TC⁰ ⊄ AC⁰[p]** for odd primes `p`
 (`Cslib.Circuits.Boolean.Smolensky.TC0_not_subset_AC0Mod`).
 

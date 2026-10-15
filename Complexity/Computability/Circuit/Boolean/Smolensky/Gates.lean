@@ -123,7 +123,7 @@ theorem natCast_pow_eq_bitVal (c : ℕ) :
 
 /-- The `MOD_p` polynomial is exact on bits. -/
 theorem modApprox_bitVal (u : Fin m → Bool) :
-    modApprox (fun i => bitVal (ZMod p) (u i)) = bitVal (ZMod p) (ModBasis.modGate p m u) := by
+    modApprox (fun i => bitVal (ZMod p) (u i)) = bitVal (ZMod p) (modGate p m u) := by
   rw [modApprox, sum_bitVal, natCast_pow_eq_bitVal]
   rfl
 
@@ -230,14 +230,14 @@ theorem exists_orApprox (u : BitString n → Fin m → Bool) :
 /-- **Gate approximators.** For every operation of the AC⁰[p] basis and every way `u` its
 arguments depend on the input, some approximator multiplies degrees by at most `(p - 1) ℓ` and errs
 on at most `2 ^ n / 2 ^ ℓ` inputs. -/
-theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : ModBasis.signature.Op)
-    (u : BitString n → Fin (ModBasis.signature.Arity op) → Bool) :
-    ∃ A : (Fin (ModBasis.signature.Arity op) → ZMod p) → ZMod p,
-      (∀ (D : ℕ) (v : Fin (ModBasis.signature.Arity op) → BitString n → ZMod p),
+theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : Unbounded.extSignature.Op)
+    (u : BitString n → Fin (Unbounded.extSignature.Arity op) → Bool) :
+    ∃ A : (Fin (Unbounded.extSignature.Arity op) → ZMod p) → ZMod p,
+      (∀ (D : ℕ) (v : Fin (Unbounded.extSignature.Arity op) → BitString n → ZMod p),
         (∀ k, v k ∈ lowDegree (ZMod p) n D) →
           (fun x => A fun k => v k x) ∈ lowDegree (ZMod p) n ((p - 1) * ℓ * D)) ∧
       #(univ.filter fun x => A (fun k => bitVal (ZMod p) (u x k)) ≠
-          bitVal (ZMod p) (ModBasis.interpretation p op (u x))) * 2 ^ ℓ ≤ 2 ^ n := by
+          bitVal (ZMod p) (Unbounded.extInterpretation (modGate p) op (u x))) * 2 ^ ℓ ≤ 2 ^ n := by
   have hp := (Fact.out : p.Prime).two_le
   have hdeg : ∀ D : ℕ, ℓ * ((p - 1) * D) = (p - 1) * ℓ * D := fun D => by ring
   cases op with
@@ -249,7 +249,7 @@ theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : ModBasis.signature.Op)
         have : 1 ≤ (p - 1) * ℓ := Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by omega) (by omega))
         nlinarith
       · rw [filter_false_of_mem fun x _ => by
-          simp [ModBasis.interpretation, Unbounded.interpretation, bitVal_not]]
+          simp [Unbounded.extInterpretation, Unbounded.interpretation, bitVal_not]]
         simp
     | or m =>
       obtain ⟨T, hT⟩ := exists_orApprox (p := p) (ℓ := ℓ) u
@@ -258,18 +258,19 @@ theorem exists_gate_approx (hℓ : 1 ≤ ℓ) (op : ModBasis.signature.Op)
       obtain ⟨T, hT⟩ := exists_orApprox (p := p) (ℓ := ℓ) fun x k => !u x k
       refine ⟨andApprox T, fun D v hv => hdeg D ▸ andApprox_comp_mem T hv, ?_⟩
       convert hT using 4 with x
-      simp only [andApprox, bitVal_not, ModBasis.interpretation, Unbounded.interpretation, ne_eq]
+      simp only [andApprox, bitVal_not, Unbounded.extInterpretation, Unbounded.interpretation,
+        ne_eq]
       rw [show decide (∀ j : Fin m, u x j = true) = !decide (∃ j, (!u x j) = true) by
           rw [Bool.eq_iff_iff, Bool.not_eq_true', decide_eq_true_iff, decide_eq_false_iff_not,
             not_exists]
           simp,
         bitVal_not, sub_right_inj]
-  | mod m =>
+  | gate m =>
     refine ⟨modApprox, fun D v hv => lowDegree_mono (Nat.mul_le_mul_right D
       (Nat.le_mul_of_pos_right _ (by omega))) (modApprox_comp_mem hv), ?_⟩
     rw [filter_false_of_mem fun x _ => by
       rw [modApprox_bitVal]
-      simp [ModBasis.interpretation]]
+      simp [Unbounded.extInterpretation]]
     simp
 
 end Cslib.Circuits.Boolean.Smolensky

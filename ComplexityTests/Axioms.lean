@@ -407,10 +407,10 @@ info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_pari
 #print axioms Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity
 
 /--
-info: 'Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.parity_notMem_AC0' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0
+#print axioms Cslib.Circuits.Boolean.parity_notMem_AC0
 
 /--
 info: 'Cslib.PolynomiallyBounded.eventually_lt_two_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -419,10 +419,10 @@ info: 'Cslib.PolynomiallyBounded.eventually_lt_two_pow' depends on axioms: [prop
 #print axioms Cslib.PolynomiallyBounded.eventually_lt_two_pow
 
 /--
-info: 'Cslib.Circuits.Boolean.Unbounded.majority_notMem_AC0' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.majority_notMem_AC0' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.majority_notMem_AC0
+#print axioms Cslib.Circuits.Boolean.majority_notMem_AC0
 
 /--
 info: 'Cslib.Circuits.Circuit.depth_comp_le' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -437,16 +437,16 @@ info: 'Cslib.Circuits.Circuit.depth_append_le' depends on axioms: [propext, Clas
 #print axioms Cslib.Circuits.Circuit.depth_append_le
 
 /--
-info: 'Cslib.Circuits.Boolean.Unbounded.AC0.compl' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.ConstDepth.compl' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.AC0.compl
+#print axioms Cslib.Circuits.Boolean.ConstDepth.compl
 
 /--
-info: 'Cslib.Circuits.Boolean.MajorityBasis.AC0_ssubset_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.AC0_ssubset_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.MajorityBasis.AC0_ssubset_TC0
+#print axioms Cslib.Circuits.Boolean.AC0_ssubset_TC0
 
 /--
 info: 'Cslib.Circuits.Circuit.eval_mapOp' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -479,16 +479,16 @@ info: 'Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod' depends on axioms:
 #print axioms Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod
 
 /--
-info: 'Cslib.Circuits.Boolean.Unbounded.parity_mem_of_majority_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.ConstDepth.parity_mem_of_majority_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.parity_mem_of_majority_mem
+#print axioms Cslib.Circuits.Boolean.ConstDepth.parity_mem_of_majority_mem
 
 /--
-info: 'Cslib.Circuits.Boolean.MajorityBasis.parity_mem_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.parity_mem_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.MajorityBasis.parity_mem_TC0
+#print axioms Cslib.Circuits.Boolean.parity_mem_TC0
 
 /--
 info: 'Cslib.Circuits.Boolean.Smolensky.majority_notMem_AC0Mod' depends on axioms: [propext, Classical.choice, Quot.sound]

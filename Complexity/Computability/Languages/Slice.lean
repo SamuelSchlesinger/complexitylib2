@@ -13,7 +13,8 @@ public import Cslib.Computability.Languages.Slice
 /-!
 # Slices of Boolean combinations of languages
 
-The slices of the empty and the full language, of complements, unions and intersections.
+The slices of the empty and the full language (as `0` or `⊥`, and `⊤`), of complements, unions
+and intersections.
 -/
 
 @[expose] public section
@@ -24,6 +25,9 @@ variable {α : Type*} {L M : Language α} {n : ℕ} {x : Fin n → α}
 
 @[simp] theorem slice_zero : (0 : Language α).slice n x = false :=
   Bool.eq_false_iff.2 fun h => notMem_zero _ (slice_eq_true_iff.1 h)
+
+@[simp] theorem slice_bot : (⊥ : Language α).slice n x = false :=
+  slice_zero
 
 @[simp] theorem slice_top : (⊤ : Language α).slice n x = true := slice_eq_true_iff.2 trivial
 

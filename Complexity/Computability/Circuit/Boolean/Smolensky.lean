@@ -57,13 +57,14 @@ variable {p : ℕ} [hp : Fact p.Prime] {n : ℕ}
 computing the parity of `n` bits, for an odd prime `p`, has size at least `2 ^ ℓ · 2 / 5` whenever
 `100 (((p - 1) ℓ) ^ d + 1)² ≤ n + 1`. -/
 theorem two_mul_two_pow_le_size_of_computes_parity (hp2 : p ≠ 2)
-    {C : Circuit ModBasis.signature n 1}
-    (hC : C.Computes (ModBasis.interpretation p) (single (parity n))) {ℓ : ℕ} (hℓ : 1 ≤ ℓ)
+    {C : Circuit Unbounded.extSignature n 1}
+    (hC : C.Computes (Unbounded.extInterpretation (modGate p)) (single (parity n))) {ℓ : ℕ}
+    (hℓ : 1 ≤ ℓ)
     (hn : 100 * (((p - 1) * ℓ) ^ C.depth + 1) ^ 2 ≤ n + 1) : 2 * 2 ^ ℓ ≤ 5 * C.size := by
   classical
   let _ := invertibleTwo hp2
   obtain ⟨Q, hQ, herr⟩ := exists_lowDegree_approx (p := p) hℓ C
-  have heval : ∀ x, C.eval (ModBasis.interpretation p) x 0 = parity n x := fun x =>
+  have heval : ∀ x, C.eval (Unbounded.extInterpretation (modGate p)) x 0 = parity n x := fun x =>
     congrFun (hC x) 0
   simp only [heval] at herr
   set A := univ.filter fun x => Q x = bitVal (ZMod p) (parity n x)
@@ -84,7 +85,7 @@ theorem two_mul_two_pow_le_size_of_computes_parity (hp2 : p ≠ 2)
   exact Nat.le_of_mul_le_mul_left h (by positivity)
 
 /-- **Parity is not in AC⁰[p]** for an odd prime `p` (Razborov–Smolensky). -/
-theorem parity_notMem_AC0Mod (hp2 : p ≠ 2) : Language.ofSlices parity ∉ ModBasis.AC0Mod p := by
+theorem parity_notMem_AC0Mod (hp2 : p ≠ 2) : Language.ofSlices parity ∉ AC0Mod p := by
   rintro ⟨d, size, hsize, hC⟩
   have hp1 := hp.out.two_le
   -- the size bound at the lengths `100 (((p - 1) ℓ) ^ d + 1)² - 1` is a polynomial in `ℓ`

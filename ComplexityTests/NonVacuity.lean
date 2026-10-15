@@ -100,14 +100,15 @@ example : ∃ F : Cslib.Circuits.Formula Cslib.Circuits.Boolean.signature (2 ^ 2
   Cslib.Circuits.Boolean.exists_formula_parity_two_pow 2
 
 /-- The constant-depth classes are inhabited, by the constants. -/
-example : (⊤ : Language Bool) ∈ Unbounded.AC0 ∧ (0 : Language Bool) ∈ Unbounded.AC0 :=
-  ⟨Unbounded.AC0.top_mem, Unbounded.AC0.zero_mem⟩
+example : (⊤ : Language Bool) ∈ AC0 ∧ (⊥ : Language Bool) ∈ AC0 :=
+  ⟨ConstDepth.top_mem (Cslib.Circuits.Signature.Hom.id _),
+    ConstDepth.bot_mem (Cslib.Circuits.Signature.Hom.id _)⟩
 
-example : (⊤ : Language Bool) ∈ MajorityBasis.TC0 :=
-  MajorityBasis.AC0_subset_TC0 Unbounded.AC0.top_mem
+example : (⊤ : Language Bool) ∈ TC0 :=
+  ConstDepth.top_mem Unbounded.toExt
 
-example : (0 : Language Bool) ∈ ModBasis.AC0Mod 3 :=
-  ModBasis.AC0_subset_AC0Mod 3 Unbounded.AC0.zero_mem
+example : (⊥ : Language Bool) ∈ AC0Mod 3 :=
+  ConstDepth.bot_mem Unbounded.toExt
 
 /-- The tidy normal form applies to upstream's machine for the identity, which is not tidy: it
 leaves its input head at the end of the input. -/
