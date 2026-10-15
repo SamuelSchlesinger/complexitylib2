@@ -8,14 +8,18 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Linearity
+public import Mathlib.Data.Matrix.Mul
 import Mathlib.Tactic.Linarith
 
 /-!
 # The Hadamard code
 
 The *Hadamard code* (or Walsh–Hadamard code) encodes a bit string `x` of length `n` as the truth
-table of the function `a ↦ ⟨x, a⟩`, the inner product modulo two (`BitString.hadamardCode`). Its
-codewords are exactly the parities, hence exactly the linear Boolean functions
+table of the function `a ↦ x ⬝ᵥ a`, the dot product in the Boolean ring `Bool`, that is, the inner
+product modulo two (`BitString.hadamardCode`). Bit strings add coordinatewise through the same
+ring structure, and the code is bilinear (`BitString.hadamardCode_add`,
+`BitString.hadamardCode_add_left`). Its codewords are exactly the parities, hence exactly the
+linear Boolean functions
 (`BitString.exists_eq_hadamardCode_iff`), and two distinct codewords differ on exactly half of the
 inputs (`BitString.two_mul_hammingDist_hadamardCode`).
 
@@ -42,6 +46,7 @@ The distance of the code comes from the fact that distinct parities differ on ha
 
 ## Main results
 
+* `Cslib.BitString.hadamardCode_eq_parityOn`: a codeword is a parity.
 * `Cslib.BitString.card_filter_selfCorrect_ne_le`,
   `Cslib.BitString.one_sub_two_mul_le_expect_selfCorrect`: local correctability of parities.
 * `Cslib.BitString.exists_eq_hadamardCode_iff`: the codewords are the linear functions.
@@ -78,16 +83,16 @@ private theorem expect_boole_eq_card_div (P : BitString n → Prop) [DecidablePr
 
 /-! ### Self-correction -/
 
-/-- The self-corrected read of `f` at `x` with randomness `y`: the sum `f y + f (x + y)`, where
-bits add modulo two and bit strings add coordinatewise. For uniformly random `y`, both points
-read are uniformly random, and on a parity the read is exact (`selfCorrect_parityOn`). -/
+/-- The self-corrected read of `f` at `x` with randomness `y`: the exclusive or of `f y` and
+`f (x + y)`. For uniformly random `y`, both points read are uniformly random, and on a parity the
+read is exact (`selfCorrect_parityOn`). -/
 def selfCorrect (f : BooleanFunction n) (x y : BitString n) : Bool :=
-  f y ^^ f fun i => x i ^^ y i
+  f y ^^ f (x + y)
 
 /-- Self-correction reads a parity exactly. -/
 @[simp] theorem selfCorrect_parityOn (S : Finset (Fin n)) (x y : BitString n) :
     selfCorrect (parityOn S) x y = parityOn S x := by
-  rw [selfCorrect, parityOn_xor, Bool.xor_left_comm, Bool.xor_self, Bool.xor_false]
+  rw [selfCorrect, parityOn_add, Bool.xor_left_comm, Bool.xor_self, Bool.xor_false]
 
 /-- **Local correctability of parities**, counting version: the self-corrected read of `f` at `x`
 differs from the parity on `S` at `x` for at most twice as many `y` as there are inputs on which
@@ -95,15 +100,14 @@ differs from the parity on `S` at `x` for at most twice as many `y` as there are
 theorem card_filter_selfCorrect_ne_le (f : BooleanFunction n) (S : Finset (Fin n))
     (x : BitString n) :
     #{y | selfCorrect f x y ≠ parityOn S x} ≤ 2 * hammingDist f (parityOn S) := by
-  have htrans : #{y : BitString n | f (fun i => x i ^^ y i) ≠ parityOn S fun i => x i ^^ y i} =
+  have htrans : #{y : BitString n | f (x + y) ≠ parityOn S (x + y)} =
       hammingDist f (parityOn S) :=
-    card_equiv (Function.Involutive.toPerm (fun (y : BitString n) i => x i ^^ y i)
-      fun y => funext fun i => Bool.bne_self_left (x i) (y i)) fun y => by
-        simp only [mem_filter, mem_univ, true_and]
-        exact Iff.rfl
+    card_equiv (Equiv.addLeft x) fun y => by
+      simp only [mem_filter, mem_univ, true_and]
+      exact Iff.rfl
   calc #{y | selfCorrect f x y ≠ parityOn S x}
       ≤ #(({y | f y ≠ parityOn S y} : Finset (BitString n)) ∪
-          ({y | f (fun i => x i ^^ y i) ≠ parityOn S fun i => x i ^^ y i} : Finset _)) := by
+          ({y | f (x + y) ≠ parityOn S (x + y)} : Finset _)) := by
         refine card_le_card fun y hy => ?_
         simp only [mem_union, mem_filter, mem_univ, true_and] at hy ⊢
         by_contra h
@@ -132,48 +136,54 @@ theorem one_sub_two_mul_le_expect_selfCorrect {f : BooleanFunction n} {S : Finse
 
 /-! ### The Hadamard code -/
 
-/-- The Hadamard encoding of `x`: the Boolean function sending `a` to the inner product of `x`
-and `a` modulo two, that is, to the parity of the bits of `a` at the positions where `x` is
-`true` (`hadamardCode_apply`) [Arora and Barak, Section 11.5][AroraBarak09]. -/
+/-- The Hadamard encoding of `x`: the Boolean function sending `a` to the dot product `x ⬝ᵥ a` in
+the Boolean ring `Bool`, the inner product of `x` and `a` modulo two
+[Arora and Barak, Section 11.5][AroraBarak09]. -/
 def hadamardCode (x : BitString n) : BooleanFunction n :=
-  parityOn {i | x i = true}
+  fun a => x ⬝ᵥ a
 
-/-- The Hadamard code is the inner product modulo two. -/
-theorem hadamardCode_apply (x a : BitString n) :
-    hadamardCode x a = parity n fun i => x i && a i := by
-  simp only [hadamardCode, parity, parityOn, filter_filter, Bool.and_eq_true]
+theorem hadamardCode_apply (x a : BitString n) : hadamardCode x a = x ⬝ᵥ a :=
+  rfl
+
+/-- A Hadamard codeword is the parity of the bits at the positions where the message is
+`true`. -/
+theorem hadamardCode_eq_parityOn (x : BitString n) :
+    hadamardCode x = parityOn {i | x i = true} := by
+  funext a
+  rw [parityOn_eq_sum, sum_filter, hadamardCode_apply, dotProduct]
+  exact sum_congr rfl fun i _ => by cases x i <;> rfl
 
 /-- The inner product is symmetric. -/
-theorem hadamardCode_comm (x a : BitString n) : hadamardCode x a = hadamardCode a x := by
-  simp only [hadamardCode_apply, Bool.and_comm]
+theorem hadamardCode_comm (x a : BitString n) : hadamardCode x a = hadamardCode a x :=
+  dotProduct_comm x a
 
 /-- Hadamard codewords are linear. -/
-theorem hadamardCode_xor (x a b : BitString n) :
-    hadamardCode x (fun i => a i ^^ b i) = (hadamardCode x a ^^ hadamardCode x b) :=
-  parityOn_xor _ a b
+theorem hadamardCode_add (x a b : BitString n) :
+    hadamardCode x (a + b) = (hadamardCode x a ^^ hadamardCode x b) :=
+  dotProduct_add x a b
 
 /-- The Hadamard code is linear. -/
-theorem hadamardCode_xor_left (x y a : BitString n) :
-    hadamardCode (fun i => x i ^^ y i) a = (hadamardCode x a ^^ hadamardCode y a) := by
-  rw [hadamardCode_comm _ a, hadamardCode_xor, hadamardCode_comm a, hadamardCode_comm a]
+theorem hadamardCode_add_left (x y a : BitString n) :
+    hadamardCode (x + y) a = (hadamardCode x a ^^ hadamardCode y a) :=
+  add_dotProduct x y a
 
 /-- Self-correction reads a Hadamard codeword exactly. -/
 @[simp] theorem selfCorrect_hadamardCode (x a y : BitString n) :
-    selfCorrect (hadamardCode x) a y = hadamardCode x a :=
-  selfCorrect_parityOn _ a y
+    selfCorrect (hadamardCode x) a y = hadamardCode x a := by
+  rw [hadamardCode_eq_parityOn, selfCorrect_parityOn]
 
 /-- The parity on `S` is the Hadamard encoding of the indicator of `S`. -/
 theorem hadamardCode_decide_mem (S : Finset (Fin n)) :
     hadamardCode (fun i => decide (i ∈ S)) = parityOn S := by
-  simp [hadamardCode]
+  simp [hadamardCode_eq_parityOn]
 
 /-- **The Hadamard codewords are the linear Boolean functions.** -/
 theorem exists_eq_hadamardCode_iff {f : BooleanFunction n} :
-    (∃ x, f = hadamardCode x) ↔ ∀ x y, f (fun i => x i ^^ y i) = (f x ^^ f y) := by
+    (∃ x, f = hadamardCode x) ↔ ∀ x y, f (x + y) = (f x ^^ f y) := by
   rw [← exists_eq_parityOn_iff]
   constructor
   · rintro ⟨x, rfl⟩
-    exact ⟨_, rfl⟩
+    exact ⟨_, hadamardCode_eq_parityOn x⟩
   · rintro ⟨S, rfl⟩
     exact ⟨_, (hadamardCode_decide_mem S).symm⟩
 
@@ -181,9 +191,13 @@ theorem exists_eq_hadamardCode_iff {f : BooleanFunction n} :
 message. -/
 theorem hadamardCode_apply_decide_eq (x : BitString n) (i : Fin n) :
     hadamardCode x (fun j => decide (j = i)) = x i := by
-  rw [hadamardCode_comm, hadamardCode]
-  simp only [decide_eq_true_eq, filter_eq', mem_univ, ite_true]
-  exact (parityOn_insert (notMem_empty i) x).trans (by simp)
+  have h : (fun j => decide (j = i)) = Pi.single i 1 := by
+    funext j
+    by_cases hj : j = i
+    · subst hj
+      simp [Bool.one_eq_true]
+    · simp [hj, Bool.zero_eq_false]
+  rw [h, hadamardCode_apply, dotProduct_single_one]
 
 /-- The Hadamard code is injective. -/
 theorem hadamardCode_injective : Function.Injective (hadamardCode (n := n)) := fun x y h =>
@@ -192,9 +206,10 @@ theorem hadamardCode_injective : Function.Injective (hadamardCode (n := n)) := f
 /-- **The Hadamard code has relative distance one half**: the encodings of distinct bit strings
 differ on exactly half of the inputs. -/
 theorem two_mul_hammingDist_hadamardCode {x y : BitString n} (h : x ≠ y) :
-    2 * hammingDist (hadamardCode x) (hadamardCode y) = 2 ^ n :=
-  two_mul_hammingDist_parityOn fun hS => h <| hadamardCode_injective <| by
-    rw [hadamardCode, hadamardCode, hS]
+    2 * hammingDist (hadamardCode x) (hadamardCode y) = 2 ^ n := by
+  rw [hadamardCode_eq_parityOn, hadamardCode_eq_parityOn]
+  exact two_mul_hammingDist_parityOn fun hS => h <| hadamardCode_injective <| by
+    rw [hadamardCode_eq_parityOn, hadamardCode_eq_parityOn, hS]
 
 /-- **Unique decoding**: a Boolean function within relative distance `δ < 1/4` of the encodings
 of `x` and of `y` forces `x = y`. -/
@@ -217,8 +232,9 @@ with probability at least `1 - 2ε`. -/
 theorem one_sub_two_mul_le_expect_selfCorrect_hadamardCode {f : BooleanFunction n}
     {x : BitString n} {ε : ℝ} (h : (hammingDist f (hadamardCode x) : ℝ) / 2 ^ n ≤ ε)
     (a : BitString n) :
-    1 - 2 * ε ≤ 𝔼 y, if selfCorrect f a y = hadamardCode x a then 1 else 0 :=
-  one_sub_two_mul_le_expect_selfCorrect h a
+    1 - 2 * ε ≤ 𝔼 y, if selfCorrect f a y = hadamardCode x a then 1 else 0 := by
+  rw [hadamardCode_eq_parityOn] at h ⊢
+  exact one_sub_two_mul_le_expect_selfCorrect h a
 
 /-- **Local decoding of the Hadamard code with two queries**: if `f` is within relative distance
 `ε` of the encoding of `x`, then self-correction at the `i`-th unit vector returns `x i` with
@@ -234,8 +250,8 @@ theorem one_sub_two_mul_le_expect_selfCorrect_eq_apply {f : BooleanFunction n}
 
 /-- Hadamard codewords pass the BLR test with probability one. -/
 @[simp] theorem blrAcceptance_hadamardCode (x : BitString n) :
-    blrAcceptance (hadamardCode x) = 1 :=
-  blrAcceptance_parityOn _
+    blrAcceptance (hadamardCode x) = 1 := by
+  rw [hadamardCode_eq_parityOn, blrAcceptance_parityOn]
 
 /-- **Decoding from the BLR test**: if the test accepts `f` with probability at least `1 - ε`,
 then `f` is within relative distance `ε` of the Hadamard encoding of some bit string. -/

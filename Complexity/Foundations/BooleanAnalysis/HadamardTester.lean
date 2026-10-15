@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.BooleanAnalysis.Hadamard
 public import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.Algebra.Order.BigOperators.Expect
+import Mathlib.Data.Matrix.Mul
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -18,8 +19,10 @@ import Mathlib.Tactic.Linarith
 A system of quadratic equations over the two-element field in the unknowns `x : BitString n` can
 be written as `⟨x ⊗ x, A e⟩ = b e` for `e : Fin m`, where `x ⊗ x` is the tensor product of `x`
 with itself (`BitString.tensor`), indexed by pairs of coordinates through `finProdFinEquiv`, and
-`⟨·, ·⟩` is the inner product modulo two. A proof that the system has a solution `x` consists of
-two tables: the Hadamard encodings `f` of `x` and `g` of `x ⊗ x`. Since
+`⟨·, ·⟩` is the inner product modulo two, the dot product in the Boolean ring `Bool`. Bit strings
+add coordinatewise in the same ring, and the tensor product is bilinear
+(`BitString.tensor_add_left`, `BitString.tensor_add_right`). A proof that the system has a
+solution `x` consists of two tables: the Hadamard encodings `f` of `x` and `g` of `x ⊗ x`. Since
 `⟨x ⊗ x, y ⊗ z⟩ = ⟨x, y⟩ ⟨x, z⟩` (`BitString.hadamardCode_tensor_tensor`), the tables can be
 checked with a constant number of queries, every value being read by self-correction
 [Arora and Barak, Section 11.5][AroraBarak09]:
@@ -90,13 +93,13 @@ def tensor (x : BitString m) (y : BitString n) : BitString (m * n) :=
   simp [tensor]
 
 /-- The tensor product is linear in its first argument. -/
-theorem tensor_xor_left (x x' : BitString m) (y : BitString n) :
-    tensor (fun i => x i ^^ x' i) y = fun k => tensor x y k ^^ tensor x' y k :=
+theorem tensor_add_left (x x' : BitString m) (y : BitString n) :
+    tensor (x + x') y = tensor x y + tensor x' y :=
   funext fun _ => Bool.and_xor_distrib_right _ _ _
 
 /-- The tensor product is linear in its second argument. -/
-theorem tensor_xor_right (x : BitString m) (y y' : BitString n) :
-    tensor x (fun j => y j ^^ y' j) = fun k => tensor x y k ^^ tensor x y' k :=
+theorem tensor_add_right (x : BitString m) (y y' : BitString n) :
+    tensor x (y + y') = tensor x y + tensor x y' :=
   funext fun _ => Bool.and_xor_distrib_left _ _ _
 
 /-- The tensor product of two unit vectors is a unit vector. -/
@@ -111,19 +114,12 @@ theorem tensor_decide_eq (i : Fin m) (j : Fin n) :
 `⟨x ⊗ y, a ⊗ b⟩ = ⟨x, a⟩ ⟨y, b⟩`. -/
 theorem hadamardCode_tensor_tensor (x a : BitString m) (y b : BitString n) :
     hadamardCode (tensor x y) (tensor a b) = (hadamardCode x a && hadamardCode y b) := by
-  have hcard : #{k | (tensor x y k && tensor a b k) = true} =
-      #{i | (x i && a i) = true} * #{j | (y j && b j) = true} := by
-    rw [← card_product, ← filter_product]
-    refine card_equiv finProdFinEquiv.symm fun k => ?_
-    simp only [tensor, mem_filter, mem_univ, mem_product, true_and, Bool.and_eq_true]
-    tauto
-  simp only [hadamardCode_apply, parity, parityOn]
-  rw [hcard]
-  generalize #{i | (x i && a i) = true} = p
-  generalize #{j | (y j && b j) = true} = q
-  rcases Nat.mod_two_eq_zero_or_one p with h₁ | h₁ <;>
-    rcases Nat.mod_two_eq_zero_or_one q with h₂ | h₂ <;>
-    simp [Nat.mul_mod, h₁, h₂]
+  rw [← Bool.mul_eq_and, hadamardCode_apply, hadamardCode_apply, hadamardCode_apply, dotProduct,
+    dotProduct, dotProduct, sum_mul_sum, ← Fintype.sum_prod_type',
+    ← finProdFinEquiv.symm.sum_comp]
+  refine Fintype.sum_congr _ _ fun p => ?_
+  simp only [tensor, ← Bool.mul_eq_and]
+  ring
 
 /-- **A nonzero bilinear form is nonzero on a quarter of the pairs**: if `M` is not all `false`,
 then `⟨M, y ⊗ z⟩ = 1` with probability at least `1/4` over uniformly random `y` and `z`. -/
@@ -136,15 +132,16 @@ theorem one_div_four_le_expect_hadamardCode_tensor {M : BitString (m * n)}
       1 / 2 * (if hadamardCode M (tensor y fun j' => decide (j' = j)) = true then 1 else 0) ≤
         𝔼 z, if hadamardCode M (tensor y z) = true then (1 : ℝ) else 0 := by
     split_ifs with hy
-    · rw [mul_one, expect_boole_eq_one_div_two_of_xor (f := fun z => hadamardCode M (tensor y z))
-        (fun z z' => by rw [tensor_xor_right, hadamardCode_xor]) ⟨_, hy⟩]
+    · rw [mul_one, expect_boole_eq_one_div_two_of_map_add
+        (f := fun z => hadamardCode M (tensor y z))
+        (fun z z' => by rw [tensor_add_right, hadamardCode_add]) ⟨_, hy⟩]
     · rw [mul_zero]
       exact expect_nonneg fun z _ => by split_ifs <;> norm_num
   have hcol : 𝔼 y, (if hadamardCode M (tensor y fun j' => decide (j' = j)) = true then
       (1 : ℝ) else 0) = 1 / 2 :=
-    expect_boole_eq_one_div_two_of_xor
+    expect_boole_eq_one_div_two_of_map_add
       (f := fun y => hadamardCode M (tensor y fun j' => decide (j' = j)))
-      (fun y y' => by rw [tensor_xor_left, hadamardCode_xor])
+      (fun y y' => by rw [tensor_add_left, hadamardCode_add])
       ⟨fun i' => decide (i' = i), by rwa [tensor_decide_eq, hadamardCode_apply_decide_eq]⟩
   calc (1 / 4 : ℝ) = 𝔼 y, 1 / 2 * (if hadamardCode M (tensor y fun j' => decide (j' = j)) = true
         then (1 : ℝ) else 0) := by
@@ -211,15 +208,16 @@ theorem eq_tensor_of_lt_tensorTestAcceptance {f : BooleanFunction n}
   set c' : BitString n → BitString n → BitString (n * n) → ℝ := fun y z t =>
     if selfCorrect g (tensor y z) t = hadamardCode w (tensor y z) then 1 else 0
   have hD : 𝔼 y, 𝔼 z, D y z ≤ 3 / 4 := by
-    have hM : ∃ k, (w k ^^ tensor x x k) = true := by
+    have hM : ∃ k, (w + tensor x x) k = true := by
       by_contra hc
       refine hw (funext fun k => ?_)
       have hk := not_exists.1 hc k
       revert hk
+      simp only [Pi.add_apply, Bool.add_eq_xor]
       cases w k <;> cases tensor x x k <;> simp
     have hpt (y z : BitString n) : D y z =
-        1 - if hadamardCode (fun k => w k ^^ tensor x x k) (tensor y z) = true then 1 else 0 := by
-      simp only [D, hadamardCode_xor_left, hadamardCode_tensor_tensor]
+        1 - if hadamardCode (w + tensor x x) (tensor y z) = true then 1 else 0 := by
+      simp only [D, hadamardCode_add_left, hadamardCode_tensor_tensor]
       cases hadamardCode w (tensor y z) <;> cases (hadamardCode x y && hadamardCode x z) <;>
         norm_num
     simp only [hpt, expect_sub_distrib, Fintype.expect_const]
@@ -245,10 +243,10 @@ private theorem hadamardCode_hadamardCode (w : BitString N) (k : BitString m)
     (A : Fin m → BitString N) :
     hadamardCode w (fun j => hadamardCode k fun e => A e j) =
       hadamardCode k fun e => hadamardCode w (A e) := by
-  simp only [hadamardCode]
-  induction ({e | k e = true} : Finset (Fin m)) using Finset.induction_on with
-  | empty => simp [parityOn]
-  | insert e T he ih => simp only [parityOn_insert he, parityOn_xor, ih]
+  simp only [hadamardCode_apply]
+  rw [dotProduct_comm]
+  exact (Matrix.dotProduct_mulVec k (Matrix.of A) w).symm.trans
+    (congrArg _ (funext fun e => dotProduct_comm (A e) w))
 
 /-- The acceptance probability of the equation test on a table `g`, for the linear equations
 `⟨w, A e⟩ = b e` in `w`: the probability, over independent uniformly random `k` and `t`, that the
@@ -283,15 +281,16 @@ theorem hadamardCode_eq_of_lt_equationTestAcceptance {g : BooleanFunction N}
       hadamardCode w (fun j => hadamardCode k fun e' => A e' j) then 1 else 0
   have hD : 𝔼 k, D k = 1 / 2 := by
     -- The parity of the equations violated by `w` in a random set of equations.
-    have hv : ∃ k, hadamardCode (fun e' => hadamardCode w (A e') ^^ b e') k = true :=
-      ⟨fun e' => decide (e' = e), by simpa [hadamardCode_apply_decide_eq] using he⟩
+    have hv : ∃ k, hadamardCode ((fun e' => hadamardCode w (A e')) + b) k = true :=
+      ⟨fun e' => decide (e' = e), by
+        simpa [hadamardCode_apply_decide_eq, Bool.add_eq_xor] using he⟩
     have hpt (k : BitString m) : D k =
-        1 - if hadamardCode (fun e' => hadamardCode w (A e') ^^ b e') k = true then 1 else 0 := by
+        1 - if hadamardCode ((fun e' => hadamardCode w (A e')) + b) k = true then 1 else 0 := by
       simp only [D]
-      rw [hadamardCode_hadamardCode, hadamardCode_comm _ k, hadamardCode_xor]
+      rw [hadamardCode_hadamardCode, hadamardCode_comm _ k, hadamardCode_add]
       cases hadamardCode k (fun e' => hadamardCode w (A e')) <;> cases hadamardCode k b <;> norm_num
     simp only [hpt, expect_sub_distrib, Fintype.expect_const,
-      expect_boole_eq_one_div_two_of_xor (hadamardCode_xor _) hv]
+      expect_boole_eq_one_div_two_of_map_add (hadamardCode_add _) hv]
     norm_num
   have hbound : equationTestAcceptance g A b ≤ 𝔼 k, 𝔼 t, (D k + (1 - c k t)) := by
     unfold equationTestAcceptance

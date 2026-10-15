@@ -22,7 +22,9 @@ import Mathlib.Tactic.FieldSimp
 
 Reading a bit `b` as the sign `(-1) ^ b` (`BitString.signVal`), the *character* of a set `S` of
 coordinates is `χ_S x = ∏_{i ∈ S} (-1) ^ (x i)` (`BitString.chi`), the sign of the parity of the
-bits of `x` in `S`. The characters are orthonormal for the uniform expectation
+bits of `x` in `S`. Bit strings add coordinatewise modulo two, `(x + y) i = (x i ^^ y i)`, through
+Mathlib's Boolean ring structure on `Bool`, and the characters turn sums into products
+(`BitString.chi_add`). The characters are orthonormal for the uniform expectation
 (`BitString.expect_chi_mul_chi`), and every real function on the cube is the sum of its *Fourier
 expansion* `f = ∑_S f̂(S) χ_S`, with the *Fourier coefficients* `f̂(S) = 𝔼_x f x χ_S x`
 (`BitString.fourierCoeff`, `BitString.sum_fourierCoeff_mul_chi`), which are unique
@@ -44,7 +46,7 @@ coefficient on the circle, so the name is meant to be used qualified.
 ## Main results
 
 * `Cslib.BitString.expect_chi_mul_chi`: the characters are orthonormal.
-* `Cslib.BitString.chi_xor`: the characters are multiplicative.
+* `Cslib.BitString.chi_add`: the characters are multiplicative.
 * `Cslib.BitString.sum_fourierCoeff_mul_chi`: the Fourier expansion.
 * `Cslib.BitString.fourierCoeff_sum_mul_chi`, `Cslib.BitString.fourierCoeff_injective`:
   uniqueness of the Fourier coefficients.
@@ -117,11 +119,10 @@ theorem chi_mul_chi (S T : Finset (Fin n)) (x : BitString n) :
   refine prod_congr rfl fun i _ => ?_
   by_cases hS : i ∈ S <;> by_cases hT : i ∈ T <;> simp [hS, hT, mem_symmDiff, signVal_mul_self]
 
-/-- **Characters are multiplicative**: the character of the bitwise exclusive or of two strings is
-the product of their characters. -/
-theorem chi_xor (S : Finset (Fin n)) (x y : BitString n) :
-    chi S (fun i => x i ^^ y i) = chi S x * chi S y := by
-  simp only [chi, signVal_xor, prod_mul_distrib]
+/-- **Characters are multiplicative**: the character of the sum of two bit strings, their
+coordinatewise exclusive or, is the product of their characters. -/
+theorem chi_add (S : Finset (Fin n)) (x y : BitString n) : chi S (x + y) = chi S x * chi S y := by
+  simp only [chi, Pi.add_apply, Bool.add_eq_xor, signVal_xor, prod_mul_distrib]
 
 section Update
 

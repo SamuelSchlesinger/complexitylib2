@@ -16,14 +16,15 @@ import Mathlib.Tactic.NormNum
 # Linearity testing
 
 A Boolean function on the cube is *linear* when it turns sums into sums,
-`f (x + y) = f x + f y`, where bits add modulo two (`^^`) and bit strings add coordinatewise. The
-linear functions are exactly the parities (`BitString.exists_eq_parityOn_iff`, with
-`parityOn_xor`). Distinct parities differ on half of the inputs
-(`BitString.two_mul_hammingDist_parityOn`), and a linear function that is not constantly `false`
-takes the value `true` on half of the inputs (`BitString.expect_boole_eq_one_div_two_of_xor`).
+`f (x + y) = (f x ^^ f y)`, where bit strings add coordinatewise modulo two (`x + y`, through
+Mathlib's Boolean ring structure on `Bool`) and single bits by exclusive or (`^^`). The linear
+functions are exactly the parities (`BitString.exists_eq_parityOn_iff`, with `parityOn_add`).
+Distinct parities differ on half of the inputs (`BitString.two_mul_hammingDist_parityOn`), and a
+linear function that is not constantly `false` takes the value `true` on half of the inputs
+(`BitString.expect_boole_eq_one_div_two_of_map_add`).
 
 The *Blum–Luby–Rubinfeld test* queries `f` at independent uniformly random `x` and `y` and at
-`x + y`, and accepts when `f x + f y = f (x + y)`; `BitString.blrAcceptance f` is the probability
+`x + y`, and accepts when `(f x ^^ f y) = f (x + y)`; `BitString.blrAcceptance f` is the probability
 that it accepts. Reading `f` as the function `F x = (-1) ^ f x`, the test accepts with probability
 `1/2 + 1/2 ∑_S F̂(S)³` (`BitString.blrAcceptance_eq_sum_fourierCoeff_pow_three`), by the
 convolution theorem. Parities pass with probability one (`BitString.blrAcceptance_parityOn`).
@@ -44,7 +45,8 @@ Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`
 * `Cslib.BitString.expect_signVal_mul_signVal`, `Cslib.BitString.fourierCoeff_signVal`: the
   correlation of two Boolean functions is one minus twice their relative Hamming distance.
 * `Cslib.BitString.two_mul_hammingDist_parityOn`: distinct parities differ on half the inputs.
-* `Cslib.BitString.expect_boole_eq_one_div_two_of_xor`: nonzero linear functions are balanced.
+* `Cslib.BitString.expect_boole_eq_one_div_two_of_map_add`: nonzero linear functions are
+  balanced.
 * `Cslib.BitString.blrAcceptance_eq_sum_fourierCoeff_pow_three`: the acceptance probability in
   terms of the Fourier coefficients.
 * `Cslib.BitString.blrAcceptance_parityOn`: completeness of the test.
@@ -68,26 +70,31 @@ variable {n : ℕ}
 
 /-! ### Linear functions -/
 
-/-- **The linear Boolean functions are the parities**: a Boolean function turns the exclusive or
-of bit strings into the exclusive or of its values exactly when it is the parity of some set of
+/-- **The linear Boolean functions are the parities**: a Boolean function turns sums of bit
+strings into the exclusive or of its values exactly when it is the parity of some set of
 coordinates [O'Donnell, Definition 1.28][ODonnell2014]. -/
 theorem exists_eq_parityOn_iff {f : BooleanFunction n} :
-    (∃ S, f = parityOn S) ↔ ∀ x y, f (fun i => x i ^^ y i) = (f x ^^ f y) := by
+    (∃ S, f = parityOn S) ↔ ∀ x y, f (x + y) = (f x ^^ f y) := by
   refine ⟨?_, fun hf => ?_⟩
   · rintro ⟨S, rfl⟩
-    exact parityOn_xor S
+    exact parityOn_add S
   -- `a i` is the value of `f` at the unit vector of `i`.
   set a : BitString n := fun i => f fun j => decide (j = i)
   have hT (T : Finset (Fin n)) : f (fun j => decide (j ∈ T)) = parityOn T a := by
     induction T using Finset.induction_on with
-    | empty => simpa using hf (fun _ => false) (fun _ => false)
+    | empty =>
+      have h0 := hf 0 0
+      rw [add_zero, Bool.xor_self] at h0
+      simp only [notMem_empty, decide_false, parityOn_empty]
+      exact h0
     | insert i T hi ih =>
-      have h : (fun j => decide (j ∈ insert i T)) = fun j => decide (j = i) ^^ decide (j ∈ T) := by
+      have h : (fun j => decide (j ∈ insert i T)) =
+          (fun j => decide (j = i)) + fun j => decide (j ∈ T) := by
         funext j
         by_cases hj : j = i
         · subst hj
-          simp [hi]
-        · simp [hj]
+          simp [hi, Bool.add_eq_xor]
+        · simp [hj, Bool.add_eq_xor]
       rw [h, hf, ih, parityOn_insert hi]
   refine ⟨({i | a i = true} : Finset (Fin n)), funext fun x => ?_⟩
   calc f x = f fun j => decide (j ∈ ({j | x j = true} : Finset (Fin n))) := by simp
@@ -131,11 +138,11 @@ theorem two_mul_hammingDist_parityOn {S T : Finset (Fin n)} (h : S ≠ T) :
     linarith
   exact_mod_cast this
 
-/-- **Nonzero linear functions are balanced**: a Boolean function that turns the exclusive or of
-bit strings into the exclusive or of its values, and is not constantly `false`, takes the value
-`true` with probability one half at a uniformly random input. -/
-theorem expect_boole_eq_one_div_two_of_xor {f : BooleanFunction n}
-    (hf : ∀ x y, f (fun i => x i ^^ y i) = (f x ^^ f y)) (h : ∃ x, f x = true) :
+/-- **Nonzero linear functions are balanced**: a Boolean function that turns sums of bit strings
+into the exclusive or of its values, and is not constantly `false`, takes the value `true` with
+probability one half at a uniformly random input. -/
+theorem expect_boole_eq_one_div_two_of_map_add {f : BooleanFunction n}
+    (hf : ∀ x y, f (x + y) = (f x ^^ f y)) (h : ∃ x, f x = true) :
     𝔼 x, (if f x = true then (1 : ℝ) else 0) = 1 / 2 := by
   obtain ⟨S, rfl⟩ := exists_eq_parityOn_iff.2 hf
   have hS : S ≠ ∅ := by
@@ -150,10 +157,9 @@ theorem expect_boole_eq_one_div_two_of_xor {f : BooleanFunction n}
 /-! ### The Blum–Luby–Rubinfeld test -/
 
 /-- The acceptance probability of the Blum–Luby–Rubinfeld linearity test on `f`: the probability,
-over independent uniformly random bit strings `x` and `y`, that `f x + f y = f (x + y)`, where
-bits add modulo two and bit strings add coordinatewise. -/
+over independent uniformly random bit strings `x` and `y`, that `(f x ^^ f y) = f (x + y)`. -/
 noncomputable def blrAcceptance (f : BooleanFunction n) : ℝ :=
-  𝔼 x, 𝔼 y, if (f x ^^ f y) = f (fun i => x i ^^ y i) then 1 else 0
+  𝔼 x, 𝔼 y, if (f x ^^ f y) = f (x + y) then 1 else 0
 
 /-- **The acceptance probability of the BLR test**: reading `f` as signs, the test accepts with
 probability `1/2 + 1/2 ∑_S F̂(S)³`. -/
@@ -163,10 +169,10 @@ theorem blrAcceptance_eq_sum_fourierCoeff_pow_three (f : BooleanFunction n) :
   have hind (a b c : Bool) : (if (a ^^ b) = c then (1 : ℝ) else 0) =
       1 / 2 + 1 / 2 * (signVal a * (signVal b * signVal c)) := by
     cases a <;> cases b <;> cases c <;> norm_num
-  have hconv : 𝔼 x, 𝔼 y, F x * (F y * F (fun i => x i ^^ y i)) =
+  have hconv : 𝔼 x, 𝔼 y, F x * (F y * F (x + y)) =
       𝔼 x, F x * convolution F F x := by
     simp only [convolution, mul_expect]
-  calc blrAcceptance f = 1 / 2 + 1 / 2 * 𝔼 x, 𝔼 y, F x * (F y * F (fun i => x i ^^ y i)) := by
+  calc blrAcceptance f = 1 / 2 + 1 / 2 * 𝔼 x, 𝔼 y, F x * (F y * F (x + y)) := by
         simp only [blrAcceptance, hind, expect_add_distrib, ← mul_expect, Fintype.expect_const]
         rfl
     _ = 1 / 2 + 1 / 2 * ∑ S, fourierCoeff F S ^ 3 := by
@@ -175,7 +181,7 @@ theorem blrAcceptance_eq_sum_fourierCoeff_pow_three (f : BooleanFunction n) :
 
 /-- **Completeness of the BLR test**: parities pass with probability one. -/
 theorem blrAcceptance_parityOn (S : Finset (Fin n)) : blrAcceptance (parityOn S) = 1 := by
-  simp [blrAcceptance, parityOn_xor]
+  simp [blrAcceptance, parityOn_add]
 
 /-- **Soundness of the BLR test**: if the test accepts `f` with probability at least `1 - ε`,
 then `f` differs from some parity on at most an `ε` fraction of the inputs

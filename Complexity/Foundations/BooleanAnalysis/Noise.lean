@@ -35,7 +35,9 @@ hence `NS_δ[f] = ∑_S (1 - (1 - 2 δ) ^ |S|) / 2 F̂(S) ^ 2` (`BitString.noise
 and `NS_δ[f] ≤ δ I[F]`, at most `δ` times the total influence
 (`BitString.noiseSensitivity_le_mul_totalInfluence`) [O'Donnell, Section 2.4][ODonnell2014].
 
-The noise is a random mask of `BooleanAnalysis.bernoulliAverage`. Its coordinates are independent:
+The noised string is `x + P`, the coordinatewise exclusive or of `x` with a random mask `P` of
+`BooleanAnalysis.bernoulliAverage`, bit strings adding in Mathlib's Boolean ring structure on
+`Bool`. The coordinates of the mask are independent:
 the average of a product of functions of the separate coordinates factorizes
 (`BooleanAnalysis.bernoulliAverage_prod`), so the character of `S` averages to `(1 - 2 p) ^ |S|`
 over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
@@ -97,16 +99,16 @@ theorem bernoulliAverage_chi (p : ℝ) (S : Finset (Fin n)) :
 flips each bit of `x` independently with probability `(1 - ρ) / 2`. It is an average over a
 probability distribution when `-1 ≤ ρ ≤ 1`. -/
 noncomputable def noiseOp (ρ : ℝ) (f : BitString n → ℝ) (x : BitString n) : ℝ :=
-  bernoulliAverage ((1 - ρ) / 2) fun P => f fun i => x i ^^ P i
+  bernoulliAverage ((1 - ρ) / 2) fun P => f (x + P)
 
 /-- **The Fourier expansion of `T_ρ f`**: the noise operator damps the coefficient of `S` by
 `ρ ^ |S|` [O'Donnell, Proposition 2.47][ODonnell2014]. -/
 theorem noiseOp_eq_sum (ρ : ℝ) (f : BitString n → ℝ) (x : BitString n) :
     noiseOp ρ f x = ∑ S, ρ ^ #S * fourierCoeff f S * chi S x := by
   have hf (P : BitString n) :
-      f (fun i => x i ^^ P i) = ∑ S, fourierCoeff f S * chi S x * chi S P := by
-    rw [← sum_fourierCoeff_mul_chi f (fun i => x i ^^ P i)]
-    simp only [chi_xor, mul_assoc]
+      f (x + P) = ∑ S, fourierCoeff f S * chi S x * chi S P := by
+    rw [← sum_fourierCoeff_mul_chi f (x + P)]
+    simp only [chi_add, mul_assoc]
   simp only [noiseOp, hf, bernoulliAverage, mul_sum]
   rw [sum_comm]
   refine sum_congr rfl fun S _ => ?_
@@ -126,13 +128,14 @@ theorem fourierCoeff_noiseOp (ρ : ℝ) (f : BitString n → ℝ) (S : Finset (F
 /-- The characters are eigenfunctions of the noise operator. -/
 theorem noiseOp_chi (ρ : ℝ) (S : Finset (Fin n)) (x : BitString n) :
     noiseOp ρ (chi S) x = ρ ^ #S * chi S x := by
-  simp only [noiseOp, chi_xor, bernoulliAverage_const_mul, bernoulliAverage_chi]
+  simp only [noiseOp, chi_add, bernoulliAverage_const_mul, bernoulliAverage_chi]
   rw [show 1 - 2 * ((1 - ρ) / 2) = ρ by ring, mul_comm]
 
 /-- At `ρ = 1` no bit is flipped, so the noise operator is the identity. -/
 @[simp] theorem noiseOp_one (f : BitString n → ℝ) : noiseOp 1 f = f := by
   funext x
-  simp [noiseOp, bernoulliAverage_zero]
+  simp only [noiseOp, sub_self, zero_div, bernoulliAverage_zero]
+  exact congrArg f (add_zero x)
 
 /-- At `ρ = 0` the noised string is uniform, so the noise operator returns the mean. -/
 theorem noiseOp_zero (f : BitString n → ℝ) (x : BitString n) : noiseOp 0 f x = 𝔼 y, f y := by
@@ -233,7 +236,7 @@ theorem noiseStability_le_expect_sq {ρ : ℝ} (hρ : |ρ| ≤ 1) (f : BitString
 `f x ≠ f y` for a uniform string `x` and the string `y` that flips each bit of `x` independently
 with probability `δ`. -/
 noncomputable def noiseSensitivity (δ : ℝ) (f : BooleanFunction n) : ℝ :=
-  𝔼 x, bernoulliAverage δ fun P => if f x ≠ f (fun i => x i ^^ P i) then 1 else 0
+  𝔼 x, bernoulliAverage δ fun P => if f x ≠ f (x + P) then 1 else 0
 
 /-- **The noise sensitivity through the noise stability**:
 `NS_δ[f] = 1 / 2 - 1 / 2 Stab_{1 - 2 δ}[F]`, for `F` the function `f` with values `±1`. -/
@@ -260,7 +263,8 @@ theorem noiseSensitivity_eq_sum (δ : ℝ) (f : BooleanFunction n) :
 
 /-- With no noise, `f` never changes. -/
 @[simp] theorem noiseSensitivity_zero (f : BooleanFunction n) : noiseSensitivity 0 f = 0 := by
-  simp [noiseSensitivity, bernoulliAverage_zero]
+  have h (x : BitString n) : (x + fun _ => false) = x := add_zero x
+  simp [noiseSensitivity, bernoulliAverage_zero, h]
 
 /-- On `0 ≤ δ ≤ 1`, the noise sensitivity is a probability. -/
 theorem noiseSensitivity_mem_Icc {δ : ℝ} (hδ : 0 ≤ δ) (hδ' : δ ≤ 1) (f : BooleanFunction n) :
