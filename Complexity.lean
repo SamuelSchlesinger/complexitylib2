@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
+public import Complexity.Computability.Circuit.Boolean.FanInTwo
 public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
@@ -53,6 +54,7 @@ public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
+public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.MapOp
 public import Complexity.Computability.Circuit.Monotone.Basic
 public import Complexity.Computability.Circuit.Monotone.Clique.Approximator

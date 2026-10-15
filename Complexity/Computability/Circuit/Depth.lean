@@ -37,6 +37,8 @@ with negations at the inputs.
 * `Cslib.Circuits.Circuit.depthWith_le_iff`, `Cslib.Circuits.Circuit.depthWith_mono`: bounds, and
   monotonicity in the costs.
 * `Cslib.Circuits.Circuit.depthWith_le_depth`: costs of at most one never increase the depth.
+* `Cslib.Circuits.Circuit.depthWith_le_mul_depth`: if every gate costs at most `b`, the depth with
+  costs is at most `b` times the depth.
 -/
 
 @[expose] public section
@@ -284,5 +286,46 @@ theorem Circuit.depthWith_mono {cost cost' : σ.Op → ℕ} (hcost : ∀ op, cos
 theorem Circuit.depthWith_le_depth {cost : σ.Op → ℕ} (hcost : ∀ op, cost op ≤ 1) {m : ℕ}
     (c : Circuit σ n m) : c.depthWith cost ≤ c.depth :=
   c.depthWith_one ▸ c.depthWith_mono hcost
+
+/-- If every gate of a program costs at most `b`, every gate is at most `b` times as deep with
+costs as without. -/
+theorem Program.depthsWith_le_mul_depths {cost : σ.Op → ℕ} {b : ℕ} (p : Program σ n g)
+    (h : ∀ k, cost (p.lines k).op ≤ b) (k : Fin g) : p.depthsWith cost k ≤ b * p.depths k := by
+  induction p with
+  | empty => exact k.elim0
+  | @gate g p line ih =>
+    have hw (w : Wire n g) : p.wireDepthsWith cost w ≤ b * p.wireDepths w := by
+      cases w with
+      | input i => simp
+      | gate j => exact ih (fun k => by simpa using h k.castSucc) j
+    induction k using Fin.lastCases with
+    | last =>
+      rw [Program.depthsWith_gate_last, Program.depths_gate_last]
+      obtain ⟨D, hD⟩ : ∃ D, line.depth p.wireDepths = D + 1 :=
+        ⟨_, (Nat.succ_pred_eq_of_pos (line.depth_pos p.wireDepths)).symm⟩
+      have hle := line.depthWith_le_add cost (depths' := fun _ => 0) (D := b * D) fun a => by
+        have := line.wireDepth_lt_depth p.wireDepths a
+        exact (hw _).trans ((Nat.mul_le_mul_left b (by omega : _ ≤ D)).trans_eq (zero_add _).symm)
+      rw [line.depthWith_eq_cost cost (depths := fun _ => 0) fun _ => rfl] at hle
+      have hop : cost line.op ≤ b := by simpa using h (Fin.last g)
+      rw [hD, Nat.mul_succ]
+      omega
+    | cast k => simpa using ih (fun k => by simpa using h k.castSucc) k
+
+/-- If every gate of a program costs at most `b`, every wire is at most `b` times as deep with
+costs as without. -/
+theorem Program.wireDepthsWith_le_mul_wireDepths {cost : σ.Op → ℕ} {b : ℕ} (p : Program σ n g)
+    (h : ∀ k, cost (p.lines k).op ≤ b) (w : Wire n g) :
+    p.wireDepthsWith cost w ≤ b * p.wireDepths w := by
+  cases w with
+  | input i => simp
+  | gate j => exact p.depthsWith_le_mul_depths h j
+
+/-- If every gate of a circuit costs at most `b`, its depth with costs is at most `b` times its
+depth. -/
+theorem Circuit.depthWith_le_mul_depth {cost : σ.Op → ℕ} {b m : ℕ} (c : Circuit σ n m)
+    (h : ∀ k, cost (c.program.lines k).op ≤ b) : c.depthWith cost ≤ b * c.depth :=
+  (c.depthWith_le_iff cost).2 fun j => (c.program.wireDepthsWith_le_mul_wireDepths h _).trans
+    (Nat.mul_le_mul_left b (c.outputDepths_le_depth j))
 
 end Cslib.Circuits

@@ -814,4 +814,22 @@ info: 'Cslib.Logic.PL.DNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_all_eval_eq_parit
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.DNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_all_eval_eq_parity
 
+/--
+info: 'Cslib.Circuits.Boolean.AC_subset_NC_succ' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.AC_subset_NC_succ
+
+/--
+info: 'Cslib.Circuits.Boolean.iUnion_NC_eq_iUnion_AC' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.iUnion_NC_eq_iUnion_AC
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation
+
 end ComplexityTests.Axioms
