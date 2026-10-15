@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Majority
+public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 
 /-!
 # TC⁰
@@ -18,20 +19,33 @@ and majority gates of unbounded fan-in [Vollmer, Chapter 4][Vollmer1999]: the un
 basis extended by majority (`Unbounded.extInterpretation majority`). Every AC⁰ circuit is a TC⁰
 circuit (`AC0_subset_TC0`), and majority is a single gate, so majority is in TC⁰
 (`majority_mem_TC0`) but not in AC⁰: **AC⁰ is strictly contained in TC⁰** (`AC0_ssubset_TC0`).
-Parity reduces to majority in constant depth, so parity is in TC⁰ too (`parity_mem_TC0`).
+
+TC⁰ is also the class of the threshold circuits of polynomial size and constant depth
+(`TC0_eq_constDepth_threshold`) [Hajnal et al., Section 2][HMPST1993]. A majority gate is a
+threshold gate (`Threshold.ofMajority`). Conversely, a threshold gate `Th^m_j` is a majority gate of
+`2 m + 2` arguments, `m + 1 - j` of them `true` and the others `false`
+(`thresholdCircuitOfMajority`), which costs three gates in depth two. So parity, which has threshold
+circuits of depth three and linear size (`Threshold.parity_mem_constDepth`), is in TC⁰
+(`parity_mem_TC0`).
 
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.TC0`: the class TC⁰.
+* `Cslib.Circuits.Boolean.Threshold.majorityCircuit`: a gate of the threshold basis as a circuit
+  with a majority gate.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.AC0_ssubset_TC0`: `AC⁰ ⊊ TC⁰`.
+* `Cslib.Circuits.Boolean.TC0_eq_constDepth_threshold`: TC⁰ is the class of threshold circuits of
+  polynomial size and constant depth.
 * `Cslib.Circuits.Boolean.parity_mem_TC0`: parity is in TC⁰.
 
 ## References
 
 * [H. Vollmer, *Introduction to Circuit Complexity*][Vollmer1999]
+* [A. Hajnal, W. Maass, P. Pudlák, M. Szegedy, G. Turán, *Threshold circuits of bounded
+  depth*][HMPST1993]
 -/
 
 @[expose] public section
@@ -56,12 +70,62 @@ theorem majority_mem_TC0 : Language.ofSlices majority ∈ TC0 := by
   rw [Language.slice_ofSlices]
   rfl
 
-/-- **Parity is in TC⁰**: it reduces to majority in constant depth. -/
-theorem parity_mem_TC0 : Language.ofSlices parity ∈ TC0 :=
-  ConstDepth.parity_mem_of_majority_mem Unbounded.toExt majority_mem_TC0
-
 /-- **AC⁰ is strictly contained in TC⁰.** -/
 theorem AC0_ssubset_TC0 : AC0 ⊂ TC0 :=
   Set.ssubset_iff_of_subset AC0_subset_TC0 |>.2 ⟨_, majority_mem_TC0, majority_notMem_AC0⟩
+
+namespace Threshold
+
+/-- A gate of the threshold basis as a circuit over the basis of TC⁰: a negation is a negation, and
+the threshold gate `Th^m_j` is a majority gate of `2 m + 2` arguments, the `m` arguments of `Th^m_j`
+padded with `m + 1 - j` copies of `true` and copies of `false`. -/
+def majorityCircuit : (op : Op) → Circuit Unbounded.extSignature (signature.Arity op) 1
+  | .not => Circuit.oneGate (σ := Unbounded.extSignature) (.ac .not) id
+  | .threshold m j => thresholdCircuitOfMajority Unbounded.toExt
+      (Circuit.oneGate (σ := Unbounded.extSignature) (.gate (m + (m + 2))) id) (min j (m + 1))
+
+/-- The circuit of a gate computes the gate. -/
+theorem computes_majorityCircuit (op : Op) :
+    (majorityCircuit op).Computes (Unbounded.extInterpretation majority)
+      (single (interpretation op)) := by
+  intro x
+  funext o
+  rw [Subsingleton.elim o 0]
+  cases op with
+  | not => rfl
+  | threshold m j =>
+    rw [majorityCircuit, eval_thresholdCircuitOfMajority (fun y => funext fun _ => rfl)
+      (min_le_right _ _)]
+    simp only [single_apply, interpretation_threshold]
+    rcases le_total j (m + 1) with h | h
+    · rw [min_eq_left h]
+    · rw [min_eq_right h, threshold_eq_false_of_lt (show m < m + 1 by omega),
+        threshold_eq_false_of_lt (show m < j by omega)]
+
+/-- The circuit of a gate has at most three gates. -/
+theorem size_majorityCircuit_le (op : Op) : (majorityCircuit op).size ≤ 3 := by
+  cases op with
+  | not => simp [majorityCircuit]
+  | threshold m j => simp [majorityCircuit, size_thresholdCircuitOfMajority]
+
+/-- The circuit of a gate has depth at most two. -/
+theorem depth_majorityCircuit_le (op : Op) : (majorityCircuit op).depth ≤ 2 := by
+  cases op with
+  | not => simp [majorityCircuit]
+  | threshold m j =>
+    exact (depth_thresholdCircuitOfMajority_le _).trans (by simp)
+
+end Threshold
+
+/-- **TC⁰ is the class of threshold circuits of polynomial size and constant depth**: majority
+gates are threshold gates, and a threshold gate is a majority gate with constants. -/
+theorem TC0_eq_constDepth_threshold : TC0 = ConstDepth Threshold.interpretation :=
+  (ConstDepth.mono Threshold.ofMajority).antisymm (ConstDepth.subset_of_simulation fun op =>
+    ⟨_, Threshold.computes_majorityCircuit op, Threshold.size_majorityCircuit_le op,
+      Threshold.depth_majorityCircuit_le op⟩)
+
+/-- **Parity is in TC⁰**: it has threshold circuits of depth three and linear size. -/
+theorem parity_mem_TC0 : Language.ofSlices parity ∈ TC0 :=
+  TC0_eq_constDepth_threshold ▸ Threshold.parity_mem_constDepth
 
 end Cslib.Circuits.Boolean

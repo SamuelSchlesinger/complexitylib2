@@ -7,6 +7,7 @@ public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AltFormula
 public import Complexity.Computability.Circuit.Boolean.AltFormula.TopDown
+public import Complexity.Computability.Circuit.Boolean.AtLeast
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BarringtonClass
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
@@ -52,8 +53,7 @@ public import Complexity.Computability.Circuit.Boolean.Substitution
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Boolean.TC0
 public import Complexity.Computability.Circuit.Boolean.Threshold
-public import Complexity.Computability.Circuit.Boolean.ThresholdGates
-public import Complexity.Computability.Circuit.Boolean.ThresholdGates.Parity
+public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Clique

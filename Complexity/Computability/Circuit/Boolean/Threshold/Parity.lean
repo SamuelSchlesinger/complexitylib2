@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
-public import Complexity.Computability.Circuit.Boolean.ThresholdGates
+public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Simulation
 import Mathlib.Algebra.BigOperators.Fin
 
@@ -26,7 +26,8 @@ computes the parity of `w`.
 This circuit (`Threshold.parityCircuit`) has `n + 1` threshold gates and threshold depth two, the
 `n / 2` negations being free; with them it has `n + n / 2 + 1` gates and depth three
 (`Threshold.exists_computes_parity`). So parity has threshold circuits of polynomial size and
-constant depth (`Threshold.parity_mem_constDepth`).
+constant depth (`Threshold.parity_mem_constDepth`), and is in TC⁰
+(`Cslib.Circuits.Boolean.parity_mem_TC0`).
 
 ## Main definitions
 
@@ -102,8 +103,9 @@ private theorem sum_signed_toNat (n w : ℕ) :
   | zero => by_cases hw : w = 0 <;> simp [hw]
   | succ n ih =>
     rw [sum_range_succ, ih]
-    by_cases h₁ : n % 2 = 1 <;> by_cases h₂ : n + 1 ≤ w <;> split_ifs <;> simp [h₁, h₂] <;>
-      omega
+    by_cases h₁ : n % 2 = 1 <;> by_cases h₂ : n + 1 ≤ w <;>
+      simp only [h₁, h₂, decide_true, decide_false, Bool.xor_true, Bool.xor_false, Bool.not_true,
+        Bool.not_false, Bool.toNat_true, Bool.toNat_false] <;> split_ifs <;> omega
 
 /-- If `w` of the bits are true, exactly `n / 2 + w % 2` of the signed layer values are true. -/
 theorem weight_signedLayer (x : BitString n) :
@@ -140,7 +142,8 @@ private theorem sum_range_toNat_mod_two (n : ℕ) :
   | zero => rfl
   | succ n ih =>
     rw [sum_range_succ, ih]
-    by_cases h : n % 2 = 1 <;> simp [h] <;> omega
+    by_cases h : n % 2 = 1 <;> simp only [h, decide_true, decide_false, Bool.toNat_true,
+      Bool.toNat_false] <;> omega
 
 /-- The circuit has `n + 1` threshold gates and `n / 2` negations. -/
 theorem size_parityCircuit : (parityCircuit n).size = n + n / 2 + 1 := by

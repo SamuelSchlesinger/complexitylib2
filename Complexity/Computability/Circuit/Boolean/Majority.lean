@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.AC0
-public import Complexity.Computability.Circuit.Boolean.Threshold
+public import Complexity.Foundations.Data.BitString.Weight
 import Complexity.Foundations.Data.Fin.Append
 import Mathlib.Data.Fintype.Fin
 
@@ -52,9 +52,10 @@ open Finset Unbounded
 variable {n : ℕ} {σ : Signature} (φ : Unbounded.signature.Hom σ) {I : Interpretation σ Bool}
 
 /-- The inputs followed by `a` copies of `true` and then copies of `false`, `n + 2` constants in
-all. -/
+all, read from two constant gates. -/
 def padCircuit (n a : ℕ) : Circuit σ n (n + (n + 2)) :=
-  (Circuit.id σ n).append (Circuit.pi fun j : Fin (n + 2) => constCircuit φ (decide (j.val < a)))
+  (Circuit.id σ n).append ((Circuit.wiring σ fun j : Fin (n + 2) => if j.val < a then 0 else 1).comp
+    ((constCircuit φ true).append (constCircuit φ false)))
 
 /-- The threshold function `Th^n_k` for `k ≤ n + 1`, from a circuit `M` for majority on
 `n + (n + 2)` bits. -/
@@ -74,18 +75,19 @@ def parityCircuitOfMajority (M : Circuit σ (n + (n + 2)) 1) : Circuit σ n 1 :=
 
 variable {φ} {M : Circuit σ (n + (n + 2)) 1}
 
-/-- Padding costs one gate per constant. -/
-theorem size_padCircuit (a : ℕ) : (padCircuit φ n a).size = n + 2 := by
+/-- Padding costs two gates, one for each constant. -/
+@[simp] theorem size_padCircuit (a : ℕ) : (padCircuit φ n a).size = 2 := by
   simp [padCircuit]
 
 /-- Padding has depth at most one. -/
 theorem depth_padCircuit_le (a : ℕ) : (padCircuit φ n a).depth ≤ 1 :=
-  (Circuit.depth_append_le _ _).trans
-    (max_le (by simp) (Circuit.depth_pi_le _ fun _ => depth_constCircuit_le _))
+  (Circuit.depth_append_le _ _).trans (max_le (by simp) ((Circuit.depth_comp_le _ _).trans (by
+    simpa using (Circuit.depth_append_le _ _).trans
+      (max_le (depth_constCircuit_le true) (depth_constCircuit_le false)))))
 
 /-- A threshold costs the padding and the majority circuit. -/
 theorem size_thresholdCircuitOfMajority (k : ℕ) :
-    (thresholdCircuitOfMajority φ M k).size = n + 2 + M.size := by
+    (thresholdCircuitOfMajority φ M k).size = 2 + M.size := by
   rw [thresholdCircuitOfMajority, Circuit.size_comp, size_padCircuit]
 
 /-- A threshold is one deeper than the majority circuit. -/
@@ -95,7 +97,7 @@ theorem depth_thresholdCircuitOfMajority_le (k : ℕ) :
 
 /-- "Exactly `k`" costs two thresholds and two gates. -/
 theorem size_exactlyCircuitOfMajority (k : ℕ) :
-    (exactlyCircuitOfMajority φ M k).size = 2 * (n + 2 + M.size) + 2 := by
+    (exactlyCircuitOfMajority φ M k).size = 2 * (2 + M.size) + 2 := by
   rw [exactlyCircuitOfMajority, size_binCircuit, size_notCircuit,
     size_thresholdCircuitOfMajority, size_thresholdCircuitOfMajority]
   ring
@@ -111,10 +113,10 @@ theorem depth_exactlyCircuitOfMajority_le (k : ℕ) :
 
 /-- Parity costs `n + 1` circuits for "exactly `k`" and one disjunction. -/
 theorem size_parityCircuitOfMajority_le :
-    (parityCircuitOfMajority φ M).size ≤ 1 + (n + 1) * (2 * (n + 2 + M.size) + 2) := by
+    (parityCircuitOfMajority φ M).size ≤ 1 + (n + 1) * (2 * (2 + M.size) + 2) := by
   rw [parityCircuitOfMajority, Circuit.size_comp, Circuit.size_pi, Circuit.size_mapOp,
     Circuit.size_oneGate, add_comm]
-  refine Nat.add_le_add_left ((sum_le_card_nsmul univ _ (2 * (n + 2 + M.size) + 2)
+  refine Nat.add_le_add_left ((sum_le_card_nsmul univ _ (2 * (2 + M.size) + 2)
     fun k _ => ?_).trans_eq (by rw [card_univ, Fintype.card_fin, smul_eq_mul])) _
   split_ifs
   · exact (size_exactlyCircuitOfMajority _).le
@@ -142,10 +144,14 @@ include hM
 omit hM in
 theorem eval_padCircuit (a : ℕ) (x : BitString n) :
     (padCircuit φ n a).eval I x = Fin.append x fun j => decide (j.val < a) := by
-  rw [padCircuit, Circuit.eval_append, Circuit.eval_pi]
+  simp only [padCircuit, Circuit.eval_append, Circuit.eval_comp, Circuit.eval_wiring,
+    Function.comp_id]
   congr 1
   funext j
-  exact eval_constCircuit _ x 0
+  rw [Function.comp_apply]
+  split_ifs with h
+  · exact (eval_constCircuit true x 0).trans (decide_eq_true h).symm
+  · exact (eval_constCircuit false x 0).trans (decide_eq_false h).symm
 
 omit hM in
 /-- The threshold circuit computes the threshold function. -/
@@ -205,7 +211,7 @@ theorem ConstDepth.parity_mem_of_majority_mem (φ : Unbounded.signature.Hom σ)
     Language.ofSlices parity ∈ ConstDepth I := by
   obtain ⟨d, size, hsize, hC⟩ := ConstDepth.mem_iff.1 h
   refine ConstDepth.mem_iff.2 ⟨d + 4,
-    fun n => 1 + (n + 1) * (2 * (n + 2 + size (n + (n + 2))) + 2), by fun_prop, fun n => ?_⟩
+    fun n => 1 + (n + 1) * (2 * (2 + size (n + (n + 2))) + 2), by fun_prop, fun n => ?_⟩
   obtain ⟨M, hM, hMd, hMs⟩ := hC (n + (n + 2))
   rw [Language.slice_ofSlices] at hM
   refine ⟨parityCircuitOfMajority φ M, ?_, depth_parityCircuitOfMajority_le.trans (by omega),

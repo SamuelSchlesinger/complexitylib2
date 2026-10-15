@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.Substitution
-public import Complexity.Computability.Circuit.Boolean.Threshold
+public import Complexity.Computability.Circuit.Boolean.AtLeast
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Foundations.Combinatorics.MajorityVote
 

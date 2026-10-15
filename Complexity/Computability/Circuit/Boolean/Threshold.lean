@@ -7,146 +7,150 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Cslib.Computability.Circuit.Boolean.Synthesis
-public import Cslib.Computability.Circuit.Boolean.Complexity
+public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Foundations.Data.BitString.Weight
-import Mathlib.Algebra.BigOperators.Fin
-import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
-import Mathlib.Algebra.Group.Nat.Defs
-import Mathlib.Tactic.Linarith
 
 /-!
-# Threshold circuits of quadratic size
+# The basis of threshold gates
 
-Given Boolean functions `f 0, f 1, …` that are already available, the functions "at least `j` of
-`f 0, …, f (i - 1)` are true" satisfy the recursion
+The threshold gate `Th^m_j` of `m` arguments says that at least `j` of them are true
+(`Cslib.threshold m j`). The threshold gates of every arity and every cutoff, together with
+negation, form the basis of threshold circuits [Hajnal et al., Section 2][HMPST1993]. Here the
+gates are unweighted; a gate with weights `±1` is a threshold gate reading some of its arguments
+negated. As for AC⁰ circuits over the unbounded fan-in basis, negations are free in the depth that
+counts threshold gates (`Threshold.thresholdCost`).
 
-`atLeast (i + 1) (j + 1) = atLeast i (j + 1) ∨ (f i ∧ atLeast i j)`,
-
-so all of them for `i, j ≤ k` are synthesised with `O(k ^ 2)` gates over the De Morgan basis. In
-particular every threshold function, and the majority, of `k` available functions has a circuit of
-size `O(k ^ 2)` on top of them.
+Cutoff `0` is the constant `true`, a cutoff above the arity the constant `false`
+(`Cslib.threshold_zero_right`, `Cslib.threshold_eq_false_of_lt`), cutoff `1` the disjunction and
+cutoff `m` the conjunction of `m` arguments (`Cslib.threshold_one_right`, `Cslib.threshold_self`).
+So the unbounded fan-in basis maps into the threshold basis keeping the meaning of every operation
+(`Threshold.ofUnbounded`), and its AND/OR depth becomes the threshold depth
+(`Threshold.thresholdCost_ofUnbounded`). The majority gate of `m` arguments is the threshold gate
+`Th^m_⌈m/2⌉` (`Cslib.majority`), so the basis of TC⁰ maps into the threshold basis too
+(`Threshold.ofMajority`).
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.atLeast`: the counting functions.
+* `Cslib.Circuits.Boolean.Threshold.signature`: negation, and the threshold gates of every arity
+  and cutoff.
+* `Cslib.Circuits.Boolean.Threshold.interpretation`: their Boolean meaning.
+* `Cslib.Circuits.Boolean.Threshold.thresholdCost`: the costs of the threshold depth, in which
+  negations are free.
+* `Cslib.Circuits.Boolean.Threshold.ofUnbounded`: the unbounded fan-in basis inside the threshold
+  basis.
+* `Cslib.Circuits.Boolean.Threshold.ofMajority`: the basis of TC⁰, with majority gates, inside the
+  threshold basis.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.synthesis_atLeastUpTo`: all counting functions for `i ≤ k`.
-* `Cslib.Circuits.Boolean.synthesis_atLeast`: one threshold function, within `O(k ^ 2)` gates.
-* `Cslib.Circuits.Boolean.complexity_threshold_le`: the threshold functions `Cslib.threshold` on
-  `m` variables have circuits with `O(m ^ 2)` gates.
+* `Cslib.Circuits.Boolean.Threshold.preserves_ofUnbounded`: conjunctions and disjunctions are
+  threshold gates.
+* `Cslib.Circuits.Boolean.Threshold.thresholdCost_ofUnbounded`: the AND/OR depth is the threshold
+  depth.
+* `Cslib.Circuits.Boolean.Threshold.preserves_ofMajority`: majority gates are threshold gates.
+
+## References
+
+* [A. Hajnal, W. Maass, P. Pudlák, M. Szegedy, G. Turán, *Threshold circuits of bounded
+  depth*][HMPST1993]
 -/
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean
+namespace Cslib.Circuits.Boolean.Threshold
 
-variable {n : ℕ}
+/-- Negation, and the threshold gate of `m` arguments with cutoff `j` for every `m` and `j`. -/
+inductive Op where
+  /-- Negation. -/
+  | not
+  /-- The threshold gate `Th^m_j`: at least `j` of its `m` arguments are true. -/
+  | threshold (m j : ℕ)
+  deriving DecidableEq
 
-/-- `atLeast f i j x`: at least `j` of `f 0 x, …, f (i - 1) x` are true. -/
-def atLeast (f : ℕ → BooleanFunction n) (i j : ℕ) : BooleanFunction n :=
-  fun x => decide (j ≤ ((Finset.range i).filter fun l => f l x = true).card)
+/-- The arity of an operation. -/
+abbrev Op.arity : Op → ℕ
+  | .not => 1
+  | .threshold m _ => m
 
-variable (f : ℕ → BooleanFunction n)
+/-- The signature of negation and of the threshold gates. It is reducible, so that case analysis
+on its operations sees their arities. -/
+abbrev signature : Signature :=
+  ⟨Op, Op.arity⟩
 
-@[simp] theorem atLeast_zero_right (i : ℕ) : atLeast f i 0 = fun _ => true := by
-  funext x
-  simp [atLeast]
+/-- The Boolean meaning of the operations. -/
+def interpretation : Interpretation signature Bool
+  | .not, x => !x (0 : Fin 1)
+  | .threshold m j, x => Cslib.threshold m j x
 
-theorem atLeast_zero_succ (j : ℕ) : atLeast f 0 (j + 1) = fun _ => false := by
-  funext x
-  simp [atLeast]
+@[simp] theorem interpretation_not (x : Fin 1 → Bool) :
+    interpretation .not x = !x 0 :=
+  rfl
 
-/-- The counting recursion. -/
-theorem atLeast_succ_succ (i j : ℕ) (x : Fin n → Bool) :
-    atLeast f (i + 1) (j + 1) x = (atLeast f i (j + 1) x || (f i x && atLeast f i j x)) := by
-  simp only [atLeast, Finset.range_add_one, Finset.filter_insert]
-  by_cases hi : f i x = true
-  · rw [ite_eq_left hi, Finset.card_insert_of_notMem (by simp)]
-    simp only [hi, Bool.true_and]
-    rw [Bool.eq_iff_iff]
-    simp only [Bool.or_eq_true, decide_eq_true_eq]
-    omega
-  · rw [ite_eq_right hi]
-    simp [hi]
+@[simp] theorem interpretation_threshold (m j : ℕ) (x : Fin m → Bool) :
+    interpretation (.threshold m j) x = Cslib.threshold m j x :=
+  rfl
 
-/-- The counting functions of levels `0, …, i`. -/
-def atLeastUpTo (k i : ℕ) : Set (BooleanFunction n) :=
-  {g | ∃ i' ≤ i, ∃ j ≤ k + 1, g = atLeast f i' j}
+/-- The cost of an operation in the threshold depth: negations are free. With these costs,
+`Circuit.depthWith` is the largest number of threshold gates on a path, as
+`Unbounded.andOrCost` counts the AND and OR gates of circuits over the unbounded fan-in basis. -/
+def thresholdCost : Op → ℕ
+  | .not => 0
+  | .threshold _ _ => 1
 
-/-- All counting functions of levels `0, …, i ≤ k`, if `f 0, …, f (k - 1)` are available in `s`:
-two constants, and two gates for each pair `(i', j)` with `0 < i' ≤ i` and `j ≤ k + 1`. -/
-theorem synthesis_atLeastUpTo {s : Set (BooleanFunction n)} (k : ℕ) (hf : ∀ i < k, f i ∈ s) :
-    ∀ i ≤ k, Synthesis interpretation s (atLeastUpTo f k i) (2 + i * (2 * (k + 2)))
-  | 0, _ => by
-    refine ((Synthesis.const true).union (Synthesis.const false)).mono Set.Subset.rfl ?_
-      (by omega)
-    rintro g ⟨i', hi', j, -, rfl⟩
-    obtain rfl : i' = 0 := Nat.le_zero.1 hi'
-    rcases j with _ | j
-    · exact Or.inl (by rw [atLeast_zero_right]; rfl)
-    · exact Or.inr (by rw [atLeast_zero_succ]; rfl)
-  | i + 1, hi => by
-    have hprev := synthesis_atLeastUpTo k hf i (by omega)
-    have hmem : ∀ j ≤ k + 1, atLeast f i j ∈ s ∪ atLeastUpTo f k i :=
-      fun j hj => Or.inr ⟨i, le_rfl, j, hj, rfl⟩
-    have hlevel : Synthesis interpretation (s ∪ atLeastUpTo f k i)
-        (⋃ j ∈ Finset.range (k + 2), {atLeast f (i + 1) j}) (∑ _j ∈ Finset.range (k + 2), 2) := by
-      refine Synthesis.biUnion _ _ _ fun j hj => ?_
-      have hj := Finset.mem_range.1 hj
-      rcases j with _ | j
-      · refine (Synthesis.of_mem (hmem 0 (Nat.zero_le _))).mono Set.Subset.rfl ?_ (Nat.zero_le 2)
-        simp
-      · have h := (Synthesis.of_mem (hmem (j + 1) (by omega))).or
-          ((Synthesis.of_mem (Or.inl (hf i (by omega)) : f i ∈ s ∪ atLeastUpTo f k i)).and
-            (Synthesis.of_mem (hmem j (by omega))))
-        refine (h.mono Set.Subset.rfl ?_ le_rfl)
-        rw [Set.singleton_subset_iff, Set.mem_singleton_iff]
-        funext x
-        rw [atLeast_succ_succ]
-    refine (hprev.comp hlevel).mono Set.Subset.rfl ?_ ?_
-    · rintro g ⟨i', hi', j, hj, rfl⟩
-      rcases Nat.lt_or_ge i' (i + 1) with h | h
-      · exact Or.inl ⟨i', by omega, j, hj, rfl⟩
-      · obtain rfl : i' = i + 1 := by omega
-        exact Or.inr (Set.mem_biUnion (Finset.mem_range.2 (by omega)) rfl)
-    · rw [Finset.sum_const, Finset.card_range, Nat.nsmul_eq_mul]
-      nlinarith
+@[simp] theorem thresholdCost_not : thresholdCost .not = 0 := rfl
 
-/-- The threshold function "at least `j` of `f 0, …, f (k - 1)` are true", for `j ≤ k + 1`, on
-top of available functions, within `O(k ^ 2)` gates. -/
-theorem synthesis_atLeast {s : Set (BooleanFunction n)} {k j : ℕ} (hf : ∀ i < k, f i ∈ s)
-    (hj : j ≤ k + 1) :
-    Synthesis interpretation s {atLeast f k j} (2 + k * (2 * (k + 2))) :=
-  (synthesis_atLeastUpTo f k hf k le_rfl).mono Set.Subset.rfl
-    (Set.singleton_subset_iff.2 ⟨k, le_rfl, j, hj, rfl⟩) le_rfl
+@[simp] theorem thresholdCost_threshold (m j : ℕ) : thresholdCost (.threshold m j) = 1 := rfl
 
-theorem atLeast_eq_threshold (m j : ℕ) :
-    atLeast (fun l y => if h : l < m then y ⟨l, h⟩ else false) m j = threshold m j := by
-  funext y
-  simp only [atLeast, threshold, BitString.weight]
-  congr 2
-  rw [Finset.card_filter, Finset.card_filter,
-    ← Fin.sum_univ_eq_sum_range (fun l => if (if h : l < m then y ⟨l, h⟩ else false) = true then 1
-      else 0)]
-  simp
+theorem thresholdCost_le_one (op : Op) : thresholdCost op ≤ 1 := by
+  cases op <;> simp
 
-/-- The threshold functions on `m` variables have circuits with `O(m ^ 2)` gates. -/
-theorem complexity_threshold_le (m j : ℕ) :
-    complexity interpretation (single (threshold m j)) ≤ 2 + m * (2 * (m + 2)) := by
-  by_cases hj : j ≤ m + 1
-  · rw [← atLeast_eq_threshold]
-    have hg : ∀ l < m, (fun y : BitString m => if h : l < m then y ⟨l, h⟩ else false) ∈
-        inputs m := fun l hl => ⟨⟨l, hl⟩, funext fun y => by simp [hl]⟩
-    exact (synthesis_atLeast _ hg hj).complexity_le
-  · have : threshold m j = fun _ => false := funext fun y => by
-      have := BitString.weight_le y
-      rw [Fintype.card_fin] at this
-      rw [← Bool.not_eq_true, threshold_eq_true_iff]
-      omega
-    rw [this]
-    exact (Synthesis.const false).complexity_le.trans (by omega)
+/-- The operations of the unbounded fan-in basis as threshold gates: the conjunction of `m`
+arguments is `Th^m_m` and their disjunction is `Th^m_1`. -/
+def ofUnboundedOp : Unbounded.Op → Op
+  | .not => .not
+  | .and m => .threshold m m
+  | .or m => .threshold m 1
 
-end Cslib.Circuits.Boolean
+/-- The unbounded fan-in basis inside the threshold basis. -/
+def ofUnbounded : Unbounded.signature.Hom signature :=
+  ⟨ofUnboundedOp, fun op => by cases op <;> rfl⟩
+
+@[simp] theorem ofUnbounded_apply (op : Unbounded.Op) : ofUnbounded op = ofUnboundedOp op :=
+  rfl
+
+/-- Conjunctions and disjunctions are threshold gates. -/
+instance preserves_ofUnbounded : ofUnbounded.Preserves Unbounded.interpretation interpretation :=
+  ⟨fun op x => by
+    cases op with
+    | not => rfl
+    | and m => exact threshold_self x
+    | or m => exact threshold_one_right x⟩
+
+/-- The AND/OR depth of a circuit over the unbounded fan-in basis is the threshold depth of its
+translation. -/
+@[simp] theorem thresholdCost_ofUnbounded (op : Unbounded.Op) :
+    thresholdCost (ofUnbounded op) = Unbounded.andOrCost op := by
+  cases op <;> rfl
+
+/-- The operations of the basis of TC⁰ as threshold gates: the majority gate of `m` arguments is
+`Th^m_⌈m/2⌉`. -/
+def ofMajorityOp : Unbounded.ExtOp → Op
+  | .ac op => ofUnboundedOp op
+  | .gate m => .threshold m ((m + 1) / 2)
+
+/-- The basis of TC⁰, the unbounded fan-in basis with majority gates, inside the threshold basis. -/
+def ofMajority : Unbounded.extSignature.Hom signature :=
+  ⟨ofMajorityOp, fun op => by rcases op with (_ | _ | _) | _ <;> rfl⟩
+
+@[simp] theorem ofMajority_apply (op : Unbounded.ExtOp) : ofMajority op = ofMajorityOp op :=
+  rfl
+
+/-- Majority gates are threshold gates. -/
+instance preserves_ofMajority :
+    ofMajority.Preserves (Unbounded.extInterpretation majority) interpretation :=
+  ⟨fun op x => by
+    cases op with
+    | ac op => exact preserves_ofUnbounded.interpret_eq op x
+    | gate m => rfl⟩
+
+end Cslib.Circuits.Boolean.Threshold

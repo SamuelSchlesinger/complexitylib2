@@ -31,7 +31,7 @@ import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 import Complexity.Computability.Circuit.Decomposable
 import Complexity.Computability.Circuit.Frontier.FanInTwo
 import Complexity.Computability.Circuit.Frontier.Correlation
-import Complexity.Computability.Circuit.Boolean.ThresholdGates.Parity
+import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.GapTheorem
 import Complexity.Computability.PCP.Preprocess
@@ -758,6 +758,13 @@ example : (Threshold.parityCircuit 4).eval Threshold.interpretation ![true, fals
 example : (Threshold.parityCircuit 5).program.cost Threshold.thresholdCost = 6 ∧
     (Threshold.parityCircuit 5).size = 8 :=
   ⟨Threshold.cost_parityCircuit, Threshold.size_parityCircuit⟩
+
+/-- The majority circuit of the threshold gate `Th^3_2` evaluates correctly, by computation. -/
+example : (Threshold.majorityCircuit (.threshold 3 2)).eval (Unbounded.extInterpretation majority)
+      ![true, false, true] 0 = true ∧
+    (Threshold.majorityCircuit (.threshold 3 2)).eval (Unbounded.extInterpretation majority)
+      ![false, false, true] 0 = false := by
+  decide
 
 end ThresholdParity
 

@@ -2650,6 +2650,12 @@ info: 'Cslib.Circuits.Boolean.Threshold.parity_mem_constDepth' depends on axioms
 #print axioms Cslib.Circuits.Boolean.Threshold.parity_mem_constDepth
 
 /--
+info: 'Cslib.Circuits.Boolean.TC0_eq_constDepth_threshold' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.TC0_eq_constDepth_threshold
+
+/--
 info: 'Cslib.Circuits.Frontier.Gaussian.degreeCoefficient_four' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
