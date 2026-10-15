@@ -45,6 +45,8 @@ coefficient `L`, so that each layout theorem reads as one line:
 
 ## Main results
 
+* `Cslib.Circuits.Frontier.eventually_lt_of_frontier`: the comparison of demand and supply with
+  the error terms of the problem and a sublinear slack, shared by all frontier lower bounds.
 * `Cslib.Circuits.Frontier.eventually_lt_of_graph`: the comparison of demand and supply for any
   family of graphs with the bounds of the reduction theorem.
 * `Cslib.Circuits.Frontier.eventually_lt_mul_innerSize`: the frontier lower bound for fan-in at
@@ -123,6 +125,97 @@ theorem eventually_card_mul_sq_le_ncard (hfree : ∀ᶠ n in atTop, RectangleFre
     linarith
   exact_mod_cast (Real.log_le_log_iff (by positivity) hSpos).mp this
 
+/-- **Demand against supply for the frontier method**, with the error terms of the problem and
+a sublinear slack. Let `S_n` be dense sets with `log K_n = o(n)`, let `β(n) = o(n)`, let `d` be a
+constant and `A > 0`. For every `ε > 0` there is a slack `η > 0` of the layout hypothesis such
+that, for every constant `C` and all large `n`, the following holds for reals `s, v ≥ 0` (a gate
+budget and a number of vertices with `v ≤ 7 s + 3 n + 3`) and `ρ, w`, where `q = |U|`:
+
+* if `ρ ≤ s - log_q |S_n| + 2 log_q K_n + log_q (v + 1) + β(n) + 1` (a cycle rank: the graph
+  reads almost all inputs),
+* and `log_q |S_n| ≤ w + d + 3 log_q K_n + log_q (v + 1) + β(n)` (the demand: some frontier is
+  wide),
+* and `w ≤ (A + η) ρ + η v + C` (the supply of the layout hypothesis),
+
+then `s > (1 + 1/A - ε) n`.
+
+This is the numerical half of every frontier lower bound in this library: the circuit lower
+bounds apply it to `s = (r - 1)` times the number of gates. -/
+theorem eventually_lt_of_frontier {A : ℝ} (hA : 0 < A) (d : ℝ)
+    (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
+    (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
+      fun n => (n : ℝ))
+    {β : ℕ → ℝ} (hβ : β =o[atTop] fun n => (n : ℝ)) {ε : ℝ} (hε : 0 < ε) :
+    ∃ η > 0, ∀ C : ℝ, ∀ᶠ n : ℕ in atTop, ∀ s v ρ w : ℝ, 0 ≤ s → 0 ≤ v →
+      v ≤ 7 * s + 3 * n + 3 →
+      ρ ≤ s - Real.logb (Nat.card U) (S n).ncard + 2 * Real.logb (Nat.card U) (K n) +
+        Real.logb (Nat.card U) (v + 1) + β n + 1 →
+      Real.logb (Nat.card U) (S n).ncard ≤
+        w + d + 3 * Real.logb (Nat.card U) (K n) + Real.logb (Nat.card U) (v + 1) + β n →
+      w ≤ (A + η) * ρ + η * v + C →
+      (1 + 1 / A - ε) * n < s := by
+  set q := Nat.card U
+  have hq : (1 : ℝ) < q := by exact_mod_cast Finite.one_lt_card
+  have h2 : 0 < Real.log 2 := Real.log_pos one_lt_two
+  have hL2 : Real.log 2 ≤ Real.log q :=
+    Real.log_le_log two_pos (by exact_mod_cast Finite.one_lt_card)
+  -- The constant bounding the size of the graph and the logarithm of its size.
+  set κ : ℝ := 7 + (A + 2) / Real.log 2
+  have hκ : 0 ≤ κ := by positivity
+  -- The error of the problem: the density defect, the threshold, the slack, and constants.
+  set e : ℕ → ℝ := fun n => (n - Real.logb q (S n).ncard) + 4 * Real.logb q (K n) + β n +
+    (|d| + 3)
+  have he : e =o[atTop] fun n => (n : ℝ) := by
+    have h1 : (fun n : ℕ => 4 * Real.logb q (K n)) =o[atTop] fun n => (n : ℝ) :=
+      (hK.const_mul_left (4 / Real.log q)).congr_left fun n => by
+        simp only [Real.logb]
+        ring
+    have h3 : (fun _ : ℕ => |d| + 3) =o[atTop] fun n => (n : ℝ) :=
+      isLittleO_const_left.mpr
+        (Or.inr (tendsto_norm_atTop_atTop.comp tendsto_natCast_atTop_atTop))
+    exact (((isLittleO_sub_logb_ncard hdense).add h1).add hβ).add h3
+  obtain ⟨η₀, hη₀, H⟩ := eventually_lt_of_demand hA hκ hε
+  set η := min η₀ 1
+  have hη : 0 < η := lt_min hη₀ one_pos
+  have hη1 : η ≤ 1 := min_le_right _ _
+  refine ⟨η, hη, fun C => ?_⟩
+  filter_upwards [H η hη (min_le_left _ _) C e he] with n hn
+  intro s v ρ w hs hv hvs hρ hw hsupply
+  have hlogK : 0 ≤ Real.logb q (K n) := by
+    rcases Nat.eq_zero_or_pos (K n) with h | h
+    · simp [h]
+    · exact Real.logb_nonneg hq (by exact_mod_cast h)
+  have hlog0 : 0 ≤ Real.log (v + 1) := Real.log_nonneg (by linarith)
+  have hlogV0 : 0 ≤ Real.logb q (v + 1) := Real.logb_nonneg hq (by linarith)
+  -- The logarithm of the size of the graph, in base `q`, is at most `log (v + 1) / log 2`.
+  have hlogV : (A + η + 1) * Real.logb q (v + 1) ≤ κ * Real.log (v + 1) := by
+    have h1 : Real.logb q (v + 1) ≤ Real.log (v + 1) / Real.log 2 :=
+      div_le_div_of_nonneg_left hlog0 h2 hL2
+    calc (A + η + 1) * Real.logb q (v + 1) ≤ (A + 2) * (Real.log (v + 1) / Real.log 2) :=
+          mul_le_mul (by linarith) h1 hlogV0 (by linarith)
+      _ ≤ κ * Real.log (v + 1) := by
+          rw [mul_div_assoc', div_eq_mul_inv, mul_comm, ← mul_assoc]
+          refine mul_le_mul_of_nonneg_right ?_ hlog0
+          simp only [κ]
+          rw [div_eq_inv_mul]
+          linarith
+  have hvκ : v ≤ κ * (n + s + 1) := by
+    have hκ7 : 7 ≤ κ := by simp only [κ]; linarith [show 0 ≤ (A + 2) / Real.log 2 by positivity]
+    have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg _
+    nlinarith
+  have hd := le_abs_self d
+  -- Compare the supply, less the logarithm of the graph, with the demand.
+  refine hn s v (w - (A + η) * Real.logb q (v + 1)) hs hv hvκ ?_ ?_
+  · -- The demand.
+    simp only [e]
+    nlinarith
+  · -- The supply: the cycle rank is at most `s - n + e(n) + log_q (v + 1)`.
+    have hρ' : ρ ≤ s - n + e n + Real.logb q (v + 1) := by
+      simp only [e]
+      linarith [abs_nonneg d]
+    have := mul_le_mul_of_nonneg_left hρ' (by linarith : 0 ≤ A + η)
+    nlinarith
+
 /-- **Demand against supply for graphs.** Assume the layout hypothesis for maximum degree `r + 1`
 with coefficient `A > 0`, and let `S_n` be dense `K_n`-rectangle-free sets with
 `log K_n = o(n)`. For every `ε > 0` and all large `n`: every connected, loopless graph of maximum
@@ -130,7 +223,8 @@ degree `r + 1` with the bounds of the reduction theorem for `g` gates (at most `
 vertices, cycle rank at most `(r - 1) g - n + log_q K_n + 1`, and every layout of width at least
 `log_q |S_n| - 3 log_q K_n - log_q (|V| + 1) - (r + 2)`) has `(r - 1) g > (1 + 1/A - ε) n`.
 
-This is the numerical half of the lower bound, independent of circuits. -/
+This is the numerical half of the lower bound, independent of circuits: the comparison of demand
+and supply `eventually_lt_of_frontier`, with the layout hypothesis as the supply. -/
 theorem eventually_lt_of_graph {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
     (hlayout : LayoutBound (r + 1) A) (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
     (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
@@ -147,56 +241,32 @@ theorem eventually_lt_of_graph {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
       (1 + 1 / A - ε) * n < (r - 1) * g := by
   set q := Nat.card U
   have hq : (1 : ℝ) < q := by exact_mod_cast Finite.one_lt_card
-  -- The error of the problem: the density defect, the threshold, and constants.
-  set e : ℕ → ℝ := fun n => (n - Real.logb q (S n).ncard) + 4 * Real.logb q (K n) + (r + 3)
-  have he : e =o[atTop] fun n => (n : ℝ) := by
-    have h2 : (fun n : ℕ => 4 * Real.logb q (K n)) =o[atTop] fun n => (n : ℝ) :=
-      (hK.const_mul_left (4 / Real.log q)).congr_left fun n => by
-        simp only [Real.logb]
-        ring
-    have h3 : (fun _ : ℕ => ((r : ℝ) + 3)) =o[atTop] fun n => (n : ℝ) :=
-      isLittleO_const_left.mpr
-        (Or.inr (tendsto_norm_atTop_atTop.comp tendsto_natCast_atTop_atTop))
-    exact ((isLittleO_sub_logb_ncard hdense).add h2).add h3
-  -- The constant bounding the size of the graph and the change of base of its logarithm.
-  set κ : ℝ := 4 + 1 / Real.log 2
-  have hκ : 0 ≤ κ := by positivity
-  obtain ⟨η, hη, H⟩ := eventually_lt_of_demand hA hκ hε
+  obtain ⟨η, hη, H⟩ := eventually_lt_of_frontier hA (r + 2) hK hdense
+    (isLittleO_zero (fun n : ℕ => (n : ℝ)) atTop) hε
   obtain ⟨C, hC⟩ := hlayout η hη
-  filter_upwards [H η hη le_rfl C e he, hfree,
-    eventually_card_mul_sq_le_ncard hfree hK hdense] with n hn hfreen hbign
+  filter_upwards [H C, hfree, eventually_card_mul_sq_le_ncard hfree hK hdense] with
+    n hn hfreen hbign
   intro g V E _ _ G hconn hloop hdeg hV hrank hwidth
   obtain ⟨π, hπ⟩ := hC V E G hconn hloop hdeg
-  have hwidth := hwidth π
-  -- The quantities of the comparison.
-  set s : ℝ := (r - 1) * g
   have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
-  have hs : 0 ≤ s := mul_nonneg (by linarith) (Nat.cast_nonneg g)
-  have hK1 : (1 : ℝ) ≤ K n := by exact_mod_cast hfreen.pos
-  have hlogK : 0 ≤ Real.logb q (K n) := Real.logb_nonneg hq hK1
+  have hg : (0 : ℝ) ≤ g := Nat.cast_nonneg g
+  have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg n
   have hSne : (S n).Nonempty := by
     rw [← ncard_pos (toFinite _)]
     exact lt_of_lt_of_le (Nat.mul_pos Nat.card_pos (pow_pos hfreen.pos 2)) hbign
   have hlogS := logb_ncard_le_self hSne
-  have hlogV : Real.logb q (Nat.card V + 1) ≤ κ * Real.log (Nat.card V + 1) :=
-    logb_le_mul_log (by exact_mod_cast (Finite.one_lt_card : 2 ≤ q))
-      (by linarith [Nat.cast_nonneg (α := ℝ) (Nat.card V)])
-  have hVs : (Nat.card V : ℝ) ≤ κ * (n + s + 1) := by
+  have hlogK : 0 ≤ Real.logb q (K n) := by
+    rcases Nat.eq_zero_or_pos (K n) with h | h
+    · simp [h]
+    · exact Real.logb_nonneg hq (by exact_mod_cast h)
+  have hlogV : 0 ≤ Real.logb q (Nat.card V + 1) :=
+    Real.logb_nonneg hq (by linarith [Nat.cast_nonneg (α := ℝ) (Nat.card V)])
+  refine hn ((r - 1) * g) (Nat.card V) G.cycleRank (G.width π) (mul_nonneg (by linarith) hg)
+    (Nat.cast_nonneg _) ?_ ?_ (by simpa using hwidth π) hπ
+  · -- `2 r g + 3 ≤ 7 (r - 1) g + 3 n + 3`, since `2 r ≤ 7 (r - 1)`.
     have hV' : (Nat.card V : ℝ) ≤ 2 * r * g + 3 := by exact_mod_cast hV
-    have hκ4 : 4 ≤ κ := by simp only [κ]; linarith [show 0 ≤ 1 / Real.log 2 by positivity]
-    have hg : (0 : ℝ) ≤ g := Nat.cast_nonneg g
-    have hns : 0 ≤ (n : ℝ) + s + 1 := by positivity
-    -- `2 r g + 3 ≤ 4 (r - 1) g + 4`, since `2 r ≤ 4 (r - 1)`.
     nlinarith
-  refine hn s (Nat.card V) (G.width π) hs (Nat.cast_nonneg _) hVs ?_ ?_
-  · -- The demand: `n ≤ width + e(n) + κ log (|V| + 1)`.
-    simp only [e]
-    linarith
-  · -- The supply: the layout hypothesis, with the cycle rank of the reduction.
-    have hrank' : (G.cycleRank : ℝ) ≤ s - n + e n := by
-      simp only [e]
-      linarith
-    have := mul_le_mul_of_nonneg_left hrank' (by linarith : 0 ≤ A + η)
+  · have h0 : (0 : ℕ → ℝ) n = 0 := rfl
     linarith
 
 /-- **The frontier lower bound.** Let `r ≥ 2` and assume the layout hypothesis for maximum degree
