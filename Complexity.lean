@@ -118,6 +118,7 @@ public import Complexity.Computability.Kolmogorov.Depth
 public import Complexity.Computability.Kolmogorov.Incompressibility
 public import Complexity.Computability.Kolmogorov.Invariance
 public import Complexity.Computability.Kolmogorov.MultiTape
+public import Complexity.Computability.Kolmogorov.NisanWigderson
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
@@ -149,6 +150,8 @@ public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
+public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
+public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.Convolution
 public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
@@ -192,10 +195,12 @@ public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Flip
+public import Complexity.Foundations.Data.BitString.ListDecoding
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Finset.Expect
+public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.List.BalancedFold
@@ -234,6 +239,7 @@ public import Complexity.Logics.SecondOrder.Reduction
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.PMF
+public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift

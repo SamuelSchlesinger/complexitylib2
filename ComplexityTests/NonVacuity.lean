@@ -20,6 +20,7 @@ import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Foundations.Combinatorics.Expander.Family
 import Complexity.Foundations.Combinatorics.Expander.TowerBase
 import Complexity.Computability.Kolmogorov.MultiTape
+import Complexity.Computability.Kolmogorov.NisanWigderson
 import Complexity.Computability.RAM.Squaring
 import Complexity.Computability.Circuit.Frontier.Network
 import Complexity.Logics.SecondOrder.Coloring
@@ -327,5 +328,20 @@ example : RectangleFree (univ : Set (Fin 1 → Bool)) 2 ∧ 2 ≤ (univ : Set (F
       one_lt_two
 
 end Frontier
+
+section KolmogorovNW
+
+open Cslib Cslib.BitString Cslib.Kolmogorov Cslib.Crypto.PRG.NisanWigderson
+
+/-- The literal description method runs any list decoder whose outputs have bounded length, so the
+hypothesis of the Nisan–Wigderson step to short descriptions can be met. -/
+example {ℓ n a m L K : ℕ} (D : Design ℓ n a m) (C : ListCode (List Bool) (Fin n → Bool) L)
+    (test : (Fin m → Bool) → Bool) (hC : ∀ w k, (C.decode w k).length ≤ K) :
+    DescriptionMethod.ReconstructionDecoder DescriptionMethod.literal D C test K K where
+  program R k := C.decode (R.guess test) k
+  length_program_le _ k := (hC _ k).trans (Nat.le_add_left _ _)
+  mem_run_program _ k := DescriptionMethod.mem_literal_run.mpr ⟨hC _ k, rfl⟩
+
+end KolmogorovNW
 
 end ComplexityTests.NonVacuity

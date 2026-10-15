@@ -1748,4 +1748,65 @@ info: 'Set.ncard_le_mul_ncard_image' depends on axioms: [propext, Classical.choi
 #guard_msgs (whitespace := lax) in
 #print axioms Set.ncard_le_mul_ncard_image
 
+/--
+info: 'Fintype.expect_sub_div_le_dens_filter' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Fintype.expect_sub_div_le_dens_filter
+
+/--
+info: 'Fintype.dens_filter_exists_apply_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Fintype.dens_filter_exists_apply_mem
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.expect_trialAgreement' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.expect_trialAgreement
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.div_two_mul_le_dens_goodTrials' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.div_two_mul_le_dens_goodTrials
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.half_le_dens_exists_mem_goodTrials' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.half_le_dens_exists_mem_goodTrials
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.reconstructionBits_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.reconstructionBits_le
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.one_sub_pow_le_dens_mem_trialCandidates' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.one_sub_pow_le_dens_mem_trialCandidates
+
+/--
+info: 'Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.timeBoundedComplexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.timeBoundedComplexity_le
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.timeBoundedComplexity_le_of_random' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+open Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder in
+#print axioms timeBoundedComplexity_le_of_random
+
 end ComplexityTests.Axioms
