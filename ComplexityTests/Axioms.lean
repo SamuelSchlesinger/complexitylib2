@@ -802,4 +802,16 @@ info: 'Cslib.BitString.exists_hammingDist_parityOn_le_of_le_blrAcceptance' depen
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.exists_hammingDist_parityOn_le_of_le_blrAcceptance
 
+/--
+info: 'Cslib.Logic.PL.CNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity
+
+/--
+info: 'Cslib.Logic.PL.DNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_all_eval_eq_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.DNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_all_eval_eq_parity
+
 end ComplexityTests.Axioms
