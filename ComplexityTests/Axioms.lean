@@ -580,4 +580,10 @@ info: 'card_mul_sum_choose_le_of_two_mul_lt_hammingDist' depends on axioms: [pro
 #guard_msgs (whitespace := lax) in
 #print axioms card_mul_sum_choose_le_of_two_mul_lt_hammingDist
 
+/--
+info: 'Cslib.Circuits.Boolean.NC_subset_AC' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.NC_subset_AC
+
 end ComplexityTests.Axioms
