@@ -47,7 +47,9 @@ lake exe checkInitImports
 
    public import Complexity.Init
    ```
-3. **Upstream marker** values: `candidate`, `submitted #N`, `merged @SHA` (delete the file and
+3. **Upstream marker** values: `candidate`, `submitted #N @SHA` (a copy of an open cslib pull
+   request at its head `SHA`), `vendored <owner>:<branch> @SHA (unsubmitted)` (a copy of a branch
+   of a contributor's cslib fork that has no pull request yet), `merged @SHA` (delete the file and
    bump the pin in the same commit), `local-only (reason)`. Nothing is `local-only` without a
    reason; valid reasons are project scaffolding and tests of local-only files.
    A port keeps the authors of the files it is ported from: v1's PCP internals, Sipser–Lautemann
@@ -58,8 +60,20 @@ lake exe checkInitImports
 4. **Every module publicly imports `Cslib.Init`** (through `Complexity.Init`); the test driver
    runs `checkInitImports`.
 5. **Reuse upstream first.** Before defining anything, search cslib (`../cslib/Cslib`) and the
-   in-flight PRs listed in `UPSTREAM.md`. A thin local copy of an unmerged upstream PR is allowed
-   at the same path, marked `-- upstream: submitted #N`, and must be deleted when the PR merges.
+   in-flight PRs listed in `UPSTREAM.md`. A thin local copy of an unmerged upstream PR (or of an
+   unsubmitted branch of an upstream contributor) is allowed at the mirrored path, keeping the
+   original authors and declaration names, marked `-- upstream: submitted #N @SHA` (or
+   `vendored …`). A copy holds only what the pinned cslib lacks: when a PR modifies an existing
+   cslib file, the copy contains just its additions. Copies are deleted when the work merges.
+
+## Staying current with upstream
+
+- `lakefile.toml` pins cslib `main`; move the pin forward whenever `main` moves, fixing breakage
+  in the same commit.
+- `scripts/upstream_sync.py` reports, for every copied module, whether its pull request has
+  merged (bump the pin past it and delete the copy), whether its head has moved (re-sync the
+  copy) or whether it was closed. Run it whenever upstream is checked, and act on every line that
+  is not `CURRENT`.
 6. **Bit strings.** Declarations about bit strings and the cube `ι → Bool` (operations, sampling,
    Fourier analysis, sensitivity, influence, codes) live in `Cslib.BitString`; only the named
    Boolean functions `parityOn`, `parity`, `threshold`, `majority`, `strictMajority` sit in `Cslib`
