@@ -22,12 +22,13 @@ import Mathlib.Analysis.SpecialFunctions.PolarCoord
 # Sheppard's bound for threshold crossings of correlated Gaussians
 
 Let `X` be a standard Gaussian vector of a finite-dimensional real inner product space, and let
-`u`, `v` be vectors of equal norm at angle `θ`, so that `⟪u, X⟫` and `⟪v, X⟫` are Gaussians of
-equal variance with correlation `cos θ`. **Sheppard's bound**
+`u`, `v` be vectors of equal norm at angle `θ`. When the common norm is positive, `⟪u, X⟫` and
+`⟪v, X⟫` are Gaussians of equal variance with correlation `cos θ`. **Sheppard's bound**
 (`measureReal_stdGaussian_mem_uIoc_le_angle`): a threshold `t` lies between `⟪u, X⟫` and
-`⟪v, X⟫` with probability at most `θ / π`. At `t = 0` the bound is attained: it is Sheppard's
-formula [Sheppard1899] for the probability that two correlated Gaussians differ in sign. Only the
-bound is proved here.
+`⟪v, X⟫` with probability at most `θ / π`. For vectors of positive norm the bound is attained at
+`t = 0`: that is Sheppard's formula [Sheppard1899] for the probability that two correlated
+Gaussians differ in sign. For `u = v = 0` the crossing event is empty while Mathlib's
+`angle 0 0` is `π / 2`, so the bound is then strict. Only the bound is proved here.
 
 The proof has four steps.
 
