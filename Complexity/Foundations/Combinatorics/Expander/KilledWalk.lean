@@ -237,7 +237,7 @@ private theorem expect_comp_take [Nonempty D] {M : Type*} [AddCommMonoid M] [Mod
   rw [Fintype.expect_equiv (((finCongr (Nat.add_sub_of_le h).symm).arrowCongr
       (Equiv.refl D)).trans (Fin.appendEquiv m (T - m)).symm) (fun k ↦ f (Fin.take m h k))
       (fun x ↦ f x.1) fun _ ↦ rfl,
-    Fintype.expect_prod]
+    Fintype.expect_prod_type]
   simp only [Fintype.expect_const]
 
 /-- Under uniformly random kill signals, a walk of length `T` is killed at its step `m < T` with
@@ -284,7 +284,7 @@ theorem expect_ite_killTime_eq [Nonempty D] {ℓ : ℕ} (hℓ : ℓ < T) (f : (F
         f (Fin.take ℓ hℓ.le x.1) * if killTime x.2 = ℓ then 1 else 0 := by
     split_ifs <;> simp
   simp only [h]
-  rw [Fintype.expect_prod]
+  rw [Fintype.expect_prod_type]
   simp only [← mul_expect, expect_killTime_eq hℓ]
   rw [← expect_mul, expect_comp_take, mul_comm]
 
@@ -296,16 +296,16 @@ theorem expect_prod_ite_killTime_eq [Fintype V] [Nonempty D] {ℓ : ℕ} (hℓ :
     𝔼 x : V × (Fin T → D) × (Fin T → Fin q),
         (if killTime x.2.2 = ℓ then F (x.1, Fin.take ℓ hℓ.le x.2.1) else 0) =
       (1 - (q : ℝ)⁻¹) ^ ℓ / q * 𝔼 w, F w := by
-  rw [Fintype.expect_prod, Fintype.expect_prod F, mul_expect]
+  rw [Fintype.expect_prod_type, Fintype.expect_prod_type F, mul_expect]
   exact expect_congr rfl fun v _ ↦ expect_ite_killTime_eq hℓ fun r ↦ F (v, r)
 
 /-- The kill signals of a uniformly random killed walk are independent of its walk: averaging a
 function of the start and the labels over the killed walks averages it over the walks. -/
 theorem expect_comp_fst_snd_fst [Fintype V] (g : V × (Fin T → D) → ℝ) :
     𝔼 p : V × (Fin T → D) × (Fin T → Fin q), g (p.1, p.2.1) = 𝔼 w, g w := by
-  rw [Fintype.expect_prod, Fintype.expect_prod g]
+  rw [Fintype.expect_prod_type, Fintype.expect_prod_type g]
   refine expect_congr rfl fun v _ ↦ ?_
-  rw [Fintype.expect_prod]
+  rw [Fintype.expect_prod_type]
   simp only [Fintype.expect_const]
 
 end Expect

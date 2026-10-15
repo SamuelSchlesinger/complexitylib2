@@ -283,7 +283,7 @@ theorem inv_card_sub_le_sum_truthProb [Nonempty D] (A : V → WalkLabels D T →
       split_ifs <;> linarith
   have hsurv : 𝔼 x : (Fin T → D) × (Fin T → Fin q),
       (if H + 1 ≤ killTime x.2 then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ (H + 1) := by
-    rw [Fintype.expect_prod]
+    rw [Fintype.expect_prod_type]
     simp only [expect_le_killTime (q := q) (Nat.succ_le_of_lt hH), Fintype.expect_const]
   have h := R.inv_card_le_expect_report_eq_decode T q A v
   calc (Fintype.card α : ℝ)⁻¹ - (1 - (q : ℝ)⁻¹) ^ (H + 1)

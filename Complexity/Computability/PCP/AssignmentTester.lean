@@ -318,8 +318,8 @@ def blrTest : LocalTest (ι → Bool) ((ι → Bool) × (ι → Bool)) (Fin 3) B
 /-- The linearity test accepts with the probability `blrAcceptance`. -/
 theorem acceptProb_blrTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool) :
     (blrTest ι).acceptProb f = blrAcceptance f := by
-  simp only [LocalTest.acceptProb, Fintype.expect_prod, LocalTest.Passes, blrTest, blrAcceptance,
-    Matrix.cons_val]
+  simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, blrTest,
+    blrAcceptance, Matrix.cons_val]
   refine expect_congr rfl fun x _ ↦ expect_congr rfl fun y _ ↦ ?_
   congr
 
@@ -338,7 +338,7 @@ def tensorTest : LocalTest ((ι → Bool) ⊕ (ι × ι → Bool))
 theorem acceptProb_tensorTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool)
     (g : (ι × ι → Bool) → Bool) :
     (tensorTest ι).acceptProb (Sum.elim f g) = tensorTestAcceptance f g := by
-  simp only [LocalTest.acceptProb, Fintype.expect_prod, LocalTest.Passes, tensorTest,
+  simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, tensorTest,
     tensorTestAcceptance, selfCorrect, Matrix.cons_val, Sum.elim_inl, Sum.elim_inr]
   refine expect_congr rfl fun y _ ↦ expect_congr rfl fun z _ ↦ expect_congr rfl fun r _ ↦
     expect_congr rfl fun s _ ↦ expect_congr rfl fun t _ ↦ ?_
@@ -357,7 +357,7 @@ def equationTest [Fintype κ] (A : κ → ι → Bool) (b : κ → Bool) :
 theorem acceptProb_equationTest [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
     (g : (ι → Bool) → Bool) (A : κ → ι → Bool) (b : κ → Bool) :
     (equationTest A b).acceptProb g = equationTestAcceptance g A b := by
-  simp only [LocalTest.acceptProb, Fintype.expect_prod, LocalTest.Passes, equationTest,
+  simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, equationTest,
     equationTestAcceptance, selfCorrect, Matrix.cons_val]
   refine expect_congr rfl fun k _ ↦ expect_congr rfl fun t _ ↦ ?_
   congr
@@ -376,8 +376,8 @@ self-corrected read of the linear table at the corresponding vector. -/
 theorem acceptProb_inputTest (T : Fin 2 → (α → Bool) → Bool) (f : (Fin 2 × α → Bool) → Bool) :
     (inputTest α).acceptProb (Sum.elim (fun p ↦ T p.1 p.2) f) =
       𝔼 b, 𝔼 r, 𝔼 y, if T b r = selfCorrect f (endEmbed b r) y then 1 else 0 := by
-  simp only [LocalTest.acceptProb, Fintype.expect_prod, LocalTest.Passes, inputTest, selfCorrect,
-    Matrix.cons_val, Sum.elim_inl, Sum.elim_inr]
+  simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, inputTest,
+    selfCorrect, Matrix.cons_val, Sum.elim_inl, Sum.elim_inr]
   refine expect_congr rfl fun b _ ↦ expect_congr rfl fun r _ ↦ expect_congr rfl fun y _ ↦ ?_
   congr
 

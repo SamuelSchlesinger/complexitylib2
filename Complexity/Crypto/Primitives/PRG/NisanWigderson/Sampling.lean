@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Data.Finset.Density
+import Complexity.Foundations.Data.Finset.Expect
 import Complexity.Foundations.Data.Finset.Sampling
 import Complexity.Probability.PMF
 import Complexity.Probability.PMF.Expect
@@ -161,16 +162,12 @@ theorem mem_goodTrials {θ : ℝ} {t : Trial ℓ m} :
 theorem trialAgreement_le_one (t : Trial ℓ m) : trialAgreement D f test t ≤ 1 :=
   dens_le_one
 
-private theorem expect_prod {β γ M : Type*} [Fintype β] [Fintype γ] [AddCommMonoid M]
-    [Module ℚ≥0 M] (g : β × γ → M) : 𝔼 p, g p = 𝔼 b, 𝔼 c, g (b, c) := by
-  rw [← univ_product_univ, expect_product]
-
 /-- Averaging over a uniform trial averages over its four random choices in turn. -/
 private theorem expect_trial {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (g : Trial ℓ m → M) :
     𝔼 t, g t = 𝔼 i, 𝔼 w, 𝔼 r, 𝔼 u, g ⟨i, w, r, u⟩ := by
   rw [Fintype.expect_equiv Trial.equivProd g (fun p => g ⟨p.1, p.2.1, p.2.2.1, p.2.2.2⟩)
     fun _ => rfl]
-  simp only [expect_prod]
+  simp only [Fintype.expect_prod_type]
 
 /-- **Averaging over the random choices.** For a deterministic test, the probability that the
 predictor built from it guesses bit `i` of the generator is the average agreement of the trials

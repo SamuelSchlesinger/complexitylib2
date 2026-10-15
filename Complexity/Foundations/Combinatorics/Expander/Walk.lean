@@ -423,8 +423,8 @@ of it uniformly random labels before and after it. -/
 theorem expect_splitWalk {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (i : Fin t)
     (F : (V × D) × (Fin i → D) × (Fin (t - (i + 1)) → D) → M) :
     𝔼 p, F (G.splitWalk i p) = 𝔼 q, 𝔼 r, 𝔼 s, F (q, r, s) := by
-  rw [Fintype.expect_equiv (G.splitWalk i) _ F fun _ ↦ rfl, Fintype.expect_prod]
-  simp only [Fintype.expect_prod]
+  rw [Fintype.expect_equiv (G.splitWalk i) _ F fun _ ↦ rfl, Fintype.expect_prod_type]
+  simp only [Fintype.expect_prod_type]
 
 /-- **The crossing count.** Counted by their `i`-th dart `q`, the walks of length `t` for which the
 reverse of the first `i` steps satisfies `P q` and the steps after the `i`-th satisfy `Q q` are
@@ -464,7 +464,7 @@ theorem expect_walkDart {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (i : Fi
   · have : IsEmpty (Fin t → D) := ⟨fun k ↦ hD.false (k i)⟩
     simp
   · rw [Fintype.expect_equiv (G.splitWalk i) (fun p ↦ f (G.walkDart p i)) (fun x ↦ f x.1)
-      fun _ ↦ rfl, Fintype.expect_prod]
+      fun _ ↦ rfl, Fintype.expect_prod_type]
     simp only [Fintype.expect_const]
 
 /-- The walks of length `t` whose `i`-th dart lies in `S` number `|D| ^ (t - 1) * |S|`. -/
@@ -499,7 +499,7 @@ theorem expect_walkDart_mk (v : V) (i : Fin t) (f : V × D → ℝ) :
   | succ t ih =>
     -- a tuple of `t + 1` labels is a first label and a tuple of `t` labels
     rw [← Fintype.expect_equiv (Fin.consEquiv fun _ ↦ D)
-      (fun x ↦ f (G.walkDart (v, Fin.cons x.1 x.2) i)) _ fun _ ↦ rfl, Fintype.expect_prod]
+      (fun x ↦ f (G.walkDart (v, Fin.cons x.1 x.2) i)) _ fun _ ↦ rfl, Fintype.expect_prod_type]
     induction i using Fin.cases with
     | zero =>
       simp only [walkDart, Fin.val_zero, walkAt_zero, Fin.cons_zero, Fintype.expect_const,
@@ -532,7 +532,7 @@ theorem expect_walkDart_mul_walkDart {i j : Fin t} (hij : i < j) (f g : V × D �
   simp only [h]
   rw [G.expect_splitWalk i fun x ↦ f x.1 * g (G.walkDart ((G.rot x.1).1, x.2.2) ⟨_, hj⟩)]
   simp only [Fintype.expect_const, ← mul_expect, expect_walkDart_mk]
-  rw [← G.expect_comp_rot, Fintype.expect_prod]
+  rw [← G.expect_comp_rot, Fintype.expect_prod_type]
   simp only [rot_rot, expect_mul]
 
 /-- **Two darts of a random walk are almost independent.** For steps `i < j` of a uniformly random
@@ -550,13 +550,13 @@ theorem sq_expect_walkDart_mul_walkDart_sub_le {i j : Fin t} (hij : i < j) (f g 
   set φ : V → ℝ := fun v ↦ 𝔼 a, f (G.rot (v, a))
   set ψ : V → ℝ := fun w ↦ 𝔼 a, g (w, a)
   have hφ : 𝔼 v, φ v = 𝔼 q, f q := by
-    rw [← G.expect_comp_rot f, Fintype.expect_prod]
-  have hψ : 𝔼 w, ψ w = 𝔼 q, g q := (Fintype.expect_prod g).symm
+    rw [← G.expect_comp_rot f, Fintype.expect_prod_type]
+  have hψ : 𝔼 w, ψ w = 𝔼 q, g q := (Fintype.expect_prod_type g).symm
   have hφ₂ : 𝔼 v, φ v ^ 2 ≤ 𝔼 q, f q ^ 2 := by
-    rw [← G.expect_comp_rot fun q ↦ f q ^ 2, Fintype.expect_prod]
+    rw [← G.expect_comp_rot fun q ↦ f q ^ 2, Fintype.expect_prod_type]
     exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _ _
   have hψ₂ : 𝔼 w, ψ w ^ 2 ≤ 𝔼 q, g q ^ 2 := by
-    rw [Fintype.expect_prod fun q ↦ g q ^ 2]
+    rw [Fintype.expect_prod_type fun q ↦ g q ^ 2]
     exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _ _
   have hmix := G.sq_expect_mul_walk_pow_sub_le (j - (i + 1)) φ ψ
   rw [hφ, hψ] at hmix

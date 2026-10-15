@@ -33,7 +33,7 @@ cases of the Cauchy–Schwarz inequality `Finset.expect_mul_sq_le_sq_mul_sq`.
 ## Main results
 
 * `Finset.sq_expect_le_expect_sq`: the square of an average is at most the average of the squares.
-* `Fintype.expect_prod`: the average over a product is the iterated average.
+* `Fintype.expect_prod_type`: the average over a product is the iterated average.
 * `Fintype.expect_boole`: the average of an indicator is a density.
 * `Fintype.mul_dens_filter_le_expect`: Markov's inequality for a uniform average.
 * `Fintype.sq_expect_le_dens_mul_expect_sq`: the second moment method for a uniform average.
@@ -64,7 +64,7 @@ open Finset
 variable {ι 𝕜 : Type*} [Fintype ι]
 
 /-- The uniform average over a product is the iterated average. -/
-theorem expect_prod {α β M : Type*} [Fintype α] [Fintype β] [AddCommMonoid M] [Module ℚ≥0 M]
+theorem expect_prod_type {α β M : Type*} [Fintype α] [Fintype β] [AddCommMonoid M] [Module ℚ≥0 M]
     (f : α × β → M) : 𝔼 x, f x = 𝔼 a, 𝔼 b, f (a, b) := by
   rw [← univ_product_univ, expect_product]
 
@@ -75,7 +75,7 @@ theorem expect_boole [Semifield 𝕜] [CharZero 𝕜] (p : ι → Prop) [Decidab
 
 /-- **Markov's inequality** for a uniform average: a nonnegative function is at least `a` on a set
 of density at most its average divided by `a`. -/
-theorem mul_dens_filter_le_expect [Field 𝕜] [LinearOrder 𝕜] [IsStrictOrderedRing 𝕜]
+theorem mul_dens_filter_le_expect [Semifield 𝕜] [LinearOrder 𝕜] [IsStrictOrderedRing 𝕜]
     {f : ι → 𝕜} (hf : ∀ i, 0 ≤ f i) (a : 𝕜) :
     a * (dens {i | a ≤ f i} : 𝕜) ≤ 𝔼 i, f i := by
   rw [← expect_boole, mul_expect]

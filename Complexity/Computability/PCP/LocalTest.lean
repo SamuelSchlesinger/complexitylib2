@@ -182,7 +182,7 @@ theorem acceptProb_map (f : P → P') (π : P' → Γ) : (T.map f).acceptProb π
 theorem acceptProb_and_le_left [Fintype R'] [Nonempty R'] (T' : LocalTest P R' Q' Γ)
     (π : P → Γ) : (T.and T').acceptProb π ≤ T.acceptProb π := by
   classical
-  simp only [acceptProb, Fintype.expect_prod, passes_and]
+  simp only [acceptProb, Fintype.expect_prod_type, passes_and]
   calc 𝔼 r, 𝔼 r', (if T.Passes π r ∧ T'.Passes π r' then (1 : ℝ) else 0)
       ≤ 𝔼 r, 𝔼 _r' : R', (if T.Passes π r then (1 : ℝ) else 0) := by
         gcongr with r _ r' _
@@ -193,7 +193,7 @@ theorem acceptProb_and_le_left [Fintype R'] [Nonempty R'] (T' : LocalTest P R' Q
 theorem acceptProb_and_le_right [Fintype R'] [Nonempty R] (T' : LocalTest P R' Q' Γ)
     (π : P → Γ) : (T.and T').acceptProb π ≤ T'.acceptProb π := by
   classical
-  simp only [acceptProb, Fintype.expect_prod, passes_and]
+  simp only [acceptProb, Fintype.expect_prod_type, passes_and]
   calc 𝔼 r, 𝔼 r', (if T.Passes π r ∧ T'.Passes π r' then (1 : ℝ) else 0)
       ≤ 𝔼 _r : R, 𝔼 r', (if T'.Passes π r' then (1 : ℝ) else 0) := by
         gcongr with r _ r' _
@@ -205,7 +205,7 @@ probabilities of its members. -/
 theorem acceptProb_mix [Fintype E] (T : E → LocalTest P R Q Γ) (π : P → Γ) :
     (mix T).acceptProb π = 𝔼 e, (T e).acceptProb π := by
   classical
-  simp only [acceptProb, Fintype.expect_prod, passes_mix]
+  simp only [acceptProb, Fintype.expect_prod_type, passes_mix]
 
 end Prob
 
