@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Cslib.Computability.Circuit.Boolean.Complexity
 public import Cslib.Computability.Circuit.Boolean.Synthesis
 public import Cslib.Computability.Circuit.RelativeComplexity
@@ -38,8 +39,6 @@ changed input is `Cslib.Circuits.Boolean.complexity_update_le`.
 
 ## Main results
 
-* `Cslib.Circuits.Synthesis.xor`: an exclusive or costs four De Morgan gates.
-* `Cslib.Circuits.Boolean.complexity_xor_le`: the complexity of an exclusive or.
 * `Cslib.Circuits.Boolean.complexityGiven_le_of_cover`: the cost of a sparse correction, given
   the function being corrected.
 * `Cslib.Circuits.Boolean.dist_complexity_le_of_cover`,
@@ -61,36 +60,7 @@ open Boolean Finset
 
 variable {n m k : ℕ}
 
-/-- The exclusive or `f ⊕ g = (f ∨ g) ∧ ¬(f ∧ g)` costs four gates beyond its arguments. -/
-theorem Synthesis.xor {s : Set (BooleanFunction n)} {f g : BooleanFunction n} {a b : ℕ}
-    (hf : Synthesis interpretation s {f} a) (hg : Synthesis interpretation s {g} b) :
-    Synthesis interpretation s {fun x => f x ^^ g x} (a + b + 4) := by
-  have hf' : Synthesis interpretation {f, g} {f} 0 := of_mem (by simp)
-  have hg' : Synthesis interpretation {f, g} {g} 0 := of_mem (by simp)
-  have h := (hf'.or hg').and (hf'.and hg').not
-  have heq : (fun x => (f x || g x) && !(f x && g x)) = fun x => f x ^^ g x := by
-    funext x
-    cases f x <;> cases g x <;> rfl
-  rw [heq] at h
-  exact hf.combine hg h
-
 namespace Boolean
-
-/-- An exclusive or of two outputs costs four gates. -/
-theorem complexity_xor_le (f g : BooleanFunction n) :
-    complexity interpretation (single fun x => f x ^^ g x) ≤
-      complexity interpretation (single f) + complexity interpretation (single g) + 4 := by
-  have hxor : Synthesis interpretation (inputs 2) {fun y : BitString 2 => y 0 ^^ y 1} 4 :=
-    (Synthesis.of_mem (s := inputs 2) ⟨0, rfl⟩).xor (Synthesis.of_mem ⟨1, rfl⟩)
-  have h := complexity_comp_le (I := interpretation)
-    (fun x => Fin.append (single f x) (single g x)) (single fun y : BitString 2 => y 0 ^^ y 1)
-  have heq : (single fun y : BitString 2 => y 0 ^^ y 1) ∘
-      (fun x => Fin.append (single f x) (single g x)) = single fun x => f x ^^ g x := by
-    funext x j
-    exact congrArg₂ (· ^^ ·) (Fin.append_left (single f x) (single g x) 0)
-      (Fin.append_right (single f x) (single g x) 0)
-  rw [heq] at h
-  exact h.trans (Nat.add_le_add (complexity_append_le _ _) hxor.complexity_le)
 
 /-- Correcting a single output: the complexities of `f` and `g` differ by at most the complexity
 of `f ⊕ g`, the indicator of the inputs on which they differ, plus four gates. -/

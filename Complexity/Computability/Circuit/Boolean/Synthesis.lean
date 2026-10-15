@@ -16,27 +16,32 @@ public import Cslib.Computability.Circuit.Boolean.Complexity
 Rules for synthesis bounds stated through the truth values of their targets, which is how
 semantic arguments (simulations, reductions) produce Boolean functions: change a target to one
 with the same truth values (`Synthesis.congr_iff`), a constant, bounded disjunctions and
-conjunctions with uniform costs, and disjunctions of conjunctions of literals, that is of
-available functions and their negations (`Synthesis.any_all_literal`). Also bounds on the circuit
-complexity of negations, conjunctions and disjunctions.
+conjunctions with uniform costs, disjunctions of conjunctions of literals, that is of available
+functions and their negations (`Synthesis.any_all_literal`), and exclusive ors. Also bounds on
+the circuit complexity of negations, conjunctions, disjunctions and exclusive ors.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.Synthesis.congr_iff`, `Synthesis.of_forall_eq_const`.
-* `Cslib.Circuits.Boolean.Synthesis.exists_exists_mem`, `Synthesis.exists_forall_mem`.
-* `Cslib.Circuits.Boolean.Synthesis.literal`, `Synthesis.all_literal`, `Synthesis.any_all_literal`.
-* `Cslib.Circuits.Boolean.complexity_not_le`, `complexity_and_le`, `complexity_or_le`.
+* `Cslib.Circuits.Synthesis.congr_iff`, `Cslib.Circuits.Synthesis.of_forall_eq_const`.
+* `Cslib.Circuits.Synthesis.exists_exists_mem`, `Cslib.Circuits.Synthesis.exists_forall_mem`.
+* `Cslib.Circuits.Synthesis.literal`, `Cslib.Circuits.Synthesis.all_literal`,
+  `Cslib.Circuits.Synthesis.any_all_literal`.
+* `Cslib.Circuits.Synthesis.xor`: an exclusive or costs four gates.
+* `Cslib.Circuits.Boolean.complexity_not_le`, `Cslib.Circuits.Boolean.complexity_and_le`,
+  `Cslib.Circuits.Boolean.complexity_or_le`, `Cslib.Circuits.Boolean.complexity_xor_le`.
 -/
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean
+namespace Cslib.Circuits
+
+open Boolean
 
 variable {n : ℕ}
 
 namespace Synthesis
 
-variable {s : Set (BooleanFunction n)} {f g : BooleanFunction n} {a : ℕ}
+variable {s : Set (BooleanFunction n)} {f g : BooleanFunction n} {a b : ℕ}
 
 /-- Change the target of a synthesis bound to a function with the same truth values. -/
 theorem congr_iff (h : Synthesis interpretation s {f} a) (hfg : ∀ x, f x = true ↔ g x = true) :
@@ -123,7 +128,21 @@ theorem any_all_literal {D : List (List (BooleanFunction n × Bool))} {w : ℕ}
   refine h.mono Set.Subset.rfl Set.Subset.rfl (le_of_eq ?_)
   simp only [List.map_const', List.sum_replicate, smul_eq_mul]
 
+/-- The exclusive or `f ⊕ g = (f ∨ g) ∧ ¬(f ∧ g)` costs four gates beyond its arguments. -/
+theorem xor (hf : Synthesis interpretation s {f} a) (hg : Synthesis interpretation s {g} b) :
+    Synthesis interpretation s {fun x => f x ^^ g x} (a + b + 4) := by
+  have hf' : Synthesis interpretation {f, g} {f} 0 := of_mem (by simp)
+  have hg' : Synthesis interpretation {f, g} {g} 0 := of_mem (by simp)
+  have h := (hf'.or hg').and (hf'.and hg').not
+  have heq : (fun x => (f x || g x) && !(f x && g x)) = fun x => f x ^^ g x := by
+    funext x
+    cases f x <;> cases g x <;> rfl
+  rw [heq] at h
+  exact hf.combine hg h
+
 end Synthesis
+
+namespace Boolean
 
 /-! ### Complexity of Boolean operations -/
 
@@ -141,11 +160,12 @@ theorem complexity_not_le (f : BooleanFunction n) :
   rw [heq] at h
   exact h.trans (Nat.add_le_add_left hnot.complexity_le _)
 
-/-- Combining two outputs with a binary gate costs one gate. -/
-theorem complexity_binary_le (f g : BooleanFunction n) (op : Bool → Bool → Bool)
-    (hop : Synthesis interpretation (inputs 2) {fun y : Fin 2 → Bool => op (y 0) (y 1)} 1) :
+/-- Combining two outputs with a binary operation that costs `c` gates on two inputs costs `c`
+gates. -/
+theorem complexity_binary_le (f g : BooleanFunction n) (op : Bool → Bool → Bool) {c : ℕ}
+    (hop : Synthesis interpretation (inputs 2) {fun y : Fin 2 → Bool => op (y 0) (y 1)} c) :
     complexity interpretation (single fun x => op (f x) (g x)) ≤
-      complexity interpretation (single f) + complexity interpretation (single g) + 1 := by
+      complexity interpretation (single f) + complexity interpretation (single g) + c := by
   have h := complexity_comp_le (I := interpretation)
     (fun x => Fin.append (single f x) (single g x)) (single fun y : Fin 2 → Bool => op (y 0) (y 1))
   have heq : (single fun y : Fin 2 → Bool => op (y 0) (y 1)) ∘
@@ -170,4 +190,13 @@ theorem complexity_or_le (f g : BooleanFunction n) :
   complexity_binary_le f g (· || ·)
     ((Synthesis.of_mem (s := inputs 2) ⟨0, rfl⟩).or (Synthesis.of_mem ⟨1, rfl⟩))
 
-end Cslib.Circuits.Boolean
+/-- An exclusive or of two outputs costs four gates. -/
+theorem complexity_xor_le (f g : BooleanFunction n) :
+    complexity interpretation (single fun x => f x ^^ g x) ≤
+      complexity interpretation (single f) + complexity interpretation (single g) + 4 :=
+  complexity_binary_le f g (· ^^ ·)
+    ((Synthesis.of_mem (s := inputs 2) ⟨0, rfl⟩).xor (Synthesis.of_mem ⟨1, rfl⟩))
+
+end Boolean
+
+end Cslib.Circuits
