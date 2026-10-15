@@ -8,7 +8,6 @@ module
 -- upstream: candidate (addition to `Cslib/Computability/Circuit/Frontier/Compiler.lean`)
 
 public import Complexity.Computability.Circuit.Frontier.Compiler
-public import Complexity.Computability.Circuit.Frontier.Components
 import Complexity.Computability.Circuit.Program
 
 /-!

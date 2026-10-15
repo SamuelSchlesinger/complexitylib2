@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Frontier.Ledger.Aggregate
 public import Complexity.Computability.Circuit.Frontier.Ledger.Count
 public import Complexity.Computability.Circuit.Frontier.Ledger.Sweep
 public import Complexity.Computability.Circuit.Frontier.LowerBound
+import Complexity.Computability.Circuit.Frontier.Layouts.Components
 import Mathlib.Tactic.Ring
 
 /-!
@@ -162,8 +163,8 @@ theorem eventually_lt_mul_card_of_ledger {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA 
   -- The cycle rank of the component and the inputs it reads.
   have hρ : (N.cycleRankOn W : ℝ) + nW ≤ s + 1 := by
     have h := Compiler.cycleRankOn_add_ncard_readIn_le (guessInterpretation I (L.readout 1))
-      (fun _ => univ) hfan'
-      (N.edgeCut_component (π.symm ⟨t, ht⟩)) (N.ncard_component_le (π.symm ⟨t, ht⟩))
+      (fun _ => univ) hfan' (N.edgeCut_component (π.symm ⟨t, ht⟩))
+      (N.ncard_component_le_ncard_touching_add_one (π.symm ⟨t, ht⟩))
     rw [hse] at h
     simp only [s]
     exact_mod_cast h

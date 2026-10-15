@@ -34,12 +34,22 @@ The frontier method needs one fact from graph theory: that graphs of maximum deg
 layouts whose width is at most a fixed multiple `A` of their cycle rank, up to lower-order terms.
 `LayoutBound d A` states this as a hypothesis, so that any layout theorem can be plugged in.
 
+A set of vertices `W` is *closed* when no edge leaves it: `G.edgeCut W = ∅`. Connected
+components (`Multigraph.component`) are closed, and adding a disjoint closed set to a set of
+vertices does not change its edge cut (`Multigraph.edgeCut_union_of_edgeCut_eq_empty`). The cycle
+rank of a closed set `W` is `|E(W)| + 1 - |W|`, where `E(W)` are the edges with an endpoint in
+`W` (`Multigraph.cycleRankOn`); it is the cycle rank of the subgraph induced on `W`
+(`Multigraph.induce`).
+
 ## Main definitions
 
 * `Cslib.Circuits.Frontier.Multigraph`: a multigraph, with `incidenceSet`, `MaxDegreeLE`,
   `Loopless`, `toSimpleGraph` (whose connectivity is that of the multigraph), `edgeCut`, and
   `cycleRank`.
 * `Cslib.Circuits.Frontier.Layout V`: a numbering of the vertices, with `Layout.initial`.
+* `Cslib.Circuits.Frontier.Multigraph.cycleRankOn`: the cycle rank of a set of vertices.
+* `Cslib.Circuits.Frontier.Multigraph.component`: the connected component of a vertex.
+* `Cslib.Circuits.Frontier.Multigraph.induce`: the subgraph induced on a set of vertices.
 * `Cslib.Circuits.Frontier.Multigraph.frontier`, `Multigraph.width`: the frontiers of a layout
   and its width.
 * `Cslib.Circuits.Frontier.LayoutBound d A`: the layout hypothesis for maximum degree `d` with
@@ -51,6 +61,13 @@ layouts whose width is at most a fixed multiple `A` of their cycle rank, up to l
   multigraphs.
 * `Cslib.Circuits.Frontier.Multigraph.card_le_card_add_one_of_connected`: a connected graph has
   at least `|V| - 1` edges, so its cycle rank `|E| + 1 - |V|` involves no truncation.
+* `Cslib.Circuits.Frontier.Multigraph.edgeCut_union_of_edgeCut_eq_empty`: closed sets do not
+  change edge cuts.
+* `Cslib.Circuits.Frontier.Multigraph.edgeCut_component`,
+  `Cslib.Circuits.Frontier.Multigraph.connected_induce_component`: components are closed and
+  connected.
+* `Cslib.Circuits.Frontier.Multigraph.ncard_component_le_ncard_touching_add_one`: a component
+  `W` has at least `|W| - 1` edges.
 * `Cslib.Circuits.Frontier.Multigraph.frontier_succ_subset`: consecutive frontiers differ only
   at the edges of the vertex processed in between.
 -/
@@ -201,6 +218,151 @@ def toGraph : Graph V E where
   · rintro (h | h)
     · exact ⟨G.tgt e, Or.inl ⟨h, rfl⟩⟩
     · exact ⟨G.src e, Or.inr ⟨rfl, h⟩⟩
+
+/-! ### Cycle rank of a set of vertices -/
+
+/-- The truncated expression `|E(W)| + 1 - |W|`, where `E(W)` are the edges with an endpoint
+in `W`. For a connected component it is the number of independent cycles of the component; it
+need not be additive over components. -/
+noncomputable def cycleRankOn (W : Set V) : ℕ :=
+  (G.touching W).ncard + 1 - W.ncard
+
+/-! ### Closed sets -/
+
+/-- A set of vertices is closed exactly when every edge has either both endpoints in it or
+none. -/
+theorem edgeCut_eq_empty_iff {W : Set V} : G.edgeCut W = ∅ ↔ ∀ e, (G.src e ∈ W ↔ G.tgt e ∈ W) := by
+  simp [eq_empty_iff_forall_notMem, mem_edgeCut]
+
+/-- A larger set of vertices touches more edges. -/
+theorem touching_mono {L M : Set V} (h : L ⊆ M) : G.touching L ⊆ G.touching M :=
+  fun _ he => he.imp (@h _) (@h _)
+
+/-- **Closed sets do not change edge cuts.** Adding a closed set `K` to a set `L` disjoint from
+it does not change the edge cut of `L`. -/
+theorem edgeCut_union_of_edgeCut_eq_empty {K L : Set V} (hK : G.edgeCut K = ∅)
+    (h : Disjoint K L) : G.edgeCut (K ∪ L) = G.edgeCut L := by
+  ext e
+  have hKe := G.edgeCut_eq_empty_iff.1 hK e
+  by_cases hs : G.src e ∈ K
+  · have ht := hKe.1 hs
+    simp [mem_edgeCut, hs, ht, disjoint_left.1 h hs, disjoint_left.1 h ht]
+  · simp [mem_edgeCut, hs, mt hKe.2 hs]
+
+/-- The edges touching a closed set `W` are those with both endpoints in `W`. -/
+theorem touching_eq_of_edgeCut_eq_empty {W : Set V} (hW : G.edgeCut W = ∅) :
+    G.touching W = {e | G.src e ∈ W ∧ G.tgt e ∈ W} := by
+  ext e
+  have := G.edgeCut_eq_empty_iff.1 hW e
+  simp only [touching, mem_ofPred_eq]
+  tauto
+
+/-! ### Connected components -/
+
+/-- The endpoints of an edge lie in the same connected component. -/
+theorem connectedComponentMk_src (e : E) :
+    G.toSimpleGraph.connectedComponentMk (G.src e) =
+      G.toSimpleGraph.connectedComponentMk (G.tgt e) :=
+  SimpleGraph.ConnectedComponent.sound (G.reachable_src_tgt e)
+
+/-- **Unions of components are closed.** A set of vertices described by their connected
+components has an empty edge cut. -/
+theorem edgeCut_setOf_connectedComponentMk (P : G.toSimpleGraph.ConnectedComponent → Prop) :
+    G.edgeCut {v | P (G.toSimpleGraph.connectedComponentMk v)} = ∅ :=
+  G.edgeCut_eq_empty_iff.2 fun e => by simp only [mem_ofPred_eq, G.connectedComponentMk_src e]
+
+/-- The connected component of a vertex `v`: the vertices joined to `v` by a walk. -/
+def component (v : V) : Set V :=
+  (G.toSimpleGraph.connectedComponentMk v).supp
+
+theorem mem_component {u v : V} :
+    u ∈ G.component v ↔ G.toSimpleGraph.connectedComponentMk u =
+      G.toSimpleGraph.connectedComponentMk v :=
+  Iff.rfl
+
+/-- Every vertex lies in its own component. -/
+theorem mem_component_self (v : V) : v ∈ G.component v :=
+  rfl
+
+/-- **Connected components are closed.** -/
+theorem edgeCut_component (v : V) : G.edgeCut (G.component v) = ∅ :=
+  G.edgeCut_setOf_connectedComponentMk (· = _)
+
+/-! ### Induced subgraphs -/
+
+/-- The subgraph induced on a set of vertices `W`: the edges with both endpoints in `W`. -/
+def induce (W : Set V) : Multigraph W {e // G.src e ∈ W ∧ G.tgt e ∈ W} where
+  src e := ⟨G.src e, e.2.1⟩
+  tgt e := ⟨G.tgt e, e.2.2⟩
+
+variable {G} in
+/-- Induced subgraphs of loopless graphs are loopless. -/
+theorem Loopless.induce (hG : G.Loopless) (W : Set V) : (G.induce W).Loopless :=
+  fun e h => hG e (congrArg Subtype.val h)
+
+variable {G} in
+/-- Induced subgraphs have no larger degrees. -/
+theorem MaxDegreeLE.induce [Finite E] {d : ℕ} (hG : G.MaxDegreeLE d) (W : Set V) :
+    (G.induce W).MaxDegreeLE d := fun w =>
+  (ncard_le_ncard_of_injOn Subtype.val (fun _ he => he.imp (congrArg Subtype.val)
+    (congrArg Subtype.val)) Subtype.val_injective.injOn).trans (hG w)
+
+/-- The simple graph underlying an induced subgraph is the induced simple graph. -/
+theorem toSimpleGraph_induce (W : Set V) :
+    (G.induce W).toSimpleGraph = G.toSimpleGraph.induce W := by
+  ext u v
+  simp only [toSimpleGraph_adj, SimpleGraph.comap_adj, Function.Embedding.subtype_apply, ne_eq,
+    Subtype.ext_iff]
+  refine and_congr_right fun _ => ⟨fun ⟨e, he⟩ => ⟨e.1, ?_⟩, fun ⟨e, he⟩ => ?_⟩
+  · simpa [ends, induce, Sym2.map_mk] using congrArg (Sym2.map Subtype.val) he
+  · -- An edge between two vertices of `W` is an edge of the induced subgraph.
+    have hends : s(G.src e, G.tgt e) = s((u : V), v) := he
+    have hW : G.src e ∈ W ∧ G.tgt e ∈ W := by
+      rcases Sym2.eq_iff.1 hends with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩ <;> rw [h₁, h₂] <;>
+        simp [u.2, v.2]
+    refine ⟨⟨e, hW⟩, ?_⟩
+    rcases Sym2.eq_iff.1 hends with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩
+    · exact Sym2.eq_iff.2 (Or.inl ⟨Subtype.ext h₁, Subtype.ext h₂⟩)
+    · exact Sym2.eq_iff.2 (Or.inr ⟨Subtype.ext h₁, Subtype.ext h₂⟩)
+
+/-- **Components are connected.** -/
+theorem connected_induce_component (v : V) :
+    (G.induce (G.component v)).toSimpleGraph.Connected := by
+  rw [toSimpleGraph_induce]
+  exact (G.toSimpleGraph.connectedComponentMk v).connected_toSimpleGraph
+
+/-- The subgraph induced on a closed set `W` has the cycle rank of `W`. -/
+theorem cycleRank_induce {W : Set V} (hW : G.edgeCut W = ∅) :
+    (G.induce W).cycleRank = G.cycleRankOn W := by
+  rw [cycleRankOn, G.touching_eq_of_edgeCut_eq_empty hW, ← Nat.card_coe_set_eq,
+    ← Nat.card_coe_set_eq]
+  rfl
+
+/-- **A component `W` has at least `|W| - 1` edges**, so its cycle rank `|E(W)| + 1 - |W|`
+involves no truncation. -/
+theorem ncard_component_le_ncard_touching_add_one [Finite E] (v : V) :
+    (G.component v).ncard ≤ (G.touching (G.component v)).ncard + 1 := by
+  have h := (G.induce (G.component v)).card_le_card_add_one_of_connected
+    (G.connected_induce_component v)
+  rwa [G.touching_eq_of_edgeCut_eq_empty (G.edgeCut_component v), ← Nat.card_coe_set_eq,
+    ← Nat.card_coe_set_eq]
+
+/-- On a closed set `W`, the edge cuts of the induced subgraph are those of `G`. -/
+theorem edgeCut_image_val {W : Set V} (hW : G.edgeCut W = ∅) (S : Set W) :
+    G.edgeCut (Subtype.val '' S) = Subtype.val '' (G.induce W).edgeCut S := by
+  have key (e : {e // G.src e ∈ W ∧ G.tgt e ∈ W}) :
+      e.1 ∈ G.edgeCut (Subtype.val '' S) ↔ e ∈ (G.induce W).edgeCut S := by
+    change ¬(((G.induce W).src e : V) ∈ _ ↔ ((G.induce W).tgt e : V) ∈ _) ↔ _
+    rw [Subtype.val_injective.mem_set_image, Subtype.val_injective.mem_set_image]
+    rfl
+  ext e
+  refine ⟨fun he => ?_, fun ⟨e', he', hee'⟩ => hee' ▸ (key e').2 he'⟩
+  -- An edge of the cut has an endpoint in `W`, hence both, as `W` is closed.
+  have hW' := G.edgeCut_eq_empty_iff.1 hW e
+  have hs : G.src e ∈ W :=
+    (G.touching_mono (Subtype.coe_image_subset W S) (G.edgeCut_subset_touching _ he)).elim id
+      hW'.2
+  exact ⟨⟨e, hs, hW'.1 hs⟩, (key _).1 he, rfl⟩
 
 end Multigraph
 

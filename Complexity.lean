@@ -65,7 +65,6 @@ public import Complexity.Computability.Circuit.Frontier.AverageCase
 public import Complexity.Computability.Circuit.Frontier.BoundedFanIn
 public import Complexity.Computability.Circuit.Frontier.BranchingProgram
 public import Complexity.Computability.Circuit.Frontier.Compiler
-public import Complexity.Computability.Circuit.Frontier.Components
 public import Complexity.Computability.Circuit.Frontier.Correlation
 public import Complexity.Computability.Circuit.Frontier.Correlation.Asymptotics
 public import Complexity.Computability.Circuit.Frontier.Correlation.Circuit
@@ -75,6 +74,7 @@ public import Complexity.Computability.Circuit.Frontier.Demand
 public import Complexity.Computability.Circuit.Frontier.FanInTwo
 public import Complexity.Computability.Circuit.Frontier.Layouts.Basic
 public import Complexity.Computability.Circuit.Frontier.Layouts.BoundedDegree
+public import Complexity.Computability.Circuit.Frontier.Layouts.Components
 public import Complexity.Computability.Circuit.Frontier.Layouts.Compression
 public import Complexity.Computability.Circuit.Frontier.Layouts.Core
 public import Complexity.Computability.Circuit.Frontier.Layouts.Cubic

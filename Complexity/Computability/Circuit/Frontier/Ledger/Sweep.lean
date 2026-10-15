@@ -7,7 +7,6 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Frontier.Components
 public import Complexity.Computability.Circuit.Frontier.Compiler
 public import Complexity.Computability.Circuit.Frontier.Ledger.Basic
 import Complexity.Foundations.Data.Set.Card
