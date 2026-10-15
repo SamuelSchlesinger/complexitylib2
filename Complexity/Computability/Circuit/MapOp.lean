@@ -164,13 +164,13 @@ theorem Program.mapOp_comp (ψ : τ.Hom υ) (p : Program σ n g) :
   | gate p line ih => rw [mapOp_gate, ih, Line.mapOp_comp, mapOp_gate, mapOp_gate]
 
 @[simp] theorem Circuit.mapOp_id (c : Circuit σ n m) : c.mapOp (Signature.Hom.id σ) = c := by
-  show (⟨c.program.mapOp _, c.outputs⟩ : Circuit σ n m) = c
+  change (⟨c.program.mapOp _, c.outputs⟩ : Circuit σ n m) = c
   rw [Program.mapOp_id]
 
 /-- Translating a circuit along a composition translates it twice. -/
 theorem Circuit.mapOp_comp (ψ : τ.Hom υ) (c : Circuit σ n m) :
     c.mapOp (ψ.comp φ) = (c.mapOp φ).mapOp ψ := by
-  show (⟨c.program.mapOp (ψ.comp φ), c.outputs⟩ : Circuit υ n m) =
+  change (⟨c.program.mapOp (ψ.comp φ), c.outputs⟩ : Circuit υ n m) =
     ⟨(c.program.mapOp φ).mapOp ψ, c.outputs⟩
   rw [Program.mapOp_comp]
 
@@ -199,7 +199,7 @@ theorem Program.depths_mapOp (p : Program σ n g) : (p.mapOp φ).depths = p.dept
     | cast k => simp only [Program.mapOp_gate, Program.depths_gate_castSucc, ih]
 
 @[simp] theorem Circuit.depth_mapOp (c : Circuit σ n m) : (c.mapOp φ).depth = c.depth := by
-  show Fin.foldl m (fun depth k => max depth ((c.program.mapOp φ).wireDepths (c.outputs k))) 0 =
+  change Fin.foldl m (fun depth k => max depth ((c.program.mapOp φ).wireDepths (c.outputs k))) 0 =
     Fin.foldl m (fun depth k => max depth (c.program.wireDepths (c.outputs k))) 0
   simp only [Program.wireDepths, Program.depths_mapOp]
 
