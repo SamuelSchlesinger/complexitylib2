@@ -602,7 +602,7 @@ private theorem abs_expect_signVal_mul_le_of_two_mul_card_le {n : ℕ} {f p : Bo
   have hsum : (#{x | p x = f x} : ℝ) + #{x | (!p x) = f x} = 2 ^ n := by
     have h := card_filter_add_card_filter_not (s := (univ : Finset (BitString n)))
       fun x => p x = f x
-    rw [card_univ, card_eq] at h
+    rw [card_univ, BitString.card] at h
     have he : #{x | ¬p x = f x} = #{x | (!p x) = f x} := by
       congr 1
       ext x

@@ -16,7 +16,7 @@ import Mathlib.Data.Fintype.BigOperators
 /-!
 # Counting and adding bit strings
 
-There are `2 ^ n` strings of `n` bits (`BitString.card_eq`), numbered `0, …, 2 ^ n - 1` by reading
+There are `2 ^ n` strings of `n` bits (`BitString.card`), numbered `0, …, 2 ^ n - 1` by reading
 their bits as binary digits, least significant first (`BitString.equivFin`).
 
 Bits form the two-element Boolean ring (Mathlib's `BooleanRing Bool`), in which `a + b = (a ^^ b)`
@@ -34,7 +34,7 @@ Boolean functions, are combined with `^^`.
 
 ## Main results
 
-* `Cslib.BitString.card_eq`: the number of strings of `n` bits.
+* `Cslib.BitString.card`: the number of strings of `n` bits.
 * `Cslib.BitString.add_self`, `Cslib.BitString.add_cancel_left`,
   `Cslib.BitString.add_cancel_right`: every bit string is its own negative.
 -/
@@ -46,7 +46,7 @@ namespace Cslib.BitString
 variable {n : ℕ}
 
 /-- There are `2 ^ n` strings of `n` bits. -/
-theorem card_eq : Fintype.card (BitString n) = 2 ^ n := by
+theorem card : Fintype.card (BitString n) = 2 ^ n := by
   simp
 
 variable (n) in
