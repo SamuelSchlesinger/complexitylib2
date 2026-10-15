@@ -15,13 +15,14 @@ public import Mathlib.Data.Set.Image
 /-!
 # Languages of polynomial-length programs over a monoid
 
-A program over a monoid `M` *decides* a Boolean function `f` with an accepting set `S` of elements
-of `M` when `f` is true exactly on the inputs where the value of the program lies in `S`
-(`MonoidProgram.Decides`) [BarringtonTherien1988]. `PolyLength M` is the class of languages over
-`Bool` decided, at every input length, by programs over `M` of polynomially bounded length. Over
-`Equiv.Perm (Fin w)` these are the languages of polynomial-length permutation branching programs
-of width `w`, and over `Function.End (Fin w)` those of polynomial-length branching programs of
-width `w` [Barrington1989]. Like the circuit classes, `PolyLength M` is nonuniform.
+A program over a monoid `M` *decides* a Boolean-valued function `f` of its input with an accepting
+set `S` of elements of `M` when `f` is true exactly on the inputs where the value of the program
+lies in `S` (`MonoidProgram.Decides`) [BarringtonTherien1988]. `PolyLength α M` is the class of
+languages over the alphabet `α` decided, at every word length `n`, by programs over `M` of
+polynomially bounded length reading the words of length `n` as inputs `Fin n → α`. Over the
+alphabet `Bool`, the programs over `Equiv.Perm (Fin w)` are the permutation branching programs of
+width `w`, and those over `Function.End (Fin w)` the branching programs of width `w`
+[Barrington1989]. Like the circuit classes, `PolyLength α M` is nonuniform.
 
 A program that `σ`-computes `f`, with `σ ≠ 1`, decides `f` with the accepting set `{σ}`
 (`MonoidProgram.Computes.decides`), and an injective homomorphism of monoids embeds the classes
@@ -38,6 +39,12 @@ A program that `σ`-computes `f`, with `σ ≠ 1`, decides `f` with the acceptin
 * `Cslib.BranchingPrograms.PolyLength.subset_of_injective`: an injective homomorphism of monoids
   embeds the classes.
 
+## Implementation notes
+
+The languages of [BarringtonTherien1988] are over a finite alphabet, and their monoids finite.
+Neither assumption is needed to state the class, so `PolyLength α M` takes any alphabet `α` and
+monoid `M`; the theorems that need finiteness assume it.
+
 ## References
 
 * [D. A. Barrington, *Bounded-width polynomial-size branching programs recognize exactly those
@@ -50,16 +57,16 @@ A program that `σ`-computes `f`, with `σ ≠ 1`, decides `f` with the acceptin
 
 namespace Cslib.BranchingPrograms
 
-variable {n : ℕ} {M N : Type*} [Monoid M] [Monoid N]
+variable {ι α M N : Type*} [Monoid M] [Monoid N]
 
-/-- A program decides `f` with the accepting set `S` when `f` is true exactly on the inputs where
-the value of the program lies in `S`. -/
-def MonoidProgram.Decides (P : MonoidProgram n M) (S : Set M) (f : BooleanFunction n) : Prop :=
+/-- A program decides a Boolean-valued function `f` of its input with the accepting set `S` when
+`f` is true exactly on the inputs where the value of the program lies in `S`. -/
+def MonoidProgram.Decides (P : MonoidProgram ι α M) (S : Set M) (f : (ι → α) → Bool) : Prop :=
   ∀ x, f x = true ↔ P.eval x ∈ S
 
 section Decides
 
-variable {P : MonoidProgram n M} {S : Set M} {f : BooleanFunction n}
+variable {P : MonoidProgram ι α M} {S : Set M} {f : (ι → α) → Bool}
 
 /-- A program that `σ`-computes `f`, with `σ ≠ 1`, decides `f` with the accepting set `{σ}`. -/
 theorem MonoidProgram.Computes.decides {σ : M} (h : P.Computes σ f) (hσ : σ ≠ 1) :
@@ -75,24 +82,24 @@ theorem MonoidProgram.Decides.map (h : P.Decides S f) {φ : M →* N} (hφ : Fun
     (P.map φ).Decides (φ '' S) f := fun x => by
   rw [h x, eval_map, hφ.mem_set_image]
 
-/-- The empty program decides every function of no variables, accepting everything when the
-function is true and nothing when it is false. -/
-theorem MonoidProgram.decides_one (f : BooleanFunction 0) :
-    (1 : MonoidProgram 0 M).Decides {_m | f Fin.elim0 = true} f := fun x => by
-  rw [Subsingleton.elim x Fin.elim0]
+/-- On inputs with no positions, the empty program decides every function, accepting everything
+when the function is true and nothing when it is false. -/
+theorem MonoidProgram.decides_one [IsEmpty ι] (f : (ι → α) → Bool) :
+    (1 : MonoidProgram ι α M).Decides {_m | f isEmptyElim = true} f := fun x => by
+  rw [Subsingleton.elim x isEmptyElim]
   rfl
 
 end Decides
 
-/-- The languages over `Bool` decided, at every input length `n`, by a program over `M` of length
-at most `s n`, with an accepting set, for a polynomially bounded `s`. -/
-def PolyLength (M : Type*) [Monoid M] : Set (Language Bool) :=
+/-- The languages over `α` decided, at every word length `n`, by a program over `M` of length at
+most `s n`, with an accepting set, for a polynomially bounded `s`. -/
+def PolyLength (α M : Type*) [Monoid M] : Set (Language α) :=
   {L | ∃ s : ℕ → ℕ, PolynomiallyBounded s ∧ ∀ n,
-    ∃ (P : MonoidProgram n M) (S : Set M), P.Decides S (L.slice n) ∧ P.length ≤ s n}
+    ∃ (P : MonoidProgram (Fin n) α M) (S : Set M), P.Decides S (L.slice n) ∧ P.length ≤ s n}
 
 /-- **An injective homomorphism of monoids embeds the classes**: push the programs along it. -/
 theorem PolyLength.subset_of_injective {φ : M →* N} (hφ : Function.Injective φ) :
-    PolyLength M ⊆ PolyLength N := by
+    PolyLength α M ⊆ PolyLength α N := by
   rintro L ⟨s, hs, hP⟩
   refine ⟨s, hs, fun n => ?_⟩
   obtain ⟨P, S, hPS, hlen⟩ := hP n

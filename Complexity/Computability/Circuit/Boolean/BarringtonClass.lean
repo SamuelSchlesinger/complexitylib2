@@ -38,7 +38,8 @@ languages of polynomial-length programs over a finite monoid are in NC¹
 programs over any finite monoid into which `Equiv.Perm (Fin 5)` embeds
 (`Boolean.NC_one_eq_polyLength_of_injective`), for instance of polynomial-length permutation
 branching programs, and of polynomial-length branching programs, of any fixed width `w ≥ 5`
-(`Boolean.NC_one_eq_polyLength_perm`, `Boolean.NC_one_eq_polyLength_end`). All these classes are
+(`Boolean.NC_one_eq_polyLength_perm`, `Boolean.NC_one_eq_polyLength_end`). The classes of
+programs here are those of languages over `Bool`, `PolyLength Bool M`, and all these classes are
 nonuniform.
 
 ## Main results
@@ -108,7 +109,8 @@ such that, at every length `n ≠ 0` and for every `5`-cycle `σ`, a permutation
 of width `5` and length at most `s n` `σ`-computes the slice of the language at `n`. -/
 theorem exists_monoidProgram_computes_of_mem_NC_one (hL : L ∈ NC 1) :
     ∃ s : ℕ → ℕ, PolynomiallyBounded s ∧ ∀ (n : ℕ) [NeZero n] (σ : Perm (Fin 5)), IsFiveCycle σ →
-      ∃ P : MonoidProgram n (Perm (Fin 5)), P.length ≤ s n ∧ P.Computes σ (L.slice n) := by
+      ∃ P : MonoidProgram (Fin n) Bool (Perm (Fin 5)),
+        P.length ≤ s n ∧ P.Computes σ (L.slice n) := by
   obtain ⟨c, hc⟩ := mem_NC_one_iff_formulaDepth_le.1 hL
   refine ⟨fun n => 2 ^ (2 * c * (Nat.log 2 n + 1)), polynomiallyBounded_two_pow_mul_log _,
     fun n _ σ hσ => ?_⟩
@@ -119,7 +121,7 @@ theorem exists_monoidProgram_computes_of_mem_NC_one (hL : L ∈ NC 1) :
     _ = 2 ^ (2 * c * (Nat.log 2 n + 1)) := by rw [mul_assoc, pow_mul 2 2]; rfl
 
 /-- **NC¹ is decided by polynomial-length permutation branching programs of width `5`.** -/
-theorem NC_one_subset_polyLength : NC 1 ⊆ PolyLength (Perm (Fin 5)) := by
+theorem NC_one_subset_polyLength : NC 1 ⊆ PolyLength Bool (Perm (Fin 5)) := by
   intro L hL
   obtain ⟨s, hs, hP⟩ := exists_monoidProgram_computes_of_mem_NC_one hL
   have hσ : IsFiveCycle ([0, 1, 2, 3, 4] : List (Fin 5)).formPerm :=
@@ -145,7 +147,7 @@ private theorem leftMulEnd_apply {M : Type*} [Monoid M] {k : ℕ} (e : M ≃ Fin
 /-- **Polynomial-length programs over a finite monoid decide languages in NC¹**
 [BarringtonTherien1988]: by left multiplication, a program over a finite monoid is a branching
 program of width its cardinality, which is a formula of depth logarithmic in its length. -/
-theorem polyLength_subset_NC_one (M : Type*) [Monoid M] [Finite M] : PolyLength M ⊆ NC 1 := by
+theorem polyLength_subset_NC_one (M : Type*) [Monoid M] [Finite M] : PolyLength Bool M ⊆ NC 1 := by
   classical
   rintro L ⟨s, hs, hP⟩
   obtain ⟨k, ⟨e⟩⟩ := Finite.exists_equiv_fin M
@@ -167,26 +169,26 @@ theorem polyLength_subset_NC_one (M : Type*) [Monoid M] [Finite M] : PolyLength 
 
 /-- **Barrington's theorem** [Barrington1989]: NC¹ is the class of languages decided by
 permutation branching programs of width `5` and polynomial length. -/
-theorem NC_one_eq_polyLength_perm_five : NC 1 = PolyLength (Perm (Fin 5)) :=
+theorem NC_one_eq_polyLength_perm_five : NC 1 = PolyLength Bool (Perm (Fin 5)) :=
   NC_one_subset_polyLength.antisymm (polyLength_subset_NC_one _)
 
 /-- NC¹ is the class of languages decided by polynomial-length programs over any finite monoid
 into which `Equiv.Perm (Fin 5)` embeds. -/
 theorem NC_one_eq_polyLength_of_injective {M : Type*} [Monoid M] [Finite M]
-    {φ : Perm (Fin 5) →* M} (hφ : Function.Injective φ) : NC 1 = PolyLength M :=
+    {φ : Perm (Fin 5) →* M} (hφ : Function.Injective φ) : NC 1 = PolyLength Bool M :=
   (NC_one_subset_polyLength.trans (PolyLength.subset_of_injective hφ)).antisymm
     (polyLength_subset_NC_one M)
 
 /-- For every `w ≥ 5`, NC¹ is the class of languages decided by permutation branching programs of
 width `w` and polynomial length, the programs over `Equiv.Perm (Fin w)`. -/
-theorem NC_one_eq_polyLength_perm {w : ℕ} (hw : 5 ≤ w) : NC 1 = PolyLength (Perm (Fin w)) :=
+theorem NC_one_eq_polyLength_perm {w : ℕ} (hw : 5 ≤ w) : NC 1 = PolyLength Bool (Perm (Fin w)) :=
   NC_one_eq_polyLength_of_injective (viaEmbeddingHom_injective (Fin.castLEEmb hw))
 
 /-- **Bounded-width branching programs of polynomial length decide exactly the languages of NC¹**
 [Barrington1989]: for every `w ≥ 5`, NC¹ is the class of languages decided by branching programs
 of width `w` and polynomial length, the programs over `Function.End (Fin w)`. -/
 theorem NC_one_eq_polyLength_end {w : ℕ} (hw : 5 ≤ w) :
-    NC 1 = PolyLength (Function.End (Fin w)) := by
+    NC 1 = PolyLength Bool (Function.End (Fin w)) := by
   have : Finite (Function.End (Fin w)) := inferInstanceAs (Finite (Fin w → Fin w))
   have hφ : Function.Injective (MulAction.toEndHom (M := Perm (Fin w)) (α := Fin w)) :=
     fun σ τ h => Equiv.ext fun i => congrFun h i

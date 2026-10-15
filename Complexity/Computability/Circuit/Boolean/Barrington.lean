@@ -21,13 +21,16 @@ import Mathlib.Tactic.Ring
 **Barrington's theorem**: a De Morgan formula of depth `d`, with negations free, becomes a
 permutation branching program of width `5` and length at most `4 ^ d`, which is a fixed `5`-cycle
 on the inputs where the formula is true and the identity elsewhere
-(`Formula.exists_monoidProgram_computes`) [Barrington1989], [Jukna, Section 15.4][Jukna2012].
+(`Formula.exists_monoidProgram_computes`) [Barrington1989], [Jukna, Section 15.4][Jukna2012]. The
+programs here are the programs over Boolean inputs `BitString n = Fin n → Bool`, those of
+`MonoidProgram (Fin n) Bool M`.
 
 The construction works for every `5`-cycle `σ` at once. An input `xᵢ` reads `xᵢ` and selects `σ`
-or the identity. A negation `σ⁻¹`-computes its argument and multiplies by `σ`. For a conjunction,
-`σ` is the commutator `α β α⁻¹ β⁻¹` of two `5`-cycles (`Equiv.Perm.IsFiveCycle.exists_commutator`);
-running the programs for the arguments with `α` and `β`, then their inverses, gives `σ` exactly
-when both arguments are true. A disjunction is the negation of the conjunction of the negations.
+or the identity (`Instruction.cond i σ 1`). A negation `σ⁻¹`-computes its argument and multiplies
+by `σ`. For a conjunction, `σ` is the commutator `α β α⁻¹ β⁻¹` of two `5`-cycles
+(`Equiv.Perm.IsFiveCycle.exists_commutator`); running the programs for the arguments with `α` and
+`β`, then their inverses, gives `σ` exactly when both arguments are true. A disjunction is the
+negation of the conjunction of the negations.
 
 Conversely, whether a branching program of width `w`, a program over `Function.End (Fin w)`, maps
 `a` to `b` is a formula of depth `O(log w · log L)`: split the program in halves and take the
@@ -76,19 +79,18 @@ negations and constants free, has a permutation branching program of width `5` a
 `4 ^ d` that `σ`-computes it. -/
 theorem exists_monoidProgram_computes [NeZero n] (F : Formula signature n) {σ : Perm (Fin 5)}
     (hσ : IsFiveCycle σ) :
-    ∃ P : MonoidProgram n (Perm (Fin 5)), P.length ≤ 4 ^ F.depthWith binaryCost ∧
+    ∃ P : MonoidProgram (Fin n) Bool (Perm (Fin 5)), P.length ≤ 4 ^ F.depthWith binaryCost ∧
       P.Computes σ (F.eval interpretation) := by
   induction F generalizing σ with
   | input i =>
-    refine ⟨FreeMonoid.of ⟨i, 1, σ⟩, by simp, fun x => ?_⟩
-    cases h : x i <;> simp [Instruction.eval, h]
+    refine ⟨FreeMonoid.of (.cond i σ 1), by simp, fun x => ?_⟩
+    cases h : x i <;> simp [h]
   | gate op args ih =>
     cases op with
     | const c =>
       cases c
       · exact ⟨1, by simp, fun x => by simp [interpretation]⟩
-      · exact ⟨FreeMonoid.of ⟨0, σ, σ⟩, by simp, fun x => by
-          simp [interpretation, Instruction.eval]⟩
+      · exact ⟨FreeMonoid.of (.const 0 σ), by simp, fun x => by simp [interpretation]⟩
     | not =>
       obtain ⟨P, hlen, hP⟩ := ih 0 hσ.inv
       refine ⟨mulLeft σ P, (length_mulLeft σ P).trans_le (max_le ?_ (hlen.trans ?_)),
@@ -152,7 +154,8 @@ namespace Cslib.Circuits.Boolean
 branching program of width `5` and length at most `4 ^ d`. -/
 theorem exists_monoidProgram_computes_of_formulaDepth [NeZero n]
     (f : BooleanFunction n) {σ : Perm (Fin 5)} (hσ : IsFiveCycle σ) :
-    ∃ P : MonoidProgram n (Perm (Fin 5)), P.length ≤ 4 ^ formulaDepth f ∧ P.Computes σ f := by
+    ∃ P : MonoidProgram (Fin n) Bool (Perm (Fin 5)),
+      P.length ≤ 4 ^ formulaDepth f ∧ P.Computes σ f := by
   obtain ⟨F, hF, hd⟩ := exists_computes_depthWith_eq_formulaDepth f
   obtain ⟨P, hlen, hP⟩ := F.exists_monoidProgram_computes hσ
   exact ⟨P, hd ▸ hlen, fun x => (hP x).trans (by rw [hF x])⟩
@@ -167,31 +170,32 @@ open Cslib.Circuits
 
 /-- The formula saying that an instruction of a width-`w` branching program maps `a` to `b`: a
 constant or a literal. -/
-def Instruction.entryFormula (ι : Instruction n (Function.End (Fin w))) (a b : Fin w) :
-    Formula signature n :=
-  match decide (ι.ifFalse a = b), decide (ι.ifTrue a = b) with
+def Instruction.entryFormula (I : Instruction (Fin n) Bool (Function.End (Fin w)))
+    (a b : Fin w) : Formula signature n :=
+  match decide (I.select false a = b), decide (I.select true a = b) with
   | true, true => .const true
-  | false, true => .input ι.var
-  | true, false => (Formula.input ι.var).not
+  | false, true => .input I.var
+  | true, false => (Formula.input I.var).not
   | false, false => .const false
 
-@[simp] theorem Instruction.eval_entryFormula (ι : Instruction n (Function.End (Fin w)))
-    (a b : Fin w) (x : BitString n) :
-    (ι.entryFormula a b).eval interpretation x = decide ((ι.eval x) a = b) := by
+@[simp] theorem Instruction.eval_entryFormula
+    (I : Instruction (Fin n) Bool (Function.End (Fin w))) (a b : Fin w) (x : BitString n) :
+    (I.entryFormula a b).eval interpretation x = decide ((I.eval x) a = b) := by
   unfold entryFormula
-  cases h₀ : decide (ι.ifFalse a = b) <;> cases h₁ : decide (ι.ifTrue a = b) <;>
-    cases hx : x ι.var <;> simp_all [Instruction.eval]
+  cases h₀ : decide (I.select false a = b) <;> cases h₁ : decide (I.select true a = b) <;>
+    cases hx : x I.var <;> simp_all [Instruction.eval]
 
-@[simp] theorem Instruction.depthWith_entryFormula (ι : Instruction n (Function.End (Fin w)))
-    (a b : Fin w) : (ι.entryFormula a b).depthWith binaryCost = 0 := by
+@[simp] theorem Instruction.depthWith_entryFormula
+    (I : Instruction (Fin n) Bool (Function.End (Fin w))) (a b : Fin w) :
+    (I.entryFormula a b).depthWith binaryCost = 0 := by
   unfold entryFormula
-  cases decide (ι.ifFalse a = b) <;> cases decide (ι.ifTrue a = b) <;> simp
+  cases decide (I.select false a = b) <;> cases decide (I.select true a = b) <;> simp
 
 /-- The formula of an instruction is a constant or a literal, so in negation normal form. -/
-theorem Instruction.isNNF_entryFormula (ι : Instruction n (Function.End (Fin w))) (a b : Fin w) :
-    (ι.entryFormula a b).IsNNF := by
+theorem Instruction.isNNF_entryFormula (I : Instruction (Fin n) Bool (Function.End (Fin w)))
+    (a b : Fin w) : (I.entryFormula a b).IsNNF := by
   unfold entryFormula
-  cases decide (ι.ifFalse a = b) <;> cases decide (ι.ifTrue a = b) <;> constructor
+  cases decide (I.select false a = b) <;> cases decide (I.select true a = b) <;> constructor
 
 namespace MonoidProgram
 
@@ -205,13 +209,13 @@ def entryFormulaMul (u v : Fin w → Fin w → Formula signature n) (a b : Fin w
 /-- The formula saying that a branching program of width `w` maps `a` to `b`: split the program in
 halves, and say that the second half maps `a` to some `c` that the first half maps to `b`
 (`List.balancedFold`). -/
-def entryFormula (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w) :
+def entryFormula (P : MonoidProgram (Fin n) Bool (Function.End (Fin w))) (a b : Fin w) :
     Formula signature n :=
   P.toList.balancedFold entryFormulaMul (fun a b => .const (decide (a = b)))
     Instruction.entryFormula a b
 
-@[simp] theorem eval_entryFormula (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w)
-    (x : BitString n) :
+@[simp] theorem eval_entryFormula (P : MonoidProgram (Fin n) Bool (Function.End (Fin w)))
+    (a b : Fin w) (x : BitString n) :
     (P.entryFormula a b).eval interpretation x = decide ((P.eval x) a = b) := by
   rw [eval_eq_prod, entryFormula]
   revert a b
@@ -220,7 +224,7 @@ def entryFormula (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w) :
     (p := fun l (T : Fin w → Fin w → Formula signature n) =>
       ∀ a b, (T a b).eval interpretation x =
         decide (((l.map (·.eval x)).prod : Function.End (Fin w)) a = b))
-    (fun a b => by simp; rfl) (fun ι a b => by simp) (fun l₁ l₂ u v _ _ hu hv a b => ?_) P.toList
+    (fun a b => by simp; rfl) (fun I a b => by simp) (fun l₁ l₂ u v _ _ hu hv a b => ?_) P.toList
   rw [entryFormulaMul, Formula.eval_orList, List.map_append, List.prod_append, Bool.eq_iff_iff,
     List.any_eq_true, decide_eq_true_iff]
   simp only [List.mem_map, List.mem_finRange, true_and, exists_exists_eq_and, Formula.eval_and,
@@ -229,19 +233,20 @@ def entryFormula (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w) :
 
 /-- The formula saying that a branching program maps `a` to `b` has negations only at the
 leaves. -/
-theorem isNNF_entryFormula (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w) :
+theorem isNNF_entryFormula (P : MonoidProgram (Fin n) Bool (Function.End (Fin w))) (a b : Fin w) :
     (P.entryFormula a b).IsNNF := by
   rw [entryFormula]
   revert a b
   refine List.balancedFold_induction (op := entryFormulaMul)
     (e := fun a b => .const (decide (a = b))) (f := Instruction.entryFormula)
     (p := fun _ (T : Fin w → Fin w → Formula signature n) => ∀ a b, (T a b).IsNNF)
-    (fun a b => .const _) (fun ι => ι.isNNF_entryFormula)
+    (fun a b => .const _) (fun I => I.isNNF_entryFormula)
     (fun _ _ u v _ _ hu hv a b => .orList fun F hF => ?_) P.toList
   obtain ⟨c, -, rfl⟩ := List.mem_map.1 hF
   exact .and (hv a c) (hu c b)
 
-theorem depthWith_entryFormula_le (P : MonoidProgram n (Function.End (Fin w))) (a b : Fin w) :
+theorem depthWith_entryFormula_le (P : MonoidProgram (Fin n) Bool (Function.End (Fin w)))
+    (a b : Fin w) :
     (P.entryFormula a b).depthWith binaryCost ≤ (Nat.clog 2 w + 1) * Nat.clog 2 P.length := by
   let d (T : Fin w → Fin w → Formula signature n) : ℕ :=
     Finset.univ.sup fun ab : Fin w × Fin w => (T ab.1 ab.2).depthWith binaryCost
@@ -262,7 +267,7 @@ theorem depthWith_entryFormula_le (P : MonoidProgram n (Function.End (Fin w))) (
       omega
   have := List.apply_balancedFold_le d hop (l := P.toList) (D := 0)
     (e := fun a b => .const (decide (a = b))) (f := Instruction.entryFormula)
-    (fun ι _ => Finset.sup_le fun ab _ => (Instruction.depthWith_entryFormula ι ab.1 ab.2).le)
+    (fun I _ => Finset.sup_le fun ab _ => (Instruction.depthWith_entryFormula I ab.1 ab.2).le)
     (fun _ => Finset.sup_le fun ab _ => by simp)
   rw [zero_add] at this
   exact (hd _ a b).trans this
@@ -270,7 +275,7 @@ theorem depthWith_entryFormula_le (P : MonoidProgram n (Function.End (Fin w))) (
 /-- **Branching programs give formulas.** A branching program of width `w` and length `L`, started
 at `a` and accepting at the states of `acc`, is computed by a De Morgan formula of depth at most
 `(⌈log₂ w⌉ + 1) ⌈log₂ L⌉ + ⌈log₂ w⌉`, with negations only at the leaves (`Formula.IsNNF`). -/
-theorem exists_formula (P : MonoidProgram n (Function.End (Fin w))) (a : Fin w)
+theorem exists_formula (P : MonoidProgram (Fin n) Bool (Function.End (Fin w))) (a : Fin w)
     (acc : Finset (Fin w)) :
     ∃ F : Formula signature n, (∀ x, F.eval interpretation x = decide ((P.eval x) a ∈ acc)) ∧
       F.depthWith binaryCost ≤ (Nat.clog 2 w + 1) * Nat.clog 2 P.length + Nat.clog 2 w ∧
@@ -291,7 +296,7 @@ theorem exists_formula (P : MonoidProgram n (Function.End (Fin w))) (a : Fin w)
 and length `L` that `σ`-computes `f`, with `σ ≠ 1`, is turned into a De Morgan formula computing
 `f` of depth at most `(⌈log₂ w⌉ + 1) ⌈log₂ L⌉ + ⌈log₂ (w ^ 2)⌉`, with negations only at the
 leaves (`Formula.IsNNF`): `f` is true where some `a` is mapped to some `b ≠ a`. -/
-theorem Computes.exists_formula {P : MonoidProgram n (Perm (Fin w))} {σ : Perm (Fin w)}
+theorem Computes.exists_formula {P : MonoidProgram (Fin n) Bool (Perm (Fin w))} {σ : Perm (Fin w)}
     {f : BooleanFunction n} (hP : P.Computes σ f) (hσ : σ ≠ 1) :
     ∃ F : Formula signature n, F.Computes interpretation f ∧
       F.depthWith binaryCost ≤ (Nat.clog 2 w + 1) * Nat.clog 2 P.length + Nat.clog 2 (w * w) ∧
