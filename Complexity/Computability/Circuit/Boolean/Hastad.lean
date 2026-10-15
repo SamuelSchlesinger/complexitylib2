@@ -154,14 +154,13 @@ theorem exists_dnf_of_shallow {op : Op} (hop : op ≠ .not) {args : Fin op.arity
     obtain ⟨D, hD, heval⟩ := exists_dnf_of_trees false t hd
     exact ⟨D, false, hD, fun y => by simp [heval, ht]⟩
 
-/-- **The union bound of a stage.** If there are fewer than `2 ^ s` operation nodes and `ℓ` is at
-most a `1 / (16 s + 1)` fraction of the `m` free bits, then the restrictions that the switching
-lemma bounds for every node together are fewer than all extensions with `ℓ` free bits. -/
-private theorem stage_count {S m ℓ s : ℕ} (hS : S < 2 ^ s) (hs : 1 ≤ s) (hsℓ : s ≤ ℓ)
+/-- **The switching fraction.** If `s ≤ ℓ` and `ℓ` is at most a `1 / (16 s + 1)` fraction of the `m`
+free bits, then the restrictions that the switching lemma bounds for one operation node are at
+most a `2 ^ (-s)` fraction of all extensions with `ℓ` free bits. -/
+theorem two_pow_mul_switching_le {m ℓ s : ℕ} (hs : 1 ≤ s) (hsℓ : s ≤ ℓ)
     (hℓ : (16 * s + 1) * ℓ ≤ m) :
-    S * (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * s) ^ s) < m.choose ℓ * 2 ^ (m - ℓ) := by
+    2 ^ s * (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * s) ^ s) ≤ m.choose ℓ * 2 ^ (m - ℓ) := by
   have hℓm : ℓ ≤ m := le_trans (Nat.le_mul_of_pos_left ℓ (by omega)) hℓ
-  have hB : 0 < m.choose ℓ := Nat.choose_pos hℓm
   have hratio := Nat.choose_sub_mul_pow_le hsℓ hℓm
   have hpos : 0 < (m - ℓ + 1) ^ s := Nat.pow_pos (by omega)
   have hle : 16 * s * ℓ ≤ m - ℓ + 1 := by
@@ -172,24 +171,35 @@ private theorem stage_count {S m ℓ s : ℕ} (hS : S < 2 ^ s) (hs : 1 ≤ s) (h
     congr 1
     omega
   -- cancel `2 ^ (m - ℓ)`, then multiply by `(m - ℓ + 1) ^ s`
-  suffices h : S * m.choose (ℓ - s) * (8 * s) ^ s < m.choose ℓ by
-    calc S * (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * s) ^ s)
-        = S * m.choose (ℓ - s) * (8 * s) ^ s * 2 ^ (m - ℓ) := by
+  suffices h : 2 ^ s * m.choose (ℓ - s) * (8 * s) ^ s ≤ m.choose ℓ by
+    calc 2 ^ s * (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * s) ^ s)
+        = 2 ^ s * m.choose (ℓ - s) * (8 * s) ^ s * 2 ^ (m - ℓ) := by
           rw [h2, show (8 * s) ^ s = 2 ^ s * (4 * s) ^ s by rw [← mul_pow]; ring_nf]
           ring
-      _ < m.choose ℓ * 2 ^ (m - ℓ) := Nat.mul_lt_mul_of_pos_right h (by positivity)
-  refine Nat.lt_of_mul_lt_mul_right (a := (m - ℓ + 1) ^ s) ?_
-  calc S * m.choose (ℓ - s) * (8 * s) ^ s * (m - ℓ + 1) ^ s
-      = S * (8 * s) ^ s * (m.choose (ℓ - s) * (m - ℓ + 1) ^ s) := by ring
-    _ ≤ S * (8 * s) ^ s * (m.choose ℓ * ℓ ^ s) := Nat.mul_le_mul_left _ hratio
-    _ = m.choose ℓ * (S * (8 * s * ℓ) ^ s) := by rw [mul_pow (8 * s) ℓ]; ring
-    _ < m.choose ℓ * (2 ^ s * (8 * s * ℓ) ^ s) :=
-        Nat.mul_lt_mul_of_pos_left (Nat.mul_lt_mul_of_pos_right hS
-          (Nat.pow_pos (Nat.mul_pos (Nat.mul_pos (by omega) (by omega)) (by omega)))) hB
+      _ ≤ m.choose ℓ * 2 ^ (m - ℓ) := Nat.mul_le_mul_right _ h
+  refine Nat.le_of_mul_le_mul_right (?_ : _ * (m - ℓ + 1) ^ s ≤ _ * (m - ℓ + 1) ^ s) hpos
+  calc 2 ^ s * m.choose (ℓ - s) * (8 * s) ^ s * (m - ℓ + 1) ^ s
+      = 2 ^ s * (8 * s) ^ s * (m.choose (ℓ - s) * (m - ℓ + 1) ^ s) := by ring
+    _ ≤ 2 ^ s * (8 * s) ^ s * (m.choose ℓ * ℓ ^ s) := Nat.mul_le_mul_left _ hratio
     _ = m.choose ℓ * (16 * s * ℓ) ^ s := by
-        rw [← mul_pow]
-        ring_nf
+        rw [show (16 * s * ℓ) ^ s = 2 ^ s * (8 * s) ^ s * ℓ ^ s by
+          rw [← mul_pow, ← mul_pow]; ring_nf]
+        ring
     _ ≤ m.choose ℓ * (m - ℓ + 1) ^ s := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hle s)
+
+/-- **The union bound of a stage.** If there are fewer than `2 ^ s` operation nodes and `ℓ` is at
+most a `1 / (16 s + 1)` fraction of the `m` free bits, then the restrictions that the switching
+lemma bounds for every node together are fewer than all extensions with `ℓ` free bits. -/
+private theorem stage_count {S m ℓ s : ℕ} (hS : S < 2 ^ s) (hs : 1 ≤ s) (hsℓ : s ≤ ℓ)
+    (hℓ : (16 * s + 1) * ℓ ≤ m) :
+    S * (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * s) ^ s) < m.choose ℓ * 2 ^ (m - ℓ) := by
+  have hℓm : ℓ ≤ m := le_trans (Nat.le_mul_of_pos_left ℓ (by omega)) hℓ
+  have hB : 0 < m.choose ℓ * 2 ^ (m - ℓ) := Nat.mul_pos (Nat.choose_pos hℓm) (by positivity)
+  have h := two_pow_mul_switching_le hs hsℓ hℓ
+  rcases Nat.eq_zero_or_pos (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * s) ^ s) with h0 | h0
+  · rw [h0, mul_zero]
+    exact hB
+  · exact (Nat.mul_lt_mul_of_pos_right hS h0).trans_le h
 
 open scoped Classical in
 /-- **The switching step for one operation.** If the arguments of an operation are shallow under
