@@ -38,9 +38,14 @@ peers of `x` still had fewer than `K` distinct revealed parts. An input charged 
 determined by its transition, its part revealed by time `t` and its part unrevealed at time
 `t + 1`; hence at most `(K - 1) ^ 2` inputs share a charged step and a transition.
 
-Nothing here mentions graphs or circuits: a sweep is an abstract family of splicing messages.
-Constraint networks swept along a layout produce sweeps whose messages are the values on the
-edges of the frontier (`Cslib.Circuits.Frontier.Network.sweep`).
+Nothing here mentions graphs or circuits: a sweep is an abstract family of splicing messages,
+and its charging argument is shared by everything swept along a layout. The chosen accepting
+paths of a read-once branching program form a sweep of its accepted set, which gives the
+rectangle bound for such programs (`Cslib.Circuits.Frontier.ReadOnceNBP.ncard_accepted_le`), and
+through them the counting lemma for constraint networks. Constraint
+networks swept along a layout with extra messages, such as a ledger, produce sweeps whose
+messages are the extra messages and the values on the edges of the frontier
+(`Cslib.Circuits.Frontier.Network.frontierSweep`).
 
 ## Main definitions
 
@@ -136,9 +141,19 @@ def futureSide (t : ℕ) (x : ι → U) : Set (↥(P.revealed t)ᶜ → U) :=
 its sides is small. -/
 theorem pastSide_lt_or_futureSide_lt {K : ℕ} (hS : RectangleFree S K) (t : ℕ) (x : ι → U) :
     (P.pastSide t x).ncard < K ∨ (P.futureSide t x).ncard < K := by
-  refine hS _ _ _ fun z ⟨⟨y, ⟨hy, hyx⟩, hzy⟩, ⟨y', ⟨hy', hy'x⟩, hzy'⟩⟩ => ?_
+  refine hS.ncard_lt_or _ _ _ fun z ⟨⟨y, ⟨hy, hyx⟩, hzy⟩, ⟨y', ⟨hy', hy'x⟩, hzy'⟩⟩ => ?_
   exact P.splice t y hy y' hy' (hyx.trans hy'x.symm) z
     (domRestrict_eq_domRestrict_iff.mp hzy).symm (domRestrict_eq_domRestrict_iff.mp hzy').symm
+
+/-- An input of `S` is among its own peers, so its past side is nonempty. -/
+theorem one_le_ncard_pastSide [Finite ι] [Finite U] {x : ι → U} (hx : x ∈ S) (t : ℕ) :
+    1 ≤ (P.pastSide t x).ncard :=
+  (ncard_pos (toFinite _)).mpr ⟨_, x, ⟨hx, rfl⟩, rfl⟩
+
+/-- An input of `S` is among its own peers, so its future side is nonempty. -/
+theorem one_le_ncard_futureSide [Finite ι] [Finite U] {x : ι → U} (hx : x ∈ S) (t : ℕ) :
+    1 ≤ (P.futureSide t x).ncard :=
+  (ncard_pos (toFinite _)).mpr ⟨_, x, ⟨hx, rfl⟩, rfl⟩
 
 /-- At the start nothing is revealed, so there is at most one revealed part. -/
 theorem ncard_pastSide_zero_le (x : ι → U) : (P.pastSide 0 x).ncard ≤ 1 := by
@@ -161,12 +176,12 @@ revealed parts. -/
 noncomputable def chargeTime (K : ℕ) (x : ι → U) : ℕ :=
   sInf {t | K ≤ (P.pastSide t x).ncard}
 
-/-- **The charging argument.** If at every time each input of `S` has fewer than `KL` distinct
-revealed parts or fewer than `KR` distinct unrevealed parts among its peers, then
+/-- **The charging argument.** If at every time up to the end each input of `S` has fewer than
+`KL` distinct revealed parts or fewer than `KR` distinct unrevealed parts among its peers, then
 `|S| ≤ (KL - 1) (KR - 1) · #transitions`, provided `1 < KL ≤ |S|`. -/
 theorem ncard_le_mul_transitionCount [Finite ι] [Finite U] {KL KR : ℕ} (hKL : 1 < KL)
-    (hK : KL ≤ S.ncard)
-    (hsides : ∀ t, ∀ x ∈ S, (P.pastSide t x).ncard < KL ∨ (P.futureSide t x).ncard < KR) :
+    (hK : KL ≤ S.ncard) (hsides : ∀ t ≤ P.length, ∀ x ∈ S,
+      (P.pastSide t x).ncard < KL ∨ (P.futureSide t x).ncard < KR) :
     S.ncard ≤ (KL - 1) * (KR - 1) * P.transitionCount := by
   -- The charge time is well defined, positive, and at most the length of the sweep.
   have hlength : ∀ x ∈ S, P.length ∈ {t | KL ≤ (P.pastSide t x).ncard} := fun x hx => by
@@ -198,7 +213,7 @@ theorem ncard_le_mul_transitionCount [Finite ι] [Finite U] {KL KR : ℕ} (hKL :
       have := hbefore x t (by omega); omega
     have hfuture : (P.futureSide (t + 1) x).ncard ≤ KR - 1 := by
       have := hxcharge ▸ hcharged x hxS
-      rcases hsides (t + 1) x hxS with h | h <;> omega
+      rcases hsides (t + 1) (hxcharge ▸ hle_length x hxS) x hxS with h | h <;> omega
     calc {y ∈ {y ∈ S | step y = t} | P.transition t y = τ}.ncard
         ≤ (P.pastSide t x ×ˢ P.futureSide (t + 1) x).ncard := by
           refine ncard_le_ncard_of_injOn
@@ -241,15 +256,10 @@ theorem ncard_le_mul_transitionCount [Finite ι] [Finite U] {KL KR : ℕ} (hKL :
 most `(K - 1) ^ 2` elements per transition of any of its sweeps. -/
 theorem ncard_le [Finite ι] [Finite U] {K : ℕ} (hS : RectangleFree S K) (hK : K ≤ S.ncard) :
     S.ncard ≤ (K - 1) ^ 2 * P.transitionCount := by
-  by_cases hK1 : 1 < K
-  · simpa only [sq] using P.ncard_le_mul_transitionCount hK1 hK
-      fun t x _ => P.pastSide_lt_or_futureSide_lt hS t x
-  -- A `1`-rectangle-free set is empty: at time `0` both sides of any input are nonempty.
-  suffices S = ∅ by simp [this]
-  refine eq_empty_iff_forall_notMem.mpr fun x hx => ?_
-  have hp := (ncard_pos (toFinite _)).mpr (⟨_, x, ⟨hx, rfl⟩, rfl⟩ : (P.pastSide 0 x).Nonempty)
-  have hf := (ncard_pos (toFinite _)).mpr (⟨_, x, ⟨hx, rfl⟩, rfl⟩ : (P.futureSide 0 x).Nonempty)
-  rcases P.pastSide_lt_or_futureSide_lt hS 0 x with h | h <;> omega
+  rcases S.eq_empty_or_nonempty with rfl | hne
+  · simp
+  simpa only [sq] using P.ncard_le_mul_transitionCount (hS.one_lt hne) hK
+    fun t _ x _ => P.pastSide_lt_or_futureSide_lt hS t x
 
 end Sweep
 

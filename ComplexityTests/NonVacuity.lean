@@ -360,7 +360,7 @@ open Cslib.Circuits.Frontier Set
 /-- The hypotheses of the frontier counting lemma can be met: all strings of one bit form a
 `2`-rectangle-free set with at least two elements. -/
 example : RectangleFree (univ : Set (Fin 1 → Bool)) 2 ∧ 2 ≤ (univ : Set (Fin 1 → Bool)).ncard := by
-  refine ⟨fun X A B _ => ?_, by simp⟩
+  refine ⟨rectangleFree_iff.mpr fun X A B _ => ?_, by simp⟩
   by_cases h : (0 : Fin 1) ∈ X
   · right
     have : Subsingleton (↥Xᶜ → Bool) :=
@@ -372,6 +372,50 @@ example : RectangleFree (univ : Set (Fin 1 → Bool)) 2 ∧ 2 ≤ (univ : Set (F
       ⟨fun f g => funext fun i => absurd (Subsingleton.elim i.1 0 ▸ i.2) h⟩
     exact (ncard_le_one (toFinite _)).mpr (fun a _ b _ => Subsingleton.elim a b) |>.trans_lt
       one_lt_two
+
+/-- The hypotheses of the average-case bound can be met by every family of sets: every set has
+bias at most `1/2` on rectangles, and the constant threshold `K_n = 1` has logarithm `0 = o(n)`. -/
+example (S : ∀ n, Set (Fin n → Bool)) :
+    (∀ᶠ n in Filter.atTop, RectangleBias (S n) ((fun _ => 1 : ℕ → ℕ) n) (1 / 2)) ∧
+      (fun n => Real.log ((fun _ => 1 : ℕ → ℕ) n)) =o[Filter.atTop] fun n => (n : ℝ) := by
+  refine ⟨Filter.Eventually.of_forall fun n => rectangleBias_one_half _ _, ?_⟩
+  simpa only [Nat.cast_one, Real.log_one] using Asymptotics.isLittleO_zero _ _
+
+/-- A set with no bias at all: on two bits, the inputs whose bits differ fill exactly half of
+every rectangle with both sides of size at least two. Such a rectangle cuts the two bits apart and
+has every assignment on both sides. -/
+example : RectangleBias {x : Fin 2 → Bool | x 0 ≠ x 1} 2 0 := by
+  intro X A B hA hB
+  have hcard (Y : Set (Fin 2)) : Nat.card (Y → Bool) = 2 ^ Y.ncard := by
+    rw [Nat.card_fun, Nat.card_coe_set_eq, Nat.card_eq_fintype_card, Fintype.card_bool]
+  have hA' : A.ncard ≤ 2 ^ X.ncard := hcard X ▸ ncard_le_card A
+  have hB' : B.ncard ≤ 2 ^ Xᶜ.ncard := hcard Xᶜ ▸ ncard_le_card B
+  have hX : X.ncard + Xᶜ.ncard = 2 := by
+    rw [ncard_add_ncard_compl, Nat.card_eq_fintype_card, Fintype.card_fin]
+  -- Both sides are nontrivial, so each bit lies on its own side.
+  have h1 : X.ncard = 1 ∧ Xᶜ.ncard = 1 := by
+    rcases Nat.lt_or_ge X.ncard 1 with h | h
+    · rw [show X.ncard = 0 by omega] at hA'
+      omega
+    · rcases Nat.lt_or_ge Xᶜ.ncard 1 with h' | h'
+      · rw [show Xᶜ.ncard = 0 by omega] at hB'
+        omega
+      · omega
+  -- Hence both sides are everything, and so is the rectangle.
+  have hAu : A = univ := eq_of_subset_of_ncard_le (subset_univ A)
+    (by rw [ncard_univ, hcard, h1.1]; omega)
+  have hBu : B = univ := eq_of_subset_of_ncard_le (subset_univ B)
+    (by rw [ncard_univ, hcard, h1.2]; omega)
+  have hR : rectangle X A B = univ := by
+    subst hAu hBu
+    ext x
+    simp [rectangle]
+  have hS : {x : Fin 2 → Bool | x 0 ≠ x 1}.ncard = 2 := by
+    rw [ncard_eq_toFinset_card', toFinset_ofPred]
+    decide
+  rw [hR, Set.univ_inter, hS, ncard_univ, Nat.card_eq_fintype_card, Fintype.card_fun,
+    Fintype.card_bool, Fintype.card_fin]
+  norm_num
 
 end Frontier
 
@@ -444,7 +488,7 @@ example : ∃ (c : Circuit (fullSignature 8 Bool) 8 1) (S : Set (Fin 8 → Bool)
   · change _ ↔ decide ({i | x i = true}.ncard = 1) = true
     simp [S]
   · -- A rectangle with two distinct sides on `X` forces every side on `Xᶜ` to be zero.
-    intro X A B hAB
+    refine rectangleFree_iff.mpr fun X A B hAB => ?_
     by_contra! h
     obtain ⟨a, a', ha, ha', hne⟩ := (one_lt_ncard_iff).mp (by omega : 1 < A.ncard)
     obtain ⟨b, b', hb, hb', hne'⟩ := (one_lt_ncard_iff).mp (by omega : 1 < B.ncard)

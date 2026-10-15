@@ -45,13 +45,15 @@ Each junction has one *feed* edge from its predecessor in the chain (the signal 
 * the vertex of the output `o` requires its incoming value to lie in `Acc o`.
 
 The network records gates as *relations*: it never evaluates anything, and the constraint of a
-gate does not care which of its edges a sweep reaches first.
+gate does not care which of its edges a layout reaches first.
 
 **Exactness** (`Compiler.satisfies_iff`). The values of the circuit satisfy the network.
 Conversely, in a satisfying assignment the junction constraints force all edges of a signal to
 carry one value, and the gate constraints, read in program order, force that value to be the
 value of the signal in the circuit (`Compiler.eq_trace`). So the satisfying assignment, if any,
-is unique.
+is unique, and along any layout the read-once branching program of the network
+(`Cslib.Circuits.Frontier.Network.branchingProgram`) is unambiguous
+(`Compiler.unambiguous_branchingProgram`).
 
 **Counting.** With `C` consumers, `W` signals and `m` outputs, the graph has `2 C` edges and
 `W + C + m` vertices, so its cycle rank is `C - W - m + 1`: the number of argument slots minus
@@ -70,6 +72,8 @@ cycles; gates create local constraints.
 ## Main results
 
 * `Cslib.Circuits.Frontier.Compiler.satisfies_iff`, `Compiler.accepted_network`: exactness.
+* `Cslib.Circuits.Frontier.Compiler.unambiguous_branchingProgram`: the branching program of every
+  layout is unambiguous.
 * `Cslib.Circuits.Frontier.Compiler.loopless`, `Compiler.connected`: the graph is loopless, and
   connected when the circuit has one output.
 * `Cslib.Circuits.Frontier.Compiler.maxDegreeLE`: for fan-in at most `r ≥ 2`, the degrees are at
@@ -469,6 +473,16 @@ circuit lies in `Acc o`. -/
 theorem accepted_network : (network c I Acc).accepted = {x | ∀ o, c.eval I x o ∈ Acc o} := by
   ext x
   exact ⟨fun ⟨_, hα⟩ => (satisfies_iff.mp hα).1, fun hx => ⟨_, satisfies_trace hx⟩⟩
+
+/-- **Uniqueness.** An input has at most one satisfying assignment. -/
+theorem satisfies_unique {x : Fin n → U} {α β : Edge c → U}
+    (hα : (network c I Acc).Satisfies x α) (hβ : (network c I Acc).Satisfies x β) : α = β :=
+  (satisfies_iff.mp hα).2.trans (satisfies_iff.mp hβ).2.symm
+
+/-- The branching program of the network along any layout is unambiguous. -/
+theorem unambiguous_branchingProgram (π : Layout (Vertex c)) :
+    ((network c I Acc).branchingProgram π).Unambiguous :=
+  (network c I Acc).unambiguous_branchingProgram π fun _ _ _ => satisfies_unique
 
 /-! ### The shape of the graph -/
 

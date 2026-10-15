@@ -34,6 +34,15 @@ hypothesis provides a layout of width about `A ((r - 1) s - n)`: that is the sup
 The theorems of this file are conditional on the layout hypothesis, which is stated as
 `LayoutBound`; any instance of it yields an unconditional lower bound.
 
+**The worst-case claim** (`CircuitLowerBound L`) bundles the statement for fan-in two with
+coefficient `L`, so that each layout theorem reads as one line:
+`circuitLowerBound_of_layoutBound : LayoutBound 3 A → CircuitLowerBound (1 + 1/A)`.
+
+## Main definitions
+
+* `Cslib.Circuits.Frontier.CircuitLowerBound L`: circuits of fan-in at most two deciding dense
+  rectangle-free sets need more than `(L - ε) n` inner gates.
+
 ## Main results
 
 * `Cslib.Circuits.Frontier.eventually_lt_of_graph`: the comparison of demand and supply for any
@@ -41,6 +50,7 @@ The theorems of this file are conditional on the layout hypothesis, which is sta
 * `Cslib.Circuits.Frontier.eventually_lt_mul_innerSize`: the frontier lower bound for fan-in at
   most `r`.
 * `Cslib.Circuits.Frontier.eventually_lt_innerSize`: the frontier lower bound for fan-in two.
+* `Cslib.Circuits.Frontier.circuitLowerBound_of_layoutBound`: the same, as a bundled claim.
 -/
 
 @[expose] public section
@@ -137,8 +147,6 @@ theorem eventually_lt_of_graph {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
       (1 + 1 / A - ε) * n < (r - 1) * g := by
   set q := Nat.card U
   have hq : (1 : ℝ) < q := by exact_mod_cast Finite.one_lt_card
-  have hL2 : Real.log 2 ≤ Real.log q :=
-    Real.log_le_log two_pos (by exact_mod_cast Finite.one_lt_card)
   -- The error of the problem: the density defect, the threshold, and constants.
   set e : ℕ → ℝ := fun n => (n - Real.logb q (S n).ncard) + 4 * Real.logb q (K n) + (r + 3)
   have he : e =o[atTop] fun n => (n : ℝ) := by
@@ -170,15 +178,9 @@ theorem eventually_lt_of_graph {r : ℕ} (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
     rw [← ncard_pos (toFinite _)]
     exact lt_of_lt_of_le (Nat.mul_pos Nat.card_pos (pow_pos hfreen.pos 2)) hbign
   have hlogS := logb_ncard_le_self hSne
-  have hlogV : Real.logb q (Nat.card V + 1) ≤ κ * Real.log (Nat.card V + 1) := by
-    have h0 : 0 ≤ Real.log (Nat.card V + 1) :=
-      Real.log_nonneg (by linarith [Nat.cast_nonneg (α := ℝ) (Nat.card V)])
-    have h2 : 0 < Real.log 2 := Real.log_pos one_lt_two
-    calc Real.logb q (Nat.card V + 1) ≤ Real.log (Nat.card V + 1) / Real.log 2 :=
-          div_le_div_of_nonneg_left h0 h2 hL2
-      _ ≤ κ * Real.log (Nat.card V + 1) := by
-          rw [div_eq_mul_one_div, mul_comm]
-          exact mul_le_mul_of_nonneg_right (by simp [κ]) h0
+  have hlogV : Real.logb q (Nat.card V + 1) ≤ κ * Real.log (Nat.card V + 1) :=
+    logb_le_mul_log (by exact_mod_cast (Finite.one_lt_card : 2 ≤ q))
+      (by linarith [Nat.cast_nonneg (α := ℝ) (Nat.card V)])
   have hVs : (Nat.card V : ℝ) ≤ κ * (n + s + 1) := by
     have hV' : (Nat.card V : ℝ) ≤ 2 * r * g + 3 := by exact_mod_cast hV
     have hκ4 : 4 ≤ κ := by simp only [κ]; linarith [show 0 ≤ 1 / Real.log 2 by positivity]
@@ -235,5 +237,37 @@ theorem eventually_lt_innerSize {A : ℝ} (hA : 0 < A) (hlayout : LayoutBound 3 
   intro σ I Acc c hfan hS
   simpa only [Nat.cast_ofNat, show (2 : ℝ) - 1 = 1 by norm_num, one_mul] using
     hn σ I Acc c hfan hS
+
+/-- **The worst-case claim with coefficient `L`.** Let `U` be a finite alphabet with at least
+two symbols, and let `S_n ⊆ U^n` be `K_n`-rectangle-free sets with `log K_n = o(n)` and
+`n log |U| - log |S_n| = o(n)`. Then for every `ε > 0` and all large `n`, every circuit of fan-in
+at most two deciding `S_n`, over any basis and interpretation on `U`, has more than `(L - ε) n`
+gates of positive arity.
+
+The alphabet lives in the universe `u` and the basis in the universe `v`. -/
+def CircuitLowerBound (L : ℝ) : Prop :=
+  ∀ (U : Type u) [Finite U] [Nontrivial U] (S : ∀ n, Set (Fin n → U)) (K : ℕ → ℕ),
+    (∀ᶠ n in atTop, RectangleFree (S n) (K n)) →
+    (fun n => Real.log (K n)) =o[atTop] (fun n => (n : ℝ)) →
+    (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop] (fun n => (n : ℝ)) →
+    ∀ ε > 0, ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
+      (c : Circuit σ n 1), c.FanInAtMost 2 → c.Decides I Acc (S n) →
+        (L - ε) * n < c.innerSize
+
+/-- A circuit lower bound holds for every smaller coefficient. -/
+theorem CircuitLowerBound.mono {L L' : ℝ} (h : CircuitLowerBound.{u, v} L) (hL : L' ≤ L) :
+    CircuitLowerBound.{u, v} L' := by
+  intro U _ _ S K hfree hK hdense ε hε
+  filter_upwards [h U S K hfree hK hdense ε hε] with n hn
+  intro σ I Acc c hfan hS
+  exact lt_of_le_of_lt (mul_le_mul_of_nonneg_right (sub_le_sub_right hL ε) (Nat.cast_nonneg n))
+    (hn σ I Acc c hfan hS)
+
+/-- **The frontier lower bound as a bundled claim.** If subcubic graphs have layouts of width
+`(A + o(1)) β₁ + o(|V|)` (`LayoutBound 3 A`), then circuits of fan-in at most two deciding dense
+rectangle-free sets need more than `(1 + 1/A - ε) n` inner gates. -/
+theorem circuitLowerBound_of_layoutBound {A : ℝ} (hA : 0 < A) (hlayout : LayoutBound 3 A) :
+    CircuitLowerBound.{u, v} (1 + 1 / A) :=
+  fun _ _ _ _ _ hfree hK hdense _ hε => eventually_lt_innerSize hA hlayout hfree hK hdense hε
 
 end Cslib.Circuits.Frontier

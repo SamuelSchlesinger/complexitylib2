@@ -25,6 +25,8 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
   has at most `n` times as many elements as its image (`Finset.card_le_mul_card_image`).
 * `Set.ncard_image_le_ncard_image_of_factorsThrough`: if `f` factors through `g` on `s`, then
   `f` takes at most as many values on `s` as `g`.
+* `Set.encard_lt_coe_iff_finite_ncard_lt`: `encard` and `ncard` agree below a natural number
+  (`Set.encard_le_coe_iff_finite_ncard_le`).
 -/
 
 @[expose] public section
@@ -32,6 +34,17 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 namespace Set
 
 variable {α β γ : Type*}
+
+/-- A set has fewer than `k` elements, counted with `encard`, exactly when it is finite with fewer
+than `k` elements counted with `ncard`. -/
+theorem encard_lt_coe_iff_finite_ncard_lt {s : Set α} {k : ℕ} :
+    s.encard < k ↔ s.Finite ∧ s.ncard < k := by
+  refine ⟨fun h => ?_, fun ⟨hs, h⟩ => ?_⟩
+  · have hs : s.Finite := encard_lt_top_iff.mp (h.trans (ENat.natCast_lt_top k))
+    rw [← hs.cast_ncard_eq] at h
+    exact ⟨hs, by exact_mod_cast h⟩
+  · rw [← hs.cast_ncard_eq]
+    exact_mod_cast h
 
 /-- A finite set that `f` maps into the finset `t` is the disjoint union of its fibers over
 `t`. -/

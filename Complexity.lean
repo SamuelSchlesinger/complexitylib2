@@ -60,6 +60,8 @@ public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
+public import Complexity.Computability.Circuit.Frontier.AverageCase
+public import Complexity.Computability.Circuit.Frontier.BranchingProgram
 public import Complexity.Computability.Circuit.Frontier.Compiler
 public import Complexity.Computability.Circuit.Frontier.Components
 public import Complexity.Computability.Circuit.Frontier.Decomposable

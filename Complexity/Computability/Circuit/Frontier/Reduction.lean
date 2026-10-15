@@ -55,8 +55,9 @@ For a dense set `log_q |S| ≈ n`, so a small circuit gives a graph whose cycle 
 
 * `Cslib.Circuits.Frontier.Network.ncard_accepted_le_pow`,
   `Cslib.Circuits.Frontier.Network.logb_ncard_accepted_le`: frontier demand for any network.
-* `Cslib.Circuits.Frontier.cycleRank_le`: the cycle rank of the graph of a circuit deciding a
-  rectangle-free set.
+* `Cslib.Circuits.Frontier.pow_ncard_compl_read_lt`: the support lemma for circuits.
+* `Cslib.Circuits.Frontier.cycleRank_le`: the cycle rank of the graph of a circuit that reads all
+  but few of its inputs.
 * `Cslib.Circuits.Frontier.logb_ncard_le_width`: every layout of the graph of such a circuit is
   wide.
 * `Cslib.Circuits.Frontier.exists_graph_of_decides`: the reduction theorem.
@@ -104,9 +105,7 @@ theorem ncard_accepted_le_pow [Nonempty U] (hfree : RectangleFree N.accepted K)
   set v := Nat.card V
   have hq : 0 < q := Nat.card_pos
   have hK := hfree.pos
-  have hcount := N.ncard_accepted_le π hfree
-    ((Nat.le_mul_of_pos_left K hq).trans
-      ((Nat.mul_le_mul_left _ (Nat.le_self_pow two_ne_zero K)).trans hbig)) hw hd hm
+  have hcount := N.ncard_accepted_le π hfree hw hd hm
   have hunread := hfree.pow_ncard_compl_lt N.dependsOn_read hbig
   calc N.accepted.ncard ≤ (K - 1) ^ 2 * (v * q ^ (w + d + m) + q ^ N.readᶜ.ncard) := hcount
     _ ≤ K ^ 2 * (v * K * q ^ (w + d + m) + K * q ^ (w + d + m)) := by
@@ -173,10 +172,12 @@ theorem pow_ncard_compl_read_lt (hS : c.Decides I Acc S) (hfree : RectangleFree 
   rw [← accepted_network_of_decides hS] at hfree hbig
   exact hfree.pow_ncard_compl_lt (Compiler.network c I _).dependsOn_read hbig
 
-/-- **The cycle rank of the graph of a circuit** deciding a large `K`-rectangle-free set is at
-most `(r - 1) s - n + log_q K + 1` for fan-in at most `r`, where `s` counts the inner gates. -/
-theorem cycleRank_le (hfan : c.FanInAtMost r) (hS : c.Decides I Acc S)
-    (hfree : RectangleFree S K) (hbig : Nat.card U * K ^ 2 ≤ S.ncard) :
+/-- **The cycle rank of the graph of a circuit** is at most `(r - 1) s - n + log_q K + 1` for
+fan-in at most `r`, where `s` counts the inner gates, when the inputs the circuit does not read
+carry fewer than `K` assignments. By the support lemma this is so for a circuit deciding a large
+`K`-rectangle-free set (`pow_ncard_compl_read_lt`). -/
+theorem cycleRank_le (hfan : c.FanInAtMost r)
+    (hunread : Nat.card U ^ (Compiler.network c I fun _ => Acc).readᶜ.ncard < K) :
     ((Compiler.graph c).cycleRank : ℝ) ≤
       (r - 1) * c.innerSize - n + Real.logb (Nat.card U) K + 1 := by
   set N := Compiler.network c I fun _ => Acc
@@ -189,8 +190,9 @@ theorem cycleRank_le (hfan : c.FanInAtMost r) (hS : c.Decides I Acc S)
     · simp [Circuit.innerSize_eq_zero_of_fanInAtMost_zero hfan]
     · rw [Nat.cast_mul, Nat.cast_sub hr, Nat.cast_one]
   have hunread : (N.readᶜ.ncard : ℝ) < Real.logb (Nat.card U) K := by
-    rw [Real.lt_logb_iff_rpow_lt hq (by exact_mod_cast hfree.pos), Real.rpow_natCast]
-    exact_mod_cast pow_ncard_compl_read_lt hS hfree hbig
+    rw [Real.lt_logb_iff_rpow_lt hq (by exact_mod_cast Nat.zero_lt_of_lt hunread),
+      Real.rpow_natCast]
+    exact_mod_cast hunread
   have hcompl : (N.readᶜ.ncard : ℝ) + N.read.ncard = n := by
     rw [← Nat.cast_add, add_comm, ncard_add_ncard_compl, Nat.card_eq_fintype_card, Fintype.card_fin]
   linarith
@@ -227,7 +229,8 @@ theorem exists_graph_of_decides (hr : 2 ≤ r) (hfan : c.FanInAtMost r) (hS : c.
         G.width π + (r + 2) + 3 * Real.logb (Nat.card U) K +
           Real.logb (Nat.card U) (Nat.card V + 1) :=
   ⟨_, _, inferInstance, inferInstance, Compiler.graph c, Compiler.connected c, Compiler.loopless,
-    Compiler.maxDegreeLE hr hfan, Compiler.card_vertex_le hfan, cycleRank_le hfan hS hfree hbig,
+    Compiler.maxDegreeLE hr hfan, Compiler.card_vertex_le hfan,
+    cycleRank_le hfan (pow_ncard_compl_read_lt hS hfree hbig),
     logb_ncard_le_width hr hfan hS hfree hbig⟩
 
 end Circuit

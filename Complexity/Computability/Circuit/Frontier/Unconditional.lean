@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Circuit.Frontier.AverageCase
 public import Complexity.Computability.Circuit.Frontier.Layouts.General
 public import Complexity.Computability.Circuit.Frontier.LowerBound
 
@@ -25,13 +26,23 @@ basis and interpretation on `U`, has `s` inner gates with
 
 `(r - 1) s > (2 - ε) n`.
 
-For fan-in two this reads `s > (2 - ε) n`. Gates of arity zero, the constants, are not counted.
+For fan-in two this reads `s > (2 - ε) n` (`circuitLowerBound_two`). Gates of arity zero, the
+constants, are not counted.
+
+The same layouts give the average-case bound with coefficient two (`averageCaseBound_two`): if
+`S_n` has bias at most `b_n` on rectangles with both sides of size at least `K_n`, where
+`log K_n = o(n)`, then every circuit of fan-in at most two with at most `(2 - ε) n` inner gates
+agrees with `S_n` on at most a `1/2 + b_n + exp (-γ n)` fraction of the inputs, for a `γ > 0`
+depending only on `ε`.
 
 ## Main results
 
 * `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_innerSize`: `(r - 1) s > (2 - ε) n` for
   every fan-in `r`.
 * `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize`: `s > (2 - ε) n` for fan-in two.
+* `Cslib.Circuits.Frontier.circuitLowerBound_two`: the same, as the bundled claim
+  `CircuitLowerBound 2`.
+* `Cslib.Circuits.Frontier.averageCaseBound_two`: the average-case claim `AverageCaseBound 2`.
 -/
 
 @[expose] public section
@@ -76,5 +87,20 @@ theorem eventually_two_sub_mul_lt_innerSize
         (2 - ε) * n < c.innerSize := by
   simpa only [div_one, one_add_one_eq_two] using
     eventually_lt_innerSize one_pos (layoutBound_one 3) hfree hK hdense hε
+
+/-- **The unconditional worst-case claim with coefficient two**: circuits of fan-in at most two
+deciding dense `K_n`-rectangle-free sets with `log K_n = o(n)` need more than `(2 - ε) n` inner
+gates. -/
+theorem circuitLowerBound_two : CircuitLowerBound.{u, v} 2 := by
+  simpa only [div_one, one_add_one_eq_two] using
+    circuitLowerBound_of_layoutBound.{u, v} one_pos (layoutBound_one 3)
+
+/-- **The unconditional average-case claim with coefficient two**: for every `ε > 0` there is a
+`γ > 0` such that every circuit of fan-in at most two with at most `(2 - ε) n` inner gates agrees
+with a set of bias at most `b_n` on rectangles with sides of size at least `K_n`,
+`log K_n = o(n)`, on at most a `1/2 + b_n + exp (-γ n)` fraction of the inputs. -/
+theorem averageCaseBound_two : AverageCaseBound.{u, v} 2 := by
+  simpa only [div_one, one_add_one_eq_two] using
+    averageCaseBound_of_layoutBound.{u, v} one_pos (layoutBound_one 3)
 
 end Cslib.Circuits.Frontier

@@ -261,6 +261,12 @@ def frontier (t : ℕ) : Set E :=
 noncomputable def width : ℕ :=
   (Finset.range (Nat.card V)).sup fun t => (G.frontier π t).ncard
 
+/-- An edge is on the frontier at time `t` when exactly one of its ends is among the first `t`
+vertices. -/
+theorem mem_frontier {t : ℕ} {e : E} :
+    e ∈ G.frontier π t ↔ ¬((π (G.src e) : ℕ) < t ↔ (π (G.tgt e) : ℕ) < t) :=
+  Iff.rfl
+
 @[simp] theorem frontier_zero : G.frontier π 0 = ∅ := by
   simp [frontier]
 

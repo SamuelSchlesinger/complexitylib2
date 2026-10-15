@@ -1773,6 +1773,42 @@ info: 'Cslib.Circuits.Frontier.Network.ncard_accepted_le' depends on axioms: [pr
 #print axioms Cslib.Circuits.Frontier.Network.ncard_accepted_le
 
 /--
+info: 'Cslib.Circuits.Frontier.RectangleBias.abs_signedCount_le_of_dependsOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.RectangleBias.abs_signedCount_le_of_dependsOn
+
+/--
+info: 'Cslib.Circuits.Frontier.ReadOnceNBP.ncard_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.ReadOnceNBP.ncard_accepted_le
+
+/--
+info: 'Cslib.Circuits.Frontier.ReadOnceNBP.abs_signedCount_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.ReadOnceNBP.abs_signedCount_accepted_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Network.accepted_branchingProgram' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Network.accepted_branchingProgram
+
+/--
+info: 'Cslib.Circuits.Frontier.Network.abs_signedCount_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Network.abs_signedCount_accepted_le
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_add_lt_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_add_lt_of_le
+
+/--
 info: 'Cslib.Circuits.Frontier.eventually_lt_of_demand' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -2024,6 +2060,30 @@ info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize' depends on a
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize
+
+/--
+info: 'Cslib.Circuits.Frontier.circuitLowerBound_of_layoutBound' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.circuitLowerBound_of_layoutBound
+
+/--
+info: 'Cslib.Circuits.Frontier.averageCaseBound_of_layoutBound' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.averageCaseBound_of_layoutBound
+
+/--
+info: 'Cslib.Circuits.Frontier.circuitLowerBound_two' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.circuitLowerBound_two
+
+/--
+info: 'Cslib.Circuits.Frontier.averageCaseBound_two' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.averageCaseBound_two
 
 /--
 info: 'Cslib.Circuits.Frontier.layoutBound_one' depends on axioms: [propext, Classical.choice, Quot.sound]

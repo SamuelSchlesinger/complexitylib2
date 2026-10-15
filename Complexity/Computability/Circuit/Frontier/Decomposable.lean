@@ -80,17 +80,7 @@ namespace Cslib.Circuits.Frontier
 
 open Set
 
-variable {ι U : Type*} {S : Set (ι → U)} {K : ℕ}
-
-/-- A nonempty `K`-rectangle-free set has `1 < K`: a single input is a rectangle with sides of one
-element each, for the cut of the coordinates into all and none. -/
-theorem RectangleFree.one_lt (h : RectangleFree S K) (hS : S.Nonempty) : 1 < K := by
-  obtain ⟨x, hx⟩ := hS
-  have hsub : rectangle univ {univ.domRestrict x} {(univ : Set ι)ᶜ.domRestrict x} ⊆ S := by
-    rintro y ⟨hy, -⟩
-    obtain rfl : y = x := funext fun i => congrFun (mem_singleton_iff.mp hy) ⟨i, mem_univ i⟩
-    exact hx
-  simpa using h _ _ _ hsub
+variable {ι U : Type*} {K : ℕ}
 
 /-- The gate at a node of a decomposable DAG on the nodes `N`. -/
 inductive DecomposableDAG.Gate (N : Type*) where
@@ -225,7 +215,7 @@ theorem rectangle_subset (v : N) :
 is `K`-rectangle-free. -/
 theorem ncard_contexts_le (hS : RectangleFree P.accepted K) {v : N}
     (hv : K ≤ (P.values v).ncard) : (P.contexts v).ncard ≤ K - 1 := by
-  rcases hS _ _ _ (P.rectangle_subset v) with h | h <;> omega
+  rcases hS.ncard_lt_or _ _ _ (P.rectangle_subset v) with h | h <;> omega
 
 /-! ### Threshold counting -/
 
