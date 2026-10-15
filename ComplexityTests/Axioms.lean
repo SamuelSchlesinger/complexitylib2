@@ -1514,4 +1514,46 @@ info: 'Cslib.Logic.ESO.Definable.colorable_simpleGraph' depends on axioms: [prop
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.ESO.Definable.colorable_simpleGraph
 
+/--
+info: 'Cslib.RotationMap.expect_splitWalk' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.expect_splitWalk
+
+/--
+info: 'Cslib.RotationMap.card_filter_splitWalk' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.card_filter_splitWalk
+
+/--
+info: 'Cslib.RotationMap.sum_walkDart' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.sum_walkDart
+
+/--
+info: 'Cslib.RotationMap.expect_walkDart_mul_walkDart' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.expect_walkDart_mul_walkDart
+
+/--
+info: 'Cslib.RotationMap.sq_expect_walkDart_mul_walkDart_sub_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.sq_expect_walkDart_mul_walkDart_sub_le
+
+/--
+info: 'Cslib.RotationMap.card_filter_killTime_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.card_filter_killTime_eq
+
+/--
+info: 'Cslib.RotationMap.card_filter_killTime_eq_and_splitWalk' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.card_filter_killTime_eq_and_splitWalk
+
 end ComplexityTests.Axioms
