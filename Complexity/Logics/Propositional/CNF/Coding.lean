@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.Propositional.CNF
+public import Complexity.Foundations.Data.BitString.Flip
 public import Cslib.Foundations.Data.BitString
 public import Mathlib.Data.Fintype.Perm
 public import Mathlib.Data.Fintype.Pi
@@ -39,7 +40,7 @@ of the orders (`CNF.factorial_le_mul_card_filter_mem_forced`, from
 `Equiv.Perm.card_mul_card_filter_forall_le_eq_factorial`). Hence
 `∑ₓ 2 ^ (ι(x) / k) ≤ 2 ^ N`, where `ι(x)` is the number of directions in which `x` is isolated
 (`CNF.sum_two_rpow_card_isolated_div_le`), and a `k`-CNF has at most `2 ^ ((1 - 1 / k) N)`
-solutions isolated in every direction (`CNF.card_isolated_mul_two_rpow_le`).
+solutions isolated in every direction (`CNF.card_isolatedInputs_mul_two_rpow_le`).
 
 ## Main definitions
 
@@ -50,7 +51,7 @@ solutions isolated in every direction (`CNF.card_isolated_mul_two_rpow_le`).
 * `Cslib.Logic.PL.CNF.sum_two_pow_card_forced_le`: the coding bound for one order.
 * `Cslib.Logic.PL.CNF.sum_two_rpow_average_card_forced_le`: the coding lemma.
 * `Cslib.Logic.PL.CNF.sum_two_rpow_card_isolated_div_le`: the coding lemma for `k`-CNFs.
-* `Cslib.Logic.PL.CNF.card_isolated_mul_two_rpow_le`: few isolated solutions.
+* `Cslib.Logic.PL.CNF.card_isolatedInputs_mul_two_rpow_le`: few isolated solutions.
 
 ## References
 
@@ -352,17 +353,18 @@ theorem sum_two_rpow_card_isolated_div_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c 
 /-- **Few isolated solutions** [Paturi, Pudlák and Zane, Lemma 4][PaturiPudlakZane1999]: a formula
 whose clauses have at most `k ≥ 1` literals has at most `2 ^ ((1 - 1 / k) N)` solutions isolated in
 every direction. -/
-theorem card_isolated_mul_two_rpow_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c ∈ φ, c.length ≤ k) :
-    ((univ.filter fun x : BitString N => φ.eval x = true ∧
-        ∀ i, φ.eval (Function.update x i (!x i)) = false).card : ℝ) * 2 ^ ((N : ℝ) / k) ≤
+theorem card_isolatedInputs_mul_two_rpow_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c ∈ φ, c.length ≤ k) :
+    (#(BitString.isolatedInputs φ.eval true) : ℝ) * 2 ^ ((N : ℝ) / k) ≤
       2 ^ N := by
   refine le_trans ?_ (sum_two_rpow_card_isolated_div_le hk1 hk)
   rw [← nsmul_eq_mul, ← sum_const]
   refine (sum_le_sum_of_subset_of_nonneg (fun x hx => mem_filter.2 ⟨mem_univ x,
-    (mem_filter.1 hx).2.1⟩) fun _ _ _ => by positivity).trans' (le_of_eq (sum_congr rfl
-      fun x hx => ?_))
+    (BitString.mem_isolatedInputs.1 hx).1⟩) fun _ _ _ => by positivity).trans'
+      (le_of_eq (sum_congr rfl fun x hx => ?_))
+  have hall (i : Fin N) : φ.eval (Function.update x i !x i) = false :=
+    (BitString.mem_isolatedInputs.1 hx).2 i
   congr 2
-  rw [filter_true_of_mem fun i _ => (mem_filter.1 hx).2.2 i, card_univ, Fintype.card_fin]
+  rw [filter_true_of_mem fun i _ => hall i, card_univ, Fintype.card_fin]
 
 /-! ### Weights of solutions -/
 

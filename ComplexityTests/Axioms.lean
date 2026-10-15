@@ -617,10 +617,10 @@ info: 'exists_pow_le_card_mul_sum_choose_of_le_hammingDist' depends on axioms: [
 #print axioms exists_pow_le_card_mul_sum_choose_of_le_hammingDist
 
 /--
-info: 'Cslib.Logic.PL.CNF.card_isolated_mul_two_rpow_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.card_isolatedInputs_mul_two_rpow_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.card_isolated_mul_two_rpow_le
+#print axioms Cslib.Logic.PL.CNF.card_isolatedInputs_mul_two_rpow_le
 
 /--
 info: 'Cslib.Logic.PL.CNF.two_pow_le_length_of_eval_eq_parity' depends on axioms: [propext, Classical.choice, Quot.sound]

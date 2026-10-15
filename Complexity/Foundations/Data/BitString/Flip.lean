@@ -9,6 +9,7 @@ module
 
 public import Cslib.Foundations.Data.BitString
 public import Mathlib.Data.Finset.Piecewise
+public import Mathlib.Data.Fintype.Pi
 
 /-!
 # Flipping bits
@@ -18,9 +19,14 @@ one bit is `Function.update x i (!x i)` (`BitString.flipOn_singleton`), and flip
 same positions changes nothing (`BitString.flipOn_flipOn`). Flips are the moves of sensitivity and
 block sensitivity, and they span the subcubes of the Boolean cube.
 
+An input `x` of a Boolean function `g` is *isolated* when flipping any one of its bits changes the
+value of `g` (`BitString.isolatedInputs`). A formula in disjunctive normal form needs a term for
+each isolated true input, and parity has only isolated inputs.
+
 ## Main definitions
 
 * `Cslib.BitString.flipOn`: flip the bits at a set of positions.
+* `Cslib.BitString.isolatedInputs`: the isolated inputs of a Boolean function with a given value.
 
 ## Main results
 
@@ -73,5 +79,26 @@ theorem flipOn_apply_eq_of_iff (h : i ∈ T ↔ i ∈ U) : flipOn T x i = flipOn
 
 theorem flipOn_involutive (T : Finset ι) : Function.Involutive (flipOn T) :=
   flipOn_flipOn T
+
+section Isolated
+
+variable [Fintype ι] {g : (ι → Bool) → Bool} {b : Bool}
+
+/-- The *isolated inputs* of `g` with value `b`: the inputs `x` with `g x = b` at which flipping
+any one bit changes the value of `g`. -/
+def isolatedInputs (g : (ι → Bool) → Bool) (b : Bool) : Finset (ι → Bool) :=
+  {x | g x = b ∧ ∀ i, g (Function.update x i !x i) = !b}
+
+@[simp] theorem mem_isolatedInputs :
+    x ∈ isolatedInputs g b ↔ g x = b ∧ ∀ i, g (Function.update x i !x i) = !b := by
+  simp [isolatedInputs]
+
+/-- The isolated inputs of the negation of `g` with value `b` are those of `g` with value `!b`. -/
+theorem isolatedInputs_not (g : (ι → Bool) → Bool) (b : Bool) :
+    isolatedInputs (fun x => !g x) b = isolatedInputs g (!b) := by
+  ext x
+  cases b <;> simp
+
+end Isolated
 
 end Cslib.BitString

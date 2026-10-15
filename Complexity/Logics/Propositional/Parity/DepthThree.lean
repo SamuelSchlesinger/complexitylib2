@@ -21,7 +21,7 @@ parity, whose `2 ^ (n - 1)` true inputs are all isolated.
 
 *Bottom fan-in `k`.* A formula of width `k` has at most `2 ^ ((1 - 1 / k) n)` isolated solutions,
 so an OR of such formulas needs a formula per `2 ^ ((1 - 1 / k) n)` isolated true inputs
-(`CNF.card_filter_isolated_mul_two_rpow_le`), as in the proof of
+(`CNF.card_isolatedInputs_mul_two_rpow_le_of_any`), as in the proof of
 [Paturi, Pudlák and Zane, Theorem 6][PaturiPudlakZane1999]. For parity this is `2 ^ (n / k - 1)`
 (`CNF.two_rpow_le_length_of_any_eval_eq_parity`), and the bound is attained when `k` divides `n`:
 split the variables into blocks of `k` and take one formula for each pattern of block parities
@@ -37,9 +37,9 @@ have weight at least `μ` (`CNF.card_filter_le_sum_inv_critWidth_mul_two_rpow_le
 `log 2`, so the shortest critical clauses of the inputs of weight below `μ ≤ n log 2` number at
 least `μ 2 ^ (n / μ) / 2 ^ n` per input. So an OR of `m` formulas with `K` distinct clauses
 computing a function with `s` isolated true inputs has
-`s min (2 ^ μ) (μ 2 ^ (n / μ)) ≤ 2 ^ n (m + K)` (`CNF.card_filter_isolated_mul_min_le`). With
+`s min (2 ^ μ) (μ 2 ^ (n / μ)) ≤ 2 ^ n (m + K)` (`CNF.card_isolatedInputs_mul_min_le`). With
 Paturi, Pudlák and Zane's `μ = √n + (log₂ n) / 4`, both `2 ^ μ` and `μ 2 ^ (n / μ)` are at least
-`n ^ (1 / 4) 2 ^ √n` (`CNF.card_filter_isolated_mul_rpow_mul_two_rpow_sqrt_le`), so ORs of formulas
+`n ^ (1 / 4) 2 ^ √n` (`CNF.card_isolatedInputs_mul_rpow_mul_two_rpow_sqrt_le`), so ORs of formulas
 in conjunctive normal form for the parity of `n ≥ 4` bits have `m + K ≥ n ^ (1 / 4) 2 ^ (√n - 1)`
 (`CNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity`). Dually, ANDs of formulas in
 disjunctive normal form for parity negate to ORs for its negation, all of whose `2 ^ (n - 1)` true
@@ -49,13 +49,13 @@ inputs are isolated too, and need as many formulas and terms
 
 ## Main results
 
-* `Cslib.Logic.PL.CNF.card_filter_isolated_mul_two_rpow_le`: ORs of formulas of width `k` need a
-  formula per `2 ^ ((1 - 1 / k) n)` isolated true inputs.
+* `Cslib.Logic.PL.CNF.card_isolatedInputs_mul_two_rpow_le_of_any`: ORs of formulas of width `k`
+  need a formula per `2 ^ ((1 - 1 / k) n)` isolated true inputs.
 * `Cslib.Logic.PL.CNF.two_rpow_le_length_of_any_eval_eq_parity`,
   `Cslib.Logic.PL.CNF.exists_any_eval_eq_parity`: parity is an OR of `2 ^ (n / k - 1)` but no
   fewer formulas of width `k`, when `k` divides `n`.
-* `Cslib.Logic.PL.CNF.card_filter_isolated_mul_min_le`,
-  `Cslib.Logic.PL.CNF.card_filter_isolated_mul_rpow_mul_two_rpow_sqrt_le`: ORs of formulas need
+* `Cslib.Logic.PL.CNF.card_isolatedInputs_mul_min_le`,
+  `Cslib.Logic.PL.CNF.card_isolatedInputs_mul_rpow_mul_two_rpow_sqrt_le`: ORs of formulas need
   `n ^ (1 / 4) 2 ^ √n / 2 ^ n` formulas and clauses per isolated true input.
 * `Cslib.Logic.PL.CNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity`,
   `Cslib.Logic.PL.DNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_all_eval_eq_parity`: depth-three
@@ -78,8 +78,8 @@ open Finset Function
 variable {n : ℕ}
 
 /-- Every true input of parity is isolated. -/
-private theorem card_filter_isolated_parity (hn : 1 ≤ n) :
-    #{x : BitString n | parity n x = true ∧ ∀ i, parity n (update x i !x i) = false} =
+private theorem card_isolatedInputs_parity (hn : 1 ≤ n) :
+    #(BitString.isolatedInputs (parity n) true) =
       2 ^ (n - 1) := by
   rw [← card_filter_parity_eq_true hn]
   congr 1
@@ -87,8 +87,8 @@ private theorem card_filter_isolated_parity (hn : 1 ≤ n) :
   simp +contextual [parity_update_not]
 
 /-- Every false input of parity is isolated. -/
-private theorem card_filter_isolated_not_parity (hn : 1 ≤ n) :
-    #{x : BitString n | (!parity n x) = true ∧ ∀ i, (!parity n (update x i !x i)) = false} =
+private theorem card_isolatedInputs_not_parity (hn : 1 ≤ n) :
+    #(BitString.isolatedInputs (fun x => !parity n x) true) =
       2 ^ (n - 1) := by
   rw [← card_filter_parity_eq_false hn]
   congr 1
@@ -107,34 +107,35 @@ private theorem div_two_le_of_two_pow_sub_one_mul_le (hn : 1 ≤ n) {a b : ℝ}
 of [Paturi, Pudlák and Zane, Theorem 6][PaturiPudlakZane1999]: if an OR of formulas whose clauses
 have at most `k ≥ 1` literals computes `g`, then each isolated true input of `g` is a solution of
 one of them, isolated in every direction, and each of them has at most `2 ^ ((1 - 1 / k) n)` such
-solutions (`CNF.card_isolated_mul_two_rpow_le`). -/
-theorem CNF.card_filter_isolated_mul_two_rpow_le {k : ℕ} (hk1 : 1 ≤ k) {g : BitString n → Bool}
-    {Fs : List (CNF (Fin n))} (hk : ∀ φ ∈ Fs, ∀ c ∈ φ, c.length ≤ k)
+solutions (`CNF.card_isolatedInputs_mul_two_rpow_le`). -/
+theorem CNF.card_isolatedInputs_mul_two_rpow_le_of_any {k : ℕ} (hk1 : 1 ≤ k)
+    {g : BitString n → Bool} {Fs : List (CNF (Fin n))} (hk : ∀ φ ∈ Fs, ∀ c ∈ φ, c.length ≤ k)
     (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = g x) :
-    (#{x : BitString n | g x = true ∧ ∀ i, g (update x i !x i) = false} : ℝ) *
+    (#(BitString.isolatedInputs g true) : ℝ) *
       2 ^ ((n : ℝ) / k) ≤ Fs.length * 2 ^ n := by
   -- the solutions of `φ` isolated in every direction
   let I : CNF (Fin n) → Finset (BitString n) := fun φ =>
-    {x | φ.eval x = true ∧ ∀ i, φ.eval (update x i !x i) = false}
-  have hcover : ({x : BitString n | g x = true ∧ ∀ i, g (update x i !x i) = false} : Finset _) ⊆
+    BitString.isolatedInputs φ.eval true
+  have hcover : BitString.isolatedInputs g true ⊆
       Fs.toFinset.biUnion I := by
     intro x hx
-    obtain ⟨hgx, hiso⟩ := (mem_filter.1 hx).2
+    obtain ⟨hgx, hiso⟩ := BitString.mem_isolatedInputs.1 hx
     obtain ⟨φ, hφ, hφx⟩ := List.any_eq_true.1 ((hFs x).trans hgx)
-    refine mem_biUnion.2 ⟨φ, List.mem_toFinset.2 hφ, mem_filter.2 ⟨mem_univ _, hφx, fun i => ?_⟩⟩
+    refine mem_biUnion.2
+      ⟨φ, List.mem_toFinset.2 hφ, BitString.mem_isolatedInputs.2 ⟨hφx, fun i => ?_⟩⟩
     by_contra h
     have := (hFs _).symm.trans (List.any_eq_true.2 ⟨φ, hφ, Bool.eq_true_of_not_eq_false h⟩)
     rw [hiso i] at this
     exact Bool.false_ne_true this
   have hcard := card_le_card hcover |>.trans card_biUnion_le
-  calc (#{x : BitString n | g x = true ∧ ∀ i, g (update x i !x i) = false} : ℝ) *
+  calc (#(BitString.isolatedInputs g true) : ℝ) *
         2 ^ ((n : ℝ) / k)
       ≤ (∑ φ ∈ Fs.toFinset, (#(I φ) : ℝ)) * 2 ^ ((n : ℝ) / k) := by
         gcongr
         exact_mod_cast hcard
     _ = ∑ φ ∈ Fs.toFinset, (#(I φ) : ℝ) * 2 ^ ((n : ℝ) / k) := sum_mul ..
     _ ≤ ∑ _φ ∈ Fs.toFinset, (2 : ℝ) ^ n :=
-        sum_le_sum fun φ hφ => CNF.card_isolated_mul_two_rpow_le hk1 (hk φ
+        sum_le_sum fun φ hφ => CNF.card_isolatedInputs_mul_two_rpow_le hk1 (hk φ
           (List.mem_toFinset.1 hφ))
     _ = #Fs.toFinset * 2 ^ n := by rw [sum_const, nsmul_eq_mul]
     _ ≤ Fs.length * 2 ^ n := by
@@ -147,8 +148,8 @@ theorem CNF.two_rpow_le_length_of_any_eval_eq_parity (hn : 1 ≤ n) {k : ℕ} (h
     {Fs : List (CNF (Fin n))} (hk : ∀ φ ∈ Fs, ∀ c ∈ φ, c.length ≤ k)
     (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = parity n x) :
     (2 : ℝ) ^ ((n : ℝ) / k - 1) ≤ Fs.length := by
-  have h := CNF.card_filter_isolated_mul_two_rpow_le hk1 hk hFs
-  rw [card_filter_isolated_parity hn, Nat.cast_pow, Nat.cast_ofNat, mul_comm (Fs.length : ℝ)] at h
+  have h := CNF.card_isolatedInputs_mul_two_rpow_le_of_any hk1 hk hFs
+  rw [card_isolatedInputs_parity hn, Nat.cast_pow, Nat.cast_ofNat, mul_comm (Fs.length : ℝ)] at h
   rw [Real.rpow_sub_one two_ne_zero]
   exact div_two_le_of_two_pow_sub_one_mul_le hn h
 
@@ -290,21 +291,21 @@ is a solution of one of them, isolated in every direction, and if there are `s` 
 `s min (2 ^ μ) (μ 2 ^ (n / μ)) ≤ 2 ^ n (m + K)` for every `0 < μ ≤ n log 2`. A depth-three circuit
 with an OR at the top, AND gates in the middle and OR gates of literals at the bottom has at least
 `m + K` gates, as sharing bottom gates only lowers `K`. -/
-theorem CNF.card_filter_isolated_mul_min_le {μ : ℝ} (hμ : 0 < μ) (hμn : μ ≤ n * Real.log 2)
+theorem CNF.card_isolatedInputs_mul_min_le {μ : ℝ} (hμ : 0 < μ) (hμn : μ ≤ n * Real.log 2)
     {g : BitString n → Bool} {Fs : List (CNF (Fin n))}
     (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = g x) :
-    (#{x : BitString n | g x = true ∧ ∀ i, g (update x i !x i) = false} : ℝ) *
+    (#(BitString.isolatedInputs g true) : ℝ) *
       min (2 ^ μ) (μ * 2 ^ (n / μ)) ≤
       2 ^ n * (Fs.length + #(Fs.flatten.map List.toFinset).toFinset) := by
-  set S : Finset (BitString n) := {x | g x = true ∧ ∀ i, g (update x i !x i) = false}
+  set S := BitString.isolatedInputs g true
   -- each isolated true input is a solution of one of the formulas, isolated in every direction
   have hchoose : ∀ x ∈ S, ∃ φ ∈ Fs, φ.eval x = true := fun x hx =>
-    List.any_eq_true.1 ((hFs x).trans (mem_filter.1 hx).2.1)
+    List.any_eq_true.1 ((hFs x).trans (BitString.mem_isolatedInputs.1 hx).1)
   choose! F hF hFx using hchoose
   have hiso : ∀ x ∈ S, ∀ i, (F x).eval (update x i !x i) = false := fun x hx i => by
     by_contra h
     have := (hFs _).symm.trans (List.any_eq_true.2 ⟨F x, hF x hx, Bool.eq_true_of_not_eq_false h⟩)
-    rw [(mem_filter.1 hx).2.2 i] at this
+    rw [(BitString.mem_isolatedInputs.1 hx).2 i] at this
     exact Bool.false_ne_true this
   have hcrit : ∀ x ∈ S, ∀ i, ∃ c ∈ F x, CNF.Critical x c i := fun x hx i =>
     CNF.exists_critical (hFx x hx) (hiso x hx i)
@@ -428,8 +429,8 @@ theorem CNF.two_pow_mul_min_le_of_any_eval_eq_parity (hn : 1 ≤ n) {μ : ℝ} (
     (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = parity n x) :
     (2 : ℝ) ^ (n - 1) * min (2 ^ μ) (μ * 2 ^ (n / μ)) ≤
       2 ^ n * (Fs.length + #(Fs.flatten.map List.toFinset).toFinset) := by
-  have h := CNF.card_filter_isolated_mul_min_le hμ hμn hFs
-  rwa [card_filter_isolated_parity hn, Nat.cast_pow, Nat.cast_ofNat] at h
+  have h := CNF.card_isolatedInputs_mul_min_le hμ hμn hFs
+  rwa [card_isolatedInputs_parity hn, Nat.cast_pow, Nat.cast_ofNat] at h
 
 /-- **ORs of formulas in conjunctive normal form for parity need `2 ^ (√n - 1)` gates**, taking
 `μ = √n` in `CNF.two_pow_mul_min_le_of_any_eval_eq_parity`: an OR of `m` formulas with `K` distinct
@@ -457,12 +458,12 @@ theorem CNF.two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity (hn : 3 ≤ n)
 isolated true input**, as in [Paturi, Pudlák and Zane, Theorem 6][PaturiPudlakZane1999]: an OR of
 `m` formulas with `K` distinct clauses computing a function `g` of `n ≥ 4` bits with `s` isolated
 true inputs has `s n ^ (1 / 4) 2 ^ √n ≤ 2 ^ n (m + K)`. Take `μ = √n + (log₂ n) / 4` in
-`CNF.card_filter_isolated_mul_min_le`: then `2 ^ μ = n ^ (1 / 4) 2 ^ √n`, and
+`CNF.card_isolatedInputs_mul_min_le`: then `2 ^ μ = n ^ (1 / 4) 2 ^ √n`, and
 `n / μ ≥ √n - (log₂ n) / 4` gives `μ 2 ^ (n / μ) ≥ √n 2 ^ √n / n ^ (1 / 4) = n ^ (1 / 4) 2 ^ √n`. -/
-theorem CNF.card_filter_isolated_mul_rpow_mul_two_rpow_sqrt_le (hn : 4 ≤ n)
+theorem CNF.card_isolatedInputs_mul_rpow_mul_two_rpow_sqrt_le (hn : 4 ≤ n)
     {g : BitString n → Bool} {Fs : List (CNF (Fin n))}
     (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = g x) :
-    (#{x : BitString n | g x = true ∧ ∀ i, g (update x i !x i) = false} : ℝ) *
+    (#(BitString.isolatedInputs g true) : ℝ) *
       (n ^ (1 / 4 : ℝ) * 2 ^ √(n : ℝ)) ≤
       2 ^ n * (Fs.length + #(Fs.flatten.map List.toFinset).toFinset) := by
   have hL := Real.log_two_gt_d9
@@ -490,7 +491,7 @@ theorem CNF.card_filter_isolated_mul_rpow_mul_two_rpow_sqrt_le (hn : 4 ≤ n)
     refine le_of_mul_le_mul_left ?_ (by positivity : (0 : ℝ) < 4 * Real.log 2)
     conv_rhs => rw [← hss]
     nlinarith
-  have h := CNF.card_filter_isolated_mul_min_le (μ := √n + b) (by positivity) hμn hFs
+  have h := CNF.card_isolatedInputs_mul_min_le (μ := √n + b) (by positivity) hμn hFs
   refine le_trans ?_ h
   gcongr
   refine le_min (by rw [Real.rpow_add two_pos, h2b, mul_comm]) ?_
@@ -514,8 +515,8 @@ theorem CNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity (hn : 4 ≤ 
     {Fs : List (CNF (Fin n))} (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = parity n x) :
     (n : ℝ) ^ (1 / 4 : ℝ) * 2 ^ (√(n : ℝ) - 1) ≤
       Fs.length + #(Fs.flatten.map List.toFinset).toFinset := by
-  have h := CNF.card_filter_isolated_mul_rpow_mul_two_rpow_sqrt_le hn hFs
-  rw [card_filter_isolated_parity (by omega), Nat.cast_pow, Nat.cast_ofNat] at h
+  have h := CNF.card_isolatedInputs_mul_rpow_mul_two_rpow_sqrt_le hn hFs
+  rw [card_isolatedInputs_parity (by omega), Nat.cast_pow, Nat.cast_ofNat] at h
   rw [Real.rpow_sub_one two_ne_zero, ← mul_div_assoc]
   exact div_two_le_of_two_pow_sub_one_mul_le (by omega) h
 
@@ -532,8 +533,8 @@ theorem DNF.rpow_mul_two_rpow_sqrt_sub_one_le_of_all_eval_eq_parity (hn : 4 ≤ 
   have hFs (x : BitString n) : ((Gs.map DNF.negate).any fun φ => φ.eval x) = !parity n x := by
     rw [← hGs x, List.any_map, Bool.eq_iff_iff]
     simp [List.any_eq_true]
-  have h := CNF.card_filter_isolated_mul_rpow_mul_two_rpow_sqrt_le hn hFs
-  rw [card_filter_isolated_not_parity (by omega), Nat.cast_pow, Nat.cast_ofNat] at h
+  have h := CNF.card_isolatedInputs_mul_rpow_mul_two_rpow_sqrt_le hn hFs
+  rw [card_isolatedInputs_not_parity (by omega), Nat.cast_pow, Nat.cast_ofNat] at h
   -- negating the terms does not merge them
   have hK : #((Gs.map DNF.negate).flatten.map List.toFinset).toFinset ≤
       #(Gs.flatten.map List.toFinset).toFinset := by
