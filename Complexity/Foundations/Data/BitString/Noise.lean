@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
-public import Complexity.Foundations.Data.BitString.Fourier
+public import Complexity.Foundations.Data.BitString.Influence
 import Mathlib.Algebra.Order.Ring.Pow
 import Mathlib.Tactic.Linarith
 
@@ -32,8 +32,8 @@ probability that `f x ≠ f y` when `y` flips each bit of a uniform `x` independ
 probability `δ`. Reading `f` as the function `F = (-1) ^ f` with values `±1`, it is
 `NS_δ[f] = 1 / 2 - 1 / 2 Stab_{1 - 2 δ}[F]` (`BitString.noiseSensitivity_eq_noiseStability`),
 hence `NS_δ[f] = ∑_S (1 - (1 - 2 δ) ^ |S|) / 2 F̂(S) ^ 2` (`BitString.noiseSensitivity_eq_sum`)
-and `NS_δ[f] ≤ δ ∑_S |S| F̂(S) ^ 2` (`BitString.noiseSensitivity_le_mul_sum`), where the sum is
-the total influence of `f` [O'Donnell, Section 2.4][ODonnell2014].
+and `NS_δ[f] ≤ δ I[F]`, at most `δ` times the total influence
+(`BitString.noiseSensitivity_le_mul_totalInfluence`) [O'Donnell, Section 2.4][ODonnell2014].
 
 The noise is a random mask of `BooleanAnalysis.bernoulliAverage`. Its coordinates are independent:
 the average of a product of functions of the separate coordinates factorizes
@@ -58,8 +58,9 @@ over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
   second moment, increasingly in `ρ`.
 * `Cslib.BitString.noiseSensitivity_eq_noiseStability`, `Cslib.BitString.noiseSensitivity_eq_sum`:
   the noise sensitivity through the noise stability and its Fourier formula
-  [O'Donnell, Theorem 2.49][ODonnell2014].
-* `Cslib.BitString.noiseSensitivity_le_mul_sum`: the noise sensitivity at `δ` is at most `δ` times
+  [O'Donnell, Definition 2.43 and Theorem 2.49][ODonnell2014].
+* `Cslib.BitString.noiseSensitivity_le_mul_totalInfluence`: the noise sensitivity at `δ` is at
+  most `δ` times
   the total influence.
 
 ## References
@@ -272,12 +273,11 @@ theorem noiseSensitivity_mono {δ δ' : ℝ} (hδδ' : δ ≤ δ') (hδ' : δ' �
     fun x => signVal (f x)
   linarith
 
-/-- **The noise sensitivity is at most `δ` times the total influence**:
-`NS_δ[f] ≤ δ ∑_S |S| F̂(S) ^ 2` for `δ ≤ 1`, for `F` the function `f` with values `±1`; the sum is
-the Fourier formula for the total influence of `f` [O'Donnell, Theorem 2.38][ODonnell2014]. -/
-theorem noiseSensitivity_le_mul_sum {δ : ℝ} (hδ : δ ≤ 1) (f : BooleanFunction n) :
-    noiseSensitivity δ f ≤ δ * ∑ S, #S * fourierCoeff (fun x => signVal (f x)) S ^ 2 := by
-  rw [noiseSensitivity_eq_sum, mul_sum]
+/-- **The noise sensitivity is at most `δ` times the total influence**: `NS_δ[f] ≤ δ I[F]` for
+`δ ≤ 1`, for `F` the function `f` with values `±1` [O'Donnell, Exercise 2.42][ODonnell2014]. -/
+theorem noiseSensitivity_le_mul_totalInfluence {δ : ℝ} (hδ : δ ≤ 1) (f : BooleanFunction n) :
+    noiseSensitivity δ f ≤ δ * totalInfluence (fun x => signVal (f x)) := by
+  rw [noiseSensitivity_eq_sum, totalInfluence_eq_sum_card_mul_fourierCoeff_sq, mul_sum]
   refine sum_le_sum fun S _ => ?_
   have h := one_add_mul_sub_le_pow (show -1 ≤ 1 - 2 * δ by linarith) #S
   nlinarith [sq_nonneg (fourierCoeff (fun x => signVal (f x)) S)]
