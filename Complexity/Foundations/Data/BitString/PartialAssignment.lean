@@ -13,6 +13,7 @@ public import Mathlib.Data.Fintype.BigOperators
 public import Mathlib.Data.Fintype.Option
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Fintype.Powerset
+public import Mathlib.Data.Part
 public import Mathlib.Logic.Function.DependsOn
 import Complexity.Foundations.Data.BitString.Agree
 import Mathlib.Algebra.Group.Action.Defs
@@ -42,9 +43,12 @@ counting them is the method of Nechiporuk.
 
 ## Main definitions
 
-* `Cslib.BitString.PartialAssignment`: partial assignments of the coordinates `ι`.
+* `Cslib.BitString.PartialAssignment`: partial assignments of the coordinates `ι`, and
+  `Cslib.BitString.PartialAssignment.empty` the one fixing nothing.
 * `Cslib.BitString.PartialAssignment.fill`: complete an input by the fixed coordinates.
-* `Cslib.BitString.PartialAssignment.free`: the free coordinates.
+* `Cslib.BitString.PartialAssignment.Agrees`: an input agrees with a partial assignment.
+* `Cslib.BitString.PartialAssignment.free`, `Cslib.BitString.PartialAssignment.support`: the free
+  and the fixed coordinates.
 * `Cslib.BitString.PartialAssignment.Extends`, `Cslib.BitString.PartialAssignment.extensions`,
   `Cslib.BitString.PartialAssignment.withFree`: extensions, and partial assignments with `ℓ` free
   coordinates.
@@ -52,6 +56,10 @@ counting them is the method of Nechiporuk.
 
 ## Main results
 
+* `Cslib.BitString.PartialAssignment.agrees_iff_fill_eq`: an input agrees with a partial
+  assignment when filling it changes nothing.
+* `Cslib.BitString.PartialAssignment.extends_iff_ofOption_le`: extension is the pointwise order of
+  `Part Bool`.
 * `Cslib.BitString.PartialAssignment.card_extensions`,
   `Cslib.BitString.PartialAssignment.card_withFree`: counting partial assignments by their free
   coordinates.
@@ -72,13 +80,26 @@ namespace Cslib.BitString
 open Function Finset
 
 /-- A partial assignment (a restriction, in circuit complexity) of the coordinates `ι`: `some b`
-fixes a coordinate to `b`, and `none` leaves it free. -/
+fixes a coordinate to `b`, and `none` leaves it free.
+
+Being an abbreviation of `ι → Option Bool`, a partial assignment inherits the pointwise order of
+the order of core on `Option Bool`, in which `none < some false < some true`. That order is not the
+information order: `ρ ≤ ρ'` does not say that `ρ'` extends `ρ`. The information order is
+`PartialAssignment.Extends`, the pointwise order on `Part Bool`
+(`PartialAssignment.extends_iff_ofOption_le`). -/
 abbrev PartialAssignment (ι : Type*) : Type _ :=
   ι → Option Bool
 
 namespace PartialAssignment
 
 variable {ι : Type*} {ρ : PartialAssignment ι} {i j : ι} {b : Bool}
+
+/-- The partial assignment fixing nothing. -/
+def empty : PartialAssignment ι :=
+  fun _ => none
+
+@[simp] theorem empty_apply (i : ι) : (empty : PartialAssignment ι) i = none :=
+  rfl
 
 /-- Complete `x` by the coordinates fixed by `ρ`. -/
 def fill (ρ : PartialAssignment ι) (x : ι → Bool) : ι → Bool :=
@@ -91,8 +112,35 @@ def fill (ρ : PartialAssignment ι) (x : ι → Bool) : ι → Bool :=
   simp [fill, hi]
 
 /-- Fixing nothing changes nothing. -/
-@[simp] theorem fill_none (x : ι → Bool) : fill (fun _ => none) x = x :=
+@[simp] theorem fill_empty (x : ι → Bool) : (empty : PartialAssignment ι).fill x = x :=
   rfl
+
+/-- `fill_empty`, for the partial assignment fixing nothing written as a function. -/
+@[simp] theorem fill_none (x : ι → Bool) : fill (fun _ => none) x = x :=
+  fill_empty x
+
+/-! ### Agreement -/
+
+/-- The input `x` *agrees* with `ρ`: it takes the value fixed by `ρ` at every fixed coordinate. -/
+def Agrees (ρ : PartialAssignment ι) (x : ι → Bool) : Prop :=
+  ∀ i b, ρ i = some b → x i = b
+
+instance [Fintype ι] (ρ : PartialAssignment ι) (x : ι → Bool) : Decidable (ρ.Agrees x) :=
+  inferInstanceAs (Decidable (∀ i b, ρ i = some b → x i = b))
+
+/-- An input agrees with `ρ` exactly when filling it from `ρ` does not change it. -/
+theorem agrees_iff_fill_eq {x : ι → Bool} : ρ.Agrees x ↔ ρ.fill x = x := by
+  refine ⟨fun h => funext fun i => ?_, fun h i b hi => by rw [← h, fill_of_eq_some hi]⟩
+  cases hρ : ρ i with
+  | none => exact fill_of_eq_none hρ x
+  | some c => rw [fill_of_eq_some hρ, h i c hρ]
+
+/-- A filled input agrees with the partial assignment it was filled from. -/
+theorem agrees_fill (ρ : PartialAssignment ι) (x : ι → Bool) : ρ.Agrees (ρ.fill x) :=
+  fun _ _ hi => fill_of_eq_some hi x
+
+@[simp] theorem agrees_empty (x : ι → Bool) : (empty : PartialAssignment ι).Agrees x :=
+  fun _ _ h => by simp at h
 
 /-- Filling preserves agreement away from coordinate `i`. -/
 theorem fill_eq_fill_of_forall_ne {x y : ι → Bool} (h : ∀ j, j ≠ i → x j = y j) (j : ι)
@@ -156,7 +204,7 @@ theorem assign_eq_self {S : Finset ι} {a : ι → Bool} (h : ∀ i ∈ S, ρ i 
 
 /-- Free the coordinates of `S`. -/
 def unassign (ρ : PartialAssignment ι) (S : Finset ι) : PartialAssignment ι :=
-  S.piecewise (fun _ => none) ρ
+  S.piecewise empty ρ
 
 @[simp] theorem unassign_of_mem {S : Finset ι} (hi : i ∈ S) : ρ.unassign S i = none :=
   piecewise_eq_of_mem _ _ _ hi
@@ -191,11 +239,34 @@ def free (ρ : PartialAssignment ι) : Finset ι :=
 @[simp] theorem mem_free : i ∈ ρ.free ↔ ρ i = none := by
   simp [free]
 
-@[simp] theorem free_none : free (fun _ : ι => none) = univ := by
+@[simp] theorem free_empty : (empty : PartialAssignment ι).free = univ := by
+  ext
+  simp
+
+/-- `free_empty`, for the partial assignment fixing nothing written as a function. -/
+@[simp] theorem free_none : free (fun _ : ι => none) = univ :=
+  free_empty
+
+/-- The coordinates fixed by `ρ`, the complement of its free coordinates (`compl_free`). -/
+def support (ρ : PartialAssignment ι) : Finset ι :=
+  {i | (ρ i).isSome}
+
+@[simp] theorem mem_support : i ∈ ρ.support ↔ (ρ i).isSome := by
+  simp [support]
+
+@[simp] theorem support_empty : (empty : PartialAssignment ι).support = ∅ := by
   ext
   simp
 
 variable [DecidableEq ι]
+
+/-- The free coordinates are those outside the support. -/
+theorem compl_free (ρ : PartialAssignment ι) : ρ.freeᶜ = ρ.support := by
+  ext i
+  simp [Option.isSome_iff_ne_none]
+
+theorem compl_support (ρ : PartialAssignment ι) : ρ.supportᶜ = ρ.free := by
+  rw [← compl_free, compl_compl]
 
 @[simp] theorem free_update (ρ : PartialAssignment ι) (i : ι) (b : Bool) :
     free (update ρ i (some b)) = ρ.free.erase i := by
@@ -248,9 +319,23 @@ theorem Extends.trans {ρ ρ' ρ'' : PartialAssignment ι} (h₁ : ρ''.Extends 
     ρ''.Extends ρ :=
   fun i b h => h₁ i b (h₂ i b h)
 
+/-- **The information order**: `ρ'` extends `ρ` exactly when it is above `ρ` pointwise in the
+order of `Part Bool`, where an undefined value is below every value and distinct values are
+incomparable. -/
+theorem extends_iff_ofOption_le {ρ ρ' : PartialAssignment ι} :
+    ρ'.Extends ρ ↔ (fun i => Part.ofOption (ρ i)) ≤ fun i => Part.ofOption (ρ' i) := by
+  simp only [Pi.le_def]
+  exact forall_congr' fun i => forall_congr' fun b => by
+    simp only [Part.mem_ofOption, Option.mem_def]
+
 /-- Every partial assignment extends the one fixing nothing. -/
-@[simp] theorem extends_none (ρ : PartialAssignment ι) : ρ.Extends fun _ => none :=
+@[simp] theorem extends_empty (ρ : PartialAssignment ι) : ρ.Extends empty :=
   fun _ _ h => by simp at h
+
+/-- An input agreeing with `ρ'` agrees with every partial assignment that `ρ'` extends. -/
+theorem Extends.agrees {ρ ρ' : PartialAssignment ι} (h : ρ'.Extends ρ) {x : ι → Bool}
+    (hx : ρ'.Agrees x) : ρ.Agrees x :=
+  fun i b hi => hx i b (h i b hi)
 
 /-- Filling from an extension of `ρ` is not changed by filling from `ρ`. -/
 theorem fill_fill_of_extends {ρ ρ' : PartialAssignment ι} (h : ρ'.Extends ρ) (x : ι → Bool) :
@@ -341,7 +426,7 @@ variable (ι) in
 /-- The partial assignments leaving exactly `ℓ` coordinates free: the extensions of the one fixing
 nothing. -/
 abbrev withFree (ℓ : ℕ) : Finset (PartialAssignment ι) :=
-  extensions (fun _ => none) ℓ
+  extensions empty ℓ
 
 theorem mem_withFree {ℓ : ℕ} : ρ ∈ withFree ι ℓ ↔ #ρ.free = ℓ := by
   simp
@@ -350,7 +435,7 @@ theorem mem_withFree {ℓ : ℕ} : ρ ∈ withFree ι ℓ ↔ #ρ.free = ℓ := 
 free. -/
 theorem card_withFree (ℓ : ℕ) :
     #(withFree ι ℓ) = (Fintype.card ι).choose ℓ * 2 ^ (Fintype.card ι - ℓ) := by
-  rw [card_extensions, free_none, card_univ]
+  rw [card_extensions, free_empty, card_univ]
 
 /-- A partial assignment with `ℓ'` free coordinates extends `C(|ι| - ℓ', ℓ - ℓ')` of the ones
 with `ℓ ≥ ℓ'` free coordinates: those that free `ℓ - ℓ'` of its fixed coordinates. -/
