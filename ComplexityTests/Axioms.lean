@@ -2565,4 +2565,40 @@ info: 'Cslib.Circuits.Frontier.Gaussian.exists_ncard_edgeCut_le' depends on axio
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.Gaussian.exists_ncard_edgeCut_le
 
+/--
+info: 'Cslib.Circuits.Frontier.circuitLowerBound_gaussian' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.circuitLowerBound_gaussian
+
+/--
+info: 'Cslib.Circuits.Frontier.circuitLowerBound_114_div_25' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.circuitLowerBound_114_div_25
+
+/--
+info: 'Cslib.Circuits.Frontier.circuitLowerBound_four' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.circuitLowerBound_four
+
+/--
+info: 'Cslib.Circuits.Frontier.averageCaseBound_gaussian' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.averageCaseBound_gaussian
+
+/--
+info: 'Cslib.Circuits.Frontier.averageCaseBound_114_div_25' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.averageCaseBound_114_div_25
+
+/--
+info: 'Cslib.Circuits.Frontier.averageCaseBound_four' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.averageCaseBound_four
+
 end ComplexityTests.Axioms
