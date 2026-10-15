@@ -92,7 +92,11 @@ theorem MonoidProgram.decides_one [IsEmpty ι] (f : (ι → α) → Bool) :
 end Decides
 
 /-- The languages over `α` decided, at every word length `n`, by a program over `M` of length at
-most `s n`, with an accepting set, for a polynomially bounded `s`. -/
+most `s n`, with an accepting set, for a polynomially bounded `s`.
+
+The class is meant for finite monoids, as in [BarringtonTherien1988]. Over an infinite monoid it
+can contain every language: in the free monoid on `ℕ × α`, the program of length `n` that selects
+the generator `(i, x i)` at each position `i` sends different inputs to different elements. -/
 def PolyLength (α M : Type*) [Monoid M] : Set (Language α) :=
   {L | ∃ s : ℕ → ℕ, PolynomiallyBounded s ∧ ∀ n,
     ∃ (P : MonoidProgram (Fin n) α M) (S : Set M), P.Decides S (L.slice n) ∧ P.length ≤ s n}

@@ -27,6 +27,7 @@ import Complexity.Computability.Circuit.Frontier.Reduction
 import Complexity.Computability.Circuit.Frontier.Unconditional
 import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
+import Complexity.Computability.Circuit.Frontier.Decomposable
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.GapTheorem
 import Complexity.Computability.PCP.Preprocess
@@ -527,5 +528,68 @@ example {n s : ℕ} (p : Program Boolean.Unbounded.signature n s) :
   exists_ledger_of_aggregates p _ _ _ fun _ _ => aggregates_unbounded _
 
 end FrontierLedger
+
+section FrontierDecomposable
+
+open Cslib.Circuits.Frontier Set
+
+/-- A decomposable DAG for the conjunction of two bits: a product of two leaves. -/
+def conjunctionDAG : DecomposableDAG (Fin 2) Bool (Option (Fin 2)) where
+  scope
+    | none => univ
+    | some i => {i}
+  root := none
+  scope_root := rfl
+  gate
+    | none => .product (some 0) (some 1)
+    | some _ => .leaf
+  rank
+    | none => 1
+    | some _ => 0
+  values
+    | none => {f | ∀ i, f ⟨i, mem_univ i⟩ = true}
+    | some _ => {fun _ => true}
+  values_subsingleton
+    | none, h => nomatch h
+    | some _, _ => subsingleton_singleton
+  scope_union
+    | none, _, h => nomatch h
+    | some _, _, h => nomatch h
+  rank_union
+    | none, _, h => nomatch h
+    | some _, _, h => nomatch h
+  values_union
+    | none, _, h => nomatch h
+    | some _, _, h => nomatch h
+  scope_product
+    | none, _, _, h => by
+      cases h
+      ext i
+      match i with
+      | 0 => simp
+      | 1 => simp
+    | some _, _, _, h => nomatch h
+  disjoint_product
+    | none, _, _, h => by
+      cases h
+      simp
+    | some _, _, _, h => nomatch h
+  rank_product
+    | none, _, _, h => by
+      cases h
+      simp
+    | some _, _, _, h => nomatch h
+  values_product
+    | none, _, _, h, x => by
+      cases h
+      simp [Fin.forall_fin_two, funext_iff]
+    | some _, _, _, h, _ => nomatch h
+
+/-- It represents the conjunction of the two bits. -/
+example : conjunctionDAG.accepted = {x | x 0 = true ∧ x 1 = true} := by
+  ext x
+  exact Fin.forall_fin_two
+
+end FrontierDecomposable
 
 end ComplexityTests.NonVacuity
