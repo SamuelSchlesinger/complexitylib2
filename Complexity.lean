@@ -63,6 +63,8 @@ public import Complexity.Computability.Circuit.Monotone.Clique.Essential
 public import Complexity.Computability.Circuit.Monotone.Clique.LowerBound
 public import Complexity.Computability.Circuit.Monotone.Clique.Negative
 public import Complexity.Computability.Circuit.Monotone.Clique.Positive
+public import Complexity.Computability.Circuit.Monotone.Formula
+public import Complexity.Computability.Circuit.Monotone.KarchmerWigderson
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation
