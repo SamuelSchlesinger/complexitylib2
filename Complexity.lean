@@ -170,6 +170,8 @@ public import Complexity.Foundations.Combinatorics.Expander.Power
 public import Complexity.Foundations.Combinatorics.Expander.Products
 public import Complexity.Foundations.Combinatorics.Expander.Random
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
+public import Complexity.Foundations.Combinatorics.Expander.Tower
+public import Complexity.Foundations.Combinatorics.Expander.TowerBase
 public import Complexity.Foundations.Combinatorics.Expander.Walk
 public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric

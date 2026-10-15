@@ -345,7 +345,7 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | done (`BooleanAnalysis/PolynomialCorrelation`) |
 | Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | done (`Circuit/Boolean/{Correction,SparseSynthesis}`) |
 | Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`BooleanAnalysis/{Hadamard,HadamardTester}`) |
-| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | done (`Expander/{Cheeger,Loops,Perm,Random,Family}`); the explicit zig-zag tower open |
+| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | done (`Expander/{Cheeger,Loops,Perm,Random,Family,Tower,TowerBase}`); the fully explicit RVW recursion open |
 | Zig-zag product | `PCP/Internal/ZigZag` | done (`Expander/{Power,Products}`, with tensor and balanced replacement products); the explicit tower open |
 | Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | reconstruction and designs done (`Crypto/Primitives/PRG/NisanWigderson{,/Design}`); the sampling layer open |
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure (Bolton Bailey) | done: constraint graphs, the 3-SAT reduction, degree reduction and preprocessing (`Computability/PCP/`), walks and killed walks (`Expander/{Walk,KilledWalk}`); next: powering (killed walks, moments), the assignment tester, composition |

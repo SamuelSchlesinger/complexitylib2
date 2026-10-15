@@ -18,6 +18,7 @@ import Complexity.Foundations.BooleanAnalysis.HadamardTester
 import Complexity.Probability.ApproximateCounting.Relative
 import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Foundations.Combinatorics.Expander.Family
+import Complexity.Foundations.Combinatorics.Expander.TowerBase
 import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
@@ -286,5 +287,13 @@ example : ¬ Relation.ReflTransGen (fun i j : Fin 3 => j.val = i.val + 1) 1 0 :=
   · refine (Set.encard_le_encard hsub).trans ?_
     rw [Set.encard_pair (by decide)]
     simp
+
+/-- The zig-zag tower has a base graph: a graph on `Fin 2 → D × D` of degree `|D| > 1` with
+`λ ≤ 1 / 5`. -/
+example : ∃ (D : Type) (_ : Fintype D) (H : Cslib.RotationMap (Fin 2 → D × D) D),
+    1 < Fintype.card D ∧ H.spectralExpansion ≤ 1 / 5 :=
+  ⟨_, _, Cslib.RotationMap.zigzagTowerBase 1440000,
+    Fintype.one_lt_card_iff_nontrivial.2 inferInstance,
+    Cslib.RotationMap.spectralExpansion_zigzagTowerBase_le_one_div_five le_rfl⟩
 
 end ComplexityTests.NonVacuity
