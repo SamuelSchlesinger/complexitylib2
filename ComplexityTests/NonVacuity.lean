@@ -14,6 +14,7 @@ import Complexity.Computability.Circuit.Boolean.TC0
 import Complexity.Computability.Circuit.Boolean.TopDown
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Foundations.Data.BitString.HadamardTester
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
 /-!
@@ -147,5 +148,17 @@ example {α : Type} (enc : α ↪ List Bool) :
     ∃ c, ComputableTidilyInTimeAndSpace (id : α → α) enc enc
       (fun a => 2 * ((enc a).length + 1) + 3 * 0 + c) (fun _ => c * (0 + 1)) :=
   computableInTimeAndSpace_id.exists_computableTidilyInTimeAndSpace
+
+/-- The hypotheses of the soundness of the Hadamard tester can be met: the honest tables for a
+solution pass every test with probability one. -/
+example {n m : ℕ} (x : Cslib.BitString n) (A : Fin m → Cslib.BitString (n * n))
+    (b : Cslib.BitString m)
+    (h : ∀ e, BitString.hadamardCode (BitString.tensor x x) (A e) = b e) :
+    ∃ x', (hammingDist (BitString.hadamardCode x) (BitString.hadamardCode x') : ℝ) / 2 ^ n ≤ 0 ∧
+      ∀ e, BitString.hadamardCode (BitString.tensor x' x') (A e) = b e :=
+  BitString.exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance
+    (g := BitString.hadamardCode (BitString.tensor x x)) (ε := 0) (ε' := 0)
+    (by simp) (by simp) (by norm_num)
+    (by rw [BitString.equationTestAcceptance_hadamardCode h]; norm_num)
 
 end ComplexityTests.NonVacuity

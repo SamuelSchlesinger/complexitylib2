@@ -145,6 +145,8 @@ public import Complexity.Foundations.Data.BitString.Convolution
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Fourier
 public import Complexity.Foundations.Data.BitString.FourierRestriction
+public import Complexity.Foundations.Data.BitString.Hadamard
+public import Complexity.Foundations.Data.BitString.HadamardTester
 public import Complexity.Foundations.Data.BitString.Influence
 public import Complexity.Foundations.Data.BitString.Linearity
 public import Complexity.Foundations.Data.BitString.LowDegree

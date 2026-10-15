@@ -978,4 +978,76 @@ info: 'Cslib.BitString.two_mul_card_agree_xorMajority_le' depends on axioms: [pr
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.two_mul_card_agree_xorMajority_le
 
+/--
+info: 'Cslib.BitString.card_filter_selfCorrect_ne_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.card_filter_selfCorrect_ne_le
+
+/--
+info: 'Cslib.BitString.one_sub_two_mul_le_expect_selfCorrect' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.one_sub_two_mul_le_expect_selfCorrect
+
+/--
+info: 'Cslib.BitString.exists_eq_hadamardCode_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.exists_eq_hadamardCode_iff
+
+/--
+info: 'Cslib.BitString.two_mul_hammingDist_hadamardCode' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.two_mul_hammingDist_hadamardCode
+
+/--
+info: 'Cslib.BitString.eq_of_hammingDist_hadamardCode_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.eq_of_hammingDist_hadamardCode_le
+
+/--
+info: 'Cslib.BitString.one_sub_two_mul_le_expect_selfCorrect_eq_apply' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.one_sub_two_mul_le_expect_selfCorrect_eq_apply
+
+/--
+info: 'Cslib.BitString.existsUnique_hammingDist_hadamardCode_le_of_le_blrAcceptance' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.existsUnique_hammingDist_hadamardCode_le_of_le_blrAcceptance
+
+/--
+info: 'Cslib.BitString.hadamardCode_tensor_tensor' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.hadamardCode_tensor_tensor
+
+/--
+info: 'Cslib.BitString.one_div_four_le_expect_hadamardCode_tensor' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.one_div_four_le_expect_hadamardCode_tensor
+
+/--
+info: 'Cslib.BitString.eq_tensor_of_lt_tensorTestAcceptance' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.eq_tensor_of_lt_tensorTestAcceptance
+
+/--
+info: 'Cslib.BitString.hadamardCode_eq_of_lt_equationTestAcceptance' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.hadamardCode_eq_of_lt_equationTestAcceptance
+
+/--
+info: 'Cslib.BitString.exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance
+
 end ComplexityTests.Axioms
