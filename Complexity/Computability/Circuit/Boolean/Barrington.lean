@@ -237,7 +237,7 @@ private theorem depthWith_entryFormulaList_le (l : List (Instruction n (Function
       simp only [List.length_take, List.length_cons] at h ⊢; omega
     have hlen₂ : (List.drop (k / 2) (ι :: κ :: l)).length ≤ (k + 2 - 1) / 2 := by
       simp only [List.length_drop, List.length_cons] at h ⊢; omega
-    refine (Formula.depthWith_orList_le _ (d := (Nat.clog 2 w + 1) *
+    refine (Formula.depthWith_binaryCost_orList_le _ (d := (Nat.clog 2 w + 1) *
       Nat.clog 2 ((k + 2 - 1) / 2) + 1) fun F hF => ?_).trans ?_
     · obtain ⟨c, -, rfl⟩ := List.mem_map.1 hF
       rw [Formula.depthWith_and, binaryCost_and]
@@ -277,7 +277,7 @@ theorem exists_formula (P : MonoidProgram n (Function.End (Fin w))) (a : Fin w)
   refine ⟨Formula.orList (acc.toList.map (P.entryFormula a)), fun x => ?_, ?_⟩
   · rw [Formula.eval_orList, Bool.eq_iff_iff, List.any_eq_true, decide_eq_true_iff]
     simp
-  · refine (Formula.depthWith_orList_le _ fun F hF => ?_).trans (Nat.add_le_add_left
+  · refine (Formula.depthWith_binaryCost_orList_le _ fun F hF => ?_).trans (Nat.add_le_add_left
       (Nat.clog_mono_right 2 (by simpa using acc.card_le_univ)) _)
     obtain ⟨b, -, rfl⟩ := List.mem_map.1 hF
     exact depthWith_entryFormula_le P a b
@@ -304,7 +304,7 @@ theorem Computes.exists_formula {P : MonoidProgram n (Perm (Fin w))} {σ : Perm 
     · simp only [↓reduceIte, iff_true]
       obtain ⟨a, ha⟩ := not_forall.1 fun h => hσ (Perm.ext h)
       exact ⟨a, σ a, fun h => ha h.symm, rfl⟩
-  · refine (Formula.depthWith_orList_le _ fun F hF => ?_).trans (Nat.add_le_add_left
+  · refine (Formula.depthWith_binaryCost_orList_le _ fun F hF => ?_).trans (Nat.add_le_add_left
       (Nat.clog_mono_right 2 ?_) _)
     · obtain ⟨p, -, rfl⟩ := List.mem_map.1 hF
       simpa [Q] using depthWith_entryFormula_le Q p.1 p.2
