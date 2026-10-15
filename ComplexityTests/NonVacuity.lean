@@ -17,6 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormal
 import Complexity.Foundations.BooleanAnalysis.HadamardTester
 import Complexity.Probability.ApproximateCounting.Relative
 import Complexity.Probability.PairwiseIndependentHash.Toeplitz
+import Complexity.Foundations.Combinatorics.Expander.Family
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -200,5 +201,15 @@ example : toeplitz ![(1 : ℤ), 2, 3, 4] = !![3, 2, 1; 4, 3, 2] := by
   fin_cases i <;> fin_cases j <;> rfl
 
 end Toeplitz
+
+/-- The lazy graph satisfies the hypothesis of Cheeger's lazy-walk bound. -/
+example {V D : Type} [Fintype D] [Nonempty D] (G : Cslib.RotationMap V D) :
+    ∀ f v, G.lazy.walk f v = (f v + G.walk f v) / 2 :=
+  G.walk_lazy_apply
+
+/-- Constant-degree expanders exist on five vertices. -/
+example : ∃ G : Cslib.RotationMap (Fin 5) (Fin 120), G.spectralExpansion < 1 :=
+  ⟨Cslib.RotationMap.expander (Fin 5),
+    (Cslib.RotationMap.spectralExpansion_expander_le _).trans_lt (by norm_num)⟩
 
 end ComplexityTests.NonVacuity

@@ -150,9 +150,13 @@ public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.Expander.Basic
 public import Complexity.Foundations.Combinatorics.Expander.Cheeger
+public import Complexity.Foundations.Combinatorics.Expander.Family
+public import Complexity.Foundations.Combinatorics.Expander.Loops
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
+public import Complexity.Foundations.Combinatorics.Expander.Perm
 public import Complexity.Foundations.Combinatorics.Expander.Power
 public import Complexity.Foundations.Combinatorics.Expander.Products
+public import Complexity.Foundations.Combinatorics.Expander.Random
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric

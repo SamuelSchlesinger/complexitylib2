@@ -1322,4 +1322,52 @@ info: 'Matrix.toeplitz_mulVec_surjective' depends on axioms: [propext, Classical
 #guard_msgs (whitespace := lax) in
 #print axioms Matrix.toeplitz_mulVec_surjective
 
+/--
+info: 'Cslib.RotationMap.spectralExpansion_union_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_union_le
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl
+
+/--
+info: 'Cslib.RotationMap.card_interedges_compl_ofPerms' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.card_interedges_compl_ofPerms
+
+/--
+info: 'Cslib.RotationMap.le_edgeExpansion_ofPerms' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.le_edgeExpansion_ofPerms
+
+/--
+info: 'Cslib.RotationMap.exists_spectralExpansion_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.exists_spectralExpansion_le
+
+/--
+info: 'Cslib.RotationMap.exists_forall_exists_spectralExpansion_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.exists_forall_exists_spectralExpansion_le
+
+/--
+info: 'Cslib.exists_perms_card_le_mul_card_filter_notMem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.exists_perms_card_le_mul_card_filter_notMem
+
 end ComplexityTests.Axioms
