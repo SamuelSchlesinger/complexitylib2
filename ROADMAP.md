@@ -330,7 +330,9 @@ a local polynomial-time witness (crei's `const`/`id` will supply it), `FinEnum` 
 From an inventory of v1's headline results that v2 lacks (excluding v1's `Algebraic/` tree and
 the OpenAI-sourced modules listed in v1's `docs/OpenAIMath.md`), ported by parallel agents in
 worktrees and reviewed before merging. Ported on 2026-10-15: influences, noise stability,
-convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `ACⁱ ⊆ NCⁱ⁺¹`.
+convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `ACⁱ ⊆ NCⁱ⁺¹`, the
+Hadamard code and tester, Nisan–Wigderson (reconstruction and designs), sparse corrections,
+Cheeger's inequality, graph products, relative-error approximate counting.
 
 | Target | v1 source | State |
 |---|---|---|
