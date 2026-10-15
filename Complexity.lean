@@ -130,6 +130,7 @@ public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Fourier
 public import Complexity.Foundations.Data.BitString.FourierRestriction
+public import Complexity.Foundations.Data.BitString.Influence
 public import Complexity.Foundations.Data.BitString.LowDegree
 public import Complexity.Foundations.Data.BitString.LowDegreeParity
 public import Complexity.Foundations.Data.BitString.Parity
