@@ -19,11 +19,15 @@ Changing one value of a Boolean function on `n` inputs changes its circuit compl
 time, the complexity therefore takes every value between `1` and the complexity of the hard
 function, up to `2 n + 3` (`exists_complexity_mem_Ioc`). With Shannon's lower bound, every size
 below `2 ^ n / n` is the complexity of some function, up to `2 n + 3`, and so more gates allow
-strictly more languages (`SIZE_ssubset`).
+strictly more languages (`SIZE_ssubset`). Walking from a constant function to any function `f`
+shows that `f` costs at most `2 ^ n (2 n + 3) + 1` gates (`complexity_le_two_pow_mul_add_one`).
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.complexity_update_le`: changing one value costs `2 n + 3` gates.
+* `Cslib.Circuits.Boolean.complexity_le_two_pow_mul_add_one`,
+  `Cslib.Circuits.Boolean.complexity_le_of_dependsOn`: the truth-table bound, for all functions
+  and for functions depending on few inputs.
 * `Cslib.Circuits.Boolean.exists_complexity_mem_Ioc`: complexities between `1` and that of a given
   function are attained, up to `2 n + 3`.
 * `Cslib.Circuits.Boolean.SIZE_ssubset`: the size hierarchy.
@@ -35,6 +39,7 @@ strictly more languages (`SIZE_ssubset`).
 namespace Cslib.Circuits.Boolean
 
 open Filter
+open scoped Finset
 
 variable {n : ℕ}
 
@@ -63,6 +68,47 @@ theorem complexity_update_le (f : BooleanFunction n) (a : Fin n → Bool) (b : B
         ≤ complexity interpretation (single f) + complexity interpretation (single m) + 1 :=
           complexity_or_le _ _
       _ ≤ complexity interpretation (single f) + (2 * n + 3) := by omega
+
+/-- **The truth-table bound.** A Boolean function on `n` inputs costs at most
+`2 ^ n * (2 * n + 3) + 1` gates: start from a constant and change one value at a time. -/
+theorem complexity_le_two_pow_mul_add_one (f : BooleanFunction n) :
+    complexity interpretation (single f) ≤ 2 ^ n * (2 * n + 3) + 1 := by
+  classical
+  suffices h : ∀ S : Finset (Fin n → Bool),
+      complexity interpretation (single fun x => decide (x ∈ S) && f x) ≤
+        #S * (2 * n + 3) + 1 by
+    simpa using h Finset.univ
+  intro S
+  induction S using Finset.induction_on with
+  | empty => simpa using (Synthesis.const false).complexity_le
+  | @insert a S ha ih =>
+    have e : (fun x => decide (x ∈ insert a S) && f x) =
+        Function.update (fun x => decide (x ∈ S) && f x) a (f a) := funext fun x => by
+      by_cases hx : x = a
+      · subst hx
+        simp
+      · simp [hx]
+    rw [e, Finset.card_insert_of_notMem ha, add_one_mul]
+    calc _ ≤ _ := complexity_update_le _ a (f a)
+      _ ≤ _ := by omega
+
+/-- A Boolean function that depends only on the inputs in `s` costs at most
+`2 ^ #s * (2 * #s + 3) + 1` gates. -/
+theorem complexity_le_of_dependsOn {f : BooleanFunction n} {s : Finset (Fin n)}
+    (hf : DependsOn f s) : complexity interpretation (single f) ≤ 2 ^ #s * (2 * #s + 3) + 1 := by
+  let g : BooleanFunction #s := fun y =>
+    f fun i => if h : i ∈ s then y ((s.orderIsoOfFin rfl).symm ⟨i, h⟩) else false
+  have hfg : single f = single g ∘ fun x => x ∘ s.orderEmbOfFin rfl := by
+    funext x j
+    refine hf fun i hi => ?_
+    simp only [dite_eq_left (Finset.mem_coe.1 hi), Function.comp_apply,
+      ← Finset.coe_orderIsoOfFin_apply, OrderIso.apply_symm_apply]
+  rw [hfg]
+  calc _ ≤ complexity interpretation (fun x => x ∘ s.orderEmbOfFin rfl) +
+        complexity interpretation (single g) := complexity_comp_le _ _
+    _ ≤ _ := by
+      rw [complexity_wiring, zero_add]
+      exact complexity_le_two_pow_mul_add_one g
 
 /-- **Discrete intermediate values.** If changing one coordinate raises a measure by at most `B`,
 and the measure is at most `t` at `u` and above `t` at `v`, then it lies in `(t, t + B]`

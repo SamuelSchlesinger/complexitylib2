@@ -123,6 +123,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Shadow
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Crypto.Primitives.PRG.NextBit
+public import Complexity.Crypto.Primitives.PRG.NisanWigderson
+public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
 public import Complexity.Foundations.BooleanAnalysis.Fibers

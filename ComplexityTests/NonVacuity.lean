@@ -15,6 +15,7 @@ import Complexity.Computability.Circuit.Boolean.TopDown
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Foundations.Data.BitString.HadamardTester
+import Complexity.Crypto.Primitives.PRG.NisanWigderson
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
 /-!
@@ -160,5 +161,11 @@ example {n m : ℕ} (x : Cslib.BitString n) (A : Fin m → Cslib.BitString (n * 
     (g := BitString.hadamardCode (BitString.tensor x x)) (ε := 0) (ε' := 0)
     (by simp) (by simp) (by norm_num)
     (by rw [BitString.equationTestAcceptance_hadamardCode h]; norm_num)
+
+/-- Nisan–Wigderson designs exist for some parameters: two disjoint singletons. -/
+example : Cslib.Crypto.PRG.NisanWigderson.Design 2 1 0 2 where
+  block := ![{0}, {1}]
+  card_block := by decide
+  card_inter_le := by decide
 
 end ComplexityTests.NonVacuity

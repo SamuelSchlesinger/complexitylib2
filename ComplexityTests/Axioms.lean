@@ -1050,4 +1050,46 @@ info: 'Cslib.BitString.exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance'
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance
 
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.exists_predictionExperiment_le_hardwiredExperiment' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.exists_predictionExperiment_le_hardwiredExperiment
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.exists_half_add_div_le_hardwiredExperiment' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.exists_half_add_div_le_hardwiredExperiment
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.exists_half_add_div_le_card_nextBitGuess_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.exists_half_add_div_le_card_nextBitGuess_eq
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.exists_dependsOn_half_add_div_le_card_nextBitGuess_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.exists_dependsOn_half_add_div_le_card_nextBitGuess_eq
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.exists_complexity_le_half_add_div_le_card_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.exists_complexity_le_half_add_div_le_card_eq
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.toReal_realExperiment_sub_toReal_idealExperiment_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.toReal_realExperiment_sub_toReal_idealExperiment_lt
+
+/--
+info: 'Cslib.Circuits.Boolean.complexity_le_of_dependsOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.complexity_le_of_dependsOn
+
 end ComplexityTests.Axioms

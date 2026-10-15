@@ -47,6 +47,8 @@ and `Cslib.Crypto.PRG.predictionTest`.
 * `Cslib.Crypto.PRG.Generator.Unpredictable`: concrete unpredictability against admissible
   predictors.
 * `Cslib.Crypto.PRG.nextBitPredictor`: the predictor built from a test.
+* `Cslib.Crypto.PRG.nextBitGuess`: the predictor built from a deterministic test, with its random
+  choices fixed (`Cslib.Crypto.PRG.nextBitPredictor_pure`).
 * `Cslib.Crypto.PRG.predictionTest`: the test built from a predictor.
 
 ## Main results
@@ -308,6 +310,23 @@ noncomputable def nextBitPredictor (adversary : Adversary (Fin m → Bool)) (i :
     Adversary (Fin i → Bool) := fun x =>
   guessOfDistinguisher fun r => (uniformOfFintype (Fin m → Bool)).bind fun z =>
     adversary fun j => if h : (j : ℕ) < i then x ⟨j, h⟩ else if j = i then r else z j
+
+/-- The guess of the predictor built from a deterministic test, with its random choices fixed.
+Given the first `i` bits `x`, it runs the test on `x`, followed by the candidate bit `r` at
+position `i`, followed by the bits of `u` after position `i`, and outputs `r` if the test accepts
+and `!r` otherwise. -/
+def nextBitGuess (test : (Fin m → Bool) → Bool) (i : Fin m) (r : Bool) (u : Fin m → Bool)
+    (x : Fin i → Bool) : Bool :=
+  if test fun j => if h : (j : ℕ) < i then x ⟨j, h⟩ else if j = i then r else u j then r else !r
+
+/-- For a deterministic test, the predictor built from it draws a uniform candidate bit `r` and a
+uniform string `u` and outputs `nextBitGuess test i r u x`. -/
+theorem nextBitPredictor_pure (test : (Fin m → Bool) → Bool) (i : Fin m) (x : Fin i → Bool) :
+    nextBitPredictor (fun y => PMF.pure (test y)) i x =
+      (uniformOfFintype Bool).bind fun r =>
+        (uniformOfFintype (Fin m → Bool)).map fun u => nextBitGuess test i r u x := by
+  simp only [nextBitPredictor, guessOfDistinguisher, PMF.map_bind, PMF.pure_map]
+  rfl
 
 /-- The predictor built from a test guesses bit `i` correctly with probability exactly `1 / 2`
 plus the `i`-th hybrid gap of the test. -/
