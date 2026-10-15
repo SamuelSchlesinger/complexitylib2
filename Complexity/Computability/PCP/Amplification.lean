@@ -22,7 +22,7 @@ universal constant, and leaves the alphabet fixed. It is the composite of the th
 the proof:
 
 1. **preprocessing** (`Cslib.PCP.ConstraintGraph.preprocess`): a `242`-regular expander on the
-   half-edges, losing a factor `1452000 |α|` of the value;
+   half-edges, losing a factor `1452000` of the value, whatever the alphabet;
 2. **powering** (`Cslib.PCP.RegularConstraintGraph.power`) along killed walks truncated at `T`
    steps, killed with probability `1 / q`, which multiplies the value by a factor linear in `q`, at
    the cost of an alphabet of size `|α| ^ (∑ ℓ ≤ T, 242 ^ ℓ)`;
@@ -32,7 +32,7 @@ the proof:
 
 The round `G.amplify T q` is defined over any finite alphabet `α`. For `T = 4 |α| (q - 1)`, its
 value is at least `(q - 1) / (476 (4 |α| ^ 2 + 16 |α| ^ 4 + 92928000 |α| ^ 5))` times
-`min (UNSAT(G) / (1452000 |α|)) (1 / T ^ 2)` (`le_unsatVal_amplify`), and its numbers of vertices
+`min (UNSAT(G) / 1452000) (1 / T ^ 2)` (`le_unsatVal_amplify`), and its numbers of vertices
 and edges are those of `G` times factors depending on `|α|`, `T` and `q` only
 (`card_vertices_amplify`, `card_edges_amplify`): the vertices of a preprocessed graph are the
 half-edges, so the result does not depend on the vertices of `G` at all.
@@ -149,13 +149,13 @@ theorem satisfiable_amplify_iff (hT : 1 ≤ T) (hq : 2 ≤ q) :
 /-- **The value of the amplification round** [Dinur, Theorem 4.1][Dinur2007]: for a killing rate
 `q ≥ 2` and walks truncated at `T = 4 |α| (q - 1)` steps, it is at least
 `(q - 1) / (476 (4 |α| ^ 2 + 16 |α| ^ 4 + 92928000 |α| ^ 5))` times
-`min (UNSAT(G) / (1452000 |α|)) (1 / T ^ 2)`. The factors `1452000 |α|` and `476` are lost by
+`min (UNSAT(G) / 1452000) (1 / T ^ 2)`. The factors `1452000` and `476` are lost by
 preprocessing and composition; the factor linear in `q` is gained by powering, on the expander that
 preprocessing provides. -/
 theorem le_unsatVal_amplify (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 1)) :
     ((q : ℝ) - 1) / (476 * (4 * Fintype.card α ^ 2 + 16 * Fintype.card α ^ 4 +
         92928000 * Fintype.card α ^ 5)) *
-      min (G.unsatVal / (1452000 * Fintype.card α)) (1 / T ^ 2) ≤ (G.amplify T q).unsatVal := by
+      min (G.unsatVal / 1452000) (1 / T ^ 2) ≤ (G.amplify T q).unsatVal := by
   have hpow := G.preprocess.le_unsatVal_power T q hq hT G.spectralExpansion_preprocess_le
     (by norm_num)
   set K : ℝ := (Fintype.card α : ℝ)
@@ -167,9 +167,9 @@ theorem le_unsatVal_amplify (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 
     have : (2 : ℝ) ≤ q := by exact_mod_cast hq
     exact div_nonneg (by linarith) (by positivity)
   calc ((q : ℝ) - 1) / (476 * (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5)) *
-        min (G.unsatVal / (1452000 * K)) (1 / T ^ 2)
+        min (G.unsatVal / 1452000) (1 / T ^ 2)
       = ((q - 1) / (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5) *
-          min (G.unsatVal / (1452000 * K)) (1 / T ^ 2)) / 476 := by
+          min (G.unsatVal / 1452000) (1 / T ^ 2)) / 476 := by
         rw [mul_comm 476, ← div_div]
         ring
     _ ≤ ((q - 1) / (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5) *
@@ -267,9 +267,9 @@ theorem card_alphabet : Fintype.card Alphabet = 2 ^ 18 :=
   card_alphabet_compose
 
 /-- The killing rate `q = 2 ^ 165 + 1` of the walks of Dinur's round: large enough for the factor
-`(q - 1) / (476 (4 K ^ 2 + 16 K ^ 4 + 92928000 K ^ 5))` gained by the round to be at least twice the
-factor `1452000 K` lost by preprocessing, where `K = 2 ^ 18` is the size of the alphabet; as
-`q - 1 = 2 ^ 57 K ^ 6`, it is. -/
+`(q - 1) / (476 (4 K ^ 2 + 16 K ^ 4 + 92928000 K ^ 5))` gained by the round, where `K = 2 ^ 18` is
+the size of the alphabet, to be at least twice the factor `1452000` lost by preprocessing, with a
+factor `K` to spare: as `q - 1 = 2 ^ 57 K ^ 6`, it is at least `2 · 1452000 K`. -/
 def killRate : ℕ :=
   2 ^ 165 + 1
 

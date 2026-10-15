@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
-import Mathlib.Combinatorics.Pigeonhole
 
 /-!
 # Degree reduction
@@ -31,15 +30,18 @@ There are `2 |E|` of them, whatever the degrees of `G`. Each half-edge has
 
 So `G.degreeReduce H` is `(1 + |D|)`-regular. A labelling satisfying `G` labels every half-edge by
 the label of its vertex and satisfies the new constraint graph (`satisfiable_degreeReduce`). In the
-other direction, from a labelling `A` of the half-edges, label every vertex `v` by a most popular
+other direction, from a labelling `A` of the half-edges, label every vertex `v` by a most frequent
 label `σ v` of its cloud. A half-edge disagreeing with the label of its vertex is charged to the
-cloud-links leaving the set of the disagreeing half-edges of its cloud: they all violate their
-equality constraints, and there are many of them when `H v` is an expander, since that set misses a
-proportion at least `1 / |α|` of the cloud. An edge violated by `σ` either has a disagreeing
-half-edge, or its edge-links are violated by `A`. Trading the two charges off shows that the
-proportion of darts violated by `A` is at least
-`min 1 ((1 - μ) |D| / |α|) / (2 (1 + |D|))` times the value of `G`, when the spectral expansion of
-every `H v` is at most `μ` (`le_unsatVal_degreeReduce`).
+cloud-links joining differently labelled half-edges of its cloud, which all violate their equality
+constraints. When `H v` is an expander there are many of them: at least `(1 - μ) |D|` per
+disagreeing half-edge, since the half-edges with any label `a` are at most as many as those with
+the label `σ v`, so that many edges leave them
+(`Cslib.RotationMap.mul_card_filter_ne_le_card_filter_ne_neighbor`). An edge violated by `σ`
+either has a disagreeing half-edge, or its edge-links are violated by `A`. Trading the two charges
+off shows that the proportion of darts violated by `A` is at least
+`min 1 ((1 - μ) |D|) / (2 (1 + |D|))` times the value of `G`, when the spectral expansion of every
+`H v` is at most `μ` (`le_unsatVal_degreeReduce`). The constant does not depend on the alphabet, as
+in Dinur's analysis.
 
 ## Main definitions
 
@@ -271,31 +273,36 @@ end Count
 
 section Soundness
 
-variable [Fintype E] [DecidableEq V] [Fintype D] [Fintype α] [Nonempty α]
+variable [Fintype E] [DecidableEq V] [Fintype D]
 
-/-- **Plurality**: some label is taken by a proportion at least `1 / |α|` of the half-edges of a
-cloud. -/
-theorem exists_card_cloud_le_card_mul_card_filter [DecidableEq α] (A : E × Bool → α) (v : V) :
-    ∃ a : α, (Fintype.card (G.Cloud v) : ℝ) ≤ Fintype.card α * #{x : G.Cloud v | A x.1 = a} := by
-  have hα : (0 : ℝ) < Fintype.card α := by exact_mod_cast Fintype.card_pos
-  obtain ⟨a, ha⟩ := Fintype.exists_le_card_fiber_of_nsmul_le_card (M := ℝ)
-    (fun x : G.Cloud v ↦ A x.1) (b := Fintype.card (G.Cloud v) / Fintype.card α)
-    (by rw [nsmul_eq_mul, mul_div_cancel₀ _ hα.ne'])
-  exact ⟨a, by rwa [div_le_iff₀' hα] at ha⟩
+/-- **Plurality**: some label is taken by at least as many half-edges of a cloud as any other. -/
+theorem exists_forall_card_filter_le_card_filter [Nonempty α] [DecidableEq α] (A : E × Bool → α)
+    (v : V) :
+    ∃ a : α, ∀ b, #{x : G.Cloud v | A x.1 = b} ≤ #{x : G.Cloud v | A x.1 = a} := by
+  rcases isEmpty_or_nonempty (G.Cloud v) with h | ⟨⟨x₀⟩⟩
+  · exact ⟨Classical.arbitrary α, fun b ↦ by simp [univ_eq_empty]⟩
+  obtain ⟨x, -, hx⟩ := univ.exists_max_image
+    (fun x : G.Cloud v ↦ #{y : G.Cloud v | A y.1 = A x.1}) ⟨x₀, mem_univ _⟩
+  refine ⟨A x.1, fun b ↦ ?_⟩
+  by_cases hb : ∃ y : G.Cloud v, A y.1 = b
+  · obtain ⟨y, rfl⟩ := hb
+    exact hx y (mem_univ _)
+  · simp only [not_exists] at hb
+    rw [filter_false_of_mem fun y _ ↦ hb y, card_empty]
+    exact Nat.zero_le _
 
 variable {μ : ℝ}
 
 /-- **The cloud charge**: if the multigraphs on the clouds have spectral expansion at most `μ` and
-`σ v` is a label taken by a proportion at least `1 / |α|` of the cloud of every vertex `v`, then
-the cloud-links violated by `A` number at least `(1 - μ) |D| / |α|` times the half-edges whose label
-differs from that of their vertex. -/
+`σ v` is a most frequent label of the cloud of every vertex `v`, then the cloud-links violated by
+`A` number at least `(1 - μ) |D|` times the half-edges whose label differs from that of their
+vertex. -/
 theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
     (hH : ∀ v, (H v).spectralExpansion ≤ μ) (A : E × Bool → α) (σ : V → α)
-    (hσ : ∀ v, (Fintype.card (G.Cloud v) : ℝ) ≤ Fintype.card α * #{x : G.Cloud v | A x.1 = σ v}) :
-    (1 - μ) * Fintype.card D / Fintype.card α * #{p | A p ≠ σ (G.endpoint p)} ≤
+    (hσ : ∀ v b, #{x : G.Cloud v | A x.1 = b} ≤ #{x : G.Cloud v | A x.1 = σ v}) :
+    (1 - μ) * Fintype.card D * #{p | A p ≠ σ (G.endpoint p)} ≤
       #{q ∈ (G.degreeReduce H).toConstraintGraph.unsatEdges A | q.2.isRight} := by
   classical
-  have hα : (0 : ℝ) < Fintype.card α := by exact_mod_cast Fintype.card_pos
   set T : Finset V := univ.image G.endpoint
   /- The darts of the multigraph on the cloud of `v` joining differently labelled half-edges, and
   their embedding into the cloud-links. -/
@@ -305,28 +312,10 @@ theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
     simp only [f, Prod.mk.injEq, Sum.inr.injEq] at h
     exact Prod.ext (Subtype.ext h.1) h.2
   /- In each cloud, the disagreeing darts are many. -/
-  have hcloud (v : V) : (1 - μ) * Fintype.card D / Fintype.card α *
-      #{x : G.Cloud v | A x.1 ≠ σ v} ≤ #(Dis v) := by
-    refine le_trans ?_ ((H v).le_card_filter_ne_neighbor (fun x ↦ A x.1) (σ v))
-    have hlam := (H v).spectralExpansion_le_one
-    have hk : (#{x : G.Cloud v | A x.1 ≠ σ v} : ℝ) ≤ Fintype.card (G.Cloud v) := by
-      exact_mod_cast card_le_univ _
-    rcases (Fintype.card (G.Cloud v)).eq_zero_or_pos with hn | hn
-    · rw [hn, Nat.cast_zero] at hk
-      rw [le_antisymm hk (Nat.cast_nonneg _), hn, Nat.cast_zero, div_zero, mul_zero]
-    have hn' : (0 : ℝ) < Fintype.card (G.Cloud v) := by exact_mod_cast hn
-    have h₀ : 0 ≤ (1 - (H v).spectralExpansion) * Fintype.card D *
-        #{x : G.Cloud v | A x.1 ≠ σ v} := by
-      have : 0 ≤ 1 - (H v).spectralExpansion := by linarith
-      positivity
-    calc (1 - μ) * Fintype.card D / Fintype.card α * #{x : G.Cloud v | A x.1 ≠ σ v}
-        ≤ (1 - (H v).spectralExpansion) * Fintype.card D / Fintype.card α *
-            #{x : G.Cloud v | A x.1 ≠ σ v} := by
-          gcongr
-          linarith [hH v]
-      _ ≤ _ := by
-          rw [div_mul_eq_mul_div, div_le_div_iff₀ hα hn']
-          nlinarith [mul_le_mul_of_nonneg_left (hσ v) h₀]
+  have hcloud (v : V) : (1 - μ) * Fintype.card D * #{x : G.Cloud v | A x.1 ≠ σ v} ≤ #(Dis v) := by
+    refine le_trans ?_ ((H v).mul_card_filter_ne_le_card_filter_ne_neighbor (fun x ↦ A x.1) (hσ v))
+    gcongr
+    linarith [hH v]
   /- The disagreeing half-edges are counted cloud by cloud. -/
   have hdev : (#{p | A p ≠ σ (G.endpoint p)} : ℝ) =
       ∑ v ∈ T, (#{x : G.Cloud v | A x.1 ≠ σ v} : ℝ) := by
@@ -356,9 +345,8 @@ theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
     obtain ⟨v, -, r, hr, rfl⟩ := hq
     rw [mem_filter, mem_unsatEdges, satisfies_degreeReduce_inr, neighbor_cloudGraph H r.1]
     exact ⟨by simpa [Dis] using hr, rfl⟩
-  calc (1 - μ) * Fintype.card D / Fintype.card α * #{p | A p ≠ σ (G.endpoint p)}
-      = ∑ v ∈ T, (1 - μ) * Fintype.card D / Fintype.card α *
-          #{x : G.Cloud v | A x.1 ≠ σ v} := by
+  calc (1 - μ) * Fintype.card D * #{p | A p ≠ σ (G.endpoint p)}
+      = ∑ v ∈ T, (1 - μ) * Fintype.card D * #{x : G.Cloud v | A x.1 ≠ σ v} := by
         rw [hdev, mul_sum]
     _ ≤ ∑ v ∈ T, (#((Dis v).image (f v)) : ℝ) := by
         refine sum_le_sum fun v _ ↦ ?_
@@ -372,13 +360,15 @@ theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
 
 /-- **Soundness of degree reduction** [Dinur, Section 3.1][Dinur2007]: if the multigraphs on the
 clouds have spectral expansion at most `μ`, every labelling of the half-edges violates a proportion
-of the darts at least `min 1 ((1 - μ) |D| / |α|) / (2 (1 + |D|))` times the value of `G`. -/
-theorem le_unsatFrac_degreeReduce (hH : ∀ v, (H v).spectralExpansion ≤ μ) (A : E × Bool → α) :
-    min 1 ((1 - μ) * Fintype.card D / Fintype.card α) / (2 * (1 + Fintype.card D)) * G.unsatVal ≤
+of the darts at least `min 1 ((1 - μ) |D|) / (2 (1 + |D|))` times the value of `G`, whatever the
+alphabet. -/
+theorem le_unsatFrac_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpansion ≤ μ)
+    (A : E × Bool → α) :
+    min 1 ((1 - μ) * Fintype.card D) / (2 * (1 + Fintype.card D)) * G.unsatVal ≤
       (G.degreeReduce H).toConstraintGraph.unsatFrac A := by
   classical
-  choose σ hσ using exists_card_cloud_le_card_mul_card_filter (G := G) A
-  set c := (1 - μ) * Fintype.card D / Fintype.card α
+  choose σ hσ using exists_forall_card_filter_le_card_filter (G := G) A
+  set c := (1 - μ) * Fintype.card D
   set U := (G.degreeReduce H).toConstraintGraph.unsatEdges A
   have hcloud := mul_card_filter_ne_le_card_filter_isRight H hH A σ hσ
   have hedge := card_unsatEdges_le_card_filter_isLeft_add H A σ
@@ -410,14 +400,10 @@ theorem le_unsatFrac_degreeReduce (hH : ∀ v, (H v).spectralExpansion ≤ μ) (
   have hA := (G.degreeReduce H).card_mul_card_mul_unsatFrac A
   rw [Fintype.card_prod, Fintype.card_bool, Fintype.card_sum, Fintype.card_unit] at hA
   push_cast at hA
-  rcases (Fintype.card E).eq_zero_or_pos with hE | hE
-  · have : IsEmpty E := Fintype.card_eq_zero_iff.1 hE
-    have hG : G.unsatVal = 0 := by
-      refine le_antisymm ((G.unsatVal_le σ).trans_eq ?_) G.unsatVal_nonneg
-      simp [unsatFrac]
-    rw [hG, mul_zero]
+  rcases isEmpty_or_nonempty E with hE | hE
+  · rw [G.unsatVal_of_isEmpty, mul_zero]
     exact unsatFrac_nonneg _ _
-  have hE' : (0 : ℝ) < Fintype.card E := by exact_mod_cast hE
+  have hE' : (0 : ℝ) < Fintype.card E := Nat.cast_pos.2 Fintype.card_pos
   rw [div_mul_eq_mul_div, div_le_iff₀ (by positivity)]
   rcases le_total (min 1 c) 0 with hm | hm
   · have := mul_nonpos_of_nonpos_of_nonneg hm (G.unsatVal_nonneg)
@@ -426,9 +412,9 @@ theorem le_unsatFrac_degreeReduce (hH : ∀ v, (H v).spectralExpansion ≤ μ) (
 
 /-- **Soundness of degree reduction** [Dinur, Section 3.1][Dinur2007]: if the multigraphs on the
 clouds have spectral expansion at most `μ`, degree reduction divides the value by at most
-`2 (1 + |D|) / min 1 ((1 - μ) |D| / |α|)`. -/
-theorem le_unsatVal_degreeReduce (hH : ∀ v, (H v).spectralExpansion ≤ μ) :
-    min 1 ((1 - μ) * Fintype.card D / Fintype.card α) / (2 * (1 + Fintype.card D)) * G.unsatVal ≤
+`2 (1 + |D|) / min 1 ((1 - μ) |D|)`, whatever the alphabet. -/
+theorem le_unsatVal_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpansion ≤ μ) :
+    min 1 ((1 - μ) * Fintype.card D) / (2 * (1 + Fintype.card D)) * G.unsatVal ≤
       (G.degreeReduce H).toConstraintGraph.unsatVal :=
   (le_unsatVal_iff _).2 (le_unsatFrac_degreeReduce H hH)
 
@@ -437,15 +423,12 @@ end Soundness
 /-- **Degree reduction preserves satisfiability** when the multigraphs on the clouds are expanders:
 their degree is positive and their spectral expansions are at most some `μ < 1`. -/
 theorem satisfiable_degreeReduce_iff [Fintype E] [DecidableEq V] [Fintype D] [Nonempty D]
-    [Finite α] [Nonempty α] {μ : ℝ} (hμ : μ < 1) (hH : ∀ v, (H v).spectralExpansion ≤ μ) :
+    [Nonempty α] {μ : ℝ} (hμ : μ < 1) (hH : ∀ v, (H v).spectralExpansion ≤ μ) :
     (G.degreeReduce H).toConstraintGraph.Satisfiable ↔ G.Satisfiable := by
-  have := Fintype.ofFinite α
   refine ⟨fun h ↦ ?_, satisfiable_degreeReduce H⟩
   rw [← unsatVal_eq_zero_iff] at h ⊢
-  have hc : 0 < min 1 ((1 - μ) * Fintype.card D / Fintype.card α) /
-      (2 * (1 + Fintype.card D)) := by
+  have hc : 0 < min 1 ((1 - μ) * Fintype.card D) / (2 * (1 + Fintype.card D)) := by
     have : (0 : ℝ) < Fintype.card D := by exact_mod_cast Fintype.card_pos
-    have : (0 : ℝ) < Fintype.card α := by exact_mod_cast Fintype.card_pos
     have : 0 < 1 - μ := by linarith
     exact div_pos (lt_min one_pos (by positivity)) (by positivity)
   have := le_unsatVal_degreeReduce H hH

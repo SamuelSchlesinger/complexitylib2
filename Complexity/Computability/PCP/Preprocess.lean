@@ -29,7 +29,7 @@ from an arbitrary constraint graph `G`, over the same alphabet, in three steps:
 The result `G.preprocess` is `242`-regular on `2 |E|` vertices, so its size is linear in the number
 of edges of `G`; its spectral expansion is at most `1 - 1 / 726000`
 (`spectralExpansion_preprocess_le`); it is satisfiable exactly when `G` is
-(`satisfiable_preprocess_iff`); and its value is between `UNSAT(G) / (1452000 |α|)` and
+(`satisfiable_preprocess_iff`); and its value is between `UNSAT(G) / 1452000` and
 `UNSAT(G)` (`le_unsatVal_preprocess`, `unsatVal_preprocess_le`). The constants come from the
 non-explicit expander family `RotationMap.expander`; any family of constant degree and spectral
 expansion bounded away from `1` would do, with other constants.
@@ -131,7 +131,7 @@ section Value
 variable [Nonempty α]
 
 /-- **Preprocessing preserves satisfiability.** -/
-theorem satisfiable_preprocess_iff [Finite α] :
+theorem satisfiable_preprocess_iff :
     G.preprocess.toConstraintGraph.Satisfiable ↔ G.Satisfiable := by
   rw [preprocess_eq, RegularConstraintGraph.satisfiable_addLoops_iff,
     RegularConstraintGraph.satisfiable_addTrivial_iff]
@@ -139,22 +139,16 @@ theorem satisfiable_preprocess_iff [Finite α] :
     fun v ↦ spectralExpansion_expander_le _
 
 /-- **Soundness of preprocessing** [Dinur, Section 3.1][Dinur2007]: preprocessing divides the value
-by at most `1452000 |α|`. -/
-theorem le_unsatVal_preprocess [Fintype α] :
-    G.unsatVal / (1452000 * Fintype.card α) ≤ G.preprocess.toConstraintGraph.unsatVal := by
+by at most `1452000`, whatever the alphabet. -/
+theorem le_unsatVal_preprocess :
+    G.unsatVal / 1452000 ≤ G.preprocess.toConstraintGraph.unsatVal := by
   have h := le_unsatVal_degreeReduce (G := G) _ (μ := 1 - 1 / 360000)
     fun v ↦ spectralExpansion_expander_le _
-  have hα : (1 : ℝ) ≤ Fintype.card α := by exact_mod_cast Fintype.card_pos
-  rw [Fintype.card_fin, min_eq_right (by
-    rw [div_le_one (by positivity)]
-    norm_num
-    linarith)] at h
+  rw [Fintype.card_fin, min_eq_right (by norm_num)] at h
   rw [unsatVal_preprocess]
-  have hG := G.unsatVal_nonneg
-  calc G.unsatVal / (1452000 * Fintype.card α)
-      = (1 - (1 - 1 / 360000)) * (120 : ℕ) / Fintype.card α / (2 * (1 + (120 : ℕ))) *
-          G.unsatVal / 2 := by
-        field_simp
+  calc G.unsatVal / 1452000
+      = (1 - (1 - 1 / 360000)) * (120 : ℕ) / (2 * (1 + (120 : ℕ))) * G.unsatVal / 2 := by
+        push_cast
         ring
     _ ≤ _ := by gcongr
 

@@ -55,8 +55,9 @@ says that spectral expanders are edge expanders [Arora and Barak, Section 21.2][
   `Cslib.RotationMap.le_card_interedges_compl`: edge expansion from a spectral bound.
 * `Cslib.RotationMap.le_card_interedges_compl_of_two_mul_card_le`: a set of at most half of the
   vertices has at least `(1 - λ(G)) d |S| / 2` edges leaving it.
-* `Cslib.RotationMap.le_card_filter_ne_neighbor`: an expander has many edges between differently
-  labelled vertices.
+* `Cslib.RotationMap.le_card_filter_ne_neighbor`,
+  `Cslib.RotationMap.mul_card_filter_ne_le_card_filter_ne_neighbor`: an expander has many edges
+  between differently labelled vertices.
 
 ## References
 
@@ -309,5 +310,65 @@ theorem le_card_filter_ne_neighbor {α : Type*} [DecidableEq α] (f : V → α) 
   simp only [mem_interedges, mem_filter, mem_univ, true_and] at hp ⊢
   rw [hp.2]
   exact hp.1
+
+/-- **Disagreement across an expander, for a most frequent label**: if no label is taken by more
+vertices than `c`, at least `(1 - λ(G)) d |{f ≠ c}|` darts join two differently labelled vertices,
+whatever the number of labels. The darts leaving the set of the vertices labelled `a` number at
+least `(1 - λ(G)) d |{f = a}| |{f ≠ a}| / n`, and `|{f ≠ a}| ≥ |{f ≠ c}|` for every label `a`. -/
+theorem mul_card_filter_ne_le_card_filter_ne_neighbor {α : Type*} [DecidableEq α] (f : V → α)
+    {c : α} (hc : ∀ a, #{v | f v = a} ≤ #{v | f v = c}) :
+    (1 - G.spectralExpansion) * Fintype.card D * #{v | f v ≠ c} ≤
+      #{p : V × D | f p.1 ≠ f (G.neighbor p.1 p.2)} := by
+  classical
+  rcases (Fintype.card V).eq_zero_or_pos with hV | hV
+  · have : IsEmpty V := Fintype.card_eq_zero_iff.1 hV
+    simp
+  have hn : (0 : ℝ) < Fintype.card V := Nat.cast_pos.2 hV
+  have hlam : 0 ≤ (1 - G.spectralExpansion) * Fintype.card D :=
+    mul_nonneg (sub_nonneg.2 G.spectralExpansion_le_one) (Nat.cast_nonneg _)
+  set T := univ.image f
+  set s : α → ℝ := fun a ↦ #{v | f v = a}
+  -- the vertices, sorted by their labels
+  have hs : ∑ a ∈ T, s a = Fintype.card V := by
+    simp only [s]
+    rw [← Nat.cast_sum, ← card_eq_sum_card_fiberwise fun v _ ↦ mem_image_of_mem f (mem_univ v),
+      card_univ]
+  have hne : (#{v | f v ≠ c} : ℝ) = Fintype.card V - s c := by
+    rw [← card_compl_eq]
+    congr 2
+    ext v
+    simp
+  -- the darts across, sorted by the label of their first end
+  have hsplit : (#{p : V × D | f p.1 ≠ f (G.neighbor p.1 p.2)} : ℝ) =
+      ∑ a ∈ T, (#(G.interedges {v | f v = a} ({v | f v = a} : Finset V)ᶜ) : ℝ) := by
+    rw [card_eq_sum_card_fiberwise (f := fun p : V × D ↦ f p.1) (t := T)
+      fun p _ ↦ mem_image_of_mem f (mem_univ _)]
+    push_cast
+    refine sum_congr rfl fun a _ ↦ ?_
+    congr 2
+    ext p
+    simp only [mem_filter, mem_univ, true_and, mem_interedges, mem_compl]
+    constructor
+    · rintro ⟨h, rfl⟩
+      exact ⟨rfl, fun h' ↦ h h'.symm⟩
+    · rintro ⟨rfl, h⟩
+      exact ⟨fun h' ↦ h h'.symm, rfl⟩
+  have hterm (a : α) : (1 - G.spectralExpansion) * Fintype.card D * s a *
+      (Fintype.card V - s a) / Fintype.card V ≤
+        #(G.interedges {v | f v = a} ({v | f v = a} : Finset V)ᶜ) := by
+    have h := G.le_card_interedges_compl {v | f v = a}
+    rwa [card_compl_eq] at h
+  have hsc (a : α) : s a ≤ s c := by simp only [s]; exact_mod_cast hc a
+  rw [hne, hsplit]
+  calc (1 - G.spectralExpansion) * Fintype.card D * (Fintype.card V - s c)
+      = ∑ a ∈ T, (1 - G.spectralExpansion) * Fintype.card D * s a * (Fintype.card V - s c) /
+          Fintype.card V := by
+        rw [← sum_div, ← sum_mul, ← mul_sum, hs]
+        field_simp
+    _ ≤ ∑ a ∈ T, (1 - G.spectralExpansion) * Fintype.card D * s a * (Fintype.card V - s a) /
+          Fintype.card V := by
+        gcongr with a
+        exact hsc a
+    _ ≤ _ := sum_le_sum fun a _ ↦ hterm a
 
 end Cslib.RotationMap
