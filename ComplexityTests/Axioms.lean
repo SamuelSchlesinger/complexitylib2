@@ -1200,4 +1200,30 @@ info: 'Cslib.Crypto.PRG.NisanWigderson.card_polynomialBlock_inter_le' depends on
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.PRG.NisanWigderson.card_polynomialBlock_inter_le
 
+/--
+info: 'Cslib.Probability.ApproximateCounting.le_nthRoot_and_mul_nthRoot_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.ApproximateCounting.le_nthRoot_and_mul_nthRoot_le
+
+/--
+info: 'Cslib.Probability.ApproximateCounting.dens_filter_not_relativeHashEstimate_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.ApproximateCounting.dens_filter_not_relativeHashEstimate_le
+
+/--
+info: 'Cslib.Probability.ApproximateCounting.one_sub_inv_two_pow_le_dens_filter_relativeHashEstimate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+open Cslib.Probability.ApproximateCounting in
+#print axioms one_sub_inv_two_pow_le_dens_filter_relativeHashEstimate
+
+/--
+info: 'Cslib.Probability.ApproximateCounting.one_sub_inv_two_pow_le_dens_filter_affineRelativeHashEstimate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+open Cslib.Probability.ApproximateCounting in
+#print axioms one_sub_inv_two_pow_le_dens_filter_affineRelativeHashEstimate
+
 end ComplexityTests.Axioms

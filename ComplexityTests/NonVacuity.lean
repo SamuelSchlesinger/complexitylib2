@@ -15,6 +15,7 @@ import Complexity.Computability.Circuit.Boolean.TopDown
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Foundations.BooleanAnalysis.HadamardTester
+import Complexity.Probability.ApproximateCounting.Relative
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -172,5 +173,13 @@ example : Cslib.Crypto.PRG.NisanWigderson.Design 2 1 0 2 where
 blocks. -/
 example : Nonempty (Cslib.Crypto.PRG.NisanWigderson.Design 36 3 1 16) :=
   Cslib.Crypto.PRG.NisanWigderson.Design.nonempty_four_mul_sq 3 2
+
+/-- The root recovery of relative-error counting applies: `e = 100 · 3 ^ 7` lies between `3 ^ 7`
+and `128 · 3 ^ 7`, and `128 · 1 ^ 7 ≤ 2 ^ 7`, so the integer seventh root of `e` lies between `3`
+and `2 · 3`. -/
+example : 3 ≤ Nat.nthRoot 7 (100 * 3 ^ 7) ∧ 1 * Nat.nthRoot 7 (100 * 3 ^ 7) ≤ (1 + 1) * 3 :=
+  Cslib.Probability.ApproximateCounting.le_nthRoot_and_mul_nthRoot_le (c := 128) (by norm_num)
+    (by norm_num) (by norm_num)
+    (Cslib.Probability.ApproximateCounting.two_pow_mul_pow_le_add_one_pow 7 one_ne_zero)
 
 end ComplexityTests.NonVacuity

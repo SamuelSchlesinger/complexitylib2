@@ -339,7 +339,7 @@ convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `AC‚Å
 | Yao's hybrid argument (distinguisher to next-bit predictor) | `Metacomplexity/StatisticalTest/Hybrid*` | done (`Crypto/Primitives/PRG/NextBit.lean`, over cslib's PRG game) |
 | Lautemann's covering lemma | `Classes/PH/SipserLautemann/Covering` | done (`Foundations/Combinatorics/Lautemann.lean`) |
 | Expander mixing lemma, edge expansion | `Classes/PCP/Internal/{RegularGraph,Mixing,EdgeExpansion}` | done (`Foundations/Combinatorics/Expander/`) |
-| Pairwise-independent hashing, approximate counting | `Classes/Randomized/Hashing*`, `ApproximateCounting/**` | done (`Probability/`), relative-error counting open |
+| Pairwise-independent hashing, approximate counting | `Classes/Randomized/Hashing*`, `ApproximateCounting/**` | done (`Probability/`, relative error in `ApproximateCounting/Relative`) |
 | Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | done (`BooleanAnalysis/PolynomialCorrelation`) |
 | Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | done (`Circuit/Boolean/{Correction,SparseSynthesis}`) |
 | Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`BooleanAnalysis/{Hadamard,HadamardTester}`) |
