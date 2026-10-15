@@ -17,7 +17,10 @@ import Mathlib.Tactic.NormNum
 
 A Boolean function on the cube is *linear* when it turns sums into sums,
 `f (x + y) = f x + f y`, where bits add modulo two (`^^`) and bit strings add coordinatewise. The
-linear functions are exactly the parities (`BitString.exists_eq_parityOn_iff`).
+linear functions are exactly the parities (`BitString.exists_eq_parityOn_iff`, with
+`parityOn_xor`). Distinct parities differ on half of the inputs
+(`BitString.two_mul_hammingDist_parityOn`), and a linear function that is not constantly `false`
+takes the value `true` on half of the inputs (`BitString.expect_boole_eq_one_div_two_of_xor`).
 
 The *Blum–Luby–Rubinfeld test* queries `f` at independent uniformly random `x` and `y` and at
 `x + y`, and accepts when `f x + f y = f (x + y)`; `BitString.blrAcceptance f` is the probability
@@ -38,9 +41,10 @@ Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`
 ## Main results
 
 * `Cslib.BitString.exists_eq_parityOn_iff`: the linear Boolean functions are the parities.
-* `Cslib.BitString.parityOn_xor`: parities are linear.
 * `Cslib.BitString.expect_signVal_mul_signVal`, `Cslib.BitString.fourierCoeff_signVal`: the
   correlation of two Boolean functions is one minus twice their relative Hamming distance.
+* `Cslib.BitString.two_mul_hammingDist_parityOn`: distinct parities differ on half the inputs.
+* `Cslib.BitString.expect_boole_eq_one_div_two_of_xor`: nonzero linear functions are balanced.
 * `Cslib.BitString.blrAcceptance_eq_sum_fourierCoeff_pow_three`: the acceptance probability in
   terms of the Fourier coefficients.
 * `Cslib.BitString.blrAcceptance_parityOn`: completeness of the test.
@@ -63,16 +67,6 @@ open scoped BigOperators
 variable {n : ℕ}
 
 /-! ### Linear functions -/
-
-/-- **Parities are linear**: the parity of a sum of bit strings is the exclusive or of the
-parities. -/
-theorem parityOn_xor (S : Finset (Fin n)) (x y : BitString n) :
-    parityOn S (fun i => x i ^^ y i) = (parityOn S x ^^ parityOn S y) := by
-  induction S using Finset.induction_on with
-  | empty => simp
-  | insert i S hi ih =>
-    rw [parityOn_insert hi, parityOn_insert hi, parityOn_insert hi, ih]
-    simp only [Bool.xor_assoc, Bool.xor_left_comm (y i)]
 
 /-- **The linear Boolean functions are the parities**: a Boolean function turns the exclusive or
 of bit strings into the exclusive or of its values exactly when it is the parity of some set of
@@ -123,6 +117,35 @@ theorem fourierCoeff_signVal (f : BooleanFunction n) (S : Finset (Fin n)) :
     fourierCoeff (fun x => signVal (f x)) S = 1 - 2 * hammingDist f (parityOn S) / 2 ^ n := by
   simp only [fourierCoeff, chi_eq_signVal_parityOn]
   exact expect_signVal_mul_signVal f (parityOn S)
+
+/-! ### Distance between parities -/
+
+/-- **Distinct parities differ on half of the inputs.** -/
+theorem two_mul_hammingDist_parityOn {S T : Finset (Fin n)} (h : S ≠ T) :
+    2 * hammingDist (parityOn S) (parityOn T) = 2 ^ n := by
+  have hcorr := expect_signVal_mul_signVal (parityOn S) (parityOn T)
+  simp only [← chi_eq_signVal_parityOn, expect_chi_mul_chi, h, ite_false] at hcorr
+  have : (2 * hammingDist (parityOn S) (parityOn T) : ℝ) = 2 ^ n := by
+    rw [mul_div_assoc] at hcorr
+    field_simp at hcorr
+    linarith
+  exact_mod_cast this
+
+/-- **Nonzero linear functions are balanced**: a Boolean function that turns the exclusive or of
+bit strings into the exclusive or of its values, and is not constantly `false`, takes the value
+`true` with probability one half at a uniformly random input. -/
+theorem expect_boole_eq_one_div_two_of_xor {f : BooleanFunction n}
+    (hf : ∀ x y, f (fun i => x i ^^ y i) = (f x ^^ f y)) (h : ∃ x, f x = true) :
+    𝔼 x, (if f x = true then (1 : ℝ) else 0) = 1 / 2 := by
+  obtain ⟨S, rfl⟩ := exists_eq_parityOn_iff.2 hf
+  have hS : S ≠ ∅ := by
+    rintro rfl
+    simp at h
+  have hb (b : Bool) : (if b = true then (1 : ℝ) else 0) = 1 / 2 - 1 / 2 * signVal b := by
+    cases b <;> norm_num
+  simp only [hb, ← chi_eq_signVal_parityOn, expect_sub_distrib, ← mul_expect, expect_chi, hS,
+    ite_false, Fintype.expect_const]
+  norm_num
 
 /-! ### The Blum–Luby–Rubinfeld test -/
 

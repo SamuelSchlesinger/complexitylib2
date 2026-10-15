@@ -159,6 +159,22 @@ theorem one_sub_mem_lowDegree {a : ℕ} {f : BitString n → R} (hf : f ∈ lowD
     1 - f ∈ lowDegree R n a :=
   Submodule.sub_mem _ (one_mem_lowDegree a) hf
 
+/-- Negating all the bits of the input preserves the degree. -/
+theorem comp_not_mem_lowDegree {D : ℕ} {f : BitString n → R} (hf : f ∈ lowDegree R n D) :
+    (fun x => f fun i => !x i) ∈ lowDegree R n D := by
+  suffices h : lowDegree R n D ≤
+      (lowDegree R n D).comap (LinearMap.funLeft R R fun (x : BitString n) i => !x i) from h hf
+  refine Submodule.span_le.2 ?_
+  rintro _ ⟨S, hS, rfl⟩
+  have h : (fun x : BitString n => monomial R S fun i => !x i) =
+      ∏ i ∈ S, (1 - fun x : BitString n => bitVal R (x i)) := by
+    funext x
+    simp [monomial, Finset.prod_apply, bitVal_not]
+  change (fun x : BitString n => monomial R S fun i => !x i) ∈ lowDegree R n D
+  rw [h]
+  exact lowDegree_mono (by simpa using hS)
+    (prod_mem_lowDegree S fun i _ => one_sub_mem_lowDegree (bitVal_mem_lowDegree i))
+
 /-- **Every function on the cube has degree at most `n`**: it is the sum, over the points `a`, of
 its value at `a` times the indicator of `a`, a product of `n` functions of degree one. -/
 theorem mem_lowDegree_self (f : BitString n → R) : f ∈ lowDegree R n n := by

@@ -90,22 +90,6 @@ section Interpolation
 
 variable {R : Type*} [CommRing R] {n : ℕ}
 
-/-- Negating all the bits of the input preserves the degree. -/
-theorem comp_not_mem_lowDegree {D : ℕ} {f : BitString n → R} (hf : f ∈ lowDegree R n D) :
-    (fun x => f fun i => !x i) ∈ lowDegree R n D := by
-  suffices h : lowDegree R n D ≤
-      (lowDegree R n D).comap (LinearMap.funLeft R R fun (x : BitString n) i => !x i) from h hf
-  refine Submodule.span_le.2 ?_
-  rintro _ ⟨S, hS, rfl⟩
-  have h : (fun x : BitString n => monomial R S fun i => !x i) =
-      ∏ i ∈ S, (1 - fun x : BitString n => bitVal R (x i)) := by
-    funext x
-    simp [monomial, Finset.prod_apply, bitVal_not]
-  change (fun x : BitString n => monomial R S fun i => !x i) ∈ lowDegree R n D
-  rw [h]
-  exact lowDegree_mono (by simpa using hS)
-    (prod_mem_lowDegree S fun i _ => one_sub_mem_lowDegree (bitVal_mem_lowDegree i))
-
 /-- **Interpolation on a Hamming ball**: every function agrees on the strings of weight at most `D`
 with a function of degree at most `D`. -/
 theorem exists_mem_lowDegree_forall_weight_le_eq (D : ℕ) (f : BitString n → R) :

@@ -123,6 +123,23 @@ theorem chi_xor (S : Finset (Fin n)) (x y : BitString n) :
     chi S (fun i => x i ^^ y i) = chi S x * chi S y := by
   simp only [chi, signVal_xor, prod_mul_distrib]
 
+section Update
+
+variable {i : Fin n} {S : Finset (Fin n)}
+
+/-- Changing a bit outside `S` leaves the character of `S` unchanged. -/
+theorem chi_update_of_notMem (hi : i ∉ S) (x : BitString n) (b : Bool) :
+    chi S (Function.update x i b) = chi S x :=
+  prod_congr rfl fun _ hj => by rw [Function.update_of_ne (ne_of_mem_of_not_mem hj hi)]
+
+/-- Setting a bit in `S` to `b` splits off the sign of `b` from the character of `S`. -/
+theorem chi_update_of_mem (hi : i ∈ S) (x : BitString n) (b : Bool) :
+    chi S (Function.update x i b) = signVal b * chi (S.erase i) x := by
+  rw [chi, ← mul_prod_erase S _ hi, Function.update_self, ← chi,
+    chi_update_of_notMem (notMem_erase i S)]
+
+end Update
+
 /-- The characters of nonempty sets sum to zero. -/
 theorem sum_chi (S : Finset (Fin n)) :
     ∑ x, chi S x = if S = ∅ then 2 ^ n else 0 := by

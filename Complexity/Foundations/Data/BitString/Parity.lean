@@ -32,6 +32,7 @@ the parity of a nonempty set of bits is not constant and depends on each of them
 ## Main results
 
 * `Cslib.parityOn_union`, `Cslib.parityOn_biUnion`: the parity of a disjoint union.
+* `Cslib.parityOn_xor`: parities are linear.
 * `Cslib.parity_update_not`: flipping any bit flips the parity.
 * `Cslib.card_filter_parity_eq_true`: parity of `n ≥ 1` bits is true on `2 ^ (n - 1)` inputs.
 -/
@@ -105,6 +106,16 @@ theorem parityOn_biUnion {m : ℕ} {S : Finset (Fin m)} {B : Fin m → Finset (F
       hB (mem_insert_self j S) (mem_insert_of_mem hj') fun h => hj (h ▸ hj')
     rw [biUnion_insert, parityOn_union hdisj, parityOn_insert hj,
       ih (hB.subset (by simp [Set.subset_insert]))]
+
+/-- **Parities are linear**: the parity of a sum of bit strings is the exclusive or of the
+parities. -/
+theorem parityOn_xor (S : Finset (Fin n)) (x y : BitString n) :
+    parityOn S (fun i => x i ^^ y i) = (parityOn S x ^^ parityOn S y) := by
+  induction S using Finset.induction_on with
+  | empty => simp
+  | insert i S hi ih =>
+    rw [parityOn_insert hi, parityOn_insert hi, parityOn_insert hi, ih]
+    simp only [Bool.xor_assoc, Bool.xor_left_comm (y i)]
 
 /-- Flipping one of the bits negates the parity. -/
 theorem parityOn_update_not (hi : i ∈ s) (x : BitString n) :

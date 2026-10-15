@@ -76,23 +76,6 @@ open scoped BigOperators
 
 variable {n : ℕ}
 
-section Chi
-
-variable {i : Fin n} {S : Finset (Fin n)}
-
-/-- Changing a bit outside `S` leaves the character of `S` unchanged. -/
-theorem chi_update_of_notMem (hi : i ∉ S) (x : BitString n) (b : Bool) :
-    chi S (update x i b) = chi S x :=
-  prod_congr rfl fun _ hj => by rw [update_of_ne (ne_of_mem_of_not_mem hj hi)]
-
-/-- Setting a bit in `S` to `b` splits off the sign of `b` from the character of `S`. -/
-theorem chi_update_of_mem (hi : i ∈ S) (x : BitString n) (b : Bool) :
-    chi S (update x i b) = signVal b * chi (S.erase i) x := by
-  rw [chi, ← mul_prod_erase S _ hi, update_self, ← chi,
-    chi_update_of_notMem (notMem_erase i S)]
-
-end Chi
-
 /-- Sets containing `i` correspond to sets avoiding `i`, by inserting `i`. -/
 private theorem sum_filter_mem_eq_sum_filter_notMem {M : Type*} [AddCommMonoid M] (i : Fin n)
     (g : Finset (Fin n) → M) :
