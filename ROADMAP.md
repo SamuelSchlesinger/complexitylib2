@@ -334,18 +334,18 @@ convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `AC�
 
 | Target | v1 source | State |
 |---|---|---|
-| Monotone Karchmer–Wigderson | `Circuits/KarchmerWigderson*`, `Circuits/Monotone*` | in progress |
-| Barrington: NC¹ = width-5 permutation programs | `Circuits/Barrington{Typed,Family,Converse}`, `CircuitFormula/*` | in progress |
-| Yao's hybrid argument (distinguisher to next-bit predictor) | `Metacomplexity/StatisticalTest/Hybrid*` | in progress, over cslib's `Crypto/Primitives/PRG` |
-| Lautemann's covering lemma | `Classes/PH/SipserLautemann/Covering` | in progress |
-| Expander mixing lemma, edge expansion | `Classes/PCP/Internal/{RegularGraph,Mixing,EdgeExpansion}` | in progress |
-| Pairwise-independent hashing, approximate counting | `Classes/Randomized/Hashing*`, `ApproximateCounting/**` | in progress |
-| Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | queued |
-| Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | queued |
-| Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | queued (after BLR) |
-| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | after the mixing lemma |
-| Zig-zag product | `PCP/Internal/ZigZag` | after the mixing lemma |
-| Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | after Yao |
+| Monotone Karchmer–Wigderson | `Circuits/KarchmerWigderson*`, `Circuits/Monotone*` | done (`Circuit/Monotone/KarchmerWigderson.lean`) |
+| Barrington: NC¹ = width-5 permutation programs | `Circuits/Barrington{Typed,Family,Converse}`, `CircuitFormula/*` | done (`Circuit/Boolean/BarringtonClass.lean`) |
+| Yao's hybrid argument (distinguisher to next-bit predictor) | `Metacomplexity/StatisticalTest/Hybrid*` | done (`Crypto/Primitives/PRG/NextBit.lean`, over cslib's PRG game) |
+| Lautemann's covering lemma | `Classes/PH/SipserLautemann/Covering` | done (`Foundations/Combinatorics/Lautemann.lean`) |
+| Expander mixing lemma, edge expansion | `Classes/PCP/Internal/{RegularGraph,Mixing,EdgeExpansion}` | done (`Foundations/Combinatorics/Expander/`) |
+| Pairwise-independent hashing, approximate counting | `Classes/Randomized/Hashing*`, `ApproximateCounting/**` | done (`Probability/`), relative-error counting open |
+| Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | in progress |
+| Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | in progress |
+| Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | in progress |
+| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | Cheeger in progress |
+| Zig-zag product | `PCP/Internal/ZigZag` | in progress |
+| Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | in progress |
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure | after the expander and Hadamard layers |
 | Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | multi-batch, later |
 
