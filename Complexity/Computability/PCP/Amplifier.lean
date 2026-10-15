@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.PCP.ConstraintGraph
 public import Mathlib.Data.Nat.Log
+import Complexity.Foundations.Data.Nat.Log
 
 /-!
 # Gap amplifiers and their iteration
@@ -213,21 +214,6 @@ theorem card_vertices_iter_le (k : ℕ) (G : FinConstraintGraph.{u} α) :
     exact le_max_of_le_right
       ((A.card_vertices_le _).trans (Nat.mul_le_mul_left _ (A.card_edges_iter_le k G)))
 
-/-- `⌈log₂ n⌉` rounds cost a factor at most `2 ^ f n ^ f` for `f = ⌈log₂ factor⌉`. -/
-private theorem pow_clog_le (F n : ℕ) (hn : 1 ≤ n) :
-    F ^ Nat.clog 2 n ≤ 2 ^ Nat.clog 2 F * n ^ Nat.clog 2 F := by
-  have h₂ : 2 ^ Nat.clog 2 n ≤ 2 * n := by
-    rcases hn.eq_or_lt with rfl | hn
-    · simp
-    · have := Nat.pow_pred_clog_lt_self one_lt_two hn
-      rw [← Nat.succ_pred_eq_of_pos (Nat.clog_pos one_lt_two hn), pow_succ']
-      omega
-  calc F ^ Nat.clog 2 n ≤ (2 ^ Nat.clog 2 F) ^ Nat.clog 2 n :=
-        Nat.pow_le_pow_left (Nat.le_pow_clog one_lt_two F) _
-    _ = (2 ^ Nat.clog 2 n) ^ Nat.clog 2 F := by rw [← pow_mul, ← pow_mul, mul_comm]
-    _ ≤ (2 * n) ^ Nat.clog 2 F := Nat.pow_le_pow_left h₂ _
-    _ = 2 ^ Nat.clog 2 F * n ^ Nat.clog 2 F := mul_pow _ _ _
-
 /-- **After `⌈log₂ |E|⌉` rounds, the number of edges is polynomial**: at most
 `2 ^ f |E| ^ (f + 1)`, where `f = ⌈log₂ factor⌉`. -/
 theorem card_edges_iter_clog_le (G : FinConstraintGraph.{u} α) :
@@ -237,7 +223,7 @@ theorem card_edges_iter_clog_le (G : FinConstraintGraph.{u} α) :
   rcases Nat.eq_zero_or_pos (Fintype.card G.E) with h | h
   · simp [h]
   · rw [pow_succ, ← mul_assoc]
-    exact Nat.mul_le_mul_right _ (pow_clog_le _ _ h)
+    exact Nat.mul_le_mul_right _ (Nat.pow_clog_le_pow_clog_mul_pow_clog one_lt_two _ h)
 
 /-- **After `⌈log₂ |E|⌉` rounds, the number of vertices is polynomial**: at most
 `2 ^ f |E| ^ (f + 1)`, where `f = ⌈log₂ factor⌉`, or the original number of vertices if there
@@ -250,7 +236,7 @@ theorem card_vertices_iter_clog_le (G : FinConstraintGraph.{u} α) :
   rcases Nat.eq_zero_or_pos (Fintype.card G.E) with h | h
   · simp [h]
   · rw [pow_succ, ← mul_assoc]
-    exact Nat.mul_le_mul_right _ (pow_clog_le _ _ h)
+    exact Nat.mul_le_mul_right _ (Nat.pow_clog_le_pow_clog_mul_pow_clog one_lt_two _ h)
 
 end Amplifier
 
