@@ -111,10 +111,6 @@ theorem ClauseSet.length_le_of_mem_toCNF {ψ : ClauseSet V} {k : ℕ} (hk : ∀ 
   rw [Finset.length_toList]
   exact hk C hC
 
-/-- The number of clauses of a formula, counted with repetition, mentioning the variable `v`. -/
-def CNF.occurrences (φ : CNF V) (v : V) : ℕ :=
-  φ.countP fun c => decide (∃ l ∈ c, l.1 = v)
-
 /-- The formula of a clause set has as many clauses mentioning `v` as the clause set. -/
 theorem ClauseSet.occurrences_toCNF (ψ : ClauseSet V) (v : V) :
     ψ.toCNF.occurrences v = ψ.occurrences v := by

@@ -11,15 +11,10 @@ public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Tree
 import Mathlib.Algebra.Group.Action.Defs
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Data.Finset.Max
-import Mathlib.Data.Finset.Powerset
 public import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.GCongr
 
 /-!
 # Sparsification -- explicit thresholds and the leaf count
@@ -47,11 +42,11 @@ every variable occurs in at most `2 ∑_{c < k} θ c` of their clauses
 
 @[expose] public section
 
-namespace Cslib.Logic.PL.ClauseSet.Sparsify
+namespace Cslib.Logic.PL.ClauseSet.Sparsification
 
 open Finset
 
-variable {N : ℕ}
+variable {V : Type*} [DecidableEq V] [Fintype V]
 
 /-- The base `X = 2 k α` of the thresholds. -/
 def base (k α : ℕ) : ℕ := 2 * k * α
@@ -92,9 +87,9 @@ include hk hα
 
 /-- **Introduced clauses of each size.** Along a branch from a clause set of width `k` ending in
 a sparse node, at most `N X ^ (2 c - 1)` clauses of size `c` are introduced, for `1 ≤ c ≤ k`. -/
-theorem card_introducedOfCard_le_pow (P : Path (threshold k α) N)
+theorem card_introducedOfCard_le_pow (P : Path (threshold k α) V)
     (hleaf : Sparse (threshold k α) (P.node P.len)) :
-    ∀ c, 1 ≤ c → c ≤ k → (P.introducedOfCard c).card ≤ N * base k α ^ (2 * c - 1) := by
+    ∀ c, 1 ≤ c → c ≤ k → (P.introducedOfCard c).card ≤ Fintype.card V * base k α ^ (2 * c - 1) := by
   have hθ := one_le_threshold hk hα
   set X := base k α
   intro c
@@ -105,58 +100,61 @@ theorem card_introducedOfCard_le_pow (P : Path (threshold k α) N)
     have hrec := P.card_introducedOfCard_le hθ hleaf hc
     have hterm : ∀ h ∈ Ico 1 (c' + 1),
         2 * threshold k α (c' + 1 - h) * (P.introducedOfCard h).card ≤
-          2 * α * N * X ^ (2 * c') := by
+          2 * α * Fintype.card V * X ^ (2 * c') := by
       intro h hh
       obtain ⟨hh1, hhc⟩ := mem_Ico.mp hh
       rw [threshold_of_one_le (by omega)]
       have hIh := ih h hhc hh1 (by omega)
       calc 2 * (α * X ^ (2 * (c' + 1 - h) - 1)) * (P.introducedOfCard h).card
-          ≤ 2 * (α * X ^ (2 * (c' + 1 - h) - 1)) * (N * X ^ (2 * h - 1)) :=
+          ≤ 2 * (α * X ^ (2 * (c' + 1 - h) - 1)) * (Fintype.card V * X ^ (2 * h - 1)) :=
             Nat.mul_le_mul_left _ hIh
-        _ = 2 * α * N * X ^ ((2 * (c' + 1 - h) - 1) + (2 * h - 1)) := by rw [pow_add]; ring
-        _ = 2 * α * N * X ^ (2 * c') := by congr 2; omega
+        _ = 2 * α * Fintype.card V * X ^ ((2 * (c' + 1 - h) - 1) + (2 * h - 1)) := by
+          rw [pow_add]; ring
+        _ = 2 * α * Fintype.card V * X ^ (2 * c') := by congr 2; omega
     calc (P.introducedOfCard (c' + 1)).card
-        ≤ 2 * N * threshold k α (c' + 1 - 1) +
+        ≤ 2 * Fintype.card V * threshold k α (c' + 1 - 1) +
             ∑ h ∈ Ico 1 (c' + 1), 2 * threshold k α (c' + 1 - h) *
               (P.introducedOfCard h).card := hrec
-      _ ≤ 2 * N * (α * X ^ (2 * (c' + 1) - 2)) + ∑ _h ∈ Ico 1 (c' + 1), 2 * α * N * X ^ (2 * c') :=
+      _ ≤ 2 * Fintype.card V * (α * X ^ (2 * (c' + 1) - 2)) +
+          ∑ _h ∈ Ico 1 (c' + 1), 2 * α * Fintype.card V * X ^ (2 * c') :=
           add_le_add (Nat.mul_le_mul_left _ (threshold_pred_le hk hα hc)) (sum_le_sum hterm)
-      _ = (c' + 1) * (2 * α * N * X ^ (2 * c')) := by
+      _ = (c' + 1) * (2 * α * Fintype.card V * X ^ (2 * c')) := by
           rw [sum_const, Nat.card_Ico, smul_eq_mul, Nat.add_sub_cancel,
             show 2 * (c' + 1) - 2 = 2 * c' by omega]
           ring
-      _ ≤ k * (2 * α * N * X ^ (2 * c')) := Nat.mul_le_mul_right _ hck
-      _ = N * X ^ (2 * (c' + 1) - 1) := by
+      _ ≤ k * (2 * α * Fintype.card V * X ^ (2 * c')) := Nat.mul_le_mul_right _ hck
+      _ = Fintype.card V * X ^ (2 * (c' + 1) - 1) := by
           rw [show 2 * (c' + 1) - 1 = 2 * c' + 1 by omega, pow_succ]
           simp only [X, base]
           ring
 
 /-- **Branches are short.** A branch from a clause set of width `k` ending in a sparse node has
 at most `N k X ^ (2 k)` steps. -/
-theorem len_le (P : Path (threshold k α) N) (hk0 : ∀ C ∈ P.node 0, C.card ≤ k)
+theorem len_le (P : Path (threshold k α) V) (hk0 : ∀ C ∈ P.node 0, C.card ≤ k)
     (hleaf : Sparse (threshold k α) (P.node P.len)) :
-    P.len ≤ N * (k * base k α ^ (2 * k)) := by
+    P.len ≤ Fintype.card V * (k * base k α ^ (2 * k)) := by
   have hθ := one_le_threshold hk hα
   calc P.len ≤ P.introduced.card := P.len_le_card_introduced hθ
     _ = ∑ c ∈ Ico 1 k, (P.introducedOfCard c).card := P.card_introduced_eq_sum hθ hk0
-    _ ≤ ∑ _c ∈ Ico 1 k, N * base k α ^ (2 * k) := by
+    _ ≤ ∑ _c ∈ Ico 1 k, Fintype.card V * base k α ^ (2 * k) := by
         refine sum_le_sum fun c hc => ?_
         obtain ⟨hc1, hck⟩ := mem_Ico.mp hc
         refine (card_introducedOfCard_le_pow hk hα P hleaf c hc1 hck.le).trans ?_
         exact Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (one_le_base hk hα) (by omega))
-    _ ≤ N * (k * base k α ^ (2 * k)) := by
+    _ ≤ Fintype.card V * (k * base k α ^ (2 * k)) := by
         rw [sum_const, Nat.card_Ico, smul_eq_mul]
-        calc (k - 1) * (N * base k α ^ (2 * k)) ≤ k * (N * base k α ^ (2 * k)) :=
+        calc (k - 1) * (Fintype.card V * base k α ^ (2 * k))
+            ≤ k * (Fintype.card V * base k α ^ (2 * k)) :=
               Nat.mul_le_mul_right _ (Nat.sub_le k 1)
-          _ = N * (k * base k α ^ (2 * k)) := by ring
+          _ = Fintype.card V * (k * base k α ^ (2 * k)) := by ring
 
 /-- **Few petal steps.** A branch from a clause set of width `k` ending in a sparse node has at
 most `(k - 1) N / α` petal steps. -/
-theorem mul_card_petal_le (P : Path (threshold k α) N) (hk0 : ∀ C ∈ P.node 0, C.card ≤ k)
+theorem mul_card_petal_le (P : Path (threshold k α) V) (hk0 : ∀ C ∈ P.node 0, C.card ≤ k)
     (hleaf : Sparse (threshold k α) (P.node P.len)) :
-    α * ((range P.len).filter fun i => P.dir i = true).card ≤ (k - 1) * N := by
+    α * ((range P.len).filter fun i => P.dir i = true).card ≤ (k - 1) * Fintype.card V := by
   have hθ := one_le_threshold hk hα
-  have hj : ∀ j ∈ Ico 1 k, α * (P.petalSteps j).card ≤ N := by
+  have hj : ∀ j ∈ Ico 1 k, α * (P.petalSteps j).card ≤ Fintype.card V := by
     intro j hj
     obtain ⟨hj1, hjk⟩ := mem_Ico.mp hj
     have h1 := P.mul_card_petalSteps_le hθ j
@@ -164,39 +162,40 @@ theorem mul_card_petal_le (P : Path (threshold k α) N) (hk0 : ∀ C ∈ P.node 
     rw [threshold_of_one_le hj1] at h1
     have hpos : 0 < base k α ^ (2 * j - 1) := pow_pos (one_le_base hk hα) _
     have : α * (P.petalSteps j).card * base k α ^ (2 * j - 1) ≤
-        N * base k α ^ (2 * j - 1) := by
+        Fintype.card V * base k α ^ (2 * j - 1) := by
       calc α * (P.petalSteps j).card * base k α ^ (2 * j - 1)
           = α * base k α ^ (2 * j - 1) * (P.petalSteps j).card := by ring
-        _ ≤ N * base k α ^ (2 * j - 1) := h1.trans h2
+        _ ≤ Fintype.card V * base k α ^ (2 * j - 1) := h1.trans h2
     exact Nat.le_of_mul_le_mul_right this hpos
   calc α * ((range P.len).filter fun i => P.dir i = true).card
       ≤ α * ∑ j ∈ Ico 1 k, (P.petalSteps j).card :=
         Nat.mul_le_mul_left _ (P.card_petal_le_sum hθ hk0)
     _ = ∑ j ∈ Ico 1 k, α * (P.petalSteps j).card := mul_sum _ _ _
-    _ ≤ ∑ _j ∈ Ico 1 k, N := sum_le_sum hj
-    _ = (k - 1) * N := by rw [sum_const, Nat.card_Ico, smul_eq_mul]
+    _ ≤ ∑ _j ∈ Ico 1 k, Fintype.card V := sum_le_sum hj
+    _ = (k - 1) * Fintype.card V := by rw [sum_const, Nat.card_Ico, smul_eq_mul]
 
 end Path
 
 /-- **The leaves.** For width `k ≥ 1` and `α ≥ 1`, every clause set `φ` of width `k` has a family
 of at most `∑_{j ≤ (k - 1) N / α} (Λ choose j)` sparse clause sets, `Λ = N k X ^ (2 k)`, each
 refining `φ` and having only solutions of `φ`, whose solutions cover those of `φ`. -/
-theorem exists_leaves (hk : 1 ≤ k) (hα : 1 ≤ α) (φ : ClauseSet (Fin N))
+theorem exists_leaves (hk : 1 ≤ k) (hα : 1 ≤ α) (φ : ClauseSet V)
     (hφ : ∀ C ∈ φ, C.card ≤ k) :
-    ∃ Ψ : Finset (ClauseSet (Fin N)),
-      Ψ.card ≤ ∑ j ∈ range ((k - 1) * N / α + 1), (N * (k * base k α ^ (2 * k))).choose j ∧
-      (∀ ψ ∈ Ψ, Sparse (threshold k α) ψ ∧ (∀ C ∈ ψ, ∃ D ∈ φ, C ⊆ D) ∧
+    ∃ Ψ : Finset (ClauseSet V),
+      Ψ.card ≤ ∑ j ∈ range ((k - 1) * Fintype.card V / α + 1),
+        (Fintype.card V * (k * base k α ^ (2 * k))).choose j ∧
+      (∀ ψ ∈ Ψ, Sparse (threshold k α) ψ ∧ Refines ψ φ ∧
         ∀ x, ψ.Sat x → φ.Sat x) ∧
       ∀ x, φ.Sat x → ∃ ψ ∈ Ψ, ψ.Sat x := by
   classical
   have hθ := one_le_threshold hk hα
   set θ := threshold k α
-  set Λ := N * (k * base k α ^ (2 * k))
-  set ρ := (k - 1) * N / α
+  set Λ := Fintype.card V * (k * base k α ^ (2 * k))
+  set ρ := (k - 1) * Fintype.card V / α
   set ψ₀ := reduce φ
   have hψ₀ : ∀ C ∈ ψ₀, C.card ≤ k := fun C hC => hφ C (reduce_subset φ hC)
   let S : Finset (Finset ℕ) := (range Λ).powerset.filter (·.card ≤ ρ)
-  let leaf : Finset ℕ → ClauseSet (Fin N) := fun s => walkSeq θ Λ ψ₀ fun i => decide (i ∈ s)
+  let leaf : Finset ℕ → ClauseSet V := fun s => walkSeq θ Λ ψ₀ fun i => decide (i ∈ s)
   refine ⟨(S.image leaf).filter (Sparse θ), ?_, ?_, ?_⟩
   · -- counting position sets
     calc ((S.image leaf).filter (Sparse θ)).card ≤ (S.image leaf).card := card_filter_le _ _
@@ -237,10 +236,11 @@ theorem exists_leaves (hk : 1 ≤ k) (hα : 1 ≤ α) (φ : ClauseSet (Fin N))
     rw [hleaf]
     exact hw.sparse_walk
 
+omit [Fintype V] in
 /-- **Bounded occurrences.** In a sparse clause set of width `k`, every variable occurs in at most
 `2 ∑_{c < k} θ c` clauses. -/
-theorem occurrences_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)}
-    (hsparse : Sparse θ ψ) (hk : ∀ C ∈ ψ, C.card ≤ k) (v : Fin N) :
+theorem occurrences_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V}
+    (hsparse : Sparse θ ψ) (hk : ∀ C ∈ ψ, C.card ≤ k) (v : V) :
     ψ.occurrences v ≤ 2 * ∑ c ∈ range k, θ c := by
   have hsub : ψ.filter (fun C => ∃ l ∈ C, l.1 = v) ⊆
       (univ : Finset Bool).biUnion fun p =>
@@ -264,4 +264,4 @@ theorem occurrences_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {�
         rw [sum_const, card_univ, Fintype.card_bool, smul_eq_mul, sum_Ico_eq_sum_range]
         simp
 
-end Cslib.Logic.PL.ClauseSet.Sparsify
+end Cslib.Logic.PL.ClauseSet.Sparsification

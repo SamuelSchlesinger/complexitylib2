@@ -260,7 +260,7 @@ with negations free at the inputs, and so unbounded fan-in circuits of depth `d 
 formula is coded in `N - ι / k` bits on average over orders, so `∑ₓ 2 ^ (ι(x) / k) ≤ 2 ^ N`. The
 **sparsification lemma** of Impagliazzo, Paturi and Zane (`Logics/Propositional/ClauseSet/
 Sparsification.lean`, over clause sets in `ClauseSet/Basic.lean`, with the proof of Calabro,
-Impagliazzo and Paturi in `ClauseSet/Sparsification/{Step,Path,Tree,Bounds,Asymptotics}.lean`):
+Impagliazzo and Paturi in `ClauseSet/Sparsification/{Step,Path,Tree,Bounds}.lean`):
 every width-`k` CNF over `N` variables is the disjunction of at most `2 ^ (ε N)` width-`k` CNFs in
 which every variable occurs in at most `c(k, ε)` clauses. Normal forms have a term per isolated
 input, so those of parity have at least `2 ^ (n - 1)` terms (`Logics/Propositional/Parity.lean`).

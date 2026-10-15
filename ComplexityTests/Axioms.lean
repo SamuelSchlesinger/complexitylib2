@@ -605,10 +605,10 @@ info: 'Cslib.Logic.PL.CNF.sparsification' depends on axioms: [propext, Classical
 #print axioms Cslib.Logic.PL.CNF.sparsification
 
 /--
-info: 'exists_pow_le_card_mul_sum_choose' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'exists_pow_le_card_mul_sum_choose_of_le_hammingDist' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms exists_pow_le_card_mul_sum_choose
+#print axioms exists_pow_le_card_mul_sum_choose_of_le_hammingDist
 
 /--
 info: 'Cslib.Logic.PL.CNF.card_isolated_mul_two_rpow_le' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -657,5 +657,23 @@ info: 'Cslib.Circuits.Boolean.Unbounded.exists_circuit_of_isSymmetric' depends o
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Unbounded.exists_circuit_of_isSymmetric
+
+/--
+info: 'Cslib.Logic.PL.ClauseSet.sparsification' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.ClauseSet.sparsification
+
+/--
+info: 'Cslib.Logic.PL.CNF.two_pow_mul_min_le_of_any_eval_eq_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.two_pow_mul_min_le_of_any_eval_eq_parity
+
+/--
+info: 'exists_prod_le_card_mul_card_filter_hammingDist_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_prod_le_card_mul_card_filter_hammingDist_lt
 
 end ComplexityTests.Axioms

@@ -9,10 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.CNF.Coding
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Mathlib.Analysis.SpecialFunctions.Sqrt
 import Mathlib.Analysis.Complex.ExponentialBounds
-import Mathlib.Data.Fintype.BigOperators
 
 /-!
 # Depth-three formulas for parity
@@ -264,10 +261,12 @@ private theorem card_mul_mul_two_rpow_inv_le_sum {ι : Type*} (s : Finset ι) (t
         rw [← mul_sum, sum_sub_distrib, sum_add_distrib, sum_const, nsmul_eq_mul, ← mul_sum]
     _ ≤ _ := sum_le_sum htan
 
-/-- **ORs of formulas in conjunctive normal form for parity need many gates**
+/-- **ORs of formulas in conjunctive normal form for parity need many gates**, by the argument of
 [Paturi, Pudlák and Zane, Theorem 6][PaturiPudlakZane1999]: if an OR of `m` formulas with `K`
 distinct clauses (as sets of literals) computes the parity of `n ≥ 1` bits, then
-`2 ^ (n - 1) min (2 ^ μ) (μ 2 ^ (n / μ)) ≤ 2 ^ n (m + K)` for every `0 < μ ≤ n log 2`. -/
+`2 ^ (n - 1) min (2 ^ μ) (μ 2 ^ (n / μ)) ≤ 2 ^ n (m + K)` for every `0 < μ ≤ n log 2`. A depth-three
+circuit with an OR at the top, AND gates in the middle and OR gates of literals at the bottom has
+at least `m + K` gates, as sharing bottom gates only lowers `K`. -/
 theorem CNF.two_pow_mul_min_le_of_any_eval_eq_parity (hn : 1 ≤ n) {μ : ℝ} (hμ : 0 < μ)
     (hμn : μ ≤ n * Real.log 2) {Fs : List (CNF (Fin n))}
     (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = parity n x) :
@@ -397,9 +396,10 @@ theorem CNF.two_pow_mul_min_le_of_any_eval_eq_parity (hn : 1 ≤ n) {μ : ℝ} (
     _ ≤ Fs.length * 2 ^ n + #Cl * 2 ^ n := add_le_add h₁ h₂
     _ = 2 ^ n * (Fs.length + #Cl) := by ring
 
-/-- **ORs of formulas in conjunctive normal form for parity need `2 ^ (√n - 1)` gates**
-[Paturi, Pudlák and Zane, Theorem 6][PaturiPudlakZane1999]: an OR of `m` formulas with `K` distinct
-clauses computing the parity of `n ≥ 3` bits has `2 ^ (√n - 1) ≤ m + K`. -/
+/-- **ORs of formulas in conjunctive normal form for parity need `2 ^ (√n - 1)` gates**, a weak
+form of [Paturi, Pudlák and Zane, Theorem 6][PaturiPudlakZane1999], who prove
+`Ω(n ^ (1 / 4) 2 ^ √n)`: an OR of `m` formulas with `K` distinct clauses computing the parity of
+`n ≥ 3` bits has `2 ^ (√n - 1) ≤ m + K`. -/
 theorem CNF.two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity (hn : 3 ≤ n)
     {Fs : List (CNF (Fin n))} (hFs : ∀ x, (Fs.any fun φ => φ.eval x) = parity n x) :
     (2 : ℝ) ^ (√(n : ℝ) - 1) ≤ Fs.length + #(Fs.flatten.map List.toFinset).toFinset := by

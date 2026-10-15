@@ -29,8 +29,9 @@ words, where `V` is the size of a ball: the **Hamming bound**
 the balls of radius `d - 1` around a largest code of minimum distance `d` cover every word, so some
 code of minimum distance `d` has at least `q ^ n / V` words, where `V` is the size of a ball of
 radius `d - 1`: the **Gilbert–Varshamov bound**
-(`exists_prod_le_card_mul_card_filter_hammingDist_lt`, `exists_pow_le_card_mul_sum_choose`)
-[Gilbert1952].
+(`exists_prod_le_card_mul_card_filter_hammingDist_lt`,
+`exists_pow_le_card_mul_sum_choose_of_le_hammingDist`) [Gilbert1952], by Gilbert's greedy argument;
+Varshamov proved the same bound for linear codes [Varshamov1957].
 
 ## Main results
 
@@ -40,12 +41,14 @@ radius `d - 1`: the **Gilbert–Varshamov bound**
 * `card_mul_sum_choose_le_of_two_mul_lt_hammingDist`: the Hamming bound over a `q`-letter
   alphabet.
 * `exists_prod_le_card_mul_card_filter_hammingDist_lt`: the Gilbert–Varshamov bound.
-* `exists_pow_le_card_mul_sum_choose`: the Gilbert–Varshamov bound over a `q`-letter alphabet.
+* `exists_pow_le_card_mul_sum_choose_of_le_hammingDist`: the Gilbert–Varshamov bound over a
+  `q`-letter alphabet.
 
 ## References
 
 * [R. W. Hamming, *Error detecting and error correcting codes*][Hamming1950]
 * [E. N. Gilbert, *A comparison of signalling alphabets*][Gilbert1952]
+* [R. R. Varshamov, *Estimate of the number of signals in error correcting codes*][Varshamov1957]
 * [F. J. MacWilliams, N. J. A. Sloane, *The Theory of Error-Correcting Codes*]
   [MacWilliamsSloane1977]
 -/
@@ -201,8 +204,8 @@ omit [DecidableEq ι] in
 positions: for `d ≥ 1` there is a code whose distinct words are at distance at least `d` and which
 has at least `q ^ n / V` words, where `V = ∑_{j < d} C(n, j) (q - 1) ^ j` is the size of a ball of
 radius `d - 1`. -/
-theorem exists_pow_le_card_mul_sum_choose {q : ℕ} (hq : ∀ i, Fintype.card (β i) = q) {d : ℕ}
-    (hd : 0 < d) :
+theorem exists_pow_le_card_mul_sum_choose_of_le_hammingDist {q : ℕ}
+    (hq : ∀ i, Fintype.card (β i) = q) {d : ℕ} (hd : 0 < d) :
     ∃ C : Finset (∀ i, β i), (C : Set (∀ i, β i)).Pairwise (fun x y => d ≤ hammingDist x y) ∧
       q ^ Fintype.card ι ≤ #C * ∑ j ∈ range d, (Fintype.card ι).choose j * (q - 1) ^ j := by
   classical

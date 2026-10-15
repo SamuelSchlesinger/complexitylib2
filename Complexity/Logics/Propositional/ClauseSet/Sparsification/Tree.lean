@@ -8,16 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Path
-import Mathlib.Algebra.Group.Action.Defs
 import Mathlib.Data.Finset.Max
 import Mathlib.Data.Fintype.Powerset
 public import Mathlib.Order.Interval.Finset.Nat
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.GCongr
 
 /-!
 # Sparsification -- the branching tree
@@ -44,16 +37,18 @@ every leaf word that agrees with `f` (`walkSeq_eq_walk`).
 
 @[expose] public section
 
-namespace Cslib.Logic.PL.ClauseSet.Sparsify
+namespace Cslib.Logic.PL.ClauseSet.Sparsification
 
 open Finset
 
-variable {N : ℕ}
+variable {V : Type*} [DecidableEq V] [Fintype V]
 
+omit [Fintype V] in
 /-- A clause set that is not sparse has a valid branching choice. -/
-theorem exists_choice (θ : ℕ → ℕ) {ψ : ClauseSet (Fin N)} (h : ¬ Sparse θ ψ) :
+theorem exists_choice [Finite V] (θ : ℕ → ℕ) {ψ : ClauseSet V} (h : ¬ Sparse θ ψ) :
     ∃ c H, Choice θ ψ c H := by
   classical
+  have := Fintype.ofFinite V
   have hex : ∃ c, ∃ H, Heavy θ ψ c H := by
     simp only [Sparse, not_forall, not_not] at h
     exact h
@@ -65,33 +60,33 @@ theorem exists_choice (θ : ℕ → ℕ) {ψ : ClauseSet (Fin N)} (h : ¬ Sparse
     fun H' h' => hmax H' (mem_filter.mpr ⟨mem_univ _, h'⟩)⟩
 
 /-- The deterministic branching choice: a valid choice if there is one. -/
-noncomputable def chooseBranch (θ : ℕ → ℕ) (ψ : ClauseSet (Fin N)) : ℕ × Finset (Literal (Fin N)) :=
+noncomputable def chooseBranch (θ : ℕ → ℕ) (ψ : ClauseSet V) : ℕ × Finset (Literal V) :=
   open Classical in
   if h : Sparse θ ψ then (0, ∅)
   else ((exists_choice θ h).choose, (exists_choice θ h).choose_spec.choose)
 
-theorem choice_chooseBranch {θ : ℕ → ℕ} {ψ : ClauseSet (Fin N)} (h : ¬ Sparse θ ψ) :
+theorem choice_chooseBranch {θ : ℕ → ℕ} {ψ : ClauseSet V} (h : ¬ Sparse θ ψ) :
     Choice θ ψ (chooseBranch θ ψ).1 (chooseBranch θ ψ).2 := by
   unfold chooseBranch
   rw [dite_eq_right h]
   exact (exists_choice θ h).choose_spec.choose_spec
 
 /-- One deterministic branching step. -/
-noncomputable def step (θ : ℕ → ℕ) (ψ : ClauseSet (Fin N)) (b : Bool) : ClauseSet (Fin N) :=
+noncomputable def step (θ : ℕ → ℕ) (ψ : ClauseSet V) (b : Bool) : ClauseSet V :=
   child ψ (chooseBranch θ ψ).1 (chooseBranch θ ψ).2 b
 
 /-- The node reached along a word of branches. -/
-noncomputable def walk (θ : ℕ → ℕ) : ClauseSet (Fin N) → List Bool → ClauseSet (Fin N)
+noncomputable def walk (θ : ℕ → ℕ) : ClauseSet V → List Bool → ClauseSet V
   | ψ, [] => ψ
   | ψ, b :: w => walk θ (step θ ψ b) w
 
 /-- A *leaf word*: its proper prefixes reach non-sparse nodes and it reaches a sparse node. -/
-def IsLeafWord (θ : ℕ → ℕ) : ClauseSet (Fin N) → List Bool → Prop
+def IsLeafWord (θ : ℕ → ℕ) : ClauseSet V → List Bool → Prop
   | ψ, [] => Sparse θ ψ
   | ψ, b :: w => ¬ Sparse θ ψ ∧ IsLeafWord θ (step θ ψ b) w
 
 /-- Follow the branch sequence `f` for at most `n` steps, stopping at a sparse node. -/
-noncomputable def walkSeq (θ : ℕ → ℕ) : ℕ → ClauseSet (Fin N) → (ℕ → Bool) → ClauseSet (Fin N)
+noncomputable def walkSeq (θ : ℕ → ℕ) : ℕ → ClauseSet V → (ℕ → Bool) → ClauseSet V
   | 0, ψ, _ => ψ
   | n + 1, ψ, f =>
     open Classical in
@@ -99,19 +94,19 @@ noncomputable def walkSeq (θ : ℕ → ℕ) : ℕ → ClauseSet (Fin N) → (�
 
 variable {θ : ℕ → ℕ}
 
-theorem walk_append_singleton (ψ : ClauseSet (Fin N)) (u : List Bool) (b : Bool) :
+private theorem walk_append_singleton (ψ : ClauseSet V) (u : List Bool) (b : Bool) :
     walk θ ψ (u ++ [b]) = step θ (walk θ ψ u) b := by
   induction u generalizing ψ with
   | nil => rfl
   | cons a u ih => exact ih (step θ ψ a)
 
-theorem walk_take_succ (ψ : ClauseSet (Fin N)) (w : List Bool) {i : ℕ} (hi : i < w.length) :
+private theorem walk_take_succ (ψ : ClauseSet V) (w : List Bool) {i : ℕ} (hi : i < w.length) :
     walk θ ψ (w.take (i + 1)) = step θ (walk θ ψ (w.take i)) (w.getD i false) := by
   rw [List.take_add_one, List.getElem?_eq_getElem hi, Option.toList_some,
     walk_append_singleton, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi,
     Option.getD_some]
 
-theorem IsLeafWord.not_sparse_take {ψ : ClauseSet (Fin N)} {w : List Bool} (h : IsLeafWord θ ψ w) :
+theorem IsLeafWord.not_sparse_take {ψ : ClauseSet V} {w : List Bool} (h : IsLeafWord θ ψ w) :
     ∀ i < w.length, ¬ Sparse θ (walk θ ψ (w.take i)) := by
   induction w generalizing ψ with
   | nil => intro i hi; simp at hi
@@ -123,40 +118,37 @@ theorem IsLeafWord.not_sparse_take {ψ : ClauseSet (Fin N)} {w : List Bool} (h :
       rw [List.take_succ_cons, walk]
       exact ih h.2 i (by simpa using hi)
 
-theorem IsLeafWord.sparse_walk {ψ : ClauseSet (Fin N)} {w : List Bool} (h : IsLeafWord θ ψ w) :
+theorem IsLeafWord.sparse_walk {ψ : ClauseSet V} {w : List Bool} (h : IsLeafWord θ ψ w) :
     Sparse θ (walk θ ψ w) := by
   induction w generalizing ψ with
   | nil => exact h
   | cons b w ih => exact ih h.2
 
-theorem sat_of_sat_step {ψ : ClauseSet (Fin N)} {b : Bool} {x : BitString N}
+theorem sat_of_sat_step {ψ : ClauseSet V} {b : Bool} {x : V → Bool}
     (hx : (step θ ψ b).Sat x) : ψ.Sat x :=
   sat_of_sat_child hx
-
-theorem reduced_step {ψ : ClauseSet (Fin N)} (b : Bool) : Reduced (step θ ψ b) :=
-  reduced_child _ _ _ _
 
 section
 
 variable (hθ : ∀ j, 1 ≤ θ j)
 include hθ
 
-theorem card_le_of_mem_step {ψ : ClauseSet (Fin N)} (hψ : ¬ Sparse θ ψ) {k : ℕ}
-    (hk : ∀ C ∈ ψ, C.card ≤ k) {b : Bool} {C : Finset (Literal (Fin N))} (hC : C ∈ step θ ψ b) :
+theorem card_le_of_mem_step {ψ : ClauseSet V} (hψ : ¬ Sparse θ ψ) {k : ℕ}
+    (hk : ∀ C ∈ ψ, C.card ≤ k) {b : Bool} {C : Finset (Literal V)} (hC : C ∈ step θ ψ b) :
     C.card ≤ k :=
   card_le_of_mem_child hθ (choice_chooseBranch hψ).1 hk hC
 
 /-- Every clause of a child is contained in a clause of its parent. -/
-theorem refines_step {ψ : ClauseSet (Fin N)} (hψ : ¬ Sparse θ ψ) {b : Bool}
-    {C : Finset (Literal (Fin N))} (hC : C ∈ step θ ψ b) : ∃ D ∈ ψ, C ⊆ D := by
+theorem refines_step {ψ : ClauseSet V} (hψ : ¬ Sparse θ ψ) {b : Bool}
+    {C : Finset (Literal V)} (hC : C ∈ step θ ψ b) : ∃ D ∈ ψ, C ⊆ D := by
   rcases mem_union.mp (child_subset _ _ _ _ hC) with hC | hC
   · exact ⟨C, hC, subset_rfl⟩
   · obtain ⟨D, hD, hCD⟩ := exists_flower_ssuperset hθ (choice_chooseBranch hψ).1 hC
     exact ⟨D, flower_subset _ _ _ hD, hCD.subset⟩
 
 /-- Every clause reached by following branches is contained in a clause of the start. -/
-theorem refines_walkSeq {n : ℕ} {ψ : ClauseSet (Fin N)} {f : ℕ → Bool}
-    {C : Finset (Literal (Fin N))} (hC : C ∈ walkSeq θ n ψ f) : ∃ D ∈ ψ, C ⊆ D := by
+theorem refines_walkSeq {n : ℕ} {ψ : ClauseSet V} {f : ℕ → Bool}
+    {C : Finset (Literal V)} (hC : C ∈ walkSeq θ n ψ f) : ∃ D ∈ ψ, C ⊆ D := by
   induction n generalizing ψ f C with
   | zero => exact ⟨C, hC, subset_rfl⟩
   | succ n ih =>
@@ -168,7 +160,7 @@ theorem refines_walkSeq {n : ℕ} {ψ : ClauseSet (Fin N)} {f : ℕ → Bool}
       exact ⟨E, hE, hCD.trans hDE⟩
 
 /-- **Covering.** Every solution of a clause set reaches a leaf of which it is a solution. -/
-theorem exists_isLeafWord_sat (ψ : ClauseSet (Fin N)) {x : BitString N} (hx : ψ.Sat x) :
+theorem exists_isLeafWord_sat (ψ : ClauseSet V) {x : V → Bool} (hx : ψ.Sat x) :
     ∃ w, IsLeafWord θ ψ w ∧ (walk θ ψ w).Sat x := by
   induction h : potential ψ using Nat.strong_induction_on generalizing ψ with
   | _ n ih =>
@@ -182,14 +174,7 @@ theorem exists_isLeafWord_sat (ψ : ClauseSet (Fin N)) {x : BitString N} (hx : �
       exact ⟨b :: w, ⟨hsparse, hw⟩, hwx⟩
 
 omit hθ in
-theorem sat_of_sat_walk {ψ : ClauseSet (Fin N)} {w : List Bool} (hw : IsLeafWord θ ψ w)
-    {x : BitString N} (hx : (walk θ ψ w).Sat x) : ψ.Sat x := by
-  induction w generalizing ψ with
-  | nil => exact hx
-  | cons b w ih => exact sat_of_sat_step (ih hw.2 hx)
-
-omit hθ in
-theorem sat_of_sat_walkSeq {n : ℕ} {ψ : ClauseSet (Fin N)} {f : ℕ → Bool} {x : BitString N}
+theorem sat_of_sat_walkSeq {n : ℕ} {ψ : ClauseSet V} {f : ℕ → Bool} {x : V → Bool}
     (hx : (walkSeq θ n ψ f).Sat x) : ψ.Sat x := by
   induction n generalizing ψ f with
   | zero => exact hx
@@ -199,21 +184,11 @@ theorem sat_of_sat_walkSeq {n : ℕ} {ψ : ClauseSet (Fin N)} {f : ℕ → Bool}
     · exact hx
     · exact sat_of_sat_step (ih hx)
 
-theorem card_le_of_mem_walkSeq {k n : ℕ} {ψ : ClauseSet (Fin N)} (hk : ∀ C ∈ ψ, C.card ≤ k)
-    {f : ℕ → Bool} {C : Finset (Literal (Fin N))} (hC : C ∈ walkSeq θ n ψ f) : C.card ≤ k := by
-  induction n generalizing ψ f with
-  | zero => exact hk C hC
-  | succ n ih =>
-    unfold walkSeq at hC
-    split_ifs at hC with hsparse
-    · exact hk C hC
-    · exact ih (fun D hD => card_le_of_mem_step hθ hsparse hk hD) hC
-
 end
 
 /-- Following a branch sequence that agrees with a leaf word, for at least as many steps, ends at
 that leaf. -/
-theorem walkSeq_eq_walk {ψ : ClauseSet (Fin N)} {w : List Bool} (hw : IsLeafWord θ ψ w)
+theorem walkSeq_eq_walk {ψ : ClauseSet V} {w : List Bool} (hw : IsLeafWord θ ψ w)
     {f : ℕ → Bool} (hf : ∀ i < w.length, f i = w.getD i false) {n : ℕ} (hn : w.length ≤ n) :
     walkSeq θ n ψ f = walk θ ψ w := by
   induction w generalizing ψ f n with
@@ -232,9 +207,9 @@ theorem walkSeq_eq_walk {ψ : ClauseSet (Fin N)} {w : List Bool} (hw : IsLeafWor
 
 /-- **A leaf word is a branch.** It yields a `Path` with the same length, ending in a sparse node,
 whose petal steps are the positions of `true` in the word. -/
-theorem exists_path_of_isLeafWord {ψ : ClauseSet (Fin N)} (hred : Reduced ψ) {w : List Bool}
+theorem exists_path_of_isLeafWord {ψ : ClauseSet V} (hred : Reduced ψ) {w : List Bool}
     (hw : IsLeafWord θ ψ w) :
-    ∃ P : Path θ N, P.node 0 = ψ ∧ P.len = w.length ∧ Sparse θ (P.node P.len) ∧
+    ∃ P : Path θ V, P.node 0 = ψ ∧ P.len = w.length ∧ Sparse θ (P.node P.len) ∧
       (range P.len).filter (fun i => P.dir i = true) =
         (range w.length).filter fun i => w.getD i false = true := by
   have hns := hw.not_sparse_take
@@ -248,4 +223,4 @@ theorem exists_path_of_isLeafWord {ψ : ClauseSet (Fin N)} (hred : Reduced ψ) {
             reduced_zero := by simpa [walk] using hred }, by simp [walk], rfl, ?_, rfl⟩
   simpa [List.take_length] using hw.sparse_walk
 
-end Cslib.Logic.PL.ClauseSet.Sparsify
+end Cslib.Logic.PL.ClauseSet.Sparsification

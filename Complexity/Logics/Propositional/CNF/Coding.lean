@@ -15,11 +15,6 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Complexity.Foundations.Data.BitString.Agree
 import Complexity.Foundations.GroupTheory.Perm.Last
-import Mathlib.Data.Finset.Max
-import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Analysis.MeanInequalities
 
 /-!
@@ -282,7 +277,7 @@ theorem sum_card_filter_mem_forced (x : BitString N) :
 
 /-! ### Averaging over the orders -/
 
-/-- **The coding lemma** [Paturi, Pudlák and Zane, Lemma 2 and Fact 3][PaturiPudlakZane1999]: with
+/-- **The coding lemma** [Paturi, Pudlák and Zane, Lemma 1 and Fact 3][PaturiPudlakZane1999]: with
 `E(x)` the average, over all `N!` orders, of the number of variables forced on a solution `x`, the
 solutions satisfy `∑ₓ 2 ^ E(x) ≤ 2 ^ N`. -/
 theorem sum_two_rpow_average_card_forced_le (φ : CNF (Fin N)) :

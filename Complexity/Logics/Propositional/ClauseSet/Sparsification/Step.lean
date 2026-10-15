@@ -8,17 +8,11 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.Propositional.ClauseSet.Basic
-public import Cslib.Foundations.Data.BitString
+public import Mathlib.Order.Antichain
+public import Mathlib.Order.Minimal
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 import Mathlib.Algebra.Group.Action.Defs
-import Mathlib.Data.Finset.Max
-import Mathlib.Order.Interval.Finset.Nat
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.GCongr
 
 /-!
 # Sparsification -- the branching step
@@ -50,81 +44,95 @@ of the original clause set, they preserve the width and reducedness, and the pot
 
 @[expose] public section
 
-namespace Cslib.Logic.PL.ClauseSet.Sparsify
+namespace Cslib.Logic.PL.ClauseSet.Sparsification
 
 open Finset
 
-variable {N : ℕ}
+variable {V : Type*} [DecidableEq V]
 
-/-- Remove every clause that strictly contains another clause. -/
-def reduce (ψ : ClauseSet (Fin N)) : ClauseSet (Fin N) :=
+/-- Remove every clause that strictly contains another clause, keeping the minimal clauses
+(`mem_reduce_iff_minimal`). -/
+def reduce (ψ : ClauseSet V) : ClauseSet V :=
   ψ.filter fun C => ∀ D ∈ ψ, ¬ D ⊂ C
 
-/-- No clause strictly contains another. -/
-def Reduced (ψ : ClauseSet (Fin N)) : Prop :=
+/-- No clause strictly contains another: the clauses form an antichain
+(`reduced_iff_isAntichain`). -/
+def Reduced (ψ : ClauseSet V) : Prop :=
   ∀ C ∈ ψ, ∀ D ∈ ψ, ¬ D ⊂ C
 
 /-- The *flower* of `H` at clause size `c`: the clauses of size `c` that contain `H`. -/
-def flower (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) : ClauseSet (Fin N) :=
+def flower (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) : ClauseSet V :=
   ψ.filter fun C => C.card = c ∧ H ⊆ C
 
 /-- `H` is a *heavy heart* for clause size `c`: `1 ≤ |H| < c` and at least `θ (c - |H|)`
 clauses of size `c` contain `H`. -/
-def Heavy (θ : ℕ → ℕ) (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) : Prop :=
+def Heavy (θ : ℕ → ℕ) (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) : Prop :=
   1 ≤ H.card ∧ H.card < c ∧ θ (c - H.card) ≤ (flower ψ c H).card
 
 /-- A clause set is *sparse* for the thresholds `θ` when it has no heavy heart. -/
-def Sparse (θ : ℕ → ℕ) (ψ : ClauseSet (Fin N)) : Prop :=
+def Sparse (θ : ℕ → ℕ) (ψ : ClauseSet V) : Prop :=
   ∀ c H, ¬ Heavy θ ψ c H
 
 /-- A valid branching choice: a heavy heart with the smallest clause size, and among those the
 largest heart. -/
-def Choice (θ : ℕ → ℕ) (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) : Prop :=
+def Choice (θ : ℕ → ℕ) (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) : Prop :=
   Heavy θ ψ c H ∧ (∀ c' H', Heavy θ ψ c' H' → c ≤ c') ∧
     ∀ H', Heavy θ ψ c H' → H'.card ≤ H.card
 
 /-- The petals `C \ H` of the flower of `H`. -/
-def petals (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) : ClauseSet (Fin N) :=
+def petals (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) : ClauseSet V :=
   (flower ψ c H).image (· \ H)
 
 /-- The clauses a branch introduces: the heart (`false`) or the petals (`true`). -/
-def intro (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) : Bool → ClauseSet (Fin N)
+def intro (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) : Bool → ClauseSet V
   | false => {H}
   | true => petals ψ c H
 
 /-- A child of a branching node: add the introduced clauses and reduce. -/
-def child (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) (b : Bool) :
-    ClauseSet (Fin N) :=
+def child (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) (b : Bool) :
+    ClauseSet V :=
   reduce (ψ ∪ intro ψ c H b)
 
 /-- The potential `∑_{C ∈ ψ} 2 ^ |C|`, which every branching step decreases. -/
-def potential (ψ : ClauseSet (Fin N)) : ℕ :=
+def potential (ψ : ClauseSet V) : ℕ :=
   ∑ C ∈ ψ, 2 ^ C.card
 
 /-! ### Reduction -/
 
-theorem mem_reduce {ψ : ClauseSet (Fin N)} {C : Finset (Literal (Fin N))} :
+theorem mem_reduce {ψ : ClauseSet V} {C : Finset (Literal V)} :
     C ∈ reduce ψ ↔ C ∈ ψ ∧ ∀ D ∈ ψ, ¬ D ⊂ C := by
   simp only [reduce, mem_filter]
 
-theorem reduce_subset (ψ : ClauseSet (Fin N)) : reduce ψ ⊆ ψ := fun _ h => (mem_reduce.mp h).1
+/-- The reduction keeps the minimal clauses. -/
+theorem mem_reduce_iff_minimal {ψ : ClauseSet V} {C : Finset (Literal V)} :
+    C ∈ reduce ψ ↔ Minimal (· ∈ ψ) C := by
+  rw [mem_reduce, Minimal]
+  refine and_congr_right fun _ => ⟨fun h D hD hDC => ?_, fun h D hD hDC => ?_⟩
+  · by_contra hCD
+    exact h D hD (ssubset_of_subset_not_subset hDC hCD)
+  · exact hDC.2 (h hD hDC.1)
 
-theorem reduced_reduce (ψ : ClauseSet (Fin N)) : Reduced (reduce ψ) := by
+omit [DecidableEq V] in
+/-- A reduced clause set is an antichain for inclusion. -/
+theorem reduced_iff_isAntichain {ψ : ClauseSet V} :
+    Reduced ψ ↔ IsAntichain (· ⊆ ·) (ψ : Set (Finset (Literal V))) := by
+  refine ⟨fun h C hC D hD hne hCD => h D hD C hC (ssubset_of_subset_of_ne hCD hne), fun h C hC D hD
+    hDC => h hD hC (ne_of_ssubset hDC) hDC.subset⟩
+
+theorem reduce_subset (ψ : ClauseSet V) : reduce ψ ⊆ ψ := fun _ h => (mem_reduce.mp h).1
+
+theorem reduced_reduce (ψ : ClauseSet V) : Reduced (reduce ψ) := by
   intro C hC D hD hDC
   exact (mem_reduce.mp hC).2 D (reduce_subset ψ hD) hDC
 
 /-- Every clause contains a clause of the reduction. -/
-theorem exists_mem_reduce_subset {ψ : ClauseSet (Fin N)} {C : Finset (Literal (Fin N))}
+theorem exists_mem_reduce_subset {ψ : ClauseSet V} {C : Finset (Literal V)}
     (hC : C ∈ ψ) : ∃ D ∈ reduce ψ, D ⊆ C := by
-  obtain ⟨D, hD, hmin⟩ := (ψ.filter (· ⊆ C)).exists_min_image card
-    ⟨C, mem_filter.mpr ⟨hC, subset_rfl⟩⟩
-  obtain ⟨hDψ, hDC⟩ := mem_filter.mp hD
-  refine ⟨D, mem_reduce.mpr ⟨hDψ, fun E hE hED => ?_⟩, hDC⟩
-  have := hmin E (mem_filter.mpr ⟨hE, hED.subset.trans hDC⟩)
-  exact absurd (card_lt_card hED) (not_lt.mpr this)
+  obtain ⟨D, hDC, hD⟩ := exists_minimal_le_of_wellFoundedLT (· ∈ ψ) C hC
+  exact ⟨D, mem_reduce_iff_minimal.2 hD, hDC⟩
 
 /-- Reduction does not change the solutions. -/
-theorem sat_reduce_iff {ψ : ClauseSet (Fin N)} {x : BitString N} : (reduce ψ).Sat x ↔ ψ.Sat x := by
+theorem sat_reduce_iff {ψ : ClauseSet V} {x : V → Bool} : (reduce ψ).Sat x ↔ ψ.Sat x := by
   constructor
   · intro hx C hC
     obtain ⟨D, hD, hDC⟩ := exists_mem_reduce_subset hC
@@ -132,14 +140,10 @@ theorem sat_reduce_iff {ψ : ClauseSet (Fin N)} {x : BitString N} : (reduce ψ).
     exact ⟨l, hDC hl, htrue⟩
   · exact fun hx C hC => hx C (reduce_subset ψ hC)
 
-theorem solutions_reduce (ψ : ClauseSet (Fin N)) : (reduce ψ).solutions = ψ.solutions := by
-  ext x
-  rw [mem_solutions, mem_solutions, sat_reduce_iff]
-
 /-- A clause of a reduced set that is not in the reduction of a larger set strictly contains one
 of the added clauses. -/
-theorem exists_ssubset_of_not_mem_reduce {ψ X : ClauseSet (Fin N)} (hred : Reduced ψ)
-    {a : Finset (Literal (Fin N))} (ha : a ∈ ψ) (hna : a ∉ reduce (ψ ∪ X)) : ∃ b ∈ X, b ⊂ a := by
+theorem exists_ssubset_of_notMem_reduce {ψ X : ClauseSet V} (hred : Reduced ψ)
+    {a : Finset (Literal V)} (ha : a ∈ ψ) (hna : a ∉ reduce (ψ ∪ X)) : ∃ b ∈ X, b ⊂ a := by
   rw [mem_reduce] at hna
   push Not at hna
   obtain ⟨D, hD, hDa⟩ := hna (mem_union_left _ ha)
@@ -149,37 +153,37 @@ theorem exists_ssubset_of_not_mem_reduce {ψ X : ClauseSet (Fin N)} (hred : Redu
 
 /-! ### Flowers, petals and choices -/
 
-theorem mem_flower {ψ : ClauseSet (Fin N)} {c : ℕ} {H C : Finset (Literal (Fin N))} :
+theorem mem_flower {ψ : ClauseSet V} {c : ℕ} {H C : Finset (Literal V)} :
     C ∈ flower ψ c H ↔ C ∈ ψ ∧ C.card = c ∧ H ⊆ C := mem_filter
 
-theorem flower_subset (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) :
+theorem flower_subset (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) :
     flower ψ c H ⊆ ψ := filter_subset _ _
 
-theorem mem_petals {ψ : ClauseSet (Fin N)} {c : ℕ} {H p : Finset (Literal (Fin N))} :
+theorem mem_petals {ψ : ClauseSet V} {c : ℕ} {H p : Finset (Literal V)} :
     p ∈ petals ψ c H ↔ ∃ C ∈ flower ψ c H, C \ H = p := mem_image
 
 /-- The petal map `C ↦ C \ H` is injective on the flower. -/
-theorem card_petals (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) :
+theorem card_petals (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) :
     (petals ψ c H).card = (flower ψ c H).card := by
   refine card_image_of_injOn fun C hC C' hC' h => ?_
   have hH : H ⊆ C := (mem_flower.mp hC).2.2
   have hH' : H ⊆ C' := (mem_flower.mp hC').2.2
   rw [← sdiff_union_of_subset hH, ← sdiff_union_of_subset hH', h]
 
-theorem card_of_mem_petals {ψ : ClauseSet (Fin N)} {c : ℕ} {H p : Finset (Literal (Fin N))}
+theorem card_of_mem_petals {ψ : ClauseSet V} {c : ℕ} {H p : Finset (Literal V)}
     (hp : p ∈ petals ψ c H) : p.card = c - H.card := by
   obtain ⟨C, hC, rfl⟩ := mem_petals.mp hp
   obtain ⟨-, hcard, hH⟩ := mem_flower.mp hC
   rw [card_sdiff_of_subset hH, hcard]
 
-theorem Heavy.flower_nonempty {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)} {c : ℕ}
-    {H : Finset (Literal (Fin N))} (h : Heavy θ ψ c H) : (flower ψ c H).Nonempty := by
+theorem Heavy.flower_nonempty {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V} {c : ℕ}
+    {H : Finset (Literal V)} (h : Heavy θ ψ c H) : (flower ψ c H).Nonempty := by
   rw [← card_pos]
   exact lt_of_lt_of_le (hθ _) h.2.2
 
 /-- Every introduced clause is nonempty and smaller than the flower's clause size. -/
-theorem card_of_mem_intro {θ : ℕ → ℕ} {ψ : ClauseSet (Fin N)} {c : ℕ} {H : Finset (Literal (Fin N))}
-    (h : Heavy θ ψ c H) {b : Bool} {a : Finset (Literal (Fin N))} (ha : a ∈ intro ψ c H b) :
+theorem card_of_mem_intro {θ : ℕ → ℕ} {ψ : ClauseSet V} {c : ℕ} {H : Finset (Literal V)}
+    (h : Heavy θ ψ c H) {b : Bool} {a : Finset (Literal V)} (ha : a ∈ intro ψ c H b) :
     1 ≤ a.card ∧ a.card < c := by
   obtain ⟨h1, hlt, -⟩ := h
   cases b with
@@ -192,8 +196,8 @@ theorem card_of_mem_intro {θ : ℕ → ℕ} {ψ : ClauseSet (Fin N)} {c : ℕ} 
     omega
 
 /-- Every introduced clause is strictly contained in a clause of the flower. -/
-theorem exists_flower_ssuperset {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)} {c : ℕ}
-    {H : Finset (Literal (Fin N))} (h : Heavy θ ψ c H) {b : Bool} {a : Finset (Literal (Fin N))}
+theorem exists_flower_ssuperset {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V} {c : ℕ}
+    {H : Finset (Literal V)} (h : Heavy θ ψ c H) {b : Bool} {a : Finset (Literal V)}
     (ha : a ∈ intro ψ c H b) : ∃ C ∈ flower ψ c H, a ⊂ C := by
   cases b with
   | false =>
@@ -210,8 +214,8 @@ theorem exists_flower_ssuperset {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ
     rw [← card_pos]
     exact h.1
 
-theorem intro_nonempty {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)} {c : ℕ}
-    {H : Finset (Literal (Fin N))} (h : Heavy θ ψ c H) (b : Bool) : (intro ψ c H b).Nonempty := by
+theorem intro_nonempty {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V} {c : ℕ}
+    {H : Finset (Literal V)} (h : Heavy θ ψ c H) (b : Bool) : (intro ψ c H b).Nonempty := by
   cases b with
   | false => exact singleton_nonempty H
   | true =>
@@ -220,21 +224,21 @@ theorem intro_nonempty {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : Clause
 
 /-! ### The children of a branching node -/
 
-theorem reduced_child (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) (b : Bool) :
+theorem reduced_child (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) (b : Bool) :
     Reduced (child ψ c H b) := reduced_reduce _
 
-theorem child_subset (ψ : ClauseSet (Fin N)) (c : ℕ) (H : Finset (Literal (Fin N))) (b : Bool) :
+theorem child_subset (ψ : ClauseSet V) (c : ℕ) (H : Finset (Literal V)) (b : Bool) :
     child ψ c H b ⊆ ψ ∪ intro ψ c H b := reduce_subset _
 
 /-- A child only loses solutions: its solutions are solutions of the parent. -/
-theorem sat_of_sat_child {ψ : ClauseSet (Fin N)} {c : ℕ} {H : Finset (Literal (Fin N))} {b : Bool}
-    {x : BitString N} (hx : (child ψ c H b).Sat x) : ψ.Sat x :=
+theorem sat_of_sat_child {ψ : ClauseSet V} {c : ℕ} {H : Finset (Literal V)} {b : Bool}
+    {x : V → Bool} (hx : (child ψ c H b).Sat x) : ψ.Sat x :=
   fun C hC => sat_reduce_iff.mp hx C (mem_union_left _ hC)
 
 /-- **The branches cover.** A solution of the parent satisfying the heart is a solution of the
 heart child; a solution falsifying it is a solution of the petal child. -/
-theorem sat_child_of_sat {ψ : ClauseSet (Fin N)} {c : ℕ} {H : Finset (Literal (Fin N))}
-    {x : BitString N} (hx : ψ.Sat x) :
+theorem sat_child_of_sat {ψ : ClauseSet V} {c : ℕ} {H : Finset (Literal V)}
+    {x : V → Bool} (hx : ψ.Sat x) :
     child ψ c H (decide ¬ ∃ l ∈ H, x l.1 = l.2) |>.Sat x := by
   rw [child, sat_reduce_iff]
   intro C hC
@@ -249,17 +253,17 @@ theorem sat_child_of_sat {ψ : ClauseSet (Fin N)} {c : ℕ} {H : Finset (Literal
       refine ⟨l, mem_sdiff.mpr ⟨hl, fun hlH => hH ⟨l, hlH, htrue⟩⟩, htrue⟩
 
 /-- Children keep the width. -/
-theorem card_le_of_mem_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)} {c k : ℕ}
-    {H : Finset (Literal (Fin N))} (h : Heavy θ ψ c H) (hk : ∀ C ∈ ψ, C.card ≤ k) {b : Bool}
-    {C : Finset (Literal (Fin N))} (hC : C ∈ child ψ c H b) : C.card ≤ k := by
+theorem card_le_of_mem_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V} {c k : ℕ}
+    {H : Finset (Literal V)} (h : Heavy θ ψ c H) (hk : ∀ C ∈ ψ, C.card ≤ k) {b : Bool}
+    {C : Finset (Literal V)} (hC : C ∈ child ψ c H b) : C.card ≤ k := by
   rcases mem_union.mp (child_subset ψ c H b hC) with hC | hC
   · exact hk C hC
   · obtain ⟨D, hD, hCD⟩ := exists_flower_ssuperset hθ h hC
     exact (card_le_card hCD.subset).trans (hk D (flower_subset ψ c H hD))
 
 /-- The flower disappears from both children. -/
-theorem disjoint_flower_child {θ : ℕ → ℕ} {ψ : ClauseSet (Fin N)} {c : ℕ}
-    {H : Finset (Literal (Fin N))} (h : Heavy θ ψ c H) (b : Bool) :
+theorem disjoint_flower_child {θ : ℕ → ℕ} {ψ : ClauseSet V} {c : ℕ}
+    {H : Finset (Literal V)} (h : Heavy θ ψ c H) (b : Bool) :
     Disjoint (flower ψ c H) (child ψ c H b) := by
   rw [Finset.disjoint_left]
   intro C hC hCchild
@@ -278,8 +282,8 @@ theorem disjoint_flower_child {θ : ℕ → ℕ} {ψ : ClauseSet (Fin N)} {c : �
     exact h.1
 
 /-- **Termination.** Each branching step strictly decreases the potential. -/
-theorem potential_child_lt {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)} {c : ℕ}
-    {H : Finset (Literal (Fin N))} (h : Heavy θ ψ c H) (b : Bool) :
+theorem potential_child_lt {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V} {c : ℕ}
+    {H : Finset (Literal V)} (h : Heavy θ ψ c H) (b : Bool) :
     potential (child ψ c H b) < potential ψ := by
   set F := flower ψ c H
   have hsub : child ψ c H b ⊆ (ψ \ F) ∪ intro ψ c H b := by
@@ -316,9 +320,9 @@ theorem potential_child_lt {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : Cl
     _ ≤ potential (ψ \ F) + potential (intro ψ c H b) := by
         unfold potential
         have := sum_union_inter (s₁ := ψ \ F) (s₂ := intro ψ c H b)
-          (f := fun C : Finset (Literal (Fin N)) => 2 ^ C.card)
+          (f := fun C : Finset (Literal V) => 2 ^ C.card)
         omega
     _ < potential (ψ \ F) + potential F := by rw [hF]; exact Nat.add_lt_add_left hX _
     _ = potential ψ := hFsplit.symm
 
-end Cslib.Logic.PL.ClauseSet.Sparsify
+end Cslib.Logic.PL.ClauseSet.Sparsification

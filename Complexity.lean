@@ -135,7 +135,6 @@ public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.ClauseSet.Basic
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification
-public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Asymptotics
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Path
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Step

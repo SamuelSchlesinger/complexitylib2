@@ -9,14 +9,8 @@ module
 
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Step
 import Mathlib.Algebra.Group.Action.Defs
-import Mathlib.Data.Finset.Max
 public import Mathlib.Order.Interval.Finset.Nat
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Positivity
-import Mathlib.Tactic.NormNum
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.GCongr
 
 /-!
 # Sparsification -- the analysis of one branch
@@ -47,22 +41,22 @@ clauses of size `j` (`mul_card_petalSteps_le`).
 
 @[expose] public section
 
-namespace Cslib.Logic.PL.ClauseSet.Sparsify
+namespace Cslib.Logic.PL.ClauseSet.Sparsification
 
 open Finset
 
-variable {N : ℕ}
+variable {V : Type*} [DecidableEq V]
 
 /-- One branch of the sparsification procedure, with `len` branching steps. -/
-structure Path (θ : ℕ → ℕ) (N : ℕ) where
+structure Path (θ : ℕ → ℕ) (V : Type*) [DecidableEq V] where
   /-- The number of branching steps. -/
   len : ℕ
   /-- The clause set at each node. -/
-  node : ℕ → ClauseSet (Fin N)
+  node : ℕ → ClauseSet V
   /-- The clause size of the flower chosen at each node. -/
   size : ℕ → ℕ
   /-- The heart chosen at each node. -/
-  heart : ℕ → Finset (Literal (Fin N))
+  heart : ℕ → Finset (Literal V)
   /-- The branch taken at each node: `false` for the heart, `true` for the petals. -/
   dir : ℕ → Bool
   choice : ∀ i < len, Choice θ (node i) (size i) (heart i)
@@ -70,10 +64,11 @@ structure Path (θ : ℕ → ℕ) (N : ℕ) where
   reduced_zero : Reduced (node 0)
 
 /-- Every clause of `α` is contained in a clause of `β`. -/
-def Refines (α β : ClauseSet (Fin N)) : Prop :=
+def Refines (α β : ClauseSet V) : Prop :=
   ∀ a ∈ α, ∃ b ∈ β, a ⊆ b
 
-theorem Refines.trans {α β γ : ClauseSet (Fin N)} (h₁ : Refines α β) (h₂ : Refines β γ) :
+omit [DecidableEq V] in
+theorem Refines.trans {α β γ : ClauseSet V} (h₁ : Refines α β) (h₂ : Refines β γ) :
     Refines α γ := by
   intro a ha
   obtain ⟨b, hb, hab⟩ := h₁ a ha
@@ -82,8 +77,8 @@ theorem Refines.trans {α β γ : ClauseSet (Fin N)} (h₁ : Refines α β) (h�
 
 /-- In a sparse clause set, at most `θ (c - 1)` clauses of size `c ≥ 1` contain a given
 literal. -/
-theorem card_flower_singleton_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)}
-    (hsparse : Sparse θ ψ) {c : ℕ} (hc : 1 ≤ c) (l : Literal (Fin N)) :
+theorem card_flower_singleton_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V}
+    (hsparse : Sparse θ ψ) {c : ℕ} (hc : 1 ≤ c) (l : Literal V) :
     (flower ψ c {l}).card ≤ θ (c - 1) := by
   by_cases hc2 : 2 ≤ c
   · have hnot := hsparse c {l}
@@ -99,40 +94,41 @@ theorem card_flower_singleton_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 �
       exact hθ 0
 
 /-- At most `2 N θ (c - 1)` clauses of size `c ≥ 1` survive in a sparse clause set. -/
-theorem card_filter_card_eq_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet (Fin N)}
+theorem card_filter_card_eq_le_of_sparse [Fintype V] {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j)
+    {ψ : ClauseSet V}
     (hsparse : Sparse θ ψ) {c : ℕ} (hc : 1 ≤ c) :
-    (ψ.filter (·.card = c)).card ≤ 2 * N * θ (c - 1) := by
+    (ψ.filter (·.card = c)).card ≤ 2 * Fintype.card V * θ (c - 1) := by
   have hflower := card_flower_singleton_le_of_sparse hθ hsparse hc
-  have hsub : ψ.filter (·.card = c) ⊆ univ.biUnion fun l : Literal (Fin N) => flower ψ c {l} := by
+  have hsub : ψ.filter (·.card = c) ⊆ univ.biUnion fun l : Literal V => flower ψ c {l} := by
     intro C hC
     obtain ⟨hCψ, hcard⟩ := mem_filter.mp hC
     obtain ⟨l, hl⟩ : C.Nonempty := by rw [← card_pos, hcard]; omega
     exact mem_biUnion.mpr ⟨l, mem_univ _, mem_flower.mpr ⟨hCψ, hcard, by simpa using hl⟩⟩
   calc (ψ.filter (·.card = c)).card
-      ≤ (univ.biUnion fun l : Literal (Fin N) => flower ψ c {l}).card := card_le_card hsub
-    _ ≤ ∑ l : Literal (Fin N), (flower ψ c {l}).card := card_biUnion_le
-    _ ≤ ∑ _l : Literal (Fin N), θ (c - 1) := sum_le_sum fun l _ => hflower l
-    _ = 2 * N * θ (c - 1) := by
-      rw [sum_const, card_univ, card_literal, Fintype.card_fin, smul_eq_mul]
+      ≤ (univ.biUnion fun l : Literal V => flower ψ c {l}).card := card_le_card hsub
+    _ ≤ ∑ l : Literal V, (flower ψ c {l}).card := card_biUnion_le
+    _ ≤ ∑ _l : Literal V, θ (c - 1) := sum_le_sum fun l _ => hflower l
+    _ = 2 * Fintype.card V * θ (c - 1) := by
+      rw [sum_const, card_univ, card_literal, smul_eq_mul]
 
 namespace Path
 
-variable {θ : ℕ → ℕ} (P : Path θ N)
+variable {θ : ℕ → ℕ} (P : Path θ V)
 
 /-- The clauses introduced by step `i`. -/
-def introAt (i : ℕ) : ClauseSet (Fin N) :=
+def introAt (i : ℕ) : ClauseSet V :=
   intro (P.node i) (P.size i) (P.heart i) (P.dir i)
 
 /-- All clauses introduced along the branch. -/
-def introduced : ClauseSet (Fin N) :=
+def introduced : ClauseSet V :=
   (range P.len).biUnion P.introAt
 
 /-- The introduced clauses of size `c`. -/
-def introducedOfCard (c : ℕ) : ClauseSet (Fin N) :=
+def introducedOfCard (c : ℕ) : ClauseSet V :=
   P.introduced.filter (·.card = c)
 
 /-- The new clauses of size `c` in node `j` that contain `b`; *new* means absent from the root. -/
-def newContaining (j c : ℕ) (b : Finset (Literal (Fin N))) : ClauseSet (Fin N) :=
+def newContaining (j c : ℕ) (b : Finset (Literal V)) : ClauseSet V :=
   (P.node j).filter fun a => a ∉ P.node 0 ∧ a.card = c ∧ b ⊆ a
 
 /-- The petal steps whose petals have size `j`. -/
@@ -220,7 +216,7 @@ theorem len_le_card_introduced : P.len ≤ P.introduced.card := by
     _ ≤ ∑ i ∈ range P.len, (P.introAt i).card :=
         sum_le_sum fun i hi => card_pos.mpr (intro_nonempty hθ (heavy (mem_range.mp hi)) _)
 
-theorem not_mem_node_zero_of_mem_introduced {a : Finset (Literal (Fin N))} (ha : a ∈ P.introduced) :
+theorem notMem_node_zero_of_mem_introduced {a : Finset (Literal V)} (ha : a ∈ P.introduced) :
     a ∉ P.node 0 := by
   obtain ⟨i, hi, hai⟩ := mem_biUnion.mp ha
   exact disjoint_left.mp (disjoint_introAt_node hθ (mem_range.mp hi) (Nat.zero_le i)) hai
@@ -228,15 +224,15 @@ theorem not_mem_node_zero_of_mem_introduced {a : Finset (Literal (Fin N))} (ha :
 /-- **Few new clauses contain a fixed clause** [Calabro, Lemma 5.9][Calabro2009]. Fewer than
 `2 θ (c - |b|)` new clauses of size `c` containing a fixed clause `b` with `1 ≤ |b| < c` are
 present in any node. -/
-theorem card_newContaining_lt {j c : ℕ} (hj : j ≤ P.len) {b : Finset (Literal (Fin N))}
+theorem card_newContaining_lt {j c : ℕ} (hj : j ≤ P.len) {b : Finset (Literal V)}
     (hb1 : 1 ≤ b.card) (hbc : b.card < c) :
     (P.newContaining j c b).card < 2 * θ (c - b.card) := by
-  set γ := P.newContaining j c b with hγ
+  set γ := P.newContaining j c b
   by_contra hge
   push Not at hge
   have hγ0 : ∀ a ∈ γ, a ∉ P.node 0 ∧ a.card = c ∧ b ⊆ a := fun a ha => (mem_filter.mp ha).2
   have hex : ∃ m, γ ⊆ P.node m := ⟨j, filter_subset _ _⟩
-  set x := Nat.find hex with hxdef
+  set x := Nat.find hex
   have hxsub : γ ⊆ P.node x := Nat.find_spec hex
   have hxle : x ≤ j := Nat.find_min' hex (filter_subset _ _)
   have hγne : γ.Nonempty := by
@@ -266,7 +262,7 @@ theorem card_newContaining_lt {j c : ℕ} (hj : j ≤ P.len) {b : Finset (Litera
     refine lt_of_le_of_lt (card_le_card fun a ha => ?_) hlight
     obtain ⟨haγ, hax'⟩ := mem_filter.mp ha
     exact mem_flower.mpr ⟨hax', (hγ0 a haγ).2.1, (hγ0 a haγ).2.2⟩
-  set Q := γ.filter (· ∉ P.node x') with hQ
+  set Q := γ.filter (· ∉ P.node x')
   have hsplit : (γ.filter (· ∈ P.node x')).card + Q.card = γ.card :=
     card_filter_add_card_filter_not (s := γ) (· ∈ P.node x')
   have hQcard : θ (c - b.card) + 1 ≤ Q.card := by omega
@@ -325,9 +321,11 @@ theorem card_newContaining_lt {j c : ℕ} (hj : j ≤ P.len) {b : Finset (Litera
 
 /-- **Counting introduced clauses.** If the last node is sparse, the introduced clauses of size
 `c ≥ 1` number at most `2 N θ (c - 1) + ∑_{1 ≤ h < c} 2 θ (c - h) · #(introduced, size h)`. -/
-theorem card_introducedOfCard_le (hleaf : Sparse θ (P.node P.len)) {c : ℕ} (hc : 1 ≤ c) :
+theorem card_introducedOfCard_le [Fintype V] (hleaf : Sparse θ (P.node P.len)) {c : ℕ}
+    (hc : 1 ≤ c) :
     (P.introducedOfCard c).card ≤
-      2 * N * θ (c - 1) + ∑ h ∈ Ico 1 c, 2 * θ (c - h) * (P.introducedOfCard h).card := by
+      2 * Fintype.card V * θ (c - 1) +
+        ∑ h ∈ Ico 1 c, 2 * θ (c - h) * (P.introducedOfCard h).card := by
   -- every introduced clause of size `c` survives to the leaf or is eliminated later
   have hcover : P.introducedOfCard c ⊆ (P.node P.len).filter (·.card = c) ∪
       (range P.len).biUnion fun m =>
@@ -336,7 +334,7 @@ theorem card_introducedOfCard_le (hleaf : Sparse θ (P.node P.len)) {c : ℕ} (h
     obtain ⟨haI, hac⟩ := mem_filter.mp ha
     obtain ⟨i, hi, hai⟩ := mem_biUnion.mp haI
     have hi' := mem_range.mp hi
-    have hnew := not_mem_node_zero_of_mem_introduced hθ haI
+    have hnew := notMem_node_zero_of_mem_introduced hθ haI
     by_cases hleafa : a ∈ P.node P.len
     · exact mem_union_left _ (mem_filter.mpr ⟨hleafa, hac⟩)
     · refine mem_union_right _ ?_
@@ -356,7 +354,7 @@ theorem card_introducedOfCard_le (hleaf : Sparse θ (P.node P.len)) {c : ℕ} (h
       have hred := reduced_node m hmlen.le
       have hstep : a ∉ child (P.node m) (P.size m) (P.heart m) (P.dir m) := by
         rw [← P.step m hmlen, ← hm]; exact hm₀a
-      obtain ⟨b, hb, hba⟩ := exists_ssubset_of_not_mem_reduce hred hma hstep
+      obtain ⟨b, hb, hba⟩ := exists_ssubset_of_notMem_reduce hred hma hstep
       refine mem_biUnion.mpr ⟨m, mem_range.mpr hmlen, mem_biUnion.mpr ⟨b, ?_, ?_⟩⟩
       · exact mem_filter.mpr ⟨hb, hac ▸ card_lt_card hba⟩
       · exact mem_filter.mpr ⟨hma, hnew, hac, hba.subset⟩
@@ -400,11 +398,12 @@ theorem card_introducedOfCard_le (hleaf : Sparse θ (P.node P.len)) {c : ℕ} (h
           ((range P.len).biUnion fun m =>
             ((P.introAt m).filter (·.card < c)).biUnion fun b => P.newContaining m c b).card :=
         card_union_le _ _
-    _ ≤ 2 * N * θ (c - 1) + ∑ m ∈ range P.len, ∑ b ∈ (P.introAt m).filter (·.card < c),
+    _ ≤ 2 * Fintype.card V * θ (c - 1) + ∑ m ∈ range P.len, ∑ b ∈ (P.introAt m).filter (·.card < c),
           (P.newContaining m c b).card := by
         refine add_le_add (card_filter_card_eq_le_of_sparse hθ hleaf hc) ?_
         exact card_biUnion_le.trans (sum_le_sum fun m _ => card_biUnion_le)
-    _ ≤ 2 * N * θ (c - 1) + ∑ h ∈ Ico 1 c, 2 * θ (c - h) * (P.introducedOfCard h).card :=
+    _ ≤ 2 * Fintype.card V * θ (c - 1) +
+          ∑ h ∈ Ico 1 c, 2 * θ (c - h) * (P.introducedOfCard h).card :=
         Nat.add_le_add_left hsum _
 
 /-- **Petal steps introduce many clauses.** The petal steps with petals of size `j` number at
@@ -444,7 +443,7 @@ theorem card_le_of_mem_node {k : ℕ} (hk : ∀ C ∈ P.node 0, C.card ≤ k) :
 
 /-- Introduced clauses have size between `1` and `k - 1`. -/
 theorem card_mem_Ico_of_mem_introduced {k : ℕ} (hk : ∀ C ∈ P.node 0, C.card ≤ k)
-    {a : Finset (Literal (Fin N))} (ha : a ∈ P.introduced) : a.card ∈ Ico 1 k := by
+    {a : Finset (Literal V)} (ha : a ∈ P.introduced) : a.card ∈ Ico 1 k := by
   obtain ⟨i, hi, hai⟩ := mem_biUnion.mp ha
   have hi' := mem_range.mp hi
   obtain ⟨h1, hlt⟩ := card_of_mem_intro (heavy hi') hai
@@ -482,4 +481,4 @@ end
 
 end Path
 
-end Cslib.Logic.PL.ClauseSet.Sparsify
+end Cslib.Logic.PL.ClauseSet.Sparsification

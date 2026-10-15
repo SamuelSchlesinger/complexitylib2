@@ -135,6 +135,10 @@ theorem CNF.eval_congr {σ τ : V → Bool} {φ : CNF V} (h : ∀ v ∈ φ.vars,
   rw [Clause.eval_eq_true_iff, Clause.eval_eq_true_iff]
   exact exists_congr fun l => and_congr_right fun hl => by rw [key c hc l hl]
 
+/-- The number of clauses of a formula, counted with repetition, mentioning the variable `v`. -/
+def CNF.occurrences [DecidableEq V] (φ : CNF V) (v : V) : ℕ :=
+  φ.countP fun c => decide (∃ l ∈ c, l.1 = v)
+
 /-! ### Implications -/
 
 /-- The clause `l₁ ∧ ⋯ ∧ lₙ → c` for literals `lᵢ`, that is `¬l₁ ∨ ⋯ ∨ ¬lₙ ∨ c`. -/

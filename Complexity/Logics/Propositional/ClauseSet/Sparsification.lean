@@ -9,7 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.ClauseSet.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Complexity.Logics.Propositional.ClauseSet.Sparsification.Asymptotics
+import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds
 
 /-!
 # The sparsification lemma
@@ -46,7 +46,70 @@ of their clauses.
 
 @[expose] public section
 
+universe u
+
 namespace Cslib.Logic.PL
+
+open Finset Filter
+
+/-- **A binomial tail bound.** For every `T ≥ 1`, `∑_{j ≤ ρ} (Λ choose j) ≤ exp (Λ / T) T ^ ρ`. -/
+private theorem sum_choose_le_exp_mul_pow (Λ ρ T : ℕ) (hT : 1 ≤ T) :
+    (∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ)) ≤ Real.exp (Λ / T) * (T : ℝ) ^ ρ := by
+  have hT0 : (0 : ℝ) < T := by exact_mod_cast hT
+  have hT1 : (1 : ℝ) ≤ T := by exact_mod_cast hT
+  set t : ℝ := 1 / T with ht
+  have ht0 : 0 ≤ t := by positivity
+  have hg : ∀ j, 0 ≤ (Λ.choose j : ℝ) * t ^ j := fun j => by positivity
+  have hpartial : ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j ≤ (1 + t) ^ Λ := by
+    set m := max (ρ + 1) (Λ + 1)
+    calc ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j
+        ≤ ∑ j ∈ range m, (Λ.choose j : ℝ) * t ^ j :=
+          sum_le_sum_of_subset_of_nonneg (range_subset_range.mpr (le_max_left _ _))
+            fun j _ _ => hg j
+      _ = ∑ j ∈ range (Λ + 1), (Λ.choose j : ℝ) * t ^ j := by
+          refine (sum_subset (range_subset_range.mpr (le_max_right _ _)) fun j _ hj => ?_).symm
+          rw [Nat.choose_eq_zero_of_lt (by simpa using hj), Nat.cast_zero, zero_mul]
+      _ = (1 + t) ^ Λ := by
+          rw [add_comm (1 : ℝ) t, add_pow]
+          refine sum_congr rfl fun j _ => ?_
+          rw [one_pow, mul_one, mul_comm]
+  calc (∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ))
+      ≤ ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j * (T : ℝ) ^ ρ := by
+        refine sum_le_sum fun j hj => ?_
+        have hjρ : j ≤ ρ := Nat.lt_succ_iff.mp (mem_range.mp hj)
+        have : 1 ≤ t ^ j * (T : ℝ) ^ ρ := by
+          rw [← Nat.add_sub_cancel' hjρ, pow_add, ← mul_assoc, ht, ← mul_pow, one_div,
+            inv_mul_cancel₀ hT0.ne', one_pow, one_mul]
+          exact one_le_pow₀ hT1
+        calc (Λ.choose j : ℝ) = (Λ.choose j : ℝ) * 1 := (mul_one _).symm
+          _ ≤ (Λ.choose j : ℝ) * (t ^ j * (T : ℝ) ^ ρ) :=
+              mul_le_mul_of_nonneg_left this (by positivity)
+          _ = (Λ.choose j : ℝ) * t ^ j * (T : ℝ) ^ ρ := by ring
+    _ = (∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j) * (T : ℝ) ^ ρ := by
+        rw [sum_mul]
+    _ ≤ (1 + t) ^ Λ * (T : ℝ) ^ ρ := by gcongr
+    _ ≤ Real.exp t ^ Λ * (T : ℝ) ^ ρ := by
+        gcongr
+        linarith [Real.add_one_le_exp t]
+    _ = Real.exp (Λ / T) * (T : ℝ) ^ ρ := by
+        rw [← Real.exp_nat_mul, ht]
+        ring_nf
+
+/-- A polynomial is eventually below an exponential with base `r > 1`. -/
+private theorem exists_mul_pow_le_pow (C : ℝ) (d : ℕ) {r : ℝ} (hr : 1 < r) :
+    ∃ α : ℕ, 1 ≤ α ∧ C * (α : ℝ) ^ d ≤ r ^ α := by
+  have hlim := tendsto_pow_const_div_const_pow_of_one_lt d hr
+  have hC : 0 < |C| + 1 := by positivity
+  have hev := (hlim.eventually (gt_mem_nhds (inv_pos.mpr hC))).and (eventually_ge_atTop 1)
+  obtain ⟨α, hα, hα1⟩ := hev.exists
+  refine ⟨α, hα1, ?_⟩
+  have hrα : 0 < r ^ α := pow_pos (by linarith) α
+  rw [div_lt_iff₀ hrα] at hα
+  have hpow : 0 ≤ (α : ℝ) ^ d := by positivity
+  calc C * (α : ℝ) ^ d ≤ (|C| + 1) * (α : ℝ) ^ d :=
+        mul_le_mul_of_nonneg_right (by linarith [le_abs_self C]) hpow
+    _ ≤ (|C| + 1) * ((|C| + 1)⁻¹ * r ^ α) := mul_le_mul_of_nonneg_left hα.le hC.le
+    _ = r ^ α := by field_simp
 
 /-- **The sparsification lemma** [Impagliazzo, Paturi and Zane][ImpagliazzoPaturiZane2001], **for
 clause sets.** For every width `k` and every `ε > 0` there is a constant `c` such that every clause
@@ -55,12 +118,95 @@ set `φ` over `N` variables whose clauses have at most `k` literals has a family
 occurs in at most `c` clauses, each having only solutions of `φ`, and whose solutions together
 cover those of `φ`. -/
 theorem ClauseSet.sparsification (k : ℕ) {ε : ℝ} (hε : 0 < ε) :
-    ∃ c : ℕ, ∀ (N : ℕ) (φ : ClauseSet (Fin N)), (∀ C ∈ φ, C.card ≤ k) →
-      ∃ Ψ : Finset (ClauseSet (Fin N)), (Ψ.card : ℝ) ≤ 2 ^ (ε * N) ∧
+    ∃ c : ℕ, ∀ (V : Type u) [Fintype V] [DecidableEq V] (φ : ClauseSet V),
+      (∀ C ∈ φ, C.card ≤ k) →
+      ∃ Ψ : Finset (ClauseSet V), (Ψ.card : ℝ) ≤ 2 ^ (ε * Fintype.card V) ∧
         (∀ ψ ∈ Ψ, (∀ C ∈ ψ, C.card ≤ k) ∧ (∀ v, ψ.occurrences v ≤ c) ∧
           ψ.solutions ⊆ φ.solutions) ∧
-        φ.solutions ⊆ Ψ.biUnion ClauseSet.solutions :=
-  ClauseSet.Sparsify.exists_sparsification k hε
+        φ.solutions ⊆ Ψ.biUnion ClauseSet.solutions := by
+  set K := max k 1
+  have hK : 1 ≤ K := le_max_right _ _
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  -- the parameter `M` controls `exp (Λ / T)`
+  obtain ⟨M, hM⟩ := exists_nat_gt (2 / (ε * Real.log 2))
+  have hMpos : (0 : ℝ) < M := lt_trans (by positivity) hM
+  have hM1 : 1 ≤ M := by exact_mod_cast hMpos
+  have hMε : 1 / (M : ℝ) ≤ ε / 2 * Real.log 2 := by
+    rw [div_le_iff₀ hMpos]
+    have := (div_lt_iff₀ (by positivity : 0 < ε * Real.log 2)).mp hM
+    nlinarith
+  -- the parameter `α` controls `T ^ ρ`
+  set r : ℝ := (2 : ℝ) ^ (ε / 2) with hr
+  have hr1 : 1 < r := Real.one_lt_rpow (by norm_num) (by positivity)
+  set C₀ : ℝ := ((M * K * (2 * K) ^ (2 * K) : ℕ) : ℝ) ^ (K - 1)
+  obtain ⟨α, hα, hαbound⟩ := exists_mul_pow_le_pow C₀ (2 * K * (K - 1)) hr1
+  have hθ := Sparsification.one_le_threshold hK hα
+  refine ⟨2 * ∑ j ∈ range K, Sparsification.threshold K α j, fun V _ _ φ hφ => ?_⟩
+  have hφK : ∀ C ∈ φ, C.card ≤ K := fun C hC => (hφ C hC).trans (le_max_left _ _)
+  obtain ⟨Ψ, hcard, hleaves, hcover⟩ := Sparsification.exists_leaves hK hα φ hφK
+  refine ⟨Ψ, ?_, fun ψ hψ => ?_, fun x hx => ?_⟩
+  · -- the number of leaves
+    set X := Sparsification.base K α
+    set Λ := Fintype.card V * (K * X ^ (2 * K))
+    set ρ := (K - 1) * Fintype.card V / α
+    set T := M * (K * X ^ (2 * K))
+    have hX : 1 ≤ X := Sparsification.one_le_base hK hα
+    have hT : 1 ≤ T := Nat.one_le_iff_ne_zero.mpr
+      (Nat.mul_ne_zero (by omega) (Nat.mul_ne_zero (by omega) (pow_ne_zero _ (by omega))))
+    have hT0 : (0 : ℝ) < T := by exact_mod_cast hT
+    have hTR1 : (1 : ℝ) ≤ T := by exact_mod_cast hT
+    have hsum := sum_choose_le_exp_mul_pow Λ ρ T hT
+    -- `exp (Λ / T) ≤ 2 ^ (ε N / 2)`
+    have hexp : Real.exp (Λ / T) ≤ (2 : ℝ) ^ (ε / 2 * Fintype.card V) := by
+      have hΛT : (Λ : ℝ) / T = Fintype.card V / M := by
+        have hKX : (0 : ℝ) < (K * X ^ (2 * K) : ℕ) := by
+          exact_mod_cast Nat.mul_pos (by omega) (pow_pos (by omega) _)
+        simp only [Λ, T, Nat.cast_mul] at hKX ⊢
+        field_simp
+      rw [hΛT, Real.rpow_def_of_pos (by norm_num)]
+      refine Real.exp_le_exp.mpr ?_
+      have hN : (0 : ℝ) ≤ Fintype.card V := Nat.cast_nonneg (Fintype.card V)
+      calc (Fintype.card V : ℝ) / M = Fintype.card V * (1 / M) := by ring
+        _ ≤ Fintype.card V * (ε / 2 * Real.log 2) := mul_le_mul_of_nonneg_left hMε hN
+        _ = Real.log 2 * (ε / 2 * Fintype.card V) := by ring
+    -- `T ^ ρ ≤ 2 ^ (ε N / 2)`
+    have hTK : (T : ℝ) ^ (K - 1) ≤ r ^ α := by
+      have hTeq : (T : ℝ) ^ (K - 1) = C₀ * (α : ℝ) ^ (2 * K * (K - 1)) := by
+        simp only [T, X, Sparsification.base, C₀, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat]
+        ring
+      rw [hTeq]
+      exact hαbound
+    have hTρ : (T : ℝ) ^ ρ ≤ (2 : ℝ) ^ (ε / 2 * Fintype.card V) := by
+      have hαρ : ρ * α ≤ (K - 1) * Fintype.card V := Nat.div_mul_le_self _ _
+      have hpow : ((T : ℝ) ^ ρ) ^ α ≤ ((2 : ℝ) ^ (ε / 2 * Fintype.card V)) ^ α := by
+        calc ((T : ℝ) ^ ρ) ^ α = (T : ℝ) ^ (ρ * α) := (pow_mul _ _ _).symm
+          _ ≤ (T : ℝ) ^ ((K - 1) * Fintype.card V) := pow_le_pow_right₀ hTR1 hαρ
+          _ = ((T : ℝ) ^ (K - 1)) ^ Fintype.card V := pow_mul _ _ _
+          _ ≤ (r ^ α) ^ Fintype.card V := pow_le_pow_left₀ (by positivity) hTK (Fintype.card V)
+          _ = ((2 : ℝ) ^ (ε / 2 * Fintype.card V)) ^ α := by
+              rw [hr, ← pow_mul, ← Real.rpow_natCast, ← Real.rpow_natCast,
+                ← Real.rpow_mul (by norm_num), ← Real.rpow_mul (by norm_num)]
+              congr 1
+              push_cast
+              ring
+      exact (pow_le_pow_iff_left₀ (by positivity) (by positivity) (by omega)).mp hpow
+    calc (Ψ.card : ℝ) ≤ ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) := by exact_mod_cast hcard
+      _ ≤ Real.exp (Λ / T) * (T : ℝ) ^ ρ := hsum
+      _ ≤ (2 : ℝ) ^ (ε / 2 * Fintype.card V) * (2 : ℝ) ^ (ε / 2 * Fintype.card V) :=
+          mul_le_mul hexp hTρ (by positivity) (by positivity)
+      _ = 2 ^ (ε * Fintype.card V) := by
+          rw [← Real.rpow_add (by norm_num)]
+          ring_nf
+  · obtain ⟨hsparse, hrefine, hsat⟩ := hleaves ψ hψ
+    have hψK : ∀ C ∈ ψ, C.card ≤ K := fun C hC => by
+      obtain ⟨D, hD, hCD⟩ := hrefine C hC
+      exact (card_le_card hCD).trans (hφK D hD)
+    refine ⟨fun C hC => ?_, Sparsification.occurrences_le_of_sparse hθ hsparse hψK, fun x hx => ?_⟩
+    · obtain ⟨D, hD, hCD⟩ := hrefine C hC
+      exact (card_le_card hCD).trans (hφ D hD)
+    · exact mem_solutions.mpr (hsat x (mem_solutions.mp hx))
+  · obtain ⟨ψ, hψ, hψx⟩ := hcover x (mem_solutions.mp hx)
+    exact mem_biUnion.mpr ⟨ψ, hψ, mem_solutions.mpr hψx⟩
 
 /-- **The sparsification lemma** [Impagliazzo, Paturi and Zane][ImpagliazzoPaturiZane2001]. For
 every width `k` and every `ε > 0` there is a constant `c` such that every formula `φ` in
@@ -69,14 +215,14 @@ disjunction of at most `2 ^ (ε N)` such formulas, in each of which every variab
 `c` clauses: each of them accepts only inputs that `φ` accepts, and every input that `φ` accepts is
 accepted by one of them. -/
 theorem CNF.sparsification (k : ℕ) {ε : ℝ} (hε : 0 < ε) :
-    ∃ c : ℕ, ∀ (N : ℕ) (φ : CNF (Fin N)), (∀ cl ∈ φ, cl.length ≤ k) →
-      ∃ Fs : List (CNF (Fin N)), (Fs.length : ℝ) ≤ 2 ^ (ε * N) ∧
+    ∃ c : ℕ, ∀ (V : Type u) [Fintype V] [DecidableEq V] (φ : CNF V), (∀ cl ∈ φ, cl.length ≤ k) →
+      ∃ Fs : List (CNF V), (Fs.length : ℝ) ≤ 2 ^ (ε * Fintype.card V) ∧
         (∀ F ∈ Fs, (∀ cl ∈ F, cl.length ≤ k) ∧ (∀ v, F.occurrences v ≤ c) ∧
           ∀ x, F.eval x = true → φ.eval x = true) ∧
         ∀ x, φ.eval x = true → ∃ F ∈ Fs, F.eval x = true := by
   obtain ⟨c, hc⟩ := ClauseSet.sparsification k hε
-  refine ⟨c, fun N φ hφ => ?_⟩
-  obtain ⟨Ψ, hcard, hleaves, hcover⟩ := hc N φ.toClauseSet fun C hC => by
+  refine ⟨c, fun V _ _ φ hφ => ?_⟩
+  obtain ⟨Ψ, hcard, hleaves, hcover⟩ := hc V φ.toClauseSet fun C hC => by
     obtain ⟨cl, hcl, hle⟩ := CNF.exists_card_le_of_mem_toClauseSet hC
     exact hle.trans (hφ cl hcl)
   refine ⟨Ψ.toList.map ClauseSet.toCNF, by simpa using hcard, fun F hF => ?_, fun x hx => ?_⟩
