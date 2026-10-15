@@ -27,6 +27,7 @@ import Complexity.Computability.Circuit.Frontier.Reduction
 import Complexity.Computability.Circuit.Frontier.Unconditional
 import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 import Complexity.Logics.SecondOrder.Coloring
+import Complexity.Computability.PCP.GapTheorem
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
 import Complexity.Computability.PCP.Composition
@@ -296,6 +297,14 @@ example (φ : CNF ℕ) (hφ : φ = [[(0, true)], [(0, false)]]) :
     rintro ⟨σ, hσ⟩
     simp [CNF.eval, Clause.eval, Literal.eval] at hσ
   exact lt_of_lt_of_le (by positivity) (ConstraintGraph.le_unsatVal_preprocess _)
+
+/-- Dinur's gap theorem applies: the gap graph of an unsatisfiable formula has value at least the
+gap. -/
+example :
+    Dinur.gap ≤ (Dinur.gapGraph ([[((), true)], [((), false)]] : CNF Unit)).graph.unsatVal := by
+  refine Dinur.gap_le_unsatVal_gapGraph _ (by simp) ?_
+  rintro ⟨σ, hσ⟩
+  cases h : σ () <;> simp_all [CNF.eval, Clause.eval, Literal.eval]
 
 end PCP
 

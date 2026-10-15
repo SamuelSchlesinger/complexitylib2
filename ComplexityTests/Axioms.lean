@@ -2217,4 +2217,100 @@ info: 'Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le_size' depends o
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le_size
 
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_amplify' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_amplify
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.satisfiable_amplify_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.satisfiable_amplify_iff
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.card_edges_amplify' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.card_edges_amplify
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.card_vertices_amplify' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.card_vertices_amplify
+
+/--
+info: 'Cslib.PCP.Dinur.min_le_unsatVal_amplify' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Dinur.min_le_unsatVal_amplify
+
+/--
+info: 'Cslib.PCP.Dinur.satisfiable_amplify_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Dinur.satisfiable_amplify_iff
+
+/--
+info: 'Cslib.PCP.Amplifier.min_le_unsatVal_iter' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Amplifier.min_le_unsatVal_iter
+
+/--
+info: 'Cslib.PCP.Amplifier.gap_le_unsatVal_iter' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Amplifier.gap_le_unsatVal_iter
+
+/--
+info: 'Cslib.PCP.Amplifier.unsatVal_iter_eq_zero_or_gap_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Amplifier.unsatVal_iter_eq_zero_or_gap_le
+
+/--
+info: 'Cslib.PCP.Amplifier.satisfiable_iter_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Amplifier.satisfiable_iter_iff
+
+/--
+info: 'Cslib.PCP.Amplifier.card_edges_iter_clog_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Amplifier.card_edges_iter_clog_le
+
+/--
+info: 'Cslib.PCP.Amplifier.card_vertices_iter_clog_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Amplifier.card_vertices_iter_clog_le
+
+/--
+info: 'Cslib.PCP.Dinur.satisfiable_gapGraph_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Dinur.satisfiable_gapGraph_iff
+
+/--
+info: 'Cslib.PCP.Dinur.gap_le_unsatVal_gapGraph' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Dinur.gap_le_unsatVal_gapGraph
+
+/--
+info: 'Cslib.PCP.Dinur.unsatVal_gapGraph_eq_zero_or_gap_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Dinur.unsatVal_gapGraph_eq_zero_or_gap_le
+
+/--
+info: 'Cslib.PCP.Dinur.exists_card_gapGraph_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Dinur.exists_card_gapGraph_le
+
 end ComplexityTests.Axioms
