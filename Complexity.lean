@@ -66,6 +66,7 @@ public import Complexity.Computability.Circuit.Frontier.Layouts.Basic
 public import Complexity.Computability.Circuit.Frontier.Layouts.Compression
 public import Complexity.Computability.Circuit.Frontier.Layouts.Cubic
 public import Complexity.Computability.Circuit.Frontier.Layouts.General
+public import Complexity.Computability.Circuit.Frontier.Layouts.Kernel
 public import Complexity.Computability.Circuit.Frontier.Layouts.Local
 public import Complexity.Computability.Circuit.Frontier.LowerBound
 public import Complexity.Computability.Circuit.Frontier.Multigraph
@@ -169,6 +170,7 @@ public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
+public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.Convolution
 public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
@@ -206,6 +208,7 @@ public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.MajorityVote
+public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Data.BitString.Agree
@@ -228,8 +231,13 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
+public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
+public import Complexity.Foundations.Probability.Gaussian.Multivariate
+public import Complexity.Foundations.Probability.Gaussian.Real
+public import Complexity.Foundations.Probability.Gaussian.Sheppard
+public import Complexity.Foundations.Probability.SecondMoment
 public import Complexity.Foundations.Relation.InductiveCounting
 public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Init

@@ -2061,4 +2061,76 @@ info: 'Cslib.Circuits.Frontier.Multigraph.ncard_edgeCut_threshold_le' depends on
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.Multigraph.ncard_edgeCut_threshold_le
 
+/--
+info: 'Real.sum_arccos_le_card_mul_arccos' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Real.sum_arccos_le_card_mul_arccos
+
+/--
+info: 'InnerProductGeometry.sum_offDiag_angle_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InnerProductGeometry.sum_offDiag_angle_le
+
+/--
+info: 'InnerProductGeometry.angle_eq_two_mul_arctan' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InnerProductGeometry.angle_eq_two_mul_arctan
+
+/--
+info: 'ProbabilityTheory.gaussianReal_Icc_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ProbabilityTheory.gaussianReal_Icc_le
+
+/--
+info: 'ProbabilityTheory.stdGaussian_map_inner' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ProbabilityTheory.stdGaussian_map_inner
+
+/--
+info: 'ProbabilityTheory.measurePreserving_toLp_pi_gaussianReal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ProbabilityTheory.measurePreserving_toLp_pi_gaussianReal
+
+/--
+info: 'ProbabilityTheory.gaussianReal_prod_setOf_abs_le_mul_abs' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ProbabilityTheory.gaussianReal_prod_setOf_abs_le_mul_abs
+
+/--
+info: 'ProbabilityTheory.measureReal_stdGaussian_mem_uIoc_le_angle' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ProbabilityTheory.measureReal_stdGaussian_mem_uIoc_le_angle
+
+/--
+info: 'ProbabilityTheory.variance_sum_indicator_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ProbabilityTheory.variance_sum_indicator_le
+
+/--
+info: 'ProbabilityTheory.measureReal_pi_le_abs_sum_indicator_sub_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ProbabilityTheory.measureReal_pi_le_abs_sum_indicator_sub_le
+
+/--
+info: 'SimpleGraph.card_edist_le_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms SimpleGraph.card_edist_le_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Gaussian.le_inner_unitKernelRow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Gaussian.le_inner_unitKernelRow
+
 end ComplexityTests.Axioms
