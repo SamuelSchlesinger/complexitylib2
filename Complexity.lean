@@ -60,11 +60,15 @@ public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
+public import Complexity.Computability.Circuit.Frontier.Compiler
 public import Complexity.Computability.Circuit.Frontier.Demand
+public import Complexity.Computability.Circuit.Frontier.LowerBound
 public import Complexity.Computability.Circuit.Frontier.Multigraph
 public import Complexity.Computability.Circuit.Frontier.Network
 public import Complexity.Computability.Circuit.Frontier.Rectangle
+public import Complexity.Computability.Circuit.Frontier.Reduction
 public import Complexity.Computability.Circuit.Frontier.Sweep
+public import Complexity.Computability.Circuit.InnerSize
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.MapOp
 public import Complexity.Computability.Circuit.Monotone.Basic

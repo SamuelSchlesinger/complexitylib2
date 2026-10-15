@@ -1917,4 +1917,64 @@ info: 'Cslib.RotationMap.neighbor_pow_take_rot_killedPow' depends on axioms: [pr
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.neighbor_pow_take_rot_killedPow
 
+/--
+info: 'Cslib.Circuits.Frontier.Compiler.satisfies_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Compiler.satisfies_iff
+
+/--
+info: 'Cslib.Circuits.Frontier.Compiler.connected' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Compiler.connected
+
+/--
+info: 'Cslib.Circuits.Frontier.Compiler.maxDegreeLE' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Compiler.maxDegreeLE
+
+/--
+info: 'Cslib.Circuits.Frontier.Compiler.cycleRank_add_ncard_read_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Compiler.cycleRank_add_ncard_read_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Compiler.card_vertex_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Compiler.card_vertex_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Network.logb_ncard_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Network.logb_ncard_accepted_le
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_graph_of_decides' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_graph_of_decides
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_lt_mul_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_lt_mul_innerSize
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_lt_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_lt_innerSize
+
+/--
+info: 'Cslib.Circuits.Circuit.innerSize_le_size' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.innerSize_le_size
+
 end ComplexityTests.Axioms

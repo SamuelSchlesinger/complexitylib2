@@ -22,7 +22,7 @@ import Complexity.Foundations.Combinatorics.Expander.TowerBase
 import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Computability.Kolmogorov.NisanWigderson
 import Complexity.Computability.RAM.Squaring
-import Complexity.Computability.Circuit.Frontier.Network
+import Complexity.Computability.Circuit.Frontier.Reduction
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
@@ -379,5 +379,55 @@ example {V D α : Type*} [Fintype V] [Fintype D] [Fintype α] [Nonempty α]
   · exact lt_min h₀ (by positivity)
 
 end Composition
+
+section FrontierReduction
+
+open Cslib.Circuits Cslib.Circuits.Frontier Set
+
+/-- The hypotheses of the reduction theorem are satisfiable: a one-gate circuit decides the
+inputs with exactly one bit set, an 8-element 2-rectangle-free set. -/
+example : ∃ (c : Circuit (fullSignature 8 Bool) 8 1) (S : Set (Fin 8 → Bool)),
+    c.FanInAtMost 8 ∧ c.Decides fullInterpretation {true} S ∧ RectangleFree S 2 ∧
+      Nat.card Bool * 2 ^ 2 ≤ S.ncard := by
+  let S : Set (Fin 8 → Bool) := {x | {i | x i = true}.ncard = 1}
+  -- Two set bits of an input of `S` coincide.
+  have huniq {x} (hx : x ∈ S) {i j} (hi : x i = true) (hj : x j = true) : i = j := by
+    obtain ⟨k, hk⟩ := ncard_eq_one.mp hx
+    exact ((hk ▸ hi : i ∈ ({k} : Set _))).trans (hk ▸ hj : j ∈ ({k} : Set _)).symm
+  refine ⟨⟨Program.empty.gate ⟨.fn fun x => decide ({i | x i = true}.ncard = 1),
+    fun k => .input k⟩, fun _ => .gate 0⟩, S, ⟨trivial, le_rfl⟩, fun x => ?_, ?_, ?_⟩
+  · change _ ↔ decide ({i | x i = true}.ncard = 1) = true
+    simp [S]
+  · -- A rectangle with two distinct sides on `X` forces every side on `Xᶜ` to be zero.
+    intro X A B hAB
+    by_contra! h
+    obtain ⟨a, a', ha, ha', hne⟩ := (one_lt_ncard_iff).mp (by omega : 1 < A.ncard)
+    obtain ⟨b, b', hb, hb', hne'⟩ := (one_lt_ncard_iff).mp (by omega : 1 < B.ncard)
+    classical
+    let z (a : X → Bool) (b : ↥Xᶜ → Bool) : Fin 8 → Bool :=
+      fun i => if h : i ∈ X then a ⟨i, h⟩ else b ⟨i, h⟩
+    have hz {a b} (ha : a ∈ A) (hb : b ∈ B) : z a b ∈ S := by
+      refine hAB ⟨?_, ?_⟩
+      · convert ha using 1; funext ⟨i, hi⟩; simp [z, hi]
+      · convert hb using 1; funext ⟨i, hi⟩; simp [z, show i ∉ X from hi]
+    have hzero {a} (ha : a ∈ A) {i : X} (hi : a i = true) {b} (hb : b ∈ B) :
+        b = fun _ => false := by
+      funext j
+      by_contra hj
+      have := huniq (hz ha hb) (i := i) (j := j) (by simp [z, i.2, hi])
+        (by simpa [z, show (j : Fin 8) ∉ X from j.2] using hj)
+      exact j.2 (this ▸ i.2)
+    obtain ⟨i, hi⟩ := Function.ne_iff.mp hne
+    rcases Bool.eq_false_or_eq_true (a i) with h₁ | h₁
+    · exact hne' ((hzero ha h₁ hb).trans (hzero ha h₁ hb').symm)
+    · have h₂ : a' i = true := by simpa [h₁] using hi
+      exact hne' ((hzero ha' h₂ hb).trans (hzero ha' h₂ hb').symm)
+  · -- The eight unit vectors lie in `S`.
+    let e (i : Fin 8) : Fin 8 → Bool := fun j => decide (j = i)
+    have he : Function.Injective e := fun i i' h => by simpa [e] using congrFun h i
+    calc Nat.card Bool * 2 ^ 2 = (range e).ncard := by simp [ncard_range_of_injective he]
+      _ ≤ S.ncard := ncard_le_ncard (range_subset_iff.mpr fun i => by simp [S, e]) (toFinite _)
+
+end FrontierReduction
 
 end ComplexityTests.NonVacuity
