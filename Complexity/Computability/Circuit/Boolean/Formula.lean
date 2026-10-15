@@ -213,8 +213,8 @@ theorem size_orList_add_one {l : List (Formula signature n)} (hl : l ≠ []) :
     rw [← List.map_take, ← List.map_drop] at hsum
     omega
 
-/-- A balanced disjunction is deeper than its disjuncts by `⌈log₂⌉` of their number of
-disjunctions; the disjunction of no formulas is a constant. -/
+/-- A balanced disjunction is deeper than its disjuncts by `⌈log₂⌉` of their number times the
+cost of a disjunction; the disjunction of no formulas is a constant. -/
 theorem depthWith_orList_le {cost : Op → ℕ} (l : List (Formula signature n)) {d : ℕ}
     (hl : ∀ F ∈ l, F.depthWith cost ≤ d) :
     (orList l).depthWith cost ≤ max d (cost (.const false)) + cost .or * Nat.clog 2 l.length := by
@@ -310,7 +310,7 @@ def literal (z : BitString n) (i : Fin n) : Formula signature n :=
   unfold literal
   cases z i <;> cases hx : x i <;> simp [hx]
 
-theorem depthWith_literal (z : BitString n) (i : Fin n) :
+@[simp] theorem depthWith_literal (z : BitString n) (i : Fin n) :
     (literal z i).depthWith binaryCost = 0 := by
   unfold literal
   split <;> simp
@@ -333,6 +333,8 @@ theorem exists_computes (f : BooleanFunction n) :
 end Formula
 
 namespace Boolean
+
+variable {n : ℕ}
 
 /-- The least depth of a De Morgan formula computing `f`, with negations and constants free. -/
 noncomputable def formulaDepth (f : BooleanFunction n) : ℕ :=

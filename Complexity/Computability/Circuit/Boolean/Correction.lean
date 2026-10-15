@@ -48,8 +48,7 @@ changed input is `Cslib.Circuits.Boolean.complexity_update_le`.
 
 ## References
 
-* [Stasys Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012], Chapter 1,
-  for circuit complexity over the De Morgan basis.
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
 -/
 
 @[expose] public section

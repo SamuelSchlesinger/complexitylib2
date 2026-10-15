@@ -12,6 +12,7 @@ public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.RewindInput
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
+public import Cslib.Foundations.Data.Fin.Tuple
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
@@ -53,11 +54,6 @@ sweeping until the first blank would not find them all.
 -/
 
 @[expose] public section
-
-/-- The tapes `0, …, k - 1` and `k, …, 2 k - 1` of `Fin (k + k)` are distinct. -/
-theorem Fin.castAdd_ne_natAdd {k : ℕ} (i j : Fin k) : Fin.castAdd k i ≠ Fin.natAdd k j := by
-  simp only [ne_eq, Fin.ext_iff, Fin.val_castAdd, Fin.val_natAdd]
-  omega
 
 namespace Turing.MultiTapeTM
 

@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Cslib.Computability.Circuit.Boolean.Complexity
-import Complexity.Computability.Circuit.Boolean.Correction
 import Complexity.Computability.Circuit.Boolean.Synthesis
 import Complexity.Computability.Circuit.Complexity
 import Complexity.Foundations.Data.BitString.Parity

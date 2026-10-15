@@ -25,7 +25,7 @@ width `w` [Barrington1989]. Like the circuit classes, `PolyLength M` is nonunifo
 
 A program that `σ`-computes `f`, with `σ ≠ 1`, decides `f` with the accepting set `{σ}`
 (`MonoidProgram.Computes.decides`), and an injective homomorphism of monoids embeds the classes
-(`PolyLength.mono`).
+(`PolyLength.subset_of_injective`).
 
 ## Main definitions
 
@@ -35,8 +35,8 @@ A program that `σ`-computes `f`, with `σ ≠ 1`, decides `f` with the acceptin
 ## Main results
 
 * `Cslib.BranchingPrograms.MonoidProgram.Computes.decides`: `σ`-computing is deciding.
-* `Cslib.BranchingPrograms.PolyLength.mono`: an injective homomorphism of monoids embeds the
-  classes.
+* `Cslib.BranchingPrograms.PolyLength.subset_of_injective`: an injective homomorphism of monoids
+  embeds the classes.
 
 ## References
 
@@ -91,7 +91,7 @@ def PolyLength (M : Type*) [Monoid M] : Set (Language Bool) :=
     ∃ (P : MonoidProgram n M) (S : Set M), P.Decides S (L.slice n) ∧ P.length ≤ s n}
 
 /-- **An injective homomorphism of monoids embeds the classes**: push the programs along it. -/
-theorem PolyLength.mono {φ : M →* N} (hφ : Function.Injective φ) :
+theorem PolyLength.subset_of_injective {φ : M →* N} (hφ : Function.Injective φ) :
     PolyLength M ⊆ PolyLength N := by
   rintro L ⟨s, hs, hP⟩
   refine ⟨s, hs, fun n => ?_⟩

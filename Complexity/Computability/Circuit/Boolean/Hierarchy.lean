@@ -17,10 +17,11 @@ import Mathlib.Analysis.SpecificLimits.Normed
 Changing one value of a Boolean function on `n` inputs changes its circuit complexity by at most
 `2 n + 3` (`complexity_update_le`). Walking from a constant function to a hard one, one value at a
 time, the complexity therefore takes every value between `1` and the complexity of the hard
-function, up to `2 n + 3` (`exists_complexity_mem_Ioc`). With Shannon's lower bound, every size
-below `2 ^ n / n` is the complexity of some function, up to `2 n + 3`, and so more gates allow
-strictly more languages (`SIZE_ssubset`). Walking from a constant function to any function `f`
-shows that `f` costs at most `2 ^ n (2 n + 3) + 1` gates (`complexity_le_two_pow_mul_add_one`).
+function, up to `2 n + 3` (`exists_complexity_mem_Ioc`). With Shannon's lower bound
+[Shannon1949], every size below `2 ^ n / n` is the complexity of some function, up to `2 n + 3`,
+and so more gates allow strictly more languages (`SIZE_ssubset`). Walking from a constant function
+to any function `f` shows that `f` costs at most `2 ^ n (2 n + 3) + 1` gates
+(`complexity_le_two_pow_mul_add_one`).
 
 ## Main results
 
@@ -32,6 +33,10 @@ shows that `f` costs at most `2 ^ n (2 n + 3) + 1` gates (`complexity_le_two_pow
   function are attained, up to `2 n + 3`.
 * `Cslib.Circuits.Boolean.SIZE_ssubset`: the size hierarchy.
 * `Cslib.Circuits.Boolean.SIZE_pow_ssubset`: `SIZE ((n + 1) ^ k) ⊂ SIZE ((n + 1) ^ (k + 1))`.
+
+## References
+
+* [C. E. Shannon, *The synthesis of two-terminal switching circuits*][Shannon1949]
 -/
 
 @[expose] public section

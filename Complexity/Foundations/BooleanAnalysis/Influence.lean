@@ -17,8 +17,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Influences on the Boolean cube
 
-The *derivative* of a real function `f` on the cube in coordinate `i` is half the change of `f`
-when bit `i` goes from `false` (sign `1`) to `true` (sign `-1`) (`BitString.derivative`); it is
+The *derivative* of a real function `f` on the cube in coordinate `i` is half the difference
+between its values at bit `i` equal to `false` (sign `1`) and to `true` (sign `-1`)
+(`BitString.derivative`); it is
 O'Donnell's `Dᵢ f` when bits are read as the signs `BitString.signVal`. The *influence* of
 `i` on `f` is the mean square of this derivative (`BitString.influence`), and the *total
 influence* of `f` is the sum of its influences (`BitString.totalInfluence`).
@@ -84,8 +85,8 @@ private theorem sum_filter_mem_eq_sum_filter_notMem {M : Type*} [AddCommMonoid M
     (fun _ hS => insert_erase (mem_filter.1 hS).2) (fun _ hT => erase_insert (mem_filter.1 hT).2)
     fun _ hS => by rw [insert_erase (mem_filter.1 hS).2]
 
-/-- The derivative of `f` in coordinate `i`: half the change of `f` when bit `i` goes from
-`false`, of sign `1`, to `true`, of sign `-1`. -/
+/-- The derivative of `f` in coordinate `i`: half the difference between the values of `f` at
+bit `i` equal to `false`, of sign `1`, and to `true`, of sign `-1`. -/
 noncomputable def derivative (i : Fin n) (f : BitString n → ℝ) (x : BitString n) : ℝ :=
   (f (update x i false) - f (update x i true)) / 2
 

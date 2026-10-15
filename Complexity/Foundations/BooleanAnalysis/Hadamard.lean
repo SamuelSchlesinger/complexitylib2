@@ -32,10 +32,8 @@ probability `1 - ε` is within `ε` of the encoding of some message, unique when
 (`BitString.existsUnique_hammingDist_hadamardCode_le_of_le_blrAcceptance`)
 [O'Donnell, Section 1.6][ODonnell2014], [Arora and Barak, Section 11.5][AroraBarak09].
 
-The distance of the code comes from two facts about parities proved with the linearity test:
-distinct parities differ on half of the inputs (`BitString.two_mul_hammingDist_parityOn`), and a
-linear function that is not constantly `false` takes the value `true` on half of the inputs
-(`BitString.expect_boole_eq_one_div_two_of_xor`).
+The distance of the code comes from the fact that distinct parities differ on half of the inputs
+(`BitString.two_mul_hammingDist_parityOn`).
 
 ## Main definitions
 

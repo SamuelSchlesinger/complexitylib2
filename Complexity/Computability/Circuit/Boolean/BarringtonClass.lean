@@ -203,7 +203,8 @@ theorem NC_one_eq_polyLength_perm_five : NC 1 = PolyLength (Perm (Fin 5)) :=
 into which `Equiv.Perm (Fin 5)` embeds. -/
 theorem NC_one_eq_polyLength_of_injective {M : Type*} [Monoid M] [Finite M]
     {φ : Perm (Fin 5) →* M} (hφ : Function.Injective φ) : NC 1 = PolyLength M :=
-  (NC_one_subset_polyLength.trans (PolyLength.mono hφ)).antisymm (polyLength_subset_NC_one M)
+  (NC_one_subset_polyLength.trans (PolyLength.subset_of_injective hφ)).antisymm
+    (polyLength_subset_NC_one M)
 
 /-- For every `w ≥ 5`, NC¹ is the class of languages decided by permutation branching programs of
 width `w` and polynomial length, the programs over `Equiv.Perm (Fin w)`. -/

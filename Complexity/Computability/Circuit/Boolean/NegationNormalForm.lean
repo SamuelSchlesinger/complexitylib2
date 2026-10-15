@@ -88,12 +88,7 @@ theorem Formula.depth_nnf_le (F : Formula signature n) (b : Bool) :
     cases op with
     | const c => simp [nnf, Formula.const]
     | not => simpa [nnf] using ih 0 !b
-    | and =>
-      have h₀ := ih 0 b
-      have h₁ := ih 1 b
-      cases b <;> simp only [nnf, ← depthWith_one, depthWith_and, depthWith_or] <;>
-        simp [Fin.univ_succ] at h₀ h₁ ⊢ <;> omega
-    | or =>
+    | and | or =>
       have h₀ := ih 0 b
       have h₁ := ih 1 b
       cases b <;> simp only [nnf, ← depthWith_one, depthWith_and, depthWith_or] <;>

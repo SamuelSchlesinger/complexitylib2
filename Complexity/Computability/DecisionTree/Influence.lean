@@ -43,7 +43,7 @@ namespace Cslib.DecisionTree
 open Finset BitString
 open scoped BigOperators
 
-variable {n : ℕ}
+variable {n : ℕ} {β : Type*}
 
 /-- The total influence of a Boolean function, read as signs, is at most its sensitivity. -/
 theorem totalInfluence_le_sensitivity (f : BitString n → Bool) :

@@ -141,16 +141,20 @@ theorem exists_monoidProgram_computes [NeZero n] (F : Formula signature n) {σ :
       · rw [hR.not x]
         simp [interpretation]
 
+end Cslib.Circuits.Formula
+
+namespace Cslib.Circuits.Boolean
+
 /-- A function of formula depth `d` is `σ`-computed, for every `5`-cycle `σ`, by a permutation
 branching program of width `5` and length at most `4 ^ d`. -/
-theorem _root_.Cslib.Circuits.Boolean.exists_monoidProgram_computes_of_formulaDepth [NeZero n]
+theorem exists_monoidProgram_computes_of_formulaDepth [NeZero n]
     (f : BooleanFunction n) {σ : Perm (Fin 5)} (hσ : IsFiveCycle σ) :
     ∃ P : MonoidProgram n (Perm (Fin 5)), P.length ≤ 4 ^ formulaDepth f ∧ P.Computes σ f := by
   obtain ⟨F, hF, hd⟩ := exists_computes_depthWith_eq_formulaDepth f
   obtain ⟨P, hlen, hP⟩ := F.exists_monoidProgram_computes hσ
   exact ⟨P, hd ▸ hlen, fun x => (hP x).trans (by rw [hF x])⟩
 
-end Cslib.Circuits.Formula
+end Cslib.Circuits.Boolean
 
 /-! ### The converse -/
 
@@ -285,7 +289,7 @@ theorem exists_formula (P : MonoidProgram n (Function.End (Fin w))) (a : Fin w)
 /-- **Permutation branching programs give formulas.** A permutation branching program of width `w`
 and length `L` that `σ`-computes `f`, with `σ ≠ 1`, is turned into a De Morgan formula computing
 `f` of depth at most `(⌈log₂ w⌉ + 1) ⌈log₂ L⌉ + ⌈log₂ (w ^ 2)⌉`, with negations only at the
-leaves: `f` is true where some `a ≠ b` is mapped to `b`. -/
+leaves: `f` is true where some `a` is mapped to some `b ≠ a`. -/
 theorem Computes.exists_formula {P : MonoidProgram n (Perm (Fin w))} {σ : Perm (Fin w)}
     {f : BooleanFunction n} (hP : P.Computes σ f) (hσ : σ ≠ 1) :
     ∃ F : Formula signature n, F.Computes interpretation f ∧
