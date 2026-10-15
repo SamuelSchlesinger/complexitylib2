@@ -99,6 +99,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.R
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
+public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
