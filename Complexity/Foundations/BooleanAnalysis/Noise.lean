@@ -42,7 +42,8 @@ over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
 
 ## Main definitions
 
-* `Cslib.BitString.noiseOp`: the noise operator `T_ρ`.
+* `Cslib.BitString.noiseOp`, `Cslib.BitString.noiseOpₗ`: the noise operator `T_ρ`, and the same
+  as a linear map.
 * `Cslib.BitString.noiseStability`: the noise stability of a real function.
 * `Cslib.BitString.noiseSensitivity`: the noise sensitivity of a Boolean function.
 
@@ -156,6 +157,15 @@ theorem noiseOp_sub (ρ : ℝ) (f g : BitString n → ℝ) (x : BitString n) :
 theorem noiseOp_const_mul (ρ c : ℝ) (f : BitString n → ℝ) (x : BitString n) :
     noiseOp ρ (fun y => c * f y) x = c * noiseOp ρ f x :=
   bernoulliAverage_const_mul _ _ _
+
+/-- The noise operator `T_ρ`, as a linear map. -/
+noncomputable def noiseOpₗ (ρ : ℝ) : (BitString n → ℝ) →ₗ[ℝ] BitString n → ℝ where
+  toFun := noiseOp ρ
+  map_add' f g := funext (noiseOp_add ρ f g)
+  map_smul' c f := funext (noiseOp_const_mul ρ c f)
+
+@[simp] theorem noiseOpₗ_apply (ρ : ℝ) (f : BitString n → ℝ) : noiseOpₗ ρ f = noiseOp ρ f :=
+  rfl
 
 /-- **The noise operators form a semigroup**: `T_ρ T_σ = T_{ρ σ}`. -/
 theorem noiseOp_noiseOp (ρ σ : ℝ) (f : BitString n → ℝ) :
