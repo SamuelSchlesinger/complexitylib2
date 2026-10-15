@@ -14,6 +14,7 @@ public import Mathlib.Data.Fintype.Option
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Fintype.Powerset
 public import Mathlib.Logic.Function.DependsOn
+import Complexity.Foundations.Combinatorics.Hypergeometric
 
 /-!
 # Restrictions
@@ -296,6 +297,47 @@ theorem mem_withFree {ℓ : ℕ} : ρ ∈ withFree n ℓ ↔ ρ.free.card = ℓ 
 /-- There are `(n choose ℓ) 2 ^ (n - ℓ)` restrictions leaving exactly `ℓ` bits free. -/
 theorem card_withFree (n ℓ : ℕ) : (withFree n ℓ).card = n.choose ℓ * 2 ^ (n - ℓ) := by
   rw [card_extensions, free_none, Finset.card_univ, Fintype.card_fin]
+
+/-- A restriction with `ℓ'` free bits extends `C(n - ℓ', ℓ - ℓ')` of the restrictions with
+`ℓ ≥ ℓ'` free bits: those that free `ℓ - ℓ'` of its fixed bits. -/
+theorem card_filter_extends_withFree {ρ' : Restriction n} {ℓ : ℕ} (hℓ : ρ'.free.card ≤ ℓ) :
+    ((withFree n ℓ).filter fun ρ => ρ'.Extends ρ).card =
+      (n - ρ'.free.card).choose (ℓ - ρ'.free.card) := by
+  classical
+  have h := Finset.card_filter_subset_powersetCard (s := Finset.univ) (Finset.subset_univ ρ'.free)
+    hℓ
+  rw [Finset.card_univ, Fintype.card_fin] at h
+  rw [← h]
+  refine Finset.card_nbij' free (fun F i => if i ∈ F then none else ρ' i) (fun ρ hρ => ?_)
+    (fun F hF => ?_) (fun ρ hρ => ?_) (fun F hF => ?_)
+  · obtain ⟨hρ, hext⟩ := Finset.mem_filter.1 hρ
+    exact Finset.mem_filter.2 ⟨Finset.mem_powersetCard.2 ⟨Finset.subset_univ _,
+      (mem_withFree.1 hρ)⟩, hext.free_subset⟩
+  · obtain ⟨hF, hsub⟩ := Finset.mem_filter.1 hF
+    have hfree : free (fun i => if i ∈ F then none else ρ' i) = F := by
+      ext i
+      by_cases hi : i ∈ F
+      · simp [hi]
+      · simp only [mem_free, hi, ↓reduceIte, iff_false]
+        exact fun h => hi (hsub (mem_free.2 h))
+    refine Finset.mem_filter.2 ⟨mem_withFree.2 ?_, fun i b hb => ?_⟩
+    · rw [hfree]
+      exact (Finset.mem_powersetCard.1 hF).2
+    · by_cases hi : i ∈ F
+      · simp [hi] at hb
+      · simpa [hi] using hb
+  · obtain ⟨-, hext⟩ := Finset.mem_filter.1 hρ
+    funext i
+    by_cases hi : i ∈ ρ.free
+    · simp [hi, mem_free.1 hi]
+    · obtain ⟨b, hb⟩ := Option.ne_none_iff_exists'.1 fun h => hi (mem_free.2 h)
+      simp [hi, hb, hext i b hb]
+  · obtain ⟨-, hsub⟩ := Finset.mem_filter.1 hF
+    ext i
+    by_cases hi : i ∈ F
+    · simp [hi]
+    · simp only [mem_free, hi, ↓reduceIte, iff_false]
+      exact fun h => hi (hsub (mem_free.2 h))
 
 /-- The restriction fixing the bits outside `Y` to their values in `z`. -/
 def outside (Y : Finset (Fin n)) (z : BitString n) : Restriction n :=

@@ -227,6 +227,19 @@ theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString 
   rw [this, complexity_comp_of_injective (g := (· != b)) (by cases b <;> decide)]
   simpa only [Restriction.fill_fill_of_extends hext] using not_lt.1 hdeep
 
+open scoped Classical in
+/-- **The switching fraction for one operation**: if the arguments of an operation are shallow
+under `ρ`, at most a `2 ^ (-s)` fraction of the extensions of `ρ` with `ℓ` free bits leave it
+deep, when `s ≤ ℓ` and `ℓ` is at most a `1 / (16 s + 1)` fraction of the free bits of `ρ`. -/
+theorem two_pow_mul_card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString n → Bool}
+    (h : ∀ j, Shallow s ρ (args j)) (hs : 1 ≤ s) {ℓ : ℕ} (hsℓ : s ≤ ℓ)
+    (hℓ : (16 * s + 1) * ℓ ≤ #ρ.free) :
+    2 ^ s * #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
+      #(ρ.extensions ℓ) := by
+  refine (Nat.mul_le_mul_left _ (card_filter_not_shallow_le h ℓ)).trans ?_
+  rw [Restriction.card_extensions, Restriction.card_extensions]
+  exact two_pow_mul_switching_le hs hsℓ hℓ
+
 /-- **One stage of restrictions.** Given fewer than `2 ^ s` functions, each an operation applied to
 functions that are shallow under `ρ`, and `ℓ ≥ s` at most a `1 / (16 s + 1)` fraction of the free
 bits of `ρ`, some extension of `ρ` leaving `ℓ` bits free makes all of them shallow. -/

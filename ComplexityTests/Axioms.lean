@@ -586,4 +586,10 @@ info: 'Cslib.Circuits.Boolean.NC_subset_AC' depends on axioms: [propext, Classic
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.NC_subset_AC
 
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shallow_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shallow_le
+
 end ComplexityTests.Axioms
