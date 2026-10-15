@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Cslib.Crypto.Primitives.PRG.Defs
 public import Mathlib.Data.Fin.Tuple.Take
+import Complexity.Probability.PMF
 
 /-!
 # The next-bit test
@@ -149,41 +150,16 @@ section Uniform
 variable {ι β : Type*} [Fintype ι] [DecidableEq ι] [Fintype β] [Nonempty β]
 
 /-- Overwriting one coordinate of a uniform function by an independent uniform value leaves it
-uniform. -/
-private theorem uniformOfFintype_bind_map_update (i : ι) :
-    ((uniformOfFintype β).bind fun r =>
-      (uniformOfFintype (ι → β)).map fun z => Function.update z i r) =
-      uniformOfFintype (ι → β) := by
-  let e : β × (ι → β) ≃ (ι → β) × β :=
-    { toFun := fun p => (Function.update p.2 i p.1, p.2 i)
-      invFun := fun q => (q.1 i, Function.update q.1 i q.2)
-      left_inv := fun p => by simp
-      right_inv := fun q => by simp }
-  calc _ = (uniformOfFintype (β × (ι → β))).map (Prod.fst ∘ e) := by
-        rw [← uniformOfFintype_prod, PMF.map_bind]
-        simp only [PMF.map_comp]
-        rfl
-    _ = (uniformOfFintype ((ι → β) × β)).map Prod.fst := by
-        rw [← PMF.map_comp, uniformOfFintype_map_equiv]
-    _ = (uniformOfFintype (ι → β)).bind PMF.pure := by
-        rw [← uniformOfFintype_prod, PMF.map_bind]
-        simp only [PMF.map_comp, Function.comp_def]
-        congr 1
-        funext a
-        exact PMF.map_const _ _
-    _ = _ := PMF.bind_pure _
-
+uniform: `(r, z) ↦ (Function.update z i r, z i)` is an equivalence. -/
 private theorem uniformOfFintype_bind_bind_update {γ : Type*} (i : ι) (f : (ι → β) → PMF γ) :
     ((uniformOfFintype β).bind fun r =>
       (uniformOfFintype (ι → β)).bind fun z => f (Function.update z i r)) =
-      (uniformOfFintype (ι → β)).bind f := by
-  conv_rhs => rw [← uniformOfFintype_bind_map_update i]
-  simp only [PMF.bind_bind, PMF.bind_map]
-  rfl
-
-private theorem bind_apply_of_forall {α γ : Type*} (μ : PMF α) {f : α → PMF γ} {b : γ}
-    {c : ℝ≥0∞} (h : ∀ x, f x b = c) : μ.bind f b = c := by
-  simp only [PMF.bind_apply, h, ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
+      (uniformOfFintype (ι → β)).bind f :=
+  uniformOfFintype_bind_bind_fst_equiv
+    { toFun := fun p => (Function.update p.2 i p.1, p.2 i)
+      invFun := fun q => (q.1 i, Function.update q.1 i q.2)
+      left_inv := fun p => by simp
+      right_inv := fun q => by simp } f
 
 end Uniform
 

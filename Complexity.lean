@@ -205,6 +205,7 @@ public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.SigmaThree
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
+public import Complexity.Probability.PMF
 public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift

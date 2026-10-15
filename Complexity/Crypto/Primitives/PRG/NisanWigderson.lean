@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Mathlib.Data.Finset.Sort
 public import Mathlib.Logic.Function.DependsOn
+import Complexity.Probability.PMF
 
 /-!
 # The Nisan–Wigderson generator and its reconstruction
@@ -203,49 +204,14 @@ section Uniform
 
 variable [Fintype α] [Nonempty α]
 
-private theorem map_fst_uniformOfFintype_prod {β γ : Type*} [Fintype β] [Nonempty β] [Fintype γ]
-    [Nonempty γ] : (uniformOfFintype (β × γ)).map Prod.fst = uniformOfFintype β := by
-  rw [← uniformOfFintype_prod, PMF.map_bind]
-  simp only [PMF.map_comp, Function.comp_def]
-  calc _ = (uniformOfFintype β).bind PMF.pure := by
-        congr 1
-        funext b
-        exact PMF.map_const _ _
-    _ = _ := PMF.bind_pure _
-
-/-- Overwriting the `i`-th block of a uniform string by independent uniform bits leaves it
-uniform. -/
-private theorem Design.uniformOfFintype_bind_map_extend (D : Design ℓ n a m) (i : Fin m) :
-    ((uniformOfFintype (Fin ℓ → α)).bind fun w =>
-      (uniformOfFintype (Fin n → α)).map fun x => D.extend i x w) =
-      uniformOfFintype (Fin ℓ → α) := by
-  let e := Function.Involutive.toPerm _ (D.involutive_extend_restrict (α := α) i)
-  calc _ = (uniformOfFintype ((Fin ℓ → α) × (Fin n → α))).map (Prod.fst ∘ e) := by
-        rw [← uniformOfFintype_prod, PMF.map_bind]
-        simp only [PMF.map_comp]
-        rfl
-    _ = (uniformOfFintype ((Fin ℓ → α) × (Fin n → α))).map Prod.fst := by
-        rw [← PMF.map_comp, uniformOfFintype_map_equiv]
-    _ = _ := map_fst_uniformOfFintype_prod
-
+/-- Overwriting the `i`-th block of a uniform seed by independent uniform values leaves it
+uniform, inside an experiment: `(w, x) ↦ (D.extend i x w, D.restrict i w)` is a permutation. -/
 private theorem Design.uniformOfFintype_bind_eq {β : Type*} (D : Design ℓ n a m) (i : Fin m)
     (F : (Fin ℓ → α) → PMF β) :
     (uniformOfFintype (Fin ℓ → α)).bind F = (uniformOfFintype (Fin ℓ → α)).bind fun w =>
-      (uniformOfFintype (Fin n → α)).bind fun x => F (D.extend i x w) := by
-  conv_lhs => rw [← D.uniformOfFintype_bind_map_extend i]
-  simp only [PMF.bind_bind, PMF.bind_map]
-  rfl
-
-/-- Some outcome of the first stage of a two-stage experiment does at least as well as the
-experiment. -/
-private theorem exists_bind_apply_le {β γ : Type*} [Finite β] [Nonempty β] (μ : PMF β)
-    (F : β → PMF γ) (c : γ) : ∃ b, μ.bind F c ≤ F b c := by
-  obtain ⟨b, hb⟩ := Finite.exists_max fun b => F b c
-  refine ⟨b, ?_⟩
-  rw [PMF.bind_apply]
-  calc ∑' b', μ b' * F b' c ≤ ∑' b', μ b' * F b c :=
-        ENNReal.tsum_le_tsum fun b' => mul_le_mul_right (hb b') _
-    _ = F b c := by rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
+      (uniformOfFintype (Fin n → α)).bind fun x => F (D.extend i x w) :=
+  (uniformOfFintype_bind_bind_fst_equiv
+    (Function.Involutive.toPerm _ (D.involutive_extend_restrict (α := α) i)) F).symm
 
 private theorem toReal_uniformOfFintype_map_decide_apply_true {β : Type*} [Fintype β]
     [Nonempty β] (p : β → Prop) [DecidablePred p] :
