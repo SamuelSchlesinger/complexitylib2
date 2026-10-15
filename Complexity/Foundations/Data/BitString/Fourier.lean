@@ -44,6 +44,7 @@ coefficient on the circle, so the name is meant to be used qualified.
 ## Main results
 
 * `Cslib.BitString.expect_chi_mul_chi`: the characters are orthonormal.
+* `Cslib.BitString.chi_xor`: the characters are multiplicative.
 * `Cslib.BitString.sum_fourierCoeff_mul_chi`: the Fourier expansion.
 * `Cslib.BitString.fourierCoeff_sum_mul_chi`, `Cslib.BitString.fourierCoeff_injective`:
   uniqueness of the Fourier coefficients.
@@ -84,6 +85,10 @@ theorem signVal_mul_self (b : Bool) : signVal b * signVal b = 1 := by
 theorem signVal_mul_signVal (a b : Bool) : signVal a * signVal b = if a = b then 1 else -1 := by
   cases a <;> cases b <;> simp
 
+/-- The sign of an exclusive or is the product of the signs. -/
+@[simp] theorem signVal_xor (a b : Bool) : signVal (a ^^ b) = signVal a * signVal b := by
+  cases a <;> cases b <;> simp
+
 /-- The character of a set `S` of coordinates: the sign of the parity of the bits in `S`. -/
 def chi (S : Finset (Fin n)) (x : BitString n) : ℝ :=
   ∏ i ∈ S, signVal (x i)
@@ -111,6 +116,12 @@ theorem chi_mul_chi (S T : Finset (Fin n)) (x : BitString n) :
   simp only [chi_eq_prod_univ, ← prod_mul_distrib]
   refine prod_congr rfl fun i _ => ?_
   by_cases hS : i ∈ S <;> by_cases hT : i ∈ T <;> simp [hS, hT, mem_symmDiff, signVal_mul_self]
+
+/-- **Characters are multiplicative**: the character of the bitwise exclusive or of two strings is
+the product of their characters. -/
+theorem chi_xor (S : Finset (Fin n)) (x y : BitString n) :
+    chi S (fun i => x i ^^ y i) = chi S x * chi S y := by
+  simp only [chi, signVal_xor, prod_mul_distrib]
 
 /-- The characters of nonempty sets sum to zero. -/
 theorem sum_chi (S : Finset (Fin n)) :

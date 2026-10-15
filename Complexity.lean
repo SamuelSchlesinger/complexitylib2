@@ -128,11 +128,14 @@ public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Data.BitString.Agree
+public import Complexity.Foundations.Data.BitString.Convolution
 public import Complexity.Foundations.Data.BitString.Fourier
 public import Complexity.Foundations.Data.BitString.FourierRestriction
 public import Complexity.Foundations.Data.BitString.Influence
+public import Complexity.Foundations.Data.BitString.Linearity
 public import Complexity.Foundations.Data.BitString.LowDegree
 public import Complexity.Foundations.Data.BitString.LowDegreeParity
+public import Complexity.Foundations.Data.BitString.Noise
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append

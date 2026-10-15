@@ -46,6 +46,7 @@ rate `r` is at least the probability at rate `1 / 4` to the power `5 r`
 
 ## Main results
 
+* `Cslib.BooleanAnalysis.bernoulliAverage_prod`: the coordinates of a random mask are independent.
 * `Cslib.BooleanAnalysis.bernoulliAverage_coordinate`,
   `Cslib.BooleanAnalysis.bernoulliAverage_nonempty`: the probability that a coordinate is
   selected, and that some coordinate is.
@@ -112,6 +113,15 @@ theorem bernoulliAverage_mono {ι : Type*} [Fintype ι] [DecidableEq ι]
   split_ifs
   · exact hp
   · exact sub_nonneg.mpr hp'
+
+/-- **The coordinates of a random mask are independent**: the average of a product of functions of
+the separate coordinates is the product of their averages. -/
+theorem bernoulliAverage_prod {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (p : ℝ) (g : ι → Bool → ℝ) :
+    bernoulliAverage p (fun P => ∏ i, g i (P i)) = ∏ i, ((1 - p) * g i false + p * g i true) := by
+  simp only [bernoulliAverage, bernoulliWeight, ← prod_mul_distrib]
+  rw [← Fintype.prod_sum fun i (b : Bool) => (if b then p else 1 - p) * g i b]
+  simp only [Fintype.sum_bool, ite_true, Bool.false_eq_true, ite_false, add_comm]
 
 /-- Product Bernoulli weights sum to one. This identity holds algebraically
 for every `p`; they are nonnegative when `p ∈ [0, 1]`. -/

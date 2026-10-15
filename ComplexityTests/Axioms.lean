@@ -742,4 +742,64 @@ info: 'Cslib.BooleanAnalysis.exists_mirror_set' depends on axioms: [propext, Cla
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BooleanAnalysis.exists_mirror_set
 
+/--
+info: 'Cslib.BitString.influence_eq_sum_fourierCoeff_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.influence_eq_sum_fourierCoeff_sq
+
+/--
+info: 'Cslib.BitString.totalInfluence_signVal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.totalInfluence_signVal
+
+/--
+info: 'Cslib.BitString.expect_sub_expect_sq_le_totalInfluence' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.expect_sub_expect_sq_le_totalInfluence
+
+/--
+info: 'Cslib.BitString.fourierCoeff_noiseOp' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.fourierCoeff_noiseOp
+
+/--
+info: 'Cslib.BitString.noiseStability_eq_sum' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.noiseStability_eq_sum
+
+/--
+info: 'Cslib.BitString.noiseSensitivity_eq_sum' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.noiseSensitivity_eq_sum
+
+/--
+info: 'Cslib.BitString.fourierCoeff_convolution' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.fourierCoeff_convolution
+
+/--
+info: 'Cslib.BitString.exists_eq_parityOn_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.exists_eq_parityOn_iff
+
+/--
+info: 'Cslib.BitString.blrAcceptance_eq_sum_fourierCoeff_pow_three' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.blrAcceptance_eq_sum_fourierCoeff_pow_three
+
+/--
+info: 'Cslib.BitString.exists_hammingDist_parityOn_le_of_le_blrAcceptance' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.exists_hammingDist_parityOn_le_of_le_blrAcceptance
+
 end ComplexityTests.Axioms
