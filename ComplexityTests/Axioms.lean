@@ -556,4 +556,10 @@ info: 'Cslib.BitString.expect_sum_fourierCoeff_piecewise_sq' depends on axioms: 
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.expect_sum_fourierCoeff_piecewise_sq
 
+/--
+info: 'Cslib.Circuits.Boolean.complexity_existsGuess_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.complexity_existsGuess_le
+
 end ComplexityTests.Axioms

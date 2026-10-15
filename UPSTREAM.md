@@ -68,6 +68,7 @@ Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file de
 | `Complexity.Computability.DecisionTree.Fourier` | same path | candidate | decision trees of depth `d` have Fourier degree at most `d` |
 | `Complexity.Foundations.Data.BitString.FourierRestriction` | same path | candidate | Fourier coefficients of restrictions `x ↦ f (J.piecewise x z)` and their expected squares over `z` (O'Donnell Ch. 3), towards Linial–Mansour–Nisan |
 | `Complexity.Foundations.Combinatorics.DepthReduction` | same path | candidate | **Valiant's depth reduction** for edge sets with a grading (labelling increasing along edges): removing `r / k` of the edges divides `2 ^ k` levels by `2 ^ r` |
+| `Complexity.Computability.Circuit.Boolean.Nondeterminism` | same path | candidate | guessing the last `p` inputs (`∃`/`∀`) costs at most `2 ^ p (C + 3) + 1` gates |
 | `Complexity.Foundations.Data.Fin.Append` | Mathlib `Algebra/BigOperators/Fin.lean` | candidate | `Fin.card_filter_append`: counting in an appended tuple |
 | `Complexity.Foundations.Data.BitString.LowDegree` | same path | candidate | functions of degree at most `D` on the cube over a commutative ring, as the span of monomials of bits; closure, every function has degree `n`, dimension bound |
 | `Complexity.Foundations.Data.BitString.LowDegreeParity` | same path | candidate | over a field with `2` invertible, a degree-`D` function agrees with parity on at most `#{S : |S| ≤ n/2 + D}` inputs |
