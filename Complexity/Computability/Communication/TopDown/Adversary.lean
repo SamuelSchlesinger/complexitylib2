@@ -45,26 +45,26 @@ variable {ι M : Type*} [Fintype ι] [DecidableEq ι] [Fintype M]
 density rectangle of rate `p 0` and deficit `k 0` when the parameters grow fast enough,
 `1 ≤ k i`, `k (i + 1) ≥ max (194 k i) (2 k i + 2 + m)` and `p (i + 1) ≥ 32768 k i p i`, and the
 rates stay at most `1 / 4`. -/
-theorem not_solves_density {d : ℕ} (P : RoundProtocol ι M d)
+theorem not_solves_density {d : ℕ} (P : KWRoundProtocol ι M d)
     {X Y : Finset (ι → Bool)} {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m)
     (k p : ℕ → ℝ)
     (hstep : ∀ i < d, 1 ≤ k i ∧ 194 * k i ≤ k (i + 1) ∧
       2 * k i + 2 + m ≤ k (i + 1) ∧ 32768 * k i * p i ≤ p (i + 1))
     (hcap : ∀ i ≤ d, p i ≤ 1 / 4) (h : DensityRectangle X Y (p 0) (k 0)) :
-    ¬ P.Solves X Y := by
+    ¬ P.Solves DiffersAt X Y := by
   intro hsol
   induction d generalizing X Y k p with
   | zero =>
     cases P with
-    | answer i => exact h.not_separated (by linarith [hcap 0 (by omega)]) i hsol
+    | output i => exact h.not_separated (by linarith [hcap 0 (by omega)]) i hsol
   | succ d ih =>
     cases P with
-    | answer i => exact h.not_separated (by linarith [hcap 0 (by omega)]) i hsol
+    | output i => exact h.not_separated (by linarith [hcap 0 (by omega)]) i hsol
     | alice send next =>
       have hs := hstep 0 (by omega)
       obtain ⟨a, X', hsub, hsend, hnew⟩ := h.select_left_message send hM
         hs.1 hs.2.1 hs.2.2.1 hs.2.2.2 (hcap 1 (by omega))
-      have hchild : (next a).Solves X' Y := by
+      have hchild : (next a).Solves DiffersAt X' Y := by
         intro x hx y hy
         have he := hsol x (hsub hx) y hy
         simpa only [run, hsend x hx] using he
@@ -75,7 +75,7 @@ theorem not_solves_density {d : ℕ} (P : RoundProtocol ι M d)
       have hs := hstep 0 (by omega)
       obtain ⟨a, Y', hsub, hsend, hnew⟩ := h.swap.select_left_message send hM
         hs.1 hs.2.1 hs.2.2.1 hs.2.2.2 (hcap 1 (by omega))
-      have hchild : (next a).Solves X Y' := by
+      have hchild : (next a).Solves DiffersAt X Y' := by
         intro x hx y hy
         have he := hsol x hx y (hsub hy)
         simpa only [run, hsend y hy] using he
@@ -86,11 +86,11 @@ theorem not_solves_density {d : ℕ} (P : RoundProtocol ι M d)
 /-- Korten's adversary with explicit parameters: a protocol with `d` messages of at most `m` bits
 does not separate a density rectangle of rate `p` and deficit `k ≥ max 1 (m + 1)` when
 `(32768 · 194 ^ d k) ^ d p ≤ 1 / 4`. -/
-theorem not_solves_bounded_density {d : ℕ} (P : RoundProtocol ι M d)
+theorem not_solves_bounded_density {d : ℕ} (P : KWRoundProtocol ι M d)
     {X Y : Finset (ι → Bool)} {m k p : ℝ}
     (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hk : 1 ≤ k) (hmk : m + 1 ≤ k)
     (hbudget : (32768 * (194 : ℝ) ^ d * k) ^ d * p ≤ 1 / 4)
-    (h : DensityRectangle X Y p k) : ¬ P.Solves X Y := by
+    (h : DensityRectangle X Y p k) : ¬ P.Solves DiffersAt X Y := by
   let C : ℝ := 32768 * (194 : ℝ) ^ d * k
   let K (i : ℕ) : ℝ := (194 : ℝ) ^ i * k
   let B (i : ℕ) : ℝ := C ^ i * p
@@ -128,13 +128,13 @@ theorem not_solves_bounded_density {d : ℕ} (P : RoundProtocol ι M d)
 `k ≥ 1` and their points are `(p, k)`-limits of each other for a rate `p > 0`, then a protocol with
 `d + 1` messages of at most `m ≥ 0` bits does not separate them when
 `(32768 · 194 ^ d (m + k)) ^ d p ≤ 1 / 4`. -/
-theorem not_solves_bilateral_density {d : ℕ} (P : RoundProtocol ι M (d + 1))
+theorem not_solves_bilateral_density {d : ℕ} (P : KWRoundProtocol ι M (d + 1))
     {X Y : Finset (ι → Bool)} {m p k : ℝ}
     (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m) (hk : 1 ≤ k) (hp : 0 < p)
     (hX : X.Nonempty) (hY : Y.Nonempty) (hdX : uniformDeficit X ≤ k) (hdY : uniformDeficit Y ≤ k)
     (hleft : ∀ x ∈ X, IsDensityLimit Y p k x) (hright : ∀ y ∈ Y, IsDensityLimit X p k y)
     (hbudget : (32768 * (194 : ℝ) ^ d * (m + k)) ^ d * p ≤ 1 / 4) :
-    ¬ P.Solves X Y := by
+    ¬ P.Solves DiffersAt X Y := by
   classical
   have hC : 1 ≤ 32768 * (194 : ℝ) ^ d * (m + k) := by
     have hh : 1 ≤ (194 : ℝ) ^ d := one_le_pow₀ (by norm_num)
@@ -145,7 +145,7 @@ theorem not_solves_bilateral_density {d : ℕ} (P : RoundProtocol ι M (d + 1))
     exact ht.trans hbudget
   intro hsol
   cases P with
-  | answer i =>
+  | output i =>
     have h : DensityRectangle X Y p k := ⟨hX, hY, hdX, hdY, p, hp, le_rfl, Or.inl hleft⟩
     exact h.not_separated (by linarith) i hsol
   | alice send next =>

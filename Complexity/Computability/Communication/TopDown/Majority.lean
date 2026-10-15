@@ -306,7 +306,7 @@ variable {M : Type*} [Fintype M]
 /-- The bound for strict majority with explicit constants: no protocol with `d + 1` messages of at
 most `m` bits solves the Karchmer–Wigderson game of strict majority on `n` bits when
 `64 (32768 · 194 ^ d (m + strictMajorityDeficitBound n)) ^ d ≤ n`. -/
-theorem not_solvesKW_strictMajority {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
+theorem not_solvesKW_strictMajority {n d : ℕ} (P : KWRoundProtocol (Fin n) M (d + 1))
     {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m)
     (hsize : 64 * (32768 * (194 : ℝ) ^ d * (m + strictMajorityDeficitBound n)) ^ d ≤ (n : ℝ)) :
     ¬ P.SolvesKW (strictMajority n) := by
@@ -346,7 +346,7 @@ the Karchmer–Wigderson game of strict majority on `n` bits. -/
 theorem strictMajority_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ rounds) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ {M : Type u} [Fintype M],
       (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ (ε * (n : ℝ) ^ (((rounds - 1 : ℕ) : ℝ)⁻¹)) →
-        ∀ P : RoundProtocol (Fin n) M rounds, ¬ P.SolvesKW (strictMajority n) := by
+        ∀ P : KWRoundProtocol (Fin n) M rounds, ¬ P.SolvesKW (strictMajority n) := by
   obtain ⟨d, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (show rounds ≠ 0 by omega)
   have hd : 0 < d := by omega
   let ε : ℝ := 1 / (128 * (32768 * (194 : ℝ) ^ d))

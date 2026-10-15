@@ -105,22 +105,22 @@ theorem firstArg_of_op_eq_not {p : Program signature n g} {k : Fin g} (i₀ : Fi
 /-- The Karchmer–Wigderson protocol of the wire `w` with at most `d` messages: Alice holds an input
 where `w` is `s`, Bob one where it is `!s`. At a conjunction the player whose input makes it false
 names an argument false there, at a disjunction the player whose input makes it true names an
-argument true there, and a negation exchanges the roles. The default coordinate `i₀` is the answer
+argument true there, and a negation exchanges the roles. The default coordinate `i₀` is the output
 when the budget runs out. -/
 def kwProtocol (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (w : Wire n g)
-    (s : Bool) : RoundProtocol (Fin n) (Wire n g) d :=
+    (s : Bool) : KWRoundProtocol (Fin n) (Wire n g) d :=
   match w with
-  | .input i => .answer i
+  | .input i => .output i
   | .gate k =>
     match (p.lines k).op with
     | .not => kwProtocol p i₀ d (firstArg p i₀ k) (!s)
     | .and _ =>
       match d with
-      | 0 => .answer i₀
+      | 0 => .output i₀
       | d + 1 => .speak s (argWith p k false) fun c => kwProtocol p i₀ d c s
     | .or _ =>
       match d with
-      | 0 => .answer i₀
+      | 0 => .output i₀
       | d + 1 => .speak (!s) (argWith p k true) fun c => kwProtocol p i₀ d c s
 termination_by (d, p.wireDepths w)
 decreasing_by
@@ -258,7 +258,7 @@ inputs gives a Karchmer–Wigderson protocol for `f` with at most `d` messages f
 theorem exists_roundProtocol_of_computes {C : Circuit signature n 1} {f : BitString n → Bool}
     (hC : C.Computes interpretation (single f)) (i₀ : Fin n) {d : ℕ}
     (hd : C.depthWith andOrCost ≤ d) :
-    ∃ P : RoundProtocol (Fin n) (Wire n C.size) d, P.SolvesKW f := by
+    ∃ P : KWRoundProtocol (Fin n) (Wire n C.size) d, P.SolvesKW f := by
   have hval (x : BitString n) : C.program.trace interpretation x (C.outputs 0) = f x :=
     congrFun (hC x) 0
   refine ⟨kwProtocol C.program i₀ d (C.outputs 0) false, fun x y hx hy => ?_⟩
@@ -269,9 +269,9 @@ theorem exists_roundProtocol_of_computes {C : Circuit signature n 1} {f : BitStr
 /-- A protocol for `f` with messages from the wires of a circuit bounds its size: if no protocol
 over an alphabet of at most `2 ^ x` letters solves the game of `f`, then `2 ^ x < n + g`. -/
 private theorem two_rpow_lt_add_size {f : BitString n → Bool} {d : ℕ} {x : ℝ}
-    (h : ∀ P : RoundProtocol (Fin n) (Wire n g) d,
+    (h : ∀ P : KWRoundProtocol (Fin n) (Wire n g) d,
       (Fintype.card (Wire n g) : ℝ) ≤ (2 : ℝ) ^ x → ¬ P.SolvesKW f)
-    {P : RoundProtocol (Fin n) (Wire n g) d} (hP : P.SolvesKW f) : (2 : ℝ) ^ x < n + g := by
+    {P : KWRoundProtocol (Fin n) (Wire n g) d} (hP : P.SolvesKW f) : (2 : ℝ) ^ x < n + g := by
   have hcard : (Fintype.card (Wire n g) : ℝ) = n + g := by simp
   exact hcard ▸ lt_of_not_ge fun hle => h P hle hP
 
@@ -312,7 +312,7 @@ theorem two_rpow_lt_add_size_of_computes_majority {d : ℕ} (hd : 2 ≤ d) :
   obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
   have hneg (z : BitString n) : (!majority n fun i => !z i) = strictMajority n z := by
     simpa using (strictMajority_not fun i => !z i).symm
-  refine two_rpow_lt_add_size (P := P.swapPlayers.comap fun x i => !x i)
+  refine two_rpow_lt_add_size (P := P.swapPlayers.comap (fun x i => !x i) fun x i => !x i)
     (fun P h => hN n (le_of_max_le_left hn) h P) fun x y hx hy => ?_
   exact hP.swapPlayers.comap_not x y ((hneg x).trans hx) ((hneg y).trans hy)
 

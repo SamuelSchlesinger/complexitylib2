@@ -79,18 +79,18 @@ def childLiteral (i₀ : Fin n) (ls : List (Literal (Fin n))) (b : Bool) (x : Bi
 makes it `s`, with messages a child position below `S + 1` or a literal. -/
 def kwProtocol (S : ℕ) (i₀ : Fin n) :
     {d : ℕ} → AltOp → AltFormula n d → Bool →
-      RoundProtocol (Fin n) (Fin (S + 1) ⊕ Literal (Fin n)) d
-  | 0, _, l, _ => .answer l.1
+      KWRoundProtocol (Fin n) (Fin (S + 1) ⊕ Literal (Fin n)) d
+  | 0, _, l, _ => .output l.1
   | 1, op, ls, s =>
     .speak (speaker op s) (fun x => .inr (childLiteral i₀ ls (witness op) x)) fun
-      | .inr l => .answer l.1
-      | .inl _ => .answer i₀
+      | .inr l => .output l.1
+      | .inl _ => .output i₀
   | d + 2, op, fs, s =>
     .speak (speaker op s) (fun x => .inl ⟨min (childIndex op.dual fs (witness op) x) S, by omega⟩)
       fun
       | .inl j => if h : j.val < fs.length then kwProtocol S i₀ op.dual (fs.get ⟨j, h⟩) s
-        else .answer i₀
-      | .inr _ => .answer i₀
+        else .output i₀
+      | .inr _ => .output i₀
 
 theorem childIndex_spec {d : ℕ} {op : AltOp} {fs : List (AltFormula n d)} {b : Bool}
     {x : BitString n} (h : ∃ j : Fin fs.length, eval op (fs.get j) x = b) :
@@ -249,7 +249,7 @@ theorem two_rpow_lt_size_of_eval_eq_majority {d : ℕ} (hd : 2 ≤ d) :
       (!majority n fun i => !z i) = strictMajority n z := by
     simpa using (strictMajority_not fun i => !z i).symm
   have hQ : ((kwProtocol (size f) ⟨0, le_of_max_le_right hn⟩ op f false).swapPlayers.comap
-      fun x i => !x i).SolvesKW (strictMajority n) := fun x y hx hy =>
+      (fun x i => !x i) fun x i => !x i).SolvesKW (strictMajority n) := fun x y hx hy =>
     hP.swapPlayers.comap_not x y ((hneg x).trans hx) ((hneg y).trans hy)
   have h := lt_of_not_ge fun hle => hN n (le_of_max_le_left hn) hle _ hQ
   simp only [Fintype.card_sum, Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h
