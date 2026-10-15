@@ -279,31 +279,31 @@ end Formula
 
 namespace Boolean
 
-variable {n : ℕ}
+variable {n : ℕ} {f : BooleanFunction n}
 
-/-- The least depth of a De Morgan formula computing `f`, with negations and constants free. -/
+/-- The least depth of a De Morgan formula computing `f`, with negations and constants free: the
+least depth with costs `binaryCost` (`Formula.minDepthWith`), which is finite because every
+function has a formula (`Formula.exists_computes`). -/
 noncomputable def formulaDepth (f : BooleanFunction n) : ℕ :=
-  sInf {d | ∃ F : Formula signature n, F.Computes interpretation f ∧ F.depthWith binaryCost ≤ d}
+  (Formula.minDepthWith interpretation binaryCost f).toNat
 
-theorem formulaDepth_le {f : BooleanFunction n} {F : Formula signature n}
-    (hF : F.Computes interpretation f) : formulaDepth f ≤ F.depthWith binaryCost :=
-  Nat.sInf_le ⟨F, hF, le_rfl⟩
+/-- The formula depth is the least depth with costs `binaryCost`. -/
+theorem natCast_formulaDepth (f : BooleanFunction n) :
+    (formulaDepth f : ℕ∞) = Formula.minDepthWith interpretation binaryCost f :=
+  ENat.natCast_toNat (Formula.minDepthWith_ne_top_iff.2 (Formula.exists_computes f))
 
+/-- The formula depth is at most the depth of every formula computing the function. -/
+theorem formulaDepth_le {F : Formula signature n} (hF : F.Computes interpretation f) :
+    formulaDepth f ≤ F.depthWith binaryCost := by
+  exact_mod_cast (natCast_formulaDepth f).trans_le (Formula.minDepthWith_le hF)
+
+/-- Some formula attains the formula depth. -/
 theorem exists_computes_depthWith_eq_formulaDepth (f : BooleanFunction n) :
     ∃ F : Formula signature n, F.Computes interpretation f ∧
       F.depthWith binaryCost = formulaDepth f := by
-  obtain ⟨F₀, hF₀⟩ := Formula.exists_computes f
-  obtain ⟨F, hF, hle⟩ := Nat.sInf_mem (s := {d | ∃ F : Formula signature n,
-    F.Computes interpretation f ∧ F.depthWith binaryCost ≤ d}) ⟨_, F₀, hF₀, le_rfl⟩
-  exact ⟨F, hF, le_antisymm hle (formulaDepth_le hF)⟩
-
-/-- Lower bounds on formula depth are lower bounds on the depth of every formula. -/
-theorem le_formulaDepth_iff {f : BooleanFunction n} {d : ℕ} :
-    d ≤ formulaDepth f ↔ ∀ F : Formula signature n, F.Computes interpretation f →
-      d ≤ F.depthWith binaryCost := by
-  refine ⟨fun h F hF => h.trans (formulaDepth_le hF), fun h => ?_⟩
-  obtain ⟨F, hF, hd⟩ := exists_computes_depthWith_eq_formulaDepth f
-  exact hd ▸ h F hF
+  obtain ⟨F, hF, hd⟩ := Formula.exists_depthWith_eq_minDepthWith (cost := binaryCost)
+    (Formula.exists_computes f)
+  exact ⟨F, hF, by exact_mod_cast hd.trans (natCast_formulaDepth f).symm⟩
 
 end Boolean
 

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Computability.Communication.Protocol
+public import Complexity.Computability.Communication.KarchmerWigderson
 public import Mathlib.Data.Finset.Defs
 
 /-!
@@ -18,7 +18,8 @@ A *round protocol* for the Karchmer–Wigderson game sends at most `d` messages 
 (`RoundProtocol ι M d`): at each step the speaker, who may depend on the messages so far, sends one
 message computed from their input, and the protocol ends by naming a coordinate determined by the
 transcript. It *solves* the game on a rectangle `X × Y` when, for every `x ∈ X` held by Alice and
-`y ∈ Y` held by Bob, the inputs differ at the named coordinate (`RoundProtocol.Solves`), and the
+`y ∈ Y` held by Bob, the inputs differ at the named coordinate (`DiffersAt`,
+`RoundProtocol.Solves`), and the
 game of a Boolean function `f` when this holds with `f x = false` and `f y = true`
 (`RoundProtocol.SolvesKW`). This is the model of the top-down lower bounds of Korten
 [Korten2026], in which a circuit of AND/OR depth `d` with `w` wires gives a protocol with `d`
@@ -82,12 +83,12 @@ def run {d : ℕ} : RoundProtocol ι M d → (ι → Bool) → (ι → Bool) →
 /-- The protocol solves the Karchmer–Wigderson game on the rectangle `X × Y`: every `x ∈ X` and
 `y ∈ Y` differ at the named coordinate. -/
 def Solves {d : ℕ} (P : RoundProtocol ι M d) (X Y : Finset (ι → Bool)) : Prop :=
-  ∀ x ∈ X, ∀ y ∈ Y, x (P.run x y) ≠ y (P.run x y)
+  ∀ x ∈ X, ∀ y ∈ Y, DiffersAt x y (P.run x y)
 
 /-- The protocol solves the Karchmer–Wigderson game of `f`: Alice holds an input with `f x = false`,
 Bob one with `f y = true`, and they differ at the named coordinate. -/
 def SolvesKW {d : ℕ} (P : RoundProtocol ι M d) (f : (ι → Bool) → Bool) : Prop :=
-  ∀ x y, f x = false → f y = true → x (P.run x y) ≠ y (P.run x y)
+  ∀ x y, f x = false → f y = true → DiffersAt x y (P.run x y)
 
 /-- One message, sent by Bob if `b` and by Alice otherwise. -/
 def speak {d : ℕ} (b : Bool) (msg : (ι → Bool) → M) (next : M → RoundProtocol ι M d) :
@@ -141,7 +142,7 @@ theorem SolvesKW.comap_not {d : ℕ} {P : RoundProtocol ι M d} {f : (ι → Boo
 
 /-- A bit protocol of depth at most `d` naming a coordinate, as a round protocol with `d`
 messages of one bit. -/
-def ofProtocol : (p : Protocol (ι → Bool) (ι → Bool) ι) → (d : ℕ) → p.depth ≤ d →
+def ofProtocol : (p : KWProtocol ι) → (d : ℕ) → p.depth ≤ d →
     RoundProtocol ι Bool d
   | .output i, _, _ => .answer i
   | .alice _ _ _, 0, h => absurd h (by simp)
@@ -151,7 +152,7 @@ def ofProtocol : (p : Protocol (ι → Bool) (ι → Bool) ι) → (d : ℕ) →
   | .bob send p₀ p₁, d + 1, h => .bob send fun b =>
     cond b (ofProtocol p₁ d (by simp at h; omega)) (ofProtocol p₀ d (by simp at h; omega))
 
-@[simp] theorem run_ofProtocol : ∀ (p : Protocol (ι → Bool) (ι → Bool) ι) (d : ℕ)
+@[simp] theorem run_ofProtocol : ∀ (p : KWProtocol ι) (d : ℕ)
     (h : p.depth ≤ d) (x y : ι → Bool), (ofProtocol p d h).run x y = p.run x y
   | .output _, _, _, _, _ => rfl
   | .alice _ _ _, 0, h, _, _ => absurd h (by simp)
@@ -171,8 +172,8 @@ def ofProtocol : (p : Protocol (ι → Bool) (ι → Bool) ι) → (d : ℕ) →
 
 /-- A bit protocol for the Karchmer–Wigderson game of `f` with Alice holding the input where `f` is
 true solves, as a round protocol, the game of the negation of `f` in Korten's convention. -/
-theorem solvesKW_not_ofProtocol {f : (ι → Bool) → Bool} {p : Protocol (ι → Bool) (ι → Bool) ι}
-    (hp : p.Solves (fun x y i => x i ≠ y i) {x | f x = true} {y | f y = false}) (d : ℕ)
+theorem solvesKW_not_ofProtocol {f : (ι → Bool) → Bool} {p : KWProtocol ι}
+    (hp : p.Solves DiffersAt {x | f x = true} {y | f y = false}) (d : ℕ)
     (h : p.depth ≤ d) : (ofProtocol p d h).SolvesKW fun x => !f x := by
   intro x y hx hy
   rw [run_ofProtocol]
@@ -181,9 +182,8 @@ theorem solvesKW_not_ofProtocol {f : (ι → Bool) → Bool} {p : Protocol (ι �
 /-- A bit protocol for the Karchmer–Wigderson game of `f` with Alice holding the input where `f` is
 true gives, with the players exchanged, a round protocol solving `SolvesKW f` with one bit per
 message. -/
-theorem solvesKW_swapPlayers_ofProtocol {f : (ι → Bool) → Bool}
-    {p : Protocol (ι → Bool) (ι → Bool) ι}
-    (hp : p.Solves (fun x y i => x i ≠ y i) {x | f x = true} {y | f y = false}) (d : ℕ)
+theorem solvesKW_swapPlayers_ofProtocol {f : (ι → Bool) → Bool} {p : KWProtocol ι}
+    (hp : p.Solves DiffersAt {x | f x = true} {y | f y = false}) (d : ℕ)
     (h : p.depth ≤ d) : (ofProtocol p d h).swapPlayers.SolvesKW f := by
   simpa using (solvesKW_not_ofProtocol hp d h).swapPlayers
 

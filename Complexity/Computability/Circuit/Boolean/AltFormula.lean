@@ -317,7 +317,7 @@ theorem depth_toFormula_le {d : ℕ} (op : AltOp) (f : AltFormula n d) :
     cases op <;> exact Nat.succ_le_succ (Finset.sup_le fun j _ => ih _ _)
 
 theorem depthWith_toFormula_le {d : ℕ} (op : AltOp) (f : AltFormula n d) :
-    (toFormula op f).depthWith Unbounded.Op.andOrCost ≤ d := by
+    (toFormula op f).depthWith Unbounded.andOrCost ≤ d := by
   induction d generalizing op with
   | zero => exact Nat.zero_le _
   | succ d ih =>
@@ -342,7 +342,7 @@ theorem depth_literalsCircuit_le (n : ℕ) : (literalsCircuit n).depth ≤ 1 :=
 
 /-- Negations are free in the AND/OR depth, so the literals have AND/OR depth zero. -/
 theorem depthWith_literalsCircuit (n : ℕ) :
-    (literalsCircuit n).depthWith Unbounded.Op.andOrCost = 0 :=
+    (literalsCircuit n).depthWith Unbounded.andOrCost = 0 :=
   Nat.eq_zero_of_le_zero <| (Circuit.depthWith_append_le _ _ _).trans <| max_le
     (Circuit.depthWith_wiring _ _).le
     (Circuit.depthWith_pi_le _ _ fun _ => (Circuit.depthWith_oneGate _ _ _).le)
@@ -354,7 +354,7 @@ first. -/
 theorem exists_circuit {d : ℕ} (op : AltOp) (f : AltFormula n d) :
     ∃ c : Circuit Unbounded.signature n 1,
       c.Computes Unbounded.interpretation (single (eval op f)) ∧
-        c.depthWith Unbounded.Op.andOrCost ≤ d ∧ c.depth ≤ d + 1 ∧ c.size = size f + n := by
+        c.depthWith Unbounded.andOrCost ≤ d ∧ c.depth ≤ d + 1 ∧ c.size = size f + n := by
   refine ⟨(toFormula op f).toCircuit.comp (literalsCircuit n), fun x => ?_, ?_, ?_, ?_⟩
   · rw [Circuit.eval_comp, eval_literalsCircuit]
     funext j

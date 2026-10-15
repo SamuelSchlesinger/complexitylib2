@@ -7,10 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.Circuit.MapLines
 
 /-!
-# Translating circuits between signatures
+# Translating circuits and formulas between signatures
 
 A map of signatures `φ : σ.Hom τ` sends each operation of `σ` to an operation of `τ` of the same
 arity. It is a map of the operation symbols, unlike cslib's `Homomorphism`, which maps the carriers
@@ -19,15 +20,16 @@ programs and circuits over `τ` gate by gate (`Circuit.mapOp`), keeping the size
 (`Circuit.size_mapOp`, `Circuit.depth_mapOp`), and when `φ` keeps the meaning of every operation
 (`Signature.Hom.Preserves`) the translated circuit computes the same function
 (`Circuit.eval_mapOp`). This embeds circuits over a basis into circuits over a larger basis; it is
-analogous to cslib's `Program.simulate` with a budget of one gate for every operation.
+analogous to cslib's `Program.simulate` with a budget of one gate for every operation. Formulas
+are translated likewise (`Formula.mapOp`), keeping their function, size, leaves and depth.
 
 ## Main definitions
 
 * `Cslib.Circuits.Signature.Hom`: an arity-preserving map of operations, with `Hom.id` and
   `Hom.comp`.
 * `Cslib.Circuits.Signature.Hom.Preserves`: a map of operations keeps their meaning.
-* `Cslib.Circuits.Line.mapOp`, `Cslib.Circuits.Program.mapOp`, `Cslib.Circuits.Circuit.mapOp`: the
-  translation along a map of signatures.
+* `Cslib.Circuits.Line.mapOp`, `Cslib.Circuits.Program.mapOp`, `Cslib.Circuits.Circuit.mapOp`,
+  `Cslib.Circuits.Formula.mapOp`: the translation along a map of signatures.
 
 ## Main results
 
@@ -37,6 +39,8 @@ analogous to cslib's `Program.simulate` with a budget of one gate for every oper
   kept.
 * `Cslib.Circuits.Circuit.mapOp_id`, `Cslib.Circuits.Circuit.mapOp_comp`: translation is
   functorial.
+* `Cslib.Circuits.Formula.eval_mapOp`, `Cslib.Circuits.Formula.depthWith_mapOp`: a translated
+  formula computes the same function, with depth measured by the costs of the images.
 -/
 
 @[expose] public section
@@ -221,5 +225,74 @@ theorem Circuit.eval_mapOp [hφ : φ.Preserves I J] (c : Circuit σ n m) (x : Fi
 theorem Circuit.Computes.mapOp [φ.Preserves I J] {c : Circuit σ n m}
     {f : (Fin n → U) → Fin m → U} (hc : c.Computes I f) : (c.mapOp φ).Computes J f :=
   fun x => (Circuit.eval_mapOp c x).trans (hc x)
+
+/-! ### Formulas -/
+
+variable (φ) in
+/-- The formula performing `φ op` in place of each operation `op`. -/
+def Formula.mapOp : Formula σ n → Formula τ n
+  | .input i => .input i
+  | .gate op args => .gate (φ op) fun a => (args (Fin.cast (φ.arity_eq op) a)).mapOp
+
+@[simp] theorem Formula.mapOp_input (i : Fin n) :
+    (Formula.input i : Formula σ n).mapOp φ = .input i :=
+  rfl
+
+@[simp] theorem Formula.mapOp_gate (op : σ.Op) (args : Fin (σ.Arity op) → Formula σ n) :
+    (Formula.gate op args).mapOp φ =
+      .gate (φ op) fun a => (args (Fin.cast (φ.arity_eq op) a)).mapOp φ :=
+  rfl
+
+/-- Reindexing along `Fin.cast` keeps a sum. -/
+private theorem sum_cast {k l : ℕ} (h : k = l) (f : Fin l → ℕ) :
+    ∑ a : Fin k, f (Fin.cast h a) = ∑ j, f j := by
+  subst h
+  rfl
+
+/-- Reindexing along `Fin.cast` keeps a supremum. -/
+private theorem sup_cast {k l : ℕ} (h : k = l) (f : Fin l → ℕ) :
+    (Finset.univ.sup fun a : Fin k => f (Fin.cast h a)) = Finset.univ.sup f := by
+  subst h
+  rfl
+
+/-- The translated formula has the same depth when `φ op` costs what `op` does. -/
+@[simp] theorem Formula.depthWith_mapOp (cost : τ.Op → ℕ) (F : Formula σ n) :
+    (F.mapOp φ).depthWith cost = F.depthWith (cost ∘ φ) := by
+  induction F with
+  | input i => rfl
+  | gate op args ih =>
+    simp only [Formula.mapOp_gate, Formula.depthWith_gate, ih, Function.comp_apply]
+    exact congrArg (· + cost (φ op))
+      (sup_cast (φ.arity_eq op) fun j => (args j).depthWith (cost ∘ φ))
+
+/-- The translated formula has the same size. -/
+@[simp] theorem Formula.size_mapOp (F : Formula σ n) : (F.mapOp φ).size = F.size := by
+  induction F with
+  | input i => rfl
+  | gate op args ih =>
+    simp only [Formula.mapOp_gate, Formula.size_gate, ih]
+    exact congrArg (· + 1) (sum_cast (φ.arity_eq op) fun j => (args j).size)
+
+/-- The translated formula has the same leaves. -/
+@[simp] theorem Formula.leafSize_mapOp (F : Formula σ n) : (F.mapOp φ).leafSize = F.leafSize := by
+  induction F with
+  | input i => rfl
+  | gate op args ih =>
+    simp only [Formula.mapOp_gate, Formula.leafSize_gate, ih]
+    exact sum_cast (φ.arity_eq op) fun j => (args j).leafSize
+
+/-- **The translated formula computes the same function** along a meaning-preserving map. -/
+theorem Formula.eval_mapOp [hφ : φ.Preserves I J] (F : Formula σ n) (x : Fin n → U) :
+    (F.mapOp φ).eval J x = F.eval I x := by
+  induction F with
+  | input i => rfl
+  | gate op args ih =>
+    simp only [Formula.mapOp_gate, Formula.eval_gate, ih]
+    exact hφ.interpret_eq op fun j => (args j).eval I x
+
+/-- A formula translated along a meaning-preserving map computes what the formula computes. -/
+theorem Formula.Computes.mapOp [φ.Preserves I J] {F : Formula σ n} {f : (Fin n → U) → U}
+    (hF : F.Computes I f) : (F.mapOp φ).Computes J f :=
+  fun x => (Formula.eval_mapOp F x).trans (hF x)
 
 end Cslib.Circuits

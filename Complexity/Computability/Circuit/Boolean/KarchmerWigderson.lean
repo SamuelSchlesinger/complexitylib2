@@ -9,15 +9,15 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.Formula
-public import Complexity.Computability.Communication.Protocol
+public import Complexity.Computability.Communication.KarchmerWigderson
 
 /-!
 # The Karchmer–Wigderson theorem
 
 In the *Karchmer–Wigderson game* of a Boolean function `f`, Alice holds an input `x` with
 `f x = 1`, Bob holds an input `y` with `f y = 0`, and they must find a bit where `x` and `y`
-differ (`DiffersAt`). **Karchmer and Wigderson** showed that the least depth of a De Morgan formula
-for `f`, with negations free, is the communication complexity of this game
+differ (`Communication.DiffersAt`). **Karchmer and Wigderson** showed that the least depth of a
+De Morgan formula for `f`, with negations free, is the communication complexity of this game
 (`formulaDepth_eq_ecomplexity`) [KarchmerWigderson1990], [Jukna, Section 3.3][Jukna2012],
 [Kushilevitz and Nisan, Chapter 10][KushilevitzNisan1997].
 
@@ -26,7 +26,8 @@ where the gate is false says which argument is false there; at an OR gate, the p
 input where it is true says which argument is true; a negation exchanges the roles; an input leaf
 names its bit. Conversely a protocol gives a formula (`Protocol.kwFormula`), with an OR at each of
 Alice's nodes, an AND at each of Bob's, and at each leaf the literal that separates the inputs of
-the two players that reach it, so with negations only at the leaves.
+the two players that reach it, so with negations only at the leaves. The monotone counterparts
+are `Formula.monotoneKWProtocol` and `Protocol.monotoneKWFormula`.
 
 The round protocols of Korten's top-down lower bounds give Alice the input where `f` is false
 instead (`Communication.RoundProtocol.SolvesKW`); exchanging the players translates
@@ -34,7 +35,6 @@ instead (`Communication.RoundProtocol.SolvesKW`); exchanging the players transla
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.DiffersAt`: the Karchmer–Wigderson relation.
 * `Cslib.Circuits.Formula.kwProtocol`: the protocol of a formula.
 * `Cslib.Communication.Protocol.kwFormula`: the formula of a protocol.
 
@@ -58,23 +58,11 @@ open Boolean Cslib.Communication
 
 variable {n : ℕ}
 
-/-- The Karchmer–Wigderson relation: Alice's input `x` and Bob's input `y` differ at bit `i`. -/
-def Boolean.DiffersAt (x y : BitString n) (i : Fin n) : Prop :=
-  x i ≠ y i
-
-@[simp] theorem Boolean.differsAt_iff {x y : BitString n} {i : Fin n} :
-    DiffersAt x y i ↔ x i ≠ y i :=
-  Iff.rfl
-
-/-- Protocols for the Karchmer–Wigderson game on `n` bits. -/
-abbrev Boolean.KWProtocol (n : ℕ) : Type :=
-  Protocol (BitString n) (BitString n) (Fin n)
-
 /-- The protocol of a De Morgan formula for the Karchmer–Wigderson game, when the formula is
 `onAlice` on Alice's input: the player holding the input where an AND gate is false, or where an
 OR gate is true, says which argument witnesses it. Constant subformulas, which never separate the
 two inputs, output the bit `0`. -/
-def Formula.kwProtocol [NeZero n] : Formula signature n → Bool → KWProtocol n
+def Formula.kwProtocol [NeZero n] : Formula signature n → Bool → KWProtocol (Fin n)
   | .input i, _ => .output i
   | .gate op args, onAlice =>
     match op, args with
@@ -176,7 +164,7 @@ open Classical in
 /-- The formula of a protocol for the Karchmer–Wigderson game on `A × B`: an OR at each of Alice's
 nodes, an AND at each of Bob's, and at each leaf a literal true on the inputs of `A` and false on
 those of `B` that reach it, or a constant if one side is empty. -/
-noncomputable def kwFormula : KWProtocol n → Set (BitString n) → Set (BitString n) →
+noncomputable def kwFormula : KWProtocol (Fin n) → Set (BitString n) → Set (BitString n) →
     Formula signature n
   | .output i, A, B =>
     if A = ∅ then .const false
@@ -189,7 +177,7 @@ noncomputable def kwFormula : KWProtocol n → Set (BitString n) → Set (BitStr
 
 /-- The formula of a protocol solving the Karchmer–Wigderson game on `A × B` is true on `A` and
 false on `B`. -/
-private theorem eval_kwFormula (p : KWProtocol n)
+private theorem eval_kwFormula (p : KWProtocol (Fin n))
     {A B : Set (BitString n)} (hp : p.Solves DiffersAt A B) :
     (∀ x ∈ A, (p.kwFormula A B).eval interpretation x = true) ∧
       ∀ y ∈ B, (p.kwFormula A B).eval interpretation y = false := by
@@ -235,7 +223,7 @@ private theorem eval_kwFormula (p : KWProtocol n)
 
 /-- The formula of a protocol has as many AND and OR gates on a path as the protocol sends
 bits. -/
-theorem depthWith_kwFormula_le (p : KWProtocol n)
+theorem depthWith_kwFormula_le (p : KWProtocol (Fin n))
     (A B : Set (BitString n)) : (p.kwFormula A B).depthWith binaryCost ≤ p.depth := by
   induction p generalizing A B with
   | output i =>
@@ -249,13 +237,13 @@ theorem depthWith_kwFormula_le (p : KWProtocol n)
     exact Nat.add_le_add_right (max_le_max (ih₀ _ _) (ih₁ _ _)) 1
 
 /-- The formula of a protocol solving the Karchmer–Wigderson game on `A × B` is true on `A`. -/
-theorem eval_kwFormula_of_mem_left {p : KWProtocol n} {A B : Set (BitString n)}
+theorem eval_kwFormula_of_mem_left {p : KWProtocol (Fin n)} {A B : Set (BitString n)}
     (hp : p.Solves DiffersAt A B) {x : BitString n} (hx : x ∈ A) :
     (p.kwFormula A B).eval interpretation x = true :=
   (p.eval_kwFormula hp).1 x hx
 
 /-- The formula of a protocol solving the Karchmer–Wigderson game on `A × B` is false on `B`. -/
-theorem eval_kwFormula_of_mem_right {p : KWProtocol n} {A B : Set (BitString n)}
+theorem eval_kwFormula_of_mem_right {p : KWProtocol (Fin n)} {A B : Set (BitString n)}
     (hp : p.Solves DiffersAt A B) {y : BitString n} (hy : y ∈ B) :
     (p.kwFormula A B).eval interpretation y = false :=
   (p.eval_kwFormula hp).2 y hy
@@ -272,14 +260,14 @@ variable {n : ℕ}
 many bits as the formula has AND and OR gates on a path. -/
 theorem exists_kwProtocol_of_computes [NeZero n] {f : BooleanFunction n}
     {F : Formula signature n} (hF : F.Computes interpretation f) :
-    ∃ p : KWProtocol n, p.Solves DiffersAt {x | f x = true} {y | f y = false} ∧
+    ∃ p : KWProtocol (Fin n), p.Solves DiffersAt {x | f x = true} {y | f y = false} ∧
       p.depth ≤ F.depthWith binaryCost :=
   ⟨F.kwProtocol true, fun x hx y hy => F.differsAt_run_kwProtocol true ((hF x).trans hx)
     ((hF y).trans hy), F.depth_kwProtocol_le true⟩
 
 /-- A protocol for the Karchmer–Wigderson game of `f` gives a formula computing `f`, with at most
 as many AND and OR gates on a path as the protocol sends bits. -/
-theorem exists_formula_of_solves {f : BooleanFunction n} {p : KWProtocol n}
+theorem exists_formula_of_solves {f : BooleanFunction n} {p : KWProtocol (Fin n)}
     (hp : p.Solves DiffersAt {x | f x = true} {y | f y = false}) :
     ∃ F : Formula signature n, F.Computes interpretation f ∧ F.depthWith binaryCost ≤ p.depth := by
   refine ⟨p.kwFormula {x | f x = true} {y | f y = false}, fun x => ?_,

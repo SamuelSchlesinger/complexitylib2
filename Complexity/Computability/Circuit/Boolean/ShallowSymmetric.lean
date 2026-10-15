@@ -184,7 +184,7 @@ negations, with at most `2 ^ (C n ^ (1 / (d - 1))) + n` gates. -/
 theorem Unbounded.exists_circuit_of_isSymmetric {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ f : BitString n → Bool, IsSymmetric f →
       ∃ c : Circuit Unbounded.signature n 1, c.Computes Unbounded.interpretation (single f) ∧
-        c.depthWith Unbounded.Op.andOrCost ≤ d ∧ c.depth ≤ d + 1 ∧
+        c.depthWith Unbounded.andOrCost ≤ d ∧ c.depth ≤ d + 1 ∧
           (c.size : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) + n := by
   obtain ⟨C, hC, h⟩ := AltFormula.exists_of_isSymmetric hd
   refine ⟨C, hC, fun n hn f hf => ?_⟩

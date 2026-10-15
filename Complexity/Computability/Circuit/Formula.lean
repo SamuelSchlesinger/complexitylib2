@@ -13,6 +13,7 @@ public import Cslib.Computability.Circuit.Homomorphism
 public import Cslib.Computability.Circuit.Synthesis
 public import Mathlib.Data.Finset.Lattice.Fold
 public import Mathlib.Data.Finset.Piecewise
+public import Mathlib.Data.ENat.Lattice
 public import Mathlib.Data.Fin.VecNotation
 public import Mathlib.Logic.Function.DependsOn
 public import Mathlib.Order.SetNotation
@@ -36,7 +37,9 @@ it gives constant functions leaf size zero. `Formula.size` counts the operation 
 included. A formula of depth `d` with operations of arity at most `r` has at most `r ^ d` leaves
 (`Formula.leafSize_le_pow_depth`) and, for `r ≥ 2`, fewer than `r ^ d` operation nodes
 (`Formula.size_lt_pow_depth`); with `s` operation nodes it has at most `(r - 1) s + 1` leaves
-(`Formula.leafSize_le`). A formula is a circuit with one gate for each operation node and at most
+(`Formula.leafSize_le`). The least depth of a formula computing a function, with given costs of the
+operations, is `Formula.minDepthWith`; it is `⊤` when no formula computes the function, as happens
+for monotone formulas. A formula is a circuit with one gate for each operation node and at most
 its depth (`Formula.toCircuit`). Counting only the leaves labelled by inputs of a set `Y`
 (`Formula.leafSizeIn`) splits the leaf size among disjoint blocks of inputs
 (`Formula.sum_leafSizeIn_le_leafSize`), and a formula with no leaf in `Y` depends only on the
@@ -53,6 +56,8 @@ depth `⌈log₂ k⌉` above them, the usual way to replace a gate of unbounded 
   the depth.
 * `Cslib.Circuits.Formula.leafSizeIn`: the number of input leaves in a set of inputs.
 * `Cslib.Circuits.Formula.depthWith`: the depth when each operation costs a given number of levels.
+* `Cslib.Circuits.Formula.minDepthWith`: the least depth with costs of a formula computing a
+  function, in `ℕ∞`.
 * `Cslib.Circuits.Formula.gate₂`, `Cslib.Circuits.Formula.balanced`: an operation of arity two
   applied to two formulas, and the balanced tree of such an operation over a list of formulas.
 * `Cslib.Circuits.Formula.bind`: substitution of formulas for the inputs; `Formula.rename`
@@ -63,6 +68,9 @@ depth `⌈log₂ k⌉` above them, the usual way to replace a gate of unbounded 
 ## Main results
 
 * `Cslib.Circuits.Formula.map_eval`: evaluation commutes with homomorphisms.
+* `Cslib.Circuits.Formula.minDepthWith_le`, `Cslib.Circuits.Formula.le_minDepthWith_iff`,
+  `Cslib.Circuits.Formula.exists_depthWith_eq_minDepthWith`: upper and lower bounds on the least
+  depth, which is attained when some formula computes the function.
 * `Cslib.Circuits.Formula.leafSize_le_pow_depth`, `Cslib.Circuits.Formula.leafSize_le`: leaf size
   under bounded fan-in.
 * `Cslib.Circuits.Formula.size_lt_pow_depth`: size under bounded fan-in.
@@ -430,6 +438,44 @@ theorem depthWith_balanced_le {cost : σ.Op → ℕ} (unit : Formula σ n) {l : 
   List.apply_balancedFold_le (depthWith cost) (fun F G => (depthWith_gate₂ cost F G).le) hl hunit
 
 end Balanced
+
+/-! ### Least depth -/
+
+section MinDepthWith
+
+variable {I : Interpretation σ U} {cost : σ.Op → ℕ} {f : (Fin n → U) → U}
+
+variable (I cost) in
+/-- The least depth with costs `cost` of a formula computing `f` under `I`, or `⊤` if no formula
+computes `f`. -/
+noncomputable def minDepthWith (f : (Fin n → U) → U) : ℕ∞ :=
+  ⨅ F : {F : Formula σ n // F.Computes I f}, (F.1.depthWith cost : ℕ∞)
+
+/-- The least depth is at most the depth of every formula computing the function. -/
+theorem minDepthWith_le {F : Formula σ n} (hF : F.Computes I f) :
+    minDepthWith I cost f ≤ F.depthWith cost :=
+  iInf_le_of_le ⟨F, hF⟩ le_rfl
+
+/-- Lower bounds on the least depth are lower bounds on the depth of every formula computing the
+function, including when there is none. -/
+theorem le_minDepthWith_iff {k : ℕ∞} :
+    k ≤ minDepthWith I cost f ↔ ∀ F : Formula σ n, F.Computes I f → k ≤ F.depthWith cost := by
+  simp only [minDepthWith, le_iInf_iff, Subtype.forall]
+
+/-- The least depth is finite exactly when some formula computes the function. -/
+theorem minDepthWith_ne_top_iff :
+    minDepthWith I cost f ≠ ⊤ ↔ ∃ F : Formula σ n, F.Computes I f := by
+  rw [minDepthWith, ENat.iInf_natCast_ne_top, nonempty_subtype]
+
+/-- When some formula computes the function, the least depth is attained. -/
+theorem exists_depthWith_eq_minDepthWith (h : ∃ F : Formula σ n, F.Computes I f) :
+    ∃ F : Formula σ n, F.Computes I f ∧ (F.depthWith cost : ℕ∞) = minDepthWith I cost f := by
+  have : Nonempty {F : Formula σ n // F.Computes I f} := nonempty_subtype.2 h
+  obtain ⟨⟨F, hF⟩, hmin⟩ := ENat.exists_eq_iInf
+    fun F : {F : Formula σ n // F.Computes I f} => (F.1.depthWith cost : ℕ∞)
+  exact ⟨F, hF, hmin⟩
+
+end MinDepthWith
 
 /-- A formula is synthesized with one gate for each operation node. -/
 theorem synthesis_eval (I : Interpretation σ U) (F : Formula σ n) :

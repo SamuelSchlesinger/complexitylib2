@@ -7,11 +7,10 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Formula
+public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Monotone.Basic
 public import Cslib.Foundations.Data.BitString
 public import Mathlib.Data.ENat.Lattice
-import Mathlib.Data.Fin.VecNotation
 import Mathlib.Data.Fintype.Pi
 
 /-!
@@ -19,18 +18,21 @@ import Mathlib.Data.Fintype.Pi
 
 A *monotone formula* is a formula over the monotone basis, `Formula Monotone.signature n`,
 evaluated under `Monotone.interpretation`: a tree of AND and OR gates of fan-in two whose leaves
-are inputs and Boolean constants. Every function it computes is monotone (`monotone_eval`), and
-every monotone function has one: the disjunction, over the inputs `z` where the function is true,
-of the conjunction of the bits that are one in `z` (`exists_computes_of_monotone`). Unlike De
-Morgan formulas, monotone formulas thus compute only some Boolean functions, so the least depth of
-a monotone formula for `f` is extended-valued: `eformulaDepth f` is `⊤` when no monotone formula
-computes `f`, that is, when `f` is not monotone (`eformulaDepth_ne_top_iff`). As for De Morgan
-formulas (`Boolean.formulaDepth`), the depth counts the AND and OR gates on a path, and constants
-are free (`binaryCost`).
+are inputs and Boolean constants (`Monotone.const`, `Monotone.and`, `Monotone.or`). Every function
+it computes is monotone (`monotone_eval`), and every monotone function has one: the disjunction,
+over the inputs `z` where the function is true, of the conjunction of the bits that are one in `z`
+(`exists_computes_of_monotone`). Unlike De Morgan formulas, monotone formulas thus compute only
+some Boolean functions, so the least depth of a monotone formula for `f` is extended-valued:
+`eformulaDepth f`, the least depth with constants free (`Formula.minDepthWith` for `binaryCost`),
+is `⊤` when no monotone formula computes `f`, that is, when `f` is not monotone
+(`eformulaDepth_ne_top_iff`). A monotone formula is a De Morgan formula (`Formula.mapOp` along
+`toDeMorgan`), so the De Morgan formula depth is at most the monotone one
+(`formulaDepth_le_eformulaDepth`).
 
 ## Main definitions
 
-* `Cslib.Circuits.Monotone.binaryCost`: the cost function charging one for each AND and OR gate.
+* `Cslib.Circuits.Monotone.const`, `Cslib.Circuits.Monotone.and`, `Cslib.Circuits.Monotone.or`:
+  monotone formulas built from constants and smaller formulas.
 * `Cslib.Circuits.Monotone.eformulaDepth`: the least depth of a monotone formula for a function,
   or `⊤` if there is none.
 
@@ -40,8 +42,8 @@ are free (`binaryCost`).
   formula exactly when it is monotone.
 * `Cslib.Circuits.Monotone.eformulaDepth_ne_top_iff`: monotone formula depth is finite exactly for
   monotone functions.
-* `Cslib.Circuits.Monotone.eformulaDepth_le`, `Cslib.Circuits.Monotone.le_eformulaDepth_iff`:
-  upper and lower bounds on monotone formula depth.
+* `Cslib.Circuits.Monotone.formulaDepth_le_eformulaDepth`: De Morgan formulas are at most as deep
+  as monotone ones.
 
 ## References
 
@@ -54,22 +56,50 @@ namespace Cslib.Circuits.Monotone
 
 variable {n : ℕ}
 
-/-- The cost function charging one for each AND and OR gate and nothing for constants. -/
-def binaryCost : Op → ℕ
-  | .and | .or => 1
-  | .const _ => 0
+/-! ### Constructors -/
 
-/-- An AND gate costs one level. -/
-@[simp] theorem binaryCost_and : binaryCost .and = 1 :=
+section Constructors
+
+variable (F G : Formula signature n) (x : BitString n)
+
+/-- The constant monotone formula. -/
+def const (b : Bool) : Formula signature n :=
+  .gate (.const b) Fin.elim0
+
+/-- The conjunction of two monotone formulas. -/
+def and : Formula signature n :=
+  .gate .and ![F, G]
+
+/-- The disjunction of two monotone formulas. -/
+def or : Formula signature n :=
+  .gate .or ![F, G]
+
+@[simp] theorem eval_const (b : Bool) : (const b : Formula signature n).eval interpretation x = b :=
   rfl
 
-/-- An OR gate costs one level. -/
-@[simp] theorem binaryCost_or : binaryCost .or = 1 :=
+@[simp] theorem eval_and :
+    (and F G).eval interpretation x = (F.eval interpretation x && G.eval interpretation x) :=
   rfl
 
-/-- Constants are free. -/
-@[simp] theorem binaryCost_const (b : Bool) : binaryCost (.const b) = 0 :=
+@[simp] theorem eval_or :
+    (or F G).eval interpretation x = (F.eval interpretation x || G.eval interpretation x) :=
   rfl
+
+@[simp] theorem depthWith_const (cost : Op → ℕ) (b : Bool) :
+    (const b : Formula signature n).depthWith cost = cost (.const b) := by
+  simp [const]
+
+@[simp] theorem depthWith_and (cost : Op → ℕ) :
+    (and F G).depthWith cost = max (F.depthWith cost) (G.depthWith cost) + cost .and := by
+  simp [and, Fin.univ_succ]
+
+@[simp] theorem depthWith_or (cost : Op → ℕ) :
+    (or F G).depthWith cost = max (F.depthWith cost) (G.depthWith cost) + cost .or := by
+  simp [or, Fin.univ_succ]
+
+end Constructors
+
+/-! ### Monotone functions -/
 
 /-- Monotone formulas compute monotone functions. -/
 theorem monotone_eval (F : Formula signature n) : Monotone (F.eval interpretation) := by
@@ -87,18 +117,18 @@ theorem exists_computes_of_monotone (hf : Monotone f) :
   have hconj (s : Finset (Fin n)) : ∃ F : Formula signature n,
       F.Computes interpretation fun x => decide (∀ i ∈ s, x i = true) := by
     induction s using Finset.induction_on with
-    | empty => exact ⟨.gate (.const true) Fin.elim0, fun x => by simp⟩
+    | empty => exact ⟨const true, fun x => by simp⟩
     | insert i s _ ih =>
       obtain ⟨F, hF⟩ := ih
-      exact ⟨.gate .and ![.input i, F], fun x => by simp [hF x]⟩
+      exact ⟨and (.input i) F, fun x => by simp [hF x]⟩
   have hdisj (T : Finset (BitString n)) : ∃ F : Formula signature n,
       F.Computes interpretation fun x => decide (∃ z ∈ T, ∀ i, z i = true → x i = true) := by
     induction T using Finset.induction_on with
-    | empty => exact ⟨.gate (.const false) Fin.elim0, fun x => by simp⟩
+    | empty => exact ⟨const false, fun x => by simp⟩
     | insert z T _ ih =>
       obtain ⟨F, hF⟩ := ih
       obtain ⟨G, hG⟩ := hconj {i | z i = true}
-      exact ⟨.gate .or ![G, F], fun x => by simp [hF x, hG x]⟩
+      exact ⟨or G F, fun x => by simp [hF x, hG x]⟩
   obtain ⟨F, hF⟩ := hdisj {z | f z = true}
   refine ⟨F, fun x => (hF x).trans ?_⟩
   rw [Bool.eq_iff_iff, decide_eq_true_iff]
@@ -111,37 +141,25 @@ theorem exists_computes_iff_monotone :
     (∃ F : Formula signature n, F.Computes interpretation f) ↔ Monotone f :=
   ⟨fun ⟨F, hF⟩ => Formula.computes_iff.1 hF ▸ monotone_eval F, exists_computes_of_monotone⟩
 
-/-- The least depth of a monotone formula computing `f`, with constants free, or `⊤` if no
-monotone formula computes `f`. -/
-noncomputable def eformulaDepth (f : BooleanFunction n) : ℕ∞ :=
-  ⨅ F : {F : Formula signature n // F.Computes interpretation f}, (F.1.depthWith binaryCost : ℕ∞)
+/-! ### Depth -/
 
-/-- The monotone formula depth of `f` is at most the depth of every monotone formula computing
-`f`. -/
-theorem eformulaDepth_le {F : Formula signature n} (hF : F.Computes interpretation f) :
-    eformulaDepth f ≤ F.depthWith binaryCost :=
-  iInf_le_of_le ⟨F, hF⟩ le_rfl
+/-- The least depth of a monotone formula computing `f`, with constants free, or `⊤` if no
+monotone formula computes `f`: the least depth with costs `binaryCost` (`Formula.minDepthWith`),
+whose API applies to it. -/
+noncomputable abbrev eformulaDepth (f : BooleanFunction n) : ℕ∞ :=
+  Formula.minDepthWith interpretation binaryCost f
 
 /-- The monotone formula depth of a function is finite exactly when the function is monotone. -/
-theorem eformulaDepth_ne_top_iff : eformulaDepth f ≠ ⊤ ↔ Monotone f := by
-  rw [eformulaDepth, ENat.iInf_natCast_ne_top, nonempty_subtype, exists_computes_iff_monotone]
+theorem eformulaDepth_ne_top_iff : eformulaDepth f ≠ ⊤ ↔ Monotone f :=
+  Formula.minDepthWith_ne_top_iff.trans exists_computes_iff_monotone
 
-/-- The least depth of a monotone formula for a monotone function is attained. -/
-theorem exists_computes_depthWith_eq_eformulaDepth (hf : Monotone f) :
-    ∃ F : Formula signature n, F.Computes interpretation f ∧
-      (F.depthWith binaryCost : ℕ∞) = eformulaDepth f := by
-  have : Nonempty {F : Formula signature n // F.Computes interpretation f} :=
-    nonempty_subtype.2 (exists_computes_of_monotone hf)
-  obtain ⟨⟨F, hF⟩, hmin⟩ := ENat.exists_eq_iInf
-    (fun F : {F : Formula signature n // F.Computes interpretation f} =>
-      (F.1.depthWith binaryCost : ℕ∞))
-  exact ⟨F, hF, hmin⟩
-
-/-- Lower bounds on monotone formula depth are lower bounds on the depth of every monotone formula
-computing the function, including when there is none. -/
-theorem le_eformulaDepth_iff {k : ℕ∞} :
-    k ≤ eformulaDepth f ↔
-      ∀ F : Formula signature n, F.Computes interpretation f → k ≤ F.depthWith binaryCost := by
-  simp only [eformulaDepth, le_iInf_iff, Subtype.forall]
+/-- A monotone formula is a De Morgan formula of the same depth, so De Morgan formulas are at most
+as deep as monotone ones. -/
+theorem formulaDepth_le_eformulaDepth (f : BooleanFunction n) :
+    (Boolean.formulaDepth f : ℕ∞) ≤ eformulaDepth f :=
+  Formula.le_minDepthWith_iff.2 fun F hF => by
+    have h := Boolean.formulaDepth_le (hF.mapOp (φ := toDeMorgan))
+    rw [Formula.depthWith_mapOp] at h
+    exact_mod_cast h.trans_eq (congrArg F.depthWith (funext binaryCost_toDeMorgan))
 
 end Cslib.Circuits.Monotone

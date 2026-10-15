@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Cslib.Computability.Circuit.Basic
+public import Complexity.Computability.Circuit.Boolean.BinaryCost
+public import Complexity.Computability.Circuit.MapOp
 public import Mathlib.Data.Fintype.Basic
 
 /-!
@@ -15,11 +16,16 @@ public import Mathlib.Data.Fintype.Basic
 
 The monotone basis has the Boolean constants, binary conjunction and binary disjunction: the De
 Morgan basis (`Cslib.Circuits.Boolean.signature`) without negation. Each of its operations is
-monotone (`interpretation_mono`), and so is every function computed by a monotone circuit.
+monotone (`interpretation_mono`), and so is every function computed by a monotone circuit. The
+depth of monotone formulas charges AND and OR gates and lets constants be free (`binaryCost`), as
+for De Morgan formulas, and the monotone basis maps into the De Morgan basis (`toDeMorgan`)
+keeping meanings and these costs (`binaryCost_toDeMorgan`).
 
 ## Main definitions
 
 * `Cslib.Circuits.Monotone.signature`, `Cslib.Circuits.Monotone.interpretation`.
+* `Cslib.Circuits.Monotone.binaryCost`: the cost function charging one for each AND and OR gate.
+* `Cslib.Circuits.Monotone.toDeMorgan`: the monotone basis inside the De Morgan basis.
 
 ## Main results
 
@@ -80,5 +86,51 @@ theorem interpretation_mono (op : Op) {x y : Fin (signature.Arity op) → Bool}
     revert h0 h1
     simp only [interpretation]
     cases x 0 <;> cases x 1 <;> cases y 0 <;> cases y 1 <;> decide
+
+/-- The cost function charging one for each AND and OR gate and nothing for constants, the
+monotone counterpart of `Boolean.binaryCost` (`binaryCost_toDeMorgan`). -/
+def binaryCost : Op → ℕ
+  | .and | .or => 1
+  | .const _ => 0
+
+/-- An AND gate costs one level. -/
+@[simp] theorem binaryCost_and : binaryCost .and = 1 :=
+  rfl
+
+/-- An OR gate costs one level. -/
+@[simp] theorem binaryCost_or : binaryCost .or = 1 :=
+  rfl
+
+/-- Constants are free. -/
+@[simp] theorem binaryCost_const (b : Bool) : binaryCost (.const b) = 0 :=
+  rfl
+
+/-! ### The monotone basis inside the De Morgan basis -/
+
+/-- The monotone basis is the De Morgan basis without negation. -/
+def toDeMorgan : signature.Hom Boolean.signature where
+  toFun
+    | .const b => .const b
+    | .and => .and
+    | .or => .or
+  arity_eq op := by cases op <;> rfl
+
+@[simp] theorem toDeMorgan_const (b : Bool) : toDeMorgan (.const b) = .const b :=
+  rfl
+
+@[simp] theorem toDeMorgan_and : toDeMorgan .and = .and :=
+  rfl
+
+@[simp] theorem toDeMorgan_or : toDeMorgan .or = .or :=
+  rfl
+
+/-- The monotone operations mean what their De Morgan images mean. -/
+instance : toDeMorgan.Preserves interpretation Boolean.interpretation :=
+  ⟨fun op _ => by cases op <;> rfl⟩
+
+/-- The De Morgan image of an operation costs what it costs in the monotone basis. -/
+@[simp] theorem binaryCost_toDeMorgan (op : Op) :
+    Boolean.binaryCost (toDeMorgan op) = binaryCost op := by
+  cases op <;> rfl
 
 end Cslib.Circuits.Monotone

@@ -77,6 +77,7 @@ public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.SimulationDepth
 public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Circuit.Unfolding
+public import Complexity.Computability.Communication.KarchmerWigderson
 public import Complexity.Computability.Communication.Protocol
 public import Complexity.Computability.Communication.RoundProtocol
 public import Complexity.Computability.Communication.TopDown.Adversary

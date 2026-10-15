@@ -27,7 +27,7 @@ bases of TC⁰ (majority gates) and AC⁰[q] (`MOD_q` gates): `extSignature` and
 * `Cslib.Circuits.Boolean.Unbounded.signature`: negation, and conjunction and disjunction of every
   arity.
 * `Cslib.Circuits.Boolean.Unbounded.interpretation`: their Boolean meaning.
-* `Cslib.Circuits.Boolean.Unbounded.Op.andOrCost`: the costs of the AND/OR depth, in which
+* `Cslib.Circuits.Boolean.Unbounded.andOrCost`: the costs of the AND/OR depth, in which
   negations are free.
 * `Cslib.Circuits.Boolean.Unbounded.deMorganToUnbounded`: the De Morgan basis inside it.
 * `Cslib.Circuits.Boolean.Unbounded.extSignature`,
@@ -80,19 +80,24 @@ def interpretation : Interpretation signature Bool
 
 /-- The cost of an operation in the AND/OR depth: negations are free. With these costs,
 `Circuit.depthWith` is the largest number of conjunctions and disjunctions on a path, the usual
-depth of AC⁰ circuits, in which negations sit at the inputs. -/
-def Op.andOrCost : Op → ℕ
+depth of AC⁰ circuits, in which negations sit at the inputs.
+
+This is the counterpart of `Boolean.binaryCost` and `Monotone.binaryCost` for the bases of fan-in
+two, which charge one for AND and OR and nothing for negations and constants. It is not their
+transport along `deMorganToUnbounded`: this basis has no constants, and the De Morgan constants
+become the conjunction and the disjunction of no arguments, which cost one here. -/
+def andOrCost : Op → ℕ
   | .not => 0
   | .and _ => 1
   | .or _ => 1
 
-@[simp] theorem Op.andOrCost_not : Op.not.andOrCost = 0 := rfl
+@[simp] theorem andOrCost_not : andOrCost .not = 0 := rfl
 
-@[simp] theorem Op.andOrCost_and (m : ℕ) : (Op.and m).andOrCost = 1 := rfl
+@[simp] theorem andOrCost_and (m : ℕ) : andOrCost (.and m) = 1 := rfl
 
-@[simp] theorem Op.andOrCost_or (m : ℕ) : (Op.or m).andOrCost = 1 := rfl
+@[simp] theorem andOrCost_or (m : ℕ) : andOrCost (.or m) = 1 := rfl
 
-theorem Op.andOrCost_le_one (op : Op) : op.andOrCost ≤ 1 := by
+theorem andOrCost_le_one (op : Op) : andOrCost op ≤ 1 := by
   cases op <;> simp
 
 /-- The operations of the unbounded fan-in basis, and one extra gate of every arity. -/

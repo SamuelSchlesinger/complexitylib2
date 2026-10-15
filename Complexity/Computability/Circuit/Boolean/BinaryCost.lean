@@ -72,7 +72,9 @@ theorem Op.IsBinary.eq_or_eq {op : Op} (h : op.IsBinary) {s t : Fin (signature.A
   omega
 
 /-- The cost function charging one for each AND and OR gate and nothing for negations and
-constants. -/
+constants. Its counterparts for the other bases are `Monotone.binaryCost`, its restriction to the
+monotone basis (`Monotone.binaryCost_toDeMorgan`), and `Unbounded.andOrCost`, which also charges
+the constants of the unbounded fan-in basis, its AND and OR gates of no arguments. -/
 def binaryCost : Op → ℕ
   | .and | .or => 1
   | .const _ | .not => 0

@@ -148,7 +148,7 @@ example {f : BooleanFunction 528} {C : Cslib.Circuits.Circuit Unbounded.signatur
 /-- The AND/OR depth of Korten's theorem differs from the depth: a negation of an input has AND/OR
 depth zero and depth one. -/
 example : (Cslib.Circuits.Circuit.oneGate (σ := Unbounded.signature) (n := 1) .not
-      fun _ => 0).depthWith Unbounded.Op.andOrCost = 0 ∧
+      fun _ => 0).depthWith Unbounded.andOrCost = 0 ∧
     (Cslib.Circuits.Circuit.oneGate (σ := Unbounded.signature) (n := 1) .not fun _ => 0).depth =
       1 := by
   decide
