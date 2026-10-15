@@ -2133,4 +2133,46 @@ info: 'Cslib.Circuits.Frontier.Gaussian.le_inner_unitKernelRow' depends on axiom
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.Gaussian.le_inner_unitKernelRow
 
+/--
+info: 'Matrix.totallyRegular_cauchy' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.totallyRegular_cauchy
+
+/--
+info: 'Matrix.totallyRegular_cauchyNat_zmod' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.totallyRegular_cauchyNat_zmod
+
+/--
+info: 'Cslib.Circuits.Circuit.Computes.exists_affine' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.Computes.exists_affine
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_graph_of_totallyRegular' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_graph_of_totallyRegular
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_of_totallyRegular' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_of_totallyRegular
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_arith_cauchyNat' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_arith_cauchyNat
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_cauchyNat_zmod' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_cauchyNat_zmod
+
 end ComplexityTests.Axioms

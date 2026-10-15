@@ -68,6 +68,12 @@ public import Complexity.Computability.Circuit.Frontier.Layouts.Cubic
 public import Complexity.Computability.Circuit.Frontier.Layouts.General
 public import Complexity.Computability.Circuit.Frontier.Layouts.Kernel
 public import Complexity.Computability.Circuit.Frontier.Layouts.Local
+public import Complexity.Computability.Circuit.Frontier.Linear.Basis
+public import Complexity.Computability.Circuit.Frontier.Linear.Cut
+public import Complexity.Computability.Circuit.Frontier.Linear.Linearize
+public import Complexity.Computability.Circuit.Frontier.Linear.LowerBound
+public import Complexity.Computability.Circuit.Frontier.Linear.TotallyRegular
+public import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 public import Complexity.Computability.Circuit.Frontier.LowerBound
 public import Complexity.Computability.Circuit.Frontier.Multigraph
 public import Complexity.Computability.Circuit.Frontier.Network
