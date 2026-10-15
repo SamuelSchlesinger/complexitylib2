@@ -2013,4 +2013,52 @@ info: 'Cslib.Circuits.Circuit.innerSize_le_size' depends on axioms: [propext, Cl
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Circuit.innerSize_le_size
 
+/--
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_innerSize
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize
+
+/--
+info: 'Cslib.Circuits.Frontier.layoutBound_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.layoutBound_one
+
+/--
+info: 'Cslib.Circuits.Frontier.LayoutBound.of_cubic' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.LayoutBound.of_cubic
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.exists_width_le_cycleRank_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.exists_width_le_cycleRank_add
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.Compression.exists_width_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.Compression.exists_width_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.Compression.Saturated.card_blocks_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.Compression.Saturated.card_blocks_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.ncard_edgeCut_threshold_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.ncard_edgeCut_threshold_le
+
 end ComplexityTests.Axioms

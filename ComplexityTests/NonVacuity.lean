@@ -24,6 +24,7 @@ import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Computability.Kolmogorov.NisanWigderson
 import Complexity.Computability.RAM.Squaring
 import Complexity.Computability.Circuit.Frontier.Reduction
+import Complexity.Computability.Circuit.Frontier.Unconditional
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
@@ -457,6 +458,21 @@ example : ∃ (c : Circuit (fullSignature 8 Bool) 8 1) (S : Set (Fin 8 → Bool)
     have he : Function.Injective e := fun i i' h => by simpa [e] using congrFun h i
     calc Nat.card Bool * 2 ^ 2 = (range e).ncard := by simp [ncard_range_of_injective he]
       _ ≤ S.ncard := ncard_le_ncard (range_subset_iff.mpr fun i => by simp [S, e]) (toFinite _)
+
+/-- The hypotheses of the spanning-tree layout theorem can be met: one edge between two vertices
+is connected, loopless and of maximum degree one, and it has a layout of width at most one. -/
+example : ∃ π : Layout (Fin 2),
+    (⟨fun _ => 0, fun _ => 1⟩ : Multigraph (Fin 2) Unit).width π ≤ 1 := by
+  set G : Multigraph (Fin 2) Unit := ⟨fun _ => 0, fun _ => 1⟩
+  have hadj : G.toSimpleGraph.Adj 0 1 := Multigraph.toSimpleGraph_adj.mpr ⟨by decide, (), rfl⟩
+  have hconn : G.toSimpleGraph.Connected := by
+    refine (SimpleGraph.connected_iff_exists_forall_reachable _).mpr ⟨0, fun v => ?_⟩
+    fin_cases v
+    exacts [SimpleGraph.Reachable.refl _, hadj.reachable]
+  have hdeg : G.MaxDegreeLE 1 := fun v => (Set.ncard_le_card _).trans (by simp)
+  obtain ⟨π, hπ⟩ := Multigraph.exists_width_le_cycleRank_add hconn hdeg
+  refine ⟨π, hπ.trans ?_⟩
+  simp [Multigraph.cycleRank, Nat.log_eq_one_iff'.mpr (by decide : 2 ≤ 2 ∧ 2 < 2 * 2)]
 
 end FrontierReduction
 
