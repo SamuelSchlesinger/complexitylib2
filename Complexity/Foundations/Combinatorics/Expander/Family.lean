@@ -28,7 +28,8 @@ vertices, with a degree and a spectral bound that do not depend on that number
 
 The construction is not explicit, since the permutations come from a counting argument, and neither
 is the multigraph `expander V` chosen from it. Explicit families are built by graph products from a
-single expander of constant size [ReingoldVadhanWigderson2002]
+single expander of constant size
+[Reingold, Vadhan and Wigderson, Section 1.2][ReingoldVadhanWigderson2002]
 [Arora and Barak, Section 21.3][AroraBarak09].
 
 ## Main definitions
@@ -63,7 +64,7 @@ universe u
 variable (V : Type u) [Fintype V]
 
 /-- **Constant-degree expanders exist**
-[Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Hoory, Linial and Wigderson, Theorem 4.16][HooryLinialWigderson2006]
 [Arora and Barak, Chapter 21][AroraBarak09]: every finite type carries a `120`-regular multigraph of
 spectral expansion at most `1 - 1 / 360000`. It is the lazy graph of the multigraph of thirty
 permutations that move a tenth of every set of at most half of the vertices out of it. -/
@@ -90,7 +91,7 @@ theorem exists_spectralExpansion_le :
     norm_num
 
 /-- **Constant-degree expanders exist**
-[Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Hoory, Linial and Wigderson, Theorem 4.16][HooryLinialWigderson2006]
 [Arora and Barak, Chapter 21][AroraBarak09]: there are a degree `d` and a bound `μ < 1` such that
 every finite type carries a `d`-regular multigraph of spectral expansion at most `μ`. -/
 theorem exists_forall_exists_spectralExpansion_le :

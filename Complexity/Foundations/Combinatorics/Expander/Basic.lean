@@ -17,7 +17,8 @@ import Mathlib.Algebra.Order.BigOperators.Expect
 # Rotation maps and the spectral expansion of regular graphs
 
 A `D`-regular undirected multigraph on `V`, with parallel edges and self-loops allowed, is presented
-by its *rotation map* [ReingoldVadhanWigderson2002] [Arora and Barak, Section 21.3][AroraBarak09]
+by its *rotation map* [Reingold, Vadhan and Wigderson, Section 2.1][ReingoldVadhanWigderson2002]
+[Arora and Barak, Section 21.3][AroraBarak09]
 `rot : V × D → V × D`: `rot (v, i) = (w, j)` when the `i`-th edge at `v` leads to `w` and is the
 `j`-th edge at `w`. Following an edge back returns to where it started, so `rot` is an involution;
 conversely every involution of `V × D` is the rotation map of a `D`-regular multigraph. Vertices and
@@ -40,6 +41,7 @@ characterization. `λ(G) ≤ 1` always, and `G` is a good expander when `λ(G)` 
 
 * `Cslib.RotationMap`: a `D`-regular multigraph on `V`, given by its rotation map.
 * `Cslib.RotationMap.neighbor`: the `i`-th neighbor of a vertex.
+* `Cslib.RotationMap.ofInvolutive`: the `1`-regular multigraph of an involution.
 * `Cslib.RotationMap.interedges`: the edges from one set of vertices to another, as darts.
 * `Cslib.RotationMap.walk`: the walk operator.
 * `Cslib.RotationMap.spectralExpansion`: the spectral expansion `λ(G)`.
@@ -72,7 +74,8 @@ open Finset
 open scoped BigOperators
 
 /-- A `D`-regular undirected multigraph on `V`, parallel edges and self-loops allowed, presented by
-its rotation map [ReingoldVadhanWigderson2002] [Arora and Barak, Section 21.3][AroraBarak09]:
+its rotation map [Reingold, Vadhan and Wigderson, Section 2.1][ReingoldVadhanWigderson2002]
+[Arora and Barak, Section 21.3][AroraBarak09]:
 `rot (v, i) = (w, j)` when the `i`-th edge at `v` leads to `w` and is the `j`-th edge at `w`. -/
 @[ext]
 structure RotationMap (V D : Type*) where

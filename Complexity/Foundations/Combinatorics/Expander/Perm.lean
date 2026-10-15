@@ -28,7 +28,7 @@ permutations, the multigraph is an edge expander (`le_edgeExpansion_ofPerms`). R
 have this property (`Cslib.exists_perms_card_le_mul_card_filter_notMem`): their multigraph is the
 permutation model of random regular graphs
 [Hoory, Linial and Wigderson, Section 7.2.1][HooryLinialWigderson2006], and random regular graphs
-are expanders [Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+are expanders [Hoory, Linial and Wigderson, Theorem 4.16][HooryLinialWigderson2006]
 [Arora and Barak, Chapter 21][AroraBarak09].
 
 ## Main definitions

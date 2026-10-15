@@ -16,10 +16,11 @@ import Mathlib.Data.Fintype.Fin
 # From 3-SAT to constraint graphs
 
 The standard reduction from 3-SAT to the satisfiability of constraint graphs over a constant
-alphabet, with binary constraints [Arora and Barak, Chapter 22][AroraBarak09]. It is the entry point
-of Dinur's proof of the PCP theorem [Dinur, Section 3][Dinur2007]: it produces a constraint graph
-whose value is at least a constant fraction of the proportion of clauses that every assignment
-falsifies, and the rest of the proof amplifies that value.
+alphabet, with binary constraints [Arora and Barak, Chapter 22][AroraBarak09]. It can serve as the
+starting point of Dinur's proof of the PCP theorem, which starts instead from graph 3-colouring
+[Dinur, Proposition 2.1 and Corollary 4.2][Dinur2007]: it produces a constraint graph whose value is
+at least a constant fraction of the proportion of clauses that every assignment falsifies, and the
+rest of the proof amplifies that value.
 
 The constraint graph `ConstraintGraph.ofCNF φ` of a formula `φ` with `m` clauses has
 
@@ -43,7 +44,6 @@ to have at most three literals.
 
 ## Main definitions
 
-* `Cslib.Logic.PL.CNF.countUnsat`: the number of clauses of a formula falsified by an assignment.
 * `Cslib.PCP.ConstraintGraph.ofCNF`: the constraint graph of a formula.
 * `Cslib.PCP.ConstraintGraph.cnfLabelling`, `Cslib.PCP.ConstraintGraph.cnfAssignment`: the
   translations between assignments of the variables and labellings of the vertices.

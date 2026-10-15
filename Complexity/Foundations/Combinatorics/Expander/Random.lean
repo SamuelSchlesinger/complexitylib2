@@ -24,7 +24,7 @@ points has at least a tenth of its points moved out of `S` by one of them
 (`exists_perms_card_le_mul_card_filter_notMem`). By `Cslib.RotationMap.le_edgeExpansion_ofPerms`
 this makes the `60`-regular multigraph of the permutations an edge expander, which is the classical
 probabilistic proof that constant-degree expanders exist
-[Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Hoory, Linial and Wigderson, Theorem 4.16][HooryLinialWigderson2006]
 [Arora and Barak, Chapter 21][AroraBarak09].
 
 The proof is a counting argument; it is the probabilistic method with the probabilities
@@ -256,7 +256,7 @@ variable (V) in
 /-- **Random permutations move small sets**: there are thirty permutations of a finite type `V` such
 that every set `S` of at most half of the points has at least a tenth of its points moved out of `S`
 by one of them. This is the counting form of the probabilistic proof that constant-degree expanders
-exist [Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+exist [Hoory, Linial and Wigderson, Theorem 4.16][HooryLinialWigderson2006]
 [Arora and Barak, Chapter 21][AroraBarak09]. -/
 theorem exists_perms_card_le_mul_card_filter_notMem :
     ∃ σ : Fin 30 → Perm V, ∀ S : Finset V, 2 * #S ≤ Fintype.card V →

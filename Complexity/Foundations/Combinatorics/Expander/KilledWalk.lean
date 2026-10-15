@@ -12,14 +12,15 @@ public import Complexity.Foundations.Combinatorics.Expander.Walk
 /-!
 # Killed walks
 
-Walks whose length is random, killed after each step with probability `1 / q` and stopped after `T`
-steps, are used in the powering step of Dinur's proof of the PCP theorem [Dinur2007]
-[Radhakrishnan2006]. A killed walk on a `D`-regular multigraph `G` is presented by `T` labels of `G`
-and `T` kill signals `c : Fin T → Fin q`: it follows the labels until its kill time `killTime c`,
-the first step `i` with `c i = 0` (or `T` if there is none), and the remaining labels carry no
-meaning. Under uniformly random signals the kill time has the geometric law truncated at `T`: it is
-`m < T` with probability `(1 - 1 / q) ^ m / q` (`card_filter_killTime_eq`) and at least `m ≤ T` with
-probability `(1 - 1 / q) ^ m` (`card_filter_le_killTime`).
+Walks whose length is random, killed before each step with probability `1 / q` and stopped after `T`
+steps, are Radhakrishnan's variant [Radhakrishnan2006] of the walks in the powering step of Dinur's
+proof of the PCP theorem [Dinur, Section 9][Dinur2007]. A killed walk on a `D`-regular multigraph
+`G` is presented by `T` labels of `G` and `T` kill signals `c : Fin T → Fin q`: it follows the
+labels until its kill time `killTime c`, the first step `i` with `c i = 0` (or `T` if there is
+none), and the remaining labels carry no meaning. Under uniformly random signals the kill time has
+the geometric law truncated at `T`: it is `m < T` with probability `(1 - 1 / q) ^ m / q`
+(`card_filter_killTime_eq`) and at least `m ≤ T` with probability `(1 - 1 / q) ^ m`
+(`card_filter_le_killTime`).
 
 Given that it is killed at step `ℓ < T`, a uniformly random killed walk is a uniformly random walk
 of length `ℓ` (`sum_ite_killTime_eq`, `card_filter_killTime_eq_and`). Splitting it at a step

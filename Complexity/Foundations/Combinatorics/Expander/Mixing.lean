@@ -55,6 +55,8 @@ says that spectral expanders are edge expanders [Arora and Barak, Section 21.2][
   `Cslib.RotationMap.le_card_interedges_compl`: edge expansion from a spectral bound.
 * `Cslib.RotationMap.le_card_interedges_compl_of_two_mul_card_le`: a set of at most half of the
   vertices has at least `(1 - λ(G)) d |S| / 2` edges leaving it.
+* `Cslib.RotationMap.le_card_filter_ne_neighbor`: an expander has many edges between differently
+  labelled vertices.
 
 ## References
 

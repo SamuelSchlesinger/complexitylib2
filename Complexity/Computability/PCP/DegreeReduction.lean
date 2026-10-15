@@ -43,7 +43,6 @@ every `H v` is at most `μ` (`le_unsatVal_degreeReduce`).
 
 ## Main definitions
 
-* `Cslib.RotationMap.ofInvolutive`: the `1`-regular multigraph of an involution.
 * `Cslib.PCP.ConstraintGraph.endpoint`, `Cslib.PCP.ConstraintGraph.Cloud`: the vertex of a
   half-edge, and the half-edges at a vertex.
 * `Cslib.PCP.ConstraintGraph.cloudGraph`: the regular multigraph on the half-edges joining each
@@ -52,8 +51,6 @@ every `H v` is at most `μ` (`le_unsatVal_degreeReduce`).
 
 ## Main results
 
-* `Cslib.RotationMap.le_card_filter_ne_neighbor`: an expander has many edges between differently
-  labelled vertices.
 * `Cslib.PCP.ConstraintGraph.satisfiable_degreeReduce`: completeness.
 * `Cslib.PCP.ConstraintGraph.one_add_card_mul_unsatVal_degreeReduce_le`: degree reduction divides
   the value by at least `1 + |D|`.

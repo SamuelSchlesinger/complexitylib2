@@ -17,7 +17,8 @@ import Mathlib.Analysis.Real.Sqrt
 # Products of rotation maps
 
 Expanders of constant degree on arbitrarily many vertices are built from small ones by graph
-products [ReingoldVadhanWigderson2002] [Arora and Barak, Section 21.3][AroraBarak09]
+products [Reingold, Vadhan and Wigderson, Section 1.2][ReingoldVadhanWigderson2002]
+[Arora and Barak, Section 21.3][AroraBarak09]
 [Hoory, Linial and Wigderson, Section 9][HooryLinialWigderson2006]. Besides powers
 (`Cslib.RotationMap.pow`), these are:
 

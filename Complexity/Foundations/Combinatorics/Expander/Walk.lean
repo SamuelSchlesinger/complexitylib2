@@ -19,7 +19,8 @@ import Mathlib.Algebra.Order.BigOperators.Expect
 A walk of length `t` in a `D`-regular multigraph `G` on `V` is a start vertex together with `t`
 labels, `p : V × (Fin t → D)`, and takes the edges labelled `p.2 0, …, p.2 (t - 1)` in turn.
 There are `|V| |D| ^ t` of them, and they are the darts of the power `G.pow t`. Walks are the
-combinatorial side of the powering step of Dinur's proof of the PCP theorem [Dinur2007]
+combinatorial side of the powering step of Dinur's proof of the PCP theorem
+[Dinur, Sections 3.2 and 5][Dinur2007]
 [Arora and Barak, Chapter 22][AroraBarak09], whose analysis counts the steps of a random walk that
 cross a given set of edges; this file provides the facts about walks that analysis rests on.
 
