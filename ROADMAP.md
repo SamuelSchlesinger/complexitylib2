@@ -248,6 +248,11 @@ Håstad's argument (`Circuit/Boolean/Hastad.lean`, from which Håstad's theorem 
 Fourier coefficients of restrictions, decision-tree degree, and Chebyshev's inequality for random
 subsets (`Foundations/Combinatorics/Hypergeometric.lean`).
 
+**Shallow circuits for symmetric functions** (`Circuit/Boolean/ShallowSymmetric.lean`, over
+alternating formulas in `Circuit/Boolean/AltFormula.lean`): the theorem of Lecomte and
+Ramakrishnan, every symmetric function has depth-`d` circuits of size `2 ^ O(n ^ (1 / (d - 1)))`,
+with negations free at the inputs, and so unbounded fan-in circuits of depth `d + 1` counting them.
+
 **Resolution** (`Logics/Propositional/Resolution.lean`): soundness and refutation completeness.
 
 **Exponential-time SAT combinatorics.** The satisfiability coding lemma of Paturi, Pudlák and Zane

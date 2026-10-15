@@ -646,4 +646,16 @@ info: 'Cslib.Logic.PL.CNF.two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity' depend
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity
 
+/--
+info: 'Cslib.Circuits.Boolean.AltFormula.exists_of_isSymmetric' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.AltFormula.exists_of_isSymmetric
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.exists_circuit_of_isSymmetric' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.exists_circuit_of_isSymmetric
+
 end ComplexityTests.Axioms

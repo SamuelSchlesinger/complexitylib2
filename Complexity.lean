@@ -3,6 +3,7 @@ module  -- shake: keep-all --deprecated_module: ignore
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.Circuit.Approximation
 public import Complexity.Computability.Circuit.Boolean.AC0
+public import Complexity.Computability.Circuit.Boolean.AltFormula
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
@@ -27,6 +28,13 @@ public import Complexity.Computability.Circuit.Boolean.PPolyHard
 public import Complexity.Computability.Circuit.Boolean.Parity
 public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.Circuit.Boolean.Restriction
+public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric
+public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
+public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Construction
+public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Covering
+public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Moduli
+public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.ShiftTest
+public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Weights
 public import Complexity.Computability.Circuit.Boolean.Smolensky
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Approximation
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
@@ -100,6 +108,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.R
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
+public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.Sunflower
