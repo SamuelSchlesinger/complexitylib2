@@ -25,6 +25,8 @@ adds depths (`Circuit.depth_comp_le`) and parallel composition takes their maxim
   `Cslib.Circuits.Program.wireDepths_append_appendedWire_le`: depths in a continued program.
 * `Cslib.Circuits.Circuit.depth_comp_le`: `depth (d.comp c) ≤ depth d + depth c`.
 * `Cslib.Circuits.Circuit.depth_append_le`: `depth (c.append d) ≤ max (depth c) (depth d)`.
+* `Cslib.Circuits.Circuit.depthWith_comp_le`, `Cslib.Circuits.Circuit.depthWith_append_le`: the
+  same for depths with costs.
 -/
 
 @[expose] public section
@@ -80,6 +82,48 @@ theorem wireDepths_append_appendedWire_le {D : ℕ} (hD : ∀ i, P.wireDepths (f
         rw [Program.wireDepths_gate_castSucc, Program.wireDepths_gate_castSucc]
         exact ih (.gate j)
 
+/-- Continuing a program does not change the depths with costs of its wires. -/
+@[simp] theorem wireDepthsWith_append_castAdd (cost : σ.Op → ℕ) (q : Program σ k g₂)
+    (w : Wire n g₁) :
+    (P.append feed q).wireDepthsWith cost (w.castAdd g₂) = P.wireDepthsWith cost w := by
+  induction q with
+  | empty => cases w <;> rfl
+  | gate q line ih =>
+    cases w with
+    | input i => rfl
+    | gate j =>
+      exact (Program.wireDepthsWith_gate_castSucc _ _ _ (Wire.gate (j.castAdd _))).trans ih
+
+/-- With costs, a wire of the continuation is at most as deep as in the continuation alone, plus
+the depth of the wires feeding it. -/
+theorem wireDepthsWith_append_appendedWire_le (cost : σ.Op → ℕ) {D : ℕ}
+    (hD : ∀ i, P.wireDepthsWith cost (feed i) ≤ D) (q : Program σ k g₂) (w : Wire k g₂) :
+    (P.append feed q).wireDepthsWith cost (appendedWire feed w) ≤ q.wireDepthsWith cost w + D := by
+  induction q with
+  | empty =>
+    cases w with
+    | input i => exact (wireDepthsWith_append_castAdd P feed cost .empty (feed i)).trans_le (by
+        simpa using hD i)
+    | gate j => exact j.elim0
+  | gate q line ih =>
+    cases w with
+    | input i =>
+      refine (wireDepthsWith_append_castAdd P feed cost _ (feed i)).trans_le ?_
+      simpa using hD i
+    | gate j =>
+      refine Fin.lastCases ?_ (fun j => ?_) j
+      · change ((P.append feed q).gate (line.mapWires (appendedWire feed))).depthsWith cost
+          (Fin.last _) ≤ (q.gate line).depthsWith cost (Fin.last _) + D
+        rw [Program.depthsWith_gate_last, Program.depthsWith_gate_last]
+        exact line.depthWith_le_add cost
+          (depths := fun w => (P.append feed q).wireDepthsWith cost (appendedWire feed w))
+          (depths' := q.wireDepthsWith cost) fun a => ih (line.wires a)
+      · change ((P.append feed q).gate (line.mapWires (appendedWire feed))).wireDepthsWith cost
+          (Wire.castSucc (Wire.gate (Fin.natAdd g₁ j))) ≤
+          (q.gate line).wireDepthsWith cost (Wire.castSucc (Wire.gate j)) + D
+        rw [Program.wireDepthsWith_gate_castSucc, Program.wireDepthsWith_gate_castSucc]
+        exact ih (.gate j)
+
 end Program
 
 namespace Circuit
@@ -115,6 +159,32 @@ theorem depth_append_le (c : Circuit σ n m) (d : Circuit σ n p) :
     exact (Program.wireDepths_append_appendedWire_le c.program Wire.input (D := 0)
       (fun i => le_rfl) d.program (d.outputs o)).trans
       ((d.outputDepths_le_depth o).trans (le_max_right _ _))
+
+/-- **Sequential composition adds depths with costs.** -/
+theorem depthWith_comp_le (cost : σ.Op → ℕ) (d : Circuit σ m p) (c : Circuit σ n m) :
+    (d.comp c).depthWith cost ≤ d.depthWith cost + c.depthWith cost :=
+  (Circuit.depthWith_le_iff cost _).2 fun o =>
+    (Program.wireDepthsWith_append_appendedWire_le c.program c.outputs cost
+      (fun i => c.wireDepthsWith_outputs_le_depthWith cost i) d.program (d.outputs o)).trans
+      (Nat.add_le_add_right (d.wireDepthsWith_outputs_le_depthWith cost o) _)
+
+/-- **Parallel composition takes the larger depth with costs.** -/
+theorem depthWith_append_le (cost : σ.Op → ℕ) (c : Circuit σ n m) (d : Circuit σ n p) :
+    (c.append d).depthWith cost ≤ max (c.depthWith cost) (d.depthWith cost) := by
+  refine (Circuit.depthWith_le_iff cost _).2 fun o => ?_
+  induction o using Fin.addCases with
+  | left o =>
+    change (c.program.append Wire.input d.program).wireDepthsWith cost
+      ((c.append d).outputs _) ≤ _
+    rw [outputs_append_castAdd, Program.wireDepthsWith_append_castAdd]
+    exact (c.wireDepthsWith_outputs_le_depthWith cost o).trans (le_max_left _ _)
+  | right o =>
+    change (c.program.append Wire.input d.program).wireDepthsWith cost
+      ((c.append d).outputs _) ≤ _
+    rw [outputs_append_natAdd]
+    exact (Program.wireDepthsWith_append_appendedWire_le c.program Wire.input cost (D := 0)
+      (fun i => le_rfl) d.program (d.outputs o)).trans
+      ((d.wireDepthsWith_outputs_le_depthWith cost o).trans (le_max_right _ _))
 
 end Circuit
 

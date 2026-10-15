@@ -31,9 +31,9 @@ normal form (`AltFormula.eval_and_eq_cnf_eval`, `AltFormula.eval_or_eq_dnf_eval`
 Substituting literals for the inputs costs nothing (`AltFormula.mapInputs`), and negating every
 input computes the negation with the dual root operation (`AltFormula.eval_neg`). Every function
 has alternating formulas of depth two of size `2 ^ n + 1` (`AltFormula.exists_depth_two`).
-An alternating formula of depth `d` is a circuit over the unbounded fan-in basis of depth at most
-`d + 1` with at most `n` more gates, computing the negated inputs first
-(`AltFormula.exists_circuit`).
+An alternating formula of depth `d` is a circuit over the unbounded fan-in basis of AND/OR depth
+at most `d`, and of depth at most `d + 1` counting negations, with at most `n` more gates, computing
+the negated inputs first (`AltFormula.exists_circuit`).
 
 ## Main definitions
 
@@ -316,6 +316,13 @@ theorem depth_toFormula_le {d : ℕ} (op : AltOp) (f : AltFormula n d) :
   | succ d ih =>
     cases op <;> exact Nat.succ_le_succ (Finset.sup_le fun j _ => ih _ _)
 
+theorem depthWith_toFormula_le {d : ℕ} (op : AltOp) (f : AltFormula n d) :
+    (toFormula op f).depthWith Unbounded.Op.andOrCost ≤ d := by
+  induction d generalizing op with
+  | zero => exact Nat.zero_le _
+  | succ d ih =>
+    cases op <;> exact Nat.add_le_add (Finset.sup_le fun j _ => ih _ _) le_rfl
+
 /-- The circuit computing the positive and the negated inputs, with one negation gate per
 input. -/
 def literalsCircuit (n : ℕ) : Circuit Unbounded.signature n (n + n) :=
@@ -333,18 +340,29 @@ theorem depth_literalsCircuit_le (n : ℕ) : (literalsCircuit n).depth ≤ 1 :=
   (Circuit.depth_append_le _ _).trans (max_le (by simp)
     (Circuit.depth_pi_le _ fun _ => (Circuit.depth_oneGate _ _).le))
 
+/-- Negations are free in the AND/OR depth, so the literals have AND/OR depth zero. -/
+theorem depthWith_literalsCircuit (n : ℕ) :
+    (literalsCircuit n).depthWith Unbounded.Op.andOrCost = 0 :=
+  Nat.eq_zero_of_le_zero <| (Circuit.depthWith_append_le _ _ _).trans <| max_le
+    ((Circuit.depthWith_le_iff _ _).2 fun _ => le_rfl)
+    (Circuit.depthWith_pi_le _ _ fun _ => (Circuit.depthWith_oneGate _ _ _).le)
+
 /-- **Alternating formulas are circuits**: an alternating formula of depth `d` computing `f`
-with root `op` is a circuit over the unbounded fan-in basis of depth at most `d + 1` with at most
-`n` more gates, negating every input first. -/
+with root `op` is a circuit over the unbounded fan-in basis of AND/OR depth at most `d`, and of
+depth at most `d + 1` counting negations, with at most `n` more gates, negating every input
+first. -/
 theorem exists_circuit {d : ℕ} (op : AltOp) (f : AltFormula n d) :
     ∃ c : Circuit Unbounded.signature n 1,
-      c.Computes Unbounded.interpretation (single (eval op f)) ∧ c.depth ≤ d + 1 ∧
-        c.size = size f + n := by
-  refine ⟨(toFormula op f).toCircuit.comp (literalsCircuit n), fun x => ?_, ?_, ?_⟩
+      c.Computes Unbounded.interpretation (single (eval op f)) ∧
+        c.depthWith Unbounded.Op.andOrCost ≤ d ∧ c.depth ≤ d + 1 ∧ c.size = size f + n := by
+  refine ⟨(toFormula op f).toCircuit.comp (literalsCircuit n), fun x => ?_, ?_, ?_, ?_⟩
   · rw [Circuit.eval_comp, eval_literalsCircuit]
     funext j
     rw [Formula.eval_toCircuit, eval_toFormula]
     rfl
+  · refine (Circuit.depthWith_comp_le _ _ _).trans ?_
+    rw [depthWith_literalsCircuit, add_zero]
+    exact (Formula.depthWith_toCircuit_le _ _).trans (depthWith_toFormula_le op f)
   · refine (Circuit.depth_comp_le _ _).trans ?_
     have h₁ := (Formula.depth_toCircuit_le (toFormula op f)).trans (depth_toFormula_le op f)
     have h₂ := depth_literalsCircuit_le n

@@ -22,10 +22,11 @@ import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 depth `d ≥ 2` there is a constant `C` such that every symmetric Boolean function of `n` bits (one
 depending only on the number of true bits, `BooleanFunction.IsSymmetric`), majority among them, has
 alternating formulas of depth `d` with at most `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates
-(`AltFormula.exists_of_isSymmetric`), so circuits over the unbounded fan-in basis of depth `d + 1`
-with at most `n` more gates (`Unbounded.exists_circuit_of_isSymmetric`), negations included. For
-depth three this is `2 ^ (C √n)`. The exponent is optimal for majority, by Korten's top-down bound
-(`AltFormula.two_rpow_lt_size_of_eval_eq_majority`).
+(`AltFormula.exists_of_isSymmetric`), so circuits over the unbounded fan-in basis of AND/OR depth
+`d` with at most `n` more gates (`Unbounded.exists_circuit_of_isSymmetric`). For depth three this
+is `2 ^ (C √n)`. The exponent is optimal for majority, by Korten's top-down bounds for alternating
+formulas (`AltFormula.two_rpow_lt_size_of_eval_eq_majority`) and for circuits of AND/OR depth `d`
+(`Unbounded.two_rpow_lt_add_size_of_computes_majority`).
 
 The proof is by induction on the depth: at depth `d + 2` and for `n ≤ k ^ (d + 1)` inputs, symmetric
 functions have size `2 ^ (C_d k)` (`exists_symmetric_altFormula`). A symmetric function is an OR
@@ -174,17 +175,18 @@ end AltFormula
 
 /-- **The theorem of Lecomte and Ramakrishnan, for circuits** [LecomteRamakrishnan2026]: for every
 `d ≥ 2` there is a constant `C` such that every symmetric function of `n ≥ 1` bits has circuits over
-the unbounded fan-in basis of depth at most `d + 1` (counting negations) with at most
-`2 ^ (C n ^ (1 / (d - 1))) + n` gates. -/
+the unbounded fan-in basis of AND/OR depth at most `d`, and of depth at most `d + 1` counting
+negations, with at most `2 ^ (C n ^ (1 / (d - 1))) + n` gates. -/
 theorem Unbounded.exists_circuit_of_isSymmetric {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ f : BitString n → Bool, IsSymmetric f →
       ∃ c : Circuit Unbounded.signature n 1, c.Computes Unbounded.interpretation (single f) ∧
-        c.depth ≤ d + 1 ∧ (c.size : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) + n := by
+        c.depthWith Unbounded.Op.andOrCost ≤ d ∧ c.depth ≤ d + 1 ∧
+          (c.size : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) + n := by
   obtain ⟨C, hC, h⟩ := AltFormula.exists_of_isSymmetric hd
   refine ⟨C, hC, fun n hn f hf => ?_⟩
   obtain ⟨g, hs, he⟩ := h n hn f hf .or
-  obtain ⟨c, hc, hdepth, hsize⟩ := AltFormula.exists_circuit .or g
-  refine ⟨c, ?_, hdepth, ?_⟩
+  obtain ⟨c, hc, hdepthWith, hdepth, hsize⟩ := AltFormula.exists_circuit .or g
+  refine ⟨c, ?_, hdepthWith, hdepth, ?_⟩
   · rwa [show AltFormula.eval .or g = f from funext he] at hc
   · rw [hsize]
     push_cast

@@ -443,6 +443,17 @@ theorem depth_toCircuit_le (F : Formula σ n) : F.toCircuit.depth ≤ F.depth :=
       (Circuit.depth_pi_le _ fun a => (ih a).trans (Finset.le_sup (f := fun a => (args a).depth)
         (Finset.mem_univ a))))
 
+/-- With costs, the circuit of a formula is no deeper than the formula. -/
+theorem depthWith_toCircuit_le (cost : σ.Op → ℕ) (F : Formula σ n) :
+    F.toCircuit.depthWith cost ≤ F.depthWith cost := by
+  induction F with
+  | input i => exact (Circuit.depthWith_le_iff cost _).2 fun _ => le_rfl
+  | gate op args ih =>
+    rw [toCircuit, depthWith_gate, add_comm]
+    exact (Circuit.depthWith_comp_le _ _ _).trans (Nat.add_le_add
+      (Circuit.depthWith_oneGate _ _ _).le (Circuit.depthWith_pi_le _ _ fun a => (ih a).trans
+        (Finset.le_sup (f := fun a => (args a).depthWith cost) (Finset.mem_univ a))))
+
 end Formula
 
 end Cslib.Circuits

@@ -112,8 +112,27 @@ private theorem foldl_max_mono {m : ℕ} {f f' : Fin m → ℕ} (h : ∀ i, f i 
 
 /-- With unit costs, `Line.depthWith` is `Line.depth`. -/
 @[simp] theorem Line.depthWith_one (line : Line σ n g) (depths : Wire n g → ℕ) :
-    line.depthWith (fun _ => 1) depths = line.depth depths := by
-  simp only [Line.depthWith, Line.depth]
+    line.depthWith 1 depths = line.depth depths := by
+  simp only [Line.depthWith, Line.depth, Pi.one_apply]
+  omega
+
+/-- Raising the depths of the wires by at most `D` raises the depth of a line by at most `D`. -/
+theorem Line.depthWith_le_add (cost : σ.Op → ℕ) (line : Line σ n g) {depths depths' : Wire n g → ℕ}
+    {D : ℕ} (h : ∀ a, depths (line.wires a) ≤ depths' (line.wires a) + D) :
+    line.depthWith cost depths ≤ line.depthWith cost depths' + D := by
+  have : Fin.foldl (σ.Arity line.op) (fun depth k => max depth (depths (line.wires k))) 0 ≤
+      Fin.foldl (σ.Arity line.op) (fun depth k => max depth (depths' (line.wires k))) 0 + D :=
+    (foldl_max_le_iff _ 0 _).2 ⟨Nat.zero_le _, fun a =>
+      (h a).trans (Nat.add_le_add_right (le_foldl_max (fun k => depths' (line.wires k)) 0 a) _)⟩
+  unfold Line.depthWith
+  omega
+
+/-- A line reading only wires of depth zero has the depth of its cost. -/
+theorem Line.depthWith_eq_cost (cost : σ.Op → ℕ) (line : Line σ n g) {depths : Wire n g → ℕ}
+    (h : ∀ a, depths (line.wires a) = 0) : line.depthWith cost depths = cost line.op := by
+  have : Fin.foldl (σ.Arity line.op) (fun depth k => max depth (depths (line.wires k))) 0 ≤ 0 :=
+    (foldl_max_le_iff _ 0 0).2 ⟨le_rfl, fun a => (h a).le⟩
+  unfold Line.depthWith
   omega
 
 /-- `Line.depthWith` is monotone in the costs and in the depths of the wires. -/
@@ -179,11 +198,11 @@ theorem Program.cost_le_depthsWith (cost : σ.Op → ℕ) (p : Program σ n g) (
 
 /-- With unit costs, `Program.depthsWith` is `Program.depths`. -/
 @[simp] theorem Program.depthsWith_one (p : Program σ n g) :
-    p.depthsWith (fun _ => 1) = p.depths := by
+    p.depthsWith 1 = p.depths := by
   induction p with
   | empty => exact funext fun k => k.elim0
   | @gate g p line ih =>
-    have hw : p.wireDepthsWith (fun _ => 1) = p.wireDepths := by
+    have hw : p.wireDepthsWith 1 = p.wireDepths := by
       funext w; cases w <;> simp [ih, Program.wireDepths]
     funext k
     induction k using Fin.lastCases with
@@ -192,7 +211,7 @@ theorem Program.cost_le_depthsWith (cost : σ.Op → ℕ) (p : Program σ n g) (
 
 /-- With unit costs, `Program.wireDepthsWith` is `Program.wireDepths`. -/
 @[simp] theorem Program.wireDepthsWith_one (p : Program σ n g) :
-    p.wireDepthsWith (fun _ => 1) = p.wireDepths := by
+    p.wireDepthsWith 1 = p.wireDepths := by
   simp [Program.wireDepthsWith, Program.wireDepths]
 
 /-- `Program.depthsWith` is monotone in the costs. -/
@@ -222,6 +241,11 @@ theorem Program.wireDepthsWith_lines_add_le (cost : σ.Op → ℕ) (p : Program 
 def Circuit.depthWith (cost : σ.Op → ℕ) {m : ℕ} (c : Circuit σ n m) : ℕ :=
   Fin.foldl m (fun depth k => max depth (c.program.wireDepthsWith cost (c.outputs k))) 0
 
+/-- A circuit has depth at most `D` with costs exactly when all its outputs do. -/
+theorem Circuit.depthWith_le_iff (cost : σ.Op → ℕ) {m : ℕ} (c : Circuit σ n m) {D : ℕ} :
+    c.depthWith cost ≤ D ↔ ∀ j, c.program.wireDepthsWith cost (c.outputs j) ≤ D := by
+  simpa [Circuit.depthWith] using foldl_max_le_iff _ 0 D
+
 theorem Circuit.wireDepthsWith_outputs_le_depthWith (cost : σ.Op → ℕ) {m : ℕ}
     (c : Circuit σ n m) (j : Fin m) :
     c.program.wireDepthsWith cost (c.outputs j) ≤ c.depthWith cost :=
@@ -229,7 +253,7 @@ theorem Circuit.wireDepthsWith_outputs_le_depthWith (cost : σ.Op → ℕ) {m : 
 
 /-- With unit costs, `Circuit.depthWith` is `Circuit.depth`. -/
 @[simp] theorem Circuit.depthWith_one {m : ℕ} (c : Circuit σ n m) :
-    c.depthWith (fun _ => 1) = c.depth := by
+    c.depthWith 1 = c.depth := by
   simp [Circuit.depthWith, Circuit.depth, Circuit.outputDepths]
 
 /-- `Circuit.depthWith` is monotone in the costs. -/

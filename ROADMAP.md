@@ -260,10 +260,10 @@ Håstad's argument above.
 **Shallow circuits for symmetric functions** (`Circuit/Boolean/ShallowSymmetric.lean`, over
 alternating formulas in `Circuit/Boolean/AltFormula.lean`): the theorem of Lecomte and
 Ramakrishnan, every symmetric function has depth-`d` circuits of size `2 ^ O(n ^ (1 / (d - 1)))`,
-with negations free at the inputs, and so unbounded fan-in circuits of depth `d + 1` counting them.
-By Korten's bound for alternating formulas (`Circuit/Boolean/AltFormula/TopDown.lean`), this is
-optimal for majority. Open: the circuit form in AND/OR depth `d`, which needs `depthWith` bounds
-for `Circuit.comp` and `Formula.toCircuit`.
+with negations free at the inputs, and so unbounded fan-in circuits of AND/OR depth `d` (depth
+`d + 1` counting negations). By Korten's bounds for alternating formulas
+(`Circuit/Boolean/AltFormula/TopDown.lean`) and for circuits of AND/OR depth `d`, this is optimal
+for majority.
 
 **Resolution** (`Logics/Propositional/Resolution.lean`): soundness and refutation completeness.
 
