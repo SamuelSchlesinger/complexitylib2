@@ -30,6 +30,7 @@ import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 import Complexity.Computability.Circuit.Frontier.Decomposable
 import Complexity.Computability.Circuit.Frontier.FanInTwo
+import Complexity.Computability.Circuit.Frontier.Correlation
 import Complexity.Computability.Circuit.Boolean.ThresholdGates.Parity
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.GapTheorem
@@ -682,6 +683,67 @@ example : ∃ N₀ : ℕ, ∀ m : ℕ, N₀ < 2 * m → ∃ σ : Layout (Fin m �
     (by simpa [mul_comm] using hm)⟩
 
 end FrontierGaussian
+
+section FrontierCorrelation
+
+open Cslib.Circuits Cslib.Circuits.Frontier Filter Matrix
+
+/-- The headline bound is not vacuous: its rate is positive, it applies to the zero-gate circuit
+of fan-in two that outputs the first input (over the full binary basis), and its bound `2^{-γ n}`
+is below one for every `n ≥ 1`, while every correlation is at most one. -/
+example : ∃ γ : ℝ, 0 < γ ∧ ∀ᶠ n in atTop,
+    |correlation {x | hardForm (n + 1) x} {x : Fin (n + 1) → Bool | x 0 ∈ ({true} : Set Bool)}| ≤
+      (2 : ℝ) ^ (-γ * (n + 1 : ℕ)) ∧ (2 : ℝ) ^ (-γ * (n + 1 : ℕ)) < 1 := by
+  obtain ⟨γ, hγ, H⟩ := exists_eventually_abs_correlation_hardForm_le.{0}
+  refine ⟨γ, hγ, ?_⟩
+  filter_upwards [(tendsto_add_atTop_nat 1).eventually H] with n hn
+  let C : Circuit (fullSignature 2 Bool) (n + 1) 1 := Circuit.wiring _ fun _ => 0
+  have hsize : (C.innerSize : ℝ) ≤ 277 / 100 * (n + 1 : ℕ) := by
+    have : C.innerSize = 0 := Nat.le_zero.mp (C.innerSize_le_size)
+    rw [this, Nat.cast_zero]
+    positivity
+  refine ⟨hn _ fullInterpretation {true} C (Circuit.fanInAtMost_wiring _ _) hsize, ?_⟩
+  exact Real.rpow_lt_one_of_one_lt_of_neg (by norm_num)
+    (by have : (0 : ℝ) < (n + 1 : ℕ) := by positivity
+        nlinarith)
+
+/-- The hypothesis on the cut ranks is met by the explicit family at a concrete length: every
+bisection of `100` coordinates has cut rank at least `19 = 50 - 31` in the polar matrix of
+`hardMatrix 100`, and bisections exist. -/
+example : (∃ U : Set (Fin 100), U.ncard = 50) ∧
+    ∀ U : Set (Fin 100), U.ncard = 50 → 19 ≤ (hardMatrix 100 + (hardMatrix 100)ᵀ).cutRank U := by
+  refine ⟨Set.exists_subset_card_eq (s := Set.univ) (by simp) |>.imp fun _ h => h.2, ?_⟩
+  intro U hU
+  have h := half_le_cutRank_hardMatrix 100 hU
+  have hs : Nat.sqrt 50 = 7 := (Nat.eq_sqrt.mpr ⟨by norm_num, by norm_num⟩).symm
+  rw [show (100 : ℕ) / 2 = 50 from rfl, hs] at h
+  omega
+
+/-- Robustness is not trivial at a concrete size: the fixed `100 × 100` matrix has every square
+block with `k` rows of rank at least `k - 21`. -/
+example : (robustMatrix 100).SubmatrixRobust 21 := by
+  have h := robustMatrix_submatrixRobust 100
+  rwa [show Nat.sqrt 100 = 10 from (Nat.eq_sqrt.mpr ⟨by norm_num, by norm_num⟩).symm] at h
+
+/-- The threshold `c* ≈ 2.78125` exceeds `2.77`, so the hypothesis `c < c*` of
+`exists_eventually_abs_correlation_hardForm_le_of_lt` is satisfiable. -/
+example : (277 / 100 : ℝ) < 1 + Real.pi / (6 * Real.arccos ((1 + 2 * √2) / 4)) := by
+  linarith [correlationThreshold_ge]
+
+/-- The rate hypothesis of `eventually_abs_correlation_hardForm_le` is satisfiable at `c = 2`. -/
+example : ∃ γ : ℝ, 0 < γ ∧ γ < (1 + Real.pi / (6 * Real.arccos ((1 + 2 * √2) / 4)) - 2) /
+      (2 * (1 + Real.pi / (3 * Real.arccos ((1 + 2 * √2) / 4)))) := by
+  have h₁ := correlationThreshold_ge
+  have h₂ := Gaussian.circuitCoefficient_ge_456
+  refine ⟨(1 + Real.pi / (6 * Real.arccos ((1 + 2 * √2) / 4)) - 2) /
+      (2 * (1 + Real.pi / (3 * Real.arccos ((1 + 2 * √2) / 4)))) / 2, ?_, ?_⟩
+  · apply div_pos (div_pos (by linarith) (by linarith)) two_pos
+  · have : 0 < (1 + Real.pi / (6 * Real.arccos ((1 + 2 * √2) / 4)) - 2) /
+        (2 * (1 + Real.pi / (3 * Real.arccos ((1 + 2 * √2) / 4)))) :=
+      div_pos (by linarith) (by linarith)
+    linarith
+
+end FrontierCorrelation
 
 section ThresholdParity
 

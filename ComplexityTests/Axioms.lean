@@ -2667,4 +2667,118 @@ info: 'Cslib.Circuits.Frontier.eventually_seven_div_two_lt_two_mul_innerSize' de
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.eventually_seven_div_two_lt_two_mul_innerSize
 
+/--
+info: 'Matrix.sq_sum_bilinear_mul_two_pow_rank_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.sq_sum_bilinear_mul_two_pow_rank_le
+
+/--
+info: 'Matrix.exists_submatrixRobust' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.exists_submatrixRobust
+
+/--
+info: 'Matrix.SubmatrixRobust.le_cutRank_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.SubmatrixRobust.le_cutRank_add
+
+/--
+info: 'Matrix.dotProduct_mulVec_self_eq_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.dotProduct_mulVec_self_eq_add
+
+/--
+info: 'Cslib.BitString.quadForm_eq_of_submatrix' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.quadForm_eq_of_submatrix
+
+/--
+info: 'Cslib.Circuits.Frontier.correlation_eq_two_mul_agreement_sub_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.correlation_eq_two_mul_agreement_sub_one
+
+/--
+info: 'Cslib.Circuits.Frontier.sq_signedCount_quadForm_rectangle_mul_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.sq_signedCount_quadForm_rectangle_mul_le
+
+/--
+info: 'Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le
+
+/--
+info: 'Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le_of_unread' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le_of_unread
+
+/--
+info: 'Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le_of_layout' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le_of_layout
+
+/--
+info: 'Cslib.Circuits.Frontier.sq_correlation_quadForm_le_of_unread' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.sq_correlation_quadForm_le_of_unread
+
+/--
+info: 'Cslib.Circuits.Frontier.sq_correlation_quadForm_le_of_layout' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.sq_correlation_quadForm_le_of_layout
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le_of_isLittleO' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le_of_isLittleO
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le_gaussian' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le_gaussian
+
+/--
+info: 'Cslib.Circuits.Frontier.half_le_cutRank_hardMatrix' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.half_le_cutRank_hardMatrix
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_abs_correlation_hardForm_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_abs_correlation_hardForm_le
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le_of_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le_of_lt
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le
+
 end ComplexityTests.Axioms

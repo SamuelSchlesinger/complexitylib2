@@ -66,6 +66,10 @@ public import Complexity.Computability.Circuit.Frontier.BoundedFanIn
 public import Complexity.Computability.Circuit.Frontier.BranchingProgram
 public import Complexity.Computability.Circuit.Frontier.Compiler
 public import Complexity.Computability.Circuit.Frontier.Components
+public import Complexity.Computability.Circuit.Frontier.Correlation
+public import Complexity.Computability.Circuit.Frontier.Correlation.Asymptotics
+public import Complexity.Computability.Circuit.Frontier.Correlation.Circuit
+public import Complexity.Computability.Circuit.Frontier.Correlation.Rectangle
 public import Complexity.Computability.Circuit.Frontier.Decomposable
 public import Complexity.Computability.Circuit.Frontier.Demand
 public import Complexity.Computability.Circuit.Frontier.FanInTwo
@@ -256,6 +260,7 @@ public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
+public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Finset.Expect
@@ -275,6 +280,9 @@ public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
+public import Complexity.Foundations.LinearAlgebra.Matrix.CutRank
+public import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
+public import Complexity.Foundations.LinearAlgebra.Matrix.SubmatrixRobust
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard
