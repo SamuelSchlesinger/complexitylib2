@@ -50,6 +50,11 @@ lake exe checkInitImports
 3. **Upstream marker** values: `candidate`, `submitted #N`, `merged @SHA` (delete the file and
    bump the pin in the same commit), `local-only (reason)`. Nothing is `local-only` without a
    reason; valid reasons are project scaffolding and tests of local-only files.
+   A port keeps the authors of the files it is ported from: v1's PCP internals, Sipser–Lautemann
+   and containment internals are by Bolton Bailey, so their ports carry
+   `Copyright (c) 2026 Bolton Bailey, Samuel Schlesinger` and `Authors: Bolton Bailey, Samuel
+   Schlesinger`; ports of Christian Reitwiessner's work carry his name likewise. Check the v1
+   file's `Authors:` line before porting.
 4. **Every module publicly imports `Cslib.Init`** (through `Complexity.Init`); the test driver
    runs `checkInitImports`.
 5. **Reuse upstream first.** Before defining anything, search cslib (`../cslib/Cslib`) and the
