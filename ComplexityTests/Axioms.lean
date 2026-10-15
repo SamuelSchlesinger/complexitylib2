@@ -676,4 +676,22 @@ info: 'exists_prod_le_card_mul_card_filter_hammingDist_lt' depends on axioms: [p
 #guard_msgs (whitespace := lax) in
 #print axioms exists_prod_le_card_mul_card_filter_hammingDist_lt
 
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_parity
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_parity
+
+/--
+info: 'Cslib.Communication.parity_communication_lower_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Communication.parity_communication_lower_bound
+
 end ComplexityTests.Axioms

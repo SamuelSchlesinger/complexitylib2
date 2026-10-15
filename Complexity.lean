@@ -44,6 +44,7 @@ public import Complexity.Computability.Circuit.Boolean.Substitution
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Boolean.TC0
 public import Complexity.Computability.Circuit.Boolean.Threshold
+public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
@@ -64,6 +65,13 @@ public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Communication.Protocol
+public import Complexity.Computability.Communication.RoundProtocol
+public import Complexity.Computability.Communication.TopDown.Adversary
+public import Complexity.Computability.Communication.TopDown.Arithmetic
+public import Complexity.Computability.Communication.TopDown.Defs
+public import Complexity.Computability.Communication.TopDown.Parity
+public import Complexity.Computability.Communication.TopDown.Rectangle
+public import Complexity.Computability.Communication.TopDown.Sampling
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
@@ -106,6 +114,12 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Shadow
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
+public import Complexity.Foundations.BooleanAnalysis.Bernoulli
+public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
+public import Complexity.Foundations.BooleanAnalysis.Fibers
+public import Complexity.Foundations.BooleanAnalysis.HarmonicMean
+public import Complexity.Foundations.BooleanAnalysis.LightPatterns
+public import Complexity.Foundations.BooleanAnalysis.MirrorSets
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.FiniteCover
