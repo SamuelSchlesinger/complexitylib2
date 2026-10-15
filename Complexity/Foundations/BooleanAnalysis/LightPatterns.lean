@@ -10,19 +10,27 @@ module
 public import Complexity.Init
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.HarmonicMean
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Algebra.Order.Floor.Ring
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 
 /-!
 # Korten's light-patterns lemma
 
-Let `mass` be a distribution on the masks of `ι` with min-entropy deficit at most `k`, that is,
-`mass x ≤ 2 ^ (k - |ι|)`. Select each coordinate independently with rate `r ≤ 1 / (512 k)`. With
-probability at least `63 / 64`, at most `2 ^ (|R| - k)` patterns on the selected coordinates `R`
-are *light*, of marginal probability at most `2 ^ (-|R| - 2 k - 2)`
-[Korten, Lemma 10][Korten2026] (`bernoulliAverage_few_light_patterns`). The proof transfers the
-lower set of masks on which the harmonic mean transform is large from rate `1 / 4` to rate `r`
-(`harmonicTransform_sparse_good_probability`), and bounds the light patterns by the harmonic mean.
+Let `mass` be a distribution on the points of the cube `ι → Bool` with min-entropy deficit at most
+`k`, that is, `mass x ≤ 2 ^ (k - |ι|)`. Select each coordinate independently with rate
+`r ≤ 1 / (512 k)`. With probability at least `63 / 64`, at most `2 ^ (|R| - k)` patterns on the
+selected coordinates `R` are *light*, of marginal probability at most `2 ^ (-|R| - 2 k - 2)`
+[Korten, Lemma 10][Korten2026] (`bernoulliAverage_few_light_patterns`).
+
+The proof transfers a lower set of masks from rate `1 / 4` to a small rate `r`: its probability at
+rate `r` is at least its probability at rate `1 / 4` to the power `5 r`
+(`bernoulliAverage_lowerSet_transfer`). The masks on which the harmonic mean transform of the
+density of `mass` is large form such a lower set, of probability at least `2 ^ (-k / 2 - 1)` at
+rate `1 / 4` (`harmonicTransform_good_probability`), so they have probability at least `63 / 64` at
+rate `r` (`harmonicTransform_sparse_good_probability`). On these masks the harmonic mean bounds the
+number of light patterns.
 
 ## Main definitions
 
@@ -31,6 +39,10 @@ lower set of masks on which the harmonic mean transform is large from rate `1 / 
 
 ## Main results
 
+* `Cslib.BooleanAnalysis.bernoulliAverage_lowerSet_transfer`: transference for lower sets at a
+  small rate.
+* `Cslib.BooleanAnalysis.harmonicTransform_sparse_good_probability`: the harmonic mean transform at
+  a sparse random set.
 * `Cslib.BooleanAnalysis.bernoulliAverage_few_light_patterns`: Korten's light-patterns lemma.
 * `Cslib.BooleanAnalysis.bernoulliAverage_few_light_patterns_density`: the same, for densities.
 
@@ -41,44 +53,72 @@ lower set of masks on which the harmonic mean transform is large from rate `1 / 
 
 @[expose] public section
 
-/-! ### Marginal probability masses on coordinate patterns
-
-The marginal of a finite real-valued probability mass function is the sum of
-its masses over all completions of a selected-coordinate pattern. This differs
-from `coordinateMarginal`, which averages normalized densities.
--/
-
 namespace Cslib.BooleanAnalysis
 
 open scoped BigOperators
 open Finset
 
-/-- Sum of the masses of all completions of a coordinate pattern. For a
-nonnegative mass function summing to one, this is the probability of the pattern. -/
-noncomputable def coordinateMass {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (mass : (ι → Bool) → ℝ) (selected : ι → Bool)
-    (pattern : {i // selected i = true} → Bool) : ℝ :=
-  ∑ rest : {i // selected i ≠ true} → Bool,
-    mass (fun i => if h : selected i = true then pattern ⟨i, h⟩ else rest ⟨i, h⟩)
+section
 
-/-! ### Proof of Korten's improved light-patterns lemma
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-Theorem specialization for Lemma 10 of [Korten2026].
+/-! ### Transference at a small rate -/
 
-Transfer the downward-closed event that the harmonic transform is large,
-then bound light patterns by the reciprocal-density Markov inequality.
-The final step converts normalized marginal densities into probability masses
-and counts, preserving the paper's real deficit parameter and constants.
--/
+/-- **Transference for lower sets** at a small rate `r ≤ 1 / 20`: the probability of a nonempty
+lower set at rate `r` is at least its probability at rate `1 / 4` to the power `5 r`, as in the
+proof of [Korten, Lemma 10][Korten2026]. Nonemptiness covers `r = 0`, where the right side is
+one. -/
+theorem bernoulliAverage_lowerSet_transfer {A : Set (ι → Bool)}
+    (hA : IsLowerSet A) (hA' : A.Nonempty) {r : ℝ} (hr : 0 ≤ r) (hr' : r ≤ 1 / 20) :
+    bernoulliAverage (1 / 4) (A.indicator 1) ^ (5 * r) ≤ bernoulliAverage r (A.indicator 1) := by
+  rcases hr.eq_or_lt with rfl | hr
+  · obtain ⟨s, hs⟩ := hA'
+    have hz : (fun _ => false) ∈ A := hA (fun i => Bool.false_le (s i)) hs
+    simp [bernoulliAverage_zero, Set.indicator_of_mem hz]
+  let h := ⌊1 / (4 * r)⌋₊
+  have hr1 : r ≤ 1 := by linarith
+  have hmul : (1 / (4 * r)) * r = 1 / 4 := by field_simp
+  have hupper : (h : ℝ) * r ≤ 1 / 4 := by
+    have hf := mul_le_mul_of_nonneg_right (Nat.floor_le (show 0 ≤ 1 / (4 * r) by positivity)) hr.le
+    rwa [hmul] at hf
+  have hlower : 1 ≤ (h : ℝ) * (5 * r) := by
+    have hf := mul_lt_mul_of_pos_right (Nat.lt_floor_add_one (1 / (4 * r))) hr
+    rw [hmul] at hf
+    dsimp [h]
+    nlinarith
+  have hpos : 0 < (h : ℝ) := by
+    by_contra hn
+    have := mul_nonpos_of_nonpos_of_nonneg (le_of_not_gt hn) (by positivity : 0 ≤ 5 * r)
+    linarith
+  have hinv : (h : ℝ)⁻¹ ≤ 5 * r := by
+    rw [inv_eq_one_div]
+    exact (div_le_iff₀ hpos).mpr (by nlinarith)
+  have hbase := bernoulliAverage_indicator_mem_Icc A
+    (by norm_num : (0 : ℝ) ≤ 1 / 4) (by norm_num)
+  calc
+    _ ≤ bernoulliAverage (1 / 4) (A.indicator 1) ^ (h : ℝ)⁻¹ :=
+      Real.rpow_le_rpow_of_exponent_ge' hbase.1 hbase.2 (by positivity) hinv
+    _ ≤ _ := by
+      apply (Real.rpow_inv_le_iff_of_pos hbase.1
+        (bernoulliAverage_indicator_mem_Icc A hr.le hr1).1 hpos).mpr
+      rw [Real.rpow_natCast]
+      exact bernoulliAverage_lowerSet_pow_le hA hr.le hr1 (by norm_num) h hupper
 
-private theorem harmonicTransform_sparse_good_probability_fin {n : ℕ} {f : (Fin n → Bool) → ℝ}
-    (hf : ∀ x, 0 ≤ f x) (hmean : (𝔼 x, f x) = 1) {k r : ℝ} (hk : 1 ≤ k)
-    (hbound : ∀ x, f x ≤ (2 : ℝ) ^ k) (hr : 0 ≤ r) (hr' : r ≤ 1 / (512 * k)) :
+/-! ### The harmonic mean transform at a sparse random set -/
+
+/-- **The harmonic mean transform at a sparse random set**, as in the proof of
+[Korten, Lemma 10][Korten2026]: for a density `f` relative to the uniform distribution bounded by
+`2 ^ k`, `k ≥ 1`, the transform at a random set of rate `r ≤ 1 / (512 k)` is at least
+`1 / (4 · 2 ^ k)` with probability at least `63 / 64`. -/
+theorem harmonicTransform_sparse_good_probability
+    {f : (ι → Bool) → ℝ} (hf : ∀ x, 0 ≤ f x) (hmean : (𝔼 x, f x) = 1)
+    {k r : ℝ} (hk : 1 ≤ k) (hbound : ∀ x, f x ≤ (2 : ℝ) ^ k)
+    (hr : 0 ≤ r) (hr' : r ≤ 1 / (512 * k)) :
     63 / 64 ≤ bernoulliAverage r
       (fun s => if 1 / (4 * (2 : ℝ) ^ k) ≤ harmonicTransform f s then 1 else 0) := by
   let B : ℝ := (2 : ℝ) ^ k
   let a : ℝ := 1 / (2 * Real.sqrt B)
-  let A : Set (Fin n → Bool) := {s | 1 / (4 * B) ≤ harmonicTransform f s}
+  let A : Set (ι → Bool) := {s | 1 / (4 * B) ≤ harmonicTransform f s}
   have hB : 1 ≤ B := Real.one_le_rpow (by norm_num) (by linarith)
   have hBp : 0 < B := lt_of_lt_of_le zero_lt_one hB
   have ha : 0 < a := by dsimp [a]; positivity
@@ -124,27 +164,9 @@ private theorem harmonicTransform_sparse_good_probability_fin {n : ℕ} {f : (Fi
   rw [← hind]
   nlinarith
 
-/-- Sparse-sampling estimate for the harmonic transform in the proof of Lemma 10. -/
-theorem harmonicTransform_sparse_good_probability {ι : Type*} [Fintype ι] [DecidableEq ι]
-    {f : (ι → Bool) → ℝ} (hf : ∀ x, 0 ≤ f x) (hmean : (𝔼 x, f x) = 1)
-    {k r : ℝ} (hk : 1 ≤ k) (hbound : ∀ x, f x ≤ (2 : ℝ) ^ k)
-    (hr : 0 ≤ r) (hr' : r ≤ 1 / (512 * k)) :
-    63 / 64 ≤ bernoulliAverage r
-      (fun s => if 1 / (4 * (2 : ℝ) ^ k) ≤ harmonicTransform f s then 1 else 0) := by
-  let e := (Fintype.equivFin ι).symm
-  have hmean' : (𝔼 x : Fin (Fintype.card ι) → Bool,
-      f (fun j => x (e.symm j))) = 1 := by
-    exact (Fintype.expect_equiv (Equiv.arrowCongr e (Equiv.refl Bool))
-      (fun x => f (fun j => x (e.symm j))) f (fun _ => rfl)).trans hmean
-  have h := harmonicTransform_sparse_good_probability_fin
-    (fun x => hf (fun j => x (e.symm j))) hmean' hk (fun x => hbound _) hr hr'
-  simp_rw [harmonicTransform_reindex e] at h
-  rwa [bernoulliAverage_reindex e r
-    (fun s => if 1 / (4 * (2 : ℝ) ^ k) ≤ harmonicTransform f s then 1 else 0)] at h
-
 /-- Korten's light-patterns lemma for densities: with probability at least `63 / 64`, the fraction
 of patterns of marginal density at most `2 ^ (-2 k - 2)` is at most `2 ^ (-k)`. -/
-theorem bernoulliAverage_few_light_patterns_density {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem bernoulliAverage_few_light_patterns_density
     {f : (ι → Bool) → ℝ}
     (hf : ∀ x, 0 ≤ f x) (hmean : (𝔼 x, f x) = 1) {k r : ℝ} (hk : 1 ≤ k)
     (hbound : ∀ x, f x ≤ (2 : ℝ) ^ k) (hr : 0 ≤ r) (hr' : r ≤ 1 / (512 * k)) :
@@ -169,9 +191,44 @@ theorem bernoulliAverage_few_light_patterns_density {ι : Type*} [Fintype ι] [D
   · rw [ite_eq_right hs]
     split_ifs <;> norm_num
 
+/-! ### Marginal probability masses on coordinate patterns
+
+The marginal of a probability mass function on the cube sums its masses over the completions of a
+pattern on the selected coordinates. It is the marginal `coordinateMarginal` of the density
+relative to the uniform distribution, scaled by the number of patterns
+(`coordinateMarginal_normalize`). -/
+
+/-- Sum of the masses of all completions of a coordinate pattern. For a
+nonnegative mass function summing to one, this is the probability of the pattern. -/
+noncomputable def coordinateMass (mass : (ι → Bool) → ℝ) (selected : ι → Bool)
+    (pattern : {i // selected i = true} → Bool) : ℝ :=
+  ∑ rest : {i // selected i ≠ true} → Bool,
+    mass (fun i => if h : selected i = true then pattern ⟨i, h⟩ else rest ⟨i, h⟩)
+
+/-- Marginalization preserves total probability mass. -/
+theorem sum_coordinateMass (mass : (ι → Bool) → ℝ) (s : ι → Bool) :
+    (∑ z, coordinateMass mass s z) = ∑ x, mass x := by
+  let e := Equiv.piEquivPiSubtypeProd (fun i => s i = true) (fun _ => Bool)
+  rw [← e.symm.sum_comp mass, Fintype.sum_prod_type]
+  rfl
+
+/-- Marginal masses of a nonnegative mass function are nonnegative. -/
+theorem coordinateMass_nonneg {mass : (ι → Bool) → ℝ} (hm : ∀ x, 0 ≤ mass x) (s : ι → Bool)
+    (z : {i // s i = true} → Bool) : 0 ≤ coordinateMass mass s z :=
+  sum_nonneg fun _ _ => hm _
+
+/-- The marginal mass of a pattern is the marginal of `mass` at the pattern times the number
+`2 ^ |{i | s i ≠ true}|` of its completions. -/
+theorem coordinateMass_eq_mul_coordinateMarginal (mass : (ι → Bool) → ℝ) (s : ι → Bool)
+    (z : {i // s i = true} → Bool) :
+    coordinateMass mass s z =
+      (2 : ℝ) ^ Fintype.card {i // s i ≠ true} * coordinateMarginal mass s z := by
+  rw [coordinateMarginal, Fintype.expect_eq_sum_div_card, coordinateMass]
+  simp only [Fintype.card_fun, Fintype.card_bool, Nat.cast_pow, Nat.cast_ofNat]
+  field_simp
+
 /-- Normalizing the input mass by `2^n` normalizes each marginal by `2^|R|`. -/
-theorem coordinateMarginal_normalize {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (mass : (ι → Bool) → ℝ) (s : ι → Bool)
+theorem coordinateMarginal_normalize (mass : (ι → Bool) → ℝ) (s : ι → Bool)
     (z : {i // s i = true} → Bool) :
     coordinateMarginal (fun x => (2 : ℝ) ^ Fintype.card ι * mass x) s z =
       (2 : ℝ) ^ Fintype.card {i // s i = true} * coordinateMass mass s z := by
@@ -189,10 +246,12 @@ theorem coordinateMarginal_normalize {ι : Type*} [Fintype ι] [DecidableEq ι]
     exact_mod_cast (Fintype.card_pos : 0 < Fintype.card ({i // s i ≠ true} → Bool))
   field_simp
 
+/-! ### Korten's light-patterns lemma -/
+
 /-- **Korten's light-patterns lemma** [Korten, Lemma 10][Korten2026], with its constants and
 pattern count. Nonnegative masses summing to one represent a distribution;
 the pointwise bound is min-entropy deficit at most the real parameter `k`. -/
-theorem bernoulliAverage_few_light_patterns {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem bernoulliAverage_few_light_patterns
     {mass : (ι → Bool) → ℝ}
     (hm : ∀ x, 0 ≤ mass x) (hmean : (∑ x, mass x) = 1) {k r : ℝ} (hk : 1 ≤ k)
     (hbound : ∀ x, mass x ≤ (2 : ℝ) ^ (k - Fintype.card ι))
@@ -245,18 +304,6 @@ theorem bernoulliAverage_few_light_patterns {ι : Type*} [Fintype ι] [Decidable
   simp only [havg, div_le_iff₀ hp, hcount]
   exact le_rfl
 
-/-- Marginalization preserves total probability mass. -/
-theorem sum_coordinateMass {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (mass : (ι → Bool) → ℝ) (s : ι → Bool) :
-    (∑ z, coordinateMass mass s z) = ∑ x, mass x := by
-  let e := Equiv.piEquivPiSubtypeProd (fun i => s i = true) (fun _ => Bool)
-  rw [← e.symm.sum_comp mass, Fintype.sum_prod_type]
-  rfl
-
-/-- Marginal masses of a nonnegative mass function are nonnegative. -/
-theorem coordinateMass_nonneg {ι : Type*} [Fintype ι] [DecidableEq ι]
-    {mass : (ι → Bool) → ℝ} (hm : ∀ x, 0 ≤ mass x) (s : ι → Bool)
-    (z : {i // s i = true} → Bool) : 0 ≤ coordinateMass mass s z :=
-  sum_nonneg fun _ _ => hm _
+end
 
 end Cslib.BooleanAnalysis

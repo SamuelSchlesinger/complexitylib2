@@ -260,7 +260,7 @@ private theorem isDensityLimit_of_many_neighbors {n : ℕ} (hn : 16 ≤ n)
   have hhits : bernoulliAverage p (fun P : Fin n → Bool =>
       if ∃ i, s i = true ∧ P i = true then (1 : ℝ) else 0) = 1 - (1 - p) ^ weight s := by
     convert bernoulliAverage_hits p s
-  rw [bernoulliAverage_sub, hhits, bernoulliAverage_mul, bernoulliAverage_weight,
+  rw [bernoulliAverage_sub, hhits, bernoulliAverage_const_mul, bernoulliAverage_weight,
     Fintype.card_fin, hmean] at hh
   unfold IsDensityLimit
   change (3 : ℝ) / 4 ≤ bernoulliAverage p _

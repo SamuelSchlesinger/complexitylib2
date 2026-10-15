@@ -9,6 +9,8 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.Data.BitString.Fourier
+import Mathlib.Algebra.Order.Ring.Pow
+import Mathlib.Tactic.Linarith
 
 /-!
 # Noise stability and noise sensitivity
@@ -123,7 +125,7 @@ theorem fourierCoeff_noiseOp (ρ : ℝ) (f : BitString n → ℝ) (S : Finset (F
 /-- The characters are eigenfunctions of the noise operator. -/
 theorem noiseOp_chi (ρ : ℝ) (S : Finset (Fin n)) (x : BitString n) :
     noiseOp ρ (chi S) x = ρ ^ #S * chi S x := by
-  simp only [noiseOp, chi_xor, bernoulliAverage_mul, bernoulliAverage_chi]
+  simp only [noiseOp, chi_xor, bernoulliAverage_const_mul, bernoulliAverage_chi]
   rw [show 1 - 2 * ((1 - ρ) / 2) = ρ by ring, mul_comm]
 
 /-- At `ρ = 1` no bit is flipped, so the noise operator is the identity. -/
@@ -142,9 +144,8 @@ theorem noiseOp_zero (f : BitString n → ℝ) (x : BitString n) : noiseOp 0 f x
 
 /-- The noise operator is additive. -/
 theorem noiseOp_add (ρ : ℝ) (f g : BitString n → ℝ) (x : BitString n) :
-    noiseOp ρ (fun y => f y + g y) x = noiseOp ρ f x + noiseOp ρ g x := by
-  simpa only [noiseOp, one_mul] using bernoulliAverage_linear ((1 - ρ) / 2) 1 1
-    (fun P => f fun i => x i ^^ P i) (fun P => g fun i => x i ^^ P i)
+    noiseOp ρ (fun y => f y + g y) x = noiseOp ρ f x + noiseOp ρ g x :=
+  bernoulliAverage_add _ _ _
 
 /-- The noise operator commutes with subtraction. -/
 theorem noiseOp_sub (ρ : ℝ) (f g : BitString n → ℝ) (x : BitString n) :
@@ -154,7 +155,7 @@ theorem noiseOp_sub (ρ : ℝ) (f g : BitString n → ℝ) (x : BitString n) :
 /-- The noise operator commutes with scaling. -/
 theorem noiseOp_const_mul (ρ c : ℝ) (f : BitString n → ℝ) (x : BitString n) :
     noiseOp ρ (fun y => c * f y) x = c * noiseOp ρ f x :=
-  bernoulliAverage_mul _ _ _
+  bernoulliAverage_const_mul _ _ _
 
 /-- **The noise operators form a semigroup**: `T_ρ T_σ = T_{ρ σ}`. -/
 theorem noiseOp_noiseOp (ρ σ : ℝ) (f : BitString n → ℝ) :
@@ -232,7 +233,7 @@ theorem noiseSensitivity_eq_noiseStability (δ : ℝ) (f : BooleanFunction n) :
       (if a ≠ b then (1 : ℝ) else 0) = 1 / 2 - 1 / 2 * (signVal a * signVal b) := by
     cases a <;> cases b <;> norm_num
   simp only [noiseSensitivity, noiseStability, noiseOp, show (1 - (1 - 2 * δ)) / 2 = δ by ring, h,
-    bernoulliAverage_sub, bernoulliAverage_const, bernoulliAverage_mul, expect_sub_distrib,
+    bernoulliAverage_sub, bernoulliAverage_const, bernoulliAverage_const_mul, expect_sub_distrib,
     Fintype.expect_const, mul_expect]
 
 /-- **The Fourier formula for the noise sensitivity**:

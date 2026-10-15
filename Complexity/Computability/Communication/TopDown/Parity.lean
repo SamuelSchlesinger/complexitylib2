@@ -72,8 +72,8 @@ private theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : 
         (univ.filter fun z : Fin n → Bool => parity n z = b) P x then 1 else 0 := by
     by_cases h : ∃ i, P i = true
     · obtain ⟨i, hi⟩ := h
-      have hd := coordinateDensity_half_of_flip (parity n)
-        (fun x i => parity_update_not x i) P x b i hi
+      have hd := coordinateDensity_half_of_flip (parity n) i
+        (fun x => parity_update_not x i) P x hi b
       simp only [hd]
       norm_num [show ∃ j, P j = true from ⟨i, hi⟩]
     · rw [ite_eq_right h]

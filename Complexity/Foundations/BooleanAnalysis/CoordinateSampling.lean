@@ -16,10 +16,15 @@ import Mathlib.Tactic.Linarith
 
 Let `P` and `Q` be independent random masks of rates `p` and `q`. Their union `S` has rate
 `p + q - p q`, and conditionally on `S`, the difference `P \ Q` selects each coordinate of `S`
-independently with rate `r = p (1 - q) / (p + q - p q)` (`bernoulliAverage_union_difference`).
-The law is stated as an equality of finite expectations, with `(p + q - p q) r = p (1 - q)`, so it
-avoids conditioning on events of probability zero and covers degenerate rates. This is the
-coordinate-sampling step of Korten's mirror-set argument [Korten2026].
+independently with rate `conditionalSamplingRate p q = p (1 - q) / (p + q - p q)`
+(`bernoulliAverage_union_difference`). The law is stated as an equality of finite expectations for
+any rate `r` with `(p + q - p q) r = p (1 - q)`, so it avoids conditioning on events of probability
+zero and covers degenerate rates. This is the coordinate-sampling step of Korten's proof of the
+mirror-set lemma [Korten2026].
+
+## Main definitions
+
+* `Cslib.BooleanAnalysis.conditionalSamplingRate`: the conditional rate of `P \ Q` inside `P ∪ Q`.
 
 ## Main results
 
@@ -27,7 +32,9 @@ coordinate-sampling step of Korten's mirror-set argument [Korten2026].
   `P \ Q`.
 * `Cslib.BooleanAnalysis.bernoulliAverage_union_difference_subtype`: the same, with the difference
   as a mask on the coordinates of the union.
-* `Cslib.BooleanAnalysis.conditionalSamplingRate_bounds`: the conditional rate is a probability,
+* `Cslib.BooleanAnalysis.conditionalSamplingRate_nonneg`,
+  `Cslib.BooleanAnalysis.conditionalSamplingRate_le_one`,
+  `Cslib.BooleanAnalysis.conditionalSamplingRate_le_div`: the conditional rate is a probability,
   at most `p / q`.
 
 ## References
@@ -39,80 +46,62 @@ coordinate-sampling step of Korten's mirror-set argument [Korten2026].
 
 namespace Cslib.BooleanAnalysis
 
-private theorem bernoulliAverage_union_difference_fin {n : ℕ} (p q r : ℝ)
-    (hr : (p + q - p * q) * r = p * (1 - q))
-    (f : (Fin n → Bool) → (Fin n → Bool) → ℝ) :
-    bernoulliAverage p (fun P => bernoulliAverage q (fun Q =>
-      f (fun i => P i || Q i) (fun i => P i && !Q i))) =
-      bernoulliAverage (p + q - p * q) (fun S => bernoulliAverage r (fun T =>
-        f S (fun i => S i && T i))) := by
-  induction n with
-  | zero =>
-    have he : f = fun _ _ => f (fun _ => false) (fun _ => false) := by
-      funext x y
-      congr 1 <;> exact Subsingleton.elim _ _
-    rw [he]
-    simp only [bernoulliAverage_const]
-  | succ n ih =>
-    have hc (op : Bool → Bool → Bool) (a b : Bool) (x y : Fin n → Bool) :
-        (fun i => op ((Fin.cons a x : Fin (n + 1) → Bool) i)
-          ((Fin.cons b y : Fin (n + 1) → Bool) i)) =
-          Fin.cons (op a b) (fun i => op (x i) (y i)) := by
-      funext i
-      refine Fin.cases ?_ (fun j => ?_) i <;> rfl
-    rw [bernoulliAverage_cons p, bernoulliAverage_cons (p + q - p * q)]
-    simp_rw [bernoulliAverage_cons (n := n) q,
-      bernoulliAverage_cons (n := n) r, hc Bool.or,
-      hc (fun a b => a && !b), hc Bool.and]
-    simp only [Bool.or_false, Bool.or_true, Bool.not_false, Bool.not_true,
-      Bool.and_false, Bool.and_true]
-    simp_rw [bernoulliAverage_linear]
-    rw [ih (fun S R => f (Fin.cons false S) (Fin.cons false R)),
-      ih (fun S R => f (Fin.cons true S) (Fin.cons false R)),
-      ih (fun S R => f (Fin.cons true S) (Fin.cons true R))]
-    linear_combination
-      -(bernoulliAverage (p + q - p * q) (fun S => bernoulliAverage r (fun T =>
-        f (Fin.cons true S) (Fin.cons true (fun i => S i && T i)))) -
-      bernoulliAverage (p + q - p * q) (fun S => bernoulliAverage r (fun T =>
-        f (Fin.cons true S) (Fin.cons false (fun i => S i && T i))))) * hr
+open Finset
+
+/-- The rate `p (1 - q) / (p + q - p q)` at which the difference `P \ Q` of independent masks of
+rates `p` and `q` selects the coordinates of their union `P ∪ Q`. -/
+noncomputable def conditionalSamplingRate (p q : ℝ) : ℝ :=
+  p * (1 - q) / (p + q - p * q)
+
+/-- The conditional rate solves `(p + q - p q) r = p (1 - q)` when the union has positive rate. -/
+theorem mul_conditionalSamplingRate {p q : ℝ} (h : p + q - p * q ≠ 0) :
+    (p + q - p * q) * conditionalSamplingRate p q = p * (1 - q) :=
+  mul_div_cancel₀ _ h
+
+private theorem add_sub_mul_pos {p q : ℝ} (hp : 0 ≤ p) (hq : 0 < q) (hq' : q ≤ 1) :
+    0 < p + q - p * q := by
+  nlinarith [mul_nonneg hp (sub_nonneg.mpr hq')]
+
+/-- For `p ≥ 0` and `0 ≤ q ≤ 1`, the conditional rate is nonnegative. -/
+theorem conditionalSamplingRate_nonneg {p q : ℝ} (hp : 0 ≤ p) (hq : 0 ≤ q) (hq' : q ≤ 1) :
+    0 ≤ conditionalSamplingRate p q :=
+  div_nonneg (mul_nonneg hp (sub_nonneg.mpr hq'))
+    (by nlinarith [mul_nonneg hp (sub_nonneg.mpr hq')])
+
+/-- For `p ≥ 0` and `0 < q ≤ 1`, the conditional rate is at most one. -/
+theorem conditionalSamplingRate_le_one {p q : ℝ} (hp : 0 ≤ p) (hq : 0 < q) (hq' : q ≤ 1) :
+    conditionalSamplingRate p q ≤ 1 := by
+  apply (div_le_one (add_sub_mul_pos hp hq hq')).mpr
+  linarith
+
+/-- For `p ≥ 0` and `0 < q ≤ 1`, the conditional rate is at most `p / q`. -/
+theorem conditionalSamplingRate_le_div {p q : ℝ} (hp : 0 ≤ p) (hq : 0 < q) (hq' : q ≤ 1) :
+    conditionalSamplingRate p q ≤ p / q := by
+  apply (div_le_div_iff₀ (add_sub_mul_pos hp hq hq') hq).mpr
+  nlinarith [mul_nonneg (sq_nonneg p) (sub_nonneg.mpr hq'), mul_nonneg hp (sq_nonneg q)]
 
 /-- **The joint law of `P ∪ Q` and `P \ Q`**: for independent masks `P` and `Q` of rates `p` and
 `q`, the union and the difference are distributed as a mask `S` of rate `p + q - p q` and the
 part inside `S` of an independent mask of rate `r`, when `(p + q - p q) r = p (1 - q)`. -/
 theorem bernoulliAverage_union_difference {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (p q r : ℝ)
-    (hr : (p + q - p * q) * r = p * (1 - q))
+    (p q r : ℝ) (hr : (p + q - p * q) * r = p * (1 - q))
     (f : (ι → Bool) → (ι → Bool) → ℝ) :
     bernoulliAverage p (fun P => bernoulliAverage q (fun Q =>
       f (fun i => P i || Q i) (fun i => P i && !Q i))) =
       bernoulliAverage (p + q - p * q) (fun S => bernoulliAverage r (fun T =>
         f S (fun i => S i && T i))) := by
-  let e := (Fintype.equivFin ι).symm
-  rw [← bernoulliAverage_reindex e p,
-    ← bernoulliAverage_reindex e (p + q - p * q)]
-  simp_rw [← bernoulliAverage_reindex e q, ← bernoulliAverage_reindex e r]
-  exact bernoulliAverage_union_difference_fin p q r hr (fun S R =>
-    f (fun i => S (e.symm i)) (fun i => R (e.symm i)))
-
-/-- For `p ≥ 0` and `0 < q ≤ 1`, the conditional rate of the difference is a probability, at most
-`p / q`. -/
-theorem conditionalSamplingRate_bounds {p q : ℝ} (hp : 0 ≤ p) (hq : 0 < q) (hq' : q ≤ 1) :
-    0 ≤ p * (1 - q) / (p + q - p * q) ∧
-      p * (1 - q) / (p + q - p * q) ≤ p / q ∧
-      p * (1 - q) / (p + q - p * q) ≤ 1 := by
-  have htheta : 0 < p + q - p * q := by
-    nlinarith [mul_nonneg hp (sub_nonneg.mpr hq')]
-  refine ⟨div_nonneg (mul_nonneg hp (sub_nonneg.mpr hq')) htheta.le, ?_, ?_⟩
-  · apply (div_le_div_iff₀ htheta hq).mpr
-    nlinarith [mul_nonneg (sq_nonneg p) (sub_nonneg.mpr hq'), mul_nonneg hp (sq_nonneg q)]
-  · apply (div_le_one htheta).mpr
-    linarith
+  let g (z : ι → Bool × Bool) : ℝ := f (fun i => (z i).1) (fun i => (z i).2)
+  refine (bernoulliAverage_bernoulliAverage_eq_sum p q (fun b c => (b || c, b && !c)) g).trans
+    (Eq.trans ?_
+      (bernoulliAverage_bernoulliAverage_eq_sum (p + q - p * q) r (fun s t => (s, s && t)) g).symm)
+  refine sum_congr rfl fun a _ => congrArg _ (prod_congr rfl fun i _ => ?_)
+  obtain ⟨b, c⟩ := a i
+  cases b <;> cases c <;> simp <;> linarith
 
 /-- The joint law of `P ∪ Q` and `P \ Q`, with the difference as a mask on the coordinates of the
 union. -/
 theorem bernoulliAverage_union_difference_subtype {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (p q r : ℝ)
-    (hr : (p + q - p * q) * r = p * (1 - q))
+    (p q r : ℝ) (hr : (p + q - p * q) * r = p * (1 - q))
     (f : (S : ι → Bool) → ({i // S i = true} → Bool) → ℝ) :
     bernoulliAverage p (fun P => bernoulliAverage q (fun Q =>
       f (fun i => P i || Q i) (fun i => P i && !Q i))) =
