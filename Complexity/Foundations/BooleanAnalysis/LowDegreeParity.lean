@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.LowDegree
+public import Complexity.Foundations.BooleanAnalysis.LowDegree
 public import Complexity.Foundations.Data.BitString.Parity
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.LinearAlgebra.Dimension.Finrank

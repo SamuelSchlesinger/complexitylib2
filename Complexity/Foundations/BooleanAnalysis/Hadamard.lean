@@ -7,7 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Linearity
+public import Complexity.Foundations.BooleanAnalysis.Linearity
 import Mathlib.Tactic.Linarith
 
 /-!

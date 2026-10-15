@@ -226,7 +226,7 @@ and the logarithm of formula size agree up to a factor of four. The split at a s
 third to two thirds of the leaves is stated for any basis of fan-in two, over substitution of
 formulas for inputs (`Formula.bind`, `Formula.substLast`).
 
-**Fourier analysis on the Boolean cube** (`Foundations/Data/BitString/Fourier.lean`, from v1's
+**Fourier analysis on the Boolean cube** (`Foundations/BooleanAnalysis/Fourier.lean`, from v1's
 `BooleanAnalysis/FourierExpansion` without its inner-product-space type synonym): characters
 `χ_S` on cslib's `BitString`, orthonormality under Mathlib's `𝔼`, the Fourier expansion and
 uniqueness of coefficients, Plancherel and Parseval. Decision trees of depth `d` have Fourier
@@ -286,7 +286,7 @@ solutions (`Logics/Propositional/ClauseSet/SubcubeFree.lean`), so subcube disper
 `Σ₃^k ≥ 2 ^ ((1 / k - ε) n)` (`Logics/Propositional/SigmaThree.lean`).
 
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
-`Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
+`Foundations/BooleanAnalysis/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
 for every odd prime `p`, a depth-`d` circuit with `MOD_p` gates computing parity has size at least
 `2 ^ ℓ · 2 / 5` whenever `100 (((p - 1) ℓ) ^ d + 1)² ≤ n + 1`, so **parity ∉ AC⁰[p]**
 (`Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod`). The circuit is evaluated on pairs of a
@@ -340,9 +340,9 @@ convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `AC�
 | Lautemann's covering lemma | `Classes/PH/SipserLautemann/Covering` | done (`Foundations/Combinatorics/Lautemann.lean`) |
 | Expander mixing lemma, edge expansion | `Classes/PCP/Internal/{RegularGraph,Mixing,EdgeExpansion}` | done (`Foundations/Combinatorics/Expander/`) |
 | Pairwise-independent hashing, approximate counting | `Classes/Randomized/Hashing*`, `ApproximateCounting/**` | done (`Probability/`), relative-error counting open |
-| Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | done (`Data/BitString/PolynomialCorrelation`) |
+| Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | done (`BooleanAnalysis/PolynomialCorrelation`) |
 | Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | done (`Circuit/Boolean/{Correction,SparseSynthesis}`) |
-| Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`Data/BitString/{Hadamard,HadamardTester}`) |
+| Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`BooleanAnalysis/{Hadamard,HadamardTester}`) |
 | Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | Cheeger done (`Expander/Cheeger`); constant-degree expanders open |
 | Zig-zag product | `PCP/Internal/ZigZag` | in progress |
 | Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | reconstruction done (`Crypto/Primitives/PRG/NisanWigderson`); designs' existence and the sampling layer open |

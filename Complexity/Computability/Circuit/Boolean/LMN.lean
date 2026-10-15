@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Hastad
-public import Complexity.Foundations.Data.BitString.FourierRestriction
+public import Complexity.Foundations.BooleanAnalysis.FourierRestriction
 import Complexity.Computability.DecisionTree.Fourier
 import Complexity.Foundations.Combinatorics.Hypergeometric
 import Mathlib.Algebra.Order.BigOperators.Expect

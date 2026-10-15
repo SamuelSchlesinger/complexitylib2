@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Fourier
+public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Mathlib.Data.Finset.Piecewise
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Tactic.Ring

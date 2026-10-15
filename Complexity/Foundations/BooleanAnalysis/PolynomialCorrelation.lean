@@ -7,14 +7,14 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Fourier
-public import Complexity.Foundations.Data.BitString.LowDegree
+public import Complexity.Foundations.BooleanAnalysis.Fourier
+public import Complexity.Foundations.BooleanAnalysis.LowDegree
 public import Complexity.Foundations.Data.BitString.Weight
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Data.ZMod.Defs
 public import Mathlib.Logic.Equiv.Fin.Basic
 import Complexity.Foundations.Combinatorics.CentralBinomial
-import Complexity.Foundations.Data.BitString.Linearity
+import Complexity.Foundations.BooleanAnalysis.Linearity
 import Mathlib.Algebra.CharP.Two
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Algebra.Module.Equiv.Basic

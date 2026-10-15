@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Convolution
+public import Complexity.Foundations.BooleanAnalysis.Convolution
 public import Mathlib.InformationTheory.Hamming
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum

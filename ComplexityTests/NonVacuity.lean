@@ -14,7 +14,7 @@ import Complexity.Computability.Circuit.Boolean.TC0
 import Complexity.Computability.Circuit.Boolean.TopDown
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
-import Complexity.Foundations.Data.BitString.HadamardTester
+import Complexity.Foundations.BooleanAnalysis.HadamardTester
 import Complexity.Crypto.Primitives.PRG.NisanWigderson
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 

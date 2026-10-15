@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Approximation
 public import Complexity.Foundations.Combinatorics.CentralBinomial
-public import Complexity.Foundations.Data.BitString.LowDegreeParity
+public import Complexity.Foundations.BooleanAnalysis.LowDegreeParity
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!

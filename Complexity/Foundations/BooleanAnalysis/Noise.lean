@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
-public import Complexity.Foundations.Data.BitString.Influence
+public import Complexity.Foundations.BooleanAnalysis.Influence
 import Mathlib.Algebra.Order.Ring.Pow
 import Mathlib.Tactic.Linarith
 

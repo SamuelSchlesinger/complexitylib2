@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.DecisionTree.Fourier
 public import Complexity.Computability.DecisionTree.Sensitivity
-public import Complexity.Foundations.Data.BitString.Influence
+public import Complexity.Foundations.BooleanAnalysis.Influence
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Algebra.Order.BigOperators.Group.Finset

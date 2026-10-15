@@ -7,7 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Hadamard
+public import Complexity.Foundations.BooleanAnalysis.Hadamard
 public import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Tactic.Linarith

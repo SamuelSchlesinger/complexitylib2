@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.ModGates
-public import Complexity.Foundations.Data.BitString.LowDegree
+public import Complexity.Foundations.BooleanAnalysis.LowDegree
 public import Mathlib.FieldTheory.Finite.Basic
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.Fintype.Pi

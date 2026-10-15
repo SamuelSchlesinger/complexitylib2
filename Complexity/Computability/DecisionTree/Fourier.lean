@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.DecisionTree.Basic
-public import Complexity.Foundations.Data.BitString.Fourier
+public import Complexity.Foundations.BooleanAnalysis.Fourier
 import Mathlib.Tactic.Ring
 
 /-!
