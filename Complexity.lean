@@ -68,8 +68,6 @@ public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Communication.Protocol
 public import Complexity.Computability.Communication.RoundProtocol
 public import Complexity.Computability.Communication.TopDown.Adversary
-public import Complexity.Computability.Communication.TopDown.Arithmetic
-public import Complexity.Computability.Communication.TopDown.Defs
 public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle

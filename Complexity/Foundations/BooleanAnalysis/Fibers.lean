@@ -17,6 +17,7 @@ import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
 import Mathlib.Logic.Equiv.Prod
 import Mathlib.Analysis.SpecialFunctions.Log.NegMulLog
+import Mathlib.Combinatorics.Pigeonhole
 
 /-!
 # Korten's entropy lemma for coordinate fibers
@@ -375,5 +376,79 @@ theorem coordinateDensity_nonneg {ι : Type*} [Fintype ι] [DecidableEq ι]
 theorem uniformDensity_nonneg {ι : Type*} [Fintype ι]
     (X : Finset (ι → Bool)) (x : ι → Bool) : 0 ≤ uniformDensity X x :=
   mul_nonneg (by positivity) (uniformMass_nonneg X x)
+
+/-- **Pigeonhole for deficits**: some fiber of a map from a nonempty set `X` to a type of at most
+`2 ^ m` elements is nonempty, of deficit at most the deficit of `X` plus `m`. -/
+theorem exists_uniformDeficit_fiber_le {ι M : Type*} [Fintype ι] [Fintype M] [DecidableEq M]
+    (X : Finset (ι → Bool)) (hX : X.Nonempty) (send : (ι → Bool) → M)
+    {m : ℝ} (hm : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) :
+    ∃ a : M, (X.filter fun x => send x = a).Nonempty ∧
+      uniformDeficit (X.filter fun x => send x = a) ≤ uniformDeficit X + m := by
+  obtain ⟨x, hx⟩ := hX
+  have : Nonempty M := ⟨send x⟩
+  have hXpos : (0 : ℝ) < X.card := by exact_mod_cast card_pos.mpr ⟨x, hx⟩
+  let b : ℝ := X.card / (2 : ℝ) ^ m
+  have hb : Fintype.card M • b ≤ (X.card : ℝ) := by
+    rw [nsmul_eq_mul]
+    calc
+      _ ≤ (2 : ℝ) ^ m * b := mul_le_mul_of_nonneg_right hm (by dsimp [b]; positivity)
+      _ = _ := by dsimp [b]; field_simp
+  obtain ⟨a, _, ha⟩ := exists_le_card_fiber_of_nsmul_le_card_of_maps_to
+    (s := X) (t := univ) (f := send) (b := b) (fun _ _ => mem_univ _) univ_nonempty
+    (by simpa only [card_univ] using hb)
+  have hne : (X.filter fun x => send x = a).Nonempty := by
+    apply card_pos.mp
+    have hbpos : 0 < b := by dsimp [b]; positivity
+    exact_mod_cast hbpos.trans_le ha
+  refine ⟨a, hne, (uniformDeficit_le_iff hne).mpr ?_⟩
+  convert ha using 1
+  dsimp [b]
+  rw [card_eq_rpow_sub_uniformDeficit (show X.Nonempty from ⟨x, hx⟩),
+    ← Real.rpow_sub (by norm_num)]
+  congr 1
+  ring
+
+/-- A Boolean function that flips with one coordinate is true on half of the cube. -/
+theorem expect_half_of_flip {ι : Type*} [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool)
+    (i : ι)
+    (hf : ∀ x, f (Function.update x i (!x i)) = !f x) (b : Bool) :
+    (𝔼 x, if f x = b then (1 : ℝ) else 0) = 1 / 2 := by
+  let flip (x : ι → Bool) := Function.update x i (!x i)
+  have hinv : Function.Involutive flip := by
+    intro x
+    funext j
+    by_cases hj : j = i
+    · subst hj
+      simp [flip]
+    · simp [flip, Function.update_of_ne hj]
+  let e := hinv.toPerm flip
+  have he := Fintype.expect_equiv e
+    (fun x => if f (flip x) = b then (1 : ℝ) else 0)
+    (fun x => if f x = b then (1 : ℝ) else 0) (fun _ => rfl)
+  have hpoint (x : ι → Bool) : (if f (flip x) = b then (1 : ℝ) else 0) =
+      1 - (if f x = b then 1 else 0) := by
+    rw [hf]
+    cases h : f x <;> cases b <;> norm_num
+  simp_rw [hpoint, expect_sub_distrib, Fintype.expect_const] at he
+  linarith
+
+/-- A Boolean function that flips with every coordinate is true on half of every fiber over a
+nonempty set of coordinates. -/
+theorem coordinateDensity_half_of_flip {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (f : (ι → Bool) → Bool)
+    (hf : ∀ x i, f (Function.update x i (!x i)) = !f x)
+    (P x : ι → Bool) (b : Bool) (i : ι) (hi : P i = true) :
+    coordinateDensity (univ.filter fun z => f z = b) P x = 1 / 2 := by
+  have hflip (y : ι → Bool) : resample P x (Function.update y i (!y i)) =
+      Function.update (resample P x y) i (!(resample P x y i)) := by
+    funext j
+    by_cases hj : j = i
+    · subst hj
+      simp [resample, hi]
+    · simp [resample, Function.update_of_ne hj]
+  rw [coordinateDensity_eq_expect]
+  simp only [mem_filter, mem_univ, true_and]
+  exact expect_half_of_flip (fun y => f (resample P x y)) i
+    (fun y => by rw [hflip, hf]) b
 
 end Cslib.BooleanAnalysis

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Foundations.Data.BitString.Weight
 public import Mathlib.Algebra.Order.BigOperators.Expect
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Pi
@@ -445,5 +446,35 @@ theorem _root_.one_sub_pow_mul_one_add_mul_le_one {p : ℝ} (hp : p ≤ 1) (n : 
     have hnon := mul_nonneg (pow_nonneg (sub_nonneg.mpr hp) n)
       (mul_nonneg (show (0 : ℝ) ≤ n + 1 by positivity) (sq_nonneg p))
     nlinarith
+
+/-- A mask of rate `p` has `|ι| p` coordinates on average. -/
+theorem bernoulliAverage_weight {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ) :
+    bernoulliAverage p (fun P : ι → Bool => (BitString.weight P : ℝ)) = Fintype.card ι * p := by
+  have he (P : ι → Bool) : (BitString.weight P : ℝ) = ∑ i, if P i then (1 : ℝ) else 0 := by
+    simp [BitString.weight]
+  unfold bernoulliAverage
+  simp_rw [he, mul_sum]
+  rw [sum_comm]
+  have hc (i : ι) := bernoulliAverage_coordinate p i
+  simp only [bernoulliAverage] at hc
+  simp_rw [hc]
+  simp
+
+/-- A mask of rate `p` meets the coordinates selected by `s` with probability
+`1 - (1 - p) ^ |s|`. -/
+theorem bernoulliAverage_hits {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ) (s : ι → Bool) :
+    bernoulliAverage p (fun P : ι → Bool =>
+      if ∃ i, s i = true ∧ P i = true then (1 : ℝ) else 0) =
+        1 - (1 - p) ^ BitString.weight s := by
+  let f (P : {i // s i = true} → Bool) : ℝ := if ∃ i, P i = true then 1 else 0
+  calc
+    _ = bernoulliAverage p (fun P : ι → Bool => f (fun i => P i)) := by
+      congr 1
+      funext P
+      simp [f]
+    _ = bernoulliAverage p f := bernoulliAverage_restrict p s f
+    _ = _ := by
+      simpa only [f, Fintype.card_subtype, BitString.weight] using
+        bernoulliAverage_nonempty (ι := {i // s i = true}) p
 
 end Cslib.BooleanAnalysis

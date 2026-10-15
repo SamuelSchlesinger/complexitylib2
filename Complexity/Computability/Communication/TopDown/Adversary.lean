@@ -11,16 +11,29 @@ public import Complexity.Computability.Communication.TopDown.Rectangle
 import Mathlib.Tactic.Linarith
 
 /-!
-# The bounded-round density adversary
+# Korten's top-down adversary
 
-Induct on the remaining messages and maintain Korten's density rectangle.
-The finite parameter specialization uses `K_i = 194^i*k` and
-`p_i = (32768*194^d*k)^i*p`. Bilateral limits at the root avoid a mirror
-step for the first message, giving the exponent `d-1` for `d` rounds.
+A protocol with `d` messages of at most `m` bits cannot separate a density rectangle of small
+rate: by induction on the messages, each message leaves a density rectangle, at the end no
+coordinate separates it, and the deficits grow as `194 ^ i k` and the rates as
+`(32768 · 194 ^ d k) ^ i p` (`RoundProtocol.not_solves_bounded_density`)
+[Korten, Sections 2 to 4][Korten2026]. When the starting sets are density limits of each other,
+the first message needs no mirror step, which saves one round
+(`RoundProtocol.not_solves_bilateral_density`).
 
-Source: [Korten, Sections 2--4][Korten2026]. -/
+## Main results
 
-public section
+* `Cslib.Communication.RoundProtocol.not_solves_density`: the adversary, for general parameters.
+* `Cslib.Communication.RoundProtocol.not_solves_bounded_density`: with explicit parameters.
+* `Cslib.Communication.RoundProtocol.not_solves_bilateral_density`: from mutual density limits,
+  with one more message.
+
+## References
+
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
+-/
+
+@[expose] public section
 
 namespace Cslib.Communication.RoundProtocol
 
@@ -28,6 +41,10 @@ open Cslib.BooleanAnalysis
 
 variable {ι M : Type*} [Fintype ι] [DecidableEq ι] [Fintype M]
 
+/-- **Korten's adversary**: a protocol with `d` messages of at most `m` bits does not separate a
+density rectangle of rate `p 0` and deficit `k 0` when the parameters grow fast enough,
+`1 ≤ k i`, `k (i + 1) ≥ max (194 k i) (2 k i + 2 + m)` and `p (i + 1) ≥ 32768 k i p i`, and the
+rates stay at most `1 / 4`. -/
 theorem not_solves_density {d : ℕ} (P : RoundProtocol ι M d)
     {X Y : Finset (ι → Bool)} {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m)
     (k p : ℕ → ℝ)
@@ -66,6 +83,9 @@ theorem not_solves_density {d : ℕ} (P : RoundProtocol ι M d)
         (fun i hi => hstep (i + 1) (by omega))
         (fun i hi => hcap (i + 1) (by omega)) hnew.swap hchild
 
+/-- Korten's adversary with explicit parameters: a protocol with `d` messages of at most `m` bits
+does not separate a density rectangle of rate `p` and deficit `k ≥ m + 1` when
+`(32768 · 194 ^ d k) ^ d p ≤ 1 / 4`. -/
 theorem not_solves_bounded_density {d : ℕ} (P : RoundProtocol ι M d)
     {X Y : Finset (ι → Bool)} {m k p : ℝ}
     (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hk : 1 ≤ k) (hmk : m + 1 ≤ k)
@@ -104,7 +124,10 @@ theorem not_solves_bounded_density {d : ℕ} (P : RoundProtocol ι M d)
     exact (mul_le_mul_of_nonneg_right (pow_le_pow_right₀ hC hi) hp).trans hbudget
   · simpa only [K, B, pow_zero, one_mul] using h
 
-theorem not_solves_bilateral_density_with_deficit {d : ℕ} (P : RoundProtocol ι M (d + 1))
+/-- **Korten's adversary from mutual limits**: if `X` and `Y` are nonempty of deficit at most `k`
+and their points are `(p, k)`-limits of each other, then a protocol with `d + 1` messages of at
+most `m` bits does not separate them when `(32768 · 194 ^ d (m + k)) ^ d p ≤ 1 / 4`. -/
+theorem not_solves_bilateral_density {d : ℕ} (P : RoundProtocol ι M (d + 1))
     {X Y : Finset (ι → Bool)} {m p k : ℝ}
     (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m) (hk : 1 ≤ k) (hp : 0 < p)
     (hX : X.Nonempty) (hY : Y.Nonempty) (hdX : uniformDeficit X ≤ k) (hdY : uniformDeficit Y ≤ k)
@@ -125,7 +148,7 @@ theorem not_solves_bilateral_density_with_deficit {d : ℕ} (P : RoundProtocol �
     have h : DensityRectangle X Y p k := ⟨hX, hY, hdX, hdY, p, hp, le_rfl, Or.inl hleft⟩
     exact h.not_separated (by linarith) i hsol
   | alice send next =>
-    obtain ⟨a, hne, hdef⟩ := exists_large_message_fiber X hX send hM
+    obtain ⟨a, hne, hdef⟩ := exists_uniformDeficit_fiber_le X hX send hM
     let X' := X.filter (fun x => send x = a)
     have hnew : DensityRectangle X' Y p (m + k) := by
       refine ⟨hne, hY, by linarith, by linarith, p, hp, le_rfl, Or.inl ?_⟩
@@ -138,7 +161,7 @@ theorem not_solves_bilateral_density_with_deficit {d : ℕ} (P : RoundProtocol �
     have he := hsol x (Finset.mem_filter.mp hx).1 y hy
     simpa only [run, (Finset.mem_filter.mp hx).2] using he
   | bob send next =>
-    obtain ⟨a, hne, hdef⟩ := exists_large_message_fiber Y hY send hM
+    obtain ⟨a, hne, hdef⟩ := exists_uniformDeficit_fiber_le Y hY send hM
     let Y' := Y.filter (fun y => send y = a)
     have hnew : DensityRectangle X Y' p (m + k) := by
       refine ⟨hX, hne, by linarith, by linarith, p, hp, le_rfl, Or.inr ?_⟩
@@ -150,15 +173,5 @@ theorem not_solves_bilateral_density_with_deficit {d : ℕ} (P : RoundProtocol �
     intro x hx y hy
     have he := hsol x hx y (Finset.mem_filter.mp hy).1
     simpa only [run, (Finset.mem_filter.mp hy).2] using he
-
-theorem not_solves_bilateral_density {d : ℕ} (P : RoundProtocol ι M (d + 1))
-    {X Y : Finset (ι → Bool)} {m p : ℝ}
-    (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m) (hp : 0 < p)
-    (hX : X.Nonempty) (hY : Y.Nonempty) (hdX : uniformDeficit X ≤ 1) (hdY : uniformDeficit Y ≤ 1)
-    (hleft : ∀ x ∈ X, IsDensityLimit Y p 1 x) (hright : ∀ y ∈ Y, IsDensityLimit X p 1 y)
-    (hbudget : (32768 * (194 : ℝ) ^ d * (m + 1)) ^ d * p ≤ 1 / 4) :
-    ¬ P.Solves X Y :=
-  not_solves_bilateral_density_with_deficit P hM hm le_rfl hp
-    hX hY hdX hdY hleft hright hbudget
 
 end Cslib.Communication.RoundProtocol

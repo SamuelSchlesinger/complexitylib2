@@ -8,70 +8,41 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Communication.TopDown.Adversary
-public import Complexity.Computability.Communication.TopDown.Arithmetic
 public import Complexity.Foundations.Data.BitString.Parity
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 
 /-!
-# Parity initialization and the top-down communication bound
+# Korten's communication lower bound for parity
 
-Flipping one free coordinate pairs the two parity classes in every nonempty
-fiber, giving density exactly `1/2`. A rate-`4/n` mask is nonempty with
-probability at least `3/4`. Both parity classes therefore satisfy the initial
-limit condition, with deficit one. Apply the bilateral density adversary and
-its checked parameter bound to obtain the communication part of Theorem 3.
+The two parity classes of `n` bits have deficit one, and every nonempty fiber of either is half
+full, since flipping a free coordinate exchanges them; a mask of rate `4 / n` is nonempty with
+probability at least `3 / 4`, so each class consists of `(4 / n, 1)`-limits of the other. Korten's
+adversary then shows that no protocol with `d + 1` messages of `m` bits solves the
+Karchmer–Wigderson game of parity once `16 (32768 · 194 ^ d (m + 1)) ^ d ≤ n`
+(`RoundProtocol.not_solves_parity_finite`), so protocols with `d` messages need
+`Ω(n ^ (1 / (d - 1)))` bits [Korten, Theorem 3][Korten2026]
+(`parity_communication_lower_bound`).
 
-Source: [Korten2026]. -/
+## Main results
 
-public section
+* `Cslib.Communication.RoundProtocol.not_solves_parity_finite`: the bound with explicit
+  constants.
+* `Cslib.Communication.parity_communication_lower_bound`: Korten's lower bound.
 
-namespace Cslib.BooleanAnalysis
-open Finset
-open scoped BigOperators
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+## References
 
-theorem expect_half_of_flip (f : (ι → Bool) → Bool) (i : ι)
-    (hf : ∀ x, f (Function.update x i (!x i)) = !f x) (b : Bool) :
-    (𝔼 x, if f x = b then (1 : ℝ) else 0) = 1 / 2 := by
-  let flip (x : ι → Bool) := Function.update x i (!x i)
-  have hinv : Function.Involutive flip := by
-    intro x
-    funext j
-    by_cases hj : j = i
-    · subst hj
-      simp [flip]
-    · simp [flip, Function.update_of_ne hj]
-  let e := hinv.toPerm flip
-  have he := Fintype.expect_equiv e
-    (fun x => if f (flip x) = b then (1 : ℝ) else 0)
-    (fun x => if f x = b then (1 : ℝ) else 0) (fun _ => rfl)
-  have hpoint (x : ι → Bool) : (if f (flip x) = b then (1 : ℝ) else 0) =
-      1 - (if f x = b then 1 else 0) := by
-    rw [hf]
-    cases h : f x <;> cases b <;> norm_num
-  simp_rw [hpoint, expect_sub_distrib, Fintype.expect_const] at he
-  linarith
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
+-/
 
-theorem coordinateDensity_half_of_flip (f : (ι → Bool) → Bool)
-    (hf : ∀ x i, f (Function.update x i (!x i)) = !f x)
-    (P x : ι → Bool) (b : Bool) (i : ι) (hi : P i = true) :
-    coordinateDensity (univ.filter fun z => f z = b) P x = 1 / 2 := by
-  have hflip (y : ι → Bool) : resample P x (Function.update y i (!y i)) =
-      Function.update (resample P x y) i (!(resample P x y i)) := by
-    funext j
-    by_cases hj : j = i
-    · subst hj
-      simp [resample, hi]
-    · simp [resample, Function.update_of_ne hj]
-  rw [coordinateDensity_eq_expect]
-  simp only [mem_filter, mem_univ, true_and]
-  exact expect_half_of_flip (fun y => f (resample P x y)) i
-    (fun y => by rw [hflip, hf]) b
+@[expose] public section
 
+namespace Cslib.Communication
 
+open Cslib.BooleanAnalysis Finset
 
-theorem parity_initial {n : ℕ} (hn : 0 < n) (b : Bool) :
+/-- The parity classes are nonempty of deficit at most one. -/
+private theorem parity_class_nonempty_deficit {n : ℕ} (hn : 0 < n) (b : Bool) :
     (univ.filter fun x : Fin n → Bool => parity n x = b).Nonempty ∧
       uniformDeficit (univ.filter fun x : Fin n → Bool => parity n x = b) ≤ 1 := by
   let X := univ.filter (fun x : Fin n → Bool => parity n x = b)
@@ -91,7 +62,9 @@ theorem parity_initial {n : ℕ} (hn : 0 < n) (b : Bool) :
   simp only [Fintype.card_fin]
   rw [Real.rpow_sub (by norm_num), Real.rpow_natCast, Real.rpow_one, ← hcard]
 
-theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1)
+/-- The points are density limits of a parity class when masks are nonempty with probability at
+least `3 / 4`. -/
+private theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1)
     (hsmall : (1 - p) ^ n ≤ 1 / 4) (b : Bool) (x : Fin n → Bool) :
     IsDensityLimit (univ.filter fun z : Fin n → Bool => parity n z = b) p 1 x := by
   have hpoint (P : Fin n → Bool) : (if ∃ i, P i = true then (1 : ℝ) else 0) ≤
@@ -119,7 +92,8 @@ theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : p ≤ 1)
   unfold IsDensityLimit
   convert hg using 1
 
-theorem parity_isDensityLimit_four_div {n : ℕ} (hn : 4 ≤ n) (b : Bool) (x : Fin n → Bool) :
+private theorem parity_isDensityLimit_four_div {n : ℕ} (hn : 4 ≤ n) (b : Bool)
+    (x : Fin n → Bool) :
     IsDensityLimit (univ.filter fun z : Fin n → Bool => parity n z = b)
       (4 / n) 1 x := by
   have hnpos : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
@@ -131,14 +105,11 @@ theorem parity_isDensityLimit_four_div {n : ℕ} (hn : 4 ≤ n) (b : Bool) (x : 
   rw [hnp] at ht
   nlinarith
 
-end Cslib.BooleanAnalysis
-
-namespace Cslib.Communication.RoundProtocol
-open Cslib.BooleanAnalysis Finset
+namespace RoundProtocol
 
 variable {M : Type*} [Fintype M]
 
-theorem not_solves_parity_finite_raw {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
+private theorem not_solves_parity_classes {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
     {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m)
     (hsize : 16 * (32768 * (194 : ℝ) ^ d * (m + 1)) ^ d ≤ (n : ℝ)) :
     ¬ P.Solves (univ.filter fun x => parity n x = false)
@@ -149,9 +120,9 @@ theorem not_solves_parity_finite_raw {n d : ℕ} (P : RoundProtocol (Fin n) M (d
   have hn16 : (16 : ℝ) ≤ n := by nlinarith [one_le_pow₀ (n := d) hC]
   have hn4 : 4 ≤ n := by exact_mod_cast (show (4 : ℝ) ≤ n by linarith)
   have hnpos : (0 : ℝ) < n := by linarith
-  have hX := parity_initial (show 0 < n by omega) false
-  have hY := parity_initial (show 0 < n by omega) true
-  apply P.not_solves_bilateral_density hM hm (show (0 : ℝ) < 4 / n by positivity)
+  have hX := parity_class_nonempty_deficit (show 0 < n by omega) false
+  have hY := parity_class_nonempty_deficit (show 0 < n by omega) true
+  apply P.not_solves_bilateral_density hM hm le_rfl (show (0 : ℝ) < 4 / n by positivity)
     hX.1 hY.1 hX.2 hY.2
     (fun x _ => parity_isDensityLimit_four_div hn4 true x)
     (fun y _ => parity_isDensityLimit_four_div hn4 false y)
@@ -159,21 +130,53 @@ theorem not_solves_parity_finite_raw {n d : ℕ} (P : RoundProtocol (Fin n) M (d
   apply (div_le_iff₀ hnpos).mpr
   nlinarith
 
+/-- **Korten's bound for parity, with explicit constants**: no protocol with `d + 1` messages of at
+most `m` bits solves the Karchmer–Wigderson game of parity on `n` bits when
+`16 (32768 · 194 ^ d (m + 1)) ^ d ≤ n`. -/
 theorem not_solves_parity_finite {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
     {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m)
     (hsize : 16 * (32768 * (194 : ℝ) ^ d * (m + 1)) ^ d ≤ (n : ℝ)) :
     ¬ P.SolvesKW (parity n) := by
   intro hsol
-  apply not_solves_parity_finite_raw P hM hm hsize
+  apply not_solves_parity_classes P hM hm hsize
   intro x hx y hy
   exact hsol x y (mem_filter.mp hx).2 (mem_filter.mp hy).2
 
-end Cslib.Communication.RoundProtocol
+end RoundProtocol
 
+private theorem finite_budget_of_cost {n d : ℕ} (hd : 0 < d)
+    (hlarge : (32 * (32768 * 194 ^ d)) ^ d ≤ n) {m : ℝ} (hm : 0 ≤ m)
+    (hcost : m ≤ (n : ℝ) ^ ((d : ℝ)⁻¹) / (32 * (32768 * (194 : ℝ) ^ d))) :
+    16 * (32768 * (194 : ℝ) ^ d * (m + 1)) ^ d ≤ (n : ℝ) := by
+  let C : ℝ := 32768 * (194 : ℝ) ^ d
+  let r : ℝ := (n : ℝ) ^ ((d : ℝ)⁻¹)
+  have hC : 0 < C := by dsimp [C]; positivity
+  have hlarge' : (32 * C) ^ d ≤ (n : ℝ) := by
+    dsimp [C]
+    exact_mod_cast hlarge
+  have hroot : 32 * C ≤ r := by
+    have hh := Real.rpow_le_rpow (show 0 ≤ (32 * C) ^ d by positivity)
+      hlarge' (show 0 ≤ (d : ℝ)⁻¹ by positivity)
+    rw [Real.pow_rpow_inv_natCast (by positivity) (Nat.ne_of_gt hd)] at hh
+    exact hh
+  have hcost' : m * (32 * C) ≤ r := (le_div_iff₀ (by positivity)).mp hcost
+  have hstep : C * (m + 1) ≤ r / 16 := by nlinarith
+  have hpow := pow_le_pow_left₀ (show 0 ≤ C * (m + 1) by positivity) hstep d
+  have hrootpow : r ^ d = (n : ℝ) := Real.rpow_inv_natCast_pow (by positivity) (Nat.ne_of_gt hd)
+  rw [div_pow, hrootpow] at hpow
+  have hden : (16 : ℝ) ≤ (16 : ℝ) ^ d := by
+    simpa only [pow_one] using
+      pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 16) (Nat.succ_le_of_lt hd)
+  have hh : 16 * ((n : ℝ) / (16 : ℝ) ^ d) ≤ n := by
+    rw [← mul_div_assoc]
+    apply (div_le_iff₀ (by positivity)).mpr
+    nlinarith [mul_nonneg (show (0 : ℝ) ≤ n by positivity) (sub_nonneg.mpr hden)]
+  exact (mul_le_mul_of_nonneg_left hpow (by norm_num)).trans hh
 
-universe u
-namespace Cslib.Communication
-
+universe u in
+/-- **Korten's communication lower bound for parity** [Korten, Theorem 3][Korten2026]: for every
+`d ≥ 2` there is `ε > 0` such that, for all large `n`, no protocol with `d` messages of at most
+`ε n ^ (1 / (d - 1))` bits solves the Karchmer–Wigderson game of parity on `n` bits. -/
 theorem parity_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ rounds) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n →
       ∀ {M : Type u} [Fintype M] (m : ℝ), 0 ≤ m →

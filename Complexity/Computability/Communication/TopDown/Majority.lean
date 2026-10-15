@@ -35,6 +35,8 @@ Karchmer–Wigderson game of strict majority on `n` bits for large `n`
 
 ## Main results
 
+* `Cslib.Communication.RoundProtocol.not_solves_majority_finite`: the bound with explicit
+  constants.
 * `Cslib.Communication.majority_communication_lower_bound`: the communication lower bound for
   strict majority.
 
@@ -51,23 +53,22 @@ Strict majority (`strictMajority`) is false at a tie, so the two layers at weigh
 `n / 2 + 1` straddle its threshold.
 -/
 
-
-namespace Cslib.BooleanAnalysis
+namespace Cslib.Communication
 
 open BitString
-
 open Finset
+open Filter Asymptotics
+open scoped BigOperators
+open Cslib.BooleanAnalysis
 
 /-- The Boolean vectors with exactly `r` true coordinates. -/
-def weightLayer (n r : ℕ) : Finset (Fin n → Bool) :=
+private def weightLayer (n r : ℕ) : Finset (Fin n → Bool) :=
   univ.filter fun x => weight x = r
 
 /-- A common deficit and density-limit bound for the two majority boundary layers.
 The logarithmic term bounds their entropy deficit; `128` bounds the mask size. -/
 noncomputable def majorityDeficitBound (n : ℕ) : ℝ :=
   128 + Real.logb 2 (2 * ((n : ℝ) + 1))
-
-end Cslib.BooleanAnalysis
 
 /-! ### Absorbing the logarithmic initial deficit
 
@@ -76,14 +77,7 @@ Thus replacing the parity deficit `1` with this logarithmic bound preserves
 the exponent `1/(d-1)` in a `d`-round communication lower bound.
 -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open BitString
-
-open Filter Asymptotics
-
-theorem majorityDeficitBound_eventually_le {r c : ℝ} (hr : 0 < r) (hc : 0 < c) :
+private theorem majorityDeficitBound_eventually_le {r c : ℝ} (hr : 0 < r) (hc : 0 < c) :
     ∃ N : ℕ, ∀ n : ℕ, N ≤ n → majorityDeficitBound n ≤ c * (n : ℝ) ^ r := by
   have hlog := isLittleO_log_rpow_atTop hr
   have hconst : (fun _ : ℝ => (130 : ℝ)) =o[atTop] (fun x : ℝ => x ^ r) :=
@@ -113,13 +107,7 @@ theorem majorityDeficitBound_eventually_le {r c : ℝ} (hr : 0 < r) (hc : 0 < c)
   exact (show 128 + Real.logb 2 (2 * ((n : ℝ) + 1)) ≤
     130 + (Real.log 2)⁻¹ * Real.log n by linarith).trans ((le_abs_self _).trans hbound)
 
-end Cslib.BooleanAnalysis
-
-namespace Cslib.Communication
-
-open BitString
-
-theorem finite_budget_with_deficit_of_cost {n d : ℕ} (hd : 0 < d) {m k : ℝ}
+private theorem finite_budget_with_deficit_of_cost {n d : ℕ} (hd : 0 < d) {m k : ℝ}
     (hm : 0 ≤ m) (hk : 0 ≤ k)
     (hcost : m ≤ (n : ℝ) ^ ((d : ℝ)⁻¹) / (128 * (32768 * (194 : ℝ) ^ d)))
     (hkcost : k ≤ (n : ℝ) ^ ((d : ℝ)⁻¹) / (128 * (32768 * (194 : ℝ) ^ d))) :
@@ -143,8 +131,6 @@ theorem finite_budget_with_deficit_of_cost {n d : ℕ} (hd : 0 < d) {m k : ℝ}
     nlinarith [mul_nonneg (show (0 : ℝ) ≤ n by positivity) (sub_nonneg.mpr hden)]
   exact (mul_le_mul_of_nonneg_left hpow (by norm_num)).trans hh
 
-end Cslib.Communication
-
 /-! ### The two layers around the threshold of strict majority
 
 The largest binomial coefficient is at least `2^n/(n+1)`, and its upper
@@ -152,28 +138,20 @@ neighbor is at least half as large. This gives a logarithmic entropy
 deficit for both boundary layers, for even as well as odd input sizes.
 -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open BitString
-
-open Finset
-open scoped BigOperators
-
-theorem le_majorityDeficitBound (n : ℕ) : 128 ≤ majorityDeficitBound n := by
+private theorem le_majorityDeficitBound (n : ℕ) : 128 ≤ majorityDeficitBound n := by
   have h := Real.logb_nonneg (by norm_num : (1 : ℝ) < 2)
     (show (1 : ℝ) ≤ 2 * ((n : ℝ) + 1) by have := Nat.cast_nonneg (α := ℝ) n; linarith)
   unfold majorityDeficitBound
   linarith
 
-theorem middle_choose_bound (n : ℕ) : 2 ^ n ≤ (n + 1) * n.choose (n / 2) := by
+private theorem two_pow_le_succ_mul_choose_half (n : ℕ) : 2 ^ n ≤ (n + 1) * n.choose (n / 2) := by
   calc
     _ = ∑ r ∈ range (n + 1), n.choose r := (Nat.sum_range_choose n).symm
     _ ≤ ∑ _r ∈ range (n + 1), n.choose (n / 2) :=
       sum_le_sum (fun r _ => Nat.choose_le_middle r n)
     _ = _ := by simp
 
-theorem next_middle_choose_bound {n : ℕ} (hn : 2 ≤ n) :
+private theorem choose_half_le_two_mul_choose_half_succ {n : ℕ} (hn : 2 ≤ n) :
     n.choose (n / 2) ≤ 2 * n.choose (n / 2 + 1) := by
   have he := Nat.choose_succ_right_eq n (n / 2)
   have hh := Nat.mul_le_mul_left (n.choose (n / 2 + 1))
@@ -181,7 +159,7 @@ theorem next_middle_choose_bound {n : ℕ} (hn : 2 ≤ n) :
   have hpos : 0 < n - n / 2 := by omega
   nlinarith
 
-theorem weightLayer_deficit {n r : ℕ} (hr : r ≤ n)
+private theorem weightLayer_deficit {n r : ℕ} (hr : r ≤ n)
     (hcard : 2 ^ n ≤ (2 * (n + 1)) * n.choose r) :
     (weightLayer n r).Nonempty ∧ uniformDeficit (weightLayer n r) ≤ majorityDeficitBound n := by
   have hne : (weightLayer n r).Nonempty := by
@@ -198,18 +176,16 @@ theorem weightLayer_deficit {n r : ℕ} (hr : r ≤ n)
   unfold majorityDeficitBound
   linarith
 
-theorem majority_layers_deficit {n : ℕ} (hn : 2 ≤ n) :
+private theorem majority_layers_deficit {n : ℕ} (hn : 2 ≤ n) :
     ((weightLayer n (n / 2)).Nonempty ∧
       uniformDeficit (weightLayer n (n / 2)) ≤ majorityDeficitBound n) ∧
     ((weightLayer n (n / 2 + 1)).Nonempty ∧
       uniformDeficit (weightLayer n (n / 2 + 1)) ≤ majorityDeficitBound n) := by
-  have hmid := middle_choose_bound n
-  have hnext := Nat.mul_le_mul_left (n + 1) (next_middle_choose_bound hn)
+  have hmid := two_pow_le_succ_mul_choose_half n
+  have hnext := Nat.mul_le_mul_left (n + 1) (choose_half_le_two_mul_choose_half_succ hn)
   constructor
   · exact weightLayer_deficit (by omega) (by nlinarith)
   · exact weightLayer_deficit (by omega) (by nlinarith)
-
-end Cslib.BooleanAnalysis
 
 /-! ### Density limits from many single-bit neighbors
 
@@ -222,42 +198,7 @@ Applying this to the two middle Hamming layers initializes Korten's top-down adv
 majority, extending his initialization for parity [Korten2026].
 -/
 
-
-namespace Cslib.BooleanAnalysis
-
-open BitString
-
-open Finset
-open scoped BigOperators
-
-theorem bernoulliAverage_weight {n : ℕ} (p : ℝ) :
-    bernoulliAverage p (fun P : Fin n → Bool => (weight P : ℝ)) = n * p := by
-  have he (P : Fin n → Bool) : (weight P : ℝ) = ∑ i, if P i then (1 : ℝ) else 0 := by
-    simp [weight]
-  unfold bernoulliAverage
-  simp_rw [he, mul_sum]
-  rw [sum_comm]
-  have hc (i : Fin n) := bernoulliAverage_coordinate p i
-  simp only [bernoulliAverage] at hc
-  simp_rw [hc]
-  simp
-
-theorem bernoulliAverage_hits {n : ℕ} (p : ℝ) (s : Fin n → Bool) :
-    bernoulliAverage p (fun P : Fin n → Bool =>
-      if ∃ i, s i = true ∧ P i = true then (1 : ℝ) else 0) =
-        1 - (1 - p) ^ weight s := by
-  let f (P : {i // s i = true} → Bool) : ℝ := if ∃ i, P i = true then 1 else 0
-  calc
-    _ = bernoulliAverage p (fun P : Fin n → Bool => f (fun i => P i)) := by
-      congr 1
-      funext P
-      simp [f]
-    _ = bernoulliAverage p f := bernoulliAverage_restrict p s f
-    _ = _ := by
-      simpa only [f, Fintype.card_subtype, weight] using
-        bernoulliAverage_nonempty (ι := {i // s i = true}) p
-
-theorem coordinateDensity_of_neighbor {n : ℕ} (X : Finset (Fin n → Bool))
+private theorem coordinateDensity_of_neighbor {n : ℕ} (X : Finset (Fin n → Bool))
     (P x : Fin n → Bool) (i : Fin n) (hi : P i = true)
     (hx : Function.update x i (!x i) ∈ X) (hsmall : weight P ≤ 128) :
     (2 : ℝ) ^ (-(128 : ℝ)) ≤ coordinateDensity X P x := by
@@ -284,7 +225,7 @@ theorem coordinateDensity_of_neighbor {n : ℕ} (X : Finset (Fin n → Bool))
     _ = 1 := by rw [← Real.rpow_natCast, ← Real.rpow_add (by norm_num)]; norm_num
     _ ≤ _ := hc
 
-theorem isDensityLimit_of_many_neighbors {n : ℕ} (hn : 16 ≤ n)
+private theorem isDensityLimit_of_many_neighbors {n : ℕ} (hn : 16 ≤ n)
     (X : Finset (Fin n → Bool)) (x s : Fin n → Bool) (hs : n ≤ 2 * weight s)
     (hneighbor : ∀ i, s i = true → Function.update x i (!x i) ∈ X) :
     IsDensityLimit X (16 / n) 128 x := by
@@ -318,13 +259,16 @@ theorem isDensityLimit_of_many_neighbors {n : ℕ} (hn : 16 ≤ n)
       have := Nat.cast_nonneg (α := ℝ) (weight P)
       split_ifs <;> linarith
   have hh := bernoulliAverage_mono hp hp' hpoint
-  rw [bernoulliAverage_sub, bernoulliAverage_hits,
-    bernoulliAverage_mul, bernoulliAverage_weight, hmean] at hh
+  have hhits : bernoulliAverage p (fun P : Fin n → Bool =>
+      if ∃ i, s i = true ∧ P i = true then (1 : ℝ) else 0) = 1 - (1 - p) ^ weight s := by
+    convert bernoulliAverage_hits p s
+  rw [bernoulliAverage_sub, hhits, bernoulliAverage_mul, bernoulliAverage_weight,
+    Fintype.card_fin, hmean] at hh
   unfold IsDensityLimit
   change (3 : ℝ) / 4 ≤ bernoulliAverage p _
   linarith
 
-theorem majority_layers_limits {n : ℕ} (hn : 16 ≤ n) :
+private theorem majority_layers_limits {n : ℕ} (hn : 16 ≤ n) :
     (∀ x ∈ weightLayer n (n / 2),
       IsDensityLimit (weightLayer n (n / 2 + 1)) (16 / n) (majorityDeficitBound n) x) ∧
     (∀ y ∈ weightLayer n (n / 2 + 1),
@@ -351,8 +295,6 @@ theorem majority_layers_limits {n : ℕ} (hn : 16 ≤ n) :
     simp only [weightLayer, mem_filter, mem_univ, true_and, hi, Bool.not_true]
     omega
 
-end Cslib.BooleanAnalysis
-
 /-! ### The communication lower bound for strict majority
 
 The bilateral density adversary starts from the two layers around the threshold, and the power-law
@@ -360,15 +302,13 @@ budget absorbs their logarithmic entropy deficit. This extends the argument of K
 [Korten2026], whose Theorem 3 is the case of parity.
 -/
 
-
-namespace Cslib.Communication.RoundProtocol
-
-open BitString
-
-open Cslib.BooleanAnalysis Finset
+namespace RoundProtocol
 
 variable {M : Type*} [Fintype M]
 
+/-- The bound for strict majority with explicit constants: no protocol with `d + 1` messages of at
+most `m` bits solves the Karchmer–Wigderson game of strict majority on `n` bits when
+`64 (32768 · 194 ^ d (m + majorityDeficitBound n)) ^ d ≤ n`. -/
 theorem not_solves_majority_finite {n d : ℕ} (P : RoundProtocol (Fin n) M (d + 1))
     {m : ℝ} (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) (hm : 0 ≤ m)
     (hsize : 64 * (32768 * (194 : ℝ) ^ d * (m + majorityDeficitBound n)) ^ d ≤ (n : ℝ)) :
@@ -387,7 +327,7 @@ theorem not_solves_majority_finite {n d : ℕ} (P : RoundProtocol (Fin n) M (d +
     apply (div_le_iff₀ hnpos).mpr
     nlinarith
   intro hsol
-  apply P.not_solves_bilateral_density_with_deficit hM hm (by linarith)
+  apply P.not_solves_bilateral_density hM hm (by linarith)
     (show (0 : ℝ) < 16 / n by positivity) hX.1 hY.1 hX.2 hY.2 hleft hright hbudget
   intro x hx y hy
   apply hsol x y
@@ -398,16 +338,12 @@ theorem not_solves_majority_finite {n d : ℕ} (P : RoundProtocol (Fin n) M (d +
     change weight y = n / 2 + 1 at this
     omega
 
-end Cslib.Communication.RoundProtocol
+end RoundProtocol
 
-universe u
-
-namespace Cslib.Communication
-
-open BitString
-
-open Cslib.BooleanAnalysis
-
+universe u in /-- **The communication lower bound for strict majority**, extending
+[Korten, Theorem 3][Korten2026]: for every `d ≥ 2` there is `ε > 0` such that, for all large `n`, no
+protocol with `d` messages of at most `ε n ^ (1 / (d - 1))` bits solves the Karchmer–Wigderson game
+of strict majority on `n` bits. -/
 theorem majority_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ rounds) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n →
       ∀ {M : Type u} [Fintype M] (m : ℝ), 0 ≤ m →

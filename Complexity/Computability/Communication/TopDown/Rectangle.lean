@@ -7,102 +7,38 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Communication.TopDown.Defs
+public import Complexity.Computability.Communication.RoundProtocol
 public import Complexity.Foundations.BooleanAnalysis.MirrorSets
-public import Complexity.Foundations.BooleanAnalysis.Bernoulli
-import Mathlib.Combinatorics.Pigeonhole
-import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 
 /-!
-# Maintaining the density rectangle through one message
+# Density rectangles
 
-A weighted pigeonhole argument bounds the entropy loss of a message cell.
-Use the improved mirror set when the existing limit condition faces the wrong
-speaker. A density limit at rate below `3/4` precludes a fixed separating coordinate.
+The invariant of Korten's top-down adversary [Korten, Sections 3 and 4][Korten2026] is a
+*density rectangle* `X × Y` (`DensityRectangle`): two nonempty sets of deficit at most `k`, one of
+which consists of `(r, k)`-limits of the other for some rate `0 < r ≤ p`. The rate may be smaller
+than `p`, since density limits need not be monotone in the rate. A density rectangle of rate
+below `3 / 4` is not separated by any coordinate (`DensityRectangle.not_separated`), and after a
+message of `m` bits from Alice, some message leaves a density rectangle with deficit
+`max (194 k) (2 k + 2 + m)` and rate `32768 k p` (`DensityRectangle.select_left_message`): the
+mirror-set lemma turns the limits around when they face the wrong player.
+
+## Main definitions
+
+* `Cslib.Communication.DensityRectangle`: density rectangles.
+
+## Main results
+
+* `Cslib.Communication.DensityRectangle.not_separated`: no coordinate separates a density
+  rectangle.
+* `Cslib.Communication.DensityRectangle.select_left_message`: a message keeps a density rectangle.
+
+## References
+
+* [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
 -/
 
-public section
-
-namespace Cslib.BooleanAnalysis
-
-open Finset
-open scoped BigOperators
-
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-omit [DecidableEq ι] in
-open scoped Classical in
-theorem exists_large_message_fiber {M : Type*} [Fintype M]
-    (X : Finset (ι → Bool)) (hX : X.Nonempty) (send : (ι → Bool) → M)
-    {m : ℝ} (hm : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m) :
-    ∃ a : M, (X.filter fun x => send x = a).Nonempty ∧
-      uniformDeficit (X.filter fun x => send x = a) ≤ uniformDeficit X + m := by
-  obtain ⟨x, hx⟩ := hX
-  have : Nonempty M := ⟨send x⟩
-  have hXpos : (0 : ℝ) < X.card := by exact_mod_cast card_pos.mpr ⟨x, hx⟩
-  let b : ℝ := X.card / (2 : ℝ) ^ m
-  have hb : Fintype.card M • b ≤ (X.card : ℝ) := by
-    rw [nsmul_eq_mul]
-    calc
-      _ ≤ (2 : ℝ) ^ m * b := mul_le_mul_of_nonneg_right hm (by dsimp [b]; positivity)
-      _ = _ := by dsimp [b]; field_simp
-  obtain ⟨a, _, ha⟩ := exists_le_card_fiber_of_nsmul_le_card_of_maps_to
-    (s := X) (t := univ) (f := send) (b := b) (fun _ _ => mem_univ _) univ_nonempty
-    (by simpa only [card_univ] using hb)
-  have hne : (X.filter fun x => send x = a).Nonempty := by
-    apply card_pos.mp
-    have hbpos : 0 < b := by dsimp [b]; positivity
-    exact_mod_cast hbpos.trans_le ha
-  refine ⟨a, hne, (uniformDeficit_le_iff hne).mpr ?_⟩
-  convert ha using 1
-  dsimp [b]
-  rw [card_eq_rpow_sub_uniformDeficit (show X.Nonempty from ⟨x, hx⟩),
-    ← Real.rpow_sub (by norm_num)]
-  congr 1
-  ring
-
-
-theorem IsDensityLimit.agrees {Y : Finset (ι → Bool)} {p k : ℝ} {x : ι → Bool}
-    (hlim : IsDensityLimit Y p k x) (hp : 0 ≤ p) (hp' : p < 3 / 4) (i : ι) :
-    ∃ y ∈ Y, y i = x i := by
-  by_contra hn
-  have hd (P : ι → Bool) (hi : P i ≠ true) : coordinateDensity Y P x = 0 := by
-    rw [coordinateDensity_eq_expect]
-    apply expect_eq_zero
-    intro y _
-    have hy : resample P x y ∉ Y := by
-      intro hy
-      apply hn
-      exact ⟨resample P x y, hy, by simp [resample, hi]⟩
-    simp [hy]
-  have hpoint (P : ι → Bool) :
-      (if (2 : ℝ) ^ (-k) ≤ coordinateDensity Y P x then (1 : ℝ) else 0) ≤
-        if P i then 1 else 0 := by
-    by_cases hi : P i = true
-    · rw [ite_eq_left hi]
-      split_ifs <;> norm_num
-    · rw [ite_eq_right hi, hd P hi]
-      have hn : ¬ (2 : ℝ) ^ (-k) ≤ 0 := not_le.mpr (by positivity)
-      rw [ite_eq_right hn]
-  have h := bernoulliAverage_mono hp (show p ≤ 1 by linarith) hpoint
-  rw [bernoulliAverage_coordinate] at h
-  unfold IsDensityLimit at hlim
-  linarith
-
-theorem IsDensityLimit.mono_deficit {Y : Finset (ι → Bool)} {p k k' : ℝ} {x : ι → Bool}
-    (hlim : IsDensityLimit Y p k x) (hp : 0 ≤ p) (hp' : p ≤ 1) (hkk' : k ≤ k') :
-    IsDensityLimit Y p k' x := by
-  refine hlim.trans (bernoulliAverage_mono hp hp' fun P => ?_)
-  by_cases h : (2 : ℝ) ^ (-k) ≤ coordinateDensity Y P x
-  · have h' : (2 : ℝ) ^ (-k') ≤ coordinateDensity Y P x :=
-      (Real.rpow_le_rpow_of_exponent_le (by norm_num) (neg_le_neg hkk')).trans h
-    simp only [ite_eq_left h, ite_eq_left h', le_refl]
-  · rw [ite_eq_right h]
-    split_ifs <;> norm_num
-
-
-end Cslib.BooleanAnalysis
+@[expose] public section
 
 namespace Cslib.Communication
 
@@ -110,24 +46,37 @@ open Cslib.BooleanAnalysis Finset
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
+/-- A *density rectangle* `X × Y` of rate `p` and deficit `k`: `X` and `Y` are nonempty of deficit
+at most `k`, and for some rate `0 < r ≤ p`, the points of one of them are `(r, k)`-limits of the
+other. -/
+def DensityRectangle (X Y : Finset (ι → Bool)) (p k : ℝ) : Prop :=
+  X.Nonempty ∧ Y.Nonempty ∧ uniformDeficit X ≤ k ∧ uniformDeficit Y ≤ k ∧
+    ∃ r : ℝ, 0 < r ∧ r ≤ p ∧
+      ((∀ x ∈ X, IsDensityLimit Y r k x) ∨ (∀ y ∈ Y, IsDensityLimit X r k y))
+
+/-- Density rectangles are symmetric. -/
 theorem DensityRectangle.swap {X Y : Finset (ι → Bool)} {p k : ℝ}
     (h : DensityRectangle X Y p k) : DensityRectangle Y X p k := by
   rcases h with ⟨hX, hY, hdX, hdY, r, hr, hrp, hl | hl⟩
   · exact ⟨hY, hX, hdY, hdX, r, hr, hrp, Or.inr hl⟩
   · exact ⟨hY, hX, hdY, hdX, r, hr, hrp, Or.inl hl⟩
 
+/-- No coordinate separates a density rectangle of rate below `3 / 4`. -/
 theorem DensityRectangle.not_separated {X Y : Finset (ι → Bool)} {p k : ℝ}
     (h : DensityRectangle X Y p k) (hp : p < 3 / 4) (i : ι) :
     ¬ ∀ x ∈ X, ∀ y ∈ Y, x i ≠ y i := by
   intro hsep
   rcases h with ⟨hX, hY, _, _, r, hr, hrp, hl | hl⟩
   · obtain ⟨x, hx⟩ := hX
-    obtain ⟨y, hy, he⟩ := (hl x hx).agrees hr.le (hrp.trans_lt hp) i
+    obtain ⟨y, hy, he⟩ := (hl x hx).exists_mem_apply_eq hr.le (hrp.trans_lt hp) i
     exact hsep x hx y hy he.symm
   · obtain ⟨y, hy⟩ := hY
-    obtain ⟨x, hx, he⟩ := (hl y hy).agrees hr.le (hrp.trans_lt hp) i
+    obtain ⟨x, hx, he⟩ := (hl y hy).exists_mem_apply_eq hr.le (hrp.trans_lt hp) i
     exact hsep x hx y hy he
 
+/-- **One message keeps a density rectangle**: if Alice sends one of at most `2 ^ m` messages, some
+message leaves a density rectangle of rate `p'` and deficit `k'`, for `k' ≥ 194 k`,
+`k' ≥ 2 k + 2 + m` and `32768 k p ≤ p' ≤ 1 / 4`. -/
 theorem DensityRectangle.select_left_message {M : Type*} [Fintype M]
     {X Y : Finset (ι → Bool)} {p p' k k' m : ℝ} (h : DensityRectangle X Y p k)
     (send : (ι → Bool) → M) (hM : (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m)
@@ -145,7 +94,7 @@ theorem DensityRectangle.select_left_message {M : Type*} [Fintype M]
       (hlim : ∀ z ∈ Z, IsDensityLimit Y s k' z) :
       ∃ (a : M) (X' : Finset (ι → Bool)), X' ⊆ X ∧ (∀ x ∈ X', send x = a) ∧
         DensityRectangle X' Y p' k' := by
-    obtain ⟨a, hne, hd⟩ := exists_large_message_fiber Z hZ send hM
+    obtain ⟨a, hne, hd⟩ := exists_uniformDeficit_fiber_le Z hZ send hM
     refine ⟨a, Z.filter (fun x => send x = a), (filter_subset _ _).trans hZX,
       (fun x hx => (mem_filter.mp hx).2), hne, hY, hd.trans hdef, hdY.trans hkmono,
       s, hs, hsp, Or.inl ?_⟩

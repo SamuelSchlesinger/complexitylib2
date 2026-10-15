@@ -55,6 +55,48 @@ def IsDensityLimit {ι : Type*} [Fintype ι] [DecidableEq ι]
   3 / 4 ≤ bernoulliAverage p
     (fun P => if (2 : ℝ) ^ (-k) ≤ coordinateDensity Y P x then (1 : ℝ) else 0)
 
+/-- A density limit at a rate below `3 / 4` agrees with a point of `Y` at every coordinate. -/
+theorem IsDensityLimit.exists_mem_apply_eq {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {Y : Finset (ι → Bool)} {p k : ℝ} {x : ι → Bool}
+    (hlim : IsDensityLimit Y p k x) (hp : 0 ≤ p) (hp' : p < 3 / 4) (i : ι) :
+    ∃ y ∈ Y, y i = x i := by
+  by_contra hn
+  have hd (P : ι → Bool) (hi : P i ≠ true) : coordinateDensity Y P x = 0 := by
+    rw [coordinateDensity_eq_expect]
+    apply expect_eq_zero
+    intro y _
+    have hy : resample P x y ∉ Y := by
+      intro hy
+      apply hn
+      exact ⟨resample P x y, hy, by simp [resample, hi]⟩
+    simp [hy]
+  have hpoint (P : ι → Bool) :
+      (if (2 : ℝ) ^ (-k) ≤ coordinateDensity Y P x then (1 : ℝ) else 0) ≤
+        if P i then 1 else 0 := by
+    by_cases hi : P i = true
+    · rw [ite_eq_left hi]
+      split_ifs <;> norm_num
+    · rw [ite_eq_right hi, hd P hi]
+      have hn : ¬ (2 : ℝ) ^ (-k) ≤ 0 := not_le.mpr (by positivity)
+      rw [ite_eq_right hn]
+  have h := bernoulliAverage_mono hp (show p ≤ 1 by linarith) hpoint
+  rw [bernoulliAverage_coordinate] at h
+  unfold IsDensityLimit at hlim
+  linarith
+
+/-- A density limit with deficit `k` is one with every larger deficit. -/
+theorem IsDensityLimit.mono_deficit {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {Y : Finset (ι → Bool)} {p k k' : ℝ} {x : ι → Bool}
+    (hlim : IsDensityLimit Y p k x) (hp : 0 ≤ p) (hp' : p ≤ 1) (hkk' : k ≤ k') :
+    IsDensityLimit Y p k' x := by
+  refine hlim.trans (bernoulliAverage_mono hp hp' fun P => ?_)
+  by_cases h : (2 : ℝ) ^ (-k) ≤ coordinateDensity Y P x
+  · have h' : (2 : ℝ) ^ (-k') ≤ coordinateDensity Y P x :=
+      (Real.rpow_le_rpow_of_exponent_le (by norm_num) (neg_le_neg hkk')).trans h
+    simp only [ite_eq_left h, ite_eq_left h', le_refl]
+  · rw [ite_eq_right h]
+    split_ifs <;> norm_num
+
 /-! ### Completion density in Korten's improved mirror-set argument
 
 Apply the entropy lemma and improved light-patterns lemma inside the sampled
