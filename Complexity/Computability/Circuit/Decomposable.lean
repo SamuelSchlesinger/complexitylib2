@@ -53,18 +53,18 @@ exponentially large.
 
 ## Main definitions
 
-* `Cslib.Circuits.Frontier.DecomposableDAG`: a smooth decomposable DAG.
-* `Cslib.Circuits.Frontier.DecomposableDAG.accepted`: the set it represents.
-* `Cslib.Circuits.Frontier.DecomposableDAG.Occurs`: the nodes on accepting certificates.
-* `Cslib.Circuits.Frontier.DecomposableDAG.unionEdges`, `DecomposableDAG.products`,
+* `Cslib.Circuits.DecomposableDAG`: a smooth decomposable DAG.
+* `Cslib.Circuits.DecomposableDAG.accepted`: the set it represents.
+* `Cslib.Circuits.DecomposableDAG.Occurs`: the nodes on accepting certificates.
+* `Cslib.Circuits.DecomposableDAG.unionEdges`, `DecomposableDAG.products`,
   `DecomposableDAG.size`: the size of a DAG.
 
 ## Main results
 
-* `Cslib.Circuits.Frontier.DecomposableDAG.rectangle_subset`: a node and its contexts form a
+* `Cslib.Circuits.DecomposableDAG.rectangle_subset`: a node and its contexts form a
   rectangle inside the accepted set.
-* `Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le`: threshold counting.
-* `Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le_size`: threshold counting, charging
+* `Cslib.Circuits.DecomposableDAG.ncard_accepted_le`: threshold counting.
+* `Cslib.Circuits.DecomposableDAG.ncard_accepted_le_size`: threshold counting, charging
   `(K - 1) ^ 3` to every union edge and every product.
 
 ## References
@@ -76,9 +76,9 @@ exponentially large.
 
 @[expose] public section
 
-namespace Cslib.Circuits.Frontier
+namespace Cslib.Circuits
 
-open Set
+open Set Frontier
 
 variable {ι U : Type*} {K : ℕ}
 
@@ -394,4 +394,4 @@ end Finite
 
 end DecomposableDAG
 
-end Cslib.Circuits.Frontier
+end Cslib.Circuits

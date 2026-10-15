@@ -59,6 +59,7 @@ public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth
+public import Complexity.Computability.Circuit.Decomposable
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.Erase
 public import Complexity.Computability.Circuit.FanIn
@@ -71,7 +72,6 @@ public import Complexity.Computability.Circuit.Frontier.Correlation
 public import Complexity.Computability.Circuit.Frontier.Correlation.Asymptotics
 public import Complexity.Computability.Circuit.Frontier.Correlation.Circuit
 public import Complexity.Computability.Circuit.Frontier.Correlation.Rectangle
-public import Complexity.Computability.Circuit.Frontier.Decomposable
 public import Complexity.Computability.Circuit.Frontier.Demand
 public import Complexity.Computability.Circuit.Frontier.FanInTwo
 public import Complexity.Computability.Circuit.Frontier.Layouts.Basic

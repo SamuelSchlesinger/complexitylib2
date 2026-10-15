@@ -2302,16 +2302,16 @@ info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_nondeterminis
 #print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_nondeterministic
 
 /--
-info: 'Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.DecomposableDAG.ncard_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le
+#print axioms Cslib.Circuits.DecomposableDAG.ncard_accepted_le
 
 /--
-info: 'Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le_size' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.DecomposableDAG.ncard_accepted_le_size' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le_size
+#print axioms Cslib.Circuits.DecomposableDAG.ncard_accepted_le_size
 
 /--
 info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_amplify' depends on axioms: [propext, Classical.choice, Quot.sound]

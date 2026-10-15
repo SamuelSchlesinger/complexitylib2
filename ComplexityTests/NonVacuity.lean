@@ -28,7 +28,7 @@ import Complexity.Computability.Circuit.Frontier.Reduction
 import Complexity.Computability.Circuit.Frontier.Unconditional
 import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
-import Complexity.Computability.Circuit.Frontier.Decomposable
+import Complexity.Computability.Circuit.Decomposable
 import Complexity.Computability.Circuit.Frontier.FanInTwo
 import Complexity.Computability.Circuit.Frontier.Correlation
 import Complexity.Computability.Circuit.Boolean.ThresholdGates.Parity
@@ -592,7 +592,7 @@ end FrontierLedger
 
 section FrontierDecomposable
 
-open Cslib.Circuits.Frontier Set
+open Cslib.Circuits Set
 
 /-- A decomposable DAG for the conjunction of two bits: a product of two leaves. -/
 def conjunctionDAG : DecomposableDAG (Fin 2) Bool (Option (Fin 2)) where
