@@ -46,28 +46,28 @@ namespace Cslib.Logic.PL
 
 open Cslib.BitString Cslib.DecisionTree Finset
 
-variable {n : ℕ}
+variable {ι : Type*}
 
 namespace Term
 
 /-- The restriction `ρ` falsifies the term `t`: it fixes one of its variables to the other value. -/
-def FalsifiedBy (t : Term (Fin n)) (ρ : PartialAssignment (Fin n)) : Prop :=
+def FalsifiedBy (t : Term ι) (ρ : PartialAssignment ι) : Prop :=
   ∃ l ∈ t, ρ l.1 = some !l.2
 
-instance (t : Term (Fin n)) (ρ : PartialAssignment (Fin n)) : Decidable (t.FalsifiedBy ρ) :=
+instance (t : Term ι) (ρ : PartialAssignment ι) : Decidable (t.FalsifiedBy ρ) :=
   inferInstanceAs (Decidable (∃ l ∈ t, _))
 
 /-- The variables of the term `t` left free by `ρ`, in order. -/
-def freeVars (t : Term (Fin n)) (ρ : PartialAssignment (Fin n)) : List (Fin n) :=
+def freeVars (t : Term ι) (ρ : PartialAssignment ι) : List ι :=
   (t.filter fun l => (ρ l.1).isNone).map Prod.fst
 
-variable {t : Term (Fin n)} {ρ : PartialAssignment (Fin n)}
+variable {t : Term ι} {ρ : PartialAssignment ι}
 
-theorem mem_freeVars {v : Fin n} : v ∈ t.freeVars ρ ↔ ∃ b, (v, b) ∈ t ∧ ρ v = none := by
+theorem mem_freeVars {v : ι} : v ∈ t.freeVars ρ ↔ ∃ b, (v, b) ∈ t ∧ ρ v = none := by
   simp [freeVars, Option.isNone_iff_eq_none]
 
 /-- A falsified term is false on every input filled from the restriction. -/
-theorem eval_fill_of_falsifiedBy (h : t.FalsifiedBy ρ) (x : BitString n) :
+theorem eval_fill_of_falsifiedBy (h : t.FalsifiedBy ρ) (x : ι → Bool) :
     Term.eval (ρ.fill x) t = false := by
   obtain ⟨l, hl, hρ⟩ := h
   rw [Bool.eq_false_iff, ne_eq, Term.eval_eq_true_iff, not_forall]
@@ -76,7 +76,7 @@ theorem eval_fill_of_falsifiedBy (h : t.FalsifiedBy ρ) (x : BitString n) :
 /-- A term that is not falsified and has no free variable is true on every input filled from the
 restriction. -/
 theorem eval_fill_of_freeVars_eq_nil (h : ¬ t.FalsifiedBy ρ) (hV : t.freeVars ρ = [])
-    (x : BitString n) : Term.eval (ρ.fill x) t = true := by
+    (x : ι → Bool) : Term.eval (ρ.fill x) t = true := by
   rw [Term.eval_eq_true_iff]
   intro l hl
   cases hρ : ρ l.1 with
@@ -90,19 +90,19 @@ end Term
 
 namespace DNF
 
-variable (F : DNF (Fin n))
+variable (F : DNF ι)
 
 /-- The first term of `F` not falsified by `ρ`. -/
-def firstTerm (ρ : PartialAssignment (Fin n)) : Option (Term (Fin n)) :=
+def firstTerm (ρ : PartialAssignment ι) : Option (Term ι) :=
   F.find? fun t => !decide (t.FalsifiedBy ρ)
 
 /-- The variables queried at `ρ`: the free variables of the first term not falsified by `ρ`. -/
-def queried (ρ : PartialAssignment (Fin n)) : List (Fin n) :=
+def queried (ρ : PartialAssignment ι) : List ι :=
   ((F.firstTerm ρ).map (·.freeVars ρ)).getD []
 
-variable {F} {ρ : PartialAssignment (Fin n)}
+variable {F} {ρ : PartialAssignment ι}
 
-theorem free_of_mem_queried {v : Fin n} (hv : v ∈ F.queried ρ) : ρ v = none := by
+theorem free_of_mem_queried {v : ι} (hv : v ∈ F.queried ρ) : ρ v = none := by
   unfold queried at hv
   cases h : F.firstTerm ρ with
   | none => simp [h] at hv
@@ -111,12 +111,9 @@ theorem free_of_mem_queried {v : Fin n} (hv : v ∈ F.queried ρ) : ρ v = none 
     obtain ⟨b, -, hρ⟩ := Term.mem_freeVars.1 hv
     exact hρ
 
-theorem toFinset_queried_subset_free : (F.queried ρ).toFinset ⊆ ρ.free := fun _ hv =>
-  PartialAssignment.mem_free.2 (free_of_mem_queried (List.mem_toFinset.1 hv))
-
 /-- When nothing is queried, the formula is constant under the restriction: true exactly when some
 term is not falsified. -/
-theorem eval_fill_of_queried_eq_nil (h : F.queried ρ = []) (x : BitString n) :
+theorem eval_fill_of_queried_eq_nil (h : F.queried ρ = []) (x : ι → Bool) :
     DNF.eval (ρ.fill x) F = (F.firstTerm ρ).isSome := by
   unfold queried at h
   cases hf : F.firstTerm ρ with
@@ -132,8 +129,13 @@ theorem eval_fill_of_queried_eq_nil (h : F.queried ρ = []) (x : BitString n) :
     rw [Option.isSome_some, DNF.eval_eq_true_iff]
     exact ⟨t, ht, Term.eval_fill_of_freeVars_eq_nil hnf h x⟩
 
+variable [Fintype ι] [DecidableEq ι]
+
+theorem toFinset_queried_subset_free : (F.queried ρ).toFinset ⊆ ρ.free := fun _ hv =>
+  PartialAssignment.mem_free.2 (free_of_mem_queried (List.mem_toFinset.1 hv))
+
 /-- Answering the queried variables frees fewer variables, as long as something is queried. -/
-theorem card_free_assign_lt (h : F.queried ρ ≠ []) (a : BitString n) :
+theorem card_free_assign_lt (h : F.queried ρ ≠ []) (a : ι → Bool) :
     #(ρ.assign (F.queried ρ).toFinset a).free < #ρ.free := by
   rw [PartialAssignment.free_assign]
   obtain ⟨v, hv⟩ := List.exists_mem_of_ne_nil _ h
@@ -143,7 +145,7 @@ variable (F)
 
 /-- The canonical decision tree of `F` under `ρ`: query the free variables of the first term not
 falsified by `ρ`, and continue under `ρ` extended by the answers. -/
-def canonicalTree (ρ : PartialAssignment (Fin n)) : DecisionTree (Fin n) Bool :=
+def canonicalTree (ρ : PartialAssignment ι) : DecisionTree ι Bool :=
   if h : F.queried ρ = [] then leaf (DNF.eval (ρ.fill fun _ => false) F)
   else graft (F.queried ρ) (fun a =>
     have := card_free_assign_lt h a
@@ -152,7 +154,7 @@ termination_by #ρ.free
 decreasing_by exact this
 
 /-- The number of variables the canonical tree queries on the input `x`. -/
-def pathLength (ρ : PartialAssignment (Fin n)) (x : BitString n) : ℕ :=
+def pathLength (ρ : PartialAssignment ι) (x : ι → Bool) : ℕ :=
   if h : F.queried ρ = [] then 0
   else
     have := card_free_assign_lt h x
@@ -171,17 +173,17 @@ theorem canonicalTree_of_queried_ne_nil (h : F.queried ρ ≠ []) :
       (fun a => F.canonicalTree (ρ.assign (F.queried ρ).toFinset a)) fun _ => false := by
   rw [canonicalTree, dite_eq_right h]
 
-theorem pathLength_of_queried_eq_nil (h : F.queried ρ = []) (x : BitString n) :
+theorem pathLength_of_queried_eq_nil (h : F.queried ρ = []) (x : ι → Bool) :
     F.pathLength ρ x = 0 := by
   rw [pathLength, dite_eq_left h]
 
-theorem pathLength_of_queried_ne_nil (h : F.queried ρ ≠ []) (x : BitString n) :
+theorem pathLength_of_queried_ne_nil (h : F.queried ρ ≠ []) (x : ι → Bool) :
     F.pathLength ρ x =
       (F.queried ρ).length + F.pathLength (ρ.assign (F.queried ρ).toFinset x) x := by
   rw [pathLength, dite_eq_right h]
 
 /-- The canonical tree computes the formula restricted by `ρ`. -/
-theorem eval_canonicalTree (ρ : PartialAssignment (Fin n)) (x : BitString n) :
+theorem eval_canonicalTree (ρ : PartialAssignment ι) (x : ι → Bool) :
     (F.canonicalTree ρ).eval x = DNF.eval (ρ.fill x) F := by
   by_cases h : F.queried ρ = []
   · rw [canonicalTree_of_queried_eq_nil h, eval_leaf, eval_fill_of_queried_eq_nil h,
@@ -194,7 +196,7 @@ termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h _
 
 /-- The query path depends only on the free bits of the input. -/
-theorem pathLength_congr {ρ : PartialAssignment (Fin n)} {x y : BitString n}
+theorem pathLength_congr {ρ : PartialAssignment ι} {x y : ι → Bool}
     (h : ∀ i ∈ ρ.free, x i = y i) :
     F.pathLength ρ x = F.pathLength ρ y := by
   by_cases hq : F.queried ρ = []
@@ -212,7 +214,7 @@ termination_by #ρ.free
 decreasing_by exact card_free_assign_lt hq y
 
 /-- The canonical tree is no deeper than its longest query path. -/
-theorem depth_canonicalTree_le (ρ : PartialAssignment (Fin n)) :
+theorem depth_canonicalTree_le (ρ : PartialAssignment ι) :
     (F.canonicalTree ρ).depth ≤ univ.sup (F.pathLength ρ) := by
   by_cases h : F.queried ρ = []
   · simp [canonicalTree_of_queried_eq_nil h]
@@ -228,7 +230,7 @@ theorem depth_canonicalTree_le (ρ : PartialAssignment (Fin n)) :
     (F.pathLength (ρ.assign V.toFinset a))
   rw [hy]
   -- The input reading `a` on `V` and `y` elsewhere has a query path through `V`.
-  set x : BitString n := fun j => if j ∈ V then a j else y j
+  set x : ι → Bool := fun j => if j ∈ V then a j else y j
   have hxa : ρ.assign V.toFinset x = ρ.assign V.toFinset a := by
     funext i
     by_cases hi : i ∈ V <;> simp [x, hi]
