@@ -121,16 +121,6 @@ end Decode
 
 variable (G : ConstraintGraph V E α)
 
-open Classical in
-/-- The proportion of the edges that a labelling violates is the probability that it violates a
-uniformly random edge. -/
-theorem unsatFrac_eq_expect [Fintype E] (σ : V → α) :
-    G.unsatFrac σ = 𝔼 e, if G.Satisfies σ e then 0 else 1 := by
-  rw [unsatFrac, unsatEdges, Fintype.expect_eq_sum_div_card, card_filter]
-  push_cast
-  congr 1
-  exact sum_congr rfl fun e _ ↦ by split_ifs <;> rfl
-
 /-! ### The composed constraint graph -/
 
 /-- The two ends of an edge: the first one at `0`, the second one at `1`. -/
@@ -273,15 +263,16 @@ theorem unsatFrac_decodeLabelling_le [Fintype E]
   rw [card_query, Nat.cast_ofNat] at h₁
   have h₂ : G.unsatFrac (decodeLabelling (LocalTest.proofOf A)) / 28 ≤
       1 - G.composeTest.acceptProb (LocalTest.proofOf A) := by
-    rw [composeTest, LocalTest.acceptProb_mix, unsatFrac_eq_expect, expect_div]
+    rw [composeTest, LocalTest.acceptProb_mix, ← expect_mem_unsatEdges, expect_div]
     conv_rhs => rw [← Fintype.expect_const (ι := E) (1 : ℝ), ← expect_sub_distrib]
     refine expect_le_expect fun e _ ↦ ?_
     rw [LocalTest.acceptProb_map]
     split_ifs with he
+    · rw [one_div]
+      simpa [one_div] using
+        G.one_div_le_one_sub_acceptProb_of_not_satisfies (mem_unsatEdges.1 he)
     · rw [zero_div, sub_nonneg]
       exact LocalTest.acceptProb_le_one _ _
-    · rw [one_div]
-      simpa [one_div] using G.one_div_le_one_sub_acceptProb_of_not_satisfies he
   linarith
 
 /-- **Soundness of composition** [Dinur, Lemma 3.6][Dinur2005]: composition divides the value of a
