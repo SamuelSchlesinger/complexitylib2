@@ -61,6 +61,7 @@ public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.Circuit.Frontier.Compiler
+public import Complexity.Computability.Circuit.Frontier.Components
 public import Complexity.Computability.Circuit.Frontier.Decomposable
 public import Complexity.Computability.Circuit.Frontier.Demand
 public import Complexity.Computability.Circuit.Frontier.Layouts.Basic
@@ -69,6 +70,12 @@ public import Complexity.Computability.Circuit.Frontier.Layouts.Cubic
 public import Complexity.Computability.Circuit.Frontier.Layouts.General
 public import Complexity.Computability.Circuit.Frontier.Layouts.Kernel
 public import Complexity.Computability.Circuit.Frontier.Layouts.Local
+public import Complexity.Computability.Circuit.Frontier.Ledger.Aggregate
+public import Complexity.Computability.Circuit.Frontier.Ledger.Basic
+public import Complexity.Computability.Circuit.Frontier.Ledger.Count
+public import Complexity.Computability.Circuit.Frontier.Ledger.LowerBound
+public import Complexity.Computability.Circuit.Frontier.Ledger.Sweep
+public import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 public import Complexity.Computability.Circuit.Frontier.Linear.Basis
 public import Complexity.Computability.Circuit.Frontier.Linear.Cut
 public import Complexity.Computability.Circuit.Frontier.Linear.Linearize

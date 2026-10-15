@@ -2313,4 +2313,88 @@ info: 'Cslib.PCP.Dinur.exists_card_gapGraph_le' depends on axioms: [propext, Cla
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.Dinur.exists_card_gapGraph_le
 
+/--
+info: 'Cslib.Circuits.Frontier.LayoutBound.exists_layout_componentwise' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.LayoutBound.exists_layout_componentwise
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.connected_induce_component' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.connected_induce_component
+
+/--
+info: 'Cslib.Circuits.Frontier.Compiler.cycleRankOn_add_ncard_readIn_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Compiler.cycleRankOn_add_ncard_readIn_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Ledger.run_eq_trace' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Ledger.run_eq_trace
+
+/--
+info: 'Cslib.Circuits.Frontier.Ledger.run_total_trace' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Ledger.run_total_trace
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_ledger_of_aggregates' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_ledger_of_aggregates
+
+/--
+info: 'Cslib.Circuits.Frontier.aggregates_unbounded' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.aggregates_unbounded
+
+/--
+info: 'Cslib.Circuits.Frontier.aggregates_countMod' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.aggregates_countMod
+
+/--
+info: 'Cslib.Circuits.Frontier.Ledger.mem_of_splice' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Ledger.mem_of_splice
+
+/--
+info: 'Cslib.Circuits.Frontier.Ledger.exists_ncard_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Ledger.exists_ncard_le
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_lt_mul_card_of_ledger' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_lt_mul_card_of_ledger
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_lt_mul_card_of_aggregates' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_lt_mul_card_of_aggregates
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_card_of_ledger' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_card_of_ledger
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_card_of_aggregates' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_card_of_aggregates
+
 end ComplexityTests.Axioms

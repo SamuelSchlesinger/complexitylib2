@@ -26,6 +26,7 @@ import Complexity.Computability.RAM.Squaring
 import Complexity.Computability.Circuit.Frontier.Reduction
 import Complexity.Computability.Circuit.Frontier.Unconditional
 import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
+import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.GapTheorem
 import Complexity.Computability.PCP.Preprocess
@@ -513,5 +514,17 @@ example : negCircuit.Computes (arithInterpretation ℚ) (fun x => cauchyNat ℚ 
 example : (cauchyNat ℚ 5).TotallyRegular := totallyRegular_cauchyNat 5
 
 end FrontierLinear
+
+section FrontierLedger
+
+open Cslib.Circuits Cslib.Circuits.Frontier
+
+/-- The ledger hypothesis can be met: every AC⁰ program has a ledger for all of its gates. -/
+example {n s : ℕ} (p : Program Boolean.Unbounded.signature n s) :
+    Nonempty (Ledger (fun _ => True) p Boolean.Unbounded.interpretation
+      ({_g : Fin s // True} → ZMod 2)) :=
+  exists_ledger_of_aggregates p _ _ _ fun _ _ => aggregates_unbounded _
+
+end FrontierLedger
 
 end ComplexityTests.NonVacuity
