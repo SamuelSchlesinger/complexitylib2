@@ -68,6 +68,7 @@ public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.DecisionTree.Basic
 public import Complexity.Computability.DecisionTree.CanonicalTree
 public import Complexity.Computability.DecisionTree.Certificate
+public import Complexity.Computability.DecisionTree.Fourier
 public import Complexity.Computability.DecisionTree.NormalForm
 public import Complexity.Computability.DecisionTree.Parity
 public import Complexity.Computability.DecisionTree.Restrict
@@ -97,6 +98,7 @@ public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
+public import Complexity.Foundations.Data.BitString.Fourier
 public import Complexity.Foundations.Data.BitString.LowDegree
 public import Complexity.Foundations.Data.BitString.LowDegreeParity
 public import Complexity.Foundations.Data.BitString.Parity

@@ -520,4 +520,28 @@ info: 'Cslib.Circuits.Boolean.formulaDepth_le_four_mul_clog' depends on axioms: 
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.formulaDepth_le_four_mul_clog
 
+/--
+info: 'Cslib.BitString.sum_fourierCoeff_mul_chi' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.sum_fourierCoeff_mul_chi
+
+/--
+info: 'Cslib.BitString.expect_mul_eq_sum_fourierCoeff_mul' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.expect_mul_eq_sum_fourierCoeff_mul
+
+/--
+info: 'Cslib.BitString.sum_fourierCoeff_sq_signVal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.sum_fourierCoeff_sq_signVal
+
+/--
+info: 'Cslib.DecisionTree.fourierCoeff_eq_zero_of_depth_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.DecisionTree.fourierCoeff_eq_zero_of_depth_lt
+
 end ComplexityTests.Axioms

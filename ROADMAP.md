@@ -226,6 +226,13 @@ and the logarithm of formula size agree up to a factor of four. The split at a s
 third to two thirds of the leaves is stated for any basis of fan-in two, over substitution of
 formulas for inputs (`Formula.bind`, `Formula.substLast`).
 
+**Fourier analysis on the Boolean cube** (`Foundations/Data/BitString/Fourier.lean`, from v1's
+`BooleanAnalysis/FourierExpansion` without its inner-product-space type synonym): characters
+`χ_S` on cslib's `BitString`, orthonormality under Mathlib's `𝔼`, the Fourier expansion and
+uniqueness of coefficients, Plancherel and Parseval. Decision trees of depth `d` have Fourier
+degree at most `d` (`DecisionTree/Fourier.lean`), the first step towards Linial–Mansour–Nisan
+over the switching lemma.
+
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
 `Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
 for every odd prime `p`, a depth-`d` circuit with `MOD_p` gates computing parity has size at least
