@@ -17,6 +17,7 @@ makes induction on depth go through for programs.
 
 ## Main results
 
+* `Cslib.Circuits.Program.depths_eq_depth_lines`: the depth of a gate is the depth of its line.
 * `Cslib.Circuits.Program.wireDepths_lines_lt`: the wires a gate reads are shallower than it.
 * `Cslib.Circuits.Program.depths_pos`: gates have positive depth.
 -/
@@ -35,34 +36,29 @@ theorem Line.wireDepth_lt_depth (line : Line σ n g) (depths : Wire n g → ℕ)
   have := line.depth_pos depths
   omega
 
-/-- The wires read by a gate of a program are shallower than the gate. -/
-theorem Program.wireDepths_lines_lt (p : Program σ n g) (k : Fin g)
-    (a : Fin (σ.Arity (p.lines k).op)) : p.wireDepths ((p.lines k).wires a) < p.depths k := by
+/-- The depth of a gate of a program is the depth of its line, over the depths of the wires. -/
+theorem Program.depths_eq_depth_lines (p : Program σ n g) (k : Fin g) :
+    p.depths k = (p.lines k).depth p.wireDepths := by
   induction p with
   | empty => exact k.elim0
   | @gate g p line ih =>
-    revert a
+    have h : (fun w => (p.gate line).wireDepths (Wire.Renaming.castSucc w)) = p.wireDepths :=
+      funext fun w => by rw [Wire.Renaming.castSucc_apply, Program.wireDepths_gate_castSucc]
     induction k using Fin.lastCases with
     | last =>
       rw [Program.lines_gate_last, Program.depths_gate_last]
-      intro a
-      change (p.gate line).wireDepths (Wire.Renaming.castSucc (line.wires a)) < _
-      rw [Wire.Renaming.castSucc_apply, Program.wireDepths_gate_castSucc]
-      exact line.wireDepth_lt_depth _ a
+      exact congrArg line.depth h.symm
     | cast k =>
-      rw [Program.lines_gate_castSucc, Program.depths_gate_castSucc]
-      intro a
-      change (p.gate line).wireDepths (Wire.Renaming.castSucc ((p.lines k).wires a)) < _
-      rw [Wire.Renaming.castSucc_apply, Program.wireDepths_gate_castSucc]
-      exact ih k a
+      rw [Program.lines_gate_castSucc, Program.depths_gate_castSucc, ih]
+      exact congrArg (p.lines k).depth h.symm
+
+/-- The wires read by a gate of a program are shallower than the gate. -/
+theorem Program.wireDepths_lines_lt (p : Program σ n g) (k : Fin g)
+    (a : Fin (σ.Arity (p.lines k).op)) : p.wireDepths ((p.lines k).wires a) < p.depths k :=
+  p.depths_eq_depth_lines k ▸ (p.lines k).wireDepth_lt_depth _ a
 
 /-- Every gate of a program has positive depth. -/
-theorem Program.depths_pos (p : Program σ n g) (k : Fin g) : 0 < p.depths k := by
-  induction p with
-  | empty => exact k.elim0
-  | @gate g p line ih =>
-    induction k using Fin.lastCases with
-    | last => rw [Program.depths_gate_last]; exact line.depth_pos _
-    | cast k => rw [Program.depths_gate_castSucc]; exact ih k
+theorem Program.depths_pos (p : Program σ n g) (k : Fin g) : 0 < p.depths k :=
+  p.depths_eq_depth_lines k ▸ (p.lines k).depth_pos _
 
 end Cslib.Circuits

@@ -21,6 +21,8 @@ adds depths (`Circuit.depth_comp_le`) and parallel composition takes their maxim
 
 ## Main results
 
+* `Cslib.Circuits.Program.wireDepths_append_castAdd`,
+  `Cslib.Circuits.Program.wireDepths_append_appendedWire_le`: depths in a continued program.
 * `Cslib.Circuits.Circuit.depth_comp_le`: `depth (d.comp c) ≤ depth d + depth c`.
 * `Cslib.Circuits.Circuit.depth_append_le`: `depth (c.append d) ≤ max (depth c) (depth d)`.
 -/
@@ -36,7 +38,7 @@ namespace Program
 variable (P : Program σ n g₁) (feed : Fin k → Wire n g₁)
 
 /-- Continuing a program does not change the depths of its wires. -/
-theorem wireDepths_append_castAdd (q : Program σ k g₂) (w : Wire n g₁) :
+@[simp] theorem wireDepths_append_castAdd (q : Program σ k g₂) (w : Wire n g₁) :
     (P.append feed q).wireDepths (w.castAdd g₂) = P.wireDepths w := by
   induction q with
   | empty => cases w <;> rfl
@@ -82,6 +84,14 @@ end Program
 
 namespace Circuit
 
+@[simp] theorem outputs_append_castAdd (c : Circuit σ n m) (d : Circuit σ n p) (o : Fin m) :
+    (c.append d).outputs (Fin.castAdd p o) = (c.outputs o).castAdd d.size :=
+  Fin.append_left _ _ o
+
+@[simp] theorem outputs_append_natAdd (c : Circuit σ n m) (d : Circuit σ n p) (o : Fin p) :
+    (c.append d).outputs (Fin.natAdd m o) = Program.appendedWire Wire.input (d.outputs o) :=
+  Fin.append_right _ _ o
+
 /-- **Sequential composition adds depths.** -/
 theorem depth_comp_le (d : Circuit σ m p) (c : Circuit σ n m) :
     (d.comp c).depth ≤ d.depth + c.depth :=
@@ -96,16 +106,12 @@ theorem depth_append_le (c : Circuit σ n m) (d : Circuit σ n p) :
   refine (Circuit.depth_le_iff _).2 fun o => ?_
   induction o using Fin.addCases with
   | left o =>
-    change (c.program.append Wire.input d.program).wireDepths
-      (Fin.append (Wire.castAdd d.size ∘ c.outputs)
-        (Program.appendedWire Wire.input ∘ d.outputs) (Fin.castAdd p o)) ≤ _
-    rw [Fin.append_left, Function.comp_apply, Program.wireDepths_append_castAdd]
+    change (c.program.append Wire.input d.program).wireDepths ((c.append d).outputs _) ≤ _
+    rw [outputs_append_castAdd, Program.wireDepths_append_castAdd]
     exact (c.outputDepths_le_depth o).trans (le_max_left _ _)
   | right o =>
-    change (c.program.append Wire.input d.program).wireDepths
-      (Fin.append (Wire.castAdd d.size ∘ c.outputs)
-        (Program.appendedWire Wire.input ∘ d.outputs) (Fin.natAdd m o)) ≤ _
-    rw [Fin.append_right, Function.comp_apply]
+    change (c.program.append Wire.input d.program).wireDepths ((c.append d).outputs _) ≤ _
+    rw [outputs_append_natAdd]
     exact (Program.wireDepths_append_appendedWire_le c.program Wire.input (D := 0)
       (fun i => le_rfl) d.program (d.outputs o)).trans
       ((d.outputDepths_le_depth o).trans (le_max_right _ _))

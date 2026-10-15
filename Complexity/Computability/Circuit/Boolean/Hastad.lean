@@ -148,20 +148,11 @@ theorem exists_dnf_of_shallow {op : Op} (hop : op ≠ .not) {args : Fin op.arity
   | and m =>
     obtain ⟨D, hD, heval⟩ := exists_dnf_of_trees true t hd
     refine ⟨D, true, hD, fun y => ?_⟩
-    rw [heval]
-    change _ = (decide (∀ j, args j (ρ.fill y) = true) != true)
-    by_cases hall : ∀ j, args j (ρ.fill y) = true
-    · simp [ht, hall]
-    · obtain ⟨j, hj⟩ := not_forall.1 hall
-      have h₂ : ∃ j, ((t j).eval y != true) = true := ⟨j, by simpa [ht] using hj⟩
-      rw [decide_eq_true h₂, decide_eq_false hall]
-      rfl
+    rw [heval, Bool.eq_iff_iff]
+    simp [ht]
   | or m =>
     obtain ⟨D, hD, heval⟩ := exists_dnf_of_trees false t hd
-    refine ⟨D, false, hD, fun y => ?_⟩
-    rw [heval]
-    change _ = (decide (∃ j, args j (ρ.fill y) = true) != false)
-    simp [ht]
+    exact ⟨D, false, hD, fun y => by simp [heval, ht]⟩
 
 /-- **The union bound of a stage.** If there are fewer than `2 ^ s` operation nodes and `ℓ` is at
 most a `1 / (16 s + 1)` fraction of the `m` free bits, then the restrictions that the switching

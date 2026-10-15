@@ -22,6 +22,12 @@ largest of their depths (`Circuit.depth_pi_le`).
 
 * `Cslib.Circuits.Circuit.pi`: single-output circuits side by side.
 * `Cslib.Circuits.Circuit.oneGate`: the circuit of one gate on inputs.
+
+## Main results
+
+* `Cslib.Circuits.Circuit.eval_pi`, `Cslib.Circuits.Circuit.size_pi`,
+  `Cslib.Circuits.Circuit.depth_pi_le`: the function, size and depth of circuits side by side.
+* `Cslib.Circuits.Circuit.depth_oneGate`: one gate has depth one.
 -/
 
 @[expose] public section
@@ -36,8 +42,8 @@ def pi : {m : ℕ} → (Fin m → Circuit σ n 1) → Circuit σ n m
   | m + 1, cs => (pi fun i => cs i.castSucc).append (cs (Fin.last m))
 
 /-- Output `j` of `pi cs` is the output of `cs j`. -/
-theorem eval_pi {I : Interpretation σ U} {m : ℕ} (cs : Fin m → Circuit σ n 1) (x : Fin n → U) :
-    (pi cs).eval I x = fun j => (cs j).eval I x 0 := by
+@[simp] theorem eval_pi {I : Interpretation σ U} {m : ℕ} (cs : Fin m → Circuit σ n 1)
+    (x : Fin n → U) : (pi cs).eval I x = fun j => (cs j).eval I x 0 := by
   induction m with
   | zero => funext j; exact j.elim0
   | succ m ih =>
@@ -50,7 +56,7 @@ theorem eval_pi {I : Interpretation σ U} {m : ℕ} (cs : Fin m → Circuit σ n
       rfl
 
 /-- The size of `pi cs` is the sum of the sizes. -/
-theorem size_pi {m : ℕ} (cs : Fin m → Circuit σ n 1) : (pi cs).size = ∑ j, (cs j).size := by
+@[simp] theorem size_pi {m : ℕ} (cs : Fin m → Circuit σ n 1) : (pi cs).size = ∑ j, (cs j).size := by
   induction m with
   | zero => rfl
   | succ m ih =>
@@ -77,8 +83,15 @@ def oneGate (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) : Circuit σ n 1 :
     (oneGate op args).size = 1 :=
   rfl
 
+@[simp] theorem depth_oneGate (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) :
+    (oneGate op args).depth = 1 :=
+  le_antisymm
+    ((depth_le_iff _).2 fun _ => (Line.depth_le_add_one_iff _ _ (d := 0)).2 fun _ => le_rfl)
+    (((oneGate op args).program.depths_pos (0 : Fin 1)).trans_le
+      ((oneGate op args).outputDepths_le_depth 0))
+
 theorem depth_oneGate_le (op : σ.Op) (args : Fin (σ.Arity op) → Fin n) :
     (oneGate op args).depth ≤ 1 :=
-  (depth_le_iff _).2 fun _ => (Line.depth_le_add_one_iff _ _ (d := 0)).2 fun _ => le_rfl
+  (depth_oneGate op args).le
 
 end Cslib.Circuits.Circuit
