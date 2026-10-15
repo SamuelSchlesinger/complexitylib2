@@ -226,28 +226,11 @@ theorem run_gate_of_not_special (m : M) (x : Fin n → U) {g : Fin s} (hg : ¬sp
     L.run m x (.gate g) = I (p.lines g).op fun a => L.run m x ((p.lines g).wires a) := by
   simp only [run_gate, hg, ↓reduceIte]
 
-/-- A valuation of the wires is the trace of `p` when it reads the inputs and satisfies the
-equation of every gate. -/
-private theorem eq_trace_of_forall_gate {v : Wire n s → U} {x : Fin n → U}
-    (hin : ∀ i, v (.input i) = x i)
-    (hgate : ∀ g, v (.gate g) = I (p.lines g).op fun a => v ((p.lines g).wires a)) :
-    v = p.trace I x := by
-  have hv : v = Wire.elim x fun g => v (.gate g) := by
-    funext w
-    cases w with
-    | input i => exact hin i
-    | gate g => rfl
-  have hgates : (fun g => v (.gate g)) = p.eval I x := by
-    refine p.eq_eval_of_forall_lines_eval I x _ fun g => ?_
-    simp only [Line.eval, Function.comp_def, ← hv]
-    exact (hgate g).symm
-  rw [Program.trace, ← hgates, ← hv]
-
 /-- **Guess and check, soundness.** If the run with guess `m` reproduces `m`, it is the true
 run. -/
 theorem run_eq_trace {m : M} {x : Fin n → U} (h : L.total (L.run m x) = m) :
     L.run m x = p.trace I x := by
-  refine eq_trace_of_forall_gate (fun _ => rfl) fun g => ?_
+  refine Program.eq_trace_of_forall_gate (fun _ => rfl) fun g => ?_
   rw [run_gate]
   split_ifs with hg
   · have hread := L.readout_prod (L.run m x) g hg
@@ -258,9 +241,7 @@ theorem run_eq_trace {m : M} {x : Fin n → U} (h : L.total (L.run m x) = m) :
 guess whose run is the true run. -/
 theorem run_total_trace (x : Fin n → U) : L.run (L.total (p.trace I x)) x = p.trace I x := by
   -- The true run satisfies the equations of the erased program with this guess.
-  have htrace (g : Fin s) :
-      p.trace I x (.gate g) = I (p.lines g).op fun a => p.trace I x ((p.lines g).wires a) :=
-    (p.lines_eval I x g).symm
+  have htrace (g : Fin s) := p.trace_gate I x g
   have hgates : (fun g => p.trace I x (.gate g)) =
       (erase special p).eval (guessInterpretation I (L.readout (L.total (p.trace I x)))) x := by
     refine (erase special p).eq_eval_of_forall_lines_eval _ x _ fun g => ?_

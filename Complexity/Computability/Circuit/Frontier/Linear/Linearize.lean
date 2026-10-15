@@ -93,14 +93,6 @@ namespace Cslib.Circuits
 
 variable {F : Type*} {n s m : ℕ}
 
-/-- The value of the last gate of a program is its operation applied to the values of its
-arguments. -/
-private theorem trace_gate_last {σ : Signature} {U : Type*} (p : Program σ n s)
-    (line : Line σ n s) (I : Interpretation σ U) (x : Fin n → U) :
-    (p.gate line).trace I x (.gate (Fin.last s)) =
-      I line.op fun a => p.trace I x (line.wires a) :=
-  p.eval_gate_last line I x
-
 /-- **Affine circuits compute affine maps.** In a program over the affine basis, the value of
 every wire is a linear map of the input plus a constant. -/
 theorem Program.exists_affine_trace [CommRing F] (p : Program (affineSignature F) n s)
@@ -116,7 +108,7 @@ theorem Program.exists_affine_trace [CommRing F] (p : Program (affineSignature F
     · obtain ⟨⟨k, c, d⟩, wires⟩ := line
       choose L b h using fun a => ih (wires a)
       refine ⟨∑ a, c a • L a, ∑ a, c a * b a + d, fun x => ?_⟩
-      rw [trace_gate_last]
+      rw [Program.trace_gate_last]
       simp [affineInterpretation, h, mul_add, Finset.sum_add_distrib, add_assoc]
     · obtain ⟨L, b, h⟩ := ih w
       exact ⟨L, b, fun x => by rw [Program.trace_gate_castSucc, h]⟩
@@ -225,8 +217,9 @@ theorem Program.trace_linearize (p : Program σ n s) (x : Fin n → F) (w : Wire
   | gate p line ih =>
     refine Wire.lastCases ?_ (fun w => ?_) w
     · -- The new gate is the first-order Taylor expansion of the old one.
-      refine (trace_gate_last _ _ _ _).trans ((affineInterpretation_taylorOp _ _ _).trans ?_)
-      rw [trace_gate_last]
+      refine (Program.trace_gate_last _ _ _ _).trans
+        ((affineInterpretation_taylorOp _ _ _).trans ?_)
+      rw [Program.trace_gate_last]
       simp only [ih, polynomialInterpretation_apply, fst_aeval_dualNumber, snd_aeval_dualNumber,
         fst_trace_dualNumber, add_sub_cancel_left]
     · simpa only [linearize, Program.trace_gate_castSucc] using ih w

@@ -322,11 +322,6 @@ theorem eq_outEdge_of_tgt_eq_output {e : Edge c} {o : Fin m} (h : tgt e = .outpu
 
 variable {U : Type*} (I : Interpretation σ U) (Acc : Fin m → Set U)
 
-/-- The value of a gate is its operation applied to the values of the wires it reads. -/
-private theorem trace_gate {k : ℕ} (p : Program σ n k) (x : Fin n → U) (g : Fin k) :
-    p.trace I x (.gate g) = I (p.lines g).op fun a => p.trace I x ((p.lines g).wires a) :=
-  (p.lines_eval I x g).symm
-
 /-- The value that the vertex of a signal puts on its outgoing edge: the input itself for an
 input wire, and the operation of the gate applied to its incoming edges for a gate wire. -/
 noncomputable def emit : Signal c → (Fin n → U) → (Edge c → U) → U
@@ -409,7 +404,7 @@ theorem satisfies_trace {x : Fin n → U} (hx : ∀ o, c.eval I x o ∈ Acc o) :
     cases w with
     | input i => rfl
     | gate g =>
-      rw [trace_gate]
+      rw [Program.trace_gate]
       simp only [emit, argEdge, signal_deliverEdge, consumed]
   | junction j =>
     intro e he
@@ -445,7 +440,7 @@ theorem head_eq_trace :
     ∀ (w : Wire n c.size) (hw : Reach c w), α (head ⟨w, hw⟩) = c.program.trace I x w := by
   refine c.program.wire_induction (fun i hw => hα (.signal ⟨.input i, hw⟩)) fun g ih hw => ?_
   have h : α (head ⟨.gate g, hw⟩) = I _ fun a => α (argEdge hw a) := hα (.signal ⟨.gate g, hw⟩)
-  rw [h, trace_gate]
+  rw [h, Program.trace_gate]
   refine congrArg _ (funext fun a => ?_)
   rw [eq_head hα, argEdge, signal_deliverEdge]
   exact ih a _

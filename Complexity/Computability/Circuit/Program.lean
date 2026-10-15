@@ -16,6 +16,18 @@ In the widened lines of a program (`Program.lines`), every gate wire that a line
 before the line's own gate (`Program.lt_of_lines_wires_eq_gate`), so facts about wires can be
 proved by induction along the program order (`Program.wire_induction`). Bounded fan-in is a
 bound on the arity of every line (`Program.fanInAtMost_iff`).
+
+The value of a gate is its operation applied to the values of the wires it reads
+(`Program.trace_gate`, and `Program.trace_gate_last` for the last gate), and a valuation of the
+wires that reads the inputs and satisfies the equation of every gate is the trace
+(`Program.eq_trace_of_forall_gate`).
+
+## Main results
+
+* `Program.wire_induction`: induction along the program order.
+* `Program.fanInAtMost_iff`: bounded fan-in, gate by gate.
+* `Program.trace_gate`, `Program.trace_gate_last`: the value of a gate.
+* `Program.eq_trace_of_forall_gate`: the trace is the unique solution of the gate equations.
 -/
 
 @[expose] public section
@@ -79,5 +91,41 @@ theorem Program.wire_induction (p : Program σ n g) {P : Wire n g → Prop}
   cases w with
   | input i => exact input i
   | gate k => exact hgate k k rfl
+
+section Trace
+
+variable {U : Type*}
+
+/-- The value of a gate is its operation applied to the values of the wires it reads. -/
+theorem Program.trace_gate (p : Program σ n g) (I : Interpretation σ U) (x : Fin n → U)
+    (k : Fin g) :
+    p.trace I x (.gate k) = I (p.lines k).op fun a => p.trace I x ((p.lines k).wires a) :=
+  (p.lines_eval I x k).symm
+
+/-- The value of the last gate of a program is its operation applied to the values of its
+arguments. -/
+theorem Program.trace_gate_last (p : Program σ n g) (line : Line σ n g) (I : Interpretation σ U)
+    (x : Fin n → U) :
+    (p.gate line).trace I x (.gate (Fin.last g)) = I line.op fun a => p.trace I x (line.wires a) :=
+  p.eval_gate_last line I x
+
+/-- A valuation of the wires is the trace of `p` when it reads the inputs and satisfies the
+equation of every gate. -/
+theorem Program.eq_trace_of_forall_gate {p : Program σ n g} {I : Interpretation σ U}
+    {v : Wire n g → U} {x : Fin n → U} (hin : ∀ i, v (.input i) = x i)
+    (hgate : ∀ k, v (.gate k) = I (p.lines k).op fun a => v ((p.lines k).wires a)) :
+    v = p.trace I x := by
+  have hv : v = Wire.elim x fun k => v (.gate k) := by
+    funext w
+    cases w with
+    | input i => exact hin i
+    | gate k => rfl
+  have hgates : (fun k => v (.gate k)) = p.eval I x := by
+    refine p.eq_eval_of_forall_lines_eval I x _ fun k => ?_
+    simp only [Line.eval, Function.comp_def, ← hv]
+    exact (hgate k).symm
+  rw [Program.trace, ← hgates, ← hv]
+
+end Trace
 
 end Cslib.Circuits
