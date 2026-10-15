@@ -118,6 +118,7 @@ public import Complexity.Foundations.Data.Nat.Div
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
+public import Complexity.Foundations.GroupTheory.Perm.Last
 public import Complexity.Init
 public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding

@@ -14,6 +14,7 @@ public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Complexity.Foundations.Data.BitString.Agree
+import Complexity.Foundations.GroupTheory.Perm.Last
 import Mathlib.Data.Finset.Max
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -39,7 +40,8 @@ same holds with the average number of forced variables over all orders in the ex
 If every clause has at most `k` literals and `x` is isolated in direction `i` (flipping bit `i`
 of `x` gives no solution), some clause is *critical* for `i` (`CNF.exists_critical`), and `i` is
 forced whenever it comes last among the variables of that clause, for at least a `1 / k` fraction
-of the orders (`CNF.factorial_le_mul_card_filter_mem_forced`). Hence
+of the orders (`CNF.factorial_le_mul_card_filter_mem_forced`, from
+`Equiv.Perm.card_mul_card_filter_forall_le_eq_factorial`). Hence
 `∑ₓ 2 ^ (ι(x) / k) ≤ 2 ^ N`, where `ι(x)` is the number of directions in which `x` is isolated
 (`CNF.sum_two_rpow_card_isolated_div_le`), and a `k`-CNF has at most `2 ^ ((1 - 1 / k) N)`
 solutions isolated in every direction (`CNF.card_isolated_mul_two_rpow_le`).
@@ -151,36 +153,6 @@ theorem sum_two_pow_card_forced_le (φ : CNF (Fin N)) (σ : Equiv.Perm (Fin N)) 
 
 /-! ### Isolated directions are forced often -/
 
-/-- At least a `1 / #S` fraction of the orders put a given `i ∈ S` last among `S`: every order puts
-some element of `S` last, and composing with the transposition of `i` and `j` moves the orders
-putting `j` last to orders putting `i` last. -/
-theorem factorial_le_card_mul_card_filter_le {S : Finset (Fin N)} {i : Fin N} (hi : i ∈ S) :
-    N.factorial ≤ S.card * (univ.filter fun σ : Equiv.Perm (Fin N) => ∀ u ∈ S, σ u ≤ σ i).card := by
-  set M : Fin N → Finset (Equiv.Perm (Fin N)) := fun j =>
-    univ.filter fun σ => ∀ u ∈ S, σ u ≤ σ j
-  have hcover : (univ : Finset (Equiv.Perm (Fin N))) ⊆ S.biUnion M := fun σ _ => by
-    obtain ⟨j, hj, hmax⟩ := exists_max_image S (fun u => σ u) ⟨i, hi⟩
-    exact mem_biUnion.2 ⟨j, hj, mem_filter.2 ⟨mem_univ σ, hmax⟩⟩
-  have hle : ∀ j ∈ S, (M j).card ≤ (M i).card := fun j hj => by
-    refine card_le_card_of_injOn (fun σ => σ * Equiv.swap i j) (fun σ hσ => ?_)
-      (fun σ _ τ _ h => mul_right_cancel h)
-    refine mem_filter.2 ⟨mem_univ _, fun u hu => ?_⟩
-    have hmax := (mem_filter.1 hσ).2
-    simp only [Equiv.Perm.coe_mul, Function.comp_apply, Equiv.swap_apply_left]
-    refine hmax _ ?_
-    rcases eq_or_ne u i with rfl | hui
-    · rw [Equiv.swap_apply_left]; exact hj
-    rcases eq_or_ne u j with rfl | huj
-    · rw [Equiv.swap_apply_right]; exact hi
-    rw [Equiv.swap_apply_of_ne_of_ne hui huj]
-    exact hu
-  calc N.factorial = (univ : Finset (Equiv.Perm (Fin N))).card := by
-        rw [card_univ, Fintype.card_perm, Fintype.card_fin]
-    _ ≤ (S.biUnion M).card := card_le_card hcover
-    _ ≤ ∑ j ∈ S, (M j).card := card_biUnion_le
-    _ ≤ ∑ _j ∈ S, (M i).card := sum_le_sum hle
-    _ = S.card * (M i).card := by rw [sum_const, Nat.nsmul_eq_mul]
-
 /-- A direction `i` in which a solution `x` is isolated has a *critical clause*: it contains the
 literal of `i` true under `x`, and all its other literals are on other variables and false under
 `x`. -/
@@ -225,11 +197,14 @@ theorem factorial_le_mul_card_filter_mem_forced {k : ℕ} (hk : ∀ c ∈ φ, c.
   set S := (c.map Prod.fst).toFinset
   have hiS : i ∈ S := List.mem_toFinset.2 (List.mem_map.2 ⟨_, hic, rfl⟩)
   have hS : S.card ≤ k := (List.toFinset_card_le _).trans ((List.length_map _).trans_le (hk c hc))
-  refine (factorial_le_card_mul_card_filter_le hiS).trans (Nat.mul_le_mul hS (card_le_card ?_))
+  have hlast := Equiv.Perm.card_mul_card_filter_forall_le_eq_factorial hiS
+  rw [Fintype.card_fin] at hlast
+  refine hlast.ge.trans (Nat.mul_le_mul hS (card_le_card ?_))
   intro σ hσ
+  simp only [mem_filter, mem_univ, true_and] at hσ
   refine mem_filter.2 ⟨mem_univ σ, mem_filter.2 ⟨mem_univ i, c, hc, hic, fun l hl hne => ?_⟩⟩
   obtain ⟨hli, hxl⟩ := hrest l hl hne
-  have hle := (mem_filter.1 hσ).2 l.1 (List.mem_toFinset.2 (List.mem_map.2 ⟨l, hl, rfl⟩))
+  have hle := hσ l.1 (List.mem_toFinset.2 (List.mem_map.2 ⟨l, hl, rfl⟩))
   exact ⟨lt_of_le_of_ne hle fun h => hli (σ.injective h), hxl⟩
 
 /-! ### Averaging over the orders -/

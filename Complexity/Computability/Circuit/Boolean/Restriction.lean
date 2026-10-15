@@ -236,7 +236,6 @@ def extensions (ρ₀ : Restriction n) (ℓ : ℕ) : Finset (Restriction n) :=
 `ρ₀` free. -/
 theorem card_extensions (ρ₀ : Restriction n) (ℓ : ℕ) :
     (ρ₀.extensions ℓ).card = ρ₀.free.card.choose ℓ * 2 ^ (ρ₀.free.card - ℓ) := by
-  classical
   rw [Finset.card_eq_sum_card_fiberwise (f := free) (t := Finset.powersetCard ℓ ρ₀.free)
     fun ρ hρ => Finset.mem_powersetCard.2
       ⟨(mem_extensions.1 hρ).1.free_subset, (mem_extensions.1 hρ).2⟩]
@@ -304,7 +303,6 @@ theorem card_withFree (n ℓ : ℕ) : (withFree n ℓ).card = n.choose ℓ * 2 ^
 theorem card_filter_extends_withFree {ρ' : Restriction n} {ℓ : ℕ} (hℓ : ρ'.free.card ≤ ℓ) :
     ((withFree n ℓ).filter fun ρ => ρ'.Extends ρ).card =
       (n - ρ'.free.card).choose (ℓ - ρ'.free.card) := by
-  classical
   have h := Finset.card_filter_powersetCard_subset ρ'.free Finset.univ ℓ (Finset.subset_univ _) hℓ
   rw [Finset.card_univ, Fintype.card_fin] at h
   rw [← h]
