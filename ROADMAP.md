@@ -250,10 +250,11 @@ subsets (`Foundations/Combinatorics/Hypergeometric.lean`).
 
 **Korten's top-down lower bounds** (`Circuit/Boolean/TopDown.lean`, over the round protocols of
 `Communication/RoundProtocol.lean`, the adversary of `Communication/TopDown/` and the sampling
-lemmas of `Foundations/BooleanAnalysis/`): a circuit of depth `d` with `g` gates gives a
-Karchmer–Wigderson protocol with `d` messages from its `n + g` wires, and parity has no such
-protocol unless `n + g > 2 ^ (ε n ^ (1 / (d - 1)))`, so parity needs more than `n ^ k` gates at
-every fixed depth; the same for majority. This is the optimal exponent, against `1 / (d + 1)` from
+lemmas of `Foundations/BooleanAnalysis/`): a circuit of AND/OR depth `d` (negations free,
+`Circuit.depthWith` in `Circuit/Depth.lean`) with `g` gates gives a Karchmer–Wigderson protocol
+with `d` messages from its `n + g` wires, and parity has no such protocol unless
+`n + g > 2 ^ (ε n ^ (1 / (d - 1)))`, so parity needs more than `n ^ k` gates at every fixed depth;
+the same for majority. In AND/OR depth this is the optimal exponent, against `1 / (d + 1)` from
 Håstad's argument above.
 
 **Shallow circuits for symmetric functions** (`Circuit/Boolean/ShallowSymmetric.lean`, over
@@ -261,7 +262,8 @@ alternating formulas in `Circuit/Boolean/AltFormula.lean`): the theorem of Lecom
 Ramakrishnan, every symmetric function has depth-`d` circuits of size `2 ^ O(n ^ (1 / (d - 1)))`,
 with negations free at the inputs, and so unbounded fan-in circuits of depth `d + 1` counting them.
 By Korten's bound for alternating formulas (`Circuit/Boolean/AltFormula/TopDown.lean`), this is
-optimal for majority.
+optimal for majority. Open: the circuit form in AND/OR depth `d`, which needs `depthWith` bounds
+for `Circuit.comp` and `Formula.toCircuit`.
 
 **Resolution** (`Logics/Propositional/Resolution.lean`): soundness and refutation completeness.
 

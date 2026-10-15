@@ -11,7 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Circuit.Boolean.Threshold
-import Complexity.Computability.Circuit.Depth
+public import Complexity.Computability.Circuit.Depth
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 
 /-!
@@ -22,18 +22,21 @@ walk down from the output [Korten, Section 1.1][Korten2026]: at a conjunction th
 input makes it false names an argument wire false on that input, at a disjunction the player whose
 input makes it true names an argument true on it, a negation exchanges the roles without a
 message, and at an input the two inputs differ (`Unbounded.kwProtocol`,
-`Unbounded.kwProtocol_solves`). The messages are wires, so a circuit of depth `d` with `g` gates on
-`n` inputs gives a protocol with `d` messages from an alphabet of size `n + g`.
+`Unbounded.kwProtocol_solves`). The messages are wires, so a circuit of AND/OR depth `d` (its depth
+with negations free, `Circuit.depthWith Unbounded.Op.andOrCost`) with `g` gates on `n` inputs gives
+a protocol with `d` messages from an alphabet of size `n + g`.
 
 **Korten's theorem** [Korten, Theorem 3][Korten2026] bounds such protocols for parity, so for every
-`d ≥ 2` there is `ε > 0` such that circuits of depth `d` for the parity of `n` bits have
+`d ≥ 2` there is `ε > 0` such that circuits of AND/OR depth `d` for the parity of `n` bits have
 `n + g > 2 ^ (ε n ^ (1 / (d - 1)))` for all large `n`
-(`Unbounded.two_rpow_lt_add_size_of_computes_parity`). The exponent `1 / (d - 1)` is optimal, and
-beats the `1 / (d + 1)` of `Unbounded.two_pow_le_size_of_computes_parity`, both with negations
-counted in the depth. The same holds for strict majority, and for majority, whose protocols give
-protocols for strict majority by negating the inputs and exchanging the players
-(`Unbounded.two_rpow_lt_add_size_of_computes_majority`); at every fixed depth, both need more than
-`n ^ k` gates for large `n` (`Unbounded.pow_lt_size_of_computes_parity`,
+(`Unbounded.two_rpow_lt_add_size_of_computes_parity`). The exponent `1 / (d - 1)` improves on the
+`1 / (d + 1)` of `Unbounded.two_pow_le_size_of_computes_parity`, and is optimal, since parity has
+circuits of AND/OR depth `d` with `2 ^ O(n ^ (1 / (d - 1)))` gates [Hastad1986]. Negations are free
+in this depth, so the bound also holds for `Circuit.depth`, which counts them
+(`Circuit.depthWith_le_depth`). The same bound holds for strict majority, and for majority, whose
+protocols give protocols for strict majority by negating the inputs and exchanging the players
+(`Unbounded.two_rpow_lt_add_size_of_computes_majority`), extending Korten's theorem. At every fixed
+depth, both need more than `n ^ k` gates for large `n` (`Unbounded.pow_lt_size_of_computes_parity`,
 `Unbounded.pow_lt_size_of_computes_majority`).
 
 ## Main definitions
@@ -45,7 +48,7 @@ protocols for strict majority by negating the inputs and exchanging the players
 * `Cslib.Circuits.Boolean.Unbounded.kwProtocol_solves`: it solves the game of the wire.
 * `Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_parity`: Korten's theorem.
 * `Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_majority`: the same for
-  majority.
+  majority, extending Korten's theorem.
 * `Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_parity`,
   `Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_majority`: at every fixed depth, parity
   and majority need more than `n ^ k` gates for large `n`.
@@ -53,6 +56,7 @@ protocols for strict majority by negating the inputs and exchanging the players
 ## References
 
 * [O. Korten, *Top-Down Lower Bounds for All Depths*][Korten2026]
+* [J. Håstad, *Almost Optimal Lower Bounds for Small Depth Circuits*][Hastad1986]
 -/
 
 @[expose] public section
@@ -150,10 +154,11 @@ theorem interpretation_of_op_eq_or {l : Line signature n g} {m : ℕ} (h : l.op 
   subst h
   simp
 
-/-- **The protocol of a wire solves its game**: if the wire `w` has depth at most `d`, Alice's
-input makes it `s` and Bob's makes it `!s`, the two inputs differ at the named coordinate. -/
+/-- **The protocol of a wire solves its game**: if the wire `w` has AND/OR depth at most `d`,
+Alice's input makes it `s` and Bob's makes it `!s`, the two inputs differ at the named
+coordinate. -/
 theorem kwProtocol_solves (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (w : Wire n g)
-    (s : Bool) (hw : p.wireDepths w ≤ d) (x y : BitString n)
+    (s : Bool) (hw : p.wireDepthsWith Op.andOrCost w ≤ d) (x y : BitString n)
     (hx : p.trace interpretation x w = s) (hy : p.trace interpretation y w = !s) :
     x ((kwProtocol p i₀ d w s).run x y) ≠ y ((kwProtocol p i₀ d w s).run x y) := by
   match w with
@@ -167,9 +172,12 @@ theorem kwProtocol_solves (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (
     have hval (z : BitString n) : p.trace interpretation z (.gate k) =
         interpretation (p.lines k).op fun a => p.trace interpretation z ((p.lines k).wires a) :=
       (p.lines_eval interpretation z k).symm
-    have hdk : p.depths k ≤ d := by rwa [Program.wireDepths_gateWire] at hw
-    have hlt (a : Fin (signature.Arity (p.lines k).op)) :
-        p.wireDepths ((p.lines k).wires a) < p.depths k := p.wireDepths_lines_lt k a
+    have hdk : p.depthsWith Op.andOrCost k ≤ d := hw
+    have hle (a : Fin (signature.Arity (p.lines k).op)) :
+        p.wireDepthsWith Op.andOrCost ((p.lines k).wires a) + (p.lines k).op.andOrCost ≤
+          p.depthsWith Op.andOrCost k :=
+      p.wireDepthsWith_lines_add_le _ k a
+    have hcost := p.cost_le_depthsWith Op.andOrCost k
     rw [kwProtocol.eq_def]
     dsimp only
     split
@@ -178,13 +186,16 @@ theorem kwProtocol_solves (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (
       have hy' := (hval y).symm.trans hy
       rw [interpretation_of_op_eq_not hop] at hx' hy'
       have hfirst := firstArg_of_op_eq_not i₀ hop
-      refine kwProtocol_solves p i₀ d _ (!s) ((wireDepths_firstArg_lt p i₀ k).le.trans hdk) x y
-        ?_ ?_
+      have hd : p.wireDepthsWith Op.andOrCost (firstArg p i₀ k) ≤ d := by
+        rw [hfirst]
+        exact (Nat.le_add_right _ _).trans ((hle _).trans hdk)
+      refine kwProtocol_solves p i₀ d _ (!s) hd x y ?_ ?_
       · rw [hfirst, ← hx', Bool.not_not]
       · rw [hfirst, ← hy', Bool.not_not]
     · rename_i m hop
+      have hc : (p.lines k).op.andOrCost = 1 := by rw [hop]; rfl
       split
-      · exact absurd hdk (by have := p.depths_pos k; omega)
+      · omega
       rename_i d
       -- the player whose input makes the conjunction false names a false argument
       have hfalse : ∀ {z z' : BitString n}, p.trace interpretation z (.gate k) = false →
@@ -202,14 +213,15 @@ theorem kwProtocol_solves (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (
       cases s
       · obtain ⟨a, ha, hxa, hya⟩ := hfalse hx (by simpa using hy)
         simp only [Bool.false_eq_true, ↓reduceIte, ha]
-        exact kwProtocol_solves p i₀ d _ false (by have := hlt a; omega) x y hxa hya
+        exact kwProtocol_solves p i₀ d _ false (by have := hle a; omega) x y hxa hya
       · obtain ⟨a, ha, hya, hxa⟩ := hfalse (by simpa using hy) hx
         simp only [↓reduceIte, ha]
-        exact kwProtocol_solves p i₀ d _ true (by have := hlt a; omega) x y hxa
+        exact kwProtocol_solves p i₀ d _ true (by have := hle a; omega) x y hxa
           (by simpa using hya)
     · rename_i m hop
+      have hc : (p.lines k).op.andOrCost = 1 := by rw [hop]; rfl
       split
-      · exact absurd hdk (by have := p.depths_pos k; omega)
+      · omega
       rename_i d
       -- the player whose input makes the disjunction true names a true argument
       have htrue : ∀ {z z' : BitString n}, p.trace interpretation z (.gate k) = true →
@@ -227,11 +239,11 @@ theorem kwProtocol_solves (p : Program signature n g) (i₀ : Fin n) (d : ℕ) (
       cases s
       · obtain ⟨a, ha, hya, hxa⟩ := htrue (by simpa using hy) hx
         simp only [Bool.not_false, ↓reduceIte, ha]
-        exact kwProtocol_solves p i₀ d _ false (by have := hlt a; omega) x y hxa
+        exact kwProtocol_solves p i₀ d _ false (by have := hle a; omega) x y hxa
           (by simpa using hya)
       · obtain ⟨a, ha, hxa, hya⟩ := htrue hx (by simpa using hy)
         simp only [Bool.not_true, Bool.false_eq_true, ↓reduceIte, ha]
-        exact kwProtocol_solves p i₀ d _ true (by have := hlt a; omega) x y hxa
+        exact kwProtocol_solves p i₀ d _ true (by have := hle a; omega) x y hxa
           (by simpa using hya)
 termination_by (d, p.wireDepths w)
 decreasing_by
@@ -239,20 +251,22 @@ decreasing_by
   · exact Prod.Lex.right _ (wireDepths_firstArg_lt p i₀ k)
   all_goals exact Prod.Lex.left _ _ (by omega)
 
-/-- **A circuit gives a protocol**: a circuit of depth at most `d` computing `f` on `n ≥ 1` inputs
-gives a Karchmer–Wigderson protocol for `f` with at most `d` messages from its wires. -/
+/-- **A circuit gives a protocol**: a circuit of AND/OR depth at most `d` computing `f` on `n ≥ 1`
+inputs gives a Karchmer–Wigderson protocol for `f` with at most `d` messages from its wires. -/
 theorem exists_roundProtocol_of_computes {C : Circuit signature n 1} {f : BitString n → Bool}
-    (hC : C.Computes interpretation (single f)) (i₀ : Fin n) {d : ℕ} (hd : C.depth ≤ d) :
+    (hC : C.Computes interpretation (single f)) (i₀ : Fin n) {d : ℕ}
+    (hd : C.depthWith Op.andOrCost ≤ d) :
     ∃ P : RoundProtocol (Fin n) (Wire n C.size) d, P.SolvesKW f := by
   have hval (x : BitString n) : C.program.trace interpretation x (C.outputs 0) = f x :=
     congrFun (hC x) 0
   refine ⟨kwProtocol C.program i₀ d (C.outputs 0) false, fun x y hx hy => ?_⟩
-  exact kwProtocol_solves C.program i₀ d _ false ((C.outputDepths_le_depth 0).trans hd) x y
+  exact kwProtocol_solves C.program i₀ d _ false
+    ((C.wireDepthsWith_outputs_le_depthWith _ 0).trans hd) x y
     ((hval x).trans hx) ((hval y).trans hy)
 
 /-- **A communication lower bound gives a circuit lower bound**: if, for `n ≥ N`, no protocol with
-`d` messages of at most `ε n ^ (1 / (d - 1))` bits solves the game of `f n`, then circuits of depth
-at most `d` computing `f n` have `n + g > 2 ^ (ε n ^ (1 / (d - 1)))`. -/
+`d` messages of at most `ε n ^ (1 / (d - 1))` bits solves the game of `f n`, then circuits of
+AND/OR depth at most `d` computing `f n` have `n + g > 2 ^ (ε n ^ (1 / (d - 1)))`. -/
 theorem two_rpow_lt_add_size_of_not_solvesKW {f : ∀ n, BitString n → Bool} {d N : ℕ} {ε : ℝ}
     (hN : ∀ n : ℕ, N ≤ n → ∀ {M : Type} [Fintype M] (m : ℝ), 0 ≤ m →
       (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ m → m ≤ ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹) →
@@ -273,23 +287,24 @@ theorem two_rpow_lt_add_size_of_not_solvesKW {f : ∀ n, BitString n → Bool} {
     ((Real.logb_le_iff_le_rpow one_lt_two hpos).2 hle) P hP
 
 /-- **Korten's theorem** [Korten, Theorem 3][Korten2026]: for every depth `d ≥ 2` there is `ε > 0`
-such that, for all large `n`, a circuit over the unbounded fan-in basis of depth at most `d`
+such that, for all large `n`, a circuit over the unbounded fan-in basis of AND/OR depth at most `d`
 computing the parity of `n` bits has `n + g > 2 ^ (ε n ^ (1 / (d - 1)))`, where `g` is its number of
 gates. -/
 theorem two_rpow_lt_add_size_of_computes_parity {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
-      C.Computes interpretation (single (parity n)) → C.depth ≤ d →
+      C.Computes interpretation (single (parity n)) → C.depthWith Op.andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
   obtain ⟨ε, hε, N, hN⟩ := parity_communication_lower_bound.{0} d hd
   exact ⟨ε, hε, max N 1, fun n hn C hC hCd =>
     two_rpow_lt_add_size_of_not_solvesKW (f := parity) hN hn
       (exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd)⟩
 
-/-- **Korten's theorem for majority** [Korten2026]: the bound of
+/-- **Korten's bound for strict majority**, extending [Korten2026]: the bound of
 `two_rpow_lt_add_size_of_computes_parity` holds for strict majority. -/
 theorem two_rpow_lt_add_size_of_computes_strictMajority {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
-      C.Computes interpretation (single BooleanAnalysis.strictMajority) → C.depth ≤ d →
+      C.Computes interpretation (single BooleanAnalysis.strictMajority) →
+      C.depthWith Op.andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
   obtain ⟨ε, hε, N, hN⟩ := majority_communication_lower_bound.{0} d hd
   exact ⟨ε, hε, max N 1, fun n hn C hC hCd =>
@@ -307,12 +322,12 @@ theorem strictMajority_not (x : BitString n) :
   simp only [decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not, not_le]
   omega
 
-/-- **Korten's theorem for majority** [Korten2026]: the bound of
+/-- **Korten's bound for majority**, extending [Korten2026]: the bound of
 `two_rpow_lt_add_size_of_computes_parity` holds for majority. A protocol for majority gives one
 for strict majority by negating the inputs and exchanging the players. -/
 theorem two_rpow_lt_add_size_of_computes_majority {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
-      C.Computes interpretation (single (majority n)) → C.depth ≤ d →
+      C.Computes interpretation (single (majority n)) → C.depthWith Op.andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
   obtain ⟨ε, hε, N, hN⟩ := majority_communication_lower_bound.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
@@ -357,37 +372,55 @@ private theorem exists_add_pow_le_two_rpow {r ε : ℝ} (hr : 0 < r) (hε : 0 < 
     _ ≤ Real.exp (Real.log 2 * (ε * (n : ℝ) ^ r)) := Real.exp_le_exp.2 hlog
     _ = 2 ^ (ε * (n : ℝ) ^ r) := (Real.rpow_def_of_pos two_pos _).symm
 
-/-- Bounds `n + g > 2 ^ (ε n ^ (1 / (d - 1)))` at every depth `d ≥ 2` give, at every depth `d`,
-more than `n ^ k` gates for large `n`. -/
-theorem pow_lt_size_of_two_rpow_lt {Q : ∀ n, Circuit signature n 1 → Prop}
-    (h : ∀ d, 2 ≤ d → ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
-      Q n C → C.depth ≤ d → (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size)
-    (d k : ℕ) :
-    ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1, Q n C → C.depth ≤ d →
-      n ^ k < C.size := by
-  obtain ⟨ε, hε, N, hN⟩ := h (max d 2) (le_max_right _ _)
-  obtain ⟨N', hN'⟩ := exists_add_pow_le_two_rpow (r := (((max d 2 - 1 : ℕ) : ℝ))⁻¹)
-    (inv_pos.2 (Nat.cast_pos.2 (by omega))) hε k
-  refine ⟨max N N', fun n hn C hC hCd => ?_⟩
-  have h₁ := hN n (le_of_max_le_left hn) C hC (hCd.trans (le_max_left _ _))
-  have h₂ := hN' n (le_of_max_le_right hn)
+/-- Bounds `n + g > 2 ^ (ε n ^ r)` with `r, ε > 0` on the circuits satisfying `Q` give more than
+`n ^ k` gates for large `n`. -/
+theorem pow_lt_size_of_two_rpow_lt {σ : Signature} {Q : ∀ n, Circuit σ n 1 → Prop} {r ε : ℝ}
+    (hr : 0 < r) (hε : 0 < ε)
+    (h : ∀ᶠ n : ℕ in Filter.atTop, ∀ C, Q n C → (2 : ℝ) ^ (ε * (n : ℝ) ^ r) < n + C.size)
+    (k : ℕ) : ∀ᶠ n : ℕ in Filter.atTop, ∀ C, Q n C → n ^ k < C.size := by
+  obtain ⟨N, hN⟩ := exists_add_pow_le_two_rpow hr hε k
+  filter_upwards [h, Filter.eventually_ge_atTop N] with n hn hnN C hC
+  have h₁ := hn C hC
+  have h₂ := hN n hnN
   have : (n : ℝ) ^ k < C.size := by linarith
   exact_mod_cast this
 
+/-- At every depth `d`, bounds `n + g > 2 ^ (ε n ^ (1 / (d - 1)))` at depth `max d 2` give more than
+`n ^ k` gates for large `n`. -/
+private theorem pow_lt_size_of_computes_of_two_rpow_lt {f : ∀ n, BitString n → Bool} (d k : ℕ)
+    (h : ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
+      C.Computes interpretation (single (f n)) → C.depthWith Op.andOrCost ≤ max d 2 →
+      (2 : ℝ) ^ (ε * (n : ℝ) ^ (((max d 2 - 1 : ℕ) : ℝ)⁻¹)) < n + C.size) :
+    ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
+      C.Computes interpretation (single (f n)) → C.depthWith Op.andOrCost ≤ d →
+      n ^ k < C.size := by
+  obtain ⟨ε, hε, N, hN⟩ := h
+  obtain ⟨N', hN'⟩ := Filter.eventually_atTop.1 <|
+    pow_lt_size_of_two_rpow_lt (Q := fun n C => C.Computes interpretation (single (f n)) ∧
+        C.depthWith Op.andOrCost ≤ d)
+      (inv_pos.2 (Nat.cast_pos.2 (by omega))) hε
+      (Filter.eventually_atTop.2 ⟨N, fun n hn C hC => hN n hn C hC.1
+        (hC.2.trans (le_max_left _ _))⟩) k
+  exact ⟨N', fun n hn C hC hCd => hN' n hn C ⟨hC, hCd⟩⟩
+
 /-- **Parity is not in AC⁰, superpolynomially** [Korten2026]: for every depth `d` and exponent
-`k`, circuits over the unbounded fan-in basis of depth at most `d` computing the parity of `n`
-bits have more than `n ^ k` gates for all large `n`. -/
+`k`, circuits over the unbounded fan-in basis of AND/OR depth at most `d` computing the parity of
+`n` bits have more than `n ^ k` gates for all large `n`. -/
 theorem pow_lt_size_of_computes_parity (d k : ℕ) :
     ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
-      C.Computes interpretation (single (parity n)) → C.depth ≤ d → n ^ k < C.size :=
-  pow_lt_size_of_two_rpow_lt (fun _ hd => two_rpow_lt_add_size_of_computes_parity hd) d k
+      C.Computes interpretation (single (parity n)) → C.depthWith Op.andOrCost ≤ d →
+      n ^ k < C.size :=
+  pow_lt_size_of_computes_of_two_rpow_lt d k
+    (two_rpow_lt_add_size_of_computes_parity (le_max_right d 2))
 
-/-- **Majority is not in AC⁰, superpolynomially** [Korten2026]: for every depth `d` and exponent
-`k`, circuits over the unbounded fan-in basis of depth at most `d` computing the majority of `n`
-bits have more than `n ^ k` gates for all large `n`. -/
+/-- **Majority is not in AC⁰, superpolynomially**, extending [Korten2026]: for every depth `d` and
+exponent `k`, circuits over the unbounded fan-in basis of AND/OR depth at most `d` computing the
+majority of `n` bits have more than `n ^ k` gates for all large `n`. -/
 theorem pow_lt_size_of_computes_majority (d k : ℕ) :
     ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
-      C.Computes interpretation (single (majority n)) → C.depth ≤ d → n ^ k < C.size :=
-  pow_lt_size_of_two_rpow_lt (fun _ hd => two_rpow_lt_add_size_of_computes_majority hd) d k
+      C.Computes interpretation (single (majority n)) → C.depthWith Op.andOrCost ≤ d →
+      n ^ k < C.size :=
+  pow_lt_size_of_computes_of_two_rpow_lt d k
+    (two_rpow_lt_add_size_of_computes_majority (le_max_right d 2))
 
 end Cslib.Circuits.Boolean.Unbounded

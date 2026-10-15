@@ -27,6 +27,8 @@ bases of TC⁰ (majority gates) and AC⁰[q] (`MOD_q` gates): `extSignature` and
 * `Cslib.Circuits.Boolean.Unbounded.signature`: negation, and conjunction and disjunction of every
   arity.
 * `Cslib.Circuits.Boolean.Unbounded.interpretation`: their Boolean meaning.
+* `Cslib.Circuits.Boolean.Unbounded.Op.andOrCost`: the costs of the AND/OR depth, in which
+  negations are free.
 * `Cslib.Circuits.Boolean.Unbounded.deMorganToUnbounded`: the De Morgan basis inside it.
 * `Cslib.Circuits.Boolean.Unbounded.extSignature`,
   `Cslib.Circuits.Boolean.Unbounded.extInterpretation`: the basis with one extra gate of every
@@ -75,6 +77,23 @@ def interpretation : Interpretation signature Bool
 @[simp] theorem interpretation_or (m : ℕ) (x : Fin m → Bool) :
     interpretation (.or m) x = decide (∃ j, x j = true) :=
   rfl
+
+/-- The cost of an operation in the AND/OR depth: negations are free. With these costs,
+`Circuit.depthWith` counts the conjunctions and disjunctions along a path, the usual depth of AC⁰
+circuits, in which negations sit at the inputs. -/
+def Op.andOrCost : Op → ℕ
+  | .not => 0
+  | .and _ => 1
+  | .or _ => 1
+
+@[simp] theorem Op.andOrCost_not : Op.not.andOrCost = 0 := rfl
+
+@[simp] theorem Op.andOrCost_and (m : ℕ) : (Op.and m).andOrCost = 1 := rfl
+
+@[simp] theorem Op.andOrCost_or (m : ℕ) : (Op.or m).andOrCost = 1 := rfl
+
+theorem Op.andOrCost_le_one (op : Op) : op.andOrCost ≤ 1 := by
+  cases op <;> simp
 
 /-- The operations of the unbounded fan-in basis, and one extra gate of every arity. -/
 inductive ExtOp where

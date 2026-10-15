@@ -11,6 +11,7 @@ import Complexity.Computability.Circuit.Boolean.LMN
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
 import Complexity.Computability.Circuit.Boolean.Smolensky
 import Complexity.Computability.Circuit.Boolean.TC0
+import Complexity.Computability.Circuit.Boolean.TopDown
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
@@ -132,6 +133,14 @@ example {f : BooleanFunction 528} {C : Cslib.Circuits.Circuit Unbounded.signatur
     ∑ U with 264 ≤ #U, BitString.fourierCoeff (fun x => BitString.signVal (f x)) U ^ 2 ≤
       2 * C.size / 2 ^ 2 :=
   Unbounded.sum_fourierCoeff_sq_le_of_computes hC le_rfl (by norm_num) (by rw [hd]; norm_num)
+
+/-- The AND/OR depth of Korten's theorem differs from the depth: a negation of an input has AND/OR
+depth zero and depth one. -/
+example : (Cslib.Circuits.Circuit.oneGate (σ := Unbounded.signature) (n := 1) .not
+      fun _ => 0).depthWith Unbounded.Op.andOrCost = 0 ∧
+    (Cslib.Circuits.Circuit.oneGate (σ := Unbounded.signature) (n := 1) .not fun _ => 0).depth =
+      1 := by
+  decide
 
 /-- The tidy normal form applies to upstream's machine for the identity, which is not tidy: it
 leaves its input head at the end of the input. -/
