@@ -348,8 +348,16 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | done (`Expander/{Cheeger,Loops,Perm,Random,Family}`); the explicit zig-zag tower open |
 | Zig-zag product | `PCP/Internal/ZigZag` | done (`Expander/{Power,Products}`, with tensor and balanced replacement products); the explicit tower open |
 | Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | reconstruction and designs done (`Crypto/Primitives/PRG/NisanWigderson{,/Design}`); the sampling layer open |
-| Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure | after the expander and Hadamard layers |
+| Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure (Bolton Bailey) | in progress: constraint graphs and preprocessing, walks; then powering (killed walks, moments), the assignment tester, composition |
+| Multi-tape to single-tape simulation, time `O((T + n)²)` | `Models/TuringMachine/SingleTape` | queued (machine level, over upstream `MultiTapeTM`) |
+| Machine-relative Kolmogorov complexity, incompressibility, invariance | `Metacomplexity/Kolmogorov/**` | in progress |
+| Nisan–Wigderson sampling layer and the Kt step | `Metacomplexity/NisanWigderson/Reconstruction/**`, `ListDecoding` | after Kolmogorov |
+| Second-order logic, FO interpretations and reductions, order independence | `DescriptiveComplexity/{SecondOrder,Interpretation,…}` | queued |
+| Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | queued |
+| Finite cores of Savitch and of inductive counting | `Classes/Containments/Internal/ReachIn`, `InductiveCounting`, `CountingCert` | queued |
+| Depth-two threshold circuit for parity | `Circuits/Threshold/Parity` | queued |
 | Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | multi-batch, later |
+| Class-level results (Savitch, hierarchies, `PH ⊆ PSPACE`, Sipser–Lautemann, Cobham, `PCP = NP`, RAM-P = P, …) | `Classes/**`, `Models/**` | blocked on the polynomial-time calculus |
 
 The class-level forms of the time hierarchy, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE`, Sipser–Lautemann
 and the PCP theorem wait for the polynomial-time calculus.
