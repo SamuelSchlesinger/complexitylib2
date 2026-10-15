@@ -16,6 +16,7 @@ import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Foundations.BooleanAnalysis.HadamardTester
 import Complexity.Probability.ApproximateCounting.Relative
+import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -181,5 +182,23 @@ example : 3 ≤ Nat.nthRoot 7 (100 * 3 ^ 7) ∧ 1 * Nat.nthRoot 7 (100 * 3 ^ 7) 
   Cslib.Probability.ApproximateCounting.le_nthRoot_and_mul_nthRoot_le (c := 128) (by norm_num)
     (by norm_num) (by norm_num)
     (Cslib.Probability.ApproximateCounting.two_pow_mul_pow_le_add_one_pow 7 one_ne_zero)
+
+section Toeplitz
+
+open Cslib.Probability Matrix Finset
+
+/-- Toeplitz hashing gives a concrete pair of values its pairwise-independent probability. -/
+example : dens {p : (Fin (2 + 3 - 1) → ZMod 2) × (Fin 2 → ZMod 2) |
+    toeplitzHash p ![1, 0, 0] = 0 ∧ toeplitzHash p ![0, 1, 0] = ![1, 1]} = 1 / 16 := by
+  rw [isPairwiseIndependentHash_toeplitzHash.dens_filter_apply_eq_and_apply_eq (by decide)]
+  simp [ZMod.card]
+  norm_num
+
+/-- The diagonals of a Toeplitz matrix are read along its last column, then its first row. -/
+example : toeplitz ![(1 : ℤ), 2, 3, 4] = !![3, 2, 1; 4, 3, 2] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> rfl
+
+end Toeplitz
 
 end ComplexityTests.NonVacuity

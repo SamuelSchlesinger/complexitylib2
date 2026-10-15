@@ -1286,4 +1286,40 @@ info: 'Cslib.RotationMap.spectralExpansion_balancedReplacement_le' depends on ax
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.spectralExpansion_balancedReplacement_le
 
+/--
+info: 'Cslib.Probability.isPairwiseIndependentHash_add_of_dens_filter_sub_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.isPairwiseIndependentHash_add_of_dens_filter_sub_eq
+
+/--
+info: 'Cslib.Probability.isPairwiseIndependentHash_add_of_shift' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.isPairwiseIndependentHash_add_of_shift
+
+/--
+info: 'Cslib.Probability.isPairwiseIndependentHash_add_of_surjective' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.isPairwiseIndependentHash_add_of_surjective
+
+/--
+info: 'Cslib.Probability.isPairwiseIndependentHash_toeplitzHash' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.isPairwiseIndependentHash_toeplitzHash
+
+/--
+info: 'Cslib.Probability.card_toeplitzHash_seed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.card_toeplitzHash_seed
+
+/--
+info: 'Matrix.toeplitz_mulVec_surjective' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.toeplitz_mulVec_surjective
+
 end ComplexityTests.Axioms
