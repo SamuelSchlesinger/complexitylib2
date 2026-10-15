@@ -106,6 +106,12 @@ public import Complexity.Computability.DecisionTree.Parity
 public import Complexity.Computability.DecisionTree.Restrict
 public import Complexity.Computability.DecisionTree.Sensitivity
 public import Complexity.Computability.DecisionTree.Switching
+public import Complexity.Computability.Kolmogorov.Basic
+public import Complexity.Computability.Kolmogorov.ChainRule
+public import Complexity.Computability.Kolmogorov.Depth
+public import Complexity.Computability.Kolmogorov.Incompressibility
+public import Complexity.Computability.Kolmogorov.Invariance
+public import Complexity.Computability.Kolmogorov.MultiTape
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm

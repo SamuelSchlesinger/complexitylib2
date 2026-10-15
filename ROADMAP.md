@@ -350,7 +350,7 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | reconstruction and designs done (`Crypto/Primitives/PRG/NisanWigderson{,/Design}`); the sampling layer open |
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure (Bolton Bailey) | in progress: constraint graphs and preprocessing, walks; then powering (killed walks, moments), the assignment tester, composition |
 | Multi-tape to single-tape simulation, time `O((T + n)²)` | `Models/TuringMachine/SingleTape` | queued (machine level, over upstream `MultiTapeTM`) |
-| Machine-relative Kolmogorov complexity, incompressibility, invariance | `Metacomplexity/Kolmogorov/**` | in progress |
+| Machine-relative Kolmogorov complexity, incompressibility, invariance | `Metacomplexity/Kolmogorov/**` | done (`Computability/Kolmogorov/`); the universal-machine complexity waits for crei's UTM |
 | Nisan–Wigderson sampling layer and the Kt step | `Metacomplexity/NisanWigderson/Reconstruction/**`, `ListDecoding` | after Kolmogorov |
 | Second-order logic, FO interpretations and reductions, order independence | `DescriptiveComplexity/{SecondOrder,Interpretation,…}` | queued |
 | Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | queued |

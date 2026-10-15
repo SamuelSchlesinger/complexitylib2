@@ -18,6 +18,7 @@ import Complexity.Foundations.BooleanAnalysis.HadamardTester
 import Complexity.Probability.ApproximateCounting.Relative
 import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Foundations.Combinatorics.Expander.Family
+import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -211,5 +212,20 @@ example {V D : Type} [Fintype D] [Nonempty D] (G : Cslib.RotationMap V D) :
 example : ∃ G : Cslib.RotationMap (Fin 5) (Fin 120), G.spectralExpansion < 1 :=
   ⟨Cslib.RotationMap.expander (Fin 5),
     (Cslib.RotationMap.spectralExpansion_expander_le _).trans_lt (by norm_num)⟩
+
+section Kolmogorov
+
+open Cslib.Kolmogorov Cslib.Kolmogorov.DescriptionMethod
+
+/-- Some finite-state multi-tape machine describes every string `x` with `|x|` bits within
+`|x| + 1` steps, so the Turing-machine description method is not vacuous. -/
+example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : Turing.MultiTapeTM k Bool State),
+    ∀ x : List Bool,
+      (ofMultiTapeTM tm).timeBoundedComplexity (x.length + 1) x ≤ x.length := by
+  obtain ⟨k, State, hfin, tm, ⟨S⟩⟩ := exists_simulation_literal
+  refine ⟨k, State, hfin, tm, fun x => ?_⟩
+  simpa [timeBoundedComplexity_literal le_rfl] using S.timeBoundedComplexity_le x.length x
+
+end Kolmogorov
 
 end ComplexityTests.NonVacuity

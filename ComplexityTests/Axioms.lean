@@ -1370,4 +1370,82 @@ info: 'Cslib.exists_perms_card_le_mul_card_filter_notMem' depends on axioms: [pr
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.exists_perms_card_le_mul_card_filter_notMem
 
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.complexity_le_natCast_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.complexity_le_natCast_iff
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.timeBoundedComplexity_antitone' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.timeBoundedComplexity_antitone
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.iInf_timeBoundedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.iInf_timeBoundedComplexity
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.encard_setOf_complexity_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.encard_setOf_complexity_lt
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_timeBoundedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_timeBoundedComplexity
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_complexity_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_complexity_lt
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.Simulation.complexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.Simulation.complexity_le
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.Simulation.timeBoundedComplexity_le_of_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.Simulation.timeBoundedComplexity_le_of_polynomial
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.IsAdditivelyOptimal.invariance' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.IsAdditivelyOptimal.invariance
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_run_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_run_iff
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.exists_simulation_literal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.exists_simulation_literal
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.Composition.complexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.Composition.complexity_le
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.depthBetween_add_depth' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.depthBetween_add_depth
+
 end ComplexityTests.Axioms
