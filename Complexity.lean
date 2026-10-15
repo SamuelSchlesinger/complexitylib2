@@ -133,4 +133,5 @@ public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Step
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Tree
 public import Complexity.Logics.Propositional.DNF
 public import Complexity.Logics.Propositional.Parity
+public import Complexity.Logics.Propositional.Parity.DepthThree
 public import Complexity.Logics.Propositional.Resolution

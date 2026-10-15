@@ -634,4 +634,16 @@ info: 'Cslib.Logic.PL.CNF.exists_any_eval_eq_parity' depends on axioms: [propext
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.exists_any_eval_eq_parity
 
+/--
+info: 'Cslib.Logic.PL.CNF.sum_two_rpow_sum_inv_critWidth_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.sum_two_rpow_sum_inv_critWidth_le
+
+/--
+info: 'Cslib.Logic.PL.CNF.two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.two_rpow_sqrt_sub_one_le_of_any_eval_eq_parity
+
 end ComplexityTests.Axioms

@@ -153,12 +153,18 @@ theorem sum_two_pow_card_forced_le (φ : CNF (Fin N)) (σ : Equiv.Perm (Fin N)) 
 
 /-! ### Isolated directions are forced often -/
 
-/-- A direction `i` in which a solution `x` is isolated has a *critical clause*: it contains the
-literal of `i` true under `x`, and all its other literals are on other variables and false under
-`x`. -/
+/-- The clause `c` is *critical* for the direction `i` at `x`: it contains the literal of `i` true
+under `x`, and all its other literals are on other variables and false under `x`. Flipping bit `i`
+of `x` falsifies a critical clause. -/
+def Critical (x : BitString N) (c : Clause (Fin N)) (i : Fin N) : Prop :=
+  (i, x i) ∈ c ∧ ∀ l ∈ c, l ≠ (i, x i) → l.1 ≠ i ∧ x l.1 ≠ l.2
+
+instance (x : BitString N) (c : Clause (Fin N)) (i : Fin N) : Decidable (Critical x c i) :=
+  inferInstanceAs (Decidable (_ ∧ ∀ l ∈ c, _))
+
+/-- A direction `i` in which a solution `x` is isolated has a critical clause. -/
 theorem exists_critical {x : BitString N} {i : Fin N} (hx : φ.eval x = true)
-    (hi : φ.eval (Function.update x i (!x i)) = false) :
-    ∃ c ∈ φ, (i, x i) ∈ c ∧ ∀ l ∈ c, l ≠ (i, x i) → l.1 ≠ i ∧ x l.1 ≠ l.2 := by
+    (hi : φ.eval (Function.update x i (!x i)) = false) : ∃ c ∈ φ, Critical x c i := by
   obtain ⟨c, hc, hcf⟩ : ∃ c ∈ φ, c.eval (Function.update x i (!x i)) = false := by
     by_contra h
     push Not at h
@@ -186,6 +192,73 @@ theorem exists_critical {x : BitString N} {i : Fin N} (hx : φ.eval x = true)
     cases b <;> cases hxv : x v <;> simp_all
   exact ⟨hli, fun h => hfalse l hl' (by rw [Function.update_of_ne hli]; exact h)⟩
 
+/-- Criticality depends only on the literals of the clause. -/
+theorem critical_congr {x : BitString N} {i : Fin N} {c c' : Clause (Fin N)}
+    (h : ∀ l, l ∈ c ↔ l ∈ c') : Critical x c i ↔ Critical x c' i := by
+  simp only [Critical, h]
+
+/-- **A clause is critical at few inputs**: for each direction, a clause with `v` variables is
+critical at at most `2 ^ (N - v)` inputs, since they all agree on its variables. -/
+theorem card_filter_critical_le (c : Clause (Fin N)) (i : Fin N) :
+    #{x : BitString N | Critical x c i} ≤ 2 ^ (N - (c.map Prod.fst).toFinset.card) := by
+  set V := (c.map Prod.fst).toFinset
+  rcases ({x : BitString N | Critical x c i} : Finset _).eq_empty_or_nonempty with h | ⟨x₀, hx₀⟩
+  · rw [h, card_empty]
+    exact Nat.zero_le _
+  have hx₀ := (mem_filter.1 hx₀).2
+  calc #{x : BitString N | Critical x c i}
+      ≤ #{y : BitString N | ∀ u ∉ Vᶜ, y u = x₀ u} := card_le_card fun x hx => ?_
+    _ = 2 ^ (N - #V) := by
+        rw [BitString.card_filter_forall_notMem_eq, card_compl, Fintype.card_fin]
+  have hx := (mem_filter.1 hx).2
+  refine mem_filter.2 ⟨mem_univ _, fun u hu => ?_⟩
+  rw [notMem_compl] at hu
+  obtain ⟨l, hl, rfl⟩ := List.mem_map.1 (List.mem_toFinset.1 hu)
+  by_cases hli : l = (i, x i)
+  · -- the literal of `i` true under `x₀` is in the clause too, so it is `l`
+    subst hli
+    by_contra hne
+    exact (hx.2 (i, x₀ i) hx₀.1 fun h => hne (Prod.mk.inj h).2.symm).1 rfl
+  · have h₁ := hx.2 l hl hli
+    have h₂ := hx₀.2 l hl fun h => h₁.1 (by rw [h])
+    have key : ∀ a b e : Bool, a ≠ e → b ≠ e → a = b := by decide
+    exact key _ _ _ h₁.2 h₂.2
+
+/-- A clause with `v` variables is critical for at most `v 2 ^ (N - v)` pairs of an input and a
+direction. -/
+theorem card_filter_critical_prod_le (c : Clause (Fin N)) :
+    #{p : BitString N × Fin N | Critical p.1 c p.2} ≤
+      (c.map Prod.fst).toFinset.card * 2 ^ (N - (c.map Prod.fst).toFinset.card) := by
+  set V := (c.map Prod.fst).toFinset
+  rw [card_eq_sum_card_fiberwise (f := Prod.snd) (t := V) fun p hp =>
+    List.mem_toFinset.2 (List.mem_map.2 ⟨_, (mem_filter.1 hp).2.1, rfl⟩)]
+  refine (sum_le_sum fun i _ => ?_).trans_eq (by rw [sum_const, smul_eq_mul])
+  refine (card_le_card_of_injOn Prod.fst (fun p hp => ?_) fun p hp q hq h => ?_).trans
+    (card_filter_critical_le c i)
+  · obtain ⟨hp', hpi⟩ := mem_filter.1 hp
+    exact mem_filter.2 ⟨mem_univ _, hpi ▸ (mem_filter.1 hp').2⟩
+  · exact Prod.ext h (((mem_filter.1 hp).2).trans ((mem_filter.1 hq).2).symm)
+
+/-- **Critical clauses force often.** A direction `i` with a critical clause `c` at `x` is forced
+whenever it comes last among the variables of `c`, so for at least a `1 / v` fraction of the
+orders, where `v` is the number of variables of `c`. -/
+theorem factorial_le_card_mul_card_filter_mem_forced {x : BitString N} {i : Fin N}
+    {c : Clause (Fin N)} (hc : c ∈ φ) (hcrit : Critical x c i) :
+    N.factorial ≤ (c.map Prod.fst).toFinset.card *
+      (univ.filter fun σ : Equiv.Perm (Fin N) => i ∈ φ.forced σ x).card := by
+  obtain ⟨hic, hrest⟩ := hcrit
+  set S := (c.map Prod.fst).toFinset
+  have hiS : i ∈ S := List.mem_toFinset.2 (List.mem_map.2 ⟨_, hic, rfl⟩)
+  have hlast := Equiv.Perm.card_mul_card_filter_forall_le_eq_factorial hiS
+  rw [Fintype.card_fin] at hlast
+  refine hlast.ge.trans (Nat.mul_le_mul_left _ (card_le_card ?_))
+  intro σ hσ
+  simp only [mem_filter, mem_univ, true_and] at hσ
+  refine mem_filter.2 ⟨mem_univ σ, mem_filter.2 ⟨mem_univ i, c, hc, hic, fun l hl hne => ?_⟩⟩
+  obtain ⟨hli, hxl⟩ := hrest l hl hne
+  have hle := hσ l.1 (List.mem_toFinset.2 (List.mem_map.2 ⟨l, hl, rfl⟩))
+  exact ⟨lt_of_le_of_ne hle fun h => hli (σ.injective h), hxl⟩
+
 /-- **Isolated directions are forced often.** If every clause of `φ` has at most `k` literals,
 every direction `i` in which a solution `x` is isolated is forced for at least a `1 / k` fraction
 of the orders. -/
@@ -193,19 +266,19 @@ theorem factorial_le_mul_card_filter_mem_forced {k : ℕ} (hk : ∀ c ∈ φ, c.
     {x : BitString N} {i : Fin N} (hx : φ.eval x = true)
     (hi : φ.eval (Function.update x i (!x i)) = false) :
     N.factorial ≤ k * (univ.filter fun σ : Equiv.Perm (Fin N) => i ∈ φ.forced σ x).card := by
-  obtain ⟨c, hc, hic, hrest⟩ := exists_critical hx hi
-  set S := (c.map Prod.fst).toFinset
-  have hiS : i ∈ S := List.mem_toFinset.2 (List.mem_map.2 ⟨_, hic, rfl⟩)
-  have hS : S.card ≤ k := (List.toFinset_card_le _).trans ((List.length_map _).trans_le (hk c hc))
-  have hlast := Equiv.Perm.card_mul_card_filter_forall_le_eq_factorial hiS
-  rw [Fintype.card_fin] at hlast
-  refine hlast.ge.trans (Nat.mul_le_mul hS (card_le_card ?_))
-  intro σ hσ
-  simp only [mem_filter, mem_univ, true_and] at hσ
-  refine mem_filter.2 ⟨mem_univ σ, mem_filter.2 ⟨mem_univ i, c, hc, hic, fun l hl hne => ?_⟩⟩
-  obtain ⟨hli, hxl⟩ := hrest l hl hne
-  have hle := hσ l.1 (List.mem_toFinset.2 (List.mem_map.2 ⟨l, hl, rfl⟩))
-  exact ⟨lt_of_le_of_ne hle fun h => hli (σ.injective h), hxl⟩
+  obtain ⟨c, hc, hcrit⟩ := exists_critical hx hi
+  have hS : (c.map Prod.fst).toFinset.card ≤ k :=
+    (List.toFinset_card_le _).trans ((List.length_map _).trans_le (hk c hc))
+  exact (factorial_le_card_mul_card_filter_mem_forced hc hcrit).trans (Nat.mul_le_mul_right _ hS)
+
+/-- Summed over the variables, the orders forcing each count the forced variables of every
+order. -/
+theorem sum_card_filter_mem_forced (x : BitString N) :
+    ∑ i, (univ.filter fun σ : Equiv.Perm (Fin N) => i ∈ φ.forced σ x).card =
+      ∑ σ : Equiv.Perm (Fin N), (φ.forced σ x).card := by
+  simp only [card_eq_sum_ones, sum_filter]
+  rw [sum_comm]
+  simp [-mem_forced]
 
 /-! ### Averaging over the orders -/
 
@@ -272,10 +345,7 @@ theorem sum_two_rpow_card_isolated_div_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c 
           rw [← mul_sum]
           exact Nat.mul_le_mul_left _ (sum_le_sum_of_subset (filter_subset _ _))
       _ = k * ∑ σ : Equiv.Perm (Fin N), (φ.forced σ x).card := by
-          congr 1
-          simp only [card_eq_sum_ones, sum_filter]
-          rw [sum_comm]
-          simp [-mem_forced]
+          rw [sum_card_filter_mem_forced]
   have hkR : (0 : ℝ) < k := by exact_mod_cast hk1
   have hF : (0 : ℝ) < N.factorial := by exact_mod_cast N.factorial_pos
   rw [div_le_div_iff₀ hkR hF]
@@ -298,6 +368,74 @@ theorem card_isolated_mul_two_rpow_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c ∈ 
       fun x hx => ?_))
   congr 2
   rw [filter_true_of_mem fun i _ => (mem_filter.1 hx).2.2 i, card_univ, Fintype.card_fin]
+
+/-! ### Weights of solutions -/
+
+/-- The number of variables of a shortest clause critical for the direction `i` at `x`, or `0`
+if no clause is. -/
+noncomputable def critWidth (φ : CNF (Fin N)) (x : BitString N) (i : Fin N) : ℕ :=
+  sInf {v | ∃ c ∈ φ, Critical x c i ∧ (c.map Prod.fst).toFinset.card = v}
+
+theorem exists_critical_card_eq_critWidth {x : BitString N} {i : Fin N}
+    (h : ∃ c ∈ φ, Critical x c i) :
+    ∃ c ∈ φ, Critical x c i ∧ (c.map Prod.fst).toFinset.card = φ.critWidth x i := by
+  obtain ⟨c, hc, hcrit⟩ := h
+  exact Nat.sInf_mem (s := {v | ∃ c ∈ φ, Critical x c i ∧ (c.map Prod.fst).toFinset.card = v})
+    ⟨_, c, hc, hcrit, rfl⟩
+
+theorem critWidth_eq_zero {x : BitString N} {i : Fin N} (h : ¬ ∃ c ∈ φ, Critical x c i) :
+    φ.critWidth x i = 0 := by
+  refine Nat.sInf_eq_zero.2 (Or.inr (Set.eq_empty_iff_forall_notMem.2 fun v hv => ?_))
+  obtain ⟨c, hc, hcrit, -⟩ := hv
+  exact h ⟨c, hc, hcrit⟩
+
+theorem critWidth_pos {x : BitString N} {i : Fin N} (h : ∃ c ∈ φ, Critical x c i) :
+    0 < φ.critWidth x i := by
+  obtain ⟨c, -, hcrit, hcard⟩ := exists_critical_card_eq_critWidth h
+  rw [← hcard]
+  exact card_pos.2 ⟨i, List.mem_toFinset.2 (List.mem_map.2 ⟨_, hcrit.1, rfl⟩)⟩
+
+/-- The average number of variables forced on `x` is at least its *weight*
+`∑ᵢ 1 / critWidth φ x i`. -/
+theorem sum_inv_critWidth_le (x : BitString N) :
+    ∑ i, 1 / (φ.critWidth x i : ℝ) ≤
+      (∑ σ : Equiv.Perm (Fin N), ((φ.forced σ x).card : ℝ)) / N.factorial := by
+  have hswap : ∑ σ : Equiv.Perm (Fin N), ((φ.forced σ x).card : ℝ) =
+      ∑ i, ((univ.filter fun σ : Equiv.Perm (Fin N) => i ∈ φ.forced σ x).card : ℝ) := by
+    exact_mod_cast (sum_card_filter_mem_forced x).symm
+  have hF : (0 : ℝ) < N.factorial := by exact_mod_cast N.factorial_pos
+  rw [hswap, sum_div]
+  refine sum_le_sum fun i _ => ?_
+  by_cases h : ∃ c ∈ φ, Critical x c i
+  · obtain ⟨c, hc, hcrit, hcard⟩ := exists_critical_card_eq_critWidth h
+    have hle := factorial_le_card_mul_card_filter_mem_forced hc hcrit
+    rw [hcard] at hle
+    have hpos : (0 : ℝ) < φ.critWidth x i := by exact_mod_cast critWidth_pos h
+    rw [div_le_div_iff₀ hpos hF, one_mul, mul_comm]
+    exact_mod_cast hle
+  · rw [critWidth_eq_zero h, Nat.cast_zero, div_zero]
+    positivity
+
+/-- **The weighted coding lemma**, after [Paturi, Pudlák and Zane, Lemma 5][PaturiPudlakZane1999]:
+the solutions `x` of any formula satisfy `∑ₓ 2 ^ w(x) ≤ 2 ^ N`, where the weight
+`w(x) = ∑ᵢ 1 / critWidth φ x i` sums, over the directions in which `x` is isolated, the inverse
+number of variables of a shortest critical clause. -/
+theorem sum_two_rpow_sum_inv_critWidth_le (φ : CNF (Fin N)) :
+    ∑ x ∈ univ.filter fun x : BitString N => φ.eval x = true,
+      (2 : ℝ) ^ (∑ i, 1 / (φ.critWidth x i : ℝ)) ≤ 2 ^ N :=
+  le_trans (sum_le_sum fun x _ => Real.rpow_le_rpow_of_exponent_le (by norm_num)
+    (sum_inv_critWidth_le x)) (sum_two_rpow_average_card_forced_le φ)
+
+/-- **Few solutions of large weight** [Paturi, Pudlák and Zane, Lemma 5][PaturiPudlakZane1999]: at
+most `2 ^ (N - μ)` solutions have weight at least `μ`. -/
+theorem card_filter_le_sum_inv_critWidth_mul_two_rpow_le (φ : CNF (Fin N)) (μ : ℝ) :
+    (#{x : BitString N | φ.eval x = true ∧ μ ≤ ∑ i, 1 / (φ.critWidth x i : ℝ)} : ℝ) * 2 ^ μ ≤
+      2 ^ N := by
+  refine le_trans ?_ (sum_two_rpow_sum_inv_critWidth_le φ)
+  rw [← nsmul_eq_mul, ← sum_const]
+  refine (sum_le_sum fun x hx => Real.rpow_le_rpow_of_exponent_le (by norm_num)
+    (mem_filter.1 hx).2.2).trans (sum_le_sum_of_subset_of_nonneg (fun x hx => mem_filter.2
+      ⟨mem_univ x, (mem_filter.1 hx).2.1⟩) fun _ _ _ => by positivity)
 
 end CNF
 
