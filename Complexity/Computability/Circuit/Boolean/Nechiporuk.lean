@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Formula
-public import Complexity.Computability.Circuit.Boolean.Restriction
+public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Mathlib.Data.Nat.Log
 public import Mathlib.Logic.Function.Const
 import Mathlib.Algebra.BigOperators.Fin
@@ -50,7 +50,7 @@ bound, it holds for the full binary basis.
 
 namespace Cslib.Circuits.Boolean
 
-open Finset Function
+open Finset Function BitString
 
 variable {n : ℕ}
 

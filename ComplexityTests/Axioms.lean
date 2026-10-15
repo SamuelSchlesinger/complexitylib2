@@ -323,10 +323,10 @@ info: 'Cslib.DecisionTree.eval_toDNF' depends on axioms: [propext, Classical.cho
 #print axioms Cslib.DecisionTree.eval_toDNF
 
 /--
-info: 'Cslib.Circuits.Boolean.Restriction.card_withFree' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.BitString.PartialAssignment.card_withFree' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Restriction.card_withFree
+#print axioms Cslib.BitString.PartialAssignment.card_withFree
 
 /--
 info: 'Cslib.Logic.PL.DNF.eval_canonicalTree' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -389,10 +389,10 @@ info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_computableTidilyInTime
 #print axioms Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace
 
 /--
-info: 'Cslib.Circuits.Boolean.Restriction.card_extensions' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.BitString.PartialAssignment.card_extensions' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Restriction.card_extensions
+#print axioms Cslib.BitString.PartialAssignment.card_extensions
 
 /--
 info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]

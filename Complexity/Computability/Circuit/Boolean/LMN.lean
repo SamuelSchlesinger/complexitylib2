@@ -32,7 +32,8 @@ stage leaves a `1 / (16 s + 1)` fraction of the free bits (as in
 `Unbounded.two_pow_le_size_of_computes_parity`).
 
 The proof draws a random set `J` of `ℓ = ⌊n / (16 s + 1) ^ d⌋` coordinates and fixes the others
-to a random word `z` (`Restriction.sum_card_filter_outside`). A set `U` of at least `k`
+to a random word `z`, a random restriction (partial assignment)
+(`PartialAssignment.sum_card_filter_outside`). A set `U` of at least `k`
 coordinates meets `J` in at least `s` of them for at least half of the `J`
 (`Finset.two_mul_card_filter_card_inter_lt_le`), so the weight on such `U` is at most twice the
 expected weight of the restriction on sets of at least `s` coordinates
@@ -71,14 +72,14 @@ zero if the restriction is `s`-shallow, and at most one otherwise. -/
 private theorem sum_fourierCoeff_sq_le_ite (f : BooleanFunction n) (J : Finset (Fin n))
     (z : BitString n) (s : ℕ) :
     ∑ S with s ≤ #S, fourierCoeff (fun x => signVal (f (J.piecewise x z))) S ^ 2 ≤
-      if Shallow s (Restriction.outside J z) f then 0 else 1 := by
+      if Shallow s (PartialAssignment.outside J z) f then 0 else 1 := by
   split_ifs with h
   · -- a decision tree of depth below `s` has no weight on sets of `s` coordinates
     obtain ⟨t, ht, hd⟩ := h.exists_tree
     refine (sum_eq_zero fun S hS => ?_).le
     have hfun : (fun x => signVal (f (J.piecewise x z))) = fun x => signVal (t.eval x) := by
       funext x
-      rw [ht, Restriction.fill_outside]
+      rw [ht, PartialAssignment.fill_outside]
     rw [hfun, DecisionTree.fourierCoeff_eq_zero_of_depth_lt signVal t
       (hd.trans_le (mem_filter.1 hS).2)]
     simp
@@ -90,11 +91,11 @@ meeting `J` in at least `s` coordinates is at most the fraction of the words `z`
 deep when fixing the coordinates outside `J` to `z`. -/
 private theorem sum_fourierCoeff_sq_le_card (f : BooleanFunction n) (J : Finset (Fin n)) (s : ℕ) :
     ∑ U with s ≤ #(U ∩ J), fourierCoeff (fun x => signVal (f x)) U ^ 2 ≤
-      ((univ.filter fun z : BitString n => ¬ Shallow s (Restriction.outside J z) f).card : ℝ) /
-        2 ^ n := by
+      ((univ.filter fun z : BitString n =>
+        ¬ Shallow s (PartialAssignment.outside J z) f).card : ℝ) / 2 ^ n := by
   rw [← expect_sum_fourierCoeff_piecewise_sq (fun x => signVal (f x)) J s]
   calc 𝔼 z, ∑ S with s ≤ #S, fourierCoeff (fun x => signVal (f (J.piecewise x z))) S ^ 2
-      ≤ 𝔼 z : BitString n, (if Shallow s (Restriction.outside J z) f then 0 else 1 : ℝ) :=
+      ≤ 𝔼 z : BitString n, (if Shallow s (PartialAssignment.outside J z) f then 0 else 1 : ℝ) :=
         expect_le_expect fun z _ => sum_fourierCoeff_sq_le_ite f J z s
     _ = _ := by
         rw [expect_eq_sum_div_card, sum_ite, sum_const_zero, zero_add, sum_const, nsmul_eq_mul,
@@ -128,12 +129,12 @@ theorem sum_fourierCoeff_sq_le_of_computes {f : BooleanFunction n} {C : Circuit 
   set P := (univ : Finset (Fin n)).powersetCard ℓ
   set N := n.choose ℓ
   set a : Finset (Fin n) → ℝ := fun U => fourierCoeff (fun x => signVal (f x)) U ^ 2
-  set bad := (Restriction.withFree n ℓ).filter fun ρ => ¬ Shallow s ρ f
+  set bad := (PartialAssignment.withFree (Fin n) ℓ).filter fun ρ => ¬ Shallow s ρ f
   have ha : ∀ U, 0 ≤ a U := fun U => by simp only [a]; positivity
   have hℓn : ℓ ≤ n := Nat.div_le_self _ _
   have hN : 0 < N := Nat.choose_pos hℓn
   -- the counted stages: few restrictions leave the output deep
-  have hbad : 2 ^ s * bad.card ≤ C.size * (Restriction.withFree n ℓ).card := by
+  have hbad : 2 ^ s * bad.card ≤ C.size * (PartialAssignment.withFree (Fin n) ℓ).card := by
     have h := two_pow_mul_card_filter_exists_not_shallow_le (p := C.program) hs hn C.depth le_rfl
     refine (Nat.mul_le_mul_left _ (card_le_card fun ρ hρ => ?_)).trans
       (h.trans (Nat.mul_le_mul_right _ ((card_filter_le _ _).trans (by simp))))
@@ -149,12 +150,12 @@ theorem sum_fourierCoeff_sq_le_of_computes {f : BooleanFunction n} {C : Circuit 
   have hupper : ∑ J ∈ P, ∑ U with s ≤ #(U ∩ J), a U ≤ (2 ^ ℓ * bad.card : ℝ) / 2 ^ n := by
     calc ∑ J ∈ P, ∑ U with s ≤ #(U ∩ J), a U
         ≤ ∑ J ∈ P, ((univ.filter fun z : BitString n =>
-            ¬ Shallow s (Restriction.outside J z) f).card : ℝ) / 2 ^ n :=
+            ¬ Shallow s (PartialAssignment.outside J z) f).card : ℝ) / 2 ^ n :=
           sum_le_sum fun J _ => sum_fourierCoeff_sq_le_card f J s
       _ = (2 ^ ℓ * bad.card : ℝ) / 2 ^ n := by
           rw [← sum_div]
           congr 1
-          exact_mod_cast Restriction.sum_card_filter_outside (fun ρ => ¬ Shallow s ρ f) ℓ
+          exact_mod_cast PartialAssignment.sum_card_filter_outside (fun ρ => ¬ Shallow s ρ f) ℓ
   -- for the sets of at least `k` coordinates, at least half of the `J` meet them in `s`
   have hlower : (N : ℝ) / 2 * ∑ U with k ≤ #U, a U ≤ ∑ J ∈ P, ∑ U with s ≤ #(U ∩ J), a U := by
     have hswap : ∑ J ∈ P, ∑ U with s ≤ #(U ∩ J), a U =
@@ -192,7 +193,7 @@ theorem sum_fourierCoeff_sq_le_of_computes {f : BooleanFunction n} {C : Circuit 
   have hW := hlower.trans hupper
   have hbadR : (2 ^ s : ℝ) * bad.card ≤ C.size * (N * 2 ^ (n - ℓ)) := by
     have := hbad
-    rw [Restriction.card_withFree] at this
+    rw [PartialAssignment.card_withFree, Fintype.card_fin] at this
     exact_mod_cast this
   have h2n : (2 : ℝ) ^ ℓ * 2 ^ (n - ℓ) = 2 ^ n := by
     rw [← pow_add, Nat.add_sub_cancel' hℓn]

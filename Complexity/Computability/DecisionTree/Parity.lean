@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.Restriction
+public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Computability.DecisionTree.Sensitivity
 
@@ -57,18 +57,18 @@ theorem complexity_parity : complexity (parity n) = n := by
 
 /-- **Restricted parity** is the parity of the free bits, up to a constant, so every decision tree
 for it queries all free bits in the worst case. -/
-theorem card_free_le_complexity_parity_fill (ρ : Cslib.Circuits.Boolean.Restriction n) :
+theorem card_free_le_complexity_parity_fill (ρ : PartialAssignment (Fin n)) :
     #ρ.free ≤ complexity fun x => parity n (ρ.fill x) := by
   refine le_trans ?_ (sensitivityAt_le_complexity _ fun _ => false)
   refine card_le_card fun i hi => mem_filter.2 ⟨mem_univ i, ?_⟩
-  have hρ := Cslib.Circuits.Boolean.Restriction.mem_free.1 hi
+  have hρ := PartialAssignment.mem_free.1 hi
   set y := ρ.fill fun _ => false
   have hfill : ρ.fill (Function.update (fun _ => false) i !false) = Function.update y i !y i := by
     funext j
     by_cases hj : j = i
     · subst hj
-      simp [y, Cslib.Circuits.Boolean.Restriction.fill, hρ]
-    · simp [y, Cslib.Circuits.Boolean.Restriction.fill, hj]
+      simp [y, PartialAssignment.fill, hρ]
+    · simp [y, PartialAssignment.fill, hj]
   simp only [hfill]
   rw [parity, parityOn_update_not (mem_univ i)]
   cases parityOn univ y <;> decide

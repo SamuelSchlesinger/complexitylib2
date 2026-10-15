@@ -33,7 +33,6 @@ public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.PPolyHard
 public import Complexity.Computability.Circuit.Boolean.Parity
 public import Complexity.Computability.Circuit.Boolean.PolynomialTime
-public import Complexity.Computability.Circuit.Boolean.Restriction
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Construction
@@ -256,6 +255,7 @@ public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Parity
+public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Finset.Expect

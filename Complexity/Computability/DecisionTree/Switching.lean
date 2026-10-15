@@ -13,8 +13,9 @@ public import Complexity.Computability.DecisionTree.CanonicalTree
 # The switching lemma
 
 **Håstad's switching lemma**: if every term of a formula `F` in disjunctive normal form has at most
-`k` literals and reads each variable once, then few restrictions leaving `ℓ` variables free make
-the canonical decision tree of `F` deep. Precisely, at most `#R(ℓ - s) (4k)^s` of them leave a
+`k` literals and reads each variable once, then few restrictions (partial assignments,
+`BitString.PartialAssignment`) leaving `ℓ` variables free make the canonical decision tree of `F`
+deep. Precisely, at most `#R(ℓ - s) (4k)^s` of them leave a
 query path of length at least `s` (`DNF.card_filter_pathLength_le`), and so at most that many leave
 `F` with decision tree complexity at least `s` (`DNF.card_switching_le`), where `R(m)` is the set of
 restrictions leaving `m` variables free. Since `#R(ℓ - s) / #R(ℓ)` is about `(2ℓ / n) ^ s`, a random
@@ -53,7 +54,7 @@ first terms not falsified, the decoder can replay the path (`DNF.decode`, `DNF.d
 
 namespace Cslib.Logic.PL
 
-open Cslib.Circuits.Boolean Cslib.DecisionTree Finset
+open Cslib.BitString Cslib.DecisionTree Finset
 
 variable {n : ℕ}
 
@@ -105,8 +106,8 @@ theorem fst_lt_of_mem_stageCode {x : BitString n} {W : List (Fin n)}
     · exact ih (fun w hw => hW w (by simp [hw])) he
 
 /-- A restriction falsifies more terms than any restriction it extends. -/
-theorem FalsifiedBy.mono {ρ θ : Restriction n} (ht : t.FalsifiedBy ρ) (h : θ.Extends ρ) :
-    t.FalsifiedBy θ :=
+theorem FalsifiedBy.mono {ρ θ : PartialAssignment (Fin n)} (ht : t.FalsifiedBy ρ)
+    (h : θ.Extends ρ) : t.FalsifiedBy θ :=
   let ⟨l, hl, hρ⟩ := ht
   ⟨l, hl, h _ _ hρ⟩
 
@@ -114,7 +115,7 @@ end Term
 
 namespace DNF
 
-variable {F : DNF (Fin n)} {ρ θ : Restriction n} {t : Term (Fin n)}
+variable {F : DNF (Fin n)} {ρ θ : PartialAssignment (Fin n)} {t : Term (Fin n)}
 
 theorem queried_eq_freeVars (ht : F.firstTerm ρ = some t) : F.queried ρ = t.freeVars ρ := by
   simp [queried, ht]
@@ -170,7 +171,7 @@ theorem firstTerm_assign_satisfying (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup)
     rintro ⟨l, hl, hθ⟩
     by_cases hlW : l.1 ∈ W
     · simp [hlW, Term.satisfying_of_mem (hF t (mem_of_firstTerm_eq_some ht)) hl] at hθ
-    · rw [Restriction.assign_of_notMem (by simpa using hlW)] at hθ
+    · rw [PartialAssignment.assign_of_notMem (by simpa using hlW)] at hθ
       cases hρl : ρ l.1 with
       | none =>
         have hq : l.1 ∈ F.queried ρ := by
@@ -186,8 +187,8 @@ variable (F)
 /-- Razborov's encoding of the first `s` queries of the canonical path of `x` from `ρ`: the
 restriction fixing the queried variables to the values satisfying their terms, and the code of
 the path. -/
-def encode (s : ℕ) (ρ : Restriction n) (x : BitString n) :
-    Restriction n × List (ℕ × Bool × Bool) :=
+def encode (s : ℕ) (ρ : PartialAssignment (Fin n)) (x : BitString n) :
+    PartialAssignment (Fin n) × List (ℕ × Bool × Bool) :=
   if h : F.queried ρ = [] then (ρ, [])
   else if s ≤ (F.queried ρ).length then
     (ρ.assign ((F.queried ρ).take s).toFinset ((F.firstTerm ρ).getD []).satisfying,
@@ -203,8 +204,8 @@ decreasing_by exact this
 
 /-- Replay the canonical path from the code: `cur` is the term of the current stage, if the stage
 has started, `θ` the restriction so far, and `Q` the variables replayed so far. -/
-def decodeAux : Option (Term (Fin n)) → Restriction n → Finset (Fin n) →
-    List (ℕ × Bool × Bool) → Restriction n
+def decodeAux : Option (Term (Fin n)) → PartialAssignment (Fin n) → Finset (Fin n) →
+    List (ℕ × Bool × Bool) → PartialAssignment (Fin n)
   | _, θ, Q, [] => θ.unassign Q
   | cur, θ, Q, (j, b, e) :: c =>
     match ((cur.getD ((F.firstTerm θ).getD [])).map Prod.fst)[j]? with
@@ -213,7 +214,8 @@ def decodeAux : Option (Term (Fin n)) → Restriction n → Finset (Fin n) →
         (Function.update θ v (some b)) (insert v Q) c
 
 /-- Razborov's decoding: recover the restriction from its encoding. -/
-def decode (θ : Restriction n) (c : List (ℕ × Bool × Bool)) : Restriction n :=
+def decode (θ : PartialAssignment (Fin n)) (c : List (ℕ × Bool × Bool)) :
+    PartialAssignment (Fin n) :=
   F.decodeAux none θ ∅ c
 
 variable {F}
@@ -238,7 +240,7 @@ theorem encode_of_lt (h : F.queried ρ ≠ []) {s : ℕ} (hs : (F.queried ρ).le
   rw [encode, dite_eq_right h, ite_eq_right (by omega)]
 
 /-- The encoding extends the restriction it encodes. -/
-theorem encode_extends (s : ℕ) (ρ : Restriction n) (x : BitString n) :
+theorem encode_extends (s : ℕ) (ρ : PartialAssignment (Fin n)) (x : BitString n) :
     (F.encode s ρ x).1.Extends ρ := by
   intro i b hi
   have hiV : i ∉ (F.queried ρ).toFinset := fun hiV => by
@@ -249,18 +251,18 @@ theorem encode_extends (s : ℕ) (ρ : Restriction n) (x : BitString n) :
   by_cases hs : s ≤ (F.queried ρ).length
   · rw [encode_of_le h hs]
     dsimp only
-    rw [Restriction.assign_of_notMem
+    rw [PartialAssignment.assign_of_notMem
       fun hiW => hiV (List.mem_toFinset.2 (List.mem_of_mem_take (List.mem_toFinset.1 hiW))), hi]
   · rw [encode_of_lt h (by omega)]
     dsimp only
-    rw [Restriction.assign_of_notMem hiV,
+    rw [PartialAssignment.assign_of_notMem hiV,
       encode_extends _ (ρ.assign (F.queried ρ).toFinset x) x i b (by simp [hiV, hi])]
 termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h x
 
 /-- One step of the decoder: set the variable at position `j` of the current term to `b`. -/
-theorem decodeAux_cons {cur : Option (Term (Fin n))} {θ : Restriction n} {t : Term (Fin n)}
-    (ht : cur.getD ((F.firstTerm θ).getD []) = t) {j : ℕ} {v : Fin n}
+theorem decodeAux_cons {cur : Option (Term (Fin n))} {θ : PartialAssignment (Fin n)}
+    {t : Term (Fin n)} (ht : cur.getD ((F.firstTerm θ).getD []) = t) {j : ℕ} {v : Fin n}
     (hv : (t.map Prod.fst)[j]? = some v) (Q : Finset (Fin n)) (b e : Bool)
     (c : List (ℕ × Bool × Bool)) :
     F.decodeAux cur θ Q ((j, b, e) :: c) =
@@ -270,8 +272,8 @@ theorem decodeAux_cons {cur : Option (Term (Fin n))} {θ : Restriction n} {t : T
 
 /-- Replaying a stage from its term. -/
 theorem decodeAux_stageCode {t : Term (Fin n)} {W : List (Fin n)}
-    (hW : ∀ v ∈ W, v ∈ t.map Prod.fst) (hne : W ≠ []) (x : BitString n) (θ : Restriction n)
-    (Q : Finset (Fin n)) (c : List (ℕ × Bool × Bool)) :
+    (hW : ∀ v ∈ W, v ∈ t.map Prod.fst) (hne : W ≠ []) (x : BitString n)
+    (θ : PartialAssignment (Fin n)) (Q : Finset (Fin n)) (c : List (ℕ × Bool × Bool)) :
     F.decodeAux (some t) θ Q (t.stageCode x W ++ c) =
       F.decodeAux none (θ.assign W.toFinset x) (Q ∪ W.toFinset) c := by
   induction W generalizing θ Q with
@@ -295,19 +297,19 @@ theorem decodeAux_stageCode {t : Term (Fin n)} {W : List (Fin n)}
       · funext i
         have hv : v ∈ (v :: w :: W).toFinset := by simp
         by_cases hi' : i ∈ (w :: W).toFinset
-        · rw [Restriction.assign_of_mem hi', Restriction.assign_of_mem
+        · rw [PartialAssignment.assign_of_mem hi', PartialAssignment.assign_of_mem
             (List.mem_toFinset.2 (List.mem_cons_of_mem _ (List.mem_toFinset.1 hi')))]
-        · rw [Restriction.assign_of_notMem hi']
+        · rw [PartialAssignment.assign_of_notMem hi']
           by_cases hi : i = v
           · subst hi
-            rw [Restriction.assign_of_mem hv, Function.update_self]
-          · rw [Function.update_of_ne hi, Restriction.assign_of_notMem (by simp_all)]
+            rw [PartialAssignment.assign_of_mem hv, Function.update_self]
+          · rw [Function.update_of_ne hi, PartialAssignment.assign_of_notMem (by simp_all)]
       · ext i
         simp only [mem_union, mem_insert, List.mem_toFinset, List.mem_cons]
         tauto
 
 /-- At the start of a stage, the decoder reads the first term not falsified. -/
-theorem decodeAux_none {c : List (ℕ × Bool × Bool)} (hc : c ≠ []) (θ : Restriction n)
+theorem decodeAux_none {c : List (ℕ × Bool × Bool)} (hc : c ≠ []) (θ : PartialAssignment (Fin n))
     (Q : Finset (Fin n)) :
     F.decodeAux none θ Q c = F.decodeAux ((F.firstTerm θ).getD []) θ Q c := by
   obtain ⟨⟨j, b, e⟩, c, rfl⟩ := List.exists_cons_of_ne_nil hc
@@ -326,8 +328,8 @@ private theorem encode_assign_eq (s : ℕ) (x : BitString n) {i : Fin n}
 
 /-- Decoding the encoding of a restriction with a query path of length at least `s` gives the
 restriction back, freeing the accumulated variables `Q`. -/
-theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : Restriction n} {s : ℕ}
-    {x : BitString n} (hs : s ≤ F.pathLength ρ x) (Q : Finset (Fin n)) :
+theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : PartialAssignment (Fin n)}
+    {s : ℕ} {x : BitString n} (hs : s ≤ F.pathLength ρ x) (Q : Finset (Fin n)) :
     F.decodeAux none (F.encode s ρ x).1 Q (F.encode s ρ x).2 = ρ.unassign Q := by
   by_cases h : F.queried ρ = []
   · rw [encode_of_queried_eq_nil h]
@@ -340,29 +342,29 @@ theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : Restri
     by_cases hs0 : s = 0
     · subst hs0
       simp only [List.take_zero, List.toFinset_nil, Term.stageCode, decodeAux]
-      exact congrArg (Restriction.unassign · Q) (Restriction.assign_eq_self (by simp))
+      exact congrArg (PartialAssignment.unassign · Q) (PartialAssignment.assign_eq_self (by simp))
     have hW : (F.queried ρ).take s ≠ [] := by simp [List.take_eq_nil_iff, hs0, h]
     rw [decodeAux_none (Term.stageCode_eq_nil_iff.not.2 hW),
-      firstTerm_assign_satisfying hF ht (Restriction.Extends.refl ρ)
+      firstTerm_assign_satisfying hF ht (PartialAssignment.Extends.refl ρ)
         (fun _ hv => List.mem_of_mem_take hv)
         (fun v hv _ => free_of_mem_queried hv),
       Option.getD_some, ← List.append_nil (Term.stageCode _ _ _),
       decodeAux_stageCode (fun v hv => htV v (List.mem_of_mem_take hv)) hW]
-    simp only [decodeAux, Restriction.assign_assign]
-    exact Restriction.unassign_union_assign (toFinset_take_queried_subset_free s) x
+    simp only [decodeAux, PartialAssignment.assign_assign]
+    exact PartialAssignment.unassign_union_assign (toFinset_take_queried_subset_free s) x
   · have hlt : (F.queried ρ).length < s := by omega
     rw [encode_of_lt h hlt, ht, Option.getD_some]
     dsimp only
     rw [decodeAux_none (List.append_ne_nil_of_left_ne_nil (Term.stageCode_eq_nil_iff.not.2 h) _),
       firstTerm_assign_satisfying hF ht ((encode_extends _ _ _).trans
-          (Restriction.extends_assign toFinset_queried_subset_free x))
+          (PartialAssignment.extends_assign toFinset_queried_subset_free x))
         (fun _ hv => hv) (fun _ hv hv' => absurd hv hv'),
-      Option.getD_some, decodeAux_stageCode htV h, Restriction.assign_assign,
-      Restriction.assign_eq_self fun i hi => encode_assign_eq _ x hi,
+      Option.getD_some, decodeAux_stageCode htV h, PartialAssignment.assign_assign,
+      PartialAssignment.assign_eq_self fun i hi => encode_assign_eq _ x hi,
       decodeAux_encode hF (ρ := ρ.assign (F.queried ρ).toFinset x) (by
         rw [pathLength_of_queried_ne_nil h] at hs
         omega)]
-    exact Restriction.unassign_union_assign toFinset_queried_subset_free x
+    exact PartialAssignment.unassign_union_assign toFinset_queried_subset_free x
 termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h x
 
@@ -370,11 +372,12 @@ decreasing_by exact card_free_assign_lt h x
 `s` determines the restriction. -/
 theorem decode_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {s : ℕ} {x : BitString n}
     (hs : s ≤ F.pathLength ρ x) : F.decode (F.encode s ρ x).1 (F.encode s ρ x).2 = ρ := by
-  rw [decode, decodeAux_encode hF hs, Restriction.unassign_empty]
+  rw [decode, decodeAux_encode hF hs, PartialAssignment.unassign_empty]
 
 /-- The encoding fixes `s` more variables. -/
-theorem card_free_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : Restriction n} {s : ℕ}
-    {x : BitString n} (hs : s ≤ F.pathLength ρ x) : #(F.encode s ρ x).1.free = #ρ.free - s := by
+theorem card_free_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : PartialAssignment (Fin n)}
+    {s : ℕ} {x : BitString n} (hs : s ≤ F.pathLength ρ x) :
+    #(F.encode s ρ x).1.free = #ρ.free - s := by
   by_cases h : F.queried ρ = []
   · rw [pathLength_of_queried_eq_nil h] at hs
     rw [encode_of_queried_eq_nil h, Nat.le_zero.1 hs, Nat.sub_zero]
@@ -382,26 +385,26 @@ theorem card_free_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : Restri
   by_cases hsV : s ≤ (F.queried ρ).length
   · rw [encode_of_le h hsV]
     dsimp only
-    rw [Restriction.free_assign, card_sdiff_of_subset (toFinset_take_queried_subset_free s),
+    rw [PartialAssignment.free_assign, card_sdiff_of_subset (toFinset_take_queried_subset_free s),
       List.toFinset_card_of_nodup ((List.take_sublist _ _).nodup hnd), List.length_take,
       min_eq_left hsV]
   · rw [encode_of_lt h (by omega)]
     dsimp only
     have hlen := (List.toFinset_card_of_nodup hnd).symm.trans_le
       (card_le_card (toFinset_queried_subset_free (ρ := ρ)))
-    rw [Restriction.free_assign, sdiff_eq_self_of_disjoint (disjoint_left.2 fun i hi hiV => by
-        simp [Restriction.mem_free, encode_assign_eq _ x hiV] at hi),
+    rw [PartialAssignment.free_assign, sdiff_eq_self_of_disjoint (disjoint_left.2 fun i hi hiV => by
+        simp [PartialAssignment.mem_free, encode_assign_eq _ x hiV] at hi),
       card_free_encode hF (ρ := ρ.assign (F.queried ρ).toFinset x) (by
         rw [pathLength_of_queried_ne_nil h] at hs
         omega),
-      Restriction.free_assign, card_sdiff_of_subset toFinset_queried_subset_free,
+      PartialAssignment.free_assign, card_sdiff_of_subset toFinset_queried_subset_free,
       List.toFinset_card_of_nodup hnd]
     omega
 termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h x
 
 /-- The code of a query path of length at least `s` has length `s`. -/
-theorem length_encode {ρ : Restriction n} {s : ℕ} {x : BitString n}
+theorem length_encode {ρ : PartialAssignment (Fin n)} {s : ℕ} {x : BitString n}
     (hs : s ≤ F.pathLength ρ x) : (F.encode s ρ x).2.length = s := by
   by_cases h : F.queried ρ = []
   · rw [pathLength_of_queried_eq_nil h] at hs
@@ -421,8 +424,9 @@ termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h x
 
 /-- The positions recorded in a code are positions in terms of at most `k` literals. -/
-theorem fst_lt_of_mem_encode {k : ℕ} (hF : ∀ t ∈ F, t.length ≤ k) (s : ℕ) (ρ : Restriction n)
-    (x : BitString n) {e : ℕ × Bool × Bool} (he : e ∈ (F.encode s ρ x).2) : e.1 < k := by
+theorem fst_lt_of_mem_encode {k : ℕ} (hF : ∀ t ∈ F, t.length ≤ k) (s : ℕ)
+    (ρ : PartialAssignment (Fin n)) (x : BitString n) {e : ℕ × Bool × Bool}
+    (he : e ∈ (F.encode s ρ x).2) : e.1 < k := by
   by_cases h : F.queried ρ = []
   · rw [encode_of_queried_eq_nil h] at he
     simp at he
@@ -454,7 +458,7 @@ private theorem mem_image_ofFn {k s : ℕ} {c : List (ℕ × Bool × Bool)} (hc 
 extensions of `ρ₀` leaving `m` variables free, if every term of `F` has at most `k` literals and
 reads each variable once. -/
 theorem card_filter_pathLength_le {k : ℕ} (hk : ∀ t ∈ F, t.length ≤ k)
-    (hnd : ∀ t ∈ F, (t.map Prod.fst).Nodup) (ρ₀ : Restriction n) (ℓ s : ℕ) :
+    (hnd : ∀ t ∈ F, (t.map Prod.fst).Nodup) (ρ₀ : PartialAssignment (Fin n)) (ℓ s : ℕ) :
     #((ρ₀.extensions ℓ).filter fun ρ => ∃ x, s ≤ F.pathLength ρ x) ≤
       #(ρ₀.extensions (ℓ - s)) * (4 * k) ^ s := by
   set C := (Fintype.piFinset fun _ : Fin s => range k ×ˢ (univ : Finset (Bool × Bool))).image
@@ -463,9 +467,9 @@ theorem card_filter_pathLength_le {k : ℕ} (hk : ∀ t ∈ F, t.length ≤ k)
   calc _ ≤ #((ρ₀.extensions (ℓ - s) ×ˢ C).image fun p => F.decode p.1 p.2) :=
         card_le_card fun ρ hρ => by
           obtain ⟨hρ, x, hx⟩ := mem_filter.1 hρ
-          obtain ⟨hext, hcard⟩ := Restriction.mem_extensions.1 hρ
+          obtain ⟨hext, hcard⟩ := PartialAssignment.mem_extensions.1 hρ
           refine mem_image.2 ⟨F.encode s ρ x, mem_product.2 ⟨?_, ?_⟩, decode_encode hnd hx⟩
-          · refine Restriction.mem_extensions.2 ⟨(encode_extends s ρ x).trans hext, ?_⟩
+          · refine PartialAssignment.mem_extensions.2 ⟨(encode_extends s ρ x).trans hext, ?_⟩
             rw [card_free_encode hnd hx, hcard]
           · exact mem_image_ofFn (length_encode hx) fun e he => fst_lt_of_mem_encode hk s ρ x he
     _ ≤ #(ρ₀.extensions (ℓ - s) ×ˢ C) := card_image_le
@@ -477,9 +481,9 @@ theorem card_filter_pathLength_le {k : ℕ} (hk : ∀ t ∈ F, t.length ≤ k)
 and reads each variable once, then at most `#E(ℓ - s) (4k)^s` of the extensions of `ρ₀` leaving `ℓ`
 variables free leave `F` with decision tree complexity at least `s`, where `E(m)` are the
 extensions of `ρ₀` leaving `m` variables free. For `ρ₀` fixing nothing, these are all restrictions
-(`Restriction.withFree`). -/
+(`PartialAssignment.withFree`). -/
 theorem card_switching_le {k : ℕ} (hk : ∀ t ∈ F, t.length ≤ k)
-    (hnd : ∀ t ∈ F, (t.map Prod.fst).Nodup) (ρ₀ : Restriction n) (ℓ s : ℕ) :
+    (hnd : ∀ t ∈ F, (t.map Prod.fst).Nodup) (ρ₀ : PartialAssignment (Fin n)) (ℓ s : ℕ) :
     #((ρ₀.extensions ℓ).filter fun ρ => s ≤ complexity fun x => DNF.eval (ρ.fill x) F) ≤
       #(ρ₀.extensions (ℓ - s)) * (4 * k) ^ s := by
   refine (card_le_card fun ρ hρ => ?_).trans (card_filter_pathLength_le hk hnd ρ₀ ℓ s)

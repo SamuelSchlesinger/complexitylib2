@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Synthesis
+public import Complexity.Foundations.Data.BitString.PartialAssignment
 
 /-!
 # Substituting variables and constants for inputs
@@ -19,11 +20,14 @@ the remaining inputs free. A substitution does not make a function harder to com
 `f` with its inputs rewired, and two gates for the constants, computes `f ∘ ρ`.
 
 The substitution `appendInputs r` fixes the last `p` inputs of a function of `n + p` variables to
-the bits `r`: substituting it computes `x ↦ f (Fin.append x r)`.
+the bits `r`: substituting it computes `x ↦ f (Fin.append x r)`. A restriction (partial
+assignment) is the substitution that replaces each bit by itself or by a constant
+(`BitString.PartialAssignment.substitute_toSubstitution`).
 
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.substitute`, `Cslib.Circuits.Boolean.appendInputs`.
+* `Cslib.BitString.PartialAssignment.toSubstitution`: a partial assignment as a substitution.
 
 ## Main results
 
@@ -84,3 +88,21 @@ def appendInputs {p : ℕ} (r : Fin p → Bool) : Fin (n + p) → Fin n ⊕ Bool
   refine Fin.addCases (fun i => ?_) (fun i => ?_) j <;> simp [substitute, appendInputs]
 
 end Cslib.Circuits.Boolean
+
+namespace Cslib.BitString.PartialAssignment
+
+open Circuits.Boolean
+
+variable {n : ℕ}
+
+/-- The substitution replacing each fixed bit by its value and each free bit by itself. -/
+def toSubstitution (ρ : PartialAssignment (Fin n)) : Fin n → Fin n ⊕ Bool :=
+  fun i => (ρ i).elim (.inl i) .inr
+
+/-- Restricting is substituting constants for the fixed bits. -/
+theorem substitute_toSubstitution (ρ : PartialAssignment (Fin n)) :
+    substitute ρ.toSubstitution = ρ.fill := by
+  funext x i
+  cases h : ρ i <;> simp [toSubstitution, fill, h]
+
+end Cslib.BitString.PartialAssignment

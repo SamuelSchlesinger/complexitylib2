@@ -49,7 +49,8 @@ size about `m ^ 2 log₂ m / 4`, which is of order `n ^ 2 / log n`.
 namespace Cslib.Circuits.Boolean
 
 open Finset
-open BitString (block blockBits block_piecewise pairwiseDisjoint_blockBits)
+open BitString (block blockBits block_piecewise pairwiseDisjoint_blockBits subfunctions
+  mem_subfunctions)
 
 variable {m k t : ℕ}
 

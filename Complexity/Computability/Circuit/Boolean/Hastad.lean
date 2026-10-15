@@ -31,18 +31,19 @@ So such circuits, and formulas (`Formula.toCircuit`), have size `2 ^ Ω(n ^ (1 /
 fraction of the free bits rather than `1 / (10 s)` with a final DNF stage. Depth counts every gate
 on a path, negations included, and size counts every gate.
 
-The proof restricts the circuit `d` times. After stage `j`, every gate of depth at most `j`
+The proof restricts the circuit `d` times by random restrictions (partial assignments,
+`BitString.PartialAssignment`). After stage `j`, every gate of depth at most `j`
 computes, under the restriction so far, a function of decision tree complexity below `s`
 (`Shallow`). A gate of depth `j + 1` then computes, up to negation, a formula in disjunctive normal
 form whose terms have fewer than `s` literals (`exists_dnf_of_shallow`), and the switching lemma
 shows that at most a `2 ^ (-s)` fraction of the extensions of the restriction fail to make it
 shallow (`two_pow_mul_card_filter_not_shallow_le`). Drawing a restriction with fewer free bits by
 first drawing one with more free bits and then an extension of it
-(`Restriction.sum_card_filter_extensions`), at most a `G / 2 ^ s` fraction of the restrictions
-leaving `n / (16 s + 1) ^ j` bits free make some gate of depth at most `j` deep, where `G` is the
-number of those gates (`two_pow_mul_card_filter_exists_not_shallow_le`). With fewer than `2 ^ s`
-gates, some restriction makes the output shallow, while the restricted parity needs to query every
-free bit. The counted form also bounds the Fourier tails of small circuits of constant depth
+(`PartialAssignment.sum_card_filter_extensions`), at most a `G / 2 ^ s` fraction of the
+restrictions leaving `n / (16 s + 1) ^ j` bits free make some gate of depth at most `j` deep, where
+`G` is the number of those gates (`two_pow_mul_card_filter_exists_not_shallow_le`). With fewer than
+`2 ^ s` gates, some restriction makes the output shallow, while the restricted parity needs to query
+every free bit. The counted form also bounds the Fourier tails of small circuits of constant depth
 [Linial, Mansour and Nisan][LinialMansourNisan1993].
 
 ## Main definitions
@@ -78,18 +79,18 @@ free bit. The counted form also bounds the Fourier tails of small circuits of co
 
 namespace Cslib.Circuits.Boolean
 
-open Cslib.DecisionTree Cslib.Logic.PL Finset
+open Cslib.BitString Cslib.DecisionTree Cslib.Logic.PL Finset
 
-variable {n s : ℕ} {ρ ρ' : Restriction n}
+variable {n s : ℕ} {ρ ρ' : PartialAssignment (Fin n)}
 
 /-! ### Shallow functions -/
 
 /-- `f` is `s`-shallow under `ρ`: the function it computes under `ρ` has decision tree complexity
 below `s`. -/
-def Shallow (s : ℕ) (ρ : Restriction n) (f : BitString n → Bool) : Prop :=
+def Shallow (s : ℕ) (ρ : PartialAssignment (Fin n)) (f : BitString n → Bool) : Prop :=
   DecisionTree.complexity (fun x => f (ρ.fill x)) < s
 
-noncomputable instance (s : ℕ) (ρ : Restriction n) (f : BitString n → Bool) :
+noncomputable instance (s : ℕ) (ρ : PartialAssignment (Fin n)) (f : BitString n → Bool) :
     Decidable (Shallow s ρ f) :=
   inferInstanceAs (Decidable (_ < s))
 
@@ -100,10 +101,10 @@ theorem Shallow.mono {f : BitString n → Bool} (hf : Shallow s ρ f) (h : ρ'.E
   have : DecisionTree.complexity (fun x => f (ρ.fill (ρ'.fill x))) ≤
       DecisionTree.complexity fun y => f (ρ.fill y) :=
     complexity_comp_fill_le ρ' fun y => f (ρ.fill y)
-  simpa only [Restriction.fill_fill_of_extends h] using this
+  simpa only [PartialAssignment.fill_fill_of_extends h] using this
 
 /-- The input bits are shallow. -/
-theorem shallow_proj (hs : 2 ≤ s) (ρ : Restriction n) (i : Fin n) :
+theorem shallow_proj (hs : 2 ≤ s) (ρ : PartialAssignment (Fin n)) (i : Fin n) :
     Shallow s ρ fun x => x i := by
   have h₁ : DecisionTree.complexity (fun x : BitString n => x i) ≤ 1 :=
     DecisionTree.complexity_le_iff.2 ⟨DecisionTree.node i (.leaf false) (.leaf true),
@@ -181,20 +182,20 @@ theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString 
   · subst hop
     have hG : Shallow s ρ fun x => interpretation .not fun j => args j x := (h 0).not
     rw [filter_false_of_mem fun ρ' hρ' => not_not.2 (hG.mono
-      (Restriction.mem_extensions.1 hρ').1)]
+      (PartialAssignment.mem_extensions.1 hρ').1)]
     simp
   obtain ⟨D, b, hD, heval⟩ := exists_dnf_of_shallow hop h
   refine (card_le_card fun ρ' hρ' => ?_).trans (DNF.card_switching_le
     (fun t ht => (hD t ht).1.le) (fun t ht => (hD t ht).2) ρ ℓ s)
   obtain ⟨hρ', hdeep⟩ := mem_filter.1 hρ'
   refine mem_filter.2 ⟨hρ', ?_⟩
-  have hext := (Restriction.mem_extensions.1 hρ').1
+  have hext := (PartialAssignment.mem_extensions.1 hρ').1
   have : (fun x => DNF.eval (ρ'.fill x) D) =
       fun x => (interpretation op (fun j => args j (ρ.fill (ρ'.fill x))) != b) := by
     funext x
     rw [heval]
   rw [this, complexity_comp_of_injective (g := (· != b)) (by cases b <;> decide)]
-  simpa only [Restriction.fill_fill_of_extends hext] using not_lt.1 hdeep
+  simpa only [PartialAssignment.fill_fill_of_extends hext] using not_lt.1 hdeep
 
 /-- **The switching fraction for one operation**: if the arguments of an operation are shallow
 under `ρ`, at most a `2 ^ (-s)` fraction of the extensions of `ρ` with `ℓ` free bits leave it
@@ -204,7 +205,7 @@ theorem two_pow_mul_card_filter_not_shallow_le {op : Op} {args : Fin op.arity �
     2 ^ s * #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
       #(ρ.extensions ℓ) := by
   refine (Nat.mul_le_mul_left _ (card_filter_not_shallow_le h ℓ)).trans ?_
-  rw [Restriction.card_extensions, Restriction.card_extensions]
+  rw [PartialAssignment.card_extensions, PartialAssignment.card_extensions]
   set m := #ρ.free
   have hℓm : ℓ ≤ m := le_trans (Nat.le_mul_of_pos_left ℓ (by omega)) hℓ
   have h2 : 2 ^ (m - (ℓ - s)) = 2 ^ (m - ℓ) * 2 ^ s := by
@@ -255,7 +256,7 @@ private theorem two_pow_mul_card_filter_extensions_le {p : Program signature n g
     obtain ⟨hext, k, hk, hdeep⟩ := mem_filter.1 hρ'
     refine mem_biUnion.2 ⟨k, mem_filter.2 ⟨mem_univ k, ?_⟩, mem_filter.2 ⟨hext, hdeep⟩⟩
     by_contra hk'
-    exact hdeep ((hgood k (by omega)).mono (Restriction.mem_extensions.1 hext).1)
+    exact hdeep ((hgood k (by omega)).mono (PartialAssignment.mem_extensions.1 hext).1)
   calc 2 ^ s * #{ρ' ∈ ρ.extensions ℓ' |
         ∃ k, p.depths k ≤ j + 1 ∧ ¬ Shallow s ρ' fun x => p.eval interpretation x k}
       ≤ 2 ^ s * ∑ k ∈ T, #{ρ' ∈ ρ.extensions ℓ' |
@@ -279,9 +280,9 @@ gates of depth at most `d`, `s ≥ 2` and `s (16 s + 1) ^ d ≤ n`, after `j ≤
 depth at most `j` deep, where `G` is the number of gates of depth at most `j`. -/
 theorem two_pow_mul_card_filter_exists_not_shallow_le {p : Program signature n g} (hs : 2 ≤ s)
     {d : ℕ} (hn : s * (16 * s + 1) ^ d ≤ n) (j : ℕ) (hj : j ≤ d) :
-    2 ^ s * #{ρ ∈ Restriction.withFree n (n / (16 * s + 1) ^ j) |
+    2 ^ s * #{ρ ∈ PartialAssignment.withFree (Fin n) (n / (16 * s + 1) ^ j) |
         ∃ k, p.depths k ≤ j ∧ ¬ Shallow s ρ fun x => p.eval interpretation x k} ≤
-      #{k | p.depths k ≤ j} * #(Restriction.withFree n (n / (16 * s + 1) ^ j)) := by
+      #{k | p.depths k ≤ j} * #(PartialAssignment.withFree (Fin n) (n / (16 * s + 1) ^ j)) := by
   induction j with
   | zero =>
     rw [filter_false_of_mem fun ρ _ => fun ⟨k, hk, _⟩ => absurd hk (by
@@ -292,8 +293,8 @@ theorem two_pow_mul_card_filter_exists_not_shallow_le {p : Program signature n g
     have ih := ih (by omega)
     set ℓ := n / (16 * s + 1) ^ j
     set ℓ' := n / (16 * s + 1) ^ (j + 1)
-    set W := Restriction.withFree n ℓ
-    set B : ℕ → Restriction n → Prop := fun i ρ =>
+    set W := PartialAssignment.withFree (Fin n) ℓ
+    set B : ℕ → PartialAssignment (Fin n) → Prop := fun i ρ =>
       ∃ k, p.depths k ≤ i ∧ ¬ Shallow s ρ fun x => p.eval interpretation x k
     set H := #{k | p.depths k = j + 1}
     have hsℓ' : s ≤ ℓ' := Nat.le_div_pow_of_mul_pow_le (by omega) hj hn
@@ -304,7 +305,7 @@ theorem two_pow_mul_card_filter_exists_not_shallow_le {p : Program signature n g
     have hF : 0 < F := Nat.choose_pos (by omega)
     set T := ℓ.choose ℓ' * 2 ^ (ℓ - ℓ')
     have hT : ∀ ρ ∈ W, #(ρ.extensions ℓ') = T := fun ρ hρ => by
-      rw [Restriction.card_extensions, Restriction.mem_withFree.1 hρ]
+      rw [PartialAssignment.card_extensions, PartialAssignment.mem_withFree.1 hρ]
     -- each restriction with `ℓ` free bits has few bad extensions, unless it is bad itself
     have hper : ∀ ρ ∈ W, 2 ^ s * #{ρ' ∈ ρ.extensions ℓ' | B (j + 1) ρ'} ≤
         (if B j ρ then 2 ^ s else 0) * T + H * T := fun ρ hρ => by
@@ -315,7 +316,7 @@ theorem two_pow_mul_card_filter_exists_not_shallow_le {p : Program signature n g
       · simp only [hb, ↓reduceIte, zero_mul, zero_add]
         rw [← hT ρ hρ]
         refine two_pow_mul_card_filter_extensions_le hs hsℓ'
-          ((Restriction.mem_withFree.1 hρ).symm ▸ hℓ) fun k hk => ?_
+          ((PartialAssignment.mem_withFree.1 hρ).symm ▸ hℓ) fun k hk => ?_
         by_contra h
         exact hb ⟨k, hk, h⟩
     -- the gates of depth at most `j + 1`
@@ -326,12 +327,13 @@ theorem two_pow_mul_card_filter_exists_not_shallow_le {p : Program signature n g
       simp only [mem_filter, mem_univ, true_and, mem_union]
       omega
     -- double counting the extensions, with and without the condition
-    have hdc := Restriction.sum_card_filter_extensions (B (j + 1)) hℓ'ℓ
-    have hall := Restriction.sum_card_filter_extensions (n := n) (fun _ => True) hℓ'ℓ
+    have hdc := PartialAssignment.sum_card_filter_extensions (B (j + 1)) hℓ'ℓ
+    have hall := PartialAssignment.sum_card_filter_extensions (ι := Fin n) (fun _ => True) hℓ'ℓ
     simp only [filter_true] at hall
+    rw [Fintype.card_fin] at hdc hall
     rw [sum_congr rfl hT, sum_const, smul_eq_mul] at hall
     refine Nat.le_of_mul_le_mul_right (?_ : _ * F ≤ _ * F) hF
-    calc 2 ^ s * #{ρ ∈ Restriction.withFree n ℓ' | B (j + 1) ρ} * F
+    calc 2 ^ s * #{ρ ∈ PartialAssignment.withFree (Fin n) ℓ' | B (j + 1) ρ} * F
         = ∑ ρ ∈ W, 2 ^ s * #{ρ' ∈ ρ.extensions ℓ' | B (j + 1) ρ'} := by
           rw [mul_assoc, ← hdc, mul_sum]
       _ ≤ ∑ ρ ∈ W, ((if B j ρ then 2 ^ s else 0) * T + H * T) := sum_le_sum hper
@@ -341,8 +343,8 @@ theorem two_pow_mul_card_filter_exists_not_shallow_le {p : Program signature n g
           ring
       _ ≤ #{k | p.depths k ≤ j} * #W * T + #W * H * T := by
           gcongr
-      _ = #{k | p.depths k ≤ j + 1} * #(Restriction.withFree n ℓ') * F := by
-          rw [mul_assoc _ #(Restriction.withFree n ℓ'), hG, ← hall]
+      _ = #{k | p.depths k ≤ j + 1} * #(PartialAssignment.withFree (Fin n) ℓ') * F := by
+          rw [mul_assoc _ #(PartialAssignment.withFree (Fin n) ℓ'), hG, ← hall]
           ring
 
 /-! ### Circuits -/
@@ -370,11 +372,12 @@ theorem two_pow_le_size_of_computes_parity {C : Circuit signature n 1}
   have hsℓ : s ≤ ℓ := Nat.le_div_pow_of_mul_pow_le (by omega) le_rfl hn
   -- fewer than all restrictions leaving `ℓ` bits free make some gate deep
   have h := two_pow_mul_card_filter_exists_not_shallow_le (p := C.program) hs hn C.depth le_rfl
-  have hW : 0 < #(Restriction.withFree n ℓ) := by
-    rw [Restriction.card_withFree]
+  have hW : 0 < #(PartialAssignment.withFree (Fin n) ℓ) := by
+    rw [PartialAssignment.card_withFree, Fintype.card_fin]
     exact Nat.mul_pos (Nat.choose_pos (Nat.div_le_self _ _)) (by positivity)
-  have hlt : #{ρ ∈ Restriction.withFree n ℓ | ∃ k, C.program.depths k ≤ C.depth ∧
-      ¬ Shallow s ρ fun x => C.program.eval interpretation x k} < #(Restriction.withFree n ℓ) := by
+  have hlt : #{ρ ∈ PartialAssignment.withFree (Fin n) ℓ | ∃ k, C.program.depths k ≤ C.depth ∧
+      ¬ Shallow s ρ fun x => C.program.eval interpretation x k} <
+      #(PartialAssignment.withFree (Fin n) ℓ) := by
     refine Nat.lt_of_mul_lt_mul_left (a := 2 ^ s) (h.trans_lt ?_)
     exact Nat.mul_lt_mul_of_pos_right ((card_filter_le _ _).trans_lt (by simpa using hS)) hW
   obtain ⟨ρ, hρ, hgood⟩ := exists_mem_notMem_of_card_lt_card hlt
@@ -386,7 +389,7 @@ theorem two_pow_le_size_of_computes_parity {C : Circuit signature n 1}
   have heq : (fun x => C.program.trace interpretation x (C.outputs 0)) = parity n :=
     funext fun x => congrFun (hC x) 0
   rw [heq] at hout
-  exact not_shallow_parity ((Restriction.mem_withFree.1 hρ).symm ▸ hsℓ) hout
+  exact not_shallow_parity ((PartialAssignment.mem_withFree.1 hρ).symm ▸ hsℓ) hout
 
 /-- **Håstad's theorem** for formulas with unbounded fan-in. A formula of depth `d` computing the
 parity of `n` bits has at least `2 ^ s` operation nodes, for every `s ≥ 2` with
