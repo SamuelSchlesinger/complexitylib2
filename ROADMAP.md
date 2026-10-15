@@ -356,7 +356,7 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | done (`Computability/RAM/`) |
 | Finite cores of Savitch and of inductive counting | `Classes/Containments/Internal/ReachIn`, `InductiveCounting`, `CountingCert` | done (`Foundations/Relation/`) |
 | Depth-two threshold circuit for parity | `Circuits/Threshold/Parity` | queued |
-| Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | batch 1 in progress (rectangles, sweeps, layouts, networks, demand); then the compiler and reduction, then the layout bounds |
+| Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | batch 1 done (`Circuit/Frontier/{Rectangle,Sweep,Multigraph,Network,Demand}`); next the compiler and reduction, then the layout bounds |
 | Class-level results (Savitch, hierarchies, `PH ⊆ PSPACE`, Sipser–Lautemann, Cobham, `PCP = NP`, RAM-P = P, …) | `Classes/**`, `Models/**` | blocked on the polynomial-time calculus |
 
 The class-level forms of the time hierarchy, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE`, Sipser–Lautemann

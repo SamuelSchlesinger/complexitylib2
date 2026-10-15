@@ -1706,4 +1706,46 @@ info: 'Cslib.RAM.bitLength_read_run_le' depends on axioms: [propext, Classical.c
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RAM.bitLength_read_run_le
 
+/--
+info: 'Cslib.Circuits.Frontier.RectangleFree.pow_ncard_compl_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.RectangleFree.pow_ncard_compl_lt
+
+/--
+info: 'Cslib.Circuits.Frontier.Sweep.ncard_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Sweep.ncard_le
+
+/--
+info: 'Cslib.Circuits.Frontier.Multigraph.card_le_card_add_one_of_connected' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Multigraph.card_le_card_add_one_of_connected
+
+/--
+info: 'Cslib.Circuits.Frontier.Network.Satisfies.splice' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Network.Satisfies.splice
+
+/--
+info: 'Cslib.Circuits.Frontier.Network.ncard_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Network.ncard_accepted_le
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_lt_of_demand' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_lt_of_demand
+
+/--
+info: 'Set.ncard_le_mul_ncard_image' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Set.ncard_le_mul_ncard_image
+
 end ComplexityTests.Axioms

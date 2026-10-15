@@ -21,6 +21,7 @@ import Complexity.Foundations.Combinatorics.Expander.Family
 import Complexity.Foundations.Combinatorics.Expander.TowerBase
 import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Computability.RAM.Squaring
+import Complexity.Computability.Circuit.Frontier.Network
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
@@ -304,5 +305,27 @@ example : (Cslib.RAM.run (Cslib.RAM.repeatedSquaring 2) 3 (Cslib.RAM.State.init 
     Cslib.RAM.time Cslib.RAM.logCost (Cslib.RAM.repeatedSquaring 2) 3 (Cslib.RAM.State.init []) =
       12 := by
   decide
+
+section Frontier
+
+open Cslib.Circuits.Frontier Set
+
+/-- The hypotheses of the frontier counting lemma can be met: all strings of one bit form a
+`2`-rectangle-free set with at least two elements. -/
+example : RectangleFree (univ : Set (Fin 1 → Bool)) 2 ∧ 2 ≤ (univ : Set (Fin 1 → Bool)).ncard := by
+  refine ⟨fun X A B _ => ?_, by simp⟩
+  by_cases h : (0 : Fin 1) ∈ X
+  · right
+    have : Subsingleton (↥Xᶜ → Bool) :=
+      ⟨fun f g => funext fun i => absurd (Subsingleton.elim i.1 0 ▸ h) i.2⟩
+    exact (ncard_le_one (toFinite _)).mpr (fun a _ b _ => Subsingleton.elim a b) |>.trans_lt
+      one_lt_two
+  · left
+    have : Subsingleton (↥X → Bool) :=
+      ⟨fun f g => funext fun i => absurd (Subsingleton.elim i.1 0 ▸ i.2) h⟩
+    exact (ncard_le_one (toFinite _)).mpr (fun a _ b _ => Subsingleton.elim a b) |>.trans_lt
+      one_lt_two
+
+end Frontier
 
 end ComplexityTests.NonVacuity
