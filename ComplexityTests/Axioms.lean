@@ -2175,4 +2175,46 @@ info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_cauchyNat_zmo
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_cauchyNat_zmod
 
+/--
+info: 'Cslib.Circuits.Frontier.Network.accepted_hide' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Network.accepted_hide
+
+/--
+info: 'Cslib.Circuits.Frontier.Compiler.accepted_hiddenNetwork' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.Compiler.accepted_hiddenNetwork
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_graph_of_nondeterministicDecides' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_graph_of_nondeterministicDecides
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_nondeterministic' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_nondeterministic
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_nondeterministic' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize_nondeterministic
+
+/--
+info: 'Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le
+
+/--
+info: 'Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le_size' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.DecomposableDAG.ncard_accepted_le_size
+
 end ComplexityTests.Axioms
