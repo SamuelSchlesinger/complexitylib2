@@ -256,8 +256,10 @@ formula is coded in `N - ι / k` bits on average over orders, so `∑ₓ 2 ^ (ι
 Sparsification.lean`, over clause sets in `ClauseSet/Basic.lean`, with the proof of Calabro,
 Impagliazzo and Paturi in `ClauseSet/Sparsification/{Step,Path,Tree,Bounds,Asymptotics}.lean`):
 every width-`k` CNF over `N` variables is the disjunction of at most `2 ^ (ε N)` width-`k` CNFs in
-which every variable occurs in at most `c(k, ε)` clauses. Normal forms of parity have at least
-`2 ^ (n - 1)` terms (`Circuit/Boolean/NormalFormParity.lean`).
+which every variable occurs in at most `c(k, ε)` clauses. Normal forms have a term per isolated
+input, so those of parity have at least `2 ^ (n - 1)` terms; by the coding lemma, an OR of width-`k`
+CNFs for parity has at least `2 ^ (n / k - 1)` of them, which is attained when `k ∣ n`
+(`Logics/Propositional/Parity.lean`).
 
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
 `Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):

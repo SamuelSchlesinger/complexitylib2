@@ -23,7 +23,6 @@ public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
 public import Complexity.Computability.Circuit.Boolean.Nondeterminism
-public import Complexity.Computability.Circuit.Boolean.NormalFormParity
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.PPolyHard
 public import Complexity.Computability.Circuit.Boolean.Parity
@@ -131,4 +130,5 @@ public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Path
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Step
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Tree
 public import Complexity.Logics.Propositional.DNF
+public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.Resolution

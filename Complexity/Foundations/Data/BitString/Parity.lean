@@ -9,9 +9,12 @@ module
 
 public import Cslib.Foundations.Data.BitString
 public import Mathlib.Data.Finset.Card
+public import Mathlib.Data.Finset.Union
 public import Mathlib.Data.Fintype.Basic
+public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Logic.Function.Const
 public import Mathlib.Logic.Function.DependsOn
+import Mathlib.Data.Fintype.BigOperators
 
 /-!
 # The parity function
@@ -25,6 +28,12 @@ the parity of a nonempty set of bits is not constant and depends on each of them
 
 * `Cslib.parityOn`: the parity of the bits in a set.
 * `Cslib.parity`: the parity of all bits.
+
+## Main results
+
+* `Cslib.parityOn_union`, `Cslib.parityOn_biUnion`: the parity of a disjoint union.
+* `Cslib.parity_update_not`: flipping any bit flips the parity.
+* `Cslib.card_filter_parity_eq_true`: parity of `n ≥ 1` bits is true on `2 ^ (n - 1)` inputs.
 -/
 
 @[expose] public section
@@ -84,12 +93,54 @@ theorem parityOn_union (h : Disjoint s t) (x : BitString n) :
     rw [insert_union, parityOn_insert (by simp [hi, hit]), parityOn_insert hi,
       ih (disjoint_of_subset_left (subset_insert i s) h), Bool.xor_assoc]
 
+/-- The parity of a union of pairwise disjoint blocks is the parity of the parities of the
+blocks. -/
+theorem parityOn_biUnion {m : ℕ} {S : Finset (Fin m)} {B : Fin m → Finset (Fin n)}
+    (hB : (S : Set (Fin m)).PairwiseDisjoint B) (x : BitString n) :
+    parityOn (S.biUnion B) x = parityOn S fun j => parityOn (B j) x := by
+  induction S using Finset.induction_on with
+  | empty => simp
+  | insert j S hj ih =>
+    have hdisj : Disjoint (B j) (S.biUnion B) := (disjoint_biUnion_right _ _ _).2 fun j' hj' =>
+      hB (mem_insert_self j S) (mem_insert_of_mem hj') fun h => hj (h ▸ hj')
+    rw [biUnion_insert, parityOn_union hdisj, parityOn_insert hj,
+      ih (hB.subset (by simp [Set.subset_insert]))]
+
 /-- Flipping one of the bits negates the parity. -/
 theorem parityOn_update_not (hi : i ∈ s) (x : BitString n) :
     parityOn s (update x i !x i) = !parityOn s x := by
   rw [parityOn_eq_xor_erase hi, parityOn_eq_xor_erase hi, update_self,
     parityOn_update_of_notMem (notMem_erase i s)]
   cases x i <;> simp
+
+/-- Flipping any bit flips the parity. -/
+theorem parity_update_not (x : BitString n) (i : Fin n) :
+    parity n (update x i !x i) = !parity n x :=
+  parityOn_update_not (mem_univ i) x
+
+/-- Parity of `n ≥ 1` bits is true on as many inputs as it is false: flipping the first bit
+exchanges them. -/
+theorem card_filter_parity_eq_true_eq (hn : 1 ≤ n) :
+    #{x : BitString n | parity n x = true} = #{x : BitString n | parity n x = false} := by
+  refine card_nbij' (fun x => update x ⟨0, hn⟩ !x ⟨0, hn⟩) (fun x => update x ⟨0, hn⟩ !x ⟨0, hn⟩)
+    (fun x hx => ?_) (fun x hx => ?_) (fun x _ => by simp) (fun x _ => by simp)
+  · simpa [parity_update_not] using hx
+  · simpa [parity_update_not] using hx
+
+/-- Parity of `n ≥ 1` bits is true on half of the inputs. -/
+theorem card_filter_parity_eq_true (hn : 1 ≤ n) :
+    #{x : BitString n | parity n x = true} = 2 ^ (n - 1) := by
+  have htotal := card_filter_add_card_filter_not (s := (univ : Finset (BitString n)))
+    (fun x => parity n x = true)
+  simp only [Bool.not_eq_true, card_univ, Fintype.card_fun, Fintype.card_bool,
+    Fintype.card_fin, ← card_filter_parity_eq_true_eq hn] at htotal
+  have : 2 ^ n = 2 * 2 ^ (n - 1) := by rw [← pow_succ']; congr 1; omega
+  omega
+
+/-- Parity of `n ≥ 1` bits is false on half of the inputs. -/
+theorem card_filter_parity_eq_false (hn : 1 ≤ n) :
+    #{x : BitString n | parity n x = false} = 2 ^ (n - 1) := by
+  rw [← card_filter_parity_eq_true_eq hn, card_filter_parity_eq_true hn]
 
 /-- The parity, possibly negated, depends on each of its bits. -/
 theorem not_dependsOn_parityOn (hi : i ∈ s) (c : Bool) :

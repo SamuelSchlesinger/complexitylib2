@@ -30,7 +30,7 @@ over `N` variables and an order `σ` of the variables. A variable `v` is *forced
 literals are on earlier variables and false under `x`. The words agreeing with a solution `x`
 off its forced variables are disjoint for distinct solutions: at the first variable where two
 solutions differ, a clause forcing it in one of them is false under the other
-(`CNF.disjoint_agree`). Hence `∑ₓ 2 ^ |forced σ x| ≤ 2 ^ N` for every order
+(`CNF.disjoint_agreeOffForced`). Hence `∑ₓ 2 ^ |forced σ x| ≤ 2 ^ N` for every order
 (`CNF.sum_two_pow_card_forced_le`), and by the inequality of arithmetic and geometric means the
 same holds with the average number of forced variables over all orders in the exponent
 (`CNF.sum_two_rpow_average_card_forced_le`).
@@ -71,7 +71,10 @@ namespace CNF
 
 /-- The clause `c` forces `v` on `x` for the order `σ`: it contains the literal of `v` true under
 `x`, and all its other literals are on variables before `v` (in the order `σ`) and false under
-`x`. -/
+`x`. This is the deletion rule of Paturi, Pudlák and Zane: such a clause is critical for `v` at `x`
+and `v` comes last among its variables, so the decoder meets it as a unit clause on `v`. A clause
+also containing the literal of `v` false under `x` forces nothing, as the decoder would not see a
+unit clause there; the definition rules it out, since that literal would need `σ v < σ v`. -/
 def Forces (σ : Equiv.Perm (Fin N)) (x : BitString N) (c : Clause (Fin N)) (v : Fin N) : Prop :=
   (v, x v) ∈ c ∧ ∀ l ∈ c, l ≠ (v, x v) → σ l.1 < σ v ∧ x l.1 ≠ l.2
 
@@ -85,16 +88,20 @@ def forced (φ : CNF (Fin N)) (σ : Equiv.Perm (Fin N)) (x : BitString N) : Fins
 
 variable {φ : CNF (Fin N)} {σ : Equiv.Perm (Fin N)}
 
+@[simp] theorem mem_forced {φ : CNF (Fin N)} {σ : Equiv.Perm (Fin N)} {x : BitString N}
+    {v : Fin N} : v ∈ φ.forced σ x ↔ ∃ c ∈ φ, Forces σ x c v := by
+  simp [forced]
+
 /-- The words agreeing with `x` outside the variables forced on `x`. -/
-def agree (φ : CNF (Fin N)) (σ : Equiv.Perm (Fin N)) (x : BitString N) :
+def agreeOffForced (φ : CNF (Fin N)) (σ : Equiv.Perm (Fin N)) (x : BitString N) :
     Finset (BitString N) :=
   univ.filter fun y => ∀ v ∉ φ.forced σ x, y v = x v
 
 /-- **The words agreeing with distinct solutions off their forced variables are disjoint**: at the
 first variable, in the order `σ`, where two solutions differ, one of them is forced, and the clause
 forcing it is false under the other solution. -/
-theorem disjoint_agree {x x' : BitString N} (hx : φ.eval x = true) (hx' : φ.eval x' = true)
-    (hne : x ≠ x') : Disjoint (φ.agree σ x) (φ.agree σ x') := by
+theorem disjoint_agreeOffForced {x x' : BitString N} (hx : φ.eval x = true) (hx' : φ.eval x' = true)
+    (hne : x ≠ x') : Disjoint (φ.agreeOffForced σ x) (φ.agreeOffForced σ x') := by
   refine disjoint_left.2 fun y hy hy' => ?_
   -- the first variable where `x` and `x'` differ
   have hdiff : (univ.filter fun v => x v ≠ x' v).Nonempty := by
@@ -124,12 +131,12 @@ theorem disjoint_agree {x x' : BitString N} (hx : φ.eval x = true) (hx' : φ.ev
     · exact hxv (((mem_filter.1 hy).2 v hfx).symm.trans ((mem_filter.1 hy').2 v hfx'))
 
 /-- `2 ^ |forced σ x|` words agree with `x` off its forced variables. -/
-theorem card_agree (x : BitString N) : (φ.agree σ x).card = 2 ^ (φ.forced σ x).card := by
-  classical
-  have h : (φ.agree σ x).card =
+theorem card_agreeOffForced (x : BitString N) :
+    (φ.agreeOffForced σ x).card = 2 ^ (φ.forced σ x).card := by
+  have h : (φ.agreeOffForced σ x).card =
       Fintype.card (∀ v, {b : Bool // v ∉ φ.forced σ x → b = x v}) := by
     rw [← Fintype.card_coe]
-    exact Fintype.card_congr ((Equiv.subtypeEquivRight fun y => by simp [agree]).trans
+    exact Fintype.card_congr ((Equiv.subtypeEquivRight fun y => by simp [agreeOffForced]).trans
       Equiv.subtypePiEquivPi)
   rw [h, Fintype.card_pi]
   have hv (v : Fin N) : Fintype.card {b : Bool // v ∉ φ.forced σ x → b = x v} =
@@ -145,12 +152,11 @@ theorem card_agree (x : BitString N) : (φ.agree σ x).card = 2 ^ (φ.forced σ 
 `∑ₓ 2 ^ |forced σ x| ≤ 2 ^ N`. -/
 theorem sum_two_pow_card_forced_le (φ : CNF (Fin N)) (σ : Equiv.Perm (Fin N)) :
     ∑ x ∈ univ.filter fun x : BitString N => φ.eval x = true, 2 ^ (φ.forced σ x).card ≤ 2 ^ N := by
-  classical
   calc ∑ x ∈ univ.filter fun x : BitString N => φ.eval x = true, 2 ^ (φ.forced σ x).card
-      = ∑ x ∈ univ.filter fun x : BitString N => φ.eval x = true, (φ.agree σ x).card :=
-        sum_congr rfl fun x _ => (card_agree x).symm
-    _ = ((univ.filter fun x : BitString N => φ.eval x = true).biUnion (φ.agree σ)).card :=
-        (card_biUnion fun x hx x' hx' hne => disjoint_agree (mem_filter.1 hx).2
+      = ∑ x ∈ univ.filter fun x : BitString N => φ.eval x = true, (φ.agreeOffForced σ x).card :=
+        sum_congr rfl fun x _ => (card_agreeOffForced x).symm
+    _ = ((univ.filter fun x : BitString N => φ.eval x = true).biUnion (φ.agreeOffForced σ)).card :=
+        (card_biUnion fun x hx x' hx' hne => disjoint_agreeOffForced (mem_filter.1 hx).2
           (mem_filter.1 hx').2 hne).symm
     _ ≤ (univ : Finset (BitString N)).card := card_le_univ _
     _ = 2 ^ N := by simp
@@ -162,7 +168,6 @@ some element of `S` last, and composing with the transposition of `i` and `j` mo
 putting `j` last to orders putting `i` last. -/
 theorem factorial_le_card_mul_card_filter_le {S : Finset (Fin N)} {i : Fin N} (hi : i ∈ S) :
     N.factorial ≤ S.card * (univ.filter fun σ : Equiv.Perm (Fin N) => ∀ u ∈ S, σ u ≤ σ i).card := by
-  classical
   set M : Fin N → Finset (Equiv.Perm (Fin N)) := fun j =>
     univ.filter fun σ => ∀ u ∈ S, σ u ≤ σ j
   have hcover : (univ : Finset (Equiv.Perm (Fin N))) ⊆ S.biUnion M := fun σ _ => by
@@ -241,8 +246,8 @@ theorem factorial_le_mul_card_filter_mem_forced {k : ℕ} (hk : ∀ c ∈ φ, c.
 
 /-! ### Averaging over the orders -/
 
-/-- **The coding lemma** [Paturi, Pudlák and Zane, Lemma 1][PaturiPudlakZane1999]: with `E(x)`
-the average, over all `N!` orders, of the number of variables forced on a solution `x`, the
+/-- **The coding lemma** [Paturi, Pudlák and Zane, Lemma 2 and Fact 3][PaturiPudlakZane1999]: with
+`E(x)` the average, over all `N!` orders, of the number of variables forced on a solution `x`, the
 solutions satisfy `∑ₓ 2 ^ E(x) ≤ 2 ^ N`. -/
 theorem sum_two_rpow_average_card_forced_le (φ : CNF (Fin N)) :
     ∑ x ∈ univ.filter fun x : BitString N => φ.eval x = true,
@@ -281,7 +286,7 @@ theorem sum_two_rpow_average_card_forced_le (φ : CNF (Fin N)) :
         field_simp
 
 /-- **The coding lemma for formulas of width `k`**
-[Paturi, Pudlák and Zane, Lemma 1][PaturiPudlakZane1999]: if every clause has at most `k ≥ 1`
+[Paturi, Pudlák and Zane, Lemma 2][PaturiPudlakZane1999]: if every clause has at most `k ≥ 1`
 literals, the solutions `x` satisfy `∑ₓ 2 ^ (ι(x) / k) ≤ 2 ^ N`, where `ι(x)` is the number of
 directions in which `x` is isolated. -/
 theorem sum_two_rpow_card_isolated_div_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c ∈ φ, c.length ≤ k) :
@@ -307,7 +312,7 @@ theorem sum_two_rpow_card_isolated_div_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c 
           congr 1
           simp only [card_eq_sum_ones, sum_filter]
           rw [sum_comm]
-          simp
+          simp [-mem_forced]
   have hkR : (0 : ℝ) < k := by exact_mod_cast hk1
   have hF : (0 : ℝ) < N.factorial := by exact_mod_cast N.factorial_pos
   rw [div_le_div_iff₀ hkR hF]
@@ -316,8 +321,9 @@ theorem sum_two_rpow_card_isolated_div_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c 
     exact_mod_cast hcount
   linarith
 
-/-- **Few isolated solutions**: a formula whose clauses have at most `k ≥ 1` literals has at most
-`2 ^ ((1 - 1 / k) N)` solutions isolated in every direction. -/
+/-- **Few isolated solutions** [Paturi, Pudlák and Zane, Lemma 4][PaturiPudlakZane1999]: a formula
+whose clauses have at most `k ≥ 1` literals has at most `2 ^ ((1 - 1 / k) N)` solutions isolated in
+every direction. -/
 theorem card_isolated_mul_two_rpow_le {k : ℕ} (hk1 : 1 ≤ k) (hk : ∀ c ∈ φ, c.length ≤ k) :
     ((univ.filter fun x : BitString N => φ.eval x = true ∧
         ∀ i, φ.eval (Function.update x i (!x i)) = false).card : ℝ) * 2 ^ ((N : ℝ) / k) ≤
