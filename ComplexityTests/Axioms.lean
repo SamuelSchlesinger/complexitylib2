@@ -1827,10 +1827,10 @@ info: 'Cslib.Crypto.PRG.NisanWigderson.one_sub_pow_le_dens_mem_trialCandidates' 
 #print axioms Cslib.Crypto.PRG.NisanWigderson.one_sub_pow_le_dens_mem_trialCandidates
 
 /--
-info: 'Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.ListCode.ListDecodes.exists_decodeBits_eq_some' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some
+#print axioms Cslib.ListCode.ListDecodes.exists_decodeBits_eq_some
 
 /--
 info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.etimeBoundedComplexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]

@@ -66,7 +66,7 @@ outputs of the generator have low time-bounded complexity
 
 namespace Cslib.Kolmogorov.DescriptionMethod
 
-open Cslib.BitString Cslib.Crypto.PRG Cslib.Crypto.PRG.NisanWigderson Finset
+open Cslib.Crypto.PRG Cslib.Crypto.PRG.NisanWigderson Finset
 
 variable {α : Type*} {ℓ n a m L : ℕ}
 
@@ -86,7 +86,7 @@ decoder's input. The overhead `c` and the time bound `t` may depend on `D`, `C` 
 resulting bounds are relative to them; nothing is assumed about how the decoder evaluates the test
 or the list decoder, whose cost is part of `t`. -/
 structure ReconstructionDecoder (M : DescriptionMethod α) (D : Design ℓ n a m)
-    (C : ListCode α (Fin n → Bool) L) (test : (Fin m → Bool) → Bool) (c t : ℕ) where
+    (C : ListCode α (Fin n → Bool) Bool L) (test : (Fin m → Bool) → Bool) (c t : ℕ) where
   /-- The program describing the `k`-th candidate decoded from the reconstruction `R`. -/
   program : Reconstruction D → Fin L → List Bool
   /-- A program exceeds a direct description of its reconstruction and index by at most `c`
@@ -99,7 +99,7 @@ structure ReconstructionDecoder (M : DescriptionMethod α) (D : Design ℓ n a m
 
 namespace ReconstructionDecoder
 
-variable {M : DescriptionMethod α} {D : Design ℓ n a m} {C : ListCode α (Fin n → Bool) L}
+variable {M : DescriptionMethod α} {D : Design ℓ n a m} {C : ListCode α (Fin n → Bool) Bool L}
   {test : (Fin m → Bool) → Bool} {c t : ℕ}
 
 /-- **Short descriptions from distinguishers** [Hirahara2018]. Let `0 < m`, let the list code `C`

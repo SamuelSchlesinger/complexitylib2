@@ -234,7 +234,6 @@ public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Flip
-public import Complexity.Foundations.Data.BitString.ListDecoding
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
@@ -243,6 +242,7 @@ public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.List.BalancedFold
+public import Complexity.Foundations.Data.ListDecoding
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.Div
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure

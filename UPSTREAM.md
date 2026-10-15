@@ -246,7 +246,7 @@ Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file de
 | `Complexity.Foundations.Data.BitString.Agree` | cslib `Foundations/Data/BitString.lean` | candidate | `2 ^ #F` words agree with a word outside `F` |
 | `Complexity.Foundations.Data.BitString.Block` | cslib `Foundations/Data/BitString.lean` | candidate | the blocks of a string of `m * k` bits through `finProdFinEquiv`, the equivalence with `Fin m → BitString k`, the positions of a block and gluing along a block; shared by element distinctness and the polynomial correlation bounds |
 | `Complexity.Foundations.Data.Finset.Sampling` | Mathlib `Algebra/Order/BigOperators/Expect.lean` | candidate | reverse averaging (`expect_sub_div_le_dens_filter`) and repeated trials (`dens_filter_exists_apply_mem`) for uniform samples |
-| `Complexity.Foundations.Data.BitString.ListDecoding` | same path | candidate | list codes, the list-decoding radius, candidate lists of size `L`, a `⌈log₂ L⌉`-bit index; open: a concrete list-decodable family |
+| `Complexity.Foundations.Data.ListDecoding` | same path | candidate | list codes over any alphabet, the list-decoding radius, candidate lists of size `L`, a `⌈log₂ L⌉`-bit index; open: a concrete list-decodable family |
 | `Complexity.Probability.PMF.Expect` | addition to `Cslib/Probability/PMF.lean` | candidate | uniform PMF experiments as averages and densities |
 | `Complexity.Foundations.Combinatorics.Sunflower` | `Cslib/Foundations/Combinatorics/Sunflower.lean` (or Mathlib) | candidate | the Erdős–Rado sunflower lemma |
 | `Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame` | addition to crei's `Encodings/Basic.lean` | candidate | the bits of `frame w` |

@@ -18,31 +18,31 @@ public import Mathlib.Data.Nat.Log
 /-!
 # List decoding
 
-A *list code* encodes messages of a type `α` as binary words `ι → Bool`, and its list decoder
-turns every received word `w` into `L` candidate messages. The code *list decodes up to radius
-`ρ`* if the candidates for `w` include every message whose codeword differs from `w` on at most a
-`ρ` fraction of the coordinates [Arora and Barak, Chapter 19][AroraBarak09]. A word that agrees
-with the codeword of `x` on a `1 / 2 + δ` fraction of the coordinates thus determines `x` up to
-`L` possibilities when the code list decodes up to radius `1 / 2 - δ`
-(`Cslib.BitString.ListCode.ListDecodes.mem_candidates_of_half_add_le`): `x` is one of the at most
-`L` candidates (`Cslib.BitString.ListCode.card_candidates_le`), and it is named by an index of
-`⌈log₂ L⌉` bits (`Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some`). This is how
-the Nisan–Wigderson reconstruction recovers a message from a predictor of its codeword.
+A *list code* encodes messages of a type `α` as words `ι → β` over an alphabet `β`, and its list
+decoder turns every received word `w` into `L` candidate messages. The code *list decodes up to
+radius `ρ`* if the candidates for `w` include every message whose codeword differs from `w` on at
+most a `ρ` fraction of the coordinates [Arora and Barak, Chapter 19][AroraBarak09]; binary codes
+are those with `β = Bool`. A word that agrees with the codeword of `x` on a `1 / 2 + δ` fraction of
+the coordinates thus determines `x` up to `L` possibilities when the code list decodes up to radius
+`1 / 2 - δ` (`Cslib.ListCode.ListDecodes.mem_candidates_of_half_add_le`): `x` is one of the at
+most `L` candidates (`Cslib.ListCode.card_candidates_le`), and it is named by an index of
+`⌈log₂ L⌉` bits (`Cslib.ListCode.ListDecodes.exists_decodeBits_eq_some`). This is how the
+Nisan–Wigderson reconstruction recovers a message from a predictor of its codeword.
 
 ## Main definitions
 
-* `Cslib.BitString.ListCode`: an encoder of messages as binary words with a list decoder.
-* `Cslib.BitString.ListCode.ListDecodes`: list decoding up to a relative radius.
-* `Cslib.BitString.ListCode.candidates`: the candidates for a received word.
-* `Cslib.BitString.ListCode.decodeBits`: the candidate named by a binary index.
+* `Cslib.ListCode`: an encoder of messages as words over an alphabet with a list decoder.
+* `Cslib.ListCode.ListDecodes`: list decoding up to a relative radius.
+* `Cslib.ListCode.candidates`: the candidates for a received word.
+* `Cslib.ListCode.decodeBits`: the candidate named by a binary index.
 
 ## Main results
 
-* `Cslib.BitString.ListCode.card_candidates_le`: there are at most `L` candidates.
-* `Cslib.BitString.ListCode.ListDecodes.exists_decode_eq`,
-  `Cslib.BitString.ListCode.ListDecodes.exists_decode_eq_of_half_add_le`: a message whose codeword
+* `Cslib.ListCode.card_candidates_le`: there are at most `L` candidates.
+* `Cslib.ListCode.ListDecodes.exists_decode_eq`,
+  `Cslib.ListCode.ListDecodes.exists_decode_eq_of_half_add_le`: a message whose codeword
   agrees with the received word on enough coordinates is a candidate.
-* `Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some`: it is named by an index of
+* `Cslib.ListCode.ListDecodes.exists_decodeBits_eq_some`: it is named by an index of
   `Nat.clog 2 L` bits.
 
 ## References
@@ -52,48 +52,48 @@ the Nisan–Wigderson reconstruction recovers a message from a predictor of its 
 
 @[expose] public section
 
-namespace Cslib.BitString
+namespace Cslib
 
 open Finset
 
-/-- A *list code*: an encoder of messages of type `α` as binary words on the coordinates `ι`,
-with a list decoder returning `L` candidate messages for every received word. -/
-structure ListCode (α ι : Type*) (L : ℕ) where
+/-- A *list code*: an encoder of messages of type `α` as words on the coordinates `ι` over the
+alphabet `β`, with a list decoder returning `L` candidate messages for every received word. -/
+structure ListCode (α ι β : Type*) (L : ℕ) where
   /-- The codeword of a message. -/
-  encode : α → ι → Bool
+  encode : α → ι → β
   /-- The `k`-th candidate message for a received word. -/
-  decode : (ι → Bool) → Fin L → α
+  decode : (ι → β) → Fin L → α
 
 namespace ListCode
 
-variable {α ι : Type*} {L : ℕ} (C : ListCode α ι L)
+variable {α ι β : Type*} {L : ℕ} (C : ListCode α ι β L)
 
 /-- The code *list decodes up to radius `ρ`*: the candidates for a received word `w` include every
 message whose codeword differs from `w` on at most a `ρ` fraction of the coordinates. -/
-def ListDecodes [Fintype ι] (ρ : ℝ) : Prop :=
+def ListDecodes [Fintype ι] [DecidableEq β] (ρ : ℝ) : Prop :=
   ∀ x w, (hammingDist (C.encode x) w : ℝ) ≤ ρ * Fintype.card ι → ∃ k, C.decode w k = x
 
 /-- The candidates for the received word `w`, without repetitions. -/
-def candidates [DecidableEq α] (w : ι → Bool) : Finset α :=
+def candidates [DecidableEq α] (w : ι → β) : Finset α :=
   univ.image (C.decode w)
 
 @[simp]
-theorem mem_candidates [DecidableEq α] {w : ι → Bool} {x : α} :
+theorem mem_candidates [DecidableEq α] {w : ι → β} {x : α} :
     x ∈ C.candidates w ↔ ∃ k, C.decode w k = x := by
   simp [candidates]
 
 /-- **List size.** A received word has at most `L` candidates. -/
-theorem card_candidates_le [DecidableEq α] (w : ι → Bool) : #(C.candidates w) ≤ L :=
+theorem card_candidates_le [DecidableEq α] (w : ι → β) : #(C.candidates w) ≤ L :=
   card_image_le.trans_eq (card_fin L)
 
 /-- The candidate named by the binary index `b` of `Nat.clog 2 L` bits, read least significant bit
 first: the `k`-th candidate for `w` if `b` spells a number `k < L`, and nothing otherwise. -/
-def decodeBits (w : ι → Bool) (b : BitString (Nat.clog 2 L)) : Option α :=
+def decodeBits (w : ι → β) (b : BitString (Nat.clog 2 L)) : Option α :=
   let k : Fin (2 ^ Nat.clog 2 L) := finFunctionFinEquiv (finTwoEquiv.symm ∘ b)
   if h : (k : ℕ) < L then some (C.decode w ⟨k, h⟩) else none
 
 /-- **Short index.** Every candidate is named by an index of `Nat.clog 2 L` bits. -/
-theorem exists_decodeBits_eq_some {w : ι → Bool} {x : α} (h : ∃ k, C.decode w k = x) :
+theorem exists_decodeBits_eq_some {w : ι → β} {x : α} (h : ∃ k, C.decode w k = x) :
     ∃ b : BitString (Nat.clog 2 L), C.decodeBits w b = some x := by
   obtain ⟨k, rfl⟩ := h
   let k' : Fin (2 ^ Nat.clog 2 L) := Fin.castLE (Nat.le_pow_clog one_lt_two L) k
@@ -103,9 +103,9 @@ theorem exists_decodeBits_eq_some {w : ι → Bool} {x : α} (h : ∃ k, C.decod
     rw [← Function.comp_assoc, Equiv.symm_comp_self, Function.id_comp, Equiv.apply_symm_apply]
   simp only [decodeBits, hk, k', Fin.val_castLE, k.isLt, ↓reduceDIte]
 
-variable [Fintype ι] {C}
+variable [Fintype ι] [DecidableEq β] {C}
 
-private theorem hammingDist_eq_card_mul_one_sub_dens (f g : ι → Bool) :
+private theorem hammingDist_eq_card_mul_one_sub_dens (f g : ι → β) :
     (hammingDist f g : ℝ) = Fintype.card ι * (1 - dens {i | f i = g i}) := by
   have hcard : #{i | f i = g i} + hammingDist f g = Fintype.card ι := by
     rw [hammingDist, ← card_univ]
@@ -116,7 +116,7 @@ private theorem hammingDist_eq_card_mul_one_sub_dens (f g : ι → Bool) :
 
 /-- A list decoder up to radius `ρ` lists every message whose codeword agrees with the received
 word on at least a `1 - ρ` fraction of the coordinates. -/
-theorem ListDecodes.exists_decode_eq {ρ : ℝ} (hC : C.ListDecodes ρ) {x : α} {w : ι → Bool}
+theorem ListDecodes.exists_decode_eq {ρ : ℝ} (hC : C.ListDecodes ρ) {x : α} {w : ι → β}
     (h : 1 - ρ ≤ (dens {i | C.encode x i = w i} : ℝ)) : ∃ k, C.decode w k = x := by
   refine hC x w ?_
   rw [hammingDist_eq_card_mul_one_sub_dens, mul_comm]
@@ -126,14 +126,14 @@ theorem ListDecodes.exists_decode_eq {ρ : ℝ} (hC : C.ListDecodes ρ) {x : α}
 /-- A list decoder up to radius `1 / 2 - δ` lists every message whose codeword agrees with the
 received word on at least a `1 / 2 + δ` fraction of the coordinates. -/
 theorem ListDecodes.exists_decode_eq_of_half_add_le {δ : ℝ} (hC : C.ListDecodes (1 / 2 - δ))
-    {x : α} {w : ι → Bool} (h : 1 / 2 + δ ≤ (dens {i | C.encode x i = w i} : ℝ)) :
+    {x : α} {w : ι → β} (h : 1 / 2 + δ ≤ (dens {i | C.encode x i = w i} : ℝ)) :
     ∃ k, C.decode w k = x :=
   hC.exists_decode_eq (by linarith)
 
 /-- A list decoder up to radius `1 / 2 - δ` lists every message whose codeword agrees with the
 received word on at least a `1 / 2 + δ` fraction of the coordinates. -/
 theorem ListDecodes.mem_candidates_of_half_add_le [DecidableEq α] {δ : ℝ}
-    (hC : C.ListDecodes (1 / 2 - δ)) {x : α} {w : ι → Bool}
+    (hC : C.ListDecodes (1 / 2 - δ)) {x : α} {w : ι → β}
     (h : 1 / 2 + δ ≤ (dens {i | C.encode x i = w i} : ℝ)) : x ∈ C.candidates w :=
   C.mem_candidates.mpr (hC.exists_decode_eq_of_half_add_le h)
 
@@ -141,10 +141,10 @@ theorem ListDecodes.mem_candidates_of_half_add_le [DecidableEq α] {δ : ℝ}
 with the codeword of `x` on at least a `1 / 2 + δ` fraction of the coordinates, together with an
 index of `Nat.clog 2 L` bits, determines `x`. -/
 theorem ListDecodes.exists_decodeBits_eq_some {δ : ℝ} (hC : C.ListDecodes (1 / 2 - δ)) {x : α}
-    {w : ι → Bool} (h : 1 / 2 + δ ≤ (dens {i | C.encode x i = w i} : ℝ)) :
+    {w : ι → β} (h : 1 / 2 + δ ≤ (dens {i | C.encode x i = w i} : ℝ)) :
     ∃ b : BitString (Nat.clog 2 L), C.decodeBits w b = some x :=
   C.exists_decodeBits_eq_some (hC.exists_decode_eq_of_half_add_le h)
 
 end ListCode
 
-end Cslib.BitString
+end Cslib

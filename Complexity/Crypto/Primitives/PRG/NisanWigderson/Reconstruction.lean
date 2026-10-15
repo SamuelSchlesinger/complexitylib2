@@ -9,7 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
-public import Complexity.Foundations.Data.BitString.ListDecoding
+public import Complexity.Foundations.Data.ListDecoding
 import Complexity.Foundations.Data.Finset.Sampling
 
 /-!
@@ -69,7 +69,7 @@ randomized list-decoding reconstruction of [Hirahara2018].
 
 namespace Cslib.Crypto.PRG.NisanWigderson
 
-open Cslib.BitString Finset
+open Finset
 
 variable {ℓ n a m : ℕ}
 
@@ -162,12 +162,12 @@ variable {α : Type*} {L : ℕ} [DecidableEq α]
 
 /-- The candidates listed by the trials `ts`: the union of the candidates that the list code `C`
 decodes from their guesses. -/
-def trialCandidates (C : ListCode α (Fin n → Bool) L) (D : Design ℓ n a m)
+def trialCandidates (C : ListCode α (Fin n → Bool) Bool L) (D : Design ℓ n a m)
     (f : (Fin n → Bool) → Bool) (test : (Fin m → Bool) → Bool) {k : ℕ}
     (ts : Fin k → Trial ℓ m) : Finset α :=
   univ.biUnion fun j => C.candidates (trialGuess D f test (ts j))
 
-variable (C : ListCode α (Fin n → Bool) L) (D : Design ℓ n a m) (test : (Fin m → Bool) → Bool)
+variable (C : ListCode α (Fin n → Bool) Bool L) (D : Design ℓ n a m) (test : (Fin m → Bool) → Bool)
 
 /-- **List size.** `k` trials list at most `k L` candidates. -/
 theorem card_trialCandidates_le (f : (Fin n → Bool) → Bool) {k : ℕ} (ts : Fin k → Trial ℓ m) :
