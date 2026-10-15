@@ -15,7 +15,7 @@ import Complexity.Computability.Circuit.Boolean.TopDown
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Foundations.BooleanAnalysis.HadamardTester
-import Complexity.Crypto.Primitives.PRG.NisanWigderson
+import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
 /-!
@@ -167,5 +167,10 @@ example : Cslib.Crypto.PRG.NisanWigderson.Design 2 1 0 2 where
   block := ![{0}, {1}]
   card_block := by decide
   card_inter_le := by decide
+
+/-- Nisan–Wigderson designs with nontrivial parameters exist: a `(36, 3, 1)`-design with 16
+blocks. -/
+example : Nonempty (Cslib.Crypto.PRG.NisanWigderson.Design 36 3 1 16) :=
+  Cslib.Crypto.PRG.NisanWigderson.Design.nonempty_four_mul_sq 3 2
 
 end ComplexityTests.NonVacuity

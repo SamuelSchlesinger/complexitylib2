@@ -37,7 +37,7 @@ lower bound on the size of circuits approximating `f` thus becomes a lower bound
 circuits distinguishing the generator; this file is the finite core of that argument, without a
 model of computation.
 
-The existence of designs with good parameters is not proved here.
+Designs with good parameters exist: see `Complexity.Crypto.Primitives.PRG.NisanWigderson.Design`.
 
 ## Main definitions
 

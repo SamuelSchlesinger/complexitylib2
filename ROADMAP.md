@@ -345,7 +345,7 @@ convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `AC�
 | Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`BooleanAnalysis/{Hadamard,HadamardTester}`) |
 | Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | Cheeger done (`Expander/Cheeger`); constant-degree expanders open |
 | Zig-zag product | `PCP/Internal/ZigZag` | in progress |
-| Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | reconstruction done (`Crypto/Primitives/PRG/NisanWigderson`); designs' existence and the sampling layer open |
+| Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | reconstruction and designs done (`Crypto/Primitives/PRG/NisanWigderson{,/Design}`); the sampling layer open |
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure | after the expander and Hadamard layers |
 | Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | multi-batch, later |
 

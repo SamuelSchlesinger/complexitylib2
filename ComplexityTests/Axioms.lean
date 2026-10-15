@@ -1182,4 +1182,22 @@ info: 'Cslib.RotationMap.spectralExpansion_le_one_sub_edgeExpansion_sq_div' depe
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.spectralExpansion_le_one_sub_edgeExpansion_sq_div
 
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.Design.nonempty_four_mul_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.Design.nonempty_four_mul_sq
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.Design.nonempty_of_isPrimePow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.Design.nonempty_of_isPrimePow
+
+/--
+info: 'Cslib.Crypto.PRG.NisanWigderson.card_polynomialBlock_inter_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.NisanWigderson.card_polynomialBlock_inter_le
+
 end ComplexityTests.Axioms
