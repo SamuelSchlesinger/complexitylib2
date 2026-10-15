@@ -60,8 +60,7 @@ over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
   the noise sensitivity through the noise stability and its Fourier formula
   [O'Donnell, Definition 2.43 and Theorem 2.49][ODonnell2014].
 * `Cslib.BitString.noiseSensitivity_le_mul_totalInfluence`: the noise sensitivity at `δ` is at
-  most `δ` times
-  the total influence.
+  most `δ` times the total influence.
 
 ## References
 
