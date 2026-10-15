@@ -64,6 +64,7 @@ public import Complexity.Computability.Circuit.Monotone.Clique.Positive
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation
+public import Complexity.Computability.Circuit.SimulationDepth
 public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Communication.Protocol
 public import Complexity.Computability.Communication.RoundProtocol
