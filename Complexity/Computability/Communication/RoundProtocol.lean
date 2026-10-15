@@ -103,6 +103,26 @@ theorem SolvesKW.swapPlayers {d : ℕ} {P : RoundProtocol ι M d} {f : (ι → B
   rw [run_swapPlayers]
   exact (h y x (by simpa using hy) (by simpa using hx)).symm
 
+/-- Apply `φ` to both players' inputs before running the protocol. -/
+def comap (φ : (ι → Bool) → ι → Bool) : {d : ℕ} → RoundProtocol ι M d → RoundProtocol ι M d
+  | _, .answer i => .answer i
+  | _, .alice send next => .alice (send ∘ φ) fun a => (next a).comap φ
+  | _, .bob send next => .bob (send ∘ φ) fun a => (next a).comap φ
+
+theorem run_comap (φ : (ι → Bool) → ι → Bool) : ∀ {d : ℕ} (P : RoundProtocol ι M d)
+    (x y : ι → Bool), (P.comap φ).run x y = P.run (φ x) (φ y)
+  | _, .answer _, _, _ => rfl
+  | _, .alice send next, x, y => run_comap φ (next (send (φ x))) x y
+  | _, .bob send next, x, y => run_comap φ (next (send (φ y))) x y
+
+/-- Negating both players' inputs solves the game of the function of the negated input. -/
+theorem SolvesKW.comap_not {d : ℕ} {P : RoundProtocol ι M d} {f : (ι → Bool) → Bool}
+    (h : P.SolvesKW f) : (P.comap fun x i => !x i).SolvesKW fun x => f fun i => !x i := by
+  intro x y hx hy
+  rw [run_comap]
+  intro hxy
+  exact h _ _ hx hy (by simp [hxy])
+
 end RoundProtocol
 
 end Cslib.Communication

@@ -253,7 +253,8 @@ subsets (`Foundations/Combinatorics/Hypergeometric.lean`).
 lemmas of `Foundations/BooleanAnalysis/`): a circuit of depth `d` with `g` gates gives a
 Karchmer–Wigderson protocol with `d` messages from its `n + g` wires, and parity has no such
 protocol unless `n + g > 2 ^ (ε n ^ (1 / (d - 1)))`, so parity needs more than `n ^ k` gates at
-every fixed depth. This is the optimal exponent, against `1 / (d + 1)` from Håstad's argument above.
+every fixed depth; the same for majority. This is the optimal exponent, against `1 / (d + 1)` from
+Håstad's argument above.
 
 **Shallow circuits for symmetric functions** (`Circuit/Boolean/ShallowSymmetric.lean`, over
 alternating formulas in `Circuit/Boolean/AltFormula.lean`): the theorem of Lecomte and

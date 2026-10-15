@@ -694,4 +694,16 @@ info: 'Cslib.Communication.parity_communication_lower_bound' depends on axioms: 
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Communication.parity_communication_lower_bound
 
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_majority' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_majority
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_majority' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_majority
+
 end ComplexityTests.Axioms
