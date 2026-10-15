@@ -1641,6 +1641,18 @@ info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess' depends on axioms: [pro
 #print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess
 
 /--
+info: 'Cslib.PCP.ConstraintGraph.spectralExpansion_preprocess_expanderFamily_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.spectralExpansion_preprocess_expanderFamily_le
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess_expanderFamily' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess_expanderFamily
+
+/--
 info: 'Relation.RelatesWithinSteps.add_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

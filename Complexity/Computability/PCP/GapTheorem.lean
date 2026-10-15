@@ -35,7 +35,7 @@ The construction:
    `1 / |E|`, the value reaches the threshold, while the size grows by a factor polynomial in `|E|`.
 
 Everything here is a noncomputable definition: the expanders of preprocessing are chosen
-non-constructively (`Cslib.RotationMap.expander`), and the realization of the construction in
+non-constructively (`Cslib.RotationMap.expanderFamily`), and the realization of the construction in
 polynomial time, which needs explicit expanders [Dinur, Lemma 2.2][Dinur2007], is not addressed.
 As the function `gapGraph` is fixed, the theorems below are not mere existence statements, which
 would be trivial: a function deciding satisfiability could output one fixed graph of each kind.
@@ -64,7 +64,7 @@ universe u
 
 namespace Cslib.PCP.Dinur
 
-open ConstraintGraph HadamardTester Logic.PL
+open ConstraintGraph HadamardTester Logic.PL RotationMap
 
 /-- **Dinur's round** on a finite constraint graph over the fixed alphabet `Σ₀`:
 `amplify walkLength killRate`, with the vertices and edges it builds from the edges of its input. -/
@@ -130,14 +130,14 @@ variable {V : Type u} [DecidableEq V] (φ : CNF V)
 `ofCNF φ`, preprocessed, then composed. Preprocessing replaces the vertices by the half-edges, so
 that the variables of `φ` disappear, and composition brings the alphabet to `Σ₀`. -/
 noncomputable def cnfGraph : FinConstraintGraph.{0} Alphabet :=
-  ⟨_, _, (ofCNF φ).preprocess.toConstraintGraph.compose⟩
+  ⟨_, _, ((ofCNF φ).preprocess expanderFamily).toConstraintGraph.compose⟩
 
 /-- If the clauses of `φ` have at most three literals, its constraint graph over `Σ₀` is
 satisfiable exactly when `φ` is. -/
 theorem satisfiable_cnfGraph_iff (h3 : ∀ κ ∈ φ, κ.length ≤ 3) :
     (cnfGraph φ).graph.Satisfiable ↔ φ.Satisfiable :=
   (satisfiable_compose_iff _).trans
-    (((ofCNF φ).satisfiable_preprocess_iff).trans (satisfiable_ofCNF_iff φ h3))
+    (((ofCNF φ).satisfiable_preprocess_iff _ (by norm_num)).trans (satisfiable_ofCNF_iff φ h3))
 
 /-- The alphabet `Fin 3 → Bool` of the constraint graph of a formula has eight symbols. -/
 private theorem card_cnfAlphabet : Fintype.card (Fin 3 → Bool) = 8 := by
@@ -147,7 +147,7 @@ private theorem card_cnfAlphabet : Fintype.card (Fin 3 → Bool) = 8 := by
 edges. -/
 theorem card_edges_cnfGraph : Fintype.card (cnfGraph φ).E = 24684 * 2 ^ 1403 * φ.length := by
   rw [Fintype.card_congr' (α := (cnfGraph φ).E)
-    (β := ((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) ×
+    (β := ((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) ×
       Rand (Fin 3 → Bool)) × Query) rfl,
     card_edges_compose, card_cnfAlphabet, show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]
@@ -160,8 +160,8 @@ theorem card_vertices_cnfGraph :
     Fintype.card (cnfGraph φ).V = (1536 + 1452 * (2 ^ 16 + 2 ^ 256 + 2 ^ 1403)) * φ.length := by
   rw [Fintype.card_congr' (α := (cnfGraph φ).V)
     (β := ComposePos ((Fin φ.length × Fin 3) × Bool)
-      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) (Fin 3 → Bool) ⊕
-      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel) × Rand (Fin 3 → Bool))
+      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) (Fin 3 → Bool) ⊕
+      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool))
     rfl, card_vertices_compose, card_cnfAlphabet, show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl,
     show 4 * 8 ^ 2 = 256 from rfl, show 2 * 8 = 16 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]

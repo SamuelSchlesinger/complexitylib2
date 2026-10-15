@@ -21,8 +21,9 @@ value of unsatisfiable ones until it reaches a universal constant, multiplies th
 universal constant, and leaves the alphabet fixed. It is the composite of the three operations of
 the proof:
 
-1. **preprocessing** (`Cslib.PCP.ConstraintGraph.preprocess`): a `242`-regular expander on the
-   half-edges, losing a factor `1452000` of the value, whatever the alphabet;
+1. **preprocessing** (`Cslib.PCP.ConstraintGraph.preprocess`) with the family of `120`-regular
+   expanders `Cslib.RotationMap.expanderFamily`: a `242`-regular expander on the half-edges, losing
+   a factor `1452000` of the value, whatever the alphabet;
 2. **powering** (`Cslib.PCP.RegularConstraintGraph.power`) along killed walks truncated at `T`
    steps, killed with probability `1 / q`, which multiplies the value by a factor linear in `q`, at
    the cost of an alphabet of size `|α| ^ (∑ ℓ ≤ T, 242 ^ ℓ)`;
@@ -42,9 +43,10 @@ with the killing rate `q = 2 ^ 165 + 1` and the walk length `T = 2 ^ 185` chosen
 the round maps `Σ₀` to itself and **doubles the value up to the threshold** `γ = 1 / T ^ 2`:
 `min (2 UNSAT(G)) γ ≤ UNSAT(G.amplify T q)` (`Cslib.PCP.Dinur.min_le_unsatVal_amplify`). This is
 Dinur's main theorem, in a non-explicit form: the expanders of preprocessing are chosen
-non-constructively (`Cslib.RotationMap.expander`), and the round is a noncomputable definition;
-its realization in polynomial time is not addressed here. The constants are astronomically large,
-since nothing has been done to optimize them: the size factors are triply exponential in `T`.
+non-constructively (`Cslib.RotationMap.expanderFamily`), and the round is a noncomputable
+definition; its realization in polynomial time is not addressed here. The constants are
+astronomically large, since nothing has been done to optimize them: the size factors are triply
+exponential in `T`.
 
 ## Main definitions
 
@@ -73,41 +75,27 @@ since nothing has been done to optimize them: the size factors are triply expone
 
 namespace Cslib.PCP
 
-open Finset HadamardTester
+open Finset HadamardTester RotationMap
 
 namespace ConstraintGraph
-
-/-- The labels of the darts of a preprocessed constraint graph, which is `242`-regular. -/
-abbrev PreprocessLabel : Type :=
-  ((Unit ⊕ Fin 120) ⊕ Fin 120) ⊕ Unit
-
-/- The instances on `PreprocessLabel` are named so that those on the alphabet
-`WalkLabels PreprocessLabel T → α` of a powered graph stay below the size limit of instance
-synthesis. -/
-
-instance : DecidableEq PreprocessLabel :=
-  inferInstanceAs (DecidableEq (((Unit ⊕ Fin 120) ⊕ Fin 120) ⊕ Unit))
-
-instance : Fintype PreprocessLabel :=
-  inferInstanceAs (Fintype (((Unit ⊕ Fin 120) ⊕ Fin 120) ⊕ Unit))
 
 /-- The darts of the powered constraint graph in an amplification round on a constraint graph with
 edges `E`: a half-edge of the original graph, the labels of a walk of `T` steps from it in the
 preprocessed graph, and its kill signals. They are the edges of the constraint graph that
 composition is applied to. -/
 abbrev AmplifyDart (E : Type*) (T q : ℕ) : Type _ :=
-  (E × Bool) × (Fin T → PreprocessLabel) × (Fin T → Fin q)
+  (E × Bool) × (Fin T → PreprocessLabel (Fin 120)) × (Fin T → Fin q)
 
 /-- The vertices of the amplification round: those of the composed constraint graph of the powered
-one, whose alphabet is `WalkLabels PreprocessLabel T → α`. -/
+one, whose alphabet is `WalkLabels (PreprocessLabel (Fin 120)) T → α`. -/
 abbrev AmplifyVertex (E α : Type*) (T q : ℕ) : Type _ :=
-  ComposePos (E × Bool) (AmplifyDart E T q) (WalkLabels PreprocessLabel T → α) ⊕
-    AmplifyDart E T q × Rand (WalkLabels PreprocessLabel T → α)
+  ComposePos (E × Bool) (AmplifyDart E T q) (WalkLabels (PreprocessLabel (Fin 120)) T → α) ⊕
+    AmplifyDart E T q × Rand (WalkLabels (PreprocessLabel (Fin 120)) T → α)
 
 /-- The edges of the amplification round: those of the composed constraint graph of the powered
 one. -/
 abbrev AmplifyEdge (E α : Type*) (T q : ℕ) : Type _ :=
-  (AmplifyDart E T q × Rand (WalkLabels PreprocessLabel T → α)) × Query
+  (AmplifyDart E T q × Rand (WalkLabels (PreprocessLabel (Fin 120)) T → α)) × Query
 
 /- The instances on the vertices and edges of the round are assembled once for any alphabet, so
 that those of the round over a concrete alphabet stay below the size limit of instance
@@ -125,17 +113,13 @@ section Round
 
 variable {V E α : Type*} [Fintype E] [DecidableEq V] (G : ConstraintGraph V E α)
 
-/-- **The amplification round** [Dinur, Theorem 4.1][Dinur2007]: preprocessing, then powering
-along killed walks truncated at `T` steps and killed at rate `q`, then composition back to the
-alphabet `Bool × (HadamardTester.Query → Bool)`. -/
+/-- **The amplification round** [Dinur, Theorem 4.1][Dinur2007]: preprocessing with the
+non-explicit family of expanders `RotationMap.expanderFamily`, then powering along killed walks
+truncated at `T` steps and killed at rate `q`, then composition back to the alphabet
+`Bool × (HadamardTester.Query → Bool)`. -/
 noncomputable def amplify (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
     ConstraintGraph (AmplifyVertex E α T q) (AmplifyEdge E α T q) (Bool × (Query → Bool)) :=
-  (G.preprocess.power T q).toConstraintGraph.compose
-
-/-- The amplification round is preprocessing, then powering, then composition. -/
-theorem amplify_eq (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
-    G.amplify T q = (G.preprocess.power T q).toConstraintGraph.compose :=
-  rfl
+  ((G.preprocess expanderFamily).power T q).toConstraintGraph.compose
 
 variable [Fintype α] [DecidableEq α] [Nonempty α] {T q : ℕ} [NeZero q]
 
@@ -144,7 +128,8 @@ killing rate `q ≥ 2`. -/
 theorem satisfiable_amplify_iff (hT : 1 ≤ T) (hq : 2 ≤ q) :
     (G.amplify T q).Satisfiable ↔ G.Satisfiable := by
   rw [amplify, satisfiable_compose_iff,
-    RegularConstraintGraph.satisfiable_power_iff _ _ _ hT hq, satisfiable_preprocess_iff]
+    RegularConstraintGraph.satisfiable_power_iff _ _ _ hT hq,
+    satisfiable_preprocess_iff _ _ (by norm_num)]
 
 /-- **The value of the amplification round** [Dinur, Theorem 4.1][Dinur2007]: for a killing rate
 `q ≥ 2` and walks truncated at `T = 4 |α| (q - 1)` steps, it is at least
@@ -156,7 +141,8 @@ theorem le_unsatVal_amplify (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 
     ((q : ℝ) - 1) / (476 * (4 * Fintype.card α ^ 2 + 16 * Fintype.card α ^ 4 +
         92928000 * Fintype.card α ^ 5)) *
       min (G.unsatVal / 1452000) (1 / T ^ 2) ≤ (G.amplify T q).unsatVal := by
-  have hpow := G.preprocess.le_unsatVal_power T q hq hT G.spectralExpansion_preprocess_le
+  have hpow := (G.preprocess expanderFamily).le_unsatVal_power T q hq hT
+    G.spectralExpansion_preprocess_expanderFamily_le
     (by norm_num)
   set K : ℝ := (Fintype.card α : ℝ)
   have hmu : 128 * K ^ 5 / (1 - (1 - 1 / 726000)) = 92928000 * K ^ 5 := by
@@ -173,13 +159,14 @@ theorem le_unsatVal_amplify (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 
         rw [mul_comm 476, ← div_div]
         ring
     _ ≤ ((q - 1) / (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5) *
-          min G.preprocess.toConstraintGraph.unsatVal (1 / T ^ 2)) / 476 := by
+          min (G.preprocess expanderFamily).toConstraintGraph.unsatVal (1 / T ^ 2)) / 476 := by
         gcongr ?_ / _
-        exact mul_le_mul_of_nonneg_left (min_le_min_right _ G.le_unsatVal_preprocess) hs
-    _ ≤ (G.preprocess.power T q).toConstraintGraph.unsatVal / 476 := by
+        exact mul_le_mul_of_nonneg_left
+          (min_le_min_right _ G.le_unsatVal_preprocess_expanderFamily) hs
+    _ ≤ ((G.preprocess expanderFamily).power T q).toConstraintGraph.unsatVal / 476 := by
         gcongr
     _ ≤ (G.amplify T q).unsatVal :=
-        (G.preprocess.power T q).toConstraintGraph.le_unsatVal_compose
+        ((G.preprocess expanderFamily).power T q).toConstraintGraph.le_unsatVal_compose
 
 end Round
 
@@ -211,8 +198,10 @@ variable {E α : Type*} [Fintype E] [Fintype α] (T q : ℕ)
 /-- The alphabet of the powered constraint graph in an amplification round has
 `|α| ^ (∑ ℓ ≤ T, 242 ^ ℓ)` symbols. -/
 theorem card_walkLabels_preprocessLabel :
-    Fintype.card (WalkLabels PreprocessLabel T → α) = amplifyAlphabetCard (Fintype.card α) T := by
-  rw [RegularConstraintGraph.card_alphabet_power, amplifyAlphabetCard, card_label_preprocess]
+    Fintype.card (WalkLabels (PreprocessLabel (Fin 120)) T → α) =
+      amplifyAlphabetCard (Fintype.card α) T := by
+  rw [RegularConstraintGraph.card_alphabet_power, amplifyAlphabetCard, card_label_preprocess,
+    Fintype.card_fin]
 
 /-- The powered constraint graph in an amplification round has `2 |E| (242 q) ^ T` darts. -/
 theorem card_amplifyDart :

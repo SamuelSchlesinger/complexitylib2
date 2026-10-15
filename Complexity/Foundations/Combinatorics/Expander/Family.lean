@@ -32,10 +32,18 @@ single expander of constant size
 [Reingold, Vadhan and Wigderson, Section 1.2][ReingoldVadhanWigderson2002]
 [Arora and Barak, Section 21.3][AroraBarak09].
 
+A **family of expanders** (`Cslib.RotationMap.ExpanderFamily`) bundles a choice of a `D`-regular
+multigraph on every finite type with a common bound `μ` on their spectral expansions; constructions
+that need expanders of constant degree on arbitrary vertex sets, such as Dinur's preprocessing, take
+one as a parameter. The multigraphs `expander V` form one (`expanderFamily`).
+
 ## Main definitions
 
+* `Cslib.RotationMap.ExpanderFamily`: a family of `D`-regular multigraphs on all finite types with
+  spectral expansion at most `μ`.
 * `Cslib.RotationMap.expander`: a `120`-regular multigraph on `V` of spectral expansion at most
   `1 - 1 / 360000`, chosen non-constructively.
+* `Cslib.RotationMap.expanderFamily`: the family of the multigraphs `expander V`.
 
 ## Main results
 
@@ -108,5 +116,25 @@ noncomputable def expander : RotationMap V (Fin 120) :=
 /-- The spectral expansion of `expander V` is at most `1 - 1 / 360000`. -/
 theorem spectralExpansion_expander_le : (expander V).spectralExpansion ≤ 1 - 1 / 360000 :=
   (exists_spectralExpansion_le V).choose_spec
+
+/-- A **family of expanders** of degree `|D|` and spectral bound `μ`: a `D`-regular multigraph on
+every finite type `V` in the universe `u`, of spectral expansion at most `μ`. It is a family of
+expanders in the usual sense when `D` is finite and nonempty and `μ < 1`. -/
+structure ExpanderFamily (D : Type*) [Fintype D] (μ : ℝ) where
+  /-- The multigraph on a finite type. -/
+  graph (V : Type u) [Fintype V] : RotationMap V D
+  /-- The spectral expansion of each multigraph of the family is at most `μ`. -/
+  spectralExpansion_graph_le (V : Type u) [Fintype V] : (graph V).spectralExpansion ≤ μ
+
+/-- The non-explicit family of the `120`-regular multigraphs `expander V`, of spectral expansion
+at most `1 - 1 / 360000`. -/
+noncomputable def expanderFamily : ExpanderFamily.{u} (Fin 120) (1 - 1 / 360000) where
+  graph V _ := expander V
+  spectralExpansion_graph_le V _ := spectralExpansion_expander_le V
+
+/-- The multigraph of `expanderFamily` on `V` is `expander V`. -/
+@[simp]
+theorem graph_expanderFamily (V : Type u) [Fintype V] : expanderFamily.graph V = expander V :=
+  rfl
 
 end Cslib.RotationMap

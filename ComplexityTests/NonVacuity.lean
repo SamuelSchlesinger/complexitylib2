@@ -300,13 +300,14 @@ open Cslib.PCP Cslib.Logic.PL
 /-- The whole first layer of Dinur's proof applies: an unsatisfiable formula gives a preprocessed
 constraint graph of positive value. -/
 example (φ : CNF ℕ) (hφ : φ = [[(0, true)], [(0, false)]]) :
-    0 < (ConstraintGraph.ofCNF φ).preprocess.toConstraintGraph.unsatVal := by
+    0 < ((ConstraintGraph.ofCNF φ).preprocess
+      Cslib.RotationMap.expanderFamily).toConstraintGraph.unsatVal := by
   subst hφ
   have h : 0 < (ConstraintGraph.ofCNF ([[(0, true)], [(0, false)]] : CNF ℕ)).unsatVal := by
     rw [ConstraintGraph.unsatVal_pos_iff, ConstraintGraph.satisfiable_ofCNF_iff _ (by simp)]
     rintro ⟨σ, hσ⟩
     simp [CNF.eval, Clause.eval, Literal.eval] at hσ
-  exact lt_of_lt_of_le (by positivity) (ConstraintGraph.le_unsatVal_preprocess _)
+  exact lt_of_lt_of_le (by positivity) (ConstraintGraph.le_unsatVal_preprocess_expanderFamily _)
 
 /-- Dinur's gap theorem applies: the gap graph of an unsatisfiable formula has value at least the
 gap. -/
