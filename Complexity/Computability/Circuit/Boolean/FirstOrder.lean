@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Formula
-public import Mathlib.ModelTheory.Semantics
+public import Complexity.Logics.FirstOrder.Interpretation
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Tactic.FinCases
@@ -61,6 +61,7 @@ are about structures rather than an encoding of structures as bit strings.
 namespace Cslib.Circuits.Boolean.ModelChecking
 
 open FirstOrder FirstOrder.Language
+open Cslib.Logic.FO (termVar realize_termVar)
 
 variable {L : Language} [L.IsRelational] {n N : ℕ}
 
@@ -81,19 +82,6 @@ instance (x : Atom L n → Bool) : L.Structure (Model x) where
 instance [Fintype (Σ l, L.Relations l)] : Fintype (Atom L n) :=
   inferInstanceAs (Fintype (Σ R : Σ l, L.Relations l, Fin R.1 → Fin n))
 
-/-- The value of a term of a relational language: a bound variable. -/
-def termVal {k : ℕ} (xs : Fin k → Fin n) : L.Term (Empty ⊕ Fin k) → Fin n
-  | .var (.inl e) => e.elim
-  | .var (.inr i) => xs i
-  | .func f _ => isEmptyElim f
-
-theorem realize_term {x : Atom L n → Bool} {k : ℕ} (xs : Fin k → Model x)
-    (t : L.Term (Empty ⊕ Fin k)) : t.realize (Sum.elim Empty.elim xs) = termVal xs t := by
-  rcases t with (e | i) | ⟨f, _⟩
-  · exact e.elim
-  · rfl
-  · exact isEmptyElim f
-
 /-- The constant `b` as a formula over the unbounded fan-in basis. -/
 def constUnbounded (b : Bool) : Formula Unbounded.signature N :=
   if b then .gate (.and 0) Fin.elim0 else .gate (.or 0) Fin.elim0
@@ -105,12 +93,15 @@ def constUnbounded (b : Bool) : Formula Unbounded.signature N :=
 /-- A first-order formula, with values `xs` for its bound variables, as a formula over the
 unbounded fan-in basis reading the atomic facts through `e`: atomic formulas are inputs or
 constants, an implication is a disjunction with one negated argument, and a universal quantifier
-is a conjunction over the `n` elements. -/
+is a conjunction over the `n` elements. A term of the relational language `L` is a variable
+(`Cslib.Logic.FO.termVar`), here a bound one, with value given by `xs`. -/
 def toUnbounded (e : Atom L n ≃ Fin N) :
     ∀ {k}, L.BoundedFormula Empty k → (Fin k → Fin n) → Formula Unbounded.signature N
   | _, .falsum, _ => constUnbounded false
-  | _, .equal t₁ t₂, xs => constUnbounded (decide (termVal xs t₁ = termVal xs t₂))
-  | _, .rel R ts, xs => .input (e ⟨⟨_, R⟩, fun i => termVal xs (ts i)⟩)
+  | _, .equal t₁ t₂, xs =>
+    constUnbounded (decide (Sum.elim Empty.elim xs (termVar t₁) =
+      Sum.elim Empty.elim xs (termVar t₂)))
+  | _, .rel R ts, xs => .input (e ⟨⟨_, R⟩, fun i => Sum.elim Empty.elim xs (termVar (ts i))⟩)
   | _, .imp φ ψ, xs =>
     .gate (.or 2) ![.gate .not ![toUnbounded e φ xs], toUnbounded e ψ xs]
   | _, .all φ, xs => .gate (.and n) fun a => toUnbounded e φ (Fin.snoc xs a)
@@ -124,11 +115,11 @@ theorem eval_toUnbounded (e : Atom L n ≃ Fin N) (x : Atom L n → Bool) {k : �
   | falsum => simp [toUnbounded, BoundedFormula.Realize]
   | equal t₁ t₂ =>
     simp only [toUnbounded, eval_constUnbounded, decide_eq_true_iff, BoundedFormula.Realize,
-      realize_term]
+      realize_termVar]
     exact Iff.rfl
   | rel R ts =>
     simp only [toUnbounded, Formula.eval_input, Function.comp_apply, BoundedFormula.Realize,
-      realize_term]
+      realize_termVar]
     exact iff_of_eq (congrArg (fun a => x a = true) (e.symm_apply_apply _))
   | imp φ ψ ihφ ihψ =>
     simp only [toUnbounded, Formula.eval_gate, Unbounded.interpretation_or,

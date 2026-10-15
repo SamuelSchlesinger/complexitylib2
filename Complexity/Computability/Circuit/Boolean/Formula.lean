@@ -288,6 +288,7 @@ noncomputable def formulaDepth (f : BooleanFunction n) : ℕ :=
   (Formula.minDepthWith interpretation binaryCost f).toNat
 
 /-- The formula depth is the least depth with costs `binaryCost`. -/
+@[simp]
 theorem natCast_formulaDepth (f : BooleanFunction n) :
     (formulaDepth f : ℕ∞) = Formula.minDepthWith interpretation binaryCost f :=
   ENat.natCast_toNat (Formula.minDepthWith_ne_top_iff.2 (Formula.exists_computes f))

@@ -148,7 +148,7 @@ theorem Definable.of_reduces {K : Set (Bundled.{w} L.Structure)}
   obtain ⟨κ, _, I, hI⟩ := h
   obtain ⟨Φ, hΦ⟩ := hK'
   refine ⟨I.onESOSentence Φ, fun M _ => ?_⟩
-  rw [hI M, @hΦ _ (inferInstanceAs (Finite (I.Model M))), I.realize_onESOSentence]
+  rw [hI M, hΦ (Bundled.of (I.Model M)), I.realize_onESOSentence]
   rfl
 
 end Cslib.Logic.ESO

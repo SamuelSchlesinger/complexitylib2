@@ -253,6 +253,15 @@ example :
   have := h.card_le_of_pairwise_adj id fun i j hij => (SimpleGraph.top_adj i j).2 hij
   simp at this
 
+/-- Definable classes meet the isomorphism-closure hypothesis of first-order reducibility: the
+class of `3`-colorable finite simple graphs reduces to itself. -/
+example :
+    let K : Set (CategoryTheory.Bundled.{0} Language.graph.Structure) :=
+      {M | M ⊨ Theory.simpleGraph ∧
+        ∃ f : M → Fin 3, ∀ x y, Structure.RelMap adj ![x, y] → f x ≠ f y}
+    FO.Reduces K K :=
+  .refl (ESO.Definable.colorable_simpleGraph 3).isoClosed
+
 end SecondOrder
 
 section PCP
@@ -301,13 +310,18 @@ example : ∃ (D : Type) (_ : Fintype D) (H : Cslib.RotationMap (Fin 2 → D × 
     Fintype.one_lt_card_iff_nontrivial.2 inferInstance,
     Cslib.RotationMap.spectralExpansion_zigzagTowerBase_le_one_div_five le_rfl⟩
 
-/-- Repeated squaring on a RAM: two squarings leave `16` in register `1`, and the run costs `12`
-units of logarithmic time. -/
-example : (Cslib.RAM.run (Cslib.RAM.repeatedSquaring 2) 3 (Cslib.RAM.State.init [])).regs.read 1 =
-      16 ∧
-    Cslib.RAM.time Cslib.RAM.logCost (Cslib.RAM.repeatedSquaring 2) 3 (Cslib.RAM.State.init []) =
-      12 := by
+open Cslib.RAM in
+/-- Repeated squaring on a RAM: on input `2` the program halts after `4 * 2 + 5 = 13` steps with
+`2 ^ 2 ^ 2 = 16` in the output register, and the run costs `31` units of logarithmic time. -/
+example : (run repeatedSquaring 13 (State.init [2])).isHalted repeatedSquaring ∧
+    (run repeatedSquaring 13 (State.init [2])).regs.output = 16 ∧
+    time logCost repeatedSquaring 13 (State.init [2]) = 31 := by
   decide
+
+open Cslib.RAM in
+/-- The repeated-squaring program evaluates to `2 ^ 2 ^ k` on input `k`. -/
+example (k : ℕ) : eval repeatedSquaring [k] = .some (2 ^ 2 ^ k) :=
+  computesInTime_unitCost_repeatedSquaring.eval_eq ![k]
 
 section Frontier
 

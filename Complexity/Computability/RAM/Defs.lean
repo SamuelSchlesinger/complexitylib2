@@ -10,6 +10,8 @@ module
 public import Complexity.Init
 public import Cslib.Computability.URM.Basic
 public import Cslib.Foundations.Relation.Defs
+public import Mathlib.Data.Nat.Find
+public import Mathlib.Data.Part
 
 /-!
 # Random-access machines
@@ -30,17 +32,28 @@ counter is past the end of the program. The instruction set is that of Cook and 
 rather than integers, so subtraction is truncated and the conditional jump tests for a nonzero
 register; there are no input and output instructions, since the inputs sit in registers as for
 URMs; and there is a multiplication instruction, which is what makes the unit cost measure unsound
-(see `Cslib.RAM.logGap_squaring`).
+(see `Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logCost`). Halting and evaluation
+(`Cslib.RAM.Halts`, `Cslib.RAM.HaltsWithResult`, `Cslib.RAM.eval`) are as for URMs, with the
+output in register `0`.
 
 ## Design notes
 
-* `Cslib.RAM.State` is a separate structure from `Cslib.URM.State`, with the same two fields,
-  because its halting predicate refers to RAM programs.
-* Besides the single-step relation `Cslib.RAM.Step`, which mirrors `Cslib.URM.Step`, there is a
-  total step function `Cslib.RAM.step`, which leaves a halted state fixed, and the run
-  `Cslib.RAM.run p n` is its `n`-th iterate. Costs are sums over runs, and a run as a function of
-  its length is what makes those sums definitions rather than relations;
-  `Cslib.RAM.steps_iff_exists_run` connects the two views.
+* Shared with `Cslib.URM`: the register contents `Cslib.URM.Regs` with `read`, `write`, `ofInputs`
+  and `output`, hence the conventions for inputs (registers `0, 1, …`) and output (register `0`),
+  and the notions of rewriting (`Relation.Normal`, `Relation.Normalizable`) through which halting
+  is characterized.
+* Not shared: the instructions, hence the step relation `Cslib.RAM.Step`, which mirrors
+  `Cslib.URM.Step`; and the states. `Cslib.RAM.State` has the same two fields as
+  `Cslib.URM.State`, but `Cslib.URM.State.isHalted` takes a URM program, so a shared structure
+  would leave the halting predicate of RAM programs without the dot notation `s.isHalted p`.
+  The halting and evaluation API repeats URM's statements and names for the RAM step relation,
+  since cslib states it for URMs only rather than for a deterministic machine in general; `eval`
+  is defined from the run (`Nat.find`) rather than by choice, and is computable.
+* Besides the single-step relation `Cslib.RAM.Step` there is a total step function
+  `Cslib.RAM.step`, which leaves a halted state fixed, and the run `Cslib.RAM.run p n` is its
+  `n`-th iterate. Costs are sums over runs, and a run as a function of its length is what makes
+  those sums definitions rather than relations; `Cslib.RAM.steps_iff_exists_run` connects the two
+  views.
 
 ## Main definitions
 
@@ -51,6 +64,8 @@ URMs; and there is a multiplication instruction, which is what makes the unit co
 * `Cslib.RAM.step`, `Cslib.RAM.run`: the step function and the run for a given number of steps.
 * `Cslib.RAM.Step`, `Cslib.RAM.Steps`: the single-step relation and its reflexive transitive
   closure.
+* `Cslib.RAM.Halts`, `Cslib.RAM.HaltsWithResult`: halting, and halting with a given output.
+* `Cslib.RAM.eval`: evaluation as a partial function.
 
 ## Main results
 
@@ -58,6 +73,9 @@ URMs; and there is a multiplication instruction, which is what makes the unit co
 * `Cslib.RAM.isHalted_iff_normal`: a state is halted iff it has no successor.
 * `Cslib.RAM.run_add`, `Cslib.RAM.run_eq_of_le`: runs compose, and are stationary once halted.
 * `Cslib.RAM.steps_iff_exists_run`: the states reachable from `s` are the states `run p n s`.
+* `Cslib.RAM.halts_iff_exists_run`, `Cslib.RAM.haltsWithResult_iff_exists_run`: halting read on
+  the run.
+* `Cslib.RAM.haltsWithResult_iff_eval`: a program halts with result `a` iff it evaluates to `a`.
 
 ## References
 
@@ -248,6 +266,97 @@ theorem steps_iff_exists_run : Steps p s t ↔ ∃ n, run p n s = t := by
   | tail _ hstep ih =>
     obtain ⟨n, rfl⟩ := ih
     exact ⟨n + 1, by rw [run_succ', hstep.step_eq]⟩
+
+/-! ## Halting and evaluation
+
+The halting and evaluation API of `Cslib.URM` (`URM/Execution.lean`), for RAM programs. -/
+
+/-- Two halted states reachable from the same state are equal. -/
+theorem Steps.eq_of_halts {s₁ s₂ : State} (h₁ : Steps p s s₁) (hh₁ : s₁.isHalted p)
+    (h₂ : Steps p s s₂) (hh₂ : s₂.isHalted p) : s₁ = s₂ := by
+  obtain ⟨n₁, rfl⟩ := steps_iff_exists_run.1 h₁
+  obtain ⟨n₂, rfl⟩ := steps_iff_exists_run.1 h₂
+  rcases le_total n₁ n₂ with h | h
+  · exact (run_eq_of_le h hh₁).symm
+  · exact run_eq_of_le h hh₂
+
+variable (p) in
+/-- A program halts on given inputs if its run from the initial state reaches a halted state. -/
+def Halts (inputs : List ℕ) : Prop :=
+  ∃ s, Steps p (State.init inputs) s ∧ s.isHalted p
+
+variable (p) in
+/-- A program diverges on given inputs if it does not halt. -/
+def Diverges (inputs : List ℕ) : Prop :=
+  ¬Halts p inputs
+
+variable (p) in
+/-- A program halts on given inputs with `result` in the output register `0`. -/
+def HaltsWithResult (inputs : List ℕ) (result : ℕ) : Prop :=
+  ∃ s, Steps p (State.init inputs) s ∧ s.isHalted p ∧ s.regs.output = result
+
+variable {inputs : List ℕ} {result : ℕ}
+
+/-- Halting is normalizability for the step relation. -/
+theorem halts_iff_normalizable :
+    Halts p inputs ↔ Relation.Normalizable (Step p) (State.init inputs) :=
+  exists_congr fun _ => and_congr_right' isHalted_iff_normal
+
+/-- A program halts exactly when its run is halted after some number of steps. -/
+theorem halts_iff_exists_run :
+    Halts p inputs ↔ ∃ n, (run p n (State.init inputs)).isHalted p := by
+  refine ⟨fun ⟨_, hs, hh⟩ => ?_, fun ⟨n, hn⟩ => ⟨_, steps_run, hn⟩⟩
+  obtain ⟨n, rfl⟩ := steps_iff_exists_run.1 hs
+  exact ⟨n, hh⟩
+
+/-- A program halts with `result` exactly when its run is halted after some number of steps with
+`result` in register `0`. -/
+theorem haltsWithResult_iff_exists_run :
+    HaltsWithResult p inputs result ↔ ∃ n, (run p n (State.init inputs)).isHalted p ∧
+      (run p n (State.init inputs)).regs.output = result := by
+  refine ⟨fun ⟨_, hs, hh, hr⟩ => ?_, fun ⟨n, hn, hr⟩ => ⟨_, steps_run, hn, hr⟩⟩
+  obtain ⟨n, rfl⟩ := steps_iff_exists_run.1 hs
+  exact ⟨n, hh, hr⟩
+
+/-- A program that halts with a result halts. -/
+theorem HaltsWithResult.toHalts (h : HaltsWithResult p inputs result) : Halts p inputs :=
+  let ⟨s, hs, hh, _⟩ := h
+  ⟨s, hs, hh⟩
+
+variable (p) in
+/-- The halted state reached from the initial state, if any: the run after the least number of
+steps after which it is halted. -/
+def evalState (inputs : List ℕ) : Part State :=
+  ⟨Halts p inputs, fun h => run p (Nat.find (halts_iff_exists_run.1 h)) (State.init inputs)⟩
+
+/-- The state given by `evalState` is reachable and halted. -/
+theorem evalState_spec (h : (evalState p inputs).Dom) :
+    Steps p (State.init inputs) ((evalState p inputs).get h) ∧
+      ((evalState p inputs).get h).isHalted p :=
+  ⟨steps_run, Nat.find_spec (halts_iff_exists_run.1 h)⟩
+
+/-- A program that halts halts with the output of the state given by `evalState`. -/
+theorem Halts.toHaltsWithResult (h : Halts p inputs) :
+    HaltsWithResult p inputs ((evalState p inputs).get h).regs.output :=
+  ⟨_, (evalState_spec h).1, (evalState_spec h).2, rfl⟩
+
+variable (p) in
+/-- Evaluation as a partial function: defined when the program halts, with the contents of the
+output register `0`. -/
+def eval (inputs : List ℕ) : Part ℕ :=
+  (evalState p inputs).map (·.regs.output)
+
+/-- A program halts with `result` iff it evaluates to `result`. -/
+theorem haltsWithResult_iff_eval :
+    HaltsWithResult p inputs result ↔ eval p inputs = .some result := by
+  rw [Part.eq_some_iff, eval, Part.mem_map_iff]
+  constructor
+  · rintro ⟨s, hs, hh, rfl⟩
+    have hd : (evalState p inputs).Dom := ⟨s, hs, hh⟩
+    exact ⟨_, Part.get_mem hd,
+      congrArg (·.regs.output) ((evalState_spec hd).1.eq_of_halts (evalState_spec hd).2 hs hh)⟩
+  · rintro ⟨s, ⟨hd, rfl⟩, rfl⟩
+    exact ⟨_, (evalState_spec hd).1, (evalState_spec hd).2, rfl⟩
 
 end Cslib.RAM
 

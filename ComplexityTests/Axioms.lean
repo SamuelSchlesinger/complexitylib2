@@ -1479,6 +1479,18 @@ info: 'Cslib.Logic.FO.Reduces.trans' depends on axioms: [propext, Classical.choi
 #print axioms Cslib.Logic.FO.Reduces.trans
 
 /--
+info: 'Cslib.Logic.FO.Reduces.isoClosed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Reduces.isoClosed
+
+/--
+info: 'Cslib.Logic.ESO.Definable.isoClosed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Definable.isoClosed
+
+/--
 info: 'Cslib.Logic.FO.Definable.simpleGraph' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -1695,10 +1707,22 @@ info: 'Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le' depends on axi
 #print axioms Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le
 
 /--
-info: 'Cslib.RAM.logGap_squaring' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.RAM.computesInTime_unitCost_repeatedSquaring' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.RAM.logGap_squaring
+#print axioms Cslib.RAM.computesInTime_unitCost_repeatedSquaring
+
+/--
+info: 'Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logCost' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logCost
+
+/--
+info: 'Cslib.RAM.haltsWithResult_iff_eval' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RAM.haltsWithResult_iff_eval
 
 /--
 info: 'Cslib.RAM.bitLength_read_run_le' depends on axioms: [propext, Classical.choice, Quot.sound]

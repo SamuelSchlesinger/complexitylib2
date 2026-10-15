@@ -34,6 +34,15 @@ The arguments of `Interpretation L L' ι` are in the order of the map on structu
 `L`-structures into `L'`-structures as a reduction turns instances of one problem into instances
 of another; formulas are mapped the other way, from `L'` to `L`.
 
+Senellart and Gnatenko build interpretations, the pullback of formulas and first-order reductions
+over Mathlib's model theory as well [Senellart and Gnatenko][SenellartGnatenko2026]. Their
+interpretations are tagged: the interpreted universe is all of `Tag × (Fin dim → M)` for a finite
+type of tags, with no domain formula (a relativized variant restricts it), and a relation symbol
+has a defining formula for each choice of tags of its arguments. Here the interpreted universe is
+the set of tuples `ι → M` defined by the domain formula, with no tags, and the coordinates range
+over any finite type `ι` rather than `Fin dim`, so that the coordinates `κ × ι` of a composite
+need no reindexing.
+
 ## Main definitions
 
 * `Cslib.Logic.FO.Interpretation`: a first-order interpretation of `L'` in `L` of dimension `ι`.
@@ -63,6 +72,8 @@ first-order queries. The pullback uses Mathlib's `FirstOrder.Language.Formula.iA
 ## References
 
 * [N. Immerman, *Descriptive Complexity*][Immerman1999]
+* [P. Senellart and A. Gnatenko, *Descriptive Complexity in Lean: Completeness by First-Order
+  Reductions*][SenellartGnatenko2026]
 -/
 
 @[expose] public section
@@ -92,6 +103,7 @@ theorem termVar_var {L' : Language.{u', v'}} [L'.IsRelational] {β : Type*} (x :
     termVar (Term.var x : L'.Term β) = x :=
   rfl
 
+/-- In a relational language a term takes the value of its variable. -/
 theorem realize_termVar {L' : Language.{u', v'}} [L'.IsRelational] {β N : Type*} [L'.Structure N]
     (t : L'.Term β) (v : β → N) : t.realize v = v (termVar t) := by
   cases t with

@@ -19,6 +19,9 @@ Polynomially bounded functions have logarithmic logarithms: if `s` is polynomial
 is polynomially bounded (`polynomiallyBounded_two_pow_mul_log`). These are the conversions between
 depth `O(log n)` and size `n ^ O(1)` in circuit complexity.
 
+Here `⌊log₂ n⌋ + 1`, written `Nat.log 2 n + 1`, is the number of binary digits of `n` with `0`
+written as one digit, that is `max n.size 1`, which unlike `Nat.size n` is positive at `n = 0`.
+
 ## Main results
 
 * `Cslib.PolynomiallyBounded.exists_clog_le_mul_log`: the logarithm of a polynomially bounded

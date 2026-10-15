@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.RAM.Defs
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 public import Mathlib.Data.Nat.Digits.Lemmas
+public import Mathlib.Data.Nat.Size
 
 /-!
 # Cost measures for random-access machines
@@ -22,13 +23,22 @@ standard [Cook and Reckhow, Section 1][CookReckhow1973]:
 * the *logarithmic* cost measure charges every instruction the lengths of the numbers it reads,
   so that time accounts for the size of the numbers in the registers.
 
-Only the logarithmic measure is a sound measure of time: within logarithmic time `T` a RAM never
-holds a number longer than `T` (`Cslib.RAM.bitLength_read_run_le`), whereas within unit time `k + 1`
-it can build a number with `2 ^ k + 1` binary digits (`Cslib.RAM.logGap_squaring`).
+Within logarithmic time `T` a RAM never holds a number longer than `T` or than the longest number
+it starts with (`Cslib.RAM.bitLength_read_run_le`), whereas within unit time `4 k + 5` a fixed
+program builds from `k` a number with `2 ^ k + 1` binary digits
+(`Cslib.RAM.computesInTime_unitCost_repeatedSquaring`), so that logarithmic time is not bounded by
+any polynomial in unit time (`Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logCost`).
+
+A program computes a function within time `T` (`Cslib.RAM.ComputesInTime`) when on every input it
+halts with the value of the function in the output register `0` (`Cslib.RAM.HaltsWithResult`)
+after a run of time at most `T`.
 
 The length of a number is `Cslib.RAM.bitLength n = ⌊log₂ n⌋ + 1`, its number of binary digits with
-`0` written as one digit. Cook and Reckhow's logarithmic function `l(n)` is `⌈log₂ n⌉` for `n ≥ 2`
-and `1` below, so that `l(n) ≤ bitLength n ≤ 2 * l(n)`.
+`0` written as one digit: it is `max n.size 1`, Mathlib's `Nat.size n` except at `0`
+(`Cslib.RAM.bitLength_eq_max_size`). It is defined through `Nat.log`, which the kernel evaluates,
+so that `decide` computes costs, and it is the `⌊log₂ n⌋ + 1` of the bounds of
+`Cslib.polynomiallyBounded_two_pow_mul_log`. Cook and Reckhow's logarithmic function `l(n)` is
+`⌈log₂ n⌉` for `n ≥ 2` and `1` below, so that `l(n) ≤ bitLength n ≤ 2 * l(n)`.
 
 ## Main definitions
 
@@ -36,11 +46,14 @@ and `1` below, so that `l(n) ≤ bitLength n ≤ 2 * l(n)`.
 * `Cslib.RAM.unitCost`, `Cslib.RAM.logCost`: the unit and the logarithmic cost measures.
 * `Cslib.RAM.stepCost`: the cost of the next step of a program.
 * `Cslib.RAM.time`: the time of a run of a given number of steps.
+* `Cslib.RAM.HaltsWithResultInTime`, `Cslib.RAM.ComputesInTime`: halting with a given output, and
+  computing a function, within a time bound.
 
 ## Main results
 
 * `Cslib.RAM.time_add`: time is additive along a run.
-* `Cslib.RAM.time_mono_fuel`, `Cslib.RAM.time_mono_cost`, `Cslib.RAM.time_eq_of_le`: time is
+* `Cslib.RAM.bitLength_eq_max_size`: the length of a number is `max n.size 1`.
+* `Cslib.RAM.time_le_time_of_le`, `Cslib.RAM.time_mono_cost`, `Cslib.RAM.time_eq_of_le`: time is
   monotone in the number of steps and in the cost measure, and stationary once halted.
 * `Cslib.RAM.time_unitCost`: unit time counts the steps taken.
 * `Cslib.RAM.time_unitCost_le_time_logCost`: unit time is at most logarithmic time.
@@ -60,31 +73,49 @@ namespace Cslib.RAM
 
 /-- The length `⌊log₂ n⌋ + 1` of a natural number `n`: its number of binary digits, where `0` is
 written with one digit. This is the logarithmic cost of storing `n`
-[Cook and Reckhow, Section 1][CookReckhow1973]. -/
+[Cook and Reckhow, Section 1][CookReckhow1973]. It is `max n.size 1`
+(`Cslib.RAM.bitLength_eq_max_size`), and is defined through `Nat.log` so that the kernel
+evaluates it. -/
 def bitLength (n : ℕ) : ℕ := Nat.log 2 n + 1
+
+/-- The length of a number is Mathlib's `Nat.size`, except that `0` has length `1`. -/
+theorem bitLength_eq_max_size (n : ℕ) : bitLength n = max n.size 1 := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · rfl
+  · have h₁ : Nat.log 2 n < n.size := Nat.lt_size.2 (Nat.pow_log_le_self 2 hn.ne')
+    have h₂ : n.size ≤ Nat.log 2 n + 1 :=
+      Nat.size_le.2 (Nat.lt_pow_succ_log_self Nat.one_lt_two n)
+    rw [bitLength]
+    omega
+
+theorem bitLength_eq_size {n : ℕ} (hn : n ≠ 0) : bitLength n = n.size := by
+  have := Nat.size_pos.2 (Nat.pos_of_ne_zero hn)
+  rw [bitLength_eq_max_size]
+  omega
 
 @[simp]
 theorem bitLength_zero : bitLength 0 = 1 := rfl
 
 theorem one_le_bitLength (n : ℕ) : 1 ≤ bitLength n := Nat.le_add_left 1 _
 
-theorem bitLength_mono : Monotone bitLength :=
-  fun _ _ h => Nat.add_le_add_right (Nat.log_mono_right h) 1
+theorem bitLength_mono : Monotone bitLength := fun _ _ h => by
+  simpa only [bitLength_eq_max_size] using max_le_max_right 1 (Nat.size_le_size h)
 
 @[simp]
 theorem bitLength_two_pow (k : ℕ) : bitLength (2 ^ k) = k + 1 := by
-  rw [bitLength, Nat.log_pow Nat.one_lt_two]
+  rw [bitLength_eq_size (Nat.two_pow_pos k).ne', Nat.size_pow]
 
 /-- A nonzero number has as many binary digits as its length. -/
 theorem length_digits_two {n : ℕ} (hn : n ≠ 0) : (Nat.digits 2 n).length = bitLength n :=
   Nat.length_digits 2 n Nat.one_lt_two hn
 
 theorem lt_two_pow_bitLength (n : ℕ) : n < 2 ^ bitLength n :=
-  Nat.lt_pow_succ_log_self Nat.one_lt_two n
+  (Nat.lt_size_self n).trans_le <| Nat.pow_le_pow_right Nat.two_pos <|
+    (bitLength_eq_max_size n).symm ▸ le_max_left _ _
 
-theorem bitLength_le_iff {n k : ℕ} (hk : k ≠ 0) : bitLength n ≤ k ↔ n < 2 ^ k :=
-  ⟨fun h => (lt_two_pow_bitLength n).trans_le (Nat.pow_le_pow_right Nat.two_pos h),
-    Nat.log_lt_of_lt_pow' hk⟩
+theorem bitLength_le_iff {n k : ℕ} (hk : k ≠ 0) : bitLength n ≤ k ↔ n < 2 ^ k := by
+  rw [bitLength_eq_max_size, max_le_iff, Nat.size_le]
+  exact and_iff_left (Nat.one_le_iff_ne_zero.2 hk)
 
 theorem bitLength_add_le (m n : ℕ) : bitLength (m + n) ≤ bitLength m + bitLength n := by
   have hm : 2 ≤ 2 ^ bitLength m := by
@@ -175,7 +206,7 @@ theorem time_eq_of_le (hmn : m ≤ n) (h : (run p m s).isHalted p) :
   rw [time_add, time_of_isHalted h, Nat.add_zero]
 
 /-- Time is monotone in the number of steps. -/
-theorem time_mono_fuel (hmn : m ≤ n) : time cost p m s ≤ time cost p n s :=
+theorem time_le_time_of_le (hmn : m ≤ n) : time cost p m s ≤ time cost p n s :=
   Finset.sum_le_sum_of_subset (Finset.range_subset_range.mpr hmn)
 
 /-- Time is monotone in the cost measure. -/
@@ -265,6 +296,67 @@ theorem bitLength_read_run_le (hs : ∀ r, bitLength (s.regs.read r) ≤ b) (n r
     rw [run_succ', time_succ']
     refine (bitLength_read_step_le ih r).trans ?_
     omega
+
+/-! ## Computing within a time bound -/
+
+/-- `p` halts on `inputs` with `result` in the output register `0` within time `T` under `cost`:
+its run from the initial state is halted after some number of steps, with `result` in register
+`0`, and takes time at most `T` until then. -/
+def HaltsWithResultInTime (cost : Instr → URM.Regs → ℕ) (p : Program) (inputs : List ℕ)
+    (result T : ℕ) : Prop :=
+  ∃ n, (run p n (State.init inputs)).isHalted p ∧
+    (run p n (State.init inputs)).regs.output = result ∧ time cost p n (State.init inputs) ≤ T
+
+/-- `p` computes the function `f` of `k` arguments within time `T` under `cost`: on every input
+`x` it halts with `f x` in the output register `0` within time `T x`. As for URMs
+(`Cslib.URM.Computes`), the arguments are the inputs in registers `0, …, k - 1`. -/
+def ComputesInTime (cost : Instr → URM.Regs → ℕ) (k : ℕ) (p : Program)
+    (f T : (Fin k → ℕ) → ℕ) : Prop :=
+  ∀ x : Fin k → ℕ, HaltsWithResultInTime cost p (List.ofFn x) (f x) (T x)
+
+namespace HaltsWithResultInTime
+
+variable {inputs : List ℕ} {result T T' : ℕ}
+
+/-- A program halting with a result within a time bound halts with that result. -/
+theorem haltsWithResult (h : HaltsWithResultInTime cost p inputs result T) :
+    HaltsWithResult p inputs result :=
+  let ⟨n, hn, hr, _⟩ := h
+  haltsWithResult_iff_exists_run.2 ⟨n, hn, hr⟩
+
+/-- A time bound can be increased. -/
+theorem mono (h : HaltsWithResultInTime cost p inputs result T) (hT : T ≤ T') :
+    HaltsWithResultInTime cost p inputs result T' :=
+  let ⟨n, hn, hr, ht⟩ := h
+  ⟨n, hn, hr, ht.trans hT⟩
+
+/-- A cost measure can be decreased. -/
+theorem mono_cost (h : HaltsWithResultInTime cost' p inputs result T) (hc : cost ≤ cost') :
+    HaltsWithResultInTime cost p inputs result T :=
+  let ⟨n, hn, hr, ht⟩ := h
+  ⟨n, hn, hr, (time_mono_cost hc).trans ht⟩
+
+end HaltsWithResultInTime
+
+namespace ComputesInTime
+
+variable {k : ℕ} {f T T' : (Fin k → ℕ) → ℕ}
+
+/-- A program computing `f` evaluates to `f`. -/
+theorem eval_eq (h : ComputesInTime cost k p f T) (x : Fin k → ℕ) :
+    eval p (List.ofFn x) = .some (f x) :=
+  haltsWithResult_iff_eval.1 (h x).haltsWithResult
+
+/-- A time bound can be increased. -/
+theorem mono (h : ComputesInTime cost k p f T) (hT : T ≤ T') : ComputesInTime cost k p f T' :=
+  fun x => (h x).mono (hT x)
+
+/-- A cost measure can be decreased. -/
+theorem mono_cost (h : ComputesInTime cost' k p f T) (hc : cost ≤ cost') :
+    ComputesInTime cost k p f T :=
+  fun x => (h x).mono_cost hc
+
+end ComputesInTime
 
 end Cslib.RAM
 

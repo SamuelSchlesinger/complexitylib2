@@ -8,37 +8,44 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.RAM.Cost
+import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
 # Repeated squaring: why unit cost is unsound
 
 The unit cost measure charges a RAM one unit per instruction, however large the numbers involved.
-Without multiplication this is harmless: apart from loading a constant, an instruction at most
-doubles the largest number held, and a Turing machine simulates a RAM running in unit time `T(n)`
-within time `T(n) ^ 3` [Cook and Reckhow, Section 4, Theorem 2][CookReckhow1973]. With
-multiplication it is not. The program `Cslib.RAM.repeatedSquaring k`, whose only constant is `2`,
-squares register `1` a total of `k` times, so after `k + 1` steps register `1` holds `2 ^ 2 ^ k`.
-That number has `2 ^ k + 1` binary digits, so a Turing machine needs at least `2 ^ k` steps just
-to write it down: unit-cost RAM time is not polynomially related to Turing machine time. Hartmanis
-and Simon showed much more: under unit cost, RAMs with multiplication and bitwise Boolean
-operations decide in polynomial time exactly the languages that Turing machines decide in
-polynomial space [Hartmanis and Simon, Abstract][HartmanisSimon1974].
+With multiplication this is unsound. The fixed program `Cslib.RAM.repeatedSquaring` reads `k` in
+register `0`, puts `2` in register `1`, squares register `1` while counting register `0` down to
+zero, and copies the result to register `0`: it computes `k ↦ 2 ^ 2 ^ k` within unit time
+`4 k + 5`, taking exactly `4 k + 5` steps. The value `2 ^ 2 ^ k` has `2 ^ k + 1` binary digits,
+and logarithmic time bounds the length of every number a RAM holds
+(`Cslib.RAM.bitLength_read_run_le`), so every program computing `k ↦ 2 ^ 2 ^ k`, this one
+included, takes logarithmic time more than `2 ^ k` on input `k`. Hence no polynomial in the unit
+time `4 k + 5` bounds the logarithmic time of any program computing this function: unit time and
+logarithmic time are not polynomially related.
 
-The logarithmic cost measure has no such gap. The same run takes logarithmic time more than
-`2 ^ k`, as it must, since logarithmic time bounds the length of every number held
-(`Cslib.RAM.bitLength_read_run_le`).
+Hartmanis and Simon showed much more: under unit cost, RAMs with multiplication and bitwise
+Boolean operations decide in polynomial time exactly the languages that Turing machines decide in
+polynomial space [Hartmanis and Simon][HartmanisSimon1974]. Without multiplication, an
+instruction other than loading a constant at most doubles the largest number held, so that unit
+and logarithmic time are polynomially related; neither fact is formalized here.
 
 ## Main definitions
 
-* `Cslib.RAM.repeatedSquaring`: the program that squares register `1` a given number of times.
+* `Cslib.RAM.repeatedSquaring`: the program computing `k ↦ 2 ^ 2 ^ k` by repeated squaring.
 
 ## Main results
 
-* `Cslib.RAM.run_repeatedSquaring`: the state after each step of the program.
-* `Cslib.RAM.time_unitCost_repeatedSquaring`: the run takes unit time `k + 1`.
-* `Cslib.RAM.two_pow_lt_time_logCost_repeatedSquaring`: the run takes logarithmic time more than
-  `2 ^ k`.
-* `Cslib.RAM.logGap_squaring`: the gap between the two measures on the same run.
+* `Cslib.RAM.run_repeatedSquaring`: the state in which the program halts on input `k`.
+* `Cslib.RAM.computesInTime_unitCost_repeatedSquaring`,
+  `Cslib.RAM.time_unitCost_repeatedSquaring`: the program computes `k ↦ 2 ^ 2 ^ k` within unit
+  time `4 k + 5`, and its run takes exactly that time.
+* `Cslib.RAM.two_pow_lt_of_computesInTime_logCost`,
+  `Cslib.RAM.two_pow_lt_time_logCost_repeatedSquaring`: every program computing `k ↦ 2 ^ 2 ^ k`
+  within logarithmic time `T` has `2 ^ k < T k`; in particular the run of `repeatedSquaring` on
+  `k` takes logarithmic time more than `2 ^ k`.
+* `Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logCost`: the logarithmic time of a program
+  computing `k ↦ 2 ^ 2 ^ k` is bounded by no polynomial in the unit time `4 k + 5`.
 
 ## References
 
@@ -51,77 +58,143 @@ The logarithmic cost measure has no such gap. The same run takes logarithmic tim
 
 namespace Cslib.RAM
 
-/-- The `k`-fold repeated-squaring program: put the constant `2` into register `1`, then square
-register `1` a total of `k` times. -/
-def repeatedSquaring (k : ℕ) : Program := .const 1 2 :: List.replicate k (.mul 1 1 1)
-
-variable {j k : ℕ}
+/-- The repeated-squaring program. With `k` in register `0`, it puts `2` in register `1` and `1`
+in register `2` (instructions `0` and `1`); while register `0` is positive, it squares register `1`
+and decrements register `0` (instructions `2` and `4` to `6`); then it copies register `1` into
+register `0` (instructions `3` and `7`). Register `2` holds the constant `1`, which makes the
+jumps at instructions `3` and `6` unconditional. -/
+def repeatedSquaring : Program :=
+  [.const 1 2, .const 2 1, .jpos 0 4, .jpos 2 7, .mul 1 1 1, .sub 0 0 2, .jpos 2 2, .add 0 1 0]
 
 @[simp]
-theorem length_repeatedSquaring : (repeatedSquaring k).length = k + 1 := by
-  simp [repeatedSquaring]
+theorem length_repeatedSquaring : repeatedSquaring.length = 8 := rfl
 
-/-- After `j + 1` steps from the all-zero state, for `j ≤ k`, the program counter is `j + 1`,
-register `1` holds `2 ^ 2 ^ j`, and every other register still holds `0`. -/
-theorem run_repeatedSquaring (hj : j ≤ k) :
-    run (repeatedSquaring k) (j + 1) (State.init []) =
-      ⟨j + 1, (State.init []).regs.write 1 (2 ^ 2 ^ j)⟩ := by
+/-- The first two steps load the constants. -/
+theorem run_two_repeatedSquaring (k : ℕ) :
+    run repeatedSquaring 2 (State.init [k]) = ⟨2, URM.Regs.ofInputs [k, 2, 1]⟩ := by
+  ext1
+  · rfl
+  · funext r
+    rcases r with _ | _ | _ | r <;> rfl
+
+/-- One round of the loop squares register `1` and decrements register `0`. -/
+theorem run_four_repeatedSquaring (a b : ℕ) :
+    run repeatedSquaring 4 ⟨2, URM.Regs.ofInputs [a + 1, b, 1]⟩ =
+      ⟨2, URM.Regs.ofInputs [a, b * b, 1]⟩ := by
+  ext1
+  · rfl
+  · funext r
+    rcases r with _ | _ | _ | r <;> rfl
+
+/-- After `j ≤ k` rounds of the loop, register `0` holds `k - j` and register `1` holds
+`2 ^ 2 ^ j`. -/
+theorem run_four_mul_repeatedSquaring {j k : ℕ} (hj : j ≤ k) :
+    run repeatedSquaring (4 * j) ⟨2, URM.Regs.ofInputs [k, 2, 1]⟩ =
+      ⟨2, URM.Regs.ofInputs [k - j, 2 ^ 2 ^ j, 1]⟩ := by
   induction j with
   | zero => rfl
   | succ j ih =>
-    have hi : (repeatedSquaring k)[j + 1]? = some (.mul 1 1 1) := by
-      simp [repeatedSquaring, Nat.lt_of_succ_le hj]
-    rw [run_succ', ih (Nat.le_of_succ_le hj), step_of_getElem? (s := ⟨j + 1, _⟩) hi]
-    ext1
-    · rfl
-    · simp only [Instr.exec, URM.Regs.write_read_self]
-      rw [URM.Regs.write, URM.Regs.write, URM.Regs.write, Function.update_idem, ← pow_add,
-        ← two_mul, ← pow_succ']
+    obtain ⟨a, ha⟩ : ∃ a, k - j = a + 1 := ⟨k - j - 1, by omega⟩
+    rw [Nat.mul_succ, run_add, ih (by omega), ha, run_four_repeatedSquaring,
+      show k - (j + 1) = a by omega, ← pow_two, ← pow_mul, pow_succ]
 
-/-- The run halts after `k + 1` steps. -/
-theorem isHalted_run_repeatedSquaring :
-    (run (repeatedSquaring k) (k + 1) (State.init [])).isHalted (repeatedSquaring k) := by
-  simp [run_repeatedSquaring le_rfl]
+/-- Once register `0` is zero, the loop exits at instruction `3`. -/
+theorem run_four_mul_add_four_repeatedSquaring (k : ℕ) :
+    run repeatedSquaring (4 * k + 4) (State.init [k]) =
+      ⟨7, URM.Regs.ofInputs [0, 2 ^ 2 ^ k, 1]⟩ := by
+  rw [show 4 * k + 4 = 2 + 4 * k + 2 by omega, run_add, run_add, run_two_repeatedSquaring,
+    run_four_mul_repeatedSquaring le_rfl, Nat.sub_self]
+  rfl
 
-/-- After `k + 1` steps, register `1` holds `2 ^ 2 ^ k`. -/
-theorem read_run_repeatedSquaring :
-    (run (repeatedSquaring k) (k + 1) (State.init [])).regs.read 1 = 2 ^ 2 ^ k := by
-  rw [run_repeatedSquaring le_rfl, URM.Regs.write_read_self]
+/-- **The run of the repeated-squaring program**: on input `k`, it halts after `4 k + 5` steps
+with `2 ^ 2 ^ k` in registers `0` and `1`. -/
+theorem run_repeatedSquaring (k : ℕ) :
+    run repeatedSquaring (4 * k + 5) (State.init [k]) =
+      ⟨8, URM.Regs.ofInputs [2 ^ 2 ^ k, 2 ^ 2 ^ k, 1]⟩ := by
+  rw [run_succ', run_four_mul_add_four_repeatedSquaring]
+  ext1
+  · rfl
+  · funext r
+    rcases r with _ | _ | _ | r
+    · exact Nat.add_zero _
+    all_goals rfl
 
-/-- Under unit cost, the run takes time `k + 1`. -/
-theorem time_unitCost_repeatedSquaring :
-    time unitCost (repeatedSquaring k) (k + 1) (State.init []) = k + 1 :=
-  time_unitCost fun j hj => by
-    cases j with
-    | zero => simp
-    | succ j =>
-      rw [run_repeatedSquaring (by omega)]
-      simpa using hj
+/-- On input `k`, the program halts after `4 k + 5` steps. -/
+theorem isHalted_run_repeatedSquaring (k : ℕ) :
+    (run repeatedSquaring (4 * k + 5) (State.init [k])).isHalted repeatedSquaring := by
+  simp [run_repeatedSquaring]
 
-/-- Under logarithmic cost, the run takes time more than `2 ^ k`: it builds a number of length
-`2 ^ k + 1`. -/
-theorem two_pow_lt_time_logCost_repeatedSquaring :
-    2 ^ k < time logCost (repeatedSquaring k) (k + 1) (State.init []) := by
-  have h := bitLength_read_run_le (p := repeatedSquaring k) (s := State.init []) (b := 1)
-    (by simp) (k + 1) 1
-  rw [read_run_repeatedSquaring, bitLength_two_pow] at h
-  have := Nat.two_pow_pos k
+/-- On input `k`, the program halts with `2 ^ 2 ^ k` in the output register `0`. -/
+theorem output_run_repeatedSquaring (k : ℕ) :
+    (run repeatedSquaring (4 * k + 5) (State.init [k])).regs.output = 2 ^ 2 ^ k := by
+  rw [run_repeatedSquaring]
+  rfl
+
+/-- Under unit cost, the run on `k` takes time `4 k + 5`: it halts after `4 k + 5` steps and not
+before. -/
+theorem time_unitCost_repeatedSquaring (k : ℕ) :
+    time unitCost repeatedSquaring (4 * k + 5) (State.init [k]) = 4 * k + 5 := by
+  refine time_unitCost fun j hj hhalt => ?_
+  have h := run_eq_of_le (show j ≤ 4 * k + 4 by omega) hhalt
+  rw [run_four_mul_add_four_repeatedSquaring] at h
+  rw [← h] at hhalt
+  simp at hhalt
+
+/-- **Repeated squaring computes `k ↦ 2 ^ 2 ^ k` within unit time `4 k + 5`.** -/
+theorem computesInTime_unitCost_repeatedSquaring :
+    ComputesInTime unitCost 1 repeatedSquaring (fun x => 2 ^ 2 ^ x 0) fun x => 4 * x 0 + 5 :=
+  fun x => by
+    rw [show List.ofFn x = [x 0] by simp]
+    exact ⟨4 * x 0 + 5, isHalted_run_repeatedSquaring _, output_run_repeatedSquaring _,
+      (time_unitCost_repeatedSquaring _).le⟩
+
+/-- **Computing `2 ^ 2 ^ k` takes logarithmic time more than `2 ^ k`.** Every program computing
+`k ↦ 2 ^ 2 ^ k` within logarithmic time `T` has `2 ^ k < T k`: the output has `2 ^ k + 1` binary
+digits, and a run of logarithmic time `T` holds no number longer than `T` or than the input
+(`Cslib.RAM.bitLength_read_run_le`). -/
+theorem two_pow_lt_of_computesInTime_logCost {p : Program} {T : (Fin 1 → ℕ) → ℕ}
+    (h : ComputesInTime logCost 1 p (fun x => 2 ^ 2 ^ x 0) T) (x : Fin 1 → ℕ) :
+    2 ^ x 0 < T x := by
+  obtain ⟨n, -, hout, htime⟩ := h x
+  have hx : List.ofFn x = [x 0] := by simp
+  rw [hx] at hout htime
+  have hread : (run p n (State.init [x 0])).regs.read 0 = 2 ^ 2 ^ x 0 := hout
+  have hinit (r : ℕ) : bitLength ((State.init [x 0]).regs.read r) ≤ bitLength (x 0) := by
+    rcases r with _ | r
+    · exact le_rfl
+    · change bitLength 0 ≤ _
+      exact one_le_bitLength _
+  have hlen := bitLength_read_run_le (p := p) hinit n 0
+  rw [hread, bitLength_two_pow] at hlen
+  have hx0 : bitLength (x 0) ≤ 2 ^ x 0 :=
+    (bitLength_le_iff (Nat.two_pow_pos _).ne').2
+      (Nat.lt_two_pow_self.trans_le (Nat.pow_le_pow_right Nat.two_pos Nat.lt_two_pow_self.le))
   omega
 
-/-- **Unit cost is unsound.** The repeated-squaring program `repeatedSquaring k`, whose only
-constant is `2`, halts after `k + 1` steps from the all-zero state with `2 ^ 2 ^ k` in register
-`1`. Under unit cost the run takes time `k + 1`; under logarithmic cost it takes time more than
-`2 ^ k`. A Turing machine writing `2 ^ 2 ^ k` in binary writes its `2 ^ k + 1` digits, which takes
-at least `2 ^ k` steps, so unit-cost RAM time is not polynomially related to Turing machine time.
-Logarithmic time has no such gap: it bounds the length of every number held
-(`Cslib.RAM.bitLength_read_run_le`). -/
-theorem logGap_squaring (k : ℕ) :
-    (run (repeatedSquaring k) (k + 1) (State.init [])).isHalted (repeatedSquaring k) ∧
-      (run (repeatedSquaring k) (k + 1) (State.init [])).regs.read 1 = 2 ^ 2 ^ k ∧
-      time unitCost (repeatedSquaring k) (k + 1) (State.init []) = k + 1 ∧
-      2 ^ k < time logCost (repeatedSquaring k) (k + 1) (State.init []) :=
-  ⟨isHalted_run_repeatedSquaring, read_run_repeatedSquaring, time_unitCost_repeatedSquaring,
-    two_pow_lt_time_logCost_repeatedSquaring⟩
+/-- Under logarithmic cost, the run of the repeated-squaring program on `k` takes time more than
+`2 ^ k`. -/
+theorem two_pow_lt_time_logCost_repeatedSquaring (k : ℕ) :
+    2 ^ k < time logCost repeatedSquaring (4 * k + 5) (State.init [k]) :=
+  two_pow_lt_of_computesInTime_logCost (p := repeatedSquaring)
+    (T := fun x => time logCost repeatedSquaring (4 * x 0 + 5) (State.init [x 0]))
+    (fun x => by
+      rw [show List.ofFn x = [x 0] by simp]
+      exact ⟨4 * x 0 + 5, isHalted_run_repeatedSquaring _, output_run_repeatedSquaring _, le_rfl⟩)
+    ![k]
+
+/-- **Unit cost is unsound.** The repeated-squaring program computes `k ↦ 2 ^ 2 ^ k` within unit
+time `4 k + 5` (`Cslib.RAM.computesInTime_unitCost_repeatedSquaring`), but the logarithmic time
+`T` of any program computing it is bounded by no polynomial in `4 k + 5`: for all `c` and `d`,
+some input `k` has `c (4 k + 5) ^ d < T k`. -/
+theorem exists_mul_pow_lt_of_computesInTime_logCost {p : Program} {T : (Fin 1 → ℕ) → ℕ}
+    (h : ComputesInTime logCost 1 p (fun x => 2 ^ 2 ^ x 0) T) (c d : ℕ) :
+    ∃ x : Fin 1 → ℕ, c * (4 * x 0 + 5) ^ d < T x := by
+  have hpoly : PolynomiallyBounded fun k => c * (4 * k + 5) ^ d :=
+    polynomiallyBounded_iff_le.2 ⟨c * 5 ^ d, d, fun k => by
+      rw [mul_assoc, ← mul_pow]
+      exact Nat.mul_le_mul_left c (Nat.pow_le_pow_left (by omega) d)⟩
+  obtain ⟨k, hk⟩ := hpoly.eventually_lt_two_pow.exists
+  exact ⟨![k], hk.trans (two_pow_lt_of_computesInTime_logCost h ![k])⟩
 
 end Cslib.RAM
 

@@ -42,7 +42,7 @@ ones, are closed under intersection and union, and are closed under isomorphism.
   conjunction and disjunction.
 * `Cslib.Logic.ESO.Sentence.realize_iff_of_equiv`: invariance under isomorphism.
 * `Cslib.Logic.ESO.Definable.of_fo`, `Cslib.Logic.ESO.Definable.inter`,
-  `Cslib.Logic.ESO.Definable.union`, `Cslib.Logic.ESO.Definable.mem_iff_of_equiv`.
+  `Cslib.Logic.ESO.Definable.union`, `Cslib.Logic.ESO.Definable.isoClosed`.
 
 ## References
 
@@ -291,10 +291,9 @@ theorem union (h₁ : Definable K₁) (h₂ : Definable K₂) : Definable (K₁ 
   obtain ⟨Φ₂, hΦ₂⟩ := h₂
   exact ⟨Φ₁ ⊔ Φ₂, fun M _ => by rw [Set.mem_union, hΦ₁ M, hΦ₂ M, Sentence.realize_sup]⟩
 
-/-- An existential second-order definable class is closed under isomorphism of finite
-structures. -/
-theorem mem_iff_of_equiv (hK : Definable K) {M N : Bundled.{w} L.Structure} [Finite M]
-    (e : M ≃[L] N) : M ∈ K ↔ N ∈ K := by
+/-- An existential second-order definable class is closed under isomorphism. -/
+theorem isoClosed (hK : Definable K) : IsoClosed K := by
+  intro M N _ e
   obtain ⟨Φ, hΦ⟩ := hK
   have : Finite N := Finite.of_equiv _ e.toEquiv
   rw [hΦ M, hΦ N]
