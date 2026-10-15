@@ -13,23 +13,33 @@ public import Mathlib.Order.Basic
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Analysis.SpecialFunctions.Exponential
+import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
 # Finite covers from uniform local density
 
-If a uniformly chosen test misses each obligation with probability at most
-`p / q`, then `t` tests suffice whenever `card W * p ^ t < q ^ t`.
-The argument counts finite function spaces and uses a union bound; no
-measure-theoretic or independence assumptions are left to the caller.
+If a uniformly chosen test misses each of the obligations `w : W` with probability at most `p / q`,
+then `t` tests hit every obligation as soon as `|W| p ^ t < q ^ t`
+(`exists_cover_of_scaled_card_lt`): the bad sequences of tests are counted, with a union bound
+over the obligations. In particular, if every obligation is hit by at least a `1 / q` fraction of
+the tests, then `q (n + 1)` tests hit `2 ^ n` obligations (`exists_cover_of_density`).
+
+## Main results
+
+* `Cslib.exists_cover_of_scaled_card_lt`: the union bound for covers.
+* `Cslib.exists_cover_of_density`: covers from density.
 -/
 
 @[expose] public section
 
-namespace Fintype
+namespace Cslib
 
 open Finset
 
-/-- A finite probabilistic cover bound, stated with integer cardinalities. -/
+/-- **The union bound for covers**, with integer cardinalities: if a uniform test misses each
+obligation with probability at most `p / q`, and `|W| p ^ t < q ^ t`, then some `t` tests hit
+every obligation. -/
 theorem exists_cover_of_scaled_card_lt
     {S W : Type*} [Fintype S] [Nonempty S] [Fintype W]
     (hit : S → W → Prop) [DecidableRel hit] (p q t : Nat)
@@ -80,4 +90,47 @@ theorem exists_cover_of_scaled_card_lt
   simp only [failures, mem_biUnion, mem_univ, true_and]
   exact ⟨w, by simpa [bad] using none⟩
 
-end Fintype
+private theorem failure_power_le_half (q : ℕ) (hq : 0 < q) :
+    2 * (q - 1) ^ q ≤ q ^ q := by
+  have hqr : (0 : ℝ) < q := by exact_mod_cast hq
+  have h := Real.one_sub_div_pow_le_exp_neg (n := q) (t := 1)
+    (by exact_mod_cast hq)
+  have he : Real.exp (-1 : ℝ) ≤ (2 : ℝ)⁻¹ := by
+    rw [Real.exp_neg]
+    exact inv_anti₀ (by norm_num) Real.exp_one_gt_two.le
+  have hr : (1 - 1 / (q : ℝ)) = (q - 1 : ℕ) / (q : ℝ) := by
+    rw [Nat.cast_sub (by omega), Nat.cast_one]
+    field_simp
+  rw [hr, div_pow] at h
+  have hh := (div_le_iff₀ (pow_pos hqr q)).mp (h.trans he)
+  have : (2 : ℝ) * (q - 1 : ℕ) ^ q ≤ (q : ℝ) ^ q := by linarith
+  exact_mod_cast this
+
+private theorem cover_power_lt (q n : ℕ) (hq : 0 < q) :
+    2 ^ n * (q - 1) ^ (q * (n + 1)) < q ^ (q * (n + 1)) := by
+  have h := Nat.pow_le_pow_left (failure_power_le_half q hq) (n + 1)
+  rw [mul_pow, ← pow_mul, ← pow_mul, pow_succ] at h
+  have hp := Nat.pow_pos (n := q * (n + 1)) hq
+  nlinarith
+
+/-- **Covers from density**: if every obligation `w` is hit by at least a `1 / q` fraction of the
+tests, then `q (n + 1)` tests, with repetitions, hit all of at most `2 ^ n` obligations. -/
+theorem exists_cover_of_density {S W : Type*} [Fintype S] [Nonempty S] [Fintype W]
+    (hit : S → W → Prop) [DecidableRel hit] (q n : ℕ) (hq : 0 < q)
+    (hw : Fintype.card W ≤ 2 ^ n)
+    (density : ∀ w, Fintype.card S ≤ q * Fintype.card {s : S // hit s w}) :
+    ∃ tests : Fin (q * (n + 1)) → S, ∀ w, ∃ i, hit (tests i) w := by
+  classical
+  apply exists_cover_of_scaled_card_lt
+    hit (q - 1) q (q * (n + 1))
+  · intro w
+    rw [Fintype.card_subtype_compl]
+    have hc : Fintype.card {s : S // hit s w} ≤ Fintype.card S :=
+      Fintype.card_subtype_le _
+    have hd := density w
+    have hsub := Nat.sub_add_cancel hc
+    have hqsub : q - 1 + 1 = q := by omega
+    nlinarith
+  · exact (Nat.mul_le_mul_right _ hw).trans_lt (cover_power_lt q n hq)
+
+end Cslib

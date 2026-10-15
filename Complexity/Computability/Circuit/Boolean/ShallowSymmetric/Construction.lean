@@ -20,6 +20,17 @@ The modular tests of Lecomte and Ramakrishnan [LecomteRamakrishnan2026] are conj
 symmetric two-block comparisons after signed input substitution. Their output AND gates can be
 merged, retaining the depth of a comparison. A small covering family of these tests is then joined
 by one OR layer.
+
+## Main results
+
+* `Cslib.Circuits.Boolean.ShallowSymmetric.exists_pairComparison`: one comparison of two blocks.
+* `Cslib.Circuits.Boolean.ShallowSymmetric.exists_exact_altFormula`: the exact-weight tests.
+* `Cslib.Circuits.Boolean.ShallowSymmetric.exists_symmetric_altFormula_succ`: one step of the depth
+  induction.
+
+## References
+
+* [V. Lecomte, P. Ramakrishnan, *Optimal Shallow Circuits for Majority*][LecomteRamakrishnan2026]
 -/
 
 @[expose] public section

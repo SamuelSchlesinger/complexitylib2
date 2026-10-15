@@ -19,6 +19,15 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 As in [Lecomte and Ramakrishnan, Section 4][LecomteRamakrishnan2026], use the smallest power of each
 of the first `r` primes that exceeds the integer scale `k`. These powers lie between `k` and a
 constant (depending only on `r`) times `k`.
+
+## Main results
+
+* `Cslib.Circuits.Boolean.ShallowSymmetric.exists_moduli`: `r` pairwise coprime moduli between `k`
+  and `C k`.
+
+## References
+
+* [V. Lecomte, P. Ramakrishnan, *Optimal Shallow Circuits for Majority*][LecomteRamakrishnan2026]
 -/
 
 @[expose] public section

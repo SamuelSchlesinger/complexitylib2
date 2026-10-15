@@ -78,7 +78,7 @@ theorem exists_symmetric_altFormula (d : ℕ) :
     obtain ⟨f, hs, he⟩ := AltFormula.exists_depth_two (fun x => a (weight x)) op
     refine ⟨f, hs.trans ?_, he⟩
     have h : 2 ^ n ≤ 2 ^ (1 * k) := Nat.pow_le_pow_right (by omega) (by simpa using hn)
-    simpa using exp_add_bound hk h (show 1 ≤ 2 ^ (0 * k) by simp)
+    simpa using add_le_two_pow_add_add_one_mul hk h (show 1 ≤ 2 ^ (0 * k) by simp)
   | succ d ih =>
     obtain ⟨A, hA⟩ := ih
     obtain ⟨C, hC, hmod⟩ := exists_moduli (d + 2)
@@ -136,7 +136,7 @@ alternating formulas of depth `d`, with either root operation, with at most
 `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates. -/
 theorem exists_of_isSymmetric {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ f : BitString n → Bool, IsSymmetric f → ∀ op : AltOp,
-      ∃ g : AltFormula n d, (size g : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ (1 / ((d - 1 : ℕ) : ℝ))) ∧
+      ∃ g : AltFormula n d, (size g : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) ∧
         ∀ x, eval op g x = f x := by
   obtain ⟨C, hC⟩ := exists_of_isSymmetric_nat hd
   refine ⟨2 * C + 1, by positivity, fun n hn f hf op => ?_⟩
@@ -152,7 +152,6 @@ theorem exists_of_isSymmetric {d : ℕ} (hd : 2 ≤ d) :
         rfl
     _ ≤ _ := by
         apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
-        simp only [one_div]
         nlinarith [show (0 : ℝ) ≤ (C : ℝ) from Nat.cast_nonneg C]
 
 /-- **Depth three** [LecomteRamakrishnan2026, Theorem 2]: symmetric functions of `n ≥ 1` bits have
@@ -166,7 +165,7 @@ theorem exists_of_isSymmetric_depth_three :
 gates. -/
 theorem exists_majority {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ op : AltOp,
-      ∃ g : AltFormula n d, (size g : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ (1 / ((d - 1 : ℕ) : ℝ))) ∧
+      ∃ g : AltFormula n d, (size g : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) ∧
         ∀ x, eval op g x = majority n x := by
   obtain ⟨C, hC, h⟩ := exists_of_isSymmetric hd
   exact ⟨C, hC, fun n hn => h n hn _ isSymmetric_majority⟩
@@ -180,7 +179,7 @@ the unbounded fan-in basis of depth at most `d + 1` (counting negations) with at
 theorem Unbounded.exists_circuit_of_isSymmetric {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ f : BitString n → Bool, IsSymmetric f →
       ∃ c : Circuit Unbounded.signature n 1, c.Computes Unbounded.interpretation (single f) ∧
-        c.depth ≤ d + 1 ∧ (c.size : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ (1 / ((d - 1 : ℕ) : ℝ))) + n := by
+        c.depth ≤ d + 1 ∧ (c.size : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) + n := by
   obtain ⟨C, hC, h⟩ := AltFormula.exists_of_isSymmetric hd
   refine ⟨C, hC, fun n hn f hf => ?_⟩
   obtain ⟨g, hs, he⟩ := h n hn f hf .or

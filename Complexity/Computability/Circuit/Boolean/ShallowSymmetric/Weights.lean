@@ -14,6 +14,7 @@ public import Mathlib.Data.Nat.GCD.BigOperators
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Sum
 import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Data.Nat.ChineseRemainder
 
 /-!
 # Block weights and exact-weight certificates
@@ -22,6 +23,21 @@ The arithmetic of the construction of Lecomte and Ramakrishnan [LecomteRamakrish
 partitioning input bits preserves their total weight, a residue class partition has small blocks,
 and coprime modular certificates determine the exact weight. Complementing one block turns a
 difference of block weights into a symmetric function.
+
+## Main definitions
+
+* `Cslib.Circuits.Boolean.ShallowSymmetric.blockWeight`: the weight of a block of a partition.
+* `Cslib.Circuits.Boolean.ShallowSymmetric.residueBlock`: the partition into residue classes.
+
+## Main results
+
+* `Cslib.Circuits.Boolean.ShallowSymmetric.sum_blockWeight`: block weights sum to the weight.
+* `Cslib.Circuits.Boolean.ShallowSymmetric.weight_eq_of_shiftTests`: accepting tests modulo
+  coprime moduli of product larger than `n` certify the exact weight.
+
+## References
+
+* [V. Lecomte, P. Ramakrishnan, *Optimal Shallow Circuits for Majority*][LecomteRamakrishnan2026]
 -/
 
 @[expose] public section
@@ -71,21 +87,6 @@ theorem weight_pair_not_add {ι κ : Type*} [Fintype ι] [Fintype κ]
       weight x + Fintype.card κ := by
   rw [weight_sum_elim, Nat.add_assoc, weight_not_add]
 
-/-- Pairwise coprime modular equalities combine into equality modulo the product. -/
-theorem modEq_prod {ι : Type*} [Fintype ι] (k : ι → ℕ)
-    (hc : Pairwise (fun i j => (k i).Coprime (k j))) {a b : ℕ}
-    (h : ∀ i, a ≡ b [MOD k i]) : a ≡ b [MOD ∏ i, k i] := by
-  classical
-  have aux (s : Finset ι) : a ≡ b [MOD ∏ i ∈ s, k i] := by
-    induction s using Finset.induction_on with
-    | empty => simpa using (Nat.modEq_one (a := a) (b := b))
-    | @insert i s hi ih =>
-      rw [prod_insert hi]
-      apply (Nat.modEq_and_modEq_iff_modEq_mul ?_).1 ⟨h i, ih⟩
-      exact Nat.coprime_prod_right_iff.2 fun j hj => hc (by
-        intro he; subst j; exact hi hj)
-  exact aux univ
-
 /-- Modular certificates over coprime moduli larger in product than the input
 length certify the exact Hamming weight. -/
 theorem weight_eq_of_shiftTests {n : ℕ} {ι : Type*} [Fintype ι]
@@ -96,11 +97,16 @@ theorem weight_eq_of_shiftTests {n : ℕ} {ι : Type*} [Fintype ι]
     (hs : ∀ i, ShiftTest (t.val : ZMod (k i))
       (fun a => (blockWeight residueBlock x a : ZMod (k i))) (s i)) :
     weight x = t.val := by
-  apply (modEq_prod k hc (fun i => ?_)).eq_of_lt_of_lt
+  classical
+  have hmod : weight x ≡ t.val [MOD ∏ i, k i] := by
+    rw [← prod_map_toList]
+    refine (Nat.modEq_list_map_prod_iff ((nodup_toList univ).pairwise_of_forall_ne
+      fun i _ j _ hij => hc hij)).2 fun i _ => ?_
+    apply (ZMod.natCast_eq_natCast_iff _ _ _).1
+    have h := (hs i).sound
+    rw [← Nat.cast_sum, sum_blockWeight] at h
+    exact h
+  exact hmod.eq_of_lt_of_lt
     ((weight_le x).trans_lt (by simpa using hn)) (by omega)
-  apply (ZMod.natCast_eq_natCast_iff _ _ _).1
-  have h := (hs i).sound
-  rw [← Nat.cast_sum, sum_blockWeight] at h
-  exact h
 
 end Cslib.Circuits.Boolean.ShallowSymmetric

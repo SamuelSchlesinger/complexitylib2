@@ -28,6 +28,21 @@ We sample from all `|G| ^ |G|` shifts and reject shifts with the wrong sum. The 
 samples only shifts with the prescribed sum. This slightly weaker success density still gives the
 same exponential bound and avoids a conditional sampling space. The argument works for any finite
 abelian group; the circuit construction uses `ZMod k`.
+
+## Main definitions
+
+* `Cslib.Circuits.Boolean.ShallowSymmetric.ShiftTest`: the shifted distinctness tests.
+
+## Main results
+
+* `Cslib.Circuits.Boolean.ShallowSymmetric.ShiftTest.sound`: an accepting test certifies the sum
+  of the weights.
+* `Cslib.Circuits.Boolean.ShallowSymmetric.card_acceptingShifts`: a valid weight vector is
+  accepted by exactly `|G|!` shifts.
+
+## References
+
+* [V. Lecomte, P. Ramakrishnan, *Optimal Shallow Circuits for Majority*][LecomteRamakrishnan2026]
 -/
 
 @[expose] public section

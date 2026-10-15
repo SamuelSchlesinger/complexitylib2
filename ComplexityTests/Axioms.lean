@@ -724,4 +724,22 @@ info: 'Cslib.Circuits.Boolean.AltFormula.two_rpow_lt_size_of_eval_eq_majority' d
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.AltFormula.two_rpow_lt_size_of_eval_eq_majority
 
+/--
+info: 'Cslib.Circuits.Boolean.AltFormula.exists_majority' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.AltFormula.exists_majority
+
+/--
+info: 'Cslib.Communication.majority_communication_lower_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Communication.majority_communication_lower_bound
+
+/--
+info: 'Cslib.BooleanAnalysis.exists_mirror_set' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BooleanAnalysis.exists_mirror_set
+
 end ComplexityTests.Axioms
