@@ -1146,4 +1146,40 @@ info: 'Cslib.Circuits.Boolean.SparseSynthesis.le_vcDim_circuitSets' depends on a
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.SparseSynthesis.le_vcDim_circuitSets
 
+/--
+info: 'Cslib.RotationMap.card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion
+
+/--
+info: 'Cslib.RotationMap.expect_mul_walk_le_of_mul_card_le_card_interedges_compl' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.expect_mul_walk_le_of_mul_card_le_card_interedges_compl
+
+/--
+info: 'Cslib.RotationMap.secondEigenvalue_le_one_sub_edgeExpansion_sq_div' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.secondEigenvalue_le_one_sub_edgeExpansion_sq_div
+
+/--
+info: 'Cslib.RotationMap.edgeExpansion_le_card_mul_sqrt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.edgeExpansion_le_card_mul_sqrt
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_eq_secondEigenvalue_of_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_eq_secondEigenvalue_of_nonneg
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_le_one_sub_edgeExpansion_sq_div' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_le_one_sub_edgeExpansion_sq_div
+
 end ComplexityTests.Axioms

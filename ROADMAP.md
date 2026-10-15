@@ -343,7 +343,7 @@ convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `AC�
 | Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | done (`Data/BitString/PolynomialCorrelation`) |
 | Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | done (`Circuit/Boolean/{Correction,SparseSynthesis}`) |
 | Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`Data/BitString/{Hadamard,HadamardTester}`) |
-| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | Cheeger in progress |
+| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | Cheeger done (`Expander/Cheeger`); constant-degree expanders open |
 | Zig-zag product | `PCP/Internal/ZigZag` | in progress |
 | Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | reconstruction done (`Crypto/Primitives/PRG/NisanWigderson`); designs' existence and the sampling layer open |
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure | after the expander and Hadamard layers |
