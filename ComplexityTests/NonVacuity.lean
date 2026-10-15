@@ -20,6 +20,7 @@ import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Foundations.Combinatorics.Expander.Family
 import Complexity.Foundations.Combinatorics.Expander.TowerBase
 import Complexity.Computability.Kolmogorov.MultiTape
+import Complexity.Computability.RAM.Squaring
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
@@ -295,5 +296,13 @@ example : ∃ (D : Type) (_ : Fintype D) (H : Cslib.RotationMap (Fin 2 → D × 
   ⟨_, _, Cslib.RotationMap.zigzagTowerBase 1440000,
     Fintype.one_lt_card_iff_nontrivial.2 inferInstance,
     Cslib.RotationMap.spectralExpansion_zigzagTowerBase_le_one_div_five le_rfl⟩
+
+/-- Repeated squaring on a RAM: two squarings leave `16` in register `1`, and the run costs `12`
+units of logarithmic time. -/
+example : (Cslib.RAM.run (Cslib.RAM.repeatedSquaring 2) 3 (Cslib.RAM.State.init [])).regs.read 1 =
+      16 ∧
+    Cslib.RAM.time Cslib.RAM.logCost (Cslib.RAM.repeatedSquaring 2) 3 (Cslib.RAM.State.init []) =
+      12 := by
+  decide
 
 end ComplexityTests.NonVacuity

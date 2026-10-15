@@ -353,7 +353,7 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Machine-relative Kolmogorov complexity, incompressibility, invariance | `Metacomplexity/Kolmogorov/**` | done (`Computability/Kolmogorov/`); the universal-machine complexity waits for crei's UTM |
 | Nisan–Wigderson sampling layer and the Kt step | `Metacomplexity/NisanWigderson/Reconstruction/**`, `ListDecoding` | in progress |
 | Second-order logic, FO interpretations and reductions, order independence | `DescriptiveComplexity/{SecondOrder,Interpretation,…}` | done (`Logics/{FirstOrder,SecondOrder}`); order-invariant queries and congruences open |
-| Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | in progress |
+| Logarithmic-cost RAM and the unsoundness of unit cost | `Models/RandomAccessMachine/{Defs,Soundness}` | done (`Computability/RAM/`) |
 | Finite cores of Savitch and of inductive counting | `Classes/Containments/Internal/ReachIn`, `InductiveCounting`, `CountingCert` | done (`Foundations/Relation/`) |
 | Depth-two threshold circuit for parity | `Circuits/Threshold/Parity` | queued |
 | Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | batch 1 in progress (rectangles, sweeps, layouts, networks, demand); then the compiler and reduction, then the layout bounds |

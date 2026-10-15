@@ -137,6 +137,9 @@ public import Complexity.Computability.PCP.DegreeReduction
 public import Complexity.Computability.PCP.Preprocess
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
+public import Complexity.Computability.RAM.Cost
+public import Complexity.Computability.RAM.Defs
+public import Complexity.Computability.RAM.Squaring
 public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit

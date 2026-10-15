@@ -1694,4 +1694,16 @@ info: 'Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le' depends on axi
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le
 
+/--
+info: 'Cslib.RAM.logGap_squaring' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RAM.logGap_squaring
+
+/--
+info: 'Cslib.RAM.bitLength_read_run_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RAM.bitLength_read_run_le
+
 end ComplexityTests.Axioms
