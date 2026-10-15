@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification
-public import Cslib.Foundations.Data.BitString
+public import Complexity.Foundations.Data.BitString.Flip
 import Complexity.Logics.Propositional.CNF.Coding
 import Mathlib.Order.Interval.Finset.Nat
 
@@ -50,41 +50,6 @@ namespace Cslib
 
 open Finset
 
-namespace BitString
-
-variable {N : ℕ}
-
-/-- Flip the bits of `x` at the positions in `T`. -/
-def flipOn (T : Finset (Fin N)) (x : BitString N) : BitString N :=
-  fun i => if i ∈ T then !x i else x i
-
-theorem flipOn_apply_of_mem {x : BitString N} {T : Finset (Fin N)} {i : Fin N} (h : i ∈ T) :
-    flipOn T x i = !x i := by
-  simp [flipOn, h]
-
-theorem flipOn_apply_of_notMem {x : BitString N} {T : Finset (Fin N)} {i : Fin N} (h : i ∉ T) :
-    flipOn T x i = x i := by
-  simp [flipOn, h]
-
-@[simp] theorem flipOn_empty (x : BitString N) : flipOn ∅ x = x := by
-  funext i
-  simp [flipOn]
-
-theorem flipOn_singleton (i : Fin N) (x : BitString N) :
-    flipOn {i} x = Function.update x i (!x i) := by
-  funext j
-  by_cases h : j = i
-  · subst h
-    simp [flipOn]
-  · simp [flipOn, h]
-
-theorem flipOn_apply_eq_of_iff {x : BitString N} {T U : Finset (Fin N)} {i : Fin N}
-    (h : i ∈ T ↔ i ∈ U) : flipOn T x i = flipOn U x i := by
-  by_cases hi : i ∈ T
-  · rw [flipOn_apply_of_mem hi, flipOn_apply_of_mem (h.mp hi)]
-  · rw [flipOn_apply_of_notMem hi, flipOn_apply_of_notMem fun hU => hi (h.mpr hU)]
-
-end BitString
 
 namespace Logic.PL
 

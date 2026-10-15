@@ -832,4 +832,10 @@ info: 'Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation' depends on a
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation
 
+/--
+info: 'Cslib.DecisionTree.totalInfluence_le_depth' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.DecisionTree.totalInfluence_le_depth
+
 end ComplexityTests.Axioms

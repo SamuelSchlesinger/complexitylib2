@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.DecisionTree.Basic
 public import Mathlib.Data.Finset.Lattice.Fold
-public import Mathlib.Data.Finset.Piecewise
+public import Complexity.Foundations.Data.BitString.Flip
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Fintype.Powerset
 import Mathlib.Combinatorics.Enumerative.DoubleCounting
@@ -32,7 +32,6 @@ certificate, so all three are at most the decision tree complexity
 
 ## Main definitions
 
-* `Cslib.DecisionTree.flipBlock`: flip a block of variables.
 * `Cslib.DecisionTree.sensitivityAt`, `Cslib.DecisionTree.sensitivity`.
 * `Cslib.DecisionTree.blockSensitivityAt`, `Cslib.DecisionTree.blockSensitivity`.
 * `Cslib.DecisionTree.IsCertificate`, `Cslib.DecisionTree.certificateComplexityAt`,
@@ -97,21 +96,6 @@ end Certificate
 
 variable [DecidableEq ι]
 
-/-- Flip the variables of `x` in the block `B`. -/
-def flipBlock (x : ι → Bool) (B : Finset ι) : ι → Bool :=
-  B.piecewise (fun i => !x i) x
-
-@[simp] theorem flipBlock_singleton (x : ι → Bool) (i : ι) :
-    flipBlock x {i} = Function.update x i !x i := by
-  funext j
-  by_cases hj : j = i
-  · subst hj
-    simp [flipBlock]
-  · simp [flipBlock, hj]
-
-@[simp] theorem flipBlock_empty (x : ι → Bool) : flipBlock x ∅ = x := by
-  simp [flipBlock]
-
 variable [Fintype ι] [DecidableEq β]
 
 /-- The number of variables whose flip changes `f x`. -/
@@ -122,9 +106,13 @@ def sensitivityAt (f : (ι → Bool) → β) (x : ι → Bool) : ℕ :=
 def sensitivity (f : (ι → Bool) → β) : ℕ :=
   univ.sup (sensitivityAt f)
 
+theorem sensitivityAt_le_sensitivity (f : (ι → Bool) → β) (x : ι → Bool) :
+    sensitivityAt f x ≤ sensitivity f :=
+  le_sup (mem_univ x)
+
 /-- The families of pairwise disjoint blocks each of whose flip changes `f x`. -/
 def sensitiveFamilies (f : (ι → Bool) → β) (x : ι → Bool) : Finset (Finset (Finset ι)) :=
-  {F | (∀ B ∈ F, ∀ C ∈ F, B ≠ C → Disjoint B C) ∧ ∀ B ∈ F, f (flipBlock x B) ≠ f x}
+  {F | (∀ B ∈ F, ∀ C ∈ F, B ≠ C → Disjoint B C) ∧ ∀ B ∈ F, f (BitString.flipOn B x) ≠ f x}
 
 /-- The largest number of pairwise disjoint blocks each of whose flip changes `f x`. -/
 def blockSensitivityAt (f : (ι → Bool) → β) (x : ι → Bool) : ℕ :=
@@ -142,7 +130,7 @@ variable {f : (ι → Bool) → β} {x : ι → Bool}
 
 @[simp] theorem mem_sensitiveFamilies {F : Finset (Finset ι)} :
     F ∈ sensitiveFamilies f x ↔
-      (∀ B ∈ F, ∀ C ∈ F, B ≠ C → Disjoint B C) ∧ ∀ B ∈ F, f (flipBlock x B) ≠ f x := by
+      (∀ B ∈ F, ∀ C ∈ F, B ≠ C → Disjoint B C) ∧ ∀ B ∈ F, f (BitString.flipOn B x) ≠ f x := by
   simp [sensitiveFamilies]
 
 /-- Sensitivity at an input is at most block sensitivity there: sensitive variables are
@@ -167,7 +155,7 @@ theorem IsCertificate.card_le_of_mem_sensitiveFamilies {S : Finset ι} (hS : IsC
   refine card_le_card_of_forall_subsingleton (fun B i => i ∈ B) (fun B hB => ?_)
     fun i _ B hB C hC => by_contra fun hne => disjoint_left.1 (hF.1 B hB.1 C hC.1 hne) hB.2 hC.2
   by_contra! h
-  exact hF.2 B hB (hS _ fun i hi => by simp [flipBlock, fun hiB => h i hi hiB])
+  exact hF.2 B hB (hS _ fun i hi => by simp [BitString.flipOn, fun hiB => h i hi hiB])
 
 /-- Block sensitivity at an input is at most certificate complexity there. -/
 theorem blockSensitivityAt_le_certificateComplexityAt (f : (ι → Bool) → β) (x : ι → Bool) :

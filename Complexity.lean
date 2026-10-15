@@ -91,6 +91,7 @@ public import Complexity.Computability.DecisionTree.Basic
 public import Complexity.Computability.DecisionTree.CanonicalTree
 public import Complexity.Computability.DecisionTree.Certificate
 public import Complexity.Computability.DecisionTree.Fourier
+public import Complexity.Computability.DecisionTree.Influence
 public import Complexity.Computability.DecisionTree.NormalForm
 public import Complexity.Computability.DecisionTree.Parity
 public import Complexity.Computability.DecisionTree.Restrict
@@ -131,6 +132,7 @@ public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Convolution
+public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Fourier
 public import Complexity.Foundations.Data.BitString.FourierRestriction
 public import Complexity.Foundations.Data.BitString.Influence
