@@ -23,6 +23,7 @@ public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.Circuit.Boolean.Restriction
 public import Complexity.Computability.Circuit.Boolean.Substitution
 public import Complexity.Computability.Circuit.Boolean.Synthesis
+public import Complexity.Computability.Circuit.Boolean.TC0
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Clique
@@ -31,6 +32,7 @@ public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
+public import Complexity.Computability.Circuit.MapOp
 public import Complexity.Computability.Circuit.Monotone.Basic
 public import Complexity.Computability.Circuit.Monotone.Clique.Approximator
 public import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic

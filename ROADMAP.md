@@ -213,7 +213,10 @@ polynomially bounded size and constant depth. AC⁰ is closed under the Boolean 
 **majority is not in AC⁰** (`Circuit/Boolean/Majority.lean`): padding the input with constants
 turns majority into every threshold function, so parity has circuits of depth four more and
 polynomially larger size than majority. Depth bounds for cslib's `Circuit.comp`/`Circuit.append`
-were added for this (`Circuit/CompositionDepth.lean`).
+were added for this (`Circuit/CompositionDepth.lean`). With majority gates added to the basis
+(`Circuit/Boolean/TC0.lean`, over the translation of circuits along maps of operations
+`Circuit/MapOp.lean`), majority is one gate, so **AC⁰ ⊊ TC⁰**
+(`Cslib.Circuits.Boolean.ThresholdBasis.AC0_ssubset_TC0`).
 
 Independent cslib-style reviews of the gate-elimination and Khrapchenko modules were addressed:
 a wrong Jukna citation was corrected (Section 1.6 for Schnorr, Section 6.8 for Khrapchenko, plus

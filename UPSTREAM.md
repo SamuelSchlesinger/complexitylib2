@@ -60,6 +60,8 @@ Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file de
 | `Complexity.Computability.Circuit.Boolean.AC0` | same path | candidate | the class AC⁰ over cslib circuits, closure under the Boolean operations, Håstad's theorem for circuits (same bound, counting gates), **parity ∉ AC⁰** |
 | `Complexity.Computability.Circuit.Boolean.Majority` | same path | candidate | majority, the constant-depth reduction from parity (padding gives every threshold, two thresholds give "exactly `k`"), **majority ∉ AC⁰** |
 | `Complexity.Computability.Circuit.CompositionDepth` | addition to `Circuit/Composition.lean` | candidate | depths of continued programs; `depth (d.comp c) ≤ depth d + depth c`, `depth (c.append d) ≤ max` |
+| `Complexity.Computability.Circuit.Boolean.TC0` | same path | candidate | the AC⁰ basis with majority gates, the class TC⁰, **AC⁰ ⊊ TC⁰** |
+| `Complexity.Computability.Circuit.MapOp` | same path (or `Circuit/Program.lean`) | candidate | translating programs and circuits along an arity-preserving map of operations, preserving size, depth and (under agreeing interpretations) evaluation; open: shorter depth proof |
 | `Complexity.Computability.Circuit.Pi` | addition to `Circuit/Composition.lean` | candidate | single-output circuits side by side (`Circuit.pi`) and one-gate circuits (`Circuit.oneGate`), with eval/size/depth |
 | `Complexity.Computability.Circuit.Depth` | addition to `Circuit/Depth.lean` | candidate | the wires a gate reads are shallower than it; gates have positive depth |
 | `Complexity.Foundations.Data.Nat.PolynomialBound.Exponential` | addition to `Foundations/Data/Nat/PolynomialBound.lean` | candidate | polynomially bounded functions are eventually below `2 ^ n` |
