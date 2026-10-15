@@ -228,7 +228,7 @@ theorem sum_fourierCoeff_sq_le {f : BooleanFunction n} {C : Circuit Unbounded.si
     refine sum_le_sum fun U _ => ?_
     split_ifs with hU
     · have hcount := Finset.two_mul_card_filter_card_inter_lt_le (s := univ) (U := U) (ℓ := ℓ)
-        (m := s) (subset_univ U) (by simpa using hℓn) (by simpa using hn0)
+        (m := s) (subset_univ U) (by simpa using hn0)
         (by
           have : 8 * n ≤ k * ℓ := (Nat.mul_le_mul_right _ (le_max_left _ _)).trans hk
           simpa using this.trans (Nat.mul_le_mul_right _ hU))

@@ -14,7 +14,6 @@ public import Mathlib.Data.Fintype.Option
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Fintype.Powerset
 public import Mathlib.Logic.Function.DependsOn
-import Complexity.Foundations.Combinatorics.Hypergeometric
 
 /-!
 # Restrictions
@@ -304,8 +303,7 @@ theorem card_filter_extends_withFree {ρ' : Restriction n} {ℓ : ℕ} (hℓ : �
     ((withFree n ℓ).filter fun ρ => ρ'.Extends ρ).card =
       (n - ρ'.free.card).choose (ℓ - ρ'.free.card) := by
   classical
-  have h := Finset.card_filter_subset_powersetCard (s := Finset.univ) (Finset.subset_univ ρ'.free)
-    hℓ
+  have h := Finset.card_filter_powersetCard_subset ρ'.free Finset.univ ℓ (Finset.subset_univ _) hℓ
   rw [Finset.card_univ, Fintype.card_fin] at h
   rw [← h]
   refine Finset.card_nbij' free (fun F i => if i ∈ F then none else ρ' i) (fun ρ hρ => ?_)
