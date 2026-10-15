@@ -17,17 +17,17 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 /-!
 # Influence and sensitivity
 
-The total influence of a Boolean function, read as signs, is its *average sensitivity*: the
-expected number of bits whose flip changes the value
-(`DecisionTree.totalInfluence_eq_expect_sensitivityAt`) [O'Donnell, Section 2.3][ODonnell2014], so
-it is at most the sensitivity. A function computed by a decision tree of depth `d` has Fourier
-degree at most `d`, so its total influence is at most `d` (`DecisionTree.totalInfluence_le_depth`).
+The total influence of a Boolean function, read as signs, is its *average sensitivity*, the
+expected value of `sensitivityAt f x` (`BitString.totalInfluence_signVal`)
+[O'Donnell, Section 2.3][ODonnell2014], so it is at most the sensitivity
+(`DecisionTree.totalInfluence_le_sensitivity`). A function computed by a decision tree of depth
+`d` has Fourier degree at most `d`, so its total influence is at most `d`
+(`DecisionTree.totalInfluence_le_depth`).
 
 ## Main results
 
-* `Cslib.DecisionTree.totalInfluence_eq_expect_sensitivityAt`: total influence is average
+* `Cslib.DecisionTree.totalInfluence_le_sensitivity`: total influence is at most the
   sensitivity.
-* `Cslib.DecisionTree.totalInfluence_le_sensitivity`: it is at most the sensitivity.
 * `Cslib.DecisionTree.totalInfluence_le_depth`: functions of decision trees of depth `d` have
   total influence at most `d`.
 
@@ -45,16 +45,10 @@ open scoped BigOperators
 
 variable {n : ℕ}
 
-/-- **Total influence is average sensitivity**: the total influence of a Boolean function, read as
-signs, is the expected number of bits whose flip changes its value. -/
-theorem totalInfluence_eq_expect_sensitivityAt (f : BitString n → Bool) :
-    totalInfluence (fun x => signVal (f x)) = 𝔼 x, (sensitivityAt f x : ℝ) :=
-  totalInfluence_signVal f
-
 /-- The total influence of a Boolean function, read as signs, is at most its sensitivity. -/
 theorem totalInfluence_le_sensitivity (f : BitString n → Bool) :
     totalInfluence (fun x => signVal (f x)) ≤ sensitivity f := by
-  rw [totalInfluence_eq_expect_sensitivityAt]
+  rw [totalInfluence_signVal]
   exact expect_le univ_nonempty fun x _ => by exact_mod_cast sensitivityAt_le_sensitivity f x
 
 /-- **Decision trees of depth `d` have total influence at most `d`**: a Boolean function of the
