@@ -1,11 +1,13 @@
 module  -- shake: keep-all --deprecated_module: ignore
 
 public import Complexity.Computability.BranchingProgram.MonoidProgram
+public import Complexity.Computability.BranchingProgram.PolyLength
 public import Complexity.Computability.Circuit.Approximation
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AltFormula
 public import Complexity.Computability.Circuit.Boolean.AltFormula.TopDown
 public import Complexity.Computability.Circuit.Boolean.Barrington
+public import Complexity.Computability.Circuit.Boolean.BarringtonClass
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
@@ -24,6 +26,7 @@ public import Complexity.Computability.Circuit.Boolean.MachineSimulation
 public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
+public import Complexity.Computability.Circuit.Boolean.NegationNormalForm
 public import Complexity.Computability.Circuit.Boolean.Nondeterminism
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.PPolyHard
@@ -70,6 +73,7 @@ public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.SimulationDepth
 public import Complexity.Computability.Circuit.Support
+public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Communication.Protocol
 public import Complexity.Computability.Communication.RoundProtocol
 public import Complexity.Computability.Communication.TopDown.Adversary

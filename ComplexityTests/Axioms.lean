@@ -868,4 +868,28 @@ info: 'Cslib.BitString.mem_iff_forall_exists_forall' depends on axioms: [propext
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.mem_iff_forall_exists_forall
 
+/--
+info: 'Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm_five' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm_five
+
+/--
+info: 'Cslib.Circuits.Boolean.NC_one_eq_polyLength_end' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.NC_one_eq_polyLength_end
+
+/--
+info: 'Cslib.Circuits.Boolean.mem_NC_one_iff_formulaDepth_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.mem_NC_one_iff_formulaDepth_le
+
+/--
+info: 'Cslib.Circuits.Circuit.size_toFormula_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.size_toFormula_lt
+
 end ComplexityTests.Axioms

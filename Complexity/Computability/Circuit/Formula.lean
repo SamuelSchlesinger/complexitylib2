@@ -31,9 +31,10 @@ The *leaf size* `Formula.leafSize` counts the input leaves, the measure of formu
 [Jukna, Chapter 6][Jukna2012]. Nullary operations, such as constants, are not counted: constants
 can be eliminated from a formula for a nonconstant function, so this changes no lower bound, and
 it gives constant functions leaf size zero. `Formula.size` counts the operation nodes, constants
-included. A formula with operations of arity at most `r` has at most `r ^ d` leaves at depth `d`
-(`Formula.leafSize_le_pow_depth`) and at most `(r - 1) s + 1` leaves with `s` operation nodes
-(`Formula.leafSize_le`), and it is a circuit with one gate for each operation node and at most
+included. A formula of depth `d` with operations of arity at most `r` has at most `r ^ d` leaves
+(`Formula.leafSize_le_pow_depth`) and, for `r ≥ 2`, fewer than `r ^ d` operation nodes
+(`Formula.size_lt_pow_depth`); with `s` operation nodes it has at most `(r - 1) s + 1` leaves
+(`Formula.leafSize_le`). A formula is a circuit with one gate for each operation node and at most
 its depth (`Formula.toCircuit`). Counting only the leaves labelled by inputs of a set `Y`
 (`Formula.leafSizeIn`) splits the leaf size among disjoint blocks of inputs
 (`Formula.sum_leafSizeIn_le_leafSize`), and a formula with no leaf in `Y` depends only on the
@@ -58,6 +59,7 @@ inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
 * `Cslib.Circuits.Formula.map_eval`: evaluation commutes with homomorphisms.
 * `Cslib.Circuits.Formula.leafSize_le_pow_depth`, `Cslib.Circuits.Formula.leafSize_le`: leaf size
   under bounded fan-in.
+* `Cslib.Circuits.Formula.size_lt_pow_depth`: size under bounded fan-in.
 * `Cslib.Circuits.Formula.Computes.toCircuit`, `Cslib.Circuits.Formula.size_toCircuit`,
   `Cslib.Circuits.Formula.depth_toCircuit_le`: a formula is a circuit computing the same function,
   of the same size and at most the same depth.
@@ -174,6 +176,37 @@ theorem leafSize_le_pow_depth {r : ℕ} (hr : ∀ op, σ.Arity op ≤ r) (F : Fo
       _ ≤ r ^ d * r := by
           rw [Fintype.card_fin, smul_eq_mul, mul_comm]
           exact Nat.mul_le_mul_left _ (hr op)
+
+/-- With operations of arity at most `r`, where `2 ≤ r`, a formula of depth `d` has fewer than
+`r ^ d` operation nodes. -/
+theorem size_lt_pow_depth {r : ℕ} (hr : ∀ op, σ.Arity op ≤ r) (hr₂ : 2 ≤ r) (F : Formula σ n) :
+    F.size < r ^ F.depth := by
+  induction F with
+  | input i => simp
+  | gate op args ih =>
+    set d := Finset.univ.sup fun j => (args j).depth
+    have hd : 1 ≤ r ^ d := Nat.one_le_pow _ _ (by omega)
+    have hsum : ∑ j, ((args j).size + 1) ≤ σ.Arity op * r ^ d := by
+      calc ∑ j, ((args j).size + 1) ≤ ∑ _j : Fin (σ.Arity op), r ^ d :=
+            Finset.sum_le_sum fun j _ => (ih j).trans_le (Nat.pow_le_pow_right (by omega)
+              (Finset.le_sup (f := fun j => (args j).depth) (Finset.mem_univ j)))
+        _ = σ.Arity op * r ^ d := by simp
+    rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+      smul_eq_mul, mul_one] at hsum
+    rw [size_gate, depth_gate, pow_succ, mul_comm]
+    have hk := hr op
+    rcases Nat.lt_or_ge (σ.Arity op) 2 with hk₂ | hk₂
+    · calc (∑ j, (args j).size) + 1 ≤ r ^ d := by
+            obtain h | h : σ.Arity op = 0 ∨ σ.Arity op = 1 := by omega
+            · have : σ.Arity op * r ^ d = 0 := by rw [h, zero_mul]
+              omega
+            · have : σ.Arity op * r ^ d = r ^ d := by rw [h, one_mul]
+              omega
+        _ < 2 * r ^ d := by omega
+        _ ≤ r * r ^ d := Nat.mul_le_mul_right _ hr₂
+    · calc (∑ j, (args j).size) + 1 < (∑ j, (args j).size) + σ.Arity op := by omega
+        _ ≤ σ.Arity op * r ^ d := hsum
+        _ ≤ r * r ^ d := Nat.mul_le_mul_right _ hk
 
 /-- With operations of arity at most `r`, a formula with `s` operation nodes has at most
 `(r - 1) s + 1` leaves. -/
