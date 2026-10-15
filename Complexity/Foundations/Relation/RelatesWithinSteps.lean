@@ -33,11 +33,11 @@ algorithm relies on.
 
 * `Relation.relatesWithinSteps_iff_relatesInSteps_reflGen`: a walk of at most `n` steps is a walk
   of exactly `n` steps that may stay put.
-* `Relation.relatesWithinSteps_succ_iff`: one more step of breadth-first search.
-* `Relation.relatesInSteps_add_iff`, `Relation.relatesWithinSteps_add_iff`: walks split at any
+* `Relation.RelatesWithinSteps.succ_iff`: one more step of breadth-first search.
+* `Relation.RelatesInSteps.add_iff`, `Relation.RelatesWithinSteps.add_iff`: walks split at any
   point; the second is the midpoint recursion.
-* `Relation.relatesWithinSteps_two_mul_iff`, `Relation.relatesWithinSteps_two_pow_succ_iff`,
-  `Relation.relatesWithinSteps_one_iff`: the recursion of Savitch's algorithm and its base case.
+* `Relation.RelatesWithinSteps.two_mul_iff`, `Relation.RelatesWithinSteps.two_pow_succ_iff`,
+  `Relation.RelatesWithinSteps.one_iff`: the recursion of Savitch's algorithm and its base case.
 * `Relation.ReflTransGen.relatesWithinSteps_of_encard_le`,
   `Relation.reflTransGen_iff_relatesWithinSteps`: reachability is reachability within one step
   fewer than the number of elements.
@@ -87,22 +87,22 @@ theorem relatesWithinSteps_iff_relatesInSteps_reflGen :
 
 /-- **One more step of breadth-first search.** An element is reached within `n + 1` steps exactly
 when it is reached in at most one step from an element reached within `n` steps. -/
-theorem relatesWithinSteps_succ_iff :
+theorem RelatesWithinSteps.succ_iff :
     RelatesWithinSteps r a c (n + 1) ↔ ∃ b, RelatesWithinSteps r a b n ∧ ReflGen r b c := by
   simp only [relatesWithinSteps_iff_relatesInSteps_reflGen]
   exact RelatesInSteps.succ_iff
 
 /-- A walk of at most one step is a step of the reflexive closure. -/
 @[simp]
-theorem relatesWithinSteps_one_iff : RelatesWithinSteps r a b 1 ↔ ReflGen r a b := by
-  rw [← Nat.zero_add 1, relatesWithinSteps_succ_iff]
+theorem RelatesWithinSteps.one_iff : RelatesWithinSteps r a b 1 ↔ ReflGen r a b := by
+  rw [← Nat.zero_add 1, RelatesWithinSteps.succ_iff]
   simp
 
 /-! ### Splitting walks -/
 
 /-- **Walks split at any point.** A walk of `m + n` steps passes through a midpoint after exactly
 `m` of them. -/
-theorem relatesInSteps_add_iff :
+theorem RelatesInSteps.add_iff :
     RelatesInSteps r a c (m + n) ↔ ∃ b, RelatesInSteps r a b m ∧ RelatesInSteps r b c n := by
   refine ⟨fun h => ?_, fun ⟨_, h₁, h₂⟩ => h₁.trans h₂⟩
   induction n generalizing c with
@@ -116,27 +116,27 @@ theorem relatesInSteps_add_iff :
 /-- **The midpoint recursion.** A walk of at most `m + n` steps is exactly a walk of at most `m`
 steps to some midpoint followed by a walk of at most `n` steps from it. The midpoint is all a
 recursive search has to remember. -/
-theorem relatesWithinSteps_add_iff :
+theorem RelatesWithinSteps.add_iff :
     RelatesWithinSteps r a c (m + n) ↔
       ∃ b, RelatesWithinSteps r a b m ∧ RelatesWithinSteps r b c n := by
   simp only [relatesWithinSteps_iff_relatesInSteps_reflGen]
-  exact relatesInSteps_add_iff
+  exact RelatesInSteps.add_iff
 
 /-- The halving form of the midpoint recursion: a bound of `2 n` splits into two independent
 bounds of `n`. -/
-theorem relatesWithinSteps_two_mul_iff :
+theorem RelatesWithinSteps.two_mul_iff :
     RelatesWithinSteps r a c (2 * n) ↔
       ∃ b, RelatesWithinSteps r a b n ∧ RelatesWithinSteps r b c n := by
-  rw [Nat.two_mul, relatesWithinSteps_add_iff]
+  rw [Nat.two_mul, RelatesWithinSteps.add_iff]
 
 /-- **The recursion of Savitch's algorithm.** A bound of `2 ^ (i + 1)` splits into two
 subproblems with bound `2 ^ i`, so the recursion from a bound of `2 ^ i` has depth `i` and each
-level stores one midpoint; its base case is `Relation.relatesWithinSteps_one_iff`
+level stores one midpoint; its base case is `Relation.RelatesWithinSteps.one_iff`
 [Sipser, Theorem 8.5][Sipser2013]. -/
-theorem relatesWithinSteps_two_pow_succ_iff {i : ℕ} :
+theorem RelatesWithinSteps.two_pow_succ_iff {i : ℕ} :
     RelatesWithinSteps r a c (2 ^ (i + 1)) ↔
       ∃ b, RelatesWithinSteps r a b (2 ^ i) ∧ RelatesWithinSteps r b c (2 ^ i) := by
-  rw [Nat.pow_succ', relatesWithinSteps_two_mul_iff]
+  rw [Nat.pow_succ', RelatesWithinSteps.two_mul_iff]
 
 /-! ### Walks on few elements are short -/
 
@@ -169,7 +169,7 @@ theorem reflTransGen_iff_relatesWithinSteps [Finite α] (hN : Nat.card α ≤ N 
 
 /-- **The bound Savitch's recursion starts from.** On a finite type with `N` elements, reachability
 is reachability within `2 ^ ⌈log₂ N⌉` steps, so the recursion of
-`Relation.relatesWithinSteps_two_pow_succ_iff` decides it at depth `⌈log₂ N⌉`
+`Relation.RelatesWithinSteps.two_pow_succ_iff` decides it at depth `⌈log₂ N⌉`
 [Sipser, Theorem 8.5][Sipser2013]. -/
 theorem reflTransGen_iff_relatesWithinSteps_two_pow_clog [Finite α] :
     ReflTransGen r a b ↔ RelatesWithinSteps r a b (2 ^ Nat.clog 2 (Nat.card α)) :=

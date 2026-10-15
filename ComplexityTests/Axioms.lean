@@ -1617,16 +1617,16 @@ info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess' depends on axioms: [pro
 #print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_preprocess
 
 /--
-info: 'Relation.relatesWithinSteps_add_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Relation.RelatesWithinSteps.add_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Relation.relatesWithinSteps_add_iff
+#print axioms Relation.RelatesWithinSteps.add_iff
 
 /--
-info: 'Relation.relatesWithinSteps_two_pow_succ_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Relation.RelatesWithinSteps.two_pow_succ_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Relation.relatesWithinSteps_two_pow_succ_iff
+#print axioms Relation.RelatesWithinSteps.two_pow_succ_iff
 
 /--
 info: 'Relation.reflTransGen_iff_relatesWithinSteps_two_pow_clog' depends on axioms: [propext, Classical.choice, Quot.sound]

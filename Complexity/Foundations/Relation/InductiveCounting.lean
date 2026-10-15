@@ -86,7 +86,7 @@ theorem reachableWithin_zero : reachableWithin r a 0 = {a} := by
 /-- An element is in round `n + 1` exactly when it is at most one step away from round `n`. -/
 theorem mem_reachableWithin_succ :
     c ∈ reachableWithin r a (n + 1) ↔ ∃ b ∈ reachableWithin r a n, ReflGen r b c :=
-  relatesWithinSteps_succ_iff
+  RelatesWithinSteps.succ_iff
 
 /-- **The round recursion.** Round `n + 1` is round `n` together with the successors of its
 members. -/
@@ -234,7 +234,7 @@ only the size of round `n`, which is how the size of round `n + 1` is computed f
 theorem not_relatesWithinSteps_succ_iff (hfin : (reachableWithin r a n).Finite) :
     ¬ RelatesWithinSteps r a c (n + 1) ↔
       ∃ l, IsRoundList r a n l ∧ ∀ b ∈ l, ¬ ReflGen r b c := by
-  rw [← forall_relatesWithinSteps_iff_exists_isRoundList hfin, relatesWithinSteps_succ_iff]
+  rw [← forall_relatesWithinSteps_iff_exists_isRoundList hfin, RelatesWithinSteps.succ_iff]
   exact ⟨fun h b hb hbc => h ⟨b, hb, hbc⟩, fun h ⟨b, hb, hbc⟩ => h b hb hbc⟩
 
 /-! ### Unreachability as a certificate -/
