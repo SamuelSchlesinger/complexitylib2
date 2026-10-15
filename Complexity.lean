@@ -108,6 +108,7 @@ public import Complexity.Foundations.Data.BitString.LowDegreeParity
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Hamming
+public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential

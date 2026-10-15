@@ -574,4 +574,10 @@ info: 'Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize' depends on axio
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize
 
+/--
+info: 'card_mul_sum_choose_le_of_two_mul_lt_hammingDist' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_mul_sum_choose_le_of_two_mul_lt_hammingDist
+
 end ComplexityTests.Axioms
