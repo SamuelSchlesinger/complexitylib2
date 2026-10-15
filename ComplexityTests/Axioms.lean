@@ -892,4 +892,22 @@ info: 'Cslib.Circuits.Circuit.size_toFormula_lt' depends on axioms: [propext, Cl
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Circuit.size_toFormula_lt
 
+/--
+info: 'Cslib.Crypto.PRG.Generator.exists_half_add_div_le_predictionExperiment' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.Generator.exists_half_add_div_le_predictionExperiment
+
+/--
+info: 'Cslib.Crypto.PRG.Generator.Unpredictable.secure' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.Generator.Unpredictable.secure
+
+/--
+info: 'Cslib.Crypto.PRG.Generator.Secure.unpredictable' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.Generator.Secure.unpredictable
+
 end ComplexityTests.Axioms
