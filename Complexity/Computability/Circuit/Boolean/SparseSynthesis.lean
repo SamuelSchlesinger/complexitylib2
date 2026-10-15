@@ -43,18 +43,18 @@ disjunctions, and the bounds are proved here for De Morgan circuits. The circuit
 `Complexity.Computability.Circuit.Boolean.SparseSynthesisConstruction`; this file chooses their
 parameters, uniformly in the set and the function.
 
-Together with the sparse corrections of `Complexity.Computability.Circuit.Boolean.Correction`, these
-bounds show that circuit complexity is continuous at the scale of the square root of the number of
-inputs: changing a function with any number of outputs on at most `2 ^ p` inputs, and in at most `2
-p` outputs, changes its complexity by at most `(3 + ε) 2 ^ p` (`dist_complexity_le`). Indeed the
-indicator of the changed inputs costs `(1 + ε) 2 ^ p`, and each of the at most `2 p` changed outputs
-costs `(1 + ε) 2 ^ p / p` on those inputs. For a single output the bound is `(1 + ε) 2 ^ p`
-(`dist_complexity_single_le`). The order is optimal: for `p ≥ 4`, by counting, some set of `2 ^ p`
-inputs has an indicator of complexity more than `2 ^ p / 16` (`exists_hard_indicator`), so no
-continuity bound is `o(2 ^ p)` (`not_isLittleO_of_dist_complexity_le`). Consequences are that exact
-hardness survives sparse errors (`lt_hammingDist_of_complexity_add_lt`,
-`dist_complexity_isLittleO`), and that circuits of `(1 + ε) 2 ^ p / p` gates shatter every set of at
-most `2 ^ p` inputs (`shatters_circuitSets`).
+Together with the sparse corrections of `Complexity.Computability.Circuit.Boolean.Correction`,
+these bounds show that circuit complexity is continuous at the scale of the square root of the
+number of inputs: changing a function with any number of outputs on at most `2 ^ p` inputs, and in
+at most `2 p` outputs, changes its complexity by at most `(3 + ε) 2 ^ p` (`dist_complexity_le`).
+Indeed the indicator of the changed inputs costs `(1 + ε) 2 ^ p`, and each of the at most `2 p`
+changed outputs costs `(1 + ε) 2 ^ p / p` on those inputs. For a single output the bound is
+`(1 + ε) 2 ^ p` (`dist_complexity_single_le`). The order is optimal: for `p ≥ 4`, by counting,
+some set of `2 ^ p` inputs has an indicator of complexity more than `2 ^ p / 16`
+(`exists_hard_indicator`), so no continuity bound is `o(2 ^ p)`
+(`not_isLittleO_of_dist_complexity_le`). Consequences are that exact hardness survives sparse
+errors (`lt_hammingDist_of_complexity_add_lt`, `dist_complexity_isLittleO`), and that circuits of
+`(1 + ε) 2 ^ p / p` gates shatter every set of at most `2 ^ p` inputs (`shatters_circuitSets`).
 
 The circuit model counts every AND, OR, NOT and constant gate; fan-out and output wires are free.
 
