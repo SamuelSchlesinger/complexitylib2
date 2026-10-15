@@ -966,4 +966,16 @@ info: 'Cslib.RotationMap.exists_isSimple_toSimpleGraph_eq' depends on axioms: [p
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.exists_isSimple_toSimpleGraph_eq
 
+/--
+info: 'Cslib.BitString.abs_expect_signVal_xorMajority_mul_signVal_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.abs_expect_signVal_xorMajority_mul_signVal_le
+
+/--
+info: 'Cslib.BitString.two_mul_card_agree_xorMajority_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.two_mul_card_agree_xorMajority_le
+
 end ComplexityTests.Axioms

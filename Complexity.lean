@@ -151,6 +151,7 @@ public import Complexity.Foundations.Data.BitString.LowDegree
 public import Complexity.Foundations.Data.BitString.LowDegreeParity
 public import Complexity.Foundations.Data.BitString.Noise
 public import Complexity.Foundations.Data.BitString.Parity
+public import Complexity.Foundations.Data.BitString.PolynomialCorrelation
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Hamming
