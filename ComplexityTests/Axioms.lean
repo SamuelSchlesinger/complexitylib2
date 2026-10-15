@@ -910,4 +910,30 @@ info: 'Cslib.Crypto.PRG.Generator.Secure.unpredictable' depends on axioms: [prop
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.PRG.Generator.Secure.unpredictable
 
+/--
+info: 'Cslib.Probability.IsPairwiseIndependentHash.three_quarters_mul_le_dens_filter_mem_image' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+open Cslib.Probability in
+#print axioms IsPairwiseIndependentHash.three_quarters_mul_le_dens_filter_mem_image
+
+/--
+info: 'Cslib.Probability.IsPairwiseIndependentHash.three_sixteenths_le_dens_filter_card_filter_eq_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+open Cslib.Probability in
+#print axioms IsPairwiseIndependentHash.three_sixteenths_le_dens_filter_card_filter_eq_one
+
+/--
+info: 'Cslib.Probability.isPairwiseIndependentHash_affineHash' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.isPairwiseIndependentHash_affineHash
+
+/--
+info: 'Cslib.Probability.ApproximateCounting.three_quarters_le_dens_filter_affineHashEstimate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.ApproximateCounting.three_quarters_le_dens_filter_affineHashEstimate
+
 end ComplexityTests.Axioms
