@@ -18,7 +18,7 @@ import Mathlib.Data.Fintype.Fin
 The standard reduction from 3-SAT to the satisfiability of constraint graphs over a constant
 alphabet, with binary constraints [Arora and Barak, Chapter 22][AroraBarak09]. It can serve as the
 starting point of Dinur's proof of the PCP theorem, which starts instead from graph 3-colouring
-[Dinur, Proposition 2.1 and Corollary 4.2][Dinur2007]: it produces a constraint graph whose value is
+[Dinur, Proposition 2.1 and Corollary 4.2][Dinur2005]: it produces a constraint graph whose value is
 at least a constant fraction of the proportion of clauses that every assignment falsifies, and the
 rest of the proof amplifies that value.
 
@@ -61,6 +61,7 @@ to have at most three literals.
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 -/
 
 @[expose] public section

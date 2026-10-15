@@ -13,11 +13,11 @@ public import Complexity.Foundations.Combinatorics.Expander.KilledWalk
 /-!
 # Powering a constraint graph
 
-The **powering** step of Dinur's proof of the PCP theorem [Dinur, Section 3.2][Dinur2007] trades a
+The **powering** step of Dinur's proof of the PCP theorem [Dinur, Section 3.2][Dinur2005] trades a
 larger alphabet for a larger value: on an expander, it multiplies the value of a regular constraint
 graph by a factor that grows with the length of the walks it uses (see also
 [Arora and Barak, Chapter 22][AroraBarak09]). This file builds the powered constraint graph along
-**killed walks**, the variant of Radhakrishnan [Radhakrishnan2006] [Dinur, Section 9][Dinur2007]:
+**killed walks**, the variant of Radhakrishnan [Radhakrishnan2006] [Dinur, Section 9][Dinur2005]:
 the length of a walk is random, killed before each step with probability `1 / q` and stopped after
 `T` steps (`Cslib.RotationMap.killedPow`).
 
@@ -72,6 +72,7 @@ soundness analysis of `Cslib.PCP.RegularConstraintGraph.le_unsatVal_power` start
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [J. Radhakrishnan, *Gap amplification in PCPs using lazy random walks*][Radhakrishnan2006]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
@@ -146,8 +147,8 @@ open RotationMap
 
 variable {V D α : Type*} (R : RegularConstraintGraph V D α) (T q : ℕ) [NeZero q]
 
-/-- **The powered constraint graph** [Dinur, Section 3.2][Dinur2007], along killed walks
-[Radhakrishnan2006] [Dinur, Section 9][Dinur2007]. Its vertices are those of `R`, its darts at `v`
+/-- **The powered constraint graph** [Dinur, Section 3.2][Dinur2005], along killed walks
+[Radhakrishnan2006] [Dinur, Section 9][Dinur2005]. Its vertices are those of `R`, its darts at `v`
 are the killed walks from `v`, the darts of the killed power `R.graph.killedPow T q`, and the label
 of a vertex is its opinion about the end of every walk of length at most `T` from it. The
 constraint on a killed walk `p` from `v` to `w`, killed at step `ℓ`, holds when at every step
@@ -229,7 +230,7 @@ theorem satisfies_power_truthful {σ : V → α} (hσ : ∀ d, R.toConstraintGra
   satisfies_power_iff.2 fun _ hi ↦ (R.rel_truthful_iff T q σ p hi).2 (hσ _)
 
 variable {R} in
-/-- **Completeness of powering** [Dinur, Section 3.2][Dinur2007]: if `R` is satisfiable, so is the
+/-- **Completeness of powering** [Dinur, Section 3.2][Dinur2005]: if `R` is satisfiable, so is the
 powered constraint graph. -/
 theorem satisfiable_power (h : R.toConstraintGraph.Satisfiable) :
     (R.power T q).toConstraintGraph.Satisfiable :=
@@ -266,7 +267,7 @@ theorem satisfiable_power_iff (hT : 1 ≤ T) (hq : 2 ≤ q) :
 
 /-! ### The soundness witness -/
 
-/-- The killed walk `p` is **hit** at its step `i` [Dinur, Definition 5.1][Dinur2007] by a
+/-- The killed walk `p` is **hit** at its step `i` [Dinur, Definition 5.1][Dinur2005] by a
 labelling `A` of the powered constraint graph, relative to a labelling `σ` of `R`, when the step
 comes before `p` is killed, `σ` violates the dart crossed there, and both ends of `p` hold the
 truthful opinions of `σ` at the indices read at that step. -/
@@ -291,7 +292,7 @@ theorem Hit.lt_killTime {A : V → WalkLabels D T → α} {σ : V → α}
   h.1
 
 variable {R T q} in
-/-- **A killed walk hit at some step is violated** [Dinur, Section 5][Dinur2007]: at that step, the
+/-- **A killed walk hit at some step is violated** [Dinur, Section 5][Dinur2005]: at that step, the
 opinions of its ends are truthful, so its check is the constraint of `R` on a violated dart. -/
 theorem not_satisfies_of_hit {A : V → WalkLabels D T → α} {σ : V → α}
     {p : V × (Fin T → D) × (Fin T → Fin q)} {i : ℕ} (h : R.Hit T q A σ p i) :

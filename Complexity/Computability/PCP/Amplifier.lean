@@ -14,11 +14,11 @@ import Complexity.Foundations.Data.Nat.Log
 /-!
 # Gap amplifiers and their iteration
 
-Dinur's proof of the PCP theorem [Dinur, Section 4][Dinur2007] iterates a single transformation of
+Dinur's proof of the PCP theorem [Dinur, Section 4][Dinur2005] iterates a single transformation of
 constraint graphs over a fixed alphabet that keeps satisfiable graphs satisfiable, at least doubles
 the value of unsatisfiable ones until it reaches a universal threshold `γ`, and multiplies the size
 by at most a universal constant. This file packages those properties as an `Amplifier` and derives
-the consequence that drives the proof [Dinur, Corollary 4.2][Dinur2007]: after `k` rounds the value
+the consequence that drives the proof [Dinur, Corollary 4.2][Dinur2005]: after `k` rounds the value
 of an unsatisfiable graph is at least `min (2 ^ k UNSAT(G)) γ`, so after `⌈log₂ |E|⌉` rounds it is
 at least `γ`, since it was at least `1 / |E|` to begin with, while the size has grown by a factor
 polynomial in `|E|` only.
@@ -34,7 +34,7 @@ As a mere function, an amplifier is easy to come by: a function that decides sat
 map the satisfiable constraint graphs to one without edges and the others to a single violated
 edge. The interest of an amplifier lies in its construction: Dinur's round
 (`Cslib.PCP.Dinur.amplifier`) transforms a constraint graph locally, and can be carried out in
-polynomial time given explicit expanders [Dinur, Theorem 4.1][Dinur2007]. This file is only about
+polynomial time given explicit expanders [Dinur, Theorem 4.1][Dinur2005]. This file is only about
 the consequences of the interface; running times are not formalized here.
 
 ## Main definitions
@@ -60,6 +60,7 @@ the consequences of the interface; running times are not formalized here.
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 -/
 
 @[expose] public section
@@ -84,7 +85,7 @@ structure FinConstraintGraph (α : Type v) where
 
 attribute [instance] FinConstraintGraph.fintypeV FinConstraintGraph.fintypeE
 
-/-- A **gap amplifier** over the alphabet `α` [Dinur, Theorem 4.1][Dinur2007]: a transformation of
+/-- A **gap amplifier** over the alphabet `α` [Dinur, Theorem 4.1][Dinur2005]: a transformation of
 finite constraint graphs over `α` that preserves satisfiability, at least doubles the value up to a
 positive threshold `gap`, and multiplies the size by at most `factor`. The size is measured by the
 edges of the input alone, which the numbers of vertices and of edges of the output may not exceed
@@ -140,7 +141,7 @@ theorem satisfiable_iter_iff (k : ℕ) (G : FinConstraintGraph.{u} α) :
   | zero => rfl
   | succ k ih => rw [iter_succ, A.satisfiable_iff, ih]
 
-/-- **The value after `k` rounds** [Dinur, Corollary 4.2][Dinur2007]: it is at least
+/-- **The value after `k` rounds** [Dinur, Corollary 4.2][Dinur2005]: it is at least
 `min (2 ^ k UNSAT(G)) γ`. -/
 theorem min_le_unsatVal_iter (k : ℕ) (G : FinConstraintGraph.{u} α) :
     min (2 ^ k * G.graph.unsatVal) A.gap ≤ (A.iter k G).graph.unsatVal := by
@@ -165,7 +166,7 @@ section Gap
 variable [Nonempty α]
 
 /-- **After enough rounds, an unsatisfiable graph has value at least `γ`** [Dinur, Corollary
-4.2][Dinur2007]: `k` rounds suffice when `|E| ≤ 2 ^ k`, since the value of an unsatisfiable graph
+4.2][Dinur2005]: `k` rounds suffice when `|E| ≤ 2 ^ k`, since the value of an unsatisfiable graph
 is at least `1 / |E|`. -/
 theorem gap_le_unsatVal_iter {G : FinConstraintGraph.{u} α} (h : ¬ G.graph.Satisfiable) {k : ℕ}
     (hk : Fintype.card G.E ≤ 2 ^ k) : A.gap ≤ (A.iter k G).graph.unsatVal := by
@@ -181,7 +182,7 @@ theorem gap_le_unsatVal_iter {G : FinConstraintGraph.{u} α} (h : ¬ G.graph.Sat
         gcongr
         exact G.graph.inv_card_le_unsatVal h
 
-/-- **The dichotomy** [Dinur, Corollary 4.2][Dinur2007]: after `k` rounds with `|E| ≤ 2 ^ k`, the
+/-- **The dichotomy** [Dinur, Corollary 4.2][Dinur2005]: after `k` rounds with `|E| ≤ 2 ^ k`, the
 value is either zero, when the graph was satisfiable, or at least `γ`. -/
 theorem unsatVal_iter_eq_zero_or_gap_le (G : FinConstraintGraph.{u} α) {k : ℕ}
     (hk : Fintype.card G.E ≤ 2 ^ k) :

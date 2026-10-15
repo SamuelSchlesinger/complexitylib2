@@ -13,7 +13,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Loops
 /-!
 # Constraint graphs on a regular multigraph
 
-The steps of Dinur's proof after preprocessing [Dinur, Section 3][Dinur2007] run on constraint
+The steps of Dinur's proof after preprocessing [Dinur, Section 3][Dinur2005] run on constraint
 graphs whose underlying multigraph is regular, since this is what makes random walks and the
 spectral expansion `λ` available. A `RegularConstraintGraph V D α` is a `D`-regular multigraph on
 `V`, presented by its rotation map (`Cslib.RotationMap`), together with a constraint on each of its
@@ -61,6 +61,7 @@ edges of an expander in this way, to make the underlying multigraph an expander,
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 -/
 
 @[expose] public section

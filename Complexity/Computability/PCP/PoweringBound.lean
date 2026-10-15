@@ -17,7 +17,7 @@ import Mathlib.Combinatorics.Pigeonhole
 # The powering bound
 
 Powering amplifies the value of a regular constraint graph on an expander
-[Dinur, Section 5][Dinur2007]. For a killing rate `q ≥ 2` and walks truncated at
+[Dinur, Section 5][Dinur2005]. For a killing rate `q ≥ 2` and walks truncated at
 `T = 4 |α| (q - 1)` steps, the value of the powered constraint graph `R.power T q` is at least
 
 `(q - 1) / (4 |α| ^ 2 + 16 |α| ^ 4 + 128 |α| ^ 5 / (1 - μ)) * min (UNSAT R) (1 / T ^ 2)`
@@ -26,7 +26,7 @@ when the spectral expansion of `R` is at most `μ < 1` (`le_unsatVal_power`). Th
 linearly with `q`, while the alphabet of the powered constraint graph depends on `q`, `|α|` and the
 degree of `R` only: this is the gap amplification of Dinur's proof. The proof follows Dinur's
 [Arora and Barak, Chapter 22][AroraBarak09], along killed walks [Radhakrishnan2006]
-[Dinur, Section 9][Dinur2007], which gain a factor linear in their expected length where Dinur's
+[Dinur, Section 9][Dinur2005], which gain a factor linear in their expected length where Dinur's
 walks of fixed length `t` gain `√t`; as their lengths are random already, `R` needs no self-loops.
 
 * **Decoding.** A labelling `A` of the powered constraint graph is decoded into the labelling
@@ -78,6 +78,7 @@ graph, that is over uniformly random starts, labels and kill signals.
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [J. Radhakrishnan, *Gap amplification in PCPs using lazy random walks*][Radhakrishnan2006]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
@@ -221,7 +222,7 @@ theorem expect_killTime_eq_and_report_eq [Nonempty D] (A : V → WalkLabels D T 
 variable [Fintype α] [Nonempty α]
 
 open Classical in
-/-- **The plurality decoding** [Dinur, Section 5][Dinur2007] of a labelling `A` of the powered
+/-- **The plurality decoding** [Dinur, Section 5][Dinur2005] of a labelling `A` of the powered
 constraint graph: the label of `v` most often reported about `v` by the far ends of the killed walks
 from `v`. -/
 noncomputable def decode (A : V → WalkLabels D T → α) (v : V) : α :=
@@ -252,7 +253,7 @@ theorem inv_card_le_expect_report_eq_decode [Nonempty D] (A : V → WalkLabels D
   gcongr
 
 open Classical in
-/-- **Plurality, in terms of walks** [Dinur, Section 5][Dinur2007]: for `H < T`, the walks of length
+/-- **Plurality, in terms of walks** [Dinur, Section 5][Dinur2005]: for `H < T`, the walks of length
 at most `H` from `v` whose far end reports the decoded label of `v`, weighted by the probability
 `(1 - 1 / q) ^ ℓ / q` that a killed walk is killed at step `ℓ`, have total weight at least
 `1 / |α| - (1 - 1 / q) ^ (H + 1)`, for a killed walk survives its first `H + 1` steps with
@@ -361,7 +362,7 @@ private theorem hit_iff_splitHit (A : V → WalkLabels D T → α) (σ : V → �
   exact ⟨fun ⟨_, h⟩ ↦ h, fun h ↦ ⟨hi, h⟩⟩
 
 open Classical in
-/-- **The crossing count** [Dinur, Section 5.1][Dinur2007]: a uniformly random killed walk is
+/-- **The crossing count** [Dinur, Section 5.1][Dinur2005]: a uniformly random killed walk is
 killed at its step `ℓ < T` and hit at its step `i < ℓ` with probability `(1 - 1 / q) ^ ℓ / q` times
 the average over the darts `d` violated by `σ` of the product of the proportion of the walks of
 length `i` from the start of `d` and the proportion of the walks of length `ℓ - (i + 1)` from the
@@ -422,7 +423,7 @@ theorem numHits_eq_sum (A : V → WalkLabels D T → α) (σ : V → α)
   rfl
 
 open Classical in
-/-- **The first moment** [Dinur, Lemma 5.1][Dinur2007]: for `2 H + 1 < T`, a uniformly random
+/-- **The first moment** [Dinur, Lemma 5.1][Dinur2005]: for `2 H + 1 < T`, a uniformly random
 killed walk is hit by a labelling `A` of the powered constraint graph, relative to its plurality
 decoding, at least `(q - 1) (1 / |α| - (1 - 1 / q) ^ (H + 1)) ^ 2` times the proportion of the darts
 violated by the decoding many times on average.
@@ -532,7 +533,7 @@ theorem expect_mem_unsatEdges_mul_le (σ : V → α) {i j : Fin T} (hij : i < j)
   nlinarith [(abs_le.1 h).2, mul_nonneg hlam (sq_nonneg (R.toConstraintGraph.unsatFrac σ))]
 
 open Classical in
-/-- **The second moment** [Dinur, Lemma 5.2][Dinur2007]: on an expander, the number of hits of a
+/-- **The second moment** [Dinur, Lemma 5.2][Dinur2005]: on an expander, the number of hits of a
 uniformly random killed walk has second moment at most its first moment plus
 `T ^ 2 ε ^ 2 + 2 T ε / (1 - λ)`, where `ε` is the proportion of the darts violated by `σ` and
 `λ < 1` the spectral expansion. A hit is a step crossing a violated dart, and two steps `i < j` of
@@ -660,7 +661,7 @@ section Bound
 
 variable [Fintype V] [Fintype D] [Fintype α] [Nonempty α]
 
-/-- **The powering bound** [Dinur, Section 5][Dinur2007], for a labelling: on a constraint graph
+/-- **The powering bound** [Dinur, Section 5][Dinur2005], for a labelling: on a constraint graph
 whose spectral expansion is `λ < 1`, a labelling `A` of the powered constraint graph violates a
 proportion at least `c ^ 2 ε / (c + T ^ 2 ε + 2 T / (1 - λ))` of its darts, where `ε` is the
 proportion of the darts violated by its plurality decoding, for `2 H + 1 < T` and any
@@ -709,7 +710,7 @@ theorem le_unsatFrac_power [Nonempty D] (A : V → WalkLabels D T → α) {H : �
   rw [div_le_iff₀ (by positivity)]
   exact le_of_mul_le_mul_left h₅ h₀
 
-/-- **The powering bound** [Dinur, Section 5][Dinur2007]: on a constraint graph `R` whose spectral
+/-- **The powering bound** [Dinur, Section 5][Dinur2005]: on a constraint graph `R` whose spectral
 expansion is at most `μ < 1`, the value of the powered constraint graph is at least
 `c ^ 2 / (c + 1 + 2 T / (1 - μ))` times `min (UNSAT R) (1 / T ^ 2)`, for `2 H + 1 < T` and any
 `0 ≤ c ≤ (q - 1) (1 / |α| - (1 - 1 / q) ^ (H + 1)) ^ 2`. -/
@@ -736,7 +737,7 @@ theorem le_unsatVal_power_of_le (H : ℕ) (hH : 2 * H + 1 < T)
   exact (mul_min_le_div hc₀ hB hBB R.toConstraintGraph.unsatVal_nonneg
     (R.toConstraintGraph.unsatVal_le _)).trans (R.le_unsatFrac_power T q A hH hα hc₀ hc hlam)
 
-/-- **The powering bound** [Dinur, Section 5][Dinur2007]: for a killing rate `q ≥ 2` and walks
+/-- **The powering bound** [Dinur, Section 5][Dinur2005]: for a killing rate `q ≥ 2` and walks
 truncated at `T = 4 |α| (q - 1)` steps, on a constraint graph `R` whose spectral expansion is at
 most `μ < 1`, the value of the powered constraint graph is at least
 `(q - 1) / (4 |α| ^ 2 + 16 |α| ^ 4 + 128 |α| ^ 5 / (1 - μ))` times `min (UNSAT R) (1 / T ^ 2)`.

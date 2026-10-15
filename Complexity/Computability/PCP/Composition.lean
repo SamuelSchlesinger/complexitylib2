@@ -16,7 +16,7 @@ import Mathlib.Tactic.Linarith
 # Composition: alphabet reduction
 
 The powering step of Dinur's proof of the PCP theorem amplifies the value of a constraint graph at
-the cost of an enormous, though constant, alphabet. **Composition** [Dinur, Section 3.3][Dinur2007]
+the cost of an enormous, though constant, alphabet. **Composition** [Dinur, Section 3.3][Dinur2005]
 brings the alphabet back to a fixed one, losing a constant factor of the value that does not depend
 on the alphabet being reduced: that independence is what lets powering win.
 
@@ -65,6 +65,7 @@ only on `|α|` (`ConstraintGraph.card_edges_compose`).
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -151,13 +152,13 @@ table of the vertex `G.ends e b`, and its linear and quadratic tables are those 
 def testerPos (e : E) : Pos α → ComposePos V E α :=
   Sum.elim (fun p ↦ .inl (G.ends e p.1, p.2)) fun y ↦ .inr (e, y)
 
-/-- The **composed test** [Dinur, Section 3.3][Dinur2007]: on a uniformly random edge `e`, run the
+/-- The **composed test** [Dinur, Section 3.3][Dinur2005]: on a uniformly random edge `e`, run the
 Hadamard assignment tester of the constraint of `e` on the tables of the ends of `e` and the tables
 of its tester. -/
 noncomputable def composeTest : LocalTest (ComposePos V E α) (E × Rand α) Query Bool :=
   LocalTest.mix fun e ↦ (hadamardTester (G.rel e)).map (G.testerPos e)
 
-/-- The **composed constraint graph** [Dinur, Section 3.3][Dinur2007]: the constraint graph of the
+/-- The **composed constraint graph** [Dinur, Section 3.3][Dinur2005]: the constraint graph of the
 composed test, over the alphabet `Bool × (HadamardTester.Query → Bool)`, which does not depend on
 `α`. -/
 noncomputable def compose :
@@ -187,7 +188,7 @@ theorem passes_composeTest_composeProof {σ : V → α} {e : E} (he : G.Satisfie
   rw [composeTest, LocalTest.passes_mix, LocalTest.passes_map, composeProof_comp_testerPos]
   exact passes_honestProof he ω
 
-/-- **Completeness of composition** [Dinur, Lemma 3.6][Dinur2007]: if `G` is satisfiable, so is
+/-- **Completeness of composition** [Dinur, Lemma 3.6][Dinur2005]: if `G` is satisfiable, so is
 the composed graph. -/
 theorem satisfiable_compose (h : G.Satisfiable) : G.compose.Satisfiable := by
   obtain ⟨σ, hσ⟩ := h
@@ -283,7 +284,7 @@ theorem unsatFrac_decodeLabelling_le [Fintype E]
       simpa [one_div] using G.one_div_le_one_sub_acceptProb_of_not_satisfies he
   linarith
 
-/-- **Soundness of composition** [Dinur, Lemma 3.6][Dinur2007]: composition divides the value of a
+/-- **Soundness of composition** [Dinur, Lemma 3.6][Dinur2005]: composition divides the value of a
 constraint graph by at most `476`, whatever its alphabet. -/
 theorem le_unsatVal_compose [Fintype E] : G.unsatVal / 476 ≤ G.compose.unsatVal := by
   obtain ⟨A, hA⟩ := G.compose.exists_unsatFrac_eq_unsatVal

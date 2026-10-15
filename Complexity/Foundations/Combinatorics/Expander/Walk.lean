@@ -20,7 +20,7 @@ A walk of length `t` in a `D`-regular multigraph `G` on `V` is a start vertex to
 labels, `p : V × (Fin t → D)`, and takes the edges labelled `p.2 0, …, p.2 (t - 1)` in turn.
 There are `|V| |D| ^ t` of them, and they are the darts of the power `G.pow t`. Walks are the
 combinatorial side of the powering step of Dinur's proof of the PCP theorem
-[Dinur, Sections 3.2 and 5][Dinur2007]
+[Dinur, Sections 3.2 and 5][Dinur2005]
 [Arora and Barak, Chapter 22][AroraBarak09], whose analysis counts the steps of a random walk that
 cross a given set of edges; this file provides the facts about walks that analysis rests on.
 
@@ -75,6 +75,7 @@ steps, this is the second-moment estimate of the powering step.
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 

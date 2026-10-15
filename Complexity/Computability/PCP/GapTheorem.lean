@@ -14,13 +14,13 @@ public import Complexity.Computability.PCP.ThreeSAT
 /-!
 # Dinur's gap theorem
 
-The combinatorial heart of Dinur's proof of the PCP theorem [Dinur, Corollary 4.2][Dinur2007]:
+The combinatorial heart of Dinur's proof of the PCP theorem [Dinur, Corollary 4.2][Dinur2005]:
 every formula `φ` in 3-CNF with `m` clauses yields a constraint graph `gapGraph φ` over the fixed
 alphabet `Σ₀ = Bool × (HadamardTester.Query → Bool)` with polynomially many vertices and edges in
 `m` (`exists_card_gapGraph_le`), which is satisfiable exactly when `φ` is
 (`satisfiable_gapGraph_iff`), and whose value is at least the universal constant
 `Cslib.PCP.Dinur.gap` when `φ` is unsatisfiable (`gap_le_unsatVal_gapGraph`). As the
-construction can be carried out in polynomial time [Dinur, Theorem 4.1][Dinur2007], telling the
+construction can be carried out in polynomial time [Dinur, Theorem 4.1][Dinur2005], telling the
 two cases apart is as hard as 3-SAT: this is the PCP theorem in its gap form, of which only the
 combinatorial half is proved here.
 
@@ -36,7 +36,7 @@ The construction:
 
 Everything here is a noncomputable definition: the expanders of preprocessing are chosen
 non-constructively (`Cslib.RotationMap.expanderFamily`), and the realization of the construction in
-polynomial time, which needs explicit expanders [Dinur, Lemma 2.2][Dinur2007], is not addressed.
+polynomial time, which needs explicit expanders [Dinur, Lemma 2.2][Dinur2005], is not addressed.
 As the function `gapGraph` is fixed, the theorems below are not mere existence statements, which
 would be trivial: a function deciding satisfiability could output one fixed graph of each kind.
 
@@ -57,6 +57,7 @@ would be trivial: a function deciding satisfiability could output one fixed grap
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 -/
 
 @[expose] public section
@@ -80,7 +81,7 @@ theorem satisfiable_round_iff (G : FinConstraintGraph.{u} Alphabet) :
   letI := Classical.decEq G.V
   satisfiable_amplify_iff G.graph
 
-/-- **Dinur's main theorem** [Dinur, Theorem 4.1][Dinur2007]: Dinur's round doubles the value up
+/-- **Dinur's main theorem** [Dinur, Theorem 4.1][Dinur2005]: Dinur's round doubles the value up
 to the threshold `gap`. -/
 theorem min_le_unsatVal_round (G : FinConstraintGraph.{u} Alphabet) :
     min (2 * G.graph.unsatVal) gap ≤ (round G).graph.unsatVal :=
@@ -97,7 +98,7 @@ theorem card_edges_round (G : FinConstraintGraph.{u} Alphabet) :
     Fintype.card (round G).E = edgeFactor * Fintype.card G.E :=
   card_edges_amplify
 
-/-- **Dinur's amplifier** [Dinur, Theorem 4.1][Dinur2007]: Dinur's round on finite constraint
+/-- **Dinur's amplifier** [Dinur, Theorem 4.1][Dinur2005]: Dinur's round on finite constraint
 graphs over the fixed alphabet `Σ₀`, which doubles the value up to the threshold `gap` and
 multiplies the numbers of vertices and edges by at most `vertexFactor + edgeFactor`. -/
 noncomputable def amplifier : Amplifier.{u} Alphabet where
@@ -180,7 +181,7 @@ theorem card_vertices_cnfGraph :
   generalize 2 ^ 256 = d
   ring
 
-/-- **The gap graph** of a formula `φ` [Dinur, Corollary 4.2][Dinur2007]: `⌈log₂ |E|⌉` rounds of
+/-- **The gap graph** of a formula `φ` [Dinur, Corollary 4.2][Dinur2005]: `⌈log₂ |E|⌉` rounds of
 Dinur's amplifier on the constraint graph of `φ` over `Σ₀`, which has `|E|` edges. -/
 noncomputable def gapGraph : FinConstraintGraph.{0} Alphabet :=
   amplifier.iter (Nat.clog 2 (Fintype.card (cnfGraph φ).E)) (cnfGraph φ)
@@ -191,7 +192,7 @@ theorem satisfiable_gapGraph_iff (h3 : ∀ κ ∈ φ, κ.length ≤ 3) :
     (gapGraph φ).graph.Satisfiable ↔ φ.Satisfiable :=
   (amplifier.satisfiable_iter_iff _ _).trans (satisfiable_cnfGraph_iff φ h3)
 
-/-- **Dinur's gap theorem** [Dinur, Corollary 4.2][Dinur2007]: if the clauses of `φ` have at most
+/-- **Dinur's gap theorem** [Dinur, Corollary 4.2][Dinur2005]: if the clauses of `φ` have at most
 three literals and `φ` is unsatisfiable, the value of its gap graph is at least the universal
 constant `gap`. -/
 theorem gap_le_unsatVal_gapGraph (h3 : ∀ κ ∈ φ, κ.length ≤ 3) (h : ¬ φ.Satisfiable) :
@@ -199,13 +200,13 @@ theorem gap_le_unsatVal_gapGraph (h3 : ∀ κ ∈ φ, κ.length ≤ 3) (h : ¬ �
   amplifier.gap_le_unsatVal_iter (fun hs ↦ h ((satisfiable_cnfGraph_iff φ h3).1 hs))
     (Nat.le_pow_clog one_lt_two _)
 
-/-- **The dichotomy** [Dinur, Corollary 4.2][Dinur2007]: the value of the gap graph of a formula
+/-- **The dichotomy** [Dinur, Corollary 4.2][Dinur2005]: the value of the gap graph of a formula
 is either zero or at least the universal constant `gap`. -/
 theorem unsatVal_gapGraph_eq_zero_or_gap_le :
     (gapGraph φ).graph.unsatVal = 0 ∨ gap ≤ (gapGraph φ).graph.unsatVal :=
   amplifier.unsatVal_iter_eq_zero_or_gap_le _ (Nat.le_pow_clog one_lt_two _)
 
-/-- **The gap graph is polynomial** [Dinur, Corollary 4.2][Dinur2007]: its numbers of vertices and
+/-- **The gap graph is polynomial** [Dinur, Corollary 4.2][Dinur2005]: its numbers of vertices and
 edges are at most `C m ^ c` for a formula with `m` clauses, for universal constants `C` and `c`. -/
 theorem exists_card_gapGraph_le :
     ∃ C c : ℕ, ∀ {V : Type u} [DecidableEq V] (φ : CNF V),

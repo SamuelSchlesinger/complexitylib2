@@ -18,7 +18,7 @@ import Mathlib.Tactic.Linarith
 /-!
 # The Hadamard assignment tester
 
-An **assignment tester** [Dinur, Definition 3.1][Dinur2007] for a constraint `C` on the labels of
+An **assignment tester** [Dinur, Definition 3.1][Dinur2005] for a constraint `C` on the labels of
 the two ends of an edge checks, with a constant number of queries and a constant rejection rate,
 that two tables encode labels satisfying `C`. It is handed the tables and a proof; it accepts the
 encodings of satisfying labels together with an honest proof, and rejects every proof with
@@ -93,6 +93,7 @@ distance (`HadamardTester.exists_inputDist_div_le_unsatFrac`).
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -602,7 +603,7 @@ theorem exists_inputDist_le_of_le_acceptProb {π : Pos α → Bool} {ρ : ℝ} (
   rw [inputDist]
   linarith
 
-/-- **Soundness of the Hadamard assignment tester** [Dinur, Definition 3.1][Dinur2007]: if the
+/-- **Soundness of the Hadamard assignment tester** [Dinur, Definition 3.1][Dinur2005]: if the
 constraint `C` is satisfiable, the tester of `C` rejects every proof with probability at least
 `1/28` times the distance of its tables from the long codes of some labels satisfying `C`. -/
 theorem exists_inputDist_div_le_one_sub_acceptProb (hC : ∃ a b, C a b) (π : Pos α → Bool) :
@@ -670,7 +671,7 @@ theorem acceptProb_honestProof {σ : Fin 2 → α} (hσ : C (σ 0) (σ 1)) :
 
 /-! ### The tester as a constraint graph -/
 
-/-- **Completeness of the tester as a constraint graph** [Dinur, Definition 3.1][Dinur2007]: for
+/-- **Completeness of the tester as a constraint graph** [Dinur, Definition 3.1][Dinur2005]: for
 labels satisfying the constraint, the labelling of the constraint graph of the tester by the honest
 proof, whose positions of the tables carry the long codes of the labels, satisfies every edge. -/
 theorem satisfies_toConstraintGraph_honestProof {σ : Fin 2 → α}
@@ -679,7 +680,7 @@ theorem satisfies_toConstraintGraph_honestProof {σ : Fin 2 → α}
       ((hadamardTester C).labellingOf (honestProof σ) γ) x :=
   LocalTest.satisfies_labellingOf (passes_honestProof hσ x.1)
 
-/-- **Soundness of the tester as a constraint graph** [Dinur, Definition 3.1][Dinur2007]: if the
+/-- **Soundness of the tester as a constraint graph** [Dinur, Definition 3.1][Dinur2005]: if the
 constraint `C` is satisfiable, every labelling of the constraint graph of the tester violates a
 proportion of the edges at least `1/476` times the distance of the tables it carries from the long
 codes of some labels satisfying `C`. -/

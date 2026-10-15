@@ -18,7 +18,7 @@ import Mathlib.Order.ConditionallyCompleteLattice.Finset
 /-!
 # Constraint graphs and their unsatisfiability value
 
-A **constraint graph** [Dinur, Section 2.1][Dinur2007] over an alphabet `α` is a multigraph with
+A **constraint graph** [Dinur, Section 2.1][Dinur2005] over an alphabet `α` is a multigraph with
 finitely many edges, each of which carries a binary constraint on the labels of its two ends. A
 labelling `σ : V → α` of the vertices violates the edges whose constraints its labels fail, and the
 **unsatisfiability value** `unsatVal` is the least fraction of edges that a labelling violates. It
@@ -72,6 +72,7 @@ as is right: it is satisfied by every labelling.
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -82,7 +83,7 @@ namespace Cslib.PCP
 open Finset
 open scoped BigOperators
 
-/-- A **constraint graph** [Dinur, Section 2.1][Dinur2007] on the vertices `V`, with edges indexed
+/-- A **constraint graph** [Dinur, Section 2.1][Dinur2005] on the vertices `V`, with edges indexed
 by `E`, over the alphabet `α`: each edge `e` goes from `src e` to `dst e` and carries a binary
 constraint `rel e` on the labels of its ends. Parallel edges and self-loops are allowed. -/
 @[ext]
@@ -129,7 +130,7 @@ theorem card_unsatEdges_le (σ : V → α) : #(G.unsatEdges σ) ≤ Fintype.card
   card_le_univ _
 
 /-- The proportion of the edges that the labelling `σ` violates, `UNSAT_σ(G)` in
-[Dinur, Section 2.1][Dinur2007]. It is zero when there are no edges. -/
+[Dinur, Section 2.1][Dinur2005]. It is zero when there are no edges. -/
 noncomputable def unsatFrac (σ : V → α) : ℝ :=
   #(G.unsatEdges σ) / Fintype.card E
 
@@ -163,7 +164,7 @@ theorem expect_mem_unsatEdges [DecidableEq E] (σ : V → α) :
     𝔼 e, (if e ∈ G.unsatEdges σ then 1 else 0 : ℝ) = G.unsatFrac σ := by
   rw [Fintype.expect_eq_sum_div_card, sum_boole, filter_mem_eq_inter, univ_inter, unsatFrac]
 
-/-- The **unsatisfiability value** `UNSAT(G)` [Dinur, Section 2.1][Dinur2007]: the least
+/-- The **unsatisfiability value** `UNSAT(G)` [Dinur, Section 2.1][Dinur2005]: the least
 proportion of the edges that a labelling violates. The minimum is attained when `α` is nonempty
 (`exists_unsatFrac_eq_unsatVal`); when there is no labelling at all, the value is zero by
 convention. -/

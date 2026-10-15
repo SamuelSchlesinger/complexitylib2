@@ -14,7 +14,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Family
 # Preprocessing
 
 Dinur's powering step needs a constraint graph that is regular, of constant degree, an expander,
-and has a self-loop at every vertex. **Preprocessing** [Dinur, Section 3.1][Dinur2007] produces one
+and has a self-loop at every vertex. **Preprocessing** [Dinur, Section 3.1][Dinur2005] produces one
 from an arbitrary constraint graph `G`, over the same alphabet, given a family `X` of `D`-regular
 expanders of spectral expansion at most `μ` (`Cslib.RotationMap.ExpanderFamily`), in three steps:
 
@@ -62,6 +62,7 @@ value at least `UNSAT(G) / 1452000` (`le_unsatVal_preprocess_expanderFamily`).
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 -/
 
 @[expose] public section
@@ -105,7 +106,7 @@ variable {V : Type*} {E : Type u} {α : Type*} [Fintype E] [DecidableEq V]
 abbrev degreeReduceExpander : RegularConstraintGraph (E × Bool) (Unit ⊕ D) α :=
   G.degreeReduce fun v ↦ X.graph (G.Cloud v)
 
-/-- **Preprocessing** [Dinur, Section 3.1][Dinur2007] with the family of expanders `X`: degree
+/-- **Preprocessing** [Dinur, Section 3.1][Dinur2005] with the family of expanders `X`: degree
 reduction with expanders of `X` on the clouds, then the edges of the expander of `X` on the
 half-edges and a self-loop at every vertex added, with constraints that always hold. The vertices
 are the half-edges of `G`, and the degree is `2 |D| + 2`. -/
@@ -180,7 +181,7 @@ theorem satisfiable_preprocess_iff [Nonempty D] (hμ : μ < 1) :
     RegularConstraintGraph.satisfiable_addTrivial_iff]
   exact satisfiable_degreeReduce_iff _ hμ fun v ↦ X.spectralExpansion_graph_le _
 
-/-- **Soundness of preprocessing** [Dinur, Section 3.1][Dinur2007]: preprocessing with a family of
+/-- **Soundness of preprocessing** [Dinur, Section 3.1][Dinur2005]: preprocessing with a family of
 `D`-regular expanders of spectral expansion at most `μ` divides the value by at most
 `4 (1 + |D|) / min 1 ((1 - μ) |D|)`, whatever the alphabet. -/
 theorem le_unsatVal_preprocess :
@@ -195,7 +196,7 @@ theorem le_unsatVal_preprocess :
         ring
     _ ≤ _ := by gcongr
 
-/-- **Completeness of preprocessing** [Dinur, Section 3.1][Dinur2007]: preprocessing does not
+/-- **Completeness of preprocessing** [Dinur, Section 3.1][Dinur2005]: preprocessing does not
 increase the value. -/
 theorem unsatVal_preprocess_le :
     (G.preprocess X).toConstraintGraph.unsatVal ≤ G.unsatVal := by
@@ -217,7 +218,7 @@ theorem spectralExpansion_preprocess_expanderFamily_le :
   rw [Fintype.card_fin]
   norm_num
 
-/-- **Soundness of preprocessing** [Dinur, Section 3.1][Dinur2007]: with the non-explicit family
+/-- **Soundness of preprocessing** [Dinur, Section 3.1][Dinur2005]: with the non-explicit family
 `expanderFamily` of `120`-regular expanders, preprocessing divides the value by at most `1452000`,
 whatever the alphabet. -/
 theorem le_unsatVal_preprocess_expanderFamily [Nonempty α] :

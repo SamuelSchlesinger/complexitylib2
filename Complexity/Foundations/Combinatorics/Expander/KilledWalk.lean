@@ -15,7 +15,7 @@ import Complexity.Foundations.Data.Finset.Expect
 
 Walks whose length is random, killed before each step with probability `1 / q` and stopped after `T`
 steps, are Radhakrishnan's variant [Radhakrishnan2006] of the walks in the powering step of Dinur's
-proof of the PCP theorem [Dinur, Section 9][Dinur2007]. A killed walk on a `D`-regular multigraph
+proof of the PCP theorem [Dinur, Section 9][Dinur2005]. A killed walk on a `D`-regular multigraph
 `G` is presented by `T` labels of `G` and `T` kill signals `c : Fin T → Fin q`: it follows the
 labels until its kill time `killTime c`, the first step `i` with `c i = 0` (or `T` if there is
 none), and the remaining labels carry no meaning. Under uniformly random signals the kill time has
@@ -61,6 +61,7 @@ that the reverse is killed at the same step.
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [J. Radhakrishnan, *Gap amplification in PCPs using lazy random walks*][Radhakrishnan2006]
 -/
 

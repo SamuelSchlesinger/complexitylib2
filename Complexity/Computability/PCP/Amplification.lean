@@ -15,7 +15,7 @@ import Mathlib.Tactic.IrreducibleDef
 /-!
 # An amplification round
 
-The main theorem of Dinur's proof of the PCP theorem [Dinur, Theorem 4.1][Dinur2007] is a single
+The main theorem of Dinur's proof of the PCP theorem [Dinur, Theorem 4.1][Dinur2005] is a single
 transformation of constraint graphs that keeps satisfiable graphs satisfiable, at least doubles the
 value of unsatisfiable ones until it reaches a universal constant, multiplies the size by at most a
 universal constant, and leaves the alphabet fixed. It is the composite of the three operations of
@@ -69,6 +69,7 @@ exponential in `T`.
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 -/
 
 @[expose] public section
@@ -113,7 +114,7 @@ section Round
 
 variable {V E α : Type*} [Fintype E] [DecidableEq V] (G : ConstraintGraph V E α)
 
-/-- **The amplification round** [Dinur, Theorem 4.1][Dinur2007]: preprocessing with the
+/-- **The amplification round** [Dinur, Theorem 4.1][Dinur2005]: preprocessing with the
 non-explicit family of expanders `RotationMap.expanderFamily`, then powering along killed walks
 truncated at `T` steps and killed at rate `q`, then composition back to the alphabet
 `Bool × (HadamardTester.Query → Bool)`. -/
@@ -131,7 +132,7 @@ theorem satisfiable_amplify_iff (hT : 1 ≤ T) (hq : 2 ≤ q) :
     RegularConstraintGraph.satisfiable_power_iff _ _ _ hT hq,
     satisfiable_preprocess_iff _ _ (by norm_num)]
 
-/-- **The value of the amplification round** [Dinur, Theorem 4.1][Dinur2007]: for a killing rate
+/-- **The value of the amplification round** [Dinur, Theorem 4.1][Dinur2005]: for a killing rate
 `q ≥ 2` and walks truncated at `T = 4 |α| (q - 1)` steps, it is at least
 `(q - 1) / (476 (4 |α| ^ 2 + 16 |α| ^ 4 + 92928000 |α| ^ 5))` times
 `min (UNSAT(G) / 1452000) (1 / T ^ 2)`. The factors `1452000` and `476` are lost by
@@ -308,7 +309,7 @@ theorem satisfiable_amplify_iff :
     (G.amplify walkLength killRate).Satisfiable ↔ G.Satisfiable :=
   G.satisfiable_amplify_iff one_le_walkLength two_le_killRate
 
-/-- **Dinur's main theorem** [Dinur, Theorem 4.1][Dinur2007]: Dinur's round, over the fixed
+/-- **Dinur's main theorem** [Dinur, Theorem 4.1][Dinur2005]: Dinur's round, over the fixed
 alphabet `Σ₀`, at least doubles the value of a constraint graph, up to the threshold `gap`. -/
 theorem min_le_unsatVal_amplify :
     min (2 * G.unsatVal) gap ≤ (G.amplify walkLength killRate).unsatVal := by

@@ -13,7 +13,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Mixing
 /-!
 # Degree reduction
 
-The first step of Dinur's preprocessing [Dinur, Section 3.1][Dinur2007]: an arbitrary constraint
+The first step of Dinur's preprocessing [Dinur, Section 3.1][Dinur2005]: an arbitrary constraint
 graph, whose vertices may have wildly different degrees, is replaced by a regular one over the same
 alphabet, losing at most a constant factor of its value. This is the expander replacement of
 Papadimitriou and Yannakakis: every vertex is split into one copy per edge end at it, and the
@@ -63,6 +63,7 @@ in Dinur's analysis.
 ## References
 
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 -/
 
 @[expose] public section
@@ -142,7 +143,7 @@ theorem neighbor_halfEdgeGraph (e : E) (b : Bool) (i : Unit) :
     (halfEdgeGraph (E := E)).neighbor (e, b) i = (e, !b) :=
   rfl
 
-/-- The **degree-reduced constraint graph** [Dinur, Section 3.1][Dinur2007]: its vertices are the
+/-- The **degree-reduced constraint graph** [Dinur, Section 3.1][Dinur2005]: its vertices are the
 half-edges of `G`; the edge-link `inl ()` joins the two halves of an edge `e` and carries the
 constraint of `e`, read from its first end to its second one; the cloud-links `inr i` join the
 half-edges of every cloud as `H` does and carry equality constraints. -/
@@ -226,7 +227,7 @@ theorem card_unsatEdges_degreeReduce_comp_endpoint_le (σ : V → α) :
     · rw [mem_coe, mem_unsatEdges] at hq
       exact absurd (satisfies_degreeReduce_comp_endpoint_inr H σ p i) hq
 
-/-- **Degree reduction divides the value by at least `1 + |D|`** [Dinur, Section 3.1][Dinur2007]:
+/-- **Degree reduction divides the value by at least `1 + |D|`** [Dinur, Section 3.1][Dinur2005]:
 labelling the half-edges by the labels of their vertices violates the edge-links of the violated
 edges only, which are a proportion `1 / (1 + |D|)` of the darts at their half-edges. -/
 theorem one_add_card_mul_unsatVal_degreeReduce_le [Nonempty α] :
@@ -358,7 +359,7 @@ theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
         rfl
     _ ≤ _ := by exact_mod_cast card_le_card hsub
 
-/-- **Soundness of degree reduction** [Dinur, Section 3.1][Dinur2007]: if the multigraphs on the
+/-- **Soundness of degree reduction** [Dinur, Section 3.1][Dinur2005]: if the multigraphs on the
 clouds have spectral expansion at most `μ`, every labelling of the half-edges violates a proportion
 of the darts at least `min 1 ((1 - μ) |D|) / (2 (1 + |D|))` times the value of `G`, whatever the
 alphabet. -/
@@ -410,7 +411,7 @@ theorem le_unsatFrac_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpan
     nlinarith [unsatFrac_nonneg (G.degreeReduce H).toConstraintGraph A]
   · nlinarith [mul_le_mul_of_nonneg_left hval hm]
 
-/-- **Soundness of degree reduction** [Dinur, Section 3.1][Dinur2007]: if the multigraphs on the
+/-- **Soundness of degree reduction** [Dinur, Section 3.1][Dinur2005]: if the multigraphs on the
 clouds have spectral expansion at most `μ`, degree reduction divides the value by at most
 `2 (1 + |D|) / min 1 ((1 - μ) |D|)`, whatever the alphabet. -/
 theorem le_unsatVal_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpansion ≤ μ) :
