@@ -844,4 +844,22 @@ info: 'Cslib.Circuits.Monotone.eformulaDepth_eq_ecomplexity' depends on axioms: 
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Monotone.eformulaDepth_eq_ecomplexity
 
+/--
+info: 'Cslib.exists_forall_exists_add_mem_of_card_mul_card_compl_pow_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.exists_forall_exists_add_mem_of_card_mul_card_compl_pow_lt
+
+/--
+info: 'Cslib.BitString.mem_iff_exists_forall_exists' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.mem_iff_exists_forall_exists
+
+/--
+info: 'Cslib.BitString.mem_iff_forall_exists_forall' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.mem_iff_forall_exists_forall
+
 end ComplexityTests.Axioms
