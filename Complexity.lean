@@ -13,7 +13,6 @@ public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hastad
-public import Complexity.Computability.Circuit.Boolean.HastadCounting
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko
@@ -105,6 +104,7 @@ public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
+public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Fourier
 public import Complexity.Foundations.Data.BitString.FourierRestriction
 public import Complexity.Foundations.Data.BitString.LowDegree
@@ -114,6 +114,7 @@ public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.Nat.Choose
+public import Complexity.Foundations.Data.Nat.Div
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle

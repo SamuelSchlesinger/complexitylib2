@@ -14,6 +14,8 @@ public import Mathlib.Data.Fintype.Option
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Fintype.Powerset
 public import Mathlib.Logic.Function.DependsOn
+import Complexity.Foundations.Data.BitString.Agree
+import Mathlib.Combinatorics.Enumerative.DoubleCounting
 
 /-!
 # Restrictions
@@ -349,6 +351,72 @@ def outside (Y : Finset (Fin n)) (z : BitString n) : Restriction n :=
 @[simp] theorem free_outside (Y : Finset (Fin n)) (z : BitString n) : (outside Y z).free = Y := by
   ext j
   by_cases hj : j ∈ Y <;> simp [outside, hj]
+
+/-! ### Drawing random restrictions -/
+
+open Finset
+
+/-- The words agreeing with a restriction outside its free bits: `2 ^ ℓ` of them for `ℓ` free
+bits. -/
+theorem card_filter_outside_eq (ρ : Restriction n) :
+    #{z : BitString n | outside ρ.free z = ρ} = 2 ^ #ρ.free := by
+  rw [← BitString.card_filter_forall_notMem_eq ρ.free (ρ.fill fun _ => false)]
+  congr 1
+  ext z
+  simp only [mem_filter, mem_univ, true_and, funext_iff, outside]
+  refine forall_congr' fun i => ?_
+  by_cases hi : i ∈ ρ.free
+  · simp [hi, mem_free.1 hi]
+  · obtain ⟨c, hc⟩ := Option.ne_none_iff_exists'.1 fun h => hi (mem_free.2 h)
+    simp [hi, hc, fill]
+
+/-- **Drawing a free set and a word**: fixing the coordinates outside a set `J` of `ℓ`
+coordinates to a word `z` draws every restriction with `ℓ` free bits `2 ^ ℓ` times. -/
+theorem sum_card_filter_outside (Q : Restriction n → Prop) [DecidablePred Q] (ℓ : ℕ) :
+    ∑ J ∈ (univ : Finset (Fin n)).powersetCard ℓ, #{z : BitString n | Q (outside J z)} =
+      2 ^ ℓ * #{ρ ∈ withFree n ℓ | Q ρ} := by
+  rw [← card_sigma, card_eq_sum_card_fiberwise (f := fun p => outside p.1 p.2)
+    (t := (withFree n ℓ).filter Q) fun p hp => ?_]
+  · rw [sum_congr rfl fun ρ hρ => ?_, sum_const, smul_eq_mul, mul_comm]
+    have hfree : #ρ.free = ℓ := mem_withFree.1 (mem_filter.1 hρ).1
+    rw [← hfree, ← card_filter_outside_eq ρ]
+    refine card_nbij' (fun p => p.2) (fun z => ⟨ρ.free, z⟩) (fun p hp => ?_) (fun z hz => ?_)
+      (fun p hp => ?_) (fun z _ => rfl)
+    · obtain ⟨-, hpρ⟩ := mem_filter.1 hp
+      have h1 : p.1 = ρ.free := by rw [← hpρ, free_outside]
+      exact mem_filter.2 ⟨mem_univ _, h1 ▸ hpρ⟩
+    · have hz' : outside ρ.free z = ρ := (mem_filter.1 hz).2
+      refine mem_filter.2 ⟨mem_sigma.2 ⟨mem_powersetCard.2 ⟨subset_univ _, rfl⟩, ?_⟩, hz'⟩
+      refine mem_filter.2 ⟨mem_univ _, ?_⟩
+      change Q (outside ρ.free z)
+      rw [hz']
+      exact (mem_filter.1 hρ).2
+    · obtain ⟨-, hpρ⟩ := mem_filter.1 hp
+      have h1 : p.1 = ρ.free := by rw [← hpρ, free_outside]
+      exact Sigma.ext h1.symm HEq.rfl
+  · obtain ⟨hJ, hz⟩ := mem_sigma.1 hp
+    exact mem_filter.2 ⟨mem_withFree.2 (by rw [free_outside]; exact (mem_powersetCard.1 hJ).2),
+      (mem_filter.1 hz).2⟩
+
+/-- **Double counting extensions.** Summed over the restrictions with `ℓ` free bits, the extensions
+with `ℓ' ≤ ℓ` free bits satisfying `P` count each restriction with `ℓ'` free bits satisfying `P`
+once for each of the `C(n - ℓ', ℓ - ℓ')` restrictions it extends. -/
+theorem sum_card_filter_extensions (P : Restriction n → Prop) [DecidablePred P] {ℓ ℓ' : ℕ}
+    (hℓ : ℓ' ≤ ℓ) :
+    ∑ ρ ∈ withFree n ℓ, #{ρ' ∈ ρ.extensions ℓ' | P ρ'} =
+      #{ρ' ∈ withFree n ℓ' | P ρ'} * (n - ℓ').choose (ℓ - ℓ') := by
+  have h := sum_card_bipartiteAbove_eq_sum_card_bipartiteBelow (s := withFree n ℓ)
+    (t := (withFree n ℓ').filter P) (r := fun ρ ρ' => ρ'.Extends ρ)
+  have habove (ρ : Restriction n) : #{ρ' ∈ ρ.extensions ℓ' | P ρ'} =
+      #(((withFree n ℓ').filter P).bipartiteAbove (fun ρ ρ' => ρ'.Extends ρ) ρ) := by
+    congr 1
+    ext ρ'
+    simp only [mem_filter, mem_extensions, bipartiteAbove]
+    tauto
+  rw [sum_congr rfl fun ρ _ => habove ρ, h, sum_congr rfl fun ρ' hρ' => ?_, sum_const,
+    smul_eq_mul]
+  have hfree : #ρ'.free = ℓ' := mem_withFree.1 (mem_filter.1 hρ').1
+  rw [bipartiteBelow, ← hfree, card_filter_extends_withFree (hfree ▸ hℓ)]
 
 end Restriction
 

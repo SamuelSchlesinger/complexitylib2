@@ -183,6 +183,14 @@ theorem fourierCoeff_const (c : ℝ) (S : Finset (Fin n)) :
     fourierCoeff (fun _ => c) S = if S = ∅ then c else 0 := by
   simp only [fourierCoeff, ← mul_expect, expect_chi, mul_ite, mul_one, mul_zero]
 
+/-- A parity, read as `±1`, is the character of its set, so all its weight is on that set. -/
+theorem fourierCoeff_signVal_parityOn (S U : Finset (Fin n)) :
+    fourierCoeff (fun x => signVal (parityOn S x)) U = if U = S then 1 else 0 := by
+  have h : (fun x => signVal (parityOn S x)) = fun x => chi S x :=
+    funext fun x => (chi_eq_signVal_parityOn S x).symm
+  rw [h, fourierCoeff, expect_chi_mul_chi]
+  exact if_congr eq_comm rfl rfl
+
 /-- The coefficient on the empty set is the expectation. -/
 @[simp] theorem fourierCoeff_empty (f : BitString n → ℝ) : fourierCoeff f ∅ = 𝔼 x, f x := by
   simp [fourierCoeff]

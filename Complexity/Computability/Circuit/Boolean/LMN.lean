@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.HastadCounting
+public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Foundations.Data.BitString.FourierRestriction
 import Complexity.Computability.DecisionTree.Fourier
 import Complexity.Foundations.Combinatorics.Hypergeometric
@@ -23,16 +23,19 @@ import Mathlib.Tactic.Positivity
 
 A function computed by a small circuit of constant depth with unbounded fan-in has almost all of
 its Fourier weight on small sets of coordinates [LinialMansourNisan1993],
-[O'Donnell, Section 4.5][ODonnell2014]: for a circuit of depth `d` with `g` gates and `s ≥ 2`,
-the weight on the sets of at least `k` coordinates is at most `2 g / 2 ^ s` once
-`max 8 (2 s) n ≤ k ⌊n / (16 s + 1) ^ d⌋` (`sum_fourierCoeff_sq_le`), so for fixed `d` it is
-`g 2 ^ (-Ω(k ^ (1 / (d + 1))))` (with an exponent weaker than Håstad's, as in
+[O'Donnell, Section 4.5][ODonnell2014]: for a circuit of depth `d` with `g` gates, `s ≥ 2` and
+`n ≥ 1`, the weight on the sets of at least `k` coordinates is at most `2 g / 2 ^ s` once
+`max 8 (2 s) n ≤ k ⌊n / (16 s + 1) ^ d⌋` (`Unbounded.sum_fourierCoeff_sq_le_of_computes`). For
+fixed `d` it is `g 2 ^ (-Ω(k ^ (1 / (d + 1))))`: the exponent is weaker than the `k ^ (1 / d)` of
+Linial, Mansour and Nisan, since depth counts every gate on a path, negations included, and each
+stage leaves a `1 / (16 s + 1)` fraction of the free bits (as in
 `Unbounded.two_pow_le_size_of_computes_parity`).
 
 The proof draws a random set `J` of `ℓ = ⌊n / (16 s + 1) ^ d⌋` coordinates and fixes the others
-to a random word `z`. A set `U` of at least `k` coordinates meets `J` in at least `s` of them for
-at least half of the `J` (`Finset.two_mul_card_filter_card_inter_lt_le`), so the weight on such
-`U` is at most twice the expected weight of the restriction on sets of at least `s` coordinates
+to a random word `z` (`Restriction.sum_card_filter_outside`). A set `U` of at least `k`
+coordinates meets `J` in at least `s` of them for at least half of the `J`
+(`Finset.two_mul_card_filter_card_inter_lt_le`), so the weight on such `U` is at most twice the
+expected weight of the restriction on sets of at least `s` coordinates
 (`BitString.expect_sum_fourierCoeff_piecewise_sq`). That is zero when the restriction has a
 decision tree of depth below `s` (`DecisionTree.fourierCoeff_eq_zero_of_depth_lt`) and at most
 one otherwise (Parseval), and the restriction is deep with probability at most `g / 2 ^ s`
@@ -40,12 +43,8 @@ one otherwise (Parseval), and the restriction is deep with probability at most `
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.sum_fourierCoeff_sq_le`: the Linial–Mansour–Nisan theorem.
-* `Cslib.Circuits.Boolean.two_pow_le_two_mul_size_of_computes_parity`: parity needs many gates
-  in constant depth, from LMN.
-* `Cslib.Circuits.Boolean.Restriction.sum_card_filter_outside`: drawing a set `J` of `ℓ`
-  coordinates and a word `z` and fixing the coordinates outside `J` to `z` draws every
-  restriction with `ℓ` free bits `2 ^ ℓ` times.
+* `Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes`: the
+  Linial–Mansour–Nisan theorem.
 
 ## References
 
@@ -62,70 +61,11 @@ open Finset
 
 variable {n : ℕ}
 
-namespace Restriction
-
-/-- The words agreeing with a restriction outside its free bits: `2 ^ ℓ` of them for `ℓ` free
-bits. -/
-private theorem card_filter_outside_eq (ρ : Restriction n) :
-    (univ.filter fun z : BitString n => outside ρ.free z = ρ).card = 2 ^ ρ.free.card := by
-  classical
-  have h : (univ.filter fun z : BitString n => outside ρ.free z = ρ).card =
-      Fintype.card (∀ i, {b : Bool // i ∉ ρ.free → some b = ρ i}) := by
-    rw [← Fintype.card_coe]
-    refine Fintype.card_congr ((Equiv.subtypeEquivRight fun z => ?_).trans
-      Equiv.subtypePiEquivPi)
-    simp only [mem_filter, mem_univ, true_and, funext_iff, outside]
-    refine forall_congr' fun i => ?_
-    by_cases hi : i ∈ ρ.free
-    · simp [hi, mem_free.1 hi]
-    · simp [hi]
-  rw [h, Fintype.card_pi]
-  have hi (i : Fin n) : Fintype.card {b : Bool // i ∉ ρ.free → some b = ρ i} =
-      if i ∈ ρ.free then 2 else 1 := by
-    by_cases hif : i ∈ ρ.free
-    · simp [hif]
-    · obtain ⟨c, hc⟩ := Option.ne_none_iff_exists'.1 fun h => hif (mem_free.2 h)
-      simp only [hif, not_false_eq_true, forall_const, hc, Option.some.injEq, ↓reduceIte]
-      exact Fintype.card_subtype_eq' c
-  simp only [hi]
-  rw [prod_ite, prod_const, prod_const_one, mul_one, filter_mem_eq_inter, univ_inter]
-
-/-- **Drawing a free set and a word**: fixing the coordinates outside a set `J` of `ℓ`
-coordinates to a word `z` draws every restriction with `ℓ` free bits `2 ^ ℓ` times. -/
-theorem sum_card_filter_outside (Q : Restriction n → Prop) [DecidablePred Q] (ℓ : ℕ) :
-    ∑ J ∈ (univ : Finset (Fin n)).powersetCard ℓ,
-        (univ.filter fun z : BitString n => Q (outside J z)).card =
-      2 ^ ℓ * ((withFree n ℓ).filter Q).card := by
-  classical
-  rw [← card_sigma, card_eq_sum_card_fiberwise (f := fun p => outside p.1 p.2)
-    (t := (withFree n ℓ).filter Q) fun p hp => ?_]
-  · rw [sum_congr rfl fun ρ hρ => ?_, sum_const, smul_eq_mul, mul_comm]
-    have hfree : ρ.free.card = ℓ := mem_withFree.1 (mem_filter.1 hρ).1
-    rw [← hfree, ← card_filter_outside_eq ρ]
-    refine card_nbij' (fun p => p.2) (fun z => ⟨ρ.free, z⟩) (fun p hp => ?_) (fun z hz => ?_)
-      (fun p hp => ?_) (fun z _ => rfl)
-    · obtain ⟨-, hpρ⟩ := mem_filter.1 hp
-      have h1 : p.1 = ρ.free := by rw [← hpρ, free_outside]
-      exact mem_filter.2 ⟨mem_univ _, h1 ▸ hpρ⟩
-    · have hz' : outside ρ.free z = ρ := (mem_filter.1 hz).2
-      refine mem_filter.2 ⟨mem_sigma.2 ⟨mem_powersetCard.2 ⟨subset_univ _, rfl⟩, ?_⟩, hz'⟩
-      refine mem_filter.2 ⟨mem_univ _, ?_⟩
-      change Q (outside ρ.free z)
-      rw [hz']
-      exact (mem_filter.1 hρ).2
-    · obtain ⟨-, hpρ⟩ := mem_filter.1 hp
-      have h1 : p.1 = ρ.free := by rw [← hpρ, free_outside]
-      exact Sigma.ext h1.symm HEq.rfl
-  · obtain ⟨hJ, hz⟩ := mem_sigma.1 hp
-    exact mem_filter.2 ⟨mem_withFree.2 (by rw [free_outside]; exact (mem_powersetCard.1 hJ).2),
-      (mem_filter.1 hz).2⟩
-
-end Restriction
+namespace Unbounded
 
 open BitString
 open scoped BigOperators
 
-open scoped Classical in
 /-- The weight of a restriction of a `±1`-valued function on sets of at least `s` coordinates is
 zero if the restriction is `s`-shallow, and at most one otherwise. -/
 private theorem sum_fourierCoeff_sq_le_ite (f : BooleanFunction n) (J : Finset (Fin n))
@@ -145,7 +85,6 @@ private theorem sum_fourierCoeff_sq_le_ite (f : BooleanFunction n) (J : Finset (
   · rw [← sum_fourierCoeff_sq_signVal fun x => f (J.piecewise x z)]
     exact sum_le_sum_of_subset_of_nonneg (filter_subset _ _) fun _ _ _ => sq_nonneg _
 
-open scoped Classical in
 /-- For a fixed set `J` of free coordinates, the weight of a `±1`-valued function on the sets
 meeting `J` in at least `s` coordinates is at most the fraction of the words `z` that leave `f`
 deep when fixing the coordinates outside `J` to `z`. -/
@@ -162,50 +101,50 @@ private theorem sum_fourierCoeff_sq_le_card (f : BooleanFunction n) (J : Finset 
           mul_one]
         simp
 
-open scoped Classical in
 /-- **The Linial–Mansour–Nisan theorem.** Let `f` be computed by a circuit of negations and
-unbounded fan-in conjunctions and disjunctions of depth `d` with `g` gates, let `s ≥ 2` with
-`s (16 s + 1) ^ d ≤ n`, and let `ℓ = ⌊n / (16 s + 1) ^ d⌋`. Then the Fourier weight of `f`, read
-as `±1`, on the sets of at least `k` coordinates is at most `2 g / 2 ^ s`, whenever
-`max 8 (2 s) n ≤ k ℓ`. -/
-theorem sum_fourierCoeff_sq_le {f : BooleanFunction n} {C : Circuit Unbounded.signature n 1}
-    (hC : C.Computes Unbounded.interpretation (single f)) {s : ℕ} (hs : 2 ≤ s)
-    (hn : s * (16 * s + 1) ^ C.depth ≤ n) {k : ℕ}
+unbounded fan-in conjunctions and disjunctions of depth `d` with `g` gates, let `s ≥ 2` and
+`n ≥ 1`, and let `ℓ = ⌊n / (16 s + 1) ^ d⌋`. Then the Fourier weight of `f`, read as `±1`, on the
+sets of at least `k` coordinates is at most `2 g / 2 ^ s`, whenever `max 8 (2 s) n ≤ k ℓ`. -/
+theorem sum_fourierCoeff_sq_le_of_computes {f : BooleanFunction n} {C : Circuit signature n 1}
+    (hC : C.Computes interpretation (single f)) {s : ℕ} (hs : 2 ≤ s) (hn0 : 0 < n) {k : ℕ}
     (hk : max 8 (2 * s) * n ≤ k * (n / (16 * s + 1) ^ C.depth)) :
     ∑ U with k ≤ #U, fourierCoeff (fun x => signVal (f x)) U ^ 2 ≤ 2 * C.size / 2 ^ s := by
+  -- there is no weight on more than `n` coordinates
+  rcases Nat.lt_or_ge n k with hkn | hkn
+  · rw [sum_eq_zero fun U hU => absurd ((mem_filter.1 hU).2.trans (card_le_univ U))
+      (by simpa using hkn)]
+    positivity
   set ℓ := n / (16 * s + 1) ^ C.depth
+  have hsℓ : s ≤ ℓ := by
+    have h : n * (2 * s) ≤ n * ℓ :=
+      calc n * (2 * s) = 2 * s * n := by ring
+        _ ≤ max 8 (2 * s) * n := Nat.mul_le_mul_right _ (le_max_right _ _)
+        _ ≤ k * ℓ := hk
+        _ ≤ n * ℓ := Nat.mul_le_mul_right _ hkn
+    have := Nat.le_of_mul_le_mul_left h hn0
+    omega
+  have hn : s * (16 * s + 1) ^ C.depth ≤ n :=
+    (Nat.le_div_iff_mul_le (Nat.pow_pos (by omega))).1 hsℓ
   set P := (univ : Finset (Fin n)).powersetCard ℓ
   set N := n.choose ℓ
   set a : Finset (Fin n) → ℝ := fun U => fourierCoeff (fun x => signVal (f x)) U ^ 2
   set bad := (Restriction.withFree n ℓ).filter fun ρ => ¬ Shallow s ρ f
   have ha : ∀ U, 0 ≤ a U := fun U => by simp only [a]; positivity
   have hℓn : ℓ ≤ n := Nat.div_le_self _ _
-  have hsℓ : s ≤ ℓ := by
-    rw [Nat.le_div_iff_mul_le (Nat.pow_pos (by omega))]
-    exact hn
-  have hn0 : 0 < n := by omega
   have hN : 0 < N := Nat.choose_pos hℓn
   -- the counted stages: few restrictions leave the output deep
   have hbad : 2 ^ s * bad.card ≤ C.size * (Restriction.withFree n ℓ).card := by
-    have h := Unbounded.two_pow_mul_card_filter_exists_not_shallow_le (p := C.program) hs hn
-      C.depth le_rfl
+    have h := two_pow_mul_card_filter_exists_not_shallow_le (p := C.program) hs hn C.depth le_rfl
     refine (Nat.mul_le_mul_left _ (card_le_card fun ρ hρ => ?_)).trans
       (h.trans (Nat.mul_le_mul_right _ ((card_filter_le _ _).trans (by simp))))
     obtain ⟨hρW, hdeep⟩ := mem_filter.1 hρ
     refine mem_filter.2 ⟨hρW, ?_⟩
-    have hf : f = fun x => C.program.trace Unbounded.interpretation x (C.outputs 0) :=
+    have hf : f = fun x => C.program.trace interpretation x (C.outputs 0) :=
       funext fun x => (congrFun (hC x) 0).symm
     rw [hf] at hdeep
-    cases hw : C.outputs 0 with
-    | input i =>
-      rw [hw] at hdeep
-      exact absurd (shallow_proj hs ρ i) hdeep
-    | gate k =>
-      rw [hw] at hdeep
-      refine ⟨k, ?_, hdeep⟩
-      have := C.outputDepths_le_depth 0
-      simpa only [Circuit.outputDepths, Function.comp_apply, hw,
-        Program.wireDepths_gateWire] using this
+    by_contra hall
+    push Not at hall
+    exact hdeep (shallow_output hs hall)
   -- the weight on sets meeting a random `J` in at least `s` coordinates
   have hupper : ∑ J ∈ P, ∑ U with s ≤ #(U ∩ J), a U ≤ (2 ^ ℓ * bad.card : ℝ) / 2 ^ n := by
     calc ∑ J ∈ P, ∑ U with s ≤ #(U ∩ J), a U
@@ -277,31 +216,6 @@ theorem sum_fourierCoeff_sq_le {f : BooleanFunction n} {C : Circuit Unbounded.si
     exact le_of_mul_le_mul_right h4 hpown
   nlinarith
 
-/-- All the Fourier weight of parity, read as `±1`, is on the set of all coordinates. -/
-theorem fourierCoeff_signVal_parity (U : Finset (Fin n)) :
-    fourierCoeff (fun x => signVal (parity n x)) U = if U = univ then 1 else 0 := by
-  have h : (fun x => signVal (parity n x)) = fun x => chi univ x :=
-    funext fun x => (chi_eq_signVal_parityOn univ x).symm
-  rw [h, fourierCoeff, expect_chi_mul_chi]
-  exact if_congr eq_comm rfl rfl
-
-/-- **Parity needs many gates in constant depth**, from the Linial–Mansour–Nisan theorem: all its
-Fourier weight is on the set of all `n` coordinates, so a circuit of depth `d` for it has at least
-`2 ^ (s - 1)` gates whenever `s ≥ 2`, `s (16 s + 1) ^ d ≤ n` and
-`max 8 (2 s) ≤ ⌊n / (16 s + 1) ^ d⌋`. -/
-theorem two_pow_le_two_mul_size_of_computes_parity {C : Circuit Unbounded.signature n 1}
-    (hC : C.Computes Unbounded.interpretation (single (parity n))) {s : ℕ} (hs : 2 ≤ s)
-    (hn : s * (16 * s + 1) ^ C.depth ≤ n) (hℓ : max 8 (2 * s) ≤ n / (16 * s + 1) ^ C.depth) :
-    (2 : ℝ) ^ s ≤ 2 * C.size := by
-  have h := sum_fourierCoeff_sq_le hC hs hn (k := n)
-    (by rw [mul_comm]; exact Nat.mul_le_mul_left _ hℓ)
-  have hone : ∑ U with n ≤ #U, fourierCoeff (fun x => signVal (parity n x)) U ^ 2 = 1 := by
-    rw [sum_eq_single_of_mem univ (by simp) fun U hU hne => ?_]
-    · simp [fourierCoeff_signVal_parity]
-    · have : U = univ := eq_univ_of_card U (le_antisymm (card_le_univ U |>.trans_eq (by simp))
-        (by simpa using (mem_filter.1 hU).2))
-      exact absurd this hne
-  rw [hone, le_div_iff₀ (by positivity)] at h
-  linarith
+end Unbounded
 
 end Cslib.Circuits.Boolean

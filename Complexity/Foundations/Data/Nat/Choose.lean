@@ -19,7 +19,8 @@ Scaling the ground set by `q` scales the number of `d`-subsets by at least `q ^ 
 (`Nat.pow_mul_choose_le_choose_mul`). Consequently a fixed `d`-subset of the ground set lies in at
 most a `q ^ (-d)` fraction of the `k`-subsets when the ground set has at least `q k` elements
 (`Nat.pow_mul_choose_sub_le_choose`). Lowering `ℓ` by `s` scales the number of `ℓ`-subsets of an
-`m`-set by at most `(ℓ / (m - ℓ + 1)) ^ s` (`Nat.choose_sub_mul_pow_le`).
+`m`-set by at most `(ℓ / (m - ℓ + 1)) ^ s` (`Nat.choose_sub_mul_pow_le`), so by at most
+`q ^ (-s)` when `(q + 1) ℓ ≤ m` (`Nat.pow_mul_choose_sub_le_choose_of_mul_le`).
 -/
 
 @[expose] public section
@@ -79,5 +80,21 @@ theorem choose_sub_mul_pow_le {m ℓ s : ℕ} (hs : s ≤ ℓ) (hℓ : ℓ ≤ m
       _ = m.choose (ℓ - s) * (m - ℓ + 1) ^ s * ℓ := by ring
       _ ≤ m.choose ℓ * ℓ ^ s * ℓ := Nat.mul_le_mul_right _ (ih (by omega))
       _ = m.choose ℓ * ℓ ^ (s + 1) := by ring
+
+/-- If `ℓ` and `q ℓ` together fit into `m`, lowering `ℓ` by `s ≤ ℓ` divides the number of
+`ℓ`-subsets of an `m`-set by at least `q ^ s`. -/
+theorem pow_mul_choose_sub_le_choose_of_mul_le {m ℓ s q : ℕ} (hs : s ≤ ℓ)
+    (hℓ : (q + 1) * ℓ ≤ m) : q ^ s * m.choose (ℓ - s) ≤ m.choose ℓ := by
+  have hℓm : ℓ ≤ m := le_trans (Nat.le_mul_of_pos_left ℓ (by omega)) hℓ
+  have hqℓ : q * ℓ ≤ m - ℓ + 1 := by
+    have : (q + 1) * ℓ = q * ℓ + ℓ := by ring
+    omega
+  refine Nat.le_of_mul_le_mul_right (?_ : _ * (m - ℓ + 1) ^ s ≤ _ * (m - ℓ + 1) ^ s)
+    (Nat.pow_pos (by omega))
+  calc q ^ s * m.choose (ℓ - s) * (m - ℓ + 1) ^ s
+      = q ^ s * (m.choose (ℓ - s) * (m - ℓ + 1) ^ s) := by ring
+    _ ≤ q ^ s * (m.choose ℓ * ℓ ^ s) := Nat.mul_le_mul_left _ (choose_sub_mul_pow_le hs hℓm)
+    _ = m.choose ℓ * (q * ℓ) ^ s := by rw [Nat.mul_pow]; ring
+    _ ≤ m.choose ℓ * (m - ℓ + 1) ^ s := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hqℓ s)
 
 end Nat

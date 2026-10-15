@@ -13,6 +13,7 @@ public import Mathlib.Data.Fintype.Perm
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Complexity.Foundations.Data.BitString.Agree
 import Mathlib.Data.Finset.Max
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -132,21 +133,8 @@ theorem disjoint_agreeOffForced {x x' : BitString N} (hx : φ.eval x = true) (hx
 
 /-- `2 ^ |forced σ x|` words agree with `x` off its forced variables. -/
 theorem card_agreeOffForced (x : BitString N) :
-    (φ.agreeOffForced σ x).card = 2 ^ (φ.forced σ x).card := by
-  have h : (φ.agreeOffForced σ x).card =
-      Fintype.card (∀ v, {b : Bool // v ∉ φ.forced σ x → b = x v}) := by
-    rw [← Fintype.card_coe]
-    exact Fintype.card_congr ((Equiv.subtypeEquivRight fun y => by simp [agreeOffForced]).trans
-      Equiv.subtypePiEquivPi)
-  rw [h, Fintype.card_pi]
-  have hv (v : Fin N) : Fintype.card {b : Bool // v ∉ φ.forced σ x → b = x v} =
-      if v ∈ φ.forced σ x then 2 else 1 := by
-    by_cases hvF : v ∈ φ.forced σ x
-    · simp [hvF]
-    · simp only [hvF, not_false_eq_true, forall_const, ↓reduceIte]
-      exact Fintype.card_subtype_eq (x v)
-  simp only [hv]
-  rw [prod_ite, prod_const, prod_const_one, mul_one, filter_mem_eq_inter, univ_inter]
+    (φ.agreeOffForced σ x).card = 2 ^ (φ.forced σ x).card :=
+  BitString.card_filter_forall_notMem_eq _ x
 
 /-- **The coding bound for one order**: the solutions `x` of `φ` satisfy
 `∑ₓ 2 ^ |forced σ x| ≤ 2 ^ N`. -/

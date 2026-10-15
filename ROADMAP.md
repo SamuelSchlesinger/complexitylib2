@@ -241,11 +241,12 @@ their atomic facts, by unbounded fan-in formulas of depth independent of `n` and
 in `n` (`Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize`).
 
 **The Linial–Mansour–Nisan theorem** (`Circuit/Boolean/LMN.lean`, beyond v1, whose docstring
-mentioned but did not contain it): the Fourier weight above `k` of a function computed by an
-unbounded fan-in circuit of depth `d` with `g` gates is at most `2 g / 2 ^ s` once
-`max 8 (2 s) n ≤ k ⌊n / (16 s + 1) ^ d⌋`. It combines the counted stages of Håstad's argument
-(`Circuit/Boolean/HastadCounting.lean`), Fourier coefficients of restrictions, decision-tree
-degree, and a Chebyshev bound for random subsets (`Foundations/Combinatorics/Hypergeometric.lean`).
+mentioned but did not contain it): the Fourier weight on sets of at least `k` coordinates of a
+function computed by an unbounded fan-in circuit of depth `d` with `g` gates is at most
+`2 g / 2 ^ s` once `max 8 (2 s) n ≤ k ⌊n / (16 s + 1) ^ d⌋`. It combines the counted stages of
+Håstad's argument (`Circuit/Boolean/Hastad.lean`, from which Håstad's theorem now follows),
+Fourier coefficients of restrictions, decision-tree degree, and Chebyshev's inequality for random
+subsets (`Foundations/Combinatorics/Hypergeometric.lean`).
 
 **Resolution** (`Logics/Propositional/Resolution.lean`): soundness and refutation completeness.
 

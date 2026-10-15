@@ -389,12 +389,6 @@ info: 'Cslib.Circuits.Boolean.Restriction.card_extensions' depends on axioms: [p
 #print axioms Cslib.Circuits.Boolean.Restriction.card_extensions
 
 /--
-info: 'Cslib.Circuits.Boolean.Unbounded.exists_extension_shallow' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.Unbounded.exists_extension_shallow
-
-/--
 info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -593,10 +587,10 @@ info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shall
 #print axioms Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shallow_le
 
 /--
-info: 'Cslib.Circuits.Boolean.sum_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.sum_fourierCoeff_sq_le
+#print axioms Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes
 
 /--
 info: 'Cslib.Logic.PL.CNF.sum_two_rpow_card_isolated_div_le' depends on axioms: [propext, Classical.choice, Quot.sound]

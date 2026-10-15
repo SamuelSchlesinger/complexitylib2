@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.FirstOrder
 import Complexity.Computability.Circuit.Boolean.GateElimination
 import Complexity.Computability.Circuit.Boolean.Khrapchenko
+import Complexity.Computability.Circuit.Boolean.LMN
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
 import Complexity.Computability.Circuit.Boolean.Smolensky
 import Complexity.Computability.Circuit.Boolean.TC0
@@ -28,7 +29,7 @@ against definitions that are accidentally unsatisfiable.
 
 namespace ComplexityTests.NonVacuity
 
-open Turing Turing.MultiTapeTM Cslib.Complexity Cslib.Circuits.Boolean
+open Turing Turing.MultiTapeTM Cslib.Complexity Cslib.Circuits.Boolean Finset Cslib
 
 /-- The machine that writes `b` and halts. -/
 def constTM (b : Bool) : MultiTapeTM 0 Bool Unit :=
@@ -123,6 +124,14 @@ example (φ : FirstOrder.Language.empty.Sentence) (n : ℕ) :
   have : IsEmpty (ModelChecking.Atom FirstOrder.Language.empty n) := ⟨fun a => a.1.2.elim⟩
   let e := Equiv.equivOfIsEmpty (ModelChecking.Atom FirstOrder.Language.empty n) (Fin 0)
   exact ⟨e, ModelChecking.exists_formula_realize_structure φ e⟩
+
+/-- The hypotheses of the Linial–Mansour–Nisan theorem can be met: for depth one, `s = 2` and
+`n = 528`, the restrictions keep `⌊528 / 33⌋ = 16` bits free, and `k = 264` works. -/
+example {f : BooleanFunction 528} {C : Cslib.Circuits.Circuit Unbounded.signature 528 1}
+    (hC : C.Computes Unbounded.interpretation (Cslib.Circuits.single f)) (hd : C.depth = 1) :
+    ∑ U with 264 ≤ #U, BitString.fourierCoeff (fun x => BitString.signVal (f x)) U ^ 2 ≤
+      2 * C.size / 2 ^ 2 :=
+  Unbounded.sum_fourierCoeff_sq_le_of_computes hC le_rfl (by norm_num) (by rw [hd]; norm_num)
 
 /-- The tidy normal form applies to upstream's machine for the identity, which is not tidy: it
 leaves its input head at the end of the input. -/
