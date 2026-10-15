@@ -7,7 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.Basic
+public import Complexity.Foundations.Combinatorics.Expander.Loops
 import Complexity.Foundations.Combinatorics.Expander.Power
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
@@ -35,7 +35,7 @@ products [Reingold, Vadhan and Wigderson, Section 1.2][ReingoldVadhanWigderson20
 The zig-zag theorem is proved as in
 [Reingold, Vadhan and Wigderson, Section 4.1][ReingoldVadhanWigderson2002]. The walk operator of
 `G ⓩ H` is `B̃ Ã B̃`, where `B̃ = I ⊗ W_H` is the walk on the copies `{v} × D` of `H`, the walk
-operator of `(refl V).tensor H`, and `Ã` permutes the vertices by the rotation map of `G`. A
+operator of `(loops V Unit).tensor H`, and `Ã` permutes the vertices by the rotation map of `G`. A
 function on `V × D` splits into its averages over the copies of `H` and a part of average zero on
 every copy; `B̃` fixes the first and shrinks the second by `λ(H)`, while on the first `Ã` acts as
 the walk on `G`. This bounds `𝔼 h · W f` for every `h` and every `f` of expectation zero, and with
@@ -46,7 +46,6 @@ product is `(B̃ + Ã) / 2`, and the zig-zag walk `B̃ Ã B̃` is one of the eig
 
 ## Main definitions
 
-* `Cslib.RotationMap.refl`: a self-loop at every vertex.
 * `Cslib.RotationMap.tensor`: the tensor product `G ⊗ H`.
 * `Cslib.RotationMap.zigzag`: the zig-zag product `G ⓩ H`.
 * `Cslib.RotationMap.balancedReplacement`: the balanced replacement product `G Ⓡ H`.
@@ -167,23 +166,6 @@ section Tensor
 
 variable {V D V' D' : Type*}
 
-/-- The rotation map with a single self-loop at every vertex. Its walk operator is the identity
-(`walk_refl`), and `(refl V).tensor H` consists of disjoint copies of `H`, one for each vertex of
-`V`. -/
-def refl (V : Type*) : RotationMap V Unit where
-  rot := id
-  rot_involutive _ := rfl
-
-/-- Every edge of `refl V` is a self-loop. -/
-@[simp]
-theorem neighbor_refl (v : V) (i : Unit) : (refl V).neighbor v i = v :=
-  rfl
-
-/-- The walk operator of `refl V` is the identity. -/
-@[simp]
-theorem walk_refl : (refl V).walk = LinearMap.id :=
-  LinearMap.ext fun f ↦ funext fun v ↦ by simp [walk_apply]
-
 variable (G : RotationMap V D) (H : RotationMap V' D')
 
 /-- The **tensor product** `G ⊗ H`
@@ -222,80 +204,80 @@ theorem walk_tensor_mul (f : V → ℝ) (g : V' → ℝ) :
     (G.tensor H).walk (fun p ↦ f p.1 * g p.2) = fun p ↦ G.walk f p.1 * H.walk g p.2 :=
   funext fun p ↦ by rw [walk_tensor_apply, walk_apply, walk_apply, Fintype.expect_mul_expect]
 
-/-- The walk operator of `(refl V).tensor H` is the walk operator `I ⊗ W_H` of `H` on every copy
-`{v} × V'` of `H`. -/
-theorem walk_refl_tensor_apply (f : V × V' → ℝ) (p : V × V') :
-    ((refl V).tensor H).walk f p = H.walk (fun w ↦ f (p.1, w)) p.2 := by
+/-- The walk operator of `(loops V Unit).tensor H` is the walk operator `I ⊗ W_H` of `H` on every
+copy `{v} × V'` of `H`. -/
+theorem walk_loops_tensor_apply (f : V × V' → ℝ) (p : V × V') :
+    ((loops V Unit).tensor H).walk f p = H.walk (fun w ↦ f (p.1, w)) p.2 := by
   rw [walk_tensor_apply, walk_apply]
-  simp only [neighbor_refl, Fintype.expect_const]
+  simp only [neighbor_loops, Fintype.expect_const]
 
-/-- The walk operator of `G.tensor (refl V')` is the walk operator `W_G ⊗ I` of `G` on every copy
-`V × {v'}` of `G`. -/
-theorem walk_tensor_refl_apply (f : V × V' → ℝ) (p : V × V') :
-    (G.tensor (refl V')).walk f p = G.walk (fun w ↦ f (w, p.2)) p.1 := by
+/-- The walk operator of `G.tensor (loops V' Unit)` is the walk operator `W_G ⊗ I` of `G` on every
+copy `V × {v'}` of `G`. -/
+theorem walk_tensor_loops_apply (f : V × V' → ℝ) (p : V × V') :
+    (G.tensor (loops V' Unit)).walk f p = G.walk (fun w ↦ f (w, p.2)) p.1 := by
   rw [walk_tensor_apply, walk_apply]
-  simp only [neighbor_refl, Fintype.expect_const]
+  simp only [neighbor_loops, Fintype.expect_const]
 
 /-- The walk operator of `G ⊗ H` factors as `W_G ⊗ W_H = (W_G ⊗ I) (I ⊗ W_H)`. -/
 theorem walk_tensor :
-    (G.tensor H).walk = (G.tensor (refl V')).walk ∘ₗ ((refl V).tensor H).walk :=
+    (G.tensor H).walk = (G.tensor (loops V' Unit)).walk ∘ₗ ((loops V Unit).tensor H).walk :=
   LinearMap.ext fun f ↦ funext fun p ↦ by
-    rw [LinearMap.comp_apply, walk_tensor_refl_apply, walk_tensor_apply, walk_apply]
-    simp only [walk_refl_tensor_apply]
+    rw [LinearMap.comp_apply, walk_tensor_loops_apply, walk_tensor_apply, walk_apply]
+    simp only [walk_loops_tensor_apply]
     simp only [walk_apply]
 
 /-- When `H` has edges, the walk operator on the copies of `H` fixes the functions that are
 constant on every copy. -/
-theorem walk_refl_tensor_comp_fst [Nonempty D'] (φ : V → ℝ) :
-    ((refl V).tensor H).walk (fun p ↦ φ p.1) = fun p ↦ φ p.1 :=
+theorem walk_loops_tensor_comp_fst [Nonempty D'] (φ : V → ℝ) :
+    ((loops V Unit).tensor H).walk (fun p ↦ φ p.1) = fun p ↦ φ p.1 :=
   funext fun p ↦ by
-    rw [walk_refl_tensor_apply]
+    rw [walk_loops_tensor_apply]
     exact congrFun (H.walk_const (φ p.1)) p.2
 
 /-- The walk operator on the copies of `H` acts on the part of average zero over every copy. -/
-private theorem walk_refl_tensor_add [Nonempty D'] (φ : V → ℝ) (g : V × V' → ℝ) :
-    ((refl V).tensor H).walk (fun p ↦ φ p.1 + g p) =
-      fun p ↦ φ p.1 + ((refl V).tensor H).walk g p := by
+private theorem walk_loops_tensor_add [Nonempty D'] (φ : V → ℝ) (g : V × V' → ℝ) :
+    ((loops V Unit).tensor H).walk (fun p ↦ φ p.1 + g p) =
+      fun p ↦ φ p.1 + ((loops V Unit).tensor H).walk g p := by
   rw [show (fun p ↦ φ p.1 + g p) = (fun p : V × V' ↦ φ p.1) + g from rfl, map_add,
-    walk_refl_tensor_comp_fst]
+    walk_loops_tensor_comp_fst]
   rfl
 
 /-- On functions of average zero over every copy `{v} × V'` of `H`, the walk operator on the
 copies of `H` multiplies the second moment by at most `λ(H) ^ 2`. -/
-theorem expect_walk_refl_tensor_sq_le [Fintype V] [Fintype V'] {f : V × V' → ℝ}
+theorem expect_walk_loops_tensor_sq_le [Fintype V] [Fintype V'] {f : V × V' → ℝ}
     (hf : ∀ v, 𝔼 v', f (v, v') = 0) :
-    𝔼 p, ((refl V).tensor H).walk f p ^ 2 ≤ H.spectralExpansion ^ 2 * 𝔼 p, f p ^ 2 := by
+    𝔼 p, ((loops V Unit).tensor H).walk f p ^ 2 ≤ H.spectralExpansion ^ 2 * 𝔼 p, f p ^ 2 := by
   rw [Fintype.expect_prod, Fintype.expect_prod, mul_expect]
   refine expect_le_expect fun v _ ↦ ?_
-  simp only [walk_refl_tensor_apply]
+  simp only [walk_loops_tensor_apply]
   exact H.expect_walk_sq_le_spectralExpansion_sq_mul (hf v)
 
 /-- The walk operator on the copies of `H` keeps average zero over every copy. -/
-private theorem expect_walk_refl_tensor_eq_zero [Fintype V'] [Nonempty D'] {f : V × V' → ℝ}
+private theorem expect_walk_loops_tensor_eq_zero [Fintype V'] [Nonempty D'] {f : V × V' → ℝ}
     (hf : ∀ v, 𝔼 v', f (v, v') = 0) (v : V) :
-    𝔼 v', ((refl V).tensor H).walk f (v, v') = 0 := by
-  simp only [walk_refl_tensor_apply]
+    𝔼 v', ((loops V Unit).tensor H).walk f (v, v') = 0 := by
+  simp only [walk_loops_tensor_apply]
   rw [H.expect_walk (fun w ↦ f (v, w)), hf v]
 
 /-- For `g` of average zero over every copy of `H`, `λ(H) φ + (I ⊗ W_H) g` has norm at most `λ(H)`
 times that of `φ + g`, where `φ` is a function of the first coordinate. -/
-private theorem sqrt_expect_mul_add_walk_refl_tensor_sq_le [Fintype V] [Fintype V'] [Nonempty V']
+private theorem sqrt_expect_mul_add_walk_loops_tensor_sq_le [Fintype V] [Fintype V'] [Nonempty V']
     [Nonempty D'] (φ : V → ℝ) {g : V × V' → ℝ} (hg : ∀ v, 𝔼 v', g (v, v') = 0) :
-    √(𝔼 p, (H.spectralExpansion * φ p.1 + ((refl V).tensor H).walk g p) ^ 2) ≤
+    √(𝔼 p, (H.spectralExpansion * φ p.1 + ((loops V Unit).tensor H).walk g p) ^ 2) ≤
       H.spectralExpansion * √(𝔼 v, φ v ^ 2 + 𝔼 p, g p ^ 2) := by
   refine sqrt_le_mul_sqrt H.spectralExpansion_nonneg ?_
   rw [expect_add_sq_of_expect_fiber_eq_zero (fun v ↦ H.spectralExpansion * φ v)
-      (H.expect_walk_refl_tensor_eq_zero hg),
+      (H.expect_walk_loops_tensor_eq_zero hg),
     expect_comp_fst (fun v ↦ (H.spectralExpansion * φ v) ^ 2), mul_add]
   simp only [mul_pow, ← mul_expect]
   gcongr
-  exact H.expect_walk_refl_tensor_sq_le hg
+  exact H.expect_walk_loops_tensor_sq_le hg
 
 /-- The walk operator on the copies of `G` keeps average zero over the copies of `H`. -/
-private theorem expect_walk_tensor_refl_eq_zero [Fintype V'] {f : V × V' → ℝ}
+private theorem expect_walk_tensor_loops_eq_zero [Fintype V'] {f : V × V' → ℝ}
     (hf : ∀ v, 𝔼 v', f (v, v') = 0) (v : V) :
-    𝔼 v', (G.tensor (refl V')).walk f (v, v') = 0 := by
-  simp only [walk_tensor_refl_apply]
+    𝔼 v', (G.tensor (loops V' Unit)).walk f (v, v') = 0 := by
+  simp only [walk_tensor_loops_apply]
   simp only [walk_apply]
   rw [expect_comm]
   simp [hf]
@@ -320,21 +302,22 @@ theorem spectralExpansion_tensor_le :
   obtain ⟨f₁, f₂, rfl, hf₂, hf₁, hff⟩ := exists_eq_add_expect_fiber_eq_zero f
   rw [hf] at hf₁
   have hW : (G.tensor H).walk (fun p ↦ f₁ p.1 + f₂ p) =
-      fun p ↦ G.walk f₁ p.1 + (G.tensor (refl V')).walk (((refl V).tensor H).walk f₂) p := by
-    rw [walk_tensor, LinearMap.comp_apply, walk_refl_tensor_add,
-      show (fun p ↦ f₁ p.1 + ((refl V).tensor H).walk f₂ p) =
-        (fun p : V × V' ↦ f₁ p.1) + ((refl V).tensor H).walk f₂ from rfl, map_add]
-    exact funext fun p ↦ by simp [walk_tensor_refl_apply]
+      fun p ↦ G.walk f₁ p.1 +
+        (G.tensor (loops V' Unit)).walk (((loops V Unit).tensor H).walk f₂) p := by
+    rw [walk_tensor, LinearMap.comp_apply, walk_loops_tensor_add,
+      show (fun p ↦ f₁ p.1 + ((loops V Unit).tensor H).walk f₂ p) =
+        (fun p : V × V' ↦ f₁ p.1) + ((loops V Unit).tensor H).walk f₂ from rfl, map_add]
+    exact funext fun p ↦ by simp [walk_tensor_loops_apply]
   rw [hW, expect_add_sq_of_expect_fiber_eq_zero _
-      (G.expect_walk_tensor_refl_eq_zero (H.expect_walk_refl_tensor_eq_zero hf₂)),
+      (G.expect_walk_tensor_loops_eq_zero (H.expect_walk_loops_tensor_eq_zero hf₂)),
     expect_comp_fst (fun v ↦ G.walk f₁ v ^ 2), hff]
   calc
     _ ≤ G.spectralExpansion ^ 2 * 𝔼 v, f₁ v ^ 2 +
           H.spectralExpansion ^ 2 * 𝔼 p, f₂ p ^ 2 := by
       gcongr
       · exact expect_walk_sq_le_spectralExpansion_sq_mul hf₁
-      · exact ((G.tensor (refl V')).expect_walk_sq_le _).trans
-          (H.expect_walk_refl_tensor_sq_le hf₂)
+      · exact ((G.tensor (loops V' Unit)).expect_walk_sq_le _).trans
+          (H.expect_walk_loops_tensor_sq_le hf₂)
     _ ≤ max G.spectralExpansion H.spectralExpansion ^ 2 * 𝔼 v, f₁ v ^ 2 +
           max G.spectralExpansion H.spectralExpansion ^ 2 * 𝔼 p, f₂ p ^ 2 := by
       have h₁ : 0 ≤ 𝔼 v, f₁ v ^ 2 := expect_nonneg fun v _ ↦ sq_nonneg (f₁ v)
@@ -453,11 +436,12 @@ the walk operator of `H` on every cloud and `Ã` is the permutation of the verti
 rotation map of `G`. -/
 theorem walk_zigzag :
     (G.zigzag H).walk =
-      ((refl V).tensor H).walk ∘ₗ LinearMap.funLeft ℝ ℝ G.rot ∘ₗ ((refl V).tensor H).walk :=
+      ((loops V Unit).tensor H).walk ∘ₗ LinearMap.funLeft ℝ ℝ G.rot ∘ₗ
+        ((loops V Unit).tensor H).walk :=
   LinearMap.ext fun f ↦ funext fun p ↦ by
     rw [walk_apply (G.zigzag H), Fintype.expect_prod, LinearMap.comp_apply, LinearMap.comp_apply,
-      walk_refl_tensor_apply, walk_apply H]
-    simp only [LinearMap.funLeft_apply, walk_refl_tensor_apply]
+      walk_loops_tensor_apply, walk_apply H]
+    simp only [LinearMap.funLeft_apply, walk_loops_tensor_apply]
     simp only [walk_apply]
     rfl
 
@@ -467,10 +451,10 @@ variable [Fintype V] [Fintype D]
 parts constant on the clouds. -/
 private theorem expect_mul_walk_zigzag_eq [Nonempty E] (h₁ f₁ : V → ℝ) (h₂ f₂ : V × D → ℝ) :
     𝔼 p, (h₁ p.1 + h₂ p) * (G.zigzag H).walk (fun p ↦ f₁ p.1 + f₂ p) p =
-      𝔼 p, (h₁ p.1 + ((refl V).tensor H).walk h₂ p) *
-        (f₁ (G.rot p).1 + ((refl V).tensor H).walk f₂ (G.rot p)) := by
+      𝔼 p, (h₁ p.1 + ((loops V Unit).tensor H).walk h₂ p) *
+        (f₁ (G.rot p).1 + ((loops V Unit).tensor H).walk f₂ (G.rot p)) := by
   rw [walk_zigzag, LinearMap.comp_apply, LinearMap.comp_apply,
-    ((refl V).tensor H).expect_mul_walk_comm, walk_refl_tensor_add, walk_refl_tensor_add]
+    ((loops V Unit).tensor H).expect_mul_walk_comm, walk_loops_tensor_add, walk_loops_tensor_add]
   rfl
 
 /-- On the functions constant on the clouds, `Ã` acts as the walk on `G`. -/
@@ -505,19 +489,19 @@ private theorem expect_mul_walk_zigzag_le [Nonempty D] [Nonempty E] (h : V × D 
   simp only [mul_add, expect_add_distrib]
   rw [← add_assoc]
   -- the walk on the clouds shrinks the parts of average zero over the clouds by `λ(H)`
-  have hqh := sqrt_le_mul_sqrt hν (H.expect_walk_refl_tensor_sq_le hh₂)
-  have hqf := sqrt_le_mul_sqrt hν (H.expect_walk_refl_tensor_sq_le hf₂)
+  have hqh := sqrt_le_mul_sqrt hν (H.expect_walk_loops_tensor_sq_le hh₂)
+  have hqf := sqrt_le_mul_sqrt hν (H.expect_walk_loops_tensor_sq_le hf₂)
   gcongr ?_ + ?_ + ?_ + ?_
   · exact G.expect_mul_comp_rot_le h₁ hf₁
   · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
     rw [expect_comp_fst (fun v ↦ h₁ v ^ 2),
-      expect_comp_rot G (fun p ↦ ((refl V).tensor H).walk f₂ p ^ 2)]
+      expect_comp_rot G (fun p ↦ ((loops V Unit).tensor H).walk f₂ p ^ 2)]
     exact mul_le_mul_of_nonneg_left hqf (by positivity)
   · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
     rw [expect_comp_rot G (fun p ↦ f₁ p.1 ^ 2), expect_comp_fst (fun v ↦ f₁ v ^ 2)]
     exact mul_le_mul_of_nonneg_right hqh (by positivity)
   · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
-    rw [expect_comp_rot G (fun p ↦ ((refl V).tensor H).walk f₂ p ^ 2)]
+    rw [expect_comp_rot G (fun p ↦ ((loops V Unit).tensor H).walk f₂ p ^ 2)]
     exact mul_le_mul hqh hqf (by positivity) (by positivity)
 
 /-- The second zig-zag estimate in bilinear form:
@@ -536,19 +520,20 @@ private theorem expect_mul_walk_zigzag_le_one_sub [Nonempty D] [Nonempty E] (h :
   rw [expect_mul_walk_zigzag_eq, hhh, hff]
   -- `B̃ h = (1 - λ(H)) h₁ + u` with `‖u‖ ≤ λ(H) ‖h‖`, and the same for `f`
   have hsplit (p : V × D) :
-      (h₁ p.1 + ((refl V).tensor H).walk h₂ p) *
-          (f₁ (G.rot p).1 + ((refl V).tensor H).walk f₂ (G.rot p)) =
+      (h₁ p.1 + ((loops V Unit).tensor H).walk h₂ p) *
+          (f₁ (G.rot p).1 + ((loops V Unit).tensor H).walk f₂ (G.rot p)) =
         (1 - H.spectralExpansion) ^ 2 * (h₁ p.1 * f₁ (G.rot p).1) +
           (1 - H.spectralExpansion) * (h₁ p.1 * (H.spectralExpansion * f₁ (G.rot p).1 +
-            ((refl V).tensor H).walk f₂ (G.rot p))) +
+            ((loops V Unit).tensor H).walk f₂ (G.rot p))) +
           (1 - H.spectralExpansion) * ((H.spectralExpansion * h₁ p.1 +
-            ((refl V).tensor H).walk h₂ p) * f₁ (G.rot p).1) +
-          (H.spectralExpansion * h₁ p.1 + ((refl V).tensor H).walk h₂ p) *
-            (H.spectralExpansion * f₁ (G.rot p).1 + ((refl V).tensor H).walk f₂ (G.rot p)) := by
+            ((loops V Unit).tensor H).walk h₂ p) * f₁ (G.rot p).1) +
+          (H.spectralExpansion * h₁ p.1 + ((loops V Unit).tensor H).walk h₂ p) *
+            (H.spectralExpansion * f₁ (G.rot p).1 +
+              ((loops V Unit).tensor H).walk f₂ (G.rot p)) := by
     ring
   simp only [hsplit, expect_add_distrib, ← mul_expect]
-  have hu := H.sqrt_expect_mul_add_walk_refl_tensor_sq_le h₁ hh₂
-  have hu' := H.sqrt_expect_mul_add_walk_refl_tensor_sq_le f₁ hf₂
+  have hu := H.sqrt_expect_mul_add_walk_loops_tensor_sq_le h₁ hh₂
+  have hu' := H.sqrt_expect_mul_add_walk_loops_tensor_sq_le f₁ hf₂
   have ha : √(𝔼 v, h₁ v ^ 2) ≤ √(𝔼 v, h₁ v ^ 2 + 𝔼 p, h₂ p ^ 2) :=
     Real.sqrt_le_sqrt (le_add_of_nonneg_right (expect_nonneg fun p _ ↦ sq_nonneg (h₂ p)))
   have hb : √(𝔼 v, f₁ v ^ 2) ≤ √(𝔼 v, f₁ v ^ 2 + 𝔼 p, f₂ p ^ 2) :=
@@ -559,14 +544,14 @@ private theorem expect_mul_walk_zigzag_le_one_sub [Nonempty D] [Nonempty E] (h :
   · exact G.expect_mul_comp_rot_le h₁ hf₁
   · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
     rw [expect_comp_fst (fun v ↦ h₁ v ^ 2), expect_comp_rot G (fun p ↦
-      (H.spectralExpansion * f₁ p.1 + ((refl V).tensor H).walk f₂ p) ^ 2)]
+      (H.spectralExpansion * f₁ p.1 + ((loops V Unit).tensor H).walk f₂ p) ^ 2)]
     exact mul_le_mul_of_nonneg_left hu' (by positivity)
   · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
     rw [expect_comp_rot G (fun p ↦ f₁ p.1 ^ 2), expect_comp_fst (fun v ↦ f₁ v ^ 2)]
     exact mul_le_mul_of_nonneg_right hu (by positivity)
   · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
     rw [expect_comp_rot G (fun p ↦
-      (H.spectralExpansion * f₁ p.1 + ((refl V).tensor H).walk f₂ p) ^ 2)]
+      (H.spectralExpansion * f₁ p.1 + ((loops V Unit).tensor H).walk f₂ p) ^ 2)]
     exact mul_le_mul hu hu' (by positivity) (by positivity)
 
 /-- To bound `λ(G ⓩ H)` by `c ≥ 0`, it suffices to bound `𝔼 h · W f` by `c ‖h‖ ‖f‖` for every `h`
@@ -662,11 +647,11 @@ the walk operator of `H` on every copy and `Ã` permutes the vertices `V × D` b
 `G`. -/
 theorem walk_balancedReplacement [Nonempty E] :
     (G.balancedReplacement H).walk =
-      (2⁻¹ : ℝ) • (((refl V).tensor H).walk + LinearMap.funLeft ℝ ℝ G.rot) :=
+      (2⁻¹ : ℝ) • (((loops V Unit).tensor H).walk + LinearMap.funLeft ℝ ℝ G.rot) :=
   LinearMap.ext fun f ↦ funext fun p ↦ by
     have hE : (Fintype.card E : ℝ) ≠ 0 := Nat.cast_ne_zero.2 Fintype.card_ne_zero
     rw [LinearMap.smul_apply, LinearMap.add_apply, walk_apply, Fintype.expect_eq_sum_div_card,
-      Fintype.sum_sum_type, Fintype.card_sum, Pi.smul_apply, Pi.add_apply, walk_refl_tensor_apply,
+      Fintype.sum_sum_type, Fintype.card_sum, Pi.smul_apply, Pi.add_apply, walk_loops_tensor_apply,
       walk_apply, Fintype.expect_eq_sum_div_card, LinearMap.funLeft_apply]
     simp only [neighbor, rot_balancedReplacement_inl, rot_balancedReplacement_inr, sum_const,
       card_univ, nsmul_eq_mul, Nat.cast_add, smul_eq_mul]
@@ -681,8 +666,8 @@ private theorem expect_mul_walk_balancedReplacement_pow_three_le [Nonempty E] (h
     𝔼 p, h p * ((G.balancedReplacement H).pow 3).walk f p ≤
       (7 / 8 + (G.zigzag H).spectralExpansion / 8) * (√(𝔼 p, h p ^ 2) * √(𝔼 p, f p ^ 2)) := by
   -- `B̃` and `Ã` do not increase the second moment
-  have hB (g : V × D → ℝ) : 𝔼 p, ((refl V).tensor H).walk g p ^ 2 ≤ 𝔼 p, g p ^ 2 :=
-    ((refl V).tensor H).expect_walk_sq_le g
+  have hB (g : V × D → ℝ) : 𝔼 p, ((loops V Unit).tensor H).walk g p ^ 2 ≤ 𝔼 p, g p ^ 2 :=
+    ((loops V Unit).tensor H).expect_walk_sq_le g
   have hA (g : V × D → ℝ) : 𝔼 p, LinearMap.funLeft ℝ ℝ G.rot g p ^ 2 ≤ 𝔼 p, g p ^ 2 :=
     (expect_comp_rot G fun p ↦ g p ^ 2).le
   have hmul (S T : Module.End ℝ (V × D → ℝ)) (hS : ∀ g, 𝔼 p, S g p ^ 2 ≤ 𝔼 p, g p ^ 2)
@@ -700,7 +685,7 @@ private theorem expect_mul_walk_balancedReplacement_pow_three_le [Nonempty E] (h
     rw [mul_left_comm]
     exact mul_le_mul_of_nonneg_left (sqrt_le_mul_sqrt (spectralExpansion_nonneg _)
       ((G.zigzag H).expect_walk_sq_le_spectralExpansion_sq_mul hf)) (Real.sqrt_nonneg _)
-  set B := ((refl V).tensor H).walk
+  set B := ((loops V Unit).tensor H).walk
   set A : Module.End ℝ (V × D → ℝ) := LinearMap.funLeft ℝ ℝ G.rot
   rw [walk_zigzag, ← LinearMap.comp_assoc] at hZ
   have hexp : (B + A) ^ 3 = B * B * B + B * B * A + B * A * B + B * A * A + A * B * B +

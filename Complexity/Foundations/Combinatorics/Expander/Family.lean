@@ -7,7 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.Loops
+public import Complexity.Foundations.Combinatorics.Expander.Lazy
 public import Complexity.Foundations.Combinatorics.Expander.Perm
 import Complexity.Foundations.Combinatorics.Expander.Random
 

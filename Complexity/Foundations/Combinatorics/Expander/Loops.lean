@@ -7,12 +7,11 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.Cheeger
-public import Complexity.Foundations.Combinatorics.Expander.Products
+public import Complexity.Foundations.Combinatorics.Expander.Basic
 import Mathlib.Algebra.Order.BigOperators.Expect
 
 /-!
-# Unions, self-loops and the lazy walk
+# Unions and self-loops
 
 Two regular multigraphs `G` and `H` on the same vertices, of degrees `|D|` and `|E|`, superpose
 to a multigraph `G.union H` of degree `|D| + |E|`, whose edges at a vertex are those of `G`
@@ -22,14 +21,12 @@ theirs (`walk_union_apply`) and its spectral expansion is at most the weighted a
 theirs (`spectralExpansion_union_le`).
 
 The simplest such `H` is `loops V E`, with a self-loop at every vertex for each label `i : E` and no
-other edge, whose walk operator is the identity; `loops V Unit` is `refl V`. Superposing it adds
-self-loops to `G` (`addLoops`); with as many self-loops as edges at each vertex this is the **lazy
-graph** `G.lazy`, whose walk stays put with probability `1 / 2` and otherwise takes a step of the
-walk on `G`. Its walk operator `(1 + G.walk) / 2` is positive semidefinite, so Cheeger's inequality
-[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006] bounds its spectral expansion
-by the edge expansion of `G`: `λ(G.lazy) ≤ 1 - h(G)² / (4 |D|²)`
-(`spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div`). This turns edge expanders into spectral
-expanders, even those, such as bipartite ones, whose walk operators have the eigenvalue `-1`.
+other edge, whose walk operator is the identity as soon as there is a label (`walk_loops`); with a
+single label, `loops V Unit` is the multigraph whose tensor products with `H` are disjoint copies of
+`H`. Superposing `loops V E` adds self-loops to `G` (`addLoops`). A few of them, as Dinur's
+preprocessing adds, close at most the proportion `|E| / (|D| + |E|)` of the gap between the
+spectral expansion and `1` (`spectralExpansion_addLoops_le`). As many self-loops as edges at each
+vertex give the lazy graph `Cslib.RotationMap.lazy`, whose walk stays put half of the time.
 
 Renaming the edge labels along an equivalence (`relabel`) changes neither the walk operator nor
 the spectral expansion; it lets constructions with structured label types, such as `D ⊕ D`,
@@ -41,21 +38,15 @@ present their results with labels `Fin d`.
 * `Cslib.RotationMap.union`: the superposition of two regular multigraphs on the same vertices.
 * `Cslib.RotationMap.loops`: a self-loop at every vertex for each label.
 * `Cslib.RotationMap.addLoops`: a regular multigraph with self-loops added at every vertex.
-* `Cslib.RotationMap.lazy`: the lazy graph, with a self-loop for every edge at each vertex.
 
 ## Main results
 
 * `Cslib.RotationMap.spectralExpansion_relabel`: relabelling preserves the spectral expansion.
 * `Cslib.RotationMap.walk_union_apply`, `Cslib.RotationMap.spectralExpansion_union_le`: the walk
   operator and the spectral expansion of a union.
+* `Cslib.RotationMap.walk_loops`: the walk operator of the self-loops is the identity.
 * `Cslib.RotationMap.walk_addLoops_apply`, `Cslib.RotationMap.spectralExpansion_addLoops_le`:
   the same for adding self-loops.
-* `Cslib.RotationMap.walk_lazy_apply`: the lazy walk is `(f + G.walk f) / 2`.
-* `Cslib.RotationMap.spectralExpansion_lazy_le_one_add_secondEigenvalue_div_two`:
-  `λ(G.lazy) ≤ (1 + λ₂(G)) / 2`.
-* `Cslib.RotationMap.spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div`,
-  `Cslib.RotationMap.spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl`: edge
-  expansion bounds the spectral expansion of the lazy graph.
 
 ## References
 
@@ -229,10 +220,6 @@ theorem rot_loops (p : V × E) : (loops V E).rot p = p :=
 theorem neighbor_loops (v : V) (i : E) : (loops V E).neighbor v i = v :=
   rfl
 
-/-- One self-loop at every vertex is `refl V`. -/
-theorem loops_unit : loops V Unit = refl V :=
-  rfl
-
 /-- With at least one self-loop at every vertex, the walk operator of `loops V E` is the
 identity. -/
 @[simp]
@@ -281,58 +268,5 @@ theorem spectralExpansion_addLoops_le [Fintype V] :
   exact mul_le_of_le_one_right (Nat.cast_nonneg _) this
 
 end Loops
-
-section Lazy
-
-/-- The **lazy graph** of `G`: `G` with a self-loop added at every vertex for each of its edges
-there. Its random walk stays put with probability `1 / 2` and otherwise takes a step of the
-random walk on `G`. -/
-def lazy (G : RotationMap V D) : RotationMap V (D ⊕ D) :=
-  G.addLoops D
-
-variable (G : RotationMap V D) [Fintype D]
-
-/-- The walk operator of the lazy graph is `(1 + G.walk) / 2`. -/
-theorem walk_lazy_apply [Nonempty D] (f : V → ℝ) (v : V) :
-    G.lazy.walk f v = (f v + G.walk f v) / 2 := by
-  rw [lazy, walk_addLoops_apply]
-  have : (0 : ℝ) < Fintype.card D := Nat.cast_pos.2 Fintype.card_pos
-  field_simp
-  ring
-
-variable [Fintype V]
-
-/-- **The spectral expansion of the lazy graph** is at most `(1 + λ₂(G)) / 2`: its walk operator
-is positive semidefinite, so its spectral expansion is its second eigenvalue. -/
-theorem spectralExpansion_lazy_le_one_add_secondEigenvalue_div_two :
-    G.lazy.spectralExpansion ≤ (1 + G.secondEigenvalue) / 2 := by
-  rcases isEmpty_or_nonempty D with hD | hD
-  · have : G.lazy.spectralExpansion ≤ 0 :=
-      spectralExpansion_le le_rfl fun f _ ↦ by simp [walk_apply]
-    linarith [G.neg_one_le_secondEigenvalue]
-  · exact G.spectralExpansion_le_one_add_secondEigenvalue_div_two G.lazy G.walk_lazy_apply
-
-/-- **Edge expansion bounds the spectral expansion of the lazy graph**
-[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]:
-`λ(G.lazy) ≤ 1 - h(G)² / (4 |D|²)`. -/
-theorem spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div [DecidableEq V] :
-    G.lazy.spectralExpansion ≤ 1 - G.edgeExpansion ^ 2 / (4 * Fintype.card D ^ 2) := by
-  rcases isEmpty_or_nonempty D with hD | hD
-  · simpa [Fintype.card_eq_zero] using G.lazy.spectralExpansion_le_one
-  · exact G.spectralExpansion_le_one_sub_edgeExpansion_sq_div G.lazy G.walk_lazy_apply
-
-/-- **Edge expansion bounds the spectral expansion of the lazy graph**
-[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]: on at least two vertices, if
-`c ≥ 0` and at least `c |S|` edges leave every set `S` of at most half of the vertices, then
-`λ(G.lazy) ≤ 1 - c² / (4 |D|²)`. -/
-theorem spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl [DecidableEq V]
-    [Nontrivial V] {c : ℝ} (hc₀ : 0 ≤ c)
-    (hc : ∀ S : Finset V, 2 * #S ≤ Fintype.card V → c * #S ≤ #(G.interedges S Sᶜ)) :
-    G.lazy.spectralExpansion ≤ 1 - c ^ 2 / (4 * Fintype.card D ^ 2) := by
-  refine G.spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div.trans ?_
-  have := G.le_edgeExpansion_iff.2 hc
-  gcongr
-
-end Lazy
 
 end Cslib.RotationMap

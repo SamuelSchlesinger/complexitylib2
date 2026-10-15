@@ -233,6 +233,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Basic
 public import Complexity.Foundations.Combinatorics.Expander.Cheeger
 public import Complexity.Foundations.Combinatorics.Expander.Family
 public import Complexity.Foundations.Combinatorics.Expander.KilledWalk
+public import Complexity.Foundations.Combinatorics.Expander.Lazy
 public import Complexity.Foundations.Combinatorics.Expander.Loops
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
 public import Complexity.Foundations.Combinatorics.Expander.Perm
