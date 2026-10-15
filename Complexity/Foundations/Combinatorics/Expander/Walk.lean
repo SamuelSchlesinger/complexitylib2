@@ -232,14 +232,6 @@ theorem walkAt_eq_neighbor_pow (p : V × (Fin t → D)) {n : ℕ} (hn : n ≤ t)
     G.walkAt p n = (G.pow n).neighbor p.1 (Fin.take n hn p.2) := by
   rw [← G.walkAt_take p hn le_rfl, walkAt_length]
 
-/-- In `G ^ (t + 1)`, the walk along `k` takes the walk along all labels but the last, then the edge
-labelled by the last. -/
-theorem neighbor_pow_succ' (v : V) (k : Fin (t + 1) → D) :
-    (G.pow (t + 1)).neighbor v k =
-      G.neighbor ((G.pow t).neighbor v (Fin.init k)) (k (Fin.last t)) := by
-  rw [← Fin.take_eq_init, ← G.walkAt_eq_neighbor_pow (v, k) t.le_succ]
-  exact (G.walkAt_length (v, k)).symm.trans (G.walkAt_succ_of_lt _ t.lt_succ_self)
-
 end Trajectory
 
 section Reverse

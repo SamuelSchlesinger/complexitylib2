@@ -34,6 +34,8 @@ walk from a function `f` are log-convex, as the walk operator is self-adjoint, s
 ## Main results
 
 * `Cslib.RotationMap.powRot_involutive`: reversing a walk twice gives it back.
+* `Cslib.RotationMap.neighbor_pow_succ`, `Cslib.RotationMap.neighbor_pow_succ'`: a walk of length
+  `t + 1` is a step followed by a walk of length `t`, and a walk of length `t` followed by a step.
 * `Cslib.RotationMap.walk_pow`: the walk operator of `G ^ t` is the `t`-th power of that of `G`.
 * `Cslib.RotationMap.spectralExpansion_pow_le`, `Cslib.RotationMap.spectralExpansion_pow`:
   `λ(G ^ t) ≤ λ(G) ^ t`, with equality for `t ≠ 0`.
@@ -114,6 +116,13 @@ labels. -/
 theorem neighbor_pow_succ (t : ℕ) (v : V) (k : Fin (t + 1) → D) :
     (G.pow (t + 1)).neighbor v k = (G.pow t).neighbor (G.neighbor v (k 0)) (Fin.tail k) :=
   rfl
+
+/-- In `G ^ (t + 1)`, the walk along `k` takes the walk along all labels but the last, then the edge
+labelled by the last. -/
+theorem neighbor_pow_succ' (t : ℕ) (v : V) (k : Fin (t + 1) → D) :
+    (G.pow (t + 1)).neighbor v k =
+      G.neighbor ((G.pow t).neighbor v (Fin.init k)) (k (Fin.last t)) :=
+  congrArg Prod.fst (G.powRot_succ' t v k)
 
 variable [Fintype D]
 
