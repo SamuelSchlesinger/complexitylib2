@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.Circuit.Pi
+public import Complexity.Logics.Propositional.DNF
 public import Mathlib.Data.Fintype.Pi
 import Complexity.Computability.Circuit.CompositionDepth
 import Mathlib.Algebra.BigOperators.Fin
@@ -20,14 +21,16 @@ import Mathlib.Data.Fintype.BigOperators
 
 An *alternating formula* of depth `d` over `n` variables is a formula in negation normal form
 whose unbounded fan-in AND and OR gates alternate along every path from the root, with `d` gates on
-each path and signed inputs at the bottom (`AltFormula n d`): a signed input `(i, s)` reads bit `i`,
-negated when `s`. Its root operation is given when it is evaluated (`AltFormula.eval`), and its
-size counts the AND and OR gates; signed inputs are free (`AltFormula.size`). This is the model of
-constant-depth circuits in which negations are free and only at the inputs.
+each path and literals at the bottom (`AltFormula n d`): a literal `(i, b)` holds when bit `i` is
+`b`, as in `Logic.PL.Literal`. Its root operation is given when it is evaluated
+(`AltFormula.eval`), and its size counts the AND and OR gates; literals are free
+(`AltFormula.size`). This is the model of constant-depth circuits in which negations are free and
+only at the inputs. At depth two, alternating formulas are formulas in conjunctive or disjunctive
+normal form (`AltFormula.eval_and_eq_cnf_eval`, `AltFormula.eval_or_eq_dnf_eval`).
 
-Substituting signed inputs for the inputs costs nothing (`AltFormula.mapInputs`), and negating
-every input computes the negation with the dual root operation (`AltFormula.eval_neg`). Every
-function has alternating formulas of depth two of size `2 ^ n + 1` (`AltFormula.exists_depth_two`).
+Substituting literals for the inputs costs nothing (`AltFormula.mapInputs`), and negating every
+input computes the negation with the dual root operation (`AltFormula.eval_neg`). Every function
+has alternating formulas of depth two of size `2 ^ n + 1` (`AltFormula.exists_depth_two`).
 An alternating formula of depth `d` is a circuit over the unbounded fan-in basis of depth at most
 `d + 1` with at most `n` more gates, computing the negated inputs first
 (`AltFormula.exists_circuit`).
@@ -40,6 +43,9 @@ An alternating formula of depth `d` is a circuit over the unbounded fan-in basis
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.AltFormula.eval_and_eq_cnf_eval`,
+  `Cslib.Circuits.Boolean.AltFormula.eval_or_eq_dnf_eval`: depth two is conjunctive and disjunctive
+  normal form.
 * `Cslib.Circuits.Boolean.AltFormula.exists_depth_two`: normal forms as alternating formulas.
 * `Cslib.Circuits.Boolean.AltFormula.exists_circuit`: alternating formulas as circuits over the
   unbounded fan-in basis.
@@ -49,7 +55,7 @@ An alternating formula of depth `d` is a circuit over the unbounded fan-in basis
 
 namespace Cslib.Circuits.Boolean
 
-open Finset
+open Finset Logic.PL
 
 /-- The operation at the root of an alternating formula. -/
 inductive AltOp where
@@ -64,48 +70,51 @@ def AltOp.dual : AltOp → AltOp
   | .and => .or
   | .or => .and
 
-/-- Alternating formulas of depth `d` over `n` variables: signed inputs at depth zero, and a list
-of alternating formulas of depth `d` below each gate of depth `d + 1`. -/
+/-- Alternating formulas of depth `d` over `n` variables: literals at depth zero, and a list of
+alternating formulas of depth `d` below each gate of depth `d + 1`. It is reducible, so that an
+alternating formula of depth two is a formula in conjunctive or disjunctive normal form. -/
 abbrev AltFormula (n : ℕ) : ℕ → Type
-  | 0 => Fin n × Bool
+  | 0 => Literal (Fin n)
   | d + 1 => List (AltFormula n d)
 
 namespace AltFormula
 
 variable {n : ℕ}
 
-/-- The number of AND and OR gates; signed inputs are free. -/
+/-- The number of AND and OR gates; literals are free. -/
 def size : {d : ℕ} → AltFormula n d → ℕ
   | 0, _ => 0
   | _ + 1, fs => 1 + (fs.map size).sum
 
 /-- Evaluate an alternating formula with `op` at the root. -/
 def eval : {d : ℕ} → AltOp → AltFormula n d → BitString n → Bool
-  | 0, _, l, x => l.2.xor (x l.1)
+  | 0, _, l, x => Literal.eval x l
   | _ + 1, .and, fs, x => fs.all fun f => eval .or f x
   | _ + 1, .or, fs, x => fs.any fun f => eval .and f x
 
-/-- Substitute signed inputs for the inputs. This changes no gates. -/
-def mapInputs {m : ℕ} (ρ : Fin n → Fin m × Bool) : {d : ℕ} → AltFormula n d → AltFormula m d
-  | 0, l => ((ρ l.1).1, l.2.xor (ρ l.1).2)
+/-- Substitute literals for the inputs. This changes no gates. -/
+def mapInputs {m : ℕ} (ρ : Fin n → Literal (Fin m)) : {d : ℕ} → AltFormula n d → AltFormula m d
+  | 0, l => ((ρ l.1).1, (ρ l.1).2 == l.2)
   | _ + 1, fs => fs.map (mapInputs ρ)
 
 /-- Negate every input; with the dual root operation, this computes the negation
 (`AltFormula.eval_neg`). -/
 def neg {d : ℕ} (f : AltFormula n d) : AltFormula n d :=
-  mapInputs (fun i => (i, true)) f
+  mapInputs (fun i => (i, false)) f
 
-@[simp] theorem size_mapInputs {m d : ℕ} (ρ : Fin n → Fin m × Bool) (f : AltFormula n d) :
+@[simp] theorem size_mapInputs {m d : ℕ} (ρ : Fin n → Literal (Fin m)) (f : AltFormula n d) :
     size (mapInputs ρ f) = size f := by
   induction d with
   | zero => rfl
   | succ d ih => simp [size, mapInputs, List.map_map, Function.comp_def, ih]
 
-theorem eval_mapInputs {m d : ℕ} (ρ : Fin n → Fin m × Bool) (f : AltFormula n d) (op : AltOp)
+theorem eval_mapInputs {m d : ℕ} (ρ : Fin n → Literal (Fin m)) (f : AltFormula n d) (op : AltOp)
     (x : BitString m) :
-    eval op (mapInputs ρ f) x = eval op f fun i => (ρ i).2.xor (x (ρ i).1) := by
+    eval op (mapInputs ρ f) x = eval op f fun i => Literal.eval x (ρ i) := by
   induction d generalizing op with
-  | zero => exact Bool.xor_assoc ..
+  | zero =>
+    simp only [eval, mapInputs, Literal.eval]
+    cases x (ρ f.1).1 <;> cases (ρ f.1).2 <;> cases f.2 <;> rfl
   | succ d ih =>
     cases op <;> simp [eval, mapInputs, List.all_map, List.any_map, Function.comp_def, ih]
 
@@ -117,13 +126,27 @@ value. -/
 theorem eval_neg {d : ℕ} (f : AltFormula n d) (op : AltOp) (x : BitString n) :
     eval op.dual (neg f) x = !eval op f x := by
   induction d generalizing op with
-  | zero => simp [neg, mapInputs, eval]
+  | zero =>
+    simp only [neg, mapInputs, eval, Literal.eval]
+    cases x f.1 <;> cases f.2 <;> rfl
   | succ d ih =>
     have hn : neg f = f.map neg := rfl
     have ha (g : AltFormula n d) : eval .and (neg g) x = !eval .or g x := ih g .or
     have ho (g : AltFormula n d) : eval .or (neg g) x = !eval .and g x := ih g .and
     cases op <;> simp [hn, AltOp.dual, eval, List.all_map, List.any_map, Function.comp_def,
       List.not_all_eq_any_not, List.not_any_eq_all_not, ha, ho]
+
+/-- An alternating formula of depth two with a conjunction at the root is a formula in conjunctive
+normal form. -/
+theorem eval_and_eq_cnf_eval (f : AltFormula n 2) (x : BitString n) :
+    eval .and f x = CNF.eval x f :=
+  rfl
+
+/-- An alternating formula of depth two with a disjunction at the root is a formula in disjunctive
+normal form. -/
+theorem eval_or_eq_dnf_eval (f : AltFormula n 2) (x : BitString n) :
+    eval .or f x = DNF.eval x f :=
+  rfl
 
 /-! ### Building alternating formulas -/
 
@@ -184,21 +207,13 @@ theorem size_constant_le (n d : ℕ) (op : AltOp) (b : Bool) : size (constant n 
 
 /-- The clause excluding exactly the input `y`. -/
 noncomputable def excludingClause (y : BitString n) : AltFormula n 1 :=
-  gate fun i : Fin n => (i, y i)
+  gate fun i : Fin n => (i, !y i)
 
 theorem eval_excludingClause (y x : BitString n) :
     eval .or (excludingClause y) x = true ↔ x ≠ y := by
   rw [excludingClause, eval_gate_or]
-  simp only [eval, Bool.xor_iff_ne]
-  constructor
-  · rintro ⟨i, hi⟩ h
-    exact hi (congrFun h i).symm
-  · intro h
-    by_contra he
-    apply h
-    funext i
-    have he' : ∀ i, y i = x i := by simpa only [not_exists, not_not] using he
-    exact (he' i).symm
+  simp only [eval, Literal.eval, beq_iff_eq, Bool.eq_not_iff, ne_eq]
+  exact ⟨fun ⟨i, hi⟩ h => hi (congrFun h i), fun h => not_forall.1 fun h' => h (funext h')⟩
 
 theorem size_excludingClause (y : BitString n) : size (excludingClause y) = 1 := by
   rw [excludingClause, size_gate]
@@ -244,7 +259,7 @@ theorem exists_depth_two (f : BitString n → Bool) (op : AltOp) :
 /-- An alternating formula as a formula over the unbounded fan-in basis, on the positive inputs
 `0, …, n - 1` followed by the negated inputs `n, …, 2 n - 1`. -/
 def toFormula : {d : ℕ} → AltOp → AltFormula n d → Formula Unbounded.signature (n + n)
-  | 0, _, l => .input (if l.2 then Fin.natAdd n l.1 else Fin.castAdd n l.1)
+  | 0, _, l => .input (if l.2 then Fin.castAdd n l.1 else Fin.natAdd n l.1)
   | _ + 1, .and, fs => .gate (.and fs.length) fun j => toFormula .or (fs.get j)
   | _ + 1, .or, fs => .gate (.or fs.length) fun j => toFormula .and (fs.get j)
 
@@ -271,9 +286,11 @@ theorem eval_toFormula {d : ℕ} (op : AltOp) (f : AltFormula n d) (x : BitStrin
     obtain ⟨i, s⟩ := f
     cases s
     · simp only [toFormula, Bool.false_eq_true, ↓reduceIte, Formula.eval_input, literals,
-        Fin.append_left, eval, Bool.false_xor]
-    · simp only [toFormula, ↓reduceIte, Formula.eval_input, literals, Fin.append_right, eval,
-        Bool.true_xor]
+        Fin.append_right, eval, Literal.eval]
+      cases x i <;> rfl
+    · simp only [toFormula, ↓reduceIte, Formula.eval_input, literals, Fin.append_left, eval,
+        Literal.eval]
+      cases x i <;> rfl
   | succ d ih =>
     cases op
     · simp only [toFormula, Formula.eval_gate, Unbounded.interpretation_and, ih, eval]

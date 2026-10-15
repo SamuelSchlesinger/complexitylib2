@@ -45,7 +45,7 @@ depth `d` for parity or majority have `S + 2 n + 1 > 2 ^ (ε n ^ (1 / (d - 1)))`
 
 namespace Cslib.Circuits.Boolean.AltFormula
 
-open Cslib.Communication
+open Cslib.Communication Logic.PL
 
 variable {n : ℕ}
 
@@ -68,15 +68,16 @@ noncomputable def childIndex {d : ℕ} (op : AltOp) (fs : List (AltFormula n d))
   if h : ∃ j : Fin fs.length, eval op (fs.get j) x = b then (Classical.choose h).val else 0
 
 /-- A literal of the clause or term `ls` whose value is `b` on `x`, or `i₀`. -/
-noncomputable def childLiteral (i₀ : Fin n) (ls : List (Fin n × Bool)) (b : Bool)
-    (x : BitString n) : Fin n × Bool :=
+noncomputable def childLiteral (i₀ : Fin n) (ls : List (Literal (Fin n))) (b : Bool)
+    (x : BitString n) : Literal (Fin n) :=
   open scoped Classical in
-  if h : ∃ l ∈ ls, l.2.xor (x l.1) = b then Classical.choose h else (i₀, false)
+  if h : ∃ l ∈ ls, Literal.eval x l = b then Classical.choose h else (i₀, true)
 
 /-- The Karchmer–Wigderson protocol of an alternating formula with root `op`, when Alice's input
 makes it `s`, with messages a child position below `S + 1` or a literal. -/
 noncomputable def kwProtocol (S : ℕ) (i₀ : Fin n) :
-    {d : ℕ} → AltOp → AltFormula n d → Bool → RoundProtocol (Fin n) (Fin (S + 1) ⊕ (Fin n × Bool)) d
+    {d : ℕ} → AltOp → AltFormula n d → Bool →
+      RoundProtocol (Fin n) (Fin (S + 1) ⊕ Literal (Fin n)) d
   | 0, _, l, _ => .answer l.1
   | 1, op, ls, s =>
     .speak (speaker op s) (fun x => .inr (childLiteral i₀ ls (witness op) x)) fun
@@ -94,10 +95,9 @@ theorem childIndex_spec {d : ℕ} {op : AltOp} {fs : List (AltFormula n d)} {b :
     ∃ j : Fin fs.length, childIndex op fs b x = j ∧ eval op (fs.get j) x = b :=
   ⟨Classical.choose h, by simp only [childIndex, h, ↓reduceDIte], Classical.choose_spec h⟩
 
-theorem childLiteral_spec {i₀ : Fin n} {ls : List (Fin n × Bool)} {b : Bool} {x : BitString n}
-    (h : ∃ l ∈ ls, l.2.xor (x l.1) = b) :
-    childLiteral i₀ ls b x ∈ ls ∧
-      (childLiteral i₀ ls b x).2.xor (x (childLiteral i₀ ls b x).1) = b := by
+theorem childLiteral_spec {i₀ : Fin n} {ls : List (Literal (Fin n))} {b : Bool}
+    {x : BitString n} (h : ∃ l ∈ ls, Literal.eval x l = b) :
+    childLiteral i₀ ls b x ∈ ls ∧ Literal.eval x (childLiteral i₀ ls b x) = b := by
   simp only [childLiteral, h, ↓reduceDIte]
   exact Classical.choose_spec h
 
@@ -141,7 +141,7 @@ theorem kwProtocol_solves (S : ℕ) (i₀ : Fin n) : ∀ {d : ℕ} (op : AltOp) 
   | 0, op, l, _, s, x, y, hx, hy => by
     simp only [kwProtocol, RoundProtocol.run]
     intro h
-    simp only [eval] at hx hy
+    simp only [eval, Literal.eval] at hx hy
     rw [h] at hx
     rw [hx] at hy
     cases s <;> simp at hy
@@ -154,7 +154,7 @@ theorem kwProtocol_solves (S : ℕ) (i₀ : Fin n) : ∀ {d : ℕ} (op : AltOp) 
         obtain ⟨j, hj⟩ := exists_child_eq_witness op ls hu
         exact ⟨ls.get j, List.get_mem ls j, hj⟩)
       have hlv := eval_child_eq_not_witness op ls hv _ hl
-      simp only [eval] at hlv
+      simp only [eval, Literal.eval] at hlv hlu
       rw [← h, hlu] at hlv
       cases witness op <;> simp at hlv
     have hw := witness_of_speaker (op := op) (s := s)
