@@ -7,13 +7,14 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Frontier.Linear.Basis
+public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.InnerSize
 public import Mathlib.Algebra.DualNumber
 public import Mathlib.Algebra.MvPolynomial.PDeriv
 public import Mathlib.Data.Matrix.Mul
 public import Mathlib.LinearAlgebra.Pi
 import Complexity.Computability.Circuit.Program
+import Complexity.Foundations.Data.MvPolynomial.DualNumber
 import Mathlib.Algebra.MvPolynomial.Funext
 
 /-!
@@ -24,7 +25,9 @@ circuit over the affine basis, the value of every wire is an affine function of 
 
 **Linearization** (`Cslib.Circuits.Circuit.Computes.exists_affine`). Over an infinite field, a
 circuit with polynomial operations that computes a linear map `x ↦ M x` can be replaced by a
-circuit over the affine basis, with the same wires, that computes the same map. Each gate is
+circuit over the affine basis, with the same wires, that computes the same map: nonlinear
+operations do not help to compute linear maps, as in Strassen's theorem on linear complexity
+[BurgisserClausenShokrollahi1997, Chapter 13]. Each gate is
 replaced by its first-order Taylor expansion at the point that its arguments take on the zero
 input (`Cslib.Circuits.taylorOp`, `Cslib.Circuits.Program.linearize`).
 
@@ -47,47 +50,19 @@ value at `ε x` is `ε (M x)_i`.
 ## Main results
 
 * `Cslib.Circuits.Program.exists_affine_trace`: affine circuits compute affine maps.
-* `MvPolynomial.snd_aeval_dualNumber`: Taylor expansion over the dual numbers.
 * `Cslib.Circuits.Program.trace_linearize`: the linearized program reads off the dual numbers.
 * `Cslib.Circuits.Circuit.Computes.exists_affine`: linearization of circuits for linear maps.
+
+## References
+
+* [P. Bürgisser, M. Clausen, M. A. Shokrollahi, *Algebraic Complexity
+  Theory*][BurgisserClausenShokrollahi1997], Chapter 13
 -/
 
 @[expose] public section
 
 open MvPolynomial TrivSqZeroExt
 open scoped DualNumber Matrix
-
-/-! ### First-order Taylor expansion over the dual numbers -/
-
-namespace MvPolynomial
-
-variable {F : Type*} [CommRing F] {k : ℕ}
-
-/-- The real part of a polynomial at a dual number is its value at the real parts. -/
-theorem fst_aeval_dualNumber (P : MvPolynomial (Fin k) F) (u : Fin k → F[ε]) :
-    (aeval u P).fst = eval (fun a => (u a).fst) P :=
-  comp_aeval_apply u (fstHom F F F) P
-
-/-- **Taylor expansion over the dual numbers.** The dual part of `P(z + ε v)` is
-`∑_a ∂_a P(z) v_a`. -/
-theorem snd_aeval_dualNumber (P : MvPolynomial (Fin k) F) (u : Fin k → F[ε]) :
-    (aeval u P).snd = ∑ a, eval (fun b => (u b).fst) (pderiv a P) * (u a).snd := by
-  induction P using MvPolynomial.induction_on with
-  | C c => simp [algebraMap_eq_inl]
-  | add P Q hP hQ => simp [hP, hQ, add_mul, Finset.sum_add_distrib]
-  | mul_X P i hP =>
-    have hX (a : Fin k) :
-        eval (fun b => (u b).fst) (pderiv a (X i : MvPolynomial (Fin k) F)) =
-          (Pi.single i 1 : Fin k → F) a := by
-      by_cases h : a = i <;> simp [h, Ne.symm]
-    rw [map_mul, aeval_X, DualNumber.snd_mul, fst_aeval_dualNumber, hP, Finset.sum_mul]
-    simp only [pderiv_mul, map_add, map_mul, eval_X, hX, add_mul, Finset.sum_add_distrib,
-      Pi.single_apply, mul_ite, ite_mul, mul_one, mul_zero, zero_mul, Finset.sum_ite_eq',
-      Finset.mem_univ, ite_true]
-    rw [add_comm]
-    exact congrArg (· + _) (Finset.sum_congr rfl fun a _ => mul_right_comm _ _ _)
-
-end MvPolynomial
 
 namespace Cslib.Circuits
 
@@ -109,7 +84,7 @@ theorem Program.exists_affine_trace [CommRing F] (p : Program (affineSignature F
       choose L b h using fun a => ih (wires a)
       refine ⟨∑ a, c a • L a, ∑ a, c a * b a + d, fun x => ?_⟩
       rw [Program.trace_gate_last]
-      simp [affineInterpretation, h, mul_add, Finset.sum_add_distrib, add_assoc]
+      simp [h, mul_add, Finset.sum_add_distrib, add_assoc]
     · obtain ⟨L, b, h⟩ := ih w
       exact ⟨L, b, fun x => by rw [Program.trace_gate_castSucc, h]⟩
 
@@ -159,8 +134,7 @@ noncomputable def taylorOp (P : MvPolynomial (Fin k) F) (z : Fin k → F) :
 theorem affineInterpretation_taylorOp (P : MvPolynomial (Fin k) F) (z y : Fin k → F) :
     affineInterpretation F (taylorOp P z) y =
       eval z P + ∑ a, eval z (pderiv a P) * (y a - z a) := by
-  change ∑ a, eval z (pderiv a P) * y a + (eval z P - ∑ a, eval z (pderiv a P) * z a) = _
-  simp only [mul_sub, Finset.sum_sub_distrib]
+  simp only [taylorOp, affineInterpretation_apply, mul_sub, Finset.sum_sub_distrib]
   ring
 
 variable {σ : Signature} (P : (o : σ.Op) → MvPolynomial (Fin (σ.Arity o)) F)

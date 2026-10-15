@@ -7,10 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Frontier.Demand
 public import Complexity.Computability.Circuit.Frontier.Compiler
-public import Complexity.Computability.Circuit.Frontier.Linear.Linearize
-public import Complexity.Computability.Circuit.Frontier.Linear.TotallyRegular
+public import Complexity.Computability.Circuit.Frontier.Demand
+public import Complexity.Computability.Circuit.Linearize
+public import Complexity.Foundations.Data.Matrix.TotallyRegular
+import Complexity.Foundations.Data.Nat.IntermediateValue
 
 /-!
 # The frontier lower bound for linear maps
@@ -26,7 +27,8 @@ inputs outside `X`, and the outputs outside `Y` do not see the inputs in `X`. Wh
 regular and `|X| + |Y| = N`, both blocks `M[Y, Xᶜ]` and `M[Yᶜ, X]` are square and nonsingular,
 so the values on the cut determine the input. Every layout passes through such a `P`, since
 `|X| + |Y|` grows by at most one per vertex, from `0` to `2 N`
-(`Cslib.Circuits.Frontier.Compiler.exists_injective_frontier`).
+(`Cslib.Circuits.Frontier.Compiler.exists_injective_frontier`), by a discrete intermediate value
+theorem (`Nat.exists_eq_of_le_add_one`).
 
 How many values can a cut of `k` edges carry? A circuit has *linear capacity*
 (`Cslib.Circuits.Circuit.LinearCapacity`) when the values of `k` wires never determine more than
@@ -47,7 +49,7 @@ exactly `N`. For `s` inner gates of fan-in at most `r` the graph has cycle rank 
 `(r - 1) s + 1 - N`, and the comparison of demand and supply (`eventually_lt_of_demand`) gives
 the coefficient of the frontier lower bound for decision problems.
 
-**Main theorem** (`eventually_lt_mul_innerSize_of_totallyRegular`). Under `LayoutBound (r + 1) A`,
+**Main theorem** (`eventually_lt_mul_innerSize_of_isTotallyRegular`). Under `LayoutBound (r + 1) A`,
 for every `ε > 0` and all large `N`, every circuit of fan-in at most `r` with linear capacity
 computing a totally regular map `F^N → F^N` has `s` inner gates with
 `(r - 1) s > (1 + 1/A - ε) N`, uniformly in the field. Constants are free.
@@ -60,12 +62,18 @@ computing a totally regular map `F^N → F^N` has `s` inner gates with
 
 * `Cslib.Circuits.Frontier.Compiler.exists_injective_frontier`: some frontier of every layout
   determines the input.
-* `Cslib.Circuits.Frontier.exists_graph_of_totallyRegular`: the reduction theorem for linear
+* `Cslib.Circuits.Frontier.exists_graph_of_isTotallyRegular`: the reduction theorem for linear
   maps.
-* `Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_of_totallyRegular`: the lower bound, for
+* `Cslib.Circuits.Frontier.eventually_lt_mul_innerSize_of_isTotallyRegular`: the lower bound, for
   circuits with linear capacity; `..._finite`, `..._affine` and `..._isPolynomial` specialize it
   to finite fields with any basis, to any field with the affine basis, and to infinite fields with
   polynomial operations.
+
+## References
+
+* [L. G. Valiant, *Graph-theoretic arguments in low-level complexity*][Valiant1977]
+* [P. Bürgisser, M. Clausen, M. A. Shokrollahi, *Algebraic Complexity
+  Theory*][BurgisserClausenShokrollahi1997], Chapter 13
 -/
 
 @[expose] public section
@@ -118,17 +126,6 @@ end Capacity
 
 namespace Frontier
 
-/-- A sequence of naturals that starts at `0` and grows by at most one per step takes every value
-up to any of its later values. -/
-private theorem exists_eq_of_le_add_one {a : ℕ → ℕ} (h0 : a 0 = 0) {k : ℕ} :
-    ∀ {T : ℕ}, k ≤ a T → (∀ t < T, a (t + 1) ≤ a t + 1) → ∃ t ≤ T, a t = k
-  | 0, hT, _ => ⟨0, le_rfl, by omega⟩
-  | T + 1, hT, hstep => by
-    by_cases h : k ≤ a T
-    · obtain ⟨t, ht, hat⟩ := exists_eq_of_le_add_one h0 h fun t ht => hstep t (by omega)
-      exact ⟨t, by omega, hat⟩
-    · exact ⟨T + 1, le_rfl, by have := hstep T (by omega); omega⟩
-
 /-! ### The graph of a circuit for a totally regular map -/
 
 namespace Compiler
@@ -143,7 +140,7 @@ private theorem eval_eq_mulVec (hc : c.Computes I fun x => M *ᵥ x) (x : Fin N 
 
 /-- **Every output of a totally regular map depends on every input**, so in the graph of a
 circuit computing it the vertex of every input is joined to every output vertex. -/
-theorem exists_reachable_of_totallyRegular (hM : M.TotallyRegular)
+theorem exists_reachable_of_isTotallyRegular (hM : M.IsTotallyRegular)
     (hc : c.Computes I fun x => M *ᵥ x) (i o : Fin N) :
     ∃ hi : Reach c (.input i),
       (graph c).toSimpleGraph.Reachable (.signal ⟨.input i, hi⟩) (.output o) := by
@@ -155,18 +152,18 @@ theorem exists_reachable_of_totallyRegular (hM : M.TotallyRegular)
 
 /-- The graph of a circuit computing a totally regular map with at least one input is
 connected. -/
-theorem connected_of_totallyRegular (hN : 0 < N) (hM : M.TotallyRegular)
+theorem connected_of_isTotallyRegular (hN : 0 < N) (hM : M.IsTotallyRegular)
     (hc : c.Computes I fun x => M *ᵥ x) : (graph c).toSimpleGraph.Connected := by
-  obtain ⟨hi, -⟩ := exists_reachable_of_totallyRegular hM hc ⟨0, hN⟩ ⟨0, hN⟩
+  obtain ⟨hi, -⟩ := exists_reachable_of_isTotallyRegular hM hc ⟨0, hN⟩ ⟨0, hN⟩
   exact connected_of_reachable (v₀ := .signal ⟨.input ⟨0, hN⟩, hi⟩) fun o =>
-    (exists_reachable_of_totallyRegular hM hc ⟨0, hN⟩ o).2
+    (exists_reachable_of_isTotallyRegular hM hc ⟨0, hN⟩ o).2
 
 /-- A circuit computing a totally regular map reads all of its inputs. -/
-theorem read_eq_univ_of_totallyRegular (hM : M.TotallyRegular)
+theorem read_eq_univ_of_isTotallyRegular (hM : M.IsTotallyRegular)
     (hc : c.Computes I fun x => M *ᵥ x) (Acc : Fin N → Set F) :
     (network c I Acc).read = univ := by
   rw [read_network]
-  exact eq_univ_of_forall fun i => (exists_reachable_of_totallyRegular hM hc i i).1
+  exact eq_univ_of_forall fun i => (exists_reachable_of_isTotallyRegular hM hc i i).1
 
 omit [Field F] in
 /-- In the network of a circuit computing a function, a vertex reads one input or holds one
@@ -199,7 +196,7 @@ private theorem ncard_readAt_add_ncard_le (v : Vertex c) :
 /-- **Some frontier of every layout determines the input.** For a circuit computing a totally
 regular map, every layout of its graph has a time at which the values of the circuit on the
 frontier determine the input. -/
-theorem exists_injective_frontier (hM : M.TotallyRegular) (hc : c.Computes I fun x => M *ᵥ x)
+theorem exists_injective_frontier (hM : M.IsTotallyRegular) (hc : c.Computes I fun x => M *ᵥ x)
     (π : Layout (Vertex c)) :
     ∃ t, Function.Injective fun (x : Fin N → F) (e : (graph c).frontier π t) =>
       c.program.trace I x e.1.signal.1 := by
@@ -236,7 +233,7 @@ theorem exists_injective_frontier (hM : M.TotallyRegular) (hc : c.Computes I fun
       ncard_readAt_add_ncard_le v
     simp only [a]
     omega
-  obtain ⟨t, -, hat⟩ := exists_eq_of_le_add_one h0 hT hstep
+  obtain ⟨t, -, hat⟩ := Nat.exists_eq_of_le_add_one (h0.trans_le (Nat.zero_le N)) hT hstep
   refine ⟨t, fun x x' hxx' => ?_⟩
   set P := π.initial t
   set X := G.readIn P
@@ -245,59 +242,37 @@ theorem exists_injective_frontier (hM : M.TotallyRegular) (hc : c.Computes I fun
   have hcut : ∀ e ∈ (graph c).edgeCut P,
       c.program.trace I x e.signal.1 = c.program.trace I x' e.signal.1 :=
     fun e he => congrFun hxx' ⟨e, he⟩
-  have hcard : ∀ S : Set (Fin N), S.toFinset.card = S.ncard ∧ Sᶜ.toFinset.card = N - S.ncard :=
-    fun S => by
-      refine ⟨(ncard_eq_toFinset_card' S).symm, ?_⟩
-      have := ncard_add_ncard_compl S
-      rw [Nat.card_eq_fintype_card, Fintype.card_fin] at this
-      rw [← ncard_eq_toFinset_card']
-      omega
-  -- Off `X`: splice `x` at `P` with `x'` elsewhere.
-  have hoff : ∀ j ∉ X, x' j = x j := by
-    set z := X.piecewise x x'
-    have hzx : EqOn z x X := X.piecewise_eqOn x x'
-    have hzy : EqOn z x' Xᶜ := X.piecewise_eqOn_compl x x'
-    have hv := hM.eq_zero_of_mulVec_eq_zero (rows := Y.toFinset) (cols := Xᶜ.toFinset)
-      (v := z - x) (by rw [(hcard X).2, (hcard Y).1]; omega)
-      (fun j hj => by
-        have : j ∈ X := by simpa using hj
-        simp [hzx this])
-      (fun o ho => by
-        have ho : Vertex.output o ∈ P := by simpa [Y, outs] using ho
-        have := (eval_splice hcut hzx hzy o).1 ho
-        rw [eval_eq_mulVec hc, eval_eq_mulVec hc] at this
-        rw [mulVec_sub, Pi.sub_apply, this, sub_self])
-    intro j hj
-    have := congrFun hv j
-    simp only [Pi.sub_apply, Pi.zero_apply, sub_eq_zero] at this
-    rw [← this, hzy hj]
-  -- On `X`: splice `x'` at `P` with `x` elsewhere.
-  have hon : ∀ j ∈ X, x' j = x j := by
-    set z := X.piecewise x' x
-    have hzx : EqOn z x' X := X.piecewise_eqOn x' x
-    have hzy : EqOn z x Xᶜ := X.piecewise_eqOn_compl x' x
-    have hv := hM.eq_zero_of_mulVec_eq_zero (rows := Yᶜ.toFinset) (cols := X.toFinset)
-      (v := z - x) (by rw [(hcard X).1, (hcard Y).2]; omega)
-      (fun j hj => by
-        have : j ∉ X := by simpa using hj
-        simp [hzy this])
-      (fun o ho => by
-        have ho : Vertex.output o ∉ P := by simpa [Y, outs] using ho
-        have := (eval_splice (fun e he => (hcut e he).symm) hzx hzy o).2 ho
-        rw [eval_eq_mulVec hc, eval_eq_mulVec hc] at this
-        rw [mulVec_sub, Pi.sub_apply, this, sub_self])
-    intro j hj
-    have := congrFun hv j
-    simp only [Pi.sub_apply, Pi.zero_apply, sub_eq_zero] at this
-    rw [← this, hzx hj]
+  have hcompl : ∀ S : Set (Fin N), Sᶜ.ncard = N - S.ncard := fun S => by
+    have := ncard_add_ncard_compl S
+    rw [Nat.card_eq_fintype_card, Fintype.card_fin] at this
+    omega
+  -- Two inputs that agree on a set `B` of coordinates, and whose outputs agree on a set `R` of at
+  -- least `|Bᶜ|` outputs, are equal: the matrix is totally regular.
+  have key (B R : Set (Fin N)) (z y : Fin N → F) (hBR : Bᶜ.ncard ≤ R.ncard) (hzy : EqOn z y B)
+      (hout : ∀ o ∈ R, c.eval I z o = c.eval I y o) : z = y := by
+    refine sub_eq_zero.mp (hM.eq_zero_of_mulVec_eq_zero (rows := R.toFinset) (cols := Bᶜ.toFinset)
+      (by rwa [← ncard_eq_toFinset_card', ← ncard_eq_toFinset_card']) (fun j hj => ?_)
+      fun o ho => ?_)
+    · simp [hzy (by simpa using hj)]
+    · rw [mulVec_sub, Pi.sub_apply, ← eval_eq_mulVec hc, ← eval_eq_mulVec hc,
+        hout o (by simpa using ho), sub_self]
+  -- Off `X`: splice `x` at `P` with `x'` elsewhere; the outputs in `Y` are those of `x`.
+  have hoff : X.piecewise x x' = x :=
+    key X Y _ x (by rw [hcompl]; omega) (X.piecewise_eqOn x x') fun o ho =>
+      (eval_splice hcut (X.piecewise_eqOn x x') (X.piecewise_eqOn_compl x x') o).1 ho
+  -- On `X`: splice `x'` at `P` with `x` elsewhere; the outputs off `Y` are those of `x`.
+  have hon : X.piecewise x' x = x :=
+    key Xᶜ Yᶜ _ x (by rw [compl_compl, hcompl]; omega) (X.piecewise_eqOn_compl x' x) fun o ho =>
+      (eval_splice (fun e he => (hcut e he).symm) (X.piecewise_eqOn x' x)
+        (X.piecewise_eqOn_compl x' x) o).2 ho
   funext j
   by_cases hj : j ∈ X
-  · exact (hon j hj).symm
-  · exact (hoff j hj).symm
+  · simpa [X.piecewise_eq_of_mem _ _ hj] using (congrFun hon j).symm
+  · simpa [X.piecewise_eq_of_notMem _ _ hj] using (congrFun hoff j).symm
 
 /-- **Every layout is wide.** Every layout of the graph of a circuit with linear capacity
 computing a totally regular map `F^N → F^N` has width at least `N`. -/
-theorem le_width_of_totallyRegular (hM : M.TotallyRegular) (hc : c.Computes I fun x => M *ᵥ x)
+theorem le_width_of_isTotallyRegular (hM : M.IsTotallyRegular) (hc : c.Computes I fun x => M *ᵥ x)
     (hcap : c.LinearCapacity I) (π : Layout (Vertex c)) : N ≤ (graph c).width π := by
   obtain ⟨t, ht⟩ := exists_injective_frontier hM hc π
   -- The wires carried by the frontier.
@@ -318,30 +293,30 @@ variable {F : Type u} [Field F] {σ : Signature.{v}} {I : Interpretation σ F} {
 `r ≥ 2` and linear capacity, computing a totally regular map `F^N → F^N` with `N ≥ 1`, yields a
 connected, loopless multigraph of maximum degree `r + 1` with at most `2 r s + 3 N` vertices and
 cycle rank at most `(r - 1) s + 1 - N`, every layout of which has width at least `N`. -/
-theorem exists_graph_of_totallyRegular (hN : 0 < N) (hr : 2 ≤ r) (hfan : c.FanInAtMost r)
-    (hM : M.TotallyRegular) (hc : c.Computes I fun x => M *ᵥ x) (hcap : c.LinearCapacity I) :
+theorem exists_graph_of_isTotallyRegular (hN : 0 < N) (hr : 2 ≤ r) (hfan : c.FanInAtMost r)
+    (hM : M.IsTotallyRegular) (hc : c.Computes I fun x => M *ᵥ x) (hcap : c.LinearCapacity I) :
     ∃ (V E : Type) (_ : Finite V) (_ : Finite E) (G : Multigraph V E),
       G.toSimpleGraph.Connected ∧ G.Loopless ∧ G.MaxDegreeLE (r + 1) ∧
       Nat.card V ≤ 2 * r * c.innerSize + 3 * N ∧
       G.cycleRank + N ≤ (r - 1) * c.innerSize + 1 ∧
       ∀ π : Layout V, N ≤ G.width π := by
-  have hconn := Compiler.connected_of_totallyRegular hN hM hc
+  have hconn := Compiler.connected_of_isTotallyRegular hN hM hc
   have hrank := Compiler.cycleRank_add_ncard_read_le I (fun _ => univ) hfan hconn
-  rw [Compiler.read_eq_univ_of_totallyRegular hM hc, ncard_univ, Nat.card_eq_fintype_card,
+  rw [Compiler.read_eq_univ_of_isTotallyRegular hM hc, ncard_univ, Nat.card_eq_fintype_card,
     Fintype.card_fin] at hrank
   exact ⟨_, _, inferInstance, inferInstance, Compiler.graph c, hconn, Compiler.loopless,
     Compiler.maxDegreeLE hr hfan, Compiler.card_vertex_le hfan, hrank,
-    Compiler.le_width_of_totallyRegular hM hc hcap⟩
+    Compiler.le_width_of_isTotallyRegular hM hc hcap⟩
 
 /-- **The frontier lower bound for linear maps.** Let `r ≥ 2` and assume the layout hypothesis
 for maximum degree `r + 1` with coefficient `A > 0`. For every `ε > 0` and all large `N`, every
 circuit of fan-in at most `r` with linear capacity, over any field and any basis, that computes
 `x ↦ M x` for a totally regular `N × N` matrix `M`, has `s` inner gates with
 `(r - 1) s > (1 + 1/A - ε) N`. -/
-theorem eventually_lt_mul_innerSize_of_totallyRegular (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
+theorem eventually_lt_mul_innerSize_of_isTotallyRegular (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
     (hlayout : LayoutBound (r + 1) A) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N in atTop, ∀ (F : Type u) [Field F] (σ : Signature.{v}) (I : Interpretation σ F)
-      (M : Matrix (Fin N) (Fin N) F) (c : Circuit σ N N), M.TotallyRegular →
+      (M : Matrix (Fin N) (Fin N) F) (c : Circuit σ N N), M.IsTotallyRegular →
         c.FanInAtMost r → c.Computes I (fun x => M *ᵥ x) → c.LinearCapacity I →
           (1 + 1 / A - ε) * N < (r - 1) * c.innerSize := by
   obtain ⟨η, hη, H⟩ := eventually_lt_of_demand hA (κ := 4) (by norm_num) hε
@@ -351,7 +326,7 @@ theorem eventually_lt_mul_innerSize_of_totallyRegular (hr : 2 ≤ r) {A : ℝ} (
   filter_upwards [H η hη le_rfl C _ he, eventually_ge_atTop 1] with N hN hN1
   intro F _ σ I M c hM hfan hc hcap
   obtain ⟨V, E, _, _, G, hconn, hloop, hdeg, hV, hrank, hwidth⟩ :=
-    exists_graph_of_totallyRegular hN1 hr hfan hM hc hcap
+    exists_graph_of_isTotallyRegular hN1 hr hfan hM hc hcap
   obtain ⟨π, hπ⟩ := hC V E G hconn hloop hdeg
   -- The quantities of the comparison.
   set s : ℝ := (r - 1) * c.innerSize
@@ -381,42 +356,42 @@ theorem eventually_lt_mul_innerSize_of_totallyRegular (hr : 2 ≤ r) {A : ℝ} (
     linarith
 
 /-- **The frontier lower bound for linear maps over finite fields**, for every basis. Under the
-hypotheses of `eventually_lt_mul_innerSize_of_totallyRegular`, for every `ε > 0` and all large
+hypotheses of `eventually_lt_mul_innerSize_of_isTotallyRegular`, for every `ε > 0` and all large
 `N`, every circuit of fan-in at most `r` over a finite field `F`, over any basis, that computes
 `x ↦ M x` for a totally regular `N × N` matrix `M` has `s` inner gates with
 `(r - 1) s > (1 + 1/A - ε) N`. -/
-theorem eventually_lt_mul_innerSize_of_totallyRegular_finite (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
+theorem eventually_lt_mul_innerSize_of_isTotallyRegular_finite (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
     (hlayout : LayoutBound (r + 1) A) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N in atTop, ∀ (F : Type u) [Field F] [Finite F] (σ : Signature.{v})
       (I : Interpretation σ F) (M : Matrix (Fin N) (Fin N) F) (c : Circuit σ N N),
-        M.TotallyRegular → c.FanInAtMost r → c.Computes I (fun x => M *ᵥ x) →
+        M.IsTotallyRegular → c.FanInAtMost r → c.Computes I (fun x => M *ᵥ x) →
           (1 + 1 / A - ε) * N < (r - 1) * c.innerSize := by
-  filter_upwards [eventually_lt_mul_innerSize_of_totallyRegular.{u, v} hr hA hlayout hε]
+  filter_upwards [eventually_lt_mul_innerSize_of_isTotallyRegular.{u, v} hr hA hlayout hε]
     with N hN
   intro F _ _ σ I M c hM hfan hc
   exact hN F σ I M c hM hfan hc (c.linearCapacity_of_finite I)
 
 /-- **The frontier lower bound for linear maps over the affine basis**, over every field. -/
-theorem eventually_lt_mul_innerSize_of_totallyRegular_affine (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
+theorem eventually_lt_mul_innerSize_of_isTotallyRegular_affine (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
     (hlayout : LayoutBound (r + 1) A) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N in atTop, ∀ (F : Type u) [Field F] (M : Matrix (Fin N) (Fin N) F)
-      (c : Circuit (affineSignature F) N N), M.TotallyRegular → c.FanInAtMost r →
+      (c : Circuit (affineSignature F) N N), M.IsTotallyRegular → c.FanInAtMost r →
         c.Computes (affineInterpretation F) (fun x => M *ᵥ x) →
           (1 + 1 / A - ε) * N < (r - 1) * c.innerSize := by
-  filter_upwards [eventually_lt_mul_innerSize_of_totallyRegular.{u, u} hr hA hlayout hε]
+  filter_upwards [eventually_lt_mul_innerSize_of_isTotallyRegular.{u, u} hr hA hlayout hε]
     with N hN
   intro F _ M c hM hfan hc
   exact hN F _ _ M c hM hfan hc c.linearCapacity_affine
 
 /-- **The frontier lower bound for linear maps over infinite fields**, for every basis of
 polynomial operations: their coefficients and degrees are arbitrary. -/
-theorem eventually_lt_mul_innerSize_of_totallyRegular_isPolynomial (hr : 2 ≤ r) {A : ℝ}
+theorem eventually_lt_mul_innerSize_of_isTotallyRegular_isPolynomial (hr : 2 ≤ r) {A : ℝ}
     (hA : 0 < A) (hlayout : LayoutBound (r + 1) A) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N in atTop, ∀ (F : Type u) [Field F] [Infinite F] (σ : Signature.{v})
       (I : Interpretation σ F), I.IsPolynomial → ∀ (M : Matrix (Fin N) (Fin N) F)
-        (c : Circuit σ N N), M.TotallyRegular → c.FanInAtMost r →
+        (c : Circuit σ N N), M.IsTotallyRegular → c.FanInAtMost r →
           c.Computes I (fun x => M *ᵥ x) → (1 + 1 / A - ε) * N < (r - 1) * c.innerSize := by
-  filter_upwards [eventually_lt_mul_innerSize_of_totallyRegular_affine.{u} hr hA hlayout hε]
+  filter_upwards [eventually_lt_mul_innerSize_of_isTotallyRegular_affine.{u} hr hA hlayout hε]
     with N hN
   intro F _ _ σ I hI M c hM hfan hc
   obtain ⟨c', -, hinner, hfan', hc'⟩ := hc.exists_affine hI

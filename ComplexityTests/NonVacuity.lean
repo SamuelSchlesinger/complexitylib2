@@ -574,7 +574,7 @@ example : negCircuit.Computes (arithInterpretation ℚ) (fun x => cauchyNat ℚ 
   ring
 
 /-- Explicit Cauchy matrices are totally regular. -/
-example : (cauchyNat ℚ 5).TotallyRegular := totallyRegular_cauchyNat 5
+example : (cauchyNat ℚ 5).IsTotallyRegular := isTotallyRegular_cauchyNat 5
 
 end FrontierLinear
 

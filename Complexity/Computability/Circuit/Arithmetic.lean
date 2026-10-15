@@ -43,6 +43,11 @@ exactly the additions and multiplications.
 * `Cslib.Circuits.isPolynomial_affineInterpretation`,
   `Cslib.Circuits.isPolynomial_arithInterpretation`: both bases are polynomial.
 * `Cslib.Circuits.Circuit.fanInAtMost_two_arith`: arithmetic circuits have fan-in two.
+
+## References
+
+* [P. Bürgisser, M. Clausen, M. A. Shokrollahi, *Algebraic Complexity
+  Theory*][BurgisserClausenShokrollahi1997], Chapter 4
 -/
 
 @[expose] public section
@@ -63,6 +68,11 @@ abbrev affineSignature : Signature.{u} where
 `x ↦ ∑ i, a i * x i + b`. -/
 def affineInterpretation [Semiring F] : Interpretation (affineSignature F) F :=
   fun o x => ∑ i, o.2.1 i * x i + o.2.2
+
+/-- An affine operation with arity `k`, coefficients `a` and constant `b`. -/
+@[simp] theorem affineInterpretation_apply [Semiring F] (k : ℕ) (a : Fin k → F) (b : F)
+    (x : Fin k → F) : affineInterpretation F ⟨k, a, b⟩ x = ∑ i, a i * x i + b :=
+  rfl
 
 /-- The operations of the arithmetic basis. -/
 inductive ArithOp : Type u

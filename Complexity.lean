@@ -3,6 +3,7 @@ module  -- shake: keep-all --deprecated_module: ignore
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
 public import Complexity.Computability.Circuit.Approximation
+public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AltFormula
 public import Complexity.Computability.Circuit.Boolean.AltFormula.TopDown
@@ -98,10 +99,7 @@ public import Complexity.Computability.Circuit.Frontier.Ledger.Basic
 public import Complexity.Computability.Circuit.Frontier.Ledger.LowerBound
 public import Complexity.Computability.Circuit.Frontier.Ledger.Sweep
 public import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
-public import Complexity.Computability.Circuit.Frontier.Linear.Basis
-public import Complexity.Computability.Circuit.Frontier.Linear.Linearize
 public import Complexity.Computability.Circuit.Frontier.Linear.LowerBound
-public import Complexity.Computability.Circuit.Frontier.Linear.TotallyRegular
 public import Complexity.Computability.Circuit.Frontier.Linear.Unconditional
 public import Complexity.Computability.Circuit.Frontier.LowerBound
 public import Complexity.Computability.Circuit.Frontier.Multigraph
@@ -113,6 +111,7 @@ public import Complexity.Computability.Circuit.Frontier.Reduction
 public import Complexity.Computability.Circuit.Frontier.Sweep
 public import Complexity.Computability.Circuit.Frontier.Unconditional
 public import Complexity.Computability.Circuit.InnerSize
+public import Complexity.Computability.Circuit.Linearize
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.MapOp
 public import Complexity.Computability.Circuit.Monotone.Basic
@@ -267,9 +266,12 @@ public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.ListDecoding
+public import Complexity.Foundations.Data.Matrix.TotallyRegular
+public import Complexity.Foundations.Data.MvPolynomial.DualNumber
 public import Complexity.Foundations.Data.Nat.Card
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.Div
+public import Complexity.Foundations.Data.Nat.IntermediateValue
 public import Complexity.Foundations.Data.Nat.Log
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
