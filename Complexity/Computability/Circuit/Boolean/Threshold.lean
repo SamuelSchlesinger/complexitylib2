@@ -30,6 +30,7 @@ size `O(k ^ 2)` on top of them.
 
 * `Cslib.Circuits.Boolean.atLeast`: the counting functions.
 * `Cslib.Circuits.Boolean.threshold`: the threshold function `Th^m_j` on `m` variables.
+* `Cslib.Circuits.Boolean.majority`: the majority function, the threshold `Th^m_⌈m/2⌉`.
 
 ## Main results
 
@@ -126,6 +127,11 @@ theorem synthesis_atLeast {s : Set (BooleanFunction n)} {k j : ℕ} (hf : ∀ i 
 /-- The threshold function on `m` variables: at least `j` of them are true. -/
 def threshold (m j : ℕ) : BooleanFunction m :=
   fun y => decide (j ≤ (Finset.univ.filter fun i => y i = true).card)
+
+/-- The majority function on `m` bits: whether at least half of them are true, that is, the
+threshold function `Th^m_⌈m/2⌉`. -/
+def majority (m : ℕ) : BooleanFunction m :=
+  threshold m ((m + 1) / 2)
 
 theorem atLeast_eq_threshold (m j : ℕ) :
     atLeast (fun l y => if h : l < m then y ⟨l, h⟩ else false) m j = threshold m j := by

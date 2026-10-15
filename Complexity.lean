@@ -6,6 +6,7 @@ public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
+public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
@@ -36,6 +37,7 @@ public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
+public import Complexity.Computability.Circuit.Formula.ToCircuit
 public import Complexity.Computability.Circuit.MapOp
 public import Complexity.Computability.Circuit.Monotone.Basic
 public import Complexity.Computability.Circuit.Monotone.Clique.Approximator
@@ -97,6 +99,7 @@ public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Data.BitString.LowDegree
 public import Complexity.Foundations.Data.BitString.LowDegreeParity
 public import Complexity.Foundations.Data.BitString.Parity
+public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure

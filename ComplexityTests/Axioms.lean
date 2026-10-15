@@ -443,10 +443,10 @@ info: 'Cslib.Circuits.Boolean.Unbounded.AC0.compl' depends on axioms: [propext, 
 #print axioms Cslib.Circuits.Boolean.Unbounded.AC0.compl
 
 /--
-info: 'Cslib.Circuits.Boolean.ThresholdBasis.AC0_ssubset_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.MajorityBasis.AC0_ssubset_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.ThresholdBasis.AC0_ssubset_TC0
+#print axioms Cslib.Circuits.Boolean.MajorityBasis.AC0_ssubset_TC0
 
 /--
 info: 'Cslib.Circuits.Circuit.eval_mapOp' depends on axioms: [propext, Classical.choice, Quot.sound]

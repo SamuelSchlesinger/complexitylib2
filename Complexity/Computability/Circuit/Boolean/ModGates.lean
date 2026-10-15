@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.AC0
-public import Complexity.Computability.Circuit.MapOp
 
 /-!
 # AC⁰[q]
@@ -38,6 +37,7 @@ inductive Op where
   | ac (op : Unbounded.Op)
   /-- The `MOD_q` gate of `m` arguments. -/
   | mod (m : ℕ)
+  deriving DecidableEq
 
 /-- The arity of an operation. -/
 abbrev Op.arity : Op → ℕ
@@ -58,22 +58,17 @@ def interpretation (q : ℕ) : Interpretation signature Bool
   | .ac op, x => Unbounded.interpretation op x
   | .mod m, x => modGate q m x
 
+/-- The AC⁰ basis inside the basis with `MOD_q` gates. -/
+def ofUnbounded : Unbounded.signature.Hom signature :=
+  ⟨Op.ac, fun _ => rfl⟩
+
 /-- **AC⁰[q]**: the languages over `Bool` decided, at every input length, by circuits with `MOD_q`
 gates of polynomially bounded size and constant depth. -/
 def AC0Mod (q : ℕ) : Set (Language Bool) :=
-  {L | ∃ (d : ℕ) (size : ℕ → ℕ), PolynomiallyBounded size ∧ ∀ n,
-    ∃ C : Circuit signature n 1, C.Computes (interpretation q) (single (L.slice n)) ∧
-      C.depth ≤ d ∧ C.size ≤ size n}
+  ConstDepth (interpretation q)
 
 /-- **AC⁰ ⊆ AC⁰[q]**: every AC⁰ circuit is a circuit with `MOD_q` gates. -/
-theorem AC0_subset_AC0Mod (q : ℕ) : Unbounded.AC0 ⊆ AC0Mod q := by
-  rintro L ⟨d, size, hsize, hC⟩
-  refine ⟨d, size, hsize, fun n => ?_⟩
-  obtain ⟨C, hCc, hCd, hCs⟩ := hC n
-  refine ⟨C.mapOp (τ := signature) Op.ac (fun _ => rfl), fun x => ?_, by simpa using hCd,
-    by simpa using hCs⟩
-  exact (Circuit.eval_mapOp (σ := Unbounded.signature) (τ := signature) (f := Op.ac)
-    (hf := fun _ => rfl) (I := Unbounded.interpretation) (J := interpretation q)
-    (fun _ _ => rfl) C x).trans (hCc x)
+theorem AC0_subset_AC0Mod (q : ℕ) : Unbounded.AC0 ⊆ AC0Mod q :=
+  ConstDepth.mono ofUnbounded fun _ _ => rfl
 
 end Cslib.Circuits.Boolean.ModBasis

@@ -7,6 +7,8 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.GateElimination
 import Complexity.Computability.Circuit.Boolean.Khrapchenko
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
+import Complexity.Computability.Circuit.Boolean.Smolensky
+import Complexity.Computability.Circuit.Boolean.TC0
 import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
@@ -96,6 +98,16 @@ example : ∃ F : Cslib.Circuits.Formula Cslib.Circuits.Boolean.signature (2 ^ 2
     F.Computes Cslib.Circuits.Boolean.interpretation (Cslib.parity (2 ^ 2)) ∧
       F.leafSize = 16 :=
   Cslib.Circuits.Boolean.exists_formula_parity_two_pow 2
+
+/-- The constant-depth classes are inhabited, by the constants. -/
+example : (⊤ : Language Bool) ∈ Unbounded.AC0 ∧ (0 : Language Bool) ∈ Unbounded.AC0 :=
+  ⟨Unbounded.AC0.top_mem, Unbounded.AC0.zero_mem⟩
+
+example : (⊤ : Language Bool) ∈ MajorityBasis.TC0 :=
+  MajorityBasis.AC0_subset_TC0 Unbounded.AC0.top_mem
+
+example : (0 : Language Bool) ∈ ModBasis.AC0Mod 3 :=
+  ModBasis.AC0_subset_AC0Mod 3 Unbounded.AC0.zero_mem
 
 /-- The tidy normal form applies to upstream's machine for the identity, which is not tidy: it
 leaves its input head at the end of the input. -/

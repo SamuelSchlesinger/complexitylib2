@@ -213,10 +213,12 @@ polynomially bounded size and constant depth. AC⁰ is closed under the Boolean 
 **majority is not in AC⁰** (`Circuit/Boolean/Majority.lean`): padding the input with constants
 turns majority into every threshold function, so parity has circuits of depth four more and
 polynomially larger size than majority. Depth bounds for cslib's `Circuit.comp`/`Circuit.append`
-were added for this (`Circuit/CompositionDepth.lean`). With majority gates added to the basis
-(`Circuit/Boolean/TC0.lean`, over the translation of circuits along maps of operations
-`Circuit/MapOp.lean`), majority is one gate, so **AC⁰ ⊊ TC⁰**
-(`Cslib.Circuits.Boolean.ThresholdBasis.AC0_ssubset_TC0`).
+were added for this (`Circuit/CompositionDepth.lean`). AC⁰, TC⁰ and AC⁰[q] are all one
+class `ConstDepth I` of polynomial-size constant-depth circuits over a basis `I`
+(`Circuit/Boolean/ConstDepth.lean`), monotone along maps of bases (`Signature.Hom`, with the
+translation of circuits in `Circuit/MapOp.lean`). With majority gates added to the basis
+(`Circuit/Boolean/TC0.lean`), majority is one gate, so **AC⁰ ⊊ TC⁰**
+(`Cslib.Circuits.Boolean.MajorityBasis.AC0_ssubset_TC0`).
 
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
 `Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
