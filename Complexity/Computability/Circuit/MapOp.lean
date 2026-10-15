@@ -23,6 +23,7 @@ keeps its depth.
 ## Main definitions
 
 * `Cslib.Circuits.Signature.Hom`: an arity-preserving map of operations.
+* `Cslib.Circuits.Signature.Hom.Preserves`: a map of operations keeps their meaning.
 * `Cslib.Circuits.Circuit.mapOp`: the translation of a circuit along a map of signatures.
 
 ## Main results
@@ -44,7 +45,21 @@ structure Signature.Hom (σ τ : Signature) where
   /-- Operations keep their arity. -/
   arity_eq : ∀ op, τ.Arity (toFun op) = σ.Arity op
 
-variable {σ τ : Signature} {n g m : ℕ} {U : Type*} (φ : σ.Hom τ)
+variable {σ τ : Signature} {n g m : ℕ} {U : Type*}
+
+/-- The identity map of a signature. -/
+def Signature.Hom.id (σ : Signature) : σ.Hom σ :=
+  ⟨_root_.id, fun _ => rfl⟩
+
+/-- `φ` keeps the meaning of every operation: `op` means under `I` what `φ op` means under `J`. -/
+def Signature.Hom.Preserves (φ : σ.Hom τ) (I : Interpretation σ U) (J : Interpretation τ U) :
+    Prop :=
+  ∀ op (x : Fin (σ.Arity op) → U), J (φ.toFun op) (fun a => x (Fin.cast (φ.arity_eq op) a)) = I op x
+
+theorem Signature.Hom.preserves_id (I : Interpretation σ U) : (Hom.id σ).Preserves I I :=
+  fun _ _ => rfl
+
+variable (φ : σ.Hom τ)
 
 /-- The line performing `φ op` on the wires of `line`. -/
 def Line.mapOp (line : Line σ n g) : Line τ n g :=
@@ -91,9 +106,8 @@ theorem Program.depths_mapOp (p : Program σ n g) : (p.mapOp φ).depths = p.dept
 variable {I : Interpretation σ U} {J : Interpretation τ U}
 
 /-- The translated program computes the same gate values, if the interpretations agree. -/
-theorem Program.eval_mapOp (hIJ : ∀ op (x : Fin (σ.Arity op) → U),
-      J (φ.toFun op) (fun a => x (Fin.cast (φ.arity_eq op) a)) = I op x) (p : Program σ n g)
-    (x : Fin n → U) : (p.mapOp φ).eval J x = p.eval I x := by
+theorem Program.eval_mapOp (hIJ : φ.Preserves I J) (p : Program σ n g) (x : Fin n → U) :
+    (p.mapOp φ).eval J x = p.eval I x := by
   induction p with
   | empty => funext k; exact k.elim0
   | gate p line ih =>
@@ -105,15 +119,13 @@ theorem Program.eval_mapOp (hIJ : ∀ op (x : Fin (σ.Arity op) → U),
     | cast k => rw [Program.mapOp, Program.eval_gate_castSucc, Program.eval_gate_castSucc, ih]
 
 /-- **The translated circuit computes the same function**, if the interpretations agree. -/
-theorem Circuit.eval_mapOp (hIJ : ∀ op (x : Fin (σ.Arity op) → U),
-      J (φ.toFun op) (fun a => x (Fin.cast (φ.arity_eq op) a)) = I op x) (c : Circuit σ n m)
-    (x : Fin n → U) : (c.mapOp φ).eval J x = c.eval I x := by
+theorem Circuit.eval_mapOp (hIJ : φ.Preserves I J) (c : Circuit σ n m) (x : Fin n → U) :
+    (c.mapOp φ).eval J x = c.eval I x := by
   funext o
   simp only [Circuit.eval, Circuit.mapOp, Function.comp_apply, Program.trace]
   rw [Program.eval_mapOp hIJ]
 
-theorem Circuit.Computes.mapOp (hIJ : ∀ op (x : Fin (σ.Arity op) → U),
-      J (φ.toFun op) (fun a => x (Fin.cast (φ.arity_eq op) a)) = I op x) {c : Circuit σ n m}
+theorem Circuit.Computes.mapOp (hIJ : φ.Preserves I J) {c : Circuit σ n m}
     {f : (Fin n → U) → Fin m → U} (hc : c.Computes I f) : (c.mapOp φ).Computes J f :=
   fun x => (Circuit.eval_mapOp hIJ c x).trans (hc x)
 

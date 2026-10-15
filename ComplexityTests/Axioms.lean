@@ -478,4 +478,28 @@ info: 'Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod' depends on axioms:
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod
 
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.parity_mem_of_majority_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.parity_mem_of_majority_mem
+
+/--
+info: 'Cslib.Circuits.Boolean.MajorityBasis.parity_mem_TC0' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MajorityBasis.parity_mem_TC0
+
+/--
+info: 'Cslib.Circuits.Boolean.Smolensky.majority_notMem_AC0Mod' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Smolensky.majority_notMem_AC0Mod
+
+/--
+info: 'Cslib.Circuits.Boolean.Smolensky.TC0_not_subset_AC0Mod' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Smolensky.TC0_not_subset_AC0Mod
+
 end ComplexityTests.Axioms

@@ -17,6 +17,7 @@ and constant depth whose gates are negations, conjunctions and disjunctions of u
 and majority gates of unbounded fan-in [Arora and Barak, Chapter 14][AroraBarak09]. Every AC⁰
 circuit is a TC⁰ circuit (`AC0_subset_TC0`), and majority is a single gate, so majority is in TC⁰
 (`majority_mem_TC0`) but not in AC⁰: **AC⁰ is strictly contained in TC⁰** (`AC0_ssubset_TC0`).
+Parity reduces to majority in constant depth, so parity is in TC⁰ too (`parity_mem_TC0`).
 
 ## Main definitions
 
@@ -26,6 +27,7 @@ circuit is a TC⁰ circuit (`AC0_subset_TC0`), and majority is a single gate, so
 ## Main results
 
 * `Cslib.Circuits.Boolean.MajorityBasis.AC0_ssubset_TC0`: `AC⁰ ⊊ TC⁰`.
+* `Cslib.Circuits.Boolean.MajorityBasis.parity_mem_TC0`: parity is in TC⁰.
 
 ## References
 
@@ -70,7 +72,7 @@ def TC0 : Set (Language Bool) :=
 
 /-- **AC⁰ ⊆ TC⁰**: every AC⁰ circuit is a circuit with majority gates. -/
 theorem AC0_subset_TC0 : Unbounded.AC0 ⊆ TC0 :=
-  ConstDepth.mono ofUnbounded fun _ _ => rfl
+  ConstDepth.mono (φ := ofUnbounded) fun _ _ => rfl
 
 /-- **Majority is in TC⁰**: it is a single gate. -/
 theorem majority_mem_TC0 : Language.ofSlices majority ∈ TC0 := by
@@ -79,6 +81,10 @@ theorem majority_mem_TC0 : Language.ofSlices majority ∈ TC0 := by
   funext j
   rw [Language.slice_ofSlices]
   rfl
+
+/-- **Parity is in TC⁰**: it reduces to majority in constant depth. -/
+theorem parity_mem_TC0 : Language.ofSlices parity ∈ TC0 :=
+  Unbounded.parity_mem_of_majority_mem (φ := ofUnbounded) (fun _ _ => rfl) majority_mem_TC0
 
 /-- **AC⁰ is strictly contained in TC⁰.** -/
 theorem AC0_ssubset_TC0 : Unbounded.AC0 ⊂ TC0 :=

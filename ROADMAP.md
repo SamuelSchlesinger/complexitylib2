@@ -225,7 +225,11 @@ for every odd prime `p`, a depth-`d` circuit with `MOD_p` gates computing parity
 `2 ^ ℓ · 2 / 5` whenever `100 (((p - 1) ℓ) ^ d + 1)² ≤ n + 1`, so **parity ∉ AC⁰[p]**
 (`Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod`). The circuit is evaluated on pairs of a
 true function and its low-degree approximant, so each gate's approximator is chosen for its true
-arguments without dependent recursion over the program. Generalises v1's `p = 3`.
+arguments without dependent recursion over the program. Generalises v1's `p = 3`. The reduction of
+parity to majority is stated over every basis containing the unbounded fan-in basis
+(`Unbounded.parity_mem_of_majority_mem`), so parity ∈ TC⁰, majority ∉ AC⁰[p], and
+**TC⁰ ⊄ AC⁰[p]** for odd primes `p`
+(`Cslib.Circuits.Boolean.Smolensky.TC0_not_subset_AC0Mod`).
 
 Independent cslib-style reviews of the gate-elimination and Khrapchenko modules were addressed:
 a wrong Jukna citation was corrected (Section 1.6 for Schnorr, Section 6.8 for Khrapchenko, plus

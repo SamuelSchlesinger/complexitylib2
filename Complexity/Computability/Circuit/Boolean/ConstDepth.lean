@@ -60,9 +60,7 @@ theorem mem_iff : L ∈ ConstDepth I ↔ ∃ (d : ℕ) (s : ℕ → ℕ), Polyno
 
 /-- **A map of bases keeping the meaning of every operation embeds the classes**: translate the
 circuits gate by gate. -/
-theorem mono (φ : σ.Hom τ) {J : Interpretation τ Bool}
-    (hIJ : ∀ op (x : Fin (σ.Arity op) → Bool),
-      J (φ.toFun op) (fun a => x (Fin.cast (φ.arity_eq op) a)) = I op x) :
+theorem mono {φ : σ.Hom τ} {J : Interpretation τ Bool} (hIJ : φ.Preserves I J) :
     ConstDepth I ⊆ ConstDepth J := by
   rintro L ⟨d, s, hs, hC⟩
   refine ⟨d, s, hs, fun n => ?_⟩

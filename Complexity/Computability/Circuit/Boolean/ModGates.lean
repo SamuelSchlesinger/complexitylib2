@@ -69,6 +69,6 @@ def AC0Mod (q : ℕ) : Set (Language Bool) :=
 
 /-- **AC⁰ ⊆ AC⁰[q]**: every AC⁰ circuit is a circuit with `MOD_q` gates. -/
 theorem AC0_subset_AC0Mod (q : ℕ) : Unbounded.AC0 ⊆ AC0Mod q :=
-  ConstDepth.mono ofUnbounded fun _ _ => rfl
+  ConstDepth.mono (φ := ofUnbounded) fun _ _ => rfl
 
 end Cslib.Circuits.Boolean.ModBasis
