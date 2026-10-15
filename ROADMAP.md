@@ -233,6 +233,15 @@ uniqueness of coefficients, Plancherel and Parseval. Decision trees of depth `d`
 degree at most `d` (`DecisionTree/Fourier.lean`), the first step towards Linial–Mansour–Nisan
 over the switching lemma.
 
+**First-order queries are in nonuniform AC⁰** (`Circuit/Boolean/FirstOrder.lean`, the main
+result of v1's `DescriptiveComplexity` tree, rebuilt on Mathlib's model theory instead of a
+bespoke first-order syntax): for a relational language, expanding quantifiers into
+conjunctions over the universe decides any sentence on structures with `n` elements, read from
+their atomic facts, by unbounded fan-in formulas of depth independent of `n` and size polynomial
+in `n` (`Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize`).
+
+**Resolution** (`Logics/Propositional/Resolution.lean`): soundness and refutation completeness.
+
 **Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
 `Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
 for every odd prime `p`, a depth-`d` circuit with `MOD_p` gates computing parity has size at least

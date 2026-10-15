@@ -8,6 +8,7 @@ public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
+public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hastad

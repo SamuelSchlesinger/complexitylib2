@@ -568,4 +568,10 @@ info: 'Cslib.Logic.PL.CNF.derives_nil_iff_not_satisfiable' depends on axioms: [p
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.derives_nil_iff_not_satisfiable
 
+/--
+info: 'Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize
+
 end ComplexityTests.Axioms
