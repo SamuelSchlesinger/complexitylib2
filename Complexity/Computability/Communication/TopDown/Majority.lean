@@ -62,7 +62,6 @@ namespace Cslib.Communication
 open BitString
 open Finset
 open Filter Asymptotics
-open Cslib.BooleanAnalysis
 
 /-- A common deficit and density-limit bound for the two majority boundary layers.
 The logarithmic term bounds their entropy deficit; `128` bounds the mask size. -/

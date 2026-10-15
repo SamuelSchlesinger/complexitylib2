@@ -40,24 +40,24 @@ power `h` (`bernoulliAverage_lowerSet_pow_le`). This transference principle appe
 
 ## Main definitions
 
-* `Cslib.BooleanAnalysis.bernoulliWeight`: the probability of a mask.
-* `Cslib.BooleanAnalysis.bernoulliAverage`: the expectation over a random mask.
+* `Cslib.BitString.bernoulliWeight`: the probability of a mask.
+* `Cslib.BitString.bernoulliAverage`: the expectation over a random mask.
 
 ## Main results
 
-* `Cslib.BooleanAnalysis.bernoulliAverage_prod`: the coordinates of a random mask are independent.
-* `Cslib.BooleanAnalysis.bernoulliAverage_coordinate`,
-  `Cslib.BooleanAnalysis.bernoulliAverage_nonempty`, `Cslib.BooleanAnalysis.bernoulliAverage_hits`,
-  `Cslib.BooleanAnalysis.bernoulliAverage_weight`: the probability that a coordinate is selected,
+* `Cslib.BitString.bernoulliAverage_prod`: the coordinates of a random mask are independent.
+* `Cslib.BitString.bernoulliAverage_coordinate`,
+  `Cslib.BitString.bernoulliAverage_nonempty`, `Cslib.BitString.bernoulliAverage_hits`,
+  `Cslib.BitString.bernoulliAverage_weight`: the probability that a coordinate is selected,
   that some coordinate is, that some coordinate of a given set is, and the expected number of
   selected coordinates.
-* `Cslib.BooleanAnalysis.bernoulliAverage_bernoulliAverage_eq_sum`: the law of a coordinatewise
+* `Cslib.BitString.bernoulliAverage_bernoulliAverage_eq_sum`: the law of a coordinatewise
   image of two independent masks.
-* `Cslib.BooleanAnalysis.bernoulliAverage_union`: unions of independent masks.
-* `Cslib.BooleanAnalysis.bernoulliAverage_bias_antitone`: antitone functions have smaller
+* `Cslib.BitString.bernoulliAverage_union`: unions of independent masks.
+* `Cslib.BitString.bernoulliAverage_bias_antitone`: antitone functions have smaller
   expectations at larger rates.
-* `Cslib.BooleanAnalysis.bernoulliAverage_lowerSet_union`,
-  `Cslib.BooleanAnalysis.bernoulliAverage_lowerSet_pow_le`: transference for lower sets.
+* `Cslib.BitString.bernoulliAverage_lowerSet_union`,
+  `Cslib.BitString.bernoulliAverage_lowerSet_pow_le`: transference for lower sets.
 
 ## References
 
@@ -67,7 +67,7 @@ power `h` (`bernoulliAverage_lowerSet_pow_le`). This transference principle appe
 
 @[expose] public section
 
-namespace Cslib.BooleanAnalysis
+namespace Cslib.BitString
 
 open Finset
 open scoped BigOperators
@@ -477,4 +477,4 @@ theorem bernoulliAverage_lowerSet_pow_le {A : Set (ι → Bool)} (hA : IsLowerSe
 
 end
 
-end Cslib.BooleanAnalysis
+end Cslib.BitString

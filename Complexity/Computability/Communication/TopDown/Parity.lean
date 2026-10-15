@@ -39,7 +39,7 @@ Karchmer–Wigderson game of parity once `16 (32768 · 194 ^ d (m + 1)) ^ d ≤ 
 
 namespace Cslib.Communication
 
-open Cslib.BooleanAnalysis Finset
+open Cslib.BitString Finset
 
 /-- The parity classes are nonempty of deficit at most one. -/
 private theorem parity_class_nonempty_deficit {n : ℕ} (hn : 0 < n) (b : Bool) :

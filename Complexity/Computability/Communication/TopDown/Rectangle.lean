@@ -21,7 +21,7 @@ than `p`, since density limits need not be monotone in the rate. A density recta
 below `3 / 4` is not separated by any coordinate (`DensityRectangle.not_separated`), and after a
 message of `m` bits from Alice, some message leaves a density rectangle with deficit
 `max (194 k) (2 k + 2 + m)` and rate `32768 k p` (`DensityRectangle.select_left_message`): the
-strong mirror-set lemma (`Cslib.BooleanAnalysis.exists_mirror_set`) turns the limits around when
+strong mirror-set lemma (`Cslib.BitString.exists_mirror_set`) turns the limits around when
 they face the wrong player.
 
 ## Main definitions
@@ -43,7 +43,7 @@ they face the wrong player.
 
 namespace Cslib.Communication
 
-open Cslib.BooleanAnalysis Finset
+open Cslib.BitString Finset
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 

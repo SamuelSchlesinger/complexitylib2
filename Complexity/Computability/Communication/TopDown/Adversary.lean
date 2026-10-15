@@ -37,7 +37,7 @@ the first message needs no mirror step, which saves one round
 
 namespace Cslib.Communication.RoundProtocol
 
-open Cslib.BooleanAnalysis
+open Cslib.BitString
 
 variable {ι M : Type*} [Fintype ι] [DecidableEq ι] [Fintype M]
 

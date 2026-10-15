@@ -34,17 +34,17 @@ number of light patterns.
 
 ## Main definitions
 
-* `Cslib.BooleanAnalysis.coordinateMass`: the marginal of a distribution on the selected
+* `Cslib.BitString.coordinateMass`: the marginal of a distribution on the selected
   coordinates.
 
 ## Main results
 
-* `Cslib.BooleanAnalysis.bernoulliAverage_lowerSet_transfer`: transference for lower sets at a
+* `Cslib.BitString.bernoulliAverage_lowerSet_transfer`: transference for lower sets at a
   small rate.
-* `Cslib.BooleanAnalysis.harmonicTransform_sparse_good_probability`: the harmonic mean transform at
+* `Cslib.BitString.harmonicTransform_sparse_good_probability`: the harmonic mean transform at
   a sparse random set.
-* `Cslib.BooleanAnalysis.bernoulliAverage_few_light_patterns`: Korten's light-patterns lemma.
-* `Cslib.BooleanAnalysis.bernoulliAverage_few_light_patterns_density`: the same, for densities.
+* `Cslib.BitString.bernoulliAverage_few_light_patterns`: Korten's light-patterns lemma.
+* `Cslib.BitString.bernoulliAverage_few_light_patterns_density`: the same, for densities.
 
 ## References
 
@@ -53,7 +53,7 @@ number of light patterns.
 
 @[expose] public section
 
-namespace Cslib.BooleanAnalysis
+namespace Cslib.BitString
 
 open scoped BigOperators
 open Finset
@@ -306,4 +306,4 @@ theorem bernoulliAverage_few_light_patterns
 
 end
 
-end Cslib.BooleanAnalysis
+end Cslib.BitString

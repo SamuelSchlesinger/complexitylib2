@@ -8,10 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.DecisionTree.Fourier
-public import Complexity.Computability.DecisionTree.Sensitivity
 public import Complexity.Foundations.BooleanAnalysis.Influence
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!
@@ -20,14 +18,12 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 The total influence of a Boolean function, read as signs, is its *average sensitivity*, the
 expected value of `sensitivityAt f x` (`BitString.totalInfluence_signVal`)
 [O'Donnell, Section 2.3][ODonnell2014], so it is at most the sensitivity
-(`DecisionTree.totalInfluence_le_sensitivity`). A function computed by a decision tree of depth
+(`BitString.totalInfluence_le_sensitivity`). A function computed by a decision tree of depth
 `d` has Fourier degree at most `d`, so its total influence is at most `d`
 (`DecisionTree.totalInfluence_le_depth`).
 
 ## Main results
 
-* `Cslib.DecisionTree.totalInfluence_le_sensitivity`: total influence is at most the
-  sensitivity.
 * `Cslib.DecisionTree.totalInfluence_le_depth`: functions of decision trees of depth `d` have
   total influence at most `d`.
 
@@ -44,12 +40,6 @@ open Finset BitString
 open scoped BigOperators
 
 variable {n : ℕ} {β : Type*}
-
-/-- The total influence of a Boolean function, read as signs, is at most its sensitivity. -/
-theorem totalInfluence_le_sensitivity (f : BitString n → Bool) :
-    totalInfluence (fun x => signVal (f x)) ≤ sensitivity f := by
-  rw [totalInfluence_signVal]
-  exact expect_le univ_nonempty fun x _ => by exact_mod_cast sensitivityAt_le_sensitivity f x
 
 /-- **Decision trees of depth `d` have total influence at most `d`**: a Boolean function of the
 output of a decision tree of depth `d`, read as signs, has Fourier weight only on sets of at most

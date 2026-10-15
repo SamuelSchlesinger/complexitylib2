@@ -24,17 +24,17 @@ mirror-set lemma [Korten2026].
 
 ## Main definitions
 
-* `Cslib.BooleanAnalysis.conditionalSamplingRate`: the conditional rate of `P \ Q` inside `P ∪ Q`.
+* `Cslib.BitString.conditionalSamplingRate`: the conditional rate of `P \ Q` inside `P ∪ Q`.
 
 ## Main results
 
-* `Cslib.BooleanAnalysis.bernoulliAverage_union_difference`: the joint law of `P ∪ Q` and
+* `Cslib.BitString.bernoulliAverage_union_difference`: the joint law of `P ∪ Q` and
   `P \ Q`.
-* `Cslib.BooleanAnalysis.bernoulliAverage_union_difference_subtype`: the same, with the difference
+* `Cslib.BitString.bernoulliAverage_union_difference_subtype`: the same, with the difference
   as a mask on the coordinates of the union.
-* `Cslib.BooleanAnalysis.conditionalSamplingRate_nonneg`,
-  `Cslib.BooleanAnalysis.conditionalSamplingRate_le_one`,
-  `Cslib.BooleanAnalysis.conditionalSamplingRate_le_div`: the conditional rate is a probability,
+* `Cslib.BitString.conditionalSamplingRate_nonneg`,
+  `Cslib.BitString.conditionalSamplingRate_le_one`,
+  `Cslib.BitString.conditionalSamplingRate_le_div`: the conditional rate is a probability,
   at most `p / q`.
 
 ## References
@@ -44,7 +44,7 @@ mirror-set lemma [Korten2026].
 
 @[expose] public section
 
-namespace Cslib.BooleanAnalysis
+namespace Cslib.BitString
 
 open Finset
 
@@ -119,4 +119,4 @@ theorem bernoulliAverage_union_difference_subtype {ι : Type*} [Fintype ι] [Dec
   simp_rw [he]
   exact bernoulliAverage_restrict r S (f S)
 
-end Cslib.BooleanAnalysis
+end Cslib.BitString

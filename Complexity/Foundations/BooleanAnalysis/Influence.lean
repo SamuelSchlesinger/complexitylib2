@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Fourier
+public import Complexity.Foundations.Data.BitString.Flip
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Expect
@@ -34,8 +35,9 @@ total influence (the **Poincaré inequality**, `BitString.expect_sub_expect_sq_l
 
 For a Boolean function read as signs, the influence of `i` is the probability that flipping bit
 `i` changes the value (`BitString.influence_signVal`), and the total influence is the expected
-number of bits whose flip changes the value, the *average sensitivity*
-(`BitString.totalInfluence_signVal`) [O'Donnell, Sections 2.2 and 2.3][ODonnell2014].
+number of bits whose flip changes the value, the *average sensitivity* `𝔼 x, sensitivityAt f x`
+(`BitString.totalInfluence_signVal`), at most the sensitivity
+(`BitString.totalInfluence_le_sensitivity`) [O'Donnell, Sections 2.2 and 2.3][ODonnell2014].
 
 ## Main definitions
 
@@ -53,8 +55,9 @@ number of bits whose flip changes the value, the *average sensitivity*
   that a flip changes its value.
 * `Cslib.BitString.totalInfluence_eq_sum_card_mul_fourierCoeff_sq`: the spectral formula for the
   total influence.
-* `Cslib.BitString.totalInfluence_signVal`: the total influence of a Boolean function is its
-  average sensitivity.
+* `Cslib.BitString.totalInfluence_signVal`, `Cslib.BitString.totalInfluence_le_sensitivity`: the
+  total influence of a Boolean function is its average sensitivity, hence at most its
+  sensitivity.
 * `Cslib.BitString.expect_sub_expect_sq_eq_sum_fourierCoeff_sq`: the variance is the Fourier
   weight on the nonempty sets.
 * `Cslib.BitString.expect_sub_expect_sq_le_totalInfluence`: the Poincaré inequality.
@@ -206,10 +209,15 @@ theorem totalInfluence_eq_sum_card_mul_fourierCoeff_sq (f : BitString n → ℝ)
 /-- **The total influence of a Boolean function** read as signs is its *average sensitivity*: the
 expected number of bits whose flip changes the value [O'Donnell, Section 2.3][ODonnell2014]. -/
 theorem totalInfluence_signVal (f : BitString n → Bool) :
-    totalInfluence (fun x => signVal (f x)) =
-      𝔼 x, (#{i | f (update x i !x i) ≠ f x} : ℝ) := by
-  simp only [totalInfluence, influence_signVal, natCast_card_filter, ite_not]
+    totalInfluence (fun x => signVal (f x)) = 𝔼 x, (sensitivityAt f x : ℝ) := by
+  simp only [totalInfluence, influence_signVal, sensitivityAt, natCast_card_filter, ite_not]
   exact (expect_sum_comm _ _ _).symm
+
+/-- The total influence of a Boolean function, read as signs, is at most its sensitivity. -/
+theorem totalInfluence_le_sensitivity (f : BitString n → Bool) :
+    totalInfluence (fun x => signVal (f x)) ≤ sensitivity f := by
+  rw [totalInfluence_signVal]
+  exact expect_le univ_nonempty fun x _ => by exact_mod_cast sensitivityAt_le_sensitivity f x
 
 /-- A character has total influence the size of its set. -/
 theorem totalInfluence_chi (S : Finset (Fin n)) : totalInfluence (chi S) = #S := by

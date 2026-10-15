@@ -36,10 +36,10 @@ and `NS_δ[f] ≤ δ I[F]`, at most `δ` times the total influence
 (`BitString.noiseSensitivity_le_mul_totalInfluence`) [O'Donnell, Section 2.4][ODonnell2014].
 
 The noised string is `x + P`, the coordinatewise exclusive or of `x` with a random mask `P` of
-`BooleanAnalysis.bernoulliAverage`, bit strings adding in Mathlib's Boolean ring structure on
+`BitString.bernoulliAverage`, bit strings adding in Mathlib's Boolean ring structure on
 `Bool`. The coordinates of the mask are independent:
 the average of a product of functions of the separate coordinates factorizes
-(`BooleanAnalysis.bernoulliAverage_prod`), so the character of `S` averages to `(1 - 2 p) ^ |S|`
+(`BitString.bernoulliAverage_prod`), so the character of `S` averages to `(1 - 2 p) ^ |S|`
 over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
 
 ## Main definitions
@@ -74,7 +74,7 @@ over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
 
 namespace Cslib.BitString
 
-open Finset BooleanAnalysis
+open Finset
 open scoped BigOperators
 
 variable {n : ℕ}

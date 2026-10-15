@@ -38,21 +38,21 @@ sparse sampling conclusion of Lemma 10 is in `Complexity.Foundations.BooleanAnal
 
 ## Main definitions
 
-* `Cslib.BooleanAnalysis.harmonicMean`: the harmonic mean on a finite type.
-* `Cslib.BooleanAnalysis.harmonicTransform`: Korten's harmonic mean transform.
+* `Cslib.BitString.harmonicMean`: the harmonic mean on a finite type.
+* `Cslib.BitString.harmonicTransform`: Korten's harmonic mean transform.
 
 ## Main results
 
-* `Cslib.BooleanAnalysis.harmonicMean_variational`: the variational formula.
-* `Cslib.BooleanAnalysis.concaveOn_harmonicMean`, `Cslib.BooleanAnalysis.harmonicMean_le_expect`:
+* `Cslib.BitString.harmonicMean_variational`: the variational formula.
+* `Cslib.BitString.concaveOn_harmonicMean`, `Cslib.BitString.harmonicMean_le_expect`:
   the harmonic mean is concave, and at most the arithmetic mean.
-* `Cslib.BooleanAnalysis.concaveOn_harmonicTransform`,
-  `Cslib.BooleanAnalysis.harmonicTransform_antitone`,
-  `Cslib.BooleanAnalysis.harmonicTransform_le_expect`: the transform is concave in the function,
+* `Cslib.BitString.concaveOn_harmonicTransform`,
+  `Cslib.BitString.harmonicTransform_antitone`,
+  `Cslib.BitString.harmonicTransform_le_expect`: the transform is concave in the function,
   antitone in the selected set, and at most the mean.
-* `Cslib.BooleanAnalysis.expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform`: Korten's
+* `Cslib.BitString.expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform`: Korten's
   inequality.
-* `Cslib.BooleanAnalysis.harmonicTransform_good_probability`: the sampling estimate of Lemma 10.
+* `Cslib.BitString.harmonicTransform_good_probability`: the sampling estimate of Lemma 10.
 
 ## References
 
@@ -61,7 +61,7 @@ sparse sampling conclusion of Lemma 10 is in `Complexity.Foundations.BooleanAnal
 
 @[expose] public section
 
-namespace Cslib.BooleanAnalysis
+namespace Cslib.BitString
 
 open scoped BigOperators
 open Finset
@@ -708,4 +708,4 @@ theorem coordinateMarginal_light_fraction_le {f : (ι → Bool) → ℝ}
 
 end
 
-end Cslib.BooleanAnalysis
+end Cslib.BitString

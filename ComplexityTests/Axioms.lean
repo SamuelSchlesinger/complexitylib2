@@ -743,10 +743,10 @@ info: 'Cslib.Communication.strictMajority_communication_lower_bound' depends on 
 #print axioms Cslib.Communication.strictMajority_communication_lower_bound
 
 /--
-info: 'Cslib.BooleanAnalysis.exists_mirror_set' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.BitString.exists_mirror_set' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BooleanAnalysis.exists_mirror_set
+#print axioms Cslib.BitString.exists_mirror_set
 
 /--
 info: 'Cslib.BitString.influence_eq_sum_fourierCoeff_sq' depends on axioms: [propext, Classical.choice, Quot.sound]

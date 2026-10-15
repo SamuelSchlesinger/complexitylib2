@@ -36,13 +36,13 @@ least `1 / 4` to the points of `Y` that are `(q, 194 k)`-limits of `X`, and thes
 
 ## Main definitions
 
-* `Cslib.BooleanAnalysis.IsDensityLimit`: density limits [Korten, Definition 2][Korten2026].
+* `Cslib.BitString.IsDensityLimit`: density limits [Korten, Definition 2][Korten2026].
 
 ## Main results
 
-* `Cslib.BooleanAnalysis.IsDensityLimit.exists_mem_apply_eq`: a density limit of `Y` at a rate
+* `Cslib.BitString.IsDensityLimit.exists_mem_apply_eq`: a density limit of `Y` at a rate
   below `3 / 4` agrees with a point of `Y` at every coordinate.
-* `Cslib.BooleanAnalysis.exists_mirror_set`: the strong mirror-set lemma, with the constants
+* `Cslib.BitString.exists_mirror_set`: the strong mirror-set lemma, with the constants
   `32768` and `194`.
 
 ## References
@@ -52,7 +52,7 @@ least `1 / 4` to the points of `Y` that are `(q, 194 k)`-limits of `X`, and thes
 
 @[expose] public section
 
-namespace Cslib.BooleanAnalysis
+namespace Cslib.BitString
 
 open Finset
 open scoped BigOperators
@@ -551,4 +551,4 @@ theorem exists_mirror_set (X Y : Finset (ι → Bool)) (hX : X.Nonempty)
 
 end
 
-end Cslib.BooleanAnalysis
+end Cslib.BitString

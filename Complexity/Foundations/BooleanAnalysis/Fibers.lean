@@ -43,28 +43,28 @@ light-patterns lemma.
 
 ## Main definitions
 
-* `Cslib.BooleanAnalysis.uniformMass`, `Cslib.BooleanAnalysis.uniformDensity`: the uniform
+* `Cslib.BitString.uniformMass`, `Cslib.BitString.uniformDensity`: the uniform
   distribution on a set, and its density.
-* `Cslib.BooleanAnalysis.uniformDeficit`: the min-entropy deficit of a set.
-* `Cslib.BooleanAnalysis.completePattern`, `Cslib.BooleanAnalysis.resample`: gluing points along
+* `Cslib.BitString.uniformDeficit`: the min-entropy deficit of a set.
+* `Cslib.BitString.completePattern`, `Cslib.BitString.resample`: gluing points along
   a set of coordinates.
-* `Cslib.BooleanAnalysis.coordinateFiber`, `Cslib.BooleanAnalysis.coordinateDensity`: the fiber
+* `Cslib.BitString.coordinateFiber`, `Cslib.BitString.coordinateDensity`: the fiber
   of a set over the coordinates outside `s`, and its density.
-* `Cslib.BooleanAnalysis.projectionAverage`, `Cslib.BooleanAnalysis.coordinateMarginal`: averages
+* `Cslib.BitString.projectionAverage`, `Cslib.BitString.coordinateMarginal`: averages
   over the coordinates outside `s`.
 
 ## Main results
 
-* `Cslib.BooleanAnalysis.expect_uniformDeficit_coordinateFiber`: Korten's entropy lemma.
-* `Cslib.BooleanAnalysis.coordinateFiber_good_probability`: most fibers have small deficit.
-* `Cslib.BooleanAnalysis.exists_uniformDeficit_fiber_le`: pigeonhole for deficits.
-* `Cslib.BooleanAnalysis.coordinateDensity_eq_expect`: the density of a fiber is the probability
+* `Cslib.BitString.expect_uniformDeficit_coordinateFiber`: Korten's entropy lemma.
+* `Cslib.BitString.coordinateFiber_good_probability`: most fibers have small deficit.
+* `Cslib.BitString.exists_uniformDeficit_fiber_le`: pigeonhole for deficits.
+* `Cslib.BitString.coordinateDensity_eq_expect`: the density of a fiber is the probability
   that resampling the coordinates in `s` lands in the set.
-* `Cslib.BooleanAnalysis.projectionAverage_eq_coordinateMarginal`,
-  `Cslib.BooleanAnalysis.expect_projectionAverage`, `Cslib.BooleanAnalysis.expect_resample`: the
+* `Cslib.BitString.projectionAverage_eq_coordinateMarginal`,
+  `Cslib.BitString.expect_projectionAverage`, `Cslib.BitString.expect_resample`: the
   two projections agree, and projecting or resampling preserves the mean.
-* `Cslib.BooleanAnalysis.expect_half_of_flip`,
-  `Cslib.BooleanAnalysis.coordinateDensity_half_of_flip`: a Boolean function that flips with a
+* `Cslib.BitString.expect_half_of_flip`,
+  `Cslib.BitString.coordinateDensity_half_of_flip`: a Boolean function that flips with a
   coordinate is true on half of the cube, and on half of every fiber that frees the coordinate.
 
 ## References
@@ -74,7 +74,7 @@ light-patterns lemma.
 
 @[expose] public section
 
-namespace Cslib.BooleanAnalysis
+namespace Cslib.BitString
 
 open Finset
 open scoped BigOperators
@@ -610,4 +610,4 @@ theorem coordinateDensity_half_of_flip {ι : Type*} [Fintype ι] [DecidableEq ι
   exact expect_half_of_flip (fun y => f (resample P x y)) i
     (fun y => by rw [resample_update_not hi, hf]) b
 
-end Cslib.BooleanAnalysis
+end Cslib.BitString

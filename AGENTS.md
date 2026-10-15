@@ -60,7 +60,12 @@ lake exe checkInitImports
 5. **Reuse upstream first.** Before defining anything, search cslib (`../cslib/Cslib`) and the
    in-flight PRs listed in `UPSTREAM.md`. A thin local copy of an unmerged upstream PR is allowed
    at the same path, marked `-- upstream: submitted #N`, and must be deleted when the PR merges.
-6. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
+6. **Bit strings.** Declarations about bit strings and the cube `ι → Bool` (operations, sampling,
+   Fourier analysis, sensitivity, influence, codes) live in `Cslib.BitString`; only the named
+   Boolean functions `parityOn`, `parity`, `threshold`, `majority`, `strictMajority` sit in `Cslib`
+   beside cslib's `BooleanFunction`. Bit strings add with `+` (Mathlib's `BooleanRing Bool`),
+   single bits with `^^`.
+7. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
    (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …); add new entries in
    cslib's format.
 

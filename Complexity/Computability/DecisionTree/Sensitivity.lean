@@ -19,7 +19,8 @@ import Mathlib.Combinatorics.Enumerative.DoubleCounting
 
 For a function `f` of Boolean variables and an input `x`:
 
-* the *sensitivity* `sensitivityAt f x` is the number of variables whose flip changes `f x`;
+* the *sensitivity* `sensitivityAt f x` is the number of variables whose flip changes `f x`
+  (`BitString.sensitivityAt`, in `Complexity.Foundations.Data.BitString.Flip`);
 * the *block sensitivity* `blockSensitivityAt f x` is the largest number of pairwise disjoint
   blocks of variables each of whose flip changes `f x`;
 * the *certificate complexity* `certificateComplexityAt f x` is the least size of a set of
@@ -32,7 +33,6 @@ certificate, so all three are at most the decision tree complexity
 
 ## Main definitions
 
-* `Cslib.DecisionTree.sensitivityAt`, `Cslib.DecisionTree.sensitivity`.
 * `Cslib.DecisionTree.blockSensitivityAt`, `Cslib.DecisionTree.blockSensitivity`.
 * `Cslib.DecisionTree.IsCertificate`, `Cslib.DecisionTree.certificateComplexityAt`,
   `Cslib.DecisionTree.certificateComplexity`.
@@ -53,7 +53,7 @@ certificate, so all three are at most the decision tree complexity
 
 namespace Cslib.DecisionTree
 
-open Finset
+open Finset BitString
 
 variable {ι β : Type*}
 
@@ -97,18 +97,6 @@ end Certificate
 variable [DecidableEq ι]
 
 variable [Fintype ι] [DecidableEq β]
-
-/-- The number of variables whose flip changes `f x`. -/
-def sensitivityAt (f : (ι → Bool) → β) (x : ι → Bool) : ℕ :=
-  #{i | f (Function.update x i !x i) ≠ f x}
-
-/-- The sensitivity of `f`: its largest sensitivity at an input. -/
-def sensitivity (f : (ι → Bool) → β) : ℕ :=
-  univ.sup (sensitivityAt f)
-
-theorem sensitivityAt_le_sensitivity (f : (ι → Bool) → β) (x : ι → Bool) :
-    sensitivityAt f x ≤ sensitivity f :=
-  le_sup (mem_univ x)
 
 /-- The families of pairwise disjoint blocks each of whose flip changes `f x`. -/
 def sensitiveFamilies (f : (ι → Bool) → β) (x : ι → Bool) : Finset (Finset (Finset ι)) :=

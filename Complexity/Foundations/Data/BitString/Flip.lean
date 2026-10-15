@@ -8,6 +8,7 @@ module
 -- upstream: candidate (addition to `Cslib/Foundations/Data/BitString.lean`)
 
 public import Cslib.Foundations.Data.BitString
+public import Mathlib.Data.Finset.Lattice.Fold
 public import Mathlib.Data.Finset.Piecewise
 public import Mathlib.Data.Fintype.Pi
 
@@ -19,6 +20,12 @@ one bit is `Function.update x i (!x i)` (`BitString.flipOn_singleton`), and flip
 same positions changes nothing (`BitString.flipOn_flipOn`). Flips are the moves of sensitivity and
 block sensitivity, and they span the subcubes of the Boolean cube.
 
+The *sensitivity* of a function `f` of Boolean variables at an input `x` is the number of
+variables whose flip changes `f x` (`BitString.sensitivityAt`), and the sensitivity of `f` is its
+largest sensitivity at an input (`BitString.sensitivity`) [Nisan1991]. Block sensitivity and
+certificate complexity, which bound it from above, are in
+`Complexity.Computability.DecisionTree.Sensitivity`.
+
 An input `x` of a Boolean function `g` is *isolated* when flipping any one of its bits changes the
 value of `g` (`BitString.isolatedInputs`). A formula in disjunctive normal form needs a term for
 each isolated true input, and parity has only isolated inputs.
@@ -27,16 +34,24 @@ each isolated true input, and parity has only isolated inputs.
 
 * `Cslib.BitString.flipOn`: flip the bits at a set of positions.
 * `Cslib.BitString.isolatedInputs`: the isolated inputs of a Boolean function with a given value.
+* `Cslib.BitString.sensitivityAt`, `Cslib.BitString.sensitivity`: the sensitivity of a function
+  of Boolean variables at an input, and its largest value.
 
 ## Main results
 
 * `Cslib.BitString.flipOn_singleton`: flipping one bit.
 * `Cslib.BitString.flipOn_flipOn`, `Cslib.BitString.flipOn_involutive`: flipping is an involution.
+
+## References
+
+* [N. Nisan, *CREW PRAMs and decision trees*][Nisan1991]
 -/
 
 @[expose] public section
 
 namespace Cslib.BitString
+
+open Finset
 
 variable {ι : Type*} [DecidableEq ι] {T U : Finset ι} {x : ι → Bool} {i : ι}
 
@@ -100,5 +115,23 @@ theorem isolatedInputs_not (g : (ι → Bool) → Bool) (b : Bool) :
   cases b <;> simp
 
 end Isolated
+
+section Sensitivity
+
+variable [Fintype ι] {β : Type*} [DecidableEq β]
+
+/-- The sensitivity of `f` at `x`: the number of variables whose flip changes `f x`. -/
+def sensitivityAt (f : (ι → Bool) → β) (x : ι → Bool) : ℕ :=
+  #{i | f (Function.update x i !x i) ≠ f x}
+
+/-- The sensitivity of `f`: its largest sensitivity at an input. -/
+def sensitivity (f : (ι → Bool) → β) : ℕ :=
+  univ.sup (sensitivityAt f)
+
+theorem sensitivityAt_le_sensitivity (f : (ι → Bool) → β) (x : ι → Bool) :
+    sensitivityAt f x ≤ sensitivity f :=
+  le_sup (mem_univ x)
+
+end Sensitivity
 
 end Cslib.BitString

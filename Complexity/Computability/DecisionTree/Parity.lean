@@ -37,7 +37,7 @@ tree complexity therefore all equal the number of bits [Jukna, Chapter 14][Jukna
 
 namespace Cslib.DecisionTree
 
-open Finset
+open Finset BitString
 
 variable {n : ℕ}
 
