@@ -1092,4 +1092,58 @@ info: 'Cslib.Circuits.Boolean.complexity_le_of_dependsOn' depends on axioms: [pr
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.complexity_le_of_dependsOn
 
+/--
+info: 'Cslib.Circuits.Boolean.dist_complexity_le_of_cover' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.dist_complexity_le_of_cover
+
+/--
+info: 'Cslib.Circuits.Boolean.complexityGiven_le_of_cover' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.complexityGiven_le_of_cover
+
+/--
+info: 'Cslib.Circuits.Boolean.SparseSynthesis.complexity_indicator_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.SparseSynthesis.complexity_indicator_le
+
+/--
+info: 'Cslib.Circuits.Boolean.SparseSynthesis.complexityOn_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.SparseSynthesis.complexityOn_le
+
+/--
+info: 'Cslib.Circuits.Boolean.SparseSynthesis.dist_complexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.SparseSynthesis.dist_complexity_le
+
+/--
+info: 'Cslib.Circuits.Boolean.SparseSynthesis.dist_complexity_single_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.SparseSynthesis.dist_complexity_single_le
+
+/--
+info: 'Cslib.Circuits.Boolean.SparseSynthesis.exists_hard_indicator' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.SparseSynthesis.exists_hard_indicator
+
+/--
+info: 'Cslib.Circuits.Boolean.SparseSynthesis.not_isLittleO_of_dist_complexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.SparseSynthesis.not_isLittleO_of_dist_complexity_le
+
+/--
+info: 'Cslib.Circuits.Boolean.SparseSynthesis.le_vcDim_circuitSets' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.SparseSynthesis.le_vcDim_circuitSets
+
 end ComplexityTests.Axioms

@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.BarringtonClass
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
+public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
 public import Complexity.Computability.Circuit.Boolean.FanInTwo
@@ -44,6 +45,8 @@ public import Complexity.Computability.Circuit.Boolean.Smolensky
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Approximation
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
+public import Complexity.Computability.Circuit.Boolean.SparseSynthesis
+public import Complexity.Computability.Circuit.Boolean.SparseSynthesisConstruction
 public import Complexity.Computability.Circuit.Boolean.Spira
 public import Complexity.Computability.Circuit.Boolean.Substitution
 public import Complexity.Computability.Circuit.Boolean.Synthesis
