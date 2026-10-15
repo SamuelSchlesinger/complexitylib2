@@ -34,6 +34,7 @@ says that this preserves satisfiability.
 * `Cslib.Logic.PL.CNF.eval`, `Cslib.Logic.PL.CNF.Satisfiable`.
 * `Cslib.Logic.PL.CNF.vars`: the variables of a formula, in order of occurrence.
 * `Cslib.Logic.PL.CNF.relabel`: rename the variables of a formula.
+* `Cslib.Logic.PL.CNF.countUnsat`: the number of clauses an assignment falsifies.
 * `Cslib.Logic.PL.Clause.imp`, `Cslib.Logic.PL.Clause.impLits`: the clause `h₁ ∧ ⋯ ∧ hₙ → c`, for
   variables or literals `hᵢ`.
 
@@ -205,5 +206,18 @@ theorem CNF.satisfiable_relabel {f : V → W} (hf : Function.Injective f) (φ : 
     classical
     refine ⟨Function.extend f σ (fun _ => false), ?_⟩
     rwa [CNF.eval_relabel, Function.extend_comp hf]
+
+/-- The number of clauses of `φ`, counted with multiplicity, that the assignment `σ` falsifies. -/
+def CNF.countUnsat (σ : V → Bool) (φ : CNF V) : ℕ :=
+  φ.countP fun c ↦ !c.eval σ
+
+/-- An assignment falsifies no clause exactly when it satisfies the formula. -/
+theorem CNF.countUnsat_eq_zero_iff {σ : V → Bool} {φ : CNF V} :
+    φ.countUnsat σ = 0 ↔ φ.eval σ = true := by
+  simp [countUnsat, List.countP_eq_zero, CNF.eval_eq_true_iff]
+
+/-- An assignment falsifies at most all the clauses. -/
+theorem CNF.countUnsat_le_length (σ : V → Bool) (φ : CNF V) : φ.countUnsat σ ≤ φ.length :=
+  List.countP_le_length
 
 end Cslib.Logic.PL

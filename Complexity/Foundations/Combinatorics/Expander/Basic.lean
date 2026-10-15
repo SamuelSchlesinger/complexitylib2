@@ -98,6 +98,18 @@ def neighbor (v : V) (i : D) : V :=
 theorem neighbor_def (v : V) (i : D) : G.neighbor v i = (G.rot (v, i)).1 :=
   rfl
 
+/-- The `1`-regular multigraph of an involution `f`: the single edge at `v` leads to `f v`. A fixed
+point of `f` carries a self-loop. -/
+def ofInvolutive (f : V → V) (hf : Function.Involutive f) : RotationMap V Unit where
+  rot p := (f p.1, p.2)
+  rot_involutive p := Prod.ext (hf p.1) rfl
+
+/-- The neighbor of `v` in the multigraph of an involution `f` is `f v`. -/
+@[simp]
+theorem neighbor_ofInvolutive (f : V → V) (hf : Function.Involutive f) (v : V) (i : Unit) :
+    (ofInvolutive f hf).neighbor v i = f v :=
+  rfl
+
 /-- `v` is the neighbor of its `i`-th neighbor along the same edge. -/
 @[simp]
 theorem neighbor_neighbor_rot (v : V) (i : D) :

@@ -70,39 +70,6 @@ every `H v` is at most `μ` (`le_unsatVal_degreeReduce`).
 
 open Finset
 
-namespace Cslib.RotationMap
-
-variable {V D α : Type*}
-
-/-- The `1`-regular multigraph of an involution `f`: the single edge at `v` leads to `f v`. A fixed
-point of `f` carries a self-loop. -/
-def ofInvolutive (f : V → V) (hf : Function.Involutive f) : RotationMap V Unit where
-  rot p := (f p.1, p.2)
-  rot_involutive p := Prod.ext (hf p.1) rfl
-
-/-- The neighbor of `v` in the multigraph of an involution `f` is `f v`. -/
-@[simp]
-theorem neighbor_ofInvolutive (f : V → V) (hf : Function.Involutive f) (v : V) (i : Unit) :
-    (ofInvolutive f hf).neighbor v i = f v :=
-  rfl
-
-/-- **Disagreement across an expander**: for a labelling `f` of the vertices of a `d`-regular
-multigraph on `n` vertices and a label `c`, at least `(1 - λ(G)) d |{f ≠ c}| |{f = c}| / n` darts
-join two differently labelled vertices, since every dart from `{f ≠ c}` to `{f = c}` does. -/
-theorem le_card_filter_ne_neighbor [Fintype V] [Fintype D] [DecidableEq α] (G : RotationMap V D)
-    (f : V → α) (c : α) :
-    (1 - G.spectralExpansion) * Fintype.card D * #{v | f v ≠ c} * #{v | f v = c} /
-        Fintype.card V ≤ #{p : V × D | f p.1 ≠ f (G.neighbor p.1 p.2)} := by
-  classical
-  have h := G.le_card_interedges_compl {v | f v ≠ c}
-  simp only [compl_filter, ne_eq, not_not] at h
-  refine h.trans (Nat.cast_le.2 (card_le_card fun p hp ↦ ?_))
-  simp only [mem_interedges, mem_filter, mem_univ, true_and] at hp ⊢
-  rw [hp.2]
-  exact hp.1
-
-end Cslib.RotationMap
-
 namespace Cslib.PCP
 
 namespace ConstraintGraph

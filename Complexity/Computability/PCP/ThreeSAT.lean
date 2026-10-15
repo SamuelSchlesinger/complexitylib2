@@ -71,10 +71,6 @@ namespace Cslib.Logic.PL
 
 variable {V : Type*}
 
-/-- The number of clauses of `φ`, counted with multiplicity, that the assignment `σ` falsifies. -/
-def CNF.countUnsat (σ : V → Bool) (φ : CNF V) : ℕ :=
-  φ.countP fun c ↦ !c.eval σ
-
 /-- The number of falsified clauses, counted by their positions in the formula. -/
 theorem CNF.countUnsat_eq_card (σ : V → Bool) (φ : CNF V) :
     φ.countUnsat σ = #{j : Fin φ.length | φ[j].eval σ = false} := by
@@ -89,15 +85,6 @@ theorem CNF.countUnsat_eq_card (σ : V → Bool) (φ : CNF V) :
         List.getElem_cons_succ]
       congr
   simp [countUnsat, key]
-
-/-- An assignment falsifies no clause exactly when it satisfies the formula. -/
-theorem CNF.countUnsat_eq_zero_iff {σ : V → Bool} {φ : CNF V} :
-    φ.countUnsat σ = 0 ↔ φ.eval σ = true := by
-  simp [countUnsat, List.countP_eq_zero, CNF.eval_eq_true_iff]
-
-/-- An assignment falsifies at most all the clauses. -/
-theorem CNF.countUnsat_le_length (σ : V → Bool) (φ : CNF V) : φ.countUnsat σ ≤ φ.length :=
-  List.countP_le_length
 
 end Cslib.Logic.PL
 
