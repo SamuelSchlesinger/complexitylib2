@@ -204,7 +204,12 @@ conjunctions and disjunctions of any arity that computes the parity of `n` bits 
 `2 ^ Ω(n ^ (1 / (d + 1)))` at fixed depth. The proof restricts `d` times; after stage `j` every
 operation node of depth at most `j` computes a function of decision tree complexity below `s`, an
 operation node one level up is then a narrow DNF up to negation, and the switching lemma with a
-union bound over the nodes gives the next stage. Open: circuits instead of formulas.
+union bound over the nodes gives the next stage. The stage lemma is stated for any family of
+operations applied to shallow functions, so the same argument runs over the gates of a cslib
+circuit sorted by depth (`Circuit/Boolean/AC0.lean`): a depth-`d` circuit for parity has at least
+`2 ^ s` gates under the same condition, and **parity is not in AC⁰**
+(`Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0`), with AC⁰ defined over cslib circuits of
+polynomially bounded size and constant depth.
 
 Independent cslib-style reviews of the gate-elimination and Khrapchenko modules were addressed:
 a wrong Jukna citation was corrected (Section 1.6 for Schnorr, Section 6.8 for Khrapchenko, plus

@@ -400,4 +400,22 @@ info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity' depe
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity
 
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.Circuit.two_pow_le_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.Circuit.two_pow_le_size_of_computes_parity
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0
+
+/--
+info: 'Cslib.PolynomiallyBounded.eventually_lt_two_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PolynomiallyBounded.eventually_lt_two_pow
+
 end ComplexityTests.Axioms

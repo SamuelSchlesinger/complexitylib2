@@ -2,6 +2,7 @@ module  -- shake: keep-all --deprecated_module: ignore
 
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.Circuit.Approximation
+public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
@@ -25,6 +26,7 @@ public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
+public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.Circuit.Monotone.Basic
@@ -86,6 +88,7 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
+public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Init
 public import Complexity.Logics.Propositional.CNF
