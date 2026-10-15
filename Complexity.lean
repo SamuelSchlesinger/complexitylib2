@@ -187,6 +187,8 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
 public import Complexity.Init
+public import Complexity.Logics.FirstOrder.Interpretation
+public import Complexity.Logics.FirstOrder.Reduction
 public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
@@ -203,6 +205,9 @@ public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.Parity.DepthThree
 public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.SigmaThree
+public import Complexity.Logics.SecondOrder.Coloring
+public import Complexity.Logics.SecondOrder.Existential
+public import Complexity.Logics.SecondOrder.Reduction
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.PMF

@@ -1448,4 +1448,70 @@ info: 'Cslib.Kolmogorov.DescriptionMethod.depthBetween_add_depth' depends on axi
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Kolmogorov.DescriptionMethod.depthBetween_add_depth
 
+/--
+info: 'Cslib.Logic.FO.Interpretation.realize_onSentence' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Interpretation.realize_onSentence
+
+/--
+info: 'Cslib.Logic.FO.Interpretation.compEquiv' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Interpretation.compEquiv
+
+/--
+info: 'Cslib.Logic.FO.Interpretation.realize_onESOSentence' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Interpretation.realize_onESOSentence
+
+/--
+info: 'Cslib.Logic.FO.Definable.of_reduces' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Definable.of_reduces
+
+/--
+info: 'Cslib.Logic.FO.Reduces.trans' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Reduces.trans
+
+/--
+info: 'Cslib.Logic.FO.Definable.simpleGraph' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Definable.simpleGraph
+
+/--
+info: 'Cslib.Logic.ESO.Sentence.realize_iff_of_equiv' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Sentence.realize_iff_of_equiv
+
+/--
+info: 'Cslib.Logic.ESO.Sentence.realize_colorable_structure_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Sentence.realize_colorable_structure_iff
+
+/--
+info: 'Cslib.Logic.ESO.Definable.of_fo' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Definable.of_fo
+
+/--
+info: 'Cslib.Logic.ESO.Definable.of_reduces' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Definable.of_reduces
+
+/--
+info: 'Cslib.Logic.ESO.Definable.colorable_simpleGraph' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Definable.colorable_simpleGraph
+
 end ComplexityTests.Axioms

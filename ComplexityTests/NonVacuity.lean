@@ -19,6 +19,7 @@ import Complexity.Probability.ApproximateCounting.Relative
 import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Foundations.Combinatorics.Expander.Family
 import Complexity.Computability.Kolmogorov.MultiTape
+import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -227,5 +228,21 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : Turing.MultiTape
   simpa [timeBoundedComplexity_literal le_rfl] using S.timeBoundedComplexity_le x.length x
 
 end Kolmogorov
+
+section SecondOrder
+
+open FirstOrder Language Cslib.Logic
+
+/-- The triangle satisfies the three-colorability sentence but not the two-colorability one. -/
+example :
+    (letI := (⊤ : SimpleGraph (Fin 3)).structure; (ESO.Sentence.colorable 3).Realize (Fin 3)) ∧
+      ¬ (letI := (⊤ : SimpleGraph (Fin 3)).structure;
+        (ESO.Sentence.colorable 2).Realize (Fin 3)) := by
+  rw [ESO.Sentence.realize_colorable_structure_iff, ESO.Sentence.realize_colorable_structure_iff]
+  refine ⟨⟨(⊤ : SimpleGraph (Fin 3)).selfColoring⟩, fun h => ?_⟩
+  have := h.card_le_of_pairwise_adj id fun i j hij => (SimpleGraph.top_adj i j).2 hij
+  simp at this
+
+end SecondOrder
 
 end ComplexityTests.NonVacuity
