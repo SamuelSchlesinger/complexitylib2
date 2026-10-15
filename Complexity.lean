@@ -27,6 +27,7 @@ public import Complexity.Computability.Circuit.Boolean.Smolensky
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Approximation
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
+public import Complexity.Computability.Circuit.Boolean.Spira
 public import Complexity.Computability.Circuit.Boolean.Substitution
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Boolean.TC0
