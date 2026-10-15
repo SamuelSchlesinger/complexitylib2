@@ -1809,4 +1809,70 @@ info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.timeBoundedCompl
 open Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder in
 #print axioms timeBoundedComplexity_le_of_random
 
+/--
+info: 'Cslib.PCP.HadamardTester.exists_inputDist_div_le_one_sub_acceptProb' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.HadamardTester.exists_inputDist_div_le_one_sub_acceptProb
+
+/--
+info: 'Cslib.PCP.HadamardTester.one_div_le_one_sub_acceptProb_of_forall_not' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.HadamardTester.one_div_le_one_sub_acceptProb_of_forall_not
+
+/--
+info: 'Cslib.PCP.HadamardTester.passes_honestProof' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.HadamardTester.passes_honestProof
+
+/--
+info: 'Cslib.PCP.HadamardTester.exists_inputDist_div_le_unsatFrac' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.HadamardTester.exists_inputDist_div_le_unsatFrac
+
+/--
+info: 'Cslib.PCP.HadamardTester.forall_hadamardCode_tensor_equationCoeff_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.HadamardTester.forall_hadamardCode_tensor_equationCoeff_iff
+
+/--
+info: 'Cslib.BitString.eq_of_hammingDist_longCode_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.eq_of_hammingDist_longCode_lt
+
+/--
+info: 'Cslib.PCP.LocalTest.one_sub_acceptProb_le_card_mul_unsatFrac' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.LocalTest.one_sub_acceptProb_le_card_mul_unsatFrac
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_compose' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_compose
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.unsatVal_compose_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.unsatVal_compose_le
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.satisfiable_compose_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.satisfiable_compose_iff
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.card_edges_compose' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.card_edges_compose
+
 end ComplexityTests.Axioms

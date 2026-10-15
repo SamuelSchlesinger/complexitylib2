@@ -26,6 +26,7 @@ import Complexity.Computability.Circuit.Frontier.Network
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.Preprocess
 import Complexity.Computability.PCP.ThreeSAT
+import Complexity.Computability.PCP.Composition
 import Complexity.Foundations.Relation.InductiveCounting
 import Mathlib.Tactic.FinCases
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
@@ -343,5 +344,24 @@ example {ℓ n a m L K : ℕ} (D : Design ℓ n a m) (C : ListCode (List Bool) (
   mem_run_program _ k := DescriptionMethod.mem_literal_run.mpr ⟨hC _ k, rfl⟩
 
 end KolmogorovNW
+
+section Composition
+
+open Cslib.PCP
+
+/-- Composition keeps an unsatisfiable constraint graph unsatisfiable by a constant margin: the
+graph asking two equal labels to differ composes to a graph of positive value. -/
+example : 0 < (⟨fun _ ↦ (), fun _ ↦ (), fun _ (a b : Bool) ↦ a ≠ b⟩ :
+    ConstraintGraph Unit Unit Bool).compose.unsatVal := by
+  set G : ConstraintGraph Unit Unit Bool := ⟨fun _ ↦ (), fun _ ↦ (), fun _ a b ↦ a ≠ b⟩
+  have h := G.le_unsatVal_compose
+  have hG : 0 < G.unsatVal := G.unsatVal_pos_iff.2 fun ⟨σ, hσ⟩ ↦ hσ () rfl
+  linarith
+
+/-- The honest proof passes the Hadamard assignment tester with probability one. -/
+example : (hadamardTester (k := 2) (· = ·)).acceptProb (HadamardTester.honestProof ![0, 0]) = 1 :=
+  HadamardTester.acceptProb_honestProof rfl
+
+end Composition
 
 end ComplexityTests.NonVacuity
