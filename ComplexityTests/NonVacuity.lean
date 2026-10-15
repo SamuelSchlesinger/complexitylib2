@@ -238,6 +238,11 @@ example : ∃ G : Cslib.RotationMap (Fin 5) (Fin 120), G.spectralExpansion < 1 :
   ⟨Cslib.RotationMap.expander (Fin 5),
     (Cslib.RotationMap.spectralExpansion_expander_le _).trans_lt (by norm_num)⟩
 
+/-- A family of expanders with a spectral bound below one exists, so the hypotheses of
+preprocessing with a family can be met. -/
+example : ∃ μ < 1, Nonempty (Cslib.RotationMap.ExpanderFamily.{0} (Fin 120) μ) :=
+  ⟨_, by norm_num, ⟨Cslib.RotationMap.expanderFamily⟩⟩
+
 section Kolmogorov
 
 open Cslib.Kolmogorov Cslib.Kolmogorov.DescriptionMethod

@@ -1623,6 +1623,24 @@ info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_degreeReduce' depends on axioms: [p
 #print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_degreeReduce
 
 /--
+info: 'Cslib.RotationMap.mul_card_filter_ne_le_card_filter_ne_neighbor' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.mul_card_filter_ne_le_card_filter_ne_neighbor
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.unsatVal_reindex' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.unsatVal_reindex
+
+/--
+info: 'Cslib.PCP.RegularConstraintGraph.unsatVal_addTrivial' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.unsatVal_addTrivial
+
+/--
 info: 'Cslib.PCP.ConstraintGraph.spectralExpansion_preprocess_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
