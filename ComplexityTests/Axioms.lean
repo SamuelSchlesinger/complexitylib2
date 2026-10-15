@@ -305,6 +305,12 @@ info: 'Cslib.Circuits.Boolean.exists_monoidProgram_computes_of_formulaDepth' dep
 #print axioms Cslib.Circuits.Boolean.exists_monoidProgram_computes_of_formulaDepth
 
 /--
+info: 'Cslib.Circuits.Boolean.exists_monoidProgram_alternatingGroup_computes_of_mem_NC_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.exists_monoidProgram_alternatingGroup_computes_of_mem_NC_one
+
+/--
 info: 'Cslib.BranchingPrograms.MonoidProgram.Computes.exists_formula' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

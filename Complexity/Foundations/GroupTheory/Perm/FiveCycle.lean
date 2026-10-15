@@ -10,6 +10,7 @@ module
 public import Cslib.Init
 public import Mathlib.GroupTheory.Perm.Cycle.Type
 public import Mathlib.GroupTheory.SpecificGroups.Alternating
+public import Mathlib.Algebra.Group.Commutator
 import Mathlib.GroupTheory.Perm.Cycle.Concrete
 import Mathlib.Tactic.Group
 
@@ -20,7 +21,7 @@ A five-cycle is a permutation of cycle type `{5}` (`Equiv.Perm.IsFiveCycle`), de
 Mathlib's `Equiv.Perm.IsThreeCycle`. Five-cycles are even (`Equiv.Perm.IsFiveCycle.sign`), all
 five-cycles are conjugate (`Equiv.Perm.IsFiveCycle.isConj`), and in `Fin 5` every five-cycle is a
 commutator of two five-cycles (`Equiv.Perm.IsFiveCycle.exists_commutator`), the fact behind
-Barrington's theorem.
+Barrington's theorem [Barrington1989].
 
 ## Main definitions
 
@@ -31,11 +32,18 @@ Barrington's theorem.
 * `Equiv.Perm.IsFiveCycle.mem_alternatingGroup`: five-cycles are even.
 * `Equiv.Perm.IsFiveCycle.exists_commutator`: every five-cycle of `Fin 5` is the commutator of two
   five-cycles.
+
+## References
+
+* [D. A. Barrington, *Bounded-width polynomial-size branching programs recognize exactly those
+  languages in NC¹*][Barrington1989]
 -/
 
 @[expose] public section
 
 namespace Equiv.Perm
+
+open scoped commutatorElement
 
 variable {α : Type*} [DecidableEq α] [Fintype α]
 
@@ -84,18 +92,17 @@ theorem isFiveCycle_formPerm {l : List α} (hl : l.Nodup) (hlen : l.length = 5) 
     List.support_formPerm_of_nodup l hl fun x h => by simp [h] at hlen,
     List.toFinset_card_of_nodup hl, hlen]
 
-/-- Every five-cycle of `Fin 5` is the commutator of two five-cycles. -/
+/-- Every five-cycle of `Fin 5` is the commutator of two five-cycles [Barrington1989]. -/
 theorem IsFiveCycle.exists_commutator {σ : Perm (Fin 5)} (hσ : IsFiveCycle σ) :
-    ∃ α β, IsFiveCycle α ∧ IsFiveCycle β ∧ α * β * α⁻¹ * β⁻¹ = σ := by
+    ∃ τ₁ τ₂ : Perm (Fin 5), IsFiveCycle τ₁ ∧ IsFiveCycle τ₂ ∧ ⁅τ₁, τ₂⁆ = σ := by
   -- `(0 1 2 3 4)` and `(0 2 4 3 1)` have the commutator `(0 3 2 4 1)`.
-  have hα := isFiveCycle_formPerm (l := ([0, 1, 2, 3, 4] : List (Fin 5))) (by decide) rfl
-  have hβ := isFiveCycle_formPerm (l := ([0, 2, 4, 3, 1] : List (Fin 5))) (by decide) rfl
-  have hγ := isFiveCycle_formPerm (l := ([0, 3, 2, 4, 1] : List (Fin 5))) (by decide) rfl
-  have hcomm : List.formPerm [0, 1, 2, 3, 4] * List.formPerm [0, 2, 4, 3, 1] *
-      (List.formPerm [0, 1, 2, 3, 4])⁻¹ * (List.formPerm [0, 2, 4, 3, 1])⁻¹ =
-        (List.formPerm [0, 3, 2, 4, 1] : Perm (Fin 5)) := by
+  have h₁ := isFiveCycle_formPerm (l := ([0, 1, 2, 3, 4] : List (Fin 5))) (by decide) rfl
+  have h₂ := isFiveCycle_formPerm (l := ([0, 2, 4, 3, 1] : List (Fin 5))) (by decide) rfl
+  have h₃ := isFiveCycle_formPerm (l := ([0, 3, 2, 4, 1] : List (Fin 5))) (by decide) rfl
+  have hcomm : ⁅List.formPerm ([0, 1, 2, 3, 4] : List (Fin 5)),
+      List.formPerm ([0, 2, 4, 3, 1] : List (Fin 5))⁆ = List.formPerm [0, 3, 2, 4, 1] := by
     decide
-  obtain ⟨ρ, rfl⟩ := isConj_iff.1 (hγ.isConj hσ)
-  exact ⟨_, _, hα.conj ρ, hβ.conj ρ, by rw [← hcomm]; group⟩
+  obtain ⟨ρ, rfl⟩ := isConj_iff.1 (h₃.isConj hσ)
+  exact ⟨_, _, h₁.conj ρ, h₂.conj ρ, by rw [← hcomm]; group⟩
 
 end Equiv.Perm

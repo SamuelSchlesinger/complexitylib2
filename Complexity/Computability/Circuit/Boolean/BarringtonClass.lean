@@ -29,8 +29,10 @@ negation normal form of depth at most `d + 1` (`Formula.nnf`), which is a circui
 **Barrington's theorem** [Barrington1989], [Jukna, Section 15.4][Jukna2012]: NC¹ is the class of
 languages decided by permutation branching programs of width `5` and polynomial length
 (`Boolean.NC_one_eq_polyLength_perm_five`). A formula of depth `O(log n)` becomes a program of
-length `4 ^ O(log n)`, a polynomial, that `σ`-computes it for any `5`-cycle `σ`
-(`Boolean.exists_monoidProgram_computes_of_mem_NC_one`). Conversely, a program over a finite
+length `4 ^ O(log n)`, a polynomial (`Boolean.exists_four_pow_formulaDepth_le_of_mem_NC_one`), that
+`σ`-computes it for any `5`-cycle `σ`
+(`Boolean.exists_monoidProgram_alternatingGroup_computes_of_mem_NC_one`,
+`Boolean.exists_monoidProgram_computes_of_mem_NC_one`). Conversely, a program over a finite
 monoid `M` is a branching program of width `|M|`, through the action of `M` on itself by left
 multiplication, and so a formula of depth logarithmic in its length [BarringtonTherien1988]: the
 languages of polynomial-length programs over a finite monoid are in NC¹
@@ -47,8 +49,9 @@ nonuniform.
 ## Main results
 
 * `Cslib.Circuits.Boolean.mem_NC_one_iff_formulaDepth_le`: NC¹ is logarithmic formula depth.
-* `Cslib.Circuits.Boolean.exists_monoidProgram_computes_of_mem_NC_one`: Barrington's theorem for
-  the languages of NC¹.
+* `Cslib.Circuits.Boolean.exists_monoidProgram_alternatingGroup_computes_of_mem_NC_one`,
+  `Cslib.Circuits.Boolean.exists_monoidProgram_computes_of_mem_NC_one`: Barrington's theorem for
+  the languages of NC¹, over `A₅` and over `S₅`.
 * `Cslib.Circuits.Boolean.NC_one_subset_polyLength_alternatingGroup`,
   `Cslib.Circuits.Boolean.NC_one_subset_polyLength`,
   `Cslib.Circuits.Boolean.polyLength_subset_NC_one`: the inclusions.
@@ -108,6 +111,29 @@ theorem mem_NC_one_iff_formulaDepth_le :
 
 /-! ### Barrington's theorem -/
 
+/-- On a language in NC¹, `4` to the power of the formula depth is polynomially bounded. -/
+theorem exists_four_pow_formulaDepth_le_of_mem_NC_one (hL : L ∈ NC 1) :
+    ∃ s : ℕ → ℕ, PolynomiallyBounded s ∧ ∀ n, 4 ^ formulaDepth (L.slice n) ≤ s n := by
+  obtain ⟨c, hc⟩ := mem_NC_one_iff_formulaDepth_le.1 hL
+  refine ⟨fun n => 2 ^ (2 * c * (Nat.log 2 n + 1)), polynomiallyBounded_two_pow_mul_log _,
+    fun n => ?_⟩
+  calc 4 ^ formulaDepth (L.slice n) ≤ 4 ^ (c * (Nat.log 2 n + 1)) :=
+        Nat.pow_le_pow_right (by decide) (hc n)
+    _ = 2 ^ (2 * c * (Nat.log 2 n + 1)) := by rw [mul_assoc, pow_mul 2 2]; rfl
+
+/-- **Barrington's theorem for NC¹ over `A₅`.** For a language in NC¹ there is a polynomially
+bounded `s` such that, at every length `n ≠ 0` and for every `5`-cycle `σ`, a program over the
+alternating group `A₅` of length at most `s n` `σ`-computes the slice of the language at `n`. -/
+theorem exists_monoidProgram_alternatingGroup_computes_of_mem_NC_one (hL : L ∈ NC 1) :
+    ∃ s : ℕ → ℕ, PolynomiallyBounded s ∧ ∀ (n : ℕ) [NeZero n] (σ : alternatingGroup (Fin 5)),
+      IsFiveCycle (σ : Perm (Fin 5)) → ∃ P : MonoidProgram (Fin n) Bool (alternatingGroup (Fin 5)),
+        P.length ≤ s n ∧ P.Computes σ (L.slice n) := by
+  obtain ⟨s, hs, hle⟩ := exists_four_pow_formulaDepth_le_of_mem_NC_one hL
+  refine ⟨s, hs, fun n _ σ hσ => ?_⟩
+  obtain ⟨P, hlen, hP⟩ :=
+    exists_monoidProgram_alternatingGroup_computes_of_formulaDepth (L.slice n) hσ
+  exact ⟨P, hlen.trans (hle n), hP⟩
+
 /-- **Barrington's theorem for NC¹.** For a language in NC¹ there is a polynomially bounded `s`
 such that, at every length `n ≠ 0` and for every `5`-cycle `σ`, a permutation branching program
 of width `5` and length at most `s n` `σ`-computes the slice of the language at `n`. -/
@@ -115,32 +141,24 @@ theorem exists_monoidProgram_computes_of_mem_NC_one (hL : L ∈ NC 1) :
     ∃ s : ℕ → ℕ, PolynomiallyBounded s ∧ ∀ (n : ℕ) [NeZero n] (σ : Perm (Fin 5)), IsFiveCycle σ →
       ∃ P : MonoidProgram (Fin n) Bool (Perm (Fin 5)),
         P.length ≤ s n ∧ P.Computes σ (L.slice n) := by
-  obtain ⟨c, hc⟩ := mem_NC_one_iff_formulaDepth_le.1 hL
-  refine ⟨fun n => 2 ^ (2 * c * (Nat.log 2 n + 1)), polynomiallyBounded_two_pow_mul_log _,
-    fun n _ σ hσ => ?_⟩
-  obtain ⟨P, hlen, hP⟩ := exists_monoidProgram_computes_of_formulaDepth (L.slice n) hσ
-  refine ⟨P, hlen.trans ?_, hP⟩
-  calc 4 ^ formulaDepth (L.slice n) ≤ 4 ^ (c * (Nat.log 2 n + 1)) :=
-        Nat.pow_le_pow_right (by decide) (hc n)
-    _ = 2 ^ (2 * c * (Nat.log 2 n + 1)) := by rw [mul_assoc, pow_mul 2 2]; rfl
+  obtain ⟨s, hs, h⟩ := exists_monoidProgram_alternatingGroup_computes_of_mem_NC_one hL
+  refine ⟨s, hs, fun n _ σ hσ => ?_⟩
+  obtain ⟨P, hlen, hP⟩ := h n ⟨σ, hσ.mem_alternatingGroup⟩ hσ
+  exact ⟨P.map (alternatingGroup (Fin 5)).subtype, (MonoidProgram.length_map _ P).trans_le hlen,
+    hP.map _⟩
 
 /-- **NC¹ is decided by polynomial-length programs over the alternating group `A₅`.** -/
 theorem NC_one_subset_polyLength_alternatingGroup :
     NC 1 ⊆ PolyLength Bool (alternatingGroup (Fin 5)) := by
   intro L hL
-  obtain ⟨c, hc⟩ := mem_NC_one_iff_formulaDepth_le.1 hL
+  obtain ⟨s, hs, h⟩ := exists_monoidProgram_alternatingGroup_computes_of_mem_NC_one hL
   have hσ : IsFiveCycle ([0, 1, 2, 3, 4] : List (Fin 5)).formPerm :=
     isFiveCycle_formPerm (by decide) rfl
-  refine ⟨fun n => 2 ^ (2 * c * (Nat.log 2 n + 1)), polynomiallyBounded_two_pow_mul_log _,
-    fun n => ?_⟩
+  refine ⟨s, hs, fun n => ?_⟩
   rcases n with _ | n
   · exact ⟨1, _, MonoidProgram.decides_one _, by simp⟩
-  · obtain ⟨P, hlen, hPc⟩ := exists_monoidProgram_alternatingGroup_computes_of_formulaDepth
-      (L.slice (n + 1)) (σ := ⟨_, hσ.mem_alternatingGroup⟩) hσ
-    refine ⟨P, _, hPc.decides fun h => hσ.ne_one (congrArg Subtype.val h), hlen.trans ?_⟩
-    calc 4 ^ formulaDepth (L.slice (n + 1)) ≤ 4 ^ (c * (Nat.log 2 (n + 1) + 1)) :=
-          Nat.pow_le_pow_right (by decide) (hc (n + 1))
-      _ = 2 ^ (2 * c * (Nat.log 2 (n + 1) + 1)) := by rw [mul_assoc, pow_mul 2 2]; rfl
+  · obtain ⟨P, hlen, hPc⟩ := h (n + 1) ⟨_, hσ.mem_alternatingGroup⟩ hσ
+    exact ⟨P, _, hPc.decides fun h => hσ.ne_one (congrArg Subtype.val h), hlen⟩
 
 /-- **NC¹ is decided by polynomial-length permutation branching programs of width `5`.** -/
 theorem NC_one_subset_polyLength : NC 1 ⊆ PolyLength Bool (Perm (Fin 5)) :=
