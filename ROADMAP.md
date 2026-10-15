@@ -218,6 +218,14 @@ were added for this (`Circuit/CompositionDepth.lean`). With majority gates added
 `Circuit/MapOp.lean`), majority is one gate, so **AC⁰ ⊊ TC⁰**
 (`Cslib.Circuits.Boolean.ThresholdBasis.AC0_ssubset_TC0`).
 
+**Razborov–Smolensky** (`Circuit/Boolean/Smolensky.lean`, over `Smolensky/{Gates,Approximation}`,
+`Foundations/Data/BitString/LowDegree{,Parity}.lean` and `Foundations/Combinatorics/CentralBinomial.lean`):
+for every odd prime `p`, a depth-`d` circuit with `MOD_p` gates computing parity has size at least
+`2 ^ ℓ · 2 / 5` whenever `100 (((p - 1) ℓ) ^ d + 1)² ≤ n + 1`, so **parity ∉ AC⁰[p]**
+(`Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod`). The circuit is evaluated on pairs of a
+true function and its low-degree approximant, so each gate's approximator is chosen for its true
+arguments without dependent recursion over the program. Generalises v1's `p = 3`.
+
 Independent cslib-style reviews of the gate-elimination and Khrapchenko modules were addressed:
 a wrong Jukna citation was corrected (Section 1.6 for Schnorr, Section 6.8 for Khrapchenko, plus
 the primary sources), a docstring overclaim was removed, Mathlib's `Function.IsConst` and

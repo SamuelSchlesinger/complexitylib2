@@ -454,4 +454,28 @@ info: 'Cslib.Circuits.Circuit.eval_mapOp' depends on axioms: [propext, Classical
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Circuit.eval_mapOp
 
+/--
+info: 'Cslib.Circuits.Boolean.Smolensky.exists_lowDegree_approx' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Smolensky.exists_lowDegree_approx
+
+/--
+info: 'Cslib.BitString.card_agree_parity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.card_agree_parity_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Smolensky.two_mul_two_pow_le_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Smolensky.two_mul_two_pow_le_size_of_computes_parity
+
+/--
+info: 'Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod
+
 end ComplexityTests.Axioms
