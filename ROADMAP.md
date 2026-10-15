@@ -325,6 +325,35 @@ so nothing claims the polynomial-time parts, imports shaken, closure rules `prot
 a local polynomial-time witness (crei's `const`/`id` will supply it), `FinEnum` instead of
 `Finset.toList` (computable tableau), deriving `add`/`mul`/`pow` bounds from `IsBigO`.
 
+## Porting queue toward parity (2026-10-15)
+
+From an inventory of v1's headline results that v2 lacks (excluding v1's `Algebraic/` tree and
+the OpenAI-sourced modules listed in v1's `docs/OpenAIMath.md`), ported by parallel agents in
+worktrees and reviewed before merging. Ported on 2026-10-15: influences, noise stability,
+convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `ACⁱ ⊆ NCⁱ⁺¹`.
+
+| Target | v1 source | State |
+|---|---|---|
+| Monotone Karchmer–Wigderson | `Circuits/KarchmerWigderson*`, `Circuits/Monotone*` | in progress |
+| Barrington: NC¹ = width-5 permutation programs | `Circuits/Barrington{Typed,Family,Converse}`, `CircuitFormula/*` | in progress |
+| Yao's hybrid argument (distinguisher to next-bit predictor) | `Metacomplexity/StatisticalTest/Hybrid*` | in progress, over cslib's `Crypto/Primitives/PRG` |
+| Lautemann's covering lemma | `Classes/PH/SipserLautemann/Covering` | in progress |
+| Expander mixing lemma, edge expansion | `Classes/PCP/Internal/{RegularGraph,Mixing,EdgeExpansion}` | in progress |
+| Pairwise-independent hashing, approximate counting | `Classes/Randomized/Hashing*`, `ApproximateCounting/**` | in progress |
+| Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | queued |
+| Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | queued |
+| Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | queued (after BLR) |
+| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | after the mixing lemma |
+| Zig-zag product | `PCP/Internal/ZigZag` | after the mixing lemma |
+| Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | after Yao |
+| Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure | after the expander and Hadamard layers |
+| Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | multi-batch, later |
+
+The class-level forms of the time hierarchy, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE`, Sipser–Lautemann
+and the PCP theorem wait for the polynomial-time calculus. Results in scope from
+[karnseth/katz-lindell](https://github.com/karnseth/katz-lindell) (Apache 2.0: pseudorandomness,
+hard-core predicates, hashing) are being surveyed as a second source.
+
 ## Realignment with crei's `tidy-universal` branch (2026-10-13)
 
 crei's fork branch `crei/tidy-universal` (39 commits, ~9.3k lines; not yet a PR) implements
