@@ -14,7 +14,8 @@ public import Cslib.Computability.Circuit.Program
 
 In the widened lines of a program (`Program.lines`), every gate wire that a line reads comes
 before the line's own gate (`Program.lt_of_lines_wires_eq_gate`), so facts about wires can be
-proved by induction along the program order (`Program.wire_induction`).
+proved by induction along the program order (`Program.wire_induction`). Bounded fan-in is a
+bound on the arity of every line (`Program.fanInAtMost_iff`).
 -/
 
 @[expose] public section
@@ -51,6 +52,15 @@ theorem Program.lt_of_lines_wires_eq_gate (p : Program σ n g) (k : Fin g)
     | cast k =>
       rw [Program.lines_gate_castSucc]
       exact widen _ _ fun s j hw => Fin.castSucc_lt_castSucc_iff.2 (ih k s j hw)
+
+/-- A program has fan-in at most `r` exactly when every gate reads at most `r` wires. -/
+theorem Program.fanInAtMost_iff {p : Program σ n g} {r : ℕ} :
+    p.FanInAtMost r ↔ ∀ k, σ.Arity (p.lines k).op ≤ r := by
+  induction p with
+  | empty => exact iff_of_true trivial fun k => k.elim0
+  | gate p line ih =>
+    rw [Program.FanInAtMost, ih, Fin.forall_fin_succ']
+    simp only [Program.lines_gate_castSucc, Program.lines_gate_last, Line.mapWires_op]
 
 /-- Induction along the program order: a property of wires that holds for the inputs, and for a
 gate whenever it holds for the wires the gate reads, holds for every wire. -/

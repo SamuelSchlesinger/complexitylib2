@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Cslib.Computability.Circuit.Boolean.Complexity
+public import Cslib.Computability.Circuit.Boolean.Counting
 public import Mathlib.Analysis.Asymptotics.Defs
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Combinatorics.SetFamily.Shatter
@@ -15,7 +16,6 @@ public import Mathlib.Data.Nat.Dist
 public import Mathlib.InformationTheory.Hamming
 import Complexity.Computability.Circuit.Boolean.Correction
 import Complexity.Computability.Circuit.Boolean.SparseSynthesisConstruction
-import Cslib.Computability.Circuit.Boolean.Counting
 import Cslib.Foundations.Data.Nat.Asymptotics
 import Mathlib.Algebra.Order.Archimedean.Real.Basic
 import Mathlib.Analysis.Asymptotics.Basic
@@ -335,6 +335,19 @@ private theorem eventually_complexity_le (P : ℕ) :
 
 /-! ### Uniform sparse and partial synthesis -/
 
+/-- **From natural-number bounds to `ε`.** For every `ε > 0` there is `P > 0` such that a bound
+`P x ≤ (a P + b) y` in natural numbers gives `x ≤ (a + ε) y`: the error `b` is at most `ε P`. -/
+private theorem exists_le_add_mul_of_mul_le (a b : ℕ) {ε : ℝ} (hε : 0 < ε) :
+    ∃ P : ℕ, ∀ x y : ℕ, P * x ≤ (a * P + b) * y → (x : ℝ) ≤ (a + ε) * y := by
+  obtain ⟨P, hP⟩ := exists_nat_gt (b / ε)
+  have hP0 : (0 : ℝ) < P := lt_of_le_of_lt (by positivity) hP
+  have hb : (b : ℝ) ≤ ε * P := by
+    have := (div_lt_iff₀ hε).mp hP
+    linarith
+  refine ⟨P, fun x y h => (mul_le_mul_iff_right₀ hP0).mp ?_⟩
+  have h' : (P : ℝ) * x ≤ (a * P + b) * y := by exact_mod_cast h
+  nlinarith [mul_le_mul_of_nonneg_right hb (by positivity : (0 : ℝ) ≤ y)]
+
 /-- **Sparse indicators.** For every `ε > 0` and all large `p`, the indicator of any set of at
 most `2 ^ p` of the `2 ^ (2 p)` inputs has a De Morgan circuit with at most `(1 + ε) 2 ^ p`
 gates. This is the case `N = 2 ^ p` of Lupanov's bound for functions with `N` ones, which is
@@ -342,17 +355,10 @@ asymptotically optimal [Lupanov1965], [Chashkin, Theorem 3.1][Chashkin2024]. -/
 theorem complexity_indicator_le (ε : ℝ) (hε : 0 < ε) :
     ∃ p₀ : ℕ, ∀ p ≥ p₀, ∀ D : Finset (BitString (2 * p)), #D ≤ 2 ^ p →
       (complexity interpretation (single fun x => decide (x ∈ D)) : ℝ) ≤ (1 + ε) * 2 ^ p := by
-  obtain ⟨P, hP⟩ := exists_nat_gt (1 / ε)
-  have hP0 : (0 : ℝ) < P := lt_trans (by positivity) hP
-  have hcoeff : (P : ℝ) + 1 ≤ (1 + ε) * P := by
-    have := (div_lt_iff₀ hε).mp hP
-    nlinarith
+  obtain ⟨P, hP⟩ := exists_le_add_mul_of_mul_le 1 1 hε
   obtain ⟨p₀, hp₀⟩ := eventually_atTop.mp (eventually_complexity_le P)
-  refine ⟨p₀, fun p hp D hD => (mul_le_mul_iff_right₀ hP0).mp ?_⟩
-  calc (P : ℝ) * complexity interpretation (single fun x => decide (x ∈ D))
-      ≤ (P + 1) * 2 ^ p := by exact_mod_cast (hp₀ p hp D hD).1
-    _ ≤ P * ((1 + ε) * 2 ^ p) := by
-      nlinarith [mul_le_mul_of_nonneg_right hcoeff (by positivity : (0 : ℝ) ≤ 2 ^ p)]
+  refine ⟨p₀, fun p hp D hD => ?_⟩
+  simpa using hP _ (2 ^ p) (by simpa using (hp₀ p hp D hD).1)
 
 /-- **Partial functions.** For every `ε > 0` and all large `p`, every Boolean function on any
 set of at most `2 ^ p` of the `2 ^ (2 p)` inputs agrees on that set with a De Morgan circuit
@@ -363,21 +369,14 @@ theorem complexityOn_le (ε : ℝ) (hε : 0 < ε) :
     ∃ p₀ : ℕ, ∀ p ≥ p₀, ∀ D : Finset (BitString (2 * p)), #D ≤ 2 ^ p →
       ∀ u : BooleanFunction (2 * p),
         (complexityOn interpretation D (single u) : ℝ) ≤ (1 + ε) * 2 ^ p / p := by
-  obtain ⟨P, hP⟩ := exists_nat_gt (1 / ε)
-  have hP0 : (0 : ℝ) < P := lt_trans (by positivity) hP
-  have hcoeff : (P : ℝ) + 1 ≤ (1 + ε) * P := by
-    have := (div_lt_iff₀ hε).mp hP
-    nlinarith
+  obtain ⟨P, hP⟩ := exists_le_add_mul_of_mul_le 1 1 hε
   obtain ⟨p₀, hp₀⟩ := eventually_atTop.mp (eventually_complexity_le P)
   refine ⟨max p₀ 1, fun p hp D hD u => ?_⟩
   have hp0 : (0 : ℝ) < p := by exact_mod_cast (show 0 < p by omega)
-  rw [le_div_iff₀ hp0]
-  refine (mul_le_mul_iff_right₀ hP0).mp ?_
-  calc (P : ℝ) * (complexityOn interpretation D (single u) * p)
-      = P * p * complexityOn interpretation D (single u) := by ring
-    _ ≤ (P + 1) * 2 ^ p := by exact_mod_cast (hp₀ p (le_of_max_le_left hp) D hD).2 u
-    _ ≤ P * ((1 + ε) * 2 ^ p) := by
-      nlinarith [mul_le_mul_of_nonneg_right hcoeff (by positivity : (0 : ℝ) ≤ 2 ^ p)]
+  rw [le_div_iff₀ hp0, mul_comm]
+  have := hP (p * complexityOn interpretation D (single u)) (2 ^ p) (by
+    simpa [mul_assoc] using (hp₀ p (le_of_max_le_left hp) D hD).2 u)
+  simpa using this
 
 /-! ### Square-root continuity of circuit complexity -/
 
@@ -451,17 +450,10 @@ theorem dist_complexity_le (ε : ℝ) (hε : 0 < ε) :
       hammingDist f g ≤ 2 ^ p → hammingDist (Function.swap f) (Function.swap g) ≤ 2 * p →
       (Nat.dist (complexity interpretation f) (complexity interpretation g) : ℝ) ≤
         (3 + ε) * 2 ^ p := by
-  obtain ⟨P, hP⟩ := exists_nat_gt (4 / ε)
-  have hP0 : (0 : ℝ) < P := lt_trans (by positivity) hP
-  have hcoeff : 3 * (P : ℝ) + 4 ≤ (3 + ε) * P := by
-    have := (div_lt_iff₀ hε).mp hP
-    nlinarith
+  obtain ⟨P, hP⟩ := exists_le_add_mul_of_mul_le 3 4 hε
   obtain ⟨p₀, hp₀⟩ := eventually_atTop.mp (eventually_mul_dist_complexity_le P)
-  refine ⟨p₀, fun p hp m f g hrows hcols => (mul_le_mul_iff_right₀ hP0).mp ?_⟩
-  calc (P : ℝ) * Nat.dist (complexity interpretation f) (complexity interpretation g)
-      ≤ (3 * P + 4) * 2 ^ p := by exact_mod_cast hp₀ p hp m f g hrows hcols
-    _ ≤ P * ((3 + ε) * 2 ^ p) := by
-      nlinarith [mul_le_mul_of_nonneg_right hcoeff (by positivity : (0 : ℝ) ≤ 2 ^ p)]
+  refine ⟨p₀, fun p hp m f g hrows hcols => ?_⟩
+  simpa using hP _ (2 ^ p) (hp₀ p hp m f g hrows hcols)
 
 /-- **Square-root continuity for a single output.** For every `ε > 0` and all large `p`, changing
 a Boolean function on at most `2 ^ p` of its `2 ^ (2 p)` inputs changes its De Morgan circuit
@@ -470,14 +462,10 @@ theorem dist_complexity_single_le (ε : ℝ) (hε : 0 < ε) :
     ∃ p₀ : ℕ, ∀ p ≥ p₀, ∀ f g : BooleanFunction (2 * p), hammingDist f g ≤ 2 ^ p →
       (Nat.dist (complexity interpretation (single f)) (complexity interpretation (single g)) :
         ℝ) ≤ (1 + ε) * 2 ^ p := by
-  obtain ⟨P, hP⟩ := exists_nat_gt (2 / ε)
-  have hP0 : (0 : ℝ) < P := lt_trans (by positivity) hP
-  have hcoeff : (P : ℝ) + 2 ≤ (1 + ε) * P := by
-    have := (div_lt_iff₀ hε).mp hP
-    nlinarith
+  obtain ⟨P, hP⟩ := exists_le_add_mul_of_mul_le 1 2 hε
   obtain ⟨p₀, hp₀⟩ := eventually_atTop.mp ((eventually_complexity_le P).and
     (Nat.eventually_mul_pow_le_pow (4 * P) 0 Nat.one_lt_two))
-  refine ⟨p₀, fun p hp f g hfg => (mul_le_mul_iff_right₀ hP0).mp ?_⟩
+  refine ⟨p₀, fun p hp f g hfg => ?_⟩
   obtain ⟨hsynth, hsmall⟩ := hp₀ p hp
   let D : Finset (BitString (2 * p)) := {x | f x ≠ g x}
   have hxor : (fun x => f x ^^ g x) = fun x => decide (x ∈ D) := by
@@ -488,14 +476,10 @@ theorem dist_complexity_single_le (ε : ℝ) (hε : 0 < ε) :
   have hind := (hsynth D hfg).1
   simp only [pow_zero, mul_one] at hsmall
   have hnat : P * Nat.dist (complexity interpretation (single f))
-      (complexity interpretation (single g)) ≤ (P + 2) * 2 ^ p := by
+      (complexity interpretation (single g)) ≤ (1 * P + 2) * 2 ^ p := by
     have := Nat.mul_le_mul_left P hdist
     nlinarith
-  calc (P : ℝ) * Nat.dist (complexity interpretation (single f))
-        (complexity interpretation (single g))
-      ≤ (P + 2) * 2 ^ p := by exact_mod_cast hnat
-    _ ≤ P * ((1 + ε) * 2 ^ p) := by
-      nlinarith [mul_le_mul_of_nonneg_right hcoeff (by positivity : (0 : ℝ) ≤ 2 ^ p)]
+  simpa using hP _ (2 ^ p) hnat
 
 /-- **Exact hardness survives sparse errors.** For every `ε > 0` and all large `p`, if a
 function `f` with at most `2 p` outputs on `2 p` inputs has complexity more than
@@ -668,9 +652,21 @@ theorem not_isLittleO_of_dist_complexity_le (b : ℕ → ℝ)
 /-! ### Shattering -/
 
 /-- The sets of inputs on `n` bits whose indicators have De Morgan circuits with at most `s`
-gates: the concept class of circuits of size `s`. -/
+gates, the supports of `computableFunctions n s`: the concept class of circuits of size `s`. -/
 noncomputable def circuitSets (n s : ℕ) : Finset (Finset (BitString n)) :=
-  {T | complexity interpretation (single fun x => decide (x ∈ T)) ≤ s}
+  (computableFunctions n s).image fun f => ({x | f x = true} : Finset (BitString n))
+
+/-- A set is in the concept class of circuits of size `s` exactly when a circuit with at most `s`
+gates computes its indicator. -/
+@[simp] theorem mem_circuitSets {n s : ℕ} {T : Finset (BitString n)} :
+    T ∈ circuitSets n s ↔ ∃ c : Circuit signature n 1,
+      c.Computes interpretation (single fun x => decide (x ∈ T)) ∧ c.size ≤ s := by
+  simp only [circuitSets, mem_image, mem_computableFunctions]
+  constructor
+  · rintro ⟨f, ⟨c, hc, hs⟩, rfl⟩
+    exact ⟨c, fun x => (hc x).trans (by simp), hs⟩
+  · rintro ⟨c, hc, hs⟩
+    exact ⟨_, ⟨c, hc, hs⟩, by ext x; simp⟩
 
 /-- **Circuits shatter square-root-sized samples.** For every `ε > 0` and all large `p`, the
 sets with circuits of `(1 + ε) 2 ^ p / p` gates shatter every set of at most `2 ^ p` of the
@@ -683,13 +679,10 @@ theorem shatters_circuitSets (ε : ℝ) (hε : 0 < ε) :
   obtain ⟨c, hc, hsize⟩ := exists_computesOn_size_eq_complexityOn (I := interpretation)
     (S := (D : Set (BitString (2 * p)))) (f := single fun x => decide (x ∈ t))
   let u : Finset (BitString (2 * p)) := {x | c.eval interpretation x 0 = true}
-  refine ⟨u, ?_, ?_⟩
-  · have hu : c.Computes interpretation (single fun x => decide (x ∈ u)) := fun x => by
-      funext j
-      rw [Fin.fin_one_eq_zero j]
-      simp [u]
-    simp only [circuitSets, mem_filter, mem_univ, true_and]
-    exact (complexity_le_of_computes c hu).trans (Nat.le_floor (hsize ▸ hp₀ p hp D hD _))
+  refine ⟨u, mem_circuitSets.2 ⟨c, fun x => ?_, Nat.le_floor (hsize ▸ hp₀ p hp D hD _)⟩, ?_⟩
+  · funext j
+    rw [Fin.fin_one_eq_zero j]
+    simp [u]
   · ext x
     simp only [mem_inter, u, mem_filter, mem_univ, true_and]
     constructor

@@ -48,7 +48,6 @@ are translated likewise (`Formula.mapOp`), keeping their function, size, leaves 
 namespace Cslib.Circuits
 
 /-- A map of signatures: an arity-preserving map of operations. -/
-@[ext]
 structure Signature.Hom (σ τ : Signature) where
   /-- The image of each operation. -/
   toFun : σ.Op → τ.Op
@@ -62,10 +61,17 @@ namespace Signature.Hom
 /-- Maps of signatures are applied like functions. -/
 instance : FunLike (σ.Hom τ) σ.Op τ.Op where
   coe φ := φ.toFun
-  coe_injective _ _ h := Signature.Hom.ext h
+  coe_injective φ ψ h := by
+    cases φ
+    cases ψ
+    congr
 
 @[simp] theorem toFun_eq_coe (φ : σ.Hom τ) : φ.toFun = ⇑φ :=
   rfl
+
+/-- Two maps of signatures agreeing on every operation are equal. -/
+@[ext] theorem ext {φ ψ : σ.Hom τ} (h : ∀ op, φ op = ψ op) : φ = ψ :=
+  DFunLike.ext φ ψ h
 
 /-- The identity map of a signature. -/
 protected def id (σ : Signature) : σ.Hom σ :=

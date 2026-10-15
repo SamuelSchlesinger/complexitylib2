@@ -143,12 +143,6 @@ theorem runsInTime_iff_halted {input : List Symbol} {t : ℕ} :
     tm.RunsInTime input t ↔ (tm.runFrom (tm.initCfg input) t).Halted :=
   ⟨halted_of_runsInTime, runsInTime_of_halted⟩
 
-/-- The path of the first `t` steps from `cfg` ends where the run does. -/
-@[simp]
-theorem last_ofDeterministic {input : List Symbol} (cfg : Cfg k Symbol State input) (t : ℕ) :
-    (MultiTapeNTM.RunPath.ofDeterministic tm cfg t).last = tm.runFrom cfg t :=
-  rfl
-
 /-- A path of a deterministic machine ends where the run from its head does. -/
 theorem runPath_last_eq_runFrom {input : List Symbol} (p : tm.RunPath input) :
     p.last = tm.runFrom p.head p.time :=
@@ -187,5 +181,12 @@ theorem runsInSpace_iff {input : List Symbol} {s : ℕ} :
   exact h _
 
 end MultiTapeTM
+
+/-- The path of the first `t` steps from `cfg` ends where the run does. -/
+@[simp]
+theorem MultiTapeNTM.RunPath.last_ofDeterministic (tm : MultiTapeTM k Symbol State)
+    {input : List Symbol} (cfg : Cfg k Symbol State input) (t : ℕ) :
+    (RunPath.ofDeterministic tm cfg t).last = tm.runFrom cfg t :=
+  rfl
 
 end Turing

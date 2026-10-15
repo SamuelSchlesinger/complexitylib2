@@ -67,22 +67,26 @@ def pairEmb (i : Fin k) : Fin 2 ↪ Fin (k + k) :=
 
 @[simp] theorem pairEmb_zero (i : Fin k) : pairEmb i 0 = Fin.castAdd k i := rfl
 
-theorem pairEmb_one (i : Fin k) : pairEmb i 1 = Fin.natAdd k i := rfl
+/-- The shadow of work tape `i` is tape `k + i`, written `i.addNat k` in simp normal form. -/
+@[simp] theorem pairEmb_one (i : Fin k) : pairEmb i 1 = i.addNat k :=
+  Fin.natAdd_eq_addNat k i
 
 /-- The tapes of the pair `i` are work tape `i` and its shadow. -/
 theorem pairIdx_eq_iff {j : Fin (k + k)} {i : Fin k} :
-    pairIdx j = i ↔ j = Fin.castAdd k i ∨ j = Fin.natAdd k i := by
+    pairIdx j = i ↔ j = Fin.castAdd k i ∨ j = i.addNat k := by
   refine Fin.addCases (fun j' => ?_) (fun j' => ?_) j
-  · simp only [pairIdx_castAdd, Fin.castAdd_inj, Fin.castAdd_ne_natAdd, or_false]
-  · simp only [pairIdx_natAdd, Fin.natAdd_inj, (Fin.castAdd_ne_natAdd _ _).symm, false_or]
+  · simp only [pairIdx_castAdd, Fin.castAdd_inj, ← Fin.natAdd_eq_addNat, Fin.castAdd_ne_natAdd,
+      or_false]
+  · simp only [pairIdx_natAdd, ← Fin.natAdd_eq_addNat, Fin.natAdd_inj,
+      (Fin.castAdd_ne_natAdd _ _).symm, false_or]
 
 /-- Tape `j` is a tape of the pair `i` exactly when it is work tape `i` or its shadow. -/
 theorem partialInv_pairEmb (i : Fin k) (j : Fin (k + k)) :
     partialInv (pairEmb i) j =
-      if j = Fin.castAdd k i then some 0 else if j = Fin.natAdd k i then some 1 else none := by
+      if j = Fin.castAdd k i then some 0 else if j = i.addNat k then some 1 else none := by
   split_ifs with h₀ h₁
   · exact h₀ ▸ partialInv_embed (pairEmb i) 0
-  · exact h₁ ▸ partialInv_embed (pairEmb i) 1
+  · exact h₁ ▸ pairEmb_one i ▸ partialInv_embed (pairEmb i) 1
   · refine partialInv_eq_none _ ?_
     rintro ⟨a, rfl⟩
     fin_cases a <;> simp_all [pairEmb_one]
@@ -126,11 +130,14 @@ theorem runFrom_clearShadowed_pairEmb (hm : m₀ ≠ m₁) {C : Cfg (k + k) Symb
     · exact h.pos_castAdd
     · exact h.pos_natAdd
   rw [runFrom_extendTapes, hview, runFrom_clearShadowed hm h.insert_eq h.blank]
+  have hne : i.addNat k ≠ Fin.castAdd k i := by
+    rw [← Fin.natAdd_eq_addNat]
+    exact (Fin.castAdd_ne_natAdd i i).symm
   refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext j <;>
     simp only [embed, partialInv_pairEmb, clearedCfg, List.mem_singleton, Cfg.withState,
       pairIdx_eq_iff] <;>
-    by_cases h₀ : j = Fin.castAdd k i <;> by_cases h₁ : j = Fin.natAdd k i <;>
-    simp [-Fin.natAdd_eq_addNat, h₀, h₁, (Fin.castAdd_ne_natAdd _ _).symm]
+    by_cases h₀ : j = Fin.castAdd k i <;> by_cases h₁ : j = i.addNat k <;>
+    simp [h₀, h₁, hne]
 
 /-- The control states of `clearList` for a list of length `n`. -/
 def ClearListState : ℕ → Type
@@ -183,16 +190,14 @@ theorem exists_runPath_clearList (hm : m₀ ≠ m₁) (l : List (Fin k)) (hl : l
     obtain ⟨p₁, hh₁, hl₁, ht₁⟩ := ih hl (clearedCfg (σ' := σ) [i] C) fun j hj => by
       have hji : j ≠ i := fun h => hil (h ▸ hj)
       obtain ⟨h₁, h₂, h₄, h₅, h₆⟩ := hC j (List.mem_cons_of_mem _ hj)
-      exact ⟨by simp [-Fin.natAdd_eq_addNat, clearedCfg, hji, h₁],
-        by simp [-Fin.natAdd_eq_addNat, pairIdx_natAdd, clearedCfg, hji, h₂], h₄,
-        by simp [-Fin.natAdd_eq_addNat, pairIdx_natAdd, clearedCfg, hji, h₅],
-        fun y hy => by simp [-Fin.natAdd_eq_addNat, clearedCfg, hji, h₆ y hy]⟩
+      exact ⟨by simp [clearedCfg, hji, h₁], by simpa [clearedCfg, hji] using h₂, h₄,
+        by simpa [clearedCfg, hji] using h₅, fun y hy => by simp [clearedCfg, hji, h₆ y hy]⟩
     -- clear tape `i`, then the others
     obtain ⟨p, hh, hl', ht, -⟩ := exists_runPath_seq
       (p₀ := .ofDeterministic ((clearShadowed m₀ m₁).extendTapes (pairEmb i))
         (C.withState (some .start)) (a i + 2 * b i + c i + 5)) (p₁ := p₁)
-      (by rw [last_ofDeterministic, hmid]; rfl)
-      (by rw [hh₁, last_ofDeterministic, hmid]; rfl) (by rw [hl₁]; rfl)
+      (by rw [MultiTapeNTM.RunPath.last_ofDeterministic, hmid]; rfl)
+      (by rw [hh₁, MultiTapeNTM.RunPath.last_ofDeterministic, hmid]; rfl) (by rw [hl₁]; rfl)
     refine ⟨p, hh, hl'.trans ?_, ?_⟩
     · rw [hl₁]
       refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext j <;>
@@ -283,8 +288,8 @@ theorem exists_runPath_tidy (hm : m₀ ≠ m₁) {u : ℕ}
   rw [clearedCfg_finRange] at hlB
   obtain ⟨pAB, hhAB, hlAB, htAB, hsAB⟩ := exists_runPath_seq_space
     (p₀ := .ofDeterministic (shadow m₀ m₁ tm) ((shadow m₀ m₁ tm).initCfg input) (u + 1))
-    (p₁ := pB) (by rw [last_ofDeterministic, hA]; exact hC₁)
-    (by rw [hhB, last_ofDeterministic, hA]) (by rw [hlB])
+    (p₁ := pB) (by rw [MultiTapeNTM.RunPath.last_ofDeterministic, hA]; exact hC₁)
+    (by rw [hhB, MultiTapeNTM.RunPath.last_ofDeterministic, hA]) (by rw [hlB])
   set R₀ : Cfg (k + k) Symbol RewindState input :=
     (Sequential.rightCfg (State₀ := Option State)
       (⟨none, C₁.inputPos, fun _ _ => none, fun _ => 0, C₁.output⟩ :
@@ -298,7 +303,8 @@ theorem exists_runPath_tidy (hm : m₀ ≠ m₁) {u : ℕ}
   obtain ⟨p, hh, hl, ht, hs⟩ := exists_runPath_seq_space (p₀ := pAB)
     (p₁ := .ofDeterministic ((rewindInput Symbol).extendTapes (noTapes (k + k))) R₀
       (C₁.inputPos.val - 1 + 2))
-    (by rw [hlAB, hlB]; rfl) (by rw [hlAB, hlB]; rfl) (by rw [last_ofDeterministic, hR])
+    (by rw [hlAB, hlB]; rfl) (by rw [hlAB, hlB]; rfl)
+    (by rw [MultiTapeNTM.RunPath.last_ofDeterministic, hR])
   -- the time bound
   set Tc := ((List.finRange k).map fun i => a i + 2 * b i + c i + 5).sum + 1
   have hcard : ∀ i, a i + b i + 1 = tm.spaceUsedByTape c₀ u i := fun i => by
@@ -328,7 +334,7 @@ theorem exists_runPath_tidy (hm : m₀ ≠ m₁) {u : ℕ}
     omega
   change pB.length ≤ Tc at htB
   refine ⟨p, hh.trans (by rw [hhAB]; rfl), hl.trans ?_, ?_, ?_⟩
-  · rw [last_ofDeterministic, hR]
+  · rw [MultiTapeNTM.RunPath.last_ofDeterministic, hR]
     refine Cfg.ext rfl rfl ?_ rfl rfl
     funext i
     exact tapeOfList_nil.symm

@@ -10,6 +10,7 @@ module
 public import Cslib.Computability.Circuit.Boolean.Complexity
 import Complexity.Computability.Circuit.Boolean.Synthesis
 import Complexity.Computability.Circuit.Complexity
+import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Foundations.Data.BitString.Parity
 import Cslib.Computability.Circuit.Boolean.Synthesis
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -103,13 +104,9 @@ section Table
 
 variable {k l : ℕ}
 
-/-- Number the assignments to `k` bits as `0, …, 2 ^ k - 1`. -/
-private def index (k : ℕ) : BitString k ≃ Fin (2 ^ k) :=
-  (Equiv.arrowCongr (Equiv.refl (Fin k)) finTwoEquiv.symm).trans finFunctionFinEquiv
-
 /-- The column of an input of a table: the number of its first `k` bits. -/
 private def column (x : BitString (k + l)) : Fin (2 ^ k) :=
-  index k fun i => x (Fin.castAdd l i)
+  BitString.equivFin k fun i => x (Fin.castAdd l i)
 
 /-- The row of an input of a table: its last `l` bits. -/
 private def row (x : BitString (k + l)) : BitString l :=
@@ -117,7 +114,7 @@ private def row (x : BitString (k + l)) : BitString l :=
 
 /-- The input in row `r` and column `c` of a table. -/
 private def entry (r : BitString l) (c : Fin (2 ^ k)) : BitString (k + l) :=
-  Fin.append ((index k).symm c) r
+  Fin.append ((BitString.equivFin k).symm c) r
 
 @[simp] private theorem entry_row_column (x : BitString (k + l)) :
     entry (row x) (column x) = x := by
@@ -178,7 +175,7 @@ private theorem synthesis_table {B : Type*} [Fintype B] (pattern : B → Finset 
       cases t with
       | inl c =>
         have heq : test (.inl c) =
-            fun x => decide ((fun i => x (Fin.castAdd l i)) = (index k).symm c) := by
+            fun x => decide ((fun i => x (Fin.castAdd l i)) = (BitString.equivFin k).symm c) := by
           funext x
           exact Bool.eq_iff_iff.mpr (by
             rw [decide_eq_true_iff, decide_eq_true_iff, Equiv.eq_symm_apply]; rfl)

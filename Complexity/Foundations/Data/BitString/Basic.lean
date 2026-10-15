@@ -8,6 +8,7 @@ module
 -- upstream: candidate (addition to `Cslib/Foundations/Data/BitString.lean`)
 
 public import Cslib.Foundations.Data.BitString
+public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Data.Fintype.Pi
 import Mathlib.Data.Fintype.BigOperators
@@ -15,7 +16,8 @@ import Mathlib.Data.Fintype.BigOperators
 /-!
 # Counting and adding bit strings
 
-There are `2 ^ n` strings of `n` bits (`BitString.card_eq`).
+There are `2 ^ n` strings of `n` bits (`BitString.card_eq`), numbered `0, …, 2 ^ n - 1` by reading
+their bits as binary digits, least significant first (`BitString.equivFin`).
 
 Bits form the two-element Boolean ring (Mathlib's `BooleanRing Bool`), in which `a + b = (a ^^ b)`
 and `a * b = (a && b)`, so bit strings form an additive group under coordinatewise exclusive or:
@@ -24,6 +26,10 @@ and `a * b = (a && b)`, so bit strings form an additive group under coordinatewi
 
 Throughout the library, bit strings are added with `+`, while single bits, such as the values of
 Boolean functions, are combined with `^^`.
+
+## Main definitions
+
+* `Cslib.BitString.equivFin`: the numbering of the strings of `n` bits by `Fin (2 ^ n)`.
 
 ## Main results
 
@@ -41,6 +47,12 @@ variable {n : ℕ}
 /-- There are `2 ^ n` strings of `n` bits. -/
 theorem card_eq : Fintype.card (BitString n) = 2 ^ n := by
   simp
+
+variable (n) in
+/-- The strings of `n` bits numbered `0, …, 2 ^ n - 1`, reading the bits as binary digits with
+the least significant bit first. -/
+def equivFin : BitString n ≃ Fin (2 ^ n) :=
+  (Equiv.arrowCongr (Equiv.refl (Fin n)) finTwoEquiv.symm).trans finFunctionFinEquiv
 
 /-- A bit string added to itself gives zero. -/
 @[simp] protected theorem add_self (x : BitString n) : x + x = 0 :=

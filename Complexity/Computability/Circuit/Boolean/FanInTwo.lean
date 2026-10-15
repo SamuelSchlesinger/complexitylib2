@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.SimulationDepth
+import Complexity.Computability.Circuit.Program
 import Complexity.Computability.Circuit.Simulation
 import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 
@@ -161,13 +162,8 @@ theorem arity_lines_dedup_le (C : Circuit signature n m) (k : Fin C.size) :
 
 /-- **Fan-in reduction**: the gates of `dedup C` have fan-in at most the number of inputs and
 gates of `C`. -/
-theorem fanInAtMost_dedup (C : Circuit signature n m) : (dedup C).FanInAtMost (n + C.size) := by
-  suffices h : ∀ {g : ℕ} (p : Program signature n g) {r : ℕ}, n + g ≤ r →
-      (p.mapLines dedupLine).FanInAtMost r from h C.program le_rfl
-  intro g p r hr
-  induction p with
-  | empty => trivial
-  | gate p line ih => exact ⟨ih (by omega), (arity_dedupLine_le line).trans (by omega)⟩
+theorem fanInAtMost_dedup (C : Circuit signature n m) : (dedup C).FanInAtMost (n + C.size) :=
+  Program.fanInAtMost_iff.2 (arity_lines_dedup_le C)
 
 /-! ### Balanced trees for the gates -/
 

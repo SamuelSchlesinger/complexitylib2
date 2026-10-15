@@ -31,7 +31,7 @@ variable {k : ℕ} {Symbol State : Type*} {tm : MultiTapeTM k Symbol State}
 the given output. -/
 theorem ComputesTidilyInTimeAndSpace.runFrom_initCfg {input output : List Symbol} {t s : ℕ}
     (h : tm.ComputesTidilyInTimeAndSpace input output t s) :
-    (tm.runFrom (tm.initCfg input) t).state = none ∧
+    (tm.runFrom (tm.initCfg input) t).Halted ∧
       (tm.runFrom (tm.initCfg input) t).output = output := by
   obtain ⟨p, hhead, hlast, htime, -⟩ := computesTidily_iff.1 h
   rw [initCfg_eq_wordsCfg, ← hhead, runFrom_eq_of_runPath (by rw [hlast]; rfl) htime, hlast]

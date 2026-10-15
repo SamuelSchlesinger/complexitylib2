@@ -53,7 +53,7 @@ theorem computesTidily_constTM (b : Bool) (w : List Bool) :
   rw [computesTidily_iff]
   refine ⟨.ofDeterministic (constTM b) (wordsCfg w (some (constTM b).q₀) (fun _ => []) []) 1, rfl,
     ?_, le_rfl, (space_zero_tapes_eq_zero _ _ rfl).le⟩
-  rw [last_ofDeterministic, runFrom_one, step_of_state (q := ()) rfl]
+  rw [MultiTapeNTM.RunPath.last_ofDeterministic, runFrom_one, step_of_state (q := ()) rfl]
   simp only [constTM, tr_ofTr, wordsCfg, Action.apply, moveInputPos_zero]
   congr <;> funext i <;> exact i.elim0
 
