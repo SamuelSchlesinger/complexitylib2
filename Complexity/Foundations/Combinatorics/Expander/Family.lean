@@ -26,10 +26,10 @@ vertices, with a degree and a spectral bound that do not depend on that number
 * Cheeger's inequality turns edge expansion into a spectral bound for its lazy graph, of degree
   `120` (`Cslib.RotationMap.spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl`).
 
-The construction is not explicit, since the permutations come from a counting argument, and
-neither is the multigraph `expander V` chosen from it. Explicit families are built by graph
-products from a single expander of constant size [ReingoldVadhanWigderson2002]
-[AroraBarak09, Section 21.3].
+The construction is not explicit, since the permutations come from a counting argument, and neither
+is the multigraph `expander V` chosen from it. Explicit families are built by graph products from a
+single expander of constant size [ReingoldVadhanWigderson2002]
+[Arora and Barak, Section 21.3][AroraBarak09].
 
 ## Main definitions
 
@@ -74,10 +74,11 @@ private theorem spectralExpansion_eq_zero_of_subsingleton {V D : Type*} [Fintype
 
 variable (V : Type u) [Fintype V]
 
-/-- **Constant-degree expanders exist** [HooryLinialWigderson2006, Section 4.6]
-[AroraBarak09, Chapter 21]: every finite type carries a `120`-regular multigraph of spectral
-expansion at most `1 - 1 / 360000`. It is the lazy graph of the multigraph of thirty permutations
-that move a tenth of every set of at most half of the vertices out of it. -/
+/-- **Constant-degree expanders exist**
+[Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Arora and Barak, Chapter 21][AroraBarak09]: every finite type carries a `120`-regular multigraph of
+spectral expansion at most `1 - 1 / 360000`. It is the lazy graph of the multigraph of thirty
+permutations that move a tenth of every set of at most half of the vertices out of it. -/
 theorem exists_spectralExpansion_le :
     ∃ G : RotationMap V (Fin 120), G.spectralExpansion ≤ 1 - 1 / 360000 := by
   classical
@@ -100,9 +101,10 @@ theorem exists_spectralExpansion_le :
   · simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool]
     norm_num
 
-/-- **Constant-degree expanders exist** [HooryLinialWigderson2006, Section 4.6]
-[AroraBarak09, Chapter 21]: there are a degree `d` and a bound `μ < 1` such that every finite type
-carries a `d`-regular multigraph of spectral expansion at most `μ`. -/
+/-- **Constant-degree expanders exist**
+[Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Arora and Barak, Chapter 21][AroraBarak09]: there are a degree `d` and a bound `μ < 1` such that
+every finite type carries a `d`-regular multigraph of spectral expansion at most `μ`. -/
 theorem exists_forall_exists_spectralExpansion_le :
     ∃ d : ℕ, ∃ μ < 1, ∀ (V : Type u) [Fintype V],
       ∃ G : RotationMap V (Fin d), G.spectralExpansion ≤ μ :=

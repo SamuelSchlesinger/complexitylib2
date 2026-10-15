@@ -91,11 +91,11 @@ private theorem complexity_nextBitGuess_le (test : BooleanFunction m) (i : Fin m
     rw [e]
     exact htest.trans (Nat.le_succ _)
 
-/-- **The Nisan–Wigderson reconstruction with circuits** ([AroraBarak09], Chapter 20). If `0 < m`
-and a deterministic test accepts outputs of the generator with probability at least `ε` more than
-uniform strings, then some function `g` on `n` bits agrees with `f` on at least a
-`1 / 2 + ε / m` fraction of the inputs and has De Morgan circuit complexity at most that of the
-test plus `m * (2 ^ a * (2 * a + 3) + 1) + 1`. -/
+/-- **The Nisan–Wigderson reconstruction with circuits**
+[Arora and Barak, Chapter 20][AroraBarak09]. If `0 < m` and a deterministic test accepts outputs of
+the generator with probability at least `ε` more than uniform strings, then some function `g` on `n`
+bits agrees with `f` on at least a `1 / 2 + ε / m` fraction of the inputs and has De Morgan circuit
+complexity at most that of the test plus `m * (2 ^ a * (2 * a + 3) + 1) + 1`. -/
 theorem exists_complexity_le_half_add_div_le_card_eq (D : Design ℓ n a m)
     (f : BooleanFunction n) (test : BooleanFunction m) (hm : 0 < m) {ε : ℝ}
     (hε : ε ≤ ((generator D f).realExperiment (fun y => PMF.pure (test y)) true).toReal -
@@ -110,11 +110,11 @@ theorem exists_complexity_le_half_add_div_le_card_eq (D : Design ℓ n a m)
   have := hs j
   gcongr
 
-/-- **The Nisan–Wigderson generator fools small circuits** ([AroraBarak09], Chapter 20). Let
-`0 < m`. If every function on `n` bits of complexity at most `S + m * (2 ^ a * (2 * a + 3) + 1) + 1`
-agrees with `f` on less than a `1 / 2 + ε / m` fraction of the inputs, then every test of
-complexity at most `S` accepts outputs of the generator with probability less than `ε` more than
-uniform strings. -/
+/-- **The Nisan–Wigderson generator fools small circuits**
+[Arora and Barak, Chapter 20][AroraBarak09]. Let `0 < m`. If every function on `n` bits of
+complexity at most `S + m * (2 ^ a * (2 * a + 3) + 1) + 1` agrees with `f` on less than a
+`1 / 2 + ε / m` fraction of the inputs, then every test of complexity at most `S` accepts outputs of
+the generator with probability less than `ε` more than uniform strings. -/
 theorem toReal_realExperiment_sub_toReal_idealExperiment_lt (D : Design ℓ n a m)
     (f : BooleanFunction n) (hm : 0 < m) {ε : ℝ} {S : ℕ}
     (hf : ∀ g : BooleanFunction n,

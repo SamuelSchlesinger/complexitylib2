@@ -129,8 +129,8 @@ theorem card_interedges [DecidableEq V] [DecidableRel G.toSimpleGraph.Adj] (hG :
 
 end IsSimple
 
-/-- Every `d`-regular simple graph is the simple graph of a simple rotation map with labels
-`Fin d`, obtained by numbering the neighbors of each vertex [AroraBarak09, Section 21.3]. -/
+/-- Every `d`-regular simple graph is the simple graph of a simple rotation map with labels `Fin d`,
+obtained by numbering the neighbors of each vertex [Arora and Barak, Section 21.3][AroraBarak09]. -/
 theorem exists_isSimple_toSimpleGraph_eq {H : SimpleGraph V} [H.LocallyFinite] {d : ℕ}
     (hH : H.IsRegularOfDegree d) :
     ∃ G : RotationMap V (Fin d), G.IsSimple ∧ G.toSimpleGraph = H := by

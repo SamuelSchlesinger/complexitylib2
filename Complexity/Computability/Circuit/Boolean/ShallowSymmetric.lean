@@ -17,13 +17,14 @@ import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 /-!
 # Shallow circuits for symmetric functions
 
-**The theorem of Lecomte and Ramakrishnan** [LecomteRamakrishnan2026, Theorems 1 and 2]: for every
-depth `d ≥ 2` there is a constant `C` such that every symmetric Boolean function of `n` bits (one
-depending only on the number of true bits, `BooleanFunction.IsSymmetric`), majority among them, has
-alternating formulas of depth `d` with at most `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates
+**The theorem of Lecomte and Ramakrishnan**
+[Lecomte and Ramakrishnan, Theorems 1 and 2][LecomteRamakrishnan2026]: for every depth `d ≥ 2` there
+is a constant `C` such that every symmetric Boolean function of `n` bits (one depending only on the
+number of true bits, `BooleanFunction.IsSymmetric`), majority among them, has alternating formulas
+of depth `d` with at most `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates
 (`AltFormula.exists_of_isSymmetric`), so circuits over the unbounded fan-in basis of AND/OR depth
-`d` with at most `n` more gates (`Unbounded.exists_circuit_of_isSymmetric`). For depth three this
-is `2 ^ (C √n)`. The exponent is optimal for majority, by Korten's top-down bounds for alternating
+`d` with at most `n` more gates (`Unbounded.exists_circuit_of_isSymmetric`). For depth three this is
+`2 ^ (C √n)`. The exponent is optimal for majority, by Korten's top-down bounds for alternating
 formulas (`AltFormula.two_rpow_lt_size_of_eval_eq_majority`) and for circuits of AND/OR depth `d`
 (`Unbounded.two_rpow_lt_add_size_of_computes_majority`).
 
@@ -116,10 +117,11 @@ end ShallowSymmetric
 
 namespace AltFormula
 
-/-- **The theorem of Lecomte and Ramakrishnan** [LecomteRamakrishnan2026, Theorem 1], with an
-integer root: for every depth `d ≥ 2` there is a constant `C` such that every symmetric function of
-`n` bits has alternating formulas of depth `d`, with either root operation, with at most
-`2 ^ (C (⌊n ^ (1 / (d - 1))⌋ + 1))` AND and OR gates. -/
+/-- **The theorem of Lecomte and Ramakrishnan**
+[Lecomte and Ramakrishnan, Theorem 1][LecomteRamakrishnan2026], with an integer root: for every
+depth `d ≥ 2` there is a constant `C` such that every symmetric function of `n` bits has alternating
+formulas of depth `d`, with either root operation, with at most `2 ^ (C (⌊n ^ (1 / (d - 1))⌋ + 1))`
+AND and OR gates. -/
 theorem exists_of_isSymmetric_nat {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℕ, ∀ (n : ℕ) (f : BitString n → Bool), IsSymmetric f → ∀ op : AltOp,
       ∃ g : AltFormula n d, size g ≤ 2 ^ (C * (Nat.nthRoot (d - 1) n + 1)) ∧
@@ -132,10 +134,10 @@ theorem exists_of_isSymmetric_nat {d : ℕ} (hd : 2 ≤ d) :
     (Nat.lt_pow_nthRoot_add_one (by omega) n).le a op
   exact ⟨g, by simpa only [show e + 2 - 1 = e + 1 by omega] using hs, fun x => (he x).trans (ha x)⟩
 
-/-- **The theorem of Lecomte and Ramakrishnan** [LecomteRamakrishnan2026, Theorem 1]: for every
-depth `d ≥ 2` there is a constant `C` such that every symmetric function of `n ≥ 1` bits has
-alternating formulas of depth `d`, with either root operation, with at most
-`2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates. -/
+/-- **The theorem of Lecomte and Ramakrishnan**
+[Lecomte and Ramakrishnan, Theorem 1][LecomteRamakrishnan2026]: for every depth `d ≥ 2` there is a
+constant `C` such that every symmetric function of `n ≥ 1` bits has alternating formulas of depth
+`d`, with either root operation, with at most `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates. -/
 theorem exists_of_isSymmetric {d : ℕ} (hd : 2 ≤ d) :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ f : BitString n → Bool, IsSymmetric f → ∀ op : AltOp,
       ∃ g : AltFormula n d, (size g : ℝ) ≤ 2 ^ (C * (n : ℝ) ^ ((d - 1 : ℕ) : ℝ)⁻¹) ∧
@@ -156,8 +158,9 @@ theorem exists_of_isSymmetric {d : ℕ} (hd : 2 ≤ d) :
         apply Real.rpow_le_rpow_of_exponent_le (by norm_num)
         nlinarith [show (0 : ℝ) ≤ (C : ℝ) from Nat.cast_nonneg C]
 
-/-- **Depth three** [LecomteRamakrishnan2026, Theorem 2]: symmetric functions of `n ≥ 1` bits have
-alternating formulas of depth three with at most `2 ^ (C √n)` gates. -/
+/-- **Depth three** [Lecomte and Ramakrishnan, Theorem 2][LecomteRamakrishnan2026]: symmetric
+functions of `n ≥ 1` bits have alternating formulas of depth three with at most `2 ^ (C √n)` gates.
+-/
 theorem exists_of_isSymmetric_depth_three :
     ∃ C : ℝ, 0 < C ∧ ∀ n : ℕ, 1 ≤ n → ∀ f : BitString n → Bool, IsSymmetric f → ∀ op : AltOp,
       ∃ g : AltFormula n 3, (size g : ℝ) ≤ 2 ^ (C * √(n : ℝ)) ∧ ∀ x, eval op g x = f x := by

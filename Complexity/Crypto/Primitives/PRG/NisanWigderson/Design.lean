@@ -19,14 +19,13 @@ import Mathlib.NumberTheory.Bertrand
 # Existence of Nisan–Wigderson designs
 
 Nisan and Wigderson build designs from polynomials over a finite field `F` with `q` elements
-([NisanWigderson1994]). The universe is the plane `F × F`, and each polynomial `P` of degree less
-than `k` contributes its graph `{(x, P x) | x ∈ F}`, a set of `q` points. Two distinct such
-polynomials agree on at most `k - 1` points, because their difference is a nonzero polynomial of
-degree less than `k`, so two distinct graphs share at most `k - 1` points. There are `q ^ k`
-polynomials of degree less than `k`, one for each list of `k` coefficients. Numbering the points
-of the plane and the polynomials gives a `(q ^ 2, q, k - 1)`-design with `q ^ k` blocks. Since
-finite fields exist in every prime power order, such a design exists whenever `q` is a prime
-power.
+[NisanWigderson1994]. The universe is the plane `F × F`, and each polynomial `P` of degree less than
+`k` contributes its graph `{(x, P x) | x ∈ F}`, a set of `q` points. Two distinct such polynomials
+agree on at most `k - 1` points, because their difference is a nonzero polynomial of degree less
+than `k`, so two distinct graphs share at most `k - 1` points. There are `q ^ k` polynomials of
+degree less than `k`, one for each list of `k` coefficients. Numbering the points of the plane and
+the polynomials gives a `(q ^ 2, q, k - 1)`-design with `q ^ k` blocks. Since finite fields exist in
+every prime power order, such a design exists whenever `q` is a prime power.
 
 Designs can be adjusted: one may keep only some of the blocks, embed the universe in a larger
 one, weaken the bound on intersections, or replace each block by a subset of a given size, since
@@ -34,8 +33,8 @@ intersections of subsets are no larger than intersections of the original blocks
 Bertrand's postulate, which yields a prime `p` with `n < p ≤ 2 n`, this gives for all `n` and `k`
 a `(4 n ^ 2, n, k - 1)`-design with `(n + 1) ^ k` blocks.
 
-Arora and Barak construct designs greedily instead ([AroraBarak09], Chapter 20); the greedy
-construction is not formalized here.
+Arora and Barak construct designs greedily instead [Arora and Barak, Chapter 20][AroraBarak09]; the
+greedy construction is not formalized here.
 
 ## Main definitions
 
@@ -169,8 +168,8 @@ theorem card_polynomialBlock (c : Fin k → F) : #(polynomialBlock F k c) = Fint
 variable [DecidableEq F]
 
 /-- The graphs of two distinct polynomials over `F` of degree less than `k` share at most `k - 1`
-points: the difference of the polynomials is nonzero and has degree less than `k`, so it has at
-most `k - 1` roots ([NisanWigderson1994]). -/
+points: the difference of the polynomials is nonzero and has degree less than `k`, so it has at most
+`k - 1` roots [NisanWigderson1994]. -/
 theorem card_polynomialBlock_inter_le {c d : Fin k → F} (hcd : c ≠ d) :
     #(polynomialBlock F k c ∩ polynomialBlock F k d) ≤ k - 1 := by
   have heval (c : Fin k → F) (x : F) :
@@ -195,10 +194,10 @@ theorem card_polynomialBlock_inter_le {c d : Fin k → F} (hcd : c ≠ d) :
   exact_mod_cast hks
 
 variable (F k) in
-/-- The Nisan–Wigderson design over a finite field `F` with `q` elements ([NisanWigderson1994]):
-a `(q ^ 2, q, k - 1)`-design with `q ^ k` blocks. Its blocks are the graphs
-`polynomialBlock F k c` of the polynomials of degree less than `k` over `F`, with the points of
-the plane `F × F` and the coefficient vectors `c : Fin k → F` numbered in some order. -/
+/-- The Nisan–Wigderson design over a finite field `F` with `q` elements [NisanWigderson1994]: a
+`(q ^ 2, q, k - 1)`-design with `q ^ k` blocks. Its blocks are the graphs `polynomialBlock F k c` of
+the polynomials of degree less than `k` over `F`, with the points of the plane `F × F` and the
+coefficient vectors `c : Fin k → F` numbered in some order. -/
 noncomputable def Design.polynomial :
     Design (Fintype.card F ^ 2) (Fintype.card F) (k - 1) (Fintype.card F ^ k) :=
   .ofFamily (polynomialBlock F k) card_polynomialBlock
@@ -210,7 +209,7 @@ end Polynomial
 
 /-- For every prime power `q` and every `k`, there is a `(q ^ 2, q, k - 1)`-design with `q ^ k`
 blocks: the polynomial design `Design.polynomial` over a field with `q` elements
-([NisanWigderson1994]). -/
+[NisanWigderson1994]. -/
 theorem Design.nonempty_of_isPrimePow {q : ℕ} (hq : IsPrimePow q) (k : ℕ) :
     Nonempty (Design (q ^ 2) q (k - 1) (q ^ k)) := by
   obtain ⟨_⟩ := Fintype.nonempty_field_iff.2 (by rwa [Fintype.card_fin] : IsPrimePow

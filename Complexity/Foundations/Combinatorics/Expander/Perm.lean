@@ -12,23 +12,24 @@ public import Complexity.Foundations.Combinatorics.Expander.Cheeger
 /-!
 # Regular multigraphs of permutations
 
-A family `σ : K → Equiv.Perm V` of permutations of the vertices gives a regular multigraph of
-degree `2 |K|` (`ofPerms`): at every vertex `v`, each permutation `σ k` contributes an edge to
-`σ k v` and, as the other end of the edge from `(σ k)⁻¹ v`, an edge to `(σ k)⁻¹ v`. Following an
-edge forwards along `σ k` and then backwards along `(σ k)⁻¹` returns to its start, so the rotation
-map is an involution. When the permutations are the actions of the generators of a group, this is
-the Schreier graph of the action with respect to the generators and their inverses
-[HooryLinialWigderson2006, Section 11.1.2].
+A family `σ : K → Equiv.Perm V` of permutations of the vertices gives a regular multigraph of degree
+`2 |K|` (`ofPerms`): at every vertex `v`, each permutation `σ k` contributes an edge to `σ k v` and,
+as the other end of the edge from `(σ k)⁻¹ v`, an edge to `(σ k)⁻¹ v`. Following an edge forwards
+along `σ k` and then backwards along `(σ k)⁻¹` returns to its start, so the rotation map is an
+involution. When the permutations are the actions of the generators of a group, this is the Schreier
+graph of the action with respect to the generators and their inverses
+[Hoory, Linial and Wigderson, Section 11.1.2][HooryLinialWigderson2006].
 
 The edges leaving a set `S` of vertices are counted exactly by how many points of `S` each
-permutation moves out of `S`: `σ k` moves as many points of `S` out of `S` as its inverse does,
-and each such point is the start of an edge leaving `S` (`card_interedges_compl_ofPerms`). So if
-every set of at most half of the vertices has a constant fraction of its points moved out of it by
-the permutations, the multigraph is an edge expander (`le_edgeExpansion_ofPerms`). Random
-permutations have this property (`Cslib.exists_perms_card_le_mul_card_filter_notMem`): their
-multigraph is the permutation model of random regular graphs
-[HooryLinialWigderson2006, Section 7.2.1], and random regular graphs are expanders
-[HooryLinialWigderson2006, Section 4.6] [AroraBarak09, Chapter 21].
+permutation moves out of `S`: `σ k` moves as many points of `S` out of `S` as its inverse does, and
+each such point is the start of an edge leaving `S` (`card_interedges_compl_ofPerms`). So if every
+set of at most half of the vertices has a constant fraction of its points moved out of it by the
+permutations, the multigraph is an edge expander (`le_edgeExpansion_ofPerms`). Random permutations
+have this property (`Cslib.exists_perms_card_le_mul_card_filter_notMem`): their multigraph is the
+permutation model of random regular graphs
+[Hoory, Linial and Wigderson, Section 7.2.1][HooryLinialWigderson2006], and random regular graphs
+are expanders [Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Arora and Barak, Chapter 21][AroraBarak09].
 
 ## Main definitions
 
@@ -57,10 +58,11 @@ open scoped BigOperators
 
 variable {V K : Type*}
 
-/-- The regular multigraph of a family `σ : K → Equiv.Perm V` of permutations, of degree `2 |K|`,
-as in the permutation model of random regular graphs [HooryLinialWigderson2006, Section 7.2.1]:
-the edge `(k, false)` at `v` leads to `σ k v`, where it is the edge `(k, true)`, which leads back
-along the inverse permutation. -/
+/-- The regular multigraph of a family `σ : K → Equiv.Perm V` of permutations, of degree `2 |K|`, as
+in the permutation model of random regular graphs
+[Hoory, Linial and Wigderson, Section 7.2.1][HooryLinialWigderson2006]: the edge `(k, false)` at `v`
+leads to `σ k v`, where it is the edge `(k, true)`, which leads back along the inverse permutation.
+-/
 def ofPerms (σ : K → Equiv.Perm V) : RotationMap V (K × Bool) where
   rot p := bif p.2.2 then ((σ p.2.1).symm p.1, (p.2.1, false)) else (σ p.2.1 p.1, (p.2.1, true))
   rot_involutive := by

@@ -15,11 +15,11 @@ public import Mathlib.Logic.Function.DependsOn
 /-!
 # The Nisan–Wigderson generator and its reconstruction
 
-An `(ℓ, n, a)`-design with `m` blocks is a family of `m` subsets of `Fin ℓ`, each with `n`
-elements, any two of which share at most `a` elements. Given such a design and a Boolean function
-`f` on `n` bits, the Nisan–Wigderson generator stretches a seed `z` of `ℓ` bits to the `m` bits
+An `(ℓ, n, a)`-design with `m` blocks is a family of `m` subsets of `Fin ℓ`, each with `n` elements,
+any two of which share at most `a` elements. Given such a design and a Boolean function `f` on `n`
+bits, the Nisan–Wigderson generator stretches a seed `z` of `ℓ` bits to the `m` bits
 `f (z|S₀) … f (z|Sₘ₋₁)`, where `z|S` lists the bits of `z` in `S` in increasing order of position
-([NisanWigderson1994], [AroraBarak09], Chapter 20).
+[NisanWigderson1994], [Arora and Barak, Chapter 20][AroraBarak09].
 
 Its analysis is a reconstruction. Suppose that a test accepts generated outputs with probability
 at least `ε` more than uniform ones. By the next-bit theorem
@@ -79,8 +79,8 @@ namespace Cslib.Crypto.PRG.NisanWigderson
 open Cslib.Probability.PMF Finset
 open scoped ENNReal
 
-/-- An `(ℓ, n, a)`-design with `m` blocks ([AroraBarak09], Chapter 20): `m` subsets of `Fin ℓ`,
-each with `n` elements, any two distinct ones sharing at most `a` elements. -/
+/-- An `(ℓ, n, a)`-design with `m` blocks [Arora and Barak, Chapter 20][AroraBarak09]: `m` subsets
+of `Fin ℓ`, each with `n` elements, any two distinct ones sharing at most `a` elements. -/
 structure Design (ℓ n a m : ℕ) where
   /-- The `i`-th block of the design. -/
   block : Fin m → Finset (Fin ℓ)
@@ -257,8 +257,8 @@ private theorem toReal_uniformOfFintype_map_decide_apply_true {β : Type*} [Fint
 end Uniform
 
 /-- The Nisan–Wigderson generator of a design `D` and a function `f` on `n` bits
-([AroraBarak09], Chapter 20): bit `i` of the output on a seed `z` is `f` applied to the bits of
-`z` in the `i`-th block. -/
+[Arora and Barak, Chapter 20][AroraBarak09]: bit `i` of the output on a seed `z` is `f` applied to
+the bits of `z` in the `i`-th block. -/
 def generator (D : Design ℓ n a m) (f : (Fin n → Bool) → Bool) :
     Generator (Fin ℓ → Bool) (Fin m → Bool) :=
   ⟨fun z i => f (D.restrict i z)⟩
@@ -306,13 +306,13 @@ theorem exists_predictionExperiment_le_hardwiredExperiment (D : Design ℓ n a m
   rw [predictionExperiment_generator]
   exact exists_bind_apply_le _ _ _
 
-/-- **The Nisan–Wigderson reconstruction** ([AroraBarak09], Chapter 20). If `0 < m` and a test
-accepts outputs of the generator with probability at least `ε` more than uniform strings, then
-for some position `i` and some choice `w` of the seed bits outside the `i`-th block, the
+/-- **The Nisan–Wigderson reconstruction** [Arora and Barak, Chapter 20][AroraBarak09]. If `0 < m`
+and a test accepts outputs of the generator with probability at least `ε` more than uniform strings,
+then for some position `i` and some choice `w` of the seed bits outside the `i`-th block, the
 predictor built from the test guesses `f x` from the first `i` bits of the output on
 `D.extend i x w` with probability at least `1 / 2 + ε / m`, for a uniform `x`. By
-`dependsOn_generator_extend` and `Design.card_overlap_le`, each of these `i` bits depends on at
-most `a` bits of `x`. -/
+`dependsOn_generator_extend` and `Design.card_overlap_le`, each of these `i` bits depends on at most
+`a` bits of `x`. -/
 theorem exists_half_add_div_le_hardwiredExperiment (D : Design ℓ n a m)
     (f : (Fin n → Bool) → Bool) (adversary : Adversary (Fin m → Bool)) (hm : 0 < m) {ε : ℝ}
     (hε : ε ≤ ((generator D f).realExperiment adversary true).toReal -

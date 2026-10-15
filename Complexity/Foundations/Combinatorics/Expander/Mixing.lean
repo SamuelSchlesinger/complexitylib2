@@ -21,24 +21,24 @@ On a regular graph of small spectral expansion `λ(G)`, edges are spread out as 
 the number of edges between two sets of vertices is close to what a random graph of the same
 density would have.
 
-For real functions on the vertices, with expectations taken over uniform vertices, the
-correlation of `f` at the start of a walk of length `t` with `g` at its end is the product of the
-expectations up to `λ(G) ^ t` times the two standard deviations
-(`sq_expect_mul_walk_pow_sub_le`). Applied to the indicator functions of two sets `S` and `T` of
-vertices, this is the **expander mixing lemma** [AroraBarak09, Section 21.2]
-[HooryLinialWigderson2006, Lemma 2.5], in the sharper form
+For real functions on the vertices, with expectations taken over uniform vertices, the correlation
+of `f` at the start of a walk of length `t` with `g` at its end is the product of the expectations
+up to `λ(G) ^ t` times the two standard deviations (`sq_expect_mul_walk_pow_sub_le`). Applied to the
+indicator functions of two sets `S` and `T` of vertices, this is the **expander mixing lemma**
+[Arora and Barak, Section 21.2][AroraBarak09]
+[Hoory, Linial and Wigderson, Lemma 2.5][HooryLinialWigderson2006], in the sharper form
 
 `|e(S, T) - d |S| |T| / n| ≤ λ(G) d √(|S| |Sᶜ| |T| |Tᶜ|) / n`
 
 (`abs_card_interedges_sub_le`), for a `d`-regular graph on `n` vertices, where `e(S, T)` counts
 the edges from `S` to `T` with those inside `S ∩ T` counted twice.
 
-For `T = Sᶜ` a one-sided bound suffices: at least `(1 - μ) d |S| |Sᶜ| / n` edges leave `S` as
-soon as `𝔼 f · G.walk f ≤ μ 𝔼 f²` for all `f` of expectation zero
+For `T = Sᶜ` a one-sided bound suffices: at least `(1 - μ) d |S| |Sᶜ| / n` edges leave `S` as soon
+as `𝔼 f · G.walk f ≤ μ 𝔼 f²` for all `f` of expectation zero
 (`le_card_interedges_compl_of_expect_mul_walk_le`). This is the easy half of the discrete Cheeger
-inequality [HooryLinialWigderson2006, Theorem 2.4]; with `μ = λ(G)` it says that spectral
-expanders are edge expanders [AroraBarak09, Section 21.2] (`le_card_interedges_compl`,
-`le_card_interedges_compl_of_two_mul_card_le`).
+inequality [Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]; with `μ = λ(G)` it
+says that spectral expanders are edge expanders [Arora and Barak, Section 21.2][AroraBarak09]
+(`le_card_interedges_compl`, `le_card_interedges_compl_of_two_mul_card_le`).
 
 ## Main results
 
@@ -171,9 +171,10 @@ private theorem expect_ite_mem_mul_walk (S T : Finset V) :
 private theorem card_compl_eq (S : Finset V) : (#Sᶜ : ℝ) = Fintype.card V - #S := by
   rw [eq_sub_iff_add_eq, ← Nat.cast_add, card_compl_add_card]
 
-/-- **The expander mixing lemma** [AroraBarak09, Section 21.2] [HooryLinialWigderson2006,
-Lemma 2.5], sharper form: in a `d`-regular graph on `n` vertices, the number of edges from `S` to
-`T` differs from `d |S| |T| / n` by at most `λ(G) d √(|S| |Sᶜ| |T| |Tᶜ|) / n`. -/
+/-- **The expander mixing lemma** [Arora and Barak, Section 21.2][AroraBarak09]
+[Hoory, Linial and Wigderson, Lemma 2.5][HooryLinialWigderson2006], sharper form: in a `d`-regular
+graph on `n` vertices, the number of edges from `S` to `T` differs from `d |S| |T| / n` by at most
+`λ(G) d √(|S| |Sᶜ| |T| |Tᶜ|) / n`. -/
 theorem abs_card_interedges_sub_le (S T : Finset V) :
     |(#(G.interedges S T) : ℝ) - Fintype.card D * #S * #T / Fintype.card V| ≤
       G.spectralExpansion * Fintype.card D * √((#S : ℝ) * #Sᶜ * #T * #Tᶜ) /
@@ -203,9 +204,10 @@ theorem abs_card_interedges_sub_le (S T : Finset V) :
           (G.spectralExpansion ^ 2 * (s / n - (s / n) ^ 2) * (t / n - (t / n) ^ 2)) := by gcongr
     _ = _ := by field_simp
 
-/-- **The expander mixing lemma** in its usual form [AroraBarak09, Section 21.2]
-[HooryLinialWigderson2006, Lemma 2.5]: in a `d`-regular graph on `n` vertices, the number of
-edges from `S` to `T` differs from `d |S| |T| / n` by at most `λ(G) d √(|S| |T|)`. -/
+/-- **The expander mixing lemma** in its usual form [Arora and Barak, Section 21.2][AroraBarak09]
+[Hoory, Linial and Wigderson, Lemma 2.5][HooryLinialWigderson2006]: in a `d`-regular graph on `n`
+vertices, the number of edges from `S` to `T` differs from `d |S| |T| / n` by at most
+`λ(G) d √(|S| |T|)`. -/
 theorem abs_card_interedges_sub_le_mul_sqrt (S T : Finset V) :
     |(#(G.interedges S T) : ℝ) - Fintype.card D * #S * #T / Fintype.card V| ≤
       G.spectralExpansion * Fintype.card D * √((#S : ℝ) * #T) := by
@@ -225,9 +227,9 @@ theorem abs_card_interedges_sub_le_mul_sqrt (S T : Finset V) :
 
 /-- **Edge expansion from a one-sided spectral bound**: if `𝔼 v, f v * G.walk f v ≤ μ 𝔼 f²` for
 every function `f` of expectation zero, then in a `d`-regular graph on `n` vertices at least
-`(1 - μ) d |S| |Sᶜ| / n` edges leave `S`. The best such `μ` is the second largest eigenvalue of
-the walk operator, so this is the easy half of the discrete Cheeger inequality
-[HooryLinialWigderson2006, Theorem 2.4]. -/
+`(1 - μ) d |S| |Sᶜ| / n` edges leave `S`. The best such `μ` is the second largest eigenvalue of the
+walk operator, so this is the easy half of the discrete Cheeger inequality
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]. -/
 theorem le_card_interedges_compl_of_expect_mul_walk_le {μ : ℝ}
     (hμ : ∀ f : V → ℝ, 𝔼 v, f v = 0 → 𝔼 v, f v * G.walk f v ≤ μ * 𝔼 v, f v ^ 2)
     (S : Finset V) :
@@ -260,16 +262,17 @@ theorem le_card_interedges_compl_of_expect_mul_walk_le {μ : ℝ}
     linarith
   nlinarith
 
-/-- **Spectral expanders are edge expanders** [AroraBarak09, Section 21.2]: in a `d`-regular
-graph on `n` vertices, at least `(1 - λ(G)) d |S| |Sᶜ| / n` edges leave `S`. -/
+/-- **Spectral expanders are edge expanders** [Arora and Barak, Section 21.2][AroraBarak09]: in a
+`d`-regular graph on `n` vertices, at least `(1 - λ(G)) d |S| |Sᶜ| / n` edges leave `S`. -/
 theorem le_card_interedges_compl (S : Finset V) :
     (1 - G.spectralExpansion) * Fintype.card D * #S * #Sᶜ / Fintype.card V ≤
       #(G.interedges S Sᶜ) :=
   G.le_card_interedges_compl_of_expect_mul_walk_le
     (fun _ hf ↦ (le_abs_self _).trans (G.abs_expect_mul_walk_le hf)) S
 
-/-- **Spectral expanders are edge expanders** [AroraBarak09, Section 21.2]: in a `d`-regular
-graph, at least `(1 - λ(G)) d |S| / 2` edges leave a set `S` of at most half of the vertices. -/
+/-- **Spectral expanders are edge expanders** [Arora and Barak, Section 21.2][AroraBarak09]: in a
+`d`-regular graph, at least `(1 - λ(G)) d |S| / 2` edges leave a set `S` of at most half of the
+vertices. -/
 theorem le_card_interedges_compl_of_two_mul_card_le {S : Finset V}
     (hS : 2 * #S ≤ Fintype.card V) :
     (1 - G.spectralExpansion) * Fintype.card D * #S / 2 ≤ #(G.interedges S Sᶜ) := by

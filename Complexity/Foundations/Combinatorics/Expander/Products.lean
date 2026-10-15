@@ -16,8 +16,9 @@ import Mathlib.Analysis.Real.Sqrt
 # Products of rotation maps
 
 Expanders of constant degree on arbitrarily many vertices are built from small ones by graph
-products [ReingoldVadhanWigderson2002] [AroraBarak09, Section 21.3]
-[HooryLinialWigderson2006, Section 9]. Besides powers (`Cslib.RotationMap.pow`), these are:
+products [ReingoldVadhanWigderson2002] [Arora and Barak, Section 21.3][AroraBarak09]
+[Hoory, Linial and Wigderson, Section 9][HooryLinialWigderson2006]. Besides powers
+(`Cslib.RotationMap.pow`), these are:
 
 * the **tensor product** `G.tensor H` on `V × V'`, which takes a step in `G` and a step in `H` at
   the same time: `λ(G ⊗ H) ≤ max λ(G) λ(H)`, with equality when neither factor is empty or
@@ -29,8 +30,9 @@ products [ReingoldVadhanWigderson2002] [AroraBarak09, Section 21.3]
   twice the degree of `H`: `λ(G Ⓡ H) ^ 3 ≤ 7 / 8 + λ(G ⓩ H) / 8`, so that
   `λ(G Ⓡ H) ≤ 1 - (1 - λ(G)) (1 - λ(H)) ^ 2 / 24`.
 
-The zig-zag theorem is proved as in [ReingoldVadhanWigderson2002, Section 4.1]. The walk operator
-of `G ⓩ H` is `B̃ Ã B̃`, where `B̃ = I ⊗ W_H` is the walk on the copies `{v} × D` of `H`, the walk
+The zig-zag theorem is proved as in
+[Reingold, Vadhan and Wigderson, Section 4.1][ReingoldVadhanWigderson2002]. The walk operator of
+`G ⓩ H` is `B̃ Ã B̃`, where `B̃ = I ⊗ W_H` is the walk on the copies `{v} × D` of `H`, the walk
 operator of `(refl V).tensor H`, and `Ã` permutes the vertices by the rotation map of `G`. A
 function on `V × D` splits into its averages over the copies of `H` and a part of average zero on
 every copy; `B̃` fixes the first and shrinks the second by `λ(H)`, while on the first `Ã` acts as
@@ -38,7 +40,7 @@ the walk on `G`. This bounds `𝔼 h · W f` for every `h` and every `f` of expe
 `h = W f` it bounds `W f`: as `λ` is an operator norm, no eigenvectors are needed. The same
 splitting proves the bound for the tensor product. The walk operator of the balanced replacement
 product is `(B̃ + Ã) / 2`, and the zig-zag walk `B̃ Ã B̃` is one of the eight terms of its cube
-[ReingoldVadhanWigderson2002, Theorem 6.7].
+[Reingold, Vadhan and Wigderson, Theorem 6.7][ReingoldVadhanWigderson2002].
 
 ## Main definitions
 
@@ -192,9 +194,10 @@ theorem walk_refl : (refl V).walk = LinearMap.id :=
 
 variable (G : RotationMap V D) (H : RotationMap V' D')
 
-/-- The **tensor product** `G ⊗ H` [ReingoldVadhanWigderson2002, Section 2.3]: the multigraph on
-`V × V'` with labels `D × D'` whose edge `(i, i')` at `(v, v')` takes the edge `i` of `G` at `v`
-and the edge `i'` of `H` at `v'` at the same time. -/
+/-- The **tensor product** `G ⊗ H`
+[Reingold, Vadhan and Wigderson, Section 2.3][ReingoldVadhanWigderson2002]: the multigraph on
+`V × V'` with labels `D × D'` whose edge `(i, i')` at `(v, v')` takes the edge `i` of `G` at `v` and
+the edge `i'` of `H` at `v'` at the same time. -/
 def tensor : RotationMap (V × V') (D × D') where
   rot p := (((G.rot (p.1.1, p.2.1)).1, (H.rot (p.1.2, p.2.2)).1),
     ((G.rot (p.1.1, p.2.1)).2, (H.rot (p.1.2, p.2.2)).2))
@@ -308,7 +311,7 @@ private theorem expect_walk_tensor_refl_eq_zero [Fintype V'] {f : V × V' → �
 variable [Fintype V] [Fintype V']
 
 /-- The spectral expansion of `G ⊗ H` is at most the larger of those of `G` and `H`
-[ReingoldVadhanWigderson2002, Proposition 2.4]. -/
+[Reingold, Vadhan and Wigderson, Proposition 2.4][ReingoldVadhanWigderson2002]. -/
 theorem spectralExpansion_tensor_le :
     (G.tensor H).spectralExpansion ≤ max G.spectralExpansion H.spectralExpansion := by
   have hG := le_max_left G.spectralExpansion H.spectralExpansion
@@ -372,8 +375,8 @@ private theorem spectralExpansion_le_spectralExpansion_tensor_right [Nonempty V]
   rwa [hW, expect_comp_snd (fun v ↦ H.walk f v ^ 2), expect_comp_snd (fun v ↦ f v ^ 2)] at h
 
 /-- The spectral expansion of `G ⊗ H` is the larger of those of `G` and `H`
-[ReingoldVadhanWigderson2002, Proposition 2.4], when neither factor is empty or without
-edges. -/
+[Reingold, Vadhan and Wigderson, Proposition 2.4][ReingoldVadhanWigderson2002], when neither factor
+is empty or without edges. -/
 theorem spectralExpansion_tensor [Nonempty V] [Nonempty D] [Nonempty V'] [Nonempty D'] :
     (G.tensor H).spectralExpansion = max G.spectralExpansion H.spectralExpansion :=
   (G.spectralExpansion_tensor_le H).antisymm
@@ -418,13 +421,14 @@ section ZigZag
 
 variable {V D E : Type*} (G : RotationMap V D) (H : RotationMap D E)
 
-/-- The **zig-zag product** `G ⓩ H` [ReingoldVadhanWigderson2002, Definition 3.1]
-[HooryLinialWigderson2006, Section 9.3] of a `D`-regular graph `G` on `V` with a graph `H` on the
-labels `D` of `G`. Its vertices are the pairs `(v, k)`, the `k`-th edge at `v`, grouped into the
-cloud `{v} × D` of `v`, and its labels are pairs of labels of `H`. The edge `(i, j)` at `(v, k)`
-takes the edge `i` of `H` from `k` to `k'` inside the cloud ("zig"), crosses the `k'`-th edge of
-`G` from `v` to `(w, ℓ')`, where it is the `ℓ'`-th edge at `w`, and takes the edge `j` of `H`
-from `ℓ'` to `ℓ` inside the cloud of `w` ("zag"), ending at `(w, ℓ)`. -/
+/-- The **zig-zag product** `G ⓩ H`
+[Reingold, Vadhan and Wigderson, Definition 3.1][ReingoldVadhanWigderson2002]
+[Hoory, Linial and Wigderson, Section 9.3][HooryLinialWigderson2006] of a `D`-regular graph `G` on
+`V` with a graph `H` on the labels `D` of `G`. Its vertices are the pairs `(v, k)`, the `k`-th edge
+at `v`, grouped into the cloud `{v} × D` of `v`, and its labels are pairs of labels of `H`. The edge
+`(i, j)` at `(v, k)` takes the edge `i` of `H` from `k` to `k'` inside the cloud ("zig"), crosses
+the `k'`-th edge of `G` from `v` to `(w, ℓ')`, where it is the `ℓ'`-th edge at `w`, and takes the
+edge `j` of `H` from `ℓ'` to `ℓ` inside the cloud of `w` ("zag"), ending at `(w, ℓ)`. -/
 def zigzag : RotationMap (V × D) (E × E) where
   rot p :=
     let a := H.rot (p.1.2, p.2.1)
@@ -433,7 +437,8 @@ def zigzag : RotationMap (V × D) (E × E) where
     ((b.1, c.1), (c.2, a.2))
   rot_involutive p := by simp
 
-/-- The rotation map of `G ⓩ H` [ReingoldVadhanWigderson2002, Definition 3.1]: with
+/-- The rotation map of `G ⓩ H`
+[Reingold, Vadhan and Wigderson, Definition 3.1][ReingoldVadhanWigderson2002]: with
 `(k', i') = H.rot (k, i)`, `(w, ℓ') = G.rot (v, k')` and `(ℓ, j') = H.rot (ℓ', j)`, the edge
 `(i, j)` at `(v, k)` is the edge `(j', i')` at `(w, ℓ)`. -/
 theorem rot_zigzag (v : V) (k : D) (i j : E) :
@@ -450,9 +455,10 @@ theorem neighbor_zigzag (p : V × D) (i : E × E) :
 
 variable [Fintype E]
 
-/-- The walk operator of `G ⓩ H` is `B̃ Ã B̃` [ReingoldVadhanWigderson2002, Section 4.1], where
-`B̃ = I ⊗ W_H` is the walk operator of `H` on every cloud and `Ã` is the permutation of the
-vertices `V × D` by the rotation map of `G`. -/
+/-- The walk operator of `G ⓩ H` is `B̃ Ã B̃`
+[Reingold, Vadhan and Wigderson, Section 4.1][ReingoldVadhanWigderson2002], where `B̃ = I ⊗ W_H` is
+the walk operator of `H` on every cloud and `Ã` is the permutation of the vertices `V × D` by the
+rotation map of `G`. -/
 theorem walk_zigzag :
     (G.zigzag H).walk =
       ((refl V).tensor H).walk ∘ₗ LinearMap.funLeft ℝ ℝ G.rot ∘ₗ ((refl V).tensor H).walk :=
@@ -586,9 +592,10 @@ private theorem spectralExpansion_zigzag_le_of_expect_mul_le {c : ℝ} (hc : 0 �
   · simp
   exact expect_sq_le_of_expect_mul_le (h _ f hf)
 
-/-- **The zig-zag theorem** [ReingoldVadhanWigderson2002, Theorem 3.2]
-[HooryLinialWigderson2006, Section 9.3]: the spectral expansion of `G ⓩ H` is at most
-`λ(G) + λ(H) + λ(H) ^ 2`. -/
+/-- **The zig-zag theorem**
+[Reingold, Vadhan and Wigderson, Theorem 3.2][ReingoldVadhanWigderson2002]
+[Hoory, Linial and Wigderson, Section 9.3][HooryLinialWigderson2006]: the spectral expansion of
+`G ⓩ H` is at most `λ(G) + λ(H) + λ(H) ^ 2`. -/
 theorem spectralExpansion_zigzag_le :
     (G.zigzag H).spectralExpansion ≤
       G.spectralExpansion + H.spectralExpansion + H.spectralExpansion ^ 2 := by
@@ -615,7 +622,7 @@ theorem spectralExpansion_zigzag_le_one_sub :
   linarith
 
 /-- The zig-zag product of two graphs of spectral expansion less than `1` has spectral expansion
-less than `1` [ReingoldVadhanWigderson2002, Theorem 3.2]. -/
+less than `1` [Reingold, Vadhan and Wigderson, Theorem 3.2][ReingoldVadhanWigderson2002]. -/
 theorem spectralExpansion_zigzag_lt_one (hG : G.spectralExpansion < 1)
     (hH : H.spectralExpansion < 1) : (G.zigzag H).spectralExpansion < 1 :=
   (G.spectralExpansion_zigzag_le_one_sub H).trans_lt
@@ -628,11 +635,12 @@ section BalancedReplacement
 variable {V D E : Type*} (G : RotationMap V D) (H : RotationMap D E)
 
 /-- The **balanced replacement product** of a `D`-regular graph `G` on `V` with a graph `H` on the
-labels `D` of `G` [ReingoldVadhanWigderson2002, Definition 6.6] [AroraBarak09, Section 21.3]. Every
-vertex `v` of `G` is replaced by the copy `{v} × D` of `H`. At `(v, k)`, the edge `Sum.inl i` is
-the edge `i` of `H` at `k` inside the copy, and the edges `Sum.inr i`, one for every label `i` of
-`H`, all cross the `k`-th edge of `G` at `v`, to `G.rot (v, k)`. So a step of the random walk
-takes a step in `H` or crosses an edge of `G` with probability `1 / 2` each. -/
+labels `D` of `G` [Reingold, Vadhan and Wigderson, Definition 6.6][ReingoldVadhanWigderson2002]
+[Arora and Barak, Section 21.3][AroraBarak09]. Every vertex `v` of `G` is replaced by the copy
+`{v} × D` of `H`. At `(v, k)`, the edge `Sum.inl i` is the edge `i` of `H` at `k` inside the copy,
+and the edges `Sum.inr i`, one for every label `i` of `H`, all cross the `k`-th edge of `G` at `v`,
+to `G.rot (v, k)`. So a step of the random walk takes a step in `H` or crosses an edge of `G` with
+probability `1 / 2` each. -/
 def balancedReplacement : RotationMap (V × D) (E ⊕ E) where
   rot
     | (p, .inl i) => ((p.1, (H.rot (p.2, i)).1), .inl (H.rot (p.2, i)).2)
@@ -657,8 +665,9 @@ theorem rot_balancedReplacement_inr (p : V × D) (i : E) :
 variable [Fintype E]
 
 /-- When `H` has edges, the walk operator of the balanced replacement product is `(B̃ + Ã) / 2`
-[ReingoldVadhanWigderson2002, Theorem 6.7], where `B̃ = I ⊗ W_H` is the walk operator of `H` on
-every copy and `Ã` permutes the vertices `V × D` by the rotation map of `G`. -/
+[Reingold, Vadhan and Wigderson, Theorem 6.7][ReingoldVadhanWigderson2002], where `B̃ = I ⊗ W_H` is
+the walk operator of `H` on every copy and `Ã` permutes the vertices `V × D` by the rotation map of
+`G`. -/
 theorem walk_balancedReplacement [Nonempty E] :
     (G.balancedReplacement H).walk =
       (2⁻¹ : ℝ) • (((refl V).tensor H).walk + LinearMap.funLeft ℝ ℝ G.rot) :=
@@ -728,8 +737,8 @@ private theorem expect_mul_walk_balancedReplacement_pow_three_le [Nonempty E] (h
       linarith
 
 /-- The cube of the spectral expansion of the balanced replacement product is at most
-`7 / 8 + λ(G ⓩ H) / 8` [ReingoldVadhanWigderson2002, Theorem 6.7]: the zig-zag walk is one of the
-eight terms of the cube of its walk operator. -/
+`7 / 8 + λ(G ⓩ H) / 8` [Reingold, Vadhan and Wigderson, Theorem 6.7][ReingoldVadhanWigderson2002]:
+the zig-zag walk is one of the eight terms of the cube of its walk operator. -/
 theorem spectralExpansion_balancedReplacement_pow_three_le :
     (G.balancedReplacement H).spectralExpansion ^ 3 ≤
       7 / 8 + (G.zigzag H).spectralExpansion / 8 := by
@@ -766,8 +775,9 @@ theorem spectralExpansion_balancedReplacement_le :
   refine (pow_le_pow_iff_left₀ (spectralExpansion_nonneg _) (by linarith) three_ne_zero).1 ?_
   nlinarith [mul_nonneg (sq_nonneg x) (by linarith : (0 : ℝ) ≤ 72 - x)]
 
-/-- The balanced replacement product of two graphs of spectral expansion less than `1` has
-spectral expansion less than `1` [ReingoldVadhanWigderson2002, Theorem 6.7]. -/
+/-- The balanced replacement product of two graphs of spectral expansion less than `1` has spectral
+expansion less than `1` [Reingold, Vadhan and Wigderson, Theorem 6.7][ReingoldVadhanWigderson2002].
+-/
 theorem spectralExpansion_balancedReplacement_lt_one (hG : G.spectralExpansion < 1)
     (hH : H.spectralExpansion < 1) : (G.balancedReplacement H).spectralExpansion < 1 := by
   refine (G.spectralExpansion_balancedReplacement_le H).trans_lt (sub_lt_self 1 ?_)

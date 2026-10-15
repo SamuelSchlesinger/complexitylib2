@@ -17,21 +17,20 @@ import Mathlib.Algebra.Order.BigOperators.Expect
 # Rotation maps and the spectral expansion of regular graphs
 
 A `D`-regular undirected multigraph on `V`, with parallel edges and self-loops allowed, is presented
-by its *rotation map* [ReingoldVadhanWigderson2002] [AroraBarak09, Section 21.3]
-`rot : V × D → V × D`: `rot (v, i) = (w, j)`
-when the `i`-th edge at `v` leads to `w` and is the `j`-th edge at `w`. Following an edge back
-returns to where it started, so `rot` is an involution; conversely every involution of `V × D` is
-the rotation map of a `D`-regular multigraph. Vertices and labels are types rather than numbers
-because graph products build graphs whose vertices and labels are pairs or tuples of those of
-their factors.
+by its *rotation map* [ReingoldVadhanWigderson2002] [Arora and Barak, Section 21.3][AroraBarak09]
+`rot : V × D → V × D`: `rot (v, i) = (w, j)` when the `i`-th edge at `v` leads to `w` and is the
+`j`-th edge at `w`. Following an edge back returns to where it started, so `rot` is an involution;
+conversely every involution of `V × D` is the rotation map of a `D`-regular multigraph. Vertices and
+labels are types rather than numbers because graph products build graphs whose vertices and labels
+are pairs or tuples of those of their factors.
 
 The random walk on `G` moves from `v` along a uniformly random edge. Its action on real functions
 is the walk operator `G.walk`, which averages a function over the neighbors of each vertex; it
 fixes constants, preserves expectations, is self-adjoint for the uniform inner product
 `𝔼 v, f v * g v` and does not increase `𝔼 v, f v ^ 2`.
 
-The spectral expansion `λ(G)` [AroraBarak09, Section 21.1] is the operator norm of the walk
-operator on the functions orthogonal to the constants: the smallest `c ≥ 0` with
+The spectral expansion `λ(G)` [Arora and Barak, Section 21.1][AroraBarak09] is the operator norm of
+the walk operator on the functions orthogonal to the constants: the smallest `c ≥ 0` with
 `𝔼 v, G.walk f v ^ 2 ≤ c ^ 2 * 𝔼 v, f v ^ 2` for all `f` of expectation zero
 (`spectralExpansion_le_iff`). It is the largest absolute value of an eigenvalue of the walk operator
 on such functions, but no spectral theory is needed here: everything below is proved from this
@@ -73,8 +72,8 @@ open Finset
 open scoped BigOperators
 
 /-- A `D`-regular undirected multigraph on `V`, parallel edges and self-loops allowed, presented by
-its rotation map [ReingoldVadhanWigderson2002] [AroraBarak09, Section 21.3]: `rot (v, i) = (w, j)`
-when the `i`-th edge at `v` leads to `w` and is the `j`-th edge at `w`. -/
+its rotation map [ReingoldVadhanWigderson2002] [Arora and Barak, Section 21.3][AroraBarak09]:
+`rot (v, i) = (w, j)` when the `i`-th edge at `v` leads to `w` and is the `j`-th edge at `w`. -/
 @[ext]
 structure RotationMap (V D : Type*) where
   /-- The rotation map, sending the `i`-th edge at `v` to the same edge seen from its other end. -/
@@ -111,7 +110,7 @@ variable [DecidableEq V] [Fintype D]
 
 /-- The edges from `S` to `T`, as the darts `(v, i)` with `v ∈ S` whose `i`-th edge leads into `T`.
 An edge between two vertices of `S ∩ T` is counted once from each end, as in the edge counts
-`|E(S, T)|` of [HooryLinialWigderson2006, Section 2.1]. -/
+`|E(S, T)|` of [Hoory, Linial and Wigderson, Section 2.1][HooryLinialWigderson2006]. -/
 def interedges (S T : Finset V) : Finset (V × D) :=
   {p ∈ S ×ˢ univ | G.neighbor p.1 p.2 ∈ T}
 
@@ -243,9 +242,9 @@ section SpectralExpansion
 variable [Fintype V] [Fintype D]
 
 /-- The **spectral expansion** `λ(G)`: the operator norm, for the Euclidean norm, of the walk
-operator on the functions orthogonal to the constants [AroraBarak09, Section 21.1]. As the walk
-operator is self-adjoint, this is the largest absolute value of its eigenvalues on those functions,
-but nothing here depends on that: `λ(G)` is used through its characterization
+operator on the functions orthogonal to the constants [Arora and Barak, Section 21.1][AroraBarak09].
+As the walk operator is self-adjoint, this is the largest absolute value of its eigenvalues on those
+functions, but nothing here depends on that: `λ(G)` is used through its characterization
 `spectralExpansion_le_iff`. -/
 noncomputable def spectralExpansion : ℝ :=
   ‖(LinearMap.toContinuousLinearMap

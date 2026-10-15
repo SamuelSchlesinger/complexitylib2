@@ -17,20 +17,23 @@ import Mathlib.Algebra.QuadraticDiscriminant
 The edge expansion `h(G)` of a regular graph measures combinatorially how well it is connected: it
 is the least number of edges leaving a set of at most half of the vertices, per vertex of the set.
 Its spectral counterpart is the gap `1 - λ₂(G)` between the two largest eigenvalues of the walk
-operator. The **discrete Cheeger inequality** [HooryLinialWigderson2006, Theorem 2.4]
-[AroraBarak09, Section 21.2] says that the two agree up to a square: for a `d`-regular graph,
+operator. The **discrete Cheeger inequality**
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]
+[Arora and Barak, Section 21.2][AroraBarak09] says that the two agree up to a square: for a
+`d`-regular graph,
 
 `d (1 - λ₂(G)) / 2 ≤ h(G) ≤ d √(2 (1 - λ₂(G)))`.
 
-The edge expansion `h(G)` (`edgeExpansion`) is normalized as in [HooryLinialWigderson2006,
-Definition 2.1]: it is the minimum of `e(S, Sᶜ) / |S|` over the nonempty sets `S` of at most half
-of the vertices, where `e(S, Sᶜ)` counts the edges between `S` and its complement;
-[AroraBarak09, Section 21.2] divides it by `d`. The second eigenvalue `λ₂(G)`
-(`secondEigenvalue`) is the supremum of the Rayleigh quotient `𝔼 f · G.walk f / 𝔼 f²` over the
-nonzero functions `f` of expectation zero. It lies between `-λ(G)` and `λ(G)`, and equals the
-spectral expansion `λ(G)` when the walk operator is positive semidefinite. Both are defined
-without spectral theory and used through their characterizations `secondEigenvalue_le_iff` and
-`le_edgeExpansion_iff`; on fewer than two vertices both are `0` by convention.
+The edge expansion `h(G)` (`edgeExpansion`) is normalized as in
+[Hoory, Linial and Wigderson, Definition 2.1][HooryLinialWigderson2006]: it is the minimum of
+`e(S, Sᶜ) / |S|` over the nonempty sets `S` of at most half of the vertices, where `e(S, Sᶜ)` counts
+the edges between `S` and its complement; [Arora and Barak, Section 21.2][AroraBarak09] divides it
+by `d`. The second eigenvalue `λ₂(G)` (`secondEigenvalue`) is the supremum of the Rayleigh quotient
+`𝔼 f · G.walk f / 𝔼 f²` over the nonzero functions `f` of expectation zero. It lies between `-λ(G)`
+and `λ(G)`, and equals the spectral expansion `λ(G)` when the walk operator is positive
+semidefinite. Both are defined without spectral theory and used through their characterizations
+`secondEigenvalue_le_iff` and `le_edgeExpansion_iff`; on fewer than two vertices both are `0` by
+convention.
 
 The easy half is the one-sided expander mixing lemma
 `le_card_interedges_compl_of_expect_mul_walk_le`. The hard half is proved for every function `f`
@@ -249,11 +252,12 @@ section EdgeExpansion
 
 variable [DecidableEq V]
 
-/-- The **edge expansion** `h(G)` [HooryLinialWigderson2006, Definition 2.1]: the least ratio
-`e(S, Sᶜ) / |S|` of the number `e(S, Sᶜ)` of edges leaving `S` to the size of `S`, over the
-nonempty sets `S` of at most half of the vertices. It counts edges, so `0 ≤ h(G) ≤ |D|`;
-[AroraBarak09, Section 21.2] divides it by the degree `|D|` instead. When `V` has at most one
-vertex there is no such set, and `h(G) = 0` by convention. -/
+/-- The **edge expansion** `h(G)`
+[Hoory, Linial and Wigderson, Definition 2.1][HooryLinialWigderson2006]: the least ratio
+`e(S, Sᶜ) / |S|` of the number `e(S, Sᶜ)` of edges leaving `S` to the size of `S`, over the nonempty
+sets `S` of at most half of the vertices. It counts edges, so `0 ≤ h(G) ≤ |D|`;
+[Arora and Barak, Section 21.2][AroraBarak09] divides it by the degree `|D|` instead. When `V` has
+at most one vertex there is no such set, and `h(G) = 0` by convention. -/
 noncomputable def edgeExpansion : ℝ :=
   ⨅ S : {S : Finset V // S.Nonempty ∧ 2 * #S ≤ Fintype.card V},
     (#(G.interedges S.1 S.1ᶜ) : ℝ) / #S.1
@@ -391,8 +395,10 @@ section Cheeger
 
 variable [DecidableEq V]
 
-/-- **The easy half of Cheeger's inequality** [HooryLinialWigderson2006, Theorem 2.4]
-[AroraBarak09, Section 21.2]: on at least two vertices, `|D| (1 - λ₂(G)) / 2 ≤ h(G)`. -/
+/-- **The easy half of Cheeger's inequality**
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]
+[Arora and Barak, Section 21.2][AroraBarak09]: on at least two vertices,
+`|D| (1 - λ₂(G)) / 2 ≤ h(G)`. -/
 theorem card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion [Nontrivial V] :
     Fintype.card D * (1 - G.secondEigenvalue) / 2 ≤ G.edgeExpansion := by
   refine G.le_edgeExpansion_iff.2 fun S hS ↦ le_trans ?_
@@ -535,11 +541,12 @@ private theorem sq_mul_sum_sq_le_of_sum_eq_zero {c : ℝ} (hc₀ : 0 ≤ c)
   have hd : (0 : ℝ) ≤ Fintype.card D := Nat.cast_nonneg _
   nlinarith [mul_le_mul_of_nonneg_left hsq (sq_nonneg c), mul_le_mul_of_nonneg_left hdir hd]
 
-/-- **Edge expansion bounds the second eigenvalue** [HooryLinialWigderson2006, Theorem 2.4]
-[AroraBarak09, Section 21.2]: if `c ≥ 0` and at least `c |S|` edges leave every set `S` of at most
-half of the vertices, then `𝔼 v, f v * G.walk f v ≤ (1 - c ^ 2 / (2 |D| ^ 2)) 𝔼 f²` for every
-`f` of expectation zero. This is the hard half of the discrete Cheeger inequality in one-sided
-form, converse to `le_card_interedges_compl_of_expect_mul_walk_le`. -/
+/-- **Edge expansion bounds the second eigenvalue**
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]
+[Arora and Barak, Section 21.2][AroraBarak09]: if `c ≥ 0` and at least `c |S|` edges leave every set
+`S` of at most half of the vertices, then `𝔼 v, f v * G.walk f v ≤ (1 - c ^ 2 / (2 |D| ^ 2)) 𝔼 f²`
+for every `f` of expectation zero. This is the hard half of the discrete Cheeger inequality in
+one-sided form, converse to `le_card_interedges_compl_of_expect_mul_walk_le`. -/
 theorem expect_mul_walk_le_of_mul_card_le_card_interedges_compl {c : ℝ} (hc₀ : 0 ≤ c)
     (hc : ∀ S : Finset V, 2 * #S ≤ Fintype.card V → c * #S ≤ #(G.interedges S Sᶜ))
     {f : V → ℝ} (hf : 𝔼 v, f v = 0) :
@@ -566,8 +573,9 @@ theorem expect_mul_walk_le_of_mul_card_le_card_interedges_compl {c : ℝ} (hc₀
     exact key'
   linarith
 
-/-- **The hard half of Cheeger's inequality** [HooryLinialWigderson2006, Theorem 2.4]
-[AroraBarak09, Section 21.2], as a bound on the second eigenvalue:
+/-- **The hard half of Cheeger's inequality**
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]
+[Arora and Barak, Section 21.2][AroraBarak09], as a bound on the second eigenvalue:
 `λ₂(G) ≤ 1 - h(G) ^ 2 / (2 |D| ^ 2)`. -/
 theorem secondEigenvalue_le_one_sub_edgeExpansion_sq_div :
     G.secondEigenvalue ≤ 1 - G.edgeExpansion ^ 2 / (2 * Fintype.card D ^ 2) := by
@@ -579,8 +587,9 @@ theorem secondEigenvalue_le_one_sub_edgeExpansion_sq_div :
     G.expect_mul_walk_le_of_mul_card_le_card_interedges_compl G.edgeExpansion_nonneg
       fun _ ↦ G.edgeExpansion_mul_card_le
 
-/-- **The hard half of Cheeger's inequality** [HooryLinialWigderson2006, Theorem 2.4]
-[AroraBarak09, Section 21.2], squared: `h(G) ^ 2 ≤ 2 |D| ^ 2 (1 - λ₂(G))`. -/
+/-- **The hard half of Cheeger's inequality**
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]
+[Arora and Barak, Section 21.2][AroraBarak09], squared: `h(G) ^ 2 ≤ 2 |D| ^ 2 (1 - λ₂(G))`. -/
 theorem edgeExpansion_sq_le :
     G.edgeExpansion ^ 2 ≤ 2 * Fintype.card D ^ 2 * (1 - G.secondEigenvalue) := by
   rcases (Fintype.card D).eq_zero_or_pos with hD | hD
@@ -592,8 +601,9 @@ theorem edgeExpansion_sq_le :
   rw [← div_le_iff₀' (by positivity)]
   linarith
 
-/-- **The hard half of Cheeger's inequality** [HooryLinialWigderson2006, Theorem 2.4]
-[AroraBarak09, Section 21.2]: `h(G) ≤ |D| √(2 (1 - λ₂(G)))`. -/
+/-- **The hard half of Cheeger's inequality**
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]
+[Arora and Barak, Section 21.2][AroraBarak09]: `h(G) ≤ |D| √(2 (1 - λ₂(G)))`. -/
 theorem edgeExpansion_le_card_mul_sqrt :
     G.edgeExpansion ≤ Fintype.card D * √(2 * (1 - G.secondEigenvalue)) := by
   rw [← Real.sqrt_sq (Nat.cast_nonneg (Fintype.card D)), ← Real.sqrt_mul (sq_nonneg _),

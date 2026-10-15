@@ -23,12 +23,13 @@ import Mathlib.Tactic.Ring
 /-!
 # Pairwise independent hash families
 
-A family of functions `h i : X → Y`, indexed by a seed `i` drawn uniformly from a finite type
-`ι`, is *pairwise independent* (`Cslib.Probability.IsPairwiseIndependentHash`) if each value
-`h i x` is uniformly distributed on `Y` and the values at any two distinct points are independent
-[AroraBarak09, Definition 8.14]. Wegman and Carter call such families *strongly universal₂*
-[WegmanCarter1981], after the universal families of [CarterWegman1979]. Probabilities over the
-seed are densities `Finset.dens` of sets of seeds, and averages are uniform expectations `𝔼 i`.
+A family of functions `h i : X → Y`, indexed by a seed `i` drawn uniformly from a finite type `ι`,
+is *pairwise independent* (`Cslib.Probability.IsPairwiseIndependentHash`) if each value `h i x` is
+uniformly distributed on `Y` and the values at any two distinct points are independent
+[Arora and Barak, Definition 8.14][AroraBarak09]. Wegman and Carter call such families *strongly
+universal₂* [WegmanCarter1981], after the universal families of [CarterWegman1979]. Probabilities
+over the seed are densities `Finset.dens` of sets of seeds, and averages are uniform expectations
+`𝔼 i`.
 
 Fix a finite set `S ⊆ X` and a target `y : Y`. The size `N i = #{x ∈ S | h i x = y}` of the
 *cell* of `y` has mean `μ = #S / |Y|` and second factorial moment
@@ -40,14 +41,14 @@ inequality bounds its deviations. For the probability that `S` hits `y`:
 * `S` misses `y` with probability at most `1 / μ`
   (`IsPairwiseIndependentHash.dens_filter_notMem_image_le`), so `S` hits `y` with probability at
   least `1 - 1 / k` when `#S ≥ k |Y|`;
-* it is at least `μ - #S (#S - 1) / (2 |Y|²)` by inclusion–exclusion, hence at least `3 μ / 4`
-  when `2 #S ≤ |Y|`: the analysis of the set lower bound protocol of Goldwasser and Sipser
-  [GoldwasserSipser1986] in [AroraBarak09, Section 8.2].
+* it is at least `μ - #S (#S - 1) / (2 |Y|²)` by inclusion–exclusion, hence at least `3 μ / 4` when
+  `2 #S ≤ |Y|`: the analysis of the set lower bound protocol of Goldwasser and Sipser
+  [GoldwasserSipser1986] in [Arora and Barak, Section 8.2][AroraBarak09].
 
 The same argument shows that exactly one element of `S` hits `y` with probability at least
-`μ - #S (#S - 1) / |Y|²`, hence at least `3 / 16` when `|Y| ≤ 4 #S ≤ 2 |Y|`: the lemma of
-Valiant and Vazirani [ValiantVazirani1986] in [AroraBarak09, Section 17.4], where the bound is
-`1 / 8`.
+`μ - #S (#S - 1) / |Y|²`, hence at least `3 / 16` when `|Y| ≤ 4 #S ≤ 2 |Y|`: the lemma of Valiant
+and Vazirani [ValiantVazirani1986] in [Arora and Barak, Section 17.4][AroraBarak09], where the bound
+is `1 / 8`.
 
 ## Main definitions
 
@@ -314,7 +315,7 @@ theorem sub_le_dens_filter_mem_image [Field 𝕜] [LinearOrder 𝕜] [IsStrictOr
 
 /-- **The set lower bound protocol** of Goldwasser and Sipser: if `2 #S ≤ |Y|`, then `S` hits `y`
 with probability at least three quarters of the mean cell size `#S / |Y|`
-[AroraBarak09, Section 8.2]. -/
+[Arora and Barak, Section 8.2][AroraBarak09]. -/
 theorem three_quarters_mul_le_dens_filter_mem_image (hh : IsPairwiseIndependentHash h)
     {S : Finset X} (y : Y) (hS : 2 * #S ≤ Fintype.card Y) :
     3 / 4 * (#S / Fintype.card Y : ℚ≥0) ≤ dens {i | y ∈ S.image (h i)} := by
@@ -346,7 +347,7 @@ theorem sub_le_dens_filter_card_filter_eq_one [Field 𝕜] [LinearOrder 𝕜] [I
     _ = _ := expect_ite_eq_dens _
 
 /-- **The Valiant–Vazirani lemma**: if `|Y| ≤ 4 #S ≤ 2 |Y|`, then exactly one element of `S` hits
-`y` with probability at least `3 / 16` [AroraBarak09, Section 17.4]. -/
+`y` with probability at least `3 / 16` [Arora and Barak, Section 17.4][AroraBarak09]. -/
 theorem three_sixteenths_le_dens_filter_card_filter_eq_one (hh : IsPairwiseIndependentHash h)
     {S : Finset X} (y : Y) (hS₁ : Fintype.card Y ≤ 4 * #S) (hS₂ : 2 * #S ≤ Fintype.card Y) :
     3 / 16 ≤ dens {i | #{x ∈ S | h i x = y} = 1} := by

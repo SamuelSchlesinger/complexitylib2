@@ -14,21 +14,22 @@ public import Mathlib.Data.Fin.Tuple.Take
 /-!
 # The next-bit test
 
-A generator `G` with `m`-bit outputs is unpredictable when no predictor, shown the first `i` bits
-of a generated output, guesses bit `i` with probability much better than `1 / 2`
-([BonehShoup2023], Attack Game 3.2 and Definition 3.3). This file proves that unpredictability is
-equivalent to security in the sense of Attack Game 3.1, up to a factor of `m` in the error. This
-is the next-bit theorem usually credited to Yao; the proof follows [BonehShoup2023], Section 3.5
-(see also [AroraBarak09], Chapter 9).
+A generator `G` with `m`-bit outputs is unpredictable when no predictor, shown the first `i` bits of
+a generated output, guesses bit `i` with probability much better than `1 / 2`
+[Boneh and Shoup, Attack Game 3.2 and Definition 3.3][BonehShoup2023]. This file proves that
+unpredictability is equivalent to security in the sense of Attack Game 3.1, up to a factor of `m` in
+the error. This is the next-bit theorem usually credited to Yao; the proof follows
+[Boneh and Shoup, Section 3.5][BonehShoup2023] (see also
+[Arora and Barak, Chapter 9][AroraBarak09]).
 
 The proof is a hybrid argument. The `k`-th hybrid gives a test the first `k` bits of a generated
 output followed by uniform bits. Running the test on the `0`-th hybrid is the ideal experiment of
 Attack Game 3.1 and running it on the `m`-th is the real experiment, so the difference of the two
-acceptance probabilities telescopes into the gaps between adjacent hybrids. The predictor for
-bit `i` built from a test pads the first `i` bits with a uniform candidate bit and uniform later
-bits, runs the test, and keeps the candidate if the test accepts and flips it otherwise. By the
-distinguisher/predictor lemma ([BonehShoup2023], Lemma 3.5) it is correct with probability
-exactly `1 / 2` plus the `i`-th hybrid gap.
+acceptance probabilities telescopes into the gaps between adjacent hybrids. The predictor for bit
+`i` built from a test pads the first `i` bits with a uniform candidate bit and uniform later bits,
+runs the test, and keeps the candidate if the test accepts and flips it otherwise. By the
+distinguisher/predictor lemma [Boneh and Shoup, Lemma 3.5][BonehShoup2023] it is correct with
+probability exactly `1 / 2` plus the `i`-th hybrid gap.
 
 Here the position `i` is a parameter of the prediction game, whereas the adversary of Attack Game
 3.2 chooses it. A predictor that chooses its position at random wins with the average of the
@@ -85,7 +86,7 @@ section Guess
 variable {S : Type*}
 
 /-- Guess a bit with a randomized distinguisher `d`: draw a uniform candidate bit `r`, run `d r`,
-and output `r` if it accepts and `!r` if it rejects ([BonehShoup2023], Lemma 3.5). -/
+and output `r` if it accepts and `!r` if it rejects [Boneh and Shoup, Lemma 3.5][BonehShoup2023]. -/
 noncomputable def guessOfDistinguisher (d : Bool → PMF Bool) : PMF Bool :=
   (uniformOfFintype Bool).bind fun r => (d r).map fun a => if a then r else !r
 
@@ -119,9 +120,9 @@ private theorem bind_apply_add_of_forall {α β : Type*} (μ : PMF α) {f g h : 
   simp_rw [← mul_add, hfg, mul_add]
   rw [ENNReal.tsum_add, ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
 
-/-- **The distinguisher/predictor lemma** ([BonehShoup2023], Lemma 3.5). Draw `x` from `μ`. The
-guess `guessOfDistinguisher (d x)` equals `target x` with probability `1 / 2`, plus the
-probability that `d x` accepts `target x`, minus the probability that `d x` accepts an
+/-- **The distinguisher/predictor lemma** [Boneh and Shoup, Lemma 3.5][BonehShoup2023]. Draw `x`
+from `μ`. The guess `guessOfDistinguisher (d x)` equals `target x` with probability `1 / 2`, plus
+the probability that `d x` accepts `target x`, minus the probability that `d x` accepts an
 independent uniform bit. -/
 theorem toReal_bind_guessOfDistinguisher (μ : PMF S) (target : S → Bool)
     (d : S → Bool → PMF Bool) :
@@ -191,7 +192,7 @@ section Hybrid
 variable {Seed : Type*} [Fintype Seed] [Nonempty Seed] {m : ℕ}
 
 /-- The `k`-th hybrid: the first `k` bits of the generator's output on a uniform seed, followed by
-independent uniform bits. It is Hybrid `m - k` of [BonehShoup2023], Section 3.5. -/
+independent uniform bits. It is Hybrid `m - k` of [Boneh and Shoup, Section 3.5.][BonehShoup2023] -/
 noncomputable def Generator.hybridDist (G : Generator Seed (Fin m → Bool)) (k : ℕ) :
     PMF (Fin m → Bool) :=
   G.outputDist.bind fun y =>
@@ -294,18 +295,18 @@ noncomputable def Generator.predictionAdvantage (G : Generator Seed (Fin m → B
     (i : Fin m) (predictor : Adversary (Fin i → Bool)) : ℝ :=
   |(G.predictionExperiment i predictor true).toReal - 1 / 2|
 
-/-- Concrete unpredictability against admissible predictors ([BonehShoup2023], Definition 3.3
-with an explicit error): every admissible predictor for every position has advantage at most `δ`.
-As for `Cslib.Crypto.PRG.Generator.Secure`, the predicate `Admissible` is supplied by the caller;
-`fun _ _ => True` allows arbitrary predictors. -/
+/-- Concrete unpredictability against admissible predictors
+[Boneh and Shoup, Definition 3.3 with an explicit error][BonehShoup2023]: every admissible predictor
+for every position has advantage at most `δ`. As for `Cslib.Crypto.PRG.Generator.Secure`, the
+predicate `Admissible` is supplied by the caller; `fun _ _ => True` allows arbitrary predictors. -/
 def Generator.Unpredictable (G : Generator Seed (Fin m → Bool))
     (Admissible : (i : Fin m) → Adversary (Fin i → Bool) → Prop) (δ : ℝ≥0) : Prop :=
   ∀ i predictor, Admissible i predictor → G.predictionAdvantage i predictor ≤ δ
 
-/-- The predictor for bit `i` built from a test, following the proof of [BonehShoup2023],
-Theorem 3.6. Given the first `i` bits `x`, it applies `Cslib.Crypto.PRG.guessOfDistinguisher` to
-the distinguisher that, on a candidate bit `r`, runs the test on `x`, followed by `r` at
-position `i`, followed by uniform bits. -/
+/-- The predictor for bit `i` built from a test, following the proof of
+[Boneh and Shoup, Theorem 3.6.][BonehShoup2023] Given the first `i` bits `x`, it applies
+`Cslib.Crypto.PRG.guessOfDistinguisher` to the distinguisher that, on a candidate bit `r`, runs the
+test on `x`, followed by `r` at position `i`, followed by uniform bits. -/
 noncomputable def nextBitPredictor (adversary : Adversary (Fin m → Bool)) (i : Fin m) :
     Adversary (Fin i → Bool) := fun x =>
   guessOfDistinguisher fun r => (uniformOfFintype (Fin m → Bool)).bind fun z =>
@@ -398,9 +399,9 @@ theorem Generator.exists_div_le_predictionAdvantage (G : Generator Seed (Fin m �
       exact G.advantage_le_sum_predictionAdvantage adversary)
   exact ⟨i, hi⟩
 
-/-- **The next-bit theorem** in the one-sided form of [AroraBarak09], Chapter 9. If `0 < m` and a
-test accepts in the real experiment with probability at least `ε` more than in the ideal
-experiment, then for some position `i` the predictor built from the test guesses bit `i`
+/-- **The next-bit theorem** in the one-sided form of [Arora and Barak, Chapter 9.][AroraBarak09] If
+`0 < m` and a test accepts in the real experiment with probability at least `ε` more than in the
+ideal experiment, then for some position `i` the predictor built from the test guesses bit `i`
 correctly with probability at least `1 / 2 + ε / m`. -/
 theorem Generator.exists_half_add_div_le_predictionExperiment
     (G : Generator Seed (Fin m → Bool)) (adversary : Adversary (Fin m → Bool)) (hm : 0 < m)
@@ -413,8 +414,8 @@ theorem Generator.exists_half_add_div_le_predictionExperiment
   rw [G.toReal_predictionExperiment_nextBitPredictor]
   linarith
 
-/-- **Unpredictability implies security** ([BonehShoup2023], Theorem 3.6). If every admissible
-predictor has advantage at most `δ`, and the predictors built from admissible tests are
+/-- **Unpredictability implies security** [Boneh and Shoup, Theorem 3.6][BonehShoup2023]. If every
+admissible predictor has advantage at most `δ`, and the predictors built from admissible tests are
 admissible, then every admissible test has advantage at most `m * δ`. -/
 theorem Generator.Unpredictable.secure {G : Generator Seed (Fin m → Bool)}
     {Admissible : Adversary (Fin m → Bool) → Prop}
@@ -430,9 +431,9 @@ theorem Generator.Unpredictable.secure {G : Generator Seed (Fin m → Bool)}
     _ ≤ ∑ _i : Fin m, (δ : ℝ) := Finset.sum_le_sum fun i _ => hG i _ (hred adversary ha i)
     _ = ((m * δ : ℝ≥0) : ℝ) := by simp
 
-/-- The test built from a predictor for bit `i`, following the proof of [BonehShoup2023],
-Theorem 3.4: run the predictor on the first `i` bits and accept exactly when its guess is
-bit `i`. -/
+/-- The test built from a predictor for bit `i`, following the proof of
+[Boneh and Shoup, Theorem 3.4][BonehShoup2023]: run the predictor on the first `i` bits and accept
+exactly when its guess is bit `i`. -/
 noncomputable def predictionTest (i : Fin m) (predictor : Adversary (Fin i → Bool)) :
     Adversary (Fin m → Bool) := fun y =>
   (predictor (Fin.take i i.isLt.le y)).map fun g => decide (g = y i)
@@ -467,9 +468,9 @@ theorem Generator.advantage_predictionTest (G : Generator Seed (Fin m → Bool))
     idealExperiment_predictionTest_apply_true, Generator.predictionAdvantage]
   norm_num
 
-/-- **Security implies unpredictability** ([BonehShoup2023], Theorem 3.4). If every admissible
-test has advantage at most `ε`, and the tests built from admissible predictors are admissible,
-then every admissible predictor has advantage at most `ε`. -/
+/-- **Security implies unpredictability** [Boneh and Shoup, Theorem 3.4][BonehShoup2023]. If every
+admissible test has advantage at most `ε`, and the tests built from admissible predictors are
+admissible, then every admissible predictor has advantage at most `ε`. -/
 theorem Generator.Secure.unpredictable {G : Generator Seed (Fin m → Bool)}
     {Admissible : Adversary (Fin m → Bool) → Prop}
     {AdmissiblePredictor : (i : Fin m) → Adversary (Fin i → Bool) → Prop} {ε : ℝ≥0}

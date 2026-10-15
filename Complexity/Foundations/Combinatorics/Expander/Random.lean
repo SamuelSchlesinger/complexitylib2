@@ -19,12 +19,13 @@ import Mathlib.Data.Nat.Choose.Sum
 /-!
 # Random permutations move small sets
 
-Thirty permutations of a finite set `V` can be chosen so that every set `S` of at most half of
-the points has at least a tenth of its points moved out of `S` by one of them
+Thirty permutations of a finite set `V` can be chosen so that every set `S` of at most half of the
+points has at least a tenth of its points moved out of `S` by one of them
 (`exists_perms_card_le_mul_card_filter_notMem`). By `Cslib.RotationMap.le_edgeExpansion_ofPerms`
-this makes the `60`-regular multigraph of the permutations an edge expander, which is the
-classical probabilistic proof that constant-degree expanders exist
-[HooryLinialWigderson2006, Section 4.6] [AroraBarak09, Chapter 21].
+this makes the `60`-regular multigraph of the permutations an edge expander, which is the classical
+probabilistic proof that constant-degree expanders exist
+[Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Arora and Barak, Chapter 21][AroraBarak09].
 
 The proof is a counting argument; it is the probabilistic method with the probabilities
 multiplied out. Let `n = |V|` and let `S` have `s` points, `1 ≤ s ≤ n / 2`. A permutation fails
@@ -252,11 +253,11 @@ private theorem card_filter_pow_le {S : Finset V} (hS : 0 < #S)
         exact choose_mul_pow_le hS hSn (by omega)
 
 variable (V) in
-/-- **Random permutations move small sets**: there are thirty permutations of a finite type `V`
-such that every set `S` of at most half of the points has at least a tenth of its points moved
-out of `S` by one of them. This is the counting form of the probabilistic proof that
-constant-degree expanders exist [HooryLinialWigderson2006, Section 4.6]
-[AroraBarak09, Chapter 21]. -/
+/-- **Random permutations move small sets**: there are thirty permutations of a finite type `V` such
+that every set `S` of at most half of the points has at least a tenth of its points moved out of `S`
+by one of them. This is the counting form of the probabilistic proof that constant-degree expanders
+exist [Hoory, Linial and Wigderson, Section 4.6][HooryLinialWigderson2006]
+[Arora and Barak, Chapter 21][AroraBarak09]. -/
 theorem exists_perms_card_le_mul_card_filter_notMem :
     ∃ σ : Fin 30 → Perm V, ∀ S : Finset V, 2 * #S ≤ Fintype.card V →
       ∃ i, #S ≤ 10 * #{v ∈ S | σ i v ∉ S} := by

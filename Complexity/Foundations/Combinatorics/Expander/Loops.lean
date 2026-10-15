@@ -21,16 +21,15 @@ followed by those of `H`. One step of its random walk is a step of `G` with prob
 theirs (`walk_union_apply`) and its spectral expansion is at most the weighted average of
 theirs (`spectralExpansion_union_le`).
 
-The simplest such `H` is `loops V E`, with a self-loop at every vertex for each label `i : E`
-and no other edge, whose walk operator is the identity; `loops V Unit` is `refl V`. Superposing
-it adds self-loops to `G` (`addLoops`); with as many self-loops as edges at each vertex this is
-the **lazy graph** `G.lazy`, whose walk stays put with probability `1 / 2` and otherwise takes a
-step of the walk on `G`. Its walk operator `(1 + G.walk) / 2` is positive semidefinite, so
-Cheeger's inequality [HooryLinialWigderson2006, Theorem 2.4] bounds its spectral expansion by the
-edge expansion of `G`: `λ(G.lazy) ≤ 1 - h(G)² / (4 |D|²)`
-(`spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div`). This turns edge expanders into
-spectral expanders, even those, such as bipartite ones, whose walk operators have the eigenvalue
-`-1`.
+The simplest such `H` is `loops V E`, with a self-loop at every vertex for each label `i : E` and no
+other edge, whose walk operator is the identity; `loops V Unit` is `refl V`. Superposing it adds
+self-loops to `G` (`addLoops`); with as many self-loops as edges at each vertex this is the **lazy
+graph** `G.lazy`, whose walk stays put with probability `1 / 2` and otherwise takes a step of the
+walk on `G`. Its walk operator `(1 + G.walk) / 2` is positive semidefinite, so Cheeger's inequality
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006] bounds its spectral expansion
+by the edge expansion of `G`: `λ(G.lazy) ≤ 1 - h(G)² / (4 |D|²)`
+(`spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div`). This turns edge expanders into spectral
+expanders, even those, such as bipartite ones, whose walk operators have the eigenvalue `-1`.
 
 Renaming the edge labels along an equivalence (`relabel`) changes neither the walk operator nor
 the spectral expansion; it lets constructions with structured label types, such as `D ⊕ D`,
@@ -314,7 +313,8 @@ theorem spectralExpansion_lazy_le_one_add_secondEigenvalue_div_two :
   · exact G.spectralExpansion_le_one_add_secondEigenvalue_div_two G.lazy G.walk_lazy_apply
 
 /-- **Edge expansion bounds the spectral expansion of the lazy graph**
-[HooryLinialWigderson2006, Theorem 2.4]: `λ(G.lazy) ≤ 1 - h(G)² / (4 |D|²)`. -/
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]:
+`λ(G.lazy) ≤ 1 - h(G)² / (4 |D|²)`. -/
 theorem spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div [DecidableEq V] :
     G.lazy.spectralExpansion ≤ 1 - G.edgeExpansion ^ 2 / (4 * Fintype.card D ^ 2) := by
   rcases isEmpty_or_nonempty D with hD | hD
@@ -322,8 +322,8 @@ theorem spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div [DecidableEq V] :
   · exact G.spectralExpansion_le_one_sub_edgeExpansion_sq_div G.lazy G.walk_lazy_apply
 
 /-- **Edge expansion bounds the spectral expansion of the lazy graph**
-[HooryLinialWigderson2006, Theorem 2.4]: on at least two vertices, if `c ≥ 0` and at least
-`c |S|` edges leave every set `S` of at most half of the vertices, then
+[Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]: on at least two vertices, if
+`c ≥ 0` and at least `c |S|` edges leave every set `S` of at most half of the vertices, then
 `λ(G.lazy) ≤ 1 - c² / (4 |D|²)`. -/
 theorem spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl [DecidableEq V]
     [Nontrivial V] {c : ℝ} (hc₀ : 0 ≤ c)

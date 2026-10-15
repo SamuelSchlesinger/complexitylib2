@@ -14,12 +14,12 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Powers of rotation maps
 
-The `t`-th power `G ^ t` of a `D`-regular multigraph `G` has an edge for every walk of length `t`
-in `G` [ReingoldVadhanWigderson2002, Section 2.3] [AroraBarak09, Section 21.3]. Its labels are the
-`t`-tuples of labels of `G`, and its rotation map follows the walk and reverses it, so that the
-labels at the far end describe the walk back. A step of the random walk on `G ^ t` is `t` steps of
-the random walk on `G`: the walk operator of `G ^ t` is the `t`-th power of that of `G`, and
-`λ(G ^ t) = λ(G) ^ t` for `t ≠ 0`.
+The `t`-th power `G ^ t` of a `D`-regular multigraph `G` has an edge for every walk of length `t` in
+`G` [Reingold, Vadhan and Wigderson, Section 2.3][ReingoldVadhanWigderson2002]
+[Arora and Barak, Section 21.3][AroraBarak09]. Its labels are the `t`-tuples of labels of `G`, and
+its rotation map follows the walk and reverses it, so that the labels at the far end describe the
+walk back. A step of the random walk on `G ^ t` is `t` steps of the random walk on `G`: the walk
+operator of `G ^ t` is the `t`-th power of that of `G`, and `λ(G ^ t) = λ(G) ^ t` for `t ≠ 0`.
 
 The bound `λ(G ^ t) ≤ λ(G) ^ t` holds as for any operator norm. For the reverse inequality, which
 spectral theory would give at once, the second moments `a s = 𝔼 v, (G.walk ^ s) f v ^ 2` along the
@@ -54,10 +54,11 @@ open scoped BigOperators
 
 variable {V D : Type*} (G : RotationMap V D)
 
-/-- The rotation map of the walks of length `t` in `G` [ReingoldVadhanWigderson2002, Section 2.3]:
+/-- The rotation map of the walks of length `t` in `G`
+[Reingold, Vadhan and Wigderson, Section 2.3][ReingoldVadhanWigderson2002]:
 `G.powRot t (v, k) = (w, ℓ)` when the walk from `v` along the labels `k 0, …, k (t - 1)` ends at
-`w`, and `ℓ` lists the labels of its edges at their far ends, from the last edge back to the
-first, so that `ℓ` labels the reverse walk from `w` to `v`. -/
+`w`, and `ℓ` lists the labels of its edges at their far ends, from the last edge back to the first,
+so that `ℓ` labels the reverse walk from `w` to `v`. -/
 def powRot : (t : ℕ) → V × (Fin t → D) → V × (Fin t → D)
   | 0, p => p
   | t + 1, p =>
@@ -95,9 +96,10 @@ theorem powRot_involutive : ∀ t, Function.Involutive (G.powRot t)
     rw [powRot_succ G t p, powRot_succ']
     simp [Fin.init_snoc, Fin.snoc_last, powRot_involutive t _]
 
-/-- The **`t`-th power** `G ^ t` [ReingoldVadhanWigderson2002, Section 2.3]: the multigraph on the
-same vertices with an edge for every walk of length `t` in `G`, labelled by the labels of its
-steps. -/
+/-- The **`t`-th power** `G ^ t`
+[Reingold, Vadhan and Wigderson, Section 2.3][ReingoldVadhanWigderson2002]: the multigraph on the
+same vertices with an edge for every walk of length `t` in `G`, labelled by the labels of its steps.
+-/
 def pow (t : ℕ) : RotationMap V (Fin t → D) where
   rot := G.powRot t
   rot_involutive := G.powRot_involutive t
@@ -131,7 +133,7 @@ theorem walk_pow (t : ℕ) : (G.pow t).walk = G.walk ^ t := by
 variable [Fintype V]
 
 /-- The spectral expansion of `G ^ t` is at most `λ(G) ^ t`
-[ReingoldVadhanWigderson2002, Proposition 2.3]. -/
+[Reingold, Vadhan and Wigderson, Proposition 2.3][ReingoldVadhanWigderson2002]. -/
 theorem spectralExpansion_pow_le (t : ℕ) :
     (G.pow t).spectralExpansion ≤ G.spectralExpansion ^ t := by
   refine spectralExpansion_le (pow_nonneg G.spectralExpansion_nonneg t) fun f hf ↦ ?_
@@ -178,7 +180,7 @@ private theorem sq_expect_walk_pow_succ_sq_le (f : V → ℝ) (s : ℕ) :
   exact expect_mul_sq_le_sq_mul_sq _ _ _
 
 /-- The spectral expansion of `G ^ t` is `λ(G) ^ t`, for `t ≠ 0`
-[ReingoldVadhanWigderson2002, Proposition 2.3]. -/
+[Reingold, Vadhan and Wigderson, Proposition 2.3][ReingoldVadhanWigderson2002]. -/
 theorem spectralExpansion_pow {t : ℕ} (ht : t ≠ 0) :
     (G.pow t).spectralExpansion = G.spectralExpansion ^ t := by
   refine (G.spectralExpansion_pow_le t).antisymm ?_
