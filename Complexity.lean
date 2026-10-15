@@ -14,6 +14,7 @@ public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
+public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.PPolyHard
@@ -26,6 +27,7 @@ public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
+public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
@@ -36,6 +38,7 @@ public import Complexity.Computability.Circuit.Monotone.Clique.Essential
 public import Complexity.Computability.Circuit.Monotone.Clique.LowerBound
 public import Complexity.Computability.Circuit.Monotone.Clique.Negative
 public import Complexity.Computability.Circuit.Monotone.Clique.Positive
+public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.Support

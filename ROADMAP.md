@@ -209,7 +209,11 @@ operations applied to shallow functions, so the same argument runs over the gate
 circuit sorted by depth (`Circuit/Boolean/AC0.lean`): a depth-`d` circuit for parity has at least
 `2 ^ s` gates under the same condition, and **parity is not in AC⁰**
 (`Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0`), with AC⁰ defined over cslib circuits of
-polynomially bounded size and constant depth.
+polynomially bounded size and constant depth. AC⁰ is closed under the Boolean operations, and
+**majority is not in AC⁰** (`Circuit/Boolean/Majority.lean`): padding the input with constants
+turns majority into every threshold function, so parity has circuits of depth four more and
+polynomially larger size than majority. Depth bounds for cslib's `Circuit.comp`/`Circuit.append`
+were added for this (`Circuit/CompositionDepth.lean`).
 
 Independent cslib-style reviews of the gate-elimination and Khrapchenko modules were addressed:
 a wrong Jukna citation was corrected (Section 1.6 for Schnorr, Section 6.8 for Khrapchenko, plus

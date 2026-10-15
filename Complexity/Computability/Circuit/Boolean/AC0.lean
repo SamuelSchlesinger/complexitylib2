@@ -9,8 +9,9 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Depth
+public import Complexity.Computability.Circuit.Pi
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
-public import Cslib.Computability.Languages.Slice
+public import Complexity.Computability.Languages.Slice
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
@@ -30,9 +31,11 @@ of the circuit sorted by depth.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.Unbounded.Circuit.two_pow_le_size_of_computes_parity`: Håstad's theorem
+* `Cslib.Circuits.Circuit.two_pow_le_size_of_computes_parity`: Håstad's theorem
   for circuits.
 * `Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0`: parity is not in AC⁰.
+* `Cslib.Circuits.Boolean.Unbounded.AC0.compl`, `AC0.inf`, `AC0.sup`: AC⁰ is closed under the
+  Boolean operations.
 
 ## References
 
@@ -108,8 +111,8 @@ private theorem exists_restriction_stages_program {p : Program signature n g} (h
 
 /-- **Håstad's theorem** for circuits with unbounded fan-in. A circuit of depth `d` computing the
 parity of `n` bits has at least `2 ^ s` gates, for every `s ≥ 2` with `s (16 s + 1) ^ d ≤ n`. -/
-theorem Circuit.two_pow_le_size_of_computes_parity {C : Circuit signature n 1}
-    (hC : C.Computes interpretation (single (parity n))) (hs : 2 ≤ s)
+theorem _root_.Cslib.Circuits.Circuit.two_pow_le_size_of_computes_parity
+    {C : Circuit signature n 1} (hC : C.Computes interpretation (single (parity n))) (hs : 2 ≤ s)
     (hn : s * (16 * s + 1) ^ C.depth ≤ n) : 2 ^ s ≤ C.size := by
   by_contra! hS
   obtain ⟨ρ, hfree, hρ⟩ := exists_restriction_stages_program (p := C.program) hs hS hn C.depth
@@ -150,5 +153,97 @@ theorem parity_notMem_AC0 : Language.ofSlices parity ∉ AC0 := by
   have h := Circuit.two_pow_le_size_of_computes_parity hCcomp hs
     (Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by omega) hCdepth))
   omega
+
+namespace AC0
+
+variable {L M : Language Bool}
+
+/-- The circuit `C` followed by a negation. -/
+private def notCircuit (C : Circuit signature n 1) : Circuit signature n 1 :=
+  (Circuit.oneGate (σ := signature) Op.not fun _ => 0).comp C
+
+/-- The circuits `C` and `D` followed by a gate `op` of two arguments. -/
+private def binCircuit (op : signature.Op) (h : signature.Arity op = 2)
+    (C D : Circuit signature n 1) : Circuit signature n 1 :=
+  (Circuit.oneGate op fun a => Fin.cast h a).comp (C.append D)
+
+private theorem eval_binCircuit_and {C D : Circuit signature n 1} (x : BitString n) :
+    (binCircuit (.and 2) rfl C D).eval interpretation x 0 =
+      (C.eval interpretation x 0 && D.eval interpretation x 0) := by
+  rw [binCircuit, Circuit.eval_comp, Circuit.eval_oneGate, Circuit.eval_append]
+  have h₀ : Fin.append (C.eval interpretation x) (D.eval interpretation x) 0 =
+      C.eval interpretation x 0 := Fin.append_left _ _ 0
+  have h₁ : Fin.append (C.eval interpretation x) (D.eval interpretation x) 1 =
+      D.eval interpretation x 0 := Fin.append_right _ _ 0
+  change decide (∀ a : Fin 2, Fin.append (C.eval interpretation x) (D.eval interpretation x)
+    (Fin.cast rfl a) = true) = _
+  simp only [Fin.cast_eq_self, Fin.forall_fin_two, h₀, h₁]
+  cases C.eval interpretation x 0 <;> cases D.eval interpretation x 0 <;> decide
+
+private theorem eval_binCircuit_or {C D : Circuit signature n 1} (x : BitString n) :
+    (binCircuit (.or 2) rfl C D).eval interpretation x 0 =
+      (C.eval interpretation x 0 || D.eval interpretation x 0) := by
+  rw [binCircuit, Circuit.eval_comp, Circuit.eval_oneGate, Circuit.eval_append]
+  have h₀ : Fin.append (C.eval interpretation x) (D.eval interpretation x) 0 =
+      C.eval interpretation x 0 := Fin.append_left _ _ 0
+  have h₁ : Fin.append (C.eval interpretation x) (D.eval interpretation x) 1 =
+      D.eval interpretation x 0 := Fin.append_right _ _ 0
+  change decide (∃ a : Fin 2, Fin.append (C.eval interpretation x) (D.eval interpretation x)
+    (Fin.cast rfl a) = true) = _
+  simp only [Fin.cast_eq_self, Fin.exists_fin_two, h₀, h₁]
+  cases C.eval interpretation x 0 <;> cases D.eval interpretation x 0 <;> decide
+
+private theorem depth_binCircuit_le (op : signature.Op) (h : signature.Arity op = 2)
+    (C D : Circuit signature n 1) :
+    (binCircuit op h C D).depth ≤ max C.depth D.depth + 1 := by
+  have := Circuit.depth_oneGate_le op fun a => Fin.cast h a
+  have := Circuit.depth_append_le C D
+  exact (Circuit.depth_comp_le _ _).trans (by omega)
+
+/-- AC⁰ is closed under complement. -/
+theorem compl (hL : L ∈ AC0) : Lᶜ ∈ AC0 := by
+  obtain ⟨d, size, hsize, hC⟩ := hL
+  refine ⟨d + 1, fun n => size n + 1, by fun_prop, fun n => ?_⟩
+  obtain ⟨C, hCc, hCd, hCs⟩ := hC n
+  refine ⟨notCircuit C, fun x => ?_, ?_, ?_⟩
+  · funext j
+    rw [notCircuit, Circuit.eval_comp, Circuit.eval_oneGate, hCc x]
+    simp [single, Language.slice_compl]
+  · have := Circuit.depth_oneGate_le (σ := signature) (n := 1) Op.not fun _ => 0
+    exact (Circuit.depth_comp_le _ _).trans (by omega)
+  · simp only [notCircuit, Circuit.size_comp, Circuit.size_oneGate]
+    omega
+
+/-- AC⁰ is closed under intersection. -/
+theorem inf (hL : L ∈ AC0) (hM : M ∈ AC0) : L ⊓ M ∈ AC0 := by
+  obtain ⟨d, size, hsize, hC⟩ := hL
+  obtain ⟨d', size', hsize', hC'⟩ := hM
+  refine ⟨max d d' + 1, fun n => size n + size' n + 1, by fun_prop, fun n => ?_⟩
+  obtain ⟨C, hCc, hCd, hCs⟩ := hC n
+  obtain ⟨D, hDc, hDd, hDs⟩ := hC' n
+  refine ⟨binCircuit (.and 2) rfl C D, fun x => ?_, ?_, ?_⟩
+  · funext j
+    rw [show j = 0 from Subsingleton.elim _ _, eval_binCircuit_and, hCc x, hDc x]
+    simp [single]
+  · exact (depth_binCircuit_le _ _ C D).trans (by omega)
+  · simp only [binCircuit, Circuit.size_comp, Circuit.size_append, Circuit.size_oneGate]
+    omega
+
+/-- AC⁰ is closed under union. -/
+theorem sup (hL : L ∈ AC0) (hM : M ∈ AC0) : L ⊔ M ∈ AC0 := by
+  obtain ⟨d, size, hsize, hC⟩ := hL
+  obtain ⟨d', size', hsize', hC'⟩ := hM
+  refine ⟨max d d' + 1, fun n => size n + size' n + 1, by fun_prop, fun n => ?_⟩
+  obtain ⟨C, hCc, hCd, hCs⟩ := hC n
+  obtain ⟨D, hDc, hDd, hDs⟩ := hC' n
+  refine ⟨binCircuit (.or 2) rfl C D, fun x => ?_, ?_, ?_⟩
+  · funext j
+    rw [show j = 0 from Subsingleton.elim _ _, eval_binCircuit_or, hCc x, hDc x]
+    simp [single]
+  · exact (depth_binCircuit_le _ _ C D).trans (by omega)
+  · simp only [binCircuit, Circuit.size_comp, Circuit.size_append, Circuit.size_oneGate]
+    omega
+
+end AC0
 
 end Cslib.Circuits.Boolean.Unbounded
