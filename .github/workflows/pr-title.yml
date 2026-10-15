@@ -1,0 +1,20 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title follows cslib's `type(scope): description` convention
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -e
+          if ! printf '%s' "$TITLE" | grep -Eq '^(feat|fix|doc|style|refactor|test|chore|perf|ci)(\([^)]+\))?: [^ ].*[^.]$'; then
+            echo "PR title must look like 'feat(Scope): description' with no trailing period."
+            echo "Got: $TITLE"
+            exit 1
+          fi

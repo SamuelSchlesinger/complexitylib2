@@ -1,0 +1,39 @@
+name = "complexitylib2"
+version = "0.2.0"
+defaultTargets = ["Complexity"]
+testDriver = "ComplexityTests"
+lintDriver = "batteries/runLinter"
+
+# Linter settings are copied verbatim from cslib's lakefile so that every module here
+# compiles unchanged when it is upstreamed.
+[leanOptions]
+weak.linter.mathlibStandardSet = true
+weak.linter.flexible = true
+# The next three linters are provided by Mathlib, but don't work here (see cslib's lakefile).
+weak.linter.pythonStyle = false
+weak.linter.checkInitImports = false
+weak.linter.allScriptsDocumented = false
+# this is currently not extensible for unicode not used in Mathlib
+weak.linter.unicodeLinter = false
+
+# cslib is the base library. Mathlib comes transitively through cslib's own pin; never pin it
+# separately. Bump this SHA together with lean-toolchain (which must equal cslib's at the SHA).
+[[require]]
+name = "cslib"
+git = "https://github.com/leanprover/cslib"
+rev = "b2d4c7c3c08420144c9f80f5277d4bb3e1c99df1"
+
+[[lean_lib]]
+name = "Complexity"
+
+[[lean_lib]]
+name = "ComplexityTests"
+leanOptions = {weak.linter.style.header = false}
+# The test files do not use the module system, but they import Mathlib, whose package sets
+# `requiresModuleSystem`.
+allowNonModules = true
+
+[[lean_exe]]
+name = "checkInitImports"
+srcDir = "scripts"
+root = "CheckInitImports"

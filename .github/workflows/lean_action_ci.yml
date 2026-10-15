@@ -1,0 +1,31 @@
+name: Lean Action CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  ci-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          build-args: "--wfail --iofail"
+          test-args: "--wfail --iofail"
+      - name: "lake exe mk_all --check"
+        run: |
+          set -e
+          lake exe mk_all --check
+      - name: "lake exe lint-style"
+        run: |
+          set -e
+          lake exe lint-style
+      - name: "checkInitImports"
+        run: |
+          set -e
+          lake exe checkInitImports
