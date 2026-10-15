@@ -200,7 +200,7 @@ polynomial-size constant-depth circuits if majority does. -/
 theorem ConstDepth.parity_mem_of_majority_mem (φ : Unbounded.signature.Hom σ)
     [φ.Preserves Unbounded.interpretation I] (h : Language.ofSlices majority ∈ ConstDepth I) :
     Language.ofSlices parity ∈ ConstDepth I := by
-  obtain ⟨d, size, hsize, hC⟩ := h
+  obtain ⟨d, size, hsize, hC⟩ := ConstDepth.mem_iff.1 h
   refine ConstDepth.mem_iff.2 ⟨d + 4,
     fun n => 1 + (n + 1) * (2 * (n + 2 + size (n + (n + 2))) + 2), by fun_prop, fun n => ?_⟩
   obtain ⟨M, hM, hMd, hMs⟩ := hC (n + (n + 2))

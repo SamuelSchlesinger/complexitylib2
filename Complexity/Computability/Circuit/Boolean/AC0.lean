@@ -147,7 +147,8 @@ def AC0 : Set (Language Bool) :=
 
 /-- **Parity is not in AC⁰.** -/
 theorem parity_notMem_AC0 : Language.ofSlices parity ∉ AC0 := by
-  rintro ⟨d, size, hsize, hC⟩
+  intro h
+  obtain ⟨d, size, hsize, hC⟩ := ConstDepth.mem_iff.1 h
   -- the size bound at the lengths `s (16 s + 1) ^ d` is a polynomial in `s`
   have hpoly : PolynomiallyBounded fun s => size (s * (16 * s + 1) ^ d) :=
     hsize.comp (by fun_prop)
@@ -186,7 +187,7 @@ theorem top_mem (φ : Unbounded.signature.Hom σ) [φ.Preserves Unbounded.interp
 complement. -/
 theorem compl (φ : Unbounded.signature.Hom σ) [φ.Preserves Unbounded.interpretation I]
     (hL : L ∈ ConstDepth I) : Lᶜ ∈ ConstDepth I := by
-  obtain ⟨d, size, hsize, hC⟩ := hL
+  obtain ⟨d, size, hsize, hC⟩ := mem_iff.1 hL
   refine mem_iff.2 ⟨d + 1, fun n => size n + 1, by fun_prop, fun n => ?_⟩
   obtain ⟨C, hCc, hCd, hCs⟩ := hC n
   refine ⟨notCircuit φ C, fun x => ?_, (depth_notCircuit_le C).trans (by omega),
@@ -200,8 +201,8 @@ private theorem binCircuit_mem (φ : Unbounded.signature.Hom σ)
     {N : Language Bool} (hN : ∀ n x, N.slice n x = Unbounded.interpretation op fun a =>
       ![L.slice n x, M.slice n x] (Fin.cast h a))
     (hL : L ∈ ConstDepth I) (hM : M ∈ ConstDepth I) : N ∈ ConstDepth I := by
-  obtain ⟨d, size, hsize, hC⟩ := hL
-  obtain ⟨d', size', hsize', hC'⟩ := hM
+  obtain ⟨d, size, hsize, hC⟩ := mem_iff.1 hL
+  obtain ⟨d', size', hsize', hC'⟩ := mem_iff.1 hM
   refine mem_iff.2 ⟨max d d' + 1, fun n => size n + size' n + 1, by fun_prop, fun n => ?_⟩
   obtain ⟨C, hCc, hCd, hCs⟩ := hC n
   obtain ⟨D, hDc, hDd, hDs⟩ := hC' n

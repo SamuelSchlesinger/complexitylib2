@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Circuit.Boolean.FirstOrder
 import Complexity.Computability.Circuit.Boolean.GateElimination
 import Complexity.Computability.Circuit.Boolean.Khrapchenko
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
@@ -109,6 +110,19 @@ example : (⊤ : Language Bool) ∈ TC0 :=
 
 example : (⊥ : Language Bool) ∈ AC0Mod 3 :=
   ConstDepth.bot_mem Unbounded.toExt
+
+/-- First-order model checking applies: over the empty language, the atomic facts of a structure
+on `Fin n` are enumerated by `Fin 0`. -/
+example (φ : FirstOrder.Language.empty.Sentence) (n : ℕ) :
+    ∃ e : ModelChecking.Atom FirstOrder.Language.empty n ≃ Fin 0,
+      ∃ F : Cslib.Circuits.Formula Unbounded.signature 0,
+        (∀ (M : Type) [FirstOrder.Language.empty.Structure M] (eM : M ≃ Fin n),
+          F.eval Unbounded.interpretation (ModelChecking.atomsOf eM ∘ e.symm) = true ↔ M ⊨ φ) ∧
+        F.depth ≤ ModelChecking.foDepth φ ∧
+          F.size ≤ ModelChecking.foSize φ * (n + 2) ^ ModelChecking.foSize φ := by
+  have : IsEmpty (ModelChecking.Atom FirstOrder.Language.empty n) := ⟨fun a => a.1.2.elim⟩
+  let e := Equiv.equivOfIsEmpty (ModelChecking.Atom FirstOrder.Language.empty n) (Fin 0)
+  exact ⟨e, ModelChecking.exists_formula_realize_structure φ e⟩
 
 /-- The tidy normal form applies to upstream's machine for the identity, which is not tidy: it
 leaves its input head at the end of the input. -/

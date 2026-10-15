@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.MapOp
+public import Cslib.Computability.Circuit.Boolean.Basic
 public import Cslib.Foundations.Data.BitString
 
 /-!
@@ -26,6 +27,7 @@ bases of TC⁰ (majority gates) and AC⁰[q] (`MOD_q` gates): `extSignature` and
 * `Cslib.Circuits.Boolean.Unbounded.signature`: negation, and conjunction and disjunction of every
   arity.
 * `Cslib.Circuits.Boolean.Unbounded.interpretation`: their Boolean meaning.
+* `Cslib.Circuits.Boolean.Unbounded.deMorganToUnbounded`: the De Morgan basis inside it.
 * `Cslib.Circuits.Boolean.Unbounded.extSignature`,
   `Cslib.Circuits.Boolean.Unbounded.extInterpretation`: the basis with one extra gate of every
   arity.
@@ -113,5 +115,36 @@ def toExt : signature.Hom extSignature :=
 instance preserves_toExt (g : ∀ m, BooleanFunction m) :
     toExt.Preserves interpretation (extInterpretation g) :=
   ⟨fun _ _ => rfl⟩
+
+/-- The operations of the De Morgan basis as operations of the unbounded fan-in basis: the
+constants as the conjunction and disjunction of nothing. -/
+def deMorganOp : Boolean.Op → Op
+  | .const true => .and 0
+  | .const false => .or 0
+  | .not => .not
+  | .and => .and 2
+  | .or => .or 2
+
+/-- The De Morgan basis inside the unbounded fan-in basis. -/
+def deMorganToUnbounded : Boolean.signature.Hom signature :=
+  ⟨deMorganOp, fun op => by rcases op with (_ | _) | _ | _ | _ <;> rfl⟩
+
+@[simp] theorem deMorganToUnbounded_apply (op : Boolean.Op) :
+    deMorganToUnbounded op = deMorganOp op :=
+  rfl
+
+instance preserves_deMorganToUnbounded :
+    deMorganToUnbounded.Preserves Boolean.interpretation interpretation :=
+  ⟨fun op x => by
+    rcases op with (_ | _) | _ | _ | _
+    · exact decide_eq_false fun ⟨j, _⟩ => j.elim0
+    · exact decide_eq_true fun j => j.elim0
+    · rfl
+    · change decide (∀ j : Fin 2, x (Fin.cast rfl j) = true) = (x 0 && x 1)
+      rw [Bool.eq_iff_iff, decide_eq_true_iff, Bool.and_eq_true, Fin.forall_fin_two]
+      exact Iff.rfl
+    · change decide (∃ j : Fin 2, x (Fin.cast rfl j) = true) = (x 0 || x 1)
+      rw [Bool.eq_iff_iff, decide_eq_true_iff, Bool.or_eq_true, Fin.exists_fin_two]
+      exact Iff.rfl⟩
 
 end Cslib.Circuits.Boolean.Unbounded

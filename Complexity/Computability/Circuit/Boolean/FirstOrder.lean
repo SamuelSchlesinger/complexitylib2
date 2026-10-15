@@ -19,31 +19,35 @@ import Mathlib.Tactic.Linarith
 # First-order model checking in constant depth
 
 A structure for a relational first-order language `L` on the universe `Fin n` is determined by the
-truth values of its atomic facts `R(a₁, …, aₗ)` (`FirstOrder.Atom`, `FirstOrder.Model`). Expanding
-each universal quantifier into a conjunction over the `n` elements turns a first-order formula
-into a formula of negations and unbounded fan-in conjunctions and disjunctions over the atomic
-facts (`FirstOrder.toUnbounded`), which computes whether the structure satisfies it
-(`FirstOrder.eval_toUnbounded`). Its depth is bounded independently of `n`
-(`FirstOrder.depth_toUnbounded_le`) and its size is polynomial in `n`
-(`FirstOrder.size_toUnbounded_le`): **first-order queries are in nonuniform AC⁰**
-[Immerman, Chapter 5][Immerman1999],
-[Barrington, Immerman and Straubing][BarringtonImmermanStraubing1990].
+truth values of its atomic facts `R(a₁, …, aₗ)` (`ModelChecking.Atom`, `ModelChecking.Model`), and
+every structure with `n` elements is isomorphic to one of these through an enumeration
+(`ModelChecking.realize_iff_atomsOf`). Expanding each universal quantifier into a conjunction over
+the `n` elements turns a first-order formula into a formula of negations and unbounded fan-in
+conjunctions and disjunctions over the atomic facts (`ModelChecking.toUnbounded`), which computes
+whether the structure satisfies it (`ModelChecking.eval_toUnbounded`). Its depth is bounded
+independently of `n` (`ModelChecking.depth_toUnbounded_le`) and its size is polynomial in `n`
+(`ModelChecking.size_toUnbounded_le`). This is the easy, nonuniform half of the characterization
+of AC⁰ by first-order logic [Immerman, Chapter 5][Immerman1999],
+[Barrington, Immerman and Straubing][BarringtonImmermanStraubing1990], for relational vocabularies
+and without numerical predicates such as order or `BIT`; it reads as membership in AC⁰ once the
+atomic facts are the input bits, which needs a relation symbol of positive arity for the number of
+facts to grow with `n`.
 
-Sentences are those of Mathlib's model theory (`FirstOrder.Language.Sentence`), so this is stated
-for queries on structures rather than for an encoding of structures as bit strings.
+Sentences are those of Mathlib's model theory (`FirstOrder.Language.Sentence`), and the statements
+are about structures rather than an encoding of structures as bit strings.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.FirstOrder.Atom`: the atomic facts of a structure on `Fin n`.
-* `Cslib.Circuits.Boolean.FirstOrder.Model`: the structure with given true atomic facts.
-* `Cslib.Circuits.Boolean.FirstOrder.toUnbounded`: a first-order formula as a formula over the
+* `Cslib.Circuits.Boolean.ModelChecking.Atom`: the atomic facts of a structure on `Fin n`.
+* `Cslib.Circuits.Boolean.ModelChecking.Model`: the structure with given true atomic facts.
+* `Cslib.Circuits.Boolean.ModelChecking.toUnbounded`: a first-order formula as a formula over the
   unbounded fan-in basis.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize`: every first-order sentence is
-  decided on structures with `n` elements by unbounded fan-in formulas of constant depth and
-  polynomial size.
+* `Cslib.Circuits.Boolean.ModelChecking.exists_formula_realize_structure`: every first-order
+  sentence is decided on the structures with `n` elements by unbounded fan-in formulas of constant
+  depth and polynomial size.
 
 ## References
 
@@ -54,9 +58,9 @@ for queries on structures rather than for an encoding of structures as bit strin
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.FirstOrder
+namespace Cslib.Circuits.Boolean.ModelChecking
 
-open _root_.FirstOrder _root_.FirstOrder.Language
+open FirstOrder FirstOrder.Language
 
 variable {L : Language} [L.IsRelational] {n N : ℕ}
 
@@ -73,6 +77,9 @@ def Model (_x : Atom L n → Bool) : Type :=
 instance (x : Atom L n → Bool) : L.Structure (Model x) where
   funMap f := isEmptyElim f
   RelMap {l} R t := x ⟨⟨l, R⟩, t⟩ = true
+
+instance [Fintype (Σ l, L.Relations l)] : Fintype (Atom L n) :=
+  inferInstanceAs (Fintype (Σ R : Σ l, L.Relations l, Fin R.1 → Fin n))
 
 /-- The value of a term of a relational language: a bound variable. -/
 def termVal {k : ℕ} (xs : Fin k → Fin n) : L.Term (Empty ⊕ Fin k) → Fin n
@@ -150,7 +157,7 @@ def foSize : ∀ {k}, L.BoundedFormula Empty k → ℕ
   | _, .all φ => foSize φ + 1
 
 omit [L.IsRelational] in
-theorem one_le_foSize {k : ℕ} (φ : L.BoundedFormula Empty k) : 1 ≤ foSize φ := by
+theorem foSize_pos {k : ℕ} (φ : L.BoundedFormula Empty k) : 0 < foSize φ := by
   cases φ <;> simp [foSize]
 
 /-- **The depth does not depend on the universe.** -/
@@ -203,16 +210,42 @@ theorem size_toUnbounded_le (e : Atom L n ≃ Fin N) {k : ℕ} (φ : L.BoundedFo
         n * (foSize φ * (n + 2) ^ foSize φ) :=
       (Finset.sum_le_card_nsmul _ _ _ fun a _ => ih _).trans_eq (by simp)
     have hpos : 1 ≤ (n + 2) ^ foSize φ := Nat.one_le_pow _ _ (by omega)
-    have := one_le_foSize φ
+    have := foSize_pos φ
     calc _ ≤ n * (foSize φ * (n + 2) ^ foSize φ) + 1 := Nat.add_le_add_right hsum 1
       _ ≤ (foSize φ + 1) * (n + 2) ^ (foSize φ + 1) := by
         rw [pow_succ]
         nlinarith
 
-/-- **First-order queries are in nonuniform AC⁰**: every sentence is decided on the structures with
-`n` elements, given by their atomic facts, by a formula of negations and unbounded fan-in
-conjunctions and disjunctions whose depth does not depend on `n` and whose size is polynomial in
-`n`. -/
+/-! ### Arbitrary finite structures -/
+
+section Structures
+
+variable {M : Type*} [L.Structure M]
+
+open Classical in
+/-- The atomic facts of a structure on `M`, read through an enumeration `e` of `M` by `Fin n`. -/
+noncomputable def atomsOf (e : M ≃ Fin n) : Atom L n → Bool :=
+  fun a => decide (Structure.RelMap a.1.2 (e.symm ∘ a.2))
+
+/-- An enumeration of `M` is an isomorphism onto the structure with the atomic facts of `M`. -/
+noncomputable def equivModel (e : M ≃ Fin n) : M ≃[L] Model (atomsOf (L := L) e) where
+  toEquiv := e
+  map_fun' f := isEmptyElim f
+  map_rel' R t := by
+    change atomsOf e ⟨⟨_, R⟩, e ∘ t⟩ = true ↔ Structure.RelMap R t
+    simp [atomsOf, Function.comp_def]
+
+/-- A structure satisfies a sentence exactly when the structure with its atomic facts does. -/
+theorem realize_iff_atomsOf (e : M ≃ Fin n) (φ : L.Sentence) :
+    M ⊨ φ ↔ Model (atomsOf (L := L) e) ⊨ φ :=
+  StrongHomClass.realize_sentence (equivModel e) φ
+
+end Structures
+
+/-- **First-order sentences are decided in constant depth**: for a relational language, every
+sentence is decided on the structures with `n` elements, given by their atomic facts, by a formula
+of negations and unbounded fan-in conjunctions and disjunctions whose depth does not depend on `n`
+and whose size is polynomial in `n`. -/
 theorem exists_formula_realize (φ : L.Sentence) (e : Atom L n ≃ Fin N) :
     ∃ F : Formula Unbounded.signature N,
       (∀ x : Atom L n → Bool, F.eval Unbounded.interpretation (x ∘ e.symm) = true ↔
@@ -224,4 +257,14 @@ theorem exists_formula_realize (φ : L.Sentence) (e : Atom L n ≃ Fin N) :
         Subsingleton.elim (Fin.elim0 : Fin 0 → Model x) default]),
     depth_toUnbounded_le e φ _, size_toUnbounded_le e φ _⟩
 
-end Cslib.Circuits.Boolean.FirstOrder
+/-- The same formula decides the sentence on every structure with `n` elements, through any
+enumeration of it. -/
+theorem exists_formula_realize_structure (φ : L.Sentence) (e : Atom L n ≃ Fin N) :
+    ∃ F : Formula Unbounded.signature N,
+      (∀ (M : Type) [L.Structure M] (eM : M ≃ Fin n),
+        F.eval Unbounded.interpretation (atomsOf (L := L) eM ∘ e.symm) = true ↔ M ⊨ φ) ∧
+      F.depth ≤ foDepth φ ∧ F.size ≤ foSize φ * (n + 2) ^ foSize φ := by
+  obtain ⟨F, hF, hd, hs⟩ := exists_formula_realize φ e
+  exact ⟨F, fun M _ eM => (hF _).trans (realize_iff_atomsOf eM φ).symm, hd, hs⟩
+
+end Cslib.Circuits.Boolean.ModelChecking

@@ -17,8 +17,10 @@ import Mathlib.Tactic.Linarith
 # Valiant's depth reduction
 
 A *grading* of a set `E` of edges with `D` levels is a labelling of the vertices by numbers below
-`D` that increases along every edge (`IsGrading`); a finite directed acyclic graph has depth at
-most `D` exactly when it has one. **Valiant's depth reduction** [Valiant1977],
+`D` that increases along every edge (`IsGrading`). The levels increase along every path, so a path
+of edges of `E` has at most `D` vertices; labelling every vertex of a directed acyclic graph by the
+number of vertices on a longest path ending at it is a grading, so this is a way of bounding the
+depth of the graph. **Valiant's depth reduction** [Valiant1977],
 [Jukna, Lemma 1.4][Jukna2012]: if `E` has a grading with `2 ^ k` levels, then for every `r ≤ k`,
 removing some `r / k` of the edges leaves edges with a grading with `2 ^ (k - r)` levels
 (`IsGrading.exists_sdiff`).
@@ -63,25 +65,25 @@ theorem mono (hg : IsGrading E D g) (hF : F ⊆ E) : IsGrading F D g :=
   ⟨hg.1, fun e he => hg.2 e (hF he)⟩
 
 /-- The levels `a` and `c` first differ, from the top, at bit `b`. -/
-def InClass (b a c : ℕ) : Prop :=
+private def InClass (b a c : ℕ) : Prop :=
   a / 2 ^ (b + 1) = c / 2 ^ (b + 1) ∧ a / 2 ^ b ≠ c / 2 ^ b
 
-instance (b a c : ℕ) : Decidable (InClass b a c) :=
+private instance (b a c : ℕ) : Decidable (InClass b a c) :=
   inferInstanceAs (Decidable (_ ∧ _))
 
 /-- Two levels first differ at one bit at most. -/
-theorem not_inClass_of_inClass {b b' a c : ℕ} (hb : InClass b a c) (hbb' : b < b') :
+private theorem not_inClass_of_inClass {b b' a c : ℕ} (hb : InClass b a c) (hbb' : b < b') :
     ¬ InClass b' a c := fun hb' => hb'.2 (by
   obtain ⟨t, rfl⟩ := Nat.exists_eq_add_of_lt hbb'
   rw [show b + t + 1 = (b + 1) + t by omega, pow_add, ← Nat.div_div_eq_div_mul,
     ← Nat.div_div_eq_div_mul, hb.1])
 
 /-- The level `a` with bit `b` deleted. -/
-def deleteBit (b a : ℕ) : ℕ :=
+private def deleteBit (b a : ℕ) : ℕ :=
   a / 2 ^ (b + 1) * 2 ^ b + a % 2 ^ b
 
 /-- Deleting a bit keeps the order of levels that do not first differ at that bit. -/
-theorem deleteBit_lt_deleteBit {b a c : ℕ} (hac : a < c) (hb : ¬ InClass b a c) :
+private theorem deleteBit_lt_deleteBit {b a c : ℕ} (hac : a < c) (hb : ¬ InClass b a c) :
     deleteBit b a < deleteBit b c := by
   have h2 : 0 < 2 ^ b := Nat.pow_pos (by omega)
   have hmod (m : ℕ) : m % 2 ^ b < 2 ^ b := Nat.mod_lt _ h2
@@ -109,7 +111,7 @@ theorem deleteBit_lt_deleteBit {b a c : ℕ} (hac : a < c) (hb : ¬ InClass b a 
     omega
 
 /-- Deleting a bit below `k + 1` halves the levels. -/
-theorem deleteBit_lt {b k a : ℕ} (hb : b ≤ k) (ha : a < 2 ^ (k + 1)) :
+private theorem deleteBit_lt {b k a : ℕ} (hb : b ≤ k) (ha : a < 2 ^ (k + 1)) :
     deleteBit b a < 2 ^ k := by
   have h2 : 0 < 2 ^ b := Nat.pow_pos (by omega)
   have hq : a / 2 ^ (b + 1) < 2 ^ (k - b) := by

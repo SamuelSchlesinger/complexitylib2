@@ -86,7 +86,8 @@ theorem two_mul_two_pow_le_size_of_computes_parity (hp2 : p ≠ 2)
 
 /-- **Parity is not in AC⁰[p]** for an odd prime `p` (Razborov–Smolensky). -/
 theorem parity_notMem_AC0Mod (hp2 : p ≠ 2) : Language.ofSlices parity ∉ AC0Mod p := by
-  rintro ⟨d, size, hsize, hC⟩
+  intro h
+  obtain ⟨d, size, hsize, hC⟩ := ConstDepth.mem_iff.1 h
   have hp1 := hp.out.two_le
   -- the size bound at the lengths `100 (((p - 1) ℓ) ^ d + 1)² - 1` is a polynomial in `ℓ`
   have hpoly : PolynomiallyBounded fun ℓ => 5 * size (100 * (((p - 1) * ℓ) ^ d + 1) ^ 2) :=

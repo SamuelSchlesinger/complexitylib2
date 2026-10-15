@@ -569,10 +569,10 @@ info: 'Cslib.Logic.PL.CNF.derives_nil_iff_not_satisfiable' depends on axioms: [p
 #print axioms Cslib.Logic.PL.CNF.derives_nil_iff_not_satisfiable
 
 /--
-info: 'Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.ModelChecking.exists_formula_realize_structure' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.FirstOrder.exists_formula_realize
+#print axioms Cslib.Circuits.Boolean.ModelChecking.exists_formula_realize_structure
 
 /--
 info: 'card_mul_sum_choose_le_of_two_mul_lt_hammingDist' depends on axioms: [propext, Classical.choice, Quot.sound]

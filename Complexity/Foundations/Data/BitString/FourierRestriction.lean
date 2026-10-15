@@ -23,7 +23,7 @@ orthogonal, so the expected squared coefficient on `S` is the weight of `f` on t
 `J` in `S` (`BitString.expect_fourierCoeff_piecewise_sq`), and the expected weight of the
 restriction on sets of at least `m` coordinates is the weight of `f` on the sets meeting `J` in at
 least `m` coordinates (`BitString.expect_sum_fourierCoeff_piecewise_sq`)
-[O'Donnell, Chapter 3][ODonnell2014].
+[O'Donnell, Section 3.3][ODonnell2014].
 
 ## Main results
 
