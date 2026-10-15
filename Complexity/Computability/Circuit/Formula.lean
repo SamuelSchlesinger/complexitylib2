@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Circuit.Pi
 public import Cslib.Computability.Circuit.Homomorphism
 public import Cslib.Computability.Circuit.Synthesis
 public import Mathlib.Data.Finset.Lattice.Fold
@@ -32,8 +33,8 @@ can be eliminated from a formula for a nonconstant function, so this changes no 
 it gives constant functions leaf size zero. `Formula.size` counts the operation nodes, constants
 included. A formula with operations of arity at most `r` has at most `r ^ d` leaves at depth `d`
 (`Formula.leafSize_le_pow_depth`) and at most `(r - 1) s + 1` leaves with `s` operation nodes
-(`Formula.leafSize_le`), and it is a circuit with at most one gate for each operation node
-(`Formula.exists_circuit`). Counting only the leaves labelled by inputs of a set `Y`
+(`Formula.leafSize_le`), and it is a circuit with one gate for each operation node and at most
+its depth (`Formula.toCircuit`). Counting only the leaves labelled by inputs of a set `Y`
 (`Formula.leafSizeIn`) splits the leaf size among disjoint blocks of inputs
 (`Formula.sum_leafSizeIn_le_leafSize`), and a formula with no leaf in `Y` depends only on the
 inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
@@ -47,13 +48,16 @@ inputs outside `Y` (`Formula.dependsOn_eval_of_leafSizeIn_eq_zero`).
   the depth.
 * `Cslib.Circuits.Formula.leafSizeIn`: the number of input leaves in a set of inputs.
 * `Cslib.Circuits.Formula.depthWith`: the depth when each operation costs a given number of levels.
+* `Cslib.Circuits.Formula.toCircuit`: a formula as a single-output circuit.
 
 ## Main results
 
 * `Cslib.Circuits.Formula.map_eval`: evaluation commutes with homomorphisms.
 * `Cslib.Circuits.Formula.leafSize_le_pow_depth`, `Cslib.Circuits.Formula.leafSize_le`: leaf size
   under bounded fan-in.
-* `Cslib.Circuits.Formula.exists_circuit`: a formula is a circuit of at most the same size.
+* `Cslib.Circuits.Formula.computes_toCircuit`, `Cslib.Circuits.Formula.size_toCircuit`,
+  `Cslib.Circuits.Formula.depth_toCircuit_le`: a formula is a circuit computing the same function,
+  of the same size and at most the same depth.
 
 ## References
 
@@ -149,63 +153,6 @@ def depth : Formula σ n → ℕ
 @[simp] theorem depth_gate (op : σ.Op) (args : Fin (σ.Arity op) → Formula σ n) :
     (gate op args).depth = (Finset.univ.sup fun j => (args j).depth) + 1 :=
   rfl
-
-/-- The operation nodes of a formula, as subformulas: the formula itself if it is an operation
-node, followed by the operation nodes of its arguments. -/
-def gates : Formula σ n → List (Formula σ n)
-  | input _ => []
-  | gate op args => gate op args :: (List.ofFn fun j => (args j).gates).flatten
-
-@[simp] theorem gates_input (i : Fin n) : (input i : Formula σ n).gates = [] :=
-  rfl
-
-/-- A formula has as many operation nodes as its size. -/
-@[simp] theorem length_gates (F : Formula σ n) : F.gates.length = F.size := by
-  induction F with
-  | input i => rfl
-  | gate op args ih =>
-    simp only [gates, List.length_cons, List.length_flatten, List.map_ofFn, size_gate]
-    rw [Fin.sum_ofFn]
-    exact congrArg (· + 1) (Finset.sum_congr rfl fun j _ => ih j)
-
-/-- Inputs are not operation nodes. -/
-theorem input_notMem_gates (i : Fin n) (F : Formula σ n) : input i ∉ F.gates := by
-  induction F with
-  | input j => simp
-  | gate op args ih =>
-    simp only [gates, List.mem_cons, reduceCtorEq, false_or, List.mem_flatten, List.mem_ofFn]
-    rintro ⟨_, ⟨j, rfl⟩, h⟩
-    exact ih j h
-
-theorem mem_gates_self (op : σ.Op) (args : Fin (σ.Arity op) → Formula σ n) :
-    gate op args ∈ (gate op args).gates :=
-  List.mem_cons_self
-
-theorem gates_subset_gates_gate (op : σ.Op) (args : Fin (σ.Arity op) → Formula σ n)
-    (j : Fin (σ.Arity op)) : (args j).gates ⊆ (gate op args).gates := fun _ hG =>
-  List.mem_cons_of_mem _ (List.mem_flatten.2 ⟨_, List.mem_ofFn.2 ⟨j, rfl⟩, hG⟩)
-
-/-- The operation nodes of an operation node of `F` are operation nodes of `F`. -/
-theorem gates_subset_of_mem_gates {G F : Formula σ n} (h : G ∈ F.gates) : G.gates ⊆ F.gates := by
-  induction F with
-  | input i => simp at h
-  | gate op args ih =>
-    rcases List.mem_cons.1 h with rfl | h
-    · exact List.Subset.refl _
-    · obtain ⟨_, hl, hG⟩ := List.mem_flatten.1 h
-      obtain ⟨j, rfl⟩ := List.mem_ofFn.1 hl
-      exact List.Subset.trans (ih j hG) (gates_subset_gates_gate op args j)
-
-/-- An argument of an operation node of `F` is an input or an operation node of `F`. -/
-theorem arg_mem_gates {F : Formula σ n} {op : σ.Op} {args : Fin (σ.Arity op) → Formula σ n}
-    (h : gate op args ∈ F.gates) (j : Fin (σ.Arity op)) :
-    (∃ i, args j = input i) ∨ args j ∈ F.gates := by
-  cases hj : args j with
-  | input i => exact Or.inl ⟨i, rfl⟩
-  | gate op' args' =>
-    refine Or.inr (gates_subset_of_mem_gates h (gates_subset_gates_gate op args j ?_))
-    rw [hj]
-    exact mem_gates_self op' args'
 
 /-- With operations of arity at most `r`, a formula of depth `d` has at most `r ^ d` leaves. -/
 theorem leafSize_le_pow_depth {r : ℕ} (hr : ∀ op, σ.Arity op ≤ r) (F : Formula σ n) :
@@ -343,17 +290,45 @@ theorem synthesis_eval (I : Interpretation σ U) (F : Formula σ n) :
   | input i => exact Synthesis.of_mem ⟨i, rfl⟩
   | gate op args ih => exact Synthesis.gate_of_syntheses op _ _ ih
 
-/-- A formula is a circuit with at most one gate for each operation node. -/
-theorem exists_circuit (I : Interpretation σ U) (F : Formula σ n) :
-    ∃ c : Circuit σ n 1, c.Computes I (single (F.eval I)) ∧ c.size ≤ F.size :=
-  (F.synthesis_eval I).exists_circuit
+/-! ### Formulas as circuits -/
 
-/-- A function computed by a formula is computed by a circuit with at most one gate for each
-operation node. -/
-theorem Computes.exists_circuit {F : Formula σ n} {I : Interpretation σ U}
-    {f : (Fin n → U) → U} (hF : F.Computes I f) :
-    ∃ c : Circuit σ n 1, c.Computes I (single f) ∧ c.size ≤ F.size :=
-  computes_iff.1 hF ▸ F.exists_circuit I
+/-- A formula as a circuit: an input leaf is a wire, and an operation node is a gate on the
+circuits of its arguments, side by side. -/
+def toCircuit : Formula σ n → Circuit σ n 1
+  | input i => Circuit.wiring σ fun _ => i
+  | gate op args => (Circuit.oneGate op id).comp (Circuit.pi fun a => (args a).toCircuit)
+
+@[simp] theorem eval_toCircuit (I : Interpretation σ U) (F : Formula σ n) (x : Fin n → U)
+    (j : Fin 1) : F.toCircuit.eval I x j = F.eval I x := by
+  induction F generalizing j with
+  | input i => rfl
+  | gate op args ih =>
+    rw [toCircuit, Circuit.eval_comp, Circuit.eval_oneGate, Circuit.eval_pi, eval_gate]
+    exact congrArg (I op) (funext fun a => ih a 0)
+
+theorem Computes.toCircuit {I : Interpretation σ U} {F : Formula σ n} {f : (Fin n → U) → U}
+    (hF : F.Computes I f) : F.toCircuit.Computes I (single f) := fun x => by
+  funext j
+  rw [eval_toCircuit, computes_iff.1 hF]
+  rfl
+
+/-- The circuit of a formula has one gate for each operation node. -/
+@[simp] theorem size_toCircuit (F : Formula σ n) : F.toCircuit.size = F.size := by
+  induction F with
+  | input i => rfl
+  | gate op args ih =>
+    rw [toCircuit, Circuit.size_comp, Circuit.size_pi, Circuit.size_oneGate, size_gate]
+    simp only [ih]
+
+/-- The circuit of a formula is no deeper than the formula. -/
+theorem depth_toCircuit_le (F : Formula σ n) : F.toCircuit.depth ≤ F.depth := by
+  induction F with
+  | input i => simp [toCircuit]
+  | gate op args ih =>
+    rw [toCircuit, depth_gate, add_comm]
+    exact (Circuit.depth_comp_le _ _).trans (Nat.add_le_add (Circuit.depth_oneGate_le _ _)
+      (Circuit.depth_pi_le _ fun a => (ih a).trans (Finset.le_sup (f := fun a => (args a).depth)
+        (Finset.mem_univ a))))
 
 end Formula
 

@@ -7,15 +7,15 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Formula
+public import Complexity.Init
+public import Cslib.Computability.Circuit.Basic
 
 /-!
-# Boolean formulas with unbounded fan-in
+# The Boolean basis with unbounded fan-in
 
-The basis of AC⁰: negation, and conjunctions and disjunctions of any number of arguments. Formulas
-over this basis (`Cslib.Circuits.Formula Unbounded.signature n`) of constant depth are the setting
-of Håstad's lower bound for parity. The conjunction and the disjunction of no arguments are the
-constants `true` and `false`.
+The basis of AC⁰: negation, and conjunctions and disjunctions of any number of arguments. Circuits
+and formulas over this basis of constant depth are the setting of Håstad's lower bound for parity.
+The conjunction and the disjunction of no arguments are the constants `true` and `false`.
 
 ## Main definitions
 
@@ -65,23 +65,6 @@ def interpretation : Interpretation signature Bool
 
 @[simp] theorem interpretation_or (m : ℕ) (x : Fin m → Bool) :
     interpretation (.or m) x = decide (∃ j, x j = true) :=
-  rfl
-
-variable {n : ℕ}
-
-@[simp] theorem eval_gate_not (args : Fin 1 → Formula signature n) (x : Fin n → Bool) :
-    (Formula.gate (Op.not : signature.Op) args).eval interpretation x =
-      !(args 0).eval interpretation x :=
-  rfl
-
-@[simp] theorem eval_gate_and {m : ℕ} (args : Fin m → Formula signature n) (x : Fin n → Bool) :
-    (Formula.gate (Op.and m : signature.Op) args).eval interpretation x =
-      decide (∀ j, (args j).eval interpretation x = true) :=
-  rfl
-
-@[simp] theorem eval_gate_or {m : ℕ} (args : Fin m → Formula signature n) (x : Fin n → Bool) :
-    (Formula.gate (Op.or m : signature.Op) args).eval interpretation x =
-      decide (∃ j, (args j).eval interpretation x = true) :=
   rfl
 
 end Cslib.Circuits.Boolean.Unbounded

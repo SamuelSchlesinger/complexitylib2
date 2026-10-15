@@ -197,18 +197,17 @@ The encoding is an explicit pair of functions with `decode ∘ encode = id`
 (`Cslib.Logic.PL.DNF.decode_encode`). Both hold among the extensions of any restriction.
 
 **Håstad's theorem** (`Circuit/Boolean/Hastad.lean`, over the unbounded fan-in basis
-`Circuit/Boolean/Unbounded.lean` and generic formulas): a formula of depth `d` with negations and
-conjunctions and disjunctions of any arity that computes the parity of `n` bits has at least
-`2 ^ s` operation nodes whenever `s ≥ 2` and `s (16 s + 1) ^ d ≤ n`
+`Circuit/Boolean/Unbounded.lean`): a circuit of depth `d` with negations and conjunctions and
+disjunctions of any arity that computes the parity of `n` bits has at least `2 ^ s` gates whenever
+`s ≥ 2` and `s (16 s + 1) ^ d ≤ n`
 (`Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity`), so size
-`2 ^ Ω(n ^ (1 / (d + 1)))` at fixed depth. The proof restricts `d` times; after stage `j` every
-operation node of depth at most `j` computes a function of decision tree complexity below `s`, an
-operation node one level up is then a narrow DNF up to negation, and the switching lemma with a
-union bound over the nodes gives the next stage. The stage lemma is stated for any family of
-operations applied to shallow functions, so the same argument runs over the gates of a cslib
-circuit sorted by depth (`Circuit/Boolean/AC0.lean`): a depth-`d` circuit for parity has at least
-`2 ^ s` gates under the same condition, and **parity is not in AC⁰**
-(`Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0`), with AC⁰ defined over cslib circuits of
+`2 ^ Ω(n ^ (1 / (d + 1)))` at fixed depth (Håstad's exponent is `1 / (d - 1)`). The proof restricts
+`d` times; after stage `j` every gate of depth at most `j` computes a function of decision tree
+complexity below `s`, a gate one level up is then a narrow DNF up to negation, and the switching
+lemma with a union bound over the gates gives the next stage. Formulas get the same bound through
+`Formula.toCircuit` (same function and size, no deeper), and **parity is not in AC⁰**
+(`Cslib.Circuits.Boolean.Unbounded.parity_notMem_AC0`, `Circuit/Boolean/AC0.lean`), with AC⁰ defined
+over cslib circuits of
 polynomially bounded size and constant depth. AC⁰ is closed under the Boolean operations, and
 **majority is not in AC⁰** (`Circuit/Boolean/Majority.lean`): padding the input with constants
 turns majority into every threshold function, so parity has circuits of depth four more and

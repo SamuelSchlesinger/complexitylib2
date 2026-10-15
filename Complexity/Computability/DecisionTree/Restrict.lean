@@ -14,9 +14,9 @@ public import Complexity.Computability.DecisionTree.NormalForm
 
 Fixing some variables can only make a function easier to compute by decision trees: answering the
 fixed queries in a tree for `f` gives a tree for the restricted function that is no deeper
-(`DecisionTree.restrict`, `DecisionTree.complexity_comp_fill_le`). Post-processing the output does
-not make it harder either (`DecisionTree.complexity_comp_le`), and negating a Boolean function does
-not change its complexity (`DecisionTree.complexity_not`).
+(`DecisionTree.restrict`, `DecisionTree.complexity_restrict_le`). Post-processing the output does
+not make it harder either (`DecisionTree.complexity_comp_le`), and post-processing by an injective
+map, such as negation, does not change it (`DecisionTree.complexity_comp_of_injective`).
 
 ## Main definitions
 
@@ -24,9 +24,10 @@ not change its complexity (`DecisionTree.complexity_not`).
 
 ## Main results
 
-* `Cslib.DecisionTree.complexity_comp_fill_le`: restricting does not raise decision tree
+* `Cslib.DecisionTree.complexity_restrict_le`: restricting does not raise decision tree
   complexity.
-* `Cslib.DecisionTree.complexity_not`: negation preserves decision tree complexity.
+* `Cslib.DecisionTree.complexity_comp_of_injective`: post-processing by an injective map preserves
+  decision tree complexity.
 -/
 
 @[expose] public section
@@ -66,7 +67,7 @@ theorem depth_restrict_le (ρ : ι → Option Bool) (t : DecisionTree ι β) :
 variable [Finite ι]
 
 /-- **Restricting does not raise decision tree complexity.** -/
-theorem complexity_comp_fill_le (ρ : ι → Option Bool) (f : (ι → Bool) → β) :
+theorem complexity_restrict_le (ρ : ι → Option Bool) (f : (ι → Bool) → β) :
     complexity (fun x => f fun i => (ρ i).getD (x i)) ≤ complexity f := by
   obtain ⟨t, ht, hd⟩ := exists_computes_depth_eq_complexity f
   refine (complexity_le_depth (t := t.restrict ρ) fun x => ?_).trans
@@ -80,9 +81,18 @@ theorem complexity_comp_le (g : β → γ) (f : (ι → Bool) → β) :
   refine (complexity_le_depth (t := t.map g) fun x => ?_).trans (by rw [depth_map, hd])
   rw [eval_map, ht]
 
-/-- **Negation preserves decision tree complexity.** -/
+/-- **Post-processing by an injective map preserves decision tree complexity**: a left inverse
+undoes it. -/
+theorem complexity_comp_of_injective {g : β → γ} (hg : Function.Injective g)
+    (f : (ι → Bool) → β) : complexity (fun x => g (f x)) = complexity f := by
+  have : Nonempty β := ⟨f fun _ => false⟩
+  refine le_antisymm (complexity_comp_le g f) ?_
+  simpa only [Function.leftInverse_invFun hg _] using
+    complexity_comp_le (Function.invFun g) fun x => g (f x)
+
+/-- Negation preserves decision tree complexity. -/
 theorem complexity_not (f : (ι → Bool) → Bool) :
     complexity (fun x => !f x) = complexity f :=
-  le_antisymm (complexity_comp_le _ f) (by simpa using complexity_comp_le (!·) fun x => !f x)
+  complexity_comp_of_injective (fun _ _ => Bool.not_inj) f
 
 end Cslib.DecisionTree
