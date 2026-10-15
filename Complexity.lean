@@ -4,6 +4,7 @@ public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.Circuit.Approximation
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AltFormula
+public import Complexity.Computability.Circuit.Boolean.AltFormula.TopDown
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError

@@ -718,4 +718,10 @@ info: 'Cslib.Logic.PL.eventually_two_rpow_le_sigmaThreeSize' depends on axioms: 
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.eventually_two_rpow_le_sigmaThreeSize
 
+/--
+info: 'Cslib.Circuits.Boolean.AltFormula.two_rpow_lt_size_of_eval_eq_majority' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.AltFormula.two_rpow_lt_size_of_eval_eq_majority
+
 end ComplexityTests.Axioms

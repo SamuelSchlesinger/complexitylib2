@@ -24,7 +24,8 @@ depending only on the number of true bits, `IsSymmetric`), majority among them, 
 formulas of depth `d` with at most `2 ^ (C n ^ (1 / (d - 1)))` AND and OR gates
 (`AltFormula.exists_of_isSymmetric`), so circuits over the unbounded fan-in basis of depth `d + 1`
 with at most `n` more gates (`Unbounded.exists_circuit_of_isSymmetric`), negations included. For
-depth three this is `2 ^ (C √n)`. By Håstad's theorem the exponent is optimal for majority.
+depth three this is `2 ^ (C √n)`. The exponent is optimal for majority, by Korten's top-down bound
+(`AltFormula.two_rpow_lt_size_of_eval_eq_majority`).
 
 The proof is by induction on the depth: at depth `d + 2` and for `n ≤ k ^ (d + 1)` inputs, symmetric
 functions have size `2 ^ (C_d k)` (`exists_symmetric_altFormula`). A symmetric function is an OR

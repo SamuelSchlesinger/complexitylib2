@@ -260,6 +260,8 @@ Håstad's argument above.
 alternating formulas in `Circuit/Boolean/AltFormula.lean`): the theorem of Lecomte and
 Ramakrishnan, every symmetric function has depth-`d` circuits of size `2 ^ O(n ^ (1 / (d - 1)))`,
 with negations free at the inputs, and so unbounded fan-in circuits of depth `d + 1` counting them.
+By Korten's bound for alternating formulas (`Circuit/Boolean/AltFormula/TopDown.lean`), this is
+optimal for majority.
 
 **Resolution** (`Logics/Propositional/Resolution.lean`): soundness and refutation completeness.
 
