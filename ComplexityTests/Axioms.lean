@@ -544,4 +544,16 @@ info: 'Cslib.DecisionTree.fourierCoeff_eq_zero_of_depth_lt' depends on axioms: [
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.DecisionTree.fourierCoeff_eq_zero_of_depth_lt
 
+/--
+info: 'Cslib.IsGrading.exists_sdiff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.IsGrading.exists_sdiff
+
+/--
+info: 'Cslib.BitString.expect_sum_fourierCoeff_piecewise_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.expect_sum_fourierCoeff_piecewise_sq
+
 end ComplexityTests.Axioms

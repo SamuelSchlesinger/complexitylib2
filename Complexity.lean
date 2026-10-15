@@ -95,10 +95,12 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.D
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Foundations.Combinatorics.CentralBinomial
+public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Data.BitString.Fourier
+public import Complexity.Foundations.Data.BitString.FourierRestriction
 public import Complexity.Foundations.Data.BitString.LowDegree
 public import Complexity.Foundations.Data.BitString.LowDegreeParity
 public import Complexity.Foundations.Data.BitString.Parity
