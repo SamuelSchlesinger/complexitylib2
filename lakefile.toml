@@ -15,6 +15,9 @@ weak.linter.checkInitImports = false
 weak.linter.allScriptsDocumented = false
 # this is currently not extensible for unicode not used in Mathlib
 weak.linter.unicodeLinter = false
+# Stricter than cslib, as in Mathlib: every variable is bound explicitly. Code that compiles here
+# compiles unchanged under cslib's default.
+autoImplicit = false
 
 # cslib is the base library. Mathlib comes transitively through cslib's own pin; never pin it
 # separately. Bump this SHA together with lean-toolchain (which must equal cslib's at the SHA).
