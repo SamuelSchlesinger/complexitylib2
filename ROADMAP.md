@@ -350,9 +350,17 @@ convolution and BLR (O'Donnell chapters 1 and 2), PPZ's Theorem 6 in full, `AC�
 | Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | multi-batch, later |
 
 The class-level forms of the time hierarchy, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE`, Sipser–Lautemann
-and the PCP theorem wait for the polynomial-time calculus. Results in scope from
-[karnseth/katz-lindell](https://github.com/karnseth/katz-lindell) (Apache 2.0: pseudorandomness,
-hard-core predicates, hashing) are being surveyed as a second source.
+and the PCP theorem wait for the polynomial-time calculus.
+
+Second source: [karnseth/katz-lindell](https://github.com/karnseth/katz-lindell) (Apache 2.0).
+Its proofs (`infra/`) are complete; its statements came from a Codex-generated layer, so they are
+restated from Katz–Lindell rather than copied. Queued from it, after the Yao and hashing ports:
+PRGs from one-way permutations with a hard-core bit and length extension (Theorems 8.6 and 8.7),
+Blum–Micali (Exercise 8.10), PRGs give one-way functions (Proposition 8.27), closure of
+computational indistinguishability under repetition, strongly universal hash families
+(Exercises 4.24–4.26), and pairwise-independent tail and birthday bounds. Goldreich–Levin, the
+switching lemma and Luby–Rackoff are planned as cslib PRs by the katz-lindell authors, so they
+wait on coordination.
 
 ## Realignment with crei's `tidy-universal` branch (2026-10-13)
 
