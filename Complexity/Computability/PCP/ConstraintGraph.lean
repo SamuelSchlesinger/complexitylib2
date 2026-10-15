@@ -43,6 +43,8 @@ as is right: it is satisfied by every labelling.
   labelling violates, and their proportion.
 * `Cslib.PCP.ConstraintGraph.unsatVal`: the least proportion of violated edges.
 * `Cslib.PCP.ConstraintGraph.map`: the vertices renamed, for instance to add isolated vertices.
+* `Cslib.PCP.ConstraintGraph.comap`: the edges pulled back along a map, for instance renamed.
+* `Cslib.PCP.ConstraintGraph.reindex`: the vertices and the edges renamed along equivalences.
 * `Cslib.PCP.ConstraintGraph.union`: two constraint graphs on the same vertices, superposed.
 
 ## Main results
@@ -56,6 +58,11 @@ as is right: it is satisfied by every labelling.
   least one edge's worth.
 * `Cslib.PCP.ConstraintGraph.unsatVal_map`: renaming the vertices injectively preserves the
   value.
+* `Cslib.PCP.ConstraintGraph.satisfiable_comap_iff`,
+  `Cslib.PCP.ConstraintGraph.unsatVal_comap_equiv`: pulling back along a surjection preserves
+  satisfiability, and along an equivalence the value.
+* `Cslib.PCP.ConstraintGraph.satisfiable_reindex_iff`, `Cslib.PCP.ConstraintGraph.unsatVal_reindex`:
+  renaming the vertices and the edges preserves satisfiability and the value.
 * `Cslib.PCP.ConstraintGraph.card_mul_unsatVal_add_le`,
   `Cslib.PCP.ConstraintGraph.card_mul_unsatVal_le_union`: adding edges can only increase the number
   of edges violated by the best labelling.
@@ -78,6 +85,7 @@ open scoped BigOperators
 /-- A **constraint graph** [Dinur, Section 2.1][Dinur2007] on the vertices `V`, with edges indexed
 by `E`, over the alphabet `α`: each edge `e` goes from `src e` to `dst e` and carries a binary
 constraint `rel e` on the labels of its ends. Parallel edges and self-loops are allowed. -/
+@[ext]
 structure ConstraintGraph (V E α : Type*) where
   /-- The first end of an edge. -/
   src : E → V
@@ -182,6 +190,11 @@ theorem unsatVal_le_one : G.unsatVal ≤ 1 := by
   · obtain ⟨σ⟩ := h
     exact (G.unsatVal_le σ).trans (G.unsatFrac_le_one σ)
 
+/-- A constraint graph without edges has value zero. -/
+theorem unsatVal_of_isEmpty [IsEmpty E] : G.unsatVal = 0 := by
+  have h (σ : V → α) : G.unsatFrac σ = 0 := by simp [unsatFrac]
+  simp only [unsatVal, h, Real.iInf_const_zero]
+
 /-- The proportion of violated edges takes finitely many values, multiples of `1 / |E|`. -/
 theorem finite_range_unsatFrac : (Set.range G.unsatFrac).Finite := by
   refine (Set.finite_range fun k : Fin (Fintype.card E + 1) ↦ (k : ℝ) / Fintype.card E).subset ?_
@@ -284,6 +297,109 @@ theorem unsatVal_map [Nonempty α] {f : V → W} (hf : f.Injective) :
   exact unsatVal_le _ _
 
 end Map
+
+section Comap
+
+variable {F' : Type*} (g : F → E)
+
+/-- The constraint graph `G` **pulled back** along a map `g : F → E` of edges: its edge `f` is a
+copy of the edge `g f` of `G`, with the same ends and the same constraint. Renaming the edges along
+an equivalence, repeating them or keeping only some of them are pullbacks. -/
+def comap : ConstraintGraph V F α where
+  src := G.src ∘ g
+  dst := G.dst ∘ g
+  rel := G.rel ∘ g
+
+variable {G g} in
+/-- A labelling satisfies an edge of `G.comap g` when it satisfies its image in `G`. -/
+@[simp]
+theorem satisfies_comap {σ : V → α} {f : F} : (G.comap g).Satisfies σ f ↔ G.Satisfies σ (g f) :=
+  Iff.rfl
+
+/-- Pulling back along the identity does nothing. -/
+@[simp]
+theorem comap_id : G.comap id = G :=
+  rfl
+
+/-- Pulling back twice is pulling back along the composite. -/
+theorem comap_comap (h : F' → F) : (G.comap g).comap h = G.comap (g ∘ h) :=
+  rfl
+
+/-- A labelling satisfying `G` satisfies its pullbacks. -/
+theorem Satisfiable.comap {G : ConstraintGraph V E α} (h : G.Satisfiable) (g : F → E) :
+    (G.comap g).Satisfiable :=
+  let ⟨σ, hσ⟩ := h
+  ⟨σ, fun f ↦ hσ (g f)⟩
+
+/-- Pulling back along a surjective map of edges preserves satisfiability. -/
+theorem satisfiable_comap_iff {g : F → E} (hg : g.Surjective) :
+    (G.comap g).Satisfiable ↔ G.Satisfiable := by
+  refine ⟨fun ⟨σ, hσ⟩ ↦ ⟨σ, fun e ↦ ?_⟩, fun h ↦ h.comap g⟩
+  obtain ⟨f, rfl⟩ := hg e
+  exact hσ f
+
+variable [Fintype E] [Fintype F]
+
+/-- A labelling violates the edges of `G.comap g` whose images it violates in `G`. -/
+theorem mem_unsatEdges_comap {σ : V → α} {f : F} :
+    f ∈ (G.comap g).unsatEdges σ ↔ g f ∈ G.unsatEdges σ := by
+  simp
+
+/-- Renaming the edges along an equivalence renames the violated edges. -/
+theorem unsatEdges_comap_equiv (e : F ≃ E) (σ : V → α) :
+    (G.comap e).unsatEdges σ = (G.unsatEdges σ).map e.symm.toEmbedding := by
+  ext f
+  simp
+
+/-- Renaming the edges along an equivalence preserves the number of violated edges. -/
+theorem card_unsatEdges_comap_equiv (e : F ≃ E) (σ : V → α) :
+    #((G.comap e).unsatEdges σ) = #(G.unsatEdges σ) := by
+  rw [unsatEdges_comap_equiv, card_map]
+
+/-- Renaming the edges along an equivalence preserves the proportion of violated edges. -/
+theorem unsatFrac_comap_equiv (e : F ≃ E) (σ : V → α) :
+    (G.comap e).unsatFrac σ = G.unsatFrac σ := by
+  rw [unsatFrac, unsatFrac, card_unsatEdges_comap_equiv, Fintype.card_congr e]
+
+/-- **Renaming the edges along an equivalence preserves the value.** -/
+theorem unsatVal_comap_equiv (e : F ≃ E) : (G.comap e).unsatVal = G.unsatVal :=
+  iInf_congr (G.unsatFrac_comap_equiv e)
+
+end Comap
+
+section Reindex
+
+variable {W : Type*}
+
+/-- The constraint graph `G` with its vertices and its edges renamed along equivalences: for
+instance numbered by `Fin` (`Fintype.equivFin`). -/
+def reindex (eV : V ≃ W) (eE : E ≃ F) : ConstraintGraph W F α :=
+  (G.map eV).comap eE.symm
+
+variable {G} in
+/-- A labelling satisfies an edge of the renamed constraint graph when its composite with the
+renaming of the vertices satisfies the corresponding edge of `G`. -/
+@[simp]
+theorem satisfies_reindex {eV : V ≃ W} {eE : E ≃ F} {τ : W → α} {f : F} :
+    (G.reindex eV eE).Satisfies τ f ↔ G.Satisfies (τ ∘ eV) (eE.symm f) :=
+  Iff.rfl
+
+/-- **Renaming the vertices and the edges preserves satisfiability.** -/
+theorem satisfiable_reindex_iff (eV : V ≃ W) (eE : E ≃ F) :
+    (G.reindex eV eE).Satisfiable ↔ G.Satisfiable := by
+  rw [reindex, satisfiable_comap_iff _ eE.symm.surjective]
+  refine ⟨fun ⟨τ, hτ⟩ ↦ ⟨τ ∘ eV, hτ⟩, fun ⟨σ, hσ⟩ ↦ ⟨σ ∘ eV.symm, fun e ↦ ?_⟩⟩
+  simpa [Function.comp_def] using hσ e
+
+/-- **Renaming the vertices and the edges preserves the value.** -/
+theorem unsatVal_reindex [Fintype E] [Fintype F] (eV : V ≃ W) (eE : E ≃ F) :
+    (G.reindex eV eE).unsatVal = G.unsatVal := by
+  rw [reindex, unsatVal_comap_equiv, unsatVal, unsatVal]
+  simp only [unsatFrac_map]
+  exact Function.Surjective.iInf_comp (fun σ ↦ ⟨σ ∘ eV.symm, by simp [Function.comp_def]⟩)
+    G.unsatFrac
+
+end Reindex
 
 section Union
 

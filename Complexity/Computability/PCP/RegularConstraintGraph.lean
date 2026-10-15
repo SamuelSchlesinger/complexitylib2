@@ -26,23 +26,32 @@ An undirected edge has two darts, and their constraints are not required to agre
 an undirected constraint is given by the same relation on both darts, read in the two directions,
 and the estimates of the proof are stated over darts anyway.
 
-Constraints that always hold may be added on the edges of a second regular multigraph on the same
-vertices (`addTrivial`). The violated darts are then the same, and the proportion of violated darts
-drops by the factor `|D| / (|D| + |D'|)` (`unsatVal_addTrivial`). Dinur adds the edges of an
-expander in this way, to make the underlying multigraph an expander, and self-loops (`addLoops`),
-which the powering step needs.
+Two regular constraint graphs on the same vertices superpose to their union (`union`), whose
+constraint graph is the union of theirs up to the renaming `V × (D ⊕ D') ≃ (V × D) ⊕ (V × D')` of
+the darts (`toConstraintGraph_union`). In particular, constraints that always hold may be added on
+the edges of a second regular multigraph on the same vertices (`addTrivial`), as the union with an
+`unconstrained` regular constraint graph. The violated darts are then the same, and the proportion
+of violated darts drops by the factor `|D| / (|D| + |D'|)` (`unsatVal_addTrivial`). Dinur adds the
+edges of an expander in this way, to make the underlying multigraph an expander, and self-loops
+(`addLoops`), which his powering step along walks of a fixed length needs.
 
 ## Main definitions
 
 * `Cslib.PCP.RegularConstraintGraph`: a rotation map with a constraint on each dart.
 * `Cslib.PCP.RegularConstraintGraph.toConstraintGraph`: its constraint graph, whose edges are the
   darts.
+* `Cslib.PCP.RegularConstraintGraph.union`: two regular constraint graphs on the same vertices,
+  superposed.
+* `Cslib.PCP.RegularConstraintGraph.unconstrained`: a rotation map with constraints that always
+  hold.
 * `Cslib.PCP.RegularConstraintGraph.addTrivial`: the edges of another regular multigraph added,
   with constraints that always hold.
 * `Cslib.PCP.RegularConstraintGraph.addLoops`: self-loops added, with constraints that always hold.
 
 ## Main results
 
+* `Cslib.PCP.RegularConstraintGraph.toConstraintGraph_union`,
+  `Cslib.PCP.RegularConstraintGraph.satisfiable_union_iff`: the constraint graph of a union.
 * `Cslib.PCP.RegularConstraintGraph.unsatVal_addTrivial`,
   `Cslib.PCP.RegularConstraintGraph.satisfiable_addTrivial_iff`: adding edges with constraints that
   always hold scales the value by `|D| / (|D| + |D'|)` and preserves satisfiability.
@@ -95,13 +104,63 @@ theorem card_mul_card_mul_unsatFrac [Fintype V] [Fintype D] (σ : V → α) :
       #(R.toConstraintGraph.unsatEdges σ) := by
   rw [← Nat.cast_mul, ← Fintype.card_prod, ConstraintGraph.card_mul_unsatFrac]
 
+section Union
+
+variable (R' : RegularConstraintGraph V D' α)
+
+/-- The **union** of two regular constraint graphs on the same vertices: its multigraph is the
+union of theirs, the darts `inl i` at `v` being those of `R` and the darts `inr j` those of `R'`,
+and every dart keeps its constraint. -/
+def union : RegularConstraintGraph V (D ⊕ D') α where
+  graph := R.graph.union R'.graph
+  rel p := p.2.elim (fun i ↦ R.rel (p.1, i)) fun j ↦ R'.rel (p.1, j)
+
+/-- The underlying multigraph of a union is the union of the underlying multigraphs. -/
+@[simp]
+theorem graph_union : (R.union R').graph = R.graph.union R'.graph :=
+  rfl
+
+/-- The darts of `R` keep their constraints in `R.union R'`. -/
+@[simp]
+theorem rel_union_inl (v : V) (i : D) : (R.union R').rel (v, .inl i) = R.rel (v, i) :=
+  rfl
+
+/-- The darts of `R'` keep their constraints in `R.union R'`. -/
+@[simp]
+theorem rel_union_inr (v : V) (j : D') : (R.union R').rel (v, .inr j) = R'.rel (v, j) :=
+  rfl
+
+/-- The constraint graph of a union is the union of the constraint graphs, with its darts
+`V × (D ⊕ D')` renamed to `(V × D) ⊕ (V × D')`. -/
+theorem toConstraintGraph_union : (R.union R').toConstraintGraph =
+    (R.toConstraintGraph.union R'.toConstraintGraph).comap (Equiv.prodSumDistrib V D D') := by
+  ext ⟨v, i | j⟩ <;> rfl
+
+/-- A union is satisfied by the labellings that satisfy both regular constraint graphs. -/
+theorem satisfiable_union_iff :
+    (R.union R').toConstraintGraph.Satisfiable ↔ ∃ σ : V → α,
+      (∀ p, R.toConstraintGraph.Satisfies σ p) ∧ ∀ p, R'.toConstraintGraph.Satisfies σ p := by
+  rw [toConstraintGraph_union, ConstraintGraph.satisfiable_comap_iff _ (Equiv.surjective _),
+    ConstraintGraph.satisfiable_union_iff]
+
+end Union
+
 section AddTrivial
 
+/-- The regular constraint graph on the multigraph `H` whose constraints always hold. -/
+def unconstrained (H : RotationMap V D) : RegularConstraintGraph V D α where
+  graph := H
+  rel _ _ _ := True
+
+/-- An unconstrained regular constraint graph is satisfied by every labelling. -/
+theorem satisfies_unconstrained (H : RotationMap V D) (σ : V → α) (p : V × D) :
+    (unconstrained H).toConstraintGraph.Satisfies σ p :=
+  True.intro
+
 /-- The regular constraint graph `R` with the edges of `H` added, carrying constraints that always
-hold: its underlying multigraph is the union `R.graph.union H`. -/
-def addTrivial (H : RotationMap V D') : RegularConstraintGraph V (D ⊕ D') α where
-  graph := R.graph.union H
-  rel p := p.2.elim (fun i ↦ R.rel (p.1, i)) fun _ _ _ ↦ True
+hold: its union with the unconstrained regular constraint graph on `H`. -/
+def addTrivial (H : RotationMap V D') : RegularConstraintGraph V (D ⊕ D') α :=
+  R.union (unconstrained H)
 
 variable (H : RotationMap V D')
 
@@ -118,7 +177,7 @@ theorem rel_addTrivial_inl (v : V) (i : D) : (R.addTrivial H).rel (v, .inl i) = 
 /-- The constraints on the added darts always hold. -/
 @[simp]
 theorem rel_addTrivial_inr (v : V) (j : D') (a b : α) : (R.addTrivial H).rel (v, .inr j) a b :=
-  trivial
+  True.intro
 
 variable {R H} in
 /-- The darts of `R` keep their constraints in `R.addTrivial H`. -/
@@ -131,53 +190,30 @@ variable {R} in
 /-- The added darts are satisfied by every labelling. -/
 theorem satisfies_addTrivial_inr (σ : V → α) (v : V) (j : D') :
     (R.addTrivial H).toConstraintGraph.Satisfies σ (v, .inr j) :=
-  trivial
+  True.intro
 
 /-- Adding edges with constraints that always hold preserves satisfiability. -/
 theorem satisfiable_addTrivial_iff :
     (R.addTrivial H).toConstraintGraph.Satisfiable ↔ R.toConstraintGraph.Satisfiable := by
-  refine ⟨fun ⟨σ, hσ⟩ ↦ ⟨σ, fun p ↦ hσ (p.1, .inl p.2)⟩, fun ⟨σ, hσ⟩ ↦ ⟨σ, ?_⟩⟩
-  rintro ⟨v, i | j⟩
-  exacts [hσ (v, i), trivial]
+  rw [addTrivial, satisfiable_union_iff]
+  exact ⟨fun ⟨σ, hσ, _⟩ ↦ ⟨σ, hσ⟩, fun ⟨σ, hσ⟩ ↦ ⟨σ, hσ, satisfies_unconstrained H σ⟩⟩
 
 variable [Fintype V] [Fintype D] [Fintype D']
 
-/-- Adding edges with constraints that always hold does not change the number of violated
-darts. -/
-theorem card_unsatEdges_addTrivial (σ : V → α) :
-    #((R.addTrivial H).toConstraintGraph.unsatEdges σ) = #(R.toConstraintGraph.unsatEdges σ) := by
-  refine (card_bij (fun p _ ↦ (p.1, .inl p.2)) (fun p hp ↦ ?_) (fun p _ q _ h ↦ ?_)
-    fun q hq ↦ ?_).symm
-  · simpa using hp
-  · simp only [Prod.mk.injEq, Sum.inl.injEq] at h
-    exact Prod.ext h.1 h.2
-  · obtain ⟨v, i | j⟩ := q
-    · exact ⟨(v, i), by simpa using hq, rfl⟩
-    · simp at hq
-
-/-- Adding edges with constraints that always hold scales the proportion of violated darts by
-`|D| / (|D| + |D'|)`. -/
-theorem unsatFrac_addTrivial (σ : V → α) :
-    (R.addTrivial H).toConstraintGraph.unsatFrac σ =
-      Fintype.card D / (Fintype.card D + Fintype.card D') * R.toConstraintGraph.unsatFrac σ := by
-  have hk := R.toConstraintGraph.card_unsatEdges_le σ
-  simp only [ConstraintGraph.unsatFrac, card_unsatEdges_addTrivial, Fintype.card_prod,
-    Fintype.card_sum] at hk ⊢
-  rcases Nat.eq_zero_or_pos #(R.toConstraintGraph.unsatEdges σ) with h₀ | h₀
-  · simp [h₀]
-  have h := h₀.trans_le hk
-  have hV : Fintype.card V ≠ 0 := by rintro h'; simp [h'] at h
-  have hD : Fintype.card D ≠ 0 := by rintro h'; simp [h'] at h
-  push_cast
-  field_simp
-
 /-- **Adding edges with constraints that always hold** scales the value by
-`|D| / (|D| + |D'|)`. -/
+`|D| / (|D| + |D'|)`: the constraint graph of `R.addTrivial H` is the union of that of `R` with
+`|V| |D'|` edges that are always satisfied. -/
 theorem unsatVal_addTrivial :
     (R.addTrivial H).toConstraintGraph.unsatVal =
       Fintype.card D / (Fintype.card D + Fintype.card D') * R.toConstraintGraph.unsatVal := by
-  rw [ConstraintGraph.unsatVal, ConstraintGraph.unsatVal, Real.mul_iInf_of_nonneg (by positivity)]
-  exact iInf_congr (R.unsatFrac_addTrivial H)
+  rw [addTrivial, toConstraintGraph_union, ConstraintGraph.unsatVal_comap_equiv,
+    ConstraintGraph.unsatVal_union_of_forall_rel _ _ fun _ _ _ ↦ True.intro, Fintype.card_prod,
+    Fintype.card_prod]
+  rcases isEmpty_or_nonempty V with hV | hV
+  · rw [R.toConstraintGraph.unsatVal_of_isEmpty, mul_zero, mul_zero]
+  · have hV' : (Fintype.card V : ℝ) ≠ 0 := Nat.cast_ne_zero.2 Fintype.card_ne_zero
+    push_cast
+    rw [← mul_add, mul_div_mul_left _ _ hV']
 
 end AddTrivial
 
