@@ -562,4 +562,10 @@ info: 'Cslib.Circuits.Boolean.complexity_existsGuess_le' depends on axioms: [pro
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.complexity_existsGuess_le
 
+/--
+info: 'Cslib.Logic.PL.CNF.derives_nil_iff_not_satisfiable' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.derives_nil_iff_not_satisfiable
+
 end ComplexityTests.Axioms

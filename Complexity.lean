@@ -116,3 +116,4 @@ public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.DNF
+public import Complexity.Logics.Propositional.Resolution
