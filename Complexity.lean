@@ -116,7 +116,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ClearS
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.SequentialSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Shadow
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli

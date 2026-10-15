@@ -6,7 +6,7 @@ Authors: Samuel Schlesinger
 
 module
 -- upstream: candidate (redo of the withdrawn cslib PR #1101); blocked on the definitions of
--- `Complexity.P` (crei's `ComputableTidilyInPolyTime`, #1126)
+-- `Complexity.P` (crei's `ComputableTidilyInPolyTime`, built on the merged #1126)
 
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation

@@ -12,14 +12,15 @@ public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 /-!
 # Space of a sequential run
 
-The space used by a run of `tm₀.seq tm₁` is at most the space of the run of `tm₀` plus the space
-of the run of `tm₁` started where `tm₀` halted (`spaceUsed_seq_le`), for arbitrary configurations.
-This is the space half of `Turing.MultiTapeTM.runFrom_seq`; the corresponding bound for tape
-transformations is part of `Turing.MultiTapeTM.transformsTapes_seq`.
+Two run paths to halted configurations, the second started where the first halted, join to a run
+path of `tm₀.seq tm₁` that visits at most the cells of the two paths together
+(`exists_runPath_seq_space`). This is `Turing.MultiTapeTM.exists_runPath_seq` with the space bound
+that `Turing.MultiTapeTM.transformsTapes_seq` proves inline, for paths between arbitrary
+configurations.
 
 ## Main results
 
-* `Turing.MultiTapeTM.spaceUsed_seq_le`: the space of a sequential run.
+* `Turing.MultiTapeTM.exists_runPath_seq_space`: the time and space of a sequential run path.
 -/
 
 @[expose] public section
@@ -30,44 +31,24 @@ variable {k : ℕ} {Symbol State₀ State₁ : Type*} {input : List Symbol}
   {tm₀ : MultiTapeTM k Symbol State₀} {tm₁ : MultiTapeTM k Symbol State₁}
 
 open Sequential in
-/-- If `tm₀` halts at step `u`, the first `u + n` steps of `seq` use at most the space of the run
-of `tm₀` plus the space of the first `n` steps of `tm₁`, started where `tm₀` halted. -/
-theorem HaltsAt.spaceUsed_seq_le {cfg : Cfg k Symbol State₀ input} {u : ℕ}
-    (h : tm₀.HaltsAt cfg u) (n : ℕ) :
-    (tm₀.seq tm₁).spaceUsed (leftCfg tm₁ cfg) (u + n) ≤
-      tm₀.spaceUsed cfg u + tm₁.spaceUsed ((tm₀.runFrom cfg u).withState (some tm₁.q₀)) n := by
-  refine (spaceUsed_add_le _ _ _).trans (Nat.add_le_add (le_of_eq ?_) (le_of_eq ?_))
-  · -- the first phase visits what `tm₀` visits, including the cell of the handoff
-    refine (spaceUsed_eq_of_workTapePos _ _ u fun m hm => ?_).symm
-    rcases Nat.lt_or_ge m u with hm' | hm'
-    · rw [runFrom_leftCfg cfg m fun _ hr => h.not_halted (by omega), workTapePos_leftCfg]
-    · obtain rfl : m = u := le_antisymm hm hm'
-      rw [← add_zero m, h.runFrom_seq, workTapePos_rightCfg]
-      rfl
-  · -- the second phase visits what `tm₁` visits
-    rw [show (tm₀.seq tm₁).runFrom (leftCfg tm₁ cfg) u = _ from by
-      simpa using h.runFrom_seq (tm₁ := tm₁) 0]
-    refine spaceUsed_eq_of_workTapePos _ _ n fun m _ => ?_
-    rw [runFrom_rightCfg, workTapePos_rightCfg]
-    rfl
-
-/-- **The space of a sequential run.** If `tm₀` has halted in `mid` by step `t₀`, and `tm₁`, started
-where `tm₀` halted, has halted by step `t₁`, then the first `t₀ + t₁` steps of `seq` use at most
-the space of the two runs together. -/
-theorem spaceUsed_seq_le {cfg mid : Cfg k Symbol State₀ input} {t₀ t₁ : ℕ}
-    (h₀ : tm₀.runFrom cfg t₀ = mid) (hmid : mid.Halted)
-    (h₁ : (tm₁.runFrom (mid.withState (some tm₁.q₀)) t₁).Halted) :
-    (tm₀.seq tm₁).spaceUsed (Sequential.leftCfg tm₁ cfg) (t₀ + t₁) ≤
-      tm₀.spaceUsed cfg t₀ + tm₁.spaceUsed (mid.withState (some tm₁.q₀)) t₁ := by
-  obtain ⟨u, hu, hhaltsAt⟩ := exists_haltsAt (tm := tm₀) (cfg := cfg) (h₀ ▸ hmid)
-  have hmid' : tm₀.runFrom cfg u = mid := (hhaltsAt.runFrom_eq hu).symm.trans h₀
-  -- the composed machine has halted by step `u + t₁`
-  have hhalt : ((tm₀.seq tm₁).runFrom (Sequential.leftCfg tm₁ cfg) (u + t₁)).Halted := by
-    rw [hhaltsAt.runFrom_seq, hmid']
-    simp only [Cfg.Halted] at h₁ ⊢
-    simp [Sequential.rightCfg, h₁]
-  rw [spaceUsed_eq_of_halt _ (by omega : u + t₁ ≤ t₀ + t₁) hhalt]
-  refine (hhaltsAt.spaceUsed_seq_le t₁).trans (Nat.add_le_add (spaceUsed_mono tm₀ _ hu) ?_)
-  rw [hmid']
+/-- **The space of a sequential run.** A run path of `tm₀` to a halted configuration, followed by a
+run path of `tm₁` to a halted configuration started where `tm₀` halted, gives a run path of `seq`
+taking at most the steps and visiting at most the cells of the two paths together. -/
+theorem exists_runPath_seq_space {p₀ : tm₀.RunPath input} (h₀ : p₀.last.Halted)
+    {p₁ : tm₁.RunPath input} (h₁ : p₁.head = p₀.last.withState (some tm₁.q₀))
+    (hp₁ : p₁.last.Halted) :
+    ∃ p : (tm₀.seq tm₁).RunPath input, p.head = leftCfg tm₁ p₀.head ∧
+      p.last = rightCfg p₁.last ∧ p.time ≤ p₀.time + p₁.time ∧
+      p.space ≤ p₀.space + p₁.space := by
+  obtain ⟨p, hh, hl, ht, hmem⟩ := exists_runPath_seq h₀ h₁ hp₁
+  refine ⟨p, hh, hl, ht, ?_⟩
+  -- every head position of the composed path is one of the first path or one of the second
+  refine (p.space_le_sum_card
+    (S := fun i => p₀.visitedByTapeHead i ∪ p₁.visitedByTapeHead i) fun c hc i => ?_).trans
+    ((Finset.sum_le_sum fun i _ => Finset.card_union_le _ _).trans_eq Finset.sum_add_distrib)
+  rcases hmem c hc with ⟨_, ⟨n, rfl⟩, he⟩ | ⟨_, ⟨n, rfl⟩, he⟩ <;>
+    rw [show c.workTapePos i = _ from congrArg (·.workTapePos i) he]
+  · exact Finset.mem_union_left _ (Finset.mem_image_of_mem _ (Finset.mem_univ n))
+  · exact Finset.mem_union_right _ (Finset.mem_image_of_mem _ (Finset.mem_univ n))
 
 end Turing.MultiTapeTM

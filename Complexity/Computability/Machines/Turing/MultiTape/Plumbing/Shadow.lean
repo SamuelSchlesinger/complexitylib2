@@ -24,8 +24,8 @@ halting step may be unmarked. A machine cannot tell these cells from the tape of
 the marked cells (`Turing.MultiTapeTM.clearShadowed`).
 
 The first step of `shadow m₀ m₁ tm` marks the start cells; after it, the machine mirrors `tm` step
-by step (`Shadow.runFrom_cfg`), and if `tm` halts at step `u` it has halted at step `u + 1`
-(`HaltsAt.runFrom_shadow`). Two general facts about runs are proved along the way: the cells a head
+by step (`Shadow.runFrom_cfg`), and if `tm` first halts at step `u` it has halted at step `u + 1`
+(`runFrom_shadow`). Two general facts about runs are proved along the way: the cells a head
 visits form an interval (`exists_visitedByTapeHead_eq_Icc`), and a cell the head never visits keeps
 its contents (`workTapes_runFrom_eq_of_notMem_visitedByTapeHead`).
 
@@ -36,9 +36,9 @@ its contents (`workTapes_runFrom_eq_of_notMem_visitedByTapeHead`).
 
 ## Main results
 
-* `Turing.MultiTapeTM.HaltsAt.runFrom_shadow`: the configuration of `shadow m₀ m₁ tm` when `tm`
-  has halted.
-* `Turing.MultiTapeTM.spaceUsed_shadow`: `shadow m₀ m₁ tm` uses twice the space of `tm`.
+* `Turing.MultiTapeTM.runFrom_shadow`: the configuration of `shadow m₀ m₁ tm` when `tm` has
+  halted.
+* `Turing.MultiTapeTM.space_shadow`: `shadow m₀ m₁ tm` uses twice the space of `tm`.
 -/
 
 @[expose] public section
@@ -261,30 +261,33 @@ theorem runFrom_cfg (c : Cfg k Symbol State input) (V : Fin k → Finset ℤ) (n
     rw [visited_succ, Finset.union_insert]
 
 /-- After its first step, `shadow m₀ m₁ tm` mirrors the run of `tm` until `tm` halts. -/
-theorem runFrom_succ_initCfg {u : ℕ} (h : tm.HaltsAt (tm.initCfg input) u) {m : ℕ} (hm : m ≤ u) :
+theorem runFrom_succ_initCfg {u : ℕ} (h : ∀ m < u, ¬(tm.runFrom (tm.initCfg input) m).Halted)
+    {m : ℕ} (hm : m ≤ u) :
     (shadow m₀ m₁ tm).runFrom ((shadow m₀ m₁ tm).initCfg input) (m + 1) =
       cfg m₀ m₁ (tm.runFrom (tm.initCfg input) m) (visited tm (tm.initCfg input) m) := by
   rw [Nat.add_comm m 1, runFrom_add, runFrom_one, step_initCfg,
-    runFrom_cfg _ _ _ fun m' hm' => h.not_halted (by omega)]
+    runFrom_cfg _ _ _ fun m' hm' => h m' (by omega)]
   simp only [Finset.empty_union]
 
 end Shadow
 
 open Shadow
 
-/-- If `tm` halts at step `u`, then `shadow m₀ m₁ tm` has halted at step `u + 1` with the tapes of
-`tm`, and shadow tape `i` marks the cells visited by the head of tape `i` before step `u`. -/
-theorem HaltsAt.runFrom_shadow {tm : MultiTapeTM k Symbol State} {u : ℕ}
-    (h : tm.HaltsAt (tm.initCfg input) u) :
+/-- If `tm` has not halted before step `u`, then after `u + 1` steps `shadow m₀ m₁ tm` holds the
+configuration of `tm` after `u` steps, and shadow tape `i` marks the cells visited by the head of
+tape `i` before step `u`. In particular, if `tm` halts at step `u`, so has `shadow m₀ m₁ tm` at
+step `u + 1`. -/
+theorem runFrom_shadow {tm : MultiTapeTM k Symbol State} {u : ℕ}
+    (h : ∀ m < u, ¬(tm.runFrom (tm.initCfg input) m).Halted) :
     (shadow m₀ m₁ tm).runFrom ((shadow m₀ m₁ tm).initCfg input) (u + 1) =
       cfg m₀ m₁ (tm.runFrom (tm.initCfg input) u) (visited tm (tm.initCfg input) u) :=
   runFrom_succ_initCfg h le_rfl
 
-/-- `shadow m₀ m₁ tm` uses twice the space of `tm`. -/
-theorem spaceUsed_shadow {tm : MultiTapeTM k Symbol State} {u : ℕ}
-    (h : tm.HaltsAt (tm.initCfg input) u) :
-    (shadow m₀ m₁ tm).spaceUsed ((shadow m₀ m₁ tm).initCfg input) (u + 1) =
-      2 * tm.spaceUsed (tm.initCfg input) u := by
+/-- Until `tm` halts, `shadow m₀ m₁ tm` uses twice the space of `tm`. -/
+theorem space_shadow {tm : MultiTapeTM k Symbol State} {u : ℕ}
+    (h : ∀ m < u, ¬(tm.runFrom (tm.initCfg input) m).Halted) :
+    (shadow m₀ m₁ tm).space ((shadow m₀ m₁ tm).initCfg input) (u + 1) =
+      2 * tm.space (tm.initCfg input) u := by
   -- every tape of `shadow m₀ m₁ tm` visits the cells its copy of the tape of `tm` visits
   have hpos : ∀ m ≤ u, ((shadow m₀ m₁ tm).runFrom ((shadow m₀ m₁ tm).initCfg input)
       (m + 1)).workTapePos = Fin.append (tm.runFrom (tm.initCfg input) m).workTapePos
@@ -314,7 +317,7 @@ theorem spaceUsed_shadow {tm : MultiTapeTM k Symbol State} {u : ℕ}
       rw [hpos m (by omega)]
       refine Fin.addCases (fun i => ?_) (fun i => ?_) l <;>
         simp only [pairIdx_castAdd, pairIdx_natAdd, Fin.append_left, Fin.append_right]
-  simp only [spaceUsed, spaceUsedByTape, hvis]
+  simp only [space_eq_sum_spaceUsedByTape, spaceUsedByTape, hvis]
   rw [Fin.sum_univ_add]
   simp only [pairIdx_castAdd, pairIdx_natAdd, two_mul]
 

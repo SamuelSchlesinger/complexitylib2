@@ -544,8 +544,7 @@ L6  Circuits                   families, SIZE, P/poly, FP/poly (redo of #1099–
 
 ## Repository conventions
 
-- `lean-toolchain` **identical** to cslib's at the pinned SHA (currently `v4.35.0-rc4`; the
-  repo now says `v4.35.0` — fix in phase 0). `[[require]] cslib` from git with `rev = <SHA>`;
+- `lean-toolchain` **identical** to cslib's at the pinned SHA (currently `v4.35.0`). `[[require]] cslib` from git with `rev = <SHA>`;
   Mathlib comes transitively (no separate pin). Copy cslib's `[leanOptions]` verbatim.
 - `lean_lib Complexity` (module system), `lean_lib ComplexityTests` with `allowNonModules = true`,
   `testDriver = "ComplexityTests"`, `lintDriver = "batteries/runLinter"`, `mk_all`.

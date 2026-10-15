@@ -353,10 +353,10 @@ info: 'Cslib.Logic.PL.DNF.card_switching_le' depends on axioms: [propext, Classi
 #print axioms Cslib.Logic.PL.DNF.card_switching_le
 
 /--
-info: 'Turing.MultiTapeTM.HaltsAt.runFrom_shadow' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.runFrom_shadow' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.HaltsAt.runFrom_shadow
+#print axioms Turing.MultiTapeTM.runFrom_shadow
 
 /--
 info: 'Turing.MultiTapeTM.runFrom_clearShadowed' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -365,10 +365,16 @@ info: 'Turing.MultiTapeTM.runFrom_clearShadowed' depends on axioms: [propext, Cl
 #print axioms Turing.MultiTapeTM.runFrom_clearShadowed
 
 /--
-info: 'Turing.MultiTapeTM.spaceUsed_seq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.exists_runPath_seq_space' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.spaceUsed_seq_le
+#print axioms Turing.MultiTapeTM.exists_runPath_seq_space
+
+/--
+info: 'Turing.MultiTapeTM.exists_runPath_tidy' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.exists_runPath_tidy
 
 /--
 info: 'Turing.MultiTapeTM.ComputesInTimeAndSpace.computesTidily_tidy' depends on axioms: [propext, Classical.choice, Quot.sound]

@@ -5,13 +5,13 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate (after #1126)
+-- upstream: candidate (coordinate with crei on #611)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ClearShadowed
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.RewindInput
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
+public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
@@ -45,6 +45,7 @@ sweeping until the first blank would not find them all.
 
 ## Main results
 
+* `Turing.MultiTapeTM.exists_runPath_tidy`: the run path of `tidy m₀ m₁ tm` when `tm` halts.
 * `Turing.MultiTapeTM.ComputesInTimeAndSpace.computesTidily_tidy`: `tidy m₀ m₁ tm` computes
   tidily what `tm` computes.
 * `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace`: computable
@@ -167,32 +168,45 @@ theorem runFrom_nop_withState {k : ℕ} (C : Cfg k Symbol σ input) :
   · simp only [nop, tr_ofTr, Action.apply_output, Option.toList_none, List.append_nil,
       Cfg.withState]
 
-/-- **Clearing a list of work tapes** with their shadows, each ready to be cleared. -/
-theorem runFrom_clearList (hm : m₀ ≠ m₁) (l : List (Fin k)) (hl : l.Nodup) (a b c : Fin k → ℕ)
-    (V : Fin k → Finset ℤ) (C : Cfg (k + k) Symbol σ input)
+/-- **Clearing a list of work tapes** with their shadows, each ready to be cleared: a run path of
+`clearList m₀ m₁ l` to the configuration with these tapes cleared. -/
+theorem exists_runPath_clearList (hm : m₀ ≠ m₁) (l : List (Fin k)) (hl : l.Nodup)
+    (a b c : Fin k → ℕ) (V : Fin k → Finset ℤ) (C : Cfg (k + k) Symbol σ input)
     (hC : ∀ i ∈ l, PairReady m₀ m₁ C i (a i) (b i) (c i) (V i)) :
-    (clearList m₀ m₁ l).runFrom (C.withState (some (clearList m₀ m₁ l).q₀))
-        ((l.map fun i => a i + 2 * b i + c i + 5).sum + 1) = clearedCfg l C := by
+    ∃ p : (clearList m₀ m₁ l).RunPath input,
+      p.head = C.withState (some (clearList m₀ m₁ l).q₀) ∧ p.last = clearedCfg l C ∧
+        p.time ≤ (l.map fun i => a i + 2 * b i + c i + 5).sum + 1 := by
   induction l generalizing C σ with
   | nil =>
-    refine (runFrom_nop_withState C).trans (Cfg.ext rfl rfl ?_ ?_ rfl) <;> funext j <;>
+    refine ⟨.ofDeterministic _ _ 1, rfl, (runFrom_nop_withState C).trans
+      (Cfg.ext rfl rfl ?_ ?_ rfl), le_rfl⟩ <;> funext j <;>
       simp only [clearedCfg, List.not_mem_nil, ↓reduceIte, Cfg.withState]
   | cons i l ih =>
     obtain ⟨hil, hl⟩ := List.nodup_cons.1 hl
     have hmid := runFrom_clearShadowed_pairEmb hm (hC i List.mem_cons_self)
-    have hrest := ih hl (clearedCfg (σ' := σ) [i] C) fun j hj => by
+    obtain ⟨p₁, hh₁, hl₁, ht₁⟩ := ih hl (clearedCfg (σ' := σ) [i] C) fun j hj => by
       have hji : j ≠ i := fun h => hil (h ▸ hj)
       obtain ⟨h₁, h₂, h₄, h₅, h₆⟩ := hC j (List.mem_cons_of_mem _ hj)
       exact ⟨by simp [-Fin.natAdd_eq_addNat, clearedCfg, hji, h₁],
         by simp [-Fin.natAdd_eq_addNat, pairIdx_natAdd, clearedCfg, hji, h₂], h₄,
         by simp [-Fin.natAdd_eq_addNat, pairIdx_natAdd, clearedCfg, hji, h₅],
         fun y hy => by simp [-Fin.natAdd_eq_addNat, clearedCfg, hji, h₆ y hy]⟩
-    rw [List.map_cons, List.sum_cons, add_assoc]
-    refine (runFrom_seq (tm₀ := (clearShadowed m₀ m₁).extendTapes (pairEmb i))
-      (tm₁ := clearList m₀ m₁ l) (cfg := C.withState (some .start)) hmid rfl hrest rfl).trans ?_
-    refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext j <;>
-      simp only [Sequential.rightCfg, Cfg.mapState, clearedCfg, List.mem_cons] <;>
-      by_cases hj : pairIdx j = i <;> by_cases hj' : pairIdx j ∈ l <;> simp [hj, hj']
+    -- clear tape `i`, then the others
+    obtain ⟨p, hh, hl', ht, -⟩ := exists_runPath_seq
+      (p₀ := .ofDeterministic ((clearShadowed m₀ m₁).extendTapes (pairEmb i))
+        (C.withState (some .start)) (a i + 2 * b i + c i + 5)) (p₁ := p₁)
+      (by rw [last_ofDeterministic, hmid]; rfl)
+      (by rw [hh₁, last_ofDeterministic, hmid]; rfl) (by rw [hl₁]; rfl)
+    refine ⟨p, hh, hl'.trans ?_, ?_⟩
+    · rw [hl₁]
+      refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext j <;>
+        simp only [Sequential.rightCfg, Cfg.mapState, clearedCfg, List.mem_cons] <;>
+        by_cases hj : pairIdx j = i <;> by_cases hj' : pairIdx j ∈ l <;> simp [hj, hj']
+    · change p.length ≤ a i + 2 * b i + c i + 5 + p₁.length at ht
+      change p₁.length ≤ _ at ht₁
+      change p.length ≤ _
+      rw [List.map_cons, List.sum_cons]
+      omega
 
 /-! ### The tidy normal form -/
 
@@ -217,19 +231,21 @@ private theorem clearedCfg_finRange (C : Cfg (k + k) Symbol σ input) :
       C.output⟩ := by
   simp [clearedCfg]
 
-/-- **The run of the tidy normal form.** If `tm` halts at step `u` having used `S` cells, then
-`tidy m₀ m₁ tm` halts within `2 u + 3 S + 2 k + 4` steps, with blank work tapes, every head on its
-start cell and the output of `tm`, having used at most `2 S + 2 k (3 S + 2 k + 3)` cells. -/
-theorem HaltsAt.runFrom_tidy (hm : m₀ ≠ m₁) {u : ℕ} (h : tm.HaltsAt (tm.initCfg input) u) :
-    ∃ T ≤ 2 * u + 3 * tm.spaceUsed (tm.initCfg input) u + 2 * k + 4,
-      (tidy m₀ m₁ tm).runFrom ((tidy m₀ m₁ tm).initCfg input) T =
-          wordsCfg input none (fun _ => []) (tm.runFrom (tm.initCfg input) u).output ∧
-        (tidy m₀ m₁ tm).spaceUsed ((tidy m₀ m₁ tm).initCfg input) T ≤
-          2 * tm.spaceUsed (tm.initCfg input) u +
-            2 * k * (3 * tm.spaceUsed (tm.initCfg input) u + 2 * k + 3) := by
+/-- **The run of the tidy normal form.** If `tm` first halts at step `u`, having used `S` cells,
+then `tidy m₀ m₁ tm` has a run path to the halted configuration with blank work tapes, every head on
+its start cell and the output of `tm`, taking at most `2 u + 3 S + 2 k + 4` steps and visiting at
+most `2 S + 2 k (3 S + 2 k + 3)` cells. -/
+theorem exists_runPath_tidy (hm : m₀ ≠ m₁) {u : ℕ}
+    (hlt : ∀ m < u, ¬(tm.runFrom (tm.initCfg input) m).Halted)
+    (hu : (tm.runFrom (tm.initCfg input) u).Halted) :
+    ∃ p : (tidy m₀ m₁ tm).RunPath input, p.head = (tidy m₀ m₁ tm).initCfg input ∧
+      p.last = wordsCfg input none (fun _ => []) (tm.runFrom (tm.initCfg input) u).output ∧
+      p.time ≤ 2 * u + 3 * tm.space (tm.initCfg input) u + 2 * k + 4 ∧
+      p.space ≤ 2 * tm.space (tm.initCfg input) u +
+        2 * k * (3 * tm.space (tm.initCfg input) u + 2 * k + 3) := by
   set c₀ := tm.initCfg input
   set D := tm.runFrom c₀ u
-  set S := tm.spaceUsed c₀ u
+  set S := tm.space c₀ u
   set C₁ := Shadow.cfg m₀ m₁ D (Shadow.visited tm c₀ u)
   -- the visited cells of each tape form an interval `[L i, R i]` around the start cell
   choose L R hLR using fun i => exists_visitedByTapeHead_eq_Icc (tm := tm) c₀ u i
@@ -260,32 +276,33 @@ theorem HaltsAt.runFrom_tidy (hm : m₀ ≠ m₁) {u : ℕ} (h : tm.HaltsAt (tm.
     · rw [hIcc, ← hLR] at hy
       simp only [C₁, Shadow.cfg, Fin.append_left]
       exact workTapes_runFrom_eq_of_notMem_visitedByTapeHead hy
-  -- the three phases
+  -- the three phases: shadowing, clearing, rewinding the input head
   have hA : (shadow m₀ m₁ tm).runFrom ((shadow m₀ m₁ tm).initCfg input) (u + 1) = C₁ :=
-    h.runFrom_shadow
-  have hB := runFrom_clearList hm (List.finRange k) (List.nodup_finRange k) a b c
-    (Shadow.visited tm c₀ u) C₁ hready
-  rw [clearedCfg_finRange] at hB
+    runFrom_shadow hlt
   have hC₁ : C₁.Halted := by
     simp only [Cfg.Halted, C₁, Shadow.cfg, Option.map_eq_none_iff]
-    exact h.halted
-  have hAB := Turing.MultiTapeTM.runFrom_seq (tm₁ := clearList m₀ m₁ (List.finRange k)) hA hC₁
-    hB rfl
-  have hR : ((rewindInput Symbol).extendTapes (noTapes (k + k))).runFrom
-      ((Sequential.rightCfg (State₀ := Option State)
-        (⟨none, C₁.inputPos, fun _ _ => none, fun _ => 0, C₁.output⟩ :
-          Cfg (k + k) Symbol (ClearListState (List.finRange k).length) input)).withState
-        (some ((rewindInput Symbol).extendTapes (noTapes (k + k))).q₀))
-      (C₁.inputPos.val - 1 + 2) =
-      ⟨none, 1, fun _ _ => none, fun _ => 0, C₁.output⟩ := by
+    exact hu
+  obtain ⟨pB, hhB, hlB, htB⟩ := exists_runPath_clearList hm (List.finRange k)
+    (List.nodup_finRange k) a b c (Shadow.visited tm c₀ u) C₁ hready
+  rw [clearedCfg_finRange] at hlB
+  obtain ⟨pAB, hhAB, hlAB, htAB, hsAB⟩ := exists_runPath_seq_space
+    (p₀ := .ofDeterministic (shadow m₀ m₁ tm) ((shadow m₀ m₁ tm).initCfg input) (u + 1))
+    (p₁ := pB) (by rw [last_ofDeterministic, hA]; exact hC₁)
+    (by rw [hhB, last_ofDeterministic, hA]) (by rw [hlB])
+  set R₀ : Cfg (k + k) Symbol RewindState input :=
+    (Sequential.rightCfg (State₀ := Option State)
+      (⟨none, C₁.inputPos, fun _ _ => none, fun _ => 0, C₁.output⟩ :
+        Cfg (k + k) Symbol (ClearListState (List.finRange k).length) input)).withState
+      (some ((rewindInput Symbol).extendTapes (noTapes (k + k))).q₀)
+  have hR : ((rewindInput Symbol).extendTapes (noTapes (k + k))).runFrom R₀
+      (C₁.inputPos.val - 1 + 2) = ⟨none, 1, fun _ _ => none, fun _ => 0, C₁.output⟩ := by
     rw [runFrom_noTapes]
-    simp only [noTapesCfg, Cfg.withState, Sequential.rightCfg, Cfg.mapState, extendTapes_q₀,
+    simp only [R₀, noTapesCfg, Cfg.withState, Sequential.rightCfg, Cfg.mapState, extendTapes_q₀,
       runFrom_rewindInput]
-  have hTot := Turing.MultiTapeTM.runFrom_seq hAB rfl hR rfl
-  have hinit : (tidy m₀ m₁ tm).initCfg input =
-      Sequential.leftCfg ((rewindInput Symbol).extendTapes (noTapes (k + k)))
-        (Sequential.leftCfg (clearList m₀ m₁ (List.finRange k))
-          ((shadow m₀ m₁ tm).initCfg input)) := rfl
+  obtain ⟨p, hh, hl, ht, hs⟩ := exists_runPath_seq_space (p₀ := pAB)
+    (p₁ := .ofDeterministic ((rewindInput Symbol).extendTapes (noTapes (k + k))) R₀
+      (C₁.inputPos.val - 1 + 2))
+    (by rw [hlAB, hlB]; rfl) (by rw [hlAB, hlB]; rfl) (by rw [last_ofDeterministic, hR])
   -- the time bound
   set Tc := ((List.finRange k).map fun i => a i + 2 * b i + c i + 5).sum + 1
   have hcard : ∀ i, a i + b i + 1 = tm.spaceUsedByTape c₀ u i := fun i => by
@@ -306,30 +323,37 @@ theorem HaltsAt.runFrom_tidy (hm : m₀ ≠ m₁) {u : ℕ} (h : tm.HaltsAt (tm.
       omega
     have : ∑ i, (3 * tm.spaceUsedByTape c₀ u i + 2) = 3 * S + 2 * k := by
       rw [Finset.sum_add_distrib, ← Finset.mul_sum]
-      simp [S, spaceUsed, mul_comm]
+      simp [S, space_eq_sum_spaceUsedByTape, mul_comm]
     omega
   have hTr : C₁.inputPos.val - 1 + 2 ≤ u + 2 := by
     have h₁ : (D.inputPos : ℕ) ≤ (c₀.inputPos : ℕ) + u := inputPos_runFrom_le tm c₀ u
     have h₂ : (c₀.inputPos : ℕ) = 1 := rfl
     change (D.inputPos : ℕ) - 1 + 2 ≤ u + 2
     omega
-  refine ⟨u + 1 + Tc + (C₁.inputPos.val - 1 + 2), by omega, ?_, ?_⟩
-  · rw [hinit]
-    refine hTot.trans ?_
+  change pB.length ≤ Tc at htB
+  refine ⟨p, hh.trans (by rw [hhAB]; rfl), hl.trans ?_, ?_, ?_⟩
+  · rw [last_ofDeterministic, hR]
     refine Cfg.ext rfl rfl ?_ rfl rfl
     funext i
     exact tapeOfList_nil.symm
-  · rw [hinit]
-    refine (Turing.MultiTapeTM.spaceUsed_seq_le hAB rfl (congrArg Cfg.state hR)).trans ?_
-    refine (Nat.add_le_add (Turing.MultiTapeTM.spaceUsed_seq_le hA hC₁ (congrArg Cfg.state hB))
-      (spaceUsed_noTapes_le _ _ _)).trans ?_
-    rw [spaceUsed_shadow h]
-    change 2 * S + _ + (k + k) ≤ _
-    have h₁ := spaceUsed_linear (tm := clearList m₀ m₁ (List.finRange k))
-      (C₁.withState (some (clearList m₀ m₁ (List.finRange k)).q₀)) Tc
-    have h₂ : (k + k) * Tc ≤ 2 * k * (3 * S + 2 * k + 1) := by
-      rw [← two_mul]
-      exact Nat.mul_le_mul_left _ hTc
+  · change p.length ≤ pAB.length + (C₁.inputPos.val - 1 + 2) at ht
+    change pAB.length ≤ u + 1 + pB.length at htAB
+    change p.length ≤ _
+    omega
+  · -- the shadowing phase visits `2 S` cells, the clearing phase at most one new cell per tape and
+    -- step, and the rewinding phase one cell per tape
+    refine hs.trans ?_
+    have hsA : (MultiTapeNTM.RunPath.ofDeterministic (shadow m₀ m₁ tm)
+        ((shadow m₀ m₁ tm).initCfg input) (u + 1)).space = 2 * S := space_shadow hlt
+    have hsB : pB.space ≤ (k + k) * pB.length + (k + k) := space_runPath_le pB
+    have hsR : (MultiTapeNTM.RunPath.ofDeterministic
+        ((rewindInput Symbol).extendTapes (noTapes (k + k))) R₀ (C₁.inputPos.val - 1 + 2)).space ≤
+        k + k := by
+      refine (space_extendTapes_le (rewindInput Symbol) (noTapes (k + k)) R₀ _).trans ?_
+      rw [space_zero_tapes_eq_zero _ _ rfl]
+      omega
+    have h₂ : (k + k) * pB.length ≤ 2 * k * (3 * S + 2 * k + 1) :=
+      (Nat.mul_le_mul_left _ (htB.trans hTc)).trans_eq (by ring)
     have h₃ : 2 * k * (3 * S + 2 * k + 3) = 2 * k * (3 * S + 2 * k + 1) + 4 * k := by ring
     omega
 
@@ -340,23 +364,21 @@ theorem ComputesInTimeAndSpace.computesTidily_tidy (hm : m₀ ≠ m₁) {output 
     {t s : ℕ} (h : tm.ComputesInTimeAndSpace input output t s) :
     (tidy m₀ m₁ tm).ComputesTidilyInTimeAndSpace input output (2 * t + 3 * s + 2 * k + 4)
       (2 * s + 2 * k * (3 * s + 2 * k + 3)) := by
+  classical
   obtain ⟨⟨u', hu', hout⟩, ht, hs⟩ := h
-  obtain ⟨u, hut, hu⟩ := exists_haltsAt (halted_of_runsInTime ht)
+  -- the first step at which `tm` has halted
+  have hex : ∃ n, (tm.runFrom (tm.initCfg input) n).Halted := ⟨u', hu'⟩
+  obtain ⟨u, hu, hlt⟩ : ∃ u, (tm.runFrom (tm.initCfg input) u).Halted ∧
+      ∀ m < u, ¬(tm.runFrom (tm.initCfg input) m).Halted :=
+    ⟨Nat.find hex, Nat.find_spec hex, fun _ => Nat.find_min hex⟩
+  have hut : u ≤ t := Nat.le_of_not_lt fun h => hlt t h (halted_of_runsInTime ht)
   have hout' : (tm.runFrom (tm.initCfg input) u).output = output := by
-    rw [← hout, hu.runFrom_eq (hu.le_of_halted hu')]
-  have hS := spaceUsed_le_of_runsInSpace hs u
-  obtain ⟨T, hT, hrun, hspace⟩ := hu.runFrom_tidy hm
-  have hhalt : ((tidy m₀ m₁ tm).runFrom ((tidy m₀ m₁ tm).initCfg input) T).Halted := by
-    rw [hrun]
-    rfl
-  have hTle : T ≤ 2 * t + 3 * s + 2 * k + 4 := by omega
-  rw [computesTidily_iff, ← Cfg.init_eq_wordsCfg]
-  refine ⟨by
-    rw [show Cfg.init (tidy m₀ m₁ tm).q₀ input = (tidy m₀ m₁ tm).initCfg input from rfl,
-      runFrom_eq_of_halt _ _ hTle hhalt, hrun, hout'], ?_⟩
-  rw [show Cfg.init (tidy m₀ m₁ tm).q₀ input = (tidy m₀ m₁ tm).initCfg input from rfl,
-    spaceUsed_eq_of_halt _ hTle hhalt]
-  refine hspace.trans (Nat.add_le_add (Nat.mul_le_mul_left 2 hS) (Nat.mul_le_mul_left _ ?_))
+    rw [← hout, runFrom_eq_of_halt _ _ (Nat.le_of_not_lt fun h => hlt u' h hu') hu]
+  have hS := space_le_of_runsInSpace hs u
+  obtain ⟨p, hhead, hlast, htime, hspace⟩ := exists_runPath_tidy hm hlt hu
+  rw [computesTidily_iff]
+  refine ⟨p, hhead.trans (initCfg_eq_wordsCfg input), hlast.trans (by rw [hout']), by omega,
+    hspace.trans (Nat.add_le_add (Nat.mul_le_mul_left 2 hS) (Nat.mul_le_mul_left _ ?_))⟩
   omega
 
 /-- **Computable functions are tidily computable**, at a linear cost: a function computable within

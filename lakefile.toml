@@ -21,7 +21,7 @@ weak.linter.unicodeLinter = false
 [[require]]
 name = "cslib"
 git = "https://github.com/leanprover/cslib"
-rev = "b2d4c7c3c08420144c9f80f5277d4bb3e1c99df1"
+rev = "0b1e3680b43ad9cd482a66f183764f33fc8a4e8f"
 
 [[lean_lib]]
 name = "Complexity"

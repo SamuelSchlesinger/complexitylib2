@@ -5,9 +5,9 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate (addition to `Plumbing/Tidy`, after #1126)
+-- upstream: candidate (addition to `Plumbing/Tidy/Defs.lean`)
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
+public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 
 /-!
@@ -33,7 +33,8 @@ theorem ComputesTidilyInTimeAndSpace.runFrom_initCfg {input output : List Symbol
     (h : tm.ComputesTidilyInTimeAndSpace input output t s) :
     (tm.runFrom (tm.initCfg input) t).state = none ∧
       (tm.runFrom (tm.initCfg input) t).output = output := by
-  rw [initCfg_eq_wordsCfg, (computesTidily_iff.1 h).1]
+  obtain ⟨p, hhead, hlast, htime, -⟩ := computesTidily_iff.1 h
+  rw [initCfg_eq_wordsCfg, ← hhead, runFrom_eq_of_runPath (by rw [hlast]; rfl) htime, hlast]
   exact ⟨rfl, rfl⟩
 
 end Turing.MultiTapeTM

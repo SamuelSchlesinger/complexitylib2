@@ -5,10 +5,10 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate (additions to `Configuration.lean` and `Deterministic.lean`)
+-- upstream: candidate (additions to `Configuration`, `Deterministic` and `TapeLemmas`)
 
-public import Cslib.Computability.Machines.Turing.MultiTape.Deterministic
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.WordsCfg
+public import Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas
 
 /-!
 # Facts about runs of multi-tape machines
@@ -27,9 +27,14 @@ travel, and the initial configuration as a configuration of words.
 
 * `Turing.Cfg.inputSymbol_eq_inputAt`, `Turing.val_moveInputPos_eq_moveInputPosNat`.
 * `Turing.Action.apply_workTapes_eq_ite`.
+* `Turing.MultiTapeTM.runFrom_succ`, `Turing.MultiTapeTM.runFrom_add`: a run, one step or one
+  phase at a time.
 * `Turing.MultiTapeTM.abs_workTapePos_runFrom_le`: after `t` steps a work head is within `t` cells
   of the origin.
 * `Turing.MultiTapeTM.initCfg_eq_wordsCfg`: the initial configuration has blank work tapes.
+* `Turing.MultiTapeTM.runFrom_eq_of_runPath`: a path to a halted configuration, read as a run.
+* `Turing.MultiTapeTM.space_runPath_le`: a path of a deterministic machine visits at most one new
+  cell per tape and step.
 * `Turing.MultiTapeTM.runsInTime_iff_halted`, `Turing.MultiTapeTM.runsInSpace_iff`: the shared
   time and space bounds, read on the run of a deterministic machine.
 -/
@@ -92,6 +97,17 @@ namespace MultiTapeTM
 
 variable {tm : MultiTapeTM k Symbol State}
 
+/-- One more step of a run. -/
+theorem runFrom_succ {input : List Symbol} (cfg : Cfg k Symbol State input) (t : ℕ) :
+    tm.runFrom cfg (t + 1) = tm.step (tm.runFrom cfg t) :=
+  Function.iterate_succ_apply' _ _ _
+
+/-- A run splits at any intermediate step. -/
+theorem runFrom_add {input : List Symbol} (cfg : Cfg k Symbol State input) (m n : ℕ) :
+    tm.runFrom cfg (m + n) = tm.runFrom (tm.runFrom cfg m) n := by
+  rw [runFrom, Nat.add_comm, Function.iterate_add_apply]
+  rfl
+
 /-- After `t` steps from the initial configuration, a work head is within `t` cells of the
 origin. -/
 theorem abs_workTapePos_runFrom_le (x : List Symbol) (t : ℕ) (i : Fin k) :
@@ -127,24 +143,47 @@ theorem runsInTime_iff_halted {input : List Symbol} {t : ℕ} :
     tm.RunsInTime input t ↔ (tm.runFrom (tm.initCfg input) t).Halted :=
   ⟨halted_of_runsInTime, runsInTime_of_halted⟩
 
-/-- The space of the path of the first `t` steps is the space used by the run. -/
-theorem space_ofDeterministic (input : List Symbol) (t : ℕ) :
-    (MultiTapeNTM.ComputationPath.ofDeterministic tm input t).space =
-      tm.spaceUsed (tm.initCfg input) t :=
+/-- The path of the first `t` steps from `cfg` ends where the run does. -/
+@[simp]
+theorem last_ofDeterministic {input : List Symbol} (cfg : Cfg k Symbol State input) (t : ℕ) :
+    (MultiTapeNTM.RunPath.ofDeterministic tm cfg t).last = tm.runFrom cfg t :=
   rfl
+
+/-- A path of a deterministic machine ends where the run from its head does. -/
+theorem runPath_last_eq_runFrom {input : List Symbol} (p : tm.RunPath input) :
+    p.last = tm.runFrom p.head p.time :=
+  runPath_apply_eq_runFrom p (Fin.last _)
+
+/-- A path of a deterministic machine to a halted configuration gives the run from its head at
+any later step. -/
+theorem runFrom_eq_of_runPath {input : List Symbol} {p : tm.RunPath input} (hp : p.last.Halted)
+    {t : ℕ} (ht : p.time ≤ t) : tm.runFrom p.head t = p.last := by
+  rw [runPath_last_eq_runFrom] at hp ⊢
+  exact runFrom_eq_of_halt tm _ ht hp
+
+/-- The space of a run is the sum of the space used by each tape. -/
+theorem space_eq_sum_spaceUsedByTape {input : List Symbol} (cfg : Cfg k Symbol State input)
+    (t : ℕ) : tm.space cfg t = ∑ i, tm.spaceUsedByTape cfg t i :=
+  rfl
+
+/-- A path of a deterministic machine visits at most one new cell per tape and step. -/
+theorem space_runPath_le {input : List Symbol} (p : tm.RunPath input) :
+    p.space ≤ k * p.time + k := by
+  rw [p.eq_ofDeterministic]
+  exact space_linear _ _
 
 /-- A deterministic machine satisfying the shared space bound `s` uses at most `s` cells in every
 prefix of its run. -/
-theorem spaceUsed_le_of_runsInSpace {input : List Symbol} {s : ℕ} (h : tm.RunsInSpace input s)
-    (t : ℕ) : tm.spaceUsed (tm.initCfg input) t ≤ s :=
-  space_ofDeterministic (tm := tm) input t ▸ h _
+theorem space_le_of_runsInSpace {input : List Symbol} {s : ℕ} (h : tm.RunsInSpace input s)
+    (t : ℕ) : tm.space (tm.initCfg input) t ≤ s :=
+  h (MultiTapeNTM.ComputationPath.ofDeterministic tm input t)
 
 /-- A deterministic machine satisfies the shared space bound `s` exactly when every prefix of its
 run uses at most `s` cells. -/
 theorem runsInSpace_iff {input : List Symbol} {s : ℕ} :
-    tm.RunsInSpace input s ↔ ∀ t, tm.spaceUsed (tm.initCfg input) t ≤ s := by
-  refine ⟨spaceUsed_le_of_runsInSpace, fun h p => ?_⟩
-  rw [p.eq_ofDeterministic, space_ofDeterministic]
+    tm.RunsInSpace input s ↔ ∀ t, tm.space (tm.initCfg input) t ≤ s := by
+  refine ⟨space_le_of_runsInSpace, fun h p => ?_⟩
+  rw [p.eq_ofDeterministic]
   exact h _
 
 end MultiTapeTM

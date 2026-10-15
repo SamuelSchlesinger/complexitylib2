@@ -25,7 +25,7 @@ to any embedding.
 
 ## Main results
 
-* `Turing.MultiTapeTM.runFrom_extendTapes`, `Turing.MultiTapeTM.spaceUsed_extendTapes_le`: the run
+* `Turing.MultiTapeTM.runFrom_extendTapes`, `Turing.MultiTapeTM.space_extendTapes_le`: the run
   and the space of a machine run on the tapes selected by an embedding.
 -/
 
@@ -55,14 +55,15 @@ theorem runFrom_extendTapes (tm : MultiTapeTM k Symbol State) (e : Fin k ↪ Fin
     (cfg : Cfg k' Symbol State input) (n : ℕ) :
     (tm.extendTapes e).runFrom cfg n =
       embed e (tm.runFrom (viewCfg e cfg) n) cfg.workTapes cfg.workTapePos := by
-  rw [← runFrom_embed, embed_viewCfg]
+  rw [← embedHom_apply tm, ← runFrom_map, embedHom_apply, embed_viewCfg]
 
 /-- **Space of a machine run on the tapes selected by an embedding:** the space of the run on the
 view, plus one cell for each tape the machine does not use. -/
-theorem spaceUsed_extendTapes_le (tm : MultiTapeTM k Symbol State) (e : Fin k ↪ Fin k')
+theorem space_extendTapes_le (tm : MultiTapeTM k Symbol State) (e : Fin k ↪ Fin k')
     (cfg : Cfg k' Symbol State input) (n : ℕ) :
-    (tm.extendTapes e).spaceUsed cfg n ≤ tm.spaceUsed (viewCfg e cfg) n + (k' - k) := by
-  conv_lhs => rw [← embed_viewCfg e cfg]
-  exact spaceUsed_embed_le _ _ _ _ _ _
+    (tm.extendTapes e).space cfg n ≤ tm.space (viewCfg e cfg) n + (k' - k) := by
+  have := space_map_embedHom_le tm e cfg.workTapes cfg.workTapePos
+    (MultiTapeNTM.RunPath.ofDeterministic tm (viewCfg e cfg) n)
+  rwa [MultiTapeNTM.RunPath.map_ofDeterministic, embedHom_apply, embed_viewCfg] at this
 
 end Turing.MultiTapeTM

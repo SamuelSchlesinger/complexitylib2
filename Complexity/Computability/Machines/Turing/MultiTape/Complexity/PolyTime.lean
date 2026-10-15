@@ -8,7 +8,7 @@ module
 -- upstream: subset of crei/tidy-universal `Complexity/PolyTime.lean`;
 -- definitions only, delete when it lands
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
+public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 import Mathlib.Tactic.Ring
 
 /-!

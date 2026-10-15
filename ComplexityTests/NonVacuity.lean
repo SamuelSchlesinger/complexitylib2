@@ -39,12 +39,11 @@ def constTM (b : Bool) : MultiTapeTM 0 Bool Unit :=
 theorem computesTidily_constTM (b : Bool) (w : List Bool) :
     (constTM b).ComputesTidilyInTimeAndSpace w [b] 1 0 := by
   rw [computesTidily_iff]
-  refine ⟨?_, ?_⟩
-  · rw [show (1 : ℕ) = 0 + 1 from rfl, runFrom_succ, show runFrom _ 0 = _ from rfl,
-      step_of_state (q := ()) rfl]
-    simp only [constTM, tr_ofTr, wordsCfg, Action.apply, moveInputPos_zero]
-    congr <;> funext i <;> exact i.elim0
-  · simp [spaceUsed]
+  refine ⟨.ofDeterministic (constTM b) (wordsCfg w (some (constTM b).q₀) (fun _ => []) []) 1, rfl,
+    ?_, le_rfl, (space_zero_tapes_eq_zero _ _ rfl).le⟩
+  rw [last_ofDeterministic, runFrom_one, step_of_state (q := ()) rfl]
+  simp only [constTM, tr_ofTr, wordsCfg, Action.apply, moveInputPos_zero]
+  congr <;> funext i <;> exact i.elim0
 
 theorem polyTime_const {α : Type} (enc : α ↪ List Bool) (b : Bool) :
     ComputableTidilyInPolyTime (fun _ : α => b) enc encBool :=
