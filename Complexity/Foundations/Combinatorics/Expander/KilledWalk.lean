@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.Expander.Walk
+import Complexity.Foundations.Data.Finset.Expect
 
 /-!
 # Killed walks
@@ -50,6 +51,9 @@ that the reverse is killed at the same step.
   truncated geometric law of the kill time.
 * `Cslib.RotationMap.sum_ite_killTime_eq`, `Cslib.RotationMap.card_filter_killTime_eq_and`: given
   its kill time, a killed walk is a uniformly random walk of that length.
+* `Cslib.RotationMap.expect_killTime_eq`, `Cslib.RotationMap.expect_le_killTime`,
+  `Cslib.RotationMap.expect_ite_killTime_eq`, `Cslib.RotationMap.expect_prod_ite_killTime_eq`: the
+  law of killed walks, as uniform averages.
 * `Cslib.RotationMap.card_filter_killTime_eq_and_splitWalk`: the crossing count for killed walks.
 * `Cslib.RotationMap.neighbor_killedPow`, `Cslib.RotationMap.rot_pow_killTime`: the edges of the
   killed power and their reverses.
@@ -65,6 +69,7 @@ that the reverse is killed at the same step.
 namespace Cslib.RotationMap
 
 open Finset
+open scoped BigOperators
 
 variable {V D : Type*} (G : RotationMap V D)
 
@@ -217,6 +222,92 @@ theorem card_filter_killTime_eq_and_splitWalk {ℓ : ℕ} (hℓ : ℓ < T) (i : 
       Q (G.walkDart w i) (G.walkDrop w (i + 1)).2
 
 end Law
+
+section Expect
+
+/-! ### The law of killed walks, as averages -/
+
+variable {T q : ℕ} [NeZero q] [Fintype D]
+
+/-- Averaging a function of the first `m` labels over the label sequences of length `T` averages it
+over the label sequences of length `m`. -/
+private theorem expect_comp_take [Nonempty D] {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] {m : ℕ}
+    (h : m ≤ T) (f : (Fin m → D) → M) : 𝔼 k : Fin T → D, f (Fin.take m h k) = 𝔼 r, f r := by
+  rw [Fintype.expect_equiv (((finCongr (Nat.add_sub_of_le h).symm).arrowCongr
+      (Equiv.refl D)).trans (Fin.appendEquiv m (T - m)).symm) (fun k ↦ f (Fin.take m h k))
+      (fun x ↦ f x.1) fun _ ↦ rfl,
+    Fintype.expect_prod]
+  simp only [Fintype.expect_const]
+
+/-- Under uniformly random kill signals, a walk of length `T` is killed at its step `m < T` with
+probability `(1 - 1 / q) ^ m / q`. -/
+theorem expect_killTime_eq {m : ℕ} (hm : m < T) :
+    𝔼 c : Fin T → Fin q, (if killTime c = m then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ m / q := by
+  have hq : (q : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne q)
+  rw [Fintype.expect_eq_sum_div_card, sum_boole, card_filter_killTime_eq hm]
+  have hT : (q : ℝ) ^ T = q ^ (T - (m + 1)) * q ^ m * q := by
+    rw [← pow_add, ← pow_succ]
+    congr 1
+    omega
+  simp only [Fintype.card_pi, prod_const, card_univ, Fintype.card_fin]
+  push_cast [Nat.cast_sub (NeZero.one_le : 1 ≤ q)]
+  rw [hT]
+  field_simp
+  rw [← mul_pow, mul_div_cancel₀ _ hq]
+
+/-- Under uniformly random kill signals, a walk of length `T` survives its first `m ≤ T` steps with
+probability `(1 - 1 / q) ^ m`. -/
+theorem expect_le_killTime {m : ℕ} (hm : m ≤ T) :
+    𝔼 c : Fin T → Fin q, (if m ≤ killTime c then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ m := by
+  have hq : (q : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne q)
+  rw [Fintype.expect_eq_sum_div_card, sum_boole, card_filter_le_killTime hm]
+  have hT : (q : ℝ) ^ T = q ^ (T - m) * q ^ m := by
+    rw [← pow_add]
+    congr 1
+    omega
+  simp only [Fintype.card_pi, prod_const, card_univ, Fintype.card_fin]
+  push_cast [Nat.cast_sub (NeZero.one_le : 1 ≤ q)]
+  rw [hT]
+  field_simp
+  rw [← mul_pow, mul_div_cancel₀ _ hq]
+
+/-- **The law of a killed walk**: averaged over uniformly random labels and kill signals, a function
+of the first `ℓ < T` labels, on the event that the walk is killed at step `ℓ`, averages to
+`(1 - 1 / q) ^ ℓ / q` times its average over the label sequences of length `ℓ`. -/
+theorem expect_ite_killTime_eq [Nonempty D] {ℓ : ℕ} (hℓ : ℓ < T) (f : (Fin ℓ → D) → ℝ) :
+    𝔼 x : (Fin T → D) × (Fin T → Fin q),
+        (if killTime x.2 = ℓ then f (Fin.take ℓ hℓ.le x.1) else 0) =
+      (1 - (q : ℝ)⁻¹) ^ ℓ / q * 𝔼 r, f r := by
+  have h (x : (Fin T → D) × (Fin T → Fin q)) :
+      (if killTime x.2 = ℓ then f (Fin.take ℓ hℓ.le x.1) else 0) =
+        f (Fin.take ℓ hℓ.le x.1) * if killTime x.2 = ℓ then 1 else 0 := by
+    split_ifs <;> simp
+  simp only [h]
+  rw [Fintype.expect_prod]
+  simp only [← mul_expect, expect_killTime_eq hℓ]
+  rw [← expect_mul, expect_comp_take, mul_comm]
+
+/-- **The law of a killed walk**, with a uniformly random start: a function of the walk along the
+first `ℓ < T` labels, on the event that the walk is killed at step `ℓ`, averages to
+`(1 - 1 / q) ^ ℓ / q` times its average over the walks of length `ℓ`. -/
+theorem expect_prod_ite_killTime_eq [Fintype V] [Nonempty D] {ℓ : ℕ} (hℓ : ℓ < T)
+    (F : V × (Fin ℓ → D) → ℝ) :
+    𝔼 x : V × (Fin T → D) × (Fin T → Fin q),
+        (if killTime x.2.2 = ℓ then F (x.1, Fin.take ℓ hℓ.le x.2.1) else 0) =
+      (1 - (q : ℝ)⁻¹) ^ ℓ / q * 𝔼 w, F w := by
+  rw [Fintype.expect_prod, Fintype.expect_prod F, mul_expect]
+  exact expect_congr rfl fun v _ ↦ expect_ite_killTime_eq hℓ fun r ↦ F (v, r)
+
+/-- The kill signals of a uniformly random killed walk are independent of its walk: averaging a
+function of the start and the labels over the killed walks averages it over the walks. -/
+theorem expect_comp_fst_snd_fst [Fintype V] (g : V × (Fin T → D) → ℝ) :
+    𝔼 p : V × (Fin T → D) × (Fin T → Fin q), g (p.1, p.2.1) = 𝔼 w, g w := by
+  rw [Fintype.expect_prod, Fintype.expect_prod g]
+  refine expect_congr rfl fun v _ ↦ ?_
+  rw [Fintype.expect_prod]
+  simp only [Fintype.expect_const]
+
+end Expect
 
 section KilledPow
 

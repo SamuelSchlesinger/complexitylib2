@@ -534,13 +534,6 @@ theorem expect_walkDart_mul_walkDart {i j : Fin t} (hij : i < j) (f g : V × D �
   rw [← G.expect_comp_rot, Fintype.expect_prod]
   simp only [rot_rot, expect_mul]
 
-/-- The square of an average is at most the average of the squares. -/
-private theorem sq_expect_le_expect_sq {ι : Type*} [Fintype ι] (u : ι → ℝ) :
-    (𝔼 x, u x) ^ 2 ≤ 𝔼 x, u x ^ 2 := by
-  rcases isEmpty_or_nonempty ι with hι | hι
-  · simp
-  · simpa using expect_mul_sq_le_sq_mul_sq univ u fun _ ↦ 1
-
 /-- **Two darts of a random walk are almost independent.** For steps `i < j` of a uniformly random
 walk, the correlation of `f` at the `i`-th dart with `g` at the `j`-th dart differs from the product
 of their averages over the darts by at most `λ(G) ^ (j - (i + 1))` times their standard deviations.
@@ -560,17 +553,17 @@ theorem sq_expect_walkDart_mul_walkDart_sub_le {i j : Fin t} (hij : i < j) (f g 
   have hψ : 𝔼 w, ψ w = 𝔼 q, g q := (Fintype.expect_prod g).symm
   have hφ₂ : 𝔼 v, φ v ^ 2 ≤ 𝔼 q, f q ^ 2 := by
     rw [← G.expect_comp_rot fun q ↦ f q ^ 2, Fintype.expect_prod]
-    exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _
+    exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _ _
   have hψ₂ : 𝔼 w, ψ w ^ 2 ≤ 𝔼 q, g q ^ 2 := by
     rw [Fintype.expect_prod fun q ↦ g q ^ 2]
-    exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _
+    exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _ _
   have hmix := G.sq_expect_mul_walk_pow_sub_le (j - (i + 1)) φ ψ
   rw [hφ, hψ] at hmix
   rw [G.expect_walkDart_mul_walkDart hij]
   refine hmix.trans ?_
   have := G.spectralExpansion_nonneg
-  have h₂ : 0 ≤ 𝔼 w, ψ w ^ 2 - (𝔼 q, g q) ^ 2 := hψ ▸ sub_nonneg.2 (sq_expect_le_expect_sq ψ)
-  have h₃ : 0 ≤ 𝔼 q, f q ^ 2 - (𝔼 q, f q) ^ 2 := sub_nonneg.2 (sq_expect_le_expect_sq f)
+  have h₂ : 0 ≤ 𝔼 w, ψ w ^ 2 - (𝔼 q, g q) ^ 2 := hψ ▸ sub_nonneg.2 (sq_expect_le_expect_sq _ ψ)
+  have h₃ : 0 ≤ 𝔼 q, f q ^ 2 - (𝔼 q, f q) ^ 2 := sub_nonneg.2 (sq_expect_le_expect_sq _ f)
   gcongr
 
 /-- **Two darts of a random walk are almost independent**: for steps `i < j` of a uniformly random
@@ -580,7 +573,7 @@ theorem abs_expect_walkDart_mul_walkDart_sub_le {i j : Fin t} (hij : i < j) (f :
     |𝔼 p : V × (Fin t → D), f (G.walkDart p i) * f (G.walkDart p j) - (𝔼 q, f q) ^ 2| ≤
       G.spectralExpansion ^ (j - (i + 1) : ℕ) * (𝔼 q, f q ^ 2 - (𝔼 q, f q) ^ 2) := by
   have := G.spectralExpansion_nonneg
-  have hf : 0 ≤ 𝔼 q, f q ^ 2 - (𝔼 q, f q) ^ 2 := sub_nonneg.2 (sq_expect_le_expect_sq f)
+  have hf : 0 ≤ 𝔼 q, f q ^ 2 - (𝔼 q, f q) ^ 2 := sub_nonneg.2 (sq_expect_le_expect_sq _ f)
   refine abs_le_of_sq_le_sq ?_ (by positivity)
   calc _ = (𝔼 p : V × (Fin t → D), f (G.walkDart p i) * f (G.walkDart p j) -
         (𝔼 q, f q) * 𝔼 q, f q) ^ 2 := by rw [sq (𝔼 q, f q)]

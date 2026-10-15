@@ -8,8 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Basic.Real.Pointwise
 public import Mathlib.Data.Fintype.Sum
+import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.CharP.Defs
 import Mathlib.Order.ConditionallyCompleteLattice.Finset
 
@@ -45,6 +47,8 @@ as is right: it is satisfied by every labelling.
 
 ## Main results
 
+* `Cslib.PCP.ConstraintGraph.expect_mem_unsatEdges`: the proportion of violated edges is the
+  probability that a uniformly random edge is violated.
 * `Cslib.PCP.ConstraintGraph.exists_unsatFrac_eq_unsatVal`: the minimum is attained.
 * `Cslib.PCP.ConstraintGraph.unsatVal_eq_zero_iff`: the value vanishes exactly on satisfiable
   constraint graphs.
@@ -69,6 +73,7 @@ as is right: it is satisfied by every labelling.
 namespace Cslib.PCP
 
 open Finset
+open scoped BigOperators
 
 /-- A **constraint graph** [Dinur, Section 2.1][Dinur2007] on the vertices `V`, with edges indexed
 by `E`, over the alphabet `α`: each edge `e` goes from `src e` to `dst e` and carries a binary
@@ -143,6 +148,12 @@ theorem unsatFrac_eq_zero_iff {σ : V → α} : G.unsatFrac σ = 0 ↔ ∀ e, G.
     unsatEdges_eq_empty_iff, or_iff_left_of_imp]
   intro h e
   exact (Fintype.card_eq_zero_iff.1 h).elim e
+
+/-- The proportion of the edges that a labelling violates is the average of the indicator of the
+violated edges: the probability that it violates a uniformly random edge. -/
+theorem expect_mem_unsatEdges [DecidableEq E] (σ : V → α) :
+    𝔼 e, (if e ∈ G.unsatEdges σ then 1 else 0 : ℝ) = G.unsatFrac σ := by
+  rw [Fintype.expect_eq_sum_div_card, sum_boole, filter_mem_eq_inter, univ_inter, unsatFrac]
 
 /-- The **unsatisfiability value** `UNSAT(G)` [Dinur, Section 2.1][Dinur2007]: the least
 proportion of the edges that a labelling violates. The minimum is attained when `α` is nonempty

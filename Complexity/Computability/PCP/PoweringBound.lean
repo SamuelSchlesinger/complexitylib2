@@ -65,8 +65,6 @@ graph, that is over uniformly random starts, labels and kill signals.
 
 ## Main results
 
-* `Cslib.RotationMap.expect_killTime_eq`, `Cslib.RotationMap.expect_le_killTime`,
-  `Cslib.RotationMap.expect_ite_killTime_eq`: the law of killed walks, as averages.
 * `Cslib.PCP.RegularConstraintGraph.inv_card_sub_le_sum_truthProb`: plurality, in terms of walks.
 * `Cslib.PCP.RegularConstraintGraph.expect_killTime_eq_and_hit`: the crossing count.
 * `Cslib.PCP.RegularConstraintGraph.le_expect_numHits`: the first moment.
@@ -108,17 +106,6 @@ private theorem sum_ite_lt_pow_le {x : ℝ} (hx₀ : 0 ≤ x) (hx₁ : x < 1) (T
   simp only [Nat.add_sub_cancel_left]
   rw [range_eq_Ico]
   simpa using geom_sum_Ico_le_of_lt_one (m := 0) (n := T - (i + 1)) hx₀ hx₁
-
-/-- **The second moment method**: the square of the average of `N` is at most the proportion of the
-points where `N` does not vanish times the average of `N ^ 2`, by the Cauchy–Schwarz inequality. -/
-private theorem sq_expect_le_expect_ne_zero_mul {ι : Type*} [Fintype ι] (N : ι → ℝ) :
-    (𝔼 i, N i) ^ 2 ≤ (𝔼 i, if N i = 0 then 0 else 1) * 𝔼 i, N i ^ 2 := by
-  have h := expect_mul_sq_le_sq_mul_sq univ (fun i ↦ if N i = 0 then (0 : ℝ) else 1) N
-  have h₁ : 𝔼 i, (if N i = 0 then (0 : ℝ) else 1) * N i = 𝔼 i, N i :=
-    expect_congr rfl fun i _ ↦ by split_ifs with hi <;> simp [hi]
-  have h₂ : 𝔼 i, (if N i = 0 then (0 : ℝ) else 1) ^ 2 = 𝔼 i, if N i = 0 then 0 else 1 :=
-    expect_congr rfl fun i _ ↦ by split_ifs <;> norm_num
-  rwa [h₁, h₂] at h
 
 /-- The ratio `a ^ 2 / (a + P)` of the second moment method grows with `a`: if `e ^ 2 ≤ x (e + P)`
 and `0 ≤ a ≤ e`, then `a ^ 2 ≤ x (a + P)`. -/
@@ -181,107 +168,9 @@ private theorem one_sub_inv_pow_le {q K : ℕ} (hq : 2 ≤ q) (hK : 1 ≤ K) :
 
 end Auxiliary
 
-/-! ### The law of killed walks, as averages -/
-
-namespace RotationMap
-
-variable {V D : Type*} [Fintype D] {T q : ℕ} [NeZero q]
-
-/-- Averaging a function of the first `m` labels over the label sequences of length `T` averages it
-over the label sequences of length `m`. -/
-private theorem expect_comp_take [Nonempty D] {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] {m : ℕ}
-    (h : m ≤ T) (f : (Fin m → D) → M) : 𝔼 k : Fin T → D, f (Fin.take m h k) = 𝔼 r, f r := by
-  rw [Fintype.expect_equiv (((finCongr (Nat.add_sub_of_le h).symm).arrowCongr
-      (Equiv.refl D)).trans (Fin.appendEquiv m (T - m)).symm) (fun k ↦ f (Fin.take m h k))
-      (fun x ↦ f x.1) fun _ ↦ rfl,
-    Fintype.expect_prod]
-  simp only [Fintype.expect_const]
-
-/-- Under uniformly random kill signals, a walk of length `T` is killed at its step `m < T` with
-probability `(1 - 1 / q) ^ m / q`. -/
-theorem expect_killTime_eq {m : ℕ} (hm : m < T) :
-    𝔼 c : Fin T → Fin q, (if killTime c = m then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ m / q := by
-  have hq : (q : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne q)
-  rw [Fintype.expect_eq_sum_div_card, sum_boole, card_filter_killTime_eq hm]
-  have hT : (q : ℝ) ^ T = q ^ (T - (m + 1)) * q ^ m * q := by
-    rw [← pow_add, ← pow_succ]
-    congr 1
-    omega
-  simp only [Fintype.card_pi, prod_const, card_univ, Fintype.card_fin]
-  push_cast [Nat.cast_sub (NeZero.one_le : 1 ≤ q)]
-  rw [hT]
-  field_simp
-  rw [← mul_pow, mul_div_cancel₀ _ hq]
-
-/-- Under uniformly random kill signals, a walk of length `T` survives its first `m ≤ T` steps with
-probability `(1 - 1 / q) ^ m`. -/
-theorem expect_le_killTime {m : ℕ} (hm : m ≤ T) :
-    𝔼 c : Fin T → Fin q, (if m ≤ killTime c then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ m := by
-  have hq : (q : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne q)
-  rw [Fintype.expect_eq_sum_div_card, sum_boole, card_filter_le_killTime hm]
-  have hT : (q : ℝ) ^ T = q ^ (T - m) * q ^ m := by
-    rw [← pow_add]
-    congr 1
-    omega
-  simp only [Fintype.card_pi, prod_const, card_univ, Fintype.card_fin]
-  push_cast [Nat.cast_sub (NeZero.one_le : 1 ≤ q)]
-  rw [hT]
-  field_simp
-  rw [← mul_pow, mul_div_cancel₀ _ hq]
-
-/-- **The law of a killed walk**: averaged over uniformly random labels and kill signals, a function
-of the first `ℓ < T` labels, on the event that the walk is killed at step `ℓ`, averages to
-`(1 - 1 / q) ^ ℓ / q` times its average over the label sequences of length `ℓ`. -/
-theorem expect_ite_killTime_eq [Nonempty D] {ℓ : ℕ} (hℓ : ℓ < T) (f : (Fin ℓ → D) → ℝ) :
-    𝔼 x : (Fin T → D) × (Fin T → Fin q),
-        (if killTime x.2 = ℓ then f (Fin.take ℓ hℓ.le x.1) else 0) =
-      (1 - (q : ℝ)⁻¹) ^ ℓ / q * 𝔼 r, f r := by
-  have h (x : (Fin T → D) × (Fin T → Fin q)) :
-      (if killTime x.2 = ℓ then f (Fin.take ℓ hℓ.le x.1) else 0) =
-        f (Fin.take ℓ hℓ.le x.1) * if killTime x.2 = ℓ then 1 else 0 := by
-    split_ifs <;> simp
-  simp only [h]
-  rw [Fintype.expect_prod]
-  simp only [← mul_expect, expect_killTime_eq hℓ]
-  rw [← expect_mul, expect_comp_take, mul_comm]
-
-/-- **The law of a killed walk**, with a uniformly random start: a function of the walk along the
-first `ℓ < T` labels, on the event that the walk is killed at step `ℓ`, averages to
-`(1 - 1 / q) ^ ℓ / q` times its average over the walks of length `ℓ`. -/
-private theorem expect_prod_ite_killTime_eq [Fintype V] [Nonempty D] {ℓ : ℕ} (hℓ : ℓ < T)
-    (F : V × (Fin ℓ → D) → ℝ) :
-    𝔼 x : V × (Fin T → D) × (Fin T → Fin q),
-        (if killTime x.2.2 = ℓ then F (x.1, Fin.take ℓ hℓ.le x.2.1) else 0) =
-      (1 - (q : ℝ)⁻¹) ^ ℓ / q * 𝔼 w, F w := by
-  rw [Fintype.expect_prod, Fintype.expect_prod F, mul_expect]
-  exact expect_congr rfl fun v _ ↦ expect_ite_killTime_eq hℓ fun r ↦ F (v, r)
-
-/-- The kill signals of a uniformly random killed walk are independent of its walk: averaging a
-function of the start and the labels over the killed walks averages it over the walks. -/
-private theorem expect_comp_fst_snd_fst [Fintype V] (g : V × (Fin T → D) → ℝ) :
-    𝔼 p : V × (Fin T → D) × (Fin T → Fin q), g (p.1, p.2.1) = 𝔼 w, g w := by
-  rw [Fintype.expect_prod, Fintype.expect_prod g]
-  refine expect_congr rfl fun v _ ↦ ?_
-  rw [Fintype.expect_prod]
-  simp only [Fintype.expect_const]
-
-end RotationMap
-
 namespace PCP
 
 open RotationMap
-
-namespace ConstraintGraph
-
-variable {V E α : Type*} [Fintype E] (G : ConstraintGraph V E α)
-
-/-- The proportion of the edges that a labelling violates is the average of the indicator of the
-violated edges. -/
-theorem expect_mem_unsatEdges [DecidableEq E] (σ : V → α) :
-    𝔼 e, (if e ∈ G.unsatEdges σ then 1 else 0 : ℝ) = G.unsatFrac σ := by
-  rw [Fintype.expect_eq_sum_div_card, sum_boole, filter_mem_eq_inter, univ_inter, unsatFrac]
-
-end ConstraintGraph
 
 namespace RegularConstraintGraph
 
@@ -802,9 +691,12 @@ theorem le_unsatFrac_power [Nonempty D] (A : V → WalkLabels D T → α) {H : �
   -- the second moment
   have h₂ := R.expect_numHits_sq_le T q A (R.decode T q A) hlam
   -- the second moment method
-  have h₃ : (𝔼 p, N p) ^ 2 ≤ x * (𝔼 p, N p + (T ^ 2 * ε ^ 2 + 2 * T * ε / (1 - lam))) :=
-    (sq_expect_le_expect_ne_zero_mul N).trans (mul_le_mul (R.expect_numHits_ne_zero_le T q A _)
+  have h₃ : (𝔼 p, N p) ^ 2 ≤ x * (𝔼 p, N p + (T ^ 2 * ε ^ 2 + 2 * T * ε / (1 - lam))) := by
+    refine (Fintype.sq_expect_le_dens_mul_expect_sq N).trans (mul_le_mul ?_
       (h₂.trans_eq (add_assoc _ _ _)) (expect_nonneg fun p _ ↦ sq_nonneg _) hx)
+    rw [← Fintype.expect_boole]
+    exact le_of_eq_of_le (expect_congr rfl fun p _ ↦ ite_not _ _ _)
+      (R.expect_numHits_ne_zero_le T q A (R.decode T q A))
   have h₄ := sq_le_mul_add_of_le (mul_nonneg hc₀ hε) h₁ (by positivity) hx h₃
   rcases hε.eq_or_lt with h₀ | h₀
   · rw [← h₀]
