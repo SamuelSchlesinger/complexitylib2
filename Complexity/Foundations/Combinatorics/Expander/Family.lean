@@ -60,18 +60,6 @@ open scoped BigOperators
 
 universe u
 
-/-- On at most one vertex the spectral expansion is zero: the only function of expectation zero is
-zero. -/
-private theorem spectralExpansion_eq_zero_of_subsingleton {V D : Type*} [Fintype V] [Fintype D]
-    [Subsingleton V] (G : RotationMap V D) : G.spectralExpansion = 0 := by
-  have h {f : V → ℝ} (hf : 𝔼 v, f v = 0) (v : V) : f v = 0 := by
-    have : Nonempty V := ⟨v⟩
-    calc f v = 𝔼 _w : V, f v := (Fintype.expect_const _).symm
-      _ = 𝔼 w, f w := expect_congr rfl fun w _ ↦ congrArg f (Subsingleton.elim v w)
-      _ = 0 := hf
-  refine le_antisymm (spectralExpansion_le le_rfl fun f hf ↦ ?_) G.spectralExpansion_nonneg
-  simp [h (G.expect_walk_eq_zero hf)]
-
 variable (V : Type u) [Fintype V]
 
 /-- **Constant-degree expanders exist**

@@ -25,6 +25,7 @@ by its average (`Fintype.mul_dens_filter_le_expect`).
 
 ## Main results
 
+* `Fintype.expect_prod`: the average over a product is the iterated average.
 * `Fintype.expect_boole`: the average of an indicator is a density.
 * `Fintype.mul_dens_filter_le_expect`: Markov's inequality for a uniform average.
 -/
@@ -37,6 +38,11 @@ open Finset
 open scoped BigOperators
 
 variable {ι 𝕜 : Type*} [Fintype ι]
+
+/-- The uniform average over a product is the iterated average. -/
+theorem expect_prod {α β M : Type*} [Fintype α] [Fintype β] [AddCommMonoid M] [Module ℚ≥0 M]
+    (f : α × β → M) : 𝔼 x, f x = 𝔼 a, 𝔼 b, f (a, b) := by
+  rw [← univ_product_univ, expect_product]
 
 /-- The uniform average of the indicator of `p` is the density of the set where `p` holds. -/
 theorem expect_boole [Semifield 𝕜] [CharZero 𝕜] (p : ι → Prop) [DecidablePred p] :

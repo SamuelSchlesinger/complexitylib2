@@ -157,6 +157,10 @@ theorem expect_expect_neighbor_comm (F : V → V → M) :
   simp only [← expect_product', univ_product_univ]
   exact Fintype.expect_bijective G.rot G.rot_involutive.bijective _ _ fun p ↦ by simp [neighbor]
 
+/-- The rotation map permutes the darts, so it preserves averages over them. -/
+theorem expect_comp_rot (u : V × D → M) : 𝔼 q, u (G.rot q) = 𝔼 q, u q :=
+  Fintype.expect_bijective G.rot G.rot_involutive.bijective _ _ fun _ ↦ rfl
+
 /-- Averaging a function of the neighbor over all darts averages it over the vertices. -/
 theorem expect_expect_neighbor [Nonempty D] (f : V → M) :
     𝔼 v, 𝔼 i, f (G.neighbor v i) = 𝔼 v, f v := by
@@ -336,6 +340,17 @@ theorem expect_walk_pow_sq_le_spectralExpansion_pow_mul {f : V → ℝ}
         exact expect_walk_sq_le_spectralExpansion_sq_mul (G.expect_walk_pow_eq_zero hf t)
       _ ≤ G.spectralExpansion ^ 2 * (G.spectralExpansion ^ (2 * t) * 𝔼 v, f v ^ 2) := by gcongr
       _ = G.spectralExpansion ^ (2 * (t + 1)) * 𝔼 v, f v ^ 2 := by ring
+
+/-- On at most one vertex the spectral expansion is zero: the only function of expectation zero is
+zero. -/
+theorem spectralExpansion_eq_zero_of_subsingleton [Subsingleton V] : G.spectralExpansion = 0 := by
+  have h {f : V → ℝ} (hf : 𝔼 v, f v = 0) (v : V) : f v = 0 := by
+    have : Nonempty V := ⟨v⟩
+    calc f v = 𝔼 _w : V, f v := (Fintype.expect_const _).symm
+      _ = 𝔼 w, f w := expect_congr rfl fun w _ ↦ congrArg f (Subsingleton.elim v w)
+      _ = 0 := hf
+  refine le_antisymm (spectralExpansion_le le_rfl fun f hf ↦ ?_) G.spectralExpansion_nonneg
+  simp [h (G.expect_walk_eq_zero hf)]
 
 end SpectralExpansion
 

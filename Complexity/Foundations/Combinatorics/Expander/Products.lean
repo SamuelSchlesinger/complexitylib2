@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Basic
 import Complexity.Foundations.Combinatorics.Expander.Power
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Analysis.Real.Sqrt
 
@@ -86,20 +87,15 @@ section Expect
 
 variable {ι α β : Type*}
 
-/-- Averaging over a product averages over the first factor the averages over the second. -/
-private theorem expect_prod [Fintype α] [Fintype β] (f : α × β → ℝ) :
-    𝔼 p, f p = 𝔼 a, 𝔼 b, f (a, b) := by
-  rw [← univ_product_univ, expect_product]
-
 /-- A function of the first coordinate has the same average on the product. -/
 private theorem expect_comp_fst [Fintype α] [Fintype β] [Nonempty β] (φ : α → ℝ) :
     𝔼 p : α × β, φ p.1 = 𝔼 a, φ a := by
-  simp only [expect_prod, Fintype.expect_const]
+  simp only [Fintype.expect_prod, Fintype.expect_const]
 
 /-- A function of the second coordinate has the same average on the product. -/
 private theorem expect_comp_snd [Fintype α] [Fintype β] [Nonempty α] (φ : β → ℝ) :
     𝔼 p : α × β, φ p.2 = 𝔼 b, φ b := by
-  simp only [expect_prod, Fintype.expect_const]
+  simp only [Fintype.expect_prod, Fintype.expect_const]
 
 /-- Subtracting from a function its averages over the fibers `{a} × β` leaves averages zero over
 the fibers. -/
@@ -115,7 +111,7 @@ private theorem expect_add_sq_of_expect_fiber_eq_zero [Fintype α] [Fintype β] 
     {g : α × β → ℝ} (hg : ∀ a, 𝔼 b, g (a, b) = 0) :
     𝔼 p, (φ p.1 + g p) ^ 2 = 𝔼 p : α × β, φ p.1 ^ 2 + 𝔼 p, g p ^ 2 := by
   have h : 𝔼 p, φ p.1 * g p = 0 := by
-    simp only [expect_prod, ← mul_expect, hg, mul_zero, expect_const_zero]
+    simp only [Fintype.expect_prod, ← mul_expect, hg, mul_zero, expect_const_zero]
   simp only [add_sq, expect_add_distrib, mul_assoc, ← mul_expect, h, mul_zero, add_zero]
 
 /-- Every function on `α × β` is a function of the first coordinate, its averages over the fibers
@@ -128,7 +124,7 @@ private theorem exists_eq_add_expect_fiber_eq_zero [Fintype α] [Fintype β] [No
   have hf : f = fun p ↦ 𝔼 b, f (p.1, b) + (f p - 𝔼 b, f (p.1, b)) :=
     funext fun p ↦ (add_sub_cancel _ _).symm
   refine ⟨fun a ↦ 𝔼 b, f (a, b), fun p ↦ f p - 𝔼 b, f (p.1, b), hf, expect_sub_expect_fiber f,
-    (expect_prod f).symm, ?_⟩
+    (Fintype.expect_prod f).symm, ?_⟩
   calc 𝔼 p, f p ^ 2 = 𝔼 p, (𝔼 b, f (p.1, b) + (f p - 𝔼 b, f (p.1, b))) ^ 2 := by
         simp only [add_sub_cancel]
     _ = 𝔼 p : α × β, (𝔼 b, f (p.1, b)) ^ 2 + 𝔼 p, (f p - 𝔼 b, f (p.1, b)) ^ 2 :=
@@ -165,11 +161,6 @@ private theorem expect_sq_le_of_expect_mul_le [Fintype ι] {u w : ι → ℝ} {c
       _ = _ := by ring
 
 end Expect
-
-/-- Averaging over the darts is invariant under the rotation map. -/
-private theorem expect_comp_rot {V D : Type*} [Fintype V] [Fintype D] (G : RotationMap V D)
-    (u : V × D → ℝ) : 𝔼 p, u (G.rot p) = 𝔼 p, u p :=
-  Fintype.expect_bijective G.rot G.rot_involutive.bijective _ _ fun _ ↦ rfl
 
 section Tensor
 
@@ -221,7 +212,7 @@ variable [Fintype D] [Fintype D']
 /-- The walk operator of `G ⊗ H` averages over a neighbor in `G` and a neighbor in `H`. -/
 theorem walk_tensor_apply (f : V × V' → ℝ) (p : V × V') :
     (G.tensor H).walk f p = 𝔼 i, 𝔼 i', f (G.neighbor p.1 i, H.neighbor p.2 i') := by
-  rw [walk_apply, expect_prod]
+  rw [walk_apply, Fintype.expect_prod]
   rfl
 
 /-- The walk operator of `G ⊗ H` is the tensor product of those of `G` and `H`: it sends
@@ -273,7 +264,7 @@ copies of `H` multiplies the second moment by at most `λ(H) ^ 2`. -/
 theorem expect_walk_refl_tensor_sq_le [Fintype V] [Fintype V'] {f : V × V' → ℝ}
     (hf : ∀ v, 𝔼 v', f (v, v') = 0) :
     𝔼 p, ((refl V).tensor H).walk f p ^ 2 ≤ H.spectralExpansion ^ 2 * 𝔼 p, f p ^ 2 := by
-  rw [expect_prod, expect_prod, mul_expect]
+  rw [Fintype.expect_prod, Fintype.expect_prod, mul_expect]
   refine expect_le_expect fun v _ ↦ ?_
   simp only [walk_refl_tensor_apply]
   exact H.expect_walk_sq_le_spectralExpansion_sq_mul (hf v)
@@ -463,7 +454,7 @@ theorem walk_zigzag :
     (G.zigzag H).walk =
       ((refl V).tensor H).walk ∘ₗ LinearMap.funLeft ℝ ℝ G.rot ∘ₗ ((refl V).tensor H).walk :=
   LinearMap.ext fun f ↦ funext fun p ↦ by
-    rw [walk_apply (G.zigzag H), expect_prod, LinearMap.comp_apply, LinearMap.comp_apply,
+    rw [walk_apply (G.zigzag H), Fintype.expect_prod, LinearMap.comp_apply, LinearMap.comp_apply,
       walk_refl_tensor_apply, walk_apply H]
     simp only [LinearMap.funLeft_apply, walk_refl_tensor_apply]
     simp only [walk_apply]
@@ -485,7 +476,7 @@ private theorem expect_mul_walk_zigzag_eq [Nonempty E] (h₁ f₁ : V → ℝ) (
 private theorem expect_mul_comp_rot_le (φ : V → ℝ) {ψ : V → ℝ} (hψ : 𝔼 v, ψ v = 0) :
     𝔼 p, φ p.1 * ψ (G.rot p).1 ≤ √(𝔼 v, φ v ^ 2) * (G.spectralExpansion * √(𝔼 v, ψ v ^ 2)) := by
   have : 𝔼 p, φ p.1 * ψ (G.rot p).1 = 𝔼 v, φ v * G.walk ψ v := by
-    simp only [expect_prod, walk_apply, mul_expect]
+    simp only [Fintype.expect_prod, walk_apply, mul_expect]
     rfl
   rw [this]
   refine (expect_mul_le_sqrt_mul_sqrt _ _).trans (mul_le_mul_of_nonneg_left ?_ (by positivity))

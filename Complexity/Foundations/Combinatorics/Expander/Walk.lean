@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
 public import Complexity.Foundations.Combinatorics.Expander.Power
 public import Mathlib.Data.Fin.Tuple.Take
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
 
 /-!
@@ -422,19 +423,14 @@ theorem walkAt_rot_pow_take (p : V × (Fin t → D)) {n i : ℕ} (hn : n ≤ t) 
 
 variable [Fintype V] [Fintype D]
 
-/-- Averaging over a product averages over the first factor the averages over the second. -/
-private theorem expect_prod {α β M : Type*} [Fintype α] [Fintype β] [AddCommMonoid M]
-    [Module ℚ≥0 M] (f : α × β → M) : 𝔼 x, f x = 𝔼 a, 𝔼 b, f (a, b) := by
-  rw [← univ_product_univ, expect_product]
-
 /-- **The pieces of a uniformly random walk are independent and uniform.** Split at its `i`-th
 step, a uniformly random walk of length `t` has a uniformly random `i`-th dart, and independently
 of it uniformly random labels before and after it. -/
 theorem expect_splitWalk {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (i : Fin t)
     (F : (V × D) × (Fin i → D) × (Fin (t - (i + 1)) → D) → M) :
     𝔼 p, F (G.splitWalk i p) = 𝔼 q, 𝔼 r, 𝔼 s, F (q, r, s) := by
-  rw [Fintype.expect_equiv (G.splitWalk i) _ F fun _ ↦ rfl, expect_prod]
-  simp only [expect_prod]
+  rw [Fintype.expect_equiv (G.splitWalk i) _ F fun _ ↦ rfl, Fintype.expect_prod]
+  simp only [Fintype.expect_prod]
 
 /-- **The crossing count.** Counted by their `i`-th dart `q`, the walks of length `t` for which the
 reverse of the first `i` steps satisfies `P q` and the steps after the `i`-th satisfy `Q q` are
@@ -474,7 +470,7 @@ theorem expect_walkDart {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (i : Fi
   · have : IsEmpty (Fin t → D) := ⟨fun k ↦ hD.false (k i)⟩
     simp
   · rw [Fintype.expect_equiv (G.splitWalk i) (fun p ↦ f (G.walkDart p i)) (fun x ↦ f x.1)
-      fun _ ↦ rfl, expect_prod]
+      fun _ ↦ rfl, Fintype.expect_prod]
     simp only [Fintype.expect_const]
 
 /-- The walks of length `t` whose `i`-th dart lies in `S` number `|D| ^ (t - 1) * |S|`. -/
@@ -509,7 +505,7 @@ theorem expect_walkDart_mk (v : V) (i : Fin t) (f : V × D → ℝ) :
   | succ t ih =>
     -- a tuple of `t + 1` labels is a first label and a tuple of `t` labels
     rw [← Fintype.expect_equiv (Fin.consEquiv fun _ ↦ D)
-      (fun x ↦ f (G.walkDart (v, Fin.cons x.1 x.2) i)) _ fun _ ↦ rfl, expect_prod]
+      (fun x ↦ f (G.walkDart (v, Fin.cons x.1 x.2) i)) _ fun _ ↦ rfl, Fintype.expect_prod]
     induction i using Fin.cases with
     | zero =>
       simp only [walkDart, Fin.val_zero, walkAt_zero, Fin.cons_zero, Fintype.expect_const,
@@ -518,10 +514,6 @@ theorem expect_walkDart_mk (v : V) (i : Fin t) (f : V × D → ℝ) :
       simp only [walkDart_cons_succ, ih, Fin.val_succ, pow_succ', Module.End.mul_apply, walk_apply]
 
 variable [Fintype V]
-
-/-- Averaging over the darts is invariant under the rotation map. -/
-private theorem expect_comp_rot (u : V × D → ℝ) : 𝔼 q, u (G.rot q) = 𝔼 q, u q :=
-  Fintype.expect_bijective G.rot G.rot_involutive.bijective _ _ fun _ ↦ rfl
 
 /-- **Two darts of a random walk.** For steps `i < j` of a uniformly random walk, the correlation of
 `f` at the `i`-th dart with `g` at the `j`-th dart is the correlation, along `j - (i + 1)` steps of
@@ -546,7 +538,7 @@ theorem expect_walkDart_mul_walkDart {i j : Fin t} (hij : i < j) (f g : V × D �
   simp only [h]
   rw [G.expect_splitWalk i fun x ↦ f x.1 * g (G.walkDart ((G.rot x.1).1, x.2.2) ⟨_, hj⟩)]
   simp only [Fintype.expect_const, ← mul_expect, expect_walkDart_mk]
-  rw [← G.expect_comp_rot, expect_prod]
+  rw [← G.expect_comp_rot, Fintype.expect_prod]
   simp only [rot_rot, expect_mul]
 
 /-- The square of an average is at most the average of the squares. -/
@@ -571,13 +563,13 @@ theorem sq_expect_walkDart_mul_walkDart_sub_le {i j : Fin t} (hij : i < j) (f g 
   set φ : V → ℝ := fun v ↦ 𝔼 a, f (G.rot (v, a))
   set ψ : V → ℝ := fun w ↦ 𝔼 a, g (w, a)
   have hφ : 𝔼 v, φ v = 𝔼 q, f q := by
-    rw [← G.expect_comp_rot f, expect_prod]
-  have hψ : 𝔼 w, ψ w = 𝔼 q, g q := (expect_prod g).symm
+    rw [← G.expect_comp_rot f, Fintype.expect_prod]
+  have hψ : 𝔼 w, ψ w = 𝔼 q, g q := (Fintype.expect_prod g).symm
   have hφ₂ : 𝔼 v, φ v ^ 2 ≤ 𝔼 q, f q ^ 2 := by
-    rw [← G.expect_comp_rot fun q ↦ f q ^ 2, expect_prod]
+    rw [← G.expect_comp_rot fun q ↦ f q ^ 2, Fintype.expect_prod]
     exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _
   have hψ₂ : 𝔼 w, ψ w ^ 2 ≤ 𝔼 q, g q ^ 2 := by
-    rw [expect_prod fun q ↦ g q ^ 2]
+    rw [Fintype.expect_prod fun q ↦ g q ^ 2]
     exact expect_le_expect fun v _ ↦ sq_expect_le_expect_sq _
   have hmix := G.sq_expect_mul_walk_pow_sub_le (j - (i + 1)) φ ψ
   rw [hφ, hψ] at hmix
