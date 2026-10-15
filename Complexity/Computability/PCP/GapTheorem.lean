@@ -42,6 +42,7 @@ would be trivial: a function deciding satisfiability could output one fixed grap
 
 ## Main definitions
 
+* `Cslib.PCP.Dinur.round`: Dinur's round on bundled constraint graphs.
 * `Cslib.PCP.Dinur.amplifier`: Dinur's round as a gap amplifier.
 * `Cslib.PCP.Dinur.cnfGraph`: the constraint graph of a formula over `Σ₀`.
 * `Cslib.PCP.Dinur.gapGraph`: the gap graph of a formula.
@@ -68,49 +69,49 @@ open ConstraintGraph HadamardTester Logic.PL RotationMap
 
 /-- **Dinur's round** on a finite constraint graph over the fixed alphabet `Σ₀`:
 `amplify walkLength killRate`, with the vertices and edges it builds from the edges of its input. -/
-noncomputable def step (G : FinConstraintGraph.{u} Alphabet) : FinConstraintGraph.{u} Alphabet :=
+noncomputable def round (G : FinConstraintGraph.{u} Alphabet) : FinConstraintGraph.{u} Alphabet :=
   letI := Classical.decEq G.V
   ⟨AmplifyVertex G.E Alphabet walkLength killRate, AmplifyEdge G.E Alphabet walkLength killRate,
     G.graph.amplify walkLength killRate⟩
 
 /-- Dinur's round preserves satisfiability. -/
-theorem satisfiable_step_iff (G : FinConstraintGraph.{u} Alphabet) :
-    (step G).graph.Satisfiable ↔ G.graph.Satisfiable :=
+theorem satisfiable_round_iff (G : FinConstraintGraph.{u} Alphabet) :
+    (round G).graph.Satisfiable ↔ G.graph.Satisfiable :=
   letI := Classical.decEq G.V
   satisfiable_amplify_iff G.graph
 
 /-- **Dinur's main theorem** [Dinur, Theorem 4.1][Dinur2007]: Dinur's round doubles the value up
 to the threshold `gap`. -/
-theorem min_le_unsatVal_step (G : FinConstraintGraph.{u} Alphabet) :
-    min (2 * G.graph.unsatVal) gap ≤ (step G).graph.unsatVal :=
+theorem min_le_unsatVal_round (G : FinConstraintGraph.{u} Alphabet) :
+    min (2 * G.graph.unsatVal) gap ≤ (round G).graph.unsatVal :=
   letI := Classical.decEq G.V
   min_le_unsatVal_amplify G.graph
 
 /-- Dinur's round has `vertexFactor` vertices per edge of its input. -/
-theorem card_vertices_step (G : FinConstraintGraph.{u} Alphabet) :
-    Fintype.card (step G).V = vertexFactor * Fintype.card G.E :=
+theorem card_vertices_round (G : FinConstraintGraph.{u} Alphabet) :
+    Fintype.card (round G).V = vertexFactor * Fintype.card G.E :=
   card_vertices_amplify
 
 /-- Dinur's round has `edgeFactor` edges per edge of its input. -/
-theorem card_edges_step (G : FinConstraintGraph.{u} Alphabet) :
-    Fintype.card (step G).E = edgeFactor * Fintype.card G.E :=
+theorem card_edges_round (G : FinConstraintGraph.{u} Alphabet) :
+    Fintype.card (round G).E = edgeFactor * Fintype.card G.E :=
   card_edges_amplify
 
 /-- **Dinur's amplifier** [Dinur, Theorem 4.1][Dinur2007]: Dinur's round on finite constraint
 graphs over the fixed alphabet `Σ₀`, which doubles the value up to the threshold `gap` and
 multiplies the numbers of vertices and edges by at most `vertexFactor + edgeFactor`. -/
 noncomputable def amplifier : Amplifier.{u} Alphabet where
-  toFun := step
+  toFun := round
   factor := vertexFactor + edgeFactor
   gap := gap
   gap_pos := gap_pos
   gap_le_one := gap_le_one
   card_vertices_le G :=
-    (card_vertices_step G).trans_le (Nat.mul_le_mul_right _ (Nat.le_add_right _ _))
+    (card_vertices_round G).trans_le (Nat.mul_le_mul_right _ (Nat.le_add_right _ _))
   card_edges_le G :=
-    (card_edges_step G).trans_le (Nat.mul_le_mul_right _ (Nat.le_add_left _ _))
-  satisfiable_iff := satisfiable_step_iff
-  min_le_unsatVal := min_le_unsatVal_step
+    (card_edges_round G).trans_le (Nat.mul_le_mul_right _ (Nat.le_add_left _ _))
+  satisfiable_iff := satisfiable_round_iff
+  min_le_unsatVal := min_le_unsatVal_round
 
 /-- The threshold of Dinur's amplifier is `gap`. -/
 @[simp]
@@ -132,6 +133,21 @@ that the variables of `φ` disappear, and composition brings the alphabet to `Σ
 noncomputable def cnfGraph : FinConstraintGraph.{0} Alphabet :=
   ⟨_, _, ((ofCNF φ).preprocess expanderFamily).toConstraintGraph.compose⟩
 
+/-- The vertices of the constraint graph of a formula over `Σ₀`: those of the composed graph of
+the preprocessed `ofCNF φ`, built from its edges `Fin φ.length × Fin 3`. -/
+theorem cnfGraph_V : (cnfGraph φ).V =
+    (ComposePos ((Fin φ.length × Fin 3) × Bool)
+        (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) (Fin 3 → Bool) ⊕
+      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool)) :=
+  rfl
+
+/-- The edges of the constraint graph of a formula over `Σ₀`: those of the composed graph of the
+preprocessed `ofCNF φ`. -/
+theorem cnfGraph_E : (cnfGraph φ).E =
+    (((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool)) ×
+      Query) :=
+  rfl
+
 /-- If the clauses of `φ` have at most three literals, its constraint graph over `Σ₀` is
 satisfiable exactly when `φ` is. -/
 theorem satisfiable_cnfGraph_iff (h3 : ∀ κ ∈ φ, κ.length ≤ 3) :
@@ -146,10 +162,8 @@ private theorem card_cnfAlphabet : Fintype.card (Fin 3 → Bool) = 8 := by
 /-- The constraint graph over `Σ₀` of a formula with `m` clauses has `24684 · 2 ^ 1403 · m`
 edges. -/
 theorem card_edges_cnfGraph : Fintype.card (cnfGraph φ).E = 24684 * 2 ^ 1403 * φ.length := by
-  rw [Fintype.card_congr' (α := (cnfGraph φ).E)
-    (β := ((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) ×
-      Rand (Fin 3 → Bool)) × Query) rfl,
-    card_edges_compose, card_cnfAlphabet, show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl]
+  rw [Fintype.card_congr' (cnfGraph_E φ), card_edges_compose, card_cnfAlphabet,
+    show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]
   generalize 2 ^ 1403 = c
   ring
@@ -158,12 +172,9 @@ theorem card_edges_cnfGraph : Fintype.card (cnfGraph φ).E = 24684 * 2 ^ 1403 * 
 `(1536 + 1452 (2 ^ 16 + 2 ^ 256 + 2 ^ 1403)) m` vertices. -/
 theorem card_vertices_cnfGraph :
     Fintype.card (cnfGraph φ).V = (1536 + 1452 * (2 ^ 16 + 2 ^ 256 + 2 ^ 1403)) * φ.length := by
-  rw [Fintype.card_congr' (α := (cnfGraph φ).V)
-    (β := ComposePos ((Fin φ.length × Fin 3) × Bool)
-      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) (Fin 3 → Bool) ⊕
-      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool))
-    rfl, card_vertices_compose, card_cnfAlphabet, show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl,
-    show 4 * 8 ^ 2 = 256 from rfl, show 2 * 8 = 16 from rfl]
+  rw [Fintype.card_congr' (cnfGraph_V φ), card_vertices_compose, card_cnfAlphabet,
+    show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl, show 4 * 8 ^ 2 = 256 from rfl,
+    show 2 * 8 = 16 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]
   generalize 2 ^ 1403 = c
   generalize 2 ^ 256 = d
@@ -201,7 +212,7 @@ theorem exists_card_gapGraph_le :
       Fintype.card (gapGraph φ).V ≤ C * φ.length ^ c ∧
         Fintype.card (gapGraph φ).E ≤ C * φ.length ^ c := by
   -- the constants are kept opaque, so that nothing tries to evaluate them
-  obtain ⟨f, hf⟩ : ∃ f, Nat.clog 2 amplifier.{0}.factor = f := ⟨_, rfl⟩
+  generalize hf : Nat.clog 2 amplifier.{0}.factor = f
   obtain ⟨c₀, hc₀⟩ : ∃ c₀ : ℕ, ∀ {V : Type u} [DecidableEq V] (φ : CNF V),
       Fintype.card (cnfGraph φ).E = c₀ * φ.length :=
     ⟨_, fun φ ↦ card_edges_cnfGraph φ⟩
