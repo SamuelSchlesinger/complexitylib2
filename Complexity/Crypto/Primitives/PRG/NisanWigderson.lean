@@ -270,7 +270,8 @@ theorem exists_predictionExperiment_le_hardwiredExperiment (D : Design ℓ n a m
     ∃ w, (generator D f).predictionExperiment i predictor true ≤
       hardwiredExperiment D f i w predictor true := by
   rw [predictionExperiment_generator]
-  exact exists_bind_apply_le _ _ _
+  obtain ⟨w, -, hw⟩ := exists_bind_apply_le (uniformOfFintype (Fin ℓ → Bool)) _ true
+  exact ⟨w, hw⟩
 
 /-- **The Nisan–Wigderson reconstruction** [Arora and Barak, Chapter 20][AroraBarak09]. If `0 < m`
 and a test accepts outputs of the generator with probability at least `ε` more than uniform strings,
@@ -292,7 +293,7 @@ theorem exists_half_add_div_le_hardwiredExperiment (D : Design ℓ n a m)
 
 /-- The hardwired experiment against the predictor built from a deterministic test, with the
 random choices of the predictor drawn first. -/
-private theorem hardwiredExperiment_nextBitPredictor_pure (D : Design ℓ n a m)
+theorem hardwiredExperiment_nextBitPredictor_pure (D : Design ℓ n a m)
     (f : (Fin n → Bool) → Bool) (test : (Fin m → Bool) → Bool) (i : Fin m) (w : Fin ℓ → Bool) :
     hardwiredExperiment D f i w (nextBitPredictor (fun y => PMF.pure (test y)) i) =
       (uniformOfFintype Bool).bind fun r => (uniformOfFintype (Fin m → Bool)).bind fun u =>
@@ -321,8 +322,8 @@ theorem exists_half_add_div_le_card_nextBitGuess_eq (D : Design ℓ n a m)
         f x} : ℝ) / 2 ^ n := by
   obtain ⟨i, w, h⟩ := exists_half_add_div_le_hardwiredExperiment D f _ hm hε
   rw [hardwiredExperiment_nextBitPredictor_pure] at h
-  obtain ⟨r, hr⟩ := exists_bind_apply_le (uniformOfFintype Bool) _ true
-  obtain ⟨u, hu⟩ := exists_bind_apply_le (uniformOfFintype (Fin m → Bool)) _ true
+  obtain ⟨r, -, hr⟩ := exists_bind_apply_le (uniformOfFintype Bool) _ true
+  obtain ⟨u, -, hu⟩ := exists_bind_apply_le (uniformOfFintype (Fin m → Bool)) _ true
   refine ⟨i, w, r, u, h.trans ?_⟩
   calc _ ≤ _ := ENNReal.toReal_mono (PMF.apply_ne_top _ _) (hr.trans hu)
     _ = _ := by

@@ -172,22 +172,6 @@ private theorem expect_trial {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (g
     fun _ => rfl]
   simp only [expect_prod]
 
-/-- The hardwired experiment against the predictor built from a deterministic test, with the
-random choices of the predictor drawn first. -/
-private theorem hardwiredExperiment_nextBitPredictor_pure (i : Fin m) (w : Fin ℓ → Bool) :
-    hardwiredExperiment D f i w (nextBitPredictor (fun y => PMF.pure (test y)) i) =
-      (uniformOfFintype Bool).bind fun r => (uniformOfFintype (Fin m → Bool)).bind fun u =>
-        (uniformOfFintype (Fin n → Bool)).map fun x => decide
-          (nextBitGuess test i r u (Fin.take i i.isLt.le (generator D f (D.extend i x w))) =
-            f x) := by
-  simp only [hardwiredExperiment, nextBitPredictor_pure, ← PMF.bind_pure_comp, PMF.bind_bind,
-    Function.comp_apply, PMF.pure_bind]
-  rw [PMF.bind_comm]
-  congr 1
-  funext r
-  rw [PMF.bind_comm]
-  rfl
-
 /-- **Averaging over the random choices.** For a deterministic test, the probability that the
 predictor built from it guesses bit `i` of the generator is the average agreement of the trials
 at position `i`. -/

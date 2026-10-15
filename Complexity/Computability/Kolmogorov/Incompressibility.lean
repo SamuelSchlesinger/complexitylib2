@@ -25,17 +25,17 @@ of length `n` have complexity below `n - c` [Li and Vitányi, Chapter 2][LiVitan
 
 * `Cslib.Kolmogorov.encard_setOf_length_eq`, `Cslib.Kolmogorov.encard_setOf_length_lt_add_one`:
   there are `2 ^ n` binary strings of length `n` and `2 ^ n - 1` of length below `n`.
-* `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_complexity_lt`,
-  `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_timeBoundedComplexity_lt`: fewer than `2 ^ r`
+* `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_ecomplexity_lt`,
+  `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_etimeBoundedComplexity_lt`: fewer than `2 ^ r`
   objects have (time-bounded) complexity below `r`.
-* `Cslib.Kolmogorov.DescriptionMethod.exists_mem_le_complexity`: a set of at least `2 ^ r`
+* `Cslib.Kolmogorov.DescriptionMethod.exists_mem_le_ecomplexity`: a set of at least `2 ^ r`
   objects has an element of complexity at least `r`.
-* `Cslib.Kolmogorov.DescriptionMethod.ncard_lt_ncard_setOf_le_complexity_add`: all but fewer than
+* `Cslib.Kolmogorov.DescriptionMethod.ncard_lt_ncard_setOf_le_ecomplexity_add`: all but fewer than
   `2 ^ r` elements of a finite set have complexity at least `r`.
-* `Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_timeBoundedComplexity`: for every
+* `Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_etimeBoundedComplexity`: for every
   `n` some string of length `n` has complexity at least `n` under every time bound.
-* `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_complexity_lt`,
-  `Cslib.Kolmogorov.DescriptionMethod.two_pow_lt_ncard_setOf_length_eq_le_complexity_add`: fewer
+* `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_ecomplexity_lt`,
+  `Cslib.Kolmogorov.DescriptionMethod.two_pow_lt_ncard_setOf_length_eq_le_ecomplexity_add`: fewer
   than `2 ^ (n - c)` strings of length `n` have complexity below `n - c`.
 
 ## References
@@ -81,14 +81,14 @@ variable {α : Type*} (M : DescriptionMethod α)
 
 /-- **Incompressibility.** Fewer than `2 ^ r` objects have complexity below `r`: they have
 distinct shortest programs, all of length below `r`. -/
-theorem encard_setOf_complexity_lt (r : ℕ) : {x | M.complexity x < r}.encard < 2 ^ r := by
+theorem encard_setOf_ecomplexity_lt (r : ℕ) : {x | M.ecomplexity x < r}.encard < 2 ^ r := by
   classical
   let f (x : α) : List Bool :=
     if h : ∃ p : List Bool, p.length < r ∧ M.Produces p x then h.choose else []
-  have hf {x : α} (hx : M.complexity x < r) : (f x).length < r ∧ M.Produces (f x) x := by
-    have h := complexity_lt_natCast_iff.mp hx
+  have hf {x : α} (hx : M.ecomplexity x < r) : (f x).length < r ∧ M.Produces (f x) x := by
+    have h := ecomplexity_lt_natCast_iff.mp hx
     simpa only [f, h, ↓reduceDIte] using h.choose_spec
-  have hle : {x | M.complexity x < r}.encard ≤ {p : List Bool | p.length < r}.encard :=
+  have hle : {x | M.ecomplexity x < r}.encard ≤ {p : List Bool | p.length < r}.encard :=
     Set.encard_le_encard_of_injOn (fun _ hx => (hf hx).1)
       fun _ hx _ hy hxy => (hf hx).2.unique (hxy ▸ (hf hy).2)
   have htop : {p : List Bool | p.length < r}.encard ≠ ⊤ :=
@@ -97,30 +97,30 @@ theorem encard_setOf_complexity_lt (r : ℕ) : {x | M.complexity x < r}.encard <
   exact add_le_add_left hle 1
 
 /-- Fewer than `2 ^ r` objects have time-bounded complexity below `r`, for every time bound. -/
-theorem encard_setOf_timeBoundedComplexity_lt (t r : ℕ) :
-    {x | M.timeBoundedComplexity t x < r}.encard < 2 ^ r :=
+theorem encard_setOf_etimeBoundedComplexity_lt (t r : ℕ) :
+    {x | M.etimeBoundedComplexity t x < r}.encard < 2 ^ r :=
   (Set.encard_le_encard fun _ hx =>
-    (M.complexity_le_timeBoundedComplexity t _).trans_lt hx).trans_lt
-    (M.encard_setOf_complexity_lt r)
+    (M.ecomplexity_le_etimeBoundedComplexity t _).trans_lt hx).trans_lt
+    (M.encard_setOf_ecomplexity_lt r)
 
 /-- A set of at least `2 ^ r` objects has an element of complexity at least `r`. -/
-theorem exists_mem_le_complexity {s : Set α} {r : ℕ} (hs : 2 ^ r ≤ s.encard) :
-    ∃ x ∈ s, r ≤ M.complexity x := by
+theorem exists_mem_le_ecomplexity {s : Set α} {r : ℕ} (hs : 2 ^ r ≤ s.encard) :
+    ∃ x ∈ s, r ≤ M.ecomplexity x := by
   by_contra! h
-  exact (hs.trans (Set.encard_le_encard h)).not_gt (M.encard_setOf_complexity_lt r)
+  exact (hs.trans (Set.encard_le_encard h)).not_gt (M.encard_setOf_ecomplexity_lt r)
 
 /-- All but fewer than `2 ^ r` elements of a finite set have complexity at least `r`. -/
-theorem ncard_lt_ncard_setOf_le_complexity_add {s : Set α} (hs : s.Finite) (r : ℕ) :
-    s.ncard < {x ∈ s | r ≤ M.complexity x}.ncard + 2 ^ r := by
-  have hsub : s ⊆ {x ∈ s | r ≤ M.complexity x} ∪ {x | M.complexity x < r} := fun x hx => by
-    by_cases h : (r : ℕ∞) ≤ M.complexity x
+theorem ncard_lt_ncard_setOf_le_ecomplexity_add {s : Set α} (hs : s.Finite) (r : ℕ) :
+    s.ncard < {x ∈ s | r ≤ M.ecomplexity x}.ncard + 2 ^ r := by
+  have hsub : s ⊆ {x ∈ s | r ≤ M.ecomplexity x} ∪ {x | M.ecomplexity x < r} := fun x hx => by
+    by_cases h : (r : ℕ∞) ≤ M.ecomplexity x
     · exact .inl ⟨hx, h⟩
     · exact .inr (not_le.mp h)
-  have hfin : {x ∈ s | r ≤ M.complexity x}.Finite := hs.subset fun _ hx => hx.1
+  have hfin : {x ∈ s | r ≤ M.ecomplexity x}.Finite := hs.subset fun _ hx => hx.1
   rw [← ENat.natCast_lt_natCast, Nat.cast_add, hs.cast_ncard_eq, hfin.cast_ncard_eq, Nat.cast_pow,
     Nat.cast_ofNat]
   exact (Set.encard_le_encard hsub).trans_lt <| (Set.encard_union_le _ _).trans_lt <|
-    WithTop.add_lt_add_left hfin.encard_lt_top.ne (M.encard_setOf_complexity_lt r)
+    WithTop.add_lt_add_left hfin.encard_lt_top.ne (M.encard_setOf_ecomplexity_lt r)
 
 /-! ### Incompressible strings -/
 
@@ -130,40 +130,40 @@ variable (M : DescriptionMethod (List Bool))
 
 /-- **Incompressible strings exist.** For every `n`, some string of length `n` has complexity at
 least `n`. -/
-theorem exists_length_eq_le_complexity (n : ℕ) :
-    ∃ x : List Bool, x.length = n ∧ n ≤ M.complexity x :=
-  M.exists_mem_le_complexity (encard_setOf_length_eq n).ge
+theorem exists_length_eq_le_ecomplexity (n : ℕ) :
+    ∃ x : List Bool, x.length = n ∧ n ≤ M.ecomplexity x :=
+  M.exists_mem_le_ecomplexity (encard_setOf_length_eq n).ge
 
 /-- For every `n`, some string of length `n` has complexity at least `n` under every time
 bound. -/
-theorem exists_length_eq_forall_le_timeBoundedComplexity (n : ℕ) :
-    ∃ x : List Bool, x.length = n ∧ ∀ t, n ≤ M.timeBoundedComplexity t x :=
-  let ⟨x, hx, hn⟩ := M.exists_length_eq_le_complexity n
-  ⟨x, hx, fun t => hn.trans (M.complexity_le_timeBoundedComplexity t x)⟩
+theorem exists_length_eq_forall_le_etimeBoundedComplexity (n : ℕ) :
+    ∃ x : List Bool, x.length = n ∧ ∀ t, n ≤ M.etimeBoundedComplexity t x :=
+  let ⟨x, hx, hn⟩ := M.exists_length_eq_le_ecomplexity n
+  ⟨x, hx, fun t => hn.trans (M.ecomplexity_le_etimeBoundedComplexity t x)⟩
 
 /-- **Most strings are nearly incompressible.** Fewer than `2 ^ (n - c)` strings of length `n`
 have complexity below `n - c`. -/
-theorem encard_setOf_length_eq_complexity_lt (n c : ℕ) :
-    {x : List Bool | x.length = n ∧ M.complexity x < (n - c : ℕ)}.encard < 2 ^ (n - c) :=
-  (Set.encard_le_encard fun _ hx => hx.2).trans_lt (M.encard_setOf_complexity_lt (n - c))
+theorem encard_setOf_length_eq_ecomplexity_lt (n c : ℕ) :
+    {x : List Bool | x.length = n ∧ M.ecomplexity x < (n - c : ℕ)}.encard < 2 ^ (n - c) :=
+  (Set.encard_le_encard fun _ hx => hx.2).trans_lt (M.encard_setOf_ecomplexity_lt (n - c))
 
 /-- Fewer than `2 ^ (n - c)` strings of length `n` have time-bounded complexity below `n - c`. -/
-theorem encard_setOf_length_eq_timeBoundedComplexity_lt (t n c : ℕ) :
-    {x : List Bool | x.length = n ∧ M.timeBoundedComplexity t x < (n - c : ℕ)}.encard <
+theorem encard_setOf_length_eq_etimeBoundedComplexity_lt (t n c : ℕ) :
+    {x : List Bool | x.length = n ∧ M.etimeBoundedComplexity t x < (n - c : ℕ)}.encard <
       2 ^ (n - c) :=
   (Set.encard_le_encard fun _ hx => hx.2).trans_lt
-    (M.encard_setOf_timeBoundedComplexity_lt t (n - c))
+    (M.encard_setOf_etimeBoundedComplexity_lt t (n - c))
 
 /-- All but fewer than `2 ^ (n - c)` of the `2 ^ n` strings of length `n` have complexity at least
 `n - c`. -/
-theorem two_pow_lt_ncard_setOf_length_eq_le_complexity_add (n c : ℕ) :
-    2 ^ n < {x : List Bool | x.length = n ∧ (n - c : ℕ) ≤ M.complexity x}.ncard + 2 ^ (n - c) := by
+theorem two_pow_lt_ncard_setOf_length_eq_le_ecomplexity_add (n c : ℕ) :
+    2 ^ n < {x : List Bool | x.length = n ∧ (n - c : ℕ) ≤ M.ecomplexity x}.ncard + 2 ^ (n - c) := by
   have hfin : {x : List Bool | x.length = n}.Finite :=
     Set.finite_of_encard_eq_coe (encard_setOf_length_eq n)
   have hcard : {x : List Bool | x.length = n}.ncard = 2 ^ n := by
     rw [← ENat.natCast_inj, hfin.cast_ncard_eq, encard_setOf_length_eq, Nat.cast_pow,
       Nat.cast_ofNat]
-  simpa only [hcard, Set.mem_ofPred_eq] using M.ncard_lt_ncard_setOf_le_complexity_add hfin (n - c)
+  simpa only [hcard, Set.mem_ofPred_eq] using M.ncard_lt_ncard_setOf_le_ecomplexity_add hfin (n - c)
 
 end Strings
 

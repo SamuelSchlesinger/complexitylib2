@@ -123,6 +123,8 @@ public import Complexity.Computability.Kolmogorov.Incompressibility
 public import Complexity.Computability.Kolmogorov.Invariance
 public import Complexity.Computability.Kolmogorov.MultiTape
 public import Complexity.Computability.Kolmogorov.NisanWigderson
+public import Complexity.Computability.Kolmogorov.Partrec
+public import Complexity.Computability.Kolmogorov.SelfDelimiting
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
@@ -218,6 +220,7 @@ public import Complexity.Foundations.Data.Nat.Div
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
+public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last

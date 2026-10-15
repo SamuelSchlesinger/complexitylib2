@@ -30,9 +30,9 @@ computes `x` within `t` steps.
 
 * `Cslib.Kolmogorov.DescriptionMethod.ofMultiTapeTM_produces_iff`: a program describes `x`
   exactly when the machine computes `x` from it.
-* `Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_run_iff`: a program describes `x` within
+* `Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_runFor_iff`: a program describes `x` within
   `t` steps exactly when the machine computes `x` from it and halts within `t` steps.
-* `Cslib.Kolmogorov.DescriptionMethod.timeBoundedComplexity_ofMultiTapeTM_le`: an input from which
+* `Cslib.Kolmogorov.DescriptionMethod.etimeBoundedComplexity_ofMultiTapeTM_le`: an input from which
   the machine computes `x` within `t` steps bounds `C_tm^t(x)`.
 * `Cslib.Kolmogorov.DescriptionMethod.exists_simulation_literal`: some machine simulates the
   literal description method.
@@ -50,47 +50,46 @@ variable {k : ℕ} {State : Type*} (tm : MultiTapeTM k Bool State)
 the program `p` is the input, and after `t` steps its output is the contents of the output tape if
 the machine has halted. -/
 noncomputable def ofMultiTapeTM : DescriptionMethod (List Bool) where
-  run p t :=
-    if (tm.runFrom (tm.initCfg p) t).Halted then some (tm.runFrom (tm.initCfg p) t).output
-    else none
-  run_mono {p t₁ t₂ x} h hx := by
-    simp only [Option.mem_def, Option.ite_none_right_eq_some, Option.some.injEq] at hx ⊢
-    rwa [tm.runFrom_eq_of_halt _ h hx.1]
+  run p := ⟨fun t => if (tm.runFrom (tm.initCfg p) t).Halted then
+      some (tm.runFrom (tm.initCfg p) t).output else none, fun t x hx => by
+    simp only [Option.ite_none_right_eq_some, Option.some.injEq] at hx ⊢
+    rwa [tm.runFrom_eq_of_halt _ t.le_succ hx.1]⟩
 
 variable {tm} {p x : List Bool} {t : ℕ}
 
-theorem mem_ofMultiTapeTM_run_iff_halted :
-    x ∈ (ofMultiTapeTM tm).run p t ↔
+theorem mem_ofMultiTapeTM_runFor_iff_halted :
+    x ∈ ((ofMultiTapeTM tm).run p).runFor t ↔
       (tm.runFrom (tm.initCfg p) t).Halted ∧ (tm.runFrom (tm.initCfg p) t).output = x := by
-  simp only [ofMultiTapeTM, Option.mem_def, Option.ite_none_right_eq_some, Option.some.injEq]
+  change (if _ then _ else _) = _ ↔ _
+  simp only [Option.ite_none_right_eq_some, Option.some.injEq]
 
 /-- A program describes `x` exactly when the machine computes `x` from it. -/
 @[simp]
 theorem ofMultiTapeTM_produces_iff : (ofMultiTapeTM tm).Produces p x ↔ tm.Computes p x :=
-  exists_congr fun _ => mem_ofMultiTapeTM_run_iff_halted
+  produces_iff_exists_mem_runFor.trans (exists_congr fun _ => mem_ofMultiTapeTM_runFor_iff_halted)
 
 /-- A program describes `x` within `t` steps exactly when the machine computes `x` from it and
 halts within `t` steps. -/
-theorem mem_ofMultiTapeTM_run_iff :
-    x ∈ (ofMultiTapeTM tm).run p t ↔ tm.RunsInTime p t ∧ tm.Computes p x := by
+theorem mem_ofMultiTapeTM_runFor_iff :
+    x ∈ ((ofMultiTapeTM tm).run p).runFor t ↔ tm.RunsInTime p t ∧ tm.Computes p x := by
   constructor
   · intro h
-    exact ⟨MultiTapeTM.runsInTime_iff_halted.mpr (mem_ofMultiTapeTM_run_iff_halted.mp h).1,
-      ofMultiTapeTM_produces_iff.mp (.of_mem_run h)⟩
+    exact ⟨MultiTapeTM.runsInTime_iff_halted.mpr (mem_ofMultiTapeTM_runFor_iff_halted.mp h).1,
+      ofMultiTapeTM_produces_iff.mp (.of_mem_runFor h)⟩
   · rintro ⟨ht, hx⟩
-    have hmem : (tm.runFrom (tm.initCfg p) t).output ∈ (ofMultiTapeTM tm).run p t :=
-      mem_ofMultiTapeTM_run_iff_halted.mpr ⟨MultiTapeTM.runsInTime_iff_halted.mp ht, rfl⟩
-    rwa [(Produces.of_mem_run hmem).unique (ofMultiTapeTM_produces_iff.mpr hx)] at hmem
+    have hmem : (tm.runFrom (tm.initCfg p) t).output ∈ ((ofMultiTapeTM tm).run p).runFor t :=
+      mem_ofMultiTapeTM_runFor_iff_halted.mpr ⟨MultiTapeTM.runsInTime_iff_halted.mp ht, rfl⟩
+    rwa [(Produces.of_mem_runFor hmem).unique (ofMultiTapeTM_produces_iff.mpr hx)] at hmem
 
-theorem complexity_ofMultiTapeTM_le (h : tm.Computes p x) :
-    (ofMultiTapeTM tm).complexity x ≤ p.length :=
-  complexity_le_length (ofMultiTapeTM_produces_iff.mpr h)
+theorem ecomplexity_ofMultiTapeTM_le (h : tm.Computes p x) :
+    (ofMultiTapeTM tm).ecomplexity x ≤ p.length :=
+  ecomplexity_le_length (ofMultiTapeTM_produces_iff.mpr h)
 
 /-- An input from which the machine computes `x` within `t` steps bounds the time-bounded
 complexity `C_tm^t(x)`. -/
-theorem timeBoundedComplexity_ofMultiTapeTM_le (ht : tm.RunsInTime p t) (h : tm.Computes p x) :
-    (ofMultiTapeTM tm).timeBoundedComplexity t x ≤ p.length :=
-  timeBoundedComplexity_le_length (mem_ofMultiTapeTM_run_iff.mpr ⟨ht, h⟩)
+theorem etimeBoundedComplexity_ofMultiTapeTM_le (ht : tm.RunsInTime p t) (h : tm.Computes p x) :
+    (ofMultiTapeTM tm).etimeBoundedComplexity t x ≤ p.length :=
+  etimeBoundedComplexity_le_length (mem_ofMultiTapeTM_runFor_iff.mpr ⟨ht, h⟩)
 
 /-! ### A machine simulating the literal method -/
 
@@ -102,9 +101,9 @@ noncomputable def literalSimulation
     Simulation literal (ofMultiTapeTM tm) 0 fun _ t => t + 1 where
   compile := id
   length_compile_le _ := le_rfl
-  mem_run_compile {p t x} hpx := by
-    obtain ⟨hp, rfl⟩ := mem_literal_run.mp hpx
-    exact mem_ofMultiTapeTM_run_iff.mpr ⟨(h p).2.1.mono (Nat.succ_le_succ hp), (h p).1⟩
+  mem_runFor_compile {p t x} hpx := by
+    obtain ⟨hp, rfl⟩ := mem_literal_runFor.mp hpx
+    exact mem_ofMultiTapeTM_runFor_iff.mpr ⟨(h p).2.1.mono (Nat.succ_le_succ hp), (h p).1⟩
 
 /-- Some machine with finitely many states simulates the literal description method with one extra
 step, so under it every string `x` has complexity at most `|x|` within `|x| + 1` steps. -/

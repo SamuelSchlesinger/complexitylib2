@@ -19,6 +19,7 @@ import Complexity.Probability.ApproximateCounting.Relative
 import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 import Complexity.Foundations.Combinatorics.Expander.Family
 import Complexity.Foundations.Combinatorics.Expander.TowerBase
+import Complexity.Computability.Kolmogorov.ChainRule
 import Complexity.Computability.Kolmogorov.MultiTape
 import Complexity.Computability.Kolmogorov.NisanWigderson
 import Complexity.Computability.RAM.Squaring
@@ -232,10 +233,25 @@ open Cslib.Kolmogorov Cslib.Kolmogorov.DescriptionMethod
 `|x| + 1` steps, so the Turing-machine description method is not vacuous. -/
 example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : Turing.MultiTapeTM k Bool State),
     ∀ x : List Bool,
-      (ofMultiTapeTM tm).timeBoundedComplexity (x.length + 1) x ≤ x.length := by
+      (ofMultiTapeTM tm).etimeBoundedComplexity (x.length + 1) x ≤ x.length := by
   obtain ⟨k, State, hfin, tm, ⟨S⟩⟩ := exists_simulation_literal
   refine ⟨k, State, hfin, tm, fun x => ?_⟩
-  simpa [timeBoundedComplexity_literal le_rfl] using S.timeBoundedComplexity_le x.length x
+  simpa [etimeBoundedComplexity_literal le_rfl] using S.etimeBoundedComplexity_le x.length x
+
+/-- The canonical composition of the literal method with itself describes every pair `(x, y)`
+with `|x| + |y| + 2 size |x| + 1` bits, so the chain rule is not vacuous. -/
+example (x y : List Bool) :
+    (literal.compose (fun _ => literal) Prod.mk).ecomplexity (x, y) ≤
+      (x.length + y.length + (2 * x.length.size + 1) : ℕ) := by
+  simpa using (Composition.compose literal (fun _ => literal) Prod.mk).ecomplexity_le x y
+
+/-- The same within `|x| + |y|` steps, from the time-bounded chain rule. -/
+example (x y : List Bool) :
+    (literal.compose (fun _ => literal) Prod.mk).etimeBoundedComplexity (x.length + y.length)
+      (x, y) ≤ (x.length + y.length + (2 * x.length.size + 1) : ℕ) :=
+  (Composition.compose literal (fun _ => literal) Prod.mk).etimeBoundedComplexity_le_of_le
+    (fun _ _ h => by dsimp only; have := Nat.size_le_size h; omega) monotone_const
+    (etimeBoundedComplexity_literal le_rfl).le (etimeBoundedComplexity_literal le_rfl).le
 
 end Kolmogorov
 
@@ -356,7 +372,7 @@ example {ℓ n a m L K : ℕ} (D : Design ℓ n a m) (C : ListCode (List Bool) (
     DescriptionMethod.ReconstructionDecoder DescriptionMethod.literal D C test K K where
   program R k := C.decode (R.guess test) k
   length_program_le _ k := (hC _ k).trans (Nat.le_add_left _ _)
-  mem_run_program _ k := DescriptionMethod.mem_literal_run.mpr ⟨hC _ k, rfl⟩
+  mem_runFor_program _ k := DescriptionMethod.mem_literal_runFor.mpr ⟨hC _ k, rfl⟩
 
 end KolmogorovNW
 

@@ -20,8 +20,8 @@ overwriting part of a uniform string `a` by independent uniform values `b` leave
 the overwritten string and the old part together determine `(a, b)`.
 
 A two-stage experiment `μ.bind f` gives an outcome the probability `c` when every second stage
-does (`bind_apply_of_forall`), and some first stage gives it at least the probability of the
-whole experiment (`exists_bind_apply_le`).
+does (`bind_apply_of_forall`), and some possible first stage gives it at least the probability
+of the whole experiment (`exists_bind_apply_le`).
 
 ## Main results
 
@@ -90,15 +90,18 @@ theorem bind_apply_of_forall (μ : PMF α) {f : α → PMF β} {b : β} {c : ℝ
     (h : ∀ a, f a b = c) : μ.bind f b = c := by
   simp only [PMF.bind_apply, h, ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
 
-/-- Some outcome of the first stage of a two-stage experiment does at least as well as the
-experiment. -/
-theorem exists_bind_apply_le [Finite α] [Nonempty α] (μ : PMF α) (f : α → PMF β) (b : β) :
-    ∃ a, μ.bind f b ≤ f a b := by
-  obtain ⟨a, ha⟩ := Finite.exists_max fun a => f a b
-  refine ⟨a, ?_⟩
+/-- Some possible outcome of the first stage of a two-stage experiment does at least as well as
+the experiment. -/
+theorem exists_bind_apply_le [Finite α] (μ : PMF α) (f : α → PMF β) (b : β) :
+    ∃ a ∈ μ.support, μ.bind f b ≤ f a b := by
+  obtain ⟨a, ha, hmax⟩ :=
+    μ.support.exists_max_image (fun a => f a b) μ.support.toFinite μ.support_nonempty
+  refine ⟨a, ha, ?_⟩
   rw [PMF.bind_apply]
-  calc ∑' a', μ a' * f a' b ≤ ∑' a', μ a' * f a b :=
-        ENNReal.tsum_le_tsum fun a' => mul_le_mul_right (ha a') _
+  calc ∑' a', μ a' * f a' b ≤ ∑' a', μ a' * f a b := ENNReal.tsum_le_tsum fun a' => by
+        by_cases h : a' ∈ μ.support
+        · exact mul_le_mul_right (hmax a' h) _
+        · simp [(μ.apply_eq_zero_iff a').mpr h]
     _ = f a b := by rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
 
 end Cslib.Probability.PMF

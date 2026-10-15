@@ -1371,52 +1371,52 @@ info: 'Cslib.exists_perms_card_le_mul_card_filter_notMem' depends on axioms: [pr
 #print axioms Cslib.exists_perms_card_le_mul_card_filter_notMem
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.complexity_le_natCast_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.ecomplexity_le_natCast_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.complexity_le_natCast_iff
+#print axioms Cslib.Kolmogorov.DescriptionMethod.ecomplexity_le_natCast_iff
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.timeBoundedComplexity_antitone' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.etimeBoundedComplexity_antitone' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.timeBoundedComplexity_antitone
+#print axioms Cslib.Kolmogorov.DescriptionMethod.etimeBoundedComplexity_antitone
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.iInf_timeBoundedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.iInf_etimeBoundedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.iInf_timeBoundedComplexity
+#print axioms Cslib.Kolmogorov.DescriptionMethod.iInf_etimeBoundedComplexity
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.encard_setOf_complexity_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.encard_setOf_ecomplexity_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.encard_setOf_complexity_lt
+#print axioms Cslib.Kolmogorov.DescriptionMethod.encard_setOf_ecomplexity_lt
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_timeBoundedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_etimeBoundedComplexity' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_timeBoundedComplexity
+#print axioms Cslib.Kolmogorov.DescriptionMethod.exists_length_eq_forall_le_etimeBoundedComplexity
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_complexity_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_ecomplexity_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_complexity_lt
+#print axioms Cslib.Kolmogorov.DescriptionMethod.encard_setOf_length_eq_ecomplexity_lt
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.Simulation.complexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.Simulation.ecomplexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.Simulation.complexity_le
+#print axioms Cslib.Kolmogorov.DescriptionMethod.Simulation.ecomplexity_le
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.Simulation.timeBoundedComplexity_le_of_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.Simulation.etimeBoundedComplexity_le_of_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.Simulation.timeBoundedComplexity_le_of_polynomial
+#print axioms Cslib.Kolmogorov.DescriptionMethod.Simulation.etimeBoundedComplexity_le_of_polynomial
 
 /--
 info: 'Cslib.Kolmogorov.DescriptionMethod.IsAdditivelyOptimal.invariance' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -1425,10 +1425,10 @@ info: 'Cslib.Kolmogorov.DescriptionMethod.IsAdditivelyOptimal.invariance' depend
 #print axioms Cslib.Kolmogorov.DescriptionMethod.IsAdditivelyOptimal.invariance
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_run_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_runFor_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_run_iff
+#print axioms Cslib.Kolmogorov.DescriptionMethod.mem_ofMultiTapeTM_runFor_iff
 
 /--
 info: 'Cslib.Kolmogorov.DescriptionMethod.exists_simulation_literal' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -1437,16 +1437,28 @@ info: 'Cslib.Kolmogorov.DescriptionMethod.exists_simulation_literal' depends on 
 #print axioms Cslib.Kolmogorov.DescriptionMethod.exists_simulation_literal
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.Composition.complexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.Composition.ecomplexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.Composition.complexity_le
+#print axioms Cslib.Kolmogorov.DescriptionMethod.Composition.ecomplexity_le
 
 /--
 info: 'Cslib.Kolmogorov.DescriptionMethod.depthBetween_add_depth' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Kolmogorov.DescriptionMethod.depthBetween_add_depth
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.isPartrec_universal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.isPartrec_universal
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.isAdditivelyOptimal_universal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.isAdditivelyOptimal_universal
 
 /--
 info: 'Cslib.Logic.FO.Interpretation.realize_onSentence' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -1821,17 +1833,17 @@ info: 'Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some' depends o
 #print axioms Cslib.BitString.ListCode.ListDecodes.exists_decodeBits_eq_some
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.timeBoundedComplexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.etimeBoundedComplexity_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.timeBoundedComplexity_le
+#print axioms Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.etimeBoundedComplexity_le
 
 /--
-info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.timeBoundedComplexity_le_of_random' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder.etimeBoundedComplexity_le_of_random' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 open Cslib.Kolmogorov.DescriptionMethod.ReconstructionDecoder in
-#print axioms timeBoundedComplexity_le_of_random
+#print axioms etimeBoundedComplexity_le_of_random
 
 /--
 info: 'Cslib.PCP.HadamardTester.exists_inputDist_div_le_one_sub_acceptProb' depends on axioms: [propext, Classical.choice, Quot.sound]
