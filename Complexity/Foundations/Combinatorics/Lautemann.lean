@@ -12,6 +12,7 @@ public import Cslib.Foundations.Data.BitString
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Data.Fintype.Pi
 import Complexity.Foundations.Combinatorics.FiniteCover
+import Complexity.Foundations.Data.BitString.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Tactic.Positivity
@@ -137,9 +138,6 @@ section BitString
 
 variable {m : ℕ}
 
-private theorem card_bitString : Fintype.card (BitString m) = 2 ^ m := by
-  simp
-
 /-- **Lautemann's covering lemma** for bit strings, with xor as the group operation
 [Arora and Barak, Section 7.5.2][AroraBarak09]: if a set `S` of strings of `m` bits misses at most
 a `2 ^ (-n)` fraction of them, that is `2 ^ n |Sᶜ| ≤ 2 ^ m`, and `m < n k`, then some `k` shifts
@@ -148,8 +146,8 @@ theorem BitString.exists_forall_exists_add_mem_of_two_pow_mul_card_compl_le {n k
     (S : Finset (BitString m)) (hS : 2 ^ n * #Sᶜ ≤ 2 ^ m) (hk : m < n * k) :
     ∃ u : Fin k → BitString m, ∀ r, ∃ i, r + u i ∈ S := by
   refine exists_forall_exists_add_mem_of_mul_card_compl_le S (q := 2 ^ n)
-    (by rwa [card_bitString]) ?_
-  rw [card_bitString, ← pow_mul]
+    (by rwa [BitString.card_eq]) ?_
+  rw [BitString.card_eq, ← pow_mul]
   exact Nat.pow_lt_pow_right (by norm_num) hk
 
 /-- **The converse of Lautemann's covering lemma** for bit strings, with xor as the group
@@ -159,7 +157,7 @@ shifts `u i`, some string `r` has `r + u i ∉ S` for every `i`. -/
 theorem BitString.exists_forall_add_notMem_of_two_pow_mul_card_le {n k : ℕ}
     (S : Finset (BitString m)) (hS : 2 ^ n * #S ≤ 2 ^ m) (hk : k < 2 ^ n)
     (u : Fin k → BitString m) : ∃ r, ∀ i, r + u i ∉ S :=
-  exists_forall_add_notMem_of_mul_card_le S (by rwa [card_bitString]) hk u
+  exists_forall_add_notMem_of_mul_card_le S (by rwa [BitString.card_eq]) hk u
 
 private theorem two_pow_lt_two_mul_pow (hm : 2 ≤ m) : 2 ^ m < (2 * m) ^ m := by
   rw [mul_pow]
@@ -179,13 +177,13 @@ theorem BitString.mem_iff_exists_forall_exists (hm : 2 ≤ m)
   constructor
   · intro hx
     obtain ⟨u, hu⟩ := exists_forall_exists_add_mem_of_mul_card_compl_le {r | A x r = true}
-      (q := 2 * m) (k := m) (by simpa [compl_filter, card_bitString] using hmem x hx)
-      (by rw [card_bitString]; exact two_pow_lt_two_mul_pow hm)
+      (q := 2 * m) (k := m) (by simpa [compl_filter, BitString.card_eq] using hmem x hx)
+      (by rw [BitString.card_eq]; exact two_pow_lt_two_mul_pow hm)
     exact ⟨u, fun r => by simpa using hu r⟩
   · rintro ⟨u, hu⟩
     by_contra hx
     obtain ⟨r, hr⟩ := exists_forall_add_notMem_of_mul_card_le {r | A x r = true} (q := 2 * m)
-      (by rw [card_bitString]; exact hnotMem x hx) (by omega) u
+      (by rw [BitString.card_eq]; exact hnotMem x hx) (by omega) u
     obtain ⟨i, hi⟩ := hu r
     exact hr i (mem_filter.2 ⟨mem_univ _, hi⟩)
 

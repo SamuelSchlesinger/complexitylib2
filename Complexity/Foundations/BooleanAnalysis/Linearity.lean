@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Convolution
-public import Mathlib.InformationTheory.Hamming
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -33,7 +32,8 @@ Conversely, a function passing with probability at least `1 - ε` differs from s
 most an `ε` fraction of the inputs
 (`BitString.exists_hammingDist_parityOn_le_of_le_blrAcceptance`): the squares `F̂(S)²` sum to one
 by Parseval's identity, so `∑_S F̂(S)³ ≤ max_S F̂(S)`, and `F̂(S)` is one minus twice the relative
-Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`)
+Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`, in
+`Complexity.Foundations.BooleanAnalysis.Fourier`)
 [O'Donnell, Section 1.6][ODonnell2014], [BlumLubyRubinfeld1993].
 
 ## Main definitions
@@ -43,8 +43,6 @@ Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`
 ## Main results
 
 * `Cslib.BitString.exists_eq_parityOn_iff`: the linear Boolean functions are the parities.
-* `Cslib.BitString.expect_signVal_mul_signVal`, `Cslib.BitString.fourierCoeff_signVal`: the
-  correlation of two Boolean functions is one minus twice their relative Hamming distance.
 * `Cslib.BitString.two_mul_hammingDist_parityOn`: distinct parities differ on half the inputs.
 * `Cslib.BitString.expect_boole_eq_one_div_two_of_map_add`: nonzero linear functions are
   balanced.
@@ -101,30 +99,6 @@ theorem exists_eq_parityOn_iff {f : BooleanFunction n} :
   calc f x = f fun j => decide (j ∈ ({j | x j = true} : Finset (Fin n))) := by simp
     _ = parityOn {j | x j = true} a := hT _
     _ = parityOn {i | a i = true} x := by simp only [parityOn, filter_filter, and_comm]
-
-/-! ### Distance and correlation -/
-
-/-- **Correlation is one minus twice the distance**: the correlation of two Boolean functions,
-read as signs, is one minus twice the fraction of the inputs on which they differ
-[O'Donnell, Section 1.4][ODonnell2014]. -/
-theorem expect_signVal_mul_signVal (f g : BooleanFunction n) :
-    𝔼 x, signVal (f x) * signVal (g x) = 1 - 2 * hammingDist f g / 2 ^ n := by
-  have h (x : BitString n) :
-      signVal (f x) * signVal (g x) = 1 - 2 * if f x ≠ g x then 1 else 0 := by
-    rw [signVal_mul_signVal]
-    by_cases hx : f x = g x <;> norm_num [hx]
-  rw [hammingDist]
-  simp only [h, expect_eq_sum_div_card, sum_sub_distrib, ← mul_sum, sum_boole, sum_const,
-    card_univ, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin, nsmul_eq_mul, mul_one,
-    Nat.cast_pow, Nat.cast_ofNat]
-  rw [sub_div, div_self (pow_ne_zero n two_ne_zero)]
-
-/-- The Fourier coefficient on `S` of a Boolean function read as signs is one minus twice the
-relative Hamming distance from the function to the parity on `S`. -/
-theorem fourierCoeff_signVal (f : BooleanFunction n) (S : Finset (Fin n)) :
-    fourierCoeff (fun x => signVal (f x)) S = 1 - 2 * hammingDist f (parityOn S) / 2 ^ n := by
-  simp only [fourierCoeff, chi_eq_signVal_parityOn]
-  exact expect_signVal_mul_signVal f (parityOn S)
 
 /-! ### Distance between parities -/
 

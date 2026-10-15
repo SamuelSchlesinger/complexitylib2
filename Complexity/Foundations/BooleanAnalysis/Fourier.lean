@@ -11,11 +11,13 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Powerset
-public import Mathlib.Algebra.Module.LinearMap.Defs
+public import Mathlib.Algebra.Module.Equiv.Defs
+public import Mathlib.InformationTheory.Hamming
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.NormNum
 
 /-!
 # Fourier analysis on the Boolean cube
@@ -28,10 +30,13 @@ Mathlib's Boolean ring structure on `Bool`, and the characters turn sums into pr
 (`BitString.expect_chi_mul_chi`), and every real function on the cube is the sum of its *Fourier
 expansion* `f = ∑_S f̂(S) χ_S`, with the *Fourier coefficients* `f̂(S) = 𝔼_x f x χ_S x`
 (`BitString.fourierCoeff`, `BitString.sum_fourierCoeff_mul_chi`), which are unique
-(`BitString.fourierCoeff_sum_mul_chi`). The expectation of a product is the sum of products of
+(`BitString.fourierCoeff_sum_mul_chi`), so the Fourier transform is a linear equivalence
+(`BitString.fourierTransform`). The expectation of a product is the sum of products of
 coefficients (**Plancherel**, `BitString.expect_mul_eq_sum_fourierCoeff_mul`), so the squared
-coefficients of a function with values `±1` sum to one (`BitString.sum_fourierCoeff_sq_signVal`)
-[O'Donnell, Chapter 1][ODonnell2014].
+coefficients of a function with values `±1` sum to one (`BitString.sum_fourierCoeff_sq_signVal`).
+For Boolean functions read as signs, correlation is one minus twice the relative Hamming distance
+(`BitString.expect_signVal_mul_signVal`), so the coefficient on `S` measures the distance to the
+parity on `S` (`BitString.fourierCoeff_signVal`) [O'Donnell, Chapter 1][ODonnell2014].
 
 The coefficients are named `BitString.fourierCoeff`; Mathlib's root `fourierCoeff` is the Fourier
 coefficient on the circle, so the name is meant to be used qualified.
@@ -42,6 +47,7 @@ coefficient on the circle, so the name is meant to be used qualified.
 * `Cslib.BitString.chi`: the character of a set of coordinates.
 * `Cslib.BitString.fourierCoeff`: the Fourier coefficient of a real function on the cube, and
   `Cslib.BitString.fourierCoeffₗ` the same as a linear map.
+* `Cslib.BitString.fourierTransform`: the Fourier transform, as a linear equivalence.
 
 ## Main results
 
@@ -53,6 +59,8 @@ coefficient on the circle, so the name is meant to be used qualified.
 * `Cslib.BitString.expect_mul_eq_sum_fourierCoeff_mul`: Plancherel's identity.
 * `Cslib.BitString.sum_fourierCoeff_sq_signVal`: Parseval's identity for functions with values
   `±1`.
+* `Cslib.BitString.expect_signVal_mul_signVal`, `Cslib.BitString.fourierCoeff_signVal`: the
+  correlation of two Boolean functions is one minus twice their relative Hamming distance.
 
 ## References
 
@@ -156,8 +164,8 @@ theorem sum_chi (S : Finset (Fin n)) :
 theorem expect_chi_mul_chi (S T : Finset (Fin n)) :
     𝔼 x, chi S x * chi T x = if S = T then 1 else 0 := by
   have h : symmDiff S T = ∅ ↔ S = T := by rw [← bot_eq_empty, symmDiff_eq_bot]
-  simp only [chi_mul_chi, expect_eq_sum_div_card, sum_chi, h, card_univ, Fintype.card_fun,
-    Fintype.card_bool, Fintype.card_fin, Nat.cast_pow, Nat.cast_ofNat]
+  simp only [chi_mul_chi, expect_eq_sum_div_card, sum_chi, h, card_univ, card_eq, Nat.cast_pow,
+    Nat.cast_ofNat]
   split_ifs <;> simp
 
 /-- The characters at two points, summed over all sets, detect equality of the points. -/
@@ -258,6 +266,24 @@ noncomputable def fourierCoeffₗ (S : Finset (Fin n)) : (BitString n → ℝ) �
     fourierCoeffₗ S f = fourierCoeff f S :=
   rfl
 
+/-- The Fourier transform, sending a real function on the cube to its Fourier coefficients, as a
+linear equivalence: its inverse is the Fourier expansion. -/
+noncomputable def fourierTransform : (BitString n → ℝ) ≃ₗ[ℝ] (Finset (Fin n) → ℝ) where
+  toFun := fourierCoeff
+  map_add' f g := funext (fourierCoeff_add f g)
+  map_smul' c f := funext (fourierCoeff_const_mul c f)
+  invFun c x := ∑ S, c S * chi S x
+  left_inv f := funext (sum_fourierCoeff_mul_chi f)
+  right_inv c := funext (fourierCoeff_sum_mul_chi c)
+
+@[simp] theorem fourierTransform_apply (f : BitString n → ℝ) :
+    fourierTransform f = fourierCoeff f :=
+  rfl
+
+@[simp] theorem fourierTransform_symm_apply (c : Finset (Fin n) → ℝ) (x : BitString n) :
+    fourierTransform.symm c x = ∑ S, c S * chi S x :=
+  rfl
+
 /-- **Plancherel's identity**: the expectation of a product is the sum of the products of the
 Fourier coefficients. -/
 theorem expect_mul_eq_sum_fourierCoeff_mul (f g : BitString n → ℝ) :
@@ -284,5 +310,28 @@ theorem sum_fourierCoeff_sq_signVal (f : BitString n → Bool) :
   rw [← expect_sq_eq_sum_fourierCoeff_sq]
   simp only [sq, signVal_mul_self]
   exact expect_const univ_nonempty 1
+
+/-! ### Distance and correlation -/
+
+/-- **Correlation is one minus twice the distance**: the correlation of two Boolean functions,
+read as signs, is one minus twice the fraction of the inputs on which they differ
+[O'Donnell, Section 1.4][ODonnell2014]. -/
+theorem expect_signVal_mul_signVal (f g : BooleanFunction n) :
+    𝔼 x, signVal (f x) * signVal (g x) = 1 - 2 * hammingDist f g / 2 ^ n := by
+  have h (x : BitString n) :
+      signVal (f x) * signVal (g x) = 1 - 2 * if f x ≠ g x then 1 else 0 := by
+    rw [signVal_mul_signVal]
+    by_cases hx : f x = g x <;> norm_num [hx]
+  rw [hammingDist]
+  simp only [h, expect_eq_sum_div_card, sum_sub_distrib, ← mul_sum, sum_boole, sum_const,
+    card_univ, card_eq, nsmul_eq_mul, mul_one, Nat.cast_pow, Nat.cast_ofNat]
+  rw [sub_div, div_self (pow_ne_zero n two_ne_zero)]
+
+/-- The Fourier coefficient on `S` of a Boolean function read as signs is one minus twice the
+relative Hamming distance from the function to the parity on `S`. -/
+theorem fourierCoeff_signVal (f : BooleanFunction n) (S : Finset (Fin n)) :
+    fourierCoeff (fun x => signVal (f x)) S = 1 - 2 * hammingDist f (parityOn S) / 2 ^ n := by
+  simp only [fourierCoeff, chi_eq_signVal_parityOn]
+  exact expect_signVal_mul_signVal f (parityOn S)
 
 end Cslib.BitString

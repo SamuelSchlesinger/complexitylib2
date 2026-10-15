@@ -25,7 +25,8 @@ string and every other block from the second (`BitString.block_piecewise`).
 ## Main definitions
 
 * `Cslib.BitString.block`: the `i`-th block of `k` bits of a string of `m * k` bits.
-* `Cslib.BitString.blocksEquiv`: cutting a string into its blocks.
+* `Cslib.BitString.blocksEquiv`: cutting a string into its blocks; its inverse reads bit `p` of
+  the string in its block (`BitString.blocksEquiv_symm_apply`).
 * `Cslib.BitString.blockBits`: the positions of the bits of a block.
 
 ## Main results
@@ -51,6 +52,7 @@ def block (x : BitString (m * k)) (i : Fin m) : BitString k :=
   rfl
 
 /-- Cutting a string of `m * k` bits into its `m` blocks of `k` bits. -/
+@[simps symm_apply]
 def blocksEquiv : BitString (m * k) ≃ (Fin m → BitString k) where
   toFun := block
   invFun y p := y (finProdFinEquiv.symm p).1 (finProdFinEquiv.symm p).2

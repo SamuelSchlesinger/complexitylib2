@@ -19,8 +19,9 @@ Flipping each bit of a string `x` independently with probability `(1 - ρ) / 2` 
 string `y` that is *`ρ`-correlated* with `x`. The *noise operator* `T_ρ` (`BitString.noiseOp`)
 averages a real function over this noise, `T_ρ f x = 𝔼_y f y`. It damps the Fourier coefficient of
 `S` by `ρ ^ |S|` (`BitString.fourierCoeff_noiseOp`), so it has Fourier expansion
-`∑_S ρ ^ |S| f̂(S) χ_S` (`BitString.noiseOp_eq_sum`) and the noise operators form a semigroup,
-`T_ρ T_σ = T_{ρ σ}` (`BitString.noiseOp_noiseOp`).
+`∑_S ρ ^ |S| f̂(S) χ_S` (`BitString.noiseOp_eq_sum`), the noise operators form a semigroup,
+`T_ρ T_σ = T_{ρ σ}` (`BitString.noiseOp_noiseOp`), and each is self-adjoint
+(`BitString.expect_mul_noiseOp_comm`).
 
 The *noise stability* `Stab_ρ[f] = 𝔼_x f x T_ρ f x` (`BitString.noiseStability`) is the
 correlation of `f` at two `ρ`-correlated strings. It is `∑_S ρ ^ |S| f̂(S) ^ 2`
@@ -54,6 +55,7 @@ over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
 * `Cslib.BitString.noiseOp_eq_sum`, `Cslib.BitString.fourierCoeff_noiseOp`: the Fourier expansion
   of `T_ρ f` [O'Donnell, Proposition 2.47][ODonnell2014].
 * `Cslib.BitString.noiseOp_noiseOp`: the noise operators form a semigroup.
+* `Cslib.BitString.expect_mul_noiseOp_comm`: the noise operator is self-adjoint.
 * `Cslib.BitString.noiseStability_eq_sum`: the Fourier formula for the noise stability
   [O'Donnell, Theorem 2.49][ODonnell2014].
 * `Cslib.BitString.sq_expect_le_noiseStability`, `Cslib.BitString.noiseStability_le_expect_sq`,
@@ -177,11 +179,16 @@ theorem noiseOp_noiseOp (ρ σ : ℝ) (f : BitString n → ℝ) :
     simp only [fourierCoeff_noiseOp, mul_pow, mul_assoc]
 
 /-- The correlation of `f` with `T_ρ g` is the sum of the products of the Fourier coefficients
-damped by `ρ ^ |S|`; in particular `T_ρ` is self-adjoint. -/
+damped by `ρ ^ |S|`. -/
 theorem expect_mul_noiseOp_eq_sum (ρ : ℝ) (f g : BitString n → ℝ) :
     𝔼 x, f x * noiseOp ρ g x = ∑ S, ρ ^ #S * (fourierCoeff f S * fourierCoeff g S) := by
   rw [expect_mul_eq_sum_fourierCoeff_mul]
   exact sum_congr rfl fun S _ => by rw [fourierCoeff_noiseOp, mul_left_comm]
+
+/-- **The noise operator is self-adjoint**: `𝔼 f T_ρ g = 𝔼 (T_ρ f) g`. -/
+theorem expect_mul_noiseOp_comm (ρ : ℝ) (f g : BitString n → ℝ) :
+    𝔼 x, f x * noiseOp ρ g x = 𝔼 x, noiseOp ρ f x * g x := by
+  simp only [mul_comm (noiseOp ρ f _), expect_mul_noiseOp_eq_sum, mul_comm (fourierCoeff f _)]
 
 /-! ### Noise stability -/
 

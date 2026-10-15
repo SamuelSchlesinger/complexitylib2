@@ -9,13 +9,12 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Foundations.BooleanAnalysis.LowDegree
+public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Weight
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Data.ZMod.Defs
 public import Mathlib.Logic.Equiv.Fin.Basic
 import Complexity.Foundations.Combinatorics.CentralBinomial
-import Complexity.Foundations.Data.BitString.Block
-import Complexity.Foundations.BooleanAnalysis.Linearity
 import Mathlib.Algebra.CharP.Two
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Algebra.Module.Equiv.Basic
@@ -80,10 +79,10 @@ namespace Cslib.BitString
 open Finset
 open scoped BigOperators
 
-/-- The exclusive or of the majorities of the `k` blocks of `ℓ` consecutive bits of a string of
-`k * ℓ` bits. -/
+/-- The exclusive or of the majorities of the `k` blocks `block x i` of `ℓ` consecutive bits of a
+string `x` of `k * ℓ` bits. -/
 def xorMajority (k ℓ : ℕ) : BooleanFunction (k * ℓ) :=
-  fun x => parity k fun i => majority ℓ fun j => x (finProdFinEquiv (i, j))
+  fun x => parity k fun i => majority ℓ (block x i)
 
 /-! ### Interpolation and the majority decomposition -/
 
@@ -601,7 +600,7 @@ private theorem abs_expect_signVal_mul_le_of_two_mul_card_le {n : ℕ} {f p : Bo
   have hsum : (#{x | p x = f x} : ℝ) + #{x | (!p x) = f x} = 2 ^ n := by
     have h := card_filter_add_card_filter_not (s := (univ : Finset (BitString n)))
       fun x => p x = f x
-    rw [card_univ, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin] at h
+    rw [card_univ, card_eq] at h
     have he : #{x | ¬p x = f x} = #{x | (!p x) = f x} := by
       congr 1
       ext x

@@ -68,7 +68,7 @@ def monomial (S : Finset (Fin n)) (x : BitString n) : R :=
 /-- The functions on the cube of degree at most `D`: the `R`-linear span of the monomials of at most
 `D` coordinates. -/
 def lowDegree (n D : ℕ) : Submodule R (BitString n → R) :=
-  Submodule.span R (monomial R '' {S | S.card ≤ D})
+  Submodule.span R (monomial R '' {S | #S ≤ D})
 
 variable {R}
 
@@ -101,7 +101,7 @@ theorem monomial_singleton (i : Fin n) : monomial R {i} = fun x => bitVal R (x i
   funext x
   simp [monomial]
 
-theorem monomial_mem_lowDegree {S : Finset (Fin n)} {D : ℕ} (hS : S.card ≤ D) :
+theorem monomial_mem_lowDegree {S : Finset (Fin n)} {D : ℕ} (hS : #S ≤ D) :
     monomial R S ∈ lowDegree R n D :=
   Submodule.subset_span ⟨S, hS, rfl⟩
 
@@ -142,7 +142,7 @@ theorem pow_mem_lowDegree {a : ℕ} {f : BitString n → R} (hf : f ∈ lowDegre
     exact mul_mem_lowDegree ih hf
 
 theorem prod_mem_lowDegree {ι : Type*} (s : Finset ι) {a : ℕ} {f : ι → BitString n → R}
-    (hf : ∀ i ∈ s, f i ∈ lowDegree R n a) : ∏ i ∈ s, f i ∈ lowDegree R n (s.card * a) := by
+    (hf : ∀ i ∈ s, f i ∈ lowDegree R n a) : ∏ i ∈ s, f i ∈ lowDegree R n (#s * a) := by
   classical
   induction s using Finset.induction_on with
   | empty => simpa using one_mem_lowDegree (R := R) (n := n) 0
@@ -208,10 +208,10 @@ theorem mem_lowDegree_self (f : BitString n → R) : f ∈ lowDegree R n n := by
 /-- **The dimension of the functions of degree at most `D`** is at most the number of sets of at
 most `D` coordinates. -/
 theorem finrank_lowDegree_le [StrongRankCondition R] (D : ℕ) :
-    Module.finrank R (lowDegree R n D) ≤ #(univ.filter fun S : Finset (Fin n) => S.card ≤ D) := by
+    Module.finrank R (lowDegree R n D) ≤ #{S : Finset (Fin n) | #S ≤ D} := by
   classical
-  rw [lowDegree, show monomial R '' {S | S.card ≤ D} =
-      ((univ.filter fun S : Finset (Fin n) => S.card ≤ D).image (monomial R) : Set _) by
+  rw [lowDegree, show monomial R '' {S | #S ≤ D} =
+      ((univ.filter fun S : Finset (Fin n) => #S ≤ D).image (monomial R) : Set _) by
     ext f
     simp]
   exact (finrank_span_finset_le_card _).trans card_image_le
