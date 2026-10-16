@@ -58,8 +58,9 @@ exact program equality with the native machine, including stateful choice and qu
 Its storage bounds charge installed replies separately. Tape operations now have `fun_prop`
 certificates for arbitrary symbol encodings, including infinite and empty alphabets. Fixed finite
 tables likewise support ordinary function construction, projection and updates through `fun_prop`,
-charging all unbounded entries. Efficient configuration handling and the substitution certificate
-remain pending.
+charging all unbounded entries. Encoded configurations now have constructor, projection, local-step
+and reply-installation certificates; their complete storage bound includes the largest installed
+reply. Finite-control dispatch and the efficient stateful substitution certificate remain pending.
 General OWF → PRG through pseudoentropy and adaptive GGM security
 remain to be ported.
 

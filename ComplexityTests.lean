@@ -4,6 +4,7 @@ import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CoinTape
 import ComplexityTests.ComputationalCrypto
+import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
 import ComplexityTests.FiniteMachine

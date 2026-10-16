@@ -39,6 +39,20 @@ example : ComputableTidilyInPolyTime
     (fun bits : List Bool => List.ofFn (fun _ : Fin 4 => bits.reverse))
     encBits (encList encBits) := by fun_prop
 
+-- Aesop normalizes the tuple spelling to replication, including a symbolic fixed tuple length.
+example (count : ℕ) : ComputableTidilyInPolyTime
+    (fun bits : List Bool => List.ofFn (fun _ : Fin count => bits.reverse))
+    encBits (encList encBits) := by polytime
+
+example (count : ℕ) : ComputableTidilyInPolyTime
+    (fun bits : List Bool => List.replicate count bits.reverse)
+    encBits (encList encBits) := by fun_prop
+
+-- Runtime replication computes its count in unary and charges every copy of an unbounded value.
+example : ComputableTidilyInPolyTime
+    (fun pair : ℕ × List Bool => List.replicate pair.1 pair.2)
+    (encPair encUnary encBits) (encList encBits) := by polytime
+
 private def encEmpty : Empty ↪ List Bool := ⟨Empty.elim, fun value => value.elim⟩
 
 -- There is an empty table even when no entry value exists.

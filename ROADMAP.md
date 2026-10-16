@@ -809,6 +809,48 @@ is 5,456 / 37,114 in 499 source modules. Statements, definitions, instances and 
 Finite-control case analysis, encoded configuration transitions and efficient stateful
 substitution remain next.
 
+### Encoded configurations and predictable composition (2026-10-16)
+
+`Encodings/Configuration.lean` stores ordinary finite storage and all oracle channels. Its bound
+charges the input, unary head position, work tapes, output, requests, stored replies and framing.
+The uniform constant depends only on the fixed machine types; the bound separately includes the
+largest installed reply, since a short oracle run can receive a long word.
+`Complexity/PolyTime/Configuration.lean` certifies construction, projections, observations, fixed
+native actions, initialization and installation of computed replies. Functional structure updates,
+captured configurations and channel access use these rules through `fun_prop` or `polytime`.
+Tests cover empty state/channel types, zero work tapes and replies longer than the machine clock.
+
+Initialization rules accept a certified input expression. Registering the existing raw/framed-bit
+conversions lets the same program use either input encoding without a manual hint. A reusable
+`List.replicate` certificate also covers the form to which Aesop normalizes constant `List.ofFn`;
+tests exercise both spellings and a runtime unary count. These are semantic closure rules, with
+each copied value charged, rather than new syntax cases in either tactic.
+
+The configuration modules contain 23 theorem bodies / 106 body lines, including their shared
+product views and encoding equations, versus 19 / 109 in crypto's original configuration module.
+The shared replication rule adds another body / 3 lines. Counting that helper, this batch costs
+109 body lines; there is no net reduction against the original configuration module. The current
+inventory is 5,480 / 37,223 in 501 source modules. Statements, definitions, instances and tests
+are excluded, so these counts do not measure total source size or kernel proof-term size.
+
+Selected Lean 4.35 tactic measurements use the raw heartbeat counter (1,000 raw units per reported
+Lean heartbeat). They measure elaborator work, not runtime of the certified program or wall time:
+
+| Client | Tactic | Raw heartbeats |
+| --- | --- | ---: |
+| Symbolic fixed tuple of reversed words | `fun_prop` | 7,952 |
+| Same tuple | `polytime` | 128,171 |
+| Runtime unary-count replication | `polytime` | 86,829 |
+| Configuration initialization from framed bits | `fun_prop` | 42,324 |
+| Reply installation, local step and two projections | `fun_prop` | 136,131 |
+
+An independent review rejected a composition-first tactic experiment: removing one required
+local certificate made the speculative `fun_prop` exhaust the default budget even with
+`maxSteps := 16`, while the existing Aesop tactic failed promptly. The macros remain unchanged.
+The negative test is retained; any future speculative search needs an actual execution budget,
+not just a recursion/search-step bound. Finite-control dispatch and efficient stateful simulation
+remain the next interpreter obligations.
+
 ### Implementation priorities (2026-10-16)
 
 1. Finish efficient stateful oracle substitution through finite tables, encoded configurations

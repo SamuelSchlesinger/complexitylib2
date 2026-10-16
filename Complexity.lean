@@ -207,6 +207,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
@@ -222,6 +223,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Prim
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length

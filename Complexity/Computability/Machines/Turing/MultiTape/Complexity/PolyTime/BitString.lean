@@ -83,6 +83,7 @@ theorem bitsBoundedBinaryValueWithInput {α : Type} {input : α ↪ List Bool}
       input encUnary := bitsBoundedBinaryValue.comp (hcap.prod hword)
 
 /-- Convert a raw bit string to the framed list encoding. -/
+@[fun_prop]
 theorem bitsToList : ComputableTidilyInPolyTime (fun l => l) encBits (encList encBool) := by
   have h := foldl_of_bounded_growth (encA := encBool) (encL := encBits)
     (step := fun acc bit => acc ++ [bit]) (init := fun _ => [])
@@ -94,6 +95,7 @@ theorem bitsToList : ComputableTidilyInPolyTime (fun l => l) encBits (encList en
     List.flatMap_map, id_eq, List.flatMap_singleton'] using h
 
 /-- Remove the framing from a list of bits. -/
+@[fun_prop]
 theorem listToBits : ComputableTidilyInPolyTime (fun l => l) (encList encBool) encBits := by
   have h := foldl_of_bounded_growth (encA := encBool)
     (step := fun acc bit => acc ++ [bit]) (init := fun _ => [])

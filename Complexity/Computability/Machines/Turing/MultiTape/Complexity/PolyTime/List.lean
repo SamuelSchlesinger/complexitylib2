@@ -36,7 +36,8 @@ up a variable with a large binary label does not require a certificate as long a
   list without requiring an encoding of its elements.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`, `.findWith`: filtering or searching
   a polynomial-time list with a parameterized test.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`: unary lengths and ranges.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`, `.replicate`: unary lengths,
+  ranges and lists of a computed length, charging each repeated value.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
@@ -370,6 +371,17 @@ theorem range : ComputableTidilyInPolyTime List.range encUnary (encList encUnary
       · simp only [List.length_range, encUnary_apply, List.length_replicate]
         exact Nat.mul_le_mul_right _ (Nat.min_le_right i n))
   simpa only [hrep] using h
+
+/-- Repeat a computed value a computed unary number of times, charging every copy and delimiter. -/
+@[fun_prop]
+theorem replicate {count : γ → ℕ} {value : γ → α}
+    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
+    (hvalue : ComputableTidilyInPolyTime value encIn encA) :
+    ComputableTidilyInPolyTime (fun x => List.replicate (count x) (value x))
+      encIn (encList encA) := by
+  simpa only [Function.comp_def, List.map_const', List.length_range] using
+    mapWithInput (f := fun x _ => value x) (range.comp hcount)
+      (hvalue.comp (fst encIn encUnary))
 
 /-- Test whether any element satisfies a polynomial-time predicate with a fixed parameter. -/
 theorem anyWith {test : π × α → Bool} {par : γ → π} {list : γ → List α}
