@@ -1514,6 +1514,59 @@ after refreshing dependency artifacts, import coverage 1.96 s, tests 20.77 s, en
 7.36 s, style 2.25 s, and init imports 5.55 s. The axiom guards use only `propext`,
 `Classical.choice` and `Quot.sound`.
 
+The post-publication Codex correctness review approves commit `3be79d6`, with no material
+findings. It examined source and contracts; the local checks above supply compilation evidence.
+
+### Arithmetic expanders and executable PCP (2026-10-16)
+
+The first construction milestone is a concrete expander family together with a complete certified
+preprocessing transformation on encoded constraint graphs and small executable examples. The
+arithmetic base is now implemented; this does not complete that milestone. Reingold, Vadhan and
+Wigderson distinguish rotation time polynomial in vertex count from time polynomial in vertex-name
+length (Section 1.6). The former can suffice for a polynomial-sized PCP reduction. The existing
+squaring/zig-zag tower takes exponentially many base calls in its depth, but only polynomially
+many in its vertex count. Its uniform TM certificate remains to be proved.
+
+`Expander/AffinePlane.lean` implements the finite-field rotation
+`((a, b), c) ↦ ((c, a*c-b), a)`. Its exact two-step averaging law gives spectral expansion at most
+`sqrt (1 / |K|)` by self-adjointness, without eigenvectors or a graph search. Tensoring two copies
+and zig-zagging twice gives a base on `|K|⁸` vertices of degree `|K|²`, with expansion at most
+`3r + 2r²`. A field of size at least 256 meets the existing tower's `1 / 5` base hypothesis;
+`ZMod 257` is a checked concrete instance. `AffineTower.lean` supplies graphs on
+`257^(8(n+1))` vertices with expansion at most `2 / 5`. This removes the nonconstructive base
+choice, but the tower's degree is `257⁴ = 4,362,470,401`. Asymptotic certification and practical
+enumeration remain distinct targets.
+
+Tensor and zig-zag rotations now use named functional programs with explicit intermediate
+results. Their three certificates, including the affine-plane rule, are each `unfold ...;
+fun_prop`. The complete arithmetic base composes through `fun_prop` from multiplication and
+subtraction certificates for any supplied encoding. Only the fixed-field arithmetic witness uses
+the finite-domain theorem; no such theorem is used to assert uniformity over tower depth.
+Tests evaluate all neighbors of one `ZMod 3` vertex and a complete `ZMod 257` base rotation,
+exercise the actual spectral hypotheses, equivalent direct/let-bound calls and arbitrary
+component encodings, and reject missing component certificates. No new TM, tactic implementation
+or heartbeat override is needed.
+
+This batch adds 11 named proofs / 73 body lines, including all three certificate helpers
+(6 body lines); the 8 mathematical proofs use 67 body lines. The source-layout count excludes
+the new program definitions, the involution proof inside the graph definition, and tests. The
+complete library has 5,789 named proofs / 39,812 body lines across 546 modules. Full-module
+profiles of the generic tensor, zig-zag and affine certificate bodies use respectively
+2,104,838, 3,388,753 and 100,304 raw tactic heartbeats. The complete generic base client uses
+51,159. These are elaboration measurements, not program runtime or a before/after speedup.
+
+Independent source/API review approves the batch with no required fixes. All six checks pass:
+strict build 38.71 s, import coverage 1.71 s, tests 6.97 s, environment lint 7.21 s, style 2.34 s,
+and init imports 4.43 s. Seven headline axiom guards use only `propext`, `Classical.choice` and
+`Quot.sound`. The external correctness review follows publication of this coherent batch.
+
+Next, obtain arbitrary cloud sizes with a proved spectral and size contract, certify the tower
+uniformly, and interpret compact encoded constraint graphs into the existing mathematical
+graphs. A full preprocessing client must account for enumeration, lookup, relabelling, copying
+and output storage. Propagate expander degree and spectral parameters through amplification,
+retaining the current numerical specialization as a client. The logarithmic-round cardinality
+bounds already proved in `Amplifier.lean` still need an encoded-size and total-time bridge.
+
 ### Implementation priorities (2026-10-16)
 
 1. Efficient closed stateful substitution is implemented through finite tables, encoded
@@ -1898,7 +1951,7 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | done (`BooleanAnalysis/PolynomialCorrelation`) |
 | Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | done (`Circuit/Boolean/{Correction,SparseSynthesis}`) |
 | Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`BooleanAnalysis/{Hadamard,HadamardTester}`) |
-| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | done (`Expander/{Cheeger,Loops,Perm,Random,Family,Tower,TowerBase}`); the fully explicit RVW recursion open |
+| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | done (`Expander/{Cheeger,Loops,Perm,Random,Family,Tower,TowerBase,AffinePlane,AffineTower}`); arbitrary sizes and the fully explicit RVW recursion remain open |
 | Zig-zag product | `PCP/Internal/ZigZag` | done (`Expander/{Power,Products}`, with tensor and balanced replacement products; the tower in `Expander/{Tower,TowerBase}`) |
 | Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | done: reconstruction, designs, circuits, sampling and the list-decoding reconstruction (`Crypto/Primitives/PRG/NisanWigderson{,/Design,/Circuit,/Sampling,/Reconstruction}`), the `Kᵗ` bound (`Computability/Kolmogorov/NisanWigderson`); open: a concrete list-decodable code family |
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure (Bolton Bailey) | done: constraint graphs, the 3-SAT reduction, degree reduction and preprocessing (`Computability/PCP/`), walks and killed walks (`Expander/{Walk,KilledWalk}`), the assignment tester and composition (`PCP/{LocalTest,AssignmentTester,Composition}`), powering (`PCP/{Power,PoweringBound}`), the amplification round, amplifiers and the gap theorem (`PCP/{Amplification,Amplifier,GapTheorem}`); next: polynomial-time constructibility, which needs explicit expanders and the poly-time calculus |

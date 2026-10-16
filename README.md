@@ -96,6 +96,14 @@ extraction and the final general OWF → PRG security assembly remain pending. E
 tests now have exact independent-trial laws, exponential error bounds and complete PPT
 certificates, providing the sampling prerequisites for amplification.
 
+The expander library now has an arithmetic affine-plane construction and a concrete base for
+the existing zig-zag tower: `ZMod 257` gives spectral expansion at most `2 / 5` throughout the
+tower without a nonconstructive base choice. Tensor, zig-zag and affine rotations have
+compositional `fun_prop` certificates, and small rotations execute directly. Uniform efficiency
+of the tower, arbitrary cloud sizes and encoded PCP preprocessing remain open. Polynomial time
+in the graph's vertex count can suffice for PCP construction; time polynomial in the bit length
+of a vertex name is a separate, stronger target. The concrete tower's degree is still enormous.
+
 ## Layout
 
 Every file lives at the path and in the namespace it would have inside cslib, under the library

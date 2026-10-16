@@ -2030,6 +2030,48 @@ info: 'Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le' depends on axi
 #print axioms Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le
 
 /--
+info: 'Cslib.RotationMap.walk_affinePlane_twice' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.walk_affinePlane_twice
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_affinePlane_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_affinePlane_le
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_affinePlaneTowerBase_le_one_div_five' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_affinePlaneTowerBase_le_one_div_five
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_affinePlaneTower_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_affinePlaneTower_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_tensor' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_tensor
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_zigzag' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_zigzag
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane
+
+/--
 info: 'Cslib.RAM.computesInTime_unitCost_repeatedSquaring' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

@@ -220,6 +220,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
@@ -402,6 +403,8 @@ public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
+public import Complexity.Foundations.Combinatorics.Expander.AffinePlane
+public import Complexity.Foundations.Combinatorics.Expander.AffineTower
 public import Complexity.Foundations.Combinatorics.Expander.Basic
 public import Complexity.Foundations.Combinatorics.Expander.Cheeger
 public import Complexity.Foundations.Combinatorics.Expander.Existence

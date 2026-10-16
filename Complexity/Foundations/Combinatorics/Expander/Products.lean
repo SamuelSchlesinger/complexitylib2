@@ -46,6 +46,8 @@ product is `(B̃ + Ã) / 2`, and the zig-zag walk `B̃ Ã B̃` is one of the eig
 
 ## Main definitions
 
+* `Cslib.RotationMap.tensorRot`, `Cslib.RotationMap.zigzagRot`: the underlying functional
+  rotation programs, shared with their efficiency certificates.
 * `Cslib.RotationMap.tensor`: the tensor product `G ⊗ H`.
 * `Cslib.RotationMap.zigzag`: the zig-zag product `G ⓩ H`.
 * `Cslib.RotationMap.balancedReplacement`: the balanced replacement product `G Ⓡ H`.
@@ -154,14 +156,20 @@ variable {V D V' D' : Type*}
 
 variable (G : RotationMap V D) (H : RotationMap V' D')
 
+/-- Execute a tensor rotation with one call to each component, retaining both return labels. -/
+def tensorRot (rotate : V × D → V × D) (other : V' × D' → V' × D')
+    (p : (V × V') × (D × D')) : (V × V') × (D × D') :=
+  let first := rotate (p.1.1, p.2.1)
+  let second := other (p.1.2, p.2.2)
+  ((first.1, second.1), (first.2, second.2))
+
 /-- The **tensor product** `G ⊗ H`
 [Reingold, Vadhan and Wigderson, Section 2.3][ReingoldVadhanWigderson2002]: the multigraph on
 `V × V'` with labels `D × D'` whose edge `(i, i')` at `(v, v')` takes the edge `i` of `G` at `v` and
 the edge `i'` of `H` at `v'` at the same time. -/
 def tensor : RotationMap (V × V') (D × D') where
-  rot p := (((G.rot (p.1.1, p.2.1)).1, (H.rot (p.1.2, p.2.2)).1),
-    ((G.rot (p.1.1, p.2.1)).2, (H.rot (p.1.2, p.2.2)).2))
-  rot_involutive p := by simp
+  rot := tensorRot G.rot H.rot
+  rot_involutive p := by simp [tensorRot]
 
 /-- The rotation map of `G ⊗ H` applies those of `G` and of `H` side by side. -/
 @[simp]
@@ -382,6 +390,14 @@ section ZigZag
 
 variable {V D E : Type*} (G : RotationMap V D) (H : RotationMap D E)
 
+/-- Execute a zig-zag rotation, retaining the return labels of the zig and zag. -/
+def zigzagRot (rotate : V × D → V × D) (cloud : D × E → D × E)
+    (p : (V × D) × (E × E)) : (V × D) × (E × E) :=
+  let a := cloud (p.1.2, p.2.1)
+  let b := rotate (p.1.1, a.1)
+  let c := cloud (b.2, p.2.2)
+  ((b.1, c.1), (c.2, a.2))
+
 /-- The **zig-zag product** `G ⓩ H`
 [Reingold, Vadhan and Wigderson, Definition 3.1][ReingoldVadhanWigderson2002]
 [Hoory, Linial and Wigderson, Section 9.3][HooryLinialWigderson2006] of a `D`-regular graph `G` on
@@ -391,12 +407,8 @@ at `v`, grouped into the cloud `{v} × D` of `v`, and its labels are pairs of la
 the `k'`-th edge of `G` from `v` to `(w, ℓ')`, where it is the `ℓ'`-th edge at `w`, and takes the
 edge `j` of `H` from `ℓ'` to `ℓ` inside the cloud of `w` ("zag"), ending at `(w, ℓ)`. -/
 def zigzag : RotationMap (V × D) (E × E) where
-  rot p :=
-    let a := H.rot (p.1.2, p.2.1)
-    let b := G.rot (p.1.1, a.1)
-    let c := H.rot (b.2, p.2.2)
-    ((b.1, c.1), (c.2, a.2))
-  rot_involutive p := by simp
+  rot := zigzagRot G.rot H.rot
+  rot_involutive p := by simp [zigzagRot]
 
 /-- The rotation map of `G ⓩ H`
 [Reingold, Vadhan and Wigderson, Definition 3.1][ReingoldVadhanWigderson2002]: with
