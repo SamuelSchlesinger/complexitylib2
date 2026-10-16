@@ -3972,4 +3972,28 @@ info: 'Cslib.Crypto.GoldreichLevin.negligible_prediction_of_negligible_inversion
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.GoldreichLevin.negligible_prediction_of_negligible_inversion
 
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.polyTime_wordDecode' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GoldreichLevin.polyTime_wordDecode
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.uniform_wordDecode' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GoldreichLevin.uniform_wordDecode
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.wordDecode_success_ge_half' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GoldreichLevin.wordDecode_success_ge_half
+
 end ComplexityTests.Axioms

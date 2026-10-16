@@ -78,6 +78,12 @@ theorem unary_mul : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
       simpa [List.foldl_const] using Nat.mul_le_mul hb ha)
   simpa [List.foldl_const, Nat.mul_comm] using h
 
+/-- Take the smaller of two unary naturals. -/
+@[fun_prop]
+theorem unary_min : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
+    (encPair encUnary encUnary) encUnary :=
+  ComputableTidilyInDegree.unary_min.computableTidilyInPolyTime
+
 /-- Compare unary naturals. -/
 @[fun_prop]
 theorem unary_le : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))

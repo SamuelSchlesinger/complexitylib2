@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.Basic
+public import Mathlib.Data.List.OfFn
 
 /-!
 # Enumerating bit strings
@@ -19,6 +20,7 @@ be polynomial in `n`.
 ## Main definitions
 
 * `Cslib.BitString.enum`: enumerate bit strings by prepending both bits to every shorter string.
+* `Cslib.BitString.enumList`: the same enumeration as ordinary lists of bits.
 
 ## Main results
 
@@ -27,8 +29,8 @@ be polynomial in `n`.
 
 ## References
 
-Adapted from `Crypto/Computational/GoldreichLevin/Reduction.lean` on the cslib `crypto` branch
-at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
+Adapted from `Crypto/Computational/GoldreichLevin/{Reduction,WordDecoder}.lean` on the cslib
+`crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
 @[expose] public section
@@ -63,5 +65,26 @@ theorem nodup_enum (k : ℕ) : (enum k).Nodup := by
   have hall : (enum k).toFinset = Finset.univ := by ext; simp
   rw [hall]
   simp [BitString]
+
+/-- The binary enumeration represented by ordinary lists, in the same order. -/
+def enumList (count : ℕ) : List (List Bool) := (enum count).map List.ofFn
+
+@[simp] theorem enumList_zero : enumList 0 = [[]] := rfl
+
+/-- Extend every shorter string by both possible first bits. -/
+theorem enumList_succ (count : ℕ) :
+    enumList (count + 1) =
+      (enumList count).flatMap (fun word => [false :: word, true :: word]) := by
+  simp [enumList, enum, List.map_flatMap, List.flatMap_map]
+
+/-- The word enumeration has the same size as the finite-string enumeration. -/
+@[simp] theorem length_enumList (count : ℕ) : (enumList count).length = 2 ^ count := by
+  simp [enumList]
+
+/-- Every enumerated word has the requested width. -/
+theorem length_of_mem_enumList {count : ℕ} {word : List Bool}
+    (hword : word ∈ enumList count) : word.length = count := by
+  obtain ⟨_, _, rfl⟩ := List.mem_map.mp hword
+  simp
 
 end Cslib.BitString

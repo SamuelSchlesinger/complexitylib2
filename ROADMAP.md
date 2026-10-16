@@ -519,6 +519,35 @@ in 462 source files; definitions, statements and tests remain excluded. Tests ex
 enumeration order, a different valid preimage, the empty-list fallback, and negative prediction
 bias with image-dependent finite seeds, including dimension zero.
 
+### Executable Goldreich–Levin decoder (2026-10-16)
+
+`GoldreichLevin/WordDecoder` now implements the complete deterministic decoder using ordinary
+maps, filtering, folds and first-match search. The finite/list correspondence preserves order,
+duplicates and the zero fallback for every mask tape, including short tapes. Uniform mask bits
+give exactly the earlier finite inversion law and its half-success bound for correlated
+predictors. The predictor certificate is joint in its captured input and query. Connecting saved
+randomness to this callback and proving the complete uniform PPT inverter remain next.
+
+Candidate decoding, candidate-list generation, checking and the full decoder each have an
+`unfold …; fun_prop` efficiency proof. Their combined proof bodies are 8 lines versus 17 in the
+crypto branch. A closed client with an input-dependent parity predictor is certified by one
+`polytime`; no assumed algorithm certificate is needed for that example. Tests also cover short
+selectors and rows, out-of-range coordinates, ties, noninjective checking and zero dimension.
+Automation rejects an attempted certificate for unrestricted exponential enumeration.
+
+The shared calculus gains captured search and runtime option defaults, raw-bit traversals,
+Boolean folds, pointwise operations, strict majority, basis masks and selected row sums. Binary
+logarithms reuse encoded lengths; unary logarithms first convert to binary. Enumeration requires
+a polynomial bound on **all** `2^k * (2k+1)` encoded bits, and the loop proof bounds intermediate
+states too. Algebraic list/finite identities live in `BitString.List.Operations`, while binary
+enumeration has a shared `BitString.enumList` representation.
+
+The crypto-specific module has 15 theorem bodies / 82 body lines. Counting all new shared
+infrastructure, this batch adds 49 / 233, bringing the library to 5,205 / 35,767 in 466 source
+files. The crypto branch's original `WordDecoder` alone had 29 / 166; the lower local module count
+does not represent a reduction in total work, because generic operations and certificates have
+moved into shared APIs. As before, definitions, statements and tests are excluded from the metric.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and

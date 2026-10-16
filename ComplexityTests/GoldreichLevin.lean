@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Crypto.Computational.GoldreichLevin.Parameters
+import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 import Complexity.Probability.PMF.Expect
+import Complexity.Tactic.PolyTime
 
 /-! Decoder checks with imperfect and perfect predictors, overlapping masks, and boundary cases. -/
 
@@ -92,5 +93,41 @@ example (n : ℕ) :
 example : precision 0 0 = 1 ∧ maskCount 0 1 = 1 := by decide
 example : PolynomiallyBounded (fun n => n * maskCount n (precision 7 n)) :=
   randomMaskBits_polynomial 7
+
+open Turing.MultiTapeTM
+
+-- The complete decoder has a closed uniform certificate with an input-dependent parity predictor.
+example (degree : ℕ) : ComputableTidilyInPolyTime
+    (fun p : ℕ × List Bool × List Bool =>
+      wordDecode id (fun query => (p.2.1.zipWith Bool.and query).foldl Bool.xor false)
+        degree p.1 p.2.1 p.2.2)
+    (encPair encUnary (encPair encBits encBits)) encBits := by polytime
+
+-- Runtime fallback and captured-predicate search compose without exposing a machine.
+example : ComputableTidilyInPolyTime
+    (fun p : ℕ × List (List Bool) =>
+      (p.2.find? (fun word => word.length == p.1)).getD (List.replicate p.1 false))
+    (encPair encUnary (encList encBits)) encBits := by fun_prop
+
+-- Output-size bounds cannot be silently discarded to certify exponential enumeration.
+example : True := by
+  fail_if_success
+    have : ComputableTidilyInPolyTime BitString.enumList encUnary (encList encBits) := by polytime
+  trivial
+
+-- The total word algorithms cover ties, short selectors, short rows and out-of-range coordinates.
+example : BitString.listStrictMajority [] = false ∧
+    BitString.listStrictMajority [true, false] = false := by decide
+example : BitString.listSingle 2 5 = [false, false] := by decide
+example : BitString.listXorSelected 3 [true] [[true, false], [false, true, true]] =
+    [true, false] := by decide
+example : wordCheckCandidates (fun _ => []) 3 [] [[true], [false, true]] = [true] := by decide
+example (f : List Bool → List Bool) (image : List Bool) :
+    wordCheckCandidates f 3 image [] = [false, false, false] := rfl
+
+-- A one-bit mask tape is padded to the requested matrix; the perfect predictor still recovers x.
+example : wordDecode id (fun query => (query.zipWith Bool.and [true, false]).foldl Bool.xor false)
+    0 2 [true, false] [true] = [true, false] := by decide
+example : wordDecode id (fun _ => false) 0 0 [] [] = [] := by decide
 
 end ComplexityTests.GoldreichLevin

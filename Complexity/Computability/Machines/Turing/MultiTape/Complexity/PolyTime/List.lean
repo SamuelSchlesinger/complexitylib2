@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -29,12 +30,12 @@ up a variable with a large binary label does not require a certificate as long a
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith`, `.flatMapWith`: constructing lists
   with a parameter; the input list may itself have polynomial encoded length.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput`, `.flatMapWithInput`,
-  `.filterWithInput`, `.anyWithInput`, `.allWithInput`:
+  `.filterWithInput`, `.findWithInput`, `.anyWithInput`, `.allWithInput`:
   automation rules for traversals whose body also uses the original input.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst`, `.flatMapConst`: traverse a fixed
   list without requiring an encoding of its elements.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`: filtering a polynomial-time list
-  with a parameterized test.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`, `.findWith`: filtering or searching
+  a polynomial-time list with a parameterized test.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`: unary lengths and ranges.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
@@ -126,6 +127,29 @@ theorem listAppend' {left right : γ → List α}
     (hright : ComputableTidilyInPolyTime right encIn (encList encA)) :
     ComputableTidilyInPolyTime (fun x => left x ++ right x) encIn (encList encA) :=
   (listAppend encA).comp (hleft.prod hright)
+
+/-- Find the first element passing a polynomial-time test with a fixed parameter.
+The list may have any polynomial encoded length. -/
+theorem findWith {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableTidilyInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableTidilyInPolyTime par encIn encP)
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun x => (list x).find? fun a => test (par x, a))
+      encIn (encOption encA) := by
+  obtain ⟨d, e, htest⟩ := htest.exists_degree
+  exact (ComputableTidilyInDegree.findWith htest
+    (ComputableTidilyInDegree.fst encP (encList encA))
+    (ComputableTidilyInDegree.snd encP (encList encA))).computableTidilyInPolyTime.comp
+      (hpar.prod hlist)
+
+/-- Search with a predicate that captures the original input. -/
+@[fun_prop]
+theorem findWithInput {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (htest : ComputableTidilyInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableTidilyInPolyTime (fun x => (list x).find? (test x)) encIn (encOption encA) :=
+  findWith htest id' hlist
 
 /-- Keep the elements passing a polynomial-time test with a fixed parameter.
 The input list may have any polynomial encoded length. -/

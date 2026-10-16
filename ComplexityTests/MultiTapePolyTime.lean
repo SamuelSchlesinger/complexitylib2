@@ -5,7 +5,9 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 import Complexity.Computability.Complexity.CookLevin.Parameters
@@ -21,6 +23,21 @@ for encoding inference, list construction and indexing.
 namespace ComplexityTests.MultiTapePolyTime
 
 open Turing.MultiTapeTM
+
+-- Captured bit maps compose with raw-word projections, without framing in client code.
+example : ComputableTidilyInPolyTime
+    (fun p : Bool × List Bool => p.2.map (fun bit => p.1 ^^ bit))
+    (encPair encBool encBits) encBits := by fun_prop
+
+-- The fallback itself is computed from an independently encoded input.
+example : ComputableTidilyInPolyTime
+    (fun p : Option ℕ × ℕ => p.1.getD (p.2 + 1))
+    (encPair (encOption encUnary) encUnary) encUnary := by fun_prop
+
+-- Both binary and unary input logarithms feed subsequent unary arithmetic.
+example : ComputableTidilyInPolyTime (fun n => Nat.log 2 n + 1) encNat encUnary := by fun_prop
+example : ComputableTidilyInPolyTime (fun n => Nat.log 2 (n ^ 2 + 1)) encUnary encUnary := by
+  fun_prop
 
 -- `fun_prop` assembles polynomial-time computability from the closure properties.
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (p.2, p.1 + 1 + 1))

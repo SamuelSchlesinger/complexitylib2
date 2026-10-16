@@ -100,6 +100,11 @@ theorem bool_and' {left right : α → Bool}
 theorem bool_or : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 || p.2)
     (encPair encBool encBool) encBool := of_finite _
 
+/-- Exclusive-or is a finite Boolean computation. -/
+@[fun_prop]
+theorem bool_xor : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 ^^ p.2)
+    (encPair encBool encBool) encBool := of_finite _
+
 /-- Conjunction of efficiently decidable propositions uses the standard Boolean encoding. -/
 @[fun_prop]
 theorem decide_and {left right : α → Prop} [∀ a, Decidable (left a)] [∀ a, Decidable (right a)]

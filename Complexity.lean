@@ -212,6 +212,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
@@ -319,6 +321,7 @@ public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
 public import Complexity.Crypto.Computational.GoldreichLevin.Parameters
 public import Complexity.Crypto.Computational.GoldreichLevin.Reduction
+public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 public import Complexity.Crypto.Computational.HardCore
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Prediction
@@ -383,6 +386,7 @@ public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Hoeffding
 public import Complexity.Foundations.Data.BitString.List
+public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.QuadraticForm
