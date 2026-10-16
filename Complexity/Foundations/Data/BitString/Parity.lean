@@ -179,11 +179,7 @@ theorem card_filter_parityOn_eq (hs : s.Nonempty) (b : Bool) :
   have htotal := card_filter_add_card_filter_not (s := (univ : Finset (ι → Bool)))
     fun x => parityOn s x = true
   simp only [Bool.not_eq_true, card_univ, Fintype.card_fun, Fintype.card_bool, hfib] at htotal
-  have : 2 ^ Fintype.card ι = 2 * 2 ^ (Fintype.card ι - 1) := by
-    rw [← pow_succ']
-    congr 1
-    have := Fintype.card_pos_iff.2 ⟨i⟩
-    omega
+  have := Nat.two_pow_pred_mul_two (Fintype.card_pos_iff.2 ⟨i⟩)
   omega
 
 /-- **Parities of nonempty sets are balanced**: the parity on a nonempty set of bits takes each
@@ -191,14 +187,9 @@ value with probability one half at a uniformly random input. -/
 theorem dens_filter_parityOn_eq (hs : s.Nonempty) (b : Bool) :
     dens {x : ι → Bool | parityOn s x = b} = 2⁻¹ := by
   obtain ⟨i, hi⟩ := hs
-  have hcard : 2 ^ Fintype.card ι = 2 * 2 ^ (Fintype.card ι - 1) := by
-    rw [← pow_succ']
-    congr 1
-    have := Fintype.card_pos_iff.2 ⟨i⟩
-    omega
   rw [dens_eq_card_div_card, card_filter_parityOn_eq ⟨i, hi⟩ b, Fintype.card_fun,
-    Fintype.card_bool, hcard, Nat.cast_mul, Nat.cast_ofNat, mul_comm,
-    div_mul_cancel_left₀ (by positivity)]
+    Fintype.card_bool, ← Nat.two_pow_pred_mul_two (Fintype.card_pos_iff.2 ⟨i⟩), Nat.cast_mul,
+    Nat.cast_ofNat, div_mul_cancel_left₀ (by positivity)]
 
 end Fintype
 

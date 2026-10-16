@@ -111,11 +111,8 @@ theorem two_mul_hammingDist_parityOn {S T : Finset ι} (h : S ≠ T) :
     2 * hammingDist (parityOn S) (parityOn T) = 2 ^ Fintype.card ι := by
   have hcorr := expect_signVal_mul_signVal (parityOn S) (parityOn T)
   simp only [← chi_eq_signVal_parityOn, expect_chi_mul_chi, h, ite_false] at hcorr
-  have : (2 * hammingDist (parityOn S) (parityOn T) : ℝ) = 2 ^ Fintype.card ι := by
-    rw [mul_div_assoc] at hcorr
-    field_simp at hcorr
-    linarith
-  exact_mod_cast this
+  rw [eq_sub_iff_add_eq, zero_add, div_eq_one_iff_eq (by positivity)] at hcorr
+  exact_mod_cast hcorr
 
 /-- **Nonzero linear functions are balanced**: a Boolean function that turns sums of bit strings
 into the exclusive or of its values, and is not constantly `false`, takes the value `true` with
