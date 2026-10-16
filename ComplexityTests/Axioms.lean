@@ -17,6 +17,32 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Turing.MultiTapeTM.length_encBiTape_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.length_encBiTape_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.biTape_step' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.biTape_step
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.biTape_mk₁' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.biTape_mk₁
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.stackTape_cons' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.stackTape_cons
+
+/--
 info: 'Cslib.Turing.BiTape.Represents.step' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in

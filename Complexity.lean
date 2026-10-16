@@ -215,6 +215,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
@@ -229,6 +230,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatSt
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Feature
 public import Complexity.Computability.Machines.Turing.MultiTape.FiniteConfiguration
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine

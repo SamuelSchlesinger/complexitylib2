@@ -48,6 +48,12 @@ variable {Symbol : Type*}
 @[simp] lemma tail_toList (tape : StackTape Symbol) : tape.tail.toList = tape.toList.tail := by
   cases tape with | mk values h => cases values <;> rfl
 
+/-- Prepending retains blank cells only when there is stored data beyond them. -/
+lemma cons_toList (symbol : Option Symbol) (tape : StackTape Symbol) :
+    (cons symbol tape).toList =
+      if symbol.isSome || !tape.toList.isEmpty then symbol :: tape.toList else [] := by
+  cases symbol <;> cases tape with | mk values h => cases values <;> rfl
+
 /-- Read a cell, treating every position beyond the finite representation as blank. -/
 def read : StackTape Symbol → ℕ → Option Symbol
   | tape, 0 => tape.head

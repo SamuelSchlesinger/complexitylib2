@@ -756,6 +756,29 @@ The next requirement is efficient encodings and transition certificates for thes
 followed by the stateful substitution theorem. These semantic and storage results alone do not
 establish a PPT simulation.
 
+### Encoded finite tape operations (2026-10-16)
+
+`Encodings/Tape.lean` and `Complexity/PolyTime/Tape.lean` give cslib's existing stack and
+bidirectional tapes standard framed encodings and tidy polynomial-time certificates. The symbol
+encoding is arbitrary: neither a finite alphabet nor a default symbol is required. Tape moves,
+blank erasure, loading lists and each fixed native action compose through `fun_prop`. Only the
+size lemmas assume a uniform bound on encoded symbol lengths; their bounds charge blank gaps and
+the complete list and pair framing.
+
+The collection API now supplies optional heads, construction of `some`, emptiness tests and a
+framed-list tail rule that determines its element encoding. The latter removes a real inference
+failure in `fun_prop` for `StackTape.mapSome values.tail`; no tactic-specific syntax case was
+added. Tests certify functional programs over an infinite word alphabet and an empty alphabet,
+and check omitted trailing blanks versus charged interior blanks.
+
+The two tape modules contain 19 theorem bodies / 50 body lines, including the shared product-view
+lemma, versus 15 / 53 in crypto's tape module. Shared collection and stack helpers add another
+5 bodies / 7 lines, so the full new surface costs 57 lines, four more than the old module while
+providing the broader alphabet interface and additional reusable operations. The batch adds
+24 bodies / 57 lines net: 5,447 / 37,084 in 496 source files. Statements, definitions, instances
+and tests are excluded. Finite indexed tables, encoded configuration transitions and the final
+efficient stateful substitution theorem remain next.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and

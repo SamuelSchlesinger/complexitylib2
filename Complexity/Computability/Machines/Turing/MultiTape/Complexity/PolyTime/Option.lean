@@ -18,6 +18,7 @@ its fallback may be computed from the input; no inhabitant of the value type is 
 
 ## Main results
 
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionSome`: construct an optional value.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetD`: read an option with a fallback
   supplied as part of the input.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetDWithInput`: the composition rule.
@@ -33,6 +34,12 @@ Uses Christian Reitwiessner's option encoding and degree-bounded machine calculu
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+
+/-- Construct an optional value with the standard option encoding. -/
+@[fun_prop]
+theorem optionSome (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (some (α := α)) enc (encOption enc) :=
+  of_linear OptionEncoding.some
 
 /-- Test whether a computed option contains a value, without requiring a default value. -/
 @[fun_prop]

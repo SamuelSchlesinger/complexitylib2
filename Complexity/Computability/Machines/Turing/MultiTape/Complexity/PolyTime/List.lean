@@ -41,6 +41,8 @@ up a variable with a large binary label does not require a certificate as long a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD`: lookup by a unary index.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listIsEmpty`, `.head?`: inspect a list without
+  a default element.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOfWithInput`, `.bitsGetDWithInput`:
   compositional rules for first-occurrence lookup and raw-bit access.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsDropWithInput`, `.bitsTakeWithInput`:
@@ -81,6 +83,18 @@ theorem headD {encL : List α ↪ List Bool} [ListEncoding encA encL] (fallback 
 theorem tail {encL : List α ↪ List Bool} [ListEncoding encA encL] :
     ComputableTidilyInPolyTime (List.tail (α := α)) encL encL :=
   (ComputableTidilyInDegree.tail (enc₁ := encA)).computableTidilyInPolyTime
+
+/-- Test emptiness without decoding a list element or requiring a default value. -/
+@[fun_prop]
+theorem listIsEmpty {encL : List α ↪ List Bool} [ListEncoding encA encL] :
+    ComputableTidilyInPolyTime (List.isEmpty (α := α)) encL encBool :=
+  of_linear (ListEncoding.isEmpty (enc₁ := encA) (enc := encL))
+
+/-- Drop the head of a framed list, determining its element encoding for automation. -/
+@[fun_prop]
+theorem listTail (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (List.tail (α := α)) (encList enc) (encList enc) :=
+  tail (encA := enc)
 
 /-- Drop the first raw bit. The raw encoding fixes the otherwise undetermined element encoding. -/
 @[fun_prop]
@@ -210,6 +224,14 @@ theorem mapWithInput {f : γ → α → β} {list : γ → List α}
 theorem map {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
     ComputableTidilyInPolyTime (List.map f) (encList encA) (encList encB) :=
   mapWith (hf.comp (snd encBool encA)) (const true) id'
+
+/-- Read an optional head without an inhabitant of the element type. -/
+@[fun_prop]
+theorem head? (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (List.head? (α := α)) (encList enc) (encOption enc) := by
+  apply ((headD (encA := encOption enc) none).comp (map (optionSome enc))).of_enc_eq
+  intro values
+  cases values <;> rfl
 
 /-- Map an input-dependent function over a fixed list. Only its members need certificates;
 the list and its elements are not part of the computational input. -/
