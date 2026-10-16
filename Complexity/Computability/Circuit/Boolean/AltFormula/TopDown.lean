@@ -245,12 +245,11 @@ theorem two_rpow_lt_size_of_eval_eq_majority {d : ℕ} (hd : 2 ≤ d) :
   refine ⟨ε, hε, max N 1, fun n hn op f hf => ?_⟩
   have hP := solvesKW_kwProtocol hf ⟨0, le_of_max_le_right hn⟩
   -- a protocol for majority gives one for strict majority
-  have hneg (z : BitString n) :
-      (!majority n fun i => !z i) = strictMajority n z := by
-    simpa using (strictMajority_not fun i => !z i).symm
+  have hneg (z : BitString n) : (!majority n zᶜ) = strictMajority n z := by
+    simpa using (strictMajority_not zᶜ).symm
   have hQ : ((kwProtocol (size f) ⟨0, le_of_max_le_right hn⟩ op f false).swapPlayers.comap
-      (fun x i => !x i) fun x i => !x i).SolvesKW (strictMajority n) := fun x y hx hy =>
-    hP.swapPlayers.comap_not x y ((hneg x).trans hx) ((hneg y).trans hy)
+      compl compl).SolvesKW (strictMajority n) := fun x y hx hy =>
+    hP.swapPlayers.comap_compl x y ((hneg x).trans hx) ((hneg y).trans hy)
   have h := lt_of_not_ge fun hle => hN n (le_of_max_le_left hn) hle _ hQ
   simp only [Fintype.card_sum, Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h
   push_cast at h

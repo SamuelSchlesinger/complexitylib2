@@ -18,13 +18,15 @@ nodes are owned by one of the players, who sends one bit computed from their inp
 branch, and whose leaves are labelled by outputs (`Protocol.run`)
 [Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997]. Its depth is the number of bits sent in
 the worst case, and a protocol of depth `d` has at most `2 ^ d` leaves
-(`Protocol.leaves_le_two_pow_depth`). A protocol *solves* a relation `R` on inputs from `A × B`
-when its output on every such pair is related to the pair (`Protocol.Solves`); the communication
-complexity of `R` on `A × B` is the least depth of a protocol solving it, or `⊤` if there is none
+(`Protocol.leaves_le_two_pow_depth`). A function of the two inputs *solves* a relation `R` on
+inputs from `A × B` when its value on every such pair is related to the pair (`Solves`), and a
+protocol solves `R` when its output does (`Protocol.Solves`); the communication complexity of `R`
+on `A × B` is the least depth of a protocol solving it, or `⊤` if there is none
 (`Protocol.ecomplexity`) [Kushilevitz and Nisan, Chapter 5][KushilevitzNisan1997].
 
 ## Main definitions
 
+* `Cslib.Communication.Solves`: a function of the two inputs solves a relation.
 * `Cslib.Communication.Protocol`: deterministic two-party protocols.
 * `Cslib.Communication.Protocol.run`, `Cslib.Communication.Protocol.depth`,
   `Cslib.Communication.Protocol.leaves`, `Cslib.Communication.Protocol.Solves`.
@@ -46,6 +48,29 @@ complexity of `R` on `A × B` is the least depth of a protocol solving it, or `�
 @[expose] public section
 
 namespace Cslib.Communication
+
+section Solves
+
+variable {X Y Z : Type*}
+
+/-- A function `f` of Alice's input `x : X` and Bob's input `y : Y` *solves* the relation `R` on
+`A × B` when `f x y` is related to `x` and `y` for every pair from `A × B`. A protocol solves a
+relation when its output does (`Protocol.Solves`). -/
+def Solves (f : X → Y → Z) (R : X → Y → Z → Prop) (A : Set X) (B : Set Y) : Prop :=
+  ∀ x ∈ A, ∀ y ∈ B, R x y (f x y)
+
+variable {f : X → Y → Z} {R R' : X → Y → Z → Prop} {A A' : Set X} {B B' : Set Y}
+
+/-- A function solving a relation on `A × B` solves it on smaller sets. -/
+theorem Solves.mono (h : Solves f R A B) (hA : A' ⊆ A) (hB : B' ⊆ B) : Solves f R A' B' :=
+  fun x hx y hy => h x (hA hx) y (hB hy)
+
+/-- A function solving a relation solves every weaker relation. -/
+theorem Solves.of_imp (h : Solves f R A B) (hR : ∀ x y z, R x y z → R' x y z) :
+    Solves f R' A B :=
+  fun x hx y hy => hR x y _ (h x hx y hy)
+
+end Solves
 
 /-- A deterministic protocol between Alice, holding `x : X`, and Bob, holding `y : Y`, with
 outputs in `Z`. -/
@@ -122,21 +147,13 @@ theorem leaves_le_two_pow_depth (p : Protocol X Y Z) : p.leaves ≤ 2 ^ p.depth 
     simp only [leaves_alice, leaves_bob, depth_alice, depth_bob, pow_succ]
     omega
 
-/-- A protocol solves the relation `R` on `A × B` when its output on every pair of inputs from
-`A × B` is related to them. -/
+/-- A protocol solves the relation `R` on `A × B` when its output does: its output on every pair
+of inputs from `A × B` is related to them. `Communication.Solves.mono` and
+`Communication.Solves.of_imp` apply to it. -/
 def Solves (p : Protocol X Y Z) (R : X → Y → Z → Prop) (A : Set X) (B : Set Y) : Prop :=
-  ∀ x ∈ A, ∀ y ∈ B, R x y (p.run x y)
+  Communication.Solves p.run R A B
 
 variable {p : Protocol X Y Z} {R R' : X → Y → Z → Prop} {A A' : Set X} {B B' : Set Y}
-
-/-- A protocol solving a relation on `A × B` solves it on smaller sets. -/
-theorem Solves.mono (h : p.Solves R A B) (hA : A' ⊆ A) (hB : B' ⊆ B) : p.Solves R A' B' :=
-  fun x hx y hy => h x (hA hx) y (hB hy)
-
-/-- A protocol solving a relation solves every weaker relation. -/
-theorem Solves.of_imp (h : p.Solves R A B) (hR : ∀ x y z, R x y z → R' x y z) :
-    p.Solves R' A B :=
-  fun x hx y hy => hR x y _ (h x hx y hy)
 
 /-- The communication complexity of `R` on `A × B`: the least depth of a protocol solving it, or
 `⊤` if there is none. -/

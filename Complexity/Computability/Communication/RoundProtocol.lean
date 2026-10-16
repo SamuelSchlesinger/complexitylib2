@@ -20,19 +20,20 @@ the messages so far, sends one message computed from their input, and the protoc
 output in `Z` determined by the transcript (`RoundProtocol.run`). Bit protocols are the case of
 one-bit messages: a bit protocol of depth at most `d` is a round protocol with `d` messages from
 `Bool` (`RoundProtocol.ofProtocol`). Counting messages from a larger alphabet rather than bits is
-the measure of protocols with few rounds [Kushilevitz and Nisan][KushilevitzNisan1997]. As for bit
-protocols, a round protocol *solves* a relation `R` on `A × B` when its output on every such pair
-is related to the pair (`RoundProtocol.Solves`). Exchanging the speakers exchanges the inputs
-(`RoundProtocol.run_swapPlayers`), and relabelling the inputs is precomposition
+the measure of protocols with few rounds [Kushilevitz and Nisan, Chapter 4][KushilevitzNisan1997].
+As for bit protocols, a round protocol *solves* a relation `R` on `A × B` when its output does
+(`RoundProtocol.Solves`, through `Communication.Solves`). Exchanging the speakers exchanges the
+inputs (`RoundProtocol.run_swapPlayers`), and relabelling the inputs is precomposition
 (`RoundProtocol.run_comap`).
 
 For the Karchmer–Wigderson game on the coordinates `ι` both players hold inputs `ι → Bool` and the
 protocol names a coordinate (`KWRoundProtocol`). Such a protocol solves the game of a Boolean
 function `f` when, for every `x` with `f x = false` held by Alice and `y` with `f y = true` held by
 Bob, the inputs differ at the named coordinate (`RoundProtocol.SolvesKW`). This is the model of the
-top-down lower bounds of Korten [Korten2026], in which a circuit of AND/OR depth `d` with `w` wires
-gives a protocol with `d` messages from an alphabet of size `w`. Exchanging the speakers solves the
-game of the negated function (`RoundProtocol.SolvesKW.swapPlayers`).
+top-down lower bounds of Korten [Korten, Section 1.1][Korten2026], in which a circuit of AND/OR
+depth `d` with `w` wires gives a protocol with `d` messages from an alphabet of size `w`.
+Exchanging the speakers solves the game of the negated function
+(`RoundProtocol.SolvesKW.swapPlayers`).
 
 Following Korten, `SolvesKW f` gives Alice the input where `f` is false. The Karchmer–Wigderson
 theorem for formulas (`Circuits.Boolean.formulaDepth_eq_ecomplexity`) uses the bit protocols of
@@ -105,11 +106,12 @@ def run {d : ℕ} : RoundProtocol X Y M Z d → X → Y → Z
     (bob send next).run x y = (next (send y)).run x y :=
   rfl
 
-/-- A protocol solves the relation `R` on `A × B` when its output on every pair of inputs from
-`A × B` is related to them. -/
+/-- A protocol solves the relation `R` on `A × B` when its output does: its output on every pair
+of inputs from `A × B` is related to them. `Communication.Solves.mono` and
+`Communication.Solves.of_imp` apply to it. -/
 def Solves {d : ℕ} (P : RoundProtocol X Y M Z d) (R : X → Y → Z → Prop) (A : Set X)
     (B : Set Y) : Prop :=
-  ∀ x ∈ A, ∀ y ∈ B, R x y (P.run x y)
+  Communication.Solves P.run R A B
 
 /-- One message, from players holding inputs of the same type, sent by Bob if `b` and by Alice
 otherwise. -/
@@ -167,24 +169,26 @@ theorem Solves.comap {d : ℕ} {P : RoundProtocol X Y M Z d} {R : X → Y → Z 
 /-- A bit protocol of depth at most `d` as a round protocol with `d` messages of one bit. -/
 def ofProtocol : (p : Protocol X Y Z) → (d : ℕ) → p.depth ≤ d → RoundProtocol X Y Bool Z d
   | .output z, _, _ => .output z
-  | .alice _ _ _, 0, h => absurd h (by simp)
+  | .alice _ _ _, 0, h => absurd h (Nat.not_succ_le_zero _)
   | .alice send p₀ p₁, d + 1, h => .alice send fun b =>
-    cond b (ofProtocol p₁ d (by simp at h; omega)) (ofProtocol p₀ d (by simp at h; omega))
-  | .bob _ _ _, 0, h => absurd h (by simp)
+    cond b (ofProtocol p₁ d (le_of_max_le_right (Nat.le_of_succ_le_succ h)))
+      (ofProtocol p₀ d (le_of_max_le_left (Nat.le_of_succ_le_succ h)))
+  | .bob _ _ _, 0, h => absurd h (Nat.not_succ_le_zero _)
   | .bob send p₀ p₁, d + 1, h => .bob send fun b =>
-    cond b (ofProtocol p₁ d (by simp at h; omega)) (ofProtocol p₀ d (by simp at h; omega))
+    cond b (ofProtocol p₁ d (le_of_max_le_right (Nat.le_of_succ_le_succ h)))
+      (ofProtocol p₀ d (le_of_max_le_left (Nat.le_of_succ_le_succ h)))
 
 @[simp] theorem run_ofProtocol : ∀ (p : Protocol X Y Z) (d : ℕ) (h : p.depth ≤ d) (x : X) (y : Y),
     (ofProtocol p d h).run x y = p.run x y
   | .output _, _, _, _, _ => rfl
-  | .alice _ _ _, 0, h, _, _ => absurd h (by simp)
+  | .alice _ _ _, 0, h, _, _ => absurd h (Nat.not_succ_le_zero _)
   | .alice send p₀ p₁, d + 1, h, x, y => by
     change (cond (send x) (ofProtocol p₁ d _) (ofProtocol p₀ d _)).run x y =
       cond (send x) (p₁.run x y) (p₀.run x y)
     cases send x
     · exact run_ofProtocol p₀ d _ x y
     · exact run_ofProtocol p₁ d _ x y
-  | .bob _ _ _, 0, h, _, _ => absurd h (by simp)
+  | .bob _ _ _, 0, h, _, _ => absurd h (Nat.not_succ_le_zero _)
   | .bob send p₀ p₁, d + 1, h, x, y => by
     change (cond (send y) (ofProtocol p₁ d _) (ofProtocol p₀ d _)).run x y =
       cond (send y) (p₁.run x y) (p₀.run x y)
@@ -196,7 +200,7 @@ def ofProtocol : (p : Protocol X Y Z) → (d : ℕ) → p.depth ≤ d → RoundP
 @[simp] theorem solves_ofProtocol_iff {d : ℕ} {p : Protocol X Y Z} {h : p.depth ≤ d}
     {R : X → Y → Z → Prop} {A : Set X} {B : Set Y} :
     (ofProtocol p d h).Solves R A B ↔ p.Solves R A B := by
-  simp [Solves, Protocol.Solves]
+  simp only [Solves, Protocol.Solves, Communication.Solves, run_ofProtocol]
 
 end RoundProtocol
 
@@ -226,9 +230,8 @@ theorem SolvesKW.swapPlayers {P : KWRoundProtocol ι M d} {f : (ι → Bool) →
   exact (h y x (by simpa using hy) (by simpa using hx)).symm
 
 /-- Negating both players' inputs solves the game of the function of the negated input. -/
-theorem SolvesKW.comap_not {P : KWRoundProtocol ι M d} {f : (ι → Bool) → Bool}
-    (h : P.SolvesKW f) :
-    (P.comap (fun x i => !x i) fun x i => !x i).SolvesKW fun x => f fun i => !x i := by
+theorem SolvesKW.comap_compl {P : KWRoundProtocol ι M d} {f : (ι → Bool) → Bool}
+    (h : P.SolvesKW f) : (P.comap compl compl).SolvesKW fun x => f xᶜ := by
   intro x y hx hy
   rw [run_comap]
   intro hxy

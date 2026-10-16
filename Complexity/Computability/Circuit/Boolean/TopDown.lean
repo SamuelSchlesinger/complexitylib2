@@ -310,11 +310,11 @@ theorem two_rpow_lt_add_size_of_computes_majority {d : ℕ} (hd : 2 ≤ d) :
   obtain ⟨ε, hε, N, hN⟩ := strictMajority_communication_lower_bound.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
   obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
-  have hneg (z : BitString n) : (!majority n fun i => !z i) = strictMajority n z := by
-    simpa using (strictMajority_not fun i => !z i).symm
-  refine two_rpow_lt_add_size (P := P.swapPlayers.comap (fun x i => !x i) fun x i => !x i)
+  have hneg (z : BitString n) : (!majority n zᶜ) = strictMajority n z := by
+    simpa using (strictMajority_not zᶜ).symm
+  refine two_rpow_lt_add_size (P := P.swapPlayers.comap compl compl)
     (fun P h => hN n (le_of_max_le_left hn) h P) fun x y hx hy => ?_
-  exact hP.swapPlayers.comap_not x y ((hneg x).trans hx) ((hneg y).trans hy)
+  exact hP.swapPlayers.comap_compl x y ((hneg x).trans hx) ((hneg y).trans hy)
 
 /-- Polynomials are eventually below `2 ^ (ε n ^ r)` for `r, ε > 0`. -/
 private theorem exists_add_pow_le_two_rpow {r ε : ℝ} (hr : 0 < r) (hε : 0 < ε) (k : ℕ) :

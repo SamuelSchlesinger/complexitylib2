@@ -183,7 +183,7 @@ private theorem eval_kwFormula (p : KWProtocol (Fin n))
       ∀ y ∈ B, (p.kwFormula A B).eval interpretation y = false := by
   induction p generalizing A B with
   | output i =>
-    simp only [Solves, run_output, DiffersAt] at hp
+    simp only [Solves, Communication.Solves, run_output, DiffersAt] at hp
     by_cases hA : A = ∅
     · simp [kwFormula, hA]
     by_cases hB : B = ∅
