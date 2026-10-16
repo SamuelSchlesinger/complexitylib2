@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Probabilistic.QueryBounds
 import Complexity.Computability.Probabilistic.OracleSimulation
+import Complexity.Computability.Probabilistic.Oracle.Parameter
 import Complexity.Computability.Probabilistic.Memoize
 import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 import Complexity.Tactic.PPT
@@ -135,6 +136,20 @@ private theorem requestHead_isOraclePPTOn : IsOraclePPTOn encBits encBits reques
   simpa only [requestHead, encBits, Function.Embedding.coe_refl, id_eq, pow_zero, Nat.mul_one,
     bind_pure_comp, OracleComp.interpret_map, StateT.run_map, PMF.monad_map_eq_map,
     ProbOracleComp.interpret_query] using readHead_law State oracle state input
+
+-- Parameterization retains the concrete client's external call and its entire private-state law.
+private theorem requestHead_isOraclePPT : IsOraclePPT encBits (fun _ word => requestHead word) := by
+  apply IsOraclePPTOn.isOraclePPT
+  apply (IsOraclePPTOn.of_machine (input := encPair encUnary encBits) readHead 2 0).congr
+  intro pair State oracle state
+  simpa only [requestHead, encBits, Function.Embedding.coe_refl, id_eq, pow_zero, Nat.mul_one,
+    bind_pure_comp, OracleComp.interpret_map, StateT.run_map, PMF.monad_map_eq_map,
+    ProbOracleComp.interpret_query] using
+      readHead_law State oracle state (encPair encUnary encBits pair)
+
+example : ∃ c d : ℕ, ∀ n input, ProbOracleComp.HasQueryBounds (requestHead input)
+    (fun request => request.2.length) (c * (n + input.length + 2) ^ d)
+      (c * (n + input.length + 2) ^ d) := requestHead_isOraclePPT.query_bounds
 
 -- The resource contract derives a uniform budget for this concrete functional oracle client.
 example : ∃ c d : ℕ, ∀ input, ProbOracleComp.HasQueryBounds (requestHead input)

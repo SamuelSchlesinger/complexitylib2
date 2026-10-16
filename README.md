@@ -65,6 +65,10 @@ reply. Finite-control dispatch now selects certified deterministic or probabilis
 captured input. Stateful substitution now certifies running an arbitrary oracle-PPT program
 against a closed PPT handler. Clients supply a local invariant and a reply/storage-growth allowance;
 the certificate retains the joint result and final state, including an entire memoization cache.
+`IsOraclePPT` now supplies the unary security parameter and auxiliary word on that same contract.
+PRF games use the shared nonnegative game-security API, with exact eager, lazy and executable-cache
+equivalence. For every oracle-PPT adversary, the ideal game has a strict PPT realization through
+that cache; the exponential eager table remains a specification.
 General OWF → PRG through pseudoentropy and adaptive GGM security
 remain to be ported.
 

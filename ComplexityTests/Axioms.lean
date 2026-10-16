@@ -17,6 +17,45 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Probability.IsOraclePPT.query_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsOraclePPT.query_bounds
+
+/--
+info: 'Cslib.Probability.IsOraclePPT.run_interpret_preprocess' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsOraclePPT.run_interpret_preprocess
+
+/--
+info: 'Cslib.RandomOracle.interpret_prob_eq_memoize_map' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.interpret_prob_eq_memoize_map
+
+/--
+info: 'Cslib.Crypto.prfIdealGame_eq_lazy' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.prfIdealGame_eq_lazy
+
+/--
+info: 'Cslib.Crypto.prfIdealGame_eq_cached' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.prfIdealGame_eq_cached
+
+/--
+info: 'Cslib.Crypto.isPPT_prfIdealGame' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.isPPT_prfIdealGame
+
+/--
 info: 'Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

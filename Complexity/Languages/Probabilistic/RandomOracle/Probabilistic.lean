@@ -27,6 +27,7 @@ determines a later query.
 * `Cslib.RandomOracle.run_interpret_memoize_prob`: the list cache implements the partial table.
 * `Cslib.RandomOracle.memoize_cache_bounds_prob`: external budgets control the list cache.
 * `Cslib.RandomOracle.eval_run_interpret_memoize_prob`: closed samplers realize the list cache.
+* `Cslib.RandomOracle.interpret_prob_eq_memoize_map`: injective representations preserve the game.
 
 ## References
 
@@ -183,6 +184,64 @@ theorem uniform_interpret_prob_eq_lazy [DecidableEq Query] [∀ q, Fintype (Resp
   simpa only [PMF.pi_uniformOfFintype] using
     interpret_prob_eq_lazy (fun q => PMF.uniformOfFintype (Response q)) program
 
+/-- A list cache implements eager independent sampling for clients with private randomness. -/
+theorem interpret_prob_eq_memoize {Value : Type} [Finite Value] [BEq Query] [LawfulBEq Query]
+    (distribution : Query → PMF Value) (program : ProbOracleComp (fun _ : Query => Value) α) :
+    (PMF.pi distribution).bind (fun table =>
+      OracleComp.interpret (handler ProbComp.unifOracle (fun q => PMF.pure (table q))) program) =
+      ((OracleComp.interpret
+        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (memoize distribution))
+          program).run []).map Prod.fst := by
+  classical
+  rw [interpret_prob_eq_lazy]
+  have h := congrArg (PMF.map Prod.fst) (run_interpret_memoize_prob distribution program [])
+  simpa only [PMF.map_comp, Function.comp_def, ofList_nil] using h.symm
+
+/-- Injective keys and mapped values implement the same finite random function, including
+independent private samples and adaptive external queries in the client. -/
+theorem interpret_prob_eq_memoize_map {Value Key' Value' : Type} [Finite Value]
+    [BEq Query] [LawfulBEq Query] [BEq Key'] [LawfulBEq Key']
+    (keyMap : Query ↪ Key') (valueMap : Value → Value')
+    (distribution : Query → PMF Value) (sample' : Key' → PMF Value')
+    (hsample : ∀ key, sample' (keyMap key) = (distribution key).map valueMap)
+    (program : ProbOracleComp (fun _ : Query => Value') α) :
+    (PMF.pi distribution).bind (fun table => OracleComp.interpret
+      (handler ProbComp.unifOracle (fun key => PMF.pure (valueMap (table key)))) program) =
+      ((OracleComp.interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n))
+        (fun key => memoize sample' (keyMap key))) program).run []).map Prod.fst := by
+  let represent := fun cache : List (Query × Value) =>
+    cache.map (fun entry => (keyMap entry.1, valueMap entry.2))
+  have hstep : ∀ key cache,
+      ((memoize distribution key cache).map (fun (value, next) => (valueMap value, next))).map
+        (fun (value, next) => (value, represent next)) =
+      memoize sample' (keyMap key) (represent cache) := by
+    intro key cache
+    simpa only [PMF.map_comp, Function.comp_def, represent, PMF.monad_map_eq_map] using
+      memoize_map keyMap valueMap distribution sample' hsample key cache
+  have hrun := ProbOracleComp.run_interpret_map_state
+    (fun key cache => (memoize distribution key cache).map
+      (fun (value, next) => (valueMap value, next)))
+    (fun key => memoize sample' (keyMap key)) represent hstep program []
+  have houtput := congrArg (PMF.map Prod.fst) hrun
+  simp only [PMF.map_comp, Function.comp_def, represent, List.map_nil] at houtput
+  rw [← houtput]
+  have hquery (key : Query) : OracleComp.interpret
+      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (memoize distribution))
+        (valueMap <$> ProbOracleComp.query key) =
+      fun cache => (memoize distribution key cache).map
+        (fun (value, next) => (valueMap value, next)) := by
+    funext cache
+    change (OracleComp.interpret (m := StateT (List (Query × Value)) PMF) _
+      (valueMap <$> ProbOracleComp.query (spec := fun _ : Query => Value) key)).run cache = _
+    simp only [OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query,
+      PMF.monad_map_eq_map]
+    rfl
+  simpa only [OracleComp.interpret_interpret, interpret_handler, interpret_sample,
+    ProbComp.unifFin, OracleComp.interpret_query, OracleComp.interpret_map, interpret_query,
+    PMF.monad_map_eq_map, PMF.pure_map, hquery] using interpret_prob_eq_memoize distribution
+      (OracleComp.interpret (handler (fun n => sample (ProbComp.unifFin n))
+        (fun key => valueMap <$> ProbOracleComp.query key)) program)
+
 /-- Executable closed samplers with a list cache implement the eager independent-table experiment,
 including the adversary's private samples and adaptive external calls. -/
 theorem eval_run_interpret_memoize_prob_eq_eager {Key Value Result : Type}
@@ -193,9 +252,9 @@ theorem eval_run_interpret_memoize_prob_eq_eager {Key Value Result : Type}
         (PMF.pi (fun q => ProbComp.eval (compute q))).bind (fun table =>
           OracleComp.interpret (handler ProbComp.unifOracle (fun q => PMF.pure (table q)))
             program) := by
-  classical
-  rw [interpret_prob_eq_lazy]
-  have h := congrArg (PMF.map Prod.fst) (eval_run_interpret_memoize_prob compute program [])
-  simpa only [ProbComp.eval_map, PMF.map_comp, Function.comp_def, ofList_nil] using h
+  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
+    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
+  rw [interpret_prob_eq_memoize]
+  simp only [ProbComp.eval_map, ProbOracleComp.eval_run_interpret, heval.map_memoize]
 
 end Cslib.RandomOracle

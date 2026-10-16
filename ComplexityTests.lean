@@ -32,6 +32,7 @@ import ComplexityTests.PolynomialClock
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs
+import ComplexityTests.PseudorandomFunction
 import ComplexityTests.RandomOracle
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SeededEvaluator

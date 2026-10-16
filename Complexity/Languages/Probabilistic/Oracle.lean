@@ -32,6 +32,7 @@ is not automatically a strict PPT operation.
 
 * `Cslib.ProbOracleComp.interpret_sample`: embedded sampling uses only the sampling handler.
 * `Cslib.ProbOracleComp.run_interpret_sample`: private sampling leaves oracle state unchanged.
+* `Cslib.ProbOracleComp.eval_interpret`: closed handlers commute with probability interpretation.
 * `Cslib.ProbOracleComp.eval_run_interpret`: closed handler programs preserve the joint state law.
 
 ## References
@@ -75,6 +76,17 @@ def handler {m : Type → Type v} (random : (n : ℕ) → m (Fin (n + 1)))
   | .inl n => random n
   | .inr q => oracle q
 
+/-- Interpretation distributes over the sampling and external components of a program handler. -/
+theorem interpret_handler {Query' : Type} {spec' : Query' → Type}
+    {m : Type → Type v} [Monad m] (target : (q : Query') → m (spec' q))
+    (random : (k : ℕ) → OracleComp spec' (Fin (k + 1)))
+    (oracle : (q : Query) → OracleComp spec' (spec q)) :
+    (fun q => OracleComp.interpret target (handler random oracle q)) =
+      handler (fun k => OracleComp.interpret target (random k))
+        (fun q => OracleComp.interpret target (oracle q)) := by
+  funext q
+  cases q <;> rfl
+
 variable {m : Type → Type v} [Monad m] [LawfulMonad m]
 
 /-- The combined handler answers a single external query through its external component. -/
@@ -111,6 +123,15 @@ theorem run_interpret_sample (oracle : (q : Query) → StateT State PMF (spec q)
         (ProbComp.eval program).map (·, s) := by
   rw [interpret_sample]
   exact OracleComp.run_interpret_lift ProbComp.unifOracle program s
+
+/-- Closed handlers have the same probability law when interpreted before or after evaluation. -/
+theorem eval_interpret (oracle : (q : Query) → ProbComp (spec q))
+    (program : ProbOracleComp spec α) :
+    ProbComp.eval (OracleComp.interpret (handler ProbComp.unifFin oracle) program) =
+      OracleComp.interpret (handler ProbComp.unifOracle (fun q => ProbComp.eval (oracle q)))
+        program := by
+  simp only [ProbComp.eval, OracleComp.interpret_interpret, interpret_handler,
+    ProbComp.unifFin, OracleComp.interpret_query]
 
 /-- Evaluating closed stateful handlers commutes with interpreting the whole oracle program.
 Private sampling stays independent, and the final state is retained beside the result. -/

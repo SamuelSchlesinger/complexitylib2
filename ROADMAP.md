@@ -891,7 +891,7 @@ storage; a negative test makes that obligation explicit. Neither the oracle cont
 proof assumes that the source machine has halted when its clock expires.
 
 Checked clients retain the correlation between a sampled reply bit and the final state, receive
-replies unbounded in caller length, and use a different framed-bit caller encoding. That alternate
+replies whose length grows with caller length, and use a different framed-bit caller encoding. That alternate
 encoding requires an explicit `listToBits` composition for the handler and preprocessing; it is
 supported without a tactic patch, but inference does not insert every representation conversion.
 A generic adaptive client runs against a lazy random-function cache with runtime-length replies.
@@ -913,6 +913,46 @@ resource certificates, and cache preservation. This is a baseline, not a speedup
 The complete interpreter module passes `lean --profile`; its import loading dominates the
 observed wall time, so it does not support a claim about tactic speed. All six project checks
 and the four new headline axiom guards pass.
+
+### Parameterized oracle adversaries and PRF experiments (2026-10-16)
+
+`IsOraclePPT` specializes the existing word-oracle certificate to the same encoded unary parameter
+and auxiliary word used by `IsPPT`. Named channels and the joint output/state semantics remain
+unchanged. One machine and polynomial work for every parameter and auxiliary input. The PRF real
+and ideal games invoke the adversary with empty auxiliary input; the class still requires its
+uniform guarantee on all auxiliary inputs. The query bound absorbs pair framing into its constant.
+
+The PRF interface uses `Game.Indistinguishable`, with an actual tidy evaluator certificate and
+an exact output-width obligation. Eager tables, semantic lazy caches and executable list caches
+have the same law for randomized adaptive adversaries. The new cache-representation rule handles
+injective keys and mapped values without mixing private samples with external queries. Its
+proof reuses the generic memoizer transport and state-simulation rules.
+
+`isPPT_prfIdealGame` certifies the full ideal experiment for any oracle-PPT adversary. The realizing
+program uses an ordinary list cache and fair-bit words; the exponentially large eager table is
+only a specification. The single local invariant bounds cached reply lengths. The shared
+substitution theorem and `memoize_call_size_le` account for every query, reply and retained entry,
+including pair/list framing. Malformed queries leave the cache intact.
+
+Tests cover functional parameter-dependent code, an actual parameterized querying machine,
+repeated private-random queries with an intervening fresh bit, malformed inputs, duplicate keys,
+and the output-width obligation. All source and client files pass MCP checks without a tactic
+patch or heartbeat override. The current upstream sync reports the pinned main and all copied
+modules CURRENT. GGM prefix hybrids, expansion, reduction and security remain to be ported.
+
+This batch adds 14 proof bodies / 135 body lines: 14 for the parameter interface, 40 for shared
+interpretation/cache helpers, 49 for PRF semantic equivalences, and 32 for the cache and full-game
+PPT certificates. The three matched PRF semantic proofs cost 49 lines versus 35 in crypto; their
+new private-randomness helpers are charged separately in the 40 lines above. The existing closed
+memoizer bridge now reuses the shared lemma at unchanged length. Total: 5,506 bodies / 37,574
+lines in 509 source modules, with the same scanner exclusions and median 3 / P90 17. This is new
+functionality and a compatible interface, without a claimed net proof reduction.
+
+The complete `isPPT_prfIdealGame` proof uses 1,595,142 raw tactic heartbeats in a fresh
+single-file Lean check using Mathlib's `#count_heartbeats` tactic. This includes handler/resource
+certificates and the cache invariant. All six project checks and six new headline axiom guards
+pass. The API review approved the source and clients; the independent correctness review is
+run on the published batch.
 
 ### Implementation priorities (2026-10-16)
 
@@ -946,7 +986,7 @@ and the four new headline axiom guards pass.
    semantic invariant rules with functional clients. Port the independent repetition, empirical
    probability tests and collection helpers used by Goldreich–Levin and pseudoentropy, then the
    adaptive GGM reductions using the completed stateful substitution theorem. General
-   open-program composition and the security-parameter oracle wrapper remain separate work.
+   open-program composition remains separate work.
 2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
    repeat finite union bounds, construction of a bad event and extraction of a good sample.
    Trial a shared finite-family existence lemma using Mathlib's existing measure union bounds;
