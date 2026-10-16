@@ -80,6 +80,7 @@ Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-tim
 | Tableau of a multi-tape run and its correctness | `CookLevin/{Tableau,Correctness}.lean` | proved (`tableau_satisfiable_iff`) |
 | The reduction and its correctness | `CookLevin/Reduction.lean` | proved (`reduce_mem_SAT_iff`) |
 | Polynomial-time SAT verifier, `SAT ∈ NP`, `UNSAT ∈ coNP` | `Problems/SAT/PolyTime.lean` | proved, using the vendored calculus and reusable polynomial-time list rules |
+| Parameterized maps and flat-maps, unary lengths and ranges | `MultiTape/Complexity/PolyTime/List.lean` | proved, allowing polynomial-sized intermediate lists for tableau enumeration |
 | `NPComplete encCNF SAT` from the reduction's polynomial-time bound | `CookLevin/Staging.lean` | proved (local-only staging) |
 | `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: the calculus is available; the reduction's certificate is still needed |
 | `ThreeSAT` and correctness of `SAT ≤ 3SAT` | `Problems/ThreeSAT.lean`, `CNF/ThreeCNF.lean` | proved (polynomial time open) |
@@ -90,7 +91,7 @@ simulation built from upstream `Synthesis` (state, heads, cells and output view 
 Boolean combinations of step-`t` features, `O(n + T)` gates per feature, `fun_prop` for the
 polynomial bound). This redoes the withdrawn cslib PRs #1100/#1101 without frame encodings. Also proved: some
 language is not in `P/poly` (from upstream Shannon), and Karp's reductions `SAT ≤ IndependentSet`
-and `IndependentSet ≤ Clique` are correct (their polynomial time awaits the calculus).
+and `IndependentSet ≤ Clique` are correct (their polynomial-time certificates remain open).
 The simulation is stated over `Turing.MultiTapeTM.Feature` (`MultiTape/Feature.lean`): finite
 observations of a configuration with one lemma per kind describing how a step changes it, meant
 to be shared with the Cook–Levin tableau. `Threshold.lean` synthesises the threshold and majority functions (defined with the Hamming

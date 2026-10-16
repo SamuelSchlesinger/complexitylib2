@@ -5,7 +5,6 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
 /-!
 # SAT polynomial-time and encoding regression tests
@@ -27,30 +26,6 @@ example : ComputableTidilyInPolyTime SAT.verifier (encPair encCNF encBits) encBo
 example : ComputableTidilyInPolyTime (fun p => (SAT.verifier p, !SAT.verifier p))
     (encPair encCNF encBits) (encPair encBool encBool) := by
   fun_prop
-
-example : ComputableTidilyInPolyTime (List.map (fun n : ℕ => n + 1))
-    (encList encNat) (encList encNat) := by
-  fun_prop
-
-example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.idxOf p.2)
-    (encPair (encList encNat) encNat) encUnary := by
-  fun_prop
-
-example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1.getD p.2 false)
-    (encPair encBits encUnary) encBool := by
-  fun_prop
-
--- Composition infers the unary index encoding from `idxOf` before applying lookup.
-example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.getD (p.1.idxOf p.2) 0)
-    (encPair (encList encNat) encNat) encNat := by
-  fun_prop
-
--- Scans, like folds, use an explicit rule for the captured parameter.
-example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.any fun n => decide (p.2 = n))
-    (encPair (encList encNat) encNat) encBool :=
-  ComputableTidilyInPolyTime.anyWith (ComputableTidilyInPolyTime.decide_eq encNat)
-    (ComputableTidilyInPolyTime.snd (encList encNat) encNat)
-    (ComputableTidilyInPolyTime.fst (encList encNat) encNat)
 
 example : SAT.verifier ([], []) = true := rfl
 example : SAT.verifier ([[]], []) = false := rfl

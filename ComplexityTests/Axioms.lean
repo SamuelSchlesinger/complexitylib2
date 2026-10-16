@@ -3052,6 +3052,30 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl' depends on axioms: [
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl
 
 /--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWith' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWith
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.length' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.length
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.range' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.range
+
+/--
 info: 'Turing.MultiTapeTM.Universal.computableTidilyInO_universal' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

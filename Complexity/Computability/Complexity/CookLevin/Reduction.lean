@@ -27,10 +27,10 @@ exactly when `a ∈ A`. It only uses that the run of `tm` on `frame (enc a) ++ w
 allowed number of steps with output `[V (a, w)]`, so it applies to any machine computing `V` in
 that time, tidily (`reduce_mem_SAT_iff_of_computesTidily`) or not.
 
-That the reduction is computable in polynomial time is not proved here: it needs the closure
-properties of `Turing.MultiTapeTM.ComputableTidilyInPolyTime` under composition, folds and binary
-arithmetic, which are being developed upstream. `CookLevin/Staging.lean` assembles the
-`NP`-completeness of `SAT` from that fact.
+That the reduction is computable in polynomial time is not proved here. The polynomial-time
+machine calculus supplies composition, folds and arithmetic; applying it to the tableau clauses
+and their variable numbering remains to be done. `CookLevin/Staging.lean` assembles the
+`NP`-completeness of `SAT` from that remaining bound.
 
 ## Main definitions
 

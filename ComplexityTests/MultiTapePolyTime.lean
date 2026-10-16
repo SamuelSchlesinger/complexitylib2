@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
 /-!
 # Tests for the polynomial-time calculus
 
-Christian Reitwiessner's `CslibTests/MultiTapePolyTime.lean` (branch `crei/tidy-universal`
-@7f7c0696), and the change that branch makes to `CslibTests/MultiTapeComplexity.lean`.
+Based on Christian Reitwiessner's `CslibTests/MultiTapePolyTime.lean` (branch `crei/tidy-universal`
+@7f7c0696), and the change that branch makes to `CslibTests/MultiTapeComplexity.lean`, with tests
+for encoding inference, list construction and indexing.
 -/
 
 namespace ComplexityTests.MultiTapePolyTime
@@ -26,6 +26,52 @@ example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (p.2, p.1 + 1 + 1))
 example {c : ℕ → Bool} (hc : ComputableTidilyInPolyTime c encNat encBool) :
     ComputableTidilyInPolyTime (fun n => if c n then n + 1 else n) encNat encNat := by
   fun_prop
+
+example : ComputableTidilyInPolyTime (List.map (fun n : ℕ => n + 1))
+    (encList encNat) (encList encNat) := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.idxOf p.2)
+    (encPair (encList encNat) encNat) encUnary := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1.getD p.2 false)
+    (encPair encBits encUnary) encBool := by
+  fun_prop
+
+-- Composition infers the unary index encoding from `idxOf` before applying lookup.
+example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.getD (p.1.idxOf p.2) 0)
+    (encPair (encList encNat) encNat) encNat := by
+  fun_prop
+
+-- Scans, like folds, use an explicit rule for the captured parameter.
+example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.any fun n => decide (p.2 = n))
+    (encPair (encList encNat) encNat) encBool :=
+  ComputableTidilyInPolyTime.anyWith (ComputableTidilyInPolyTime.decide_eq encNat)
+    (ComputableTidilyInPolyTime.snd (encList encNat) encNat)
+    (ComputableTidilyInPolyTime.fst (encList encNat) encNat)
+
+-- Both raw and framed lists infer the element encoding for unary lengths.
+example : ComputableTidilyInPolyTime (fun w : List Bool => List.range w.length)
+    encBits (encList encUnary) := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun l : List ℕ => List.range l.length)
+    (encList encNat) (encList encUnary) := by
+  fun_prop
+
+-- The intermediate range has quadratic encoded length, so the parameterized map must
+-- accept polynomial-sized lists, not just lists with a linear output bound.
+example : ComputableTidilyInPolyTime (fun n => (List.range n).map fun i => (n, i))
+    encUnary (encList (encPair encUnary encUnary)) :=
+  ComputableTidilyInPolyTime.mapWith .id' .id' ComputableTidilyInPolyTime.range
+
+example : ComputableTidilyInPolyTime (fun n => (List.range n).flatMap fun i => List.replicate i n)
+    encUnary (encList encUnary) := by
+  have hrep := (ComputableTidilyInDegree.replicate encUnary).computableTidilyInPolyTime.comp
+    ((ComputableTidilyInPolyTime.snd encUnary encUnary).prod
+      (ComputableTidilyInPolyTime.fst encUnary encUnary))
+  exact ComputableTidilyInPolyTime.flatMapWith hrep .id' ComputableTidilyInPolyTime.range
 
 private def finish (move : SignType) (symbol : Bool) : Turing.MultiTapeTM 0 Bool Unit :=
   ofTr () fun _ _ _ => ⟨move, Fin.elim0, some symbol, none⟩

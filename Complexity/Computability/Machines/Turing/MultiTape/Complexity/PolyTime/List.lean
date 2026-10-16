@@ -21,6 +21,9 @@ up a variable with a large binary label does not require a certificate as long a
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.map`, `.flatten`: constructing lists.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith`, `.flatMapWith`: constructing lists
+  with a parameter; the input list may itself have polynomial encoded length.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`: unary lengths and ranges.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
@@ -34,16 +37,25 @@ namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 variable {α β γ π : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
   {encIn : γ ↪ List Bool} {encP : π ↪ List Bool}
 
+/-- Map a polynomial-time function with a fixed parameter over a polynomial-time computable list.
+The list may have any polynomial encoded length. -/
+theorem mapWith {f : π × α → β} {par : γ → π} {list : γ → List α}
+    (hf : ComputableTidilyInPolyTime f (encPair encP encA) encB)
+    (hpar : ComputableTidilyInPolyTime par encIn encP)
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun x => (list x).map fun a => f (par x, a))
+      encIn (encList encB) := by
+  obtain ⟨d, e, hf⟩ := hf.exists_degree
+  exact (ComputableTidilyInDegree.mapWith hf
+    (ComputableTidilyInDegree.fst encP (encList encA))
+    (ComputableTidilyInDegree.snd encP (encList encA))).computableTidilyInPolyTime.comp
+      (hpar.prod hlist)
+
 /-- A polynomial-time function can be mapped over a list in polynomial time. -/
 @[fun_prop]
 theorem map {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
-    ComputableTidilyInPolyTime (List.map f) (encList encA) (encList encB) := by
-  obtain ⟨d, e, hf⟩ := hf.exists_degree
-  have h := ComputableTidilyInDegree.mapWith (par := fun _ => true) (list := id)
-    (hf.comp (ComputableTidilyInDegree.snd encBool encA))
-    ((ComputableTidilyInDegree.const true).mono (d' := 1) (e' := 1))
-    (ComputableTidilyInDegree.of_eq fun _ => rfl)
-  exact h.computableTidilyInPolyTime
+    ComputableTidilyInPolyTime (List.map f) (encList encA) (encList encB) :=
+  mapWith (hf.comp (snd encBool encA)) (const true) id'
 
 private theorem foldl_append (l : List (List α)) (acc : List α) :
     l.foldl (· ++ ·) acc = acc ++ l.flatten := by
@@ -69,6 +81,63 @@ theorem flatten (enc : α ↪ List Bool) :
       exact (length_encList_flatten_le enc (l.take i)).trans
         (length_encList_take_le (encList enc) l i))
   simpa only [foldl_append, List.nil_append, id_eq] using h
+
+/-- Concatenate polynomial-time lists computed from each element and a fixed parameter. -/
+theorem flatMapWith {f : π × α → List β} {par : γ → π} {list : γ → List α}
+    (hf : ComputableTidilyInPolyTime f (encPair encP encA) (encList encB))
+    (hpar : ComputableTidilyInPolyTime par encIn encP)
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun x => (list x).flatMap fun a => f (par x, a))
+      encIn (encList encB) := by
+  simpa only [Function.comp_def, List.flatten_eq_flatMap, List.flatMap_map, id_eq] using
+    (flatten encB).comp (mapWith hf hpar hlist)
+
+/-- The length of a list, in unary, including raw bit strings. -/
+theorem length (enc : α ↪ List Bool) {encL : List α ↪ List Bool} [ListEncoding enc encL]
+    [SizedListEncoding enc encL] :
+    ComputableTidilyInPolyTime (fun l : List α => l.length) encL encUnary := by
+  have h := foldl' (encA := enc) (encL := encL) (list := id)
+    (step := fun n _ => n + 1) id' (const 0)
+    (ComputableTidilyInDegree.unary_succ.computableTidilyInPolyTime.comp (fst encUnary enc))
+    (B := fun l => (encL l).length) .self (fun l i _ => by
+      simpa [List.foldl_const] using (Nat.min_le_right i l.length).trans
+        (SizedListEncoding.length_le (encA := enc) (encL := encL) l))
+  simpa [List.foldl_const] using h
+
+/-- Length of a framed list; the element encoding is inferred from the list encoding. -/
+@[fun_prop]
+theorem length_list (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun l : List α => l.length) (encList enc) encUnary := length enc
+
+/-- Length of a raw bit string. -/
+@[fun_prop]
+theorem length_bits :
+    ComputableTidilyInPolyTime (fun l : List Bool => l.length) encBits encUnary := length encBool
+
+/-- Enumerate `0, …, n - 1`, with the bound and the elements in unary. -/
+@[fun_prop]
+theorem range : ComputableTidilyInPolyTime List.range encUnary (encList encUnary) := by
+  have hrep (n : ℕ) :
+      (List.replicate n true).foldl (fun l _ => l ++ [l.length]) [] = List.range n := by
+    induction n with
+    | zero => rfl
+    | succ n ih => simp [List.replicate_succ', List.foldl_append, ih, List.range_succ]
+  have hstep := (ComputableTidilyInDegree.snoc encUnary).computableTidilyInPolyTime.comp
+    ((fst (encList encUnary) encBool).prod
+      ((length encUnary).comp (fst (encList encUnary) encBool)))
+  have h := foldl' (encA := encBool) (encL := encBits)
+    (list := fun n => List.replicate n true) (step := fun l _ => l ++ [l.length])
+    (of_eq (encIn := encUnary) (encMid := encBits) fun _ => rfl) (const []) hstep
+    (B := fun n => (encUnary n).length * (2 * (encUnary n).length + 1))
+    (PolyBounded.self.mul (((PolyBounded.const 2).mul .self).add (.const 1)))
+    (fun n i _ => by
+      rw [List.take_replicate, hrep]
+      refine (length_encList_le encUnary _ (b := n) fun a ha => ?_).trans ?_
+      · simpa only [encUnary_apply, List.length_replicate] using
+          (Nat.le_of_lt (List.mem_range.mp ha)).trans (Nat.min_le_right i n)
+      · simp only [List.length_range, encUnary_apply, List.length_replicate]
+        exact Nat.mul_le_mul_right _ (Nat.min_le_right i n))
+  simpa only [hrep] using h
 
 /-- Test whether any element satisfies a polynomial-time predicate with a fixed parameter. -/
 theorem anyWith {test : π × α → Bool} {par : γ → π} {list : γ → List α}
