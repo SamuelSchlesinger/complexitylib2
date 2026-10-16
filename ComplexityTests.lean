@@ -13,6 +13,7 @@ import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
+import ComplexityTests.PPTTactic
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock

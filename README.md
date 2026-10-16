@@ -20,8 +20,9 @@ now has exact deterministic/nondeterministic specializations and a clocked progr
 including fair-coin runs. Closed `IsPPTOn` certificates now reuse deterministic proofs through
 `fun_prop` and certify fair-bit sampling, monadic `bind`, deterministic preprocessing and
 postprocessing, captured inputs and conditionals. The compiler charges copying and fresh-input
-preparation and guarantees actual halting. Probabilistic loops, oracle PPT, and `ppt` remain
-to be integrated.
+preparation and guarantees actual halting. The `ppt` tactic combines these rules with deterministic
+`polytime` automation, named certificates and locally supplied routines. Probabilistic loops and
+oracle PPT remain to be integrated.
 The deterministic `polytime` tactic now combines `fun_prop`, named and local routine certificates,
 and bounded-growth
 loop rules. Fold and iteration specifications prove both efficiency and a final invariant from

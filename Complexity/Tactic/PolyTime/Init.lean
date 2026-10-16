@@ -19,13 +19,12 @@ with `@[program_certificate]`. Certificates are indexed by their efficiency pred
 constant at the head of the program, looking through an output encoding. A goal is matched against
 the certificates for its own program head before proof search unfolds the program, so similarly
 implemented algorithms do not unfold into each other's rules.
-Deterministic certificates are also registered with `fun_prop`, so the same annotation supports
+Certificates are also registered with `fun_prop`, so the same annotation supports
 calls inside larger functional programs.
 
-The certificate index is adapted from the cslib `crypto` branch. The computation predicate has
-separate input and output encodings in v2. The `PPT` rule set and probabilistic indexing conventions
-are reserved compatibility hooks for the crypto interface; v2 does not yet provide a `ppt` tactic
-or probabilistic machine realizations.
+The certificate index is adapted from the cslib `crypto` branch. Both computation predicates use
+separate input and output encodings. `Tactic.PPT` combines the `PPT` and `PolyTime`
+rule sets for closed probabilistic programs; machine witnesses remain behind their certificates.
 
 ## Main definitions
 
@@ -33,6 +32,11 @@ or probabilistic machine realizations.
 
 Aesop's index cannot see inside the program, which is a function, so the lookup is a single tactic
 rule for each efficiency predicate rather than one `apply` rule for each certificate.
+
+## References
+
+Adapted from `Cslib/Tactic/PolyTime/Init.lean` on the cslib `crypto` branch at
+`5ff69ca93402e7c947208dc56396d6d86203ccd8`, sharing routine-call matching between both tactics.
 -/
 
 public section
@@ -88,7 +92,7 @@ initialize certificateExt : SimpleScopedEnvExtension ((Name × Name × Bool) × 
 /-- `@[program_certificate]` registers an efficiency certificate for `polytime` and `ppt`. Its
 conclusion must be a `ComputableTidilyInPolyTime`, `IsPPTOn` or `IsPPT` statement whose program
 body applies a constant, possibly under an output encoding.
-Deterministic certificates are also registered with `fun_prop` for use in larger compositions.
+Certificates are also registered with `fun_prop` for use in larger compositions.
 
 `@[program_certificate h₁ … hₙ]` additionally solves the hypotheses `h₁ … hₙ` immediately after the
 certificate is applied. This is needed when such a hypothesis determines an encoding that other
@@ -104,7 +108,8 @@ initialize registerBuiltinAttribute {
     let eager := stx[1].getArgs.map (·.getId)
     let key ← MetaM.run' <| forallTelescope (← getConstInfo declName).type fun _ conclusion =>
       efficiencyKey conclusion
-    if key.1 == `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
+    if key.1 == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
+        key.1 == `Cslib.Probability.IsPPTOn then
       Attribute.add declName `fun_prop .missing kind
     certificateExt.add (key, declName, eager) kind
 }
@@ -146,5 +151,67 @@ def applyCertificate (predicate : Name) : TacticM Unit :=
     catch _ =>
       saved.restore
   throwError "no certificate for `{key.2.1}` applies"
+
+/-- Apply a rule with known arguments, leaving all remaining hypotheses as goals. -/
+private def applyWithArguments (rule : Name) (arguments : Array (Name × Expr)) : TacticM Unit := do
+  let mut proof ← mkConstWithFreshMVarLevels rule
+  let mut type ← inferType proof
+  while let .forallE name domain body _ := type do
+    let arg ← match arguments.find? (fun argument => argument.1 == name) with
+      | some (_, value) => pure value
+      | none => mkFreshExprMVar domain
+    unless ← isDefEq (← inferType arg) domain do throwError "argument type mismatch"
+    proof := mkApp proof arg
+    type := body.instantiate1 arg
+    if name == arguments.back!.1 then
+      replaceMainGoal (← (← getMainGoal).apply proof)
+      return
+  throwError "argument not found"
+
+/-- Expose tuple components before higher-order unification matches a subroutine call. -/
+private partial def prepareArgument (domain type : Expr) : MetaM Expr := do
+  let type ← whnf type
+  if type.isAppOf ``Prod then
+    let args := type.getAppArgs
+    let left ← prepareArgument domain args[0]!
+    let right ← prepareArgument domain args[1]!
+    withLocalDeclD `input domain fun input => do
+      mkLambdaFVars #[input] (← mkAppM ``Prod.mk #[mkApp left input, mkApp right input])
+  else
+    mkFreshExprMVar (← mkArrow domain type)
+
+/-- Apply a local routine certificate through a composition rule, preparing tuple arguments
+with `polytime`. Predicate parameters select the program; rule parameter names select the
+argument and certificate, and `argumentGoal` names the remaining preparation obligation.
+Failed candidates restore all assignments before another input encoding is tried. -/
+def applyKnownCall (predicate : Name) (programIndex : Nat) (rule : Name)
+    (argumentName certificateName argumentGoal : Name) : TacticM Unit :=
+  withMainContext <| Term.withoutErrToSorry <| withoutRecover do
+    let target := (← instantiateMVars (← getMainTarget)).consumeMData
+    unless target.isAppOf predicate do throwError "expected an efficiency goal for {predicate}"
+    let program := target.getAppArgs[programIndex]!
+    if program.hasExprMVar then throwError "the called program is not determined"
+    let head ← lambdaTelescope (← Core.betaReduce (← etaExpand program)) fun _ body =>
+      pure body.getAppFn
+    for decl in ← getLCtx do
+      if decl.isImplementationDetail || !decl.type.isAppOf predicate then continue
+      let certified := decl.type.getAppArgs[programIndex]!
+      let called ← lambdaTelescope (← Core.betaReduce (← etaExpand certified)) fun _ body =>
+        pure body.getAppFn
+      unless called == head do continue
+      let saved ← saveState
+      try
+        let argument ← prepareArgument target.getAppArgs[0]! decl.type.getAppArgs[0]!
+        let composed ← withLocalDeclD `input target.getAppArgs[0]! fun input =>
+          mkLambdaFVars #[input] (mkApp certified (mkApp argument input))
+        unless ← isDefEq (← withReducible (reduce composed)) program do
+          throwError "the certificate does not match this call"
+        applyWithArguments rule #[(argumentName, argument), (certificateName, decl.toExpr)]
+        if ← (← getGoals).anyM (fun goal => do isDefEq (← goal.getType) target) then
+          throwError "composition made no progress"
+        solveTagged argumentGoal
+        return
+      catch _ => saved.restore
+    throwError "no applicable local routine certificate"
 
 end Cslib.Tactic

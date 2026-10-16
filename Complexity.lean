@@ -429,5 +429,6 @@ public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
+public import Complexity.Tactic.PPT
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init

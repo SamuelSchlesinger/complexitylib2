@@ -23,6 +23,11 @@ bounds across all encoded inputs. Unknown algorithms still require certificates.
 ## Main definitions
 
 * `polytime`: prove a polynomial-time certificate using the `PolyTime` Aesop rule set.
+
+## References
+
+Adapted from `Cslib/Tactic/PolyTime.lean` on the cslib `crypto` branch at
+`5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing tidy calculus.
 -/
 
 public section
@@ -31,72 +36,11 @@ namespace Cslib.Tactic.PolyTime
 
 open Turing.MultiTapeTM
 
-open Lean Meta Elab Tactic in
-/-- Apply a rule with known arguments, leaving all remaining hypotheses as goals. -/
-private meta def applyWithArguments (rule : Name)
-    (arguments : Array (Name × Expr)) : TacticM Unit := do
-  let mut proof ← mkConstWithFreshMVarLevels rule
-  let mut type ← inferType proof
-  while let .forallE name domain body _ := type do
-    let arg ← match arguments.find? (fun argument => argument.1 == name) with
-      | some (_, value) => pure value
-      | none => mkFreshExprMVar domain
-    unless ← isDefEq (← inferType arg) domain do throwError "argument type mismatch"
-    proof := mkApp proof arg
-    type := body.instantiate1 arg
-    if name == arguments.back!.1 then
-      replaceMainGoal (← (← getMainGoal).apply proof)
-      return
-  throwError "argument not found"
-
-open Lean Meta in
-/-- Expose tuple components before higher-order unification matches a subroutine call. -/
-private meta partial def prepareArgument (domain type : Expr) : MetaM Expr := do
-  let type ← whnf type
-  if type.isAppOf ``Prod then
-    let args := type.getAppArgs
-    let left ← prepareArgument domain args[0]!
-    let right ← prepareArgument domain args[1]!
-    withLocalDeclD `input domain fun input => do
-      mkLambdaFVars #[input] (← mkAppM ``Prod.mk #[mkApp left input, mkApp right input])
-  else
-    mkFreshExprMVar (← mkArrow domain type)
-
-open Lean Meta Elab Tactic in
 /-- Supply the called algorithm's local certificate before inferring its tuple arguments. -/
 @[aesop safe -40 tactic (rule_sets := [PolyTime])]
-private meta def polytimeKnownCall : TacticM Unit :=
-  withMainContext <| Term.withoutErrToSorry <| withoutRecover do
-    let target := (← instantiateMVars (← getMainTarget)).consumeMData
-    unless target.isAppOf ``ComputableTidilyInPolyTime do
-      throwError "expected a polynomial-time goal"
-    let program := target.getAppArgs[2]!
-    if program.hasExprMVar then throwError "the called program is not determined"
-    let head ← lambdaTelescope (← Core.betaReduce (← etaExpand program)) fun _ body =>
-      pure body.getAppFn
-    for decl in ← getLCtx do
-      if decl.isImplementationDetail || !decl.type.isAppOf ``ComputableTidilyInPolyTime then
-        continue
-      let certified := decl.type.getAppArgs[2]!
-      let called ← lambdaTelescope (← Core.betaReduce (← etaExpand certified)) fun _ body =>
-        pure body.getAppFn
-      unless called == head do continue
-      let saved ← saveState
-      try
-        let argument ← prepareArgument target.getAppArgs[0]! decl.type.getAppArgs[0]!
-        let composed ← withLocalDeclD `input target.getAppArgs[0]! fun input =>
-          mkLambdaFVars #[input] (mkApp certified (mkApp argument input))
-        unless ← isDefEq (← withReducible (reduce composed)) program do
-          throwError "the certificate does not match this call"
-        applyWithArguments ``ComputableTidilyInPolyTime.comp #[(`g, argument), (`hf, decl.toExpr)]
-        if ← (← getGoals).anyM (fun goal => do isDefEq (← goal.getType) target) then
-          throwError "composition made no progress"
-        -- Different certificates for the same routine may use different input encodings.
-        -- Commit only after this call's argument can be prepared with the selected encoding.
-        evalTactic (← `(tactic| case hg => solve | aesop (rule_sets := [PolyTime])))
-        return
-      catch _ => saved.restore
-    throwError "no applicable local algorithm certificate"
+private meta def polytimeKnownCall : Lean.Elab.Tactic.TacticM Unit :=
+  Cslib.Tactic.applyKnownCall ``ComputableTidilyInPolyTime 2
+    ``ComputableTidilyInPolyTime.comp `g `hf `hg
 
 /-- Reuse a named routine's certificate before unfolding it. -/
 @[aesop safe -30 tactic (rule_sets := [PolyTime])]
