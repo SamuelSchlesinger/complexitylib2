@@ -1321,12 +1321,23 @@ degree or constants.
 
 There are 25 machine-level constructor/adapter declaration sites in the local source tree,
 all in the backend: 17 candidates, seven copies of Christian Reitwiessner's tidy-universal work,
-and one submitted declaration from PR #1111. Ten further finite-state transducer tables all come
-from that tidy-universal work. Pinned cslib contributes another 11 transition-building declarations
+and one submitted declaration from PR #1111. A follow-up source audit distinguishes nine
+`Transducer` definitions (`eqWordT`, `succT`, `predT`, `frameT`, `readFrameT`, `headT`, `isEmptyT`,
+`doubledT`, `extractT`) and two `Translator` definitions (`inTr`, `bitTr`), all from that
+tidy-universal work. The earlier count of ten finite-state tables omitted the term-form identity
+translator `bitTr`. Pinned cslib contributes another 11 transition-building declarations
 (copy, almost-constant output, forward/rewind, input/output adapters, sequencing, looping, no-op and
 tape extension). The generic `ofTr` factory is excluded. Representation bridges, probabilistic
 specializations and adapters are included, so these are declaration sites, not a minimal primitive
 basis or a count of semantically distinct machines. The saved-seed/entropy batches add none.
+There are also two term-form `InputReader` definitions, `bitReader` and `digitReader`, with
+identical bodies. Thus the three finite-state helper types account for thirteen declaration sites,
+all vendored from Christian Reitwiessner; they are separate from the direct-TM count above.
+The 25 local sites divide into ten deterministic tape/control plumbing definitions, nine shared
+execution/model adapters and six randomness/replay definitions. The constructive expander and
+logarithmic-schedule batches also add none. The low-level work remains concentrated in copying,
+scratch cleanup, head restoration, input/output routing, clocks and replay; client developments
+principally supply semantic and encoded-size invariants.
 
 ### Universal hashing and preimage isolation (2026-10-16)
 
@@ -1698,8 +1709,11 @@ All six checks pass: strict build 1.39 s, import coverage 1.51 s, tests 16.75 s,
 7.06 s, style 2.17 s and init imports 4.24 s. Three headline axiom guards use only `propext`,
 `Classical.choice` and `Quot.sound`. Independent source/API review approves the loop invariant,
 all intermediate powers, fixed-parameter boundary and encoding inference; its portability fix
-corrected the capitalization of the test's `PolyTime` import. Codex correctness review follows
-publication of this batch.
+corrected the capitalization of the test's `PolyTime` import. The independent post-publication
+Codex correctness review approves `1ee3c2a` without material findings in the state bounds,
+degenerate cases, fixed-parameter boundary, tests or documentation. It reviewed the published
+sources and pinned cslib and did not rerun the six gates. The binary-input rejection example
+checks proof search; it is not a formal impossibility theorem.
 
 Uniform tower rotation and numbering certificates, encoded graph preprocessing and the complete
 PCP reduction are still outstanding. This batch certifies their numerical schedules only.
