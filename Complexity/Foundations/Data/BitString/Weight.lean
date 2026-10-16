@@ -21,12 +21,13 @@ import Mathlib.Data.Fintype.Powerset
 
 The weight of a Boolean vector is its number of true coordinates (`BitString.weight`), Mathlib's
 Hamming norm with `false` as `0` (`BitString.weight_eq_hammingNorm`), so the Hamming distance of two
-bit strings is the weight of their sum (`BitString.hammingDist_eq_weight_add`). The
-threshold function `threshold n j` says that at least `j` of `n` bits are true, and majority
-(`majority`, at least half) and strict majority (`strictMajority`, more than half) are threshold
-functions. A Boolean function is *symmetric* when it depends only on the weight of its input
+bit strings is the weight of their sum (`BitString.hammingDist_eq_weight_add`)
+[MacWilliams and Sloane, Chapter 1][MacWilliamsSloane1977]. The threshold function
+`threshold n j` says that at least `j` of `n` bits are true, and majority (`majority`, at least
+half) and strict majority (`strictMajority`, more than half) are threshold functions. A Boolean
+function is *symmetric* when it depends only on the weight of its input
 (`BooleanFunction.IsSymmetric`), and then it factors through the weight
-(`BooleanFunction.IsSymmetric.exists_eq_comp_weight`).
+(`BooleanFunction.IsSymmetric.exists_eq_comp_weight`) [Jukna, Chapter 1][Jukna2012].
 
 ## Main definitions
 
@@ -43,6 +44,12 @@ functions. A Boolean function is *symmetric* when it depends only on the weight 
 * `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
 * `Cslib.isSymmetric_threshold`, `Cslib.isSymmetric_parity`: threshold functions and parity are
   symmetric.
+
+## References
+
+* [F. J. MacWilliams, N. J. A. Sloane, *The Theory of Error-Correcting Codes*]
+  [MacWilliamsSloane1977]
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
 -/
 
 @[expose] public section
@@ -92,8 +99,8 @@ theorem weight_not (x : ι → Bool) : weight (fun i => !x i) = Fintype.card ι 
 /-- Setting a false coordinate to true adds one to the weight. -/
 theorem weight_update_true [DecidableEq ι] {x : ι → Bool} {i : ι} (hi : x i = false) :
     weight (Function.update x i true) = weight x + 1 := by
-  have he : univ.filter (fun j => Function.update x i true j = true) =
-      insert i (univ.filter fun j => x j = true) := by
+  have he : ({j | Function.update x i true j = true} : Finset ι) =
+      insert i ({j | x j = true} : Finset ι) := by
     ext j
     by_cases hj : j = i
     · subst hj; simp
@@ -103,8 +110,8 @@ theorem weight_update_true [DecidableEq ι] {x : ι → Bool} {i : ι} (hi : x i
 /-- Setting a true coordinate to false takes one from the weight. -/
 theorem weight_update_false [DecidableEq ι] {x : ι → Bool} {i : ι} (hi : x i = true) :
     weight (Function.update x i false) + 1 = weight x := by
-  have he : univ.filter (fun j => Function.update x i false j = true) =
-      (univ.filter fun j => x j = true).erase i := by
+  have he : ({j | Function.update x i false j = true} : Finset ι) =
+      ({j | x j = true} : Finset ι).erase i := by
     ext j
     by_cases hj : j = i
     · subst hj; simp

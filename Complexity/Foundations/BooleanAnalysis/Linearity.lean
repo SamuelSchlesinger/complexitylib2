@@ -32,8 +32,7 @@ Conversely, a function passing with probability at least `1 - ε` differs from s
 most an `ε` fraction of the inputs
 (`BitString.exists_hammingDist_parityOn_le_of_le_blrAcceptance`): the squares `F̂(S)²` sum to one
 by Parseval's identity, so `∑_S F̂(S)³ ≤ max_S F̂(S)`, and `F̂(S)` is one minus twice the relative
-Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`, in
-`Complexity.Foundations.BooleanAnalysis.Fourier`)
+Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`)
 [O'Donnell, Section 1.6][ODonnell2014], [BlumLubyRubinfeld1993].
 
 ## Main definitions

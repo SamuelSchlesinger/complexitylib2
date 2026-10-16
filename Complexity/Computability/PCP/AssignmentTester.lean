@@ -25,12 +25,12 @@ that two tables encode labels satisfying `C`. It is handed the tables and a proo
 encodings of satisfying labels together with an honest proof, and rejects every proof with
 probability at least a constant times the distance of the tables from the encodings of the closest
 satisfying labels. Running it on every edge of a constraint graph over a large alphabet reduces the
-alphabet to a constant one (`Complexity.Computability.PCP.Composition`): for this, the number of
-queries and the rejection rate must not depend on the alphabet, however large the proof is.
+alphabet to a constant one (`PCP.ConstraintGraph.compose`): for this, the number of queries and
+the rejection rate must not depend on the alphabet, however large the proof is.
 
 The tester here, for constraints on labels in a finite type `α`, follows Arora and Barak
 [Arora and Barak, Chapter 22][AroraBarak09] and is built on the Hadamard tester for quadratic
-equations (`Complexity.Foundations.BooleanAnalysis.HadamardTester`).
+equations (`BitString.exists_forall_hadamardCode_tensor_eq_of_le_blrAcceptance`).
 
 * A label `a` is encoded by its **long code** `BitString.longCode a`, the dictator `r ↦ r a` on
   `α → Bool`, which is the Hadamard encoding of the unit vector of `a`. The long codes of distinct
@@ -47,11 +47,11 @@ equations (`Complexity.Foundations.BooleanAnalysis.HadamardTester`).
   (`HadamardTester.endEmbed`) reads the long code of the label of that end at `r`.
 * The proof consists of a *linear table*, supposedly the Hadamard encoding of the variables, and a
   *quadratic table*, supposedly that of their tensor square. On independent random strings, the
-  tester `hadamardTester C` runs five checks, each a local test
-  (`Complexity.Computability.PCP.LocalTest`): the linearity test on both tables, the tensor test,
-  the equation test for the quadratic equations of `C`, and the *input test*, which compares the
-  bit of the table of a random end at a random point with the self-corrected read of the linear
-  table at the corresponding vector. It accepts when all five do, and makes `17` queries.
+  tester `hadamardTester C` runs five checks, each a local test (`PCP.LocalTest`): the linearity
+  test on both tables, the tensor test, the equation test for the quadratic equations of `C`, and
+  the *input test*, which compares the bit of the table of a random end at a random point with the
+  self-corrected read of the linear table at the corresponding vector. It accepts when all five
+  do, and makes `17` queries.
 
 If the tester accepts with probability at least `1 - ρ` for some `ρ < 1/28`, the linear table is
 within `ρ` of the Hadamard encoding of a solution of the equations, which is the one-hot encoding of

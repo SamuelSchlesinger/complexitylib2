@@ -36,7 +36,7 @@ So when `h p ≤ q`, the probability of `A` at rate `q` is at most its probabili
 power `h` (`bernoulliAverage_lowerSet_pow_le`). This transference principle appears in Section 2 of
 [Korten2026] (Lemma 3) and again in Section 4; Korten attributes it to
 [Zhao, Lemma 4.3.7][Zhao2023]. Its form at small rates, with a real exponent, is
-`bernoulliAverage_lowerSet_transfer` in `Complexity.Foundations.BooleanAnalysis.LightPatterns`.
+`BitString.bernoulliAverage_lowerSet_transfer`.
 
 ## Main definitions
 

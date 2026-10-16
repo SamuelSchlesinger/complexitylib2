@@ -21,10 +21,10 @@ brings the alphabet back to a fixed one, losing a constant factor of the value t
 on the alphabet being reduced: that independence is what lets powering win.
 
 Composition replaces every edge `e` of a constraint graph `G` over a finite alphabet `α` by the
-Hadamard assignment tester of its constraint (`Complexity.Computability.PCP.AssignmentTester`), on
-the labels in `α` themselves. The testers of all the edges share the tables of the
-vertices: the composed proof holds, for every vertex, a table that is supposedly the long code of
-its label, and for every edge, the linear and quadratic tables of its tester. The composed test
+Hadamard assignment tester of its constraint (`PCP.hadamardTester`), on the labels in `α`
+themselves. The testers of all the edges share the tables of the vertices: the composed proof
+holds, for every vertex, a table that is supposedly the long code of its label, and for every edge,
+the linear and quadratic tables of its tester. The composed test
 (`ConstraintGraph.composeTest`) runs the tester of a uniformly random edge on the tables of the ends
 of that edge and on its own tables, and the composed constraint graph `G.compose` is the constraint
 graph of that test (`LocalTest.toConstraintGraph`). Its alphabet `Bool × (HadamardTester.Query →

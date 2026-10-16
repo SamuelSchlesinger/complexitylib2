@@ -25,13 +25,14 @@ import Mathlib.GroupTheory.Index
 # The parity function
 
 `parityOn s x` says whether an odd number of the bits of `x : ι → Bool` in `s` are true, and
-`parity n` is the parity of all `n` bits.
+`parity n` is the parity of all `n` bits. These are the parity functions `χ_S` of
+[O'Donnell, Chapter 1][ODonnell2014], with values in `Bool` rather than `±1`.
 
 In the Boolean ring `Bool`, where `a + b = (a ^^ b)`, the parity on `s` is the sum of the bits in
 `s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`) and is additive for
 the coordinatewise sum of bit strings (`parityOn_add`, bundled as `parityOnAddMonoidHom`). Bit
-strings are added with `+` and single bits with `^^`, as in
-`Complexity.Foundations.Data.BitString.Basic`. Flipping one of the bits negates the parity
+strings are added with `+`, under which each is its own negative (`BitString.add_self`), and
+single bits with `^^`. Flipping one of the bits negates the parity
 (`parityOn_update_not`), so the parity of a nonempty set of bits is not constant and depends on
 each of them; being additive, it then takes each value on exactly half of the inputs
 (`card_filter_parityOn_eq`).
@@ -51,6 +52,10 @@ each of them; being additive, it then takes each value on exactly half of the in
 * `Cslib.card_filter_parityOn_eq`, `Cslib.dens_filter_parityOn_eq`: the parity on a nonempty set
   takes each value on half of the inputs.
 * `Cslib.card_filter_parity_eq_true`: parity of `n ≥ 1` bits is true on `2 ^ (n - 1)` inputs.
+
+## References
+
+* [R. O'Donnell, *Analysis of Boolean Functions*][ODonnell2014]
 -/
 
 @[expose] public section

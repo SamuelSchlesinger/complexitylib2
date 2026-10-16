@@ -23,8 +23,8 @@ block sensitivity, and they span the subcubes of the Boolean cube.
 The *sensitivity* of a function `f` of Boolean variables at an input `x` is the number of
 variables whose flip changes `f x` (`BitString.sensitivityAt`), and the sensitivity of `f` is its
 largest sensitivity at an input (`BitString.sensitivity`) [Nisan1991]. Block sensitivity and
-certificate complexity, which bound it from above, are in
-`Complexity.Computability.DecisionTree.Sensitivity`.
+certificate complexity, which bound it from above, are `DecisionTree.blockSensitivity` and
+`DecisionTree.certificateComplexity`.
 
 An input `x` of a Boolean function `g` is *isolated* when flipping any one of its bits changes the
 value of `g` (`BitString.isolatedInputs`). A formula in disjunctive normal form needs a term for

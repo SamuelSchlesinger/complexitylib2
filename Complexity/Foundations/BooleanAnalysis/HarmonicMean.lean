@@ -34,7 +34,7 @@ Korten's inequality bounds the expected square root of a function by the expecte
 its transform at a random set containing each coordinate with probability `1 / 4`
 [Korten, Lemma 12][Korten2026] (`expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform`), which
 gives the sampling estimate in the proof of Lemma 10 (`harmonicTransform_good_probability`). The
-sparse sampling conclusion of Lemma 10 is in `Complexity.Foundations.BooleanAnalysis.LightPatterns`.
+sparse sampling conclusion of Lemma 10 is `BitString.harmonicTransform_sparse_good_probability`.
 
 ## Main definitions
 

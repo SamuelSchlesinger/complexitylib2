@@ -21,7 +21,7 @@ their bits as binary digits, least significant first (`BitString.equivFin`).
 
 Bits form the two-element Boolean ring (Mathlib's `BooleanRing Bool`), in which `a + b = (a ^^ b)`
 and `a * b = (a && b)`, so bit strings `ι → Bool` form an additive group under coordinatewise
-exclusive or:
+exclusive or, the vector space `𝔽₂ⁿ` of [O'Donnell, Chapter 1][ODonnell2014]:
 `(x + y) i = (x i ^^ y i)` holds by definition. Every bit string is its own negative
 (`BitString.add_self`). Translating by a fixed string is the permutation `Equiv.addLeft x`.
 
@@ -37,6 +37,10 @@ Boolean functions, are combined with `^^`.
 * `Cslib.BitString.card`: the number of strings of `n` bits.
 * `Cslib.BitString.add_self`, `Cslib.BitString.add_cancel_left`,
   `Cslib.BitString.add_cancel_right`: every bit string is its own negative.
+
+## References
+
+* [R. O'Donnell, *Analysis of Boolean Functions*][ODonnell2014]
 -/
 
 @[expose] public section

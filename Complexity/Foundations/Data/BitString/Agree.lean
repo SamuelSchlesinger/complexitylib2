@@ -17,6 +17,11 @@ import Mathlib.Data.Fintype.BigOperators
 
 The words `ι → Bool` agreeing with a word `x` outside a set `F` of positions are free exactly on
 `F`, so there are `2 ^ |F|` of them (`BitString.card_filter_forall_notMem_eq`).
+
+## Main results
+
+* `Cslib.BitString.card_filter_forall_notMem_eq`: the words agreeing with `x` outside `F` number
+  `2 ^ |F|`.
 -/
 
 @[expose] public section
