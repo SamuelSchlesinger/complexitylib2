@@ -31,8 +31,6 @@ travel, and the initial configuration as a configuration of words.
   of the origin.
 * `Turing.MultiTapeTM.initCfg_eq_wordsCfg`: the initial configuration has blank work tapes.
 * `Turing.MultiTapeTM.runFrom_eq_of_runPath`: a path to a halted configuration, read as a run.
-* `Turing.MultiTapeTM.space_runPath_le`: a path of a deterministic machine visits at most one new
-  cell per tape and step.
 * `Turing.MultiTapeTM.runsInSpace_iff`: the shared space bound, read on the run of a deterministic
   machine.
 -/
@@ -113,11 +111,6 @@ theorem initCfg_eq_wordsCfg (input : List Symbol) :
     tm.initCfg input = wordsCfg input (some tm.q₀) (fun _ => []) [] :=
   Cfg.init_eq_wordsCfg _ _
 
-/-- A deterministic machine satisfying the shared time bound `t` has halted after `t` steps. -/
-theorem halted_of_runsInTime {input : List Symbol} {t : ℕ} (h : tm.RunsInTime input t) :
-    (tm.runFrom (tm.initCfg input) t).Halted :=
-  runsInTime_iff_halted.mp h
-
 /-- A path of a deterministic machine ends where the run from its head does. -/
 theorem runPath_last_eq_runFrom {input : List Symbol} (p : tm.RunPath input) :
     p.last = tm.runFrom p.head p.time :=
@@ -129,12 +122,6 @@ theorem runFrom_eq_of_runPath {input : List Symbol} {p : tm.RunPath input} (hp :
     {t : ℕ} (ht : p.time ≤ t) : tm.runFrom p.head t = p.last := by
   rw [runPath_last_eq_runFrom] at hp ⊢
   exact runFrom_eq_of_halt tm _ ht hp
-
-/-- A path of a deterministic machine visits at most one new cell per tape and step. -/
-theorem space_runPath_le {input : List Symbol} (p : tm.RunPath input) :
-    p.space ≤ k * p.time + k := by
-  rw [p.eq_ofDeterministic]
-  exact space_linear _ _
 
 /-- A deterministic machine satisfying the shared space bound `s` uses at most `s` cells in every
 prefix of its run. -/

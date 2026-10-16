@@ -371,10 +371,10 @@ info: 'Turing.MultiTapeTM.runFrom_clearShadowed' depends on axioms: [propext, Cl
 #print axioms Turing.MultiTapeTM.runFrom_clearShadowed
 
 /--
-info: 'Turing.MultiTapeTM.exists_runPath_seq_space' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.exists_runPath_seq_space_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.exists_runPath_seq_space
+#print axioms Turing.MultiTapeTM.exists_runPath_seq_space_le
 
 /--
 info: 'Turing.MultiTapeTM.exists_runPath_tidy' depends on axioms: [propext, Classical.choice, Quot.sound]

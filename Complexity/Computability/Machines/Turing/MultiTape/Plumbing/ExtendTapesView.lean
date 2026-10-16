@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate (addition to `Plumbing/ExtendTapes.lean`)
 
-public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 
 /-!
 # The view of a configuration through a tape embedding
@@ -62,8 +62,7 @@ view, plus one cell for each tape the machine does not use. -/
 theorem space_extendTapes_le (tm : MultiTapeTM k Symbol State) (e : Fin k ↪ Fin k')
     (cfg : Cfg k' Symbol State input) (n : ℕ) :
     (tm.extendTapes e).space cfg n ≤ tm.space (viewCfg e cfg) n + (k' - k) := by
-  have := space_map_embedHom_le tm e cfg.workTapes cfg.workTapePos
-    (MultiTapeNTM.RunPath.ofDeterministic tm (viewCfg e cfg) n)
-  rwa [MultiTapeNTM.RunPath.map_ofDeterministic, embedHom_apply, embed_viewCfg] at this
+  conv_lhs => rw [← embed_viewCfg e cfg]
+  exact space_embed_le _ _ _ _ _ _
 
 end Turing.MultiTapeTM

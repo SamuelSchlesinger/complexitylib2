@@ -231,7 +231,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ReadIn
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.RepeatUntilBlank
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.RewindWork
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.SequentialSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Shadow
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs

@@ -10,13 +10,12 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ClearShadowed
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.RewindInput
-public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Cslib.Foundations.Data.Fin.Tuple
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
-import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.SequentialSpace
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.Option
@@ -286,7 +285,7 @@ theorem exists_runPath_tidy (hm : m₀ ≠ m₁) {u : ℕ}
   obtain ⟨pB, hhB, hlB, htB⟩ := exists_runPath_clearList hm (List.finRange k)
     (List.nodup_finRange k) a b c (Shadow.visited tm c₀ u) C₁ hready
   rw [clearedCfg_finRange] at hlB
-  obtain ⟨pAB, hhAB, hlAB, htAB, hsAB⟩ := exists_runPath_seq_space
+  obtain ⟨pAB, hhAB, hlAB, htAB, hsAB⟩ := exists_runPath_seq_space_le
     (p₀ := .ofDeterministic (shadow m₀ m₁ tm) ((shadow m₀ m₁ tm).initCfg input) (u + 1))
     (p₁ := pB) (by rw [MultiTapeNTM.RunPath.last_ofDeterministic, hA]; exact hC₁)
     (by rw [hhB, MultiTapeNTM.RunPath.last_ofDeterministic, hA]) (by rw [hlB])
@@ -300,7 +299,7 @@ theorem exists_runPath_tidy (hm : m₀ ≠ m₁) {u : ℕ}
     rw [runFrom_noTapes]
     simp only [R₀, noTapesCfg, Cfg.withState, Sequential.rightCfg, Cfg.mapState, extendTapes_q₀,
       runFrom_rewindInput]
-  obtain ⟨p, hh, hl, ht, hs⟩ := exists_runPath_seq_space (p₀ := pAB)
+  obtain ⟨p, hh, hl, ht, hs⟩ := exists_runPath_seq_space_le (p₀ := pAB)
     (p₁ := .ofDeterministic ((rewindInput Symbol).extendTapes (noTapes (k + k))) R₀
       (C₁.inputPos.val - 1 + 2))
     (by rw [hlAB, hlB]; rfl) (by rw [hlAB, hlB]; rfl)
@@ -347,13 +346,12 @@ theorem exists_runPath_tidy (hm : m₀ ≠ m₁) {u : ℕ}
     refine hs.trans ?_
     have hsA : (MultiTapeNTM.RunPath.ofDeterministic (shadow m₀ m₁ tm)
         ((shadow m₀ m₁ tm).initCfg input) (u + 1)).space = 2 * S := space_shadow hlt
-    have hsB : pB.space ≤ (k + k) * pB.length + (k + k) := space_runPath_le pB
+    have hsB : pB.space ≤ (k + k) * pB.length + (k + k) :=
+      pB.space_le_mul_time_add_one.trans_eq (Nat.mul_add_one _ _)
     have hsR : (MultiTapeNTM.RunPath.ofDeterministic
         ((rewindInput Symbol).extendTapes (noTapes (k + k))) R₀ (C₁.inputPos.val - 1 + 2)).space ≤
-        k + k := by
-      refine (space_extendTapes_le (rewindInput Symbol) (noTapes (k + k)) R₀ _).trans ?_
-      rw [space_zero_tapes_eq_zero _ _ rfl]
-      omega
+        k + k :=
+      space_noTapes_le _ _ _
     have h₂ : (k + k) * pB.length ≤ 2 * k * (3 * S + 2 * k + 1) :=
       (Nat.mul_le_mul_left _ (htB.trans hTc)).trans_eq (by ring)
     have h₃ : 2 * k * (3 * S + 2 * k + 3) = 2 * k * (3 * S + 2 * k + 1) + 4 * k := by ring
@@ -366,14 +364,10 @@ theorem ComputesInTimeAndSpace.computesTidily_tidy (hm : m₀ ≠ m₁) {output 
     {t s : ℕ} (h : tm.ComputesInTimeAndSpace input output t s) :
     (tidy m₀ m₁ tm).ComputesTidilyInTimeAndSpace input output (2 * t + 3 * s + 2 * k + 4)
       (2 * s + 2 * k * (3 * s + 2 * k + 3)) := by
-  classical
   obtain ⟨⟨u', hu', hout⟩, ht, hs⟩ := h
   -- the first step at which `tm` has halted
-  have hex : ∃ n, (tm.runFrom (tm.initCfg input) n).Halted := ⟨u', hu'⟩
-  obtain ⟨u, hu, hlt⟩ : ∃ u, (tm.runFrom (tm.initCfg input) u).Halted ∧
-      ∀ m < u, ¬(tm.runFrom (tm.initCfg input) m).Halted :=
-    ⟨Nat.find hex, Nat.find_spec hex, fun _ => Nat.find_min hex⟩
-  have hut : u ≤ t := Nat.le_of_not_lt fun h => hlt t h (halted_of_runsInTime ht)
+  obtain ⟨u, -, hu, hlt⟩ := exists_haltsAt hu'
+  have hut : u ≤ t := Nat.le_of_not_lt fun h => hlt t h (runsInTime_iff_halted.mp ht)
   have hout' : (tm.runFrom (tm.initCfg input) u).output = output := by
     rw [← hout, runFrom_eq_of_halt _ _ (Nat.le_of_not_lt fun h => hlt u' h hu') hu]
   have hS := space_le_of_runsInSpace hs u
