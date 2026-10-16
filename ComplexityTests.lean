@@ -21,6 +21,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.LinearHash
+import ComplexityTests.Logarithms
 import ComplexityTests.MachineClock
 import ComplexityTests.MachineExtendTapes
 import ComplexityTests.MachineIOBuffer

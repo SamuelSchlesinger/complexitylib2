@@ -1651,13 +1651,58 @@ elaboration cost, not machine runtime or a before/after speedup.
 Independent source/API review approves the batch. All six checks pass: strict build 4.87 s,
 import coverage 1.62 s, tests 7.02 s, environment lint 7.18 s, style 2.19 s and init imports 4.17 s.
 Nine headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`. The independent
-Codex correctness review follows publication of this batch.
+post-publication Codex correctness review approves `f615416` without material findings in the
+reindexing invariants, tower sizing, nonvacuity, degree/gap bounds or certificate premises.
+It reviewed the sources and did not rerun the six gates.
 
 The arbitrary-size mathematical and executable family is now supplied. The next construction
 work is the uniform machine certificate for tower rotation and numbering, followed by full
 encoded graph preprocessing. The expander degree/gap contract still needs to flow through the
 remaining amplification stages, and logarithmic-round cardinality bounds still need the total
 encoded-size/time bridge. No completed PCP constructibility claim follows from this batch.
+
+### Certified logarithmic construction schedules (2026-10-16)
+
+`PolyTime/Nat/Log.lean` now certifies fixed-base floor and ceiling logarithms on unary inputs.
+The floor-log program repeatedly divides, maintaining the logarithm identity, a progress bound
+and a bound of `3*n+1` on the complete encoded quotient/counter state. The existing invariant
+loop rule charges all `n` iterations, including the idle iterations after the quotient is small.
+The ceiling-log certificate reuses floor logarithms and handles inputs zero and one explicitly.
+Bases zero and one follow Lean's conventions.
+
+The bounded-power rule computes `factor ^ clog base (size x)` for any caller's encoding with
+a certified unary size function. Both factor and base are fixed parameters. The existing
+logarithmic-growth bound controls every intermediate power, using `max factor 1` and `n+1` to
+include a zero factor, empty input and the initial accumulator. This supplies the numerical
+depth/size schedule needed by the expander family and supports fixed-factor amplification
+schedules. It is polynomial in the original encoded input through the unary-size certificate;
+there is no arbitrary binary-input/unary-output claim.
+
+Tests cover the actual arithmetic tower's base `257^8`, power boundaries, degenerate bases and
+zero factors, generic caller encodings, raw/framed words, and refusal of exponentially long unary
+output from binary input. Direct expressions use `fun_prop`. The let-bound depth/size pair uses
+the existing `polytime` tactic, or `dsimp only; fun_prop`: bare `fun_prop` separates the exponent
+from its logarithmic relation and cannot certify the resulting unrestricted exponential call.
+The bounded-power statement retains the caller's size function, so composition does not discard
+that relation. No tactic patch, new machine, or heartbeat override is added.
+
+The three new certificates cost 71 named proof-body lines (32, 20 and 19). Reusing the existing
+`Nat.pow_clog_le_mul` saves one line in the tower size proof. This is a net addition of 70 lines,
+not a proof-reduction claim; the total is 5,813 named proofs / 40,059 body lines across 550 modules.
+The metric excludes tests and embedded definition proofs. Full-module profiles use 2,554,505,
+1,057,360 and 267,324 raw tactic heartbeats respectively; these measure elaboration, not runtime.
+The standalone MCP profiler could not extract the file context, so profiling used a full source
+replica with `CountHeartbeats`.
+
+All six checks pass: strict build 1.39 s, import coverage 1.51 s, tests 16.75 s, environment lint
+7.06 s, style 2.17 s and init imports 4.24 s. Three headline axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`. Independent source/API review approves the loop invariant,
+all intermediate powers, fixed-parameter boundary and encoding inference; its portability fix
+corrected the capitalization of the test's `PolyTime` import. Codex correctness review follows
+publication of this batch.
+
+Uniform tower rotation and numbering certificates, encoded graph preprocessing and the complete
+PCP reduction are still outstanding. This batch certifies their numerical schedules only.
 
 ### Implementation priorities (2026-10-16)
 

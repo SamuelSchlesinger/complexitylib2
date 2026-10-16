@@ -5158,3 +5158,27 @@ info: 'Cslib.Probability.IsPPTOn.testProbabilityLT' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Cslib.Probability.IsPPTOn.testProbabilityLT
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_log_const' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_log_const
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_clog_const' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_clog_const
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow_clog_const' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow_clog_const

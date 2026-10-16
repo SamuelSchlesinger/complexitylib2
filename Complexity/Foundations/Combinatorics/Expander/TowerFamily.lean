@@ -11,6 +11,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Contraction
 public import Complexity.Foundations.Combinatorics.Expander.Reindex
 public import Complexity.Foundations.Combinatorics.Expander.Tower
 public import Mathlib.Data.Nat.Log
+import Complexity.Foundations.Data.Nat.Log
 
 /-!
 # Zig-zag expanders on every vertex count
@@ -59,9 +60,8 @@ theorem zigzagTower_size_bounds (hb : 1 < b) {n : ℕ} (hn : 2 ≤ n) :
     n ≤ b ^ (Nat.clog b n - 1 + 1) ∧ b ^ (Nat.clog b n - 1 + 1) ≤ b * n := by
   have hp := Nat.clog_pos hb hn
   have he : Nat.clog b n - 1 + 1 = Nat.clog b n := by lia
-  refine ⟨by rw [he]; exact Nat.le_pow_clog hb n, ?_⟩
-  rw [pow_succ, mul_comm]
-  exact Nat.mul_le_mul_left b (Nat.le_of_lt (Nat.pow_pred_clog_lt_self hb hn))
+  rw [he]
+  exact ⟨Nat.le_pow_clog hb n, Nat.pow_clog_le_mul hb (by lia)⟩
 
 /-- A constant-degree graph on every vertex count, from a numbered zig-zag base. -/
 def zigzagTowerFamily (H : RotationMap B D) (e : B ≃ (Fin 2 → D × D))
