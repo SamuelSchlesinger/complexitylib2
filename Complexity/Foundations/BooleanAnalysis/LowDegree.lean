@@ -12,6 +12,7 @@ public import Mathlib.Algebra.Algebra.Pi
 public import Mathlib.LinearAlgebra.Span.Defs
 public import Mathlib.Algebra.Algebra.Operations
 public import Mathlib.LinearAlgebra.Dimension.Constructions
+public import Mathlib.RingTheory.MvPolynomial.Basic
 import Mathlib.Algebra.BigOperators.Ring.Finset
 
 /-!
@@ -23,10 +24,12 @@ the monomial of a set `S` of coordinates is the function `x ↦ ∏_{i ∈ S} x 
 monomials of at most `D` coordinates (`BitString.lowDegree`). This is the degree of the multilinear
 polynomial representing a function on the cube, without formal polynomials: on bits every monomial
 is idempotent, so products of monomials are monomials (`BitString.monomial_mul`) and degrees add
-under multiplication (`BitString.mul_mem_lowDegree`). Every function has degree at most the number
+under multiplication (`BitString.mul_mem_lowDegree`). Evaluated at the bits read in `R`, Mathlib's
+polynomials of total degree at most `D` give exactly the functions of degree at most `D`
+(`BitString.lowDegree_eq_map_restrictTotalDegree`). Every function has degree at most the number
 of coordinates (`BitString.mem_lowDegree_self`), and the functions of degree at most `D` span a
-space of dimension
-at most the number of sets of at most `D` coordinates (`BitString.finrank_lowDegree_le`).
+space of dimension at most the number of sets of at most `D` coordinates
+(`BitString.finrank_lowDegree_le`).
 
 These are the polynomials of Razborov's and Smolensky's approximation method
 [Razborov1987], [Smolensky1987].
@@ -38,6 +41,8 @@ These are the polynomials of Razborov's and Smolensky's approximation method
 ## Main results
 
 * `Cslib.BitString.mul_mem_lowDegree`: degrees add under multiplication.
+* `Cslib.BitString.lowDegree_eq_map_restrictTotalDegree`: the functions of degree at most `D` are
+  the evaluations at bits of the polynomials of total degree at most `D`.
 * `Cslib.BitString.mem_lowDegree_self`: every function has degree at most the number of
   coordinates.
 * `Cslib.BitString.finrank_lowDegree_le`: the dimension of the functions of degree at most `D`.
@@ -78,6 +83,10 @@ variable {R}
 @[simp] theorem bitVal_true : bitVal R true = 1 := rfl
 
 @[simp] theorem bitVal_false : bitVal R false = 0 := rfl
+
+/-- A bit read in `R` is idempotent. -/
+theorem bitVal_pow (b : Bool) {k : ℕ} (hk : k ≠ 0) : bitVal R b ^ k = bitVal R b := by
+  cases b <;> simp [bitVal, hk]
 
 theorem bitVal_not (b : Bool) : bitVal R (!b) = 1 - bitVal R b := by
   cases b <;> simp [bitVal]
@@ -179,6 +188,37 @@ theorem comp_not_mem_lowDegree {D : ℕ} {f : (ι → Bool) → R} (hf : f ∈ l
   exact lowDegree_mono (by simpa using hS)
     (prod_mem_lowDegree S fun i _ => one_sub_mem_lowDegree (bitVal_mem_lowDegree i))
 
+open MvPolynomial in
+/-- **Low degree as total degree.** The functions of degree at most `D` are the evaluations at the
+bits, read in `R`, of the multivariate polynomials of total degree at most `D`: a monomial `x^d`
+evaluates to the monomial of the support of `d`, every bit being idempotent. -/
+theorem lowDegree_eq_map_restrictTotalDegree (D : ℕ) :
+    lowDegree R ι D = (restrictTotalDegree ι R D).map
+      (aeval fun i (x : ι → Bool) => bitVal R (x i)).toLinearMap := by
+  classical
+  refine le_antisymm (Submodule.span_le.2 ?_) ?_
+  · rintro _ ⟨S, hS, rfl⟩
+    refine ⟨∏ i ∈ S, X i, (mem_restrictTotalDegree _ _ _).2 ?_, ?_⟩
+    · refine (totalDegree_finsetProd _ _).trans ((sum_le_card_nsmul _ _ 1 fun i _ => ?_).trans ?_)
+      · exact (totalDegree_monomial_le _ _).trans (by simp)
+      · simpa using hS
+    · funext x
+      simp [BitString.monomial, Finset.prod_apply]
+  · rintro _ ⟨p, hp, rfl⟩
+    rw [SetLike.mem_coe, mem_restrictTotalDegree] at hp
+    rw [p.as_sum, map_sum]
+    refine Submodule.sum_mem _ fun d hd => ?_
+    have hd' : #d.support ≤ D := by
+      refine le_trans ?_ ((le_totalDegree hd).trans hp)
+      rw [Finsupp.sum, card_eq_sum_ones]
+      exact sum_le_sum fun i hi => Nat.one_le_iff_ne_zero.2 (Finsupp.mem_support_iff.1 hi)
+    convert Submodule.smul_mem _ (p.coeff d) (monomial_mem_lowDegree (R := R) hd') using 1
+    funext x
+    simp only [AlgHom.toLinearMap_apply, aeval_monomial, Pi.mul_apply, Pi.smul_apply,
+      smul_eq_mul, Finsupp.prod, Finset.prod_apply, Pi.pow_apply, BitString.monomial]
+    congr 1
+    exact prod_congr rfl fun i hi => bitVal_pow _ (Finsupp.mem_support_iff.1 hi)
+
 variable [Fintype ι]
 
 /-- **Every function on the cube has degree at most the number of coordinates**: it is the sum,
@@ -218,7 +258,7 @@ theorem finrank_lowDegree_le [StrongRankCondition R] (D : ℕ) :
     Module.finrank R (lowDegree R ι D) ≤ #{S : Finset ι | #S ≤ D} := by
   classical
   rw [lowDegree, show monomial R '' {S | #S ≤ D} =
-      ((univ.filter fun S : Finset ι => #S ≤ D).image (monomial R) : Set _) by
+      (({S : Finset ι | #S ≤ D} : Finset _).image (monomial R) : Set _) by
     ext f
     simp]
   exact (finrank_span_finset_le_card _).trans card_image_le
