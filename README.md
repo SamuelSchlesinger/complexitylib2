@@ -49,8 +49,11 @@ one-bit PRG theorem. The randomized inverter is ordinary functional code certifi
 with an exact finite-game correspondence and a typed saved-seed evaluator. Polynomial stretch
 uses a uniform random-hop reduction with an exact dyadic loss; arbitrary efficient larger output
 lengths follow. Random functions have exact eager/lazy semantics, typed caches and an
-association-list implementation with query-budget bounds. General OWF → PRG through pseudoentropy
-and adaptive GGM security, including oracle-PPT certification, remain to be ported.
+association-list implementation with query-budget bounds. The same eager/lazy law now covers
+independent private randomness. Word-oracle PPT uses the joint stateful machine contract and
+reuses deterministic `fun_prop` certificates; query-budget extraction and efficient oracle
+substitution remain pending. General OWF → PRG through pseudoentropy and adaptive GGM security
+remain to be ported.
 
 ## Layout
 

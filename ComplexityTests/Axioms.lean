@@ -4167,3 +4167,38 @@ info: 'Cslib.IsMonadHom.stateT' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.IsMonadHom.stateT
+
+/--
+info: 'Cslib.RandomOracle.run_interpret_answer_complete_prob' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.run_interpret_answer_complete_prob
+
+/--
+info: 'Cslib.RandomOracle.uniform_interpret_prob_eq_lazy' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.uniform_interpret_prob_eq_lazy
+
+/--
+info: 'Cslib.Probability.IsOraclePPTOn.length_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsOraclePPTOn.length_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.isOraclePPTOn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.isOraclePPTOn
+
+/--
+info: 'Turing.MultiTapePTM.run_interpret_runOracle_ofDeterministic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapePTM.run_interpret_runOracle_ofDeterministic

@@ -39,7 +39,8 @@ rules and general effectful machine are now present. Closed `IsPPTOn` supplies t
 realization contract, a deterministic bridge, fair-bit sampling, monadic bind, captured inputs
 and conditionals. The `ppt` tactic combines these with deterministic automation and
 constant-growth probabilistic loops. General bounded loops use supported-state invariants;
-oracle PPT remains to be integrated into v2.
+the word-oracle PPT contract and deterministic bridge are present, while its composition,
+substitution and query-budget rules remain to be integrated.
 The deterministic `polytime` tactic and invariant-oriented loop specifications have now been
 adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
@@ -209,10 +210,10 @@ not existence proofs of one-way functions or permutations.
 |---|---|
 | Typed programs and probability/state interpretation | PR #1129 copied at `4e626b5`; source credits Samuel Schlesinger and Devon Tuma and the VCVio design |
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
-| Random-function semantics | joint eager/lazy completion law for adaptive oracle-only programs; typed caches, association-list realization, compositional query budgets and a closed-sampler bridge. Independent private coins and oracle-PPT realization remain pending |
+| Random-function semantics | joint eager/lazy completion law including independent private coins and adaptive queries; typed caches, association-list realization, compositional oracle-only query budgets and a closed-sampler bridge |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Machine composition charges preparation and has intrinsically halting finite witnesses; oracle PPT remains pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; oracle composition, substitution and query-budget extraction remain pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -656,6 +657,30 @@ files. Two existing PRG proofs now use the shared support-sensitive map congruen
 saving one line each. This batch expands the interface and is not an overall proof-length reduction.
 Counts exclude definitions, statements and tests.
 
+### Private coins and word-oracle PPT (2026-10-16)
+
+`ProbOracleComp` is an abbreviation for the disjoint sum of the existing uniform sampling and
+external query interfaces. Programs use `sample` and `query` inside ordinary `do` blocks, and
+`OracleComp.interpret` remains the sole interpreter. The completion theorem now handles both
+adaptive external requests and fresh private coins, preserving the joint result and final table.
+Its proof uses the existing state simulation rule: random draws commute with table completion,
+and external requests use the established one-query completion law.
+
+`IsOraclePPTOn` fixes one finite-control, finite-channel fair-coin machine and one polynomial
+before quantifying over inputs and shared stateful handlers. Requests and replies are words;
+arbitrary typed codecs are not hidden in the external handler. The clock charges writing requests,
+reading replies and writing output. Deterministic functional programs reuse tidy certificates
+with `fun_prop`. Tests certify a functional client that requests a word and returns its first bit,
+with exact joint-state behavior, and prove that returning an unrestricted reply cannot have a
+uniform strict polynomial clock. Separate tests check independence of repeated private samples.
+
+This is the realization contract and deterministic bridge. Extracting request budgets from the
+machine clock, composing open programs and certifying efficient stateful oracle substitution are
+the next requirements for the GGM reduction; the closed `ppt` tactic does not yet cover them.
+The four source modules add 16 theorem bodies / 70 body lines, bringing the library to
+5,361 / 36,656 in 485 source files. Counts include shared semantic and machine helpers, but exclude
+definitions, statements and tests; they are not a claim of reduced elaboration time.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
@@ -1066,7 +1091,8 @@ It merges into current cslib main with two trivial conflicts and the merge build
 3. The universal simulation backend is crei's; v2's hierarchy work will build on `Universal/`.
    The free-monad interface and realization layer are separate from crei's backend; v2 now
    supplies the typed frontend, closed PPT contract, monadic composition, captured inputs and
-   invariant-certified bounded probabilistic loops, while oracle PPT remains pending.
+   invariant-certified bounded probabilistic loops, and the word-oracle realization contract.
+   Oracle composition and substitution remain pending.
 4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
    freely.** crei's calculus and universal machine are vendored in full as tracked local copies
    (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),

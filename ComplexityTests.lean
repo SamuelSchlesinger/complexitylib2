@@ -16,6 +16,7 @@ import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
+import ComplexityTests.OraclePPT
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
