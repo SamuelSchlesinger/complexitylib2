@@ -100,6 +100,25 @@ example : ComputableTidilyInPolyTime (fun p : Bool × List Bool => reverseCopy p
 example : ComputableTidilyInPolyTime (fun word => reverseCopy (reverseCopy word))
     encBits encBits := by polytime
 
+private def appendFixed (n : ℕ) (word : List Bool) : List Bool :=
+  List.replicate n false ++ word
+
+@[program_certificate]
+private theorem appendFixed_zero (n : ℕ) (h : n = 0) :
+    ComputableTidilyInPolyTime (appendFixed n) encBits encBits := by
+  subst n
+  fun_prop [appendFixed]
+
+@[program_certificate]
+private theorem appendFixed_polytime (n : ℕ) :
+    ComputableTidilyInPolyTime (appendFixed n) encBits encBits := by
+  fun_prop [appendFixed]
+
+attribute [irreducible] appendFixed
+
+-- An inapplicable side condition must not hide a later, unconditional certificate.
+example : ComputableTidilyInPolyTime (appendFixed 1) encBits encBits := by polytime
+
 -- A captured parameter and a value invariant prove efficiency and the computed result together.
 example : ComputableTidilyInPolyTime
       (fun n : ℕ => (fun total => total + n)^[n] 0) encUnary encUnary ∧

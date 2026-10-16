@@ -126,8 +126,10 @@ def solveTagged (name : Name) : TacticM Unit := do
     evalTactic (← `(tactic| case $tag:ident => solve | aesop (rule_sets := [PPT, PolyTime])))
 
 /-- Apply a certificate registered for the program in the main goal, trying each certificate for
-its head in registration order. -/
-def applyCertificate (predicate : Name) : TacticM Unit := withMainContext do
+its head in registration order. Discharge its premises before committing, so an unavailable
+side condition does not prevent using a later certificate. -/
+def applyCertificate (predicate : Name) : TacticM Unit :=
+    withMainContext <| focus <| Term.withoutErrToSorry <| withoutRecover do
   let target := (← instantiateMVars (← getMainTarget)).consumeMData
   unless target.isAppOf predicate do throwError "expected an efficiency goal for {predicate}"
   let key ← efficiencyKey target
@@ -136,6 +138,10 @@ def applyCertificate (predicate : Name) : TacticM Unit := withMainContext do
     try
       liftMetaTactic fun goal => goal.applyConst certificate
       eager.forM solveTagged
+      if predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
+        evalTactic (← `(tactic| all_goals solve | aesop (rule_sets := [PolyTime])))
+      else
+        evalTactic (← `(tactic| all_goals solve | aesop (rule_sets := [PPT, PolyTime])))
       return
     catch _ =>
       saved.restore
