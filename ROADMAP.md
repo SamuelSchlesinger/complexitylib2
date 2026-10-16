@@ -1788,7 +1788,10 @@ checks the formal-polynomial boundary. Three headline axiom guards use only `pro
 `Classical.choice` and `Quot.sound`. Independent source/API review approves the implementation
 and tests. All six project checks pass: strict build 1.56 s, import coverage 1.63 s, tests 5.72 s,
 environment lint 7.40 s, style 2.18 s and init imports 4.32 s. These are incremental checkpoint
-timings. The required post-publication correctness review is pending.
+timings. The independent post-publication Codex correctness review approves `99b3211` without
+material findings. It checked the exact published diff, supplied CSLib APIs, theorem premises,
+shared-gate accounting, affine inputs, constant semantics, rank bridge, characteristic-two
+counterexample and proof-length accounting. It did not rerun the six gates or profiling.
 
 ### Implementation priorities (2026-10-16)
 
