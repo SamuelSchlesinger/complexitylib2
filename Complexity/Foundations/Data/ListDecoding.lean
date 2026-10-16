@@ -14,6 +14,7 @@ public import Mathlib.Data.Finset.Density
 public import Mathlib.InformationTheory.Hamming
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Data.Nat.Log
+import Complexity.Foundations.Data.Hamming
 
 /-!
 # List decoding
@@ -39,6 +40,8 @@ Nisan–Wigderson reconstruction recovers a message from a predictor of its code
 ## Main results
 
 * `Cslib.ListCode.card_candidates_le`: there are at most `L` candidates.
+* `Cslib.ListCode.listDecodes_of_surjective`: a decoder listing every message list decodes at
+  every radius.
 * `Cslib.ListCode.ListDecodes.exists_decode_eq`,
   `Cslib.ListCode.ListDecodes.exists_decode_eq_of_half_add_le`: a message whose codeword
   agrees with the received word on enough coordinates is a candidate.
@@ -105,21 +108,19 @@ theorem exists_decodeBits_eq_some {w : ι → β} {x : α} (h : ∃ k, C.decode 
 
 variable [Fintype ι] [DecidableEq β] {C}
 
-private theorem hammingDist_eq_card_mul_one_sub_dens (f g : ι → β) :
-    (hammingDist f g : ℝ) = Fintype.card ι * (1 - dens {i | f i = g i}) := by
-  have hcard : #{i | f i = g i} + hammingDist f g = Fintype.card ι := by
-    rw [hammingDist, ← card_univ]
-    exact card_filter_add_card_filter_not _
-  rw [mul_sub, mul_one, natCast_card_mul_nnratCast_dens, ← hcard]
-  push_cast
-  ring
+/-- A decoder whose candidates enumerate all messages, whatever the received word, list decodes at
+every radius: the list then has `L ≥ |α|` entries, so this only shows that list decoding is
+satisfiable. -/
+theorem listDecodes_of_surjective (h : ∀ w, Function.Surjective (C.decode w)) (ρ : ℝ) :
+    C.ListDecodes ρ :=
+  fun x w _ => h w x
 
 /-- A list decoder up to radius `ρ` lists every message whose codeword agrees with the received
 word on at least a `1 - ρ` fraction of the coordinates. -/
 theorem ListDecodes.exists_decode_eq {ρ : ℝ} (hC : C.ListDecodes ρ) {x : α} {w : ι → β}
     (h : 1 - ρ ≤ (dens {i | C.encode x i = w i} : ℝ)) : ∃ k, C.decode w k = x := by
   refine hC x w ?_
-  rw [hammingDist_eq_card_mul_one_sub_dens, mul_comm]
+  rw [hammingDist_eq_card_mul_one_sub_dens (𝕜 := ℝ), mul_comm]
   gcongr
   linarith
 
@@ -130,8 +131,8 @@ theorem ListDecodes.exists_decode_eq_of_half_add_le {δ : ℝ} (hC : C.ListDecod
     ∃ k, C.decode w k = x :=
   hC.exists_decode_eq (by linarith)
 
-/-- A list decoder up to radius `1 / 2 - δ` lists every message whose codeword agrees with the
-received word on at least a `1 / 2 + δ` fraction of the coordinates. -/
+/-- A message whose codeword agrees with the received word on at least a `1 / 2 + δ` fraction of
+the coordinates is among the candidates of a list decoder up to radius `1 / 2 - δ`. -/
 theorem ListDecodes.mem_candidates_of_half_add_le [DecidableEq α] {δ : ℝ}
     (hC : C.ListDecodes (1 / 2 - δ)) {x : α} {w : ι → β}
     (h : 1 / 2 + δ ≤ (dens {i | C.encode x i = w i} : ℝ)) : x ∈ C.candidates w :=

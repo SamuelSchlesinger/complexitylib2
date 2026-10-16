@@ -449,6 +449,13 @@ example {ℓ n a m L K : ℕ} (D : Design ℓ n a m)
   length_program_le _ k := (hC _ k).trans (Nat.le_add_left _ _)
   mem_runFor_program _ k := DescriptionMethod.mem_literal_runFor.mpr ⟨hC _ k, rfl⟩
 
+/-- List decoding, a hypothesis of the Nisan–Wigderson reconstruction, is satisfiable: a decoder
+listing all `Fintype.card α` messages decodes any code at every radius. -/
+example {α ι : Type} [Fintype α] [Fintype ι] (encode : α → ι → Bool) (ρ : ℝ) :
+    (⟨encode, fun _ k => (Fintype.equivFin α).symm k⟩ :
+      ListCode α ι Bool (Fintype.card α)).ListDecodes ρ :=
+  ListCode.listDecodes_of_surjective (fun _ => (Fintype.equivFin α).symm.surjective) ρ
+
 end KolmogorovNW
 
 section Composition
