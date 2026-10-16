@@ -50,6 +50,11 @@ universe u
 
 variable {α β γ δ ε : Type*}
 
+/-- Every event has finite probability, including on an infinite ambient type.
+Adapted from the cslib `crypto` branch at `5ff69ca`. -/
+theorem toOuterMeasure_ne_top (p : PMF α) (event : Set α) : p.toOuterMeasure event ≠ ⊤ := by
+  simpa only [PMF.toOuterMeasure_apply] using p.tsum_coe_indicator_ne_top event
+
 /-- The pairing law also holds when the second sample's type depends on the first.
 Adapted from the cslib `crypto` branch at `5ff69ca`. -/
 theorem bind_sigma_apply {β : α → Type*} (p : PMF α) (f : (a : α) → PMF (β a))

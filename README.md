@@ -83,8 +83,10 @@ yields an OWF whose output length depends only on its input length, with a polyn
 length function and a uniform strict PPT inversion reduction. The conditioning and collision APIs
 are also ported, including the necessary negligible-output-collision consequence of one-wayness.
 Finite Shannon entropy and the samplable pseudoentropy-pair interface are implemented, with a
-strict PPT certificate for the complete prediction game. Constructing a positive pseudoentropy
-gap from an OWF remains part of the pending security reduction.
+strict PPT certificate for the complete prediction game. Every such sampler has an efficient
+deterministic saved-seed evaluator, with exact joint-law and entropy accounting for unused coins;
+finite-PMF concentration bounds support independent repetition. Constructing a positive
+pseudoentropy gap from an OWF remains part of the pending security reduction.
 
 ## Layout
 

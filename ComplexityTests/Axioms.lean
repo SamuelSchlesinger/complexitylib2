@@ -4775,3 +4775,61 @@ info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_entropy_add_ga
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_entropy_add_gap_le_one
+
+/--
+info: 'Cslib.Probability.PMF.pi_sum_le_mean_sub' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.pi_sum_le_mean_sub
+
+/--
+info: 'Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge
+
+/--
+info: 'Cslib.Probability.PMF.pi_conditional_mass_gt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.pi_conditional_mass_gt
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.exists_observationBound' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.exists_observationBound
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.exists_seedRealization' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.exists_seedRealization
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.isPPTOn_sampleWithSeed' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.isPPTOn_sampleWithSeed
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.eval_sampleWithSeed' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.eval_sampleWithSeed
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.entropy_chain_rule' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.entropy_chain_rule

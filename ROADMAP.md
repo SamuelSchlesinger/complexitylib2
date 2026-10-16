@@ -216,7 +216,7 @@ not existence proofs of one-way functions or permutations.
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
-| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy and the samplable-pair interface are complete; queue the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy, concentration and uniform-seed samplable pairs are complete; queue the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
@@ -1244,8 +1244,83 @@ Under the same current imports and helper API, old/new raw tactic heartbeats are
 924,461 / 1,693,912 for the dependent-pair mass rule, 109,050 / 146,563 for expected surprisal,
 and 313,355 / 267,062 for the ambiguous-observation entropy bound. The shorter simplification
 proofs do not uniformly reduce elaboration cost. The complete prediction-game `ppt` certificate
-uses 659,605. These are proof elaboration counts, not machine runtime; independent adversarial
-correctness review follows publication.
+uses 659,605. These are proof elaboration counts, not machine runtime. Independent adversarial
+correctness review approves `b14217e` without material findings. Its Lean probes include null
+observations, dependent alphabets, exact joint sampling and predictor complementation; approval
+covers these foundations, with positive-gap existence and general OWF → PRG still pending.
+
+### Uniform seeds and information concentration (2026-10-16)
+
+Every samplable pair now has a deterministic polynomial-time evaluator from a uniform polynomial
+seed, using the existing typed saved-coin evaluator. Its program accepts arbitrary seed words;
+exactly sized uniform seeds realize the full observation/hidden-bit law. A finite semantic view
+uses the observation encoding's injectivity, without requiring a computable enumeration or a
+decoder on arbitrary words. The seed-retaining sampler returns the complete evaluator result and
+all seed bits with a strict PPT certificate. Revealing the pair leaves exactly the remaining seed
+entropy, including randomness the evaluator never used.
+
+Finite-PMF Hoeffding bounds reuse Mathlib's sub-Gaussian estimate and the existing independent
+product API. Scores need be bounded only on supported values. Their lower, upper and two-sided
+forms allow empty index sets and zero bounds, for which the exponent's division is totalized.
+The information corollaries use a lower bound on positive joint masses; for saved seeds the
+bound is their full length. This is the seed-length variant of Holenstein's information estimate,
+not the sharper alphabet-size version. Neither concentration nor the seed presentation proves
+the pending positive pseudoentropy gap or extraction security.
+
+The three matched source modules have 21 bodies / 186 lines; the port has 21 / 171. Including the
+one-line event-finiteness helper gives matched totals 22 / 187 versus 22 / 172. The source also
+needs a two-line event-probability bound helper, which direct reuse of Mathlib makes unnecessary
+here: the full selected prerequisite cost is therefore 23 / 189 versus 22 / 172. There are no
+changes to existing proof bodies. The library now has 5,681 bodies / 38,769 lines in 530 modules,
+median 3 / P90 17, under the same source-layout convention used above.
+
+The seed chain rule drops from nine body lines to three by combining the existing marginal law
+with injective entropy preservation. Its old/new bodies, under the same current imports, use
+1,183,162 / 949,264 raw tactic heartbeats. The complete seed-retaining sampler's four-line
+certificate uses 5,930,772; the finite-PMF lower-tail proof uses 1,916,241. These measure proof
+elaboration, not runtime. An independently checked specialization to the older counting-form
+bit-string Hoeffding result would save only eight lines after its two bridges, while adding a
+probability-layer dependency, so that existing self-contained proof is retained.
+
+Regressions cover arbitrary biased marginals, zero coordinates, support-only bounds with an
+impossible score of 100, malformed seeds, and a concrete sampler that reads one bit from an
+`n + 1`-bit seed. Its exact joint law and residual conditional entropy of `n` bits are checked.
+Named calls, explicit binds and an alternative input encoding all certify through `ppt`. Eight
+axiom guards cover concentration, existence, efficiency, exact distribution and entropy.
+Independent source/API review approves these contracts and checks the concrete instances.
+All six project checks pass after the final simplification. Independent adversarial correctness
+review follows publication.
+
+### Efficiency-certificate inventory (2026-10-16)
+
+An independently checked inventory at the saved-seed batch counts named theorem/lemma declarations
+whose conclusion is headed by `ComputableTidilyInPolyTime`, `IsPPTOn`, `IsPPT`, `IsOraclePPTOn` or
+`IsOraclePPT`. It includes private named helpers and term proofs, excludes hypotheses and proofs
+embedded in definitions/structures, and excludes tests, generated declarations and the separate
+degree/time-space predicates. These are accepted certificate proofs, not a success rate over
+attempted tactic goals or a count of distinct algorithms.
+
+| Area | Certificates | Body lines | Median | At most 3 lines | At most 5 lines |
+|---|---:|---:|---:|---:|---:|
+| `Crypto/Computational` | 44 | 191 | 2 | 34 | 38 |
+| `Computability/Complexity/CookLevin` | 26 | 82 | 1 | 21 | 23 |
+| Entire local library | 333 | 1,522 | 2 | 239 | 266 |
+
+Of the 44 crypto certificate bodies, 43 invoke `fun_prop`, `polytime` or `ppt` somewhere; this
+does not mean 43 one-command proofs. Most longer application proofs supply loop-size or adaptive
+cache invariants. Neither computational crypto nor Cook–Levin defines a native TM transition
+table. Their certificates compose the shared backend, and their separate mathematical/security
+proofs are outside these numbers. The 333 declarations comprise 314 candidates and 19 vendored
+declarations; this count does not attribute inherited work to the port.
+
+There are 25 machine-level constructor/adapter declaration sites in the local source tree,
+all in the backend: 17 candidates, seven copies of Christian Reitwiessner's tidy-universal work,
+and one submitted declaration from PR #1111. Ten further finite-state transducer tables all come
+from that tidy-universal work. Pinned cslib contributes another 11 transition-building declarations
+(copy, almost-constant output, forward/rewind, input/output adapters, sequencing, looping, no-op and
+tape extension). The generic `ofTr` factory is excluded. Representation bridges, probabilistic
+specializations and adapters are included, so these are declaration sites, not a minimal primitive
+basis or a count of semantically distinct machines. The saved-seed/entropy batches add none.
 
 ### Implementation priorities (2026-10-16)
 
