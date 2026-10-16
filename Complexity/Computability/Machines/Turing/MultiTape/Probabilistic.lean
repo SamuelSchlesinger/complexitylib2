@@ -39,7 +39,7 @@ open Cslib
 
 /-- A machine with one transition per Boolean coin; by default it has no oracle channels. -/
 abbrev MultiTapePTM (k : ℕ) (Symbol State : Type) (Oracle : Type := Empty) :=
-  MultiTapeMachine k Symbol State Oracle (fun α => Bool → α)
+  MultiTapeMachine k Symbol State Oracle (ReaderT Bool Id)
 
 namespace MultiTapePTM
 

@@ -36,7 +36,7 @@ conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's 
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
 that count, not its binary length. The `PFunctor.FreeM` program interface and stateful simulation
 rules and general effectful machine are now present. Closed `IsPPTOn` supplies the semantic
-realization contract, a deterministic bridge, and fair-bit sampling; probabilistic sequencing,
+realization contract, a deterministic bridge, and fair-bit sampling; PPT bind/loop closure,
 oracle PPT and `ppt` remain to be integrated into v2. The deterministic
 `polytime` tactic and invariant-oriented loop specifications have now been adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
@@ -206,9 +206,9 @@ not existence proofs of one-way functions or permutations.
 |---|---|
 | Typed programs and probability/state interpretation | PR #1129 copied at `4e626b5`; source credits Samuel Schlesinger and Devon Tuma and the VCVio design |
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
-| Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs |
+| Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge and fair-bit sampling registered with `fun_prop`; resource-certified probabilistic/oracle composition, oracle PPT and `ppt` remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge and fair-bit sampling registered with `fun_prop`; machine sequencing available, while clock compilation, fresh-input composition, PPT bind/loop closure, oracle PPT and `ppt` remain pending |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -251,11 +251,23 @@ an intrinsically halting witness still requires a clock compiler. Its output bou
 supported result, and the deterministic embedding preserves all channels and private oracle state
 under stateless coin semantics.
 
+The shared sequencing batch adds 12 theorem bodies / 107 body lines, reaching 4,786 / 33,537.
+The compiler maps actions through the existing choice functor; the probabilistic specialization
+uses the same proof in three body lines. `HaltsWithin` and the additive sequencing rule retain
+all communication channels and the final private state, and `toTM_seq` identifies deterministic
+sequencing with upstream's compiler. Independent review shortened that bridge by 11 body lines
+by comparing the transition-table constructors directly. Tests instantiate both halting premises
+for arbitrary stateful probabilistic interpreters, exercise one- versus two-instruction stopping times and
+coin-count-dependent replies, and exhibit failure of the proposed equality without actual
+halting of the continuation. This is shared-tape composition; closing `IsPPTOn` under `bind`
+still requires the clock compiler and a compiler that supplies fresh encoded input.
+
 ### Next design experiments
 
 1. **Integrate the crypto probabilistic realization layer and `ppt`.** The deterministic loop
    and tactic interfaces, typed `PFunctor.FreeM` frontend, effectful machine interpreter, and initial
-   closed PPT contract are in place. Adapt the probabilistic composition and loop rules, then
+   closed PPT contract and machine sequencing are in place. Adapt clock compilation,
+   fresh-input composition and the probabilistic loop rules, then
    validate one readable `do` program containing a bounded loop, a semantic specification and an
    actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement

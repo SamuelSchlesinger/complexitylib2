@@ -3533,4 +3533,30 @@ info: 'Cslib.OracleComp.run_interpret_simulation_of_invariant' depends on axioms
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.OracleComp.run_interpret_simulation_of_invariant
 
+/--
+info: 'Turing.MultiTapeMachine.run_interpret_runConfigFrom_add_of_halted' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.run_interpret_runConfigFrom_add_of_halted
+
+/--
+info: 'Turing.MultiTapeMachine.toTM_seq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.toTM_seq
+
+/--
+info: 'Turing.MultiTapeMachine.run_interpret_runConfigFrom_seq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.run_interpret_runConfigFrom_seq
+
+/--
+info: 'Turing.MultiTapePTM.run_interpret_runConfigFrom_seq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.run_interpret_runConfigFrom_seq
+
 end ComplexityTests.Axioms

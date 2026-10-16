@@ -5,6 +5,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
 import ComplexityTests.GGM
 import ComplexityTests.MachinePrograms
+import ComplexityTests.MachineSequential
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
 import ComplexityTests.PPT
