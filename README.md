@@ -22,8 +22,9 @@ including fair-coin runs. Closed `IsPPTOn` certificates now reuse deterministic 
 deterministic preprocessing and
 postprocessing, captured inputs and conditionals. The compiler charges copying and fresh-input
 preparation and guarantees actual halting. The `ppt` tactic combines these rules with deterministic
-`polytime` automation, named certificates and locally supplied routines. Probabilistic loops and
-oracle PPT remain to be integrated.
+`polytime` automation, named certificates and locally supplied routines. Bounded probabilistic
+loops have joint efficiency and invariant rules, including captured inputs; `ppt` handles
+constant state growth. Oracle PPT remains to be integrated.
 Saved-coin replay preserves the full configuration and private oracle state under stateless
 fair-coin semantics. Closed replay has a uniform linear-time and space certificate from the
 ordinary encoded pair of coins and input, including preparation and final cleanup. Functional

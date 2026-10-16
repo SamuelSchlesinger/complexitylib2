@@ -37,8 +37,9 @@ Its universal function takes a binary step count: its bound is polynomial in the
 that count, not its binary length. The `PFunctor.FreeM` program interface and stateful simulation
 rules and general effectful machine are now present. Closed `IsPPTOn` supplies the semantic
 realization contract, a deterministic bridge, fair-bit sampling, monadic bind, captured inputs
-and conditionals. The `ppt` tactic combines these with deterministic automation;
-probabilistic loops and oracle PPT remain to be integrated into v2.
+and conditionals. The `ppt` tactic combines these with deterministic automation and
+constant-growth probabilistic loops. General bounded loops use supported-state invariants;
+oracle PPT remains to be integrated into v2.
 The deterministic `polytime` tactic and invariant-oriented loop specifications have now been
 adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
@@ -210,7 +211,7 @@ not existence proofs of one-way functions or permutations.
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; machine composition charges copying and fresh input and has intrinsically halting finite witnesses; probabilistic loops and oracle PPT remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Machine composition charges preparation and has intrinsically halting finite witnesses; oracle PPT remains pending |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -307,8 +308,8 @@ The machine test distinguishes generated input from the real input, dirty source
 fresh continuation scratch, empty output from a one-bit word, and one- from two-instruction
 stopping times. Adapter tests also preserve channel data and stateful coin effects at both ends
 of an empty input. Independent review replaced tuple-index arithmetic with existing `Fin` tuple
-identities. The following batch supplies captured caller inputs; probabilistic iteration and
-oracle PPT remain separate work.
+identities. Later batches below supply captured caller inputs and probabilistic iteration;
+oracle PPT remains separate work.
 
 The capture batch adds 22 theorem bodies / 108 body lines, reaching 4,913 / 34,269. A common
 program law preserves existing output prefixes, including channels and stateful interactions.
@@ -354,7 +355,8 @@ arithmetic or a bounded-growth population-count fold, and sampled-seed GGM evalu
 Binary-only counts are rejected. Including the guard wrapper, this batch adds 18 theorem bodies /
 112 body lines, for 4,931 / 34,381 in 435 source files. The scanner's general configuration proof
 is 33 body lines; its high-level sampler certificate is four, and its count-composition rule is
-one. Probabilistic iteration, oracle PPT and the crypto security reductions are still pending.
+one. Subsequent batches below supply saved-seed evaluation and probabilistic iteration; oracle
+PPT and the crypto security reductions are still pending.
 
 Saved-coin semantics and its deterministic controller are now ported. Replay is a `foldlM` of
 the shared one-step program, so pause/resume and interpretation use the existing list and monad
@@ -391,20 +393,34 @@ of different lengths, preserving their marginal distributions without asserting 
 Tests instantiate a marked variable-length sampler, unary natural outputs with constrained
 support, and a shared Boolean predictor tape. Including the generic PMF encoding lemma, this
 batch adds 7 theorem bodies / 68 body lines, giving 4,973 / 34,718 in 441 source files.
-Probabilistic repetition, adaptive loops, oracle PPT and the crypto security reductions remain
-to be ported.
+Adaptive loops are supplied in the following batch. Repetition helpers, oracle PPT and the crypto
+security reductions remain to be ported.
+
+Bounded adaptive iteration now reuses the deterministic fold calculus. One invariant bounds every
+supported intermediate state's encoded size and proves the final supported postcondition. A
+common polynomial coin budget and independent rows of one uniform tape give the exact adaptive
+distribution. The captured-input rule retains a uniform joint certificate for the input and
+changing state. Constant-growth and nonincreasing variants are registered with `ppt`.
+`BitString.listRows` uses ordinary dropping, padding and taking and reuses `blocksEquiv`; no new
+machine table is needed. Its count, width and complete encoded output are charged.
+
+Tests certify a quadratic-length random-list program with `ppt`, a captured capped counter, and
+an implicit binary-graph walk whose invariant proves reachability. They cover zero iterations,
+zero rows and width, short tapes, and reject an exponential-growth loop with only a polynomial
+count. The captured counter also exposed ambiguous intermediate encodings in conditional guards:
+pointwise Boolean and unary-comparison rules now let `fun_prop`, `polytime` and `ppt` handle the
+compound guard directly. Including the five new modules and these rules, this batch adds
+30 theorem bodies / 190 body lines, reaching 5,003 / 34,908 in 446 source files. The general loop
+certificate uses 59 body lines, captured iteration 28, and the bounded-growth wrappers 14 and 1.
+Statements, definitions, tests and tactic registration code are excluded from this layout metric.
 
 ### Next design experiments
 
-1. **Extend `ppt` to probabilistic loops.** The deterministic loop and tactic interfaces, typed
-   `PFunctor.FreeM` frontend, effectful machine interpreter, closed PPT contract, runtime-length
-   sampling, captured-input composition and polynomial clock compiler are in place.
-   Use the total typed saved-coin evaluators, with exact distributions and support for every seed,
-   to certify repetition and adaptive loops through the deterministic loop calculus. Then
-   validate one readable `do` program containing a bounded loop, a semantic specification and an
-   actual TM resource certificate, without a
-   new transition table in the client. This is an interface acceptance test, not a replacement
-   for the Cook–Levin milestone.
+1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
+   semantic invariant rules with functional clients. Port the independent repetition, empirical
+   probability tests and collection helpers used by Goldreich–Levin and pseudoentropy, then the
+   stateful oracle realization contract required for adaptive GGM security. Preserve the joint
+   result/private-state distribution and charge query and reply lengths.
 2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
    repeat finite union bounds, construction of a bad event and extraction of a good sample.
    Trial a shared finite-family existence lemma using Mathlib's existing measure union bounds;
@@ -807,8 +823,8 @@ It merges into current cslib main with two trivial conflicts and the merge build
 2. `PolyTime` is crei's `ComputableTidilyInPolyTime`; v2 does not build its own calculus.
 3. The universal simulation backend is crei's; v2's hierarchy work will build on `Universal/`.
    The free-monad interface and realization layer are separate from crei's backend; v2 now
-   supplies the typed frontend, closed PPT contract, monadic composition and captured inputs,
-   while probabilistic loops and oracle PPT remain pending.
+   supplies the typed frontend, closed PPT contract, monadic composition, captured inputs and
+   invariant-certified bounded probabilistic loops, while oracle PPT remains pending.
 4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
    freely.** crei's calculus and universal machine are vendored in full as tracked local copies
    (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),

@@ -3797,4 +3797,39 @@ info: 'Cslib.Probability.IsPPTOn.exists_padded_bool_coin_evaluator' depends on a
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.IsPPTOn.exists_padded_bool_coin_evaluator
 
+/--
+info: 'Cslib.BitString.uniformList_listRows' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.uniformList_listRows
+
+/--
+info: 'Cslib.ProbComp.eval_iterate_of_uniform' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.eval_iterate_of_uniform
+
+/--
+info: 'Cslib.Probability.IsPPTOn.iterate_spec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.iterate_spec
+
+/--
+info: 'Cslib.Probability.IsPPTOn.iterateWith_spec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.iterateWith_spec
+
+/--
+info: 'Cslib.Probability.IsPPTOn.iterate_of_bounded_growth' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.iterate_of_bounded_growth
+
 end ComplexityTests.Axioms

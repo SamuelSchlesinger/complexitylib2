@@ -10,6 +10,7 @@ module
 public import Complexity.Tactic.PolyTime
 public import Complexity.Computability.Probabilistic.PPT.Capture
 public import Complexity.Computability.Probabilistic.Sampling
+public import Complexity.Computability.Probabilistic.Adaptive
 
 /-!
 # Certifying functional probabilistic programs
@@ -19,8 +20,9 @@ use ordinary `do` notation, captured inputs and conditionals. Named and local ce
 reused, and tuple arguments are prepared with the shared routine-call
 matcher. Every proof supplies the uniform strict fair-coin machine contract of `IsPPTOn`.
 
-Unknown algorithms need certificates. Fair bits and uniform words with efficiently computed unary
-lengths are certified here. Probabilistic loops and oracle PPT need further rules.
+Unknown algorithms need certificates. Fair bits, uniform words with efficiently computed unary
+lengths, and bounded loops with constant state growth are certified here. General loop invariants
+use `IsPPTOn.iterate_spec`; oracle PPT needs further rules.
 
 ## Main definitions
 
@@ -75,6 +77,9 @@ private meta def pptCaptured : TacticM Unit :=
     liftMetaTactic fun goal => goal.applyConst rule
 
 attribute [aesop unsafe 80% apply (rule_sets := [PPT])] IsPPTOn.cond IsPPTOn.ite
+
+attribute [aesop unsafe 80% apply (rule_sets := [PPT])]
+  IsPPTOn.iterate_of_length_le IsPPTOn.iterate_of_bounded_growth
 
 /-- Certify a probabilistic program using proved sampling, composition and deterministic rules. -/
 macro "ppt" : tactic => `(tactic| solve | aesop (rule_sets := [PPT, PolyTime]))

@@ -29,8 +29,9 @@ In particular, this definition does not certify exact uniform sampling from ever
 The public input and output encodings reuse the tidy calculus. A deterministic certificate lifts
 directly to `IsPPTOn` without another deterministic computability predicate. `PPT.Composition`
 certifies monadic `bind`, deterministic preprocessing and postprocessing. `PPT.Capture` permits
-captured inputs and efficient conditionals. `Tactic.PPT` automates these closed program rules;
-probabilistic loops and oracle PPT require further certified constructions.
+captured inputs and efficient conditionals. `Adaptive` certifies bounded probabilistic loops from
+supported state-size invariants. `Tactic.PPT` automates the closed program rules and constant-growth
+loops; oracle PPT requires further certified constructions.
 
 Adapted from the cslib `crypto` branch's `Computability/Probabilistic/PPT.lean` at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`. The witness uses the common machine and any finite

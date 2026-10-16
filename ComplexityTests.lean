@@ -1,3 +1,4 @@
+import ComplexityTests.AdaptivePPT
 import ComplexityTests.Axioms
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime

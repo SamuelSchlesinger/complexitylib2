@@ -23,6 +23,8 @@ rules for `fun_prop`.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq`: reuse identical encoded outputs.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_finite`: functions on finite domains.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_eq`: equality for any fixed encoding.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_and'`, `.decide_and`, `.cond`, `.ite_decide`:
+  compound guards and conditionals with fixed intermediate Boolean encodings.
 -/
 
 @[expose] public section
@@ -86,9 +88,43 @@ theorem bool_not : ComputableTidilyInPolyTime Bool.not encBool encBool := of_fin
 theorem bool_and : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 && p.2)
     (encPair encBool encBool) encBool := of_finite _
 
+/-- Conjoin computed guards, fixing both intermediate Boolean encodings. -/
+@[fun_prop]
+theorem bool_and' {left right : α → Bool}
+    (hleft : ComputableTidilyInPolyTime left encA encBool)
+    (hright : ComputableTidilyInPolyTime right encA encBool) :
+    ComputableTidilyInPolyTime (fun a => left a && right a) encA encBool :=
+  bool_and.comp (hleft.prod hright)
+
 @[fun_prop]
 theorem bool_or : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 || p.2)
     (encPair encBool encBool) encBool := of_finite _
+
+/-- Conjunction of efficiently decidable propositions uses the standard Boolean encoding. -/
+@[fun_prop]
+theorem decide_and {left right : α → Prop} [∀ a, Decidable (left a)] [∀ a, Decidable (right a)]
+    (hleft : ComputableTidilyInPolyTime (fun a => decide (left a)) encA encBool)
+    (hright : ComputableTidilyInPolyTime (fun a => decide (right a)) encA encBool) :
+    ComputableTidilyInPolyTime (fun a => decide (left a ∧ right a)) encA encBool := by
+  simpa only [Bool.decide_and, Function.comp_def] using bool_and.comp (hleft.prod hright)
+
+/-- A Boolean conditional fixes the guard encoding before automation synthesizes its proof. -/
+@[fun_prop]
+theorem cond {condition : α → Bool} {yes no : α → β}
+    (hcondition : ComputableTidilyInPolyTime condition encA encBool)
+    (hyes : ComputableTidilyInPolyTime yes encA encB)
+    (hno : ComputableTidilyInPolyTime no encA encB) :
+    ComputableTidilyInPolyTime (fun a => if condition a then yes a else no a) encA encB :=
+  hcondition.ite' hyes hno
+
+/-- A proposition-valued conditional computes its decision in the standard Boolean encoding. -/
+@[fun_prop]
+theorem ite_decide {condition : α → Prop} [∀ a, Decidable (condition a)] {yes no : α → β}
+    (hcondition : ComputableTidilyInPolyTime (fun a => decide (condition a)) encA encBool)
+    (hyes : ComputableTidilyInPolyTime yes encA encB)
+    (hno : ComputableTidilyInPolyTime no encA encB) :
+    ComputableTidilyInPolyTime (fun a => if condition a then yes a else no a) encA encB := by
+  simpa only [decide_eq_true_eq] using hcondition.cond hyes hno
 
 /-- Comparing two Boolean values is a finite-domain computation. -/
 @[fun_prop]

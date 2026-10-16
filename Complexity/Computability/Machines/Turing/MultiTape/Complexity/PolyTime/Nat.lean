@@ -28,6 +28,8 @@ operations support polynomially bounded counters and list enumeration in reducti
   arithmetic on unary naturals.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le`, `.unary_lt`, `.unary_pair`:
   comparisons and the natural-number pairing function.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le'`, `.unary_lt'`: comparisons of computed
+  operands with the intermediate unary encodings fixed for automation.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow`, `.unary_eval`:
   evaluation of a fixed power or polynomial, with input and output in unary.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_to_binary`:
@@ -89,6 +91,22 @@ theorem unary_lt : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1
     (encPair encUnary encUnary) encBool := by
   simpa only [Function.comp_def, ← decide_not, Nat.not_le] using bool_not.comp
     (unary_le.comp ((snd encUnary encUnary).prod (fst encUnary encUnary)))
+
+/-- Compare computed unary values, fixing their intermediate encodings before proof search. -/
+@[fun_prop]
+theorem unary_le' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableTidilyInPolyTime left input encUnary)
+    (hright : ComputableTidilyInPolyTime right input encUnary) :
+    ComputableTidilyInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
+  unary_le.comp (hleft.prod hright)
+
+/-- Strictly compare computed unary values, with both operand encodings fixed. -/
+@[fun_prop]
+theorem unary_lt' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableTidilyInPolyTime left input encUnary)
+    (hright : ComputableTidilyInPolyTime right input encUnary) :
+    ComputableTidilyInPolyTime (fun a => decide (left a < right a)) input encBool :=
+  unary_lt.comp (hleft.prod hright)
 
 /-- The natural-number pairing function, with both arguments and the result in unary. -/
 @[fun_prop]

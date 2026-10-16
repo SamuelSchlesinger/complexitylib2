@@ -206,6 +206,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
@@ -302,6 +303,7 @@ public import Complexity.Computability.PCP.PoweringBound
 public import Complexity.Computability.PCP.Preprocess
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
+public import Complexity.Computability.Probabilistic.Adaptive
 public import Complexity.Computability.Probabilistic.CoinTape
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Computability.Probabilistic.PPT.Capture
@@ -366,6 +368,7 @@ public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Hoeffding
+public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.QuadraticForm
@@ -405,6 +408,7 @@ public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
+public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction
@@ -432,6 +436,7 @@ public import Complexity.Logics.SecondOrder.Reduction
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
+public import Complexity.Probability.BitString.List
 public import Complexity.Probability.PMF
 public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PairwiseIndependentHash
