@@ -114,6 +114,12 @@ theorem length_list (enc : α ↪ List Bool) :
 theorem length_bits :
     ComputableTidilyInPolyTime (fun l : List Bool => l.length) encBits encUnary := length encBool
 
+/-- The encoded input length, computed in unary by reading the input word. -/
+@[fun_prop]
+theorem encoding_length (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun a => (enc a).length) enc encUnary :=
+  length_bits.comp (of_eq (encMid := encBits) fun _ => rfl)
+
 /-- Enumerate `0, …, n - 1`, with the bound and the elements in unary. -/
 @[fun_prop]
 theorem range : ComputableTidilyInPolyTime List.range encUnary (encList encUnary) := by

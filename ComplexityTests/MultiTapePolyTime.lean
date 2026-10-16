@@ -5,6 +5,8 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Complexity.CookLevin.Parameters
 
 /-!
 # Tests for the polynomial-time calculus
@@ -72,6 +74,31 @@ example : ComputableTidilyInPolyTime (fun n => (List.range n).flatMap fun i => L
     ((ComputableTidilyInPolyTime.snd encUnary encUnary).prod
       (ComputableTidilyInPolyTime.fst encUnary encUnary))
   exact ComputableTidilyInPolyTime.flatMapWith hrep .id' ComputableTidilyInPolyTime.range
+
+-- Unary loop bounds can be evaluated and enumerated for every fixed polynomial and exponent.
+example (p : Polynomial ℕ) (c d : ℕ) :
+    ComputableTidilyInPolyTime
+      (fun w : List Bool => List.range (c * (2 * w.length + 1 + p.eval w.length + 1) ^ d))
+      encBits (encList encUnary) := by
+  fun_prop
+
+-- Labels generated from unary loop indices can be emitted in binary.
+example : ComputableTidilyInPolyTime (fun n => (List.range n).map fun i => Nat.pair n i)
+    encUnary (encList encNat) :=
+  ComputableTidilyInPolyTime.mapWith
+    (ComputableTidilyInPolyTime.unary_to_binary.comp ComputableTidilyInPolyTime.unary_pair)
+    .id' ComputableTidilyInPolyTime.range
+
+example : ComputableTidilyInPolyTime (fun q : ℕ × ℕ => (decide (q.1 < q.2), q.1 - q.2))
+    (encPair encUnary encUnary) (encPair encBool encUnary) := by
+  fun_prop
+
+-- This uses the parameter function called by `reduce`, with an arbitrary instance encoding.
+example {α : Type} (enc : α ↪ List Bool) (p : Polynomial ℕ) (c d : ℕ) :
+    ComputableTidilyInPolyTime
+      (fun a => List.range (Cslib.Complexity.CookLevin.parameters p c d enc a).2.2)
+      enc (encList encUnary) := by
+  fun_prop
 
 private def finish (move : SignType) (symbol : Bool) : Turing.MultiTapeTM 0 Bool Unit :=
   ofTr () fun _ _ _ => ⟨move, Fin.elim0, some symbol, none⟩

@@ -81,8 +81,10 @@ Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-tim
 | The reduction and its correctness | `CookLevin/Reduction.lean` | proved (`reduce_mem_SAT_iff`) |
 | Polynomial-time SAT verifier, `SAT ∈ NP`, `UNSAT ∈ coNP` | `Problems/SAT/PolyTime.lean` | proved, using the vendored calculus and reusable polynomial-time list rules |
 | Parameterized maps and flat-maps, unary lengths and ranges | `MultiTape/Complexity/PolyTime/List.lean` | proved, allowing polynomial-sized intermediate lists for tableau enumeration |
+| Unary arithmetic, pairing, polynomial evaluation and conversion to binary | `MultiTape/Complexity/PolyTime/Nat.lean` | proved |
+| Polynomial-time input prefix, certificate length and time bound | `CookLevin/Parameters.lean` | proved for the parameter function shared with `reduce`; both bounds are in unary |
 | `NPComplete encCNF SAT` from the reduction's polynomial-time bound | `CookLevin/Staging.lean` | proved (local-only staging) |
-| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: the calculus is available; the reduction's certificate is still needed |
+| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: polynomial-time tableau clause generation and variable numbering remain |
 | `ThreeSAT` and correctness of `SAT ≤ 3SAT` | `Problems/ThreeSAT.lean`, `CNF/ThreeCNF.lean` | proved (polynomial time open) |
 
 Circuit track (independent of the calculus): `P/poly` over upstream circuits and `Language.slice`,

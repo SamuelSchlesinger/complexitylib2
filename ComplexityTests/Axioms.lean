@@ -3076,6 +3076,72 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.range' depends on axioms: [
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.range
 
 /--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.encoding_length' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.encoding_length
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_add
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_sub' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_sub
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_mul' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_mul
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_lt
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pair' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pair
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_eval' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_eval
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_to_binary' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_to_binary
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_parameters' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_parameters
+
+/--
 info: 'Turing.MultiTapeTM.Universal.computableTidilyInO_universal' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

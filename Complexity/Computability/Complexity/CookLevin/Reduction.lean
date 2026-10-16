@@ -27,15 +27,16 @@ exactly when `a ∈ A`. It only uses that the run of `tm` on `frame (enc a) ++ w
 allowed number of steps with output `[V (a, w)]`, so it applies to any machine computing `V` in
 that time, tidily (`reduce_mem_SAT_iff_of_computesTidily`) or not.
 
-That the reduction is computable in polynomial time is not proved here. The polynomial-time
-machine calculus supplies composition, folds and arithmetic; applying it to the tableau clauses
-and their variable numbering remains to be done. `CookLevin/Staging.lean` assembles the
-`NP`-completeness of `SAT` from that remaining bound.
+The input prefix and unary bounds are jointly computable in polynomial time
+(`computableTidilyInPolyTime_parameters` in `CookLevin/Parameters.lean`). The polynomial-time
+computation of the tableau clauses and their variable numbering remains to be proved.
+`CookLevin/Staging.lean` assembles the `NP`-completeness of `SAT` from that remaining bound.
 
 ## Main definitions
 
 * `Cslib.Complexity.CookLevin.featureIndex`, `Cslib.Complexity.CookLevin.Var.index`: injective
   numberings of the features and of the tableau variables.
+* `Cslib.Complexity.CookLevin.parameters`: the input prefix, certificate length and time bound.
 * `Cslib.Complexity.CookLevin.reduce`: the reduction.
 
 ## Main results
@@ -103,13 +104,20 @@ theorem Var.index_injective : Function.Injective (Var.index (k := k) (State := S
 
 variable [DecidableEq State] {α : Type}
 
+/-- The framed input prefix, certificate length and verifier time bound supplied to the tableau.
+The verifier is allowed `c * (n + 1) ^ d` steps on an input of encoded length `n`. -/
+noncomputable def parameters (p : Polynomial ℕ) (c d : ℕ) (enc : α ↪ List Bool) (a : α) :
+    List Bool × ℕ × ℕ :=
+  (frame (enc a), p.eval (enc a).length,
+    c * (2 * (enc a).length + 1 + p.eval (enc a).length + 1) ^ d)
+
 /-- The Cook–Levin reduction for the verifier computed by `tm` within `c * (n + 1) ^ d` steps on
 inputs of length `n`, with certificates of length `p` of the instance length: the tableau of `tm`
 on inputs `frame (enc a) ++ w`, unrolled for exactly the allowed number of steps. -/
 noncomputable def reduce (tm : MultiTapeTM k Bool State) (p : Polynomial ℕ) (c d : ℕ)
     (enc : α ↪ List Bool) (a : α) : CNF ℕ :=
-  (tableau tm (frame (enc a)) (p.eval (enc a).length)
-    (c * (2 * (enc a).length + 1 + p.eval (enc a).length + 1) ^ d)).relabel Var.index
+  let q := parameters p c d enc a
+  (tableau tm q.1 q.2.1 q.2.2).relabel Var.index
 
 /-- **Correctness of the Cook–Levin reduction.** If `V` verifies `A` with certificates of length
 `p`, and on every input `frame (enc a) ++ w` with `|w| = p (enc a).length` the machine `tm` has
@@ -124,7 +132,8 @@ theorem reduce_mem_SAT_iff {enc : α ↪ List Bool} {A : Set α} {p : Polynomial
         (tm.runFrom (tm.initCfg (encPair enc encBits (a, w)))
           (c * ((encPair enc encBits (a, w)).length + 1) ^ d)).output = [V (a, w)]) :
     reduce tm p c d enc a ∈ SAT ↔ a ∈ A := by
-  rw [mem_SAT, reduce, CNF.satisfiable_relabel Var.index_injective, tableau_satisfiable_iff, hV a]
+  rw [mem_SAT, reduce, parameters, CNF.satisfiable_relabel Var.index_injective,
+    tableau_satisfiable_iff, hV a]
   refine exists_congr fun w => and_congr_right fun hw => ?_
   have hlen : (encPair enc encBits (a, w)).length =
       2 * (enc a).length + 1 + p.eval (enc a).length := by
