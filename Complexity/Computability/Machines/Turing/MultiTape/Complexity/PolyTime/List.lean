@@ -24,6 +24,8 @@ up a variable with a large binary label does not require a certificate as long a
   constructing lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith`, `.flatMapWith`: constructing lists
   with a parameter; the input list may itself have polynomial encoded length.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst`, `.flatMapConst`: traverse a fixed
+  list without requiring an encoding of its elements.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`: filtering a polynomial-time list
   with a parameterized test.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`: unary lengths and ranges.
@@ -94,6 +96,17 @@ theorem map {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
     ComputableTidilyInPolyTime (List.map f) (encList encA) (encList encB) :=
   mapWith (hf.comp (snd encBool encA)) (const true) id'
 
+/-- Map an input-dependent function over a fixed list. Only its members need certificates;
+the list and its elements are not part of the computational input. -/
+theorem mapConst {ι : Type*} (l : List ι) {f : γ → ι → β}
+    (hf : ∀ i ∈ l, ComputableTidilyInPolyTime (fun x => f x i) encIn encB) :
+    ComputableTidilyInPolyTime (fun x => l.map (f x)) encIn (encList encB) := by
+  induction l with
+  | nil => exact const []
+  | cons a l ih =>
+    exact (cons encB).comp ((hf a (List.mem_cons_self ..)).prod
+      (ih fun b hb => hf b (List.mem_cons_of_mem _ hb)))
+
 private theorem foldl_append (l : List (List α)) (acc : List α) :
     l.foldl (· ++ ·) acc = acc ++ l.flatten := by
   simpa only [List.map_id_fun, id_eq] using
@@ -128,6 +141,14 @@ theorem flatMapWith {f : π × α → List β} {par : γ → π} {list : γ → 
       encIn (encList encB) := by
   simpa only [Function.comp_def, List.flatten_eq_flatMap, List.flatMap_map, id_eq] using
     (flatten encB).comp (mapWith hf hpar hlist)
+
+/-- Concatenate input-dependent lists indexed by a fixed list of parameters.
+No encoding of the fixed parameters is required. -/
+theorem flatMapConst {ι : Type*} (l : List ι) {f : γ → ι → List β}
+    (hf : ∀ i ∈ l, ComputableTidilyInPolyTime (fun x => f x i) encIn (encList encB)) :
+    ComputableTidilyInPolyTime (fun x => l.flatMap (f x)) encIn (encList encB) := by
+  simpa only [Function.comp_def, List.flatten_eq_flatMap, List.flatMap_map, id_eq] using
+    (flatten encB).comp (mapConst l hf)
 
 /-- The length of a list, in unary, including raw bit strings. -/
 theorem length (enc : α ↪ List Bool) {encL : List α ↪ List Bool} [ListEncoding enc encL]

@@ -19,6 +19,7 @@ rules for `fun_prop`.
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.exists_degree`: polynomial-time functions
   admit explicit time and output degrees.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq`: reuse identical encoded outputs.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_finite`: functions on finite domains.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_eq`: equality for any fixed encoding.
 -/
@@ -58,6 +59,13 @@ theorem exists_degree {f : α → β} (hf : ComputableTidilyInPolyTime f encA en
   exact ⟨max dt ds, max dt ds, .of_bounds
     (DegreeBounded.mono_deg ⟨ct, ht⟩ (le_max_left dt ds))
     (DegreeBounded.mono_deg ⟨cs, hs⟩ (le_max_right dt ds)) hf⟩
+
+/-- Reuse a computation when the new function emits the same encoded output word. -/
+theorem of_enc_eq {δ : Type} {encD : δ ↪ List Bool} {f : α → β} {g : α → δ}
+    (hf : ComputableTidilyInPolyTime f encA encB)
+    (h : ∀ a, encD (g a) = encB (f a)) : ComputableTidilyInPolyTime g encA encD := by
+  obtain ⟨d, e, hf⟩ := hf.exists_degree
+  exact (hf.of_enc_eq h).computableTidilyInPolyTime
 
 /-- Every function on a finite domain is polynomial-time for any fixed encodings. -/
 theorem of_finite [Finite α] (f : α → β) : ComputableTidilyInPolyTime f encA encB :=

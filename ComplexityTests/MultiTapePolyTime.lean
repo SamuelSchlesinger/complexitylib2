@@ -6,6 +6,8 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 import Complexity.Computability.Complexity.CookLevin.Parameters
 
 /-!
@@ -85,6 +87,28 @@ example : ComputableTidilyInPolyTime
       ((ComputableTidilyInPolyTime.snd encUnary encUnary).prod
         (ComputableTidilyInPolyTime.fst encUnary encUnary))
   exact ComputableTidilyInPolyTime.filterWith htest .id' (by fun_prop)
+
+-- A fixed list needs no encoding of its elements, even when their type lives in a larger universe.
+example {ι : Type 1} (l : List ι) :
+    ComputableTidilyInPolyTime (fun n : ℕ => l.map fun _ => n) encUnary (encList encUnary) :=
+  ComputableTidilyInPolyTime.mapConst l fun _ _ => .id'
+
+-- Signed subtraction feeds the magnitude operation, with both natural results in unary.
+example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => ((p.1 : ℤ) - p.2).natAbs)
+    (encPair encUnary encUnary) encUnary := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun z : ℤ => (z + 1, (z - 1).natAbs))
+    encInt (encPair encInt encUnary) := by
+  fun_prop
+
+-- Negative tape positions retain their existing numbering when emitted in binary.
+example : ComputableTidilyInPolyTime
+    (fun n => (Turing.windowList n).map Equiv.intEquivNat) encUnary (encList encNat) :=
+  (ComputableTidilyInPolyTime.map
+    (ComputableTidilyInPolyTime.unary_to_binary.comp
+      ComputableTidilyInPolyTime.int_equivNat)).comp
+    Turing.computableTidilyInPolyTime_windowList
 
 -- Unary loop bounds can be evaluated and enumerated for every fixed polynomial and exponent.
 example (p : Polynomial ℕ) (c d : ℕ) :

@@ -3255,4 +3255,154 @@ info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne' depends on axio
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne
 
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapConst' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapConst
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_natCast' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_natCast
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_negSucc' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_negSucc
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_natCast_sub' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_natCast_sub
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_succ' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_succ
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_pred' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_pred
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_pos' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_pos
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_neg' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_neg
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_toNat' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_toNat
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_natAbs' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_natAbs
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_equivNat' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_equivNat
+
+/--
+info: 'Turing.computableTidilyInPolyTime_windowList' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.computableTidilyInPolyTime_windowList
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_featureIndex' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_featureIndex
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_inPos' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_inPos
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_head' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_head
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_cell' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_cell
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_holds
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_cert' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_cert
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_index' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_index
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_relabel
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_initClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_initClauses
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_acceptClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_acceptClauses
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_sitClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_sitClauses
+
 end ComplexityTests.Axioms

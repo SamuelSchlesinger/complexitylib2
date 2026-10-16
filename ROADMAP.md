@@ -83,9 +83,12 @@ Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-tim
 | Polynomial-time SAT verifier, `SAT ∈ NP`, `UNSAT ∈ coNP` | `Problems/SAT/PolyTime.lean` | proved, using the vendored calculus and reusable polynomial-time list rules |
 | Parameterized maps, flat-maps and filtering, unary lengths and ranges | `MultiTape/Complexity/PolyTime/List.lean` | proved, allowing polynomial-sized intermediate lists for tableau enumeration |
 | Unary arithmetic, pairing, polynomial evaluation and conversion to binary | `MultiTape/Complexity/PolyTime/Nat.lean` | proved |
+| Signed unary positions, integer numbering and tape-window enumeration | `MultiTape/Complexity/PolyTime/{Int,Window}.lean` | proved using the existing signed encoding and `windowList` |
 | Polynomial-time input prefix, certificate length and time bound | `CookLevin/Parameters.lean` | proved for the parameter function shared with `reduce`; both bounds are in unary |
+| Polynomial-time variable construction and binary relabelling | `CookLevin/Encoding.lean` | proved using the existing indices in unary as an intermediate representation |
+| Initial, accepting and situation clause construction | `CookLevin/Clauses.lean` | proved for the existing clause definitions; composed clients close with `fun_prop` |
 | `NPComplete encCNF SAT` from the reduction's polynomial-time bound | `CookLevin/Staging.lean` | proved (local-only staging) |
-| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: polynomial-time tableau clause generation and variable numbering remain |
+| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: one-hot, input/read and step clauses, then full tableau assembly |
 | `ThreeSAT` and correctness of `SAT ≤ 3SAT` | `Problems/ThreeSAT.lean`, `CNF/ThreeCNF.lean` | proved (polynomial time open) |
 
 Circuit track (independent of the calculus): `P/poly` over upstream circuits and `Language.slice`,

@@ -28,8 +28,10 @@ allowed number of steps with output `[V (a, w)]`, so it applies to any machine c
 that time, tidily (`reduce_mem_SAT_iff_of_computesTidily`) or not.
 
 The input prefix and unary bounds are jointly computable in polynomial time
-(`computableTidilyInPolyTime_parameters` in `CookLevin/Parameters.lean`). The polynomial-time
-computation of the tableau clauses and their variable numbering remains to be proved.
+(`computableTidilyInPolyTime_parameters` in `CookLevin/Parameters.lean`).
+Variable construction and numbering are certified in `CookLevin/Encoding.lean`; the initial,
+accepting and situation clauses are certified in `CookLevin/Clauses.lean`. The remaining
+clause families and full tableau assembly are still required.
 `CookLevin/Staging.lean` assembles the `NP`-completeness of `SAT` from that remaining bound.
 
 ## Main definitions
