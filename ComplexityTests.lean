@@ -21,6 +21,7 @@ import ComplexityTests.MachineSequential
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
+import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition

@@ -10,8 +10,8 @@ module
 public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 
 /-!
 # Computing the Cook–Levin parameters
@@ -47,9 +47,6 @@ theorem computableTidilyInPolyTime_parameters {α : Type} (p : Polynomial ℕ) (
     (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (parameters p c d enc)
       enc (encPair encBits (encPair encUnary encUnary)) := by
-  have hframe : ComputableTidilyInPolyTime (fun a => frame (enc a)) enc encBits :=
-    .of_linear (.of_frame fun _ => rfl)
-  have hlength := ComputableTidilyInPolyTime.encoding_length enc
   unfold parameters
   fun_prop
 

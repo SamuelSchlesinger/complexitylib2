@@ -78,7 +78,9 @@ cached expansion games have exact endpoint and adjacent-level laws, with uniform
 certificates for the entire adaptive experiments. Saved independent samples expose one uniform
 single-challenge reduction, with an exact polynomial loss and complete strict PPT certificate.
 Adaptive GGM security and PRG → PRF are proved. General OWF → PRG through pseudoentropy, and hence
-general OWF → PRF, remain to be ported.
+general OWF → PRF, remain to be ported. The first prerequisite is implemented: every general OWF
+yields an OWF whose output length depends only on its input length, with a polynomial-time
+length function and a uniform strict PPT inversion reduction.
 
 ## Layout
 

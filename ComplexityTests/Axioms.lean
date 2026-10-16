@@ -4645,3 +4645,39 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapFilterConst' depends on 
 -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapFilterConst
+
+/--
+info: 'Cslib.Crypto.OneWay.normalize' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.OneWay.normalize
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_fixedOutputLength' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.OneWay.exists_fixedOutputLength
+
+/--
+info: 'Cslib.Crypto.OneWayNormalization.inversion_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.OneWayNormalization.inversion_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsPadWord' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsPadWord
+
+/--
+info: 'Cslib.Probability.PMF.bind_apply_mono_on_support' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.bind_apply_mono_on_support
+
+/--
+info: 'Cslib.BitString.word_eq_of_padWord_eq' depends on axioms: [propext]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.word_eq_of_padWord_eq

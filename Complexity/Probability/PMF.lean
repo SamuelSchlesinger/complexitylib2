@@ -33,6 +33,7 @@ of the whole experiment (`exists_bind_apply_le`).
   two-stage experiments.
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
   adapted from the cslib `crypto` branch at `5ff69ca`.
+* `Cslib.Probability.PMF.bind_apply_mono_on_support`: compare two continuations at one outcome.
 * `Cslib.Probability.PMF.map_injective`: injective encodings preserve equality of distributions,
   adapted from the same branch.
 * `Cslib.Probability.PMF.bind_apply_toReal`, `sum_toReal`: real-valued finite averages,
@@ -165,6 +166,17 @@ theorem bind_apply_of_forall (μ : PMF α) {f : α → PMF β} {b : β} {c : ℝ
     (h : ∀ a, f a b = c) : μ.bind f b = c := by
   simp only [PMF.bind_apply, h, ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
 
+/-- Increasing an outcome's probability on every possible first-stage result increases its
+probability in the whole experiment. The sample spaces may be infinite. -/
+theorem bind_apply_mono_on_support (μ : PMF α) {f g : α → PMF β} (b : β)
+    (h : ∀ a ∈ μ.support, f a b ≤ g a b) : μ.bind f b ≤ μ.bind g b := by
+  simp only [PMF.bind_apply]
+  apply ENNReal.tsum_le_tsum
+  intro a
+  by_cases ha : a ∈ μ.support
+  · exact mul_le_mul_right (h a ha) _
+  · simp [(μ.apply_eq_zero_iff a).mpr ha]
+
 /-- Some possible outcome of the first stage of a two-stage experiment does at least as well as
 the experiment. -/
 theorem exists_bind_apply_le [Finite α] (μ : PMF α) (f : α → PMF β) (b : β) :
@@ -172,11 +184,7 @@ theorem exists_bind_apply_le [Finite α] (μ : PMF α) (f : α → PMF β) (b : 
   obtain ⟨a, ha, hmax⟩ :=
     μ.support.exists_max_image (fun a => f a b) μ.support.toFinite μ.support_nonempty
   refine ⟨a, ha, ?_⟩
-  rw [PMF.bind_apply]
-  calc ∑' a', μ a' * f a' b ≤ ∑' a', μ a' * f a b := ENNReal.tsum_le_tsum fun a' => by
-        by_cases h : a' ∈ μ.support
-        · exact mul_le_mul_right (hmax a' h) _
-        · simp [(μ.apply_eq_zero_iff a').mpr h]
-    _ = f a b := by rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
+  exact (bind_apply_mono_on_support μ b hmax).trans_eq
+    (bind_apply_of_forall μ fun _ => rfl)
 
 end Cslib.Probability.PMF

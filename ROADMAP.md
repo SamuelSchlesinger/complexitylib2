@@ -216,7 +216,7 @@ not existence proofs of one-way functions or permutations.
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
-| General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| General OWF → PRG | output-length normalization is complete; queue `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
@@ -1127,7 +1127,46 @@ checks minimal downstream imports and the completeness theorems' standard axiom 
 The full tableau proof measures 1,087,931 raw tactic heartbeats; the reduction's final certificate
 composition measures 101,881. These measure proof elaboration, not machine runtime; the imported
 clause and parameter proofs are not re-elaborated in those measurements. All six project checks
-pass. The separate adversarial correctness review is pending.
+pass. The independent adversarial correctness review approves `fa6e514` without material findings:
+MCP diagnostics, regressions, axiom guards and independent probes check all five templates,
+ordering and duplicates, halted persistence, total clipping and the unconditional assembly.
+
+### OWF output normalization and shared framing (2026-10-16)
+
+The general OWF port now normalizes variable-length images to a width determined by the input
+length. The fixed-width theorem derives one polynomial output bound from the original tidy
+machine certificate; evaluation and the width function are uniformly polynomial-time. Its
+inversion reduction is an ordinary functional call with a padded challenge, certified by `ppt`.
+The underlying security theorem accepts arbitrary supplied bounds, including bounds smaller
+than the image, and arbitrary-length inverter candidates. Only the fixed-width conclusion
+requires the output-size bound. General OWF → PRG and its pseudoentropy argument remain open.
+
+`Computability/BitString/Padding.lean` bridges pure bit strings to the existing machine frame
+encoding; it is definitionally the crypto branch's framed-pair expression. Longer words retain
+their whole frame, and equal padded words have equal original words even across distinct bounds.
+The general `bitsFrame` certificate works directly on any input encoding. It certifies padding
+and reduces the existing Cook–Levin parameter proof from five body lines to
+`unfold parameters; fun_prop`. A shared supported-bind monotonicity lemma is used at both levels
+of the inversion experiment and shortens the existing maximum-outcome lemma.
+
+The matched padding/normalization source, including the padding certificate, has 9 bodies /
+44 body lines; the port has 9 / 46. The additional `bitsFrame` and supported-bind rules add
+2 bodies / 7 lines, and the two existing clients lose 7 lines. Thus the entire batch, including
+all helpers and refactors, adds 11 bodies / 46 lines relative to `fa6e514`. This is an API/reuse
+improvement, not a reduction in the matched normalization proof length.
+The library total is 5,591 bodies / 38,245 lines in 522 modules, median 3 / P90 17. As above,
+these are layout measurements, excluding definitions, statements, tests and generated code.
+
+Regressions check exact framing, empty and overlong words, raw-bit and generic-list input
+encodings, equivalent functional expressions, and a genuinely variable-output-length function.
+A concrete wrong-length inverter has success zero after normalization and one before it,
+guarding the inequality and unrestricted-candidate contract. Six new axiom guards cover the
+security reduction, fixed-width existence, padding and supported-bind monotonicity. Source/API
+review approves the implementation, and all six project checks pass. Raw tactic heartbeat counts
+are 18,135 for the normalization certificate and 307,318 for its PPT inverter wrapper. Under the
+same current imports and registered rules, the old/new Cook–Levin parameter proof bodies measure
+345,463 / 316,591; these are elaboration costs, not machine runtime or a comparison against the old
+registration environment. Independent adversarial correctness review follows publication.
 
 ### Implementation priorities (2026-10-16)
 

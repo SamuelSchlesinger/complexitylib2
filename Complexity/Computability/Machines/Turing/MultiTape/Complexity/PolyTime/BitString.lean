@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.Enumeration
+public import Complexity.Computability.BitString.Padding
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -25,6 +26,8 @@ polynomial bound on the complete encoded output. The operations are total on emp
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsToList`, `.listToBits`: encoding conversion.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFrame`, `.bitsPadWord`: self-delimiting
+  framing and bounded padding, including arbitrary encoded inputs and overlong words.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsGetElem?`: optional lookup in raw bits.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapToBitsWithInput`, `.bitsFilterWithInput`,
   `.bitsAnyWithInput`, `.bitsFoldlWithInput`, `.bitsZipWithInput`: compositional bit operations.
@@ -57,6 +60,12 @@ theorem length_encList_enumList (count : ℕ) :
     Function.comp_def]
 
 namespace ComputableTidilyInPolyTime
+
+/-- Frame the existing input encoding, charging every delimiter. -/
+@[fun_prop]
+theorem bitsFrame {α : Type} (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun a => frame (enc a)) enc encBits :=
+  .of_linear (.of_frame fun _ => rfl)
 
 /-- Saturating binary decoding to unary is polynomial time on arbitrary input words. -/
 @[fun_prop]
@@ -128,6 +137,16 @@ theorem bitsReplicate (bit : Bool) :
     (step := List.cons bit) id' (const []) (by fun_prop) (growth := 1) (fun _ => by simp)
 
 variable {α : Type} {input : α ↪ List Bool}
+
+/-- Self-delimiting padding uses ordinary framing and unary arithmetic. -/
+@[fun_prop]
+theorem bitsPadWord {bound : α → ℕ} {word : α → List Bool}
+    (hbound : ComputableTidilyInPolyTime bound input encUnary)
+    (hword : ComputableTidilyInPolyTime word input encBits) :
+    ComputableTidilyInPolyTime (fun a => Cslib.BitString.padWord (bound a) (word a))
+      input encBits := by
+  unfold Cslib.BitString.padWord
+  fun_prop
 
 /-- Map a captured Boolean-valued function over a framed list, emitting a raw bit string. -/
 @[fun_prop]
