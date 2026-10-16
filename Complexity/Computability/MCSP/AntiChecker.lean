@@ -28,11 +28,11 @@ good-string lemma of Oliveira, Pich and Santhanam [OliveiraPichSanthanam2019, Le
 the inputs number at most `2 ^ m`, and no `m` members of `F`, repetitions allowed, have `f` as
 their pointwise strict majority. Then every tuple of `m` members of a subfamily `G` is refuted by
 at least half of its entries (at least `m - m / 2` of them) at some input; averaging over the
-inputs, one input refutes a `2 ^ -m` share of all tuples, and counting the tuples with at least half of their entries in the
-set of members refuted there shows that this set holds a sixteenth of `G`
-(`exists_card_le_sixteen_mul`). Removing the refuted members and repeating, `16 b` inputs refute
-every member of a family of fewer than `2 ^ b` (`exists_isAntiChecker`). Counting ordered tuples
-gives the constant share `1 / 16` where the original counts sets and gets `1 / (2 m)`.
+inputs, one input refutes a `2 ^ -m` share of all tuples, and counting the tuples with at least
+half of their entries in the set of members refuted there shows that this set holds a sixteenth of
+`G` (`exists_card_le_sixteen_mul`). Removing the refuted members and repeating, `16 b` inputs
+refute every member of a family of fewer than `2 ^ b` (`exists_isAntiChecker`). Counting ordered
+tuples gives the constant share `1 / 16` where the original counts sets and gets `1 / (2 m)`.
 
 For circuits (`exists_lt_complexityOn`): the strict majority of `m` circuits with `s` gates each
 has a circuit with `m s` gates plus those of a circuit for strict majority, so if `f` needs more

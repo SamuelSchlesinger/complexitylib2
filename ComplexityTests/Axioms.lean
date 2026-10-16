@@ -2900,6 +2900,8 @@ info: 'Cslib.Logic.PL.QBF.eval_eq_of_closed' depends on axioms: [propext, Classi
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.QBF.eval_eq_of_closed
+
+/--
 info: 'Cslib.BitString.card_filter_le_abs_card_filter_sub_half_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -2928,5 +2930,71 @@ info: 'Cslib.Circuits.Frontier.exists_rectangleBias_family' depends on axioms: [
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.exists_rectangleBias_family
+
+/--
+info: 'Cslib.MCSP.mem_iff_exists_circuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.mem_iff_exists_circuit
+
+/--
+info: 'Cslib.MCSP.ncard_setOf_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.ncard_setOf_mem
+
+/--
+info: 'Cslib.GapMCSP.disjoint_yes_no' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.GapMCSP.disjoint_yes_no
+
+/--
+info: 'Cslib.MCSP.mem_of_twelve_mul_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.mem_of_twelve_mul_le
+
+/--
+info: 'Cslib.MCSP.ncard_setOf_mem_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.ncard_setOf_mem_le
+
+/--
+info: 'Cslib.MCSP.eventually_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.eventually_mem
+
+/--
+info: 'Cslib.MCSP.eventually_exists_not_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.eventually_exists_not_mem
+
+/--
+info: 'Cslib.SuccinctMCSP.eventually_ofFunction_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.SuccinctMCSP.eventually_ofFunction_mem
+
+/--
+info: 'Cslib.MCSP.exists_card_le_sixteen_mul' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.exists_card_le_sixteen_mul
+
+/--
+info: 'Cslib.MCSP.exists_isAntiChecker' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.exists_isAntiChecker
+
+/--
+info: 'Cslib.MCSP.exists_lt_complexityOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.MCSP.exists_lt_complexityOn
 
 end ComplexityTests.Axioms
