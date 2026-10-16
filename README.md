@@ -13,14 +13,20 @@ arithmetic, conditionals and list operations have one-line proofs that an actual
 computes them in polynomial time. A universal simulator is implemented as ordinary Lean functions
 with correctness and explicit time/space bounds.
 
-The intended programming interface uses `PFunctor.FreeM`, straight-line `do` code, queries and
-coins, with machine realizations and resource certificates obtained compositionally. That program
-layer, the general effectful machine, and `ppt` remain to be integrated into v2. The deterministic
+Programs now use `PFunctor.FreeM` and the typed-oracle interface from cslib PR #1129: ordinary
+`do` code interpreted into probability, private state, or another program. Local invariant and
+simulation rules preserve the joint result and final oracle state. The general effectful machine,
+probabilistic realization layer, and `ppt` remain to be integrated into v2. The deterministic
 `polytime` tactic now combines `fun_prop`, named and local routine certificates, and bounded-growth
 loop rules. Fold and iteration specifications prove both efficiency and a final invariant from
 value-level contracts. These interfaces adapt the local cslib `crypto` branch to the existing tidy
 TM calculus. See `ROADMAP.md` for implemented results, measured proof reductions, and the remaining
 integration work.
+
+The crypto port includes GGM tree evaluation with a polynomial-time TM certificate. The planned
+security developments are OWP → PRG through Goldreich–Levin, general OWF → PRG through
+pseudoentropy, and adaptive GGM security. Their constructions and reductions will exercise the
+same computation interfaces; the full security theorems have not yet been ported.
 
 ## Layout
 
@@ -31,7 +37,7 @@ root `Complexity` instead of `Cslib`:
 Complexity/Foundations/…                 ↔  Cslib/Foundations/…
 Complexity/Computability/Machines/…      ↔  Cslib/Computability/Machines/…
 Complexity/Computability/Complexity/…    ↔  Cslib/Computability/Complexity/…   (new upstream dir)
-Complexity/Languages/Programs/…          ↔  Cslib/Languages/Programs/…         (new upstream dir)
+Complexity/Languages/Probabilistic/…     ↔  Cslib/Languages/Probabilistic/…
 ```
 
 Each file records its upstream status on the line after `module`

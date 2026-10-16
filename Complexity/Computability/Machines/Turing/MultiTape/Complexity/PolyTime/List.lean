@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+
 /-!
 # Polynomial-time list operations
 
@@ -40,6 +42,8 @@ up a variable with a large binary label does not require a certificate as long a
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD`: lookup by a unary index.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOfWithInput`, `.bitsGetDWithInput`:
   compositional rules for first-occurrence lookup and raw-bit access.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsDropWithInput`, `.bitsTakeWithInput`:
+  runtime bit-string slicing, with computed unary indices.
 -/
 
 @[expose] public section
@@ -76,6 +80,10 @@ theorem headD {encL : List α ↪ List Bool} [ListEncoding encA encL] (fallback 
 theorem tail {encL : List α ↪ List Bool} [ListEncoding encA encL] :
     ComputableTidilyInPolyTime (List.tail (α := α)) encL encL :=
   (ComputableTidilyInDegree.tail (enc₁ := encA)).computableTidilyInPolyTime
+
+/-- Drop the first raw bit. The raw encoding fixes the otherwise undetermined element encoding. -/
+@[fun_prop]
+theorem bitsTail : ComputableTidilyInPolyTime List.tail encBits encBits := tail (encA := encBool)
 
 /-- Reverse a raw bit string using an accumulator that grows by one bit per step. -/
 @[fun_prop]
@@ -412,6 +420,31 @@ theorem dropUnary {encL : List α ↪ List Bool} [ListEncoding encA encL]
       simp only [length_encPair]
       lia)
   simpa only [heq] using h
+
+/-- Drop a computed unary number of bits from a computed bit string. -/
+@[fun_prop]
+theorem bitsDropWithInput {list : γ → List Bool} {count : γ → ℕ}
+    (hlist : ComputableTidilyInPolyTime list encIn encBits)
+    (hcount : ComputableTidilyInPolyTime count encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => (list x).drop (count x)) encIn encBits :=
+  (dropUnary (encA := encBool)).comp (hlist.prod hcount)
+
+/-- Take a unary number of bits. Reversing and dropping reuses the certified list operations. -/
+@[fun_prop]
+theorem bitsTake : ComputableTidilyInPolyTime
+    (fun p : List Bool × ℕ => p.1.take p.2) (encPair encBits encUnary) encBits := by
+  have h : ComputableTidilyInPolyTime
+      (fun p : List Bool × ℕ => (p.1.reverse.drop (p.1.length - p.2)).reverse)
+      (encPair encBits encUnary) encBits := by fun_prop
+  simpa only [← List.reverse_take, List.reverse_reverse] using h
+
+/-- Take a computed unary number of bits from a computed bit string. -/
+@[fun_prop]
+theorem bitsTakeWithInput {list : γ → List Bool} {count : γ → ℕ}
+    (hlist : ComputableTidilyInPolyTime list encIn encBits)
+    (hcount : ComputableTidilyInPolyTime count encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => (list x).take (count x)) encIn encBits :=
+  bitsTake.comp (hlist.prod hcount)
 
 /-- List lookup with a fixed default and a unary index, including lookup in raw bit strings. -/
 @[fun_prop]

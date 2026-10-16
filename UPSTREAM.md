@@ -11,6 +11,9 @@ Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file de
 | Module (here) | Upstream path | Status | Notes |
 |---|---|---|---|
 | `Complexity.Init` | — | local-only (root re-export of `Cslib.Init`) | |
+| `Complexity.Languages.Probabilistic.Basic` | same path | submitted #1129 @4e626b5449d9c93b4ac7028e596e91324ed2f4f1 | current `OracleSpec` / `OracleComp` / `interpret` interface on `PFunctor.FreeM`, with finite-uniform `ProbComp`; retains Samuel Schlesinger and Devon Tuma credits. The PR's two PMF notation lemmas and simp attributes are copied into the existing `Complexity.Probability.PMF`; remove that marked block when the PR merges, retaining the candidate resampling lemmas |
+| `Complexity.Languages.Probabilistic.Simulation` | same path | candidate | crypto-branch invariant and probabilistic state simulation rules adapted to `interpret` into `StateT`; preserves the joint result and final private state |
+| `Complexity.Crypto.Computational.GGM.Evaluation` | same path | candidate | GGM tree evaluation, truncation and size laws, and a uniform tidy TM certificate using `fun_prop` and `polytime`; no security or length assumption is needed for efficiency. Full adaptive GGM security, OWP → PRG and general OWF → PRG remain queued in `ROADMAP.md` |
 | `Complexity.Foundations.Data.Nat.PolynomialBound` | `Cslib/Foundations/Data/Nat/PolynomialBound.lean` | merged @b2d4c7c3 (#1067) | local copy deleted |
 | `Complexity.Foundations.Data.Nat.PolynomialBound.Closure` | `Cslib/Foundations/Data/Nat/PolynomialBound/Closure.lean` | candidate (ready: #1067 merged) | `fun_prop` registration and closure lemmas; the next PR to open |
 | `Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs` | `Cslib/Computability/Machines/Turing/MultiTape/Plumbing/Tidy/Defs.lean` | merged @0b1e3680 (#1126) | local copy deleted; upstream states `computesTidily_iff` through a run path |

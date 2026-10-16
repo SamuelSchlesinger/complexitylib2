@@ -3453,4 +3453,16 @@ info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses' depe
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses
 
+/--
+info: 'Cslib.Crypto.GGM.computableTidilyInPolyTime_eval' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GGM.computableTidilyInPolyTime_eval
+
+/--
+info: 'Cslib.OracleComp.run_interpret_simulation_of_invariant' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.OracleComp.run_interpret_simulation_of_invariant
+
 end ComplexityTests.Axioms

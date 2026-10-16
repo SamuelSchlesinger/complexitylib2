@@ -161,7 +161,8 @@ theorem foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
   ComputableTidilyInPolyTime.foldl_of_bounded_growth hlist hinit hstep hgrowth
 
 open Lean Meta Elab Tactic in
-/-- Resolve the traversed list's encoding before certifying the step. -/
+/-- Resolve the traversed list's encoding before certifying the step. Try a nonincreasing state
+bound first, committing to it only after its growth obligation has been proved. -/
 @[aesop safe 50 tactic (rule_sets := [PolyTime])]
 private meta def polytimeFold : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
@@ -172,12 +173,17 @@ private meta def polytimeFold : TacticM Unit :=
     let isFold ← lambdaTelescope program fun _ body => pure (body.isAppOf ``List.foldl)
     unless isFold do throwError "expected a list fold"
     for rule in [``foldl_bits_rule, ``foldl_list_rule] do
-      let saved ← saveState
-      try
-        liftMetaTactic fun goal => goal.applyConst rule
-        evalTactic (← `(tactic| case hlist => solve | aesop (rule_sets := [PolyTime])))
-        return
-      catch _ => saved.restore
+      for zeroGrowth in [true, false] do
+        let saved ← saveState
+        try
+          if zeroGrowth then
+            let rule := mkIdent rule
+            evalTactic (← `(tactic| apply $rule:ident (growth := 0)))
+          else liftMetaTactic fun goal => goal.applyConst rule
+          evalTactic (← `(tactic| case hlist => solve | aesop (rule_sets := [PolyTime])))
+          if zeroGrowth then Cslib.Tactic.solveTagged `hgrowth
+          return
+        catch _ => saved.restore
     throwError "no supported list encoding"
 
 attribute [aesop safe apply (rule_sets := [PolyTime])] Nat.le_refl

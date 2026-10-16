@@ -275,6 +275,7 @@ public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
+public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit
@@ -366,6 +367,8 @@ public import Complexity.Foundations.Probability.SecondMoment
 public import Complexity.Foundations.Relation.InductiveCounting
 public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Init
+public import Complexity.Languages.Probabilistic.Basic
+public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction
 public import Complexity.Logics.Propositional.CNF

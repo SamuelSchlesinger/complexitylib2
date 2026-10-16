@@ -3,10 +3,12 @@ import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
+import ComplexityTests.GGM
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
+import ComplexityTests.Programs
 import ComplexityTests.SATPolyTime
 import ComplexityTests.Smoke
 import ComplexityTests.ThreeCNF

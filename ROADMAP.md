@@ -34,8 +34,9 @@ The deterministic function calculus already provides actual TM certificates, com
 conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's vendored
 `Universal/` development certifies an interpreter written as ordinary Lean functions.
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
-that count, not its binary length. The `PFunctor.FreeM` program interface, program realization
-theorems, general effectful machine and `ppt` remain to be integrated into v2. The deterministic
+that count, not its binary length. The `PFunctor.FreeM` program interface and stateful simulation
+rules are now present; program realization theorems, the general effectful machine and `ppt`
+remain to be integrated into v2. The deterministic
 `polytime` tactic and invariant-oriented loop specifications have now been adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
 
@@ -71,8 +72,13 @@ The integration work is to adapt those public rules to v2's tidy deterministic c
 encoded input/output API, and to bring the effectful realization layer onto the agreed machine
 model. The original crypto branch uses `FreeM`; the existing `codex/crypto-pfunctor-experiment-20261012`
 at `1d7efae` changes only three probabilistic-language files in the relevant interface while leaving
-the tactic and client files unchanged. That is useful migration evidence, not a checked v2 port.
-Use the existing examples as acceptance tests and retain their negative cases.
+the tactic and client files unchanged. The newer PR #1129 at `4e626b5` supersedes that experiment:
+`OracleComp spec` has one typed query interface, and `interpret` handles all target monads.
+`ProbComp` samples finite uniform ranges, rather than exposing an arbitrary-PMF primitive.
+V2 now copies this current PR and adapts the invariant simulation rules to it. The remaining
+crypto port must express executable sampling through this interface and keep arbitrary
+distributions at the semantic level. Use the existing examples as acceptance tests and retain
+their negative cases.
 
 ### Accounting
 
@@ -186,11 +192,49 @@ the library overall; its measured benefit is client readability and reusable cov
 source reduction or a claim of faster elaboration. Strict project validation and the negative
 tests check robustness, but compilation performance needs a separate benchmark.
 
+### Cryptographic constructions as integration clients (2026-10-16)
+
+The user's requested scope includes both the general OWF construction and the OWP route, plus
+GGM security. The source is the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
+Its `OneWay.exists_pseudorandomGenerator` assumes only uniform one-wayness; its pseudoentropy
+construction follows Holenstein's simplification of Håstad–Impagliazzo–Levin–Luby. The OWP route
+constructs a hard-core predicate through Goldreich–Levin. These remain conditional implications,
+not existence proofs of one-way functions or permutations.
+
+| Development | Port status |
+|---|---|
+| Typed programs and probability/state interpretation | PR #1129 copied at `4e626b5`; source credits Samuel Schlesinger and Devon Tuma and the VCVio design |
+| Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
+| GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
+| Uniform PPT and oracle PPT, `ppt` automation | pending the effectful machine realizations and deterministic bridge |
+| OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
+| General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
+
+The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
+already present in v2 at `316944d` or its cslib pin, has 183 absent modules / 33,887 source lines.
+This is an inventory of the old branch, not an estimate of necessary new code: its deterministic
+realizations overlap the existing calculus, and its program frontend has since changed upstream.
+Reconcile the predicates with the current PRG/game APIs rather than importing parallel notions.
+Preserve uniform, strict fair-coin PPT and the joint output/private-state oracle contract.
+
+GGM evaluation already drives reusable improvements: raw-bit slicing rules and a transactional
+zero-growth fold attempt let its certificate use a local step certificate and a length bound,
+followed by `polytime`. Tests include a shrinking generator and surplus output, so the efficiency
+theorem does not depend on a PRG security or exact-length hypothesis. The adaptive security
+theorem still requires the remaining reductions; evaluation alone does not establish it.
+
+The three GGM efficiency proofs have 2, 1 and 4 body lines. Including the copied frontend,
+simulation rules and shared helpers, this batch adds 38 theorem bodies / 103 body lines, taking
+the library from 4,707 / 33,128 at `316944d` to 4,745 / 33,231. This is additional functionality,
+not a net proof reduction; tactic implementation code, definitions and tests are excluded by the
+same accounting convention used above.
+
 ### Next design experiments
 
 1. **Integrate the crypto probabilistic realization layer and `ppt`.** The deterministic loop
-   and tactic interfaces above are in place. Adapt the effectful machine and the intended
-   `PFunctor.FreeM` interface, then validate one readable `do` program containing a
+   and tactic interfaces and typed `PFunctor.FreeM` frontend above are in place. Adapt the
+   effectful machine and probabilistic realization rules, then validate one readable `do` program containing a
    bounded loop, a semantic specification and an actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
    for the Cook–Levin milestone.

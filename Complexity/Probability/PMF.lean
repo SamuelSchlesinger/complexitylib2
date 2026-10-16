@@ -31,6 +31,8 @@ of the whole experiment (`exists_bind_apply_le`).
   `Cslib.Probability.PMF.uniformOfFintype_bind_bind_fst_equiv`: resampling along an equivalence.
 * `Cslib.Probability.PMF.bind_apply_of_forall`, `Cslib.Probability.PMF.exists_bind_apply_le`:
   two-stage experiments.
+* `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
+  adapted from the cslib `crypto` branch at `5ff69ca`.
 -/
 
 @[expose] public section
@@ -39,7 +41,22 @@ namespace Cslib.Probability.PMF
 
 open scoped ENNReal
 
+universe u
+
 variable {α β γ δ ε : Type*}
+
+/-! ### Monad notation
+
+Copied from cslib PR #1129 at `4e626b5449d9c93b4ac7028e596e91324ed2f4f1`.
+Remove this block when that PR is in the base pin; the resampling lemmas below remain candidates.
+-/
+
+@[simp] theorem monad_pure_eq_pure (a : α) : (pure a : PMF α) = PMF.pure a := rfl
+
+@[simp] theorem monad_bind_eq_bind {α β : Type u} (p : PMF α) (f : α → PMF β) :
+    p >>= f = p.bind f := rfl
+
+attribute [simp] _root_.PMF.monad_map_eq_map _root_.PMF.pure_map
 
 section Uniform
 
@@ -83,6 +100,14 @@ theorem uniformOfFintype_bind_bind_fst_equiv (e : α × β ≃ γ × δ) (f : γ
   rfl
 
 end Uniform
+
+/-- A continuation only needs to agree on outcomes the preceding distribution can produce. -/
+theorem bind_congr_on_support (p : PMF α) (f g : α → PMF β)
+    (h : ∀ a ∈ p.support, f a = g a) : p.bind f = p.bind g := by
+  rw [← PMF.bindOnSupport_eq_bind p f, ← PMF.bindOnSupport_eq_bind p g]
+  congr 1
+  funext a ha
+  exact h a ha
 
 /-- If every second stage of a two-stage experiment gives the outcome `b` probability `c`, so
 does the experiment. -/
