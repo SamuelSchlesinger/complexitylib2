@@ -5,7 +5,9 @@ Authors: Christian Reitwiessner
 -/
 
 module
--- upstream: submitted #1111 @3441fa81
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- `space_le_mul_time_add_one`, `mem_of_last_halted` and `runsInSpace_of_runPath` are from cslib PR
+-- #1111 @3441fa81.
 
 public import Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
@@ -14,7 +16,12 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Nondeterministi
 /-!
 # Space of run paths and of halted runs
 
-The additions of cslib PR #1111 to `Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`.
+The additions of Christian Reitwiessner's branch `crei/tidy-universal` and of cslib PR #1111 to
+`Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas`.
+
+`MultiTapeTM.space` (the space of the first `t` steps from a configuration) is read through the
+cells each head visits: the visited set is monotone, splits along a run, stops growing once the
+machine halts, and depends only on the head positions.
 
 `MultiTapeNTM.RunPath.space_le_mul_time_add_one` bounds the space of any run path by its length.
 
@@ -26,6 +33,13 @@ after halting.
 
 * `Turing.MultiTapeNTM.RunPath.space_le_mul_time_add_one`.
 * `Turing.MultiTapeTM.mem_of_last_halted`, `Turing.MultiTapeTM.runsInSpace_of_runPath`.
+* `Turing.MultiTapeTM.space_add_le`, `Turing.MultiTapeTM.space_eq_of_halt`,
+  `Turing.MultiTapeTM.space_eq_of_workTapePos`: the space of a run, split, after halting, and of
+  runs with the same head positions.
+* `Turing.MultiTapeTM.runsInSpace_of_halted`: a space bound on a halted run bounds every
+  computation path.
+* `Turing.MultiTapeTM.exists_runPath_iff_runFrom`: a run path to a halted configuration is the run
+  of the given number of steps, with its space.
 -/
 
 @[expose] public section
@@ -75,5 +89,167 @@ lemma runsInSpace_of_runPath {s : ℕ} {p : tm.RunPath input} (hhead : p.head = 
     (hp : p.last.Halted) (hs : p.space ≤ s) : tm.RunsInSpace input s :=
   fun q => (MultiTapeNTM.RunPath.space_le_of_subset
     (mem_of_last_halted hp (q.head_eq.trans hhead.symm))).trans hs
+
+/-! ### Space of runs -/
+
+-- vendored: `spaceUsed` is `space` since cslib #1133, and `space` is the space of the run path of
+-- the first `t` steps since cslib #1117; this unfolds it to the sum the proofs below use
+/-- The space of a run is the sum of the space used by each tape. -/
+lemma space_eq_sum_spaceUsedByTape (cfg : Cfg k Symbol State input) (t : ℕ) :
+    tm.space cfg t = ∑ i, tm.spaceUsedByTape cfg t i :=
+  rfl
+
+/-- The total space used is monotone in the number of steps. -/
+lemma space_mono (tm : MultiTapeTM k Symbol State) (cfg : Cfg k Symbol State input) :
+    Monotone (tm.space cfg ·) := by
+  intro t t' h
+  simp only [space_eq_sum_spaceUsedByTape]
+  exact Finset.sum_le_sum (fun i _ => spaceUsedByTape_mono tm cfg i h)
+
+/-- Every position the head takes up to step `t` lies in `S`, so the whole visited set does. This
+is `Finset.image_subset_iff` for the visited set, and the workhorse behind the space bounds
+below. -/
+lemma visitedByTapeHead_subset (cfg : Cfg k Symbol State input) {t : ℕ} {i : Fin k} {S : Finset ℤ}
+    (h : ∀ m ≤ t, (tm.runFrom cfg m).workTapePos i ∈ S) :
+    tm.visitedByTapeHead cfg t i ⊆ S :=
+  Finset.image_subset_iff.mpr fun m _ => h m (Nat.lt_succ_iff.mp m.isLt)
+
+/-- A set containing every position of a head bounds the space used by its tape. -/
+lemma spaceUsedByTape_le_card (cfg : Cfg k Symbol State input) {t : ℕ} {i : Fin k} {S : Finset ℤ}
+    (h : ∀ m ≤ t, (tm.runFrom cfg m).workTapePos i ∈ S) :
+    tm.spaceUsedByTape cfg t i ≤ S.card :=
+  Finset.card_le_card (tm.visitedByTapeHead_subset cfg h)
+
+/-- A run that starts with the head of tape `i` at cell `0` and uses at most `s` cells keeps that
+head within `[-s, s]`. -/
+lemma visitedByTapeHead_subset_Icc (cfg : Cfg k Symbol State input) {t s : ℕ} {i : Fin k}
+    (h0 : cfg.workTapePos i = 0) (hs : tm.space cfg t ≤ s) :
+    tm.visitedByTapeHead cfg t i ⊆ Finset.Icc (-(s : ℤ)) (s : ℤ) := fun z hz => by
+  have hz := tm.natAbs_le_spaceUsedByTape_of_mem_visited hz
+  have := (tm.spaceUsedByTape_le_space cfg t i).trans hs
+  rw [h0, sub_zero] at hz
+  grind
+
+/-- A run whose heads all stay within `[-σ, σ]` uses at most `2 * σ + 1` cells per tape. -/
+lemma space_le_of_visited_subset_Icc (cfg : Cfg k Symbol State input) (t : ℕ) {σ : ℕ}
+    (h : ∀ i, tm.visitedByTapeHead cfg t i ⊆ Finset.Icc (-(σ : ℤ)) (σ : ℤ)) :
+    tm.space cfg t ≤ 2 * k * σ + k := by
+  rw [space_eq_sum_spaceUsedByTape]
+  refine (Finset.sum_le_card_nsmul _ _ (2 * σ + 1) fun i _ => ?_).trans_eq ?_
+  · exact (Finset.card_le_card (h i)).trans_eq (by rw [Int.card_Icc]; lia)
+  · simp only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, Nat.cast_id]
+    lia
+
+/-- A head that never moves uses a single cell. -/
+lemma spaceUsedByTape_le_one (cfg : Cfg k Symbol State input) {t : ℕ} {i : Fin k}
+    (h : ∀ m ≤ t, (tm.runFrom cfg m).workTapePos i = cfg.workTapePos i) :
+    tm.spaceUsedByTape cfg t i ≤ 1 := by
+  simpa using tm.spaceUsedByTape_le_card cfg (S := {cfg.workTapePos i})
+    fun m hm => by simp [h m hm]
+
+/-- The cells a run visits are the ones visited by its two halves. -/
+lemma visitedByTapeHead_add (cfg : Cfg k Symbol State input) (a b : ℕ) (i : Fin k) :
+    tm.visitedByTapeHead cfg (a + b) i =
+      tm.visitedByTapeHead cfg a i ∪ tm.visitedByTapeHead (tm.runFrom cfg a) b i := by
+  ext z
+  simp only [mem_visitedByTapeHead, Finset.mem_union]
+  constructor
+  · rintro ⟨r, hr, rfl⟩
+    rcases Nat.lt_or_ge r (a + 1) with h | h
+    · exact Or.inl ⟨r, h, rfl⟩
+    · exact Or.inr ⟨r - a, by omega,
+        by simp only [runFrom, ← Function.iterate_add_apply,
+          Nat.sub_add_cancel (by omega : a ≤ r)]⟩
+  · rintro (⟨r, hr, rfl⟩ | ⟨r, hr, rfl⟩)
+    · exact ⟨r, by omega, rfl⟩
+    · exact ⟨a + r, by omega,
+        by simp only [runFrom, ← Function.iterate_add_apply, Nat.add_comm]⟩
+
+/-- Splitting a run into two phases can only overcount the cells it visits, since the two phases
+may revisit each other's cells. -/
+lemma space_add_le (cfg : Cfg k Symbol State input) (a b : ℕ) :
+    tm.space cfg (a + b) ≤ tm.space cfg a + tm.space (tm.runFrom cfg a) b := by
+  simp only [space_eq_sum_spaceUsedByTape, ← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun i _ => ?_
+  rw [spaceUsedByTape, visitedByTapeHead_add]
+  exact Finset.card_union_le _ _
+
+/-- Space usage only depends on where the work-tape heads are at each step, so two runs whose head
+positions agree use the same space. This is what lets a machine be replaced by a simulation of
+it. -/
+lemma space_eq_of_workTapePos {State' : Type*} {input' : List Symbol}
+    {tm' : MultiTapeTM k Symbol State'} (cfg : Cfg k Symbol State input)
+    (cfg' : Cfg k Symbol State' input') (t : ℕ)
+    (h : ∀ m ≤ t, (tm.runFrom cfg m).workTapePos = (tm'.runFrom cfg' m).workTapePos) :
+    tm.space cfg t = tm'.space cfg' t := by
+  simp only [space_eq_sum_spaceUsedByTape]
+  refine Finset.sum_congr rfl fun i _ => congrArg Finset.card (Finset.image_congr fun m _ => ?_)
+  exact congrFun (h m (Nat.lt_succ_iff.mp m.isLt)) i
+
+/-- After the machine has halted the heads no longer move, so the visited set stops growing. -/
+lemma visitedByTapeHead_eq_of_halt (cfg : Cfg k Symbol State input) {τ t : ℕ} (hle : τ ≤ t)
+    (hhalt : (tm.runFrom cfg τ).state = none) (i : Fin k) :
+    tm.visitedByTapeHead cfg t i = tm.visitedByTapeHead cfg τ i := by
+  refine Finset.Subset.antisymm (visitedByTapeHead_subset cfg fun m hm => ?_)
+    (tm.visitedByTapeHead_mono cfg i hle)
+  rcases Nat.le_total m τ with h | h
+  · exact mem_visitedByTapeHead.mpr ⟨m, by omega, rfl⟩
+  · rw [runFrom_eq_of_halt tm cfg h hhalt]
+    exact tm.mem_visitedByTapeHead_self cfg τ i
+
+/-- After the machine has halted the heads no longer move, so the space usage stops growing. -/
+lemma space_eq_of_halt (cfg : Cfg k Symbol State input) {τ t : ℕ} (hle : τ ≤ t)
+    (hhalt : (tm.runFrom cfg τ).state = none) :
+    tm.space cfg t = tm.space cfg τ := by
+  simp only [space_eq_sum_spaceUsedByTape]
+  exact Finset.sum_congr rfl fun i _ =>
+    congrArg Finset.card (tm.visitedByTapeHead_eq_of_halt cfg hle hhalt i)
+
+/-- A run that never moves a work-tape head visits one cell per tape. -/
+lemma space_le_of_workTapePos_const (cfg : Cfg k Symbol State input) (u : ℕ)
+    (h : ∀ m ≤ u, (tm.runFrom cfg m).workTapePos = cfg.workTapePos) :
+    tm.space cfg u ≤ k := by
+  have hcard : ∀ i ∈ Finset.univ, tm.spaceUsedByTape cfg u i ≤ 1 :=
+    fun i _ => tm.spaceUsedByTape_le_one cfg fun m hm => congrFun (h m hm) i
+  simpa [space_eq_sum_spaceUsedByTape] using Finset.sum_le_card_nsmul _ _ 1 hcard
+
+/-! ### Space of computation paths -/
+
+/-- The space of a computation path is the space of the run of the same length. -/
+lemma computationPath_space_eq_space (p : tm.ComputationPath input) :
+    p.space = tm.space (tm.initCfg input) p.time := by
+  -- vendored: a computation path is the path of its first `time` steps since cslib #1117
+  rw [p.eq_ofDeterministic]
+  rfl
+
+/-- A machine that has halted by step `t`, using at most `s` cells, uses at most `s` cells on every
+computation path. -/
+lemma runsInSpace_of_halted {t s : ℕ} (hhalt : (tm.runFrom (tm.initCfg input) t).Halted)
+    (hs : tm.space (tm.initCfg input) t ≤ s) : tm.RunsInSpace input s := by
+  intro p
+  rw [computationPath_space_eq_space]
+  rcases le_total p.time t with h | h
+  · exact (space_mono tm _ h).trans hs
+  · rwa [space_eq_of_halt _ h hhalt]
+
+/-! ### Run paths to halted configurations as runs -/
+
+-- vendored: a bridge, not in crei:crei/tidy-universal. Its specifications are stated with
+-- `runFrom` and `spaceUsed`; since cslib #1117 they are stated with run paths.
+/-- A run path from `cfg` to a halted configuration `cfg'` within `t` steps and `s` cells is the run
+of `t` steps from `cfg`, which ends in `cfg'` and uses at most `s` cells. -/
+theorem exists_runPath_iff_runFrom {cfg cfg' : Cfg k Symbol State input} (h : cfg'.Halted)
+    {t s : ℕ} :
+    (∃ p : tm.RunPath input, p.head = cfg ∧ p.last = cfg' ∧ p.time ≤ t ∧ p.space ≤ s) ↔
+      tm.runFrom cfg t = cfg' ∧ tm.space cfg t ≤ s := by
+  refine ⟨fun ⟨p, hh, hl, ht, hs⟩ => ?_, fun ⟨hrun, hs⟩ =>
+    ⟨.ofDeterministic tm cfg t, rfl, hrun, le_rfl, hs⟩⟩
+  have hlast : p.last = tm.runFrom cfg p.time := by
+    rw [← hh]
+    exact runPath_apply_eq_runFrom p (Fin.last _)
+  have hhalt : (tm.runFrom cfg p.time).state = none := by rw [← hlast, hl]; exact h
+  refine ⟨(runFrom_eq_of_halt tm cfg ht hhalt).trans (hlast.symm.trans hl), ?_⟩
+  exact (MultiTapeNTM.RunPath.space_le_of_subset
+    (mem_of_last_halted (p := p) (q := .ofDeterministic tm cfg t) (hl ▸ h) hh.symm)).trans hs
 
 end Turing.MultiTapeTM

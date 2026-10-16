@@ -8,7 +8,7 @@ module
 -- upstream: candidate (additions to `Configuration`, `Deterministic` and `TapeLemmas`)
 
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.WordsCfg
-public import Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas
+public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 
 /-!
 # Facts about runs of multi-tape machines
@@ -27,16 +27,14 @@ travel, and the initial configuration as a configuration of words.
 
 * `Turing.Cfg.inputSymbol_eq_inputAt`, `Turing.val_moveInputPos_eq_moveInputPosNat`.
 * `Turing.Action.apply_workTapes_eq_ite`.
-* `Turing.MultiTapeTM.runFrom_succ`, `Turing.MultiTapeTM.runFrom_add`: a run, one step or one
-  phase at a time.
 * `Turing.MultiTapeTM.abs_workTapePos_runFrom_le`: after `t` steps a work head is within `t` cells
   of the origin.
 * `Turing.MultiTapeTM.initCfg_eq_wordsCfg`: the initial configuration has blank work tapes.
 * `Turing.MultiTapeTM.runFrom_eq_of_runPath`: a path to a halted configuration, read as a run.
 * `Turing.MultiTapeTM.space_runPath_le`: a path of a deterministic machine visits at most one new
   cell per tape and step.
-* `Turing.MultiTapeTM.runsInTime_iff_halted`, `Turing.MultiTapeTM.runsInSpace_iff`: the shared
-  time and space bounds, read on the run of a deterministic machine.
+* `Turing.MultiTapeTM.runsInSpace_iff`: the shared space bound, read on the run of a deterministic
+  machine.
 -/
 
 @[expose] public section
@@ -97,17 +95,6 @@ namespace MultiTapeTM
 
 variable {tm : MultiTapeTM k Symbol State}
 
-/-- One more step of a run. -/
-theorem runFrom_succ {input : List Symbol} (cfg : Cfg k Symbol State input) (t : ℕ) :
-    tm.runFrom cfg (t + 1) = tm.step (tm.runFrom cfg t) :=
-  Function.iterate_succ_apply' _ _ _
-
-/-- A run splits at any intermediate step. -/
-theorem runFrom_add {input : List Symbol} (cfg : Cfg k Symbol State input) (m n : ℕ) :
-    tm.runFrom cfg (m + n) = tm.runFrom (tm.runFrom cfg m) n := by
-  rw [runFrom, Nat.add_comm, Function.iterate_add_apply]
-  rfl
-
 /-- After `t` steps from the initial configuration, a work head is within `t` cells of the
 origin. -/
 theorem abs_workTapePos_runFrom_le (x : List Symbol) (t : ℕ) (i : Fin k) :
@@ -126,22 +113,10 @@ theorem initCfg_eq_wordsCfg (input : List Symbol) :
     tm.initCfg input = wordsCfg input (some tm.q₀) (fun _ => []) [] :=
   Cfg.init_eq_wordsCfg _ _
 
-/-- One step of a run. -/
-theorem runFrom_one {input : List Symbol} (c : Cfg k Symbol State input) :
-    tm.runFrom c 1 = tm.step c :=
-  rfl
-
 /-- A deterministic machine satisfying the shared time bound `t` has halted after `t` steps. -/
 theorem halted_of_runsInTime {input : List Symbol} {t : ℕ} (h : tm.RunsInTime input t) :
-    (tm.runFrom (tm.initCfg input) t).Halted := by
-  have := h (MultiTapeNTM.ComputationPath.ofDeterministic tm input t) le_rfl
-  rwa [computationPath_last_eq_runFrom] at this
-
-/-- A deterministic machine satisfies the shared time bound `t` exactly when it has halted after
-`t` steps. -/
-theorem runsInTime_iff_halted {input : List Symbol} {t : ℕ} :
-    tm.RunsInTime input t ↔ (tm.runFrom (tm.initCfg input) t).Halted :=
-  ⟨halted_of_runsInTime, runsInTime_of_halted⟩
+    (tm.runFrom (tm.initCfg input) t).Halted :=
+  runsInTime_iff_halted.mp h
 
 /-- A path of a deterministic machine ends where the run from its head does. -/
 theorem runPath_last_eq_runFrom {input : List Symbol} (p : tm.RunPath input) :
@@ -154,11 +129,6 @@ theorem runFrom_eq_of_runPath {input : List Symbol} {p : tm.RunPath input} (hp :
     {t : ℕ} (ht : p.time ≤ t) : tm.runFrom p.head t = p.last := by
   rw [runPath_last_eq_runFrom] at hp ⊢
   exact runFrom_eq_of_halt tm _ ht hp
-
-/-- The space of a run is the sum of the space used by each tape. -/
-theorem space_eq_sum_spaceUsedByTape {input : List Symbol} (cfg : Cfg k Symbol State input)
-    (t : ℕ) : tm.space cfg t = ∑ i, tm.spaceUsedByTape cfg t i :=
-  rfl
 
 /-- A path of a deterministic machine visits at most one new cell per tape and step. -/
 theorem space_runPath_le {input : List Symbol} (p : tm.RunPath input) :

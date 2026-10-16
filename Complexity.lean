@@ -182,7 +182,10 @@ public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.Shannon
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Comp
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.CopyWord
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Id
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyZeroSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
@@ -204,11 +207,14 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.InputF
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.MarkWork
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OutputToTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.RepeatUntilBlank
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.SequentialSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Shadow
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
@@ -287,6 +293,7 @@ public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
+public import Complexity.Foundations.Data.Fin.Tuple
 public import Complexity.Foundations.Data.Finset.Expect
 public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Hamming

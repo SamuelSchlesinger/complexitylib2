@@ -6,6 +6,8 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: submitted #1111 @3441fa81
+-- `transformsTapes_clearWork_only` and `ComputableTidilyInTimeAndSpace.comp_linear` are from
+-- crei:crei/tidy-universal @7f7c0696 (unsubmitted).
 
 public import Mathlib.Basic.Finite.Sum
 public import Cslib.Foundations.Data.Fin.Tuple
@@ -30,6 +32,8 @@ intermediate word; so is its space, since the intermediate word is kept on a wor
 
 * `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.comp`: tidy computations compose.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.comp`: tidily computable functions compose.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.comp_linear`: the same, with the overhead a
+  constant multiple of the length of the intermediate word plus one.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.comp'`: the same, with the length of the
   intermediate word bounded by the time of the inner function.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpaceOfLength.comp`: the same for bounds of the
@@ -54,6 +58,14 @@ public noncomputable def comp (tm₂ : MultiTapeTM k₂ Symbol S₂) (tm₁ : Mu
       Fin.castSuccEmb).seq
     (((tm₂.extendTapes (Fin.castLEEmb (le_max_right k₁ k₂))).inputFromWord mark).seq
       ((clearWork Symbol).extendTapes (tapeEmb (Fin.natAdd (max k₁ k₂) 0))))
+
+/-- Clearing the only non-blank work tape leaves all work tapes blank. -/
+public theorem transformsTapes_clearWork_only {k : ℕ} (i : Fin k) (w : List Symbol) :
+    TransformsTapes ((clearWork Symbol).extendTapes (tapeEmb i))
+      (fun _ ws => ws = Function.update (fun _ => []) i w)
+      (fun _ _ ws' e => ws' = (fun _ => []) ∧ e = []) (3 * (w.length + 1)) (w.length + 1 + k) :=
+  (transformsTapes_clearWork_tapeEmb i w).imp (fun _ _ hws => by rw [hws, Function.update_self])
+    (fun _ _ _ _ hws ⟨hws', he⟩ => ⟨by simp [hws', hws], he⟩) le_rfl le_rfl
 
 /-- If `tm₁` computes `w` from `x` tidily and `tm₂` computes `y` from `w` tidily, then
 `tm₂.comp tm₁ mark` computes `y` from `x` tidily. -/
@@ -126,6 +138,24 @@ public theorem ComputableTidilyInTimeAndSpace.comp {α β γ : Type*} {g : α �
   obtain ⟨k₂, S₂, _, tm₂, h₂⟩ := hf
   exact ⟨6 * max k₁ k₂ + 20, _, _, inferInstance, tm₂.comp tm₁ true,
     fun a => (h₁ a).comp (h₂ (g a)) true⟩
+
+-- vendored: crei:crei/tidy-universal states `ComputableTidilyInTimeAndSpace.comp` with these
+-- bounds; cslib #1111 states it with explicit constants, which this follows from
+/-- If `g` and `f` are tidily computable, so is `f ∘ g`, in the sum of their times and spaces plus
+a constant multiple of the length of the intermediate word `encMid (g a)` plus one. -/
+public theorem ComputableTidilyInTimeAndSpace.comp_linear {α β γ : Type*} {g : α → β}
+    {f : β → γ} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool} {encOut : γ ↪ List Bool}
+    {t₁ s₁ : α → ℕ} {t₂ s₂ : β → ℕ}
+    (hf : ComputableTidilyInTimeAndSpace f encMid encOut t₂ s₂)
+    (hg : ComputableTidilyInTimeAndSpace g encIn encMid t₁ s₁) :
+    ∃ c, ComputableTidilyInTimeAndSpace (f ∘ g) encIn encOut
+      (fun a => t₁ a + t₂ (g a) + c * ((encMid (g a)).length + 1))
+      (fun a => s₁ a + s₂ (g a) + c * ((encMid (g a)).length + 1)) := by
+  obtain ⟨c, h⟩ := hf.comp hg
+  refine ⟨c + 9, h.mono (fun a => ?_) (fun a => ?_)⟩ <;>
+  · have := Nat.le_mul_of_pos_right c (by omega : 0 < (encMid (g a)).length + 1)
+    rw [Nat.add_mul]
+    omega
 
 /-- If `g` and `f` are tidily computable, so is `f ∘ g`: the intermediate word is no longer than
 the time of `g`. -/

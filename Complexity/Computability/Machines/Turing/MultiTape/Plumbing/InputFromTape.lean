@@ -6,11 +6,14 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: submitted #1111 @3441fa81
+-- `transformsTapes_inputFromWord_of_runFrom` is from crei:crei/tidy-universal @7f7c0696
+-- (unsubmitted).
 
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.InputFromTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.MarkWork
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
 public import Cslib.Foundations.Data.Fin.Tuple
 
 /-!
@@ -34,7 +37,8 @@ around it. It runs three machines in sequence:
 
 * `Turing.MultiTapeTM.transformsTapes_inputFromWord`: a run path of `M` on the virtual input word,
   from and to `Turing.MultiTapeTM.wordsCfg` configurations, gives a specification of
-  `inputFromWord M mark`.
+  `inputFromWord M mark`; `Turing.MultiTapeTM.transformsTapes_inputFromWord_of_runFrom` is the same
+  for a run of `M`.
 -/
 
 namespace Turing.MultiTapeTM
@@ -184,5 +188,20 @@ public theorem transformsTapes_inputFromWord (mark : Symbol)
     have : p₁.length = pM.length := rfl
     omega
   · omega
+
+-- vendored: crei:crei/tidy-universal proves this directly, for the space bound
+-- `s + 2 * (w.length + 2) + 2 * k + 6`; here it follows from the run-path version of cslib #1111
+/-- If `M`, run on the input `w` with work tapes `ws₀`, halts after `t` steps with work tapes `ws₁`
+and every head back at its start, having emitted `e`, then `inputFromWord M mark` takes the work
+tapes `Fin.append ws₀ ![w, []]` to `Fin.append ws₁ ![w, []]` and emits `e`. -/
+public theorem transformsTapes_inputFromWord_of_runFrom (mark : Symbol)
+    {M : MultiTapeTM k Symbol State} {w e : List Symbol} {ws₀ ws₁ : Fin k → List Symbol}
+    {t s : ℕ} (hrun : M.runFrom (wordsCfg w (some M.q₀) ws₀ []) t = wordsCfg w none ws₁ e)
+    (hspace : M.space (wordsCfg w (some M.q₀) ws₀ []) t ≤ s) :
+    TransformsTapes (M.inputFromWord mark)
+      (fun _ ws => ws = Fin.append ws₀ ![w, []])
+      (fun _ _ ws' em => ws' = Fin.append ws₁ ![w, []] ∧ em = e)
+      (t + 4) (s + 2 * w.length + 2 * k + 12) :=
+  transformsTapes_inputFromWord mark ((exists_runPath_iff_runFrom rfl).mpr ⟨hrun, hspace⟩)
 
 end Turing.MultiTapeTM

@@ -6,6 +6,8 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: submitted #1111 @3441fa81
+-- `ComputableTidilyInTimeAndSpace.length_le` is from crei:crei/tidy-universal @7f7c0696
+-- (unsubmitted).
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
@@ -22,6 +24,8 @@ the machine is given more work tapes.
   computable function is computable, within the same bounds.
 * `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.length_output_le`: a tidy computation emits at
   most one symbol per step.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_le`: the output of a tidily computable
+  function is no longer than its time bound.
 * `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.extendTapes`: a tidy computation stays tidy with
   more work tapes.
 -/
@@ -76,6 +80,14 @@ theorem ComputesFunTidilyInTimeAndSpace.computesFunInTimeAndSpace {encIn : α �
     (h : ComputesFunTidilyInTimeAndSpace tm encIn encOut f t s) :
     tm.ComputesFunInTimeAndSpace encIn encOut f t s :=
   fun a => (h a).computesInTimeAndSpace
+
+/-- The output of a tidily computable function is no longer than its time bound. -/
+theorem ComputableTidilyInTimeAndSpace.length_le {f : α → β} {encIn : α ↪ List Bool}
+    {encOut : β ↪ List Bool} {t s : α → ℕ}
+    (h : ComputableTidilyInTimeAndSpace f encIn encOut t s) (a : α) :
+    (encOut (f a)).length ≤ t a :=
+  let ⟨_, _, _, _, htm⟩ := h
+  (htm a).length_output_le
 
 /-- A tidily computable function is computable. -/
 theorem ComputableTidilyInTimeAndSpace.computableInTimeAndSpace {f : α → β}
