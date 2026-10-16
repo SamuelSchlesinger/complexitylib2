@@ -4833,3 +4833,39 @@ info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.entropy_chain_ru
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.entropy_chain_rule
+
+/--
+info: 'Cslib.Probability.PMF.dist_bind_pair_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.dist_bind_pair_sq_le
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.collision_with_set_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsTwoUniversal.collision_with_set_le
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.leftover_hash' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsTwoUniversal.leftover_hash
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.leftover_hash_conditional' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsTwoUniversal.leftover_hash_conditional
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.conditionalEntropy_hash_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsTwoUniversal.conditionalEntropy_hash_le
+
+/--
+info: 'Cslib.Probability.conditionalEntropy_random_hash_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.conditionalEntropy_random_hash_le

@@ -85,8 +85,10 @@ are also ported, including the necessary negligible-output-collision consequence
 Finite Shannon entropy and the samplable pseudoentropy-pair interface are implemented, with a
 strict PPT certificate for the complete prediction game. Every such sampler has an efficient
 deterministic saved-seed evaluator, with exact joint-law and entropy accounting for unused coins;
-finite-PMF concentration bounds support independent repetition. Constructing a positive
-pseudoentropy gap from an OWF remains part of the pending security reduction.
+finite-PMF concentration bounds support independent repetition. Universal hashing, the strong
+leftover hash lemma with public side information, and preimage-isolation entropy bounds are
+implemented. Constructing a positive pseudoentropy gap from an OWF remains part of the pending
+security reduction.
 
 ## Layout
 

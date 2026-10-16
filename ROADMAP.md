@@ -216,7 +216,7 @@ not existence proofs of one-way functions or permutations.
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
-| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy, concentration and uniform-seed samplable pairs are complete; queue the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy, concentration, uniform-seed samplable pairs and hash-isolation bounds are complete; queue efficient hashing, the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
@@ -1289,7 +1289,9 @@ Named calls, explicit binds and an alternative input encoding all certify throug
 axiom guards cover concentration, existence, efficiency, exact distribution and entropy.
 Independent source/API review approves these contracts and checks the concrete instances.
 All six project checks pass after the final simplification. Independent adversarial correctness
-review follows publication.
+review approves the published batch: its probes check zero-length seed impossibility for a fair
+bit, full joint-law preservation, unused seed entropy, concentration boundaries and all eight
+axiom guards. It also independently reproduces the proof and certificate inventories below.
 
 ### Efficiency-certificate inventory (2026-10-16)
 
@@ -1312,6 +1314,10 @@ cache invariants. Neither computational crypto nor Cook–Levin defines a native
 table. Their certificates compose the shared backend, and their separate mathematical/security
 proofs are outside these numbers. The 333 declarations comprise 314 candidates and 19 vendored
 declarations; this count does not attribute inherited work to the port.
+The predicates prove the existence of one finite machine and a polynomial valid for all inputs.
+The tactic produces that proof by composing certified constructions; it is not an optimized
+executable compiler, and these certificate counts do not measure the resulting polynomial's
+degree or constants.
 
 There are 25 machine-level constructor/adapter declaration sites in the local source tree,
 all in the backend: 17 candidates, seven copies of Christian Reitwiessner's tidy-universal work,
@@ -1321,6 +1327,39 @@ from that tidy-universal work. Pinned cslib contributes another 11 transition-bu
 tape extension). The generic `ofTr` factory is excluded. Representation bridges, probabilistic
 specializations and adapters are included, so these are declaration sites, not a minimal primitive
 basis or a count of semantically distinct machines. The saved-seed/entropy batches add none.
+
+### Universal hashing and preimage isolation (2026-10-16)
+
+Two-universal families now have strong and conditional leftover-hash bounds that retain the
+complete public seed and side information. The seed distribution need not be uniform, provided
+it satisfies the pairwise collision bound. Shared public-pair distance laws reuse the pinned
+finite-PMF metric; the port does not copy the crypto branch's alternative metric instance.
+An empty digest has an exact uniformity law, also for an infinite ambient source type.
+
+Hash isolation bounds a hidden bit's conditional entropy by the chance of another preimage
+colliding. The bit may depend on the public seed. Averaging over hash lengths keeps the chosen
+length public in the dependent observation type and gives the logarithmic fiber-size bound used
+in Holenstein's pseudoentropy construction. These results are information-theoretic; efficient
+matrix hashing and the positive prediction gap are subsequent steps.
+
+The matched source has 19 bodies / 257 lines, including the two shared distance helpers and the
+private geometric-tail estimate. The port has 19 / 234. No new helper is introduced
+solely to shorten a proof. The library inventory is 5,700 bodies / 39,003 lines in 533 modules,
+median 3 / P90 17. This batch adds no efficiency certificates or machine constructions.
+
+Same-import source/port profiles use 2,329,541 / 2,494,995 raw tactic heartbeats for the squared
+leftover-hash proof, 157,557 / 129,631 for the empty-digest law, and 1,117,996 / 1,181,980 for
+the conditional-entropy bound. A shorter broad-simp version of the last proof cost about
+6.97 million; retaining explicit collision witnesses and using a narrowly oriented arithmetic
+simplification avoids that regression. These are elaboration costs, not algorithm runtimes.
+
+Regressions cover nonuniform seeds, a noninjective coordinate hash attaining collision probability
+one half, an empty digest, and a seed-dependent predicate whose entropy vanishes on injective
+fibers. A fixed-source XOR hash has a uniform digest marginal but joint distance one half when
+its public seed is retained. The conditional-extraction test keeps correlated side information.
+Six axiom guards cover public-pair distance, isolation and the extraction/entropy headlines.
+Independent cslib-style source/API review approves the final proofs, tests and documentation.
+All six project checks pass. Independent adversarial correctness review follows publication.
 
 ### Implementation priorities (2026-10-16)
 

@@ -516,6 +516,7 @@ public import Complexity.Probability.Concentration
 public import Complexity.Probability.Conditioning
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
+public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.PMF
 public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PMF.Map
@@ -525,8 +526,10 @@ public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 public import Complexity.Probability.Product
+public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
+public import Complexity.Probability.UniversalHash
 public import Complexity.Tactic.PPT
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init

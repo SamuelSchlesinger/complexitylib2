@@ -45,3 +45,4 @@ import ComplexityTests.Smoke
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
 import ComplexityTests.UniformNat
+import ComplexityTests.UniversalHash
