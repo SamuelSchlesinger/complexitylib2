@@ -3177,4 +3177,82 @@ info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_logSpace' depends on axi
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_logSpace
 
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.listAppend' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.listAppend
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.filter' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.filter
+
+/--
+info: 'Cslib.Logic.PL.Literal.computableTidilyInPolyTime_negate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.Literal.computableTidilyInPolyTime_negate
+
+/--
+info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_impLits' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_impLits
+
+/--
+info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_imp' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_imp
+
+/--
+info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_relabel
+
+/--
+info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel
+
+/--
+info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars
+
+/--
+info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atLeastOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atLeastOne
+
+/--
+info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atMostOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atMostOne
+
+/--
+info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne
+
 end ComplexityTests.Axioms

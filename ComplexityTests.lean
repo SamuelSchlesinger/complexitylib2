@@ -1,5 +1,6 @@
 import ComplexityTests.Axioms
 import ComplexityTests.CNF
+import ComplexityTests.CNFPolyTime
 import ComplexityTests.Encodings
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity

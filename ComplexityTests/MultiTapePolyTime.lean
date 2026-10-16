@@ -75,6 +75,17 @@ example : ComputableTidilyInPolyTime (fun n => (List.range n).flatMap fun i => L
       (ComputableTidilyInPolyTime.fst encUnary encUnary))
   exact ComputableTidilyInPolyTime.flatMapWith hrep .id' ComputableTidilyInPolyTime.range
 
+-- Filtering also accepts a parameter and a list whose encoded length grows polynomially.
+example : ComputableTidilyInPolyTime
+    (fun n => (List.range (n * n)).filter fun i => decide (i < n))
+    encUnary (encList encUnary) := by
+  have htest : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.2 < p.1))
+      (encPair encUnary encUnary) encBool :=
+    ComputableTidilyInPolyTime.unary_lt.comp
+      ((ComputableTidilyInPolyTime.snd encUnary encUnary).prod
+        (ComputableTidilyInPolyTime.fst encUnary encUnary))
+  exact ComputableTidilyInPolyTime.filterWith htest .id' (by fun_prop)
+
 -- Unary loop bounds can be evaluated and enumerated for every fixed polynomial and exponent.
 example (p : Polynomial ℕ) (c d : ℕ) :
     ComputableTidilyInPolyTime

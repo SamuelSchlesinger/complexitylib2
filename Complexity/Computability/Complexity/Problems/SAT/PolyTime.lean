@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SAT
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Logics.Propositional.CNF.PolyTime
 
 /-!
 # SAT belongs to NP
@@ -46,7 +47,7 @@ open ComputableTidilyInPolyTime
 @[fun_prop]
 theorem computableTidilyInPolyTime_vars :
     ComputableTidilyInPolyTime (CNF.vars (V := ℕ)) encCNF (encList encNat) :=
-  (map (fst encNat encBool)).comp (flatten (encPair encNat encBool))
+  CNF.computableTidilyInPolyTime_vars encNat
 
 /-- Reading the certificate at the first occurrence of a variable is polynomial-time. -/
 @[fun_prop]

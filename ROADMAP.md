@@ -75,12 +75,13 @@ Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-tim
 | Piece | Module | State |
 |---|---|---|
 | CNF over any variables, relabelling, exactly-one | `Logics/Propositional/CNF*.lean` | proved |
+| Polynomial-time implication clauses, relabelling and exactly-one constraints | `Logics/Propositional/CNF/PolyTime.lean` | proved for arbitrary variable encodings, including repeated variables |
 | `P`, `NP` (verifiers, `Polynomial ℕ` certificate length), reductions, `NPHard` | `Computability/Complexity/{Classes,Reduction}` | defined |
 | `SAT`, `encCNF`, verifier correctness | `Problems/SAT.lean` | proved |
 | Tableau of a multi-tape run and its correctness | `CookLevin/{Tableau,Correctness}.lean` | proved (`tableau_satisfiable_iff`) |
 | The reduction and its correctness | `CookLevin/Reduction.lean` | proved (`reduce_mem_SAT_iff`) |
 | Polynomial-time SAT verifier, `SAT ∈ NP`, `UNSAT ∈ coNP` | `Problems/SAT/PolyTime.lean` | proved, using the vendored calculus and reusable polynomial-time list rules |
-| Parameterized maps and flat-maps, unary lengths and ranges | `MultiTape/Complexity/PolyTime/List.lean` | proved, allowing polynomial-sized intermediate lists for tableau enumeration |
+| Parameterized maps, flat-maps and filtering, unary lengths and ranges | `MultiTape/Complexity/PolyTime/List.lean` | proved, allowing polynomial-sized intermediate lists for tableau enumeration |
 | Unary arithmetic, pairing, polynomial evaluation and conversion to binary | `MultiTape/Complexity/PolyTime/Nat.lean` | proved |
 | Polynomial-time input prefix, certificate length and time bound | `CookLevin/Parameters.lean` | proved for the parameter function shared with `reduce`; both bounds are in unary |
 | `NPComplete encCNF SAT` from the reduction's polynomial-time bound | `CookLevin/Staging.lean` | proved (local-only staging) |

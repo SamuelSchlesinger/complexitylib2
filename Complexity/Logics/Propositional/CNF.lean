@@ -180,6 +180,11 @@ def Clause.relabel (f : V → W) (c : Clause V) : Clause W := c.map (Prod.map f 
 /-- Rename the variables of a formula along `f`. -/
 def CNF.relabel (f : V → W) (φ : CNF V) : CNF W := φ.map (Clause.relabel f)
 
+@[simp] theorem Clause.relabel_id (c : Clause V) : c.relabel id = c := List.map_id c
+
+@[simp] theorem CNF.relabel_id (φ : CNF V) : φ.relabel id = φ :=
+  List.map_id'' Clause.relabel_id φ
+
 @[simp] theorem Clause.eval_relabel (f : V → W) (σ : W → Bool) (c : Clause V) :
     (c.relabel f).eval σ = c.eval (σ ∘ f) := by
   induction c with

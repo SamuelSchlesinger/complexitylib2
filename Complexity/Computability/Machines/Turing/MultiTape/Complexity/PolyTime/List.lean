@@ -20,9 +20,12 @@ up a variable with a large binary label does not require a certificate as long a
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.map`, `.flatten`: constructing lists.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons`, `.listAppend`, `.map`, `.flatten`:
+  constructing lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith`, `.flatMapWith`: constructing lists
   with a parameter; the input list may itself have polynomial encoded length.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`: filtering a polynomial-time list
+  with a parameterized test.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`: unary lengths and ranges.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
@@ -36,6 +39,40 @@ namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α β γ π : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
   {encIn : γ ↪ List Bool} {encP : π ↪ List Bool}
+
+/-- Prepending an element to a framed list is polynomial-time. -/
+@[fun_prop]
+theorem cons (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun p : α × List α => p.1 :: p.2)
+      (encPair enc (encList enc)) (encList enc) :=
+  (ComputableTidilyInDegree.cons enc).computableTidilyInPolyTime
+
+/-- Concatenating two framed lists is polynomial-time. -/
+@[fun_prop]
+theorem listAppend (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun p : List α × List α => p.1 ++ p.2)
+      (encPair (encList enc) (encList enc)) (encList enc) :=
+  (ComputableTidilyInDegree.listAppend enc).computableTidilyInPolyTime
+
+/-- Keep the elements passing a polynomial-time test with a fixed parameter.
+The input list may have any polynomial encoded length. -/
+theorem filterWith {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableTidilyInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableTidilyInPolyTime par encIn encP)
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun x => (list x).filter fun a => test (par x, a))
+      encIn (encList encA) := by
+  obtain ⟨d, e, htest⟩ := htest.exists_degree
+  exact (ComputableTidilyInDegree.filterWith htest
+    (ComputableTidilyInDegree.fst encP (encList encA))
+    (ComputableTidilyInDegree.snd encP (encList encA))).computableTidilyInPolyTime.comp
+      (hpar.prod hlist)
+
+/-- Filtering a list by a polynomial-time test is polynomial-time. -/
+@[fun_prop]
+theorem filter {test : α → Bool} (htest : ComputableTidilyInPolyTime test encA encBool) :
+    ComputableTidilyInPolyTime (List.filter test) (encList encA) (encList encA) :=
+  filterWith (htest.comp (snd encBool encA)) (const true) id'
 
 /-- Map a polynomial-time function with a fixed parameter over a polynomial-time computable list.
 The list may have any polynomial encoded length. -/
