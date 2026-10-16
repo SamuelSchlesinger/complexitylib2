@@ -13,6 +13,7 @@ public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Data.Finset.Density
 public import Mathlib.Basic.Real.Basic
 import Complexity.Foundations.Data.Finset.Expect
+import Complexity.Probability.PMF.Map
 
 /-!
 # Uniform experiments as averages
@@ -27,6 +28,7 @@ into the vocabulary of `Finset.expect` (`𝔼`) and `Finset.dens`.
 ## Main results
 
 * `Cslib.Probability.PMF.sum_le_affine`: average pointwise affine bounds.
+* `Cslib.Probability.PMF.sum_map_mul`, `.sum_bind_mul`: average deterministic and random scores.
 
 * `Cslib.Probability.PMF.toReal_uniformOfFintype_bind_apply`: a uniform first stage averages the
   second stages.
@@ -41,6 +43,25 @@ namespace Cslib.Probability.PMF
 
 open Finset
 open scoped BigOperators ENNReal
+
+/-- Averaging a score after a deterministic map averages its composite with that map.
+Adapted from the cslib `crypto` branch at `5ff69ca`. -/
+theorem sum_map_mul {α β : Type*} [Fintype α] [Fintype β]
+    (p : PMF α) (f : α → β) (score : β → ℝ) :
+    ∑ b, ((p.map f) b).toReal * score b = ∑ a, (p a).toReal * score (f a) := by
+  classical
+  simp only [map_apply_toReal, Finset.sum_mul]
+  rw [Finset.sum_comm]
+  simp [ite_mul]
+
+/-- Averaging a score after a random choice averages its conditional scores.
+Adapted from the cslib `crypto` branch at `5ff69ca`. -/
+theorem sum_bind_mul {α β : Type*} [Fintype α] [Fintype β]
+    (p : PMF α) (kernel : α → PMF β) (score : β → ℝ) :
+    ∑ b, (p.bind kernel b).toReal * score b =
+      ∑ a, (p a).toReal * ∑ b, (kernel a b).toReal * score b := by
+  simp only [bind_apply_toReal, Finset.sum_mul, Finset.mul_sum, mul_assoc]
+  exact Finset.sum_comm
 
 /-- The expectation of an affine score is the affine function of its expectation.
 Adapted from the cslib `crypto` branch at `5ff69ca`. -/

@@ -4681,3 +4681,45 @@ info: 'Cslib.BitString.word_eq_of_padWord_eq' depends on axioms: [propext]
 -/
 #guard_msgs in
 #print axioms Cslib.BitString.word_eq_of_padWord_eq
+
+/--
+info: 'Cslib.Probability.PMF.bind_conditionalSnd' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.bind_conditionalSnd
+
+/--
+info: 'Cslib.Probability.PMF.conditionalSnd_uniform_map' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.conditionalSnd_uniform_map
+
+/--
+info: 'Cslib.Probability.PMF.conditionalSnd_pi_joint' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.conditionalSnd_pi_joint
+
+/--
+info: 'Cslib.Probability.PMF.collisionProbability_eq_probability' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.collisionProbability_eq_probability
+
+/--
+info: 'Cslib.Probability.PMF.dist_uniform_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.dist_uniform_le
+
+/--
+info: 'Cslib.Crypto.output_collision_eq_inversion' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.output_collision_eq_inversion
+
+/--
+info: 'Cslib.Crypto.OneWay.output_collision_negligible' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.OneWay.output_collision_negligible

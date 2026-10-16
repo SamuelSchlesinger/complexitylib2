@@ -216,7 +216,7 @@ not existence proofs of one-way functions or permutations.
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
-| General OWF → PRG | output-length normalization is complete; queue `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| General OWF → PRG | output-length normalization, conditioning and output-collision bounds are complete; queue `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
@@ -1137,9 +1137,10 @@ The general OWF port now normalizes variable-length images to a width determined
 length. The fixed-width theorem derives one polynomial output bound from the original tidy
 machine certificate; evaluation and the width function are uniformly polynomial-time. Its
 inversion reduction is an ordinary functional call with a padded challenge, certified by `ppt`.
-The underlying security theorem accepts arbitrary supplied bounds, including bounds smaller
-than the image, and arbitrary-length inverter candidates. Only the fixed-width conclusion
-requires the output-size bound. General OWF → PRG and its pseudoentropy argument remain open.
+The semantic inversion inequality accepts arbitrary supplied bounds, including bounds smaller
+than the image, and arbitrary-length inverter candidates. Preservation of one-wayness requires a
+uniformly polynomial-time bound function; only the fixed-width conclusion requires an output-size
+bound. General OWF → PRG and its pseudoentropy argument remain open.
 
 `Computability/BitString/Padding.lean` bridges pure bit strings to the existing machine frame
 encoding; it is definitionally the crypto branch's framed-pair expression. Longer words retain
@@ -1166,7 +1167,45 @@ review approves the implementation, and all six project checks pass. Raw tactic 
 are 18,135 for the normalization certificate and 307,318 for its PPT inverter wrapper. Under the
 same current imports and registered rules, the old/new Cook–Levin parameter proof bodies measure
 345,463 / 316,591; these are elaboration costs, not machine runtime or a comparison against the old
-registration environment. Independent adversarial correctness review follows publication.
+registration environment. Independent adversarial correctness review approves `cf1784a` without
+material findings. Its Lean probes cover undersized bounds, unrestricted candidates, global
+output bounds, total padding costs, supported-bind monotonicity and the Cook–Levin client.
+
+### Conditioning and OWF output collisions (2026-10-16)
+
+The next general-OWF prerequisites are implemented: conditioning of joint PMFs, independent
+product conditionals, collision probability and the collision-to-uniform-distance estimate.
+Conditioning wraps upstream `posteriorDist`, with the second marginal as the explicit fallback
+at impossible observations. Its reconstruction theorem preserves the entire joint law. Uniform
+inputs conditioned on their image are uniform on the observed fiber, including unequal fibers.
+The product corollaries deferred in the earlier probability port are now complete.
+
+The elementary independent-guess experiment gives exactly the output collision probability.
+Its sampler is certified by `ppt`, so every uniform OWF has negligible output collisions without
+regularity, injectivity or fixed image lengths. This necessary condition is not the pseudoentropy
+surplus required by OWF → PRG; that construction remains open. The real-valued collision statistic
+transfers exactly to the nonnegative game API. Injective encoding invariance now permits both
+ambient types to be infinite. The experiment theorem accepts the caller's equality decision
+procedure, allowing the functional-program equality to close with `simp only` without expanding
+all probability masses.
+
+The matched source and port both have 31 bodies, including all five new shared map/expectation
+rules and the two product clients. Body lines decrease from 165 to 151. The uniform-fiber proof
+uses Mathlib's subtype-sum identity instead of manual subtype witnesses and singleton sums;
+using the upstream posterior adds two lines elsewhere. The library total is 5,622 bodies /
+38,396 lines in 525 modules, median 3 / P90 17. These are the same source-layout counts used above,
+excluding definitions, statements, tests and generated declarations.
+
+Regression tests cover possible and impossible observations, unequal fibers of sizes one and
+two, correlated joint reconstruction, arbitrary word distributions on an infinite ambient type,
+uniform-word collisions and constant images. Seven axiom guards cover the headline results.
+Source/API review approves the implementation, including independent checks with arbitrary
+equality decision procedures. All six project checks pass. Under the same current imports and
+helper API, the old/new fiber proof bodies use 1,522,571 / 1,873,459 raw tactic heartbeats: the
+shorter subtype proof costs more elaboration. The old/new collision-experiment bodies use
+165,172 / 117,254, and the independent guesser's `ppt` certificate uses 139,407. These measure
+proof elaboration, not machine runtime. Independent adversarial correctness review follows
+publication.
 
 ### Implementation priorities (2026-10-16)
 

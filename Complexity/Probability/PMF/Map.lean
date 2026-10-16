@@ -16,6 +16,8 @@ public import Complexity.Probability.PMF
 
 * `Cslib.Probability.PMF.map_equiv_apply`: point masses after an equivalence.
 * `Cslib.Probability.PMF.map_congr_on_support`: only supported inputs need equal outputs.
+* `Cslib.Probability.PMF.map_apply_toReal`: finite fiber sums.
+* `Cslib.Probability.PMF.uniformOfFintype_map_apply`: uniform image masses from fiber sizes.
 
 ## References
 
@@ -26,6 +28,8 @@ Adapted from `Probability/PMF.lean` on the cslib `crypto` branch at
 @[expose] public section
 
 namespace Cslib.Probability.PMF
+
+open scoped ENNReal
 
 variable {α β : Type*}
 
@@ -39,5 +43,30 @@ theorem map_equiv_apply (p : PMF α) (e : α ≃ β) (b : β) :
 theorem map_congr_on_support (p : PMF α) (f g : α → β)
     (h : ∀ a ∈ p.support, f a = g a) : p.map f = p.map g :=
   PMF.bind_congr_on_support p _ _ (fun a ha => congrArg PMF.pure (h a ha))
+
+/-- The mass of a deterministic image is the sum of the masses in its fiber. -/
+theorem map_apply_toReal [Fintype α] [DecidableEq β] (p : PMF α) (f : α → β) (b : β) :
+    ((p.map f) b).toReal = ∑ a, if b = f a then (p a).toReal else 0 := by
+  change (p.bind (fun a => PMF.pure (f a)) b).toReal = _
+  rw [bind_apply_toReal]
+  apply Finset.sum_congr rfl
+  intro a _
+  by_cases h : b = f a <;> simp [PMF.pure_apply, h]
+
+/-- The mass of an image of a uniform input is its fiber size divided by the input size. -/
+theorem uniformOfFintype_map_apply [Fintype α] [Nonempty α] (f : α → β) (b : β) :
+    ((uniformOfFintype α).map f) b =
+      (Nat.card {a // f a = b} : ℝ≥0∞) / Fintype.card α := by
+  classical
+  simp only [PMF.map_apply, uniformOfFintype_apply, tsum_fintype,
+    ← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv,
+    Nat.card_eq_fintype_card, Fintype.card_subtype, eq_comm]
+
+/-- Marginalizing over a freshly sampled second component recovers the first distribution. -/
+@[simp] theorem map_fst_bind_pair (p : PMF α) (f : α → PMF β) :
+    (p.bind (fun a => (f a).map (a, ·))).map Prod.fst = p := by
+  simp only [PMF.map_bind, PMF.map_comp, Function.comp_def]
+  change p.bind (fun a => (f a).map (Function.const β a)) = p
+  simp only [PMF.map_const, PMF.bind_pure]
 
 end Cslib.Probability.PMF

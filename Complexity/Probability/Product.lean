@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.PMF.Map
+public import Complexity.Probability.Conditioning
 public import Mathlib.Probability.Independence.Basic
 import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Fintype.Pi
@@ -29,12 +30,12 @@ Replacing one coordinate of a uniform tuple by a fresh uniform sample preserves 
 * `Cslib.Probability.PMF.toMeasure_pi`, `.iIndepFun_pi`: product-measure and independence laws.
 * `Cslib.Probability.PMF.pi_bind_update_pair`: reveal a coordinate and retain the entire tuple.
 * `Cslib.Probability.PMF.pi_map`, `.pi_bind`: coordinatewise mapping and sampling laws.
+* `Cslib.Probability.PMF.conditionalSnd_pi_joint`: coordinatewise conditioning.
 
 ## References
 
 Adapted from `Probability/Product.lean` on the cslib `crypto` branch at
-`5ff69ca93402e7c947208dc56396d6d86203ccd8`. The conditional-distribution corollaries are deferred
-until the conditioning API is ported. The measure and independence results reuse Mathlib.
+`5ff69ca93402e7c947208dc56396d6d86203ccd8`. The measure and independence results reuse Mathlib.
 -/
 
 @[expose] public section
@@ -205,5 +206,25 @@ theorem pi_bind_pair [∀ i, Finite (β i)] (p : ∀ i, PMF (α i))
   funext outcome
   rw [pi_map, PMF.map_comp]
   rfl
+
+/-- Independent joint samples can be drawn by first drawing all observations and then drawing
+the hidden coordinates independently from their conditional distributions. -/
+theorem pi_joint_eq_bind_conditionalSnd [∀ i, Finite (β i)]
+    (joint : ∀ i, PMF (α i × β i)) :
+    (pi joint).map (fun outcome => (fun i => (outcome i).1, fun i => (outcome i).2)) =
+      (pi (fun i => (joint i).map Prod.fst)).bind (fun observed =>
+        (pi (fun i => conditionalSnd (joint i) (observed i))).map (observed, ·)) := by
+  simpa only [bind_conditionalSnd] using
+    pi_bind_pair (fun i => (joint i).map Prod.fst) (fun i => conditionalSnd (joint i))
+
+/-- Conditioning independent joint samples on a possible observation tuple preserves independence
+of their hidden coordinates. -/
+theorem conditionalSnd_pi_joint [∀ i, Finite (β i)]
+    (joint : ∀ i, PMF (α i × β i)) (observed : ∀ i, α i)
+    (hobserved : observed ∈ (pi (fun i => (joint i).map Prod.fst)).support) :
+    conditionalSnd ((pi joint).map
+      (fun outcome => (fun i => (outcome i).1, fun i => (outcome i).2))) observed =
+        pi (fun i => conditionalSnd (joint i) (observed i)) := by
+  rw [pi_joint_eq_bind_conditionalSnd, conditionalSnd_bind_pair _ _ _ hobserved]
 
 end Cslib.Probability.PMF

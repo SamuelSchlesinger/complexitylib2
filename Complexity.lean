@@ -356,6 +356,7 @@ public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction
 public import Complexity.Crypto.Computational.HardCore
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
+public import Complexity.Crypto.Computational.OneWay.Collision
 public import Complexity.Crypto.Computational.OneWay.Normalize
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.PseudorandomFunction
@@ -508,6 +509,8 @@ public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
 public import Complexity.Probability.BitString.List
+public import Complexity.Probability.Collision
+public import Complexity.Probability.Conditioning
 public import Complexity.Probability.PMF
 public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PMF.Map
