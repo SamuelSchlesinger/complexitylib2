@@ -46,8 +46,9 @@ postprocessing rule, and one-way-function/permutation definitions. The complete 
 has a short `ppt` certificate. Word-based generators use the existing finite PRG security API,
 and Goldreich–Levin now supplies a hard-core predicate and the complete one-way-permutation →
 one-bit PRG theorem. The randomized inverter is ordinary functional code certified by `ppt`,
-with an exact finite-game correspondence and a typed saved-seed evaluator. Polynomial stretch,
-general OWF → PRG through pseudoentropy, and adaptive GGM security remain to be ported.
+with an exact finite-game correspondence and a typed saved-seed evaluator. Polynomial stretch
+uses a uniform random-hop reduction with an exact dyadic loss; arbitrary efficient larger output
+lengths follow. General OWF → PRG through pseudoentropy and adaptive GGM security remain to be ported.
 
 ## Layout
 

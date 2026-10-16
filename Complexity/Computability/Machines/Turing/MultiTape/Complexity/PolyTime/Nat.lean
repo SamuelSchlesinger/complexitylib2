@@ -48,6 +48,12 @@ namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 @[fun_prop]
 theorem bool_toUnary : ComputableTidilyInPolyTime Bool.toNat encBool encUnary := of_finite _
 
+/-- A unary-output polynomial-time function is polynomially bounded in its unary input. -/
+theorem polynomiallyBounded {f : ℕ → ℕ} (hf : ComputableTidilyInPolyTime f encUnary encUnary) :
+    Cslib.PolynomiallyBounded f := by
+  obtain ⟨c, d, h⟩ := hf.polyBounded_length
+  exact Cslib.polynomiallyBounded_iff_le.mpr ⟨c, d, by simpa using h⟩
+
 /-- Addition of unary naturals, by concatenating their encodings. -/
 @[fun_prop]
 theorem unary_add : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)

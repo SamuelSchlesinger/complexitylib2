@@ -4068,3 +4068,46 @@ info: 'Cslib.Probability.isPPTOn_sampleDyadicCoin' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.Probability.isPPTOn_sampleDyadicCoin
+
+/--
+info: 'Cslib.Crypto.PRGStretch.advantage_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.advantage_eq
+
+/--
+info: 'Cslib.Crypto.PRGStretch.indexed_indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.indexed_indistinguishable
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.amplify' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PseudorandomGenerator.amplify
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.truncate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PseudorandomGenerator.truncate
+
+/--
+info: 'Cslib.Crypto.PRGStretch.polyTime_iterate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.polyTime_iterate
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_of_bounded_growth' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_of_bounded_growth

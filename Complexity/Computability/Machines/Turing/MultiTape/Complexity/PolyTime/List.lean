@@ -305,6 +305,14 @@ theorem encoding_length (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (fun a => (enc a).length) enc encUnary :=
   length_bits.comp (of_eq (encMid := encBits) fun _ => rfl)
 
+/-- Length of a computed raw bit string, fixing the intermediate encoding for proof search.
+Registered after `encoding_length` so `fun_prop` first tries this rule on computed words. -/
+@[fun_prop]
+theorem length_bits_comp {input : α ↪ List Bool} {word : α → List Bool}
+    (hword : ComputableTidilyInPolyTime word input encBits) :
+    ComputableTidilyInPolyTime (fun a => (word a).length) input encUnary :=
+  length_bits.comp hword
+
 /-- Enumerate `0, …, n - 1`, with the bound and the elements in unary. -/
 @[fun_prop]
 theorem range : ComputableTidilyInPolyTime List.range encUnary (encList encUnary) := by

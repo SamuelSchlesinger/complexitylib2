@@ -130,4 +130,13 @@ theorem ComputationallyIndistinguishable.bind {X Y : ℕ → PMF (List Bool)}
       adversary n result) := by ppt
   simpa only [distinguishingGame, ProbComp.eval_bind, PMF.bind_bind] using h _ hefficient
 
+/-- Efficient parameter-dependent deterministic postprocessing preserves indistinguishability. -/
+theorem ComputationallyIndistinguishable.map {X Y : ℕ → PMF (List Bool)}
+    (h : ComputationallyIndistinguishable X Y) {f : ℕ → List Bool → List Bool}
+    (hf : ComputableTidilyInPolyTime (fun p : ℕ × List Bool => f p.1 p.2)
+      (encPair encUnary encBits) encBits) :
+    ComputationallyIndistinguishable (fun n => (X n).map (f n)) (fun n => (Y n).map (f n)) := by
+  have hp : IsPPT encBits (fun n word => pure (f n word)) := by ppt
+  simpa only [ProbComp.eval_pure, PMF.map, Function.comp_def] using h.bind hp
+
 end Cslib.Crypto

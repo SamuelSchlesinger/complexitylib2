@@ -19,6 +19,7 @@ import ComplexityTests.NonVacuity
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
+import ComplexityTests.PRGStretch
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock

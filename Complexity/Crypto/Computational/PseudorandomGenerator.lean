@@ -56,6 +56,17 @@ open Probability Turing.MultiTapeTM
 noncomputable def generatorEnsemble (generator : List Bool → List Bool) (n : ℕ) :
     PMF (List Bool) := (BitString.uniformList n).map generator
 
+/-- Length-dependent postprocessing can use the sampled seed length as its parameter. -/
+theorem generatorEnsemble_postprocess (generator : List Bool → List Bool)
+    (f : ℕ → List Bool → List Bool) (n : ℕ) :
+    generatorEnsemble (fun seed => f seed.length (generator seed)) n =
+      (generatorEnsemble generator n).map (f n) := by
+  simp only [generatorEnsemble, PMF.map_comp]
+  simp only [PMF.map]
+  apply PMF.bind_congr_on_support
+  intro seed hseed
+  simp only [Function.comp_def, BitString.length_of_mem_support_uniformList hseed]
+
 /-- The finite family represented by a word function. An exact output-length hypothesis is
 required by the experiment and security bridges below. -/
 def PRG.wordFamily (generator : List Bool → List Bool) (length : ℕ → ℕ) :

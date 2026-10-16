@@ -212,7 +212,7 @@ not existence proofs of one-way functions or permutations.
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Machine composition charges preparation and has intrinsically halting finite witnesses; oracle PPT remains pending |
-| OWP → PRG | complete through the uniform one-bit PRG theorem and Goldreich–Levin hard-core construction; polynomial length extension remains |
+| OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
 
@@ -602,6 +602,34 @@ to 5,256 / 36,041 in 473 source files. The three original crypto-branch files co
 two grid-coordinate division/remainder helpers (2 / 5) are deferred, so the corresponding original
 portion is 26 / 133. Definitions, statements and tests remain outside this source-layout metric.
 Polynomial PRG stretch and adaptive GGM security still require their hybrid reductions.
+
+### Polynomial PRG stretch (2026-10-16)
+
+`PRGStretch` retains a fixed-width seed prefix and emits one bit per iteration. Its public
+functional program is certified without a length promise on the generator: each call reads only
+a bounded prefix, so its output has a polynomial bound in the original input. A new shared
+`iterateWith_of_bounded_growth` rule charges this input-dependent growth at every iteration.
+The existing invariant-based iteration proof now reuses the same captured loop rule.
+
+The reduction samples one bounded hop and rejects the padded outcomes. The exact advantage loss
+is `2^(log₂(count)+1)`, including `count = 0`; for positive counts it is at most `2*count`.
+The signed averaging theorem comes unchanged from current upstream PR #1070. Both the ordinary
+and captured hybrid tests have two-line `unfold; ppt` certificates. A client that captures a
+Boolean, computes a quadratic count and runs a randomized length test closes with `ppt`.
+That test exposed expensive encoding inference for a raw word's length in nested tuples;
+one shared composition rule resolves it at the default heartbeat limit.
+
+`PseudorandomGenerator.amplify` gives any efficiently computed, strictly larger output length;
+`truncate` preserves security at an efficient intermediate length. The indexed theorem retains
+one uniform reduction receiving the family index as input. Its secure choice need not be
+computable, and the theorem does not certify evaluation of that chosen family as a PPT program.
+General OWF → PRG and adaptive GGM security remain to be ported.
+
+The stretch module has 25 theorem bodies / 174 body lines versus 25 / 168 in the crypto branch;
+this is a broader captured-input interface, not a proof-length reduction. The two PPT certificate
+bodies remain two lines each. Including the shared loop, composition and size rules and the
+upstream hybrid copy, the net addition is 39 bodies / 237 lines, bringing the library to
+5,295 / 36,278 in 475 source files. Counts exclude definitions, statements and tests.
 
 ### Next design experiments
 
