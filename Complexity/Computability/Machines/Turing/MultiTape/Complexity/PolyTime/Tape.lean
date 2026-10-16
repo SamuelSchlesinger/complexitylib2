@@ -69,8 +69,6 @@ theorem stackTape_cons {symbol : α → Option Symbol} {tape : α → StackTape 
     (htape : ComputableTidilyInPolyTime tape input (encStackTape enc)) :
     ComputableTidilyInPolyTime (fun a => StackTape.cons (symbol a) (tape a)) input
       (encStackTape enc) := by
-  have hdata := (stackTape_toList enc).comp htape
-  have hempty := (listIsEmpty (encA := encOption enc)).comp hdata
   have hlist : ComputableTidilyInPolyTime
       (fun a => if (symbol a).isSome || !(tape a).toList.isEmpty
         then symbol a :: (tape a).toList else []) input (encList (encOption enc)) := by fun_prop

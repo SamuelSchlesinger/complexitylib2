@@ -55,4 +55,18 @@ example (tape : BiTape Bool) : (encBiTape encBool tape).length ≤ 12 * tape.spa
 example : ComputableTidilyInPolyTime (List.head? (α := Empty))
     (encList encEmpty) (encOption encEmpty) := by fun_prop
 
+-- The generic capability theorem alone leaves the element encoding undetermined in proof search.
+example {Symbol : Type} (enc : Symbol ↪ List Bool) :
+    ComputableTidilyInPolyTime (List.isEmpty (α := Symbol)) (encList enc) encBool := by fun_prop
+
+example : ComputableTidilyInPolyTime (List.isEmpty (α := Bool)) encBits encBool := by fun_prop
+
+example : ComputableTidilyInPolyTime (fun values : List ℕ => values.isEmpty)
+    (encList encUnary) encBool := by polytime
+
+example : ComputableTidilyInPolyTime
+    (fun tape : BiTape (List Bool) =>
+      if tape.left.toList.isEmpty then tape.moveRight else tape.moveLeft)
+    (encBiTape encBits) (encBiTape encBits) := by fun_prop
+
 end ComplexityTests.TapePolyTime

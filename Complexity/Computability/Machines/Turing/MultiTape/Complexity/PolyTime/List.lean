@@ -41,8 +41,8 @@ up a variable with a large binary label does not require a certificate as long a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD`: lookup by a unary index.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listIsEmpty`, `.head?`: inspect a list without
-  a default element.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listIsEmpty`, `.listIsEmpty'`, `.bitsIsEmpty`,
+  `.head?`: inspect a list without a default element, with inference rules for framed and raw lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOfWithInput`, `.bitsGetDWithInput`:
   compositional rules for first-occurrence lookup and raw-bit access.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsDropWithInput`, `.bitsTakeWithInput`:
@@ -89,6 +89,17 @@ theorem tail {encL : List α ↪ List Bool} [ListEncoding encA encL] :
 theorem listIsEmpty {encL : List α ↪ List Bool} [ListEncoding encA encL] :
     ComputableTidilyInPolyTime (List.isEmpty (α := α)) encL encBool :=
   of_linear (ListEncoding.isEmpty (enc₁ := encA) (enc := encL))
+
+/-- Test a framed list's emptiness, determining its element encoding for automation. -/
+@[fun_prop]
+theorem listIsEmpty' (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (List.isEmpty (α := α)) (encList enc) encBool :=
+  listIsEmpty (encA := enc)
+
+/-- Test a raw bit string's emptiness using the standard Boolean element encoding. -/
+@[fun_prop]
+theorem bitsIsEmpty : ComputableTidilyInPolyTime (List.isEmpty (α := Bool)) encBits encBool :=
+  listIsEmpty (encA := encBool)
 
 /-- Drop the head of a framed list, determining its element encoding for automation. -/
 @[fun_prop]

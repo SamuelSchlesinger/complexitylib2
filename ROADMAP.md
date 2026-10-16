@@ -779,6 +779,13 @@ providing the broader alphabet interface and additional reusable operations. The
 and tests are excluded. Finite indexed tables, encoded configuration transitions and the final
 efficient stateful substitution theorem remain next.
 
+The follow-up correctness review found that the generic `listIsEmpty` rule left its element
+encoding undetermined during proof search. Framed-list and raw-bit specializations now make both
+`fun_prop` and `polytime` handle direct emptiness tests and composed tape guards. This removes
+two manual certificate hints from `stackTape_cons`: two reusable one-line rules replace two
+client lines, with no net body-line growth. Regression tests cover both encodings and a tape
+program that branches on its stored left side.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
