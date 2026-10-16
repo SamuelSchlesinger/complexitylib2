@@ -323,12 +323,14 @@ public import Complexity.Computability.Probabilistic.CoinTape
 public import Complexity.Computability.Probabilistic.Finite
 public import Complexity.Computability.Probabilistic.Memoize
 public import Complexity.Computability.Probabilistic.Oracle
+public import Complexity.Computability.Probabilistic.OracleSimulation
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Computability.Probabilistic.PPT.Capture
 public import Complexity.Computability.Probabilistic.PPT.Clock
 public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Computability.Probabilistic.QueryBounds
+public import Complexity.Computability.Probabilistic.Realization.OracleSimulation
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Computability.RAM.Cost

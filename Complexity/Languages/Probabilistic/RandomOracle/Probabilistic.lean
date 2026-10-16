@@ -124,17 +124,9 @@ theorem eval_run_interpret_memoize_prob [LawfulBEq Query] [DecidableEq Query]
           (answer (fun q => ProbComp.eval (compute q)))) program).run (ofList cache) := by
   have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
     PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
-  rw [OracleComp.map_run_interpret heval]
-  have hhandler : (fun q state => ProbComp.eval
-      (handler (fun n => StateT.lift (ProbComp.unifFin n)) (memoize compute) q state)) =
-        handler (fun n => StateT.lift (ProbComp.unifOracle n))
-          (memoize (fun q => ProbComp.eval (compute q))) := by
-    funext q state
-    cases q with
-    | inl n => simp [handler, StateT.lift, ProbComp.unifOracle, PMF.map, Function.comp_def]
-    | inr q => exact heval.map_memoize compute q state
-  rw [hhandler]
-  exact run_interpret_memoize_prob (fun q => ProbComp.eval (compute q)) program cache
+  rw [ProbOracleComp.eval_run_interpret]
+  simpa only [heval.map_memoize] using
+    run_interpret_memoize_prob (fun q => ProbComp.eval (compute q)) program cache
 
 end List
 

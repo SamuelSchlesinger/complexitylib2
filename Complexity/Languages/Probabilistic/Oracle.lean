@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Basic
+import Complexity.Languages.Probabilistic.Simulation
 
 /-!
 # Private randomness with typed oracle calls
@@ -31,6 +32,7 @@ is not automatically a strict PPT operation.
 
 * `Cslib.ProbOracleComp.interpret_sample`: embedded sampling uses only the sampling handler.
 * `Cslib.ProbOracleComp.run_interpret_sample`: private sampling leaves oracle state unchanged.
+* `Cslib.ProbOracleComp.eval_run_interpret`: closed handler programs preserve the joint state law.
 
 ## References
 
@@ -108,7 +110,24 @@ theorem run_interpret_sample (oracle : (q : Query) → StateT State PMF (spec q)
       (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle) (sample program)).run s =
         (ProbComp.eval program).map (·, s) := by
   rw [interpret_sample]
-  exact OracleComp.run_interpret_stateless ProbComp.unifOracle program s
+  exact OracleComp.run_interpret_lift ProbComp.unifOracle program s
+
+/-- Evaluating closed stateful handlers commutes with interpreting the whole oracle program.
+Private sampling stays independent, and the final state is retained beside the result. -/
+theorem eval_run_interpret (oracle : (q : Query) → StateT State ProbComp (spec q))
+    (program : ProbOracleComp spec α) (s : State) :
+    ProbComp.eval ((OracleComp.interpret
+      (handler (fun n => StateT.lift (ProbComp.unifFin n)) oracle) program).run s) =
+      (OracleComp.interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n))
+        (fun q state => ProbComp.eval (oracle q state))) program).run s := by
+  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
+    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
+  rw [OracleComp.map_run_interpret heval]
+  apply congrArg (fun oracle => (OracleComp.interpret (m := StateT State PMF) oracle program).run s)
+  funext q state
+  cases q with
+  | inl n => simp [handler, StateT.lift, ProbComp.unifOracle, PMF.map, Function.comp_def]
+  | inr q => rfl
 
 end ProbOracleComp
 

@@ -26,7 +26,8 @@ preparation and guarantees actual halting. The `ppt` tactic combines these rules
 loops have joint efficiency and invariant rules, including captured inputs; `ppt` handles
 constant state growth. `IsPPT` supplies the standard unary security parameter and auxiliary word;
 `ppt` reuses its local certificates; named certificates also register with `fun_prop`.
-Oracle PPT remains to be integrated.
+Word-oracle PPT has a uniform joint-state realization contract and efficient closed stateful
+substitution; general open-program composition remains to be integrated.
 Saved-coin replay preserves the full configuration and private oracle state under stateless
 fair-coin semantics. Closed replay has a uniform linear-time and space certificate from the
 ordinary encoded pair of coins and input, including preparation and final cleanup. Functional
@@ -61,7 +62,9 @@ tables likewise support ordinary function construction, projection and updates t
 charging all unbounded entries. Encoded configurations now have constructor, projection, local-step
 and reply-installation certificates; their complete storage bound includes the largest installed
 reply. Finite-control dispatch now selects certified deterministic or probabilistic branches with
-captured input. Efficient stateful substitution remains pending.
+captured input. Stateful substitution now certifies running an arbitrary oracle-PPT program
+against a closed PPT handler. Clients supply a local invariant and a reply/storage-growth allowance;
+the certificate retains the joint result and final state, including an entire memoization cache.
 General OWF → PRG through pseudoentropy and adaptive GGM security
 remain to be ported.
 

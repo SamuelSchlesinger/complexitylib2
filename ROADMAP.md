@@ -40,7 +40,8 @@ realization contract, a deterministic bridge, fair-bit sampling, monadic bind, c
 and conditionals. The `ppt` tactic combines these with deterministic automation and
 constant-growth probabilistic loops. General bounded loops use supported-state invariants;
 the word-oracle PPT contract, deterministic bridge and derived query budgets are present,
-while its composition and substitution rules remain to be integrated.
+and closed stateful substitution is now certified. General open-program composition remains
+to be integrated.
 The deterministic `polytime` tactic and invariant-oriented loop specifications have now been
 adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
@@ -213,7 +214,7 @@ not existence proofs of one-way functions or permutations.
 | Random-function semantics | joint eager/lazy completion law including independent private coins and adaptive queries; typed caches, association-list realization, compositional oracle-only query budgets and a closed-sampler bridge |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; oracle composition and substitution remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -875,11 +876,49 @@ instead of unpacking a machine witness. Three computed-table access rules add 3 
 The complete batch adds 6 / 46, for 5,486 bodies / 37,269 lines in 504 source modules, with the same
 source-layout exclusions as above. The efficient stateful interpreter is the next obligation.
 
+### Efficient stateful oracle substitution (2026-10-16)
+
+`IsOraclePPTOn.run_interpret_preprocess` now certifies the ordinary `OracleComp.interpret`
+expression against a closed PPT handler. Its output contains both the original result and final
+private state. The client provides input preparation, the handler certificate, initial state,
+one meaningful invariant and an efficiently computed allowance for replies and added storage.
+The machine, clock-derived query budgets and configuration invariant remain internal.
+
+The proof charges captured inputs, copying, requests, replies and the entire retained finite
+configuration and private state. Bounds hold on every supported transition. An additive allowance
+depending only on the caller and request prevents repeated state doubling from hiding exponential
+storage; a negative test makes that obligation explicit. Neither the oracle contract nor this
+proof assumes that the source machine has halted when its clock expires.
+
+Checked clients retain the correlation between a sampled reply bit and the final state, receive
+replies unbounded in caller length, and use a different framed-bit caller encoding. That alternate
+encoding requires an explicit `listToBits` composition for the handler and preprocessing; it is
+supported without a tactic patch, but inference does not insert every representation conversion.
+A generic adaptive client runs against a lazy random-function cache with runtime-length replies.
+Its proof uses `memoize_call_size_le` for the full entry/list framing bound and preserves the whole
+cache in the result. This completes the substitution infrastructure, not adaptive GGM security.
+
+The three interpreter proofs and public rule cost 4 bodies / 165 body lines, compared with
+4 / 156 for the matching crypto-branch proofs. The single-step efficiency proof falls from
+47 to 42 lines; the exact shared-interpreter bridge and bounded run offset that saving. Two
+shared interpretation helpers add 13 lines and shorten the existing randomized-cache bridge
+from 13 to 5 lines. Including those helpers and that reuse, this batch adds 6 bodies / 170 lines,
+for 5,492 / 37,439 in 506 source modules (median 3, P90 17). These are the same source-layout
+counts as above, excluding definitions, statements and tests; this batch does not claim a net
+proof-length reduction against the matched crypto implementation.
+
+The generic memoized-oracle client proof uses 649,052 raw tactic heartbeats with Mathlib's
+`#count_heartbeats` tactic on this checkout. It includes the substitution rule, handler and
+resource certificates, and cache preservation. This is a baseline, not a speedup comparison.
+The complete interpreter module passes `lean --profile`; its import loading dominates the
+observed wall time, so it does not support a claim about tactic speed. All six project checks
+and the four new headline axiom guards pass.
+
 ### Implementation priorities (2026-10-16)
 
-1. Finish efficient stateful oracle substitution through finite tables, encoded configurations
-   and simulation, preserving the joint result/private-state law and charging computation,
-   copying, queries, replies and storage growth.
+1. Efficient closed stateful substitution is implemented through finite tables, encoded
+   configurations and simulation, preserving the joint result/private-state law and charging
+   computation, copying, queries, replies and storage growth. Use it in the crypto reductions.
 2. Make constructor, projection, lookup and composition certificates infer encodings predictably;
    test equivalent functional expressions and alternative encodings instead of adding syntax
    cases to tactics.
@@ -906,9 +945,8 @@ source-layout exclusions as above. The efficient stateful interpreter is the nex
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
    semantic invariant rules with functional clients. Port the independent repetition, empirical
    probability tests and collection helpers used by Goldreich–Levin and pseudoentropy, then the
-   efficient stateful oracle substitution required for adaptive GGM security. The realization
-   contract and clock-derived query budgets are now present; substitution must preserve the joint
-   result/private-state distribution and charge query and reply lengths.
+   adaptive GGM reductions using the completed stateful substitution theorem. General
+   open-program composition and the security-parameter oracle wrapper remain separate work.
 2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
    repeat finite union bounds, construction of a bad event and extraction of a good sample.
    Trial a shared finite-family existence lemma using Mathlib's existing measure union bounds;
@@ -1313,7 +1351,7 @@ It merges into current cslib main with two trivial conflicts and the merge build
    The free-monad interface and realization layer are separate from crei's backend; v2 now
    supplies the typed frontend, closed PPT contract, monadic composition, captured inputs and
    invariant-certified bounded probabilistic loops, and the word-oracle realization contract.
-   Oracle composition and substitution remain pending.
+   Closed stateful substitution is certified; general open-program composition remains pending.
 4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
    freely.** crei's calculus and universal machine are vendored in full as tracked local copies
    (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),

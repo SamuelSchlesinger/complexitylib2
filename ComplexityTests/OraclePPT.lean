@@ -5,6 +5,8 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Probabilistic.QueryBounds
+import Complexity.Computability.Probabilistic.OracleSimulation
+import Complexity.Computability.Probabilistic.Memoize
 import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 import Complexity.Tactic.PPT
 
@@ -138,6 +140,103 @@ private theorem requestHead_isOraclePPTOn : IsOraclePPTOn encBits encBits reques
 example : ∃ c d : ℕ, ∀ input, ProbOracleComp.HasQueryBounds (requestHead input)
     (fun request => request.2.length) (c * (input.length + 1) ^ d)
       (c * (input.length + 1) ^ d) := requestHead_isOraclePPTOn.query_bounds
+
+private noncomputable def respond (caller : List Bool) (_ : Unit × List Bool)
+    (state : List Bool) : ProbComp (List Bool × List Bool) := do
+  let bit ← ProbComp.uniform Bool
+  return (bit :: caller, bit :: state)
+
+-- A functional oracle client becomes closed PPT with correlated output and accumulated state.
+-- Reply size is unbounded in the caller, and the local invariant survives every sampled bit.
+example : IsPPTOn encBits (encPair encBits encBits) (fun word =>
+    (OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n)) (respond word))
+        (requestHead word)).run word) := by
+  apply requestHead_isOraclePPTOn.run_interpret_preprocess
+    (resources := fun caller _ => caller.length + 1)
+    ComputableTidilyInPolyTime.id' (by unfold respond; fun_prop)
+    ComputableTidilyInPolyTime.id' (fun caller state => caller.length ≤ state.length)
+    (fun _ => le_rfl) (by fun_prop)
+  intro caller request state hstate result hresult
+  simp only [respond, ProbComp.eval_bind, PMF.mem_support_bind_iff] at hresult
+  obtain ⟨bit, _, hresult⟩ := hresult
+  simp only [ProbComp.eval_pure, PMF.mem_support_pure_iff] at hresult
+  subst result
+  simp only [encBits_apply, List.length_cons]
+  exact ⟨by lia, le_rfl, by lia⟩
+
+-- The same bit appears in the output and the returned state; no marginalization is hidden.
+example (word : List Bool) :
+    ProbComp.eval ((OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n)) (respond word))
+        (requestHead word)).run word) =
+      (PMF.uniformOfFintype Bool).map (fun bit => ([bit], bit :: word)) := by
+  rw [ProbOracleComp.eval_run_interpret]
+  simp only [requestHead, bind_pure_comp, OracleComp.interpret_map, StateT.run_map,
+    ProbOracleComp.interpret_query, PMF.monad_map_eq_map]
+  change PMF.map _ (ProbComp.eval (respond word ((), []) word)) = _
+  simp [respond, PMF.map_comp, Function.comp_def]
+
+-- The API accepts a different caller encoding and preprocessing without any machine annotation.
+example : IsPPTOn (encList encBool) (encPair encBits encBits) (fun word =>
+    (OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n)) (respond word))
+        (requestHead word.reverse)).run word) := by
+  apply requestHead_isOraclePPTOn.run_interpret_preprocess
+    (resources := fun caller _ => caller.length + 1)
+    (ComputableTidilyInPolyTime.bitsReverse.comp ComputableTidilyInPolyTime.listToBits)
+    (by
+      have h : IsPPTOn
+          (encPair encBits (encPair (encPair (encFinite Unit) encBits) encBits))
+          (encPair encBits encBits) (fun pair => respond pair.1 pair.2.1 pair.2.2) := by
+        unfold respond
+        fun_prop
+      apply h.preprocess
+      exact (ComputableTidilyInPolyTime.listToBits.comp
+        (ComputableTidilyInPolyTime.fst _ _)).prod (ComputableTidilyInPolyTime.snd _ _))
+    (by fun_prop)
+    (fun caller state => caller.length ≤ state.length) (fun _ => le_rfl) (by fun_prop)
+  intro caller request state hstate result hresult
+  simp only [respond, ProbComp.eval_bind, PMF.mem_support_bind_iff] at hresult
+  obtain ⟨bit, _, hresult⟩ := hresult
+  simp only [ProbComp.eval_pure, PMF.mem_support_pure_iff] at hresult
+  subst result
+  simp only [encBits_apply, List.length_cons]
+  exact ⟨by lia, le_rfl, by lia⟩
+
+-- A fixed caller/request allowance cannot conceal unbounded doubling of retained raw state.
+example (allowance : ℕ) : ¬ ∀ state : List Bool,
+    (encBits (state ++ state)).length ≤ (encBits state).length + allowance := by
+  intro h
+  have hlarge := h (List.replicate (allowance + 1) false)
+  simp only [encBits_apply, List.length_append, List.length_replicate] at hlarge
+  lia
+
+-- An arbitrary certified adaptive client can use a lazy random function with unbounded words.
+-- The local cache invariant and one-entry growth bound hide the interpreter's storage arithmetic.
+example {β : Type} {output : β ↪ List Bool} {program : List Bool → WordOracleComp Unit β}
+    (hprogram : IsOraclePPTOn encBits output program) :
+    IsPPTOn encBits (encPair output (encList (encPair encBits encBits))) (fun word =>
+      (OracleComp.interpret
+        (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n))
+          (fun request => memoize (fun _ => BitString.sampleList word.length) request.2))
+            (program word)).run []) := by
+  apply hprogram.run_interpret_preprocess
+    (resources := fun caller query => 4 * query.length + 2 * caller.length + 3)
+    ComputableTidilyInPolyTime.id' (by fun_prop) (by fun_prop)
+    (fun caller cache => ∀ entry ∈ cache, entry.2.length ≤ caller.length)
+    (by simp) (by fun_prop)
+  intro caller request cache hcache result hresult
+  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
+    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
+  rw [heval.map_memoize] at hresult
+  obtain ⟨hreply, hcache', hgrowth⟩ := memoize_call_size_le encBits encBits
+    (fun _ => ProbComp.eval (BitString.sampleList caller.length)) request.2 cache caller.length
+    hcache (fun value hvalue => by
+      rw [BitString.eval_sampleList] at hvalue
+      exact (BitString.length_of_mem_support_uniformList hvalue).le) result hresult
+  exact ⟨hcache', by simpa only [encBits_apply] using hreply.trans (by lia), by
+    simpa only [encBits_apply, Nat.add_assoc] using hgrowth⟩
 
 -- The trace contains one external request despite two private draws and an unbounded reply.
 example (n : ℕ) :

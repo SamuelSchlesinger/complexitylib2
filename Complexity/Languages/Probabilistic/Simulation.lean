@@ -28,6 +28,7 @@ There is one oracle specification and one interpreter; stateful execution uses `
 * `Cslib.OracleComp.run_interpret_simulation_of_invariant`: probabilistic state simulation.
 * `Cslib.OracleComp.run_interpret_map_state_of_invariant`: deterministic state representation.
 * `Cslib.OracleComp.map_run_interpret`: a monad morphism commutes with stateful interpretation.
+* `Cslib.OracleComp.run_interpret_lift`: lifted effects preserve the complete private state.
 -/
 
 @[expose] public section
@@ -37,6 +38,17 @@ namespace Cslib.OracleComp
 universe u v
 
 variable {ι : Type u} {spec : OracleSpec.{u, v} ι} {α State State' : Type v}
+
+/-- Lifting every oracle action into state retains the original state beside its result. -/
+theorem run_interpret_lift {m : Type v → Type*} [Monad m] [LawfulMonad m]
+    (oracle : (q : ι) → m (spec q)) (program : OracleComp spec α) (s : State) :
+    (interpret (fun q => StateT.lift (oracle q)) program).run s =
+      (fun a => (a, s)) <$> interpret oracle program := by
+  have hlift : (fun q => StateT.lift (σ := State) (oracle q)) =
+      (fun q s => (fun a => (a, s)) <$> oracle q) := by
+    funext q s
+    simp only [StateT.lift, bind_pure_comp]
+  rw [hlift, run_interpret_stateless]
 
 /-- An invariant preserved by supported oracle transitions holds after every adaptive program. -/
 theorem run_interpret_invariant

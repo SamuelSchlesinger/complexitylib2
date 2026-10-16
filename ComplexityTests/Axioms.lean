@@ -17,6 +17,34 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess
+
+/--
+info: 'Cslib.Probability.OracleSimulation.isPPTOn_run' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.OracleSimulation.isPPTOn_run
+
+/--
+info: 'Cslib.Probability.OracleSimulation.step_eq_run_interpret' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.OracleSimulation.step_eq_run_interpret
+
+/--
+info: 'Cslib.ProbOracleComp.eval_run_interpret' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbOracleComp.eval_run_interpret
+
+/--
 info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.finite_cases' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
