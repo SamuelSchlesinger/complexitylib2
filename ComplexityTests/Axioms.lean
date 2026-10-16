@@ -2900,5 +2900,33 @@ info: 'Cslib.Logic.PL.QBF.eval_eq_of_closed' depends on axioms: [propext, Classi
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.QBF.eval_eq_of_closed
+info: 'Cslib.BitString.card_filter_le_abs_card_filter_sub_half_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.card_filter_le_abs_card_filter_sub_half_le
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_rectangleFree_two_pow_le_ncard' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_rectangleFree_two_pow_le_ncard
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_rectangleFree_family' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_rectangleFree_family
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_rectangleBias' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_rectangleBias
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_rectangleBias_family' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_rectangleBias_family
 
 end ComplexityTests.Axioms

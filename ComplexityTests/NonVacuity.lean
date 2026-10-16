@@ -31,6 +31,7 @@ import Complexity.Computability.Circuit.Frontier.Ledger.Unconditional
 import Complexity.Computability.Circuit.Decomposable
 import Complexity.Computability.Circuit.Frontier.FanInTwo
 import Complexity.Computability.Circuit.Frontier.Correlation
+import Complexity.Computability.Circuit.Frontier.Witness
 import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 import Complexity.Logics.SecondOrder.Coloring
 import Complexity.Computability.PCP.GapTheorem
@@ -744,6 +745,81 @@ example : ∃ γ : ℝ, 0 < γ ∧ γ < (1 + Real.pi / (6 * Real.arccos ((1 + 2 
     linarith
 
 end FrontierCorrelation
+
+section FrontierWitness
+
+open Cslib.Circuits Cslib.Circuits.Frontier Filter
+
+/-- The hypotheses `hfree`, `hK` and `hdense` of the worst-case claim `CircuitLowerBound` can be
+met over the alphabet `Bool`, with `K_n = n + 2`. -/
+example : ∃ (S : ∀ n, Set (Fin n → Bool)) (K : ℕ → ℕ),
+    (∀ᶠ n in atTop, RectangleFree (S n) (K n)) ∧
+    (fun n => Real.log (K n)) =o[atTop] (fun n => (n : ℝ)) ∧
+    (fun n => n * Real.log (Nat.card Bool) - Real.log (S n).ncard) =o[atTop]
+      (fun n => (n : ℝ)) := by
+  obtain ⟨S, hfree, hK, hdense, -⟩ := exists_rectangleFree_family
+  exact ⟨S, fun n => n + 2, hfree, hK, hdense⟩
+
+/-- So `CircuitLowerBound 4` applies non-vacuously: for every `ε > 0` and all large `n`, circuits
+of fan-in at most two deciding a set of at least `2 ^ (n - 1)` bit strings (half of the cube) need
+more than `(4 - ε) n` gates of positive arity. -/
+example : ∃ S : ∀ n, Set (Fin n → Bool), (∀ n, 2 ^ (n - 1) ≤ (S n).ncard) ∧
+    ∀ ε > (0 : ℝ), ∀ᶠ n in atTop,
+      ∀ (σ : Signature.{0}) (I : Interpretation σ Bool) (Acc : Set Bool) (c : Circuit σ n 1),
+        c.FanInAtMost 2 → c.Decides I Acc (S n) → (4 - ε) * n < c.innerSize := by
+  obtain ⟨S, hfree, hK, hdense, hhalf⟩ := exists_rectangleFree_family
+  exact ⟨S, hhalf, circuitLowerBound_four.{0, 0} Bool S (fun n => n + 2) hfree hK hdense⟩
+
+/-- The hypotheses of the average-case claim `AverageCaseBound` can be met over the alphabet
+`Bool` with bias `b_n = 1 / (n + 1)` tending to zero, and `K_n = (n + 1) ^ 3`. -/
+example : ∃ (S : ∀ n, Set (Fin n → Bool)) (K : ℕ → ℕ) (b : ℕ → ℝ),
+    (∀ᶠ n in atTop, RectangleBias (S n) (K n) (b n)) ∧
+    (fun n => Real.log (K n)) =o[atTop] (fun n => (n : ℝ)) ∧ Tendsto b atTop (nhds 0) := by
+  obtain ⟨S, hbias, hK, hb⟩ := exists_rectangleBias_family
+  exact ⟨S, fun n => (n + 1) ^ 3, fun n => 1 / ((n : ℝ) + 1), hbias, hK, hb⟩
+
+/-- The bias bound constrains such sets once rectangles with both sides of size at least `K_n`
+exist. For `60` coordinates the cube is a rectangle with both sides of size `2 ^ 30 ≥ 61 ^ 3`, so
+a set of bias at most `1 / 61` on rectangles with both sides of size at least `61 ^ 3` has within
+`2 ^ 60 / 61` of `2 ^ 59` elements; and such a set exists. -/
+example : ∃ S : Set (Fin 60 → Bool), RectangleBias S (61 ^ 3) (1 / 61) ∧
+    |(S.ncard : ℝ) - 2 ^ 59| ≤ 2 ^ 60 / 61 := by
+  obtain ⟨S, hS⟩ := exists_rectangleBias (ι := Fin 60) (K := 61 ^ 3) (b := 1 / 61) (by norm_num)
+    (by norm_num)
+  refine ⟨S, hS, ?_⟩
+  obtain ⟨X, -, hX⟩ := Set.exists_subset_card_eq (s := (Set.univ : Set (Fin 60))) (n := 30)
+    (by simp)
+  have hXc : Xᶜ.ncard = 30 := by
+    have := Set.ncard_add_ncard_compl X
+    simp only [Nat.card_eq_fintype_card, Fintype.card_fin] at this
+    omega
+  have hcard (Y : Set (Fin 60)) (hY : Y.ncard = 30) :
+      (Set.univ : Set (Y → Bool)).ncard = 2 ^ 30 := by
+    rw [Set.ncard_univ, Nat.card_fun, Nat.card_coe_set_eq, hY, Nat.card_eq_fintype_card,
+      Fintype.card_bool]
+  have h := hS X Set.univ Set.univ (by rw [hcard X hX]; norm_num) (by rw [hcard Xᶜ hXc]; norm_num)
+  have hR : rectangle X (Set.univ : Set (X → Bool)) Set.univ = Set.univ := by
+    ext
+    simp [rectangle]
+  rw [hR, Set.univ_inter, Set.ncard_univ, Nat.card_eq_fintype_card, Fintype.card_fun,
+    Fintype.card_bool, Fintype.card_fin] at h
+  convert h using 1 <;> norm_num
+
+/-- So `AverageCaseBound 4` applies with a conclusion tending to `1/2`: for every `ε > 0` there is
+a `γ > 0` such that for all large `n`, circuits of fan-in at most two with at most `(4 - ε) n`
+gates of positive arity agree with a set of bias `1 / (n + 1)` on at most a
+`1/2 + 1 / (n + 1) + exp (-γ n)` fraction of the inputs. -/
+example : ∃ S : ∀ n, Set (Fin n → Bool), ∀ ε > (0 : ℝ), ∃ γ > (0 : ℝ), ∀ᶠ n in atTop,
+    ∀ (σ : Signature.{0}) (I : Interpretation σ Bool) (Acc : Set Bool) (c : Circuit σ n 1),
+      c.FanInAtMost 2 → (c.innerSize : ℝ) ≤ (4 - ε) * n →
+        agreement (S n) {x | c.eval I x 0 ∈ Acc} ≤
+          1 / 2 + 1 / ((n : ℝ) + 1) + Real.exp (-(γ * n)) := by
+  obtain ⟨S, hbias, hK, -⟩ := exists_rectangleBias_family
+  refine ⟨S, fun ε hε => ?_⟩
+  obtain ⟨γ, hγ, H⟩ := averageCaseBound_four.{0, 0} ε hε
+  exact ⟨γ, hγ, H Bool S (fun n => (n + 1) ^ 3) (fun n => 1 / ((n : ℝ) + 1)) hbias hK⟩
+
+end FrontierWitness
 
 section ThresholdParity
 
