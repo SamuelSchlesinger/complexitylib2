@@ -229,6 +229,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Feature
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Equivalence
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Halting
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Sequential
@@ -259,6 +260,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileI
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ExtendTapes
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.PolynomialClock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
@@ -285,6 +288,7 @@ public import Complexity.Computability.PCP.Preprocess
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.PPT
+public import Complexity.Computability.Probabilistic.PPT.Clock
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs

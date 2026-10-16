@@ -3589,4 +3589,34 @@ info: 'Turing.MultiTapeTM.PolynomialClock.exists_prepare' depends on axioms: [pr
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.PolynomialClock.exists_prepare
 
+/--
+info: 'Turing.MultiTapeMachine.runConfigFrom_embed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.runConfigFrom_embed
+
+/--
+info: 'Turing.MultiTapeMachine.toTM_extendTapes' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.toTM_extendTapes
+
+/--
+info: 'Turing.MultiTapePTM.PolynomialClock.run_interpret_compile' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.PolynomialClock.run_interpret_compile
+
+/--
+info: 'Turing.MultiTapePTM.exists_polynomialClock' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.exists_polynomialClock
+
+/--
+info: 'Cslib.Probability.IsPPTOn.exists_halting_machine' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.exists_halting_machine
+
 end ComplexityTests.Axioms

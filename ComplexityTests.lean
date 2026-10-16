@@ -5,6 +5,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
 import ComplexityTests.GGM
 import ComplexityTests.MachineClock
+import ComplexityTests.MachineExtendTapes
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MultiTapePolyTime
@@ -12,6 +13,7 @@ import ComplexityTests.NonVacuity
 import ComplexityTests.PPT
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
+import ComplexityTests.PolynomialClock
 import ComplexityTests.Programs
 import ComplexityTests.SATPolyTime
 import ComplexityTests.Smoke

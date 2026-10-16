@@ -22,7 +22,8 @@ samplers are not free operations.
 
 The clock bounds every execution, rather than its expectation. The witness is forcibly stopped
 at its clock; this definition does not require that its control state has already halted.
-Compiling such a witness to an intrinsically halting one requires a separate clock construction.
+`PPT.Clock` compiles every such witness to an intrinsically halting finite machine, charging
+preparation and consumption of a unary budget to its polynomial bound.
 In particular, this definition does not certify exact uniform sampling from every finite type.
 
 The public input and output encodings reuse the tidy calculus. A deterministic certificate lifts
