@@ -2793,4 +2793,112 @@ info: 'Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le' de
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le
 
+/--
+info: 'Cslib.Complexity.SigmaP_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SigmaP_one
+
+/--
+info: 'Cslib.Complexity.PiP_eq_preimage_compl_SigmaP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PiP_eq_preimage_compl_SigmaP
+
+/--
+info: 'Cslib.Complexity.PH_eq_iUnion_PiP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PH_eq_iUnion_PiP
+
+/--
+info: 'Cslib.Complexity.coNP_subset_PH' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.coNP_subset_PH
+
+/--
+info: 'Cslib.Complexity.not_alternation' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.not_alternation
+
+/--
+info: 'Cslib.Complexity.BPP_subset_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BPP_subset_PP
+
+/--
+info: 'Cslib.Complexity.mem_NP_iff_exists_SharpP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_NP_iff_exists_SharpP
+
+/--
+info: 'Cslib.Complexity.SharpP.exists_le_two_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SharpP.exists_le_two_pow
+
+/--
+info: 'Cslib.Complexity.GapP.neg' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.GapP.neg
+
+/--
+info: 'Cslib.Complexity.PromiseP_eq_PromiseNP_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PromiseP_eq_PromiseNP_iff
+
+/--
+info: 'Cslib.Complexity.mem_PromiseSIZE_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PromiseSIZE_iff
+
+/--
+info: 'Cslib.Complexity.mem_PromisePPoly_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PromisePPoly_iff
+
+/--
+info: 'Cslib.Complexity.PCP_mono_randomness' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PCP_mono_randomness
+
+/--
+info: 'Cslib.Complexity.PCP_mono_queries' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PCP_mono_queries
+
+/--
+info: 'Cslib.Complexity.CookLevin.UNSAT_coNPComplete_of_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.UNSAT_coNPComplete_of_polyTime
+
+/--
+info: 'Cslib.Complexity.NPHard.compl' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NPHard.compl
+
+/--
+info: 'Cslib.Logic.PL.QBF.eval_congr' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.QBF.eval_congr
+
+/--
+info: 'Cslib.Logic.PL.QBF.eval_eq_of_closed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.QBF.eval_eq_of_closed
+
 end ComplexityTests.Axioms
