@@ -60,7 +60,8 @@ certificates for arbitrary symbol encodings, including infinite and empty alphab
 tables likewise support ordinary function construction, projection and updates through `fun_prop`,
 charging all unbounded entries. Encoded configurations now have constructor, projection, local-step
 and reply-installation certificates; their complete storage bound includes the largest installed
-reply. Finite-control dispatch and the efficient stateful substitution certificate remain pending.
+reply. Finite-control dispatch now selects certified deterministic or probabilistic branches with
+captured input. Efficient stateful substitution remains pending.
 General OWF → PRG through pseudoentropy and adaptive GGM security
 remain to be ported.
 

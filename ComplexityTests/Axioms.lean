@@ -17,6 +17,18 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.finite_cases' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.finite_cases
+
+/--
+info: 'Cslib.Probability.IsPPTOn.finite_cases' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsPPTOn.finite_cases
+
+/--
 info: 'Turing.MultiTapeTM.length_encFiniteConfig_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in

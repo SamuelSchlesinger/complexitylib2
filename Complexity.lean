@@ -208,6 +208,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
@@ -319,6 +320,7 @@ public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.Adaptive
 public import Complexity.Computability.Probabilistic.CoinTape
+public import Complexity.Computability.Probabilistic.Finite
 public import Complexity.Computability.Probabilistic.Memoize
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Computability.Probabilistic.PPT
@@ -422,6 +424,7 @@ public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.List.BalancedFold
+public import Complexity.Foundations.Data.List.Basic
 public import Complexity.Foundations.Data.ListDecoding
 public import Complexity.Foundations.Data.Matrix.TotallyRegular
 public import Complexity.Foundations.Data.MvPolynomial.DualNumber

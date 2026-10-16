@@ -7,6 +7,7 @@ import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
+import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.GGM

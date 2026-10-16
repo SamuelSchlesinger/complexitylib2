@@ -851,6 +851,30 @@ The negative test is retained; any future speculative search needs an actual exe
 not just a recursion/search-step bound. Finite-control dispatch and efficient stateful simulation
 remain the next interpreter obligations.
 
+### Finite-control dispatch (2026-10-16)
+
+The deterministic and closed probabilistic `finite_cases` rules now select among a fixed finite
+family of certified branches, retaining the original input. Tag and result encodings are arbitrary;
+empty tags and empty result types require no default inhabitant. Both proofs share the same list
+selection identity. The probabilistic rule preserves the selected branch's output distribution,
+including state explicitly returned as part of that output; this does not yet certify substitution
+into an open oracle program.
+
+Computed table updates and lookup from a stored table/index pair use `fun_prop`. Tests cover two
+encodings of Boolean indices, unbounded entry words, an equivalent let-based program through
+`polytime`, empty control, and a concrete selector returning correlated output/state. Separately
+computed higher-order lookup still requires `hvalues.pi_apply' hindex`: upstream `fun_prop`
+decomposes `values a (index a)` into a different uncurried premise and does not accept this general
+application closure theorem as a registered rule. A computed-index update test uses the explicit
+API. No tactic matcher or heartbeat override was added to hide that limitation.
+
+The two dispatch proofs and shared selector cost 3 bodies / 43 lines, equal to the corresponding
+three proofs in crypto's original finite-control module. Supporting arbitrary deterministic result
+types requires an empty-tag case; the PPT proof now reuses the deterministic empty-domain rule
+instead of unpacking a machine witness. Three computed-table access rules add 3 bodies / 3 lines.
+The complete batch adds 6 / 46, for 5,486 bodies / 37,269 lines in 504 source modules, with the same
+source-layout exclusions as above. The efficient stateful interpreter is the next obligation.
+
 ### Implementation priorities (2026-10-16)
 
 1. Finish efficient stateful oracle substitution through finite tables, encoded configurations
