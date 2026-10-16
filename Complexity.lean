@@ -279,6 +279,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.O
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputPrefix
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.PolynomialClock
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
@@ -315,6 +316,7 @@ public import Complexity.Computability.Probabilistic.PPT.Capture
 public import Complexity.Computability.Probabilistic.PPT.Clock
 public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Probabilistic.Parameter
+public import Complexity.Computability.Probabilistic.QueryBounds
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Computability.RAM.Cost
@@ -439,6 +441,8 @@ public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.Oracle
+public import Complexity.Languages.Probabilistic.Oracle.Simulation
+public import Complexity.Languages.Probabilistic.Oracle.Transcript
 public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 public import Complexity.Languages.Probabilistic.Simulation

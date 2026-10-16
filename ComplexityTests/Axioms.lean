@@ -4202,3 +4202,38 @@ info: 'Turing.MultiTapePTM.run_interpret_runOracle_ofDeterministic' depends on a
 -/
 #guard_msgs in
 #print axioms Turing.MultiTapePTM.run_interpret_runOracle_ofDeterministic
+
+/--
+info: 'Cslib.Probability.IsOraclePPTOn.query_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsOraclePPTOn.query_bounds
+
+/--
+info: 'Turing.MultiTapePTM.query_bounds_runFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapePTM.query_bounds_runFrom
+
+/--
+info: 'Turing.MultiTapePTM.query_bounds_runOracle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapePTM.query_bounds_runOracle
+
+/--
+info: 'Cslib.ProbOracleComp.run_interpret_simulation' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbOracleComp.run_interpret_simulation
+
+/--
+info: 'Cslib.ProbOracleComp.HasQueryBounds.bind' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbOracleComp.HasQueryBounds.bind

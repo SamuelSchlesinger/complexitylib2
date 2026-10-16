@@ -51,8 +51,9 @@ uses a uniform random-hop reduction with an exact dyadic loss; arbitrary efficie
 lengths follow. Random functions have exact eager/lazy semantics, typed caches and an
 association-list implementation with query-budget bounds. The same eager/lazy law now covers
 independent private randomness. Word-oracle PPT uses the joint stateful machine contract and
-reuses deterministic `fun_prop` certificates; query-budget extraction and efficient oracle
-substitution remain pending. General OWF → PRG through pseudoentropy and adaptive GGM security
+reuses deterministic `fun_prop` certificates. Its machine clock supplies polynomial bounds on
+external call counts and request lengths; efficient oracle substitution remains pending.
+General OWF → PRG through pseudoentropy and adaptive GGM security
 remain to be ported.
 
 ## Layout

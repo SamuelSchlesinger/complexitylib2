@@ -39,8 +39,8 @@ rules and general effectful machine are now present. Closed `IsPPTOn` supplies t
 realization contract, a deterministic bridge, fair-bit sampling, monadic bind, captured inputs
 and conditionals. The `ppt` tactic combines these with deterministic automation and
 constant-growth probabilistic loops. General bounded loops use supported-state invariants;
-the word-oracle PPT contract and deterministic bridge are present, while its composition,
-substitution and query-budget rules remain to be integrated.
+the word-oracle PPT contract, deterministic bridge and derived query budgets are present,
+while its composition and substitution rules remain to be integrated.
 The deterministic `polytime` tactic and invariant-oriented loop specifications have now been
 adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
@@ -213,7 +213,7 @@ not existence proofs of one-way functions or permutations.
 | Random-function semantics | joint eager/lazy completion law including independent private coins and adaptive queries; typed caches, association-list realization, compositional oracle-only query budgets and a closed-sampler bridge |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; oracle composition, substitution and query-budget extraction remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; oracle composition and substitution remain pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -681,12 +681,34 @@ The four source modules add 16 theorem bodies / 70 body lines, bringing the libr
 5,361 / 36,656 in 485 source files. Counts include shared semantic and machine helpers, but exclude
 definitions, statements and tests; they are not a claim of reduced elaboration time.
 
+### Query budgets from oracle machine clocks (2026-10-16)
+
+The common clocked run makes at most one external call and appends at most one symbol to each
+request buffer per instruction. `MultiTapePTM.query_bounds_runFrom` accounts for arbitrary initial
+buffers and an existing transcript. Starting from blank channels, the clock bounds both the
+external call count and each request length, independently of all reply lengths and shared
+oracle state. Private samples do not enter the external transcript.
+
+`IsOraclePPTOn.query_bounds` derives those budgets from the machine realization by adding the
+transcript to its quantified private state. There is no separate query-budget assumption in the
+efficiency predicate. Tests derive a budget for the concrete functional reply-prefix client and
+check its exact one-entry transcript with arbitrarily long replies and two private draws.
+
+The value-level `ProbOracleComp.HasQueryBounds` rules cover private samples, external requests,
+mapping and adaptive bind. Shared private-coin invariant, simulation and state-representation
+lemmas also simplify the randomized completion proof from 20 to 8 body lines. Including all
+these helpers and the machine unfolding rules, the net addition is 17 theorem bodies / 141 body
+lines: the library has 5,378 / 36,797 in 489 source files. Definitions, statements and tests are
+excluded. Efficient stateful oracle substitution and memoization remain the next infrastructure
+requirements for GGM security.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
    semantic invariant rules with functional clients. Port the independent repetition, empirical
    probability tests and collection helpers used by Goldreich–Levin and pseudoentropy, then the
-   stateful oracle realization contract required for adaptive GGM security. Preserve the joint
+   efficient stateful oracle substitution required for adaptive GGM security. The realization
+   contract and clock-derived query budgets are now present; substitution must preserve the joint
    result/private-state distribution and charge query and reply lengths.
 2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
    repeat finite union bounds, construction of a bad event and extraction of a good sample.

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Probabilistic.Oracle
+import Complexity.Computability.Probabilistic.QueryBounds
 import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 import Complexity.Tactic.PPT
 
@@ -21,6 +21,18 @@ private noncomputable def randomized :
   let second ← ProbOracleComp.sample (ProbComp.uniform Bool)
   let repeated ← ProbOracleComp.query first
   return (answer, second, repeated)
+
+-- Private samples do not count as external calls; the adaptive client makes two requests.
+example : ProbOracleComp.HasQueryBounds randomized (fun _ => 1) 2 1 := by
+  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 2) (.sample _ _ _)
+  intro first
+  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.query first _ le_rfl)
+  intro answer
+  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.sample _ _ _)
+  intro second
+  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 0) (.query first _ le_rfl)
+  intro repeated
+  exact .pure (answer, second, repeated) _ _
 
 -- Private sampling remains fresh while an external query is answered consistently.
 example :
@@ -78,15 +90,33 @@ private theorem readHead_law (State : Type)
     MultiTapeMachine.Config.answerSymbols, MultiTapeMachine.Channel.answerSymbol,
     Turing.Action.apply, Function.comp_def, PMF.map, List.take_one, List.head?_eq_getElem?]
 
--- The same certificate can describe the functional program while retaining every oracle effect.
-example : IsOraclePPTOn encBits encBits (fun _ : List Bool => do
-    let reply ← ProbOracleComp.query (spec := fun _ : Unit × List Bool => List Bool) ((), [])
-    return reply.take 1) := by
+private def requestHead (_ : List Bool) : WordOracleComp Unit (List Bool) := do
+  let reply ← ProbOracleComp.query ((), [])
+  return reply.take 1
+
+-- The same certificate describes the functional program while retaining every oracle effect.
+private theorem requestHead_isOraclePPTOn : IsOraclePPTOn encBits encBits requestHead := by
   apply (IsOraclePPTOn.of_machine (input := encBits) readHead 2 0).congr
   intro input State oracle state
-  simpa only [encBits, Function.Embedding.coe_refl, id_eq, pow_zero, Nat.mul_one,
+  simpa only [requestHead, encBits, Function.Embedding.coe_refl, id_eq, pow_zero, Nat.mul_one,
     bind_pure_comp, OracleComp.interpret_map, StateT.run_map, PMF.monad_map_eq_map,
     ProbOracleComp.interpret_query] using readHead_law State oracle state input
+
+-- The resource contract derives a uniform budget for this concrete functional oracle client.
+example : ∃ c d : ℕ, ∀ input, ProbOracleComp.HasQueryBounds (requestHead input)
+    (fun request => request.2.length) (c * (input.length + 1) ^ d)
+      (c * (input.length + 1) ^ d) := requestHead_isOraclePPTOn.query_bounds
+
+-- The trace contains one external request despite two private draws and an unbounded reply.
+example (n : ℕ) :
+    (OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
+        (OracleComp.withTranscript (fun _ : Unit × List Bool =>
+          fun state : ℕ => PMF.pure (List.replicate n true, state + 1))))
+            (readHead.runOracle 2 [])).run (7, []) =
+      PMF.pure ((List.replicate n true).take 1, 8, [⟨((), []), List.replicate n true⟩]) := by
+  rw [readHead_law]
+  simp [OracleComp.withTranscript, StateT.run]
 
 -- Returning an unrestricted oracle reply cannot satisfy a uniform strict polynomial clock.
 example : ¬ IsOraclePPTOn encBits encBits

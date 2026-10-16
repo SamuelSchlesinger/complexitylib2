@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.Oracle
+import Complexity.Languages.Probabilistic.Oracle.Simulation
 
 /-!
 # Lazy random functions with independent private randomness
@@ -54,26 +55,14 @@ theorem run_interpret_answer_complete_prob [DecidableEq Query]
       (complete distribution cache).bind (fun table =>
         (OracleComp.interpret
           (handler ProbComp.unifOracle (fun q => PMF.pure (table q))) program).map (·, table)) := by
-  have h := OracleComp.run_interpret_simulation
-    (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (answer distribution))
-    (fun q table => (handler ProbComp.unifOracle (fun q => PMF.pure (table q)) q).map
-      (·, table)) (complete distribution)
+  have h := ProbOracleComp.run_interpret_simulation (answer distribution)
+    (fun q table => (PMF.pure (table q)).map (·, table)) (complete distribution)
     (fun q cache => by
-      cases q with
-      | inl n =>
-        change ((ProbComp.unifOracle n).map (·, cache)).bind
-          (fun (value, cache') => (complete distribution cache').map (value, ·)) =
-            (complete distribution cache).bind
-              (fun table => (ProbComp.unifOracle n).map (·, table))
-        simp only [PMF.map, Function.comp_def, PMF.bind_bind, PMF.pure_bind]
-        exact PMF.bind_comm _ _ _
-      | inr q =>
-        simpa only [handler, PMF.map, Function.comp_def, PMF.pure_bind] using
-          answer_complete distribution cache q) program cache
+      simpa only [PMF.map, Function.comp_def, PMF.pure_bind] using
+        answer_complete distribution cache q) program cache
   refine h.trans (congrArg ((complete distribution cache).bind) (funext fun table => ?_))
-  simpa only [PMF.monad_map_eq_map] using OracleComp.run_interpret_readOnly
-    (fun q (table : (q : Query) → Response q) =>
-      handler ProbComp.unifOracle (fun q => PMF.pure (table q)) q) program table
+  exact ProbOracleComp.run_interpret_readOnly
+    (fun q (table : (q : Query) → Response q) => PMF.pure (table q)) program table
 
 /-- Lazy sampling from an empty cache implements the eager table experiment for randomized,
 adaptive clients, with private randomness independent of the table. -/

@@ -67,6 +67,39 @@ def run (machine : MultiTapePTM k Symbol State Oracle) (coin : OracleComp spec B
     (input : List Symbol) : OracleComp spec (List Symbol) :=
   machine.runFrom coin query fuel (machine.initialConfig input)
 
+/-- A zero clock observes the current output without drawing a coin or making a query. -/
+@[simp] theorem runFrom_zero (machine : MultiTapePTM k Symbol State Oracle)
+    (coin : OracleComp spec Bool)
+    (query : Oracle → List Symbol → OracleComp spec (List Symbol))
+    (cfg : Config k Symbol State Oracle input) :
+    machine.runFrom coin query 0 cfg = pure cfg.tapes.output := by
+  simp [runFrom, runConfigFrom]
+
+/-- A live instruction draws one coin, then performs one ordinary step or one external request.
+This equation is left out of the simp set to avoid expanding a symbolic clock. -/
+theorem runFrom_succ (machine : MultiTapePTM k Symbol State Oracle) (coin : OracleComp spec Bool)
+    (query : Oracle → List Symbol → OracleComp spec (List Symbol)) (fuel : ℕ)
+    (cfg : Config k Symbol State Oracle input) :
+    machine.runFrom coin query (fuel + 1) cfg =
+      (match cfg.tapes.state with
+      | none => pure cfg.tapes.output
+      | some state => do
+        let bit ← coin
+        match machine.tr state cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols
+          cfg.answerSymbols bit with
+        | .step action symbol move => machine.runFrom coin query fuel (cfg.step action symbol move)
+        | .query op next => do
+          let answer ← query op (cfg.channels op).queryBuffer
+          machine.runFrom coin query fuel (cfg.receive op next answer)) := by
+  cases hs : cfg.tapes.state with
+  | none => simp [runFrom, runConfigFrom, MultiTapeMachine.runConfigFrom, hs]
+  | some state =>
+    simp only [runFrom, runConfigFrom, MultiTapeMachine.runConfigFrom, hs, bind_map_left, map_bind]
+    congr 1
+    funext bit
+    cases machine.tr state cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols bit <;>
+      simp only [map_bind]
+
 /-- The closed fair-coin run, with fresh uniform Boolean choices at each live transition. -/
 noncomputable def runClosed (machine : MultiTapePTM k Symbol State) (fuel : ℕ)
     (input : List Symbol) : ProbComp (List Symbol) :=
