@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
@@ -179,5 +180,12 @@ example (symbol : Bool) :
 example {α : Type 1} (enc : α ↪ List Bool) (l : List α) :
     l.length ≤ (Turing.MultiTapeTM.encList enc l).length :=
   Turing.MultiTapeTM.length_le_length_encList enc l
+
+-- Fixed division covers both degenerate constants and compositions of computed unary counters.
+example : ComputableTidilyInPolyTime (fun n : ℕ => n / 0) encUnary encUnary := by fun_prop
+example : ComputableTidilyInPolyTime (fun n : ℕ => n / 1) encUnary encUnary := by fun_prop
+example (divisor : ℕ) : ComputableTidilyInPolyTime
+    (fun p : ℕ × ℕ => ((p.1 + p.2) / divisor == p.2, (p.1 * p.2 + 1) / 2))
+    (encPair encUnary encUnary) (encPair encBool encUnary) := by fun_prop
 
 end ComplexityTests.MultiTapePolyTime

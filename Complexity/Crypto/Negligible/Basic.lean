@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Negligible
+import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
+import Mathlib.Analysis.SpecificLimits.Basic
 
 /-!
 # Negligible bounds and real-valued estimates
@@ -20,6 +22,8 @@ negligible.
 
 * `Cslib.Crypto.negligible_iff_coe`: pass between nonnegative and real-valued decay bounds.
 * `Cslib.Crypto.not_negligible_const`: constant nonzero success contradicts security.
+* `Cslib.Crypto.Negligible.comp_of_polynomial_bound`: polynomially related parameters.
+* `Cslib.Crypto.Negligible.div_const`: division of the parameter by a positive constant.
 
 ## References
 
@@ -45,5 +49,31 @@ theorem not_negligible_const {c : ℝ≥0} (hc : c ≠ 0) : ¬ Negligible (fun _
   intro h
   have ht : Filter.Tendsto (fun _ : ℕ => c) Filter.atTop (nhds 0) := by simpa using h 0
   exact hc (tendsto_nhds_unique tendsto_const_nhds ht)
+
+open Filter Topology in
+/-- Negligible decay survives reindexing when the new parameter tends to infinity and the old
+parameter is polynomially bounded in it. The reindexing function need not be computable. -/
+theorem Negligible.comp_of_polynomial_bound {ε : ℕ → ℝ≥0} {index bound : ℕ → ℕ}
+    (hε : Negligible ε) (hindex : Tendsto index atTop atTop)
+    (hbound : PolynomiallyBounded bound) (hle : ∀ᶠ n in atTop, n ≤ bound (index n)) :
+    Negligible (fun n => ε (index n)) := by
+  intro degree
+  have hlimit := (hε.polynomiallyBounded_mul (hbound.pow degree) 0).comp hindex
+  simp only [pow_zero, one_mul, Nat.cast_pow, Function.comp_def] at hlimit
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hlimit
+    (Eventually.of_forall (fun _ => zero_le)) ?_
+  filter_upwards [hle] with n hn
+  exact mul_le_mul' (pow_le_pow_left' (by exact_mod_cast hn) degree) le_rfl
+
+open Filter in
+/-- Dividing the security parameter by a fixed positive natural preserves negligible decay. -/
+theorem Negligible.div_const {ε : ℕ → ℝ≥0} (hε : Negligible ε) {divisor : ℕ}
+    (hpos : 0 < divisor) : Negligible (fun n => ε (n / divisor)) := by
+  apply hε.comp_of_polynomial_bound (bound := fun n => divisor * (n + 1))
+    (Nat.tendsto_div_const_atTop (by lia)) (by fun_prop)
+  exact Eventually.of_forall (fun n => by
+    have := Nat.mod_lt n hpos
+    have := Nat.div_add_mod n divisor
+    nlinarith)
 
 end Cslib.Crypto

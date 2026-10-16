@@ -3997,3 +3997,46 @@ info: 'Cslib.Crypto.GoldreichLevin.wordDecode_success_ge_half' depends on axioms
 #print axioms Cslib.Crypto.GoldreichLevin.wordDecode_success_ge_half
 
 end ComplexityTests.Axioms
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_div_const' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_div_const
+
+/--
+info: 'Cslib.Crypto.Negligible.comp_of_polynomial_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Negligible.comp_of_polynomial_bound
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.isPPT_wordInverter' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GoldreichLevin.isPPT_wordInverter
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.negligible_parityPrediction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GoldreichLevin.negligible_parityPrediction
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.padded_hardCore' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GoldreichLevin.padded_hardCore
+
+/--
+info: 'Cslib.Crypto.OneWayPermutation.pseudorandomGenerator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.OneWayPermutation.pseudorandomGenerator

@@ -212,6 +212,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
@@ -319,9 +320,11 @@ public import Complexity.Computability.RAM.Squaring
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
+public import Complexity.Crypto.Computational.GoldreichLevin.HardCore
 public import Complexity.Crypto.Computational.GoldreichLevin.Parameters
 public import Complexity.Crypto.Computational.GoldreichLevin.Reduction
 public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
+public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction
 public import Complexity.Crypto.Computational.HardCore
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Prediction

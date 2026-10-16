@@ -114,6 +114,14 @@ theorem unary_lt' {α : Type} {input : α ↪ List Bool} {left right : α → �
     ComputableTidilyInPolyTime (fun a => decide (left a < right a)) input encBool :=
   unary_lt.comp (hleft.prod hright)
 
+/-- Equality of computed unary counters, fixing the intermediate encoding for proof search. -/
+@[fun_prop]
+theorem unary_beq {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableTidilyInPolyTime left input encUnary)
+    (hright : ComputableTidilyInPolyTime right input encUnary) :
+    ComputableTidilyInPolyTime (fun a => left a == right a) input encBool :=
+  hleft.beq hright
+
 /-- The natural-number pairing function, with both arguments and the result in unary. -/
 @[fun_prop]
 theorem unary_pair : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Nat.pair p.1 p.2)

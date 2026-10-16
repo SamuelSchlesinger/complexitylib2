@@ -212,7 +212,7 @@ not existence proofs of one-way functions or permutations.
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Machine composition charges preparation and has intrinsically halting finite witnesses; oracle PPT remains pending |
-| OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
+| OWP → PRG | complete through the uniform one-bit PRG theorem and Goldreich–Levin hard-core construction; polynomial length extension remains |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
 
@@ -547,6 +547,37 @@ infrastructure, this batch adds 49 / 233, bringing the library to 5,205 / 35,767
 files. The crypto branch's original `WordDecoder` alone had 29 / 166; the lower local module count
 does not represent a reduction in total work, because generic operations and certificates have
 moved into shared APIs. As before, definitions, statements and tests are excluded from the metric.
+
+### Uniform Goldreich–Levin and OWP → one-bit PRG (2026-10-16)
+
+`WordReduction` connects the typed saved-seed evaluator to the deterministic decoder. The
+inverter samples one sign, one predictor seed, and independent masks, then calls `wordDecode`.
+Both the prediction game and the complete inverter have two-line `unfold; ppt` certificates.
+The exact distribution laws retain image-dependent seed lengths and the same private seed for
+all decoder queries. The actual pair encoding requires `c * (3*n + image.length + 2)^d` coins;
+the crypto branch's old framing formula is not reused. Every fixed precision degree selects
+one uniform inverter for all security parameters, yielding negligible absolute prediction bias
+from one-wayness. No extra heartbeat override is needed for these certificates.
+
+`HardCore` splits every seed into equal halves and an optional final bit, transforms the first
+half, and retains the rest. The parity of the equal halves is hard-core for any one-way function.
+Two fixed uniform reductions handle even and odd lengths, with shared negligibility under
+parameter rescaling. For a one-way permutation, appending that parity gives a secure uniform
+polynomial-time PRG of length `n+1`. This theorem supplies the predicate as well as the security
+reduction; it does not assume or prove that one-way functions exist. Polynomial stretch, the
+general OWF → PRG implication, and adaptive GGM security remain separate work.
+
+The shared calculus gains fixed unary division, including division by zero under Lean's
+convention. One quotient/remainder invariant proves correctness and an encoded state bound;
+unary equality fixes intermediate encodings so its conditional step is proved by `fun_prop`.
+Generic polynomial parameter rescaling lives beside the shared nonnegative negligibility API.
+Tests exercise zero and unit divisors, captured arithmetic, a closed typed randomized inverter,
+arbitrary image lengths, empty games, and preservation and exclusion of the odd spare bit.
+
+The two crypto modules have 19 theorem bodies / 118 body lines, compared with 22 / 124 in the
+crypto branch. Including all shared rules, this batch adds 23 / 159 and brings the library to
+5,228 / 35,926 in 469 source files. These are source-layout counts excluding definitions,
+statements and tests; the modest crypto reduction does not erase the new shared proof work.
 
 ### Next design experiments
 

@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
+import Complexity.Crypto.Computational.GoldreichLevin.HardCore
 import Complexity.Probability.PMF.Expect
-import Complexity.Tactic.PolyTime
+import Complexity.Tactic.PPT
 
 /-! Decoder checks with imperfect and perfect predictors, overlapping masks, and boundary cases. -/
 
@@ -129,5 +129,37 @@ example (f : List Bool → List Bool) (image : List Bool) :
 example : wordDecode id (fun query => (query.zipWith Bool.and [true, false]).foldl Bool.xor false)
     0 2 [true, false] [true] = [true, false] := by decide
 example : wordDecode id (fun _ => false) 0 0 [] [] = [] := by decide
+
+-- A closed randomized inverter certificate includes captured input and saved-seed processing.
+example (c d degree : ℕ) : IsPPT encBits
+    (wordInverter id
+      (fun input coins => (input.2.zipWith Bool.and coins).foldl Bool.xor false) c d degree) := by
+  ppt
+
+-- The budget uses the actual framing, including the unary parameter and arbitrary image length.
+example (c d n : ℕ) (image : List Bool) (query : BitString n) :
+    c * ((encPair encUnary encBits (n, image ++ List.ofFn query)).length + 1) ^ d =
+      coinBudget c d n image.length := by
+  congr 2
+  simp only [length_encPair, encUnary_apply, List.length_replicate, encBits_apply,
+    List.length_append, List.length_ofFn]
+  lia
+
+-- Even empty inputs have a concrete game law; zero saved coins are valid for a constant evaluator.
+example (degree : ℕ) :
+    ProbComp.eval (wordInverter id (fun _ _ => false) 0 0 degree 0 []) = PMF.pure [] := by
+  rw [wordInverter_eval]
+  exact PMF.map_const _ []
+
+-- Odd lengths preserve the spare bit without including it in the inner product.
+example : paddedPredicate [true, true, false] = true ∧
+    paddedPredicate [true, true, true] = true := by decide
+example : paddedFunction (fun word => word ++ [true]) [false, true, false] =
+    [false, true, true, false] := by decide
+example : generator id [] = [false] ∧ generator id [true] = [true, false] := by decide
+
+-- Uniform preservation is independent of the cryptographic one-wayness hypothesis.
+example (n : ℕ) : (BitString.uniformList n).map (paddedFunction id) = BitString.uniformList n :=
+  paddedFunction_uniform (fun _ => PMF.map_id _) n
 
 end ComplexityTests.GoldreichLevin
