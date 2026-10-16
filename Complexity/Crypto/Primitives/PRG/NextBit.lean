@@ -170,7 +170,7 @@ variable {Seed α : Type*} [Fintype Seed] [Nonempty Seed] [Fintype α] [Nonempty
 
 /-- The `k`-th hybrid: the first `k` symbols of the generator's output on a uniform seed, followed
 by independent uniform symbols. It is Hybrid `m - k` of
-[Boneh and Shoup, Section 3.5.][BonehShoup2023] -/
+[Boneh and Shoup, Section 3.5][BonehShoup2023]. -/
 noncomputable def Generator.hybridDist (G : Generator Seed (Fin m → α)) (k : ℕ) :
     PMF (Fin m → α) :=
   G.outputDist.bind fun y =>
@@ -211,7 +211,9 @@ theorem Generator.hybridExperiment_of_le (G : Generator Seed (Fin m → α))
     G.hybridExperiment adversary k = G.realExperiment adversary := by
   rw [Generator.hybridExperiment, G.hybridDist_of_le hk, Generator.realExperiment]
 
-private theorem Generator.hybridExperiment_eq_bind (G : Generator Seed (Fin m → α))
+/-- A test run on the `k`-th hybrid sees the first `k` symbols of a generated output followed by
+the remaining symbols of an independent uniform string. -/
+theorem Generator.hybridExperiment_eq_bind (G : Generator Seed (Fin m → α))
     (adversary : Adversary (Fin m → α)) (k : ℕ) :
     G.hybridExperiment adversary k = G.outputDist.bind fun y =>
       (uniformOfFintype (Fin m → α)).bind fun z =>
