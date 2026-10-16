@@ -4455,3 +4455,31 @@ info: 'Cslib.RandomOracle.eval_run_interpret_memoize_prob_eq_eager' depends on a
 -/
 #guard_msgs in
 #print axioms Cslib.RandomOracle.eval_run_interpret_memoize_prob_eq_eager
+
+/--
+info: 'Cslib.Crypto.GGM.hybridGame_zero' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.hybridGame_zero
+
+/--
+info: 'Cslib.Crypto.GGM.hybridGame_self' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.hybridGame_self
+
+/--
+info: 'Cslib.Crypto.GGM.frontierOracle_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.frontierOracle_bounds
+
+/--
+info: 'Cslib.Crypto.GGM.isPPTOn_hybridGame' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.isPPTOn_hybridGame

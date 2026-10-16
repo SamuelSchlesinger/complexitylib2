@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Transcript
-public import Complexity.Foundations.Control.Monad.Memoize
+public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Probability.Product
 
 /-!

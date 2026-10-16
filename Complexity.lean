@@ -339,6 +339,7 @@ public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
+public import Complexity.Crypto.Computational.GGM.Hybrid
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
 public import Complexity.Crypto.Computational.GoldreichLevin.HardCore
 public import Complexity.Crypto.Computational.GoldreichLevin.Parameters
@@ -460,6 +461,7 @@ public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.Iteration
+public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.Oracle.Simulation
 public import Complexity.Languages.Probabilistic.Oracle.Transcript

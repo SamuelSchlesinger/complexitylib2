@@ -242,9 +242,7 @@ example {β : Type} {output : β ↪ List Bool} {program : List Bool → WordOra
     (fun caller cache => ∀ entry ∈ cache, entry.2.length ≤ caller.length)
     (by simp) (by fun_prop)
   intro caller request cache hcache result hresult
-  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
-    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
-  rw [heval.map_memoize] at hresult
+  rw [ProbComp.eval_memoize] at hresult
   obtain ⟨hreply, hcache', hgrowth⟩ := memoize_call_size_le encBits encBits
     (fun _ => ProbComp.eval (BitString.sampleList caller.length)) request.2 cache caller.length
     hcache (fun value hvalue => by

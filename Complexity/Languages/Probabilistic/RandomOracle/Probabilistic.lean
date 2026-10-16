@@ -123,10 +123,8 @@ theorem eval_run_interpret_memoize_prob [LawfulBEq Query] [DecidableEq Query]
       (OracleComp.interpret
         (handler (fun n => StateT.lift (ProbComp.unifOracle n))
           (answer (fun q => ProbComp.eval (compute q)))) program).run (ofList cache) := by
-  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
-    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
   rw [ProbOracleComp.eval_run_interpret]
-  simpa only [heval.map_memoize] using
+  simpa only [ProbComp.eval_memoize] using
     run_interpret_memoize_prob (fun q => ProbComp.eval (compute q)) program cache
 
 end List
@@ -252,9 +250,7 @@ theorem eval_run_interpret_memoize_prob_eq_eager {Key Value Result : Type}
         (PMF.pi (fun q => ProbComp.eval (compute q))).bind (fun table =>
           OracleComp.interpret (handler ProbComp.unifOracle (fun q => PMF.pure (table q)))
             program) := by
-  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
-    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
   rw [interpret_prob_eq_memoize]
-  simp only [ProbComp.eval_map, ProbOracleComp.eval_run_interpret, heval.map_memoize]
+  simp only [ProbComp.eval_map, ProbOracleComp.eval_run_interpret, ProbComp.eval_memoize]
 
 end Cslib.RandomOracle

@@ -82,8 +82,6 @@ theorem prfIdealGame_eq_cached (adversary : OracleDistinguisher) (n : ℕ) :
     (fun _ => rfl) (OracleComp.interpret
       (ProbOracleComp.handler (fun k => ProbOracleComp.sample (ProbComp.unifFin k))
         (fun request : Unit × List Bool => adapter request.2)) (adversary n []))
-  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
-    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
   have hstep (query : List Bool) : OracleComp.interpret
       (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifOracle k))
         (fun key => memoize (fun _ => BitString.uniformList n) (List.ofFn key)))
@@ -92,7 +90,7 @@ theorem prfIdealGame_eq_cached (adversary : OracleDistinguisher) (n : ℕ) :
     funext cache
     by_cases hquery : query.length = n
     · simp [adapter, cachedRandomFunctionOracle, hquery, BitString.ofFn_ofList hquery,
-        heval.map_memoize, BitString.eval_sampleList]
+        ProbComp.eval_memoize, BitString.eval_sampleList]
     · simp only [adapter, cachedRandomFunctionOracle, hquery, ↓reduceIte,
         OracleComp.interpret_pure, ProbComp.eval_pure]
       rfl
@@ -127,9 +125,7 @@ theorem isPPT_prfIdealGame {adversary : OracleDistinguisher}
     intro pair request cache hcache result hresult
     by_cases hquery : request.2.length = pair.1
     · simp only [cachedRandomFunctionOracle, hquery, ↓reduceIte] at hresult
-      have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
-        PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
-      rw [heval.map_memoize] at hresult
+      rw [ProbComp.eval_memoize] at hresult
       obtain ⟨hreply, hcache', hgrowth⟩ := memoize_call_size_le encBits encBits
         (fun _ => ProbComp.eval (BitString.sampleList pair.1)) request.2 cache pair.1
         hcache (fun value hvalue => by

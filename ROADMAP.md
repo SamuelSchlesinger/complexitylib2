@@ -217,7 +217,7 @@ not existence proofs of one-way functions or permutations.
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
-| PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
+| PRG → PRF and OWF → PRF | prefix hybrids and their full-game PPT certificates are ported; queue expansion, reduction and security, then `OneWayToPRF` |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
 already present in v2 at `316944d` or its cslib pin, has 183 absent modules / 33,887 source lines.
@@ -951,8 +951,43 @@ functionality and a compatible interface, without a claimed net proof reduction.
 The complete `isPPT_prfIdealGame` proof uses 1,595,142 raw tactic heartbeats in a fresh
 single-file Lean check using Mathlib's `#count_heartbeats` tactic. This includes handler/resource
 certificates and the cache invariant. All six project checks and six new headline axiom guards
-pass. The API review approved the source and clients; the independent correctness review is
-run on the published batch.
+pass. Independent API and correctness reviews approved the published batch without material
+findings; the correctness reviewer ran targeted Lean and boundary checks, not all six gates.
+
+### GGM prefix hybrids and a shared cache simplification (2026-10-16)
+
+`GGM.Hybrid` ports the prefix experiments using ordinary list caches, memoized sampling and the
+existing functional tree evaluator. At depth zero the exact distribution is the real PRF game,
+including clients that never make a valid query; at depth `n` it is the ideal game. Both endpoint
+laws hold for arbitrary adaptive randomized programs without an efficiency or security assumption.
+
+The complete hybrid is strict PPT for every oracle-PPT adversary and efficient generator,
+uniformly in the unary parameter and depth. The generator need not preserve length: truncating
+evaluation bounds replies anyway. Clients supply only the cached-label invariant and local
+encoded-storage growth bound; the common substitution theorem accounts for the rest. The handler
+certificate is three lines and is registered for computed inputs. Functional and inlined monadic
+spellings use existing `fun_prop`/`ppt` rules without tactic changes.
+
+The narrow `ProbComp.eval_memoize` rule costs one body / two lines and removes eight lines from
+four existing library proofs, a net six-line reduction in that shared bookkeeping. The six hybrid
+proofs cost 66 body lines versus 65 in the source crypto module. This includes all local helpers;
+the function-level final-handler equality avoids a repeated extensionality wrapper. The total
+batch adds seven bodies / 60 lines, and the library has 5,513 bodies / 37,634 lines in 511 source
+modules, median 3 / P90 17 under the same scanner exclusions.
+
+Tests cover computed inputs, direct `do` notation, shrinking expansions, empty seeds and queries,
+malformed-query state preservation, duplicate cache entries, depths beyond the query length and
+deferred root sampling with private randomness. The concrete full-game PPT inhabitant makes no
+external calls; query behavior is tested at the handler level and the full-game theorem applies
+to all certified adaptive clients. Expansion, adjacent-hybrid reductions and final GGM security
+remain open.
+
+The complete `isPPTOn_hybridGame` proof uses 718,836 raw tactic heartbeats in a fresh single-file
+Lean check with Mathlib's `#count_heartbeats` tactic. This counts handler/resource certification and
+the cache invariant together. It is a measurement of this client, not a cross-version speedup.
+All six project checks and four new headline axiom guards pass. Independent API review approved
+the source, helper reuse and client design; the adversarial correctness review runs on the
+published batch.
 
 ### Implementation priorities (2026-10-16)
 
@@ -972,7 +1007,7 @@ run on the published batch.
    conditional NP-completeness assembly with an unconditional theorem.
 7. Complete general OWF → PRG through the remaining pseudoentropy and security reductions,
    reusing Goldreich–Levin, the OWP result and polynomial stretch.
-8. Complete adaptive GGM expansion, hybrids, reduction and security over the shared oracle
+8. Complete adaptive GGM expansion, reduction and security over the shared oracle
    calculus, deriving PRG → PRF and then OWF → PRF.
 9. Keep PCP polynomial-time constructibility and explicit expander construction distinct from
    combinatorial correctness and polynomial output-size bounds.

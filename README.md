@@ -68,9 +68,10 @@ the certificate retains the joint result and final state, including an entire me
 `IsOraclePPT` now supplies the unary security parameter and auxiliary word on that same contract.
 PRF games use the shared nonnegative game-security API, with exact eager, lazy and executable-cache
 equivalence. For every oracle-PPT adversary, the ideal game has a strict PPT realization through
-that cache; the exponential eager table remains a specification.
-General OWF → PRG through pseudoentropy and adaptive GGM security
-remain to be ported.
+that cache; the exponential eager table remains a specification. The GGM prefix hybrids have
+exact real/ideal endpoint laws and uniform strict PPT certificates for the entire adaptive game.
+General OWF → PRG through pseudoentropy and the adjacent-hybrid GGM security reduction remain
+to be ported.
 
 ## Layout
 
