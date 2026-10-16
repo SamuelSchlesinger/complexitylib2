@@ -10,7 +10,7 @@ module
 public import Complexity.Probability.PMF
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.List.OfFn
-public import Mathlib.Data.Vector.Basic
+import Mathlib.Data.Vector.Basic
 
 /-!
 # Uniform binary strings
