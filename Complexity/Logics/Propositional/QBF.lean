@@ -1,0 +1,232 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Init
+public import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Finset.Lattice.Lemmas
+
+/-!
+# Quantified Boolean formulas
+
+Quantified Boolean formulas over an arbitrary type `V` of variables: variables, the two constants,
+negation, conjunction, disjunction, and quantifiers `∃ v` and `∀ v` over the truth value of a
+variable [Stockmeyer and Meyer][StockmeyerMeyer1973]. `QBF.eval σ φ` is the truth value of `φ`
+under the assignment `σ`; a quantifier over `v` evaluates its body with `v` set to each of the two
+truth values (`Function.update`).
+
+The value of a formula depends only on its free variables (`QBF.eval_congr`), so a closed formula,
+one without free variables, has the same value under every assignment (`QBF.eval_eq_of_closed`).
+The true closed formulas form the problem `TQBF`, which is `PSPACE`-complete [Arora and Barak,
+Section 4.2][AroraBarak09]; that theorem is not proved here.
+
+cslib's `Cslib.Logic.PL.Proposition` has no quantifiers and is a syntax for proof systems rather
+than an evaluated one, so it is not reused.
+
+## Main definitions
+
+* `Cslib.Logic.PL.QBF`: the formulas.
+* `Cslib.Logic.PL.QBF.eval`: the value of a formula under an assignment.
+* `Cslib.Logic.PL.QBF.freeVars`, `Cslib.Logic.PL.QBF.Closed`.
+
+## Main results
+
+* `Cslib.Logic.PL.QBF.eval_ex_eq_true_iff`, `Cslib.Logic.PL.QBF.eval_all_eq_true_iff`: the
+  quantifiers as `∃` and `∀` over a truth value.
+* `Cslib.Logic.PL.QBF.eval_congr`: the value depends only on the free variables.
+* `Cslib.Logic.PL.QBF.eval_eq_of_closed`: a closed formula has the same value under every
+  assignment.
+* `Cslib.Logic.PL.QBF.eval_not_ex`, `Cslib.Logic.PL.QBF.eval_not_all`: De Morgan's laws for the
+  quantifiers.
+
+## References
+
+* [L. Stockmeyer, A. Meyer, *Word problems requiring exponential time*][StockmeyerMeyer1973]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+-/
+
+@[expose] public section
+
+namespace Cslib.Logic.PL
+
+/-- Quantified Boolean formulas over variables of type `V`. -/
+inductive QBF (V : Type*) where
+  /-- The variable `v`. -/
+  | var (v : V)
+  /-- The constant true. -/
+  | top
+  /-- The constant false. -/
+  | bot
+  /-- Negation. -/
+  | not (φ : QBF V)
+  /-- Conjunction. -/
+  | and (φ ψ : QBF V)
+  /-- Disjunction. -/
+  | or (φ ψ : QBF V)
+  /-- Existential quantification `∃ v, φ` over the truth value of `v`. -/
+  | ex (v : V) (φ : QBF V)
+  /-- Universal quantification `∀ v, φ` over the truth value of `v`. -/
+  | all (v : V) (φ : QBF V)
+  deriving DecidableEq
+
+namespace QBF
+
+variable {V : Type*} [DecidableEq V]
+
+/-! ### Evaluation -/
+
+/-- The value of a formula under the assignment `σ`. A quantifier over `v` evaluates its body
+with `v` set to `false` and to `true`, and takes the disjunction (`ex`) or the conjunction (`all`)
+of the two values. -/
+def eval (σ : V → Bool) : QBF V → Bool
+  | .var v => σ v
+  | .top => true
+  | .bot => false
+  | .not φ => !eval σ φ
+  | .and φ ψ => eval σ φ && eval σ ψ
+  | .or φ ψ => eval σ φ || eval σ ψ
+  | .ex v φ => eval (Function.update σ v false) φ || eval (Function.update σ v true) φ
+  | .all v φ => eval (Function.update σ v false) φ && eval (Function.update σ v true) φ
+
+variable (σ : V → Bool) (v : V) (φ ψ : QBF V)
+
+@[simp] theorem eval_var : (var v).eval σ = σ v := rfl
+
+@[simp] theorem eval_top : (top : QBF V).eval σ = true := rfl
+
+@[simp] theorem eval_bot : (bot : QBF V).eval σ = false := rfl
+
+@[simp] theorem eval_not : φ.not.eval σ = !φ.eval σ := rfl
+
+@[simp] theorem eval_and : (φ.and ψ).eval σ = (φ.eval σ && ψ.eval σ) := rfl
+
+@[simp] theorem eval_or : (φ.or ψ).eval σ = (φ.eval σ || ψ.eval σ) := rfl
+
+@[simp] theorem eval_ex :
+    (ex v φ).eval σ = (φ.eval (Function.update σ v false) || φ.eval (Function.update σ v true)) :=
+  rfl
+
+@[simp] theorem eval_all :
+    (all v φ).eval σ = (φ.eval (Function.update σ v false) && φ.eval (Function.update σ v true)) :=
+  rfl
+
+/-- `∃ v, φ` is true when `φ` is true for some value of `v`. -/
+theorem eval_ex_eq_true_iff :
+    (ex v φ).eval σ = true ↔ ∃ b, φ.eval (Function.update σ v b) = true := by
+  rw [Bool.exists_bool, eval_ex, Bool.or_eq_true]
+
+/-- `∀ v, φ` is true when `φ` is true for every value of `v`. -/
+theorem eval_all_eq_true_iff :
+    (all v φ).eval σ = true ↔ ∀ b, φ.eval (Function.update σ v b) = true := by
+  rw [Bool.forall_bool, eval_all, Bool.and_eq_true]
+
+/-- De Morgan's law for `∃`: `¬∃ v, φ` and `∀ v, ¬φ` have the same value. -/
+theorem eval_not_ex : (ex v φ).not.eval σ = (all v φ.not).eval σ := by
+  simp only [eval_not, eval_ex, eval_all, Bool.not_or]
+
+/-- De Morgan's law for `∀`: `¬∀ v, φ` and `∃ v, ¬φ` have the same value. -/
+theorem eval_not_all : (all v φ).not.eval σ = (ex v φ.not).eval σ := by
+  simp only [eval_not, eval_ex, eval_all, Bool.not_and]
+
+/-! ### Free variables -/
+
+/-- The free variables of a formula: the variables with an occurrence outside the scope of every
+quantifier over them. -/
+def freeVars : QBF V → Finset V
+  | .var v => {v}
+  | .top => ∅
+  | .bot => ∅
+  | .not φ => freeVars φ
+  | .and φ ψ => freeVars φ ∪ freeVars ψ
+  | .or φ ψ => freeVars φ ∪ freeVars ψ
+  | .ex v φ => (freeVars φ).erase v
+  | .all v φ => (freeVars φ).erase v
+
+@[simp] theorem freeVars_var : (var v).freeVars = {v} := rfl
+
+@[simp] theorem freeVars_top : (top : QBF V).freeVars = ∅ := rfl
+
+@[simp] theorem freeVars_bot : (bot : QBF V).freeVars = ∅ := rfl
+
+@[simp] theorem freeVars_not : φ.not.freeVars = φ.freeVars := rfl
+
+@[simp] theorem freeVars_and : (φ.and ψ).freeVars = φ.freeVars ∪ ψ.freeVars := rfl
+
+@[simp] theorem freeVars_or : (φ.or ψ).freeVars = φ.freeVars ∪ ψ.freeVars := rfl
+
+@[simp] theorem freeVars_ex : (ex v φ).freeVars = φ.freeVars.erase v := rfl
+
+@[simp] theorem freeVars_all : (all v φ).freeVars = φ.freeVars.erase v := rfl
+
+variable {σ v φ}
+
+/-- Two assignments that agree on the free variables of `φ`, updated at the same variable, agree
+on the free variables of the body of a quantifier over that variable. -/
+private theorem update_eq_update {τ : V → Bool} (h : ∀ w ∈ (ex v φ).freeVars, σ w = τ w) (b : Bool)
+    (w : V) (hw : w ∈ φ.freeVars) : Function.update σ v b w = Function.update τ v b w := by
+  by_cases hwv : w = v
+  · subst hwv
+    simp only [Function.update_self]
+  · rw [Function.update_of_ne hwv, Function.update_of_ne hwv]
+    exact h w (Finset.mem_erase.2 ⟨hwv, hw⟩)
+
+/-- **Agreement on free variables.** The value of a formula depends only on the values of its free
+variables. -/
+theorem eval_congr {τ : V → Bool} (h : ∀ w ∈ φ.freeVars, σ w = τ w) : φ.eval σ = φ.eval τ := by
+  induction φ generalizing σ τ with
+  | var v => exact h v (Finset.mem_singleton_self v)
+  | top => rfl
+  | bot => rfl
+  | not φ ih => rw [eval_not, eval_not, ih h]
+  | and φ ψ ihφ ihψ =>
+    rw [eval_and, eval_and, ihφ fun w hw => h w (Finset.mem_union_left _ hw),
+      ihψ fun w hw => h w (Finset.mem_union_right _ hw)]
+  | or φ ψ ihφ ihψ =>
+    rw [eval_or, eval_or, ihφ fun w hw => h w (Finset.mem_union_left _ hw),
+      ihψ fun w hw => h w (Finset.mem_union_right _ hw)]
+  | ex v φ ih =>
+    rw [eval_ex, eval_ex, ih (update_eq_update h false), ih (update_eq_update h true)]
+  | all v φ ih =>
+    rw [eval_all, eval_all, ih (update_eq_update h false), ih (update_eq_update h true)]
+
+/-- Updating a variable that is not free does not change the value of a formula. -/
+theorem eval_update_of_notMem_freeVars (hv : v ∉ φ.freeVars) (σ : V → Bool) (b : Bool) :
+    φ.eval (Function.update σ v b) = φ.eval σ :=
+  eval_congr fun _ hw => Function.update_of_ne (ne_of_mem_of_not_mem hw hv) _ _
+
+/-- A quantifier `∃ v` over a variable that is not free in its body can be dropped. -/
+theorem eval_ex_of_notMem_freeVars (hv : v ∉ φ.freeVars) (σ : V → Bool) :
+    (ex v φ).eval σ = φ.eval σ := by
+  rw [eval_ex, eval_update_of_notMem_freeVars hv, eval_update_of_notMem_freeVars hv, Bool.or_self]
+
+/-- A quantifier `∀ v` over a variable that is not free in its body can be dropped. -/
+theorem eval_all_of_notMem_freeVars (hv : v ∉ φ.freeVars) (σ : V → Bool) :
+    (all v φ).eval σ = φ.eval σ := by
+  rw [eval_all, eval_update_of_notMem_freeVars hv, eval_update_of_notMem_freeVars hv,
+    Bool.and_self]
+
+/-! ### Closed formulas -/
+
+/-- A formula is closed when it has no free variables. -/
+def Closed (φ : QBF V) : Prop := φ.freeVars = ∅
+
+instance : DecidablePred (Closed (V := V)) := fun φ => inferInstanceAs (Decidable (φ.freeVars = ∅))
+
+/-- A closed formula has the same value under every assignment. -/
+theorem eval_eq_of_closed (hφ : φ.Closed) (σ τ : V → Bool) : φ.eval σ = φ.eval τ :=
+  eval_congr fun w hw => absurd (hφ ▸ hw) (Finset.notMem_empty w)
+
+theorem closed_not : φ.not.Closed ↔ φ.Closed := Iff.rfl
+
+theorem closed_and : (φ.and ψ).Closed ↔ φ.Closed ∧ ψ.Closed := Finset.union_eq_empty
+
+theorem closed_or : (φ.or ψ).Closed ↔ φ.Closed ∧ ψ.Closed := Finset.union_eq_empty
+
+end QBF
+
+end Cslib.Logic.PL

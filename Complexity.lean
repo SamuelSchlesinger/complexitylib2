@@ -308,6 +308,7 @@ public import Complexity.Logics.Propositional.ClauseSet.SubcubeFree
 public import Complexity.Logics.Propositional.DNF
 public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.Parity.DepthThree
+public import Complexity.Logics.Propositional.QBF
 public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.SigmaThree
 public import Complexity.Logics.SecondOrder.Coloring
