@@ -231,6 +231,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Equivalence
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Halting
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.InputFromTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
@@ -247,6 +249,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.MarkWo
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PrepareClock
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PrepareInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ReadInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.RepeatUntilBlank
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.RewindWork
@@ -259,8 +262,12 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Transf
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Clock
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Closed
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Composition
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ExtendTapes
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.InputFromTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.PolynomialClock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
@@ -289,6 +296,7 @@ public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Computability.Probabilistic.PPT.Clock
+public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs

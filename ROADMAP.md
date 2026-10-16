@@ -36,8 +36,8 @@ conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's 
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
 that count, not its binary length. The `PFunctor.FreeM` program interface and stateful simulation
 rules and general effectful machine are now present. Closed `IsPPTOn` supplies the semantic
-realization contract, a deterministic bridge, and fair-bit sampling; PPT bind/loop closure,
-oracle PPT and `ppt` remain to be integrated into v2. The deterministic
+realization contract, a deterministic bridge, fair-bit sampling and monadic bind; captured inputs,
+probabilistic loops, oracle PPT and `ppt` remain to be integrated into v2. The deterministic
 `polytime` tactic and invariant-oriented loop specifications have now been adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
 
@@ -208,7 +208,7 @@ not existence proofs of one-way functions or permutations.
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge and fair-bit sampling registered with `fun_prop`; shared-tape sequencing and a complete clock compiler give intrinsically halting finite witnesses; fresh-input composition, PPT bind/loop closure, oracle PPT and `ppt` remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair-bit sampling, monadic bind, deterministic preprocessing and postprocessing registered with `fun_prop`; machine composition charges fresh input and has intrinsically halting finite witnesses; captured inputs, probabilistic loops, oracle PPT and `ppt` remain pending |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -259,8 +259,8 @@ sequencing with upstream's compiler. Independent review shortened that bridge by
 by comparing the transition-table constructors directly. Tests instantiate both halting premises
 for arbitrary stateful probabilistic interpreters, exercise one- versus two-instruction stopping times and
 coin-count-dependent replies, and exhibit failure of the proposed equality without actual
-halting of the continuation. This is shared-tape composition; closing `IsPPTOn` under `bind`
-still requires fresh encoded input, in addition to the clock compiler completed below.
+halting of the continuation. This is shared-tape composition; the following clock and fresh-input
+batches supply the additional machinery needed for `IsPPTOn.bind`.
 
 The clock batch adds 28 theorem bodies / 134 body lines, reaching 4,814 / 33,671. Its shared
 block-simulation rule permits changing embeddings, alphabets and choice mechanisms. The clock
@@ -288,15 +288,31 @@ halting on every raw word, including words outside the input encoding.
 Tests include a nonhalting source with a quadratic cutoff; a concrete one-cell preparation whose
 compiled machine stops in four instructions, with arbitrary padding; and a `fun_prop` fair-sampler
 client. A separate reindexing test runs on the middle of three tapes, retaining nonblank outer tapes,
-negative heads, channel data and stateful coin effects. This completes the clock obligation, not
-PPT `bind`: fresh-input composition and its input/output cost accounting are still needed.
+negative heads, channel data and stateful coin effects. This completes the clock obligation;
+the next batch closes PPT `bind` through fresh-input composition.
+
+The composition batch adds 53 theorem bodies / 331 body lines, reaching 4,891 / 34,161. Input and
+output redirection preserve whole typed programs through one common one-step simulation rule;
+their deterministic specializations agree exactly with upstream's compilers. The handoff reuses
+the existing marker and rewind machines, charging the intermediate word length plus four
+instructions. Separate blank continuation tapes permit arbitrary source scratch data. The
+continuation clock is bounded by the first machine's supported output length, with actual halting
+proved before padding. `IsPPTOn.bind` uses this compiler; deterministic preprocessing and
+postprocessing are each one-body-line clients. These counts include the shared infrastructure.
+
+Tests certify ordinary `do` programs and GGM evaluation after a certified sampler with `fun_prop`.
+The machine test distinguishes generated input from the real input, dirty source scratch from
+fresh continuation scratch, empty output from a one-bit word, and one- from two-instruction
+stopping times. Adapter tests also preserve channel data and stateful coin effects at both ends
+of an empty input. Independent review replaced tuple-index arithmetic with existing `Fin` tuple
+identities. Captured caller inputs, probabilistic iteration and oracle PPT are still separate work.
 
 ### Next design experiments
 
 1. **Integrate the crypto probabilistic realization layer and `ppt`.** The deterministic loop
    and tactic interfaces, typed `PFunctor.FreeM` frontend, effectful machine interpreter, and initial
-   closed PPT contract, machine sequencing and polynomial clock compiler are in place. Adapt
-   fresh-input composition and the probabilistic loop rules, then
+   closed PPT contract, machine composition and polynomial clock compiler are in place. Add
+   captured-input composition and the probabilistic loop rules, then
    validate one readable `do` program containing a bounded loop, a semantic specification and an
    actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
@@ -703,8 +719,8 @@ It merges into current cslib main with two trivial conflicts and the merge build
 2. `PolyTime` is crei's `ComputableTidilyInPolyTime`; v2 does not build its own calculus.
 3. The universal simulation backend is crei's; v2's hierarchy work will build on `Universal/`.
    The free-monad interface and realization layer are separate from crei's backend; v2 now
-   supplies the typed frontend and initial closed PPT contract, while probabilistic composition
-   and oracle PPT remain pending.
+   supplies the typed frontend, closed PPT contract and monadic composition, while captured
+   inputs, probabilistic loops and oracle PPT remain pending.
 4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
    freely.** crei's calculus and universal machine are vendored in full as tracked local copies
    (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),

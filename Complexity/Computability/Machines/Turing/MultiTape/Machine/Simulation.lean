@@ -23,6 +23,8 @@ correctly. The source need not halt before its external clock expires.
 
 ## Main results
 
+* `Turing.MultiTapeMachine.runConfigFrom_map`: one-instruction simulation preserves the entire
+  typed program, before interpretation.
 * `Turing.MultiTapeMachine.run_interpret_runConfigFrom_mul_indexed`: bounded block simulation
   with a changing configuration embedding.
 * `Turing.MultiTapeMachine.run_interpret_runConfigFrom_mul`: the fixed-embedding specialization.
@@ -52,6 +54,24 @@ variable {k k' : ℕ} {Symbol Symbol' State State' Oracle Oracle' OracleState : 
     OracleComp spec (Action k' Symbol' State' Oracle'))
   (query : Oracle → List Symbol → OracleComp spec (List Symbol))
   (query' : Oracle' → List Symbol' → OracleComp spec (List Symbol'))
+
+/-- A one-instruction program simulation preserves every clocked run. The hypothesis includes
+halted configurations, and the embedding may change the tape alphabet and input word. -/
+theorem runConfigFrom_map
+    (embed : Config k Symbol State Oracle input → Config k' Symbol' State' Oracle' input')
+    (hstep : ∀ cfg, target.runConfigFrom choose' query' 1 (embed cfg) =
+      embed <$> source.runConfigFrom choose query 1 cfg)
+    (fuel : ℕ) (cfg : Config k Symbol State Oracle input) :
+    target.runConfigFrom choose' query' fuel (embed cfg) =
+      embed <$> source.runConfigFrom choose query fuel cfg := by
+  induction fuel generalizing cfg with
+  | zero => simp
+  | succ fuel ih =>
+    rw [show fuel + 1 = 1 + fuel by lia, target.runConfigFrom_add, source.runConfigFrom_add,
+      hstep, bind_map_left, map_bind]
+    congr 1
+    funext next
+    exact ih next
 
 /-- A bounded simulation may update its embedding after each source instruction.
 All private interpreter state is retained, including state shared by coin and oracle programs. -/
