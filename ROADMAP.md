@@ -1718,6 +1718,30 @@ checks proof search; it is not a formal impossibility theorem.
 Uniform tower rotation and numbering certificates, encoded graph preprocessing and the complete
 PCP reduction are still outstanding. This batch certifies their numerical schedules only.
 
+### Integrating the Algebraic results into circuit theory (2026-10-16)
+
+The remaining `Complexitylib/Algebraic` results belong to the circuit port. Their destination is
+the existing `Computability/Circuit` hierarchy, with `Cslib.Circuits` namespaces. The historical
+repository name does not determine a separate top-level subsystem. Both Algebraic sources already
+use CSLib's circuit representation; v2 already integrates arithmetic bases and the approximation
+method, and pinned cslib supplies `Program.cost` and unweighted relative complexity.
+
+Port by theorem and dependency closure, checking overlap with current upstream and v2 first.
+Generic semantics, cost, simulation and relative-complexity additions extend the corresponding
+circuit APIs. Boolean results join `Boolean`, `Monotone` and `Frontier`; arithmetic lower bounds
+join `Circuit/Arithmetic`. General polynomial and rank lemmas belong with the corresponding
+foundational types. Preserve weighted-cost and supplied-input distinctions when adapting the
+older relative/conditional APIs to upstream `ecomplexityOn` and `ecomplexityGiven`.
+
+The first proposed arithmetic client is the Hessian multiplication lower bound on the existing
+arithmetic signature, with explicitly interpreted constants and formal-polynomial semantics.
+Its public theorem should expose the polynomial computation and multiplication count. Port only
+the supporting machinery needed by this client, then test reuse against the Waring sum-of-powers
+bound. Preserve the latter's restricted representation model. The standalone algebraic checkout
+has local changes and an older pin; compare its relevant results with the embedded v1 source and
+record exact provenance for each actual port. This is an integration plan, not a completed port
+of the Hessian, Waring or general Fusion developments.
+
 ### Implementation priorities (2026-10-16)
 
 1. Efficient closed stateful substitution is implemented through finite tables, encoded
