@@ -3559,4 +3559,34 @@ info: 'Turing.MultiTapePTM.run_interpret_runConfigFrom_seq' depends on axioms: [
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapePTM.run_interpret_runConfigFrom_seq
 
+/--
+info: 'Turing.MultiTapeMachine.run_interpret_runConfigFrom_mul_indexed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.run_interpret_runConfigFrom_mul_indexed
+
+/--
+info: 'Turing.MultiTapeMachine.run_interpret_runConfigFrom_withClock_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.run_interpret_runConfigFrom_withClock_add
+
+/--
+info: 'Turing.MultiTapeMachine.withClock_halted' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.withClock_halted
+
+/--
+info: 'Turing.MultiTapePTM.run_interpret_runConfigFrom_withClock_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.run_interpret_runConfigFrom_withClock_add
+
+/--
+info: 'Turing.MultiTapeTM.PolynomialClock.exists_prepare' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.PolynomialClock.exists_prepare
+
 end ComplexityTests.Axioms

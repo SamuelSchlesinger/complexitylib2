@@ -4,6 +4,7 @@ import ComplexityTests.CNFPolyTime
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
 import ComplexityTests.GGM
+import ComplexityTests.MachineClock
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MultiTapePolyTime

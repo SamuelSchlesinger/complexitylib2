@@ -208,7 +208,7 @@ not existence proofs of one-way functions or permutations.
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge and fair-bit sampling registered with `fun_prop`; machine sequencing available, while clock compilation, fresh-input composition, PPT bind/loop closure, oracle PPT and `ppt` remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge and fair-bit sampling registered with `fun_prop`; machine sequencing, prepared-budget consumption and functional budget preparation available, while connecting the clock compiler, fresh-input composition, PPT bind/loop closure, oracle PPT and `ppt` remain pending |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -261,6 +261,21 @@ for arbitrary stateful probabilistic interpreters, exercise one- versus two-inst
 coin-count-dependent replies, and exhibit failure of the proposed equality without actual
 halting of the continuation. This is shared-tape composition; closing `IsPPTOn` under `bind`
 still requires the clock compiler and a compiler that supplies fresh encoded input.
+
+The clock batch adds 28 theorem bodies / 134 body lines, reaching 4,814 / 33,671. Its shared
+block-simulation rule permits changing embeddings, alphabets and choice mechanisms. The clock
+consumer implements `t` source instructions in `2*t + 1` instructions and actually halts, preserving
+the joint source data and private state. The choice interpretation must commute with mapping and
+send constant choices to pure, state-preserving results; the probabilistic specialization admits any
+stateless coin law. A negative test shows why state-changing coin draws invalidate that contract.
+Tests also cover a halted source, zero budget, negative clock position and a false stopping cell.
+
+Polynomial budget generation reuses the tidy functional calculus: four proof-body lines certify
+the unary polynomial, and twelve produce a uniform finite machine which writes it on the last
+work tape, restores blank scratch tapes and all heads, and emits nothing. Its bound charges
+generation and rewinding. This avoids porting the crypto branch's separate low-level polynomial
+generator. Budget preparation and consumption are separately certified; connecting them through
+tape extension and sequencing into `IsPPTOn.exists_halting_machine` remains pending.
 
 ### Next design experiments
 
