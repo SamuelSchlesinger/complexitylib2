@@ -226,6 +226,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Optio
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 public import Complexity.Computability.Machines.Turing.MultiTape.Feature
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Equivalence
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Map
 public import Complexity.Computability.Machines.Turing.MultiTape.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.OutView
@@ -248,6 +251,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.D
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileInput
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas

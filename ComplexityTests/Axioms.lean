@@ -17,6 +17,48 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Turing.MultiTapeMachine.tmEquiv' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.tmEquiv
+
+/--
+info: 'Turing.MultiTapeMachine.ntmEquiv' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.ntmEquiv
+
+/--
+info: 'Turing.MultiTapeMachine.step_toNTM_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.step_toNTM_iff
+
+/--
+info: 'Turing.MultiTapeMachine.runConfigFrom_toTM' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.runConfigFrom_toTM
+
+/--
+info: 'Turing.MultiTapeMachine.runConfigFrom_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.runConfigFrom_add
+
+/--
+info: 'Turing.MultiTapeMachine.interpret_runConfigFrom' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.interpret_runConfigFrom
+
+/--
+info: 'Turing.MultiTapeMachine.length_output_runConfigFrom_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.length_output_runConfigFrom_le
+
+/--
 info: 'Cslib.Complexity.CookLevin.tableau_satisfiable_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in

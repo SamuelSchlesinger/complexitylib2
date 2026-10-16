@@ -35,8 +35,8 @@ conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's 
 `Universal/` development certifies an interpreter written as ordinary Lean functions.
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
 that count, not its binary length. The `PFunctor.FreeM` program interface and stateful simulation
-rules are now present; program realization theorems, the general effectful machine and `ppt`
-remain to be integrated into v2. The deterministic
+rules and general effectful machine are now present; probabilistic program realization theorems
+and `ppt` remain to be integrated into v2. The deterministic
 `polytime` tactic and invariant-oriented loop specifications have now been adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
 
@@ -205,8 +205,9 @@ not existence proofs of one-way functions or permutations.
 |---|---|
 | Typed programs and probability/state interpretation | PR #1129 copied at `4e626b5`; source credits Samuel Schlesinger and Devon Tuma and the VCVio design |
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
+| Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | pending the effectful machine realizations and deterministic bridge |
+| Uniform PPT and oracle PPT, `ppt` automation | pending realization predicates and resource-certified probabilistic/oracle composition; the shared machine and deterministic execution bridge are present |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -230,11 +231,20 @@ the library from 4,707 / 33,128 at `316944d` to 4,745 / 33,231. This is addition
 not a net proof reduction; tactic implementation code, definitions and tests are excluded by the
 same accounting convention used above.
 
+The machine batch adds 19 theorem bodies / 125 body lines, taking the total to 4,764 / 33,356.
+One interpreter proves pause/resume and handler substitution for any transition-choice mechanism;
+the fair-coin layer consists of specializations. This count excludes equivalence proofs inside
+definitions, as the scanner always does. Tests cover stuck and halted configurations, distinct
+nondeterministic successors, a pending query across clock exhaustion, shared request logging,
+the fair-bit output distribution, and coin consumption when both branches agree. Its clock counts
+machine instructions, not arbitrary handler computation. A PPT certificate must fix fresh fair
+coins, finite machine data, a uniform polynomial clock, and account for substituted handlers.
+
 ### Next design experiments
 
 1. **Integrate the crypto probabilistic realization layer and `ppt`.** The deterministic loop
-   and tactic interfaces and typed `PFunctor.FreeM` frontend above are in place. Adapt the
-   effectful machine and probabilistic realization rules, then validate one readable `do` program containing a
+   and tactic interfaces, typed `PFunctor.FreeM` frontend, and effectful machine interpreter above
+   are in place. Adapt the probabilistic realization rules, then validate one readable `do` program containing a
    bounded loop, a semantic specification and an actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
    for the Cook–Levin milestone.
@@ -274,17 +284,18 @@ Yes, under three conditions, all of which v2 adopts:
 
 1. **Extend, don't copy.** The parametric machine reuses upstream's `Turing.Cfg` and
    `Turing.Action` (`Cslib/Computability/Machines/Turing/MultiTape/Configuration.lean`)
-   as *components*: a general configuration is `{ core : Turing.Cfg k Symbol State input,
+   as *components*: a general configuration is `{ tapes : Turing.Cfg k Symbol State input,
    channels : Oracle → Channel }` and a general action is upstream's action plus per-channel
    query/answer actions. Then the effect-free step *is* upstream's `Action.apply` on the
-   `core` field, and `ofDeterministic`/`toDeterministic` are step-for-step bisimulations
+   `tapes` field, and `MultiTapeTM.toMachine`/`MultiTapeMachine.toTM` are step-for-step bisimulations
    (one step = one step; the same work cells visited). Time and space therefore transfer
    *exactly*, not up to constants — unlike v1's interop (3× time, space one-way).
 2. **Recover both upstream machines.** Make the choice functor cover nondeterminism too:
    `Tr : State → Option Symbol → (Fin k → Option Symbol) → Choose (Action …)` with
    `Choose := Id` (= `MultiTapeTM`), `Choose := Set` (= `MultiTapeNTM.Tr … → Action → Prop`),
    `Choose := (Bool → ·)` (fair coin, PTM). Prove `MultiTapeNTM ≃ Machine … Empty Set` and
-   `MultiTapeTM ≃ Machine … Empty Id` as definitional-as-possible equivalences, so
+   `MultiTapeTM ≃ Machine … Empty Id` as definitional-as-possible equivalences (now present as
+   `MultiTapeMachine.ntmEquiv` and `tmEquiv`, oriented from the common machine), so
    `ComputableInTimeAndSpace`, `TransformsTapes`, `RunsInTime/Space`, `ConfigBound`
    and every upstream combinator transfer by one lemma each.
 3. **Upstream path exists.** This is exactly how #964 made `MultiTapeTM extends MultiTapeNTM`.
@@ -722,19 +733,20 @@ L6  Circuits                   families, SIZE, P/poly, FP/poly (redo of #1099–
   the function as the distinguished argument with everything else inferable.
 
 ### L2 — Machine
-- `structure Machine (k) (Symbol State Oracle : Type*) (Choose : Type → Type)` with
-  `q₀ : State`, `tr : State → Option Symbol → (Fin k → Option Symbol) → (Oracle → Option Symbol)
+- `structure MultiTapeMachine (k) (Symbol State Oracle : Type*) (Choose : Type → Type)` with
+  `initial : State`, `tr : State → Option Symbol → (Fin k → Option Symbol) → (Oracle → Option Symbol)
   → Choose (Action k Symbol State Oracle)`.
   `Action` = upstream `Turing.Action k Symbol State` + `channel : Oracle → ChannelAction Symbol`
   (write one query symbol / submit query / move answer head). `Cfg` = upstream `Turing.Cfg`
   + `channels : Oracle → Channel Symbol`. Exact definitions follow crypto-frontier
   `MultiTape/Machine.lean`, with upstream types as the `core`.
-- Semantics: `step : Cfg → Choose Cfg` for `[Monad Choose]`; `run (fuel) : Cfg → Prog (Eff Oracle Choose) Cfg`
-  as a `PFunctor.FreeM` program, so a machine's clocked run *is* an L4 program (the key
-  crypto-frontier move, kept).
-- Equivalences: `ofTM : MultiTapeTM k Symbol State → Machine k Symbol State Empty Id` and
-  back, `step_ofTM` (rfl-ish), `runFrom_ofTM`, `spaceUsed_ofTM`; same for `Set`/NTM. Transfer
-  lemmas for `ComputableInTimeAndSpace` and `TransformsTapes`.
+- Semantics now implemented: effect-free `step` / `Step`, and `runConfigFrom` as a typed
+  `PFunctor.FreeM` program with explicit choice/query handlers. Pause/resume and substitution are
+  equalities of programs. Arbitrary handlers are not automatically fair, efficient, or faithful
+  resolvers of `Set` choices; the nondeterministic step relation preserves stuck configurations.
+- Equivalences now implemented: `tmEquiv`, `ntmEquiv`, `step_toTM`, `step_toNTM_iff`, and
+  `runConfigFrom_toTM`. Further resource-transfer lemmas and the probabilistic realization
+  bridge to the tidy calculus remain to be supplied as needed.
 - General combinators, written once: `extendTapes`, `seq`, `comp` (reuse crei's #1111 shape
   with channels threaded), `withClock`, `replayCoins` (seeded evaluator), `relabel`.
   Templates: crypto-frontier `Oracle/{Sequential,Composition,Clock,Replay,ExtendTapes}.lean`.
