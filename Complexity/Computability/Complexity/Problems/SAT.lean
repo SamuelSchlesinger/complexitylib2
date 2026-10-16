@@ -17,7 +17,9 @@ public import Complexity.Logics.Propositional.CNF
 
 `SAT` is the set of satisfiable formulas in conjunctive normal form over variables numbered by `ℕ`,
 encoded as lists of lists of literals with the framed encodings of lists and pairs
-(`Cslib.Complexity.encCNF`).
+(`Cslib.Complexity.encCNF`). `UNSAT` is the set of unsatisfiable ones. Instances are formulas, not
+words, so `UNSAT` is exactly the complement of `SAT`; there are no ill-formed encodings to assign
+to either side.
 
 The Cook–Levin theorem says that `SAT` is `NP`-complete [Arora and Barak, Theorem
 2.10][AroraBarak09]. Its correctness parts are proved here (`SAT.isVerifier`) and in `CookLevin/`
@@ -26,7 +28,7 @@ closure properties of `Turing.MultiTapeTM.ComputableTidilyInPolyTime`, which are
 
 ## Main definitions
 
-* `Cslib.Complexity.SAT`, `Cslib.Complexity.encCNF`.
+* `Cslib.Complexity.SAT`, `Cslib.Complexity.UNSAT`, `Cslib.Complexity.encCNF`.
 * `Cslib.Complexity.SAT.verifier`: evaluation of a formula under the assignment a certificate
   describes.
 
@@ -50,6 +52,13 @@ open Cslib.Logic.PL Turing.MultiTapeTM
 def SAT : Set (CNF ℕ) := {φ | φ.Satisfiable}
 
 theorem mem_SAT {φ : CNF ℕ} : φ ∈ SAT ↔ φ.Satisfiable := Iff.rfl
+
+/-- The unsatisfiable CNF formulas over variables numbered by natural numbers. -/
+def UNSAT : Set (CNF ℕ) := {φ | ¬φ.Satisfiable}
+
+theorem mem_UNSAT {φ : CNF ℕ} : φ ∈ UNSAT ↔ ¬φ.Satisfiable := Iff.rfl
+
+theorem compl_SAT : SATᶜ = UNSAT := rfl
 
 /-- Formulas encoded as lists of clauses, clauses as lists of literals, and a literal `(v, b)` as
 the framed binary digits of `v` followed by `b`. -/
