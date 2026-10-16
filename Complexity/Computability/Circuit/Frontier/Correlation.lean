@@ -18,9 +18,10 @@ import Mathlib.Tactic.Positivity
 # Exponentially small correlation with quadratic forms
 
 Circuits of fan-in at most two over any basis on `Bool`, with at most `c n` gates of positive
-arity, have correlation `2^{-Ω(n)}` with an explicit family of bilinear forms `xᵀ R y` over `𝔽₂`,
-for every `c < c* = 1 + 1/(2A) ≈ 2.78125`. Here `A = 2p ≈ 0.2807` is the Gaussian layout
-coefficient of the frontier method (`Cslib.Circuits.Frontier.layoutBound_gaussian`), and
+arity, have correlation `2^{-Ω(n)}` with a nonconstructively chosen family of bilinear forms
+`xᵀ R y` over `𝔽₂`, for every `c < c* = 1 + 1/(2A) ≈ 2.78125`. Here `A = 2p ≈ 0.2807` is the
+Gaussian layout coefficient of the frontier method
+(`Cslib.Circuits.Frontier.layoutBound_gaussian`), and
 `c* = (1 + L)/2` for the coefficient `L = 1 + 1/A ≈ 4.5625` of the worst-case frontier lower bound
 (`Cslib.Circuits.Frontier.circuitLowerBound_gaussian`). Correlation is measured in the terms of the
 average-case frontier lower bound: `correlation S T = 2 · agreement S T - 1`
@@ -51,15 +52,15 @@ If every set of `⌊n/2⌋` coordinates has cut rank at least `⌊n/2⌋ - τ n`
 (`Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le`), and `(c* - c)/(2L)` for a
 sublinear deficiency (`eventually_abs_correlation_quadForm_le_gaussian`).
 
-## The explicit family
+## A nonconstructively chosen family
 
 A matrix is submatrix-robust with deficiency `t` when every square block with `k` rows has rank at
 least `k - t`. Counting spanning sets of columns shows that for `t = 2 ⌊√m⌋ + 1` such an `m × m`
 matrix over `𝔽₂` exists (`Matrix.exists_submatrixRobust`). The family `hardForm n = xᵀ R y` uses a
 fixed such matrix `R = robustMatrix ⌊n/2⌋` between the first `⌊n/2⌋` coordinates `x` and the next
-`⌊n/2⌋` coordinates `y`. The matrix is **chosen by `Classical.choose`**: the family is explicit only
-in that it is defined once and for all, not in any algorithmic sense. Its bisection cut rank is at
-least `⌊n/2⌋ - O(√n)` (`half_le_cutRank_hardMatrix`).
+`⌊n/2⌋` coordinates `y`. The matrix is **chosen nonconstructively by `Classical.choose`**; no
+efficient construction is supplied. Its bisection cut rank is at least `⌊n/2⌋ - O(√n)`
+(`half_le_cutRank_hardMatrix`).
 
 *Remark, not formalized.* Taking instead the lexicographically first robust matrix makes the family
 computable in `E^NP`: whether some robust matrix extends a given prefix is one `NP` query of length
@@ -70,17 +71,18 @@ uniformity.
 ## Main definitions
 
 * `Cslib.Circuits.Frontier.robustMatrix k`: a fixed submatrix-robust `k × k` matrix over `𝔽₂`.
-* `Cslib.Circuits.Frontier.hardForm n`: the explicit family of bilinear forms `xᵀ R y`.
+* `Cslib.Circuits.Frontier.hardForm n`: a nonconstructively chosen family of bilinear forms
+  `xᵀ R y`.
 
 ## Main results
 
 * `Cslib.Circuits.Frontier.eventually_abs_correlation_quadForm_le_gaussian`: correlation `2^{-γ n}`
   below `c n` gates for every family of quadratic forms whose bisection cut rank is
   `⌊n/2⌋ - o(n)`, for every `γ < (c* - c)/(2L)`.
-* `Cslib.Circuits.Frontier.half_le_cutRank_hardMatrix`: the bisection cut rank of the explicit
+* `Cslib.Circuits.Frontier.half_le_cutRank_hardMatrix`: the bisection cut rank of the chosen
   family.
 * `Cslib.Circuits.Frontier.eventually_abs_correlation_hardForm_le`: the headline bound for the
-  explicit family.
+  chosen family.
 * `Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le_of_lt`: below `c n`
   gates, for any `c < c*`, a fixed rate `γ > 0`.
 * `Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le`: below `2.77 n` gates,
@@ -156,7 +158,7 @@ theorem eventually_abs_correlation_quadForm_le_gaussian {c γ : ℝ} (hc : 1 / 2
     (mul_pos two_pos Gaussian.gaussianCoefficient_pos) layoutBound_gaussian hc
     (by rwa [gaussian_rate_eq]) Q e he hQ
 
-/-! ### The explicit family -/
+/-! ### A nonconstructively chosen family -/
 
 /-- The coordinate of an input of length `n` holding the entry `a` of its left half `x`: the left
 half is the first `⌊n/2⌋` coordinates. -/
@@ -192,18 +194,19 @@ theorem robustMatrix_submatrixRobust (k : ℕ) :
     (robustMatrix k).SubmatrixRobust (2 * Nat.sqrt k + 1) :=
   Classical.choose_spec (Matrix.exists_submatrixRobust k)
 
-/-- The matrix of the explicit family: `robustMatrix ⌊n/2⌋` in the block whose rows are the left
+/-- The matrix of the chosen family: `robustMatrix ⌊n/2⌋` in the block whose rows are the left
 half and whose columns are the right half, and zeros elsewhere. -/
 noncomputable def hardMatrix (n : ℕ) : Matrix (Fin n) (Fin n) (ZMod 2) :=
   extendBlock (leftHalf n) (rightHalf n) (robustMatrix (n / 2))
 
-/-- **The explicit family**: on inputs of length `n`, the quadratic form of `hardMatrix n`, which
-is the bilinear form `xᵀ R y` of `R = robustMatrix ⌊n/2⌋` between the left half `x` and the right
-half `y` (`hardForm_apply`). The matrix `R` is chosen by `Classical.choose`. -/
+/-- **The nonconstructively chosen family**: on inputs of length `n`, the quadratic form of
+`hardMatrix n`, which is the bilinear form `xᵀ R y` of `R = robustMatrix ⌊n/2⌋` between the left
+half `x` and the right half `y` (`hardForm_apply`). The matrix `R` is chosen by
+`Classical.choose`. -/
 noncomputable def hardForm (n : ℕ) : (Fin n → Bool) → Bool :=
   BitString.quadForm (hardMatrix n)
 
-/-- The explicit family is the bilinear form `xᵀ R y` of `R = robustMatrix ⌊n/2⌋`. -/
+/-- The chosen family is the bilinear form `xᵀ R y` of `R = robustMatrix ⌊n/2⌋`. -/
 theorem hardForm_apply (n : ℕ) (x : Fin n → Bool) :
     hardForm n x = decide ((fun a => BitString.bitVal (ZMod 2) (x (leftHalf n a))) ⬝ᵥ
       robustMatrix (n / 2) *ᵥ (fun b => BitString.bitVal (ZMod 2) (x (rightHalf n b))) = 1) :=
@@ -211,7 +214,7 @@ theorem hardForm_apply (n : ℕ) (x : Fin n → Bool) :
     (submatrix_extendBlock (leftHalf_injective n) (rightHalf_injective n) _)
     (fun _ _ h => extendBlock_eq_zero _ h) x
 
-/-- **Bisection cut rank of the explicit family.** Every set of `⌊n/2⌋` coordinates has cut rank
+/-- **Bisection cut rank of the chosen family.** Every set of `⌊n/2⌋` coordinates has cut rank
 at least `⌊n/2⌋ - (2 (2 ⌊√⌊n/2⌋⌋ + 1) + 1)` in the polar matrix of `hardMatrix n`. -/
 theorem half_le_cutRank_hardMatrix (n : ℕ) {U : Set (Fin n)} (hU : U.ncard = n / 2) :
     n / 2 ≤ (hardMatrix n + (hardMatrix n)ᵀ).cutRank U + (2 * (2 * Nat.sqrt (n / 2) + 1) + 1) :=
@@ -221,7 +224,7 @@ theorem half_le_cutRank_hardMatrix (n : ℕ) {U : Set (Fin n)} (hU : U.ncard = n
     (fun _ _ h => extendBlock_eq_zero _ h)
     (by rw [Nat.card_eq_fintype_card, Fintype.card_fin]; omega) hU
 
-/-- The deficiency `2 (2 ⌊√⌊n/2⌋⌋ + 1) + 1` of the explicit family is sublinear. -/
+/-- The deficiency `2 (2 ⌊√⌊n/2⌋⌋ + 1) + 1` of the chosen family is sublinear. -/
 theorem isLittleO_hardDeficiency :
     (fun n : ℕ => ((2 * (2 * Nat.sqrt (n / 2) + 1) + 1 : ℕ) : ℝ)) =o[atTop] fun n => (n : ℝ) := by
   rw [isLittleO_iff]
@@ -249,13 +252,13 @@ theorem isLittleO_hardDeficiency :
   push_cast
   linarith
 
-/-- The bisection hypothesis for the explicit family, in the form used by the asymptotic bounds. -/
+/-- The bisection hypothesis for the chosen family, in the form used by the asymptotic bounds. -/
 theorem half_le_cutRank_hardMatrix_add (n : ℕ) (U : Set (Fin n)) (hU : U.ncard = n / 2) :
     ((n / 2 : ℕ) : ℝ) ≤ (hardMatrix n + (hardMatrix n)ᵀ).cutRank U +
       ((2 * (2 * Nat.sqrt (n / 2) + 1) + 1 : ℕ) : ℝ) := by
   exact_mod_cast half_le_cutRank_hardMatrix n hU
 
-/-- **Exponentially small correlation with the explicit family below `2.78 n` gates.** For every
+/-- **Exponentially small correlation with the chosen family below `2.78 n` gates.** For every
 `c ≥ 1/2` and every `γ < (c* - c)/(2L)`, with `c* = 1 + π / (6 arccos ((1 + 2√2)/4)) ≈ 2.78125`
 and `L = 1 + π / (3 arccos ((1 + 2√2)/4)) ≈ 4.5625`, for all large `n` every circuit of fan-in at
 most two, over any basis on `Bool` and accepting any set of values, with at most `c n` gates of
