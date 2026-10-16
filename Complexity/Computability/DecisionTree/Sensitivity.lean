@@ -20,7 +20,7 @@ import Mathlib.Combinatorics.Enumerative.DoubleCounting
 For a function `f` of Boolean variables and an input `x`:
 
 * the *sensitivity* `sensitivityAt f x` is the number of variables whose flip changes `f x`
-  (`BitString.sensitivityAt`, in `Complexity.Foundations.Data.BitString.Flip`);
+  (`BitString.sensitivityAt`);
 * the *block sensitivity* `blockSensitivityAt f x` is the largest number of pairwise disjoint
   blocks of variables each of whose flip changes `f x`;
 * the *certificate complexity* `certificateComplexityAt f x` is the least size of a set of
@@ -125,7 +125,7 @@ variable {f : (ι → Bool) → β} {x : ι → Bool}
 sensitive blocks. -/
 theorem sensitivityAt_le_blockSensitivityAt (f : (ι → Bool) → β) (x : ι → Bool) :
     sensitivityAt f x ≤ blockSensitivityAt f x := by
-  have hmem : (univ.filter fun i => f (Function.update x i !x i) ≠ f x).map
+  have hmem : ({i | f (Function.update x i !x i) ≠ f x} : Finset ι).map
       ⟨fun i => ({i} : Finset ι), singleton_injective⟩ ∈ sensitiveFamilies f x := by
     refine mem_sensitiveFamilies.2 ⟨fun B hB C hC hBC => ?_, fun B hB => ?_⟩
     · obtain ⟨i, -, rfl⟩ := mem_map.1 hB

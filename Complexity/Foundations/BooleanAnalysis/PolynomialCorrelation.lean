@@ -98,7 +98,7 @@ theorem exists_mem_lowDegree_forall_weight_le_eq (D : ℕ) (f : BitString n → 
   induction hf using Submodule.span_induction with
   | mem g hg =>
     obtain ⟨S, -, rfl⟩ := hg
-    by_cases hS : S.card ≤ D
+    by_cases hS : #S ≤ D
     · exact ⟨monomial R S, monomial_mem_lowDegree hS, fun _ _ => rfl⟩
     · refine ⟨0, zero_mem _, fun x hx => ?_⟩
       rw [Pi.zero_apply, monomial_apply, ite_eq_right fun h => hS ?_]
@@ -253,11 +253,11 @@ private def atom (c : Finset (Fin (2 * m + 1)) × Bool) : BitString (2 * m + 1) 
 
 /-- The weight of `atom c`: the size of its monomial, or `m + 1` if it carries the majority. -/
 private def atomWeight (m : ℕ) (c : Finset (Fin (2 * m + 1)) × Bool) : ℕ :=
-  if c.2 then m + 1 else c.1.card
+  if c.2 then m + 1 else #c.1
 
 /-- The span of the atoms of weight at most `w` whose monomials have at most `m` bits. -/
 private def atomSpan (m w : ℕ) : Submodule (ZMod 2) (BitString (2 * m + 1) → ZMod 2) :=
-  Submodule.span (ZMod 2) (atom '' {c | c.1.card ≤ m ∧ atomWeight m c ≤ w})
+  Submodule.span (ZMod 2) (atom '' {c | #c.1 ≤ m ∧ atomWeight m c ≤ w})
 
 /-- The product over the blocks of the atoms `a i`. -/
 private def gen (a : Fin k → Finset (Fin (2 * m + 1)) × Bool) (x : BitString (k * (2 * m + 1))) :
@@ -270,7 +270,7 @@ private def genWeight (m : ℕ) (a : Fin k → Finset (Fin (2 * m + 1)) × Bool)
 
 /-- The span of the products of weight at most `r` whose monomials have at most `m` bits. -/
 private def genSpan (k m r : ℕ) : Submodule (ZMod 2) (BitString (k * (2 * m + 1)) → ZMod 2) :=
-  Submodule.span (ZMod 2) (gen '' {a | (∀ i, (a i).1.card ≤ m) ∧ genWeight m a ≤ r})
+  Submodule.span (ZMod 2) (gen '' {a | (∀ i, #(a i).1 ≤ m) ∧ genWeight m a ≤ r})
 
 private theorem majVal_mul_atom (c : Finset (Fin (2 * m + 1)) × Bool) :
     majVal * atom c = atom (c.1, true) := by
@@ -308,16 +308,16 @@ private theorem atomSpan_eq_top : atomSpan m (m + 1) = ⊤ := by
   exact add_mem (hlow hq) (hmaj hr)
 
 /-- Multiplying an atom by a variable of its block raises its weight by at most one. -/
-private theorem bitVal_mul_atom_mem {c : Finset (Fin (2 * m + 1)) × Bool} (hc : c.1.card ≤ m)
+private theorem bitVal_mul_atom_mem {c : Finset (Fin (2 * m + 1)) × Bool} (hc : #c.1 ≤ m)
     (j : Fin (2 * m + 1)) :
     (fun y : BitString (2 * m + 1) => bitVal (ZMod 2) (y j)) * atom c ∈
       atomSpan m (atomWeight m c + 1) := by
   obtain ⟨A, b⟩ := c
-  by_cases h : b = false ∧ A.card < m
+  by_cases h : b = false ∧ #A < m
   · obtain ⟨rfl, hA⟩ := h
     have hcard := card_insert_le j A
     refine Submodule.subset_span
-      ⟨(insert j A, false), ⟨show (insert j A).card ≤ m by omega, ?_⟩, ?_⟩
+      ⟨(insert j A, false), ⟨show #(insert j A) ≤ m by omega, ?_⟩, ?_⟩
     · simp only [atomWeight, Bool.false_eq_true, ↓reduceIte]
       omega
     · rw [atom_false, atom_false, ← monomial_singleton, monomial_mul, insert_eq]
@@ -361,7 +361,7 @@ private theorem genSpan_mono {r s : ℕ} (h : r ≤ s) : genSpan k m r ≤ genSp
 
 /-- Putting a combination of atoms in place of the atom of one block of a product. -/
 private theorem comp_block_mul_mem_genSpan {a : Fin k → Finset (Fin (2 * m + 1)) × Bool}
-    (ha : ∀ i, (a i).1.card ≤ m) (i : Fin k) {w : ℕ} {f : BitString (2 * m + 1) → ZMod 2}
+    (ha : ∀ i, #(a i).1 ≤ m) (i : Fin k) {w : ℕ} {f : BitString (2 * m + 1) → ZMod 2}
     (hf : f ∈ atomSpan m w) :
     (fun x => f (block x i) * ∏ j ∈ univ.erase i, atom (a j) (block x j)) ∈
       genSpan k m (w + ∑ j ∈ univ.erase i, atomWeight m (a j)) := by
@@ -403,7 +403,7 @@ private theorem bitVal_mul_mem_genSpan (v : Fin (k * (2 * m + 1))) {r : ℕ}
 /-- Multiplying by a monomial raises the weight by at most its degree. -/
 private theorem monomial_mul_mem_genSpan (S : Finset (Fin (k * (2 * m + 1)))) {r : ℕ}
     {f : BitString (k * (2 * m + 1)) → ZMod 2} (hf : f ∈ genSpan k m r) :
-    monomial (ZMod 2) S * f ∈ genSpan k m (r + S.card) := by
+    monomial (ZMod 2) S * f ∈ genSpan k m (r + #S) := by
   induction S using Finset.induction_on with
   | empty => simpa using hf
   | insert v S hv ih =>
@@ -454,11 +454,11 @@ private theorem exists_mem_span_firstFlagUnset_eq {d : ℕ}
     (hP : P ∈ lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d)
     {E : Finset (BitString (k * (2 * m + 1)))} (hE : ∀ x ∈ E, P x = ∑ i, majVal (block x i))
     (f : BitString (k * (2 * m + 1)) → ZMod 2) :
-    ∃ g ∈ Submodule.span (ZMod 2) (gen '' {a | (∀ i, (a i).1.card ≤ m) ∧
-        FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => A.card + d ≤ m) a}),
+    ∃ g ∈ Submodule.span (ZMod 2) (gen '' {a | (∀ i, #(a i).1 ≤ m) ∧
+        FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => #A + d ≤ m) a}),
       ∀ x ∈ E, g x = f x := by
-  set V := Submodule.span (ZMod 2) (gen '' {a | (∀ i, (a i).1.card ≤ m) ∧
-    FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => A.card + d ≤ m) a})
+  set V := Submodule.span (ZMod 2) (gen '' {a | (∀ i, #(a i).1 ≤ m) ∧
+    FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => #A + d ≤ m) a})
   -- the functions agreeing on `E` with a member of `V`
   let U : Submodule (ZMod 2) (BitString (k * (2 * m + 1)) → ZMod 2) :=
     { carrier := {f | ∃ g ∈ V, ∀ x ∈ E, g x = f x}
@@ -468,14 +468,14 @@ private theorem exists_mem_span_firstFlagUnset_eq {d : ℕ}
       smul_mem' := fun c _ ⟨g, hg, hgx⟩ =>
         ⟨c • g, Submodule.smul_mem _ c hg, fun x hx => by simp [hgx x hx]⟩ }
   have hgen (n : ℕ) : ∀ a : Fin k → Finset (Fin (2 * m + 1)) × Bool,
-      (∀ i, (a i).1.card ≤ m) → genWeight m a = n → gen a ∈ U := by
+      (∀ i, #(a i).1 ≤ m) → genWeight m a = n → gen a ∈ U := by
     induction n using Nat.strong_induction_on with
     | _ n ih =>
     intro a ha hn
-    by_cases hall : FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => A.card + d ≤ m) a
+    by_cases hall : FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => #A + d ≤ m) a
     · exact ⟨gen a, Submodule.subset_span ⟨a, ⟨ha, hall⟩, rfl⟩, fun _ _ => rfl⟩
     -- the first block with room for `d` more bits carries its majority
-    obtain ⟨i, hi, hmi, hb⟩ : ∃ i, (a i).1.card + d ≤ m ∧ (∀ j < i, ¬(a j).1.card + d ≤ m) ∧
+    obtain ⟨i, hi, hmi, hb⟩ : ∃ i, #(a i).1 + d ≤ m ∧ (∀ j < i, ¬#(a j).1 + d ≤ m) ∧
         (a i).2 = true := by
       simpa [FirstFlagUnset] using hall
     set a' := Function.update a i ((a i).1, false) with ha'_def
@@ -484,7 +484,7 @@ private theorem exists_mem_span_firstFlagUnset_eq {d : ℕ}
       · subst hj
         simp [a']
       · simp [a', Function.update_of_ne hj]
-    have ha' (j : Fin k) : (a' j).1.card ≤ m := hfst j ▸ ha j
+    have ha' (j : Fin k) : #(a' j).1 ≤ m := hfst j ▸ ha j
     -- without the majority of block `i`, and times `P`, the product has smaller weight
     have hlow : P * gen a' ∈ U := by
       have hw : genWeight m a' + d < n := by
@@ -558,10 +558,10 @@ theorem two_mul_card_agree_xorMajority_le {k m d : ℕ}
     (hP : P ∈ lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d) :
     2 * #{x | P x = bitVal (ZMod 2) (xorMajority k (2 * m + 1) x)} ≤
       2 ^ (k * (2 * m + 1)) +
-        (2 * #{A : Finset (Fin (2 * m + 1)) | A.card ≤ m ∧ m < A.card + d}) ^ k := by
-  set S : Finset (Finset (Fin (2 * m + 1))) := {A | A.card ≤ m}
+        (2 * #{A : Finset (Fin (2 * m + 1)) | #A ≤ m ∧ m < #A + d}) ^ k := by
+  set S : Finset (Finset (Fin (2 * m + 1))) := {A | #A ≤ m}
   set T := {a ∈ Fintype.piFinset fun _ : Fin k => S ×ˢ (univ : Finset Bool) |
-    FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => A.card + d ≤ m) a}
+    FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => #A + d ≤ m) a}
   set E := ({x | P x = bitVal (ZMod 2) (xorMajority k (2 * m + 1) x)} : Finset _)
   have hE : #E ≤ #T := card_le_of_forall_exists_mem_span_eq E T gen fun f => by
     obtain ⟨g, hg, hgx⟩ := exists_mem_span_firstFlagUnset_eq hP (E := E)
@@ -575,14 +575,14 @@ theorem two_mul_card_agree_xorMajority_le {k m d : ℕ}
     ext A
     simp only [S, mem_filter, mem_univ, true_and]
     omega
-  have hband : #{A ∈ S | ¬A.card + d ≤ m} =
-      #{A : Finset (Fin (2 * m + 1)) | A.card ≤ m ∧ m < A.card + d} := by
+  have hband : #{A ∈ S | ¬#A + d ≤ m} =
+      #{A : Finset (Fin (2 * m + 1)) | #A ≤ m ∧ m < #A + d} := by
     simp only [S, filter_filter, not_le]
   calc
     2 * #E ≤ 2 * #T := Nat.mul_le_mul_left 2 hE
-    _ = (2 * #S) ^ k + (2 * #{A ∈ S | ¬A.card + d ≤ m}) ^ k :=
+    _ = (2 * #S) ^ k + (2 * #{A ∈ S | ¬#A + d ≤ m}) ^ k :=
       two_mul_card_filter_firstFlagUnset S k
-    _ ≤ (2 ^ (2 * m + 1)) ^ k + (2 * #{A ∈ S | ¬A.card + d ≤ m}) ^ k := by gcongr
+    _ ≤ (2 ^ (2 * m + 1)) ^ k + (2 * #{A ∈ S | ¬#A + d ≤ m}) ^ k := by gcongr
     _ = _ := by rw [hband, ← pow_mul, Nat.mul_comm (2 * m + 1)]
 
 /-! ### Correlation -/
@@ -626,7 +626,7 @@ theorem abs_expect_signVal_xorMajority_mul_signVal_le_card {k m d : ℕ}
     {p : BooleanFunction (k * (2 * m + 1))}
     (hp : (fun x => bitVal (ZMod 2) (p x)) ∈ lowDegree (ZMod 2) (Fin (k * (2 * m + 1))) d) :
     |𝔼 x, signVal (xorMajority k (2 * m + 1) x) * signVal (p x)| ≤
-      (2 * #{A : Finset (Fin (2 * m + 1)) | A.card ≤ m ∧ m < A.card + d} /
+      (2 * #{A : Finset (Fin (2 * m + 1)) | #A ≤ m ∧ m < #A + d} /
         2 ^ (2 * m + 1)) ^ k := by
   have hinj (a b : Bool) : bitVal (ZMod 2) a = bitVal (ZMod 2) b ↔ a = b := by
     cases a <;> cases b <;> decide
@@ -644,13 +644,13 @@ theorem abs_expect_signVal_xorMajority_mul_signVal_le_card {k m d : ℕ}
 /-- The sets of bits just below half of a block are few: at most `d` middle binomial
 coefficients. -/
 private theorem card_filter_card_le_le_choose (m d : ℕ) :
-    #{A : Finset (Fin (2 * m + 1)) | A.card ≤ m ∧ m < A.card + d} ≤ d * (2 * m + 1).choose m := by
+    #{A : Finset (Fin (2 * m + 1)) | #A ≤ m ∧ m < #A + d} ≤ d * (2 * m + 1).choose m := by
   calc
     _ ≤ #((Icc (m + 1 - d) m).biUnion fun s => powersetCard s (univ : Finset (Fin (2 * m + 1)))) :=
       card_le_card fun A hA => by
         simp only [mem_filter, mem_univ, true_and] at hA
         simp only [mem_biUnion, mem_Icc, mem_powersetCard]
-        exact ⟨A.card, ⟨by omega, hA.1⟩, subset_univ A, rfl⟩
+        exact ⟨#A, ⟨by omega, hA.1⟩, subset_univ A, rfl⟩
     _ ≤ ∑ s ∈ Icc (m + 1 - d) m, #(powersetCard s (univ : Finset (Fin (2 * m + 1)))) :=
       card_biUnion_le
     _ ≤ ∑ _s ∈ Icc (m + 1 - d) m, (2 * m + 1).choose m := by
@@ -689,7 +689,7 @@ theorem abs_expect_signVal_xorMajority_mul_signVal_le {k ℓ d : ℕ} (hℓ : Od
   obtain ⟨m, rfl⟩ := hℓ
   refine (abs_expect_signVal_xorMajority_mul_signVal_le_card hp).trans
     (pow_le_pow_left₀ (by positivity) ?_ k)
-  have hN : (#{A : Finset (Fin (2 * m + 1)) | A.card ≤ m ∧ m < A.card + d} : ℝ) ≤
+  have hN : (#{A : Finset (Fin (2 * m + 1)) | #A ≤ m ∧ m < #A + d} : ℝ) ≤
       d * (2 * m + 1).choose m := by
     exact_mod_cast card_filter_card_le_le_choose m d
   have hC := choose_mul_sqrt_le m

@@ -143,7 +143,7 @@ theorem mul_dens_filter_le_expect [Semifield 𝕜] [LinearOrder 𝕜] [IsStrictO
     a * (dens {i | a ≤ f i} : 𝕜) ≤ 𝔼 i, f i := by
   rw [← expect_boole, mul_expect]
   refine expect_le_expect fun i _ => ?_
-  split_ifs with hi
+  split_ifs
   · rwa [mul_one]
   · rw [mul_zero]
     exact hf i

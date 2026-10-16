@@ -366,7 +366,7 @@ theorem extends_assign {S : Finset ι} (hS : S ⊆ ρ.free) (a : ι → Bool) :
 
 /-- The extensions of `ρ₀` leaving exactly `ℓ` coordinates free. -/
 def extensions (ρ₀ : PartialAssignment ι) (ℓ : ℕ) : Finset (PartialAssignment ι) :=
-  univ.filter fun ρ => ρ.Extends ρ₀ ∧ #ρ.free = ℓ
+  {ρ | ρ.Extends ρ₀ ∧ #ρ.free = ℓ}
 
 @[simp] theorem mem_extensions {ρ₀ : PartialAssignment ι} {ℓ : ℕ} :
     ρ ∈ ρ₀.extensions ℓ ↔ ρ.Extends ρ₀ ∧ #ρ.free = ℓ := by
@@ -418,7 +418,7 @@ theorem card_extensions (ρ₀ : PartialAssignment ι) (ℓ : ℕ) :
     card_pair (show some false ≠ some true by simp)]
   rw [prod_ite, prod_const_one, one_mul, prod_ite, prod_const,
     prod_const_one, mul_one, filter_filter,
-    show univ.filter (fun a => a ∉ S ∧ a ∈ ρ₀.free) = ρ₀.free \ S by
+    show ({a | a ∉ S ∧ a ∈ ρ₀.free} : Finset ι) = ρ₀.free \ S by
       ext a
       simp [and_comm], card_sdiff_of_subset hSsub, hS]
 

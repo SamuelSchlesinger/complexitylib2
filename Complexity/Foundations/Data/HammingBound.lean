@@ -171,8 +171,8 @@ theorem exists_prod_le_card_mul_card_filter_hammingDist_lt {d : ℕ} (hd : 0 < d
       ∏ i, Fintype.card (β i) ≤ #C * #{y : ∀ i, β i | hammingDist x₀ y < d} := by
   classical
   -- a largest code of minimum distance `d`
-  obtain ⟨C, hC, hmax⟩ := (univ.filter fun C : Finset (∀ i, β i) =>
-      (C : Set (∀ i, β i)).Pairwise fun x y => d ≤ hammingDist x y).exists_max_image card
+  obtain ⟨C, hC, hmax⟩ := exists_max_image
+    {C : Finset (∀ i, β i) | (C : Set (∀ i, β i)).Pairwise fun x y => d ≤ hammingDist x y} card
     ⟨∅, by simp⟩
   have hCd := (mem_filter.1 hC).2
   refine ⟨C, hCd, ?_⟩
