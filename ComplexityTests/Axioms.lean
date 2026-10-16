@@ -17,6 +17,30 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Turing.BiTape.Represents.step' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Turing.BiTape.Represents.step
+
+/--
+info: 'Turing.MultiTapeMachine.FiniteConfig.SpaceBound.receive' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.FiniteConfig.SpaceBound.receive
+
+/--
+info: 'Turing.MultiTapeMachine.finiteRunFrom_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeMachine.finiteRunFrom_eq
+
+/--
+info: 'Cslib.OracleComp.run_interpret_iterate' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.OracleComp.run_interpret_iterate
+
+/--
 info: 'Turing.MultiTapePTM.run_interpret_runConfigFrom_ofDeterministic' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]

@@ -53,7 +53,10 @@ association-list implementation with query-budget bounds. Memoized samplers have
 certificates and bounds on their complete encoded cache. The eager/lazy law and executable
 list-cache bridge also cover independent private randomness. Word-oracle PPT uses the joint
 stateful machine contract and reuses deterministic `fun_prop` certificates. Its clock bounds
-external call counts and request lengths; efficient oracle substitution remains pending.
+external call counts and request lengths. The finite interpreter reuses cslib's tapes and has
+exact program equality with the native machine, including stateful choice and query effects.
+Its storage bounds charge installed replies separately; the efficient substitution certificate
+remains pending.
 General OWF → PRG through pseudoentropy and adaptive GGM security
 remain to be ported.
 

@@ -730,6 +730,32 @@ The remaining GGM infrastructure is the finite oracle interpreter's efficient st
 substitution theorem. A PPT memoized handler and its storage bound are now available, but they
 alone do not certify running an arbitrary oracle-PPT adversary against that handler.
 
+### Finite oracle interpreter semantics (2026-10-16)
+
+The common machine now runs on finite storage built from Bolton Bailey's upstream `StackTape`
+and `BiTape`. The representation relation permits arbitrary native head positions, including
+negative positions and blank gaps. Local instructions preserve that relation, and query
+submission clears only the selected pending buffer and resets its answer head.
+
+`finiteRunFrom_eq` proves equality of the entire output program with the native interpreter for
+arbitrary choice and query programs. This retains all effects and any state maintained by a later
+interpreter, including discarded choices and the final handler update. One proof serves the
+common choice mechanism. `OracleComp.run_interpret_iterate` supplies the shared three-line law
+for running a stateful handler as a loop on the joint program/handler state.
+
+`FiniteConfig.SpaceBound` tracks input, work tapes, output, pending requests and answer storage.
+The answer bound includes reply length independently of the clock: an oracle may install a long
+reply in one instruction. Tests cover blank erasure, gaps and negative heads, both input
+boundaries, retained channel state, long replies, and an effect log that detects extra choices
+after halting or dropped choices before query submission.
+
+The batch adds 34 theorem bodies / 170 body lines, giving 5,423 / 37,027 in 494 source files.
+Statements, definitions, instances and tests are excluded. The equality theorem has a 24-line
+body; the finite storage representation and bound lemmas have 72 body lines in total.
+The next requirement is efficient encodings and transition certificates for these finite data,
+followed by the stateful substitution theorem. These semantic and storage results alone do not
+establish a PPT simulation.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
