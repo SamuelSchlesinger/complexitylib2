@@ -56,8 +56,10 @@ stateful machine contract and reuses deterministic `fun_prop` certificates. Its 
 external call counts and request lengths. The finite interpreter reuses cslib's tapes and has
 exact program equality with the native machine, including stateful choice and query effects.
 Its storage bounds charge installed replies separately. Tape operations now have `fun_prop`
-certificates for arbitrary symbol encodings, including infinite and empty alphabets. Efficient
-configuration handling and the substitution certificate remain pending.
+certificates for arbitrary symbol encodings, including infinite and empty alphabets. Fixed finite
+tables likewise support ordinary function construction, projection and updates through `fun_prop`,
+charging all unbounded entries. Efficient configuration handling and the substitution certificate
+remain pending.
 General OWF → PRG through pseudoentropy and adaptive GGM security
 remain to be ported.
 

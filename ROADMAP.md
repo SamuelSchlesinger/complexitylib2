@@ -786,6 +786,55 @@ two manual certificate hints from `stackTape_cons`: two reusable one-line rules 
 client lines, with no net body-line growth. Regression tests cover both encodings and a tape
 program that branches on its stored left side.
 
+### Fixed finite tables (2026-10-16)
+
+`Encodings/Finite.lean` provides unary ranks for a fixed finite type, while `Encodings/Pi.lean`
+stores every entry of a finite family in the existing framed-list encoding. Values may be
+unbounded words or tapes. `Complexity/PolyTime/Pi.lean` certifies `List.ofFn`, ordinary function
+construction and application, and fixed-index `Function.update`. The index type and its
+enumeration are fixed independently of runtime input; this is not a uniform enumeration theorem
+for growing types.
+
+The projection certificate is registered in the application form expected by `fun_prop`, rather
+than adding another tactic syntax case. It does not require an inhabited value type. Tests use
+one `fun_prop` or `polytime` to rotate and reverse words, update word and tape tables, construct
+fixed tuples with captured input, and construct an empty table over an empty value type.
+Generic projection and update tests check the interface without default values.
+
+The table encoding and operation modules have 6 theorem bodies / 28 body lines, versus 5 / 21
+in crypto's original `Pi.lean`. The extra cost includes the empty-value projection case and the
+encoding equation; this is a stronger interface, not a net proof-length reduction. The finite
+rank bound adds 1 body / 2 lines. Together with the preceding emptiness fix, the current inventory
+is 5,456 / 37,114 in 499 source modules. Statements, definitions, instances and tests are excluded.
+Finite-control case analysis, encoded configuration transitions and efficient stateful
+substitution remain next.
+
+### Implementation priorities (2026-10-16)
+
+1. Finish efficient stateful oracle substitution through finite tables, encoded configurations
+   and simulation, preserving the joint result/private-state law and charging computation,
+   copying, queries, replies and storage growth.
+2. Make constructor, projection, lookup and composition certificates infer encodings predictably;
+   test equivalent functional expressions and alternative encodings instead of adding syntax
+   cases to tactics.
+3. Improve reusable loop size and invariant rules for lists, bounded tables, caches and nested
+   loops, leaving clients the meaningful invariant and automating routine encoding arithmetic.
+4. Centralize configuration views, tape partitions, handoff identities and preservation lemmas,
+   using oriented simplification without globally simplifying machine transitions.
+5. Factor repeated good-event, indicator-expectation and cardinality/logarithm bookkeeping when
+   multiple clients demonstrate reuse; include the helper API in proof-burden comparisons.
+6. Complete the existing Cook–Levin reduction's polynomial-time certificate and replace the
+   conditional NP-completeness assembly with an unconditional theorem.
+7. Complete general OWF → PRG through the remaining pseudoentropy and security reductions,
+   reusing Goldreich–Levin, the OWP result and polynomial stretch.
+8. Complete adaptive GGM expansion, hybrids, reduction and security over the shared oracle
+   calculus, deriving PRG → PRF and then OWF → PRF.
+9. Keep PCP polynomial-time constructibility and explicit expander construction distinct from
+   combinatorial correctness and polynomial output-size bounds.
+10. Validate each abstraction against demanding clients, total proof burden and elaboration
+    behavior; run both independent reviews and all six project checks, then commit and push
+    coherent batches. Prioritize abstractions that unblock these developments.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and

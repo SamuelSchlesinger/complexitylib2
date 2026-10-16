@@ -215,12 +215,14 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
@@ -229,6 +231,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatStream
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Feature
