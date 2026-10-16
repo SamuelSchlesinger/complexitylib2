@@ -330,8 +330,10 @@ public import Complexity.Computability.Probabilistic.PPT.Capture
 public import Complexity.Computability.Probabilistic.PPT.Clock
 public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Probabilistic.Parameter
+public import Complexity.Computability.Probabilistic.Presample
 public import Complexity.Computability.Probabilistic.QueryBounds
 public import Complexity.Computability.Probabilistic.Realization.OracleSimulation
+public import Complexity.Computability.Probabilistic.Repeat
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Computability.RAM.Cost
@@ -341,6 +343,8 @@ public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
 public import Complexity.Crypto.Computational.GGM.Hybrid
+public import Complexity.Crypto.Computational.GGM.Reduction
+public import Complexity.Crypto.Computational.GGM.Security
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
 public import Complexity.Crypto.Computational.GoldreichLevin.HardCore
 public import Complexity.Crypto.Computational.GoldreichLevin.Parameters
@@ -348,6 +352,7 @@ public import Complexity.Crypto.Computational.GoldreichLevin.Reduction
 public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction
 public import Complexity.Crypto.Computational.HardCore
+public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.PseudorandomFunction
@@ -466,8 +471,10 @@ public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.Oracle.Simulation
 public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Presample
 public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
+public import Complexity.Languages.Probabilistic.Repeat
 public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.UniformNat

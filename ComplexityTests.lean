@@ -29,6 +29,7 @@ import ComplexityTests.PRGStretch
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock
+import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs

@@ -4,11 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Crypto.Computational.GGM.Expansion
+import Complexity.Crypto.Computational.GGM.Security
 import Complexity.Tactic.PPT
 
-/-! GGM's evaluator, adaptive prefix games and machine certificates, including short expansions,
-empty seeds and noncanonical caches. These examples do not assert cryptographic security. -/
+/-! GGM's evaluator, adaptive games, uniform reduction and conditional security theorem. Concrete
+generators below exercise the certificates without being assumed pseudorandom. -/
 
 namespace ComplexityTests.GGM
 
@@ -130,5 +130,45 @@ example {generator : List Bool → List Bool} {sample : ℕ → ProbComp (List B
     (ha : IsOraclePPT encBool adversary) : IsPPTOn encUnary encBool
       (fun n => GGM.expansionGame generator (sample n) adversary n (n + 1)) :=
   GGM.isPPTOn_expansionGame hg hs (by fun_prop) (by fun_prop) ha
+
+-- Saved challenges may be short, oversized or absent, and the requested depth may exceed width.
+example {adversary : OracleDistinguisher} (ha : IsOraclePPT encBool adversary) :
+    IsPPTOn (encPair encUnary (encList encBits)) encBool (fun pair =>
+      GGM.sampleGame List.tail adversary pair.1 (pair.1 + 1) pair.2) :=
+  GGM.isPPTOn_sampleGame (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) ha
+
+-- The complete reduction has a concrete certificate without any cryptographic premise.
+example : IsPPT encBool (GGM.reduction (fun seed => seed ++ seed)
+    (fun n word => pure (decide (word.length ≤ n))) (fun n => n ^ 2 + 3)) :=
+  GGM.isPPT_reduction (by fun_prop) (by fun_prop) (by fun_prop)
+
+-- The semantic sibling client has a bound on its external calls, including its private coin.
+private theorem siblings_queryBounds (n : ℕ) :
+    ProbOracleComp.HasQueryBounds (siblings n []) (fun request => request.2.length) 2 1 := by
+  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 2) (.sample _ _ _)
+  intro coin
+  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.query ((), [coin]) _ (by simp))
+  intro first
+  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 0) (.query ((), [!coin]) _ (by simp))
+  intro second
+  exact .pure _ _ _
+
+-- The exact reduction loss applies to this randomized two-query client without a PPT premise.
+example (generator : List Bool → List Bool) :
+    Game.advantage (ProbComp.eval (prfRealGame (GGM.eval generator) siblings 1))
+        (ProbComp.eval (prfIdealGame siblings 1)) =
+      dyadicSize 1 * dyadicSize 2 *
+        Game.advantage
+          (ProbComp.eval ((generator <$> BitString.sampleList 1) >>=
+            GGM.reduction generator siblings (fun _ => 2) 1))
+          (ProbComp.eval (BitString.sampleList 2 >>=
+            GGM.reduction generator siblings (fun _ => 2) 1)) :=
+  GGM.reduction_advantage generator siblings (fun _ => 2) 1 1 (siblings_queryBounds 1)
+
+-- Any PRG, including the strict zero-width convention, supplies the full adaptive PRF contract.
+example {generator : List Bool → List Bool} {length : ℕ → ℕ}
+    (h : PseudorandomGenerator generator length) :
+    ∃ family : List Bool → List Bool → List Bool, PseudorandomFunction family :=
+  h.exists_pseudorandomFunction
 
 end ComplexityTests.GGM

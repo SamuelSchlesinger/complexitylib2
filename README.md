@@ -70,8 +70,10 @@ PRF games use the shared nonnegative game-security API, with exact eager, lazy a
 equivalence. For every oracle-PPT adversary, the ideal game has a strict PPT realization through
 that cache; the exponential eager table remains a specification. The GGM prefix hybrids and
 cached expansion games have exact endpoint and adjacent-level laws, with uniform strict PPT
-certificates for the entire adaptive experiments. General OWF → PRG through pseudoentropy and
-the single-challenge GGM security reduction remain to be ported.
+certificates for the entire adaptive experiments. Saved independent samples expose one uniform
+single-challenge reduction, with an exact polynomial loss and complete strict PPT certificate.
+Adaptive GGM security and PRG → PRF are proved. General OWF → PRG through pseudoentropy, and hence
+general OWF → PRF, remain to be ported.
 
 ## Layout
 

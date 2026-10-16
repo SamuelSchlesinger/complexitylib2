@@ -4518,3 +4518,75 @@ info: 'Cslib.Crypto.GGM.isPPTOn_expansionGame' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.GGM.isPPTOn_expansionGame
+
+/--
+info: 'Cslib.Probability.IsPPTOn.replicate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsPPTOn.replicate
+
+/--
+info: 'Cslib.ProbOracleComp.run_interpret_presample' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbOracleComp.run_interpret_presample
+
+/--
+info: 'Cslib.ProbOracleComp.HasQueryBounds.eval_presample' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbOracleComp.HasQueryBounds.eval_presample
+
+/--
+info: 'Cslib.Probability.IsOraclePPTOn.run_interpret_withSampleList' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsOraclePPTOn.run_interpret_withSampleList
+
+/--
+info: 'Cslib.Crypto.sequenceTest_gap' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.sequenceTest_gap
+
+/--
+info: 'Cslib.Crypto.GGM.sampleGame_replicate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.sampleGame_replicate
+
+/--
+info: 'Cslib.Crypto.GGM.isPPT_reduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.isPPT_reduction
+
+/--
+info: 'Cslib.Crypto.GGM.reduction_advantage' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.reduction_advantage
+
+/--
+info: 'Cslib.Crypto.GGM.pseudorandomFunction_of_indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.pseudorandomFunction_of_indistinguishable
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.exists_pseudorandomFunction' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PseudorandomGenerator.exists_pseudorandomFunction

@@ -217,7 +217,7 @@ not existence proofs of one-way functions or permutations.
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
-| PRG → PRF and OWF → PRF | prefix hybrids, expansion laws and full-game PPT certificates are ported; queue the single-challenge reduction and security, then `OneWayToPRF` |
+| PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
 already present in v2 at `316944d` or its cslib pin, has 183 absent modules / 33,887 source lines.
@@ -230,7 +230,7 @@ GGM evaluation already drives reusable improvements: raw-bit slicing rules and a
 zero-growth fold attempt let its certificate use a local step certificate and a length bound,
 followed by `polytime`. Tests include a shrinking generator and surplus output, so the efficiency
 theorem does not depend on a PRG security or exact-length hypothesis. The adaptive security
-theorem still requires the remaining reductions; evaluation alone does not establish it.
+theorem is now proved through the saved-sample and single-challenge reductions described below.
 
 The three GGM efficiency proofs have 2, 1 and 4 body lines. Including the copied frontend,
 simulation rules and shared helpers, this batch adds 38 theorem bodies / 103 body lines, taking
@@ -1028,8 +1028,70 @@ siblings. The semantic client is not itself assigned an oracle-PPT certificate. 
 approved the generalized lookup contract after catching and resolving a regression for custom
 encodings; the same review strengthened the sibling test to avoid masking correlations.
 All six project checks pass, including the five new standard-axiom guards. The independent
-adversarial correctness review is pending publication of this batch.
-The single-challenge PRG reduction and final GGM security assembly remain open.
+adversarial correctness review approved the published batch without material findings; targeted
+diagnostics, axiom checks and additional empty-type, zero-width and sibling-correlation probes
+passed.
+This batch leaves the single-challenge PRG reduction and final security assembly to the next one.
+
+### Saved samples and complete adaptive GGM security (2026-10-16)
+
+The remaining GGM reduction and security assembly are now ported from crypto `5ff69ca`.
+`GGM.reduction` is one uniform strict PPT program: it samples a padded dyadic tree level and query
+coordinate, inserts the supplied generator challenge and simulates the adaptive adversary. Its
+exact signed gap, and hence nonnegative advantage, loses precisely
+`dyadicSize n * dyadicSize (count n)`. Padding rejects. The identity includes zero width and zero
+query budget; the security proof fixes each adversary and its polynomial budget before varying
+the parameter. Existing polynomial stretch then gives `PseudorandomGenerator.exists_pseudorandomFunction`.
+This completes PRG → PRF. General OWF → PRG and its OWF → PRF consequence still need pseudoentropy.
+
+The shared support comprises ordinary list repetition, sequence hybrids and saved-sample
+substitution. `OracleComp.replicate` is `List.mapM` over a replicated unit list; its PPT certificate
+uses the existing flat-seed evaluator and row traversal, with no new machine or loop syntax.
+The exact seed law applies to arbitrary discrete output types, including infinite ones. Each
+saved value belongs to an external query; private draws neither consume it nor share its coins.
+An online supported-transcript bound suffices to transfer the joint output/ordinary-private-state
+distribution. The distribution theorem projects away the unused suffix, which can be correlated
+with the run. The efficiency theorem retains and charges that entire suffix along with the output
+and ordinary state. It accepts arbitrary encodings and short supplied lists, with the fallback
+subject to the same reply/growth contract as every supplied value.
+
+The GGM saved-list game uses the common stateful interpreter and the existing cache invariant.
+Its strict PPT proof is 16 body lines; the whole reduction's is five. No syntax-specific tactic
+patch was needed. An explicit tuple at one deterministic preprocessing boundary resolves encoding
+inference; ordinary constructor, projection, lookup and captured-input certificates do the rest.
+
+| Proof scope | Crypto source body lines | V2 body lines |
+| --- | ---: | ---: |
+| Repetition laws used here, including the flat-seed law | 40 | 32 |
+| Complete saved-sample distribution API | 72 | 83 |
+| General repetition PPT certificate | 22 | 17 |
+| Saved-sample PPT API, including the new encoded-caller generalization | 24 | 29 |
+| Sequence hybrids | 31 | 31 |
+| GGM reduction | 59 | 59 |
+| GGM security and PRG → PRF | 37 | 36 |
+| Total matched scope, including helpers | 285 | 287 |
+
+The complete addition is 35 bodies / 287 lines across seven source modules. The matched source
+scope has 36 bodies; its unported count-true and empirical-test APIs are excluded from both sides.
+The whole library now has 5,562 bodies / 38,125 lines in 519 source modules, median 3 / P90 17.
+These remain layout counts, excluding definitions, statements, tests, instances and generated
+declarations. They show comparable proof burden under the shared typed machine API, not a net
+proof reduction.
+
+The complete single-challenge reduction's PPT proof measures 11,696,757 raw tactic heartbeats,
+including the captured level-test certificate and outer sampler/conditional. This is a source
+proof elaboration measurement, not execution time or the extracted machine's polynomial bound.
+
+Tests compute all four joint masses of two independent fair bits and a nonzero single-coordinate
+gap with exact padding loss. An adaptive client makes one or two external calls around a private
+draw and retains arbitrary initial ordinary state. Separate tests cover exhausted-list fallback,
+exact suffix preservation, arbitrary challenge lengths and depths, and an actual querying-machine
+witness for the full-state efficiency certificate. The sibling-comparison GGM client exercises the
+exact reduction identity but is not itself assigned an oracle-PPT certificate. Ten new headline
+axiom guards cover the shared laws, efficiency and final security theorems.
+Source/API review approves the seven modules and independently confirms the axiom and proof-count
+accounting. All six project checks pass. The independent adversarial correctness review is pending
+for this batch.
 
 ### Implementation priorities (2026-10-16)
 
@@ -1049,8 +1111,8 @@ The single-challenge PRG reduction and final GGM security assembly remain open.
    conditional NP-completeness assembly with an unconditional theorem.
 7. Complete general OWF → PRG through the remaining pseudoentropy and security reductions,
    reusing Goldreich–Levin, the OWP result and polynomial stretch.
-8. Complete the single-challenge GGM reduction and security assembly over the shared oracle
-   calculus, deriving PRG → PRF and then OWF → PRF.
+8. Adaptive GGM security and PRG → PRF are implemented over the shared oracle calculus. Derive
+   general OWF → PRF once the pseudoentropy-based OWF → PRG theorem is complete.
 9. Keep PCP polynomial-time constructibility and explicit expander construction distinct from
    combinatorial correctness and polynomial output-size bounds.
 10. Validate each abstraction against demanding clients, total proof burden and elaboration
@@ -1060,10 +1122,9 @@ The single-challenge PRG reduction and final GGM security assembly remain open.
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
-   semantic invariant rules with functional clients. Port the independent repetition, empirical
-   probability tests and collection helpers used by Goldreich–Levin and pseudoentropy, then the
-   adaptive GGM reductions using the completed stateful substitution theorem. General
-   open-program composition remains separate work.
+   semantic invariant rules with functional clients; independent repetition and the complete
+   adaptive GGM reduction use them. Port the empirical probability tests and collection helpers
+   needed by pseudoentropy. General open-program composition remains separate work.
 2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
    repeat finite union bounds, construction of a bad event and extraction of a good sample.
    Trial a shared finite-family existence lemma using Mathlib's existing measure union bounds;

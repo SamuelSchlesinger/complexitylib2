@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Probabilistic.QueryBounds
 import Complexity.Computability.Probabilistic.OracleSimulation
 import Complexity.Computability.Probabilistic.Oracle.Parameter
+import Complexity.Computability.Probabilistic.Presample
 import Complexity.Computability.Probabilistic.Memoize
 import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 import Complexity.Tactic.PPT
@@ -273,6 +274,26 @@ example : ¬ IsOraclePPTOn encBits encBits
     simp [StateT.run])
   simp only [encBits, Function.Embedding.coe_refl, id_eq, List.length_nil, Nat.zero_add, one_pow,
     Nat.mul_one, reply, List.length_replicate] at hlength
+  lia
+
+-- The saved-list certificate has an actual querying machine witness and arbitrary challenges.
+-- Truncation bounds each reply and added ordinary state; the unused list is retained in full.
+example : IsPPTOn (encPair encBits (encList encBits))
+    (encPair encBits (encPair encBits (encList encBits))) (fun pair =>
+      (OracleComp.interpret
+        (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n))
+          (OracleComp.withSampleList [] (fun value _ state =>
+            pure (value.take pair.1.length, value.take pair.1.length ++ state))))
+              (requestHead pair.1)).run (pair.1, pair.2)) := by
+  apply requestHead_isOraclePPTOn.run_interpret_withSampleList []
+    (prepare := fun pair => pair.1) (resources := fun pair _ => pair.1.length)
+    (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (fun _ _ => True) (by simp) (by fun_prop)
+  intro caller value request state _ result hresult
+  simp only [ProbComp.eval_pure, PMF.mem_support_pure_iff] at hresult
+  subst result
+  refine ⟨trivial, List.length_take_le _ _, ?_⟩
+  simp only [encBits_apply, List.length_append, List.length_take]
   lia
 
 end ComplexityTests.OraclePPT
