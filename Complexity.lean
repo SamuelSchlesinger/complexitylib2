@@ -141,7 +141,9 @@ public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PH
+public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.RP
+public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.CookLevin.Correctness
 public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Staging
