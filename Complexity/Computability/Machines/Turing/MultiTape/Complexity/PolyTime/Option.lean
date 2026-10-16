@@ -23,6 +23,8 @@ its fallback may be computed from the input; no inhabitant of the value type is 
   supplied as part of the input.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetDWithInput`: the composition rule.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionIsSome`: test a computed optional value.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionElimWithInput`: branch on an optional
+  value while retaining the original input, including empty value types.
 
 ## References
 
@@ -71,5 +73,29 @@ theorem optionGetDWithInput {value : α → Option β} {fallback : α → β}
     (hfallback : ComputableTidilyInPolyTime fallback encA encB) :
     ComputableTidilyInPolyTime (fun a => (value a).getD (fallback a)) encA encB :=
   (optionGetD encB).comp (hvalue.prod hfallback)
+
+/-- Branch on a computed option, charging its full value and any captured original input. -/
+@[fun_prop]
+theorem optionElimWithInput {γ : Type} {encC : γ ↪ List Bool}
+    {value : α → Option β} {fallback : α → γ} {body : α → β → γ}
+    (hvalue : ComputableTidilyInPolyTime value encA (encOption encB))
+    (hfallback : ComputableTidilyInPolyTime fallback encA encC)
+    (hbody : ComputableTidilyInPolyTime (fun p : α × β => body p.1 p.2)
+      (encPair encA encB) encC) :
+    ComputableTidilyInPolyTime
+      (fun a => (value a).elim (fallback a) (body a)) encA encC := by
+  rcases isEmpty_or_nonempty β with h | h
+  · convert hfallback using 1
+    funext a
+    cases value a with
+    | none => rfl
+    | some b => exact isEmptyElim b
+  · obtain ⟨b⟩ := h
+    have hget : ComputableTidilyInPolyTime (fun a => (value a).getD b) encA encB :=
+      (ComputableTidilyInDegree.getD b).computableTidilyInPolyTime.comp hvalue
+    convert hvalue.optionIsSome.cond (hbody.comp (id'.prod hget)) hfallback using 1
+    funext a
+    dsimp only [Function.comp_def]
+    cases value a <;> rfl
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

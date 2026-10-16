@@ -99,8 +99,10 @@ certificates, providing the sampling prerequisites for amplification.
 The expander library now has an arithmetic affine-plane construction and a concrete base for
 the existing zig-zag tower: `ZMod 257` gives spectral expansion at most `2 / 5` throughout the
 tower without a nonconstructive base choice. Tensor, zig-zag and affine rotations have
-compositional `fun_prop` certificates, and small rotations execute directly. Uniform efficiency
-of the tower, arbitrary cloud sizes and encoded PCP preprocessing remain open. Polynomial time
+compositional `fun_prop` certificates, and small rotations execute directly. Executable contraction
+now adjusts indexed graphs from `m` to `n` vertices when `n ≤ m ≤ k*n`, retaining a positive gap
+with loss depending on `k`. Assembling an arbitrary-size tower family, uniform efficiency of the
+tower and encoded PCP preprocessing remain open. Polynomial time
 in the graph's vertex count can suffice for PCP construction; time polynomial in the bit length
 of a vertex name is a separate, stronger target. The concrete tower's degree is still enormous.
 

@@ -2072,6 +2072,48 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane' de
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane
 
 /--
+info: 'Cslib.RotationMap.card_interedges_le_contract' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.card_interedges_le_contract
+
+/--
+info: 'Cslib.RotationMap.le_card_interedges_compl_contract' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.le_card_interedges_compl_contract
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_contract_lazy_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_contract_lazy_le
+
+/--
+info: 'Cslib.RotationMap.isPartialInv_finSlots' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.isPartialInv_finSlots
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_contractFin_lazy_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_contractFin_lazy_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionElimWithInput' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionElimWithInput
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract
+
+/--
 info: 'Cslib.RAM.computesInTime_unitCost_repeatedSquaring' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

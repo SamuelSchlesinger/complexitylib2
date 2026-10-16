@@ -10,6 +10,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy
+import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExplicitExpanders
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine

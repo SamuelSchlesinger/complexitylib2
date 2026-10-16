@@ -8,7 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Foundations.Combinatorics.Expander.AffinePlane
+public import Complexity.Foundations.Combinatorics.Expander.Contraction
 public import Complexity.Foundations.Combinatorics.Expander.Products
 
 /-!
@@ -27,6 +29,8 @@ theorem for a varying field size or tower depth.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_tensor`: tensor rotations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_zigzag`: zig-zag rotations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane`: arithmetic rotations.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract`: contraction through
+  efficiently encoded and decoded slots, including the unused-slot branch.
 
 ## References
 
@@ -77,6 +81,22 @@ theorem rotationMap_affinePlane {K : Type} [Field K] {encode : K ↪ List Bool}
     ComputableTidilyInPolyTime (RotationMap.affinePlane K).rot
       (encPair (encPair encode encode) encode) (encPair (encPair encode encode) encode) := by
   unfold RotationMap.affinePlane RotationMap.affinePlaneRot
+  fun_prop
+
+/-- Contraction charges slot decoding, the occupied-slot rotation and re-encoding, and the
+unused-slot fallback, with all complete vertex and label encodings. -/
+@[fun_prop]
+theorem rotationMap_contract {I : Type} {slot : I ↪ List Bool}
+    {encode : V → W × I} {decode : W × I → Option V}
+    {rotate : V × D → V × D}
+    (hencode : ComputableTidilyInPolyTime encode vertex (encPair otherVertex slot))
+    (hdecode : ComputableTidilyInPolyTime decode
+      (encPair otherVertex slot) (encOption vertex))
+    (hrotate : ComputableTidilyInPolyTime rotate (encPair vertex label) (encPair vertex label)) :
+    ComputableTidilyInPolyTime (RotationMap.contractRot encode decode rotate)
+      (encPair otherVertex (encPair slot label))
+      (encPair otherVertex (encPair slot label)) := by
+  unfold RotationMap.contractRot RotationMap.contractDart
   fun_prop
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

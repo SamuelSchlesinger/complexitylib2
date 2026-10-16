@@ -1558,7 +1558,8 @@ profiles of the generic tensor, zig-zag and affine certificate bodies use respec
 Independent source/API review approves the batch with no required fixes. All six checks pass:
 strict build 38.71 s, import coverage 1.71 s, tests 6.97 s, environment lint 7.21 s, style 2.34 s,
 and init imports 4.43 s. Seven headline axiom guards use only `propext`, `Classical.choice` and
-`Quot.sound`. The external correctness review follows publication of this coherent batch.
+`Quot.sound`. The post-publication Codex correctness review approves `d3c88c5` without material
+findings. It reviewed the sources and stated proof boundaries; it did not rerun the six gates.
 
 Next, obtain arbitrary cloud sizes with a proved spectral and size contract, certify the tower
 uniformly, and interpret compact encoded constraint graphs into the existing mathematical
@@ -1566,6 +1567,48 @@ graphs. A full preprocessing client must account for enumeration, lookup, relabe
 and output storage. Propagate expander degree and spectral parameters through amplification,
 retaining the current numerical specialization as a client. The logarithmic-round cardinality
 bounds already proved in `Amplifier.lean` still need an encoded-size and total-time bridge.
+
+### Bounded-fiber contraction (2026-10-16)
+
+`Expander/Contraction.lean` now supplies the size-adjustment step. Given an executable injection
+of old vertices into `W × I` and its partial inverse, the rotation decodes an occupied slot,
+calls the original rotation, and encodes the result. Unoccupied slots are self-loops. The
+correctness contract uses Mathlib's existing `Function.IsPartialInv`; it needs no new partial
+bijection structure or enumeration. Surjectivity onto `W` makes every new vertex represented.
+Crossing darts inject into the contracted graph, so the existing lazy Cheeger theorem gives
+`λ(contract.lazy) ≤ 1 − (1 − λ(G))²/(16 |I|²)`. A positive original gap therefore remains positive.
+Quotient/remainder indexing realizes the contract for `Fin m → Fin n` when `n ≤ m ≤ k*n`.
+
+The computational certificate targets the functional rotation, independently of its
+partial-inverse correctness proof. This avoids asking encoding inference to reconstruct a proof
+that is erased from the rotation's definition. Its two-line `unfold ...; fun_prop` proof uses a
+shared 13-line captured-input option-elimination certificate, charging the original input,
+optional value, selected branch and output. Neither certificate assumes the optional value type
+is inhabited. No new TM, tactic implementation or heartbeat override is added.
+
+Tests execute occupied and unused slots of a five-to-three contraction, check both return labels,
+and instantiate the spectral bound at `63/64`. They cover zero indices, an empty optional value
+type, arbitrary supplied encodings, missing component certificates, and raw/framed unbounded
+words. Direct and let-bound `.elim` expressions work with `fun_prop`. Bare `match` syntax still
+needs a pointwise case proof identifying it with `.elim`; this is a remaining ergonomics gap,
+not evidence that all equivalent spellings already automate.
+
+The batch adds 11 named proofs / 109 body lines: nine mathematical proofs / 94 lines and the
+two certificate helpers / 15 lines. This includes the helper API's cost; it is new capability,
+not a measured proof reduction. Definitions, the embedded involution proof and tests are excluded
+by the source-layout metric. The complete library has 5,800 named proofs / 39,921 body lines
+across 547 modules. The contraction certificate uses 399,236 raw tactic heartbeats in a full-module
+profile; this measures elaboration, not machine runtime.
+
+Independent source/API review approves the implementation. All six checks pass: strict build
+21.36 s, import coverage 1.62 s, tests 17.35 s, environment lint 7.41 s, style 2.26 s and init
+imports 4.35 s. Seven headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
+The independent Codex correctness review follows publication of this batch.
+
+Next, number the arithmetic tower's vertices computably and select a nearby tower size to obtain
+a concrete family on every `Fin n`. The contraction theorem alone does not yet supply that
+family or a uniform polynomial-time indexing/tower certificate. Encoded PCP preprocessing and
+propagation of the expander contract through amplification remain subsequent milestones.
 
 ### Implementation priorities (2026-10-16)
 
