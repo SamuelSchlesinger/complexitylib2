@@ -5,19 +5,15 @@ Authors: Christian Reitwiessner
 -/
 
 module
--- upstream: subset of crei/tidy-universal `Encodings/Option.lean`;
--- definitions only, delete when it lands
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
-public import Complexity.Init
-public import Mathlib.Logic.Embedding.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 
 /-!
 # The encoding of options
 
-`encOption enc` encodes `none` as the empty word and `some a` as `true` followed by `enc a`.
-
-A verbatim subset of Christian Reitwiessner's `Encodings/Option.lean` (branch
-`crei/tidy-universal`), without the `OptionEncoding` instance.
+`encOption enc` encodes `none` as the empty word and `some a` as `true` followed by `enc a`. It has
+the capabilities of `Turing.MultiTapeTM.OptionEncoding`.
 
 ## Main definitions
 
@@ -41,5 +37,11 @@ public lemma encOption_none : encOption enc none = [] := rfl
 
 @[simp]
 public lemma encOption_some (a : α) : encOption enc (some a) = true :: enc a := rfl
+
+public instance : OptionEncoding enc (encOption enc) where
+  none_eq := rfl
+  some := .of_cons_true fun _ => rfl
+  getD d := .of_isEmpty_ite d (fun o ho => by cases o <;> simp_all)
+    (.of_tail fun ⟨o, ho⟩ => by cases o <;> simp at ho ⊢)
 
 end Turing.MultiTapeTM

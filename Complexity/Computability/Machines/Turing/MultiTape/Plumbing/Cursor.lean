@@ -1,0 +1,240 @@
+/-
+Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Christian Reitwiessner
+-/
+
+module
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: `spaceUsed` is `space` since cslib #1133
+
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
+public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.RewindInput
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
+
+/-!
+# Tape transformations with the input head anywhere
+
+A `Turing.MultiTapeTM.TransformsTapes` specification starts and ends with the input head on the
+first symbol of the input. A machine that reads its input once, from left to right, keeps a
+*cursor* there instead: its input head stays where the last round left it.
+`TransformsTapesAt` is the same specification format with the position of the input head as part
+of the precondition and the postcondition.
+
+A machine that never needs the input is run with its input head frozen (`freezeInput`): then every
+`TransformsTapes` specification of it holds at any position of the input head
+(`Turing.MultiTapeTM.TransformsTapes.freezeInput`).
+
+## Main definitions
+
+* `Turing.MultiTapeTM.wordsCfgAt`: `Turing.MultiTapeTM.wordsCfg` with the input head anywhere.
+* `Turing.MultiTapeTM.TransformsTapesAt`: the specification format.
+* `Turing.MultiTapeTM.freezeInput`: a machine run on a blank input, with its input head fixed.
+
+## Main results
+
+* `Turing.MultiTapeTM.transformsTapesAt_seq`: sequential composition.
+* `Turing.MultiTapeTM.TransformsTapes.freezeInput`: a specification of `tm` gives one of
+  `tm.freezeInput` at any position of the input head, which it keeps.
+* `Turing.MultiTapeTM.transformsTapesAt_rewindInput`: rewinding the input head.
+-/
+
+@[expose] public section
+
+namespace Turing.MultiTapeTM
+
+variable {k : ℕ} {Symbol State State₀ State₁ : Type*}
+
+/-- The configuration whose work tape `i` holds the word `ws i` with its head at the start, with
+the input head at position `p`, in state `q` with output `out`. -/
+@[simps]
+def wordsCfgAt (input : List Symbol) (p : Fin (input.length + 2)) (q : Option State)
+    (ws : Fin k → List Symbol) (out : List Symbol) : Cfg k Symbol State input :=
+  ⟨q, p, fun i => tapeOfList (ws i), fun _ => 0, out⟩
+
+@[simp]
+lemma wordsCfgAt_one (input : List Symbol) (q : Option State) (ws : Fin k → List Symbol)
+    (out : List Symbol) : wordsCfgAt input 1 q ws out = wordsCfg input q ws out := rfl
+
+@[simp]
+lemma withState_wordsCfgAt {State' : Type*} (input : List Symbol) (p : Fin (input.length + 2))
+    (q : Option State) (ws : Fin k → List Symbol) (out : List Symbol) (q' : Option State') :
+    (wordsCfgAt input p q ws out).withState q' = wordsCfgAt input p q' ws out := rfl
+
+/-- `TransformsTapesAt tm P Q t s`: started in its initial state with the input head at position
+`p` and on tapes holding words `ws` with `P input p ws`, the machine is halted after `t` steps with
+the input head at a position `p'`, on tapes holding words `ws'`, having appended `emitted` to the
+output, with `Q input p ws p' ws' emitted`, and having used at most `s` work-tape cells. -/
+def TransformsTapesAt (tm : MultiTapeTM k Symbol State)
+    (P : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) → Prop)
+    (Q : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) →
+      Fin (input.length + 2) → (Fin k → List Symbol) → List Symbol → Prop)
+    (t s : ℕ) : Prop :=
+  ∀ (input : List Symbol) (p : Fin (input.length + 2)) (ws : Fin k → List Symbol)
+    (out : List Symbol), P input p ws →
+    ∃ p' ws' emitted,
+      tm.runFrom (wordsCfgAt input p (some tm.q₀) ws out) t =
+        wordsCfgAt input p' none ws' (out ++ emitted) ∧
+      Q input p ws p' ws' emitted ∧
+      tm.space (wordsCfgAt input p (some tm.q₀) ws out) t ≤ s
+
+namespace TransformsTapesAt
+
+variable {tm : MultiTapeTM k Symbol State}
+  {P P' : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) → Prop}
+  {Q Q' : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) →
+    Fin (input.length + 2) → (Fin k → List Symbol) → List Symbol → Prop} {t s t' s' : ℕ}
+
+/-- A stronger precondition, a weaker postcondition and larger bounds. -/
+theorem imp (h : TransformsTapesAt tm P Q t s) (hP : ∀ input p ws, P' input p ws → P input p ws)
+    (hQ : ∀ input p ws p' ws' e, P' input p ws → Q input p ws p' ws' e → Q' input p ws p' ws' e)
+    (ht : t ≤ t') (hs : s ≤ s') : TransformsTapesAt tm P' Q' t' s' := by
+  intro input p ws out hP'
+  obtain ⟨p₁, ws₁, e, hrun, hQ₁, hsp⟩ := h input p ws out (hP input p ws hP')
+  have hhalt : (tm.runFrom (wordsCfgAt input p (some tm.q₀) ws out) t).Halted := by
+    rw [hrun]; rfl
+  exact ⟨p₁, ws₁, e, by rw [runFrom_eq_of_halt _ _ ht hhalt, hrun], hQ input p ws p₁ ws₁ e hP' hQ₁,
+    by rw [space_eq_of_halt _ ht hhalt]; exact hsp.trans hs⟩
+
+end TransformsTapesAt
+
+/-- A `TransformsTapes` specification is a `TransformsTapesAt` specification with the input head at
+the start before and after. -/
+theorem TransformsTapes.transformsTapesAt {tm : MultiTapeTM k Symbol State}
+    {P : (input : List Symbol) → (Fin k → List Symbol) → Prop}
+    {Q : (input : List Symbol) → (Fin k → List Symbol) → (Fin k → List Symbol) →
+      List Symbol → Prop} {t s : ℕ} (h : TransformsTapes tm P Q t s) :
+    TransformsTapesAt tm (fun input p ws => p = 1 ∧ P input ws)
+      (fun input _ ws p' ws' e => p' = 1 ∧ Q input ws ws' e) t s := by
+  rintro input _ ws out ⟨rfl, hP⟩
+  -- vendored: `TransformsTapes` is stated with run paths since cslib #1117
+  obtain ⟨ws', e, hrun, hQ, hsp⟩ := transformsTapes_iff_runFrom.mp h input ws out hP
+  exact ⟨1, ws', e, hrun, ⟨rfl, hQ⟩, hsp⟩
+
+/-- A `TransformsTapesAt` specification from and to the start of the input is a `TransformsTapes`
+specification. -/
+theorem TransformsTapesAt.transformsTapes {tm : MultiTapeTM k Symbol State}
+    {P : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) → Prop}
+    {Q : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) →
+      Fin (input.length + 2) → (Fin k → List Symbol) → List Symbol → Prop} {t s : ℕ}
+    (h : TransformsTapesAt tm P Q t s)
+    (hQ : ∀ input p ws p' ws' e, Q input p ws p' ws' e → p' = 1) :
+    TransformsTapes tm (fun input ws => P input 1 ws) (fun input ws ws' e => Q input 1 ws 1 ws' e)
+      t s := by
+  -- vendored: `TransformsTapes` is stated with run paths since cslib #1117
+  refine transformsTapes_iff_runFrom.mpr fun input ws out hP => ?_
+  obtain ⟨p', ws', e, hrun, hQ', hsp⟩ := h input 1 ws out hP
+  obtain rfl := hQ _ _ _ _ _ _ hQ'
+  exact ⟨ws', e, hrun, hQ', hsp⟩
+
+open Sequential in
+/-- **Sequential composition.** If the postcondition of the first specification implies the
+precondition of the second, the composed machine performs the two one after the other. -/
+theorem transformsTapesAt_seq {tm₀ : MultiTapeTM k Symbol State₀}
+    {tm₁ : MultiTapeTM k Symbol State₁}
+    {P₀ P₁ : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) → Prop}
+    {Q₀ Q₁ : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) →
+      Fin (input.length + 2) → (Fin k → List Symbol) → List Symbol → Prop} {t₀ s₀ t₁ s₁ : ℕ}
+    (h₀ : TransformsTapesAt tm₀ P₀ Q₀ t₀ s₀) (h₁ : TransformsTapesAt tm₁ P₁ Q₁ t₁ s₁)
+    (hmid : ∀ input p ws p' ws' e, P₀ input p ws → Q₀ input p ws p' ws' e → P₁ input p' ws') :
+    TransformsTapesAt (tm₀.seq tm₁) P₀
+      (fun input p ws p'' ws'' e => ∃ p' ws' e₀ e₁, Q₀ input p ws p' ws' e₀ ∧
+        Q₁ input p' ws' p'' ws'' e₁ ∧ e = e₀ ++ e₁)
+      (t₀ + t₁) (s₀ + s₁) := by
+  intro input p ws out hP₀
+  obtain ⟨p', ws', e₀, hrun₀, hQ₀, hspace₀⟩ := h₀ input p ws out hP₀
+  obtain ⟨p'', ws'', e₁, hrun₁, hQ₁, hspace₁⟩ :=
+    h₁ input p' ws' (out ++ e₀) (hmid input p ws p' ws' e₀ hP₀ hQ₀)
+  have hstart : wordsCfgAt input p (some (tm₀.seq tm₁).q₀) ws out =
+      leftCfg tm₁ (wordsCfgAt input p (some tm₀.q₀) ws out) := rfl
+  refine ⟨p'', ws'', e₀ ++ e₁, ?_, ⟨p', ws', e₀, e₁, hQ₀, hQ₁, rfl⟩, ?_⟩
+  · rw [hstart, runFrom_seq hrun₀ rfl (by simpa using hrun₁) rfl]
+    rfl
+  · rw [hstart]
+    refine (space_seq_le hrun₀ rfl (by rw [withState_wordsCfgAt, hrun₁]; rfl)).trans ?_
+    simpa using Nat.add_le_add hspace₀ hspace₁
+
+/-! ### Freezing the input head -/
+
+/-- `tm`, run as if on a blank input: it reads a blank on the input tape and never moves its input
+head. -/
+noncomputable def freezeInput (tm : MultiTapeTM k Symbol State) : MultiTapeTM k Symbol State :=
+  ofTr tm.q₀ fun q _ work => { tm.tr q none work with inputTape := 0 }
+
+namespace FreezeInput
+
+variable {tm : MultiTapeTM k Symbol State} {input : List Symbol}
+
+/-- A configuration on the empty input, with the input head placed at `p` on `input`. -/
+def atPos (p : Fin (input.length + 2)) (c : Cfg k Symbol State []) : Cfg k Symbol State input :=
+  ⟨c.state, p, c.workTapes, c.workTapePos, c.output⟩
+
+lemma step_atPos (p : Fin (input.length + 2)) (c : Cfg k Symbol State []) :
+    tm.freezeInput.step (atPos p c) = atPos p (tm.step c) := by
+  cases hq : c.state with
+  | none =>
+    rw [step_of_halt (show (atPos p c).state = none from hq), step_of_halt hq]
+  | some q =>
+    rw [step_of_state (show (atPos p c).state = some q from hq), step_of_state hq,
+      inputSymbol_eq_none_of_boundary (cfg := c)
+        (by have := c.inputPos.isLt; simp only [List.length_nil] at this ⊢; omega),
+      show (atPos (input := input) p c).workTapeSymbols = c.workTapeSymbols from rfl]
+    refine Cfg.ext ?_ ?_ ?_ ?_ ?_ <;> simp [freezeInput, atPos, Action.apply, moveInputPos_zero]
+
+lemma runFrom_atPos (p : Fin (input.length + 2)) (c : Cfg k Symbol State []) (n : ℕ) :
+    tm.freezeInput.runFrom (atPos p c) n = atPos p (tm.runFrom c n) :=
+  (Function.Semiconj.iterate_right (fun c => (step_atPos (tm := tm) p c).symm) n c).symm
+
+end FreezeInput
+
+open FreezeInput in
+/-- A specification of `tm` on the empty input is a specification of `tm.freezeInput` at any
+position of the input head, which it keeps. -/
+theorem TransformsTapes.freezeInput {tm : MultiTapeTM k Symbol State}
+    {P : (input : List Symbol) → (Fin k → List Symbol) → Prop}
+    {Q : (input : List Symbol) → (Fin k → List Symbol) → (Fin k → List Symbol) →
+      List Symbol → Prop} {t s : ℕ} (h : TransformsTapes tm P Q t s) :
+    TransformsTapesAt tm.freezeInput (fun _ _ ws => P [] ws)
+      (fun _ p ws p' ws' e => p' = p ∧ Q [] ws ws' e) t s := by
+  intro input p ws out hP
+  -- vendored: `TransformsTapes` is stated with run paths since cslib #1117
+  obtain ⟨ws', e, hrun, hQ, hsp⟩ := transformsTapes_iff_runFrom.mp h [] ws out hP
+  have hstart : wordsCfgAt input p (some tm.freezeInput.q₀) ws out =
+      atPos p (wordsCfg [] (some tm.q₀) ws out) := rfl
+  refine ⟨p, ws', e, ?_, ⟨rfl, hQ⟩, ?_⟩
+  · rw [hstart, runFrom_atPos, hrun]
+    rfl
+  · rw [hstart, space_eq_of_workTapePos _ (wordsCfg [] (some tm.q₀) ws out) t
+      fun m _ => by rw [runFrom_atPos]; rfl]
+    exact hsp
+
+/-! ### Rewinding the input head -/
+
+/-- `rewindInput` on a machine with `k` work tapes. -/
+noncomputable def rewindInputOn (k : ℕ) (Symbol : Type*) :
+    MultiTapeTM k Symbol RewindState :=
+  (rewindInput Symbol).extendTapes (noTapes k)
+
+/-- `rewindInputOn k Symbol` moves the input head from anywhere on the input `x` back to its start
+and changes nothing else. -/
+theorem transformsTapesAt_rewindInput (x : List Symbol) :
+    TransformsTapesAt (rewindInputOn k Symbol) (fun input _ _ => input = x)
+      (fun _ _ ws p' ws' e => p' = 1 ∧ ws' = ws ∧ e = []) (x.length + 2) k := by
+  rintro input p ws out rfl
+  have hrun : (rewindInputOn k Symbol).runFrom
+      (wordsCfgAt input p (some (rewindInputOn k Symbol).q₀) ws out) (p.val - 1 + 2) =
+        wordsCfgAt input 1 none ws (out ++ []) := by
+    have hcfg : noTapesCfg (wordsCfgAt input p (some (rewindInputOn k Symbol).q₀) ws out) =
+        ⟨some (rewindInput Symbol).q₀, p, nofun, nofun, out⟩ :=
+      Cfg.ext rfl rfl (Subsingleton.elim _ _) (Subsingleton.elim _ _) rfl
+    rw [rewindInputOn] at hcfg ⊢
+    rw [runFrom_noTapes, hcfg, runFrom_rewindInput, List.append_nil]
+    rfl
+  have hhalt : ((rewindInputOn k Symbol).runFrom
+      (wordsCfgAt input p (some (rewindInputOn k Symbol).q₀) ws out) (p.val - 1 + 2)).Halted := by
+    rw [hrun]; rfl
+  refine ⟨1, ws, [], ?_, ⟨rfl, rfl, rfl⟩, space_noTapes_le _ _ _⟩
+  rw [runFrom_eq_of_halt _ _ (by have := p.isLt; omega) hhalt, hrun]
+
+end Turing.MultiTapeTM

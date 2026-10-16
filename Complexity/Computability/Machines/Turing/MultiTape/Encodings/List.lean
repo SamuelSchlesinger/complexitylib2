@@ -5,21 +5,17 @@ Authors: Christian Reitwiessner
 -/
 
 module
--- upstream: subset of crei/tidy-universal `Encodings/List.lean`;
--- definitions only, delete when it lands
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
-public import Mathlib.Logic.Embedding.Basic
 
 /-!
 # Encodings of lists
 
 `encList enc` encodes a list as the concatenation of its framed elements
 (`Turing.MultiTapeTM.frame`), for any encoding `enc` of the elements. Lists of Booleans also have
-the plain encoding `encBits`, the list itself.
-
-A verbatim subset of Christian Reitwiessner's `Encodings/List.lean` (branch
-`crei/tidy-universal`), without the `ListEncoding` instances.
+the plain encoding `encBits`, the list itself, which is the concatenation of the elements encoded by
+`Turing.MultiTapeTM.encBool`. Both have the capabilities of `Turing.MultiTapeTM.ListEncoding`.
 
 ## Main definitions
 
@@ -52,10 +48,22 @@ public lemma encList_nil : encList enc [] = [] := rfl
 public lemma encList_cons (a : α) (l : List α) :
     encList enc (a :: l) = frame (enc a) ++ encList enc l := rfl
 
+public instance : ListEncoding enc (encList enc) where
+  headD d := .of_isEmpty_ite d (fun l hl => by cases l <;> simp_all)
+    (.of_unframe fun ⟨l, hl⟩ => by cases l <;> simp at hl ⊢)
+  tail := .of_dropFrame fun l => by cases l <;> simp [dropFrame]
+  isEmpty := .of_isEmpty fun l => by cases l <;> simp
+
 /-- Lists of Booleans encoded as themselves. -/
 @[expose] public def encBits : List Bool ↪ List Bool := Function.Embedding.refl _
 
 @[simp]
 public lemma encBits_apply (l : List Bool) : encBits l = l := rfl
+
+public instance : ListEncoding encBool encBits where
+  headD d := .of_isEmpty_ite d (fun l hl => by simp_all)
+    (.of_take_one fun ⟨l, hl⟩ => by cases l; exacts [by simp at hl, rfl])
+  tail := .of_tail fun _ => rfl
+  isEmpty := .of_isEmpty fun _ => rfl
 
 end Turing.MultiTapeTM

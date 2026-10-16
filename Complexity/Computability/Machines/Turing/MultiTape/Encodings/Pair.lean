@@ -5,20 +5,17 @@ Authors: Christian Reitwiessner
 -/
 
 module
--- upstream: subset of crei/tidy-universal `Encodings/Pair.lean`;
--- definitions only, delete when it lands
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Append
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
-public import Mathlib.Logic.Embedding.Basic
+import Mathlib.Tactic.Linarith
 
 /-!
 # The framed encoding of pairs
 
 `encPair enc₁ enc₂` encodes a pair as its framed first component (`Turing.MultiTapeTM.frame`)
-followed by its second component.
-
-A verbatim subset of Christian Reitwiessner's `Encodings/Pair.lean` (branch
-`crei/tidy-universal`), without the `PairEncoding` instance.
+followed by its second component. It has the capabilities of `Turing.MultiTapeTM.PairEncoding`.
 
 ## Main definitions
 
@@ -63,5 +60,19 @@ public lemma length_le_encPair_left (enc₁ : α ↪ List Bool) (enc₂ : β ↪
 public lemma length_le_encPair_right (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool) (p : α × β) :
     (enc₂ p.2).length ≤ (encPair enc₁ enc₂ p).length := by
   rw [length_encPair]; omega
+
+public instance : PairEncoding enc₁ enc₂ (encPair enc₁ enc₂) where
+  fst := .of_unframe fun p => by simp
+  snd := .of_dropFrame fun p => by simp
+  pair := fun {_ encIn f g t s} hf hg => by
+    obtain ⟨c₀, hframe⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := id)
+      (encIn := enc₁) (encOut := encFramed enc₁) fun _ => rfl
+    -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
+    obtain ⟨c₁, hf'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hframe hf
+    obtain ⟨k, h⟩ := hf'.append hg (encOut := encPair enc₁ enc₂) (g := fun x => (f x, g x))
+      fun _ => rfl
+    refine ⟨2 + c₀ + c₁ + k, h.mono (fun x => ?_) (fun x => ?_)⟩
+    · nlinarith [hf.length_le x]
+    · nlinarith [length_encPair (enc₁ := enc₁) (enc₂ := enc₂) (f x, g x)]
 
 end Turing.MultiTapeTM
