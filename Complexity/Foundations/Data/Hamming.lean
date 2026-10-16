@@ -8,12 +8,21 @@ module
 -- upstream: candidate (Mathlib `InformationTheory/Hamming.lean`)
 
 public import Cslib.Init
+public import Mathlib.Algebra.BigOperators.Expect
+public import Mathlib.Data.Finset.Density
 public import Mathlib.InformationTheory.Hamming
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 
 /-!
-# Hamming distance one
+# Relative Hamming distance and Hamming distance one
+
+The coordinates where two functions agree and those where they differ make up all the coordinates
+(`card_filter_eq_add_hammingDist`), so the Hamming distance is the number of coordinates times one
+minus the density of the coordinates of agreement (`hammingDist_eq_card_mul_one_sub_dens`). The
+relative Hamming distance is the probability that the two functions differ at a uniformly random
+coordinate (`hammingDist_div_eq_expect`).
 
 Two functions are at Hamming distance one when they differ at exactly one coordinate
 (`hammingDist_eq_one_iff`); changing one coordinate of a function to a new value moves it to
@@ -24,13 +33,47 @@ gives the same number (`card_hammingEdges_comm`, `card_hammingEdges_eq_sum_card_
 ## Main definitions
 
 * `hammingEdges`: the pairs of `A × B` at Hamming distance one.
+
+## Main results
+
+* `card_filter_eq_add_hammingDist`, `hammingDist_eq_card_mul_one_sub_dens`: the coordinates of
+  agreement and of disagreement.
+* `hammingDist_div_eq_expect`: the relative Hamming distance is a probability.
+* `hammingDist_eq_one_iff`: Hamming distance one.
+* `card_hammingEdges_eq_sum_card_filter`: counting the edges of the Hamming graph.
 -/
 
 @[expose] public section
 
 open Finset Function
+open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι] {β : ι → Type*} [∀ i, DecidableEq (β i)]
+
+/-! ### Relative Hamming distance -/
+
+/-- The coordinates where two functions agree and those where they differ make up all the
+coordinates. -/
+theorem card_filter_eq_add_hammingDist (x y : ∀ i, β i) :
+    #{i | x i = y i} + hammingDist x y = Fintype.card ι := by
+  rw [hammingDist, ← card_univ]
+  exact card_filter_add_card_filter_not _
+
+/-- The Hamming distance is the number of coordinates times one minus the density of the
+coordinates where the functions agree. -/
+theorem hammingDist_eq_card_mul_one_sub_dens {𝕜 : Type*} [Field 𝕜] [CharZero 𝕜]
+    (x y : ∀ i, β i) : (hammingDist x y : 𝕜) = Fintype.card ι * (1 - dens {i | x i = y i}) := by
+  rw [mul_sub, mul_one, natCast_card_mul_nnratCast_dens, ← card_filter_eq_add_hammingDist x y]
+  push_cast
+  ring
+
+/-- **The relative Hamming distance is a probability**: that of the two functions differing at a
+uniformly random coordinate. -/
+theorem hammingDist_div_eq_expect {𝕜 : Type*} [Semifield 𝕜] [CharZero 𝕜] (x y : ∀ i, β i) :
+    (hammingDist x y : 𝕜) / Fintype.card ι = 𝔼 i, if x i ≠ y i then 1 else 0 := by
+  rw [Fintype.expect_boole, nnratCast_dens, hammingDist]
+
+/-! ### Hamming distance one -/
 
 /-- Two functions are at Hamming distance one when they differ at exactly one coordinate. -/
 theorem hammingDist_eq_one_iff {x y : ∀ i, β i} :

@@ -299,15 +299,6 @@ theorem expect_prod_ite_killTime_eq [Fintype V] [Nonempty D] {ℓ : ℕ} (hℓ :
   rw [Fintype.expect_prod_type, Fintype.expect_prod_type F, mul_expect]
   exact expect_congr rfl fun v _ ↦ expect_ite_killTime_eq hℓ fun r ↦ F (v, r)
 
-/-- The kill signals of a uniformly random killed walk are independent of its walk: averaging a
-function of the start and the labels over the killed walks averages it over the walks. -/
-theorem expect_comp_fst_snd_fst [Fintype V] (g : V × (Fin T → D) → ℝ) :
-    𝔼 p : V × (Fin T → D) × (Fin T → Fin q), g (p.1, p.2.1) = 𝔼 w, g w := by
-  rw [Fintype.expect_prod_type, Fintype.expect_prod_type g]
-  refine expect_congr rfl fun v _ ↦ ?_
-  rw [Fintype.expect_prod_type]
-  simp only [Fintype.expect_const]
-
 end Expect
 
 section KilledPow

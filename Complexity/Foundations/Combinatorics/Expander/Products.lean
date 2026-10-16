@@ -81,21 +81,13 @@ product is `(B̃ + Ã) / 2`, and the zig-zag walk `B̃ Ã B̃` is one of the eig
 namespace Cslib.RotationMap
 
 open Finset
+open Fintype (expect_comp_fst expect_comp_snd)
+open Real (expect_mul_le_sqrt_mul_sqrt)
 open scoped BigOperators
 
 section Expect
 
 variable {ι α β : Type*}
-
-/-- A function of the first coordinate has the same average on the product. -/
-private theorem expect_comp_fst [Fintype α] [Fintype β] [Nonempty β] (φ : α → ℝ) :
-    𝔼 p : α × β, φ p.1 = 𝔼 a, φ a := by
-  simp only [Fintype.expect_prod_type, Fintype.expect_const]
-
-/-- A function of the second coordinate has the same average on the product. -/
-private theorem expect_comp_snd [Fintype α] [Fintype β] [Nonempty α] (φ : β → ℝ) :
-    𝔼 p : α × β, φ p.2 = 𝔼 b, φ b := by
-  simp only [Fintype.expect_prod_type, Fintype.expect_const]
 
 /-- Subtracting from a function its averages over the fibers `{a} × β` leaves averages zero over
 the fibers. -/
@@ -130,12 +122,6 @@ private theorem exists_eq_add_expect_fiber_eq_zero [Fintype α] [Fintype β] [No
     _ = 𝔼 p : α × β, (𝔼 b, f (p.1, b)) ^ 2 + 𝔼 p, (f p - 𝔼 b, f (p.1, b)) ^ 2 :=
         expect_add_sq_of_expect_fiber_eq_zero (fun a ↦ 𝔼 b, f (a, b)) (expect_sub_expect_fiber f)
     _ = _ := by rw [expect_comp_fst (fun a ↦ (𝔼 b, f (a, b)) ^ 2)]
-
-/-- **The Cauchy–Schwarz inequality** for averages, with square roots. -/
-private theorem expect_mul_le_sqrt_mul_sqrt [Fintype ι] (u w : ι → ℝ) :
-    𝔼 i, u i * w i ≤ √(𝔼 i, u i ^ 2) * √(𝔼 i, w i ^ 2) := by
-  rw [← Real.sqrt_mul (expect_nonneg fun i _ ↦ sq_nonneg (u i))]
-  exact Real.le_sqrt_of_sq_le (expect_mul_sq_le_sq_mul_sq _ _ _)
 
 /-- A bound on a square root from a bound on its argument. -/
 private theorem sqrt_le_mul_sqrt {x y c : ℝ} (hc : 0 ≤ c) (h : x ≤ c ^ 2 * y) :
@@ -464,7 +450,7 @@ private theorem expect_mul_comp_rot_le (φ : V → ℝ) {ψ : V → ℝ} (hψ : 
     simp only [Fintype.expect_prod_type, walk_apply, mul_expect]
     rfl
   rw [this]
-  refine (expect_mul_le_sqrt_mul_sqrt _ _).trans (mul_le_mul_of_nonneg_left ?_ (by positivity))
+  refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans (mul_le_mul_of_nonneg_left ?_ (by positivity))
   exact sqrt_le_mul_sqrt G.spectralExpansion_nonneg (expect_walk_sq_le_spectralExpansion_sq_mul hψ)
 
 /-- The zig-zag estimate in bilinear form: `𝔼 h · W f ≤ (λ(G) + λ(H) + λ(H)²) ‖h‖ ‖f‖` for `f` of
@@ -493,14 +479,14 @@ private theorem expect_mul_walk_zigzag_le [Nonempty D] [Nonempty E] (h : V × D 
   have hqf := sqrt_le_mul_sqrt hν (H.expect_walk_loops_tensor_sq_le hf₂)
   gcongr ?_ + ?_ + ?_ + ?_
   · exact G.expect_mul_comp_rot_le h₁ hf₁
-  · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
+  · refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans ?_
     rw [expect_comp_fst (fun v ↦ h₁ v ^ 2),
       expect_comp_rot G (fun p ↦ ((loops V Unit).tensor H).walk f₂ p ^ 2)]
     exact mul_le_mul_of_nonneg_left hqf (by positivity)
-  · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
+  · refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans ?_
     rw [expect_comp_rot G (fun p ↦ f₁ p.1 ^ 2), expect_comp_fst (fun v ↦ f₁ v ^ 2)]
     exact mul_le_mul_of_nonneg_right hqh (by positivity)
-  · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
+  · refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans ?_
     rw [expect_comp_rot G (fun p ↦ ((loops V Unit).tensor H).walk f₂ p ^ 2)]
     exact mul_le_mul hqh hqf (by positivity) (by positivity)
 
@@ -542,14 +528,14 @@ private theorem expect_mul_walk_zigzag_le_one_sub [Nonempty D] [Nonempty E] (h :
     (Real.sqrt_nonneg _) (Real.sqrt_nonneg _) ha hb)
   gcongr _ * ?_ + _ * ?_ + _ * ?_ + ?_
   · exact G.expect_mul_comp_rot_le h₁ hf₁
-  · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
+  · refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans ?_
     rw [expect_comp_fst (fun v ↦ h₁ v ^ 2), expect_comp_rot G (fun p ↦
       (H.spectralExpansion * f₁ p.1 + ((loops V Unit).tensor H).walk f₂ p) ^ 2)]
     exact mul_le_mul_of_nonneg_left hu' (by positivity)
-  · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
+  · refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans ?_
     rw [expect_comp_rot G (fun p ↦ f₁ p.1 ^ 2), expect_comp_fst (fun v ↦ f₁ v ^ 2)]
     exact mul_le_mul_of_nonneg_right hu (by positivity)
-  · refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
+  · refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans ?_
     rw [expect_comp_rot G (fun p ↦
       (H.spectralExpansion * f₁ p.1 + ((loops V Unit).tensor H).walk f₂ p) ^ 2)]
     exact mul_le_mul hu hu' (by positivity) (by positivity)
@@ -676,12 +662,12 @@ private theorem expect_mul_walk_balancedReplacement_pow_three_le [Nonempty E] (h
     (hS (T g)).trans (hT g)
   have hword (T : Module.End ℝ (V × D → ℝ)) (hT : ∀ g, 𝔼 p, T g p ^ 2 ≤ 𝔼 p, g p ^ 2) :
       𝔼 p, h p * T f p ≤ √(𝔼 p, h p ^ 2) * √(𝔼 p, f p ^ 2) :=
-    (expect_mul_le_sqrt_mul_sqrt _ _).trans
+    (expect_mul_le_sqrt_mul_sqrt univ _ _).trans
       (mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt (hT f)) (Real.sqrt_nonneg _))
   -- the cube contains the zig-zag walk `B̃ Ã B̃` once
   have hZ : 𝔼 p, h p * (G.zigzag H).walk f p ≤
       (G.zigzag H).spectralExpansion * (√(𝔼 p, h p ^ 2) * √(𝔼 p, f p ^ 2)) := by
-    refine (expect_mul_le_sqrt_mul_sqrt _ _).trans ?_
+    refine (expect_mul_le_sqrt_mul_sqrt univ _ _).trans ?_
     rw [mul_left_comm]
     exact mul_le_mul_of_nonneg_left (sqrt_le_mul_sqrt (spectralExpansion_nonneg _)
       ((G.zigzag H).expect_walk_sq_le_spectralExpansion_sq_mul hf)) (Real.sqrt_nonneg _)

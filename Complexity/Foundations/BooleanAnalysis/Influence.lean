@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Foundations.Data.BitString.Flip
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Expect
@@ -100,15 +101,14 @@ theorem derivative_chi (i : ι) (S : Finset ι) (x : ι → Bool) :
     ring
   · rw [derivative, chi_update_of_notMem hi, chi_update_of_notMem hi, sub_self, zero_div]
 
-variable [Fintype ι]
+/-- Changing bit `i` of `x` gives the two points with bit `i` set to `false` and to `true`. -/
+private theorem update_false_true_eq (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) :
+    (f (update x i false) = f (update x i true)) ↔ f (update x i !x i) = f x := by
+  cases h : x i
+  · rw [show update x i false = x from update_eq_self_iff.2 h.symm, Bool.not_false, eq_comm]
+  · rw [show update x i true = x from update_eq_self_iff.2 h.symm, Bool.not_true]
 
-/-- Sets containing `i` correspond to sets avoiding `i`, by inserting `i`. -/
-private theorem sum_filter_mem_eq_sum_filter_notMem {M : Type*} [AddCommMonoid M] (i : ι)
-    (g : Finset ι → M) :
-    ∑ S with i ∈ S, g S = ∑ T with i ∉ T, g (insert i T) :=
-  sum_nbij' (·.erase i) (insert i) (fun _ _ => by simp) (fun _ _ => by simp)
-    (fun _ hS => insert_erase (mem_filter.1 hS).2) (fun _ hT => erase_insert (mem_filter.1 hT).2)
-    fun _ hS => by rw [insert_erase (mem_filter.1 hS).2]
+variable [Fintype ι]
 
 /-- **The Fourier expansion of a derivative**: differentiating in `i` keeps the sets containing
 `i`, with `i` removed. -/
@@ -169,14 +169,6 @@ theorem influence_chi (i : ι) (S : Finset ι) :
   split_ifs
   · simp only [h, expect_const univ_nonempty]
   · simp
-
-omit [Fintype ι] in
-/-- Changing bit `i` of `x` gives the two points with bit `i` set to `false` and to `true`. -/
-private theorem update_false_true_eq (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) :
-    (f (update x i false) = f (update x i true)) ↔ f (update x i !x i) = f x := by
-  cases h : x i
-  · rw [show update x i false = x from update_eq_self_iff.2 h.symm, Bool.not_false, eq_comm]
-  · rw [show update x i true = x from update_eq_self_iff.2 h.symm, Bool.not_true]
 
 /-- **The influence on a Boolean function** read as signs is the probability that flipping bit
 `i` changes the value [O'Donnell, Section 2.2][ODonnell2014]. -/

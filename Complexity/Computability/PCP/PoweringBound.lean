@@ -589,7 +589,7 @@ theorem expect_numHits_sq_le (A : V → WalkLabels D T → α) (σ : V → α)
   have hcc (i j : Fin T) :
       (if i = j then 0 else 𝔼 p, c i p * c j p) ≤ ε ^ 2 + ε * g i j + ε * g j i := by
     rcases lt_trichotomy i j with hij | rfl | hij
-    · rw [ite_eq_right hij.ne, expect_comp_fst_snd_fst (q := q)
+    · rw [ite_eq_right hij.ne, Fintype.expect_comp_fst_snd_fst (γ := Fin T → Fin q)
         (fun w ↦ (if R.graph.walkDart w i ∈ R.toConstraintGraph.unsatEdges σ then 1 else 0) *
           (if R.graph.walkDart w j ∈ R.toConstraintGraph.unsatEdges σ then 1 else 0)),
         show g i j = lam ^ (j - (i + 1) : ℕ) from ite_eq_left hij]
@@ -598,7 +598,8 @@ theorem expect_numHits_sq_le (A : V → WalkLabels D T → α) (σ : V → α)
       have := mul_nonneg hε (hg i i)
       positivity
     · rw [ite_eq_right hij.ne', show (𝔼 p, c i p * c j p) = 𝔼 p, c j p * c i p from
-          expect_congr rfl fun p _ ↦ mul_comm _ _, expect_comp_fst_snd_fst (q := q)
+          expect_congr rfl fun p _ ↦ mul_comm _ _,
+        Fintype.expect_comp_fst_snd_fst (γ := Fin T → Fin q)
         (fun w ↦ (if R.graph.walkDart w j ∈ R.toConstraintGraph.unsatEdges σ then 1 else 0) *
           (if R.graph.walkDart w i ∈ R.toConstraintGraph.unsatEdges σ then 1 else 0)),
         show g j i = lam ^ (i - (j + 1) : ℕ) from ite_eq_left hij]

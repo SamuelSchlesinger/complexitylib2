@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.Expander.Basic
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
 
 /-!
@@ -157,25 +158,6 @@ theorem walk_union_apply (f : V → ℝ) (v : V) :
     Fintype.card_mul_expect, Fintype.card_mul_expect, Fintype.card_sum, Nat.cast_add]
   rfl
 
-/-- If `𝔼 X² ≤ α² A` and `𝔼 Y² ≤ β² A`, then `𝔼 (a X + b Y)² ≤ (a α + b β)² A` for `a, b ≥ 0`:
-the triangle inequality for the norm `√(𝔼 f²)`, squared. -/
-private theorem expect_add_sq_le [Fintype V] {X Y : V → ℝ} {a b α β A : ℝ} (ha : 0 ≤ a)
-    (hb : 0 ≤ b) (hα : 0 ≤ α) (hβ : 0 ≤ β) (hA : 0 ≤ A) (hX : 𝔼 v, X v ^ 2 ≤ α ^ 2 * A)
-    (hY : 𝔼 v, Y v ^ 2 ≤ β ^ 2 * A) :
-    𝔼 v, (a * X v + b * Y v) ^ 2 ≤ (a * α + b * β) ^ 2 * A := by
-  have hXY : 𝔼 v, X v * Y v ≤ α * β * A := by
-    refine (le_abs_self _).trans (abs_le_of_sq_le_sq ?_ (by positivity))
-    calc (𝔼 v, X v * Y v) ^ 2 ≤ (𝔼 v, X v ^ 2) * 𝔼 v, Y v ^ 2 := expect_mul_sq_le_sq_mul_sq _ _ _
-      _ ≤ (α ^ 2 * A) * (β ^ 2 * A) :=
-        mul_le_mul hX hY (expect_nonneg fun _ _ ↦ sq_nonneg _) (by positivity)
-      _ = (α * β * A) ^ 2 := by ring
-  calc 𝔼 v, (a * X v + b * Y v) ^ 2
-      = a ^ 2 * 𝔼 v, X v ^ 2 + 2 * a * b * 𝔼 v, X v * Y v + b ^ 2 * 𝔼 v, Y v ^ 2 := by
-        simp only [mul_expect, ← expect_add_distrib]
-        exact expect_congr rfl fun v _ ↦ by ring
-    _ ≤ a ^ 2 * (α ^ 2 * A) + 2 * a * b * (α * β * A) + b ^ 2 * (β ^ 2 * A) := by gcongr
-    _ = (a * α + b * β) ^ 2 * A := by ring
-
 /-- **The spectral expansion of a union** is at most the average of the spectral expansions of
 the two multigraphs, weighted by their degrees. -/
 theorem spectralExpansion_union_le [Fintype V] :
@@ -195,7 +177,7 @@ theorem spectralExpansion_union_le [Fintype V] :
     rw [walk_union_apply]
     ring
   simp only [hw]
-  refine (expect_add_sq_le (by positivity) (by positivity) hG hH
+  refine (Fintype.expect_add_sq_le (by positivity) (by positivity) hG hH
     (expect_nonneg fun _ _ ↦ sq_nonneg _) (G.expect_walk_sq_le_spectralExpansion_sq_mul hf)
     (H.expect_walk_sq_le_spectralExpansion_sq_mul hf)).trans_eq ?_
   ring
