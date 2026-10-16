@@ -5,6 +5,7 @@ Authors: Christian Reitwiessner
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 
 /-!
 # Tests for the polynomial-time calculus
@@ -41,5 +42,11 @@ example (symbol : Bool) :
     rw [runFrom, Function.iterate_one, step_of_state rfl]
     simp [finish, Turing.Cfg.Halted]; rfl
   exact ⟨⟨1, h⟩, (runsInTime_iff_halted.mpr h.1).mono (by cases b <;> decide), by simp⟩
+
+
+/-- `length_le_length_encList` holds in every universe. -/
+example {α : Type 1} (enc : α ↪ List Bool) (l : List α) :
+    l.length ≤ (Turing.MultiTapeTM.encList enc l).length :=
+  Turing.MultiTapeTM.length_le_length_encList enc l
 
 end ComplexityTests.MultiTapePolyTime

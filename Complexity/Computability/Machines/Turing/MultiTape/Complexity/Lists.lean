@@ -49,8 +49,9 @@ public lemma length_le_encList_of_mem (enc : α ↪ List Bool) {l : List α} {a 
     (enc a).length ≤ (encList enc l).length := by
   induction l <;> grind [encList_cons, length_frame]
 
+-- vendored: universe-polymorphic `α`, as this library's users need (crei's file has `α : Type`).
 /-- The number of elements is at most the length of the encoded list. -/
-public lemma length_le_length_encList (enc : α ↪ List Bool) (l : List α) :
+public lemma length_le_length_encList {α : Type*} (enc : α ↪ List Bool) (l : List α) :
     l.length ≤ (encList enc l).length := by
   induction l <;> grind [encList_cons, length_frame]
 
