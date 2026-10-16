@@ -49,7 +49,7 @@ omit [Fintype ι] in
 /-- A character at a point with the coordinates outside `J` replaced splits into the characters
 of the parts of `U` inside and outside `J`. -/
 theorem chi_piecewise (U J : Finset ι) (x z : ι → Bool) :
-    chi U (J.piecewise x z) = chi (U ∩ J) x * chi (U \ J) z := by
+    chi ℝ U (J.piecewise x z) = chi ℝ (U ∩ J) x * chi ℝ (U \ J) z := by
   rw [chi, ← prod_filter_mul_prod_filter_not U (· ∈ J), filter_mem_eq_inter, ← sdiff_eq_filter,
     chi, chi]
   congr 1
@@ -62,9 +62,9 @@ at `z`. -/
 theorem fourierCoeff_piecewise (f : (ι → Bool) → ℝ) (J : Finset ι) (z : ι → Bool)
     (S : Finset ι) :
     fourierCoeff (fun x => f (J.piecewise x z)) S =
-      ∑ U with U ∩ J = S, fourierCoeff f U * chi (U \ J) z := by
+      ∑ U with U ∩ J = S, fourierCoeff f U * chi ℝ (U \ J) z := by
   have h (x : ι → Bool) : f (J.piecewise x z) =
-      ∑ U, (fourierCoeff f U * chi (U \ J) z) * chi (U ∩ J) x := by
+      ∑ U, (fourierCoeff f U * chi ℝ (U \ J) z) * chi ℝ (U ∩ J) x := by
     rw [← sum_fourierCoeff_mul_chi f (J.piecewise x z)]
     exact sum_congr rfl fun U _ => by rw [chi_piecewise]; ring
   rw [fourierCoeff]
@@ -80,7 +80,7 @@ theorem expect_fourierCoeff_piecewise_sq (f : (ι → Bool) → ℝ) (J S : Fins
     𝔼 z, fourierCoeff (fun x => f (J.piecewise x z)) S ^ 2 =
       ∑ U with U ∩ J = S, fourierCoeff f U ^ 2 := by
   have key (U V : Finset ι) :
-      𝔼 z, fourierCoeff f U * chi (U \ J) z * (fourierCoeff f V * chi (V \ J) z) =
+      𝔼 z, fourierCoeff f U * chi ℝ (U \ J) z * (fourierCoeff f V * chi ℝ (V \ J) z) =
         fourierCoeff f U * fourierCoeff f V * if U \ J = V \ J then 1 else 0 := by
     rw [← expect_chi_mul_chi, mul_expect]
     exact expect_congr rfl fun z _ => by ring

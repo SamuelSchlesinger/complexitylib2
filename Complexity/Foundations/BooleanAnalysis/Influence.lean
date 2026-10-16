@@ -93,10 +93,10 @@ noncomputable def derivative (i : ι) (f : (ι → Bool) → ℝ) (x : ι → Bo
 /-- The derivative of a character: differentiating in `i` removes `i` from a set containing it,
 and kills the characters of the other sets. -/
 theorem derivative_chi (i : ι) (S : Finset ι) (x : ι → Bool) :
-    derivative i (chi S) x = if i ∈ S then chi (S.erase i) x else 0 := by
+    derivative i (chi ℝ S) x = if i ∈ S then chi ℝ (S.erase i) x else 0 := by
   split_ifs with hi
   · rw [derivative, chi_update_of_mem hi, chi_update_of_mem hi]
-    simp only [signVal_false, signVal_true]
+    simp only [Bool.toNat_false, Bool.toNat_true, pow_zero, pow_one]
     ring
   · rw [derivative, chi_update_of_notMem hi, chi_update_of_notMem hi, sub_self, zero_div]
 
@@ -113,12 +113,12 @@ private theorem sum_filter_mem_eq_sum_filter_notMem {M : Type*} [AddCommMonoid M
 /-- **The Fourier expansion of a derivative**: differentiating in `i` keeps the sets containing
 `i`, with `i` removed. -/
 theorem derivative_eq_sum (i : ι) (f : (ι → Bool) → ℝ) (x : ι → Bool) :
-    derivative i f x = ∑ S with i ∈ S, fourierCoeff f S * chi (S.erase i) x := by
+    derivative i f x = ∑ S with i ∈ S, fourierCoeff f S * chi ℝ (S.erase i) x := by
   rw [derivative, ← sum_fourierCoeff_mul_chi f, ← sum_fourierCoeff_mul_chi f, ← sum_sub_distrib,
     sum_div, sum_filter]
   refine sum_congr rfl fun S _ => ?_
   rw [← mul_sub, mul_div_assoc]
-  change fourierCoeff f S * derivative i (chi S) x = _
+  change fourierCoeff f S * derivative i (chi ℝ S) x = _
   rw [derivative_chi, mul_ite, mul_zero]
 
 /-- **The Fourier coefficients of a derivative**: the coefficient of the derivative in `i` on a
@@ -127,7 +127,7 @@ containing `i` [O'Donnell, Section 2.2][ODonnell2014]. -/
 theorem fourierCoeff_derivative (i : ι) (f : (ι → Bool) → ℝ) (T : Finset ι) :
     fourierCoeff (derivative i f) T = if i ∈ T then 0 else fourierCoeff f (insert i T) := by
   have h : derivative i f =
-      fun x => ∑ U, (if i ∈ U then 0 else fourierCoeff f (insert i U)) * chi U x := by
+      fun x => ∑ U, (if i ∈ U then 0 else fourierCoeff f (insert i U)) * chi ℝ U x := by
     funext x
     rw [derivative_eq_sum, sum_filter_mem_eq_sum_filter_notMem i, sum_filter]
     refine sum_congr rfl fun U _ => ?_
@@ -162,8 +162,8 @@ theorem influence_le_expect_sq (i : ι) (f : (ι → Bool) → ℝ) :
 
 /-- The influence of `i` on a character is one if `i` is in its set, and zero otherwise. -/
 theorem influence_chi (i : ι) (S : Finset ι) :
-    influence i (chi S) = if i ∈ S then 1 else 0 := by
-  have h (x : ι → Bool) : chi (S.erase i) x ^ 2 = 1 := by
+    influence i (chi ℝ S) = if i ∈ S then 1 else 0 := by
+  have h (x : ι → Bool) : chi ℝ (S.erase i) x ^ 2 = 1 := by
     rw [sq, chi_mul_chi, symmDiff_self, bot_eq_empty, chi_empty]
   simp only [influence, derivative_chi]
   split_ifs
@@ -223,7 +223,7 @@ theorem totalInfluence_le_sensitivity (f : (ι → Bool) → Bool) :
   exact expect_le univ_nonempty fun x _ => by exact_mod_cast sensitivityAt_le_sensitivity f x
 
 /-- A character has total influence the size of its set. -/
-theorem totalInfluence_chi (S : Finset ι) : totalInfluence (chi S) = #S := by
+theorem totalInfluence_chi (S : Finset ι) : totalInfluence (chi ℝ S) = #S := by
   simp [totalInfluence, influence_chi]
 
 /-- **The variance is the Fourier weight on the nonempty sets**

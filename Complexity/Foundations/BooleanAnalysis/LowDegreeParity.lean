@@ -7,8 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Foundations.BooleanAnalysis.LowDegree
-public import Complexity.Foundations.Data.BitString.Parity
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.LinearAlgebra.Dimension.Finrank
 import Mathlib.Tactic.Ring
@@ -16,23 +16,26 @@ import Mathlib.Tactic.Ring
 /-!
 # Parity is far from low-degree functions
 
-Over a field `F` in which `2` is invertible, a function of degree at most `D` agrees with parity on
-at most as many inputs as there are sets of at most `n / 2 + D` coordinates
-(`BitString.card_agree_parity_le`) [Smolensky1987]. In the signs `yᵢ = 1 - 2 xᵢ` parity is the
-product of all signs (`BitString.signMonomial_univ`), and `yᵢ² = 1`. So on the inputs where a
-function `P` of degree `D` agrees with parity, a product of more than `n / 2` signs equals `1 - 2 P`
-times the product of the other signs, of degree at most `n / 2 + D`. Every function on these inputs
-therefore agrees with one of degree at most `n / 2 + D`, and comparing dimensions bounds the number
-of inputs. Both steps hold over any finite index type `ι` (`BitString.exists_agree_of_parity`,
-`BitString.card_le_of_forall_exists_agree`).
+Over a field `F` in which `2` is invertible, a function of degree at most `D` agrees with the parity
+of all `|ι|` coordinates on at most as many inputs as there are sets of at most `|ι| / 2 + D`
+coordinates (`BitString.card_agree_parityOn_univ_le`) [Smolensky1987]. The proof works with the
+characters `chi F S`, the products of the signs `(-1) ^ xᵢ = 1 - 2 xᵢ` over the sets `S`, with
+values in `F`: the parity of all coordinates, read as a sign, is the character of `univ`
+(`BitString.chi_eq_neg_one_pow_parityOn`), and characters square to `1`. So on the inputs where a
+function `P` of degree `D` agrees with parity, a character of more than `|ι| / 2` coordinates
+equals `1 - 2 P` times the character of the other coordinates, of degree at most `|ι| / 2 + D`.
+Every function on these inputs therefore agrees with one of degree at most `|ι| / 2 + D`
+(`BitString.exists_agree_of_parity`), and comparing dimensions bounds the number of inputs
+(`BitString.card_le_of_forall_exists_agree`).
 
 ## Main definitions
 
-* `Cslib.BitString.signMonomial`: the product of the signs `1 - 2 xᵢ` over a set of coordinates.
+* `Cslib.BitString.signSpan`: the span of the characters of at most `H` coordinates.
 
 ## Main results
 
-* `Cslib.BitString.card_agree_parity_le`: parity is far from low-degree functions.
+* `Cslib.BitString.card_agree_parityOn_univ_le`, `Cslib.BitString.card_agree_parity_le`: parity
+  is far from low-degree functions.
 
 ## References
 
@@ -46,70 +49,42 @@ namespace Cslib.BitString
 
 open Finset
 
+/-- The sign `(-1) ^ b` of a bit, as a polynomial in the bit: `1 - 2 b`. -/
+theorem neg_one_pow_toNat_eq_one_sub_two_mul_bitVal {R : Type*} [CommRing R] (b : Bool) :
+    (-1 : R) ^ b.toNat = 1 - 2 * bitVal R b := by
+  cases b <;> simp only [Bool.toNat_false, Bool.toNat_true, pow_zero, pow_one, bitVal_false,
+    bitVal_true] <;> ring
+
 variable {F : Type*} [Field F] {ι : Type*}
 
-variable (F) in
-/-- The product of the signs `1 - 2 xᵢ` over `S`. -/
-def signMonomial (S : Finset ι) (x : ι → Bool) : F :=
-  ∏ i ∈ S, (1 - 2 * bitVal F (x i))
-
 variable (F ι) in
-/-- The span of the products of at most `H` signs. -/
+/-- The span of the characters of the sets of at most `H` coordinates. -/
 def signSpan (H : ℕ) : Submodule F ((ι → Bool) → F) :=
-  Submodule.span F (signMonomial F '' {S | S.card ≤ H})
+  Submodule.span F (chi F '' {S | #S ≤ H})
 
-theorem signMonomial_mem_lowDegree (S : Finset ι) :
-    signMonomial F S ∈ lowDegree F ι S.card := by
-  have hfun : signMonomial F S = ∏ i ∈ S, (1 - 2 * fun x : ι → Bool => bitVal F (x i)) := by
+/-- The character of `S` has degree at most `|S|`. -/
+theorem chi_mem_lowDegree (S : Finset ι) : chi F S ∈ lowDegree F ι #S := by
+  have hfun : chi F S = ∏ i ∈ S, (1 - 2 * fun x : ι → Bool => bitVal F (x i)) := by
     funext x
-    simp [signMonomial, Finset.prod_apply]
+    simp [chi, Finset.prod_apply, neg_one_pow_toNat_eq_one_sub_two_mul_bitVal]
   rw [hfun]
   simpa using prod_mem_lowDegree S (a := 1) fun i _ =>
     Submodule.sub_mem _ (one_mem_lowDegree 1) (by
       simpa [two_mul] using Submodule.add_mem _ (bitVal_mem_lowDegree (R := F) i)
         (bitVal_mem_lowDegree (R := F) i))
 
-theorem one_sub_two_mul_bitVal_sq (b : Bool) : (1 - 2 * bitVal F b) ^ 2 = 1 := by
-  cases b
-  · simp [bitVal]
-  · simp only [bitVal, ↓reduceIte]
-    ring
-
-theorem signMonomial_sq (S : Finset ι) (x : ι → Bool) : signMonomial F S x ^ 2 = 1 := by
-  rw [signMonomial, ← Finset.prod_pow]
-  exact Finset.prod_eq_one fun i _ => one_sub_two_mul_bitVal_sq (x i)
-
-theorem signMonomial_mul_compl [Fintype ι] [DecidableEq ι] (S : Finset ι) (x : ι → Bool) :
-    signMonomial F S x * signMonomial F Sᶜ x = signMonomial F univ x :=
-  Finset.prod_mul_prod_compl S _
-
-/-- The product of the signs over `s` is the parity of the bits in `s`, in signs. -/
-theorem signMonomial_eq_parityOn (s : Finset ι) (x : ι → Bool) :
-    signMonomial F s x = 1 - 2 * bitVal F (parityOn s x) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp [signMonomial]
-  | insert i s hi ih =>
-    rw [signMonomial, prod_insert hi, ← signMonomial, ih, parityOn_insert hi]
-    cases x i <;> cases parityOn s x <;> simp only [bitVal, Bool.xor_true, Bool.xor_false,
-      Bool.not_true, Bool.not_false, Bool.false_eq_true, ↓reduceIte] <;> ring
-
-/-- The product of all signs is parity in signs. -/
-theorem signMonomial_univ {n : ℕ} (x : BitString n) :
-    signMonomial F univ x = 1 - 2 * bitVal F (parity n x) :=
-  signMonomial_eq_parityOn univ x
-
 theorem signSpan_mono {H K : ℕ} (hHK : H ≤ K) : signSpan F ι H ≤ signSpan F ι K :=
   Submodule.span_mono (Set.image_mono fun _ hS => le_trans hS hHK)
 
-/-- Each monomial expands into products of signs over its subsets. -/
+/-- Each monomial expands into characters of its subsets. -/
 theorem monomial_mem_signSpan [Invertible (2 : F)] (S : Finset ι) :
-    monomial F S ∈ signSpan F ι S.card := by
+    monomial F S ∈ signSpan F ι #S := by
   classical
   have hfun : monomial F S = ∑ T ∈ S.powerset,
-      (⅟2 ^ S.card * (-1) ^ T.card : F) • signMonomial F T := by
+      (⅟2 ^ #S * (-1) ^ #T : F) • chi F T := by
     funext x
-    simp only [monomial, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, signMonomial]
+    simp only [monomial, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, chi,
+      neg_one_pow_toNat_eq_one_sub_two_mul_bitVal]
     have hsplit : ∏ i ∈ S, bitVal F (x i) = ∏ i ∈ S, (⅟2 * (-(1 - 2 * bitVal F (x i)) + 1)) :=
       Finset.prod_congr rfl fun i _ => by
         rw [show -(1 - 2 * bitVal F (x i)) + 1 = 2 * bitVal F (x i) by ring, ← mul_assoc,
@@ -130,11 +105,11 @@ theorem lowDegree_le_signSpan [Invertible (2 : F)] (H : ℕ) :
 
 variable [Fintype ι]
 
-/-- If `Q` has degree at most `D` and agrees with the product of all signs on `G`, every function
-agrees on `G` with a function of degree at most `|ι| / 2 + D`. -/
+/-- If `Q` has degree at most `D` and agrees with the character of all coordinates on `G`, every
+function agrees on `G` with a function of degree at most `|ι| / 2 + D`. -/
 theorem exists_agree_of_parity [Invertible (2 : F)] {D : ℕ} {Q : (ι → Bool) → F}
     (hQ : Q ∈ lowDegree F ι D) (G : Finset (ι → Bool))
-    (hG : ∀ x ∈ G, Q x = signMonomial F univ x) (f : (ι → Bool) → F) :
+    (hG : ∀ x ∈ G, Q x = chi F univ x) (f : (ι → Bool) → F) :
     ∃ p ∈ lowDegree F ι (Fintype.card ι / 2 + D), ∀ x ∈ G, p x = f x := by
   classical
   have hf : f ∈ signSpan F ι (Fintype.card ι) :=
@@ -142,16 +117,15 @@ theorem exists_agree_of_parity [Invertible (2 : F)] {D : ℕ} {Q : (ι → Bool)
   induction hf using Submodule.span_induction with
   | mem g hg =>
     obtain ⟨S, -, rfl⟩ := hg
-    by_cases hS : S.card ≤ Fintype.card ι / 2
-    · exact ⟨signMonomial F S, lowDegree_mono (by omega) (signMonomial_mem_lowDegree S),
-        fun _ _ => rfl⟩
-    · refine ⟨Q * signMonomial F Sᶜ, ?_, fun x hx => ?_⟩
-      · have hc : Sᶜ.card ≤ Fintype.card ι / 2 := by
+    by_cases hS : #S ≤ Fintype.card ι / 2
+    · exact ⟨chi F S, lowDegree_mono (by omega) (chi_mem_lowDegree S), fun _ _ => rfl⟩
+    · refine ⟨Q * chi F Sᶜ, ?_, fun x hx => ?_⟩
+      · have hc : #Sᶜ ≤ Fintype.card ι / 2 := by
           rw [card_compl]
           omega
-        exact lowDegree_mono (by omega) (mul_mem_lowDegree hQ (signMonomial_mem_lowDegree Sᶜ))
-      · rw [Pi.mul_apply, hG x hx, ← signMonomial_mul_compl S x, mul_assoc, ← sq,
-          signMonomial_sq, mul_one]
+        exact lowDegree_mono (by omega) (mul_mem_lowDegree hQ (chi_mem_lowDegree Sᶜ))
+      · rw [Pi.mul_apply, hG x hx, ← union_compl S, chi_union disjoint_compl_right, mul_assoc,
+          chi_mul_self, mul_one]
   | zero => exact ⟨0, Submodule.zero_mem _, fun _ _ => rfl⟩
   | add f g _ _ hf hg =>
     obtain ⟨p, hp, hpx⟩ := hf
@@ -165,7 +139,7 @@ theorem exists_agree_of_parity [Invertible (2 : F)] {D : ℕ} {Q : (ι → Bool)
 many points as there are sets of at most `H` coordinates. -/
 theorem card_le_of_forall_exists_agree {H : ℕ} (G : Finset (ι → Bool))
     (hG : ∀ f : (ι → Bool) → F, ∃ p ∈ lowDegree F ι H, ∀ x ∈ G, p x = f x) :
-    #G ≤ #(univ.filter fun S : Finset ι => S.card ≤ H) := by
+    #G ≤ #{S : Finset ι | #S ≤ H} := by
   classical
   -- restricting to `G` is onto
   let restrict : lowDegree F ι H →ₗ[F] (G → F) :=
@@ -182,18 +156,27 @@ theorem card_le_of_forall_exists_agree {H : ℕ} (G : Finset (ι → Bool))
     Fintype.card_coe] at h
   exact h.trans (finrank_lowDegree_le H)
 
+/-- **Parity is far from low-degree functions.** A function of degree at most `D` agrees with the
+parity of all coordinates on at most as many inputs as there are sets of at most `|ι| / 2 + D`
+coordinates. -/
+theorem card_agree_parityOn_univ_le [DecidableEq ι] [DecidableEq F] [Invertible (2 : F)] {D : ℕ}
+    {P : (ι → Bool) → F} (hP : P ∈ lowDegree F ι D) :
+    #{x | P x = bitVal F (parityOn univ x)} ≤
+      #{S : Finset ι | #S ≤ Fintype.card ι / 2 + D} :=
+  card_le_of_forall_exists_agree _ (exists_agree_of_parity (Q := 1 - 2 • P)
+    (Submodule.sub_mem _ (one_mem_lowDegree D) (Submodule.smul_of_tower_mem _ 2 hP))
+    {x | P x = bitVal F (parityOn univ x)} fun x hx => by
+      rw [mem_filter] at hx
+      rw [chi_eq_neg_one_pow_parityOn, neg_one_pow_toNat_eq_one_sub_two_mul_bitVal, ← hx.2]
+      simp [two_mul])
+
 /-- **Parity is far from low-degree functions.** A function of degree at most `D` agrees with
 parity on at most as many inputs as there are sets of at most `n / 2 + D` coordinates. -/
 theorem card_agree_parity_le [DecidableEq F] [Invertible (2 : F)] {n D : ℕ}
     {P : BitString n → F} (hP : P ∈ lowDegree F (Fin n) D) :
-    #(univ.filter fun x => P x = bitVal F (parity n x)) ≤
-      #(univ.filter fun S : Finset (Fin n) => S.card ≤ n / 2 + D) := by
-  have h := card_le_of_forall_exists_agree _ (exists_agree_of_parity (Q := 1 - 2 • P)
-    (Submodule.sub_mem _ (one_mem_lowDegree D) (Submodule.smul_of_tower_mem _ 2 hP))
-    (univ.filter fun x => P x = bitVal F (parity n x)) fun x hx => by
-      rw [mem_filter] at hx
-      rw [signMonomial_univ, ← hx.2]
-      simp [two_mul])
-  rwa [Fintype.card_fin] at h
+    #{x | P x = bitVal F (parity n x)} ≤ #{S : Finset (Fin n) | #S ≤ n / 2 + D} := by
+  have h := card_agree_parityOn_univ_le hP
+  rw [Fintype.card_fin] at h
+  exact h
 
 end Cslib.BitString

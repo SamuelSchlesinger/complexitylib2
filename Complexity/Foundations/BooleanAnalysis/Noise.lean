@@ -84,14 +84,14 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 /-- The character of `S` averages to `(1 - 2 p) ^ |S|` over a random mask of rate `p`: each of its
 coordinates is selected, negating the sign, with probability `p`. -/
 theorem bernoulliAverage_chi (p : ℝ) (S : Finset ι) :
-    bernoulliAverage p (chi S) = (1 - 2 * p) ^ #S := by
-  have h : chi S = fun P => ∏ i, if i ∈ S then signVal (P i) else 1 :=
+    bernoulliAverage p (chi ℝ S) = (1 - 2 * p) ^ #S := by
+  have h : chi ℝ S = fun P => ∏ i, if i ∈ S then (-1) ^ (P i).toNat else 1 :=
     funext (chi_eq_prod_univ S)
-  rw [h, bernoulliAverage_prod p fun i b => if i ∈ S then signVal b else 1, ← prod_const,
+  rw [h, bernoulliAverage_prod p fun i b => if i ∈ S then (-1) ^ b.toNat else 1, ← prod_const,
     ← Fintype.prod_ite_mem S]
   refine prod_congr rfl fun i _ => ?_
   split_ifs
-  · simp only [signVal_false, signVal_true]
+  · simp only [Bool.toNat_false, Bool.toNat_true, pow_zero, pow_one]
     ring
   · ring
 
@@ -106,9 +106,9 @@ noncomputable def noiseOp (ρ : ℝ) (f : (ι → Bool) → ℝ) (x : ι → Boo
 /-- **The Fourier expansion of `T_ρ f`**: the noise operator damps the coefficient of `S` by
 `ρ ^ |S|` [O'Donnell, Proposition 2.47][ODonnell2014]. -/
 theorem noiseOp_eq_sum (ρ : ℝ) (f : (ι → Bool) → ℝ) (x : ι → Bool) :
-    noiseOp ρ f x = ∑ S, ρ ^ #S * fourierCoeff f S * chi S x := by
+    noiseOp ρ f x = ∑ S, ρ ^ #S * fourierCoeff f S * chi ℝ S x := by
   have hf (P : ι → Bool) :
-      f (x + P) = ∑ S, fourierCoeff f S * chi S x * chi S P := by
+      f (x + P) = ∑ S, fourierCoeff f S * chi ℝ S x * chi ℝ S P := by
     rw [← sum_fourierCoeff_mul_chi f (x + P)]
     simp only [chi_add, mul_assoc]
   simp only [noiseOp, hf, bernoulliAverage, mul_sum]
@@ -123,13 +123,13 @@ theorem noiseOp_eq_sum (ρ : ℝ) (f : (ι → Bool) → ℝ) (x : ι → Bool) 
 [O'Donnell, Proposition 2.47][ODonnell2014]. -/
 theorem fourierCoeff_noiseOp (ρ : ℝ) (f : (ι → Bool) → ℝ) (S : Finset ι) :
     fourierCoeff (noiseOp ρ f) S = ρ ^ #S * fourierCoeff f S := by
-  have h : noiseOp ρ f = fun x => ∑ T, ρ ^ #T * fourierCoeff f T * chi T x :=
+  have h : noiseOp ρ f = fun x => ∑ T, ρ ^ #T * fourierCoeff f T * chi ℝ T x :=
     funext (noiseOp_eq_sum ρ f)
   rw [h, fourierCoeff_sum_mul_chi]
 
 /-- The characters are eigenfunctions of the noise operator. -/
 theorem noiseOp_chi (ρ : ℝ) (S : Finset ι) (x : ι → Bool) :
-    noiseOp ρ (chi S) x = ρ ^ #S * chi S x := by
+    noiseOp ρ (chi ℝ S) x = ρ ^ #S * chi ℝ S x := by
   simp only [noiseOp, chi_add, bernoulliAverage_const_mul, bernoulliAverage_chi]
   rw [show 1 - 2 * ((1 - ρ) / 2) = ρ by ring, mul_comm]
 

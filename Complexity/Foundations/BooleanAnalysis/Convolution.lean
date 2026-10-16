@@ -67,7 +67,7 @@ theorem convolution_comm (f g : (ι → Bool) → ℝ) : convolution f g = convo
 the Fourier coefficients of the factors [O'Donnell, Theorem 1.27][ODonnell2014]. -/
 theorem fourierCoeff_convolution (f g : (ι → Bool) → ℝ) (S : Finset ι) :
     fourierCoeff (convolution f g) S = fourierCoeff f S * fourierCoeff g S := by
-  have h (y : ι → Bool) : 𝔼 x, g (x + y) * chi S x = chi S y * fourierCoeff g S := by
+  have h (y : ι → Bool) : 𝔼 x, g (x + y) * chi ℝ S x = chi ℝ S y * fourierCoeff g S := by
     rw [← expect_add_left _ y, fourierCoeff, mul_expect]
     simp only [add_comm y, BitString.add_cancel_right, chi_add]
     exact expect_congr rfl fun x _ => by ring

@@ -24,16 +24,17 @@ import Mathlib.Tactic.NormNum
 /-!
 # Fourier analysis on the Boolean cube
 
-Reading a bit `b` as the sign `(-1) ^ b` (`BitString.signVal`), the *character* of a set `S` of
-coordinates is `χ_S x = ∏_{i ∈ S} (-1) ^ (x i)` (`BitString.chi`), the sign of the parity of the
-bits of `x : ι → Bool` in `S`. Bit strings add coordinatewise modulo two,
-`(x + y) i = (x i ^^ y i)`, through Mathlib's Boolean ring structure on `Bool`, and the characters
-turn sums into products (`BitString.chi_add`): they are additive characters of the cube
-(`BitString.chiChar`), whose sums are Mathlib's `AddChar.sum_eq_ite`. The characters are
-orthonormal for the uniform expectation (`BitString.expect_chi_mul_chi`), and every real function
-on the cube is the sum of its *Fourier
-expansion* `f = ∑_S f̂(S) χ_S`, with the *Fourier coefficients* `f̂(S) = 𝔼_x f x χ_S x`
-(`BitString.fourierCoeff`, `BitString.sum_fourierCoeff_mul_chi`), which are unique
+The *character* of a set `S` of coordinates is `χ_S x = ∏_{i ∈ S} (-1) ^ (x i)`
+(`BitString.chi`), the sign of the parity of the bits of `x : ι → Bool` in `S`
+(`BitString.chi_eq_neg_one_pow_parityOn`), with values in any commutative ring `R`; Fourier
+analysis takes `R = ℝ`, where the sign of a bit is `BitString.signVal`. Bit strings add
+coordinatewise modulo two, `(x + y) i = (x i ^^ y i)`, through Mathlib's Boolean ring structure on
+`Bool`, and the characters turn sums into products (`BitString.chi_add`): they are additive
+characters of the cube (`BitString.chiChar`), whose sums are Mathlib's `AddChar.sum_eq_ite`. The
+characters are orthonormal for the uniform expectation (`BitString.expect_chi_mul_chi`), and every
+real function on the cube is the sum of its *Fourier expansion* `f = ∑_S f̂(S) χ_S`, with the
+*Fourier coefficients* `f̂(S) = 𝔼_x f x χ_S x` (`BitString.fourierCoeff`,
+`BitString.sum_fourierCoeff_mul_chi`), which are unique
 (`BitString.fourierCoeff_sum_mul_chi`), so the Fourier transform is a linear equivalence
 (`BitString.fourierTransform`). The expectation of a product is the sum of products of
 coefficients (**Plancherel**, `BitString.expect_mul_eq_sum_fourierCoeff_mul`), so the squared
@@ -47,9 +48,9 @@ coefficient on the circle, so the name is meant to be used qualified.
 
 ## Main definitions
 
-* `Cslib.BitString.signVal`: a bit as a sign, `false ↦ 1` and `true ↦ -1`.
-* `Cslib.BitString.chi`: the character of a set of coordinates, and `Cslib.BitString.chiChar` the
-  same as an additive character.
+* `Cslib.BitString.signVal`: a bit as a real sign, `false ↦ 1` and `true ↦ -1`.
+* `Cslib.BitString.chi`: the character of a set of coordinates, with values in a commutative ring,
+  and `Cslib.BitString.chiChar` the same as an additive character.
 * `Cslib.BitString.fourierCoeff`: the Fourier coefficient of a real function on the cube, and
   `Cslib.BitString.fourierCoeffₗ` the same as a linear map.
 * `Cslib.BitString.fourierTransform`: the Fourier transform, as a linear equivalence.
@@ -57,7 +58,8 @@ coefficient on the circle, so the name is meant to be used qualified.
 ## Main results
 
 * `Cslib.BitString.expect_chi_mul_chi`: the characters are orthonormal.
-* `Cslib.BitString.chi_add`: the characters are multiplicative.
+* `Cslib.BitString.chi_add`, `Cslib.BitString.chi_mul_chi`: the characters are multiplicative,
+  in the input and in the set.
 * `Cslib.BitString.sum_fourierCoeff_mul_chi`: the Fourier expansion.
 * `Cslib.BitString.fourierCoeff_sum_mul_chi`, `Cslib.BitString.fourierCoeff_injective`:
   uniqueness of the Fourier coefficients.
@@ -79,9 +81,9 @@ namespace Cslib.BitString
 open Finset
 open scoped BigOperators
 
-variable {ι : Type*}
+variable {ι R : Type*}
 
-/-- A bit read as a sign: `false ↦ 1` and `true ↦ -1`. -/
+/-- A bit read as a real sign: `false ↦ 1` and `true ↦ -1`. -/
 def signVal (b : Bool) : ℝ :=
   if b then -1 else 1
 
@@ -104,76 +106,112 @@ theorem signVal_mul_signVal (a b : Bool) : signVal a * signVal b = if a = b then
 @[simp] theorem signVal_xor (a b : Bool) : signVal (a ^^ b) = signVal a * signVal b := by
   cases a <;> cases b <;> simp
 
-/-- The character of a set `S` of coordinates: the sign of the parity of the bits in `S`. -/
-def chi (S : Finset ι) (x : ι → Bool) : ℝ :=
-  ∏ i ∈ S, signVal (x i)
+/-- The real sign of a bit as a power of `-1`. -/
+theorem signVal_eq_neg_one_pow (b : Bool) : signVal b = (-1) ^ b.toNat := by
+  cases b <;> simp
 
-@[simp] theorem chi_empty (x : ι → Bool) : chi ∅ x = 1 :=
+section CommRing
+
+variable [CommRing R]
+
+/-- The sign `(-1) ^ b` of an exclusive or is the product of the signs. -/
+theorem neg_one_pow_toNat_xor (a b : Bool) :
+    (-1 : R) ^ (a ^^ b).toNat = (-1) ^ a.toNat * (-1) ^ b.toNat := by
+  cases a <;> cases b <;> simp
+
+variable (R) in
+/-- The character of a set `S` of coordinates, with values in a commutative ring `R`: the product
+of the signs `(-1) ^ xᵢ` over `S`, the sign of the parity of the bits in `S`
+(`chi_eq_neg_one_pow_parityOn`). The Fourier analysis of real functions uses `chi ℝ`. -/
+def chi (S : Finset ι) (x : ι → Bool) : R :=
+  ∏ i ∈ S, (-1) ^ (x i).toNat
+
+@[simp] theorem chi_empty (x : ι → Bool) : chi R ∅ x = 1 :=
   prod_empty
 
+variable (R) in
 /-- The character of `S`, as an additive character of the cube: it sends sums of bit strings,
 their coordinatewise exclusive or, to products. -/
-def chiChar (S : Finset ι) : AddChar (ι → Bool) ℝ where
-  toFun := chi S
-  map_zero_eq_one' := prod_eq_one fun _ _ => signVal_false
+def chiChar (S : Finset ι) : AddChar (ι → Bool) R where
+  toFun := chi R S
+  map_zero_eq_one' := prod_eq_one fun _ _ => by simp [Bool.zero_eq_false]
   map_add_eq_mul' x y := by
-    simp only [chi, Pi.add_apply, Bool.add_eq_xor, signVal_xor, prod_mul_distrib]
+    simp only [chi, Pi.add_apply, Bool.add_eq_xor, neg_one_pow_toNat_xor, prod_mul_distrib]
 
-@[simp] theorem coe_chiChar (S : Finset ι) : ⇑(chiChar S) = chi S :=
+@[simp] theorem coe_chiChar (S : Finset ι) : ⇑(chiChar R S) = chi R S :=
   rfl
 
 /-- **Characters are multiplicative**: the character of the sum of two bit strings, their
 coordinatewise exclusive or, is the product of their characters. -/
-theorem chi_add (S : Finset ι) (x y : ι → Bool) : chi S (x + y) = chi S x * chi S y :=
-  (chiChar S).map_add_eq_mul x y
+theorem chi_add (S : Finset ι) (x y : ι → Bool) : chi R S (x + y) = chi R S x * chi R S y :=
+  (chiChar R S).map_add_eq_mul x y
 
-@[simp] theorem chi_zero (S : Finset ι) : chi S 0 = 1 :=
-  (chiChar S).map_zero_eq_one
+@[simp] theorem chi_zero (S : Finset ι) : chi R S 0 = 1 :=
+  (chiChar R S).map_zero_eq_one
 
 /-- The character of `S` is the sign of the parity of the bits in `S`. -/
-theorem chi_eq_signVal_parityOn (S : Finset ι) (x : ι → Bool) :
-    chi S x = signVal (parityOn S x) := by
+theorem chi_eq_neg_one_pow_parityOn (S : Finset ι) (x : ι → Bool) :
+    chi R S x = (-1) ^ (parityOn S x).toNat := by
   classical
   induction S using Finset.induction_on with
-  | empty => simp [parityOn]
+  | empty => simp
   | insert i S hi ih =>
-    rw [chi, prod_insert hi, ← chi, ih, parityOn_insert hi]
-    cases x i <;> simp
+    rw [chi, prod_insert hi, ← chi, ih, parityOn_insert hi, neg_one_pow_toNat_xor]
+
+/-- A character squares to one. -/
+theorem chi_mul_self (S : Finset ι) (x : ι → Bool) : chi R S x * chi R S x = 1 := by
+  rw [chi, ← prod_mul_distrib]
+  exact prod_eq_one fun i _ => by cases x i <;> simp
 
 section DecidableEq
 
 variable [DecidableEq ι]
 
-/-- The character of `S` as a product over a larger set. -/
-private theorem chi_eq_prod_ite {S U : Finset ι} (h : S ⊆ U) (x : ι → Bool) :
-    chi S x = ∏ i ∈ U, if i ∈ S then signVal (x i) else 1 := by
-  rw [prod_ite_mem, inter_eq_right.2 h, chi]
-
 /-- **Characters multiply** by the symmetric difference of their sets. -/
 theorem chi_mul_chi (S T : Finset ι) (x : ι → Bool) :
-    chi S x * chi T x = chi (symmDiff S T) x := by
-  rw [chi_eq_prod_ite subset_union_left x, chi_eq_prod_ite subset_union_right x,
-    chi_eq_prod_ite (symmDiff_le_sup (α := Finset ι)) x, ← prod_mul_distrib]
+    chi R S x * chi R T x = chi R (symmDiff S T) x := by
+  have h {S U : Finset ι} (h : S ⊆ U) :
+      chi R S x = ∏ i ∈ U, if i ∈ S then (-1) ^ (x i).toNat else 1 := by
+    rw [prod_ite_mem, inter_eq_right.2 h, chi]
+  rw [h subset_union_left, h subset_union_right, h (symmDiff_le_sup (α := Finset ι)),
+    ← prod_mul_distrib]
   refine prod_congr rfl fun i _ => ?_
-  by_cases hS : i ∈ S <;> by_cases hT : i ∈ T <;> simp [hS, hT, mem_symmDiff, signVal_mul_self]
+  by_cases hS : i ∈ S <;> by_cases hT : i ∈ T <;> simp [hS, hT, mem_symmDiff, ← pow_add]
+
+/-- The character of a disjoint union is the product of the characters. -/
+theorem chi_union {S T : Finset ι} (h : Disjoint S T) (x : ι → Bool) :
+    chi R (S ∪ T) x = chi R S x * chi R T x :=
+  prod_union h
 
 variable {i : ι} {S : Finset ι}
 
 /-- Changing a bit outside `S` leaves the character of `S` unchanged. -/
 theorem chi_update_of_notMem (hi : i ∉ S) (x : ι → Bool) (b : Bool) :
-    chi S (Function.update x i b) = chi S x :=
+    chi R S (Function.update x i b) = chi R S x :=
   prod_congr rfl fun _ hj => by rw [Function.update_of_ne (ne_of_mem_of_not_mem hj hi)]
 
-/-- Setting a bit in `S` to `b` splits off the sign of `b` from the character of `S`. -/
+/-- Setting a bit in `S` to `b` splits off the sign `(-1) ^ b` from the character of `S`. -/
 theorem chi_update_of_mem (hi : i ∈ S) (x : ι → Bool) (b : Bool) :
-    chi S (Function.update x i b) = signVal b * chi (S.erase i) x := by
+    chi R S (Function.update x i b) = (-1) ^ b.toNat * chi R (S.erase i) x := by
   rw [chi, ← mul_prod_erase S _ hi, Function.update_self, ← chi,
     chi_update_of_notMem (notMem_erase i S)]
 
 end DecidableEq
 
+end CommRing
+
+/-- The real character of `S` is the product of the real signs of the bits in `S`. -/
+theorem chi_eq_prod_signVal (S : Finset ι) (x : ι → Bool) :
+    chi ℝ S x = ∏ i ∈ S, signVal (x i) :=
+  prod_congr rfl fun i _ => (signVal_eq_neg_one_pow (x i)).symm
+
+/-- The real character of `S` is the real sign of the parity of the bits in `S`. -/
+theorem chi_eq_signVal_parityOn (S : Finset ι) (x : ι → Bool) :
+    chi ℝ S x = signVal (parityOn S x) := by
+  rw [chi_eq_neg_one_pow_parityOn, signVal_eq_neg_one_pow]
+
 /-- The character of `S` is the trivial additive character exactly when `S` is empty. -/
-@[simp] theorem chiChar_eq_zero_iff {S : Finset ι} : chiChar S = 0 ↔ S = ∅ := by
+@[simp] theorem chiChar_eq_zero_iff {S : Finset ι} : chiChar ℝ S = 0 ↔ S = ∅ := by
   classical
   refine ⟨fun h => ?_, ?_⟩
   · by_contra hS
@@ -186,37 +224,15 @@ end DecidableEq
 
 section Fintype
 
-variable [Fintype ι] [DecidableEq ι]
+variable [Fintype ι]
 
-/-- The character as a product over all coordinates. -/
-theorem chi_eq_prod_univ (S : Finset ι) (x : ι → Bool) :
-    chi S x = ∏ i, if i ∈ S then signVal (x i) else 1 :=
-  chi_eq_prod_ite (subset_univ S) x
-
-/-- The characters of nonempty sets sum to zero. -/
-theorem sum_chi (S : Finset ι) :
-    ∑ x, chi S x = if S = ∅ then 2 ^ Fintype.card ι else 0 := by
-  rw [← coe_chiChar, AddChar.sum_eq_ite]
-  simp
-
-/-- The characters of nonempty sets have expectation zero. -/
-theorem expect_chi (S : Finset ι) : 𝔼 x, chi S x = if S = ∅ then 1 else 0 := by
-  rw [← coe_chiChar, AddChar.expect_eq_ite]
-  simp
-
-/-- **The characters are orthonormal.** -/
-theorem expect_chi_mul_chi (S T : Finset ι) :
-    𝔼 x, chi S x * chi T x = if S = T then 1 else 0 := by
-  simp only [chi_mul_chi, expect_chi, ← bot_eq_empty, symmDiff_eq_bot]
-
-omit [DecidableEq ι] in
 /-- The characters at two points, summed over all sets, detect equality of the points. -/
 theorem sum_chi_mul_chi (x y : ι → Bool) :
-    ∑ S, chi S x * chi S y = if x = y then 2 ^ Fintype.card ι else 0 := by
+    ∑ S, chi ℝ S x * chi ℝ S y = if x = y then 2 ^ Fintype.card ι else 0 := by
   classical
   have h := prod_add (fun i => signVal (x i) * signVal (y i)) (fun _ => (1 : ℝ)) univ
   simp only [prod_const_one, mul_one, powerset_univ] at h
-  simp only [chi, ← prod_mul_distrib]
+  simp only [chi_eq_prod_signVal, ← prod_mul_distrib]
   rw [← h]
   simp only [signVal_mul_signVal]
   split_ifs with hxy
@@ -225,13 +241,36 @@ theorem sum_chi_mul_chi (x y : ι → Bool) :
   · obtain ⟨i, hi⟩ := Function.ne_iff.1 hxy
     exact prod_eq_zero (mem_univ i) (by simp [hi])
 
+variable [DecidableEq ι]
+
+/-- The character as a product over all coordinates. -/
+theorem chi_eq_prod_univ [CommRing R] (S : Finset ι) (x : ι → Bool) :
+    chi R S x = ∏ i, if i ∈ S then (-1) ^ (x i).toNat else 1 := by
+  rw [prod_ite_mem, univ_inter, chi]
+
+/-- The characters of nonempty sets sum to zero. -/
+theorem sum_chi (S : Finset ι) :
+    ∑ x, chi ℝ S x = if S = ∅ then 2 ^ Fintype.card ι else 0 := by
+  rw [← coe_chiChar, AddChar.sum_eq_ite]
+  simp
+
+/-- The characters of nonempty sets have expectation zero. -/
+theorem expect_chi (S : Finset ι) : 𝔼 x, chi ℝ S x = if S = ∅ then 1 else 0 := by
+  rw [← coe_chiChar, AddChar.expect_eq_ite]
+  simp
+
+/-- **The characters are orthonormal.** -/
+theorem expect_chi_mul_chi (S T : Finset ι) :
+    𝔼 x, chi ℝ S x * chi ℝ T x = if S = T then 1 else 0 := by
+  simp only [chi_mul_chi, expect_chi, ← bot_eq_empty, symmDiff_eq_bot]
+
 /-- The Fourier coefficient of `f` on `S`: the correlation of `f` with the character of `S`. -/
 noncomputable def fourierCoeff (f : (ι → Bool) → ℝ) (S : Finset ι) : ℝ :=
-  𝔼 x, f x * chi S x
+  𝔼 x, f x * chi ℝ S x
 
 /-- The Fourier coefficient as a normalised sum. -/
 theorem fourierCoeff_eq_sum (f : (ι → Bool) → ℝ) (S : Finset ι) :
-    fourierCoeff f S = (∑ x, f x * chi S x) / 2 ^ Fintype.card ι := by
+    fourierCoeff f S = (∑ x, f x * chi ℝ S x) / 2 ^ Fintype.card ι := by
   simp [fourierCoeff, expect_eq_sum_div_card]
 
 /-- The Fourier coefficients are additive. -/
@@ -251,8 +290,8 @@ theorem fourierCoeff_const_mul (c : ℝ) (f : (ι → Bool) → ℝ) (S : Finset
 
 /-- Multiplying by a character shifts the coefficients by the symmetric difference. -/
 theorem fourierCoeff_chi_mul (T : Finset ι) (f : (ι → Bool) → ℝ) (S : Finset ι) :
-    fourierCoeff (fun x => chi T x * f x) S = fourierCoeff f (symmDiff T S) := by
-  simp only [fourierCoeff, ← chi_mul_chi, mul_comm (chi T _), mul_assoc]
+    fourierCoeff (fun x => chi ℝ T x * f x) S = fourierCoeff f (symmDiff T S) := by
+  simp only [fourierCoeff, ← chi_mul_chi, mul_comm (chi ℝ T _), mul_assoc]
 
 /-- A constant has all its weight on the empty set. -/
 theorem fourierCoeff_const (c : ℝ) (S : Finset ι) :
@@ -262,7 +301,7 @@ theorem fourierCoeff_const (c : ℝ) (S : Finset ι) :
 /-- A parity, read as `±1`, is the character of its set, so all its weight is on that set. -/
 theorem fourierCoeff_signVal_parityOn (S U : Finset ι) :
     fourierCoeff (fun x => signVal (parityOn S x)) U = if U = S then 1 else 0 := by
-  have h : (fun x => signVal (parityOn S x)) = fun x => chi S x :=
+  have h : (fun x => signVal (parityOn S x)) = fun x => chi ℝ S x :=
     funext fun x => (chi_eq_signVal_parityOn S x).symm
   rw [h, fourierCoeff, expect_chi_mul_chi]
   exact if_congr eq_comm rfl rfl
@@ -274,7 +313,7 @@ theorem fourierCoeff_signVal_parityOn (S U : Finset ι) :
 /-- **The Fourier expansion**: every function is the sum of its characters weighted by its
 Fourier coefficients. -/
 theorem sum_fourierCoeff_mul_chi (f : (ι → Bool) → ℝ) (x : ι → Bool) :
-    ∑ S, fourierCoeff f S * chi S x = f x := by
+    ∑ S, fourierCoeff f S * chi ℝ S x = f x := by
   simp only [fourierCoeff_eq_sum, div_mul_eq_mul_div, sum_mul, ← sum_div]
   rw [sum_comm]
   simp only [mul_assoc, ← mul_sum, sum_chi_mul_chi, mul_ite, mul_zero, sum_ite_eq', mem_univ,
@@ -284,7 +323,7 @@ theorem sum_fourierCoeff_mul_chi (f : (ι → Bool) → ℝ) (x : ι → Bool) :
 /-- **The Fourier coefficients are unique**: a combination of characters has its weights as
 coefficients. -/
 theorem fourierCoeff_sum_mul_chi (c : Finset ι → ℝ) (T : Finset ι) :
-    fourierCoeff (fun x => ∑ S, c S * chi S x) T = c T := by
+    fourierCoeff (fun x => ∑ S, c S * chi ℝ S x) T = c T := by
   simp only [fourierCoeff, sum_mul, mul_assoc]
   rw [expect_sum_comm]
   simp only [← mul_expect, expect_chi_mul_chi, mul_ite, mul_one, mul_zero, sum_ite_eq',
@@ -311,7 +350,7 @@ noncomputable def fourierTransform : ((ι → Bool) → ℝ) ≃ₗ[ℝ] (Finset
   toFun := fourierCoeff
   map_add' f g := funext (fourierCoeff_add f g)
   map_smul' c f := funext (fourierCoeff_const_mul c f)
-  invFun c x := ∑ S, c S * chi S x
+  invFun c x := ∑ S, c S * chi ℝ S x
   left_inv f := funext (sum_fourierCoeff_mul_chi f)
   right_inv c := funext (fourierCoeff_sum_mul_chi c)
 
@@ -320,14 +359,14 @@ noncomputable def fourierTransform : ((ι → Bool) → ℝ) ≃ₗ[ℝ] (Finset
   rfl
 
 @[simp] theorem fourierTransform_symm_apply (c : Finset ι → ℝ) (x : ι → Bool) :
-    fourierTransform.symm c x = ∑ S, c S * chi S x :=
+    fourierTransform.symm c x = ∑ S, c S * chi ℝ S x :=
   rfl
 
 /-- **Plancherel's identity**: the expectation of a product is the sum of the products of the
 Fourier coefficients. -/
 theorem expect_mul_eq_sum_fourierCoeff_mul (f g : (ι → Bool) → ℝ) :
     𝔼 x, f x * g x = ∑ S, fourierCoeff f S * fourierCoeff g S := by
-  have h (x : ι → Bool) : f x * g x = ∑ S, fourierCoeff g S * (f x * chi S x) := by
+  have h (x : ι → Bool) : f x * g x = ∑ S, fourierCoeff g S * (f x * chi ℝ S x) := by
     conv_lhs => rw [← sum_fourierCoeff_mul_chi g x]
     rw [mul_sum]
     exact sum_congr rfl fun S _ => mul_left_comm _ _ _

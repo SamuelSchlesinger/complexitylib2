@@ -178,7 +178,7 @@ example {α : Type} (enc : α ↪ List Bool) :
 
 /-- The Fourier analysis of the cube applies to any finite index type: on the cube `Bool → Bool`,
 the character of a nonempty set sums to zero. -/
-example : ∑ x : Bool → Bool, BitString.chi {true} x = 0 := by
+example : ∑ x : Bool → Bool, BitString.chi ℝ {true} x = 0 := by
   simp [BitString.sum_chi]
 
 /-- The hypotheses of the soundness of the Hadamard tester can be met: the honest tables for a
