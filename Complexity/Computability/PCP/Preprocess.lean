@@ -113,13 +113,6 @@ are the half-edges of `G`, and the degree is `2 |D| + 2`. -/
 def preprocess : RegularConstraintGraph (E × Bool) (PreprocessLabel D) α :=
   ((G.degreeReduceExpander X).addTrivial (X.graph (E × Bool))).addLoops Unit
 
-/-- Preprocessing is degree reduction, then expanderization, then self-loops. -/
-theorem preprocess_eq :
-    G.preprocess X =
-      ((G.degreeReduceExpander X).addTrivial (X.graph (E × Bool))).addLoops Unit :=
-  rfl
-
-omit [DecidableEq V] in
 /-- The preprocessed constraint graph has `2 |E|` vertices. -/
 theorem card_vertices_preprocess : Fintype.card (E × Bool) = 2 * Fintype.card E := by
   rw [Fintype.card_prod, Fintype.card_bool, mul_comm]
@@ -160,7 +153,7 @@ theorem spectralExpansion_preprocess_le :
 theorem unsatVal_preprocess :
     (G.preprocess X).toConstraintGraph.unsatVal =
       (G.degreeReduceExpander X).toConstraintGraph.unsatVal / 2 := by
-  rw [preprocess_eq, RegularConstraintGraph.unsatVal_addLoops,
+  rw [preprocess, RegularConstraintGraph.unsatVal_addLoops,
     RegularConstraintGraph.unsatVal_addTrivial]
   simp only [Fintype.card_sum, Fintype.card_unit]
   have h₁ : (1 + Fintype.card D + Fintype.card D : ℝ) ≠ 0 := by positivity
@@ -177,7 +170,7 @@ variable [Nonempty α]
 and their spectral expansions are at most some `μ < 1`. -/
 theorem satisfiable_preprocess_iff [Nonempty D] (hμ : μ < 1) :
     (G.preprocess X).toConstraintGraph.Satisfiable ↔ G.Satisfiable := by
-  rw [preprocess_eq, RegularConstraintGraph.satisfiable_addLoops_iff,
+  rw [preprocess, RegularConstraintGraph.satisfiable_addLoops_iff,
     RegularConstraintGraph.satisfiable_addTrivial_iff]
   exact satisfiable_degreeReduce_iff _ hμ fun v ↦ X.spectralExpansion_graph_le _
 

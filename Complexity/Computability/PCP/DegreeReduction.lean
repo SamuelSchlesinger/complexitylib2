@@ -70,6 +70,21 @@ in Dinur's analysis.
 
 open Finset
 
+/-- **Plurality**: some value of a function on a finite type is taken at least as often as any
+other. -/
+theorem Fintype.exists_forall_card_filter_le_card_filter {ι α : Type*} [Fintype ι] [Nonempty α]
+    [DecidableEq α] (f : ι → α) : ∃ a, ∀ b, #{i | f i = b} ≤ #{i | f i = a} := by
+  rcases isEmpty_or_nonempty ι with h | ⟨⟨i₀⟩⟩
+  · exact ⟨Classical.arbitrary α, fun b ↦ by simp [univ_eq_empty]⟩
+  obtain ⟨i, -, hi⟩ := univ.exists_max_image (fun i ↦ #{j | f j = f i}) ⟨i₀, mem_univ _⟩
+  refine ⟨f i, fun b ↦ ?_⟩
+  by_cases hb : ∃ j, f j = b
+  · obtain ⟨j, rfl⟩ := hb
+    exact hi j (mem_univ _)
+  · simp only [not_exists] at hb
+    rw [filter_false_of_mem fun j _ ↦ hb j, Finset.card_empty]
+    exact Nat.zero_le _
+
 namespace Cslib.PCP
 
 namespace ConstraintGraph
@@ -279,18 +294,8 @@ variable [Fintype E] [DecidableEq V] [Fintype D]
 /-- **Plurality**: some label is taken by at least as many half-edges of a cloud as any other. -/
 theorem exists_forall_card_filter_le_card_filter [Nonempty α] [DecidableEq α] (A : E × Bool → α)
     (v : V) :
-    ∃ a : α, ∀ b, #{x : G.Cloud v | A x.1 = b} ≤ #{x : G.Cloud v | A x.1 = a} := by
-  rcases isEmpty_or_nonempty (G.Cloud v) with h | ⟨⟨x₀⟩⟩
-  · exact ⟨Classical.arbitrary α, fun b ↦ by simp [univ_eq_empty]⟩
-  obtain ⟨x, -, hx⟩ := univ.exists_max_image
-    (fun x : G.Cloud v ↦ #{y : G.Cloud v | A y.1 = A x.1}) ⟨x₀, mem_univ _⟩
-  refine ⟨A x.1, fun b ↦ ?_⟩
-  by_cases hb : ∃ y : G.Cloud v, A y.1 = b
-  · obtain ⟨y, rfl⟩ := hb
-    exact hx y (mem_univ _)
-  · simp only [not_exists] at hb
-    rw [filter_false_of_mem fun y _ ↦ hb y, card_empty]
-    exact Nat.zero_le _
+    ∃ a : α, ∀ b, #{x : G.Cloud v | A x.1 = b} ≤ #{x : G.Cloud v | A x.1 = a} :=
+  Fintype.exists_forall_card_filter_le_card_filter fun x : G.Cloud v ↦ A x.1
 
 variable {μ : ℝ}
 

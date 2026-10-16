@@ -136,7 +136,7 @@ noncomputable def cnfGraph : FinConstraintGraph.{0} Alphabet :=
 
 /-- The vertices of the constraint graph of a formula over `Σ₀`: those of the composed graph of
 the preprocessed `ofCNF φ`, built from its edges `Fin φ.length × Fin 3`. -/
-theorem cnfGraph_V : (cnfGraph φ).V =
+private theorem cnfGraph_V : (cnfGraph φ).V =
     (ComposePos ((Fin φ.length × Fin 3) × Bool)
         (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) (Fin 3 → Bool) ⊕
       (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool)) :=
@@ -144,7 +144,7 @@ theorem cnfGraph_V : (cnfGraph φ).V =
 
 /-- The edges of the constraint graph of a formula over `Σ₀`: those of the composed graph of the
 preprocessed `ofCNF φ`. -/
-theorem cnfGraph_E : (cnfGraph φ).E =
+private theorem cnfGraph_E : (cnfGraph φ).E =
     (((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool)) ×
       Query) :=
   rfl
