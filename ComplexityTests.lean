@@ -7,6 +7,7 @@ import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.CookLevinPolyTime
+import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy
 import ComplexityTests.FiniteControl

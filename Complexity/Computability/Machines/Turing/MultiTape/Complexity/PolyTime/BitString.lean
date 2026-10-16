@@ -33,6 +33,8 @@ polynomial bound on the complete encoded output. The operations are total on emp
   `.bitsAnyWithInput`, `.bitsFoldlWithInput`, `.bitsZipWithInput`: compositional bit operations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajority`, `.bitsSingle`, `.bitsSingles`,
   `.bitsXorSelected`: finite-mask algorithms.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsCountPWithInput`, `.bitsCountWithInput`:
+  unary counts under captured predicates or computed labels.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList`: output-bounded enumeration.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBoundedBinaryValue`: capped binary decoding
   to unary, with every intermediate accumulator bounded by the supplied cap.
@@ -175,6 +177,23 @@ theorem bitsFilterWithInput {list : α → List Bool} {test : α → Bool → Bo
       (encPair input encBool) encBool) :
     ComputableTidilyInPolyTime (fun a => (list a).filter (test a)) input encBits :=
   listToBits.comp (filterWithInput (bitsToList.comp hlist) htest)
+
+/-- Count predicate matches in a raw bit string, including a captured input. -/
+@[fun_prop]
+theorem bitsCountPWithInput {list : α → List Bool} {test : α → Bool → Bool}
+    (hlist : ComputableTidilyInPolyTime list input encBits)
+    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
+      (encPair input encBool) encBool) :
+    ComputableTidilyInPolyTime (fun x => (list x).countP (test x)) input encUnary :=
+  countPWithInput (bitsToList.comp hlist) htest
+
+/-- Count occurrences of a computed bit in a raw bit string. -/
+@[fun_prop]
+theorem bitsCountWithInput {list : α → List Bool} {value : α → Bool}
+    (hlist : ComputableTidilyInPolyTime list input encBits)
+    (hvalue : ComputableTidilyInPolyTime value input encBool) :
+    ComputableTidilyInPolyTime (fun x => (list x).count (value x)) input encUnary :=
+  countWithInput (bitsToList.comp hlist) hvalue
 
 /-- Test whether any bit satisfies a captured predicate. -/
 @[fun_prop]

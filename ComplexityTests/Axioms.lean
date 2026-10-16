@@ -4981,3 +4981,41 @@ info: 'Cslib.Crypto.OneWay.exists_pseudoentropyPair' depends on axioms: [propext
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.OneWay.exists_pseudoentropyPair
+
+-- Independent empirical probability estimates and their complete uniform PPT certificates.
+
+/--
+info: 'Cslib.ProbComp.eval_countTrue' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbComp.eval_countTrue
+
+/--
+info: 'Cslib.ProbComp.countTrue_average_deviation_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbComp.countTrue_average_deviation_pow
+
+/--
+info: 'Cslib.ProbComp.replicate_failure_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbComp.replicate_failure_pow
+
+/--
+info: 'Cslib.ProbComp.testProbabilityLT_error_pow_of_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbComp.testProbabilityLT_error_pow_of_bounds
+
+/--
+info: 'Cslib.Probability.IsPPTOn.countTrue' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsPPTOn.countTrue
+
+/--
+info: 'Cslib.Probability.IsPPTOn.testProbabilityLT' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsPPTOn.testProbabilityLT

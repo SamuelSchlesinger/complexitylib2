@@ -27,7 +27,9 @@ type nor its encoding needs a finite range.
 
 ## Main results
 
-* `Cslib.Probability.IsPPTOn.replicate`: strict PPT collection of independent runs.
+* `Cslib.Probability.IsPPTOn.replicate`, `.replicate_bool`: collect independent runs.
+* `Cslib.Probability.IsPPTOn.countTrue`: count successful trials in unary.
+* `Cslib.Probability.IsPPTOn.testProbabilityLT`: test a rational acceptance threshold.
 
 ## References
 
@@ -66,5 +68,38 @@ theorem IsPPTOn.replicate {α β : Type} {input : α ↪ List Bool} {output : β
   simpa only [ProbComp.eval_map, BitString.eval_sampleList, Function.comp_def] using
     (ProbComp.eval_replicate_of_uniformList (count a) (budget a)
       (program a) (evaluate a) (hlaw a)).symm
+
+/-- Repeated Boolean results may use the raw bit-list encoding. -/
+@[program_certificate]
+theorem IsPPTOn.replicate_bool {α : Type} {input : α ↪ List Bool}
+    {program : α → ProbComp Bool} {count : α → ℕ}
+    (hprogram : IsPPTOn input encBool program)
+    (hcount : ComputableTidilyInPolyTime count input encUnary) :
+    IsPPTOn input encBits (fun a => OracleComp.replicate (count a) (program a)) := by
+  simpa only [id_map'] using (hprogram.replicate hcount).map
+    ComputableTidilyInPolyTime.listToBits
+
+/-- Count successes in independent trials, charging all collected bits and the unary result. -/
+@[program_certificate]
+theorem IsPPTOn.countTrue {α : Type} {input : α ↪ List Bool}
+    {program : α → ProbComp Bool} {count : α → ℕ}
+    (hprogram : IsPPTOn input encBool program)
+    (hcount : ComputableTidilyInPolyTime count input encUnary) :
+    IsPPTOn input encUnary (fun a => OracleComp.countTrue (count a) (program a)) := by
+  unfold OracleComp.countTrue
+  fun_prop
+
+/-- Rational threshold testing charges the trial count and every unary cross-product. -/
+@[program_certificate]
+theorem IsPPTOn.testProbabilityLT {α : Type} {input : α ↪ List Bool}
+    {program : α → ProbComp Bool} {count numerator denominator : α → ℕ}
+    (hprogram : IsPPTOn input encBool program)
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hnumerator : ComputableTidilyInPolyTime numerator input encUnary)
+    (hdenominator : ComputableTidilyInPolyTime denominator input encUnary) :
+    IsPPTOn input encBool (fun a =>
+      OracleComp.testProbabilityLT (count a) (numerator a) (denominator a) (program a)) := by
+  unfold OracleComp.testProbabilityLT
+  fun_prop
 
 end Cslib.Probability

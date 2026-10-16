@@ -478,6 +478,7 @@ public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
+public import Complexity.Languages.Probabilistic.Concentration
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.Memoize

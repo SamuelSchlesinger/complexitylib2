@@ -1477,6 +1477,43 @@ All six checks pass on the new toolchain: strict build 8.22 s, import coverage 1
 tests 20.69 s, environment lint 10.79 s, style 5.52 s, and init imports 6.82 s, after populating
 the new dependency build cache.
 
+### Empirical probability tests (2026-10-16)
+
+`OracleComp.countTrue` and `testProbabilityLT` are ordinary functional programs: independent
+repetition, a list count, and a strict rational comparison using natural cross-products.
+Their closed-program laws give Hoeffding bounds and overlapping threshold postconditions with
+failure at most `2⁻confidence`, using `(confidence + 1) * inverseTolerance²` trials. The normalized
+accuracy statements require positive trial count and denominator; the programs remain total at
+zero. The repeated-search consequence allows an arbitrary proof predicate without assuming an
+executable decision procedure for it. These are prerequisites for hard-core boosting; general
+OWF → PRG still needs amplification, extraction and the final security assembly.
+
+The count and threshold efficiency proofs are each `unfold ...; fun_prop`, charging all sampled
+bits, list storage, unary outputs and cross-products. Four shared list/bit-string certificates
+handle captured predicates and computed labels through existing filter, length and encoding
+conversion rules. No new TM construction, tactic implementation or heartbeat override is needed.
+Tests cover ordinary map syntax, captured original inputs, raw and framed list encodings, zero
+parameters, a concrete independent two-trial distribution, and refusal to infer a unary trial
+budget from merely binary input size. Six headline axiom guards cover both semantic bounds and
+complete PPT certificates.
+
+The matched source slice has 14 named proofs / 113 body lines; the port has 13 / 110 before its
+new helper API, or 17 / 117 including all four helpers. Thus this batch adds four proof-body lines
+overall; it does not claim a net length reduction. The complete library has 5,778 named proofs /
+39,739 body lines across 543 modules, median 3 and P90 17. Statements, definitions, comments and
+tests are excluded from this source-layout metric.
+
+Controlled full-module profiles keep imports and typed statements identical and avoid importing
+the certificate being measured. The source-style local fact plus `ppt` uses 5,789,096 raw tactic
+heartbeats for counting and 8,765,957 for threshold testing; `unfold ...; fun_prop` uses 16,410
+and 75,927 respectively. These measure elaboration, not the programs' running times. Downstream
+functional clients continue to use `ppt` successfully.
+
+Independent source/API review approves the batch. All six checks pass: strict build 166.40 s
+after refreshing dependency artifacts, import coverage 1.96 s, tests 20.77 s, environment lint
+7.36 s, style 2.25 s, and init imports 5.55 s. The axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`.
+
 ### Implementation priorities (2026-10-16)
 
 1. Efficient closed stateful substitution is implemented through finite tables, encoded
@@ -1507,8 +1544,9 @@ the new dependency build cache.
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
    semantic invariant rules with functional clients; independent repetition and the complete
-   adaptive GGM reduction use them. Port the empirical probability tests and collection helpers
-   needed by pseudoentropy. General open-program composition remains separate work.
+   adaptive GGM reduction use them. Empirical probability tests and counting helpers are now
+   implemented; use them in pseudoentropy's boosting sampler and decision procedure. General
+   open-program composition remains separate work.
 2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
    repeat finite union bounds, construction of a bad event and extraction of a good sample.
    Trial a shared finite-family existence lemma using Mathlib's existing measure union bounds;

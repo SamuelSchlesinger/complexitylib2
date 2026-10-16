@@ -21,11 +21,14 @@ is certified separately in `Computability.Probabilistic.Repeat`.
 ## Main definitions
 
 * `Cslib.OracleComp.replicate`: collect a bounded number of runs.
+* `Cslib.OracleComp.countTrue`, `.testProbabilityLT`: count successes and test rational thresholds.
 
 ## Main results
 
 * `Cslib.OracleComp.replicate_add`, `.replicate_snoc`: split an execution into segments.
 * `Cslib.ProbComp.eval_replicate`: finite outputs have the independent product law.
+* `Cslib.ProbComp.eval_countTrue`: the success count is a sum of independent indicators.
+* `Cslib.ProbComp.countTrue_le`: every supported success count respects the trial budget.
 * `Cslib.ProbComp.eval_replicate_of_uniform`: realize the joint law from independent finite seeds.
 * `Cslib.ProbComp.eval_replicate_of_uniformList`: collect independent draws from one flat bit list.
 
@@ -83,6 +86,19 @@ theorem replicate_map (count : ℕ) (program : OracleComp spec α) (f : α → �
   | succ count ih =>
     simp only [replicate_succ, ih, bind_map_left, map_bind, Functor.map_map, List.map_cons]
 
+variable {spec : OracleSpec.{u, 0} Query}
+
+/-- Count the true results of a bounded number of runs of a Boolean program. -/
+def countTrue (count : ℕ) (program : OracleComp spec Bool) : OracleComp spec ℕ :=
+  List.count true <$> replicate count program
+
+/-- Compare an empirical acceptance rate with a rational threshold by natural cross-products.
+Accuracy theorems require a positive count and denominator; the program is total at zero. -/
+def testProbabilityLT (count numerator denominator : ℕ)
+    (program : OracleComp spec Bool) : OracleComp spec Bool :=
+  (fun successes => decide (successes * denominator < count * numerator)) <$>
+    countTrue count program
+
 end OracleComp
 
 namespace ProbComp
@@ -112,6 +128,28 @@ theorem eval_replicate [Finite α] (count : ℕ) (program : ProbComp α) :
     rw [OracleComp.replicate_succ, eval_bind]
     simp [eval_map, ih, Probability.PMF.pi_fin_succ, PMF.map_bind, PMF.map_comp,
       Function.comp_def, List.ofFn_succ]
+
+/-- Counting successful repeated trials is the sum of independent Boolean indicators. -/
+theorem eval_countTrue (count : ℕ) (program : ProbComp Bool) :
+    eval (OracleComp.countTrue count program) =
+      (Probability.PMF.pi (fun _ : Fin count => eval program)).map
+        (fun bits => ∑ i, (bits i).toNat) := by
+  rw [OracleComp.countTrue, eval_map, eval_replicate, PMF.map_comp]
+  congr 1
+  funext bits
+  change (List.ofFn bits).count true = ∑ i, (bits i).toNat
+  induction count with
+  | zero => simp
+  | succ count ih =>
+    rw [List.ofFn_succ, List.count_cons, ih, Fin.sum_univ_succ]
+    cases bits 0 <;> simp [Nat.add_comm]
+
+/-- Every supported result is bounded by the number of trials, including zero trials. -/
+theorem countTrue_le (count : ℕ) (program : ProbComp Bool) {successes : ℕ}
+    (h : successes ∈ (eval (OracleComp.countTrue count program)).support) : successes ≤ count := by
+  rw [OracleComp.countTrue, eval_map, PMF.mem_support_map_iff] at h
+  obtain ⟨votes, hvotes, rfl⟩ := h
+  exact List.count_le_length.trans_eq ((mem_support_replicate_iff _ _ _).mp hvotes).1
 
 /-- Repeated closed runs use independent uniform seeds, including at count zero. The output
 type need not be finite. -/

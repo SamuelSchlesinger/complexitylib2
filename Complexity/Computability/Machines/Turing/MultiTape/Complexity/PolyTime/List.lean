@@ -42,6 +42,8 @@ up a variable with a large binary label does not require a certificate as long a
   ranges and lists of a computed length, charging each repeated value.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.countPWithInput`, `.countWithInput`: count
+  predicate matches or occurrences of a computed value.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD`: lookup by a unary index.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.getElem?`: optional lookup in computed lists.
@@ -369,6 +371,26 @@ theorem length_bits_comp {input : α ↪ List Bool} {word : α → List Bool}
     (hword : ComputableTidilyInPolyTime word input encBits) :
     ComputableTidilyInPolyTime (fun a => (word a).length) input encUnary :=
   length_bits.comp hword
+
+/-- Count matches of a predicate that captures the original input. The count is in unary. -/
+@[fun_prop]
+theorem countPWithInput {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (htest : ComputableTidilyInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableTidilyInPolyTime (fun x => (list x).countP (test x)) encIn encUnary := by
+  simp only [List.countP_eq_length_filter]
+  exact (length_list encA).comp (filterWithInput hlist htest)
+
+/-- Count occurrences of a computed value using lawful Boolean equality. -/
+@[fun_prop]
+theorem countWithInput [BEq α] [LawfulBEq α] {list : γ → List α} {value : γ → α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (hvalue : ComputableTidilyInPolyTime value encIn encA) :
+    ComputableTidilyInPolyTime (fun x => (list x).count (value x)) encIn encUnary := by
+  simp only [List.count_eq_countP]
+  apply countPWithInput hlist
+  fun_prop
 
 /-- Enumerate `0, …, n - 1`, with the bound and the elements in unary. -/
 @[fun_prop]

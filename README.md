@@ -92,7 +92,9 @@ certificates, exact finite/list laws, and a leftover-hash bound for arbitrary fi
 randomized tests of the complete public output. Every general OWF now yields an exactly samplable
 pseudoentropy pair with prediction gap `1 / (2(n + 7))`. The hashed-parity sampler and the complete
 inverter use ordinary functional programs with two-line `fun_prop` certificates. Amplification,
-extraction and the final general OWF → PRG security assembly remain pending.
+extraction and the final general OWF → PRG security assembly remain pending. Empirical probability
+tests now have exact independent-trial laws, exponential error bounds and complete PPT
+certificates, providing the sampling prerequisites for amplification.
 
 ## Layout
 
