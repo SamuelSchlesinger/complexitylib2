@@ -414,6 +414,33 @@ compound guard directly. Including the five new modules and these rules, this ba
 certificate uses 59 body lines, captured iteration 28, and the bounded-growth wrappers 14 and 1.
 Statements, definitions, tests and tactic registration code are excluded from this layout metric.
 
+### Computational crypto games (2026-10-16)
+
+The next crypto slice uses the current upstream `Negligible` and `Game.Indistinguishable`
+interfaces from PR #1069, including its prerequisite #1068, instead of reviving the old branch's
+real-valued game API. Thin bridges identify the pinned finite PRG API's real advantage and
+security with these nonnegative games. No second generator or security definition is introduced.
+
+`IsPPT` specializes the same machine contract to `encPair encUnary encBits`. A single finite
+machine and polynomial work for every security parameter and auxiliary word. `ppt` exposes this
+contract automatically. Named curried certificates are registered through definitionally equal
+uncurried theorems, so both `ppt` and `fun_prop` compose them while implementations stay folded.
+A lawful Boolean equality rule handles the computed comparisons used by inversion experiments.
+
+`ComputationallyIndistinguishable` quantifies over one uniform program before negligibility;
+semantic tests must supply a uniform realization. Arbitrary ensemble laws stay outside the
+program syntax. Randomized postprocessing preserves security, with its reduction's efficiency
+proved by `ppt`. The one-way-function game accepts any preimage, including one of another length;
+OWP adds length preservation and bijectivity. Efficient inverse and constant-function tests rule
+out trivial instances. These definitions do not assert that OWFs exist.
+
+This batch adds 59 theorem bodies / 106 body lines across seven new modules and the equality rule:
+30 / 48 are copied upstream proofs and 29 / 58 are new adaptations. The total is 5,062 / 35,014 in
+453 source files. The unary inversion efficiency proof is two body lines, its parameterized wrapper
+one, randomized postprocessing five, and the three finite-PRG bridges five combined. Definitions,
+statements, tests and certificate registration are outside this layout metric. Full OWP → PRG,
+general OWF → PRG and adaptive GGM security remain unported.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and

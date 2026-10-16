@@ -22,7 +22,7 @@ rules for `fun_prop`.
   admit explicit time and output degrees.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq`: reuse identical encoded outputs.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_finite`: functions on finite domains.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_eq`: equality for any fixed encoding.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_eq`, `.beq`: equality for fixed encodings.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_and'`, `.decide_and`, `.cond`, `.ite_decide`:
   compound guards and conditionals with fixed intermediate Boolean encodings.
 -/
@@ -145,6 +145,15 @@ theorem decide_eq' [DecidableEq β] {left right : α → β}
     (hright : ComputableTidilyInPolyTime right encA encB) :
     ComputableTidilyInPolyTime (fun x => decide (left x = right x)) encA encBool :=
   (decide_eq encB).comp (hleft.prod hright)
+
+/-- Lawful Boolean equality compares computed values through their common encoding. -/
+@[fun_prop]
+theorem beq [BEq β] [LawfulBEq β] {left right : α → β}
+    (hleft : ComputableTidilyInPolyTime left encA encB)
+    (hright : ComputableTidilyInPolyTime right encA encB) :
+    ComputableTidilyInPolyTime (fun x => left x == right x) encA encBool := by
+  classical
+  simpa only [beq_eq_decide] using hleft.decide_eq' hright
 
 /-- Compare two computed values using their common encoding. -/
 @[fun_prop]

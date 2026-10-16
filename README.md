@@ -24,7 +24,9 @@ postprocessing, captured inputs and conditionals. The compiler charges copying a
 preparation and guarantees actual halting. The `ppt` tactic combines these rules with deterministic
 `polytime` automation, named certificates and locally supplied routines. Bounded probabilistic
 loops have joint efficiency and invariant rules, including captured inputs; `ppt` handles
-constant state growth. Oracle PPT remains to be integrated.
+constant state growth. `IsPPT` supplies the standard unary security parameter and auxiliary word;
+`ppt` reuses its local certificates; named certificates also register with `fun_prop`.
+Oracle PPT remains to be integrated.
 Saved-coin replay preserves the full configuration and private oracle state under stateless
 fair-coin semantics. Closed replay has a uniform linear-time and space certificate from the
 ordinary encoded pair of coins and input, including preparation and final cleanup. Functional
@@ -38,10 +40,12 @@ value-level contracts. These interfaces adapt the local cslib `crypto` branch to
 TM calculus. See `ROADMAP.md` for implemented results, measured proof reductions, and the remaining
 integration work.
 
-The crypto port includes GGM tree evaluation with a polynomial-time TM certificate. The planned
+The crypto port includes GGM tree evaluation with a polynomial-time TM certificate, the upstream
+nonnegative game/negligibility API, computational indistinguishability and its randomized
+postprocessing rule, and one-way-function/permutation definitions. The complete inversion game
+has a short `ppt` certificate. Finite PRG security agrees with the same game calculus. The planned
 security developments are OWP → PRG through Goldreich–Levin, general OWF → PRG through
-pseudoentropy, and adaptive GGM security. Their constructions and reductions will exercise the
-same computation interfaces; the full security theorems have not yet been ported.
+pseudoentropy, and adaptive GGM security; those full security theorems have not yet been ported.
 
 ## Layout
 

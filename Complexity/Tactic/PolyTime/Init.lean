@@ -21,6 +21,8 @@ are looked up using its own program head, so similarly implemented algorithms do
 each other's rules.
 Certificates are also registered with `fun_prop`, so the same annotation supports
 calls inside larger functional programs.
+Parameterized `IsPPT` certificates are uncurried to the definitionally equal `IsPPTOn` statement
+before registration, keeping both tactic interfaces on the same encoded-input contract.
 
 The certificate index is adapted from the cslib `crypto` branch. Both computation predicates use
 separate input and output encodings. `Tactic.PPT` combines the `PPT` and `PolyTime`
@@ -79,6 +81,20 @@ def efficiencyKey (statement : Expr) : MetaM (Name × Name × Bool) := do
     `Cslib.Probability.IsPPTOn else predicate
   return (predicate, head, encoded)
 
+/-- Expose parameterized PPT in a certificate's premises and conclusion for encoded-input
+automation. The generated theorem is definitionally the original proof. -/
+private def encodedCertificate (declName : Name) : MetaM Name := do
+  let info ← getConstInfo declName
+  let type ← deltaExpand info.type (· == `Cslib.Probability.IsPPT)
+  if type == info.type then return declName
+  let name ← mkFreshUserName (declName ++ `_pptOn)
+  addDecl <| .thmDecl {
+    name
+    levelParams := info.levelParams
+    type
+    value := mkConst declName (info.levelParams.map Level.param) }
+  return name
+
 /-- Registered certificates, indexed by efficiency predicate and program head. Each certificate
 carries the hypotheses to solve as soon as it is applied. -/
 initialize certificateExt : SimpleScopedEnvExtension ((Name × Name × Bool) × Name × Array Name)
@@ -106,12 +122,15 @@ initialize registerBuiltinAttribute {
   add := fun declName stx kind => do
     unless stx.isOfKind ``programCertificate do throwUnsupportedSyntax
     let eager := stx[1].getArgs.map (·.getId)
-    let key ← MetaM.run' <| forallTelescope (← getConstInfo declName).type fun _ conclusion =>
-      efficiencyKey conclusion
+    let (certificate, key) ← MetaM.run' do
+      let certificate ← encodedCertificate declName
+      let key ← forallTelescope (← getConstInfo certificate).type fun _ conclusion =>
+        efficiencyKey conclusion
+      return (certificate, key)
     if key.1 == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
         key.1 == `Cslib.Probability.IsPPTOn then
-      Attribute.add declName `fun_prop .missing kind
-    certificateExt.add (key, declName, eager) kind
+      Attribute.add certificate `fun_prop .missing kind
+    certificateExt.add (key, certificate, eager) kind
 }
 
 /-- Solve the goal tagged `name`, or else one whose tag ends in `name` as for `case`, by proof
@@ -124,11 +143,31 @@ def solveTagged (name : Name) : TacticM Unit := do
       goals.findM? fun goal => return name.isSuffixOf (← goal.getTag))
     | throwError "no goal named `{name}`"
   let target := (← instantiateMVars (← goal.getType)).consumeMData
-  let tag := mkIdent name
-  if target.isAppOf `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
-    evalTactic (← `(tactic| case $tag:ident => solve | aesop (rule_sets := [PolyTime])))
+  let tactic ← if target.isAppOf `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
+    `(tactic| solve | aesop (rule_sets := [PolyTime]))
   else
-    evalTactic (← `(tactic| case $tag:ident => solve | aesop (rule_sets := [PPT, PolyTime])))
+    `(tactic| solve | aesop (rule_sets := [PPT, PolyTime]))
+  let remaining ← evalTacticAt tactic goal
+  unless remaining.isEmpty do throwError "proof search did not discharge `{name}`"
+  -- Nested tactic elaboration can recover an error by admitting its goal. Reject that candidate
+  -- before Aesop records it as a successful certificate application.
+  if ← Aesop.hasSorry (mkMVar goal) then
+    throwError "proof search did not discharge `{name}`"
+  setGoals (goals.filter (· != goal))
+
+/-- Preserve premise names even when Lean's `apply` gives a lone remaining goal its parent's
+tag. The applied proof records the actual argument metavariables, including inferred ones. -/
+private def applyNamedCertificate (goal : MVarId) (certificate : Name) : MetaM (List MVarId) := do
+  let goals ← goal.applyConst certificate
+  let some proof ← getExprMVarAssignment? goal
+    | throwError "the certificate did not assign its goal"
+  let names ← forallTelescope (← getConstInfo certificate).type fun xs _ =>
+    xs.mapM fun x => return (← x.fvarId!.getDecl).userName
+  let parent ← goal.getTag
+  for name in names, argument in proof.getAppArgs do
+    if let .mvar premise := argument then
+      if goals.contains premise then premise.setTag (appendTag parent name)
+  return goals
 
 /-- Expose every matching named certificate as an Aesop alternative. Eager premises are solved
 before exposing the remaining obligations, while different certificates keep independent
@@ -143,8 +182,10 @@ def applyCertificates (predicate : Name) : Aesop.RuleTac := fun input => input.g
     try
       let goals ← (Lean.Elab.Tactic.run input.goal <|
           Term.withoutErrToSorry <| withoutRecover do
-        liftMetaTactic fun goal => goal.applyConst certificate
+        liftMetaTactic fun goal => applyNamedCertificate goal certificate
         eager.forM solveTagged).run'
+      if ← Aesop.hasSorry (mkMVar input.goal) then
+        throwError "certificate application contains an admitted premise"
       let goals ← goals.toArray.mapM (Aesop.mvarIdToSubgoal input.goal)
       applications := applications.push {
         goals

@@ -1,0 +1,99 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: submitted #1069 @dd99d29a04228c74c2ae15f411e4bb2d981be30d
+
+public import Complexity.Init
+public import Cslib.Foundations.Data.Nat.PolynomialBound
+public import Mathlib.Analysis.Asymptotics.SuperpolynomialDecay
+
+/-!
+# Negligible functions
+
+Negligible bounds are nonnegative real-valued functions with Mathlib's superpolynomial decay at
+natural security parameters. This module supplies zero, addition, multiplication, fixed finite
+sums, eventual comparison, and polynomial-loss bounds for security games. Changing finitely many
+values preserves negligibility. The closure lemmas are registered with `fun_prop`, which
+discharges composite bounds such as a polynomial loss times a negligible advantage plus a
+negligible error.
+
+The decay bound may depend on the whole algorithm. Security definitions quantify over that
+algorithm before asserting negligibility; this module does not change that quantifier order.
+
+## Main definitions
+
+* `Cslib.Crypto.Negligible`: superpolynomial decay of nonnegative advantages.
+
+## Main results
+
+* `Cslib.Crypto.Negligible.polynomiallyBounded_mul`: polynomial losses preserve negligibility.
+* `Cslib.Crypto.negligible_of_eventually_le`: comparison outside a finite initial segment.
+
+## References
+
+Copied from cslib PR #1069 at `dd99d29a04228c74c2ae15f411e4bb2d981be30d`, including the
+negligibility definitions of its prerequisite PR #1068 and the later automation registrations.
+-/
+
+@[expose] public section
+
+namespace Cslib.Crypto
+
+open scoped NNReal
+
+/-- An advantage is negligible when it decays faster than every inverse polynomial in the
+security parameter. The nonnegative codomain records that advantages are magnitudes;
+the decay condition is Mathlib's superpolynomial decay in the nonnegative reals. -/
+@[fun_prop] def Negligible (ε : ℕ → ℝ≥0) : Prop :=
+  Asymptotics.SuperpolynomialDecay Filter.atTop (fun n : ℕ => (n : ℝ≥0)) ε
+
+/-- The zero advantage is negligible. -/
+@[simp, fun_prop] theorem negligible_zero : Negligible (fun _ => 0) :=
+  Asymptotics.superpolynomialDecay_zero _ _
+
+/-- Changing the value of a negligible bound at finitely many security parameters preserves
+negligibility. -/
+theorem Negligible.congr' {ε δ : ℕ → ℝ≥0} (hε : Negligible ε)
+    (h : ε =ᶠ[Filter.atTop] δ) : Negligible δ :=
+  Asymptotics.SuperpolynomialDecay.congr' hε h
+
+/-- The sum of two negligible bounds is negligible. -/
+@[fun_prop] theorem Negligible.add {ε δ : ℕ → ℝ≥0} (hε : Negligible ε) (hδ : Negligible δ) :
+    Negligible (fun n => ε n + δ n) :=
+  Asymptotics.SuperpolynomialDecay.add hε hδ
+
+/-- The product of two negligible bounds is negligible. -/
+@[fun_prop] theorem Negligible.mul {ε δ : ℕ → ℝ≥0} (hε : Negligible ε) (hδ : Negligible δ) :
+    Negligible (fun n => ε n * δ n) :=
+  Asymptotics.SuperpolynomialDecay.mul hε hδ
+
+/-- A sum over a fixed finite set of negligible bounds is negligible. -/
+theorem Negligible.sum {ι : Type*} (s : Finset ι) {ε : ι → ℕ → ℝ≥0}
+    (hε : ∀ i ∈ s, Negligible (ε i)) : Negligible (∑ i ∈ s, ε i) :=
+  Finset.sum_induction ε Negligible @Negligible.add negligible_zero hε
+
+/-- An eventually smaller advantage is negligible. -/
+theorem negligible_of_eventually_le {ε δ : ℕ → ℝ≥0} (hδ : Negligible δ)
+    (hle : ε ≤ᶠ[Filter.atTop] δ) : Negligible ε :=
+  .trans_eventuallyLE (.of_le zero_le) negligible_zero hδ (.of_le zero_le) hle
+
+/-- A pointwise smaller advantage is negligible. -/
+theorem negligible_of_le {ε δ : ℕ → ℝ≥0} (hδ : Negligible δ)
+    (hle : ∀ n, ε n ≤ δ n) : Negligible ε :=
+  negligible_of_eventually_le hδ (Filter.Eventually.of_forall hle)
+
+/-- Polynomially bounded factors preserve negligible decay. -/
+@[fun_prop] theorem Negligible.polynomiallyBounded_mul {ε : ℕ → ℝ≥0} {p : ℕ → ℕ}
+    (hε : Negligible ε) (hp : PolynomiallyBounded p) :
+    Negligible (fun n => (p n : ℝ≥0) * ε n) := by
+  obtain ⟨d, hd⟩ := hp
+  refine .trans_eventuallyLE (.of_le zero_le) negligible_zero (hε.param_pow_mul d)
+    (.of_le zero_le) ?_
+  filter_upwards [hd] with n hn
+  exact mul_le_mul' (by rw [Pi.pow_apply]; exact_mod_cast hn) le_rfl
+
+end Cslib.Crypto

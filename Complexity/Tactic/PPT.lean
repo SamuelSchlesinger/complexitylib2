@@ -11,6 +11,7 @@ public import Complexity.Tactic.PolyTime
 public import Complexity.Computability.Probabilistic.PPT.Capture
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.Adaptive
+public import Complexity.Computability.Probabilistic.Parameter
 
 /-!
 # Certifying functional probabilistic programs
@@ -19,6 +20,8 @@ public import Complexity.Computability.Probabilistic.Adaptive
 use ordinary `do` notation, captured inputs and conditionals. Named and local certificates are
 reused, and tuple arguments are prepared with the shared routine-call
 matcher. Every proof supplies the uniform strict fair-coin machine contract of `IsPPTOn`.
+`IsPPT` goals and local certificates expose the standard unary-parameter/word encoding
+automatically.
 
 Unknown algorithms need certificates. Fair bits, uniform words with efficiently computed unary
 lengths, and bounded loops with constant state growth are certified here. General loop invariants
@@ -39,6 +42,8 @@ public section
 namespace Cslib.Tactic.PPT
 
 open Lean Meta Elab Tactic Probability
+
+attribute [aesop norm unfold (rule_sets := [PPT])] IsPPT
 
 /-- Prepare local probabilistic routine calls through the same matcher as deterministic calls. -/
 @[aesop safe -40 tactic (rule_sets := [PPT])]

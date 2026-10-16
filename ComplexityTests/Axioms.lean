@@ -3832,4 +3832,39 @@ info: 'Cslib.Probability.IsPPTOn.iterate_of_bounded_growth' depends on axioms:
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.IsPPTOn.iterate_of_bounded_growth
 
+/--
+info: 'Cslib.Crypto.Game.Indistinguishable.of_reduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Game.Indistinguishable.of_reduction
+
+/--
+info: 'Cslib.Crypto.ComputationallyIndistinguishable.bind' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.ComputationallyIndistinguishable.bind
+
+/--
+info: 'Cslib.Crypto.PRG.Family.secure_iff_indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.Family.secure_iff_indistinguishable
+
+/--
+info: 'Cslib.Crypto.isPPT_inversionGame' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.isPPT_inversionGame
+
+/--
+info: 'Cslib.Crypto.not_oneWay_of_inverse' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.not_oneWay_of_inverse
+
 end ComplexityTests.Axioms
