@@ -208,6 +208,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
@@ -396,3 +397,5 @@ public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
+public import Complexity.Tactic.PolyTime
+public import Complexity.Tactic.PolyTime.Init

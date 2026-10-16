@@ -26,7 +26,8 @@ up a variable with a large binary label does not require a certificate as long a
   that let `fun_prop` infer the element encoding from the result.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith`, `.flatMapWith`: constructing lists
   with a parameter; the input list may itself have polynomial encoded length.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput`, `.flatMapWithInput`:
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput`, `.flatMapWithInput`,
+  `.filterWithInput`, `.anyWithInput`, `.allWithInput`:
   automation rules for traversals whose body also uses the original input.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst`, `.flatMapConst`: traverse a fixed
   list without requiring an encoding of its elements.
@@ -37,6 +38,8 @@ up a variable with a large binary label does not require a certificate as long a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD`: lookup by a unary index.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOfWithInput`, `.bitsGetDWithInput`:
+  compositional rules for first-occurrence lookup and raw-bit access.
 -/
 
 @[expose] public section
@@ -45,6 +48,45 @@ namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α β γ π : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
   {encIn : γ ↪ List Bool} {encP : π ↪ List Bool}
+
+/-- Concatenate raw bit strings, charging for both computed words. -/
+@[fun_prop]
+theorem bitsAppend {left right : γ → List Bool}
+    (hleft : ComputableTidilyInPolyTime left encIn encBits)
+    (hright : ComputableTidilyInPolyTime right encIn encBits) :
+    ComputableTidilyInPolyTime (fun x => left x ++ right x) encIn encBits :=
+  hleft.append hright fun _ => rfl
+
+/-- Prepend a computed bit to a raw bit string. -/
+@[fun_prop]
+theorem bitsCons {head : γ → Bool} {tail : γ → List Bool}
+    (hhead : ComputableTidilyInPolyTime head encIn encBool)
+    (htail : ComputableTidilyInPolyTime tail encIn encBits) :
+    ComputableTidilyInPolyTime (fun x => head x :: tail x) encIn encBits :=
+  hhead.append htail fun _ => rfl
+
+/-- Read the head of any list encoding with a fixed fallback. -/
+@[fun_prop]
+theorem headD {encL : List α ↪ List Bool} [ListEncoding encA encL] (fallback : α) :
+    ComputableTidilyInPolyTime (fun list => list.headD fallback) encL encA :=
+  (ComputableTidilyInDegree.headD fallback).computableTidilyInPolyTime
+
+/-- Drop the head of any list encoding. -/
+@[fun_prop]
+theorem tail {encL : List α ↪ List Bool} [ListEncoding encA encL] :
+    ComputableTidilyInPolyTime (List.tail (α := α)) encL encL :=
+  (ComputableTidilyInDegree.tail (enc₁ := encA)).computableTidilyInPolyTime
+
+/-- Reverse a raw bit string using an accumulator that grows by one bit per step. -/
+@[fun_prop]
+theorem bitsReverse : ComputableTidilyInPolyTime List.reverse encBits encBits := by
+  have h := foldl_of_bounded_growth (encA := encBool) (encL := encBits)
+    (step := fun reversed bit => bit :: reversed) (init := fun _ => [])
+    (id' (encIn := encBits)) (const [])
+    (show ComputableTidilyInPolyTime (fun p : List Bool × Bool => p.2 :: p.1)
+      (encPair encBits encBool) encBits by fun_prop)
+    (growth := 1) (fun _ _ => by simp)
+  simpa using h
 
 /-- Prepending an element to a framed list is polynomial-time. -/
 @[fun_prop]
@@ -90,6 +132,15 @@ theorem filterWith {test : π × α → Bool} {par : γ → π} {list : γ → L
     (ComputableTidilyInDegree.fst encP (encList encA))
     (ComputableTidilyInDegree.snd encP (encList encA))).computableTidilyInPolyTime.comp
       (hpar.prod hlist)
+
+/-- Filter with a predicate that captures the original input. -/
+@[fun_prop]
+theorem filterWithInput {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (htest : ComputableTidilyInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableTidilyInPolyTime (fun x => (list x).filter (test x)) encIn (encList encA) :=
+  filterWith htest id' hlist
 
 /-- Filtering a list by a polynomial-time test is polynomial-time. -/
 @[fun_prop]
@@ -274,6 +325,24 @@ theorem allWith {test : π × α → Bool} {par : γ → π} {list : γ → List
   have h := bool_not.comp (anyWith (bool_not.comp htest) hpar hlist)
   simpa only [Function.comp_def, ← List.all_eq_not_any_not] using h
 
+/-- Test whether any list element satisfies a predicate that captures the original input. -/
+@[fun_prop]
+theorem anyWithInput {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (htest : ComputableTidilyInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableTidilyInPolyTime (fun x => (list x).any (test x)) encIn encBool :=
+  anyWith htest id' hlist
+
+/-- Test whether every list element satisfies a predicate that captures the original input. -/
+@[fun_prop]
+theorem allWithInput {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (htest : ComputableTidilyInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableTidilyInPolyTime (fun x => (list x).all (test x)) encIn encBool :=
+  allWith htest id' hlist
+
 private def idxStep [DecidableEq α] (v : α) (s : Bool × ℕ) (a : α) : Bool × ℕ :=
   if s.1 || decide (a = v) then (true, s.2) else (false, s.2 + 1)
 
@@ -316,6 +385,14 @@ theorem idxOf [DecidableEq α] (enc : α ↪ List Bool) :
   simpa only [Function.comp_def, foldl_idxStep, Bool.false_eq_true, ite_false, Nat.zero_add]
     using (snd encBool encUnary).comp h
 
+/-- Find a computed value's first occurrence in a computed list. -/
+@[fun_prop]
+theorem idxOfWithInput [DecidableEq α] {list : γ → List α} {value : γ → α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (hvalue : ComputableTidilyInPolyTime value encIn encA) :
+    ComputableTidilyInPolyTime (fun x => (list x).idxOf (value x)) encIn encUnary :=
+  (idxOf encA).comp (hlist.prod hvalue)
+
 /-- Drop a unary number of elements from a sized list encoding, including raw bit strings. -/
 theorem dropUnary {encL : List α ↪ List Bool} [ListEncoding encA encL]
     [SizedListEncoding encA encL] :
@@ -346,5 +423,20 @@ theorem listGetD {encL : List α ↪ List Bool} [ListEncoding encA encL]
     List.getD_eq_getElem?_getD] using
     (of_linear (ListEncoding.headD (enc₁ := encA) (enc := encL) d)).comp
       (dropUnary (encA := encA))
+
+/-- Read a bit at a unary index with a fixed fallback. Fixing the raw encoding avoids
+guessing a list-encoding instance during compositional proof search. -/
+@[fun_prop]
+theorem bitsGetD (fallback : Bool) :
+    ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1.getD p.2 fallback)
+      (encPair encBits encUnary) encBool := listGetD (encA := encBool) fallback
+
+/-- Read a computed bit string at a computed unary index. -/
+@[fun_prop]
+theorem bitsGetDWithInput {list : γ → List Bool} {index : γ → ℕ}
+    (hlist : ComputableTidilyInPolyTime list encIn encBits)
+    (hindex : ComputableTidilyInPolyTime index encIn encUnary) (fallback : Bool) :
+    ComputableTidilyInPolyTime (fun x => (list x).getD (index x) fallback) encIn encBool :=
+  (bitsGetD fallback).comp (hlist.prod hindex)
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

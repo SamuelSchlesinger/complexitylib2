@@ -107,15 +107,7 @@ The list may contain repeated variables. -/
 theorem CNF.computableTidilyInPolyTime_atMostOne [DecidableEq V] (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (CNF.atMostOne (V := V))
       (encList enc) (encList (encList (encPair enc encBool))) := by
-  have hne : ComputableTidilyInPolyTime (fun p : V × V => decide (p.2 ≠ p.1))
-      (encPair enc enc) encBool := by
-    simpa only [Function.comp_def, decide_not] using
-      bool_not.comp ((decide_eq enc).comp ((snd enc enc).prod (fst enc enc)))
-  have hclause : ComputableTidilyInPolyTime (fun p : V × V => [(p.1, false), (p.2, false)])
-      (encPair enc enc) (encList (encPair enc encBool)) := by fun_prop
-  have hrow := mapWith hclause (snd (encList enc) enc)
-    (filterWith hne (snd (encList enc) enc) (fst (encList enc) enc))
-  exact flatMapWith hrow id' id'
+  fun_prop [CNF.atMostOne]
 
 /-- Construct exactly-one constraints in polynomial time, including for empty or repeated lists. -/
 @[fun_prop]

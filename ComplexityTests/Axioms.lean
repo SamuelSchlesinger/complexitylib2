@@ -3429,4 +3429,28 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWithInput' depends o
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWithInput
 
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl_spec
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterate_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterate_spec
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_spec
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses
+
 end ComplexityTests.Axioms

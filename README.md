@@ -15,11 +15,12 @@ with correctness and explicit time/space bounds.
 
 The intended programming interface uses `PFunctor.FreeM`, straight-line `do` code, queries and
 coins, with machine realizations and resource certificates obtained compositionally. That program
-layer, the general effectful machine, and the invariant-oriented `polytime` tactic are still
-to be integrated into v2. The local cslib `crypto` branch already supplies working `polytime` and
-`ppt` interfaces to adapt. The current v2 calculus supports deterministic functions and explicit
-fold rules. See `ROADMAP.md` for implemented results, the proof-length audit, and the next design
-experiments.
+layer, the general effectful machine, and `ppt` remain to be integrated into v2. The deterministic
+`polytime` tactic now combines `fun_prop`, named and local routine certificates, and bounded-growth
+loop rules. Fold and iteration specifications prove both efficiency and a final invariant from
+value-level contracts. These interfaces adapt the local cslib `crypto` branch to the existing tidy
+TM calculus. See `ROADMAP.md` for implemented results, measured proof reductions, and the remaining
+integration work.
 
 ## Layout
 

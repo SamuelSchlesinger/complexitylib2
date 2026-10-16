@@ -5,6 +5,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
+import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.SATPolyTime
 import ComplexityTests.Smoke

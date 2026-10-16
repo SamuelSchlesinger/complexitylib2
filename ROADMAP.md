@@ -35,7 +35,8 @@ conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's 
 `Universal/` development certifies an interpreter written as ordinary Lean functions.
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
 that count, not its binary length. The `PFunctor.FreeM` program interface, program realization
-theorems, general effectful machine and `polytime` tactic remain to be integrated into v2.
+theorems, general effectful machine and `ppt` remain to be integrated into v2. The deterministic
+`polytime` tactic and invariant-oriented loop specifications have now been adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
 
 ### Existing crypto implementation to reuse
@@ -136,23 +137,60 @@ from 10 to 1, and the accepting-clause proof from 2 to 1. Tests check a nested t
 capturing the original input in one `fun_prop` call and the existing feature-group
 enumeration in three proof lines. The change adds four proof lines and removes 21 from clients;
 it also adds theorem statements and documentation, so this is not a claim of shrinking total
-repository source by 17 lines. Generic filtering with negated equality and some lookup
-compositions still need explicit intermediate certificates; they are not claimed solved.
+repository source by 17 lines. The next batch below addresses filtering with negated equality
+and the lookup compositions used by SAT.
 
 The dynamic traversal rules require a **joint** certificate for `(input, element) ↦ body`.
 Separate certificates for each fixed element would allow different machines and polynomial
 degrees and would not establish a uniform algorithm over a variable list.
 
+### Deterministic tactic integration and existing clients (2026-10-16)
+
+The crypto interface now has a deterministic v2 adaptation: `polytime`,
+`@[program_certificate]`, local algorithm calls with nested tuple arguments, constructor rules,
+and constant-growth fold/iteration rules. Compositional goals use `fun_prop` and a bounded search;
+constructor decomposition avoids expensive unsuccessful searches for unknown subroutines.
+The certificate search checks argument preparation before choosing between two input encodings.
+Tests retain failures for missing algorithm certificates, missing growth bounds, and doubling a
+fold accumulator. No heartbeat limits were increased.
+
+`foldl_spec`, `iterate_spec`, and `iterateWith_spec` combine a semantic invariant and encoded-size
+bound to return both a TM certificate and the final postcondition. The captured iteration rule
+requires a joint step certificate in the parameter and state. Tests prove reversal by a prefix
+invariant and unary squaring by repeated addition with a captured input. These are API regression
+examples; the demanding clients remain the complete Cook–Levin reduction and clocked universal
+simulation.
+
+Measured against `916363d`, existing client proof bodies change as follows:
+
+| Existing proof | Before | After |
+|---|---:|---:|
+| SAT certificate assignment | 6 | 1 |
+| SAT literal evaluation | 7 | 1 |
+| SAT clause evaluation | 3 | 1 |
+| SAT verifier | 1 | 1 |
+| CNF at-most-one construction | 9 | 1 |
+| Total | 26 | 5 |
+
+Reusable list rules infer the traversed collection's encoding before checking captured
+predicates; first-occurrence lookup and raw-bit access get compositional forms. Together with
+negated equality these discharge the previous manual projection and filtering arguments.
+The actual Cook–Levin one-hot family now has a one-line proof, using a three-line feature-group
+certificate and the existing exactly-one CNF constructor. Input/read clauses, step clauses and
+full assembly remain open; this is not yet the complete polynomial-time reduction.
+
+The infrastructure has a real cost: 24 new theorem bodies add 89 body lines, while these clients
+remove 21, for a library total of 4,707 bodies / 33,128 lines. The scanner excludes tactic
+implementation definitions, theorem statements, documentation and tests. Thus this batch grows
+the library overall; its measured benefit is client readability and reusable coverage, not a net
+source reduction or a claim of faster elaboration. Strict project validation and the negative
+tests check robustness, but compilation performance needs a separate benchmark.
+
 ### Next design experiments
 
-1. **Port the crypto loop and tactic interfaces.** Adapt `list_foldl_spec` and the iteration
-   specifications to `foldl'`/`foldlWith` and the existing iteration backend: initialization,
-   preservation, and a polynomial encoded-size consequence should discharge the prefix-fold
-   premise. Reuse the crypto certificate-first search and encoding-order discipline, with
-   `fun_prop` handling the compositional goals already covered in v2.
-   The caller still supplies the substantive invariant and growth argument. Polynomial-time
-   steps alone do not prevent exponential growth across iterations.
-   Then validate the intended `FreeM` interface with one readable `do` program containing a
+1. **Integrate the crypto probabilistic realization layer and `ppt`.** The deterministic loop
+   and tactic interfaces above are in place. Adapt the effectful machine and the intended
+   `PFunctor.FreeM` interface, then validate one readable `do` program containing a
    bounded loop, a semantic specification and an actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
    for the Cook–Levin milestone.
@@ -170,7 +208,7 @@ degrees and would not establish a uniform algorithm over a variable list.
    The existing second-moment inequality is already there. Frontier bounds likewise deserve
    common cardinality-to-real estimate lemmas where two clients currently repeat conversions.
 
-Items 1–4 are reviewed candidates, not measured savings or completed refactors. Prefer
+These remaining items are reviewed candidates, not measured savings or completed refactors. Prefer
 `fun_prop` for composition, curated `simp` normal forms for structural identities, and a small
 domain-specific Aesop rule set for choosing specification rules. Broad search does not replace
 uniformity, invariant, concentration, or asymptotic arguments. Judge each experiment on client
@@ -234,9 +272,9 @@ Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-tim
 | Signed unary positions, integer numbering and tape-window enumeration | `MultiTape/Complexity/PolyTime/{Int,Window}.lean` | proved using the existing signed encoding and `windowList` |
 | Polynomial-time input prefix, certificate length and time bound | `CookLevin/Parameters.lean` | proved for the parameter function shared with `reduce`; both bounds are in unary |
 | Polynomial-time variable construction and binary relabelling | `CookLevin/Encoding.lean` | proved using the existing indices in unary as an intermediate representation |
-| Initial, accepting and situation clause construction | `CookLevin/Clauses.lean` | proved for the existing clause definitions; composed clients close with `fun_prop` |
+| Initial, accepting, situation and one-hot clause construction | `CookLevin/Clauses.lean` | proved for the existing clause definitions; composed clients close with `fun_prop` |
 | `NPComplete encCNF SAT` from the reduction's polynomial-time bound | `CookLevin/Staging.lean` | proved (local-only staging) |
-| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: one-hot, input/read and step clauses, then full tableau assembly |
+| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: input/read and step clauses, then full tableau assembly; the one-hot family is certified |
 | `ThreeSAT` and correctness of `SAT ≤ 3SAT` | `Problems/ThreeSAT.lean`, `CNF/ThreeCNF.lean` | proved (polynomial time open) |
 
 Circuit track (independent of the calculus): `P/poly` over upstream circuits and `Language.slice`,

@@ -185,12 +185,11 @@ theorem type_let (n : Nat) :
     let j : Nat := k
     j = k := by
   rfl
-@[expose] public def annotated : Nat := 0
-@[simp] public lemma after_annotated : annotated = 0 := rfl
-@[expose] def multi_line : Nat :=
-  0
+@[expose] public def annotated : List Nat := []
+@[simp] public lemma after_annotated : annotated = [] := rfl
+@[expose] def multi_line : List Nat := [0]
 
-lemma after_multi_line : multi_line = 0 := by
+lemma after_multi_line : multi_line = [0] := by
   rfl
 universe u
 end Sample

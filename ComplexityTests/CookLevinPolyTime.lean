@@ -32,8 +32,14 @@ example {k : ℕ} {State : Type} [Fintype State] :
     ComputableTidilyInPolyTime
       (fun p : ℕ × ℕ => Feature.groups (k := k) (State := State) p.1 p.2)
       (encPair encUnary encUnary) (encList (encList encFeature)) := by
-  unfold Feature.groups
-  simp only [SProd.sprod, List.product, List.map_flatMap, List.map_map, Function.comp_def]
+  fun_prop
+
+-- Exactly-one constraints compose with the existing binary variable numbering.
+example {k : ℕ} {State : Type} [Fintype State] [DecidableEq State] :
+    ComputableTidilyInPolyTime
+      (fun p : ((List Bool × ℕ) × ℕ) × ℕ =>
+        (oneHotClauses (k := k) (State := State) p.1.1.1 p.1.1.2 p.1.2 p.2).relabel Var.index)
+      (encPair (encPair (encPair encBits encUnary) encUnary) encUnary) encCNF := by
   fun_prop
 
 -- The input encoding, polynomial and machine are fixed parameters of the reduction.
@@ -51,6 +57,11 @@ private def finish : Turing.MultiTapeTM 0 Bool Unit :=
 example : ComputableTidilyInPolyTime
     (fun T => (initClauses finish T).relabel Var.index) encUnary encCNF := by
   fun_prop
+
+example : ComputableTidilyInPolyTime
+    (fun n => (oneHotClauses (k := 0) (State := Unit) [] n n n).relabel Var.index)
+    encUnary encCNF := by
+  fun_prop [oneHotClauses]
 
 example : ComputableTidilyInPolyTime
     (fun j => (Var.cert (k := 0) (State := Empty) j).index) encUnary encNat := by

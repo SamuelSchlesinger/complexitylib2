@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
 /-!
 # Basic polynomial-time rules
@@ -25,6 +26,13 @@ rules for `fun_prop`.
 -/
 
 @[expose] public section
+
+/-- Apply a polynomial size bound to any input-size function. -/
+theorem Turing.MultiTapeTM.PolyBounded.of_polynomiallyBounded {α : Type*}
+    (size : α → ℕ) {bound : ℕ → ℕ} (hbound : Cslib.PolynomiallyBounded bound) :
+    Turing.MultiTapeTM.PolyBounded size (fun a => bound (size a)) := by
+  obtain ⟨c, d, h⟩ := Cslib.polynomiallyBounded_iff_le.mp hbound
+  exact ⟨c, d, fun a => h (size a)⟩
 
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
@@ -82,11 +90,25 @@ theorem bool_and : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 && p.
 theorem bool_or : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 || p.2)
     (encPair encBool encBool) encBool := of_finite _
 
+/-- Comparing two Boolean values is a finite-domain computation. -/
+@[fun_prop]
+theorem bool_beq : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 == p.2)
+    (encPair encBool encBool) encBool := of_finite _
+
 /-- Equality is polynomial-time for any encoding. -/
 @[fun_prop]
 theorem decide_eq [DecidableEq α] (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (fun p : α × α => decide (p.1 = p.2))
       (encPair enc enc) encBool :=
   (ComputableTidilyInDegree.eq enc).computableTidilyInPolyTime
+
+/-- Compare two computed values using their common encoding. -/
+@[fun_prop]
+theorem decide_ne [DecidableEq β] {left right : α → β}
+    (hleft : ComputableTidilyInPolyTime left encA encB)
+    (hright : ComputableTidilyInPolyTime right encA encB) :
+    ComputableTidilyInPolyTime (fun x => decide (left x ≠ right x)) encA encBool := by
+  simpa only [Function.comp_def, decide_not] using
+    bool_not.comp ((decide_eq encB).comp (hleft.prod hright))
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

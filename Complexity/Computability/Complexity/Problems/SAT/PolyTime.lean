@@ -54,12 +54,7 @@ theorem computableTidilyInPolyTime_vars :
 theorem computableTidilyInPolyTime_assignment :
     ComputableTidilyInPolyTime (fun p : (CNF ℕ × List Bool) × ℕ => assignment p.1.1 p.1.2 p.2)
       (encPair (encPair encCNF encBits) encNat) encBool := by
-  have hx := fst (encPair encCNF encBits) encNat
-  have hφ := (fst encCNF encBits).comp hx
-  have hw := (snd encCNF encBits).comp hx
-  exact (listGetD (encA := encBool) (encL := encBits) false).comp
-    (hw.prod ((idxOf encNat).comp
-      ((computableTidilyInPolyTime_vars.comp hφ).prod (snd (encPair encCNF encBits) encNat))))
+  fun_prop [assignment]
 
 /-- Evaluating a literal with the certificate assignment is polynomial-time. -/
 @[fun_prop]
@@ -67,13 +62,7 @@ theorem computableTidilyInPolyTime_literal :
     ComputableTidilyInPolyTime
       (fun p : (CNF ℕ × List Bool) × Literal ℕ => Literal.eval (assignment p.1.1 p.1.2) p.2)
       (encPair (encPair encCNF encBits) (encPair encNat encBool)) encBool := by
-  have hx := fst (encPair encCNF encBits) (encPair encNat encBool)
-  have hl := snd (encPair encCNF encBits) (encPair encNat encBool)
-  have hv := (fst encNat encBool).comp hl
-  have hb := (snd encNat encBool).comp hl
-  exact (of_finite (encA := encPair encBool encBool) (encB := encBool)
-    (fun p : Bool × Bool => p.1 == p.2)).comp
-      ((computableTidilyInPolyTime_assignment.comp (hx.prod hv)).prod hb)
+  fun_prop [Literal.eval, assignment]
 
 /-- Evaluating a clause with the certificate assignment is polynomial-time. -/
 @[fun_prop]
@@ -81,15 +70,13 @@ theorem computableTidilyInPolyTime_clause :
     ComputableTidilyInPolyTime
       (fun p : (CNF ℕ × List Bool) × Clause ℕ => Clause.eval (assignment p.1.1 p.1.2) p.2)
       (encPair (encPair encCNF encBits) (encList (encPair encNat encBool))) encBool := by
-  exact anyWith computableTidilyInPolyTime_literal
-    (fst (encPair encCNF encBits) (encList (encPair encNat encBool)))
-    (snd (encPair encCNF encBits) (encList (encPair encNat encBool)))
+  fun_prop [Clause.eval, Literal.eval, assignment]
 
 /-- The SAT verifier is polynomial-time, including on certificates of arbitrary length. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_verifier :
     ComputableTidilyInPolyTime verifier (encPair encCNF encBits) encBool := by
-  exact allWith computableTidilyInPolyTime_clause id' (fst encCNF encBits)
+  fun_prop [verifier, CNF.eval]
 
 /-- Satisfiability is in NP, with certificates of length equal to the encoded formula length. -/
 theorem mem_NP : SAT ∈ NP encCNF :=
