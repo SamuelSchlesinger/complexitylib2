@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
+import Complexity.Tactic.PolyTime
 
 /-! Saved-coin replay with shared state, early halting, cutoff and nontrivial work tapes. -/
 
@@ -155,5 +156,30 @@ example :
 example (coins : List Bool) : writeForever.runClosedCoins coins [] ∈
     (ProbComp.eval (writeForever.runClosed coins.length [])).support :=
   MultiTapePTM.runClosedCoins_mem_support _ _ _
+
+-- The actual encoded-input certificate applies even when the source never halts.
+example : MultiTapeTM.ComputableTidilyInLinearTimeAndSpace
+    (fun p : List Bool × List Bool => writeForever.runClosedCoins p.1 p.2)
+    (MultiTapeTM.encPair MultiTapeTM.encBits MultiTapeTM.encBits) MultiTapeTM.encBits :=
+  MultiTapePTM.computableTidilyInLinearTimeAndSpace_runClosedCoins writeForever
+
+-- A functional client can rearrange arguments and preprocess the supplied tape by automation.
+example : MultiTapeTM.ComputableTidilyInPolyTime
+    (fun p : List Bool × List Bool => writeForever.runClosedCoins (false :: p.2) p.1)
+    (MultiTapeTM.encPair MultiTapeTM.encBits MultiTapeTM.encBits) MultiTapeTM.encBits := by
+  fun_prop
+
+-- Both runtime inputs matter: the scanner stops at the end of its virtual input.
+example : MultiTapeTM.ComputableTidilyInPolyTime
+    (fun p : List Bool × List Bool => MultiTapePTM.uniformListMachine.runClosedCoins p.1 p.2)
+    (MultiTapeTM.encPair MultiTapeTM.encBits MultiTapeTM.encBits) MultiTapeTM.encBits := by
+  polytime
+
+example : MultiTapePTM.uniformListMachine.runClosedCoins [false, true, false] [true] = [false] := by
+  rfl
+
+example : MultiTapePTM.uniformListMachine.runClosedCoins [false, true, false] [] = [] := by rfl
+
+example : MultiTapePTM.uniformListMachine.runClosedCoins [] [true, false] = [] := by rfl
 
 end ComplexityTests.CoinTape

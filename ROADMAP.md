@@ -368,16 +368,29 @@ already-halted source, negative work-head movement, buffered queries and shared 
 This batch adds 24 theorem bodies / 100 body lines, giving 4,955 / 34,481 in 437 source files;
 the general averaging proof is 13 lines and the controller's arbitrary-position run proof is 16.
 These counts include the two low-level modules and exclude statements, definitions and tests.
-The controller starts with preloaded tapes: standard-pair decoding and tape preparation still
-need to be connected before claiming a polynomial-time saved-coin evaluator.
+The controller itself starts with preloaded tapes; the next batch connects this to actual input
+preparation and computability as follows.
+
+Closed saved-coin replay is now tidily computable in linear time and space from the standard
+encoded pair `(coins, input)`, even when the source never halts. A reusable selected-tape writer
+preserves nonblank unselected words; `PairEncoding.exists_prepare` composes the existing certified
+projections into a finite linear-time pair preparer. Its two output heads finish at zero, and the
+replay compiler adds only the virtual-input marker before execution. The final tidy normalization
+charges cleanup and restores every head. Clients can rearrange the arguments and preprocess their
+coins with a one-line `fun_prop` proof. Tests also use `polytime` and cover the nonhalting source,
+false bits, empty coin tapes and empty virtual input. Including all three compiler modules, this
+batch adds 11 theorem bodies / 169 body lines, giving 4,966 / 34,650 in 440 source files. Statements,
+definitions and tests are excluded from this source-layout metric. Total typed seeded evaluators
+for arbitrary `IsPPTOn` programs, probabilistic repetition and adaptive loops remain to be ported.
 
 ### Next design experiments
 
 1. **Extend `ppt` to probabilistic loops.** The deterministic loop and tactic interfaces, typed
    `PFunctor.FreeM` frontend, effectful machine interpreter, closed PPT contract, runtime-length
    sampling, captured-input composition and polynomial clock compiler are in place.
-   Finish the saved-coin evaluator's standard-pair preparation and tidy TM certificate so repetition
-   and adaptive loops can reuse the deterministic loop calculus, then
+   Lift the certified raw saved-coin evaluator to total typed evaluators for `IsPPTOn`, with exact
+   distributions and support for every seed, so repetition and adaptive loops can reuse the
+   deterministic loop calculus. Then
    validate one readable `do` program containing a bounded loop, a semantic specification and an
    actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement

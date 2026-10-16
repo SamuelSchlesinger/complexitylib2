@@ -3748,4 +3748,25 @@ info: 'Turing.MultiTapePTM.runFrom_replay' depends on axioms: [propext, Classica
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapePTM.runFrom_replay
 
+/--
+info: 'Turing.MultiTapeTM.PairEncoding.exists_prepare' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.PairEncoding.exists_prepare
+
+/--
+info: 'Turing.MultiTapePTM.computableTidilyInLinearTimeAndSpace_runClosedCoins' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.computableTidilyInLinearTimeAndSpace_runClosedCoins
+
+/--
+info: 'Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins
+
 end ComplexityTests.Axioms

@@ -251,6 +251,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OnWord
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PrepareClock
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PrepareInput
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PreparePair
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ReadInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.RepeatUntilBlank
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.RewindWork
@@ -261,6 +262,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.D
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileInput
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WriteWord
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Closed
@@ -273,6 +275,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.O
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.PolynomialClock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
