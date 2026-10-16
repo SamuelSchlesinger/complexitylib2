@@ -217,7 +217,7 @@ not existence proofs of one-way functions or permutations.
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
-| PRG → PRF and OWF → PRF | prefix hybrids and their full-game PPT certificates are ported; queue expansion, reduction and security, then `OneWayToPRF` |
+| PRG → PRF and OWF → PRF | prefix hybrids, expansion laws and full-game PPT certificates are ported; queue the single-challenge reduction and security, then `OneWayToPRF` |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
 already present in v2 at `316944d` or its cslib pin, has 183 absent modules / 33,887 source lines.
@@ -986,8 +986,50 @@ The complete `isPPTOn_hybridGame` proof uses 718,836 raw tactic heartbeats in a 
 Lean check with Mathlib's `#count_heartbeats` tactic. This counts handler/resource certification and
 the cache invariant together. It is a measurement of this client, not a cross-version speedup.
 All six project checks and four new headline axiom guards pass. Independent API review approved
-the source, helper reuse and client design; the adversarial correctness review runs on the
-published batch.
+the source, helper reuse and client design. The adversarial correctness review approved the
+published batch without material findings, checking targeted Lean diagnostics and five axioms.
+
+### GGM expansions and encoding inference (2026-10-16)
+
+`GGM.Expansion` caches a sampled expansion at each queried parent prefix, truncates it to two
+labels and evaluates the selected child's suffix. Generated expansions reproduce the preceding
+prefix hybrid; uniform expansions reproduce the next one. Both equalities hold for arbitrary
+randomized adaptive clients when `depth < n`. The generated case transports the whole cache under
+an exact label-width invariant. The uniform case uses the existing eager/lazy cache theorem and
+an equivalence regrouping the complete random table. Neither identity assumes a secure generator.
+
+The complete expansion experiment is strict PPT whenever the generator, sampler and captured
+parameters are certified. Its handler proof remains three lines with `fun_prop`. Truncation
+bounds stored values and replies for short, long or malformed challenges. The supportwise growth
+allowance charges every prefix, two labels and list/pair framing; computation and copying use the
+shared stateful substitution theorem. Efficiency remains total at zero width and at arbitrary
+depth, separately from the adjacent-level identities.
+
+This client exposed an inference gap between `list.getD index fallback` and
+`list[index]?.getD fallback`. Optional head now supports every `ListEncoding`, including empty
+element types. Computed optional lookup asks for the list certificate before the operation/size
+instances, so `fun_prop` determines the encoding before typeclass search. The raw-bit rule fixes
+the element encoding without converting the word into a framed list. These rules remove the old
+syntax-restoration rewrite from `polytime`; regressions cover both spellings, raw and framed bits,
+unary naturals, abstract custom encodings and an empty element type.
+
+The module adds 11 bodies / 184 proof lines versus 11 / 170 in the source crypto module. The shared
+invariant-preserving state map adds 15 lines and replaces an existing four-line proof with two;
+lookup rules cost three lines and the generalized head rule adds four. Net batch: 14 new bodies /
+204 lines, counting every helper and local proof. The whole library has 5,527 bodies / 37,838 lines
+in 512 source modules, median 3 / P90 17 under the existing scanner exclusions. This adds semantic
+and machine certificates without a claimed net proof reduction.
+The complete expansion-game PPT proof measures 761,388 raw tactic heartbeats, including the
+captured sampler, handler inference and local storage invariant.
+
+Tests exercise computed/captured samplers, cache hits and duplicates, malformed queries, long and
+short challenges, and a private-random query order whose answer comparison detects correlated
+siblings. The semantic client is not itself assigned an oracle-PPT certificate. Source/API review
+approved the generalized lookup contract after catching and resolving a regression for custom
+encodings; the same review strengthened the sibling test to avoid masking correlations.
+All six project checks pass, including the five new standard-axiom guards. The independent
+adversarial correctness review is pending publication of this batch.
+The single-challenge PRG reduction and final GGM security assembly remain open.
 
 ### Implementation priorities (2026-10-16)
 
@@ -1007,7 +1049,7 @@ published batch.
    conditional NP-completeness assembly with an unconditional theorem.
 7. Complete general OWF → PRG through the remaining pseudoentropy and security reductions,
    reusing Goldreich–Levin, the OWP result and polynomial stretch.
-8. Complete adaptive GGM expansion, reduction and security over the shared oracle
+8. Complete the single-challenge GGM reduction and security assembly over the shared oracle
    calculus, deriving PRG → PRF and then OWF → PRF.
 9. Keep PCP polynomial-time constructibility and explicit expander construction distinct from
    combinatorial correctness and polynomial output-size bounds.

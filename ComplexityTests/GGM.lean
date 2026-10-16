@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Crypto.Computational.GGM.Hybrid
+import Complexity.Crypto.Computational.GGM.Expansion
 import Complexity.Tactic.PPT
 
 /-! GGM's evaluator, adaptive prefix games and machine certificates, including short expansions,
@@ -83,5 +83,52 @@ example (generator : List Bool → List Bool) (n : ℕ) :
   simpa [ProbOracleComp.interpret_sample] using
     (show OracleComp.interpret ProbComp.unifOracle (ProbComp.uniform Bool) =
       PMF.uniformOfFintype Bool from ProbComp.eval_uniform Bool)
+
+-- Captured samplers and computed indices use ordinary list and option operations.
+example : IsPPTOn (encPair encUnary encBits) (encPair encBits GGM.cacheEncoding)
+    (fun pair => GGM.expansionOracle List.tail
+      ((fun bits => bits ++ pair.2) <$> BitString.sampleList (pair.1 + 1))
+        pair.1 (pair.1 + 1) pair.2.reverse [(pair.2, pair.2)]) := by fun_prop
+
+-- A preassigned cache is retained on malformed queries, without invoking the sampler.
+example (generator : List Bool → List Bool) (sample : ProbComp (List Bool))
+    (depth : ℕ) (cache : GGM.Cache) :
+    GGM.expansionOracle generator sample 1 depth [] cache = pure ([], cache) := by
+  simp [GGM.expansionOracle]
+
+-- Truncation charges and stores only two labels even for a longer sampled challenge.
+example : GGM.expansionOracle List.tail (pure [true, false, true]) 1 0 [false] [] =
+    pure ([true], [([], [true, false])]) := by
+  simp [GGM.expansionOracle, GGM.selectChild, memoize]
+
+-- Short challenges are allowed: the selected child may be empty.
+example : GGM.expansionOracle List.tail (pure [true]) 1 0 [true] [] =
+    pure ([], [([], [true])]) := by
+  simp [GGM.expansionOracle, GGM.selectChild, memoize]
+
+-- Cache hits do not resample; duplicate parent keys keep their first expansion.
+example : GGM.expansionOracle List.tail (pure []) 1 0 [true]
+      [([], [false, true]), ([], [true, false])] =
+    pure ([true], [([], [false, true]), ([], [true, false])]) := by
+  simp [GGM.expansionOracle, GGM.selectChild, memoize]
+
+-- A private coin chooses query order; comparing the answers detects correlated child labels.
+private noncomputable def siblings (_ : ℕ) (_ : List Bool) : WordOracleComp Unit Bool := do
+  let coin ← ProbOracleComp.sample (ProbComp.uniform Bool)
+  let first ← ProbOracleComp.query ((), [coin])
+  let second ← ProbOracleComp.query ((), [!coin])
+  return first.headD false == second.headD false
+
+example : ProbComp.eval (GGM.expansionGame List.tail (BitString.sampleList 2) siblings 1 0) =
+    ProbComp.eval (prfIdealGame siblings 1) := by
+  rw [GGM.expansionGame_uniform List.tail siblings 1 0 (by decide), GGM.hybridGame_self]
+
+-- Every certified sampler and adaptive adversary compose through the complete-game contract.
+example {generator : List Bool → List Bool} {sample : ℕ → ProbComp (List Bool)}
+    (hg : ComputableTidilyInPolyTime generator encBits encBits)
+    (hs : IsPPTOn encUnary encBits sample) {adversary : OracleDistinguisher}
+    (ha : IsOraclePPT encBool adversary) : IsPPTOn encUnary encBool
+      (fun n => GGM.expansionGame generator (sample n) adversary n (n + 1)) :=
+  GGM.isPPTOn_expansionGame hg hs (by fun_prop) (by fun_prop) ha
 
 end ComplexityTests.GGM

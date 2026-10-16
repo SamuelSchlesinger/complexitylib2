@@ -25,6 +25,7 @@ polynomial bound on the complete encoded output. The operations are total on emp
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsToList`, `.listToBits`: encoding conversion.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsGetElem?`: optional lookup in raw bits.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapToBitsWithInput`, `.bitsFilterWithInput`,
   `.bitsAnyWithInput`, `.bitsFoldlWithInput`, `.bitsZipWithInput`: compositional bit operations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajority`, `.bitsSingle`, `.bitsSingles`,
@@ -93,6 +94,15 @@ theorem bitsToList : ComputableTidilyInPolyTime (fun l => l) encBits (encList en
     (growth := 3) (fun _ _ => by simp)
   simpa only [List.foldl_append_eq_append, List.nil_append, List.flatten_eq_flatMap,
     List.flatMap_map, id_eq, List.flatMap_singleton'] using h
+
+/-- Optional lookup in a raw bit string, fixing the representation of the returned bit. -/
+@[fun_prop]
+theorem bitsGetElem? {α : Type} {input : α ↪ List Bool}
+    {list : α → List Bool} {index : α → ℕ}
+    (hlist : ComputableTidilyInPolyTime list input encBits)
+    (hindex : ComputableTidilyInPolyTime index input encUnary) :
+    ComputableTidilyInPolyTime (fun x => (list x)[index x]?) input (encOption encBool) :=
+  getElem? hlist hindex
 
 /-- Remove the framing from a list of bits. -/
 @[fun_prop]

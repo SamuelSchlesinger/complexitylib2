@@ -22,6 +22,7 @@ the distribution relating two state representations. These are specializations o
 
 * `Cslib.ProbOracleComp.run_interpret_invariant`: external invariants survive private sampling.
 * `Cslib.ProbOracleComp.run_interpret_simulation`: local joint-state simulation suffices.
+* `Cslib.ProbOracleComp.run_interpret_map_state_of_invariant`: state representation on an invariant.
 * `Cslib.ProbOracleComp.run_interpret_map_state`: deterministic representation of oracle state.
 * `Cslib.ProbOracleComp.run_interpret_readOnly`: preserve a fixed external environment.
 
@@ -94,6 +95,37 @@ theorem run_interpret_simulation (oracle : (q : Query) → StateT State PMF (spe
     exact PMF.bind_comm _ _ _
   | inr q => exact step q state
 
+/-- Re-encode private state on invariant states while retaining independent private samples. -/
+theorem run_interpret_map_state_of_invariant
+    (oracle : (q : Query) → StateT State PMF (spec q))
+    (oracle' : (q : Query) → StateT State' PMF (spec q))
+    (represent : State → State') (invariant : State → Prop)
+    (preserve : ∀ q s, invariant s → ∀ a s', (a, s') ∈ (oracle q s).support → invariant s')
+    (step : ∀ q s, invariant s →
+      (oracle q s).map (fun (a, s') => (a, represent s')) = oracle' q (represent s))
+    (program : ProbOracleComp spec α) (s : State) (hs : invariant s) :
+    ((OracleComp.interpret
+      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle) program).run s).map
+        (fun (a, s') => (a, represent s')) =
+      (OracleComp.interpret
+        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle') program).run
+          (represent s) := by
+  apply OracleComp.run_interpret_map_state_of_invariant _ _ represent invariant ?_ ?_ program s hs
+  · intro q state hstate value next hnext
+    cases q with
+    | inl n =>
+      change (value, next) ∈ ((ProbComp.unifOracle n).map (·, state)).support at hnext
+      obtain ⟨_, _, heq⟩ := (PMF.mem_support_map_iff _ _ _).mp hnext
+      exact (Prod.mk.inj heq).2 ▸ hstate
+    | inr q => exact preserve q state hstate value next hnext
+  · intro q state hstate
+    cases q with
+    | inl n =>
+      change ((ProbComp.unifOracle n).map (·, state)).map
+        (fun (a, next) => (a, represent next)) = (ProbComp.unifOracle n).map (·, represent state)
+      simp only [PMF.map_comp, Function.comp_def]
+    | inr q => exact step q state hstate
+
 /-- A deterministic state representation commuting with external calls commutes with the whole
 randomized adaptive program, retaining the result and represented private state. -/
 theorem run_interpret_map_state (oracle : (q : Query) → StateT State PMF (spec q))
@@ -106,9 +138,7 @@ theorem run_interpret_map_state (oracle : (q : Query) → StateT State PMF (spec
       (OracleComp.interpret
         (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle') program).run
           (represent s) := by
-  simpa only [PMF.pure_map, PMF.pure_bind, PMF.map, Function.comp_def] using
-    run_interpret_simulation oracle oracle' (fun s => PMF.pure (represent s))
-      (by simpa only [PMF.pure_map, PMF.pure_bind, PMF.map, Function.comp_def] using step)
-      program s
+  exact run_interpret_map_state_of_invariant oracle oracle' represent (fun _ => True)
+    (by simp) (fun q state _ => step q state) program s trivial
 
 end Cslib.ProbOracleComp

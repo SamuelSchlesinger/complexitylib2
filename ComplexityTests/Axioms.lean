@@ -4483,3 +4483,38 @@ info: 'Cslib.Crypto.GGM.isPPTOn_hybridGame' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.GGM.isPPTOn_hybridGame
+
+/--
+info: 'Cslib.ProbOracleComp.run_interpret_map_state_of_invariant' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbOracleComp.run_interpret_map_state_of_invariant
+
+/--
+info: 'Cslib.Crypto.GGM.expansionGame_generated' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.expansionGame_generated
+
+/--
+info: 'Cslib.Crypto.GGM.expansionGame_uniform' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.expansionGame_uniform
+
+/--
+info: 'Cslib.Crypto.GGM.expansionOracle_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.expansionOracle_bounds
+
+/--
+info: 'Cslib.Crypto.GGM.isPPTOn_expansionGame' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.GGM.isPPTOn_expansionGame

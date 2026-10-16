@@ -77,8 +77,6 @@ private meta def polytimeFunProp : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     unless (← getMainTarget).isAppOf ``ComputableTidilyInPolyTime do
       throwError "expected a polynomial-time goal"
-    -- Aesop normalizes `headD` and `getD` to optional lookup; restore the certified operation.
-    evalTactic (← `(tactic| try simp only [← List.getD_eq_getElem?_getD]))
     -- A failed compositional attempt must leave time for the specification rules.
     evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
 

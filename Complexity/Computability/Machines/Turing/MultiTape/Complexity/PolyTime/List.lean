@@ -42,6 +42,7 @@ up a variable with a large binary label does not require a certificate as long a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD`: lookup by a unary index.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.getElem?`: optional lookup in computed lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listIsEmpty`, `.listIsEmpty'`, `.bitsIsEmpty`,
   `.head?`: inspect a list without a default element, with inference rules for framed and raw lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOfWithInput`, `.bitsGetDWithInput`:
@@ -237,13 +238,17 @@ theorem map {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
     ComputableTidilyInPolyTime (List.map f) (encList encA) (encList encB) :=
   mapWith (hf.comp (snd encBool encA)) (const true) id'
 
-/-- Read an optional head without an inhabitant of the element type. -/
+/-- Read an optional head in any list encoding, without an inhabitant of the element type. -/
 @[fun_prop]
-theorem head? (enc : α ↪ List Bool) :
-    ComputableTidilyInPolyTime (List.head? (α := α)) (encList enc) (encOption enc) := by
-  apply ((headD (encA := encOption enc) none).comp (map (optionSome enc))).of_enc_eq
-  intro values
-  cases values <;> rfl
+theorem head? (enc : α ↪ List Bool) {encL : List α ↪ List Bool} [ListEncoding enc encL] :
+    ComputableTidilyInPolyTime (List.head? (α := α)) encL (encOption enc) := by
+  rcases isEmpty_or_nonempty α with h | h
+  · exact of_finite _
+  · obtain ⟨fallback⟩ := h
+    apply ((listIsEmpty (encA := enc)).cond (const none)
+      ((optionSome enc).comp (headD fallback))).of_enc_eq
+    intro values
+    cases values <;> rfl
 
 /-- Map an input-dependent function over a fixed list. Only its members need certificates;
 the list and its elements are not part of the computational input. -/
@@ -497,6 +502,17 @@ theorem dropUnary {encL : List α ↪ List Bool} [ListEncoding encA encL]
       simp only [length_encPair]
       lia)
   simpa only [heq] using h
+
+/-- Look up a computed unary index, returning `none` outside a computed list. The list certificate
+determines its encoding before proof search checks the corresponding operation and size rules. -/
+@[fun_prop]
+theorem getElem? {encL : List α ↪ List Bool} {list : γ → List α} {index : γ → ℕ}
+    (hlist : ComputableTidilyInPolyTime list encIn encL)
+    (hindex : ComputableTidilyInPolyTime index encIn encUnary)
+    [ListEncoding encA encL] [SizedListEncoding encA encL] :
+    ComputableTidilyInPolyTime (fun x => (list x)[index x]?) encIn (encOption encA) := by
+  simpa only [Function.comp_def, List.head?_drop] using
+    (head? encA).comp ((dropUnary (encA := encA)).comp (hlist.prod hindex))
 
 /-- Drop a computed unary number of bits from a computed bit string. -/
 @[fun_prop]

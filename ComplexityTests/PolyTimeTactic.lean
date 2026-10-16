@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Tactic.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 
 /-!
 # Functional programs with polynomial-time certificates
@@ -153,5 +154,46 @@ example : ComputableTidilyInPolyTime
   · fun_prop
   · intro word consumed state hprefix hstate
     simpa [hstate] using hprefix.length_le
+
+-- Optional lookup works at computed unary indices with both raw and framed bit encodings.
+example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1[p.2]?)
+    (encPair encBits encUnary) (encOption encBool) := by fun_prop
+
+example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1[p.2]?)
+    (encPair (encList encBool) encUnary) (encOption encBool) := by fun_prop
+
+-- The same functional operation applies to non-bit element encodings.
+example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1[p.2]?)
+    (encPair (encList encUnary) encUnary) (encOption encUnary) := by fun_prop
+
+-- Equivalent lookup spellings compose with a default without exposing the option encoding.
+example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => (p.1[p.2]?).getD false)
+    (encPair encBits encUnary) encBool := by fun_prop
+
+example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => (p.1[p.2]?).getD false)
+    (encPair encBits encUnary) encBool := by polytime
+
+example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1.getD p.2 false)
+    (encPair encBits encUnary) encBool := by polytime
+
+-- Abstract list encodings retain the same default-lookup interface after tactic normalization.
+example {α : Type} (encA : α ↪ List Bool) (encL : List α ↪ List Bool)
+    [ListEncoding encA encL] [SizedListEncoding encA encL] (fallback : α) :
+    ComputableTidilyInPolyTime (fun p : List α × ℕ => p.1.getD p.2 fallback)
+      (encPair encL encUnary) encA := by polytime
+
+-- Optional operations require no inhabitant of the element type, even with a custom encoding.
+example {α : Type} (encA : α ↪ List Bool) (encL : List α ↪ List Bool)
+    [ListEncoding encA encL] [SizedListEncoding encA encL] :
+    ComputableTidilyInPolyTime (fun p : List α × ℕ => p.1[p.2]?)
+      (encPair encL encUnary) (encOption encA) := by fun_prop
+
+example {α : Type} (encA : α ↪ List Bool) (encL : List α ↪ List Bool)
+    [ListEncoding encA encL] :
+    ComputableTidilyInPolyTime (List.head? (α := α)) encL (encOption encA) := by fun_prop
+
+-- Empty element types still have the empty list as a computational input.
+example : ComputableTidilyInPolyTime (List.head? (α := Fin 0))
+    (encList (encFinite (Fin 0))) (encOption (encFinite (Fin 0))) := by fun_prop
 
 end ComplexityTests.PolyTimeTactic
