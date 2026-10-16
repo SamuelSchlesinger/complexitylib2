@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Approximation
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.BooleanAnalysis.LowDegreeParity
+public import Mathlib.Algebra.Field.ZMod
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
@@ -63,7 +64,7 @@ theorem two_mul_two_pow_le_size_of_computes_parity (hp2 : p ≠ 2)
     (hn : 100 * (((p - 1) * ℓ) ^ C.depth + 1) ^ 2 ≤ n + 1) : 2 * 2 ^ ℓ ≤ 5 * C.size := by
   classical
   let _ := invertibleTwo hp2
-  obtain ⟨Q, hQ, herr⟩ := exists_lowDegree_approx (F := ZMod p) hℓ C
+  obtain ⟨Q, hQ, herr⟩ := exists_lowDegree_approx (R := ZMod p) hℓ C
   have heval : ∀ x, C.eval (Unbounded.extInterpretation (modGate p)) x 0 = parity n x := fun x =>
     congrFun (hC x) 0
   simp only [heval] at herr
