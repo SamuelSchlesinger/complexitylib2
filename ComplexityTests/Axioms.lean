@@ -2997,4 +2997,52 @@ info: 'Cslib.MCSP.exists_lt_complexityOn' depends on axioms: [propext, Classical
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.MCSP.exists_lt_complexityOn
 
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.comp' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.comp
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl
+
+/--
+info: 'Turing.MultiTapeTM.Universal.computableTidilyInO_universal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.computableTidilyInO_universal
+
+/--
+info: 'Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace
+
+/--
+info: 'Turing.MultiTapeTM.Universal.stateSpace_desc' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.stateSpace_desc
+
+/--
+info: 'Turing.MultiTapeTM.Universal.simSpace_desc' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.simSpace_desc
+
+/--
+info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_space' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_space
+
+/--
+info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_logSpace' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_logSpace
+
 end ComplexityTests.Axioms
