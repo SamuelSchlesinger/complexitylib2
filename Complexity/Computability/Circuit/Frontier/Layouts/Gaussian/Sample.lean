@@ -197,7 +197,7 @@ theorem exists_good_sample_of_mean [Finite E] (hloop : G.Loopless)
       3 * ({e | ω ∈ edgeScoreEvent G q R p e}.ncard : ℝ) ≤ B := by
     have hcount := ncard_lt_of_notMem_deviation hdev
     have hmean : ∑ e, P.real (edgeScoreEvent G q R p e) ≤ 3 / 2 * h * (1 / T ^ 2) := by
-      refine (Finset.sum_le_sum fun e _ => (measureReal_mono fun ω' hω' =>
+      refine (Finset.sum_le_sum fun e _ => (measureReal_mono (μ := P) fun ω' hω' =>
         hp _ hω').trans (measureReal_le_abs_le (unit e) hT)).trans_eq ?_
       rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, hE]
     refine le_trans ?_ hB1

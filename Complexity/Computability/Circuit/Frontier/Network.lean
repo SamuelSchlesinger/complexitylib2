@@ -196,7 +196,7 @@ theorem frontierValues_eq_iff {t : ℕ} {α β : E → U} :
 
 /-- The inputs revealed by time `t`: those read by the first `t` vertices, and after the last
 vertex, all inputs, including those the network does not read. -/
-def revealedBy (t : ℕ) : Set ι :=
+noncomputable def revealedBy (t : ℕ) : Set ι :=
   if t ≤ Nat.card V then N.readIn (π.initial t) else univ
 
 theorem revealedBy_mono : Monotone (N.revealedBy π) := by

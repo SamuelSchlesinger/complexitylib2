@@ -1456,8 +1456,26 @@ maximal-index budget counterexample and an empty-prefix reduction through ordina
 Nine headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
 Independent source/API review approves the modules and tests. All six final project checks pass:
 build 4.33 s, import coverage 1.52 s, tests 5.62 s, lint 7.23 s, style 2.00 s, and init imports
-4.39 s. Independent adversarial correctness review is in progress. Amplification, extraction,
-entropy selection and the final OWF → PRG security assembly remain the next cryptographic work.
+4.39 s. Independent adversarial correctness review of `9a34274` approves the constants,
+irregular fibers, retained observations, reused coins, full tape budget, uniformity and
+normalization against crypto `5ff69ca` and Holenstein Section 4. Fresh Lean diagnostics, nine
+axiom guards and additional satisfiability probes pass. Amplification, extraction, entropy
+selection and the final OWF → PRG security assembly remain the next cryptographic work.
+
+### Upstream Lean 4.36 migration (2026-10-16)
+
+The base pin advances to upstream cslib main `6d9d1137`, with Lean `v4.36.0-rc1` and transitive
+Mathlib `625d8914`. All 62 copied-module markers remain current; no local copy needs replacement.
+Ten existing modules need compatibility fixes: explicit sets in cardinality proofs, and
+`noncomputable` on six semantic set definitions whose bodies already depend on noncomputable
+functions. The theorem statements, hypotheses, executable programs and resource certificates
+are unchanged. Two Gaussian measure estimates now supply their measure explicitly, and a straddling
+estimate uses a direct theorem application. The migration adds three proof-body lines across
+the library, for 39,622 total.
+Independent source/API and adversarial correctness reviews approve the migration.
+All six checks pass on the new toolchain: strict build 8.22 s, import coverage 10.35 s,
+tests 20.69 s, environment lint 10.79 s, style 5.52 s, and init imports 6.82 s, after populating
+the new dependency build cache.
 
 ### Implementation priorities (2026-10-16)
 
@@ -2058,7 +2076,7 @@ L6  Circuits                   families, SIZE, P/poly, FP/poly (redo of #1099–
 
 ## Repository conventions
 
-- `lean-toolchain` **identical** to cslib's at the pinned SHA (currently `v4.35.0`). `[[require]] cslib` from git with `rev = <SHA>`;
+- `lean-toolchain` **identical** to cslib's at the pinned SHA (currently `v4.36.0-rc1`). `[[require]] cslib` from git with `rev = <SHA>`;
   Mathlib comes transitively (no separate pin). Copy cslib's `[leanOptions]` verbatim.
 - `lean_lib Complexity` (module system), `lean_lib ComplexityTests` with `allowNonModules = true`,
   `testDriver = "ComplexityTests"`, `lintDriver = "batteries/runLinter"`, `mk_all`.

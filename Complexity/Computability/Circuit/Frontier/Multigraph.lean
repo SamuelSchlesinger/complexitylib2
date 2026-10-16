@@ -304,8 +304,9 @@ variable {G} in
 /-- Induced subgraphs have no larger degrees. -/
 theorem MaxDegreeLE.induce [Finite E] {d : ℕ} (hG : G.MaxDegreeLE d) (W : Set V) :
     (G.induce W).MaxDegreeLE d := fun w =>
-  (ncard_le_ncard_of_injOn Subtype.val (fun _ he => he.imp (congrArg Subtype.val)
-    (congrArg Subtype.val)) Subtype.val_injective.injOn).trans (hG w)
+  (ncard_le_ncard_of_injOn (s := (G.induce W).incidenceSet w) Subtype.val
+    (fun _ he => he.imp (congrArg Subtype.val) (congrArg Subtype.val))
+    Subtype.val_injective.injOn).trans (hG w)
 
 /-- The simple graph underlying an induced subgraph is the induced simple graph. -/
 theorem toSimpleGraph_induce (W : Set V) :

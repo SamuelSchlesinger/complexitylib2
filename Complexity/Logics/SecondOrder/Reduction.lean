@@ -82,7 +82,7 @@ theorem flatten_injective {n : ℕ} : Function.Injective (flatten (I := I) (M :=
 
 /-- Relations on `M` of arities multiplied by `Nat.card κ` define relations on `I.Model M`: a
 sequence of elements is related when its concatenated coordinates are. -/
-def modelRel (R : ∀ i, Set (Fin (arity i * Nat.card κ) → M)) (i : ι) :
+noncomputable def modelRel (R : ∀ i, Set (Fin (arity i * Nat.card κ) → M)) (i : ι) :
     Set (Fin (arity i) → I.Model M) :=
   flatten ⁻¹' R i
 

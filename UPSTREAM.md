@@ -1,7 +1,7 @@
 # Upstream ledger
 
-Base pin: `leanprover/cslib` main @ `0b1e3680b43ad9cd482a66f183764f33fc8a4e8f` (2026-10-15),
-toolchain `leanprover/lean4:v4.35.0`, Mathlib `56a00585` (transitive).
+Base pin: `leanprover/cslib` main @ `6d9d11371bae527fa615a016da8111bbdeb36f7c` (2026-10-16),
+toolchain `leanprover/lean4:v4.36.0-rc1`, Mathlib `625d8914` (transitive).
 
 Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file deleted here),
 `local-only (reason)`.

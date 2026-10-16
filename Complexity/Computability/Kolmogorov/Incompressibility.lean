@@ -107,7 +107,8 @@ theorem encard_setOf_etimeBoundedComplexity_lt (t r : ℕ) :
 theorem exists_mem_le_ecomplexity {s : Set α} {r : ℕ} (hs : 2 ^ r ≤ s.encard) :
     ∃ x ∈ s, r ≤ M.ecomplexity x := by
   by_contra! h
-  exact (hs.trans (Set.encard_le_encard h)).not_gt (M.encard_setOf_ecomplexity_lt r)
+  exact (hs.trans (Set.encard_le_encard (t := {x | M.ecomplexity x < r}) h)).not_gt
+    (M.encard_setOf_ecomplexity_lt r)
 
 /-- All but fewer than `2 ^ r` elements of a finite set have complexity at least `r`. -/
 theorem ncard_lt_ncard_setOf_le_ecomplexity_add {s : Set α} (hs : s.Finite) (r : ℕ) :
@@ -144,15 +145,16 @@ theorem exists_length_eq_forall_le_etimeBoundedComplexity (n : ℕ) :
 /-- **Most strings are nearly incompressible.** Fewer than `2 ^ (n - c)` strings of length `n`
 have complexity below `n - c`. -/
 theorem encard_setOf_length_eq_ecomplexity_lt (n c : ℕ) :
-    {x : List Bool | x.length = n ∧ M.ecomplexity x < (n - c : ℕ)}.encard < 2 ^ (n - c) :=
-  (Set.encard_le_encard fun _ hx => hx.2).trans_lt (M.encard_setOf_ecomplexity_lt (n - c))
+    {x : List Bool | x.length = n ∧ M.ecomplexity x < (n - c : ℕ)}.encard < 2 ^ (n - c) := by
+  refine (Set.encard_le_encard ?_).trans_lt (M.encard_setOf_ecomplexity_lt (n - c))
+  exact fun _ hx => hx.2
 
 /-- Fewer than `2 ^ (n - c)` strings of length `n` have time-bounded complexity below `n - c`. -/
 theorem encard_setOf_length_eq_etimeBoundedComplexity_lt (t n c : ℕ) :
     {x : List Bool | x.length = n ∧ M.etimeBoundedComplexity t x < (n - c : ℕ)}.encard <
-      2 ^ (n - c) :=
-  (Set.encard_le_encard fun _ hx => hx.2).trans_lt
-    (M.encard_setOf_etimeBoundedComplexity_lt t (n - c))
+      2 ^ (n - c) := by
+  refine (Set.encard_le_encard ?_).trans_lt (M.encard_setOf_etimeBoundedComplexity_lt t (n - c))
+  exact fun _ hx => hx.2
 
 /-- All but fewer than `2 ^ (n - c)` of the `2 ^ n` strings of length `n` have complexity at least
 `n - c`. -/

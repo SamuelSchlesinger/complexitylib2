@@ -320,7 +320,9 @@ theorem ncard_edgeCut_le_of_isMedian [Finite V] (h3 : ∀ v, (G.incidenceSet v).
   -- The straddling vertices inside and outside `P` are all the straddling vertices.
   have hS : {v | v ∉ P ∧ G.EdgeStraddles score t v}.ncard +
       {u | u ∈ P ∧ G.EdgeStraddles score t u}.ncard ≤ S.ncard := by
-    rw [← ncard_union_eq (disjoint_left.mpr fun v hv hv' => hv.1 hv'.1)]
+    rw [← ncard_union_eq (s := {v | v ∉ P ∧ G.EdgeStraddles score t v})
+      (t := {v | v ∈ P ∧ G.EdgeStraddles score t v})
+      (disjoint_left.mpr fun v hv hv' => hv.1 hv'.1)]
     exact ncard_le_ncard fun v hv => hv.elim (·.2) (·.2)
   have := ncard_le_add_add (G.edgeCut P) score t t'
   have := G.ncard_edgeCut_score_lt_le h3 hmed hPc ht

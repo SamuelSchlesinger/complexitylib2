@@ -128,19 +128,20 @@ theorem out_mem_basicFeatures (o : OutView) :
   List.mem_toFinset.2 (out_mem_basic o)
 
 /-- The basic features at time `t`, as Boolean functions of the input. -/
-def basicAt (T t : ℕ) : Set (BooleanFunction n) :=
+noncomputable def basicAt (T t : ℕ) : Set (BooleanFunction n) :=
   featureFn tm t '' ↑(basicFeatures (k := k) (State := State) n T)
 
 /-- The symbols read at time `t`, as Boolean functions of the input. -/
-def readsAt (t : ℕ) : Set (BooleanFunction n) :=
+noncomputable def readsAt (t : ℕ) : Set (BooleanFunction n) :=
   featureFn tm t '' {φ | (∃ i s, φ = Feature.read i s) ∨ ∃ s, φ = Feature.inRead s}
 
 /-- The situations at time `t`, as Boolean functions of the input. -/
-def sitsAt (t : ℕ) : Set (BooleanFunction n) := Set.range fun y => featureFn tm t (.sit y)
+noncomputable def sitsAt (t : ℕ) : Set (BooleanFunction n) :=
+  Set.range fun y => featureFn tm t (.sit y)
 
 /-- What is available for the third phase of a step: the inputs, the basic features, the symbols
 read and the situations. -/
-def stepSources (T t : ℕ) : Set (BooleanFunction n) :=
+noncomputable def stepSources (T t : ℕ) : Set (BooleanFunction n) :=
   inputs n ∪ basicAt tm T t ∪ (readsAt tm t ∪ sitsAt tm t)
 
 theorem featureFn_mem_basicAt {t : ℕ} {φ : Feature k State} (h : φ ∈ basicFeatures n T) :

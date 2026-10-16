@@ -131,7 +131,7 @@ theorem exists_multi_vertex_sample [Finite V] [Finite E] (hloop : G.Loopless) {d
       d * ({v | ω ∈ vertexEvent G q R f v}.ncard : ℝ) ≤ B := by
     have hcount := ncard_lt_of_notMem_deviation hdev
     have hmean : ∑ v, P.real (vertexEvent G q R f v) ≤ h * (1 / T ^ 2) :=
-      vertexMean fun v => (measureReal_mono fun ω' hω' => hf _ hω').trans
+      vertexMean fun v => (measureReal_mono (μ := P) fun ω' hω' => hf _ hω').trans
         (measureReal_le_abs_le (unit v) hT)
     have hbound : ({v | ω ∈ vertexEvent G q R f v}.ncard : ℝ) ≤ h / T ^ 2 + c := by
       rw [div_eq_mul_one_div]

@@ -238,11 +238,11 @@ theorem ncard_edgeCut_threshold_inter_le [Finite E] {α : Type*} [LinearOrder α
   obtain ⟨h₁, h₂⟩ := hmed
   -- The median sides with the larger of `A` and `B`.
   have hBA (hv' : key' v < t) : B.ncard ≤ A.ncard :=
-    (ncard_le_ncard (t := {e ∈ G.incidenceSet v | key' v < key (G.otherEnd v e)})
+    (ncard_le_ncard (s := B) (t := {e ∈ G.incidenceSet v | key' v < key (G.otherEnd v e)})
       fun e he => ⟨he.1, hv'.trans_le (not_lt.mp he.2)⟩).trans
       (h₁.trans (ncard_le_ncard fun e he => ⟨he.1, he.2.trans_lt hv'⟩))
   have hAB (hv' : ¬key' v < t) : A.ncard ≤ B.ncard :=
-    (ncard_le_ncard (t := {e ∈ G.incidenceSet v | key (G.otherEnd v e) < key' v})
+    (ncard_le_ncard (s := A) (t := {e ∈ G.incidenceSet v | key (G.otherEnd v e) < key' v})
       fun e he => ⟨he.1, he.2.trans_le (not_lt.mp hv')⟩).trans
       (h₂.trans (ncard_le_ncard fun e he => ⟨he.1, not_lt.mpr ((not_lt.mp hv').trans he.2)⟩))
   split_ifs with h h'

@@ -155,9 +155,7 @@ private theorem four_mul_measureReal_straddleEvent_le [Finite E] {v : V} {s : Fi
     · obtain ⟨e, he, hlt, e', he', hle⟩ := hω
       rw [← hs] at he he'
       have h4 : 4 ≤ (s.offDiag.filter fun p => ω ∈ B p).card := by
-        convert four_le_card_filter_offDiag hcard (edgeScore G q R ω) he he' hlt hle using 2
-        ext p
-        simp only [Finset.mem_filter, B, mem_ofPred_eq]
+        exact four_le_card_filter_offDiag hcard (edgeScore G q R ω) he he' hlt hle
       rw [mul_one]
       exact_mod_cast h4
     · simp
