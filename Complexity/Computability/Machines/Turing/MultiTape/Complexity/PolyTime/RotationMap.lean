@@ -12,6 +12,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Op
 public import Complexity.Foundations.Combinatorics.Expander.AffinePlane
 public import Complexity.Foundations.Combinatorics.Expander.Contraction
 public import Complexity.Foundations.Combinatorics.Expander.Products
+public import Complexity.Foundations.Combinatorics.Expander.Reindex
 
 /-!
 # Compositional certificates for graph rotations
@@ -31,6 +32,8 @@ theorem for a varying field size or tower depth.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane`: arithmetic rotations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract`: contraction through
   efficiently encoded and decoded slots, including the unused-slot branch.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_reindex`: change the vertex encoding
+  using efficient forward and inverse maps.
 
 ## References
 
@@ -97,6 +100,18 @@ theorem rotationMap_contract {I : Type} {slot : I ↪ List Bool}
       (encPair otherVertex (encPair slot label))
       (encPair otherVertex (encPair slot label)) := by
   unfold RotationMap.contractRot RotationMap.contractDart
+  fun_prop
+
+/-- Vertex renaming charges the forward and backward maps and the complete rotation. -/
+@[fun_prop]
+theorem rotationMap_reindex {forward : V → W} {backward : W → V}
+    {rotate : V × D → V × D}
+    (hrotate : ComputableTidilyInPolyTime rotate (encPair vertex label) (encPair vertex label))
+    (hforward : ComputableTidilyInPolyTime forward vertex otherVertex)
+    (hbackward : ComputableTidilyInPolyTime backward otherVertex vertex) :
+    ComputableTidilyInPolyTime (RotationMap.reindexRot forward backward rotate)
+      (encPair otherVertex label) (encPair otherVertex label) := by
+  unfold RotationMap.reindexRot
   fun_prop
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

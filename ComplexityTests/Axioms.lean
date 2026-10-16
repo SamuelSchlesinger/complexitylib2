@@ -2114,6 +2114,61 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract' depen
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract
 
 /--
+info: 'Cslib.RotationMap.spectralExpansion_reindex' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_reindex
+
+/--
+info: 'Cslib.RotationMap.zigzagTower_size_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.zigzagTower_size_bounds
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_zigzagTowerFamily_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_zigzagTowerFamily_le
+
+/--
+info: 'Cslib.RotationMap.card_affinePlaneFamilyLabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.card_affinePlaneFamilyLabel
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_affinePlaneFamily_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_affinePlaneFamily_le
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_arithmeticExpander_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_arithmeticExpander_le
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_arithmeticExpander_lt_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_arithmeticExpander_lt_one
+
+/--
+info: 'Cslib.RotationMap.arithmeticExpanderFamily' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.arithmeticExpanderFamily
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_reindex' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_reindex
+
+
+/--
 info: 'Cslib.RAM.computesInTime_unitCost_repeatedSquaring' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

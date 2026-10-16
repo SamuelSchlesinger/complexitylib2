@@ -21,8 +21,8 @@ or a nonconstructive choice of a base graph. A concrete field is `ZMod 257`.
 
 This is the affine-plane base construction of [Reingold, Vadhan and Wigderson,
 Section 5.1][ReingoldVadhanWigderson2002], adapted to the simpler tower of their Section 1.2.
-It supplies particular vertex counts. Construction on arbitrary cloud sizes, uniform machine
-certificates for the tower, and practically small degree remain separate work.
+It supplies particular vertex counts; `AffineFamily` contracts this tower to arbitrary sizes.
+Uniform machine certificates for the tower and practically small degree remain separate work.
 
 ## Main definitions
 

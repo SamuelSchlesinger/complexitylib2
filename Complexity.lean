@@ -403,6 +403,7 @@ public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
+public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
 public import Complexity.Foundations.Combinatorics.Expander.AffinePlane
 public import Complexity.Foundations.Combinatorics.Expander.AffineTower
 public import Complexity.Foundations.Combinatorics.Expander.Basic
@@ -418,9 +419,11 @@ public import Complexity.Foundations.Combinatorics.Expander.Perm
 public import Complexity.Foundations.Combinatorics.Expander.Power
 public import Complexity.Foundations.Combinatorics.Expander.Products
 public import Complexity.Foundations.Combinatorics.Expander.Random
+public import Complexity.Foundations.Combinatorics.Expander.Reindex
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.Tower
 public import Complexity.Foundations.Combinatorics.Expander.TowerBase
+public import Complexity.Foundations.Combinatorics.Expander.TowerFamily
 public import Complexity.Foundations.Combinatorics.Expander.Walk
 public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric

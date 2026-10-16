@@ -7,7 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.Basic
+public import Complexity.Foundations.Combinatorics.Expander.Reindex
 
 /-!
 # Families of expanders
@@ -23,6 +23,7 @@ on it.
 
 * `Cslib.RotationMap.ExpanderFamily`: a family of `D`-regular multigraphs on all finite types with
   spectral expansion at most `μ`.
+* `Cslib.RotationMap.ExpanderFamily.ofFin`: interpret an indexed family on arbitrary finite types.
 
 ## References
 
@@ -45,5 +46,15 @@ structure ExpanderFamily (D : Type*) [Fintype D] (μ : ℝ) where
   graph (V : Type u) [Fintype V] : RotationMap V D
   /-- The spectral expansion of each multigraph of the family is at most `μ`. -/
   spectralExpansion_graph_le (V : Type u) [Fintype V] : (graph V).spectralExpansion ≤ μ
+
+/-- Interpret an indexed family on arbitrary finite types by choosing a numbering. Only this
+mathematical wrapper is noncomputable; executable clients should use the original indexed family
+or supply their own vertex equivalence to `RotationMap.reindex`. -/
+noncomputable def ExpanderFamily.ofFin {D : Type*} [Fintype D] {μ : ℝ}
+    (graph : (n : ℕ) → RotationMap (Fin n) D)
+    (bound : ∀ n, (graph n).spectralExpansion ≤ μ) : ExpanderFamily.{u} D μ where
+  graph V _ := (graph (Fintype.card V)).reindex (Fintype.equivFin V).symm
+  spectralExpansion_graph_le V _ := by
+    simpa only [spectralExpansion_reindex] using bound (Fintype.card V)
 
 end Cslib.RotationMap

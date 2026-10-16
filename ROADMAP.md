@@ -1561,9 +1561,9 @@ and init imports 4.43 s. Seven headline axiom guards use only `propext`, `Classi
 `Quot.sound`. The post-publication Codex correctness review approves `d3c88c5` without material
 findings. It reviewed the sources and stated proof boundaries; it did not rerun the six gates.
 
-Next, obtain arbitrary cloud sizes with a proved spectral and size contract, certify the tower
-uniformly, and interpret compact encoded constraint graphs into the existing mathematical
-graphs. A full preprocessing client must account for enumeration, lookup, relabelling, copying
+The follow-up batches below supply bounded-fiber contraction and the arithmetic family on every
+vertex count. Remaining work is to certify the tower uniformly and interpret compact encoded
+constraint graphs into the existing mathematical graphs. A full preprocessing client must account for enumeration, lookup, relabelling, copying
 and output storage. Propagate expander degree and spectral parameters through amplification,
 retaining the current numerical specialization as a client. The logarithmic-round cardinality
 bounds already proved in `Amplifier.lean` still need an encoded-size and total-time bridge.
@@ -1603,12 +1603,61 @@ profile; this measures elaboration, not machine runtime.
 Independent source/API review approves the implementation. All six checks pass: strict build
 21.36 s, import coverage 1.62 s, tests 17.35 s, environment lint 7.41 s, style 2.26 s and init
 imports 4.35 s. Seven headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
-The independent Codex correctness review follows publication of this batch.
+The independent post-publication Codex correctness review approves `3fa9fbb` without material
+findings in contraction invariants, expansion normalization, empty cases or certificate boundaries.
+It reviewed the sources and did not rerun the six gates.
 
-Next, number the arithmetic tower's vertices computably and select a nearby tower size to obtain
-a concrete family on every `Fin n`. The contraction theorem alone does not yet supply that
-family or a uniform polynomial-time indexing/tower certificate. Encoded PCP preprocessing and
+The following batch numbers the arithmetic tower and selects a nearby size to supply the concrete
+family. Uniform polynomial-time indexing/tower certificates, encoded PCP preprocessing and
 propagation of the expander contract through amplification remain subsequent milestones.
+
+### Arithmetic expanders on every vertex count (2026-10-16)
+
+`Reindex.lean` transports a rotation map along an explicit vertex equivalence and preserves its
+walk and spectral expansion. This shared interface is used both to number the tower vertices and
+to interpret indexed families on arbitrary finite types. `TowerFamily.lean` numbers each tower
+level by recursively pairing the given base indices. For `n ≥ 2`, the depth `clog b n - 1` selects
+a tower with `n ≤ m ≤ b*n` vertices. Contracting into `b` slots and making the walk lazy gives
+spectral expansion at most `1 - (1-c)²/(16b²)`, where `c` is the tower's general spectral bound.
+The empty and singleton graphs use loops. Degree and gap are independent of `n`.
+
+`AffineFamily.lean` supplies the eight-coordinate base numbering from any explicit field
+numbering. For `q ≥ 256`, it gives degree `2q^12` and gap `9/(400q^16)`.
+`arithmeticExpander n` instantiates this at `ZMod 257`, with no search or chosen enumeration.
+`arithmeticExpanderFamily` is its mathematical interpretation through `ExpanderFamily.ofFin`;
+only that wrapper chooses an enumeration and is noncomputable. Tests show that the existing
+PCP preprocessing spectral and satisfiability theorems accept the new family unchanged. This is
+reuse of the mathematical preprocessing theorem, not an encoded preprocessing certificate.
+
+Executable tests check genuine cross-vertex rotations and return labels, both lazy and unused-slot
+self-loops, zero and singleton sizes, index pairing and a round trip in the second tower graph.
+No vertex or edge set is materialized. The enormous constant degree remains unsuitable for
+practical full enumeration; these examples establish runnable individual calls only.
+
+The vertex-renaming certificate has a two-line `unfold ...; fun_prop` proof and arbitrary supplied
+encodings. It targets a named functional program independently of the equivalence's proofs, and
+checks the rotation premise first to determine the intermediate vertex encoding. Generic tests
+reject missing forward, backward or rotation certificates. A concrete equivalence swapping a
+Boolean and an unbounded word uses existing coercion simplification followed by `fun_prop`.
+There is no tactic patch or new TM construction.
+
+This batch adds ten named proofs / 68 body lines, including the two-line certificate. The nine
+mathematical proofs use 66 lines. The source-layout metric excludes definitions and their embedded
+proofs, including numbering equalities, involutivity and the semantic-family wrapper, as well as
+tests. The complete library has 5,810 named proofs / 39,989 body lines across 550 modules.
+The full-module vertex-renaming certificate profile uses 118,279 raw tactic heartbeats; this is
+elaboration cost, not machine runtime or a before/after speedup.
+
+Independent source/API review approves the batch. All six checks pass: strict build 4.87 s,
+import coverage 1.62 s, tests 7.02 s, environment lint 7.18 s, style 2.19 s and init imports 4.17 s.
+Nine headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`. The independent
+Codex correctness review follows publication of this batch.
+
+The arbitrary-size mathematical and executable family is now supplied. The next construction
+work is the uniform machine certificate for tower rotation and numbering, followed by full
+encoded graph preprocessing. The expander degree/gap contract still needs to flow through the
+remaining amplification stages, and logarithmic-round cardinality bounds still need the total
+encoded-size/time bridge. No completed PCP constructibility claim follows from this batch.
 
 ### Implementation priorities (2026-10-16)
 
@@ -1994,7 +2043,7 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Exponential correlation bounds for GF(2) polynomials (CHLLTV) | `BooleanAnalysis/PolynomialCorrelation*` | done (`BooleanAnalysis/PolynomialCorrelation`) |
 | Sparse corrections, square-root continuity of circuit complexity | `Circuits/SparseSynthesis*`, `Cslib/Circuit/Boolean/Correction*` | done (`Circuit/Boolean/{Correction,SparseSynthesis}`) |
 | Hadamard decoding and testing, local correctability | `Classes/PCP/Internal/{Hadamard,CubeBlocks,HadamardTester}` | done (`BooleanAnalysis/{Hadamard,HadamardTester}`) |
-| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | done (`Expander/{Cheeger,Loops,Perm,Random,Family,Tower,TowerBase,AffinePlane,AffineTower}`); arbitrary sizes and the fully explicit RVW recursion remain open |
+| Cheeger's inequality (hard direction), constant-degree expanders | `PCP/Internal/{Cheeger,ExpanderRandom,…}` | done (`Expander/{Cheeger,Loops,Perm,Random,Family,Tower,TowerBase,AffinePlane,AffineTower,Contraction,Reindex,TowerFamily,AffineFamily}`); uniform machine certificates and the stronger RVW recursion remain open |
 | Zig-zag product | `PCP/Internal/ZigZag` | done (`Expander/{Power,Products}`, with tensor and balanced replacement products; the tower in `Expander/{Tower,TowerBase}`) |
 | Nisan–Wigderson reconstruction | `Metacomplexity/NisanWigderson/**` | done: reconstruction, designs, circuits, sampling and the list-decoding reconstruction (`Crypto/Primitives/PRG/NisanWigderson{,/Design,/Circuit,/Sampling,/Reconstruction}`), the `Kᵗ` bound (`Computability/Kolmogorov/NisanWigderson`); open: a concrete list-decodable code family |
 | Dinur's gap theorem | `PCP/Internal/GapTheorem` and its closure (Bolton Bailey) | done: constraint graphs, the 3-SAT reduction, degree reduction and preprocessing (`Computability/PCP/`), walks and killed walks (`Expander/{Walk,KilledWalk}`), the assignment tester and composition (`PCP/{LocalTest,AssignmentTester,Composition}`), powering (`PCP/{Power,PoweringBound}`), the amplification round, amplifiers and the gap theorem (`PCP/{Amplification,Amplifier,GapTheorem}`); next: polynomial-time constructibility, which needs explicit expanders and the poly-time calculus |

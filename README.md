@@ -96,15 +96,15 @@ extraction and the final general OWF → PRG security assembly remain pending. E
 tests now have exact independent-trial laws, exponential error bounds and complete PPT
 certificates, providing the sampling prerequisites for amplification.
 
-The expander library now has an arithmetic affine-plane construction and a concrete base for
-the existing zig-zag tower: `ZMod 257` gives spectral expansion at most `2 / 5` throughout the
-tower without a nonconstructive base choice. Tensor, zig-zag and affine rotations have
-compositional `fun_prop` certificates, and small rotations execute directly. Executable contraction
-now adjusts indexed graphs from `m` to `n` vertices when `n ≤ m ≤ k*n`, retaining a positive gap
-with loss depending on `k`. Assembling an arbitrary-size tower family, uniform efficiency of the
-tower and encoded PCP preprocessing remain open. Polynomial time
-in the graph's vertex count can suffice for PCP construction; time polynomial in the bit length
-of a vertex name is a separate, stronger target. The concrete tower's degree is still enormous.
+The expander library now has a computable arithmetic family on exactly `Fin n` for every `n`.
+It combines the `ZMod 257` affine-plane base, explicit tower numbering, and bounded-fiber
+contraction, with degree `2*257^12` and spectral expansion at most `1 - 9/(400*257^16)`.
+The existing mathematical PCP preprocessing accepts this family. Graph products, contraction
+and vertex renaming have compositional `fun_prop` certificates, and individual rotations execute
+directly. Uniform efficiency of the tower and indexing, encoded PCP preprocessing, and the full
+constructibility proof remain open. Polynomial time in vertex count can suffice for PCP;
+time polynomial in vertex-name bit length is a stronger target. The enormous constant degree
+still separates asymptotic constructibility from practical enumeration.
 
 ## Layout
 
