@@ -3867,4 +3867,32 @@ info: 'Cslib.Crypto.not_oneWay_of_inverse' depends on axioms:
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.not_oneWay_of_inverse
 
+/--
+info: 'Cslib.Crypto.PRG.wordFamily_secure_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PRG.wordFamily_secure_iff
+
+/--
+info: 'Cslib.Crypto.isPPT_hardCorePredictor' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.isPPT_hardCorePredictor
+
+/--
+info: 'Cslib.Crypto.hardCore_advantage_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.hardCore_advantage_le
+
+/--
+info: 'Cslib.Crypto.OneWayPermutation.pseudorandomGenerator_of_hardCore' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWayPermutation.pseudorandomGenerator_of_hardCore
+
 end ComplexityTests.Axioms

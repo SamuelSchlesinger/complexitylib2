@@ -316,7 +316,10 @@ public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
+public import Complexity.Crypto.Computational.HardCore
 public import Complexity.Crypto.Computational.OneWay
+public import Complexity.Crypto.Computational.Prediction
+public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic

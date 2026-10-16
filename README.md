@@ -43,9 +43,10 @@ integration work.
 The crypto port includes GGM tree evaluation with a polynomial-time TM certificate, the upstream
 nonnegative game/negligibility API, computational indistinguishability and its randomized
 postprocessing rule, and one-way-function/permutation definitions. The complete inversion game
-has a short `ppt` certificate. Finite PRG security agrees with the same game calculus. The planned
-security developments are OWP → PRG through Goldreich–Levin, general OWF → PRG through
-pseudoentropy, and adaptive GGM security; those full security theorems have not yet been ported.
+has a short `ppt` certificate. Word-based generators use the existing finite PRG security API,
+and a hard-core predicate for a length-preserving permutation yields a certified one-bit PRG.
+Goldreich–Levin's construction of that predicate, general OWF → PRG through pseudoentropy, and
+adaptive GGM security remain to be ported.
 
 ## Layout
 

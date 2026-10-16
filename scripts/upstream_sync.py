@@ -20,6 +20,7 @@ For every such module the script reports one of:
     CURRENT   the copy matches the current head
     UNTRACKED the marker records no SHA, so drift cannot be checked
 
+Markers can also introduce copied blocks in otherwise candidate modules; each is checked.
 It also compares the cslib pin in `lakefile.toml` with upstream `main`. It needs `gh` and
 `git` with network access; `--offline` only lists the markers.
 """
@@ -50,11 +51,10 @@ def run(*args: str) -> str:
 def markers() -> list[tuple[pathlib.Path, str]]:
     found = []
     for path in sorted((ROOT / "Complexity").rglob("*.lean")):
-        for line in path.read_text(encoding="utf-8").splitlines()[:20]:
+        for line in path.read_text(encoding="utf-8").splitlines():
             m = MARKER_RE.match(line)
             if m:
                 found.append((path.relative_to(ROOT), m.group("status")))
-                break
     return found
 
 

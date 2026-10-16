@@ -441,6 +441,32 @@ one, randomized postprocessing five, and the three finite-PRG bridges five combi
 statements, tests and certificate registration are outside this layout metric. Full OWP → PRG,
 general OWF → PRG and adaptive GGM security remain unported.
 
+### Hard-core predicates and one-bit expansion (2026-10-16)
+
+`PseudorandomGenerator` wraps the existing finite `PRG.Family.Secure` on `BitString n` and
+`BitString (length n)`. One uniform program realizes each admissible test on all valid output
+words. The exact length hypothesis identifies finite and list experiments, so padding/truncation
+cannot change the security claim. The real and ideal games are fair-bit programs. Computing the
+length needs only efficient generation and its length equation: run the generator on a canonical
+seed. No security hypothesis or extra sampling primitive is needed for that certificate.
+
+`Prediction` and `HardCore` port the two-fixed-trial reduction. Their signed gap identity gives
+an average-prediction-bias bound in the shared nonnegative game API. Each predictor is a uniform
+program with a two-line `unfold; ppt` certificate. An efficient length-preserving permutation
+with a hard-core predicate therefore yields a one-bit PRG. Goldreich–Levin still supplies the
+missing predicate construction; this is not yet the complete OWP → PRG theorem.
+
+Tests include an actual hard-core instance: a constant image perfectly hides the first bit of
+a nonempty uniform seed. This checks that hard-core unpredictability does not itself assume
+one-wayness. Constant-test admissibility and identity-family security exercise the finite/list
+bridge without cryptographic assumptions. Folded reduction programs compose through `ppt`.
+
+The three modules and copied PMF averaging lemmas add 38 theorem bodies / 125 body lines:
+33 / 118 are adaptations and 5 / 7 are copied from current upstream PR #1062. The total is
+5,100 / 35,139 in 456 source files. Statements, definitions, tests and tactic code are excluded.
+The upstream checker now recognizes copied-block markers as well as whole-module markers,
+including the independent #1062 and #1129 blocks in the shared PMF file.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and
