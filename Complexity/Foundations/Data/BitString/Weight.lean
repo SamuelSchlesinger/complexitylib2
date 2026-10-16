@@ -112,12 +112,13 @@ theorem weight_update_false [DecidableEq ι] {x : ι → Bool} {i : ι} (hi : x 
   rw [weight, he, weight]
   exact card_erase_add_one (by simp [hi])
 
-/-- The strings of `n` bits of weight `r` number `n.choose r`. -/
-theorem card_filter_weight_eq (n r : ℕ) :
-    #{x : BitString n | weight x = r} = n.choose r := by
-  refine (?_ : #{x : BitString n | weight x = r} = #(powersetCard r (univ : Finset (Fin n)))).trans
-    (by rw [card_powersetCard, card_univ, Fintype.card_fin])
-  refine card_nbij' (fun x => ({i | x i = true} : Finset (Fin n))) (fun s i => decide (i ∈ s))
+/-- The words `ι → Bool` of weight `r` number `|ι|.choose r`: they are the indicators of the
+`r`-element sets of coordinates. -/
+theorem card_filter_weight_eq [DecidableEq ι] (r : ℕ) :
+    #{x : ι → Bool | weight x = r} = (Fintype.card ι).choose r := by
+  refine (?_ : #{x : ι → Bool | weight x = r} = #(powersetCard r (univ : Finset ι))).trans
+    (by rw [card_powersetCard, card_univ])
+  refine card_nbij' (fun x => ({i | x i = true} : Finset ι)) (fun s i => decide (i ∈ s))
     (fun x hx => ?_) (fun s hs => ?_) (fun x _ => ?_) (fun s _ => ?_)
   · exact mem_powersetCard.2 ⟨subset_univ _, (mem_filter.1 hx).2⟩
   · refine mem_filter.2 ⟨mem_univ _, ?_⟩
@@ -142,8 +143,8 @@ def weightLayer (n k : ℕ) : Finset (BitString n) :=
   by simp [weightLayer]
 
 /-- The layer of weight `k` has `n.choose k` strings. -/
-theorem card_weightLayer (n k : ℕ) : #(weightLayer n k) = n.choose k :=
-  card_filter_weight_eq n k
+theorem card_weightLayer (n k : ℕ) : #(weightLayer n k) = n.choose k := by
+  rw [weightLayer, card_filter_weight_eq, Fintype.card_fin]
 
 theorem weightLayer_nonempty {n k : ℕ} (hk : k ≤ n) : (weightLayer n k).Nonempty :=
   card_pos.1 (by rw [card_weightLayer]; exact Nat.choose_pos hk)
