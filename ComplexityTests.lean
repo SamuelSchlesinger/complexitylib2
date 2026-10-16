@@ -1,5 +1,6 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.ArithmeticHessian
+import ComplexityTests.ArithmeticWaring
 import ComplexityTests.Axioms
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime

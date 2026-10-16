@@ -5203,3 +5203,23 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow_clog_const' depen
 -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow_clog_const
+
+-- Waring term counts and shared-gate accounting on native sum-of-terms circuits.
+
+/--
+info: 'Cslib.Circuits.Waring.centralBinom_le_card' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.Waring.centralBinom_le_card
+
+/--
+info: 'Cslib.Circuits.Waring.four_pow_lt_mul_cost' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.Waring.four_pow_lt_mul_cost
+
+/--
+info: 'Cslib.Circuits.SumOfTerms.rank_trace_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.SumOfTerms.rank_trace_le

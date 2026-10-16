@@ -1735,11 +1735,11 @@ older relative/conditional APIs to upstream `ecomplexityOn` and `ecomplexityGive
 
 The first arithmetic client is now the Hessian multiplication lower bound on the existing
 arithmetic signature, with explicitly interpreted constants and formal-polynomial semantics.
-Its public theorem exposes the polynomial computation and multiplication count. The next client
-is the Waring sum-of-powers bound, preserving its restricted representation model. The standalone
+Its public theorem exposes the polynomial computation and multiplication count. The second client
+is now the Waring sum-of-powers bound, preserving its restricted representation model. The standalone
 algebraic checkout has local changes and an older pin; compare its relevant results with the
-embedded v1 source and record exact provenance for each port. Waring and the general Fusion
-developments remain outstanding.
+embedded v1 source and record exact provenance for each port. The general Fusion developments
+remain outstanding.
 
 ### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
 
@@ -1792,6 +1792,56 @@ timings. The independent post-publication Codex correctness review approves `99b
 material findings. It checked the exact published diff, supplied CSLib APIs, theorem premises,
 shared-gate accounting, affine inputs, constant semantics, rank bridge, characteristic-two
 counterexample and proof-length accounting. It did not rerun the six gates or profiling.
+
+### Native arithmetic circuits: Waring term counts (2026-10-16)
+
+`Circuit/Arithmetic/Waring.lean` proves `Waring.choose_le_card` and `Waring.choose_le_cost`:
+over any characteristic-zero field, representing the product of `d` variables by scaled
+`d`-th powers of homogeneous linear forms requires at least `choose d k` terms, for every split
+`k`. The middle split at degree `2*n` gives `Nat.centralBinom n`; the circuit corollary gives
+`4^n < n * termCount` for `4 ≤ n`. These bounds concern this restricted power-term model,
+not unrestricted arithmetic circuit size. The computation premises are formal polynomial
+equalities. The result does not identify the exact Waring rank or establish border-rank bounds.
+
+The finite-sum endpoint accepts an ordinary sum without requiring a circuit encoding. The
+circuit endpoint uses native `Program` and `Circuit` values, supports any selected output,
+and charges each dictionary gate once, with additions and wiring free. The shared
+`Circuit/SumOfTerms.lean` rank theorem also supports different weights for different terms and
+supplied inputs with zero feature. Its global span argument reuses the rank API introduced for
+Hessians. The normalized coefficient matrix lives in `Foundations/Data/MvPolynomial/Catalecticant`;
+arbitrary row and column exponent families are allowed, with the power theorem requiring their
+combined degree to match. This batch introduces no machine or tactic implementation.
+
+Source provenance: the clean `Basis/SumOfTerms.lean`, `LowerBound/Fusion/SumOfTerms/Rank.lean`,
+`LowerBound/Fusion/SumOfTerms/Waring.lean`, its `Waring/Rectangular.lean` extension, and
+`Applications/Waring.lean`, under `Complexitylib/Algebraic`, at v1 revision
+`2ad6cb481b70ee6e65e078dffb76b9856be199d3`. Authorship is preserved. `references.bib` credits
+the source revision and Landsberg--Teitler, arXiv:0901.0487v3, equation (1) and Remark 6.5.
+The latter describes the catalecticant method over the complex numbers; the coefficient proof
+here checks the squarefree restriction over every characteristic-zero field.
+
+The addition costs 19 named proofs / 98 body lines, including every new helper: 26 lines in
+the sum-of-terms API, 9 in the polynomial API, and 63 in the Waring application. Six additional
+proof body lines establish linearity inside the coefficient-matrix definition; these are
+excluded by the named-proof scanner and reported separately. The longest body is the 22-line
+shared span/rank argument. The library total is 5,848 named proofs / 40,225 body lines across
+556 modules. These are source-layout counts, excluding other definition lines and tests;
+they do not compare the port with the source's more general Fusion dependency closure.
+
+Full-module MCP profiles use 1,803,604 raw tactic heartbeats for shared span/rank accounting,
+338,220 for the polynomial outer-product identity, 1,617,406 for the power-term rank bound,
+3,878,673 for the target rank, 1,815,641 for the finite-sum endpoint, and 514,379 for the circuit
+endpoint. These measure elaboration, not execution. All six project checks pass: strict build
+3.36 s, import coverage 1.63 s, tests 6.06 s, environment lint 7.58 s, style 2.39 s and init
+imports 4.20 s; these are incremental checkpoint timings.
+
+Tests include a sharp two-term rational representation of `x*y`, an odd-degree four-term
+representation of `x*y*z`, degree zero, splits zero/full/outside the degree, multiple outputs
+before unused gates, shared terms, nonuniform weights with a zero-cost zero term, zero-feature
+supplied inputs, and independent coefficient-field universes. Three headline axiom guards use
+only `propext`, `Classical.choice` and `Quot.sound`. Independent source/API review approves the
+production modules, clients, guards and proof accounting. The post-publication Codex correctness
+review is pending.
 
 ### Implementation priorities (2026-10-16)
 

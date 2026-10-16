@@ -6,6 +6,7 @@ public import Complexity.Computability.BranchingProgram.PolyLength
 public import Complexity.Computability.Circuit.Approximation
 public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.Arithmetic.Hessian
+public import Complexity.Computability.Circuit.Arithmetic.Waring
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AltFormula
 public import Complexity.Computability.Circuit.Boolean.AltFormula.TopDown
@@ -131,6 +132,7 @@ public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.SimulationDepth
+public import Complexity.Computability.Circuit.SumOfTerms
 public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Communication.KarchmerWigderson
@@ -459,6 +461,7 @@ public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.List.Basic
 public import Complexity.Foundations.Data.ListDecoding
 public import Complexity.Foundations.Data.Matrix.TotallyRegular
+public import Complexity.Foundations.Data.MvPolynomial.Catalecticant
 public import Complexity.Foundations.Data.MvPolynomial.DualNumber
 public import Complexity.Foundations.Data.MvPolynomial.Hessian
 public import Complexity.Foundations.Data.Nat.Card
