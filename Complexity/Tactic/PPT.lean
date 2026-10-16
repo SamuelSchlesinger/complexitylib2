@@ -16,11 +16,11 @@ public import Complexity.Computability.Probabilistic.Sampling
 
 `ppt` combines the proved closed PPT rules with deterministic `polytime` automation. Programs
 use ordinary `do` notation, captured inputs and conditionals. Named and local certificates are
-tried before generic composition, and tuple arguments are prepared with the shared routine-call
+reused, and tuple arguments are prepared with the shared routine-call
 matcher. Every proof supplies the uniform strict fair-coin machine contract of `IsPPTOn`.
 
-Unknown algorithms need certificates. Fair-bit sampling is the only primitive here. Sampling
-uniform bitstrings of runtime length, probabilistic loops and oracle PPT need further rules.
+Unknown algorithms need certificates. Fair bits and uniform words with efficiently computed unary
+lengths are certified here. Probabilistic loops and oracle PPT need further rules.
 
 ## Main definitions
 
@@ -43,10 +43,10 @@ open Lean Meta Elab Tactic Probability
 private meta def pptKnownCall : TacticM Unit :=
   Cslib.Tactic.applyKnownCall ``IsPPTOn 4 ``IsPPTOn.preprocess `prepare `hprogram `hprepare
 
-/-- Use a named certificate before unfolding its program. -/
-@[aesop safe -30 tactic (rule_sets := [PPT])]
-private meta def pptCertificate : TacticM Unit :=
-  Cslib.Tactic.applyCertificate ``IsPPTOn
+/-- Expose named probabilistic certificates as search alternatives. -/
+@[aesop unsafe 99% tactic (rule_sets := [PPT])]
+private meta def pptCertificate : Aesop.RuleTac :=
+  Cslib.Tactic.applyCertificates ``IsPPTOn
 
 /-- Let compositional rules finish a goal before exposing individual monadic binds. -/
 @[aesop safe -20 tactic (rule_sets := [PPT])]
@@ -58,30 +58,23 @@ private meta def pptFunProp : TacticM Unit :=
 
 attribute [program_certificate]
   Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn
+  Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList
   isPPTOn_uniform_bool
 
-/-- Let either the sampler or continuation determine the intermediate encoding. Commit only
-after both premises are proved, so an unsuitable choice cannot hide the other order. -/
-@[aesop safe 10 tactic (rule_sets := [PPT])]
+/-- Expose probabilistic sequencing to Aesop's joint search, retaining alternatives for the
+intermediate encoding until both the sampler and continuation have been proved. -/
+@[aesop unsafe 80% tactic (rule_sets := [PPT])]
 private meta def pptCaptured : TacticM Unit :=
-  withMainContext <| focus <| Term.withoutErrToSorry <| withoutRecover do
+  withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     let target := (← Core.betaReduce (← instantiateMVars (← getMainTarget))).consumeMData
     unless target.isAppOf ``IsPPTOn do throwError "expected an encoded-input PPT goal"
-    let isBind ← lambdaTelescope target.getAppArgs.back! fun _ body => do
-      if body.isAppOf ``Bind.bind then return true
-      if body.isAppOf ``Functor.map then return false
+    let rule ← lambdaTelescope target.getAppArgs.back! fun _ body => do
+      if body.isAppOf ``Bind.bind then return ``IsPPTOn.bind_with
+      if body.isAppOf ``Functor.map then return ``IsPPTOn.map_with
       throwError "expected probabilistic sequencing"
-    let (rule, sampler, continuation) := if isBind then
-      (``IsPPTOn.bind_with, `hfirst, `hsecond) else (``IsPPTOn.map_with, `hprogram, `hf)
-    for samplerFirst in [true, false] do
-      let saved ← saveState
-      try
-        liftMetaTactic fun goal => goal.applyConst rule
-        Cslib.Tactic.solveTagged (if samplerFirst then sampler else continuation)
-        Cslib.Tactic.solveTagged (if samplerFirst then continuation else sampler)
-        return
-      catch _ => saved.restore
-    throwError "no compatible encoding for the sampler and continuation"
+    liftMetaTactic fun goal => goal.applyConst rule
+
+attribute [aesop unsafe 80% apply (rule_sets := [PPT])] IsPPTOn.cond IsPPTOn.ite
 
 /-- Certify a probabilistic program using proved sampling, composition and deterministic rules. -/
 macro "ppt" : tactic => `(tactic| solve | aesop (rule_sets := [PPT, PolyTime]))

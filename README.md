@@ -18,7 +18,8 @@ Programs now use `PFunctor.FreeM` and the typed-oracle interface from cslib PR #
 simulation rules preserve the joint result and final oracle state. The common effectful machine
 now has exact deterministic/nondeterministic specializations and a clocked program interpreter,
 including fair-coin runs. Closed `IsPPTOn` certificates now reuse deterministic proofs through
-`fun_prop` and certify fair-bit sampling, monadic `bind`, deterministic preprocessing and
+`fun_prop` and certify fair bits, uniform words of an efficiently computed length, monadic `bind`,
+deterministic preprocessing and
 postprocessing, captured inputs and conditionals. The compiler charges copying and fresh-input
 preparation and guarantees actual halting. The `ppt` tactic combines these rules with deterministic
 `polytime` automation, named certificates and locally supplied routines. Probabilistic loops and

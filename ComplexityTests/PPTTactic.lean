@@ -65,6 +65,38 @@ example (sample : List Bool → ProbComp ℕ)
       (fun n => (List.range n).foldl (fun parity _ => !parity) true) <$> sample word) := by
   ppt
 
+-- Both sides have competing certificates; changing premise order alone cannot find the shared one.
+example (shared samplerOnly continuationOnly : ℕ ↪ List Bool)
+    (sample : List Bool → ProbComp ℕ) (next : List Bool → ℕ → ProbComp Bool)
+    (hsShared : IsPPTOn encBits shared sample) (_hsOther : IsPPTOn encBits samplerOnly sample)
+    (hnShared : IsPPTOn (encPair encBits shared) encBool (fun pair => next pair.1 pair.2))
+    (_hnOther : IsPPTOn (encPair encBits continuationOnly) encBool
+      (fun pair => next pair.1 pair.2)) :
+    IsPPTOn encBits encBool (fun word => do
+      let n ← sample word
+      next word n) := by
+  ppt
+
+example (shared samplerOnly continuationOnly : ℕ ↪ List Bool)
+    (sample : List Bool → ProbComp ℕ) (next : List Bool → ℕ → Bool)
+    (hsShared : IsPPTOn encBits shared sample) (_hsOther : IsPPTOn encBits samplerOnly sample)
+    (hnShared : ComputableTidilyInPolyTime (fun pair => next pair.1 pair.2)
+      (encPair encBits shared) encBool)
+    (_hnOther : ComputableTidilyInPolyTime (fun pair => next pair.1 pair.2)
+      (encPair encBits continuationOnly) encBool) :
+    IsPPTOn encBits encBool (fun word => next word <$> sample word) := by
+  ppt
+
+-- Conditional fallback lets the deterministic fold rules prove the guard.
+example : IsPPTOn encBits encBool (fun word =>
+    if word.foldl (fun parity _ => !parity) true then ProbComp.uniform Bool else pure false) := by
+  ppt
+
+example : IsPPTOn encBits encBool (fun word =>
+    if word.foldl (fun parity _ => !parity) true = false then
+      ProbComp.uniform Bool else pure false) := by
+  ppt
+
 -- GGM keeps the original path available after a certified seed sampler.
 example (sample : List Bool → ProbComp (List Bool)) (generator : List Bool → List Bool)
     (hsample : IsPPTOn encBits encBits sample)
@@ -114,6 +146,46 @@ attribute [irreducible] sampleFixed
 
 -- An inapplicable registered side condition must not hide the next certificate.
 example : IsPPTOn encBits encBits (sampleFixed 1) := by ppt
+
+private def namedSample (_c _a : ℕ ↪ List Bool) (sample : List Bool → ProbComp ℕ) :
+    List Bool → ProbComp ℕ := sample
+
+private def namedNext (_c _b : ℕ ↪ List Bool) (next : List Bool → ℕ → ProbComp Bool) :
+    List Bool → ℕ → ProbComp Bool := next
+
+-- The side condition makes these exercise named-certificate lookup rather than fun_prop alone.
+@[program_certificate]
+private theorem namedSample_other (c a : ℕ ↪ List Bool) (sample : List Bool → ProbComp ℕ)
+    (_t : True) (h : IsPPTOn encBits a sample) :
+    IsPPTOn encBits a (namedSample c a sample) := h
+
+@[program_certificate]
+private theorem namedSample_shared (c a : ℕ ↪ List Bool) (sample : List Bool → ProbComp ℕ)
+    (_t : True) (h : IsPPTOn encBits c sample) :
+    IsPPTOn encBits c (namedSample c a sample) := h
+
+@[program_certificate]
+private theorem namedNext_other (c b : ℕ ↪ List Bool) (next : List Bool → ℕ → ProbComp Bool)
+    (_t : True) (h : IsPPTOn (encPair encBits b) encBool (fun p => next p.1 p.2)) :
+    IsPPTOn (encPair encBits b) encBool (fun p => namedNext c b next p.1 p.2) := h
+
+@[program_certificate]
+private theorem namedNext_shared (c b : ℕ ↪ List Bool) (next : List Bool → ℕ → ProbComp Bool)
+    (_t : True) (h : IsPPTOn (encPair encBits c) encBool (fun p => next p.1 p.2)) :
+    IsPPTOn (encPair encBits c) encBool (fun p => namedNext c b next p.1 p.2) := h
+
+attribute [irreducible] namedSample namedNext
+
+-- Neither routine's first registered certificate is compatible with the other routine.
+example (c a b : ℕ ↪ List Bool) (sample : List Bool → ProbComp ℕ)
+    (next : List Bool → ℕ → ProbComp Bool)
+    (hsC : IsPPTOn encBits c sample) (_hsA : IsPPTOn encBits a sample)
+    (hnC : IsPPTOn (encPair encBits c) encBool (fun p => next p.1 p.2))
+    (_hnB : IsPPTOn (encPair encBits b) encBool (fun p => next p.1 p.2)) :
+    IsPPTOn encBits encBool (fun word => do
+      let n ← namedSample c a sample word
+      namedNext c b next word n) := by
+  ppt
 
 -- Neither an unknown sampler nor a non-dyadic finite uniform law is a free operation.
 example (_sample : List Bool → ProbComp Bool) : True := by

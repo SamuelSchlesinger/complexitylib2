@@ -210,7 +210,7 @@ not existence proofs of one-way functions or permutations.
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair-bit sampling, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; machine composition charges copying and fresh input and has intrinsically halting finite witnesses; probabilistic loops and oracle PPT remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; machine composition charges copying and fresh input and has intrinsically halting finite witnesses; probabilistic loops and oracle PPT remain pending |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -325,26 +325,44 @@ common encoding from its two arguments and is also reused by the existing inequa
 Concrete tests check a prepared prefix followed by the original input, and an oracle query that
 retains both an existing output prefix and the private request log.
 
-The `ppt` tactic is now integrated for these closed programs. Its new module has 89 source lines;
+The `ppt` tactic is now integrated for these closed programs. Its module has 82 source lines;
 the existing `polytime` routine-call matcher is shared, and `program_certificate` also registers
-probabilistic certificates with `fun_prop`. It adds no mathematical theorem bodies, leaving the
-total at 4,913 / 34,269; tactic implementation and tests remain outside that metric. Clients cover
+probabilistic certificates with `fun_prop`. Its initial integration added no mathematical theorem
+bodies, leaving that total at 4,913 / 34,269; tactic implementation and tests remain outside the
+metric. Clients cover
 captured `do` programs, a deterministic bounded-growth fold after sampling, nested tuple arguments,
 alternate local encodings, GGM evaluation, and irreducible named routines inside a conditional.
 Regression tests require fallback from an inapplicable certificate and reject unknown samplers
 and exact uniform sampling from `Fin 3`. Review exposed a sampled-output encoding choice that
-could prevent a valid continuation proof. Captured composition now tries both premise orders
-transactionally, committing only after both proofs succeed; tests cover unary/binary certificates
-in both orders and both bind and map. This is closed straight-line PPT automation; sampling
-uniform bitstrings of runtime length, probabilistic iteration, oracle PPT and the crypto security
-reductions are still pending.
+could prevent a valid continuation proof. Captured composition now exposes both premises to
+Aesop's joint search, retaining local and registered certificate alternatives for their shared
+encoding. Named lookup now returns every matching certificate as a separate Aesop application,
+with independent metavariable assignments and the remaining premises visible to search. Tests
+cover unary/binary certificates in both orders and competing certificates on both sides of bind
+and map, including irreducible named routines. Conditional fallback also lets `polytime` prove
+a fold-based guard, including a negated
+guard through a one-line wrapper around the existing Boolean certificate.
+
+Uniform sampling of runtime-length words is now ported from the crypto branch. `BitString.uniformList`
+keeps the finite-cube distribution and its split, prefix, support and permutation laws;
+`BitString.sampleList` draws only independent fair bits. A single one-state, zero-work-tape scanner
+outputs one bit per raw input symbol and halts after one additional transition. That last transition
+draws and discards a coin, so the theorem is distributional rather than an equality of coin-query
+programs. A unary count certificate lifts to sampling through one line of preprocessing. Tests
+cover empty and mixed raw words, the last live versus halted configurations, lengths computed by
+arithmetic or a bounded-growth population-count fold, and sampled-seed GGM evaluation with `by ppt`.
+Binary-only counts are rejected. Including the guard wrapper, this batch adds 18 theorem bodies /
+112 body lines, for 4,931 / 34,381 in 435 source files. The scanner's general configuration proof
+is 33 body lines; its high-level sampler certificate is four, and its count-composition rule is
+one. Probabilistic iteration, oracle PPT and the crypto security reductions are still pending.
 
 ### Next design experiments
 
-1. **Extend `ppt` to probabilistic loops and sampling uniform bitstrings of runtime length.**
-   The deterministic loop and tactic interfaces, typed `PFunctor.FreeM` frontend, effectful machine interpreter, closed
-   PPT contract, captured-input composition and polynomial clock compiler are in place.
-   Add probabilistic loop realization rules, then
+1. **Extend `ppt` to probabilistic loops.** The deterministic loop and tactic interfaces, typed
+   `PFunctor.FreeM` frontend, effectful machine interpreter, closed PPT contract, runtime-length
+   sampling, captured-input composition and polynomial clock compiler are in place.
+   Port the crypto branch's saved-coin evaluator so repetition and adaptive loops can reuse the
+   deterministic loop calculus, then
    validate one readable `do` program containing a bounded loop, a semantic specification and an
    actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement

@@ -18,6 +18,7 @@ import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock
 import ComplexityTests.ProbabilisticComposition
+import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs
 import ComplexityTests.SATPolyTime
 import ComplexityTests.Smoke

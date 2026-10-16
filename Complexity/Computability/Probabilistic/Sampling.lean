@@ -7,18 +7,28 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Probabilistic.PPT
+public import Complexity.Computability.Probabilistic.PPT.Composition
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
 
 /-!
-# Certified fair-bit sampling
+# Certified fair-bit and word sampling
 
 The finite-uniform Boolean program has a one-instruction machine realization. This primitive is
-independent of the input and is registered with `fun_prop`. Larger samplers need their own
-resource-certified constructions; finite uniformity alone does not imply strict fair-coin PPT.
+independent of the input and is registered with `fun_prop`. Uniform words are sampled by one fixed
+scanner with a linear clock. A runtime sample length must itself be computed in unary, so the
+certificate includes the cost of writing the sampled word. Finite uniformity alone does not imply
+strict fair-coin PPT.
 
 ## Main results
 
 * `Cslib.Probability.isPPTOn_uniform_bool`: one fair bit is uniformly PPT.
+* `Cslib.Probability.isPPTOn_sampleList`: uniform words from a unary count.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList`: sample an efficiently computed length.
+
+## References
+
+Adapted from `Cslib/Computability/Probabilistic/Sampling.lean` on the cslib `crypto` branch at
+`5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing encodings and common machine.
 -/
 
 @[expose] public section
@@ -42,4 +52,20 @@ theorem isPPTOn_uniform_bool {α : Type} (input : α ↪ List Bool) :
     Turing.MultiTapeMachine.initialConfig, Turing.Cfg.init, Turing.MultiTapeMachine.Config.step,
     Turing.Action.apply]
 
+/-- Uniform words have one finite fair-coin implementation for all unary input lengths. -/
+theorem isPPTOn_sampleList :
+    IsPPTOn Turing.MultiTapeTM.encUnary Turing.MultiTapeTM.encBits BitString.sampleList := by
+  refine ⟨0, Unit, inferInstance, Turing.MultiTapePTM.uniformListMachine, 1, 1, fun n => ?_⟩
+  simpa only [BitString.eval_sampleList, Turing.MultiTapeTM.encBits, Function.Embedding.coe_refl,
+    Turing.MultiTapeTM.encUnary_apply, List.length_replicate, pow_one, one_mul, PMF.map_id] using
+    (Turing.MultiTapePTM.eval_uniformListMachine (Turing.MultiTapeTM.encUnary n)).symm
+
 end Cslib.Probability
+
+/-- Sample an efficiently computed number of independent fair bits, charging the count in unary. -/
+@[fun_prop]
+theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList {α : Type}
+    {input : α ↪ List Bool} {count : α → ℕ}
+    (hcount : ComputableTidilyInPolyTime count input encUnary) :
+    Cslib.Probability.IsPPTOn input encBits (fun a => Cslib.BitString.sampleList (count a)) :=
+  Cslib.Probability.isPPTOn_sampleList.preprocess hcount

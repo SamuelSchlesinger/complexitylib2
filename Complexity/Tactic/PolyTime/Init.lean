@@ -16,9 +16,9 @@ public import Mathlib.Tactic.FunProp
 
 `polytime` searches the Aesop rule set `PolyTime`. A certificate for a named program is registered
 with `@[program_certificate]`. Certificates are indexed by their efficiency predicate and by the
-constant at the head of the program, looking through an output encoding. A goal is matched against
-the certificates for its own program head before proof search unfolds the program, so similarly
-implemented algorithms do not unfold into each other's rules.
+constant at the head of the program, looking through an output encoding. A goal's certificates
+are looked up using its own program head, so similarly implemented algorithms do not unfold into
+each other's rules.
 Certificates are also registered with `fun_prop`, so the same annotation supports
 calls inside larger functional programs.
 
@@ -130,27 +130,31 @@ def solveTagged (name : Name) : TacticM Unit := do
   else
     evalTactic (← `(tactic| case $tag:ident => solve | aesop (rule_sets := [PPT, PolyTime])))
 
-/-- Apply a certificate registered for the program in the main goal, trying each certificate for
-its head in registration order. Discharge its premises before committing, so an unavailable
-side condition does not prevent using a later certificate. -/
-def applyCertificate (predicate : Name) : TacticM Unit :=
-    withMainContext <| focus <| Term.withoutErrToSorry <| withoutRecover do
-  let target := (← instantiateMVars (← getMainTarget)).consumeMData
+/-- Expose every matching named certificate as an Aesop alternative. Eager premises are solved
+before exposing the remaining obligations, while different certificates keep independent
+metavariable assignments until the surrounding proof search has also succeeded. -/
+def applyCertificates (predicate : Name) : Aesop.RuleTac := fun input => input.goal.withContext do
+  let target := (← instantiateMVars (← input.goal.getType)).consumeMData
   unless target.isAppOf predicate do throwError "expected an efficiency goal for {predicate}"
   let key ← efficiencyKey target
+  let initial ← saveState
+  let mut applications := #[]
   for (certificate, eager) in (certificateExt.getState (← getEnv)).getD key #[] do
-    let saved ← saveState
     try
-      liftMetaTactic fun goal => goal.applyConst certificate
-      eager.forM solveTagged
-      if predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
-        evalTactic (← `(tactic| all_goals solve | aesop (rule_sets := [PolyTime])))
-      else
-        evalTactic (← `(tactic| all_goals solve | aesop (rule_sets := [PPT, PolyTime])))
-      return
-    catch _ =>
-      saved.restore
-  throwError "no certificate for `{key.2.1}` applies"
+      let goals ← (Lean.Elab.Tactic.run input.goal <|
+          Term.withoutErrToSorry <| withoutRecover do
+        liftMetaTactic fun goal => goal.applyConst certificate
+        eager.forM solveTagged).run'
+      let goals ← goals.toArray.mapM (Aesop.mvarIdToSubgoal input.goal)
+      applications := applications.push {
+        goals
+        postState := ← saveState
+        scriptSteps? := none
+        successProbability? := none }
+    catch _ => pure ()
+    finally initial.restore
+  if applications.isEmpty then throwError "no certificate for `{key.2.1}` applies"
+  return ⟨applications⟩
 
 /-- Apply a rule with known arguments, leaving all remaining hypotheses as goals. -/
 private def applyWithArguments (rule : Name) (arguments : Array (Name × Expr)) : TacticM Unit := do

@@ -3697,4 +3697,28 @@ info: 'Cslib.Probability.IsPPTOn.cond' depends on axioms: [propext, Classical.ch
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.IsPPTOn.cond
 
+/--
+info: 'Cslib.BitString.eval_sampleList' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.eval_sampleList
+
+/--
+info: 'Turing.MultiTapePTM.eval_uniformListMachine' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.eval_uniformListMachine
+
+/--
+info: 'Turing.MultiTapePTM.uniformListMachine_halted' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.uniformListMachine_halted
+
+/--
+info: 'Cslib.Probability.isPPTOn_sampleList' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.isPPTOn_sampleList
+
 end ComplexityTests.Axioms

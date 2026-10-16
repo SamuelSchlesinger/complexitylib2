@@ -42,10 +42,10 @@ private meta def polytimeKnownCall : Lean.Elab.Tactic.TacticM Unit :=
   Cslib.Tactic.applyKnownCall ``ComputableTidilyInPolyTime 2
     ``ComputableTidilyInPolyTime.comp `g `hf `hg
 
-/-- Reuse a named routine's certificate before unfolding it. -/
-@[aesop safe -30 tactic (rule_sets := [PolyTime])]
-private meta def polytimeCertificate : Lean.Elab.Tactic.TacticM Unit :=
-  Cslib.Tactic.applyCertificate ``ComputableTidilyInPolyTime
+/-- Expose named deterministic certificates as search alternatives. -/
+@[aesop unsafe 99% tactic (rule_sets := [PolyTime])]
+private meta def polytimeCertificate : Aesop.RuleTac :=
+  Cslib.Tactic.applyCertificates ``ComputableTidilyInPolyTime
 
 open Lean Meta Elab Tactic in
 /-- Decompose constructors before generic composition can guess intermediate encodings. -/
@@ -78,6 +78,13 @@ private meta def polytimeFunProp : TacticM Unit :=
     evalTactic (← `(tactic| try simp only [← List.getD_eq_getElem?_getD]))
     -- A failed compositional attempt must leave time for the specification rules.
     evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
+
+/-- Expose a negated guard to loop rules when compositional proof search needs their help. -/
+@[aesop unsafe 80% apply (rule_sets := [PolyTime])]
+theorem bool_not_rule {α : Type} {input : α ↪ List Bool} {guard : α → Bool}
+    (hguard : ComputableTidilyInPolyTime guard input encBool) :
+    ComputableTidilyInPolyTime (fun a => !(guard a)) input encBool :=
+  ComputableTidilyInPolyTime.bool_not.comp hguard
 
 /-- Fix a raw bit list's encoding and expose the two growth cases before proof search. -/
 theorem foldl_bits_rule {γ β : Type} {encIn : γ ↪ List Bool} {encB : β ↪ List Bool}
