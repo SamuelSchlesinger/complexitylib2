@@ -155,6 +155,7 @@ public import Complexity.Computability.Complexity.CookLevin.Tableau
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.SAT
+public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.DecisionTree.Basic
@@ -201,6 +202,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degr
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic

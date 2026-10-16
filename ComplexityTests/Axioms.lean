@@ -41,6 +41,24 @@ info: 'Cslib.Complexity.SAT.isVerifier' depends on axioms: [propext, Classical.c
 #print axioms Cslib.Complexity.SAT.isVerifier
 
 /--
+info: 'Cslib.Complexity.SAT.computableTidilyInPolyTime_verifier' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.SAT.computableTidilyInPolyTime_verifier
+
+/--
+info: 'Cslib.Complexity.SAT.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.SAT.mem_NP
+
+/--
+info: 'Cslib.Complexity.UNSAT_mem_coNP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.UNSAT_mem_coNP
+
+/--
 info: 'Cslib.Complexity.mem_ThreeSAT_toThreeSAT_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in

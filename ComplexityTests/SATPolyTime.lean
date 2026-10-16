@@ -1,0 +1,69 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+import Complexity.Computability.Complexity.Problems.SAT.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+
+/-!
+# SAT polynomial-time and encoding regression tests
+
+The verifier must handle empty formulas and clauses, repeated variables, sparse binary labels
+and certificates of any length. The calculus tests check composition through `fun_prop`.
+-/
+
+namespace ComplexityTests.SATPolyTime
+
+open Cslib.Complexity Cslib.Logic.PL Turing.MultiTapeTM
+
+example : SAT ∈ NP encCNF := SAT.mem_NP
+example : UNSAT ∈ coNP encCNF := UNSAT_mem_coNP
+
+example : ComputableTidilyInPolyTime SAT.verifier (encPair encCNF encBits) encBool := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun p => (SAT.verifier p, !SAT.verifier p))
+    (encPair encCNF encBits) (encPair encBool encBool) := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (List.map (fun n : ℕ => n + 1))
+    (encList encNat) (encList encNat) := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.idxOf p.2)
+    (encPair (encList encNat) encNat) encUnary := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1.getD p.2 false)
+    (encPair encBits encUnary) encBool := by
+  fun_prop
+
+-- Composition infers the unary index encoding from `idxOf` before applying lookup.
+example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.getD (p.1.idxOf p.2) 0)
+    (encPair (encList encNat) encNat) encNat := by
+  fun_prop
+
+-- Scans, like folds, use an explicit rule for the captured parameter.
+example : ComputableTidilyInPolyTime (fun p : List ℕ × ℕ => p.1.any fun n => decide (p.2 = n))
+    (encPair (encList encNat) encNat) encBool :=
+  ComputableTidilyInPolyTime.anyWith (ComputableTidilyInPolyTime.decide_eq encNat)
+    (ComputableTidilyInPolyTime.snd (encList encNat) encNat)
+    (ComputableTidilyInPolyTime.fst (encList encNat) encNat)
+
+example : SAT.verifier ([], []) = true := rfl
+example : SAT.verifier ([[]], []) = false := rfl
+
+-- Conflicting occurrences of the same variable cannot read different certificate bits.
+example : SAT.verifier ([[(7, true)], [(7, false)]], [true, false]) = false := rfl
+
+-- The label is stored in binary; its value is not an index into the certificate.
+example : SAT.verifier ([[(2 ^ 100, true)]], [true]) = true := by decide
+example : SAT.verifier ([[(2 ^ 100, true)]], []) = false := by decide
+example : SAT.verifier ([[(2 ^ 100, true)]], [true, false, false]) = true := by decide
+
+-- A short certificate defaults missing positions to false, including on negative literals.
+example : SAT.verifier ([[(5, true)], [(9, false)]], [true]) = true := rfl
+
+end ComplexityTests.SATPolyTime

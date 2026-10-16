@@ -68,9 +68,9 @@ What it does *not* buy: upstream combinators (`seq`, `extendTapes`, crei's `comp
 crypto-frontier's `Oracle/*.lean` (3.2k lines) is the template, and they should be written
 *once* for the general machine rather than per effect.
 
-## Status (2026-10-13)
+## Status (2026-10-15)
 
-Milestone 1 (Cook–Levin) is complete except for two polynomial-time facts:
+Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-time bound:
 
 | Piece | Module | State |
 |---|---|---|
@@ -79,8 +79,9 @@ Milestone 1 (Cook–Levin) is complete except for two polynomial-time facts:
 | `SAT`, `encCNF`, verifier correctness | `Problems/SAT.lean` | proved |
 | Tableau of a multi-tape run and its correctness | `CookLevin/{Tableau,Correctness}.lean` | proved (`tableau_satisfiable_iff`) |
 | The reduction and its correctness | `CookLevin/Reduction.lean` | proved (`reduce_mem_SAT_iff`) |
-| `NPComplete encCNF SAT` from the two polynomial-time facts | `CookLevin/Staging.lean` | proved (local-only staging) |
-| `ComputableTidilyInPolyTime SAT.verifier …` and `… (reduce tm p c d enc) …` | — | **open**: needs crei's calculus |
+| Polynomial-time SAT verifier, `SAT ∈ NP`, `UNSAT ∈ coNP` | `Problems/SAT/PolyTime.lean` | proved, using the vendored calculus and reusable polynomial-time list rules |
+| `NPComplete encCNF SAT` from the reduction's polynomial-time bound | `CookLevin/Staging.lean` | proved (local-only staging) |
+| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: the calculus is available; the reduction's certificate is still needed |
 | `ThreeSAT` and correctness of `SAT ≤ 3SAT` | `Problems/ThreeSAT.lean`, `CNF/ThreeCNF.lean` | proved (polynomial time open) |
 
 Circuit track (independent of the calculus): `P/poly` over upstream circuits and `Language.slice`,
@@ -357,10 +358,11 @@ Cheeger's inequality, graph products, relative-error approximate counting.
 | Finite cores of Savitch and of inductive counting | `Classes/Containments/Internal/ReachIn`, `InductiveCounting`, `CountingCert` | done (`Foundations/Relation/`) |
 | Depth-two threshold circuit for parity | `Circuits/Threshold/Parity` | done (`Circuit/Boolean/Threshold{,/Parity}`): `n + 1` threshold gates, threshold depth two; TC⁰ = `ConstDepth Threshold.interpretation` |
 | Frontier method, correlation with quadratic forms | `Circuits/Frontier/**`, `Circuits/Correlation*` | batches 1 and 2 done (`Circuit/Frontier/`; the lower bound conditional on `LayoutBound`); spanning-tree layouts and the unconditional `(2 − ε) n` bound done (`Frontier/{Layouts/*,Unconditional}`); the Gaussian toolkit done (Sheppard's bound, second moments, kernel rows); extensions done: linear maps (`Frontier/Linear/*`), hidden inputs, nondeterministic circuits and decomposable DAGs (`Frontier/{Projection,Nondeterministic,Decomposable}`), ledgers for aggregate gates of unbounded fan-in (`Frontier/{Components,Ledger/*}`); the Gaussian layouts and the fan-in-two bounds `(L − ε) n`, `L ≈ 4.5625`, `(4.56 − ε) n` and `(4 − ε) n` done (`Frontier/{Layouts/*,FanInTwo}`, from the independent formalization `circuit-lb-4.56-lean`); the core aligned with `circuit-lb-4.56-lean` (read-once branching programs, `Frontier/{BranchingProgram,AverageCase}`), and its six headline claims (`CircuitLowerBound` and `AverageCaseBound` with `L`, `114/25`, `4`) done; correlation `2^{-γ n}` with explicit-by-choice bilinear forms below `≈ 2.78 n` gates done (`Frontier/Correlation{,/*}`); the general fan-in bound via vertex-score layouts done (`Frontier/BoundedFanIn`) |
-| Class-level results (Savitch, hierarchies, `PH ⊆ PSPACE`, Sipser–Lautemann, Cobham, `PCP = NP`, RAM-P = P, …) | `Classes/**`, `Models/**` | blocked on the polynomial-time calculus |
+| Class-level results (Savitch, hierarchies, `PH ⊆ PSPACE`, Sipser–Lautemann, Cobham, `PCP = NP`, RAM-P = P, …) | `Classes/**`, `Models/**` | queued for machine and resource-bound certificates using the now-vendored calculus |
 
-The class-level forms of the time hierarchy, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE`, Sipser–Lautemann
-and the PCP theorem wait for the polynomial-time calculus.
+The polynomial-time calculus and UTM are now available. The class-level forms of the time
+hierarchy, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE`, Sipser–Lautemann and the PCP theorem still need their
+machine and resource-bound certificates; PCP also needs explicit expander constructibility.
 
 Second source: [karnseth/katz-lindell](https://github.com/karnseth/katz-lindell) (Apache 2.0).
 Its proofs (`infra/`) are complete; its statements came from a Codex-generated layer, so they are
@@ -632,9 +634,8 @@ P ⊆ P/poly. **Phase 6 — effects**: effectful `seq/comp/clock/replay` on the 
   fresh cslib worktree at the pinned SHA and pass cslib's gates there.
 - Milestone 1 acceptance: `SAT.npComplete` compiles axiom-clean; the reduction's `PolyTime` proof
   is `fun_prop`/`polytime` plus loop rules, with no bespoke machine.
-- Blocker log: the `comp` rule of the calculus needs cslib PR #1111 (crei) merged; until then
-  L1, class definitions, SAT, and the reduction's correctness proof proceed; only the final
-  complexity certification waits.
+- Blocker log: cslib PR #1111 and crei's calculus are vendored. SAT verifier certification is
+  complete; the remaining Cook–Levin blocker is the reduction's polynomial-time certificate.
 
 ## Risks and mitigations
 

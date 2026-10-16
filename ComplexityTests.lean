@@ -4,5 +4,6 @@ import ComplexityTests.Encodings
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
 import ComplexityTests.PolynomialBound
+import ComplexityTests.SATPolyTime
 import ComplexityTests.Smoke
 import ComplexityTests.ThreeCNF

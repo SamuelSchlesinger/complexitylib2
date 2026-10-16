@@ -23,8 +23,8 @@ to either side.
 
 The Cook–Levin theorem says that `SAT` is `NP`-complete [Arora and Barak, Theorem
 2.10][AroraBarak09]. Its correctness parts are proved here (`SAT.isVerifier`) and in `CookLevin/`
-(`reduce_mem_SAT_iff`); the polynomial-time bounds on the verifier and the reduction need the
-closure properties of `Turing.MultiTapeTM.ComputableTidilyInPolyTime`, which are not yet in cslib.
+(`reduce_mem_SAT_iff`). The verifier's polynomial-time bound and `SAT ∈ NP` are proved in
+`Problems/SAT/PolyTime.lean`; the reduction's polynomial-time bound remains open.
 
 ## Main definitions
 
