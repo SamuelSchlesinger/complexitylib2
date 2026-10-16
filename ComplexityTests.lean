@@ -26,6 +26,7 @@ import ComplexityTests.PolynomialClock
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs
+import ComplexityTests.RandomOracle
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.Smoke

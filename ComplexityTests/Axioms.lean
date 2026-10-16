@@ -4111,3 +4111,59 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_of_bounded_grow
 -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_of_bounded_growth
+
+/--
+info: 'Cslib.RandomOracle.run_interpret_answer_complete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.run_interpret_answer_complete
+
+/--
+info: 'Cslib.RandomOracle.uniform_interpret_eq_lazy' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.uniform_interpret_eq_lazy
+
+/--
+info: 'Cslib.RandomOracle.run_interpret_memoize' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.run_interpret_memoize
+
+/--
+info: 'Cslib.RandomOracle.memoize_cache_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.memoize_cache_bounds
+
+/--
+info: 'Cslib.RandomOracle.eval_run_interpret_memoize_eq_eager' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.eval_run_interpret_memoize_eq_eager
+
+/--
+info: 'Cslib.Probability.PMF.pi_bind_update_pair' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.pi_bind_update_pair
+
+/--
+info: 'Cslib.OracleComp.map_run_interpret' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.OracleComp.map_run_interpret
+
+/--
+info: 'Cslib.IsMonadHom.stateT' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.IsMonadHom.stateT

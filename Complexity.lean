@@ -385,6 +385,8 @@ public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
+public import Complexity.Foundations.Control.Monad.IsMonadHom.StateT
+public import Complexity.Foundations.Control.Monad.Memoize
 public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
@@ -434,7 +436,9 @@ public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.Iteration
+public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.Simulation
+public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction
@@ -465,11 +469,13 @@ public import Complexity.Probability.BitString
 public import Complexity.Probability.BitString.List
 public import Complexity.Probability.PMF
 public import Complexity.Probability.PMF.Expect
+public import Complexity.Probability.PMF.Map
 public import Complexity.Probability.PairwiseIndependent
 public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
+public import Complexity.Probability.Product
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
 public import Complexity.Tactic.PPT

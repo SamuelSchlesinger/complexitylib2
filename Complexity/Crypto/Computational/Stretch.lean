@@ -11,6 +11,7 @@ public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Languages.Probabilistic.UniformNat
 import Complexity.Crypto.Game.Hybrid
 import Complexity.Computability.Probabilistic.UniformNat
+import Complexity.Probability.PMF.Map
 import Complexity.Tactic.PPT
 
 /-!
@@ -154,10 +155,9 @@ noncomputable def hybrid (generator : List Bool → List Bool) (n total i : ℕ)
 theorem hybrid_zero (generator : List Bool → List Bool) (count : ℕ → ℕ) (n : ℕ) :
     hybrid generator n (count n) 0 = generatorEnsemble (stretch generator count) n := by
   simp only [hybrid, Nat.add_zero, Nat.sub_zero, generatorEnsemble]
-  simp only [PMF.map]
-  apply PMF.bind_congr_on_support
+  apply PMF.map_congr_on_support
   intro seed hseed
-  simp only [Function.comp_def, stretch, length_of_mem_support_uniformList hseed]
+  simp only [stretch, length_of_mem_support_uniformList hseed]
 
 /-- The final hybrid is uniform at the expanded length. -/
 @[simp] theorem hybrid_last (generator : List Bool → List Bool) (n total : ℕ) :

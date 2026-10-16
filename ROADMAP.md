@@ -209,6 +209,7 @@ not existence proofs of one-way functions or permutations.
 |---|---|
 | Typed programs and probability/state interpretation | PR #1129 copied at `4e626b5`; source credits Samuel Schlesinger and Devon Tuma and the VCVio design |
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
+| Random-function semantics | joint eager/lazy completion law for adaptive oracle-only programs; typed caches, association-list realization, compositional query budgets and a closed-sampler bridge. Independent private coins and oracle-PPT realization remain pending |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Machine composition charges preparation and has intrinsically halting finite witnesses; oracle PPT remains pending |
@@ -630,6 +631,30 @@ this is a broader captured-input interface, not a proof-length reduction. The tw
 bodies remain two lines each. Including the shared loop, composition and size rules and the
 upstream hybrid copy, the net addition is 39 bodies / 237 lines, bringing the library to
 5,295 / 36,278 in 475 source files. Counts exclude definitions, statements and tests.
+
+### Random functions and memoized sampling (2026-10-16)
+
+The GGM port now has a semantic foundation for consistent oracle replies. A cache records typed
+answers, and the eager/lazy theorem preserves the joint result and completed function table.
+It permits adaptive queries and preassigned answers. An association-list implementation preserves
+this law even with duplicate initial keys, using the first occurrence. Its cache grows by at most
+the number of calls; every new key came from the transcript and every new value from its sampler.
+Query bounds compose through `pure`, queries, mapping and bind.
+
+The proofs reuse the single `OracleComp.interpret` interface and generic state simulation.
+A shared `IsMonadHom.stateT` rule transfers entire stateful executions through a monad morphism;
+it gives the bridge from executable closed samplers to mathematical distributions. Tests cover
+adaptive and repeated queries, retained initial entries, duplicate keys, exact sample counts
+and query budgets. These are semantic laws for oracle-only programs. Fresh private randomness
+in the client and the oracle-PPT machine realization still need to be connected for GGM security.
+
+The random-oracle module has 19 theorem bodies / 155 body lines, versus 19 / 147 in the crypto
+branch. Transcript, memoization and product-distribution APIs add compositional rules and retain
+dependent response types; two conditioning corollaries are deferred. Including the shared APIs,
+the batch adds 50 bodies / 308 body lines net, bringing the library to 5,345 / 36,586 in 481 source
+files. Two existing PRG proofs now use the shared support-sensitive map congruence directly,
+saving one line each. This batch expands the interface and is not an overall proof-length reduction.
+Counts exclude definitions, statements and tests.
 
 ### Next design experiments
 

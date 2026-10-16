@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Basic
+import Complexity.Foundations.Control.Monad.IsMonadHom.StateT
 
 /-!
 # Stateful oracle simulation
@@ -26,6 +27,7 @@ There is one oracle specification and one interpreter; stateful execution uses `
 * `Cslib.OracleComp.run_interpret_invariant`: invariants of each call hold after execution.
 * `Cslib.OracleComp.run_interpret_simulation_of_invariant`: probabilistic state simulation.
 * `Cslib.OracleComp.run_interpret_map_state_of_invariant`: deterministic state representation.
+* `Cslib.OracleComp.map_run_interpret`: a monad morphism commutes with stateful interpretation.
 -/
 
 @[expose] public section
@@ -117,5 +119,26 @@ theorem run_interpret_map_state_of_invariant
       invariant preserve
       (by simpa only [PMF.pure_map, PMF.pure_bind, PMF.map, Function.comp_def] using step)
       program s hs
+
+/-- A deterministic representation commuting with each call preserves the complete execution. -/
+theorem run_interpret_map_state
+    (oracle : (q : ι) → StateT State PMF (spec q))
+    (oracle' : (q : ι) → StateT State' PMF (spec q)) (represent : State → State')
+    (step : ∀ q s, (oracle q s).map (fun (a, s') => (a, represent s')) =
+      oracle' q (represent s)) (program : OracleComp spec α) (s : State) :
+    ((interpret oracle program).run s).map (fun (a, s') => (a, represent s')) =
+      (interpret oracle' program).run (represent s) :=
+  run_interpret_map_state_of_invariant oracle oracle' represent (fun _ => True)
+    (by simp) (fun q s _ => step q s) program s trivial
+
+/-- Transforming the underlying monad commutes with stateful program interpretation, retaining
+the joint result and private state. -/
+theorem map_run_interpret {m n : Type v → Type*} [Monad m] [Monad n]
+    [LawfulMonad m] [LawfulMonad n] {f : ∀ {β}, m β → n β}
+    (hf : IsMonadHom m n f) (oracle : (q : ι) → StateT State m (spec q))
+    (program : OracleComp spec α) (s : State) :
+    f ((interpret oracle program).run s) =
+      (interpret (m := StateT State n) (fun q state => f (oracle q state)) program).run s :=
+  congrFun ((hf.stateT State).map_pfunctorFreeMLiftM (P := ⟨ι, spec⟩) oracle program) s
 
 end Cslib.OracleComp

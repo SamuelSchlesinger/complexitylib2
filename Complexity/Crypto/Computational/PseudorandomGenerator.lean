@@ -12,6 +12,7 @@ public import Complexity.Crypto.Primitives.PRG.Game
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Languages.Probabilistic.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Probability.PMF.Map
 import Complexity.Tactic.PPT
 
 /-!
@@ -62,8 +63,7 @@ theorem generatorEnsemble_postprocess (generator : List Bool → List Bool)
     generatorEnsemble (fun seed => f seed.length (generator seed)) n =
       (generatorEnsemble generator n).map (f n) := by
   simp only [generatorEnsemble, PMF.map_comp]
-  simp only [PMF.map]
-  apply PMF.bind_congr_on_support
+  apply Probability.PMF.map_congr_on_support
   intro seed hseed
   simp only [Function.comp_def, BitString.length_of_mem_support_uniformList hseed]
 
