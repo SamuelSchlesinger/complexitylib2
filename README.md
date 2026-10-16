@@ -24,6 +24,9 @@ postprocessing, captured inputs and conditionals. The compiler charges copying a
 preparation and guarantees actual halting. The `ppt` tactic combines these rules with deterministic
 `polytime` automation, named certificates and locally supplied routines. Probabilistic loops and
 oracle PPT remain to be integrated.
+Saved-coin replay now preserves the full configuration and private oracle state under stateless
+fair-coin semantics. A deterministic controller implements closed replay from preloaded tapes;
+input preparation and its polynomial-time evaluator certificate remain to be connected.
 The deterministic `polytime` tactic now combines `fun_prop`, named and local routine certificates,
 and bounded-growth
 loop rules. Fold and iteration specifications prove both efficiency and a final invariant from

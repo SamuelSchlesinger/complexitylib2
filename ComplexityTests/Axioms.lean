@@ -3721,4 +3721,31 @@ info: 'Cslib.Probability.isPPTOn_sampleList' depends on axioms: [propext, Classi
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.isPPTOn_sampleList
 
+/--
+info: 'Turing.MultiTapePTM.run_interpret_runConfigFrom_eq_coins' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.run_interpret_runConfigFrom_eq_coins
+
+/--
+info: 'Turing.MultiTapePTM.eval_runClosedConfigFrom_eq_map_coins' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.eval_runClosedConfigFrom_eq_map_coins
+
+/--
+info: 'Turing.MultiTapePTM.runClosedCoins_mem_support' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.runClosedCoins_mem_support
+
+/--
+info: 'Turing.MultiTapePTM.runFrom_replay' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.runFrom_replay
+
 end ComplexityTests.Axioms

@@ -1,6 +1,7 @@
 import ComplexityTests.Axioms
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
+import ComplexityTests.CoinTape
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
 import ComplexityTests.GGM

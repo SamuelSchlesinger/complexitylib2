@@ -356,13 +356,28 @@ Binary-only counts are rejected. Including the guard wrapper, this batch adds 18
 is 33 body lines; its high-level sampler certificate is four, and its count-composition rule is
 one. Probabilistic iteration, oracle PPT and the crypto security reductions are still pending.
 
+Saved-coin semantics and its deterministic controller are now ported. Replay is a `foldlM` of
+the shared one-step program, so pause/resume and interpretation use the existing list and monad
+morphism laws. Averaging fixed tapes preserves both the final configuration and private oracle
+state when the coin program is stateless and fair; query handlers may remain randomized and
+stateful. In the closed case replay is a pure deterministic fold, and every supplied tape gives
+a supported configuration and output. The controller adds one read-only work tape and uses
+`Option State` control, scanning the tape to its first blank in `coins.length + 1` instructions
+even when the source halts early or never halts. Tests cover empty and false-bit tapes, an
+already-halted source, negative work-head movement, buffered queries and shared private state.
+This batch adds 24 theorem bodies / 100 body lines, giving 4,955 / 34,481 in 437 source files;
+the general averaging proof is 13 lines and the controller's arbitrary-position run proof is 16.
+These counts include the two low-level modules and exclude statements, definitions and tests.
+The controller starts with preloaded tapes: standard-pair decoding and tape preparation still
+need to be connected before claiming a polynomial-time saved-coin evaluator.
+
 ### Next design experiments
 
 1. **Extend `ppt` to probabilistic loops.** The deterministic loop and tactic interfaces, typed
    `PFunctor.FreeM` frontend, effectful machine interpreter, closed PPT contract, runtime-length
    sampling, captured-input composition and polynomial clock compiler are in place.
-   Port the crypto branch's saved-coin evaluator so repetition and adaptive loops can reuse the
-   deterministic loop calculus, then
+   Finish the saved-coin evaluator's standard-pair preparation and tidy TM certificate so repetition
+   and adaptive loops can reuse the deterministic loop calculus, then
    validate one readable `do` program containing a bounded loop, a semantic specification and an
    actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
