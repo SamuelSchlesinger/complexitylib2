@@ -67,8 +67,14 @@ example : ComputableTidilyInPolyTime (fun l : List ℕ => List.range l.length)
 -- The intermediate range has quadratic encoded length, so the parameterized map must
 -- accept polynomial-sized lists, not just lists with a linear output bound.
 example : ComputableTidilyInPolyTime (fun n => (List.range n).map fun i => (n, i))
-    encUnary (encList (encPair encUnary encUnary)) :=
-  ComputableTidilyInPolyTime.mapWith .id' .id' ComputableTidilyInPolyTime.range
+    encUnary (encList (encPair encUnary encUnary)) := by
+  fun_prop
+
+-- Both traversals capture data from outside their body. No encoding of a function is needed.
+example : ComputableTidilyInPolyTime
+    (fun p : ℕ × List ℕ => (List.range p.1).flatMap fun i => p.2.map fun j => i + j)
+    (encPair encUnary (encList encUnary)) (encList encUnary) := by
+  fun_prop
 
 example : ComputableTidilyInPolyTime (fun n => (List.range n).flatMap fun i => List.replicate i n)
     encUnary (encList encUnary) := by
@@ -90,8 +96,8 @@ example : ComputableTidilyInPolyTime
 
 -- A fixed list needs no encoding of its elements, even when their type lives in a larger universe.
 example {ι : Type 1} (l : List ι) :
-    ComputableTidilyInPolyTime (fun n : ℕ => l.map fun _ => n) encUnary (encList encUnary) :=
-  ComputableTidilyInPolyTime.mapConst l fun _ _ => .id'
+    ComputableTidilyInPolyTime (fun n : ℕ => l.map fun _ => n) encUnary (encList encUnary) := by
+  fun_prop
 
 -- Signed subtraction feeds the magnitude operation, with both natural results in unary.
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => ((p.1 : ℤ) - p.2).natAbs)

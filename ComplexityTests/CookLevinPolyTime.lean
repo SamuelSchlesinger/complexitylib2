@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.CookLevin.Clauses
 import Complexity.Computability.Complexity.CookLevin.Parameters
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 
 /-!
 # Cook–Levin construction tests
@@ -24,6 +25,15 @@ example {k : ℕ} {State : Type} [Fintype State] (tm : Turing.MultiTapeTM k Bool
     ComputableTidilyInPolyTime
       (fun T => (initClauses tm T ++ sitClauses T ++ acceptClauses T).relabel Var.index)
       encUnary encCNF := by
+  fun_prop
+
+-- Fixed tape/symbol traversals combine with input-dependent windows and nested lists.
+example {k : ℕ} {State : Type} [Fintype State] :
+    ComputableTidilyInPolyTime
+      (fun p : ℕ × ℕ => Feature.groups (k := k) (State := State) p.1 p.2)
+      (encPair encUnary encUnary) (encList (encList encFeature)) := by
+  unfold Feature.groups
+  simp only [SProd.sprod, List.product, List.map_flatMap, List.map_map, Function.comp_def]
   fun_prop
 
 -- The input encoding, polynomial and machine are fixed parameters of the reduction.

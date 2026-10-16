@@ -4,16 +4,20 @@ A Lean 4 formalization of computational complexity theory, built on
 [cslib](https://github.com/leanprover/cslib) as its base and written so that every module can be
 upstreamed into cslib as-is.
 
-## Design in one paragraph
+## Implementation and direction
 
-Machines, circuits and languages come from cslib. On top of them this library adds a parametric
-multi-tape machine with effects (nondeterminism, randomness, oracles) that is step-for-step
-equivalent to cslib's `Turing.MultiTapeTM`/`MultiTapeNTM` in the effect-free case; a calculus of
-time- and space-bounded Lean functions whose closure rules are registered with `fun_prop`, so
-that "this reduction is polynomial-time" is a one-line proof; a free-monad program layer
-(`PFunctor.FreeM`) in which Turing-machine programs read like straight-line code with queries and
-coins; a universal machine built as an interpreter *program* rather than a hand-made machine; and,
-on that foundation, complexity classes and the classical theorems. See `ROADMAP.md`.
+Machines, circuits and languages come from cslib. The library builds complexity theory on these
+models and Christian Reitwiessner's vendored calculus of time- and space-bounded Lean functions.
+Its polynomial-time closure rules are registered with `fun_prop`: many compositions of
+arithmetic, conditionals and list operations have one-line proofs that an actual Turing machine
+computes them in polynomial time. A universal simulator is implemented as ordinary Lean functions
+with correctness and explicit time/space bounds.
+
+The intended programming interface uses `PFunctor.FreeM`, straight-line `do` code, queries and
+coins, with machine realizations and resource certificates obtained compositionally. That program
+layer, the general effectful machine, and the invariant-oriented `polytime` tactic are still
+planned. The current calculus supports deterministic functions and explicit fold rules. See
+`ROADMAP.md` for implemented results, the proof-length audit, and the next design experiments.
 
 ## Layout
 

@@ -28,6 +28,118 @@ user's `crypto-frontier` branch supply the *ergonomics* (definitions, proof stra
 4. **UTMs are a prerequisite** for (3) in full generality (programs as data, simulation with
    accounted overhead), so UTMs are on the critical path.
 
+## Proof engineering checkpoint (2026-10-15)
+
+The deterministic function calculus already provides actual TM certificates, composition,
+conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's vendored
+`Universal/` development certifies an interpreter written as ordinary Lean functions.
+Its universal function takes a binary step count: its bound is polynomial in the **value** of
+that count, not its binary length. The `PFunctor.FreeM` program interface, program realization
+theorems, general effectful machine and `polytime` tactic remain to be implemented.
+The architecture sections below describe that intended interface, not completed features.
+
+### Accounting
+
+Baseline: commit `80f9b48`, before the list-automation refactor. Reproduce it with
+`python3 scripts/proof_lengths.py --ref 80f9b48 --json /tmp/proof-lengths.json`.
+The script counts nonblank, non-comment source lines in handwritten theorem/lemma bodies,
+excluding statements and the initial `by`. It includes term and equation proofs, but excludes
+proofs embedded in definitions/instances and generated declarations. It is a source-layout
+measure, not elaboration time, proof-term size, or a measure of mathematical difficulty.
+Folder totals count each source proof once; shared and imported dependencies are not charged
+again to their clients.
+
+Across 396 modules: **4,679 proof bodies, 33,082 body lines, median 3, 90th percentile 17**.
+There are 1,544 one-line bodies. The 107 bodies of at least 40 lines contain 7,044 lines
+(about 21% of the total). Vendored modules account for 640 bodies / 5,632 lines; submitted
+upstream copies for 46 / 263. These are included below, with authorship retained in each file.
+
+| Development | Proof bodies | Body lines | Median | 90th percentile | Largest |
+|---|---:|---:|---:|---:|---:|
+| Boolean circuits | 613 | 4,889 | 4 | 20 | 101 |
+| Frontier circuit bounds | 519 | 4,874 | 4 | 22 | 127 |
+| Machine plumbing and encodings | 389 | 3,129 | 3 | 16 | 364 |
+| Boolean analysis | 354 | 2,449 | 3 | 18 | 60 |
+| Propositional logic | 245 | 2,089 | 3 | 22 | 116 |
+| Universal interpreter | 219 | 1,998 | 4 | 23 | 135 |
+| Machine complexity calculus | 241 | 1,800 | 3 | 19 | 152 |
+| Expanders | 256 | 1,720 | 3 | 18 | 49 |
+| PCP | 247 | 1,454 | 2 | 15 | 87 |
+| Shared circuit infrastructure | 294 | 1,247 | 1 | 11 | 66 |
+| Shared data structures | 253 | 1,063 | 2 | 9 | 43 |
+| Other combinatorics | 65 | 812 | 6 | 28 | 96 |
+| Monotone circuits | 90 | 699 | 5 | 18 | 63 |
+| Decision trees | 116 | 653 | 3 | 15 | 36 |
+| Probability constructions | 62 | 565 | 6.5 | 19 | 51 |
+| Communication complexity | 63 | 518 | 3 | 25 | 39 |
+| Linear algebra | 38 | 453 | 3 | 39 | 79 |
+| Complexity classes and reductions | 123 | 433 | 1 | 8 | 78 |
+| Cryptography | 70 | 380 | 4 | 11 | 34 |
+| Probability foundations | 36 | 332 | 6 | 28 | 34 |
+| Cook–Levin | 38 | 193 | 2.5 | 12 | 26 |
+| First/second-order logic | 43 | 182 | 3 | 10 | 22 |
+| Other modules | 305 | 1,150 | 2 | 8 | 67 |
+
+The longest individual bodies include Reitwiessner's `multiPassFold` (364),
+`streamFold` (226), and time/space `foldl` (154); the Gaussian
+`exists_multi_vertex_sample` (127); parity's
+`CNF.card_isolatedInputs_mul_min_le` (116); `exists_runPath_tidy` (109);
+the frontier ledger bound (103); the quadratic-form correlation asymptotic bound (102);
+and PCP's `expect_numHits_sq_le` (87). Large reusable backend proofs can be good investments:
+shortening clients by reusing them matters more than minimizing every local line count.
+
+### Validated API improvement
+
+Four thin rules in `PolyTime/List.lean` expose composition in the form clients write it:
+`cons'`, `listAppend'`, `mapWithInput`, and `flatMapWithInput`. Constructor rules infer
+encodings from the result; traversal rules infer the list's encoding before checking the body.
+The existing fixed-list rules are also registered with `fun_prop`.
+All four new proofs are one-line applications of existing machinery.
+
+The actual initial-clause proof shrinks from 12 body lines to 1, the situation-clause proof
+from 10 to 1, and the accepting-clause proof from 2 to 1. Tests check a nested traversal
+capturing the original input in one `fun_prop` call and the existing feature-group
+enumeration in three proof lines. The change adds four proof lines and removes 21 from clients;
+it also adds theorem statements and documentation, so this is not a claim of shrinking total
+repository source by 17 lines. Generic filtering with negated equality and some lookup
+compositions still need explicit intermediate certificates; they are not claimed solved.
+
+The dynamic traversal rules require a **joint** certificate for `(input, element) ↦ body`.
+Separate certificates for each fixed element would allow different machines and polynomial
+degrees and would not establish a uniform algorithm over a variable list.
+
+### Next design experiments
+
+1. **Loop specifications and the program interface.** Derive an invariant-facing rule from
+   `foldl'`/`foldlWith`: initialization, preservation of `Inv input index accumulator`,
+   and a polynomial encoded-size consequence should discharge the current prefix-fold premise.
+   A small `polytime` rule set can apply these rules and delegate composition to `fun_prop`.
+   The caller still supplies the substantive invariant and growth argument. Polynomial-time
+   steps alone do not prevent exponential growth across iterations.
+   Then validate the intended `FreeM` interface with one readable `do` program containing a
+   bounded loop, a semantic specification and an actual TM resource certificate, without a
+   new transition table in the client. This is an interface acceptance test, not a replacement
+   for the Cook–Levin milestone.
+2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
+   repeat finite union bounds, construction of a bad event and extraction of a good sample.
+   Trial a shared finite-family existence lemma using Mathlib's existing measure union bounds;
+   retain concentration estimates and layout geometry in the applications.
+3. **Configuration algebra.** In `Combinators/TidyNormalForm.lean`, add narrowly oriented
+   preservation/composition lemmas for `PairReady` and `clearedCfg` if they shorten both
+   recursive clearing and final assembly. Use `simp` for these identities, keeping machine
+   step functions out of the simp set. The visited-interval and resource arguments remain.
+4. **Indicator and cardinality calculations.** PCP's second-moment proof repeatedly expands
+   indicator sums and moves expectations through finite sums; start with a local lemma and
+   promote it to `Foundations/Data/Finset/Expect.lean` only with a second useful client.
+   The existing second-moment inequality is already there. Frontier bounds likewise deserve
+   common cardinality-to-real estimate lemmas where two clients currently repeat conversions.
+
+Items 1–4 are reviewed candidates, not measured savings or completed refactors. Prefer
+`fun_prop` for composition, curated `simp` normal forms for structural identities, and a small
+domain-specific Aesop rule set for choosing specification rules. Broad search does not replace
+uniformity, invariant, concentration, or asymptotic arguments. Judge each experiment on client
+readability, total reusable API cost, and elaboration behavior as well as body-line counts.
+
 ## Decisions (user Q&A, 2026-10-12)
 
 | Decision | Choice |
@@ -398,7 +510,7 @@ most of L1, L3 and the UTM part of L4 in exactly the style this plan wanted:
 * `ComputableTidilyInPolyTime f encIn encOut`, closed under composition, pairing, case
   distinctions and folds, **registered with `fun_prop`**;
 * combinators (composition, iterate-while, folds, streaming folds, transducers) and arithmetic;
-* a universal multi-tape machine in polynomial time, as an interpreter program
+* a universal multi-tape simulator as ordinary Lean functions with explicit time and space bounds
   (`Universal/{Basic,Machine,Correct,Complexity,Bound}.lean`).
 
 It merges into current cslib main with two trivial conflicts and the merge builds
@@ -407,7 +519,8 @@ It merges into current cslib main with two trivial conflicts and the merge build
 1. v2's own `Encoding` typeclass is dropped in favour of crei's explicit encodings; problems are
    `Set α` with an explicit `enc : α ↪ List Bool`, as upstream `DecidableInTimeAndSpace` does.
 2. `PolyTime` is crei's `ComputableTidilyInPolyTime`; v2 does not build its own calculus.
-3. The UTM milestone is crei's; v2's hierarchy work will build on `Universal/`.
+3. The universal simulation backend is crei's; v2's hierarchy work will build on `Universal/`.
+   The free-monad program interface and its realization theorems remain separate work.
 4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
    freely.** crei's calculus and universal machine are vendored in full as tracked local copies
    (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),

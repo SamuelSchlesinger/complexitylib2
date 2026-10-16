@@ -48,41 +48,20 @@ variable {k : ℕ} {State : Type} [Fintype State]
 theorem computableTidilyInPolyTime_initClauses (tm : MultiTapeTM k Bool State) :
     ComputableTidilyInPolyTime (initClauses tm) encUnary
       (encList (encList (encPair encVar encBool))) := by
-  have hrow (i : Fin k) : ComputableTidilyInPolyTime
-      (fun T => [(Var.holds 0 (.head i 0), true)] ::
-        (windowList T).map fun z => [(Var.holds 0 (.cell i z none), true)])
-      encUnary (encList (encList (encPair (encVar (State := State)) encBool))) := by
-    have hcell : ComputableTidilyInPolyTime
-        (fun z => [(Var.holds 0 (.cell i z none), true)])
-        encInt (encList (encPair (encVar (State := State)) encBool)) := by fun_prop
-    have hcells := (map hcell).comp computableTidilyInPolyTime_windowList
-    fun_prop
-  have hrows := flatMapConst (List.finRange k) (fun i _ => hrow i)
-  unfold initClauses
-  fun_prop
+  fun_prop [initClauses]
 
 /-- Build the two accepting-configuration clauses from a unary time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_acceptClauses :
     ComputableTidilyInPolyTime (acceptClauses (k := k) (State := State)) encUnary
       (encList (encList (encPair encVar encBool))) := by
-  unfold acceptClauses
-  fun_prop
+  fun_prop [acceptClauses]
 
 /-- Build the situation clauses at a unary time, with the finite machine data fixed. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_sitClauses :
     ComputableTidilyInPolyTime (sitClauses (k := k) (State := State)) encUnary
       (encList (encList (encPair encVar encBool))) := by
-  unfold sitClauses
-  apply mapConst
-  intro y _
-  have hreads : ComputableTidilyInPolyTime
-      (fun t => (List.finRange k).map fun i => Var.holds t (.read i (y.2.2 i)))
-      encUnary (encList (encVar (State := State))) := by
-    apply mapConst
-    intro i _
-    fun_prop
-  fun_prop
+  fun_prop [sitClauses]
 
 end Cslib.Complexity.CookLevin

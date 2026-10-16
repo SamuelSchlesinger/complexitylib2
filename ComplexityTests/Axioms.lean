@@ -3405,4 +3405,28 @@ info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_sitClauses' depends
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_sitClauses
 
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons'' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons'
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.listAppend'' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.listAppend'
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWithInput' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWithInput
+
 end ComplexityTests.Axioms

@@ -22,8 +22,12 @@ up a variable with a large binary label does not require a certificate as long a
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons`, `.listAppend`, `.map`, `.flatten`:
   constructing lists.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons'`, `.listAppend'`: composition rules
+  that let `fun_prop` infer the element encoding from the result.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWith`, `.flatMapWith`: constructing lists
   with a parameter; the input list may itself have polynomial encoded length.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput`, `.flatMapWithInput`:
+  automation rules for traversals whose body also uses the original input.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst`, `.flatMapConst`: traverse a fixed
   list without requiring an encoding of its elements.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`: filtering a polynomial-time list
@@ -55,6 +59,23 @@ theorem listAppend (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (fun p : List α × List α => p.1 ++ p.2)
       (encPair (encList enc) (encList enc)) (encList enc) :=
   (ComputableTidilyInDegree.listAppend enc).computableTidilyInPolyTime
+
+/-- Prepend computed data. The result encoding determines the element encoding before
+`fun_prop` searches for the two component certificates. -/
+@[fun_prop]
+theorem cons' {head : γ → α} {tail : γ → List α}
+    (hhead : ComputableTidilyInPolyTime head encIn encA)
+    (htail : ComputableTidilyInPolyTime tail encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun x => head x :: tail x) encIn (encList encA) :=
+  (cons encA).comp (hhead.prod htail)
+
+/-- Concatenate computed lists, inferring their shared encoding from the result. -/
+@[fun_prop]
+theorem listAppend' {left right : γ → List α}
+    (hleft : ComputableTidilyInPolyTime left encIn (encList encA))
+    (hright : ComputableTidilyInPolyTime right encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun x => left x ++ right x) encIn (encList encA) :=
+  (listAppend encA).comp (hleft.prod hright)
 
 /-- Keep the elements passing a polynomial-time test with a fixed parameter.
 The input list may have any polynomial encoded length. -/
@@ -90,6 +111,17 @@ theorem mapWith {f : π × α → β} {par : γ → π} {list : γ → List α}
     (ComputableTidilyInDegree.snd encP (encList encA))).computableTidilyInPolyTime.comp
       (hpar.prod hlist)
 
+/-- Map a function that also uses the original input. A single joint certificate in the input
+and list element makes the cost uniform across all elements. The list certificate is supplied
+first so that `fun_prop` can infer its element encoding before checking the body. -/
+@[fun_prop]
+theorem mapWithInput {f : γ → α → β} {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (hf : ComputableTidilyInPolyTime (fun p : γ × α => f p.1 p.2)
+      (encPair encIn encA) encB) :
+    ComputableTidilyInPolyTime (fun x => (list x).map (f x)) encIn (encList encB) :=
+  mapWith hf id' hlist
+
 /-- A polynomial-time function can be mapped over a list in polynomial time. -/
 @[fun_prop]
 theorem map {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
@@ -98,6 +130,7 @@ theorem map {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
 
 /-- Map an input-dependent function over a fixed list. Only its members need certificates;
 the list and its elements are not part of the computational input. -/
+@[fun_prop]
 theorem mapConst {ι : Type*} (l : List ι) {f : γ → ι → β}
     (hf : ∀ i ∈ l, ComputableTidilyInPolyTime (fun x => f x i) encIn encB) :
     ComputableTidilyInPolyTime (fun x => l.map (f x)) encIn (encList encB) := by
@@ -142,8 +175,19 @@ theorem flatMapWith {f : π × α → List β} {par : γ → π} {list : γ → 
   simpa only [Function.comp_def, List.flatten_eq_flatMap, List.flatMap_map, id_eq] using
     (flatten encB).comp (mapWith hf hpar hlist)
 
+/-- Concatenate lists computed jointly from the original input and each list element.
+Like `mapWithInput`, this is a composition rule for `fun_prop`. -/
+@[fun_prop]
+theorem flatMapWithInput {f : γ → α → List β} {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (hf : ComputableTidilyInPolyTime (fun p : γ × α => f p.1 p.2)
+      (encPair encIn encA) (encList encB)) :
+    ComputableTidilyInPolyTime (fun x => (list x).flatMap (f x)) encIn (encList encB) :=
+  flatMapWith hf id' hlist
+
 /-- Concatenate input-dependent lists indexed by a fixed list of parameters.
 No encoding of the fixed parameters is required. -/
+@[fun_prop]
 theorem flatMapConst {ι : Type*} (l : List ι) {f : γ → ι → List β}
     (hf : ∀ i ∈ l, ComputableTidilyInPolyTime (fun x => f x i) encIn (encList encB)) :
     ComputableTidilyInPolyTime (fun x => l.flatMap (f x)) encIn (encList encB) := by
