@@ -323,11 +323,7 @@ theorem conditionalEntropy_le_log_card [Finite α] [Fintype β] (joint : PMF (α
     conditionalEntropy joint ≤ Real.logb 2 (Fintype.card β) := by
   let := Fintype.ofFinite α
   rw [conditionalEntropy_eq_sum]
-  calc
-    _ ≤ ∑ a, ((joint.map Prod.fst) a).toReal * Real.logb 2 (Fintype.card β) :=
-      Finset.sum_le_sum (fun a _ =>
-        mul_le_mul_of_nonneg_left (entropy_le_log_card _) ENNReal.toReal_nonneg)
-    _ = _ := by rw [← Finset.sum_mul, sum_toReal, one_mul]
+  exact sum_mul_le _ _ _ (fun _ => entropy_le_log_card _)
 
 /-- A bit has at most one bit of conditional entropy. -/
 theorem conditionalEntropy_bool_le_one [Finite α] (joint : PMF (α × Bool)) :

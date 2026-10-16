@@ -216,7 +216,7 @@ not existence proofs of one-way functions or permutations.
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
-| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy, concentration, uniform-seed samplable pairs, hash-isolation bounds and efficient matrix hashing are complete; queue the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy, concentration, uniform-seed samplable pairs, hash-isolation bounds, efficient matrix hashing and the positive pseudoentropy-gap construction are complete; queue amplification and extraction, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
@@ -1399,15 +1399,65 @@ bodies / 39,089 body lines across 536 modules, median 3 and P90 17. These counts
 proofs and private helpers, and exclude tests, comments, statements and proofs inside definitions.
 
 Same-import helper profiles use 327,099 / 229,942 raw tactic heartbeats for row packing and
-197,401 / 175,364 for repetition's product law. With only the projection registrations varied,
-the unchanged Goldreich–Levin certificate uses 1,294,690 / 1,328,288 raw heartbeats. These are
-elaboration costs rather than program runtimes. The current hash and extractor certificate bodies
+197,401 / 175,364 for repetition's product law. Without / with the computed-pair projection
+registrations, the unchanged Goldreich–Levin certificate uses 1,294,690 / 1,328,288 raw heartbeats.
+These are elaboration costs rather than program runtimes. The current hash and extractor certificate bodies
 use 185,966 and 416,991 raw heartbeats. A framed-input extractor call uses 296,250, versus 872,356
 for its explicit-bind spelling; both pass without client annotations.
 
 Independent source/API review approves the modules, shared helpers and encoding tests. All six
 project checks pass: build 8.93 s, import coverage 1.67 s, tests 19.65 s, lint 7.35 s, style 2.19 s,
-and init imports 4.49 s. Independent adversarial correctness review follows publication.
+and init imports 4.49 s. Independent adversarial correctness review of `473d696` approves the
+complete public-output laws, finite-result tests, boundary cases, encoding guards and charging.
+The reviewer checked all eight standard-axiom guards and the unchanged Goldreich–Levin client.
+
+### A positive pseudoentropy gap from every OWF (2026-10-16)
+
+`OneWay.exists_pseudoentropyPair` now derives an exactly samplable pair with prediction gap
+`1 / (2(n + 7))` from any uniform one-way word function, including variable-length images.
+The normalized hashed-parity experiment reveals its complete matrix, hash length, digest,
+function image and parity query. Every uniform strict PPT predictor's signed correlation
+`2*Pr[correct] - 1` eventually stays below `1 - H(hidden | observation)` by that positive gap.
+This is a conditional cryptographic
+implication, not an existence proof of OWFs or the completed OWF → PRG theorem.
+
+The finite reduction guesses the entire digest and runs the shared Goldreich–Levin decoder.
+Fiber sizes and the short-prefix split occur only in the proof. The executable inverter samples
+one predictor tape and reuses it for every decoder query; the fixed evaluator returns `Bool`
+directly. No observation enumeration, conditional sampler or advice string enters the program.
+Exact laws preserve the complete public observation and any-preimage inversion success.
+The tape budget includes `3*n`: `2*n + 1` for the framed unary parameter and `n` for the parity
+query, in addition to all other fields and delimiters. A dimension-8 maximal-index test needs
+348 cells, fits the 352-cell budget, and rejects the old 344-cell allowance.
+
+Both complete efficiency proofs are `unfold ...; fun_prop`; downstream clients use `ppt`,
+including computed parameters, alternative encodings and captured typed callbacks. No new TM
+construction, transition table, tactic implementation or heartbeat override is introduced.
+Controlled full-module profiles at identical imports show the sampler's old `ppt` proof using
+1,049,742 raw heartbeats versus 322,523 for `fun_prop`; the five-sample inverter drops from
+148,090,497 to 586,634. These are elaboration costs, not machine running times. The existing
+compositional rules suffice; the general tactic search was substantially more expensive here.
+
+The six source modules plus three shared prerequisite lemmas and the changed existing entropy
+client have 42 named proof bodies / 584 body lines, versus 43 / 537 in the port, including the
+new one-line row-prefix helper. The hashed-pair module drops from 70 to 52 body lines and its
+word reduction from 97 to 71. The generic expectation bound is reused in matrix averaging and
+shortens the existing conditional-entropy upper bound from seven to three lines. An existing
+affine-expectation lemma saves three reduction lines and lowers that theorem's same-import
+profile from 2,864,834 to 2,620,242 raw heartbeats. Universal-hashing reduction methods now live
+in the predicate's actual namespace, so dot notation works outside the crypto namespace.
+The complete library has 5,761 named proof bodies / 39,619 body lines across 542 modules,
+median 3 and P90 17. Counts include the shared helper cost and private/term proofs, but exclude
+statements, definitions, comments and tests.
+
+Regression clients cover a noninjective constant function, empty dimension, retained public
+fields, computed parameters under a framed input encoding, a typed saved-coin inverter, the
+maximal-index budget counterexample and an empty-prefix reduction through ordinary dot notation.
+Nine headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
+Independent source/API review approves the modules and tests. All six final project checks pass:
+build 4.33 s, import coverage 1.52 s, tests 5.62 s, lint 7.23 s, style 2.00 s, and init imports
+4.39 s. Independent adversarial correctness review is in progress. Amplification, extraction,
+entropy selection and the final OWF → PRG security assembly remain the next cryptographic work.
 
 ### Implementation priorities (2026-10-16)
 

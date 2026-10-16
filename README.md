@@ -88,9 +88,11 @@ deterministic saved-seed evaluator, with exact joint-law and entropy accounting 
 finite-PMF concentration bounds support independent repetition. Universal hashing, the strong
 leftover hash lemma with public side information, and preimage-isolation entropy bounds are
 implemented. Binary matrix hashing and its seeded extractor now have compositional polynomial-time
-certificates, exact finite/list laws, and a leftover-hash bound for arbitrary randomized tests of
-the complete public output. Constructing a positive pseudoentropy gap from an OWF remains part
-of the pending security reduction.
+certificates, exact finite/list laws, and a leftover-hash bound for arbitrary finite-result
+randomized tests of the complete public output. Every general OWF now yields an exactly samplable
+pseudoentropy pair with prediction gap `1 / (2(n + 7))`. The hashed-parity sampler and the complete
+inverter use ordinary functional programs with two-line `fun_prop` certificates. Amplification,
+extraction and the final general OWF → PRG security assembly remain pending.
 
 ## Layout
 

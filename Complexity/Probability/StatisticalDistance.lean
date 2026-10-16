@@ -19,6 +19,7 @@ These statements reuse the upstream finite-PMF metric and its enumeration instan
 
 ## Main results
 
+* `Cslib.Probability.PMF.abs_sum_mul_sub_le`: bounded-score changes under statistical distance.
 * `Cslib.Probability.PMF.dist_bind_pair`: exact average distance with a shared public sample.
 * `Cslib.Probability.PMF.dist_bind_pair_sq_le`: the squared-distance bound used in leftover hashing.
 
@@ -56,5 +57,22 @@ theorem dist_bind_pair_sq_le [Fintype α] [Fintype β] (p : PMF α) (f g : α �
     (fun _ _ => mul_nonneg ENNReal.toReal_nonneg (sq_nonneg _))
     (fun _ _ => by ring_nf; rfl)
   simpa only [sum_toReal, one_mul] using h
+
+/-- Changing the distribution changes a bounded real-valued score by at most twice its
+absolute bound times statistical distance. Signed prediction scores may use `bound = 1`. -/
+theorem abs_sum_mul_sub_le [Fintype α] (p q : PMF α) (score : α → ℝ)
+    {bound : ℝ} (hscore : ∀ a, |score a| ≤ bound) :
+    |(∑ a, (p a).toReal * score a) - ∑ a, (q a).toReal * score a| ≤
+      2 * bound * dist p q := by
+  rw [← Finset.sum_sub_distrib]
+  simp only [← sub_mul]
+  calc
+    _ ≤ ∑ a, |((p a).toReal - (q a).toReal) * score a| := Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ a, |(p a).toReal - (q a).toReal| * bound := by
+      apply Finset.sum_le_sum
+      intro a _
+      rw [abs_mul]
+      exact mul_le_mul_of_nonneg_left (hscore a) (abs_nonneg _)
+    _ = _ := by rw [← Finset.sum_mul, dist_eq]; ring
 
 end Cslib.Probability.PMF

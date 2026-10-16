@@ -4921,3 +4921,63 @@ info: 'Cslib.ProbComp.eval_replicate' depends on axioms: [propext, Classical.cho
 -/
 #guard_msgs in
 #print axioms Cslib.ProbComp.eval_replicate
+
+-- Complete uniform OWF-to-pseudoentropy reduction, including the executable joint laws.
+
+/--
+info: 'Cslib.Probability.score_le_uniform_guess' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.score_le_uniform_guess
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.correlation_le_guessInverter' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.correlation_le_guessInverter
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.matrixPrediction_entropy_le_of_coins' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.matrixPrediction_entropy_le_of_coins
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.HashPair.eval_sample' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.HashPair.eval_sample
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.HashPair.isPPTOn_sample' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.HashPair.isPPTOn_sample
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.HashPair.wordInverter_eval' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.HashPair.wordInverter_eval
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.HashPair.isPPT_wordInverter' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.HashPair.isPPT_wordInverter
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.HashPair.word_prediction_entropy_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.HashPair.word_prediction_entropy_le
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_pseudoentropyPair' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.OneWay.exists_pseudoentropyPair

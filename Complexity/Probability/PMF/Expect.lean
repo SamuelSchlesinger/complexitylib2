@@ -78,6 +78,13 @@ theorem sum_le_affine {α : Type*} [Fintype α] (p : PMF α) {a b : ℝ} {score 
   (sum_le_sum fun x _ => mul_le_mul_of_nonneg_left (h x) ENNReal.toReal_nonneg).trans_eq
     (sum_affine p a b bound)
 
+/-- A uniform upper bound on a score also bounds its expectation. -/
+theorem sum_mul_le {α : Type*} [Fintype α] (p : PMF α) (score : α → ℝ) (bound : ℝ)
+    (hscore : ∀ a, score a ≤ bound) : ∑ a, (p a).toReal * score a ≤ bound :=
+  (Finset.sum_le_sum fun a _ =>
+    mul_le_mul_of_nonneg_left (hscore a) ENNReal.toReal_nonneg).trans_eq
+    (by rw [← Finset.sum_mul, sum_toReal, one_mul])
+
 variable {α β : Type*} [Fintype α] [Nonempty α]
 
 /-- An experiment whose first stage draws `a` uniformly outputs `b` with probability the average

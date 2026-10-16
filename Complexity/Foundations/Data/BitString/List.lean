@@ -65,6 +65,11 @@ theorem ofFn_blocksEquiv_symm {count width : ℕ} (rows : Fin count → BitStrin
   simpa only [List.ofFn_mul, finProdFinEquiv, Equiv.coe_fn_mk,
     Nat.mul_comm, Nat.add_comm] using h
 
+/-- Reading fewer rows agrees with restricting the longer fixed-width view. -/
+theorem block_ofList_prefix {count rows width : ℕ} (h : rows ≤ count) (word : List Bool) :
+    block (ofList (rows * width) word) =
+      block (ofList (count * width) word) ∘ Fin.castLE h := rfl
+
 /-- Read one fixed-width row, using `false` beyond the end of the supplied list. -/
 def listRow (width row : ℕ) (word : List Bool) : List Bool :=
   (word.drop (row * width) ++ List.replicate width false).take width

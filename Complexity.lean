@@ -361,7 +361,12 @@ public import Complexity.Crypto.Computational.OneWay.Collision
 public import Complexity.Crypto.Computational.OneWay.Normalize
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
+public import Complexity.Crypto.Computational.Pseudoentropy.HashPair
+public import Complexity.Crypto.Computational.Pseudoentropy.HashReduction
+public import Complexity.Crypto.Computational.Pseudoentropy.OneWay
+public import Complexity.Crypto.Computational.Pseudoentropy.Reduction
 public import Complexity.Crypto.Computational.Pseudoentropy.Seed
+public import Complexity.Crypto.Computational.Pseudoentropy.WordReduction
 public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle
 public import Complexity.Crypto.Computational.PseudorandomGenerator
@@ -519,6 +524,7 @@ public import Complexity.Probability.Concentration
 public import Complexity.Probability.Conditioning
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
+public import Complexity.Probability.Guessing
 public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.PMF
 public import Complexity.Probability.PMF.Expect

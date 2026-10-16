@@ -21,14 +21,16 @@ negligible.
 ## Main results
 
 * `Cslib.Crypto.negligible_iff_coe`: pass between nonnegative and real-valued decay bounds.
+* `Cslib.Crypto.Negligible.eventually_le_inv_polynomial`: compare with positive polynomial losses.
 * `Cslib.Crypto.not_negligible_const`: constant nonzero success contradicts security.
 * `Cslib.Crypto.Negligible.comp_of_polynomial_bound`: polynomially related parameters.
 * `Cslib.Crypto.Negligible.div_const`: division of the parameter by a positive constant.
 
 ## References
 
-The constant-bound argument is adapted from `Crypto/Negligible.lean` on the cslib `crypto` branch
-at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the current upstream nonnegative API.
+The constant and inverse-polynomial bounds are adapted from `Crypto/Negligible.lean` on the
+cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the current upstream
+nonnegative API.
 -/
 
 @[expose] public section
@@ -49,6 +51,18 @@ theorem not_negligible_const {c : ℝ≥0} (hc : c ≠ 0) : ¬ Negligible (fun _
   intro h
   have ht : Filter.Tendsto (fun _ : ℕ => c) Filter.atTop (nhds 0) := by simpa using h 0
   exact hc (tendsto_nhds_unique tendsto_const_nhds ht)
+
+open Filter in
+/-- Negligible success is eventually smaller than the reciprocal of any positive
+polynomially bounded loss. The real coercion permits comparison with analytic bounds. -/
+theorem Negligible.eventually_le_inv_polynomial {ε : ℕ → ℝ≥0} (hε : Negligible ε)
+    {p : ℕ → ℕ} (hp : PolynomiallyBounded p) (hpos : ∀ n, 0 < p n) :
+    ∀ᶠ n in atTop, (ε n : ℝ) ≤ 1 / (p n : ℝ) := by
+  have h := negligible_iff_coe.mp (hε.polynomiallyBounded_mul hp) 0
+  simp only [pow_zero, one_mul, NNReal.coe_mul, NNReal.coe_natCast] at h
+  filter_upwards [h.eventually_le_const (by norm_num : (0 : ℝ) < 1)] with n hn
+  apply (le_div_iff₀ (by exact_mod_cast hpos n)).mpr
+  simpa only [mul_comm] using hn
 
 open Filter Topology in
 /-- Negligible decay survives reindexing when the new parameter tends to infinity and the old
