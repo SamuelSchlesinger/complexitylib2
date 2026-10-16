@@ -195,6 +195,20 @@ theorem length_output_runConfigFrom_le {OracleState : Type}
         simp only [Config.receive] at hout
         lia
 
+/-- Observing only the output preserves the supported-output bound. -/
+theorem length_output_runFrom_le {OracleState : Type}
+    (oracle : (q : Query) → StateT OracleState PMF (spec q)) (fuel : ℕ)
+    (cfg : Config k Symbol State Oracle input) (s s' : OracleState) (output : List Symbol)
+    (h : (output, s') ∈
+      ((OracleComp.interpret oracle (machine.runFrom choose query fuel cfg)).run s).support) :
+    output.length ≤ cfg.tapes.output.length + fuel := by
+  simp only [runFrom, OracleComp.interpret_map, StateT.run_map, PMF.monad_map_eq_map,
+    PMF.mem_support_map_iff] at h
+  obtain ⟨⟨final, finalState⟩, hfinal, heq⟩ := h
+  rw [← (Prod.mk.inj heq).1]
+  exact machine.length_output_runConfigFrom_le choose query oracle fuel cfg final s finalState
+    hfinal
+
 /-- The deterministic run program computes exactly the iterated deterministic step. -/
 theorem runConfigFrom_pure {Symbol State Query : Type} {input : List Symbol}
     {spec : Cslib.OracleSpec.{0, 0} Query}

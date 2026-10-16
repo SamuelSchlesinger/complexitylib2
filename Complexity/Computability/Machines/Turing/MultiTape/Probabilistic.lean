@@ -72,6 +72,22 @@ noncomputable def runClosed (machine : MultiTapePTM k Symbol State) (fuel : ℕ)
     (input : List Symbol) : ProbComp (List Symbol) :=
   machine.run (ProbComp.uniform Bool) (fun oracle => oracle.elim) fuel input
 
+/-- Every supported closed output has length at most the machine's clock. -/
+theorem length_output_eval_runClosed_le (machine : MultiTapePTM k Symbol State) (fuel : ℕ)
+    (input output : List Symbol)
+    (h : output ∈ (ProbComp.eval (machine.runClosed fuel input)).support) :
+    output.length ≤ fuel := by
+  have hstate : (output, ()) ∈
+      ((OracleComp.interpret (m := StateT Unit PMF)
+        (fun q (s : Unit) => (fun a => (a, s)) <$> ProbComp.unifOracle q)
+        (machine.runClosed fuel input)).run ()).support := by
+    rw [OracleComp.run_interpret_stateless, PMF.monad_map_eq_map]
+    exact (PMF.mem_support_map_iff _ _ _).mpr ⟨output, h, rfl⟩
+  have hbound := MultiTapeMachine.length_output_runFrom_le machine
+    (fun choices => choices <$> ProbComp.uniform Bool) Empty.elim _ fuel
+    (machine.initialConfig input) () () output hstate
+  simpa only [MultiTapeMachine.initialConfig, Cfg.init, List.length_nil, Nat.zero_add] using hbound
+
 /-- Forget probabilities, retaining exactly the actions selected by some coin value. -/
 def toNondeterministic (machine : MultiTapePTM k Symbol State Oracle) :
     MultiTapeMachine k Symbol State Oracle Set where

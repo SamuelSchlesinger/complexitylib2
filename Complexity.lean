@@ -252,6 +252,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.R
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
@@ -276,6 +277,8 @@ public import Complexity.Computability.PCP.PoweringBound
 public import Complexity.Computability.PCP.Preprocess
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
+public import Complexity.Computability.Probabilistic.PPT
+public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring

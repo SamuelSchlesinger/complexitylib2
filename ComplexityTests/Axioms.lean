@@ -17,6 +17,32 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Turing.MultiTapePTM.run_interpret_runConfigFrom_ofDeterministic' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapePTM.run_interpret_runConfigFrom_ofDeterministic
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn
+
+/--
+info: 'Cslib.Probability.IsPPTOn.length_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsPPTOn.length_le
+
+/--
+info: 'Cslib.Probability.isPPTOn_uniform_bool' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.isPPTOn_uniform_bool
+
+/--
 info: 'Turing.MultiTapeMachine.tmEquiv' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in

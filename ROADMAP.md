@@ -35,8 +35,9 @@ conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's 
 `Universal/` development certifies an interpreter written as ordinary Lean functions.
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
 that count, not its binary length. The `PFunctor.FreeM` program interface and stateful simulation
-rules and general effectful machine are now present; probabilistic program realization theorems
-and `ppt` remain to be integrated into v2. The deterministic
+rules and general effectful machine are now present. Closed `IsPPTOn` supplies the semantic
+realization contract, a deterministic bridge, and fair-bit sampling; probabilistic sequencing,
+oracle PPT and `ppt` remain to be integrated into v2. The deterministic
 `polytime` tactic and invariant-oriented loop specifications have now been adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
 
@@ -207,7 +208,7 @@ not existence proofs of one-way functions or permutations.
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | pending realization predicates and resource-certified probabilistic/oracle composition; the shared machine and deterministic execution bridge are present |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge and fair-bit sampling registered with `fun_prop`; resource-certified probabilistic/oracle composition, oracle PPT and `ppt` remain pending |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -240,12 +241,23 @@ the fair-bit output distribution, and coin consumption when both branches agree.
 machine instructions, not arbitrary handler computation. A PPT certificate must fix fresh fair
 coins, finite machine data, a uniform polynomial clock, and account for substituted handlers.
 
+The first PPT realization batch adds 10 theorem bodies / 74 body lines, reaching 4,774 / 33,430.
+`ComputableTidilyInPolyTime.isPPTOn` directly reuses an existing tidy witness and its polynomial
+clock. It introduces no parallel deterministic predicate or `Fin`-state normalization. Test clients
+certify unary addition and GGM evaluation returned by a probabilistic program with one `fun_prop`
+each. A one-instruction Boolean sampler is also certified, while a negative test ensures that
+arbitrary finite uniform samplers are not silently accepted. `IsPPTOn` uses strict clock exhaustion;
+an intrinsically halting witness still requires a clock compiler. Its output bound covers every
+supported result, and the deterministic embedding preserves all channels and private oracle state
+under stateless coin semantics.
+
 ### Next design experiments
 
 1. **Integrate the crypto probabilistic realization layer and `ppt`.** The deterministic loop
-   and tactic interfaces, typed `PFunctor.FreeM` frontend, and effectful machine interpreter above
-   are in place. Adapt the probabilistic realization rules, then validate one readable `do` program containing a
-   bounded loop, a semantic specification and an actual TM resource certificate, without a
+   and tactic interfaces, typed `PFunctor.FreeM` frontend, effectful machine interpreter, and initial
+   closed PPT contract are in place. Adapt the probabilistic composition and loop rules, then
+   validate one readable `do` program containing a bounded loop, a semantic specification and an
+   actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
    for the Cook–Levin milestone.
 2. **Gaussian sampling.** `Layouts/Gaussian/Sample.lean` and `Layouts/MultiGaussian.lean`
@@ -649,7 +661,9 @@ It merges into current cslib main with two trivial conflicts and the merge build
    `Set α` with an explicit `enc : α ↪ List Bool`, as upstream `DecidableInTimeAndSpace` does.
 2. `PolyTime` is crei's `ComputableTidilyInPolyTime`; v2 does not build its own calculus.
 3. The universal simulation backend is crei's; v2's hierarchy work will build on `Universal/`.
-   The free-monad program interface and its realization theorems remain separate work.
+   The free-monad interface and realization layer are separate from crei's backend; v2 now
+   supplies the typed frontend and initial closed PPT contract, while probabilistic composition
+   and oracle PPT remain pending.
 4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
    freely.** crei's calculus and universal machine are vendored in full as tracked local copies
    (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),
