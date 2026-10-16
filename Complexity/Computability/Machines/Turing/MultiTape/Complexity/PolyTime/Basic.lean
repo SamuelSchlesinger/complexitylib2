@@ -113,6 +113,14 @@ theorem decide_and {left right : α → Prop} [∀ a, Decidable (left a)] [∀ a
     ComputableTidilyInPolyTime (fun a => decide (left a ∧ right a)) encA encBool := by
   simpa only [Bool.decide_and, Function.comp_def] using bool_and.comp (hleft.prod hright)
 
+/-- Disjunction of efficiently decidable propositions uses the standard Boolean encoding. -/
+@[fun_prop]
+theorem decide_or {left right : α → Prop} [∀ a, Decidable (left a)] [∀ a, Decidable (right a)]
+    (hleft : ComputableTidilyInPolyTime (fun a => decide (left a)) encA encBool)
+    (hright : ComputableTidilyInPolyTime (fun a => decide (right a)) encA encBool) :
+    ComputableTidilyInPolyTime (fun a => decide (left a ∨ right a)) encA encBool := by
+  simpa only [Bool.decide_or, Function.comp_def] using bool_or.comp (hleft.prod hright)
+
 /-- A Boolean conditional fixes the guard encoding before automation synthesizes its proof. -/
 @[fun_prop]
 theorem cond {condition : α → Bool} {yes no : α → β}

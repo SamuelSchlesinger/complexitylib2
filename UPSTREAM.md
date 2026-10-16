@@ -373,8 +373,9 @@ Statuses: `candidate` (not yet proposed), `submitted #N`, `merged @SHA` (file de
 | `Complexity.Computability.Complexity.CookLevin.{Tableau,Correctness,Reduction}` | same paths | candidate | tableau over upstream `MultiTapeTM`, its correctness, the reduction's correctness |
 | `Complexity.Computability.Complexity.CookLevin.Parameters` | same path | candidate | polynomial-time computation of the reduction's shared input prefix, certificate length and time bound, with the bounds in unary |
 | `Complexity.Computability.Complexity.CookLevin.Encoding` | same path | candidate | unary intermediate encodings using the existing feature/variable indices, polynomial-time constructors and binary relabelling; no feature-decoding claim |
-| `Complexity.Computability.Complexity.CookLevin.Clauses` | same path | candidate | polynomial-time feature groups and initial, accepting, situation and one-hot clauses; input/read and step clauses remain open |
-| `Complexity.Computability.Complexity.CookLevin.Staging` | — | local-only (assembles the theorem from the remaining polynomial-time bound on the reduction; replaced by an unconditional statement once that bound is proved) | SAT membership is now unconditional |
+| `Complexity.Computability.Complexity.CookLevin.Clauses` | same path | candidate | polynomial-time certificates for all existing clause families, including input/read and step clauses, with computed input parameters |
+| `Complexity.Computability.Complexity.CookLevin.PolyTime` | same path | candidate | polynomial-time certificates for the complete existing tableau and reduction, including binary relabelling |
+| `Complexity.Computability.Complexity.CookLevin.Completeness` | same path | candidate | unconditional NP-hardness and NP-completeness of SAT, and coNP-completeness of UNSAT; replaces local-only conditional staging |
 
 ## Upstream work we depend on or must not duplicate
 

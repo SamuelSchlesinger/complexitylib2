@@ -29,10 +29,10 @@ that time, tidily (`reduce_mem_SAT_iff_of_computesTidily`) or not.
 
 The input prefix and unary bounds are jointly computable in polynomial time
 (`computableTidilyInPolyTime_parameters` in `CookLevin/Parameters.lean`).
-Variable construction and numbering are certified in `CookLevin/Encoding.lean`; the initial,
-accepting and situation clauses are certified in `CookLevin/Clauses.lean`. The remaining
-clause families and full tableau assembly are still required.
-`CookLevin/Staging.lean` assembles the `NP`-completeness of `SAT` from that remaining bound.
+Variable construction and numbering are certified in `CookLevin/Encoding.lean`, and all clause
+families in `CookLevin/Clauses.lean`. `CookLevin/PolyTime.lean` certifies the complete reduction;
+`CookLevin/Completeness.lean` derives unconditional NP-completeness of SAT and coNP-completeness
+of UNSAT.
 
 ## Main definitions
 

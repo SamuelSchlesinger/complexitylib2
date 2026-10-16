@@ -66,6 +66,12 @@ theorem computableTidilyInPolyTime_featureIndex :
     ComputableTidilyInPolyTime (featureIndex (k := k) (State := State)) encFeature encUnary :=
   of_eq fun _ => rfl
 
+/-- Construct the input-symbol feature from an optional Boolean symbol. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_inRead :
+    ComputableTidilyInPolyTime (Feature.inRead (k := k) (State := State))
+      (encOption encBool) encFeature := of_finite _
+
 /-- Construct an input-head feature from a unary position. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_inPos :

@@ -280,10 +280,10 @@ info: 'Cslib.Complexity.CookLevin.reduce_mem_SAT_iff' depends on axioms: [propex
 #print axioms Cslib.Complexity.CookLevin.reduce_mem_SAT_iff
 
 /--
-info: 'Cslib.Complexity.CookLevin.SAT_npComplete_of_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.SAT_npComplete' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Complexity.CookLevin.SAT_npComplete_of_polyTime
+#print axioms Cslib.Complexity.CookLevin.SAT_npComplete
 
 /--
 info: 'Cslib.Complexity.SAT.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -3171,10 +3171,10 @@ info: 'Cslib.Complexity.PCP_mono_queries' depends on axioms: [propext, Classical
 #print axioms Cslib.Complexity.PCP_mono_queries
 
 /--
-info: 'Cslib.Complexity.CookLevin.UNSAT_coNPComplete_of_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.UNSAT_coNPComplete' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.CookLevin.UNSAT_coNPComplete_of_polyTime
+#print axioms Cslib.Complexity.CookLevin.UNSAT_coNPComplete
 
 /--
 info: 'Cslib.Complexity.NPHard.compl' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -4590,3 +4590,58 @@ info: 'Cslib.Crypto.PseudorandomGenerator.exists_pseudorandomFunction' depends o
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.PseudorandomGenerator.exists_pseudorandomFunction
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_inputClauses' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_inputClauses
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_readClauses' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_readClauses
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_stepClauses' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_stepClauses
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_tableau' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_tableau
+
+/--
+info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_reduce' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_reduce
+
+/--
+info: 'Cslib.Complexity.CookLevin.SAT_npHard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.CookLevin.SAT_npHard
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapFilterConst' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapFilterConst

@@ -149,11 +149,12 @@ public import Complexity.Computability.Complexity.Classes.Promise.Circuit
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
+public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness
 public import Complexity.Computability.Complexity.CookLevin.Encoding
 public import Complexity.Computability.Complexity.CookLevin.Parameters
+public import Complexity.Computability.Complexity.CookLevin.PolyTime
 public import Complexity.Computability.Complexity.CookLevin.Reduction
-public import Complexity.Computability.Complexity.CookLevin.Staging
 public import Complexity.Computability.Complexity.CookLevin.Tableau
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.IndependentSet

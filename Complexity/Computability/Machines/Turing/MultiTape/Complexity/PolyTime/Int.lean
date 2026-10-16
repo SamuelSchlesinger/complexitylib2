@@ -30,6 +30,10 @@ indices in a computation tableau.
   unit shifts and sign tests.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_toNat`, `.int_natAbs`, `.int_equivNat`:
   nonnegative truncation, absolute value and the standard numbering of integers, in unary.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_sub_sign`, `.int_abs_le_nat`:
+  fixed tape moves and membership in a unary-bounded window.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_abs_le_nat'`:
+  window membership for computed positions and bounds.
 
 ## References
 
@@ -108,6 +112,29 @@ theorem int_natAbs : ComputableTidilyInPolyTime Int.natAbs encInt encUnary := by
   convert h using 1
   funext z
   cases z <;> simp [intTail]
+
+/-- Subtract a fixed tape direction from a signed unary position. -/
+@[fun_prop]
+theorem int_sub_sign (direction : SignType) :
+    ComputableTidilyInPolyTime (fun z : ℤ => z - (direction : ℤ)) encInt encInt := by
+  cases direction <;> simp only [SignType.cast, sub_neg_eq_add, sub_zero] <;> fun_prop
+
+/-- Compare a signed unary position's magnitude with a unary window bound. -/
+@[fun_prop]
+theorem int_abs_le_nat :
+    ComputableTidilyInPolyTime (fun p : ℤ × ℕ => decide (|p.1| ≤ (p.2 : ℤ)))
+      (encPair encInt encUnary) encBool := by
+  simpa only [← Int.natCast_natAbs, Int.ofNat_le, Function.comp_def] using
+    unary_le.comp ((int_natAbs.comp (fst encInt encUnary)).prod (snd encInt encUnary))
+
+/-- Test window membership after computing the signed position and unary bound. -/
+@[fun_prop]
+theorem int_abs_le_nat' {α : Type} {input : α ↪ List Bool} {position : α → ℤ} {bound : α → ℕ}
+    (hposition : ComputableTidilyInPolyTime position input encInt)
+    (hbound : ComputableTidilyInPolyTime bound input encUnary) :
+    ComputableTidilyInPolyTime (fun a => decide (|position a| ≤ (bound a : ℤ)))
+      input encBool :=
+  int_abs_le_nat.comp (hposition.prod hbound)
 
 /-- Number signed integers by `0, -1, 1, -2, …`, returning the index in unary. -/
 @[fun_prop]

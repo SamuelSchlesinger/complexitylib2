@@ -1090,8 +1090,44 @@ witness for the full-state efficiency certificate. The sibling-comparison GGM cl
 exact reduction identity but is not itself assigned an oracle-PPT certificate. Ten new headline
 axiom guards cover the shared laws, efficiency and final security theorems.
 Source/API review approves the seven modules and independently confirms the axiom and proof-count
-accounting. All six project checks pass. The independent adversarial correctness review is pending
-for this batch.
+accounting. All six project checks pass. The independent adversarial correctness review approves
+the published batch without material findings; its Lean checks include the security module, three
+regression modules, zero-width/zero-budget probes and headline axiom checks.
+
+### Complete Cook–Levin and computed clause parameters (2026-10-16)
+
+The existing reduction now has a full tidy polynomial-time certificate. Input/read and step
+clauses complete the clause-family API; `unfold tableau; polytime` certifies the entire tableau,
+and two lines compose it with the exact parameter computation and binary variable relabelling.
+`SAT_npHard`, `SAT_npComplete` and `UNSAT_coNPComplete` are unconditional. The conditional
+local-only staging module is removed. No tableau, feature-step or reduction definition changed.
+The machine, finite state type, tape count and polynomial bounds are fixed parameters; each
+result supplies one machine and polynomial valid for all encoded inputs.
+
+The difficult step family enumerates its five existing constructor templates explicitly, then
+uses ordinary list and arithmetic certificates. This retains list order, repeated entries,
+halted-state persistence and clipping at the input boundary. Private constructor helpers are
+selected explicitly: registering them made `fun_prop` search through irrelevant constructors.
+No tactic patch, global transition simplification or heartbeat-limit override was needed.
+
+Shared additions certify filtering and mapping a fixed parameter list without an encoding or
+finiteness instance for its elements, signed window membership and total input-head movement.
+Computed-argument clause and comparison rules pin the intermediate encodings before search.
+The one-line computed window rule also removes one line of explicit composition from the real
+step-clause client. Tests cover equivalent filtered-map/conditional-flatMap expressions, computed
+tableau bounds, raw-bit and generic-list input encodings, zero work tapes, and out-of-range head
+positions. Seven new axiom guards supplement the now-unconditional completeness guards.
+
+Relative to `f47f424`, all source helpers and clients together add 18 bodies / 74 body lines:
+Cook–Levin moves from 40 / 176 to 52 / 233, and the shared machine calculus from 365 / 2,220 to
+371 / 2,237. The whole library has 5,580 bodies / 38,199 lines in 520 modules, median 3 / P90 17.
+These are source-layout counts under the same exclusions as above; the short final assembly
+does not conceal the helper cost. Source/API review approves the implementation and independently
+checks minimal downstream imports and the completeness theorems' standard axiom dependencies.
+The full tableau proof measures 1,087,931 raw tactic heartbeats; the reduction's final certificate
+composition measures 101,881. These measure proof elaboration, not machine runtime; the imported
+clause and parameter proofs are not re-elaborated in those measurements. All six project checks
+pass. The separate adversarial correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 
@@ -1107,8 +1143,8 @@ for this batch.
    using oriented simplification without globally simplifying machine transitions.
 5. Factor repeated good-event, indicator-expectation and cardinality/logarithm bookkeeping when
    multiple clients demonstrate reuse; include the helper API in proof-burden comparisons.
-6. Complete the existing Cook–Levin reduction's polynomial-time certificate and replace the
-   conditional NP-completeness assembly with an unconditional theorem.
+6. The entire existing Cook–Levin reduction is certified polynomial-time; SAT NP-completeness
+   and UNSAT coNP-completeness are unconditional. Reuse its construction rules in further reductions.
 7. Complete general OWF → PRG through the remaining pseudoentropy and security reductions,
    reusing Goldreich–Levin, the OWP result and polynomial stretch.
 8. Adaptive GGM security and PRG → PRF are implemented over the shared oracle calculus. Derive
@@ -1186,9 +1222,9 @@ What it does *not* buy: upstream combinators (`seq`, `extendTapes`, crei's `comp
 crypto-frontier's `Oracle/*.lean` (3.2k lines) is the template, and they should be written
 *once* for the general machine rather than per effect.
 
-## Status (2026-10-15)
+## Status (2026-10-16)
 
-Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-time bound:
+Milestone 1 (Cook–Levin) is complete, including the reduction's polynomial-time bound:
 
 | Piece | Module | State |
 |---|---|---|
@@ -1204,9 +1240,9 @@ Milestone 1 (Cook–Levin) is complete except for the reduction's polynomial-tim
 | Signed unary positions, integer numbering and tape-window enumeration | `MultiTape/Complexity/PolyTime/{Int,Window}.lean` | proved using the existing signed encoding and `windowList` |
 | Polynomial-time input prefix, certificate length and time bound | `CookLevin/Parameters.lean` | proved for the parameter function shared with `reduce`; both bounds are in unary |
 | Polynomial-time variable construction and binary relabelling | `CookLevin/Encoding.lean` | proved using the existing indices in unary as an intermediate representation |
-| Initial, accepting, situation and one-hot clause construction | `CookLevin/Clauses.lean` | proved for the existing clause definitions; composed clients close with `fun_prop` |
-| `NPComplete encCNF SAT` from the reduction's polynomial-time bound | `CookLevin/Staging.lean` | proved (local-only staging) |
-| `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | — | **open**: input/read and step clauses, then full tableau assembly; the one-hot family is certified |
+| All clause families, including input/read and step construction | `CookLevin/Clauses.lean` | proved for the existing clause definitions; computed parameters compose through `fun_prop` |
+| Complete tableau and `ComputableTidilyInPolyTime (reduce tm p c d enc) …` | `CookLevin/PolyTime.lean` | proved, including parameter computation and binary relabelling |
+| `NPComplete encCNF SAT` and `coNPComplete encCNF UNSAT` | `CookLevin/Completeness.lean` | proved unconditionally; local-only staging removed |
 | `ThreeSAT` and correctness of `SAT ≤ 3SAT` | `Problems/ThreeSAT.lean`, `CNF/ThreeCNF.lean` | proved (polynomial time open) |
 
 Circuit track (independent of the calculus): `P/poly` over upstream circuits and `Language.slice`,
@@ -1740,8 +1776,9 @@ CNF syntax/semantics and `SAT`; `SAT ∈ NP` (verifier = clause evaluation, `fun
 the tableau of the verifier's run with per-step action variables (no single-tape conversion:
 each tape's window is checked against the shared action variables), correctness over upstream
 `Turing.Cfg`, and the reduction's `PolyTime` proof by `fun_prop`.
-**Exit criterion:** `SAT.npComplete` axiom-clean; the reduction's complexity proof is a `fun_prop`
-call plus loop rules, with no hand-built machine beyond the L3 primitives.
+**Exit criterion (met):** `CookLevin.SAT_npComplete` axiom-clean; the tableau's complexity proof
+is `unfold tableau; polytime`, composed with the parameter and relabelling certificates, with no
+hand-built machine beyond the L3 primitives.
 
 **Phase 3b — L4 programs + UTM (deferred).** `Prog`, interpreters, `Realizes`, closure
 rules; `Code`/`EncCfg` encodings; `stepCode` PolyTime by `fun_prop`; `runCode`; `utm_universal`,
@@ -1758,19 +1795,20 @@ P ⊆ P/poly. **Phase 6 — effects**: effectful `seq/comp/clock/replay` on the 
 
 ## Verification
 
-- Every phase: `lake build --wfail --iofail`, `lake test --wfail --iofail`, `lake exe mk_all --check`,
-  `lake lint`, `lake exe lint-style` (same commands as cslib's CI), `grep -rn sorry Complexity` empty,
-  axiom test file passes (only `propext`, `Classical.choice`, `Quot.sound` on headline theorems).
+- Every phase: `lake build --wfail --iofail`, `lake exe mk_all --check`, `lake test --wfail --iofail`,
+  `lake lint`, `lake exe lint-style`, `lake exe checkInitImports` (same commands as cslib's CI),
+  no `sorry` in `Complexity`, and the axiom tests pass (only `propext`, `Classical.choice`,
+  `Quot.sound` on headline theorems).
 - Ergonomics check (phase 2/3): `ComplexityTests/Reductions.lean` contains ≥10 realistic
   reduction functions each proven `PolyTime` by `by fun_prop` or `by polytime` in one line;
   `ComplexityTests/Programs.lean` writes a small oracle/coin program in `do` notation and
   obtains its certificate by closure rules only.
 - Upstream rehearsal (every phase): run `scripts/upstream.py` on at least one module into a
   fresh cslib worktree at the pinned SHA and pass cslib's gates there.
-- Milestone 1 acceptance: `SAT.npComplete` compiles axiom-clean; the reduction's `PolyTime` proof
-  is `fun_prop`/`polytime` plus loop rules, with no bespoke machine.
-- Blocker log: cslib PR #1111 and crei's calculus are vendored. SAT verifier certification is
-  complete; the remaining Cook–Levin blocker is the reduction's polynomial-time certificate.
+- Milestone 1 acceptance: `CookLevin.SAT_npComplete` compiles axiom-clean; the reduction's
+  polynomial-time certificate uses `fun_prop`/`polytime` and composition, with no bespoke machine.
+- Blocker log: cslib PR #1111 and crei's calculus are vendored. Cook–Levin is complete.
+  General OWF → PRG, PCP polynomial-time constructibility and explicit expanders remain open.
 
 ## Risks and mitigations
 

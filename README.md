@@ -41,6 +41,11 @@ value-level contracts. These interfaces adapt the local cslib `crypto` branch to
 TM calculus. See `ROADMAP.md` for implemented results, measured proof reductions, and the remaining
 integration work.
 
+Cook–Levin is complete: the entire existing tableau reduction has a polynomial-time TM
+certificate, and SAT NP-completeness and UNSAT coNP-completeness are unconditional. The tableau
+certificate uses `unfold tableau; polytime`; parameter computation and binary relabelling compose
+with it. Tests exercise computed bounds, alternative input encodings and zero-tape verifiers.
+
 The crypto port includes GGM tree evaluation with a polynomial-time TM certificate, the upstream
 nonnegative game/negligibility API, computational indistinguishability and its randomized
 postprocessing rule, and one-way-function/permutation definitions. The complete inversion game
@@ -96,8 +101,8 @@ the ledger, and `scripts/upstream.py` prepares a module for a cslib pull request
 ```bash
 lake exe cache get   # Mathlib oleans
 lake build --wfail --iofail
-lake test --wfail --iofail
 lake exe mk_all --check
+lake test --wfail --iofail
 lake lint
 lake exe lint-style
 lake exe checkInitImports

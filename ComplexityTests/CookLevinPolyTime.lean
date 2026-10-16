@@ -4,10 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.CookLevin.Clauses
-import Complexity.Computability.Complexity.CookLevin.Parameters
+import Complexity.Computability.Complexity.CookLevin.Completeness
+import Complexity.Computability.Complexity.CookLevin.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
+import Complexity.Tactic.PolyTime
 
 /-!
 # Cook–Levin construction tests
@@ -66,5 +67,48 @@ example : ComputableTidilyInPolyTime
 example : ComputableTidilyInPolyTime
     (fun j => (Var.cert (k := 0) (State := Empty) j).index) encUnary encNat := by
   fun_prop
+
+-- The complete reduction has a concrete machine witness, not a supplied efficiency hypothesis.
+example : ComputableTidilyInPolyTime (reduce finish (Polynomial.X + 1) 3 2 encBits)
+    encBits encCNF := by fun_prop
+
+-- A computed tableau and the same computation through a tuple both emit binary SAT instances.
+example : ComputableTidilyInPolyTime (fun word : List Bool =>
+    (tableau finish word (word.length + 1) (word.length ^ 2 + 2)).relabel Var.index)
+    encBits encCNF := by polytime
+
+-- The same functional computation also accepts the generic list encoding of its input.
+example : ComputableTidilyInPolyTime (fun word : List Bool =>
+    (tableau finish word (word.length + 1) (word.length ^ 2 + 2)).relabel Var.index)
+    (encList encBool) encCNF := by polytime
+
+example : ComputableTidilyInPolyTime (fun q : List Bool × ℕ × ℕ =>
+    (tableau finish q.1 q.2.1 q.2.2).relabel Var.index)
+    (encPair encBits (encPair encUnary encUnary)) encCNF := by fun_prop
+
+-- Fixed parameter lists need no encoding or finiteness instance for their element type.
+example {ι : Type} (parameters : List ι) (weight : ι → ℕ) :
+    ComputableTidilyInPolyTime (fun n =>
+      (parameters.filter (fun i => decide (weight i ≤ n))).map
+        (fun i => List.replicate (n + weight i) true))
+      encUnary (encList encBits) := by fun_prop
+
+-- Equivalent functional selection through flatMap uses the same finite-template calculus.
+example {ι : Type} (parameters : List ι) (weight : ι → ℕ) :
+    ComputableTidilyInPolyTime (fun n => parameters.flatMap fun i =>
+      if weight i ≤ n then [List.replicate (n + weight i) true] else [])
+      encUnary (encList encBits) := by fun_prop
+
+-- Total input-head movement clips even an out-of-range starting position.
+example : Turing.moveInputPosNat 0 9 .neg = 1 ∧
+    Turing.moveInputPosNat 0 9 .zero = 1 ∧ Turing.moveInputPosNat 0 9 .pos = 1 ∧
+    Turing.moveInputPosNat 3 0 .neg = 0 := by decide
+
+example : ComputableTidilyInPolyTime
+    (fun p : ℕ × ℤ => decide (|p.2 - (-1 : SignType)| ≤ (p.1 : ℤ)))
+    (encPair encUnary encInt) encBool := by fun_prop
+
+example : NPComplete encCNF SAT := SAT_npComplete
+example : coNPComplete encCNF UNSAT := UNSAT_coNPComplete
 
 end ComplexityTests.CookLevinPolyTime

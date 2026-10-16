@@ -34,6 +34,8 @@ up a variable with a large binary label does not require a certificate as long a
   automation rules for traversals whose body also uses the original input.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst`, `.flatMapConst`: traverse a fixed
   list without requiring an encoding of its elements.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapFilterConst`: select and map fixed parameters
+  with computed guards and outputs, preserving list order and duplicates.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`, `.findWith`: filtering or searching
   a polynomial-time list with a parameterized test.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`, `.replicate`: unary lengths,
@@ -315,6 +317,22 @@ theorem flatMapConst {ι : Type*} (l : List ι) {f : γ → ι → List β}
     ComputableTidilyInPolyTime (fun x => l.flatMap (f x)) encIn (encList encB) := by
   simpa only [Function.comp_def, List.flatten_eq_flatMap, List.flatMap_map, id_eq] using
     (flatten encB).comp (mapConst l hf)
+
+/-- Filter and map a fixed list using computed guards and outputs. No encoding of the fixed
+parameters is required; only members of the list need certificates. -/
+@[fun_prop]
+theorem mapFilterConst {ι : Type*} (list : List ι) {test : γ → ι → Bool} {f : γ → ι → β}
+    (htest : ∀ i ∈ list, ComputableTidilyInPolyTime (fun a => test a i) encIn encBool)
+    (hf : ∀ i ∈ list, ComputableTidilyInPolyTime (fun a => f a i) encIn encB) :
+    ComputableTidilyInPolyTime (fun a => (list.filter (test a)).map (f a))
+      encIn (encList encB) := by
+  induction list with
+  | nil => exact const []
+  | cons a list ih =>
+    have htail := ih (fun i hi => htest i (List.mem_cons_of_mem _ hi))
+      (fun i hi => hf i (List.mem_cons_of_mem _ hi))
+    simpa only [List.filter_cons, List.map_cons, apply_ite] using
+      (htest a (List.mem_cons_self ..)).cond ((hf a (List.mem_cons_self ..)).cons' htail) htail
 
 /-- The length of a list, in unary, including raw bit strings. -/
 theorem length (enc : α ↪ List Bool) {encL : List α ↪ List Bool} [ListEncoding enc encL]
