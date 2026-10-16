@@ -26,10 +26,10 @@ superfluous and leaves the parity of the other bits, possibly negated.
 The proof does not rewrite circuits. For a restriction (partial assignment) `ρ` it counts the
 *nonredundant* gates: AND and OR gates whose function, once the bits fixed by `ρ` are hardwired, is
 neither constant, nor a literal, nor one of its arguments up to negation
-(`GateElimination.NonRedundant`). Fixing more bits
-never makes a redundant gate nonredundant (`GateElimination.nonRedundant_update_subset`). Every
-nonredundant gate survives the simplifications of the textbook proof, so their number is a lower
-bound on the number of binary gates, and it is what each step of the proof decreases.
+(`GateElimination.NonRedundant`). Fixing more bits never makes a redundant gate nonredundant
+(`GateElimination.nonRedundant_update_subset`). Every nonredundant gate survives the simplifications
+of the textbook proof, so their number is a lower bound on the number of binary gates, and it is
+what each step of the proof decreases.
 
 The step follows Schnorr. Consider the nonredundant gates from which a chain of nonredundant gates,
 negations and gates that compute one of their arguments up to negation leads to the output. The

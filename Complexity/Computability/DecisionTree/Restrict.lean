@@ -81,19 +81,19 @@ theorem complexity_comp_fill_le (ρ : PartialAssignment ι) (f : (ι → Bool) �
 
 /-- Post-processing the output does not raise decision tree complexity. -/
 theorem complexity_comp_le (g : β → γ) (f : (ι → Bool) → β) :
-    complexity (fun x => g (f x)) ≤ complexity f := by
+    complexity (g ∘ f) ≤ complexity f := by
   obtain ⟨t, ht, hd⟩ := exists_computes_depth_eq_complexity f
   refine (complexity_le_depth (t := t.map g) fun x => ?_).trans (by rw [depth_map, hd])
-  rw [eval_map, ht]
+  rw [eval_map, ht, Function.comp_apply]
 
 /-- **Post-processing by an injective map preserves decision tree complexity**: a left inverse
 undoes it. -/
 theorem complexity_comp_of_injective {g : β → γ} (hg : Function.Injective g)
-    (f : (ι → Bool) → β) : complexity (fun x => g (f x)) = complexity f := by
+    (f : (ι → Bool) → β) : complexity (g ∘ f) = complexity f := by
   have : Nonempty β := ⟨f fun _ => false⟩
   refine le_antisymm (complexity_comp_le g f) ?_
-  simpa only [Function.leftInverse_invFun hg _] using
-    complexity_comp_le (Function.invFun g) fun x => g (f x)
+  simpa only [← Function.comp_assoc, (Function.leftInverse_invFun hg).comp_eq_id,
+    Function.id_comp] using complexity_comp_le (Function.invFun g) (g ∘ f)
 
 /-- Negation preserves decision tree complexity. -/
 theorem complexity_not (f : (ι → Bool) → Bool) :

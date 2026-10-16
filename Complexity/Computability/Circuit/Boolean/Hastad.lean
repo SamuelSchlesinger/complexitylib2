@@ -191,10 +191,10 @@ theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString 
   refine mem_filter.2 ⟨hρ', ?_⟩
   have hext := (PartialAssignment.mem_extensions.1 hρ').1
   have : (fun x => DNF.eval (ρ'.fill x) D) =
-      fun x => (interpretation op (fun j => args j (ρ.fill (ρ'.fill x))) != b) := by
+      (· != b) ∘ fun x => interpretation op (fun j => args j (ρ.fill (ρ'.fill x))) := by
     funext x
-    rw [heval]
-  rw [this, complexity_comp_of_injective (g := (· != b)) (by cases b <;> decide)]
+    rw [heval, Function.comp_apply]
+  rw [this, complexity_comp_of_injective (by cases b <;> decide)]
   simpa only [PartialAssignment.fill_fill_of_extends hext] using not_lt.1 hdeep
 
 /-- **The switching fraction for one operation**: if the arguments of an operation are shallow

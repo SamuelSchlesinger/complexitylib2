@@ -33,14 +33,13 @@ stage leaves a `1 / (16 s + 1)` fraction of the free bits (as in
 
 The proof draws a random set `J` of `ℓ = ⌊n / (16 s + 1) ^ d⌋` coordinates and fixes the others
 to a random word `z`, a random restriction (partial assignment)
-(`PartialAssignment.sum_card_filter_outside`). A set `U` of at least `k`
-coordinates meets `J` in at least `s` of them for at least half of the `J`
-(`Finset.two_mul_card_filter_card_inter_lt_le`), so the weight on such `U` is at most twice the
-expected weight of the restriction on sets of at least `s` coordinates
-(`BitString.expect_sum_fourierCoeff_piecewise_sq`). That is zero when the restriction has a
-decision tree of depth below `s` (`DecisionTree.fourierCoeff_eq_zero_of_depth_lt`) and at most
-one otherwise (Parseval), and the restriction is deep with probability at most `g / 2 ^ s`
-(`Unbounded.two_pow_mul_card_filter_exists_not_shallow_le`).
+(`PartialAssignment.sum_card_filter_outside`). A set `U` of at least `k` coordinates meets `J` in at
+least `s` of them for at least half of the `J` (`Finset.two_mul_card_filter_card_inter_lt_le`), so
+the weight on such `U` is at most twice the expected weight of the restriction on sets of at least
+`s` coordinates (`BitString.expect_sum_fourierCoeff_piecewise_sq`). That is zero when the
+restriction has a decision tree of depth below `s` (`DecisionTree.fourierCoeff_eq_zero_of_depth_lt`)
+and at most one otherwise (Parseval), and the restriction is deep with probability at most
+`g / 2 ^ s` (`Unbounded.two_pow_mul_card_filter_exists_not_shallow_le`).
 
 ## Main results
 
