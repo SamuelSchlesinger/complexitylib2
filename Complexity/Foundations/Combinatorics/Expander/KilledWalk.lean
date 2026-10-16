@@ -240,37 +240,27 @@ private theorem expect_comp_take [Nonempty D] {M : Type*} [AddCommMonoid M] [Mod
     Fintype.expect_prod_type]
   simp only [Fintype.expect_const]
 
-/-- Under uniformly random kill signals, a walk of length `T` is killed at its step `m < T` with
-probability `(1 - 1 / q) ^ m / q`. -/
-theorem expect_killTime_eq {m : ℕ} (hm : m < T) :
-    𝔼 c : Fin T → Fin q, (if killTime c = m then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ m / q := by
-  have hq : (q : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne q)
-  rw [Fintype.expect_eq_sum_div_card, sum_boole, card_filter_killTime_eq hm]
-  have hT : (q : ℝ) ^ T = q ^ (T - (m + 1)) * q ^ m * q := by
-    rw [← pow_add, ← pow_succ]
-    congr 1
-    omega
-  simp only [Fintype.card_pi, prod_const, card_univ, Fintype.card_fin]
-  push_cast [Nat.cast_sub (NeZero.one_le : 1 ≤ q)]
-  rw [hT]
-  field_simp
-  rw [← mul_pow, mul_div_cancel₀ _ hq]
-
 /-- Under uniformly random kill signals, a walk of length `T` survives its first `m ≤ T` steps with
 probability `(1 - 1 / q) ^ m`. -/
 theorem expect_le_killTime {m : ℕ} (hm : m ≤ T) :
     𝔼 c : Fin T → Fin q, (if m ≤ killTime c then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ m := by
   have hq : (q : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (NeZero.ne q)
+  have hT : (q : ℝ) ^ T = q ^ m * q ^ (T - m) := by
+    rw [← pow_add, Nat.add_sub_cancel' hm]
   rw [Fintype.expect_eq_sum_div_card, sum_boole, card_filter_le_killTime hm]
-  have hT : (q : ℝ) ^ T = q ^ (T - m) * q ^ m := by
-    rw [← pow_add]
-    congr 1
-    omega
   simp only [Fintype.card_pi, prod_const, card_univ, Fintype.card_fin]
   push_cast [Nat.cast_sub (NeZero.one_le : 1 ≤ q)]
-  rw [hT]
-  field_simp
-  rw [← mul_pow, mul_div_cancel₀ _ hq]
+  rw [hT, mul_div_mul_right _ _ (pow_ne_zero _ hq), ← div_pow, sub_div, div_self hq, one_div]
+
+/-- Under uniformly random kill signals, a walk of length `T` is killed at its step `m < T` with
+probability `(1 - 1 / q) ^ m / q`: it survives its first `m` steps but not its first `m + 1`. -/
+theorem expect_killTime_eq {m : ℕ} (hm : m < T) :
+    𝔼 c : Fin T → Fin q, (if killTime c = m then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ m / q := by
+  have h (c : Fin T → Fin q) : (if killTime c = m then 1 else 0 : ℝ) =
+      (if m ≤ killTime c then 1 else 0) - if m + 1 ≤ killTime c then 1 else 0 := by
+    split_ifs <;> first | (exfalso; omega) | norm_num
+  simp only [h, expect_sub_distrib, expect_le_killTime hm.le, expect_le_killTime hm]
+  rw [pow_succ, ← mul_one_sub, sub_sub_cancel, div_eq_mul_inv]
 
 /-- **The law of a killed walk**: averaged over uniformly random labels and kill signals, a function
 of the first `ℓ < T` labels, on the event that the walk is killed at step `ℓ`, averages to

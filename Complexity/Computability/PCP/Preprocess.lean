@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.DegreeReduction
-public import Complexity.Foundations.Combinatorics.Expander.Family
+public import Complexity.Foundations.Combinatorics.Expander.Existence
 
 /-!
 # Preprocessing

@@ -243,6 +243,7 @@ public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.Expander.Basic
 public import Complexity.Foundations.Combinatorics.Expander.Cheeger
+public import Complexity.Foundations.Combinatorics.Expander.Existence
 public import Complexity.Foundations.Combinatorics.Expander.Family
 public import Complexity.Foundations.Combinatorics.Expander.KilledWalk
 public import Complexity.Foundations.Combinatorics.Expander.Lazy

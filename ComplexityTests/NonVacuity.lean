@@ -18,7 +18,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormal
 import Complexity.Foundations.BooleanAnalysis.HadamardTester
 import Complexity.Probability.ApproximateCounting.Relative
 import Complexity.Probability.PairwiseIndependentHash.Toeplitz
-import Complexity.Foundations.Combinatorics.Expander.Family
+import Complexity.Foundations.Combinatorics.Expander.Existence
 import Complexity.Foundations.Combinatorics.Expander.TowerBase
 import Complexity.Computability.Kolmogorov.ChainRule
 import Complexity.Computability.Kolmogorov.MultiTape

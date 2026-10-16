@@ -55,8 +55,7 @@ says that spectral expanders are edge expanders [Arora and Barak, Section 21.2][
   `Cslib.RotationMap.le_card_interedges_compl`: edge expansion from a spectral bound.
 * `Cslib.RotationMap.le_card_interedges_compl_of_two_mul_card_le`: a set of at most half of the
   vertices has at least `(1 - λ(G)) d |S| / 2` edges leaving it.
-* `Cslib.RotationMap.le_card_filter_ne_neighbor`,
-  `Cslib.RotationMap.mul_card_filter_ne_le_card_filter_ne_neighbor`: an expander has many edges
+* `Cslib.RotationMap.mul_card_filter_ne_le_card_filter_ne_neighbor`: an expander has many edges
   between differently labelled vertices.
 
 ## References
@@ -296,20 +295,6 @@ theorem le_card_interedges_compl_of_two_mul_card_le {S : Finset V}
   nlinarith [mul_le_mul_of_nonneg_left hc hA]
 
 end Sets
-
-/-- **Disagreement across an expander**: for a labelling `f` of the vertices of a `d`-regular
-multigraph on `n` vertices and a label `c`, at least `(1 - λ(G)) d |{f ≠ c}| |{f = c}| / n` darts
-join two differently labelled vertices, since every dart from `{f ≠ c}` to `{f = c}` does. -/
-theorem le_card_filter_ne_neighbor {α : Type*} [DecidableEq α] (f : V → α) (c : α) :
-    (1 - G.spectralExpansion) * Fintype.card D * #{v | f v ≠ c} * #{v | f v = c} /
-        Fintype.card V ≤ #{p : V × D | f p.1 ≠ f (G.neighbor p.1 p.2)} := by
-  classical
-  have h := G.le_card_interedges_compl {v | f v ≠ c}
-  simp only [compl_filter, ne_eq, not_not] at h
-  refine h.trans (Nat.cast_le.2 (card_le_card fun p hp ↦ ?_))
-  simp only [mem_interedges, mem_filter, mem_univ, true_and] at hp ⊢
-  rw [hp.2]
-  exact hp.1
 
 /-- **Disagreement across an expander, for a most frequent label**: if no label is taken by more
 vertices than `c`, at least `(1 - λ(G)) d |{f ≠ c}|` darts join two differently labelled vertices,

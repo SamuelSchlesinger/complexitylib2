@@ -25,8 +25,9 @@ The simplest such `H` is `loops V E`, with a self-loop at every vertex for each 
 other edge, whose walk operator is the identity as soon as there is a label (`walk_loops`); with a
 single label, `loops V Unit` is the multigraph whose tensor products with `H` are disjoint copies of
 `H`. Superposing `loops V E` adds self-loops to `G` (`addLoops`). A few of them, as Dinur's
-preprocessing adds, close at most the proportion `|E| / (|D| + |E|)` of the gap between the
-spectral expansion and `1` (`spectralExpansion_addLoops_le`). As many self-loops as edges at each
+preprocessing adds [Dinur, Section 3.1][Dinur2005], close at most the proportion
+`|E| / (|D| + |E|)` of the gap between the spectral expansion and `1`
+(`spectralExpansion_addLoops_le`). As many self-loops as edges at each
 vertex give the lazy graph `Cslib.RotationMap.lazy`, whose walk stays put half of the time.
 
 Renaming the edge labels along an equivalence (`relabel`) changes neither the walk operator nor
@@ -51,6 +52,7 @@ present their results with labels `Fin d`.
 
 ## References
 
+* [I. Dinur, *The PCP theorem by gap amplification*, ECCC TR05-046, revision 1][Dinur2005]
 * [S. Hoory, N. Linial, A. Wigderson, *Expander graphs and their
   applications*][HooryLinialWigderson2006]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
