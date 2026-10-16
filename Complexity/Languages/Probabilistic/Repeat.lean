@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Probability.BitString.List
+public import Complexity.Probability.Product
 
 /-!
 # Bounded repetition of probabilistic programs
@@ -24,6 +25,7 @@ is certified separately in `Computability.Probabilistic.Repeat`.
 ## Main results
 
 * `Cslib.OracleComp.replicate_add`, `.replicate_snoc`: split an execution into segments.
+* `Cslib.ProbComp.eval_replicate`: finite outputs have the independent product law.
 * `Cslib.ProbComp.eval_replicate_of_uniform`: realize the joint law from independent finite seeds.
 * `Cslib.ProbComp.eval_replicate_of_uniformList`: collect independent draws from one flat bit list.
 
@@ -97,6 +99,19 @@ theorem mem_support_replicate_iff (count : ℕ) (program : ProbComp α) (values 
     cases values with
     | nil => simp [OracleComp.replicate_succ]
     | cons value rest => simp [OracleComp.replicate_succ, ih, and_assoc, and_left_comm]
+
+/-- Repeated closed runs have the independent product law for any finite output distribution. -/
+theorem eval_replicate [Finite α] (count : ℕ) (program : ProbComp α) :
+    eval (OracleComp.replicate count program) =
+      (Probability.PMF.pi (fun _ : Fin count => eval program)).map List.ofFn := by
+  induction count with
+  | zero =>
+    simp only [OracleComp.replicate_zero, eval_pure, PMF.map, Function.comp_def,
+      List.ofFn_zero, PMF.bind_const]
+  | succ count ih =>
+    rw [OracleComp.replicate_succ, eval_bind]
+    simp [eval_map, ih, Probability.PMF.pi_fin_succ, PMF.map_bind, PMF.map_comp,
+      Function.comp_def, List.ofFn_succ]
 
 /-- Repeated closed runs use independent uniform seeds, including at count zero. The output
 type need not be finite. -/

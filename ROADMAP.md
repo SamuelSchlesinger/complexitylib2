@@ -216,7 +216,7 @@ not existence proofs of one-way functions or permutations.
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
-| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy, concentration, uniform-seed samplable pairs and hash-isolation bounds are complete; queue efficient hashing, the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy, concentration, uniform-seed samplable pairs, hash-isolation bounds and efficient matrix hashing are complete; queue the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
@@ -1359,7 +1359,55 @@ fibers. A fixed-source XOR hash has a uniform digest marginal but joint distance
 its public seed is retained. The conditional-extraction test keeps correlated side information.
 Six axiom guards cover public-pair distance, isolation and the extraction/entropy headlines.
 Independent cslib-style source/API review approves the final proofs, tests and documentation.
-All six project checks pass. Independent adversarial correctness review follows publication.
+All six project checks pass. Independent adversarial correctness review of `9545c07` also approves,
+including biased noninjective families, public seed/side information/hash length, seed-dependent
+predicates, infinite-source empty digests, and subtraction/zero-count boundaries.
+
+### Efficient matrix hashing and encoding conversion (2026-10-16)
+
+Binary matrix hashing now uses the shared `BitString.blocksEquiv` and total list-row parser.
+The two-universality proof includes prefixes of one public matrix, unused rows and zero-width
+outputs. Its functional list implementation pads short seeds with `false`. The seeded extractor
+returns the whole matrix seed followed by the digest; exact finite/list laws cover both a fixed
+input and concatenated independent repetitions. Shared row-packing and repetition-product laws
+supply the representation bridge.
+
+The word-output leftover-hash bound quantifies over every randomized test with a finite result
+type, including arbitrary Boolean tests; there is no efficiency assumption on these tests.
+This retains the complete public seed and uses the pinned finite-PMF distance. The port does not
+install a second metric on all list-valued PMFs. The deterministic hash and full sampler each
+have two-line certificates, `unfold ...; fun_prop` and `unfold ...; ppt`, with computed unary
+dimensions and the costs of sampling, hashing and copying the complete output included.
+No new TM construction or transition table is needed. Positive pseudoentropy and general
+OWF → PRG remain pending.
+
+Two projection lemmas certify the pair-valued function before converting its component encoding.
+This order lets ordinary nested projections work with raw or framed bit lists. Uncurried
+conversion rules made the existing Goldreich–Levin `ppt` proof exhaust its bounded compositional
+search; the computed-pair rules preserve that proof without raising any limit. The pinned
+`fun_prop` does not use local hypotheses for identity conversion goals. Two ordinary Aesop
+registrations expose those premises to `polytime`, so arbitrary locally supplied conversions
+also work. Tests require failure when the conversion certificate is removed. No new tactic
+implementation or representation-specific projection cases are added.
+
+Counting all three source modules and the two shared prerequisites gives 17 proof bodies / 92
+body lines in crypto `5ff69ca`, versus 19 / 86 here, including both new projection lemmas.
+The row-packing proof drops from 13 to 6 lines and repetition's product law from 10 to 8.
+The word-distance statement is adapted to arbitrary finite-result tests as described above;
+the extra contraction step costs one line. The complete library snapshot has 5,719 named proof
+bodies / 39,089 body lines across 536 modules, median 3 and P90 17. These counts include term
+proofs and private helpers, and exclude tests, comments, statements and proofs inside definitions.
+
+Same-import helper profiles use 327,099 / 229,942 raw tactic heartbeats for row packing and
+197,401 / 175,364 for repetition's product law. With only the projection registrations varied,
+the unchanged Goldreich–Levin certificate uses 1,294,690 / 1,328,288 raw heartbeats. These are
+elaboration costs rather than program runtimes. The current hash and extractor certificate bodies
+use 185,966 and 416,991 raw heartbeats. A framed-input extractor call uses 296,250, versus 872,356
+for its explicit-bind spelling; both pass without client annotations.
+
+Independent source/API review approves the modules, shared helpers and encoding tests. All six
+project checks pass: build 8.93 s, import coverage 1.67 s, tests 19.65 s, lint 7.35 s, style 2.19 s,
+and init imports 4.49 s. Independent adversarial correctness review follows publication.
 
 ### Implementation priorities (2026-10-16)
 

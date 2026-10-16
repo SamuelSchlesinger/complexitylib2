@@ -22,6 +22,8 @@ rules for `fun_prop`.
   admit explicit time and output degrees.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq`: reuse identical encoded outputs.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_finite`: functions on finite domains.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.fstWithEncoding`, `.sndWithEncoding`: projections
+  that compose with a known encoding conversion.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_eq`, `.beq`: equality for fixed encodings.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_and'`, `.decide_and`, `.cond`, `.ite_decide`:
   compound guards and conditionals with fixed intermediate Boolean encodings.
@@ -61,6 +63,26 @@ theorem snd' {δ : Type} {encD : δ ↪ List Bool} {f : α → β × δ}
     (hf : ComputableTidilyInPolyTime f encA (encPair encB encD)) :
     ComputableTidilyInPolyTime (fun x => (f x).2) encA encD :=
   (snd encB encD).comp hf
+
+/-- Project a first component and convert its encoding. Certifying the pair-valued function first
+determines the source encoding before automation searches for the conversion certificate. -/
+@[fun_prop]
+theorem fstWithEncoding {γ : Type} {encC : γ ↪ List Bool}
+    {output : α ↪ List Bool} {f : γ → α × β}
+    (hf : ComputableTidilyInPolyTime f encC (encPair encA encB))
+    (h : ComputableTidilyInPolyTime (fun a => a) encA output) :
+    ComputableTidilyInPolyTime (fun p => (f p).1) encC output :=
+  h.comp hf.fst'
+
+/-- Project a second component and convert its encoding. The pair certificate fixes the source
+encoding; the conversion certificate supplies the efficient change of representation. -/
+@[fun_prop]
+theorem sndWithEncoding {γ : Type} {encC : γ ↪ List Bool}
+    {output : β ↪ List Bool} {f : γ → α × β}
+    (hf : ComputableTidilyInPolyTime f encC (encPair encA encB))
+    (h : ComputableTidilyInPolyTime (fun a => a) encB output) :
+    ComputableTidilyInPolyTime (fun p => (f p).2) encC output :=
+  h.comp hf.snd'
 
 /-- Every polynomial-time function admits explicit time and output degrees. -/
 theorem exists_degree {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :

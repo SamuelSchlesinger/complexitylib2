@@ -323,6 +323,7 @@ public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.Adaptive
 public import Complexity.Computability.Probabilistic.CoinTape
 public import Complexity.Computability.Probabilistic.Finite
+public import Complexity.Computability.Probabilistic.LinearHash
 public import Complexity.Computability.Probabilistic.Memoize
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Computability.Probabilistic.Oracle.Parameter
@@ -473,6 +474,7 @@ public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.Iteration
+public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.Oracle.Simulation
@@ -510,6 +512,7 @@ public import Complexity.Logics.SecondOrder.Reduction
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
+public import Complexity.Probability.BitString.LinearHash
 public import Complexity.Probability.BitString.List
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Concentration

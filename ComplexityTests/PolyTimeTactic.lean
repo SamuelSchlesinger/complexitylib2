@@ -30,6 +30,23 @@ example (f g : List Bool → List Bool)
   fail_if_success (clear hg; polytime)
   polytime
 
+-- Projecting from an arbitrary representation still requires its conversion certificate.
+example (encode : List Bool ↪ List Bool)
+    (h : ComputableTidilyInPolyTime (fun word => word) encode encBits) :
+    ComputableTidilyInPolyTime (fun p : List Bool × ℕ => p.1)
+      (encPair encode encUnary) encBits := by
+  fail_if_success (clear h; fun_prop)
+  fail_if_success (clear h; polytime)
+  polytime
+
+example (encode : List Bool ↪ List Bool)
+    (h : ComputableTidilyInPolyTime (fun word => word) encode encBits) :
+    ComputableTidilyInPolyTime (fun p : ℕ × List Bool => p.2)
+      (encPair encUnary encode) encBits := by
+  fail_if_success (clear h; fun_prop)
+  fail_if_success (clear h; polytime)
+  polytime
+
 example : ComputableTidilyInPolyTime
     (fun word : List Bool => word.foldl (fun reversed bit => bit :: reversed) [])
     encBits encBits := by

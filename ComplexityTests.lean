@@ -15,6 +15,7 @@ import ComplexityTests.FiniteTables
 import ComplexityTests.GGM
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
+import ComplexityTests.LinearHash
 import ComplexityTests.MachineClock
 import ComplexityTests.MachineExtendTapes
 import ComplexityTests.MachineIOBuffer

@@ -26,6 +26,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 
 * `Cslib.BitString.ofList_ofFn`, `Cslib.BitString.ofFn_ofList`: representation round trips.
 * `Cslib.BitString.listRows_eq_ofFn`: agreement with the finite block representation.
+* `Cslib.BitString.ofFn_blocksEquiv_symm`: packing fixed-width rows is list concatenation.
 
 ## References
 
@@ -52,6 +53,17 @@ theorem ofFn_ofList {n : ℕ} {word : List Bool} (hlen : word.length = n) :
   apply List.ext_getElem (by simp)
   intro i hi hi'
   simp [ofList, List.getD, List.getElem?_eq_getElem hi']
+
+/-- Packing fixed-width rows in the block representation is ordinary list concatenation. -/
+theorem ofFn_blocksEquiv_symm {count width : ℕ} (rows : Fin count → BitString width) :
+    List.ofFn (blocksEquiv.symm rows) =
+      (List.ofFn (fun i => List.ofFn (rows i))).flatten := by
+  have h := congrArg (fun values => (List.ofFn fun i => List.ofFn (values i)).flatten)
+    (blocksEquiv.apply_symm_apply rows)
+  change (List.ofFn fun i => List.ofFn fun j =>
+    blocksEquiv.symm rows (finProdFinEquiv (i, j))).flatten = _ at h
+  simpa only [List.ofFn_mul, finProdFinEquiv, Equiv.coe_fn_mk,
+    Nat.mul_comm, Nat.add_comm] using h
 
 /-- Read one fixed-width row, using `false` beyond the end of the supplied list. -/
 def listRow (width row : ℕ) (word : List Bool) : List Bool :=

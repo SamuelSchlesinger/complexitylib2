@@ -87,8 +87,10 @@ strict PPT certificate for the complete prediction game. Every such sampler has 
 deterministic saved-seed evaluator, with exact joint-law and entropy accounting for unused coins;
 finite-PMF concentration bounds support independent repetition. Universal hashing, the strong
 leftover hash lemma with public side information, and preimage-isolation entropy bounds are
-implemented. Constructing a positive pseudoentropy gap from an OWF remains part of the pending
-security reduction.
+implemented. Binary matrix hashing and its seeded extractor now have compositional polynomial-time
+certificates, exact finite/list laws, and a leftover-hash bound for arbitrary randomized tests of
+the complete public output. Constructing a positive pseudoentropy gap from an OWF remains part
+of the pending security reduction.
 
 ## Layout
 

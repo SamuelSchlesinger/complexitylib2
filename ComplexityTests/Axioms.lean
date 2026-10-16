@@ -4869,3 +4869,55 @@ info: 'Cslib.Probability.conditionalEntropy_random_hash_le' depends on axioms: [
 -/
 #guard_msgs in
 #print axioms Cslib.Probability.conditionalEntropy_random_hash_le
+
+-- Linear hashing, the complete sampler, and its uniform efficiency certificates.
+
+/--
+info: 'Cslib.BitString.LinearHash.isTwoUniversal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.LinearHash.isTwoUniversal
+
+/--
+info: 'Cslib.BitString.LinearHash.wordHash_eq_ofFn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.LinearHash.wordHash_eq_ofFn
+
+/--
+info: 'Cslib.BitString.LinearHash.eval_extract_bind' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.LinearHash.eval_extract_bind
+
+/--
+info: 'Cslib.BitString.LinearHash.eval_extract_replicate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.LinearHash.eval_extract_replicate
+
+/--
+info: 'Cslib.BitString.LinearHash.extract_dist_bind_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.LinearHash.extract_dist_bind_le
+
+/--
+info: 'Cslib.BitString.LinearHash.computableTidilyInPolyTime_wordHash' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.LinearHash.computableTidilyInPolyTime_wordHash
+
+/--
+info: 'Cslib.BitString.LinearHash.isPPTOn_extract' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.LinearHash.isPPTOn_extract
+
+/--
+info: 'Cslib.ProbComp.eval_replicate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.ProbComp.eval_replicate

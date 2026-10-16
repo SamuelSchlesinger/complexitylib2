@@ -142,6 +142,11 @@ attribute [aesop safe apply (rule_sets := [PolyTime])] Nat.le_refl
 
 attribute [aesop norm simp (rule_sets := [PolyTime])] forall_and
 
+-- Aesop can use local identity certificates for changes of representation.
+attribute [aesop unsafe 80% apply (rule_sets := [PolyTime])]
+  ComputableTidilyInPolyTime.fstWithEncoding
+  ComputableTidilyInPolyTime.sndWithEncoding
+
 attribute [aesop safe apply (index := [unindexed]) (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.iterate_of_bounded_growth
 
