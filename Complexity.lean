@@ -178,6 +178,7 @@ public import Complexity.Computability.Kolmogorov.SelfDelimiting
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.Shannon
+public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
