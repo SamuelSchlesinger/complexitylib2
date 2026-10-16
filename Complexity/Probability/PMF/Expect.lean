@@ -8,7 +8,7 @@ module
 -- upstream: candidate (addition to `Cslib/Probability/PMF.lean`)
 
 public import Complexity.Init
-public import Cslib.Probability.PMF
+public import Complexity.Probability.PMF
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Data.Finset.Density
 public import Mathlib.Basic.Real.Basic
@@ -28,6 +28,7 @@ into the vocabulary of `Finset.expect` (`𝔼`) and `Finset.dens`.
 
 * `Cslib.Probability.PMF.toReal_uniformOfFintype_bind_apply`: a uniform first stage averages the
   second stages.
+* `Cslib.Probability.PMF.toReal_uniformOfFintype_map_apply`: output probabilities are densities.
 * `Cslib.Probability.PMF.toReal_uniformOfFintype_map_apply_true`: the probability that a Boolean
   function of a uniform sample is `true` is a density.
 -/
@@ -45,23 +46,24 @@ variable {α β : Type*} [Fintype α] [Nonempty α]
 over `a` of the probability that the second stage `f a` outputs `b`. -/
 theorem toReal_uniformOfFintype_bind_apply (f : α → PMF β) (b : β) :
     ((uniformOfFintype α).bind f b).toReal = 𝔼 a, (f a b).toReal := by
-  rw [PMF.bind_apply, tsum_fintype, ENNReal.toReal_sum fun a _ =>
-    ENNReal.mul_ne_top (PMF.apply_ne_top _ _) (PMF.apply_ne_top _ _),
-    Fintype.expect_eq_sum_div_card, sum_div]
-  refine sum_congr rfl fun a _ => ?_
-  rw [ENNReal.toReal_mul, uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast,
-    inv_mul_eq_div]
+  simp only [bind_apply_toReal, uniformOfFintype_apply, ENNReal.toReal_inv,
+    ENNReal.toReal_natCast, inv_mul_eq_div, Fintype.expect_eq_sum_div_card, sum_div]
+
+/-- The mass of an output of a uniform sample is the density of its fiber. -/
+theorem toReal_uniformOfFintype_map_apply [DecidableEq β] (f : α → β) (b : β) :
+    ((uniformOfFintype α).map f b).toReal = dens {a | f a = b} := by
+  rw [← PMF.bind_pure_comp, toReal_uniformOfFintype_bind_apply]
+  have h (a : α) : ((Function.comp PMF.pure f a) b).toReal =
+      if f a = b then 1 else 0 := by
+    simp only [Function.comp_apply, PMF.pure_apply, eq_comm (a := b)]
+    split_ifs <;> rfl
+  simp only [h]
+  exact Fintype.expect_boole _
 
 /-- A Boolean function `g` of a uniform sample is `true` with probability the density of the set
 where `g` is `true`. -/
 theorem toReal_uniformOfFintype_map_apply_true (g : α → Bool) :
-    ((uniformOfFintype α).map g true).toReal = dens {a | g a = true} := by
-  rw [← PMF.bind_pure_comp, toReal_uniformOfFintype_bind_apply]
-  have h (a : α) : ((Function.comp PMF.pure g a) true).toReal =
-      if g a = true then 1 else 0 := by
-    simp only [Function.comp_apply, PMF.pure_apply, eq_comm (a := true)]
-    split_ifs <;> rfl
-  simp only [h]
-  exact Fintype.expect_boole _
+    ((uniformOfFintype α).map g true).toReal = dens {a | g a = true} :=
+  toReal_uniformOfFintype_map_apply g true
 
 end Cslib.Probability.PMF

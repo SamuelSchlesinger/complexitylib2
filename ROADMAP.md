@@ -467,6 +467,33 @@ The three modules and copied PMF averaging lemmas add 38 theorem bodies / 125 bo
 The upstream checker now recognizes copied-block markers as well as whole-module markers,
 including the independent #1062 and #1129 blocks in the shared PMF file.
 
+### Finite Goldreich–Levin decoder (2026-10-16)
+
+`GoldreichLevin/Decoding` ports the subset-sum list decoder: sample `k` base masks, enumerate
+all guesses for their parities, and take a corrected strict majority for each coordinate.
+For a predictor with agreement at least `1/2 + ε`, with `ε > 0` and `k > 0`, the failure
+probability is at most `n / (4 ε² (2^k - 1))`. Every output has at most `2^k` candidates.
+With `2^k - 1 ≥ n / (2 ε²)`, recovery succeeds with probability at least one half.
+This direct-coordinate variant follows the crypto branch; its candidate bound is weaker than
+Trevisan's two-stage presentation, but it remains polynomial under the eventual parameter choice.
+These are finite distributional guarantees. The uniform PPT decoder and the hard-core theorem
+remain separate porting work.
+
+The shared probability API now derives uniformity of surjective additive homomorphisms from
+translations and the existing hash-family fiber count. The counting lemmas moved to `Uniform`
+without changing their names; they still serve the hash-family proof. A general PMF output-mass
+formula is the density of its fiber. The existing uniform-experiment averaging proof falls from
+six body lines to two. `BitString.strictMajorityOn` and its correct-vote bound replace the
+crypto-specific majority operation and also supply the existing anti-checker majority lemma.
+
+The three new modules have 26 theorem bodies / 225 body lines, including two existing fiber
+lemmas moved from the shift module. Accounting for all shared helpers, moves and refactors, the
+net addition is 28 / 211, compared with 25 / 248 in the three original crypto-branch files.
+The library total is 5,128 / 35,350 in 459 source files. Definitions, statements and tests are
+excluded from this source-layout metric. Tests cover overlapping subset masks, ties, zero target
+length, arbitrary masks against perfect prediction, and the genuinely imperfect two-bit AND
+predictor with exactly `3/4` agreement; the quantitative recovery theorem applies to it.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and

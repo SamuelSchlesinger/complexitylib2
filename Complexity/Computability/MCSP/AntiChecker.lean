@@ -80,22 +80,6 @@ variable {α : Type*} [Fintype α] {m : ℕ}
 
 /-! ### Counting refuting tuples -/
 
-/-- If the strict majority of `m` bits is not `y`, at least `m - m / 2` of them differ from `y`. -/
-private theorem le_card_ne_of_strictMajority_ne {b : Fin m → Bool} {y : Bool}
-    (h : strictMajority m b ≠ y) : m - m / 2 ≤ #{i | b i ≠ y} := by
-  have hsplit : #{i | b i = true} + #{i | b i = false} = m := by
-    simpa using card_filter_add_card_filter_not (s := (univ : Finset (Fin m))) (b · = true)
-  have hweight : BitString.weight b = #{i | b i = true} := rfl
-  cases y with
-  | true =>
-    have := strictMajority_eq_false_iff.mp (by simpa using h)
-    simp only [ne_eq, Bool.not_eq_true]
-    omega
-  | false =>
-    have := strictMajority_eq_true_iff.mp (by simpa using h)
-    simp only [ne_eq, Bool.not_eq_false]
-    omega
-
 /-- Among the tuples of `m` members of `G`, at most `2 ^ m · |D| ^ h · |G| ^ (m - h)` have at
 least `h` entries in `D`: choose `h` positions and fill them from `D`. -/
 private theorem card_filter_le_card_mem_le {β : Type*} [DecidableEq β] {h : ℕ} (hm : h ≤ m)

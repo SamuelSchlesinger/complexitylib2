@@ -3895,4 +3895,46 @@ info: 'Cslib.Crypto.OneWayPermutation.pseudorandomGenerator_of_hardCore' depends
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.OneWayPermutation.pseudorandomGenerator_of_hardCore
 
+/--
+info: 'Cslib.Probability.PMF.uniformOfFintype_map_sum_pair' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.uniformOfFintype_map_sum_pair
+
+/--
+info: 'Cslib.Probability.majority_error_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.majority_error_bound
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.decode_failure_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.decode_failure_le
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.decode_failure_le_half' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.decode_failure_le_half
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.card_le_of_mem_support_decode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.card_le_of_mem_support_decode
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.candidate_parity' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.candidate_parity
+
 end ComplexityTests.Axioms

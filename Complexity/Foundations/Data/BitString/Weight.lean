@@ -42,6 +42,8 @@ function is *symmetric* when it depends only on the weight of its input
   weight is the Hamming norm.
 * `Cslib.BitString.card_weightLayer`: there are `n.choose k` strings of `n` bits of weight `k`.
 * `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
+* `Cslib.BitString.strictMajorityOn`: strict majority on a finite set of voting indices.
+* `Cslib.le_card_ne_of_strictMajority_ne`: a wrong majority requires at least half wrong votes.
 * `Cslib.isSymmetric_threshold`, `Cslib.isSymmetric_parity`: threshold functions and parity are
   symmetric.
 
@@ -156,6 +158,31 @@ theorem card_weightLayer (n k : ℕ) : #(weightLayer n k) = n.choose k := by
 theorem weightLayer_nonempty {n k : ℕ} (hk : k ≤ n) : (weightLayer n k).Nonempty :=
   card_pos.1 (by rw [card_weightLayer]; exact Nat.choose_pos hk)
 
+omit [Fintype ι] in
+/-- Strict majority of the coordinates in `s`, choosing `false` on a tie. -/
+def strictMajorityOn (s : Finset ι) (vote : ι → Bool) : Bool :=
+  decide (s.card / 2 < (s.filter fun i => vote i).card)
+
+omit [Fintype ι] in
+/-- If strict majority is wrong, at most half of the votes are correct. -/
+theorem card_filter_eq_le_half_of_strictMajorityOn_ne (s : Finset ι) (vote : ι → Bool)
+    (bit : Bool) (h : strictMajorityOn s vote ≠ bit) :
+    (s.filter fun i => vote i = bit).card ≤ s.card / 2 := by
+  have hsplit := card_filter_add_card_filter_not (s := s) (fun i => vote i = true)
+  cases bit with
+  | true => simpa [strictMajorityOn] using h
+  | false =>
+    simp only [Bool.not_eq_true] at hsplit
+    have : s.card / 2 < (s.filter fun i => vote i = true).card := by
+      simpa [strictMajorityOn] using h
+    lia
+
+omit [Fintype ι] in
+/-- A nonempty constant vote has its constant value. -/
+@[simp] theorem strictMajorityOn_const (s : Finset ι) (hs : s.Nonempty) (bit : Bool) :
+    strictMajorityOn s (fun _ => bit) = bit := by
+  cases bit <;> simp [strictMajorityOn, Nat.div_lt_self hs.card_pos (by decide : 1 < 2)]
+
 end BitString
 
 open BitString
@@ -220,6 +247,21 @@ theorem strictMajority_eq_true_iff {x : BitString n} :
 theorem strictMajority_eq_false_iff {x : BitString n} :
     strictMajority n x = false ↔ weight x ≤ n / 2 := by
   rw [← Bool.not_eq_true, strictMajority_eq_true_iff, not_lt]
+
+/-- Strict majority on all coordinates agrees with the finite-set operation. -/
+theorem strictMajority_eq_strictMajorityOn (x : BitString n) :
+    strictMajority n x = BitString.strictMajorityOn univ x := by
+  apply Bool.eq_iff_iff.mpr
+  simp [strictMajority_eq_true_iff, BitString.strictMajorityOn, weight]
+
+/-- If the strict majority of `n` bits is not `y`, at least `n - n / 2` differ from `y`. -/
+theorem le_card_ne_of_strictMajority_ne {x : BitString n} {y : Bool}
+    (h : strictMajority n x ≠ y) : n - n / 2 ≤ #{i | x i ≠ y} := by
+  rw [strictMajority_eq_strictMajorityOn] at h
+  have hcorrect := card_filter_eq_le_half_of_strictMajorityOn_ne univ x y h
+  have hsplit := card_filter_add_card_filter_not (s := univ) (fun i => x i = y)
+  simp only [card_univ, Fintype.card_fin] at hcorrect hsplit
+  lia
 
 /-- Strict majority of the negated bits is the negation of majority: fewer than half of the bits
 are true exactly when not at least half of them are. -/

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.PairwiseIndependentHash
+public import Complexity.Probability.Uniform
 import Mathlib.Algebra.Group.Pi.Lemmas
 import Mathlib.Tactic.Abel
 
@@ -65,40 +66,6 @@ vector `A (x₁ - x₂)`. It also applies to their restriction to Toeplitz matri
 namespace Cslib.Probability
 
 open Finset
-
-section Fiber
-
-variable {ι G : Type*} [Fintype ι] [AddGroup G] [Fintype G] [DecidableEq G]
-
-/-- If every translate `f + c` of a function `f : ι → G` into a finite group is `f ∘ e` for a
-permutation `e` of `ι`, then all fibers of `f` have the same size `|ι| / |G|`. -/
-theorem card_mul_card_filter_eq_of_shift {f : ι → G}
-    (hf : ∀ c : G, ∃ e : Equiv.Perm ι, ∀ i, f (e i) = f i + c) (y : G) :
-    Fintype.card G * #{i | f i = y} = Fintype.card ι := by
-  have hfib (z : G) : #{i | f i = z} = #{i | f i = y} := by
-    obtain ⟨e, he⟩ := hf (-z + y)
-    refine card_equiv e fun i => ?_
-    simp only [mem_filter, mem_univ, true_and]
-    rw [he, ← add_assoc, add_eq_right, add_neg_eq_zero]
-  have hsum := card_eq_sum_card_fiberwise (f := f) (s := univ) (t := univ) fun _ _ => mem_univ _
-  rw [card_univ] at hsum
-  rw [hsum]
-  simp only [hfib, sum_const, card_univ, smul_eq_mul]
-
-/-- **Uniformity from shifts**: if every translate `f + c` of a function `f : ι → G` into a
-finite group is `f ∘ e` for a permutation `e` of `ι`, then `f` is uniformly distributed: for a
-uniformly random `i`, `f i` takes each value with probability `1 / |G|`. -/
-theorem dens_filter_eq_of_shift [Nonempty ι] {f : ι → G}
-    (hf : ∀ c : G, ∃ e : Equiv.Perm ι, ∀ i, f (e i) = f i + c) (y : G) :
-    dens {i | f i = y} = (Fintype.card G : ℚ≥0)⁻¹ := by
-  have h := card_mul_card_filter_eq_of_shift hf y
-  have hpos : #{i | f i = y} ≠ 0 := by
-    rintro h0
-    rw [h0, mul_zero] at h
-    exact Fintype.card_ne_zero h.symm
-  rw [dens_eq_card_div_card, ← h, Nat.cast_mul, div_mul_cancel_right₀ (Nat.cast_ne_zero.2 hpos)]
-
-end Fiber
 
 variable {κ X Y : Type*} [Fintype κ] [AddCommGroup Y] [Fintype Y] [DecidableEq Y]
 
