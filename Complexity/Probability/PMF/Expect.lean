@@ -26,6 +26,8 @@ into the vocabulary of `Finset.expect` (`𝔼`) and `Finset.dens`.
 
 ## Main results
 
+* `Cslib.Probability.PMF.sum_le_affine`: average pointwise affine bounds.
+
 * `Cslib.Probability.PMF.toReal_uniformOfFintype_bind_apply`: a uniform first stage averages the
   second stages.
 * `Cslib.Probability.PMF.toReal_uniformOfFintype_map_apply`: output probabilities are densities.
@@ -39,6 +41,21 @@ namespace Cslib.Probability.PMF
 
 open Finset
 open scoped BigOperators ENNReal
+
+/-- The expectation of an affine score is the affine function of its expectation.
+Adapted from the cslib `crypto` branch at `5ff69ca`. -/
+theorem sum_affine {α : Type*} [Fintype α] (p : PMF α) (a b : ℝ) (score : α → ℝ) :
+    (∑ x, (p x).toReal * (a + b * score x)) =
+      a + b * ∑ x, (p x).toReal * score x := by
+  simp only [mul_add, mul_left_comm _ b, Finset.sum_add_distrib, ← Finset.sum_mul,
+    sum_toReal, one_mul, ← Finset.mul_sum]
+
+/-- Pointwise affine bounds survive averaging over a finite distribution. -/
+theorem sum_le_affine {α : Type*} [Fintype α] (p : PMF α) {a b : ℝ} {score bound : α → ℝ}
+    (h : ∀ x, score x ≤ a + b * bound x) :
+    (∑ x, (p x).toReal * score x) ≤ a + b * ∑ x, (p x).toReal * bound x :=
+  (sum_le_sum fun x _ => mul_le_mul_of_nonneg_left (h x) ENNReal.toReal_nonneg).trans_eq
+    (sum_affine p a b bound)
 
 variable {α β : Type*} [Fintype α] [Nonempty α]
 

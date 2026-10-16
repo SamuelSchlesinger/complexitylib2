@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Crypto.Computational.GoldreichLevin.Decoding
+import Complexity.Crypto.Computational.GoldreichLevin.Parameters
 import Complexity.Probability.PMF.Expect
 
 /-! Decoder checks with imperfect and perfect predictors, overlapping masks, and boundary cases. -/
@@ -54,5 +54,43 @@ example : (decode (fun _ : BitString 0 => false) 1).toOuterMeasure {list | 0 ∉
   · norm_num [agreement, score, dotProduct, Bool.zero_eq_false]
     rfl
   · norm_num
+
+-- Enumeration is executable, complete, and fixes the expected binary order.
+example : BitString.enum 0 = [Fin.elim0] := rfl
+example : (BitString.enum 2).map List.ofFn =
+    [[false, false], [true, false], [false, true], [true, true]] := by decide
+
+-- A different preimage is accepted, and first-match order is preserved.
+example : checkCandidates (fun x : BitString 2 => x 0) true
+    [![true, true], ![true, false]] = ![true, true] := by decide
+example {n : ℕ} (f : BitString n → Bool) (image : Bool) : checkCandidates f image [] = 0 := rfl
+
+-- The seed type can depend on the image, including images of different weights.
+private noncomputable def seedLaw {n : ℕ} (image : BitString n) :
+    PMF (BitString (n + BitString.weight image)) :=
+  PMF.uniformOfFintype _
+
+private theorem negative_prediction (n : ℕ) :
+    predictionExperiment (id : BitString n → BitString n)
+      (fun image _ query => !(image ⬝ᵥ query)) seedLaw = PMF.pure false := by
+  simp only [predictionExperiment, id_eq, Bool.not_beq_self, PMF.bind_const]
+  exact PMF.map_const _ _
+
+-- Perfectly negative bias is handled by the same random-sign inverter, with dependent seeds.
+example (n : ℕ) :
+    1 / 16 ≤ (inversionExperiment (id : BitString n → BitString n)
+      (invertSigned id (fun image _ query => !(image ⬝ᵥ query)) seedLaw (maskCount n 2))
+      true).toReal := by
+  have h := invertSigned_success_ge (id : BitString n → BitString n)
+    (fun image _ query => !(image ⬝ᵥ query)) seedLaw (1 / 2) (by norm_num)
+    (maskCount_pos n 2) (by rw [negative_prediction]; norm_num)
+    (maskCount_sufficient n 2 (by decide))
+  norm_num at h ⊢
+  exact h
+
+-- Even degree zero and dimension zero have valid, nonempty parameter choices.
+example : precision 0 0 = 1 ∧ maskCount 0 1 = 1 := by decide
+example : PolynomiallyBounded (fun n => n * maskCount n (precision 7 n)) :=
+  randomMaskBits_polynomial 7
 
 end ComplexityTests.GoldreichLevin

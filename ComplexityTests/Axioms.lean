@@ -3937,4 +3937,39 @@ info: 'Cslib.Crypto.GoldreichLevin.candidate_parity' depends on axioms:
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.GoldreichLevin.candidate_parity
 
+/--
+info: 'Cslib.Crypto.GoldreichLevin.checkCandidates_correct' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.checkCandidates_correct
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.invert_success_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.invert_success_ge
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.invertSigned_success_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.invertSigned_success_ge
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.guessCount_polynomial' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.guessCount_polynomial
+
+/--
+info: 'Cslib.Crypto.GoldreichLevin.negligible_prediction_of_negligible_inversion' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GoldreichLevin.negligible_prediction_of_negligible_inversion
+
 end ComplexityTests.Axioms

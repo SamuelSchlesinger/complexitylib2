@@ -494,6 +494,31 @@ excluded from this source-layout metric. Tests cover overlapping subset masks, t
 length, arbitrary masks against perfect prediction, and the genuinely imperfect two-bit AND
 predictor with exactly `3/4` agreement; the quantitative recovery theorem applies to it.
 
+### Seeded Goldreich–Levin inversion and parameters (2026-10-16)
+
+`GoldreichLevin/Reduction` samples one predictor seed per image and reuses it across all decoder
+queries. The seed type and its law may depend on the image. Candidate checking accepts any valid
+preimage, without injectivity, and retains first-match order and a defined zero fallback.
+With the stated mask-count bound, positive average prediction bias `ε` gives inversion success
+at least `ε/4`. One independent fair bit chooses whether to complement the predictor, giving a
+single inverter with success at least `ε/8` for absolute bias `ε`; it receives no bias advice.
+
+`Parameters` chooses `log₂(2 n p² + 1) + 1` base masks at precision `1/p`, with at most
+`4 n p² + 2` guesses. For `p = (n+1)^d` at each fixed degree, enumeration size and random-mask
+length are polynomially bounded. If every such inverter has negligible success, prediction bias
+is negligible in the existing nonnegative `Game` API. Each degree selects one inverter for all
+input lengths. These are finite and asymptotic probability theorems; uniform TM/PPT certificates
+for the complete word decoder remain the next step.
+
+The ordinary bit-string enumeration moved out of the crypto namespace into `BitString.enum`.
+Two shared affine-average rules reduce `invert_success_ge` from 39 proof-body lines to 22, while
+the existing game-complement law supplies the negative-bias case. Including enumeration and both
+shared rules, this batch adds 28 theorem bodies / 184 body lines, versus 26 / 207 in the original
+two crypto modules plus one two-line PMF helper (27 / 209 altogether). The total is 5,156 / 35,534
+in 462 source files; definitions, statements and tests remain excluded. Tests exercise binary
+enumeration order, a different valid preimage, the empty-list fallback, and negative prediction
+bias with image-dependent finite seeds, including dimension zero.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and

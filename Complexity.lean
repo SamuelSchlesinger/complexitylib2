@@ -317,6 +317,8 @@ public import Complexity.Computability.RAM.Squaring
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
+public import Complexity.Crypto.Computational.GoldreichLevin.Parameters
+public import Complexity.Crypto.Computational.GoldreichLevin.Reduction
 public import Complexity.Crypto.Computational.HardCore
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Prediction
@@ -377,6 +379,7 @@ public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
+public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Hoeffding
 public import Complexity.Foundations.Data.BitString.List
