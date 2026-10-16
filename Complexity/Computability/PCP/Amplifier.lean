@@ -216,25 +216,25 @@ theorem card_vertices_iter_le (k : ℕ) (G : FinConstraintGraph.{u} α) :
       ((A.card_vertices_le _).trans (Nat.mul_le_mul_left _ (A.card_edges_iter_le k G)))
 
 /-- **After `⌈log₂ |E|⌉` rounds, the number of edges is polynomial**: at most
-`2 ^ f |E| ^ (f + 1)`, where `f = ⌈log₂ factor⌉`. -/
+`2 ^ f * |E| ^ (f + 1)`, where `f = ⌈log₂ factor⌉`. -/
 theorem card_edges_iter_clog_le (G : FinConstraintGraph.{u} α) :
     Fintype.card (A.iter (Nat.clog 2 (Fintype.card G.E)) G).E ≤
       2 ^ Nat.clog 2 A.factor * Fintype.card G.E ^ (Nat.clog 2 A.factor + 1) := by
   refine (A.card_edges_iter_le _ G).trans ?_
-  rcases Nat.eq_zero_or_pos (Fintype.card G.E) with h | h
+  rcases eq_or_ne (Fintype.card G.E) 0 with h | h
   · simp [h]
   · rw [pow_succ, ← mul_assoc]
     exact Nat.mul_le_mul_right _ (Nat.pow_clog_le_pow_clog_mul_pow_clog one_lt_two _ h)
 
 /-- **After `⌈log₂ |E|⌉` rounds, the number of vertices is polynomial**: at most
-`2 ^ f |E| ^ (f + 1)`, where `f = ⌈log₂ factor⌉`, or the original number of vertices if there
+`2 ^ f * |E| ^ (f + 1)`, where `f = ⌈log₂ factor⌉`, or the original number of vertices if there
 was no round. -/
 theorem card_vertices_iter_clog_le (G : FinConstraintGraph.{u} α) :
     Fintype.card (A.iter (Nat.clog 2 (Fintype.card G.E)) G).V ≤
       max (Fintype.card G.V)
         (2 ^ Nat.clog 2 A.factor * Fintype.card G.E ^ (Nat.clog 2 A.factor + 1)) := by
   refine (A.card_vertices_iter_le _ G).trans (max_le_max le_rfl ?_)
-  rcases Nat.eq_zero_or_pos (Fintype.card G.E) with h | h
+  rcases eq_or_ne (Fintype.card G.E) 0 with h | h
   · simp [h]
   · rw [pow_succ, ← mul_assoc]
     exact Nat.mul_le_mul_right _ (Nat.pow_clog_le_pow_clog_mul_pow_clog one_lt_two _ h)

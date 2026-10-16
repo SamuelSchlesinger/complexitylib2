@@ -15,15 +15,15 @@ public import Mathlib.Data.Nat.Log
 
 The power `b ^ ⌈log_b n⌉` overshoots `n` by less than a factor `b` (`Nat.pow_clog_le_mul`), so
 `m ^ ⌈log_b n⌉`, which is at most `(b ^ ⌈log_b m⌉) ^ ⌈log_b n⌉ = (b ^ ⌈log_b n⌉) ^ ⌈log_b m⌉`, is
-at most `b ^ ⌈log_b m⌉ n ^ ⌈log_b m⌉` (`Nat.pow_clog_le_pow_clog_mul_pow_clog`): a factor `m`
+at most `b ^ ⌈log_b m⌉ * n ^ ⌈log_b m⌉` (`Nat.pow_clog_le_pow_clog_mul_pow_clog`): a factor `m`
 applied `⌈log_b n⌉` times is polynomial in `n`. This is how the size of an iterated construction
 stays polynomial after logarithmically many rounds.
 
 ## Main results
 
-* `Nat.pow_clog_le_mul`: `b ^ ⌈log_b n⌉ ≤ b n` for `n ≥ 1`.
-* `Nat.pow_clog_le_pow_clog_mul_pow_clog`: `m ^ ⌈log_b n⌉ ≤ b ^ ⌈log_b m⌉ n ^ ⌈log_b m⌉` for
-  `n ≥ 1`.
+* `Nat.pow_clog_le_mul`: `b ^ ⌈log_b n⌉ ≤ b * n` for `n ≠ 0`.
+* `Nat.pow_clog_le_pow_clog_mul_pow_clog`: `m ^ ⌈log_b n⌉ ≤ b ^ ⌈log_b m⌉ * n ^ ⌈log_b m⌉` for
+  `n ≠ 0`.
 -/
 
 @[expose] public section
@@ -32,17 +32,17 @@ namespace Nat
 
 variable {b n : ℕ}
 
-/-- The power `b ^ ⌈log_b n⌉` overshoots `n ≥ 1` by less than a factor `b`. -/
-theorem pow_clog_le_mul (hb : 1 < b) (hn : 1 ≤ n) : b ^ clog b n ≤ b * n := by
-  rcases hn.eq_or_lt with rfl | hn
+/-- The power `b ^ ⌈log_b n⌉` overshoots `n ≠ 0` by less than a factor `b`. -/
+theorem pow_clog_le_mul (hb : 1 < b) (hn : n ≠ 0) : b ^ clog b n ≤ b * n := by
+  rcases (one_le_iff_ne_zero.2 hn).eq_or_lt with rfl | hn
   · simpa using hb.le
   · have := pow_pred_clog_lt_self hb hn
     rw [← succ_pred_eq_of_pos (clog_pos hb hn), pow_succ']
     exact Nat.mul_le_mul_left _ this.le
 
-/-- A factor `m` applied `⌈log_b n⌉` times is polynomial in `n ≥ 1`:
-`m ^ ⌈log_b n⌉ ≤ b ^ ⌈log_b m⌉ n ^ ⌈log_b m⌉`. -/
-theorem pow_clog_le_pow_clog_mul_pow_clog (hb : 1 < b) (m : ℕ) (hn : 1 ≤ n) :
+/-- A factor `m` applied `⌈log_b n⌉` times is polynomial in `n ≠ 0`:
+`m ^ ⌈log_b n⌉ ≤ b ^ ⌈log_b m⌉ * n ^ ⌈log_b m⌉`. -/
+theorem pow_clog_le_pow_clog_mul_pow_clog (hb : 1 < b) (m : ℕ) (hn : n ≠ 0) :
     m ^ clog b n ≤ b ^ clog b m * n ^ clog b m :=
   calc m ^ clog b n ≤ (b ^ clog b m) ^ clog b n := Nat.pow_le_pow_left (le_pow_clog hb m) _
     _ = (b ^ clog b n) ^ clog b m := by rw [← Nat.pow_mul, ← Nat.pow_mul, Nat.mul_comm]

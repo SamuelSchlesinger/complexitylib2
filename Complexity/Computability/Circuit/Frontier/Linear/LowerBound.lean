@@ -28,7 +28,7 @@ regular and `|X| + |Y| = N`, both blocks `M[Y, Xᶜ]` and `M[Yᶜ, X]` are squar
 so the values on the cut determine the input. Every layout passes through such a `P`, since
 `|X| + |Y|` grows by at most one per vertex, from `0` to `2 N`
 (`Cslib.Circuits.Frontier.Compiler.exists_injective_frontier`), by a discrete intermediate value
-theorem (`Nat.exists_eq_of_le_add_one`).
+theorem (`Nat.exists_eq_of_forall_le_add_one`).
 
 How many values can a cut of `k` edges carry? A circuit has *linear capacity*
 (`Cslib.Circuits.Circuit.LinearCapacity`) when the values of `k` wires never determine more than
@@ -233,7 +233,7 @@ theorem exists_injective_frontier (hM : M.IsTotallyRegular) (hc : c.Computes I f
       ncard_readAt_add_ncard_le v
     simp only [a]
     omega
-  obtain ⟨t, -, hat⟩ := Nat.exists_eq_of_le_add_one (h0.trans_le (Nat.zero_le N)) hT hstep
+  obtain ⟨t, -, hat⟩ := Nat.exists_eq_of_forall_le_add_one (h0.trans_le (Nat.zero_le N)) hT hstep
   refine ⟨t, fun x x' hxx' => ?_⟩
   set P := π.initial t
   set X := G.readIn P

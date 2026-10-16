@@ -813,14 +813,14 @@ private theorem ncard_eq_add (W : Set (Vertex c)) :
     W.ncard = Nat.card {w // Vertex.signal w ∈ W} + Nat.card {j // Vertex.junction j ∈ W} +
       Nat.card {o // Vertex.output o ∈ W} := by
   rw [← Nat.card_coe_set_eq, add_assoc]
-  exact (Nat.card_subtype_eq_add Vertex.equiv _).trans
-    (congrArg _ (Nat.card_subtype_eq_add (Equiv.refl _) _))
+  exact (Nat.card_subtype_eq_add_of_equiv_sum Vertex.equiv _).trans
+    (congrArg _ (Nat.card_subtype_eq_add_of_equiv_sum (Equiv.refl _) _))
 
 /-- The edges at a closed set `W` are the feed and deliver edges of the junctions in `W`. -/
 private theorem ncard_touching_eq {W : Set (Vertex c)} (hW : (graph c).edgeCut W = ∅) :
     ((graph c).touching W).ncard = 2 * Nat.card {j // Vertex.junction j ∈ W} := by
   have hW := (graph c).edgeCut_eq_empty_iff.1 hW
-  rw [← Nat.card_coe_set_eq, Nat.card_subtype_eq_add Edge.equiv, two_mul]
+  rw [← Nat.card_coe_set_eq, Nat.card_subtype_eq_add_of_equiv_sum Edge.equiv, two_mul]
   congr 1 <;> refine Nat.card_congr (Equiv.subtypeEquivRight fun j => ?_)
   · -- The feed edge of `j` ends at `j`.
     exact or_iff_right_of_imp (hW (.feed j)).1
@@ -836,7 +836,7 @@ private theorem card_junction_eq {W : Set (Vertex c)} (hW : (graph c).edgeCut W 
   have hJ (j : Junction c) : Vertex.junction j ∈ W ↔ owner (junctionEquiv c j) ∈ W :=
     (graph c).edgeCut_eq_empty_iff.1 hW (.deliver j)
   rw [Nat.card_congr ((junctionEquiv c).subtypeEquiv (q := fun t => owner t ∈ W) hJ)]
-  exact Nat.card_subtype_eq_add (Equiv.refl _) _
+  exact Nat.card_subtype_eq_add_of_equiv_sum (Equiv.refl _) _
 
 /-- The signals in `W` include the inputs read in `W` and the reachable inner gates in `W`. -/
 private theorem ncard_readIn_add_card_le (W : Set (Vertex c)) :
@@ -847,7 +847,7 @@ private theorem ncard_readIn_add_card_le (W : Set (Vertex c)) :
     rw [readIn_network, ← Nat.card_coe_set_eq]
     exact Nat.card_congr (Equiv.subtypeSubtypeEquivSubtypeExists _
       fun i : {i // Reach c (.input i)} => Vertex.signal ⟨.input i.1, i.2⟩ ∈ W).symm
-  rw [Nat.card_subtype_eq_add signalEquiv, hread]
+  rw [Nat.card_subtype_eq_add_of_equiv_sum signalEquiv, hread]
   refine Nat.add_le_add le_rfl ?_
   exact Nat.card_le_card_of_injective (fun g => ⟨⟨g.1.1, g.1.2.1⟩, g.2⟩) fun _ _ h =>
     Subtype.ext (Subtype.ext (congrArg (fun g => g.1.1) h))

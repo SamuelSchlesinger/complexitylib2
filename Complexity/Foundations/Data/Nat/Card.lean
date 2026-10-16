@@ -15,12 +15,12 @@ public import Mathlib.SetTheory.Cardinal.Finite
 
 The elements of `β ⊕ γ` satisfying a predicate are those of `β` and those of `γ` that satisfy it
 (`Nat.card_subtype_sum`); along a decomposition `α ≃ β ⊕ γ` the same count splits a subtype of
-`α` (`Nat.card_subtype_eq_add`).
+`α` (`Nat.card_subtype_eq_add_of_equiv_sum`).
 
 ## Main results
 
 * `Nat.card_subtype_sum`: counting a subtype of a sum.
-* `Nat.card_subtype_eq_add`: counting a subtype along a decomposition into a sum.
+* `Nat.card_subtype_eq_add_of_equiv_sum`: counting a subtype along a decomposition into a sum.
 -/
 
 @[expose] public section
@@ -37,7 +37,7 @@ theorem card_subtype_sum (P : β ⊕ γ → Prop) :
 
 /-- Counting along a decomposition `α ≃ β ⊕ γ`: the elements satisfying `P` are those coming
 from `β` and those coming from `γ`. -/
-theorem card_subtype_eq_add (e : α ≃ β ⊕ γ) (P : α → Prop) :
+theorem card_subtype_eq_add_of_equiv_sum (e : α ≃ β ⊕ γ) (P : α → Prop) :
     Nat.card {a // P a} =
       Nat.card {b // P (e.symm (.inl b))} + Nat.card {c // P (e.symm (.inr c))} :=
   (Nat.card_congr (e.subtypeEquiv (q := fun x => P (e.symm x)) fun a => by
