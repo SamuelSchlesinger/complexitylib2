@@ -35,8 +35,43 @@ conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's 
 `Universal/` development certifies an interpreter written as ordinary Lean functions.
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
 that count, not its binary length. The `PFunctor.FreeM` program interface, program realization
-theorems, general effectful machine and `polytime` tactic remain to be implemented.
+theorems, general effectful machine and `polytime` tactic remain to be integrated into v2.
 The architecture sections below describe that intended interface, not completed features.
+
+### Existing crypto implementation to reuse
+
+The local cslib `crypto` branch at `5ff69ca` already provides a substantial version of the
+intended experience. Its public rules and `CslibTests/ComputationalCryptoPrograms.lean`
+examples cover:
+
+* one-call `polytime` proofs for nested captured callbacks, local algorithm calls, conditionals,
+  encoded collections, and folds with inferred constant growth;
+* `iterate_spec`, `iterate_with_spec`, and `list_foldl_spec` rules returning both efficiency and
+  a final invariant, with the caller supplying initialization, preservation, and a size bound;
+* one-call `ppt` proofs for `do` programs with several random draws, runtime-dependent sampling
+  lengths, typed results, and calls to certified probabilistic routines;
+* negative checks for missing certificates, a variable exponential unary output, and a fold
+  that doubles its accumulator at each step.
+
+These examples and the three tactic files are identical in the available `crypto-frontier`
+worktree; a fresh Lean MCP check of that example file completed without diagnostics. This is a
+targeted check, not a fresh full build of the crypto branch. Real clients include GGM's
+`isPolyTime_child` (unfold plus `polytime`) and `isPPTOn_expansionOracle` (one local evaluator
+certificate, unfolding, then `ppt`). Adaptive oracle simulation still supplies local invariants
+and reply/storage bounds; the tactic does not automate general oracle sequencing.
+
+The useful design is already present: `@[program_certificate]` indexes named routines before
+unfolding, local certificates remain reusable through argument preparation, and collection and
+bind rules settle encodings before searching callbacks. `fun_prop` proves polynomial bounds;
+curated Aesop rules select computation certificates. The predicates quantify a single finite
+machine and polynomial before inputs, so these are uniform machine guarantees.
+
+The integration work is to adapt those public rules to v2's tidy deterministic calculus and
+encoded input/output API, and to bring the effectful realization layer onto the agreed machine
+model. The original crypto branch uses `FreeM`; the existing `codex/crypto-pfunctor-experiment-20261012`
+at `1d7efae` changes only three probabilistic-language files in the relevant interface while leaving
+the tactic and client files unchanged. That is useful migration evidence, not a checked v2 port.
+Use the existing examples as acceptance tests and retain their negative cases.
 
 ### Accounting
 
@@ -49,19 +84,19 @@ measure, not elaboration time, proof-term size, or a measure of mathematical dif
 Folder totals count each source proof once; shared and imported dependencies are not charged
 again to their clients.
 
-Across 396 modules: **4,679 proof bodies, 33,082 body lines, median 3, 90th percentile 17**.
-There are 1,544 one-line bodies. The 107 bodies of at least 40 lines contain 7,044 lines
-(about 21% of the total). Vendored modules account for 640 bodies / 5,632 lines; submitted
+Across 396 modules: **4,679 proof bodies, 33,077 body lines, median 3, 90th percentile 17**.
+There are 1,545 one-line bodies. The 107 bodies of at least 40 lines contain 7,044 lines
+(about 21% of the total). Vendored modules account for 640 bodies / 5,629 lines; submitted
 upstream copies for 46 / 263. These are included below, with authorship retained in each file.
 
 | Development | Proof bodies | Body lines | Median | 90th percentile | Largest |
 |---|---:|---:|---:|---:|---:|
 | Boolean circuits | 613 | 4,889 | 4 | 20 | 101 |
-| Frontier circuit bounds | 519 | 4,874 | 4 | 22 | 127 |
+| Frontier circuit bounds | 519 | 4,873 | 4 | 22 | 127 |
 | Machine plumbing and encodings | 389 | 3,129 | 3 | 16 | 364 |
 | Boolean analysis | 354 | 2,449 | 3 | 18 | 60 |
 | Propositional logic | 245 | 2,089 | 3 | 22 | 116 |
-| Universal interpreter | 219 | 1,998 | 4 | 23 | 135 |
+| Universal interpreter | 219 | 1,995 | 4 | 23 | 135 |
 | Machine complexity calculus | 241 | 1,800 | 3 | 19 | 152 |
 | Expanders | 256 | 1,720 | 3 | 18 | 49 |
 | PCP | 247 | 1,454 | 2 | 15 | 87 |
@@ -71,7 +106,7 @@ upstream copies for 46 / 263. These are included below, with authorship retained
 | Monotone circuits | 90 | 699 | 5 | 18 | 63 |
 | Decision trees | 116 | 653 | 3 | 15 | 36 |
 | Probability constructions | 62 | 565 | 6.5 | 19 | 51 |
-| Communication complexity | 63 | 518 | 3 | 25 | 39 |
+| Communication complexity | 63 | 517 | 3 | 25 | 39 |
 | Linear algebra | 38 | 453 | 3 | 39 | 79 |
 | Complexity classes and reductions | 123 | 433 | 1 | 8 | 78 |
 | Cryptography | 70 | 380 | 4 | 11 | 34 |
@@ -110,10 +145,11 @@ degrees and would not establish a uniform algorithm over a variable list.
 
 ### Next design experiments
 
-1. **Loop specifications and the program interface.** Derive an invariant-facing rule from
-   `foldl'`/`foldlWith`: initialization, preservation of `Inv input index accumulator`,
-   and a polynomial encoded-size consequence should discharge the current prefix-fold premise.
-   A small `polytime` rule set can apply these rules and delegate composition to `fun_prop`.
+1. **Port the crypto loop and tactic interfaces.** Adapt `list_foldl_spec` and the iteration
+   specifications to `foldl'`/`foldlWith` and the existing iteration backend: initialization,
+   preservation, and a polynomial encoded-size consequence should discharge the prefix-fold
+   premise. Reuse the crypto certificate-first search and encoding-order discipline, with
+   `fun_prop` handling the compositional goals already covered in v2.
    The caller still supplies the substantive invariant and growth argument. Polynomial-time
    steps alone do not prevent exponential growth across iterations.
    Then validate the intended `FreeM` interface with one readable `do` program containing a

@@ -28,12 +28,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MODIFIERS = r"(?:(?:public|private|protected|noncomputable|unsafe|partial|nonrec|scoped|local)\s+)*"
 DECL = re.compile(
-    r"^(?:@\[[^\n]*?\]\s*)*" + MODIFIERS + r"(theorem|lemma)\s+(\S+)", re.M
+    r"^(?:@\[[^\]\n]*\]\s*)*" + MODIFIERS + r"(theorem|lemma)\s+(\S+)", re.M
 )
 COMMAND = re.compile(
     r"^(?:@\[|#|" + MODIFIERS
     + r"(?:theorem|lemma|def|abbrev|opaque|axiom|constant|instance|structure|class|inductive|"
-    r"example|namespace|section|end|open|variable|include|omit|attribute|set_option|"
+    r"example|namespace|section|end|open|universe|variable|include|omit|attribute|set_option|"
     r"syntax|macro|macro_rules|elab|elab_rules|notation|infixl|infixr|infix|prefix|postfix|"
     r"initialize|builtin_initialize|mutual|export)\b)", re.M
 )
@@ -185,13 +185,23 @@ theorem type_let (n : Nat) :
     let j : Nat := k
     j = k := by
   rfl
+@[expose] public def annotated : Nat := 0
+@[simp] public lemma after_annotated : annotated = 0 := rfl
+@[expose] def multi_line : Nat :=
+  0
+
+lemma after_multi_line : multi_line = 0 := by
+  rfl
+universe u
 end Sample
 """
     rows = scan(sample, "Complexity/Sample.lean")
     assert [(r["name"], r["body_lines"]) for r in rows] == [
         ("short", 1), ("term", 1), ("quoted", 1), ("separate_attribute", 1), ("equations", 2),
-        ("type_let", 1)
+        ("type_let", 1), ("after_annotated", 1), ("after_multi_line", 1)
     ]
+    for row in rows[-2:]:
+        assert row["name"] in sample.splitlines()[row["line"] - 1]
 
 
 def main() -> None:

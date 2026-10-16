@@ -16,8 +16,10 @@ with correctness and explicit time/space bounds.
 The intended programming interface uses `PFunctor.FreeM`, straight-line `do` code, queries and
 coins, with machine realizations and resource certificates obtained compositionally. That program
 layer, the general effectful machine, and the invariant-oriented `polytime` tactic are still
-planned. The current calculus supports deterministic functions and explicit fold rules. See
-`ROADMAP.md` for implemented results, the proof-length audit, and the next design experiments.
+to be integrated into v2. The local cslib `crypto` branch already supplies working `polytime` and
+`ppt` interfaces to adapt. The current v2 calculus supports deterministic functions and explicit
+fold rules. See `ROADMAP.md` for implemented results, the proof-length audit, and the next design
+experiments.
 
 ## Layout
 
