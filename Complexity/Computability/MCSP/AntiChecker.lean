@@ -27,7 +27,7 @@ Functions without small circuits have small anti-checkers. The combinatorial cor
 good-string lemma of Oliveira, Pich and Santhanam [OliveiraPichSanthanam2019, Lemma 4.7]. Suppose
 the inputs number at most `2 ^ m`, and no `m` members of `F`, repetitions allowed, have `f` as
 their pointwise strict majority. Then every tuple of `m` members of a subfamily `G` is refuted by
-a strict majority of its entries at some input; averaging over the inputs, one input refutes a
+at least half of its entries (at least `m - m / 2` of them) at some input; averaging over the inputs, one input refutes a
 `2 ^ -m` share of all tuples, and counting the tuples with at least half of their entries in the
 set of members refuted there shows that this set holds a sixteenth of `G`
 (`exists_card_le_sixteen_mul`). Removing the refuted members and repeating, `16 b` inputs refute
@@ -143,7 +143,7 @@ theorem exists_card_le_sixteen_mul (hm : 0 < m) (hα : Fintype.card α ≤ 2 ^ m
   have hr : 0 < r := card_pos.mpr ⟨g₀, hg₀⟩
   have hh : 0 < h := by omega
   set T := Fintype.piFinset fun _ : Fin m => G
-  -- Every tuple is refuted by a strict majority of its entries at some input.
+  -- Every tuple is refuted by at least half of its entries at some input.
   have hcover : T ⊆ univ.biUnion fun x => {t ∈ T | h ≤ #{i | t i ∈ {g ∈ G | g x ≠ f x}}} := by
     intro t ht
     have htG := Fintype.mem_piFinset.mp ht

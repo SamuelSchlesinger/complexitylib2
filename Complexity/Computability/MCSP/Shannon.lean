@@ -17,10 +17,13 @@ import Mathlib.Tactic.Linarith
 # The Shannon window of MCSP
 
 Every Boolean function on `n` inputs has a circuit with about `2 ^ n / n` gates, and most of them
-need about that many [Shannon1949], [Lupanov1958]. So MCSP is only interesting for thresholds
-near `2 ^ n / n`: above them every truth table is a yes-instance, and below them almost every
-truth table is a no-instance. This file states the window with explicit constants and explicit
-arities:
+need about that many [Shannon1949], [Lupanov1958]. So for uniformly random truth tables the answer
+to MCSP changes near threshold `2 ^ n / n`: above it every truth table is a yes-instance, and below
+it almost every truth table is a no-instance. This is a statement about the distribution of
+circuit complexities, not about the difficulty of deciding MCSP: at lower thresholds the rare
+yes-instances must still be recognized exactly, and that regime is the one studied by hardness
+magnification [OliveiraPichSanthanam2019]. This file states the window with explicit constants
+and explicit arities:
 
 * for `n ≥ 64`, every truth table is a yes-instance at threshold `12 · 2 ^ n / n`
   (`MCSP.mem_of_twelve_mul_le`), by Lupanov's construction with explicit parameters;
@@ -46,6 +49,8 @@ Sizes count every AND, OR, NOT and constant gate.
 * [O. B. Lupanov, *On a Method of Circuit Synthesis*][Lupanov1958]
 * [Stasys Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012],
   Theorems 1.14 and 1.15.
+* [I. C. Oliveira, J. Pich, R. Santhanam, *Hardness magnification near state-of-the-art lower
+  bounds*][OliveiraPichSanthanam2019]
 -/
 
 public section
