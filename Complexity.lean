@@ -310,6 +310,7 @@ public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.Adaptive
 public import Complexity.Computability.Probabilistic.CoinTape
+public import Complexity.Computability.Probabilistic.Memoize
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Computability.Probabilistic.PPT.Capture

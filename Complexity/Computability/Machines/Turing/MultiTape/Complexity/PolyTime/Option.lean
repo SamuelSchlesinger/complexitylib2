@@ -21,6 +21,7 @@ its fallback may be computed from the input; no inhabitant of the value type is 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetD`: read an option with a fallback
   supplied as part of the input.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetDWithInput`: the composition rule.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionIsSome`: test a computed optional value.
 
 ## References
 
@@ -32,6 +33,13 @@ Uses Christian Reitwiessner's option encoding and degree-bounded machine calculu
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+
+/-- Test whether a computed option contains a value, without requiring a default value. -/
+@[fun_prop]
+theorem optionIsSome {value : α → Option β}
+    (hvalue : ComputableTidilyInPolyTime value encA (encOption encB)) :
+    ComputableTidilyInPolyTime (fun a => (value a).isSome) encA encBool :=
+  (ComputableTidilyInDegree.isSome encB).computableTidilyInPolyTime.comp hvalue
 
 /-- Read an option with a fallback supplied as part of the input. -/
 @[fun_prop]

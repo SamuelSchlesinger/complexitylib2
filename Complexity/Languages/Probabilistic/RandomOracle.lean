@@ -24,8 +24,8 @@ joint law as completing it before the program. `interpret_eq_lazy` discards the 
 `uniform_interpret_eq_lazy` specializes to a uniformly random function.
 
 `memoize` supplies an ordinary association-list implementation. `run_interpret_memoize` relates its
-complete executions to the mathematical cache, including on infinite query domains. A separate
-efficiency certificate for this implementation remains to be ported.
+complete executions to the mathematical cache, including on infinite query domains. Its closed
+efficiency certificate is in `Computability.Probabilistic.Memoize`.
 `memoize_cache_bounds` derives cache cardinality and entry provenance from the program's query
 bounds; a computational certificate must also account for the encoded sizes of keys and replies.
 
@@ -88,6 +88,18 @@ section List
 
 variable {Value : Type u} [BEq Query]
 
+/-- A supported memoized call either returns the first cached value unchanged, or samples and
+prepends exactly one new entry. Initial cached values need not belong to the sampling support. -/
+theorem mem_support_memoize_iff (distribution : Query → PMF Value)
+    (key : Query) (cache : List (Query × Value)) (result : Value × List (Query × Value)) :
+    result ∈ (memoize distribution key cache).support ↔
+      (cache.lookup key = some result.1 ∧ result.2 = cache) ∨
+      (cache.lookup key = none ∧ result.1 ∈ (distribution key).support ∧
+        result.2 = (key, result.1) :: cache) := by
+  rcases result with ⟨value, next⟩
+  cases h : cache.lookup key <;>
+    simp [memoize, h, PMF.monad_pure_eq_pure, PMF.monad_bind_eq_bind, Prod.ext_iff, eq_comm]
+
 /-- A memoized sampler preserves any property of its key-value entries and returns a value with
 that property at the requested key. Cache keys need not be unique. -/
 theorem memoize_invariant [LawfulBEq Query] (distribution : Query → PMF Value)
@@ -97,20 +109,13 @@ theorem memoize_invariant [LawfulBEq Query] (distribution : Query → PMF Value)
     (result : Value × List (Query × Value))
     (hresult : result ∈ (memoize distribution key cache).support) :
     property key result.1 ∧ ∀ entry ∈ result.2, property entry.1 entry.2 := by
-  cases hlookup : cache.lookup key with
-  | none =>
-    rw [memoize_of_none _ _ _ hlookup] at hresult
-    change result ∈ ((distribution key).map (fun value => (value, (key, value) :: cache))).support
-      at hresult
-    obtain ⟨value, hvalue, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hresult
-    exact ⟨hsample value hvalue, by simpa using And.intro (hsample value hvalue) hcache⟩
-  | some value =>
-    rw [memoize_of_some _ _ _ _ hlookup] at hresult
-    change result ∈ (PMF.pure (value, cache)).support at hresult
-    simp only [PMF.mem_support_pure_iff] at hresult
-    subst result
+  rcases (mem_support_memoize_iff _ _ _ _).mp hresult with
+    ⟨hlookup, hnext⟩ | ⟨_, hvalue, hnext⟩
+  · rw [hnext]
     obtain ⟨before, after, hlist, _⟩ := List.lookup_eq_some_iff.mp hlookup
-    exact ⟨hcache (key, value) (by simp [hlist]), hcache⟩
+    exact ⟨hcache (key, result.1) (by simp [hlist]), hcache⟩
+  · rw [hnext]
+    exact ⟨hsample result.1 hvalue, by simpa using And.intro (hsample result.1 hvalue) hcache⟩
 
 /-- Each memoized call adds at most one entry. Every new entry records an actual query and an
 answer in its sampling distribution's support. Repeated calls still appear in the transcript. -/
@@ -128,34 +133,11 @@ theorem run_interpret_memoize_transcript (distribution : Query → PMF Value)
         (⟨entry.1, entry.2⟩ ∈ seen ∧ entry.2 ∈ (distribution entry.1).support))
     ?_ program (cache, []) (by simp) result (cache', transcript) h
   rintro q ⟨current, seen⟩ ⟨hcount, hentries⟩ answer next hnext
-  rw [OracleComp.withTranscript, PMF.mem_support_map_iff] at hnext
+  simp only [OracleComp.withTranscript, PMF.mem_support_map_iff, mem_support_memoize_iff] at hnext
   obtain ⟨⟨value, current'⟩, hvalue, heq⟩ := hnext
   cases heq
-  have hold : ∀ entry ∈ current, entry ∈ cache ∨
-      (⟨entry.1, entry.2⟩ ∈ ⟨q, answer⟩ :: seen ∧ entry.2 ∈ (distribution entry.1).support) := by
-    intro entry hentry
-    rcases hentries entry hentry with h | ⟨hseen, hsupport⟩
-    · exact Or.inl h
-    · exact Or.inr ⟨List.mem_cons_of_mem _ hseen, hsupport⟩
-  cases hlookup : current.lookup q with
-  | none =>
-    rw [memoize_of_none _ _ _ hlookup] at hvalue
-    change (answer, current') ∈ ((distribution q).map
-      (fun value => (value, (q, value) :: current))).support at hvalue
-    rw [PMF.mem_support_map_iff] at hvalue
-    obtain ⟨fresh, hfresh, heq⟩ := hvalue
-    cases heq
-    refine ⟨by simp only [List.length_cons]; lia, ?_⟩
-    intro entry hentry
-    rcases List.mem_cons.mp hentry with rfl | hentry
-    · exact Or.inr ⟨List.mem_cons_self, hfresh⟩
-    · exact hold entry hentry
-  | some cached =>
-    rw [memoize_of_some _ _ _ _ hlookup] at hvalue
-    change (answer, current') ∈ (PMF.pure (cached, current)).support at hvalue
-    simp only [PMF.mem_support_pure_iff] at hvalue
-    cases hvalue
-    exact ⟨by simp only [List.length_cons]; lia, hold⟩
+  dsimp only at hvalue
+  rcases hvalue with ⟨_, rfl⟩ | ⟨_, hfresh, rfl⟩ <;> grind
 
 /-- Query bounds control the number and provenance of all new cache entries. The sampler's own
 support bound can then bound stored replies, without assuming that each call grows by a constant. -/

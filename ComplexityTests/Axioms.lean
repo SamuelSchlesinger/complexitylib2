@@ -4237,3 +4237,38 @@ info: 'Cslib.ProbOracleComp.HasQueryBounds.bind' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.ProbOracleComp.HasQueryBounds.bind
+
+/--
+info: 'Cslib.Probability.IsPPTOn.memoize' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.IsPPTOn.memoize
+
+/--
+info: 'Cslib.Probability.memoize_call_size_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.memoize_call_size_le
+
+/--
+info: 'Cslib.Probability.memoize_cache_size_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.memoize_cache_size_le
+
+/--
+info: 'Cslib.RandomOracle.memoize_cache_bounds_prob' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.memoize_cache_bounds_prob
+
+/--
+info: 'Cslib.RandomOracle.eval_run_interpret_memoize_prob_eq_eager' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.RandomOracle.eval_run_interpret_memoize_prob_eq_eager

@@ -699,8 +699,36 @@ mapping and adaptive bind. Shared private-coin invariant, simulation and state-r
 lemmas also simplify the randomized completion proof from 20 to 8 body lines. Including all
 these helpers and the machine unfolding rules, the net addition is 17 theorem bodies / 141 body
 lines: the library has 5,378 / 36,797 in 489 source files. Definitions, statements and tests are
-excluded. Efficient stateful oracle substitution and memoization remain the next infrastructure
-requirements for GGM security.
+excluded. Efficient stateful oracle substitution remains an infrastructure requirement for GGM
+security; the memoized-handler certificate is described below.
+
+### Efficient memoization and randomized cache bounds (2026-10-16)
+
+`IsPPTOn.memoize` certifies the ordinary list memoizer, including captured inputs, comparisons of
+complete keys and writing the entire returned cache. It needs no default inhabitant of the key
+or value type. The realizing machine may sample and discard a fallback on a hit; the source
+program's joint result/cache law is unchanged. `fun_prop` handles concrete word samplers, while
+the registered certificate lets `ppt` also handle an abstract captured sampler and repeated calls
+threading a cache through ordinary `do` notation.
+
+`memoize_call_size_le` preserves a reply-size invariant and charges the exact framing overhead
+of one added entry. `memoize_cache_size_le` bounds the whole encoded cache from external call,
+key and reply bounds. Randomized clients now have list-cache representation and eager-table
+bridges as well as cache provenance; private samples are never cached. Tests include independent
+private draws, repeated queries, a concrete 18-bit cache bound and duplicate preassigned entries
+whose values are outside the sampler's support.
+
+The memoization module has 4 theorem bodies / 42 body lines versus 4 / 64 on crypto `5ff69ca`.
+The new option test and shared support lemma cost another 4 body lines. The support lemma also
+reduces the existing cache-invariant proof from 14 to 7 lines and its transcript proof from 34
+to 11. Including all new randomized-client bridges, shared helpers and refactors, this batch
+adds 11 theorem bodies / 60 body lines net: 5,389 / 36,857 in 490 source files. Definitions,
+statements and tests remain excluded; these source-length measurements do not measure runtime
+or elaboration cost.
+
+The remaining GGM infrastructure is the finite oracle interpreter's efficient stateful
+substitution theorem. A PPT memoized handler and its storage bound are now available, but they
+alone do not certify running an arbitrary oracle-PPT adversary against that handler.
 
 ### Next design experiments
 

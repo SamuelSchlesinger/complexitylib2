@@ -12,6 +12,7 @@ public import Complexity.Computability.Probabilistic.PPT.Capture
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.Adaptive
 public import Complexity.Computability.Probabilistic.Parameter
+public import Complexity.Computability.Probabilistic.Memoize
 
 /-!
 # Certifying functional probabilistic programs
@@ -24,7 +25,8 @@ matcher. Every proof supplies the uniform strict fair-coin machine contract of `
 automatically.
 
 Unknown algorithms need certificates. Fair bits, uniform words with efficiently computed unary
-lengths, and bounded loops with constant state growth are certified here. General loop invariants
+lengths, memoized closed samplers and bounded loops with constant state growth are certified here.
+General loop invariants
 use `IsPPTOn.iterate_spec`; oracle PPT needs further rules.
 
 ## Main definitions
@@ -67,6 +69,7 @@ attribute [program_certificate]
   Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn
   Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList
   isPPTOn_uniform_bool
+  IsPPTOn.memoize
 
 /-- Expose probabilistic sequencing to Aesop's joint search, retaining alternatives for the
 intermediate encoding until both the sampler and continuation have been proved. -/

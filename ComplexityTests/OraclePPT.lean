@@ -23,7 +23,8 @@ private noncomputable def randomized :
   return (answer, second, repeated)
 
 -- Private samples do not count as external calls; the adaptive client makes two requests.
-example : ProbOracleComp.HasQueryBounds randomized (fun _ => 1) 2 1 := by
+private theorem randomized_queryBounds :
+    ProbOracleComp.HasQueryBounds randomized (fun _ => 1) 2 1 := by
   apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 2) (.sample _ _ _)
   intro first
   apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.query first _ le_rfl)
@@ -44,6 +45,37 @@ example :
           (Cslib.RandomOracle.answer (fun _ => PMF.uniformOfFintype Bool))) randomized).run
             (fun _ => none)).map Prod.fst :=
   Cslib.RandomOracle.uniform_interpret_prob_eq_lazy randomized
+
+-- Executable list memoization implements this same randomized adaptive table experiment.
+example :
+    ProbComp.eval (Prod.fst <$> (OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n))
+        (memoize (fun _ : Bool => ProbComp.uniform Bool))) randomized).run []) =
+      (PMF.pi (fun _ : Bool => PMF.uniformOfFintype Bool)).bind (fun table =>
+        OracleComp.interpret
+          (ProbOracleComp.handler ProbComp.unifOracle (fun q => PMF.pure (table q)))
+            randomized) := by
+  simpa only [ProbComp.eval_uniform] using
+    Cslib.RandomOracle.eval_run_interpret_memoize_prob_eq_eager
+      (fun _ : Bool => ProbComp.uniform Bool) randomized
+
+-- Two external calls give at most 18 encoded bits, including pair/list framing; draws are free
+-- only with respect to this storage bound, not the separate machine time certificate.
+example (result : Bool × Bool × Bool) (cache : List (Bool × Bool))
+    (h : (result, cache) ∈ ((OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
+        (memoize (fun _ : Bool => PMF.uniformOfFintype Bool))) randomized).run []).support) :
+    (encList (encPair encBool encBool) cache).length ≤ 18 := by
+  exact memoize_cache_size_le encBool encBool _ randomized 2 1 1
+    (by simpa only [encBool_apply, List.length_singleton] using randomized_queryBounds)
+    (by simp only [encBool_apply, List.length_singleton, le_refl, implies_true]) [] cache
+    (by simp) result h
+
+-- A duplicate preassigned answer may lie outside the sampler's support and still be returned.
+example : (true, [(false, true), (false, false)]) ∈
+    (memoize (fun _ : Bool => PMF.pure false) false [(false, true), (false, false)]).support := by
+  rw [Cslib.RandomOracle.mem_support_memoize_iff]
+  exact Or.inl ⟨by decide, rfl⟩
 
 -- Two equal sampling requests draw independently, even in the presence of an external oracle.
 example (State : Type) (oracle : Bool → StateT State PMF Bool) (s : State) :
