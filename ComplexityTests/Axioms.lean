@@ -2812,10 +2812,28 @@ info: 'Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le' de
 #print axioms Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le
 
 /--
+info: 'Cslib.Complexity.SigmaP_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SigmaP_zero
+
+/--
+info: 'Cslib.Complexity.PiP_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PiP_zero
+
+/--
 info: 'Cslib.Complexity.SigmaP_one' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.SigmaP_one
+
+/--
+info: 'Cslib.Complexity.PiP_one_eq_coNP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PiP_one_eq_coNP
 
 /--
 info: 'Cslib.Complexity.PiP_eq_preimage_compl_SigmaP' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -2828,6 +2846,12 @@ info: 'Cslib.Complexity.PH_eq_iUnion_PiP' depends on axioms: [propext, Classical
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.PH_eq_iUnion_PiP
+
+/--
+info: 'Cslib.Complexity.P_subset_PH' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.P_subset_PH
 
 /--
 info: 'Cslib.Complexity.coNP_subset_PH' depends on axioms: [propext, Classical.choice, Quot.sound]

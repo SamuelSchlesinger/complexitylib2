@@ -114,6 +114,11 @@ Chernoff bound for majority votes (`Foundations/Combinatorics/MajorityVote.lean`
 computing functions side by side (`Circuit/Complexity.lean`), and restrictions that hardwire
 inputs (`Circuit/Boolean/Substitution.lean`).
 
+**The first levels and complement duality of PH are proved** (`Classes/PH.lean`):
+`Σ₀ = Π₀ = P`, `Σ₁ = NP`, `Π₁ = coNP`, `Πₖ = coΣₖ`, and `P, NP, coNP ⊆ PH`.
+The polynomial-time calculus discharges the former assumptions about ignoring a certificate,
+supplying the empty certificate, and negating the verifier's output.
+
 **The circuit size hierarchy proved** (`Cslib.Circuits.Boolean.SIZE_ssubset`): changing one
 truth-table entry costs at most `2 n + 3` gates, so walking from a constant to a Shannon-hard
 function attains every size below `2 ^ n / n` up to `2 n + 3`; in particular

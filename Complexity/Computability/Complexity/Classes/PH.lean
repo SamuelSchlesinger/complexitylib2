@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+
 /-!
 # The polynomial hierarchy
 
@@ -34,11 +36,10 @@ facts about polynomial time:
   definitions give the same classes, since padding every block to the largest length only needs
   a verifier that skips the padding.
 
-That `Πₖ` consists of the complements of the problems in `Σₖ` is the quantifier duality
-`¬∃ w, φ ↔ ∀ w, ¬φ` (`not_alternation`) together with one fact about polynomial time: negating the
-output of a polynomial-time function keeps it polynomial-time. That fact needs the composition of
-polynomial-time functions, which is not yet in cslib, so it is a hypothesis of the theorems that
-use it, as are the two facts that relate `SigmaP 0` to `P`.
+The zero levels are `P`: a decider can ignore its certificate, and a verifier with no quantifiers
+can be run on the empty certificate. That `Πₖ` consists of the complements of the problems in
+`Σₖ` follows from quantifier duality (`not_alternation`) and closure of polynomial time under
+Boolean negation. These transformations use the polynomial-time machine calculus.
 
 ## Main definitions
 
@@ -49,14 +50,15 @@ use it, as are the two facts that relate `SigmaP 0` to `P`.
 ## Main results
 
 * `Cslib.Complexity.not_alternation`: the duality of alternating quantifiers.
-* `Cslib.Complexity.PiP_eq_preimage_compl_SigmaP`: `Πₖ = coΣₖ`, given that negation preserves
-  polynomial time.
-* `Cslib.Complexity.SigmaP_one`: `Σ₁ = NP`; `Cslib.Complexity.PiP_one_eq_coNP`: `Π₁ = coNP`,
-  given that negation preserves polynomial time.
+* `Cslib.Complexity.SigmaP_zero`, `Cslib.Complexity.PiP_zero`: `Σ₀ = Π₀ = P`.
+* `Cslib.Complexity.PiP_eq_preimage_compl_SigmaP`: `Πₖ = coΣₖ`.
+* `Cslib.Complexity.SigmaP_one`: `Σ₁ = NP`; `Cslib.Complexity.PiP_one_eq_coNP`: `Π₁ = coNP`.
 * `Cslib.Complexity.SigmaP_subset_SigmaP_succ`, `Cslib.Complexity.SigmaP_subset_PiP_succ`,
   `Cslib.Complexity.PiP_subset_SigmaP_succ`, `Cslib.Complexity.PiP_subset_PiP_succ`: the
   inclusions between consecutive levels.
-* `Cslib.Complexity.PH_eq_iUnion_PiP`, `Cslib.Complexity.NP_subset_PH`.
+* `Cslib.Complexity.PH_eq_iUnion_PiP`: `PH = ⋃ Πₖ`.
+* `Cslib.Complexity.P_subset_PH`, `Cslib.Complexity.NP_subset_PH`,
+  `Cslib.Complexity.coNP_subset_PH`.
 
 ## References
 
@@ -240,23 +242,23 @@ theorem SigmaP_one : SigmaP 1 enc = NP enc := by
   · rintro ⟨p, V, hV, h⟩
     exact ⟨[p], V, rfl, hV, isAlternatingVerifier_true_singleton.2 h⟩
 
-/-- `P ⊆ Σ₀`, given that a polynomial-time function of the instance stays polynomial-time when it
-is given a certificate to ignore. -/
-theorem P_subset_SigmaP_zero
-    (hfst : ∀ f : α → Bool, ComputableTidilyInPolyTime f enc encBool →
-      ComputableTidilyInPolyTime (fun x : α × List Bool => f x.1) (encPair enc encBits) encBool) :
-    P enc ⊆ SigmaP 0 enc := fun _ ⟨f, hf, h⟩ =>
-  ⟨[], fun x => f x.1, rfl, hfst f hf, fun a => by simpa using h a⟩
+/-- `P ⊆ Σ₀`: a decider can ignore its certificate. -/
+theorem P_subset_SigmaP_zero : P enc ⊆ SigmaP 0 enc := fun _ ⟨f, hf, h⟩ =>
+  ⟨[], fun x => f x.1, rfl, hf.comp (.fst enc encBits), fun a => by simpa using h a⟩
 
-/-- `Σ₀ ⊆ P`, given that a polynomial-time function of an instance and a certificate stays
-polynomial-time when the certificate is fixed to be empty. -/
-theorem SigmaP_zero_subset_P
-    (hnil : ∀ V : α × List Bool → Bool, ComputableTidilyInPolyTime V (encPair enc encBits) encBool →
-      ComputableTidilyInPolyTime (fun a => V (a, [])) enc encBool) :
-    SigmaP 0 enc ⊆ P enc := by
+/-- `Σ₀ ⊆ P`: run a verifier with no quantifiers on the empty certificate. -/
+theorem SigmaP_zero_subset_P : SigmaP 0 enc ⊆ P enc := by
   rintro _ ⟨ps, V, hk, hV, h⟩
   obtain rfl := List.length_eq_zero_iff.1 hk
-  exact ⟨fun a => V (a, []), hnil V hV, fun a => by simpa using h a⟩
+  exact ⟨fun a => V (a, []), hV.comp (.prod .id' (.const [])), fun a => by simpa using h a⟩
+
+/-- **`Σ₀ = P`.** -/
+theorem SigmaP_zero : SigmaP 0 enc = P enc :=
+  SigmaP_zero_subset_P.antisymm P_subset_SigmaP_zero
+
+/-- **`Π₀ = P`.** -/
+theorem PiP_zero : PiP 0 enc = P enc :=
+  SigmaP_zero_eq_PiP_zero.symm.trans SigmaP_zero
 
 /-! ### Inclusions between levels -/
 
@@ -292,54 +294,36 @@ theorem PH_eq_iUnion_PiP : PH enc = ⋃ k, PiP k enc :=
 
 theorem NP_subset_PH : NP enc ⊆ PH enc := SigmaP_one (enc := enc) ▸ SigmaP_subset_PH 1
 
-/-- `P ⊆ PH`, given that a polynomial-time function of the instance stays polynomial-time when it is
-given a certificate to ignore. -/
-theorem P_subset_PH
-    (hfst : ∀ f : α → Bool, ComputableTidilyInPolyTime f enc encBool →
-      ComputableTidilyInPolyTime (fun x : α × List Bool => f x.1) (encPair enc encBits) encBool) :
-    P enc ⊆ PH enc :=
-  (P_subset_SigmaP_zero hfst).trans (SigmaP_subset_PH 0)
+theorem P_subset_PH : P enc ⊆ PH enc :=
+  P_subset_SigmaP_zero.trans (SigmaP_subset_PH 0)
 
 /-! ### Quantifier duality -/
 
-section Duality
-
-/- The theorems in this section assume that negating its output keeps a polynomial-time function
-polynomial-time (`hnot`), which follows from the composition of polynomial-time functions once that
-is in cslib. -/
-
-variable
-  (hnot : ∀ V : α × List Bool → Bool, ComputableTidilyInPolyTime V (encPair enc encBits) encBool →
-    ComputableTidilyInPolyTime (fun x => !V x) (encPair enc encBits) encBool)
-include hnot
-
 theorem compl_mem_PiP_of_mem_SigmaP (hA : A ∈ SigmaP k enc) : Aᶜ ∈ PiP k enc :=
   let ⟨ps, V, hk, hV, h⟩ := hA
-  ⟨ps, fun x => !V x, hk, hnot V hV, h.compl⟩
+  ⟨ps, fun x => !V x, hk, ComputableTidilyInPolyTime.bool_not.comp hV, h.compl⟩
 
 theorem compl_mem_SigmaP_of_mem_PiP (hA : A ∈ PiP k enc) : Aᶜ ∈ SigmaP k enc :=
   let ⟨ps, V, hk, hV, h⟩ := hA
-  ⟨ps, fun x => !V x, hk, hnot V hV, h.compl⟩
+  ⟨ps, fun x => !V x, hk, ComputableTidilyInPolyTime.bool_not.comp hV, h.compl⟩
 
-/-- **`Πₖ = coΣₖ`**, given that negation preserves polynomial time. -/
+/-- **`Πₖ = coΣₖ`.** -/
 theorem PiP_eq_preimage_compl_SigmaP : PiP k enc = compl ⁻¹' SigmaP k enc := by
   ext A
-  refine ⟨compl_mem_SigmaP_of_mem_PiP hnot, fun hA => ?_⟩
-  simpa using compl_mem_PiP_of_mem_SigmaP hnot hA
+  refine ⟨compl_mem_SigmaP_of_mem_PiP, fun hA => ?_⟩
+  simpa using compl_mem_PiP_of_mem_SigmaP hA
 
-/-- **`Σₖ = coΠₖ`**, given that negation preserves polynomial time. -/
+/-- **`Σₖ = coΠₖ`.** -/
 theorem SigmaP_eq_preimage_compl_PiP : SigmaP k enc = compl ⁻¹' PiP k enc := by
   ext A
-  refine ⟨compl_mem_PiP_of_mem_SigmaP hnot, fun hA => ?_⟩
-  simpa using compl_mem_SigmaP_of_mem_PiP hnot hA
+  refine ⟨compl_mem_PiP_of_mem_SigmaP, fun hA => ?_⟩
+  simpa using compl_mem_SigmaP_of_mem_PiP hA
 
-/-- **`Π₁ = coNP`**, given that negation preserves polynomial time. -/
+/-- **`Π₁ = coNP`.** -/
 theorem PiP_one_eq_coNP : PiP 1 enc = coNP enc := by
-  rw [PiP_eq_preimage_compl_SigmaP hnot, SigmaP_one, coNP_eq_preimage_compl_NP]
+  rw [PiP_eq_preimage_compl_SigmaP, SigmaP_one, coNP_eq_preimage_compl_NP]
 
 theorem coNP_subset_PH : coNP enc ⊆ PH enc :=
-  PiP_one_eq_coNP hnot ▸ PiP_subset_PH 1
-
-end Duality
+  PiP_one_eq_coNP ▸ PiP_subset_PH 1
 
 end Cslib.Complexity
