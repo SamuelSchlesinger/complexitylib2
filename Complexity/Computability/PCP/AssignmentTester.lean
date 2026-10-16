@@ -384,28 +384,51 @@ theorem expect_hammingDist_div_le_one_sub_acceptProb_inputTest {T : Fin 2 → (�
 /-! ### The tester -/
 
 variable (α) in
+/-- The assignments of the variables `Fin 2 × α`: the positions of the linear table, and the random
+strings of its checks. -/
+abbrev LinPos : Type _ :=
+  Fin 2 × α → Bool
+
+variable (α) in
+/-- The assignments of the pairs of variables: the positions of the quadratic table, and the random
+strings of its checks. -/
+abbrev QuadPos : Type _ :=
+  (Fin 2 × α) × (Fin 2 × α) → Bool
+
+variable (α) in
+/-- The random strings of the equation test: the sets of quadratic equations of a constraint. -/
+abbrev EqnRand : Type _ :=
+  (Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2 → Bool
+
+/- The instances on the recurring factors of the positions and random strings are declared on them,
+rather than found on the function types they unfold to, so that the instances on the products of
+the tester stay below the size limit of instance synthesis. -/
+
+instance LinPos.instFintype : Fintype (LinPos α) :=
+  inferInstanceAs (Fintype (Fin 2 × α → Bool))
+
+instance QuadPos.instFintype : Fintype (QuadPos α) :=
+  inferInstanceAs (Fintype ((Fin 2 × α) × (Fin 2 × α) → Bool))
+
+instance EqnRand.instFintype : Fintype (EqnRand α) :=
+  inferInstanceAs (Fintype ((Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2 → Bool))
+
+variable (α) in
 /-- The positions of the proofs read by the tester for constraints on labels in `α`: the bit
 `inl (b, r)` of the table of the end `b` at `r`, the bit `inr (inl y)` of the linear table at `y`,
 and the bit `inr (inr z)` of the quadratic table at `z`. -/
 abbrev Pos : Type _ :=
-  (Fin 2 × (α → Bool)) ⊕ ((Fin 2 × α → Bool) ⊕ ((Fin 2 × α) × (Fin 2 × α) → Bool))
+  (Fin 2 × (α → Bool)) ⊕ (LinPos α ⊕ QuadPos α)
 
 variable (α) in
 /-- The random strings of the tester: those of its five checks. -/
 abbrev Rand : Type _ :=
-  ((Fin 2 × α → Bool) × (Fin 2 × α → Bool)) ×
-    (((Fin 2 × α) × (Fin 2 × α) → Bool) × ((Fin 2 × α) × (Fin 2 × α) → Bool)) ×
-    ((Fin 2 × α → Bool) × (Fin 2 × α → Bool) × (Fin 2 × α → Bool) × (Fin 2 × α → Bool) ×
-      ((Fin 2 × α) × (Fin 2 × α) → Bool)) ×
-    (((Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2 → Bool) × ((Fin 2 × α) × (Fin 2 × α) → Bool)) ×
-    (Fin 2 × (α → Bool) × (Fin 2 × α → Bool))
+  (LinPos α × LinPos α) × (QuadPos α × QuadPos α) ×
+    (LinPos α × LinPos α × LinPos α × LinPos α × QuadPos α) × (EqnRand α × QuadPos α) ×
+    (Fin 2 × (α → Bool) × LinPos α)
 
-/-- The random strings of the tester are finitely many. The instance is assembled from those of the
-recurring factors, which keeps instance synthesis within its default size limit. -/
+/-- The random strings of the tester are finitely many. -/
 instance : Fintype (Rand α) :=
-  letI : Fintype (Fin 2 × α → Bool) := inferInstance
-  letI : Fintype ((Fin 2 × α) × (Fin 2 × α) → Bool) := inferInstance
-  letI : Fintype ((Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2 → Bool) := inferInstance
   inferInstanceAs (Fintype (_ × _ × _ × _ × _))
 
 /-- The queries of the tester: three for each linearity test, six for the tensor test, two for the
@@ -467,11 +490,6 @@ theorem acceptProb_le (π : Pos α → Bool) :
         equationTestAcceptance (quadTable π) (equationCoeff C) equationRhs ∧
       (hadamardTester C).acceptProb π ≤
         (inputTest α).acceptProb (Sum.elim (fun p ↦ inputTable π p.1 p.2) (linTable π)) := by
-  -- The random strings of the checks are finitely many; naming the recurring factors keeps
-  -- instance synthesis within its default size limit.
-  let : Fintype (Fin 2 × α → Bool) := inferInstance
-  let : Fintype ((Fin 2 × α) × (Fin 2 × α) → Bool) := inferInstance
-  let : Fintype ((Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2 → Bool) := inferInstance
   open LocalTest in
   refine ⟨?_, ?_, ?_, ?_, ?_⟩
   · refine (acceptProb_and_le_left _ π).trans_eq ?_

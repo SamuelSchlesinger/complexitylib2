@@ -86,13 +86,10 @@ variable {V E α : Type*}
 `inl (v, r)` of the table of the vertex `v` at `r`, and the bit `inr (e, y)` of the tables of the
 tester of the edge `e` at the position `y` of its linear or quadratic table. -/
 abbrev ComposePos (V E α : Type*) : Type _ :=
-  (V × (α → Bool)) ⊕ (E × ((Fin 2 × α → Bool) ⊕ ((Fin 2 × α) × (Fin 2 × α) → Bool)))
+  (V × (α → Bool)) ⊕ (E × (HadamardTester.LinPos α ⊕ HadamardTester.QuadPos α))
 
-/-- The positions of a composed proof are finitely many. The instance is assembled from those of
-the recurring factors, which keeps instance synthesis within its default size limit. -/
+/-- The positions of a composed proof are finitely many. -/
 instance [Fintype V] [Fintype E] [Fintype α] [DecidableEq α] : Fintype (ComposePos V E α) :=
-  letI : Fintype (Fin 2 × α → Bool) := inferInstance
-  letI : Fintype ((Fin 2 × α) × (Fin 2 × α) → Bool) := inferInstance
   inferInstanceAs (Fintype (_ ⊕ _))
 
 /-! ### Decoding the long code -/
