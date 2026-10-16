@@ -22,5 +22,6 @@ import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs
 import ComplexityTests.SATPolyTime
+import ComplexityTests.SeededEvaluator
 import ComplexityTests.Smoke
 import ComplexityTests.ThreeCNF

@@ -3769,4 +3769,32 @@ info: 'Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins' depends on
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins
 
+/--
+info: 'Cslib.Probability.IsPPTOn.exists_polyTime_coin_evaluator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.exists_polyTime_coin_evaluator
+
+/--
+info: 'Cslib.Probability.IsPPTOn.exists_total_seeded_evaluator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.exists_total_seeded_evaluator
+
+/--
+info: 'Cslib.Probability.IsPPTOn.exists_seeded_evaluator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.exists_seeded_evaluator
+
+/--
+info: 'Cslib.Probability.IsPPTOn.exists_padded_bool_coin_evaluator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.exists_padded_bool_coin_evaluator
+
 end ComplexityTests.Axioms

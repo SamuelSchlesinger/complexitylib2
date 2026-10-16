@@ -33,6 +33,8 @@ of the whole experiment (`exists_bind_apply_le`).
   two-stage experiments.
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
   adapted from the cslib `crypto` branch at `5ff69ca`.
+* `Cslib.Probability.PMF.map_injective`: injective encodings preserve equality of distributions,
+  adapted from the same branch.
 -/
 
 @[expose] public section
@@ -57,6 +59,16 @@ Remove this block when that PR is in the base pin; the resampling lemmas below r
     p >>= f = p.bind f := rfl
 
 attribute [simp] _root_.PMF.monad_map_eq_map _root_.PMF.pure_map
+
+/-! ### Injective representations -/
+
+/-- An injective representation of outcomes also embeds their complete probability laws. -/
+theorem map_injective {f : α → β} (hf : Function.Injective f) :
+    Function.Injective (PMF.map f) := by
+  classical
+  intro p q h
+  ext a
+  simpa only [PMF.map_apply, hf.eq_iff, tsum_ite_eq'] using congrArg (fun law => law (f a)) h
 
 section Uniform
 

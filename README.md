@@ -27,7 +27,9 @@ oracle PPT remain to be integrated.
 Saved-coin replay preserves the full configuration and private oracle state under stateless
 fair-coin semantics. Closed replay has a uniform linear-time and space certificate from the
 ordinary encoded pair of coins and input, including preparation and final cleanup. Functional
-clients invoke it through `fun_prop` or `polytime`; typed PPT evaluators and loop rules remain next.
+clients invoke it through `fun_prop` or `polytime`. Every typed PPT program now has a total
+polynomial-time saved-seed evaluator: arbitrary seeds give supported results, and sufficiently
+long uniform seeds give the exact distribution. A shared tape can be reused across inputs.
 The deterministic `polytime` tactic now combines `fun_prop`, named and local routine certificates,
 and bounded-growth
 loop rules. Fold and iteration specifications prove both efficiency and a final invariant from

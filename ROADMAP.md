@@ -380,17 +380,27 @@ charges cleanup and restores every head. Clients can rearrange the arguments and
 coins with a one-line `fun_prop` proof. Tests also use `polytime` and cover the nonhalting source,
 false bits, empty coin tapes and empty virtual input. Including all three compiler modules, this
 batch adds 11 theorem bodies / 169 body lines, giving 4,966 / 34,650 in 440 source files. Statements,
-definitions and tests are excluded from this source-layout metric. Total typed seeded evaluators
-for arbitrary `IsPPTOn` programs, probabilistic repetition and adaptive loops remain to be ported.
+definitions and tests are excluded from this source-layout metric.
+
+Typed saved-coin evaluators are now ported for every `IsPPTOn` program. Normalizing each seed to
+the witness budget makes every output valid and supported, including empty and short seeds.
+The output embedding supplies a unique typed preimage; the TM certificate computes its encoding
+without requiring a decoder on invalid words. Any sufficiently long uniform seed gives exactly
+the original distribution. The padded raw evaluator also supports one saved tape across inputs
+of different lengths, preserving their marginal distributions without asserting independence.
+Tests instantiate a marked variable-length sampler, unary natural outputs with constrained
+support, and a shared Boolean predictor tape. Including the generic PMF encoding lemma, this
+batch adds 7 theorem bodies / 68 body lines, giving 4,973 / 34,718 in 441 source files.
+Probabilistic repetition, adaptive loops, oracle PPT and the crypto security reductions remain
+to be ported.
 
 ### Next design experiments
 
 1. **Extend `ppt` to probabilistic loops.** The deterministic loop and tactic interfaces, typed
    `PFunctor.FreeM` frontend, effectful machine interpreter, closed PPT contract, runtime-length
    sampling, captured-input composition and polynomial clock compiler are in place.
-   Lift the certified raw saved-coin evaluator to total typed evaluators for `IsPPTOn`, with exact
-   distributions and support for every seed, so repetition and adaptive loops can reuse the
-   deterministic loop calculus. Then
+   Use the total typed saved-coin evaluators, with exact distributions and support for every seed,
+   to certify repetition and adaptive loops through the deterministic loop calculus. Then
    validate one readable `do` program containing a bounded loop, a semantic specification and an
    actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
