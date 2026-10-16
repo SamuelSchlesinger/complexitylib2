@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Machine.Equivalence
+import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputPrefix
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 
 /-! Nonvacuous machine specializations, shared-state oracle runs, and fair-coin semantics. -/
@@ -73,6 +74,14 @@ example :
 -- The machine reads the installed reply and writes its first bit. Later fuel makes no calls.
 example : (OracleComp.interpret record (queryMachine.run pure query 7 [])).run [] =
     ([false], [(true, [true])]) := by rfl
+
+-- An existing prefix does not affect the submitted query, its reply, or the private request log.
+example : (OracleComp.interpret record ((fun cfg => cfg.tapes.output) <$>
+    queryMachine.runConfigFrom pure query 7
+      ((queryMachine.initialConfig []).prependOutput [true, false]))).run [(false, [])] =
+    ([true, false, false], [(false, []), (true, [true])]) := by
+  rw [MultiTapeMachine.runConfigFrom_prependOutput]
+  rfl
 
 -- Pause before the query and resume in the same hidden state, retaining the pending payload.
 example :

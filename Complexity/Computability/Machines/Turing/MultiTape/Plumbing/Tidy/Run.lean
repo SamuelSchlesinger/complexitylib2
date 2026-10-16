@@ -18,6 +18,7 @@ the initial configuration that has halted after the given number of steps with t
 
 ## Main results
 
+* `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.runFrom_initCfg_eq`.
 * `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.runFrom_initCfg`.
 -/
 
@@ -27,14 +28,20 @@ namespace Turing.MultiTapeTM
 
 variable {k : ℕ} {Symbol State : Type*} {tm : MultiTapeTM k Symbol State}
 
+/-- A tidy computation restores all work tapes and heads within its stated time bound. -/
+theorem ComputesTidilyInTimeAndSpace.runFrom_initCfg_eq {input output : List Symbol} {t s : ℕ}
+    (h : tm.ComputesTidilyInTimeAndSpace input output t s) :
+    tm.runFrom (tm.initCfg input) t = wordsCfg input none (fun _ => []) output := by
+  obtain ⟨p, hhead, hlast, htime, -⟩ := computesTidily_iff.1 h
+  rw [initCfg_eq_wordsCfg, ← hhead, runFrom_eq_of_runPath (by rw [hlast]; rfl) htime, hlast]
+
 /-- A tidy computation halts after the given number of steps from the initial configuration, with
 the given output. -/
 theorem ComputesTidilyInTimeAndSpace.runFrom_initCfg {input output : List Symbol} {t s : ℕ}
     (h : tm.ComputesTidilyInTimeAndSpace input output t s) :
     (tm.runFrom (tm.initCfg input) t).Halted ∧
       (tm.runFrom (tm.initCfg input) t).output = output := by
-  obtain ⟨p, hhead, hlast, htime, -⟩ := computesTidily_iff.1 h
-  rw [initCfg_eq_wordsCfg, ← hhead, runFrom_eq_of_runPath (by rw [hlast]; rfl) htime, hlast]
+  rw [h.runFrom_initCfg_eq]
   exact ⟨rfl, rfl⟩
 
 end Turing.MultiTapeTM

@@ -19,8 +19,8 @@ one finite machine for every input. The output-length bound controls the continu
 and the machine compiler charges every instruction needed to prepare its fresh input.
 
 This module also registers deterministic preprocessing and postprocessing with `fun_prop`.
-Continuations here consume the sampled result; retaining a captured caller input requires a
-separate copying construction.
+Continuations here consume the sampled result; `PPT.Capture` supplies the copying construction
+for retaining the caller's input.
 
 ## Main results
 

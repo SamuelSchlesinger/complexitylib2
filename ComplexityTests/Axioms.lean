@@ -3661,4 +3661,40 @@ info: 'Cslib.Probability.IsPPTOn.bind' depends on axioms: [propext, Classical.ch
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.IsPPTOn.bind
 
+/--
+info: 'Turing.MultiTapeMachine.runConfigFrom_prependOutput' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeMachine.runConfigFrom_prependOutput
+
+/--
+info: 'Turing.MultiTapePTM.eval_runClosedConfigFrom_seq_prependOutput' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapePTM.eval_runClosedConfigFrom_seq_prependOutput
+
+/--
+info: 'Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.runFrom_initCfg_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.runFrom_initCfg_eq
+
+/--
+info: 'Cslib.Probability.IsPPTOn.prefix' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.prefix
+
+/--
+info: 'Cslib.Probability.IsPPTOn.bind_with' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.bind_with
+
+/--
+info: 'Cslib.Probability.IsPPTOn.cond' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.cond
+
 end ComplexityTests.Axioms

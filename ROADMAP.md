@@ -36,9 +36,10 @@ conditionals, arithmetic, and bounded list traversals. Christian Reitwiessner's 
 Its universal function takes a binary step count: its bound is polynomial in the **value** of
 that count, not its binary length. The `PFunctor.FreeM` program interface and stateful simulation
 rules and general effectful machine are now present. Closed `IsPPTOn` supplies the semantic
-realization contract, a deterministic bridge, fair-bit sampling and monadic bind; captured inputs,
-probabilistic loops, oracle PPT and `ppt` remain to be integrated into v2. The deterministic
-`polytime` tactic and invariant-oriented loop specifications have now been adapted to this backend.
+realization contract, a deterministic bridge, fair-bit sampling, monadic bind, captured inputs
+and conditionals; probabilistic loops, oracle PPT and `ppt` remain to be integrated into v2.
+The deterministic `polytime` tactic and invariant-oriented loop specifications have now been
+adapted to this backend.
 The architecture sections below describe that intended interface, not completed features.
 
 ### Existing crypto implementation to reuse
@@ -208,7 +209,7 @@ not existence proofs of one-way functions or permutations.
 | Stateful invariant and simulation rules | adapted to `OracleComp.interpret`; tests retain the final state and exercise oracle substitution and a nontrivial state representation |
 | Shared effectful machine and clocked programs | `Id` / `Set` equivalences to upstream, exact deterministic runs, one program interpreter with pause/resume and substitution laws; Boolean-indexed tables and closed fair-coin runs; shared-tape sequencing with additive actual halting bounds and exact agreement with upstream deterministic sequencing |
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
-| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair-bit sampling, monadic bind, deterministic preprocessing and postprocessing registered with `fun_prop`; machine composition charges fresh input and has intrinsically halting finite witnesses; captured inputs, probabilistic loops, oracle PPT and `ppt` remain pending |
+| Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair-bit sampling, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; machine composition charges copying and fresh input and has intrinsically halting finite witnesses; probabilistic loops, oracle PPT and `ppt` remain pending |
 | OWP → PRG | queue `OneWay`, `HardCore`, `GoldreichLevin/*`, then length extension |
 | General OWF → PRG | queue `OneWay/Normalize`, `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | queue GGM expansion, hybrid, reduction and security, then `OneWayToPRF` |
@@ -305,14 +306,30 @@ The machine test distinguishes generated input from the real input, dirty source
 fresh continuation scratch, empty output from a one-bit word, and one- from two-instruction
 stopping times. Adapter tests also preserve channel data and stateful coin effects at both ends
 of an empty input. Independent review replaced tuple-index arithmetic with existing `Fin` tuple
-identities. Captured caller inputs, probabilistic iteration and oracle PPT are still separate work.
+identities. The following batch supplies captured caller inputs; probabilistic iteration and
+oracle PPT remain separate work.
+
+The capture batch adds 22 theorem bodies / 108 body lines, reaching 4,913 / 34,269. A common
+program law preserves existing output prefixes, including channels and stateful interactions.
+The tidy-run API now exposes the restored configuration directly; this makes the prefix
+realization a 28-body-line proof using shared sequencing. Pairing reuses upstream framing;
+`keep_input` and `bind_with` are one-body-line clients, and `map_with` uses two. Closed branch
+selection is an eight-body-line `fun_prop` client followed by distributional simplification.
+Its witness may run both total branches, so this rule is deliberately restricted to closed programs.
+
+Client tests use one `fun_prop` for two samples with a retained unbounded word, GGM evaluation
+on a sampled seed and the original query path, and a conditional between probabilistic branches.
+The conditional exposed a missing computed-argument equality rule: `decide_eq'` now infers the
+common encoding from its two arguments and is also reused by the existing inequality proof.
+Concrete tests check a prepared prefix followed by the original input, and an oracle query that
+retains both an existing output prefix and the private request log.
 
 ### Next design experiments
 
 1. **Integrate the crypto probabilistic realization layer and `ppt`.** The deterministic loop
    and tactic interfaces, typed `PFunctor.FreeM` frontend, effectful machine interpreter, and initial
-   closed PPT contract, machine composition and polynomial clock compiler are in place. Add
-   captured-input composition and the probabilistic loop rules, then
+   closed PPT contract, captured-input composition and polynomial clock compiler are in place.
+   Add the probabilistic loop rules, then
    validate one readable `do` program containing a bounded loop, a semantic specification and an
    actual TM resource certificate, without a
    new transition table in the client. This is an interface acceptance test, not a replacement
@@ -719,8 +736,8 @@ It merges into current cslib main with two trivial conflicts and the merge build
 2. `PolyTime` is crei's `ComputableTidilyInPolyTime`; v2 does not build its own calculus.
 3. The universal simulation backend is crei's; v2's hierarchy work will build on `Universal/`.
    The free-monad interface and realization layer are separate from crei's backend; v2 now
-   supplies the typed frontend, closed PPT contract and monadic composition, while captured
-   inputs, probabilistic loops and oracle PPT remain pending.
+   supplies the typed frontend, closed PPT contract, monadic composition and captured inputs,
+   while probabilistic loops and oracle PPT remain pending.
 4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
    freely.** crei's calculus and universal machine are vendored in full as tracked local copies
    (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),

@@ -102,6 +102,14 @@ theorem decide_eq [DecidableEq α] (enc : α ↪ List Bool) :
       (encPair enc enc) encBool :=
   (ComputableTidilyInDegree.eq enc).computableTidilyInPolyTime
 
+/-- Compare computed values for equality, inferring their common encoding from the arguments. -/
+@[fun_prop]
+theorem decide_eq' [DecidableEq β] {left right : α → β}
+    (hleft : ComputableTidilyInPolyTime left encA encB)
+    (hright : ComputableTidilyInPolyTime right encA encB) :
+    ComputableTidilyInPolyTime (fun x => decide (left x = right x)) encA encBool :=
+  (decide_eq encB).comp (hleft.prod hright)
+
 /-- Compare two computed values using their common encoding. -/
 @[fun_prop]
 theorem decide_ne [DecidableEq β] {left right : α → β}
@@ -109,6 +117,6 @@ theorem decide_ne [DecidableEq β] {left right : α → β}
     (hright : ComputableTidilyInPolyTime right encA encB) :
     ComputableTidilyInPolyTime (fun x => decide (left x ≠ right x)) encA encBool := by
   simpa only [Function.comp_def, decide_not] using
-    bool_not.comp ((decide_eq encB).comp (hleft.prod hright))
+    bool_not.comp (hleft.decide_eq' hright)
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

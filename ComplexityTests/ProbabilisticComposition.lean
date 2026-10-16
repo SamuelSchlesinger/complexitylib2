@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Composition
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputPrefix
 
 /-! Fresh-input composition with random stopping times, dirty scratch, and empty output. -/
 
@@ -81,5 +82,27 @@ example : ∀ final ∈ (ProbComp.eval ((readFirst.comp chooseWord true).runClos
     final.tapes.state = none :=
   MultiTapePTM.comp_halted chooseWord readFirst true [false] 2 1 (chooseWord_halts _)
     (fun word _ => readFirst_halts word)
+
+-- Writing a prefix leaves the original input available to the following computation.
+private def writePrefix : MultiTapeTM 1 Bool Unit := MultiTapeTM.ofTr ()
+  fun _ _ _ =>
+    { inputTape := 0, workTapes := fun _ => (none, 0), output := some true, state := none }
+
+private theorem writePrefix_restores (input : List Bool) :
+    writePrefix.runFrom (writePrefix.initCfg input) 1 =
+      wordsCfg input none (fun _ => []) [true] := by
+  simp only [MultiTapeTM.runFrom, Function.iterate_one]
+  rw [MultiTapeTM.step_of_state (by rfl)]
+  simp [writePrefix, MultiTapeTM.tr_ofTr, Turing.Action.apply, Cfg.init, wordsCfg]
+
+-- Prefix [true] is followed by the actual input [false], with every preparation step charged.
+example : ProbComp.eval (((MultiTapePTM.ofDeterministic writePrefix).seq readFirst).runClosed
+    2 [false]) = PMF.pure [true, false] := by
+  rw [MultiTapePTM.eval_seq_prependOutput writePrefix readFirst [false] [true] 1 1
+    (writePrefix_restores _) (readFirst_halts _)]
+  simp [MultiTapePTM.runClosed, MultiTapePTM.run, MultiTapePTM.runFrom,
+    MultiTapePTM.runConfigFrom, MultiTapeMachine.runConfigFrom, initialConfig, Cfg.init,
+    readFirst, Config.step, Turing.Action.apply, Cfg.inputSymbol, Cfg.workTapeSymbols,
+    PMF.map, Function.comp_def]
 
 end ComplexityTests.ProbabilisticComposition

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Probabilistic.PPT.Composition
+import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Crypto.Computational.GGM.Evaluation
 
@@ -53,5 +53,34 @@ example : True := by
   let encFin3 : Fin 3 ↪ List Bool := Fin.valEmbedding.trans encNat
   fail_if_success have : IsPPTOn encBits encFin3 (fun _ => ProbComp.uniform (Fin 3)) := by fun_prop
   trivial
+
+-- The callback uses an unbounded original word after sampling.
+example : IsPPTOn encBits encBits (fun word => do
+    let bit ← ProbComp.uniform Bool
+    pure (if bit then word.reverse else word)) := by
+  fun_prop
+
+-- Both samples depend on input data retained across earlier effects.
+example {sample : List Bool → ProbComp Bool} (hsample : IsPPTOn encBits encBool sample) :
+    IsPPTOn encBits encBits (fun word => do
+      let first ← sample word
+      let second ← sample word.reverse
+      pure (first :: second :: word)) := by
+  fun_prop
+
+-- GGM consumes the original query path after a seed has been sampled.
+example {sample : List Bool → ProbComp (List Bool)} {generator : List Bool → List Bool}
+    (hsample : IsPPTOn encBits encBits sample)
+    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits) :
+    IsPPTOn encBits encBits (fun path => do
+      let seed ← sample path
+      pure (Crypto.GGM.eval generator seed path)) := by
+  fun_prop
+
+-- Branch selection depends on the unbounded input, and both branches are probabilistic.
+example {yes no : List Bool → ProbComp Bool}
+    (hyes : IsPPTOn encBits encBool yes) (hno : IsPPTOn encBits encBool no) :
+    IsPPTOn encBits encBool (fun word => if word = [] then yes word else no word.reverse) := by
+  fun_prop
 
 end ComplexityTests.PPTComposition
