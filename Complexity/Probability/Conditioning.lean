@@ -56,9 +56,8 @@ theorem map_fst_apply (joint : PMF (α × β)) (a : α) :
 
 /-- Each joint mass is at most the corresponding marginal mass. -/
 theorem apply_le_map_fst (joint : PMF (α × β)) (a : α) (b : β) :
-    joint (a, b) ≤ (joint.map Prod.fst) a := by
-  rw [map_fst_apply]
-  exact ENNReal.le_tsum (f := fun b => joint (a, b)) b
+    joint (a, b) ≤ (joint.map Prod.fst) a :=
+  le_map_apply joint Prod.fst (a, b)
 
 open Classical in
 /-- The second component conditioned on the first, defaulting to its marginal at null events. -/

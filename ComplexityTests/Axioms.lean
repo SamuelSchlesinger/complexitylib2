@@ -4723,3 +4723,55 @@ info: 'Cslib.Crypto.OneWay.output_collision_negligible' depends on axioms: [prop
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.OneWay.output_collision_negligible
+
+/--
+info: 'Cslib.Probability.PMF.entropy_bind_sigma' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.entropy_bind_sigma
+
+/--
+info: 'Cslib.Probability.PMF.conditionalEntropy_eq_sum' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.conditionalEntropy_eq_sum
+
+/--
+info: 'Cslib.Probability.PMF.conditionalEntropy_map_fst_ge' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.conditionalEntropy_map_fst_ge
+
+/--
+info: 'Cslib.Probability.PMF.conditionalEntropy_map_le_collision' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.conditionalEntropy_map_le_collision
+
+/--
+info: 'Cslib.Probability.PMF.entropy_chain_rule_deterministic' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.PMF.entropy_chain_rule_deterministic
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_predictionGame' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_predictionGame
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_error_ge' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_error_ge
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_entropy_add_gap_le_one' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_entropy_add_gap_le_one

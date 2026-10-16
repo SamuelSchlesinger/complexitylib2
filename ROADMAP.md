@@ -216,7 +216,7 @@ not existence proofs of one-way functions or permutations.
 | GGM tree evaluation | ported, including truncation and size laws; uniform TM certificate through the existing tidy fold calculus |
 | Uniform PPT and oracle PPT, `ppt` automation | closed `IsPPTOn`, deterministic bridge, fair bits and runtime-length uniform words, monadic bind, deterministic preprocessing/postprocessing, captured inputs and conditionals registered with `fun_prop`; `ppt` combines these with named/local certificates and `polytime`; total saved-seed evaluation certifies bounded adaptive loops, with one invariant for resources and postconditions; `ppt` handles constant growth. Word-oracle `IsOraclePPTOn` has the joint stateful contract, supported-output bound and deterministic `fun_prop` bridge; clock-derived external query budgets are present; closed stateful substitution is certified; general open-program composition remains pending |
 | OWP → PRG | complete through Goldreich–Levin, the uniform one-bit PRG theorem and extension to any efficiently computed strictly larger output length |
-| General OWF → PRG | output-length normalization, conditioning and output-collision bounds are complete; queue `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
+| General OWF → PRG | output-length normalization, conditioning, output-collision bounds, finite Shannon entropy and the samplable-pair interface are complete; queue the positive-gap construction and remaining `Pseudoentropy/*`, entropy-grid and uniform-length conversion, then `OneWayToPRG` |
 | PRG → PRF and OWF → PRF | adaptive GGM security and PRG → PRF are complete through one uniform strict PPT reduction; general OWF → PRF awaits the pseudoentropy-based OWF → PRG theorem |
 
 The raw dependency closure of `OneWayToPRF` and `GoldreichLevin/HardCore`, stopping at modules
@@ -1204,8 +1204,48 @@ equality decision procedures. All six project checks pass. Under the same curren
 helper API, the old/new fiber proof bodies use 1,522,571 / 1,873,459 raw tactic heartbeats: the
 shorter subtype proof costs more elaboration. The old/new collision-experiment bodies use
 165,172 / 117,254, and the independent guesser's `ppt` certificate uses 139,407. These measure
-proof elaboration, not machine runtime. Independent adversarial correctness review follows
-publication.
+proof elaboration, not machine runtime. Independent adversarial correctness review approves
+`f559f7a` without material findings; its Lean probes check unequal fibers, impossible observations,
+infinite ambient types, equality procedures and the exact independent-guess experiment.
+
+### Finite entropy and pseudoentropy pairs (2026-10-16)
+
+The entropy prerequisites for general OWF → PRG now use ordinary finite PMFs: Shannon entropy
+in bits, deterministic and dependent-alphabet chain rules, conditioning as an average, and bounds
+when observations determine the hidden value outside a bad event. Null outcomes contribute zero;
+the mass/surprisal equivalence explicitly requires support membership. These are information
+identities and bounds, not computational security claims.
+
+`Pseudoentropy.SamplablePair` separates the finite semantic observation type from its injective
+word encoding and exact joint sampler. One strict PPT certificate covers all parameters. The
+prediction-gap contract quantifies over uniform PPT predictors, allowing the eventual threshold
+to depend on the predictor. Its elementary consequences bound prediction error and force entropy
+plus gap to be at most one. The complete prediction game is ordinary `do` code certified by
+`unfold predictionGame; ppt`. Constructing a positive gap from an OWF is still pending.
+
+The matched crypto source has 36 bodies / 226 lines, including both shared PMF helpers. The port
+has 36 / 200: the entropy module drops from 198 to 176 lines, the pseudoentropy consequences
+remain 17 lines, and the dependent-pair helper drops from 8 to 4. The new complete-game certificate
+adds 1 body / 2 lines, and the general map-mass bound also removes one line from the existing
+conditioning client. Thus the full batch adds 37 bodies / 201 lines relative to `f559f7a`, counting
+all helper costs. The total is 5,659 bodies / 38,597 lines in 527 modules, median 3 / P90 17.
+These source-layout measurements exclude definitions, statements, tests and generated code.
+
+Tests cover impossible outcomes, fully revealed and independent hidden bits, branch-dependent
+alphabets of sizes one and two, and a concrete efficient sampler. Its zero-gap contract holds,
+while a positive gap is refuted by a constant predictor. Both the named prediction game and its
+explicit-bind spelling are certified by `ppt`. Eight new axiom guards cover the chain rules,
+conditioning bounds, complete-game certificate and gap consequences. Independent source/API
+review approves the implementation and independently checks the tests.
+All six project checks pass. A fresh upstream-sync check reports the base pin and all 62 copied
+module markers current.
+
+Under the same current imports and helper API, old/new raw tactic heartbeats are
+924,461 / 1,693,912 for the dependent-pair mass rule, 109,050 / 146,563 for expected surprisal,
+and 313,355 / 267,062 for the ambiguous-observation entropy bound. The shorter simplification
+proofs do not uniformly reduce elaboration cost. The complete prediction-game `ppt` certificate
+uses 659,605. These are proof elaboration counts, not machine runtime; independent adversarial
+correctness review follows publication.
 
 ### Implementation priorities (2026-10-16)
 

@@ -50,6 +50,16 @@ universe u
 
 variable {α β γ δ ε : Type*}
 
+/-- The pairing law also holds when the second sample's type depends on the first.
+Adapted from the cslib `crypto` branch at `5ff69ca`. -/
+theorem bind_sigma_apply {β : α → Type*} (p : PMF α) (f : (a : α) → PMF (β a))
+    (a : α) (b : β a) :
+    (p.bind (fun a => (f a).map (Sigma.mk a))) ⟨a, b⟩ = p a * f a b := by
+  classical
+  simp only [PMF.bind_apply, PMF.map_apply, ← ENNReal.tsum_mul_left, mul_ite, mul_zero]
+  rw [← ENNReal.tsum_sigma]
+  simp
+
 /-! ### Monad notation
 
 Copied from cslib PR #1129 at `4e626b5449d9c93b4ac7028e596e91324ed2f4f1`.

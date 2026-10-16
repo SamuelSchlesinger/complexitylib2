@@ -8,6 +8,7 @@ import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.Encodings
+import ComplexityTests.EntropyPseudoentropy
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables

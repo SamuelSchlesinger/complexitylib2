@@ -33,6 +33,12 @@ open scoped ENNReal
 
 variable {α β : Type*}
 
+/-- A deterministic map preserves at least the mass of each individual preimage. -/
+theorem le_map_apply (p : PMF α) (f : α → β) (a : α) : p a ≤ (p.map f) (f a) := by
+  classical
+  rw [PMF.map_apply]
+  simpa using ENNReal.le_tsum (f := fun x => if f a = f x then p x else 0) a
+
 /-- Relabeling a distribution by an equivalence preserves each corresponding point mass. -/
 theorem map_equiv_apply (p : PMF α) (e : α ≃ β) (b : β) :
     p.map e b = p (e.symm b) := by
