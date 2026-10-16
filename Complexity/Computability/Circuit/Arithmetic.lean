@@ -36,6 +36,8 @@ exactly the additions and multiplications.
 
 * `Cslib.Circuits.affineSignature`, `Cslib.Circuits.affineInterpretation`: the affine basis.
 * `Cslib.Circuits.arithSignature`, `Cslib.Circuits.arithInterpretation`: the arithmetic basis.
+* `Cslib.Circuits.arithInterpretationWith`: interpret the constant symbols in another carrier.
+* `Cslib.Circuits.ArithOp.mulCost`: count multiplications, including scalar multiplications.
 * `Cslib.Circuits.Interpretation.IsPolynomial`: every operation is a polynomial.
 
 ## Main results
@@ -96,13 +98,47 @@ abbrev arithSignature : Signature.{u} where
   Op := ArithOp F
   Arity := ArithOp.arity F
 
-/-- Addition, multiplication and constants. -/
-def arithInterpretation [Semiring F] : Interpretation (arithSignature F) F
+/-- Addition and multiplication in `R`, with constant symbols interpreted by `constant`.
+For example, `MvPolynomial.C` interprets field constants as constant polynomials. -/
+def arithInterpretationWith {R : Type*} [Add R] [Mul R] (constant : F → R) :
+    Interpretation (arithSignature F) R
   | .add, x => x 0 + x 1
   | .mul, x => x 0 * x 1
-  | .const c, _ => c
+  | .const c, _ => constant c
+
+/-- Addition, multiplication and constants. -/
+def arithInterpretation [Semiring F] : Interpretation (arithSignature F) F :=
+  arithInterpretationWith F id
 
 variable {F}
+
+@[simp] theorem arithInterpretationWith_add {R : Type*} [Add R] [Mul R] (constant : F → R)
+    (x : Fin 2 → R) : arithInterpretationWith F constant .add x = x 0 + x 1 := rfl
+
+@[simp] theorem arithInterpretationWith_mul {R : Type*} [Add R] [Mul R] (constant : F → R)
+    (x : Fin 2 → R) : arithInterpretationWith F constant .mul x = x 0 * x 1 := rfl
+
+@[simp] theorem arithInterpretationWith_const {R : Type*} [Add R] [Mul R] (constant : F → R)
+    (c : F) (x : Fin 0 → R) : arithInterpretationWith F constant (.const c) x = constant c := rfl
+
+/-- Multiplications cost one; additions and constants are free. Multiplication by a scalar
+still costs one. -/
+def ArithOp.mulCost : ArithOp F → ℕ
+  | .mul => 1
+  | .add | .const _ => 0
+
+/-- Evaluating the formal polynomial computed by a circuit agrees with evaluating the circuit
+in the coefficient semiring. The converse need not hold over a finite field. -/
+theorem Circuit.eval_arithInterpretationWith_mvPolynomial {R : Type*} [CommSemiring R]
+    {n m : ℕ} (c : Circuit (arithSignature F) n m) (constant : F → R) (x : Fin n → R)
+    (j : Fin m) :
+    MvPolynomial.eval x
+        (c.eval (arithInterpretationWith F (MvPolynomial.C ∘ constant)) MvPolynomial.X j) =
+      c.eval (arithInterpretationWith F constant) x j := by
+  let h : Homomorphism (arithInterpretationWith F (MvPolynomial.C ∘ constant))
+      (arithInterpretationWith F constant) :=
+    ⟨MvPolynomial.eval x, fun op args => by cases op <;> simp [arithInterpretationWith]⟩
+  simpa [h, Function.comp_def] using congrFun (c.map_eval h MvPolynomial.X) j
 
 /-- An interpretation is *polynomial* when every operation is given by a polynomial in its
 arguments. -/

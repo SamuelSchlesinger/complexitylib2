@@ -17,6 +17,27 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Program.rank_hessian_trace_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.rank_hessian_trace_le
+
+/--
+info: 'Cslib.Circuits.Circuit.hessian_rank_ceilDiv_two_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.hessian_rank_ceilDiv_two_le
+
+/--
+info: 'Cslib.Circuits.Circuit.eval_arithInterpretationWith_mvPolynomial' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.eval_arithInterpretationWith_mvPolynomial
+
+/--
 info: 'Cslib.Probability.IsOraclePPT.query_bounds' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

@@ -41,6 +41,7 @@ GROUPS = [
     ("Circuits: frontier", "Computability/Circuit/Frontier/"),
     ("Circuits: Boolean", "Computability/Circuit/Boolean/"),
     ("Circuits: monotone", "Computability/Circuit/Monotone/"),
+    ("Circuits: arithmetic", "Computability/Circuit/Arithmetic/"),
     ("Circuits: shared infrastructure", "Computability/Circuit/"),
     ("Machines: universal interpreter", "Computability/Machines/Turing/MultiTape/Universal/"),
     ("Machines: complexity calculus", "Computability/Machines/Turing/MultiTape/Complexity/"),

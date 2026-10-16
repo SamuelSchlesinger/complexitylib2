@@ -571,15 +571,8 @@ def negCircuit : Circuit (arithSignature ℚ) 1 1 :=
 /-- The `Computes` hypothesis of the arithmetic Cauchy lower bound can be met. -/
 example : negCircuit.Computes (arithInterpretation ℚ) (fun x => cauchyNat ℚ 1 *ᵥ x) := by
   intro x; funext i; fin_cases i
-  simp only [Circuit.eval, negCircuit, Nat.reduceAdd, Fin.isValue, Program.trace, Program.eval,
-    Line.eval, arithInterpretation, Function.comp_apply, cons_val_zero, Wire.elim_input,
-    cons_val_one, cons_val_fin_one, Wire.elim_gate, Fin.zero_eta, mulVec, dotProduct,
-    Finset.univ_unique, Fin.default_eq_zero, cauchyNat, Fin.val_eq_zero, CharP.cast_eq_zero,
-    add_zero, Nat.cast_one, cauchy_apply, zero_sub, inv_neg, inv_one, neg_mul, one_mul,
-    Finset.sum_neg_distrib, Finset.sum_singleton]
-  rw [show (1 : Fin 2) = Fin.last 1 from rfl, Fin.lastCases_last,
-    show (0 : Fin 1) = Fin.last 0 from rfl, Fin.lastCases_last]
-  ring
+  change x 0 * (-1) = (cauchyNat ℚ 1 *ᵥ x) 0
+  simp [mulVec, dotProduct, cauchyNat, cauchy_apply]
 
 /-- Explicit Cauchy matrices are totally regular. -/
 example : (cauchyNat ℚ 5).IsTotallyRegular := isTotallyRegular_cauchyNat 5

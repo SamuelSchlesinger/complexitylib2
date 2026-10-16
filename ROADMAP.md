@@ -1733,14 +1733,62 @@ join `Circuit/Arithmetic`. General polynomial and rank lemmas belong with the co
 foundational types. Preserve weighted-cost and supplied-input distinctions when adapting the
 older relative/conditional APIs to upstream `ecomplexityOn` and `ecomplexityGiven`.
 
-The first proposed arithmetic client is the Hessian multiplication lower bound on the existing
+The first arithmetic client is now the Hessian multiplication lower bound on the existing
 arithmetic signature, with explicitly interpreted constants and formal-polynomial semantics.
-Its public theorem should expose the polynomial computation and multiplication count. Port only
-the supporting machinery needed by this client, then test reuse against the Waring sum-of-powers
-bound. Preserve the latter's restricted representation model. The standalone algebraic checkout
-has local changes and an older pin; compare its relevant results with the embedded v1 source and
-record exact provenance for each actual port. This is an integration plan, not a completed port
-of the Hessian, Waring or general Fusion developments.
+Its public theorem exposes the polynomial computation and multiplication count. The next client
+is the Waring sum-of-powers bound, preserving its restricted representation model. The standalone
+algebraic checkout has local changes and an older pin; compare its relevant results with the
+embedded v1 source and record exact provenance for each port. Waring and the general Fusion
+developments remain outstanding.
+
+### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
+
+`Circuit/Arithmetic/Hessian.lean` proves `Circuit.hessian_rank_ceilDiv_two_le`: half the rank of
+the target polynomial's Hessian at any point, rounded up, is at most the circuit's multiplication
+count. The field may have any characteristic. The premise is equality of formal polynomials;
+agreement as functions over a finite field is insufficient. Constants, additions and wiring
+are free; every multiplication, including scalar multiplication, costs one. Each shared gate is
+charged once. The program theorem covers every wire and supplied input polynomials whose Hessians
+vanish at the chosen point, including affine inputs; the circuit endpoint supports any selected
+output of a multi-output circuit.
+
+The circuit proof uses native `Program.wire_induction` and `Program.cost_eq_sum`. The global span
+of multiplication contributions avoids double-counting shared ancestors. The arithmetic basis
+now interprets constant symbols in an arbitrary carrier, and its formal-polynomial evaluation
+commutes with evaluation in the coefficient semiring through CSLib's existing homomorphism API.
+Polynomial differentiation and rank lemmas live in `Foundations/Data/MvPolynomial/Hessian.lean`
+and `Foundations/LinearAlgebra/Rank.lean`, with Mathlib destinations. This batch introduces no
+new machine or tactic implementation.
+
+Source provenance: the clean source files `LinearAlgebra/Rank.lean`,
+`LowerBound/Fusion/Arithmetic/Interaction/Hessian.lean` and `Applications/Hessian.lean`, under
+`Complexitylib/Algebraic`, at v1 revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`.
+Samuel Schlesinger's authorship is preserved and the source revision is cited in `references.bib`.
+The native circuit proof replaces the source's Fusion dependency; this does not port the rest
+of that framework or assert historical priority for the mathematical bound.
+
+The addition costs 16 named proofs / 68 body lines, including every new helper: 7 lines for
+arithmetic semantics, 11 for polynomial Hessians, 7 for rank lemmas and 43 for the circuit bound.
+The longest body is the 21-line span argument. The library total is 5,829 named proofs / 40,127
+body lines across 553 modules. These source-layout counts exclude definitions and tests, and do
+not claim a reduction against the source's more general Fusion framework. Separately, the
+existing negation/Cauchy test's proof shrank from 10 to 3 lines when adapting its explicit
+unfolding to the new interpretation. Arithmetic lower bounds have a separate accounting group.
+
+Full-module MCP profiles use 2,912,639 raw tactic heartbeats for the local rank-two bound,
+3,915,079 for the span invariant and 437,538 for the program rank bound. These measure elaboration,
+not execution. The standalone profiler could not resolve the rebuilt import; the successful
+measurement ran a complete source replica through MCP with `CountHeartbeats`.
+
+The tests cover a sharp rank-two product over every field and explicitly over `ZMod 2`, one
+shared multiplication reused by addition, outputs before unused gates, multiple outputs,
+free input wiring, zero-input constants indexed by another type, scalar multiplication and
+supplied affine inputs. A functionally zero polynomial over `ZMod 2` with Hessian rank two
+checks the formal-polynomial boundary. Three headline axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`. Independent source/API review approves the implementation
+and tests. All six project checks pass: strict build 1.56 s, import coverage 1.63 s, tests 5.72 s,
+environment lint 7.40 s, style 2.18 s and init imports 4.32 s. These are incremental checkpoint
+timings. The required post-publication correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 
