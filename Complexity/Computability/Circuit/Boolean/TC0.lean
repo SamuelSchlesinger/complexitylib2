@@ -22,11 +22,11 @@ circuit (`AC0_subset_TC0`), and majority is a single gate, so majority is in TC�
 
 TC⁰ is also the class of the threshold circuits of polynomial size and constant depth
 (`TC0_eq_constDepth_threshold`) [Hajnal et al., Section 2][HMPST1993]. A majority gate is a
-threshold gate (`Threshold.ofMajority`). Conversely, a threshold gate `Th^m_j` is a majority gate of
-`2 m + 2` arguments, `m + 1 - j` of them `true` and the others `false`
-(`thresholdCircuitOfMajority`), which costs three gates in depth two. So parity, which has threshold
-circuits of depth three and linear size (`Threshold.parity_mem_constDepth`), is in TC⁰
-(`parity_mem_TC0`).
+threshold gate (`Threshold.ofMajority`). Conversely, a threshold gate `Th^m_j` is a majority gate
+on its `m` arguments padded with `m + 2` constants, `m + 1 - j` of them `true`, read from two
+constant gates (`thresholdCircuitOfMajority`): three gates in depth two, whatever the fan-in. So
+parity, which has threshold circuits of depth three and linear size
+(`Threshold.parity_mem_constDepth`), is in TC⁰ (`parity_mem_TC0`).
 
 ## Main definitions
 
@@ -77,8 +77,8 @@ theorem AC0_ssubset_TC0 : AC0 ⊂ TC0 :=
 namespace Threshold
 
 /-- A gate of the threshold basis as a circuit over the basis of TC⁰: a negation is a negation, and
-the threshold gate `Th^m_j` is a majority gate of `2 m + 2` arguments, the `m` arguments of `Th^m_j`
-padded with `m + 1 - j` copies of `true` and copies of `false`. -/
+the threshold gate `Th^m_j` is a majority gate of `2 m + 2` arguments, its `m` arguments padded with
+`m + 1 - j` copies of `true` and the rest copies of `false`. -/
 def majorityCircuit : (op : Op) → Circuit Unbounded.extSignature (signature.Arity op) 1
   | .not => Circuit.oneGate (σ := Unbounded.extSignature) (.ac .not) id
   | .threshold m j => thresholdCircuitOfMajority Unbounded.toExt
