@@ -394,11 +394,11 @@ It merges into current cslib main with two trivial conflicts and the merge build
    `Set α` with an explicit `enc : α ↪ List Bool`, as upstream `DecidableInTimeAndSpace` does.
 2. `PolyTime` is crei's `ComputableTidilyInPolyTime`; v2 does not build its own calculus.
 3. The UTM milestone is crei's; v2's hierarchy work will build on `Universal/`.
-4. Until crei's work lands, v2 keeps verbatim *subset* copies of crei's definitions at their
-   paths (definitions only, so the switch is deleting files). **Decided by the user
-   (2026-10-13): Turing machines come from upstream main** — no merge with crei's branch;
-   machine-level results are built against upstream `Turing.MultiTapeTM`, `TransformsTapes` and
-   its combinators.
+4. **Superseded (user, 2026-10-15): "unblock everything", and the calculus may be improved
+   freely.** crei's calculus and universal machine are vendored in full as tracked local copies
+   (`-- upstream: vendored crei:crei/tidy-universal @7f7c0696`, `submitted #1111`, `#1138`),
+   adapted to the pinned upstream main; `scripts/upstream_sync.py` reports when they merge or
+   move. Turing machines still come from upstream main (the pin is never crei's branch).
 5. crei's draft #767 defines `DTIME`/`DSPACE`/`P`/`L`/`PSPACE`/`EXP` and proves
    `DSPACE s ⊆ ⋃ c, DTIME (n · 2^(c·s))`; v2 must not duplicate it.
 
