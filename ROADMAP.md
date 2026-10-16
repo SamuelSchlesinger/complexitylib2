@@ -579,6 +579,30 @@ crypto branch. Including all shared rules, this batch adds 23 / 159 and brings t
 5,228 / 35,926 in 469 source files. These are source-layout counts excluding definitions,
 statements and tests; the modest crypto reduction does not erase the new shared proof work.
 
+### Strict bounded index sampling (2026-10-16)
+
+The next reduction primitive is exact fair-bit sampling in a power-of-two range above a supplied
+bound. `sampleBoundedIndex` caps excess indices at a rejection sentinel; `sampleDyadicIndex`
+retains the complete range, and `sampleDyadicCoin` compares that index with a supplied numerator.
+All use a fixed number of fair bits and have two-line `unfold; ppt` certificates. The dyadic
+range is at most `2*(bound+1)`, so producing the unary result is charged without an unbounded
+rejection loop. These are the samplers required by uniform random-hop reductions.
+
+Binary decoding and incremental saturation live in `BitString`, with exact uniform-distribution
+laws in `Probability/UniformNat`. The shared captured-fold rule replaces manual paired-state
+bookkeeping: its bounded decoder certificate takes 10 body lines versus 29 in the crypto branch,
+plus a one-line Boolean-to-unary rule and one-line captured-input wrapper. Every intermediate
+accumulator remains at most the supplied cap. The existing polynomial-logarithm bound also proves
+the sampling range polynomial. Tests cover a power-of-two bound with half the mass at the sentinel,
+zero bounds, probability-zero and probability-one coins, captured arithmetic, and rejection of an
+automatic unary-output certificate for uncapped binary decoding.
+
+Including shared helpers, this batch adds 28 theorem bodies / 115 body lines, bringing the total
+to 5,256 / 36,041 in 473 source files. The three original crypto-branch files contain 28 / 138;
+two grid-coordinate division/remainder helpers (2 / 5) are deferred, so the corresponding original
+portion is 26 / 133. Definitions, statements and tests remain outside this source-layout metric.
+Polynomial PRG stretch and adaptive GGM security still require their hybrid reductions.
+
 ### Next design experiments
 
 1. **Repeat trials and certify oracle programs.** Closed adaptive loops now have resource and

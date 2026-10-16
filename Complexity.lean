@@ -314,6 +314,7 @@ public import Complexity.Computability.Probabilistic.PPT.Clock
 public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Computability.Probabilistic.Sampling
+public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
@@ -389,6 +390,7 @@ public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Hoeffding
 public import Complexity.Foundations.Data.BitString.List
+public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
@@ -431,6 +433,7 @@ public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.Simulation
+public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction
 public import Complexity.Logics.Propositional.CNF
@@ -466,6 +469,7 @@ public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 public import Complexity.Probability.Uniform
+public import Complexity.Probability.UniformNat
 public import Complexity.Tactic.PPT
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init

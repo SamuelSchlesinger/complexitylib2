@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Foundations.Data.BitString.List.Operations
+public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.Enumeration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -29,6 +30,8 @@ polynomial bound on the complete encoded output. The operations are total on emp
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajority`, `.bitsSingle`, `.bitsSingles`,
   `.bitsXorSelected`: finite-mask algorithms.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList`: output-bounded enumeration.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBoundedBinaryValue`: capped binary decoding
+  to unary, with every intermediate accumulator bounded by the supplied cap.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsReplicate`: repeat a fixed bit.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsRowWithInput`: read one fixed-width row.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsRowsWithInput`: read a runtime number of rows.
@@ -36,6 +39,7 @@ polynomial bound on the complete encoded output. The operations are total on emp
 ## References
 
 Adapted from `Computability/Probabilistic/BitString.lean` and
+`Computability/Probabilistic/UniformNat.lean` and
 `Crypto/Computational/GoldreichLevin/WordDecoder.lean` on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the tidy machine calculus.
 -/
@@ -52,6 +56,31 @@ theorem length_encList_enumList (count : ℕ) :
     Function.comp_def]
 
 namespace ComputableTidilyInPolyTime
+
+/-- Saturating binary decoding to unary is polynomial time on arbitrary input words. -/
+@[fun_prop]
+theorem bitsBoundedBinaryValue : ComputableTidilyInPolyTime
+    (fun p : ℕ × List Bool => Cslib.BitString.boundedBinaryValue p.1 p.2)
+    (encPair encUnary encBits) encUnary := by
+  apply foldlWith (encA := encBool) (encL := encBits) (encP := encUnary)
+    (par := Prod.fst) (list := Prod.snd)
+    (step := fun cap value bit => min cap (2 * value + bit.toNat))
+    (fst encUnary encBits) (snd encUnary encBits) (const 0) (by fun_prop)
+    (B := fun p => p.1)
+  · simpa only [encUnary_apply, List.length_replicate] using
+      (fst encUnary encBits).polyBounded_length
+  · intro p i _
+    simpa only [encUnary_apply, List.length_replicate, Cslib.BitString.boundedBinaryValue] using
+      Cslib.BitString.boundedBinaryValue_le p.1 (p.2.take i)
+
+/-- Decode computed bits under a computed unary cap, fixing both intermediate encodings. -/
+@[fun_prop]
+theorem bitsBoundedBinaryValueWithInput {α : Type} {input : α ↪ List Bool}
+    {cap : α → ℕ} {word : α → List Bool}
+    (hcap : ComputableTidilyInPolyTime cap input encUnary)
+    (hword : ComputableTidilyInPolyTime word input encBits) :
+    ComputableTidilyInPolyTime (fun a => Cslib.BitString.boundedBinaryValue (cap a) (word a))
+      input encUnary := bitsBoundedBinaryValue.comp (hcap.prod hword)
 
 /-- Convert a raw bit string to the framed list encoding. -/
 theorem bitsToList : ComputableTidilyInPolyTime (fun l => l) encBits (encList encBool) := by

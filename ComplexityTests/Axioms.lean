@@ -4040,3 +4040,31 @@ info: 'Cslib.Crypto.OneWayPermutation.pseudorandomGenerator' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.OneWayPermutation.pseudorandomGenerator
+
+/--
+info: 'Cslib.BitString.uniformList_binaryValue' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.uniformList_binaryValue
+
+/--
+info: 'Cslib.Probability.eval_sampleBoundedIndex' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.eval_sampleBoundedIndex
+
+/--
+info: 'Cslib.Probability.isPPTOn_sampleBoundedIndex' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.isPPTOn_sampleBoundedIndex
+
+/--
+info: 'Cslib.Probability.isPPTOn_sampleDyadicCoin' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Probability.isPPTOn_sampleDyadicCoin

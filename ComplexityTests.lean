@@ -29,3 +29,4 @@ import ComplexityTests.SATPolyTime
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.Smoke
 import ComplexityTests.ThreeCNF
+import ComplexityTests.UniformNat

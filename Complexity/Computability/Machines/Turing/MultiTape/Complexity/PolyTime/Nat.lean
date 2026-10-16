@@ -44,6 +44,10 @@ operations support polynomially bounded counters and list enumeration in reducti
 
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
+/-- Interpret one Boolean as a unary zero or one. -/
+@[fun_prop]
+theorem bool_toUnary : ComputableTidilyInPolyTime Bool.toNat encBool encUnary := of_finite _
+
 /-- Addition of unary naturals, by concatenating their encodings. -/
 @[fun_prop]
 theorem unary_add : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
