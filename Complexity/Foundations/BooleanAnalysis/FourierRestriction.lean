@@ -43,18 +43,19 @@ namespace Cslib.BitString
 open Finset
 open scoped BigOperators
 
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {ι : Type*} [DecidableEq ι]
 
-omit [Fintype ι] in
 /-- A character at a point with the coordinates outside `J` replaced splits into the characters
 of the parts of `U` inside and outside `J`. -/
-theorem chi_piecewise (U J : Finset ι) (x z : ι → Bool) :
-    chi ℝ U (J.piecewise x z) = chi ℝ (U ∩ J) x * chi ℝ (U \ J) z := by
+theorem chi_piecewise {R : Type*} [CommRing R] (U J : Finset ι) (x z : ι → Bool) :
+    chi R U (J.piecewise x z) = chi R (U ∩ J) x * chi R (U \ J) z := by
   rw [chi, ← prod_filter_mul_prod_filter_not U (· ∈ J), filter_mem_eq_inter, ← sdiff_eq_filter,
     chi, chi]
   congr 1
   · exact prod_congr rfl fun i hi => by rw [piecewise_eq_of_mem _ _ _ (mem_inter.1 hi).2]
   · exact prod_congr rfl fun i hi => by rw [piecewise_eq_of_notMem _ _ _ (mem_sdiff.1 hi).2]
+
+variable [Fintype ι]
 
 /-- **The Fourier coefficients of a restriction**: the coefficient on `S` sums the coefficients
 of `f` on the sets meeting `J` in `S`, each multiplied by the character of its part outside `J`

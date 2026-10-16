@@ -37,6 +37,11 @@ probability `1 - ε` is within `ε` of the encoding of some message, unique when
 (`BitString.existsUnique_hammingDist_hadamardCode_le_of_le_blrAcceptance`)
 [O'Donnell, Section 1.6][ODonnell2014], [Arora and Barak, Section 11.5][AroraBarak09].
 
+The *long code* of a label `a : ι` is the dictator `r ↦ r a`, the evaluation `Function.eval a` on
+`ι → Bool` (`BitString.longCode`). It is the Hadamard encoding of the unit vector of `a`
+(`BitString.longCode_eq_hadamardCode`), so a table within relative distance `1/4` of a long code
+determines its label (`BitString.eq_of_hammingDist_longCode_lt`).
+
 The distance of the code comes from the fact that distinct parities differ on half of the inputs
 (`BitString.two_mul_hammingDist_parityOn`).
 
@@ -44,6 +49,7 @@ The distance of the code comes from the fact that distinct parities differ on ha
 
 * `Cslib.BitString.selfCorrect`: the two-query self-corrected read of a Boolean function.
 * `Cslib.BitString.hadamardCode`: the Hadamard encoding of a bit string.
+* `Cslib.BitString.longCode`: the long code of a label.
 
 ## Main results
 
@@ -59,6 +65,8 @@ The distance of the code comes from the fact that distinct parities differ on ha
 * `Cslib.BitString.exists_hammingDist_hadamardCode_le_of_le_blrAcceptance`,
   `Cslib.BitString.existsUnique_hammingDist_hadamardCode_le_of_le_blrAcceptance`: decoding a
   function that passes the linearity test.
+* `Cslib.BitString.longCode_eq_hadamardCode`, `Cslib.BitString.eq_of_hammingDist_longCode_lt`: the
+  long code is a Hadamard code, and unique decoding of the long code.
 
 ## References
 
@@ -89,6 +97,18 @@ def selfCorrect (f : (ι → Bool) → Bool) (x y : ι → Bool) : Bool :=
 @[simp] theorem selfCorrect_parityOn (S : Finset ι) (x y : ι → Bool) :
     selfCorrect (parityOn S) x y = parityOn S x := by
   rw [selfCorrect, parityOn_add, Bool.xor_left_comm, Bool.xor_self, Bool.xor_false]
+
+/-! ### The long code -/
+
+/-- The **long code** of a label `a : ι`: the dictator `r ↦ r a` on `ι → Bool`, that is, the
+evaluation `Function.eval a` [Arora and Barak, Chapter 22][AroraBarak09]. It is the Hadamard
+encoding of the unit vector of `a` (`longCode_eq_hadamardCode`). -/
+def longCode (a : ι) : (ι → Bool) → Bool :=
+  Function.eval a
+
+@[simp]
+theorem longCode_apply (a : ι) (r : ι → Bool) : longCode a r = r a :=
+  rfl
 
 variable [Fintype ι]
 
@@ -184,15 +204,9 @@ theorem hadamardCode_decide_mem [DecidableEq ι] (S : Finset ι) :
 
 /-- The value of a Hadamard codeword at the `i`-th unit vector is the `i`-th bit of the
 message. -/
-theorem hadamardCode_apply_decide_eq [DecidableEq ι] (x : ι → Bool) (i : ι) :
-    hadamardCode x (fun j => decide (j = i)) = x i := by
-  have h : (fun j => decide (j = i)) = Pi.single i 1 := by
-    funext j
-    by_cases hj : j = i
-    · subst hj
-      simp [Bool.one_eq_true]
-    · simp [hj, Bool.zero_eq_false]
-  rw [h, hadamardCode_apply, dotProduct_single_one]
+@[simp] theorem hadamardCode_single [DecidableEq ι] (x : ι → Bool) (i : ι) :
+    hadamardCode x (Pi.single i true) = x i :=
+  dotProduct_single_one x i
 
 /-- **The Hadamard codewords are the linear Boolean functions.** -/
 theorem exists_eq_hadamardCode_iff {f : (ι → Bool) → Bool} :
@@ -208,7 +222,7 @@ theorem exists_eq_hadamardCode_iff {f : (ι → Bool) → Bool} :
 /-- The Hadamard code is injective. -/
 theorem hadamardCode_injective : Function.Injective (hadamardCode (ι := ι)) := fun x y h => by
   classical
-  exact funext fun i => by rw [← hadamardCode_apply_decide_eq x, h, hadamardCode_apply_decide_eq]
+  exact funext fun i => by rw [← hadamardCode_single x, h, hadamardCode_single]
 
 variable [DecidableEq ι]
 
@@ -251,9 +265,9 @@ probability at least `1 - 2ε` [Arora and Barak, Section 11.5][AroraBarak09]. -/
 theorem one_sub_two_mul_le_expect_selfCorrect_eq_apply {f : (ι → Bool) → Bool}
     {x : ι → Bool} {ε : ℝ} (h : (hammingDist f (hadamardCode x) : ℝ) / 2 ^ Fintype.card ι ≤ ε)
     (i : ι) :
-    1 - 2 * ε ≤ 𝔼 y, if selfCorrect f (fun j => decide (j = i)) y = x i then 1 else 0 := by
-  simpa only [hadamardCode_apply_decide_eq] using
-    one_sub_two_mul_le_expect_selfCorrect_hadamardCode h fun j => decide (j = i)
+    1 - 2 * ε ≤ 𝔼 y, if selfCorrect f (Pi.single i true) y = x i then 1 else 0 := by
+  simpa only [hadamardCode_single] using
+    one_sub_two_mul_le_expect_selfCorrect_hadamardCode h (Pi.single i true)
 
 /-! ### Decoding a function that passes the linearity test -/
 
@@ -278,5 +292,22 @@ theorem existsUnique_hammingDist_hadamardCode_le_of_le_blrAcceptance {f : (ι �
     ∃! x, (hammingDist f (hadamardCode x) : ℝ) / 2 ^ Fintype.card ι ≤ ε :=
   let ⟨x, hx⟩ := exists_hammingDist_hadamardCode_le_of_le_blrAcceptance h
   ⟨x, hx, fun _ hy => eq_of_hammingDist_hadamardCode_le hε hy hx⟩
+
+/-! ### Decoding the long code -/
+
+/-- The long code of `a` is the Hadamard encoding of the unit vector of `a`. -/
+theorem longCode_eq_hadamardCode (a : ι) : longCode a = hadamardCode (Pi.single a true) := by
+  funext r
+  rw [hadamardCode_comm, hadamardCode_single, longCode_apply]
+
+/-- **Unique decoding of the long code**: a Boolean function within relative distance less than
+`1/4` of the long codes of `a` and of `b` forces `a = b`. -/
+theorem eq_of_hammingDist_longCode_lt {f : (ι → Bool) → Bool} {a b : ι}
+    (ha : (hammingDist f (longCode a) : ℝ) / 2 ^ Fintype.card ι < 1 / 4)
+    (hb : (hammingDist f (longCode b) : ℝ) / 2 ^ Fintype.card ι < 1 / 4) : a = b := by
+  rw [longCode_eq_hadamardCode] at ha hb
+  have h := congrFun (eq_of_hammingDist_hadamardCode_le (max_lt ha hb) (le_max_left _ _)
+    (le_max_right _ _)) a
+  simpa [Pi.single_apply, Bool.zero_eq_false] using h.symm
 
 end Cslib.BitString

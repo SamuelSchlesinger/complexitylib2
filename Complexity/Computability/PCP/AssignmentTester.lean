@@ -11,6 +11,7 @@ public import Complexity.Computability.PCP.LocalTest
 public import Complexity.Foundations.BooleanAnalysis.HadamardTester
 public import Mathlib.Data.Fin.VecNotation
 import Complexity.Foundations.Data.Finset.Expect
+import Complexity.Foundations.Data.Hamming
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Linarith
@@ -32,9 +33,9 @@ The tester here, for constraints on labels in a finite type `α`, follows Arora 
 equations (`Complexity.Foundations.BooleanAnalysis.HadamardTester`).
 
 * A label `a` is encoded by its **long code** `BitString.longCode a`, the dictator `r ↦ r a` on
-  `α → Bool`, which is the Hadamard encoding of the indicator vector of `a`. The long codes of
-  distinct labels differ on half of the inputs, so a table within relative distance `1/4` of a long
-  code determines its label (`BitString.eq_of_hammingDist_longCode_lt`).
+  `α → Bool`, which is the Hadamard encoding of the unit vector of `a`. The long codes of distinct
+  labels differ on half of the inputs, so a table within relative distance `1/4` of a long code
+  determines its label (`BitString.eq_of_hammingDist_longCode_lt`).
 * The labels `σ : Fin 2 → α` of the two ends are described by Boolean variables indexed by
   `Fin 2 × α`, their **one-hot encoding** `HadamardTester.oneHot σ`. The constraint becomes a
   system of quadratic
@@ -64,7 +65,6 @@ distance (`HadamardTester.exists_inputDist_div_le_unsatFrac`).
 
 ## Main definitions
 
-* `Cslib.BitString.longCode`: the long code of a label.
 * `Cslib.PCP.HadamardTester.oneHot`: the one-hot encoding of the labels of the two ends.
 * `Cslib.PCP.HadamardTester.equationCoeff`, `Cslib.PCP.HadamardTester.equationRhs`: the quadratic
   equations of a constraint.
@@ -78,7 +78,6 @@ distance (`HadamardTester.exists_inputDist_div_le_unsatFrac`).
 
 ## Main results
 
-* `Cslib.BitString.eq_of_hammingDist_longCode_lt`: unique decoding of the long code.
 * `Cslib.PCP.HadamardTester.forall_hadamardCode_tensor_equationCoeff_iff`: the solutions of the
   quadratic equations of a constraint are the one-hot encodings of its satisfying labels.
 * `Cslib.PCP.HadamardTester.passes_honestProof`: completeness of the tester.
@@ -101,56 +100,6 @@ distance (`HadamardTester.exists_inputDist_div_le_unsatFrac`).
 
 open Finset
 open scoped BigOperators
-
-namespace Cslib.BitString
-
-variable {α ι : Type*}
-
-/-! ### The long code -/
-
-/-- The **long code** of a label `a : α`: the Boolean function `r ↦ r a` on `α → Bool`, the
-dictator of the coordinate `a`. It is the Hadamard encoding of the indicator vector of `a`
-(`BitString.longCode_eq_hadamardCode`). -/
-def longCode (a : α) : (α → Bool) → Bool :=
-  fun r ↦ r a
-
-@[simp]
-theorem longCode_apply (a : α) (r : α → Bool) : longCode a r = r a :=
-  rfl
-
-variable [Fintype α] [DecidableEq α]
-
-/-- The long code of `a` is the Hadamard encoding of the indicator vector of `a`. -/
-theorem longCode_eq_hadamardCode (a : α) :
-    longCode a = hadamardCode fun i ↦ decide (i = a) := by
-  funext r
-  rw [hadamardCode_comm, hadamardCode_apply_decide_eq, longCode_apply]
-
-/-- **Unique decoding of the long code**: a Boolean function within relative distance less than
-`1/4` of the long codes of `a` and of `b` forces `a = b`. -/
-theorem eq_of_hammingDist_longCode_lt {f : (α → Bool) → Bool} {a b : α}
-    (ha : (hammingDist f (longCode a) : ℝ) / 2 ^ Fintype.card α < 1 / 4)
-    (hb : (hammingDist f (longCode b) : ℝ) / 2 ^ Fintype.card α < 1 / 4) : a = b := by
-  rw [longCode_eq_hadamardCode] at ha hb
-  have h := congrFun (eq_of_hammingDist_hadamardCode_le (max_lt ha hb) (le_max_left _ _)
-    (le_max_right _ _)) a
-  simpa using h.symm
-
-/-- The relative Hamming distance between two Boolean functions is the probability that they
-differ at a uniformly random input. -/
-theorem hammingDist_div_eq_expect (f g : (α → Bool) → Bool) :
-    (hammingDist f g : ℝ) / 2 ^ Fintype.card α = 𝔼 r, if f r ≠ g r then 1 else 0 := by
-  rw [Fintype.expect_eq_sum_div_card, sum_boole, Fintype.card_fun, Fintype.card_bool,
-    Nat.cast_pow, Nat.cast_ofNat]
-  rfl
-
-/-- The Hadamard encoding of the tensor square of `x`, read at a unit vector, is a product of two
-bits of `x`. -/
-theorem hadamardCode_tensor_single [DecidableEq ι] [Fintype ι] (x : ι → Bool) (p p' : ι) :
-    hadamardCode (tensor x x) (Pi.single (p, p') 1) = (x p && x p') := by
-  rw [hadamardCode_apply, dotProduct_single, mul_one, tensor_apply]
-
-end Cslib.BitString
 
 namespace Cslib.PCP
 
@@ -189,8 +138,8 @@ number of its variables are set. Their solutions are the one-hot encodings of th
 satisfying `C` (`forall_hadamardCode_tensor_equationCoeff_iff`). -/
 noncomputable def equationCoeff (C : α → α → Prop) :
     (Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2 → (Fin 2 × α) × (Fin 2 × α) → Bool :=
-  Sum.elim (fun q ↦ if Compatible C q.1 q.2 then 0 else Pi.single q 1)
-    fun b ↦ ∑ a, Pi.single ((b, a), (b, a)) 1
+  Sum.elim (fun q ↦ if Compatible C q.1 q.2 then 0 else Pi.single q true)
+    fun b ↦ ∑ a, Pi.single ((b, a), (b, a)) true
 
 /-- The right-hand sides of the quadratic equations of a constraint: `0` for the pairs of
 variables, `1` for the ends. -/
@@ -302,8 +251,10 @@ theorem hadamardCode_oneHot_endEmbed (σ : Fin 2 → α) (b : Fin 2) (r : α →
   rw [hadamardCode_endEmbed, longCode_eq_hadamardCode]
   congr 1
   funext a
-  rw [oneHot_apply, decide_eq_decide]
-  exact eq_comm
+  by_cases h : σ b = a
+  · subst h
+    simp
+  · simp [h, Ne.symm h, Bool.zero_eq_false]
 
 /-! ### The checks, as local tests -/
 
@@ -406,7 +357,11 @@ theorem expect_hammingDist_div_le_one_sub_acceptProb_inputTest {T : Fin 2 → (�
   calc 𝔼 b, (hammingDist (T b) (fun r ↦ hadamardCode x (endEmbed b r)) : ℝ) / 2 ^ Fintype.card α
       = 𝔼 b, 𝔼 r, 𝔼 _y : Fin 2 × α → Bool,
           if T b r ≠ hadamardCode x (endEmbed b r) then (1 : ℝ) else 0 := by
-        simp only [hammingDist_div_eq_expect, Fintype.expect_const]
+        have h (g g' : (α → Bool) → Bool) : (hammingDist g g' : ℝ) / 2 ^ Fintype.card α =
+            𝔼 r, if g r ≠ g' r then 1 else 0 := by
+          rw [← hammingDist_div_eq_expect, Fintype.card_fun, Fintype.card_bool, Nat.cast_pow,
+            Nat.cast_ofNat]
+        simp only [h, Fintype.expect_const]
     _ ≤ 𝔼 b, 𝔼 r, 𝔼 y, ((1 - if T b r = selfCorrect f (endEmbed b r) y then (1 : ℝ) else 0) +
           (1 - if selfCorrect f (endEmbed b r) y = hadamardCode x (endEmbed b r) then (1 : ℝ)
             else 0)) := by

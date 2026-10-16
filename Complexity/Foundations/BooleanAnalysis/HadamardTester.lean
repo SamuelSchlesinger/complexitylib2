@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Hadamard
 public import Mathlib.Data.Matrix.Mul
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Tactic.Linarith
 
@@ -102,11 +103,11 @@ theorem tensor_add_right (x : ι → Bool) (y y' : κ → Bool) :
   congrArg Function.uncurry (Matrix.vecMulVec_add x y y')
 
 /-- The tensor product of two unit vectors is a unit vector. -/
-theorem tensor_decide_eq [DecidableEq ι] [DecidableEq κ] (i : ι) (j : κ) :
-    tensor (fun i' => decide (i' = i)) (fun j' => decide (j' = j)) =
-      fun k => decide (k = (i, j)) := by
+theorem tensor_single [DecidableEq ι] [DecidableEq κ] (i : ι) (j : κ) :
+    tensor (Pi.single i true) (Pi.single j true) = Pi.single (i, j) true := by
   funext ⟨i', j'⟩
-  simp [Prod.ext_iff]
+  by_cases hi : i' = i <;> by_cases hj : j' = j <;>
+    simp [hi, hj, Bool.zero_eq_false]
 
 variable [Fintype ι] [Fintype κ]
 
@@ -120,7 +121,24 @@ theorem hadamardCode_tensor_tensor (x a : ι → Bool) (y b : κ → Bool) :
   simp only [tensor_apply, ← Bool.mul_eq_and]
   ring
 
+/-- **The inner product with a combination of rows**: the inner product of `w` with the sum of the
+`A e` for the `e` with `k e = true` is the sum of the inner products of `w` with those `A e`, that
+is, `⟨w, Aᵀ k⟩ = ⟨k, A w⟩`. -/
+private theorem hadamardCode_transpose (w : ι → Bool) (k : κ → Bool) (A : κ → ι → Bool) :
+    hadamardCode w (fun j => hadamardCode k fun e => A e j) =
+      hadamardCode k fun e => hadamardCode w (A e) := by
+  simp only [hadamardCode_apply]
+  rw [dotProduct_comm]
+  exact (Matrix.dotProduct_mulVec k (Matrix.of A) w).symm.trans
+    (congrArg _ (funext fun e => dotProduct_comm (A e) w))
+
 variable [DecidableEq ι] [DecidableEq κ]
+
+/-- The Hadamard encoding of the tensor square of `x`, read at a unit vector, is a product of two
+bits of `x`. -/
+theorem hadamardCode_tensor_single (x : ι → Bool) (p p' : ι) :
+    hadamardCode (tensor x x) (Pi.single (p, p') true) = (x p && x p') := by
+  rw [hadamardCode_single, tensor_apply]
 
 /-- **A nonzero bilinear form is nonzero on a quarter of the pairs**: if `M` is not all `false`,
 then `⟨M, y ⊗ z⟩ = 1` with probability at least `1/4` over uniformly random `y` and `z`. -/
@@ -128,7 +146,7 @@ theorem one_div_four_le_expect_hadamardCode_tensor {M : ι × κ → Bool} (hM :
     1 / 4 ≤ 𝔼 y, 𝔼 z, if hadamardCode M (tensor y z) = true then (1 : ℝ) else 0 := by
   obtain ⟨⟨i, j⟩, hk⟩ := hM
   have hrow (y : ι → Bool) :
-      1 / 2 * (if hadamardCode M (tensor y fun j' => decide (j' = j)) = true then 1 else 0) ≤
+      1 / 2 * (if hadamardCode M (tensor y (Pi.single j true)) = true then 1 else 0) ≤
         𝔼 z, if hadamardCode M (tensor y z) = true then (1 : ℝ) else 0 := by
     split_ifs with hy
     · rw [mul_one, expect_boole_eq_one_div_two_of_map_add
@@ -136,13 +154,13 @@ theorem one_div_four_le_expect_hadamardCode_tensor {M : ι × κ → Bool} (hM :
         (fun z z' => by rw [tensor_add_right, hadamardCode_add]) ⟨_, hy⟩]
     · rw [mul_zero]
       exact expect_nonneg fun z _ => by split_ifs <;> norm_num
-  have hcol : 𝔼 y, (if hadamardCode M (tensor y fun j' => decide (j' = j)) = true then
+  have hcol : 𝔼 y, (if hadamardCode M (tensor y (Pi.single j true)) = true then
       (1 : ℝ) else 0) = 1 / 2 :=
     expect_boole_eq_one_div_two_of_map_add
-      (f := fun y => hadamardCode M (tensor y fun j' => decide (j' = j)))
+      (f := fun y => hadamardCode M (tensor y (Pi.single j true)))
       (fun y y' => by rw [tensor_add_left, hadamardCode_add])
-      ⟨fun i' => decide (i' = i), by rwa [tensor_decide_eq, hadamardCode_apply_decide_eq]⟩
-  calc (1 / 4 : ℝ) = 𝔼 y, 1 / 2 * (if hadamardCode M (tensor y fun j' => decide (j' = j)) = true
+      ⟨Pi.single i true, by rwa [tensor_single, hadamardCode_single]⟩
+  calc (1 / 4 : ℝ) = 𝔼 y, 1 / 2 * (if hadamardCode M (tensor y (Pi.single j true)) = true
         then (1 : ℝ) else 0) := by
         rw [← mul_expect, hcol]
         norm_num
@@ -163,15 +181,6 @@ private theorem boole_le_add_one_sub₃ {A F G₁ G₂ G₃ : Prop} [Decidable A
     (if A then (1 : ℝ) else 0) ≤ (if F then 1 else 0) + (1 - if G₁ then 1 else 0) +
       (1 - if G₂ then 1 else 0) + (1 - if G₃ then 1 else 0) := by
   split_ifs <;> first | exact absurd (h ‹A› ‹G₁› ‹G₂› ‹G₃›) ‹¬F› | norm_num
-
-/-- A read that is correct with probability at least `1 - δ` for every input is wrong with
-probability at most `δ` on average. -/
-private theorem expect_expect_one_sub_le {α β : Type*} [Fintype α] [Nonempty α] [Fintype β]
-    [Nonempty β] {c : α → β → ℝ} {δ : ℝ} (h : ∀ i, 1 - δ ≤ 𝔼 j, c i j) :
-    𝔼 i, 𝔼 j, (1 - c i j) ≤ δ :=
-  expect_le univ_nonempty fun i _ => by
-    rw [expect_sub_distrib, Fintype.expect_const]
-    linarith [h i]
 
 /-! ### The tensor test -/
 
@@ -227,24 +236,14 @@ theorem eq_tensor_of_lt_tensorTestAcceptance {f : (ι → Bool) → Bool}
     exact boole_le_add_one_sub₃ fun hA h₁ h₂ h₃ => by rw [← h₁, ← h₂, ← h₃]; exact hA
   simp only [expect_add_distrib, Fintype.expect_const] at hbound
   have hc : 𝔼 y, 𝔼 r, (1 - c y r) ≤ 2 * ε :=
-    expect_expect_one_sub_le fun y => one_sub_two_mul_le_expect_selfCorrect_hadamardCode hf y
+    Fintype.expect_expect_one_sub_le fun y =>
+      one_sub_two_mul_le_expect_selfCorrect_hadamardCode hf y
   have hc' : 𝔼 y, 𝔼 z, 𝔼 t, (1 - c' y z t) ≤ 2 * ε' :=
-    expect_le univ_nonempty fun y _ => expect_expect_one_sub_le fun z =>
+    expect_le univ_nonempty fun y _ => Fintype.expect_expect_one_sub_le fun z =>
       one_sub_two_mul_le_expect_selfCorrect_hadamardCode hg _
   linarith
 
 /-! ### The equation test -/
-
-omit [DecidableEq ι] [DecidableEq κ] in
-/-- The inner product of `w` with the sum of the `A e` for the `e` with `k e = true` is the sum of
-the inner products of `w` with those `A e`. -/
-private theorem hadamardCode_hadamardCode (w : ι → Bool) (k : κ → Bool) (A : κ → ι → Bool) :
-    hadamardCode w (fun j => hadamardCode k fun e => A e j) =
-      hadamardCode k fun e => hadamardCode w (A e) := by
-  simp only [hadamardCode_apply]
-  rw [dotProduct_comm]
-  exact (Matrix.dotProduct_mulVec k (Matrix.of A) w).symm.trans
-    (congrArg _ (funext fun e => dotProduct_comm (A e) w))
 
 /-- The acceptance probability of the equation test on a table `g`, for the linear equations
 `⟨w, A e⟩ = b e` in `w`: the probability, over independent uniformly random `k` and `t`, that the
@@ -260,7 +259,7 @@ with probability one. -/
 theorem equationTestAcceptance_hadamardCode {A : κ → ι → Bool} {b : κ → Bool} {w : ι → Bool}
     (h : ∀ e, hadamardCode w (A e) = b e) :
     equationTestAcceptance (hadamardCode w) A b = 1 := by
-  simp [equationTestAcceptance, hadamardCode_hadamardCode, h]
+  simp [equationTestAcceptance, hadamardCode_transpose, h]
 
 /-- **Soundness of the equation test**: if `g` is within relative distance `ε` of the encoding of
 `w`, and the test accepts with probability more than `1/2 + 2ε`, then `w` solves the
@@ -280,12 +279,11 @@ theorem hadamardCode_eq_of_lt_equationTestAcceptance {g : (ι → Bool) → Bool
   have hD : 𝔼 k, D k = 1 / 2 := by
     -- The parity of the equations violated by `w` in a random set of equations.
     have hv : ∃ k, hadamardCode ((fun e' => hadamardCode w (A e')) + b) k = true :=
-      ⟨fun e' => decide (e' = e), by
-        simpa [hadamardCode_apply_decide_eq, Bool.add_eq_xor] using he⟩
+      ⟨Pi.single e true, by simpa [Bool.add_eq_xor] using he⟩
     have hpt (k : κ → Bool) : D k =
         1 - if hadamardCode ((fun e' => hadamardCode w (A e')) + b) k = true then 1 else 0 := by
       simp only [D]
-      rw [hadamardCode_hadamardCode, hadamardCode_comm _ k, hadamardCode_add]
+      rw [hadamardCode_transpose, hadamardCode_comm _ k, hadamardCode_add]
       cases hadamardCode k (fun e' => hadamardCode w (A e')) <;> cases hadamardCode k b <;> norm_num
     simp only [hpt, expect_sub_distrib, Fintype.expect_const,
       expect_boole_eq_one_div_two_of_map_add (hadamardCode_add _) hv]
@@ -296,7 +294,8 @@ theorem hadamardCode_eq_of_lt_equationTestAcceptance {g : (ι → Bool) → Bool
     exact boole_le_add_one_sub fun hA hG => by rw [← hG]; exact hA
   simp only [expect_add_distrib, Fintype.expect_const] at hbound
   have hc : 𝔼 k, 𝔼 t, (1 - c k t) ≤ 2 * ε :=
-    expect_expect_one_sub_le fun k => one_sub_two_mul_le_expect_selfCorrect_hadamardCode hg _
+    Fintype.expect_expect_one_sub_le fun k =>
+      one_sub_two_mul_le_expect_selfCorrect_hadamardCode hg _
   linarith
 
 /-! ### The Hadamard tester -/

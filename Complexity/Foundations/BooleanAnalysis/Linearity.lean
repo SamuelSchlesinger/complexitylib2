@@ -80,7 +80,7 @@ theorem exists_eq_parityOn_iff [Finite ι] {f : (ι → Bool) → Bool} :
   · rintro ⟨S, rfl⟩
     exact parityOn_add S
   -- `a i` is the value of `f` at the unit vector of `i`.
-  set a : ι → Bool := fun i => f fun j => decide (j = i)
+  set a : ι → Bool := fun i => f (Pi.single i true)
   have hT (T : Finset ι) : f (fun j => decide (j ∈ T)) = parityOn T a := by
     induction T using Finset.induction_on with
     | empty =>
@@ -90,12 +90,12 @@ theorem exists_eq_parityOn_iff [Finite ι] {f : (ι → Bool) → Bool} :
       exact h0
     | insert i T hi ih =>
       have h : (fun j => decide (j ∈ insert i T)) =
-          (fun j => decide (j = i)) + fun j => decide (j ∈ T) := by
+          Pi.single i true + fun j => decide (j ∈ T) := by
         funext j
         by_cases hj : j = i
         · subst hj
           simp [hi, Bool.add_eq_xor]
-        · simp [hj, Bool.add_eq_xor]
+        · simp [hj, Bool.add_eq_xor, Bool.zero_eq_false]
       rw [h, hf, ih, parityOn_insert hi]
   refine ⟨({i | a i = true} : Finset ι), funext fun x => ?_⟩
   calc f x = f fun j => decide (j ∈ ({j | x j = true} : Finset ι)) := by simp
