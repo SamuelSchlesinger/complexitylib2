@@ -6,13 +6,9 @@ completed reference developments.
 ## Current priorities
 
 1. **Certified PCP construction.** The
-   [gap theorem](Complexity/Computability/PCP/GapTheorem.lean) establishes combinatorial correctness
-   and polynomial output size. Complete the executable reduction and its resource certificate:
-
-   * connect the [certified initial 3-SAT graph](Complexity/Computability/PCP/Encoded/ThreeSAT.lean)
-     to an efficient SAT-to-3CNF conversion and the
-     [concrete gap amplifier](Complexity/Computability/PCP/Encoded/Amplification/Arithmetic.lean);
-   * prove the final verifier's randomness, query and indexing bounds.
+   [SAT-to-gap reduction](Complexity/Computability/PCP/Encoded/GapTheorem.lean) is correct and
+   polynomial-time. Complete the final verifier and its randomness, query and indexing bounds,
+   then assemble the class-level PCP theorem.
 
    The rotation certificate is polynomial in the number of vertices, which can suffice here.
    Polynomial time in the bit length of a vertex name is a stronger, separate target. The

@@ -13,6 +13,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.List
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+import Mathlib.Data.List.GetD
 
 /-!
 # Polynomial-time list operations
@@ -41,6 +42,7 @@ up a variable with a large binary label does not require a certificate as long a
   a polynomial-time list with a parameterized test.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`, `.replicate`: unary lengths,
   ranges and lists of a computed length, charging each repeated value.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.zipIdx`: number list entries with unary indices.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.countPWithInput`, `.countWithInput`: count
@@ -643,5 +645,23 @@ theorem bitsGetDWithInput {list : γ → List Bool} {index : γ → ℕ}
     (hindex : ComputableTidilyInPolyTime index encIn encUnary) (fallback : Bool) :
     ComputableTidilyInPolyTime (fun x => (list x).getD (index x) fallback) encIn encBool :=
   (bitsGetD fallback).comp (hlist.prod hindex)
+
+/-- Number the entries of a framed list with unary indices, charging the list and every index. -/
+@[fun_prop]
+theorem zipIdx {α : Type} (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun list : List α => list.zipIdx)
+      (encList enc) (encList (encPair enc encUnary)) := by
+  rcases isEmpty_or_nonempty α with h | h
+  · exact of_finite _
+  · obtain ⟨fallback⟩ := h
+    have heq (list : List α) : list.zipIdx =
+        (List.range list.length).map (fun i => (list.getD i fallback, i)) := by
+      apply List.ext_getElem (by simp)
+      intro i hi hi'
+      simp only [List.length_zipIdx] at hi
+      simp only [List.getElem_zipIdx, List.getElem_map, List.getElem_range,
+        List.getD_eq_getElem _ _ hi, Nat.zero_add]
+    simp_rw [heq, List.getD_eq_getElem?_getD]
+    fun_prop
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

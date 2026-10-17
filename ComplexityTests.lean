@@ -38,6 +38,7 @@ import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.LinearHash
+import ComplexityTests.ListZipIdx
 import ComplexityTests.Logarithms
 import ComplexityTests.MachineClock
 import ComplexityTests.MachineExtendTapes
@@ -61,6 +62,7 @@ import ComplexityTests.PCPEncodedComposition
 import ComplexityTests.PCPEncodedCompositionEnumeration
 import ComplexityTests.PCPEncodedConstraints
 import ComplexityTests.PCPEncodedEnumeration
+import ComplexityTests.PCPEncodedGap
 import ComplexityTests.PCPEncodedIteration
 import ComplexityTests.PCPEncodedPreprocess
 import ComplexityTests.PCPEncodedSize
@@ -74,6 +76,7 @@ import ComplexityTests.PPTTactic
 import ComplexityTests.PRGStretch
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeSearch
+import ComplexityTests.PolyTimeSum
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock
@@ -98,6 +101,7 @@ import ComplexityTests.Smoke
 import ComplexityTests.SourceComplexity
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
+import ComplexityTests.ThreeCNFPolyTime
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation

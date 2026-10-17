@@ -8256,3 +8256,47 @@ info: 'Cslib.PCP.Encoded.Graph.gap_le_unsatVal_arithmeticAmplify' depends on axi
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.Encoded.Graph.gap_le_unsatVal_arithmeticAmplify
+
+/-- info: 'Turing.MultiTapeTM.encSum' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.encSum
+
+/-- info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.sumInl' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.sumInl
+
+/-- info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.sumInr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.sumInr
+
+/-- info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.zipIdx' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.zipIdx
+
+/-- info: 'Cslib.Logic.PL.Clause.isPolyTime_splitAux' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Logic.PL.Clause.isPolyTime_splitAux
+
+/-- info: 'Cslib.Logic.PL.Clause.isPolyTime_split3' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Logic.PL.Clause.isPolyTime_split3
+
+/-- info: 'Cslib.Logic.PL.CNF.isPolyTime_to3CNF' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Logic.PL.CNF.isPolyTime_to3CNF
+
+/-- info: 'Cslib.PCP.Encoded.isPolyTime_gapGraph' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.isPolyTime_gapGraph
+
+/-- info: 'Cslib.PCP.Encoded.wellFormed_gapGraph' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.wellFormed_gapGraph
+
+/-- info: 'Cslib.PCP.Encoded.satisfiable_gapGraph_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.satisfiable_gapGraph_iff
+
+/-- info: 'Cslib.PCP.Encoded.gap_le_unsatVal_gapGraph' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.gap_le_unsatVal_gapGraph
