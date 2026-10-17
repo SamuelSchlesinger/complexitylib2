@@ -149,9 +149,7 @@ theorem polyTime_repeatedEdgeVerifier (width repeats : ℕ) (decode : (Fin width
     fun_prop
   · unfold repeatedEdgeVerifier
     dsimp only
-    apply ComputableTidilyInPolyTime.allWithInput (encA := encUnary)
-    · exact .const _
-    · exact hverdict.comp (by fun_prop)
+    fun_prop
 
 /-- Disjoint random blocks make the repeated acceptance mass the power of the single-check mass. -/
 theorem acceptProb_repeatedEdgeVerifier (width repeats : ℕ)

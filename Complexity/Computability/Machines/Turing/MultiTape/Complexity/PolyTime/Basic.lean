@@ -20,6 +20,8 @@ rules for `fun_prop`.
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.exists_degree`: polynomial-time functions
   admit explicit time and output degrees.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.polyBounded`: a computed unary value bounds
+  resources polynomially in the original input encoding.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq`: reuse identical encoded outputs.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.encoded`, `.unframe`, `.dropFrame`: compose
   encoded values and total frame parsing without requiring an inverse for an encoding.
@@ -43,6 +45,12 @@ theorem Turing.MultiTapeTM.PolyBounded.of_polynomiallyBounded {α : Type*}
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+
+/-- An efficiently computed unary value is polynomially bounded in the original encoded input.
+This supplies input-dependent resource bounds without exposing their polynomial coefficients. -/
+theorem polyBounded {f : α → ℕ} (hf : ComputableTidilyInPolyTime f encA encUnary) :
+    PolyBounded (fun x => (encA x).length) f := by
+  simpa only [encUnary_apply, List.length_replicate] using hf.polyBounded_length
 
 /-- Compose in execution order. This also lets `fun_prop` infer the intermediate encoding from
 the inner function when it cannot be inferred from the outer function. -/

@@ -162,7 +162,7 @@ example : ComputableTidilyInPolyTime
   · simp
   · intro n i total _ htotal
     simp [htotal, Nat.add_mul]
-  · fun_prop
+  · exact ComputableTidilyInPolyTime.polyBounded (by polytime)
   · intro n i total hi htotal
     simpa [htotal] using Nat.mul_le_mul_right n hi
 
@@ -172,14 +172,14 @@ example : ComputableTidilyInPolyTime
       encBits encBits ∧
     ∀ word : List Bool, word.foldl (fun reversed bit => bit :: reversed) [] = word.reverse := by
   apply ComputableTidilyInPolyTime.foldl_spec (encA := encBool) (encL := encBits)
-    (invariant := fun _ consumed state => state = consumed.reverse) (size := id)
+    (invariant := fun _ consumed state => state = consumed.reverse) (size := List.length)
   · polytime
   · polytime
   · polytime
   · simp
   · intro word consumed state bit _ hstate
     simp [hstate]
-  · fun_prop
+  · exact ComputableTidilyInPolyTime.polyBounded (by polytime)
   · intro word consumed state hprefix hstate
     simpa [hstate] using hprefix.length_le
 

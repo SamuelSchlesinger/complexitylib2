@@ -13,6 +13,7 @@ public import Mathlib.Data.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Foundations.Data.Nat.PolynomialBound.Log
+import Complexity.Tactic.PolyTime
 import Mathlib.Data.List.GetD
 
 /-!
@@ -95,9 +96,7 @@ theorem isPolyTime_tableVerifier (hV : V.PolyTime enc)
   have hv := hV.2.2
   have ht := isPolyTime_queryTable hV hcoins
   unfold tableVerifier
-  apply ComputableTidilyInPolyTime.allWithInput (encA := encBits)
-  · exact he.comp (.fst enc encBits)
-  · fun_prop
+  polytime
 
 private theorem mem_queryTable {a : α} {word : List Bool} {address : ℕ}
     (hword : word.length = V.coins a) (haddress : address ∈ V.queries (a, word)) :

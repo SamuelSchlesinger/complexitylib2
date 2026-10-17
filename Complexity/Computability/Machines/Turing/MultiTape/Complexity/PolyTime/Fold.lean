@@ -76,7 +76,8 @@ theorem foldlWith {par : γ → π} {list : γ → List α} {init : γ → β}
     hstates).computableTidilyInPolyTime
 
 /-- A prefix invariant supplies both the accumulator bound and the final postcondition.
-The list and step must have uniform polynomial-time certificates. -/
+The size bound may depend on the original input and need not be computable. The list and step
+must have uniform polynomial-time certificates. -/
 theorem foldl_spec {list : γ → List α} {init : γ → β} {step : β → α → β}
     (hlist : ComputableTidilyInPolyTime list encIn encL)
     (hinit : ComputableTidilyInPolyTime init encIn encB)
@@ -86,9 +87,9 @@ theorem foldl_spec {list : γ → List α} {init : γ → β} {step : β → α 
     (hbase : ∀ x, invariant x [] (init x))
     (hpreserve : ∀ x consumed state value, consumed ++ [value] <+: list x →
       invariant x consumed state → invariant x (consumed ++ [value]) (step state value))
-    {size : ℕ → ℕ} (hsize : Cslib.PolynomiallyBounded size)
+    {size : γ → ℕ} (hsize : PolyBounded (fun x => (encIn x).length) size)
     (hbound : ∀ x consumed state, consumed <+: list x → invariant x consumed state →
-      (encB state).length ≤ size (encIn x).length) :
+      (encB state).length ≤ size x) :
     ComputableTidilyInPolyTime (fun x => (list x).foldl step (init x)) encIn encB ∧
       ∀ x, invariant x (list x) ((list x).foldl step (init x)) := by
   have htrace (x : γ) (i : ℕ) (hi : i ≤ (list x).length) :
@@ -102,7 +103,7 @@ theorem foldl_spec {list : γ → List α} {init : γ → β} {step : β → α 
         hpreserve x ((list x).take i) _ (list x)[i]
           (by simpa only [List.take_add_one, List.getElem?_eq_getElem hlt, Option.toList_some]
             using List.take_prefix (i + 1) (list x)) (ih (by lia))
-  exact ⟨foldl' hlist hinit hstep (.of_polynomiallyBounded _ hsize)
+  exact ⟨foldl' hlist hinit hstep hsize
     (fun x i hi => hbound x ((list x).take i) _ (List.take_prefix ..) (htrace x i hi)),
     fun x => by simpa using htrace x (list x).length le_rfl⟩
 
@@ -116,13 +117,11 @@ theorem foldl_of_bounded_growth {list : γ → List α} {init : γ → β} {step
     (hgrowth : ∀ state value, (encB (step state value)).length ≤
       (encB state).length + growth) :
     ComputableTidilyInPolyTime (fun x => (list x).foldl step (init x)) encIn encB := by
-  obtain ⟨ci, di, hi⟩ := hinit.polyBounded_length
-  obtain ⟨cl, dl, hl⟩ := hlist.polyBounded_length
   refine (foldl_spec hlist hinit hstep
     (fun x consumed state => (encB state).length ≤
       (encB (init x)).length + consumed.length * growth)
-    (by simp) ?_ (size := fun n => ci * (n + 1) ^ di + cl * (n + 1) ^ dl * growth)
-    (by fun_prop) ?_).1
+    (by simp) ?_
+    (hinit.polyBounded_length.add (hlist.polyBounded_length.mul (.const growth))) ?_).1
   · intro x consumed state value _ hs
     have := hgrowth state value
     simp only [List.length_append, List.length_singleton, Nat.add_mul, Nat.one_mul]
@@ -130,7 +129,6 @@ theorem foldl_of_bounded_growth {list : γ → List α} {init : γ → β} {step
   · intro x consumed state hprefix hs
     have hlen := hprefix.length_le.trans
       (SizedListEncoding.length_le (encA := encA) (encL := encL) (list x))
-    have hcount := Nat.mul_le_mul_right growth (hlen.trans (hl x))
-    exact hs.trans (Nat.add_le_add (hi x) hcount)
+    exact hs.trans (Nat.add_le_add_left (Nat.mul_le_mul_right growth hlen) _)
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

@@ -61,12 +61,9 @@ theorem polyBounded_iterationSize_clog {graph : Input → Graph C}
     PolyBounded (fun x => (input x).length)
       (fun x => iterationSize factor descriptorBound (Nat.clog 2 (graph x).edges.length)
         (graph x)) := by
-  have hsize : ComputableTidilyInPolyTime
-      (fun x => iterationSize factor descriptorBound (Nat.clog 2 (graph x).edges.length)
-        (graph x)) input encUnary := by
-    unfold iterationSize
-    polytime
-  simpa only [encUnary_apply, List.length_replicate] using hsize.polyBounded_length
+  apply ComputableTidilyInPolyTime.polyBounded
+  unfold iterationSize
+  polytime
 
 /-- A preserved graph invariant with fixed linear cardinality growth and bounded descriptors
 bounds every intermediate encoding, including the initial state and all list framing. -/

@@ -78,6 +78,7 @@ import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
 import ComplexityTests.PRGStretch
+import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeSum

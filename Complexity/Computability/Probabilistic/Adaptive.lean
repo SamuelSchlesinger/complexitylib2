@@ -70,6 +70,9 @@ theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
   obtain ⟨cs, ds, hs⟩ := polynomiallyBounded_iff_le.mp hsize
   let bound (a : α) := cs * ((input a).length + 1) ^ ds
   let budget (a : α) := c * (bound a + 1) ^ d
+  have hboundEff : ComputableTidilyInPolyTime bound input encUnary := by
+    dsimp only [bound]
+    fun_prop
   have hbudgetEff : ComputableTidilyInPolyTime budget input encUnary := by
     dsimp only [budget, bound]
     fun_prop
@@ -91,7 +94,8 @@ theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
     refine (hrows.foldl_spec hstart hevaluate
       (fun pair consumed state => invariant pair.1 consumed.length state)
       (fun pair => hbase pair.1) ?_
-      (size := fun n => cs * (n + 1) ^ ds) (by fun_prop) ?_).1
+      (size := fun pair => bound pair.1)
+      (hboundEff.comp (ComputableTidilyInPolyTime.fst input encBits)).polyBounded ?_).1
     · intro pair consumed state coins hprefix hinvariant
       have hlength := hprefix.length_le
       simp only [List.length_append, List.length_singleton, BitString.length_listRows] at hlength
@@ -100,9 +104,7 @@ theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
     · intro pair consumed state hprefix hinvariant
       have hlength := hprefix.length_le
       simp only [BitString.length_listRows] at hlength
-      have hstate := (hbound pair.1 consumed.length state hlength hinvariant).trans (hs _)
-      exact hstate.trans (Nat.mul_le_mul_left cs (Nat.pow_le_pow_left
-        (by simp only [length_encPair]; lia) ds))
+      exact (hbound pair.1 consumed.length state hlength hinvariant).trans (hs _)
   let replayed (a : α) : ProbComp State := do
     let coins ← BitString.sampleList (count a * budget a)
     return (BitString.listRows (count a) (budget a) coins).foldl evaluate (initial a)

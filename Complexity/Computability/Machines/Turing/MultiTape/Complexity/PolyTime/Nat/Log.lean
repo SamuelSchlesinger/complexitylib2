@@ -92,7 +92,7 @@ theorem unary_log_const (base : ℕ) :
         exact ⟨(Nat.div_le_self _ _).trans h.1, by lia, Or.inr (by lia), by lia⟩
       · rename_i htest
         exact ⟨h.1, by lia, Or.inl (by lia), h.2.2.2⟩)
-    (size := fun n => 3 * n + 1) (by fun_prop) (fun _ _ _ hi h => by
+    (size := fun n => 3 * n + 1) (polyBounded (by fun_prop)) (fun _ _ _ hi h => by
       simp only [length_encPair, encUnary_apply, List.length_replicate]
       simp only [id_eq] at hi
       lia)
@@ -146,7 +146,7 @@ theorem unary_pow_clog_const {α : Type} {input : α ↪ List Bool} {size : α �
     (fun _ i state => state = factor ^ i) (fun _ => rfl)
     (fun _ _ _ _ h => by rw [h, pow_succ])
     (size := fun n => base ^ Nat.clog base (max factor 1) *
-      (n + 1) ^ Nat.clog base (max factor 1)) (by fun_prop) (fun n i state hi h => by
+      (n + 1) ^ Nat.clog base (max factor 1)) (polyBounded (by fun_prop)) (fun n i state hi h => by
       simp only [encUnary_apply, List.length_replicate, h]
       calc factor ^ i ≤ max factor 1 ^ i := Nat.pow_le_pow_left (Nat.le_max_left _ _) _
         _ ≤ max factor 1 ^ Nat.clog base (n + 1) :=

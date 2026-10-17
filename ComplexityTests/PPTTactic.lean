@@ -24,6 +24,24 @@ example : IsPPTOn encBits encBits (fun word => do
     pure ((bit :: word).foldl (fun reversed next => next :: reversed) [])) := by
   ppt
 
+-- Scans capture a sampled bit and reuse certificates at either fixed or runtime indices.
+example (rounds : ℕ) (test : List Bool × Bool × ℕ → Bool)
+    (htest : ComputableTidilyInPolyTime test
+      (encPair encBits (encPair encBool encUnary)) encBool) :
+    IsPPTOn encBits encBool (fun word => do
+      let bit ← ProbComp.uniform Bool
+      pure ((List.range rounds).all fun i => test (word, bit, i))) := by
+  ppt
+
+example (test : List Bool × Bool × ℕ → Bool)
+    (htest : ComputableTidilyInPolyTime test
+      (encPair encBits (encPair encBool encUnary)) encBool) :
+    IsPPTOn encBits encBool (fun word => do
+      let bit ← ProbComp.uniform Bool
+      pure ((List.range word.length).any fun i => test (word, bit, i))) := by
+  fail_if_success (clear htest; ppt)
+  ppt
+
 -- A local routine can take a tuple assembled from captured data.
 example (sample : (List Bool × ℕ) × List Bool → ProbComp Bool)
     (hsample : IsPPTOn (encPair (encPair encBits encUnary) encBits) encBool sample) :

@@ -34,8 +34,8 @@ up a variable with a large binary label does not require a certificate as long a
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput`, `.flatMapWithInput`,
   `.filterWithInput`, `.findWithInput`, `.anyWithInput`, `.allWithInput`:
   automation rules for traversals whose body also uses the original input.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst`, `.flatMapConst`: traverse a fixed
-  list without requiring an encoding of its elements.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapConst`, `.flatMapConst`, `.allConst`,
+  `.anyConst`: traverse a fixed list without requiring an encoding of its elements.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapFilterConst`: select and map fixed parameters
   with computed guards and outputs, preserving list order and duplicates.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWith`, `.findWith`: filtering or searching
@@ -513,6 +513,27 @@ theorem allWithInput {test : γ → α → Bool} {list : γ → List α}
       (encPair encIn encA) encBool) :
     ComputableTidilyInPolyTime (fun x => (list x).all (test x)) encIn encBool :=
   allWith htest id' hlist
+
+/-- Test every element of a fixed list. Only its members need certificates; the list and its
+elements are fixed before the computational input and require no encoding. -/
+@[fun_prop]
+theorem allConst {ι : Type*} (l : List ι) {test : γ → ι → Bool}
+    (htest : ∀ i ∈ l, ComputableTidilyInPolyTime (fun x => test x i) encIn encBool) :
+    ComputableTidilyInPolyTime (fun x => l.all (test x)) encIn encBool := by
+  induction l with
+  | nil => exact const true
+  | cons a l ih =>
+    exact bool_and.comp ((htest a (List.mem_cons_self ..)).prod
+      (ih fun b hb => htest b (List.mem_cons_of_mem _ hb)))
+
+/-- Test whether any element of a fixed list satisfies its input-dependent predicate.
+The fixed list needs no element encoding or uniform certificate over all possible elements. -/
+@[fun_prop]
+theorem anyConst {ι : Type*} (l : List ι) {test : γ → ι → Bool}
+    (htest : ∀ i ∈ l, ComputableTidilyInPolyTime (fun x => test x i) encIn encBool) :
+    ComputableTidilyInPolyTime (fun x => l.any (test x)) encIn encBool := by
+  simpa only [Function.comp_def, List.any_eq_not_all_not] using
+    bool_not.comp (allConst l fun i hi => bool_not.comp (htest i hi))
 
 private def idxStep [DecidableEq α] (v : α) (s : Bool × ℕ) (a : α) : Bool × ℕ :=
   if s.1 || decide (a = v) then (true, s.2) else (false, s.2 + 1)

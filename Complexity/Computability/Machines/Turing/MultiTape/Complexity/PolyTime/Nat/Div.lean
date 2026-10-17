@@ -56,7 +56,7 @@ theorem unary_divMod : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (p.1 / 
         exact ⟨by nlinarith [h.1], by lia, h.2.2.1, fun hpos => by
           have := h.2.2.2 hpos
           lia⟩)
-    (size := fun n => 3 * n + 1) (by fun_prop) (fun _ i state hi h => by
+    (size := fun p => 3 * p.1 + 1) (polyBounded (by fun_prop)) (fun _ i state hi h => by
       simp only [length_encPair, encUnary_apply, List.length_replicate]
       nlinarith [h.1, h.2.1])
   have hresult (p : ℕ × ℕ) : (step p.2)^[p.1] (0, 0) = (p.1 / p.2, p.1 % p.2) := by

@@ -4244,6 +4244,27 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_spec' depends o
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_spec
 
 /--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.polyBounded' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.polyBounded
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.allConst' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.allConst
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyConst' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyConst
+
+/--
 info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

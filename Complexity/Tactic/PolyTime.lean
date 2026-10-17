@@ -39,6 +39,11 @@ namespace Cslib.Tactic.PolyTime
 
 open Turing.MultiTapeTM
 
+-- Boolean scans hide the element encoding in their result. Resolve the list certificate before
+-- searching for a joint callback certificate, including when the callback captures local values.
+attribute [program_certificate hlist]
+  ComputableTidilyInPolyTime.anyWithInput ComputableTidilyInPolyTime.allWithInput
+
 /-- Supply the called algorithm's local certificate before inferring its tuple arguments. -/
 @[aesop safe -40 tactic (rule_sets := [PolyTime])]
 private meta def polytimeKnownCall : Lean.Elab.Tactic.TacticM Unit :=
