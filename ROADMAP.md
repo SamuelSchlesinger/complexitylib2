@@ -3,7 +3,7 @@
 This file records outstanding work and the rationale needed to guide it. The
 [README](README.md) introduces the library and links to completed reference developments;
 [AGENTS.md](AGENTS.md) holds repository rules and design commitments;
-[UPSTREAM.md](UPSTREAM.md) tracks source provenance and upstream integration.
+[UPSTREAM.md](UPSTREAM.md) records upstream coordination and integration decisions.
 Mathematical contracts and limitations belong beside their declarations.
 
 ## Current priorities
