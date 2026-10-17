@@ -97,6 +97,7 @@ import ComplexityTests.PseudoentropySeed
 import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
+import ComplexityTests.Quantitative
 import ComplexityTests.RandomOracle
 import ComplexityTests.RotationWalk
 import ComplexityTests.SATPolyTime

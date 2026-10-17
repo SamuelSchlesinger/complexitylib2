@@ -8556,3 +8556,45 @@ info: 'Cslib.Complexity.NP_eq_PCP_log' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.NP_eq_PCP_log
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_spec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_spec
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInO.foldl_bits_finite' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInO.foldl_bits_finite
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.map_bits' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.map_bits
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.comp_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.comp_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.prod_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.prod_le
