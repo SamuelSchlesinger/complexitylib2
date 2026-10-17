@@ -125,6 +125,7 @@ public import Complexity.Computability.Circuit.Fusion.Basic
 public import Complexity.Computability.Circuit.Fusion.Composition
 public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Homomorphism
+public import Complexity.Computability.Circuit.Fusion.Semifilter
 public import Complexity.Computability.Circuit.Fusion.Simulation
 public import Complexity.Computability.Circuit.Fusion.SimulationContext
 public import Complexity.Computability.Circuit.InnerSize
@@ -140,6 +141,7 @@ public import Complexity.Computability.Circuit.Monotone.Clique.Negative
 public import Complexity.Computability.Circuit.Monotone.Clique.Positive
 public import Complexity.Computability.Circuit.Monotone.Formula
 public import Complexity.Computability.Circuit.Monotone.KarchmerWigderson
+public import Complexity.Computability.Circuit.Monotone.Set
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation

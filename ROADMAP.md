@@ -1743,8 +1743,9 @@ embedded v1 source and record exact provenance for each port. The general Fusion
 counting layer is now integrated with a support-coverage client. Atom extraction now commutes
 with native composition, and local gadget properties transfer through ordinary and contextual
 simulation. Homomorphism transport now preserves exact cover costs and gives the corresponding
-source-complexity inequalities. Semifilters and the distinct cyclic-circuit characterizations
-remain outstanding, along with further arithmetic clients.
+source-complexity inequalities. The basic semifilter cover bound is now ported. Further
+Boolean/cyclic semifilter applications and the distinct cyclic-circuit characterizations remain
+outstanding, along with further arithmetic clients.
 
 ### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
 
@@ -2295,6 +2296,61 @@ against `44352e2` with no material findings. Its source inspection supports the 
 infinite-complexity case, cover inequality direction, non-vacuous counterexamples and proof
 counts. It did not independently execute builds, axiom guards or profiling, or verify original
 v1 provenance.
+
+### Native monotone circuits and semifilter covers (2026-10-16)
+
+`Circuit/Monotone/Set` interprets the existing monotone basis on arbitrary sets: constants are
+the empty/full set, AND is intersection and OR is union. `Monotone.andCost` charges only AND
+gates. These are interpretations and weights of native CSLib syntax, with no second circuit
+representation. They do not assert efficient execution on an encoding of arbitrary sets.
+
+`Circuit/Fusion/Semifilter` uses Mathlib's `BoundedOrderHom (Set U) Prop` for an upward-closed
+family accepting the full set and rejecting the empty set. It need not preserve intersections.
+The optional `IsUltra` class requires that either a set or its complement is accepted; both
+may be accepted. A witness supplies a target point and an admissible semifilter on the target
+complement accepting each restricted input containing that point. A finite pair cover forces
+every witness to fail intersection preservation on some listed pair.
+
+`PairCover.ofCircuit` reuses the shared Fusion preservation theorem to extract the AND pairs
+of any circuit producing the target at a designated output. Its length is exactly the native
+program's AND count, including repeated and unused gates. Constants and OR gates are free;
+multiple or shared outputs add no cost. Minimum pair-cover complexity in `ℕ∞` bounds both
+individual constructions and native supplied-source complexity at an actual source assignment.
+Empty witness classes give zero, while a class admitting no finite cover gives infinity.
+
+Source provenance: `LowerBound/Fusion/Semifilter.lean` and the set interpretation/AND weight
+from `Basis/AndOr.lean`, under `Complexitylib/Algebraic`, at clean v1 revision
+`2ad6cb481b70ee6e65e078dffb76b9856be199d3`. Samuel Schlesinger's authorship and source citation
+are retained. The port replaces the bespoke semifilter implementation and problem/model
+wrappers with existing order maps, preimages and the native Fusion predicates. It also allows
+free constants and arbitrary designated outputs. Further Boolean and cyclic semifilter
+applications remain outstanding. No machines, compilers or tactics are added. The live
+upstream audit reports the cslib pin and every submitted/vendored marker current.
+
+Against `ad19c89`, the batch adds 18 named proofs / 41 body lines, including all new cost,
+interpretation and cover helpers. The `PairCover.ofCircuit` proof field contributes nine more
+lines, for 50 proof-body lines in total; statements, computational fields and tests are excluded.
+The whole library has 5,981 named proofs / 40,651 body lines across 575 modules. A full-module
+MCP replica, identical after removing measurement commands, records raw tactic heartbeats of
+261,227 for atom preservation, 57,912 for failure on the target, 142,857 for the cover proof,
+2,173,767 for the filtered-list length identity and 69,412 for exact circuit cost. These measure
+elaboration, not program runtime; no heartbeat override is used.
+
+`FusionSemifilter` checks an ultra semifilter accepting both complementary singletons while
+rejecting their intersection. An explicit three-point witness gives an exact one-AND lower
+bound attained by a circuit with shared outputs and a supplied-input output. A six-gate
+construction containing free constants/unions and an unused repeated AND extracts exactly
+two identical pairs; its structural count is executed. Separate clients check empty and full
+targets, an inadmissible witness class, the impossibility of a semifilter on an empty carrier,
+an infinite cover complexity, and independent carrier/source-domain universes. Eight new axiom
+guards use only the permitted standard axioms.
+
+All six checks pass: strict build 2.14 s, import coverage 1.56 s, tests 5.56 s, environment lint
+7.27 s, style 2.12 s and init imports 4.31 s. These are incremental checkpoint timings. The
+independent API review approves the source and clients after checking both through MCP. It
+also independently checked the eight axiom guards, reproduced the proof accounting, verified
+profile-source parity and read the six successful gate records without rerunning the gates.
+The required post-publication Codex correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 

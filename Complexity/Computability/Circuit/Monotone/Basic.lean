@@ -25,6 +25,7 @@ keeping meanings and these costs (`binaryCost_toDeMorgan`).
 
 * `Cslib.Circuits.Monotone.signature`, `Cslib.Circuits.Monotone.interpretation`.
 * `Cslib.Circuits.Monotone.binaryCost`: the cost function charging one for each AND and OR gate.
+* `Cslib.Circuits.Monotone.andCost`: the cost function charging only AND gates.
 * `Cslib.Circuits.Monotone.toDeMorgan`: the monotone basis inside the De Morgan basis.
 
 ## Main results
@@ -104,6 +105,17 @@ def binaryCost : Op → ℕ
 /-- Constants are free. -/
 @[simp] theorem binaryCost_const (b : Bool) : binaryCost (.const b) = 0 :=
   rfl
+
+/-- Count AND gates, with constants and OR gates free. -/
+def andCost : Op → ℕ
+  | .and => 1
+  | _ => 0
+
+@[simp] theorem andCost_and : andCost .and = 1 := rfl
+
+@[simp] theorem andCost_or : andCost .or = 0 := rfl
+
+@[simp] theorem andCost_const (b : Bool) : andCost (.const b) = 0 := rfl
 
 /-! ### The monotone basis inside the De Morgan basis -/
 

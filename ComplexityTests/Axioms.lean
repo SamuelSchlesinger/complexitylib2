@@ -17,6 +17,62 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Fusion.Atom.preserves_semifilter' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.Atom.preserves_semifilter
+
+/--
+info: 'Cslib.Circuits.Fusion.SemifilterWitness.not_predicate_target' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.SemifilterWitness.not_predicate_target
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.ofCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.ofCircuit
+
+/--
+info: 'Cslib.Circuits.Fusion.length_andPairs' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.length_andPairs
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.length_ofCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.length_ofCircuit
+
+/--
+info: 'Cslib.Circuits.Fusion.pairCover_lowerBound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairCover_lowerBound
+
+/--
+info: 'Cslib.Circuits.Fusion.pairCoverComplexity_le_cost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_le_cost
+
+/--
+info: 'Cslib.Circuits.Fusion.pairCoverComplexity_le_ecomplexityFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_le_ecomplexityFrom
+
+/--
 info: 'Cslib.Circuits.Circuit.ComputesFrom.map' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

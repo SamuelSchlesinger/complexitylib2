@@ -22,6 +22,7 @@ import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.Fusion
 import ComplexityTests.FusionHomomorphism
+import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.GGM
 import ComplexityTests.GoldreichLevin
