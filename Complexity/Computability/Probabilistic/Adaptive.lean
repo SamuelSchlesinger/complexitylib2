@@ -51,7 +51,9 @@ open Turing.MultiTapeTM
 variable {α State : Type} {input : α ↪ List Bool} {stateEncoding : State ↪ List Bool}
 
 /-- One invariant proves both a polynomial resource bound and the final supported postcondition.
-The resource invariant must hold on every possible execution, not just with high probability. -/
+The resource invariant must hold on every possible execution, not just with high probability.
+The bound may depend on the original input and need not be computable: the proof chooses one
+computable polynomial majorant before allocating the random tape. -/
 theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
     {step : State → ProbComp State}
     (hcount : ComputableTidilyInPolyTime count input encUnary)
@@ -60,14 +62,14 @@ theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
     (invariant : α → ℕ → State → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
       ∀ next ∈ (ProbComp.eval (step state)).support, invariant a (i + 1) next)
-    {size : ℕ → ℕ} (hsize : PolynomiallyBounded size)
+    {size : α → ℕ} (hsize : PolyBounded (fun a => (input a).length) size)
     (hbound : ∀ a i state, i ≤ count a → invariant a i state →
-      (stateEncoding state).length ≤ size (input a).length) :
+      (stateEncoding state).length ≤ size a) :
     IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) ∧
       ∀ a state, state ∈ (ProbComp.eval (OracleComp.iterate (count a) step (initial a))).support →
         invariant a (count a) state := by
   obtain ⟨c, d, evaluate, hevaluate, hsupport, hlaw⟩ := hstep.exists_total_seeded_evaluator
-  obtain ⟨cs, ds, hs⟩ := polynomiallyBounded_iff_le.mp hsize
+  obtain ⟨cs, ds, hs⟩ := hsize
   let bound (a : α) := cs * ((input a).length + 1) ^ ds
   let budget (a : α) := c * (bound a + 1) ^ d
   have hboundEff : ComputableTidilyInPolyTime bound input encUnary := by
@@ -138,9 +140,9 @@ theorem IsPPTOn.iterateWith_spec {initial : α → State} {count : α → ℕ}
     (invariant : α → ℕ → State → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
       ∀ next ∈ (ProbComp.eval (step a state)).support, invariant a (i + 1) next)
-    {size : ℕ → ℕ} (hsize : PolynomiallyBounded size)
+    {size : α → ℕ} (hsize : PolyBounded (fun a => (input a).length) size)
     (hbound : ∀ a i state, i ≤ count a → invariant a i state →
-      (stateEncoding state).length ≤ size (input a).length) :
+      (stateEncoding state).length ≤ size a) :
     IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) (step a) (initial a)) ∧
       ∀ a state,
         state ∈ (ProbComp.eval (OracleComp.iterate (count a) (step a) (initial a))).support →
@@ -159,7 +161,8 @@ theorem IsPPTOn.iterateWith_spec {initial : α → State} {count : α → ℕ}
       simp only [packedStep, ProbComp.eval_map, PMF.mem_support_map_iff] at hnext
       obtain ⟨value, hvalue, rfl⟩ := hnext
       exact ⟨rfl, hpreserve captured i state hi hstate value hvalue⟩)
-    (size := fun n => 2 * n + size n + 1) (by fun_prop)
+    (size := fun a => 2 * (input a).length + size a + 1)
+    ((((PolyBounded.const 2).mul .self).add hsize).add (.const 1))
     (by
       rintro a i ⟨captured, state⟩ hi ⟨rfl, hstate⟩
       simp only [length_encPair]
@@ -183,9 +186,6 @@ theorem IsPPTOn.iterate_of_bounded_growth {initial : α → State} {count : α �
     {growth : ℕ} (hgrowth : ∀ state next, next ∈ (ProbComp.eval (step state)).support →
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :
     IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) := by
-  obtain ⟨ci, di, hi⟩ := hinitial.polyBounded_length
-  obtain ⟨cc, dc, hc⟩ := hcount.polyBounded_length
-  simp only [encUnary_apply, List.length_replicate] at hc
   exact (IsPPTOn.iterate_spec hcount hinitial hstep
     (fun a i state => (stateEncoding state).length ≤
       (stateEncoding (initial a)).length + i * growth)
@@ -194,9 +194,9 @@ theorem IsPPTOn.iterate_of_bounded_growth {initial : α → State} {count : α �
       intro a i state _ hinvariant next hnext
       have := hgrowth state next hnext
       nlinarith)
-    (size := fun n => ci * (n + 1) ^ di + cc * (n + 1) ^ dc * growth) (by fun_prop)
-    (fun a i state hiCount hinvariant => hinvariant.trans
-      (Nat.add_le_add (hi a) (Nat.mul_le_mul_right growth (hiCount.trans (hc a)))))).1
+    (hinitial.polyBounded_length.add (hcount.polyBounded.mul (.const growth)))
+    (fun _ _ _ hiCount hinvariant => hinvariant.trans
+      (Nat.add_le_add_left (Nat.mul_le_mul_right growth hiCount) _))).1
 
 /-- Iteration of a step that never increases its encoded state needs no extra size invariant. -/
 theorem IsPPTOn.iterate_of_length_le {initial : α → State} {count : α → ℕ}

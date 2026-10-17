@@ -58,6 +58,14 @@ example : True := by
         (fun n => OracleComp.iterate n (fun state => pure (2 * state)) n) := by ppt
   trivial
 
+-- A small expected state size does not bound every supported execution of a strict PPT loop.
+example : True := by
+  fail_if_success
+    have : IsPPTOn encUnary encUnary (fun n => OracleComp.iterate n (fun state => do
+        let bit ← ProbComp.uniform Bool
+        return if bit then 2 * state else 0) 1) := by ppt
+  trivial
+
 -- An implicit binary graph is supplied by an efficient transition function. The loop contract
 -- certifies both its machine time and that every possible output is reachable from its input.
 example (neighbor : List Bool → Bool → List Bool)
@@ -87,7 +95,8 @@ example (neighbor : List Bool → Bool → List Bool)
       obtain ⟨bit, _, heq⟩ := (PMF.mem_support_map_iff _ _ _).mp hnext
       exact ⟨by simpa only [← heq] using (hsize state bit).trans hstate.1,
         hstate.2.tail ⟨bit, heq⟩⟩)
-    (size := id) (by fun_prop) (fun _ _ _ _ h => h.1)
+    (size := List.length) (ComputableTidilyInPolyTime.polyBounded (by fun_prop))
+    (fun _ _ _ _ h => h.1)
 
 private noncomputable def cappedStep (limit state : ℕ) : ProbComp ℕ := do
   let bit ← ProbComp.uniform Bool
@@ -124,9 +133,63 @@ example : IsPPTOn encUnary encUnary
           have := of_decide_eq_true (Bool.and_eq_true_iff.mp hmove).2
           lia
       · exact hstate)
-    (size := id) (by fun_prop) (fun _ _ _ _ h => by simpa using h)
+    (size := id) (ComputableTidilyInPolyTime.polyBounded (by fun_prop))
+    (fun _ _ _ _ h => by simpa using h)
 
 -- Zero iterations perform no transition, including for the captured-input client.
 example : ProbComp.eval (OracleComp.iterate 0 (cappedStep 0) 0) = PMF.pure 0 := by simp
+
+-- The resource bound is mathematical data; no computation certificate for it is required.
+example (bound : List Bool → ℕ) (hsize : PolyBounded List.length bound)
+    (hbound : ∀ word, word.length ≤ bound word) :
+    IsPPTOn encBits encBits (fun word =>
+      OracleComp.iterate word.length (fun state => pure state) word) := by
+  refine (IsPPTOn.iterate_spec (by fun_prop) (by fun_prop) (by ppt)
+    (fun word _ state => state = word) (by simp) ?_ hsize ?_).1
+  · intro word i state _ hstate next hnext
+    simpa [hstate] using hnext
+  · intro word i state _ hstate
+    simpa [hstate] using hbound word
+
+private noncomputable def sampledRows (p : List Bool × ℕ) : ProbComp (List (List Bool)) :=
+  OracleComp.iterate p.2 (fun rows => do
+    let bit ← ProbComp.uniform Bool
+    return (bit :: p.1) :: rows) []
+
+-- Every sampled row copies the captured word. The invariant describes the rows; the bound
+-- charges each sampled bit, copied word, and list frame, including on low-probability paths.
+private theorem sampledRows_spec :
+    IsPPTOn (encPair encBits encUnary) (encList encBits) sampledRows ∧
+      ∀ p rows, rows ∈ (ProbComp.eval (sampledRows p)).support →
+        rows.length = p.2 ∧ ∀ row ∈ rows, row.length = p.1.length + 1 := by
+  unfold sampledRows
+  refine IsPPTOn.iterateWith_spec ?_ ?_ ?_
+    (fun (p : List Bool × ℕ) i (rows : List (List Bool)) =>
+      rows.length = i ∧ ∀ row ∈ rows, row.length = p.1.length + 1)
+    (by simp) ?_ (size := fun p => p.2 * (2 * (p.1.length + 1) + 1)) ?_ ?_
+  · fun_prop
+  · fun_prop
+  · ppt
+  · intro p i rows _ hrows next hnext
+    simp only [ProbComp.eval_bind, ProbComp.eval_pure] at hnext
+    obtain ⟨bit, _, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hnext
+    simpa only [List.length_cons, hrows.1, List.mem_cons, forall_eq_or_imp, true_and]
+      using hrows.2
+  · exact ComputableTidilyInPolyTime.polyBounded (by fun_prop)
+  · intro p i rows hi hrows
+    calc
+      (encList encBits rows).length ≤ rows.length * (2 * (p.1.length + 1) + 1) :=
+        length_encList_le encBits rows fun row hrow => by simp [hrows.2 row hrow]
+      _ ≤ _ := by simpa only [hrows.1] using Nat.mul_le_mul_right _ hi
+
+-- The certified loop composes with an ordinary functional scan of the accumulated rows.
+example : IsPPTOn (encPair encBits encUnary) encBool (fun p => do
+    let rows ← sampledRows p
+    return rows.any (fun row => row.all id)) := by
+  have hrows := sampledRows_spec.1
+  ppt
+
+example : ProbComp.eval (sampledRows ([true, false], 0)) = PMF.pure [] := by
+  simp [sampledRows]
 
 end ComplexityTests.AdaptivePPT

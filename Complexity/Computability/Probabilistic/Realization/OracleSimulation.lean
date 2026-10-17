@@ -170,26 +170,20 @@ theorem isPPTOn_run [Finite Operation] {input : α ↪ List Bool}
         (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n))
           (handler a)) (machine.runOracle (count a) (word a))).run (initial a)) := by
   let _ := Fintype.ofFinite Operation
-  obtain ⟨cw, dw, hwordSize⟩ := hword.polyBounded_length
-  simp only [encBits_apply] at hwordSize
-  obtain ⟨ct, dt, htime⟩ := hcount.polyBounded_length
-  simp only [encUnary_apply, List.length_replicate] at htime
-  obtain ⟨ci, di, hinitialSize⟩ := hinitial.polyBounded_length
   obtain ⟨cr, dr, hresourceSize⟩ := polynomiallyBounded_iff_le.mp hresources
   obtain ⟨cf, hconfigurationSize⟩ :=
     length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Operation)
-  let time (n : ℕ) := ct * (n + 1) ^ dt
-  let budget (n : ℕ) := cr * (n + time n + 1) ^ dr
+  let budget (a : α) := cr * ((input a).length + count a + 1) ^ dr
   let start (a : α) := (FiniteConfig.init (k := k) (Oracle := Operation)
     machine.initial (word a), initial a)
   let loopInvariant (a : α) (i : ℕ) (pair : FiniteConfig k Bool Control Operation × State) :=
-    FiniteConfig.SpaceBound (word a).length i (budget (input a).length) pair.1 ∧
+    FiniteConfig.SpaceBound (word a).length i (budget a) pair.1 ∧
       invariant a pair.2 ∧ (stateEncoding pair.2).length ≤
-        (stateEncoding (initial a)).length + i * budget (input a).length
+        (stateEncoding (initial a)).length + i * budget a
   have hbudget (a : α) (word : List Bool) (hword : word.length ≤ count a) :
-      resources ((input a).length + word.length) ≤ budget (input a).length :=
+      resources ((input a).length + word.length) ≤ budget a :=
     (hresourceSize _).trans (Nat.mul_le_mul_left cr (Nat.pow_le_pow_left
-      (by have := htime a; dsimp only [time]; lia) dr))
+      (by lia) dr))
   have hstart : ComputableTidilyInPolyTime start input (encPair encFiniteConfig stateEncoding) := by
     dsimp only [start]
     fun_prop
@@ -223,16 +217,14 @@ theorem isPPTOn_run [Finite Operation] {input : α ↪ List Bool}
           exact ⟨hcfg.receive channel control answer (hreply.trans hb), hs', by
             dsimp only at hsize hgrowth ⊢
             nlinarith⟩)
-    (size := fun n => 2 * cf * (cw * (n + 1) ^ dw + time n + budget n + 1) +
-      ci * (n + 1) ^ di + time n * budget n + 1) (by dsimp only [time, budget]; fun_prop)
+    (size := fun a => 2 * cf * ((word a).length + count a + budget a + 1) +
+      (stateEncoding (initial a)).length + count a * budget a + 1)
+    (ComputableTidilyInPolyTime.polyBounded (by dsimp only [budget]; fun_prop))
     (by
       rintro a i ⟨cfg, state⟩ hi ⟨hcfg, _, hstate⟩
-      have ht : i ≤ time (input a).length := hi.trans (htime a)
       have hf := hconfigurationSize _ _ _ cfg hcfg
-      have hs := hinitialSize a
-      have hw := hwordSize a
       simp only [length_encPair]
-      dsimp only at hstate hw ⊢
+      dsimp only at hstate ⊢
       nlinarith)).1
   have hproject : ComputableTidilyInPolyTime
       (fun pair : FiniteConfig k Bool Control Operation × State =>

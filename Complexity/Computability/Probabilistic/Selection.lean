@@ -60,22 +60,17 @@ theorem IsPPTOn.selectBest {α : Type} {input : α ↪ List Bool}
     apply (htest'.countTrue htrials').map_with
     dsimp only [OracleComp.selectUpdate, stateEncoding]
     polytime
-  obtain ⟨cc, dc, hc⟩ := hcount.polyBounded_length
-  obtain ⟨ct, dt, ht⟩ := htrials.polyBounded_length
-  simp only [encUnary_apply, List.length_replicate] at hc ht
   have hloop := (IsPPTOn.iterateWith_spec (stateEncoding := stateEncoding)
     (initial := fun _ => (0, 0, 0))
     (step := fun a => OracleComp.selectStep (trials a) (test a)) hcount (by fun_prop) hstep
     (fun a i state => state.1 = i ∧ state.2.1 ≤ i ∧ state.2.2 ≤ trials a)
     (by simp) (fun a i state _ hstate next hnext =>
       ProbComp.selectStep_bounded (trials a) (test a) i state hstate next hnext)
-    (size := fun n => 4 * (cc * (n + 1) ^ dc) + ct * (n + 1) ^ dt + 2)
-    (by fun_prop) (by
+    (size := fun a => 4 * count a + trials a + 2)
+    (ComputableTidilyInPolyTime.polyBounded (by fun_prop)) (by
       intro a i state hi hstate
       dsimp only [stateEncoding]
       simp only [length_encPair, encUnary_apply, List.length_replicate]
-      have := hc a
-      have := ht a
       lia)).1
   exact hloop.map (by dsimp only [stateEncoding]; fun_prop)
 

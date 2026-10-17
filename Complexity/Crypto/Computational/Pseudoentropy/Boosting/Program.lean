@@ -441,9 +441,7 @@ theorem isPPTOn_run {α : Type} {input : α ↪ List Bool} {evaluate : List Bool
   have hclock : ComputableTidilyInPolyTime (fun a => (params a).clock) input encUnary := by
     unfold Parameters.clock Parameters.inverseRate Parameters.denominator
     polytime
-  obtain ⟨cc, dc, hc⟩ := hclock.polyBounded_length
-  obtain ⟨cb, db, hb⟩ := (Parameters.isPolyTime_codeBound hparams).polyBounded_length
-  simp only [encUnary_apply, List.length_replicate] at hc hb
+  have hcode := Parameters.isPolyTime_codeBound hparams
   refine (IsPPTOn.iterateWith_spec (stateEncoding := State.encoding)
     (initial := fun _ => State.initial)
     (step := fun a => round evaluate (source a) (learn a) (params a))
@@ -451,10 +449,10 @@ theorem isPPTOn_run {α : Type} {input : α ↪ List Bool} {evaluate : List Bool
     (fun a rounds => State.Bounded rounds (params a).codeBound)
     (fun _ => State.bounded_initial _)
     (fun a _ _ _ hstate => round_bounded evaluate (source a) (learn a) (params a) hstate)
-    (size := fun n => cc * (n + 1) ^ dc * (2 * (cb * (n + 1) ^ db) + 3) + 4)
-    (by fun_prop) ?_).1
+    (size := fun a => (params a).clock * (2 * (params a).codeBound + 3) + 4)
+    (ComputableTidilyInPolyTime.polyBounded (by fun_prop)) ?_).1
   intro a rounds state hrounds hstate
   exact hstate.length_encoding_le.trans (Nat.add_le_add_right
-    (Nat.mul_le_mul (hrounds.trans (hc a)) (by have := hb a; lia)) 4)
+    (Nat.mul_le_mul_right _ hrounds) 4)
 
 end Cslib.Crypto.Pseudoentropy.Boosting
