@@ -31,6 +31,7 @@ import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.GGM
 import ComplexityTests.GeneratorPadding
+import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
@@ -45,6 +46,7 @@ import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT

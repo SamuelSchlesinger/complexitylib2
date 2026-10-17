@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Negligible
+public import Mathlib.Analysis.Real.Sqrt
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Mathlib.Analysis.SpecificLimits.Normed
 
@@ -26,6 +27,7 @@ negligible.
 * `Cslib.Crypto.not_negligible_const`: constant nonzero success contradicts security.
 * `Cslib.Crypto.Negligible.comp_of_polynomial_bound`: polynomially related parameters.
 * `Cslib.Crypto.Negligible.div_const`: division of the parameter by a positive constant.
+* `Cslib.Crypto.Negligible.sqrt`: taking square roots preserves negligible decay.
 
 ## References
 
@@ -102,5 +104,14 @@ theorem Negligible.div_const {ε : ℕ → ℝ≥0} (hε : Negligible ε) {divis
     have := Nat.mod_lt n hpos
     have := Nat.div_add_mod n divisor
     nlinarith)
+
+/-- Taking a square root preserves negligible decay. -/
+@[fun_prop]
+theorem Negligible.sqrt {ε : ℕ → ℝ≥0} (hε : Negligible ε) :
+    Negligible (fun n => NNReal.sqrt (ε n)) := by
+  intro degree
+  have hlimit := NNReal.continuous_sqrt.continuousAt.tendsto.comp (hε (degree * 2))
+  simpa only [Function.comp_def, pow_mul, NNReal.sqrt_mul, NNReal.sqrt_sq, NNReal.sqrt_zero]
+    using hlimit
 
 end Cslib.Crypto

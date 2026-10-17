@@ -25,11 +25,13 @@ to express signed differences. It introduces no additional probability or securi
 
 * `Cslib.Crypto.trialPredictor`: prediction using a fixed trial bit.
 * `Cslib.Crypto.bitPredictor`: prediction using an independent fair trial.
+* `Cslib.Crypto.calibratedTest`: orient a test with a fresh real-or-ideal reference.
 
 ## Main results
 
 * `Cslib.Crypto.trialPredictor_gap`: the gap is the average of two signed prediction biases.
 * `Cslib.Crypto.bitPredictor_bias`: a randomized trial realizes that average.
+* `Cslib.Crypto.calibratedTest_gap`: calibration squares the distinguishing advantage.
 
 ## References
 
@@ -115,6 +117,49 @@ theorem isPPTOn_bitPredictor {α : Type} {input : α ↪ List Bool}
     (htest : IsPPTOn (encPair input encBool) encBool (fun pair => test pair.1 pair.2)) :
     IsPPTOn input encBool (fun a => bitPredictor (test a)) := by
   unfold bitPredictor
+  ppt
+
+/-- Use a fresh real-or-ideal trial to orient a challenge test without knowing its gap's sign. -/
+noncomputable def calibratedTest (real ideal challenge : ProbComp Bool) : ProbComp Bool := do
+  let direction ← bitPredictor (fun trial => if trial then real else ideal)
+  (fun result => result == direction) <$> challenge
+
+/-- Calibration multiplies the challenge's bias by the signed gap of the reference games. -/
+theorem probability_calibratedTest (real ideal challenge : ProbComp Bool) :
+    Pr[calibratedTest real ideal challenge] =
+      1 / 2 + (Pr[real] - Pr[ideal]) *
+        (Pr[challenge] - 1 / 2) := by
+  let direction := bitPredictor (fun trial => if trial then real else ideal)
+  have htotal := PMF.sum_toReal (ProbComp.eval direction)
+  have hbias := bitPredictor_bias (fun trial => if trial then real else ideal) true
+  simp only [Fintype.sum_bool] at htotal
+  simp only [beq_true, id_map', ite_true, Bool.false_eq_true, ite_false] at hbias
+  simp only [calibratedTest, Game.coe_succProbability_eval_bind, Fintype.sum_bool, beq_false,
+    beq_true, id_map', probability_not]
+  change (ProbComp.eval direction true).toReal * Pr[challenge] +
+    (ProbComp.eval direction false).toReal * (1 - Pr[challenge]) = _
+  change (ProbComp.eval direction true).toReal - 1 / 2 = _ at hbias
+  linear_combination (1 - Pr[challenge]) * htotal +
+    (2 * Pr[challenge] - 1) * hbias
+
+/-- The same calibration on both sides turns a possibly negative gap into its square. -/
+theorem calibratedTest_gap (real ideal : ProbComp Bool) :
+    Pr[calibratedTest real ideal real] -
+      Pr[calibratedTest real ideal ideal] =
+      (Game.advantage (ProbComp.eval real) (ProbComp.eval ideal) : ℝ) ^ 2 := by
+  simp only [probability_calibratedTest, Game.coe_advantage, sq_abs]
+  ring
+
+/-- Calibration is an ordinary PPT composition of its three supplied experiments. -/
+@[program_certificate]
+theorem isPPTOn_calibratedTest {α : Type} {input : α ↪ List Bool}
+    {real ideal challenge : α → ProbComp Bool}
+    (hreal : IsPPTOn input encBool real)
+    (hideal : IsPPTOn input encBool ideal)
+    (hchallenge : IsPPTOn input encBool challenge) :
+    IsPPTOn input encBool
+      (fun a => calibratedTest (real a) (ideal a) (challenge a)) := by
+  unfold calibratedTest
   ppt
 
 end Cslib.Crypto

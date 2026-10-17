@@ -59,12 +59,6 @@ open Probability Probability.PMF BitString Turing.MultiTapeTM
 
 local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
 
-private theorem probability_bind {α : Type} [Fintype α] (source : ProbComp α)
-    (test : α → ProbComp Bool) :
-    Pr[source >>= test] = ∑ x, (ProbComp.eval source x).toReal * Pr[test x] := by
-  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, ProbComp.eval_bind,
-    bind_apply_toReal]
-
 /-- Replace a label by a fresh fair bit when the supplied mask accepts. -/
 noncomputable def maskBit (mask : ProbComp Bool) (truth : Bool) : ProbComp Bool := do
   let replace ← mask
@@ -144,7 +138,7 @@ theorem maskBit_prediction_gap (test : Bool → ProbComp Bool) (mask : ProbComp 
     Pr[test truth] - Pr[maskBit mask truth >>= test] =
       (ProbComp.eval mask true).toReal *
         (Pr[(fun guess => guess == truth) <$> bitPredictor test] - 1 / 2) := by
-  rw [probability_bind, bitPredictor_bias]
+  rw [Game.coe_succProbability_eval_bind, bitPredictor_bias]
   simp only [Fintype.sum_bool, eval_maskBit_apply]
   cases truth <;> norm_num <;> ring
 
@@ -159,7 +153,8 @@ theorem maskedSample_prediction_gap {α β : Type} [Fintype α] (source : ProbCo
         (Pr[(fun guess => guess == truth x) <$> bitPredictor (test (observe x))] -
           1 / 2) := by
   simp only [maskedSample, bind_assoc, bind_map_left]
-  rw [probability_bind, probability_bind, ← Finset.sum_sub_distrib]
+  rw [Game.coe_succProbability_eval_bind, Game.coe_succProbability_eval_bind,
+    ← Finset.sum_sub_distrib]
   simp only [← mul_sub, maskBit_prediction_gap, mul_assoc]
 
 /-- A certified mask and an efficiently supplied label give a strict PPT randomized label. -/

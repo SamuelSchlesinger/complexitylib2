@@ -26,10 +26,11 @@ machine calculus.
 
 * [Cook–Levin](Complexity/Computability/Complexity/CookLevin/Completeness.lean): SAT NP-completeness
   and UNSAT coNP-completeness, including the polynomial-time tableau reduction.
-* [Goldreich–Levin](Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean),
+* [One-way functions to PRGs](Complexity/Crypto/Computational/OneWayToPRG.lean) and
+  [adaptive PRFs](Complexity/Crypto/Computational/OneWayToPRF.lean), including
+  [Goldreich–Levin](Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean),
   [polynomial stretch](Complexity/Crypto/Computational/Stretch.lean), and
-  [adaptive GGM](Complexity/Crypto/Computational/GGM/Security.lean): one-way permutations to PRGs
-  and PRGs to PRFs, with efficient security reductions. General OWF → PRG remains unfinished.
+  [GGM](Complexity/Crypto/Computational/GGM/Security.lean), with efficient security reductions.
 * [Circuit APIs](Complexity/Computability/Circuit/SourceComplexity.lean): Boolean, monotone,
   and arithmetic developments share CSLib's circuit definitions, costs, and simulations.
   The [quadratic-form correlation bound](Complexity/Computability/Circuit/Frontier/Correlation.lean)

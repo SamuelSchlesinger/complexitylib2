@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
+import Complexity.Probability.PMF
 import Complexity.Tactic.PPT
 
 /-!
@@ -77,6 +78,15 @@ theorem eval_bind_eq_distinguishingGame (sample : ProbComp (List Bool))
     (adversary : List Bool → ProbComp Bool) :
     ProbComp.eval (sample >>= adversary) = distinguishingGame (ProbComp.eval sample) adversary :=
   ProbComp.eval_bind _ _
+
+/-- Success after sampling a finite intermediate value is its weighted average. -/
+theorem Game.coe_succProbability_eval_bind {α : Type} [Fintype α]
+    (source : ProbComp α) (next : α → ProbComp Bool) :
+    (Game.succProbability (ProbComp.eval (source >>= next)) : ℝ) =
+      ∑ a, (ProbComp.eval source a).toReal *
+        (Game.succProbability (ProbComp.eval (next a)) : ℝ) := by
+  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, ProbComp.eval_bind,
+    Probability.PMF.bind_apply_toReal]
 
 /-- Postprocessing the distinguisher's answer postprocesses the experiment's answer. -/
 theorem distinguishingGame_map (distribution : PMF (List Bool))

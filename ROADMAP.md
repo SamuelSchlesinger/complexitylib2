@@ -5,14 +5,7 @@ completed reference developments.
 
 ## Current priorities
 
-1. **General OWF → PRG.** Extend the
-   [combined entropy-grid generator](Complexity/Crypto/Computational/Pseudoentropy/ThreeSource/Combined.lean)
-   to every seed length. Complete the calibrated-test uniform bound and use bounded search
-   for reindexing, then assemble the pseudoentropy and one-way-function reductions.
-   Compose the resulting PRG with GGM to obtain general OWF → PRF. The current security-parameter
-   family does not yet establish the every-input-length theorem.
-
-2. **Certified PCP construction.** The
+1. **Certified PCP construction.** The
    [gap theorem](Complexity/Computability/PCP/GapTheorem.lean) establishes combinatorial correctness
    and polynomial output size. Complete the executable reduction and its resource certificate:
 
@@ -28,7 +21,7 @@ completed reference developments.
    Polynomial time in the bit length of a vertex name is a stronger, separate target. The
    certified family has enormous constants; practical execution remains a separate milestone.
 
-3. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
+2. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
    lookup and composition rules should infer encodings for ordinary functional expressions.
    Test equivalent spellings and alternative encodings before adding tactic cases. Generalize
    reusable list, bounded-table, cache and nested-loop invariants where clients need them;
@@ -37,7 +30,7 @@ completed reference developments.
    remains separate from the implemented
    [closed stateful substitution](Complexity/Computability/Probabilistic/OracleSimulation.lean).
 
-4. **Reduce repeated proof bookkeeping.** Improve configuration views, tape partitions, handoff
+3. **Reduce repeated proof bookkeeping.** Improve configuration views, tape partitions, handoff
    identities and preservation rules when they simplify multiple clients. Keep simplification
    narrowly oriented and machine transitions out of global simp. Share mathematical bookkeeping
    only with demonstrated reuse, counting helper proofs as part of the total cost.

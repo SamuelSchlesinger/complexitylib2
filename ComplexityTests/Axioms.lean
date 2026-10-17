@@ -7670,3 +7670,129 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest' depends on ax
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest
+
+/--
+info: 'Cslib.Crypto.Game.coe_succProbability_eval_bind' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Game.coe_succProbability_eval_bind
+
+/--
+info: 'Cslib.Crypto.Negligible.sqrt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Negligible.sqrt
+
+/--
+info: 'Cslib.Crypto.probability_calibratedTest' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.probability_calibratedTest
+
+/--
+info: 'Cslib.Crypto.calibratedTest_gap' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.calibratedTest_gap
+
+/--
+info: 'Cslib.Crypto.isPPTOn_calibratedTest' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.isPPTOn_calibratedTest
+
+/--
+info: 'Cslib.Crypto.UniformChoice.isPPTOn_test' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.UniformChoice.isPPTOn_test
+
+/--
+info: 'Cslib.Crypto.UniformChoice.eval_bind_test' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.UniformChoice.eval_bind_test
+
+/--
+info: 'Cslib.Crypto.UniformChoice.advantage_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.UniformChoice.advantage_eq
+
+/--
+info: 'Cslib.Crypto.UniformChoice.advantage_sq_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.UniformChoice.advantage_sq_le
+
+/--
+info: 'Cslib.Crypto.ComputationallyIndistinguishable.uniform_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.ComputationallyIndistinguishable.uniform_bound
+
+/--
+info: 'Cslib.Crypto.GeneratorReindex.isPolyTime_parameter' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorReindex.isPolyTime_parameter
+
+/--
+info: 'Cslib.Crypto.GeneratorReindex.isPolyTime_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorReindex.isPolyTime_generate
+
+/--
+info: 'Cslib.Crypto.GeneratorReindex.length_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorReindex.length_generate
+
+/--
+info: 'Cslib.Crypto.GeneratorReindex.indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorReindex.indistinguishable
+
+/--
+info: 'Cslib.Crypto.GeneratorReindex.pseudorandomGenerator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorReindex.pseudorandomGenerator
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.exists_pseudorandomGenerator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.exists_pseudorandomGenerator
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_pseudorandomGenerator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_pseudorandomGenerator
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_pseudorandomFunction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_pseudorandomFunction

@@ -390,6 +390,7 @@ public import Complexity.Crypto.Computational.GGM.Hybrid
 public import Complexity.Crypto.Computational.GGM.Reduction
 public import Complexity.Crypto.Computational.GGM.Security
 public import Complexity.Crypto.Computational.GeneratorPadding
+public import Complexity.Crypto.Computational.GeneratorReindex
 public import Complexity.Crypto.Computational.GeneratorXor
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
 public import Complexity.Crypto.Computational.GoldreichLevin.HardCore
@@ -403,6 +404,8 @@ public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.Collision
 public import Complexity.Crypto.Computational.OneWay.Normalize
+public import Complexity.Crypto.Computational.OneWayToPRF
+public import Complexity.Crypto.Computational.OneWayToPRG
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Clipped
@@ -418,6 +421,7 @@ public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Training
 public import Complexity.Crypto.Computational.Pseudoentropy.DenseMask
 public import Complexity.Crypto.Computational.Pseudoentropy.EntropyGrid
 public import Complexity.Crypto.Computational.Pseudoentropy.ExtractionSchedule
+public import Complexity.Crypto.Computational.Pseudoentropy.Generator
 public import Complexity.Crypto.Computational.Pseudoentropy.HashPair
 public import Complexity.Crypto.Computational.Pseudoentropy.HashReduction
 public import Complexity.Crypto.Computational.Pseudoentropy.LabelExtraction
@@ -445,6 +449,7 @@ public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle
 public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Computational.Stretch
+public import Complexity.Crypto.Computational.UniformChoice
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
