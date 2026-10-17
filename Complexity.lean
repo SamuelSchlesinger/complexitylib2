@@ -366,6 +366,7 @@ public import Complexity.Computability.Probabilistic.QueryBounds
 public import Complexity.Computability.Probabilistic.Realization.OracleSimulation
 public import Complexity.Computability.Probabilistic.Repeat
 public import Complexity.Computability.Probabilistic.Sampling
+public import Complexity.Computability.Probabilistic.Selection
 public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
@@ -389,12 +390,15 @@ public import Complexity.Crypto.Computational.OneWay.Collision
 public import Complexity.Crypto.Computational.OneWay.Normalize
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Clipped
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Decision
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Loop
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Potential
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Program
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Progress
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Sampling
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Selection
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Training
 public import Complexity.Crypto.Computational.Pseudoentropy.HashPair
 public import Complexity.Crypto.Computational.Pseudoentropy.HashReduction
 public import Complexity.Crypto.Computational.Pseudoentropy.Masking
@@ -535,6 +539,7 @@ public import Complexity.Languages.Probabilistic.Presample
 public import Complexity.Languages.Probabilistic.RandomOracle
 public import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 public import Complexity.Languages.Probabilistic.Repeat
+public import Complexity.Languages.Probabilistic.Selection
 public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.UniformNat
@@ -583,6 +588,7 @@ public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 public import Complexity.Probability.Product
+public import Complexity.Probability.Quantile
 public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat

@@ -6068,3 +6068,129 @@ info: 'Cslib.Crypto.Pseudoentropy.Boosting.run_sound' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.Boosting.run_sound
+
+/--
+info: 'Cslib.Probability.PMF.exists_lowerTail' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.exists_lowerTail
+
+/--
+info: 'Cslib.ProbComp.selectBest_error_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.selectBest_error_pow
+
+/--
+info: 'Cslib.ProbComp.selectBest_test_error_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.selectBest_test_error_le
+
+/--
+info: 'Cslib.ProbComp.selectFrom_error_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.selectFrom_error_pow
+
+/--
+info: 'Cslib.ProbComp.sampleBest_error_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.sampleBest_error_pow
+
+/--
+info: 'Cslib.ProbComp.sampleBest_support' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.sampleBest_support
+
+/--
+info: 'Cslib.Probability.IsPPTOn.selectBest' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.selectBest
+
+/--
+info: 'Cslib.Probability.IsPPTOn.selectFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.selectFrom
+
+/--
+info: 'Cslib.Probability.IsPPTOn.sampleBest' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.sampleBest
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.eval_clippedPredict_correct' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.eval_clippedPredict_correct
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.exists_dyadic_clippedError_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.exists_dyadic_clippedError_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_clippedPredict' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_clippedPredict
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.selectSlope_dense_margin' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.selectSlope_dense_margin
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.State.Successful.selectSlope_advantage' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.State.Successful.selectSlope_advantage
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_train' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_train
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_predict' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_predict
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.train_sound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.train_sound
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.train_predict_error' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.train_predict_error

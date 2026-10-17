@@ -59,6 +59,7 @@ import ComplexityTests.Programs
 import ComplexityTests.PseudoentropyBoosting
 import ComplexityTests.PseudoentropyMasking
 import ComplexityTests.PseudoentropySeed
+import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.RandomOracle
 import ComplexityTests.SATPolyTime
