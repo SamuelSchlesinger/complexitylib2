@@ -2405,8 +2405,12 @@ All six checks pass: strict build 2.56 s, import coverage 1.56 s, tests 5.57 s, 
 7.41 s, style 2.34 s and init imports 4.24 s. These are incremental checkpoint timings. The
 independent API review approves with no findings, independently checking the final clients and
 all six guards through MCP, reproducing the proof counts, verifying exact profile-source parity
-and reading the successful gate records without rerunning the gates. The required
-post-publication Codex correctness review is pending.
+and reading the successful gate records without rerunning the gates. The post-publication
+Codex correctness review approves `51d15d3` against `ea37981` with no material findings.
+Its source inspection supports the computation equivalence, supplied-source bounds,
+non-vacuous witnesses, infinity transfer and empty-domain behavior, and reproduces the proof
+counts. It did not independently verify builds, client execution, axiom guards, profiling or
+original v1 provenance.
 
 ### Implementation priorities (2026-10-16)
 
