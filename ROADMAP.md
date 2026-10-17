@@ -9,13 +9,13 @@ completed reference developments.
    [gap theorem](Complexity/Computability/PCP/GapTheorem.lean) establishes combinatorial correctness
    and polynomial output size. Complete the executable reduction and its resource certificate:
 
-   * extend [certified encoded preprocessing](Complexity/Computability/PCP/Encoded/Preprocess.lean)
-     through powering and composition, reusing the
-     [expander-parameterized amplification proof](Complexity/Computability/PCP/Amplification/Family.lean);
-   * connect fixed-alphabet constraint normalization and encoded-size bounds to the loop
-     invariant, then certify an amplification round and logarithmically many rounds;
-   * charge copying, intermediate storage, lookup and every iteration, then prove the final
-     verifier's randomness, query and indexing bounds.
+   * certify logarithmically many applications of the
+     [encoded amplification round](Complexity/Computability/PCP/Encoded/Amplification.lean),
+     using its fixed-alphabet normalization and
+     [encoded-size bounds](Complexity/Computability/PCP/Encoded/Size.lean) in the loop invariant;
+   * connect an efficient initial constraint-graph construction with compact variable numbering,
+     charging copying, intermediate storage, lookup and every iteration;
+   * prove the final verifier's randomness, query and indexing bounds.
 
    The rotation certificate is polynomial in the number of vertices, which can suffice here.
    Polynomial time in the bit length of a vertex name is a stronger, separate target. The

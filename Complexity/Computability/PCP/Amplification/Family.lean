@@ -196,13 +196,14 @@ theorem satisfiable_amplifyWith_iff (hμ : μ < 1) (hT : 1 ≤ T) (hq : 2 ≤ q)
     RegularConstraintGraph.satisfiable_power_iff _ _ _ hT hq,
     satisfiable_preprocessWith_iff _ _ hμ]
 
-/-- Quantitative amplification with arbitrary fixed degree and spectral gap. The loss from
-preprocessing is `retention`; powering and composition supply the factor linear in `q`. -/
-theorem le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
+omit [DecidableEq D] [DecidableEq α] in
+/-- Preprocessing and powering supply the quantitative gap used by composition. Dividing by the
+assignment tester's fixed loss makes this bound reusable by any exact encoded realization. -/
+theorem le_div_unsatVal_power_preprocessWith (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1)) :
     ((q : ℝ) - 1) / Amplification.denominator (Fintype.card α) (Fintype.card D) μ *
       min (Amplification.retention (Fintype.card D) μ * G.unsatVal) (1 / T ^ 2) ≤
-        (G.amplifyWith X T q).unsatVal := by
+        ((G.preprocessWith X).power T q).toConstraintGraph.unsatVal / 476 := by
   have hd : (0 : ℝ) < Fintype.card D := Nat.cast_pos.mpr Fintype.card_pos
   have hgap : 0 < (1 - μ) * Fintype.card D / (2 * Fintype.card D + 2) :=
     div_pos (mul_pos (sub_pos.mpr hμ) hd) (by positivity)
@@ -229,8 +230,16 @@ theorem le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
           (min_le_min_right _ (G.le_unsatVal_preprocessWith X)) hs
     _ ≤ ((G.preprocessWith X).power T q).toConstraintGraph.unsatVal / 476 := by
         gcongr
-    _ ≤ (G.amplifyWith X T q).unsatVal :=
-        ((G.preprocessWith X).power T q).toConstraintGraph.le_unsatVal_compose
+
+/-- Quantitative amplification with arbitrary fixed degree and spectral gap. The loss from
+preprocessing is `retention`; powering and composition supply the factor linear in `q`. -/
+theorem le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
+    (hT : T = 4 * Fintype.card α * (q - 1)) :
+    ((q : ℝ) - 1) / Amplification.denominator (Fintype.card α) (Fintype.card D) μ *
+      min (Amplification.retention (Fintype.card D) μ * G.unsatVal) (1 / T ^ 2) ≤
+        (G.amplifyWith X T q).unsatVal :=
+  (G.le_div_unsatVal_power_preprocessWith X hμ hq hT).trans
+    ((G.preprocessWith X).power T q).toConstraintGraph.le_unsatVal_compose
 
 /-- A sufficiently large fixed killing rate doubles the value up to `1 / T²`. The required
 inequality is satisfiable for every nonempty alphabet, positive degree and positive spectral gap

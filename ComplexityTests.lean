@@ -52,9 +52,15 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPEncoded
+import ComplexityTests.PCPEncodedAmplification
+import ComplexityTests.PCPEncodedAssignmentTester
+import ComplexityTests.PCPEncodedComposition
 import ComplexityTests.PCPEncodedConstraints
 import ComplexityTests.PCPEncodedPreprocess
+import ComplexityTests.PCPEncodedSize
 import ComplexityTests.PCPExpander
+import ComplexityTests.PCPNumbering
+import ComplexityTests.PCPPreprocessPrograms
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
@@ -77,6 +83,7 @@ import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.RandomOracle
+import ComplexityTests.RotationWalk
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator

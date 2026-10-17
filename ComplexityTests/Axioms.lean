@@ -7796,3 +7796,216 @@ info: 'Cslib.Crypto.OneWay.exists_pseudorandomFunction' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.OneWay.exists_pseudorandomFunction
+
+/-! ### Executable PCP powering, composition, and one amplification round -/
+
+/-- info: 'Cslib.RotationMap.walkAtWithInput_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Cslib.RotationMap.walkAtWithInput_eq
+
+/-- info: 'Cslib.RotationMap.powRotWithInput_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.RotationMap.powRotWithInput_eq
+
+/-- info: 'Cslib.RotationMap.killedPowRotWithInput_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.RotationMap.killedPowRotWithInput_eq
+
+/-- info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_walkAtWithInput' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_walkAtWithInput
+
+/-- info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_powRotWithInput' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_powRotWithInput
+
+/-- info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_killedPowRotWithInput' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_killedPowRotWithInput
+
+/-- info: 'Cslib.PCP.Encoded.Graph.halfEdgeOfNumber_halfEdgeNumber' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.halfEdgeOfNumber_halfEdgeNumber
+
+/-- info: 'Cslib.PCP.Encoded.Graph.isPolyTime_halfEdgeOfNumber' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_halfEdgeOfNumber
+
+/-- info: 'Cslib.PCP.Encoded.Graph.preprocessRotation_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.preprocessRotation_eq
+
+/-- info: 'Cslib.PCP.Encoded.Graph.preprocessRelation_eq_true' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.preprocessRelation_eq_true
+
+/-- info: 'Cslib.PCP.Encoded.Graph.isPolyTime_preprocessRotation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_preprocessRotation
+
+/-- info: 'Cslib.PCP.Encoded.Graph.isPolyTime_preprocessRelation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_preprocessRelation
+
+/-- info: 'Cslib.PCP.RegularConstraintGraph.powerRelationWithInput_eq_true' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.RegularConstraintGraph.powerRelationWithInput_eq_true
+
+/-- info: 'Cslib.PCP.RegularConstraintGraph.isPolyTime_powerRelationWithInput' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.RegularConstraintGraph.isPolyTime_powerRelationWithInput
+
+/-- info: 'Cslib.PCP.Encoded.Graph.length_edges_powerPreprocess' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.length_edges_powerPreprocess
+
+/-- info: 'Cslib.PCP.Encoded.Graph.toGraph_powerPreprocess' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_powerPreprocess
+
+/-- info: 'Cslib.PCP.Encoded.Graph.wellFormed_powerPreprocess' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.wellFormed_powerPreprocess
+
+/-- info: 'Cslib.PCP.Encoded.Graph.unsatVal_powerPreprocess' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_powerPreprocess
+
+/-- info: 'Cslib.PCP.Encoded.Graph.satisfiable_powerPreprocess_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_powerPreprocess_iff
+
+/-- info: 'Cslib.PCP.Encoded.Graph.isPolyTime_powerPreprocess' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_powerPreprocess
+
+/-- info: 'Cslib.PCP.ConstraintGraph.le_div_unsatVal_power_preprocessWith' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.ConstraintGraph.le_div_unsatVal_power_preprocessWith
+
+/-- info: 'Cslib.PCP.Encoded.Graph.isPolyTime_amplify' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_amplify
+
+/-- info: 'Cslib.PCP.Encoded.Graph.vertices_amplify' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.vertices_amplify
+
+/-- info: 'Cslib.PCP.Encoded.Graph.length_edges_amplify' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.length_edges_amplify
+
+/-- info: 'Cslib.PCP.Encoded.Graph.wellFormed_amplify' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.wellFormed_amplify
+
+/-- info: 'Cslib.PCP.Encoded.Graph.div_le_unsatVal_amplify' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.div_le_unsatVal_amplify
+
+/-- info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_amplify' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_amplify
+
+/-- info: 'Cslib.PCP.Encoded.Graph.satisfiable_amplify_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_amplify_iff
+/--
+info: 'Cslib.PCP.Encoded.HadamardTester.localTest_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.HadamardTester.localTest_eq
+
+/--
+info: 'Cslib.PCP.Encoded.HadamardTester.isPolyTime_query' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.HadamardTester.isPolyTime_query
+
+/--
+info: 'Cslib.PCP.Encoded.HadamardTester.isPolyTime_accepts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.HadamardTester.isPolyTime_accepts
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_compose' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_compose
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_composeTabulated' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_composeTabulated
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.WellFormed.compose' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.WellFormed.compose
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toGraph_compose' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_compose
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_compose' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_compose
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_composeTabulated_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_composeTabulated_eq
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_composeTabulated_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_composeTabulated_iff
+/--
+info: 'Cslib.PCP.Encoded.Edge.length_encoding' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Edge.length_encoding
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.length_encoding' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.length_encoding
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.WellFormed.length_encoding_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.WellFormed.length_encoding_le
