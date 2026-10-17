@@ -15,13 +15,11 @@ completed reference developments.
    [gap theorem](Complexity/Computability/PCP/GapTheorem.lean) establishes combinatorial correctness
    and polynomial output size. Complete the executable reduction and its resource certificate:
 
-   * extend the [encoded graph layer](Complexity/Computability/PCP/Encoded/Basic.lean) from
-     edge checking and trivial-edge insertion to degree reduction, powering and composition;
-   * parameterize the full preprocessing–powering–composition pipeline by an expander contract,
-     carrying degree, spectral gap and construction certificates;
-   * complete preprocessing using the
-     [certified arithmetic expander rotations](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/RotationMap/Family.lean),
-     then certify an amplification round and logarithmically many rounds;
+   * extend [certified encoded preprocessing](Complexity/Computability/PCP/Encoded/Preprocess.lean)
+     through powering and composition, reusing the
+     [expander-parameterized amplification proof](Complexity/Computability/PCP/Amplification/Family.lean);
+   * connect fixed-alphabet constraint normalization and encoded-size bounds to the loop
+     invariant, then certify an amplification round and logarithmically many rounds;
    * charge copying, intermediate storage, lookup and every iteration, then prove the final
      verifier's randomness, query and indexing bounds.
 

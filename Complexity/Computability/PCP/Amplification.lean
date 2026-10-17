@@ -7,9 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.PCP.Composition
-public import Complexity.Computability.PCP.PoweringBound
-public import Complexity.Computability.PCP.Preprocess
+public import Complexity.Computability.PCP.Amplification.Family
 import Mathlib.Tactic.IrreducibleDef
 
 /-!
@@ -85,18 +83,17 @@ edges `E`: a half-edge of the original graph, the labels of a walk of `T` steps 
 preprocessed graph, and its kill signals. They are the edges of the constraint graph that
 composition is applied to. -/
 abbrev AmplifyDart (E : Type*) (T q : ℕ) : Type _ :=
-  (E × Bool) × (Fin T → PreprocessLabel (Fin 120)) × (Fin T → Fin q)
+  Amplification.Dart (Fin 120) E T q
 
 /-- The vertices of the amplification round: those of the composed constraint graph of the powered
 one, whose alphabet is `WalkLabels (PreprocessLabel (Fin 120)) T → α`. -/
 abbrev AmplifyVertex (E α : Type*) (T q : ℕ) : Type _ :=
-  ComposePos (E × Bool) (AmplifyDart E T q) (WalkLabels (PreprocessLabel (Fin 120)) T → α) ⊕
-    AmplifyDart E T q × Rand (WalkLabels (PreprocessLabel (Fin 120)) T → α)
+  Amplification.Vertex (Fin 120) E α T q
 
 /-- The edges of the amplification round: those of the composed constraint graph of the powered
 one. -/
 abbrev AmplifyEdge (E α : Type*) (T q : ℕ) : Type _ :=
-  (AmplifyDart E T q × Rand (WalkLabels (PreprocessLabel (Fin 120)) T → α)) × Query
+  Amplification.Edge (Fin 120) E α T q
 
 /- The instances on the vertices and edges of the round are assembled once for any alphabet, so
 that those of the round over a concrete alphabet stay below the size limit of instance
@@ -120,17 +117,15 @@ truncated at `T` steps and killed at rate `q`, then composition back to the alph
 `Bool × (HadamardTester.Query → Bool)`. -/
 noncomputable def amplify (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
     ConstraintGraph (AmplifyVertex E α T q) (AmplifyEdge E α T q) (Bool × (Query → Bool)) :=
-  ((G.preprocess expanderFamily).power T q).toConstraintGraph.compose
+  G.amplifyWith (.ofFamily G expanderFamily) T q
 
 variable [Fintype α] [DecidableEq α] [Nonempty α] {T q : ℕ} [NeZero q]
 
 /-- **The amplification round preserves satisfiability**, for walks of at least one step and a
 killing rate `q ≥ 2`. -/
 theorem satisfiable_amplify_iff (hT : 1 ≤ T) (hq : 2 ≤ q) :
-    (G.amplify T q).Satisfiable ↔ G.Satisfiable := by
-  rw [amplify, satisfiable_compose_iff,
-    RegularConstraintGraph.satisfiable_power_iff _ _ _ hT hq,
-    satisfiable_preprocess_iff _ _ (by norm_num)]
+    (G.amplify T q).Satisfiable ↔ G.Satisfiable :=
+  G.satisfiable_amplifyWith_iff (.ofFamily G expanderFamily) (by norm_num) hT hq
 
 /-- **The value of the amplification round** [Dinur, Theorem 4.1][Dinur2005]: for a killing rate
 `q ≥ 2` and walks truncated at `T = 4 |α| (q - 1)` steps, it is at least
@@ -142,32 +137,9 @@ theorem le_unsatVal_amplify (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 
     ((q : ℝ) - 1) / (476 * (4 * Fintype.card α ^ 2 + 16 * Fintype.card α ^ 4 +
         92928000 * Fintype.card α ^ 5)) *
       min (G.unsatVal / 1452000) (1 / T ^ 2) ≤ (G.amplify T q).unsatVal := by
-  have hpow := (G.preprocess expanderFamily).le_unsatVal_power T q hq hT
-    G.spectralExpansion_preprocess_expanderFamily_le
-    (by norm_num)
-  set K : ℝ := (Fintype.card α : ℝ)
-  have hmu : 128 * K ^ 5 / (1 - (1 - 1 / 726000)) = 92928000 * K ^ 5 := by
-    field_simp
-    ring
-  rw [hmu] at hpow
-  have hs : 0 ≤ ((q : ℝ) - 1) / (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5) := by
-    have : (2 : ℝ) ≤ q := by exact_mod_cast hq
-    exact div_nonneg (by linarith) (by positivity)
-  calc ((q : ℝ) - 1) / (476 * (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5)) *
-        min (G.unsatVal / 1452000) (1 / T ^ 2)
-      = ((q - 1) / (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5) *
-          min (G.unsatVal / 1452000) (1 / T ^ 2)) / 476 := by
-        rw [mul_comm 476, ← div_div]
-        ring
-    _ ≤ ((q - 1) / (4 * K ^ 2 + 16 * K ^ 4 + 92928000 * K ^ 5) *
-          min (G.preprocess expanderFamily).toConstraintGraph.unsatVal (1 / T ^ 2)) / 476 := by
-        gcongr ?_ / _
-        exact mul_le_mul_of_nonneg_left
-          (min_le_min_right _ G.le_unsatVal_preprocess_expanderFamily) hs
-    _ ≤ ((G.preprocess expanderFamily).power T q).toConstraintGraph.unsatVal / 476 := by
-        gcongr
-    _ ≤ (G.amplify T q).unsatVal :=
-        ((G.preprocess expanderFamily).power T q).toConstraintGraph.le_unsatVal_compose
+  have h := G.le_unsatVal_amplifyWith (.ofFamily G expanderFamily) (by norm_num) hq hT
+  norm_num [Amplification.denominator, Amplification.retention] at h
+  convert h using 1 <;> first | rfl | (congr 2 <;> ring)
 
 end Round
 
@@ -178,21 +150,19 @@ section Size
 /-- The size `K ^ (∑ ℓ ≤ T, 242 ^ ℓ)` of the alphabet of the powered constraint graph in an
 amplification round with walks of length `T`, over an alphabet of size `K`. -/
 def amplifyAlphabetCard (K T : ℕ) : ℕ :=
-  K ^ ∑ ℓ ∈ range (T + 1), 242 ^ ℓ
+  Amplification.alphabetCard 120 K T
 
 /-- The number `2 ^ (k + 1) + 2 (2 ^ (2 k) + 2 ^ (4 k ^ 2) + 2 ^ (20 k ^ 2 + 15 k + 3)) (242 q) ^ T`
 of vertices of an amplification round per edge of the original graph, where `k` is the size of the
 alphabet of the powered graph: an alphabet of size `K`, walks of length `T`, killing rate `q`. -/
 def amplifyVertexFactor (K T q : ℕ) : ℕ :=
-  2 ^ (amplifyAlphabetCard K T + 1) + 2 * (2 ^ (2 * amplifyAlphabetCard K T) +
-    2 ^ (4 * amplifyAlphabetCard K T ^ 2) +
-    2 ^ (20 * amplifyAlphabetCard K T ^ 2 + 15 * amplifyAlphabetCard K T + 3)) * (242 * q) ^ T
+  Amplification.vertexFactor 120 K T q
 
 /-- The number `34 · 2 ^ (20 k ^ 2 + 15 k + 3) (242 q) ^ T` of edges of an amplification round per
 edge of the original graph, where `k` is the size of the alphabet of the powered graph: an alphabet
 of size `K`, walks of length `T`, killing rate `q`. -/
 def amplifyEdgeFactor (K T q : ℕ) : ℕ :=
-  34 * 2 ^ (20 * amplifyAlphabetCard K T ^ 2 + 15 * amplifyAlphabetCard K T + 3) * (242 * q) ^ T
+  Amplification.edgeFactor 120 K T q
 
 variable {E α : Type*} [Fintype E] [Fintype α] (T q : ℕ)
 
@@ -200,33 +170,27 @@ variable {E α : Type*} [Fintype E] [Fintype α] (T q : ℕ)
 `|α| ^ (∑ ℓ ≤ T, 242 ^ ℓ)` symbols. -/
 theorem card_walkLabels_preprocessLabel :
     Fintype.card (WalkLabels (PreprocessLabel (Fin 120)) T → α) =
-      amplifyAlphabetCard (Fintype.card α) T := by
-  rw [RegularConstraintGraph.card_alphabet_power, amplifyAlphabetCard, card_label_preprocess,
-    Fintype.card_fin]
+      amplifyAlphabetCard (Fintype.card α) T :=
+  Amplification.card_walkLabels (D := Fin 120) (α := α) T
 
 /-- The powered constraint graph in an amplification round has `2 |E| (242 q) ^ T` darts. -/
 theorem card_amplifyDart :
     Fintype.card (AmplifyDart E T q) = 2 * (242 * q) ^ T * Fintype.card E := by
-  simp only [Fintype.card_prod, Fintype.card_bool, Fintype.card_fun, card_label_preprocess,
-    Fintype.card_fin]
-  ring
+  simpa only [Fintype.card_fin] using Amplification.card_dart (D := Fin 120) (E := E) T q
 
 /-- **The size of the amplification round**: every edge of the original graph gives
 `amplifyVertexFactor |α| T q` vertices. Its vertices play no role. -/
 theorem card_vertices_amplify [DecidableEq α] :
     Fintype.card (AmplifyVertex E α T q) =
-      amplifyVertexFactor (Fintype.card α) T q * Fintype.card E := by
-  rw [card_vertices_compose, card_amplifyDart, card_walkLabels_preprocessLabel, Fintype.card_prod,
-    Fintype.card_bool, amplifyVertexFactor]
-  ring
+      amplifyVertexFactor (Fintype.card α) T q * Fintype.card E :=
+  Amplification.card_vertices (D := Fin 120) (E := E) (α := α) T q
 
 /-- **The size of the amplification round**: every edge of the original graph gives
 `amplifyEdgeFactor |α| T q` edges. -/
 theorem card_edges_amplify [DecidableEq α] :
     Fintype.card (AmplifyEdge E α T q) =
-      amplifyEdgeFactor (Fintype.card α) T q * Fintype.card E := by
-  rw [card_edges_compose, card_amplifyDart, card_walkLabels_preprocessLabel, amplifyEdgeFactor]
-  ring
+      amplifyEdgeFactor (Fintype.card α) T q * Fintype.card E :=
+  Amplification.card_edges (D := Fin 120) (E := E) (α := α) T q
 
 end Size
 

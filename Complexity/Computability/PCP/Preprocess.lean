@@ -37,8 +37,15 @@ spectral expansion at most `1 - 1 / 360000`, the preprocessed graph is `242`-reg
 expansion is at most `1 - 1 / 726000` (`spectralExpansion_preprocess_expanderFamily_le`) and its
 value at least `UNSAT(G) / 1452000` (`le_unsatVal_preprocess_expanderFamily`).
 
+Executable clients may supply their own cloud numberings through `PreprocessExpanders` and
+`preprocessWith`. The family-based operation is a wrapper of this interface; its correctness does
+not require the executable numberings to equal a choice made on arbitrary finite types.
+
 ## Main definitions
 
+* `Cslib.PCP.ConstraintGraph.PreprocessExpanders`: specified cloud and half-edge rotations with
+  a common spectral bound.
+* `Cslib.PCP.ConstraintGraph.preprocessWith`: preprocessing with these specified rotations.
 * `Cslib.PCP.ConstraintGraph.PreprocessLabel`: the labels of the darts of a preprocessed graph.
 * `Cslib.PCP.ConstraintGraph.degreeReduceExpander`: degree reduction with the expanders of a family
   on the clouds.
@@ -99,19 +106,130 @@ theorem card_label_preprocess (D : Type*) [Fintype D] :
   simp only [PreprocessLabel, Fintype.card_sum, Fintype.card_unit]
   ring
 
+section SpecifiedRotations
+
 variable {V : Type*} {E : Type u} {α : Type*} [Fintype E] [DecidableEq V]
-  (G : ConstraintGraph V E α) {D : Type*} [Fintype D] {μ : ℝ} (X : ExpanderFamily.{u} D μ)
+  (G : ConstraintGraph V E α)
+
+/-- The actual cloud and half-edge rotations used in preprocessing. The degree is
+`Fintype.card D`; a caller can reuse a fixed spectral bound as the input graph varies. -/
+structure PreprocessExpanders (D : Type*) [Fintype D] (μ : ℝ) where
+  /-- The expander on each cloud. -/
+  cloud (v : V) : RotationMap (G.Cloud v) D
+  /-- The expander on all half-edges. -/
+  whole : RotationMap (E × Bool) D
+  /-- Every cloud has the required spectral bound. -/
+  spectralExpansion_cloud_le (v : V) : (cloud v).spectralExpansion ≤ μ
+  /-- The whole half-edge graph has the same bound. -/
+  spectralExpansion_whole_le : whole.spectralExpansion ≤ μ
+
+variable {D : Type*} [Fintype D] {μ : ℝ}
+
+/-- A family on arbitrary finite types supplies a preprocessing contract. Executable clients may
+instead use their own numberings when providing the two rotations. -/
+def PreprocessExpanders.ofFamily (X : ExpanderFamily.{u} D μ) : G.PreprocessExpanders D μ where
+  cloud v := X.graph (G.Cloud v)
+  whole := X.graph (E × Bool)
+  spectralExpansion_cloud_le v := X.spectralExpansion_graph_le (G.Cloud v)
+  spectralExpansion_whole_le := X.spectralExpansion_graph_le (E × Bool)
+
+variable (X : G.PreprocessExpanders D μ)
+
+/-- Preprocess using the supplied rotations, retaining their actual vertex numberings. -/
+def preprocessWith : RegularConstraintGraph (E × Bool) (PreprocessLabel D) α :=
+  ((G.degreeReduce X.cloud).addTrivial X.whole).addLoops Unit
+
+/-- The final added label gives a self-loop at every half-edge. -/
+@[simp]
+theorem neighbor_preprocessWith_inr (p : E × Bool) (i : Unit) :
+    (G.preprocessWith X).graph.neighbor p (.inr i) = p :=
+  rfl
+
+/-- The supplied whole graph provides a uniform spectral bound after preprocessing. -/
+theorem spectralExpansion_preprocessWith_le :
+    (G.preprocessWith X).graph.spectralExpansion ≤
+      1 - (1 - μ) * Fintype.card D / (2 * Fintype.card D + 2) := by
+  set R := (G.degreeReduce X.cloud).graph
+  have h₁ := R.spectralExpansion_le_one
+  have h₂ := X.spectralExpansion_whole_le
+  have h₃ := R.spectralExpansion_union_le X.whole
+  have h₄ := (R.union X.whole).spectralExpansion_addLoops_le (E := Unit)
+  change ((R.union X.whole).addLoops Unit).spectralExpansion ≤ _
+  generalize ((R.union X.whole).addLoops Unit).spectralExpansion = x₄ at h₄ ⊢
+  generalize (R.union X.whole).spectralExpansion = x₃ at h₃ h₄
+  generalize R.spectralExpansion = x₁ at h₁ h₃
+  generalize X.whole.spectralExpansion = x₂ at h₂ h₃
+  simp only [Fintype.card_sum, Fintype.card_unit] at h₃ h₄
+  push_cast at h₃ h₄
+  have hd : (0 : ℝ) ≤ Fintype.card D := Nat.cast_nonneg _
+  generalize (Fintype.card D : ℝ) = d at hd h₃ h₄ ⊢
+  rw [le_div_iff₀ (by positivity)] at h₃ h₄
+  rw [show 1 - (1 - μ) * d / (2 * d + 2) = (2 + d + d * μ) / (2 * d + 2) by field_simp; ring,
+    le_div_iff₀ (by positivity)]
+  nlinarith [mul_le_mul_of_nonneg_left h₁ (by positivity : (0 : ℝ) ≤ 1 + d),
+    mul_le_mul_of_nonneg_left h₂ hd]
+
+/-- Expanderization and self-loops divide the degree-reduced value by exactly two. -/
+theorem unsatVal_preprocessWith :
+    (G.preprocessWith X).toConstraintGraph.unsatVal =
+      (G.degreeReduce X.cloud).toConstraintGraph.unsatVal / 2 := by
+  rw [preprocessWith, RegularConstraintGraph.unsatVal_addLoops,
+    RegularConstraintGraph.unsatVal_addTrivial]
+  simp only [Fintype.card_sum, Fintype.card_unit]
+  have h₁ : (1 + Fintype.card D + Fintype.card D : ℝ) ≠ 0 := by positivity
+  have h₂ : (1 + Fintype.card D + Fintype.card D + 1 : ℝ) ≠ 0 := by positivity
+  push_cast
+  field_simp
+  ring
+
+variable [Nonempty α]
+
+/-- Cloud expansion preserves satisfiability through preprocessing. -/
+theorem satisfiable_preprocessWith_iff [Nonempty D] (hμ : μ < 1) :
+    (G.preprocessWith X).toConstraintGraph.Satisfiable ↔ G.Satisfiable := by
+  rw [preprocessWith, RegularConstraintGraph.satisfiable_addLoops_iff,
+    RegularConstraintGraph.satisfiable_addTrivial_iff]
+  exact G.satisfiable_degreeReduce_iff X.cloud hμ X.spectralExpansion_cloud_le
+
+/-- Soundness depends only on the degree and the common spectral bound, not on the numbering. -/
+theorem le_unsatVal_preprocessWith :
+    min 1 ((1 - μ) * Fintype.card D) / (4 * (1 + Fintype.card D)) * G.unsatVal ≤
+      (G.preprocessWith X).toConstraintGraph.unsatVal := by
+  have h := G.le_unsatVal_degreeReduce X.cloud X.spectralExpansion_cloud_le
+  rw [unsatVal_preprocessWith]
+  calc min 1 ((1 - μ) * Fintype.card D) / (4 * (1 + Fintype.card D)) * G.unsatVal
+      = min 1 ((1 - μ) * Fintype.card D) / (2 * (1 + Fintype.card D)) * G.unsatVal / 2 := by
+        have : (0 : ℝ) < 1 + Fintype.card D := by positivity
+        field_simp
+        ring
+    _ ≤ _ := by gcongr
+
+/-- Preprocessing does not increase the value. -/
+theorem unsatVal_preprocessWith_le :
+    (G.preprocessWith X).toConstraintGraph.unsatVal ≤ G.unsatVal := by
+  have h := G.one_add_card_mul_unsatVal_degreeReduce_le X.cloud
+  have h₀ := (G.degreeReduce X.cloud).toConstraintGraph.unsatVal_nonneg
+  have hD : (0 : ℝ) ≤ Fintype.card D := Nat.cast_nonneg _
+  rw [unsatVal_preprocessWith]
+  nlinarith
+
+end SpecifiedRotations
+
+variable {V : Type*} {E : Type u} {α D : Type*} [Fintype E] [DecidableEq V] [Fintype D]
+  (G : ConstraintGraph V E α) {μ : ℝ} (X : ExpanderFamily.{u} D μ)
 
 /-- The degree reduction of `G` with the expanders of the family `X` on the clouds. -/
 abbrev degreeReduceExpander : RegularConstraintGraph (E × Bool) (Unit ⊕ D) α :=
   G.degreeReduce fun v ↦ X.graph (G.Cloud v)
 
 /-- **Preprocessing** [Dinur, Section 3.1][Dinur2005] with the family of expanders `X`: degree
-reduction with expanders of `X` on the clouds, then the edges of the expander of `X` on the
-half-edges and a self-loop at every vertex added, with constraints that always hold. The vertices
-are the half-edges of `G`, and the degree is `2 |D| + 2`. -/
+reduction on the clouds, then the whole half-edge expander and self-loops. -/
 def preprocess : RegularConstraintGraph (E × Bool) (PreprocessLabel D) α :=
-  ((G.degreeReduceExpander X).addTrivial (X.graph (E × Bool))).addLoops Unit
+  G.preprocessWith (.ofFamily G X)
+
+/-- Supplying a family to the explicit-rotation interface recovers family-based preprocessing. -/
+theorem preprocessWith_ofFamily : G.preprocessWith (.ofFamily G X) = G.preprocess X :=
+  rfl
 
 /-- The preprocessed constraint graph has `2 |E|` vertices. -/
 theorem card_vertices_preprocess : Fintype.card (E × Bool) = 2 * Fintype.card E := by
@@ -123,81 +241,40 @@ theorem neighbor_preprocess_inr (p : E × Bool) (i : Unit) :
     (G.preprocess X).graph.neighbor p (.inr i) = p :=
   rfl
 
-/-- **The preprocessed constraint graph is an expander**: its spectral expansion is at most
-`1 - (1 - μ) |D| / (2 |D| + 2)`. -/
+/-- **The preprocessed constraint graph is an expander**, with a bound depending only on the
+family's degree and spectral expansion. -/
 theorem spectralExpansion_preprocess_le :
     (G.preprocess X).graph.spectralExpansion ≤
-      1 - (1 - μ) * Fintype.card D / (2 * Fintype.card D + 2) := by
-  set R := (G.degreeReduceExpander X).graph
-  set Y := X.graph (E × Bool)
-  have h₁ := R.spectralExpansion_le_one
-  have h₂ := X.spectralExpansion_graph_le (E × Bool)
-  have h₃ := R.spectralExpansion_union_le Y
-  have h₄ := (R.union Y).spectralExpansion_addLoops_le (E := Unit)
-  change ((R.union Y).addLoops Unit).spectralExpansion ≤ _
-  generalize ((R.union Y).addLoops Unit).spectralExpansion = x₄ at h₄ ⊢
-  generalize (R.union Y).spectralExpansion = x₃ at h₃ h₄
-  generalize R.spectralExpansion = x₁ at h₁ h₃
-  generalize Y.spectralExpansion = x₂ at h₂ h₃
-  simp only [Fintype.card_sum, Fintype.card_unit] at h₃ h₄
-  push_cast at h₃ h₄
-  have hd : (0 : ℝ) ≤ Fintype.card D := Nat.cast_nonneg _
-  generalize (Fintype.card D : ℝ) = d at hd h₃ h₄ ⊢
-  rw [le_div_iff₀ (by positivity)] at h₃ h₄
-  rw [show 1 - (1 - μ) * d / (2 * d + 2) = (2 + d + d * μ) / (2 * d + 2) by field_simp; ring,
-    le_div_iff₀ (by positivity)]
-  nlinarith [mul_le_mul_of_nonneg_left h₁ (by positivity : (0 : ℝ) ≤ 1 + d),
-    mul_le_mul_of_nonneg_left h₂ hd]
+      1 - (1 - μ) * Fintype.card D / (2 * Fintype.card D + 2) :=
+  G.spectralExpansion_preprocessWith_le (.ofFamily G X)
 
 /-- Expanderization and self-loops halve the value of the degree-reduced constraint graph. -/
 theorem unsatVal_preprocess :
     (G.preprocess X).toConstraintGraph.unsatVal =
-      (G.degreeReduceExpander X).toConstraintGraph.unsatVal / 2 := by
-  rw [preprocess, RegularConstraintGraph.unsatVal_addLoops,
-    RegularConstraintGraph.unsatVal_addTrivial]
-  simp only [Fintype.card_sum, Fintype.card_unit]
-  have h₁ : (1 + Fintype.card D + Fintype.card D : ℝ) ≠ 0 := by positivity
-  have h₂ : (1 + Fintype.card D + Fintype.card D + 1 : ℝ) ≠ 0 := by positivity
-  push_cast
-  field_simp
-  ring
+      (G.degreeReduceExpander X).toConstraintGraph.unsatVal / 2 :=
+  G.unsatVal_preprocessWith (.ofFamily G X)
 
 section Value
 
 variable [Nonempty α]
 
-/-- **Preprocessing preserves satisfiability**, with a family of expanders: their degree is positive
-and their spectral expansions are at most some `μ < 1`. -/
+/-- **Preprocessing preserves satisfiability** for a positive expander degree and a spectral bound
+below one. -/
 theorem satisfiable_preprocess_iff [Nonempty D] (hμ : μ < 1) :
-    (G.preprocess X).toConstraintGraph.Satisfiable ↔ G.Satisfiable := by
-  rw [preprocess, RegularConstraintGraph.satisfiable_addLoops_iff,
-    RegularConstraintGraph.satisfiable_addTrivial_iff]
-  exact satisfiable_degreeReduce_iff _ hμ fun v ↦ X.spectralExpansion_graph_le _
+    (G.preprocess X).toConstraintGraph.Satisfiable ↔ G.Satisfiable :=
+  G.satisfiable_preprocessWith_iff (.ofFamily G X) hμ
 
-/-- **Soundness of preprocessing** [Dinur, Section 3.1][Dinur2005]: preprocessing with a family of
-`D`-regular expanders of spectral expansion at most `μ` divides the value by at most
-`4 (1 + |D|) / min 1 ((1 - μ) |D|)`, whatever the alphabet. -/
+/-- **Soundness of preprocessing** [Dinur, Section 3.1][Dinur2005]: the retained fraction depends
+only on the family's degree and spectral bound, whatever the alphabet. -/
 theorem le_unsatVal_preprocess :
     min 1 ((1 - μ) * Fintype.card D) / (4 * (1 + Fintype.card D)) * G.unsatVal ≤
-      (G.preprocess X).toConstraintGraph.unsatVal := by
-  have h := le_unsatVal_degreeReduce (G := G) _ fun v ↦ X.spectralExpansion_graph_le (G.Cloud v)
-  rw [unsatVal_preprocess]
-  calc min 1 ((1 - μ) * Fintype.card D) / (4 * (1 + Fintype.card D)) * G.unsatVal
-      = min 1 ((1 - μ) * Fintype.card D) / (2 * (1 + Fintype.card D)) * G.unsatVal / 2 := by
-        have : (0 : ℝ) < 1 + Fintype.card D := by positivity
-        field_simp
-        ring
-    _ ≤ _ := by gcongr
+      (G.preprocess X).toConstraintGraph.unsatVal :=
+  G.le_unsatVal_preprocessWith (.ofFamily G X)
 
-/-- **Completeness of preprocessing** [Dinur, Section 3.1][Dinur2005]: preprocessing does not
-increase the value. -/
+/-- **Completeness of preprocessing**: preprocessing does not increase the value. -/
 theorem unsatVal_preprocess_le :
-    (G.preprocess X).toConstraintGraph.unsatVal ≤ G.unsatVal := by
-  have h := one_add_card_mul_unsatVal_degreeReduce_le (G := G) fun v ↦ X.graph (G.Cloud v)
-  have h₀ := (G.degreeReduceExpander X).toConstraintGraph.unsatVal_nonneg
-  have hD : (0 : ℝ) ≤ Fintype.card D := Nat.cast_nonneg _
-  rw [unsatVal_preprocess]
-  nlinarith
+    (G.preprocess X).toConstraintGraph.unsatVal ≤ G.unsatVal :=
+  G.unsatVal_preprocessWith_le (.ofFamily G X)
 
 end Value
 

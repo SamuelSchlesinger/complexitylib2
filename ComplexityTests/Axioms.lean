@@ -7285,3 +7285,234 @@ info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_padded_choice' depen
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_padded_choice
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.PreprocessExpanders.ofFamily' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.PreprocessExpanders.ofFamily
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.preprocessWith_ofFamily' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.preprocessWith_ofFamily
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.spectralExpansion_preprocessWith_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.spectralExpansion_preprocessWith_le
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.unsatVal_preprocessWith' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.unsatVal_preprocessWith
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.satisfiable_preprocessWith_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.satisfiable_preprocessWith_iff
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_preprocessWith' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_preprocessWith
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.unsatVal_preprocessWith_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.unsatVal_preprocessWith_le
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.satisfiable_amplifyWith_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.satisfiable_amplifyWith_iff
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_amplifyWith' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_amplifyWith
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.min_le_unsatVal_amplifyWith' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.min_le_unsatVal_amplifyWith
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.Amplification.exists_killRate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.Amplification.exists_killRate
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.Amplification.card_vertices' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.Amplification.card_vertices
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.Amplification.card_edges' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.Amplification.card_edges
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.Amplification.amplifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.Amplification.amplifier
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_degreeReduce' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_degreeReduce
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_degreeReduceEval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_degreeReduceEval
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toGraph_degreeReduce' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_degreeReduce
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.wellFormed_degreeReduce' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.wellFormed_degreeReduce
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_degreeReduce' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_degreeReduce
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_preprocess' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_preprocess
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toGraph_preprocess' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_preprocess
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.wellFormed_preprocess' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.wellFormed_preprocess
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_preprocess_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_preprocess_eq
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_preprocess' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_preprocess
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_preprocess_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_preprocess_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.spectralExpansion_regularPreprocess_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.spectralExpansion_regularPreprocess_le
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_constraintTable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_constraintTable
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_tabulateConstraints' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_tabulateConstraints
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_constraintTableEval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_constraintTableEval
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toGraph_mapConstraints' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_mapConstraints
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_mapConstraints' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_mapConstraints
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_mapConstraints_iff' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_mapConstraints_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.length_encoding_tabulateConstraints_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.length_encoding_tabulateConstraints_le
