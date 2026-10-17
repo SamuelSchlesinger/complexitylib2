@@ -157,8 +157,8 @@ def solveTagged (name : Name) : TacticM Unit := do
 
 /-- Preserve premise names even when Lean's `apply` gives a lone remaining goal its parent's
 tag. The applied proof records the actual argument metavariables, including inferred ones. -/
-private def applyNamedCertificate (goal : MVarId) (certificate : Name) : MetaM (List MVarId) := do
-  let goals ← goal.applyConst certificate
+private def tagPremises (goal : MVarId) (certificate : Name) (goals : List MVarId) :
+    MetaM Unit := do
   let some proof ← getExprMVarAssignment? goal
     | throwError "the certificate did not assign its goal"
   let names ← forallTelescope (← getConstInfo certificate).type fun xs _ =>
@@ -167,6 +167,11 @@ private def applyNamedCertificate (goal : MVarId) (certificate : Name) : MetaM (
   for name in names, argument in proof.getAppArgs do
     if let .mvar premise := argument then
       if goals.contains premise then premise.setTag (appendTag parent name)
+
+/-- Apply a named certificate and preserve its remaining premise names. -/
+private def applyNamedCertificate (goal : MVarId) (certificate : Name) : MetaM (List MVarId) := do
+  let goals ← goal.applyConst certificate
+  tagPremises goal certificate goals
   return goals
 
 /-- Expose every matching named certificate as an Aesop alternative. Eager premises are solved
@@ -209,7 +214,10 @@ private def applyWithArguments (rule : Name) (arguments : Array (Name × Expr)) 
     proof := mkApp proof arg
     type := body.instantiate1 arg
     if name == arguments.back!.1 then
-      replaceMainGoal (← (← getMainGoal).apply proof)
+      let goal ← getMainGoal
+      let goals ← goal.apply proof
+      tagPremises goal rule goals
+      replaceMainGoal goals
       return
   throwError "argument not found"
 

@@ -31,6 +31,35 @@ example (sample : (List Bool × ℕ) × List Bool → ProbComp Bool)
       (fun word => sample ((word.reverse, word.length), word ++ word)) := by
   ppt
 
+-- Curried callbacks leave a single argument-preparation goal after composition.
+-- Sampling twice tests the captured caller through nested monadic continuations.
+example (test : ℕ → ℕ → List Bool → ProbComp Bool)
+    (htest : IsPPTOn (encPair (encPair encUnary encUnary) encBits) encBool
+      (fun input => test input.1.1 input.1.2 input.2)) :
+    IsPPTOn (encPair encUnary encUnary) encBool (fun input : ℕ × ℕ => do
+      let first ← BitString.sampleList input.1
+      let second ← BitString.sampleList input.2
+      test input.1 input.2 (first ++ second)) := by
+  fail_if_success (clear htest; ppt)
+  ppt
+
+-- The same callback composes with a computed argument in ordinary let notation.
+example (test : ℕ → ℕ → List Bool → ProbComp Bool)
+    (htest : IsPPTOn (encPair (encPair encUnary encUnary) encBits) encBool
+      (fun input => test input.1.1 input.1.2 input.2)) :
+    IsPPTOn (encPair encUnary encBits) encBool (fun input : ℕ × List Bool =>
+      let word := input.2 ++ input.2
+      test input.1 word.length word) := by
+  ppt
+
+-- The callback's first argument may use binary encoding; the sampled count remains unary.
+example (test : ℕ → ℕ → List Bool → ProbComp Bool)
+    (htest : IsPPTOn (encPair (encPair encNat encUnary) encBits) encBool
+      (fun input => test input.1.1 input.1.2 input.2)) :
+    IsPPTOn (encPair encNat encUnary) encBool (fun input : ℕ × ℕ =>
+      BitString.sampleList input.2 >>= fun word => test input.1 input.2 word) := by
+  ppt
+
 -- Failure of the first encoding must leave the second local certificate usable.
 example (sample : ℕ → ProbComp Bool)
     (_hUnary : IsPPTOn encUnary encBool sample) (hBinary : IsPPTOn encNat encBool sample) :

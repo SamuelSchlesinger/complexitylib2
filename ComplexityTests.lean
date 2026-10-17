@@ -62,6 +62,7 @@ import ComplexityTests.PseudoentropyExtraction
 import ComplexityTests.PseudoentropyLearning
 import ComplexityTests.PseudoentropyMasking
 import ComplexityTests.PseudoentropySeed
+import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.RandomOracle

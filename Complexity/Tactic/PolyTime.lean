@@ -78,7 +78,7 @@ private meta def polytimeFunProp : TacticM Unit :=
     unless (← getMainTarget).isAppOf ``ComputableTidilyInPolyTime do
       throwError "expected a polynomial-time goal"
     -- A failed compositional attempt must leave time for the specification rules.
-    evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
+    evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 256 })))
 
 /-- Expose a negated guard to loop rules when compositional proof search needs their help. -/
 @[aesop unsafe 80% apply (rule_sets := [PolyTime])]

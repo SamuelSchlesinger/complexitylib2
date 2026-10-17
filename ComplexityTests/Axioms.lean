@@ -6635,3 +6635,199 @@ info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.extract_word_see
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.extract_word_seeds
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_divMod' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_divMod
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_div' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_div
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_mod' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_mod
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_size' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_size
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_scale' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_scale
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_observationBits' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_observationBits
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_labelBits' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_labelBits
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_remainingBits' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_remainingBits
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_numerator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_numerator
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.expands' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.expands
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.label_budget' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.label_budget
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_valid' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_valid
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.isPPTOn_extract' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.isPPTOn_extract
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.length_extract' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.length_extract
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_seedLength' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_seedLength
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_outputLength' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_outputLength
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.seedLength_lt_outputLength_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.seedLength_lt_outputLength_iff
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.replace_remaining' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.replace_remaining
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.replace_observations' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.replace_observations
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.replace_indexed_labels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.replace_indexed_labels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_indexed_three' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_indexed_three
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_three' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_three
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_hashSamples' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_hashSamples
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.isPolyTime_generate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.generate_distribution' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.generate_distribution
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.eval_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.eval_generate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.length_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.length_generate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.eval_generate_of_realization' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.eval_generate_of_realization

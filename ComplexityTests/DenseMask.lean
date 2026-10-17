@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Crypto.Computational.Pseudoentropy.DenseMask
 import Complexity.Crypto.Computational.Pseudoentropy.MaskedExtraction
 import Complexity.Crypto.Computational.Pseudoentropy.Selection
+import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource
 import Complexity.Crypto.Computational.Pseudoentropy.WordExtraction
 import Complexity.Tactic.PPT
 
@@ -83,6 +84,34 @@ private theorem fairPair_gap : fairPair.HasGap (fun _ => 0) := by
 
 private noncomputable def saved : fairPair.SeedRealization :=
   Classical.choice fairPair.exists_seedRealization
+
+-- The complete three-source theorem has a real client with positive label output. A zero-gap
+-- pair supplies no expansion claim; the two other digest budgets are deliberately zero.
+example :
+    let count := fun n => ExtractionSchedule.count n (saved.length n) 0
+    let bits := fun n => ExtractionSchedule.slack n (saved.length n) 0
+    ComputationallyIndistinguishable
+      (fun n => ProbComp.eval
+        (ThreeSource.extract (count n) (saved.length n) 2 0 (bits n) 0 (saved.sampleWithSeed n)))
+      (fun n => uniformList
+        (ThreeSource.outputLength (count n) (saved.length n) 2 0 (bits n) 0)) := by
+  have hlength := saved.length_isPolyTime
+  apply fairPair_gap.extract_three saved
+    (bound := fun _ => 2) (inverseSlack := fun _ => 0)
+    (observationBits := fun _ => 0) (remainingBits := fun _ => 0)
+    (labelBits := fun n => ExtractionSchedule.slack n (saved.length n) 0)
+    (numerator := fun _ => 2) (densityBound := fun _ => 0)
+    (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (by fun_prop) (by fun_prop) (by fun_prop)
+    (by intro n observation _; exact Nat.le_refl 2)
+    (Eventually.of_forall (by intro n; rw [fairPair_entropy]; norm_num [dyadicSize]))
+    (Eventually.of_forall (by intro n; exact Or.inl rfl)) ?_
+    (Eventually.of_forall (by intro n; exact Or.inl rfl))
+  apply Eventually.of_forall
+  intro n
+  have h := ExtractionSchedule.two_slack_eq n (saved.length n) 0
+  norm_num [dyadicSize] at h ⊢
+  linarith [Nat.cast_nonneg (α := ℝ) (ExtractionSchedule.slack n (saved.length n) 0)]
 
 -- A positive extraction budget on a real pair. Arbitrary bounded choices need no algorithm;
 -- the test itself must be one uniform efficient family, with the full output available.

@@ -87,6 +87,17 @@ example (algorithm : (List Bool × ℕ) × List Bool → List Bool)
       encBits encBits := by
   polytime
 
+-- A curried routine's sole remaining composition premise keeps its preparation name.
+example (algorithm : ℕ → ℕ → List Bool → Bool)
+    (h : ComputableTidilyInPolyTime
+      (fun input : (ℕ × ℕ) × List Bool => algorithm input.1.1 input.1.2 input.2)
+      (encPair (encPair encUnary encUnary) encBits) encBool) :
+    ComputableTidilyInPolyTime (fun input : ℕ × List Bool =>
+      algorithm input.1 input.2.length (input.2 ++ input.2))
+      (encPair encUnary encBits) encBool := by
+  fail_if_success (clear h; polytime)
+  polytime
+
 -- A locally supplied routine may have several certificates with different encodings.
 example (f : ℕ → Bool)
     (_hfUnary : ComputableTidilyInPolyTime f encUnary encBool)
