@@ -21,9 +21,11 @@ For a requested size `n ≥ 2`, choose the first tower with at least `n` vertice
 `b*n`, where `b` is the base size. Bounded-fiber contraction and laziness then give a graph
 on exactly `Fin n`, with degree and spectral gap independent of `n`. Sizes zero and one use loops.
 
-The rotation is an executable definition given the base rotation and numbering. This is not yet
-a uniform machine-time certificate. The contraction also increases the already large degree;
-asymptotic constructibility and practical enumeration are separate questions.
+The rotation is executable given the base and numbering. A uniform machine-time realization
+using complete rotation tables is certified in
+`Computability/Machines/Turing/MultiTape/Complexity/PolyTime/RotationMap/Family`. Its input vertex
+count is unary. The contraction increases the already large degree, so asymptotic constructibility,
+practical enumeration and time polynomial in the bit length of a vertex name are separate targets.
 
 ## Main definitions
 

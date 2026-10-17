@@ -6831,3 +6831,317 @@ info: 'Cslib.Crypto.Pseudoentropy.ThreeSource.eval_generate_of_realization' depe
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.ThreeSource.eval_generate_of_realization
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_finMod' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_finMod
+
+/--
+info: 'Cslib.RotationMap.TowerTable.polytime_lookup' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.polytime_lookup
+
+/--
+info: 'Cslib.RotationMap.TowerTable.polytime_nextRow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.polytime_nextRow
+
+/--
+info: 'Cslib.RotationMap.TowerTable.polytime_next' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.polytime_next
+
+/--
+info: 'Cslib.RotationMap.TowerTable.length_encoding_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.length_encoding_le
+
+/--
+info: 'Cslib.RotationMap.TowerTable.polytime_build' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.polytime_build
+
+/--
+info: 'Cslib.RotationMap.TowerTable.valid_initial' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.valid_initial
+
+/--
+info: 'Cslib.RotationMap.TowerTable.Valid.lookup_lt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.Valid.lookup_lt
+
+/--
+info: 'Cslib.RotationMap.TowerTable.Valid.next' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.Valid.next
+
+/--
+info: 'Cslib.RotationMap.TowerTable.length_iterate' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.length_iterate
+
+/--
+info: 'Cslib.RotationMap.TowerTable.valid_iterate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.valid_iterate
+
+/--
+info: 'Cslib.RotationMap.TowerTable.numberedIndex_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.numberedIndex_eq
+
+/--
+info: 'Cslib.RotationMap.TowerTable.lookup_iterate_numbered' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.lookup_iterate_numbered
+
+/--
+info: 'Cslib.RotationMap.TowerTable.length_build' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.length_build
+
+/--
+info: 'Cslib.RotationMap.TowerTable.lookup_build' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.lookup_build
+
+/--
+info: 'Cslib.RotationMap.TowerTable.contract_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.contract_eq
+
+/--
+info: 'Cslib.RotationMap.TowerTable.rotateFamily_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.rotateFamily_eq
+
+/--
+info: 'Cslib.RotationMap.TowerTable.polytime_contract' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.polytime_contract
+
+/--
+info: 'Cslib.RotationMap.TowerTable.polytime_rotateFamily' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.TowerTable.polytime_rotateFamily
+
+/--
+info: 'Cslib.RotationMap.arithmeticExpanderRotate_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.arithmeticExpanderRotate_eq
+
+/--
+info: 'Cslib.RotationMap.polytime_arithmeticExpanderRotate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.polytime_arithmeticExpanderRotate
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isWellFormed_eq_true' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isWellFormed_eq_true
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_isWellFormed' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_isWellFormed
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_edgeAt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_edgeAt
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_checkEdge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_checkEdge
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.checkEdge_eq_true_iff' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.checkEdge_eq_true_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toFiniteGraph_map' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toFiniteGraph_map
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_toFiniteGraph_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_toFiniteGraph_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_toFiniteGraph' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_toFiniteGraph
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_addTrivial' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_addTrivial
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_addLoops' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_addLoops
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.WellFormed.addTrivial' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.WellFormed.addTrivial
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.WellFormed.addLoops' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.WellFormed.addLoops
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toGraph_append' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_append
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_addTrivial_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_addTrivial_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_addTrivial' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_addTrivial
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_addLoops_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_addLoops_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_addLoops' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_addLoops
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.mem_cloud_iff' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.mem_cloud_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.nodup_cloud' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.nodup_cloud
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_cloud' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_cloud
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.cloudEquiv' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.cloudEquiv
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.cloudEquiv_symm_apply' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.cloudEquiv_symm_apply
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_cloudRotation' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_cloudRotation
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.cloudRotation_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.cloudRotation_eq

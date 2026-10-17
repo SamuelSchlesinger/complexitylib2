@@ -15,20 +15,19 @@ completed reference developments.
    [gap theorem](Complexity/Computability/PCP/GapTheorem.lean) establishes combinatorial correctness
    and polynomial output size. Complete the executable reduction and its resource certificate:
 
-   * give encoded graphs concrete indices, executable constraints and efficient enumeration,
-     with a proved interpretation into the existing mathematical graphs;
+   * extend the [encoded graph layer](Complexity/Computability/PCP/Encoded/Basic.lean) from
+     edge checking and trivial-edge insertion to degree reduction, powering and composition;
    * parameterize the full preprocessing–powering–composition pipeline by an expander contract,
      carrying degree, spectral gap and construction certificates;
-   * certify the [arithmetic expander family](Complexity/Foundations/Combinatorics/Expander/AffineFamily.lean)
-     and one preprocessing transformation, with small executable clients, before extending the
-     certificate to an amplification round and logarithmically many rounds;
+   * complete preprocessing using the
+     [certified arithmetic expander rotations](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/RotationMap/Family.lean),
+     then certify an amplification round and logarithmically many rounds;
    * charge copying, intermediate storage, lookup and every iteration, then prove the final
      verifier's randomness, query and indexing bounds.
 
-   A rotation algorithm polynomial in the number of vertices can suffice here. Polynomial time
-   in the bit length of a vertex name is a stronger, separate target. The current executable
-   family has enormous constants; certified polynomial time and practical execution are distinct
-   milestones.
+   The rotation certificate is polynomial in the number of vertices, which can suffice here.
+   Polynomial time in the bit length of a vertex name is a stronger, separate target. The
+   certified family has enormous constants; practical execution remains a separate milestone.
 
 3. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
    lookup and composition rules should infer encodings for ordinary functional expressions.

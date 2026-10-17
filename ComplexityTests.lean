@@ -46,6 +46,8 @@ import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NonVacuity
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT
+import ComplexityTests.PCPEncoded
+import ComplexityTests.PCPExpander
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic

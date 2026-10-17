@@ -23,7 +23,9 @@ gives degree `2*q^12` and spectral expansion at most `1 - 9/(400*q^16)`.
 `arithmeticExpander` instantiates the construction at `ZMod 257`, using its arithmetic equivalence
 with `Fin 257`. It performs no finite graph search or nonconstructive enumeration. The constants
 are enormous: executing one rotation and enumerating all edges are very different workloads.
-A uniform polynomial-time machine certificate remains separate from this executable definition.
+The uniform polynomial-time realization is certified in
+`Computability/Machines/Turing/MultiTape/Complexity/PolyTime/RotationMap/Family`; it constructs
+complete tables in time polynomial in the vertex count, rather than in its bit length.
 
 ## Main definitions
 

@@ -244,10 +244,13 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Family
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Tower
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
@@ -341,6 +344,10 @@ public import Complexity.Computability.PCP.AssignmentTester
 public import Complexity.Computability.PCP.Composition
 public import Complexity.Computability.PCP.ConstraintGraph
 public import Complexity.Computability.PCP.DegreeReduction
+public import Complexity.Computability.PCP.Encoded.AddTrivial
+public import Complexity.Computability.PCP.Encoded.Basic
+public import Complexity.Computability.PCP.Encoded.Cloud
+public import Complexity.Computability.PCP.Encoded.CloudRotation
 public import Complexity.Computability.PCP.GapTheorem
 public import Complexity.Computability.PCP.LocalTest
 public import Complexity.Computability.PCP.Power
@@ -480,6 +487,8 @@ public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.Tower
 public import Complexity.Foundations.Combinatorics.Expander.TowerBase
 public import Complexity.Foundations.Combinatorics.Expander.TowerFamily
+public import Complexity.Foundations.Combinatorics.Expander.TowerTable
+public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
 public import Complexity.Foundations.Combinatorics.Expander.Walk
 public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric
