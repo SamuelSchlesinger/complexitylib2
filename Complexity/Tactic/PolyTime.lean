@@ -75,10 +75,31 @@ attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.pi_apply'
 
 /-- Expose local routine certificates and their argument obligations as search alternatives. -/
-@[aesop unsafe 99% tactic (rule_sets := [PolyTime])]
+-- Equal priority lets argument goals run before expensive alternatives at the parent goal.
+@[aesop unsafe 100% tactic (rule_sets := [PolyTime])]
 private meta def polytimeKnownCall : Aesop.RuleTac :=
   Cslib.Tactic.applyKnownCall ``ComputableTidilyInPolyTime 2
     ``ComputableTidilyInPolyTime.comp `g `hf
+
+open Lean Meta Elab Tactic in
+/-- Commit to decomposition only when no local certificate supplies an alternative. The matcher
+restores the caller's state and leaves argument preparation open, so this tests applicability
+without choosing an intermediate encoding. -/
+private meta def withoutLocalCall (tactic : TacticM Unit) : TacticM Unit := withMainContext do
+  let goal ← getMainGoal
+  let hasCall ← try
+    discard <| (polytimeKnownCall { (default : Aesop.RuleTacInput) with goal }).run' {}
+    pure true
+  catch _ => pure false
+  if hasCall then throwError "a local certificate is an alternative to decomposition"
+  tactic
+
+open Lean Meta Elab Tactic in
+/-- Retain decomposition as an alternative when a local certificate competes with it. -/
+private meta def withLocalCall (tactic : TacticM Unit) : TacticM Unit := withMainContext do
+  let goal ← getMainGoal
+  discard <| (polytimeKnownCall { (default : Aesop.RuleTacInput) with goal }).run' {}
+  tactic
 
 /-- Expose named deterministic certificates as search alternatives. -/
 @[aesop unsafe 99% tactic (rule_sets := [PolyTime])]
@@ -87,7 +108,6 @@ private meta def polytimeCertificate : Aesop.RuleTac :=
 
 open Lean Meta Elab Tactic in
 /-- Decompose constructors before generic composition can guess intermediate encodings. -/
-@[aesop safe -25 tactic (rule_sets := [PolyTime])]
 private meta def polytimeConstruct : TacticM Unit := withMainContext do
   let target := (← instantiateMVars (← getMainTarget)).consumeMData
   unless target.isAppOf ``ComputableTidilyInPolyTime do
@@ -107,7 +127,6 @@ private meta def polytimeConstruct : TacticM Unit := withMainContext do
 
 open Lean Meta Elab Tactic in
 /-- Let compositional certificates finish a goal before trying loop specifications. -/
-@[aesop safe -20 tactic (rule_sets := [PolyTime])]
 private meta def polytimeFunProp : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     unless (← getMainTarget).consumeMData.isAppOf ``ComputableTidilyInPolyTime do
@@ -150,7 +169,6 @@ theorem foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
 open Lean Meta Elab Tactic in
 /-- Resolve the traversed list's encoding before certifying the step. Try a nonincreasing state
 bound first, committing to it only after its growth obligation has been proved. -/
-@[aesop safe 50 tactic (rule_sets := [PolyTime])]
 private meta def polytimeFold : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
@@ -183,8 +201,42 @@ attribute [aesop unsafe 80% apply (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.fstWithEncoding
   ComputableTidilyInPolyTime.sndWithEncoding
 
-attribute [aesop safe apply (index := [unindexed]) (rule_sets := [PolyTime])]
-  ComputableTidilyInPolyTime.iterate_of_bounded_growth
+-- Keep inexpensive structural successes and failures when no local certificate competes.
+-- Aesop postpones safe rules that assign encoding metavariables. Complementary guards avoid
+-- duplicating those alternatives while retaining decomposition if a local certificate fails.
+@[aesop safe -25 tactic (rule_sets := [PolyTime])]
+private meta def polytimeConstructFast : Lean.Elab.Tactic.TacticM Unit :=
+  withoutLocalCall polytimeConstruct
+
+@[aesop safe -20 tactic (rule_sets := [PolyTime])]
+private meta def polytimeFunPropFast : Lean.Elab.Tactic.TacticM Unit :=
+  withoutLocalCall polytimeFunProp
+
+@[aesop safe 50 tactic (rule_sets := [PolyTime])]
+private meta def polytimeFoldFast : Lean.Elab.Tactic.TacticM Unit :=
+  withoutLocalCall polytimeFold
+
+@[aesop safe tactic (rule_sets := [PolyTime])]
+private meta def polytimeIterateFast : Lean.Elab.Tactic.TacticM Unit :=
+  withoutLocalCall <| Lean.Elab.Tactic.liftMetaTactic fun goal =>
+    goal.applyConst ``ComputableTidilyInPolyTime.iterate_of_bounded_growth
+
+@[aesop unsafe 95% tactic (rule_sets := [PolyTime])]
+private meta def polytimeConstructAlternative : Lean.Elab.Tactic.TacticM Unit :=
+  withLocalCall polytimeConstruct
+
+@[aesop unsafe 90% tactic (rule_sets := [PolyTime])]
+private meta def polytimeFunPropAlternative : Lean.Elab.Tactic.TacticM Unit :=
+  withLocalCall polytimeFunProp
+
+@[aesop unsafe 85% tactic (rule_sets := [PolyTime])]
+private meta def polytimeFoldAlternative : Lean.Elab.Tactic.TacticM Unit :=
+  withLocalCall polytimeFold
+
+@[aesop unsafe 85% tactic (rule_sets := [PolyTime])]
+private meta def polytimeIterateAlternative : Lean.Elab.Tactic.TacticM Unit :=
+  withLocalCall <| Lean.Elab.Tactic.liftMetaTactic fun goal =>
+    goal.applyConst ``ComputableTidilyInPolyTime.iterate_of_bounded_growth
 
 /-- Prove a polynomial-time certificate from known routines and controlled loop rules. -/
 -- Unfold only reducible aliases when comparing assumptions. Ordinary program definitions may

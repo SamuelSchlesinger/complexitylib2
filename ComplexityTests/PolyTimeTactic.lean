@@ -106,6 +106,44 @@ example (f : ℕ → Bool)
       (encPair encNat encBool) encBool := by
   polytime
 
+-- A complete expression's certificate need not supply certificates for its individual parts.
+example (f g : List Bool → List Bool)
+    (h : ComputableTidilyInPolyTime (fun word => f word ++ g word) encBits encBits) :
+    ComputableTidilyInPolyTime (fun word => f word.reverse ++ g word.reverse)
+      encBits encBits := by
+  fail_if_success (clear h; polytime)
+  polytime
+
+example (f g : List Bool → List Bool)
+    (h : ComputableTidilyInPolyTime (fun word => (f word, g word))
+      encBits (encPair encBits encBits)) :
+    ComputableTidilyInPolyTime (fun p : Bool × List Bool => let word := p.2; (f word, g word))
+      (encPair encBool encBits) (encPair encBits encBits) := by polytime
+
+example (f : List Bool → Bool) (g : List Bool → List Bool)
+    (h : ComputableTidilyInPolyTime (fun word => f word :: g word) encBits encBits) :
+    ComputableTidilyInPolyTime (fun word => f word.reverse :: g word.reverse)
+      encBits encBits := by polytime
+
+-- The same reuse works for whole loops without deriving a second step-growth contract.
+example (step : List Bool → Bool → List Bool)
+    (h : ComputableTidilyInPolyTime (fun word => word.foldl step []) encBits encBits) :
+    ComputableTidilyInPolyTime (fun p : Bool × List Bool => p.2.foldl step [])
+      (encPair encBool encBits) encBits := by polytime
+
+example (step : List Bool → List Bool)
+    (h : ComputableTidilyInPolyTime (fun word => step^[word.length] word) encBits encBits) :
+    ComputableTidilyInPolyTime (fun p : Bool × List Bool => step^[p.2.length] p.2)
+      (encPair encBool encBits) encBits := by polytime
+
+-- Decomposition remains available when a whole certificate needs unavailable preprocessing.
+example (f g : List Bool → List Bool) (other : List Bool ↪ List Bool)
+    (_hwhole : ComputableTidilyInPolyTime (fun word => f word ++ g word) other encBits)
+    (hf : ComputableTidilyInPolyTime f encBits encBits)
+    (hg : ComputableTidilyInPolyTime g encBits encBits) :
+    ComputableTidilyInPolyTime (fun word => f word.reverse ++ g word.reverse)
+      encBits encBits := by polytime
+
 -- The step's fixed additive growth is inferred from the constructor.
 example : ComputableTidilyInPolyTime
     (fun n : ℕ => (fun word : List Bool => false :: word)^[n] []) encUnary encBits := by
