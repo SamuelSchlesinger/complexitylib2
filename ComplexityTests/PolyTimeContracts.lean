@@ -283,6 +283,53 @@ example (otherElement : α ↪ List Bool) (otherListEncoding : List α ↪ List 
   intro _hotherList _hother _hloose
   polytime
 
+omit hlist
+variable {otherListEncoding₁ otherListEncoding₂ : List α ↪ List Bool}
+
+-- All six certificate orders must work, including when the compatible choice is in the middle.
+-- Instance search must not guess a representation and discard other computation certificates.
+example (hgood : ComputableTidilyInPolyTime list input listEncoding)
+    (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁)
+    (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂) :
+    ComputableTidilyInPolyTime (fun x => (list x).foldl (step x) (initial x))
+      input stateEncoding := by polytime
+
+example (hgood : ComputableTidilyInPolyTime list input listEncoding)
+    (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂)
+    (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁) :
+    ComputableTidilyInPolyTime
+      (fun x => (list x).foldl (fun state value => step x state value) (initial x))
+      input stateEncoding := by polytime
+
+example (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁)
+    (hgood : ComputableTidilyInPolyTime list input listEncoding)
+    (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂) :
+    ComputableTidilyInPolyTime
+      (fun x => let entries := list x;
+        entries.foldl (fun state value => step x state value) (initial x))
+      input stateEncoding := by polytime
+
+example (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂)
+    (hgood : ComputableTidilyInPolyTime list input listEncoding)
+    (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁) :
+    ComputableTidilyInPolyTime (fun x => (list x).foldl (step x) (initial x))
+      input stateEncoding := by polytime
+
+example (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁)
+    (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂)
+    (hgood : ComputableTidilyInPolyTime list input listEncoding) :
+    ComputableTidilyInPolyTime
+      (fun x => (list x).foldl (fun state value => step x state value) (initial x))
+      input stateEncoding := by polytime
+
+example (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂)
+    (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁)
+    (hgood : ComputableTidilyInPolyTime list input listEncoding) :
+    ComputableTidilyInPolyTime
+      (fun x => let entries := list x;
+        entries.foldl (fun state value => step x state value) (initial x))
+      input stateEncoding := by polytime
+
 end CapturedFold
 
 private def taggedBits (p : List Bool × List Bool) : List Bool :=

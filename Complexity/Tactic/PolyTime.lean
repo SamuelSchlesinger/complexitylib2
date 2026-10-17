@@ -55,10 +55,16 @@ attribute [program_certificate]
 attribute [program_certificate hbound hcompute]
   ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
 
--- Explicit encoding evidence participates in the same search as the computation certificates.
-attribute [aesop unsafe 90% apply (rule_sets := [PolyTime])]
-  instListEncodingEncList instListEncodingBoolEncBoolEncBits
-  instSizedListEncodingEncList instSizedListEncodingBoolEncBoolEncBits
+open Lean Meta Elab Tactic in
+/-- Synthesize a list interface only after the computation evidence fixes its encodings. -/
+@[aesop safe tactic (rule_sets := [PolyTime])
+  (index := [target ListEncoding _ _, target SizedListEncoding _ _])]
+private meta def polytimeListInstance : TacticM Unit := withMainContext do
+  let goal ← getMainGoal
+  let target ← instantiateMVars (← goal.getType)
+  if target.hasExprMVar then throwError "encoding is not yet determined"
+  goal.assign (← synthInstance target)
+  replaceMainGoal []
 
 -- Computed finite tables use the ordinary application rule. Its function-valued head cannot
 -- be registered as a `fun_prop` theorem, so Aesop supplies this closure step.
