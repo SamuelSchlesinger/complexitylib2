@@ -31,6 +31,8 @@ intermediate and output tables. Exact interpretations require complete duplicate
 * `Cslib.PCP.Encoded.Graph.isPolyTime_amplify`: compositional construction certificate.
 * `Cslib.PCP.Encoded.Graph.satisfiable_amplify_iff`: preservation of satisfiability.
 * `Cslib.PCP.Encoded.Graph.le_unsatVal_amplify`: the full quantitative amplification bound.
+* `Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplify`: sufficient fixed gain doubles the value up to
+  the threshold.
 
 ## References
 
@@ -139,6 +141,22 @@ theorem le_unsatVal_amplify [Nonempty D] (μ : ℝ)
       ((g.amplify eval fallback rotate T q walks number coins queries).toGraph id).unsatVal :=
   ((g.toGraph eval).le_div_unsatVal_power_preprocessWith
     (g.preprocessExpanders eval fallback family μ hgap) hμ hq hT).trans
+      (g.div_le_unsatVal_amplify eval fallback family rotate hrotate T q walks number coins queries
+        hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries)
+
+include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries in
+/-- A killing rate with sufficient gain doubles the value up to the fixed threshold. The
+pre-composition bound is shared with the mathematical amplification proof. -/
+theorem min_le_unsatVal_amplify [Nonempty D] (μ : ℝ)
+    (hgap : ∀ n, (family n).spectralExpansion ≤ μ) (hμ : μ < 1) (hq : 2 ≤ q)
+    (hT : T = 4 * Fintype.card α * (q - 1))
+    (hgain : 2 / ConstraintGraph.Amplification.retention (Fintype.card D) μ ≤
+      ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator
+        (Fintype.card α) (Fintype.card D) μ) :
+    min (2 * (g.toGraph eval).unsatVal) (1 / T ^ 2) ≤
+      ((g.amplify eval fallback rotate T q walks number coins queries).toGraph id).unsatVal :=
+  ((g.toGraph eval).min_le_div_unsatVal_power_preprocessWith
+    (g.preprocessExpanders eval fallback family μ hgap) hμ hq hT hgain).trans
       (g.div_le_unsatVal_amplify eval fallback family rotate hrotate T q walks number coins queries
         hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries)
 

@@ -54,8 +54,9 @@ as is right: it is satisfied by every labelling.
 * `Cslib.PCP.ConstraintGraph.exists_unsatFrac_eq_unsatVal`: the minimum is attained.
 * `Cslib.PCP.ConstraintGraph.unsatVal_eq_zero_iff`: the value vanishes exactly on satisfiable
   constraint graphs.
-* `Cslib.PCP.ConstraintGraph.inv_card_le_unsatVal`: an unsatisfiable constraint graph has value at
-  least one edge's worth.
+* `Cslib.PCP.ConstraintGraph.inv_card_le_unsatVal`,
+  `Cslib.PCP.ConstraintGraph.one_le_card_mul_unsatVal`: an unsatisfiable constraint graph has value
+  at least one edge's worth.
 * `Cslib.PCP.ConstraintGraph.unsatVal_map`: renaming the vertices injectively preserves the
   value.
 * `Cslib.PCP.ConstraintGraph.satisfiable_comap_iff`,
@@ -242,6 +243,15 @@ theorem inv_card_le_unsatVal (h : ¬ G.Satisfiable) : (Fintype.card E : ℝ)⁻�
   rw [unsatFrac, inv_eq_one_div]
   gcongr
   exact_mod_cast hne.card_pos
+
+/-- An unsatisfiable constraint graph violates at least one edge at its minimum-value labelling. -/
+theorem one_le_card_mul_unsatVal (h : ¬ G.Satisfiable) :
+    1 ≤ (Fintype.card E : ℝ) * G.unsatVal := by
+  obtain ⟨σ, hσ⟩ := G.exists_unsatFrac_eq_unsatVal
+  rw [← hσ, G.card_mul_unsatFrac]
+  have hne : (G.unsatEdges σ).Nonempty :=
+    nonempty_iff_ne_empty.2 fun he ↦ h ⟨σ, G.unsatEdges_eq_empty_iff.1 he⟩
+  exact_mod_cast one_le_card.2 hne
 
 end Value
 

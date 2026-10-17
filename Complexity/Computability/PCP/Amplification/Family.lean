@@ -241,14 +241,16 @@ theorem le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
   (G.le_div_unsatVal_power_preprocessWith X hμ hq hT).trans
     ((G.preprocessWith X).power T q).toConstraintGraph.le_unsatVal_compose
 
-/-- A sufficiently large fixed killing rate doubles the value up to `1 / T²`. The required
-inequality is satisfiable for every nonempty alphabet, positive degree and positive spectral gap
-by `Amplification.exists_killRate`. -/
-theorem min_le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
+omit [DecidableEq D] [DecidableEq α] in
+/-- Preprocessing and powering already double the value after division by the composition loss.
+The required inequality is satisfiable for every nonempty alphabet, positive degree and positive
+spectral gap by `Amplification.exists_killRate`. -/
+theorem min_le_div_unsatVal_power_preprocessWith (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1))
     (hgain : 2 / Amplification.retention (Fintype.card D) μ ≤
       ((q : ℝ) - 1) / Amplification.denominator (Fintype.card α) (Fintype.card D) μ) :
-    min (2 * G.unsatVal) (1 / T ^ 2) ≤ (G.amplifyWith X T q).unsatVal := by
+    min (2 * G.unsatVal) (1 / T ^ 2) ≤
+      ((G.preprocessWith X).power T q).toConstraintGraph.unsatVal / 476 := by
   have hr := Amplification.retention_pos (d := Fintype.card D) Fintype.card_pos hμ
   have hr₁ := Amplification.retention_le_one (Fintype.card D) μ
   set c : ℝ := ((q : ℝ) - 1) /
@@ -256,12 +258,23 @@ theorem min_le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
   have hc : 1 ≤ c := (le_div_iff₀ hr).mpr (by linarith) |>.trans hgain
   have hcr : 2 ≤ c * Amplification.retention (Fintype.card D) μ :=
     (div_le_iff₀ hr).mp hgain
-  refine le_trans ?_ (G.le_unsatVal_amplifyWith X hμ hq hT)
+  refine le_trans ?_ (G.le_div_unsatVal_power_preprocessWith X hμ hq hT)
   rw [mul_min_of_nonneg _ _ (by linarith : 0 ≤ c)]
   refine min_le_min ?_ (le_mul_of_one_le_left (by positivity) hc)
   calc 2 * G.unsatVal ≤ (c * Amplification.retention (Fintype.card D) μ) * G.unsatVal :=
       mul_le_mul_of_nonneg_right hcr G.unsatVal_nonneg
     _ = c * (Amplification.retention (Fintype.card D) μ * G.unsatVal) := mul_assoc _ _ _
+
+/-- A sufficiently large fixed killing rate doubles the value up to `1 / T²`. The required
+inequality is satisfiable for every nonempty alphabet, positive degree and positive spectral gap
+by `Amplification.exists_killRate`. -/
+theorem min_le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
+    (hT : T = 4 * Fintype.card α * (q - 1))
+    (hgain : 2 / Amplification.retention (Fintype.card D) μ ≤
+      ((q : ℝ) - 1) / Amplification.denominator (Fintype.card α) (Fintype.card D) μ) :
+    min (2 * G.unsatVal) (1 / T ^ 2) ≤ (G.amplifyWith X T q).unsatVal :=
+  (G.min_le_div_unsatVal_power_preprocessWith X hμ hq hT hgain).trans
+    ((G.preprocessWith X).power T q).toConstraintGraph.le_unsatVal_compose
 
 end Cslib.PCP.ConstraintGraph
 

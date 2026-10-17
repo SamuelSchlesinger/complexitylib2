@@ -25,10 +25,10 @@ polynomial in `|E|` only.
 
 A round changes the types of the vertices and edges: the vertices of Dinur's round are built from
 the edges of its input. Its input and output are therefore **bundled** constraint graphs
-(`FinConstraintGraph`), which carry their finite types of vertices and edges along. The other
-option, numbering the vertices and edges in `Fin n` after every round, would need a reindexing at
-every round and gain nothing: the constructions name their vertices and edges by tuples of the old
-ones, and the statements only count them.
+(`FinConstraintGraph`), which carry their finite types of vertices and edges along. This
+mathematical interface retains the tuple types produced by each construction, since its size
+statements only count vertices and edges. Executable encoded graphs instead use concrete indices;
+their reindexing, storage, and running-time bounds are certified separately.
 
 As a mere function, an amplifier is easy to come by: a function that decides satisfiability can
 map the satisfiable constraint graphs to one without edges and the others to a single violated
@@ -46,6 +46,7 @@ the consequences of the interface; running times are not formalized here.
 
 ## Main results
 
+* `Cslib.PCP.min_two_pow_mul_le_iterate`: iterating a clipped doubling bound.
 * `Cslib.PCP.Amplifier.satisfiable_iter_iff`: the iterates preserve satisfiability.
 * `Cslib.PCP.Amplifier.min_le_unsatVal_iter`: the value after `k` rounds is at least
   `min (2 ^ k UNSAT(G)) γ`.
@@ -68,6 +69,25 @@ the consequences of the interface; running times are not formalized here.
 universe u v
 
 namespace Cslib.PCP
+
+/-- Iterating a step that doubles a value up to a nonnegative threshold yields the corresponding
+exponential lower bound. No nonnegativity assumption on the values is needed. -/
+theorem min_two_pow_mul_le_iterate {X : Type*} (step : X → X) (value : X → ℝ)
+    {gap : ℝ} (hgap : 0 ≤ gap)
+    (hstep : ∀ x, min (2 * value x) gap ≤ value (step x)) (k : ℕ) (x : X) :
+    min (2 ^ k * value x) gap ≤ value (step^[k] x) := by
+  induction k with
+  | zero =>
+    simpa only [pow_zero, one_mul, Function.iterate_zero_apply] using min_le_left (value x) gap
+  | succ k ih =>
+    rw [Function.iterate_succ_apply']
+    refine le_trans ?_ (hstep _)
+    calc min (2 ^ (k + 1) * value x) gap
+        = min (2 * min (2 ^ k * value x) gap) gap := by
+          rw [mul_min_of_nonneg _ _ zero_le_two, min_assoc,
+            min_eq_right (by linarith : gap ≤ 2 * gap), pow_succ', mul_assoc]
+      _ ≤ min (2 * value (step^[k] x)) gap :=
+        min_le_min (mul_le_mul_of_nonneg_left ih zero_le_two) le_rfl
 
 /-- A **finite constraint graph** over the alphabet `α`: a constraint graph bundled with its finite
 types of vertices and edges, so that transformations changing these types can be iterated. -/
@@ -144,22 +164,8 @@ theorem satisfiable_iter_iff (k : ℕ) (G : FinConstraintGraph.{u} α) :
 /-- **The value after `k` rounds** [Dinur, Corollary 4.2][Dinur2005]: it is at least
 `min (2 ^ k UNSAT(G)) γ`. -/
 theorem min_le_unsatVal_iter (k : ℕ) (G : FinConstraintGraph.{u} α) :
-    min (2 ^ k * G.graph.unsatVal) A.gap ≤ (A.iter k G).graph.unsatVal := by
-  induction k with
-  | zero =>
-    rw [pow_zero, one_mul]
-    exact min_le_left _ _
-  | succ k ih =>
-    rw [iter_succ]
-    refine le_trans ?_ (A.min_le_unsatVal _)
-    have hγ := A.gap_pos.le
-    calc min (2 ^ (k + 1) * G.graph.unsatVal) A.gap
-        ≤ min (2 * min (2 ^ k * G.graph.unsatVal) A.gap) A.gap := by
-          refine le_min ?_ (min_le_right _ _)
-          rw [mul_min_of_nonneg _ _ zero_le_two]
-          exact min_le_min (le_of_eq (by ring)) (by linarith)
-        _ ≤ min (2 * (A.iter k G).graph.unsatVal) A.gap := by
-          gcongr
+    min (2 ^ k * G.graph.unsatVal) A.gap ≤ (A.iter k G).graph.unsatVal :=
+  min_two_pow_mul_le_iterate A.toFun (fun H => H.graph.unsatVal) A.gap_pos.le A.min_le_unsatVal k G
 
 section Gap
 
@@ -171,16 +177,8 @@ is at least `1 / |E|`. -/
 theorem gap_le_unsatVal_iter {G : FinConstraintGraph.{u} α} (h : ¬ G.graph.Satisfiable) {k : ℕ}
     (hk : Fintype.card G.E ≤ 2 ^ k) : A.gap ≤ (A.iter k G).graph.unsatVal := by
   refine le_trans (le_min ?_ le_rfl) (A.min_le_unsatVal_iter k G)
-  have hE : (0 : ℝ) < Fintype.card G.E := by
-    refine Nat.cast_pos.2 (Fintype.card_pos_iff.2 ?_)
-    by_contra hE
-    exact h ⟨fun _ ↦ Classical.arbitrary α, fun e ↦ (not_nonempty_iff.1 hE).elim e⟩
-  have hk' : (Fintype.card G.E : ℝ) ≤ 2 ^ k := by exact_mod_cast hk
-  calc A.gap ≤ 1 := A.gap_le_one
-    _ = Fintype.card G.E * (Fintype.card G.E : ℝ)⁻¹ := (mul_inv_cancel₀ hE.ne').symm
-    _ ≤ 2 ^ k * G.graph.unsatVal := by
-        gcongr
-        exact G.graph.inv_card_le_unsatVal h
+  exact A.gap_le_one.trans ((G.graph.one_le_card_mul_unsatVal h).trans
+    (mul_le_mul_of_nonneg_right (by exact_mod_cast hk) G.graph.unsatVal_nonneg))
 
 /-- **The dichotomy** [Dinur, Corollary 4.2][Dinur2005]: after `k` rounds with `|E| ≤ 2 ^ k`, the
 value is either zero, when the graph was satisfiable, or at least `γ`. -/

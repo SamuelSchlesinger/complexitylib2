@@ -8079,3 +8079,97 @@ info: 'Cslib.PCP.Encoded.Graph.inv_edges_le_unsatVal_ofCompactCNF' depends on ax
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.Encoded.Graph.inv_edges_le_unsatVal_ofCompactCNF
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.min_le_div_unsatVal_power_preprocessWith' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.min_le_div_unsatVal_power_preprocessWith
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplify' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplify
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_amplifyIter_clog' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_amplifyIter_clog
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_amplifyIter_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_amplifyIter_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplifyIter' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplifyIter
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.gap_le_unsatVal_amplifyIter' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.gap_le_unsatVal_amplifyIter
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.gap_le_unsatVal_amplifyIter_clog' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.gap_le_unsatVal_amplifyIter_clog
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.Amplification.Arithmetic.walkLength_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.Amplification.Arithmetic.walkLength_eq
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.Amplification.Arithmetic.gain' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.Amplification.Arithmetic.gain
+
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.polyBounded_iterationSize_clog' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.polyBounded_iterationSize_clog
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.iterate_length_encoding_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.iterate_length_encoding_le
+
+/-- info: 'Cslib.PCP.min_two_pow_mul_le_iterate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.min_two_pow_mul_le_iterate
+
+/-- info: 'Cslib.PCP.ConstraintGraph.one_le_card_mul_unsatVal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.ConstraintGraph.one_le_card_mul_unsatVal
+
+/-- info: 'Cslib.PCP.Amplifier.min_le_unsatVal_iter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Amplifier.min_le_unsatVal_iter
+
+/-- info: 'Cslib.PCP.Amplifier.gap_le_unsatVal_iter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Amplifier.gap_le_unsatVal_iter

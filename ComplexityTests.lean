@@ -51,11 +51,14 @@ import ComplexityTests.NonVacuity
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
+import ComplexityTests.PCPAmplifierIteration
 import ComplexityTests.PCPEncoded
 import ComplexityTests.PCPEncodedAmplification
+import ComplexityTests.PCPEncodedAmplificationIteration
 import ComplexityTests.PCPEncodedAssignmentTester
 import ComplexityTests.PCPEncodedComposition
 import ComplexityTests.PCPEncodedConstraints
+import ComplexityTests.PCPEncodedIteration
 import ComplexityTests.PCPEncodedPreprocess
 import ComplexityTests.PCPEncodedSize
 import ComplexityTests.PCPEncodedThreeSAT

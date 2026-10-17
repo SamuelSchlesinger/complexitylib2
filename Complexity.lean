@@ -341,6 +341,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.InPla
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space
 public import Complexity.Computability.PCP.Amplification
+public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family
 public import Complexity.Computability.PCP.Amplifier
 public import Complexity.Computability.PCP.AssignmentTester
@@ -349,6 +350,7 @@ public import Complexity.Computability.PCP.ConstraintGraph
 public import Complexity.Computability.PCP.DegreeReduction
 public import Complexity.Computability.PCP.Encoded.AddTrivial
 public import Complexity.Computability.PCP.Encoded.Amplification
+public import Complexity.Computability.PCP.Encoded.Amplification.Iteration
 public import Complexity.Computability.PCP.Encoded.AssignmentTester
 public import Complexity.Computability.PCP.Encoded.Basic
 public import Complexity.Computability.PCP.Encoded.Cloud
@@ -356,6 +358,7 @@ public import Complexity.Computability.PCP.Encoded.CloudRotation
 public import Complexity.Computability.PCP.Encoded.Composition
 public import Complexity.Computability.PCP.Encoded.Constraints
 public import Complexity.Computability.PCP.Encoded.DegreeReduction
+public import Complexity.Computability.PCP.Encoded.Iteration
 public import Complexity.Computability.PCP.Encoded.Power
 public import Complexity.Computability.PCP.Encoded.Preprocess
 public import Complexity.Computability.PCP.Encoded.Preprocess.Programs
