@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.PCP.ConstraintGraph
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+public import Mathlib.Data.List.NodupEquivFin
 import Complexity.Tactic.PolyTime
 import Mathlib.Data.List.GetD
 
@@ -258,6 +259,17 @@ theorem unsatVal_toFiniteGraph [Nonempty α] (g : Graph C)
     (g.toFiniteGraph eval hg).unsatVal = (g.toGraph eval).unsatVal := by
   rw [← toFiniteGraph_map g eval hg]
   exact ((g.toFiniteGraph eval hg).unsatVal_map Fin.val_injective).symm
+
+/-- List positions enumerate the product of numbered vertices and a complete list of labels. -/
+def listedDartEquiv {D : Type*} [DecidableEq D] (vertices : ℕ) (labels : List D)
+    (hlabels : labels.Nodup) (hmem : ∀ d, d ∈ labels) :
+    Fin ((List.range vertices).product labels).length ≃ Fin vertices × D :=
+  (List.Nodup.getEquiv _ (List.nodup_range.product hlabels)).trans
+    { toFun := fun p => (⟨p.val.1, List.mem_range.mp (List.mem_product.mp p.property).1⟩, p.val.2)
+      invFun := fun p => ⟨(p.1.val, p.2), List.mem_product.mpr
+        ⟨List.mem_range.mpr p.1.isLt, hmem p.2⟩⟩
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl }
 
 end Graph
 

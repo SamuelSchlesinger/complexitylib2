@@ -7,8 +7,10 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
 /-!
@@ -31,6 +33,7 @@ needed separately when transferring satisfiability.
   `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel`: renaming variables.
 * `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne`: exactly-one constraints.
 * `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars`: listing variable occurrences.
+* `Cslib.Logic.PL.CNF.isPolyTime_compact`: compact unary indices for arbitrary variable names.
 
 ## References
 
@@ -115,6 +118,16 @@ theorem CNF.computableTidilyInPolyTime_exactlyOne [DecidableEq V] (enc : V ↪ L
     ComputableTidilyInPolyTime (CNF.exactlyOne (V := V))
       (encList enc) (encList (encList (encPair enc encBool))) := by
   unfold CNF.exactlyOne
+  fun_prop
+
+/-- The entire input-dependent renaming is polynomial-time for any original variable encoding.
+Its output indices use unary encoding and are bounded by the input's number of occurrences. -/
+@[fun_prop]
+theorem CNF.isPolyTime_compact [DecidableEq V] (enc : V ↪ List Bool) :
+    ComputableTidilyInPolyTime (CNF.compact (V := V))
+      (encList (encList (encPair enc encBool)))
+      (encList (encList (encPair encUnary encBool))) := by
+  unfold CNF.compact CNF.relabel Clause.relabel Prod.map
   fun_prop
 
 end Cslib.Logic.PL

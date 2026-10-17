@@ -58,6 +58,7 @@ import ComplexityTests.PCPEncodedComposition
 import ComplexityTests.PCPEncodedConstraints
 import ComplexityTests.PCPEncodedPreprocess
 import ComplexityTests.PCPEncodedSize
+import ComplexityTests.PCPEncodedThreeSAT
 import ComplexityTests.PCPExpander
 import ComplexityTests.PCPNumbering
 import ComplexityTests.PCPPreprocessPrograms

@@ -13,8 +13,8 @@ completed reference developments.
      [encoded amplification round](Complexity/Computability/PCP/Encoded/Amplification.lean),
      using its fixed-alphabet normalization and
      [encoded-size bounds](Complexity/Computability/PCP/Encoded/Size.lean) in the loop invariant;
-   * connect an efficient initial constraint-graph construction with compact variable numbering,
-     charging copying, intermediate storage, lookup and every iteration;
+   * connect the [certified initial 3-SAT graph](Complexity/Computability/PCP/Encoded/ThreeSAT.lean)
+     to an efficient SAT-to-3CNF conversion and the iterative construction;
    * prove the final verifier's randomness, query and indexing bounds.
 
    The rotation certificate is polynomial in the number of vertices, which can suffice here.

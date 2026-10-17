@@ -8009,3 +8009,73 @@ info: 'Cslib.PCP.Encoded.Graph.WellFormed.length_encoding_le' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.Encoded.Graph.WellFormed.length_encoding_le
+
+/--
+info: 'Cslib.Logic.PL.CNF.satisfiable_compact' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.satisfiable_compact
+
+/--
+info: 'Cslib.Logic.PL.CNF.mem_vars_compact_lt' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.mem_vars_compact_lt
+
+/--
+info: 'Cslib.Logic.PL.CNF.isPolyTime_compact' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.isPolyTime_compact
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.cnfVertexNumber_injective' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.cnfVertexNumber_injective
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toGraph_ofCNF' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_ofCNF
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_ofCNF' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_ofCNF
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_ofCompactCNF' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_ofCompactCNF
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.wellFormed_ofCompactCNF' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.wellFormed_ofCompactCNF
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_ofCompactCNF_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_ofCompactCNF_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.inv_edges_le_unsatVal_ofCompactCNF' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.inv_edges_le_unsatVal_ofCompactCNF

@@ -200,16 +200,6 @@ private theorem addTrivial_represents {V L L' : Type} (g : Graph C) (eval : C �
   rw [hunion]
   rfl
 
-private def listedDartEquiv [DecidableEq D] (vertices : ℕ) (labels : List D)
-    (hlabels : labels.Nodup) (hmem : ∀ d, d ∈ labels) :
-    Fin ((List.range vertices).product labels).length ≃ Fin vertices × D :=
-  (List.Nodup.getEquiv _ (List.nodup_range.product hlabels)).trans
-    { toFun := fun p => (⟨p.val.1, List.mem_range.mp (List.mem_product.mp p.property).1⟩, p.val.2)
-      invFun := fun p => ⟨(p.1.val, p.2), List.mem_product.mpr
-        ⟨List.mem_range.mpr p.1.isLt, hmem p.2⟩⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl }
-
 private theorem rotationEdges_product (rotate : ℕ × (ℕ × D) → ℕ × D)
     (labels : List D) (vertices : ℕ) :
     rotationEdges rotate labels vertices =

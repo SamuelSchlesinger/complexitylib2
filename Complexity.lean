@@ -360,6 +360,7 @@ public import Complexity.Computability.PCP.Encoded.Power
 public import Complexity.Computability.PCP.Encoded.Preprocess
 public import Complexity.Computability.PCP.Encoded.Preprocess.Programs
 public import Complexity.Computability.PCP.Encoded.Size
+public import Complexity.Computability.PCP.Encoded.ThreeSAT
 public import Complexity.Computability.PCP.GapTheorem
 public import Complexity.Computability.PCP.LocalTest
 public import Complexity.Computability.PCP.Power
@@ -600,6 +601,7 @@ public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction
 public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding
+public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
