@@ -26,6 +26,7 @@ polynomial bound on the complete encoded output. The operations are total on emp
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsToList`, `.listToBits`: encoding conversion.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFlatten`: concatenate computed raw words.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFrame`, `.bitsPadWord`: self-delimiting
   framing and bounded padding, including arbitrary encoded inputs and overlong words.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsGetElem?`: optional lookup in raw bits.
@@ -141,6 +142,14 @@ theorem bitsReplicate (bit : Bool) :
     (step := List.cons bit) id' (const []) (by fun_prop) (growth := 1) (fun _ => by simp)
 
 variable {α : Type} {input : α ↪ List Bool}
+
+/-- Concatenate computed raw words, fixing the intermediate list encoding before proof search. -/
+@[fun_prop]
+theorem bitsFlatten {words : α → List (List Bool)}
+    (hwords : ComputableTidilyInPolyTime words input (encList encBits)) :
+    ComputableTidilyInPolyTime (fun a => (words a).flatten) input encBits := by
+  simpa only [Function.comp_def, List.map_id_fun', id_eq] using
+    listToBits.comp ((flatten encBool).comp ((map bitsToList).comp hwords))
 
 /-- Self-delimiting padding uses ordinary framing and unary arithmetic. -/
 @[fun_prop]

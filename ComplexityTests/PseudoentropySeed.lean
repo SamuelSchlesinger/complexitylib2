@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Computational.Pseudoentropy.Seed
+import Complexity.Crypto.Computational.Pseudoentropy.WordSeedExtraction
 import Complexity.Tactic.PPT
 
 /-! Saved-seed contracts, unused randomness and supported-score concentration. -/
@@ -12,7 +13,7 @@ import Complexity.Tactic.PPT
 namespace ComplexityTests.PseudoentropySeed
 
 open Cslib Cslib.Probability Cslib.Probability.PMF Cslib.Crypto.Pseudoentropy
-open Turing.MultiTapeTM
+open Turing.MultiTapeTM Filter
 
 -- Arbitrary, possibly biased, independent bits: no uniformity assumption on the marginals.
 example (count : ℕ) (p : Fin count → PMF Bool) {ε : ℝ} (hε : 0 ≤ ε) :
@@ -84,7 +85,7 @@ example (n : ℕ) : ProbComp.eval (paddedSeed.sampleWithSeed n) =
   paddedSeed.eval_sampleWithSeed n
 
 -- Exactly n unused random bits remain after disclosing the hidden bit and the constant observation.
-example (n : ℕ) : conditionalEntropy (paddedSeed.jointWithSeed n) = n := by
+private theorem residual_entropy (n : ℕ) : conditionalEntropy (paddedSeed.jointWithSeed n) = n := by
   have h := paddedSeed.entropy_chain_rule n
   change entropy (((uniformOfFintype Bool).map ((), ·)).map Prod.fst) +
     conditionalEntropy ((uniformOfFintype Bool).map ((), ·)) +
@@ -92,5 +93,87 @@ example (n : ℕ) : conditionalEntropy (paddedSeed.jointWithSeed n) = n := by
   rw [conditionalEntropy_map_const, entropy_uniform] at h
   norm_num [PMF.map_comp, Function.comp_def, PMF.map, PMF.bind_const] at h
   linarith
+
+-- The joint law retains every unused coin, not just the marginal observation and label.
+example (n : ℕ) : ProbComp.eval (paddedSeed.sampleWithSeed n) =
+    (BitString.uniformList (n + 1)).map (fun bits => (([], bits.headD false), bits)) := by
+  simp only [SamplablePair.SeedRealization.sampleWithSeed, paddedSeed, bind_pure_comp,
+    ProbComp.eval_map, BitString.eval_sampleList]
+
+private theorem slack_budget (n width : ℕ) :
+    (ExtractionSchedule.slack n width 0 : ℝ) + 2 * ExtractionSchedule.slack n width 0 ≤
+      ExtractionSchedule.count n width 0 := by
+  have h := ExtractionSchedule.two_slack_eq n width 0
+  norm_num at h
+  linarith [Nat.cast_nonneg (α := ℝ) (ExtractionSchedule.slack n width 0)]
+
+-- Extract positively many bits from the unused coins, against every randomized full-output test.
+example :
+    let count := fun n => ExtractionSchedule.count n (n + 1) 0
+    let bits := fun n => ExtractionSchedule.slack n (n + 1) 0
+    Cslib.Crypto.Game.Indistinguishable
+      (fun (test : ℕ → List (List Bool × Bool) × List Bool × List Bool → Cslib.Crypto.Game) n =>
+        (ProbComp.eval (OracleComp.replicate (count n) (paddedSeed.sampleWithSeed n) >>=
+          extractWordSeeds (count n) (n + 1) (bits n))).bind (test n))
+      (fun test n => (ProbComp.eval (extractMatrixLabelsIdeal (fairPair.sample n) (count n)
+        (count n * (n + 1)) (bits n))).bind (test n)) (fun _ => True) := by
+  apply paddedSeed.extract_word_seeds (fun _ => 0)
+    (fun n => ExtractionSchedule.slack n (n + 1) 0)
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  right
+  have hresidual : (paddedSeed.length n : ℝ) - entropy ((fairPair.joint n).map Prod.fst) -
+      conditionalEntropy (fairPair.joint n) = n := by
+    linarith [paddedSeed.entropy_chain_rule n, residual_entropy n]
+  rw [hresidual]
+  exact (slack_budget n (n + 1)).trans
+    (le_mul_of_one_le_right (by positivity) (by exact_mod_cast hn))
+
+-- The observation has one fair bit, and the hidden label is constant.
+private noncomputable def observedPair : SamplablePair where
+  Observation _ := Bool
+  finite _ := inferInstance
+  encode _ := encBool
+  joint _ := (uniformOfFintype Bool).map (fun bit => (bit, false))
+  sample _ := (fun bit => ([bit], false)) <$> ProbComp.uniform Bool
+  efficient := by ppt
+  eval_sample _ := by
+    simp only [ProbComp.eval_map, ProbComp.eval_uniform, PMF.map_comp, Function.comp_def]
+    rfl
+
+private noncomputable def observedSeed : observedPair.SeedRealization where
+  length _ := 1
+  length_isPolyTime := by fun_prop
+  evaluate _ bits := ([bits.headD false], false)
+  efficient := by fun_prop
+  distribution _ := by
+    simp only [BitString.uniformList_succ, Function.comp_def, List.headD_cons, PMF.map,
+      PMF.bind_const, observedPair, PMF.bind_bind, PMF.pure_bind]
+    rfl
+
+-- Padding carries a genuine supported length bound; extraction includes the entire hash seed.
+example :
+    let count := fun n => ExtractionSchedule.count n 1 0
+    let bits := fun n => ExtractionSchedule.slack n 1 0
+    Cslib.Crypto.Game.Indistinguishable
+      (fun (test : ℕ → List Bool → Cslib.Crypto.Game) n =>
+        (ProbComp.eval (OracleComp.replicate (count n) (Prod.fst <$> observedPair.sample n) >>=
+          extractWordObservations 1 (bits n))).bind (test n))
+      (fun test n => (BitString.uniformList (bits n * (count n * 3) + bits n)).bind (test n))
+      (fun _ => True) := by
+  apply observedSeed.extract_word_observations (fun _ => 1) (fun _ => 0)
+    (fun n => ExtractionSchedule.slack n 1 0) (by
+      intro n observation _
+      change [observation].length ≤ 1
+      simp)
+  apply Eventually.of_forall
+  intro n
+  right
+  have hentropy : entropy ((observedPair.joint n).map Prod.fst) = 1 := by
+    simp only [observedPair, PMF.map_comp, Function.comp_def]
+    change entropy ((uniformOfFintype Bool).map id) = 1
+    rw [PMF.map_id]
+    norm_num [entropy_uniform]
+  rw [hentropy, mul_one]
+  exact slack_budget n 1
 
 end ComplexityTests.PseudoentropySeed

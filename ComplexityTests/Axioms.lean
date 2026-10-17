@@ -6502,3 +6502,136 @@ info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_exists_mask' d
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_exists_mask
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFlatten' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFlatten
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.eval_latentSampleWithSeed' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.eval_latentSampleWithSeed
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_extractMatrixLabels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_extractMatrixLabels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_append' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_append
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.indexed_extracted_advantage_negligible' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.indexed_extracted_advantage_negligible
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_indexed_labels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_indexed_labels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.observation_extraction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.observation_extraction
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.observation_word_extraction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.observation_word_extraction
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.remainingSeed_extraction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.remainingSeed_extraction
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.remainingSeed_word_extraction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.remainingSeed_word_extraction
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_extractWordLabels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_extractWordLabels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_extractedWordTest' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_extractedWordTest
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_indexed_word_labels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_indexed_word_labels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_word_labels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.extract_word_labels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_extractWordObservations' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_extractWordObservations
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_extractWordSeeds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_extractWordSeeds
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.extract_word_observations' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.extract_word_observations
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.extract_word_seeds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.extract_word_seeds

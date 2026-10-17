@@ -32,6 +32,8 @@ concentration bound for independent repetitions of the pair.
   with the exact joint law on uniform seeds.
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.sampleWithSeed`: return the evaluated
   pair together with every seed bit, including unused coins.
+* `Cslib.Crypto.Pseudoentropy.SamplablePair.SeedRealization.latentSampleWithSeed`: the exact
+  finite mathematical view, with no claim that observation decoding is efficient.
 
 ## Main results
 
@@ -164,6 +166,17 @@ theorem output_distribution (n : ℕ) :
 noncomputable def jointWithSeed (n : ℕ) :
     PMF ((pair.Observation n × Bool) × (Fin (seed.length n) → Bool)) :=
   (PMF.uniformOfFintype (Fin (seed.length n) → Bool)).map (fun bits => (seed.output n bits, bits))
+
+/-- Sample the finite mathematical view and retain every original seed bit. This relabelling
+has no efficiency claim; `sampleWithSeed` below is its efficient encoded realization. -/
+noncomputable def latentSampleWithSeed (n : ℕ) :
+    ProbComp ((pair.Observation n × Bool) × (Fin (seed.length n) → Bool)) :=
+  (fun bits => (seed.output n bits, bits)) <$> ProbComp.uniform (Fin (seed.length n) → Bool)
+
+/-- Finite uniform sampling realizes the complete latent output/seed law. -/
+theorem eval_latentSampleWithSeed (n : ℕ) :
+    ProbComp.eval (seed.latentSampleWithSeed n) = seed.jointWithSeed n := by
+  simp only [latentSampleWithSeed, jointWithSeed, ProbComp.eval_map, ProbComp.eval_uniform]
 
 /-- Forgetting the retained seed recovers the pair's original joint law. -/
 @[simp] theorem jointWithSeed_map_fst (n : ℕ) :

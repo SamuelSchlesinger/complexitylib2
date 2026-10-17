@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Crypto.Computational.Pseudoentropy.DenseMask
 import Complexity.Crypto.Computational.Pseudoentropy.MaskedExtraction
 import Complexity.Crypto.Computational.Pseudoentropy.Selection
+import Complexity.Crypto.Computational.Pseudoentropy.WordExtraction
 import Complexity.Tactic.PPT
 
 /-! Uniform candidate selection, latent laws, label-dependent masks and complete public output. -/
@@ -79,6 +80,39 @@ private theorem fairPair_gap : fairPair.HasGap (fun _ => 0) := by
   rw [hgame, fairPair_entropy]
   simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
   norm_num [Game.succProbability, PMF.uniformOfFintype_apply]
+
+private noncomputable def saved : fairPair.SeedRealization :=
+  Classical.choice fairPair.exists_seedRealization
+
+-- A positive extraction budget on a real pair. Arbitrary bounded choices need no algorithm;
+-- the test itself must be one uniform efficient family, with the full output available.
+example (choose : ℕ → ℕ) (hchoose : ∀ n, choose n < n + 1)
+    (test : ℕ → ℕ → List (List Bool) × List Bool × List Bool → ProbComp Bool)
+    (htest : IsPPTOn (encPair (encPair encUnary encUnary)
+      (encPair (encList encBits) (encPair encBits encBits))) encBool
+        (fun input => test input.1.1 input.1.2 input.2)) :
+    let count := fun n => ExtractionSchedule.count n (saved.length n) 0
+    let bits := fun n => ExtractionSchedule.slack n (saved.length n) 0
+    Negligible (fun n => Game.advantage
+      (ProbComp.eval (OracleComp.replicate (count n) (fairPair.sample n) >>= fun values =>
+        extractWordLabels (count n) (bits n) values >>= test n (choose n)))
+      (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> fairPair.sample n) (count n) (bits n)
+        >>= test n (choose n)))) := by
+  have hlength := saved.length_isPolyTime
+  apply fairPair_gap.extract_indexed_word_labels saved choose
+    (candidates := fun n => n + 1) (inverseSlack := fun _ => 0)
+    (outputBits := fun n _ => ExtractionSchedule.slack n (saved.length n) 0)
+    (numerator := fun _ _ => 2) (densityBound := fun _ => 0)
+    (by fun_prop)
+    (ExtractionSchedule.isPolyTime_slack (by fun_prop) (by fun_prop) (by fun_prop))
+    (by fun_prop) (by fun_prop) (by fun_prop) (Eventually.of_forall hchoose)
+    (Eventually.of_forall (by intro n; rw [fairPair_entropy]; norm_num [dyadicSize]))
+    ?_ test htest
+  apply Eventually.of_forall
+  intro n
+  have h := ExtractionSchedule.two_slack_eq n (saved.length n) 0
+  norm_num [dyadicSize] at h ⊢
+  linarith [Nat.cast_nonneg (α := ℝ) (ExtractionSchedule.slack n (saved.length n) 0)]
 
 -- A real zero-gap pair has positive conditional entropy: valid positive-density requests are
 -- nonvacuous. The eventual threshold is shared by all n+1 tests, not chosen once per index.
