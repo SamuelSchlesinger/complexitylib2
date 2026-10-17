@@ -124,6 +124,7 @@ public import Complexity.Computability.Circuit.Frontier.Witness
 public import Complexity.Computability.Circuit.Fusion.Basic
 public import Complexity.Computability.Circuit.Fusion.Composition
 public import Complexity.Computability.Circuit.Fusion.Counting
+public import Complexity.Computability.Circuit.Fusion.Homomorphism
 public import Complexity.Computability.Circuit.Fusion.Simulation
 public import Complexity.Computability.Circuit.Fusion.SimulationContext
 public import Complexity.Computability.Circuit.InnerSize

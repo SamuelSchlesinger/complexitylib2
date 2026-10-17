@@ -17,6 +17,61 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Circuit.ComputesFrom.map' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.ComputesFrom.map
+
+/--
+info: 'Cslib.Circuits.Circuit.computesFrom_map_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.computesFrom_map_iff
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_map_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_map_le
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_map_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_map_eq
+
+/--
+info: 'Cslib.Circuits.Fusion.Atom.preserves_map_iff' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.Atom.preserves_map_iff
+
+/--
+info: 'Cslib.Circuits.Fusion.programAtoms_map' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.programAtoms_map
+
+/--
+info: 'Cslib.Circuits.Fusion.Cover.cost_map' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.Cover.cost_map
+
+/--
+info: 'Cslib.Circuits.Fusion.coverComplexity_le_comap' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.coverComplexity_le_comap
+
+/--
 info: 'Cslib.Circuits.Fusion.programAtoms_gate' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

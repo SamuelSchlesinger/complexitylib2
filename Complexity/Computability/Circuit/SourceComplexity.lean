@@ -41,6 +41,8 @@ not use Boyack's convention assigning zero to disconnected vertices.
 
 * `Cslib.Circuits.ecomplexityFrom_le_iff`: every finite budget has a circuit witness.
 * `Cslib.Circuits.ecomplexityFrom_comp_le`: composition through an intermediate supplied family.
+* `Cslib.Circuits.ecomplexityFrom_map_le`: homomorphisms cannot increase source complexity;
+  `ecomplexityFrom_map_eq` gives equality for injective homomorphisms.
 * `Cslib.Circuits.ecomplexityFrom_unit_subtype`,
   `Cslib.Circuits.ecomplexityFrom_unit_append`: bridges to native circuit complexity.
 
@@ -48,6 +50,7 @@ not use Boyack's convention assigning zero to disconnected vertices.
 
 * Ported from `Complexity/Relative.lean` in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
+  Homomorphism transport adapts `LowerBound/Fusion/Comap.lean` from the same development.
 * [S. W. Boyack, *The Robustness of Combinatorial Measures of Boolean Matrix
   Complexity*][Boyack1985], Definition 2.1 and Proposition 2.2, pp. 29–30, for computation
   relative to supplied functions and its composition inequality.
@@ -57,7 +60,7 @@ not use Boyack's convention assigning zero to disconnected vertices.
 
 namespace Cslib.Circuits
 
-universe v u w
+universe v u w z
 
 variable {σ : Signature.{v}} {U : Type u} {X : Type w} {n m p : ℕ}
 
@@ -68,6 +71,22 @@ def Circuit.ComputesFrom (c : Circuit σ n m) (I : Interpretation σ U)
 
 variable {I : Interpretation σ U} {cost cost' : σ.Op → ℕ}
   {target : X → Fin m → U} {sources : X → Fin n → U}
+  {V : Type z} {J : Interpretation σ V}
+
+/-- The same circuit computes the homomorphic image of the supplied-source problem. -/
+theorem Circuit.ComputesFrom.map {c : Circuit σ n m}
+    (hc : c.ComputesFrom I target sources) (h : Homomorphism I J) :
+    c.ComputesFrom J (fun x => h.map ∘ target x) (fun x => h.map ∘ sources x) := by
+  intro x
+  rw [← c.map_eval h, hc x]
+
+/-- An injective homomorphism also reflects computation of the supplied-source problem. -/
+theorem Circuit.computesFrom_map_iff (c : Circuit σ n m) (h : Homomorphism I J)
+    (hinj : Function.Injective h.map) :
+    c.ComputesFrom J (fun x => h.map ∘ target x) (fun x => h.map ∘ sources x) ↔
+      c.ComputesFrom I target sources := by
+  refine ⟨fun hc x => funext fun i => hinj ?_, fun hc => hc.map h⟩
+  exact congrFun ((c.map_eval h (sources x)).trans (hc x)) i
 
 /-- Equal supplied values must give equal target values. -/
 theorem Circuit.ComputesFrom.agrees_on_fibers {c : Circuit σ n m}
@@ -151,6 +170,21 @@ theorem le_ecomplexityFrom_iff {k : ℕ∞} :
     k ≤ ecomplexityFrom I cost target sources ↔
       ∀ c : Circuit σ n m, c.ComputesFrom I target sources → k ≤ c.program.cost cost := by
   simp only [ecomplexityFrom, le_iInf_iff, Subtype.forall]
+
+/-- Applying a homomorphism to every supplied and target value cannot increase complexity.
+The operation weights and implementing circuit are unchanged; the map need not be injective. -/
+theorem ecomplexityFrom_map_le (h : Homomorphism I J) (weight : σ.Op → ℕ)
+    (target : X → Fin m → U) (sources : X → Fin n → U) :
+    ecomplexityFrom J weight (fun x => h.map ∘ target x) (fun x => h.map ∘ sources x) ≤
+      ecomplexityFrom I weight target sources :=
+  le_ecomplexityFrom_iff.mpr fun c hc => ecomplexityFrom_le_of_computesFrom c (hc.map h)
+
+/-- An injective homomorphism preserves supplied-source complexity, including infinity. -/
+theorem ecomplexityFrom_map_eq (h : Homomorphism I J) (hinj : Function.Injective h.map)
+    (weight : σ.Op → ℕ) (target : X → Fin m → U) (sources : X → Fin n → U) :
+    ecomplexityFrom J weight (fun x => h.map ∘ target x) (fun x => h.map ∘ sources x) =
+      ecomplexityFrom I weight target sources := by
+  simp only [ecomplexityFrom, iInf_subtype, Circuit.computesFrom_map_iff _ h hinj]
 
 theorem ecomplexityFrom_mono_cost (h : ∀ op, cost op ≤ cost' op) :
     ecomplexityFrom I cost target sources ≤ ecomplexityFrom I cost' target sources :=

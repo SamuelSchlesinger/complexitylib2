@@ -1742,8 +1742,9 @@ The standalone algebraic checkout has local changes and an older pin; compare it
 embedded v1 source and record exact provenance for each port. The general Fusion cover and
 counting layer is now integrated with a support-coverage client. Atom extraction now commutes
 with native composition, and local gadget properties transfer through ordinary and contextual
-simulation. Semifilters, homomorphism transport of covers and the distinct cyclic-circuit
-characterizations remain outstanding, along with further arithmetic clients.
+simulation. Homomorphism transport now preserves exact cover costs and gives the corresponding
+source-complexity inequalities. Semifilters and the distinct cyclic-circuit characterizations
+remain outstanding, along with further arithmetic clients.
 
 ### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
 
@@ -2240,6 +2241,56 @@ records without rerunning those gates. The post-publication Codex correctness re
 semantics, edge-case clients, seven guard statements and proof counts against the documentation.
 It did not independently run builds, MCP diagnostics, axiom guards or profiling, or verify
 original v1 provenance.
+
+### Homomorphism transport of source complexity and Fusion covers (2026-10-16)
+
+`Circuit/SourceComplexity` now transports computations through the existing interpretation
+homomorphisms, retaining the same circuit, supplied-input domain and operation weights.
+`ecomplexityFrom_map_le` gives the resulting minimum-cost inequality. Injectivity reflects
+computation and yields `ecomplexityFrom_map_eq`, including infinite complexities; surjectivity
+is unnecessary. All semantic work reuses native `Circuit.map_eval`.
+
+`Circuit/Fusion/Homomorphism` maps semantic atoms and finite indexed covers. Preservation of an
+image predicate is equivalent to preservation of its pullback. Extraction commutes with mapping
+by `Program.map_trace`, and `Cover.cost_map` preserves exact costs, repetitions and gate order.
+`coverComplexity_le_comap` transfers lower bounds on image covers to source covers. Unlike
+source complexity, cover complexity need not be preserved by an injective map: arbitrary image
+atoms may use arguments outside its range. The existing minimum-cover/source-complexity bridge
+completes lower-bound transport by transitivity, without extra problem, model or framework
+wrappers. No machines, compilers or tactics are added.
+
+Source provenance: `LowerBound/Fusion/Comap.lean` under `Complexitylib/Algebraic`, at clean v1
+revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`. Samuel Schlesinger's authorship and the
+source bibliography entry are retained. The live upstream audit reports the cslib pin and every
+submitted/vendored marker current.
+
+Against `44352e2`, the batch adds 14 named proofs / 21 body lines: four / six in source
+complexity and ten / fifteen in Fusion. This includes the mapping and simplification helpers.
+The proof field in `Cover.map` contributes one additional line; statements, computational fields
+and tests are excluded. The library total is 5,963 named proofs / 40,610 body lines across 573
+modules. Full-module MCP replicas, checked against production after removing measurement
+commands, record raw tactic heartbeats of 17,480 for computation transport, 26,796 for its
+injective converse, 86,431 for complexity equality, 34,012 for predicate preservation and
+60,355 for atom extraction. These are elaboration measurements, not program runtime; no
+heartbeat override is used.
+
+`FusionHomomorphism` includes two strict-inequality counterexamples: collapsing all values
+turns a source-fiber obstruction into a zero-gate computation, while doubling natural numbers
+leaves no source cover of the pulled-back equality-to-one predicate but admits an image cover
+of exact cost one. An injective map separately preserves the infinite source complexity.
+A one-coordinate cover bound transfers to pair-valued computations through a noninjective
+projection, and a one-gate, three-output circuit attains it. Mapping a four-gate cover from
+naturals to integers retains its repeated unused term, shared outputs and exact nonuniform
+cost 17; the executable trace checks all mapped arguments. A five-universe client checks the
+combined lower-bound API. Eight new axiom guards use only the permitted standard axioms;
+atom preservation itself is axiom-free.
+
+All six checks pass: strict build 1.41 s, import coverage 1.50 s, tests 7.44 s, environment lint
+7.34 s, style 2.23 s and init imports 4.24 s. These are incremental checkpoint timings. The
+final independent API review approves the sources, clients, documentation and proof accounting.
+It independently checked the final clients and all eight axiom guards through MCP, reproduced
+the proof counts, verified profile-source parity and read the six successful gate records
+without rerunning those gates. The separate post-publication correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 
