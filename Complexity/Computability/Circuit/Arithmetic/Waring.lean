@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.SumOfTerms
+public import Complexity.Computability.Circuit.Arithmetic.Waring.Basic
 public import Complexity.Foundations.Data.MvPolynomial.Catalecticant
 public import Mathlib.Data.Nat.Choose.Central
 import Complexity.Foundations.LinearAlgebra.Rank
@@ -56,18 +57,6 @@ unrestricted arithmetic circuits. All computation premises are formal polynomial
 namespace Cslib.Circuits.Waring
 
 open MvPolynomial
-
-/-- A scalar multiple of a `d`-th power of a homogeneous linear form in `d` variables. -/
-structure Term (K : Type*) (d : ℕ) where
-  /-- The scalar multiplying the power. -/
-  scale : K
-  /-- Coefficients of the homogeneous linear form. -/
-  coefficients : Fin d → K
-
-/-- The polynomial represented by a Waring dictionary term. -/
-noncomputable def Term.polynomial {K : Type*} [CommSemiring K] {d : ℕ}
-    (t : Term K d) : MvPolynomial (Fin d) K :=
-  C t.scale * (∑ i, t.coefficients i • X i) ^ d
 
 private abbrev Layer (d k : ℕ) := ↥(Finset.powersetCard k (Finset.univ : Finset (Fin d)))
 

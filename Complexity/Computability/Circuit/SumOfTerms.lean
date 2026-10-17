@@ -26,10 +26,13 @@ Supplied inputs are permitted when their features vanish.
 * `Cslib.Circuits.SumOfTerms.signature`: additions and nullary dictionary terms.
 * `Cslib.Circuits.SumOfTerms.interpretation`: interpret the dictionary in an additive carrier.
 * `Cslib.Circuits.SumOfTerms.dictionaryCost`, `Cslib.Circuits.SumOfTerms.termCost`: term weights.
+* `Cslib.Circuits.SumOfTerms.addCost`, `Cslib.Circuits.SumOfTerms.weightedCost`: addition counts
+  and separate uniform weights for additions and terms.
 
 ## Main results
 
 * `Cslib.Circuits.SumOfTerms.rank_trace_le`: every wire's feature rank is bounded by program cost.
+* `Cslib.Circuits.SumOfTerms.cost_weightedCost`: separate the two gate counts.
 
 ## References
 
@@ -83,6 +86,25 @@ def dictionaryCost {T : Type*} (weight : T → ℕ) : Op T → ℕ
 
 /-- Count dictionary gates, with free addition. -/
 abbrev termCost {T : Type*} : Op T → ℕ := dictionaryCost fun _ => 1
+
+/-- Count additions; dictionary gates are free. -/
+def addCost {T : Type*} : Op T → ℕ
+  | .add => 1
+  | .term _ => 0
+
+/-- Assign one weight to additions and another to dictionary gates. -/
+def weightedCost {T : Type*} (addition term : ℕ) : Op T → ℕ
+  | .add => addition
+  | .term _ => term
+
+/-- Uniform weights separate into the addition and dictionary gate counts. -/
+theorem cost_weightedCost {T : Type*} {n g : ℕ} (p : Program (signature T) n g)
+    (addition term : ℕ) :
+    p.cost (weightedCost addition term) = addition * p.cost addCost + term * p.cost termCost := by
+  simp only [Program.cost_eq_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro i _
+  cases (p.lines i).op <;> simp [weightedCost, addCost]
 
 variable {T K V A B : Type*} [Field K] [AddCommGroup V] [Module K V]
   [AddCommGroup A] [Module K A] [AddCommGroup B] [Module K B] {n g : ℕ}

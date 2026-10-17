@@ -2037,6 +2037,68 @@ context indexing, all-output semantics, sharing, exact weighted costs and the bi
 contracts against the exact public sources and pinned dependencies. It did not rerun Lean,
 builds, tests or profiling, or independently verify the original v1 provenance.
 
+### Native Waring compilation (2026-10-16)
+
+`Circuit/Arithmetic/Waring/Compilation.lean` completes the binary-power Waring translation.
+`Term.toCircuit` is the composition of an ordinary linear-form formula, the shared binary-power
+circuit, and a scaling formula. `Waring.compile` uses contextual simulation to expose the same
+variable block to every term gadget, followed by any supplied source inputs. Every output is
+preserved, including repeated outputs and outputs preceding unused gates. The common term and
+its polynomial now live in `Waring/Basic`, so compilation does not import catalecticant ranks or
+lower bounds. All developments remain in the existing circuit hierarchy.
+
+The construction needs only explicit coefficient symbols for zero and one. Semantic correctness
+assumes their interpretation is zero and one in an arbitrary semiring, with independent symbol
+and carrier universes. Closed circuits preserve their formal polynomial outputs. Arbitrary
+operation weights charge every coefficient constant, the initial zero, the final scale and
+every generated operation, even for source gates unused by the outputs. The exact multiplication
+count per degree-`d` term is `d + binaryMultiplicationCount d + 1`, at most
+`d + 2 * log₂ d + 1`; the addition count is `d`. Degree zero still generates four gates (zero,
+one, scale and final multiplication); degree one generates six. These are circuit-cost
+theorems, not TM-time certificates or claims of optimal compilation.
+
+The reusable `Formula.cost` and `cost_toCircuit` theorem replace the source's separate
+arithmetic expression compiler. The old formula size theorem is now a specialization of exact
+cost preservation. `Formula.linearForm` permits selected, repeated and permuted inputs.
+`SumOfTerms.cost_weightedCost` and the uniform-term compilation rule share the derivation of
+the multiplication, addition and total gate counts. No new machine or tactic implementation
+is needed. The source's alternative naive-tree and linear-power algorithms are not duplicated;
+the efficient binary-power construction supplies the preserved semantics and cost results.
+
+Source provenance: the linear-form/scaling construction from
+`LowerBound/Fusion/SumOfTerms/Waring/Translation.lean` and its `Binary.lean` extension under
+`Complexitylib/Algebraic`, at clean v1 revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`.
+Samuel Schlesinger's authorship and the source bibliography entry are preserved.
+
+Against `da5a881`, the entire batch adds 21 named proofs / 79 body lines, including shared helpers
+and the formula-size refactor: Waring compilation 13 / 56, linear forms 2 / 10, formula API net
+5 / 9 and sum-of-terms cost decomposition 1 / 4. The library total is 5,924 named proofs / 40,478
+body lines across 565 modules. The source-layout metric excludes statements, computational
+definitions and tests; no new definition contains a tactic proof. This is not a line-for-line
+comparison with the source's multiple compilation algorithms.
+
+Full-module MCP replicas measure 88,267 raw tactic heartbeats for generic formula cost
+preservation, 575,416 for linear-form evaluation, 714,236 for its exact cost, 561,594 for the
+three-stage term cost, 216,791 for whole-circuit evaluation, 93,238 for arbitrary compilation
+cost and 90,657 for the uniform-term cost rule. These are elaboration counts, not circuit
+execution costs; no heartbeat override is used.
+
+`WaringCompilation` checks a shared term, repeated outputs, a preserved input and an unused
+term: execution returns `[14283, 28566, 14283, 13]` with 21 gates, eight multiplications, five
+additions and cost 229 under symbol-dependent constant weights. A generic semiring proof checks
+the same output structure. Other clients cover selected/repeated linear-form inputs, zero/one
+degrees, Boolean coefficient symbols, an incorrect one interpretation, empty outputs and
+zero-context identity wiring. A rational sum of two squared linear forms compiles to the formal
+polynomial `X₀ * X₁`; its source also satisfies the existing Waring term-count lower bound.
+Ten headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
+
+All six checks pass after strengthening the incorrect-one regression: strict build 1.63 s,
+import coverage 1.70 s, tests 4.82 s, environment lint 7.49 s, style 2.24 s and init imports
+4.58 s. These are incremental checkpoint timings. Independent source/API review approves the
+implementation, clients, axiom guards, documentation and proof accounting. The negative test
+preserves zero and the scale while changing only one, proving compiled and intended values
+differ. Post-publication Codex correctness review follows the code commit.
+
 ### Implementation priorities (2026-10-16)
 
 1. Efficient closed stateful substitution is implemented through finite tables, encoded

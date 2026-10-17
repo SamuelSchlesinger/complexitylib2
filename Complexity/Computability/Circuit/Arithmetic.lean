@@ -38,6 +38,7 @@ exactly the additions and multiplications.
 * `Cslib.Circuits.arithSignature`, `Cslib.Circuits.arithInterpretation`: the arithmetic basis.
 * `Cslib.Circuits.arithInterpretationWith`: interpret the constant symbols in another carrier.
 * `Cslib.Circuits.ArithOp.mulCost`: count multiplications, including scalar multiplications.
+* `Cslib.Circuits.ArithOp.addCost`: count additions.
 * `Cslib.Circuits.Interpretation.IsPolynomial`: every operation is a polynomial.
 
 ## Main results
@@ -126,6 +127,11 @@ still costs one. -/
 def ArithOp.mulCost : ArithOp F → ℕ
   | .mul => 1
   | .add | .const _ => 0
+
+/-- Additions cost one; multiplications and constants are free. -/
+def ArithOp.addCost : ArithOp F → ℕ
+  | .add => 1
+  | .mul | .const _ => 0
 
 /-- Evaluating the formal polynomial computed by a circuit agrees with evaluating the circuit
 in the coefficient semiring. The converse need not hold over a finite field. -/

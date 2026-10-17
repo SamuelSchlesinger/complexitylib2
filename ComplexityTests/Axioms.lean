@@ -17,6 +17,76 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Formula.cost_toCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.cost_toCircuit
+
+/--
+info: 'Cslib.Circuits.Formula.eval_linearForm' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.eval_linearForm
+
+/--
+info: 'Cslib.Circuits.Formula.cost_linearForm' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.cost_linearForm
+
+/--
+info: 'Cslib.Circuits.Waring.eval_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Waring.eval_compile
+
+/--
+info: 'Cslib.Circuits.Waring.polynomial_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Waring.polynomial_compile
+
+/--
+info: 'Cslib.Circuits.Waring.cost_program_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Waring.cost_program_compile
+
+/--
+info: 'Cslib.Circuits.Waring.mulCost_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Waring.mulCost_compile
+
+/--
+info: 'Cslib.Circuits.Waring.addCost_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Waring.addCost_compile
+
+/--
+info: 'Cslib.Circuits.Waring.size_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Waring.size_compile
+
+/--
+info: 'Cslib.Circuits.Waring.termMultiplicationCount_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Waring.termMultiplicationCount_le
+
+/--
 info: 'Cslib.Circuits.Program.cost_simulateProgram' depends on axioms:
 [propext, Quot.sound]
 -/

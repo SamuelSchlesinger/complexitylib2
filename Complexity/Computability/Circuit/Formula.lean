@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Foundations.Data.List.BalancedFold
 public import Cslib.Computability.Circuit.Homomorphism
+public import Cslib.Computability.Circuit.Simulation
 public import Cslib.Computability.Circuit.Synthesis
 public import Mathlib.Data.Finset.Lattice.Fold
 public import Mathlib.Data.Finset.Piecewise
@@ -21,6 +22,7 @@ import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Group.Action.Defs
+import Complexity.Computability.Circuit.Simulation
 
 /-!
 # Formulas
@@ -55,6 +57,7 @@ depth `⌈log₂ k⌉` above them, the usual way to replace a gate of unbounded 
   `Cslib.Circuits.Formula.depth`: the number of input leaves, the number of operation nodes, and
   the depth.
 * `Cslib.Circuits.Formula.leafSizeIn`: the number of input leaves in a set of inputs.
+* `Cslib.Circuits.Formula.cost`: the sum of operation weights, with input leaves free.
 * `Cslib.Circuits.Formula.depthWith`: the depth when each operation costs a given number of levels.
 * `Cslib.Circuits.Formula.minDepthWith`: the least depth with costs of a formula computing a
   function, in `ℕ∞`.
@@ -79,6 +82,7 @@ depth `⌈log₂ k⌉` above them, the usual way to replace a gate of unbounded 
 * `Cslib.Circuits.Formula.Computes.toCircuit`, `Cslib.Circuits.Formula.size_toCircuit`,
   `Cslib.Circuits.Formula.depth_toCircuit_le`: a formula is a circuit computing the same function,
   of the same size and at most the same depth.
+* `Cslib.Circuits.Formula.cost_toCircuit`: compilation preserves arbitrary operation weights.
 
 ## References
 
@@ -149,6 +153,11 @@ def size : Formula σ n → ℕ
   | input _ => 0
   | gate _ args => (∑ j, (args j).size) + 1
 
+/-- The sum of operation weights, including nullary operations; input leaves are free. -/
+def cost (weight : σ.Op → ℕ) : Formula σ n → ℕ
+  | input _ => 0
+  | gate op args => (∑ j, (args j).cost weight) + weight op
+
 /-- The depth: inputs have depth zero, and an operation node is one deeper than its arguments, so
 nullary operations have depth one, as gates do in circuits. -/
 def depth : Formula σ n → ℕ
@@ -168,6 +177,19 @@ def depth : Formula σ n → ℕ
 @[simp] theorem size_gate (op : σ.Op) (args : Fin (σ.Arity op) → Formula σ n) :
     (gate op args).size = (∑ j, (args j).size) + 1 :=
   rfl
+
+@[simp] theorem cost_input (weight : σ.Op → ℕ) (i : Fin n) :
+    (input i : Formula σ n).cost weight = 0 := rfl
+
+@[simp] theorem cost_gate (weight : σ.Op → ℕ) (op : σ.Op)
+    (args : Fin (σ.Arity op) → Formula σ n) :
+    (gate op args).cost weight = (∑ j, (args j).cost weight) + weight op := rfl
+
+/-- Unit operation weights count all operation nodes. -/
+@[simp] theorem cost_one (F : Formula σ n) : F.cost (fun _ => 1) = F.size := by
+  induction F with
+  | input => rfl
+  | gate op args ih => simp [cost, ih]
 
 @[simp] theorem depth_input (i : Fin n) : (input i : Formula σ n).depth = 0 :=
   rfl
@@ -383,6 +405,11 @@ private theorem sup_cast_two {k : ℕ} (h : k = 2) (a b : ℕ) :
     (gate₂ op hop F G).size = F.size + G.size + 1 := by
   rw [gate₂, size_gate, ← sum_cast_two hop F.size G.size]
   simp only [apply_vecCons_two size]
+
+@[simp] theorem cost_gate₂ (weight : σ.Op → ℕ) (F G : Formula σ n) :
+    (gate₂ op hop F G).cost weight = F.cost weight + G.cost weight + weight op := by
+  rw [gate₂, cost_gate, ← sum_cast_two hop (F.cost weight) (G.cost weight)]
+  simp only [apply_vecCons_two (cost weight)]
 
 @[simp] theorem leafSize_gate₂ (F G : Formula σ n) :
     (gate₂ op hop F G).leafSize = F.leafSize + G.leafSize := by
@@ -613,13 +640,19 @@ theorem Computes.toCircuit {I : Interpretation σ U} {F : Formula σ n} {f : (Fi
   rw [eval_toCircuit, computes_iff.1 hF]
   rfl
 
+/-- Compilation preserves the sum of arbitrary operation weights exactly. -/
+theorem cost_toCircuit (weight : σ.Op → ℕ) (F : Formula σ n) :
+    F.toCircuit.program.cost weight = F.cost weight := by
+  induction F with
+  | input => rfl
+  | gate op args ih =>
+    rw [toCircuit, Circuit.cost_program_comp, Circuit.cost_program_pi,
+      Circuit.cost_program_oneGate, cost_gate]
+    simp only [ih]
+
 /-- The circuit of a formula has one gate for each operation node. -/
 @[simp] theorem size_toCircuit (F : Formula σ n) : F.toCircuit.size = F.size := by
-  induction F with
-  | input i => rfl
-  | gate op args ih =>
-    rw [toCircuit, Circuit.size_comp, Circuit.size_pi, Circuit.size_oneGate, size_gate]
-    simp only [ih]
+  simpa only [Program.cost_const, one_mul, cost_one] using F.cost_toCircuit (fun _ => 1)
 
 /-- With costs, the circuit of a formula is no deeper than the formula. -/
 theorem depthWith_toCircuit_le (cost : σ.Op → ℕ) (F : Formula σ n) :
