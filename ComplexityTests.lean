@@ -57,6 +57,7 @@ import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs
 import ComplexityTests.PseudoentropyBoosting
+import ComplexityTests.PseudoentropyLearning
 import ComplexityTests.PseudoentropyMasking
 import ComplexityTests.PseudoentropySeed
 import ComplexityTests.PseudoentropyTraining

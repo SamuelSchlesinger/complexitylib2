@@ -37,6 +37,8 @@ of the whole experiment (`exists_bind_apply_le`).
 * `Cslib.Probability.PMF.toOuterMeasure_bind_failure_le`,
   `toOuterMeasure_bind_failure_toReal_le`: compose failure bounds without independence,
   adapted from the cslib `crypto` branch at `5ff69ca`.
+* `Cslib.Probability.PMF.toOuterMeasure_rate_ge`: turn average bias into candidate probability.
+* `Cslib.Probability.PMF.filter_apply_toReal`: conditioned masses, with event/complement rules.
 * `Cslib.Probability.PMF.map_injective`: injective encodings preserve equality of distributions,
   adapted from the same branch.
 * `Cslib.Probability.PMF.bind_apply_toReal`, `sum_toReal`: real-valued finite averages,
@@ -62,6 +64,55 @@ theorem toOuterMeasure_ne_top (p : PMF α) (event : Set α) : p.toOuterMeasure e
 theorem toOuterMeasure_le_one (p : PMF α) (event : Set α) : p.toOuterMeasure event ≤ 1 := by
   rw [PMF.toOuterMeasure_apply, ← p.tsum_coe]
   exact ENNReal.tsum_le_tsum (fun a => Set.indicator_apply_le (fun _ => le_rfl))
+
+open Classical in
+/-- Event probabilities on finite spaces are sums of the masses of their members. -/
+theorem toOuterMeasure_apply_toReal [Fintype α] (p : PMF α) (event : Set α) :
+    (p.toOuterMeasure event).toReal = ∑ a, if a ∈ event then (p a).toReal else 0 := by
+  classical
+  rw [PMF.toOuterMeasure_apply_fintype, ENNReal.toReal_sum]
+  · apply Finset.sum_congr rfl
+    intro a _
+    by_cases ha : a ∈ event <;> simp [ha]
+  · intro a _
+    by_cases ha : a ∈ event <;> simp [ha, PMF.apply_ne_top]
+
+/-- An event and its complement have total probability one, in real-valued probability units. -/
+theorem toOuterMeasure_toReal_add_compl (p : PMF α) (event : Set α) :
+    (p.toOuterMeasure event).toReal + (p.toOuterMeasure eventᶜ).toReal = 1 := by
+  have h : p.toOuterMeasure event + p.toOuterMeasure eventᶜ = 1 := by
+    rw [PMF.toOuterMeasure_apply, PMF.toOuterMeasure_apply, ← ENNReal.tsum_add]
+    convert p.tsum_coe using 1
+    congr 1
+    funext a
+    by_cases ha : a ∈ event <;> simp [ha]
+  simpa only [ENNReal.toReal_add (toOuterMeasure_ne_top p _) (toOuterMeasure_ne_top p _),
+    ENNReal.toReal_one] using congrArg ENNReal.toReal h
+
+/-- An event has positive real probability exactly when it contains a possible outcome. -/
+theorem toOuterMeasure_toReal_pos_iff (p : PMF α) (event : Set α) :
+    0 < (p.toOuterMeasure event).toReal ↔ ∃ a ∈ event, a ∈ p.support := by
+  classical
+  simp [ENNReal.toReal_pos_iff, lt_top_iff_ne_top, toOuterMeasure_ne_top, pos_iff_ne_zero,
+    PMF.toOuterMeasure_apply_eq_zero_iff, Set.disjoint_left, and_comm]
+
+open Classical in
+/-- Conditioning keeps the event's masses and divides them by its probability. -/
+theorem filter_apply_toReal (p : PMF α) (event : Set α)
+    (hevent : ∃ a ∈ event, a ∈ p.support) (a : α) :
+    ((p.filter event hevent) a).toReal =
+      if a ∈ event then (p a).toReal / (p.toOuterMeasure event).toReal else 0 := by
+  rw [PMF.filter_apply, ← PMF.toOuterMeasure_apply]
+  by_cases ha : a ∈ event <;> simp [ha, ENNReal.toReal_mul, div_eq_mul_inv]
+
+/-- Event probability after a finite random choice is the average conditional probability. -/
+theorem toOuterMeasure_bind_toReal [Fintype α] (p : PMF α) (kernel : α → PMF β)
+    (event : Set β) :
+    ((p.bind kernel).toOuterMeasure event).toReal =
+      ∑ a, (p a).toReal * ((kernel a).toOuterMeasure event).toReal := by
+  rw [PMF.toOuterMeasure_bind_apply, tsum_fintype, ENNReal.toReal_sum
+    (fun a _ => ENNReal.mul_ne_top (PMF.apply_ne_top _ _) (toOuterMeasure_ne_top _ _))]
+  simp only [ENNReal.toReal_mul]
 
 /-- A randomized continuation can fail because its precondition was already false or because
 it fails from a valid input. No independence or finite-state assumption is needed. -/
@@ -100,6 +151,17 @@ theorem toOuterMeasure_bind_failure_toReal_le (p : PMF α) (kernel : α → PMF 
     ⟨toOuterMeasure_ne_top p preᶜ, ENNReal.ofReal_ne_top⟩
   simpa only [ENNReal.toReal_add (toOuterMeasure_ne_top p preᶜ) ENNReal.ofReal_ne_top,
     ENNReal.toReal_ofReal herror] using ENNReal.toReal_mono hfinite h
+
+/-- If a randomized test beats a threshold on average, at least its excess probability mass
+consists of inputs whose conditional acceptance probability reaches that threshold. -/
+theorem toOuterMeasure_rate_ge (p : PMF α) (kernel : α → PMF β) (event : Set β)
+    {threshold : ℝ} (hthreshold : 0 ≤ threshold) :
+    ((p.bind kernel).toOuterMeasure event).toReal - threshold ≤
+      (p.toOuterMeasure {a | threshold ≤ ((kernel a).toOuterMeasure event).toReal}).toReal := by
+  have h := toOuterMeasure_bind_failure_toReal_le p kernel
+    {a | ((kernel a).toOuterMeasure event).toReal < threshold} event hthreshold
+    (fun a _ ha => le_of_lt ha)
+  simpa only [Set.compl_ofPred, not_lt] using (sub_le_iff_le_add.mpr h)
 
 /-- The pairing law also holds when the second sample's type depends on the first.
 Adapted from the cslib `crypto` branch at `5ff69ca`. -/

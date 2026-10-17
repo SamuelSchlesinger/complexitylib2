@@ -35,6 +35,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
 * **Security games.** `Crypto/Negligible.lean` and `Crypto/Game.lean` include the #1068 base
   beneath #1069. If #1068 lands first, remove its declarations and retain the #1069 additions.
   The following hybrid layer is tracked by its own marker in `Crypto/Game/Hybrid.lean`.
+  `Crypto/Game/Statistical.lean` copies only the Boolean equality from #1072; its remaining
+  declarations require the arbitrary-type metric replacement in #1065. Until that is in the
+  base pin, extraction bounds quantify over every randomized test of the full encoded output,
+  using the existing finite-PMF metric and `Game.Indistinguishable` with all tests admissible.
   Coordinate the finite PRG API and its distribution-based refactor in #1071 before adapting
   `Crypto/Primitives/PRG/Game`.
 * **Query complexity.** Align `Computability/DecisionTree` with #925 and its certificate

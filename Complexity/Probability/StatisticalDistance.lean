@@ -19,6 +19,7 @@ These statements reuse the upstream finite-PMF metric and its enumeration instan
 
 ## Main results
 
+* `Cslib.Probability.PMF.dist_filter`: conditioning costs the discarded probability.
 * `Cslib.Probability.PMF.abs_sum_mul_sub_le`: bounded-score changes under statistical distance.
 * `Cslib.Probability.PMF.dist_bind_pair`: exact average distance with a shared public sample.
 * `Cslib.Probability.PMF.dist_bind_pair_sq_le`: the squared-distance bound used in leftover hashing.
@@ -34,6 +35,34 @@ Adapted from `Probability/StatisticalDistance.lean` on the cslib `crypto` branch
 namespace Cslib.Probability.PMF
 
 variable {α β : Type*}
+
+/-- Conditioning on a possible event changes the distribution by exactly the probability
+discarded outside that event. -/
+theorem dist_filter [Fintype α] (p : PMF α) (event : Set α)
+    (hevent : ∃ a ∈ event, a ∈ p.support) :
+    dist p (p.filter event hevent) = (p.toOuterMeasure eventᶜ).toReal := by
+  classical
+  have hpositive := (toOuterMeasure_toReal_pos_iff p event).mpr hevent
+  have hprobability : (p.toOuterMeasure event).toReal ≤ 1 := by
+    simpa using ENNReal.toReal_mono ENNReal.one_ne_top (toOuterMeasure_le_one p event)
+  have habsolute (a : α) : |(p a).toReal - ((p.filter event hevent) a).toReal| =
+      ((p.filter event hevent) a).toReal - (p a).toReal +
+        2 * (if a ∈ eventᶜ then (p a).toReal else 0) := by
+    by_cases ha : a ∈ event
+    · have hle : (p a).toReal ≤ ((p.filter event hevent) a).toReal := by
+        rw [filter_apply_toReal, ite_eq_left ha]
+        exact (le_div_iff₀ hpositive).mpr
+          (mul_le_of_le_one_right ENNReal.toReal_nonneg hprobability)
+      rw [abs_of_nonpos (sub_nonpos.mpr hle)]
+      simp [ha, neg_sub]
+    · simp only [filter_apply_toReal, ha, ite_false, Set.mem_compl_iff, not_false_eq_true, ite_true,
+        sub_zero, abs_of_nonneg ENNReal.toReal_nonneg]
+      ring
+  rw [dist_eq, toOuterMeasure_apply_toReal]
+  simp_rw [habsolute]
+  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, sum_toReal, sub_self, zero_add,
+    ← Finset.mul_sum]
+  ring_nf
 
 /-- With a shared revealed input, distance is the average distance of the conditional outputs. -/
 theorem dist_bind_pair [Fintype α] [Fintype β] (p : PMF α) (f g : α → PMF β) :

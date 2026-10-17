@@ -9,7 +9,7 @@ module
 
 public import Complexity.Crypto.Negligible
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
-import Mathlib.Analysis.SpecificLimits.Basic
+import Mathlib.Analysis.SpecificLimits.Normed
 
 /-!
 # Negligible bounds and real-valued estimates
@@ -22,13 +22,15 @@ negligible.
 
 * `Cslib.Crypto.negligible_iff_coe`: pass between nonnegative and real-valued decay bounds.
 * `Cslib.Crypto.Negligible.eventually_le_inv_polynomial`: compare with positive polynomial losses.
+* `Cslib.Crypto.negligible_geometric`: geometric decay of nonnegative error bounds.
 * `Cslib.Crypto.not_negligible_const`: constant nonzero success contradicts security.
 * `Cslib.Crypto.Negligible.comp_of_polynomial_bound`: polynomially related parameters.
 * `Cslib.Crypto.Negligible.div_const`: division of the parameter by a positive constant.
 
 ## References
 
-The constant and inverse-polynomial bounds are adapted from `Crypto/Negligible.lean` on the
+The geometric, constant and inverse-polynomial bounds are adapted from
+`Crypto/Negligible.lean` on the
 cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the current upstream
 nonnegative API.
 -/
@@ -45,6 +47,17 @@ theorem negligible_iff_coe {ε : ℕ → ℝ≥0} : Negligible ε ↔
       (fun n => (ε n : ℝ)) := by
   simp only [Negligible, Asymptotics.SuperpolynomialDecay, ← NNReal.tendsto_coe,
     NNReal.coe_mul, NNReal.coe_pow, NNReal.coe_natCast, NNReal.coe_zero]
+
+/-- Geometric decay with a nonnegative ratio strictly below one is negligible. -/
+theorem negligible_geometric {ratio : ℝ≥0} (h : ratio < 1) :
+    Negligible (fun n => ratio ^ n) := by
+  apply negligible_iff_coe.mpr
+  intro degree
+  simpa only [NNReal.coe_pow] using
+    tendsto_pow_const_mul_const_pow_of_abs_lt_one degree
+      (show |(ratio : ℝ)| < 1 by
+        rw [abs_of_nonneg ratio.coe_nonneg]
+        exact_mod_cast h)
 
 /-- A constant nonzero advantage is not negligible. -/
 theorem not_negligible_const {c : ℝ≥0} (hc : c ≠ 0) : ¬ Negligible (fun _ => c) := by

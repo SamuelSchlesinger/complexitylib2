@@ -6194,3 +6194,136 @@ info: 'Cslib.Crypto.Pseudoentropy.Boosting.train_predict_error' depends on axiom
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.Boosting.train_predict_error
+
+/--
+info: 'Cslib.Probability.PMF.toOuterMeasure_rate_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.toOuterMeasure_rate_ge
+
+/--
+info: 'Cslib.Probability.PMF.dist_filter' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.dist_filter
+
+/--
+info: 'Cslib.Crypto.negligible_geometric' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.negligible_geometric
+
+/--
+info: 'Cslib.Crypto.Game.advantage_eq_nndist' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Game.advantage_eq_nndist
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.leftover_hash_of_heavy_probability' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsTwoUniversal.leftover_hash_of_heavy_probability
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.leftover_hash_pi_conditional' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsTwoUniversal.leftover_hash_pi_conditional
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.randomSign_good_probability' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.randomSign_good_probability
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.learn_goodPredictor_error_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.learn_goodPredictor_error_pow
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.learn_length_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.learn_length_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_learn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_learn
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ExtractionSchedule.error_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ExtractionSchedule.error_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.ExtractionSchedule.error_negligible' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.ExtractionSchedule.error_negligible
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_extractLabels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_extractLabels
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_extractLabels_list' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_extractLabels_list
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.extractLabels_dist_bind_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.extractLabels_dist_bind_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.extractLabels_indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.extractLabels_indistinguishable
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.seededHash_replicate_indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.seededHash_replicate_indistinguishable
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSequence_validation_gap' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSequence_validation_gap
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.extractedSequence_learn_error_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.extractedSequence_learn_error_pow

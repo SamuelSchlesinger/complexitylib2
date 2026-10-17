@@ -392,6 +392,7 @@ public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Clipped
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Decision
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Learner
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Loop
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Potential
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Program
@@ -399,11 +400,14 @@ public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Progress
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Sampling
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Selection
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Training
+public import Complexity.Crypto.Computational.Pseudoentropy.ExtractionSchedule
 public import Complexity.Crypto.Computational.Pseudoentropy.HashPair
 public import Complexity.Crypto.Computational.Pseudoentropy.HashReduction
+public import Complexity.Crypto.Computational.Pseudoentropy.Learning
 public import Complexity.Crypto.Computational.Pseudoentropy.Masking
 public import Complexity.Crypto.Computational.Pseudoentropy.OneWay
 public import Complexity.Crypto.Computational.Pseudoentropy.Reduction
+public import Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction
 public import Complexity.Crypto.Computational.Pseudoentropy.Seed
 public import Complexity.Crypto.Computational.Pseudoentropy.WordReduction
 public import Complexity.Crypto.Computational.PseudorandomFunction
@@ -412,6 +416,7 @@ public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid
+public import Complexity.Crypto.Game.Statistical
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
 public import Complexity.Crypto.Primitives.PRG.Game
@@ -577,6 +582,7 @@ public import Complexity.Probability.Concentration
 public import Complexity.Probability.Conditioning
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
+public import Complexity.Probability.EntropyExtraction
 public import Complexity.Probability.Guessing
 public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.PMF
