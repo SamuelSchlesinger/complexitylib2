@@ -1872,9 +1872,10 @@ introduce no machine, tactic implementation or heartbeat override.
 Source provenance: the clean `LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean`
 and `Hessian/Pairing.lean` under `Complexitylib/Algebraic`, at v1 revision
 `2ad6cb481b70ee6e65e078dffb76b9856be199d3`; Samuel Schlesinger's authorship is preserved.
-The source's residual-rank and weighted minimum-complexity corollaries remain unported.
-Upstream `ecomplexityOn` and `ecomplexityGiven` are unweighted and cannot replace that contract
-without a weighted-cost extension. This batch also does not establish a general matching
+The source's residual-rank and weighted minimum-complexity corollaries were left for the
+weighted source-complexity batch below. Upstream `ecomplexityOn` and `ecomplexityGiven` are
+unweighted and cannot replace that contract without a weighted-cost extension. This batch also
+does not establish a general matching
 pairing upper bound, although the tests attain the bound at `n = 0` and `n = 2`.
 
 Against `1ae8e3b`, the net addition is five named proofs / 36 body lines. All affected production
@@ -1906,14 +1907,67 @@ previous zero-Hessian theorem, and the proof-count delta. It reviewed the exact 
 and public pinned dependencies; it did not rerun gates or profiles, or independently check the
 v1 source provenance.
 
-The next integration target is a small weighted supplied-source complexity API over native
-circuits. Independent design review favors one minimum of `Program.cost` over circuits computing
-`target : X → Fin m → U` from exactly `sources : X → Fin n → U`, with unit-cost bridges to
-`ecomplexityOn` and `ecomplexityGiven`. A support is represented by its subtype, avoiding a
-chosen extension outside the supplied range. No raw coordinates are implicit. Regression cases
-must distinguish free weighted operations from wiring, and vacuous correctness from existence
-of a syntactic circuit. The first client is the remaining residual-Hessian minimum-cost bound;
-this API is planned, not implemented in this batch.
+The next integration target identified here was a small weighted supplied-source complexity API
+over native circuits, with unit-cost bridges and the residual-Hessian minimum-cost bound as its
+first client. That API and its semantic regression cases are implemented in the following batch.
+
+### Weighted supplied-source complexity and Hessian minima (2026-10-16)
+
+`Circuit/SourceComplexity.lean` defines `Circuit.ComputesFrom` and `ecomplexityFrom`, minimizing
+native `Program.cost` over circuits computing `target : X → Fin m → U` from exactly
+`sources : X → Fin n → U`. The signature, carrier and common domain have independent universes.
+There are no implicit raw inputs or source-construction costs. The value is `⊤` exactly when
+no implementing circuit exists; every finite budget has a witness and every representable
+target has a minimum-cost circuit. The API includes free wiring, composition, parallel outputs,
+cost monotonicity and impossibility when equal sources have unequal targets.
+
+Unit costs recover `ecomplexityOn` by taking the support subtype as the common domain, and
+recover `ecomplexityGiven` by explicitly supplying raw inputs alongside helpers. No target
+extension or inhabitation assumption is needed for these bridges. A separate correctness lemma
+accepts an explicitly supplied extension on the source range. Existing circuit composition and
+cost lemmas provide all machinery; there is no new circuit representation, cost structure,
+machine or tactic implementation.
+
+`Circuit/Arithmetic/Hessian/SourceComplexity.lean` completes the three remaining minimum-cost
+results from the source's Hessian `Relative.lean`: minimum residual rank is at most twice
+minimum multiplication cost, raw variables alongside helpers require subtracting only helper
+Hessians, and a uniform residual-rank lower bound gives a multiplication-cost lower bound.
+The carrier is formal polynomials and the common domain is `Unit`, preserving polynomial
+equality over every field characteristic. Nonrepresentable targets have infinite cost.
+`Foundations/Data/MvPolynomial/HessianRank.lean` supplies the always-finite minimum residual rank
+over a general finite source index; coefficients are chosen separately at each point.
+
+Source provenance: the clean `Complexity/Relative.lean` and
+`LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean` under `Complexitylib/Algebraic`
+at v1 revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`, preserving Samuel Schlesinger's
+authorship. `references.bib` also credits Boyack's 1985 thesis, Definition 2.1 and Proposition 2.2,
+pp. 29–30, checked visually in the official MIT/Rivest copy. His binary, unit-cost model permits
+implicit zero at disconnected vertices; the native circuit model requires outputs to be wired
+and constants to be supplied or implemented, and permits arbitrary finite arities and weights.
+The remainder of the source's general relative-complexity API, including its extension,
+section and complete-basis characterizations, is not all ported by this batch.
+
+Against `a127067`, the addition costs 24 named proofs / 64 body lines, including all new helpers:
+19 proofs / 46 lines for the shared source API, 2 / 2 for residual rank, and 3 / 16 for the Hessian
+client. The longest body has 8 lines. The source's three corresponding Hessian corollaries have
+36 body lines, versus 16 here; this is a client comparison, not a reduction in the total added
+proof burden. There are no proofs inside the new definitions. The library total is 5,877 named
+proofs / 40,325 body lines across 560 modules; counts exclude statements, other definition lines
+and tests.
+
+Full-module MCP profiles use 95,736 raw tactic heartbeats for finite-budget witnesses, 122,996
+for composition, 84,235 and 100,031 for the support/helper bridges, and 407,465 / 335,204 / 418,515
+for the three Hessian corollaries. These measure elaboration, not execution. All six project
+checks pass: strict build 2.63 s, import coverage 1.57 s, tests 5.68 s, environment lint 6.89 s,
+style 2.11 s and init imports 4.19 s; these are incremental checkpoint timings.
+
+Tests distinguish constant supplied sources from access to raw inputs, free addition from
+wiring, and vacuous correctness from existence of a circuit with the requested outputs. Other
+clients cover a proper support, composition of squaring, independent universes, exact minimum
+multiplication cost one for `x*y`, and zero cost/residual rank when the nonlinear target is
+supplied. Seven headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
+Independent source/API review approves the implementation, regression tests, imports, guards
+and proof accounting. The post-publication Codex correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 

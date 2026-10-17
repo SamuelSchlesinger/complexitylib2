@@ -23,6 +23,7 @@ import ComplexityTests.GGM
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
+import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.LinearHash
 import ComplexityTests.Logarithms
 import ComplexityTests.MachineClock
@@ -52,6 +53,7 @@ import ComplexityTests.RandomOracle
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.Smoke
+import ComplexityTests.SourceComplexity
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
 import ComplexityTests.UniformNat

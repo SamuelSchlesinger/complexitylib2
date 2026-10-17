@@ -5246,3 +5246,55 @@ info: 'Cslib.Circuits.Circuit.pairing_le_mulCost' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Circuit.pairing_le_mulCost
+
+
+-- Weighted supplied-source complexity and the minimum-cost Hessian bounds.
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_le_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_le_iff
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_comp_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_comp_le
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_unit_subtype' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_unit_subtype
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_unit_append' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_unit_append
+
+/--
+info: 'Cslib.Circuits.hessianResidualRank_le_two_mul_ecomplexityFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.hessianResidualRank_le_two_mul_ecomplexityFrom
+
+/--
+info: 'Cslib.Circuits.hessianResidualRank_le_two_mul_ecomplexityFrom_with_helpers' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.hessianResidualRank_le_two_mul_ecomplexityFrom_with_helpers
+
+/--
+info: 'Cslib.Circuits.le_ecomplexityFrom_of_hessian_rank' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.le_ecomplexityFrom_of_hessian_rank
