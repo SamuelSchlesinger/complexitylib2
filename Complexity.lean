@@ -127,6 +127,7 @@ public import Complexity.Computability.Circuit.Fusion.Boolean
 public import Complexity.Computability.Circuit.Fusion.Composition
 public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Cyclic
+public import Complexity.Computability.Circuit.Fusion.Cyclic.Closure
 public import Complexity.Computability.Circuit.Fusion.Homomorphism
 public import Complexity.Computability.Circuit.Fusion.Semifilter
 public import Complexity.Computability.Circuit.Fusion.Simulation

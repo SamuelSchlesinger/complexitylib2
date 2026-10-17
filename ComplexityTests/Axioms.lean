@@ -5753,3 +5753,45 @@ info: 'Cslib.Circuits.Fusion.pairCoverComplexity_le_cyclic_ecomplexityFrom' depe
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Fusion.pairCoverComplexity_le_cyclic_ecomplexityFrom
+
+/--
+info: 'Cslib.Circuits.Fusion.PairDerivation.le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairDerivation.le
+
+/--
+info: 'Cslib.Circuits.Fusion.PairDerivation.mem_of_outside' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairDerivation.mem_of_outside
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.derives_empty_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.derives_empty_iff
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.ofDerivesEmpty' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.ofDerivesEmpty
+
+/--
+info: 'Cslib.Circuits.Fusion.pairClosure_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairClosure_le
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.pairClosure_empty' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.pairClosure_empty
