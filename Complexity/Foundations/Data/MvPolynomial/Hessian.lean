@@ -27,10 +27,12 @@ products of gradients. No assumption on the characteristic is needed.
 
 * `MvPolynomial.hessian_add`, `MvPolynomial.hessian_C`, `MvPolynomial.hessian_X`.
 * `MvPolynomial.hessian_mul`: the product rule for Hessians.
+* `MvPolynomial.hessian_sum_X_mul_X`: the pairing polynomial has a block-swap Hessian.
 
 ## References
 
-* Ported from `LowerBound/Fusion/Arithmetic/Interaction/Hessian.lean` in
+* Ported from `LowerBound/Fusion/Arithmetic/Interaction/Hessian.lean` and its `Pairing.lean`
+  application in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 
@@ -71,5 +73,14 @@ theorem hessian_mul (x : ι → R) (p q : MvPolynomial ι R) :
   simp only [hessian, Matrix.add_apply, Matrix.smul_apply, Matrix.vecMulVec_apply, gradient,
     pderiv_mul, map_add, eval_mul, smul_eq_mul]
   ring
+
+/-- The Hessian of the pairing polynomial swaps the two coordinate blocks. This identity
+holds over any commutative semiring, including characteristic two. -/
+theorem hessian_sum_X_mul_X [Fintype ι] [DecidableEq ι] (point : (ι ⊕ ι) → R) :
+    hessian point (∑ i : ι, X (Sum.inl i) * X (Sum.inr i)) =
+      (1 : Matrix (ι ⊕ ι) (ι ⊕ ι) R).submatrix (Equiv.sumComm ι ι) (Equiv.refl _) := by
+  ext i j
+  cases i <;> cases j <;>
+    simp [hessian, Matrix.submatrix_apply, Matrix.one_apply, Pi.single_apply, eq_comm]
 
 end MvPolynomial

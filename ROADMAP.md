@@ -1735,9 +1735,10 @@ older relative/conditional APIs to upstream `ecomplexityOn` and `ecomplexityGive
 
 The first arithmetic client is now the Hessian multiplication lower bound on the existing
 arithmetic signature, with explicitly interpreted constants and formal-polynomial semantics.
-Its public theorem exposes the polynomial computation and multiplication count. The second client
-is now the Waring sum-of-powers bound, preserving its restricted representation model. The standalone
-algebraic checkout has local changes and an older pin; compare its relevant results with the
+Its public theorem exposes the polynomial computation and multiplication count. The Waring
+sum-of-powers bound preserves its restricted representation model. Residual Hessians now support
+arbitrary supplied polynomial inputs, and bilinear pairing supplies another arithmetic client.
+The standalone algebraic checkout has local changes and an older pin; compare its relevant results with the
 embedded v1 source and record exact provenance for each port. The general Fusion developments
 remain outstanding.
 
@@ -1847,6 +1848,58 @@ zero-feature inputs, universe/rank bridge, nonvacuity tests and proof accounting
 published diff and public pinned dependencies. This source review did not rerun the six gates or
 profiling, or independently inspect the cited originals; source provenance and the cited literature
 were checked separately during implementation and API review.
+
+### Native arithmetic circuits: supplied inputs and pairing (2026-10-16)
+
+`Program.exists_hessian_residual` extends the Hessian bound to arbitrary supplied polynomial
+inputs. At any chosen point and wire, subtracting a suitable linear combination of the input
+Hessians leaves a matrix of rank at most twice multiplication count. The coefficients may depend
+on the point and selected wire; this is not a point-independent polynomial decomposition.
+`Circuit.exists_hessian_residual` exposes the formal-polynomial computation premise, and
+`Circuit.exists_helper_hessian_residual` accepts raw variables alongside helper polynomials.
+Supplying a helper is free, while any subsequent multiplication is charged. The former
+zero-Hessian-input theorem is now a three-line corollary.
+
+The implementation decomposes membership in the supremum of the input-Hessian span and the
+gate-contribution span. This uses Mathlib's submodule API directly and retains the previous
+shared-gate rank accounting. `Circuit.pairing_le_mulCost` proves that the formal polynomial
+`∑ i, xᵢ * yᵢ` requires at least `n` multiplications over every field, including characteristic
+two. Its Hessian is a row permutation of the identity; existing matrix reindexing and identity
+rank lemmas replace the source's custom block-swap linear map and surjectivity proof. Constants,
+additions and wiring remain free, and scalar multiplications remain charged. These results
+introduce no machine, tactic implementation or heartbeat override.
+
+Source provenance: the clean `LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean`
+and `Hessian/Pairing.lean` under `Complexitylib/Algebraic`, at v1 revision
+`2ad6cb481b70ee6e65e078dffb76b9856be199d3`; Samuel Schlesinger's authorship is preserved.
+The source's residual-rank and weighted minimum-complexity corollaries remain unported.
+Upstream `ecomplexityOn` and `ecomplexityGiven` are unweighted and cannot replace that contract
+without a weighted-cost extension. This batch also does not establish a general matching
+pairing upper bound, although the tests attain the bound at `n = 0` and `n = 2`.
+
+Against `1ae8e3b`, the net addition is five named proofs / 36 body lines. All affected production
+files together grow from 54 to 90 body lines, including the generalized private span argument
+(21 to 19 lines), residual program/circuit/helper results (23/2/4), zero-input-Hessian corollary
+(7 to 3), pairing Hessian identity (3) and pairing lower bound (10). The source's main residual
+proof has 59 body lines, versus 23 for the new program theorem plus 2 for its circuit endpoint;
+this is a theorem-level comparison, not a comparison of the complete dependency closures.
+The library total is 5,853 named proofs / 40,261 body lines across 557 modules. These source-layout
+counts exclude definitions and tests; no additional proofs are hidden inside new definitions.
+
+Full-module MCP profiles use 3,605,406 raw tactic heartbeats for the generalized span argument,
+4,036,613 for the residual theorem, 641,038 for its zero-input-Hessian corollary, 2,205,768 for
+the pairing Hessian identity and 476,287 for the pairing lower bound. These measure elaboration,
+not execution. All six project checks pass: strict build 2.77 s, import coverage 1.75 s, tests
+6.47 s, environment lint 7.77 s, style 2.12 s and init imports 4.15 s; these are incremental
+checkpoint timings.
+
+Tests cover a free nonlinear helper of Hessian rank two, copying and repeated addition of the
+helper, raw variables alongside helpers, a charged multiplication of supplied polynomials,
+multiple outputs and unused gates, pairing over arbitrary fields and explicitly over `ZMod 2`,
+and the empty pairing. Three headline axiom guards use only `propext`, `Classical.choice` and
+`Quot.sound`. Independent source/API review approves the production implementation, imported
+clients with independent coefficient/index universes, regression tests, axiom guards and proof
+accounting. The post-publication Codex correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 

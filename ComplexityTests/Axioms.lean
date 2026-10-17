@@ -5223,3 +5223,26 @@ info: 'Cslib.Circuits.SumOfTerms.rank_trace_le' depends on axioms: [propext, Cla
 -/
 #guard_msgs in
 #print axioms Cslib.Circuits.SumOfTerms.rank_trace_le
+
+-- Source-adjusted Hessians and the all-characteristic bilinear pairing bound.
+
+/--
+info: 'Cslib.Circuits.Program.exists_hessian_residual' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.exists_hessian_residual
+
+/--
+info: 'Cslib.Circuits.Circuit.exists_helper_hessian_residual' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.exists_helper_hessian_residual
+
+/--
+info: 'Cslib.Circuits.Circuit.pairing_le_mulCost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.pairing_le_mulCost
