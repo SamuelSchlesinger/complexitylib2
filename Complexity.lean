@@ -80,6 +80,7 @@ public import Complexity.Computability.Circuit.Cyclic.Feedback
 public import Complexity.Computability.Circuit.Decomposable
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.Erase
+public import Complexity.Computability.Circuit.Evaluation
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.Circuit.Frontier.AverageCase

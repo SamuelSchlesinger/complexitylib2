@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Formula
+public import Complexity.Computability.Circuit.Evaluation
 public import Complexity.Foundations.Data.BitString.Basic
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 

@@ -8766,3 +8766,38 @@ info: 'Cslib.Circuits.Boolean.MassProduction.massComplexity_le_shannon' depends 
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.MassProduction.massComplexity_le_shannon
+
+/--
+info: 'Cslib.Circuits.Program.get_evalVector' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.get_evalVector
+
+/--
+info: 'Cslib.Circuits.Program.eval_eq_evalImpl' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.eval_eq_evalImpl
+
+/--
+info: 'Cslib.Circuits.Program.trace_eq_traceImpl' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.trace_eq_traceImpl
+
+/--
+info: 'Cslib.Circuits.Circuit.get_evalVector' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.get_evalVector
+
+/--
+info: 'Cslib.Circuits.Circuit.eval_eq_evalImpl' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.eval_eq_evalImpl

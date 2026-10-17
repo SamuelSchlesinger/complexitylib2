@@ -5,6 +5,7 @@ import ComplexityTests.ArithmeticWaring
 import ComplexityTests.Axioms
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
+import ComplexityTests.CircuitEvaluation
 import ComplexityTests.CoinTape
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
