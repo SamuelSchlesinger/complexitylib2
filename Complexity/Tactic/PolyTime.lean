@@ -132,7 +132,8 @@ private meta def polytimeFold : TacticM Unit :=
             let rule := mkIdent rule
             evalTactic (← `(tactic| apply $rule:ident (growth := 0)))
           else liftMetaTactic fun goal => goal.applyConst rule
-          evalTactic (← `(tactic| case hlist => solve | aesop (rule_sets := [PolyTime])))
+          evalTactic (← `(tactic| case hlist => solve |
+            aesop (config := { assumptionTransparency := .reducible }) (rule_sets := [PolyTime])))
           if zeroGrowth then Cslib.Tactic.solveTagged `hgrowth
           return
         catch _ => saved.restore
@@ -151,6 +152,9 @@ attribute [aesop safe apply (index := [unindexed]) (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.iterate_of_bounded_growth
 
 /-- Prove a polynomial-time certificate from known routines and controlled loop rules. -/
-macro "polytime" : tactic => `(tactic| solve | aesop (rule_sets := [PolyTime]))
+-- Unfold only reducible aliases when comparing assumptions. Ordinary program definitions may
+-- contain large fixed enumerations; their named certificates should be tried before unfolding.
+macro "polytime" : tactic => `(tactic| solve |
+  aesop (config := { assumptionTransparency := .reducible }) (rule_sets := [PolyTime]))
 
 end Cslib.Tactic.PolyTime

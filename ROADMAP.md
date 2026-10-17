@@ -9,10 +9,9 @@ completed reference developments.
    [gap theorem](Complexity/Computability/PCP/GapTheorem.lean) establishes combinatorial correctness
    and polynomial output size. Complete the executable reduction and its resource certificate:
 
-   * instantiate the [certified logarithmic amplification](Complexity/Computability/PCP/Encoded/Amplification/Iteration.lean)
-     with the arithmetic expander family and complete finite enumerations;
    * connect the [certified initial 3-SAT graph](Complexity/Computability/PCP/Encoded/ThreeSAT.lean)
-     to an efficient SAT-to-3CNF conversion and the iterative construction;
+     to an efficient SAT-to-3CNF conversion and the
+     [concrete gap amplifier](Complexity/Computability/PCP/Encoded/Amplification/Arithmetic.lean);
    * prove the final verifier's randomness, query and indexing bounds.
 
    The rotation certificate is polynomial in the number of vertices, which can suffice here.

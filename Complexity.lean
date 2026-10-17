@@ -350,12 +350,15 @@ public import Complexity.Computability.PCP.ConstraintGraph
 public import Complexity.Computability.PCP.DegreeReduction
 public import Complexity.Computability.PCP.Encoded.AddTrivial
 public import Complexity.Computability.PCP.Encoded.Amplification
+public import Complexity.Computability.PCP.Encoded.Amplification.Arithmetic
+public import Complexity.Computability.PCP.Encoded.Amplification.Enumeration
 public import Complexity.Computability.PCP.Encoded.Amplification.Iteration
 public import Complexity.Computability.PCP.Encoded.AssignmentTester
 public import Complexity.Computability.PCP.Encoded.Basic
 public import Complexity.Computability.PCP.Encoded.Cloud
 public import Complexity.Computability.PCP.Encoded.CloudRotation
 public import Complexity.Computability.PCP.Encoded.Composition
+public import Complexity.Computability.PCP.Encoded.Composition.Enumeration
 public import Complexity.Computability.PCP.Encoded.Constraints
 public import Complexity.Computability.PCP.Encoded.DegreeReduction
 public import Complexity.Computability.PCP.Encoded.Iteration

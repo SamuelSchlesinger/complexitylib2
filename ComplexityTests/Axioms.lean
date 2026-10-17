@@ -8173,3 +8173,86 @@ info: 'Cslib.PCP.Encoded.Graph.iterate_length_encoding_le' depends on axioms:
 /-- info: 'Cslib.PCP.Amplifier.gap_le_unsatVal_iter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Cslib.PCP.Amplifier.gap_le_unsatVal_iter
+
+/-- info: 'Cslib.PCP.HadamardTester.Rand.finEnum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.HadamardTester.Rand.finEnum
+
+/-- info: 'Cslib.PCP.Encoded.Graph.ComposeSlot.finEnum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.ComposeSlot.finEnum
+
+/-- info: 'Cslib.PCP.Encoded.Graph.isPolyTime_composeEnumerated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_composeEnumerated
+
+/-- info: 'Cslib.PCP.Encoded.Graph.WellFormed.composeEnumerated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.WellFormed.composeEnumerated
+
+/-- info: 'Cslib.PCP.Encoded.Graph.unsatVal_composeEnumerated_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_composeEnumerated_eq
+
+/-- info: 'Cslib.PCP.Encoded.Graph.satisfiable_composeEnumerated_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_composeEnumerated_iff
+
+/-- info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_composeEnumerated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_composeEnumerated
+
+/-- info: 'Cslib.PCP.Encoded.Graph.isPolyTime_amplifyEnumerated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_amplifyEnumerated
+
+/-- info: 'Cslib.PCP.Encoded.Graph.wellFormed_amplifyEnumerated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.wellFormed_amplifyEnumerated
+
+/-- info: 'Cslib.PCP.Encoded.Graph.satisfiable_amplifyEnumerated_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_amplifyEnumerated_iff
+
+/-- info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_amplifyEnumerated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_amplifyEnumerated
+
+/-- info: 'Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplifyEnumerated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.min_le_unsatVal_amplifyEnumerated
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.arithmeticAmplify' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.arithmeticAmplify
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_arithmeticAmplify' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_arithmeticAmplify
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.wellFormed_arithmeticAmplify' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.wellFormed_arithmeticAmplify
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.satisfiable_arithmeticAmplify_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.satisfiable_arithmeticAmplify_iff
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.gap_le_unsatVal_arithmeticAmplify' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.gap_le_unsatVal_arithmeticAmplify
