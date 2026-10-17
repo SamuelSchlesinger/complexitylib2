@@ -36,8 +36,9 @@ of random bits it uses itself, and `r` only bounds it. (If the verifier were han
 `c * r n` random bits, an uncomputable `r` could smuggle information into the length of the random
 string and put undecidable problems into the class.)
 
-The PCP theorem, `NP = PCP(log n, 1)`, is not proved here; the finite combinatorial parts of
-Dinur's proof are in `Cslib.PCP`.
+The PCP theorem, `NP = PCP(log n, 1)`, is proved as `Cslib.Complexity.NP_eq_PCP_log` in
+`Computability/PCP/Completeness`. Its construction and Dinur's combinatorial argument are in
+`Cslib.PCP`.
 
 ## Main definitions
 

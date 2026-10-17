@@ -8435,3 +8435,65 @@ info: 'Cslib.PCP.Encoded.Graph.mem_PCP_of_gapReduction' depends on axioms:
 /-- info: 'Cslib.Complexity.acceptCount_le_half_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Cslib.Complexity.acceptCount_le_half_iff
+
+/--
+info: 'Cslib.BitString.mem_enumList' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.mem_enumList
+
+/--
+info: 'Cslib.BitString.binaryValue_reverse_bits' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.binaryValue_reverse_bits
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_to_unary_bounded' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_to_unary_bounded
+
+/--
+info: 'Cslib.Complexity.PCPVerifier.isPolyTime_queryTable' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PCPVerifier.isPolyTime_queryTable
+
+/--
+info: 'Cslib.Complexity.PCPVerifier.isPolyTime_tableVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PCPVerifier.isPolyTime_tableVerifier
+
+/--
+info: 'Cslib.Complexity.PCPVerifier.tableVerifier_complete' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PCPVerifier.tableVerifier_complete
+
+/--
+info: 'Cslib.Complexity.PCPVerifier.tableVerifier_sound' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PCPVerifier.tableVerifier_sound
+
+/--
+info: 'Cslib.Complexity.PCP_log_subset_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PCP_log_subset_NP
+
+/--
+info: 'Cslib.Complexity.NP_subset_PCP_log' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NP_subset_PCP_log
+
+/--
+info: 'Cslib.Complexity.NP_eq_PCP_log' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NP_eq_PCP_log

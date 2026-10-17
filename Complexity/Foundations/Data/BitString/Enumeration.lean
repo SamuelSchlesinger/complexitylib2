@@ -87,4 +87,12 @@ theorem length_of_mem_enumList {count : ℕ} {word : List Bool}
   obtain ⟨_, _, rfl⟩ := List.mem_map.mp hword
   simp
 
+/-- The ordinary-list enumeration contains exactly the words of the specified length. -/
+@[simp] theorem mem_enumList {count : ℕ} {word : List Bool} :
+    word ∈ enumList count ↔ word.length = count := by
+  refine ⟨length_of_mem_enumList, ?_⟩
+  intro h
+  subst count
+  exact List.mem_map.mpr ⟨word.get, mem_enum _ _, List.ofFn_get word⟩
+
 end Cslib.BitString

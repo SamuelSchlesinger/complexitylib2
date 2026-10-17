@@ -97,6 +97,18 @@ theorem bitsBoundedBinaryValueWithInput {α : Type} {input : α ↪ List Bool}
     ComputableTidilyInPolyTime (fun a => Cslib.BitString.boundedBinaryValue (cap a) (word a))
       input encUnary := bitsBoundedBinaryValue.comp (hcap.prod hword)
 
+/-- Convert a binary value to unary under a computed unary bound. -/
+theorem binary_to_unary_bounded {α : Type} {input : α ↪ List Bool} {value bound : α → ℕ}
+    (hvalue : ComputableTidilyInPolyTime value input encNat)
+    (hbound : ComputableTidilyInPolyTime bound input encUnary)
+    (hle : ∀ a, value a ≤ bound a) :
+    ComputableTidilyInPolyTime value input encUnary := by
+  have h := bitsBoundedBinaryValueWithInput hbound (bitsReverse.comp hvalue.encoded)
+  convert h using 1
+  funext a
+  simp only [Function.comp_apply, encNat_apply, Cslib.BitString.boundedBinaryValue_eq,
+    Cslib.BitString.binaryValue_reverse_bits, Nat.min_eq_right (hle a)]
+
 /-- Convert a raw bit string to the framed list encoding. -/
 @[fun_prop]
 theorem bitsToList : ComputableTidilyInPolyTime (fun l => l) encBits (encList encBool) := by

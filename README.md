@@ -35,11 +35,11 @@ machine calculus.
   and arithmetic developments share CSLib's circuit definitions, costs, and simulations.
   The [quadratic-form correlation bound](Complexity/Computability/Circuit/Frontier/Correlation.lean)
   uses a nonconstructively chosen family; it supplies no efficient construction.
-* [Dinur's gap construction](Complexity/Computability/PCP/Encoded/GapTheorem.lean): a polynomial-time
-  reduction from arbitrary SAT formulas to constant-gap constraint graphs, including clause
-  splitting, variable compaction, complete tables and amplification. The final PCP verifier
-  remains under development. Expander rotations are polynomial in the vertex count;
-  the fixed construction constants remain enormous.
+* [The PCP theorem](Complexity/Computability/PCP/Completeness.lean): `NP = PCP(log n, 1)`, with
+  polynomial-time construction and verification, perfect completeness and soundness at most
+  one half. The proof uses [Dinur's gap construction](Complexity/Computability/PCP/Encoded/GapTheorem.lean)
+  and the library's deterministic-verifier definition of NP. Expander rotations are polynomial
+  in the vertex count; the fixed construction constants remain enormous.
 
 ## Build and use
 

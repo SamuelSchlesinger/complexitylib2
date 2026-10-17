@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Mathlib.Data.Nat.Bits
 
 /-!
 # Saturating binary decoding
@@ -70,6 +71,14 @@ theorem boundedBinaryValue_le (bound : ℕ) (word : List Bool) :
 theorem binaryValue_snoc (word : List Bool) (bit : Bool) :
     binaryValue (word ++ [bit]) = 2 * binaryValue word + bit.toNat := by
   simp [binaryValue, List.foldl_append]
+
+/-- Reversing the little-endian digits gives the corresponding most-significant-first value. -/
+theorem binaryValue_reverse_bits (n : ℕ) : binaryValue n.bits.reverse = n := by
+  induction n using Nat.binaryRec' with
+  | zero => rfl
+  | bit b n hn ih =>
+    rw [Nat.bits_append_bit n b hn, List.reverse_cons, binaryValue_snoc, ih]
+    cases b <;> simp [Nat.bit_val]
 
 /-- An all-one binary word represents one less than the corresponding power of two. -/
 theorem binaryValue_replicate_true (k : ℕ) :

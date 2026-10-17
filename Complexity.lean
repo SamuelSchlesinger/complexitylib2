@@ -170,6 +170,7 @@ public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PCP
+public import Complexity.Computability.Complexity.Classes.PCP.NP
 public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.Promise.Basic
@@ -348,6 +349,7 @@ public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family
 public import Complexity.Computability.PCP.Amplifier
 public import Complexity.Computability.PCP.AssignmentTester
+public import Complexity.Computability.PCP.Completeness
 public import Complexity.Computability.PCP.Composition
 public import Complexity.Computability.PCP.ConstraintGraph
 public import Complexity.Computability.PCP.DegreeReduction

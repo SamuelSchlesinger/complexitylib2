@@ -53,6 +53,7 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
+import ComplexityTests.PCPCompleteness
 import ComplexityTests.PCPEncoded
 import ComplexityTests.PCPEncodedAmplification
 import ComplexityTests.PCPEncodedAmplificationIteration
@@ -69,6 +70,7 @@ import ComplexityTests.PCPEncodedSize
 import ComplexityTests.PCPEncodedThreeSAT
 import ComplexityTests.PCPEncodedVerifier
 import ComplexityTests.PCPExpander
+import ComplexityTests.PCPNP
 import ComplexityTests.PCPNumbering
 import ComplexityTests.PCPPreprocessPrograms
 import ComplexityTests.PCPVerifierProbability

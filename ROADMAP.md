@@ -5,14 +5,12 @@ completed reference developments.
 
 ## Current priorities
 
-1. **Certified PCP construction.** The
-   [SAT-to-gap reduction](Complexity/Computability/PCP/Encoded/GapTheorem.lean) is correct and
-   polynomial-time. Complete the final verifier and its randomness, query and indexing bounds,
-   then assemble the class-level PCP theorem.
-
-   The rotation certificate is polynomial in the number of vertices, which can suffice here.
-   Polynomial time in the bit length of a vertex name is a stronger, separate target. The
-   certified family has enormous constants; practical execution remains a separate milestone.
+1. **Practical PCP and expander constructions.** The
+   [PCP theorem](Complexity/Computability/PCP/Completeness.lean) includes certified construction
+   and verification, but the fixed parameters are enormous. Develop a reasonably runnable
+   construction and measure complete reductions. The existing rotation certificate is
+   polynomial in the number of vertices; polynomial time in the bit length of a vertex name
+   remains a stronger, separate target.
 
 2. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
    lookup and composition rules should infer encodings for ordinary functional expressions.
