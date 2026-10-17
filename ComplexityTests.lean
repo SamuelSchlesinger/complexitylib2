@@ -9,6 +9,7 @@ import ComplexityTests.CoinTape
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
+import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings

@@ -1973,6 +1973,67 @@ the native support/helper bridges and the formal-polynomial Hessian bounds. It r
 exact public sources and pinned dependencies; it did not rerun gates or profiling, or
 independently verify the original sources.
 
+### Shared-context simulation and binary powering (2026-10-16)
+
+`Circuit/SimulationContext.lean` compiles operation gadgets with a shared ambient input block.
+It prepends context arguments through the existing line map and then uses native
+`Program.simulate` through `Circuit.simulate`. All requested outputs, including repeated
+outputs and outputs preceding unused gates, keep their values. Each gadget's entire weighted
+cost is charged once per source gate. A gadget may return a context or argument wire without
+adding gates; source inputs remain available after the context prefix. The old contextual
+`ProgramCompilation` structure and separate recursive compiler are unnecessary.
+
+The basic `Circuit.simulate` definition and correctness/size lemmas now live in `Simulation`,
+with its new exact weighted-cost rule, rather than in the depth extension. Line mapping gains
+cost preservation and correctness at a fixed input, so a context-dependent interpretation
+needs no uniform agreement on other inputs. Source/target signatures and the semantic carrier
+have independent universes. `Fin.comp_append` handles context evaluation without another helper.
+
+`Circuit/Arithmetic/Power.lean` implements binary powering with ordinary composition and
+parallel outputs. Squaring reads the previous result twice; the original input remains
+available for one bits. For positive `e`, the circuit has exactly `binaryMultiplicationCount e`
+gates, all multiplications, and at most `2 * Nat.log2 e` gates. Zero uses one constant gate and
+one uses no gates. A single arbitrary-weight formula includes the constant charge and implies
+both multiplication and addition counts. The constant symbol for one is supplied explicitly;
+correctness requires its interpretation to equal one. The carrier needs only `[Add R]` and
+`[Monoid R]`, with no commutativity or distributivity assumption.
+
+These are executable circuit constructions and circuit-cost theorems. They do not certify TM
+time for generating the circuit or evaluating it on encoded coefficients. Waring's complete
+linear-form/power/scaling compilation is the next client; it is not completed by this batch.
+The existing generic `Formula.toCircuit` should handle tree-shaped arithmetic fragments rather
+than introducing the source library's separate arithmetic expression datatype and compiler.
+
+Source provenance: `Basis/Arithmetic/Power.lean` and `Translation/Contextual.lean` under
+`Complexitylib/Algebraic` at clean v1 revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`,
+preserving Samuel Schlesinger's authorship and the bibliography reference. No new machine,
+program backend or tactic implementation is needed.
+
+Against `d9791e4`, the complete batch adds 26 named proofs / 74 body lines, including all helpers
+and accounting for moved declarations: binary powering 14 / 40, contextual compilation 7 / 23,
+and shared API additions net 5 / 11. The longest new proof has 10 body lines. The two source
+modules have 30 named proofs / 179 body lines; interfaces and internal helpers are reorganized,
+so this is not a line-for-line API comparison. The library total is 5,903 named proofs / 40,399
+body lines across 562 modules. This source-layout metric excludes statements, definitions and
+tests; none of the new definitions contains a proof body.
+
+Full-module MCP replicas measure 161,656 raw tactic heartbeats for context evaluation, 90,790
+for contextual simulation, 163,390 for binary-power correctness, 378,162 for exact weighted
+power cost, and 126,820 for the logarithmic multiplication bound. These are elaboration counts,
+not circuit execution costs. No heartbeat override is used.
+
+`ContextualPower` tests a term emitting `x^13`, its shared double and a repeated output, while
+an unused term gadget is still charged. Its executable natural-number instance returns
+`[8192, 16384, 8192]` with ten multiplications and one addition. Tests also cover a free context
+wire, a two-input context, preserved raw inputs, zero context/no outputs, zero and one exponents,
+1024, arbitrary weights, no additions, incorrect interpretation of the one symbol, independent
+universes and noncommutative semantics. Six headline axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`. Independent source/API review approves the implementation,
+clients, axiom guards, documentation and proof accounting. All six checks pass: strict build
+2.32 s, import coverage 1.78 s, tests 8.50 s, environment lint 7.52 s, style 2.60 s and init
+imports 5.23 s. These are incremental checkpoint timings. Post-publication Codex correctness
+review follows the code commit.
+
 ### Implementation priorities (2026-10-16)
 
 1. Efficient closed stateful substitution is implemented through finite tables, encoded

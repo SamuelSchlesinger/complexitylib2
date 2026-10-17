@@ -17,6 +17,48 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Program.cost_simulateProgram' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.cost_simulateProgram
+
+/--
+info: 'Cslib.Circuits.Circuit.eval_simulateWithContext' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.eval_simulateWithContext
+
+/--
+info: 'Cslib.Circuits.Circuit.cost_program_simulateWithContext' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.cost_program_simulateWithContext
+
+/--
+info: 'Cslib.Circuits.eval_binaryPowerCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.eval_binaryPowerCircuit
+
+/--
+info: 'Cslib.Circuits.cost_program_binaryPowerCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.cost_program_binaryPowerCircuit
+
+/--
+info: 'Cslib.Circuits.size_binaryPowerCircuit_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.size_binaryPowerCircuit_le
+
+/--
 info: 'Cslib.Circuits.Program.rank_hessian_trace_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

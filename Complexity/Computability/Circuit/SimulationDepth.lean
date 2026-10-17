@@ -8,7 +8,7 @@ module
 -- upstream: candidate (addition to `Cslib/Computability/Circuit/Simulation.lean`)
 
 public import Complexity.Computability.Circuit.CompositionDepth
-public import Cslib.Computability.Circuit.Simulation
+public import Complexity.Computability.Circuit.Simulation
 
 /-!
 # The depth of a simulation
@@ -16,13 +16,9 @@ public import Cslib.Computability.Circuit.Simulation
 Replacing every gate of a program by a circuit computing its operation (`Program.simulate`) makes
 each wire at most as deep as its depth in the original program when an operation `op` costs the
 depth of its replacement circuit (`Program.wireDepths_simulateRenaming_le`). So a circuit over one
-basis is simulated by a circuit over another basis whose depth is the original depth with these
-costs (`Circuit.depth_simulate_le`), at most the original depth times the largest depth of a
-replacement.
-
-## Main definitions
-
-* `Cslib.Circuits.Circuit.simulate`: the circuit with every gate replaced.
+basis is simulated by a circuit over another basis whose depth is bounded by the original depth
+with these costs (`Circuit.depth_simulate_le`), at most the original depth times the largest depth
+of a replacement.
 
 ## Main results
 
@@ -77,22 +73,6 @@ theorem Program.wireDepths_simulateRenaming_le (p : Program σ n g)
         ((q.simulate impl).2 ∘ line.wires) (impl line.op).program ((q.simulate impl).2 w)).trans_le
         (ih w)
       cases w <;> exact hold
-
-/-- The circuit with every gate replaced by the circuit `impl op` for its operation. -/
-def Circuit.simulate (c : Circuit σ n m) (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1) :
-    Circuit τ n m :=
-  ⟨c.program.simulateProgram impl, c.program.simulateRenaming impl ∘ c.outputs⟩
-
-@[simp] theorem Circuit.size_simulate (c : Circuit σ n m)
-    (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1) :
-    (c.simulate impl).size = c.program.cost fun op => (impl op).size :=
-  rfl
-
-/-- Replacing the gates by circuits computing their operations computes the same function. -/
-theorem Circuit.eval_simulate {I : Interpretation σ U} {J : Interpretation τ U}
-    (c : Circuit σ n m) (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1)
-    (h : ∀ op, (impl op).Computes J (single (I op))) : (c.simulate impl).eval J = c.eval I :=
-  funext fun x => congrArg (· ∘ c.outputs) (c.program.trace_simulate impl h x)
 
 /-- The simulated circuit is at most as deep as the original circuit when every operation costs
 the depth of its replacement. -/

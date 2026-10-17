@@ -12,19 +12,36 @@ public import Cslib.Computability.Circuit.Simulation
 public import Mathlib.Algebra.BigOperators.Fin
 
 /-!
-# The cost of a program, gate by gate
+# Circuit simulation and exact costs
 
 The cost of a program is the sum of the costs of its lines (`Program.cost_eq_sum`), so a bound on
 the cost of every operation bounds the cost of the program by the number of gates
 (`Program.cost_le_mul`). Costs add up along the composition of circuits
 (`Circuit.cost_program_comp`, `Circuit.cost_program_append`, `Circuit.cost_program_pi`).
+Replacing each gate by a supplied circuit also preserves costs exactly, charging the source
+operation the entire cost of its replacement (`Circuit.cost_program_simulate`).
+
+## Main definitions
+
+* `Cslib.Circuits.Circuit.simulate`: replace every gate by its implementation circuit.
+
+## Main results
+
+* `Cslib.Circuits.Circuit.eval_simulate`: simulation preserves all circuit outputs.
+* `Cslib.Circuits.Program.cost_simulateProgram`, `Cslib.Circuits.Circuit.cost_program_simulate`:
+  exact arbitrary weighted cost under simulation.
+* `Cslib.Circuits.Program.cost_eq_sum`: program cost as a sum over gates.
+* `Cslib.Circuits.Circuit.cost_program_comp`, `Cslib.Circuits.Circuit.cost_program_append`,
+  `Cslib.Circuits.Circuit.cost_program_pi`: exact composition costs.
 -/
 
 @[expose] public section
 
 namespace Cslib.Circuits
 
-variable {σ : Signature} {n g : ℕ}
+universe v w u
+
+variable {σ : Signature.{v}} {τ : Signature.{w}} {U : Type u} {n g : ℕ}
 
 /-- The cost of a program is the sum of the costs of its lines. -/
 theorem Program.cost_eq_sum (p : Program σ n g) (cost : σ.Op → ℕ) :
@@ -49,13 +66,41 @@ theorem Program.cost_le_mul (p : Program σ n g) {cost : σ.Op → ℕ} {b : ℕ
   | gate q line ih => rw [Program.append, Program.cost_gate, Program.cost_gate, ih,
       Line.mapWires_op, Nat.add_assoc]
 
+/-- Weighted simulation cost is exactly the sum of the replacement-circuit costs. -/
+theorem Program.cost_simulateProgram (p : Program σ n g)
+    (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1) (cost : τ.Op → ℕ) :
+    (p.simulateProgram impl).cost cost = p.cost fun op => (impl op).program.cost cost := by
+  induction p with
+  | empty => rfl
+  | gate p line ih =>
+    change ((p.simulateProgram impl).append _ (impl line.op).program).cost cost = _
+    rw [cost_append, cost_gate, ih]
+
+variable {m : ℕ}
+
+/-- The circuit with every gate replaced by the circuit `impl op` for its operation. -/
+def Circuit.simulate (c : Circuit σ n m) (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1) :
+    Circuit τ n m :=
+  ⟨c.program.simulateProgram impl, c.program.simulateRenaming impl ∘ c.outputs⟩
+
+@[simp] theorem Circuit.size_simulate (c : Circuit σ n m)
+    (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1) :
+    (c.simulate impl).size = c.program.cost fun op => (impl op).size :=
+  rfl
+
+/-- Replacing the gates by circuits computing their operations computes the same function. -/
+theorem Circuit.eval_simulate {I : Interpretation σ U} {J : Interpretation τ U}
+    (c : Circuit σ n m) (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1)
+    (h : ∀ op, (impl op).Computes J (single (I op))) : (c.simulate impl).eval J = c.eval I :=
+  funext fun x => congrArg (· ∘ c.outputs) (c.program.trace_simulate impl h x)
+
 namespace Circuit
 
 /-! The costs of circuits built from smaller ones. They are not `simp` lemmas: `simp` would first
 rewrite the number of gates, an implicit argument of `Program.cost`, by `Circuit.size_comp` and the
 like, after which they no longer match. They apply with `rw` and `simp only`. -/
 
-variable {m p : ℕ}
+variable {p : ℕ}
 
 theorem cost_program_wiring (select : Fin m → Fin n) (cost : σ.Op → ℕ) :
     (Circuit.wiring σ select).program.cost cost = 0 :=
@@ -74,6 +119,13 @@ theorem cost_program_comp (d : Circuit σ m p) (c : Circuit σ n m) (cost : σ.O
 theorem cost_program_append (c : Circuit σ n m) (d : Circuit σ n p) (cost : σ.Op → ℕ) :
     (c.append d).program.cost cost = c.program.cost cost + d.program.cost cost :=
   Program.cost_append _ _ _ cost
+
+/-- Gate replacement preserves arbitrary weighted costs exactly. -/
+theorem cost_program_simulate (c : Circuit σ n m)
+    (impl : ∀ op : σ.Op, Circuit τ (σ.Arity op) 1) (cost : τ.Op → ℕ) :
+    (c.simulate impl).program.cost cost =
+      c.program.cost fun op => (impl op).program.cost cost :=
+  c.program.cost_simulateProgram impl cost
 
 /-- The cost of `pi cs` is the sum of the costs. -/
 theorem cost_program_pi (cs : Fin m → Circuit σ n 1) (cost : σ.Op → ℕ) :

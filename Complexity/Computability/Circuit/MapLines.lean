@@ -5,9 +5,10 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate (additions to `Circuit/Program.lean` and `Circuit/Depth.lean`)
+-- upstream: candidate (additions to `Circuit/{Program,Simulation,Depth}.lean`)
 
 public import Complexity.Computability.Circuit.Depth
+public import Cslib.Computability.Circuit.Simulation
 
 /-!
 # Transforming circuits line by line
@@ -29,7 +30,10 @@ of idempotent gates is another.
 ## Main results
 
 * `Cslib.Circuits.Program.eval_mapLines`, `Cslib.Circuits.Circuit.eval_mapLines`: transforming
-  lines that keep their values keeps the function computed.
+  lines that keep their values keeps the function computed. Their `_at` variants need the
+  line condition only at the given input, permitting interpretations with fixed context.
+* `Cslib.Circuits.Program.cost_mapLines`: transforming lines with matching operation costs
+  preserves total program cost.
 * `Cslib.Circuits.Program.depths_mapLines_le`, `Cslib.Circuits.Circuit.depth_mapLines_le`:
   transforming lines that get no deeper keeps the depth bounded.
 * `Cslib.Circuits.Program.depths_mapLines`, `Cslib.Circuits.Circuit.depth_mapLines`: transforming
@@ -40,7 +44,9 @@ of idempotent gates is another.
 
 namespace Cslib.Circuits
 
-variable {σ τ : Signature} {n g m : ℕ} {U : Type*}
+universe v w u
+
+variable {σ : Signature.{v}} {τ : Signature.{w}} {n g m : ℕ} {U : Type u}
 
 /-- The program with every line `line` replaced by `f line`. -/
 def Program.mapLines (f : ∀ {g : ℕ}, Line σ n g → Line τ n g) :
@@ -78,15 +84,23 @@ variable {f : ∀ {g : ℕ}, Line σ n g → Line τ n g}
 @[simp] theorem Circuit.size_mapLines (c : Circuit σ n m) : (c.mapLines f).size = c.size :=
   rfl
 
+/-- Transforming lines with matching operation costs preserves total cost. -/
+theorem Program.cost_mapLines {cost : σ.Op → ℕ} {cost' : τ.Op → ℕ}
+    (hf : ∀ {g : ℕ} (line : Line σ n g), cost' (f line).op = cost line.op)
+    (p : Program σ n g) : (p.mapLines f).cost cost' = p.cost cost := by
+  induction p with
+  | empty => rfl
+  | gate p line ih => rw [mapLines_gate, cost_gate, cost_gate, ih, hf]
+
 section eval
 
 variable {I : Interpretation σ U} {J : Interpretation τ U}
 
-/-- Transforming lines that keep their values keeps the value of every gate. -/
-theorem Program.eval_mapLines
-    (hf : ∀ {g : ℕ} (line : Line σ n g) (x : Fin n → U) (gates : Fin g → U),
+/-- At a fixed input, preserving every line value preserves every gate value. -/
+theorem Program.eval_mapLines_at (x : Fin n → U)
+    (hf : ∀ {g : ℕ} (line : Line σ n g) (gates : Fin g → U),
       (f line).eval J x gates = line.eval I x gates)
-    (p : Program σ n g) (x : Fin n → U) : (p.mapLines f).eval J x = p.eval I x := by
+    (p : Program σ n g) : (p.mapLines f).eval J x = p.eval I x := by
   induction p with
   | empty => funext k; exact k.elim0
   | gate p line ih =>
@@ -94,6 +108,20 @@ theorem Program.eval_mapLines
     induction k using Fin.lastCases with
     | last => rw [mapLines_gate, eval_gate_last, eval_gate_last, ih, hf]
     | cast k => rw [mapLines_gate, eval_gate_castSucc, eval_gate_castSucc, ih]
+
+/-- Transforming lines that keep their values keeps the value of every gate. -/
+theorem Program.eval_mapLines
+    (hf : ∀ {g : ℕ} (line : Line σ n g) (x : Fin n → U) (gates : Fin g → U),
+      (f line).eval J x gates = line.eval I x gates)
+    (p : Program σ n g) (x : Fin n → U) : (p.mapLines f).eval J x = p.eval I x :=
+  p.eval_mapLines_at x (fun line gates => hf line x gates)
+
+/-- At a fixed input, preserving every line value preserves every output value. -/
+theorem Circuit.eval_mapLines_at (x : Fin n → U)
+    (hf : ∀ {g : ℕ} (line : Line σ n g) (gates : Fin g → U),
+      (f line).eval J x gates = line.eval I x gates)
+    (c : Circuit σ n m) : (c.mapLines f).eval J x = c.eval I x :=
+  congrArg (fun gates => Wire.elim x gates ∘ c.outputs) (c.program.eval_mapLines_at x hf)
 
 /-- **Transforming lines that keep their values keeps the function computed.** -/
 theorem Circuit.eval_mapLines

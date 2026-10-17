@@ -8,6 +8,7 @@ public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.Arithmetic.Hessian
 public import Complexity.Computability.Circuit.Arithmetic.Hessian.SourceComplexity
 public import Complexity.Computability.Circuit.Arithmetic.Pairing
+public import Complexity.Computability.Circuit.Arithmetic.Power
 public import Complexity.Computability.Circuit.Arithmetic.Waring
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AltFormula
@@ -133,6 +134,7 @@ public import Complexity.Computability.Circuit.Monotone.KarchmerWigderson
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Simulation
+public import Complexity.Computability.Circuit.SimulationContext
 public import Complexity.Computability.Circuit.SimulationDepth
 public import Complexity.Computability.Circuit.SourceComplexity
 public import Complexity.Computability.Circuit.SumOfTerms
