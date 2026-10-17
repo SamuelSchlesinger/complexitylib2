@@ -82,26 +82,35 @@ def Atom.andPair? {U : Type u} {V : Type v} (a : Atom Monotone.signature (Set U)
   | ⟨.and, args⟩ => some (f ⁻¹' args 0, f ⁻¹' args 1)
   | _ => none
 
+/-- Reference membership in one tuple implies observation of the result on another tuple,
+provided the observation preserves its AND pair. No subset relation between tuples is needed. -/
+theorem Atom.semifilter_of_mem {U : Type u} {V : Type v}
+    (a : Atom Monotone.signature (Set U)) (f : V → U) (x : U) (F : Semifilter V)
+    (hp : ∀ p, a.andPair? f = some p → F.PreservesPair p)
+    (args : Fin (Monotone.signature.Arity a.op) → Set U)
+    (hs : ∀ i, x ∈ args i → F (f ⁻¹' a.arguments i)) :
+    x ∈ Monotone.setInterpretation U a.op args →
+      F (f ⁻¹' Monotone.setInterpretation U a.op a.arguments) := by
+  rcases a with ⟨op, values⟩
+  cases op with
+  | const b =>
+    cases b
+    · exact fun hx => hx.elim
+    · exact fun _ => F.apply_univ
+  | and => exact fun hx => hp _ rfl (hs 0 hx.1) (hs 1 hx.2)
+  | or =>
+    intro hx
+    rcases hx with h | h
+    · exact F.monotone (fun _ h => Or.inl h) (hs 0 h)
+    · exact F.monotone (fun _ h => Or.inr h) (hs 1 h)
+
 /-- A semifilter preserves the reference-to-observation predicate when it preserves the AND pair.
 Constants and unions preserve that predicate without any extra assumption. -/
 theorem Atom.preserves_semifilter {U : Type u} {V : Type v}
     (a : Atom Monotone.signature (Set U)) (f : V → U) (x : U) (F : Semifilter V)
     (hp : ∀ p, a.andPair? f = some p → F.PreservesPair p) :
-    a.Preserves (Monotone.setInterpretation U) (fun s => x ∈ s → F (f ⁻¹' s)) := by
-  rcases a with ⟨op, args⟩
-  cases op with
-  | const b =>
-    cases b
-    · exact fun _ hx => hx.elim
-    · exact fun _ _ => F.apply_univ
-  | and =>
-    intro hs hx
-    exact hp _ rfl (hs 0 hx.1) (hs 1 hx.2)
-  | or =>
-    intro hs hx
-    rcases hx with h | h
-    · exact F.monotone (fun _ h => Or.inl h) (hs 0 h)
-    · exact F.monotone (fun _ h => Or.inr h) (hs 1 h)
+    a.Preserves (Monotone.setInterpretation U) (fun s => x ∈ s → F (f ⁻¹' s)) :=
+  a.semifilter_of_mem f x F hp a.arguments
 
 /-- A target point and an admissible semifilter accepting the inputs containing that point. -/
 structure SemifilterWitness {U : Type u} {n : ℕ} (target : Set U)

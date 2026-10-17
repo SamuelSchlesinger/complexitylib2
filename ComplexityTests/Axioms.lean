@@ -5683,3 +5683,73 @@ info: 'Cslib.Circuits.le_ecomplexityFrom_of_hessian_rank' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.le_ecomplexityFrom_of_hessian_rank
+
+/--
+info: 'Cslib.Circuits.CyclicCircuit.evalGates_fixed' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.CyclicCircuit.evalGates_fixed
+
+/--
+info: 'Cslib.Circuits.CyclicCircuit.evalGates_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.CyclicCircuit.evalGates_le
+
+/--
+info: 'Cslib.Circuits.Circuit.eval_toCyclic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.eval_toCyclic
+
+/--
+info: 'Cslib.Circuits.Circuit.cost_toCyclic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.cost_toCyclic
+
+/--
+info: 'Cslib.Circuits.CyclicCircuit.ecomplexityFrom_ne_top_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.CyclicCircuit.ecomplexityFrom_ne_top_iff
+
+/--
+info: 'Cslib.Circuits.CyclicCircuit.ecomplexityFrom_le_acyclic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.CyclicCircuit.ecomplexityFrom_le_acyclic
+
+/--
+info: 'Cslib.Circuits.Fusion.Atom.semifilter_of_mem' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.Atom.semifilter_of_mem
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.ofCyclicCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.ofCyclicCircuit
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.length_ofCyclicCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.length_ofCyclicCircuit
+
+/--
+info: 'Cslib.Circuits.Fusion.pairCoverComplexity_le_cyclic_ecomplexityFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_le_cyclic_ecomplexityFrom

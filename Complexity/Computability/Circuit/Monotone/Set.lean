@@ -68,6 +68,15 @@ def setInterpretation (U : Type*) : Interpretation signature (Set U)
 @[simp] theorem setInterpretation_or {U : Type*} (args : Fin 2 → Set U) :
     setInterpretation U .or args = args 0 ∪ args 1 := rfl
 
+/-- Every set operation is monotone in its arguments. -/
+theorem setInterpretation_mono (op : Op) :
+    Monotone (setInterpretation U op) := by
+  intro a b h
+  cases op with
+  | const value => cases value <;> exact Set.Subset.rfl
+  | and => exact Set.inter_subset_inter (h 0) (h 1)
+  | or => exact Set.union_subset_union (h 0) (h 1)
+
 /-- Membership at a point commutes with all operations, including the empty/full constants. -/
 noncomputable def membershipHomomorphism (x : U) :
     Homomorphism (setInterpretation U) interpretation where

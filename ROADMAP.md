@@ -1744,8 +1744,9 @@ counting layer is now integrated with a support-coverage client. Atom extraction
 with native composition, and local gadget properties transfer through ordinary and contextual
 simulation. Homomorphism transport now preserves exact cover costs and gives the corresponding
 source-complexity inequalities. The basic semifilter cover bound and its Boolean interface are
-now ported. Further cyclic semifilter applications and the distinct cyclic-circuit
-characterizations remain outstanding, along with further arithmetic clients.
+now ported, together with the forward bound for least-fixed-point cyclic constructions.
+The pair-derivation closure and converse cyclic characterizations remain outstanding,
+along with further arithmetic clients.
 
 ### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
 
@@ -2323,8 +2324,9 @@ from `Basis/AndOr.lean`, under `Complexitylib/Algebraic`, at clean v1 revision
 `2ad6cb481b70ee6e65e078dffb76b9856be199d3`. Samuel Schlesinger's authorship and source citation
 are retained. The port replaces the bespoke semifilter implementation and problem/model
 wrappers with existing order maps, preimages and the native Fusion predicates. It also allows
-free constants and arbitrary designated outputs. Further cyclic semifilter applications remain
-outstanding. No machines, compilers or tactics are added. The live
+free constants and arbitrary designated outputs. The later cyclic batch supplies the forward
+least-fixed-point bound; closure and converse constructions remain outstanding. No machines,
+compilers or tactics are added. The live
 upstream audit reports the cslib pin and every submitted/vendored marker current.
 
 Against `ad19c89`, the batch adds 18 named proofs / 41 body lines, including all new cost,
@@ -2411,6 +2413,62 @@ Its source inspection supports the computation equivalence, supplied-source boun
 non-vacuous witnesses, infinity transfer and empty-domain behavior, and reproduces the proof
 counts. It did not independently verify builds, client execution, axiom guards, profiling or
 original v1 provenance.
+
+### Cyclic semantics and semifilter bounds (2026-10-16)
+
+`Circuit/Cyclic` reuses native `Line` and `Wire` in a finite equation system with arbitrary
+feedback and designated outputs. Zero gates, input-only outputs, shared outputs and unused
+components are permitted. For a monotone interpretation on a complete lattice, `OrderHom.lfp`
+provides the least gate solution. This replaces the source's proof-carrying `Constructs` package.
+`Circuit.toCyclic` embeds every ordinary native circuit, retaining all gate values and outputs;
+`Program.eq_eval_of_forall_lines_eval` supplies the semantic bridge without another induction on
+acyclic programs. Every operation weight is preserved exactly. Minimum cyclic cost from supplied
+source functions is therefore at most native supplied-source complexity, including infinity.
+
+`Fusion/Cyclic` extracts the AND pairs at the least solution and proves they form a semifilter
+cover of any designated target output, with exactly the circuit's AND count. The proof uses
+`OrderHom.lfp_induction`: membership at an intermediate stage implies observation of the final
+value. The invariant is closed under arbitrary unions; the semifilter need not preserve unions
+or intersections. The new `Atom.semifilter_of_mem` relates separate reference and observed
+argument tuples. Both this proof and the old acyclic preservation lemma use it, with the old
+lemma reduced to one line. Constants, unused gates and arbitrary admissibility are retained.
+
+The source is `LowerBound/Fusion/Cyclic.lean` under `Complexitylib/Algebraic`, at clean v1
+revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`. Samuel Schlesinger's authorship and source
+citation are retained. The generic semantics does not claim a finite or natural-number iteration
+algorithm; monotonicity alone does not justify that characterization. Pair-derivation closure
+and finite cover-to-circuit constructions remain separate work. No machines or tactics are added.
+The live upstream audit reports the cslib pin and every submitted/vendored marker current.
+
+Against `2c49297`, the batch adds 15 named proofs and 25 net theorem-body lines. Its two new
+proof fields add 35 lines: six for monotonicity of simultaneous evaluation and 29 for cover
+correctness, giving 60 net proof-body lines. The new and rewritten proofs occupy 74 lines,
+including the shared relation helper and set-monotonicity rule; they replace the old 14-line
+preservation proof. For comparison, the original cyclic source contains 68 named-proof body
+lines and a 166-line cover-correctness field, totaling 234. The new model also adds constants,
+multiple outputs, generic complete-lattice semantics and a native acyclic embedding, so this is
+a source-burden comparison rather than a claim of identical theorem statements. Statements,
+computational fields and tests are excluded. The library total is 6,002 named proofs / 40,696
+body lines across 578 modules.
+
+Full-module MCP replicas exactly match the production sources after removing measurement
+commands. Raw tactic heartbeats are 41,800 for simultaneous-step monotonicity, 45,506 for the
+minimum-cost comparison, 271,061 for the shared semifilter relation, 558,852 for cyclic cover
+correctness and 80,225 for exact pair counting. These are elaboration measurements, not runtime;
+no heartbeat override is used.
+
+`FusionCyclic` checks an unsupported OR self-loop with empty least solution and a distinct full-set
+fixed point; supported feedback computing intersection; an unused AND self-loop that is charged;
+shared and direct-input outputs; arbitrary weights; zero gates, zero outputs and an empty carrier;
+nullary constants; an attained positive minimum AND cost of one; and a construction impossible
+even with feedback, giving infinite complexity. A concrete Boolean client executes three
+synchronous steps on all four inputs. Ten new axiom guards use only the permitted standard axioms.
+All six checks pass: strict build 1.39 s, import coverage 1.50 s, tests 5.66 s, environment lint
+7.33 s, style 2.24 s and init imports 4.18 s. These are incremental checkpoint timings.
+Independent API review approves the implementation and clients after checking them and the exact
+ten guard blocks through MCP. Its closing pass reproduces the proof counts, verifies exact
+profile-source parity and reads the successful gate records without rerunning validation.
+The required post-publication correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 
