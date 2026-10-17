@@ -4244,6 +4244,12 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldlWith_of_bounded_growth
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldlWith_of_bounded_growth
 
 /--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
+
+/--
 info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterate_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

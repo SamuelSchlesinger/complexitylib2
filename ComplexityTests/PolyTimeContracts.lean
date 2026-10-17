@@ -232,4 +232,85 @@ example : True := by
         encUnary encBits := by polytime
   trivial
 
+section CapturedFold
+
+variable {γ α β : Type} (input : γ ↪ List Bool) (element : α ↪ List Bool)
+    (stateEncoding : β ↪ List Bool) (listEncoding : List α ↪ List Bool)
+    [hencoding : ListEncoding element listEncoding]
+    [hsize : SizedListEncoding element listEncoding]
+    (list : γ → List α) (initial : γ → β) (step : γ → β → α → β)
+    (hlist : ComputableTidilyInPolyTime list input listEncoding)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hstep : ComputableTidilyInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+      (encPair (encPair input stateEncoding) element) stateEncoding)
+    (growth : γ → ℕ) (hpoly : PolyBounded (fun x => (input x).length) growth)
+    (hgrowth : ∀ x state value, value ∈ list x →
+      (stateEncoding (step x state value)).length ≤ (stateEncoding state).length + growth x)
+
+include hlist hinitial hstep hpoly hgrowth
+
+-- Each part of the contract is needed. The growth bound need not itself be computable.
+example : ComputableTidilyInPolyTime (fun x => (list x).foldl (step x) (initial x))
+    input stateEncoding := by
+  fail_if_success (clear hlist; polytime)
+  fail_if_success (clear hinitial; polytime)
+  fail_if_success (clear hstep; polytime)
+  fail_if_success (clear hpoly; polytime)
+  fail_if_success (clear hgrowth; polytime)
+  fail_if_success (clear hencoding; polytime)
+  fail_if_success (clear hsize; polytime)
+  polytime
+
+-- Joint inference chooses compatible list, callback and encoding evidence. Competing encodings,
+-- polynomial bounds and growth inequalities must not commit to an incompatible choice.
+example (otherElement : α ↪ List Bool) (otherListEncoding : List α ↪ List Bool)
+    [ListEncoding otherElement otherListEncoding]
+    [SizedListEncoding otherElement otherListEncoding]
+    (_hotherList : ComputableTidilyInPolyTime list input otherListEncoding)
+    (otherGrowth looseGrowth : γ → ℕ)
+    (_hother : PolyBounded (fun x => (input x).length) otherGrowth)
+    (_hloose : ∀ x state value, value ∈ list x →
+      (stateEncoding (step x state value)).length ≤ (stateEncoding state).length + looseGrowth x) :
+    ComputableTidilyInPolyTime (fun x => (list x).foldl (step x) (initial x))
+      input stateEncoding := by
+  revert hlist hpoly hgrowth
+  intro hlist hpoly hgrowth
+  have : ComputableTidilyInPolyTime
+      (fun x => let entries := list x; entries.foldl (fun state value => step x state value)
+        (initial x)) input stateEncoding := by polytime
+  clear this
+  revert _hotherList _hother _hloose
+  intro _hotherList _hother _hloose
+  polytime
+
+end CapturedFold
+
+private def taggedBits (p : List Bool × List Bool) : List Bool :=
+  p.2.foldl (fun state bit => p.1 ++ bit :: state) []
+
+private theorem taggedBits_growth (p : List Bool × List Bool) (state : List Bool) (bit : Bool) :
+    (p.1 ++ bit :: state).length ≤ state.length + (p.1.length + 1) := by
+  simp [Nat.add_left_comm]
+
+-- Both raw and framed source words infer the callback encoding from ordinary constructors.
+example : ComputableTidilyInPolyTime taggedBits (encPair encBits encBits) encBits := by
+  have hpoly : PolyBounded (fun p : List Bool × List Bool =>
+      (encPair encBits encBits p).length) (fun p => p.1.length + 1) :=
+    ComputableTidilyInPolyTime.polyBounded (by fun_prop)
+  have hgrowth := taggedBits_growth
+  unfold taggedBits
+  polytime
+
+example : ComputableTidilyInPolyTime
+    (fun p : List Bool × List Bool => let tag := p.1;
+      p.2.foldl (fun state bit => tag ++ bit :: state) [])
+    (encPair encBits (encList encBool)) encBits := by
+  have hpoly : PolyBounded (fun p : List Bool × List Bool =>
+      (encPair encBits (encList encBool) p).length) (fun p => p.1.length + 1) :=
+    ComputableTidilyInPolyTime.polyBounded (by fun_prop)
+  have hgrowth := taggedBits_growth
+  polytime
+
+example : taggedBits ([true], [false, false]) = [true, false, true, false] := by decide
+
 end ComplexityTests.PolyTimeContracts

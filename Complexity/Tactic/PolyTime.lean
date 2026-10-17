@@ -50,6 +50,16 @@ attribute [program_certificate hvalues] ComputableTidilyInPolyTime.pi_update'
 attribute [program_certificate]
   ComputableTidilyInPolyTime.bitsReverseWithInput ComputableTidilyInPolyTime.listReverseWithInput
 
+-- Require the growth contract before exploring encodings on alternative computation branches.
+-- Each contract keeps the evidence that must agree on a bound or an encoding in one search.
+attribute [program_certificate hbound hcompute]
+  ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
+
+-- Explicit encoding evidence participates in the same search as the computation certificates.
+attribute [aesop unsafe 90% apply (rule_sets := [PolyTime])]
+  instListEncodingEncList instListEncodingBoolEncBoolEncBits
+  instSizedListEncodingEncList instSizedListEncodingBoolEncBoolEncBits
+
 -- Computed finite tables use the ordinary application rule. Its function-valued head cannot
 -- be registered as a `fun_prop` theorem, so Aesop supplies this closure step.
 attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]

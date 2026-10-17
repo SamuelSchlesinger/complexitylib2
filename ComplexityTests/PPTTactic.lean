@@ -24,6 +24,22 @@ example : IsPPTOn encBits encBits (fun word => do
     pure ((bit :: word).foldl (fun reversed next => next :: reversed) [])) := by
   ppt
 
+-- Deterministic captured folds also resolve abstract encoding instances through `ppt`.
+example {γ α β : Type} (input : γ ↪ List Bool) (element : α ↪ List Bool)
+    (stateEncoding : β ↪ List Bool) (listEncoding : List α ↪ List Bool)
+    [ListEncoding element listEncoding] [SizedListEncoding element listEncoding]
+    (list : γ → List α) (initial : γ → β) (step : γ → β → α → β)
+    (hlist : ComputableTidilyInPolyTime list input listEncoding)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hstep : ComputableTidilyInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+      (encPair (encPair input stateEncoding) element) stateEncoding)
+    (growth : γ → ℕ) (hpoly : PolyBounded (fun x => (input x).length) growth)
+    (hgrowth : ∀ x state value, value ∈ list x →
+      (stateEncoding (step x state value)).length ≤ (stateEncoding state).length + growth x) :
+    IsPPTOn input stateEncoding
+      (fun x => pure ((list x).foldl (fun state value => step x state value) (initial x))) := by
+  ppt
+
 -- Scans capture a sampled bit and reuse certificates at either fixed or runtime indices.
 example (rounds : ℕ) (test : List Bool × Bool × ℕ → Bool)
     (htest : ComputableTidilyInPolyTime test
@@ -86,6 +102,9 @@ example (sample : ℕ → ProbComp Bool)
 
 -- The continuation needs unary iteration: an additional binary-output certificate must not
 -- force that encoding onto the sampled value. This is the opposite side of a routine call.
+set_option maxHeartbeats 12000 in
+-- A reduced budget guards against exploring captured folds before a growth contract is available
+-- on a rejected encoding branch.
 example (sample : List Bool → ProbComp ℕ)
     (hUnary : IsPPTOn encBits encUnary sample) (_hBinary : IsPPTOn encBits encNat sample) :
     IsPPTOn encBits encBool (fun word => do

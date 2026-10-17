@@ -26,6 +26,8 @@ bound on the intermediate accumulator. The step may carry a fixed parameter.
   computed captured parameter.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldlWith_of_bounded_growth`: input-dependent
   additive growth on the values occurring in the runtime list.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth`: the same
+  contract for a callback that captures the original input.
 
 The specification interface is adapted from `IsPolyTime.list_foldl_spec` in the cslib
 `crypto` branch, using the tidy machine calculus for the underlying computation.
@@ -161,6 +163,26 @@ theorem foldlWith_of_bounded_growth {par : γ → π} {list : γ → List α} {i
     have hlen := hprefix.length_le.trans
       (SizedListEncoding.length_le (encA := encA) (encL := encL) (list x))
     exact hs.trans (Nat.add_le_add_left (Nat.mul_le_mul_right (growth x) hlen) _)
+
+omit [ListEncoding encA encL] [SizedListEncoding encA encL] in
+/-- A fold callback may capture its original input. Growth is needed only on elements of the
+runtime list, for every accumulator. Joint computation and encoding evidence lets automation
+choose compatible list and callback certificates; paired growth obligations select a common
+polynomial bound. The general `foldlWith_of_bounded_growth` contract takes separate premises. -/
+theorem foldlWithInput_of_bounded_growth {list : γ → List α} {init : γ → β}
+    {step : γ → β → α → β}
+    (hinit : ComputableTidilyInPolyTime init encIn encB)
+    (hcompute : ComputableTidilyInPolyTime list encIn encL ∧
+      ListEncoding encA encL ∧ SizedListEncoding encA encL ∧
+      ComputableTidilyInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+        (encPair (encPair encIn encB) encA) encB)
+    {growth : γ → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) growth ∧
+      ∀ x state value, value ∈ list x →
+      (encB (step x state value)).length ≤ (encB state).length + growth x) :
+    ComputableTidilyInPolyTime (fun x => (list x).foldl (step x) (init x)) encIn encB := by
+  let := hcompute.2.1
+  let := hcompute.2.2.1
+  exact foldlWith_of_bounded_growth id' hcompute.1 hinit hcompute.2.2.2 hbound.1 hbound.2
 
 /-- Constant additive growth discharges the fold's intermediate-size obligation. -/
 theorem foldl_of_bounded_growth {list : γ → List α} {init : γ → β} {step : β → α → β}
