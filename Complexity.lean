@@ -122,6 +122,7 @@ public import Complexity.Computability.Circuit.Frontier.Sweep
 public import Complexity.Computability.Circuit.Frontier.Unconditional
 public import Complexity.Computability.Circuit.Frontier.Witness
 public import Complexity.Computability.Circuit.Fusion.Basic
+public import Complexity.Computability.Circuit.Fusion.Boolean
 public import Complexity.Computability.Circuit.Fusion.Composition
 public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Homomorphism

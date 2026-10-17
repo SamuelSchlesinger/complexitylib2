@@ -1743,9 +1743,9 @@ embedded v1 source and record exact provenance for each port. The general Fusion
 counting layer is now integrated with a support-coverage client. Atom extraction now commutes
 with native composition, and local gadget properties transfer through ordinary and contextual
 simulation. Homomorphism transport now preserves exact cover costs and gives the corresponding
-source-complexity inequalities. The basic semifilter cover bound is now ported. Further
-Boolean/cyclic semifilter applications and the distinct cyclic-circuit characterizations remain
-outstanding, along with further arithmetic clients.
+source-complexity inequalities. The basic semifilter cover bound and its Boolean interface are
+now ported. Further cyclic semifilter applications and the distinct cyclic-circuit
+characterizations remain outstanding, along with further arithmetic clients.
 
 ### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
 
@@ -2323,8 +2323,8 @@ from `Basis/AndOr.lean`, under `Complexitylib/Algebraic`, at clean v1 revision
 `2ad6cb481b70ee6e65e078dffb76b9856be199d3`. Samuel Schlesinger's authorship and source citation
 are retained. The port replaces the bespoke semifilter implementation and problem/model
 wrappers with existing order maps, preimages and the native Fusion predicates. It also allows
-free constants and arbitrary designated outputs. Further Boolean and cyclic semifilter
-applications remain outstanding. No machines, compilers or tactics are added. The live
+free constants and arbitrary designated outputs. Further cyclic semifilter applications remain
+outstanding. No machines, compilers or tactics are added. The live
 upstream audit reports the cslib pin and every submitted/vendored marker current.
 
 Against `ad19c89`, the batch adds 18 named proofs / 41 body lines, including all new cost,
@@ -2355,6 +2355,58 @@ material findings. Its source inspection supports the semifilter semantics, redu
 AND counts, boundary clients and universe separation, and reproduces the proof accounting.
 It did not independently verify builds, client execution, axiom guards, profiling or original
 v1 provenance.
+
+### Boolean sources for semifilter bounds (2026-10-16)
+
+`Circuit/Monotone/Set` now uses Mathlib's `Set.boolIndicator` to make pointwise membership an
+interpretation homomorphism. `eval_set_iff_computesFrom` identifies constructing a tuple of sets
+with Boolean computation from the membership functions of its inputs. The same circuit works
+in both directions, retaining constants, sharing, unused gates and every designated output.
+`eval_setOf_iff_computesFrom` accepts Boolean source and target families directly as ordinary
+functions. `ecomplexityFrom_boolIndicator` identifies their minimum weighted complexities for
+every operation weight, including infinity. No finiteness, decidable-membership or inhabited
+carrier assumption is needed. The correspondence for arbitrary sets is semantic, with no
+efficient characteristic-function or machine-time claim.
+
+`Circuit/Fusion/Boolean` transfers a pair-cover lower bound to a concrete implementation and
+to its native `ecomplexityFrom`. Positive variables, positive/negative literals and arbitrary
+helper functions all use this one supplied-source interface. Input functions are free under
+that measure; the implementation itself uses only constants, AND and OR. In particular, this
+does not prove a translation of circuits with internal NOT gates or charge for computing
+supplied negative literals. No new membership function, literal datatype, circuit model,
+problem wrapper or tactic is introduced.
+
+Source provenance: `Basis/AndOr.lean` and `LowerBound/Fusion/Boolean.lean` under
+`Complexitylib/Algebraic`, at clean v1 revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`.
+Samuel Schlesinger's authorship and source bibliography entry are retained. The live upstream
+audit reports the cslib pin and every submitted/vendored marker current.
+
+Against `ea37981`, the batch adds six named proofs / 20 body lines, including the map projection
+and both computation interfaces. The homomorphism's correctness field contributes six more
+lines, for 26 proof-body lines in total. Statements, computational fields and tests are excluded.
+The library total is 5,987 named proofs / 40,671 body lines across 576 modules. A full-module
+MCP replica, identical to production after removing measurement commands, records raw tactic
+heartbeats of 146,852 for the membership homomorphism, 86,313 for the computation equivalence,
+133,893 for its Boolean-family specialization and 124,146 for minimum-complexity equality.
+These are elaboration measurements, not runtime; no heartbeat override is used.
+
+`FusionBoolean` supplies explicit semifilter witnesses for exact one-AND bounds on ordinary
+conjunction and conjunction with a negative literal, each attained by a circuit with shared
+outputs. A point observation proves that raw positive inputs cannot compute negation; supplying
+the negative literal instead gives zero-cost wiring. The minimum-complexity equality transfers
+that infinite complexity to set construction. General positive/negative set generators and two
+functional spellings of literal inputs use the same API. A six-gate executable client checks all
+four Boolean assignments, shared outputs, an unused repeated AND, two AND gates and mixed cost
+29. An empty-domain client has exact unit-weight cost one on both sides of the correspondence:
+vacuous correctness does not remove the need to construct an output wire. Six new axiom guards
+use only the permitted standard axioms.
+
+All six checks pass: strict build 2.56 s, import coverage 1.56 s, tests 5.57 s, environment lint
+7.41 s, style 2.34 s and init imports 4.24 s. These are incremental checkpoint timings. The
+independent API review approves with no findings, independently checking the final clients and
+all six guards through MCP, reproducing the proof counts, verifying exact profile-source parity
+and reading the successful gate records without rerunning the gates. The required
+post-publication Codex correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 

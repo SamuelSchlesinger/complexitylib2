@@ -17,6 +17,48 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Monotone.membershipHomomorphism' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Monotone.membershipHomomorphism
+
+/--
+info: 'Cslib.Circuits.Monotone.eval_set_iff_computesFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Monotone.eval_set_iff_computesFrom
+
+/--
+info: 'Cslib.Circuits.Monotone.eval_setOf_iff_computesFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Monotone.eval_setOf_iff_computesFrom
+
+/--
+info: 'Cslib.Circuits.Monotone.ecomplexityFrom_boolIndicator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Monotone.ecomplexityFrom_boolIndicator
+
+/--
+info: 'Cslib.Circuits.Fusion.pairCover_lowerBound_of_computesFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairCover_lowerBound_of_computesFrom
+
+/--
+info: 'Cslib.Circuits.Fusion.pairCoverComplexity_le_ecomplexityFrom_bool' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_le_ecomplexityFrom_bool
+
+/--
 info: 'Cslib.Circuits.Fusion.Atom.preserves_semifilter' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
