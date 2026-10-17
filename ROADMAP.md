@@ -5,7 +5,8 @@ completed reference developments.
 
 ## Current priorities
 
-1. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
+1. **Complete theorem ports using the existing certificate APIs.** Extend automation when a
+   concrete port is blocked or several clients repeat the same proof burden. Constructor, projection,
    lookup and composition rules should infer encodings for ordinary functional expressions.
    Test equivalent spellings and alternative encodings before adding tactic cases. Generalize
    reusable list, bounded-table, cache and nested-loop invariants where clients need them;
@@ -39,7 +40,9 @@ results. Track these by their public theorems, rather than by source-file counts
   [algebraic-circuits](https://github.com/SamuelSchlesinger/algebraic-circuits/blob/main/Algebraic/MassProduction.lean):
   the exponential copy range, sharp real-rate coefficient `1 / (1 - gamma) + o(1)`, and
   coefficient-one subexponential range. Preserve the exact gate-cost conventions and share
-  sorting, lookup and routing with other circuit clients.
+  sorting, lookup and routing with other circuit clients. The native replication and weighted-cost
+  interface, including the [eventual-to-all-length padding theorem](Complexity/Computability/Circuit/Boolean/MassProduction/Padding.lean),
+  is in place; the three mass-production bounds above remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,

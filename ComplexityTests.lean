@@ -45,6 +45,7 @@ import ComplexityTests.MachineExtendTapes
 import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
+import ComplexityTests.MassProduction
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NegligibleSqrt

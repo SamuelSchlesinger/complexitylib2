@@ -8626,3 +8626,87 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum_s
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum_spec
+
+/--
+info: 'Cslib.Circuits.Circuit.eval_replicate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.eval_replicate
+
+/--
+info: 'Cslib.Circuits.Circuit.cost_program_replicate' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.cost_program_replicate
+
+/--
+info: 'Cslib.Circuits.Circuit.Computes.takeDirectProductPrefix' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.Computes.takeDirectProductPrefix
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_directProduct_zero' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_directProduct_zero
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_directProduct_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_directProduct_le
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_directProduct_mono' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_directProduct_mono
+
+/--
+info: 'Cslib.Circuits.ecomplexityFrom_directProduct_comp_wiring_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.ecomplexityFrom_directProduct_comp_wiring_le
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.massComplexity_le_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.massComplexity_le_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.exists_computes_cost_eq_massComplexity' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.exists_computes_cost_eq_massComplexity
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.massComplexity_comp_castLE' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.massComplexity_comp_castLE
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.shannonScale_le_of_le_add' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.shannonScale_le_of_le_add
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.MassProducesAt.allLengths' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.MassProducesAt.allLengths
