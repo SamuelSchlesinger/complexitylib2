@@ -116,6 +116,14 @@ theorem mem_support_replicate_iff (count : ℕ) (program : ProbComp α) (values 
     | nil => simp [OracleComp.replicate_succ]
     | cons value rest => simp [OracleComp.replicate_succ, ih, and_assoc, and_left_comm]
 
+/-- Repetition preserves equality of closed-program distributions, including infinite outputs. -/
+theorem eval_replicate_congr {first second : ProbComp α} (h : eval first = eval second)
+    (count : ℕ) : eval (OracleComp.replicate count first) =
+      eval (OracleComp.replicate count second) := by
+  induction count with
+  | zero => rfl
+  | succ count ih => simp only [OracleComp.replicate_succ, eval_bind, eval_map, h, ih]
+
 /-- Repeated closed runs have the independent product law for any finite output distribution. -/
 theorem eval_replicate [Finite α] (count : ℕ) (program : ProbComp α) :
     eval (OracleComp.replicate count program) =

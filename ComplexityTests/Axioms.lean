@@ -6411,3 +6411,94 @@ info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.failureBound_eventually_le' de
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.failureBound_eventually_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.eval_latentSample' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.eval_latentSample
+
+/--
+info: 'Cslib.ProbComp.eval_replicate_congr' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.eval_replicate_congr
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSample_map_fst' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSample_map_fst
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSample_mass_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSample_mass_ge
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSample_dyadic_mass_ge_eventually' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSample_dyadic_mass_ge_eventually
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSample_weight_mass_ge_eventually' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSample_weight_mass_ge_eventually
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSample_extract_dist_bind_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSample_extract_dist_bind_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSample_weight_extract_dist_bind_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSample_weight_extract_dist_bind_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_selectPredictor' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_selectPredictor
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.selectPredictor_error_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.selectPredictor_error_le
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_indexed_error_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_indexed_error_ge
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_exists_indexed_mask' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_exists_indexed_mask
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_exists_mask' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_exists_mask

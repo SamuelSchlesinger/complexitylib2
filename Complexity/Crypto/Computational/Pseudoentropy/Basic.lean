@@ -33,6 +33,7 @@ strict PPT sampler's fair-bit tape as a uniform seed, including unused randomnes
 
 ## Main results
 
+* `Cslib.Crypto.Pseudoentropy.SamplablePair.eval_latentSample`: recover the exact latent joint law.
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_error_ge`: prediction error bound.
 * `Cslib.Crypto.Pseudoentropy.SamplablePair.HasGap.eventually_entropy_add_gap_le_one`:
   the threshold forced by an independent fair-bit predictor.
@@ -93,6 +94,24 @@ structure SamplablePair where
 attribute [instance] SamplablePair.finite
 
 namespace SamplablePair
+
+/-- Recover the latent draw by relabelling the existing sampler. This is a mathematical
+program, with no efficiency claim for decoding arbitrary observation encodings. -/
+noncomputable def latentSample (pair : SamplablePair) (n : ℕ) :
+    ProbComp (pair.Observation n × Bool) :=
+  letI : Nonempty (pair.Observation n × Bool) := ⟨(pair.joint n).support_nonempty.choose⟩
+  Function.invFun (fun value : pair.Observation n × Bool => (pair.encode n value.1, value.2)) <$>
+    pair.sample n
+
+/-- The recovered sample has exactly the joint law, including its hidden label. -/
+theorem eval_latentSample (pair : SamplablePair) (n : ℕ) :
+    ProbComp.eval (pair.latentSample n) = pair.joint n := by
+  let : Nonempty (pair.Observation n × Bool) := ⟨(pair.joint n).support_nonempty.choose⟩
+  have hinjective : Function.Injective
+      (fun value : pair.Observation n × Bool => (pair.encode n value.1, value.2)) :=
+    (pair.encode n).injective.prodMap Function.injective_id
+  simp only [latentSample, ProbComp.eval_map, pair.eval_sample, PMF.map_comp,
+    Function.invFun_comp hinjective, PMF.map_id]
 
 /-- Every uniform PPT predictor stays below the conditional-entropy threshold by this gap.
 The threshold beyond which the inequality holds may depend on the predictor. -/
