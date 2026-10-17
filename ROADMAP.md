@@ -26,18 +26,45 @@ completed reference developments.
    narrowly oriented and machine transitions out of global simp. Share mathematical bookkeeping
    only with demonstrated reuse, counting helper proofs as part of the total cost.
 
-## Later milestones
+## Remaining theorem developments
+
+The port still includes substantial mathematical developments beyond the completed reference
+results. Track these by their public theorems, rather than by source-file counts:
+
+* **Circuit mass production.** Integrate the existing constructions from
+  [algebraic-circuits](https://github.com/SamuelSchlesinger/algebraic-circuits/blob/main/Algebraic/MassProduction.lean):
+  the exponential copy range, sharp real-rate coefficient `1 / (1 - gamma) + o(1)`, and
+  coefficient-one subexponential range. Preserve the exact gate-cost conventions and share
+  sorting, lookup and routing with other circuit clients.
+* **Iterated-function circuits.** Port the
+  [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
+  square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
+  sparse-counter and affine-controller bounds, and hard-power counting. It already uses CSLib
+  circuits and some mass-production infrastructure. Nonuniform circuit existence does not
+  certify the preprocessing algorithm's runtime.
+* **Fagin's theorem.** Complete the connection between ESO-definable queries on finite relational
+  structures and NP. V2 currently has the logical semantics and closure results. V1 supplies the
+  [ESO-to-NP direction](https://github.com/SamuelSchlesinger/complexitylib/blob/dev/Complexitylib/DescriptiveComplexity/SecondOrder/PolynomialTime.lean);
+  port its encoded structures and efficient certificate checker, then construct the converse
+  tableau interpretation. The converse is new work even relative to V1.
+* **Further metacomplexity and algebraic results.** Carry over the existing extractor,
+  circuitized anti-checker, MINKT/MINCKT and rational-matrix hitting-list developments, recording
+  each endpoint's remaining hypotheses. The current anti-checker existence theorem does not
+  include the efficient generator or complete hardness-magnification argument; the latter also
+  has unfinished quantitative counting work in V1.
+
+## Machine-class milestones
 
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
 * machine-level hierarchy theorems and `P ⊊ EXP`; a tight tape-indexed hierarchy needs a separate
   linear-overhead simulation, and an `f log f` hierarchy needs the corresponding simulation bound;
-* logspace composition, Savitch, `NL ⊆ P`, `PH ⊆ PSPACE` and Sipser–Lautemann;
+* logspace composition, Savitch, `NL ⊆ P`, `NL = coNL`, `PH ⊆ PSPACE` and Sipser–Lautemann;
 * nondeterministic-machine/verifier equivalence, efficient `SAT ≤ 3SAT`, single-tape simulation,
   and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
-* concrete list-decodable codes for Nisan–Wigderson, order-invariant descriptive-complexity
-  queries, and the remaining algebraic results.
+* concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
+  queries.
 
 Check upstream work before starting these developments. The existing combinatorial or
 machine-relative cores do not by themselves establish the missing uniform resource guarantees.
