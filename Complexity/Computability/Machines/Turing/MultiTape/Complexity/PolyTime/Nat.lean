@@ -24,6 +24,8 @@ operations support polynomially bounded counters and list enumeration in reducti
 
 ## Main results
 
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.indexed_polynomial_bound`: a uniform polynomial
+  bound over a polynomially bounded range of indices, without computing the selected index.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_add`, `.unary_sub`, `.unary_mul`:
   arithmetic on unary naturals.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le`, `.unary_lt`, `.unary_pair`:
@@ -38,6 +40,9 @@ operations support polynomially bounded counters and list enumeration in reducti
 ## References
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+
+The indexed bound is adapted from `Cslib/Computability/Probabilistic/Encoding.lean` on the cslib
+`crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
 @[expose] public section
@@ -53,6 +58,21 @@ theorem polynomiallyBounded {f : ℕ → ℕ} (hf : ComputableTidilyInPolyTime f
     Cslib.PolynomiallyBounded f := by
   obtain ⟨c, d, h⟩ := hf.polyBounded_length
   exact Cslib.polynomiallyBounded_iff_le.mpr ⟨c, d, by simpa using h⟩
+
+/-- Efficient unary values share a polynomial bound over a polynomially bounded range of
+indices. Selecting an index does not require a computable choice. -/
+theorem indexed_polynomial_bound {f : ℕ → ℕ → ℕ} {count : ℕ → ℕ}
+    (hf : ComputableTidilyInPolyTime (fun input => f input.1 input.2)
+      (encPair encUnary encUnary) encUnary)
+    (hcount : Cslib.PolynomiallyBounded count) :
+    ∃ c d : ℕ, ∀ n i, i < count n → f n i ≤ c * (n + 1) ^ d := by
+  obtain ⟨c, d, hf⟩ := hf.polyBounded_length
+  have hpoly : Cslib.PolynomiallyBounded (fun n => c * (2 * n + count n + 2) ^ d) := by fun_prop
+  obtain ⟨C, D, hpoly⟩ := Cslib.polynomiallyBounded_iff_le.mp hpoly
+  refine ⟨C, D, fun n i hi => ?_⟩
+  have h := hf (n, i)
+  simp only [length_encPair, encUnary_apply, List.length_replicate] at h
+  exact h.trans ((Nat.mul_le_mul_left c (Nat.pow_le_pow_left (by lia) d)).trans (hpoly n))
 
 /-- Addition of unary naturals, by concatenating their encodings. -/
 @[fun_prop]

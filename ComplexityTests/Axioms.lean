@@ -7145,3 +7145,143 @@ info: 'Cslib.PCP.Encoded.Graph.cloudRotation_eq' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.Encoded.Graph.cloudRotation_eq
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.indexed_polynomial_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.indexed_polynomial_bound
+
+/--
+info: 'Cslib.Crypto.GeneratorPadding.isPolyTime_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorPadding.isPolyTime_generate
+
+/--
+info: 'Cslib.Crypto.GeneratorPadding.length_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorPadding.length_generate
+
+/--
+info: 'Cslib.Crypto.GeneratorPadding.generate_distribution' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorPadding.generate_distribution
+
+/--
+info: 'Cslib.Crypto.GeneratorPadding.ideal_distribution' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorPadding.ideal_distribution
+
+/--
+info: 'Cslib.Crypto.GeneratorPadding.isPPTOn_test' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorPadding.isPPTOn_test
+
+/--
+info: 'Cslib.Crypto.GeneratorPadding.advantage_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorPadding.advantage_eq
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_seedLength' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_seedLength
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_outputLength' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_outputLength
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_generate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_generate_of_realization' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_generate_of_realization
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.seedLength_lt_outputLength' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.seedLength_lt_outputLength
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.length_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.length_generate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_valid_choice' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_valid_choice
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_choice' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_choice
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.four_steps_le_owf_gap' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.four_steps_le_owf_gap
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_common_seedLength' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_common_seedLength
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_paddedGenerate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_paddedGenerate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.length_paddedGenerate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.length_paddedGenerate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_padded_choice' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_padded_choice

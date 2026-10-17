@@ -384,6 +384,7 @@ public import Complexity.Crypto.Computational.GGM.Expansion
 public import Complexity.Crypto.Computational.GGM.Hybrid
 public import Complexity.Crypto.Computational.GGM.Reduction
 public import Complexity.Crypto.Computational.GGM.Security
+public import Complexity.Crypto.Computational.GeneratorPadding
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
 public import Complexity.Crypto.Computational.GoldreichLevin.HardCore
 public import Complexity.Crypto.Computational.GoldreichLevin.Parameters
@@ -426,6 +427,8 @@ public import Complexity.Crypto.Computational.Pseudoentropy.SeedExtraction
 public import Complexity.Crypto.Computational.Pseudoentropy.Selection
 public import Complexity.Crypto.Computational.Pseudoentropy.SequenceLearner
 public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource
+public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Candidates
+public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Padding
 public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Seeded
 public import Complexity.Crypto.Computational.Pseudoentropy.WordExtraction
 public import Complexity.Crypto.Computational.Pseudoentropy.WordReduction
