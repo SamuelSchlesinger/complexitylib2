@@ -34,6 +34,9 @@ of the whole experiment (`exists_bind_apply_le`).
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
   adapted from the cslib `crypto` branch at `5ff69ca`.
 * `Cslib.Probability.PMF.bind_apply_mono_on_support`: compare two continuations at one outcome.
+* `Cslib.Probability.PMF.toOuterMeasure_bind_failure_le`,
+  `toOuterMeasure_bind_failure_toReal_le`: compose failure bounds without independence,
+  adapted from the cslib `crypto` branch at `5ff69ca`.
 * `Cslib.Probability.PMF.map_injective`: injective encodings preserve equality of distributions,
   adapted from the same branch.
 * `Cslib.Probability.PMF.bind_apply_toReal`, `sum_toReal`: real-valued finite averages,
@@ -54,6 +57,49 @@ variable {α β γ δ ε : Type*}
 Adapted from the cslib `crypto` branch at `5ff69ca`. -/
 theorem toOuterMeasure_ne_top (p : PMF α) (event : Set α) : p.toOuterMeasure event ≠ ⊤ := by
   simpa only [PMF.toOuterMeasure_apply] using p.tsum_coe_indicator_ne_top event
+
+/-- An event has probability at most one. -/
+theorem toOuterMeasure_le_one (p : PMF α) (event : Set α) : p.toOuterMeasure event ≤ 1 := by
+  rw [PMF.toOuterMeasure_apply, ← p.tsum_coe]
+  exact ENNReal.tsum_le_tsum (fun a => Set.indicator_apply_le (fun _ => le_rfl))
+
+/-- A randomized continuation can fail because its precondition was already false or because
+it fails from a valid input. No independence or finite-state assumption is needed. -/
+theorem toOuterMeasure_bind_failure_le (p : PMF α) (kernel : α → PMF β)
+    (pre : Set α) (failure : Set β) (error : ENNReal)
+    (hstep : ∀ a ∈ p.support, a ∈ pre → (kernel a).toOuterMeasure failure ≤ error) :
+    (p.bind kernel).toOuterMeasure failure ≤ p.toOuterMeasure preᶜ + error := by
+  classical
+  rw [PMF.toOuterMeasure_bind_apply, PMF.toOuterMeasure_apply]
+  calc
+    _ ≤ ∑' a, ((preᶜ).indicator p a + p a * error) := by
+      apply ENNReal.tsum_le_tsum
+      intro a
+      by_cases ha : a ∈ pre
+      · simp only [Set.indicator_of_notMem (show a ∉ preᶜ by simpa), zero_add]
+        by_cases hs : a ∈ p.support
+        · exact mul_le_mul_of_nonneg_left (hstep a hs ha) zero_le
+        · have hz : p a = 0 := by simpa only [PMF.mem_support_iff, not_not] using hs
+          simp [hz]
+      · simp only [Set.indicator_of_mem (show a ∈ preᶜ from ha)]
+        exact (mul_le_mul_of_nonneg_left (toOuterMeasure_le_one (kernel a) failure)
+          zero_le).trans (by simp)
+    _ = _ := by rw [ENNReal.tsum_add, ENNReal.tsum_mul_right, p.tsum_coe, one_mul]
+
+/-- The real-valued error rule for a randomized continuation. -/
+theorem toOuterMeasure_bind_failure_toReal_le (p : PMF α) (kernel : α → PMF β)
+    (pre : Set α) (failure : Set β) {error : ℝ} (herror : 0 ≤ error)
+    (hstep : ∀ a ∈ p.support, a ∈ pre →
+      ((kernel a).toOuterMeasure failure).toReal ≤ error) :
+    ((p.bind kernel).toOuterMeasure failure).toReal ≤
+      (p.toOuterMeasure preᶜ).toReal + error := by
+  have h := toOuterMeasure_bind_failure_le p kernel pre failure (ENNReal.ofReal error)
+    (fun a ha hpre => (ENNReal.le_ofReal_iff_toReal_le (toOuterMeasure_ne_top _ _) herror).mpr
+      (hstep a ha hpre))
+  have hfinite : p.toOuterMeasure preᶜ + ENNReal.ofReal error ≠ ⊤ := ENNReal.add_ne_top.mpr
+    ⟨toOuterMeasure_ne_top p preᶜ, ENNReal.ofReal_ne_top⟩
+  simpa only [ENNReal.toReal_add (toOuterMeasure_ne_top p preᶜ) ENNReal.ofReal_ne_top,
+    ENNReal.toReal_ofReal herror] using ENNReal.toReal_mono hfinite h
 
 /-- The pairing law also holds when the second sample's type depends on the first.
 Adapted from the cslib `crypto` branch at `5ff69ca`. -/

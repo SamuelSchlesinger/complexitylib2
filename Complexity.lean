@@ -389,7 +389,10 @@ public import Complexity.Crypto.Computational.OneWay.Collision
 public import Complexity.Crypto.Computational.OneWay.Normalize
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Decision
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Loop
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Potential
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Program
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Progress
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Sampling
 public import Complexity.Crypto.Computational.Pseudoentropy.HashPair

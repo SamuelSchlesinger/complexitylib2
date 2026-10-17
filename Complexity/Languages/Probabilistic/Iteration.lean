@@ -28,6 +28,8 @@ uniform seeds. State types need not be finite. These are semantic laws; efficien
 * `Cslib.OracleComp.run_interpret_iterate`: stateful interpretation threads one shared hidden state
   through the loop.
 * `Cslib.ProbComp.iterate_invariant`: supported transitions preserve the final invariant.
+* `Cslib.ProbComp.iterate_failure_le`, `iterate_failure_toReal_le_mul`: local failure bounds
+  accumulate additively across adaptive rounds.
 * `Cslib.ProbComp.eval_iterate_of_uniform`: exact evaluation from independent saved seeds.
 
 ## References
@@ -115,6 +117,57 @@ theorem iterate_invariant (count : ℕ) (step : State → ProbComp State) (initi
       obtain ⟨state, hstate, hnext⟩ := hnext
       exact hpreserve i (by lia) state (ih (by lia) state hstate) next hnext
   exact htrace count le_rfl
+
+/-- Per-step failures of an invariant accumulate additively across an adaptive loop.
+The local bound is needed only at states where the preceding invariant holds. -/
+theorem iterate_failure_le (count : ℕ) (step : State → ProbComp State) (initial : State)
+    (invariant : ℕ → State → Prop) (hinit : invariant 0 initial) (error : ℕ → ENNReal)
+    (hstep : ∀ i < count, ∀ state, invariant i state →
+      (eval (step state)).toOuterMeasure {next | ¬ invariant (i + 1) next} ≤ error i) :
+    (eval (OracleComp.iterate count step initial)).toOuterMeasure
+      {state | ¬ invariant count state} ≤ ∑ i ∈ Finset.range count, error i := by
+  classical
+  have htrace (i : ℕ) (hi : i ≤ count) :
+      (eval (OracleComp.iterate i step initial)).toOuterMeasure
+        {state | ¬ invariant i state} ≤ ∑ j ∈ Finset.range i, error j := by
+    induction i with
+    | zero => simp [eval_pure, PMF.toOuterMeasure_pure_apply, hinit]
+    | succ i ih =>
+      rw [OracleComp.iterate_succ, eval_bind, Finset.sum_range_succ]
+      exact (Probability.PMF.toOuterMeasure_bind_failure_le _ _
+        {state | invariant i state} _ (error i)
+        (fun state _ hinvariant => hstep i (by lia) state hinvariant)).trans
+          (add_le_add (ih (by lia)) le_rfl)
+  exact htrace count le_rfl
+
+/-- The real-valued form of the adaptive error rule. -/
+theorem iterate_failure_toReal_le (count : ℕ) (step : State → ProbComp State) (initial : State)
+    (invariant : ℕ → State → Prop) (hinit : invariant 0 initial) (error : ℕ → ℝ)
+    (herror : ∀ i < count, 0 ≤ error i)
+    (hstep : ∀ i < count, ∀ state, invariant i state →
+      ((eval (step state)).toOuterMeasure {next | ¬ invariant (i + 1) next}).toReal ≤ error i) :
+    ((eval (OracleComp.iterate count step initial)).toOuterMeasure
+      {state | ¬ invariant count state}).toReal ≤ ∑ i ∈ Finset.range count, error i := by
+  have h := iterate_failure_le count step initial invariant hinit
+    (fun i => ENNReal.ofReal (error i)) (fun i hi state hinvariant =>
+      (ENNReal.le_ofReal_iff_toReal_le (Probability.PMF.toOuterMeasure_ne_top _ _)
+        (herror i hi)).mpr (hstep i hi state hinvariant))
+  have hnonneg := fun i hi => herror i (Finset.mem_range.mp hi)
+  rw [← ENNReal.ofReal_sum_of_nonneg hnonneg] at h
+  exact ENNReal.toReal_le_of_le_ofReal (Finset.sum_nonneg hnonneg) h
+
+/-- A uniform per-round error `ε` gives total error at most `count * ε`, including adaptive
+rounds and state spaces that are not finite. -/
+theorem iterate_failure_toReal_le_mul (count : ℕ) (step : State → ProbComp State)
+    (initial : State) (invariant : ℕ → State → Prop) (hinit : invariant 0 initial)
+    {error : ℝ} (herror : 0 ≤ error)
+    (hstep : ∀ i < count, ∀ state, invariant i state →
+      ((eval (step state)).toOuterMeasure {next | ¬ invariant (i + 1) next}).toReal ≤ error) :
+    ((eval (OracleComp.iterate count step initial)).toOuterMeasure
+      {state | ¬ invariant count state}).toReal ≤ count * error := by
+  simpa only [Finset.sum_const, Finset.card_range, nsmul_eq_mul] using
+    iterate_failure_toReal_le count step initial invariant hinit (fun _ => error)
+      (fun _ _ => herror) hstep
 
 /-- Independent uniform seeds realize an adaptive loop when they realize each reachable step.
 The invariant allows the realization law to be restricted to reachable states. -/

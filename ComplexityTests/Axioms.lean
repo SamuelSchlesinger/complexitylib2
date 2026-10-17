@@ -5991,3 +5991,80 @@ info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_maskedSequencePredictor' depends on ax
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_maskedSequencePredictor
+
+/--
+info: 'Cslib.Probability.PMF.toOuterMeasure_bind_failure_toReal_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.toOuterMeasure_bind_failure_toReal_le
+
+/--
+info: 'Cslib.ProbComp.iterate_failure_toReal_le_mul' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ProbComp.iterate_failure_toReal_le_mul
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.testMajority_source_sound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.testMajority_source_sound
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.testShift_weights_sound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.testShift_weights_sound
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.run_bounded' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.run_bounded
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_round' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_round
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_run' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_run
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.State.Invariant.shift_add' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.State.Invariant.shift_add
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.round_sound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.round_sound
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.run_invariant' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.run_invariant
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.run_sound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.run_sound
