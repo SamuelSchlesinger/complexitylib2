@@ -2173,7 +2173,12 @@ lint 7.66 s, style 2.45 s and init imports 4.69 s. These are incremental checkpo
 The final independent API review approves the sources, tests, axiom guards, documentation and
 proof accounting. It reproduced the proof totals and checked profile-source parity and gate
 records, without rerunning gates or profiling. The post-publication Codex correctness review
-is pending.
+approves `3f7aca5` against `bfeff5a3` without material findings. It checked preservation premises,
+finite-sample bounds, exact costs, support semantics and the actual-source-assignment guard,
+confirmed the unchanged dictionary declarations and reproduced the proof counts. Fusion,
+coverage and the new tests returned clean MCP diagnostics. It did not independently rerun the
+full six checks, execute the axiom guards or profiling, or verify original provenance and live
+upstream status.
 
 ### Implementation priorities (2026-10-16)
 
