@@ -1899,7 +1899,21 @@ multiple outputs and unused gates, pairing over arbitrary fields and explicitly 
 and the empty pairing. Three headline axiom guards use only `propext`, `Classical.choice` and
 `Quot.sound`. Independent source/API review approves the production implementation, imported
 clients with independent coefficient/index universes, regression tests, axiom guards and proof
-accounting. The post-publication Codex correctness review is pending.
+accounting. The post-publication Codex correctness review approves `0759558` against `1ae8e3b`
+without material findings. It checked the residual quantifiers, helper handling, span/rank
+reasoning, shared-gate costs, pairing in characteristic two and at `n = 0`, preservation of the
+previous zero-Hessian theorem, and the proof-count delta. It reviewed the exact public sources
+and public pinned dependencies; it did not rerun gates or profiles, or independently check the
+v1 source provenance.
+
+The next integration target is a small weighted supplied-source complexity API over native
+circuits. Independent design review favors one minimum of `Program.cost` over circuits computing
+`target : X → Fin m → U` from exactly `sources : X → Fin n → U`, with unit-cost bridges to
+`ecomplexityOn` and `ecomplexityGiven`. A support is represented by its subtype, avoiding a
+chosen extension outside the supplied range. No raw coordinates are implicit. Regression cases
+must distinguish free weighted operations from wiring, and vacuous correctness from existence
+of a syntactic circuit. The first client is the remaining residual-Hessian minimum-cost bound;
+this API is planned, not implemented in this batch.
 
 ### Implementation priorities (2026-10-16)
 
