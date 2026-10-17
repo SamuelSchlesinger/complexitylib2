@@ -8801,3 +8801,45 @@ info: 'Cslib.Circuits.Circuit.eval_eq_evalImpl' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Circuit.eval_eq_evalImpl
+
+/--
+info: 'Cslib.Circuits.Formula.size_lexLt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.size_lexLt
+
+/--
+info: 'Cslib.Circuits.Formula.eval_lexLt_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.eval_lexLt_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_compareSwapCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_compareSwapCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.size_compareSwapCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_compareSwapCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.compareSwapCircuit_keys_ordered' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.compareSwapCircuit_keys_ordered
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_compareSwapCircuit_of_key_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_compareSwapCircuit_of_key_eq

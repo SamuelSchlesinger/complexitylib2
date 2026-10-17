@@ -7,6 +7,7 @@ import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
 import ComplexityTests.CoinTape
+import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime

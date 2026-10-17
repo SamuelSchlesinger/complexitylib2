@@ -21,6 +21,7 @@ public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BarringtonClass
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
+public import Complexity.Computability.Circuit.Boolean.CompareSwap
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
