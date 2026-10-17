@@ -122,7 +122,10 @@ public import Complexity.Computability.Circuit.Frontier.Sweep
 public import Complexity.Computability.Circuit.Frontier.Unconditional
 public import Complexity.Computability.Circuit.Frontier.Witness
 public import Complexity.Computability.Circuit.Fusion.Basic
+public import Complexity.Computability.Circuit.Fusion.Composition
 public import Complexity.Computability.Circuit.Fusion.Counting
+public import Complexity.Computability.Circuit.Fusion.Simulation
+public import Complexity.Computability.Circuit.Fusion.SimulationContext
 public import Complexity.Computability.Circuit.InnerSize
 public import Complexity.Computability.Circuit.Linearize
 public import Complexity.Computability.Circuit.MapLines

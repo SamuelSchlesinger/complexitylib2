@@ -1740,8 +1740,10 @@ sum-of-powers bound preserves its restricted representation model. Residual Hess
 arbitrary supplied polynomial inputs, and bilinear pairing supplies another arithmetic client.
 The standalone algebraic checkout has local changes and an older pin; compare its relevant results with the
 embedded v1 source and record exact provenance for each port. The general Fusion cover and
-counting layer is now integrated with a support-coverage client. Semifilters, substitution and
-contextual cover transports, and the distinct cyclic-circuit characterizations remain outstanding.
+counting layer is now integrated with a support-coverage client. Atom extraction now commutes
+with native composition, and local gadget properties transfer through ordinary and contextual
+simulation. Semifilters, homomorphism transport of covers and the distinct cyclic-circuit
+characterizations remain outstanding, along with further arithmetic clients.
 
 ### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
 
@@ -2179,6 +2181,61 @@ confirmed the unchanged dictionary declarations and reproduced the proof counts.
 coverage and the new tests returned clean MCP diagnostics. It did not independently rerun the
 full six checks, execute the axiom guards or profiling, or verify original provenance and live
 upstream status.
+
+### Fusion transport through native compilation (2026-10-16)
+
+`Circuit/Fusion/Composition` proves that atom extraction under `Program.append` and
+`Circuit.comp` is exactly tuple concatenation. The inner program's atoms come first; the
+continuation's atoms use the values of its supplied wires. Gate order, repeated atoms and
+unused gates are preserved. The shared `programAtoms_gate` rule centralizes the interaction
+between line widening and trace preservation. The source's separate `instantiate` path is
+replaced by native continuation, with no additional compiler or circuit representation.
+
+`Fusion/Simulation` gives an equivalence: every compiled atom has a property exactly when
+every atom of each actual source-gate implementation has it. Gadget inputs are the source
+gate's evaluated arguments, including for unused source gates. The theorem requires the
+implementations to compute the source operations; a negative client shows that omitting this
+semantic premise would invalidate the transfer. All implementation gates remain visible,
+including unused ones, while zero-gate implementations contribute no atoms.
+
+`Fusion/SimulationContext` proves that every context-bearing atom receives the same input
+prefix. This reduces contextual compilation to the ordinary simulation rule. The client
+supplies a property of each gadget at that one fixed context and arbitrary ordinary arguments;
+it need not cover other contexts. Exact weighted costs remain the existing native simulation
+theorems. This batch adds no Turing machines, compiler definitions or tactic implementations.
+
+Source provenance: `LowerBound/Fusion/{Substitution,Contextual}.lean` under
+`Complexitylib/Algebraic`, at clean v1 revision `2ad6cb481b70ee6e65e078dffb76b9856be199d3`.
+Samuel Schlesinger's authorship and the source bibliography entry are retained. The live
+upstream audit reports the cslib pin and every submitted/vendored marker current.
+
+Against `8131afd`, the batch adds seven named proofs / 56 body lines, including the shared
+gate rule: basic 1 / 8, composition 2 / 11, simulation 2 / 13 and context 2 / 24. The library
+total is 5,949 named proofs / 40,589 body lines across 572 modules. Statements and tests are
+excluded; no new production definitions contain hidden proof blocks. For context, the two
+original source files have five proofs / 80 body lines. This is not a line-for-line comparison:
+the native port removes the parallel instantiation path and adds the simulation equivalence.
+
+Full-module MCP replicas measure raw tactic heartbeats: gate extraction 204,543; append
+extraction 226,979; simulation equivalence 589,659; shared-context property 225,930; contextual
+transfer 90,712. The replicas match production after removing measurement commands. These
+are elaboration counts, not execution costs; no heartbeat override is used.
+
+`FusionTransport` checks the exact four-atom trace through repeated outputs, a free supplied
+input and an unused term. A two-gate implementation for each operation yields eight gates and
+five charged terms, retaining every unused gadget term. The local-input bound succeeds where
+a global bound fails; mismatched source semantics fail to transfer, and the reverse implication
+detects an unused bad gadget atom. `ContextualPower` transfers positivity of multiplication
+arguments through the binary-power gadget at context two for arbitrary source circuits, and
+checks its failure at context zero. A free context-wire gadget contributes no atoms. Seven
+new axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
+
+All six checks pass: strict build 4.32 s, import coverage 1.74 s, tests 7.68 s, environment
+lint 7.74 s, style 2.49 s and init imports 4.79 s. These are incremental checkpoint timings.
+The final independent API review approves the sources, clients, axiom guards, documentation
+and proof accounting. It independently checked both client files and the guards through MCP,
+reproduced the proof counts, and verified profile-source parity and the six successful gate
+records without rerunning those gates. The post-publication correctness review is pending.
 
 ### Implementation priorities (2026-10-16)
 

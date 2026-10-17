@@ -103,6 +103,20 @@ def programAtoms (p : Program σ n g) (I : Interpretation σ U) (input : Fin n �
   op := (p.lines k).op
   arguments := p.trace I input ∘ (p.lines k).wires
 
+/-- Adding a gate appends its evaluated atom, preserving every earlier atom. -/
+theorem programAtoms_gate (p : Program σ n g) (line : Line σ n g)
+    (I : Interpretation σ U) (input : Fin n → U) :
+    programAtoms (p.gate line) I input =
+      Fin.snoc (programAtoms p I input) ⟨line.op, p.trace I input ∘ line.wires⟩ := by
+  funext k
+  induction k using Fin.lastCases <;>
+    simp only [Fin.snoc_last, Fin.snoc_castSucc] <;> unfold programAtoms
+  all_goals
+    first | rw [Program.lines_gate_last] | rw [Program.lines_gate_castSucc]
+    congr 1
+    funext a
+    exact Program.trace_gate_castSucc p line I input _
+
 /-- Gates cover every invariant that holds on the inputs and fails on some wire. -/
 theorem programAtoms_isCover (p : Program σ n g) (I : Interpretation σ U)
     (P : W → U → Prop) (input : Fin n → U) (hin : ∀ t i, P t (input i))

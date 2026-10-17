@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.SimulationContext
+import Complexity.Computability.Circuit.Fusion.SimulationContext
 import Complexity.Computability.Circuit.Arithmetic.Power
 import Complexity.Computability.Circuit.SumOfTerms
 import Mathlib.Data.Fin.VecNotation
@@ -81,6 +82,57 @@ example : (source.simulateWithContext 1 contextWire).size = 1 := by decide
 
 example : (source.simulateWithContext 1 contextWire).eval
     (arithInterpretationWith Unit (fun _ => (0 : ℕ))) (fun _ => 7) = ![7, 14, 7] := by decide
+
+-- At context two, every multiplication reads positive values, for any source circuit.
+-- Addition gadgets may read arbitrary arguments; they have no multiplication atoms.
+private def positiveMulInputs : Fusion.Atom (arithSignature Unit) ℕ → Prop
+  | ⟨.mul, args⟩ => ∀ i : Fin 2, 0 < args i
+  | _ => True
+
+private instance (a : Fusion.Atom (arithSignature Unit) ℕ) : Decidable (positiveMulInputs a) :=
+  match a with
+  | ⟨.mul, args⟩ => inferInstanceAs (Decidable (∀ i : Fin 2, 0 < args i))
+  | ⟨.add, _⟩ | ⟨.const _, _⟩ => isTrue trivial
+
+example {n m : ℕ} (c : Circuit (SumOfTerms.signature Unit) n m) (input : Fin n → ℕ) :
+    ∀ k, positiveMulInputs (Fusion.programAtoms (c.simulateWithContext 1 gadget).program
+      (arithInterpretationWith Unit (fun _ => (1 : ℕ)))
+      (Fin.append (fun _ : Fin 1 => 2) input) k) := by
+  apply Fusion.forall_programAtoms_simulateWithContext
+  intro op args
+  cases op with
+  | add =>
+    intro j
+    change Fin 1 at j
+    fin_cases j
+    trivial
+  | term t =>
+    have hargs : Fin.append (fun _ : Fin 1 => 2) args = fun _ : Fin 1 => 2 := by
+      ext i
+      fin_cases i
+      rfl
+    rw [hargs]
+    change ∀ j : Fin 5, positiveMulInputs (Fusion.programAtoms
+      (binaryPowerCircuit () 13).program _ (fun _ => 2) j)
+    intro j
+    fin_cases j <;> decide
+
+-- The fixed-context premise is substantive: the same first gadget atom fails at context zero.
+example : ¬ positiveMulInputs (Fusion.programAtoms (gadget (.term ())).program
+    (arithInterpretationWith Unit (fun _ => (1 : ℕ))) (fun _ => 0) (0 : Fin 5)) := by
+  decide
+
+-- A zero-gate term gadget contributes no atoms, including the unused source term.
+example : ∀ k, (Fusion.programAtoms (source.simulateWithContext 1 contextWire).program
+    (arithInterpretationWith Unit (fun _ => (0 : ℕ))) (fun _ => 7) k).op = .add := by
+  have h := Fusion.forall_programAtoms_simulateWithContext source 1 contextWire
+    (arithInterpretationWith Unit (fun _ => (0 : ℕ))) (fun _ => 7) Fin.elim0
+    (fun a => a.op = .add) (by
+      intro op args j
+      cases op with
+      | add => fin_cases j; rfl
+      | term t => exact j.elim0)
+  simpa only [Fin.append_elim0, Function.comp_def] using h
 
 -- Both entries of a larger context remain available to every gadget.
 private def productGadget (op : SumOfTerms.Op Unit) :

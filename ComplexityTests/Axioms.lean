@@ -17,6 +17,55 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Fusion.programAtoms_gate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.programAtoms_gate
+
+/--
+info: 'Cslib.Circuits.Fusion.programAtoms_append' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.programAtoms_append
+
+/--
+info: 'Cslib.Circuits.Fusion.programAtoms_comp' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.programAtoms_comp
+
+/--
+info: 'Cslib.Circuits.Fusion.forall_programAtoms_simulate_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.forall_programAtoms_simulate_iff
+
+/--
+info: 'Cslib.Circuits.Fusion.forall_programAtoms_simulate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.forall_programAtoms_simulate
+
+/--
+info: 'Cslib.Circuits.Fusion.forall_programAtoms_withContext' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.forall_programAtoms_withContext
+
+/--
+info: 'Cslib.Circuits.Fusion.forall_programAtoms_simulateWithContext' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.forall_programAtoms_simulateWithContext
+
+/--
 info: 'Cslib.Circuits.Program.trace_induction' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
