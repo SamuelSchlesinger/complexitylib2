@@ -14,9 +14,9 @@ completed reference developments.
    remains separate from the implemented
    [closed stateful substitution](Complexity/Computability/Probabilistic/OracleSimulation.lean).
    Extend quantitative certificates to retain separate time, workspace and output-size bounds
-   through composition. Strengthen the streaming loop's uniform round bounds to sums of varying
-   step and copying costs; retain peak storage bounds. Validate this on growing accumulators and
-   PRG stretching with seed length, round count and generator cost kept separate.
+   through composition. Apply cumulative streaming contracts to captured iteration and nested
+   loops, discharging routine encoding arithmetic automatically. Certify PRG stretching with
+   seed length, round count and generator cost kept separate.
 
 2. **Practical PCP and expander constructions.** The
    [PCP theorem](Complexity/Computability/PCP/Completeness.lean) includes certified construction

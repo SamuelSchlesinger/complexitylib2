@@ -21,8 +21,12 @@ cells, excluding the read-only input and write-only output; retained accumulator
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream`: numerical bounds for
-  a fold, from per-round time, work space and prefix-state bounds.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum`: cumulative
+  computation and copying costs, with peak workspace bounds.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum_spec`: an invariant
+  supplies the cumulative cost and postcondition.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream`: the uniform-round
+  specialization.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_spec`: an invariant
   supplies the bounds and a postcondition.
 * `Turing.MultiTapeTM.ComputableTidilyInO.foldl_bits_finite`: a fixed finite-state fold takes
@@ -46,6 +50,66 @@ private lemma streamEmit_nil {σ : Type} (next : σ × Bool → σ) (init : σ) 
   | nil => rfl
   | cons a l ih => exact ih _
 
+/-- Stream a bit list with cumulative round costs. `R l i` includes the step, the current and next
+encoded state lengths, and control. `Q` and `B` bound peak step workspace and encoded state size.
+The input is scanned without copying; final output and tape restoration are charged too.
+The constant is independent of the input, and the bounds need not be computable. -/
+theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum {σ : Type}
+    {enc : σ ↪ List Bool} {step : σ → Bool → σ} (init : σ) {t s : σ × Bool → ℕ}
+    (hstep : ComputableTidilyInTimeAndSpace (fun p => step p.1 p.2)
+      (encPair enc encBool) enc t s)
+    {R : List Bool → ℕ → ℕ} {Q B : List Bool → ℕ}
+    (hcost : ∀ l i (hi : i < l.length), t ((l.take i).foldl step init, l[i]) +
+      (enc ((l.take i).foldl step init)).length +
+      (enc ((l.take (i + 1)).foldl step init)).length + 1 ≤ R l i)
+    (hspace : ∀ l i (hi : i < l.length), s ((l.take i).foldl step init, l[i]) ≤ Q l)
+    (hstate : ∀ l i, i ≤ l.length → (enc ((l.take i).foldl step init)).length ≤ B l) :
+    ∃ c, ComputableTidilyInTimeAndSpace (fun l => l.foldl step init) encBits enc
+      (fun l => c * ((∑ i ∈ Finset.range l.length, R l i) + B l + 1))
+      (fun l => c * (Q l + B l + 1)) := by
+  obtain ⟨ci, hi⟩ := computableInTimeAndSpace_of_const (encIn := encBits) (encOut := enc) init
+  obtain ⟨ce, he⟩ := computableInTimeAndSpace_of_const
+    (encIn := encPair enc encBool) (encOut := encBits) []
+  let reader : InputReader Bool Unit := ⟨(), fun _ b => (none, some b)⟩
+  obtain ⟨c, h⟩ := ComputableTidilyInTimeAndSpace.streamFold_sum
+    (g := fun l => l.foldl step init) (encOut := enc)
+    reader (fun b => [b]) (fun _ => List.cons_ne_nil _ _)
+    (fun a rest => by simp [reader, InputReader.read])
+    id (fun l => by simp) hi.computableTidilyInTimeAndSpace hstep
+    he.computableTidilyInTimeAndSpace computableTidilyInTimeAndSpace_id
+    (fun l => by simp [streamEmit_nil, streamState])
+    (roundCost := fun l i => (2 * ce + 4) * R l i) (sMax := Q)
+    (lMax := fun l => B l + 1)
+    (fun l i hi => by
+      have hr := hcost l i hi
+      have hR : 1 ≤ R l i := by lia
+      have hm := Nat.mul_le_mul_left (2 * ce + 3) hR
+      simp only [streamState, Function.const_apply, encBool_apply, List.length_singleton, id_eq]
+      nlinarith)
+    (fun l i hi => hspace l i hi)
+    (fun l i hi => (hstate l i hi).trans (Nat.le_succ _))
+    (fun _ _ _ => by simp)
+  have hn (l : List Bool) : l.length ≤ ∑ i ∈ Finset.range l.length, R l i := by
+    calc
+      l.length = ∑ _i ∈ Finset.range l.length, 1 := by simp
+      _ ≤ _ := Finset.sum_le_sum fun i hi => by
+        have hr := hcost l i (Finset.mem_range.mp hi)
+        lia
+  refine ⟨c * (2 * ci + 2 * ce + 20), h.mono (fun l => ?_) (fun l => ?_)⟩
+  · have hf := hstate l l.length le_rfl
+    simp only [List.take_length] at hf
+    simp only [id_eq, encBits_apply, streamState, List.take_length, Function.const_apply]
+    rw [Nat.mul_assoc, ← Finset.mul_sum]
+    apply Nat.mul_le_mul_left c
+    change 2 * ci + 2 + (2 * (enc (l.foldl step init)).length + 4) + l.length +
+      (2 * ce + 4) * (∑ i ∈ Finset.range l.length, R l i) + (B l + 1) + 1 ≤ _
+    have hr := hn l
+    nlinarith
+  · rw [Nat.mul_assoc]
+    apply Nat.mul_le_mul_left c
+    nlinarith
+
+
 /-- Stream a bit list through a tidy step computation. Each round charges the step and the stored
 state, without copying the input list. `R`, `Q` and `B` bound the time of a round, its work space
 and the encoded state size, respectively. The final output and tape restoration are charged too.
@@ -61,38 +125,57 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream {σ : Type}
     ∃ c, ComputableTidilyInTimeAndSpace (fun l => l.foldl step init) encBits enc
       (fun l => c * (l.length * (R l + B l + 1) + B l + 1))
       (fun l => c * (Q l + B l + 1)) := by
-  obtain ⟨ci, hi⟩ := computableInTimeAndSpace_of_const (encIn := encBits) (encOut := enc) init
-  obtain ⟨ce, he⟩ := computableInTimeAndSpace_of_const
-    (encIn := encPair enc encBool) (encOut := encBits) []
-  let reader : InputReader Bool Unit := ⟨(), fun _ b => (none, some b)⟩
-  obtain ⟨c, h⟩ := ComputableTidilyInTimeAndSpace.streamFold
-    (g := fun l => l.foldl step init) (encOut := enc)
-    reader (fun b => [b]) (fun _ => List.cons_ne_nil _ _)
-    (fun a rest => by simp [reader, InputReader.read])
-    id (fun l => by simp) hi.computableTidilyInTimeAndSpace hstep
-    he.computableTidilyInTimeAndSpace computableTidilyInTimeAndSpace_id
-    (fun l => by simp [streamEmit_nil, streamState])
-    (tMax := fun l => R l + (2 * ce + 2)) (sMax := Q) (lMax := fun l => B l + 1)
-    (fun l i hi => Nat.add_le_add_right (htime l i hi) _)
-    (fun l i hi => hspace l i hi)
-    (fun l i hi => (hstate l i hi).trans (Nat.le_succ _))
-    (fun _ _ _ => by simp)
-  refine ⟨c * (2 * ci + 2 * ce + 20), h.mono (fun l => ?_) (fun l => ?_)⟩
-  · have hf := hstate l l.length le_rfl
-    simp only [List.take_length] at hf
-    simp only [id_eq, encBits_apply, streamState, List.take_length, Function.const_apply]
+  obtain ⟨c, h⟩ := hstep.foldl_bits_stream_sum init
+    (R := fun l _ => R l + 2 * B l + 1) (Q := Q) (B := B)
+    (fun l i hi => by
+      have ht := htime l i hi
+      have h₀ := hstate l i hi.le
+      have h₁ := hstate l (i + 1) hi
+      lia) hspace hstate
+  refine ⟨c * 2, h.mono (fun l => ?_) (fun l => ?_)⟩
+  · simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
     rw [Nat.mul_assoc]
     apply Nat.mul_le_mul_left c
-    change 2 * ci + 2 + (2 * (enc (l.foldl step init)).length + 4) + l.length +
-      l.length * (R l + (2 * ce + 2) + (B l + 1) + 1) + (B l + 1) + 1 ≤ _
-    have hr := Nat.mul_le_mul_left l.length
-      (show R l + (2 * ce + 2) + (B l + 1) + 1 + 1 ≤
-        (2 * ci + 2 * ce + 20) * (R l + B l + 1) by nlinarith)
     nlinarith
   · rw [Nat.mul_assoc]
     apply Nat.mul_le_mul_left c
-    nlinarith
+    lia
 
+
+/-- An invariant supplies cumulative computation and copying costs, peak workspace and a
+postcondition. Each round's bound includes both the old and the new encoded state. -/
+theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum_spec {σ : Type}
+    {enc : σ ↪ List Bool} {step : σ → Bool → σ} (init : σ) {t s : σ × Bool → ℕ}
+    (hstep : ComputableTidilyInTimeAndSpace (fun p => step p.1 p.2)
+      (encPair enc encBool) enc t s)
+    (invariant : List Bool → ℕ → σ → Prop)
+    (hbase : ∀ l, invariant l 0 init)
+    (hpreserve : ∀ l i (hi : i < l.length) state, invariant l i state →
+      invariant l (i + 1) (step state l[i]))
+    {R : List Bool → ℕ → ℕ} {Q B : List Bool → ℕ}
+    (hcost : ∀ l i (hi : i < l.length) state, invariant l i state →
+      t (state, l[i]) + (enc state).length + (enc (step state l[i])).length + 1 ≤ R l i ∧
+        s (state, l[i]) ≤ Q l)
+    (hsize : ∀ l i, i ≤ l.length → ∀ state, invariant l i state → (enc state).length ≤ B l) :
+    (∃ c, ComputableTidilyInTimeAndSpace (fun l => l.foldl step init) encBits enc
+      (fun l => c * ((∑ i ∈ Finset.range l.length, R l i) + B l + 1))
+      (fun l => c * (Q l + B l + 1))) ∧
+      ∀ l, invariant l l.length (l.foldl step init) := by
+  have htrace (l : List Bool) (i : ℕ) (hi : i ≤ l.length) :
+      invariant l i ((l.take i).foldl step init) := by
+    induction i with
+    | zero => exact hbase l
+    | succ i ih =>
+      have hlt : i < l.length := by lia
+      simpa only [List.take_succ_eq_append_getElem hlt, List.foldl_append,
+        List.foldl_cons, List.foldl_nil] using hpreserve l i hlt _ (ih (by lia))
+  exact ⟨hstep.foldl_bits_stream_sum init
+    (fun l i hi => by
+      simpa only [List.take_succ_eq_append_getElem hi, List.foldl_append,
+        List.foldl_cons, List.foldl_nil] using (hcost l i hi _ (htrace l i hi.le)).1)
+    (fun l i hi => (hcost l i hi _ (htrace l i hi.le)).2)
+    (fun l i hi => hsize l i hi _ (htrace l i hi)),
+    fun l => by simpa using htrace l l.length le_rfl⟩
 
 /-- An invariant supplies the streaming fold's resource bounds and postcondition. -/
 theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream_spec {σ : Type}
@@ -111,19 +194,21 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream_spec {σ : Type}
       (fun l => c * (l.length * (R l + B l + 1) + B l + 1))
       (fun l => c * (Q l + B l + 1))) ∧
       ∀ l, invariant l l.length (l.foldl step init) := by
-  have htrace (l : List Bool) (i : ℕ) (hi : i ≤ l.length) :
-      invariant l i ((l.take i).foldl step init) := by
-    induction i with
-    | zero => exact hbase l
-    | succ i ih =>
-      have hlt : i < l.length := by lia
-      simpa only [List.take_succ_eq_append_getElem hlt, List.foldl_append,
-        List.foldl_cons, List.foldl_nil] using hpreserve l i hlt _ (ih (by lia))
-  exact ⟨hstep.foldl_bits_stream init
-    (fun l i hi => (hcost l i hi _ (htrace l i hi.le)).1)
-    (fun l i hi => (hcost l i hi _ (htrace l i hi.le)).2)
-    (fun l i hi => hsize l i hi _ (htrace l i hi)),
-    fun l => by simpa using htrace l l.length le_rfl⟩
+  obtain ⟨⟨c, h⟩, hpost⟩ := hstep.foldl_bits_stream_sum_spec init invariant hbase hpreserve
+    (R := fun l _ => R l + 2 * B l + 1) (Q := Q) (B := B)
+    (fun l i hi state hs => by
+      have hc := hcost l i hi state hs
+      have h₀ := hsize l i hi.le state hs
+      have h₁ := hsize l (i + 1) hi _ (hpreserve l i hi state hs)
+      exact ⟨by lia, hc.2⟩) hsize
+  refine ⟨⟨c * 2, h.mono (fun l => ?_) (fun l => ?_)⟩, hpost⟩
+  · simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
+    rw [Nat.mul_assoc]
+    apply Nat.mul_le_mul_left c
+    nlinarith
+  · rw [Nat.mul_assoc]
+    apply Nat.mul_le_mul_left c
+    lia
 
 /-- A fold with a fixed finite state type takes linear time and constant work space. The constant
 may depend on the state type, its encoding and the transition function; this is not a uniform bound

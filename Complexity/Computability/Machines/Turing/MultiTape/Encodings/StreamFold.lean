@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -28,8 +28,12 @@ the work tapes.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold`: streaming folds are tidily
-  computable, in time linear in the input plus the rounds, and in space independent of the input.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_sum`: streaming folds with
+  cumulative computation and copying costs, and peak workspace bounds.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold`: the uniform-round corollary.
+
+The cumulative theorem generalizes Christian Reitwiessner's original encoding-layer proof;
+its machine assembly is shared with the uniform-round corollary.
 -/
 
 namespace Turing.MultiTapeTM
@@ -76,14 +80,17 @@ public lemma sum_length_getD (toks : List (List Bool)) :
   | nil => rfl
   | cons t toks ih => rw [List.length_cons, Finset.sum_range_succ']; simp [ih, Nat.add_comm]
 
-/-- **Streaming folds are tidily computable.** The input `x` is encoded by concatenating the
+-- upstream: candidate
+-- vendored: generalize the original proof to sum actual round costs; retain the assembly once.
+/-- **Streaming folds with cumulative round costs.** The input `x` is encoded by concatenating the
 non-empty tokens `tok a` of the elements `elems x`, from each of which the finite-state reader `r`
 reads `encA a`. If `init`, `next`, `emit` and `finish` are tidily computable, and `g x` is encoded
 by the words emitted by the fold over `elems x` followed by `finish` of its final state, then `g`
-is tidily computable. Its time is linear in the input plus the rounds; its space does not grow
-with the input. The bounds `tMax`, `sMax` and `lMax` bound the time and space of a round and the
-lengths of the states and elements. -/
-public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε φ ω : Type*}
+is tidily computable. The time bound sums `roundCost`, including each round's computation, current
+and next states, decoded element storage and control. Initialization, finalization, input scanning
+and cleanup are charged separately. `sMax` and `lMax` bound peak callback workspace and stored
+words; output is emitted directly and does not count as workspace. -/
+public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α σ : Type u} {γ ε φ ω : Type*}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool} {encF : φ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {Q : Type} [Finite Q]
     (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
@@ -97,10 +104,13 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε
     (hfinish : ComputableTidilyInTimeAndSpace finish encS encF tF sF)
     (hg : ∀ x, encOut (g x) = streamEmit next (fun p => encE (emit p)) (init x) (elems x) ++
       encF (finish (streamState (init x) next (elems x) (elems x).length)))
-    {tMax sMax lMax : γ → ℕ}
-    (htMax : ∀ x j (hj : j < (elems x).length),
+    {roundCost : γ → ℕ → ℕ} {sMax lMax : γ → ℕ}
+    (hcost : ∀ x j (hj : j < (elems x).length),
       tN (streamState (init x) next (elems x) j, (elems x)[j]) +
-        tE (streamState (init x) next (elems x) j, (elems x)[j]) ≤ tMax x)
+        tE (streamState (init x) next (elems x) j, (elems x)[j]) +
+        (encS (streamState (init x) next (elems x) j)).length +
+        (encS (streamState (init x) next (elems x) (j + 1))).length +
+        (encA (elems x)[j]).length + 1 ≤ roundCost x j)
     (hsMax : ∀ x j (hj : j < (elems x).length),
       sN (streamState (init x) next (elems x) j, (elems x)[j]) +
         sE (streamState (init x) next (elems x) j, (elems x)[j]) ≤ sMax x)
@@ -109,7 +119,7 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε
     (hA : ∀ x j (hj : j < (elems x).length), (encA (elems x)[j]).length ≤ lMax x) :
     ∃ c, ComputableTidilyInTimeAndSpace g encIn encOut
       (fun x => c * (tI x + tF (streamState (init x) next (elems x) (elems x).length) +
-        (encIn x).length + (elems x).length * (tMax x + lMax x + 1) + lMax x + 1))
+        (encIn x).length + (∑ j ∈ Finset.range (elems x).length, roundCost x j) + lMax x + 1))
       (fun x => c * (sI x + sF (streamState (init x) next (elems x) (elems x).length) + sMax x +
         lMax x + 1)) := by
   -- the framed initial state and the framed next state
@@ -250,23 +260,20 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε
             (3 * ((frame (encS (st j)) ++ cont j).length + 1) +
               (3 * (frame (encS (st (j + 1)))).length + 10 +
                 3 * ((frame (encS (st (j + 1)))).length + 1))))) + 1 ≤
-      (toks[j]?.getD []).length + (tMax x + (cfr + cN + 60) * (L + 1)) := by
-    have h₀ := hSj j hj.le
-    have h₁ := hSj (j + 1) hj
-    have hA' := hA x j hj
-    have ht := htMax x j hj
+      (toks[j]?.getD []).length + (cfr + cN + 60) * roundCost x j := by
+    have ht := hcost x j hj
     have hnext : next (st j, l[j]) = st (j + 1) := (streamState_succ _ _ _ hj).symm
-    have hm₁ := Nat.mul_le_mul_left cfr (Nat.add_le_add_right h₁ 1)
-    have hm₂ := Nat.mul_le_mul_left cN (Nat.add_le_add_right h₁ 1)
+    have hsize : (encS (st (j + 1))).length + 1 ≤ roundCost x j := by lia
+    have hm₁ := Nat.mul_le_mul_left cfr hsize
+    have hm₂ := Nat.mul_le_mul_left cN hsize
     simp only [List.getElem?_eq_getElem hj, Option.map_some, Option.getD_some, hnext,
       hcont j hj, length_frame, List.length_append]
-    linarith
+    linarith only [ht, hm₁, hm₂]
   have hS0 : (encS (init x)).length ≤ L := hSj 0 (Nat.zero_le _)
   have hSn : (encS (st n)).length ≤ L := hSj n le_rfl
   set D := cfr + cN + cI + cuf + cF + M + 100 with hD
   have hsum := (Finset.sum_le_sum fun j hj => hround j (Finset.mem_range.mp hj)).trans_eq
-    (by rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, smul_eq_mul, ← hlen,
-      sum_length_getD, ← hx])
+    (by rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← hlen, sum_length_getD, ← hx])
   refine h.mono ?_ ?_
   · simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, st] at hsum hSn ⊢
     rw [← hn, ← hLdef]
@@ -277,11 +284,10 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε
     have f₂ := Nat.mul_le_mul (show cuf ≤ D by omega)
       (show 2 * (encS (streamState (init x) next l n)).length + 1 + 1 ≤ 2 * (L + 1) by omega)
     have f₃ := Nat.mul_le_mul (show cF ≤ D by omega) (Nat.add_le_add_right hSn 1)
-    have f₄ : n * (tMax x + (cfr + cN + 60) * (L + 1)) ≤ D * (n * (tMax x + L + 1)) :=
-      (Nat.mul_le_mul_left n (Nat.add_le_add (Nat.le_mul_of_pos_left _ hD1)
-        (Nat.mul_le_mul_right _ (show cfr + cN + 60 ≤ D by omega)))).trans_eq (by ring)
+    have f₄ := Nat.mul_le_mul_right (∑ j ∈ Finset.range n, roundCost x j)
+      (show cfr + cN + 60 ≤ D by lia)
     have f₅ := Nat.mul_le_mul_right (tI x + tF (streamState (init x) next l n) + (encIn x).length +
-      n * (tMax x + L + 1) + L + 1)
+      (∑ j ∈ Finset.range n, roundCost x j) + L + 1)
       (show 26 * D ≤ (40 * M + 200) * D from Nat.mul_le_mul_right _ (by omega))
     have f₆ := Nat.le_mul_of_pos_left (tI x) hD1
     have f₇ := Nat.le_mul_of_pos_left (tF (streamState (init x) next l n)) hD1
@@ -289,9 +295,8 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε
     have f₉ := Nat.mul_le_mul_right (L + 1) (show 20 ≤ D by omega)
     refine le_trans
       (Nat.add_le_add_right (Nat.add_le_add_left (Nat.add_le_add_right hsum 1) _) _) ?_
-    have z₁ := Nat.zero_le (D * L * n)
-    have z₂ := Nat.zero_le (D * n)
-    have z₃ := Nat.zero_le (D * n * tMax x)
+    have z₁ := Nat.zero_le (D * L)
+    have z₂ := Nat.zero_le (D * ∑ j ∈ Finset.range n, roundCost x j)
     ring_nf at f₁ f₂ f₃ f₄ f₅ f₆ f₇ f₈ f₉ z₁ ⊢
     linarith
   · simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, st] at hSn ⊢
@@ -347,5 +352,61 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε
     generalize (Finset.range n).sup sRound = sup at g₁ ⊢
     ring_nf at g₁ g₂ g₃ g₄ g₅ g₆ g₇ g₈ q₂ z₁ ⊢
     linarith
+
+
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: derived from `streamFold_sum` to share the machine and resource proof.
+/-- **Streaming folds are tidily computable.** The input `x` is encoded by concatenating the non-
+empty tokens `tok a` of the elements `elems x`, from each of which the finite-state reader `r`
+reads `encA a`. If `init`, `next`, `emit` and `finish` are tidily computable, and `g x` is encoded
+by the words emitted by the fold over `elems x` followed by `finish` of its final state, then `g`
+is tidily computable. Its time is linear in the input plus the rounds. Workspace uses peak bounds
+on states, elements and callbacks. The bounds `tMax`, `sMax` and `lMax` bound the time and space
+of a round and the lengths of the states and elements. -/
+public theorem ComputableTidilyInTimeAndSpace.streamFold {α σ : Type u} {γ ε φ ω : Type*}
+    {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool} {encF : φ ↪ List Bool}
+    {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {Q : Type} [Finite Q]
+    (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
+    (hread : ∀ a rest, r.read r.q₀ (tok a ++ rest) = (encA a, (tok a).length))
+    (elems : γ → List α) (hL : ∀ x, encIn x = (elems x).flatMap tok)
+    {init : γ → σ} {next : σ × α → σ} {emit : σ × α → ε} {finish : σ → φ} {g : γ → ω}
+    {tI sI : γ → ℕ} {tN sN tE sE : σ × α → ℕ} {tF sF : σ → ℕ}
+    (hinit : ComputableTidilyInTimeAndSpace init encIn encS tI sI)
+    (hnext : ComputableTidilyInTimeAndSpace next (encPair encS encA) encS tN sN)
+    (hemit : ComputableTidilyInTimeAndSpace emit (encPair encS encA) encE tE sE)
+    (hfinish : ComputableTidilyInTimeAndSpace finish encS encF tF sF)
+    (hg : ∀ x, encOut (g x) = streamEmit next (fun p => encE (emit p)) (init x) (elems x) ++
+      encF (finish (streamState (init x) next (elems x) (elems x).length)))
+    {tMax sMax lMax : γ → ℕ}
+    (htMax : ∀ x j (hj : j < (elems x).length),
+      tN (streamState (init x) next (elems x) j, (elems x)[j]) +
+        tE (streamState (init x) next (elems x) j, (elems x)[j]) ≤ tMax x)
+    (hsMax : ∀ x j (hj : j < (elems x).length),
+      sN (streamState (init x) next (elems x) j, (elems x)[j]) +
+        sE (streamState (init x) next (elems x) j, (elems x)[j]) ≤ sMax x)
+    (hS : ∀ x, ∀ j ≤ (elems x).length,
+      (encS (streamState (init x) next (elems x) j)).length ≤ lMax x)
+    (hA : ∀ x j (hj : j < (elems x).length), (encA (elems x)[j]).length ≤ lMax x) :
+    ∃ c, ComputableTidilyInTimeAndSpace g encIn encOut
+      (fun x => c * (tI x + tF (streamState (init x) next (elems x) (elems x).length) +
+        (encIn x).length + (elems x).length * (tMax x + lMax x + 1) + lMax x + 1))
+      (fun x => c * (sI x + sF (streamState (init x) next (elems x) (elems x).length) + sMax x +
+        lMax x + 1)) := by
+  obtain ⟨c, h⟩ := streamFold_sum r tok htok hread elems hL hinit hnext hemit hfinish hg
+    (roundCost := fun x _ => tMax x + 3 * lMax x + 1) (sMax := sMax) (lMax := lMax)
+    (fun x j hj => by
+      have ht := htMax x j hj
+      have h₀ := hS x j hj.le
+      have h₁ := hS x (j + 1) hj
+      have ha := hA x j hj
+      lia) hsMax hS hA
+  refine ⟨c * 3, h.mono (fun x => ?_) (fun x => ?_)⟩
+  · simp only [Finset.sum_const, Finset.card_range, smul_eq_mul]
+    rw [Nat.mul_assoc]
+    apply Nat.mul_le_mul_left c
+    nlinarith
+  · rw [Nat.mul_assoc]
+    apply Nat.mul_le_mul_left c
+    lia
 
 end Turing.MultiTapeTM

@@ -8605,3 +8605,24 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.id'' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.id'
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_sum' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_sum
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum_spec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum_spec

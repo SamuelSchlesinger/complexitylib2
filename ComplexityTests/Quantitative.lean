@@ -116,7 +116,8 @@ example (f : Bool → Bool) :
     ← List.map_eq_flatMap] using ComputableTidilyInTimeAndSpace.map_bits f
 
 -- The numerical loop contract also handles a genuinely growing stored accumulator.
--- Its meaningful invariant is that one bit has been accumulated per consumed input bit.
+-- Its invariant is one stored bit per consumed input bit. The cost at index i uses i, not the
+-- final input length; summing it accounts for the cumulative copying of growing prefixes.
 example : (∃ c, ComputableTidilyInTimeAndSpace (fun l : List Bool =>
       l.foldl (fun acc b => acc ++ [b]) []) encBits encBits
       (fun l => c * (l.length + 1) ^ 2) (fun l => c * (l.length + 1))) ∧
@@ -126,25 +127,105 @@ example : (∃ c, ComputableTidilyInTimeAndSpace (fun l : List Bool =>
     (PairEncoding.fst (enc₁ := encBits) encBool).append
       (PairEncoding.snd (enc₂ := encBool) encBits) (fun _ => rfl)
   obtain ⟨k, hk⟩ := hstep
-  obtain ⟨⟨c, h⟩, hpost⟩ := hk.foldl_bits_stream_spec (step := fun acc b => acc ++ [b]) []
+  obtain ⟨⟨c, h⟩, hpost⟩ := hk.foldl_bits_stream_sum_spec (step := fun acc b => acc ++ [b]) []
     (fun _ i state => state.length = i) (by simp)
     (by intro l i hi state hs; simpa using hs)
-    (R := fun l => k * (2 * l.length + 3)) (Q := fun l => k * (2 * l.length + 3))
+    (R := fun _ i => k * (2 * i + 3) + 2 * i + 2)
+    (Q := fun l => k * (2 * l.length + 3))
     (B := List.length)
     (by
       intro l i hi state hs
-      constructor <;> apply Nat.mul_le_mul_left k <;> simp only [length_encPair,
-        encBits_apply, encBool_apply, List.length_singleton] <;> lia)
+      simp only [length_encPair, encBits_apply, encBool_apply, List.length_singleton,
+        List.length_append, hs]
+      exact ⟨by lia, Nat.mul_le_mul_left k (by lia)⟩)
     (by intro l i hi state hs; simpa [hs] using hi)
   refine ⟨⟨c * (3 * k + 3), h.mono (fun l => ?_) (fun l => ?_)⟩, hpost⟩
-  · have hround : k * (2 * l.length + 3) + l.length + 1 ≤
-        (3 * k + 3) * (l.length + 1) := by nlinarith
-    have hmul := Nat.mul_le_mul_left l.length hround
-    rw [Nat.mul_assoc]
+  · have hsum (n : ℕ) : (∑ i ∈ Finset.range n, (k * (2 * i + 3) + 2 * i + 2)) =
+        (k + 1) * n ^ 2 + (2 * k + 1) * n := by
+      induction n with
+      | zero => simp
+      | succ n ih => rw [Finset.sum_range_succ]; nlinarith
+    rw [hsum, Nat.mul_assoc]
     apply Nat.mul_le_mul_left c
     nlinarith
   · rw [Nat.mul_assoc]
     apply Nat.mul_le_mul_left c
     nlinarith
+
+
+-- Resetting an accumulator charges only the prefixes actually retained between resets.
+-- Long runs cost more; short runs need not pay the largest state's cost on every round.
+private def resetStep (state : List Bool) (bit : Bool) : List Bool :=
+  if bit then [] else state ++ [false]
+
+example : ∃ c, ComputableTidilyInTimeAndSpace (fun l => l.foldl resetStep []) encBits encBits
+    (fun l => c * ((∑ i ∈ Finset.range l.length,
+      (((l.take i).foldl resetStep []).length + 1)) + 1))
+    (fun l => c * (l.length + 1)) := by
+  have hgrowth (state : List Bool) (bit : Bool) :
+      (resetStep state bit).length ≤ state.length + 1 := by cases bit <;> simp [resetStep]
+  have hlength (l state : List Bool) :
+      (l.foldl resetStep state).length ≤ state.length + l.length := by
+    induction l generalizing state with
+    | nil => simp
+    | cons b l ih =>
+      have h := ih (resetStep state b)
+      have hg := hgrowth state b
+      simpa only [List.foldl_cons, List.length_cons] using (show
+        (l.foldl resetStep (resetStep state b)).length ≤ state.length + (l.length + 1) by lia)
+  have happend : ComputableTidilyInLinearTimeAndSpace
+      (fun p : List Bool × Bool => p.1 ++ [false]) (encPair encBits encBool) encBits :=
+    (PairEncoding.fst (enc₁ := encBits) encBool).append
+      (ComputableTidilyInLinearTimeAndSpace.const (encMid := encBool) false) (fun _ => rfl)
+  have hstep : ComputableTidilyInLinearTimeAndSpace
+      (fun p : List Bool × Bool => resetStep p.1 p.2) (encPair encBits encBool) encBits :=
+    (PairEncoding.snd (enc₂ := encBool) encBits).ite
+      (ComputableTidilyInLinearTimeAndSpace.const []) (happend.restrict _)
+  obtain ⟨k, hk⟩ := hstep
+  obtain ⟨c, h⟩ := hk.foldl_bits_stream_sum (step := resetStep) []
+    (R := fun l i => (3 * k + 2) * (((l.take i).foldl resetStep []).length + 1))
+    (Q := fun l => k * (2 * l.length + 3)) (B := List.length)
+    (fun l i hi => by
+      have hg := hgrowth ((l.take i).foldl resetStep []) l[i]
+      simp only [length_encPair, encBits_apply, encBool_apply, List.length_singleton,
+        List.take_succ_eq_append_getElem hi, List.foldl_append, List.foldl_cons, List.foldl_nil]
+      nlinarith)
+    (fun l i hi => by
+      have hl := hlength (l.take i) []
+      simp only [List.length_nil, Nat.zero_add, List.length_take] at hl
+      apply Nat.mul_le_mul_left k
+      simp only [length_encPair, encBits_apply, encBool_apply, List.length_singleton]
+      lia)
+    (fun l i hi => by
+      have hl := hlength (l.take i) []
+      simpa only [encBits_apply, List.length_nil, Nat.zero_add, List.length_take] using
+        hl.trans (by simp))
+  have hn (l : List Bool) : l.length ≤ ∑ i ∈ Finset.range l.length,
+      (((l.take i).foldl resetStep []).length + 1) := by
+    simpa using (Finset.sum_le_sum (s := Finset.range l.length)
+      (f := fun _ => 1) (g := fun i => ((l.take i).foldl resetStep []).length + 1)
+      (fun _ _ => Nat.le_add_left 1 _))
+  refine ⟨c * (3 * k + 3), h.mono (fun l => ?_) (fun l => ?_)⟩
+  · rw [← Finset.mul_sum, Nat.mul_assoc]
+    apply Nat.mul_le_mul_left c
+    have hl := hn l
+    nlinarith
+  · rw [Nat.mul_assoc]
+    apply Nat.mul_le_mul_left c
+    nlinarith
+
+-- An empty input still retains and emits the nonempty initial state.
+example : ¬ (∀ l : List Bool, ∀ i ≤ l.length,
+    (encBits ((l.take i).foldl (fun state _ => state) [true])).length ≤ 0) := by
+  intro h
+  have := h [] 0 (by simp)
+  simp at this
+
+-- A one-bit input charges the successor state even when the initial state is empty.
+example : ¬ (∀ l : List Bool, ∀ i ≤ l.length,
+    (encBits ((l.take i).foldl (fun state bit => state ++ [bit]) [])).length ≤ 0) := by
+  intro h
+  have := h [true] 1 (by simp)
+  simp at this
 
 end ComplexityTests.Quantitative
