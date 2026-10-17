@@ -5858,3 +5858,136 @@ info: 'Cslib.Circuits.Fusion.pairCoverComplexity_eq_cyclic_ecomplexityFrom' depe
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Fusion.pairCoverComplexity_eq_cyclic_ecomplexityFrom
+
+/--
+info: 'Cslib.BitString.listVoteMargin_cons' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.listVoteMargin_cons
+
+/--
+info: 'Cslib.BitString.listStrictMajority_eq_of_pos' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.listStrictMajority_eq_of_pos
+
+/--
+info: 'Cslib.BitString.listNonpositiveMargin_eq_true' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.listNonpositiveMargin_eq_true
+
+/--
+info: 'Cslib.BitString.listStrictMajority_error_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.listStrictMajority_error_le
+
+/--
+info: 'Cslib.BitString.map_listNonpositiveMargin_true' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.map_listNonpositiveMargin_true
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsNonpositiveMarginWithInput' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsNonpositiveMarginWithInput
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajorityWithInput' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajorityWithInput
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.potential_le_quadratic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.potential_le_quadratic
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.potential_lower_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.potential_lower_bound
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.step_progress' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.step_progress
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.dense_margin_of_iterations' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.dense_margin_of_iterations
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.clock_sufficient' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.clock_sufficient
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.eval_sampleWeight_true' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.eval_sampleWeight_true
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.sampleWeight_density_deviation' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.sampleWeight_density_deviation
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPolyTime_weightNumerator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPolyTime_weightNumerator
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_sampleWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.Boosting.isPPTOn_sampleWeight
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSample_entropy_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSample_entropy_ge
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.maskedSequence_prediction_gap' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.maskedSequence_prediction_gap
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.isPPTOn_maskedSequencePredictor' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.isPPTOn_maskedSequencePredictor

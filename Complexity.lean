@@ -389,8 +389,12 @@ public import Complexity.Crypto.Computational.OneWay.Collision
 public import Complexity.Crypto.Computational.OneWay.Normalize
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Potential
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Progress
+public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Sampling
 public import Complexity.Crypto.Computational.Pseudoentropy.HashPair
 public import Complexity.Crypto.Computational.Pseudoentropy.HashReduction
+public import Complexity.Crypto.Computational.Pseudoentropy.Masking
 public import Complexity.Crypto.Computational.Pseudoentropy.OneWay
 public import Complexity.Crypto.Computational.Pseudoentropy.Reduction
 public import Complexity.Crypto.Computational.Pseudoentropy.Seed
@@ -471,6 +475,7 @@ public import Complexity.Foundations.Data.BitString.Hoeffding
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.List.Operations
+public import Complexity.Foundations.Data.BitString.List.Vote
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.QuadraticForm
@@ -558,6 +563,7 @@ public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
 public import Complexity.Probability.BitString.LinearHash
 public import Complexity.Probability.BitString.List
+public import Complexity.Probability.BitString.List.Vote
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Concentration
 public import Complexity.Probability.Conditioning

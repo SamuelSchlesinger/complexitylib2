@@ -21,6 +21,7 @@ produces zeros, missing selectors are false, and XOR truncates to the shorter li
 ## Main definitions
 
 * `Cslib.BitString.listStrictMajority`: strict majority, returning false on a tie.
+* `Cslib.BitString.listNonpositiveMargin`: compare correct votes with all votes.
 * `Cslib.BitString.listSingle`, `Cslib.BitString.listSingles`: basis vectors in coordinate order.
 * `Cslib.BitString.listXorSelected`: sum selected rows using an ordinary fold.
 
@@ -34,6 +35,7 @@ produces zeros, missing selectors are false, and XOR truncates to the shorter li
 ## References
 
 Adapted from `Probability/WordBits.lean` and `Crypto/Computational/GoldreichLevin/WordDecoder.lean`
+and `Crypto/Computational/Pseudoentropy/Boosting/Vote.lean`
 on the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
@@ -62,6 +64,16 @@ theorem dotProduct_eq_foldl {n : ℕ} (left right : BitString n) :
 /-- Strict majority of a word of votes, choosing false on a tie. -/
 def listStrictMajority (votes : List Bool) : Bool :=
   decide (votes.length < 2 * (votes.filter id).length)
+
+/-- Whether the correct votes fail to form a strict majority. This test uses natural arithmetic. -/
+def listNonpositiveMargin (votes : List Bool) (truth : Bool) : Bool :=
+  decide (2 * votes.count truth ≤ votes.length)
+
+/-- The existing strict-majority operation is equivalently a comparison of vote counts. -/
+theorem listStrictMajority_eq_decide_count (votes : List Bool) :
+    listStrictMajority votes = decide (votes.length < 2 * votes.count true) := by
+  simp only [listStrictMajority, List.count_eq_length_filter, beq_true]
+  rfl
 
 /-- Listing each voting index once gives exactly finite-set strict majority. -/
 theorem listStrictMajority_map {ι : Type} [DecidableEq ι]

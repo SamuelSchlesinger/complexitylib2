@@ -56,6 +56,7 @@ import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs
+import ComplexityTests.PseudoentropyMasking
 import ComplexityTests.PseudoentropySeed
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.RandomOracle

@@ -35,6 +35,8 @@ polynomial bound on the complete encoded output. The operations are total on emp
   `.bitsXorSelected`: finite-mask algorithms.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsCountPWithInput`, `.bitsCountWithInput`:
   unary counts under captured predicates or computed labels.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsNonpositiveMarginWithInput`:
+  compare the correct-vote count with the word length.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList`: output-bounded enumeration.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBoundedBinaryValue`: capped binary decoding
   to unary, with every intermediate accumulator bounded by the supplied cap.
@@ -244,6 +246,25 @@ theorem bitsZipWithInput (op : Bool → Bool → Bool) {left right : α → List
 theorem bitsStrictMajority : ComputableTidilyInPolyTime Cslib.BitString.listStrictMajority
     encBits encBool := by
   unfold Cslib.BitString.listStrictMajority
+  fun_prop
+
+/-- Strict majority of computed votes fixes the intermediate raw-word encoding. -/
+@[fun_prop]
+theorem bitsStrictMajorityWithInput {votes : α → List Bool}
+    (hvotes : ComputableTidilyInPolyTime votes input encBits) :
+    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listStrictMajority (votes a))
+      input encBool :=
+  bitsStrictMajority.comp hvotes
+
+/-- The training test is polynomial time in the vote list and its supplied label. -/
+@[fun_prop]
+theorem bitsNonpositiveMarginWithInput
+    {votes : α → List Bool} {truth : α → Bool}
+    (hvotes : ComputableTidilyInPolyTime votes input encBits)
+    (htruth : ComputableTidilyInPolyTime truth input encBool) :
+    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listNonpositiveMargin (votes a) (truth a))
+      input encBool := by
+  unfold Cslib.BitString.listNonpositiveMargin
   fun_prop
 
 /-- Generate one coordinate mask from its unary width and index. -/
