@@ -84,6 +84,14 @@ theorem headD {encL : List α ↪ List Bool} [ListEncoding encA encL] (fallback 
     ComputableTidilyInPolyTime (fun list => list.headD fallback) encL encA :=
   (ComputableTidilyInDegree.headD fallback).computableTidilyInPolyTime
 
+/-- Read a computed framed list's head, inferring the element encoding from the list before
+composing with a later field projection. -/
+@[fun_prop]
+theorem listHeadDWithInput {list : γ → List α} (fallback : α)
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun a => (list a).headD fallback) encIn encA :=
+  (headD fallback).comp hlist
+
 /-- Drop the head of any list encoding. -/
 @[fun_prop]
 theorem tail {encL : List α ↪ List Bool} [ListEncoding encA encL] :
@@ -127,6 +135,14 @@ theorem bitsReverse : ComputableTidilyInPolyTime List.reverse encBits encBits :=
       (encPair encBits encBool) encBits by fun_prop)
     (growth := 1) (fun _ _ => by simp)
   simpa using h
+
+/-- Reverse a computed word, fixing its raw intermediate encoding before proof search.
+The input certificate may itself convert from another representation. -/
+@[fun_prop]
+theorem bitsReverseWithInput {word : γ → List Bool}
+    (hword : ComputableTidilyInPolyTime word encIn encBits) :
+    ComputableTidilyInPolyTime (fun a => (word a).reverse) encIn encBits :=
+  bitsReverse.comp hword
 
 /-- Prepending an element to a framed list is polynomial-time. -/
 @[fun_prop]

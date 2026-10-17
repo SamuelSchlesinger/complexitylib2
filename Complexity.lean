@@ -384,6 +384,7 @@ public import Complexity.Crypto.Computational.GoldreichLevin.Reduction
 public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction
 public import Complexity.Crypto.Computational.HardCore
+public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.Collision
@@ -409,6 +410,7 @@ public import Complexity.Crypto.Computational.Pseudoentropy.OneWay
 public import Complexity.Crypto.Computational.Pseudoentropy.Reduction
 public import Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction
 public import Complexity.Crypto.Computational.Pseudoentropy.Seed
+public import Complexity.Crypto.Computational.Pseudoentropy.SequenceLearner
 public import Complexity.Crypto.Computational.Pseudoentropy.WordReduction
 public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle

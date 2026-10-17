@@ -21,6 +21,8 @@ rules for `fun_prop`.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.exists_degree`: polynomial-time functions
   admit explicit time and output degrees.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq`: reuse identical encoded outputs.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.encoded`, `.unframe`, `.dropFrame`: compose
+  encoded values and total frame parsing without requiring an inverse for an encoding.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_finite`: functions on finite domains.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.fstWithEncoding`, `.sndWithEncoding`: projections
   that compose with a known encoding conversion.
@@ -98,6 +100,28 @@ theorem of_enc_eq {δ : Type} {encD : δ ↪ List Bool} {f : α → β} {g : α 
     (h : ∀ a, encD (g a) = encB (f a)) : ComputableTidilyInPolyTime g encA encD := by
   obtain ⟨d, e, hf⟩ := hf.exists_degree
   exact (hf.of_enc_eq h).computableTidilyInPolyTime
+
+/-- Expose an already encoded value as a raw word. No inverse for the encoding is required. -/
+@[fun_prop]
+theorem encode (enc : α ↪ List Bool) : ComputableTidilyInPolyTime enc enc encBits :=
+  of_eq fun _ => rfl
+
+/-- Compute a value and expose its representation, inferring that representation from the
+supplied certificate before composing. -/
+@[fun_prop]
+theorem encoded {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
+    ComputableTidilyInPolyTime (fun a => encB (f a)) encA encBits :=
+  hf.of_enc_eq fun _ => rfl
+
+/-- Read the first frame from any raw word, including malformed encodings. -/
+@[fun_prop]
+theorem unframe : ComputableTidilyInPolyTime Turing.MultiTapeTM.unframe encBits encBits :=
+  of_linear (.of_unframe fun _ => rfl)
+
+/-- Drop the first frame from any raw word, including malformed encodings. -/
+@[fun_prop]
+theorem dropFrame : ComputableTidilyInPolyTime Turing.MultiTapeTM.dropFrame encBits encBits :=
+  of_linear (.of_dropFrame fun _ => rfl)
 
 /-- Every function on a finite domain is polynomial-time for any fixed encodings. -/
 theorem of_finite [Finite α] (f : α → β) : ComputableTidilyInPolyTime f encA encB :=

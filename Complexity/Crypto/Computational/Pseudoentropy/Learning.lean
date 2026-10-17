@@ -19,9 +19,9 @@ weighted validation trial. The explicit learner then samples descriptions, choos
 and estimates their validation rates. Its output has positive weighted correlation with high
 probability. All target predictions receive only the public observation.
 
-The replay law and the masked source's extraction bound are explicit hypotheses. Constructing
-saved descriptions from the sequence predictor and choosing uniform asymptotic parameters are
-separate steps in the final cryptographic reduction.
+The replay law and the masked source's extraction bound are explicit hypotheses. `SequenceLearner`
+constructs saved descriptions and obtains replay from a certified sequence test. Choosing uniform
+asymptotic parameters remains a separate step in the final cryptographic reduction.
 
 ## Main results
 

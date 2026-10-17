@@ -64,6 +64,7 @@ import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.RandomOracle
 import ComplexityTests.SATPolyTime
+import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.Smoke
 import ComplexityTests.SourceComplexity

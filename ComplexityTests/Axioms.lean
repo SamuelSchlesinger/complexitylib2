@@ -6327,3 +6327,87 @@ info: 'Cslib.Crypto.Pseudoentropy.extractedSequence_learn_error_pow' depends on 
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.Pseudoentropy.extractedSequence_learn_error_pow
+
+/--
+info: 'Cslib.Crypto.SavedPrediction.eval_sample' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.SavedPrediction.eval_sample
+
+/--
+info: 'Cslib.Crypto.SavedPrediction.exists_evaluator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.SavedPrediction.exists_evaluator
+
+/--
+info: 'Cslib.Crypto.SavedPrediction.length_sample_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.SavedPrediction.length_sample_le
+
+/--
+info: 'Cslib.Crypto.SavedPrediction.isPPTOn_sample' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.SavedPrediction.isPPTOn_sample
+
+/--
+info: 'Cslib.Crypto.SavedPrediction.isPolyTime_evaluate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.SavedPrediction.isPolyTime_evaluate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.isPPTOn_predict' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.isPPTOn_predict
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.exists_evaluator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.exists_evaluator
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.learn_goodPredictor_error' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.learn_goodPredictor_error
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.predict_error' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.predict_error
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.predict_extracted_error' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.predict_extracted_error
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.failureBound_negligible' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.failureBound_negligible
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.SequenceLearner.failureBound_eventually_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.SequenceLearner.failureBound_eventually_le
