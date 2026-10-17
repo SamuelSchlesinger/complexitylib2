@@ -1,10 +1,7 @@
 # Development roadmap
 
-This file records outstanding work and the rationale needed to guide it. The
-[README](README.md) introduces the library and links to completed reference developments;
-[AGENTS.md](AGENTS.md) holds repository rules and design commitments;
-[UPSTREAM.md](UPSTREAM.md) records upstream coordination and integration decisions.
-Mathematical contracts and limitations belong beside their declarations.
+Outstanding work and the rationale needed to guide it. See the [README](README.md) for
+completed reference developments.
 
 ## Current priorities
 
@@ -47,13 +44,7 @@ Mathematical contracts and limitations belong beside their declarations.
    narrowly oriented and machine transitions out of global simp. Share mathematical bookkeeping
    only with demonstrated reuse, counting helper proofs as part of the total cost.
 
-## Architecture and later milestones
-
-The deterministic backend is Christian Reitwiessner's tidy calculus, using explicit encodings
-and upstream Turing machines. Typed functional programs and their computational certificates
-build on it; the effectful machine reuses upstream configurations and actions. See the
-[design commitments](AGENTS.md#design-commitments-do-not-re-litigate-casually) and module docstrings
-for the contracts, and the upstream ledger for the status of copied dependencies.
+## Later milestones
 
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
@@ -83,9 +74,5 @@ Judge changes on client readability, total proof burden and elaboration cost. Co
 and helper APIs, and distinguish source-line counts from runtime or proof-term size.
 [scripts/proof_lengths.py](scripts/proof_lengths.py) supports comparison against a Git revision.
 
-## Historical evidence
-
-Previous proof measurements, review records, port inventories and superseded design proposals
-remain in the [roadmap at c883952](https://github.com/SamuelSchlesinger/complexitylib2/blob/c88395234575284c2fe1e9e3619ead1c2f6fd7f3/ROADMAP.md).
-Record new batch-specific measurements, validation and review scope in commit or PR descriptions;
-update this file when the remaining work or architectural decisions change.
+Past measurements, reviews and proposals remain in the
+[historical roadmap](https://github.com/SamuelSchlesinger/complexitylib2/blob/c88395234575284c2fe1e9e3619ead1c2f6fd7f3/ROADMAP.md).

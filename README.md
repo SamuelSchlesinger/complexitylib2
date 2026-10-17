@@ -18,24 +18,9 @@ results or make those results easier to state, prove, and reuse.
 | Find a computational model or mathematical tool | [Module index](Complexity.lean); each module documents its definitions, results, and references |
 | Contribute a result or improve an API | [Contributing](CONTRIBUTING.md) |
 
-For example, an ordinary list fold has a polynomial-time machine certificate:
-
-```lean
-import Complexity.Tactic.PolyTime
-
-open Turing.MultiTapeTM
-
-example : ComputableTidilyInPolyTime
-    (fun word : List Bool => word.foldl (fun reversed bit => bit :: reversed) [])
-    encBits encBits := by
-  polytime
-```
-
-The claim is uniform in the input and measures time and space against its encoded length.
-The deterministic backend builds on Christian Reitwiessner's tidy machine calculus. Clients
-supply algorithm-specific invariants and size bounds; shared certificates and tactics handle
-supported operations and composition. The linked examples cover encodings, named certificates,
-correctness invariants, and limits of the automation.
+The checked examples show `fun_prop`, `polytime`, and `ppt` with explicit encodings and
+client-supplied invariants. The deterministic backend builds on Christian Reitwiessner's tidy
+machine calculus.
 
 ## Selected developments
 
@@ -71,8 +56,8 @@ Import the specific modules you need. `import Complexity` imports the whole libr
 
 Modules follow CSLib's APIs, paths, namespaces, and contribution standards so they can move
 upstream with the import prefix changed from `Complexity.` to `Cslib.`. Acceptance requires
-CSLib review. [UPSTREAM.md](UPSTREAM.md) tracks integration;
-[ROADMAP.md](ROADMAP.md) holds outstanding work and architectural decisions.
+CSLib review. [ROADMAP.md](ROADMAP.md) records outstanding work;
+[UPSTREAM.md](UPSTREAM.md) records upstream coordination and exceptional integration decisions.
 
 Source headers retain authorship, module docstrings credit mathematical and formalization
 sources, and [references.bib](references.bib) contains the bibliography.

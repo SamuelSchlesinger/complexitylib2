@@ -1,7 +1,6 @@
 # Upstream integration
 
-Keep only coordination and integration decisions here. Module descriptions, theorem scope and
-source credits belong in Lean docstrings; [ROADMAP.md](ROADMAP.md) records development priorities.
+Coordination and integration decisions not already recorded in source.
 
 The authoritative records are:
 
@@ -77,9 +76,5 @@ agreement during upstream review.
 | `Probability/ApproximateCounting/Relative` | Extract the natural-number root lemmas to Mathlib. |
 | `Computability/Kolmogorov/SelfDelimiting` | Move `Nat.foldr_bit_bits` to Mathlib's `Data/Nat/Bits`. |
 
-## Earlier records
-
-The [previous ledger](https://github.com/SamuelSchlesinger/complexitylib2/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
-preserves the full port catalogue, historical integration notes and per-module follow-up ideas.
-Use current Lean declarations for theorem claims and source markers for copied revisions. Keep
-new validation, review and measurement records in commit or PR descriptions.
+The [historical ledger](https://github.com/SamuelSchlesinger/complexitylib2/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
+preserves earlier integration notes and per-module follow-up ideas.

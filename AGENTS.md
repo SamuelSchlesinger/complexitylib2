@@ -4,8 +4,8 @@ complexitylib v2 is a Lean 4 library of computational complexity theory built on
 (`leanprover/cslib`). Its defining constraint: **every module must be upstreamable into cslib
 unchanged**, apart from rewriting the import prefix `Complexity.` → `Cslib.`. cslib's own rules
 therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `CODESTYLE.md`
-(local clone: `../cslib`) and follow them. `ROADMAP.md` holds the architecture and phase plan;
-`UPSTREAM.md` is the upstreaming ledger.
+(local clone: `../cslib`) and follow them. `ROADMAP.md` records outstanding work;
+`UPSTREAM.md` records coordination and exceptional integration decisions.
 
 ## Lean development: use the Lean MCP server first
 
@@ -60,8 +60,9 @@ lake exe checkInitImports
 4. **Every module publicly imports `Cslib.Init`** (through `Complexity.Init`); the test driver
    runs `checkInitImports`.
 5. **Reuse upstream first.** Before defining anything, search cslib (`../cslib/Cslib`) and the
-   in-flight PRs listed in `UPSTREAM.md`. A thin local copy of an unmerged upstream PR (or of an
-   unsubmitted branch of an upstream contributor) is allowed at the mirrored path, keeping the
+   in-flight PRs recorded in source markers, and consult `UPSTREAM.md`. A thin local copy of an
+   unmerged upstream PR (or an unsubmitted branch of an upstream contributor) is allowed at the
+   mirrored path, keeping the
    original authors and declaration names, marked `-- upstream: submitted #N @SHA` (or
    `vendored …`). A copy holds only what the pinned cslib lacks: when a PR modifies an existing
    cslib file, the copy contains just its additions. Copies are deleted when the work merges.
