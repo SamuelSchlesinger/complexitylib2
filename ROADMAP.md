@@ -2468,7 +2468,10 @@ All six checks pass: strict build 1.39 s, import coverage 1.50 s, tests 5.66 s, 
 Independent API review approves the implementation and clients after checking them and the exact
 ten guard blocks through MCP. Its closing pass reproduces the proof counts, verifies exact
 profile-source parity and reads the successful gate records without rerunning validation.
-The required post-publication correctness review is pending.
+The post-publication Codex correctness review approves `1fce3ef` against `2c49297` with no
+material findings. Its source inspection supports the fixed-point induction, exact cost
+preservation, supplied-source bounds and edge cases. It did not independently verify builds,
+client execution, axiom guards, profiling or original v1 provenance.
 
 ### Implementation priorities (2026-10-16)
 
