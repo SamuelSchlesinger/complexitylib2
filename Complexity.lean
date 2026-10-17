@@ -246,6 +246,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap
@@ -389,6 +390,7 @@ public import Complexity.Crypto.Computational.GGM.Hybrid
 public import Complexity.Crypto.Computational.GGM.Reduction
 public import Complexity.Crypto.Computational.GGM.Security
 public import Complexity.Crypto.Computational.GeneratorPadding
+public import Complexity.Crypto.Computational.GeneratorXor
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
 public import Complexity.Crypto.Computational.GoldreichLevin.HardCore
 public import Complexity.Crypto.Computational.GoldreichLevin.Parameters
@@ -431,7 +433,9 @@ public import Complexity.Crypto.Computational.Pseudoentropy.SeedExtraction
 public import Complexity.Crypto.Computational.Pseudoentropy.Selection
 public import Complexity.Crypto.Computational.Pseudoentropy.SequenceLearner
 public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource
+public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Amplification
 public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Candidates
+public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Combined
 public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Padding
 public import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Seeded
 public import Complexity.Crypto.Computational.Pseudoentropy.WordExtraction

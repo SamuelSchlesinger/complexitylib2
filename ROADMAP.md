@@ -5,11 +5,12 @@ completed reference developments.
 
 ## Current priorities
 
-1. **General OWF → PRG.** Continue from the
-   [pseudoentropy pair construction](Complexity/Crypto/Computational/Pseudoentropy/OneWay.lean)
-   through amplification, extraction and the remaining security reductions. Reuse Goldreich–Levin,
-   polynomial stretch and the adaptive oracle machinery. Once this is complete, compose with GGM
-   to obtain general OWF → PRF. Individual efficient samplers do not settle the security theorem.
+1. **General OWF → PRG.** Extend the
+   [combined entropy-grid generator](Complexity/Crypto/Computational/Pseudoentropy/ThreeSource/Combined.lean)
+   to every seed length. Complete the calibrated-test uniform bound and use bounded search
+   for reindexing, then assemble the pseudoentropy and one-way-function reductions.
+   Compose the resulting PRG with GGM to obtain general OWF → PRF. The current security-parameter
+   family does not yet establish the every-input-length theorem.
 
 2. **Certified PCP construction.** The
    [gap theorem](Complexity/Computability/PCP/GapTheorem.lean) establishes combinatorial correctness

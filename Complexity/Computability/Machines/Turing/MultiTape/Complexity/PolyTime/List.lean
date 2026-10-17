@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 
 /-!
 # Polynomial-time list operations
@@ -49,6 +50,8 @@ up a variable with a large binary label does not require a certificate as long a
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.getElem?`: optional lookup in computed lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listIsEmpty`, `.listIsEmpty'`, `.bitsIsEmpty`,
   `.head?`: inspect a list without a default element, with inference rules for framed and raw lists.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listReverse`, `.listReverseWithInput`:
+  reverse framed lists, charging the complete encoded size of every intermediate prefix.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOfWithInput`, `.bitsGetDWithInput`:
   compositional rules for first-occurrence lookup and raw-bit access.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsDropWithInput`, `.bitsTakeWithInput`:
@@ -174,6 +177,26 @@ theorem listAppend' {left right : γ → List α}
     (hright : ComputableTidilyInPolyTime right encIn (encList encA)) :
     ComputableTidilyInPolyTime (fun x => left x ++ right x) encIn (encList encA) :=
   (listAppend encA).comp (hleft.prod hright)
+
+/-- Reverse a framed list; the accumulator is a permutation of a prefix of the input. -/
+@[fun_prop]
+theorem listReverse (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime List.reverse (encList enc) (encList enc) := by
+  have h := foldl' (encA := enc) (encL := encList enc)
+    (step := fun reversed value => value :: reversed) (init := fun _ => [])
+    (id' (encIn := encList enc)) (const [])
+    (show ComputableTidilyInPolyTime (fun p : List α × α => p.2 :: p.1)
+      (encPair (encList enc) enc) (encList enc) by fun_prop)
+    (B := fun list => (encList enc list).length) .self (fun list i _ => by
+      simpa using length_encList_take_le enc list i)
+  simpa using h
+
+/-- Reverse a computed framed list, inferring its element encoding from the result. -/
+@[fun_prop]
+theorem listReverseWithInput {list : γ → List α}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun a => (list a).reverse) encIn (encList encA) :=
+  (listReverse encA).comp hlist
 
 /-- Find the first element passing a polynomial-time test with a fixed parameter.
 The list may have any polynomial encoded length. -/

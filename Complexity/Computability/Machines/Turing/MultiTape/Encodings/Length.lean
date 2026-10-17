@@ -37,6 +37,11 @@ theorem length_encList (l : List α) :
   | nil => rfl
   | cons a l ih => simp [ih]
 
+/-- Reversing a list preserves the full encoded size, including each element's framing. -/
+@[simp] theorem length_encList_reverse (l : List α) :
+    (encList enc l.reverse).length = (encList enc l).length := by
+  simp only [length_encList, List.map_reverse, List.sum_reverse]
+
 /-- The encoded elements of a list are no longer, in total, than the encoded list. -/
 theorem sum_length_le_length_encList (l : List α) :
     (l.map fun a => (enc a).length).sum ≤ (encList enc l).length := by

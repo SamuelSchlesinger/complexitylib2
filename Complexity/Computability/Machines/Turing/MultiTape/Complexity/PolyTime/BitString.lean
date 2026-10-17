@@ -33,7 +33,7 @@ polynomial bound on the complete encoded output. The operations are total on emp
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapToBitsWithInput`, `.bitsFilterWithInput`,
   `.bitsAnyWithInput`, `.bitsFoldlWithInput`, `.bitsZipWithInput`: compositional bit operations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajority`, `.bitsSingle`, `.bitsSingles`,
-  `.bitsXorSelected`: finite-mask algorithms.
+  `.bitsXorSelected`, `.bitsXorWithInput`: finite-mask algorithms.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsCountPWithInput`, `.bitsCountWithInput`:
   unary counts under captured predicates or computed labels.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsNonpositiveMarginWithInput`:
@@ -359,6 +359,18 @@ theorem bitsRowsWithInput {count width : α → ℕ} {word : α → List Bool}
       input (encList encBits) := by
   unfold Cslib.BitString.listRows
   fun_prop
+
+/-- Variable-width XOR uses runtime lookup and ordinary Boolean folds. -/
+@[fun_prop]
+theorem bitsXorWithInput {α : Type} {input : α ↪ List Bool}
+    {width : α → ℕ} {words : α → List (List Bool)}
+    (hwidth : ComputableTidilyInPolyTime width input encUnary)
+    (hwords : ComputableTidilyInPolyTime words input (encList encBits)) :
+    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listXor (width a) (words a))
+      input encBits := by
+  unfold Cslib.BitString.listXor
+  fun_prop
+
 
 end ComputableTidilyInPolyTime
 

@@ -16,7 +16,8 @@ public import Mathlib.Data.Matrix.Mul
 
 Finite bit strings and ordinary lists agree under pointwise XOR, Boolean dot products, basis
 vectors, subset sums and strict majority. List algorithms are total: an out-of-range basis index
-produces zeros, missing selectors are false, and XOR truncates to the shorter list.
+produces zeros, missing selectors are false, and pointwise XOR truncates to the shorter list.
+Collection XOR has a declared width and treats missing bits as false.
 
 ## Main definitions
 
@@ -24,6 +25,7 @@ produces zeros, missing selectors are false, and XOR truncates to the shorter li
 * `Cslib.BitString.listNonpositiveMargin`: compare correct votes with all votes.
 * `Cslib.BitString.listSingle`, `Cslib.BitString.listSingles`: basis vectors in coordinate order.
 * `Cslib.BitString.listXorSelected`: sum selected rows using an ordinary fold.
+* `Cslib.BitString.listXor`: sum every row at a declared width, padding missing bits with false.
 
 ## Main results
 
@@ -31,11 +33,13 @@ produces zeros, missing selectors are false, and XOR truncates to the shorter li
 * `Cslib.BitString.listStrictMajority_map`: a list with distinct voting indices agrees with
   finite-set strict majority.
 * `Cslib.BitString.listXorSelected_eq_ofFn_sum`: the selector fold computes the finite mask sum.
+* `Cslib.BitString.listXor_eq_ofFn_sum`: collection XOR computes the finite sum of padded views.
 
 ## References
 
 Adapted from `Probability/WordBits.lean` and `Crypto/Computational/GoldreichLevin/WordDecoder.lean`
-and `Crypto/Computational/Pseudoentropy/Boosting/Vote.lean`
+and `Crypto/Computational/Pseudoentropy/Boosting/Vote.lean` and
+`Crypto/Computational/GeneratorXor.lean`
 on the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
@@ -147,5 +151,24 @@ theorem listXorSelected_eq_ofFn_sum_subset {n k : ℕ} (indices : Finset (Fin k)
     listXorSelected n (List.ofFn (fun i => decide (i ∈ indices)))
         (List.ofFn (fun i => List.ofFn (masks i))) = List.ofFn (∑ i ∈ indices, masks i) := by
   simpa using listXorSelected_eq_ofFn_sum (fun i => decide (i ∈ indices)) masks
+
+/-- XOR a collection at the supplied width, treating missing bits as false. -/
+def listXor (width : ℕ) (words : List (List Bool)) : List Bool :=
+  (List.range width).map fun bit =>
+    (words.map (fun word => word[bit]?.getD false)).foldl Bool.xor false
+
+/-- The result has the declared width, also for an empty collection or short rows. -/
+@[simp] theorem length_listXor (width : ℕ) (words : List (List Bool)) :
+    (listXor width words).length = width := by simp [listXor]
+
+/-- The list program agrees exactly with the sum of the finite bit-string views. -/
+theorem listXor_eq_ofFn_sum {count : ℕ} (width : ℕ) (words : Fin count → List Bool) :
+    listXor width (List.ofFn words) = List.ofFn (∑ i, ofList width (words i)) := by
+  have hparity (word : List Bool) : word.foldl Bool.xor false = word.sum := by
+    simp [List.sum_eq_foldl, Bool.add_eq_xor, Bool.zero_eq_false]
+  apply List.ext_getElem (by simp)
+  intro i hi hi'
+  simp [listXor, hparity, ofList, List.map_ofFn, List.sum_ofFn, Finset.sum_apply]
+
 
 end Cslib.BitString

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Crypto.Computational.Pseudoentropy.ThreeSource.Combined
 import Complexity.Crypto.Computational.Pseudoentropy.Seed
 import Complexity.Crypto.Computational.Pseudoentropy.WordSeedExtraction
 import Complexity.Tactic.PPT
@@ -175,5 +176,29 @@ example :
     norm_num [entropy_uniform]
   rw [hentropy, mul_one]
   exact slack_budget n 1
+
+-- The full amplified grid has a concrete seed realization, including unused seed bits.
+example : ComputableTidilyInPolyTime
+    (fun p : (ℕ × ℕ) × List Bool => EntropyGrid.amplifiedGenerate p.1.1 (p.1.1 + 1)
+      0 2 (p.1.1 + 4) p.1.2 (fun bits => ([], bits.headD false)) p.2)
+    (encPair (encPair encUnary encUnary) encBits) encBits :=
+  EntropyGrid.isPolyTime_amplifiedGenerate paddedSeed
+    (observationBound := fun _ => 0) (densityBound := fun _ => 2) (common := fun n => n + 4)
+    (by fun_prop) (by fun_prop) (by fun_prop)
+
+example : ComputableTidilyInPolyTime
+    (fun p : ℕ × List Bool => EntropyGrid.combinedGenerate p.1 (p.1 + 1)
+      0 2 (p.1 + 4) (fun bits => ([], bits.headD false)) p.2)
+    (encPair encUnary encBits) encBits :=
+  EntropyGrid.isPolyTime_combinedGenerate paddedSeed
+    (observationBound := fun _ => 0) (densityBound := fun _ => 2) (common := fun n => n + 4)
+    (by fun_prop) (by fun_prop) (by fun_prop)
+
+-- Output width is fixed even for malformed seeds; security uses the declared uniform seed law.
+example (n : ℕ) (seed : List Bool) :
+    (EntropyGrid.combinedGenerate n (n + 1) 0 2 (n + 4)
+      (fun bits => ([], bits.headD false)) seed).length =
+      EntropyGrid.size (n + 1) 2 * (n + 4) + 1 :=
+  EntropyGrid.length_combinedGenerate ..
 
 end ComplexityTests.PseudoentropySeed

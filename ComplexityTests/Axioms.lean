@@ -7516,3 +7516,157 @@ info: 'Cslib.PCP.Encoded.Graph.length_encoding_tabulateConstraints_le' depends o
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.Encoded.Graph.length_encoding_tabulateConstraints_le
+
+/--
+info: 'Cslib.BitString.length_listXor' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.length_listXor
+
+/--
+info: 'Cslib.BitString.listXor_eq_ofFn_sum' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.listXor_eq_ofFn_sum
+
+/--
+info: 'Turing.MultiTapeTM.length_encList_reverse' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.length_encList_reverse
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsXorWithInput' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsXorWithInput
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.listReverse' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.listReverse
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.listReverseWithInput' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.listReverseWithInput
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.length_generate' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.length_generate
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.isPolyTime_generate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.isPolyTime_generate
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.generate_eq_sum' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.generate_eq_sum
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.generate_distribution' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.generate_distribution
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.real_distribution' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.real_distribution
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.ideal_distribution' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.ideal_distribution
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.isPPTOn_test' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.isPPTOn_test
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.advantage_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.advantage_eq
+
+/--
+info: 'Cslib.Crypto.GeneratorXor.indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.GeneratorXor.indistinguishable
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_amplifiedGenerate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_amplifiedGenerate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.length_amplifiedGenerate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.length_amplifiedGenerate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_amplified_choice' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.exists_secure_amplified_choice
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_combinedGenerate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.isPolyTime_combinedGenerate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.length_combinedGenerate' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.length_combinedGenerate
+
+/--
+info: 'Cslib.Crypto.Pseudoentropy.EntropyGrid.combinedGenerate_indistinguishable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Pseudoentropy.EntropyGrid.combinedGenerate_indistinguishable
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest

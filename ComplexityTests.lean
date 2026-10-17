@@ -31,6 +31,7 @@ import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.GGM
 import ComplexityTests.GeneratorPadding
+import ComplexityTests.GeneratorXor
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
@@ -56,6 +57,7 @@ import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
 import ComplexityTests.PRGStretch
+import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock
