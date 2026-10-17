@@ -1841,7 +1841,12 @@ before unused gates, shared terms, nonuniform weights with a zero-cost zero term
 supplied inputs, and independent coefficient-field universes. Three headline axiom guards use
 only `propext`, `Classical.choice` and `Quot.sound`. Independent source/API review approves the
 production modules, clients, guards and proof accounting. The post-publication Codex correctness
-review is pending.
+review approves `018f4ac` against `da06ee2` without material findings. It checked the formal-polynomial
+premises, denominator guards, boundary splits, outer-product and target ranks, shared-gate costs,
+zero-feature inputs, universe/rank bridge, nonvacuity tests and proof accounting against the exact
+published diff and public pinned dependencies. This source review did not rerun the six gates or
+profiling, or independently inspect the cited originals; source provenance and the cited literature
+were checked separately during implementation and API review.
 
 ### Implementation priorities (2026-10-16)
 
