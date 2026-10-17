@@ -1967,7 +1967,11 @@ clients cover a proper support, composition of squaring, independent universes, 
 multiplication cost one for `x*y`, and zero cost/residual rank when the nonlinear target is
 supplied. Seven headline axiom guards use only `propext`, `Classical.choice` and `Quot.sound`.
 Independent source/API review approves the implementation, regression tests, imports, guards
-and proof accounting. The post-publication Codex correctness review is pending.
+and proof accounting. The post-publication Codex correctness review approves `dd0d71e` against
+`a127067` without material findings. It checked weighted minima, empty and zero-cost cases,
+the native support/helper bridges and the formal-polynomial Hessian bounds. It reviewed the
+exact public sources and pinned dependencies; it did not rerun gates or profiling, or
+independently verify the original sources.
 
 ### Implementation priorities (2026-10-16)
 
