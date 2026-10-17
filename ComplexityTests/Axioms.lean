@@ -8598,3 +8598,10 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.prod_le' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.prod_le
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.id'' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.id'

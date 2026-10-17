@@ -44,6 +44,12 @@ attribute [fun_prop] ComputableTidilyInDegree.const ComputableTidilyInDegree.fst
 
 namespace ComputableTidilyInDegree
 
+/-- Copy an encoded value. This identity rule also lets `fun_prop` retain a shared let binding. -/
+@[fun_prop]
+theorem id' {α : Type*} {enc : α ↪ List Bool} :
+    ComputableTidilyInDegree (fun x : α => x) enc enc 1 1 :=
+  of_eq fun _ => rfl
+
 /-- Compose using the intermediate output size. The computation premises determine the degrees
 before arithmetic compares them with the requested bound. -/
 @[fun_prop]

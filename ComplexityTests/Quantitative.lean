@@ -56,6 +56,29 @@ example (f g : List Bool → List Bool) (h : List Bool × List Bool → List Boo
     ComputableTidilyInDegree (fun x => h (f x, g x)) encBits encBits 3 1 := by
   fun_prop (disch := lia)
 
+-- Reusing a let-bound value and expanding the binding must give the same resource bound.
+example (f g : List Bool → List Bool)
+    (hg : ComputableTidilyInDegree g encBits encBits 2 1)
+    (hf : ComputableTidilyInDegree f encBits encBits 3 1) :
+    ComputableTidilyInDegree (fun x => let y := g x; (f y, y)) encBits
+      (encPair encBits encBits) 3 1 := by
+  fun_prop (disch := lia)
+
+example (f g : List Bool → List Bool)
+    (hg : ComputableTidilyInDegree g encBits encBits 2 1)
+    (hf : ComputableTidilyInDegree f encBits encBits 3 1) :
+    ComputableTidilyInDegree (fun x => (f (g x), g x)) encBits
+      (encPair encBits encBits) 3 1 := by
+  fun_prop (disch := lia)
+
+-- Sharing also works when the intermediate encoding differs from the input encoding.
+example (f g : List Bool → List Bool)
+    (hg : ComputableTidilyInDegree g encBits (encFramed encBits) 2 1)
+    (hf : ComputableTidilyInDegree f (encFramed encBits) encBits 3 1) :
+    ComputableTidilyInDegree (fun x => let y := g x; (f y, y)) encBits
+      (encPair encBits (encFramed encBits)) 3 1 := by
+  fun_prop (disch := lia)
+
 -- The same certificates still imply ordinary polynomial time when requested.
 example (f g : List Bool → List Bool)
     (hg : ComputableTidilyInDegree g encBits encBits 2 1)
