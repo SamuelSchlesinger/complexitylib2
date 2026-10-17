@@ -17,6 +17,77 @@ theorem is promoted to "headline" status in `ROADMAP.md`.
 namespace ComplexityTests.Axioms
 
 /--
+info: 'Cslib.Circuits.Program.trace_induction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.trace_induction
+
+/--
+info: 'Cslib.Circuits.Fusion.programAtoms_isCover' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.programAtoms_isCover
+
+/--
+info: 'Cslib.Circuits.Fusion.Cover.cost_ofProgram' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.Cover.cost_ofProgram
+
+/--
+info: 'Cslib.Circuits.Fusion.coverComplexity_le_ecomplexityFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.coverComplexity_le_ecomplexityFrom
+
+/--
+info: 'Cslib.Circuits.Fusion.Cover.card_le_mul_cost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.Cover.card_le_mul_cost
+
+/--
+info: 'Cslib.Circuits.Fusion.card_le_mul_program_cost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.card_le_mul_program_cost
+
+/--
+info: 'Cslib.Circuits.Fusion.ceilDiv_card_le_circuit_cost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.ceilDiv_card_le_circuit_cost
+
+/--
+info: 'Cslib.Circuits.SumOfTerms.card_le_mul_dictionaryCost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.SumOfTerms.card_le_mul_dictionaryCost
+
+/--
+info: 'Cslib.Circuits.SumOfTerms.ceilDiv_card_le_termCost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.SumOfTerms.ceilDiv_card_le_termCost
+
+/--
+info: 'Cslib.Circuits.SumOfTerms.card_le_termCost_of_separated' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.SumOfTerms.card_le_termCost_of_separated
+
+
+/--
 info: 'Cslib.Circuits.Formula.cost_toCircuit' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

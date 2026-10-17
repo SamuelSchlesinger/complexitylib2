@@ -121,6 +121,8 @@ public import Complexity.Computability.Circuit.Frontier.Reduction
 public import Complexity.Computability.Circuit.Frontier.Sweep
 public import Complexity.Computability.Circuit.Frontier.Unconditional
 public import Complexity.Computability.Circuit.Frontier.Witness
+public import Complexity.Computability.Circuit.Fusion.Basic
+public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.InnerSize
 public import Complexity.Computability.Circuit.Linearize
 public import Complexity.Computability.Circuit.MapLines
@@ -141,6 +143,8 @@ public import Complexity.Computability.Circuit.SimulationContext
 public import Complexity.Computability.Circuit.SimulationDepth
 public import Complexity.Computability.Circuit.SourceComplexity
 public import Complexity.Computability.Circuit.SumOfTerms
+public import Complexity.Computability.Circuit.SumOfTerms.Basic
+public import Complexity.Computability.Circuit.SumOfTerms.Coverage
 public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Communication.KarchmerWigderson

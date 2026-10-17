@@ -27,6 +27,7 @@ wires that reads the inputs and satisfies the equation of every gate is the trac
 * `Program.wire_induction`: induction along the program order.
 * `Program.fanInAtMost_iff`: bounded fan-in, gate by gate.
 * `Program.trace_gate`, `Program.trace_gate_last`: the value of a gate.
+* `Program.trace_induction`: propagate a semantic invariant from inputs through gates.
 * `Program.eq_trace_of_forall_gate`: the trace is the unique solution of the gate equations.
 -/
 
@@ -108,6 +109,17 @@ theorem Program.trace_gate_last (p : Program σ n g) (line : Line σ n g) (I : I
     (x : Fin n → U) :
     (p.gate line).trace I x (.gate (Fin.last g)) = I line.op fun a => p.trace I x (line.wires a) :=
   p.eval_gate_last line I x
+
+/-- An invariant holding on the inputs and preserved by every evaluated gate holds on every
+wire. The preservation hypothesis is needed only for the arguments actually read by the gate. -/
+theorem Program.trace_induction (p : Program σ n g) (I : Interpretation σ U) (x : Fin n → U)
+    {P : U → Prop} (input : ∀ i, P (x i))
+    (gate : ∀ k, (∀ a, P (p.trace I x ((p.lines k).wires a))) →
+      P (I (p.lines k).op (p.trace I x ∘ (p.lines k).wires))) (w : Wire n g) :
+    P (p.trace I x w) := by
+  refine p.wire_induction (P := fun w => P (p.trace I x w)) input (fun k ih => ?_) w
+  rw [p.trace_gate]
+  exact gate k ih
 
 /-- A valuation of the wires is the trace of `p` when it reads the inputs and satisfies the
 equation of every gate. -/

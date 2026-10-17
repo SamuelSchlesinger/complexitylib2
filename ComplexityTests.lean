@@ -20,6 +20,7 @@ import ComplexityTests.ExplicitExpanders
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
+import ComplexityTests.Fusion
 import ComplexityTests.GGM
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore

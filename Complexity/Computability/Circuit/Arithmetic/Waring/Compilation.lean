@@ -11,7 +11,7 @@ public import Complexity.Computability.Circuit.Arithmetic.Formula
 public import Complexity.Computability.Circuit.Arithmetic.Power
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Basic
 public import Complexity.Computability.Circuit.SimulationContext
-public import Complexity.Computability.Circuit.SumOfTerms
+public import Complexity.Computability.Circuit.SumOfTerms.Basic
 
 /-!
 # Compiling Waring circuits to arithmetic circuits

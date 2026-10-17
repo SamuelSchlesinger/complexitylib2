@@ -1739,8 +1739,9 @@ Its public theorem exposes the polynomial computation and multiplication count. 
 sum-of-powers bound preserves its restricted representation model. Residual Hessians now support
 arbitrary supplied polynomial inputs, and bilinear pairing supplies another arithmetic client.
 The standalone algebraic checkout has local changes and an older pin; compare its relevant results with the
-embedded v1 source and record exact provenance for each port. The general Fusion developments
-remain outstanding.
+embedded v1 source and record exact provenance for each port. The general Fusion cover and
+counting layer is now integrated with a support-coverage client. Semifilters, substitution and
+contextual cover transports, and the distinct cyclic-circuit characterizations remain outstanding.
 
 ### Native arithmetic circuits: Hessian multiplication bound (2026-10-16)
 
@@ -2102,6 +2103,77 @@ without material findings. It checked semantics, sharing, output preservation, e
 costs, edge cases and lower-bound API compatibility, including the tests, guards and docs.
 The review inspected the exact public sources and pinned dependencies; it did not rerun Lean,
 builds, tests or profiling, or independently verify original v1 provenance.
+
+### Native Fusion covers and support coverage (2026-10-16)
+
+`Circuit/Fusion/Basic` extracts every native program gate as a semantic atom. An arbitrary
+family of predicates supplies candidate invariants; inputs satisfy each predicate and some
+wire or designated output violates it. `Program.trace_induction` gives the direct preservation
+argument, and the resulting indexed cover has exactly the program's arbitrary weighted cost.
+Equal atoms at distinct gates remain distinct entries, unused gates still cost, and reusing a
+wire or designating repeated outputs adds no cost. The cover's minimum cost is a separate
+quantity in `ℕ∞`, transferred to existing `ecomplexityFrom` at an actual source assignment.
+This avoids both a duplicate circuit model and an empty-domain vacuity in the transfer theorem.
+
+`Fusion/Counting` uses Mathlib's finite-union bound on explicit finite samples, with no
+finiteness assumption on the ambient witness type. Capacity estimates apply only to atoms
+actually extracted from the program. Different witnesses may fail at different outputs.
+The multiplicative form allows zero capacity; ceiling division requires positive capacity.
+Reference-to-observation implications fit the predicate interface without bundling phantom
+cost or problem parameters. This is the general cover obstruction and its counting method,
+not a converse from arbitrary covers to ordinary acyclic circuits.
+
+`SumOfTerms/Coverage` supplies the first client: finite-set union circuits of dictionary
+supports. If each term covers at most `capacity` target elements, at least
+`ceil(target.card / capacity)` terms are needed. The weighted form allows term-dependent
+weights and supplied inputs disjoint from the target. Supports can lie in an infinite type.
+A polynomial-support application still needs its own semantic bridge; cancellation is not
+identified with union. No new Turing machine or tactic implementation is used.
+
+The dictionary signature, interpretation and costs now live in `SumOfTerms/Basic`, re-exported
+from the existing rank module. Coverage and Waring compilation import this smaller layer.
+The existing dictionary-rank proof now uses the same semantic invariant rule; its body remains
+22 lines. The older approximation API stays separate: encoding its two interpretations and
+sample-dependent inputs into a product carrier has no demonstrated benefit in this batch.
+
+Source provenance: `LowerBound/Fusion/{Framework,Counting}.lean` and
+`LowerBound/Fusion/SumOfTerms/Coverage.lean` under `Complexitylib/Algebraic`, at v1 revision
+`2ad6cb481b70ee6e65e078dffb76b9856be199d3`. Samuel Schlesinger's authorship and the source
+bibliography entry are retained. The live upstream audit reports the cslib pin and every
+submitted/vendored marker current; no dependency revision changes were needed.
+
+Against `bfeff5a3`, the entire batch adds 18 named proofs / 55 body lines, including the new
+semantic invariant helper: Program 1 / 3, Fusion basic 7 / 12, counting 5 / 21 and coverage
+5 / 19. Moving the dictionary API and refactoring the rank proof add no net body lines.
+The library total is 5,942 named proofs / 40,533 body lines across 569 modules. Statements,
+computational definitions and tests are excluded; the new definitions contain no tactic proof
+blocks. The old 31-line trace-preservation proof is replaced by the shared three-line semantic
+induction rule and three-line cover obstruction. Its 36-line local cover-cost estimate becomes
+five lines, using the five-line shared finite-union lemma. These comparisons count the added
+helpers but reuse the already-existing native wire induction and Mathlib union bounds; they
+are not a line-for-line port of the source's bundled wrappers.
+
+Full-module MCP replicas measure raw tactic heartbeats: semantic invariant propagation 31,198;
+cover obstruction 36,839; finite-union count 98,004; weighted cover count 103,411; local program
+count 144,444; weighted support coverage 215,518. The existing rank proof changes from
+1,775,420 to 1,791,210 (about 0.9% more), so no elaboration speedup is claimed for that refactor.
+These measure elaboration, not circuit execution; no heartbeat override is used.
+
+`ComplexityTests/Fusion` checks a five-gate circuit with sharing, a repeated output, a supplied
+input and an unused repeated term. Its extracted cover keeps all five atoms and costs 41 under
+nonuniform operation weights. A two-output client has local capacity one on the same sample
+where an unused available term has capacity two. Further clients cover singleton/range
+dictionaries over `ℕ`, a free nullary empty support, empty witnesses/outputs, zero capacity,
+failure of the disjointness assumption, independent universes, and a concrete source problem
+with matching lower and upper cost two. Ten headline axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`.
+
+All six checks pass: strict build 6.81 s, import coverage 1.71 s, tests 9.10 s, environment
+lint 7.66 s, style 2.45 s and init imports 4.69 s. These are incremental checkpoint timings.
+The final independent API review approves the sources, tests, axiom guards, documentation and
+proof accounting. It reproduced the proof totals and checked profile-source parity and gate
+records, without rerunning gates or profiling. The post-publication Codex correctness review
+is pending.
 
 ### Implementation priorities (2026-10-16)
 
