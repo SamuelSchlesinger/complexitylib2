@@ -22,9 +22,10 @@ proof, validation, and review requirements.
 
 Keep each fact in one maintained location. The README explains the purpose and points to useful
 entry points; module docstrings explain the mathematics and API; checked Lean examples show
-usage. ROADMAP records plans and design evidence, and UPSTREAM records integration status.
-Link to these sources instead of repeating them in new guides. Add a separate document only
-when it provides useful explanation that does not already have a suitable home.
+usage. ROADMAP records outstanding work and architectural decisions; UPSTREAM records integration
+status. Batch measurements and validation/review evidence belong in commit or PR descriptions.
+Link to these sources instead of repeating them in new guides. Add a separate document only when
+it provides useful explanation that does not already have a suitable home.
 
 ## Validation
 

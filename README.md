@@ -72,7 +72,7 @@ Import the specific modules you need. `import Complexity` imports the whole libr
 Modules follow CSLib's APIs, paths, namespaces, and contribution standards so they can move
 upstream with the import prefix changed from `Complexity.` to `Cslib.`. Acceptance requires
 CSLib review. [UPSTREAM.md](UPSTREAM.md) tracks integration;
-[ROADMAP.md](ROADMAP.md) holds plans, design decisions, and development records.
+[ROADMAP.md](ROADMAP.md) holds outstanding work and architectural decisions.
 
 Source headers retain authorship, module docstrings credit mathematical and formalization
 sources, and [references.bib](references.bib) contains the bibliography.
