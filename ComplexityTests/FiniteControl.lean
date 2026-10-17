@@ -21,13 +21,33 @@ example : ComputableTidilyInPolyTime
     (fun pair : (Bool → List Bool) × Bool => pair.1 pair.2)
     (encPair (encPi encBits) encBool) encBits := by fun_prop
 
--- The explicit closure rule handles separately computed higher-order values without a default.
+-- Computed tables and indices use the general application rule without a default value.
 example {α Index Value : Type} [Fintype Index] {input : α ↪ List Bool}
     {enc : Value ↪ List Bool} {indexEnc : Index ↪ List Bool}
     (values : α → Index → Value) (index : α → Index)
     (hv : ComputableTidilyInPolyTime values input (encPi enc))
     (hi : ComputableTidilyInPolyTime index input indexEnc) :
-    ComputableTidilyInPolyTime (fun a => values a (index a)) input enc := hv.pi_apply' hi
+    ComputableTidilyInPolyTime (fun a => values a (index a)) input enc := by
+  fail_if_success (clear hv; polytime)
+  fail_if_success (clear hi; polytime)
+  polytime
+
+-- Naming either computed component retains the same inference, including arbitrary encodings.
+example {α Index Value : Type} [Fintype Index] {input : α ↪ List Bool}
+    {enc : Value ↪ List Bool} {indexEnc : Index ↪ List Bool}
+    (values : α → Index → Value) (index : α → Index)
+    (hv : ComputableTidilyInPolyTime values input (encPi enc))
+    (hi : ComputableTidilyInPolyTime index input indexEnc) :
+    ComputableTidilyInPolyTime
+      (fun a => let table := values a; let i := index a; table i) input enc := by polytime
+
+-- The same application rule is available inside a deterministic return in a PPT program.
+example {α Index Value : Type} [Fintype Index] {input : α ↪ List Bool}
+    {enc : Value ↪ List Bool} {indexEnc : Index ↪ List Bool}
+    (values : α → Index → Value) (index : α → Index)
+    (hv : ComputableTidilyInPolyTime values input (encPi enc))
+    (hi : ComputableTidilyInPolyTime index input indexEnc) :
+    IsPPTOn input enc (fun a => pure (values a (index a))) := by ppt
 
 -- A different encoding of the same index type uses the same lookup rule.
 example : ComputableTidilyInPolyTime

@@ -4575,6 +4575,13 @@ info: 'Cslib.Probability.IsPPTOn.iterateWith_spec' depends on axioms:
 #print axioms Cslib.Probability.IsPPTOn.iterateWith_spec
 
 /--
+info: 'Cslib.Probability.IsPPTOn.iterateWith_of_bounded_growth' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsPPTOn.iterateWith_of_bounded_growth
+
+/--
 info: 'Cslib.Probability.IsPPTOn.iterate_of_bounded_growth' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -5000,6 +5007,13 @@ info: 'Cslib.Probability.memoize_call_size_le' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.Probability.memoize_call_size_le
+
+/--
+info: 'Cslib.Probability.memoize_cache_growth_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.memoize_cache_growth_le
 
 /--
 info: 'Cslib.Probability.memoize_cache_size_le' depends on axioms:

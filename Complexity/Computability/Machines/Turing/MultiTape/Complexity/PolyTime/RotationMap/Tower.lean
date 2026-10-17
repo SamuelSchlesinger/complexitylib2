@@ -58,17 +58,8 @@ theorem polytime_lookup (label : D ↪ List Bool) :
       p.1.lookup p.2.1 p.2.2)
       (encPair (encoding label) (encPair encUnary (encPair label label)))
       (encPair encUnary (encPair label label)) := by
-  have hget : ComputableTidilyInPolyTime
-      (fun p : TowerTable D × (ℕ × (D × D)) =>
-        p.1.getD p.2.1 (fun label => (0, label)))
-      (encPair (encoding label) (encPair encUnary (encPair label label)))
-      (encPi (encPair encUnary (encPair label label))) :=
-    (ComputableTidilyInPolyTime.listGetD
-      (encA := encPi (encPair encUnary (encPair label label)))
-      (encL := encoding label) (fun label => (0, label))).comp
-        ((ComputableTidilyInPolyTime.fst _ _).prod
-          ((ComputableTidilyInPolyTime.snd _ _).fst'))
-  exact hget.pi_apply' (by fun_prop)
+  unfold lookup encoding
+  polytime
 
 /-- Each new row uses two stored rotations and fixed finite base operations. -/
 @[fun_prop]
@@ -167,14 +158,7 @@ theorem polytime_build (H : RotationMap (Fin b) D) (e : Fin b ≃ (Fin 2 → D �
     (step := next H e (by lia)) (by fun_prop) (by fun_prop) (polytime_next H e (by lia) label)
     (bound := fun size => (b * (size + 1)) * (2 * Fintype.card (D × D) *
       (2 * (2 * (b * (size + 1)) + 3 * Finset.univ.sup (fun d => (label d).length) + 2) + 1) + 1))
-  · simp only [encUnary_apply, List.length_replicate]
-    change PolyBounded id (fun size => (b * (size + 1)) * (2 * Fintype.card (D × D) *
-      (2 * (2 * (b * (size + 1)) + 3 * Finset.univ.sup (fun d => (label d).length) + 2) + 1) + 1))
-    apply PolyBounded.of_polynomiallyBounded id
-      (bound := fun size => (b * (size + 1)) * (2 * Fintype.card (D × D) *
-        (2 * (2 * (b * (size + 1)) + 3 * Finset.univ.sup (fun d => (label d).length) + 2) + 1)
-          + 1))
-    fun_prop
+  · exact ComputableTidilyInPolyTime.polyBounded (by fun_prop)
   · intro size level hlevel
     exact length_encoding_le label (valid_iterate H e (by lia) level)
       (length_iterate_le H e hb hlevel)

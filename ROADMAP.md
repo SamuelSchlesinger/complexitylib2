@@ -5,14 +5,7 @@ completed reference developments.
 
 ## Current priorities
 
-1. **Practical PCP and expander constructions.** The
-   [PCP theorem](Complexity/Computability/PCP/Completeness.lean) includes certified construction
-   and verification, but the fixed parameters are enormous. Develop a reasonably runnable
-   construction and measure complete reductions. The existing rotation certificate is
-   polynomial in the number of vertices; polynomial time in the bit length of a vertex name
-   remains a stronger, separate target.
-
-2. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
+1. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
    lookup and composition rules should infer encodings for ordinary functional expressions.
    Test equivalent spellings and alternative encodings before adding tactic cases. Generalize
    reusable list, bounded-table, cache and nested-loop invariants where clients need them;
@@ -20,6 +13,13 @@ completed reference developments.
    Use Cook–Levin and GGM as demanding regression clients. General open-program composition
    remains separate from the implemented
    [closed stateful substitution](Complexity/Computability/Probabilistic/OracleSimulation.lean).
+
+2. **Practical PCP and expander constructions.** The
+   [PCP theorem](Complexity/Computability/PCP/Completeness.lean) includes certified construction
+   and verification, but the fixed parameters are enormous. Develop a reasonably runnable
+   construction and measure complete reductions. The existing rotation certificate is
+   polynomial in the number of vertices; polynomial time in the bit length of a vertex name
+   remains a stronger, separate target.
 
 3. **Reduce repeated proof bookkeeping.** Improve configuration views, tape partitions, handoff
    identities and preservation rules when they simplify multiple clients. Keep simplification

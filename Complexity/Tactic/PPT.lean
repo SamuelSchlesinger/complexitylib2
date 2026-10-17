@@ -25,8 +25,8 @@ matcher. Every proof supplies the uniform strict fair-coin machine contract of `
 automatically.
 
 Unknown algorithms need certificates. Fair bits, uniform words with efficiently computed unary
-lengths, memoized closed samplers and bounded loops with constant state growth are certified here.
-General loop invariants
+lengths, memoized closed samplers and bounded loops with additive state growth polynomial in the
+original input are certified here. General loop invariants
 use `IsPPTOn.iterate_spec`; oracle PPT needs further rules.
 
 ## Main definitions
@@ -88,6 +88,7 @@ attribute [aesop unsafe 80% apply (rule_sets := [PPT])] IsPPTOn.cond IsPPTOn.ite
 
 attribute [aesop unsafe 80% apply (rule_sets := [PPT])]
   IsPPTOn.iterate_of_length_le IsPPTOn.iterate_of_bounded_growth
+  IsPPTOn.iterateWith_of_bounded_growth
 
 /-- Certify a probabilistic program using proved sampling, composition and deterministic rules. -/
 macro "ppt" : tactic => `(tactic| solve | aesop (rule_sets := [PPT, PolyTime]))

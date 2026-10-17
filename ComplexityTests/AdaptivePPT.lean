@@ -66,6 +66,18 @@ example : True := by
         return if bit then 2 * state else 0) 1) := by ppt
   trivial
 
+-- A family of separate step certificates is insufficient: captured inputs need one joint
+-- machine certificate, even when the complete output size has an input-dependent growth bound.
+example (step : ℕ → List Bool → ProbComp (List Bool))
+    (_hpointwise : ∀ n, IsPPTOn encBits encBits (step n))
+    (_hgrowth : ∀ n state next, next ∈ (ProbComp.eval (step n state)).support →
+      next.length ≤ state.length + n) : True := by
+  have hsize : PolyBounded (fun n => (encUnary n).length) id :=
+    ComputableTidilyInPolyTime.polyBounded (by fun_prop)
+  fail_if_success
+    have : IsPPTOn encUnary encBits (fun n => OracleComp.iterate n (step n) []) := by ppt
+  trivial
+
 -- An implicit binary graph is supplied by an efficient transition function. The loop contract
 -- certifies both its machine time and that every possible output is reachable from its input.
 example (neighbor : List Bool → Bool → List Bool)

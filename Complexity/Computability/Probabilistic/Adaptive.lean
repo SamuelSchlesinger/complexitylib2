@@ -33,6 +33,8 @@ Clients supply ordinary programs and invariants, without machines, replay code o
 
 * `Cslib.Probability.IsPPTOn.iterate_spec`: certify efficiency and the final supported invariant.
 * `Cslib.Probability.IsPPTOn.iterateWith_spec`: allow the step to capture the original input.
+* `Cslib.Probability.IsPPTOn.iterateWith_of_bounded_growth`: infer accumulated size from
+  input-dependent growth of the full state.
 * `Cslib.Probability.IsPPTOn.iterate_of_bounded_growth`, `.iterate_of_length_le`: automatic
   intermediate-size bounds.
 
@@ -177,6 +179,28 @@ theorem IsPPTOn.iterateWith_spec {initial : α → State} {count : α → ℕ}
   simp only [ProbComp.eval_map, PMF.map_comp, Function.comp_def]
   exact PMF.map_id _
 
+/-- Captured-input steps may grow by a polynomially bounded amount depending on that input.
+The joint step certificate charges the captured input, and the growth bound covers every
+supported next state from every current state. -/
+theorem IsPPTOn.iterateWith_of_bounded_growth {initial : α → State} {count : α → ℕ}
+    {step : α → State → ProbComp State}
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hstep : IsPPTOn (encPair input stateEncoding) stateEncoding (fun pair => step pair.1 pair.2))
+    {growth : α → ℕ} (hpoly : PolyBounded (fun a => (input a).length) growth)
+    (hgrowth : ∀ a state next, next ∈ (ProbComp.eval (step a state)).support →
+      (stateEncoding next).length ≤ (stateEncoding state).length + growth a) :
+    IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) (step a) (initial a)) := by
+  refine (IsPPTOn.iterateWith_spec hcount hinitial hstep
+    (fun a i state => (stateEncoding state).length ≤
+      (stateEncoding (initial a)).length + i * growth a)
+    (by simp) ?_ (hinitial.polyBounded_length.add (hcount.polyBounded.mul hpoly)) ?_).1
+  · intro a i state _ hstate next hnext
+    simpa only [Nat.add_mul, Nat.one_mul, Nat.add_assoc] using
+      (hgrowth a state next hnext).trans (Nat.add_le_add_right hstate _)
+  · intro a i state hi hstate
+    exact hstate.trans (Nat.add_le_add_left (Nat.mul_le_mul_right _ hi) _)
+
 /-- A strict PPT step with constant growth can be repeated a polynomial number of times. -/
 theorem IsPPTOn.iterate_of_bounded_growth {initial : α → State} {count : α → ℕ}
     {step : State → ProbComp State}
@@ -185,18 +209,10 @@ theorem IsPPTOn.iterate_of_bounded_growth {initial : α → State} {count : α �
     (hstep : IsPPTOn stateEncoding stateEncoding step)
     {growth : ℕ} (hgrowth : ∀ state next, next ∈ (ProbComp.eval (step state)).support →
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :
-    IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) := by
-  exact (IsPPTOn.iterate_spec hcount hinitial hstep
-    (fun a i state => (stateEncoding state).length ≤
-      (stateEncoding (initial a)).length + i * growth)
-    (by simp)
-    (by
-      intro a i state _ hinvariant next hnext
-      have := hgrowth state next hnext
-      nlinarith)
-    (hinitial.polyBounded_length.add (hcount.polyBounded.mul (.const growth)))
-    (fun _ _ _ hiCount hinvariant => hinvariant.trans
-      (Nat.add_le_add_left (Nat.mul_le_mul_right growth hiCount) _))).1
+    IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) :=
+  IsPPTOn.iterateWith_of_bounded_growth (step := fun _ => step) hcount hinitial
+    (hstep.preprocess (ComputableTidilyInPolyTime.snd input stateEncoding))
+    (.const growth) (fun _ => hgrowth)
 
 /-- Iteration of a step that never increases its encoded state needs no extra size invariant. -/
 theorem IsPPTOn.iterate_of_length_le {initial : α → State} {count : α → ℕ}

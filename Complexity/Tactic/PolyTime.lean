@@ -13,6 +13,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Tactic.PolyTime.Init
 
 /-!
@@ -43,6 +44,11 @@ open Turing.MultiTapeTM
 -- searching for a joint callback certificate, including when the callback captures local values.
 attribute [program_certificate hlist]
   ComputableTidilyInPolyTime.anyWithInput ComputableTidilyInPolyTime.allWithInput
+
+-- Computed finite tables use the ordinary application rule. Its function-valued head cannot
+-- be registered as a `fun_prop` theorem, so Aesop supplies this closure step.
+attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]
+  ComputableTidilyInPolyTime.pi_apply'
 
 /-- Supply the called algorithm's local certificate before inferring its tuple arguments. -/
 @[aesop safe -40 tactic (rule_sets := [PolyTime])]

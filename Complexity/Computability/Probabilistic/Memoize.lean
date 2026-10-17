@@ -29,6 +29,7 @@ the source program still has exactly the joint result/cache law of `memoize`.
 ## Main results
 
 * `Cslib.Probability.IsPPTOn.memoize`: certify a memoized sampler through `fun_prop`.
+* `Cslib.Probability.memoize_cache_growth_le`: bound new storage independently of existing entries.
 * `Cslib.Probability.memoize_call_size_le`: preserve reply sizes and bound local storage growth.
 * `Cslib.Probability.memoize_cache_size_le`: bound the encoded cache using external query budgets.
 
@@ -81,6 +82,25 @@ theorem IsPPTOn.memoize {α Key Value : Type} [BEq Key] [LawfulBEq Key] {input :
   cases h : (cache a).find? (fun entry => query a == entry.1) <;>
     simp [finish, found, h, ProbComp.eval_map, PMF.map, Function.comp_def]
 
+/-- A cached call adds at most one encoded entry, charging the complete key and value and both
+layers of framing. Existing entries need no size invariant: a cache hit preserves the cache. -/
+theorem memoize_cache_growth_le {Key Value : Type} [BEq Key]
+    (keyEncoding : Key ↪ List Bool) (valueEncoding : Value ↪ List Bool)
+    (distribution : Key → PMF Value) (key : Key) (cache : List (Key × Value)) (maxValue : ℕ)
+    (hvalues : ∀ value ∈ (distribution key).support, (valueEncoding value).length ≤ maxValue)
+    (result : Value × List (Key × Value))
+    (hresult : result ∈ (memoize distribution key cache).support) :
+    (encList (encPair keyEncoding valueEncoding) result.2).length ≤
+      (encList (encPair keyEncoding valueEncoding) cache).length +
+        4 * (keyEncoding key).length + 2 * maxValue + 3 := by
+  rcases (RandomOracle.mem_support_memoize_iff _ _ _ _).mp hresult with
+    ⟨_, hnext⟩ | ⟨_, hvalue, hnext⟩
+  · simp only [hnext]
+    lia
+  · have := hvalues _ hvalue
+    simp only [hnext, encList_cons, List.length_append, length_frame, length_encPair]
+    lia
+
 /-- A cached call preserves a reply-size invariant and adds at most one encoded entry. The bound
 charges the complete key and value, including both layers of framing. -/
 theorem memoize_call_size_le {Key Value : Type} [BEq Key] [LawfulBEq Key]
@@ -97,10 +117,8 @@ theorem memoize_call_size_le {Key Value : Type} [BEq Key] [LawfulBEq Key]
           4 * (keyEncoding key).length + 2 * maxValue + 3 := by
   obtain ⟨hreply, hcache'⟩ := RandomOracle.memoize_invariant distribution
     (fun _ value => (valueEncoding value).length ≤ maxValue) key cache hcache hvalues result hresult
-  refine ⟨hreply, hcache', ?_⟩
-  rcases (RandomOracle.mem_support_memoize_iff _ _ _ _).mp hresult with
-    ⟨_, hnext⟩ | ⟨_, _, hnext⟩ <;>
-    simp only [hnext, encList_cons, List.length_append, length_frame, length_encPair] <;> lia
+  exact ⟨hreply, hcache', memoize_cache_growth_le keyEncoding valueEncoding distribution key cache
+    maxValue hvalues result hresult⟩
 
 /-- Bounds on external calls, encoded keys and replies bound the complete cache of a randomized
 client. Preassigned entries are included, as are both pair and list framing costs. -/
