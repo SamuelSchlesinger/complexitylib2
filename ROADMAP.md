@@ -1,12 +1,9 @@
 # Complexitylib — implementation roadmap and development history
 
-For the library's current purpose and design standards, read [Mission and design](docs/DESIGN.md).
-For capabilities and theorem boundaries, use the [library guide](docs/LIBRARY.md).
-The [implementation priorities](#implementation-priorities-2026-10-16) identify active work.
-
-This document retains the original architecture plan, dated implementation checkpoints, proof
-measurements, and review records. Early plans and descriptions of the previous library are
-historical context; completion claims belong to the relevant checkpoint and current source.
+The [README](README.md) introduces the library and links to current theorem statements and
+examples. This document holds plans, design decisions, proof measurements, and review records.
+Start with the [implementation priorities](#implementation-priorities-2026-10-16) for active work;
+early architecture plans and descriptions of the previous library are historical context.
 
 ## Context
 
