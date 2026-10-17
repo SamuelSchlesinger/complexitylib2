@@ -45,6 +45,11 @@ open Turing.MultiTapeTM
 attribute [program_certificate hlist]
   ComputableTidilyInPolyTime.anyWithInput ComputableTidilyInPolyTime.allWithInput
 
+-- Expose inner table and loop obligations to Aesop when composition alone cannot finish them.
+attribute [program_certificate hvalues] ComputableTidilyInPolyTime.pi_update'
+attribute [program_certificate]
+  ComputableTidilyInPolyTime.bitsReverseWithInput ComputableTidilyInPolyTime.listReverseWithInput
+
 -- Computed finite tables use the ordinary application rule. Its function-valued head cannot
 -- be registered as a `fun_prop` theorem, so Aesop supplies this closure step.
 attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]

@@ -133,6 +133,28 @@ example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ =>
 example : repeatRows ([true, false], 0) = [] := rfl
 example : (encList encBits (repeatRows ([true, false], 3))).length = 15 := by decide
 
+-- A standard outer operation leaves the fold's meaningful step and growth contracts usable.
+example (step : List Bool → Bool → List Bool) (growth : ℕ)
+    (hstep : ComputableTidilyInPolyTime (fun pair : List Bool × Bool => step pair.1 pair.2)
+      (encPair encBits encBool) encBits)
+    (hgrowth : ∀ word bit, (step word bit).length ≤ word.length + growth) :
+    ComputableTidilyInPolyTime (fun word : List Bool => (word.foldl step []).reverse)
+      encBits encBits := by
+  fail_if_success (clear hstep; polytime)
+  fail_if_success (clear hgrowth; polytime)
+  polytime
+
+-- Framed input and state elements may have unrelated encodings; let notation needs no annotation.
+example {α β : Type} (item : α ↪ List Bool) (stateElement : β ↪ List Bool)
+    (step : List β → α → List β) (growth : ℕ)
+    (hstep : ComputableTidilyInPolyTime (fun pair : List β × α => step pair.1 pair.2)
+      (encPair (encList stateElement) item) (encList stateElement))
+    (hgrowth : ∀ state value, (encList stateElement (step state value)).length ≤
+      (encList stateElement state).length + growth) :
+    ComputableTidilyInPolyTime
+      (fun list : List α => let accumulated := list.foldl step []; accumulated.reverse)
+      (encList item) (encList stateElement) := by polytime
+
 -- Growth outside the reachable invariant does not matter; the step still has a uniform certificate.
 example : ComputableTidilyInPolyTime
     (fun n : ℕ => (fun word : List Bool => if word.isEmpty then [] else word ++ word)^[n] [])

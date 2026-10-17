@@ -67,16 +67,31 @@ example : ComputableTidilyInPolyTime
       Function.update data.1 data.2 (data.1 data.2).reverse)
     (encPair (encPi encBits) encBool) (encPi encBits) := by polytime
 
--- A computed index uses the general closure rule when plain higher-order inference is insufficient.
+-- Update and reversal expose their inner computed lookup to the same application rule.
 example : ComputableTidilyInPolyTime
     (fun pair : (Bool → List Bool) × Bool =>
       let data := (pair.1, !pair.2)
       Function.update data.1 data.2 (data.1 data.2).reverse)
     (encPair (encPi encBits) encBool) (encPi encBits) := by
-  have hv := ComputableTidilyInPolyTime.fst (encPi (Index := Bool) encBits) encBool
-  have hi := ComputableTidilyInPolyTime.bool_not.comp
-    (ComputableTidilyInPolyTime.snd (encPi (Index := Bool) encBits) encBool)
-  exact hv.pi_update' hi (ComputableTidilyInPolyTime.bitsReverse.comp (hv.pi_apply' hi))
+  polytime
+
+-- The same nested update works with arbitrary framed element and index encodings.
+example {α Index Value : Type} [Fintype Index] [DecidableEq Index]
+    (input : α ↪ List Bool) (element : Value ↪ List Bool) (indexEnc : Index ↪ List Bool)
+    (values : α → Index → List Value) (index : α → Index)
+    (_replacement : α → List Value)
+    (hv : ComputableTidilyInPolyTime values input (encPi (encList element)))
+    (hi : ComputableTidilyInPolyTime index input indexEnc) :
+    ComputableTidilyInPolyTime (fun a =>
+      Function.update (values a) (index a) ((values a) (index a)).reverse)
+      input (encPi (encList element)) := by
+  fail_if_success (clear hv; polytime)
+  fail_if_success (clear hi; polytime)
+  fail_if_success
+    have : ComputableTidilyInPolyTime
+        (fun a => Function.update (values a) (index a) (_replacement a))
+        input (encPi (encList element)) := by polytime
+  polytime
 
 -- Finite dispatch retains the original unbounded input in every branch.
 example {α β Tag : Type} [Finite Tag] (input : α ↪ List Bool) (output : β ↪ List Bool)

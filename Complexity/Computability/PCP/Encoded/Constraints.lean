@@ -139,10 +139,8 @@ theorem isPolyTime_tabulateConstraints [Fintype α] {alphabet : α ↪ List Bool
 @[fun_prop]
 theorem isPolyTime_constraintTableEval [Fintype α] (alphabet : α ↪ List Bool) :
     ComputableTidilyInPolyTime (fun p : (α → α → Bool) × α × α => p.1 p.2.1 p.2.2)
-      (encPair (encPi (encPi encBool)) (encPair alphabet alphabet)) encBool :=
-  ((ComputableTidilyInPolyTime.fst _ _).pi_apply'
-    (ComputableTidilyInPolyTime.snd _ _).fst').pi_apply'
-      (ComputableTidilyInPolyTime.snd _ _).snd'
+      (encPair (encPi (encPi encBool)) (encPair alphabet alphabet)) encBool := by
+  polytime
 
 /-- The full two-dimensional constraint table has bounded encoded size, including its framing. -/
 theorem length_constraintTable_le [Fintype α] (table : α → α → Bool) :
