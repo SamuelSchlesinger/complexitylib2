@@ -2350,7 +2350,11 @@ All six checks pass: strict build 2.14 s, import coverage 1.56 s, tests 5.56 s, 
 independent API review approves the source and clients after checking both through MCP. It
 also independently checked the eight axiom guards, reproduced the proof accounting, verified
 profile-source parity and read the six successful gate records without rerunning the gates.
-The required post-publication Codex correctness review is pending.
+The post-publication Codex correctness review approves `91ec2f4` against `ad19c89` with no
+material findings. Its source inspection supports the semifilter semantics, reduction, exact
+AND counts, boundary clients and universe separation, and reproduces the proof accounting.
+It did not independently verify builds, client execution, axiom guards, profiling or original
+v1 provenance.
 
 ### Implementation priorities (2026-10-16)
 
