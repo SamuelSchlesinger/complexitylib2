@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Circuit.Fusion.Cyclic.Closure
+import Complexity.Computability.Circuit.Fusion.Cyclic.Compiler
 
 /-!
 # Semifilter closure clients
@@ -12,11 +12,13 @@ import Complexity.Computability.Circuit.Fusion.Cyclic.Closure
 A single pair generates an intersection cover on arbitrary, possibly infinite carriers.
 The universal and empty targets admit zero-pair covers even with no inputs. A nontrivial
 generated semifilter need not satisfy the complementary-set condition.
+The same covers compile to binary cyclic circuits with their exact pair counts, including
+duplicated pairs and an unseeded cycle.
 -/
 
 namespace ComplexityTests.FusionClosure
 
-open Cslib.Circuits.Fusion
+open Cslib.Circuits Fusion
 
 private def interCover {U : Type*} (A B : Set U) : PairCover (A ∩ B) ![A, B] :=
   PairCover.ofDerivesEmpty [(Subtype.val ⁻¹' A, Subtype.val ⁻¹' B)] fun point hx =>
@@ -25,6 +27,27 @@ private def interCover {U : Type*} (A B : Set U) : PairCover (A ∩ B) ![A, B] :
       (fun y hy => (y.property hy).elim)
 
 example {U : Type*} (A B : Set U) : (interCover A B).pairs.length = 1 := rfl
+
+example {U : Type*} (A B : Set U) : (interCover A B).toCyclic.cost Monotone.andCost = 1 :=
+  (interCover A B).cost_toCyclic
+
+example (A B : Set ℕ) : (interCover A B).toCyclic.eval (Monotone.setInterpretation ℕ)
+    Monotone.setInterpretation_mono ![A, B] = fun _ => A ∩ B :=
+  (interCover A B).eval_toCyclic
+
+private def twiceInterCover {U : Type*} (A B : Set U) : PairCover (A ∩ B) ![A, B] where
+  pairs := (interCover A B).pairs ++ (interCover A B).pairs
+  isCover w h := (interCover A B).isCover w (fun p hp => h p (List.mem_append_left _ hp))
+
+-- Equal pairs remain separate charged occurrences.
+example {U : Type*} (A B : Set U) :
+    (twiceInterCover A B).toCyclic.cost Monotone.andCost = 2 :=
+  (twiceInterCover A B).cost_toCyclic
+
+example {U : Type*} (A B : Set U) :
+    (twiceInterCover A B).toCyclic.eval (Monotone.setInterpretation U)
+      Monotone.setInterpretation_mono ![A, B] = fun _ => A ∩ B :=
+  (twiceInterCover A B).eval_toCyclic
 
 example {U : Type*} (A B : Set U) :
     pairClosure (A ∩ B) ![A, B] (interCover A B).pairs ∅ = A ∩ B :=
@@ -43,11 +66,34 @@ private def topCover {U : Type*} : PairCover (Set.univ : Set U) Fin.elim0 :=
 
 example {U : Type*} : (topCover (U := U)).pairs = [] := rfl
 
+example {U : Type*} : (topCover (U := U)).toCyclic.cost Monotone.andCost = 0 :=
+  topCover.cost_toCyclic
+
+example {U : Type*} : (topCover (U := U)).toCyclic.eval (Monotone.setInterpretation U)
+    Monotone.setInterpretation_mono Fin.elim0 = fun _ => Set.univ :=
+  topCover.eval_toCyclic
+
 example {U : Type*} : pairClosure Set.univ (Fin.elim0 : Fin 0 → Set U) [] ∅ = Set.univ :=
   (topCover (U := U)).pairClosure_empty
 
 private def bottomCover {U : Type*} : PairCover (∅ : Set U) Fin.elim0 :=
   PairCover.ofDerivesEmpty [] fun _ h => h.elim
+
+example {U : Type*} : (bottomCover (U := U)).toCyclic.cost Monotone.andCost = 0 :=
+  bottomCover.cost_toCyclic
+
+example {U : Type*} : (bottomCover (U := U)).toCyclic.eval (Monotone.setInterpretation U)
+    Monotone.setInterpretation_mono Fin.elim0 = fun _ => ∅ :=
+  bottomCover.eval_toCyclic
+
+private def loopCover : PairCover (∅ : Set ℕ) Fin.elim0 :=
+  PairCover.ofDerivesEmpty [(Set.univ, ∅)] fun _ h => h.elim
+
+-- The pair value feeds itself through top intersection; it has no seed.
+example : loopCover.toCyclic.cost Monotone.andCost = 1 := loopCover.cost_toCyclic
+
+example : loopCover.toCyclic.eval (Monotone.setInterpretation ℕ)
+    Monotone.setInterpretation_mono Fin.elim0 = fun _ => ∅ := loopCover.eval_toCyclic
 
 example {U : Type*} : pairClosure ∅ (Fin.elim0 : Fin 0 → Set U) [] ∅ = ∅ :=
   (bottomCover (U := U)).pairClosure_empty

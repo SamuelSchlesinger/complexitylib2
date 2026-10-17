@@ -11,6 +11,7 @@ import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
+import ComplexityTests.CyclicFeedback
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy

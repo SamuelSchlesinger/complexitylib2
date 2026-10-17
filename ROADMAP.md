@@ -33,14 +33,7 @@ Mathematical contracts and limitations belong beside their declarations.
    family has enormous constants; certified polynomial time and practical execution are distinct
    milestones.
 
-3. **Finish the cyclic circuit converse.**
-   [Generated closure](Complexity/Computability/Circuit/Fusion/Cyclic/Closure.lean) characterizes
-   unrestricted semifilter covers. Build the finite circuit realizing that closure and prove
-   the exact AND cost. Keep this separate from the existing least-fixed-point semantics, which
-   alone supplies neither a finite compiler nor an execution bound. Continue integrating
-   algebraic results through CSLib's native circuit definitions.
-
-4. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
+3. **Improve certificate inference and loop contracts through clients.** Constructor, projection,
    lookup and composition rules should infer encodings for ordinary functional expressions.
    Test equivalent spellings and alternative encodings before adding tactic cases. Generalize
    reusable list, bounded-table, cache and nested-loop invariants where clients need them;
@@ -49,7 +42,7 @@ Mathematical contracts and limitations belong beside their declarations.
    remains separate from the implemented
    [closed stateful substitution](Complexity/Computability/Probabilistic/OracleSimulation.lean).
 
-5. **Reduce repeated proof bookkeeping.** Improve configuration views, tape partitions, handoff
+4. **Reduce repeated proof bookkeeping.** Improve configuration views, tape partitions, handoff
    identities and preservation rules when they simplify multiple clients. Keep simplification
    narrowly oriented and machine transitions out of global simp. Share mathematical bookkeeping
    only with demonstrated reuse, counting helper proofs as part of the total cost.

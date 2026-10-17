@@ -69,6 +69,7 @@ public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth
 public import Complexity.Computability.Circuit.Cyclic
+public import Complexity.Computability.Circuit.Cyclic.Feedback
 public import Complexity.Computability.Circuit.Decomposable
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.Erase
@@ -128,6 +129,7 @@ public import Complexity.Computability.Circuit.Fusion.Composition
 public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Cyclic
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Closure
+public import Complexity.Computability.Circuit.Fusion.Cyclic.Compiler
 public import Complexity.Computability.Circuit.Fusion.Homomorphism
 public import Complexity.Computability.Circuit.Fusion.Semifilter
 public import Complexity.Computability.Circuit.Fusion.Simulation

@@ -11,7 +11,7 @@ import Complexity
 
 Every headline theorem of the library is listed here with a `#guard_msgs` check that it depends
 on no axioms beyond `propext`, `Classical.choice` and `Quot.sound`. Add an entry whenever a
-theorem is promoted to "headline" status in `ROADMAP.md`.
+main result is added to a public module.
 -/
 
 namespace ComplexityTests.Axioms
@@ -5795,3 +5795,66 @@ info: 'Cslib.Circuits.Fusion.PairCover.pairClosure_empty' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Fusion.PairCover.pairClosure_empty
+
+/--
+info: 'Cslib.Circuits.Program.evalGates_feedback' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.evalGates_feedback
+
+/--
+info: 'Cslib.Circuits.Program.eval_feedback_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.eval_feedback_le
+
+/--
+info: 'Cslib.Circuits.Circuit.eval_feedback_eq_lfp' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.eval_feedback_eq_lfp
+
+/--
+info: 'Cslib.Circuits.Circuit.cost_feedback' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.cost_feedback
+
+/--
+info: 'Cslib.Circuits.Fusion.PairClosureCompiler.readState_pairValues' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairClosureCompiler.readState_pairValues
+
+/--
+info: 'Cslib.Circuits.Fusion.PairClosureCompiler.eval_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairClosureCompiler.eval_circuit
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.cost_toCyclic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.cost_toCyclic
+
+/--
+info: 'Cslib.Circuits.Fusion.PairCover.eval_toCyclic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.PairCover.eval_toCyclic
+
+/--
+info: 'Cslib.Circuits.Fusion.pairCoverComplexity_eq_cyclic_ecomplexityFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Fusion.pairCoverComplexity_eq_cyclic_ecomplexityFrom
