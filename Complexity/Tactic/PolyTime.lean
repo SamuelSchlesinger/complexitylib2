@@ -75,7 +75,7 @@ open Lean Meta Elab Tactic in
 @[aesop safe -20 tactic (rule_sets := [PolyTime])]
 private meta def polytimeFunProp : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
-    unless (← getMainTarget).isAppOf ``ComputableTidilyInPolyTime do
+    unless (← getMainTarget).consumeMData.isAppOf ``ComputableTidilyInPolyTime do
       throwError "expected a polynomial-time goal"
     -- A failed compositional attempt must leave time for the specification rules.
     evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 256 })))
