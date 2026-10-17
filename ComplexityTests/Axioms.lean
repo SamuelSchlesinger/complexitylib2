@@ -8300,3 +8300,138 @@ info: 'Cslib.PCP.Encoded.Graph.gap_le_unsatVal_arithmeticAmplify' depends on axi
 /-- info: 'Cslib.PCP.Encoded.gap_le_unsatVal_gapGraph' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Cslib.PCP.Encoded.gap_le_unsatVal_gapGraph
+
+/--
+info: 'Cslib.PCP.Encoded.Edge.proofVerdict_answers' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Edge.proofVerdict_answers
+
+/--
+info: 'Cslib.PCP.Encoded.Edge.isPolyTime_proofQueries' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Edge.isPolyTime_proofQueries
+
+/--
+info: 'Cslib.PCP.Encoded.Edge.isPolyTime_proofVerdict' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Edge.isPolyTime_proofVerdict
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.isPolyTime_sampleEdge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.isPolyTime_sampleEdge
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.proofLabels_proofOfLabels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.proofLabels_proofOfLabels
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.edgeVerifier_accepts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.edgeVerifier_accepts
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.polyTime_edgeVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.polyTime_edgeVerifier
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.accepts_proofOfLabels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.accepts_proofOfLabels
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.rejectProb_edgeVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.rejectProb_edgeVerifier
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.unsatVal_div_two_le_rejectProb' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.unsatVal_div_two_le_rejectProb
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.length_queries_repeatedEdgeVerifier' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.length_queries_repeatedEdgeVerifier
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.repeatedEdgeVerifier_accepts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.repeatedEdgeVerifier_accepts
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.polyTime_repeatedEdgeVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.polyTime_repeatedEdgeVerifier
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.repeated_accepts_proofOfLabels' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.repeated_accepts_proofOfLabels
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.acceptProb_repeatedEdgeVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.acceptProb_repeatedEdgeVerifier
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.polyTime_reductionVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.polyTime_reductionVerifier
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.mem_PCP_of_gapReduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.mem_PCP_of_gapReduction
+
+/-- info: 'Cslib.BitString.uniformList_all_listRow_true' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.BitString.uniformList_all_listRow_true
+
+/-- info: 'Cslib.Complexity.uniformList_acceptCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.uniformList_acceptCount
+
+/-- info: 'Cslib.Complexity.uniformList_acceptCount_toReal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.uniformList_acceptCount_toReal
+
+/-- info: 'Cslib.Complexity.acceptCount_le_half_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.acceptCount_le_half_iff

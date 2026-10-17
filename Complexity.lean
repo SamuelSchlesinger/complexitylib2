@@ -176,6 +176,7 @@ public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Classes.Promise.Circuit
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.SharpP
+public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness
@@ -370,6 +371,10 @@ public import Complexity.Computability.PCP.Encoded.Preprocess
 public import Complexity.Computability.PCP.Encoded.Preprocess.Programs
 public import Complexity.Computability.PCP.Encoded.Size
 public import Complexity.Computability.PCP.Encoded.ThreeSAT
+public import Complexity.Computability.PCP.Encoded.Verifier
+public import Complexity.Computability.PCP.Encoded.Verifier.Reduction
+public import Complexity.Computability.PCP.Encoded.Verifier.Repetition
+public import Complexity.Computability.PCP.Encoded.Verifier.Soundness
 public import Complexity.Computability.PCP.GapTheorem
 public import Complexity.Computability.PCP.LocalTest
 public import Complexity.Computability.PCP.Power
@@ -636,6 +641,7 @@ public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
 public import Complexity.Probability.BitString.LinearHash
 public import Complexity.Probability.BitString.List
+public import Complexity.Probability.BitString.List.All
 public import Complexity.Probability.BitString.List.Vote
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Concentration

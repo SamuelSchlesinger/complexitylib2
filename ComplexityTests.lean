@@ -67,9 +67,11 @@ import ComplexityTests.PCPEncodedIteration
 import ComplexityTests.PCPEncodedPreprocess
 import ComplexityTests.PCPEncodedSize
 import ComplexityTests.PCPEncodedThreeSAT
+import ComplexityTests.PCPEncodedVerifier
 import ComplexityTests.PCPExpander
 import ComplexityTests.PCPNumbering
 import ComplexityTests.PCPPreprocessPrograms
+import ComplexityTests.PCPVerifierProbability
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
