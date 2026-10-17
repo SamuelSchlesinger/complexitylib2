@@ -2290,7 +2290,11 @@ All six checks pass: strict build 1.41 s, import coverage 1.50 s, tests 7.44 s, 
 final independent API review approves the sources, clients, documentation and proof accounting.
 It independently checked the final clients and all eight axiom guards through MCP, reproduced
 the proof counts, verified profile-source parity and read the six successful gate records
-without rerunning those gates. The separate post-publication correctness review is pending.
+without rerunning those gates. The post-publication Codex correctness review approves `b0009a7`
+against `44352e2` with no material findings. Its source inspection supports the transport claims,
+infinite-complexity case, cover inequality direction, non-vacuous counterexamples and proof
+counts. It did not independently execute builds, axiom guards or profiling, or verify original
+v1 provenance.
 
 ### Implementation priorities (2026-10-16)
 
