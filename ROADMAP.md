@@ -2235,7 +2235,11 @@ lint 7.74 s, style 2.49 s and init imports 4.79 s. These are incremental checkpo
 The final independent API review approves the sources, clients, axiom guards, documentation
 and proof accounting. It independently checked both client files and the guards through MCP,
 reproduced the proof counts, and verified profile-source parity and the six successful gate
-records without rerunning those gates. The post-publication correctness review is pending.
+records without rerunning those gates. The post-publication Codex correctness review approves
+`e0a65c9` against `8131afd` without material findings. Its source inspection confirms the
+semantics, edge-case clients, seven guard statements and proof counts against the documentation.
+It did not independently run builds, MCP diagnostics, axiom guards or profiling, or verify
+original v1 provenance.
 
 ### Implementation priorities (2026-10-16)
 
