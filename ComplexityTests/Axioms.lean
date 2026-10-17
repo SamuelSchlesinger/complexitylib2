@@ -8710,3 +8710,59 @@ info: 'Cslib.Circuits.Boolean.MassProduction.MassProducesAt.allLengths' depends 
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.MassProduction.MassProducesAt.allLengths
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_mintermCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_mintermCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.size_mintermCircuit_add_three_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_mintermCircuit_add_three_le
+
+/--
+info: 'Cslib.Circuits.Boolean.ShannonSynthesis.eval_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.ShannonSynthesis.eval_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.ShannonSynthesis.size_circuit_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.ShannonSynthesis.size_circuit_le
+
+/--
+info: 'Cslib.Circuits.Boolean.ShannonSynthesis.bound_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.ShannonSynthesis.bound_le
+
+/--
+info: 'Cslib.Circuits.Boolean.ShannonSynthesis.computes_synthesize' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.ShannonSynthesis.computes_synthesize
+
+/--
+info: 'Cslib.Circuits.Boolean.ShannonSynthesis.exists_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.ShannonSynthesis.exists_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.massComplexity_le_shannon' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.massComplexity_le_shannon

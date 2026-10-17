@@ -42,7 +42,8 @@ results. Track these by their public theorems, rather than by source-file counts
   coefficient-one subexponential range. Preserve the exact gate-cost conventions and share
   sorting, lookup and routing with other circuit clients. The native replication and weighted-cost
   interface, including the [eventual-to-all-length padding theorem](Complexity/Computability/Circuit/Boolean/MassProduction/Padding.lean),
-  is in place; the three mass-production bounds above remain to be ported.
+  and [finite Shannon synthesis](Complexity/Computability/Circuit/Boolean/MassProduction/Synthesis.lean)
+  are in place; the three mass-production bounds above remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,

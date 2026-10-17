@@ -38,6 +38,8 @@ public import Complexity.Computability.Circuit.Boolean.MachineSimulation
 public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Padding
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
+public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
 public import Complexity.Computability.Circuit.Boolean.NegationNormalForm
@@ -54,6 +56,8 @@ public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Covering
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Moduli
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.ShiftTest
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Weights
+public import Complexity.Computability.Circuit.Boolean.ShannonConstruction
+public import Complexity.Computability.Circuit.Boolean.ShannonSynthesis
 public import Complexity.Computability.Circuit.Boolean.Smolensky
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Approximation
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
