@@ -2097,7 +2097,11 @@ import coverage 1.70 s, tests 4.82 s, environment lint 7.49 s, style 2.24 s and 
 4.58 s. These are incremental checkpoint timings. Independent source/API review approves the
 implementation, clients, axiom guards, documentation and proof accounting. The negative test
 preserves zero and the scale while changing only one, proving compiled and intended values
-differ. Post-publication Codex correctness review follows the code commit.
+differ. The post-publication Codex correctness review approves `5acdfb4` against `da5a881`
+without material findings. It checked semantics, sharing, output preservation, exact weighted
+costs, edge cases and lower-bound API compatibility, including the tests, guards and docs.
+The review inspected the exact public sources and pinned dependencies; it did not rerun Lean,
+builds, tests or profiling, or independently verify original v1 provenance.
 
 ### Implementation priorities (2026-10-16)
 
