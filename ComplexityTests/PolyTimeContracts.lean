@@ -133,6 +133,63 @@ example : ComputableTidilyInPolyTime (fun p : List Bool × ℕ =>
 example : repeatRows ([true, false], 0) = [] := rfl
 example : (encList encBits (repeatRows ([true, false], 3))).length = 15 := by decide
 
+private abbrev TaggedRowsInput := (List (List Bool) × List Bool) × List (List Bool)
+private abbrev taggedRowsInputEncoding :=
+  encPair (encPair (encList encBits) encBits) (encList encBits)
+
+private def tagRows (p : TaggedRowsInput) : List (List Bool) :=
+  p.1.1.foldl (fun rows row => (row ++ p.1.2) :: rows) p.2
+
+-- Each copied row is bounded by the actual source list, including with an arbitrary initial state.
+-- No fixed additive bound would hold for all possible rows outside that list.
+private theorem tagRows_polytime :
+    ComputableTidilyInPolyTime tagRows taggedRowsInputEncoding (encList encBits) := by
+  unfold tagRows taggedRowsInputEncoding
+  refine ComputableTidilyInPolyTime.foldlWith_of_bounded_growth (encA := encBits)
+    (par := fun p : TaggedRowsInput => p.1.2)
+    (step := fun tag rows row => (row ++ tag) :: rows)
+    (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (growth := fun p => 2 * ((encList encBits p.1.1).length + p.1.2.length) + 1)
+    (ComputableTidilyInPolyTime.polyBounded (by fun_prop)) ?_
+  intro p state row hrow
+  have hsize := SizedListEncoding.length_elem_le
+    (encA := encBits) (encL := encList encBits) p.1.1 row hrow
+  simp only [encList_cons, List.length_append, length_frame, encBits_apply] at hsize ⊢
+  lia
+
+-- A downstream traversal consumes the accumulated rows through the ordinary list API.
+example : ComputableTidilyInPolyTime (fun p => (tagRows p).map List.reverse)
+    taggedRowsInputEncoding (encList encBits) := by
+  have h := tagRows_polytime
+  polytime
+
+example : tagRows (([], [true]), [[false]]) = [[false]] := rfl
+example : tagRows (([[false], [false]], [true]), [[true]]) =
+    [[false, true], [false, true], [true]] := by decide
+
+private def skipCopies (p : (Bool × ℕ) × List Bool) : List Bool :=
+  (List.replicate p.1.2 p.1.1).foldl
+    (fun state bit => if bit = p.1.1 then state else state ++ state) p.2
+
+-- Prefix membership, rather than a global growth claim, rules out the doubling branch.
+private theorem skipCopies_spec :
+    ComputableTidilyInPolyTime skipCopies (encPair (encPair encBool encUnary) encBits) encBits ∧
+      ∀ p, skipCopies p = p.2 := by
+  unfold skipCopies
+  refine ComputableTidilyInPolyTime.foldlWith_spec (encA := encBool) (encL := encList encBool)
+    (par := fun p : (Bool × ℕ) × List Bool => p.1.1)
+    (step := fun tag state bit => if bit = tag then state else state ++ state)
+    (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (fun p _ state => state = p.2) (by simp) ?_
+    (size := fun p => p.2.length) (ComputableTidilyInPolyTime.polyBounded (by fun_prop)) ?_
+  · intro p consumed state bit hprefix hstate
+    have hbit : bit = p.1.1 := List.eq_of_mem_replicate (hprefix.subset (by simp))
+    simp [hbit, hstate]
+  · intro p consumed state _ hstate
+    simp [hstate]
+
+example : skipCopies ((true, 3), [true, false]) = [true, false] := skipCopies_spec.2 _
+
 -- A standard outer operation leaves the fold's meaningful step and growth contracts usable.
 example (step : List Bool → Bool → List Bool) (growth : ℕ)
     (hstep : ComputableTidilyInPolyTime (fun pair : List Bool × Bool => step pair.1 pair.2)

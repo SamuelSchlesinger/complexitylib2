@@ -564,16 +564,12 @@ theorem idxOf [DecidableEq α] (enc : α ↪ List Bool) :
     have ha := snd (encPair enc (encPair encBool encUnary)) enc
     exact (bool_or.comp (hq.snd'.fst'.prod ((decide_eq enc).comp (ha.prod hq.fst')))).ite'
       ((const true).prod hn) ((const false).prod (hsucc.comp hn))
-  have h := foldlWith (snd (encList enc) enc) (fst (encList enc) enc)
+  have h := foldlWith_of_bounded_growth (snd (encList enc) enc) (fst (encList enc) enc)
     (const (false, 0)) hstep
-    (B := fun p => 3 + (encPair (encList enc) enc p).length)
-    ((PolyBounded.const 3).add .self) (fun p i hi => by
-      have hidx := List.idxOf_le_length (a := p.2) (l := p.1.take i)
-      have hlen := length_le_length_encList enc p.1
-      simp only [length_encPair, encBool_apply, List.length_singleton, encUnary_apply,
-        List.length_replicate, foldl_idxStep, Bool.false_eq_true, ite_false, Nat.zero_add,
-        List.length_take] at *
-      lia)
+    (growth := fun _ => 1) (.const 1) (by
+      intro p state value _
+      unfold idxStep
+      split <;> simp)
   simpa only [Function.comp_def, foldl_idxStep, Bool.false_eq_true, ite_false, Nat.zero_add]
     using (snd encBool encUnary).comp h
 

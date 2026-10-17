@@ -115,8 +115,6 @@ theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
     ComputableTidilyInPolyTime (fun a => iterate (generator a) (seedBits a) (count a) (word a))
       input encBits := by
   obtain ⟨c, d, hlength⟩ := hgenerator.polyBounded_length
-  obtain ⟨cs, ds, hseed⟩ := hseedBits.polyBounded_length
-  simp only [encUnary_apply, List.length_replicate] at hseed
   have hstep : ComputableTidilyInPolyTime
       (fun pair : α × List Bool => step (generator pair.1) (seedBits pair.1) pair.2)
       (encPair input encBits) encBits := by
@@ -125,15 +123,14 @@ theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
   apply ComputableTidilyInPolyTime.iterateWith_of_bounded_growth
     (par := id) (step := fun a => step (generator a) (seedBits a))
     .id' hcount hword hstep
-    (growth := fun a => c * (2 * (input a).length + cs * ((input a).length + 1) ^ ds + 2) ^ d)
-    (.of_polynomiallyBounded _ (show PolynomiallyBounded
-      (fun n => c * (2 * n + cs * (n + 1) ^ ds + 2) ^ d) from by fun_prop))
+    (growth := fun a => c * (2 * (input a).length + seedBits a + 2) ^ d)
+    (ComputableTidilyInPolyTime.polyBounded (by fun_prop))
   intro a state
   have h := hlength (a, state.take (seedBits a))
   simp only [length_encPair, encBits_apply, List.length_take] at h
   have hbound : (generator a (state.take (seedBits a))).length ≤
-      c * (2 * (input a).length + cs * ((input a).length + 1) ^ ds + 2) ^ d :=
-    h.trans (Nat.mul_le_mul_left c (Nat.pow_le_pow_left (by have := hseed a; lia) d))
+      c * (2 * (input a).length + seedBits a + 2) ^ d :=
+    h.trans (Nat.mul_le_mul_left c (Nat.pow_le_pow_left (by lia) d))
   simp only [step, id_eq, encBits_apply, List.length_append, List.length_drop]
   lia
 

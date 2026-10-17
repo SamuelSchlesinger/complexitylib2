@@ -92,20 +92,13 @@ theorem unary_sub : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 - p.2)
 theorem unary_mul : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
     (encPair encUnary encUnary) encUnary := by
   have hq := fst (encPair encUnary encUnary) encBool
-  have h := foldlWith (encA := encBool) (encL := encBits) (encB := encUnary)
+  have h := foldlWith_of_bounded_growth (encA := encBool) (encL := encBits) (encB := encUnary)
     (par := fun p : ℕ × ℕ => p.1) (list := fun p => List.replicate p.2 true)
     (step := fun a n _ => n + a) (fst encUnary encUnary)
     ((of_eq (encIn := encUnary) (encMid := encBits) fun _ => rfl).comp (snd encUnary encUnary))
     (const 0) (unary_add.comp (hq.snd'.prod hq.fst'))
-    (B := fun p => (encPair encUnary encUnary p).length * (encPair encUnary encUnary p).length)
-    (PolyBounded.self.mul .self) (fun p i _ => by
-      have ha : p.1 ≤ (encPair encUnary encUnary p).length := by
-        simp only [length_encPair, encUnary_apply, List.length_replicate]
-        lia
-      have hb : min i p.2 ≤ (encPair encUnary encUnary p).length := by
-        simp only [length_encPair, encUnary_apply, List.length_replicate]
-        lia
-      simpa [List.foldl_const] using Nat.mul_le_mul hb ha)
+    (growth := Prod.fst) (fst encUnary encUnary).polyBounded
+    (by intros; simp)
   simpa [List.foldl_const, Nat.mul_comm] using h
 
 /-- Take the smaller of two unary naturals. -/
