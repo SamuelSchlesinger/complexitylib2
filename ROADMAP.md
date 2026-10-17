@@ -2031,8 +2031,11 @@ universes and noncommutative semantics. Six headline axiom guards use only `prop
 `Classical.choice` and `Quot.sound`. Independent source/API review approves the implementation,
 clients, axiom guards, documentation and proof accounting. All six checks pass: strict build
 2.32 s, import coverage 1.78 s, tests 8.50 s, environment lint 7.52 s, style 2.60 s and init
-imports 5.23 s. These are incremental checkpoint timings. Post-publication Codex correctness
-review follows the code commit.
+imports 5.23 s. These are incremental checkpoint timings. The post-publication Codex
+correctness review approves `c9fd70f` against `d9791e4` without material findings. It checked
+context indexing, all-output semantics, sharing, exact weighted costs and the binary-power
+contracts against the exact public sources and pinned dependencies. It did not rerun Lean,
+builds, tests or profiling, or independently verify the original v1 provenance.
 
 ### Implementation priorities (2026-10-16)
 
