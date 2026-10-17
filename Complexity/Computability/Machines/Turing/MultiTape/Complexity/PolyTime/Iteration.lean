@@ -28,6 +28,8 @@ interface is adapted from `IsPolyTime.iterate_spec` in the cslib `crypto` branch
   state growth discharges intermediate-size obligations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_of_bounded_growth`: captured loops
   with a polynomial per-step growth bound depending on the original input.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth`: the same
+  growth contract with the original input captured directly, for certificate inference.
 
 ## References
 
@@ -141,6 +143,19 @@ theorem iterateWith_of_bounded_growth {π : Type} {encPar : π ↪ List Bool}
       (hgrowth x state).trans (Nat.add_le_add_right hstate _)
   · intro x i state hi hstate
     exact hstate.trans (Nat.add_le_add_left (Nat.mul_le_mul_right _ hi) _)
+
+/-- An iteration step may capture its original input. Paired growth obligations let automation
+select a common polynomial bound. The uniform joint step certificate charges the captured input
+on every iteration; the growth bound need not itself be computable. -/
+theorem iterateWithInput_of_bounded_growth {count : α → ℕ} {init : α → β} {step : α → β → β}
+    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
+    (hinit : ComputableTidilyInPolyTime init encIn encState)
+    (hstep : ComputableTidilyInPolyTime (fun p : α × β => step p.1 p.2)
+      (encPair encIn encState) encState)
+    {growth : α → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) growth ∧
+      ∀ x state, (encState (step x state)).length ≤ (encState state).length + growth x) :
+    ComputableTidilyInPolyTime (fun x => (step x)^[count x] (init x)) encIn encState :=
+  iterateWith_of_bounded_growth id' hcount hinit hstep hbound.1 hbound.2
 
 /-- A loop with constant additive state growth has polynomially bounded intermediate states. -/
 theorem iterate_of_bounded_growth {count : α → ℕ} {init : α → β} {step : β → β}

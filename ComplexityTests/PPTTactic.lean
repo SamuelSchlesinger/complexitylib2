@@ -253,6 +253,19 @@ example (c a b : ℕ ↪ List Bool) (sample : List Bool → ProbComp ℕ)
       namedNext c b next word n) := by
   ppt
 
+-- Deterministic captured iteration composes with probabilistic code through the shared rules.
+example {α β : Type} (input : α ↪ List Bool) (stateEncoding : β ↪ List Bool)
+    (count : α → ℕ) (initial : α → β) (step : α → β → β)
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hstep : ComputableTidilyInPolyTime (fun p : α × β => step p.1 p.2)
+      (encPair input stateEncoding) stateEncoding)
+    (growth : α → ℕ) (hpoly : PolyBounded (fun x => (input x).length) growth)
+    (hgrowth : ∀ x state, (stateEncoding (step x state)).length ≤
+      (stateEncoding state).length + growth x) :
+    IsPPTOn input stateEncoding (fun x => pure ((step x)^[count x] (initial x))) := by
+  ppt
+
 -- Neither an unknown sampler nor a non-dyadic finite uniform law is a free operation.
 example (_sample : List Bool → ProbComp Bool) : True := by
   fail_if_success have : IsPPTOn encBits encBool _sample := by ppt

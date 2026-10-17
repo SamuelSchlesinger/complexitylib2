@@ -55,6 +55,9 @@ attribute [program_certificate]
 attribute [program_certificate hbound hcompute]
   ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
 
+attribute [program_certificate hbound]
+  ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth
+
 open Lean Meta Elab Tactic in
 /-- Synthesize a list interface only after the computation evidence fixes its encodings. -/
 @[aesop safe tactic (rule_sets := [PolyTime])
@@ -71,11 +74,11 @@ private meta def polytimeListInstance : TacticM Unit := withMainContext do
 attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.pi_apply'
 
-/-- Supply the called algorithm's local certificate before inferring its tuple arguments. -/
-@[aesop safe -40 tactic (rule_sets := [PolyTime])]
-private meta def polytimeKnownCall : Lean.Elab.Tactic.TacticM Unit :=
+/-- Expose local routine certificates and their argument obligations as search alternatives. -/
+@[aesop unsafe 99% tactic (rule_sets := [PolyTime])]
+private meta def polytimeKnownCall : Aesop.RuleTac :=
   Cslib.Tactic.applyKnownCall ``ComputableTidilyInPolyTime 2
-    ``ComputableTidilyInPolyTime.comp `g `hf `hg
+    ``ComputableTidilyInPolyTime.comp `g `hf
 
 /-- Expose named deterministic certificates as search alternatives. -/
 @[aesop unsafe 99% tactic (rule_sets := [PolyTime])]

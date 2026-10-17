@@ -48,9 +48,9 @@ open Lean Meta Elab Tactic Probability
 attribute [aesop norm unfold (rule_sets := [PPT])] IsPPT
 
 /-- Prepare local probabilistic routine calls through the same matcher as deterministic calls. -/
-@[aesop safe -40 tactic (rule_sets := [PPT])]
-private meta def pptKnownCall : TacticM Unit :=
-  Cslib.Tactic.applyKnownCall ``IsPPTOn 4 ``IsPPTOn.preprocess `prepare `hprogram `hprepare
+@[aesop unsafe 99% tactic (rule_sets := [PPT])]
+private meta def pptKnownCall : Aesop.RuleTac :=
+  Cslib.Tactic.applyKnownCall ``IsPPTOn 4 ``IsPPTOn.preprocess `prepare `hprogram
 
 /-- Expose named probabilistic certificates as search alternatives. -/
 @[aesop unsafe 99% tactic (rule_sets := [PPT])]

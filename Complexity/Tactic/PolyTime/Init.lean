@@ -233,38 +233,49 @@ private partial def prepareArgument (domain type : Expr) : MetaM Expr := do
   else
     mkFreshExprMVar (← mkArrow domain type)
 
-/-- Apply a local routine certificate through a composition rule, preparing tuple arguments
-with `polytime`. Predicate parameters select the program; rule parameter names select the
-argument and certificate, and `argumentGoal` names the remaining preparation obligation.
-Failed candidates restore all assignments before another input encoding is tried. -/
+/-- Apply local routine certificates through a composition rule, exposing tuple arguments.
+Predicate parameters select the program; rule parameter names select the argument and certificate.
+Each candidate retains separate assignments and leaves argument preparation to the surrounding
+proof search, so other obligations can constrain its encoding. -/
 def applyKnownCall (predicate : Name) (programIndex : Nat) (rule : Name)
-    (argumentName certificateName argumentGoal : Name) : TacticM Unit :=
-  withMainContext <| Term.withoutErrToSorry <| withoutRecover do
-    let target := (← instantiateMVars (← getMainTarget)).consumeMData
+    (argumentName certificateName : Name) : Aesop.RuleTac := fun input =>
+  input.goal.withContext do
+    let target := (← instantiateMVars (← input.goal.getType)).consumeMData
     unless target.isAppOf predicate do throwError "expected an efficiency goal for {predicate}"
     let program := target.getAppArgs[programIndex]!
     if program.hasExprMVar then throwError "the called program is not determined"
     let head ← lambdaTelescope (← Core.betaReduce (← etaExpand program)) fun _ body =>
       pure body.getAppFn
+    let initial ← saveState
+    let mut applications := #[]
     for decl in ← getLCtx do
       if decl.isImplementationDetail || !decl.type.isAppOf predicate then continue
       let certified := decl.type.getAppArgs[programIndex]!
       let called ← lambdaTelescope (← Core.betaReduce (← etaExpand certified)) fun _ body =>
         pure body.getAppFn
       unless called == head do continue
-      let saved ← saveState
       try
-        let argument ← prepareArgument target.getAppArgs[0]! decl.type.getAppArgs[0]!
-        let composed ← withLocalDeclD `input target.getAppArgs[0]! fun input =>
-          mkLambdaFVars #[input] (mkApp certified (mkApp argument input))
-        unless ← isDefEq (← withReducible (reduce composed)) program do
-          throwError "the certificate does not match this call"
-        applyWithArguments rule #[(argumentName, argument), (certificateName, decl.toExpr)]
-        if ← (← getGoals).anyM (fun goal => do isDefEq (← goal.getType) target) then
-          throwError "composition made no progress"
-        solveTagged argumentGoal
-        return
-      catch _ => saved.restore
-    throwError "no applicable local routine certificate"
+        let goals ← (Lean.Elab.Tactic.run input.goal <|
+            Term.withoutErrToSorry <| withoutRecover do
+          let argument ← prepareArgument target.getAppArgs[0]! decl.type.getAppArgs[0]!
+          let composed ← withLocalDeclD `input target.getAppArgs[0]! fun input =>
+            mkLambdaFVars #[input] (mkApp certified (mkApp argument input))
+          unless ← isDefEq (← withReducible (reduce composed)) program do
+            throwError "the certificate does not match this call"
+          applyWithArguments rule #[(argumentName, argument), (certificateName, decl.toExpr)]
+          if ← (← getGoals).anyM (fun goal => do isDefEq (← goal.getType) target) then
+            throwError "composition made no progress").run'
+        if ← Aesop.hasSorry (mkMVar input.goal) then
+          throwError "routine application contains an admitted premise"
+        let goals ← goals.toArray.mapM (Aesop.mvarIdToSubgoal input.goal)
+        applications := applications.push {
+          goals
+          postState := ← saveState
+          scriptSteps? := none
+          successProbability? := none }
+      catch _ => pure ()
+      finally initial.restore
+    if applications.isEmpty then throwError "no applicable local routine certificate"
+    return ⟨applications⟩
 
 end Cslib.Tactic

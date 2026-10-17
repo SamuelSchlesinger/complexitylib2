@@ -173,16 +173,16 @@ theorem foldlWithInput_of_bounded_growth {list : γ → List α} {init : γ → 
     {step : γ → β → α → β}
     (hinit : ComputableTidilyInPolyTime init encIn encB)
     (hcompute : ComputableTidilyInPolyTime list encIn encL ∧
-      ListEncoding encA encL ∧ SizedListEncoding encA encL ∧
       ComputableTidilyInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
-        (encPair (encPair encIn encB) encA) encB)
+        (encPair (encPair encIn encB) encA) encB ∧
+      ListEncoding encA encL ∧ SizedListEncoding encA encL)
     {growth : γ → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) growth ∧
       ∀ x state value, value ∈ list x →
       (encB (step x state value)).length ≤ (encB state).length + growth x) :
     ComputableTidilyInPolyTime (fun x => (list x).foldl (step x) (init x)) encIn encB := by
-  let := hcompute.2.1
   let := hcompute.2.2.1
-  exact foldlWith_of_bounded_growth id' hcompute.1 hinit hcompute.2.2.2 hbound.1 hbound.2
+  let := hcompute.2.2.2
+  exact foldlWith_of_bounded_growth id' hcompute.1 hinit hcompute.2.1 hbound.1 hbound.2
 
 /-- Constant additive growth discharges the fold's intermediate-size obligation. -/
 theorem foldl_of_bounded_growth {list : γ → List α} {init : γ → β} {step : β → α → β}

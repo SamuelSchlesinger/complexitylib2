@@ -285,9 +285,19 @@ example (otherElement : α ↪ List Bool) (otherListEncoding : List α ↪ List 
 
 omit hlist
 variable {otherListEncoding₁ otherListEncoding₂ : List α ↪ List Bool}
+    {otherElement₁ otherElement₂ otherCallbackElement : α ↪ List Bool}
+    [hencoding₁ : ListEncoding otherElement₁ otherListEncoding₁]
+    [hsize₁ : SizedListEncoding otherElement₁ otherListEncoding₁]
+    [hencoding₂ : ListEncoding otherElement₂ otherListEncoding₂]
+    [hsize₂ : SizedListEncoding otherElement₂ otherListEncoding₂]
+    (_hotherStep : ComputableTidilyInPolyTime
+      (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+      (encPair (encPair input stateEncoding) otherCallbackElement) stateEncoding)
+
+include hencoding₁ hsize₁ hencoding₂ hsize₂ _hotherStep
 
 -- All six certificate orders must work, including when the compatible choice is in the middle.
--- Instance search must not guess a representation and discard other computation certificates.
+-- Every list representation has interfaces, but only one callback certificate is compatible.
 example (hgood : ComputableTidilyInPolyTime list input listEncoding)
     (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁)
     (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂) :
@@ -299,7 +309,10 @@ example (hgood : ComputableTidilyInPolyTime list input listEncoding)
     (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁) :
     ComputableTidilyInPolyTime
       (fun x => (list x).foldl (fun state value => step x state value) (initial x))
-      input stateEncoding := by polytime
+      input stateEncoding := by
+  revert hstep
+  intro hstep
+  polytime
 
 example (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁)
     (hgood : ComputableTidilyInPolyTime list input listEncoding)
@@ -313,7 +326,10 @@ example (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂
     (hgood : ComputableTidilyInPolyTime list input listEncoding)
     (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁) :
     ComputableTidilyInPolyTime (fun x => (list x).foldl (step x) (initial x))
-      input stateEncoding := by polytime
+      input stateEncoding := by
+  revert hstep
+  intro hstep
+  polytime
 
 example (_hother₁ : ComputableTidilyInPolyTime list input otherListEncoding₁)
     (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂)
@@ -328,7 +344,10 @@ example (_hother₂ : ComputableTidilyInPolyTime list input otherListEncoding₂
     ComputableTidilyInPolyTime
       (fun x => let entries := list x;
         entries.foldl (fun state value => step x state value) (initial x))
-      input stateEncoding := by polytime
+      input stateEncoding := by
+  revert hstep
+  intro hstep
+  polytime
 
 end CapturedFold
 
@@ -359,5 +378,61 @@ example : ComputableTidilyInPolyTime
   polytime
 
 example : taggedBits ([true], [false, false]) = [true, false, true, false] := by decide
+
+section CapturedIteration
+
+variable {α β : Type} (input : α ↪ List Bool) (stateEncoding : β ↪ List Bool)
+    (count : α → ℕ) (initial : α → β) (step : α → β → β)
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hstep : ComputableTidilyInPolyTime (fun p : α × β => step p.1 p.2)
+      (encPair input stateEncoding) stateEncoding)
+    (growth : α → ℕ) (hpoly : PolyBounded (fun x => (input x).length) growth)
+    (hgrowth : ∀ x state, (stateEncoding (step x state)).length ≤
+      (stateEncoding state).length + growth x)
+
+include hcount hinitial hstep hpoly hgrowth
+
+-- A captured loop still needs a unary count, uniform step and polynomial state-growth bound.
+example : ComputableTidilyInPolyTime (fun x => (step x)^[count x] (initial x))
+    input stateEncoding := by
+  fail_if_success (clear hcount; polytime)
+  fail_if_success (clear hinitial; polytime)
+  fail_if_success (clear hstep; polytime)
+  fail_if_success (clear hpoly; polytime)
+  fail_if_success (clear hgrowth; polytime)
+  polytime
+
+-- Bounds are selected jointly, independently of hypothesis order and callback spelling.
+example (otherGrowth looseGrowth : α → ℕ)
+    (_hother : PolyBounded (fun x => (input x).length) otherGrowth)
+    (_hloose : ∀ x state, (stateEncoding (step x state)).length ≤
+      (stateEncoding state).length + looseGrowth x) :
+    ComputableTidilyInPolyTime (fun x => (step x)^[count x] (initial x))
+      input stateEncoding := by
+  revert hpoly hgrowth
+  intro hpoly hgrowth
+  have : ComputableTidilyInPolyTime
+      (fun x => let update := fun state => step x state; update^[count x] (initial x))
+      input stateEncoding := by polytime
+  clear this
+  revert _hother _hloose
+  intro _hother _hloose
+  polytime
+
+end CapturedIteration
+
+-- Accumulating captured rows infers the framed state and pays for each copied row.
+example : ComputableTidilyInPolyTime
+    (fun p : List Bool × ℕ => (fun rows => p.1 :: rows)^[p.2] [])
+    (encPair encBits encUnary) (encList encBits) := by
+  have hpoly : PolyBounded (fun p : List Bool × ℕ => (encPair encBits encUnary p).length)
+      (fun p => 2 * p.1.length + 1) :=
+    ComputableTidilyInPolyTime.polyBounded (by polytime)
+  have hgrowth (p : List Bool × ℕ) (rows : List (List Bool)) :
+      (encList encBits (p.1 :: rows)).length ≤
+        (encList encBits rows).length + (2 * p.1.length + 1) := by
+    simp [Nat.add_comm]
+  polytime
 
 end ComplexityTests.PolyTimeContracts
