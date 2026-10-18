@@ -11,13 +11,38 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.SmallExpansion
 
 /-!
-# Rational hitting lists: rectangular
+# Rectangular kernels of block evaluations
 
-Adapted from OpenAI's formalization at revision `adc7f1241b42e322a6451854ab7e4b4c146bf78a`.
-Source: https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/lean/OAI/Computability/RationalHitting/Rectangular.lean
+Block evaluations of `∑ᵢ Aᵢ ⊗ Xᵢ`, built from coefficient matrices `Aᵢ` and square witness
+matrices `Xᵢ`. If such an evaluation is injective, the matrices `Aᵢ` cannot map a subspace into a
+smaller one. Combined with small-subspace expansion, this shows that the reverse-Taylor tests
+have no nonzero kernel family of bounded support whenever the same coefficients admit an
+invertible block witness.
 
-Imports, namespaces, module visibility, documentation, and formatting are adapted
-for complexitylib. The source theorem statements and mathematical arguments are retained.
+## Main definitions
+
+* `Rectangular.blockEval`: the block evaluation map on `Fin e → Fin q → F`.
+* `Rectangular.blockMatrix`: the corresponding sum of Kronecker products.
+* `Rectangular.componentSpace`, `Rectangular.coefficientMatrix`: the span of a family and the
+  coordinates of its members in a basis of that span.
+* `Rectangular.imageCombination`, `Rectangular.concatMatrix`: the combined images under several
+  maps, and the concatenated coefficient matrix.
+
+## Main results
+
+* `Rectangular.no_shrunk_subspace`: an injective block evaluation forbids shrinking subspaces.
+* `Rectangular.kernel_impossible`: an expanding kernel family contradicts injectivity.
+* `Rectangular.blockEval_injective_of_isUnit`: an invertible block matrix gives an injective
+  block evaluation.
+* `RectangularExpansion.rectangular_kernel_zero`: the reverse-Taylor tests have trivial
+  bounded-support kernel families.
+
+## References
+
+* Adapted from OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Computability/RationalHitting/Rectangular.lean), via the complexitylib port
+  [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -93,18 +118,6 @@ lemma no_shrunk_subspace {w q e : ℕ} (he : 0 < e)
     Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at hd
   exact Nat.le_of_mul_le_mul_left hd he
 
-/-- Full-rank blocks preserve the dimension of a common input subspace; this
-form avoids any unwarranted specialization of Laurent-series coefficients. -/
-lemma blockEval_injective_of_leftInverse {w q e : ℕ}
-    (A : Fin w → Matrix (Fin q) (Fin q) F)
-    (X : Fin w → Matrix (Fin e) (Fin e) F)
-    (J : (Fin e → Fin q → F) →ₗ[F] (Fin e → Fin q → F))
-    (hJ : J.comp (blockEval A X) = LinearMap.id) :
-    Function.Injective (blockEval A X) := by
-  apply Function.HasLeftInverse.injective
-  exact ⟨J, fun v => DFunLike.congr_fun hJ v⟩
-
-
 variable {P Q : Type*} [AddCommGroup P] [Module F P]
   [AddCommGroup Q] [Module F Q]
 
@@ -145,7 +158,7 @@ lemma coefficientMatrix_expansion {q k : ℕ} (f : Fin q → P)
   simpa only [coefficientMatrix, Basis.equivFun_apply, Submodule.coe_sum,
     Submodule.coe_smul, component] using congrArg Subtype.val (b.sum_repr (component (F := F) f α))
 
-/-- The output map of the wk possible component images. -/
+/-- The combined output map of the `w * k` component images. -/
 def imageCombination {w k : ℕ} (T : Fin w → P →ₗ[F] Q) (u : Fin k → P) :
     (Fin w × Fin k → F) →ₗ[F] Q :=
   Fintype.linearCombination F (fun ij => T ij.1 (u ij.2))
@@ -175,7 +188,7 @@ lemma rank_concat_lt {w q k : ℕ}
     (A : Fin w → Matrix (Fin q) (Fin q) F) (T : Fin w → P →ₗ[F] Q)
     (f : Fin q → P) (b : Basis (Fin k) F (componentSpace (F := F) f))
     (hker : ∀ α, ∑ i, ∑ γ, A i α γ • T i (f γ) = 0)
-    (hex : (w-1)*k < finrank F (imageCombination T (fun j => (b j : P))).range)
+    (hex : (w - 1) * k < finrank F (imageCombination T (fun j => (b j : P))).range)
     (hw : 1 ≤ w) : (concatMatrix A (coefficientMatrix f b)).rank < k := by
   let H := imageCombination T (fun j => (b j : P))
   have hle : Submodule.span F (Set.range (concatMatrix A (coefficientMatrix f b)).row) ≤
@@ -187,11 +200,11 @@ lemma rank_concat_lt {w q k : ℕ}
   rw [← Matrix.rank_eq_finrank_span_row] at hr
   have hd := H.finrank_range_add_finrank_ker
   simp only [Module.finrank_pi, Fintype.card_prod, Fintype.card_fin] at hd
-  have hw' : (w-1)*k+k = w*k := by
+  have hw' : (w - 1) * k + k = w * k := by
     calc
-      _ = (w-1+1)*k := by ring
+      _ = (w - 1 + 1) * k := by ring
       _ = _ := by congr 1; omega
-  change (w-1)*k < finrank F H.range at hex
+  change (w - 1) * k < finrank F H.range at hex
   omega
 
 lemma coefficient_image_le_concat {w q k : ℕ}
@@ -201,10 +214,9 @@ lemma coefficient_image_le_concat {w q k : ℕ}
   rw [Submodule.map_span, Submodule.span_le]
   rintro _ ⟨v, ⟨j, rfl⟩, rfl⟩
   apply Submodule.subset_span
-  refine ⟨(i,j), ?_⟩
+  refine ⟨(i, j), ?_⟩
   funext α
   simp [concatMatrix, Matrix.mulVec, Matrix.mul_apply, dotProduct]
-
 
 lemma component_image_le_range {w q k : ℕ} (T : Fin w → P →ₗ[F] Q)
     (f : Fin q → P) (b : Basis (Fin k) F (componentSpace (F := F) f)) (i : Fin w) :
@@ -212,15 +224,15 @@ lemma component_image_le_range {w q k : ℕ} (T : Fin w → P →ₗ[F] Q)
       (imageCombination T (fun j => (b j : P))).range := by
   rw [imageCombination, Fintype.range_linearCombination]
   rintro _ ⟨x, hx, rfl⟩
-  have he : (∑ j, (b.repr ⟨x,hx⟩) j • (b j : P)) = x := by
+  have he : (∑ j, (b.repr ⟨x, hx⟩) j • (b j : P)) = x := by
     simpa only [Submodule.coe_sum, Submodule.coe_smul] using
-      congrArg Subtype.val (b.sum_repr ⟨x,hx⟩)
+      congrArg Subtype.val (b.sum_repr ⟨x, hx⟩)
   rw [← he, map_sum]
   apply Submodule.sum_mem
   intro j _
   rw [map_smul]
   apply Submodule.smul_mem
-  exact Submodule.subset_span ⟨(i,j), rfl⟩
+  exact Submodule.subset_span ⟨(i, j), rfl⟩
 
 /-- A kernel vector with sufficiently expansive component span contradicts
 any invertible block evaluation of the same coefficient matrices. -/
@@ -230,7 +242,7 @@ theorem kernel_impossible {w q k e : ℕ} (hw : 1 ≤ w) (he : 0 < e)
     (hX : Function.Injective (blockEval A X))
     (f : Fin q → P) (b : Basis (Fin k) F (componentSpace (F := F) f))
     (hker : ∀ α, ∑ i, ∑ γ, A i α γ • T i (f γ) = 0)
-    (hex : (w-1)*k < finrank F (imageCombination T (fun j => (b j : P))).range) :
+    (hex : (w - 1) * k < finrank F (imageCombination T (fun j => (b j : P))).range) :
     False := by
   let Pmat := coefficientMatrix f b
   let Cmat := concatMatrix A Pmat
@@ -247,7 +259,6 @@ theorem kernel_impossible {w q k e : ℕ} (hw : 1 ≤ w) (he : 0 < e)
     exact rank_concat_lt A T f b hker hex hw
   omega
 
-
 /-- The block matrix obtained as a sum of Kronecker products. -/
 def blockMatrix {w q e : ℕ} (A : Fin w → Matrix (Fin q) (Fin q) F)
     (X : Fin w → Matrix (Fin e) (Fin e) F) :
@@ -256,7 +267,7 @@ def blockMatrix {w q e : ℕ} (A : Fin w → Matrix (Fin q) (Fin q) F)
 lemma blockMatrix_mulVec {w q e : ℕ} (A : Fin w → Matrix (Fin q) (Fin q) F)
     (X : Fin w → Matrix (Fin e) (Fin e) F) (v : Fin e → Fin q → F)
     (α : Fin q) (β : Fin e) :
-    (blockMatrix A X).mulVec (fun j => v j.2 j.1) (α,β) = blockEval A X v β α := by
+    (blockMatrix A X).mulVec (fun j => v j.2 j.1) (α, β) = blockEval A X v β α := by
   classical
   simp only [blockMatrix, Matrix.mulVec, dotProduct, Matrix.sum_apply,
     Matrix.kronecker_apply, Finset.sum_mul, Fintype.sum_prod_type,
@@ -286,11 +297,10 @@ lemma blockEval_injective_of_isUnit {w q e : ℕ}
     rw [blockMatrix_mulVec, blockMatrix_mulVec]
     exact congrFun (congrFun hv j.2) j.1
   funext β α
-  exact congrFun hflat (α,β)
+  exact congrFun hflat (α, β)
 
 end
 end Rational.Rectangular
-
 
 namespace Rational.RectangularExpansion
 open Module Matrix
@@ -302,7 +312,7 @@ variable {K : Type*} [Field K] [CharZero K]
 /-- The rectangular Taylor tests have no nonzero kernel component family when
 the same coefficients have an invertible matrix witness. -/
 theorem rectangular_kernel_zero (w B M N q e : ℕ) (hw : 1 ≤ w) (hN : 1 ≤ N)
-    (hMN : M = N + 2*w^3*B) (hq : q ≤ B) (he : 0 < e)
+    (hMN : M = N + 2 * w ^ 3 * B) (hq : q ≤ B) (he : 0 < e)
     (points : Fin w → K) (hp : Function.Injective points)
     (A : Fin w → Matrix (Fin q) (Fin q) (F K))
     (X : Fin w → Matrix (Fin e) (Fin e) (F K))

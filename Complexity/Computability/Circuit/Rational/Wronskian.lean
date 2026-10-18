@@ -11,13 +11,38 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Affine
 
 /-!
-# Rational hitting lists: wronskian
+# Wronskians of polynomial families
 
-Adapted from OpenAI's formalization at revision `adc7f1241b42e322a6451854ab7e4b4c146bf78a`.
-Source: https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/lean/OAI/Computability/RationalHitting/Wronskian.lean
+The Wronskian of a finite family of polynomials, with derivative orders `0, …, h - 1`, and the
+local order calculus behind the small-subspace expansion step of the rational hitting-list
+construction. Over a field of characteristic zero, a family with pairwise distinct vanishing
+orders at a point has a nonzero Wronskian whose order there is determined exactly. Since a
+change of basis only rescales the Wronskian, this bounds the total vanishing order of
+order-echelon bases at distinct points by the Wronskian's degree.
 
-Imports, namespaces, module visibility, documentation, and formatting are adapted
-for complexitylib. The source theorem statements and mathematical arguments are retained.
+## Main definitions
+
+* `Expansion.wronskianFamily`: the Wronskian `det (f_j^{(i)})` of a family `f : Fin h → K[X]`.
+* `Expansion.vanishingFiltration`: the members of a polynomial subspace vanishing to order at
+  least `r` at a point.
+
+## Main results
+
+* `Expansion.wronskian_order_of_distinct_orders`: the exact order at zero of the Wronskian of a
+  family with distinct orders.
+* `Expansion.exists_echelon_basis_at`: every bounded-degree subspace has a basis with distinct
+  vanishing orders at a given point.
+* `Expansion.wronskian_order_bound`: the total vanishing order of such bases at `w` distinct
+  points is at most `h * (d - 1) + w * (0 + 1 + ⋯ + (h - 1))`.
+* `Expansion.finrank_vanishingFiltration`: an order-echelon basis computes the dimension of
+  every step of the vanishing filtration.
+
+## References
+
+* Adapted from OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Computability/RationalHitting/Wronskian.lean), via the complexitylib port
+  [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -31,107 +56,8 @@ open scoped BigOperators Polynomial
 noncomputable section
 
 /-- The Wronskian with derivative orders 0, ..., h - 1. -/
-def wronskian {K : Type*} [CommRing K] {h : ℕ} (f : Fin h → K[X]) : K[X] :=
+def wronskianFamily {K : Type*} [CommRing K] {h : ℕ} (f : Fin h → K[X]) : K[X] :=
   Matrix.det (Matrix.of fun i j : Fin h => derivative^[i.val] (f j))
-
-lemma coeff_prod_sum_degrees {K ι : Type*} [CommSemiring K] (s : Finset ι)
-    (f : ι → K[X]) (d : ι → ℕ) (hd : ∀ i ∈ s, (f i).natDegree ≤ d i) :
-    (∏ i ∈ s, f i).coeff (∑ i ∈ s, d i) = ∏ i ∈ s, (f i).coeff (d i) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | @insert a s ha ih =>
-    rw [Finset.prod_insert ha, Finset.sum_insert ha, Finset.prod_insert ha,
-      coeff_mul_add_eq_of_natDegree_le (hd a (Finset.mem_insert_self _ _))]
-    · rw [ih (fun i hi => hd i (Finset.mem_insert_of_mem hi))]
-    · exact (natDegree_prod_le s f).trans
-        (Finset.sum_le_sum fun i hi => hd i (Finset.mem_insert_of_mem hi))
-
-lemma coeff_det_column_degrees {K ι : Type*} [CommRing K]
-    [Fintype ι] [DecidableEq ι] (A : Matrix ι ι K[X]) (d : ι → ℕ)
-    (hd : ∀ i j, (A i j).natDegree ≤ d j) :
-    A.det.coeff (∑ j, d j) = Matrix.det (Matrix.of fun i j => (A i j).coeff (d j)) := by
-  simp only [Matrix.det_apply, finsetSum_coeff, Matrix.of_apply]
-  apply Finset.sum_congr rfl
-  intro g _
-  rw [coeff_smul, coeff_prod_sum_degrees _ _ d (fun j _ => hd (g j) j)]
-
-lemma natDegree_scaled_derivative_le {K : Type*} [CommRing K]
-    (f : K[X]) (r : ℕ) :
-    (X ^ r * derivative^[r] f).natDegree ≤ f.natDegree := by
-  by_cases hr : r ≤ f.natDegree
-  · calc
-      (X ^ r * derivative^[r] f).natDegree
-          ≤ (X ^ r : K[X]).natDegree + (derivative^[r] f).natDegree := natDegree_mul_le
-      _ ≤ r + (f.natDegree - r) := Nat.add_le_add (natDegree_X_pow_le r)
-        (natDegree_iterate_derivative f r)
-      _ = f.natDegree := Nat.add_sub_of_le hr
-  · rw [iterate_derivative_eq_zero (Nat.lt_of_not_ge hr), mul_zero, natDegree_zero]
-    exact Nat.zero_le _
-
-lemma coeff_scaled_derivative {K : Type*} [CommRing K]
-    (f : K[X]) (r : ℕ) :
-    (X ^ r * derivative^[r] f).coeff f.natDegree =
-      (f.natDegree.descFactorial r : K) * f.leadingCoeff := by
-  by_cases hr : r ≤ f.natDegree
-  · rw [coeff_X_pow_mul', ite_eq_left hr, coeff_iterate_derivative,
-      Nat.sub_add_cancel hr, nsmul_eq_mul, coeff_natDegree]
-  · rw [iterate_derivative_eq_zero (Nat.lt_of_not_ge hr), mul_zero, coeff_zero,
-      Nat.descFactorial_eq_zero_iff_lt.mpr (Nat.lt_of_not_ge hr), Nat.cast_zero, zero_mul]
-
-lemma wronskian_ne_zero_of_distinct_degrees {K : Type*} [Field K] [CharZero K]
-    {h : ℕ} (f : Fin h → K[X]) (hf : ∀ j, f j ≠ 0)
-    (hd : Function.Injective (fun j => (f j).natDegree)) :
-    wronskian f ≠ 0 := by
-  let A : Matrix (Fin h) (Fin h) K[X] :=
-    Matrix.of fun i j => X ^ i.val * derivative^[i.val] (f j)
-  have hcoeff : A.det.coeff (∑ j, (f j).natDegree) =
-      Matrix.det (Matrix.of fun i j : Fin h => ((f j).natDegree.descFactorial i.val : K) *
-        (f j).leadingCoeff) := by
-    rw [coeff_det_column_degrees A (fun j => (f j).natDegree)
-      (fun i j => natDegree_scaled_derivative_le (f j) i.val)]
-    congr 1
-    ext i j
-    exact coeff_scaled_derivative (f j) i.val
-  have hfall : Matrix.det (Matrix.of fun i j : Fin h => ((f j).natDegree.descFactorial i.val :
-    K)) ≠ 0 := by
-    let p : Fin h → K[X] := fun j => descPochhammer K j.val
-    have hp := Matrix.det_eval_matrixOfPolynomials_eq_det_vandermonde
-      (fun j : Fin h => ((f j).natDegree : K)) p
-      (fun j => by simp [p]) (fun j => monic_descPochhammer K j.val)
-    have he : (Matrix.of fun i j : Fin h => ((f j).natDegree.descFactorial i.val : K)) =
-        (Matrix.of fun i j : Fin h => (p j).eval ((f i).natDegree : K)).transpose := by
-      ext i j
-      simp [p, descPochhammer_eval_eq_descFactorial]
-    rw [he, Matrix.det_transpose, ← hp, Matrix.det_vandermonde_ne_zero_iff]
-    exact (Nat.cast_injective (R := K)).comp hd
-  have htop : A.det.coeff (∑ j, (f j).natDegree) ≠ 0 := by
-    rw [hcoeff]
-    have he : (Matrix.of fun i j : Fin h => ((f j).natDegree.descFactorial i.val : K) *
-        (f j).leadingCoeff) =
-        Matrix.of (fun i j : Fin h => (f j).leadingCoeff *
-          ((f j).natDegree.descFactorial i.val : K)) := by
-      ext i j
-      exact mul_comm _ _
-    rw [he]
-    have hscale := Matrix.det_mul_row (fun j => (f j).leadingCoeff)
-      (Matrix.of fun i j : Fin h => ((f j).natDegree.descFactorial i.val : K))
-    simp only [Matrix.of_apply] at hscale
-    rw [hscale]
-    exact mul_ne_zero (Finset.prod_ne_zero_iff.mpr fun j _ => leadingCoeff_ne_zero.mpr (hf j)) hfall
-  intro hw
-  apply htop
-  have hz : A.det = 0 := by
-    change Matrix.det (Matrix.of fun i j : Fin h => (X : K[X]) ^ i.val * derivative^[i.val] (f
-      j)) = 0
-    have hscale := Matrix.det_mul_column (fun i : Fin h => (X : K[X]) ^ i.val)
-      (Matrix.of fun i j : Fin h => derivative^[i.val] (f j))
-    simp only [Matrix.of_apply] at hscale
-    rw [hscale]
-    change (∏ i : Fin h, (X : K[X]) ^ i.val) * wronskian f = 0
-    rw [hw, mul_zero]
-  rw [hz, coeff_zero]
-
 
 /-- Factoring prescribed powers from the columns keeps track of the first
 possible coefficient of a determinant. -/
@@ -175,8 +101,8 @@ The sum of the row numbers is C(h,2). -/
 lemma wronskian_order_of_distinct_orders {K : Type*} [Field K] [CharZero K]
     {h : ℕ} (f : Fin h → K[X]) (hf : ∀ j, f j ≠ 0)
     (hd : Function.Injective (fun j => (f j).natTrailingDegree)) :
-    wronskian f ≠ 0 ∧
-      (wronskian f).natTrailingDegree + (∑ i : Fin h, i.val) =
+    wronskianFamily f ≠ 0 ∧
+      (wronskianFamily f).natTrailingDegree + (∑ i : Fin h, i.val) =
         ∑ j, (f j).natTrailingDegree := by
   let A : Matrix (Fin h) (Fin h) K[X] :=
     Matrix.of fun i j => X ^ i.val * derivative^[i.val] (f j)
@@ -220,14 +146,14 @@ lemma wronskian_order_of_distinct_orders {K : Type*} [Field K] [CharZero K]
   have hA0 : A.det ≠ 0 := by
     rw [hdet]
     exact mul_ne_zero (pow_ne_zero _ X_ne_zero) hB0
-  have hscale : A.det = X ^ (∑ i : Fin h, i.val) * wronskian f := by
+  have hscale : A.det = X ^ (∑ i : Fin h, i.val) * wronskianFamily f := by
     have he := Matrix.det_mul_column (fun i : Fin h => (X : K[X]) ^ i.val)
       (Matrix.of fun i j : Fin h => derivative^[i.val] (f j))
     simp only [Matrix.of_apply] at he
     change _ = _ * Matrix.det (Matrix.of fun i j : Fin h => derivative^[i.val] (f j))
     rw [← Finset.prod_pow_eq_pow_sum]
     exact he
-  have hw : wronskian f ≠ 0 := by
+  have hw : wronskianFamily f ≠ 0 := by
     intro hz
     rw [hscale, hz, mul_zero] at hA0
     exact hA0 rfl
@@ -237,7 +163,6 @@ lemma wronskian_order_of_distinct_orders {K : Type*} [Field K] [CharZero K]
       natTrailingDegree_eq_zero.mpr (Or.inr hBc), zero_add]
   rw [hscale, mul_comm, natTrailingDegree_mul_X_pow hw] at ho
   exact ho
-
 
 /-- Polynomial row reduction, derived rather than assumed: every bounded-degree
 subspace has a basis with distinct largest degrees. -/
@@ -330,7 +255,6 @@ lemma exists_degree_echelon_family {K : Type*} [Field K]
         rw [hfd] at hj
         omega
 
-
 /-- Fixed-length coefficient reversal is linear, unlike degree-dependent
 polynomial reversal. -/
 def reflectLinearEquiv (K : Type*) [Field K] (N : ℕ) : K[X] ≃ₗ[K] K[X] where
@@ -396,10 +320,9 @@ lemma exists_order_echelon_family {K : Type*} [Field K]
     change (g i).natDegree = (g j).natDegree
     omega
 
-
 lemma wronskian_linearCombination {K : Type*} [CommRing K] {h : ℕ}
     (f : Fin h → K[X]) (A : Matrix (Fin h) (Fin h) K) :
-    wronskian (fun j => ∑ i, A i j • f i) = wronskian f * C A.det := by
+    wronskianFamily (fun j => ∑ i, A i j • f i) = wronskianFamily f * C A.det := by
   have he : (Matrix.of fun r j : Fin h =>
         derivative^[r.val] (∑ i, A i j • f i)) =
       (Matrix.of fun r i : Fin h => derivative^[r.val] (f i)) * A.map C := by
@@ -413,7 +336,7 @@ lemma wronskian_linearCombination {K : Type*} [CommRing K] {h : ℕ}
       _ = _ := by
         simp only [iterate_derivative_smul]
         simp only [smul_eq_C_mul, mul_comm]
-  unfold wronskian
+  unfold wronskianFamily
   rw [he, Matrix.det_mul]
   congr 1
   exact (C.map_det A).symm
@@ -427,8 +350,8 @@ lemma basis_toMatrix_det_ne_zero {K M : Type*} [Field K] [AddCommGroup M]
 
 lemma wronskian_basis_change {K : Type*} [Field K] {h : ℕ}
     {V : Submodule K K[X]} (b b' : Basis (Fin h) K V) :
-    wronskian (fun j => (b' j : K[X])) =
-      wronskian (fun j => (b j : K[X])) * C (b.toMatrix b').det := by
+    wronskianFamily (fun j => (b' j : K[X])) =
+      wronskianFamily (fun j => (b j : K[X])) * C (b.toMatrix b').det := by
   have he : (fun j => (b' j : K[X])) =
       (fun j => ∑ i, b.toMatrix b' i j • (b i : K[X])) := by
     funext j
@@ -457,7 +380,7 @@ lemma exists_order_echelon_basis {K : Type*} [Field K]
 lemma wronskian_basis_ne_zero {K : Type*} [Field K] [CharZero K]
     (d : ℕ) {V : Submodule K K[X]} {h : ℕ} (b : Basis (Fin h) K V)
     (hV : ∀ f ∈ V, f ≠ 0 → f.natDegree < d) :
-    wronskian (fun j => (b j : K[X])) ≠ 0 := by
+    wronskianFamily (fun j => (b j : K[X])) ≠ 0 := by
   obtain ⟨b', hord⟩ := exists_order_echelon_basis d V b hV
   have hne : ∀ j, (b' j : K[X]) ≠ 0 := by
     intro j hz
@@ -481,8 +404,8 @@ lemma iterate_derivative_taylor {K : Type*} [CommRing K] (a : K)
 
 lemma wronskian_taylor {K : Type*} [CommRing K] {h : ℕ}
     (a : K) (f : Fin h → K[X]) :
-    wronskian (fun j => taylor a (f j)) = taylor a (wronskian f) := by
-  unfold wronskian
+    wronskianFamily (fun j => taylor a (f j)) = taylor a (wronskianFamily f) := by
+  unfold wronskianFamily
   have he : (Matrix.of fun i j : Fin h => derivative^[i.val] (taylor a (f j))) =
       (Matrix.of fun i j : Fin h => derivative^[i.val] (f j)).map (taylorEquiv a) := by
     apply Matrix.ext
@@ -493,8 +416,8 @@ lemma wronskian_taylor {K : Type*} [CommRing K] {h : ℕ}
 
 lemma natDegree_wronskian_le {K : Type*} [CommRing K] {h : ℕ}
     (f : Fin h → K[X]) (D : ℕ) (hd : ∀ j, (f j).natDegree ≤ D) :
-    (wronskian f).natDegree ≤ h * D := by
-  unfold wronskian
+    (wronskianFamily f).natDegree ≤ h * D := by
+  unfold wronskianFamily
   rw [Matrix.det_apply]
   apply natDegree_sum_le_of_forall_le
   intro g _
@@ -518,11 +441,10 @@ lemma sum_rootMultiplicity_le_natDegree {K : Type*} [Field K]
       Finset.mem_union_right _ (Multiset.mem_toFinset.mpr ha))
     _ ≤ f.natDegree := card_roots' f
 
-
 lemma wronskian_order_at {K : Type*} [Field K] [CharZero K] {h : ℕ}
     (a : K) (f : Fin h → K[X]) (hf : ∀ j, f j ≠ 0)
     (hd : Function.Injective (fun j => (f j).rootMultiplicity a)) :
-    (wronskian f).rootMultiplicity a + (∑ i : Fin h, i.val) =
+    (wronskianFamily f).rootMultiplicity a + (∑ i : Fin h, i.val) =
       ∑ j, (f j).rootMultiplicity a := by
   have hn : ∀ j, taylor a (f j) ≠ 0 := by
     intro j hz
@@ -537,15 +459,14 @@ lemma wronskian_basis_rootMultiplicity {K : Type*} [Field K] [CharZero K]
     (d : ℕ) {V : Submodule K K[X]} {h : ℕ}
     (b b' : Basis (Fin h) K V) (a : K)
     (hV : ∀ f ∈ V, f ≠ 0 → f.natDegree < d) :
-    (wronskian (fun j => (b' j : K[X]))).rootMultiplicity a =
-      (wronskian (fun j => (b j : K[X]))).rootMultiplicity a := by
+    (wronskianFamily (fun j => (b' j : K[X]))).rootMultiplicity a =
+      (wronskianFamily (fun j => (b j : K[X]))).rootMultiplicity a := by
   rw [wronskian_basis_change b b', rootMultiplicity_mul
     (mul_ne_zero (wronskian_basis_ne_zero d b hV)
       (C_ne_zero.mpr (basis_toMatrix_det_ne_zero b b'))), rootMultiplicity_C, add_zero]
 
 /-- The Wronskian order bound for distinct points of a characteristic-zero
 field and order-echelon bases. The triangular sum is exactly binom(h,2). -/
-
 theorem wronskian_order_bound {K : Type*} [Field K] [CharZero K]
     (d : ℕ) {V : Submodule K K[X]} {h w : ℕ}
     (b : Basis (Fin h) K V) (a : Fin w → K) (ha : Function.Injective a)
@@ -556,7 +477,7 @@ theorem wronskian_order_bound {K : Type*} [Field K] [CharZero K]
       h * (d - 1) + w * (∑ j : Fin h, j.val) := by
   classical
   have localOrder : ∀ i, ∑ j, (e i j : K[X]).rootMultiplicity (a i) =
-      (wronskian (fun j => (b j : K[X]))).rootMultiplicity (a i) +
+      (wronskianFamily (fun j => (b j : K[X]))).rootMultiplicity (a i) +
         (∑ j : Fin h, j.val) := by
     intro i
     rw [← wronskian_order_at (a i) _ (fun j hz => (e i).ne_zero j (Subtype.ext hz)) (he i),
@@ -565,7 +486,7 @@ theorem wronskian_order_bound {K : Type*} [Field K] [CharZero K]
   rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
     nsmul_eq_mul]
   apply Nat.add_le_add_right
-  let W := wronskian (fun j => (b j : K[X]))
+  let W := wronskianFamily (fun j => (b j : K[X]))
   have hsum : (∑ i, W.rootMultiplicity (a i)) =
       ∑ x ∈ Finset.univ.image a, W.rootMultiplicity x := by
     rw [Finset.sum_image]
@@ -576,7 +497,6 @@ theorem wronskian_order_bound {K : Type*} [Field K] [CharZero K]
   intro j
   have hh := hV (b j) (b j).property (fun hz => b.ne_zero j (Subtype.ext hz))
   omega
-
 
 lemma exists_echelon_basis_at {K : Type*} [Field K]
     (d : ℕ) (V : Submodule K K[X]) {h : ℕ} (b : Basis (Fin h) K V)
@@ -637,7 +557,6 @@ lemma low_coefficients_force_zero {K : Type*} [Field K] {h : ℕ}
       exact (mul_eq_zero.mp ((hs.symm.trans (hz m hmr)))).resolve_right htc
   intro j hj
   exact hi _ j rfl hj
-
 
 /-- The exact vanishing filtration, expressed by low Taylor coefficients. -/
 def vanishingFiltration {K : Type*} [Field K] (V : Submodule K K[X])
@@ -732,9 +651,5 @@ theorem finrank_vanishingFiltration {K : Type*} [Field K]
 
 end
 end Rational.Expansion
-
-
-/- An integral frame records integral coordinate functionals, making
-saturation explicit. -/
 
 end Cslib.Circuits
