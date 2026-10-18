@@ -77,8 +77,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   [synthesis](Complexity/Computability/Circuit/Boolean/MassProduction/Synthesis.lean), and
   [batched lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean); their module
   documentation records the shared constructions and exact gate-cost contracts.
-  Constructor runtime remains uncertified. The three mass-production results above remain to
-  be ported.
+  Constructor runtime remains uncertified. Uhlig's coefficient-one theorem through
+  `2 ^ o(n / log n)` copies is ported in
+  [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean); the exponential copy
+  range and the sharp real-rate coefficient remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
@@ -86,10 +88,11 @@ Jukna coverage below is an additional target beyond the V1 port:
   circuits and some mass-production infrastructure. Nonuniform circuit existence does not
   certify the preprocessing algorithm's runtime.
 * **Fagin's theorem.** Complete the connection between ESO-definable queries on finite relational
-  structures and NP. V2 currently has the logical semantics and closure results. V1 supplies the
-  [ESO-to-NP direction](https://github.com/SamuelSchlesinger/complexitylib/blob/dev/Complexitylib/DescriptiveComplexity/SecondOrder/PolynomialTime.lean);
-  port its encoded structures and efficient certificate checker, then construct the converse
-  tableau interpretation. The converse is new work even relative to V1.
+  structures and NP. The [encoded structures](Complexity/Logics/FirstOrder/Encoding.lean) and
+  [polynomial-time certificate checker](Complexity/Computability/Complexity/Fagin/Verifier.lean)
+  now establish ESO → NP, including empty domains and nullary relations. The remaining direction
+  is a tableau interpretation proving that every isomorphism-closed NP query is ESO-definable;
+  this is new work even relative to V1.
 * **Further algebraic results.** Carry over the existing extractor and rational-matrix
   hitting-list developments, recording each endpoint's remaining hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
@@ -151,8 +154,11 @@ space bounds. Further class-level work needs resource certificates for the actua
 * machine-level hierarchy theorems and `P ⊊ EXP`; a tight tape-indexed hierarchy needs a separate
   linear-overhead simulation, and an `f log f` hierarchy needs the corresponding simulation bound;
 * logspace composition, Savitch, `NL ⊆ P`, `NL = coNL`, `PH ⊆ PSPACE` and Sipser–Lautemann;
-* nondeterministic-machine/verifier equivalence, efficient `SAT ≤ 3SAT`, single-tape simulation,
-  and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
+* the reverse direction of nondeterministic-machine/verifier equivalence: the
+  [guess-and-verify construction](Complexity/Computability/Complexity/Classes/NP/GuessVerify.lean)
+  gives polynomial-time NTMs from verifiers; verifiers from polynomial-time NTMs remain;
+* efficient `SAT ≤ 3SAT`, single-tape simulation, and machine-backed Kolmogorov and
+  Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.
 
