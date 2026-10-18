@@ -50,6 +50,7 @@ public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Padding
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Schedule
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Sharp
 public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpParameters
 public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpStatement
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
