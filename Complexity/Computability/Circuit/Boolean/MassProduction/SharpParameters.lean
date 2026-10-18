@@ -269,4 +269,92 @@ theorem eventually_le_suffixWidth (hnd : num < den) (hX : 0 < X) (c : ℕ) :
     (Nat.mul_pos (by omega : 0 < X + 1) (by omega : 0 < den))
   omega
 
+/-- Slack `X = 16 (P + 1)` in three factors costs less than `1 / (2 P)`. -/
+theorem two_mul_slack_le (P : ℕ) :
+    2 * P * ((16 * (P + 1) + 1) ^ 2 * (16 * (P + 1) + 2)) ≤ (2 * P + 1) * (16 * (P + 1)) ^ 3 := by
+  nlinarith [Nat.zero_le (P ^ 3), Nat.zero_le (P ^ 2), Nat.zero_le P, Nat.zero_le (P ^ 4)]
+
+/-- The leading-coefficient arithmetic of sharp mass production. -/
+theorem mul_add_le_of_slack {P n w p den num R L O : ℕ}
+    (hsuffix : 16 * (P + 1) * (den - num) * n ≤ (16 * (P + 1) + 1) * den * w)
+    (hsplit : n = p + w)
+    (hR : 16 * (P + 1) * R ≤ (16 * (P + 1) + 2) * 2 ^ p)
+    (hL : 16 * (P + 1) * w * L ≤ (16 * (P + 1) + 1) * 2 ^ w)
+    (hO : 2 * P * (den - num) * n * O ≤ den * 2 ^ n) :
+    P * (den - num) * n * (R * L + O) ≤ (P + 1) * den * 2 ^ n := by
+  set X := 16 * (P + 1) with hX
+  have hXpos : 0 < X := by omega
+  have main : 2 * P * ((den - num) * n * (R * L)) ≤ (2 * P + 1) * (den * 2 ^ n) := by
+    have h3 : X ^ 3 * ((den - num) * n * (R * L)) ≤
+        (X + 1) ^ 2 * (X + 2) * (den * 2 ^ n) := by
+      calc X ^ 3 * ((den - num) * n * (R * L)) = (X * (den - num) * n) * (X * R) * L * X := by
+            ring
+        _ ≤ ((X + 1) * den * w) * ((X + 2) * 2 ^ p) * L * X := by gcongr
+        _ = (X + 1) * den * (X + 2) * 2 ^ p * (X * w * L) := by ring
+        _ ≤ (X + 1) * den * (X + 2) * 2 ^ p * ((X + 1) * 2 ^ w) := by gcongr
+        _ = (X + 1) ^ 2 * (X + 2) * (den * 2 ^ n) := by rw [hsplit, pow_add]; ring
+    refine Nat.le_of_mul_le_mul_left ?_ (show 0 < X ^ 3 by positivity)
+    calc X ^ 3 * (2 * P * ((den - num) * n * (R * L)))
+        = 2 * P * (X ^ 3 * ((den - num) * n * (R * L))) := by ring
+      _ ≤ 2 * P * ((X + 1) ^ 2 * (X + 2) * (den * 2 ^ n)) := Nat.mul_le_mul_left _ h3
+      _ = 2 * P * ((X + 1) ^ 2 * (X + 2)) * (den * 2 ^ n) := by ring
+      _ ≤ (2 * P + 1) * X ^ 3 * (den * 2 ^ n) :=
+          Nat.mul_le_mul_right _ (hX ▸ two_mul_slack_le P)
+      _ = X ^ 3 * ((2 * P + 1) * (den * 2 ^ n)) := by ring
+  have e1 : 2 * (P * (den - num) * n * (R * L + O)) =
+      2 * P * ((den - num) * n * (R * L)) + 2 * P * (den - num) * n * O := by ring
+  have e2 : 2 * ((P + 1) * den * 2 ^ n) = (2 * P + 1) * (den * 2 ^ n) + den * 2 ^ n := by ring
+  omega
+
+/-- Any polynomial is eventually below `2 ^ (n / c)`. -/
+theorem eventually_mul_pow_le_two_pow_div (A E c : ℕ) (hc : 0 < c) :
+    ∀ᶠ n in atTop, A * (n + 1) ^ E ≤ 2 ^ (n / c) := by
+  have htend : Tendsto (fun n : ℕ => n / c) atTop atTop :=
+    tendsto_atTop_atTop.mpr fun k => ⟨c * k, fun n hn =>
+      (Nat.le_div_iff_mul_le hc).mpr (by rw [mul_comm]; exact hn)⟩
+  filter_upwards [htend.eventually (Nat.eventually_mul_pow_le_pow (A * (2 * c) ^ E) E
+    one_lt_two), eventually_ge_atTop c] with n hn hcn
+  have hk : n + 1 ≤ 2 * c * (n / c) := by
+    have := Nat.lt_mul_div_succ n hc
+    have : 1 ≤ n / c := (Nat.le_div_iff_mul_le hc).mpr (by omega)
+    nlinarith
+  calc A * (n + 1) ^ E ≤ A * (2 * c * (n / c)) ^ E := by gcongr
+    _ = A * (2 * c) ^ E * (n / c) ^ E := by rw [mul_pow]; ring
+    _ ≤ 2 ^ (n / c) := hn
+
+/-- The last, partly filled code copy is negligible: eventually
+`X' * fieldWidth n * 2 ^ (dimension * fieldWidth n) ≤ 2 ^ prefixWidth n`. -/
+theorem eventually_mul_two_pow_dimension_le (hnd : num ≤ den) (X' : ℕ) :
+    ∀ᶠ n in atTop, X' * fieldWidth num den X n *
+      2 ^ (dimension num den X * fieldWidth num den X n) ≤ 2 ^ prefixWidth num den X n := by
+  filter_upwards [eventually_ge_atTop (8 * X')] with n hn
+  rcases dimension_mul_fieldWidth_le (num := num) (den := den) (X := X) n with h | h
+  · have hd := three_le_dimension (num := num) (den := den) (X := X)
+    have hF : fieldWidth num den X n ≤ n := by
+      have := prefixWidth_le (X := X) hnd n
+      have : fieldWidth num den X n ≤ dimension num den X * fieldWidth num den X n :=
+        Nat.le_mul_of_pos_left _ (by omega)
+      omega
+    have hlog : n + 2 < 2 * 2 ^ Nat.log 2 (n + 2) := by
+      have := Nat.lt_pow_succ_log_self (b := 2) (by norm_num) (n + 2)
+      rw [pow_succ] at this
+      omega
+    have h8 : X' * fieldWidth num den X n ≤ 2 ^ (3 * Nat.log 2 (n + 2)) := by
+      have hcube : (n + 2) ^ 3 ≤ 8 * 2 ^ (3 * Nat.log 2 (n + 2)) := by
+        calc (n + 2) ^ 3 ≤ (2 * 2 ^ Nat.log 2 (n + 2)) ^ 3 := by gcongr
+          _ = 8 * 2 ^ (3 * Nat.log 2 (n + 2)) := by rw [mul_pow, ← pow_mul]; ring_nf
+      have : 8 * (X' * fieldWidth num den X n) ≤ (n + 2) ^ 3 := by
+        calc 8 * (X' * fieldWidth num den X n) ≤ 8 * X' * n := by
+              rw [← mul_assoc]; exact Nat.mul_le_mul_left _ hF
+          _ ≤ n * n := Nat.mul_le_mul_right _ hn
+          _ ≤ (n + 2) ^ 3 := by nlinarith
+      omega
+    calc X' * fieldWidth num den X n * 2 ^ (dimension num den X * fieldWidth num den X n)
+        ≤ 2 ^ (3 * Nat.log 2 (n + 2)) * 2 ^ (dimension num den X * fieldWidth num den X n) :=
+          Nat.mul_le_mul_right _ h8
+      _ = 2 ^ (dimension num den X * fieldWidth num den X n + 3 * Nat.log 2 (n + 2)) := by
+          rw [← pow_add, add_comm]
+      _ ≤ 2 ^ prefixWidth num den X n := Nat.pow_le_pow_right (by norm_num) h
+  · simp [h]
+
 end Cslib.Circuits.Boolean.MassProduction.Sharp
