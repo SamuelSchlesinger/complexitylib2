@@ -90,7 +90,8 @@ theorem card_filter_card_filter_le_le (G : Finset Ω) (hG : 2 * Fintype.card Ω 
         rw [mul_pow, pow_mul, ← mul_assoc, ← mul_pow]; norm_num
   exact Nat.le_of_mul_le_mul_left key (by positivity)
 
-private theorem two_pow_mul_eight_pow_lt (n : ℕ) : 2 ^ n * 8 ^ (6 * n + 6) < 9 ^ (6 * n + 6) := by
+/-- For any `n`, `2 ^ n * 8 ^ (6 * n + 6) < 9 ^ (6 * n + 6)`, since `2 * 8 ^ 6 < 9 ^ 6`. -/
+theorem two_pow_mul_eight_pow_lt (n : ℕ) : 2 ^ n * 8 ^ (6 * n + 6) < 9 ^ (6 * n + 6) := by
   calc 2 ^ n * 8 ^ (6 * n + 6) = (2 * 8 ^ 6) ^ n * 8 ^ 6 := by
         rw [mul_pow, pow_add, pow_mul]; ring
     _ < (9 ^ 6) ^ n * 9 ^ 6 :=
