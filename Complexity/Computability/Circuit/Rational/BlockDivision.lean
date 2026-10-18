@@ -69,14 +69,14 @@ lemma exponent_injective : Function.Injective exponent := by
 
 /-- The Hahn monomial corresponding to a polynomial variable. -/
 def variableSeries (i : Fin 2) : HahnSeries Exponents K :=
-  single (if i = 0 then toLex (1, 0) else toLex (0, 1)) 1
+  HahnSeries.single (if i = 0 then toLex (1, 0) else toLex (0, 1)) 1
 
 /-- Embed bivariate polynomials into the Hahn-series ring. -/
 def embed : MvPolynomial (Fin 2) K →+* HahnSeries Exponents K :=
   eval₂Hom (algebraMap K _) variableSeries
 
 lemma embed_monomial (m : Fin 2 →₀ ℕ) (a : K) :
-    embed (monomial m a) = single (exponent m) a := by
+    embed (monomial m a) = HahnSeries.single (exponent m) a := by
   rw [embed, eval₂Hom_monomial, Finsupp.prod_fintype _ _ (by simp)]
   have he : (m 0 : Exponents) * toLex (1, 0) + (m 1 : Exponents) * toLex (0, 1) =
       exponent m := by

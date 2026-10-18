@@ -281,7 +281,7 @@ noncomputable instance : DivisionRing (divisionSubring χ) :=
 /-- The Fourier lift as a finite Hahn series. -/
 def lift (R : Matrix (ZMod d) (ZMod d) K) : Ambient (K := K) (d := d) :=
   ∑ a : ZMod d, ∑ b : ZMod d,
-    single (toLex ((a.val : ℤ), (b.val : ℤ))) (fourierCoeff χ R a b • weyl χ a b)
+    HahnSeries.single (toLex ((a.val : ℤ), (b.val : ℤ))) (fourierCoeff χ R a b • weyl χ a b)
 
 omit [CharZero K] in
 lemma lift_mem (R : Matrix (ZMod d) (ZMod d) K) : lift χ R ∈ divisionSubring χ := by
