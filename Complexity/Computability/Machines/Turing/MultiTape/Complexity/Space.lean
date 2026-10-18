@@ -116,6 +116,138 @@ theorem computableTidilyInPolyTime_viewStepB :
         ((computableTidilyInPolyTime_summary.comp
           (ComputableTidilyInPolyTime.finiteCfg_step action)).comp hfst)
 
+/-! ### Codes of views -/
+
+/-- Pad a word to width `width + 1`: zeros, a one, then the word. -/
+def padWord (width : ℕ) (word : List Bool) : List Bool :=
+  List.replicate (width - word.length) false ++ true :: word
+
+/-- Remove the padding of `Turing.MultiTapeNTM.padWord`: the leading zeros and the one after
+them. -/
+def unpadWord (code : List Bool) : List Bool :=
+  (code.dropWhile (!·)).tail
+
+@[simp]
+theorem unpadWord_padWord (width : ℕ) (word : List Bool) :
+    unpadWord (padWord width word) = word := by
+  unfold unpadWord padWord
+  induction width - word.length with
+  | zero => simp
+  | succ n ih => simp [List.replicate_succ]
+
+theorem length_padWord {width : ℕ} {word : List Bool} (h : word.length ≤ width) :
+    (padWord width word).length = width + 1 := by
+  simp only [padWord, List.length_append, List.length_replicate, List.length_cons]
+  omega
+
+variable (dec : List Bool → Option (FiniteCfg k Bool State))
+
+/-- The code of a view at width `width`: a zero tag, then its padded encoding. -/
+noncomputable def viewCode (width : ℕ) (finite : FiniteCfg k Bool State) : List Bool :=
+  false :: padWord width (encFiniteCfg finite)
+
+/-- The accepting code at width `width`: all ones. Its tag is one, so it is no view's code. -/
+def acceptCode (width : ℕ) : List Bool := List.replicate (width + 2) true
+
+/-- Read the view of a code with a zero tag, by the decoder `dec`. -/
+def decodeView : List Bool → Option (FiniteCfg k Bool State)
+  | false :: code => dec (unpadWord code)
+  | _ => none
+
+open scoped Classical in
+/-- **The edge test of codes.** A code of a view `finite` has an edge to every code with tag one
+if `finite` has halted with output `[true]`, and to the code of every view `finite` steps to. -/
+noncomputable def codeEdge (code next : List Bool) : Bool :=
+  match decodeView dec code, next with
+  | none, _ => false
+  | some finite, true :: _ => decide (finite.state = none) && decide (finite.output = [true])
+  | some finite, next => match decodeView dec next with
+    | none => false
+    | some next => ntm.viewStepB (finite, next)
+
+/-- The edges between codes of width `width + 2`. -/
+def CodeStep (width : ℕ) (code next : List Bool) : Prop :=
+  code.length = width + 2 ∧ next.length = width + 2 ∧ ntm.codeEdge dec code next = true
+
+variable {ntm dec}
+
+theorem decodeView_viewCode (hdec : ∀ finite, dec (encFiniteCfg finite) = some finite)
+    (width : ℕ) (finite : FiniteCfg k Bool State) :
+    decodeView dec (viewCode width finite) = some finite := by
+  simp only [decodeView, viewCode, unpadWord_padWord, hdec]
+
+theorem length_viewCode {width : ℕ} {finite : FiniteCfg k Bool State}
+    (h : (encFiniteCfg finite).length ≤ width) : (viewCode width finite).length = width + 2 := by
+  rw [viewCode, List.length_cons, length_padWord h]
+
+theorem codeEdge_viewCode (hdec : ∀ finite, dec (encFiniteCfg finite) = some finite)
+    {width : ℕ} {finite next : FiniteCfg k Bool State} :
+    ntm.codeEdge dec (viewCode width finite) (viewCode width next) = true ↔
+      ntm.ViewStep finite next := by
+  simp only [codeEdge, viewCode, decodeView, unpadWord_padWord, hdec]
+  exact ntm.viewStepB_iff
+
+theorem codeEdge_acceptCode (hdec : ∀ finite, dec (encFiniteCfg finite) = some finite)
+    {width : ℕ} {finite : FiniteCfg k Bool State} :
+    ntm.codeEdge dec (viewCode width finite) (acceptCode width) = true ↔
+      finite.state = none ∧ finite.output = [true] := by
+  simp only [codeEdge, decodeView_viewCode hdec, acceptCode, List.replicate_succ, Bool.and_eq_true,
+    decide_eq_true_eq]
+
+/-- **Acceptance is reachability of the accepting code**, along the edges between codes of a
+width at least the length of the encoding of every reachable view. -/
+theorem accepts_iff_reflTransGen_codeStep (hdec : ∀ finite, dec (encFiniteCfg finite) = some finite)
+    {input : List Bool} {width : ℕ}
+    (hwidth : ∀ finite, Relation.ReflTransGen ntm.ViewStep (ntm.initView input) finite →
+      (encFiniteCfg finite).length ≤ width) :
+    ntm.Accepts input ↔ Relation.ReflTransGen (ntm.CodeStep dec width)
+      (viewCode width (ntm.initView input)) (acceptCode width) := by
+  rw [accepts_iff_reflTransGen_viewStep]
+  constructor
+  · rintro ⟨finite, hreach, hstate, houtput⟩
+    have hcodes : ∀ next, Relation.ReflTransGen ntm.ViewStep (ntm.initView input) next →
+        Relation.ReflTransGen (ntm.CodeStep dec width) (viewCode width (ntm.initView input))
+          (viewCode width next) := by
+      intro next hnext
+      induction hnext with
+      | refl => rfl
+      | @tail view next hview hstep ih =>
+        exact ih.tail ⟨length_viewCode (hwidth _ hview),
+          length_viewCode (hwidth _ (hview.tail hstep)), (codeEdge_viewCode hdec).mpr hstep⟩
+    exact (hcodes finite hreach).tail ⟨length_viewCode (hwidth _ hreach),
+      List.length_replicate .., (codeEdge_acceptCode hdec).mpr ⟨hstate, houtput⟩⟩
+  · intro hreach
+    -- every reachable code is the code of a reachable view, or has tag one after an accepting view
+    have hinv : ∀ code, Relation.ReflTransGen (ntm.CodeStep dec width)
+        (viewCode width (ntm.initView input)) code →
+        (∃ finite, decodeView dec code = some finite ∧
+          Relation.ReflTransGen ntm.ViewStep (ntm.initView input) finite) ∨
+        (code.head? = some true ∧ ∃ finite,
+          Relation.ReflTransGen ntm.ViewStep (ntm.initView input) finite ∧
+            finite.state = none ∧ finite.output = [true]) := by
+      intro code hcode
+      induction hcode with
+      | refl => exact .inl ⟨_, decodeView_viewCode hdec _ _, .refl⟩
+      | @tail code next _ hstep ih =>
+        obtain ⟨-, -, hedge⟩ := hstep
+        unfold codeEdge at hedge
+        rcases ih with ⟨finite, hfinite, hreach⟩ | ⟨hhead, -⟩
+        · rw [hfinite] at hedge
+          rcases next with _ | ⟨_ | _, next⟩
+          · simp [decodeView] at hedge
+          · simp only at hedge
+            rcases hview : decodeView dec (false :: next) with _ | view
+            · simp [hview] at hedge
+            · simp only [hview, viewStepB_iff] at hedge
+              exact .inl ⟨view, rfl, hreach.tail hedge⟩
+          · simp only [Bool.and_eq_true, decide_eq_true_eq] at hedge
+            exact .inr ⟨rfl, finite, hreach, hedge⟩
+        · rcases code with _ | ⟨_ | _, code⟩ <;> simp at hhead
+          simp [decodeView] at hedge
+    rcases hinv _ hreach with ⟨finite, hfinite, -⟩ | ⟨-, hacc⟩
+    · simp [acceptCode, List.replicate_succ, decodeView] at hfinite
+    · exact hacc
+
 end MultiTapeNTM
 
 end Turing
