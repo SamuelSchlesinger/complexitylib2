@@ -88,7 +88,8 @@ private theorem eval_pair {k r : ℕ} (key : Fin k → Fin r) (ascending : Bool)
     split_ifs <;> funext i <;> cases i using Fin.addCases <;>
     simp_all [compareSwapCircuit.swapInput, Function.comp_def, -Fin.natAdd_eq_addNat]
 
-private theorem gather_pair {n r : ℕ} (x : BitString ((n + n) * r)) (j : Fin n) :
+/-- Gather reads corresponding records from the two halves without changing their bits. -/
+theorem bitonicLayerCircuit.gather_pair {n r : ℕ} (x : BitString ((n + n) * r)) (j : Fin n) :
     directProductInput (x ∘ gather n r) j =
       Fin.append (directProductInput x (Fin.castAdd n j))
         (directProductInput x (Fin.natAdd n j)) := by
@@ -145,12 +146,14 @@ where
 
 open bitonicMergeCircuit
 
-private theorem records_firstHalf {n r : ℕ} (x : BitString ((n + n) * r)) :
+/-- The first flat input block is the first half of the record array. -/
+theorem bitonicMergeCircuit.records_firstHalf {n r : ℕ} (x : BitString ((n + n) * r)) :
     directProductInput (x ∘ firstHalf n r) = directProductInput x ∘ Fin.castAdd n := by
   funext j b
   rfl
 
-private theorem records_secondHalf {n r : ℕ} (x : BitString ((n + n) * r)) :
+/-- The second flat input block is the second half of the record array. -/
+theorem bitonicMergeCircuit.records_secondHalf {n r : ℕ} (x : BitString ((n + n) * r)) :
     directProductInput (x ∘ secondHalf n r) = directProductInput x ∘ Fin.natAdd n := by
   funext j b
   apply congrArg x

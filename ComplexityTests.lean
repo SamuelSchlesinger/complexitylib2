@@ -114,6 +114,7 @@ import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.ShannonSynthesis
 import ComplexityTests.Smoke
+import ComplexityTests.SortingTrace
 import ComplexityTests.SourceComplexity
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF

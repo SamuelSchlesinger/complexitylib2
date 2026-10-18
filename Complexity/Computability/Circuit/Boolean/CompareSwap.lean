@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Evaluation
 public import Mathlib.Order.PiLex
 import Mathlib.Order.Fin.Tuple
+import Mathlib.Tactic.Ring
 
 /-!
 # Boolean comparison and compare-exchange circuits
@@ -28,6 +29,8 @@ the usual prefix key is `Fin.castLE h` for `h : k ≤ r`.
 
 * `Cslib.Circuits.Formula.lexLt`: compare two selected input sequences lexicographically.
 * `Cslib.Circuits.Boolean.compareSwapCircuit`: order two records by selected key coordinates.
+* `Cslib.Circuits.Boolean.compareSwapCircuit.record`: expose a shared swap flag and its complement.
+* `Cslib.Circuits.Boolean.compareSwapCircuit.switch`: exchange payloads using saved controls.
 
 ## Main results
 
@@ -35,6 +38,8 @@ the usual prefix key is `Fin.castLE h` for `h : k ≤ r`.
 * `Cslib.Circuits.Boolean.eval_compareSwapCircuit`: swap whole records exactly when out of order.
 * `Cslib.Circuits.Boolean.size_compareSwapCircuit`: exact total gate count.
 * `Cslib.Circuits.Boolean.compareSwapCircuit_keys_ordered`: the output keys are in ascending order.
+* `Cslib.Circuits.Boolean.compareSwapCircuit.cost_record_eq_exchange`: exposing controls adds
+  no gates to `exchange`, which computes its flag even at zero payload width.
 
 ## References
 
@@ -110,10 +115,18 @@ where
   /-- Swap the two blocks of record wires. -/
   swapInput (r : ℕ) : Fin (r + r) → Fin (r + r) :=
     Fin.addCases (Fin.natAdd r) (Fin.castAdd r)
+  /-- Switch two payload blocks using a supplied flag and its supplied complement. -/
+  switch (r : ℕ) : Circuit signature (2 + (r + r)) (r + r) :=
+    Circuit.pi fun j => (selectBit j (swapInput r j)).toCircuit
+  /-- Expose the shared flag and its complement before the exchanged records. -/
+  record {r : ℕ} (flag : Circuit signature (r + r) 1) :
+      Circuit signature (r + r) (2 + (r + r)) :=
+    ((Circuit.wiring signature (Fin.castAdd (r + r))).append (switch r)).comp
+      ((flagPair.comp flag).append (Circuit.id signature (r + r)))
   /-- Share a swap flag across every bit of the two records. -/
   exchange {r : ℕ} (flag : Circuit signature (r + r) 1) :
       Circuit signature (r + r) (r + r) :=
-    (Circuit.pi fun j => (selectBit j (swapInput r j)).toCircuit).comp
+    (switch r).comp
       ((flagPair.comp flag).append (Circuit.id signature (r + r)))
 
 open compareSwapCircuit
@@ -128,11 +141,69 @@ private theorem eval_selectBit {n : ℕ} (left right : Fin n) (b : Bool) (x : Bi
       if b then x right else x left := by
   cases b <;> simp [selectBit]
 
+/-- The control bits are supplied together: invalid pairs are not asserted to be swaps. -/
+theorem compareSwapCircuit.eval_switch (r : ℕ) (b : Bool) (x y : BitString r) :
+    (switch r).eval interpretation (Fin.append ![b, !b] (Fin.append x y)) =
+      if b then Fin.append y x else Fin.append x y := by
+  funext j
+  cases b <;> cases j using Fin.addCases <;>
+    simp [switch, selectBit, swapInput, -Fin.natAdd_eq_addNat]
+
+/-- Recording returns both existing control wires without duplicating their computation. -/
+theorem compareSwapCircuit.eval_record {r : ℕ} (flag : Circuit signature (r + r) 1)
+    (x y : BitString r) :
+    (record flag).eval interpretation (Fin.append x y) =
+      let b := flag.eval interpretation (Fin.append x y) 0
+      Fin.append ![b, !b] (if b then Fin.append y x else Fin.append x y) := by
+  simp only [record, Circuit.eval_comp, Circuit.eval_append, Circuit.id,
+    Circuit.eval_wiring, Function.comp_id, eval_flagPair]
+  rw [eval_switch]
+  congr 1
+  funext j
+  simp
+
+/-- Applying the same saved controls twice restores arbitrary payloads. -/
+theorem compareSwapCircuit.switch_involutive (r : ℕ) (b : Bool) (x y : BitString r) :
+    (switch r).eval interpretation
+      (Fin.append ![b, !b] ((switch r).eval interpretation (Fin.append ![b, !b]
+        (Fin.append x y)))) = Fin.append x y := by
+  rw [eval_switch]
+  cases b with
+  | false => simpa using eval_switch r false x y
+  | true => simpa using eval_switch r true y x
+
+/-- Switching charges two ANDs and one OR for each output bit. -/
+theorem compareSwapCircuit.cost_switch (r : ℕ) (cost : signature.Op → ℕ) :
+    (switch r).program.cost cost = 2 * r * (2 * cost .and + cost .or) := by
+  simp only [switch, Circuit.cost_program_pi, Formula.cost_toCircuit, selectBit,
+    Formula.and, Formula.or, Formula.cost_gate, Formula.cost_input,
+    Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, Finset.sum_const,
+    Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  ring
+
+/-- The comparator and one shared negation are charged in addition to switching. -/
+theorem compareSwapCircuit.cost_record {r : ℕ} (flag : Circuit signature (r + r) 1)
+    (cost : signature.Op → ℕ) :
+    (record flag).program.cost cost =
+      flag.program.cost cost + cost .not + 2 * r * (2 * cost .and + cost .or) := by
+  simp only [record, Circuit.cost_program_comp, Circuit.cost_program_append,
+    Circuit.cost_program_wiring, cost_switch, flagPair, Circuit.id, Formula.cost_toCircuit,
+    Formula.not, Formula.cost_gate, Formula.cost_input, Fin.sum_univ_one, Matrix.cons_val_zero]
+  ring
+
+/-- Exposing the controls adds no gates to `exchange`. Unlike `compareSwapCircuit`, `exchange`
+and `record` compute the flag even when the payload width is zero. -/
+theorem compareSwapCircuit.cost_record_eq_exchange {r : ℕ}
+    (flag : Circuit signature (r + r) 1) (cost : signature.Op → ℕ) :
+    (record flag).program.cost cost = (exchange flag).program.cost cost := by
+  simp only [record, exchange, Circuit.cost_program_comp, Circuit.cost_program_append,
+    Circuit.cost_program_wiring, Nat.zero_add]
+
 private theorem eval_exchange {r : ℕ} (flag : Circuit signature (r + r) 1)
     (x y : BitString r) : (exchange flag).eval interpretation (Fin.append x y) =
       if flag.eval interpretation (Fin.append x y) 0 then Fin.append y x else Fin.append x y := by
   funext j
-  simp only [exchange, Circuit.eval_comp, Circuit.eval_pi, Formula.eval_toCircuit,
+  simp only [exchange, switch, Circuit.eval_comp, Circuit.eval_pi, Formula.eval_toCircuit,
     Circuit.eval_append, eval_flagPair, Circuit.id, Circuit.eval_wiring, Function.comp_id,
     eval_selectBit]
   cases flag.eval interpretation (Fin.append x y) 0 <;>
@@ -140,7 +211,7 @@ private theorem eval_exchange {r : ℕ} (flag : Circuit signature (r + r) 1)
 
 private theorem size_exchange {r : ℕ} (flag : Circuit signature (r + r) 1) :
     (exchange flag).size = flag.size + 6 * r + 1 := by
-  simp only [exchange, Circuit.size_comp, Circuit.size_append, flagPair, Circuit.id,
+  simp only [exchange, switch, Circuit.size_comp, Circuit.size_append, flagPair, Circuit.id,
     Circuit.size_wiring, Formula.size_toCircuit, Formula.size_not, Formula.size_input,
     selectBit, Formula.size_or, Formula.size_and, Circuit.size_pi, Finset.sum_const,
     Finset.card_fin, smul_eq_mul]

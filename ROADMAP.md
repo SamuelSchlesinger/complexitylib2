@@ -56,6 +56,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   copies a unique matching source to each sorted destination. The
   [two-sort router](Complexity/Computability/Circuit/Boolean/Routing.lean) preserves headers,
   restores uniquely keyed requests to their input-determined ranks, and has exact gate costs.
+  [Saved-control sorting](Complexity/Computability/Circuit/Boolean/SortingTrace.lean) now records
+  comparisons and reverses them on new payloads, with exact gate costs and no request identifiers.
+  Integrate this backend into lookup to remove the second sort and its rank bookkeeping.
   Constructor runtime is not certified. Concrete batched lookup layouts, padding and bounds,
   and the three mass-production results above remain to be ported.
 * **Iterated-function circuits.** Port the

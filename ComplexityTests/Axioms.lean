@@ -9229,3 +9229,46 @@ info: 'Cslib.BitonicSort.four_mul_sortTraceSize' depends on axioms: [propext]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitonicSort.four_mul_sortTraceSize
+
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_bitonicSortTraceCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_bitonicSortTraceCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_bitonicUnsortCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_bitonicUnsortCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_bitonicUnsortCircuit_sort' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_bitonicUnsortCircuit_sort
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_bitonicSortTraceCircuit_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_bitonicSortTraceCircuit_eq
+
+/--
+info: 'Cslib.Circuits.Boolean.size_bitonicUnsortCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_bitonicUnsortCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_bitonicSortTraceCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_bitonicSortTraceCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_bitonicUnsortCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_bitonicUnsortCircuit
