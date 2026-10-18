@@ -9,12 +9,14 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.PH
+public import Complexity.Foundations.Data.BitString.Basic
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Combinatorics.FiniteCover
 import Complexity.Foundations.Combinatorics.MajorityVote
+import Mathlib.Algebra.Group.Units.Equiv
 
 /-!
 # The Sipser–Lautemann theorem
@@ -44,9 +46,9 @@ the construction.
 
 ## Main definitions
 
-* `Cslib.Complexity.SipserLautemann.Seed`, `Cslib.Complexity.SipserLautemann.shiftSeed`,
-  `Cslib.Complexity.SipserLautemann.majorityAccepts`: amplified seeds, bitwise XOR shifts and strict
-  majority acceptance.
+* `Cslib.Complexity.SipserLautemann.Seed`,
+  `Cslib.Complexity.SipserLautemann.majorityAccepts`: amplified seeds and strict majority
+  acceptance. Seeds are shifted by pointwise bit-string addition (`+`).
 * `Cslib.Complexity.SipserLautemann.verifier`: the `Σ₂` matrix verifier for a `BPP` problem.
 * `Cslib.Complexity.SipserLautemann.witnessPoly`, `Cslib.Complexity.SipserLautemann.seedPoly`:
   the polynomial block lengths of the existential shift table and universal seed.
@@ -165,33 +167,6 @@ private theorem shifts_mul_eight_pow_halfRuns_lt (m : ℕ) :
 /-- An amplified seed for single-trial seed length `m`: `runs m` blocks of `m` bits each. -/
 abbrev Seed (m : ℕ) : Type := Fin (runs m) → Fin m → Bool
 
-/-- Bitwise XOR shift of an amplified seed `r` by a shift vector `u`. -/
-def shiftSeed {m : ℕ} (r u : Seed m) : Seed m :=
-  fun j k => r j k ^^ u j k
-
-theorem shiftSeed_comm {m : ℕ} (r u : Seed m) : shiftSeed r u = shiftSeed u r := by
-  ext j k
-  exact Bool.xor_comm (r j k) (u j k)
-
-@[simp]
-theorem shiftSeed_self_left {m : ℕ} (r u : Seed m) : shiftSeed r (shiftSeed r u) = u := by
-  ext j k
-  simp only [shiftSeed]
-  cases r j k <;> cases u j k <;> rfl
-
-@[simp]
-theorem shiftSeed_self_right {m : ℕ} (r u : Seed m) : shiftSeed (shiftSeed r u) u = r := by
-  ext j k
-  simp only [shiftSeed]
-  cases r j k <;> cases u j k <;> rfl
-
-/-- Bitwise XOR with a fixed seed `r` is a bijection on `Seed m`. -/
-def shiftSeedEquiv {m : ℕ} (r : Seed m) : Seed m ≃ Seed m where
-  toFun u := shiftSeed r u
-  invFun u := shiftSeed r u
-  left_inv u := shiftSeed_self_left r u
-  right_inv u := shiftSeed_self_left r u
-
 /-- The amplified test accepts `ω : Seed m` when a strict majority (`> halfRuns m`) of the
 `runs m = 2 * halfRuns m` blocks satisfy the single-trial predicate `P`. -/
 def majorityAccepts {m : ℕ} (P : (Fin m → Bool) → Bool) (ω : Seed m) : Prop :=
@@ -214,16 +189,16 @@ under `majorityAccepts P`. -/
 theorem exists_shifts_majorityAccepts {m : ℕ} {P : (Fin m → Bool) → Bool}
     (hP : 2 * 2 ^ m ≤ 3 * (univ.filter fun s : Fin m → Bool => P s = true).card) :
     ∃ tests : Fin (shifts m) → Seed m, ∀ r : Seed m, ∃ i,
-      majorityAccepts P (shiftSeed r (tests i)) := by
+      majorityAccepts P (r + tests i) := by
   let G : Finset (Fin m → Bool) := univ.filter fun s => P s = true
   have hG : 2 * Fintype.card (Fin m → Bool) ≤ 3 * G.card := by
     simpa [Fintype.card_fin, Fintype.card_bool, G] using hP
   refine Cslib.exists_cover_of_scaled_card_lt
-    (fun u r : Seed m => majorityAccepts P (shiftSeed r u))
+    (fun u r : Seed m => majorityAccepts P (r + u))
     (8 ^ halfRuns m) (9 ^ halfRuns m) (shifts m) (fun r => ?_) ?_
-  · have hbij : Fintype.card {u : Seed m // ¬ majorityAccepts P (shiftSeed r u)} =
+  · have hbij : Fintype.card {u : Seed m // ¬ majorityAccepts P (r + u)} =
         Fintype.card {ω : Seed m // ¬ majorityAccepts P ω} :=
-      Fintype.card_congr (Equiv.subtypeEquiv (shiftSeedEquiv r) fun _ => Iff.rfl)
+      Fintype.card_congr (Equiv.subtypeEquiv (Equiv.addLeft r) fun _ => Iff.rfl)
     have hcard : Fintype.card {ω : Seed m // ¬ majorityAccepts P ω} =
         (univ.filter fun ω : Seed m => (univ.filter fun j => ω j ∈ G).card ≤ halfRuns m).card := by
       rw [Fintype.card_subtype]
@@ -239,22 +214,22 @@ theorem exists_shifts_majorityAccepts {m : ℕ} {P : (Fin m → Bool) → Bool}
 
 /-- **Soundness on amplified seeds.** If at least two thirds of the single-trial seeds satisfy
 `P s = false`, then for every tuple `tests : Fin (shifts m) → Seed m` of shift vectors, some
-amplified seed `r : Seed m` fails `majorityAccepts P (shiftSeed r (tests i))` for all `i`. -/
+amplified seed `r : Seed m` fails `majorityAccepts P (r + tests i)` for all `i`. -/
 theorem exists_seed_not_majorityAccepts {m : ℕ} {P : (Fin m → Bool) → Bool}
     (hP : 2 * 2 ^ m ≤ 3 * (univ.filter fun s : Fin m → Bool => P s = false).card)
     (tests : Fin (shifts m) → Seed m) :
-    ∃ r : Seed m, ∀ i, ¬ majorityAccepts P (shiftSeed r (tests i)) := by
+    ∃ r : Seed m, ∀ i, ¬ majorityAccepts P (r + tests i) := by
   let G₀ : Finset (Fin m → Bool) := univ.filter fun s => P s = false
   have hG₀ : 2 * Fintype.card (Fin m → Bool) ≤ 3 * G₀.card := by
     simpa [Fintype.card_fin, Fintype.card_bool, G₀] using hP
   let bad (i : Fin (shifts m)) : Finset (Seed m) :=
-    univ.filter fun r : Seed m => majorityAccepts P (shiftSeed r (tests i))
+    univ.filter fun r : Seed m => majorityAccepts P (r + tests i)
   have hbad (i : Fin (shifts m)) :
       9 ^ halfRuns m * (bad i).card ≤ 8 ^ halfRuns m * Fintype.card (Seed m) := by
     have hcard : (bad i).card = (univ.filter fun ω : Seed m => majorityAccepts P ω).card := by
       rw [← Fintype.card_subtype, ← Fintype.card_subtype]
-      refine Fintype.card_congr (Equiv.subtypeEquiv (shiftSeedEquiv (tests i)) fun r => ?_)
-      simp [shiftSeed_comm, shiftSeedEquiv]
+      refine Fintype.card_congr (Equiv.subtypeEquiv (Equiv.addLeft (tests i)) fun r => ?_)
+      simp [add_comm]
     have hsub : (univ.filter fun ω : Seed m => majorityAccepts P ω) ⊆
         univ.filter fun ω : Seed m => (univ.filter fun j => ω j ∈ G₀).card ≤ halfRuns m := by
       intro ω hω
@@ -399,28 +374,6 @@ def verifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Bool 
   let m := p.eval (enc x.1).length
   (List.range (shifts m)).any fun i => shiftAccepts enc p V x.1 x.2 i
 
-private theorem listBool_to_bits :
-    ComputableTidilyInPolyTime (fun l : List Bool => l) (encList encBool) encBits := by
-  have heq (l : List Bool) (acc : List Bool) :
-      l.foldl (fun acc b => acc ++ [b]) acc = acc ++ l := by
-    induction l generalizing acc with
-    | nil => simp
-    | cons b l ih => simp [ih]
-  have h := ComputableTidilyInPolyTime.foldl_of_bounded_growth
-    (encA := encBool) (encL := encList encBool) (encB := encBits)
-    (list := id) (init := fun _ => []) (step := fun acc b => acc ++ [b])
-    .id' (.const []) (by fun_prop) (growth := 1) (fun _ _ => by simp)
-  simpa only [heq, List.nil_append, id_eq] using h
-
-private theorem bitsMapWithInput {γ β : Type} {encIn : γ ↪ List Bool} {encA : β ↪ List Bool}
-    {f : γ → β → Bool} {list : γ → List β}
-    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
-    (hf : ComputableTidilyInPolyTime (fun p : γ × β => f p.1 p.2) (encPair encIn encA) encBool) :
-    ComputableTidilyInPolyTime (fun x => (list x).map (f x)) encIn encBits :=
-  listBool_to_bits.comp (.mapWithInput hlist hf)
-
-attribute [local fun_prop] bitsMapWithInput
-
 /-- If `V` is computable tidily in polynomial time, then so is the Sipser–Lautemann matrix verifier
 `verifier enc p V`. -/
 @[fun_prop]
@@ -433,11 +386,11 @@ theorem verifier_polyTime {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α 
 /-! ### Correctness of the matrix verifier -/
 
 /-- On a combined certificate `u ++ r` with `u.length = witnessLen m`, `trialSeed` reconstructs
-the `j`-th block of the shifted seed `shiftSeed (listToSeed m r) (listToShifts m u i)`. -/
+the `j`-th block of the shifted seed `listToSeed m r + listToShifts m u i`. -/
 theorem trialSeed_append {m : ℕ} {u r : List Bool} (hu : u.length = witnessLen m)
     (i : Fin (shifts m)) (j : Fin (runs m)) :
     trialSeed m (seedLen m) (shifts m) (u ++ r) i.1 j.1 =
-      List.ofFn (shiftSeed (listToSeed m r) (listToShifts m u i) j) := by
+      List.ofFn ((listToSeed m r + listToShifts m u i) j) := by
   apply List.ext_getElem (by simp [trialSeed])
   intro k hk₁ hk₂
   simp only [trialSeed, List.length_map, List.length_range] at hk₁
@@ -452,7 +405,7 @@ theorem trialSeed_append {m : ℕ} {u r : List Bool} (hu : u.length = witnessLen
     rw [hu, witnessLen]
     omega
   simp only [trialSeed, List.getElem_map, List.getElem_range, List.getElem_ofFn,
-    shiftSeed, listToSeed, listToShifts, List.getD_eq_getElem?_getD]
+    Pi.add_apply, Bool.add_eq_xor, listToSeed, listToShifts, List.getD_eq_getElem?_getD]
   rw [List.getElem?_append_right hge, hsub, List.getElem?_append_left hlt]
 
 private theorem countP_range_eq_card_filter (n : ℕ) (pred : ℕ → Bool) :
@@ -479,8 +432,7 @@ theorem shiftAccepts_append_iff {enc : α ↪ List Bool} {p : Polynomial ℕ}
     (i : Fin (shifts (p.eval (enc a).length))) :
     shiftAccepts enc p V a (u ++ r) i.1 = true ↔
       majorityAccepts (fun s => V (a, List.ofFn s))
-        (shiftSeed (listToSeed (p.eval (enc a).length) r)
-          (listToShifts (p.eval (enc a).length) u i)) := by
+        (listToSeed (p.eval (enc a).length) r + listToShifts (p.eval (enc a).length) u i) := by
   unfold shiftAccepts majorityAccepts
   dsimp only
   rw [decide_eq_true_iff, countP_range_eq_card_filter]
@@ -496,8 +448,7 @@ theorem verifier_append_iff {enc : α ↪ List Bool} {p : Polynomial ℕ}
     verifier enc p V (a, u ++ r) = true ↔
       ∃ i : Fin (shifts (p.eval (enc a).length)),
         majorityAccepts (fun s => V (a, List.ofFn s))
-          (shiftSeed (listToSeed (p.eval (enc a).length) r)
-            (listToShifts (p.eval (enc a).length) u i)) := by
+          (listToSeed (p.eval (enc a).length) r + listToShifts (p.eval (enc a).length) u i) := by
   unfold verifier
   simp only [List.any_eq_true, List.mem_range]
   constructor

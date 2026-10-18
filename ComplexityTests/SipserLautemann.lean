@@ -54,11 +54,11 @@ example : majorityAccepts (m := 1) (fun s => s 0) (fun j _ => decide (j.1 ≤ ha
 
 -- Zero-length seed completeness and soundness on `m = 0`.
 example : ∃ tests : Fin (shifts 0) → Seed 0, ∀ r : Seed 0, ∃ i,
-    majorityAccepts (fun _ => true) (shiftSeed r (tests i)) :=
+    majorityAccepts (fun _ => true) (r + tests i) :=
   exists_shifts_majorityAccepts (by decide)
 
 example (tests : Fin (shifts 0) → Seed 0) :
-    ∃ r : Seed 0, ∀ i, ¬ majorityAccepts (fun _ => false) (shiftSeed r (tests i)) :=
+    ∃ r : Seed 0, ∀ i, ¬ majorityAccepts (fun _ => false) (r + tests i) :=
   exists_seed_not_majorityAccepts (by decide) tests
 
 /-! ### Non-vacuous randomized BPP decision problem with two-sided error 1/4 -/
