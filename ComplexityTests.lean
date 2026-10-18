@@ -60,6 +60,11 @@ import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MassProduction
+import ComplexityTests.MassProduction.HighRate
+import ComplexityTests.MassProduction.Menu
+import ComplexityTests.MassProduction.Pipeline
+import ComplexityTests.MassProduction.Scheduler
+import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime

@@ -511,6 +511,31 @@ private def testIntegrationAndSessionGenerations : IO Unit := do
   let state ← transition takeover state (.join .worker 300 ⟨"unused"⟩ true)
   reject {context "alice" [workToken] with now := 1361} state .heartbeat "replaced session"
 
+private def testCoordinatorRelease : IO Unit := do
+  let lead := leadContext
+  let state ← protocolState 3
+  reject (context "alice" [workToken]) state .releaseCoordinator "worker cannot release coordinator"
+  reject (context "lead") state .releaseCoordinator "release requires held generation"
+  reject {lead with now := 1301} state .releaseCoordinator "expired coordinator cannot release"
+  let reserved ← transition lead state (.reserve feature integrationToken)
+  reject lead reserved .releaseCoordinator "active integration must finish or cancel"
+  let released ← transition lead state .releaseCoordinator
+  check released.coordinator.isNone "Release retained coordinator authority"
+  check (released.epics == state.epics && released.agents == state.agents &&
+      released.integration == state.integration) "Release changed work or review state"
+  let token : Token := ⟨"successor-generation"⟩
+  let successor := context "successor" [token]
+  let joined ← transition successor released (.join .coordinator 300 token false)
+  check (joined.coordinator.any fun lease => lease.holder == successor.actor)
+    "Fresh coordinator could not join immediately"
+  reject lead joined (.instruct feature "stale authority") "old coordinator cannot instruct"
+  reject lead joined .releaseCoordinator "old coordinator cannot release successor"
+  let renewed ← transition lead joined .heartbeat
+  check (renewed.coordinator == joined.coordinator) "Old heartbeat renewed successor authority"
+  reject lead renewed (.reserve feature integrationToken) "old coordinator cannot reserve"
+  let successor := {successor with heldTokens := [token, integrationToken]}
+  discard <| transition successor renewed (.reserve feature integrationToken)
+
 private def testDependenciesAndConflictingStarts : IO Unit := do
   let state ← protocolState 0
   let lead := leadContext
@@ -592,6 +617,7 @@ private def protocolTests : List (String × IO Unit) := [
   ("plan revisions preserve claims and fence scope and review changes", testPlanRevision),
   ("coordinator guidance preserves work, reviews and integration", testCoordinatorGuidance),
   ("integration, expiry and session replacement fence old authority", testIntegrationAndSessionGenerations),
+  ("planned coordinator release preserves reviews and fences old authority", testCoordinatorRelease),
   ("dependencies, conflicting starts and idempotent claim retry", testDependenciesAndConflictingStarts),
   ("actual protocol state flows through local Git to atomic publish", testProtocolThroughGit)]
 

@@ -299,6 +299,33 @@ private def testReservationSurvivesValidationFailure : IO Unit := withFixture fu
   | .merged _ => pure ()
   | _ => throw <| IO.userError "Recovered integration did not complete journal"
 
+private def testCoordinatorHandoff : IO Unit := withFixture fun fixture => do
+  let (lead, id, snapshot) ← approvedRuntime fixture
+  let before ← Runtime.readState lead
+  let identity ← Runtime.identity lead
+  IO.FS.writeFile (lead.root / "handoff-untracked.txt") "unfinished integration\n"
+  expectError (Runtime.releaseCoordinator lead) "clean"
+  check ((← Runtime.readState lead) == before) "Dirty handoff changed remote board"
+  IO.FS.removeFile (lead.root / "handoff-untracked.txt")
+  let released ← Runtime.releaseCoordinator lead
+  check released.state.coordinator.isNone "Release did not publish vacant coordinator"
+  check (released.state.epics == before.epics) "Release lost submitted work or approvals"
+  let primary ← fixture.open
+  let successor ← joined primary "successor" .coordinator
+  check (successor.root != lead.root) "Successor reused outgoing worktree"
+  check ((← Runtime.identity successor).actor != identity.actor) "Successor copied old identity"
+  expectError (Runtime.run lead (.instruct id "stale instruction")) "generation"
+  discard <| Runtime.run lead .heartbeat
+  expectError (Runtime.releaseCoordinator lead) "generation"
+  let (self, token) ← Runtime.claim successor "integration"
+  discard <| Runtime.dispatch successor self (.reserve id token)
+  Runtime.finishClaim successor "integration" token
+  expectError (Runtime.releaseCoordinator successor) "Finish or cancel"
+  let submitted ← Runtime.submission (← Runtime.readState successor) id
+  Runtime.checkout successor (.review submitted.work.branch snapshot)
+  discard <| Runtime.run successor (.land id snapshot "Previously reviewed fixture")
+  check ((← fixture.ref Git.mainRef) == snapshot.head.value) "Successor could not land reviewed work"
+
 /-- Runtime coverage is intentionally separate from pure transition and transport tests. -/
 def runtimeTests : List (String × IO Unit) := [
   ("runtime join creates linked worktree without changing dirty primary", testJoinPreservesPrimary),
@@ -308,6 +335,7 @@ def runtimeTests : List (String × IO Unit) := [
   ("runtime expired replaced pending join rotates fresh identity and token", testExpiredPendingJoinRotatesIdentity),
   ("runtime claim is durable before push and recovers its accepted generation", testDurableWorkClaimRecovery),
   ("runtime worktree lock rejects overlapping mutations and preserves claims", testLocalLockSerializesIdentityMutation),
+  ("runtime planned handoff rejects dirt and resumes reviewed work in a fresh worktree", testCoordinatorHandoff),
   ("runtime A-B-A checkout refuses to omit B's pushed contribution", testAlternatingAuthorsPreservePushedWork),
   ("runtime validation failure permits reservation retry with new pending token", testReservationSurvivesValidationFailure)]
 

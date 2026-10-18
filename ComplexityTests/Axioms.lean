@@ -8902,6 +8902,62 @@ info: 'Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le' d
 #print axioms Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le
 
 /--
+info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.exists_isScheduler' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.exists_isScheduler
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.complexity_directProduct_le_of_isScheduler' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.complexity_directProduct_le_of_isScheduler
+
+/--
+info: 'Cslib.LineCode.HighRate.exists_lineCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.LineCode.HighRate.exists_lineCode
+
+/--
+info: 'Cslib.LineCode.exists_isUniversalMenu' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.LineCode.exists_isUniversalMenu
+
+/--
 info: 'Cslib.Circuits.Boolean.eval_mintermCircuit' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
