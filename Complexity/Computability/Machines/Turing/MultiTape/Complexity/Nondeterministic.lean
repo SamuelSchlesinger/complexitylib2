@@ -28,9 +28,8 @@ computation path within the bound extends to a halted one of exactly the bound
 (`Turing.MultiTapeNTM.ComputationPath.exists_halted_extension`).
 
 `Turing.MultiTapeNTM.DecidableInPolyTime` asks for one machine with a binary alphabet and finitely
-many states, and one polynomially bounded time bound, for all instances. Problems in the
-verifier class `Cslib.Complexity.NP` have such machines
-(`Cslib.Complexity.decidableInPolyTime_of_mem_NP`); the converse is not proved here.
+many states, and one polynomially bounded time bound, for all instances. Like
+`Turing.MultiTapeTM.ComputableTidilyInPolyTime`, it is relative to the encoding of instances.
 
 ## Main definitions
 
@@ -42,6 +41,8 @@ verifier class `Cslib.Complexity.NP` have such machines
 ## Main results
 
 * `Turing.MultiTapeNTM.RunPath.exists_extend_of_halted`: a halted path extends to any length.
+* `Turing.MultiTapeNTM.RunsInTime.exists_time_eq`: under a time bound, a halted computation path
+  has the last configuration of one of exactly the bound.
 * `Turing.MultiTapeNTM.accepts_iff_exists_time_eq`: under a time bound `t`, acceptance is
   witnessed by a computation path of exactly `t` steps.
 * `Turing.MultiTapeNTM.ComputationPath.exists_halted_extension`: without stuck configurations,
@@ -69,11 +70,12 @@ theorem RunPath.exists_extend_of_halted (p : ntm.RunPath input) (h : p.last.Halt
   | succ m ih =>
     obtain ⟨q, hhead, hlen, hlast⟩ := ih (Nat.le_add_right _ _)
     have hstep : ntm.Step q.last q.last := (step_of_halt (hlast ▸ h)).mpr rfl
-    exact ⟨q.snoc q.last hstep, by simpa using hhead, by simp [hlen]; rfl, by simpa using hlast⟩
+    exact ⟨q.snoc q.last hstep, by simpa using hhead,
+      by rw [RelSeries.snoc_length, hlen, Nat.add_assoc], by simpa using hlast⟩
 
 /-- Under a time bound `t`, every computation path that ends halted has the same last
 configuration as a computation path of exactly `t` steps. -/
-theorem exists_time_eq_of_runsInTime {t : ℕ} (ht : ntm.RunsInTime input t)
+theorem RunsInTime.exists_time_eq {t : ℕ} (ht : ntm.RunsInTime input t)
     (p : ntm.ComputationPath input) (hp : p.last.Halted) :
     ∃ q : ntm.ComputationPath input, q.time = t ∧ q.last = p.last := by
   rcases le_or_gt t p.time with hle | hlt
@@ -99,7 +101,7 @@ theorem RunPath.exists_extend (htotal : ∀ c : Cfg k Symbol State input, ∃ c'
   | succ m ih =>
     obtain ⟨q, hlen, hprefix⟩ := ih (Nat.le_add_right _ _)
     obtain ⟨c, hc⟩ := htotal q.last
-    refine ⟨q.snoc c hc, by simp [hlen]; rfl, fun i hi => ?_⟩
+    refine ⟨q.snoc c hc, by rw [RelSeries.snoc_length, hlen, Nat.add_assoc], fun i hi => ?_⟩
     rw [← hprefix i hi]
     have hi' : i < q.length + 1 := by omega
     exact (congrArg (q.snoc c hc) (Fin.ext rfl)).trans (RelSeries.snoc_castSucc q c hc ⟨i, hi'⟩)
@@ -130,7 +132,7 @@ theorem accepts_iff_exists_time_eq {ntm : MultiTapeNTM k Bool State} {input : Li
     ntm.Accepts input ↔ ∃ p : ntm.ComputationPath input, p.time = t ∧ p.last.output = [true] := by
   constructor
   · rintro ⟨p, hhalt, hout⟩
-    obtain ⟨q, hq, hlast⟩ := exists_time_eq_of_runsInTime ht p hhalt
+    obtain ⟨q, hq, hlast⟩ := ht.exists_time_eq p hhalt
     exact ⟨q, hq, hlast ▸ hout⟩
   · rintro ⟨p, hp, hout⟩
     exact ⟨p, ht p hp.ge, hout⟩

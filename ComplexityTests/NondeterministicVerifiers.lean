@@ -116,6 +116,81 @@ example (input : List Bool) (p : coin.toNTM.ComputationPath input) (hp : p.time 
   MultiTapeNTM.ComputationPath.exists_halted_extension (coin.exists_step_toNTM)
     (runsInTime_coin input) p hp
 
+/-! ### A looping machine violates every time bound -/
+
+/-- Stay in its only state forever. -/
+private def loop : MultiTapeTM 0 Bool Unit :=
+  MultiTapeTM.ofTr () fun _ _ _ =>
+    { inputTape := 0, workTapes := Fin.elim0, output := none, state := some () }
+
+private theorem state_runFrom_loop (input : List Bool) (t : ℕ) :
+    (loop.runFrom (loop.initCfg input) t).state = some () := by
+  induction t with
+  | zero => rfl
+  | succ t ih =>
+    rw [MultiTapeTM.runFrom, Function.iterate_succ_apply', ← MultiTapeTM.runFrom,
+      MultiTapeTM.step_of_state ih]
+    simp [loop, Action.apply]
+
+example (input : List Bool) (t : ℕ) : ¬loop.toMultiTapeNTM.RunsInTime input t := by
+  intro h
+  have hhalt := h (MultiTapeNTM.ComputationPath.ofDeterministic loop input t) le_rfl
+  rw [MultiTapeTM.computationPath_last_eq_runFrom] at hhalt
+  have htime : (MultiTapeNTM.ComputationPath.ofDeterministic loop input t).time = t := rfl
+  rw [htime, Cfg.Halted, state_runFrom_loop] at hhalt
+  exact Option.some_ne_none _ hhalt
+
+/-! ### A stuck branch beside an accepting one -/
+
+/-- Halt with output `[true]`. -/
+private def acceptAction : Action 0 Bool Bool :=
+  { inputTape := 0, workTapes := Fin.elim0, output := some true, state := none }
+
+/-- Move to the state `true`, which has no transitions. -/
+private def stuckAction : Action 0 Bool Bool :=
+  { inputTape := 0, workTapes := Fin.elim0, output := none, state := some true }
+
+/-- From its initial state `false`, either accept or move to the stuck state `true`. -/
+private def fork : MultiTapeNTM 0 Bool Bool where
+  q₀ := false
+  Tr q _ _ action := q = false ∧ (action = acceptAction ∨ action = stuckAction)
+
+/-- The stuck branch does not prevent acceptance. -/
+example (input : List Bool) : fork.Accepts input := by
+  have hstep : fork.Step (fork.initCfg input) (acceptAction.apply (fork.initCfg input)) :=
+    ⟨acceptAction, ⟨rfl, .inl rfl⟩, rfl⟩
+  refine ⟨⟨(RelSeries.singleton _ _).cons (fork.initCfg input) hstep, rfl⟩, ?_, ?_⟩ <;>
+    simp [acceptAction]
+
+/-- After one step the stuck branch is still running, so one step is not a time bound. -/
+example (input : List Bool) : ¬fork.RunsInTime input 1 := by
+  have hstep : fork.Step (fork.initCfg input) (stuckAction.apply (fork.initCfg input)) :=
+    ⟨stuckAction, ⟨rfl, .inr rfl⟩, rfl⟩
+  intro h
+  have := h ⟨(RelSeries.singleton _ _).cons (fork.initCfg input) hstep, rfl⟩
+    (by simp [MultiTapeNTM.ComputationPath.time, MultiTapeNTM.RunPath.time])
+  simp [Cfg.Halted, stuckAction] at this
+
+/-- Two steps bound every branch: the stuck branch has no second step. -/
+example (input : List Bool) : fork.RunsInTime input 2 := by
+  intro p hp
+  have hlen : 1 < p.length := hp
+  have h₀ : fork.Step (p.toRunPath (Fin.castSucc ⟨0, by omega⟩))
+      (p.toRunPath (Fin.succ ⟨0, by omega⟩)) := p.step ⟨0, by omega⟩
+  have h₁ : fork.Step (p.toRunPath (Fin.castSucc ⟨1, hlen⟩))
+      (p.toRunPath (Fin.succ ⟨1, hlen⟩)) := p.step ⟨1, hlen⟩
+  have hhead : p.toRunPath (Fin.castSucc ⟨0, by omega⟩) = fork.initCfg input := p.head_eq
+  have hone : p.toRunPath (Fin.succ ⟨0, by omega⟩) = p.toRunPath (Fin.castSucc ⟨1, hlen⟩) :=
+    congrArg p.toRunPath (Fin.ext rfl)
+  rw [hhead] at h₀
+  rw [← hone] at h₁
+  obtain ⟨action, ⟨-, haction⟩, hnext⟩ := h₀
+  rcases haction with rfl | rfl
+  · have hhalt : (p.toRunPath (Fin.succ ⟨0, by omega⟩)).Halted := by rw [hnext]; rfl
+    exact (MultiTapeNTM.RunPath.last_eq_of_halted p.toRunPath _ hhalt) ▸ hhalt
+  · rw [hnext] at h₁
+    simp [MultiTapeNTM.Step, fork, stuckAction] at h₁
+
 /-! ### Acceptance requires exactly the output `[true]` -/
 
 /-- Emit `true` twice, then halt. -/
@@ -151,6 +226,31 @@ example (input : List Bool) : ¬twice.toMultiTapeNTM.Accepts input := by
 decider. -/
 example : MultiTapeNTM.DecidableInPolyTime SAT encCNF :=
   decidableInPolyTime_of_mem_NP SAT.mem_NP
+
+/-- The verifier reading the first certificate bit. -/
+private theorem polyTime_headD :
+    ComputableTidilyInPolyTime (fun x : List Bool × List Bool => x.2.headD false)
+      (encPair encBits encBits) encBool :=
+  (ComputableTidilyInPolyTime.headD (encA := encBool) false).comp
+    (ComputableTidilyInPolyTime.snd encBits encBits)
+
+/-- With one-bit certificates, the decider accepts the empty instance only through the branch
+guessing `[true]`. -/
+example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePTM k Bool State),
+    machine.toNTM.Accepts [] := by
+  obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ :=
+    IsVerifier.exists_decidesInTime (enc := encBits) (p := 1) (A := Set.univ) polyTime_headD
+      fun _ => ⟨fun _ => ⟨[true], by simp, rfl⟩, fun _ => trivial⟩
+  exact ⟨k, State, hfinite, machine, ((hdecides []).2).mp trivial⟩
+
+/-- With empty certificates, the same verifier rejects: the decider guesses exactly
+`p (enc a).length` bits, so it cannot reach the accepting certificate `[true]`. -/
+example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePTM k Bool State),
+    ¬machine.toNTM.Accepts [] := by
+  obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ :=
+    IsVerifier.exists_decidesInTime (enc := encBits) (p := 0) (A := ∅) polyTime_headD
+      fun _ => by simp
+  exact ⟨k, State, hfinite, machine, fun h => ((hdecides []).2).mpr h⟩
 
 /-- The guessing decider of the trivial verifier accepts the empty instance. -/
 example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePTM k Bool State),

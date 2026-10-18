@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.NP
-public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Nondeterministic
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.PPT.Clock
@@ -19,11 +19,12 @@ import Complexity.Computability.Probabilistic.Sampling
 
 Every problem in `Cslib.Complexity.NP` is decided in polynomial time by a nondeterministic
 machine with a binary alphabet and finitely many states, which guesses a certificate and runs the
-verifier on it [Arora and Barak, Theorem 2.6][AroraBarak09].
+verifier on it: the inclusion of `NP` in nondeterministic polynomial time
+[Arora and Barak, Theorem 2.6][AroraBarak09].
 
-The machine is built from existing certificates rather than by hand. For a verifier `V` with
-certificates of length `p (enc a).length`, the probabilistic program that samples a word of this
-length and returns the verdict of `V` is uniformly polynomial-time by the PPT calculus. The clock
+The machine is built from the PPT calculus and its clock compiler rather than by hand. For a
+verifier `V` with certificates of length `p (enc a).length`, the probabilistic program that samples
+a word of this length and returns the verdict of `V` is uniformly polynomial-time. The clock
 compiler `Cslib.Probability.IsPPTOn.exists_halting_machine` turns it into a finite fair-coin
 machine that actually halts on every branch within a polynomial clock. Its nondeterministic machine
 `Turing.MultiTapePTM.toNTM` guesses the coins: its computation paths are exactly the coin
@@ -51,9 +52,10 @@ open Turing Turing.MultiTapeTM Probability
 variable {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}
   {A : Set α}
 
-/-- **Guess and verify** [Arora and Barak, Theorem 2.6][AroraBarak09]. A polynomial-time verifier
-gives a finite fair-coin machine whose nondeterministic machine decides the problem within the
-explicit polynomial `c * ((enc a).length + 1) ^ d`. That machine is never stuck, so its branches
+/-- **Guess and verify**, the inclusion of `NP` in nondeterministic polynomial time
+[Arora and Barak, Theorem 2.6][AroraBarak09]. A polynomial-time verifier gives a finite fair-coin
+machine whose nondeterministic machine decides the problem within the explicit polynomial
+`c * ((enc a).length + 1) ^ d`. That machine is never stuck, so its branches
 actually halt within the bound. -/
 theorem IsVerifier.exists_decidesInTime
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (hA : IsVerifier enc p V A) :
