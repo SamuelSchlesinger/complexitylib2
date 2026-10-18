@@ -19,8 +19,9 @@ certificate bits. It looks up each variable's first occurrence, so arbitrary bin
 labels do not inflate certificates. Repeated variables read the same certificate position.
 
 Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
-[Arora and Barak, Section 2.3][AroraBarak09]. NP-hardness still requires the polynomial-time bound
-for the Cook–Levin reduction.
+[Arora and Barak, Section 2.3][AroraBarak09]. Combined with the tableau reduction in
+`CookLevin/PolyTime.lean`, this gives `Cslib.Complexity.CookLevin.SAT_npComplete` in
+`CookLevin/Completeness.lean`.
 
 ## Main results
 

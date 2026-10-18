@@ -65,7 +65,7 @@ cd .worktrees/worker-alice
 scripts/coordinate status
 scripts/coordinate heartbeat
 scripts/coordinate start assigned-epic
-# Implement, validate, commit, then push the branch printed by status.
+# Implement, self-review, validate, commit, then push the branch printed by status.
 git push -u origin HEAD
 scripts/coordinate ready assigned-epic 'Result, checks, source credit, and remaining limitations'
 ```
@@ -74,13 +74,17 @@ The coordinator initializes the board with `scripts/coordinate init` once and jo
 `join NAME --coordinator`. It records each epic's endpoint, acceptance criteria, source paths,
 and dependencies, then assigns it to a registered worker. Include any test files in the scope.
 Overlapping assigned scopes are rejected; generated root imports are the shared exception.
+After submission, the coordinator arranges the independent API and correctness reviews in the
+root coordinating thread, using independent local review subagents when useful. Workers hand off
+their self-reviewed work without arranging an external worker cross-review roundtrip. Reviewers
+register and use the same worktree and exact-commit board workflow below.
 
 ```bash
 scripts/coordinate plan scan-api 'Endpoint and acceptance criteria' Complexity/Path ComplexityTests/Client.lean
 scripts/coordinate assign scan-api worker-alice
-# After submission, assign two independent agents, neither of whom contributed to the epic.
-scripts/coordinate assign scan-api worker-bob api
-scripts/coordinate assign scan-api worker-carol correctness
+# After submission, assign two independent reviewers who did not contribute to the epic.
+scripts/coordinate assign scan-api review-api api
+scripts/coordinate assign scan-api review-correctness correctness
 ```
 
 Workers own their development's design and may delegate within its assigned scope, using separate
@@ -99,7 +103,7 @@ branch and claim; a submitted plan must be reopened
 before revision. `instruct` is advisory and does not change the acceptance criteria or approvals.
 Both commands leave completed records unchanged. Read coordinator guidance in `status --json`
 even when using an older checkout whose dashboard does not display it. At clean implementation
-checkpoints, merge current `main` to pick up shared APIs and tooling updates.
+checkpoints, coordinate updates from current `main` to pick up shared APIs and tooling changes.
 
 Land large developments in independently useful milestones. Before submission, the coordinator
 records the remaining development as a continuation epic, then revises the current epic to the
@@ -109,10 +113,17 @@ finished. Its continuation may depend on the milestone via `plan ... --after EPI
 Reviewers run `start EPIC api` or `start EPIC correctness`, which checks out the submitted commit
 in their own clean worktree. They record their review with
 `review EPIC KIND BASE HEAD approve|changes 'Scope, evidence, findings, and limitations'`.
-`note EPIC KIND 'Progress or blocker' --blocked` is available to both authors and reviewers.
-Starting a review again withdraws its previous verdict. The coordinator uses `reopen EPIC REASON`
-before revision; this invalidates reviews and any pending integration. The author restarts, merges
-current `main`, validates, pushes normally, and submits again. Never force-push these branches.
+`note EPIC KIND 'Progress or blocker' --blocked` is available during an active implementation or
+review claim.
+Starting a review again withdraws its previous verdict. Reviewers remain read-only; implementation
+and integration edits happen separately. The coordinator uses `reopen EPIC REASON` before revision;
+this invalidates reviews and any pending integration. For mechanical main merges, conflict
+resolution or central documentation fixes within scope, it can then `assign EPIC COORDINATOR_NAME`
+and `start EPIC` in its own worktree. Reassignment resumes from the previous branch and preserves its
+contributors; starting records the coordinator as another contributor. The coordinator can instead
+return substantive fixes to the author. The assigned implementer merges current `main`, validates,
+commits, pushes normally and submits again. Obtain fresh independent reviews of the exact final
+base and head after these edits. Never force-push these branches.
 
 `land EPIC` is coordinator-only. It checks out the reviewed commit, runs all six project checks
 and the coordination tests, and atomically publishes both `main` and the completed board record.

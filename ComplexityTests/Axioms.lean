@@ -772,6 +772,34 @@ info: 'Cslib.Complexity.CookLevin.SAT_npComplete' depends on axioms: [propext, C
 #print axioms Cslib.Complexity.CookLevin.SAT_npComplete
 
 /--
+info: 'Cslib.Complexity.IsVerifier.exists_decidesInTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.IsVerifier.exists_decidesInTime
+
+/--
+info: 'Cslib.Complexity.decidableInPolyTime_of_mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.decidableInPolyTime_of_mem_NP
+
+/--
+info: 'Cslib.Logic.ESO.Definable.queryLanguage_mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Definable.queryLanguage_mem_NP
+
+/--
+info: 'Cslib.Logic.ESO.Sentence.Layout.computableTidilyInPolyTime_verifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Sentence.Layout.computableTidilyInPolyTime_verifier
+
+/--
 info: 'Cslib.Complexity.SAT.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
@@ -800,6 +828,27 @@ info: 'Cslib.Complexity.mem_ThreeSAT_toThreeSAT_iff' depends on axioms: [propext
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.mem_ThreeSAT_toThreeSAT_iff
+
+/--
+info: 'Cslib.Complexity.ThreeSAT_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.ThreeSAT_npComplete
+
+/--
+info: 'Cslib.Complexity.IndependentSet_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.IndependentSet_npComplete
+
+/--
+info: 'Cslib.Complexity.Clique_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Clique_npComplete
 
 /--
 info: 'Cslib.Logic.PL.CNF.satisfiable_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
