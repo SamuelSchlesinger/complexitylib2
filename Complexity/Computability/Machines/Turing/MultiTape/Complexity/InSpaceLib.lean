@@ -37,6 +37,11 @@ variable {α β γ δ : Type} {encIn : α ↪ List Bool} {encB : β ↪ List Boo
 
 /-! ### Computing within a space budget -/
 
+/-- A multiple of the length of a value computed within a budget is within it. -/
+theorem length_mul_bigOLe {f : α → β} (h : ComputableTidilyInSpace f encIn encB Bs) (k : ℕ) :
+    (fun x => k * ((encB (f x)).length + 1)) ≼ Bs :=
+  .const_mul k (h.length_le.add (.const 1 _))
+
 theorem budget_comp {f : α → β} {g : β → γ} {Sg : β → ℕ}
     (hg : ComputableTidilyInSpace g encB encC Sg) (hf : ComputableTidilyInSpace f encIn encB Bs)
     (hS : (fun x => Sg (f x)) ≼ Bs) : ComputableTidilyInSpace (fun x => g (f x)) encIn encC Bs :=
