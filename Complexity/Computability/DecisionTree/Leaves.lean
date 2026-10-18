@@ -61,4 +61,12 @@ theorem eval_eq_of_path_eq (t : DecisionTree ι β) {x y : ι → Bool}
     · apply ihr
       simpa only [h.1, hy, Bool.cond_true] using h.2
 
+/-- Relabelling queries preserves the structural leaf count, including unreachable leaves. -/
+@[simp]
+theorem leafCount_mapQueries {κ : Type*} (f : ι → κ) (t : DecisionTree ι β) :
+    (t.mapQueries f).leafCount = t.leafCount := by
+  induction t with
+  | leaf => rfl
+  | node i left right ihl ihr => simp [mapQueries, leafCount, ihl, ihr]
+
 end Cslib.DecisionTree

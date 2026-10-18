@@ -32,6 +32,7 @@ it [Jukna, Chapter 14][Jukna2012].
 
 * `Cslib.DecisionTree`: decision trees.
 * `Cslib.DecisionTree.eval`, `Cslib.DecisionTree.depth`, `Cslib.DecisionTree.queries`.
+* `Cslib.DecisionTree.mapQueries`: relabel queries without changing the tree shape.
 * `Cslib.DecisionTree.complexity`: the decision tree complexity of a function.
 
 ## Main results
@@ -92,6 +93,25 @@ theorem computes_iff {t : DecisionTree ι β} {f : (ι → Bool) → β} : t.Com
 @[simp] theorem depth_node (i : ι) (t₀ t₁ : DecisionTree ι β) :
     (node i t₀ t₁).depth = max t₀.depth t₁.depth + 1 :=
   rfl
+
+/-- Relabel the queries while preserving every branch and leaf, even when `f` is not injective. -/
+def mapQueries {κ : Type*} (f : ι → κ) : DecisionTree ι β → DecisionTree κ β
+  | leaf b => leaf b
+  | node i left right => node (f i) (left.mapQueries f) (right.mapQueries f)
+
+@[simp]
+theorem eval_mapQueries {κ : Type*} (f : ι → κ) (t : DecisionTree ι β) (x : κ → Bool) :
+    (t.mapQueries f).eval x = t.eval (x ∘ f) := by
+  induction t with
+  | leaf => rfl
+  | node i left right ihl ihr => simp [mapQueries, ihl, ihr]
+
+@[simp]
+theorem depth_mapQueries {κ : Type*} (f : ι → κ) (t : DecisionTree ι β) :
+    (t.mapQueries f).depth = t.depth := by
+  induction t with
+  | leaf => rfl
+  | node i left right ihl ihr => simp [mapQueries, ihl, ihr]
 
 section Queries
 

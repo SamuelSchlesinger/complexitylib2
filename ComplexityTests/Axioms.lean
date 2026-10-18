@@ -9830,3 +9830,39 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode
+
+/-- info: 'Cslib.DecisionTree.eval_mapQueries' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Cslib.DecisionTree.eval_mapQueries
+
+/-- info: 'Cslib.DecisionTree.depth_mapQueries' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Cslib.DecisionTree.depth_mapQueries
+
+/-- info: 'Cslib.DecisionTree.leafCount_mapQueries' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Cslib.DecisionTree.leafCount_mapQueries
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.gateQuery_eval_eq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.gateQuery_eval_eq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.lineComparison_eval' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.lineComparison_eval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.exists_linear_transcript_tree'
+depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.exists_linear_transcript_tree
