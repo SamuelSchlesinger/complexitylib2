@@ -36,6 +36,7 @@ public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
+public import Complexity.Computability.Circuit.Boolean.KeyedSort
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko
 public import Complexity.Computability.Circuit.Boolean.LMN
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
@@ -53,6 +54,7 @@ public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.PPolyHard
 public import Complexity.Computability.Circuit.Boolean.Parity
 public import Complexity.Computability.Circuit.Boolean.PolynomialTime
+public import Complexity.Computability.Circuit.Boolean.Propagation
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Construction
@@ -572,6 +574,7 @@ public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Vote
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
+public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append

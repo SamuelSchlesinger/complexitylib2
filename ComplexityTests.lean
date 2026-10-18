@@ -40,6 +40,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.KeyedSort
 import ComplexityTests.LinearHash
 import ComplexityTests.ListZipIdx
 import ComplexityTests.Logarithms
@@ -93,6 +94,7 @@ import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.Programs
+import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
 import ComplexityTests.PseudoentropyExtraction
 import ComplexityTests.PseudoentropyLearning

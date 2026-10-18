@@ -46,8 +46,12 @@ results. Track these by their public theorems, rather than by source-file counts
   [stable compare-exchange](Complexity/Computability/Circuit/Boolean/CompareSwap.lean),
   and [Batcher sorting](Complexity/Computability/Circuit/Boolean/Sorting.lean) are in place.
   Sorting has key-order, complete-record permutation and exact weighted-cost theorems; its
-  constructor runtime is not certified. Lookup, routing and the three mass-production bounds
-  above remain to be ported.
+  [computed-key wrapper](Complexity/Computability/Circuit/Boolean/KeyedSort.lean) preserves
+  complete records and charges key computation once per record. The shared
+  [segmented propagation circuit](Complexity/Computability/Circuit/Boolean/Propagation.lean)
+  has exact linear gate cost and connected-source semantics, including sorted equal-key runs.
+  Constructor runtime is not certified. Full record broadcast, lookup, routing and the three
+  mass-production bounds above remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
