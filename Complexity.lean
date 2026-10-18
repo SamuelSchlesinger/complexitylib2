@@ -51,6 +51,7 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Padding
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Schedule
 public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpParameters
+public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpStatement
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Layer
