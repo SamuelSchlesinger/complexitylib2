@@ -14,7 +14,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
+public import Complexity.Computability.BitString.Padding
 
 /-!
 # Testing the steps of views in polynomial time
@@ -120,40 +120,19 @@ theorem computableTidilyInPolyTime_viewStepB :
 
 /-! ### Codes of views -/
 
-/-- Pad a word to width `width + 1`: zeros, a one, then the word. -/
-def padWord (width : ℕ) (word : List Bool) : List Bool :=
-  List.replicate (width - word.length) false ++ true :: word
-
-/-- Remove the padding of `Turing.MultiTapeNTM.padWord`: the leading zeros and the one after
-them. -/
-def unpadWord (code : List Bool) : List Bool :=
-  (code.dropWhile (!·)).tail
-
-@[simp]
-theorem unpadWord_padWord (width : ℕ) (word : List Bool) :
-    unpadWord (padWord width word) = word := by
-  unfold unpadWord padWord
-  induction width - word.length with
-  | zero => simp
-  | succ n ih => simp [List.replicate_succ]
-
-theorem length_padWord {width : ℕ} {word : List Bool} (h : word.length ≤ width) :
-    (padWord width word).length = width + 1 := by
-  simp only [padWord, List.length_append, List.length_replicate, List.length_cons]
-  omega
-
 variable (dec : List Bool → Option (FiniteCfg k Bool State))
 
-/-- The code of a view at width `width`: a zero tag, then its padded encoding. -/
+/-- The code of a view for encodings of length at most `width`: a zero tag, then its encoding
+padded to `2 * width + 1` bits (`Cslib.BitString.padWord`). -/
 noncomputable def viewCode (width : ℕ) (finite : FiniteCfg k Bool State) : List Bool :=
-  false :: padWord width (encFiniteCfg finite)
+  false :: Cslib.BitString.padWord width (encFiniteCfg finite)
 
-/-- The accepting code at width `width`: all ones. Its tag is one, so it is no view's code. -/
-def acceptCode (width : ℕ) : List Bool := List.replicate (width + 2) true
+/-- The accepting code for width `width`: all ones. Its tag is one, so it is no view's code. -/
+def acceptCode (width : ℕ) : List Bool := List.replicate (2 * width + 2) true
 
-/-- Read the view of a code with a zero tag, by the decoder `dec`. -/
+/-- Read the view of a code with a zero tag: decode its first frame by `dec`. -/
 def decodeView : List Bool → Option (FiniteCfg k Bool State)
-  | false :: code => dec (unpadWord code)
+  | false :: code => dec (unframe code)
   | _ => none
 
 open scoped Classical in
@@ -167,26 +146,27 @@ noncomputable def codeEdge (code next : List Bool) : Bool :=
     | none => false
     | some next => ntm.viewStepB (finite, next)
 
-/-- The edges between codes of width `width + 2`. -/
+/-- The edges between codes of `2 * width + 2` bits. -/
 def CodeStep (width : ℕ) (code next : List Bool) : Prop :=
-  code.length = width + 2 ∧ next.length = width + 2 ∧ ntm.codeEdge dec code next = true
+  code.length = 2 * width + 2 ∧ next.length = 2 * width + 2 ∧ ntm.codeEdge dec code next = true
 
 variable {ntm dec}
 
 theorem decodeView_viewCode (hdec : ∀ finite, dec (encFiniteCfg finite) = some finite)
     (width : ℕ) (finite : FiniteCfg k Bool State) :
     decodeView dec (viewCode width finite) = some finite := by
-  simp only [decodeView, viewCode, unpadWord_padWord, hdec]
+  simp only [decodeView, viewCode, Cslib.BitString.padWord, unframe_frame_append, hdec]
 
 theorem length_viewCode {width : ℕ} {finite : FiniteCfg k Bool State}
-    (h : (encFiniteCfg finite).length ≤ width) : (viewCode width finite).length = width + 2 := by
-  rw [viewCode, List.length_cons, length_padWord h]
+    (h : (encFiniteCfg finite).length ≤ width) :
+    (viewCode width finite).length = 2 * width + 2 := by
+  rw [viewCode, List.length_cons, Cslib.BitString.length_padWord h]
 
 theorem codeEdge_viewCode (hdec : ∀ finite, dec (encFiniteCfg finite) = some finite)
     {width : ℕ} {finite next : FiniteCfg k Bool State} :
     ntm.codeEdge dec (viewCode width finite) (viewCode width next) = true ↔
       ntm.ViewStep finite next := by
-  simp only [codeEdge, viewCode, decodeView, unpadWord_padWord, hdec]
+  simp only [codeEdge, viewCode, decodeView, Cslib.BitString.padWord, unframe_frame_append, hdec]
   exact ntm.viewStepB_iff
 
 theorem codeEdge_acceptCode (hdec : ∀ finite, dec (encFiniteCfg finite) = some finite)
@@ -252,29 +232,9 @@ theorem accepts_iff_reflTransGen_codeStep (hdec : ∀ finite, dec (encFiniteCfg 
 
 /-! ### The edge test in polynomial time -/
 
-/-- The transducer of `Turing.MultiTapeNTM.unpadWord`: skip zeros up to the first one, then copy.
-Its state records whether the first one has been read. -/
-private def unpadT : MultiTapeTM.Transducer Bool Bool where
-  q₀ := false
-  step copying bit := if copying then (true, [bit]) else (bit, [])
-  final _ := []
-  length_step_le copying _ := by cases copying <;> simp
-  length_final_le _ := by simp
-
-private theorem unpadT_run (code : List Bool) :
-    unpadT.run false code = unpadWord code ∧ unpadT.run true code = code := by
-  induction code with
-  | nil => exact ⟨rfl, rfl⟩
-  | cons bit code ih =>
-    cases bit <;> simp [unpadT, unpadWord, MultiTapeTM.Transducer.run_cons] at ih ⊢ <;> simp [ih]
-
-theorem computableTidilyInPolyTime_unpadWord :
-    ComputableTidilyInPolyTime unpadWord encBits encBits :=
-  .of_linear (unpadT.computableTidilyInLinearTimeAndSpace fun code => (unpadT_run code).1.symm)
-
 omit [Finite State] in
 theorem decodeView_eq (code : List Bool) :
-    decodeView dec code = if code.headD true then none else dec (unpadWord code.tail) := by
+    decodeView dec code = if code.headD true then none else dec (unframe code.tail) := by
   rcases code with _ | ⟨_ | _, code⟩ <;> rfl
 
 section Certificate
@@ -289,7 +249,7 @@ theorem computableTidilyInPolyTime_decodeView
       (encOption encFiniteCfg) := by
   simp only [decodeView_eq]
   exact (ComputableTidilyInPolyTime.headD true |>.comp hcode).cond (.const none)
-    (hdec.comp (computableTidilyInPolyTime_unpadWord.comp
+    (hdec.comp (ComputableTidilyInPolyTime.unframe.comp
       (ComputableTidilyInPolyTime.tail (encA := encBool) |>.comp hcode)))
 
 theorem codeEdge_eq (code next : List Bool) : ntm.codeEdge dec code next =
