@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Probabilistic.LinearHash
+import Complexity.Probability.BitString.LinearHash.Collisions
 import Complexity.Tactic.PPT
 
 /-! Matrix hashing through ordinary functional programs and arbitrary public-output tests. -/
@@ -64,5 +65,32 @@ example {n m : ℕ} (source : PMF (BitString n)) (test : List Bool → PMF Bool)
         ((uniformList (m * n + m)).bind test) ≤
       Real.sqrt ((2 : ℝ) ^ m * collisionProbability source) / 2 :=
   extract_dist_bind_le source test
+
+-- The finite matrix maps in the collision theorem are linear over the Boolean ring.
+example {n m : ℕ} (rows : Fin m → BitString n) (x y : BitString n) :
+    hash rows (x + y) = hash rows x + hash rows y := by
+  ext i
+  simp [Cslib.BitString.LinearHash.hash, dotProduct_add]
+
+-- Three inputs need at most two digest bits, independently of the ambient input width.
+example {n : ℕ} (S : Finset (BitString n)) (hS : S.card ≤ 3) :
+    ∃ rows : Fin 2 → BitString n, Set.InjOn (hash rows) S :=
+  exists_injOn S ((Nat.choose_le_choose 2 hS).trans_lt (by decide))
+
+-- The zero-bit output case applies to the singleton zero-width input space.
+example : ∃ rows : Fin 0 → BitString 0,
+    Set.InjOn (hash rows) (Finset.univ : Finset (BitString 0)) :=
+  exists_injOn Finset.univ (by decide)
+
+-- It does not make a zero-bit digest injective on a two-element set.
+example : ¬ ∃ rows : Fin 0 → BitString 1,
+    Set.InjOn (hash rows) (Finset.univ : Finset (BitString 1)) := by decide
+
+-- Independently search all four one-row matrices for every subset of the two-bit cube.
+-- This counts ordered distinct pairs; the general theorem also permits one orientation only.
+/-- info: true -/
+#guard_msgs in
+#eval decide (∀ S : Finset (BitString 2), ∃ rows : Fin 1 → BitString 2,
+  2 * (S.offDiag.filter fun p => hash rows p.1 = hash rows p.2).card ≤ S.offDiag.card)
 
 end ComplexityTests.LinearHash

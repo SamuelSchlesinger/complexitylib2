@@ -95,7 +95,18 @@ These do not include an efficient anti-checker generator or a hardness-magnifica
 Formalize the established theorems, lemmas, constructions and exercise results throughout
 [Jukna's *Boolean Function Complexity: Advances and Frontiers* (2012)](https://web.vu.lt/mif/s.jukna/boolean/index.html),
 using the author's [errata](https://web.vu.lt/mif/s.jukna/boolean/misprints-BFC.html).
-Research problems remain explicitly open. Reuse Mathlib and CSLib for the supporting mathematics.
+The target is all useful established results and constructions, including supporting lemmas and
+worthwhile exercises. Open problems are separate research opportunities, not completion
+requirements. Reuse Mathlib and CSLib for the supporting mathematics.
+
+Complete and review developments individually; book-wide coverage is a long-term program, not
+a prerequisite for usable releases. Organize modules by mathematical subject rather than book
+chapter.
+
+The [almost-injective binary linear map](Complexity/Probability/BitString/LinearHash/Collisions.lean)
+implements Lemma 1.17, including its unordered-pair collision bound and an injective-map
+corollary. Its matrix selection is existential; the partial-function circuit upper bounds that
+use it remain outstanding.
 
 This initial map follows the [contents](https://web.vu.lt/mif/s.jukna/boolean/TOC.pdf).
 The linked modules are starting points, not evidence of complete chapter coverage. Audit exact

@@ -9426,3 +9426,27 @@ info: 'Fin.exists_ne_apply_eq_iff_adjacent' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Fin.exists_ne_apply_eq_iff_adjacent
+
+/--
+info: 'Cslib.BitString.LinearHash.expect_card_collisions_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.LinearHash.expect_card_collisions_le
+
+/--
+info: 'Cslib.BitString.LinearHash.exists_card_collisions_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.LinearHash.exists_card_collisions_le
+
+/--
+info: 'Cslib.BitString.LinearHash.exists_card_collisions_le_choose' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.LinearHash.exists_card_collisions_le_choose
+
+/--
+info: 'Cslib.BitString.LinearHash.exists_injOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.LinearHash.exists_injOn
