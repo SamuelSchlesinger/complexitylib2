@@ -128,8 +128,10 @@ import ComplexityTests.SourceComplexity
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
 import ComplexityTests.ThreeCNFPolyTime
+import ComplexityTests.ThresholdActivity
 import ComplexityTests.ThresholdInnerProduct
 import ComplexityTests.ThresholdRectangles
+import ComplexityTests.ThresholdTranscript
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation

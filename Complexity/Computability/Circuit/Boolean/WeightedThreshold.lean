@@ -175,15 +175,20 @@ noncomputable def transcript (p : Program signature n g) (x : Fin n → Bool) :
     inputGates p → Bool :=
   fun gate => p.eval interpretation x gate
 
-/-- Agreement on all input-reading gates forces agreement on every gate. -/
-theorem eval_eq_of_forall_mem_inputGates (p : Program signature n g) {x y : Fin n → Bool}
-    (h : ∀ gate ∈ inputGates p, p.eval interpretation x gate = p.eval interpretation y gate) :
-    p.eval interpretation x = p.eval interpretation y := by
-  funext gate
+/-- Agreement on input-reading gates before a given bound forces agreement on every gate
+before that bound. -/
+theorem eval_eq_of_forall_mem_inputGates_lt (p : Program signature n g)
+    {x y : Fin n → Bool} (bound : ℕ)
+    (h : ∀ gate ∈ inputGates p, (gate : ℕ) < bound →
+      p.eval interpretation x gate = p.eval interpretation y gate) :
+    ∀ gate : Fin g, (gate : ℕ) < bound →
+      p.eval interpretation x gate = p.eval interpretation y gate := by
+  intro gate
   induction gate using Fin.strong_induction_on with
   | h gate ih =>
+    intro hbound
     by_cases hgate : gate ∈ inputGates p
-    · exact h gate hgate
+    · exact h gate hgate hbound
     · rw [eval_gate_eq p x gate, eval_gate_eq p y gate]
       simp only [inputWeight_eq_zero_of_not_mem p hgate, zero_mul,
         sum_const_zero, zero_add]
@@ -191,9 +196,16 @@ theorem eval_eq_of_forall_mem_inputGates (p : Program signature n g) {x y : Fin 
       apply sum_congr rfl
       intro prior _
       by_cases hprior : prior < gate
-      · rw [ih prior hprior]
+      · rw [ih prior hprior (lt_trans hprior hbound)]
       · rw [gateWeight_eq_zero_of_le p gate prior (le_of_not_gt hprior)]
         simp
+
+/-- Agreement on all input-reading gates forces agreement on every gate. -/
+theorem eval_eq_of_forall_mem_inputGates (p : Program signature n g) {x y : Fin n → Bool}
+    (h : ∀ gate ∈ inputGates p, p.eval interpretation x gate = p.eval interpretation y gate) :
+    p.eval interpretation x = p.eval interpretation y :=
+  funext fun gate => eval_eq_of_forall_mem_inputGates_lt p g
+    (fun gate hgate _ => h gate hgate) gate gate.isLt
 
 /-- The restricted transcript determines the complete gate valuation. -/
 theorem eval_eq_of_transcript_eq (p : Program signature n g) {x y : Fin n → Bool}

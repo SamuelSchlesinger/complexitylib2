@@ -89,6 +89,8 @@ public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activity
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth
@@ -228,6 +230,7 @@ public import Complexity.Computability.DecisionTree.Influence
 public import Complexity.Computability.DecisionTree.InnerProduct
 public import Complexity.Computability.DecisionTree.Leaves
 public import Complexity.Computability.DecisionTree.NormalForm
+public import Complexity.Computability.DecisionTree.Observations
 public import Complexity.Computability.DecisionTree.Parity
 public import Complexity.Computability.DecisionTree.Restrict
 public import Complexity.Computability.DecisionTree.Sensitivity

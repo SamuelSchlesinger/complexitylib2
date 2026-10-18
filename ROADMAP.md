@@ -97,10 +97,13 @@ Jukna coverage below is an additional target beyond the V1 port:
   The [leaf-count rectangle theorem](Complexity/Computability/DecisionTree/Separable.lean) and
   [inner-product leaf bound](Complexity/Computability/DecisionTree/InnerProduct.lean) are proved;
   [native weighted circuits](Complexity/Computability/Circuit/Boolean/WeightedThreshold.lean)
-  have input-reading transcripts. Next compile their comparison trees and prove the activity
-  and scalar-capacity results. Port the cited scalar-block capacity theorem and explicit
-  source-reduction family from v1; their threshold consequences are not yet in v2. Entropy,
-  geometric cutting, and integer-summary counting require further foundations.
+  have [comparison trees](Complexity/Computability/Circuit/Boolean/WeightedThreshold/TranscriptTree.lean)
+  with leaves bounded by attainable transcripts, whose
+  [activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activity.lean)
+  is the exact Hamming-ball count. Connect these bounds to the inner-product activity inequality.
+  Port the cited scalar-block capacity theorem and explicit source-reduction family from v1;
+  their threshold consequences are not yet in v2. Entropy, geometric cutting, and
+  integer-summary counting require further foundations.
 
 Further metacomplexity ports are outside the current scope: the circuitized anti-checker,
 hardness-magnification argument and MINKT/MINCKT developments will not be carried over. Retain

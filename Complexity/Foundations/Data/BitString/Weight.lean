@@ -41,6 +41,7 @@ function is *symmetric* when it depends only on the weight of its input
 * `Cslib.BitString.weight_eq_hammingNorm`, `Cslib.BitString.hammingDist_eq_weight_add`: the
   weight is the Hamming norm.
 * `Cslib.BitString.card_weightLayer`: there are `n.choose k` strings of `n` bits of weight `k`.
+* `Cslib.BitString.card_filter_weight_le`: the exact binomial-sum size of a Hamming ball.
 * `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
 * `Cslib.BitString.strictMajorityOn`: strict majority on a finite set of voting indices.
 * `Cslib.le_card_ne_of_strictMajority_ne`: a wrong majority requires at least half wrong votes.
@@ -139,6 +140,16 @@ theorem card_filter_weight_eq [DecidableEq ι] (r : ℕ) :
     simp
   · ext i
     simp
+
+/-- The words of weight at most `e` form a Hamming ball with the exact binomial-sum size.
+The radius may exceed the number of coordinates. -/
+theorem card_filter_weight_le [DecidableEq ι] (e : ℕ) :
+    #{x : ι → Bool | weight x ≤ e} =
+      ∑ j ∈ Finset.range (e + 1), (Fintype.card ι).choose j := by
+  classical
+  simpa only [card_filter_weight_eq, Finset.mem_range, Nat.lt_succ_iff] using
+    (Finset.sum_card_fiberwise_eq_card_filter
+      (Finset.univ : Finset (ι → Bool)) (Finset.range (e + 1)) weight).symm
 
 /-- The weight of `x` as a number of true coordinates. -/
 theorem weight_eq_card_subtype (x : ι → Bool) : weight x = Fintype.card {i // x i = true} :=

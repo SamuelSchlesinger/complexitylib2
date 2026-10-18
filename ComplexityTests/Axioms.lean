@@ -9662,3 +9662,66 @@ info: 'Cslib.DecisionTree.two_pow_le_leafCount_sq_of_hadamardCode' depends on ax
 -/
 #guard_msgs in
 #print axioms Cslib.DecisionTree.two_pow_le_leafCount_sq_of_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.exists_of_observations'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.DecisionTree.exists_of_observations
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_forall_mem_inputGates_lt'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_forall_mem_inputGates_lt
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.gateComparison_eval_eq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.gateComparison_eval_eq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.exists_transcript_tree'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.exists_transcript_tree
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.exists_gate_readout_tree'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.exists_gate_readout_tree
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.exists_circuit_tree'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.exists_circuit_tree
+
+/--
+info: 'Cslib.BitString.card_filter_weight_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.card_filter_weight_le
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_le_card' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_le_card
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose
