@@ -45,6 +45,17 @@ def propagate (source link : ℕ → Bool) : ℕ → Bool
   | 0 => false
   | count + 1 => source count || (link count && propagate source link count)
 
+/-- Propagation depends only on the source and link bits in its processed prefix. -/
+theorem propagate_congr {source source' link link' : ℕ → Bool} (count : ℕ)
+    (hs : ∀ i, i < count → source i = source' i)
+    (hl : ∀ i, i < count → link i = link' i) :
+    propagate source link count = propagate source' link' count := by
+  induction count with
+  | zero => rfl
+  | succ count ih =>
+    rw [propagate, propagate, hs count (by lia), hl count (by lia),
+      ih (fun i hi => hs i (by lia)) (fun i hi => hl i (by lia))]
+
 /-- A true value has a true source connected to the end by uninterrupted true links. -/
 theorem propagate_eq_true_iff (source link : ℕ → Bool) (count : ℕ) :
     propagate source link count = true ↔

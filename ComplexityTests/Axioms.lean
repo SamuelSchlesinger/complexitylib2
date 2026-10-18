@@ -8997,3 +8997,87 @@ info: 'Cslib.Circuits.Boolean.size_propagateCircuit' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.size_propagateCircuit
+
+/--
+info: 'Cslib.Circuits.Formula.eval_equalBits_iff' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.eval_equalBits_iff
+
+/--
+info: 'Cslib.Circuits.Formula.cost_equalBits' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.cost_equalBits
+
+/--
+info: 'Cslib.Circuits.Formula.size_equalBits' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Formula.size_equalBits
+
+/--
+info: 'Cslib.BitString.propagate_congr' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.propagate_congr
+
+/--
+info: 'Cslib.BitString.propagate_sorted_tagged_eq_true_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.propagate_sorted_tagged_eq_true_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.broadcastCircuit.eval_values_eq_true_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.broadcastCircuit.eval_values_eq_true_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_broadcastCircuit_header' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_broadcastCircuit_header
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_broadcastCircuit_value' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_broadcastCircuit_value
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_broadcastCircuit_value_eq_true_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_broadcastCircuit_value_eq_true_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_broadcastCircuit_value_of_unique_source' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_broadcastCircuit_value_of_unique_source
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_broadcastCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_broadcastCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.size_broadcastCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_broadcastCircuit
