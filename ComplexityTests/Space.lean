@@ -6,9 +6,11 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.Classes.Space
 import Complexity.Computability.Machines.Turing.MultiTape.Machine.Space
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space
 
 /-! Polynomial-space classes and finite views of space-bounded nondeterministic machines:
-inhabitants, a branch running forever, a stuck branch, repeated output and empty inputs. -/
+inhabitants, a branch running forever, a stuck branch, repeated output, empty inputs, malformed
+codes, and the codes of views. -/
 
 namespace ComplexityTests.Space
 
@@ -92,6 +94,78 @@ example : ∃ finite, Relation.ReflTransGen loopOrAccept.ViewStep (loopOrAccept.
     finite ∧ finite.state = none ∧ finite.output = [true] :=
   MultiTapeNTM.accepts_iff_reflTransGen_viewStep.mp (accepts_loopOrAccept [])
 
+/-! ### A stuck branch -/
+
+/-- A machine permitting no action: its initial configuration is stuck. -/
+private def stuck : MultiTapeNTM 0 Bool Bool where
+  q₀ := false
+  Tr _ _ _ _ := False
+
+/-- The initial view of the stuck machine has no successor, even itself. -/
+private theorem not_viewStep_stuck (input : List Bool) (next : FiniteCfg 0 Bool Bool) :
+    ¬stuck.ViewStep (stuck.initView input) next := by
+  simp [MultiTapeNTM.ViewStep, MultiTapeNTM.initView, FiniteCfg.init, stuck]
+
+/-- A stuck branch does not accept: no halted view is reachable. -/
+private theorem not_accepts_stuck (input : List Bool) : ¬stuck.Accepts input := by
+  rw [MultiTapeNTM.accepts_iff_reflTransGen_viewStep]
+  rintro ⟨finite, hreach, hstate, -⟩
+  rcases Relation.ReflTransGen.cases_head hreach with rfl | ⟨next, hstep, -⟩
+  · simp [MultiTapeNTM.initView, FiniteCfg.init] at hstate
+  · exact not_viewStep_stuck input next hstep
+
+example : (∅ : Set (List Bool)) ∈ NPSPACE encBits :=
+  ⟨0, Bool, inferInstance, stuck, fun _ => 0, .const 0, fun a =>
+    ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, iff_of_false id (not_accepts_stuck a)⟩⟩
+
+/-- The step test rejects every successor of the stuck initial view. -/
+example (input : List Bool) (next : FiniteCfg 0 Bool Bool) :
+    stuck.viewStepB (stuck.initView input, next) = false := by
+  rw [Bool.eq_false_iff, Ne, MultiTapeNTM.viewStepB_iff]
+  exact not_viewStep_stuck input next
+
+/-- A halted view steps to itself, and only to itself. -/
+example (finite next : FiniteCfg 0 Bool Bool) (h : finite.state = none) :
+    loopOrAccept.ViewStep finite next ↔ next = finite := by
+  simp [MultiTapeNTM.ViewStep, h]
+
+/-! ### Codes of views -/
+
+/-- Malformed words decode to some configuration: the empty word to one on the empty input. -/
+example : (decodeFiniteCfg (k := 0) (State := Bool) []).input = [] := rfl
+
+example (finite : FiniteCfg 2 Bool Bool) : decodeFiniteCfg (encFiniteCfg finite) = finite :=
+  decodeFiniteCfg_encFiniteCfg finite
+
+/-- The accepting code is no view's code. -/
+example : MultiTapeNTM.decodeView (k := 0) (State := Bool) (MultiTapeNTM.acceptCode 3) = none :=
+  rfl
+
+/-- The width bounding every reachable view of the looping machine on the empty input. -/
+private noncomputable abbrev loopWidth : ℕ :=
+  (10 + 2 * Nat.card (Option Bool) + 200 * 0) * (0 + 0 + 1)
+
+/-- Acceptance on the empty input reaches the accepting code from the initial code. -/
+example : Relation.ReflTransGen (loopOrAccept.CodeStep loopWidth)
+    (MultiTapeNTM.viewCode loopWidth (loopOrAccept.initView []))
+    (MultiTapeNTM.acceptCode loopWidth) :=
+  (MultiTapeNTM.accepts_iff_reflTransGen_codeStep fun _ h =>
+    MultiTapeNTM.length_encFiniteCfg_le (MultiTapeNTM.runsInSpace_zero_tapes _ _ 0) h).mp
+    (accepts_loopOrAccept [])
+
+/-- The stuck machine never reaches the accepting code. -/
+example : ¬Relation.ReflTransGen (stuck.CodeStep loopWidth)
+    (MultiTapeNTM.viewCode loopWidth (stuck.initView [])) (MultiTapeNTM.acceptCode loopWidth) :=
+  (MultiTapeNTM.accepts_iff_reflTransGen_codeStep fun _ h =>
+    MultiTapeNTM.length_encFiniteCfg_le (MultiTapeNTM.runsInSpace_zero_tapes _ _ 0) h).not.mp
+    (not_accepts_stuck [])
+
+/-- The edge test is polynomial-time on pairs of words. -/
+example : ComputableTidilyInPolyTime
+    (fun p : List Bool × List Bool => loopOrAccept.codeEdge p.1 p.2) (encPair encBits encBits)
+      encBool :=
+  loopOrAccept.computableTidilyInPolyTime_codeEdge (.fst _ _) (.snd _ _)
+
 /-! ### Axioms -/
 
 /--
@@ -121,5 +195,46 @@ info: 'Turing.MultiTapeNTM.RunPath.natAbs_lt_spaceUsedByTape' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeNTM.RunPath.natAbs_lt_spaceUsedByTape
+
+/--
+info: 'Cslib.Complexity.mem_PSPACE_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PSPACE_iff
+
+/--
+info: 'Turing.MultiTapeNTM.computableTidilyInPolyTime_viewStepB' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.computableTidilyInPolyTime_viewStepB
+
+/--
+info: 'Turing.MultiTapeTM.decodeFiniteCfg_encFiniteCfg' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.decodeFiniteCfg_encFiniteCfg
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.decodeFiniteCfg' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.decodeFiniteCfg
+
+/--
+info: 'Turing.MultiTapeNTM.accepts_iff_reflTransGen_codeStep' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.accepts_iff_reflTransGen_codeStep
+
+/--
+info: 'Turing.MultiTapeNTM.computableTidilyInPolyTime_codeEdge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.computableTidilyInPolyTime_codeEdge
 
 end ComplexityTests.Space
