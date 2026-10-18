@@ -309,6 +309,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Prim
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Decode
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Reachability
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
