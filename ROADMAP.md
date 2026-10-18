@@ -95,7 +95,8 @@ Jukna coverage below is an additional target beyond the V1 port:
 * **Weighted threshold representations.** Formalize the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [leaf-count rectangle theorem](Complexity/Computability/DecisionTree/Separable.lean) is
-  proved. Next connect native weighted circuits to activation transcripts, then prove the activity
+  proved, and [native weighted circuits](Complexity/Computability/Circuit/Boolean/WeightedThreshold.lean)
+  have input-reading transcripts. Next compile their comparison trees and prove the activity
   and scalar-capacity results. Port the cited scalar-block capacity theorem and explicit
   source-reduction family from v1; their threshold consequences are not yet in v2. Entropy,
   geometric cutting, and integer-summary counting require further foundations.

@@ -9613,3 +9613,38 @@ info: 'Cslib.DecisionTree.card_mul_le_mul_leafCount_sq' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.DecisionTree.card_mul_le_mul_leafCount_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.preserves_ofThreshold' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.preserves_ofThreshold
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_gate_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.eval_gate_eq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.gateWeight_eq_zero_of_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.gateWeight_eq_zero_of_le
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_transcript_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_transcript_eq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_eval_eq_of_transcript_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_eval_eq_of_transcript_eq

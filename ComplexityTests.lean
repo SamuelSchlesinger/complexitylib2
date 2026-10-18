@@ -132,3 +132,4 @@ import ComplexityTests.ThresholdRectangles
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation
+import ComplexityTests.WeightedThreshold
