@@ -61,7 +61,7 @@ example (f : Fin 5 → Fin 5) (x : Fin 5) (h : f^[2] x = f^[4] x) :
     transientDepth f x + cycleLength f x ≤ 4 :=
   transientDepth_add_cycleLength_le_of_iterate_eq f x (by decide) h
 
--- The canonical cycle of a fixed point is the point itself.
+-- The canonical cycle label lies on the cycle, here that of a fixed point.
 example : canonicalCycle (id : Fin 3 → Fin 3) 2 ∈ cycleSet id 2 := canonicalCycle_mem _ _
 
 /-! ### Checkpoints -/

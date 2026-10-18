@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Simulation
+public import Complexity.Computability.Circuit.Synthesis
 public import Cslib.Computability.Circuit.Composition
 public import Cslib.Computability.Circuit.Synthesis
 public import Mathlib.Logic.Function.Iterate
@@ -104,25 +105,6 @@ namespace Synthesis
 
 variable {I : Interpretation σ U} {n : ℕ}
 
-/-- A circuit whose inputs are fed by available functions computes its outputs with as many
-additional gates as it has. The functions feeding the inputs may repeat. -/
-private theorem circuit {s : Set ((Fin n → U) → U)} {m p : ℕ} (c : Circuit σ m p)
-    (g : Fin m → (Fin n → U) → U) (hg : ∀ i, g i ∈ s) :
-    Synthesis I s (Set.range fun j x => c.eval I (fun i => g i x) j) c.size := by
-  intro g₁ p₁ hp
-  choose wires hw using fun i => mem_available.mp (hp (hg i))
-  refine ⟨g₁ + c.size, p₁.append wires c.program, le_rfl, ?_, ?_⟩
-  · intro f hf
-    obtain ⟨w, hw'⟩ := mem_available.mp hf
-    exact mem_available.mpr ⟨w.castAdd c.size, fun x =>
-      (Program.trace_append_castAdd p₁ wires I x c.program w).trans (hw' x)⟩
-  · rintro _ ⟨j, rfl⟩
-    refine mem_available.mpr ⟨Program.appendedWire wires (c.outputs j), fun x => ?_⟩
-    rw [Program.trace_append_appendedWire]
-    have : (fun i => p₁.trace I x (wires i)) = fun i => g i x := funext fun i => hw i x
-    rw [this]
-    rfl
-
 /-- The values retained through stage `t` of a straight-line construction. -/
 def stages (q : ℕ → Set ((Fin n → U) → U)) (t : ℕ) : Set ((Fin n → U) → U) :=
   ⋃ j ∈ Finset.range (t + 1), q j
@@ -148,9 +130,9 @@ theorem steps {s : Set ((Fin n → U) → U)} (q : ℕ → Set ((Fin n → U) �
     have h := (ih fun j hj => hstep j (by omega)).comp (hstep t (by omega))
     simpa only [stages_succ, Nat.succ_mul] using h
 
-/-- **Retained orbit prefixes.** If every bit of the initial state is available, then all bits of
-the states `(c.eval I)^[j] (init x)` for `j ≤ t` become available with `t * c.size` additional
-gates: one copy of `c` per transition. -/
+/-- **Retained orbit prefixes.** If every coordinate of the initial state is available, then all
+coordinates of the states `(c.eval I)^[j] (init x)` for `j ≤ t` become available with
+`t * c.size` additional gates: one copy of `c` per transition. -/
 theorem orbit {s : Set ((Fin n → U) → U)} {m : ℕ} (c : Circuit σ m m)
     (init : (Fin n → U) → Fin m → U) (hinit : ∀ i, (fun x => init x i) ∈ s) (t : ℕ) :
     Synthesis I s
