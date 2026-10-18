@@ -79,6 +79,33 @@ example (f g : List Bool → List Bool)
       (encPair encBits (encFramed encBits)) 3 1 := by
   fun_prop (disch := lia)
 
+-- Constructors, nested projections and branching infer their payload encodings. The element
+-- encoding is arbitrary: this also covers framed and nonstandard representations.
+example {α : Type} (enc : α ↪ List Bool) (fallback : α) :
+    ComputableTidilyInDegree (fun q : Bool × List α =>
+      if q.1 then q.2.headD fallback :: q.2.tail else q.2)
+      (encPair encBool (encList enc)) (encList enc) 1 1 := by
+  fun_prop (disch := first | apply le_refl | lia)
+
+example {α : Type} (enc : α ↪ List Bool) (fallback : α) :
+    ComputableTidilyInDegree (fun q : Bool × List α =>
+      let word := q.2
+      if q.1 then List.cons (List.headD word fallback) (List.tail word) else word)
+      (encPair encBool (encList enc)) (encList enc) 1 1 := by
+  fun_prop (disch := first | apply le_refl | lia)
+
+-- A costly producer with linear output still gives degree three after testing and projecting.
+example (f : List Bool → ℕ × Option ℕ × Bool)
+    (hf : ComputableTidilyInDegree f encBits
+      (encPair encUnary (encPair (encOption encUnary) encBool)) 3 1) :
+    ComputableTidilyInDegree (fun x =>
+      if (f x).2.1.isSome then (f x).2.1.getD 0 else (f x).1) encBits encUnary 3 1 := by
+  fail_if_success
+    have : ComputableTidilyInDegree (fun x =>
+        if (f x).2.1.isSome then (f x).2.1.getD 0 else (f x).1) encBits encUnary 3 0 := by
+      fun_prop (disch := first | apply le_refl | lia)
+  fun_prop (disch := first | apply le_refl | lia)
+
 -- The same certificates still imply ordinary polynomial time when requested.
 example (f g : List Bool → List Bool)
     (hg : ComputableTidilyInDegree g encBits encBits 2 1)

@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -124,38 +125,45 @@ lemma tapeFields_deg : ComputableTidilyInDegree (fun t : Tape => (t.head, t.left
     eTapeFields 1 1 :=
   of_eq fun _ => rfl
 
-lemma tapeMk_deg : ComputableTidilyInDegree
+@[fun_prop] lemma tapeMk_deg : ComputableTidilyInDegree
     (fun p : ℤ × List (Option ℕ) × List (Option ℕ) => Tape.mk p.1 p.2.1 p.2.2) eTapeFields eTape
     1 1 :=
   of_eq fun _ => rfl
 
+@[fun_prop] lemma tapeHead_deg : ComputableTidilyInDegree Tape.head eTape encInt 1 1 :=
+  tapeFields_deg.fst'
+
+@[fun_prop] lemma tapeLeft_deg : ComputableTidilyInDegree Tape.left eTape (encList eSym) 1 1 :=
+  tapeFields_deg.snd'.fst'
+
+@[fun_prop] lemma tapeRight_deg : ComputableTidilyInDegree Tape.right eTape (encList eSym) 1 1 :=
+  tapeFields_deg.snd'.snd'
+
 /-- The symbol under the head. -/
-lemma read_deg : ComputableTidilyInDegree Tape.read eTape eSym 1 1 :=
-  ((headD (enc₁ := eSym) none).comp tapeFields_deg.snd'.snd').mono
+@[fun_prop] lemma read_deg : ComputableTidilyInDegree Tape.read eTape eSym 1 1 := by
+  unfold Tape.read
+  fun_prop (disch := lia)
 
 /-- Writing under the head. -/
-lemma write_deg : ComputableTidilyInDegree (fun p : Tape × Option ℕ => p.1.write p.2)
+@[fun_prop] lemma write_deg : ComputableTidilyInDegree (fun p : Tape × Option ℕ => p.1.write p.2)
     (encPair eTape eSym) eTape 1 1 := by
-  have ht := tapeFields_deg.comp (fst eTape eSym)
-  have ho := snd eTape eSym
-  exact (tapeMk_deg.comp (ht.fst'.prod (ht.snd'.fst'.prod ((cons eSym).comp
-    (ho.prod ((tail (enc₁ := eSym)).comp ht.snd'.snd')))))).mono
+  unfold Tape.write
+  fun_prop (disch := lia)
 
 /-- A right move. -/
-lemma movePos_deg : ComputableTidilyInDegree (fun t : Tape => t.move .pos) eTape eTape 1 1 :=
-  (tapeMk_deg.comp ((int_succ.comp tapeFields_deg.fst').prod
-    (((cons eSym).comp (read_deg.prod tapeFields_deg.snd'.fst')).prod
-      ((tail (enc₁ := eSym)).comp tapeFields_deg.snd'.snd')))).mono
+@[fun_prop] lemma movePos_deg :
+    ComputableTidilyInDegree (fun t : Tape => t.move .pos) eTape eTape 1 1 := by
+  simp only [Tape.move]
+  fun_prop (disch := lia)
 
 /-- A left move. -/
-lemma moveNeg_deg : ComputableTidilyInDegree (fun t : Tape => t.move .neg) eTape eTape 1 1 :=
-  (tapeMk_deg.comp ((int_pred.comp tapeFields_deg.fst').prod
-    (((tail (enc₁ := eSym)).comp tapeFields_deg.snd'.fst').prod
-      ((cons eSym).comp (((headD (enc₁ := eSym) none).comp tapeFields_deg.snd'.fst').prod
-        tapeFields_deg.snd'.snd'))))).mono
+@[fun_prop] lemma moveNeg_deg :
+    ComputableTidilyInDegree (fun t : Tape => t.move .neg) eTape eTape 1 1 := by
+  simp only [Tape.move]
+  fun_prop (disch := lia)
 
 /-- Moving the head. -/
-lemma move_deg : ComputableTidilyInDegree (fun p : Tape × SignType => p.1.move p.2)
+@[fun_prop] lemma move_deg : ComputableTidilyInDegree (fun p : Tape × SignType => p.1.move p.2)
     (encPair eTape encSign) eTape 1 1 := by
   have ht := fst eTape encSign
   have hm := snd eTape encSign
@@ -168,14 +176,11 @@ lemma move_deg : ComputableTidilyInDegree (fun p : Tape × SignType => p.1.move 
   rcases m with _ | _ | _ <;> rfl
 
 /-- Applying an action to a work tape: write, then move. -/
-lemma apply_deg : ComputableTidilyInDegree (fun p : Tape × (Option (Option ℕ) × SignType) =>
+@[fun_prop] lemma apply_deg : ComputableTidilyInDegree (fun p : Tape × TapeAct =>
     p.1.apply p.2) (encPair eTape eTA) eTape 1 1 := by
-  have ht := fst eTape eTA
-  have ha := snd eTape eTA
-  have hw := (isSome eSym).comp ha.fst'
-  have hwrite := write_deg.comp (ht.prod ((getD (enc₁ := eSym) none).comp ha.fst'))
-  have hwritten := hw.ite (hwrite.restrict _) (ht.restrict _)
-  convert (move_deg.comp (hwritten.prod ha.snd')).mono (d' := 1) (e' := 1) using 1
+  convert (show ComputableTidilyInDegree (fun p : Tape × TapeAct =>
+    (if p.2.1.isSome then p.1.write (p.2.1.getD none) else p.1).move p.2.2)
+    (encPair eTape eTA) eTape 1 1 by fun_prop (disch := first | apply le_refl | lia)) using 1
   funext ⟨t, w, m⟩
   cases w <;> rfl
 
@@ -204,13 +209,11 @@ lemma applyStep_deg : ComputableTidilyInDegree
     (fun q : (List TapeAct × List Tape) × Tape => applyStep q.1 q.2)
     (encPair (encPair (encList eTA) (encList eTape)) eTape)
     (encPair (encList eTA) (encList eTape)) 1 1 := by
-  have has := (fst (encPair (encList eTA) (encList eTape)) eTape).fst'
-  have hacc := (fst (encPair (encList eTA) (encList eTape)) eTape).snd'
-  have ht := snd (encPair (encList eTA) (encList eTape)) eTape
-  have hel := ((isEmpty (enc₁ := eTA)).comp has).ite (ht.restrict _)
-    ((apply_deg.comp (ht.prod ((headD (enc₁ := eTA) (none, 0)).comp has))).restrict _)
-  convert (((tail (enc₁ := eTA)).comp has).prod ((snoc eTape).comp (hacc.prod hel))).mono
-    (d' := 1) (e' := 1) using 1
+  convert (show ComputableTidilyInDegree (fun q : (List TapeAct × List Tape) × Tape =>
+    (q.1.1.tail, q.1.2 ++ [if q.1.1.isEmpty then q.2 else q.2.apply (q.1.1.headD (none, 0))]))
+    (encPair (encPair (encList eTA) (encList eTape)) eTape)
+    (encPair (encList eTA) (encList eTape)) 1 1 by
+      fun_prop (disch := first | apply le_refl | lia)) using 1
   funext ⟨⟨as, acc⟩, t⟩
   cases as <;> rfl
 

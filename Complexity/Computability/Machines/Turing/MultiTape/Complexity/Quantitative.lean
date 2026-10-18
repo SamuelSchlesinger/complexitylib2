@@ -17,6 +17,9 @@ public import Mathlib.Tactic.FunProp
 runtime bounds. Computation premises determine the intermediate encodings and degrees before the
 arithmetic obligations compare the resulting degrees with the requested ones. The same `fun_prop`
 interface recognizes ordinary finite-state bit folds with linear time and constant work space.
+For nested projections with inferred degrees, `disch := first | apply le_refl | lia` first
+instantiates a missing degree with the derived bound, then checks arithmetic inequalities.
+Framed-list and option rules infer the payload encoding from the representation explicitly.
 
 ## Main results
 
@@ -40,9 +43,37 @@ attribute [fun_prop] ComputableTidilyInDegree ComputableTidilyInO
 attribute [fun_prop] ComputableTidilyInTimeAndSpace
 attribute [fun_prop] ComputableTidilyInDegree.const ComputableTidilyInDegree.fst
   ComputableTidilyInDegree.snd ComputableTidilyInDegree.comp ComputableTidilyInDegree.prod
+  ComputableTidilyInDegree.fst' ComputableTidilyInDegree.snd'
+  ComputableTidilyInDegree.cons ComputableTidilyInDegree.snoc
+  ComputableTidilyInDegree.listAppend ComputableTidilyInDegree.isSome
+  ComputableTidilyInDegree.int_succ ComputableTidilyInDegree.int_pred
   ComputableTidilyInO.foldl_bits_finite ComputableTidilyInTimeAndSpace.map_bits
 
 namespace ComputableTidilyInDegree
+
+/-- The result encoding fixes the element encoding, without reversing `ListEncoding` inference. -/
+@[fun_prop]
+theorem listTail {α : Type*} (enc : α ↪ List Bool) :
+    ComputableTidilyInDegree List.tail (encList enc) (encList enc) 1 1 :=
+  tail (enc₁ := enc)
+
+/-- The framed input list determines the encoding of its head, including a fixed fallback. -/
+@[fun_prop]
+theorem listHeadD {α : Type*} (enc : α ↪ List Bool) (fallback : α) :
+    ComputableTidilyInDegree (fun l => l.headD fallback) (encList enc) enc 1 1 :=
+  headD (enc₁ := enc) fallback
+
+/-- Testing a framed list for emptiness. -/
+@[fun_prop]
+theorem listIsEmpty {α : Type*} (enc : α ↪ List Bool) :
+    ComputableTidilyInDegree List.isEmpty (encList enc) encBool 1 1 :=
+  isEmpty (enc₁ := enc)
+
+/-- The option encoding determines the encoding used for the payload and fallback. -/
+@[fun_prop]
+theorem optionGetD {α : Type*} (enc : α ↪ List Bool) (fallback : α) :
+    ComputableTidilyInDegree (fun o => o.getD fallback) (encOption enc) enc 1 1 :=
+  getD (enc₁ := enc) fallback
 
 /-- Copy an encoded value. This identity rule also lets `fun_prop` retain a shared let binding. -/
 @[fun_prop]
@@ -70,6 +101,17 @@ theorem prod_le {α β γ : Type u} {encIn : α ↪ List Bool} {encF : β ↪ Li
     (hd : max df dg ≤ d) (he : max ef eg ≤ e) :
     ComputableTidilyInDegree (fun x => (f x, g x)) encIn (encPair encF encG) d e :=
   (hf.prod hg).mono hd he
+
+/-- Branching on a computed Boolean, retaining each branch's output degree. -/
+@[fun_prop]
+theorem ite_le {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
+    {condition : α → Bool} {f g : α → β} {dc ec df ef dg eg d e : ℕ}
+    (hc : ComputableTidilyInDegree condition encIn encBool dc ec)
+    (hf : ComputableTidilyInDegree f encIn encOut df ef)
+    (hg : ComputableTidilyInDegree g encIn encOut dg eg)
+    (hd : max dc (max df dg) ≤ d) (he : max ef eg ≤ e) :
+    ComputableTidilyInDegree (fun x => if condition x then f x else g x) encIn encOut d e :=
+  (hc.ite (hf.restrict _) (hg.restrict _)).mono hd he
 
 end ComputableTidilyInDegree
 
