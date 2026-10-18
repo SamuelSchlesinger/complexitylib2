@@ -786,6 +786,20 @@ info: 'Cslib.Complexity.decidableInPolyTime_of_mem_NP' depends on axioms:
 #print axioms Cslib.Complexity.decidableInPolyTime_of_mem_NP
 
 /--
+info: 'Cslib.Complexity.mem_NP_of_decidableInPolyTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_NP_of_decidableInPolyTime
+
+/--
+info: 'Cslib.Complexity.mem_NP_iff_decidableInPolyTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_NP_iff_decidableInPolyTime
+
+/--
 info: 'Cslib.Logic.ESO.Definable.queryLanguage_mem_NP' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
