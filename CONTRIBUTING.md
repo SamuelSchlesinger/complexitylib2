@@ -113,12 +113,13 @@ finished. Its continuation may depend on the milestone via `plan ... --after EPI
 Reviewers run `start EPIC api` or `start EPIC correctness`, which checks out the submitted commit
 in their own clean worktree. They record their review with
 `review EPIC KIND BASE HEAD approve|changes 'Scope, evidence, findings, and limitations'`.
-`note EPIC KIND 'Progress or blocker' --blocked` is available to both authors and reviewers.
+`note EPIC KIND 'Progress or blocker' --blocked` is available during an active implementation or
+review claim.
 Starting a review again withdraws its previous verdict. Reviewers remain read-only; implementation
 and integration edits happen separately. The coordinator uses `reopen EPIC REASON` before revision;
 this invalidates reviews and any pending integration. For mechanical main merges, conflict
 resolution or central documentation fixes within scope, it can then `assign EPIC COORDINATOR_NAME`
-and `start EPIC` in its own worktree. Reassignment resumes the previous branch and preserves its
+and `start EPIC` in its own worktree. Reassignment resumes from the previous branch and preserves its
 contributors; starting records the coordinator as another contributor. The coordinator can instead
 return substantive fixes to the author. The assigned implementer merges current `main`, validates,
 commits, pushes normally and submits again. Obtain fresh independent reviews of the exact final
