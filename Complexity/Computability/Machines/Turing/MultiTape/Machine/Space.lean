@@ -388,4 +388,66 @@ theorem accepts_iff_reflTransGen_viewStep :
 
 end MultiTapeNTM
 
+/-! ### The size of reachable views -/
+
+namespace MultiTapeNTM
+
+/-- A work tape of a configuration whose head and non-blank cells lie within distance `s` of `0`
+is stored in at most `4 * s + 1` cells relative to its head. -/
+theorem spaceUsed_le_of_natAbs_lt {tape : BiTape Bool} {contents : ℤ → Option Bool} {head : ℤ}
+    (h : tape.Represents contents head) {s : ℕ} (hhead : head.natAbs < s)
+    (hcells : ∀ z, contents z ≠ none → z.natAbs < s) : tape.spaceUsed ≤ 4 * s + 1 := by
+  have hblank (z : ℤ) (hz : s ≤ z.natAbs) : contents z = none := by
+    by_contra hne
+    exact absurd (hcells z hne) (by omega)
+  refine (BiTape.spaceUsed_le_of_read_eq_none tape (m := 2 * s) (fun j hj => ?_)
+    fun j hj => ?_).trans (by omega)
+  · rw [h]
+    exact hblank _ (by omega)
+  · rw [h]
+    exact hblank _ (by omega)
+
+variable {k : ℕ} {State : Type} [Finite State] {ntm : MultiTapeNTM k Bool State}
+  {input : List Bool}
+
+/-- **Reachable views are small.** Under a space bound `s`, every view reachable from the initial
+view has an encoding of length linear in the input and in `s`, whatever the length of the path
+reaching it. The constant depends only on the control and the number of work tapes. -/
+theorem length_encFiniteCfg_le {s : ℕ} (hs : ntm.RunsInSpace input s)
+    {finite : FiniteCfg k Bool State}
+    (h : Relation.ReflTransGen ntm.ViewStep (ntm.initView input) finite) :
+    (MultiTapeTM.encFiniteCfg finite).length ≤
+      (10 + 2 * Nat.card (Option State) + 200 * k) * (input.length + s + 1) := by
+  obtain ⟨p, hrep⟩ := exists_computationPath_of_viewStep h
+  have hspace : RunPath.space p.toRunPath ≤ s := hs p
+  -- every work tape is stored in few cells
+  have htape (tape : Fin k) : (finite.workTapes tape).spaceUsed ≤ 4 * s + 1 := by
+    have hle : RunPath.spaceUsedByTape p.toRunPath tape ≤ s :=
+      (Finset.single_le_sum (f := fun i => RunPath.spaceUsedByTape p.toRunPath i)
+        (fun _ _ => Nat.zero_le _) (Finset.mem_univ tape)).trans hspace
+    obtain ⟨hhead, hcells⟩ := RunPath.natAbs_lt_spaceUsedByTape p.toRunPath
+      (fun i z => by rw [p.head_eq]; rfl) (fun i => by rw [p.head_eq]; rfl) tape
+    exact spaceUsed_le_of_natAbs_lt (hrep.workTapes tape) (hhead.trans_le hle)
+      fun z hz => (hcells z hz).trans_le hle
+  have hwork : (MultiTapeTM.encPi (MultiTapeTM.encBiTape MultiTapeTM.encBool)
+      finite.workTapes).length ≤ k * (2 * (12 * (4 * s + 1)) + 1) := by
+    simpa using MultiTapeTM.length_encPi_le (MultiTapeTM.encBiTape MultiTapeTM.encBool)
+      finite.workTapes fun tape => (MultiTapeTM.length_encBiTape_le MultiTapeTM.encBool _
+        (bound := 1) (by simp)).trans (by have := htape tape; nlinarith)
+  have hcontrol := MultiTapeTM.length_encFinite_lt finite.state
+  have hin : finite.input.length = input.length := by rw [hrep.input]
+  have hpos : finite.inputPos.val ≤ input.length + 1 := by
+    have := finite.inputPos.isLt
+    omega
+  have hout : finite.output.length ≤ 1 := hrep.output ▸ length_outputClass_le _
+  have hw : 2 * (MultiTapeTM.encPi (MultiTapeTM.encBiTape MultiTapeTM.encBool)
+      finite.workTapes).length ≤ 200 * k * (input.length + s + 1) := by nlinarith
+  have hc : 2 * (MultiTapeTM.encFinite (Option State) finite.state).length + 2 ≤
+      2 * Nat.card (Option State) * (input.length + s + 1) := by nlinarith
+  simp only [MultiTapeTM.encFiniteCfg_apply, MultiTapeTM.length_encPair, MultiTapeTM.encBits,
+    Function.Embedding.refl_apply, MultiTapeTM.encUnary_apply, List.length_replicate]
+  nlinarith
+
+end MultiTapeNTM
+
 end Turing
