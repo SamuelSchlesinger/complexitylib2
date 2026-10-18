@@ -12,9 +12,10 @@ public import Complexity.Computability.Circuit.Boolean.WeightedThreshold
 /-!
 # Activity and attainable threshold transcripts
 
-The number of attainable input-reading transcripts is at most the number of bit strings whose
-weight is at most the worst-case input-reading activity. This counts only the gates with a
-nonzero aggregated coefficient on an original input, not all internal gates.
+The number of attainable input-reading transcripts is bounded by a Hamming ball at the
+worst-case input-reading activity. Projecting the full gate valuations gives a second bound
+using the total gate count and maximum activity across all gates. Both bounds use the same
+finite-image counting lemma.
 
 The resulting exact binomial sum is an upper bound on the number of patterns. Lower bounds for
 a computed function also require a representation theorem, such as the comparison-tree compiler.
@@ -23,11 +24,14 @@ a computed function also require a representation theorem, such as the compariso
 
 * `Cslib.Circuits.Boolean.WeightedThreshold.attainableTranscripts`: the realized transcripts.
 * `Cslib.Circuits.Boolean.WeightedThreshold.inputActivity`: maximum input-reading activity.
+* `Cslib.Circuits.Boolean.WeightedThreshold.gateActivity`: maximum activity across all gates.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose`: the exact
   Hamming-ball bound for attainable patterns.
+* `Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_gateActivity`:
+  the bound using activity across all gates.
 
 ## References
 
@@ -52,6 +56,10 @@ noncomputable def attainableTranscripts (p : Program signature n g) :
 noncomputable def inputActivity (p : Program signature n g) : ℕ :=
   univ.sup fun x => weight (transcript p x)
 
+/-- The maximum number of active gates on one input, including gates without direct inputs. -/
+noncomputable def gateActivity (p : Program signature n g) : ℕ :=
+  univ.sup fun x => weight (p.eval interpretation x)
+
 @[simp]
 theorem mem_attainableTranscripts (p : Program signature n g) (z : inputGates p → Bool) :
     z ∈ attainableTranscripts p ↔ ∃ x, transcript p x = z := by
@@ -62,6 +70,26 @@ theorem mem_attainableTranscripts (p : Program signature n g) (z : inputGates p 
 theorem inputActivity_le_iff (p : Program signature n g) {e : ℕ} :
     inputActivity p ≤ e ↔ ∀ x, weight (transcript p x) ≤ e := by
   simp [inputActivity, Finset.sup_le_iff]
+
+/-- A bound on total activity is exactly a uniform bound on complete gate valuations. -/
+theorem gateActivity_le_iff (p : Program signature n g) {e : ℕ} :
+    gateActivity p ≤ e ↔ ∀ x, weight (p.eval interpretation x) ≤ e := by
+  simp [gateActivity, Finset.sup_le_iff]
+
+/-- Total gate activity never exceeds the number of gates. -/
+theorem gateActivity_le (p : Program signature n g) : gateActivity p ≤ g := by
+  apply (gateActivity_le_iff p).mpr
+  intro x
+  simpa only [Fintype.card_fin] using weight_le (p.eval interpretation x)
+
+/-- Restricting to the input-reading gates cannot increase activity. -/
+theorem inputActivity_le_gateActivity (p : Program signature n g) :
+    inputActivity p ≤ gateActivity p := by
+  apply (inputActivity_le_iff p).mpr
+  intro x
+  exact (weight_comp_le (p.eval interpretation x)
+    (f := fun i : inputGates p => i.val) Subtype.val_injective).trans
+      ((gateActivity_le_iff p).mp le_rfl x)
 
 /-- Input-reading activity never exceeds the number of input-reading gates. -/
 theorem inputActivity_le_card (p : Program signature n g) :
@@ -77,18 +105,29 @@ theorem card_attainableTranscripts_le_sum_choose_of_le (p : Program signature n 
     (attainableTranscripts p).card ≤
       ∑ j ∈ range (e + 1), (inputGates p).card.choose j := by
   classical
-  calc
-    _ ≤ #{z : inputGates p → Bool | weight z ≤ e} := by
-      apply card_le_card
-      intro z hz
-      obtain ⟨x, rfl⟩ := (mem_attainableTranscripts p z).mp hz
-      exact mem_filter.mpr ⟨mem_univ _, (inputActivity_le_iff p).mp he x⟩
-    _ = _ := by simp only [card_filter_weight_le, Fintype.card_coe]
+  simpa only [attainableTranscripts, Fintype.card_coe] using
+    card_image_le_sum_choose univ (transcript p)
+    (fun x _ => (inputActivity_le_iff p).mp he x)
 
 /-- Attainable patterns are bounded by the exact binomial sum at worst-case activity. -/
 theorem card_attainableTranscripts_le_sum_choose (p : Program signature n g) :
     (attainableTranscripts p).card ≤
       ∑ j ∈ range (inputActivity p + 1), (inputGates p).card.choose j :=
   card_attainableTranscripts_le_sum_choose_of_le p le_rfl
+
+/-- Projecting full gate valuations cannot create additional restricted transcripts, so total
+gate activity gives a Hamming-ball bound using the total number of gates. -/
+theorem card_attainableTranscripts_le_sum_choose_gateActivity (p : Program signature n g) :
+    (attainableTranscripts p).card ≤ ∑ j ∈ range (gateActivity p + 1), g.choose j := by
+  classical
+  calc
+    _ = ((univ.image (p.eval interpretation)).image
+        fun z => fun i : inputGates p => z i).card := by
+      simp only [attainableTranscripts, image_image]
+      rfl
+    _ ≤ (univ.image (p.eval interpretation)).card := card_image_le
+    _ ≤ _ := by
+      simpa only [Fintype.card_fin] using card_image_le_sum_choose univ
+        (p.eval interpretation) (fun x _ => (gateActivity_le_iff p).mp le_rfl x)
 
 end Cslib.Circuits.Boolean.WeightedThreshold

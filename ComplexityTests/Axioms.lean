@@ -9790,3 +9790,43 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_four_pow_inputGates
+
+/--
+info: 'Cslib.BitString.card_image_le_sum_choose'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.BitString.card_image_le_sum_choose
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_le_gateActivity'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_le_gateActivity
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_gateActivity'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_gateActivity
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivity_sq_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivity_sq_of_hadamardCode
+
+open Cslib.Circuits.Boolean.WeightedThreshold in
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode

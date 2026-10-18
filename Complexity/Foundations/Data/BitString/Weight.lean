@@ -42,6 +42,7 @@ function is *symmetric* when it depends only on the weight of its input
   weight is the Hamming norm.
 * `Cslib.BitString.card_weightLayer`: there are `n.choose k` strings of `n` bits of weight `k`.
 * `Cslib.BitString.card_filter_weight_le`: the exact binomial-sum size of a Hamming ball.
+* `Cslib.BitString.card_image_le_sum_choose`: bound a finite family of words by a Hamming ball.
 * `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
 * `Cslib.BitString.strictMajorityOn`: strict majority on a finite set of voting indices.
 * `Cslib.le_card_ne_of_strictMajority_ne`: a wrong majority requires at least half wrong votes.
@@ -154,6 +155,28 @@ theorem card_filter_weight_le [DecidableEq ι] (e : ℕ) :
 /-- The weight of `x` as a number of true coordinates. -/
 theorem weight_eq_card_subtype (x : ι → Bool) : weight x = Fintype.card {i // x i = true} :=
   (Fintype.card_subtype _).symm
+
+/-- Selecting distinct coordinates cannot increase the number of true bits. -/
+theorem weight_comp_le {κ : Type*} [Fintype κ] (x : ι → Bool) {f : κ → ι}
+    (hf : Function.Injective f) : weight (x ∘ f) ≤ weight x := by
+  rw [weight_eq_card_subtype, weight_eq_card_subtype]
+  exact Fintype.card_le_of_injective
+    (fun i : {i : κ // (x ∘ f) i = true} => (⟨f i, i.property⟩ : {j : ι // x j = true}))
+    (fun _ _ h => Subtype.ext (hf (congrArg Subtype.val h)))
+
+/-- A finite family of words of weight at most `e` attains at most the Hamming-ball size.
+The map need not be injective, and the radius may exceed the number of coordinates. -/
+theorem card_image_le_sum_choose {α : Type*} (s : Finset α) (f : α → ι → Bool) {e : ℕ}
+    (h : ∀ x ∈ s, weight (f x) ≤ e) :
+    (s.image f).card ≤ ∑ j ∈ range (e + 1), (Fintype.card ι).choose j := by
+  classical
+  calc
+    _ ≤ #{z : ι → Bool | weight z ≤ e} := by
+      apply card_le_card
+      intro z hz
+      obtain ⟨x, hx, rfl⟩ := mem_image.mp hz
+      exact mem_filter.mpr ⟨mem_univ _, h x hx⟩
+    _ = _ := card_filter_weight_le e
 
 /-- The *layer* of weight `k` of the cube: the strings of `n` bits with `k` true bits. -/
 def weightLayer (n k : ℕ) : Finset (BitString n) :=
