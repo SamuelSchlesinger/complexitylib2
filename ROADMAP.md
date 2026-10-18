@@ -49,7 +49,10 @@ of the handover. The work below remains available for subsequent, independently 
 2. **Practical PCP and expander constructions.** The
    [PCP theorem](Complexity/Computability/PCP/Completeness.lean) includes certified construction
    and verification, but the fixed parameters are enormous. Develop a reasonably runnable
-   construction and measure complete reductions. The existing rotation certificate is
+   construction and measure complete reductions. Carry the
+   [six-query tester](Complexity/Computability/PCP/SelectedComposition.lean) through encoded
+   composition and amplification, then retune their parameters; the headline theorem still uses
+   the seventeen-query conjunction. The existing rotation certificate is
    polynomial in the number of vertices; polynomial time in the bit length of a vertex name
    remains a stronger, separate target.
 

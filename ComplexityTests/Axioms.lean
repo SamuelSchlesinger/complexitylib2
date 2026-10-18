@@ -25,6 +25,41 @@ Add an entry whenever a main result is added to a public module.
 
 namespace ComplexityTests.Axioms
 
+/--
+info: 'Cslib.PCP.AssignmentTester.le_unsatVal_compose' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.AssignmentTester.le_unsatVal_compose
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.le_unsatVal_composeSelected' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.ConstraintGraph.le_unsatVal_composeSelected
+
+/--
+info: 'Cslib.PCP.HadamardTester.exists_inputDist_div_le_one_sub_acceptProb_selected'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.HadamardTester.exists_inputDist_div_le_one_sub_acceptProb_selected
+
+/--
+info: 'Cslib.PCP.Encoded.SelectedHadamardTester.isPolyTime_query' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.SelectedHadamardTester.isPolyTime_query
+
+/--
+info: 'Cslib.PCP.Encoded.SelectedHadamardTester.isPolyTime_accepts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.SelectedHadamardTester.isPolyTime_accepts
+
 open Lean Elab Command in
 run_cmd do
   let env := (← getEnv).setExporting false

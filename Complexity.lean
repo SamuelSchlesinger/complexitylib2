@@ -377,6 +377,7 @@ public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family
 public import Complexity.Computability.PCP.Amplifier
 public import Complexity.Computability.PCP.AssignmentTester
+public import Complexity.Computability.PCP.AssignmentTester.Selection
 public import Complexity.Computability.PCP.Completeness
 public import Complexity.Computability.PCP.Composition
 public import Complexity.Computability.PCP.ConstraintGraph
@@ -399,6 +400,7 @@ public import Complexity.Computability.PCP.Encoded.Iteration
 public import Complexity.Computability.PCP.Encoded.Power
 public import Complexity.Computability.PCP.Encoded.Preprocess
 public import Complexity.Computability.PCP.Encoded.Preprocess.Programs
+public import Complexity.Computability.PCP.Encoded.SelectedAssignmentTester
 public import Complexity.Computability.PCP.Encoded.Size
 public import Complexity.Computability.PCP.Encoded.ThreeSAT
 public import Complexity.Computability.PCP.Encoded.Verifier
@@ -406,6 +408,7 @@ public import Complexity.Computability.PCP.Encoded.Verifier.Reduction
 public import Complexity.Computability.PCP.Encoded.Verifier.Repetition
 public import Complexity.Computability.PCP.Encoded.Verifier.Soundness
 public import Complexity.Computability.PCP.GapTheorem
+public import Complexity.Computability.PCP.GenericComposition
 public import Complexity.Computability.PCP.LocalTest
 public import Complexity.Computability.PCP.Power
 public import Complexity.Computability.PCP.Power.Complexity
@@ -413,6 +416,7 @@ public import Complexity.Computability.PCP.Power.WithInput
 public import Complexity.Computability.PCP.PoweringBound
 public import Complexity.Computability.PCP.Preprocess
 public import Complexity.Computability.PCP.RegularConstraintGraph
+public import Complexity.Computability.PCP.SelectedComposition
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.Adaptive
 public import Complexity.Computability.Probabilistic.CoinTape

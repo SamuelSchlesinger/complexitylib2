@@ -43,6 +43,8 @@ proof; `LocalTest.and` runs two tests on independent random strings and accepts 
   and its probability.
 * `Cslib.PCP.LocalTest.map`, `Cslib.PCP.LocalTest.and`, `Cslib.PCP.LocalTest.mix`: renaming the
   positions, conjunction, and random choice in a family.
+* `Cslib.PCP.LocalTest.comapRand`, `Cslib.PCP.LocalTest.padQueries`: adapting coin and query
+  layouts.
 * `Cslib.PCP.LocalTest.toConstraintGraph`: the constraint graph of a local test.
 * `Cslib.PCP.LocalTest.proofOf`: the proof that a labelling of that graph carries at the positions.
 * `Cslib.PCP.LocalTest.labellingOf`: the labelling of that graph by a proof.
@@ -57,6 +59,7 @@ proof; `LocalTest.and` runs two tests on independent random strings and accepts 
   `Cslib.PCP.LocalTest.one_sub_acceptProb_le_card_mul_unsatFrac`: soundness of the constraint
   graph, every rejecting random string accounting for a violated edge.
 * `Cslib.PCP.LocalTest.satisfiable_toConstraintGraph`: completeness of the constraint graph.
+* `Cslib.PCP.LocalTest.unsatFrac_labellingOf`: its exact value on the labelling carried by a proof.
 
 ## References
 
@@ -96,6 +99,25 @@ def map (f : P → P') : LocalTest P' R Q Γ where
   query r i := f (T.query r i)
   Accepts := T.Accepts
 
+/-- Run a test using the random string extracted by `f`. This does not assert that `f`
+preserves the uniform distribution. -/
+def comapRand (f : R' → R) : LocalTest P R' Q Γ where
+  query r := T.query (f r)
+  Accepts r := T.Accepts (f r)
+
+/-- Replace the query layout by `Q'`: `read` chooses the old query at each new position,
+and `use` selects the answers consumed by the original predicate. A left inverse makes this
+an exact padding or rearrangement, as expressed by `passes_reindexQueries`. -/
+def reindexQueries (read : Q' → Q) (use : Q → Q') : LocalTest P R Q' Γ where
+  query r i := T.query r (read i)
+  Accepts r a := T.Accepts r (a ∘ use)
+
+/-- Pad a nonempty query layout to length `m`, repeating the first query at unused positions.
+The acceptance predicate ignores those additional answers. -/
+def padQueries {n m : ℕ} (T : LocalTest P R (Fin (n + 1)) Γ) (h : n + 1 ≤ m) :
+    LocalTest P R (Fin m) Γ :=
+  T.reindexQueries (fun i ↦ if hi : i.val < n + 1 then ⟨i.val, hi⟩ else 0) (Fin.castLE h)
+
 /-- The **conjunction** of two tests: on independent random strings `r` and `r'`, run both tests,
 making the queries of both, and accept when both accept. -/
 def and (T' : LocalTest P R' Q' Γ) : LocalTest P (R × R') (Q ⊕ Q') Γ where
@@ -113,6 +135,26 @@ variable {T}
 @[simp]
 theorem passes_map {f : P → P'} {π : P' → Γ} {r : R} : (T.map f).Passes π r ↔ T.Passes (π ∘ f) r :=
   Iff.rfl
+
+@[simp]
+theorem passes_comapRand (f : R' → R) (π : P → Γ) (r : R') :
+    (T.comapRand f).Passes π r ↔ T.Passes π (f r) :=
+  Iff.rfl
+
+@[simp]
+theorem passes_reindexQueries {read : Q' → Q} {use : Q → Q'}
+    (h : Function.LeftInverse read use) (π : P → Γ) (r : R) :
+    (T.reindexQueries read use).Passes π r ↔ T.Passes π r := by
+  simp only [Passes, reindexQueries, Function.comp_def, h.eq]
+
+@[simp]
+theorem passes_padQueries {n m : ℕ} (T : LocalTest P R (Fin (n + 1)) Γ)
+    (h : n + 1 ≤ m) (π : P → Γ) (r : R) :
+    (T.padQueries h).Passes π r ↔ T.Passes π r := by
+  apply passes_reindexQueries
+  intro i
+  change (if hi : i.val < n + 1 then (⟨i.val, hi⟩ : Fin (n + 1)) else 0) = i
+  simp only [dite_eq_left i.isLt]
 
 @[simp]
 theorem passes_and {T' : LocalTest P R' Q' Γ} {π : P → Γ} {r : R × R'} :
@@ -207,6 +249,36 @@ theorem acceptProb_mix [Fintype E] (T : E → LocalTest P R Q Γ) (π : P → Γ
   classical
   simp only [acceptProb, Fintype.expect_prod_type, passes_mix]
 
+/-- Selecting one of `|E|` checks loses at most a factor `|E|` in rejection compared with any
+test implied by passing all the checks on the same random string. The checks may share coins;
+independence is unnecessary. -/
+theorem one_sub_acceptProb_le_card_mul_one_sub_acceptProb_mix
+    [Nonempty R] [Fintype E] [Nonempty E] (S : LocalTest P R Q' Γ)
+    (T : E → LocalTest P R Q Γ) (π : P → Γ)
+    (h : ∀ r, (∀ e, (T e).Passes π r) → S.Passes π r) :
+    1 - S.acceptProb π ≤ Fintype.card E * (1 - (mix T).acceptProb π) := by
+  classical
+  have hpoint (r : R) :
+      (1 - if S.Passes π r then (1 : ℝ) else 0) ≤
+        ∑ e, (1 - if (T e).Passes π r then (1 : ℝ) else 0) := by
+    by_cases hs : S.Passes π r
+    · simp only [ite_eq_left hs, sub_self]
+      exact sum_nonneg fun e _ ↦ by split_ifs <;> norm_num
+    · obtain ⟨e, he⟩ := not_forall.1 (mt (h r) hs)
+      simpa only [ite_eq_right hs, ite_eq_right he, sub_zero] using
+        (single_le_sum (f := fun e ↦ (1 - if (T e).Passes π r then (1 : ℝ) else 0))
+          (fun e _ ↦ by split_ifs <;> norm_num) (mem_univ e))
+  have hmean := expect_le_expect fun r (_ : r ∈ (univ : Finset R)) ↦ hpoint r
+  simp only [expect_sum_comm, expect_sub_distrib, Fintype.expect_const] at hmean
+  change 1 - S.acceptProb π ≤ ∑ e, (1 - (T e).acceptProb π) at hmean
+  have hE : (Fintype.card E : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  calc
+    1 - S.acceptProb π ≤ ∑ e, (1 - (T e).acceptProb π) := hmean
+    _ = Fintype.card E * (1 - (mix T).acceptProb π) := by
+      rw [acceptProb_mix, Fintype.expect_eq_sum_div_card, mul_sub,
+        mul_div_cancel₀ _ hE, sum_sub_distrib]
+      simp only [sum_const, card_univ, nsmul_eq_mul, mul_one]
+
 end Prob
 
 /-! ### The constraint graph of a local test -/
@@ -300,6 +372,22 @@ that proof. -/
 theorem satisfies_labellingOf {π : P → Γ} {γ : Γ} {x : R × Q} (h : T.Passes π x.1) :
     T.toConstraintGraph.Satisfies (T.labellingOf π γ) x :=
   ⟨h, rfl⟩
+
+/-- When the claimed answers are read from a proof, every edge at a random string is violated
+exactly when the test rejects. The violated fraction is therefore the rejection probability. -/
+theorem unsatFrac_labellingOf [Fintype R] [Fintype Q] [Nonempty R] [Nonempty Q]
+    (π : P → Γ) (γ : Γ) :
+    T.toConstraintGraph.unsatFrac (T.labellingOf π γ) = 1 - T.acceptProb π := by
+  classical
+  rw [← ConstraintGraph.expect_mem_unsatEdges, Fintype.expect_prod_type]
+  simp only [ConstraintGraph.mem_unsatEdges, ConstraintGraph.Satisfies, toConstraintGraph,
+    labellingOf, Sum.elim_inl, Sum.elim_inr, and_true, Fintype.expect_const]
+  rw [acceptProb]
+  conv_rhs => rw [← Fintype.expect_const (ι := R) (1 : ℝ), ← expect_sub_distrib]
+  exact expect_congr rfl fun r _ ↦ by
+    simp only [Fintype.expect_const]
+    change (if ¬ T.Passes π r then (1 : ℝ) else 0) = 1 - if T.Passes π r then 1 else 0
+    split_ifs <;> norm_num
 
 /-- **Completeness of the constraint graph of a test**: if the test passes the proof `π` on every
 random string, the labelling by `π` satisfies the constraint graph. -/

@@ -81,9 +81,12 @@ import ComplexityTests.PCPEncodedSize
 import ComplexityTests.PCPEncodedThreeSAT
 import ComplexityTests.PCPEncodedVerifier
 import ComplexityTests.PCPExpander
+import ComplexityTests.PCPGenericComposition
+import ComplexityTests.PCPLocalTest
 import ComplexityTests.PCPNP
 import ComplexityTests.PCPNumbering
 import ComplexityTests.PCPPreprocessPrograms
+import ComplexityTests.PCPSelectedAssignmentTester
 import ComplexityTests.PCPVerifierProbability
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition

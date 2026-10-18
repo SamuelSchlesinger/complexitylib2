@@ -8,8 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.AssignmentTester
-import Complexity.Foundations.Data.Finset.Expect
-import Mathlib.Algebra.Order.BigOperators.Expect
+public import Complexity.Computability.PCP.GenericComposition
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -78,6 +77,24 @@ namespace Cslib.PCP
 
 open BitString HadamardTester
 
+namespace HadamardTester
+
+variable {α : Type*} [Fintype α] [DecidableEq α]
+
+/-- The Hadamard tester as data for binary-constraint composition. Its distance-soundness theorem
+remains separate; composition needs only rejection on a violated decoded constraint. -/
+noncomputable def assignmentTester :
+    AssignmentTester α (α → Bool) (LinPos α ⊕ QuadPos α) (Rand α) Query Bool where
+  test := hadamardTester
+  encode := longCode
+  auxiliary _ σ p := honestProof σ (.inr p)
+
+/-- The Hadamard construction has perfect completeness in the generic composition interface. -/
+theorem isComplete_assignmentTester : (assignmentTester (α := α)).IsComplete :=
+  fun hσ ω => passes_honestProof hσ ω
+
+end HadamardTester
+
 namespace ConstraintGraph
 
 variable {V E α : Type*}
@@ -86,7 +103,7 @@ variable {V E α : Type*}
 `inl (v, r)` of the table of the vertex `v` at `r`, and the bit `inr (e, y)` of the tables of the
 tester of the edge `e` at the position `y` of its linear or quadratic table. -/
 abbrev ComposePos (V E α : Type*) : Type _ :=
-  (V × (α → Bool)) ⊕ (E × (HadamardTester.LinPos α ⊕ HadamardTester.QuadPos α))
+  AssignmentTester.ComposePos V E (α → Bool) (HadamardTester.LinPos α ⊕ HadamardTester.QuadPos α)
 
 /-- The positions of a composed proof are finitely many. -/
 instance [Fintype V] [Fintype E] [Fintype α] [DecidableEq α] : Fintype (ComposePos V E α) :=
@@ -116,28 +133,39 @@ theorem decodeLabel_eq {T : (α → Bool) → Bool} {a : α}
 
 end Decode
 
-variable (G : ConstraintGraph V E α)
+end ConstraintGraph
+
+namespace HadamardTester
+
+variable {α : Type*} [Fintype α] [DecidableEq α] [Nonempty α]
+
+/-- A violated constraint on the uniquely decoded input tables is rejected with probability at
+least `1/28`. This is the soundness contract required by generic composition. -/
+theorem sound_assignmentTester :
+    (assignmentTester (α := α)).Sound ConstraintGraph.decodeLabel (1 / 28) := by
+  intro C π h
+  by_contra! hρ
+  change 1 - (hadamardTester C).acceptProb π < 1 / 28 at hρ
+  obtain ⟨τ, hτ, hd⟩ := exists_inputDist_le_of_le_acceptProb (C := C) (π := π) hρ (by linarith)
+  have hdec (b : Fin 2) : ConstraintGraph.decodeLabel (fun r => π (.inl (b, r))) = τ b :=
+    ConstraintGraph.decodeLabel_eq
+      ((hammingDist_inputTable_div_le π τ b).trans_lt (by linarith))
+  exact h (by rw [hdec, hdec]; exact hτ)
+
+end HadamardTester
+
+namespace ConstraintGraph
+
+variable {V E α : Type*} (G : ConstraintGraph V E α)
 
 /-! ### The composed constraint graph -/
-
-/-- The two ends of an edge: the first one at `0`, the second one at `1`. -/
-def ends (e : E) : Fin 2 → V :=
-  ![G.src e, G.dst e]
-
-@[simp]
-theorem ends_zero (e : E) : G.ends e 0 = G.src e :=
-  rfl
-
-@[simp]
-theorem ends_one (e : E) : G.ends e 1 = G.dst e :=
-  rfl
 
 variable [Fintype α] [DecidableEq α]
 
 /-- Where the tester of the edge `e` reads in a composed proof: the table of its end `b` is the
 table of the vertex `G.ends e b`, and its linear and quadratic tables are those of `e`. -/
 def testerPos (e : E) : Pos α → ComposePos V E α :=
-  Sum.elim (fun p ↦ .inl (G.ends e p.1, p.2)) fun y ↦ .inr (e, y)
+  AssignmentTester.testerPos G e
 
 /-- The **composed test** [Dinur, Section 3.3][Dinur2005]: on a uniformly random edge `e`, run the
 Hadamard assignment tester of the constraint of `e` on the tables of the ends of `e` and the tables
@@ -159,65 +187,34 @@ noncomputable def compose :
 vertex as its table, and the honest proof of the labels of its ends as the tables of the tester of
 every edge. -/
 noncomputable def composeProof (σ : V → α) : ComposePos V E α → Bool :=
-  Sum.elim (fun p ↦ longCode (σ p.1) p.2) fun q ↦ honestProof (fun b ↦ σ (G.ends q.1 b)) (.inr q.2)
+  assignmentTester.composeProof G σ
 
 /-- The tester of the edge `e` reads in the honest composed proof the honest proof of the labels of
 the ends of `e`. -/
 theorem composeProof_comp_testerPos (σ : V → α) (e : E) :
-    G.composeProof σ ∘ G.testerPos e = honestProof fun b ↦ σ (G.ends e b) := by
-  funext p
-  rcases p with ⟨b, r⟩ | y <;> rfl
+    G.composeProof σ ∘ G.testerPos e = honestProof fun b ↦ σ (G.ends e b) :=
+  assignmentTester.composeProof_comp_testerPos G σ e
 
 /-- The composed test passes the honest composed proof of `σ` on every random string of the edges
 satisfied by `σ`. -/
 theorem passes_composeTest_composeProof {σ : V → α} {e : E} (he : G.Satisfies σ e)
-    (ω : Rand α) : G.composeTest.Passes (G.composeProof σ) (e, ω) := by
-  rw [composeTest, LocalTest.passes_mix, LocalTest.passes_map, composeProof_comp_testerPos]
-  exact passes_honestProof he ω
+    (ω : Rand α) : G.composeTest.Passes (G.composeProof σ) (e, ω) :=
+  AssignmentTester.passes_composeTest_composeProof isComplete_assignmentTester G he ω
 
 /-- **Completeness of composition** [Dinur, Lemma 3.6][Dinur2005]: if `G` is satisfiable, so is
 the composed graph. -/
-theorem satisfiable_compose (h : G.Satisfiable) : G.compose.Satisfiable := by
-  obtain ⟨σ, hσ⟩ := h
-  exact LocalTest.satisfiable_toConstraintGraph fun ω ↦
-    G.passes_composeTest_composeProof (hσ ω.1) ω.2
+theorem satisfiable_compose (h : G.Satisfiable) : G.compose.Satisfiable :=
+  AssignmentTester.satisfiable_compose isComplete_assignmentTester h
 
 /-- The labelling of the composed graph by the honest composed proof of `σ` violates at most the
 proportion of the edges of `G` that `σ` violates. -/
 theorem unsatFrac_compose_labellingOf_le [Fintype E] (σ : V → α) (γ : Bool) :
-    G.compose.unsatFrac (G.composeTest.labellingOf (G.composeProof σ) γ) ≤ G.unsatFrac σ := by
-  classical
-  set A := G.composeTest.labellingOf (G.composeProof σ) γ
-  have hsub : G.compose.unsatEdges A ⊆ (G.unsatEdges σ ×ˢ univ) ×ˢ univ := by
-    intro x hx
-    rw [mem_unsatEdges] at hx
-    simp only [mem_product, mem_univ, and_true, mem_unsatEdges]
-    exact fun he ↦ hx (LocalTest.satisfies_labellingOf (G.passes_composeTest_composeProof he x.1.2))
-  have hcard := card_le_card hsub
-  rw [card_product, card_product, card_univ, card_univ] at hcard
-  rcases (Fintype.card E).eq_zero_or_pos with hE | hE
-  · have : IsEmpty E := Fintype.card_eq_zero_iff.1 hE
-    simp [unsatFrac]
-  have hE' : (0 : ℝ) < Fintype.card E := by exact_mod_cast hE
-  have hR : (0 : ℝ) < Fintype.card (Rand α) := by
-    exact_mod_cast Fintype.card_pos
-  have hQ : (0 : ℝ) < Fintype.card Query := by exact_mod_cast Fintype.card_pos
-  rw [unsatFrac, unsatFrac, Fintype.card_prod, Fintype.card_prod]
-  push_cast
-  rw [div_le_div_iff₀ (mul_pos (mul_pos hE' hR) hQ) hE']
-  have hcard' : (#(G.compose.unsatEdges A) : ℝ) ≤ #(G.unsatEdges σ) *
-      Fintype.card (Rand α) * Fintype.card Query := by
-    exact_mod_cast hcard
-  calc (#(G.compose.unsatEdges A) : ℝ) * Fintype.card E
-      ≤ #(G.unsatEdges σ) * Fintype.card (Rand α) *
-          Fintype.card Query * Fintype.card E := by gcongr
-    _ = _ := by ring
+    G.compose.unsatFrac (G.composeTest.labellingOf (G.composeProof σ) γ) ≤ G.unsatFrac σ :=
+  AssignmentTester.unsatFrac_compose_labellingOf_le isComplete_assignmentTester G σ γ
 
 /-- **Completeness of composition**, quantitatively: composition does not increase the value. -/
-theorem unsatVal_compose_le [Fintype E] [Nonempty α] : G.compose.unsatVal ≤ G.unsatVal := by
-  obtain ⟨σ, hσ⟩ := G.exists_unsatFrac_eq_unsatVal
-  rw [← hσ]
-  exact (G.compose.unsatVal_le _).trans (G.unsatFrac_compose_labellingOf_le σ false)
+theorem unsatVal_compose_le [Fintype E] [Nonempty α] : G.compose.unsatVal ≤ G.unsatVal :=
+  AssignmentTester.unsatVal_compose_le isComplete_assignmentTester G
 
 /-! ### Soundness -/
 
@@ -228,22 +225,14 @@ variable [Nonempty α]
 /-- The labelling of `G` decoded from a composed proof `π`: every vertex gets the label decoded from
 its table. -/
 noncomputable def decodeLabelling (π : ComposePos V E α → Bool) (v : V) : α :=
-  decodeLabel fun r ↦ π (.inl (v, r))
+  AssignmentTester.decodeLabelling decodeLabel π v
 
 /-- **A violated edge makes its tester reject**: if the labelling decoded from a composed proof `π`
 violates the edge `e`, the tester of `e` rejects `π` with probability at least `1/28`. -/
 theorem one_div_le_one_sub_acceptProb_of_not_satisfies
     {π : ComposePos V E α → Bool} {e : E} (he : ¬ G.Satisfies (decodeLabelling π) e) :
-    1 / 28 ≤ 1 - (hadamardTester (G.rel e)).acceptProb (π ∘ G.testerPos e) := by
-  by_contra! hρ
-  obtain ⟨τ, hτ, hd⟩ := exists_inputDist_le_of_le_acceptProb hρ (by linarith)
-  have hdec (b : Fin 2) : decodeLabelling π (G.ends e b) = τ b :=
-    decodeLabel_eq ((hammingDist_inputTable_div_le (π ∘ G.testerPos e) τ b).trans_lt
-      (by linarith))
-  apply he
-  change G.rel e (decodeLabelling π (G.ends e 0)) (decodeLabelling π (G.ends e 1))
-  rw [hdec, hdec]
-  exact hτ
+    1 / 28 ≤ 1 - (hadamardTester (G.rel e)).acceptProb (π ∘ G.testerPos e) :=
+  sound_assignmentTester (G.rel e) (π ∘ G.testerPos e) he
 
 /-- **Soundness of composition**, for a labelling: every labelling `A` of the composed graph
 violates a proportion of the edges at least `1/476` times the proportion of the edges of `G`
@@ -251,42 +240,22 @@ violated by the labelling decoded from it. -/
 theorem unsatFrac_decodeLabelling_le [Fintype E]
     (A : ComposePos V E α ⊕ E × Rand α → Bool × (Query → Bool)) :
     G.unsatFrac (decodeLabelling (LocalTest.proofOf A)) ≤ 476 * G.compose.unsatFrac A := by
-  classical
-  rcases isEmpty_or_nonempty E with hE | hE
-  · simp [unsatFrac]
-  have h₁ : 1 - G.composeTest.acceptProb (LocalTest.proofOf A) ≤
-      Fintype.card Query * G.compose.unsatFrac A :=
-    LocalTest.one_sub_acceptProb_le_card_mul_unsatFrac A
-  rw [card_query, Nat.cast_ofNat] at h₁
-  have h₂ : G.unsatFrac (decodeLabelling (LocalTest.proofOf A)) / 28 ≤
-      1 - G.composeTest.acceptProb (LocalTest.proofOf A) := by
-    rw [composeTest, LocalTest.acceptProb_mix, ← expect_mem_unsatEdges, expect_div]
-    conv_rhs => rw [← Fintype.expect_const (ι := E) (1 : ℝ), ← expect_sub_distrib]
-    refine expect_le_expect fun e _ ↦ ?_
-    rw [LocalTest.acceptProb_map]
-    split_ifs with he
-    · rw [one_div]
-      simpa [one_div] using
-        G.one_div_le_one_sub_acceptProb_of_not_satisfies (mem_unsatEdges.1 he)
-    · rw [zero_div, sub_nonneg]
-      exact LocalTest.acceptProb_le_one _ _
+  have h := AssignmentTester.mul_unsatFrac_decodeLabelling_le sound_assignmentTester G A
+  change (1 / 28 : ℝ) * G.unsatFrac (decodeLabelling (LocalTest.proofOf A)) ≤
+    17 * G.compose.unsatFrac A at h
   linarith
 
 /-- **Soundness of composition** [Dinur, Lemma 3.6][Dinur2005]: composition divides the value of a
 constraint graph by at most `476`, whatever its alphabet. -/
 theorem le_unsatVal_compose [Fintype E] : G.unsatVal / 476 ≤ G.compose.unsatVal := by
-  obtain ⟨A, hA⟩ := G.compose.exists_unsatFrac_eq_unsatVal
-  rw [← hA, div_le_iff₀ (by norm_num), mul_comm]
-  exact (G.unsatVal_le _).trans (G.unsatFrac_decodeLabelling_le A)
+  have h := AssignmentTester.le_unsatVal_compose sound_assignmentTester (by norm_num) G
+  norm_num only [card_query, Nat.cast_ofNat] at h
+  exact h
 
 /-- **Composition preserves satisfiability.** -/
-theorem satisfiable_compose_iff [Finite E] : G.compose.Satisfiable ↔ G.Satisfiable := by
-  have := Fintype.ofFinite E
-  refine ⟨fun h ↦ ?_, G.satisfiable_compose⟩
-  rw [← unsatVal_eq_zero_iff] at h ⊢
-  have := G.le_unsatVal_compose
-  rw [h] at this
-  exact le_antisymm (by linarith) G.unsatVal_nonneg
+theorem satisfiable_compose_iff [Finite E] : G.compose.Satisfiable ↔ G.Satisfiable :=
+  AssignmentTester.satisfiable_compose_iff isComplete_assignmentTester sound_assignmentTester
+    (by norm_num) G
 
 end Soundness
 
