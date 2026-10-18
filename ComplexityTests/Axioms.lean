@@ -9585,3 +9585,31 @@ info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_composeSelectedEnumerated' depends on
 -/
 #guard_msgs in
 #print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_composeSelectedEnumerated
+
+/--
+info: 'Finset.exists_quantile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Finset.exists_quantile
+
+/--
+info: 'Cslib.SeparableComparison.exists_rectangle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.SeparableComparison.exists_rectangle
+
+/--
+info: 'Cslib.DecisionTree.exists_leaf_rectangle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.DecisionTree.exists_leaf_rectangle
+
+/--
+info: 'Cslib.DecisionTree.card_mul_le_mul_leafCount_sq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.DecisionTree.card_mul_le_mul_leafCount_sq

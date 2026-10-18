@@ -224,10 +224,12 @@ public import Complexity.Computability.DecisionTree.CanonicalTree
 public import Complexity.Computability.DecisionTree.Certificate
 public import Complexity.Computability.DecisionTree.Fourier
 public import Complexity.Computability.DecisionTree.Influence
+public import Complexity.Computability.DecisionTree.Leaves
 public import Complexity.Computability.DecisionTree.NormalForm
 public import Complexity.Computability.DecisionTree.Parity
 public import Complexity.Computability.DecisionTree.Restrict
 public import Complexity.Computability.DecisionTree.Sensitivity
+public import Complexity.Computability.DecisionTree.Separable
 public import Complexity.Computability.DecisionTree.Switching
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
@@ -601,6 +603,7 @@ public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Fin.Order
 public import Complexity.Foundations.Data.Fin.Tuple
 public import Complexity.Foundations.Data.Finset.Expect
+public import Complexity.Foundations.Data.Finset.Quantile
 public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
