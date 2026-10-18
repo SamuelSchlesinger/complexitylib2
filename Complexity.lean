@@ -592,6 +592,12 @@ public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
+public import Complexity.Foundations.Combinatorics.LineCode.Field
+public import Complexity.Foundations.Combinatorics.LineCode.HighRate
+public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Monomial
+public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
+public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Rate
+public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Systematic
 public import Complexity.Foundations.Combinatorics.LineCode.Line
 public import Complexity.Foundations.Combinatorics.LineCode.Menu
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Collision
