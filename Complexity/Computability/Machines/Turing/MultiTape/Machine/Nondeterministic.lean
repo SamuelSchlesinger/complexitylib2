@@ -98,6 +98,17 @@ noncomputable def stepCoins (coins : List Bool) (c : Cfg k Symbol State input) :
     Cfg k Symbol State input :=
   coins.foldl (fun c bit => (machine.withCoin bit).toTM.step c) c
 
+@[simp] theorem stepCoins_nil (c : Cfg k Symbol State input) : machine.stepCoins [] c = c := rfl
+
+theorem stepCoins_cons (bit : Bool) (coins : List Bool) (c : Cfg k Symbol State input) :
+    machine.stepCoins (bit :: coins) c =
+      machine.stepCoins coins ((machine.withCoin bit).toTM.step c) := rfl
+
+/-- Replaying concatenated coins pauses and resumes. -/
+theorem stepCoins_append (coins more : List Bool) (c : Cfg k Symbol State input) :
+    machine.stepCoins (coins ++ more) c = machine.stepCoins more (machine.stepCoins coins c) :=
+  List.foldl_append
+
 /-- Replaying coins acts on the tapes by upstream deterministic steps. -/
 theorem tapes_runClosedConfigFromCoins (coins : List Bool)
     (cfg : Config k Symbol State Empty input) :

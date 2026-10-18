@@ -154,9 +154,6 @@ space bounds. Further class-level work needs resource certificates for the actua
 * machine-level hierarchy theorems and `P ⊊ EXP`; a tight tape-indexed hierarchy needs a separate
   linear-overhead simulation, and an `f log f` hierarchy needs the corresponding simulation bound;
 * logspace composition, Savitch, `NL ⊆ P`, `NL = coNL`, `PH ⊆ PSPACE` and Sipser–Lautemann;
-* the reverse direction of nondeterministic-machine/verifier equivalence: the
-  [guess-and-verify construction](Complexity/Computability/Complexity/Classes/NP/GuessVerify.lean)
-  gives polynomial-time NTMs from verifiers; verifiers from polynomial-time NTMs remain;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.
