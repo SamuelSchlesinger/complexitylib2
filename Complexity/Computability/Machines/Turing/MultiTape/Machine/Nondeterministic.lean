@@ -23,9 +23,9 @@ on both sides. Hence the run paths of length `n` are exactly the replays of coin
 last configurations of these run paths.
 
 In particular, a fair-coin machine that halts on every supported branch within its clock runs
-within the same time as a nondeterministic machine, and its supported outputs at that clock are
-the outputs of its computation paths of clock length, which are exactly its halted computation
-paths.
+within the same time as a nondeterministic machine. Its supported outputs at that clock are
+exactly the outputs of its halted computation paths; halted self-loops allow their lengths to
+differ without changing their endpoints.
 
 ## Main definitions
 
