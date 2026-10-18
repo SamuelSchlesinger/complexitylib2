@@ -43,7 +43,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   `Crypto/Primitives/PRG/Game`.
 * **Query complexity.** Align `Computability/DecisionTree` with #925 and its certificate
   follow-up `D ≤ C₀ C₁`; align `Sensitivity` and `Foundations/Data/BitString/{Flip,PartialAssignment}`
-  with #923. Compare arbitrary index/result types with their `Fin n`/`Bool` models,
+  with upstream `Computability/QueryComplexity`, now included in the base pin. Compare arbitrary
+  index/result types with its `Fin n`/`Bool` models,
   `IsCertificate` with `Fixes`, and the `*At` and `point*` names.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
