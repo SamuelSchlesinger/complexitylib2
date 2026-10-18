@@ -11,13 +11,35 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.QuantumMatrices
 
 /-!
-# Rational hitting lists: block division
+# Block division and rank specialization
 
-Adapted from OpenAI's formalization at revision `adc7f1241b42e322a6451854ab7e4b4c146bf78a`.
-Source: https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/lean/OAI/Computability/RationalHitting/BlockDivision.lean
+Three algebraic tools for the rational hitting lists. Bivariate polynomials embed injectively
+into Hahn series over the lexicographically ordered group `ℤ ×ₗ ℤ`. A square block matrix over a
+division ring `D`, flattened through a faithful matrix representation `D →+* Matrix κ κ E`, is
+either invertible or loses at least `|κ|` in rank (block elimination). Finally, specializing the
+entries of a matrix along a `K`-algebra map `P →ₐ[K] K` cannot raise its rank over any field
+into which `P` embeds.
 
-Imports, namespaces, module visibility, documentation, and formatting are adapted
-for complexitylib. The source theorem statements and mathematical arguments are retained.
+## Main definitions
+
+* `Rational.PolynomialHahn.embed`: bivariate polynomials as Hahn series over `ℤ ×ₗ ℤ`.
+* `Rational.BlockDivision.blockEmbedding`: the entrywise extension of a matrix representation
+  of `D` to square block matrices over `D`.
+
+## Main results
+
+* `Rational.PolynomialHahn.embed_injective`: the Hahn-series embedding is injective.
+* `Rational.BlockDivision.rank_gap`: a block-embedded matrix is invertible or has rank at most
+  `(|m| - 1) * |κ|`.
+* `Rational.BlockDivision.isUnit_of_rank_gt`: rank above `(|m| - 1) * |κ|` forces invertibility.
+* `Rational.RankSpecialization.rank_le`: specialization cannot raise the generic rank.
+
+## References
+
+* Adapted from OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Computability/RationalHitting/BlockDivision.lean), via the complexitylib port
+  [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -28,8 +50,10 @@ namespace Rational.PolynomialHahn
 open HahnSeries MvPolynomial
 open scoped BigOperators
 noncomputable section
+
 /-- Lexicographically ordered integer exponents for two-variable monomials. -/
 abbrev Exponents := ℤ ×ₗ ℤ
+
 variable {K : Type*} [Field K]
 
 /-- Embed a two-variable natural exponent vector into the ordered exponent group. -/
@@ -45,7 +69,7 @@ lemma exponent_injective : Function.Injective exponent := by
 
 /-- The Hahn monomial corresponding to a polynomial variable. -/
 def variableSeries (i : Fin 2) : HahnSeries Exponents K :=
-  single (if i = 0 then toLex (1,0) else toLex (0,1)) 1
+  single (if i = 0 then toLex (1, 0) else toLex (0, 1)) 1
 
 /-- Embed bivariate polynomials into the Hahn-series ring. -/
 def embed : MvPolynomial (Fin 2) K →+* HahnSeries Exponents K :=
@@ -54,9 +78,9 @@ def embed : MvPolynomial (Fin 2) K →+* HahnSeries Exponents K :=
 lemma embed_monomial (m : Fin 2 →₀ ℕ) (a : K) :
     embed (monomial m a) = single (exponent m) a := by
   rw [embed, eval₂Hom_monomial, Finsupp.prod_fintype _ _ (by simp)]
-  have he : (m 0 : Exponents) * toLex (1,0) + (m 1 : Exponents) * toLex (0,1) =
+  have he : (m 0 : Exponents) * toLex (1, 0) + (m 1 : Exponents) * toLex (0, 1) =
       exponent m := by
-    change toLex ((m 0 : ℤ)*1+(m 1 : ℤ)*0, (m 0 : ℤ)*0+(m 1 : ℤ)*1) = _
+    change toLex ((m 0 : ℤ) * 1 + (m 1 : ℤ) * 0, (m 0 : ℤ) * 0 + (m 1 : ℤ) * 1) = _
     simp [exponent]
   simp [variableSeries, Fin.prod_univ_two, HahnSeries.single_pow,
     HahnSeries.single_mul_single, HahnSeries.algebraMap_apply, HahnSeries.C_apply, he]
@@ -82,7 +106,6 @@ lemma embed_injective : Function.Injective (embed (K := K)) := by
 end
 end Rational.PolynomialHahn
 
-
 namespace Rational.BlockDivision
 open Module Matrix
 open scoped BigOperators
@@ -91,12 +114,12 @@ variable {D E : Type*} [DivisionRing D] [Field E]
 variable {m κ : Type*} [Fintype m] [DecidableEq m] [Fintype κ] [DecidableEq κ]
 
 /-- Extend a matrix representation entrywise to block matrices. -/
-def blockEmbedding (φ : D →+* Matrix (κ) (κ) E) :
-    Matrix (m) (m) D →+* Matrix (m × κ) (m × κ) E where
+def blockEmbedding (φ : D →+* Matrix κ κ E) :
+    Matrix m m D →+* Matrix (m × κ) (m × κ) E where
   toFun A i j := φ (A i.1 j.1) i.2 j.2
   map_zero' := by ext i j; simp
   map_one' := by
-    ext ⟨i,α⟩ ⟨j,β⟩
+    ext ⟨i, α⟩ ⟨j, β⟩
     simp only [Matrix.one_apply, Prod.mk.injEq]
     by_cases hij : i = j <;> by_cases hab : α = β <;> simp [hij, hab]
   map_add' A B := by
@@ -104,13 +127,13 @@ def blockEmbedding (φ : D →+* Matrix (κ) (κ) E) :
     change φ (A i.1 j.1 + B i.1 j.1) i.2 j.2 = _ + _
     simp
   map_mul' A B := by
-    ext ⟨i,α⟩ ⟨j,β⟩
+    ext ⟨i, α⟩ ⟨j, β⟩
     change φ (∑ k, A i k * B k j) α β =
       ∑ k : m × κ, φ (A i k.1) α k.2 * φ (B k.1 j) k.2 β
     simp only [map_sum, map_mul, Matrix.sum_apply, Matrix.mul_apply,
       Fintype.sum_prod_type]
 
-lemma unit_of_vecMul_injective (A : Matrix (m) (m) D)
+lemma unit_of_vecMul_injective (A : Matrix m m D)
     (hA : Function.Injective A.vecMulLinear) : IsUnit A := by
   let e := LinearEquiv.ofBijective A.vecMulLinear
     ⟨hA, (LinearMap.injective_iff_surjective).mp hA⟩
@@ -129,22 +152,19 @@ lemma unit_of_vecMul_injective (A : Matrix (m) (m) D)
       (LinearMap.toMatrixRight'.symm (LinearMap.toMatrixRight' e.symm.toLinearMap)) = LinearMap.id
     rw [LinearEquiv.symm_apply_apply]
     exact e.comp_symm
-
   exact ⟨⟨A, B, hAB, hBA⟩, rfl⟩
 
 /-- A nonzero row of a division-ring kernel expands into d independent ordinary
 kernel rows after a faithful d-dimensional representation. -/
-def kernelRows (φ : D →+* Matrix (κ) (κ) E) (v : m → D) :
+def kernelRows (φ : D →+* Matrix κ κ E) (v : m → D) :
     (κ → E) →ₗ[E] (m × κ → E) where
   toFun x j := (x ᵥ* φ (v j.1)) j.2
   map_add' x y := by ext j; simp [Matrix.add_vecMul]
   map_smul' c x := by ext j; simp [Matrix.smul_vecMul]
 
-lemma kernelRows_injective.{v_1, v_2, v_3, v_4}
-    {D : Type v_1} {E : Type v_2} [DivisionRing D] [Field E]
-    {m : Type v_3} {κ : Type v_4}
-    [Fintype κ] [DecidableEq κ] (φ : D →+* Matrix (κ) (κ) E)
-    (v : m → D) (hv : v ≠ 0) : Function.Injective (kernelRows φ v) := by
+omit [Fintype m] [DecidableEq m] in
+lemma kernelRows_injective (φ : D →+* Matrix κ κ E) (v : m → D) (hv : v ≠ 0) :
+    Function.Injective (kernelRows φ v) := by
   obtain ⟨j, hj⟩ : ∃ j, v j ≠ 0 := by
     by_contra! hh
     exact hv (funext hh)
@@ -152,14 +172,14 @@ lemma kernelRows_injective.{v_1, v_2, v_3, v_4}
   intro x y h
   apply Matrix.vecMul_injective_of_isUnit hunit
   funext α
-  exact congrFun h (j,α)
+  exact congrFun h (j, α)
 
-lemma kernelRows_mem (φ : D →+* Matrix (κ) (κ) E)
-    (A : Matrix (m) (m) D) (v : m → D)
+lemma kernelRows_mem (φ : D →+* Matrix κ κ E)
+    (A : Matrix m m D) (v : m → D)
     (hv : v ᵥ* A = 0) (x : κ → E) :
     kernelRows φ v x ∈ (blockEmbedding φ A).vecMulLinear.ker := by
   change (kernelRows φ v x) ᵥ* (blockEmbedding φ A) = 0
-  funext ⟨j,β⟩
+  funext ⟨j, β⟩
   have hh := congrArg (fun z : D => (x ᵥ* φ z) β) (congrFun hv j)
   change (∑ i : m × κ,
     (∑ γ, x γ * φ (v i.1) γ i.2) * φ (A i.1 j) i.2 β) = 0
@@ -174,13 +194,11 @@ lemma kernelRows_mem (φ : D →+* Matrix (κ) (κ) E)
   rw [heq, hv]
   simp
 
-
-/-- The rank gap obtained by block elimination over a division ring. -/
-
-theorem rank_gap (φ : D →+* Matrix (κ) (κ) E)
-    (A : Matrix (m) (m) D) :
-    IsUnit (blockEmbedding φ A) ∨ (blockEmbedding φ A).rank + Fintype.card κ ≤ Fintype.card m *
-      Fintype.card κ := by
+/-- The rank gap obtained by block elimination over a division ring: a block-embedded matrix
+is invertible or has rank at most `(|m| - 1) * |κ|`. -/
+theorem rank_gap (φ : D →+* Matrix κ κ E) (A : Matrix m m D) :
+    IsUnit (blockEmbedding φ A) ∨
+      (blockEmbedding φ A).rank + Fintype.card κ ≤ Fintype.card m * Fintype.card κ := by
   classical
   by_cases hu : IsUnit (blockEmbedding φ A)
   · exact Or.inl hu
@@ -206,24 +224,23 @@ theorem rank_gap (φ : D →+* Matrix (κ) (κ) E)
   simp only [Module.finrank_pi, Fintype.card_prod] at hdim hrank
   omega
 
-theorem isUnit_of_rank_gt (φ : D →+* Matrix (κ) (κ) E)
-    (A : Matrix (m) (m) D) (hq : 1 ≤ Fintype.card m)
-    (h : (Fintype.card m-1)*Fintype.card κ < (blockEmbedding φ A).rank) : IsUnit (blockEmbedding
-      φ A) := by
+/-- A block-embedded matrix of rank above `(|m| - 1) * |κ|` is invertible. -/
+theorem isUnit_of_rank_gt (φ : D →+* Matrix κ κ E)
+    (A : Matrix m m D) (hq : 1 ≤ Fintype.card m)
+    (h : (Fintype.card m - 1) * Fintype.card κ < (blockEmbedding φ A).rank) :
+    IsUnit (blockEmbedding φ A) := by
   rcases rank_gap φ A with hunit | hgap
   · exact hunit
-  have heq : (Fintype.card m-1)*Fintype.card κ+Fintype.card κ = Fintype.card m * Fintype.card κ
-    := by
-    calc
-      _ = (Fintype.card m-1+1)*Fintype.card κ := by ring
-      _ = Fintype.card m * Fintype.card κ := by rw [Nat.sub_add_cancel hq]
+  have heq : (Fintype.card m - 1) * Fintype.card κ + Fintype.card κ =
+      Fintype.card m * Fintype.card κ := by
+    rw [← Nat.succ_mul, Nat.succ_eq_add_one, Nat.sub_add_cancel hq]
   omega
 
 end
 end Rational.BlockDivision
 
-
-namespace Rational.RankSpecialization
+namespace
+ Rational.RankSpecialization
 open Matrix
 noncomputable section
 variable {K P E ι : Type*} [Field K] [CommRing P] [Field E]
@@ -237,11 +254,11 @@ theorem rank_le (ev : P →ₐ[K] K) (inclusion : P →+* E)
     (ev.toRingHom.mapMatrix A).rank ≤ (inclusion.mapMatrix A).rank := by
   classical
   let S := ev.toRingHom.mapMatrix A
-  obtain ⟨V,U,e,hV,hU,hform⟩ := Matrix.exists_rank_normal_form S
+  obtain ⟨V, U, e, hV, hU, hform⟩ := Matrix.exists_rank_normal_form S
   let c := algebraMap K P
   let T := c.mapMatrix V * A * c.mapMatrix U
   let j : Fin S.rank → ι := fun i => e.symm (Sum.inl i)
-  have hT : ev.toRingHom.mapMatrix T = V*S*U := by
+  have hT : ev.toRingHom.mapMatrix T = V * S * U := by
     dsimp [T]
     rw [map_mul, map_mul]
     congr 2
