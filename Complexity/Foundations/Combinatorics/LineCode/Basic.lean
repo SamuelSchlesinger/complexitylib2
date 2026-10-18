@@ -16,24 +16,23 @@ public import Mathlib.Data.Fintype.Pi
 /-!
 # Line-parity codes and recovery menus
 
-The sharp mass-production construction stores the restrictions of a Boolean function in a code
-on the points of `K ^ ℓ`, for a finite field `K` of characteristic two. Each value of a codeword
-is the sum of its values on every punctured affine line through that point
-(`LineCode.sum_extend`), so a requested value can be recovered from any one of many disjoint
-sets of other points. A scheduler chooses, for every request, a line avoiding the points already
-used and the lines of the other requests (`IsClean`). It tests a fixed menu of direction tuples
-that leaves at least half of the pending requests clean in every possible state
-(`IsUniversalMenu`).
+A line-parity code on the points of `K ^ ℓ`, for a finite field `K`, is systematic on an
+information set, and the value of each codeword at a point is the sum of its values on every
+punctured affine line through that point (`LineCode.sum_extend`). A requested value can therefore
+be recovered from any one of many sets of other points. Requests made in parallel are served by
+choosing, for every request, a line avoiding the points already used and the lines of the other
+requests (`LineCode.IsClean`). A fixed menu of direction tuples is universal when it leaves at
+least half of the pending requests clean in every possible state (`LineCode.IsUniversalMenu`).
 
-This module fixes these shared definitions; constructions are in later modules.
+This module fixes these definitions; constructions are in later modules.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.MassProduction.puncturedLine`: the points `u + c • v` for `c ≠ 0`.
-* `Cslib.Circuits.Boolean.MassProduction.LineCode`: a systematic line-parity code.
-* `Cslib.Circuits.Boolean.MassProduction.occupiedPoints`: the points of a list of lines.
-* `Cslib.Circuits.Boolean.MassProduction.IsClean`: a request whose line avoids the others.
-* `Cslib.Circuits.Boolean.MassProduction.IsUniversalMenu`: a menu serving every state.
+* `Cslib.LineCode`: a systematic line-parity code.
+* `Cslib.LineCode.puncturedLine`: the points `u + c • v` for nonzero scalars `c`.
+* `Cslib.LineCode.occupiedPoints`: the points of a list of lines.
+* `Cslib.LineCode.IsClean`: a request whose line avoids the occupied points and the others.
+* `Cslib.LineCode.IsUniversalMenu`: a menu of directions serving every state.
 
 ## References
 
@@ -44,16 +43,11 @@ This module fixes these shared definitions; constructions are in later modules.
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.MassProduction
+namespace Cslib
 
 open Finset
 
 variable {K : Type*} [Field K] [Fintype K] [DecidableEq K] {ℓ : ℕ}
-
-/-- The punctured affine line through `u` with direction `v`: the points `u + c • v` for nonzero
-scalars `c`. The point `u` itself is omitted. -/
-def puncturedLine (u v : Fin ℓ → K) : Finset (Fin ℓ → K) :=
-  ((univ : Finset K).erase 0).image fun c => u + c • v
 
 variable (K ℓ) in
 /-- A code on the points of `K ^ ℓ`. Data given on the information set `info` extends to a
@@ -70,6 +64,14 @@ structure LineCode where
   /-- Line parity: every value is the sum over every punctured line through its point. -/
   sum_extend : ∀ data u v, v ≠ 0 →
     ∑ c ∈ (univ : Finset K).erase 0, extend data (u + c • v) = extend data u
+
+namespace LineCode
+
+/-- The punctured affine line through `u` with direction `v`: the points `u + c • v` for nonzero
+scalars `c`. When `v ≠ 0` these are `Fintype.card K - 1` distinct points and `u` is omitted; when
+`v = 0` the line is the single point `u`. -/
+def puncturedLine (u v : Fin ℓ → K) : Finset (Fin ℓ → K) :=
+  ((univ : Finset K).erase 0).image fun c => u + c • v
 
 /-- The points covered by a list of at most `g` lines, each given by an anchor and a direction;
 `none` marks an unused slot. -/
@@ -94,4 +96,6 @@ def IsUniversalMenu {k r : ℕ} (g : ℕ) (menu : Fin r → Fin k → Fin ℓ �
       ∃ e, ∃ clean : Finset (Fin k), k ≤ 2 * clean.card ∧
         ∀ i ∈ clean, IsClean (occupiedPoints lines) targets (menu e) i
 
-end Cslib.Circuits.Boolean.MassProduction
+end LineCode
+
+end Cslib

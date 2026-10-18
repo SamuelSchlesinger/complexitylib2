@@ -48,9 +48,9 @@ public import Complexity.Computability.Circuit.Boolean.LMN
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
 public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
-public import Complexity.Computability.Circuit.Boolean.MassProduction.Line
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Padding
-public import Complexity.Computability.Circuit.Boolean.MassProduction.PointBits
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Schedule
+public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpParameters
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Layer
@@ -590,6 +590,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Walk.WithInput
 public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
+public import Complexity.Foundations.Combinatorics.LineCode.Basic
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
 public import Complexity.Foundations.Combinatorics.Sunflower
@@ -610,6 +611,7 @@ public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Vote
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
+public import Complexity.Foundations.Data.BitString.Point
 public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Uhlig
