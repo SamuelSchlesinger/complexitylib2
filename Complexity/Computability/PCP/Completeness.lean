@@ -69,13 +69,11 @@ theorem NP_subset_PCP_log {Input : Type} (input : Input ↪ List Bool) :
       (encPair (encPi (encPi encBool))
         (encPair (encPair encBool (encPi encBool)) (encPair encBool (encPi encBool)))) encBool := by
     fun_prop
-  have hwalk : (0 : ℝ) < walkLength := by
-    exact_mod_cast (lt_of_lt_of_le Nat.zero_lt_one one_le_walkLength)
   exact Graph.mem_PCP_of_gapReduction (FinEnum.card Query + 1)
     encodeLabel decodeLabel decode_encodeLabel (isPolyTime_gapGraph hreduce) heval
     (fun x => wellFormed_gapGraph (reduce x))
     (fun x hx => (satisfiable_gapGraph_iff _).mpr ((hmem x).mp hx))
-    (gap := 1 / (walkLength : ℝ) ^ 2) (by positivity)
+    (gap := gap) gap_pos
     (fun x hx => gap_le_unsatVal_gapGraph _ fun h => hx ((hmem x).mpr h))
 
 /-- **The PCP theorem:** NP is exactly logarithmic-randomness, constant-query PCP, with perfect

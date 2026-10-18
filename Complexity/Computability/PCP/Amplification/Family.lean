@@ -26,6 +26,7 @@ implement the graph representation and certify each transformation.
 * `Cslib.PCP.ConstraintGraph.amplifyWith`: preprocessing with supplied rotations, followed by
   powering and composition.
 * `Cslib.PCP.ConstraintGraph.Amplification.retention`: the value retained by preprocessing.
+* `Cslib.PCP.ConstraintGraph.Amplification.gain`: the gain at a supplied soundness threshold.
 * `Cslib.PCP.ConstraintGraph.Amplification.denominator`: the denominator in the gain obtained by
   powering and composition.
 * `Cslib.PCP.ConstraintGraph.Amplification.amplifier`: a gap amplifier with supplied rotations.
@@ -81,6 +82,13 @@ instance {D E α : Type*} [Fintype D] [DecidableEq D] [Fintype E] [Fintype α] [
 /-- The fraction of value retained by preprocessing with degree `d` and spectral bound `μ`. -/
 noncomputable def retention (d : ℕ) (μ : ℝ) : ℝ :=
   min 1 ((1 - μ) * d) / (4 * (1 + d))
+
+/-- The gain after preprocessing, powering and composition, at final threshold `γ`.
+The powering threshold is `retention d μ * γ / 2`, so gain at least two suffices for doubling. -/
+noncomputable def gain (K d T q : ℕ) (μ γ : ℝ) : ℝ :=
+  let r := retention d μ
+  let c : ℝ := (q - 1) / (4 * K ^ 2)
+  r * c ^ 2 / (476 * (c + T ^ 2 * (r * γ / 2) + 2 * T / ((1 - μ) * d / (2 * d + 2))))
 
 /-- The denominator of the gain from powering and composition, for an alphabet of size `K`. -/
 noncomputable def denominator (K d : ℕ) (μ : ℝ) : ℝ :=
@@ -242,38 +250,55 @@ theorem le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
     ((G.preprocessWith X).power T q).toConstraintGraph.le_unsatVal_compose
 
 omit [DecidableEq D] [DecidableEq α] in
-/-- Preprocessing and powering already double the value after division by the composition loss.
-The required inequality is satisfiable for every nonempty alphabet, positive degree and positive
-spectral gap by `Amplification.exists_killRate`. -/
+/-- Preprocessing and powering double the value up to `γ`, after division by the composition
+loss, whenever the scalar gain at that threshold is at least two. -/
 theorem min_le_div_unsatVal_power_preprocessWith (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1))
-    (hgain : 2 / Amplification.retention (Fintype.card D) μ ≤
-      ((q : ℝ) - 1) / Amplification.denominator (Fintype.card α) (Fintype.card D) μ) :
-    min (2 * G.unsatVal) (1 / T ^ 2) ≤
+    {γ : ℝ} (hγ : 0 ≤ γ)
+    (hgain : 2 ≤ Amplification.gain (Fintype.card α) (Fintype.card D) T q μ γ) :
+    min (2 * G.unsatVal) γ ≤
       ((G.preprocessWith X).power T q).toConstraintGraph.unsatVal / 476 := by
   have hr := Amplification.retention_pos (d := Fintype.card D) Fintype.card_pos hμ
-  have hr₁ := Amplification.retention_le_one (Fintype.card D) μ
-  set c : ℝ := ((q : ℝ) - 1) /
-    Amplification.denominator (Fintype.card α) (Fintype.card D) μ
-  have hc : 1 ≤ c := (le_div_iff₀ hr).mpr (by linarith) |>.trans hgain
-  have hcr : 2 ≤ c * Amplification.retention (Fintype.card D) μ :=
-    (div_le_iff₀ hr).mp hgain
-  refine le_trans ?_ (G.le_div_unsatVal_power_preprocessWith X hμ hq hT)
-  rw [mul_min_of_nonneg _ _ (by linarith : 0 ≤ c)]
-  refine min_le_min ?_ (le_mul_of_one_le_left (by positivity) hc)
-  calc 2 * G.unsatVal ≤ (c * Amplification.retention (Fintype.card D) μ) * G.unsatVal :=
-      mul_le_mul_of_nonneg_right hcr G.unsatVal_nonneg
-    _ = c * (Amplification.retention (Fintype.card D) μ * G.unsatVal) := mul_assoc _ _ _
+  set r := Amplification.retention (Fintype.card D) μ
+  set c : ℝ := (q - 1) / (4 * Fintype.card α ^ 2)
+  set B : ℝ := 2 * T / ((1 - μ) * Fintype.card D / (2 * Fintype.card D + 2))
+  set a : ℝ := c ^ 2 / (c + T ^ 2 * (r * γ / 2) + B) / 476
+  have har : 2 ≤ a * r := by
+    change 2 ≤ r * c ^ 2 / (476 * (c + T ^ 2 * (r * γ / 2) + B)) at hgain
+    rw [mul_comm 476, ← div_div] at hgain
+    convert hgain using 1
+    dsimp only [a]
+    ring
+  have ha : 0 ≤ a := by nlinarith
+  have hd : (0 : ℝ) < Fintype.card D := Nat.cast_pos.mpr Fintype.card_pos
+  have hgap : 0 < (1 - μ) * Fintype.card D / (2 * Fintype.card D + 2) :=
+    div_pos (mul_pos (sub_pos.mpr hμ) hd) (by positivity)
+  have hpow := (G.preprocessWith X).le_unsatVal_power_min T q hq hT
+    (G.spectralExpansion_preprocessWith_le X) (by linarith)
+    (δ := r * γ / 2) (by positivity)
+  dsimp only at hpow
+  rw [sub_sub_cancel] at hpow
+  calc min (2 * G.unsatVal) γ
+      ≤ a * min (r * G.unsatVal) (r * γ / 2) := by
+        rw [mul_min_of_nonneg _ _ ha]
+        refine min_le_min ?_ ?_
+        · nlinarith [G.unsatVal_nonneg]
+        · nlinarith
+    _ ≤ a * min (G.preprocessWith X).toConstraintGraph.unsatVal (r * γ / 2) :=
+      mul_le_mul_of_nonneg_left (min_le_min_right _ (G.le_unsatVal_preprocessWith X)) ha
+    _ = (c ^ 2 / (c + T ^ 2 * (r * γ / 2) + B) *
+        min (G.preprocessWith X).toConstraintGraph.unsatVal (r * γ / 2)) / 476 := by
+      dsimp only [a]
+      ring
+    _ ≤ _ := div_le_div_of_nonneg_right hpow (by norm_num)
 
-/-- A sufficiently large fixed killing rate doubles the value up to `1 / T²`. The required
-inequality is satisfiable for every nonempty alphabet, positive degree and positive spectral gap
-by `Amplification.exists_killRate`. -/
+/-- A scalar gain of at least two doubles the value up to the supplied threshold. -/
 theorem min_le_unsatVal_amplifyWith (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1))
-    (hgain : 2 / Amplification.retention (Fintype.card D) μ ≤
-      ((q : ℝ) - 1) / Amplification.denominator (Fintype.card α) (Fintype.card D) μ) :
-    min (2 * G.unsatVal) (1 / T ^ 2) ≤ (G.amplifyWith X T q).unsatVal :=
-  (G.min_le_div_unsatVal_power_preprocessWith X hμ hq hT hgain).trans
+    {γ : ℝ} (hγ : 0 ≤ γ)
+    (hgain : 2 ≤ Amplification.gain (Fintype.card α) (Fintype.card D) T q μ γ) :
+    min (2 * G.unsatVal) γ ≤ (G.amplifyWith X T q).unsatVal :=
+  (G.min_le_div_unsatVal_power_preprocessWith X hμ hq hT hγ hgain).trans
     ((G.preprocessWith X).power T q).toConstraintGraph.le_unsatVal_compose
 
 end Cslib.PCP.ConstraintGraph
@@ -300,8 +325,8 @@ noncomputable def round (T q : ℕ) [NeZero q]
 result is mathematical; the encoded implementation and running time need separate certificates. -/
 noncomputable def amplifier [Nonempty D] (T q : ℕ) [NeZero q] (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card (Bool × (Query → Bool)) * (q - 1))
-    (hgain : 2 / retention (Fintype.card D) μ ≤
-      ((q : ℝ) - 1) / denominator (Fintype.card (Bool × (Query → Bool))) (Fintype.card D) μ) :
+    {γ : ℝ} (hγ : 0 < γ) (hγ₁ : γ ≤ 1)
+    (hgain : 2 ≤ gain (Fintype.card (Bool × (Query → Bool))) (Fintype.card D) T q μ γ) :
     Amplifier.{u} (Bool × (Query → Bool)) :=
   have hT₁ : 1 ≤ T := by
     rw [hT]
@@ -309,14 +334,9 @@ noncomputable def amplifier [Nonempty D] (T q : ℕ) [NeZero q] (hμ : μ < 1) (
   { toFun := round X T q
     factor := vertexFactor (Fintype.card D) (Fintype.card (Bool × (Query → Bool))) T q +
       edgeFactor (Fintype.card D) (Fintype.card (Bool × (Query → Bool))) T q
-    gap := 1 / (T : ℝ) ^ 2
-    gap_pos := by
-      have : (0 : ℝ) < T := Nat.cast_pos.mpr hT₁
-      positivity
-    gap_le_one := by
-      have : (1 : ℝ) ≤ T := by exact_mod_cast hT₁
-      rw [div_le_one (by positivity)]
-      exact one_le_pow₀ this
+    gap := γ
+    gap_pos := hγ
+    gap_le_one := hγ₁
     card_vertices_le G :=
       (card_vertices (D := D) (E := G.E) (α := Bool × (Query → Bool)) T q).trans_le
         (Nat.mul_le_mul_right _ (Nat.le_add_right _ _))
@@ -328,6 +348,6 @@ noncomputable def amplifier [Nonempty D] (T q : ℕ) [NeZero q] (hμ : μ < 1) (
       G.graph.satisfiable_amplifyWith_iff (X G) hμ hT₁ hq
     min_le_unsatVal G :=
       letI := Classical.decEq G.V
-      G.graph.min_le_unsatVal_amplifyWith (X G) hμ hq hT hgain }
+      G.graph.min_le_unsatVal_amplifyWith (X G) hμ hq hT hγ.le hgain }
 
 end Cslib.PCP.ConstraintGraph.Amplification

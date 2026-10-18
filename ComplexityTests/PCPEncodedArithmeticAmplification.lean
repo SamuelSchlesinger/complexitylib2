@@ -53,7 +53,7 @@ private theorem rejectingEdge_unsat : ¬ (rejectingEdge.toGraph id).Satisfiable 
   rintro ⟨σ, hσ⟩
   exact Bool.false_ne_true (hσ ⟨0, by decide⟩)
 
-example : 1 / (walkLength : ℝ) ^ 2 ≤ (rejectingEdge.arithmeticAmplify.toGraph id).unsatVal :=
+example : gap ≤ (rejectingEdge.arithmeticAmplify.toGraph id).unsatVal :=
   Graph.gap_le_unsatVal_arithmeticAmplify rejectingEdge_unsat
 
 example : (rejectingEdge.arithmeticAmplify.toGraph id).unsatVal = 1 := by
@@ -76,9 +76,9 @@ example : (rejectingEdge.arithmeticAmplify).WellFormed :=
     subst edge
     exact ⟨by decide, by decide⟩)
 
-example : 0 < 1 / (walkLength : ℝ) ^ 2 := by
-  have h : 0 < (walkLength : ℝ) := by exact_mod_cast (Nat.zero_lt_of_lt one_le_walkLength)
-  positivity
+example : 0 < gap := gap_pos
+
+example : gap = 1 / (2 : ℝ) ^ 126 := rfl
 
 -- Two parallel rejecting constraints force a complete round, beyond the zero-round clients.
 -- We instantiate its semantic contract without attempting to materialize its enormous tables.
@@ -91,7 +91,7 @@ private theorem rejectingPair_unsat : ¬ (rejectingPair.toGraph id).Satisfiable 
 
 example : Nat.clog 2 rejectingPair.edges.length = 1 := by decide
 
-example : 1 / (walkLength : ℝ) ^ 2 ≤ (rejectingPair.arithmeticAmplify.toGraph id).unsatVal :=
+example : 1 / (2 : ℝ) ^ 126 ≤ (rejectingPair.arithmeticAmplify.toGraph id).unsatVal :=
   Graph.gap_le_unsatVal_arithmeticAmplify rejectingPair_unsat
 
 example : ¬ (rejectingPair.arithmeticAmplify.toGraph id).Satisfiable :=

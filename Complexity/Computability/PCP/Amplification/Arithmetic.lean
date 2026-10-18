@@ -15,8 +15,10 @@ import Mathlib.Tactic.IrreducibleDef
 # Fixed amplification parameters for the arithmetic expanders
 
 The arithmetic family has degree `2 * 257 ^ 12` and a uniform spectral bound strictly below one.
-The fixed killing rate `2 ^ 400 + 1` suffices to double the value after preprocessing, powering,
-and composition over the fixed answer alphabet. Its walk length is `2 ^ 420`.
+The fixed killing rate `2 ^ 379 + 1` suffices to double the value after preprocessing, powering,
+and composition over the fixed answer alphabet, up to the gap `2 ^ (-126)`.
+Its walk length is `2 ^ 399`. The threshold uses the full denominator of the second-moment
+bound, rather than the smaller cutoff `1 / walkLength²`.
 
 Both parameters are concrete natural numbers, with no search or choice in their definitions.
 They are irreducible to keep elaboration from evaluating the astronomical finite types built
@@ -26,6 +28,7 @@ from them. The construction is asymptotic: these parameters are not intended for
 
 * `Cslib.PCP.ConstraintGraph.Amplification.Arithmetic.killRate`: the fixed killing rate.
 * `Cslib.PCP.ConstraintGraph.Amplification.Arithmetic.walkLength`: the fixed walk length.
+* `Cslib.PCP.ConstraintGraph.Amplification.Arithmetic.gap`: the certified soundness gap.
 
 ## Main results
 
@@ -46,22 +49,29 @@ namespace Cslib.PCP.ConstraintGraph.Amplification.Arithmetic
 open HadamardTester RotationMap
 
 /-- A fixed killing rate large enough for the concrete arithmetic spectral bound. -/
-irreducible_def killRate : ℕ := 4 ^ 200 + 1
+irreducible_def killRate : ℕ := 2 * 4 ^ 189 + 1
 
 /-- The walk length required by the powering bound over the fixed answer alphabet. -/
-irreducible_def walkLength : ℕ := 4 ^ 210
+irreducible_def walkLength : ℕ := 2 * 4 ^ 199
+
+/-- A soundness threshold supported by the exact second-moment bound. -/
+noncomputable def gap : ℝ := 1 / 2 ^ 126
+
+/-- The concrete soundness gap is positive. -/
+theorem gap_pos : 0 < gap := by norm_num [gap]
+
+/-- The concrete soundness gap is at most one. -/
+theorem gap_le_one : gap ≤ 1 := by norm_num [gap]
 
 instance : NeZero killRate := ⟨by rw [killRate_def]; exact Nat.succ_ne_zero _⟩
 
 /-- The chosen killing rate is at least two. -/
 theorem two_le_killRate : 2 ≤ killRate := by
-  rw [killRate_def]
-  exact Nat.succ_le_succ (one_le_pow₀ (by decide : 1 ≤ (4 : ℕ)))
+  norm_num [killRate_def]
 
 /-- The chosen walk length is positive. -/
 theorem one_le_walkLength : 1 ≤ walkLength := by
-  rw [walkLength_def]
-  exact one_le_pow₀ (by decide : 1 ≤ (4 : ℕ))
+  norm_num [walkLength_def]
 
 /-- The chosen walk length matches the alphabet size and killing rate. -/
 theorem walkLength_eq :
@@ -71,13 +81,11 @@ theorem walkLength_eq :
 
 /-- The concrete killing rate pays for preprocessing and composition with a factor of two left. -/
 theorem gain :
-    2 / retention (Fintype.card (AffinePlaneFamilyLabel (ZMod 257) 257))
-        (1 - 9 / (400 * (257 : ℝ) ^ 16)) ≤
-      ((killRate : ℝ) - 1) / denominator (Fintype.card (Bool × (Query → Bool)))
+    2 ≤ Amplification.gain (Fintype.card (Bool × (Query → Bool)))
         (Fintype.card (AffinePlaneFamilyLabel (ZMod 257) 257))
-        (1 - 9 / (400 * (257 : ℝ) ^ 16)) := by
+        walkLength killRate (1 - 9 / (400 * (257 : ℝ) ^ 16)) gap := by
   rw [card_affinePlaneFamilyLabel (ZMod.finEquiv 257).toEquiv.symm, card_alphabet_compose,
-    killRate_def]
-  norm_num [retention, denominator]
+    killRate_def, walkLength_def]
+  norm_num [Amplification.gain, retention, gap]
 
 end Cslib.PCP.ConstraintGraph.Amplification.Arithmetic

@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.PCP.Amplification
-import Complexity.Foundations.Combinatorics.Expander.AffineFamily
+import Complexity.Computability.PCP.Amplification.Arithmetic
 import Mathlib.Tactic.NormNum.Prime
 
 /-! Regression clients for amplification with actual rotations and arbitrary degree. -/
@@ -55,12 +55,10 @@ example : ∃ q : ℕ, 2 ≤ q ∧
 
 -- These parameters actually instantiate the full amplifier, including all its size, value and
 -- satisfiability fields. This is a mathematical client, not an efficiency certificate for a round.
-example : Nonempty (Amplifier.{0} (Bool × (Query → Bool))) := by
-  obtain ⟨q, hq, hgain⟩ := Amplification.exists_killRate
-    (K := Fintype.card (Bool × (Query → Bool))) (d := Fintype.card Label)
-    Fintype.card_pos Fintype.card_pos (by norm_num [spectralBound] : spectralBound < 1)
-  let : NeZero q := ⟨by lia⟩
-  exact ⟨Amplification.amplifier arithmeticInputs _ q (by norm_num [spectralBound]) hq rfl hgain⟩
+open Amplification.Arithmetic in
+example : Nonempty (Amplifier.{0} (Bool × (Query → Bool))) :=
+  ⟨Amplification.amplifier arithmeticInputs walkLength killRate
+    (by norm_num [spectralBound]) two_le_killRate walkLength_eq gap_pos gap_le_one gain⟩
 
 -- A concrete normalization check for the generic coefficients, separate from family existence.
 example : Amplification.retention 120 (1 - 1 / 360000) = 1 / 1452000 := by

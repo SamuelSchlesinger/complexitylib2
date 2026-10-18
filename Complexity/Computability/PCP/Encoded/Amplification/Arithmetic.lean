@@ -107,13 +107,13 @@ theorem satisfiable_arithmeticAmplify_iff (g : Graph Constraint) :
 /-- Every unsatisfiable graph reaches the fixed positive gap after logarithmically many rounds. -/
 theorem gap_le_unsatVal_arithmeticAmplify {g : Graph Constraint}
     (hunsat : ¬ (g.toGraph id).Satisfiable) :
-    1 / (walkLength : ℝ) ^ 2 ≤ (g.arithmeticAmplify.toGraph id).unsatVal := by
+    gap ≤ (g.arithmeticAmplify.toGraph id).unsatVal := by
   unfold arithmeticAmplify
   exact gap_le_unsatVal_amplifyIter_clog (fun _ _ => true) RotationMap.arithmeticExpander
     RotationMap.arithmeticExpanderRotate RotationMap.arithmeticExpanderRotate_eq
     walkLength killRate (FinEnum.toList _) FinEnum.equiv (FinEnum.toList _) (FinEnum.toList _)
     FinEnum.nodup_toList FinEnum.mem_toList FinEnum.nodup_toList FinEnum.nodup_toList
     FinEnum.mem_toList FinEnum.mem_toList _ RotationMap.spectralExpansion_arithmeticExpander_le
-    (by norm_num) two_le_killRate walkLength_eq gain hunsat
+    (by norm_num) two_le_killRate walkLength_eq gap_pos.le gap_le_one gain hunsat
 
 end Cslib.PCP.Encoded.Graph

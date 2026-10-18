@@ -134,39 +134,33 @@ include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries hgap hμ 
 /-- The complete rounds double the value until the fixed threshold is reached. -/
 theorem min_le_unsatVal_amplifyIter (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card Alphabet * (q - 1))
-    (hgain : 2 / ConstraintGraph.Amplification.retention (Fintype.card D) μ ≤
-      ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator
-        (Fintype.card Alphabet) (Fintype.card D) μ)
+    {γ : ℝ} (hγ : 0 ≤ γ)
+    (hgain : 2 ≤ ConstraintGraph.Amplification.gain
+      (Fintype.card Alphabet) (Fintype.card D) T q μ γ)
     (k : ℕ) (g : Graph Constraint) :
-    min (2 ^ k * (g.toGraph id).unsatVal) (1 / T ^ 2) ≤
+    min (2 ^ k * (g.toGraph id).unsatVal) γ ≤
       ((amplifyIter fallback rotate T q walks number coins queries k g).toGraph id).unsatVal := by
   unfold amplifyIter
   exact min_two_pow_mul_le_iterate _ (fun graph : Graph Constraint => (graph.toGraph id).unsatVal)
-      (by positivity) (fun graph => graph.min_le_unsatVal_amplify id fallback family rotate hrotate
+      hγ (fun graph => graph.min_le_unsatVal_amplify id fallback family rotate hrotate
         T q walks number coins queries hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries
-        μ hgap hμ hq hT hgain) k g
+        μ hgap hμ hq hT hγ hgain) k g
 
 include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries hgap hμ in
 /-- Enough complete rounds turn every unsatisfiable input into a graph above the fixed gap. -/
 theorem gap_le_unsatVal_amplifyIter (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card Alphabet * (q - 1))
-    (hgain : 2 / ConstraintGraph.Amplification.retention (Fintype.card D) μ ≤
-      ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator
-        (Fintype.card Alphabet) (Fintype.card D) μ)
+    {γ : ℝ} (hγ : 0 ≤ γ) (hγ₁ : γ ≤ 1)
+    (hgain : 2 ≤ ConstraintGraph.Amplification.gain
+      (Fintype.card Alphabet) (Fintype.card D) T q μ γ)
     {g : Graph Constraint} (hunsat : ¬ (g.toGraph id).Satisfiable) {k : ℕ}
     (hk : g.edges.length ≤ 2 ^ k) :
-    1 / (T : ℝ) ^ 2 ≤
+    γ ≤
       ((amplifyIter fallback rotate T q walks number coins queries k g).toGraph id).unsatVal := by
   refine le_trans (le_min ?_ le_rfl) (min_le_unsatVal_amplifyIter fallback family rotate hrotate
     T q walks number coins queries hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries
-    μ hgap hμ hq hT hgain k g)
-  have hT₁ : (1 : ℝ) ≤ T := by
-    exact_mod_cast (show 1 ≤ T from by
-      rw [hT]
-      exact Nat.mul_pos (Nat.mul_pos (by decide) Fintype.card_pos) (by lia))
-  have hthreshold : 1 / (T : ℝ) ^ 2 ≤ 1 :=
-    (div_le_one (by positivity)).mpr (one_le_pow₀ hT₁)
-  exact hthreshold.trans (((g.toGraph id).one_le_card_mul_unsatVal hunsat).trans
+    μ hgap hμ hq hT hγ hgain k g)
+  exact hγ₁.trans (((g.toGraph id).one_le_card_mul_unsatVal hunsat).trans
     (mul_le_mul_of_nonneg_right (by simpa only [Fintype.card_fin] using
       (show (g.edges.length : ℝ) ≤ 2 ^ k by exact_mod_cast hk)) (g.toGraph id).unsatVal_nonneg))
 
@@ -174,15 +168,15 @@ include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries hgap hμ 
 /-- The logarithmic program has a constant soundness gap on every unsatisfiable input. -/
 theorem gap_le_unsatVal_amplifyIter_clog (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card Alphabet * (q - 1))
-    (hgain : 2 / ConstraintGraph.Amplification.retention (Fintype.card D) μ ≤
-      ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator
-        (Fintype.card Alphabet) (Fintype.card D) μ)
+    {γ : ℝ} (hγ : 0 ≤ γ) (hγ₁ : γ ≤ 1)
+    (hgain : 2 ≤ ConstraintGraph.Amplification.gain
+      (Fintype.card Alphabet) (Fintype.card D) T q μ γ)
     {g : Graph Constraint} (hunsat : ¬ (g.toGraph id).Satisfiable) :
-    1 / (T : ℝ) ^ 2 ≤
+    γ ≤
       ((amplifyIter fallback rotate T q walks number coins queries
         (Nat.clog 2 g.edges.length) g).toGraph id).unsatVal :=
   gap_le_unsatVal_amplifyIter fallback family rotate hrotate T q walks number coins queries
-    hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries μ hgap hμ hq hT hgain hunsat
+    hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries μ hgap hμ hq hT hγ hγ₁ hgain hunsat
     (Nat.le_pow_clog (by decide) _)
 
 end Correctness

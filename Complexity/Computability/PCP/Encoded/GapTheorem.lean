@@ -88,7 +88,7 @@ theorem satisfiable_gapGraph_iff {V : Type} [DecidableEq V] (φ : CNF V) :
 /-- Every unsatisfiable formula produces a graph above the fixed arithmetic gap. -/
 theorem gap_le_unsatVal_gapGraph {V : Type} [DecidableEq V] (φ : CNF V)
     (hφ : ¬ φ.Satisfiable) :
-    1 / (walkLength : ℝ) ^ 2 ≤ ((gapGraph φ).toGraph id).unsatVal := by
+    gap ≤ ((gapGraph φ).toGraph id).unsatVal := by
   apply Graph.gap_le_unsatVal_arithmeticAmplify
   intro h
   exact hφ ((satisfiable_gapGraph_iff φ).mp

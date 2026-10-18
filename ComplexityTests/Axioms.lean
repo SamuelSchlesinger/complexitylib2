@@ -2885,6 +2885,13 @@ info: 'Cslib.PCP.RegularConstraintGraph.le_unsatFrac_power' depends on axioms: [
 #print axioms Cslib.PCP.RegularConstraintGraph.le_unsatFrac_power
 
 /--
+info: 'Cslib.PCP.RegularConstraintGraph.le_unsatVal_power_min' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.RegularConstraintGraph.le_unsatVal_power_min
+
+/--
 info: 'Cslib.PCP.RegularConstraintGraph.le_unsatVal_power' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

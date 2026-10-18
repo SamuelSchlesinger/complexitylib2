@@ -150,13 +150,13 @@ pre-composition bound is shared with the mathematical amplification proof. -/
 theorem min_le_unsatVal_amplify [Nonempty D] (μ : ℝ)
     (hgap : ∀ n, (family n).spectralExpansion ≤ μ) (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1))
-    (hgain : 2 / ConstraintGraph.Amplification.retention (Fintype.card D) μ ≤
-      ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator
-        (Fintype.card α) (Fintype.card D) μ) :
-    min (2 * (g.toGraph eval).unsatVal) (1 / T ^ 2) ≤
+    {γ : ℝ} (hγ : 0 ≤ γ)
+    (hgain : 2 ≤ ConstraintGraph.Amplification.gain
+      (Fintype.card α) (Fintype.card D) T q μ γ) :
+    min (2 * (g.toGraph eval).unsatVal) γ ≤
       ((g.amplify eval fallback rotate T q walks number coins queries).toGraph id).unsatVal :=
   ((g.toGraph eval).min_le_div_unsatVal_power_preprocessWith
-    (g.preprocessExpanders eval fallback family μ hgap) hμ hq hT hgain).trans
+    (g.preprocessExpanders eval fallback family μ hgap) hμ hq hT hγ hgain).trans
       (g.div_le_unsatVal_amplify eval fallback family rotate hrotate T q walks number coins queries
         hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries)
 

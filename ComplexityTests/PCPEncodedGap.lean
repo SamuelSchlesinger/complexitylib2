@@ -55,7 +55,7 @@ end Captured
 example : ((gapGraph ([] : CNF Empty)).toGraph id).Satisfiable :=
   (satisfiable_gapGraph_iff _).mpr ⟨Empty.elim, rfl⟩
 
-example : 1 / (walkLength : ℝ) ^ 2 ≤ ((gapGraph ([[]] : CNF Empty)).toGraph id).unsatVal :=
+example : gap ≤ ((gapGraph ([[]] : CNF Empty)).toGraph id).unsatVal :=
   gap_le_unsatVal_gapGraph _ (by simp [CNF.Satisfiable])
 
 private def wideFormula : CNF ℕ :=
@@ -70,7 +70,7 @@ private def wideContradiction : CNF ℕ :=
     [(2 ^ 100, false)]]
 
 -- Repeated sparse names and a wide clause still produce a genuine positive gap.
-example : 1 / (walkLength : ℝ) ^ 2 ≤ ((gapGraph wideContradiction).toGraph id).unsatVal := by
+example : gap ≤ ((gapGraph wideContradiction).toGraph id).unsatVal := by
   apply gap_le_unsatVal_gapGraph
   rintro ⟨σ, hσ⟩
   cases σ (2 ^ 100) <;>

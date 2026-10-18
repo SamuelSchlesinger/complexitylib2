@@ -72,6 +72,8 @@ graph, that is over uniformly random starts, labels and kill signals.
 * `Cslib.PCP.RegularConstraintGraph.le_unsatFrac_power`,
   `Cslib.PCP.RegularConstraintGraph.le_unsatVal_power_of_le`: the powering bound, for any admissible
   constants.
+* `Cslib.PCP.RegularConstraintGraph.le_unsatVal_power_min`: the standard first-moment coefficient,
+  retaining a supplied soundness threshold in the second-moment bound.
 * `Cslib.PCP.RegularConstraintGraph.le_unsatVal_power`: the powering bound, with explicit
   parameters.
 
@@ -123,23 +125,20 @@ private theorem sq_le_mul_add_of_le {a e x P : ℝ} (ha : 0 ≤ a) (hae : a ≤ 
       mul_le_mul_of_nonneg_right h (add_nonneg ha hP)
     nlinarith
 
-/-- The bound `c ^ 2 ε / (c + T ^ 2 ε + B)` grows with `ε`, and dominates
-`c ^ 2 / (c + 1 + B')` times `min u (1 / T ^ 2)` for `u ≤ ε` and `B ≤ B'`. -/
-private theorem mul_min_le_div {c B B' T ε u : ℝ} (hc : 0 ≤ c) (hB : 0 ≤ B) (hBB : B ≤ B')
-    (hu : 0 ≤ u) (huε : u ≤ ε) :
-    c ^ 2 / (c + 1 + B') * min u (1 / T ^ 2) ≤ c ^ 2 * ε / (c + T ^ 2 * ε + B) := by
+/-- Truncating the increasing second-moment ratio at any nonnegative threshold gives a linear
+bound below that threshold, with its exact denominator retained. -/
+private theorem mul_min_le_div {c B B' T ε u δ : ℝ} (hc : 0 ≤ c) (hB : 0 ≤ B) (hBB : B ≤ B')
+    (hu : 0 ≤ u) (huε : u ≤ ε) (hδ : 0 ≤ δ) :
+    c ^ 2 / (c + T ^ 2 * δ + B') * min u δ ≤ c ^ 2 * ε / (c + T ^ 2 * ε + B) := by
   rcases hc.eq_or_lt with rfl | hc
   · simp
-  set m := min u (1 / T ^ 2)
-  have hm₀ : 0 ≤ m := le_min hu (by positivity)
+  set m := min u δ
+  have hm₀ : 0 ≤ m := le_min hu hδ
   have hmε : m ≤ ε := (min_le_left _ _).trans huε
-  have hTm : T ^ 2 * m ≤ 1 := by
-    rcases eq_or_ne T 0 with rfl | hT
-    · simp
-    · calc T ^ 2 * m ≤ T ^ 2 * (1 / T ^ 2) := by gcongr; exact min_le_right _ _
-        _ = 1 := by field_simp
+  have hTm : T ^ 2 * m ≤ T ^ 2 * δ :=
+    mul_le_mul_of_nonneg_left (min_le_right _ _) (sq_nonneg T)
   have hε₀ : 0 ≤ ε := hm₀.trans hmε
-  calc c ^ 2 / (c + 1 + B') * m = c ^ 2 * m / (c + 1 + B') := by ring
+  calc c ^ 2 / (c + T ^ 2 * δ + B') * m = c ^ 2 * m / (c + T ^ 2 * δ + B') := by ring
     _ ≤ c ^ 2 * m / (c + T ^ 2 * m + B) :=
         div_le_div_of_nonneg_left (by positivity) (by positivity) (by linarith)
     _ ≤ c ^ 2 * ε / (c + T ^ 2 * ε + B) := by
@@ -711,15 +710,13 @@ theorem le_unsatFrac_power [Nonempty D] (A : V → WalkLabels D T → α) {H : �
   rw [div_le_iff₀ (by positivity)]
   exact le_of_mul_le_mul_left h₅ h₀
 
-/-- **The powering bound** [Dinur, Section 5][Dinur2005]: on a constraint graph `R` whose spectral
-expansion is at most `μ < 1`, the value of the powered constraint graph is at least
-`c ^ 2 / (c + 1 + 2 T / (1 - μ))` times `min (UNSAT R) (1 / T ^ 2)`, for `2 H + 1 < T` and any
-`0 ≤ c ≤ (q - 1) (1 / |α| - (1 - 1 / q) ^ (H + 1)) ^ 2`. -/
+/-- **The powering bound** [Dinur, Section 5][Dinur2005], with a supplied nonnegative threshold
+`δ`. Retaining its contribution to the denominator permits a larger final amplification gap. -/
 theorem le_unsatVal_power_of_le (H : ℕ) (hH : 2 * H + 1 < T)
     (hα : (1 - (q : ℝ)⁻¹) ^ (H + 1) ≤ (Fintype.card α : ℝ)⁻¹) {c : ℝ} (hc₀ : 0 ≤ c)
     (hc : c ≤ ((q : ℝ) - 1) * ((Fintype.card α : ℝ)⁻¹ - (1 - (q : ℝ)⁻¹) ^ (H + 1)) ^ 2) {μ : ℝ}
-    (hμ : R.graph.spectralExpansion ≤ μ) (hμ₁ : μ < 1) :
-    c ^ 2 / (c + 1 + 2 * T / (1 - μ)) * min R.toConstraintGraph.unsatVal (1 / T ^ 2) ≤
+    (hμ : R.graph.spectralExpansion ≤ μ) (hμ₁ : μ < 1) {δ : ℝ} (hδ : 0 ≤ δ) :
+    c ^ 2 / (c + T ^ 2 * δ + 2 * T / (1 - μ)) * min R.toConstraintGraph.unsatVal δ ≤
       (R.power T q).toConstraintGraph.unsatVal := by
   have hlam : R.graph.spectralExpansion < 1 := hμ.trans_lt hμ₁
   have hB : 0 ≤ 2 * (T : ℝ) / (1 - R.graph.spectralExpansion) :=
@@ -736,19 +733,14 @@ theorem le_unsatVal_power_of_le (H : ℕ) (hH : 2 * H + 1 < T)
     exact (R.power T q).toConstraintGraph.unsatVal_nonneg
   refine ((R.power T q).toConstraintGraph.le_unsatVal_iff).2 fun A ↦ ?_
   exact (mul_min_le_div hc₀ hB hBB R.toConstraintGraph.unsatVal_nonneg
-    (R.toConstraintGraph.unsatVal_le _)).trans (R.le_unsatFrac_power T q A hH hα hc₀ hc hlam)
+    (R.toConstraintGraph.unsatVal_le _) hδ).trans (R.le_unsatFrac_power T q A hH hα hc₀ hc hlam)
 
-/-- **The powering bound** [Dinur, Section 5][Dinur2005]: for a killing rate `q ≥ 2` and walks
-truncated at `T = 4 |α| (q - 1)` steps, on a constraint graph `R` whose spectral expansion is at
-most `μ < 1`, the value of the powered constraint graph is at least
-`(q - 1) / (4 |α| ^ 2 + 16 |α| ^ 4 + 128 |α| ^ 5 / (1 - μ))` times `min (UNSAT R) (1 / T ^ 2)`.
-The factor grows linearly with `q`, while the alphabet of the powered constraint graph depends on
-`q`, `|α|` and the degree of `R` only (`card_alphabet_power`): this is the gap amplification of
-Dinur's proof. -/
-theorem le_unsatVal_power (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 1)) {μ : ℝ}
-    (hμ : R.graph.spectralExpansion ≤ μ) (hμ₁ : μ < 1) :
-    ((q : ℝ) - 1) / (4 * Fintype.card α ^ 2 + 16 * Fintype.card α ^ 4 +
-        128 * Fintype.card α ^ 5 / (1 - μ)) * min R.toConstraintGraph.unsatVal (1 / T ^ 2) ≤
+/-- The standard killed-walk cutoff supplies first-moment coefficient `(q - 1) / (4 |α|²)`.
+The soundness threshold remains a parameter, independently of the walk length. -/
+theorem le_unsatVal_power_min (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 1)) {μ : ℝ}
+    (hμ : R.graph.spectralExpansion ≤ μ) (hμ₁ : μ < 1) {δ : ℝ} (hδ : 0 ≤ δ) :
+    let c : ℝ := (q - 1) / (4 * Fintype.card α ^ 2)
+    c ^ 2 / (c + T ^ 2 * δ + 2 * T / (1 - μ)) * min R.toConstraintGraph.unsatVal δ ≤
       (R.power T q).toConstraintGraph.unsatVal := by
   set K := Fintype.card α
   have hK : 1 ≤ K := Fintype.card_pos
@@ -756,7 +748,6 @@ theorem le_unsatVal_power (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 1)
   have hq' : (1 : ℝ) ≤ q - 1 := by
     have : (2 : ℝ) ≤ q := by exact_mod_cast hq
     linarith
-  have hμ' : 0 < 1 - μ := sub_pos.2 hμ₁
   -- the killed walks surviving their first `2 |α| (q - 1)` steps are few
   have hm : 1 ≤ K * (q - 1) := Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by omega) (by omega))
   have hH : 2 * (2 * K * (q - 1) - 1) + 1 < T := by
@@ -775,7 +766,31 @@ theorem le_unsatVal_power (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 1)
       linarith
     calc c = (q - 1) * ((2 * K : ℝ)⁻¹) ^ 2 := by simp only [c]; field_simp; ring
       _ ≤ _ := by gcongr
-  refine le_trans ?_ (R.le_unsatVal_power_of_le T q _ hH (hsurv.trans h2K) hc₀ hc hμ hμ₁)
+  exact R.le_unsatVal_power_of_le T q _ hH (hsurv.trans h2K) hc₀ hc hμ hμ₁ hδ
+
+/-- **The powering bound** [Dinur, Section 5][Dinur2005]: the standard cutoff gains a factor
+linear in `q`, up to threshold `1 / T²`. The more precise `le_unsatVal_power_min` permits larger
+thresholds without repeating the probabilistic argument. -/
+theorem le_unsatVal_power (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 1)) {μ : ℝ}
+    (hμ : R.graph.spectralExpansion ≤ μ) (hμ₁ : μ < 1) :
+    ((q : ℝ) - 1) / (4 * Fintype.card α ^ 2 + 16 * Fintype.card α ^ 4 +
+        128 * Fintype.card α ^ 5 / (1 - μ)) * min R.toConstraintGraph.unsatVal (1 / T ^ 2) ≤
+      (R.power T q).toConstraintGraph.unsatVal := by
+  set K := Fintype.card α
+  have hK : 1 ≤ K := Fintype.card_pos
+  have hq' : (1 : ℝ) ≤ q - 1 := by
+    have : (2 : ℝ) ≤ q := by exact_mod_cast hq
+    linarith
+  have hμ' : 0 < 1 - μ := sub_pos.2 hμ₁
+  have hT₀ : 0 < T := by rw [hT]; exact Nat.mul_pos (by lia) (by lia)
+  have hcancel : (T : ℝ) ^ 2 * (1 / (T : ℝ) ^ 2) = 1 := by
+    have : (T : ℝ) ≠ 0 := by exact_mod_cast hT₀.ne'
+    field_simp
+  have hpow := R.le_unsatVal_power_min T q hq hT hμ hμ₁ (δ := 1 / T ^ 2) (by positivity)
+  dsimp only at hpow
+  rw [hcancel] at hpow
+  set c : ℝ := (q - 1) / (4 * K ^ 2)
+  refine le_trans ?_ hpow
   gcongr ?_ * _
   · exact le_min R.toConstraintGraph.unsatVal_nonneg (by positivity)
   -- the factor `c ^ 2 / (c + 1 + 2 T / (1 - μ))` grows linearly with `q`
