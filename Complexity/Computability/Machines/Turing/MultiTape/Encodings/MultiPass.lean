@@ -19,8 +19,9 @@ import Mathlib.Tactic.Ring
 A multi-pass fold reads a list, encoded as the concatenation of the tokens of its elements, several
 times. Each pass folds `next` over the elements, emitting `emit` for each of them, then emits
 `passEmit` of the resulting state and moves on to `passEnd` of it. The passes stop once `cont` of
-the state is false, and the fold ends by emitting `finish` of the final state. Only the state and
-one element are ever held on the work tapes, so the space does not grow with the input.
+the state is false, and the fold ends by emitting `finish` of the final state. Workspace is
+controlled by initialization, finalization and the peak state, element and callback bounds,
+without a separate full-input-copy term.
 
 ## Main definitions
 
@@ -29,8 +30,8 @@ one element are ever held on the work tapes, so the space does not grow with the
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.multiPassFold`: multi-pass folds are tidily
-  computable, in time linear in the input plus the rounds for each pass, and in space independent
-  of the input.
+  computable, charging each pass and bounding workspace by the initialization, finalization and
+  peak state, element and callback bounds.
 -/
 
 namespace Turing.MultiTapeTM
@@ -56,71 +57,15 @@ lemma linear_flagWord : ComputableTidilyInLinearTimeAndSpace flagWord encBool en
   funext c
   cases c <;> rfl
 
-/-! ### Tidy machines on selected tapes -/
-
-section Tapes
-
-variable {β δ : Type*} {k K : ℕ} {S : Type*} {tm : MultiTapeTM k Bool S} {encB : β ↪ List Bool}
-  {encD : δ ↪ List Bool} {f : β → δ} {t s : β → ℕ}
-
-/-- A tidy machine writing its output to tape `V`. -/
-lemma transformsTapes_outputToWord (h : ComputesFunTidilyInTimeAndSpace tm encB encD f t s)
-    {e : Fin (k + 1) ↪ Fin K} {V : Fin K} (he : e (Fin.last k) = V) (b : β) :
-    TransformsTapes (tm.outputToWord.extendTapes e) (fun inp ws => inp = encB b ∧ ws = fun _ => [])
-      (fun _ _ ws' em => ws' = Function.update (fun _ => []) V (encD (f b)) ∧ em = [])
-      (t b + (encD (f b)).length + 2) (s b + 2 * (encD (f b)).length + 2 * K + 3) := by
-  have hk : k + 1 ≤ K := by simpa using Fintype.card_le_of_embedding e
-  have h' := ((h b).outputToWord.imp
-      (P' := fun inp ws => inp = encB b ∧ ws = Function.update (fun _ => []) (Fin.last k) [])
-      (Q' := fun _ ws ws' em => ws' = Function.update ws (Fin.last k) (encD (f b)) ∧ em = [])
-      (fun _ _ ⟨hin, hws⟩ => ⟨hin, by simp [hws]⟩)
-      (fun _ _ _ _ ⟨_, hws⟩ ⟨hws', he⟩ => ⟨by simp [hws', hws], he⟩) le_rfl le_rfl
-    ).extendTapes_update e
-  rw [he] at h'
-  exact h'.imp (fun _ _ ⟨hin, hws⟩ => ⟨hin, by simp [hws]⟩)
-    (fun _ _ _ _ ⟨_, hws⟩ ⟨hws', he⟩ => ⟨by simp [hws', hws], he⟩) le_rfl (by omega)
-
--- vendored: `transformsTapes_inputFromWord` in crei:crei/tidy-universal, a name that cslib #1111
--- gives to a public lemma of `Plumbing/InputFromTape`
-/-- A tidy machine run on the word on tape `V`, emitting its output. -/
-lemma transformsTapes_inputFromWord_tape (h : ComputesFunTidilyInTimeAndSpace tm encB encD f t s)
-    {e : Fin (k + 2) ↪ Fin K} {V : Fin K} (he : e (Fin.natAdd k 0) = V) (b : β) :
-    TransformsTapes ((tm.inputFromWord true).extendTapes e)
-      (fun _ ws => ws = Function.update (fun _ => []) V (encB b))
-      (fun _ ws ws' em => ws' = ws ∧ em = encD (f b))
-      (t b + 4) (s b + 2 * (encB b).length + 3 * K + 10) := by
-  have hk : k + 2 ≤ K := by simpa using Fintype.card_le_of_embedding e
-  have h' := ((h b).inputFromWord true).extendTapes_update e
-  rw [he] at h'
-  exact h'.imp (fun _ _ hws => ⟨trivial, hws⟩)
-    (fun _ _ _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws, Function.update_idem], he⟩) le_rfl (by omega)
-
-/-- A tidy machine run on the word on tape `V`, writing its output to tape `O`. -/
-lemma transformsTapes_onWords (h : ComputesFunTidilyInTimeAndSpace tm encB encD f t s)
-    {e : Fin (k + 1 + 2) ↪ Fin K} {V O : Fin K} (hi : e (Fin.natAdd (k + 1) 0) = V)
-    (ho : e ((Fin.last k).castAdd 2) = O) (b : β) :
-    TransformsTapes ((tm.onWords true).extendTapes e)
-      (fun _ ws => ws = Function.update (fun _ => []) V (encB b))
-      (fun _ ws ws' em => ws' = Function.update ws O (encD (f b)) ∧ em = [])
-      (t b + (encD (f b)).length + 6)
-      (s b + 2 * (encB b).length + 2 * (encD (f b)).length + 4 * K + 15) := by
-  have hk : k + 1 + 2 ≤ K := by simpa using Fintype.card_le_of_embedding e
-  have h' := (((h b).onWords true).imp
-    (P' := fun _ ws => True ∧ ws = Function.update (fun _ => []) (Fin.natAdd (k + 1) 0) (encB b))
-    (fun _ _ h => h.2) (fun _ _ _ _ _ h => h) le_rfl le_rfl).extendTapes_update e
-  rw [hi, ho] at h'
-  exact h'.imp (fun _ _ hws => ⟨trivial, hws⟩) (fun _ _ _ _ _ h => h) le_rfl (by omega)
-
-end Tapes
-
 /-- **Multi-pass folds are tidily computable.** The input `x` is encoded by concatenating the
 non-empty tokens `tok a` of the elements `elems x`, from each of which the finite-state reader `r`
 reads `encA a`. Pass `i` starts from `passState … i`; the fold makes `passes x + 1` passes, which
 `cont` signals after each of them. If all the parts are tidily computable and `g x` is encoded by
 what the passes emit followed by `finish` of the final state, then `g` is tidily computable. Its
-time is that of a streaming fold for every pass; its space does not grow with the input. The
-bounds `tMax`, `sMax` and `lMax` bound the time and space of a round and of the end of a pass, and
-the lengths of the states and elements. -/
+time is that of a streaming fold for every pass. The bounds `tMax`, `sMax` and `lMax` bound the
+time and space of a round and of the end of a pass, and the lengths of the states and elements.
+Workspace also accounts for initialization and finalization, without a separate full-input-copy
+term. All these bounds may depend on the input. -/
 public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ ε ε' φ ω : Type*}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool}
     {encE' : ε' ↪ List Bool} {encF : φ ↪ List Bool} {encIn : γ ↪ List Bool}
@@ -227,13 +172,13 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
     (i := Fin.natAdd (kC + 1) (0 : Fin 2)) (o := (Fin.last kC).castAdd 2)
     (by simp [Fin.ext_iff]) hVC
   -- the machines on the common tapes
-  have hI := transformsTapes_outputToWord htmI heI
-  have hE := transformsTapes_inputFromWord_tape htmE heE
-  have hN := transformsTapes_onWords htmN heN heN'
-  have hF := transformsTapes_inputFromWord_tape htmF heF
-  have hPE := transformsTapes_inputFromWord_tape htmPE hePE
-  have hPN := transformsTapes_onWords htmPN hePN hePN'
-  have hC := transformsTapes_onWords (encD := encBits) htmC heC heC'
+  have hI := fun a => (htmI a).outputToWord_onTape heI
+  have hE := fun a => (htmE a).inputFromWord_extendTapes true heE
+  have hN := fun a => (htmN a).onWords_extendTapes true heN heN'
+  have hF := fun a => (htmF a).inputFromWord_extendTapes true heF
+  have hPE := fun a => (htmPE a).inputFromWord_extendTapes true hePE
+  have hPN := fun a => (htmPN a).onWords_extendTapes true hePN hePN'
+  have hC := fun a => (htmC a).onWords_extendTapes true heC heC'
   set D := cfr + cuf + cfl + cI + cN + cF + cPE + cPN₁ + cPN + cC₁ + cC + M + 100 with hD
   -- the state type nests the states of eight machines, beyond the default instance size limit
   refine ⟨2000 * (D * D * D), _, _, by set_option synthInstance.maxSize 1024 in infer_instance,

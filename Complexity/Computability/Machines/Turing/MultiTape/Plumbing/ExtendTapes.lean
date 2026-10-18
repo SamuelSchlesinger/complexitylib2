@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -24,11 +24,12 @@ The additions of cslib PR #1111 and of Christian Reitwiessner's branch `crei/tid
   `Turing.MultiTapeTM.space_noTapes_le`: the space of a reindexed run.
 * `Turing.MultiTapeTM.TransformsTapes.extendTapes`: a specification, read on the tapes selected by
   `e`.
+* `Turing.MultiTapeTM.TransformsTapes.extendTapes_update`: transport a single-word update.
 -/
 
 namespace Turing.MultiTapeTM
 
-variable {k k' : ℕ} {Symbol State : Type*} {input : List Symbol}
+variable {m K k k' : ℕ} {Symbol S State : Type*} {input : List Symbol}
 
 /-! ### Specifications on the selected tapes -/
 
@@ -71,6 +72,29 @@ public theorem TransformsTapes.extendTapes {tm : MultiTapeTM k Symbol State}
     exact embed_wordsCfg e (fun _ => rfl) fun _ _ => rfl
   · simp only [RelSeries.last_map, hlast, embedHom_apply]
     exact embed_wordsCfg e hv hx
+
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: moved from `Combinators/StreamFold` so selected-tape clients share this rule.
+/-- A specification that starts with the word `w` on tape `i` and every other tape blank and writes
+`out` to tape `o`, on the tapes selected by `e`. -/
+public theorem TransformsTapes.extendTapes_update {tm : MultiTapeTM m Symbol S}
+    {I : List Symbol → Prop} {i o : Fin m} {w out y : List Symbol} {t s : ℕ}
+    (h : TransformsTapes tm (fun inp ws => I inp ∧ ws = Function.update (fun _ => []) i w)
+      (fun _ ws ws' em => ws' = Function.update ws o out ∧ em = y) t s) (e : Fin m ↪ Fin K) :
+    TransformsTapes (tm.extendTapes e)
+      (fun inp ws => I inp ∧ ws = Function.update (fun _ => []) (e i) w)
+      (fun _ ws ws' em => ws' = Function.update ws (e o) out ∧ em = y) t (s + (K - m)) := by
+  refine (h.extendTapes e).imp (fun _ ws ⟨hI, hws⟩ => ⟨hI, ?_⟩)
+    (fun _ ws ws' _ _ ⟨⟨hv, hy⟩, hx⟩ => ⟨?_, hy⟩) le_rfl le_rfl
+  · subst hws
+    funext j
+    by_cases hj : j = i <;> simp [e.injective.eq_iff, hj]
+  · funext l
+    by_cases hl : l ∈ Set.range e
+    · obtain ⟨j, rfl⟩ := hl
+      have := congrFun hv j
+      by_cases hj : j = o <;> simp_all [Function.update_apply, e.injective.eq_iff]
+    · rw [hx l hl, Function.update_of_ne fun h => hl ⟨o, h.symm⟩]
 
 /-! ### Space of reindexed runs -/
 

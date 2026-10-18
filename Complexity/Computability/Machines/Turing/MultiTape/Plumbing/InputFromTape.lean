@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -14,7 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Extend
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.MarkWork
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
-public import Cslib.Foundations.Data.Fin.Tuple
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
+import Complexity.Foundations.Data.Fin.Tuple
 
 /-!
 # Reading the input from a word on a work tape
@@ -34,6 +35,9 @@ around it. It runs three machines in sequence:
 * `Turing.MultiTapeTM.inputFromWord`: the machine reading its input from a word on a work tape.
 
 ## Main results
+
+* `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.inputFromWord_extendTapes`: run on a selected
+  input tape, preserving it and emitting the output.
 
 * `Turing.MultiTapeTM.transformsTapes_inputFromWord`: a run path of `M` on the virtual input word,
   from and to `Turing.MultiTapeTM.wordsCfg` configurations, gives a specification of
@@ -203,5 +207,49 @@ public theorem transformsTapes_inputFromWord_of_runFrom (mark : Symbol)
       (fun _ _ ws' em => ws' = Fin.append ws₁ ![w, []] ∧ em = e)
       (t + 4) (s + 2 * w.length + 2 * k + 12) :=
   transformsTapes_inputFromWord mark ((exists_runPath_iff_runFrom rfl).mpr ⟨hrun, hspace⟩)
+
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: these tidy-word specifications previously lived in `Combinators/StreamFold`.
+-- The tuple identity is public for reuse by `onWords`.
+/-- The work tapes in which `inputFromWord` starts and halts, for a tidy machine. -/
+public lemma append_nil_eq_update {k : ℕ} (w : List Symbol) :
+    Fin.append (fun _ : Fin k => ([] : List Symbol)) ![w, []] =
+      Function.update (fun _ => []) (Fin.natAdd k 0) w := by
+  rw [← Fin.append_const (m := k) (n := 2) [], ← Fin.append_update_right]
+  congr 1
+  simp [funext_iff, Fin.forall_fin_two]
+
+/-- A tidy machine run on the word on a work tape, emitting what it computes. -/
+public theorem ComputesTidilyInTimeAndSpace.inputFromWord {k : ℕ} {tm : MultiTapeTM k Symbol State}
+    (mark : Symbol) {w y : List Symbol} {t s : ℕ} (h : tm.ComputesTidilyInTimeAndSpace w y t s) :
+    TransformsTapes (tm.inputFromWord mark)
+      (fun _ ws => True ∧ ws = Function.update (fun _ => []) (Fin.natAdd k 0) w)
+      (fun _ ws ws' em => ws' = Function.update ws (Fin.natAdd k 0) w ∧ em = y)
+      -- vendored: `+ 8` rather than crei's `+ 6`, as cslib #1111's `inputFromWord` uses two more
+      -- cells
+      (t + 4) (s + 2 * (w.length + 2) + 2 * k + 8) := by
+  -- vendored: `computesTidily_iff` is stated with run paths since cslib #1117
+  obtain ⟨hrun, hspace⟩ := computesTidily_iff_runFrom.mp h
+  refine (transformsTapes_inputFromWord_of_runFrom mark hrun hspace).imp
+    (fun _ ws ⟨_, hws⟩ => by rw [hws, append_nil_eq_update])
+    (fun _ ws ws' _ ⟨_, hws⟩ ⟨hws', hy⟩ => ⟨?_, hy⟩) le_rfl (by omega)
+  rw [hws', hws, append_nil_eq_update, Function.update_idem]
+
+-- upstream: candidate
+-- vendored: generalize the selected-tape helper from `Encodings/MultiPass` to a single run,
+-- retaining the exact space bound for streaming clients.
+/-- Run a tidy computation on a selected input tape, preserving it and emitting the output. -/
+public theorem ComputesTidilyInTimeAndSpace.inputFromWord_extendTapes
+    {tm : MultiTapeTM k Symbol State} (mark : Symbol) {input output : List Symbol} {t s K : ℕ}
+    (h : tm.ComputesTidilyInTimeAndSpace input output t s)
+    {e : Fin (k + 2) ↪ Fin K} {V : Fin K} (he : e (Fin.natAdd k 0) = V) :
+    TransformsTapes ((tm.inputFromWord mark).extendTapes e)
+      (fun _ ws => ws = Function.update (fun _ => []) V input)
+      (fun _ ws ws' em => ws' = ws ∧ em = output)
+      (t + 4) (s + 2 * (input.length + 2) + 2 * k + 8 + (K - (k + 2))) := by
+  have h' := (h.inputFromWord mark).extendTapes_update e
+  rw [he] at h'
+  exact h'.imp (fun _ _ hws => ⟨trivial, hws⟩)
+    (fun _ _ _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws, Function.update_idem], he⟩) le_rfl le_rfl
 
 end Turing.MultiTapeTM

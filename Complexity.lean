@@ -343,7 +343,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.D
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileInput
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WriteWord
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Closed

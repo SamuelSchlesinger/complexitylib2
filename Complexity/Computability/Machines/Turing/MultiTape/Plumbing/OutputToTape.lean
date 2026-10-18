@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -32,6 +32,9 @@ to blank work tapes, except that the last one holds `output`, and emits nothing.
 ## Main results
 
 * `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.outputToWord`: its specification.
+* `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.outputToWord_extendTapes`: preserve
+  unselected tapes while writing the output.
+* `Turing.MultiTapeTM.ComputesTidilyInTimeAndSpace.outputToWord_onTape`: the blank-tape case.
 -/
 
 namespace Turing.MultiTapeTM
@@ -110,5 +113,42 @@ public theorem ComputesTidilyInTimeAndSpace.outputToWord {tm : MultiTapeTM k Sym
   · simp only [MultiTapeNTM.RunPath.time] at ht ht₁ ⊢
     have : p₀.length = p.length := rfl
     omega
+
+-- upstream: candidate
+/-- A tidy computation writes its output on the selected last tape, leaves its selected scratch
+tapes blank, and preserves all unselected words. All selected tapes must initially be blank. -/
+public theorem ComputesTidilyInTimeAndSpace.outputToWord_extendTapes
+    {k n : ℕ} {Symbol State : Type*} {machine : MultiTapeTM k Symbol State}
+    {input output : List Symbol} {t s : ℕ}
+    (h : machine.ComputesTidilyInTimeAndSpace input output t s) (e : Fin (k + 1) ↪ Fin n) :
+    TransformsTapes (machine.outputToWord.extendTapes e)
+      (fun inp ws => inp = input ∧ ∀ j, ws (e j) = [])
+      (fun _ ws ws' emitted => ws' = Function.update ws (e (Fin.last k)) output ∧ emitted = [])
+      (t + output.length + 2) (s + 2 * output.length + k + 4 + (n - (k + 1))) := by
+  refine (h.outputToWord.extendTapes e).imp (fun _ _ h => ⟨h.1, funext h.2⟩) ?_ le_rfl le_rfl
+  rintro inp ws ws' emitted hP ⟨⟨hv, rfl⟩, hx⟩
+  refine ⟨funext fun i => ?_, rfl⟩
+  by_cases hi : i ∈ Set.range e
+  · obtain ⟨j, rfl⟩ := hi
+    simpa [Function.update_apply, e.injective.eq_iff, hP.2] using congrFun hv j
+  · rw [hx i hi, Function.update_of_ne]
+    exact fun h => hi ⟨Fin.last k, h.symm⟩
+
+-- upstream: candidate
+-- vendored: generalize the selected-tape helper from `Encodings/MultiPass` to a single run,
+-- retaining the exact space bound for streaming clients.
+/-- Write a tidy computation's output to a selected tape, leaving every other tape blank. -/
+public theorem ComputesTidilyInTimeAndSpace.outputToWord_onTape
+    {tm : MultiTapeTM k Symbol State} {input output : List Symbol} {t s K : ℕ}
+    (h : tm.ComputesTidilyInTimeAndSpace input output t s)
+    {e : Fin (k + 1) ↪ Fin K} {V : Fin K} (he : e (Fin.last k) = V) :
+    TransformsTapes (tm.outputToWord.extendTapes e)
+      (fun inp ws => inp = input ∧ ws = fun _ => [])
+      (fun _ _ ws' em => ws' = Function.update (fun _ => []) V output ∧ em = [])
+      (t + output.length + 2) (s + 2 * output.length + k + 4 + (K - (k + 1))) := by
+  exact (h.outputToWord_extendTapes e).imp
+    (fun _ _ ⟨hin, hws⟩ => ⟨hin, by simp [hws]⟩)
+    (fun _ _ _ _ ⟨_, hws⟩ ⟨hws', hem⟩ => ⟨by simpa only [hws, he] using hws', hem⟩)
+    le_rfl le_rfl
 
 end Turing.MultiTapeTM

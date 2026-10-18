@@ -177,18 +177,11 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α σ : Type u} {�
     rw [drop_flatten_take toks hj]
     simp [toks, hcont j (by omega), hread]
   -- the four machines on the common tapes
-  have hI := ((htmI x).outputToWord.imp
-      (P' := fun inp ws => inp = encIn x ∧ ws = Function.update (fun _ => []) (Fin.last kI) [])
-      (Q' := fun _ ws ws' em => ws' = Function.update ws (Fin.last kI)
-        (frame (encS (init x))) ∧ em = [])
-      (fun _ _ ⟨hin, hws⟩ => ⟨hin, by simp [hws]⟩)
-      (fun _ _ _ _ ⟨_, hws⟩ ⟨hws', he⟩ => ⟨by simp [hws', hws], he⟩) le_rfl le_rfl
-    ).extendTapes_update eI
-  rw [heI] at hI
+  have hI := (htmI x).outputToWord_onTape heI
   have hI₀ := hI.imp (P' := fun inp ws => inp = toks.flatten ∧ ws = fun _ => [])
     (Q' := fun _ _ ws' em => ws' = Function.update (fun _ => []) V (frame (encS (st 0))) ∧ em = [])
-    (fun _ _ ⟨hin, hws⟩ => ⟨hin.trans hx.symm, by simp [hws]⟩)
-    (fun _ _ _ _ ⟨_, hws⟩ ⟨hws', he⟩ => ⟨by rw [hws', hws]; simp [st], he⟩) le_rfl le_rfl
+    (fun _ _ ⟨hin, hws⟩ => ⟨hin.trans hx.symm, hws⟩)
+    (fun _ _ _ _ _ ⟨hws', he⟩ => ⟨by rw [hws']; rfl, he⟩) le_rfl le_rfl
   have hE : ∀ j < toks.length, TransformsTapes ((tmE.inputFromWord true).extendTapes eE)
       (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (st j)) ++ cont j))
       (fun _ ws ws' em => ws' = ws ∧ em = es j)
@@ -197,11 +190,10 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α σ : Type u} {�
         2 * kE + 8 + (M + 3 - (kE + 2))).getD 0) := by
     intro j hj
     have hjn : j < n := by omega
-    have h := ((htmE (st j, l[j])).inputFromWord true).extendTapes_update eE
-    rw [heE] at h
-    refine h.imp (fun _ _ hws => ⟨trivial, by rw [hws, hcont j hjn]; rfl⟩)
-      (fun _ ws _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws, hcont j hjn, Function.update_idem]; rfl,
-        by rw [he, hes j hjn]⟩) ?_ ?_ <;> simp [List.getElem?_eq_getElem hjn]
+    have h := (htmE (st j, l[j])).inputFromWord_extendTapes true heE
+    refine h.imp (fun _ _ hws => by rw [hws, hcont j hjn]; rfl)
+      (fun _ _ _ _ _ ⟨h, he⟩ => ⟨h, by rw [he, hes j hjn]⟩) ?_ ?_ <;>
+      simp [List.getElem?_eq_getElem hjn]
   have hN : ∀ j < toks.length, TransformsTapes ((tmN.onWords true).extendTapes eN)
       (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (st j)) ++ cont j))
       (fun _ ws ws' em => ws' = Function.update ws N (frame (encS (st (j + 1)))) ∧ em = [])
@@ -214,21 +206,11 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α σ : Type u} {�
         (M + 3 - (kN + 1 + 2))).getD 0) := by
     intro j hj
     have hjn : j < n := by omega
-    have h := (((htmN (st j, l[j])).onWords true).imp
-      (P' := fun _ ws => True ∧ ws = Function.update (fun _ => []) (Fin.natAdd (kN + 1) 0)
-        (encPair encS encA (st j, l[j])))
-      (fun _ _ h => h.2) (fun _ _ _ _ _ h => h) le_rfl le_rfl).extendTapes_update eN
-    rw [heN, heN'] at h
-    refine h.imp (fun _ _ hws => ⟨trivial, by rw [hws, hcont j hjn]; rfl⟩)
+    have h := (htmN (st j, l[j])).onWords_extendTapes true heN heN'
+    refine h.imp (fun _ _ hws => by rw [hws, hcont j hjn]; rfl)
       (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; simp only [st, streamState_succ _ _ _ hjn]; rfl, he⟩)
       ?_ ?_ <;> simp [List.getElem?_eq_getElem hjn]
-  have hF := (((htmF (st toks.length)).inputFromWord true).extendTapes_update eF)
-  rw [heF] at hF
-  have hF₀ := hF.imp (P' := fun _ ws => ws = Function.update (fun _ => []) V
-      (frame (encS (st toks.length))))
-    (Q' := fun _ ws ws' em => ws' = ws ∧ em = encF (finish (st toks.length)))
-    (fun _ _ hws => ⟨trivial, hws⟩)
-    (fun _ _ _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws, Function.update_idem]; rfl, he⟩) le_rfl le_rfl
+  have hF := (htmF (st toks.length)).inputFromWord_extendTapes true heF
   -- the space of a round, bounded by the largest one
   let sRound (j : ℕ) : ℕ := (frame (encS (st j)) ++ cont j).length + 2 + (M + 3 - 1) +
     (((l[j]?.map fun a => sE (st j, a) + 2 * ((encPair encS encA (st j, a)).length + 2) +
@@ -241,7 +223,7 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α σ : Type u} {�
         ((4 * (frame (encS (st (j + 1)))).length + (M + 3) + 15) +
           ((frame (encS (st (j + 1)))).length + 1 + (M + 3))))))
   have h := computesTidily_streamTM (r := r) hVN hVF hNF toks htoks cont
-    (fun j => frame (encS (st j))) es (encF (finish (st toks.length))) hread' hI₀ hE hN hF₀
+    (fun j => frame (encS (st j))) es (encF (finish (st toks.length))) hread' hI₀ hE hN hF
     (sR := (Finset.range toks.length).sup sRound)
     (fun j hj => Finset.le_sup (f := sRound) (Finset.mem_range.mpr hj))
   simp only [streamRoundTime] at h

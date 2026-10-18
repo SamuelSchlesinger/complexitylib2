@@ -28,8 +28,6 @@ time and space in the size of the state and the token only.
 
 ## Main results
 
-* `Turing.MultiTapeTM.TransformsTapes.extendTapes_update`: a specification that writes one word,
-  on the tapes selected by an embedding.
 * `Turing.MultiTapeTM.transformsTapes_frozenRound`: the specification of `frozenRound`.
 -/
 
@@ -38,27 +36,6 @@ namespace Turing.MultiTapeTM
 variable {m K : ℕ} {Symbol S : Type*}
 
 /-! ### Specifications on selected tapes -/
-
-/-- A specification that starts with the word `w` on tape `i` and every other tape blank and writes
-`out` to tape `o`, on the tapes selected by `e`. -/
-public theorem TransformsTapes.extendTapes_update {tm : MultiTapeTM m Symbol S}
-    {I : List Symbol → Prop} {i o : Fin m} {w out y : List Symbol} {t s : ℕ}
-    (h : TransformsTapes tm (fun inp ws => I inp ∧ ws = Function.update (fun _ => []) i w)
-      (fun _ ws ws' em => ws' = Function.update ws o out ∧ em = y) t s) (e : Fin m ↪ Fin K) :
-    TransformsTapes (tm.extendTapes e)
-      (fun inp ws => I inp ∧ ws = Function.update (fun _ => []) (e i) w)
-      (fun _ ws ws' em => ws' = Function.update ws (e o) out ∧ em = y) t (s + (K - m)) := by
-  refine (h.extendTapes e).imp (fun _ ws ⟨hI, hws⟩ => ⟨hI, ?_⟩)
-    (fun _ ws ws' _ _ ⟨⟨hv, hy⟩, hx⟩ => ⟨?_, hy⟩) le_rfl le_rfl
-  · subst hws
-    funext j
-    by_cases hj : j = i <;> simp [e.injective.eq_iff, hj]
-  · funext l
-    by_cases hl : l ∈ Set.range e
-    · obtain ⟨j, rfl⟩ := hl
-      have := congrFun hv j
-      by_cases hj : j = o <;> simp_all [Function.update_apply, e.injective.eq_iff]
-    · rw [hx l hl, Function.update_of_ne fun h => hl ⟨o, h.symm⟩]
 
 /-- An embedding of `Fin m` into a larger `Fin K` sending `i` to `a`. -/
 public theorem exists_embedding_eq (h : m ≤ K) (i : Fin m) (a : Fin K) :
@@ -72,30 +49,6 @@ public theorem exists_embedding_eq₂ (h : m ≤ K) {i o : Fin m} (hio : i ≠ o
   refine ⟨e.trans (Equiv.swap (e o) b).toEmbedding, ?_, by simp⟩
   have hoa : e o ≠ a := fun h => hio (e.injective (h.trans he.symm)).symm
   simp [he, Equiv.swap_apply_of_ne_of_ne hoa.symm hab]
-
-/-- The work tapes in which `inputFromWord` starts and halts, for a tidy machine. -/
-lemma append_nil_eq_update {k : ℕ} (w : List Symbol) :
-    Fin.append (fun _ : Fin k => ([] : List Symbol)) ![w, []] =
-      Function.update (fun _ => []) (Fin.natAdd k 0) w := by
-  rw [← Fin.append_const (m := k) (n := 2) [], ← Fin.append_update_right]
-  congr 1
-  simp [funext_iff, Fin.forall_fin_two]
-
-/-- A tidy machine run on the word on a work tape, emitting what it computes. -/
-public theorem ComputesTidilyInTimeAndSpace.inputFromWord {k : ℕ} {tm : MultiTapeTM k Symbol S}
-    (mark : Symbol) {w y : List Symbol} {t s : ℕ} (h : tm.ComputesTidilyInTimeAndSpace w y t s) :
-    TransformsTapes (tm.inputFromWord mark)
-      (fun _ ws => True ∧ ws = Function.update (fun _ => []) (Fin.natAdd k 0) w)
-      (fun _ ws ws' em => ws' = Function.update ws (Fin.natAdd k 0) w ∧ em = y)
-      -- vendored: `+ 8` rather than crei's `+ 6`, as cslib #1111's `inputFromWord` uses two more
-      -- cells
-      (t + 4) (s + 2 * (w.length + 2) + 2 * k + 8) := by
-  -- vendored: `computesTidily_iff` is stated with run paths since cslib #1117
-  obtain ⟨hrun, hspace⟩ := computesTidily_iff_runFrom.mp h
-  refine (transformsTapes_inputFromWord_of_runFrom mark hrun hspace).imp
-    (fun _ ws ⟨_, hws⟩ => by rw [hws, append_nil_eq_update])
-    (fun _ ws ws' _ ⟨_, hws⟩ ⟨hws', hy⟩ => ⟨?_, hy⟩) le_rfl (by omega)
-  rw [hws', hws, append_nil_eq_update, Function.update_idem]
 
 /-! ### The part of a round that does not use the input -/
 

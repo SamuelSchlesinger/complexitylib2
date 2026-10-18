@@ -25,7 +25,9 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   shared encodings and calculus through CSLib issue #611, including the `TapeEncodable`
   interface proposed in #590. Check #767 and its split #768 before adding space-to-time
   inclusions or overlapping class definitions; reconcile the local encoded, tidy-machine
-  definitions of `P`/`NP` with its `DTIME`-based language classes.
+  definitions of `P`/`NP` with its `DTIME`-based language classes. Selected-tape specifications
+  formerly in `Combinators/StreamFold` and `Encodings/MultiPass` now live beside the plumbing
+  operations; preserve their exact space bounds when resynchronizing the copied files.
 * **Polynomial bounds.** The tidy calculus's size-parameterized `PolyBounded` adapts CSLib's
   `PolynomiallyBounded` and shares its closure API. Coordinate this adaptation with the tidy
   branch; preserve it when resynchronizing the vendored files.

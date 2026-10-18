@@ -172,15 +172,19 @@ public theorem events_eIn (d : Desc) (x : List ℕ) (t : ℕ) :
 @[expose] public def scan (p : ℕ × ℕ) (b : Bool) : ℕ × ℕ :=
   if b then (p.1, if p.1 = 1 then p.2 + 1 else p.2) else (p.1 - 1, p.2)
 
-public lemma scan_tok (k cur n : ℕ) :
-    (tok n).foldl scan (k, cur) = (k - 1, if k = 1 then cur + n else cur) := by
-  induction n generalizing cur with
-  | zero => simp [tok, scan]
-  | succ n ih =>
-    rw [tok, List.replicate_succ, List.cons_append, List.foldl_cons, ← tok]
+lemma foldl_scan_replicate (k cur j : ℕ) :
+    (List.replicate j true).foldl scan (k, cur) = (k, if k = 1 then cur + j else cur) := by
+  induction j generalizing cur with
+  | zero => simp
+  | succ j ih =>
+    rw [List.replicate_succ, List.foldl_cons]
     simp only [scan, ↓reduceIte, ih]
     split_ifs <;> simp
     omega
+
+public lemma scan_tok (k cur n : ℕ) :
+    (tok n).foldl scan (k, cur) = (k - 1, if k = 1 then cur + n else cur) := by
+  simp [tok, List.foldl_append, foldl_scan_replicate, scan]
 
 lemma scan_zero (l : List Bool) (cur : ℕ) : l.foldl scan (0, cur) = (0, cur) := by
   induction l with
@@ -269,12 +273,8 @@ has halted. -/
 @[expose] public def events (x : List ℕ) : List Bool := (x.map tok).flatten
 
 lemma streamState_foldNext (s : St) (l : List Bool) (j : ℕ) :
-    streamState s foldNext l j = (s.1, (s.2.1, (l.take j).foldl scan s.2.2)) := by
-  rw [streamState]
-  generalize l.take j = l
-  induction l generalizing s with
-  | nil => rfl
-  | cons b l ih => exact ih _
+    streamState s foldNext l j = (s.1, (s.2.1, (l.take j).foldl scan s.2.2)) :=
+  List.foldl_hom (fun a => (s.1, (s.2.1, a))) (fun _ _ => rfl)
 
 public lemma run_succ' (d : Desc) (x : List ℕ) (j : ℕ) :
     run d x (j + 1) = (step d x (run d x j)).1 := by
@@ -590,16 +590,6 @@ public lemma foldInit_inO : ComputableTidilyInO foldInit eIn eSt
     nlinarith
 
 /-! ### The size of the state -/
-
-lemma foldl_scan_replicate (k cur j : ℕ) :
-    (List.replicate j true).foldl scan (k, cur) = (k, if k = 1 then cur + j else cur) := by
-  induction j generalizing cur with
-  | zero => simp
-  | succ j ih =>
-    rw [List.replicate_succ, List.foldl_cons]
-    simp only [scan, ↓reduceIte, ih]
-    split_ifs <;> simp
-    omega
 
 /-- Along the events of a symbol, the countdown does not go up and the symbol read grows by at
 most the symbol. -/

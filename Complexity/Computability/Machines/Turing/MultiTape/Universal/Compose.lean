@@ -333,12 +333,8 @@ of `f`. -/
 @[expose] public def cInit (dg df : Desc) : CSt := (ctl₀ dg df, (1, 0))
 
 lemma streamState_cNext (s : CSt) (l : List Bool) (j : ℕ) :
-    streamState s cNext l j = (s.1, (l.take j).foldl bitScan s.2) := by
-  rw [streamState]
-  generalize l.take j = l
-  induction l generalizing s with
-  | nil => rfl
-  | cons b l ih => exact ih _
+    streamState s cNext l j = (s.1, (l.take j).foldl bitScan s.2) :=
+  List.foldl_hom (fun a => (s.1, a)) (fun _ _ => rfl)
 
 /-- **The passes** are the steps of the composition. -/
 public theorem passState_cInit (dg df : Desc) (w : List Bool) (i : ℕ) :

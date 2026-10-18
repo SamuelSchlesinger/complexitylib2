@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
-import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WriteWord
+import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OutputToTape
 import Cslib.Foundations.Data.Fin.Tuple
 import Mathlib.Data.Fin.Tuple.Embedding
 import Mathlib.Tactic.Linarith
