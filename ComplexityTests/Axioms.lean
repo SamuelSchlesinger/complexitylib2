@@ -830,6 +830,27 @@ info: 'Cslib.Complexity.mem_ThreeSAT_toThreeSAT_iff' depends on axioms: [propext
 #print axioms Cslib.Complexity.mem_ThreeSAT_toThreeSAT_iff
 
 /--
+info: 'Cslib.Complexity.ThreeSAT_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.ThreeSAT_npComplete
+
+/--
+info: 'Cslib.Complexity.IndependentSet_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.IndependentSet_npComplete
+
+/--
+info: 'Cslib.Complexity.Clique_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Clique_npComplete
+
+/--
 info: 'Cslib.Logic.PL.CNF.satisfiable_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in

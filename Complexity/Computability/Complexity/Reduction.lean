@@ -33,6 +33,10 @@ polynomial-time, reducibility, and is stated for `Primcodable` types; it is not 
 
 ## Main results
 
+* `Cslib.Complexity.PolyTimeReducible.refl`, `Cslib.Complexity.PolyTimeReducible.trans`:
+  polynomial-time reducibility is a preorder.
+* `Cslib.Complexity.NPHard.trans`, `Cslib.Complexity.coNPHard.trans`: hardness transfers along
+  polynomial-time reductions.
 * `Cslib.Complexity.PolyTimeReducible.compl`: a reduction between problems is one between their
   complements.
 * `Cslib.Complexity.NPHard.compl`, `Cslib.Complexity.coNPHard.compl`,
@@ -74,7 +78,32 @@ def coNPHard (encB : β ↪ List Bool) (B : Set β) : Prop :=
 def coNPComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop :=
   B ∈ coNP encB ∧ coNPHard encB B
 
-variable {encA : α ↪ List Bool} {encB : β ↪ List Bool} {A : Set α} {B : Set β}
+variable {γ : Type*} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
+  {A : Set α} {B : Set β} {C : Set γ}
+
+/-- Every problem reduces to itself in polynomial time by the identity function. -/
+@[refl]
+theorem PolyTimeReducible.refl (encA : α ↪ List Bool) (A : Set α) :
+    PolyTimeReducible encA encA A A :=
+  ⟨id, ComputableTidilyInPolyTime.id', fun _ => Iff.rfl⟩
+
+/-- Polynomial-time many-one reductions compose. -/
+@[trans]
+theorem PolyTimeReducible.trans (hAB : PolyTimeReducible encA encB A B)
+    (hBC : PolyTimeReducible encB encC B C) : PolyTimeReducible encA encC A C :=
+  let ⟨f, hf, hAB⟩ := hAB
+  let ⟨g, hg, hBC⟩ := hBC
+  ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hBC (f a))⟩
+
+/-- `NP`-hardness transfers along a polynomial-time reduction. -/
+theorem NPHard.trans (hA : NPHard encA A) (hAB : PolyTimeReducible encA encB A B) :
+    NPHard encB B :=
+  fun enc X hX => (hA enc X hX).trans hAB
+
+/-- `coNP`-hardness transfers along a polynomial-time reduction. -/
+theorem coNPHard.trans (hA : coNPHard encA A) (hAB : PolyTimeReducible encA encB A B) :
+    coNPHard encB B :=
+  fun enc X hX => (hA enc X hX).trans hAB
 
 /-- A reduction from `A` to `B` is also a reduction from `Aᶜ` to `Bᶜ`. -/
 theorem PolyTimeReducible.compl (h : PolyTimeReducible encA encB A B) :

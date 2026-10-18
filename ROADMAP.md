@@ -157,8 +157,7 @@ space bounds. Further class-level work needs resource certificates for the actua
 * the reverse direction of nondeterministic-machine/verifier equivalence: the
   [guess-and-verify construction](Complexity/Computability/Complexity/Classes/NP/GuessVerify.lean)
   gives polynomial-time NTMs from verifiers; verifiers from polynomial-time NTMs remain;
-* efficient `SAT ≤ 3SAT`, single-tape simulation, and machine-backed Kolmogorov and
-  Nisan–Wigderson decoding results;
+* single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.
 
