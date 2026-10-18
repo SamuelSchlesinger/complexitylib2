@@ -116,6 +116,35 @@ example (input : List Bool) (p : coin.toNTM.ComputationPath input) (hp : p.time 
   MultiTapeNTM.ComputationPath.exists_halted_extension (coin.exists_step_toNTM)
     (runsInTime_coin input) p hp
 
+/-! ### Acceptance requires exactly the output `[true]` -/
+
+/-- Emit `true` twice, then halt. -/
+private def twice : MultiTapeTM 0 Bool (Fin 2) :=
+  MultiTapeTM.ofTr 0 fun q _ _ =>
+    { inputTape := 0, workTapes := Fin.elim0, output := some true,
+      state := if q = 0 then some 1 else none }
+
+private theorem runFrom_twice (input : List Bool) :
+    twice.runFrom (twice.initCfg input) 2 =
+      ⟨none, 1, fun _ _ => none, fun _ => 0, [true, true]⟩ := by
+  change twice.step (twice.step (twice.initCfg input)) = _
+  rw [MultiTapeTM.step_of_state (cfg := twice.initCfg input) (q := 0) rfl,
+    MultiTapeTM.step_of_state (q := 1) (by simp [twice, Action.apply])]
+  apply Cfg.ext_zero_tapes <;> simp [twice, Action.apply]
+
+/-- Every branch halts after two steps, with output `[true, true]`. -/
+private theorem runsInTime_twice (input : List Bool) :
+    twice.toMultiTapeNTM.RunsInTime input 2 :=
+  MultiTapeTM.runsInTime_of_halted (by rw [runFrom_twice])
+
+/-- Halting after emitting `[true, true]` does not accept. -/
+example (input : List Bool) : ¬twice.toMultiTapeNTM.Accepts input := by
+  rw [MultiTapeNTM.accepts_iff_exists_time_eq (runsInTime_twice input)]
+  rintro ⟨p, hp, hout⟩
+  have hlast := MultiTapeTM.computationPath_last_eq_runFrom p
+  rw [show p.time = 2 from hp, runFrom_twice] at hlast
+  simp [hlast] at hout
+
 /-! ### Guess and verify -/
 
 /-- `SAT`, whose certificates are genuine assignments, has a polynomial-time nondeterministic

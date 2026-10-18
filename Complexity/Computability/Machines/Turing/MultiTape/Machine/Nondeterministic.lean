@@ -40,6 +40,12 @@ its computation paths.
 
 @[expose] public section
 
+/-- A configuration without communication channels is determined by its tapes. -/
+theorem Turing.MultiTapeMachine.Config.eq_iff_tapes_eq {k : ℕ} {Symbol State : Type}
+    {input : List Symbol} {cfg cfg' : Config k Symbol State Empty input} :
+    cfg = cfg' ↔ cfg.tapes = cfg'.tapes :=
+  Config.emptyOracleEquiv.injective.eq_iff.symm
+
 namespace Turing.MultiTapePTM
 
 open Cslib MultiTapeMachine
@@ -112,11 +118,6 @@ theorem exists_runPath_toNTM_iff {c c' : Cfg k Symbol State input} {n : ℕ} :
         (machine.step_toNTM_iff).mpr ⟨bit, hhead.symm⟩
       exact ⟨p.cons c hstep, rfl, by simp [hlen], by simp [hlast, stepCoins]⟩
 
-/-- A configuration without communication channels is determined by its tapes. -/
-theorem config_eq_iff {cfg cfg' : Config k Symbol State Empty input} :
-    cfg = cfg' ↔ cfg.tapes = cfg'.tapes :=
-  Config.emptyOracleEquiv.injective.eq_iff.symm
-
 /-- **Supported configurations are endpoints of run paths.** A configuration is supported by the
 closed fair-coin run with clock `fuel` exactly when the nondeterministic machine has a run path of
 length `fuel` to it. -/
@@ -126,7 +127,7 @@ theorem mem_support_runClosedConfigFrom_iff {fuel : ℕ}
       ∃ p : machine.toNTM.RunPath input, p.head = cfg.tapes ∧ p.length = fuel ∧
         p.last = final.tapes := by
   rw [exists_runPath_toNTM_iff, eval_runClosedConfigFrom_eq_map_coins, PMF.mem_support_map_iff]
-  simp only [BitString.mem_support_uniformList_iff, config_eq_iff,
+  simp only [BitString.mem_support_uniformList_iff, Config.eq_iff_tapes_eq,
     tapes_runClosedConfigFromCoins]
 
 /-- **Halting on every branch is a time bound.** If every configuration supported by the closed

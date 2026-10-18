@@ -17,9 +17,9 @@ A nondeterministic machine accepts an input when some computation path ends halt
 `[true]`, the encoding `Turing.MultiTapeTM.encBool true` used by verifiers and deterministic
 deciders. Paths that halt with another output, and paths ending in a stuck configuration, do not
 accept. A machine decides `A` in time `t` [Arora and Barak, Definition 2.5][AroraBarak09] when
-on every encoded instance `enc a`, every computation path of `t a` steps has halted, and `a ∈ A`
-exactly when some computation path on `enc a` accepts. The time bound applies to every branch,
-including rejecting ones.
+on every encoded instance `enc a`, every computation path of at least `t a` steps ends halted, and
+`a ∈ A` exactly when some computation path on `enc a` accepts. The time bound applies to every
+branch, including rejecting ones.
 
 A transition relation may be empty at a running configuration. Upstream's
 `Turing.MultiTapeNTM.RunsInTime` therefore permits a computation path that ends stuck before the
@@ -137,9 +137,10 @@ theorem accepts_iff_exists_time_eq {ntm : MultiTapeNTM k Bool State} {input : Li
 
 variable {α : Type*}
 
-/-- `ntm` decides `A` within `t` relative to the encoding `enc`: on every encoded instance, every
-computation path of `t a` steps has halted, and `a ∈ A` exactly when some computation path
-accepts. -/
+/-- `ntm` decides `A` within `t` relative to the encoding `enc`: on every encoded instance `enc a`,
+every computation path of at least `t a` steps ends halted, and `a ∈ A` exactly when some
+computation path accepts. A computation path may also end stuck before `t a` steps; it does not
+accept. -/
 def DecidesInTime (ntm : MultiTapeNTM k Bool State) (enc : α ↪ List Bool) (A : Set α)
     (t : α → ℕ) : Prop :=
   ∀ a, ntm.RunsInTime (enc a) (t a) ∧ (a ∈ A ↔ ntm.Accepts (enc a))
