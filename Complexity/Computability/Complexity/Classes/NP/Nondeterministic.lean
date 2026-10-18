@@ -69,6 +69,7 @@ noncomputable def checkChoices (ntm : MultiTapeNTM k Bool State) (enc : α ↪ L
 
 /-- Checking an encoded computation is polynomial-time: it replays a fixed finite fair-coin
 table. -/
+@[fun_prop]
 theorem computableTidilyInPolyTime_checkChoices (ntm : MultiTapeNTM k Bool State) :
     ComputableTidilyInPolyTime (ntm.checkChoices enc) (encPair enc encBits) encBool := by
   have hswap : ComputableTidilyInPolyTime (fun x : α × List Bool => (x.2, enc x.1))

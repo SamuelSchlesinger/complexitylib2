@@ -281,7 +281,21 @@ example : MultiTapeNTM.DecidableInPolyTime {a : Bool × ℕ | a.1 = true}
 
 /-! ### Checking encoded accepting computations -/
 
-/-- The fair coin decides every problem within one step: some branch emits `[true]`. -/
+/-- A fixed machine's checker is inferred under any encoding of instances. -/
+example {k : ℕ} {State α : Type} [Finite State] (ntm : MultiTapeNTM k Bool State)
+    (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (ntm.checkChoices enc) (encPair enc encBits) encBool := by
+  fun_prop
+
+/-- Checker inference composes with ordinary projections and a runtime guard. -/
+example {k : ℕ} {State α : Type} [Finite State] (ntm : MultiTapeNTM k Bool State)
+    (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime
+      (fun x : (α × List Bool) × Bool => if x.2 then ntm.checkChoices enc x.1 else false)
+      (encPair (encPair enc encBits) encBool) encBool := by
+  fun_prop
+
+/-- The fair coin decides the universal problem within one step: some branch emits `[true]`. -/
 private theorem decides_coin : coin.toNTM.DecidesInTime encBits Set.univ fun _ => 1 :=
   fun a => ⟨runsInTime_coin a, by
     simp only [Set.mem_univ, true_iff]
