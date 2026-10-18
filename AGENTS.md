@@ -1,10 +1,11 @@
 # Project Instructions
 
-complexitylib v2 is a Lean 4 library of computational complexity theory built on **cslib**
+Complexitylib is a Lean 4 library of computational complexity theory built on **cslib**
 (`leanprover/cslib`). Its defining constraint: **every module must be upstreamable into cslib
 unchanged**, apart from rewriting the import prefix `Complexity.` → `Cslib.`. cslib's own rules
 therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `CODESTYLE.md`
-(local clone: `../cslib`) and follow them. `ROADMAP.md` records outstanding work;
+(pinned checkout: `.lake/packages/cslib`, or a local clone at `../cslib`) and follow them.
+`ROADMAP.md` records outstanding work;
 `UPSTREAM.md` records coordination and exceptional integration decisions.
 
 ## Lean development: use the Lean MCP server first
@@ -12,7 +13,7 @@ therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `
 Use MCP goal inspection, diagnostics and theorem search while iterating; reserve `lake` commands
 for validation checkpoints. If MCP tools are unavailable, say so and use the smallest shell check.
 
-## Validation sequence (identical to cslib's CI)
+## Validation sequence
 
 ```bash
 lake build --wfail --iofail
@@ -22,6 +23,8 @@ lake lint
 lake exe lint-style
 lake exe checkInitImports
 ```
+
+`scripts/check.sh` runs this sequence. CI runs the same checks.
 
 `lake exe mk_all` regenerates `Complexity.lean` after adding a file. New test files go in
 `ComplexityTests/` and must be imported from `ComplexityTests.lean`.
@@ -37,9 +40,9 @@ lake exe checkInitImports
    then `@[expose] public section` or per-declaration `public`.
    ```lean
    /-
-   Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+   Copyright (c) <year> <authors>. All rights reserved.
    Released under Apache 2.0 license as described in the file LICENSE.
-   Authors: Samuel Schlesinger
+   Authors: <authors>
    -/
 
    module
@@ -59,7 +62,8 @@ lake exe checkInitImports
    file's `Authors:` line before porting.
 4. **Every module publicly imports `Cslib.Init`** (through `Complexity.Init`); the test driver
    runs `checkInitImports`.
-5. **Reuse upstream first.** Before defining anything, search cslib (`../cslib/Cslib`) and the
+5. **Reuse upstream first.** Before defining anything, search cslib (`.lake/packages/cslib/Cslib`,
+   or the local `../cslib/Cslib` checkout) and the
    in-flight PRs recorded in source markers, and consult `UPSTREAM.md`. A thin local copy of an
    unmerged upstream PR (or an unsubmitted branch of an upstream contributor) is allowed at the
    mirrored path, keeping the
@@ -90,19 +94,24 @@ lake exe checkInitImports
 - `set_option maxHeartbeats` / `maxRecDepth` overrides need a justifying comment.
 - Never put `[simp]` on machine step functions or transition tables (goals explode).
 - Non-terminal `simp` only as `simp only`; definitions as terms, not `by` blocks, where possible.
-- Headline theorems are listed in `ComplexityTests/Axioms.lean`, which checks they depend only
-  on `propext`, `Classical.choice` and `Quot.sound`.
+- `ComplexityTests/Axioms.lean` audits all declarations stored in imported `Complexity` modules
+  for dependencies beyond `propext`, `Classical.choice` and `Quot.sound`. Add named checks there
+  for headline theorems as well.
 - Watch for vacuous hypotheses: when a structure bundles bounds, provide at least one instance in
   the test suite.
 
 ## Review cycle
 
+Maintainers arrange these reviews; contributors do not need a particular agent installation.
+Record the reviewed revision, scope, findings and resolutions in the PR or commit description,
+following [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
+
 - Every batch of new or refactored modules gets an independent cslib-style review (naming, API,
   duplication, placement, documentation) before or soon after it lands on `main`.
-- Every batch also gets a Codex correctness review (`codex-companion.mjs adversarial-review`):
+- Every batch also gets an independent correctness review:
   are the statements true and as the docstrings claim, are hypotheses satisfiable and
-  non-vacuous, do definitions match the cited literature. Codex only reviews; fixes are written
-  here.
+  non-vacuous, do definitions match the cited literature. Reviewers report findings; fixes are
+  made separately.
 
 ## Design commitments (do not re-litigate casually)
 

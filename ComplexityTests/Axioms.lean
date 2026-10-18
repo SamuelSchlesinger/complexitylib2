@@ -5,16 +5,47 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity
+import Lean.Util.CollectAxioms
 
 /-!
 # Axiom audit
 
-Every headline theorem of the library is listed here with a `#guard_msgs` check that it depends
-on no axioms beyond `propext`, `Classical.choice` and `Quot.sound`. Add an entry whenever a
-main result is added to a public module.
+Audit every declaration stored in the imported `Complexity` modules, including private and
+generated declarations and extensions in other namespaces. Transitive axiom dependencies must
+be among `propext`, `Classical.choice` and `Quot.sound`. The root-import check ensures that all
+library modules are reached. This adapts the original Complexitylib's `scripts/AxiomGuard.lean`.
+
+The audit trusts compiled Lean artifacts; it is not an independent kernel checker. Allowing
+`Classical.choice` does not establish computability. Examples and commands that leave no stored
+declaration are outside its scope, as are the test modules themselves.
+
+The named `#guard_msgs` checks below also record the exact axioms of headline theorems.
+Add an entry whenever a main result is added to a public module.
 -/
 
 namespace ComplexityTests.Axioms
+
+open Lean Elab Command in
+run_cmd do
+  let env := (← getEnv).setExporting false
+  let allowed : List Name := [``propext, ``Classical.choice, ``Quot.sound]
+  let mut moduleCount : Nat := 0
+  let mut declarationCount : Nat := 0
+  for moduleName in env.header.moduleNames, data in env.header.moduleData do
+    if (`Complexity).isPrefixOf moduleName then
+      moduleCount := moduleCount + 1
+      unless data.constNames.size == data.constants.size do
+        throwError "axiom audit: malformed declaration table for {moduleName}"
+      for name in data.constNames do
+        declarationCount := declarationCount + 1
+        unless (env.find? name).isSome do
+          throwError "axiom audit: declaration {name} from {moduleName} is unavailable"
+        let axioms ← collectAxioms name
+        let disallowed := axioms.filter fun ax => !allowed.contains ax
+        unless disallowed.isEmpty do
+          throwError "axiom audit: {name} from {moduleName} depends on {disallowed}"
+  unless moduleCount > 0 && declarationCount > 0 do
+    throwError "axiom audit: no Complexity declarations found"
 
 /--
 info: 'Cslib.Circuits.Monotone.membershipHomomorphism' depends on axioms:

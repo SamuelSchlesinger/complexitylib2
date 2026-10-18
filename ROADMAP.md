@@ -3,7 +3,33 @@
 Outstanding work and the rationale needed to guide it. See the [README](README.md) for
 completed reference developments.
 
-## Current priorities
+## First community release
+
+Prepare the existing library as a usable successor to the original Complexitylib. Keep the
+public identity **Complexitylib**: computational complexity theory built on CSLib. AI assistance
+is a development method, and community participation includes mathematical review, API design,
+documentation and maintenance as well as proving new theorems.
+
+The release boundary is the existing documented developments, with these acceptance criteria:
+
+* **Auditable claims.** Check each README result against its public statement, definitions,
+  assumptions, encodings and resource model. Preserve nonconstructive and conditional boundaries;
+  passing Lean does not establish that a statement matches its prose or literature source.
+* **Reproducible validation and review.** Run all six checks on the release revision, retain the
+  full-library axiom audit and representative clients, and record independent review with that
+  revision. Publish concise evidence with the release rather than relying on local build logs.
+* **A usable contribution path.** A new contributor can find a bounded task, the relevant APIs,
+  source references, validation commands and review expectations without private conversation
+  history or a maintainer's agent installation.
+* **An agreed handover.** Before announcing community hosting, agree the repository name,
+  maintainers and merge responsibilities with CSLib Community. Verify CI and repository links
+  after transfer, publish an immutable release reference, and then point the original repository
+  to its successor. Organizational hosting does not imply acceptance into upstream CSLib.
+
+Completing every V1 port, Jukna chapter, or future resource-bound improvement is not a condition
+of this release. The work below remains available for subsequent, independently reviewed batches.
+
+## Continuing priorities
 
 1. **Complete theorem ports using the existing certificate APIs.** Extend automation when a
    concrete port is blocked or several clients repeat the same proof burden. Constructor, projection,
@@ -41,33 +67,13 @@ Jukna coverage below is an additional target beyond the V1 port:
   [algebraic-circuits](https://github.com/SamuelSchlesinger/algebraic-circuits/blob/main/Algebraic/MassProduction.lean):
   the exponential copy range, sharp real-rate coefficient `1 / (1 - gamma) + o(1)`, and
   coefficient-one subexponential range. Preserve the exact gate-cost conventions and share
-  sorting, lookup and routing with other circuit clients. The native replication and weighted-cost
-  interface, including the [eventual-to-all-length padding theorem](Complexity/Computability/Circuit/Boolean/MassProduction/Padding.lean),
-  [finite Shannon synthesis](Complexity/Computability/Circuit/Boolean/MassProduction/Synthesis.lean),
-  [stable compare-exchange](Complexity/Computability/Circuit/Boolean/CompareSwap.lean),
-  and [Batcher sorting](Complexity/Computability/Circuit/Boolean/Sorting.lean) are in place.
-  Sorting has key-order, complete-record permutation and exact weighted-cost theorems; its
-  [computed-key wrapper](Complexity/Computability/Circuit/Boolean/KeyedSort.lean) preserves
-  complete records and charges key computation once per record. The shared
-  [segmented propagation circuit](Complexity/Computability/Circuit/Boolean/Propagation.lean)
-  has exact linear gate cost and connected-source semantics, including sorted equal-key runs.
-  The [record broadcast circuit](Complexity/Computability/Circuit/Boolean/Broadcast.lean)
-  preserves headers and routing metadata, shares adjacent-key tests across value bits, and
-  copies a unique matching source to each sorted destination. The
-  [two-sort router](Complexity/Computability/Circuit/Boolean/Routing.lean) preserves headers,
-  restores uniquely keyed requests to their input-determined ranks, and has exact gate costs.
-  [Saved-control sorting](Complexity/Computability/Circuit/Boolean/SortingTrace.lean) now records
-  comparisons and reverses them on new payloads, with exact gate costs and no request identifiers.
-  [Batched table lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean) uses one sort,
-  shared broadcast, and saved swaps to return answers in query order, including repeated queries.
-  It includes concrete layouts, automatic padding, and exact gate counts; its bound is linear in
-  table size plus query count and field width, and quadratic in sorting depth. The same layout
-  supports [shared OR lookup](Complexity/Computability/Circuit/Boolean/BatchOr.lean) over dynamic
-  source records, including repeated and missing keys.
-  [Duplicate detection](Complexity/Computability/Circuit/Boolean/DuplicateFlags.lean) shares
-  adjacent-key tests and returns flags to their original positions using saved swaps.
-  These have exact weighted gate costs; constructor runtime is not certified. The three
-  mass-production results above remain to be ported.
+  sorting, lookup and routing with other circuit clients. Start from
+  [padding](Complexity/Computability/Circuit/Boolean/MassProduction/Padding.lean),
+  [synthesis](Complexity/Computability/Circuit/Boolean/MassProduction/Synthesis.lean), and
+  [batched lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean); their module
+  documentation records the shared constructions and exact gate-cost contracts.
+  Constructor runtime remains uncertified. The three mass-production results above remain to
+  be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,

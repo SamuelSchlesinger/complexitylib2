@@ -9,6 +9,11 @@ compositionally, with Turing-machine implementations justified underneath. Nonco
 mathematics and model-specific lower bounds also belong. Developments should establish useful
 results or make those results easier to state, prove, and reuse.
 
+Development is AI-assisted. Contributors are responsible for the mathematical statements,
+source attribution, and maintainability of their changes. Lean checks proofs against their stated
+definitions; independent review checks that those definitions and statements express the intended
+mathematics. See [Contributing](CONTRIBUTING.md) to propose, implement, or review a development.
+
 ## Start here
 
 | I want to… | Start with… |
@@ -54,6 +59,12 @@ lake build --wfail --iofail
 ```
 
 Import the specific modules you need. `import Complexity` imports the whole library.
+
+This is the CSLib-based successor to
+[the original Complexitylib](https://github.com/SamuelSchlesinger/complexitylib). The two libraries
+have different APIs, and some original developments remain to be ported. APIs are still evolving;
+downstream projects should pin a commit. [ROADMAP.md](ROADMAP.md) separates the first community
+release from longer-term mathematical work.
 
 ## Project information
 
