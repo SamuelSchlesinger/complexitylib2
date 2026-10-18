@@ -63,9 +63,7 @@ theorem isPolyTime_amplifiedGenerate {pair : SamplablePair} (saved : pair.SeedRe
           (saved.evaluate input.1.1) input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits := by
   have hlength := saved.length_isPolyTime
-  have hgenerate := isPolyTime_paddedGenerate saved
-    (observationBound := observationBound) (densityBound := densityBound) (common := common)
-    hobservation hdensity hcommon
+  have hgenerate := isPolyTime_paddedGenerate saved hobservation hdensity hcommon
   unfold amplifiedGenerate
   apply PRGStretch.polyTime_iterate
   · apply hgenerate.comp (g := fun input : ((ℕ × ℕ) × List Bool) × List Bool =>
@@ -99,13 +97,7 @@ theorem length_amplifiedGenerate {pair : SamplablePair} (saved : pair.SeedRealiz
 theorem exists_secure_amplified_choice {pair : SamplablePair} {gap : ℕ → ℝ}
     (hpair : pair.HasGap gap) (saved : pair.SeedRealization)
     {observationBound densityBound common : ℕ → ℕ}
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
-    (hcommon : ComputableTidilyInPolyTime common encUnary encUnary)
-    (hfits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
-      (pair.encode n observation).length ≤ observationBound n)
-    (hbound : ∀ n index, index < size (saved.length n) (densityBound n) →
-      seedLength n (saved.length n) (observationBound n) (densityBound n) index ≤ common n)
+    (bounds : PaddingBounds saved observationBound densityBound common)
     (hgap : ∀ᶠ n in atTop, 4 / (dyadicSize (densityBound n) : ℝ) ≤ gap n) :
     ∃ choose : ℕ → ℕ,
       (∀ᶠ n in atTop, choose n < size (saved.length n) (densityBound n)) ∧
@@ -119,9 +111,8 @@ theorem exists_secure_amplified_choice {pair : SamplablePair} {gap : ℕ → ℝ
           ((uniformList (size (saved.length n) (densityBound n) * common n + 1)).bind
             (fun word => ProbComp.eval (test n (choose n) word)))) := by
   obtain ⟨choose, hchoose, hsecure⟩ :=
-    exists_secure_padded_choice hpair saved
-      (observationBound := observationBound) (densityBound := densityBound) (common := common)
-      hobservation hdensity hcommon hfits hbound hgap
+    exists_secure_padded_choice hpair saved bounds hgap
+  obtain ⟨hobservation, hdensity, hcommon, _, _⟩ := bounds
   have hlength := saved.length_isPolyTime
   have hcount : ComputableTidilyInPolyTime (fun n =>
       size (saved.length n) (densityBound n) * common n + 1 - common n) encUnary encUnary := by
@@ -131,8 +122,7 @@ theorem exists_secure_amplified_choice {pair : SamplablePair} {gap : ℕ → ℝ
       (densityBound n) (common n) index (saved.evaluate n))
     (count := fun n => size (saved.length n) (densityBound n) * common n + 1 - common n)
     (choose := choose)
-    (isPolyTime_paddedGenerate saved (observationBound := observationBound)
-      (densityBound := densityBound) (common := common) hobservation hdensity hcommon)
+    (isPolyTime_paddedGenerate saved hobservation hdensity hcommon)
     hcommon hcount hsecure
   refine ⟨choose, hchoose, fun test htest => ?_⟩
   unfold amplifiedGenerate

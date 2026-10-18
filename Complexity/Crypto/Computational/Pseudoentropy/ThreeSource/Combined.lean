@@ -67,9 +67,7 @@ theorem isPolyTime_combinedGenerate {pair : SamplablePair} (saved : pair.SeedRea
   have hlength := saved.length_isPolyTime
   unfold combinedGenerate
   refine GeneratorXor.isPolyTime_generate (by polytime) (by polytime) (by polytime) ?_ (by polytime)
-  have hgenerate := isPolyTime_amplifiedGenerate saved
-    (observationBound := observationBound) (densityBound := densityBound) (common := common)
-    hobservation hdensity hcommon
+  have hgenerate := isPolyTime_amplifiedGenerate saved hobservation hdensity hcommon
   exact hgenerate.comp (g := fun input : ((ℕ × List Bool) × ℕ) × List Bool =>
     ((input.1.1.1, input.1.2), input.2)) (by fun_prop)
 
@@ -84,22 +82,15 @@ theorem length_combinedGenerate (n sourceBits observationBound densityBound comm
 theorem combinedGenerate_indistinguishable {pair : SamplablePair} {gap : ℕ → ℝ}
     (hpair : pair.HasGap gap) (saved : pair.SeedRealization)
     {observationBound densityBound common : ℕ → ℕ}
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
-    (hcommon : ComputableTidilyInPolyTime common encUnary encUnary)
-    (hfits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
-      (pair.encode n observation).length ≤ observationBound n)
-    (hbound : ∀ n index, index < size (saved.length n) (densityBound n) →
-      seedLength n (saved.length n) (observationBound n) (densityBound n) index ≤ common n)
+    (bounds : PaddingBounds saved observationBound densityBound common)
     (hgap : ∀ᶠ n in atTop, 4 / (dyadicSize (densityBound n) : ℝ) ≤ gap n) :
     ComputationallyIndistinguishable
       (fun n => (uniformList (size (saved.length n) (densityBound n) * common n)).map
         (combinedGenerate n (saved.length n) (observationBound n) (densityBound n) (common n)
           (saved.evaluate n)))
       (fun n => uniformList (size (saved.length n) (densityBound n) * common n + 1)) := by
-  obtain ⟨choose, hchoose, hsecure⟩ := exists_secure_amplified_choice hpair saved
-    (observationBound := observationBound) (densityBound := densityBound) (common := common)
-    hobservation hdensity hcommon hfits hbound hgap
+  obtain ⟨choose, hchoose, hsecure⟩ := exists_secure_amplified_choice hpair saved bounds hgap
+  obtain ⟨hobservation, hdensity, hcommon, _, _⟩ := bounds
   have hlength := saved.length_isPolyTime
   unfold combinedGenerate
   refine GeneratorXor.indistinguishable (choose := choose)
@@ -108,7 +99,6 @@ theorem combinedGenerate_indistinguishable {pair : SamplablePair} {gap : ℕ →
     (generator := fun n index => amplifiedGenerate n (saved.length n) (observationBound n)
       (densityBound n) (common n) index (saved.evaluate n))
     (by polytime) hcommon (by polytime) ?_ hchoose hsecure
-  exact isPolyTime_amplifiedGenerate saved (observationBound := observationBound)
-    (densityBound := densityBound) (common := common) hobservation hdensity hcommon
+  exact isPolyTime_amplifiedGenerate saved hobservation hdensity hcommon
 
 end Cslib.Crypto.Pseudoentropy.EntropyGrid

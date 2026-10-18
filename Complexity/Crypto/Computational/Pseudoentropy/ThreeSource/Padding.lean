@@ -21,6 +21,7 @@ one, preparing later reindexing by the actual seed length.
 
 ## Main definitions
 
+* `PaddingBounds`: shared efficiency and size contract for the padding pipeline.
 * `paddedGenerate`: normalize an entropy-grid entry to a common input length.
 
 ## Main results
@@ -70,6 +71,19 @@ theorem exists_common_seedLength {sourceBits observationBound densityBound : ℕ
   · intro n index hindex
     exact (hbound n index hindex).trans (by lia)
 
+/-- Efficient observation, entropy-resolution and common seed-length bounds for padding the
+entropy grid. The observation bound applies only on support; the seed bound covers every grid
+entry. Security assumptions and the entropy gap remain separate. -/
+structure PaddingBounds {pair : SamplablePair} (saved : pair.SeedRealization)
+    (observationBound densityBound common : ℕ → ℕ) : Prop where
+  observation_isPolyTime : ComputableTidilyInPolyTime observationBound encUnary encUnary
+  density_isPolyTime : ComputableTidilyInPolyTime densityBound encUnary encUnary
+  common_isPolyTime : ComputableTidilyInPolyTime common encUnary encUnary
+  observation_fits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
+    (pair.encode n observation).length ≤ observationBound n
+  seed_fits : ∀ n index, index < size (saved.length n) (densityBound n) →
+    seedLength n (saved.length n) (observationBound n) (densityBound n) index ≤ common n
+
 /-- Normalize every grid entry to a chosen common seed length and one bit of stretch. -/
 def paddedGenerate (n sourceBits observationBound densityBound commonBits index : ℕ)
     (evaluate : List Bool → List Bool × Bool) (seed : List Bool) : List Bool :=
@@ -114,13 +128,7 @@ theorem length_paddedGenerate {pair : SamplablePair} (saved : pair.SeedRealizati
 theorem exists_secure_padded_choice {pair : SamplablePair} {gap : ℕ → ℝ}
     (hpair : pair.HasGap gap) (saved : pair.SeedRealization)
     {observationBound densityBound common : ℕ → ℕ}
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
-    (hcommon : ComputableTidilyInPolyTime common encUnary encUnary)
-    (hfits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
-      (pair.encode n observation).length ≤ observationBound n)
-    (hbound : ∀ n index, index < size (saved.length n) (densityBound n) →
-      seedLength n (saved.length n) (observationBound n) (densityBound n) index ≤ common n)
+    (bounds : PaddingBounds saved observationBound densityBound common)
     (hgap : ∀ᶠ n in atTop, 4 / (dyadicSize (densityBound n) : ℝ) ≤ gap n) :
     ∃ choose : ℕ → ℕ,
       (∀ᶠ n in atTop, choose n < size (saved.length n) (densityBound n)) ∧
@@ -133,6 +141,7 @@ theorem exists_secure_padded_choice {pair : SamplablePair} {gap : ℕ → ℝ}
               (fun word => ProbComp.eval (test n (choose n) word)))
           ((uniformList (common n + 1)).bind
             (fun word => ProbComp.eval (test n (choose n) word)))) := by
+  obtain ⟨hobservation, hdensity, hcommon, hfits, hbound⟩ := bounds
   obtain ⟨choose, hchoose, hsecure⟩ :=
     exists_secure_choice hpair saved hobservation hdensity hfits hgap
   refine ⟨choose, hchoose, fun test htest => ?_⟩
