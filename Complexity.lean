@@ -267,6 +267,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Id
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Ite
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.MultiPass
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Reverse
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.StreamFold
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyZeroSpace

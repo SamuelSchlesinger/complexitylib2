@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
+import Complexity.Crypto.Computational.GGM.Evaluation
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -254,5 +255,196 @@ example : ¬ (∀ l : List Bool, ∀ i ≤ l.length,
   intro h
   have := h [true] 1 (by simp)
   simp at this
+
+-- Reversal, dropLast and getLast have linear time, zero workspace and exact output degrees.
+example : ComputableTidilyInTimeAndSpace (List.reverse (α := Bool)) encBits encBits
+    (fun l => 2 * l.length + 2) (fun _ => 0) := by
+  fun_prop
+
+example : ComputableTidilyInTimeAndSpace (List.dropLast (α := Bool)) encBits encBits
+    (fun l => 4 * l.length + 8) (fun _ => 0) := by
+  fun_prop
+
+example : ComputableTidilyInTimeAndSpace (fun l : List Bool => l.getLast?.toList) encBits encBits
+    (fun l => 4 * l.length + 8) (fun _ => 0) := by
+  fun_prop
+
+example (f : List Bool → List Bool) (hf : ComputableTidilyInDegree f encBits encBits 2 1) :
+    ComputableTidilyInDegree (fun x => (f x).dropLast.reverse) encBits encBits 2 1 := by
+  fail_if_success
+    have : ComputableTidilyInDegree (fun x => (f x).dropLast.reverse) encBits encBits 2 0 := by
+      fun_prop (disch := lia)
+  fun_prop (disch := lia)
+
+-- Because `getLast?.toList` has output degree 0, a high-degree consumer still runs in constant
+-- time on its 0-or-1-bit output.
+example (f g : List Bool → List Bool)
+    (hf : ComputableTidilyInDegree f encBits encBits 2 1)
+    (hg : ComputableTidilyInDegree g encBits encBits 5 1) :
+    ComputableTidilyInDegree (fun x => g (f x).getLast?.toList) encBits encBits 2 0 := by
+  fun_prop (disch := lia)
+
+-- Second quantitative client of `streamFold_pair_sum` (via `foldl_bits_pair_stream_sum_spec`):
+-- GGM tree evaluation streams the query bits from the second component of `(seed, query)` while
+-- keeping only the current `n`-bit node label in the state, so workspace is
+-- `O(Q + seed.length + 1)` independent of the query depth `query.length`.
+theorem ggm_eval_quantitative {generator : List Bool → List Bool}
+    {tChild sChild : List Bool × Bool → ℕ}
+    (hchild : ComputableTidilyInTimeAndSpace
+      (fun p : List Bool × Bool => Cslib.Crypto.GGM.child generator p.1 p.2)
+      (encPair encBits encBool) encBits tChild sChild)
+    {Q : List Bool × List Bool → ℕ}
+    (hspace : ∀ p : List Bool × List Bool, ∀ i < p.2.length,
+      sChild (Cslib.Crypto.GGM.eval generator p.1 (p.2.take i), p.2[i]?.getD false) ≤ Q p) :
+    (∃ c, ComputableTidilyInTimeAndSpace
+      (fun p : List Bool × List Bool => Cslib.Crypto.GGM.eval generator p.1 p.2)
+      (encPair encBits encBits) encBits
+      (fun p => c * (p.1.length + p.2.length +
+        (∑ i ∈ Finset.range p.2.length,
+          (tChild (Cslib.Crypto.GGM.eval generator p.1 (p.2.take i), p.2[i]?.getD false) +
+            p.1.length + 1)) + 1))
+      (fun p => c * (Q p + p.1.length + 1))) ∧
+      ∀ p : List Bool × List Bool,
+        (Cslib.Crypto.GGM.eval generator p.1 p.2).length ≤ p.1.length := by
+  obtain ⟨⟨c, h⟩, hpost⟩ := hchild.foldl_bits_pair_stream_sum_spec
+    (invariant := fun p i state =>
+      state = Cslib.Crypto.GGM.eval generator p.1 (p.2.take i) ∧ state.length ≤ p.1.length)
+    (fun _ => ⟨rfl, le_rfl⟩)
+    (fun p i hi state ⟨heq, hle⟩ => by
+      refine ⟨?_, (Cslib.Crypto.GGM.length_child_le generator state p.2[i]).trans hle⟩
+      rw [List.take_succ_eq_append_getElem hi, Cslib.Crypto.GGM.eval_append,
+        Cslib.Crypto.GGM.eval_cons, Cslib.Crypto.GGM.eval_nil, ← heq])
+    (R := fun p i =>
+      3 * (tChild (Cslib.Crypto.GGM.eval generator p.1 (p.2.take i), p.2[i]?.getD false) +
+        p.1.length + 1))
+    (Q := Q)
+    (B := fun p => p.1.length)
+    (fun p i hi state ⟨heq, hle⟩ => by
+      have hnext_le : (Cslib.Crypto.GGM.child generator state p.2[i]).length ≤ p.1.length :=
+        (Cslib.Crypto.GGM.length_child_le generator state p.2[i]).trans hle
+      subst heq
+      have hsp := hspace p i hi
+      simp only [encBits_apply, List.getElem?_eq_getElem hi, Option.getD_some] at hsp ⊢
+      exact ⟨by omega, hsp⟩)
+    (fun _ _ _ _ ⟨_, hle⟩ => by simpa using hle)
+  refine ⟨⟨3 * c, h.mono (fun p => ?_) (fun p => ?_)⟩, fun p => (hpost p).2⟩
+  · have hsum_nonneg : 0 ≤ ∑ i ∈ Finset.range p.2.length,
+        (tChild (Cslib.Crypto.GGM.eval generator p.1 (p.2.take i), p.2[i]?.getD false) +
+          p.1.length + 1) := Nat.zero_le _
+    simp only [← Finset.mul_sum]
+    nlinarith
+  · nlinarith
+
+-- Concrete boundary evaluations of `GGM.eval` (empty query, empty seed, multi-bit path).
+example : Cslib.Crypto.GGM.eval (fun s => s ++ s.map (!·)) [true, false] [] =
+    [true, false] := rfl
+
+example : Cslib.Crypto.GGM.eval (fun s => s ++ s.map (!·)) [] [true, false, true] =
+    [] := rfl
+
+example : Cslib.Crypto.GGM.eval (fun s => s ++ s.map (!·)) [true, false] [false, true] =
+    [false, true] := by decide
+
+/--
+info: 'Turing.MultiTapeTM.ReverseInput.computesTidily' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ReverseInput.computesTidily
+
+/--
+info: 'Turing.MultiTapeTM.computableTidilyInTimeAndSpace_reverse' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.computableTidilyInTimeAndSpace_reverse
+
+/-- info: 'Turing.MultiTapeTM.read_rawFrameReader' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.read_rawFrameReader
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_pair_sum' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_pair_sum
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.reverse_bits' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.reverse_bits
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.dropLast_bits' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.dropLast_bits
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast_bits' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast_bits
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast?_bits' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast?_bits
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsReverse' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.bitsReverse
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsDropLast' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.bitsDropLast
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.optionBoolToList' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.optionBoolToList
+
+/--
+info: 'ComplexityTests.Quantitative.ggm_eval_quantitative' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ComplexityTests.Quantitative.ggm_eval_quantitative
 
 end ComplexityTests.Quantitative
