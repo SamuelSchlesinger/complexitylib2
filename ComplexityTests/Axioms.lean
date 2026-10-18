@@ -9727,16 +9727,16 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_su
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose
 
 /--
-info: 'Function.ChangesAtMost.exists_sorted_group' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.ChangesAtMost.exists_sorted_group' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Function.ChangesAtMost.exists_sorted_group
+#print axioms Cslib.ChangesAtMost.exists_sorted_group
 
 /--
-info: 'Function.ChangesAtMost.comp_monotone' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.ChangesAtMost.comp_monotone' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Function.ChangesAtMost.comp_monotone
+#print axioms Cslib.ChangesAtMost.comp_monotone
 
 /--
 info: 'Cslib.Circuits.Boolean.WeightedThreshold.BlockDecomposition.two_pow_lt_mul_cost' depends on axioms: [propext,

@@ -10,7 +10,7 @@ import Mathlib.Tactic.FinCases
 
 /-! Boundary and non-vacuity clients for scalar-block capacity. -/
 
-open Function Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
+open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
 universe u
 

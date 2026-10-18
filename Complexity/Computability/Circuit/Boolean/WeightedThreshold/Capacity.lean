@@ -55,8 +55,6 @@ of two on the second side. Integer division is retained at every step.
 
 namespace Cslib.Circuits.Boolean.WeightedThreshold
 
-open Function
-
 variable {n : ℕ}
 
 local notation "glue" => fun (U : Finset (Fin n)) (p : U → Bool)
@@ -211,7 +209,7 @@ private theorem reachable_succ (D : BlockDecomposition f H) (U : Finset (Fin n))
       intro p hp q hq
       rw [hnext, hη p hp q hq, weightedSum_glue]
     obtain ⟨P', hP', Qbad, hQbad, hcardP, hcardQ, hconst⟩ :=
-      Function.ChangesAtMost.exists_sorted_group P Q α Ψ hG
+      ChangesAtMost.exists_sorted_group P Q α Ψ hG
         (fun q _ => (hΦ (η q)).comp_monotone (monotone_id.add_const (β q)))
     refine ⟨P', Q.filter (· ∉ Qbad),
       fun q => if h : P'.Nonempty then Ψ q (α h.choose) else Ψ q 0, ?_, ?_, ?_⟩

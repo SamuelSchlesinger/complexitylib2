@@ -24,11 +24,11 @@ The key may have ties, and the size bound uses natural-number division.
 
 ## Main definitions
 
-* `Function.ChangesAtMost`: a uniform bound on changes along nondecreasing sequences.
+* `Cslib.ChangesAtMost`: a uniform bound on changes along nondecreasing sequences.
 
 ## Main results
 
-* `Function.ChangesAtMost.exists_sorted_group`: a group of at least `|P| / G` points,
+* `Cslib.ChangesAtMost.exists_sorted_group`: a group of at least `|P| / G` points,
   with at most `T |Q| / G` exceptional functions.
 
 ## References
@@ -39,7 +39,7 @@ The key may have ties, and the size bound uses natural-number division.
 
 @[expose] public section
 
-namespace Function
+namespace Cslib
 
 variable {α β γ : Type*}
 
@@ -218,4 +218,4 @@ theorem ChangesAtMost.exists_sorted_group {ι κ : Type*} (P : Finset ι) (Q : F
   by_contra hne
   exact hnot ⟨j, hj, j', hj', hne⟩
 
-end Function
+end Cslib
