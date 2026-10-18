@@ -19,16 +19,17 @@ binary alphabet and finitely many states that halts on every encoded instance `e
 the length of `enc a` (upstream `Turing.MultiTapeTM.ComputableInTimeAndSpace`, with no tidiness
 requirement). No bound on the time is imposed beyond halting. Equivalently
 (`Cslib.Complexity.mem_PSPACE_iff`), the problem is decidable within some time bound and such a
-space bound in the sense of upstream `Turing.MultiTapeTM.DecidableInTimeAndSpace`, the notion on
-which the proposed upstream `DSPACE` classes are built; there, `PSPACE` is the union of the
-classes of space `O(n ^ k)`, the same problems for encodings of words.
+space bound in the sense of upstream `Turing.MultiTapeTM.DecidableInTimeAndSpace`. The proposed
+upstream complexity classes (cslib pull request #767, open) build `DSPACE` on the same notion of
+decidability and define `PSPACE` as the union of the classes of space `O(n ^ k)`; their bounds
+are functions of the input length, and that comparison is not formalized here.
 
 `Cslib.Complexity.NPSPACE enc` consists of the problems decided by one nondeterministic machine
 with a binary alphabet and finitely many states, every computation path of which on `enc a` visits
-at most `s (enc a).length` work-tape cells (upstream `Turing.MultiTapeNTM.RunsInSpace`, over every
-prefix of every path), with `a ∈ A` exactly when some computation path halts with output exactly
-`[true]` (`Turing.MultiTapeNTM.Accepts`). No time bound is imposed: branches may run forever or
-end stuck, and neither accepts.
+at most `s a` work-tape cells, for an `s` polynomially bounded in the length of `enc a` (upstream
+`Turing.MultiTapeNTM.RunsInSpace`, over every prefix of every path), with `a ∈ A` exactly when
+some computation path halts with output exactly `[true]` (`Turing.MultiTapeNTM.Accepts`). No
+time bound is imposed: branches may run forever or end stuck, and neither accepts.
 
 Space counts visited work-tape cells, as upstream does: the input tape is read-only and the output
 tape write-only [Sipser, Section 8.0][Sipser2013].
@@ -60,8 +61,9 @@ open Turing Turing.MultiTapeTM
 variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 
 /-- The problems decided by one deterministic machine within polynomial space, with respect to
-the encoding `enc`: a Boolean function deciding membership is tidily computable within some time
-and within space polynomially bounded in the length of the encoded instance. -/
+the encoding `enc`: a Boolean function deciding membership is computable (upstream
+`Turing.MultiTapeTM.ComputableInTimeAndSpace`) within some time and within space polynomially
+bounded in the length of the encoded instance. -/
 def PSPACE (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f : α → Bool, (∃ t s, PolyBounded (fun a => (enc a).length) s ∧
     ComputableInTimeAndSpace f enc encBool t s) ∧ ∀ a, a ∈ A ↔ f a = true}

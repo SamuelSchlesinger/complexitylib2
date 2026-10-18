@@ -12,12 +12,12 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ChoiceT
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Decode
+public import Complexity.Computability.BitString.Padding
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-public import Complexity.Computability.BitString.Padding
 
 /-!
 # Views and their codes in polynomial time
@@ -53,6 +53,10 @@ the accepting code are polynomial-time.
 * `Turing.MultiTapeNTM.accepts_iff_reflTransGen_codeStep`: acceptance is reachability of the
   accepting code.
 * `Turing.MultiTapeNTM.computableTidilyInPolyTime_codeEdge`: the edge test is polynomial-time.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Theorem 8.5][Sipser2013]
 -/
 
 @[expose] public section
@@ -65,13 +69,22 @@ namespace MultiTapeTM.ComputableTidilyInPolyTime
 
 /-- The output summary is polynomial-time on raw words. -/
 @[fun_prop]
-theorem outputClass : ComputableTidilyInPolyTime Turing.outputClass encBits encBits := by
-  have h : Turing.outputClass = fun word : List Bool =>
+theorem outputClass :
+    ComputableTidilyInPolyTime MultiTapeNTM.outputClass encBits encBits := by
+  have h : MultiTapeNTM.outputClass = fun word : List Bool =>
       if decide (word = []) then [] else if decide (word = [true]) then [true] else [false] := by
     funext word
-    unfold Turing.outputClass
+    unfold MultiTapeNTM.outputClass
     split_ifs <;> simp_all
   rw [h]
+  fun_prop
+
+/-- Summarizing the output of a configuration is polynomial-time. -/
+@[fun_prop]
+theorem finiteCfg_summarizeOutput {k : ℕ} {State : Type} [Finite State] :
+    ComputableTidilyInPolyTime (FiniteCfg.summarizeOutput (k := k) (State := State)) encFiniteCfg
+      encFiniteCfg := by
+  unfold FiniteCfg.summarizeOutput
   fun_prop
 
 end MultiTapeTM.ComputableTidilyInPolyTime
@@ -86,7 +99,7 @@ noncomputable def viewStepB (views : FiniteCfg k Bool State × FiniteCfg k Bool 
   match views.1.state with
   | none => decide (views.2 = views.1)
   | some state => (ntm.actions state views.1.inputSymbol views.1.workTapeSymbols).any
-      fun action => decide (views.2 = (views.1.step action).summary)
+      fun action => decide (views.2 = (views.1.step action).summarizeOutput)
 
 /-- The test decides the steps of views. -/
 theorem viewStepB_iff {finite next : FiniteCfg k Bool State} :
@@ -95,13 +108,6 @@ theorem viewStepB_iff {finite next : FiniteCfg k Bool State} :
   rcases finite.state with _ | state
   · simp
   · simp only [List.any_eq_true, decide_eq_true_eq, mem_actions]
-
-/-- The summary of a view is polynomial-time. -/
-theorem computableTidilyInPolyTime_summary :
-    ComputableTidilyInPolyTime (FiniteCfg.summary (k := k) (State := State)) encFiniteCfg
-      encFiniteCfg := by
-  unfold FiniteCfg.summary
-  fun_prop
 
 /-- **The step test is polynomial-time** in the encoded pair of views. -/
 theorem computableTidilyInPolyTime_viewStepB :
@@ -116,7 +122,7 @@ theorem computableTidilyInPolyTime_viewStepB :
     match tag.1 with
     | none => decide (views.2 = views.1)
     | some state => (ntm.actions state tag.2.1 tag.2.2).any
-        fun action => decide (views.2 = (views.1.step action).summary)
+        fun action => decide (views.2 = (views.1.step action).summarizeOutput)
   have heq : ntm.viewStepB = fun views => branch (key views) views := by
     funext views
     rfl
@@ -134,7 +140,7 @@ theorem computableTidilyInPolyTime_viewStepB :
     · exact ComputableTidilyInPolyTime.decide_eq' hsnd hfst
     · refine ComputableTidilyInPolyTime.anyConst _ fun action _ => ?_
       exact ComputableTidilyInPolyTime.decide_eq' hsnd
-        ((computableTidilyInPolyTime_summary.comp
+        ((ComputableTidilyInPolyTime.finiteCfg_summarizeOutput.comp
           (ComputableTidilyInPolyTime.finiteCfg_step action)).comp hfst)
 
 /-! ### Codes of views -/
@@ -170,16 +176,19 @@ def CodeStep (width : ℕ) (code next : List Bool) : Prop :=
 
 variable {ntm}
 
+/-- The code of a view decodes to the view. -/
 theorem decodeView_viewCode (width : ℕ) (finite : FiniteCfg k Bool State) :
     decodeView (viewCode width finite) = some finite := by
   simp only [decodeView, viewCode, Cslib.BitString.padWord, unframe_frame_append,
     decodeFiniteCfg_encFiniteCfg]
 
+/-- The code of a view with an encoding of length at most `width` has `2 * width + 2` bits. -/
 theorem length_viewCode {width : ℕ} {finite : FiniteCfg k Bool State}
     (h : (encFiniteCfg finite).length ≤ width) :
     (viewCode width finite).length = 2 * width + 2 := by
   rw [viewCode, List.length_cons, Cslib.BitString.length_padWord h]
 
+/-- Between codes of views, the edges are the steps of the views. -/
 theorem codeEdge_viewCode {width : ℕ} {finite next : FiniteCfg k Bool State} :
     ntm.codeEdge (viewCode width finite) (viewCode width next) = true ↔
       ntm.ViewStep finite next := by
@@ -187,6 +196,8 @@ theorem codeEdge_viewCode {width : ℕ} {finite next : FiniteCfg k Bool State} :
     decodeFiniteCfg_encFiniteCfg]
   exact ntm.viewStepB_iff
 
+/-- The code of a view has an edge to the accepting code exactly when the view has halted with
+output `[true]`. -/
 theorem codeEdge_acceptCode {width : ℕ} {finite : FiniteCfg k Bool State} :
     ntm.codeEdge (viewCode width finite) (acceptCode width) = true ↔
       finite.state = none ∧ finite.output = [true] := by
@@ -240,14 +251,17 @@ theorem accepts_iff_reflTransGen_codeStep {input : List Bool} {width : ℕ}
               exact .inl ⟨view, rfl, hreach.tail hedge⟩
           · simp only [Bool.and_eq_true, decide_eq_true_eq] at hedge
             exact .inr ⟨rfl, finite, hreach, hedge⟩
-        · rcases code with _ | ⟨_ | _, code⟩ <;> simp at hhead
-          simp [decodeView] at hedge
+        · rcases code with _ | ⟨_ | _, code⟩
+          · simp at hhead
+          · simp at hhead
+          · simp [decodeView] at hedge
     rcases hinv _ hreach with ⟨finite, hfinite, -⟩ | ⟨-, hacc⟩
     · simp [acceptCode, List.replicate_succ, decodeView] at hfinite
     · exact hacc
 
 /-! ### The edge test in polynomial time -/
 
+/-- Reading the view of a code, by cases on its tag. -/
 theorem decodeView_eq (code : List Bool) :
     decodeView code = if code.headD true then none else
       some (decodeFiniteCfg (k := k) (State := State) (unframe code.tail)) := by
@@ -268,6 +282,7 @@ theorem computableTidilyInPolyTime_decodeView {code : α → List Bool}
       (ComputableTidilyInPolyTime.decodeFiniteCfg.comp (ComputableTidilyInPolyTime.unframe.comp
       (ComputableTidilyInPolyTime.tail (encA := encBool) |>.comp hcode))))
 
+/-- The edge test by cases on the decoded views and the tag of the second code. -/
 theorem codeEdge_eq (code next : List Bool) : ntm.codeEdge code next =
     (decodeView code).elim false fun finite =>
       if next.headD false then

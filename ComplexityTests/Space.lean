@@ -83,11 +83,11 @@ example (input : List Bool) (n : ℕ) : ∃ p : loopOrAccept.ComputationPath inp
 /-! ### Views -/
 
 /-- Repeated output is not acceptance: `[true, true]` is summarized as `[false]`. -/
-example : outputClass [true, true] = [false] := rfl
+example : MultiTapeNTM.outputClass [true, true] = [false] := rfl
 
-example : outputClass [true] = [true] := rfl
+example : MultiTapeNTM.outputClass [true] = [true] := rfl
 
-example : outputClass [false] = [false] := rfl
+example : MultiTapeNTM.outputClass [false] = [false] := rfl
 
 /-- Acceptance of the looping machine is witnessed by a reachable halted view with output
 `[true]`, on the empty input. -/

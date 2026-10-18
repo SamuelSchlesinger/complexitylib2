@@ -25,8 +25,9 @@ step and only visited cells are written, so every head position and every non-bl
 within the space used by its tape (`Turing.MultiTapeNTM.RunPath.natAbs_lt_spaceUsedByTape`).
 
 A configuration is viewed as finite data (`Turing.FiniteCfg`), with every work tape stored
-relative to its head and the append-only output summarized by `Turing.outputClass`: empty, exactly
-`[true]`, or `[false]` for every other word. The summary is a congruence for appending, so the
+relative to its head and the append-only output summarized by
+`Turing.MultiTapeNTM.outputClass`: empty, exactly `[true]`, or `[false]` for every other
+word. The summary is a congruence for appending, so the
 views step exactly as the machine does (`Turing.MultiTapeNTM.ViewStep`); a halted view steps only
 to itself. A computation path accepts exactly when a halted view with output `[true]` is reachable
 from the initial view (`Turing.MultiTapeNTM.accepts_iff_reflTransGen_viewStep`). Under a space
@@ -35,7 +36,7 @@ whatever the length of the path reaching it.
 
 ## Main definitions
 
-* `Turing.outputClass`: the summary of an output word.
+* `Turing.MultiTapeNTM.outputClass`: the summary of an output word.
 * `Turing.MultiTapeNTM.ViewStep`: the steps of the views of a machine.
 
 ## Main results
@@ -44,6 +45,11 @@ whatever the length of the path reaching it.
   the space used.
 * `Turing.MultiTapeNTM.accepts_iff_reflTransGen_viewStep`: acceptance is reachability of views.
 * `Turing.MultiTapeNTM.length_encFiniteCfg_le`: reachable views are small under a space bound.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.1][Sipser2013]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 4.1][AroraBarak09]
 -/
 
 @[expose] public section
@@ -92,9 +98,12 @@ theorem visitedByTapeHead_singleton (c : Cfg k Symbol State input) (i : Fin k) :
 /-- The invariant of a run path from blank tapes with the heads at `0`: the visited positions
 form an interval around `0` containing every non-blank cell. -/
 structure VisitedInterval (p : ntm.RunPath input) (i : Fin k) : Prop where
+  /-- The starting position is visited. -/
   zero_mem : 0 ∈ p.visitedByTapeHead i
+  /-- The visited positions form an interval. -/
   convex : ∀ a ∈ p.visitedByTapeHead i, ∀ b ∈ p.visitedByTapeHead i, ∀ z, a ≤ z → z ≤ b →
     z ∈ p.visitedByTapeHead i
+  /-- Every non-blank cell of the last configuration has been visited. -/
   written : ∀ z, p.last.workTapes i z ≠ none → z ∈ p.visitedByTapeHead i
 
 /-- The invariant holds along every run path from blank tapes with the heads at `0`. -/
@@ -221,13 +230,14 @@ end Cslib.Turing
 
 /-! ### Views -/
 
-namespace Turing
+namespace Turing.MultiTapeNTM
 
 /-- The summary of an output word for acceptance: empty, exactly `[true]`, or `[false]` for every
 other word. -/
 def outputClass (word : List Bool) : List Bool :=
   if word = [] then [] else if word = [true] then [true] else [false]
 
+/-- The empty word is its own summary. -/
 @[simp] theorem outputClass_nil : outputClass [] = [] := rfl
 
 /-- The summary is `[true]` exactly for the word `[true]`. -/
@@ -265,12 +275,12 @@ theorem length_outputClass_le (word : List Bool) : (outputClass word).length ≤
   unfold outputClass
   split_ifs <;> simp
 
-/-- The finite configuration with its output replaced by the summary. -/
-def FiniteCfg.summary {k : ℕ} {State : Type*} (finite : FiniteCfg k Bool State) :
-    FiniteCfg k Bool State :=
-  { finite with output := outputClass finite.output }
+section Views
 
-namespace MultiTapeNTM
+/-- The finite configuration with its output replaced by the summary. -/
+def _root_.Turing.FiniteCfg.summarizeOutput {k : ℕ} {State : Type*}
+    (finite : FiniteCfg k Bool State) : FiniteCfg k Bool State :=
+  { finite with output := outputClass finite.output }
 
 variable {k : ℕ} {State : Type*} (ntm : MultiTapeNTM k Bool State)
 
@@ -280,7 +290,7 @@ def ViewStep (finite next : FiniteCfg k Bool State) : Prop :=
   match finite.state with
   | none => next = finite
   | some state => ∃ action, ntm.Tr state finite.inputSymbol finite.workTapeSymbols action ∧
-      next = (finite.step action).summary
+      next = (finite.step action).summarizeOutput
 
 /-- The initial view on an input. -/
 def initView (input : List Bool) : FiniteCfg k Bool State := FiniteCfg.init ntm.q₀ input
@@ -288,45 +298,50 @@ def initView (input : List Bool) : FiniteCfg k Bool State := FiniteCfg.init ntm.
 variable {ntm} {input : List Bool}
 
 /-- A view represents a native configuration on `input`: the same input, control and input head,
-work tapes centered at the native heads, and the summary of the native output. -/
+work tapes centered at the native heads, and the summary of the native output. With the native
+output in place of the summary, it is `Turing.FiniteCfg.Represents` (`ViewRep.represents`). -/
 structure ViewRep (finite : FiniteCfg k Bool State) (cfg : Cfg k Bool State input) : Prop where
+  /-- The inputs agree. -/
   input : finite.input = input
+  /-- The controls agree. -/
   state : finite.state = cfg.state
+  /-- The input heads agree. -/
   inputPos : finite.inputPos.val = cfg.inputPos.val
+  /-- Each work tape represents the native tape at its native head. -/
   workTapes : ∀ tape, (finite.workTapes tape).Represents (cfg.workTapes tape) (cfg.workTapePos tape)
+  /-- The output is the summary of the native output. -/
   output : finite.output = outputClass cfg.output
 
+/-- The initial view represents the initial configuration. -/
 theorem viewRep_init (input : List Bool) :
     ViewRep (ntm.initView input) (ntm.initCfg input) :=
   ⟨rfl, rfl, rfl, fun _ => BiTape.represents_nil _, rfl⟩
+
+/-- With the native output in place of the summary, a view on the native input is a
+`Turing.FiniteCfg.Represents` of the native configuration. -/
+theorem ViewRep.represents {finite : FiniteCfg k Bool State} {cfg : Cfg k Bool State finite.input}
+    (h : ViewRep finite cfg) :
+    ({ finite with output := cfg.output } : FiniteCfg k Bool State).Represents cfg :=
+  ⟨h.state, Fin.ext h.inputPos, h.workTapes, rfl⟩
 
 /-- Represented configurations read the same symbols. -/
 theorem ViewRep.symbols {finite : FiniteCfg k Bool State} {cfg : Cfg k Bool State input}
     (h : ViewRep finite cfg) :
     finite.inputSymbol = cfg.inputSymbol ∧ finite.workTapeSymbols = cfg.workTapeSymbols := by
-  obtain ⟨finput, fstate, fpos, ftapes, foutput⟩ := finite
-  obtain ⟨hinput, -, hpos, htapes, -⟩ := h
-  dsimp only at hinput hpos htapes
+  have hinput := h.input
   subst hinput
-  have : fpos = cfg.inputPos := Fin.ext hpos
-  subst this
-  exact ⟨rfl, funext fun tape => (htapes tape).head⟩
+  exact ⟨h.represents.inputSymbol, h.represents.workTapeSymbols⟩
 
 /-- **Views step with the machine.** The same action preserves the representation. -/
 theorem ViewRep.step {finite : FiniteCfg k Bool State} {cfg : Cfg k Bool State input}
     (h : ViewRep finite cfg) (action : Action k Bool State) :
-    ViewRep (finite.step action).summary (action.apply cfg) := by
-  obtain ⟨finput, fstate, fpos, ftapes, foutput⟩ := finite
-  obtain ⟨hinput, hstate, hpos, htapes, houtput⟩ := h
-  dsimp only at hinput hstate hpos htapes houtput
+    ViewRep (finite.step action).summarizeOutput (action.apply cfg) := by
+  have hinput := h.input
   subst hinput
-  have : fpos = cfg.inputPos := Fin.ext hpos
-  subst this
-  refine ⟨rfl, rfl, rfl, fun tape => ?_, ?_⟩
-  · have hstep := (htapes tape).step (action.workTapes tape)
-    cases hw : (action.workTapes tape).1 <;>
-      simpa [FiniteCfg.summary, FiniteCfg.step, Action.apply, hw] using hstep
-  · simp only [FiniteCfg.summary, FiniteCfg.step, Action.apply, houtput, outputClass_append]
+  have hstep := h.represents.step action
+  refine ⟨rfl, hstep.state, congrArg Fin.val hstep.inputPos, hstep.workTapes, ?_⟩
+  simp only [FiniteCfg.summarizeOutput, FiniteCfg.step, Action.apply, h.output,
+    outputClass_append]
 
 /-- **Every computation path has a reachable view.** -/
 theorem exists_viewStep_of_runPath (p : ntm.RunPath input) (hp : p.head = ntm.initCfg input) :
@@ -386,17 +401,18 @@ theorem accepts_iff_reflTransGen_viewStep :
     exact ⟨p, hrep.state.symm.trans hstate,
       outputClass_eq_true_iff.mp (hrep.output.symm.trans hout)⟩
 
-end MultiTapeNTM
+end Views
 
 /-! ### The size of reachable views -/
 
-namespace MultiTapeNTM
+section Size
 
-/-- A work tape of a configuration whose head and non-blank cells lie within distance `s` of `0`
+/-- A tape representing contents whose head and non-blank cells lie within distance `s` of `0`
 is stored in at most `4 * s + 1` cells relative to its head. -/
-theorem spaceUsed_le_of_natAbs_lt {tape : BiTape Bool} {contents : ℤ → Option Bool} {head : ℤ}
-    (h : tape.Represents contents head) {s : ℕ} (hhead : head.natAbs < s)
-    (hcells : ∀ z, contents z ≠ none → z.natAbs < s) : tape.spaceUsed ≤ 4 * s + 1 := by
+theorem _root_.Cslib.Turing.BiTape.Represents.spaceUsed_le {tape : BiTape Bool}
+    {contents : ℤ → Option Bool} {head : ℤ} (h : tape.Represents contents head) {s : ℕ}
+    (hhead : head.natAbs < s) (hcells : ∀ z, contents z ≠ none → z.natAbs < s) :
+    tape.spaceUsed ≤ 4 * s + 1 := by
   have hblank (z : ℤ) (hz : s ≤ z.natAbs) : contents z = none := by
     by_contra hne
     exact absurd (hcells z hne) (by omega)
@@ -407,17 +423,28 @@ theorem spaceUsed_le_of_natAbs_lt {tape : BiTape Bool} {contents : ℤ → Optio
   · rw [h]
     exact hblank _ (by omega)
 
+/-- The bound of `Turing.MultiTapeNTM.length_encFiniteCfg_le` on the encodings of the reachable
+views of a machine with `k` work tapes and controls `State`, on inputs of length `n` under the
+space bound `s`: linear in `n` and `s`, with a constant depending only on `k` and `State`. -/
+noncomputable def viewLengthBound (k : ℕ) (State : Type*) (n s : ℕ) : ℕ :=
+  (10 + 2 * Nat.card (Option State) + 200 * k) * (n + s + 1)
+
+/-- The bound grows with the space bound. -/
+theorem viewLengthBound_mono (k : ℕ) (State : Type*) (n : ℕ) {s s' : ℕ} (h : s ≤ s') :
+    viewLengthBound k State n s ≤ viewLengthBound k State n s' :=
+  Nat.mul_le_mul_left _ (by omega)
+
 variable {k : ℕ} {State : Type} [Finite State] {ntm : MultiTapeNTM k Bool State}
   {input : List Bool}
 
 /-- **Reachable views are small.** Under a space bound `s`, every view reachable from the initial
-view has an encoding of length linear in the input and in `s`, whatever the length of the path
-reaching it. The constant depends only on the control and the number of work tapes. -/
+view has an encoding of length at most `Turing.MultiTapeNTM.viewLengthBound`, linear in the input
+and in `s`, whatever the length of the path reaching it. -/
 theorem length_encFiniteCfg_le {s : ℕ} (hs : ntm.RunsInSpace input s)
     {finite : FiniteCfg k Bool State}
     (h : Relation.ReflTransGen ntm.ViewStep (ntm.initView input) finite) :
-    (MultiTapeTM.encFiniteCfg finite).length ≤
-      (10 + 2 * Nat.card (Option State) + 200 * k) * (input.length + s + 1) := by
+    (MultiTapeTM.encFiniteCfg finite).length ≤ viewLengthBound k State input.length s := by
+  rw [viewLengthBound]
   obtain ⟨p, hrep⟩ := exists_computationPath_of_viewStep h
   have hspace : RunPath.space p.toRunPath ≤ s := hs p
   -- every work tape is stored in few cells
@@ -427,7 +454,7 @@ theorem length_encFiniteCfg_le {s : ℕ} (hs : ntm.RunsInSpace input s)
         (fun _ _ => Nat.zero_le _) (Finset.mem_univ tape)).trans hspace
     obtain ⟨hhead, hcells⟩ := RunPath.natAbs_lt_spaceUsedByTape p.toRunPath
       (fun i z => by rw [p.head_eq]; rfl) (fun i => by rw [p.head_eq]; rfl) tape
-    exact spaceUsed_le_of_natAbs_lt (hrep.workTapes tape) (hhead.trans_le hle)
+    exact (hrep.workTapes tape).spaceUsed_le (hhead.trans_le hle)
       fun z hz => (hcells z hz).trans_le hle
   have hwork : (MultiTapeTM.encPi (MultiTapeTM.encBiTape MultiTapeTM.encBool)
       finite.workTapes).length ≤ k * (2 * (12 * (4 * s + 1)) + 1) := by
@@ -448,6 +475,6 @@ theorem length_encFiniteCfg_le {s : ℕ} (hs : ntm.RunsInSpace input s)
     Function.Embedding.refl_apply, MultiTapeTM.encUnary_apply, List.length_replicate]
   nlinarith
 
-end MultiTapeNTM
+end Size
 
-end Turing
+end Turing.MultiTapeNTM
