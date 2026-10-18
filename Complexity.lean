@@ -480,6 +480,7 @@ public import Complexity.Computability.TreeEval.Encoding
 public import Complexity.Computability.TreeEval.Iterative
 public import Complexity.Computability.TreeEval.Reader.Arith
 public import Complexity.Computability.TreeEval.Reader.Cert.Residue
+public import Complexity.Computability.TreeEval.Reader.Cert.Weight
 public import Complexity.Computability.TreeEval.Reader.Correct
 public import Complexity.Computability.TreeEval.Reader.Defs
 public import Complexity.Computability.TreeEval.Reader.Encode
