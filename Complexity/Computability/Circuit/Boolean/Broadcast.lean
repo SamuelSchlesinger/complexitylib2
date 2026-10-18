@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Equality
 public import Complexity.Computability.Circuit.Boolean.Propagation
 public import Complexity.Computability.Circuit.Replication
+public import Complexity.Computability.Circuit.Wiring
 public import Complexity.Foundations.Data.BitString.Broadcast
 import Mathlib.Tactic.Ring
 
@@ -62,10 +63,10 @@ open propagateCircuit (inputBlock)
 
 /-- Run one shared propagation scan per value bit, reusing a single block of links. -/
 def scans (count width : ℕ) : Circuit signature (width * count + count) (width * count) :=
-  ((propagateCircuit count).replicate width).comp (Circuit.wiring signature fun index =>
-    let pair := finProdFinEquiv.symm index
-    Fin.addCases (fun record => Fin.castAdd count (finProdFinEquiv (pair.1, record)))
-      (Fin.natAdd (width * count)) pair.2)
+  ((propagateCircuit count).replicate width).comp (Circuit.wiringOn signature
+    ((finProdFinEquiv.sumCongr (Equiv.refl _)).trans finSumFinEquiv)
+    (((Equiv.refl _).prodCongr finSumFinEquiv).trans finProdFinEquiv)
+    (fun (bit, field) => field.elim (fun record => Sum.inl (bit, record)) Sum.inr))
 
 private theorem eval_scans {count width : ℕ} (source : Fin width → BitString count)
     (link : BitString count) (bit : Fin width) (record : Fin count) :
@@ -73,18 +74,18 @@ private theorem eval_scans {count width : ℕ} (source : Fin width → BitString
       (Fin.append (fun index => source (finProdFinEquiv.symm index).1
         (finProdFinEquiv.symm index).2) link) (finProdFinEquiv (bit, record)) =
       (propagateCircuit count).eval interpretation (Fin.append (source bit) link) record := by
-  rw [scans, Circuit.eval_comp, Circuit.eval_replicate_apply, Circuit.eval_wiring]
+  rw [scans, Circuit.eval_comp, Circuit.eval_replicate_apply]
   congr 2
   funext index
   cases index using Fin.addCases <;>
-    simp only [directProductInput, Function.comp_apply, Equiv.symm_apply_apply,
-      Fin.addCases_left, Fin.addCases_right, Fin.append_left, Fin.append_right]
+    simp [Circuit.eval_wiringOn, directProductInput,
+      -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 private theorem cost_scans (count width : ℕ) (cost : signature.Op → ℕ) :
     (scans count width).program.cost cost =
       width * (cost (.const false) + count * (cost .and + cost .or)) := by
   simp only [scans, Circuit.cost_program_comp, Circuit.cost_program_replicate,
-    cost_program_propagateCircuit, Circuit.cost_program_wiring, Nat.zero_add]
+    cost_program_propagateCircuit, Circuit.cost_program_wiringOn, Nat.zero_add]
 
 /-- Only false-tagged source records seed a value bit. -/
 def sources {input count width : ℕ} (tag : Fin count → Fin input)

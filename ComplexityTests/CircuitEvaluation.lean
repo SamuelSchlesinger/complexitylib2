@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.ShannonSynthesis
 import Complexity.Computability.Circuit.Support
+import Complexity.Computability.Circuit.Wiring
 
 /-!
 # Stored circuit evaluation regression clients
@@ -34,6 +35,12 @@ open Cslib Cslib.Circuits Cslib.Circuits.Boolean Cslib.Circuits.Boolean.ShannonS
 /-- info: #[false, true, false, false, false, false, false, false] -/
 #guard_msgs in
 #eval ((mintermCircuit 3).evalVector interpretation ![true, false, false]).toArray
+
+-- Structured fan-out repeats a record without changing its bit order.
+/-- info: [true, false, true, false, true, false] -/
+#guard_msgs in
+#eval List.ofFn ((Circuit.wiringOn signature finProdFinEquiv finProdFinEquiv
+  (fun p : Fin 3 × Fin 2 => ((0 : Fin 1), p.2))).eval interpretation ![true, false])
 
 -- One unused gate, repeated gate outputs, and a direct input output.
 private def shared : Circuit signature 1 4 :=
@@ -82,6 +89,11 @@ example : ((Program.empty : Program emptySignature 0 0).evalVector
   funext j
   exact j.elim0
 
+-- Empty structured layouts work with an empty evaluation carrier.
+example : ((Circuit.wiringOn emptySignature
+    (finProdFinEquiv : Fin 0 × Fin 3 ≃ Fin 0) (Equiv.refl (Fin 0)) Fin.elim0).evalVector
+      emptyInterpretation Fin.elim0).toArray = #[] := rfl
+
 -- Nullary operations and a non-Boolean carrier do not require input values.
 private def constantSignature : Signature where
   Op := Unit
@@ -98,6 +110,14 @@ example : naturalConstant.depthWith (fun _ => 9) = 9 ∧
 #guard_msgs in
 #eval (naturalConstant.evalVector (fun _ _ => (37 : Nat)) Fin.elim0 |>.toArray,
   naturalConstant.eval (fun _ _ => (37 : Nat)) Fin.elim0 1)
+
+-- Selecting no outputs preserves the cost of a gate already computed.
+example (cost : constantSignature.Op → ℕ) :
+    ((Circuit.wiringOn constantSignature (Equiv.refl (Fin 2)) finProdFinEquiv
+      (fun _ : Fin 0 × Fin 3 => (0 : Fin 2))).comp naturalConstant).program.cost cost =
+        cost () := by
+  simp only [Circuit.cost_program_comp, Circuit.cost_program_wiringOn, Nat.add_zero,
+    naturalConstant, Program.cost_gate, Program.cost_empty, Nat.zero_add]
 
 -- Distinct signature and carrier universes remain polymorphic, including compiler adapters.
 example {σ : Signature.{v}} {U : Type u} {n m : Nat} (c : Circuit σ n m)

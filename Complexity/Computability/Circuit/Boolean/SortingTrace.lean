@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Sorting
+public import Complexity.Computability.Circuit.Wiring
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Ring
@@ -123,26 +124,23 @@ private theorem ext {t n r : ℕ} {x y : BitString (t * 2 + n * r)}
     obtain ⟨⟨j, b⟩, rfl⟩ := finProdFinEquiv.surjective i
     exact congrFun (congrFun hd j) b
 
+/-- The explicit numbering of control-pair and record coordinates. -/
+def layout (t n r : ℕ) : (Fin t × Fin 2) ⊕ (Fin n × Fin r) ≃
+    Fin (t * 2 + n * r) :=
+  (finProdFinEquiv.sumCongr finProdFinEquiv).trans finSumFinEquiv
+
 /-- Collect two circuits' controls before their concatenated record outputs. -/
 def collect {input a b n m r : ℕ}
     (left : Circuit signature input (a * 2 + n * r))
     (right : Circuit signature input (b * 2 + m * r)) :
     Circuit signature input ((a + b) * 2 + (n + m) * r) :=
-  (Circuit.wiring signature (Fin.addCases
-    (fun i =>
-      let jb := finProdFinEquiv.symm i
-      Fin.addCases
-        (fun j => Fin.castAdd (b * 2 + m * r) (Fin.castAdd (n * r)
-          (finProdFinEquiv (j, jb.2))))
-        (fun j => Fin.natAdd (a * 2 + n * r) (Fin.castAdd (m * r)
-          (finProdFinEquiv (j, jb.2)))) jb.1)
-    (fun i =>
-      let jb := finProdFinEquiv.symm i
-      Fin.addCases
-        (fun j => Fin.castAdd (b * 2 + m * r) (Fin.natAdd (a * 2)
-          (finProdFinEquiv (j, jb.2))))
-        (fun j => Fin.natAdd (a * 2 + n * r) (Fin.natAdd (b * 2)
-          (finProdFinEquiv (j, jb.2)))) jb.1))).comp (left.append right)
+  (Circuit.wiringOn signature
+    (((layout a n r).sumCongr (layout b m r)).trans finSumFinEquiv)
+    (((finSumFinEquiv.prodCongr (Equiv.refl _)).sumCongr
+      (finSumFinEquiv.prodCongr (Equiv.refl _))).trans (layout (a + b) (n + m) r))
+    (((Equiv.sumProdDistrib (Fin a) (Fin b) (Fin 2)).sumCongr
+      (Equiv.sumProdDistrib (Fin n) (Fin m) (Fin r))).trans
+        (Equiv.sumSumSumComm _ _ _ _))).comp (left.append right)
 
 private theorem controls_collect {input a b n m r : ℕ}
     (left : Circuit signature input (a * 2 + n * r))
@@ -152,9 +150,8 @@ private theorem controls_collect {input a b n m r : ℕ}
         (controls (right.eval interpretation x)) := by
   funext j bit
   cases j using Fin.addCases <;>
-    simp only [controls, collect, directProductInput, Circuit.eval_comp, Circuit.eval_wiring,
-      Circuit.eval_append, Function.comp_apply, Fin.addCases_left,
-      Fin.addCases_right, Fin.append_left, Fin.append_right, Equiv.symm_apply_apply]
+    simp [controls, collect, layout, Circuit.eval_wiringOn, directProductInput,
+      Equiv.sumSumSumComm, -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 private theorem records_collect {input a b n m r : ℕ}
     (left : Circuit signature input (a * 2 + n * r))
@@ -164,30 +161,27 @@ private theorem records_collect {input a b n m r : ℕ}
         (records (right.eval interpretation x)) := by
   funext j bit
   cases j using Fin.addCases <;>
-    simp only [records, collect, directProductInput, Circuit.eval_comp, Circuit.eval_wiring,
-      Circuit.eval_append, Function.comp_apply, Fin.addCases_left,
-      Fin.addCases_right, Fin.append_left, Fin.append_right, Equiv.symm_apply_apply]
+    simp [records, collect, layout, Circuit.eval_wiringOn, directProductInput,
+      Equiv.sumSumSumComm, -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 private theorem cost_collect {input a b n m r : ℕ}
     (left : Circuit signature input (a * 2 + n * r))
     (right : Circuit signature input (b * 2 + m * r)) (cost : signature.Op → ℕ) :
     (collect left right).program.cost cost = left.program.cost cost + right.program.cost cost := by
   simp only [collect, Circuit.cost_program_comp, Circuit.cost_program_append,
-    Circuit.cost_program_wiring, Nat.add_zero]
+    Circuit.cost_program_wiringOn, Nat.add_zero]
 
 /-- Preserve the first controls while executing the second circuit on its payload. -/
 def chain {input a b n m r : ℕ}
     (first : Circuit signature input (a * 2 + n * r))
     (second : Circuit signature (n * r) (b * 2 + m * r)) :
     Circuit signature input ((a + b) * 2 + m * r) :=
-  (Circuit.wiring signature (Fin.addCases
-    (fun i =>
-      let jb := finProdFinEquiv.symm i
-      Fin.addCases
-        (fun j => Fin.castAdd (b * 2 + m * r) (finProdFinEquiv (j, jb.2)))
-        (fun j => Fin.natAdd (a * 2) (Fin.castAdd (m * r)
-          (finProdFinEquiv (j, jb.2)))) jb.1)
-    (Fin.natAdd (a * 2) ∘ Fin.natAdd (b * 2)))).comp
+  (Circuit.wiringOn signature
+    ((finProdFinEquiv.sumCongr (layout b m r)).trans finSumFinEquiv)
+    (((finSumFinEquiv.prodCongr (Equiv.refl _)).sumCongr (Equiv.refl _)).trans
+      (layout (a + b) m r))
+    (((Equiv.sumProdDistrib (Fin a) (Fin b) (Fin 2)).sumCongr (Equiv.refl _)).trans
+      (Equiv.sumAssoc _ _ _))).comp
     (((Circuit.id signature (a * 2)).parallel second).comp first)
 
 private theorem controls_chain {input a b n m r : ℕ}
@@ -199,9 +193,8 @@ private theorem controls_chain {input a b n m r : ℕ}
           (first.eval interpretation x ∘ Fin.natAdd (a * 2)))) := by
   funext j bit
   cases j using Fin.addCases <;>
-    simp only [controls, chain, directProductInput, Circuit.eval_comp, Circuit.eval_wiring,
-      Circuit.eval_parallel, Circuit.id, Function.comp_id, Function.comp_apply, Fin.addCases_left,
-      Fin.addCases_right, Fin.append_left, Fin.append_right, Equiv.symm_apply_apply]
+    simp [controls, chain, layout, Circuit.eval_wiringOn, directProductInput,
+      -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 private theorem records_chain {input a b n m r : ℕ}
     (first : Circuit signature input (a * 2 + n * r))
@@ -209,9 +202,8 @@ private theorem records_chain {input a b n m r : ℕ}
     records ((chain first second).eval interpretation x) =
       records (second.eval interpretation (first.eval interpretation x ∘ Fin.natAdd (a * 2))) := by
   funext j bit
-  simp only [records, chain, directProductInput, Circuit.eval_comp, Circuit.eval_wiring,
-      Circuit.eval_parallel, Circuit.id, Function.comp_id, Function.comp_apply,
-      Fin.addCases_right, Fin.append_right]
+  simp [records, chain, layout, Circuit.eval_wiringOn, directProductInput,
+    -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 private theorem cost_chain {input a b n m r : ℕ}
     (first : Circuit signature input (a * 2 + n * r))
@@ -219,7 +211,7 @@ private theorem cost_chain {input a b n m r : ℕ}
     (chain first second).program.cost cost =
       first.program.cost cost + second.program.cost cost := by
   simp only [chain, Circuit.cost_program_comp, Circuit.cost_program_parallel, Circuit.id,
-    Circuit.cost_program_wiring, Nat.zero_add, Nat.add_zero]
+    Circuit.cost_program_wiringOn, Circuit.cost_program_wiring, Nat.zero_add, Nat.add_zero]
 
 private theorem eval_collect {input a b n m r : ℕ}
     (left : Circuit signature input (a * 2 + n * r))
@@ -490,23 +482,15 @@ namespace bitonicSortTraceCircuit
 /-- Select controls and records independently by free wiring. -/
 def select {a t n m r : ℕ} (cs : Fin a → Fin t) (rs : Fin n → Fin m) :
     Circuit signature (t * 2 + m * r) (a * 2 + n * r) :=
-  Circuit.wiring signature (Fin.addCases
-    (fun i =>
-      let jb := finProdFinEquiv.symm i
-      Fin.castAdd (m * r) (finProdFinEquiv (cs jb.1, jb.2)))
-    (fun i =>
-      let jb := finProdFinEquiv.symm i
-      Fin.natAdd (t * 2) (finProdFinEquiv (rs jb.1, jb.2))))
+  Circuit.wiringOn signature (layout t m r) (layout a n r)
+    (Sum.map (Prod.map cs id) (Prod.map rs id))
 
 private theorem eval_select {a t n m r : ℕ} (cs : Fin a → Fin t) (rs : Fin n → Fin m)
     (c : Fin t → BitString 2) (x : Fin m → BitString r) :
     (select cs rs).eval interpretation (pack c x) = pack (c ∘ cs) (x ∘ rs) := by
-  apply ext <;>
-    simp only [controls_pack, records_pack] <;>
-    funext j bit <;>
-    simp only [controls, records, select, Circuit.eval_wiring, Function.comp_apply,
-      Fin.addCases_left, Fin.addCases_right, pack, directProductInput, Fin.append_left,
-      Fin.append_right, flatten, Equiv.symm_apply_apply]
+  apply ext <;> funext j bit <;>
+    simp [controls, records, select, layout, Circuit.eval_wiringOn, pack, directProductInput,
+      flatten, -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 /-- Reverse a comparison layer, reading the saved decision and its complement. -/
 def unlayer (n r : ℕ) : Circuit signature (n * 2 + (n + n) * r) ((n + n) * r) :=
@@ -562,11 +546,10 @@ private theorem cost_unlayer (n r : ℕ) (cost : signature.Op → ℕ) :
 def unhalves {a b n r : ℕ} (left : Circuit signature (a * 2 + n * r) (n * r))
     (right : Circuit signature (b * 2 + n * r) (n * r)) :
     Circuit signature ((a + b) * 2 + (n + n) * r) ((n + n) * r) :=
-  (Circuit.wiring signature (fun i =>
-    let jb := finProdFinEquiv.symm i
-    Fin.addCases
-      (fun j => Fin.castAdd (n * r) (finProdFinEquiv (j, jb.2)))
-      (fun j => Fin.natAdd (n * r) (finProdFinEquiv (j, jb.2))) jb.1)).comp
+  (Circuit.wiringOn signature
+    ((finProdFinEquiv.sumCongr finProdFinEquiv).trans finSumFinEquiv)
+    ((finSumFinEquiv.prodCongr (Equiv.refl (Fin r))).trans finProdFinEquiv)
+    (Equiv.sumProdDistrib (Fin n) (Fin n) (Fin r))).comp
     ((left.comp (select (Fin.castAdd b) (Fin.castAdd n))).append
       (right.comp (select (Fin.natAdd a) (Fin.natAdd n))))
 
@@ -581,24 +564,22 @@ private theorem eval_unhalves {a b n r : ℕ} (left : Circuit signature (a * 2 +
           (pack (c ∘ Fin.natAdd a) (x ∘ Fin.natAdd n)))) := by
   funext j bit
   cases j using Fin.addCases <;>
-    simp only [unhalves, directProductInput, Circuit.eval_comp, Circuit.eval_wiring,
-      Function.comp_apply, Equiv.symm_apply_apply, Fin.addCases_left, Fin.addCases_right,
-      Circuit.eval_append, Fin.append_left, Fin.append_right, eval_select]
+    simp [unhalves, Circuit.eval_wiringOn, directProductInput, eval_select,
+      -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 private theorem cost_unhalves {a b n r : ℕ} (left : Circuit signature (a * 2 + n * r) (n * r))
     (right : Circuit signature (b * 2 + n * r) (n * r)) (cost : signature.Op → ℕ) :
     (unhalves left right).program.cost cost =
       left.program.cost cost + right.program.cost cost := by
   simp only [unhalves, select, Circuit.cost_program_comp, Circuit.cost_program_append,
-    Circuit.cost_program_wiring, Nat.zero_add, Nat.add_zero]
+    Circuit.cost_program_wiringOn, Nat.zero_add, Nat.add_zero]
 
 /-- Preserve the first controls while undoing the second stage, then undo the first stage. -/
 def unchain {a b n r : ℕ} (first : Circuit signature (a * 2 + n * r) (n * r))
     (second : Circuit signature (b * 2 + n * r) (n * r)) :
     Circuit signature ((a + b) * 2 + n * r) (n * r) :=
-  first.comp ((Circuit.wiring signature (fun i =>
-    let jb := finProdFinEquiv.symm i
-    Fin.castAdd (n * r) (finProdFinEquiv (Fin.castAdd b jb.1, jb.2)))).append
+  first.comp ((Circuit.wiringOn signature (layout (a + b) n r) finProdFinEquiv
+    (fun (j, bit) => Sum.inl (Fin.castAdd b j, bit))).append
       (second.comp (select (Fin.natAdd a) id)))
 
 private theorem eval_unchain {a b n r : ℕ} (first : Circuit signature (a * 2 + n * r) (n * r))
@@ -612,8 +593,8 @@ private theorem eval_unchain {a b n r : ℕ} (first : Circuit signature (a * 2 +
   funext i
   cases i using Fin.addCases with
   | left i =>
-    simp only [Fin.append_left, Circuit.eval_wiring, Function.comp_apply, pack, flatten,
-      Equiv.symm_apply_apply]
+    simp [Circuit.eval_wiringOn, layout, pack, flatten,
+      -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
   | right i =>
     simp only [Fin.append_right, pack, flatten, directProductInput, Prod.mk.eta,
       Equiv.apply_symm_apply]
@@ -623,7 +604,7 @@ private theorem cost_unchain {a b n r : ℕ} (first : Circuit signature (a * 2 +
     (unchain first second).program.cost cost =
       first.program.cost cost + second.program.cost cost := by
   simp only [unchain, select, Circuit.cost_program_comp, Circuit.cost_program_append,
-    Circuit.cost_program_wiring, Nat.zero_add]
+    Circuit.cost_program_wiringOn, Nat.zero_add]
   exact Nat.add_comm _ _
 
 theorem pairs_comp {a b : ℕ} (flags : BitString a) (f : Fin b → Fin a) :

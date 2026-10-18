@@ -11,6 +11,7 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Computability.Circuit.Boolean.CompareSwap
 public import Complexity.Computability.Circuit.Parallel
 public import Complexity.Computability.Circuit.Replication
+public import Complexity.Computability.Circuit.Wiring
 import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 import Mathlib.Tactic.Ring
 
@@ -133,16 +134,20 @@ def bitonicMergeCircuit {k r : ℕ} (key : Fin k → Fin r) : (depth : ℕ) → 
 where
   /-- Select the first half of a flat record array. -/
   firstHalf (n r : ℕ) : Fin (n * r) → Fin ((n + n) * r) :=
-    Fin.cast (Nat.add_mul n n r).symm ∘ Fin.castAdd (n * r)
+    fun i => finProdFinEquiv (Fin.castAdd n (finProdFinEquiv.symm i).1,
+      (finProdFinEquiv.symm i).2)
   /-- Select the second half of a flat record array. -/
   secondHalf (n r : ℕ) : Fin (n * r) → Fin ((n + n) * r) :=
-    Fin.cast (Nat.add_mul n n r).symm ∘ Fin.natAdd (n * r)
+    fun i => finProdFinEquiv (Fin.natAdd n (finProdFinEquiv.symm i).1,
+      (finProdFinEquiv.symm i).2)
   /-- Apply a circuit to each record half, transporting only the flat wire indices. -/
   halves {n r : ℕ} (left right : Circuit signature (n * r) (n * r)) :
       Circuit signature ((n + n) * r) ((n + n) * r) :=
-    (Circuit.wiring signature (Fin.cast (Nat.add_mul n n r))).comp
-      ((left.parallel right).comp
-        (Circuit.wiring signature (Fin.cast (Nat.add_mul n n r).symm)))
+    let rows := (finSumFinEquiv.prodCongr (Equiv.refl (Fin r))).trans finProdFinEquiv
+    let blocks := (finProdFinEquiv.sumCongr finProdFinEquiv).trans finSumFinEquiv
+    let distribute := Equiv.sumProdDistrib (Fin n) (Fin n) (Fin r)
+    (Circuit.wiringOn signature blocks rows distribute).comp
+      ((left.parallel right).comp (Circuit.wiringOn signature rows blocks distribute.symm))
 
 open bitonicMergeCircuit
 
@@ -150,43 +155,23 @@ open bitonicMergeCircuit
 theorem bitonicMergeCircuit.records_firstHalf {n r : ℕ} (x : BitString ((n + n) * r)) :
     directProductInput (x ∘ firstHalf n r) = directProductInput x ∘ Fin.castAdd n := by
   funext j b
-  rfl
+  simp only [firstHalf, directProductInput, Function.comp_apply, Equiv.symm_apply_apply]
 
 /-- The second flat input block is the second half of the record array. -/
 theorem bitonicMergeCircuit.records_secondHalf {n r : ℕ} (x : BitString ((n + n) * r)) :
     directProductInput (x ∘ secondHalf n r) = directProductInput x ∘ Fin.natAdd n := by
   funext j b
-  apply congrArg x
-  apply Fin.ext
-  simp only [secondHalf, Function.comp_apply, Fin.val_cast, Fin.val_natAdd, finProdFinEquiv]
-  dsimp
-  ring
+  simp only [secondHalf, directProductInput, Function.comp_apply, Equiv.symm_apply_apply]
 
 private theorem eval_halves {n r : ℕ} (left right : Circuit signature (n * r) (n * r))
     (x : BitString ((n + n) * r)) :
     directProductInput ((halves left right).eval interpretation x) =
       Fin.append (directProductInput (left.eval interpretation (x ∘ firstHalf n r)))
         (directProductInput (right.eval interpretation (x ∘ secondHalf n r))) := by
-  funext j b
-  cases j using Fin.addCases with
-  | left j =>
-    simp only [halves, Circuit.eval_comp, Circuit.eval_wiring, Circuit.eval_parallel,
-      directProductInput, Function.comp_apply, Fin.append_left]
-    have h : Fin.cast (Nat.add_mul n n r) (finProdFinEquiv (Fin.castAdd n j, b)) =
-        Fin.castAdd (n * r) (finProdFinEquiv (j, b)) := rfl
-    rw [h, Fin.append_left]
-    rfl
-  | right j =>
-    simp only [halves, Circuit.eval_comp, Circuit.eval_wiring, Circuit.eval_parallel,
-      directProductInput, Function.comp_apply, Fin.append_right]
-    have h : Fin.cast (Nat.add_mul n n r) (finProdFinEquiv (Fin.natAdd n j, b)) =
-        Fin.natAdd (n * r) (finProdFinEquiv (j, b)) := by
-      apply Fin.ext
-      simp only [Fin.val_cast, finProdFinEquiv, Fin.val_natAdd]
-      dsimp
-      ring
-    rw [h, Fin.append_right]
-    rfl
+  funext j bit
+  cases j using Fin.addCases <;>
+    simp [halves, Circuit.eval_wiringOn, directProductInput, firstHalf, secondHalf,
+      Function.comp_def, -finProdFinEquiv_symm_apply, -Fin.natAdd_eq_addNat]
 
 /-- The native circuit realizes bitonic merge on complete records. -/
 theorem eval_bitonicMergeCircuit {k r : ℕ} (key : Fin k → Fin r) (depth : ℕ)
@@ -274,7 +259,7 @@ theorem cost_program_bitonicLayerCircuit {k r : ℕ} (key : Fin k → Fin r) (n 
 private theorem cost_halves {n r : ℕ} (left right : Circuit signature (n * r) (n * r))
     (cost : signature.Op → ℕ) :
     (halves left right).program.cost cost = left.program.cost cost + right.program.cost cost := by
-  simp only [halves, Circuit.cost_program_comp, Circuit.cost_program_wiring,
+  simp only [halves, Circuit.cost_program_comp, Circuit.cost_program_wiringOn,
     Circuit.cost_program_parallel, Nat.zero_add, Nat.add_zero]
 
 /-- Exact merge cost: `depth * 2^depth / 2` comparisons, stated without natural division. -/
