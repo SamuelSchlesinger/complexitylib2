@@ -479,6 +479,7 @@ public import Complexity.Computability.TreeEval.CookMertz
 public import Complexity.Computability.TreeEval.Encoding
 public import Complexity.Computability.TreeEval.Iterative
 public import Complexity.Computability.TreeEval.Reader.Arith
+public import Complexity.Computability.TreeEval.Reader.Cert.Offset
 public import Complexity.Computability.TreeEval.Reader.Cert.Regs
 public import Complexity.Computability.TreeEval.Reader.Cert.Residue
 public import Complexity.Computability.TreeEval.Reader.Cert.Weight

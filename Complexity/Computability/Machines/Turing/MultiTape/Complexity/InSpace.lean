@@ -66,6 +66,12 @@ theorem of_enc_eq {f : α → β} {g : α → γ} (h : ComputableTidilyInSpace f
   let ⟨T, hT⟩ := h
   ⟨T, hT.of_enc_eq he⟩
 
+theorem of_encIn_eq {α' : Type} {encIn' : α' ↪ List Bool} {f : α → β} (e : α' → α)
+    (h : ComputableTidilyInSpace f encIn encB S) (he : ∀ a, encIn' a = encIn (e a)) :
+    ComputableTidilyInSpace (fun a => f (e a)) encIn' encB fun a => S (e a) :=
+  let ⟨_, hT⟩ := h
+  ⟨_, hT.of_encIn_eq e he⟩
+
 theorem comp {f : α → β} {g : β → γ} {S₂ : β → ℕ} (hg : ComputableTidilyInSpace g encB encC S₂)
     (hf : ComputableTidilyInSpace f encIn encB S₁) :
     ComputableTidilyInSpace (fun a => g (f a)) encIn encC fun a => S₁ a + S₂ (f a) :=
