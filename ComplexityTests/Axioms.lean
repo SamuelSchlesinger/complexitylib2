@@ -9081,3 +9081,115 @@ info: 'Cslib.Circuits.Boolean.size_broadcastCircuit' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.size_broadcastCircuit
+
+/--
+info: 'List.Perm.exists_ofFn_iff' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms List.Perm.exists_ofFn_iff
+
+/--
+info: 'List.countP_ofFn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms List.countP_ofFn
+
+/--
+info: 'List.Perm.card_filter_ofFn_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms List.Perm.card_filter_ofFn_eq
+
+/--
+info: 'List.Perm.existsUnique_ofFn_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms List.Perm.existsUnique_ofFn_iff
+
+/--
+info: 'Fin.card_lt_of_monotone_of_unique' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Fin.card_lt_of_monotone_of_unique
+
+/--
+info: 'List.Perm.key_ofFn_eq_of_rank' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms List.Perm.key_ofFn_eq_of_rank
+
+/--
+info: 'List.Perm.apply_ofFn_eq_of_rank' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms List.Perm.apply_ofFn_eq_of_rank
+
+/--
+info: 'Cslib.Circuits.Boolean.routeCircuit.headers_perm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.routeCircuit.headers_perm
+
+/--
+info: 'Cslib.Circuits.Boolean.routeCircuit.value_eq_true_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.routeCircuit.value_eq_true_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.routeCircuit_headers_perm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.routeCircuit_headers_perm
+
+/--
+info: 'Cslib.Circuits.Boolean.monotone_routeCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.monotone_routeCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_routeCircuit_value_eq_true_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_routeCircuit_value_eq_true_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_routeCircuit_header_of_rank' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_routeCircuit_header_of_rank
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_routeCircuit_value_eq_true_iff_of_rank' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_routeCircuit_value_eq_true_iff_of_rank
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_routeCircuit_value_of_unique_source' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_routeCircuit_value_of_unique_source
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_routeCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_routeCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.four_mul_cost_program_routeCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.four_mul_cost_program_routeCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.four_mul_size_routeCircuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.four_mul_size_routeCircuit

@@ -52,8 +52,11 @@ results. Track these by their public theorems, rather than by source-file counts
   has exact linear gate cost and connected-source semantics, including sorted equal-key runs.
   The [record broadcast circuit](Complexity/Computability/Circuit/Boolean/Broadcast.lean)
   preserves headers and routing metadata, shares adjacent-key tests across value bits, and
-  copies a unique matching source to each sorted destination. Constructor runtime is not
-  certified. Lookup, routing and the three mass-production bounds above remain to be ported.
+  copies a unique matching source to each sorted destination. The
+  [two-sort router](Complexity/Computability/Circuit/Boolean/Routing.lean) preserves headers,
+  restores uniquely keyed requests to their input-determined ranks, and has exact gate costs.
+  Constructor runtime is not certified. Concrete batched lookup layouts, padding and bounds,
+  and the three mass-production results above remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,

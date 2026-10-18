@@ -107,6 +107,7 @@ import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.RandomOracle
 import ComplexityTests.RotationWalk
+import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator

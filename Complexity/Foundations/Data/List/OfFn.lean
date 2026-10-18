@@ -1,0 +1,112 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Init
+public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Data.List.OfFn
+public import Mathlib.Data.Finset.Card
+import Mathlib.Order.Interval.Finset.Fin
+
+/-!
+# Finite-array permutations and ranks
+
+Use ordinary `List.Perm` on `List.ofFn` to transport predicates and their multiplicities.
+If an entry has a unique key, its sorted position is the number of strictly smaller keys;
+other keys may repeat. The key order need only be a partial order.
+
+## Main results
+
+* `List.Perm.exists_ofFn_iff`, `List.Perm.existsUnique_ofFn_iff`: predicate transport.
+* `List.Perm.card_filter_ofFn_eq`: preservation of predicate counts.
+* `List.Perm.apply_ofFn_eq_of_rank`: identify an entire entry at its sorted position.
+
+## References
+
+The rank argument supports the two-sort routing construction in
+[S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
+-/
+
+@[expose] public section
+
+open Finset
+
+/-- Permuting a finite array preserves whether any entry satisfies a predicate. -/
+theorem List.Perm.exists_ofFn_iff {α : Type*} {m n : ℕ} {f : Fin m → α} {g : Fin n → α}
+    (perm : (List.ofFn f).Perm (List.ofFn g)) (p : α → Prop) :
+    (∃ i, p (f i)) ↔ ∃ i, p (g i) := by
+  have h : (∃ x ∈ List.ofFn f, p x) ↔ ∃ x ∈ List.ofFn g, p x :=
+    exists_congr fun _ => and_congr_left fun _ => perm.mem_iff
+  simpa [List.mem_ofFn] using h
+
+/-- Count satisfying array entries by summing their Boolean indicators. -/
+theorem List.countP_ofFn {α : Type*} {n : ℕ} (f : Fin n → α) (p : α → Bool) :
+    (List.ofFn f).countP p = ∑ i, if p (f i) then 1 else 0 := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [List.ofFn_succ, List.countP_cons, Fin.sum_univ_succ, ih, Nat.add_comm]
+
+/-- Permuting a finite array preserves the number of entries satisfying a predicate. -/
+theorem List.Perm.card_filter_ofFn_eq {α : Type*} {n : ℕ} {f g : Fin n → α}
+    (perm : (List.ofFn f).Perm (List.ofFn g)) (p : α → Prop) [DecidablePred p] :
+    #{i | p (f i)} = #{i | p (g i)} := by
+  have h := perm.countP_eq (fun x => decide (p x))
+  simpa only [List.countP_ofFn, decide_eq_true_eq, Finset.card_filter] using h
+
+/-- Permuting a finite array preserves unique occurrence of a predicate. -/
+theorem List.Perm.existsUnique_ofFn_iff {α : Type*} {n : ℕ} {f g : Fin n → α}
+    (perm : (List.ofFn f).Perm (List.ofFn g)) (p : α → Prop) :
+    (∃! i, p (f i)) ↔ ∃! i, p (g i) := by
+  classical
+  have h := List.Perm.card_filter_ofFn_eq perm p
+  simpa only [Finset.card_eq_one_iff_existsUnique, Finset.mem_filter,
+    Finset.mem_univ, true_and] using (congrArg (fun size => size = 1) h).to_iff
+
+/-- A unique value in a monotone finite array has exactly its index many smaller entries. -/
+theorem Fin.card_lt_of_monotone_of_unique {α : Type*} [PartialOrder α] [DecidableLT α] {n : ℕ}
+    {f : Fin n → α} (sorted : Monotone f) (j : Fin n)
+    (unique : ∀ i, f i = f j → i = j) : #{i | f i < f j} = j.val := by
+  have lt_iff (i : Fin n) : f i < f j ↔ i < j := by
+    constructor
+    · intro h
+      by_contra hn
+      exact (not_lt_of_ge (sorted (le_of_not_gt hn))) h
+    · intro h
+      exact lt_of_le_of_ne (sorted h.le) (fun he => h.ne (unique i he))
+  calc
+    #{i | f i < f j} = #(Finset.Iio j) := congrArg Finset.card (by ext i; simp [lt_iff])
+    _ = j.val := Fin.card_Iio j
+
+/-- A unique key occurs at its rank after a finite array is sorted by that key. -/
+theorem List.Perm.key_ofFn_eq_of_rank {α β : Type*} [PartialOrder β] [DecidableLT β] {n : ℕ}
+    {f g : Fin n → α} (perm : (List.ofFn f).Perm (List.ofFn g))
+    (key : α → β) (sorted : Monotone (key ∘ g)) (target : β)
+    (unique : ∃! i, key (f i) = target) (j : Fin n)
+    (rank : #{i | key (f i) < target} = j.val) : key (g j) = target := by
+  obtain ⟨i, hi, hu⟩ :=
+    (List.Perm.existsUnique_ofFn_iff perm (fun row => key row = target)).mp unique
+  have ri := Fin.card_lt_of_monotone_of_unique sorted i (fun k hk => hu k (hk.trans hi))
+  have preserve := List.Perm.card_filter_ofFn_eq perm (fun row => key row < target)
+  simp only [Function.comp_apply, hi] at ri
+  have same : i = j := Fin.ext (by lia)
+  simpa only [same] using hi
+
+/-- Sorting places an entry with a unique key at the number of strictly smaller keys. -/
+theorem List.Perm.apply_ofFn_eq_of_rank {α β : Type*} [PartialOrder β] [DecidableLT β] {n : ℕ}
+    {f g : Fin n → α} (perm : (List.ofFn f).Perm (List.ofFn g))
+    (key : α → β) (sorted : Monotone (key ∘ g)) (source j : Fin n)
+    (unique : ∀ i, key (f i) = key (f source) → i = source)
+    (rank : #{i | key (f i) < key (f source)} = j.val) : g j = f source := by
+  have hj := List.Perm.key_ofFn_eq_of_rank perm key sorted (key (f source))
+    ⟨source, rfl, unique⟩ j rank
+  have mem : g j ∈ List.ofFn f := perm.mem_iff.mpr (by simp)
+  obtain ⟨i, hi⟩ := List.mem_ofFn.mp mem
+  have same := unique i (by simpa only [hi] using hj)
+  simpa only [same] using hi.symm
+
