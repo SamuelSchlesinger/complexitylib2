@@ -1,0 +1,21 @@
+name = "coordination"
+version = "0.1.0"
+defaultTargets = ["coordinate", "coordinateTests"]
+testDriver = "coordinateTests"
+
+[leanOptions]
+autoImplicit = false
+
+[[lean_lib]]
+name = "Coordination"
+
+[[lean_lib]]
+name = "Tests"
+
+[[lean_exe]]
+name = "coordinate"
+root = "Main"
+
+[[lean_exe]]
+name = "coordinateTests"
+root = "Tests"

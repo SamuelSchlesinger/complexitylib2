@@ -7,7 +7,8 @@ The pinned copies are in `.lake/packages/cslib/` after fetching dependencies.
 
 ## Proposing and contributing work
 
-Use this repository's Issues to coordinate a substantial development before implementing it.
+Use this repository's Issues or the coordination board below to agree on a substantial development
+before implementing it.
 State the mathematical endpoint, cite its source, identify existing APIs and missing dependencies,
 and propose a first independently useful milestone. [ROADMAP.md](ROADMAP.md) lists open directions;
 an item there is not an assignment or a claim that its prerequisites are complete.
@@ -45,6 +46,82 @@ the tested revision (or base revision and exact diff), commands and outcomes, re
 scope, findings and their resolution, and any remaining limitations. Preserve enough evidence
 there for another contributor to assess the change; a path into a local `.lake/` directory is not
 a durable review record. Recheck changes made after review and identify the final reviewed revision.
+
+## Coordinated agent work
+
+An agent can join by receiving the instruction **"become a worker in complexitylib"** in this
+checkout. [AGENTS.md](AGENTS.md#coordinated-workers) defines its operating loop. The Lean executable
+behind `scripts/coordinate` stores assignments, leases, reports, and exact-commit reviews on the
+Git branch `coordination`. It needs the repository's Lean toolchain, Git, and push access; SSH is
+sufficient, with no GitHub API token or pull request required. It builds independently of the library.
+
+Each agent uses its own linked worktree, branch, and build directory. Joining creates
+`.worktrees/NAME` from remote `main`; `--here` instead registers an existing linked worktree.
+Choose a unique lowercase name. Commands after joining run inside that worktree:
+
+```bash
+scripts/coordinate join worker-alice
+cd .worktrees/worker-alice
+scripts/coordinate status
+scripts/coordinate heartbeat
+scripts/coordinate start assigned-epic
+# Implement, validate, commit, then push the branch printed by status.
+git push -u origin HEAD
+scripts/coordinate ready assigned-epic 'Result, checks, source credit, and remaining limitations'
+```
+
+The coordinator initializes the board with `scripts/coordinate init` once and joins with
+`join NAME --coordinator`. It records each epic's endpoint, acceptance criteria, source paths,
+and dependencies, then assigns it to a registered worker. Include any test files in the scope.
+Overlapping assigned scopes are rejected; generated root imports are the shared exception.
+
+```bash
+scripts/coordinate plan scan-api 'Endpoint and acceptance criteria' Complexity/Path ComplexityTests/Client.lean
+scripts/coordinate assign scan-api worker-alice
+# After submission, assign two independent agents, neither of whom contributed to the epic.
+scripts/coordinate assign scan-api worker-bob api
+scripts/coordinate assign scan-api worker-carol correctness
+```
+
+Reviewers run `start EPIC api` or `start EPIC correctness`, which checks out the submitted commit
+in their own clean worktree. They record their review with
+`review EPIC KIND BASE HEAD approve|changes 'Scope, evidence, findings, and limitations'`.
+`note EPIC KIND 'Progress or blocker' --blocked` is available to both authors and reviewers.
+Starting a review again withdraws its previous verdict. The coordinator uses `reopen EPIC REASON`
+before revision; this invalidates reviews and any pending integration. The author restarts, merges
+current `main`, validates, pushes normally, and submits again. Never force-push these branches.
+
+`land EPIC` is coordinator-only. It checks out the reviewed commit, runs all six project checks
+and the coordination tests, and atomically publishes both `main` and the completed board record.
+It requires two independent approvals of that exact base and head. A moved `main`, withdrawn review,
+lost lease, dirty worktree, or failed check prevents landing. Servers without atomic push support
+are rejected. Validation failures retain the reservation for retry; `cancel` releases it.
+
+Sessions last four hours by default (`join --minutes N` changes this). Heartbeats renew only held,
+unexpired generations. After expiry plus a one-minute grace period, `join NAME --here --takeover`
+creates a fresh session; the coordinator reassigns or reopens work as appropriate. Coordinators
+also pass `--coordinator`; repeat a nondefault `--minutes` value when retrying.
+`assign ... --replace` explicitly revokes a live claim. `unassign EPIC REASON` releases its scope while preserving
+authors and the previous branch as a continuation point. Push partial work before a planned handoff.
+If a command loses its network response, inspect `status` to determine whether it succeeded.
+Joining and acquiring work or integration claims can be retried with the same arguments because
+their pending identities and tokens survive locally. For other commands, reconcile the recorded
+state before retrying; a submitted review or completed landing may already be present.
+A definitive rejection leaves existing work intact.
+To change the role or duration after a rejected join, repeat it with `--takeover`; a pending
+identity is replaced only when the board shows it was never accepted, was replaced, or has expired.
+Mutating commands take a worktree-local lock. After an interrupted process, inspect the lock's
+`owner` PID and remove the lock directory only after establishing that command has stopped.
+
+This is coordination between cooperating writers, not access control against someone who can
+push arbitrary Git refs. Use reasonably synchronized clocks. The journal provides durable review
+and validation evidence; it does not start agents or keep them running. Local agent credentials
+live in each worktree's Git metadata, outside tracked files. Do not copy them between worktrees.
+
+The implementation separates typed protocol transitions in
+[`Protocol.lean`](scripts/coordination/Coordination/Protocol.lean) from Git transport and worktree IO.
+Run `lake -d scripts/coordination test --wfail` after changing it. Tests use temporary local remotes;
+they do not mutate the project's remote or exercise the mathematical library's proofs.
 
 ## Documentation
 

@@ -1,4 +1,6 @@
 /.lake
+/.worktrees
+/scripts/coordination/.lake
 /docbuild/.lake
 .DS_Store
 .claude
