@@ -91,23 +91,8 @@ theorem exists_multi_vertex_sample [Finite V] [Finite E] (hloop : G.Loopless) {d
       (fun v => closedBall G.toSimpleGraph v (R + 1)) (fun v => dependsOn_vertexEvent q R f v)
       (fun v => card_not_disjoint_closedBall_le hdeg (by omega) R v) hcpos
     rwa [hcardV] at this
-  set bad : Set (V → ℝ) :=
-    ((⋃ i ∈ Finset.range M, (deviation (crossingEvent G q R (-T + i * δ)) c ∪
-      deviation (vertexEvent G q R fun x => -T + i * δ ≤ x ∧ x < -T + i * δ + δ) c)) ∪
-      deviation (vertexEvent G q R (· < -T)) c) ∪ deviation (vertexEvent G q R (T ≤ ·)) c
-  -- The union bound.
-  have hbad : P.real bad < 1 := by
-    have hunion : P.real bad ≤ ∑ _i ∈ Finset.range M, (m * D / c ^ 2 + h * D / c ^ 2) +
-        h * D / c ^ 2 + h * D / c ^ 2 := by
-      refine (measureReal_union_le _ _).trans (add_le_add ?_
-        (vertexDev (measurableSet_le measurable_const measurable_id)))
-      refine (measureReal_union_le _ _).trans (add_le_add ?_
-        (vertexDev (measurableSet_lt measurable_id measurable_const)))
-      refine (measureReal_biUnion_finset_le _ _).trans (Finset.sum_le_sum fun i _ => ?_)
-      exact (measureReal_union_le _ _).trans (add_le_add (crossDev _)
-        (vertexDev ((measurableSet_le measurable_const measurable_id).inter
-          (measurableSet_lt measurable_id measurable_const))))
-    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul] at hunion
+  have hsmall : M * (m * D / c ^ 2 + h * D / c ^ 2) + h * D / c ^ 2 +
+      h * D / c ^ 2 < 1 := by
     have hm' : m * D / c ^ 2 ≤ d * h * D / c ^ 2 := by gcongr
     have hcalc : (M * (d * h * D / c ^ 2 + h * D / c ^ 2) + h * D / c ^ 2 + h * D / c ^ 2) =
         (M * (d + 1) + 2) * D / ε ^ 2 / h := by
@@ -116,9 +101,13 @@ theorem exists_multi_vertex_sample [Finite V] [Finite E] (hloop : G.Loopless) {d
       ring
     have hlast : (M * (d + 1) + 2) * D / ε ^ 2 / h < 1 := (div_lt_one hhpos).mpr large
     nlinarith [mul_le_mul_of_nonneg_left hm' (Nat.cast_nonneg (α := ℝ) M)]
-  obtain ⟨ω, hω⟩ := exists_notMem_of_measureReal_lt_one hbad
-  simp only [bad, mem_union, mem_iUnion, Finset.mem_range, not_or, not_exists] at hω
-  obtain ⟨⟨hmid, hlow⟩, hhigh⟩ := hω
+  obtain ⟨ω, hmid, hlow, hhigh⟩ := exists_sample_of_grid_bounds
+    (fun i _ => crossDev (-T + i * δ))
+    (fun i _ => vertexDev (f := fun x => -T + i * δ ≤ x ∧ x < -T + i * δ + δ)
+      ((measurableSet_le measurable_const measurable_id).inter
+        (measurableSet_lt measurable_id measurable_const)))
+    (vertexDev (f := (· < -T)) (measurableSet_lt measurable_id measurable_const))
+    (vertexDev (f := (T ≤ ·)) (measurableSet_le measurable_const measurable_id)) hsmall
   set score := vertexScore G q R ω
   set B := p * m + h * (d / T ^ 2 + d * δ / √(2 * π) + (d + 1) * ε)
   have vertexMean {f : ℝ → Prop} {b : ℝ} (hb : ∀ v, P.real (vertexEvent G q R f v) ≤ b) :

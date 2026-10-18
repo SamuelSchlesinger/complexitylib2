@@ -184,12 +184,29 @@ theorem ncard_lt_of_not_le_abs {A : κ → Set Ω} {ω : Ω} {m c : ℝ}
   rw [ncard_eq_sum_indicator]
   linarith [le_abs_self (∑ k, (A k).indicator (1 : Ω → ℝ) ω - m), not_le.mp h]
 
-/-- A set of probability less than one misses some sample. -/
-theorem exists_notMem_of_measureReal_lt_one [MeasurableSpace Ω] {P : Measure Ω}
-    [IsProbabilityMeasure P] {s : Set Ω} (h : P.real s < 1) : ∃ ω, ω ∉ s := by
-  by_contra! hall
-  rw [eq_univ_of_forall hall, probReal_univ] at h
-  exact lt_irrefl _ h
+/-- Simultaneously avoid two families of grid events and both tail events when their
+probability bounds sum to less than one. -/
+theorem exists_sample_of_grid_bounds {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
+    [IsProbabilityMeasure P] {A B : ℕ → Set Ω} {C D : Set Ω} {a b c d : ℝ} {M : ℕ}
+    (hA : ∀ i < M, P.real (A i) ≤ a) (hB : ∀ i < M, P.real (B i) ≤ b)
+    (hC : P.real C ≤ c) (hD : P.real D ≤ d)
+    (hsmall : M * (a + b) + c + d < 1) :
+    ∃ ω, (∀ i < M, ω ∉ A i ∧ ω ∉ B i) ∧ ω ∉ C ∧ ω ∉ D := by
+  let bad := ((⋃ i ∈ Finset.range M, A i ∪ B i) ∪ C) ∪ D
+  have hbound : P.real bad ≤ M * (a + b) + c + d := by
+    refine (measureReal_union_le _ _).trans (add_le_add ?_ hD)
+    refine (measureReal_union_le _ _).trans (add_le_add ?_ hC)
+    refine (measureReal_biUnion_finset_le _ _).trans ?_
+    simpa only [Finset.sum_const, Finset.card_range, nsmul_eq_mul] using
+      Finset.sum_le_sum (fun i hi => (measureReal_union_le _ _).trans
+        (add_le_add (hA i (Finset.mem_range.mp hi)) (hB i (Finset.mem_range.mp hi))))
+  have hbad : ∃ ω, ω ∉ bad := by
+    by_contra! hall
+    have hlt := hbound.trans_lt hsmall
+    rw [Set.eq_univ_of_forall hall, probReal_univ] at hlt
+    exact lt_irrefl _ hlt
+  simpa only [bad, mem_union, mem_iUnion, Finset.mem_range, not_or, not_exists,
+    and_assoc] using hbad
 
 variable {V : Type*} [Fintype V]
 

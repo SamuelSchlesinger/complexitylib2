@@ -10,11 +10,12 @@ module
 public import Cslib.Computability.Circuit.Boolean.Complexity
 import Complexity.Computability.Circuit.Boolean.Synthesis
 import Complexity.Computability.Circuit.Complexity
+import Complexity.Foundations.Combinatorics.FiniteCover
+import Complexity.Probability.BitString.LinearHash.Collisions
 import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Foundations.Data.BitString.Parity
 import Cslib.Computability.Circuit.Boolean.Synthesis
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Fintype.Powerset
 
 /-!
@@ -43,8 +44,9 @@ pattern chosen in a row.
   chosen.
 * A *partial table* computes a function given on a set `D`: the given entries of each row are cut
   into chunks of `J` consecutive entries. On a chunk, the function agrees with some assignment to
-  all columns from a bank of `(2 · 2 ^ k + 1) 2 ^ J` assignments, found greedily, which extends
-  every assignment to at most `J` columns [Chashkin, Lemma 2.1][Chashkin2024]. Masked to the
+  all columns from a bank of `(2 · 2 ^ k + 1) 2 ^ J` assignments, chosen by a covering bound,
+  which extends every assignment to at most `J` columns [Chashkin, Lemma 2.1][Chashkin2024].
+  Masked to the
   interval of columns spanned by the chunk, that assignment is a pattern and does not interfere
   with the other chunks [Chashkin, Lemma 2.2][Chashkin2024]. About `|D| / J` patterns are
   chosen.
@@ -63,7 +65,8 @@ given pairs of distinct inputs collide [Chashkin, Lemmas 2.3 and 2.4][Chashkin20
   of the other inputs. The conjunction of `t` filters wrongly accepts at most `2 ^ n / 2 ^ (a t)`
   inputs, which are removed by explicit minterms [Chashkin, Lemma 3.3][Chashkin2024].
 
-The linear hashing here is the minimal amount needed for these two constructions.
+The collision bound uses the shared `BitString.LinearHash` API; the circuit implementation
+uses finite-set parity masks to retain its exact gate bound.
 
 ## Main definitions
 
@@ -331,114 +334,22 @@ section Cover
 variable {α β : Type*} [Fintype α] [Nonempty α] (cover : α → β → Prop)
   [∀ x b, Decidable (cover x b)] {a : ℕ}
 
-/-- If every target is covered by at least a `1 / a` fraction of the candidates, then some
-candidate covers at least a `1 / a` fraction of the targets. -/
-private theorem exists_card_le_mul_card_filter (s : Finset β)
-    (hs : ∀ b ∈ s, Fintype.card α ≤ a * #{x | cover x b}) :
-    ∃ x, #s ≤ a * #{b ∈ s | cover x b} := by
-  have hsum : ∑ _x : α, #s ≤ ∑ x : α, a * #{b ∈ s | cover x b} := by
-    calc ∑ _x : α, #s = ∑ _b ∈ s, Fintype.card α := by simp [Nat.mul_comm]
-      _ ≤ ∑ b ∈ s, a * #{x | cover x b} := sum_le_sum hs
-      _ = ∑ x : α, a * #{b ∈ s | cover x b} := by
-        simp only [← mul_sum, card_filter]
-        rw [sum_comm]
-  obtain ⟨x, -, hx⟩ := exists_le_of_sum_le univ_nonempty hsum
-  exact ⟨x, hx⟩
-
-/-- Greedy covering: after `t` greedy choices, at most a `(1 - 1 / a) ^ t` fraction of the
-targets is left uncovered. -/
-private theorem exists_pow_mul_card_uncovered_le [DecidableEq α] (ha : 0 < a) (t : ℕ) :
-    ∀ s : Finset β, (∀ b ∈ s, Fintype.card α ≤ a * #{x | cover x b}) →
-      ∃ chosen : Finset α, #chosen ≤ t ∧
-        a ^ t * #{b ∈ s | ∀ x ∈ chosen, ¬cover x b} ≤ (a - 1) ^ t * #s := by
-  induction t with
-  | zero => exact fun s _ => ⟨∅, by simp, by simp⟩
-  | succ t ih =>
-    intro s hs
-    obtain ⟨x, hx⟩ := exists_card_le_mul_card_filter cover s hs
-    let rest := s.filter fun b => ¬cover x b
-    obtain ⟨chosen, hcard, hrest⟩ := ih rest fun b hb => hs b (mem_filter.mp hb).1
-    refine ⟨insert x chosen, (card_insert_le _ _).trans (by omega), ?_⟩
-    have heq : ({b ∈ s | ∀ y ∈ insert x chosen, ¬cover y b} : Finset β) =
-        {b ∈ rest | ∀ y ∈ chosen, ¬cover y b} := by
-      ext b
-      simp [rest, and_assoc]
-    have hsplit := card_filter_add_card_filter_not (s := s) (cover x)
-    have hstep : a * #rest ≤ (a - 1) * #s := by
-      obtain ⟨a, rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
-      simp only [Nat.add_sub_cancel]
-      nlinarith
-    rw [heq, pow_succ, pow_succ]
-    calc a ^ t * a * #{b ∈ rest | ∀ y ∈ chosen, ¬cover y b}
-        = a * (a ^ t * #{b ∈ rest | ∀ y ∈ chosen, ¬cover y b}) := by ring
-      _ ≤ a * ((a - 1) ^ t * #rest) := Nat.mul_le_mul_left a hrest
-      _ = (a - 1) ^ t * (a * #rest) := by ring
-      _ ≤ (a - 1) ^ t * ((a - 1) * #s) := Nat.mul_le_mul_left _ hstep
-      _ = (a - 1) ^ t * (a - 1) * #s := by ring
-
-/-- `(a - 1) ^ ((2 L + 1) a) 4 ^ L < a ^ ((2 L + 1) a)`, that is
-`(1 - 1 / a) ^ ((2 L + 1) a) < 4 ^ -L`, since `(1 - 1 / a) ^ a ≤ e⁻¹` and `4 ≤ e ^ 2`. -/
-private theorem pow_mul_four_pow_lt (ha : 0 < a) (L : ℕ) :
-    (a - 1) ^ ((2 * L + 1) * a) * 4 ^ L < a ^ ((2 * L + 1) * a) := by
-  have haR : (0 : ℝ) < a := by exact_mod_cast ha
-  have hcast : ((a - 1 : ℕ) : ℝ) = a * (1 - 1 / a) := by
-    rw [Nat.cast_sub (by omega), Nat.cast_one]
-    field_simp
-  have hq : 0 ≤ 1 - 1 / (a : ℝ) := by
-    rw [sub_nonneg, div_le_one haR]
-    exact_mod_cast ha
-  have hdecay : (1 - 1 / (a : ℝ)) ^ a ≤ Real.exp (-1) :=
-    Real.one_sub_div_pow_le_exp_neg (by exact_mod_cast ha)
-  have hfour : (4 : ℝ) ^ L ≤ Real.exp (2 * L) := by
-    rw [mul_comm, Real.exp_nat_mul]
-    apply pow_le_pow_left₀ (by norm_num)
-    have h := Real.add_one_le_exp 1
-    rw [show (2 : ℝ) = 1 + 1 by norm_num, Real.exp_add]
-    nlinarith
-  have hsmall : (1 - 1 / (a : ℝ)) ^ ((2 * L + 1) * a) * 4 ^ L < 1 := by
-    calc (1 - 1 / (a : ℝ)) ^ ((2 * L + 1) * a) * 4 ^ L
-        ≤ Real.exp (-1) ^ (2 * L + 1) * Real.exp (2 * L) := by
-          rw [mul_comm (2 * L + 1) a, pow_mul]
-          exact mul_le_mul (pow_le_pow_left₀ (pow_nonneg hq _) hdecay _) hfour
-            (by positivity) (by positivity)
-      _ = Real.exp (-1) := by
-          rw [← Real.exp_nat_mul, ← Real.exp_add]
-          congr 1
-          push_cast
-          ring
-      _ < 1 := by
-          rw [Real.exp_lt_one_iff]
-          norm_num
-  have hpos : (0 : ℝ) < (a : ℝ) ^ ((2 * L + 1) * a) := by positivity
-  have hreal : ((a - 1 : ℕ) : ℝ) ^ ((2 * L + 1) * a) * 4 ^ L < (a : ℝ) ^ ((2 * L + 1) * a) :=
-    calc ((a - 1 : ℕ) : ℝ) ^ ((2 * L + 1) * a) * 4 ^ L
-        = (a : ℝ) ^ ((2 * L + 1) * a) * ((1 - 1 / (a : ℝ)) ^ ((2 * L + 1) * a) * 4 ^ L) := by
-          rw [hcast, mul_pow]
-          ring
-      _ < (a : ℝ) ^ ((2 * L + 1) * a) * 1 := mul_lt_mul_of_pos_left hsmall hpos
-      _ = (a : ℝ) ^ ((2 * L + 1) * a) := mul_one _
-  exact_mod_cast hreal
-
-/-- **Greedy covering.** If each of at most `4 ^ L` targets is covered by at least a `1 / a`
-fraction of the candidates, then `(2 L + 1) a` candidates cover every target. -/
+/-- If each of at most `4 ^ L` targets is covered by at least a `1 / a` fraction of the
+candidates, then `(2 L + 1) a` candidates cover every target. -/
 private theorem exists_cover (ha : 0 < a) {L : ℕ} (s : Finset β) (hsL : #s ≤ 4 ^ L)
     (hs : ∀ b ∈ s, Fintype.card α ≤ a * #{x | cover x b}) :
     ∃ chosen : Finset α, #chosen ≤ (2 * L + 1) * a ∧ ∀ b ∈ s, ∃ x ∈ chosen, cover x b := by
   classical
-  obtain ⟨chosen, hcard, hleft⟩ := exists_pow_mul_card_uncovered_le cover ha _ s hs
-  have hzero (U : ℕ) (hU : a ^ ((2 * L + 1) * a) * U ≤ (a - 1) ^ ((2 * L + 1) * a) * #s) :
-      U = 0 := by
-    have h₁ := pow_mul_four_pow_lt ha L
-    have h₂ := Nat.mul_le_mul_left ((a - 1) ^ ((2 * L + 1) * a)) hsL
-    by_contra hU0
-    have h₃ := Nat.le_mul_of_pos_right (a ^ ((2 * L + 1) * a)) (Nat.pos_of_ne_zero hU0)
-    omega
-  have hempty := hzero _ hleft
-  rw [card_eq_zero, filter_eq_empty_iff] at hempty
-  refine ⟨chosen, hcard, fun b hb => ?_⟩
-  by_contra hb'
-  push Not at hb'
-  exact hempty hb hb'
+  obtain ⟨tests, htests⟩ := Cslib.exists_cover_of_density
+    (S := α) (W := s) (fun x b => cover x b) a (2 * L) ha
+    (by simpa only [Fintype.card_coe, pow_mul, Nat.reducePow] using hsL)
+    (fun b => by simpa only [Fintype.card_subtype] using hs b b.property)
+  refine ⟨univ.image tests, ?_, ?_⟩
+  · simpa only [card_univ, Fintype.card_fin, Nat.mul_comm] using
+      (card_image_le (s := univ) (f := tests))
+  · intro b hb
+    obtain ⟨i, hi⟩ := htests ⟨b, hb⟩
+    exact ⟨tests i, mem_image.mpr ⟨i, mem_univ _, rfl⟩, hi⟩
 
 end Cover
 
@@ -562,65 +473,23 @@ in `A j`. -/
 private def linearMap (A : Fin m → Finset (Fin n)) (x : BitString n) : BitString m :=
   fun j => parityOn (A j) x
 
-/-- Adding `i` to `S` or removing it adds `x i` to the parity of `x` on `S`. -/
-private theorem parityOn_toggle (S : Finset (Fin n)) (i : Fin n) (x : BitString n) :
-    parityOn (if i ∈ S then S.erase i else insert i S) x = (x i ^^ parityOn S x) := by
-  split_ifs with h
-  · rw [parityOn_eq_xor_erase h x, ← Bool.xor_assoc, Bool.xor_self, Bool.false_xor]
-  · exact parityOn_insert h x
+/-- Finite-set parity masks implement the shared Boolean-matrix hash. -/
+private theorem linearMap_filter_eq_hash (rows : Fin m → BitString n) (x : BitString n) :
+    linearMap (fun j => univ.filter fun i => rows j i = true) x =
+      BitString.LinearHash.hash rows x := by
+  funext j
+  simp only [linearMap, parityOn_eq_sum, BitString.LinearHash.hash, dotProduct, sum_filter]
+  apply sum_congr rfl
+  intro i _
+  cases rows j i <;> cases x i <;> rfl
 
-/-- The parities on `S` of two distinct bit strings agree for exactly half of the sets `S`. -/
-private theorem card_filter_parityOn_eq_mul_two {x y : BitString n} (hxy : x ≠ y) :
-    #{S : Finset (Fin n) | parityOn S x = parityOn S y} * 2 = 2 ^ n := by
-  obtain ⟨i, hi⟩ := Function.ne_iff.mp hxy
-  let toggle (S : Finset (Fin n)) : Finset (Fin n) := if i ∈ S then S.erase i else insert i S
-  have htoggle (S : Finset (Fin n)) : toggle (toggle S) = S := by
-    by_cases h : i ∈ S
-    · simp [toggle, h, insert_erase h]
-    · simp [toggle, h, erase_insert h]
-  have hflip (S : Finset (Fin n)) :
-      (parityOn (toggle S) x = parityOn (toggle S) y) ↔ ¬parityOn S x = parityOn S y := by
-    rw [parityOn_toggle, parityOn_toggle]
-    revert hi
-    cases x i <;> cases y i <;> cases parityOn S x <;> cases parityOn S y <;> simp
-  have hhalf : #{S : Finset (Fin n) | parityOn S x = parityOn S y} =
-      #{S : Finset (Fin n) | ¬parityOn S x = parityOn S y} :=
-    card_nbij' toggle toggle (fun S hS => by simpa [hflip] using hS)
-      (fun S hS => by simpa [← hflip, htoggle] using hS) (fun S _ => htoggle S)
-      (fun S _ => htoggle S)
-  have htotal := card_filter_add_card_filter_not (s := (univ : Finset (Finset (Fin n))))
-    fun S => parityOn S x = parityOn S y
-  rw [card_univ, Fintype.card_finset, Fintype.card_fin, ← hhalf] at htotal
-  omega
-
-/-- Two distinct bit strings collide under exactly a `2 ^ -m` fraction of the linear maps. -/
-private theorem card_filter_linearMap_eq_mul {x y : BitString n} (hxy : x ≠ y) (m : ℕ) :
-    #{A : Fin m → Finset (Fin n) | linearMap A x = linearMap A y} * 2 ^ m = 2 ^ (n * m) := by
-  have heq : ({A : Fin m → Finset (Fin n) | linearMap A x = linearMap A y} :
-      Finset (Fin m → Finset (Fin n))) =
-        Fintype.piFinset fun _ => {S : Finset (Fin n) | parityOn S x = parityOn S y} := by
-    ext A
-    simp [linearMap, funext_iff, Fintype.mem_piFinset]
-  rw [heq, Fintype.card_piFinset, prod_const, card_univ, Fintype.card_fin, ← mul_pow,
-    card_filter_parityOn_eq_mul_two hxy, pow_mul]
-
-/-- **Linear hashing.** Among any pairs of distinct bit strings, some linear map to `m` bits
-makes at most a `2 ^ -m` fraction collide. -/
+/-- Some linear map collides on at most a `2⁻ᵐ` fraction of any specified distinct pairs. -/
 private theorem exists_card_filter_linearMap_mul_le (P : Finset (BitString n × BitString n))
     (hP : ∀ z ∈ P, z.1 ≠ z.2) (m : ℕ) :
     ∃ A : Fin m → Finset (Fin n), #{z ∈ P | linearMap A z.1 = linearMap A z.2} * 2 ^ m ≤ #P := by
-  have hsum : ∑ A : Fin m → Finset (Fin n), #{z ∈ P | linearMap A z.1 = linearMap A z.2} * 2 ^ m =
-      ∑ _A : Fin m → Finset (Fin n), #P := by
-    calc ∑ A : Fin m → Finset (Fin n), #{z ∈ P | linearMap A z.1 = linearMap A z.2} * 2 ^ m
-        = ∑ z ∈ P, #{A : Fin m → Finset (Fin n) | linearMap A z.1 = linearMap A z.2} * 2 ^ m := by
-          simp only [← sum_mul, card_filter]
-          rw [sum_comm]
-      _ = ∑ _z ∈ P, 2 ^ (n * m) :=
-          sum_congr rfl fun z hz => card_filter_linearMap_eq_mul (hP z hz) m
-      _ = ∑ _A : Fin m → Finset (Fin n), #P := by
-          simp [Fintype.card_finset, ← pow_mul, Nat.mul_comm]
-  obtain ⟨A, -, hA⟩ := exists_le_of_sum_le univ_nonempty hsum.le
-  exact ⟨A, hA⟩
+  obtain ⟨rows, hrows⟩ := BitString.LinearHash.exists_card_collisions_le (m := m) P hP
+  refine ⟨fun j => univ.filter fun i => rows j i = true, ?_⟩
+  simpa only [linearMap_filter_eq_hash, Nat.mul_comm] using hrows
 
 /-- The parity on `S` costs four gates per bit of `S` and a constant. -/
 private theorem synthesis_parityOn (S : Finset (Fin n)) :

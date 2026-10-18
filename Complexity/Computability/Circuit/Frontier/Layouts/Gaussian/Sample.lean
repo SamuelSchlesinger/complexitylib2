@@ -125,24 +125,8 @@ private theorem exists_concentrated_sample [Fintype E] (hloop : G.Loopless)
       (fun e => card_not_disjoint_closedBall_src_le hdeg R e) hcpos
     rwa [hE] at this
   set δ := 2 * T / M
-  set bad : Set (V → ℝ) :=
-    ((⋃ i ∈ Finset.range M, (deviation (straddleEvent G q R (-T + i * δ)) c ∪
-      deviation (edgeScoreEvent G q R fun x => -T + i * δ ≤ x ∧ x < -T + i * δ + δ) c)) ∪
-      deviation (edgeScoreEvent G q R (· < -T)) c) ∪ deviation (edgeScoreEvent G q R (T ≤ ·)) c
-  -- The union bound.
-  have hbad : P.real bad < 1 := by
-    have hunion : P.real bad ≤ ∑ _i ∈ Finset.range M, (h * D / c ^ 2 + 3 / 2 * h * D / c ^ 2) +
-        3 / 2 * h * D / c ^ 2 + 3 / 2 * h * D / c ^ 2 := by
-      refine (measureReal_union_le _ _).trans (add_le_add ?_
-        (devE (measurableSet_le measurable_const measurable_id)))
-      refine (measureReal_union_le _ _).trans (add_le_add ?_
-        (devE (measurableSet_lt measurable_id measurable_const)))
-      refine (measureReal_biUnion_finset_le _ _).trans (Finset.sum_le_sum fun i _ => ?_)
-      exact (measureReal_union_le _ _).trans (add_le_add (devSt _)
-        (devE ((measurableSet_le measurable_const measurable_id).inter
-          (measurableSet_lt measurable_id measurable_const))))
-    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul] at hunion
-    refine hunion.trans_lt ?_
+  have hsmall : M * (h * D / c ^ 2 + 3 / 2 * h * D / c ^ 2) + 3 / 2 * h * D / c ^ 2 +
+      3 / 2 * h * D / c ^ 2 < 1 := by
     have key : (M * (h * D / c ^ 2 + 3 / 2 * h * D / c ^ 2) + 3 / 2 * h * D / c ^ 2 +
         3 / 2 * h * D / c ^ 2) = (5 / 2 * M + 3) * D / ε ^ 2 / h := by
       rw [hc]
@@ -153,10 +137,11 @@ private theorem exists_concentrated_sample [Fintype E] (hloop : G.Loopless)
           gcongr
           linarith
       _ < h := large
-  obtain ⟨ω, hω⟩ := exists_notMem_of_measureReal_lt_one hbad
-  simp only [bad, mem_union, mem_iUnion, Finset.mem_range, not_or, not_exists] at hω
-  obtain ⟨⟨hmid, hlow⟩, hhigh⟩ := hω
-  exact ⟨ω, fun i hi => hmid i hi, hlow, hhigh⟩
+  exact exists_sample_of_grid_bounds (fun i _ => devSt _)
+    (fun i _ => devE ((measurableSet_le measurable_const measurable_id).inter
+      (measurableSet_lt measurable_id measurable_const)))
+    (devE (measurableSet_lt measurable_id measurable_const))
+    (devE (measurableSet_le measurable_const measurable_id)) hsmall
 
 /-- **A good sample, from the mean of the straddling counts.** Let `G` be a loopless multigraph
 whose vertices have three edges, let adjacent kernel rows have inner product above `-1`, and let
