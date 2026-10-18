@@ -339,6 +339,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputT
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.Map
 public import Complexity.Computability.Machines.Turing.MultiTape.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.OutView
