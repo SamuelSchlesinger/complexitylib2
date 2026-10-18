@@ -220,6 +220,7 @@ public import Complexity.Computability.Complexity.CookLevin.Parameters
 public import Complexity.Computability.Complexity.CookLevin.PolyTime
 public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Tableau
+public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.SAT
@@ -671,6 +672,7 @@ public import Complexity.Languages.Probabilistic.Selection
 public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.UniformNat
+public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction
 public import Complexity.Logics.Propositional.CNF
