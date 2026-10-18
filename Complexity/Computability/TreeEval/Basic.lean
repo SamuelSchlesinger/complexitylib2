@@ -25,6 +25,7 @@ We follow Goldreich's parametrization by the value length `ℓ`, rather than by 
 
 * `Cslib.TreeEval.Tree ℓ h`: a Tree Evaluation instance of height `h` and value length `ℓ`.
 * `Cslib.TreeEval.Tree.eval`: the value of the root.
+* `Cslib.TreeEval.Tree.nodeAt`: the node at a path from the root.
 
 ## References
 
@@ -61,6 +62,34 @@ def eval : {h : ℕ} → Tree ℓ h → Fin ℓ → Bool
 
 @[simp] theorem eval_node (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
     (l r : Tree ℓ h) : (node f l r).eval = f l.eval r.eval := rfl
+
+/-- What a path from the root leads to: a leaf with its value, a gate, or nothing. -/
+inductive Node (ℓ : ℕ) where
+  /-- A leaf with its value. -/
+  | leaf (v : Fin ℓ → Bool)
+  /-- An internal node with its gate. -/
+  | gate (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+  /-- A path leaving the tree. -/
+  | none
+
+/-- The node reached from the root along a path, where `false` is the left child. -/
+def nodeAt : {h : ℕ} → Tree ℓ h → List Bool → Node ℓ
+  | _, leaf v, [] => .leaf v
+  | _, leaf _, _ :: _ => .none
+  | _, node f _ _, [] => .gate f
+  | _, node _ l _, false :: P => l.nodeAt P
+  | _, node _ _ r, true :: P => r.nodeAt P
+
+@[simp] theorem nodeAt_leaf_nil (v : Fin ℓ → Bool) : (leaf v).nodeAt [] = .leaf v := rfl
+
+@[simp] theorem nodeAt_node_nil (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+    (l r : Tree ℓ h) : (node f l r).nodeAt [] = .gate f := rfl
+
+@[simp] theorem nodeAt_node_false (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+    (l r : Tree ℓ h) (P : List Bool) : (node f l r).nodeAt (false :: P) = l.nodeAt P := rfl
+
+@[simp] theorem nodeAt_node_true (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+    (l r : Tree ℓ h) (P : List Bool) : (node f l r).nodeAt (true :: P) = r.nodeAt P := rfl
 
 end Tree
 

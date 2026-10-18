@@ -469,6 +469,7 @@ public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
 public import Complexity.Computability.TreeEval.Basic
 public import Complexity.Computability.TreeEval.CookMertz
+public import Complexity.Computability.TreeEval.Iterative
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion

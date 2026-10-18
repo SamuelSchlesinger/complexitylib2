@@ -74,6 +74,12 @@ noncomputable def gatePoly (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fi
 def scale (r : Fin 3) (a : K) (S : State K ℓ) : State K ℓ :=
   Function.update S r (a • S r)
 
+/-- The update of a round at a gate `f`: subtract `c` times the gate's extension at registers
+`t + 1` and `t + 2` from register `t`. -/
+noncomputable def gateUpdate (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (c : K)
+    (t : Fin 3) (S : State K ℓ) : State K ℓ :=
+  Function.update S t fun i => S t i - c * eval (Sum.elim (S (t + 1)) (S (t + 2))) (gatePoly f i)
+
 /-- One round of the procedure at a gate `f`, for the unit `u`, given procedures `pl` and `pr`
 for the two subtrees. The target is `t`, and the registers `t + 1` and `t + 2` hold the masks. -/
 noncomputable def gateRound (pl pr : K → Fin 3 → State K ℓ → State K ℓ)
@@ -81,8 +87,7 @@ noncomputable def gateRound (pl pr : K → Fin 3 → State K ℓ → State K ℓ
     (S : State K ℓ) : State K ℓ :=
   let S := pl 1 (t + 1) (scale (t + 1) (u : K) S)
   let S := pr 1 (t + 2) (scale (t + 2) (u : K) S)
-  let S := Function.update S t fun i =>
-    S t i - c * eval (Sum.elim (S (t + 1)) (S (t + 2))) (gatePoly f i)
+  let S := gateUpdate f c t S
   let S := scale (t + 1) ((u⁻¹ : Kˣ) : K) (pl (-1) (t + 1) S)
   scale (t + 2) ((u⁻¹ : Kˣ) : K) (pr (-1) (t + 2) S)
 
@@ -111,7 +116,7 @@ theorem gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl v
   have h2 := add_two_ne t
   have h21 := add_two_ne_add_one t
   funext r i
-  simp only [gateRound, hl, hr, scale, Function.update_apply]
+  simp only [gateRound, gateUpdate, hl, hr, scale, Function.update_apply]
   by_cases hrt : r = t
   · subst hrt
     simp [h1.symm, h2.symm, h21, h21.symm]
