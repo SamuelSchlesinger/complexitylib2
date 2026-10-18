@@ -100,11 +100,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   have [comparison trees](Complexity/Computability/Circuit/Boolean/WeightedThreshold/TranscriptTree.lean)
   with leaves bounded by attainable transcripts, whose
   [activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activity.lean)
-  is the exact Hamming-ball count. Connect these bounds to the inner-product activity inequality.
+  is the exact Hamming-ball count. Their
+  [inner-product inequality](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
+  is proved in exact squared form. Logarithmic and entropy consequences remain.
   The [scalar-block capacity theorem](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Capacity.lean)
   is ported from v1; connect native circuits to its semantic block decompositions. The explicit
-  source-reduction family and its threshold consequences remain to port. Entropy, geometric
-  cutting, and integer-summary counting require further foundations.
+  source-reduction family and its threshold consequences remain to port. Further manuscript
+  results include scalar enumerative coding, pending-bias simulation, geometric cutting, and
+  integer-summary counting; the tree compiler also needs a syntactic linear-query certificate.
 
 Further metacomplexity ports are outside the current scope: the circuitized anti-checker,
 hardness-magnification argument and MINKT/MINCKT developments will not be carried over. Retain

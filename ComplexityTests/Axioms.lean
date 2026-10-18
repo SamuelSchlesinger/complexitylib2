@@ -9745,3 +9745,27 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.BlockDecomposition.two_pow_lt_mu
 -/
 #guard_msgs in
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.BlockDecomposition.two_pow_lt_mul_cost
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_attainableTranscripts_sq_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_attainableTranscripts_sq_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_circuit_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_circuit_hadamardCode

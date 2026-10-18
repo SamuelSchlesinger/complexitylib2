@@ -131,6 +131,7 @@ import ComplexityTests.ThreeCNFPolyTime
 import ComplexityTests.ThresholdActivity
 import ComplexityTests.ThresholdCapacity
 import ComplexityTests.ThresholdInnerProduct
+import ComplexityTests.ThresholdInnerProductActivity
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.UniformNat
