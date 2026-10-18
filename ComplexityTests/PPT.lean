@@ -7,12 +7,27 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Crypto.Computational.GGM.Evaluation
+import Complexity.Tactic.PPT
 
 /-! PPT certificates reuse deterministic automation and require explicit sampling certificates. -/
 
 namespace ComplexityTests.PPT
 
 open Cslib Cslib.Probability Turing.MultiTapeTM
+
+-- Nested deterministic loops remain reusable inside a closed probabilistic computation.
+example {α : Type} (input : α ↪ List Bool) (N C : α → ℕ)
+    (call : α → ℕ → ℕ → Bool)
+    (hN : ComputableTidilyInPolyTime N input encUnary)
+    (hC : ComputableTidilyInPolyTime C input encUnary)
+    (hcall : ComputableTidilyInPolyTime
+      (fun p : (α × ℕ) × ℕ => call p.1.1 p.1.2 p.2)
+      (encPair (encPair input encUnary) encUnary) encBool) :
+    IsPPTOn input encBool (fun a => pure
+      (BitString.listStrictMajority ((List.range (N a)).map fun i =>
+        ((List.range (C a)).map (call a i)).foldl Bool.xor false))) := by
+  fail_if_success (clear hcall; ppt)
+  ppt
 
 example (offset : ℕ) : IsPPTOn encUnary encUnary (fun n => pure (n + offset)) := by fun_prop
 

@@ -8811,6 +8811,34 @@ info: 'Cslib.Circuits.Boolean.MassProduction.MassProducesAt.allLengths' depends 
 #print axioms Cslib.Circuits.Boolean.MassProduction.MassProducesAt.allLengths
 
 /--
+info: 'Cslib.Circuits.Boolean.MassProduction.Uhlig.complexity_directProduct_two_mul_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.Uhlig.complexity_directProduct_two_mul_le
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.mul_complexity_directProduct_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.mul_complexity_directProduct_le
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.eventually_mul_complexity_directProduct_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.eventually_mul_complexity_directProduct_le
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le
+
+/--
 info: 'Cslib.Circuits.Boolean.eval_mintermCircuit' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

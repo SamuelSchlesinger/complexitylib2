@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Tactic.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
+import Mathlib.Data.List.Fold
 
 /-!
 # Functional programs with polynomial-time certificates
@@ -171,10 +172,75 @@ example : ComputableTidilyInPolyTime
 
 private def reverseCopy (word : List Bool) : List Bool := word.reverse ++ word
 
-@[program_certificate]
+@[fun_prop, program_certificate]
 private theorem reverseCopy_polytime : ComputableTidilyInPolyTime reverseCopy encBits encBits := by
   unfold reverseCopy
   polytime
+
+open Lean Mathlib.Meta.FunProp in
+private meta def checkFunctionRule (name : Name) (priority : Nat := eval_prio default) :
+    MetaM Unit := do
+  let .function thm ← getTheoremFromConst name
+    | throwError "expected a function certificate"
+  let entries ← getTheoremsForFunction thm.funOrigin.name thm.funPropName
+  let entries := entries.filter (·.thmOrigin.name == name)
+  unless entries.size == 1 && entries[0]!.priority == priority do
+    throwError "expected one registration of {name} with priority {priority}"
+
+-- The annotation reuses imported and same-file fun_prop entries without duplicating them.
+run_meta
+  checkFunctionRule ``reverseCopy_polytime
+  checkFunctionRule ``ComputableTidilyInPolyTime.mapToBitsWithInput
+  checkFunctionRule ``ComputableTidilyInPolyTime.bitsFoldlWithInput
+  checkFunctionRule ``ComputableTidilyInPolyTime.bitsStrictMajorityWithInput
+
+-- A different certificate for the same function keeps its own registration and priority.
+private theorem reverseCopy_prioritized : ComputableTidilyInPolyTime reverseCopy encBits encBits :=
+  reverseCopy_polytime
+
+run_meta Mathlib.Meta.FunProp.addTheorem ``reverseCopy_prioritized .global 1234
+attribute [program_certificate] reverseCopy_prioritized
+run_meta
+  checkFunctionRule ``reverseCopy_polytime
+  checkFunctionRule ``reverseCopy_prioritized 1234
+
+-- Local evidence cannot suppress a registration that must survive the section.
+private theorem reverseCopy_local : ComputableTidilyInPolyTime reverseCopy encBits encBits :=
+  reverseCopy_polytime
+
+section
+attribute [local fun_prop] reverseCopy_local
+attribute [program_certificate] reverseCopy_local
+end
+
+run_meta checkFunctionRule ``reverseCopy_local
+
+-- The same applies to an active scoped attribute after leaving that scope.
+private theorem reverseCopy_scoped : ComputableTidilyInPolyTime reverseCopy encBits encBits :=
+  reverseCopy_polytime
+
+namespace Scoped
+attribute [scoped fun_prop] reverseCopy_scoped
+end Scoped
+
+section
+open scoped Scoped
+attribute [program_certificate] reverseCopy_scoped
+end
+
+run_meta checkFunctionRule ``reverseCopy_scoped
+
+-- Constant functions use fun_prop's separate lambda-theorem index.
+@[fun_prop, program_certificate]
+private theorem constantFalse_polytime :
+    ComputableTidilyInPolyTime (fun _ : List Bool => false) encBits encBool := .const false
+
+run_meta
+  let .lam thm ← Mathlib.Meta.FunProp.getTheoremFromConst ``constantFalse_polytime
+    | throwError "expected a constant-function certificate"
+  let entries ← Mathlib.Meta.FunProp.getLambdaTheorems thm.funPropName thm.thmArgs.type
+  unless (entries.filter (·.thmName == ``constantFalse_polytime)).size == 1 do
+    throwError "expected one constant-function registration"
 
 attribute [irreducible] reverseCopy
 
@@ -281,5 +347,103 @@ example {α : Type} (encA : α ↪ List Bool) (encL : List α ↪ List Bool)
 -- Empty element types still have the empty list as a computational input.
 example : ComputableTidilyInPolyTime (List.head? (α := Fin 0))
     (encList (encFinite (Fin 0))) (encOption (encFinite (Fin 0))) := by fun_prop
+
+-- Nested range/map, Boolean folds and majority share the computation calculus.
+example (call : List Bool → ℕ → ℕ → Bool)
+    (hcall : ComputableTidilyInPolyTime
+      (fun p : (List Bool × ℕ) × ℕ => call p.1.1 p.1.2 p.2)
+      (encPair (encPair encBits encUnary) encUnary) encBool) :
+    ComputableTidilyInPolyTime (fun p : (List Bool × ℕ) × ℕ =>
+      Cslib.BitString.listStrictMajority ((List.range p.1.2).map fun i =>
+        ((List.range p.2).map (call p.1.1 i)).foldl Bool.xor false))
+      (encPair (encPair encBits encUnary) encUnary) encBool := by
+  polytime
+
+-- The input representation and the runtime dimensions are arbitrary certified data.
+example {α : Type} (input : α ↪ List Bool) (N C : α → ℕ)
+    (call : α → ℕ → ℕ → Bool)
+    (hN : ComputableTidilyInPolyTime N input encUnary)
+    (hC : ComputableTidilyInPolyTime C input encUnary)
+    (hcall : ComputableTidilyInPolyTime
+      (fun p : (α × ℕ) × ℕ => call p.1.1 p.1.2 p.2)
+      (encPair (encPair input encUnary) encUnary) encBool) :
+    ComputableTidilyInPolyTime (fun a =>
+      Cslib.BitString.listStrictMajority ((List.range (N a)).map fun i =>
+        ((List.range (C a)).map (call a i)).foldl Bool.xor false)) input encBool := by
+  polytime
+
+-- Uncurried List.map spelling supplies the same computation without definition unfolding.
+example {α : Type} (input : α ↪ List Bool) (N C : α → ℕ)
+    (call : α → ℕ → ℕ → Bool)
+    (hN : ComputableTidilyInPolyTime N input encUnary)
+    (hC : ComputableTidilyInPolyTime C input encUnary)
+    (hcall : ComputableTidilyInPolyTime
+      (fun p : (α × ℕ) × ℕ => call p.1.1 p.1.2 p.2)
+      (encPair (encPair input encUnary) encUnary) encBool) :
+    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listStrictMajority
+      (List.map (fun i => List.foldl Bool.xor false
+        (List.map (fun j => call a i j) (List.range (C a)))) (List.range (N a))))
+      input encBool := by
+  polytime
+
+-- Infinite runtime inputs still require the joint callback certificate.
+example (_call : List Bool → ℕ → ℕ → Bool) : True := by
+  fail_if_success
+    have : ComputableTidilyInPolyTime (fun p : (List Bool × ℕ) × ℕ =>
+      Cslib.BitString.listStrictMajority ((List.range p.1.2).map fun i =>
+        ((List.range p.2).map (_call p.1.1 i)).foldl Bool.xor false))
+      (encPair (encPair encBits encUnary) encUnary) encBool := by polytime
+  trivial
+
+-- A callback certificate does not make an arbitrary runtime loop count computable.
+example (_C : List Bool → ℕ) (call : List Bool → ℕ → ℕ → Bool)
+    (_hcall : ComputableTidilyInPolyTime
+      (fun p : (List Bool × ℕ) × ℕ => call p.1.1 p.1.2 p.2)
+      (encPair (encPair encBits encUnary) encUnary) encBool) : True := by
+  fail_if_success
+    have : ComputableTidilyInPolyTime (fun p : List Bool × ℕ =>
+      Cslib.BitString.listStrictMajority ((List.range p.2).map fun i =>
+        ((List.range (_C p.1)).map (call p.1 i)).foldl Bool.xor false))
+      (encPair encBits encUnary) encBool := by polytime
+  trivial
+
+-- The legacy right-fold spelling uses the existing exact fold/reverse identity.
+example {α : Type} (input : α ↪ List Bool) (N C : α → ℕ)
+    (call : α → ℕ → ℕ → Bool)
+    (hN : ComputableTidilyInPolyTime N input encUnary)
+    (hC : ComputableTidilyInPolyTime C input encUnary)
+    (hcall : ComputableTidilyInPolyTime
+      (fun p : (α × ℕ) × ℕ => call p.1.1 p.1.2 p.2)
+      (encPair (encPair input encUnary) encUnary) encBool) :
+    ComputableTidilyInPolyTime (fun a =>
+      Cslib.BitString.listStrictMajority ((List.range (N a)).map fun i =>
+        ((List.range (C a)).map (call a i)).foldr Bool.xor false)) input encBool := by
+  let : Std.Commutative Bool.xor := ⟨Bool.xor_comm⟩
+  let : Std.Associative Bool.xor := ⟨Bool.xor_assoc⟩
+  simp only [← List.foldl_eq_foldr (f := Bool.xor)]
+  polytime
+
+-- Every parameter below is runtime data, including L, C and the source word.
+example {α : Type} (input : α ↪ List Bool) (L N C : α → ℕ)
+    (source : α → List Bool) (call : ℕ → ℕ → List Bool → ℕ → ℕ → Bool)
+    (hL : ComputableTidilyInPolyTime L input encUnary)
+    (hN : ComputableTidilyInPolyTime N input encUnary)
+    (hC : ComputableTidilyInPolyTime C input encUnary)
+    (hsource : ComputableTidilyInPolyTime source input encBits)
+    (hcall : ComputableTidilyInPolyTime
+      (fun p : (((ℕ × ℕ) × List Bool) × ℕ) × ℕ =>
+        call p.1.1.1.1 p.1.1.1.2 p.1.1.2 p.1.2 p.2)
+      (encPair (encPair (encPair (encPair encUnary encUnary) encBits) encUnary) encUnary)
+      encBool) :
+    ComputableTidilyInPolyTime (fun a =>
+      Cslib.BitString.listStrictMajority ((List.range (N a)).map fun i =>
+        ((List.range (C a)).map (call (L a) (C a) (source a) i)).foldl Bool.xor false))
+      input encBool := by
+  have prepared : ComputableTidilyInPolyTime
+      (fun p : (α × ℕ) × ℕ => call (L p.1.1) (C p.1.1) (source p.1.1) p.1.2 p.2)
+      (encPair (encPair input encUnary) encUnary) encBool := by
+    exact hcall.comp (g := fun p : (α × ℕ) × ℕ =>
+      ((((L p.1.1, C p.1.1), source p.1.1), p.1.2), p.2)) (by fun_prop)
+  polytime
 
 end ComplexityTests.PolyTimeTactic

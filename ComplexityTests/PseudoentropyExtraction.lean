@@ -39,6 +39,8 @@ example : IsPPTOn (encPair encUnary (encList (encPair encBits encBool)))
       extractWordLabels count (input.1 + 1) samples) := by ppt
 
 -- The same program spelled with an explicit seed bind has the same compositional certificate.
+set_option maxHeartbeats 12000 in
+-- A tighter budget guards against duplicated fun_prop entries exhausting the default 200000.
 example : IsPPTOn (encPair encUnary (encList (encPair encBits encBool)))
     (encPair (encList encBits) (encPair encBits encBits))
     (fun input : ℕ × List (List Bool × Bool) => do

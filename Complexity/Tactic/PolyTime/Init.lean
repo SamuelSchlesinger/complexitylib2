@@ -19,8 +19,8 @@ with `@[program_certificate]`. Certificates are indexed by their efficiency pred
 constant at the head of the program, looking through an output encoding. A goal's certificates
 are looked up using its own program head, so similarly implemented algorithms do not unfold into
 each other's rules.
-Certificates are also registered with `fun_prop`, so the same annotation supports
-calls inside larger functional programs.
+Certificates are also registered with `fun_prop`, reusing any existing global registration, so the
+same annotation supports calls inside larger functional programs without duplicating search rules.
 Parameterized `IsPPT` certificates are uncurried to the definitionally equal `IsPPTOn` statement
 before registration, keeping both tactic interfaces on the same encoded-input contract.
 
@@ -105,10 +105,30 @@ initialize certificateExt : SimpleScopedEnvExtension ((Name × Name × Bool) × 
     initial := {}
   }
 
+/-- Check persistent entries rather than the active index: a local or scoped registration must
+not suppress a registration that remains available after leaving its scope. -/
+private def hasGlobalEntry {α σ : Type} (ext : SimpleScopedEnvExtension α σ)
+    (name : α → Name) (decl : Name) : CoreM Bool := do
+  let state := ext.ext.toEnvExtension.getState (← getEnv)
+  let isEntry : ScopedEnvExtension.Entry α → Bool
+    | .global entry => name entry == decl
+    | .scoped _ _ => false
+  return state.state.newEntries.any isEntry || state.importedEntries.any (·.any isEntry)
+
+open Mathlib.Meta.FunProp in
+/-- Preserve an existing `fun_prop` entry, including its priority. Distinct certificates for the
+same function are still registered independently. -/
+private def hasGlobalFunProp (decl : Name) : CoreM Bool := do
+  return (← hasGlobalEntry functionTheoremsExt (·.thmOrigin.name) decl) ||
+    (← hasGlobalEntry lambdaTheoremsExt (·.thmName) decl) ||
+    (← hasGlobalEntry morTheoremsExt (·.thmName) decl) ||
+    (← hasGlobalEntry transitionTheoremsExt (·.thmName) decl)
+
 /-- `@[program_certificate]` registers an efficiency certificate for `polytime` and `ppt`. Its
 conclusion must be a `ComputableTidilyInPolyTime`, `IsPPTOn` or `IsPPT` statement whose program
 body applies a constant, possibly under an output encoding.
-Certificates are also registered with `fun_prop` for use in larger compositions.
+Certificates are also registered with `fun_prop` for use in larger compositions, unless the same
+declaration already has a global registration.
 
 `@[program_certificate h₁ … hₙ]` additionally solves the hypotheses `h₁ … hₙ` immediately after the
 certificate is applied. This is needed when such a hypothesis determines an encoding that other
@@ -129,7 +149,8 @@ initialize registerBuiltinAttribute {
       return (certificate, key)
     if key.1 == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
         key.1 == `Cslib.Probability.IsPPTOn then
-      Attribute.add certificate `fun_prop .missing kind
+      unless ← hasGlobalFunProp certificate do
+        Attribute.add certificate `fun_prop .missing kind
     certificateExt.add (key, certificate, eager) kind
 }
 

@@ -50,6 +50,8 @@ public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Padding
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Layer
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
@@ -609,6 +611,7 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
+public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Fin.Order
