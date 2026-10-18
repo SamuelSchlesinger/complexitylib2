@@ -23,7 +23,7 @@ certificate complexity.
 
 ## Main definitions
 
-* `Cslib.DecisionTree.certificateComplexityFor`: the certificate complexity `C_b(f)` of the
+* `Cslib.QueryComplexity.certificateComplexityFor`: the certificate complexity `C_b(f)` of the
   inputs where `f` has value `b`.
 
 ## Main results
@@ -43,16 +43,18 @@ certificate complexity.
 
 @[expose] public section
 
-namespace Cslib.DecisionTree
+namespace Cslib
 
 open Finset
 
-variable {ι β : Type*} [DecidableEq ι]
+variable {n : ℕ}
+
+namespace QueryComplexity
 
 /-- A certificate for one value and a certificate for another value disagree at a variable that
 both contain. -/
-theorem IsCertificate.exists_mem_inter_ne {f : (ι → Bool) → β} {x w : ι → Bool}
-    {S T : Finset ι} (hS : IsCertificate f x S) (hT : IsCertificate f w T) (hne : f x ≠ f w) :
+theorem IsCertificate.exists_mem_inter_ne {f : BooleanFunction n} {x w : BitString n}
+    {S T : Finset (Fin n)} (hS : IsCertificate f x S) (hT : IsCertificate f w T) (hne : f x ≠ f w) :
     ∃ i ∈ T ∩ S, w i ≠ x i := by
   by_contra! h
   have hvx : f (T.piecewise w x) = f x := hS _ fun i hi => by
@@ -64,13 +66,19 @@ theorem IsCertificate.exists_mem_inter_ne {f : (ι → Bool) → β} {x w : ι �
 
 /-- Fixing the variables of `S` to the values `a` turns a certificate `T` at the filled input into
 the certificate `T \ S` of the restricted function. -/
-theorem IsCertificate.restrict {f : (ι → Bool) → β} {S T : Finset ι} {a z : ι → Bool}
+theorem IsCertificate.restrict {f : BooleanFunction n} {S T : Finset (Fin n)} {a z : BitString n}
     (hT : IsCertificate f (S.piecewise a z) T) :
     IsCertificate (fun y => f (S.piecewise a y)) z (T \ S) := fun y hy =>
   hT _ fun i hi => by
     by_cases hiS : i ∈ S
     · simp [hiS]
     · simp [hiS, hy i (mem_sdiff.2 ⟨hi, hiS⟩)]
+
+end QueryComplexity
+
+namespace DecisionTree
+
+variable {ι β : Type*} [DecidableEq ι]
 
 /-- Querying the variables of `S` and continuing with a tree for the function restricted by the
 answers computes `f` with `#S` more queries. -/
@@ -85,26 +93,28 @@ theorem complexity_le_card_add [Finite ι] {f : (ι → Bool) → β} (S : Finse
   funext j
   by_cases hj : j ∈ S <;> simp [hj]
 
-variable [Fintype ι] [DecidableEq β]
+end DecisionTree
+
+namespace QueryComplexity
 
 /-- `C_b(f)`: the largest certificate complexity of `f` at an input where it has value `b`. -/
-noncomputable def certificateComplexityFor (f : (ι → Bool) → β) (b : β) : ℕ :=
+def certificateComplexityFor (f : BooleanFunction n) (b : Bool) : ℕ :=
   (univ.filter fun x => f x = b).sup (certificateComplexityAt f)
 
-theorem certificateComplexityAt_le_certificateComplexityFor {f : (ι → Bool) → β} {x : ι → Bool}
-    {b : β} (h : f x = b) : certificateComplexityAt f x ≤ certificateComplexityFor f b :=
+theorem certificateComplexityAt_le_certificateComplexityFor {f : BooleanFunction n}
+    {x : BitString n} {b : Bool} (h : f x = b) :
+    certificateComplexityAt f x ≤ certificateComplexityFor f b :=
   le_sup (f := certificateComplexityAt f) (mem_filter.2 ⟨mem_univ x, h⟩)
 
-theorem certificateComplexityFor_le_certificateComplexity (f : (ι → Bool) → β) (b : β) :
+theorem certificateComplexityFor_le_certificateComplexity (f : BooleanFunction n) (b : Bool) :
     certificateComplexityFor f b ≤ certificateComplexity f :=
   sup_mono (filter_subset _ _)
 
-omit [Fintype ι] [DecidableEq β] in
 /-- Restricting by answers on `S` does not lengthen certificates: every certificate for the
 function restricted by `a` at `z` is at most as long as a certificate of `f` at the filled input,
 minus its variables in `S`. -/
-private theorem exists_certificateComplexityAt_restrict_le [Finite ι] {f : (ι → Bool) → β}
-    (S : Finset ι) (a z : ι → Bool) :
+private theorem exists_certificateComplexityAt_restrict_le {f : BooleanFunction n}
+    (S : Finset (Fin n)) (a z : BitString n) :
     ∃ T, IsCertificate f (S.piecewise a z) T ∧ #T = certificateComplexityAt f (S.piecewise a z) ∧
       certificateComplexityAt (fun y => f (S.piecewise a y)) z ≤ #(T \ S) := by
   obtain ⟨T, hT, hcard⟩ := exists_isCertificate_card_eq f (S.piecewise a z)
@@ -112,9 +122,9 @@ private theorem exists_certificateComplexityAt_restrict_le [Finite ι] {f : (ι 
 
 /-- Restricting by answers on a certificate `S` for a value `b` keeps the certificates of the
 other values, minus their variables in `S`, which they all meet. -/
-private theorem certificateComplexityFor_restrict_lt {f : (ι → Bool) → β} {x : ι → Bool}
-    {S : Finset ι} (hS : IsCertificate f x S) (a : ι → Bool) {c : β} (hc : c ≠ f x) {m : ℕ}
-    (hm : certificateComplexityFor f c ≤ m + 1) :
+private theorem certificateComplexityFor_restrict_lt {f : BooleanFunction n} {x : BitString n}
+    {S : Finset (Fin n)} (hS : IsCertificate f x S) (a : BitString n) {c : Bool}
+    (hc : c ≠ f x) {m : ℕ} (hm : certificateComplexityFor f c ≤ m + 1) :
     certificateComplexityFor (fun y => f (S.piecewise a y)) c ≤ m := by
   refine Finset.sup_le fun z hz => ?_
   have hz : f (S.piecewise a z) = c := (mem_filter.1 hz).2
@@ -123,11 +133,11 @@ private theorem certificateComplexityFor_restrict_lt {f : (ι → Bool) → β} 
   have := card_sdiff_add_card_inter T S
   have := card_pos.2 ⟨i, hi⟩
   have := (certificateComplexityAt_le_certificateComplexityFor hz).trans hm
-  omega
+  lia
 
 /-- Restricting does not raise certificate complexity for a value. -/
-private theorem certificateComplexityFor_restrict_le {f : (ι → Bool) → β} (S : Finset ι)
-    (a : ι → Bool) (c : β) :
+private theorem certificateComplexityFor_restrict_le {f : BooleanFunction n} (S : Finset (Fin n))
+    (a : BitString n) (c : Bool) :
     certificateComplexityFor (fun y => f (S.piecewise a y)) c ≤ certificateComplexityFor f c := by
   refine Finset.sup_le fun z hz => ?_
   have hz : f (S.piecewise a z) = c := (mem_filter.1 hz).2
@@ -135,11 +145,17 @@ private theorem certificateComplexityFor_restrict_le {f : (ι → Bool) → β} 
   exact hle.trans ((card_le_card sdiff_subset).trans
     (hTcard.trans_le (certificateComplexityAt_le_certificateComplexityFor hz)))
 
+end QueryComplexity
+
+namespace DecisionTree
+
+open QueryComplexity
+
 /-- **Certificates give decision trees.** A Boolean function is computed by a decision tree of
 depth at most `C₀(f) C₁(f)`. -/
-theorem complexity_le_certificateComplexityFor_mul (f : (ι → Bool) → Bool) :
+theorem complexity_le_certificateComplexityFor_mul (f : BooleanFunction n) :
     complexity f ≤ certificateComplexityFor f false * certificateComplexityFor f true := by
-  suffices ∀ m (f : (ι → Bool) → Bool), certificateComplexityFor f false ≤ m →
+  suffices ∀ m (f : BooleanFunction n), certificateComplexityFor f false ≤ m →
       complexity f ≤ m * certificateComplexityFor f true from this _ f le_rfl
   intro m
   induction m with
@@ -171,11 +187,13 @@ theorem complexity_le_certificateComplexityFor_mul (f : (ι → Bool) → Bool) 
     exact Nat.add_le_add_left (certificateComplexityAt_le_certificateComplexityFor hx) _
 
 /-- Decision tree complexity is at most the square of certificate complexity. -/
-theorem complexity_le_certificateComplexity_sq (f : (ι → Bool) → Bool) :
+theorem complexity_le_certificateComplexity_sq (f : BooleanFunction n) :
     complexity f ≤ certificateComplexity f ^ 2 :=
   (complexity_le_certificateComplexityFor_mul f).trans (by
     rw [sq]
     exact Nat.mul_le_mul (certificateComplexityFor_le_certificateComplexity f false)
       (certificateComplexityFor_le_certificateComplexity f true))
 
-end Cslib.DecisionTree
+end DecisionTree
+
+end Cslib

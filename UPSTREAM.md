@@ -41,11 +41,13 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   using the existing finite-PMF metric and `Game.Indistinguishable` with all tests admissible.
   Coordinate the finite PRG API and its distribution-based refactor in #1071 before adapting
   `Crypto/Primitives/PRG/Game`.
-* **Query complexity.** Align `Computability/DecisionTree` with #925 and its certificate
-  follow-up `D ≤ C₀ C₁`; align `Sensitivity` and `Foundations/Data/BitString/{Flip,PartialAssignment}`
-  with upstream `Computability/QueryComplexity`, now included in the base pin. Compare arbitrary
-  index/result types with its `Fin n`/`Bool` models,
-  `IsCertificate` with `Fixes`, and the `*At` and `point*` names.
+* **Query complexity.** Numerical measures and certificates use the merged
+  `Computability/QueryComplexity` API directly, on `Fin n`/`Bool`. Generic decision trees,
+  restrictions and Fourier analysis retain arbitrary coordinate/output types; sensitivity
+  lower bounds there use explicit coordinate sets. The restriction representations agree
+  definitionally, with `QueryComplexity/Restriction` connecting filling to `Forces`.
+  Align the remaining tree representation in `Computability/DecisionTree` with #925 and
+  coordinate its certificate follow-up `D ≤ C₀ C₁`; no second numerical measure API is retained.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
   #871–#875 requested composition above configuration level; use `TransformsTapes`-style specs.

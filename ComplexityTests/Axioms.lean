@@ -987,6 +987,12 @@ info: 'Cslib.DecisionTree.complexity_le_certificateComplexityFor_mul' depends on
 #print axioms Cslib.DecisionTree.complexity_le_certificateComplexityFor_mul
 
 /--
+info: 'Cslib.DecisionTree.card_le_complexity_of_forall_update_ne' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.DecisionTree.card_le_complexity_of_forall_update_ne
+
+/--
 info: 'Cslib.Circuits.Boolean.prod_card_subfunctions_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

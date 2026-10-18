@@ -109,6 +109,7 @@ import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
+import ComplexityTests.QueryComplexity
 import ComplexityTests.RandomOracle
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing

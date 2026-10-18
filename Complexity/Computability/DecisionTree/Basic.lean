@@ -18,9 +18,10 @@ public import Mathlib.Order.Lattice.Nat
 
 A decision tree over Boolean variables indexed by `ι` queries a variable at each internal node
 and follows the branch for its value; the leaf it reaches is the output (`DecisionTree.eval`). Its
-depth is the number of queries in the worst case. The variables queried on the way to the leaf of
-an input `x` determine the output: every input that agrees with `x` on them reaches the same leaf
-(`DecisionTree.eval_eq_of_forall_mem_queries`).
+depth is the longest structural root-to-leaf path, an upper bound on the number of queries on
+any input. Repeated variables can make a longest path unreachable. The variables queried on the
+way to the leaf of an input `x` determine the output: every input that agrees with `x` on them
+reaches the same leaf (`DecisionTree.eval_eq_of_forall_mem_queries`).
 
 Querying every variable in turn computes any function, so over finitely many variables every
 function has a decision tree of depth at most the number of variables (`exists_computes`). The
@@ -65,7 +66,8 @@ def eval : DecisionTree ι β → (ι → Bool) → β
   | leaf b, _ => b
   | node i t₀ t₁, x => cond (x i) (t₁.eval x) (t₀.eval x)
 
-/-- The number of queries in the worst case. -/
+/-- The longest structural root-to-leaf path, bounding the queries executed on any input.
+Repeated variables can make a longest path unreachable. -/
 def depth : DecisionTree ι β → ℕ
   | leaf _ => 0
   | node _ t₀ t₁ => max t₀.depth t₁.depth + 1

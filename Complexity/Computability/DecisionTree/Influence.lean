@@ -9,6 +9,8 @@ module
 
 public import Complexity.Computability.DecisionTree.Fourier
 public import Complexity.Foundations.BooleanAnalysis.Influence
+public import Cslib.Computability.QueryComplexity.Measures
+import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
@@ -16,7 +18,7 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 # Influence and sensitivity
 
 The total influence of a Boolean function, read as signs, is its *average sensitivity*, the
-expected value of `sensitivityAt f x` (`BitString.totalInfluence_signVal`)
+expected value of `sensitivityAt f x` (`BitString.totalInfluence_eq_expect_sensitivityAt`)
 [O'Donnell, Section 2.3][ODonnell2014], so it is at most the sensitivity
 (`BitString.totalInfluence_le_sensitivity`). A function computed by a decision tree of depth
 `d` has Fourier degree at most `d`, so its total influence is at most `d`
@@ -24,6 +26,8 @@ expected value of `sensitivityAt f x` (`BitString.totalInfluence_signVal`)
 
 ## Main results
 
+* `Cslib.BitString.totalInfluence_eq_expect_sensitivityAt`: total influence is average sensitivity.
+* `Cslib.BitString.totalInfluence_le_sensitivity`: total influence is at most sensitivity.
 * `Cslib.DecisionTree.totalInfluence_le_depth`: functions of decision trees of depth `d` have
   total influence at most `d`.
 
@@ -33,6 +37,24 @@ expected value of `sensitivityAt f x` (`BitString.totalInfluence_signVal`)
 -/
 
 @[expose] public section
+
+namespace Cslib.BitString
+
+open Finset
+open scoped BigOperators
+
+/-- The expected sensitivity at a uniformly sampled input is the total influence. -/
+theorem totalInfluence_eq_expect_sensitivityAt {n : ℕ} (f : BooleanFunction n) :
+    totalInfluence (fun x => signVal (f x)) = 𝔼 x, (sensitivityAt f x : ℝ) :=
+  totalInfluence_signVal f
+
+/-- The total influence of a Boolean function, read as signs, is at most its sensitivity. -/
+theorem totalInfluence_le_sensitivity {n : ℕ} (f : BooleanFunction n) :
+    totalInfluence (fun x => signVal (f x)) ≤ sensitivity f := by
+  rw [totalInfluence_eq_expect_sensitivityAt]
+  exact expect_le univ_nonempty fun x _ => by exact_mod_cast sensitivityAt_le_sensitivity f x
+
+end Cslib.BitString
 
 namespace Cslib.DecisionTree
 
