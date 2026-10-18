@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 
 public import Complexity.Computability.PCP.Encoded.Composition
+public import Complexity.Computability.PCP.Encoded.SelectedComposition
 public import Complexity.Foundations.Data.BitString.Basic
 public import Mathlib.Logic.Equiv.Fin.Basic
 public import Mathlib.Data.List.OfFn
@@ -51,6 +52,41 @@ def numberSlots {α : Type} (alphabet : Numbering α) : Numbering (Graph.Compose
   numberSum (numberBits alphabet) <|
     numberSum (numberSum (numberBits indices) (numberBits (numberProd indices indices)))
       (numberCoins alphabet)
+
+-- Parallel explicit numberings for the six-query selected composition. The conjunction helpers
+-- above remain unchanged for clients that still use the seventeen-query tester.
+def numberSelectedCoins {α : Type} (alphabet : Numbering α) :
+    Numbering (Fin 5 × Rand α) :=
+  numberProd ⟨5, Equiv.refl _⟩ (numberCoins alphabet)
+
+def numberSelectedSlots {α : Type} (alphabet : Numbering α) :
+    Numbering (Graph.SelectedComposeSlot α) :=
+  let indices := numberProd ⟨2, Equiv.refl _⟩ alphabet
+  numberSum (numberBits alphabet) <|
+    numberSum (numberSum (numberBits indices) (numberBits (numberProd indices indices)))
+      (numberSelectedCoins alphabet)
+
+def numberSelectedQueries : Numbering (Fin 6) := ⟨6, Equiv.refl _⟩
+
+def selectedQueries : List (Fin 6) := List.ofFn numberSelectedQueries.2.symm
+
+def selectedCoins {α : Type} (alphabet : Numbering α) : List (Fin 5 × Rand α) :=
+  List.ofFn (numberSelectedCoins alphabet).2.symm
+
+theorem nodup_selectedCoins {α : Type} (alphabet : Numbering α) :
+    (selectedCoins alphabet).Nodup :=
+  List.nodup_ofFn.mpr (numberSelectedCoins alphabet).2.symm.injective
+
+theorem mem_selectedCoins {α : Type} (alphabet : Numbering α) (ω : Fin 5 × Rand α) :
+    ω ∈ selectedCoins alphabet :=
+  List.mem_ofFn.mpr ⟨(numberSelectedCoins alphabet).2 ω,
+    (numberSelectedCoins alphabet).2.symm_apply_apply ω⟩
+
+theorem nodup_selectedQueries : selectedQueries.Nodup :=
+  List.nodup_ofFn.mpr numberSelectedQueries.2.symm.injective
+
+theorem mem_selectedQueries (i : Fin 6) : i ∈ selectedQueries :=
+  List.mem_ofFn.mpr ⟨numberSelectedQueries.2 i, numberSelectedQueries.2.symm_apply_apply i⟩
 
 def numberQueries : Numbering Query :=
   numberSum ⟨3, Equiv.refl _⟩ <| numberSum ⟨3, Equiv.refl _⟩ <|

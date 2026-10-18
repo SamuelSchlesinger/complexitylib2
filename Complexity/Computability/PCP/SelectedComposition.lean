@@ -103,6 +103,17 @@ theorem satisfiable_composeSelected_iff [Finite E] [Nonempty α] :
 theorem card_alphabet_composeSelected : Fintype.card (Bool × (Fin 6 → Bool)) = 128 := by
   norm_num
 
+/-- The auxiliary tables are shared across the five checks; only the coin vertices are repeated. -/
+theorem card_vertices_composeSelected [Fintype V] [Fintype E] :
+    Fintype.card (ComposePos V E α ⊕ E × (Fin 5 × Rand α)) =
+      2 ^ Fintype.card α * Fintype.card V +
+        (2 ^ (2 * Fintype.card α) + 2 ^ (4 * Fintype.card α ^ 2) +
+          5 * 2 ^ (20 * Fintype.card α ^ 2 + 15 * Fintype.card α + 3)) * Fintype.card E := by
+  rw [Fintype.card_sum, Fintype.card_prod E, Fintype.card_prod (Fin 5), card_rand]
+  simp only [Fintype.card_sum, Fintype.card_prod, Fintype.card_fun,
+    Fintype.card_bool, Fintype.card_fin]
+  ring
+
 /-- Each original edge contributes five choices of check, the original coins, and six queries. -/
 theorem card_edges_composeSelected [Fintype E] :
     Fintype.card ((E × (Fin 5 × Rand α)) × Fin 6) =

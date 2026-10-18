@@ -20,9 +20,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 
 Compose Cook–Levin's polynomial-time reduction with the concrete SAT-to-gap construction and
 the encoded graph verifier. The fixed output alphabet has an explicit binary representation:
-one bit for the input label and one for each assignment-tester query. The complete construction
-uses logarithmic randomness, constantly many queries, perfect completeness and soundness at most
-one half. Its enormous fixed parameters remain asymptotic construction constants.
+seven bits: one for the input label and six for the selected tester's claimed answers.
+The construction uses logarithmic randomness, constantly many queries, perfect completeness and
+soundness at most one half. Its enormous fixed parameters remain asymptotic construction constants.
 
 Conversely, exhaustive checking of logarithmically many random bits has polynomial cost. A
 certificate supplies the bits at all queried addresses, with repeated addresses sharing one bit.
@@ -46,12 +46,12 @@ namespace Cslib.Complexity
 open Cslib.PCP Cslib.PCP.Encoded HadamardTester Turing.MultiTapeTM
 open ConstraintGraph.Amplification.Arithmetic
 
-private abbrev Alphabet := Bool × (Query → Bool)
+private abbrev Alphabet := Bool × (Fin 6 → Bool)
 
-private def encodeLabel (label : Alphabet) : Fin (FinEnum.card Query + 1) → Bool :=
+private def encodeLabel (label : Alphabet) : Fin (FinEnum.card (Fin 6) + 1) → Bool :=
   Fin.cases label.1 (fun i => label.2 (FinEnum.equiv.symm i))
 
-private def decodeLabel (bits : Fin (FinEnum.card Query + 1) → Bool) : Alphabet :=
+private def decodeLabel (bits : Fin (FinEnum.card (Fin 6) + 1) → Bool) : Alphabet :=
   (bits 0, fun query => bits (FinEnum.equiv query).succ)
 
 private theorem decode_encodeLabel : Function.LeftInverse decodeLabel encodeLabel := by
@@ -69,7 +69,7 @@ theorem NP_subset_PCP_log {Input : Type} (input : Input ↪ List Bool) :
       (encPair (encPi (encPi encBool))
         (encPair (encPair encBool (encPi encBool)) (encPair encBool (encPi encBool)))) encBool := by
     fun_prop
-  exact Graph.mem_PCP_of_gapReduction (FinEnum.card Query + 1)
+  exact Graph.mem_PCP_of_gapReduction (FinEnum.card (Fin 6) + 1)
     encodeLabel decodeLabel decode_encodeLabel (isPolyTime_gapGraph hreduce) heval
     (fun x => wellFormed_gapGraph (reduce x))
     (fun x hx => (satisfiable_gapGraph_iff _).mpr ((hmem x).mp hx))

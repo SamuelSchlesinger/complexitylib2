@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.Encoded.ThreeSAT
-public import Complexity.Computability.PCP.Encoded.Composition.Enumeration
+public import Complexity.Computability.PCP.Encoded.SelectedComposition.Enumeration
 public import Complexity.Computability.PCP.Encoded.Amplification.Arithmetic
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
@@ -52,9 +52,9 @@ attribute [local instance] Cslib.PCP.HadamardTester.instFinEnumBool
 
 /-- Split, compact, normalize, and amplify a CNF formula using the concrete arithmetic family. -/
 def gapGraph {V : Type} [DecidableEq V] (φ : CNF V) :
-    Graph ((Bool × (HadamardTester.Query → Bool)) →
-      (Bool × (HadamardTester.Query → Bool)) → Bool) :=
-  (Graph.ofCompactCNF φ.to3CNF).composeEnumerated.arithmeticAmplify
+    Graph ((Bool × (Fin 6 → Bool)) →
+      (Bool × (Fin 6 → Bool)) → Bool) :=
+  (Graph.ofCompactCNF φ.to3CNF).composeSelectedEnumerated.arithmeticAmplify
 
 /-- The whole reduction is polynomial-time in any efficiently computed input formula. Variable
 names retain their supplied encoding until compaction, including sparse or repeated names. -/
@@ -67,21 +67,21 @@ theorem isPolyTime_gapGraph {V Input : Type} [DecidableEq V]
       (Graph.encoding (encPi (encPi encBool))) := by
   unfold gapGraph
   apply Graph.isPolyTime_arithmeticAmplify
-  · exact Graph.isPolyTime_composeEnumerated
+  · exact Graph.isPolyTime_composeSelectedEnumerated
       (Graph.isPolyTime_ofCompactCNF ((CNF.isPolyTime_to3CNF enc).comp hformula))
-  · exact fun x => (Graph.wellFormed_ofCompactCNF (formula x).to3CNF).composeEnumerated
+  · exact fun x => (Graph.wellFormed_ofCompactCNF (formula x).to3CNF).composeSelectedEnumerated
 
 /-- Every output edge has endpoints in the declared finite vertex range. -/
 theorem wellFormed_gapGraph {V : Type} [DecidableEq V] (φ : CNF V) :
     (gapGraph φ).WellFormed :=
   Graph.wellFormed_arithmeticAmplify
-    (Graph.wellFormed_ofCompactCNF φ.to3CNF).composeEnumerated
+    (Graph.wellFormed_ofCompactCNF φ.to3CNF).composeSelectedEnumerated
 
 /-- The complete construction preserves satisfiability for arbitrary clause lengths. -/
 theorem satisfiable_gapGraph_iff {V : Type} [DecidableEq V] (φ : CNF V) :
     ((gapGraph φ).toGraph id).Satisfiable ↔ φ.Satisfiable := by
   rw [gapGraph, Graph.satisfiable_arithmeticAmplify_iff,
-    Graph.satisfiable_composeEnumerated_iff, Graph.satisfiable_ofCompactCNF_iff,
+    Graph.satisfiable_composeSelectedEnumerated_iff, Graph.satisfiable_ofCompactCNF_iff,
     CNF.satisfiable_to3CNF]
   exact fun _ => CNF.length_le_three_of_mem_to3CNF
 

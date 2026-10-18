@@ -16,7 +16,7 @@ public import Complexity.Computability.PCP.ThreeSAT
 
 The combinatorial heart of Dinur's proof of the PCP theorem [Dinur, Corollary 4.2][Dinur2005]:
 every formula `φ` in 3-CNF with `m` clauses yields a constraint graph `gapGraph φ` over the fixed
-alphabet `Σ₀ = Bool × (HadamardTester.Query → Bool)` with polynomially many vertices and edges in
+alphabet `Σ₀ = Bool × (Fin 6 → Bool)` with polynomially many vertices and edges in
 `m` (`exists_card_gapGraph_le`), which is satisfiable exactly when `φ` is
 (`satisfiable_gapGraph_iff`), and whose value is at least the universal constant
 `Cslib.PCP.Dinur.gap` when `φ` is unsatisfiable (`gap_le_unsatVal_gapGraph`). As the
@@ -132,48 +132,49 @@ variable {V : Type u} [DecidableEq V] (φ : CNF V)
 `ofCNF φ`, preprocessed, then composed. Preprocessing replaces the vertices by the half-edges, so
 that the variables of `φ` disappear, and composition brings the alphabet to `Σ₀`. -/
 noncomputable def cnfGraph : FinConstraintGraph.{0} Alphabet :=
-  ⟨_, _, ((ofCNF φ).preprocess expanderFamily).toConstraintGraph.compose⟩
+  ⟨_, _, ((ofCNF φ).preprocess expanderFamily).toConstraintGraph.composeSelected⟩
 
 /-- The vertices of the constraint graph of a formula over `Σ₀`: those of the composed graph of
 the preprocessed `ofCNF φ`, built from its edges `Fin φ.length × Fin 3`. -/
 private theorem cnfGraph_V : (cnfGraph φ).V =
     (ComposePos ((Fin φ.length × Fin 3) × Bool)
         (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) (Fin 3 → Bool) ⊕
-      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool)) :=
+      (((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) ×
+        (Fin 5 × Rand (Fin 3 → Bool))) :=
   rfl
 
 /-- The edges of the constraint graph of a formula over `Σ₀`: those of the composed graph of the
 preprocessed `ofCNF φ`. -/
 private theorem cnfGraph_E : (cnfGraph φ).E =
-    (((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) × Rand (Fin 3 → Bool)) ×
-      Query) :=
+    (((((Fin φ.length × Fin 3) × Bool) × PreprocessLabel (Fin 120)) ×
+      (Fin 5 × Rand (Fin 3 → Bool))) × Fin 6) :=
   rfl
 
 /-- If the clauses of `φ` have at most three literals, its constraint graph over `Σ₀` is
 satisfiable exactly when `φ` is. -/
 theorem satisfiable_cnfGraph_iff (h3 : ∀ κ ∈ φ, κ.length ≤ 3) :
     (cnfGraph φ).graph.Satisfiable ↔ φ.Satisfiable :=
-  (satisfiable_compose_iff _).trans
+  (satisfiable_composeSelected_iff _).trans
     (((ofCNF φ).satisfiable_preprocess_iff _ (by norm_num)).trans (satisfiable_ofCNF_iff φ h3))
 
 /-- The alphabet `Fin 3 → Bool` of the constraint graph of a formula has eight symbols. -/
 private theorem card_cnfAlphabet : Fintype.card (Fin 3 → Bool) = 8 := by
   simp
 
-/-- The constraint graph over `Σ₀` of a formula with `m` clauses has `24684 · 2 ^ 1403 · m`
+/-- The constraint graph over `Σ₀` of a formula with `m` clauses has `43560 · 2 ^ 1403 · m`
 edges. -/
-theorem card_edges_cnfGraph : Fintype.card (cnfGraph φ).E = 24684 * 2 ^ 1403 * φ.length := by
-  rw [Fintype.card_congr' (cnfGraph_E φ), card_edges_compose, card_cnfAlphabet,
+theorem card_edges_cnfGraph : Fintype.card (cnfGraph φ).E = 43560 * 2 ^ 1403 * φ.length := by
+  rw [Fintype.card_congr' (cnfGraph_E φ), card_edges_composeSelected, card_cnfAlphabet,
     show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]
   generalize 2 ^ 1403 = c
   ring
 
 /-- The constraint graph over `Σ₀` of a formula with `m` clauses has
-`(1536 + 1452 (2 ^ 16 + 2 ^ 256 + 2 ^ 1403)) m` vertices. -/
+`(1536 + 1452 (2 ^ 16 + 2 ^ 256 + 5 * 2 ^ 1403)) m` vertices. -/
 theorem card_vertices_cnfGraph :
-    Fintype.card (cnfGraph φ).V = (1536 + 1452 * (2 ^ 16 + 2 ^ 256 + 2 ^ 1403)) * φ.length := by
-  rw [Fintype.card_congr' (cnfGraph_V φ), card_vertices_compose, card_cnfAlphabet,
+    Fintype.card (cnfGraph φ).V = (1536 + 1452 * (2 ^ 16 + 2 ^ 256 + 5 * 2 ^ 1403)) * φ.length := by
+  rw [Fintype.card_congr' (cnfGraph_V φ), card_vertices_composeSelected, card_cnfAlphabet,
     show 20 * 8 ^ 2 + 15 * 8 + 3 = 1403 from rfl, show 4 * 8 ^ 2 = 256 from rfl,
     show 2 * 8 = 16 from rfl]
   simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, card_label_preprocess]

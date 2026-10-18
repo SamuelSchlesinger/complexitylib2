@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.Encoded.Amplification.Iteration
-public import Complexity.Computability.PCP.Encoded.Composition.Enumeration
+public import Complexity.Computability.PCP.Encoded.SelectedComposition.Enumeration
 public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Family
@@ -46,7 +46,7 @@ namespace Cslib.PCP.Encoded.Graph
 open Cslib.PCP.HadamardTester Turing.MultiTapeTM
 open ConstraintGraph.Amplification.Arithmetic
 
-local notation "Alphabet" => (Bool × (Query → Bool))
+local notation "Alphabet" => (Bool × (Fin 6 → Bool))
 local notation "Constraint" => (Alphabet → Alphabet → Bool)
 local notation "Label" => RotationMap.AffinePlaneFamilyLabel (ZMod 257) 257
 
@@ -57,7 +57,7 @@ local instance instFinEnumBool : FinEnum Bool := FinEnum.ofList [false, true] (b
 local instance instFinEnumZMod257 : FinEnum (ZMod 257) :=
   FinEnum.ofEquiv (Fin 257) (ZMod.finEquiv 257).toEquiv.symm
 
-attribute [local instance] Cslib.PCP.HadamardTester.Rand.finEnum ComposeSlot.finEnum
+attribute [local instance] Cslib.PCP.HadamardTester.Rand.finEnum SelectedComposeSlot.finEnum
 
 /-- Complete normalized rounds with fixed arithmetic expanders and fixed numerical parameters. -/
 @[irreducible]

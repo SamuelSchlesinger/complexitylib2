@@ -17,7 +17,7 @@ namespace ComplexityTests.PCPEncodedArithmeticAmplification
 open Cslib Cslib.PCP Cslib.PCP.Encoded Cslib.PCP.HadamardTester Turing.MultiTapeTM
 open Cslib.PCP.ConstraintGraph.Amplification.Arithmetic
 
-local notation "Alphabet" => (Bool × (Query → Bool))
+local notation "Alphabet" => (Bool × (Fin 6 → Bool))
 local notation "Constraint" => (Alphabet → Alphabet → Bool)
 
 variable {Input : Type} {input : Input ↪ List Bool} {graph : Input → Graph Constraint}
@@ -78,7 +78,7 @@ example : (rejectingEdge.arithmeticAmplify).WellFormed :=
 
 example : 0 < gap := gap_pos
 
-example : gap = 1 / (2 : ℝ) ^ 126 := rfl
+example : gap = 1 / (2 : ℝ) ^ 61 := rfl
 
 -- Two parallel rejecting constraints force a complete round, beyond the zero-round clients.
 -- We instantiate its semantic contract without attempting to materialize its enormous tables.
@@ -91,7 +91,7 @@ private theorem rejectingPair_unsat : ¬ (rejectingPair.toGraph id).Satisfiable 
 
 example : Nat.clog 2 rejectingPair.edges.length = 1 := by decide
 
-example : 1 / (2 : ℝ) ^ 126 ≤ (rejectingPair.arithmeticAmplify.toGraph id).unsatVal :=
+example : 1 / (2 : ℝ) ^ 61 ≤ (rejectingPair.arithmeticAmplify.toGraph id).unsatVal :=
   Graph.gap_le_unsatVal_arithmeticAmplify rejectingPair_unsat
 
 example : ¬ (rejectingPair.arithmeticAmplify.toGraph id).Satisfiable :=

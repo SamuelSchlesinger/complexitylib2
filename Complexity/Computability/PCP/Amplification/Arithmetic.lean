@@ -15,9 +15,9 @@ import Mathlib.Tactic.IrreducibleDef
 # Fixed amplification parameters for the arithmetic expanders
 
 The arithmetic family has degree `2 * 257 ^ 12` and a uniform spectral bound strictly below one.
-The fixed killing rate `2 ^ 379 + 1` suffices to double the value after preprocessing, powering,
-and composition over the fixed answer alphabet, up to the gap `2 ^ (-126)`.
-Its walk length is `2 ^ 399`. The threshold uses the full denominator of the second-moment
+The fixed killing rate `2 ^ 324 + 1` suffices to double the value after preprocessing, powering,
+and selected composition over the `128`-symbol answer alphabet, up to the gap `2 ^ (-61)`.
+Its walk length is `2 ^ 333`. The threshold uses the full denominator of the second-moment
 bound, rather than the smaller cutoff `1 / walkLength²`.
 
 Both parameters are concrete natural numbers, with no search or choice in their definitions.
@@ -49,13 +49,13 @@ namespace Cslib.PCP.ConstraintGraph.Amplification.Arithmetic
 open HadamardTester RotationMap
 
 /-- A fixed killing rate large enough for the concrete arithmetic spectral bound. -/
-irreducible_def killRate : ℕ := 2 * 4 ^ 189 + 1
+irreducible_def killRate : ℕ := 4 ^ 162 + 1
 
 /-- The walk length required by the powering bound over the fixed answer alphabet. -/
-irreducible_def walkLength : ℕ := 2 * 4 ^ 199
+irreducible_def walkLength : ℕ := 2 * 4 ^ 166
 
 /-- A soundness threshold supported by the exact second-moment bound. -/
-noncomputable def gap : ℝ := 1 / 2 ^ 126
+noncomputable def gap : ℝ := 1 / 2 ^ 61
 
 /-- The concrete soundness gap is positive. -/
 theorem gap_pos : 0 < gap := by norm_num [gap]
@@ -75,16 +75,16 @@ theorem one_le_walkLength : 1 ≤ walkLength := by
 
 /-- The chosen walk length matches the alphabet size and killing rate. -/
 theorem walkLength_eq :
-    walkLength = 4 * Fintype.card (Bool × (Query → Bool)) * (killRate - 1) := by
-  rw [walkLength_def, killRate_def, card_alphabet_compose]
+    walkLength = 4 * Fintype.card (Bool × (Fin 6 → Bool)) * (killRate - 1) := by
+  rw [walkLength_def, killRate_def, card_alphabet_composeSelected]
   norm_num
 
 /-- The concrete killing rate pays for preprocessing and composition with a factor of two left. -/
 theorem gain :
-    2 ≤ Amplification.gain (Fintype.card (Bool × (Query → Bool)))
+    2 ≤ Amplification.gain 840 (Fintype.card (Bool × (Fin 6 → Bool)))
         (Fintype.card (AffinePlaneFamilyLabel (ZMod 257) 257))
         walkLength killRate (1 - 9 / (400 * (257 : ℝ) ^ 16)) gap := by
-  rw [card_affinePlaneFamilyLabel (ZMod.finEquiv 257).toEquiv.symm, card_alphabet_compose,
+  rw [card_affinePlaneFamilyLabel (ZMod.finEquiv 257).toEquiv.symm, card_alphabet_composeSelected,
     killRate_def, walkLength_def]
   norm_num [Amplification.gain, retention, gap]
 

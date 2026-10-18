@@ -29,10 +29,11 @@ example : (@FinEnum.toList (Rand Unit) (Rand.finEnum Unit)).Nodup :=
 example (ω : Rand Unit) : ω ∈ @FinEnum.toList _ (Rand.finEnum Unit) :=
   @FinEnum.mem_toList _ (Rand.finEnum Unit) ω
 
-example (slot : Graph.ComposeSlot Unit) :
-    (Graph.ComposeSlot.finEnum Unit).equiv.symm ((Graph.ComposeSlot.finEnum Unit).equiv slot) =
+example (slot : Graph.SelectedComposeSlot Unit) :
+    (Graph.SelectedComposeSlot.finEnum Unit).equiv.symm
+      ((Graph.SelectedComposeSlot.finEnum Unit).equiv slot) =
       slot :=
-  (Graph.ComposeSlot.finEnum Unit).equiv.symm_apply_apply slot
+  (Graph.SelectedComposeSlot.finEnum Unit).equiv.symm_apply_apply slot
 
 private def unitEval (constraint : Bool) (_ _ : Unit) : Bool := constraint
 
@@ -72,7 +73,7 @@ example : ((⟨0, [⟨4, 7, false⟩]⟩ : Graph Bool).amplifyEnumerated
 -- Already at a one-element alphabet, the complete tester is too large to materialize here.
 example (g : Graph Bool) :
     (g.amplifyEnumerated unitEval false rotateLoops 1 2).edges.length =
-      74766790688768 * g.edges.length := by
+      131941395333120 * g.edges.length := by
   rw [Graph.length_edges_amplifyEnumerated]
   simp only [Graph.PowerLabel, Fintype.card_prod, Fintype.card_fun, Fintype.card_fin,
     Graph.PreprocessLabel, Fintype.card_sum, Fintype.card_unique, Fintype.card_bool,

@@ -388,6 +388,7 @@ public import Complexity.Computability.PCP.Encoded.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Encoded.Amplification.Enumeration
 public import Complexity.Computability.PCP.Encoded.Amplification.Iteration
 public import Complexity.Computability.PCP.Encoded.AssignmentTester
+public import Complexity.Computability.PCP.Encoded.AssignmentTester.Enumeration
 public import Complexity.Computability.PCP.Encoded.Basic
 public import Complexity.Computability.PCP.Encoded.Cloud
 public import Complexity.Computability.PCP.Encoded.CloudRotation
@@ -396,11 +397,15 @@ public import Complexity.Computability.PCP.Encoded.Composition.Enumeration
 public import Complexity.Computability.PCP.Encoded.Constraints
 public import Complexity.Computability.PCP.Encoded.DegreeReduction
 public import Complexity.Computability.PCP.Encoded.GapTheorem
+public import Complexity.Computability.PCP.Encoded.GenericComposition
+public import Complexity.Computability.PCP.Encoded.GenericComposition.Enumeration
 public import Complexity.Computability.PCP.Encoded.Iteration
 public import Complexity.Computability.PCP.Encoded.Power
 public import Complexity.Computability.PCP.Encoded.Preprocess
 public import Complexity.Computability.PCP.Encoded.Preprocess.Programs
 public import Complexity.Computability.PCP.Encoded.SelectedAssignmentTester
+public import Complexity.Computability.PCP.Encoded.SelectedComposition
+public import Complexity.Computability.PCP.Encoded.SelectedComposition.Enumeration
 public import Complexity.Computability.PCP.Encoded.Size
 public import Complexity.Computability.PCP.Encoded.ThreeSAT
 public import Complexity.Computability.PCP.Encoded.Verifier

@@ -25,26 +25,25 @@ the proof:
 2. **powering** (`Cslib.PCP.RegularConstraintGraph.power`) along killed walks truncated at `T`
    steps, killed with probability `1 / q`, which multiplies the value by a factor linear in `q`, at
    the cost of an alphabet of size `|α| ^ (∑ ℓ ≤ T, 242 ^ ℓ)`;
-3. **composition** (`Cslib.PCP.ConstraintGraph.compose`), back to the fixed alphabet
-   `Bool × (HadamardTester.Query → Bool)` of `2 ^ 18` symbols, losing a factor `476` of the value
+3. **composition** (`Cslib.PCP.ConstraintGraph.composeSelected`), back to the fixed alphabet
+   `Bool × (Fin 6 → Bool)` of `128` symbols, losing a factor `840` of the value
    whatever the alphabet it starts from.
 
 The round `G.amplify T q` is defined over any finite alphabet `α`. For `T = 4 |α| (q - 1)`, its
-value is at least `(q - 1) / (476 (4 |α| ^ 2 + 16 |α| ^ 4 + 92928000 |α| ^ 5))` times
+value is at least `(q - 1) / (840 (4 |α| ^ 2 + 16 |α| ^ 4 + 92928000 |α| ^ 5))` times
 `min (UNSAT(G) / 1452000) (1 / T ^ 2)` (`le_unsatVal_amplify`), and its numbers of vertices
 and edges are those of `G` times factors depending on `|α|`, `T` and `q` only
 (`card_vertices_amplify`, `card_edges_amplify`): the vertices of a preprocessed graph are the
 half-edges, so the result does not depend on the vertices of `G` at all.
 
-Over the fixed alphabet `Σ₀ = Bool × (HadamardTester.Query → Bool)` (`Cslib.PCP.Dinur.Alphabet`),
-with the killing rate `q = 2 ^ 165 + 1` and the walk length `T = 2 ^ 185` chosen once and for all,
-the round maps `Σ₀` to itself and **doubles the value up to the threshold** `γ = 1 / T ^ 2`:
+Over the fixed alphabet `Σ₀ = Bool × (Fin 6 → Bool)` (`Cslib.PCP.Dinur.Alphabet`),
+with the killing rate `q = 2 ^ 94 + 1` and the walk length `T = 2 ^ 103` chosen once and for all,
+the round maps `Σ₀` to itself and **doubles the value up to the threshold** `γ = 2 ^ (-61)`:
 `min (2 UNSAT(G)) γ ≤ UNSAT(G.amplify T q)` (`Cslib.PCP.Dinur.min_le_unsatVal_amplify`). This is
 Dinur's main theorem, in a non-explicit form: the expanders of preprocessing are chosen
 non-constructively (`Cslib.RotationMap.expanderFamily`), and the round is a noncomputable
-definition; its realization in polynomial time is not addressed here. The constants are
-astronomically large, since nothing has been done to optimize them: the size factors are triply
-exponential in `T`.
+definition; its realization in polynomial time is not addressed here. The construction remains
+asymptotic: despite the smaller answer alphabet, the size factors are triply exponential in `T`.
 
 ## Main definitions
 
@@ -114,9 +113,9 @@ variable {V E α : Type*} [Fintype E] [DecidableEq V] (G : ConstraintGraph V E �
 /-- **The amplification round** [Dinur, Theorem 4.1][Dinur2005]: preprocessing with the
 non-explicit family of expanders `RotationMap.expanderFamily`, then powering along killed walks
 truncated at `T` steps and killed at rate `q`, then composition back to the alphabet
-`Bool × (HadamardTester.Query → Bool)`. -/
+`Bool × (Fin 6 → Bool)`. -/
 noncomputable def amplify (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
-    ConstraintGraph (AmplifyVertex E α T q) (AmplifyEdge E α T q) (Bool × (Query → Bool)) :=
+    ConstraintGraph (AmplifyVertex E α T q) (AmplifyEdge E α T q) (Bool × (Fin 6 → Bool)) :=
   G.amplifyWith (.ofFamily G expanderFamily) T q
 
 variable [Fintype α] [DecidableEq α] [Nonempty α] {T q : ℕ} [NeZero q]
@@ -129,12 +128,12 @@ theorem satisfiable_amplify_iff (hT : 1 ≤ T) (hq : 2 ≤ q) :
 
 /-- **The value of the amplification round** [Dinur, Theorem 4.1][Dinur2005]: for a killing rate
 `q ≥ 2` and walks truncated at `T = 4 |α| (q - 1)` steps, it is at least
-`(q - 1) / (476 (4 |α| ^ 2 + 16 |α| ^ 4 + 92928000 |α| ^ 5))` times
-`min (UNSAT(G) / 1452000) (1 / T ^ 2)`. The factors `1452000` and `476` are lost by
+`(q - 1) / (840 (4 |α| ^ 2 + 16 |α| ^ 4 + 92928000 |α| ^ 5))` times
+`min (UNSAT(G) / 1452000) (1 / T ^ 2)`. The factors `1452000` and `840` are lost by
 preprocessing and composition; the factor linear in `q` is gained by powering, on the expander that
 preprocessing provides. -/
 theorem le_unsatVal_amplify (hq : 2 ≤ q) (hT : T = 4 * Fintype.card α * (q - 1)) :
-    ((q : ℝ) - 1) / (476 * (4 * Fintype.card α ^ 2 + 16 * Fintype.card α ^ 4 +
+    ((q : ℝ) - 1) / (840 * (4 * Fintype.card α ^ 2 + 16 * Fintype.card α ^ 4 +
         92928000 * Fintype.card α ^ 5)) *
       min (G.unsatVal / 1452000) (1 / T ^ 2) ≤ (G.amplify T q).unsatVal := by
   have h := G.le_unsatVal_amplifyWith (.ofFamily G expanderFamily) (by norm_num) hq hT
@@ -152,13 +151,14 @@ amplification round with walks of length `T`, over an alphabet of size `K`. -/
 def amplifyAlphabetCard (K T : ℕ) : ℕ :=
   Amplification.alphabetCard 120 K T
 
-/-- The number `2 ^ (k + 1) + 2 (2 ^ (2 k) + 2 ^ (4 k ^ 2) + 2 ^ (20 k ^ 2 + 15 k + 3)) (242 q) ^ T`
-of vertices of an amplification round per edge of the original graph, where `k` is the size of the
-alphabet of the powered graph: an alphabet of size `K`, walks of length `T`, killing rate `q`. -/
+/-- The number of vertices of an amplification round per edge of the original graph, for an
+alphabet of size `K`, walks of length `T`, and killing rate `q`. With powered alphabet size `k`,
+this is `2 ^ (k + 1) + 2 (2 ^ (2 k) + 2 ^ (4 k ^ 2) + 5 * 2 ^ (20 k ^ 2 + 15 k + 3)) (242 q) ^ T`.
+-/
 def amplifyVertexFactor (K T q : ℕ) : ℕ :=
   Amplification.vertexFactor 120 K T q
 
-/-- The number `34 · 2 ^ (20 k ^ 2 + 15 k + 3) (242 q) ^ T` of edges of an amplification round per
+/-- The number `60 · 2 ^ (20 k ^ 2 + 15 k + 3) (242 q) ^ T` of edges of an amplification round per
 edge of the original graph, where `k` is the size of the alphabet of the powered graph: an alphabet
 of size `K`, walks of length `T`, killing rate `q`. -/
 def amplifyEdgeFactor (K T q : ℕ) : ℕ :=
@@ -202,43 +202,32 @@ namespace Dinur
 
 open ConstraintGraph
 
-/-- A factor `c ≥ 1` that is at least twice a loss `L` turns `min (u / L) g` into at least
-`min (2 u) g`. -/
-private theorem min_two_mul_le {u g c L : ℝ} (hu : 0 ≤ u) (hg : 0 ≤ g) (hL : 0 < L)
-    (hcL : 2 * L ≤ c) (hc : 1 ≤ c) : min (2 * u) g ≤ c * min (u / L) g := by
-  rw [mul_min_of_nonneg _ _ (by linarith)]
-  refine min_le_min ?_ (le_mul_of_one_le_left hg hc)
-  calc 2 * u = 2 * L * (u / L) := by field_simp
-    _ ≤ c * (u / L) := by gcongr
-
-/-- The fixed alphabet `Σ₀` of Dinur's proof: the alphabet `Bool × (HadamardTester.Query → Bool)`
-of composition, of `2 ^ 18` symbols. -/
+/-- The fixed alphabet `Σ₀` of selected composition: one bit and six claimed answers. -/
 abbrev Alphabet : Type :=
-  Bool × (Query → Bool)
+  Bool × (Fin 6 → Bool)
 
-/-- The fixed alphabet has `2 ^ 18` symbols. -/
-theorem card_alphabet : Fintype.card Alphabet = 2 ^ 18 :=
-  card_alphabet_compose
+/-- The fixed alphabet has `128` symbols. -/
+theorem card_alphabet : Fintype.card Alphabet = 128 :=
+  card_alphabet_composeSelected
 
-/-- The killing rate `q = 2 ^ 165 + 1` of the walks of Dinur's round: large enough for the factor
-`(q - 1) / (476 (4 K ^ 2 + 16 K ^ 4 + 92928000 K ^ 5))` gained by the round, where `K = 2 ^ 18` is
-the size of the alphabet, to be at least twice the factor `1452000` lost by preprocessing, with a
-factor `K` to spare: as `q - 1 = 2 ^ 57 K ^ 6`, it is at least `2 · 1452000 K`. -/
-def killRate : ℕ :=
-  2 ^ 165 + 1
+/-- The killing rate `q = 2 ^ 94 + 1` gives enough gain for the chosen spectral bound and
+selected composition loss. It is irreducible to avoid evaluating the resulting finite types. -/
+irreducible_def killRate : ℕ :=
+  2 ^ 94 + 1
 
-/-- The length `T = 2 ^ 185 = 4 |Σ₀| (q - 1)` at which the walks of Dinur's round are
+/-- The length `T = 2 ^ 103 = 4 |Σ₀| (q - 1)` at which the walks of Dinur's round are
 truncated. It is irreducible: the sizes of Dinur's round are triply exponential in `T`, and
 neither the elaborator nor the kernel should ever try to evaluate them. -/
 irreducible_def walkLength : ℕ :=
-  2 ^ 185
+  2 ^ 103
 
 instance : NeZero killRate :=
-  ⟨Nat.succ_ne_zero _⟩
+  ⟨by rw [killRate_def]; exact Nat.succ_ne_zero _⟩
 
 /-- The killing rate is at least `2`. -/
-theorem two_le_killRate : 2 ≤ killRate :=
-  Nat.succ_le_succ Nat.one_le_two_pow
+theorem two_le_killRate : 2 ≤ killRate := by
+  rw [killRate_def]
+  exact Nat.succ_le_succ Nat.one_le_two_pow
 
 /-- The walks of Dinur's round have at least one step. -/
 theorem one_le_walkLength : 1 ≤ walkLength :=
@@ -246,25 +235,18 @@ theorem one_le_walkLength : 1 ≤ walkLength :=
 
 /-- The walk length is the one that the powering bound asks for. -/
 theorem walkLength_eq : walkLength = 4 * Fintype.card Alphabet * (killRate - 1) := by
-  rw [card_alphabet, walkLength_def, killRate, Nat.add_sub_cancel]
+  rw [card_alphabet, walkLength_def, killRate_def, Nat.add_sub_cancel]
   norm_num
 
-/-- The threshold `γ = 1 / T ^ 2 = 2 ^ (-370)` up to which Dinur's round doubles the value. -/
+/-- The threshold `γ = 2 ^ (-61)` up to which Dinur's round doubles the value. -/
 noncomputable def gap : ℝ :=
-  1 / (walkLength : ℝ) ^ 2
+  1 / 2 ^ 61
 
 /-- The threshold is positive. -/
-theorem gap_pos : 0 < gap := by
-  unfold gap
-  have : (0 : ℝ) < walkLength := by exact_mod_cast one_le_walkLength
-  positivity
+theorem gap_pos : 0 < gap := by norm_num [gap]
 
 /-- The threshold is at most one. -/
-theorem gap_le_one : gap ≤ 1 := by
-  unfold gap
-  have : (1 : ℝ) ≤ walkLength := by exact_mod_cast one_le_walkLength
-  rw [div_le_one (by positivity)]
-  nlinarith
+theorem gap_le_one : gap ≤ 1 := by norm_num [gap]
 
 variable {V E : Type*} [Fintype E] [DecidableEq V] (G : ConstraintGraph V E Alphabet)
 
@@ -277,25 +259,18 @@ theorem satisfiable_amplify_iff :
 alphabet `Σ₀`, at least doubles the value of a constraint graph, up to the threshold `gap`. -/
 theorem min_le_unsatVal_amplify :
     min (2 * G.unsatVal) gap ≤ (G.amplify walkLength killRate).unsatVal := by
-  have h := G.le_unsatVal_amplify two_le_killRate walkLength_eq
-  have hq : ((killRate : ℕ) : ℝ) - 1 = 2 ^ 165 := by
-    rw [killRate]
-    push_cast
-    ring
-  have hK : ((Fintype.card Alphabet : ℕ) : ℝ) = 2 ^ 18 := by
-    rw [card_alphabet]
-    norm_num
-  rw [hq, hK, ← gap] at h
-  refine le_trans ?_ h
-  apply min_two_mul_le G.unsatVal_nonneg gap_pos.le (by positivity) <;> norm_num
+  apply G.min_le_unsatVal_amplifyWith (.ofFamily G expanderFamily)
+    (by norm_num) two_le_killRate walkLength_eq gap_pos.le
+  rw [card_alphabet, killRate_def, walkLength_def]
+  norm_num [Amplification.gain, Amplification.retention, gap]
 
 /-- The number of vertices of Dinur's round per edge of the original graph. -/
 def vertexFactor : ℕ :=
-  amplifyVertexFactor (2 ^ 18) walkLength killRate
+  amplifyVertexFactor 128 walkLength killRate
 
 /-- The number of edges of Dinur's round per edge of the original graph. -/
 def edgeFactor : ℕ :=
-  amplifyEdgeFactor (2 ^ 18) walkLength killRate
+  amplifyEdgeFactor 128 walkLength killRate
 
 /-- **The size of Dinur's round**: every edge of the original graph gives `vertexFactor`
 vertices. -/

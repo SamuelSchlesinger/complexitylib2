@@ -9549,3 +9549,39 @@ info: 'Cslib.BitString.LinearHash.exists_injOn' depends on axioms: [propext, Cla
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.LinearHash.exists_injOn
+
+/--
+info: 'Cslib.PCP.AssignmentTester.Implementation.toGraph_compose' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.PCP.AssignmentTester.Implementation.toGraph_compose
+
+/--
+info: 'Cslib.PCP.AssignmentTester.Implementation.isPolyTime_composeTabulated' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.PCP.AssignmentTester.Implementation.isPolyTime_composeTabulated
+
+/--
+info: 'Cslib.PCP.AssignmentTester.Implementation.unsatVal_composeEnumerated_eq' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.PCP.AssignmentTester.Implementation.unsatVal_composeEnumerated_eq
+
+/--
+info: 'Cslib.PCP.ConstraintGraph.card_vertices_composeSelected' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.PCP.ConstraintGraph.card_vertices_composeSelected
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.le_unsatVal_composeSelectedEnumerated' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.PCP.Encoded.Graph.le_unsatVal_composeSelectedEnumerated

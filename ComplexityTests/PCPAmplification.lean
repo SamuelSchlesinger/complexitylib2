@@ -21,14 +21,14 @@ private noncomputable def spectralBound : ℝ :=
   1 - 9 / (400 * (257 : ℝ) ^ 16)
 
 private noncomputable def arithmeticInputs
-    (G : FinConstraintGraph.{0} (Bool × (Query → Bool))) :
+    (G : FinConstraintGraph.{0} (Bool × (Fin 6 → Bool))) :
     letI := Classical.decEq G.V
     G.graph.PreprocessExpanders Label spectralBound :=
   letI := Classical.decEq G.V
   .ofFamily G.graph arithmeticExpanderFamily
 
 -- The supplied contract is inhabited by the concrete arithmetic expander family.
-example (G : FinConstraintGraph.{0} (Bool × (Query → Bool))) :
+example (G : FinConstraintGraph.{0} (Bool × (Fin 6 → Bool))) :
     letI := Classical.decEq G.V
     (arithmeticInputs G).whole.spectralExpansion ≤ spectralBound :=
   letI := Classical.decEq G.V
@@ -49,14 +49,22 @@ example {V E α : Type} [Fintype E] [DecidableEq V] [Fintype α] [DecidableEq α
 example : ∃ q : ℕ, 2 ≤ q ∧
     2 / Amplification.retention (Fintype.card Label) spectralBound ≤
       ((q : ℝ) - 1) /
-        Amplification.denominator (Fintype.card (Bool × (Query → Bool)))
+        Amplification.denominator 840 (Fintype.card (Bool × (Fin 6 → Bool)))
           (Fintype.card Label) spectralBound :=
-  Amplification.exists_killRate Fintype.card_pos Fintype.card_pos (by norm_num [spectralBound])
+  Amplification.exists_killRate (loss := 840) (by norm_num)
+    Fintype.card_pos Fintype.card_pos (by norm_num [spectralBound])
+
+-- The generic parameter search accepts any positive composition loss.
+example (loss : ℝ) (hloss : 0 < loss) (K d : ℕ) (hK : 0 < K) (hd : 0 < d) :
+    ∃ q : ℕ, 2 ≤ q ∧
+      2 / Amplification.retention d spectralBound ≤
+        ((q : ℝ) - 1) / Amplification.denominator loss K d spectralBound :=
+  Amplification.exists_killRate hloss hK hd (by norm_num [spectralBound])
 
 -- These parameters actually instantiate the full amplifier, including all its size, value and
 -- satisfiability fields. This is a mathematical client, not an efficiency certificate for a round.
 open Amplification.Arithmetic in
-example : Nonempty (Amplifier.{0} (Bool × (Query → Bool))) :=
+example : Nonempty (Amplifier.{0} (Bool × (Fin 6 → Bool))) :=
   ⟨Amplification.amplifier arithmeticInputs walkLength killRate
     (by norm_num [spectralBound]) two_le_killRate walkLength_eq gap_pos gap_le_one gain⟩
 
@@ -64,8 +72,13 @@ example : Nonempty (Amplifier.{0} (Bool × (Query → Bool))) :=
 example : Amplification.retention 120 (1 - 1 / 360000) = 1 / 1452000 := by
   norm_num [Amplification.retention]
 
-example (K : ℕ) : Amplification.denominator K 120 (1 - 1 / 360000) =
+example (K : ℕ) : Amplification.denominator 476 K 120 (1 - 1 / 360000) =
     476 * (4 * (K : ℝ) ^ 2 + 16 * (K : ℝ) ^ 4 + 92928000 * (K : ℝ) ^ 5) := by
+  norm_num [Amplification.denominator]
+  ring
+
+example (K : ℕ) : Amplification.denominator 840 K 120 (1 - 1 / 360000) =
+    840 * (4 * (K : ℝ) ^ 2 + 16 * (K : ℝ) ^ 4 + 92928000 * (K : ℝ) ^ 5) := by
   norm_num [Amplification.denominator]
   ring
 

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.Encoded.Amplification
-public import Complexity.Computability.PCP.Encoded.Composition.Enumeration
+public import Complexity.Computability.PCP.Encoded.SelectedComposition.Enumeration
 
 /-!
 # Complete enumeration for executable amplification
@@ -43,16 +43,16 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime Cslib.PCP.HadamardTester
 
 namespace Encoded.Graph
 
-attribute [local instance] HadamardTester.Rand.finEnum ComposeSlot.finEnum
+attribute [local instance] HadamardTester.Rand.finEnum SelectedComposeSlot.finEnum
 
 variable {C α D : Type} [FinEnum α] [FinEnum D]
 
 /-- An amplification round with complete constructive enumerations for every finite parameter. -/
 def amplifyEnumerated (eval : C → α → α → Bool) (fallback : C)
     (rotate : ℕ × (ℕ × D) → ℕ × D) (T q : ℕ) [NeZero q] (g : Graph C) :
-    Graph ((Bool × (Query → Bool)) → (Bool × (Query → Bool)) → Bool) :=
+    Graph ((Bool × (Fin 6 → Bool)) → (Bool × (Fin 6 → Bool)) → Bool) :=
   g.amplify eval fallback rotate T q (FinEnum.toList (PowerLabel D T q)) FinEnum.equiv
-    (FinEnum.toList (Rand (PowerAlphabet D α T))) (FinEnum.toList Query)
+    (FinEnum.toList (Fin 5 × Rand (PowerAlphabet D α T))) (FinEnum.toList (Fin 6))
 
 /-- A certified graph expression feeds the round without finite enumeration proof obligations. -/
 @[fun_prop]
@@ -76,7 +76,7 @@ theorem vertices_amplifyEnumerated (eval : C → α → α → Bool) (fallback :
     (rotate : ℕ × (ℕ × D) → ℕ × D) (T q : ℕ) [NeZero q] (g : Graph C) :
     (g.amplifyEnumerated eval fallback rotate T q).vertices =
       (2 * g.edges.length + 2 * g.edges.length * Fintype.card (PowerLabel D T q)) *
-        Fintype.card (ComposeSlot (PowerAlphabet D α T)) := by
+        Fintype.card (SelectedComposeSlot (PowerAlphabet D α T)) := by
   simp only [amplifyEnumerated, vertices_amplify, FinEnum.toList, List.length_map,
     List.length_finRange, FinEnum.card_eq_fintypeCard]
 
@@ -86,7 +86,7 @@ theorem length_edges_amplifyEnumerated (eval : C → α → α → Bool) (fallba
     (rotate : ℕ × (ℕ × D) → ℕ × D) (T q : ℕ) [NeZero q] (g : Graph C) :
     (g.amplifyEnumerated eval fallback rotate T q).edges.length =
       2 * g.edges.length * Fintype.card (PowerLabel D T q) *
-        Fintype.card (Rand (PowerAlphabet D α T)) * Fintype.card Query := by
+        Fintype.card (Fin 5 × Rand (PowerAlphabet D α T)) * Fintype.card (Fin 6) := by
   simp only [amplifyEnumerated, length_edges_amplify, FinEnum.toList, List.length_map,
     List.length_finRange, FinEnum.card_eq_fintypeCard]
 
@@ -108,9 +108,9 @@ theorem wellFormed_amplifyEnumerated :
 variable [Nonempty α]
 
 include hrotate in
-/-- The complete round retains the tester's `1/476` fraction of the powered value. -/
+/-- The complete round retains the tester's `1/840` fraction of the powered value. -/
 theorem div_le_unsatVal_amplifyEnumerated :
-    ((g.regularPreprocess eval fallback family).power T q).toConstraintGraph.unsatVal / 476 ≤
+    ((g.regularPreprocess eval fallback family).power T q).toConstraintGraph.unsatVal / 840 ≤
       ((g.amplifyEnumerated eval fallback rotate T q).toGraph id).unsatVal :=
   g.div_le_unsatVal_amplify eval fallback family rotate hrotate T q
     (FinEnum.toList _) FinEnum.equiv (FinEnum.toList _) (FinEnum.toList _)
@@ -122,7 +122,7 @@ include hrotate in
 theorem le_unsatVal_amplifyEnumerated [Nonempty D] (μ : ℝ)
     (hgap : ∀ n, (family n).spectralExpansion ≤ μ) (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1)) :
-    ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator
+    ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator 840
         (Fintype.card α) (Fintype.card D) μ *
       min (ConstraintGraph.Amplification.retention (Fintype.card D) μ *
         (g.toGraph eval).unsatVal) (1 / T ^ 2) ≤
@@ -138,7 +138,7 @@ theorem min_le_unsatVal_amplifyEnumerated [Nonempty D] (μ : ℝ)
     (hgap : ∀ n, (family n).spectralExpansion ≤ μ) (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1))
     {γ : ℝ} (hγ : 0 ≤ γ)
-    (hgain : 2 ≤ ConstraintGraph.Amplification.gain
+    (hgain : 2 ≤ ConstraintGraph.Amplification.gain 840
       (Fintype.card α) (Fintype.card D) T q μ γ) :
     min (2 * (g.toGraph eval).unsatVal) γ ≤
       ((g.amplifyEnumerated eval fallback rotate T q).toGraph id).unsatVal :=

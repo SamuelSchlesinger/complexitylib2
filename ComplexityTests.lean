@@ -75,6 +75,7 @@ import ComplexityTests.PCPEncodedCompositionEnumeration
 import ComplexityTests.PCPEncodedConstraints
 import ComplexityTests.PCPEncodedEnumeration
 import ComplexityTests.PCPEncodedGap
+import ComplexityTests.PCPEncodedGenericComposition
 import ComplexityTests.PCPEncodedIteration
 import ComplexityTests.PCPEncodedPreprocess
 import ComplexityTests.PCPEncodedSize

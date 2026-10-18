@@ -13,7 +13,7 @@ namespace ComplexityTests.PCPEncodedAmplificationIteration
 
 open Cslib Cslib.PCP Cslib.PCP.Encoded Cslib.PCP.HadamardTester Turing.MultiTapeTM
 
-local notation "Alphabet" => (Bool × (Query → Bool))
+local notation "Alphabet" => (Bool × (Fin 6 → Bool))
 local notation "Constraint" => (Alphabet → Alphabet → Bool)
 
 variable {D Input : Type} [Fintype D] [DecidableEq D] {width : ℕ}
@@ -26,8 +26,8 @@ variable {D Input : Type} [Fintype D] [DecidableEq D] {width : ℕ}
   (hcost : ComputableTidilyInPolyTime rotate
     (encPair encUnary (encPair encUnary label)) (encPair encUnary label))
   (fallback : Constraint) (T q : ℕ) [NeZero q] (walks : List (Graph.PowerLabel D T q))
-  (number : Graph.ComposeSlot (Graph.PowerAlphabet D Alphabet T) ≃ Fin width)
-  (coins : List (Rand (Graph.PowerAlphabet D Alphabet T))) (queries : List Query)
+  (number : Graph.SelectedComposeSlot (Graph.PowerAlphabet D Alphabet T) ≃ Fin width)
+  (coins : List (Fin 5 × Rand (Graph.PowerAlphabet D Alphabet T))) (queries : List (Fin 6))
 
 example : ComputableTidilyInPolyTime
     (fun x => Graph.amplifyIter fallback rotate T q walks number coins queries

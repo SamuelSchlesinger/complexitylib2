@@ -8,7 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.Encoded.Composition
-public import Mathlib.Data.FinEnum
+public import Complexity.Computability.PCP.Encoded.GenericComposition.Enumeration
+public import Complexity.Computability.PCP.Encoded.AssignmentTester.Enumeration
 
 /-!
 # Complete enumeration for executable composition
@@ -44,23 +45,7 @@ namespace Cslib.PCP
 
 open Turing.MultiTapeTM ComputableTidilyInPolyTime Cslib.PCP.HadamardTester
 
-/-- Concrete bit enumeration, registered locally while constructing the tester's coins. -/
-local instance HadamardTester.instFinEnumBool : FinEnum Bool :=
-  FinEnum.ofList [false, true] (by decide)
-
-/-- Constructively enumerate the tester's coins. Batching the repeated factors keeps the nested
-product within instance-synthesis limits. -/
-@[instance_reducible]
-def HadamardTester.Rand.finEnum (α : Type) [FinEnum α] : FinEnum (Rand α) :=
-  let linear : FinEnum (LinPos α) := inferInstance
-  let quadratic : FinEnum (QuadPos α) := inferInstance
-  let equations : FinEnum (EqnRand α) := inferInstance
-  letI := linear
-  letI := quadratic
-  letI := equations
-  inferInstanceAs (FinEnum (_ × _ × _ × _ × _))
-
-attribute [local instance] HadamardTester.Rand.finEnum
+attribute [local instance] HadamardTester.instFinEnumBool HadamardTester.Rand.finEnum
 
 namespace Encoded.Graph
 
@@ -76,7 +61,7 @@ variable {α : Type} [FinEnum α]
 /-- Apply every assignment-tester coin and query, then tabulate the output constraints. -/
 def composeEnumerated (g : Graph (α → α → Bool)) :
     Graph ((Bool × (Query → Bool)) → (Bool × (Query → Bool)) → Bool) :=
-  g.composeTabulated FinEnum.equiv (FinEnum.toList (Rand α)) (FinEnum.toList Query)
+  Encoded.HadamardTester.implementation.composeEnumerated g
 
 /-- Compose a certified runtime graph, charging a conversion from its fixed constraint encoding
 and every output table. The input need not use the implementation's finite enumeration. -/
@@ -86,46 +71,42 @@ theorem isPolyTime_composeEnumerated {Input : Type} {input : Input ↪ List Bool
     {graph : Input → Graph (α → α → Bool)}
     (hgraph : ComputableTidilyInPolyTime graph input (encoding constraintEncoding)) :
     ComputableTidilyInPolyTime (fun x => (graph x).composeEnumerated)
-      input (encoding (encPi (encPi encBool))) := by
-  have hconvert : ComputableTidilyInPolyTime (id : (α → α → Bool) → _)
-      constraintEncoding (encPi (encPi encBool)) := .of_finite _
-  simpa only [composeEnumerated, mapConstraints_id] using
-    isPolyTime_composeTabulated (isPolyTime_mapConstraints hgraph hconvert)
-      FinEnum.equiv (FinEnum.toList (Rand α)) (FinEnum.toList Query)
+      input (encoding (encPi (encPi encBool))) :=
+  Encoded.HadamardTester.implementation.isPolyTime_composeEnumerated hgraph
 
 /-- The declared vertex count includes the complete input, proof, and coin slots. -/
 @[simp]
 theorem vertices_composeEnumerated (g : Graph (α → α → Bool)) :
     g.composeEnumerated.vertices =
       (g.vertices + g.edges.length) * Fintype.card (ComposeSlot α) := by
-  simp only [composeEnumerated, composeTabulated, vertices_mapConstraints, vertices_compose,
-    FinEnum.card_eq_fintypeCard]
+  simpa only [Fintype.card_eq_nat_card, composeEnumerated] using
+    Encoded.HadamardTester.implementation.vertices_composeEnumerated g
 
 /-- Each original edge contributes one edge per coin and query pair. -/
 @[simp]
 theorem length_edges_composeEnumerated (g : Graph (α → α → Bool)) :
     g.composeEnumerated.edges.length =
       g.edges.length * Fintype.card (Rand α) * Fintype.card Query := by
-  simp only [composeEnumerated, composeTabulated, length_edges_mapConstraints, length_edges_compose,
-    FinEnum.toList, List.length_map, List.length_finRange, FinEnum.card_eq_fintypeCard]
+  simpa only [Fintype.card_eq_nat_card, composeEnumerated] using
+    Encoded.HadamardTester.implementation.length_edges_composeEnumerated g
 
 /-- Valid input endpoints give valid endpoints in the completely enumerated gadget graph. -/
 theorem WellFormed.composeEnumerated {g : Graph (α → α → Bool)} (hg : g.WellFormed) :
     g.composeEnumerated.WellFormed :=
-  (wellFormed_mapConstraints_iff _ _).mpr
-    (hg.compose FinEnum.equiv (FinEnum.toList (Rand α)) (FinEnum.toList Query))
+  Encoded.HadamardTester.implementation.wellFormed_composeEnumerated hg
 
 /-- Complete constructive enumeration preserves the exact mathematical composition value. -/
 theorem unsatVal_composeEnumerated_eq (g : Graph (α → α → Bool)) :
     (g.composeEnumerated.toGraph id).unsatVal = (g.toGraph id).compose.unsatVal :=
-  unsatVal_composeTabulated_eq FinEnum.equiv (FinEnum.toList (Rand α)) (FinEnum.toList Query) g
-    FinEnum.nodup_toList FinEnum.nodup_toList FinEnum.mem_toList FinEnum.mem_toList
+  Encoded.HadamardTester.implementation.unsatVal_composeEnumerated_eq
+    Encoded.HadamardTester.realizes_implementation g
 
 /-- Complete tabulated composition preserves satisfiability. -/
 theorem satisfiable_composeEnumerated_iff [Nonempty α] (g : Graph (α → α → Bool)) :
     (g.composeEnumerated.toGraph id).Satisfiable ↔ (g.toGraph id).Satisfiable :=
-  satisfiable_composeTabulated_iff FinEnum.equiv (FinEnum.toList (Rand α)) (FinEnum.toList Query) g
-    FinEnum.nodup_toList FinEnum.nodup_toList FinEnum.mem_toList FinEnum.mem_toList
+  Encoded.HadamardTester.implementation.satisfiable_composeEnumerated_iff
+    Encoded.HadamardTester.realizes_implementation isComplete_assignmentTester
+    sound_assignmentTester (by norm_num) g
 
 /-- Complete tabulated composition retains the tester's `1/476` fraction of the input value. -/
 theorem le_unsatVal_composeEnumerated [Nonempty α] (g : Graph (α → α → Bool)) :

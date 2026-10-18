@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.Encoded.Power
-public import Complexity.Computability.PCP.Encoded.Composition
+public import Complexity.Computability.PCP.Encoded.SelectedComposition
 public import Complexity.Computability.PCP.Amplification.Family
 
 /-!
@@ -51,10 +51,11 @@ variable {C α D : Type} [Fintype α] [DecidableEq α] [Fintype D] [DecidableEq 
 /-- A normalized amplification round. Each stage materializes the next stage's input graph. -/
 def amplify (eval : C → α → α → Bool) (fallback : C)
     (rotate : ℕ × (ℕ × D) → ℕ × D) (T q : ℕ) [NeZero q]
-    (walks : List (PowerLabel D T q)) (number : ComposeSlot (PowerAlphabet D α T) ≃ Fin width)
-    (coins : List (Rand (PowerAlphabet D α T))) (queries : List Query) (g : Graph C) :
-    Graph ((Bool × (Query → Bool)) → (Bool × (Query → Bool)) → Bool) :=
-  (g.powerPreprocess eval fallback rotate T q walks).composeTabulated number coins queries
+    (walks : List (PowerLabel D T q))
+    (number : SelectedComposeSlot (PowerAlphabet D α T) ≃ Fin width)
+    (coins : List (Fin 5 × Rand (PowerAlphabet D α T))) (queries : List (Fin 6)) (g : Graph C) :
+    Graph ((Bool × (Fin 6 → Bool)) → (Bool × (Fin 6 → Bool)) → Bool) :=
+  (g.powerPreprocess eval fallback rotate T q walks).composeSelectedTabulated number coins queries
 
 /-- Any certified graph expression can feed a round, with all internal finite encodings hidden. -/
 @[fun_prop]
@@ -67,8 +68,8 @@ theorem isPolyTime_amplify {Input : Type} {input : Input ↪ List Bool}
     (heval : ComputableTidilyInPolyTime (fun p : C × (α × α) => eval p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool)
     (fallback : C) (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
-    (number : ComposeSlot (PowerAlphabet D α T) ≃ Fin width)
-    (coins : List (Rand (PowerAlphabet D α T))) (queries : List Query) :
+    (number : SelectedComposeSlot (PowerAlphabet D α T) ≃ Fin width)
+    (coins : List (Fin 5 × Rand (PowerAlphabet D α T))) (queries : List (Fin 6)) :
     ComputableTidilyInPolyTime
       (fun x => (graph x).amplify eval fallback rotate T q walks number coins queries)
       input (encoding (encPi (encPi encBool))) := by
@@ -79,21 +80,23 @@ theorem isPolyTime_amplify {Input : Type} {input : Input ↪ List Bool}
 @[simp]
 theorem vertices_amplify (eval : C → α → α → Bool) (fallback : C)
     (rotate : ℕ × (ℕ × D) → ℕ × D) (T q : ℕ) [NeZero q]
-    (walks : List (PowerLabel D T q)) (number : ComposeSlot (PowerAlphabet D α T) ≃ Fin width)
-    (coins : List (Rand (PowerAlphabet D α T))) (queries : List Query) (g : Graph C) :
+    (walks : List (PowerLabel D T q))
+    (number : SelectedComposeSlot (PowerAlphabet D α T) ≃ Fin width)
+    (coins : List (Fin 5 × Rand (PowerAlphabet D α T))) (queries : List (Fin 6)) (g : Graph C) :
     (g.amplify eval fallback rotate T q walks number coins queries).vertices =
       (2 * g.edges.length + 2 * g.edges.length * walks.length) * width := by
-  simp [amplify, composeTabulated]
+  simp [amplify]
 
 /-- Every original half-edge contributes one edge for each walk, coin and query triple. -/
 @[simp]
 theorem length_edges_amplify (eval : C → α → α → Bool) (fallback : C)
     (rotate : ℕ × (ℕ × D) → ℕ × D) (T q : ℕ) [NeZero q]
-    (walks : List (PowerLabel D T q)) (number : ComposeSlot (PowerAlphabet D α T) ≃ Fin width)
-    (coins : List (Rand (PowerAlphabet D α T))) (queries : List Query) (g : Graph C) :
+    (walks : List (PowerLabel D T q))
+    (number : SelectedComposeSlot (PowerAlphabet D α T) ≃ Fin width)
+    (coins : List (Fin 5 × Rand (PowerAlphabet D α T))) (queries : List (Fin 6)) (g : Graph C) :
     (g.amplify eval fallback rotate T q walks number coins queries).edges.length =
       2 * g.edges.length * walks.length * coins.length * queries.length := by
-  simp [amplify, composeTabulated]
+  simp [amplify]
 
 section Correctness
 
@@ -102,15 +105,14 @@ variable (g : Graph C) (eval : C → α → α → Bool) (fallback : C)
   (hrotate : ∀ n (v : Fin n) d, rotate (n, v.val, d) =
     (((family n).rot (v, d)).1.val, ((family n).rot (v, d)).2))
   (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
-  (number : ComposeSlot (PowerAlphabet D α T) ≃ Fin width)
-  (coins : List (Rand (PowerAlphabet D α T))) (queries : List Query)
+  (number : SelectedComposeSlot (PowerAlphabet D α T) ≃ Fin width)
+  (coins : List (Fin 5 × Rand (PowerAlphabet D α T))) (queries : List (Fin 6))
 
 include hrotate in
 /-- Every generated endpoint lies in the declared range, independently of the input bounds. -/
 theorem wellFormed_amplify :
     (g.amplify eval fallback rotate T q walks number coins queries).WellFormed := by
-  apply (wellFormed_mapConstraints_iff _ _).mpr
-  apply WellFormed.compose
+  apply WellFormed.composeSelectedTabulated
   exact g.wellFormed_powerPreprocess eval fallback family rotate hrotate T q walks
 
 variable [Nonempty α]
@@ -119,14 +121,13 @@ variable [Nonempty α]
   (hmemCoins : ∀ ω, ω ∈ coins) (hmemQueries : ∀ i, i ∈ queries)
 
 include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries in
-/-- The executable round retains the assignment tester's `1/476` fraction of the powered gap. -/
+/-- The executable round retains the assignment tester's `1/840` fraction of the powered gap. -/
 theorem div_le_unsatVal_amplify :
-    ((g.regularPreprocess eval fallback family).power T q).toConstraintGraph.unsatVal / 476 ≤
+    ((g.regularPreprocess eval fallback family).power T q).toConstraintGraph.unsatVal / 840 ≤
       ((g.amplify eval fallback rotate T q walks number coins queries).toGraph id).unsatVal := by
   rw [← unsatVal_powerPreprocess g eval fallback family rotate hrotate T q walks hwalks hmemWalks]
-  unfold amplify composeTabulated
-  rw [unsatVal_mapConstraints]
-  exact le_unsatVal_compose number coins queries _ hcoins hqueries hmemCoins hmemQueries
+  exact le_unsatVal_composeSelectedTabulated number coins queries _
+    hcoins hqueries hmemCoins hmemQueries
 
 include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries in
 /-- The complete executable round inherits the mathematical amplification bound, using the
@@ -134,13 +135,13 @@ explicit cloud numberings selected by its preprocessing program. -/
 theorem le_unsatVal_amplify [Nonempty D] (μ : ℝ)
     (hgap : ∀ n, (family n).spectralExpansion ≤ μ) (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1)) :
-    ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator
+    ((q : ℝ) - 1) / ConstraintGraph.Amplification.denominator 840
         (Fintype.card α) (Fintype.card D) μ *
       min (ConstraintGraph.Amplification.retention (Fintype.card D) μ *
         (g.toGraph eval).unsatVal) (1 / T ^ 2) ≤
       ((g.amplify eval fallback rotate T q walks number coins queries).toGraph id).unsatVal :=
   ((g.toGraph eval).le_div_unsatVal_power_preprocessWith
-    (g.preprocessExpanders eval fallback family μ hgap) hμ hq hT).trans
+    (g.preprocessExpanders eval fallback family μ hgap) 840 (by norm_num) hμ hq hT).trans
       (g.div_le_unsatVal_amplify eval fallback family rotate hrotate T q walks number coins queries
         hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries)
 
@@ -151,12 +152,12 @@ theorem min_le_unsatVal_amplify [Nonempty D] (μ : ℝ)
     (hgap : ∀ n, (family n).spectralExpansion ≤ μ) (hμ : μ < 1) (hq : 2 ≤ q)
     (hT : T = 4 * Fintype.card α * (q - 1))
     {γ : ℝ} (hγ : 0 ≤ γ)
-    (hgain : 2 ≤ ConstraintGraph.Amplification.gain
+    (hgain : 2 ≤ ConstraintGraph.Amplification.gain 840
       (Fintype.card α) (Fintype.card D) T q μ γ) :
     min (2 * (g.toGraph eval).unsatVal) γ ≤
       ((g.amplify eval fallback rotate T q walks number coins queries).toGraph id).unsatVal :=
   ((g.toGraph eval).min_le_div_unsatVal_power_preprocessWith
-    (g.preprocessExpanders eval fallback family μ hgap) hμ hq hT hγ hgain).trans
+    (g.preprocessExpanders eval fallback family μ hgap) 840 (by norm_num) hμ hq hT hγ hgain).trans
       (g.div_le_unsatVal_amplify eval fallback family rotate hrotate T q walks number coins queries
         hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries)
 
@@ -166,7 +167,7 @@ theorem satisfiable_amplify_iff [Nonempty D] (μ : ℝ)
     (hgap : ∀ n, (family n).spectralExpansion ≤ μ) (hμ : μ < 1) (hT : 1 ≤ T) (hq : 2 ≤ q) :
     ((g.amplify eval fallback rotate T q walks number coins queries).toGraph id).Satisfiable ↔
       (g.toGraph eval).Satisfiable := by
-  rw [amplify, satisfiable_composeTabulated_iff number coins queries _ hcoins hqueries
+  rw [amplify, satisfiable_composeSelectedTabulated_iff number coins queries _ hcoins hqueries
     hmemCoins hmemQueries, satisfiable_powerPreprocess_iff g eval fallback family rotate hrotate
     T q walks hwalks hmemWalks, RegularConstraintGraph.satisfiable_power_iff _ _ _ hT hq]
   exact (g.toGraph eval).satisfiable_preprocessWith_iff

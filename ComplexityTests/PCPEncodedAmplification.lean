@@ -226,23 +226,24 @@ private def oneCoin : Rand (Graph.PowerAlphabet Unit Unit 1) :=
 
 -- This partial-list example evaluates selected function entries and endpoints, not the enormous
 -- complete encPi output. It does not instantiate the full gap theorem.
-private def partialRound (g : Graph Bool) :=
-  g.amplify unitEval false rotateReflection 1 2 walks (numberSlots (unitOpinions Unit 1)).2
-    [oneCoin] queries
+private def selectedPartialRound (g : Graph Bool) :=
+  g.amplify unitEval false rotateReflection 1 2 walks
+    (numberSelectedSlots (unitOpinions Unit 1)).2 [(0, oneCoin)] selectedQueries
 
-example : (partialRound exampleGraph).edges.length = 272 := by
-  rw [partialRound, Graph.length_edges_amplify]
+example : (selectedPartialRound exampleGraph).edges.length = 96 := by
+  rw [selectedPartialRound, Graph.length_edges_amplify]
   decide
 
-/-- info: (272, true) -/
+/-- info: (96, true) -/
 #guard_msgs in
-#eval ((partialRound exampleGraph).edges.length, (partialRound exampleGraph).isWellFormed)
+#eval ((selectedPartialRound exampleGraph).edges.length,
+  (selectedPartialRound exampleGraph).isWellFormed)
 
-example : (partialRound exampleGraph).WellFormed :=
+example : (selectedPartialRound exampleGraph).WellFormed :=
   exampleGraph.wellFormed_amplify unitEval false reflection rotateReflection rotateReflection_eq
-    1 2 walks (numberSlots (unitOpinions Unit 1)).2 [oneCoin] queries
+    1 2 walks (numberSelectedSlots (unitOpinions Unit 1)).2 [(0, oneCoin)] selectedQueries
 
-example : ComputableTidilyInPolyTime partialRound (Graph.encoding encBool)
+example : ComputableTidilyInPolyTime selectedPartialRound (Graph.encoding encBool)
     (Graph.encoding (encPi (encPi encBool))) := by
   have hr := isPolyTime_rotateReflection
   have he : ComputableTidilyInPolyTime
@@ -250,7 +251,7 @@ example : ComputableTidilyInPolyTime partialRound (Graph.encoding encBool)
       (encPair encBool (encPair (encFinite Unit) (encFinite Unit))) encBool := by
     unfold unitEval
     fun_prop
-  unfold partialRound Graph.amplify
+  unfold selectedPartialRound Graph.amplify
   fun_prop
 
 -- Full enumeration uses explicit finite numberings. The concrete arithmetic expander provides a
@@ -281,6 +282,9 @@ private def fullWalks : List (Graph.PowerLabel ArithmeticLabel 4 2) :=
 private def fullCoins : List (Rand (Graph.PowerAlphabet ArithmeticLabel Unit 4)) :=
   List.ofFn (numberCoins (unitOpinions ArithmeticLabel 4)).2.symm
 
+private def fullSelectedCoins : List (Fin 5 × Rand (Graph.PowerAlphabet ArithmeticLabel Unit 4)) :=
+  List.ofFn (numberSelectedCoins (unitOpinions ArithmeticLabel 4)).2.symm
+
 private theorem nodup_fullWalks : fullWalks.Nodup :=
   List.nodup_ofFn.mpr arithmeticWalks.2.symm.injective
 
@@ -290,7 +294,7 @@ private theorem mem_fullWalks (walk : Graph.PowerLabel ArithmeticLabel 4 2) :
 
 private def completeRound (g : Graph Bool) :=
   g.amplify unitEval false RotationMap.arithmeticExpanderRotate 4 2 fullWalks
-    (numberSlots (unitOpinions ArithmeticLabel 4)).2 fullCoins queries
+    (numberSelectedSlots (unitOpinions ArithmeticLabel 4)).2 fullSelectedCoins selectedQueries
 
 example : ComputableTidilyInPolyTime completeRound (Graph.encoding encBool)
     (Graph.encoding (encPi (encPi encBool))) := by
@@ -322,8 +326,10 @@ private theorem satisfiable_completeRound_iff (g : Graph Bool) :
     ((completeRound g).toGraph id).Satisfiable ↔ (g.toGraph unitEval).Satisfiable :=
   g.satisfiable_amplify_iff unitEval false RotationMap.arithmeticExpander
     RotationMap.arithmeticExpanderRotate RotationMap.arithmeticExpanderRotate_eq
-    4 2 fullWalks (numberSlots (unitOpinions ArithmeticLabel 4)).2 fullCoins queries
-    nodup_fullWalks mem_fullWalks (nodup_coins _) nodup_queries (mem_coins _) mem_queries
+    4 2 fullWalks (numberSelectedSlots (unitOpinions ArithmeticLabel 4)).2
+    fullSelectedCoins selectedQueries
+    nodup_fullWalks mem_fullWalks (nodup_selectedCoins _) nodup_selectedQueries
+    (mem_selectedCoins _) mem_selectedQueries
     _ RotationMap.spectralExpansion_arithmeticExpander_le (by norm_num) (by decide) (by decide)
 
 example : 0 < ((completeRound exampleGraph).toGraph id).unsatVal := by
@@ -333,7 +339,7 @@ example : 0 < ((completeRound exampleGraph).toGraph id).unsatVal := by
   simp [ConstraintGraph.Satisfies, Graph.toGraph, exampleGraph, unitEval] at hf
 
 example (g : Graph Bool) :
-    ((2 : ℕ) - 1 : ℝ) / ConstraintGraph.Amplification.denominator
+    ((2 : ℕ) - 1 : ℝ) / ConstraintGraph.Amplification.denominator 840
         (Fintype.card Unit) (Fintype.card ArithmeticLabel)
         (1 - 9 / (400 * (257 : ℝ) ^ 16)) *
       min (ConstraintGraph.Amplification.retention (Fintype.card ArithmeticLabel)
@@ -341,8 +347,10 @@ example (g : Graph Bool) :
       ((completeRound g).toGraph id).unsatVal :=
   g.le_unsatVal_amplify unitEval false RotationMap.arithmeticExpander
         RotationMap.arithmeticExpanderRotate RotationMap.arithmeticExpanderRotate_eq
-        4 2 fullWalks (numberSlots (unitOpinions ArithmeticLabel 4)).2 fullCoins queries
-        nodup_fullWalks mem_fullWalks (nodup_coins _) nodup_queries (mem_coins _) mem_queries
+        4 2 fullWalks (numberSelectedSlots (unitOpinions ArithmeticLabel 4)).2
+        fullSelectedCoins selectedQueries
+        nodup_fullWalks mem_fullWalks (nodup_selectedCoins _) nodup_selectedQueries
+        (mem_selectedCoins _) mem_selectedQueries
         _ RotationMap.spectralExpansion_arithmeticExpander_le (by norm_num) (by decide)
         (by simp)
 
