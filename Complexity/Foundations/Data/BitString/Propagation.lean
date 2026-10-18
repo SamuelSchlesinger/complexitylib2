@@ -74,8 +74,9 @@ def keyLinks {κ : Type*} [DecidableEq κ] (key : ℕ → κ) (index : ℕ) : Bo
 
 /-- In a sorted prefix, propagation reports exactly the true sources having the last key.
 The prefix may be empty. No uniqueness of sources or keys is required, and no order is
-required beyond the prefix. -/
-theorem propagate_sorted_eq_true_iff {κ : Type*} [LinearOrder κ]
+required beyond the prefix. The explicit equality instance retains the caller's executable
+equality test when it differs from the one inherited from the order. -/
+theorem propagate_sorted_eq_true_iff {κ : Type*} [LinearOrder κ] [DecidableEq κ]
     (key : ℕ → κ) (source : ℕ → Bool) (count : ℕ)
     (sorted : MonotoneOn key (Set.Iio count)) :
     propagate source (keyLinks key) count = true ↔

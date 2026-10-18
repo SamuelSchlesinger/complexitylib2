@@ -7,6 +7,8 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.Propagation
 import Complexity.Computability.Circuit.Evaluation
 import Complexity.Foundations.Data.BitString.Basic
+import Mathlib.Data.Bool.Basic
+import Mathlib.Order.PiLex
 
 /-!
 # Segmented propagation clients
@@ -37,6 +39,29 @@ example (source : ℕ → Bool) :
   change b < 6 at hb
   simp only [keys, ite_eq_left ha, ite_eq_left hb]
   exact Nat.div_le_div_right hab
+
+-- The executable equality test can be chosen independently of the order instance.
+example {κ : Type*} [LinearOrder κ] [DecidableEq κ] (key : ℕ → κ)
+    (source : ℕ → Bool) (count : ℕ) (sorted : MonotoneOn key (Set.Iio count)) :
+    BitString.propagate source (BitString.keyLinks key) count = true ↔
+      ∃ start, start < count ∧ source start = true ∧ key start = key (count - 1) := by
+  rw [BitString.propagate_sorted_eq_true_iff key source count sorted]
+
+-- Lexicographic keys have their own inferred equality; an ordinary lambda needs no transport.
+example {k : ℕ} (key : ℕ → BitString k) (source : ℕ → Bool) (count : ℕ)
+    (sorted : MonotoneOn (fun i => toLex (key i)) (Set.Iio count)) :
+    BitString.propagate source (BitString.keyLinks (fun i => toLex (key i))) count = true ↔
+      ∃ start, start < count ∧ source start = true ∧ key start = key (count - 1) := by
+  rw [BitString.propagate_sorted_eq_true_iff _ _ _ sorted]
+  simp only [toLex_inj]
+
+-- Composition spelling uses the same theorem and inferred equality.
+example {k : ℕ} (key : ℕ → BitString k) (source : ℕ → Bool) (count : ℕ)
+    (sorted : MonotoneOn (toLex ∘ key) (Set.Iio count)) :
+    BitString.propagate source (BitString.keyLinks (toLex ∘ key)) count = true ↔
+      ∃ start, start < count ∧ source start = true ∧ key start = key (count - 1) := by
+  rw [BitString.propagate_sorted_eq_true_iff _ _ _ sorted]
+  simp only [Function.comp_apply, toLex_inj]
 
 example {n : ℕ} (source link : BitString n) (j : Fin n) :
     (propagateCircuit n).eval interpretation (Fin.append source link) j = true ↔
