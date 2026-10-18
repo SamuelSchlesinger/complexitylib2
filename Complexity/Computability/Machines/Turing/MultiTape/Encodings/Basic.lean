@@ -175,6 +175,17 @@ end Encodings
 
 open Encodings
 
+-- upstream: vendored crei:crei/tidy-universal @9cce4cc7 (unsubmitted)
+-- vendored: `encOfEquiv` below, from that revision's `Encodings/Basic`
+/-- The encoding of `α` through an equivalence with `β`, such as that of a structure with the
+tuple of its fields. -/
+@[expose] public def encOfEquiv {α β : Type*} (e : α ≃ β) (enc : β ↪ List Bool) :
+    α ↪ List Bool :=
+  e.toEmbedding.trans enc
+
+@[simp] public lemma encOfEquiv_apply {α β : Type*} (e : α ≃ β) (enc : β ↪ List Bool) (a : α) :
+    encOfEquiv e enc a = enc (e a) := rfl
+
 namespace ComputableTidilyInLinearTimeAndSpace
 
 variable {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {f : α → β}

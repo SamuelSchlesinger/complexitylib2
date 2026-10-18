@@ -263,12 +263,14 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Id
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Ite
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.MultiPass
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.StepMachine
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.StreamFold
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyZeroSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
@@ -313,6 +315,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatSt
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pi
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StepMachine
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StepMachineComp
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Sum
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Tape
@@ -339,6 +343,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Cursor
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.InputFromTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.InputHead
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.MarkWork
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OutputToTape
@@ -354,6 +359,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.B
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsWords
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileCond
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Clock
@@ -374,6 +381,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.S
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
+public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Comp
 public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Bound

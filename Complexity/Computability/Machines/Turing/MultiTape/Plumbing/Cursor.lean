@@ -6,12 +6,13 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
--- vendored: `spaceUsed` is `space` since cslib #1133
+-- vendored: `space` is `space` since cslib #1133
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.RewindInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsWords
 
 /-!
 # Tape transformations with the input head anywhere
@@ -281,5 +282,67 @@ theorem transformsTapesAt_rewindInput (x : List Symbol) :
     rw [hrun]; rfl
   refine ⟨1, ws, [], ?_, ⟨rfl, rfl, rfl⟩, space_noTapes_le _ _ _⟩
   rw [runFrom_eq_of_halt _ _ (by have := p.isLt; omega) hhalt, hrun]
+
+-- upstream: vendored crei:crei/tidy-universal @9cce4cc7 (unsubmitted)
+-- vendored: the `TransformsWordsAt` block below, from that revision's `Plumbing/Cursor`
+
+/-- `TransformsWordsAt tm x p p' ws ws' e t s`: on the input `x` with the input head at the
+position `p`, the machine `tm` takes the words `ws` to the words `ws'` emitting `e`, with the input
+head ending at `p'`, within `t` steps and `s` work-tape cells. -/
+abbrev TransformsWordsAt (tm : MultiTapeTM k Symbol State) (x : List Symbol) (p p' : ℕ)
+    (ws ws' : Fin k → List Symbol) (e : List Symbol) (t s : ℕ) : Prop :=
+  TransformsTapesAt tm (fun input q v => input = x ∧ q.val = p ∧ v = ws)
+    (fun input _ _ q' v' e' => input = x ∧ q'.val = p' ∧ v' = ws' ∧ e' = e) t s
+
+/-- **A specification read on given words**, on the input `x` with the input head at `p`. -/
+theorem TransformsTapesAt.wordsAt {tm : MultiTapeTM k Symbol State}
+    {P : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) → Prop}
+    {Q : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) →
+      Fin (input.length + 2) → (Fin k → List Symbol) → List Symbol → Prop} {t s : ℕ}
+    (h : TransformsTapesAt tm P Q t s) {x : List Symbol} {p p' : ℕ} {ws ws' : Fin k → List Symbol}
+    {e : List Symbol} (hP : ∀ q : Fin (x.length + 2), q.val = p → P x q ws)
+    (hQ : ∀ (q q' : Fin (x.length + 2)) v e', q.val = p → Q x q ws q' v e' →
+      q'.val = p' ∧ v = ws' ∧ e' = e) :
+    TransformsWordsAt tm x p p' ws ws' e t s :=
+  h.imp (by rintro _ q _ ⟨rfl, hq, rfl⟩; exact hP q hq)
+    (by rintro _ q _ q' v e' ⟨rfl, hq, rfl⟩ hQ'; exact ⟨rfl, hQ q q' v e' hq hQ'⟩) le_rfl le_rfl
+
+/-- A specification given by equations, with the input head fixed. -/
+theorem TransformsWords.freezeInput {tm : MultiTapeTM k Symbol State}
+    {ws ws' : Fin k → List Symbol} {e : List Symbol} {t s : ℕ}
+    (h : TransformsWords tm ws ws' e t s) (x : List Symbol) (p : ℕ) :
+    TransformsWordsAt tm.freezeInput x p p ws ws' e t s :=
+  (TransformsTapes.freezeInput h).wordsAt (fun _ _ => rfl)
+    fun _ _ _ _ hq ⟨hq', h⟩ => ⟨by rw [hq', hq], h⟩
+
+namespace TransformsWordsAt
+
+variable {tm : MultiTapeTM k Symbol State} {x : List Symbol} {p p' p₂ p₂' : ℕ}
+  {ws ws' ws₂ ws₂' : Fin k → List Symbol} {e e₂ : List Symbol} {t s t' s' : ℕ}
+
+theorem mono (h : TransformsWordsAt tm x p p' ws ws' e t s) (ht : t ≤ t') (hs : s ≤ s') :
+    TransformsWordsAt tm x p p' ws ws' e t' s' :=
+  TransformsTapesAt.imp h (fun _ _ _ h => h) (fun _ _ _ _ _ _ _ h => h) ht hs
+
+/-- Other spellings of the positions, the words and the emitted word. -/
+theorem congr (h : TransformsWordsAt tm x p p' ws ws' e t s) (hp : p₂ = p) (hp' : p' = p₂')
+    (hws : ws₂ = ws) (hws' : ws' = ws₂') (he : e = e₂) :
+    TransformsWordsAt tm x p₂ p₂' ws₂ ws₂' e₂ t s := by
+  subst hp hp' hws hws' he
+  exact h
+
+/-- **Sequential composition**: the position and the words left by the first machine are those
+the second one starts on, and the emitted words are concatenated. -/
+theorem seq {tm₀ : MultiTapeTM k Symbol State₀} {tm₁ : MultiTapeTM k Symbol State₁}
+    {p₀ p₁ p₂ : ℕ} {ws₀ ws₁ ws₂ : Fin k → List Symbol} {e₀ e₁ : List Symbol}
+    {t₀ s₀ t₁ s₁ : ℕ} (h₀ : TransformsWordsAt tm₀ x p₀ p₁ ws₀ ws₁ e₀ t₀ s₀)
+    (h₁ : TransformsWordsAt tm₁ x p₁ p₂ ws₁ ws₂ e₁ t₁ s₁) :
+    TransformsWordsAt (tm₀.seq tm₁) x p₀ p₂ ws₀ ws₂ (e₀ ++ e₁) (t₀ + t₁) (s₀ + s₁) :=
+  (transformsTapesAt_seq h₀ h₁ fun _ _ _ _ _ _ _ ⟨hin, hq, hv, _⟩ => ⟨hin, hq, hv⟩).imp
+    (fun _ _ _ h => h)
+    (by rintro _ _ _ _ _ _ _ ⟨_, _, _, _, ⟨rfl, -, rfl, rfl⟩, ⟨-, hq, rfl, rfl⟩, rfl⟩
+        exact ⟨rfl, hq, rfl, rfl⟩) le_rfl le_rfl
+
+end TransformsWordsAt
 
 end Turing.MultiTapeTM
