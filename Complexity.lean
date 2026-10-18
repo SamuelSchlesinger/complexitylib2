@@ -368,10 +368,12 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.O
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.PolynomialClock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryTake
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
