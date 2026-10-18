@@ -173,7 +173,7 @@ example (input : List Bool) : ¬fork.RunsInTime input 1 := by
   simp [Cfg.Halted, stuckAction] at this
 
 /-- Two steps bound every branch: the stuck branch has no second step. -/
-example (input : List Bool) : fork.RunsInTime input 2 := by
+private theorem runsInTime_fork (input : List Bool) : fork.RunsInTime input 2 := by
   intro p hp
   have hlen : 1 < p.length := hp
   have h₀ : fork.Step (p.toRunPath (Fin.castSucc ⟨0, by omega⟩))
@@ -320,24 +320,7 @@ example : IsVerifier encBits
 /-- A stuck branch beside an accepting one: the fork's problem is still in `NP`. -/
 private theorem decides_fork : fork.DecidesInTime encBits Set.univ fun _ => 2 := by
   intro input
-  refine ⟨?_, ?_⟩
-  · intro p hp
-    have hlen : 1 < p.length := hp
-    have h₀ : fork.Step (p.toRunPath (Fin.castSucc ⟨0, by omega⟩))
-        (p.toRunPath (Fin.succ ⟨0, by omega⟩)) := p.step ⟨0, by omega⟩
-    have h₁ : fork.Step (p.toRunPath (Fin.castSucc ⟨1, hlen⟩))
-        (p.toRunPath (Fin.succ ⟨1, hlen⟩)) := p.step ⟨1, hlen⟩
-    have hhead : p.toRunPath (Fin.castSucc ⟨0, by omega⟩) = fork.initCfg input := p.head_eq
-    have hone : p.toRunPath (Fin.succ ⟨0, by omega⟩) = p.toRunPath (Fin.castSucc ⟨1, hlen⟩) :=
-      congrArg p.toRunPath (Fin.ext rfl)
-    rw [hhead] at h₀
-    rw [← hone] at h₁
-    obtain ⟨action, ⟨-, haction⟩, hnext⟩ := h₀
-    rcases haction with rfl | rfl
-    · have hhalt : (p.toRunPath (Fin.succ ⟨0, by omega⟩)).Halted := by rw [hnext]; rfl
-      exact (MultiTapeNTM.RunPath.last_eq_of_halted p.toRunPath _ hhalt) ▸ hhalt
-    · rw [hnext] at h₁
-      simp [MultiTapeNTM.Step, fork, stuckAction] at h₁
+  refine ⟨runsInTime_fork _, ?_⟩
   · simp only [Set.mem_univ, true_iff]
     have hstep : fork.Step (fork.initCfg (encBits input))
         (acceptAction.apply (fork.initCfg (encBits input))) :=
@@ -364,6 +347,13 @@ private theorem isSome_state_runFrom_emitLoop (input : List Bool) (t : ℕ) :
       MultiTapeTM.step_of_state hq]
     simp [emitLoop, Action.apply]
 
+/-- After one step, `emitLoop` has emitted `[true]` and is still running. -/
+example : (emitLoop.runFrom (emitLoop.initCfg []) 1).output = [true] ∧
+    (emitLoop.runFrom (emitLoop.initCfg []) 1).state = some true := by
+  change (emitLoop.step (emitLoop.initCfg [])).output = _ ∧ (emitLoop.step _).state = _
+  rw [MultiTapeTM.step_of_state (q := false) rfl]
+  simp [emitLoop, Action.apply]
+
 /-- A running prefix `[true]` is not acceptance: no certificate is accepted for `emitLoop`. -/
 example (input w : List Bool) :
     emitLoop.toMultiTapeNTM.choiceTable.runClosedCoins w input ≠ [true] := by
@@ -374,9 +364,31 @@ example (input w : List Bool) :
   rw [← hlast, show p.last.state = none from hhalt] at hsome
   exact absurd hsome (by simp)
 
-/-- The characterization, round trip for `SAT`. -/
-example : SAT ∈ NP encCNF :=
-  mem_NP_iff_decidableInPolyTime.mpr (mem_NP_iff_decidableInPolyTime.mp SAT.mem_NP)
+/-- The encoded rejecting branch of the fair coin is rejected, although the coin accepts. -/
+example : ∃ coins : List Bool, coin.toNTM.checkChoices encBits ([], coins) = false := by
+  obtain ⟨p, -, hhalt, hout⟩ := exists_path_coin false []
+  obtain ⟨coins, -, hcoins⟩ := MultiTapeNTM.ChoiceTable.exists_coins_runPath p.toRunPath
+  have hsim : MultiTapeNTM.ChoiceTable.simCfg p.last = MultiTapeNTM.ChoiceTable.haltCfg p.last := by
+    simp only [MultiTapeNTM.ChoiceTable.simCfg, show p.last.state = none from hhalt]
+  refine ⟨coins, ?_⟩
+  rw [MultiTapeNTM.checkChoices, decide_eq_false_iff_not]
+  change ¬coin.toNTM.choiceTable.runClosedCoins coins [] = [true]
+  rw [MultiTapePTM.runClosedCoins, MultiTapePTM.tapes_runClosedConfigFromCoins,
+    ← MultiTapePTM.initCfg_toNTM, MultiTapeNTM.ChoiceTable.initCfg_choiceTable, ← p.head_eq,
+    hcoins, hsim]
+  simp [MultiTapeNTM.ChoiceTable.haltCfg, hout]
+
+/-- Halting with `[true, true]` is rejected under every certificate. -/
+example (w : List Bool) : twice.toMultiTapeNTM.checkChoices encBits ([], w) = false := by
+  rw [MultiTapeNTM.checkChoices, decide_eq_false_iff_not]
+  change ¬twice.toMultiTapeNTM.choiceTable.runClosedCoins w [] = [true]
+  intro h
+  have hacc := MultiTapeNTM.accepts_of_runClosedCoins_choiceTable h
+  rw [MultiTapeNTM.accepts_iff_exists_time_eq (runsInTime_twice [])] at hacc
+  obtain ⟨p, hp, hout⟩ := hacc
+  have hlast := MultiTapeTM.computationPath_last_eq_runFrom p
+  rw [show p.time = 2 from hp, runFrom_twice] at hlast
+  simp [hlast] at hout
 
 /-! ### Axioms -/
 

@@ -22,14 +22,15 @@ inclusion (`Cslib.Complexity.decidableInPolyTime_of_mem_NP`). This file proves t
 checking an encoded accepting computation.
 
 A computation path is encoded by its choices, as coins of the fixed finite choice table
-`Turing.MultiTapeNTM.choiceTable`: a step taking the `j`-th permitted action costs `j + 1` coins,
-at most `M = Nat.card` of the action type. If every branch on `enc a` has halted after
-`c * ((enc a).length + 1) ^ d` steps, accepting computations are encoded within
-`M * c * ((enc a).length + 1) ^ d` coins, and padded to exactly this polynomial length, which a
-halted table ignores. The verifier `Turing.MultiTapeNTM.checkChoices` replays the certificate with
-the choice table and accepts when the table emits `[true]`: then the coins encode a computation
-path that halts with output `[true]`. Coins choosing beyond the permitted actions, for instance at
-a stuck configuration, reject. Replaying a fixed finite fair-coin table from encoded coins and
+`Turing.MultiTapeNTM.choiceTable`: a step taking the permitted action of zero-based index `j`
+costs `j + 1` coins, at most `M = Nat.card` of the action type. If every computation path on
+`enc a` with at least `c * ((enc a).length + 1) ^ d` steps has halted (stuck paths may be
+shorter), accepting computations are encoded within `M * c * ((enc a).length + 1) ^ d` coins, and
+padded to exactly this polynomial length, which a halted table ignores. The verifier
+`Turing.MultiTapeNTM.checkChoices` replays the certificate with the choice table and accepts when
+the table emits `[true]`: then the coins encode a computation path that halts with output
+`[true]`. Every coin list selects permitted actions, except at a stuck configuration, which has
+none; there the table rejects. Replaying a fixed finite fair-coin table from encoded coins and
 input is polynomial-time (`Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins`), so
 the verifier needs no machine built by hand.
 
@@ -59,9 +60,9 @@ open MultiTapeTM
 
 variable {k : ℕ} {State : Type} [Finite State] {α : Type} {enc : α ↪ List Bool}
 
-/-- **The verifier of encoded accepting computations.** The certificate, read as coins of the
-choice table, replays a computation path on the encoded instance that halts with output
-`[true]`. -/
+/-- **The verifier of encoded accepting computations.** It accepts when the certificate, read as
+coins of the choice table, replays a computation path on the encoded instance that halts with
+output `[true]`. -/
 noncomputable def checkChoices (ntm : MultiTapeNTM k Bool State) (enc : α ↪ List Bool)
     (x : α × List Bool) : Bool :=
   decide (ntm.choiceTable.runClosedCoins x.2 (enc x.1) = [true])
@@ -80,8 +81,9 @@ theorem computableTidilyInPolyTime_checkChoices (ntm : MultiTapeNTM k Bool State
     (ComputableTidilyInPolyTime.const [true])
 
 /-- **Accepting computations as certificates.** A machine deciding `A` within
-`c * ((enc a).length + 1) ^ d` steps on every branch yields a verifier whose certificates have
-length exactly `M * c * ((enc a).length + 1) ^ d`, for the number `M` of actions. -/
+`c * ((enc a).length + 1) ^ d` steps (every computation path with at least that many steps has
+halted) yields a verifier whose certificates have length exactly
+`M * c * ((enc a).length + 1) ^ d`, for the number `M` of actions. -/
 theorem DecidesInTime.isVerifier {ntm : MultiTapeNTM k Bool State} {A : Set α} {c d : ℕ}
     (h : ntm.DecidesInTime enc A fun a => c * ((enc a).length + 1) ^ d) :
     Cslib.Complexity.IsVerifier enc
@@ -101,7 +103,8 @@ theorem DecidesInTime.isVerifier {ntm : MultiTapeNTM k Bool State} {A : Set α} 
     rw [hp] at hlen
     beta_reduce at hlen
     refine ⟨coins ++ List.replicate (Nat.card (Turing.Action k Bool State) *
-      (c * ((enc a).length + 1) ^ d) - coins.length) false, by simp; omega, ?_⟩
+      (c * ((enc a).length + 1) ^ d) - coins.length) false, by
+        simp only [List.length_append, List.length_replicate]; omega, ?_⟩
     simp [checkChoices, hcoins]
   · rintro ⟨w, -, hw⟩
     exact accepts_of_runClosedCoins_choiceTable (coins := w) (by simpa [checkChoices] using hw)

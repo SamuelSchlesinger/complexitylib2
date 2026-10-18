@@ -18,20 +18,24 @@ actions. Its choice table `Turing.MultiTapeNTM.choiceTable` is one fixed finite 
 that replays a computation path from a list of coins. At a running configuration it scans the
 permitted actions in a fixed order (`Turing.MultiTapeNTM.actions`), one coin per candidate: the
 coin `true` takes the current candidate, the coin `false` moves on, and the last candidate is
-taken under either coin. A step of the nondeterministic machine choosing the candidate `j`
-therefore costs the coins `false^j true`, at most `Nat.card` of the action type. A stuck
-configuration has no candidate and rejects: the table halts without output.
+taken under either coin. A step of the nondeterministic machine choosing the candidate of
+(zero-based) index `j` therefore costs the coins `false^j true`, at most `Nat.card` of the action
+type. Every coin list thus selects permitted actions, except at a stuck configuration, which has
+none; there the table rejects: it halts without output.
 
 The table emits nothing while it simulates. It records in its finite control whether the
-simulated output is empty, exactly `[true]` or something else (`Turing.MultiTapeNTM.OutputTrack`),
-and when the simulated machine halts it emits `true` exactly when the simulated output is `[true]`.
+simulated output is empty, exactly `[true]` or something else
+(`Turing.MultiTapeNTM.ChoiceTable.OutputTrack`), and when the simulated machine halts it emits
+`true` exactly when the simulated output is `[true]`.
 So a running prefix of output `[true]` is never mistaken for acceptance. A halted table ignores
 the remaining coins, which allows padding.
 
 ## Main definitions
 
 * `Turing.MultiTapeNTM.actions`: the permitted actions, in a fixed order.
-* `Turing.MultiTapeNTM.choiceTable`: the fair-coin table replaying choices.
+* `Turing.MultiTapeNTM.choiceTable`: the fair-coin table replaying choices. Its states
+  `Turing.MultiTapeNTM.ChoiceTable.ScanState` record the simulated state, the candidate index
+  and the track `Turing.MultiTapeNTM.ChoiceTable.OutputTrack` of the simulated output.
 
 ## Main results
 
@@ -56,6 +60,30 @@ instance Turing.Action.instFinite {k : ℕ} {Symbol State : Type*} [Finite Symbo
       rfl
 
 namespace Turing.MultiTapeNTM
+
+variable {k : ℕ} {State : Type} [Finite State] {input : List Bool}
+
+/-- The actions permitted by `ntm` at a state and read symbols, in a fixed order. -/
+noncomputable def actions (ntm : MultiTapeNTM k Bool State) (state : State) (symbol : Option Bool)
+    (work : Fin k → Option Bool) : List (Turing.Action k Bool State) :=
+  (Set.toFinite {action | ntm.Tr state symbol work action}).toFinset.toList
+
+variable (ntm : MultiTapeNTM k Bool State)
+
+theorem mem_actions {state : State} {symbol : Option Bool} {work : Fin k → Option Bool}
+    {action : Turing.Action k Bool State} :
+    action ∈ ntm.actions state symbol work ↔ ntm.Tr state symbol work action := by
+  simp [actions]
+
+/-- There are at most as many permitted actions as actions. -/
+theorem length_actions_le (state : State) (symbol : Option Bool) (work : Fin k → Option Bool) :
+    (ntm.actions state symbol work).length ≤ Nat.card (Turing.Action k Bool State) := by
+  classical
+  have := Fintype.ofFinite (Turing.Action k Bool State)
+  rw [actions, Finset.length_toList, Nat.card_eq_fintype_card]
+  exact Finset.card_le_univ _
+
+namespace ChoiceTable
 
 /-- Whether an emitted word is empty, exactly `[true]`, or something else. -/
 inductive OutputTrack
@@ -104,28 +132,6 @@ theorem ofWord_eq_accept_iff (word : List Bool) : ofWord word = accept ↔ word 
 
 end OutputTrack
 
-variable {k : ℕ} {State : Type} [Finite State] {input : List Bool}
-
-/-- The actions permitted by `ntm` at a state and read symbols, in a fixed order. -/
-noncomputable def actions (ntm : MultiTapeNTM k Bool State) (state : State) (symbol : Option Bool)
-    (work : Fin k → Option Bool) : List (Turing.Action k Bool State) :=
-  (Set.toFinite {action | ntm.Tr state symbol work action}).toFinset.toList
-
-variable (ntm : MultiTapeNTM k Bool State)
-
-theorem mem_actions {state : State} {symbol : Option Bool} {work : Fin k → Option Bool}
-    {action : Turing.Action k Bool State} :
-    action ∈ ntm.actions state symbol work ↔ ntm.Tr state symbol work action := by
-  simp [actions]
-
-/-- There are at most as many permitted actions as actions. -/
-theorem length_actions_le (state : State) (symbol : Option Bool) (work : Fin k → Option Bool) :
-    (ntm.actions state symbol work).length ≤ Nat.card (Turing.Action k Bool State) := by
-  classical
-  have := Fintype.ofFinite (Turing.Action k Bool State)
-  rw [actions, Finset.length_toList, Nat.card_eq_fintype_card]
-  exact Finset.card_le_univ _
-
 /-- The states of the choice table: the simulated state, the index of the candidate action, and
 the track of the simulated output. -/
 abbrev ScanState (k : ℕ) (State : Type) :=
@@ -158,17 +164,21 @@ noncomputable def scan (s : ScanState k State) (symbol : Option Bool) (work : Fi
     else idle (some (s.1, ⟨min (s.2.1.val + 1) (Nat.card (Turing.Action k Bool State)),
       Nat.lt_succ_of_le (min_le_right _ _)⟩, s.2.2))
 
+end ChoiceTable
+
 /-- **The choice table.** A fixed finite fair-coin table replaying the choices of `ntm`, one coin
 per candidate action. -/
-noncomputable def choiceTable : MultiTapePTM k Bool (ScanState k State) where
+noncomputable def choiceTable : MultiTapePTM k Bool (ChoiceTable.ScanState k State) where
   initial := (ntm.q₀, 0, .empty)
-  tr s symbol work _ bit := .step (ntm.scan s symbol work bit) Empty.elim Empty.elim
+  tr s symbol work _ bit := .step (ChoiceTable.scan ntm s symbol work bit) Empty.elim Empty.elim
+
+namespace ChoiceTable
 
 /-- A running instruction of the choice table applies `scan`. -/
 theorem step_choiceTable {cfg : Cfg k Bool (ScanState k State) input} {s : ScanState k State}
     (h : cfg.state = some s) (bit : Bool) :
     (ntm.choiceTable.withCoin bit).toTM.step cfg =
-      (ntm.scan s cfg.inputSymbol cfg.workTapeSymbols bit).apply cfg := by
+      (scan ntm s cfg.inputSymbol cfg.workTapeSymbols bit).apply cfg := by
   rw [MultiTapeTM.step_of_state h, MultiTapeMachine.toTM, MultiTapeTM.tr_ofTr]
   rfl
 
@@ -222,19 +232,19 @@ variable {state : State} {symbol : Option Bool} {work : Fin k → Option Bool}
   {action : Turing.Action k Bool State}
 
 theorem scan_of_getElem?_eq_none (hj : (ntm.actions state symbol work)[j.val]? = none)
-    (bit : Bool) : ntm.scan (state, j, track) symbol work bit = idle none := by
+    (bit : Bool) : scan ntm (state, j, track) symbol work bit = idle none := by
   simp [scan, hj]
 
 theorem scan_of_take (hj : (ntm.actions state symbol work)[j.val]? = some action) {bit : Bool}
     (hbit : bit = true ∨ j.val + 1 = (ntm.actions state symbol work).length) :
-    ntm.scan (state, j, track) symbol work bit = perform track action := by
+    scan ntm (state, j, track) symbol work bit = perform track action := by
   have hcond : (bit || decide (j.val + 1 = (ntm.actions state symbol work).length)) = true := by
     rcases hbit with rfl | h <;> simp [*]
   simp only [scan, hj, hcond, ↓reduceIte]
 
 theorem scan_of_skip (hj : (ntm.actions state symbol work)[j.val]? = some action)
     (hlast : j.val + 1 ≠ (ntm.actions state symbol work).length) :
-    ntm.scan (state, j, track) symbol work false = idle (some (state, ⟨j.val + 1,
+    scan ntm (state, j, track) symbol work false = idle (some (state, ⟨j.val + 1,
       Nat.lt_succ_of_le (by
         have := ntm.length_actions_le state symbol work
         have := (List.getElem?_eq_some_iff.mp hj).1
@@ -260,7 +270,7 @@ theorem step_scanCfg_skip
         have := (List.getElem?_eq_some_iff.mp hj).1
         omega)⟩ := by
   rw [step_choiceTable ntm rfl]
-  change (ntm.scan (state, j, _) c.inputSymbol c.workTapeSymbols false).apply _ = _
+  change (scan ntm (state, j, _) c.inputSymbol c.workTapeSymbols false).apply _ = _
   rw [scan_of_skip hj hlast, apply_idle]
   rfl
 
@@ -270,7 +280,7 @@ theorem step_scanCfg_take
     (hbit : bit = true ∨ j.val + 1 = (ntm.actions state c.inputSymbol c.workTapeSymbols).length) :
     (ntm.choiceTable.withCoin bit).toTM.step (scanCfg c state j) = simCfg (action.apply c) := by
   rw [step_choiceTable ntm rfl]
-  change (ntm.scan (state, j, _) c.inputSymbol c.workTapeSymbols bit).apply _ = _
+  change (scan ntm (state, j, _) c.inputSymbol c.workTapeSymbols bit).apply _ = _
   rw [scan_of_take hj hbit]
   exact apply_perform c state j action
 
@@ -280,7 +290,7 @@ theorem step_scanCfg_reject
     (ntm.choiceTable.withCoin bit).toTM.step (scanCfg c state j) =
       ⟨none, c.inputPos, c.workTapes, c.workTapePos, []⟩ := by
   rw [step_choiceTable ntm rfl]
-  change (ntm.scan (state, j, _) c.inputSymbol c.workTapeSymbols bit).apply _ = _
+  change (scan ntm (state, j, _) c.inputSymbol c.workTapeSymbols bit).apply _ = _
   rw [scan_of_getElem?_eq_none hj, apply_idle]
   rfl
 
@@ -295,12 +305,6 @@ def Replayable (ntm : MultiTapeNTM k Bool State) (input : List Bool)
   (b.state = none ∧ b.output = []) ∨
   (b.state = none ∧ b.output = [true] ∧ ntm.Accepts input)
 
-omit [Finite State] in
-/-- A computation path extends by one step. -/
-theorem ComputationPath.exists_snoc (p : ntm.ComputationPath input) {c : Cfg k Bool State input}
-    (h : ntm.Step p.last c) : ∃ q : ntm.ComputationPath input, q.last = c :=
-  ⟨⟨p.toRunPath.snoc c h, by simpa using p.head_eq⟩, by simp⟩
-
 /-- Every coin preserves replayability. -/
 theorem Replayable.step {b : Cfg k Bool (ScanState k State) input}
     (h : Replayable ntm input b) (bit : Bool) :
@@ -314,7 +318,7 @@ theorem Replayable.step {b : Cfg k Bool (ScanState k State) input}
     have hstep : ntm.Step p.last (action.apply p.last) := by
       simp only [Step, hstate]
       exact ⟨action, (ntm.mem_actions).mp hmem, rfl⟩
-    obtain ⟨q, hq⟩ := ComputationPath.exists_snoc p hstep
+    obtain ⟨q, -, hq⟩ := ComputationPath.exists_snoc p hstep
     have htake : ∀ bit : Bool,
         bit = true ∨ j.val + 1 = (ntm.actions state p.last.inputSymbol
           p.last.workTapeSymbols).length →
@@ -341,29 +345,6 @@ theorem Replayable.step {b : Cfg k Bool (ScanState k State) input}
   · rw [MultiTapeTM.step_of_halt hhalt]
     exact .inr (.inr ⟨hhalt, hout, hacc⟩)
 
-/-- **Soundness.** A coin list on which the choice table emits `[true]` encodes an accepting
-computation path. -/
-theorem accepts_of_runClosedCoins_choiceTable {coins : List Bool}
-    (h : ntm.choiceTable.runClosedCoins coins input = [true]) : ntm.Accepts input := by
-  have hinit : Replayable ntm input (ntm.choiceTable.toNTM.initCfg input) :=
-    .inl ⟨⟨RelSeries.singleton _ (ntm.initCfg input), rfl⟩, ntm.q₀, 0, rfl, rfl⟩
-  have hreplay : ∀ (coins : List Bool) (b : Cfg k Bool (ScanState k State) input),
-      Replayable ntm input b → Replayable ntm input (ntm.choiceTable.stepCoins coins b) := by
-    intro coins
-    induction coins with
-    | nil => exact fun _ hb => hb
-    | cons bit coins ih => exact fun b hb => ih _ (hb.step bit)
-  have hout : (ntm.choiceTable.stepCoins coins (ntm.choiceTable.toNTM.initCfg input)).output =
-      [true] := by
-    rw [MultiTapePTM.initCfg_toNTM, ← MultiTapePTM.tapes_runClosedConfigFromCoins]
-    exact h
-  rcases hreplay coins _ hinit with ⟨p, state, j, -, hb⟩ | ⟨-, hnil⟩ | ⟨-, -, hacc⟩
-  · rw [hb] at hout
-    simp [scanCfg] at hout
-  · rw [hnil] at hout
-    simp at hout
-  · exact hacc
-
 /-! ### Completeness -/
 
 /-- One step of a running configuration is replayed by at most `Nat.card` coins. -/
@@ -387,14 +368,15 @@ theorem exists_coins_step {c c' : Cfg k Bool State input} {state : State}
       obtain ⟨a, ha⟩ : ∃ a, (ntm.actions state c.inputSymbol c.workTapeSymbols)[i]? = some a :=
         ⟨_, List.getElem?_eq_getElem (by omega)⟩
       exact step_scanCfg_skip (j := ⟨i, by omega⟩) ha (by change i + 1 ≠ _; omega)
-  refine ⟨List.replicate j false ++ [true], by simp; omega, ?_⟩
+  refine ⟨List.replicate j false ++ [true], by
+    simp only [List.length_append, List.length_replicate, List.length_singleton]; omega, ?_⟩
   rw [MultiTapePTM.stepCoins_append]
   simp only [simCfg, hstate]
   rw [hskip j le_rfl, MultiTapePTM.stepCoins_cons, MultiTapePTM.stepCoins_nil]
   exact step_scanCfg_take (j := ⟨j, by omega⟩) (by simp [← hget]) (.inl rfl)
 
-/-- A run path from `c` is replayed from the simulation of `c` by at most `Nat.card` coins per
-step. Halted steps need no coins. -/
+/-- A run path is replayed from the simulation of its head by at most `Nat.card` coins per step.
+Halted steps need no coins. -/
 theorem exists_coins_runPath (p : ntm.RunPath input) :
     ∃ coins : List Bool, coins.length ≤ Nat.card (Turing.Action k Bool State) * p.length ∧
       ntm.choiceTable.stepCoins coins (simCfg p.head) = simCfg p.last := by
@@ -420,6 +402,35 @@ theorem stepCoins_haltCfg (c : Cfg k Bool State input) (coins : List Bool) :
   | cons bit coins ih =>
     rw [MultiTapePTM.stepCoins_cons, MultiTapeTM.step_of_halt rfl]
     exact ih
+
+end ChoiceTable
+
+open ChoiceTable
+
+variable {ntm}
+
+/-- **Soundness.** A coin list on which the choice table emits `[true]` encodes an accepting
+computation path. -/
+theorem accepts_of_runClosedCoins_choiceTable {coins : List Bool}
+    (h : ntm.choiceTable.runClosedCoins coins input = [true]) : ntm.Accepts input := by
+  have hinit : Replayable ntm input (ntm.choiceTable.toNTM.initCfg input) :=
+    .inl ⟨⟨RelSeries.singleton _ (ntm.initCfg input), rfl⟩, ntm.q₀, 0, rfl, rfl⟩
+  have hreplay : ∀ (coins : List Bool) (b : Cfg k Bool (ScanState k State) input),
+      Replayable ntm input b → Replayable ntm input (ntm.choiceTable.stepCoins coins b) := by
+    intro coins
+    induction coins with
+    | nil => exact fun _ hb => hb
+    | cons bit coins ih => exact fun b hb => ih _ (hb.step bit)
+  have hout : (ntm.choiceTable.stepCoins coins (ntm.choiceTable.toNTM.initCfg input)).output =
+      [true] := by
+    rw [MultiTapePTM.initCfg_toNTM, ← MultiTapePTM.tapes_runClosedConfigFromCoins]
+    exact h
+  rcases hreplay coins _ hinit with ⟨p, state, j, -, hb⟩ | ⟨-, hnil⟩ | ⟨-, -, hacc⟩
+  · rw [hb] at hout
+    simp [scanCfg] at hout
+  · rw [hnil] at hout
+    simp at hout
+  · exact hacc
 
 /-- **Completeness.** A computation path of `t` steps ending halted with output `[true]` is
 encoded by at most `Nat.card (Action k Bool State) * t` coins, after which any padding is
