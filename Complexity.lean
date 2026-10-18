@@ -488,6 +488,7 @@ public import Complexity.Computability.TreeEval.Reader.Cert.Weight
 public import Complexity.Computability.TreeEval.Reader.Correct
 public import Complexity.Computability.TreeEval.Reader.Defs
 public import Complexity.Computability.TreeEval.Reader.Encode
+public import Complexity.Computability.TreeEval.Reader.Invariant
 public import Complexity.Computability.TreeEval.Reader.Tuple
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
