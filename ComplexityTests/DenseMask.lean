@@ -101,8 +101,7 @@ example :
     (observationBits := fun _ => 0) (remainingBits := fun _ => 0)
     (labelBits := fun n => ExtractionSchedule.slack n (saved.length n) 0)
     (numerator := fun _ => 2) (densityBound := fun _ => 0)
-    (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
-    (by fun_prop) (by fun_prop) (by fun_prop)
+    (by constructor <;> fun_prop)
     (by intro n observation _; exact Nat.le_refl 2)
     (Eventually.of_forall (by intro n; rw [fairPair_entropy]; norm_num [dyadicSize]))
     (Eventually.of_forall (by intro n; exact Or.inl rfl)) ?_

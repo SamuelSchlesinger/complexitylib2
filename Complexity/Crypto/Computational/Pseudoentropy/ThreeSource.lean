@@ -26,6 +26,7 @@ only to the security argument; the efficient test handles all indices uniformly.
 
 * `ThreeSource.extract`: sample once and hash observations, labels, and retained sampler seeds.
 * `ThreeSource.seedLength`, `ThreeSource.outputLength`: exact input and output budgets.
+* `ThreeSource.Efficient`: the shared uniformity contract for the extraction schedules.
 
 ## Main results
 
@@ -291,6 +292,24 @@ theorem replace_observations {pair : SamplablePair} (saved : pair.SeedRealizatio
     ProbComp.eval_pure, uniformList_add, PMF.bind_bind, PMF.pure_bind, PMF.map,
     Function.comp_def, List.append_assoc]
 
+/-- Uniform computation of the size and density schedules used by three-source extraction.
+This contract covers every candidate; it imposes no computability requirement on the index chosen
+in the security proof. Entropy and observation-size assumptions remain separate. -/
+structure Efficient (candidates bound inverseSlack densityBound : ℕ → ℕ)
+    (observationBits labelBits remainingBits numerator : ℕ → ℕ → ℕ) : Prop where
+  candidates_isPolyTime : ComputableTidilyInPolyTime candidates encUnary encUnary
+  bound_isPolyTime : ComputableTidilyInPolyTime bound encUnary encUnary
+  observation_isPolyTime : ComputableTidilyInPolyTime
+    (fun input => observationBits input.1 input.2) (encPair encUnary encUnary) encUnary
+  label_isPolyTime : ComputableTidilyInPolyTime
+    (fun input => labelBits input.1 input.2) (encPair encUnary encUnary) encUnary
+  remaining_isPolyTime : ComputableTidilyInPolyTime
+    (fun input => remainingBits input.1 input.2) (encPair encUnary encUnary) encUnary
+  slack_isPolyTime : ComputableTidilyInPolyTime inverseSlack encUnary encUnary
+  numerator_isPolyTime : ComputableTidilyInPolyTime
+    (fun input => numerator input.1 input.2) (encPair encUnary encUnary) encUnary
+  density_isPolyTime : ComputableTidilyInPolyTime densityBound encUnary encUnary
+
 open Probability.PMF Filter in
 /-- Indexed label extraction remains secure when the test computes the observation hash and
 supplies the independent third component. Only the proof uses the chosen valid index. -/
@@ -298,18 +317,8 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
     (saved : pair.SeedRealization) (choose : ℕ → ℕ)
     {candidates bound inverseSlack densityBound : ℕ → ℕ}
     {observationBits labelBits remainingBits numerator : ℕ → ℕ → ℕ}
-    (hcandidates : ComputableTidilyInPolyTime candidates encUnary encUnary)
-    (hbound : ComputableTidilyInPolyTime bound encUnary encUnary)
-    (hobservation : ComputableTidilyInPolyTime (fun input => observationBits input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hlabel : ComputableTidilyInPolyTime (fun input => labelBits input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hremaining : ComputableTidilyInPolyTime (fun input => remainingBits input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hslack : ComputableTidilyInPolyTime inverseSlack encUnary encUnary)
-    (hnumerator : ComputableTidilyInPolyTime (fun input => numerator input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
+    (efficient : ThreeSource.Efficient candidates bound inverseSlack densityBound
+      observationBits labelBits remainingBits numerator)
     (hchoose : ∀ᶠ n in atTop, choose n < candidates n)
     (hvalid : ∀ᶠ n in atTop, 0 < numerator n (choose n) ∧
       numerator n (choose n) ≤ dyadicSize (densityBound n) ∧
@@ -333,6 +342,8 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
         (observationBits n (choose n))
         (labelBits n (choose n)) (remainingBits n (choose n)) (Prod.fst <$> pair.sample n) >>=
           adversary n (choose n)))) := by
+  obtain ⟨hcandidates, hbound, hobservation, hlabel, hremaining, hslack, hnumerator, hdensity⟩ :=
+    efficient
   let count := fun n => ExtractionSchedule.count n (saved.length n) (inverseSlack n)
   have hlength := saved.length_isPolyTime
   have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=
@@ -385,18 +396,8 @@ theorem SamplablePair.HasGap.extract_indexed_three {pair : SamplablePair} {gap :
     (hpair : pair.HasGap gap) (saved : pair.SeedRealization) (choose : ℕ → ℕ)
     {candidates bound inverseSlack densityBound : ℕ → ℕ}
     {observationBits labelBits remainingBits numerator : ℕ → ℕ → ℕ}
-    (hcandidates : ComputableTidilyInPolyTime candidates encUnary encUnary)
-    (hbound : ComputableTidilyInPolyTime bound encUnary encUnary)
-    (hobservation : ComputableTidilyInPolyTime (fun input => observationBits input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hlabel : ComputableTidilyInPolyTime (fun input => labelBits input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hremaining : ComputableTidilyInPolyTime (fun input => remainingBits input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hslack : ComputableTidilyInPolyTime inverseSlack encUnary encUnary)
-    (hnumerator : ComputableTidilyInPolyTime (fun input => numerator input.1 input.2)
-      (encPair encUnary encUnary) encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
+    (efficient : ThreeSource.Efficient candidates bound inverseSlack densityBound
+      observationBits labelBits remainingBits numerator)
     (hfits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
       (pair.encode n observation).length ≤ bound n)
     (hchoose : ∀ᶠ n in atTop, choose n < candidates n)
@@ -437,8 +438,8 @@ theorem SamplablePair.HasGap.extract_indexed_three {pair : SamplablePair} {gap :
   have third := (ThreeSource.replace_remaining saved bound inverseSlack
     (fun n => observationBits n (choose n)) (fun n => labelBits n (choose n))
     (fun n => remainingBits n (choose n)) hlast) continuation trivial
-  have middle := ThreeSource.replace_indexed_labels hpair saved choose hcandidates hbound
-    hobservation hlabel hremaining hslack hnumerator hdensity hchoose hvalid hmiddle test htest
+  have middle := ThreeSource.replace_indexed_labels hpair saved choose efficient
+    hchoose hvalid hmiddle test htest
   have first := (ThreeSource.replace_observations saved bound inverseSlack
     (fun n => observationBits n (choose n)) (fun n => labelBits n (choose n))
     (fun n => remainingBits n (choose n)) hfits hfirst) continuation trivial
@@ -455,13 +456,9 @@ budgets for which some candidate is valid. -/
 theorem SamplablePair.HasGap.extract_three {pair : SamplablePair} {gap : ℕ → ℝ}
     (hpair : pair.HasGap gap) (saved : pair.SeedRealization)
     {bound inverseSlack observationBits labelBits remainingBits numerator densityBound : ℕ → ℕ}
-    (hbound : ComputableTidilyInPolyTime bound encUnary encUnary)
-    (hobservation : ComputableTidilyInPolyTime observationBits encUnary encUnary)
-    (hlabel : ComputableTidilyInPolyTime labelBits encUnary encUnary)
-    (hremaining : ComputableTidilyInPolyTime remainingBits encUnary encUnary)
-    (hslack : ComputableTidilyInPolyTime inverseSlack encUnary encUnary)
-    (hnumerator : ComputableTidilyInPolyTime numerator encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
+    (efficient : ThreeSource.Efficient (fun _ => 1) bound inverseSlack densityBound
+      (fun n _ => observationBits n) (fun n _ => labelBits n)
+      (fun n _ => remainingBits n) (fun n _ => numerator n))
     (hfits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
       (pair.encode n observation).length ≤ bound n)
     (hvalid : ∀ᶠ n in atTop, 0 < numerator n ∧ numerator n ≤ dyadicSize (densityBound n) ∧
@@ -491,8 +488,8 @@ theorem SamplablePair.HasGap.extract_three {pair : SamplablePair} {gap : ℕ →
   have h := hpair.extract_indexed_three saved (fun _ => 0)
     (candidates := fun _ => 1) (observationBits := fun n _ => observationBits n)
     (labelBits := fun n _ => labelBits n) (remainingBits := fun n _ => remainingBits n)
-    (numerator := fun n _ => numerator n) (by polytime) hbound (by polytime) (by polytime)
-    (by polytime) hslack (by polytime) hdensity hfits (Eventually.of_forall (by intro n; decide))
+    (numerator := fun n _ => numerator n) efficient hfits
+    (Eventually.of_forall (by intro n; decide))
     hvalid hfirst hmiddle hlast (fun n _ => adversary n) (by ppt)
   simpa only [distinguishingGame, ProbComp.eval_bind, BitString.eval_sampleList] using h
 

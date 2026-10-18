@@ -201,8 +201,8 @@ theorem exists_secure_choice {pair : SamplablePair} {gap : ℕ → ℝ}
     (labelBits := fun n i => labelBits n (saved.length n) (densityBound n) i)
     (remainingBits := fun n i => remainingBits n (saved.length n) (densityBound n) i)
     (numerator := fun n i => numerator (densityBound n) i)
-    (by polytime) hobservation (by polytime) (by polytime) (by polytime) (by polytime)
-    (by polytime) hdensity hfits (hvalid.mono (fun _ h => h.index_lt))
+    ⟨by polytime, hobservation, by polytime, by polytime, by polytime, by polytime,
+      by polytime, hdensity⟩ hfits (hvalid.mono (fun _ h => h.index_lt))
     (hvalid.mono (fun n h => ⟨numerator_pos _ _, h.numerator_le, h.density_le⟩))
     (hvalid.mono (fun _ h => by simpa only [scale, Nat.cast_mul, Nat.cast_ofNat]
       using h.observation_budget))
