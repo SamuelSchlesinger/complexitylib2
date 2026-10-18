@@ -10111,3 +10111,28 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #guard_msgs (whitespace := lax) in
 #print axioms
   Cslib.Circuits.Boolean.WeightedThreshold.gateActivity_mul_rpow_le_of_circuit_hadamardCode
+
+/--
+info: 'Cslib.FunctionalGraph.exists_checkpoints' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.FunctionalGraph.exists_checkpoints
+
+/--
+info: 'Cslib.FunctionalGraph.card_range_iterate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.FunctionalGraph.card_range_iterate
+
+/-- info: 'Cslib.Circuits.Circuit.cost_program_iterate' does not depend on any axioms -/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.cost_program_iterate
+
+/--
+info: 'Cslib.Circuits.Synthesis.orbit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Synthesis.orbit
