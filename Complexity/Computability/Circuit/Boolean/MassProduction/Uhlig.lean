@@ -24,9 +24,10 @@ import Mathlib.Data.ENat.Basic
 # Uhlig's mass-production theorem
 
 Every Boolean function on `n` inputs can be evaluated on `2 ^ d(n)` independent inputs with
-`(1 + o(1)) 2 ^ n / n` gates, as long as `d(n) log₂ n = o(n)` [Uhlig1992]. This matches
-Lupanov's bound for a single copy, so up to this many copies cost asymptotically no more than
-one.
+`(1 + o(1)) 2 ^ n / n` gates, as long as `d(n) log₂ n = o(n)` [Uhlig1992]. This is Lupanov's
+worst-case bound for a single copy: up to this many copies of any function fit within the
+asymptotic single-copy ceiling `2 ^ n / n`. The theorem does not compare them with the complexity
+of the particular function.
 
 `d` layers of `Uhlig.complexity_directProduct_two_mul_le` with prefixes of `p` bits turn single
 copies on `m` inputs into `2 ^ d` copies on `d p + m` inputs, multiplying the size by
@@ -36,9 +37,11 @@ remaining `m` inputs, the leading term is `(2 ^ p + 1) ^ d 2 ^ m / m = (1 + o(1)
 and every overhead is `2 ^ (o(n))`.
 
 The statements are denominator-free: for every precision `P`, eventually
-`P * n * cost ≤ (P + 1) * 2 ^ n`. The copy count may be any number up to `2 ^ d(n)`, including
-zero. Sizes count all gates; `massComplexity` charges NOT, AND and OR once and constants never.
-These are bounds on circuit size, not on the running time of a circuit constructor.
+`P * n * cost ≤ (P + 1) * 2 ^ n`. For `P > 0` this is `cost ≤ (1 + 1 / P) 2 ^ n / n`; the
+precision `P = 0` is allowed but says nothing. The copy count may be any number up to
+`2 ^ d(n)`, including zero. Sizes count all gates; `massComplexity` charges NOT, AND and OR
+once and constants never. These are bounds on circuit size, not on the running time of a circuit
+constructor.
 
 ## Main definitions
 
@@ -239,9 +242,10 @@ def IsUhligDepth (depth : ℕ → ℕ) : Prop :=
 /-- **Finite form of Uhlig's theorem.** Split `n = d * p + m` inputs into `d` prefixes of `p`
 bits and `m > 0` remaining inputs, and let `X` be a slack with
 `2 P (X + 1) ^ 3 ≤ (2 P + 1) X ^ 3`. Suppose the prefixes use at most a `1 / (X + 1)` fraction
-of the input and number at least `(X + 1) d`, single copies on `m` inputs have size at most
-`(1 + 1 / X) 2 ^ m / m`, and the overhead of all layers is negligible. Then every function on `n`
-inputs has `k ≤ 2 ^ d` independent copies of size at most `(1 + 1 / P) 2 ^ n / n`. -/
+of the input, the `2 ^ p` assignments of one prefix number at least `(X + 1) d`, single copies
+on `m` inputs have size at most `(1 + 1 / X) 2 ^ m / m`, and the overhead of all layers is
+negligible. Then every function on `n` inputs has `k ≤ 2 ^ d` independent copies of size `s`
+with `P * n * s ≤ (P + 1) * 2 ^ n`, that is, at most `(1 + 1 / P) 2 ^ n / n` when `P > 0`. -/
 theorem mul_complexity_directProduct_le {P X n d p m : ℕ}
     (hX : 2 * P * (X + 1) ^ 3 ≤ (2 * P + 1) * X ^ 3) (hX0 : 0 < X)
     (hnm : n = d * p + m) (hm : 0 < m)
@@ -314,9 +318,9 @@ theorem mul_complexity_directProduct_le {P X n d p m : ℕ}
       omega
 
 /-- **Uhlig's theorem** for circuit size. If `d(n) log₂ n = o(n)`, then for every precision `P`,
-eventually every function on `n` inputs has `k ≤ 2 ^ d(n)` independent copies of size at most
-`(1 + 1 / P) 2 ^ n / n`, stated as `P * n * size ≤ (P + 1) * 2 ^ n`. Prefixes have
-`2 log₂ n + 2` bits. -/
+eventually every function on `n` inputs has `k ≤ 2 ^ d(n)` independent copies of size `s` with
+`P * n * s ≤ (P + 1) * 2 ^ n`: for `P > 0`, at most `(1 + 1 / P) 2 ^ n / n`. The case `P = 0`
+holds trivially. Prefixes have `2 log₂ n + 2` bits. -/
 theorem eventually_mul_complexity_directProduct_le {depth : ℕ → ℕ}
     (hdepth : IsUhligDepth depth) (P : ℕ) :
     ∀ᶠ n in atTop, ∀ (f : BooleanFunction n) (k : ℕ), k ≤ 2 ^ depth n →
@@ -360,7 +364,8 @@ theorem eventually_mul_complexity_directProduct_le {depth : ℕ → ℕ}
 /-- **Uhlig's theorem** for mass complexity, which charges NOT, AND and OR once and constants
 never. If `d(n) log₂ n = o(n)`, then for every precision `P`, eventually
 `P * n * massComplexity f k ≤ (P + 1) * 2 ^ n` for every function `f` on `n` inputs and every
-number of copies `k ≤ 2 ^ d(n)`. -/
+number of copies `k ≤ 2 ^ d(n)`. For `P > 0` the bound is `(1 + 1 / P) 2 ^ n / n`; the case
+`P = 0` holds trivially. -/
 theorem eventually_mul_massComplexity_le {depth : ℕ → ℕ} (hdepth : IsUhligDepth depth)
     (P : ℕ) :
     ∀ᶠ n in atTop, ∀ (f : BooleanFunction n) (k : ℕ), k ≤ 2 ^ depth n →

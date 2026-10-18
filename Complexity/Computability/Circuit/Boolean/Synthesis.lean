@@ -159,7 +159,7 @@ theorem sum {ι : Type*} (indices : Finset ι) (F : ι → BooleanFunction n) (c
     (Synthesis.of_mem (by simp)).xor (Synthesis.of_mem (by simp))
   have h' := Synthesis.finset_fold (· + ·) 4 hop indices (Synthesis.const false) h
   simp only [Finset.sum_eq_fold]
-  exact h' 
+  exact h'
 
 /-- A function of `k` selected inputs costs at most `2 ^ k * (2 * k + 2) + 1` gates: its
 disjunctive normal form tests every accepted assignment of the selected inputs. Selectors may

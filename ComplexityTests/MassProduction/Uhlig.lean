@@ -101,8 +101,8 @@ example (f : BooleanFunction (2 * 1 + 0)) :
 -- Single copies: Lupanov's coefficient one.
 example : IsUhligDepth fun _ => 0 := fun _ => Eventually.of_forall fun _ => by simp
 
-/-- `n / log₂² n` layers satisfy the depth condition, so `2 ^ (n / log₂² n)` copies, a
-superpolynomial number, cost asymptotically no more than one copy. -/
+/-- `n / log₂² n` layers satisfy the depth condition, so `2 ^ (n / log₂² n)` copies of any
+function, a superpolynomial number, fit within the asymptotic single-copy ceiling `2 ^ n / n`. -/
 theorem isUhligDepth_div_log_sq : IsUhligDepth fun n => n / Nat.log 2 n ^ 2 := by
   intro c
   filter_upwards [eventually_ge_atTop (2 ^ (c + 1))] with n hn

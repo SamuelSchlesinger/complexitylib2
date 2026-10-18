@@ -77,8 +77,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   [synthesis](Complexity/Computability/Circuit/Boolean/MassProduction/Synthesis.lean), and
   [batched lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean); their module
   documentation records the shared constructions and exact gate-cost contracts.
-  Constructor runtime remains uncertified. The three mass-production results above remain to
-  be ported.
+  Constructor runtime remains uncertified. Uhlig's coefficient-one theorem through
+  `2 ^ o(n / log n)` copies is ported in
+  [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean); the exponential copy
+  range and the sharp real-rate coefficient remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
