@@ -56,6 +56,14 @@ evidence belong in commit or PR descriptions.
 Link to these sources instead of repeating them in new guides. Add a separate document only when
 it provides useful explanation that does not already have a suitable home.
 
+The [README](README.md#build-and-use) explains how to generate API documentation using
+[doc-gen4](https://github.com/leanprover/doc-gen4). Its separate `docbuild` project shares the
+library's toolchain, bibliography and dependency checkouts. After changing library dependencies,
+run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update complexitylib2`. When changing Lean,
+also update the doc-gen4 tag in `docbuild/lakefile.toml` and run
+`MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update doc-gen4`.
+Commit the refreshed documentation lockfile and run the documentation checks and build.
+
 ## Upstreaming
 
 ```bash

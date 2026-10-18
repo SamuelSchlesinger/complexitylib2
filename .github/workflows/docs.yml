@@ -1,0 +1,30 @@
+name: API documentation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check documentation pins
+        run: python3 scripts/check_docs.py --config-only
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: "false"
+          build: "false"
+          test: "false"
+          lint: "false"
+      - name: Generate API documentation
+        run: lake -d docbuild build Complexity:docs
+      - name: Check generated documentation
+        run: python3 scripts/check_docs.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: docbuild/.lake/build/doc
+          if-no-files-found: error

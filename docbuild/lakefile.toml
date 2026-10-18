@@ -1,0 +1,15 @@
+# Separate documentation project, following https://github.com/leanprover/doc-gen4.
+# Inherits ../lean-toolchain. Build with: lake -d docbuild build Complexity:docs
+name = "docbuild"
+version = "0.1.0"
+reservoir = false
+packagesDir = "../.lake/packages"
+
+[[require]]
+name = "complexitylib2"
+path = ".."
+
+[[require]]
+scope = "leanprover"
+name = "doc-gen4"
+rev = "v4.36.0-rc1"

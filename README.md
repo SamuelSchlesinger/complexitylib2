@@ -60,6 +60,19 @@ lake build --wfail --iofail
 
 Import the specific modules you need. `import Complexity` imports the whole library.
 
+To build searchable API documentation from the module docstrings (Python 3.11+):
+
+```bash
+python3 scripts/check_docs.py --config-only
+lake -d docbuild build Complexity:docs
+python3 scripts/check_docs.py
+python3 -m http.server --bind 127.0.0.1 --directory docbuild/.lake/build/doc
+```
+
+Open `http://localhost:8000` to browse and search. The on-demand **API documentation** workflow
+also produces an `api-docs` artifact; serve it by replacing the directory argument above with
+the extracted artifact directory.
+
 This is the CSLib-based successor to
 [the original Complexitylib](https://github.com/SamuelSchlesinger/complexitylib). The two libraries
 have different APIs, and some original developments remain to be ported. APIs are still evolving;
