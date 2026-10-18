@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space
 public import Complexity.Algorithms.Reachability.Savitch
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Reachability
 import Complexity.Computability.Kolmogorov.Incompressibility
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
