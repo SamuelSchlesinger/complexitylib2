@@ -9866,3 +9866,101 @@ depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.exists_linear_transcript_tree
+
+/--
+info: 'Cslib.sum_choose_le_exp_mul_pow' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.sum_choose_le_exp_mul_pow
+
+/--
+info: 'Cslib.sum_choose_le_exp_one_mul_div_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.sum_choose_le_exp_one_mul_div_pow
+
+/--
+info: 'Cslib.le_mul_logb_of_two_pow_le_sum_choose_sq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.le_mul_logb_of_two_pow_le_sum_choose_sq
+
+/--
+info: 'Cslib.mul_rpow_le_of_two_pow_le_sum_choose_sq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.mul_rpow_le_of_two_pow_le_sum_choose_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_pos_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_pos_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.le_inputActivity_mul_logb_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.le_inputActivity_mul_logb_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_mul_rpow_le_card_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_mul_rpow_le_card_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.le_inputActivity_mul_logb_of_circuit_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.le_inputActivity_mul_logb_of_circuit_hadamardCode
+
+/--
+info:
+'Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_mul_rpow_le_card_of_circuit_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.inputActivity_mul_rpow_le_card_of_circuit_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.le_gateActivity_mul_logb_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.le_gateActivity_mul_logb_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.gateActivity_mul_rpow_le_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.gateActivity_mul_rpow_le_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.le_gateActivity_mul_logb_of_circuit_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.le_gateActivity_mul_logb_of_circuit_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.gateActivity_mul_rpow_le_of_circuit_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Boolean.WeightedThreshold.gateActivity_mul_rpow_le_of_circuit_hadamardCode

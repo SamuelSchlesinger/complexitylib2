@@ -10,6 +10,7 @@ module
 public import Complexity.Logics.Propositional.ClauseSet.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds
+import Complexity.Foundations.Data.Nat.Choose.Real
 
 /-!
 # The sparsification lemma
@@ -51,49 +52,6 @@ universe u
 namespace Cslib.Logic.PL
 
 open Finset Filter
-
-/-- **A binomial tail bound.** For every `T ≥ 1`, `∑_{j ≤ ρ} (Λ choose j) ≤ exp (Λ / T) T ^ ρ`. -/
-private theorem sum_choose_le_exp_mul_pow (Λ ρ T : ℕ) (hT : 1 ≤ T) :
-    (∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ)) ≤ Real.exp (Λ / T) * (T : ℝ) ^ ρ := by
-  have hT0 : (0 : ℝ) < T := by exact_mod_cast hT
-  have hT1 : (1 : ℝ) ≤ T := by exact_mod_cast hT
-  set t : ℝ := 1 / T with ht
-  have ht0 : 0 ≤ t := by positivity
-  have hg : ∀ j, 0 ≤ (Λ.choose j : ℝ) * t ^ j := fun j => by positivity
-  have hpartial : ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j ≤ (1 + t) ^ Λ := by
-    set m := max (ρ + 1) (Λ + 1)
-    calc ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j
-        ≤ ∑ j ∈ range m, (Λ.choose j : ℝ) * t ^ j :=
-          sum_le_sum_of_subset_of_nonneg (range_subset_range.mpr (le_max_left _ _))
-            fun j _ _ => hg j
-      _ = ∑ j ∈ range (Λ + 1), (Λ.choose j : ℝ) * t ^ j := by
-          refine (sum_subset (range_subset_range.mpr (le_max_right _ _)) fun j _ hj => ?_).symm
-          rw [Nat.choose_eq_zero_of_lt (by simpa using hj), Nat.cast_zero, zero_mul]
-      _ = (1 + t) ^ Λ := by
-          rw [add_comm (1 : ℝ) t, add_pow]
-          refine sum_congr rfl fun j _ => ?_
-          rw [one_pow, mul_one, mul_comm]
-  calc (∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ))
-      ≤ ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j * (T : ℝ) ^ ρ := by
-        refine sum_le_sum fun j hj => ?_
-        have hjρ : j ≤ ρ := Nat.lt_succ_iff.mp (mem_range.mp hj)
-        have : 1 ≤ t ^ j * (T : ℝ) ^ ρ := by
-          rw [← Nat.add_sub_cancel' hjρ, pow_add, ← mul_assoc, ht, ← mul_pow, one_div,
-            inv_mul_cancel₀ hT0.ne', one_pow, one_mul]
-          exact one_le_pow₀ hT1
-        calc (Λ.choose j : ℝ) = (Λ.choose j : ℝ) * 1 := (mul_one _).symm
-          _ ≤ (Λ.choose j : ℝ) * (t ^ j * (T : ℝ) ^ ρ) :=
-              mul_le_mul_of_nonneg_left this (by positivity)
-          _ = (Λ.choose j : ℝ) * t ^ j * (T : ℝ) ^ ρ := by ring
-    _ = (∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) * t ^ j) * (T : ℝ) ^ ρ := by
-        rw [sum_mul]
-    _ ≤ (1 + t) ^ Λ * (T : ℝ) ^ ρ := by gcongr
-    _ ≤ Real.exp t ^ Λ * (T : ℝ) ^ ρ := by
-        gcongr
-        linarith [Real.add_one_le_exp t]
-    _ = Real.exp (Λ / T) * (T : ℝ) ^ ρ := by
-        rw [← Real.exp_nat_mul, ht]
-        ring_nf
 
 /-- A polynomial is eventually below an exponential with base `r > 1`. -/
 private theorem exists_mul_pow_le_pow (C : ℝ) (d : ℕ) {r : ℝ} (hr : 1 < r) :
@@ -155,7 +113,7 @@ theorem ClauseSet.sparsification (k : ℕ) {ε : ℝ} (hε : 0 < ε) :
       (Nat.mul_ne_zero (by omega) (Nat.mul_ne_zero (by omega) (pow_ne_zero _ (by omega))))
     have hT0 : (0 : ℝ) < T := by exact_mod_cast hT
     have hTR1 : (1 : ℝ) ≤ T := by exact_mod_cast hT
-    have hsum := sum_choose_le_exp_mul_pow Λ ρ T hT
+    have hsum := sum_choose_le_exp_mul_pow Λ ρ (T : ℝ) hTR1
     -- `exp (Λ / T) ≤ 2 ^ (ε N / 2)`
     have hexp : Real.exp (Λ / T) ≤ (2 : ℝ) ^ (ε / 2 * Fintype.card V) := by
       have hΛT : (Λ : ℝ) / T = Fintype.card V / M := by

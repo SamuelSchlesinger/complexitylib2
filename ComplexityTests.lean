@@ -129,6 +129,7 @@ import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
 import ComplexityTests.ThreeCNFPolyTime
 import ComplexityTests.ThresholdActivity
+import ComplexityTests.ThresholdActivityLog
 import ComplexityTests.ThresholdCapacity
 import ComplexityTests.ThresholdCapacityCircuit
 import ComplexityTests.ThresholdInnerProduct

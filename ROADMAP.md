@@ -98,8 +98,8 @@ Jukna coverage below is an additional target beyond the V1 port:
   and [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
   are proved. Port v1's remaining gate-count consequences and explicit source-reduction family.
   Further manuscript work includes scalar enumerative coding, pending-bias simulation,
-  logarithmic and entropy bounds, geometric cutting,
-  integer-summary counting, and quadratic-potential representations.
+  entropy and asymptotic activity bounds, geometric cutting, integer-summary counting,
+  and quadratic-potential representations.
 
 Further metacomplexity ports are outside the current scope: the circuitized anti-checker,
 hardness-magnification argument and MINKT/MINCKT developments will not be carried over. Retain
