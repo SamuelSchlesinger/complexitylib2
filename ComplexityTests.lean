@@ -3,6 +3,7 @@ import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
 import ComplexityTests.Axioms
+import ComplexityTests.BitonicSort
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation

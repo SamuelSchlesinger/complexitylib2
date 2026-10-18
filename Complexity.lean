@@ -1,5 +1,8 @@
 module  -- shake: keep-all --deprecated_module: ignore
 
+public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
+public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
+public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
@@ -63,6 +66,7 @@ public import Complexity.Computability.Circuit.Boolean.Smolensky
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Approximation
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
+public import Complexity.Computability.Circuit.Boolean.Sorting
 public import Complexity.Computability.Circuit.Boolean.SparseSynthesis
 public import Complexity.Computability.Circuit.Boolean.SparseSynthesisConstruction
 public import Complexity.Computability.Circuit.Boolean.Spira
@@ -157,6 +161,7 @@ public import Complexity.Computability.Circuit.Monotone.Clique.Positive
 public import Complexity.Computability.Circuit.Monotone.Formula
 public import Complexity.Computability.Circuit.Monotone.KarchmerWigderson
 public import Complexity.Computability.Circuit.Monotone.Set
+public import Complexity.Computability.Circuit.Parallel
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Replication

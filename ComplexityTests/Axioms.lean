@@ -8843,3 +8843,73 @@ info: 'Cslib.Circuits.Boolean.eval_compareSwapCircuit_of_key_eq' depends on axio
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.eval_compareSwapCircuit_of_key_eq
+
+/--
+info: 'Cslib.BitonicSort.sort_perm' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.sort_perm
+
+/--
+info: 'Cslib.BitonicSort.monotone_sort' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.monotone_sort
+
+/--
+info: 'Cslib.BitonicSort.antitone_sort' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.antitone_sort
+
+/--
+info: 'Cslib.Circuits.Circuit.cost_program_parallel' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.cost_program_parallel
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_bitonicSortCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_bitonicSortCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.monotone_bitonicSortCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.monotone_bitonicSortCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.antitone_bitonicSortCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.antitone_bitonicSortCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.bitonicSortCircuit_perm' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.bitonicSortCircuit_perm
+
+/--
+info: 'Cslib.Circuits.Boolean.four_mul_cost_program_bitonicSortCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.four_mul_cost_program_bitonicSortCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.four_mul_size_bitonicSortCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.four_mul_size_bitonicSortCircuit
