@@ -10009,3 +10009,38 @@ info: 'Turing.ReadMachine.tidy_toStepMachine' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.ReadMachine.tidy_toStepMachine
+
+/--
+info: 'Cslib.TreeEval.Reader.tidy_machine' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.Reader.tidy_machine
+
+/--
+info: 'Cslib.TreeEval.Reader.inv_run' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.Reader.inv_run
+
+/--
+info: 'Cslib.TreeEval.Reader.stateBudget_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.Reader.stateBudget_le
+
+/--
+info: 'Cslib.TreeEval.encode_injective' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.encode_injective
+
+/--
+info: 'Cslib.TreeEval.computableTidilyInSpace_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.computableTidilyInSpace_eval

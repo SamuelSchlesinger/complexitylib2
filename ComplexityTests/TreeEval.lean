@@ -5,6 +5,7 @@ Authors: Christian Reitwiessner
 -/
 
 import Complexity.Computability.TreeEval.Reader.Correct
+import Complexity.Computability.TreeEval.Space
 
 /-!
 # Tree Evaluation
@@ -60,5 +61,15 @@ example : ∃ n s, Reader.machine.run sample.encode n = ⟨s, [false, true]⟩ �
     Reader.machine.halt s = true := by
   obtain ⟨n, s, h, hs⟩ := Reader.exists_run_eq sample
   exact ⟨n, s, by rw [h]; congr 1, hs⟩
+
+/-- The encoding of instances tells the sample instance apart from a leaf with its value. -/
+example : encInstance ⟨2, 2, sample⟩ ≠ encInstance ⟨2, 0, .leaf ![false, true]⟩ :=
+  encInstance.injective.ne (by simp)
+
+open Turing MultiTapeTM Reader in
+/-- **Tree Evaluation in small space**: `O((ℓ + H + 1) · log ℓ + log n)`. -/
+example : ∃ t, ComputableTidilyInBigO (fun I : Instance => List.ofFn I.tree.eval) encInstance
+    encBits t fun I => spaceBound I.ell I.height + (encNat ((encInstance I).length + 1)).length :=
+  computableTidilyInSpace_eval
 
 end ComplexityTests.TreeEval

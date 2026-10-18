@@ -225,27 +225,37 @@ theorem cast_weight (k : ℕ) (x y : List ℕ) :
   have : NeZero p := ⟨(Fact.out : p.Prime).ne_zero⟩
   simp [lowBits, highBits]
 
+omit [Fact p.Prime] in
+/-- The inputs of a gate as the indices below `2^(2ℓ)`. -/
+def cubeEquiv (ℓ : ℕ) : (Fin ℓ ⊕ Fin ℓ → Bool) ≃ Fin (2 ^ (ℓ + ℓ)) :=
+  (Equiv.arrowCongr finSumFinEquiv finTwoEquiv.symm).trans finFunctionFinEquiv
+
+omit [Fact p.Prime] in
+/-- An index reads as its low and high bits. -/
+theorem cubeEquiv_symm_apply (k : Fin (2 ^ (ℓ + ℓ))) :
+    (cubeEquiv ℓ).symm k = Sum.elim (lowBits ℓ k) (highBits ℓ k) := by
+  funext ι
+  have key (n : ℕ) (x : Fin 2) (hx : (x : ℕ) = k / 2 ^ n % 2) :
+      finTwoEquiv x = (k : ℕ).testBit n := by
+    rw [Nat.testBit_eq_decide_div_mod_eq, ← hx]
+    fin_cases x <;> rfl
+  rcases ι with j | j
+  · simp only [cubeEquiv, Equiv.symm_trans_apply, Equiv.arrowCongr_symm, Equiv.symm_symm,
+      Equiv.arrowCongr_apply, Function.comp_apply, Sum.elim_inl, lowBits]
+    exact key j _ (by simp [finFunctionFinEquiv_symm_apply_val])
+  · simp only [cubeEquiv, Equiv.symm_trans_apply, Equiv.arrowCongr_symm, Equiv.symm_symm,
+      Equiv.arrowCongr_apply, Function.comp_apply, Sum.elim_inr, highBits]
+    exact key (ℓ + j) _ (by simp [finFunctionFinEquiv_symm_apply_val, Nat.add_comm])
+
+omit [Fact p.Prime] in
+theorem four_pow_eq (ℓ : ℕ) : 4 ^ ℓ = 2 ^ (ℓ + ℓ) := by rw [← two_mul, pow_mul]; norm_num
+
 /-- The indices `k < 4^ℓ`, read as the low and high bits, enumerate the inputs of a gate. -/
 theorem sum_cube {M : Type*} [AddCommMonoid M] (G : (Fin ℓ ⊕ Fin ℓ → Bool) → M) :
     ∑ a, G a = ∑ k ∈ Finset.range (4 ^ ℓ), G (Sum.elim (lowBits ℓ k) (highBits ℓ k)) := by
-  let E : (Fin ℓ ⊕ Fin ℓ → Bool) ≃ Fin (2 ^ (ℓ + ℓ)) :=
-    (Equiv.arrowCongr finSumFinEquiv finTwoEquiv.symm).trans finFunctionFinEquiv
-  have hE (k : Fin (2 ^ (ℓ + ℓ))) : E.symm k = Sum.elim (lowBits ℓ k) (highBits ℓ k) := by
-    funext ι
-    have key (n : ℕ) (x : Fin 2) (hx : (x : ℕ) = k / 2 ^ n % 2) :
-        finTwoEquiv x = (k : ℕ).testBit n := by
-      rw [Nat.testBit_eq_decide_div_mod_eq, ← hx]
-      fin_cases x <;> rfl
-    rcases ι with j | j
-    · simp only [E, Equiv.symm_trans_apply, Equiv.arrowCongr_symm, Equiv.symm_symm,
-        Equiv.arrowCongr_apply, Function.comp_apply, Sum.elim_inl, lowBits]
-      exact key j _ (by simp [finFunctionFinEquiv_symm_apply_val])
-    · simp only [E, Equiv.symm_trans_apply, Equiv.arrowCongr_symm, Equiv.symm_symm,
-        Equiv.arrowCongr_apply, Function.comp_apply, Sum.elim_inr, highBits]
-      exact key (ℓ + j) _ (by simp [finFunctionFinEquiv_symm_apply_val, Nat.add_comm])
-  rw [← E.symm.sum_comp, show 4 ^ ℓ = 2 ^ (ℓ + ℓ) by rw [← two_mul, pow_mul]; norm_num,
+  rw [← (cubeEquiv ℓ).symm.sum_comp, four_pow_eq,
     ← Fin.sum_univ_eq_sum_range (fun k => G (Sum.elim (lowBits ℓ k) (highBits ℓ k)))]
-  exact Finset.sum_congr rfl fun k _ => by rw [hE]
+  exact Finset.sum_congr rfl fun k _ => by rw [cubeEquiv_symm_apply]
 
 /-- The value of the indicator polynomial of a point at any `z`. -/
 theorem eval_indicatorPoly' {ι : Type*} [Fintype ι] (a : ι → Bool) (z : ι → ZMod p) :

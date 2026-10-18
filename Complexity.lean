@@ -477,6 +477,7 @@ public import Complexity.Computability.RAM.Squaring
 public import Complexity.Computability.TreeEval.Basic
 public import Complexity.Computability.TreeEval.CookMertz
 public import Complexity.Computability.TreeEval.Encoding
+public import Complexity.Computability.TreeEval.Instance
 public import Complexity.Computability.TreeEval.Iterative
 public import Complexity.Computability.TreeEval.Reader.Arith
 public import Complexity.Computability.TreeEval.Reader.Cert.Machine
@@ -489,7 +490,9 @@ public import Complexity.Computability.TreeEval.Reader.Correct
 public import Complexity.Computability.TreeEval.Reader.Defs
 public import Complexity.Computability.TreeEval.Reader.Encode
 public import Complexity.Computability.TreeEval.Reader.Invariant
+public import Complexity.Computability.TreeEval.Reader.Size
 public import Complexity.Computability.TreeEval.Reader.Tuple
+public import Complexity.Computability.TreeEval.Space
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
