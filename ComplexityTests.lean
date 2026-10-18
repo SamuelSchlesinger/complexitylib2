@@ -130,6 +130,7 @@ import ComplexityTests.ShannonSynthesis
 import ComplexityTests.Smoke
 import ComplexityTests.SortingTrace
 import ComplexityTests.SourceComplexity
+import ComplexityTests.Space
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
 import ComplexityTests.ThreeCNFPolyTime
