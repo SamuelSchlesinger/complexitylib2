@@ -479,8 +479,11 @@ public import Complexity.Computability.TreeEval.CookMertz
 public import Complexity.Computability.TreeEval.Encoding
 public import Complexity.Computability.TreeEval.Iterative
 public import Complexity.Computability.TreeEval.Reader.Arith
+public import Complexity.Computability.TreeEval.Reader.Cert.Residue
 public import Complexity.Computability.TreeEval.Reader.Correct
 public import Complexity.Computability.TreeEval.Reader.Defs
+public import Complexity.Computability.TreeEval.Reader.Encode
+public import Complexity.Computability.TreeEval.Reader.Tuple
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
