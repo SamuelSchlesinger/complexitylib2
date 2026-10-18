@@ -88,10 +88,11 @@ Jukna coverage below is an additional target beyond the V1 port:
   circuits and some mass-production infrastructure. Nonuniform circuit existence does not
   certify the preprocessing algorithm's runtime.
 * **Fagin's theorem.** Complete the connection between ESO-definable queries on finite relational
-  structures and NP. V2 currently has the logical semantics and closure results. V1 supplies the
-  [ESO-to-NP direction](https://github.com/SamuelSchlesinger/complexitylib/blob/dev/Complexitylib/DescriptiveComplexity/SecondOrder/PolynomialTime.lean);
-  port its encoded structures and efficient certificate checker, then construct the converse
-  tableau interpretation. The converse is new work even relative to V1.
+  structures and NP. The [encoded structures](Complexity/Logics/FirstOrder/Encoding.lean) and
+  [polynomial-time certificate checker](Complexity/Computability/Complexity/Fagin/Verifier.lean)
+  now establish ESO → NP, including empty domains and nullary relations. The remaining direction
+  is a tableau interpretation proving that every isomorphism-closed NP query is ESO-definable;
+  this is new work even relative to V1.
 * **Further algebraic results.** Carry over the existing extractor and rational-matrix
   hitting-list developments, recording each endpoint's remaining hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in

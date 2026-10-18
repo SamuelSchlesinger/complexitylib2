@@ -772,6 +772,20 @@ info: 'Cslib.Complexity.CookLevin.SAT_npComplete' depends on axioms: [propext, C
 #print axioms Cslib.Complexity.CookLevin.SAT_npComplete
 
 /--
+info: 'Cslib.Logic.ESO.Definable.queryLanguage_mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Definable.queryLanguage_mem_NP
+
+/--
+info: 'Cslib.Logic.ESO.Sentence.Layout.computableTidilyInPolyTime_verifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Sentence.Layout.computableTidilyInPolyTime_verifier
+
+/--
 info: 'Cslib.Complexity.SAT.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in

@@ -24,7 +24,7 @@ relation symbol (`Cslib.Logic.Vocabulary.encode`): the table of a symbol of arit
 truth values of the relation on the `n ^ k` tuples of `Fin n`, in the order of their index
 `Cslib.Logic.tupleIndex`, the order of `finFunctionFinEquiv`. The cardinality is written in unary
 and the tables as raw bit strings, framed as a pair and a list
-(`Cslib.Logic.Vocabulary.encStructure`), so that the input has polynomial length in the number of
+(`Cslib.Logic.encStructure`), so that the input has polynomial length in the number of
 tuples and polynomial-time programs can read its components.
 
 Conversely, every input `(n, tables)` decodes to an `L`-structure on `Fin n`
