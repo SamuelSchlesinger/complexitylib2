@@ -9,30 +9,38 @@ module
 
 public import Complexity.Computability.Circuit.SourceComplexity
 public import Complexity.Computability.Circuit.Pi
+public import Complexity.Computability.Circuit.Parallel
 import Complexity.Computability.Circuit.Simulation
 public import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # Independent copies of a circuit
 
-Inputs and outputs are arranged in consecutive blocks. Replication preserves sharing between
-the outputs of each copy, and multiplies both gate count and arbitrary weighted cost exactly.
+Inputs and outputs are arranged in consecutive blocks. A family of circuits runs its members on
+disjoint blocks and adds their gate counts and arbitrary weighted costs exactly. Replication is
+the constant family: it preserves sharing between the outputs of each copy, and multiplies both
+gate count and arbitrary weighted cost exactly.
 Keeping a positive initial batch requires only input and output wiring. The resulting minimum
 cost is monotone even at zero copies, where a separate empty circuit suffices.
 
 ## Main definitions
 
 * `Cslib.Circuits.directProduct`: independent copies of a scalar function.
-* `Cslib.Circuits.Circuit.replicate`: independent copies of a multi-output circuit.
+* `Cslib.Circuits.Circuit.parallelFamily`: different circuits on consecutive disjoint blocks.
+* `Cslib.Circuits.Circuit.replicate`: independent copies of a multi-output circuit, the
+  constant family.
 * `Cslib.Circuits.Circuit.replicateScalar`: the single-output specialization.
 * `Cslib.Circuits.Circuit.takeDirectProductPrefix`: retain a positive initial batch.
 
 ## Main results
 
+* `Cslib.Circuits.Circuit.eval_parallelFamily_apply`,
+  `Cslib.Circuits.Circuit.cost_program_parallelFamily`: blockwise semantics and additive cost.
 * `Cslib.Circuits.Circuit.eval_replicate`,
   `Cslib.Circuits.Circuit.cost_program_replicate`: exact replication semantics and cost.
 * `Cslib.Circuits.ecomplexityFrom_directProduct_le`: the naive replication upper bound.
-* `Cslib.Circuits.ecomplexityFrom_directProduct_mono`: monotonicity in the number of copies.
+* `Cslib.Circuits.ecomplexityFrom_directProduct_mono`,
+  `Cslib.Circuits.complexity_directProduct_mono`: monotonicity in the number of copies.
 * `Cslib.Circuits.ecomplexityFrom_directProduct_comp_wiring_le`: blockwise input rewiring.
 
 ## References
@@ -68,43 +76,70 @@ def directProduct (f : (Fin n → U) → U) (k : ℕ) : (Fin (k * n) → U) → 
 
 namespace Circuit
 
-/-- Disjoint-input copies of a circuit, preserving sharing within each copy. -/
-def replicate (c : Circuit σ n m) : (k : ℕ) → Circuit σ (k * n) (k * m)
-  | 0 => Circuit.wiring σ (Fin.elim0 ∘ Fin.cast (Nat.zero_mul m))
-  | k + 1 =>
+/-- Circuits of a family run on consecutive disjoint input blocks, preserving sharing within
+each member. Their outputs are arranged in the same block order. -/
+def parallelFamily : {k : ℕ} → (Fin k → Circuit σ n m) → Circuit σ (k * n) (k * m)
+  | 0, _ => Circuit.wiring σ (Fin.elim0 ∘ Fin.cast (Nat.zero_mul m))
+  | k + 1, cs =>
     (Circuit.wiring σ (Fin.cast (Nat.succ_mul k m))).comp
-      (((replicate c k).comp (Circuit.wiring σ
-        (Fin.cast (Nat.succ_mul k n).symm ∘ Fin.castAdd n))).append
-        (c.comp (Circuit.wiring σ (Fin.cast (Nat.succ_mul k n).symm ∘ Fin.natAdd (k * n)))))
+      (((parallelFamily fun j => cs j.castSucc).parallel (cs (Fin.last k))).comp
+        (Circuit.wiring σ (Fin.cast (Nat.succ_mul k n).symm)))
 
-/-- Each output of each copy reads exactly its own input block. -/
-theorem eval_replicate_apply (c : Circuit σ n m) (k : ℕ) (I : Interpretation σ U)
+/-- Each output of each member reads exactly that member's input block. -/
+theorem eval_parallelFamily_apply {k : ℕ} (cs : Fin k → Circuit σ n m) (I : Interpretation σ U)
     (x : Fin (k * n) → U) (j : Fin k) (i : Fin m) :
-    (c.replicate k).eval I x (finProdFinEquiv (j, i)) =
-      c.eval I (directProductInput x j) i := by
+    (parallelFamily cs).eval I x (finProdFinEquiv (j, i)) =
+      (cs j).eval I (directProductInput x j) i := by
   induction k with
   | zero => exact j.elim0
   | succ k ih =>
-    simp only [replicate, eval_comp, eval_wiring, Function.comp_apply, eval_append]
+    simp only [parallelFamily, eval_comp, eval_wiring, eval_parallel, Function.comp_apply]
     by_cases hj : j.val < k
     · let j' : Fin k := ⟨j.val, hj⟩
       rw [show Fin.cast (Nat.succ_mul k m) (finProdFinEquiv (j, i)) =
         Fin.castAdd m (finProdFinEquiv (j', i)) by
           apply Fin.ext
           simp [finProdFinEquiv, j']]
-      rw [Fin.append_left, ih]
-      rfl
-    · have hj' : j.val = k := by lia
-      rw [show Fin.cast (Nat.succ_mul k m) (finProdFinEquiv (j, i)) =
+      rw [Fin.append_left, ih, show j'.castSucc = j from Fin.ext rfl]
+      congr 1
+    · have hj' : j = Fin.last k := Fin.ext (by simp; lia)
+      subst hj'
+      rw [show Fin.cast (Nat.succ_mul k m) (finProdFinEquiv (Fin.last k, i)) =
         Fin.natAdd (k * m) i by
           apply Fin.ext
-          simp [finProdFinEquiv, hj', Nat.mul_comm, Nat.add_comm]]
+          simp [finProdFinEquiv, Nat.mul_comm, Nat.add_comm]]
       rw [Fin.append_right]
       congr 1
       funext a
       apply congrArg x
       apply Fin.ext
-      simp [finProdFinEquiv, hj', Nat.mul_comm, Nat.add_comm]
+      simp [finProdFinEquiv, Nat.mul_comm, Nat.add_comm]
+
+/-- Running a family on disjoint blocks adds arbitrary weighted cost exactly. -/
+theorem cost_program_parallelFamily {k : ℕ} (cs : Fin k → Circuit σ n m) (cost : σ.Op → ℕ) :
+    (parallelFamily cs).program.cost cost = ∑ j, (cs j).program.cost cost := by
+  induction k with
+  | zero => simp only [parallelFamily, cost_program_wiring, Finset.univ_eq_empty,
+      Finset.sum_empty]
+  | succ k ih =>
+    simp only [parallelFamily, cost_program_comp, cost_program_parallel, cost_program_wiring,
+      Nat.zero_add, Nat.add_zero, ih, Fin.sum_univ_castSucc]
+
+/-- Running a family on disjoint blocks adds gate counts exactly. -/
+@[simp] theorem size_parallelFamily {k : ℕ} (cs : Fin k → Circuit σ n m) :
+    (parallelFamily cs).size = ∑ j, (cs j).size := by
+  simpa only [Program.cost_const, one_mul] using cost_program_parallelFamily cs (fun _ => 1)
+
+/-- Disjoint-input copies of a circuit, preserving sharing within each copy. -/
+def replicate (c : Circuit σ n m) (k : ℕ) : Circuit σ (k * n) (k * m) :=
+  parallelFamily fun _ : Fin k => c
+
+/-- Each output of each copy reads exactly its own input block. -/
+theorem eval_replicate_apply (c : Circuit σ n m) (k : ℕ) (I : Interpretation σ U)
+    (x : Fin (k * n) → U) (j : Fin k) (i : Fin m) :
+    (c.replicate k).eval I x (finProdFinEquiv (j, i)) =
+      c.eval I (directProductInput x j) i :=
+  eval_parallelFamily_apply _ I x j i
 
 /-- Replication computes the blockwise application of the original circuit. -/
 @[simp] theorem eval_replicate (c : Circuit σ n m) (k : ℕ) (I : Interpretation σ U)
@@ -118,10 +153,11 @@ theorem eval_replicate_apply (c : Circuit σ n m) (k : ℕ) (I : Interpretation 
 theorem cost_program_replicate (c : Circuit σ n m) (k : ℕ) (cost : σ.Op → ℕ) :
     (c.replicate k).program.cost cost = k * c.program.cost cost := by
   induction k with
-  | zero => simp only [replicate, cost_program_wiring, Nat.zero_mul]
+  | zero => simp only [replicate, parallelFamily, cost_program_wiring, Nat.zero_mul]
   | succ k ih =>
-    simp only [replicate, cost_program_comp, cost_program_append, cost_program_wiring,
-      Nat.zero_add, Nat.add_zero, ih, Nat.succ_mul]
+    simp only [replicate, parallelFamily, cost_program_comp, cost_program_parallel,
+      cost_program_wiring, Nat.zero_add, Nat.add_zero] at ih ⊢
+    rw [ih, Nat.succ_mul]
 
 /-- Replication multiplies the gate count exactly. -/
 @[simp] theorem size_replicate (c : Circuit σ n m) (k : ℕ) :
@@ -240,5 +276,27 @@ theorem ecomplexityFrom_directProduct_comp_wiring_le {p : ℕ} (select : Fin n �
       Equiv.symm_apply_apply, id_eq]
   exact (ecomplexityFrom_le_of_computesFrom _ h).trans_eq
     (by rw [Circuit.cost_program_comp, Circuit.cost_program_wiring, Nat.zero_add])
+
+/-- Minimum direct-product size is monotone in the number of copies, including zero copies. -/
+theorem complexity_directProduct_mono [I.IsComplete] {small large : ℕ} (hle : small ≤ large) :
+    complexity I (directProduct f small) ≤ complexity I (directProduct f large) := by
+  rcases small.eq_zero_or_pos with rfl | hsmall
+  · exact (complexity_le_of_computes (Circuit.wiring σ (Fin.elim0 : Fin 0 → Fin (0 * n)))
+      fun _ => funext fun i => i.elim0).trans (by simp)
+  obtain ⟨c, hc, hsize⟩ :=
+    exists_computes_size_eq_complexity (I := I) (f := directProduct f large)
+  refine (complexity_le_of_computes _ (hc.takeDirectProductPrefix hsmall hle)).trans_eq ?_
+  simp [Circuit.takeDirectProductPrefix, hsize]
+
+/-- One copy costs no more than a single-output implementation. -/
+theorem complexity_directProduct_one_le [I.IsComplete] :
+    complexity I (directProduct f 1) ≤ complexity I (single f) := by
+  obtain ⟨c, hc, hsize⟩ := exists_computes_size_eq_complexity (I := I) (f := single f)
+  refine (complexity_le_of_computes (c.comp (Circuit.wiring σ fun i => finProdFinEquiv (0, i)))
+    fun x => ?_).trans_eq (by simp [hsize])
+  rw [Circuit.eval_comp, hc]
+  funext j
+  rw [Subsingleton.elim j 0]
+  rfl
 
 end Cslib.Circuits
