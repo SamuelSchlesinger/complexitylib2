@@ -36,6 +36,14 @@ folded into a canonical tape by `StackTape.cons`, last cell first.
 
 * `Turing.MultiTapeTM.decodeFiniteCfg_encFiniteCfg`: decoding inverts the encoding.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.decodeFiniteCfg`: decoding is polynomial-time.
+
+## Implementation notes
+
+Only `unframe`, `dropFrame`, list folds and finite transducers from the main development are
+used. The cell transducer `Turing.MultiTapeTM.cellsTransducer` splits a framed list of cells, a
+special case of splitting a word into its framed words; a general splitter with list decoders,
+once available, could replace it, and `Turing.MultiTapeTM.decodeState` is a decoder of a finite
+encoding from its length.
 -/
 
 @[expose] public section
@@ -78,17 +86,18 @@ def cellsTransducer : Transducer Bool (Option (Option Bool) × Bool) where
   length_step_le state bit := by split_ifs <;> simp
   length_final_le state := by split_ifs <;> simp
 
+/-- The transducer emits the bits of a framed cell and continues after its frame. -/
 theorem cellsTransducer_run_frame (cell : Option Bool) (rest : List Bool) :
     cellsTransducer.run (none, false) (frame (encOption encBool cell) ++ rest) =
       cellBits cell ++ cellsTransducer.run (none, false) rest := by
   rcases cell with _ | _ | _ <;> rfl
 
-theorem cellsTransducer_run_encStackTape (tape : StackTape Bool) :
-    cellsTransducer.run cellsTransducer.q₀ (encStackTape encBool tape) =
-      tape.toList.flatMap cellBits := by
+/-- On an encoded list of cells, the transducer emits the bits of every cell. -/
+theorem cellsTransducer_run_encList (cells : List (Option Bool)) :
+    cellsTransducer.run cellsTransducer.q₀ (encList (encOption encBool) cells) =
+      cells.flatMap cellBits := by
   change cellsTransducer.run (none, false) _ = _
-  rw [encStackTape_apply]
-  induction tape.toList with
+  induction cells with
   | nil => rfl
   | cons cell cells ih => rw [encList_cons, cellsTransducer_run_frame, ih, List.flatMap_cons]
 
@@ -105,6 +114,7 @@ def stackStep : Option Bool × StackTape Bool → Bool → Option Bool × StackT
 def decodeStackTape (word : List Bool) : StackTape Bool :=
   ((cellsTransducer.run cellsTransducer.q₀ word).reverse.foldl stackStep (none, .nil)).2
 
+/-- The fold over the reversed bits of cells prepends the cells, last first. -/
 theorem foldl_stackStep (cells : List (Option Bool)) (tape : StackTape Bool) :
     (cells.flatMap cellBits).reverse.foldl stackStep (none, tape) =
       (none, cells.foldr StackTape.cons tape) := by
@@ -114,8 +124,9 @@ theorem foldl_stackStep (cells : List (Option Bool)) (tape : StackTape Bool) :
     rw [List.flatMap_cons, List.reverse_append, List.foldl_append, ih]
     rcases cell with _ | _ <;> rfl
 
-theorem foldr_cons_toList {Symbol : Type*} (tape : StackTape Symbol) :
-    tape.toList.foldr StackTape.cons .nil = tape := by
+/-- Prepending the stored cells of a stack tape to the empty tape rebuilds it. -/
+theorem _root_.Cslib.Turing.StackTape.foldr_cons_toList {Symbol : Type*}
+    (tape : StackTape Symbol) : tape.toList.foldr StackTape.cons .nil = tape := by
   induction h : tape.toList generalizing tape with
   | nil => exact (StackTape.ext (by rw [h]; rfl)).symm
   | cons cell cells ih =>
@@ -124,10 +135,17 @@ theorem foldr_cons_toList {Symbol : Type*} (tape : StackTape Symbol) :
       cases tape with | mk values _ => cases h; rfl
     rw [List.foldr_cons, ih _ htail, ← hhead, StackTape.cons_head_tail]
 
+/-- A word encoding a list of cells decodes to the tape of the cells, without the blank cells
+at its end. -/
+theorem decodeStackTape_encList (cells : List (Option Bool)) :
+    decodeStackTape (encList (encOption encBool) cells) = cells.foldr StackTape.cons .nil := by
+  rw [decodeStackTape, cellsTransducer_run_encList, foldl_stackStep]
+
+/-- Decoding inverts the encoding of stack tapes. -/
 @[simp]
 theorem decodeStackTape_encStackTape (tape : StackTape Bool) :
     decodeStackTape (encStackTape encBool tape) = tape := by
-  rw [decodeStackTape, cellsTransducer_run_encStackTape, foldl_stackStep, foldr_cons_toList]
+  rw [encStackTape_apply, decodeStackTape_encList, StackTape.foldr_cons_toList]
 
 /-- A step of `Turing.MultiTapeTM.stackStep` lengthens the encoded state by at most four bits. -/
 theorem length_stackStep_le (state : Option Bool × StackTape Bool) (bit : Bool) :
@@ -145,6 +163,7 @@ theorem length_stackStep_le (state : Option Bool × StackTape Bool) (bit : Bool)
 def decodeCell (word : List Bool) : Option Bool :=
   if word.isEmpty then none else some (word.tail.headD false)
 
+/-- Decoding inverts the encoding of cells. -/
 @[simp]
 theorem decodeCell_encOption (cell : Option Bool) : decodeCell (encOption encBool cell) = cell := by
   rcases cell with _ | _ | _ <;> rfl
@@ -154,12 +173,14 @@ def decodeBiTape (word : List Bool) : BiTape Bool :=
   ⟨decodeCell (unframe word), decodeStackTape (unframe (dropFrame word)),
     decodeStackTape (dropFrame (dropFrame word))⟩
 
+/-- Decoding inverts the encoding of two-sided tapes. -/
 @[simp]
 theorem decodeBiTape_encBiTape (tape : BiTape Bool) :
     decodeBiTape (encBiTape encBool tape) = tape := by
   simp only [decodeBiTape, encBiTape_apply, encPair_apply, unframe_frame_append,
     dropFrame_frame_append, decodeCell_encOption, decodeStackTape_encStackTape]
 
+/-- Dropping `n` frames from an encoded list drops its first `n` elements. -/
 theorem dropFrame_iterate_encList {α : Type*} (enc : α ↪ List Bool) (values : List α) (n : ℕ) :
     dropFrame^[n] (encList enc values) = encList enc (values.drop n) := by
   induction n generalizing values with
@@ -175,6 +196,7 @@ theorem dropFrame_iterate_encList {α : Type*} (enc : α ↪ List Bool) (values 
 noncomputable def decodeTapes (k : ℕ) (word : List Bool) : Fin k → BiTape Bool :=
   fun tape => decodeBiTape (unframe (dropFrame^[(Fintype.equivFin (Fin k) tape).val] word))
 
+/-- Decoding inverts the encoding of families of tapes. -/
 @[simp]
 theorem decodeTapes_encPi {k : ℕ} (tapes : Fin k → BiTape Bool) :
     decodeTapes k (encPi (encBiTape encBool) tapes) = tapes := by
@@ -197,11 +219,13 @@ noncomputable def decodeState (n : ℕ) : Option State :=
     have := Fintype.card_pos (α := Option State)
     omega⟩
 
+/-- A decoded control state is encoded by the clamped count. -/
 theorem encFinite_decodeState (n : ℕ) : encFinite (Option State) (decodeState n) =
     encUnary (min n (Nat.card (Option State) - 1)) := by
   let := Fintype.ofFinite (Option State)
   simp [decodeState, encFinite, Nat.card_eq_fintype_card]
 
+/-- Decoding inverts the encoding of control states. -/
 @[simp]
 theorem decodeState_length_encFinite (state : Option State) :
     decodeState (encFinite (Option State) state).length = state := by
@@ -221,6 +245,7 @@ noncomputable def decodeFiniteCfg (word : List Bool) : FiniteCfg k Bool State wh
   workTapes := decodeTapes k (unframe (dropFrame (dropFrame (dropFrame word))))
   output := dropFrame (dropFrame (dropFrame (dropFrame word)))
 
+/-- **Decoding inverts the encoding of finite configurations.** -/
 @[simp]
 theorem decodeFiniteCfg_encFiniteCfg (finite : FiniteCfg k Bool State) :
     decodeFiniteCfg (encFiniteCfg finite) = finite := by
@@ -318,6 +343,7 @@ theorem decodeBiTape :
   biTape_mk (decodeCell.comp unframe) (decodeStackTape.comp (unframe.comp dropFrame))
     (decodeStackTape.comp (dropFrame.comp dropFrame))
 
+/-- Dropping a fixed number of frames is polynomial-time. -/
 theorem dropFrame_iterate (n : ℕ) :
     ComputableTidilyInPolyTime (MultiTapeTM.dropFrame^[n]) encBits encBits := by
   induction n with

@@ -218,6 +218,7 @@ public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.Classes.Space
+public import Complexity.Computability.Complexity.Classes.Space.Savitch
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.Classes.Space
 import Complexity.Computability.Machines.Turing.MultiTape.Machine.Space
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space
+import Complexity.Computability.Complexity.Classes.Space.Savitch
 
 /-! Polynomial-space classes and finite views of space-bounded nondeterministic machines:
 inhabitants, a branch running forever, a stuck branch, repeated output, empty inputs, malformed
@@ -134,6 +135,12 @@ example (finite next : FiniteCfg 0 Bool Bool) (h : finite.state = none) :
 /-- Malformed words decode to some configuration: the empty word to one on the empty input. -/
 example : (decodeFiniteCfg (k := 0) (State := Bool) []).input = [] := rfl
 
+/-- A malformed stack tape ending in blank cells decodes to the canonical tape without them. -/
+example : (decodeStackTape (encList (encOption encBool) [some true, none, none])).toList =
+    [some true] := by
+  rw [decodeStackTape_encList]
+  rfl
+
 example (finite : FiniteCfg 2 Bool Bool) : decodeFiniteCfg (encFiniteCfg finite) = finite :=
   decodeFiniteCfg_encFiniteCfg finite
 
@@ -166,6 +173,35 @@ example : ComputableTidilyInPolyTime
       encBool :=
   loopOrAccept.computableTidilyInPolyTime_codeEdge (.fst _ _) (.snd _ _)
 
+/-! ### Savitch's theorem -/
+
+/-- The classes coincide, here for raw words. -/
+example : NPSPACE encBits = PSPACE encBits := NPSPACE_eq_PSPACE
+
+/-- A machine with a forever-looping branch is decided deterministically: the problem it accepts,
+every word, is in `PSPACE`. -/
+example : (Set.univ : Set (List Bool)) ∈ PSPACE encBits :=
+  NPSPACE_subset_PSPACE ⟨0, Bool, inferInstance, loopOrAccept, fun _ => 0, .const 0,
+    fun a => ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_loopOrAccept a⟩⟩
+
+/-- Savitch's decider for the looping machine accepts every input, the branch running forever
+notwithstanding. -/
+example (input : List Bool) : loopOrAccept.savitchDecide 0 0 input = true :=
+  (MultiTapeNTM.savitchDecide_eq_true_iff (MultiTapeNTM.runsInSpace_zero_tapes _ _ 0)
+    (Nat.zero_le _)).mpr (accepts_loopOrAccept input)
+
+/-- Savitch's decider for the stuck machine rejects, here the empty input. -/
+example : stuck.savitchDecide 0 0 [] = false := by
+  rw [Bool.eq_false_iff, Ne, MultiTapeNTM.savitchDecide_eq_true_iff
+    (MultiTapeNTM.runsInSpace_zero_tapes _ _ 0) (Nat.zero_le _)]
+  exact not_accepts_stuck []
+
+/-- The decider of a fixed machine is an actual polynomial-space computation. -/
+example : ∃ t s, PolyBounded (fun word : List Bool => (encBits word).length) s ∧
+    ComputableTidilyInTimeAndSpace (fun word => loopOrAccept.savitchDecide 0 0 (encBits word))
+      encBits encBool t s :=
+  loopOrAccept.exists_polyBounded_space_savitchDecide encBits 0 0
+
 /-! ### Axioms -/
 
 /--
@@ -195,6 +231,33 @@ info: 'Turing.MultiTapeNTM.RunPath.natAbs_lt_spaceUsedByTape' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeNTM.RunPath.natAbs_lt_spaceUsedByTape
+
+/--
+info: 'Cslib.Complexity.NPSPACE_eq_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NPSPACE_eq_PSPACE
+
+/--
+info: 'Cslib.Complexity.NPSPACE_subset_PSPACE' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NPSPACE_subset_PSPACE
+
+/--
+info: 'Turing.MultiTapeNTM.savitchDecide_eq_true_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.savitchDecide_eq_true_iff
+
+/--
+info: 'Turing.MultiTapeNTM.exists_polyBounded_space_savitchDecide' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.exists_polyBounded_space_savitchDecide
 
 /--
 info: 'Cslib.Complexity.mem_PSPACE_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
