@@ -1,17 +1,16 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
-public import Mathlib.Tactic.FunProp
+public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Foldl
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
-import Mathlib.Tactic.Ring
 
 /-!
 # Tidy computability in polynomial time
@@ -30,6 +29,8 @@ and does not depend on the encodings up to polynomial-time conversions
 
 ## Main results
 
+* `Turing.MultiTapeTM.PolyBounded.exists_le`, `.of_forall_le`: recover and supply explicit
+  polynomial bounds for the size adapter over `Cslib.PolynomiallyBounded`.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.comp`, `.ite`, `.pair`: closure properties.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl`: left folds with polynomially bounded
   intermediate states.
@@ -47,55 +48,71 @@ universe u
 
 /-! ### Polynomial bounds -/
 
-/-- `u` is bounded by a polynomial in `size`. -/
+-- vendored: express size-dependent bounds through cslib's `PolynomiallyBounded` and reuse
+-- its closure rules; `exists_le` and `of_forall_le` preserve the original explicit-bound contract.
+/-- `u` is bounded by a polynomially bounded function of `size`. This adapts
+`Cslib.PolynomiallyBounded` to arbitrary inputs; it does not assert computability. -/
 @[expose] public def PolyBounded {α : Type*} (size u : α → ℕ) : Prop :=
-  ∃ c d, ∀ a, u a ≤ c * (size a + 1) ^ d
+  ∃ bound : ℕ → ℕ, Cslib.PolynomiallyBounded bound ∧ ∀ a, u a ≤ bound (size a)
 
 namespace PolyBounded
 
 variable {α β : Type*} {size : α → ℕ} {u v : α → ℕ}
 
+/-- Recover an explicit polynomial bound valid at every input, including size zero. -/
+public theorem exists_le (h : PolyBounded size u) :
+    ∃ c d, ∀ a, u a ≤ c * (size a + 1) ^ d := by
+  obtain ⟨bound, hbound, h⟩ := h
+  obtain ⟨c, d, hp⟩ := Cslib.polynomiallyBounded_iff_le.mp hbound
+  exact ⟨c, d, fun a => (h a).trans (hp (size a))⟩
+
+/-- Supply an explicit polynomial bound in the input size. -/
+public theorem of_forall_le (c d : ℕ) (h : ∀ a, u a ≤ c * (size a + 1) ^ d) :
+    PolyBounded size u :=
+  ⟨_, Cslib.PolynomiallyBounded.of_forall_le c d (fun _ => le_rfl), h⟩
+
+/-- Apply a polynomial bound to any input-size function. -/
+public theorem of_polynomiallyBounded (size : α → ℕ) {bound : ℕ → ℕ}
+    (hbound : Cslib.PolynomiallyBounded bound) : PolyBounded size (fun a => bound (size a)) :=
+  ⟨bound, hbound, fun _ => le_rfl⟩
+
+/-- With the identity size, the adapter gives CSLib's polynomial-growth predicate. -/
+public theorem polynomiallyBounded {f : ℕ → ℕ} (h : PolyBounded id f) :
+    Cslib.PolynomiallyBounded f :=
+  let ⟨_, hbound, h⟩ := h
+  hbound.mono_of_le h
+
 public theorem mono (h : PolyBounded size v) (huv : ∀ a, u a ≤ v a) : PolyBounded size u :=
-  let ⟨c, d, hv⟩ := h
-  ⟨c, d, fun a => (huv a).trans (hv a)⟩
+  let ⟨bound, hbound, hv⟩ := h
+  ⟨bound, hbound, fun a => (huv a).trans (hv a)⟩
 
 public theorem const (k : ℕ) : PolyBounded size fun _ => k :=
-  ⟨k, 0, fun _ => by simp⟩
+  of_polynomiallyBounded size (.const k)
 
 public theorem self : PolyBounded size size :=
-  ⟨1, 1, fun _ => by simp⟩
+  of_polynomiallyBounded size .id
 
 public theorem add (hu : PolyBounded size u) (hv : PolyBounded size v) :
-    PolyBounded size fun a => u a + v a := by
-  obtain ⟨c₁, d₁, h₁⟩ := hu
-  obtain ⟨c₂, d₂, h₂⟩ := hv
-  refine ⟨c₁ + c₂, max d₁ d₂, fun a => (add_le_add (h₁ a) (h₂ a)).trans ?_⟩
-  rw [Nat.add_mul]
-  gcongr <;> omega
+    PolyBounded size fun a => u a + v a :=
+  let ⟨_, hp, hu⟩ := hu
+  let ⟨_, hq, hv⟩ := hv
+  ⟨_, hp.add hq, fun a => Nat.add_le_add (hu a) (hv a)⟩
 
 public theorem mul (hu : PolyBounded size u) (hv : PolyBounded size v) :
-    PolyBounded size fun a => u a * v a := by
-  obtain ⟨c₁, d₁, h₁⟩ := hu
-  obtain ⟨c₂, d₂, h₂⟩ := hv
-  refine ⟨c₁ * c₂, d₁ + d₂, fun a => (Nat.mul_le_mul (h₁ a) (h₂ a)).trans_eq ?_⟩
-  rw [Nat.pow_add]
-  ring
+    PolyBounded size fun a => u a * v a :=
+  let ⟨_, hp, hu⟩ := hu
+  let ⟨_, hq, hv⟩ := hv
+  ⟨_, hp.mul hq, fun a => Nat.mul_le_mul (hu a) (hv a)⟩
 
 /-- Substitution: if `v` is bounded by a polynomial in `size'` and `size' ∘ g` by a polynomial in
 `size`, then `v ∘ g` is bounded by a polynomial in `size`. -/
 public theorem comp {size' : β → ℕ} {v : β → ℕ} {g : α → β} (hv : PolyBounded size' v)
     (hg : PolyBounded size fun a => size' (g a)) : PolyBounded size fun a => v (g a) := by
-  obtain ⟨c₁, d₁, h₁⟩ := hg
-  obtain ⟨c₂, d₂, h₂⟩ := hv
-  refine ⟨c₂ * (c₁ + 1) ^ d₂, d₁ * d₂, fun a => (h₂ (g a)).trans ?_⟩
-  have h : size' (g a) + 1 ≤ (c₁ + 1) * (size a + 1) ^ d₁ := by
-    have := h₁ a
-    dsimp only at this
-    have := Nat.one_le_pow d₁ (size a + 1) (Nat.succ_pos _)
-    rw [Nat.add_one_mul]
-    omega
-  refine (Nat.mul_le_mul_left c₂ (Nat.pow_le_pow_left h d₂)).trans_eq ?_
-  rw [Nat.mul_pow, ← Nat.pow_mul, Nat.mul_assoc]
+  obtain ⟨c, d, hv⟩ := hv.exists_le
+  obtain ⟨bound, hbound, hg⟩ := hg
+  refine ⟨fun n => c * (bound n + 1) ^ d, by fun_prop, fun a => ?_⟩
+  exact (hv (g a)).trans (Nat.mul_le_mul_left c
+    (Nat.pow_le_pow_left (Nat.add_le_add_right (hg a) 1) d))
 
 end PolyBounded
 
@@ -122,7 +139,7 @@ public theorem polyBounded_length {f : α → β} (h : ComputableTidilyInPolyTim
 public theorem of_linear {f : α → β} (h : ComputableTidilyInLinearTimeAndSpace f encIn encMid) :
     ComputableTidilyInPolyTime f encIn encMid :=
   let ⟨c, hc⟩ := h
-  ⟨_, _, ⟨c, 1, fun _ => by simp⟩, ⟨c, 1, fun _ => by simp⟩, hc⟩
+  ⟨_, _, .of_forall_le c 1 (fun _ => by simp), .of_forall_le c 1 (fun _ => by simp), hc⟩
 
 public theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInPolyTime f encMid encOut)
     (hg : ComputableTidilyInPolyTime g encIn encMid) :
@@ -139,8 +156,8 @@ public theorem restrict {f : α → β} (h : ComputableTidilyInPolyTime f encIn 
     (p : α → Prop) :
     ComputableTidilyInPolyTime (f ∘ Subtype.val) ((Function.Embedding.subtype p).trans encIn)
       encMid :=
-  let ⟨_, _, ⟨ct, dt, ht⟩, ⟨cs, ds, hs⟩, hf⟩ := h
-  ⟨_, _, ⟨ct, dt, fun a => ht a⟩, ⟨cs, ds, fun a => hs a⟩, hf.restrict p⟩
+  let ⟨_, _, ⟨t, ht, ht'⟩, ⟨s, hs, hs'⟩, hf⟩ := h
+  ⟨_, _, ⟨t, ht, fun a => ht' a⟩, ⟨s, hs, fun a => hs' a⟩, hf.restrict p⟩
 
 public theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
     (hc : ComputableTidilyInPolyTime c encIn encC)
@@ -150,8 +167,8 @@ public theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → �
       ((Function.Embedding.subtype (c · = false)).trans encIn) encMid) :
     ComputableTidilyInPolyTime (fun x => if c x then f x else g x) encIn encMid := by
   obtain ⟨tc, sc, htc, hsc, h₀⟩ := hc
-  obtain ⟨tf, sf, ⟨ctf, dtf, htf⟩, ⟨csf, dsf, hsf⟩, h₁⟩ := hf
-  obtain ⟨tg, sg, ⟨ctg, dtg, htg⟩, ⟨csg, dsg, hsg⟩, h₂⟩ := hg
+  obtain ⟨tf, sf, htf, hsf, h₁⟩ := hf
+  obtain ⟨tg, sg, htg, hsg, h₂⟩ := hg
   -- the bounds of the branches, extended to all inputs
   let ext (u : {x // c x = true} → ℕ) (v : {x // c x = false} → ℕ) (x : α) : ℕ :=
     if h : c x = true then u ⟨x, h⟩ else v ⟨x, by simpa using h⟩
@@ -159,14 +176,16 @@ public theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → �
     (tg := ext tf tg) (sg := ext sf sg)
     (h₁.mono (fun x => by simp [ext, x.2]) (fun x => by simp [ext, x.2]))
     (h₂.mono (fun x => by simp [ext, x.2]) (fun x => by simp [ext, x.2]))
-  have hext {u v} {cu du cv dv : ℕ}
-      (hu : ∀ x : {x // c x = true}, u x ≤ cu * ((encIn x).length + 1) ^ du)
-      (hv : ∀ x : {x // c x = false}, v x ≤ cv * ((encIn x).length + 1) ^ dv) :
-      PolyBounded (fun a => (encIn a).length) (ext u v) :=
-    (PolyBounded.add ⟨cu, du, fun _ => le_rfl⟩ ⟨cv, dv, fun _ => le_rfl⟩).mono fun x => by
-      by_cases hx : c x = true
-      · simpa [ext, hx] using Nat.le_add_right_of_le (hu ⟨x, hx⟩)
-      · simpa [ext, hx] using Nat.le_add_left_of_le (hv ⟨x, by simpa using hx⟩)
+  have hext {u v}
+      (hu : PolyBounded (fun x : {x // c x = true} => (encIn x).length) u)
+      (hv : PolyBounded (fun x : {x // c x = false} => (encIn x).length) v) :
+      PolyBounded (fun a => (encIn a).length) (ext u v) := by
+    obtain ⟨_, hbu, hu⟩ := hu
+    obtain ⟨_, hbv, hv⟩ := hv
+    refine ⟨_, hbu.add hbv, fun x => ?_⟩
+    by_cases hx : c x = true
+    · simpa [ext, hx] using Nat.le_add_right_of_le (hu ⟨x, hx⟩)
+    · simpa [ext, hx] using Nat.le_add_left_of_le (hv ⟨x, by simpa using hx⟩)
   refine ⟨_, _, (htc.add (hext htf htg)).add (.const k), (hsc.add (hext hsf hsg)).add (.const k),
     h.mono (fun x => ?_) (fun x => ?_)⟩ <;>
   · by_cases hx : c x = true <;> simp [ext, hx]
@@ -300,9 +319,12 @@ public theorem ComputableTidilyInPolyTime.foldl {γ α β : Type u} {encIn : γ 
     ComputableTidilyInPolyTime (fun x => (list x).foldl step (init x)) encIn encB := by
   obtain ⟨t₁, s₁, ht₁, hs₁, h₁⟩ := hlist
   obtain ⟨t₂, s₂, ht₂, hs₂, h₂⟩ := hinit
-  obtain ⟨tS, sS, ⟨ct, dt, htS⟩, ⟨cs, ds, hsS⟩, hS⟩ := hstep
+  obtain ⟨tS, sS, htS, hsS, hS⟩ := hstep
+  obtain ⟨ct, dt, htS⟩ := htS.exists_le
+  obtain ⟨cs, ds, hsS⟩ := hsS.exists_le
   have hmax {c d : ℕ} : PolyBounded (fun x => (encIn x).length) fun x => c * (aMax x + 1) ^ d :=
-    PolyBounded.comp (size' := id) (v := fun n => c * (n + 1) ^ d) ⟨c, d, fun _ => le_rfl⟩ haMax'
+    PolyBounded.comp (size' := id) (v := fun n => c * (n + 1) ^ d)
+      (.of_forall_le c d (fun _ => le_rfl)) haMax'
   obtain ⟨c, h⟩ := ComputableTidilyInTimeAndSpace.foldl (encA := encA) (encL := encL)
     (encBA := encBA) (encS := encS) (encO := encO)
     (h₁.mono (t' := fun x => t₁ x + t₂ x) (s' := fun x => s₁ x + s₂ x)
@@ -322,6 +344,6 @@ public theorem ComputableTidilyInPolyTime.foldl {γ α β : Type u} {encIn : γ 
 @[fun_prop]
 public theorem computableTidilyInPolyTime_succ : ComputableTidilyInPolyTime (· + 1) encNat encNat :=
   let ⟨c, h⟩ := computableTidilyInTimeAndSpace_succ
-  ⟨_, _, ⟨c, 2, fun _ => le_rfl⟩, ⟨c, 1, fun _ => by simp⟩, h⟩
+  ⟨_, _, .of_forall_le c 2 (fun _ => le_rfl), .of_forall_le c 1 (fun _ => by simp), h⟩
 
 end Turing.MultiTapeTM

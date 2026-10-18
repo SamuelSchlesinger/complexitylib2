@@ -114,7 +114,7 @@ theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
     (hword : ComputableTidilyInPolyTime word input encBits) :
     ComputableTidilyInPolyTime (fun a => iterate (generator a) (seedBits a) (count a) (word a))
       input encBits := by
-  obtain ⟨c, d, hlength⟩ := hgenerator.polyBounded_length
+  obtain ⟨c, d, hlength⟩ := hgenerator.polyBounded_length.exists_le
   have hpoly : PolyBounded (fun a => (input a).length)
       (fun a => c * (2 * (input a).length + seedBits a + 2) ^ d) :=
     ComputableTidilyInPolyTime.polyBounded (by fun_prop)

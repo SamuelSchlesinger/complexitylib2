@@ -55,9 +55,9 @@ theorem bool_toUnary : ComputableTidilyInPolyTime Bool.toNat encBool encUnary :=
 
 /-- A unary-output polynomial-time function is polynomially bounded in its unary input. -/
 theorem polynomiallyBounded {f : ℕ → ℕ} (hf : ComputableTidilyInPolyTime f encUnary encUnary) :
-    Cslib.PolynomiallyBounded f := by
-  obtain ⟨c, d, h⟩ := hf.polyBounded_length
-  exact Cslib.polynomiallyBounded_iff_le.mpr ⟨c, d, by simpa using h⟩
+    Cslib.PolynomiallyBounded f :=
+  (show PolyBounded (fun n : ℕ => n) f by
+    simpa only [encUnary_apply, List.length_replicate] using hf.polyBounded).polynomiallyBounded
 
 /-- Efficient unary values share a polynomial bound over a polynomially bounded range of
 indices. Selecting an index does not require a computable choice. -/
@@ -66,7 +66,7 @@ theorem indexed_polynomial_bound {f : ℕ → ℕ → ℕ} {count : ℕ → ℕ}
       (encPair encUnary encUnary) encUnary)
     (hcount : Cslib.PolynomiallyBounded count) :
     ∃ c d : ℕ, ∀ n i, i < count n → f n i ≤ c * (n + 1) ^ d := by
-  obtain ⟨c, d, hf⟩ := hf.polyBounded_length
+  obtain ⟨c, d, hf⟩ := hf.polyBounded_length.exists_le
   have hpoly : Cslib.PolynomiallyBounded (fun n => c * (2 * n + count n + 2) ^ d) := by fun_prop
   obtain ⟨C, D, hpoly⟩ := Cslib.polynomiallyBounded_iff_le.mp hpoly
   refine ⟨C, D, fun n i hi => ?_⟩

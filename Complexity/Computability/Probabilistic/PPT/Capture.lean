@@ -45,7 +45,8 @@ theorem IsPPTOn.prefix {α : Type} {input : α ↪ List Bool} {pre : α → List
     {program : α → ProbComp (List Bool)} (hprogram : IsPPTOn input encBits program)
     (hprefix : ComputableTidilyInPolyTime pre input encBits) :
     IsPPTOn input encBits (fun a => (pre a ++ ·) <$> program a) := by
-  obtain ⟨t, s, ⟨ci, di, ht⟩, _, ki, InitState, hfinite, initializer, hi⟩ := hprefix
+  obtain ⟨t, s, ht, _, ki, InitState, hfinite, initializer, hi⟩ := hprefix
+  obtain ⟨ci, di, ht⟩ := ht.exists_le
   obtain ⟨ks, State, hfinite', source, cs, ds, hsource, hhalt⟩ := hprogram.exists_halting_machine
   let prep := initializer.extendTapes (Fin.castAddEmb ks)
   let runner := source.extendTapes (Fin.natAddEmb ki)

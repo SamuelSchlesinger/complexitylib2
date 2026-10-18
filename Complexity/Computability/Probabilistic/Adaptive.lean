@@ -71,7 +71,7 @@ theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
       ∀ a state, state ∈ (ProbComp.eval (OracleComp.iterate (count a) step (initial a))).support →
         invariant a (count a) state := by
   obtain ⟨c, d, evaluate, hevaluate, hsupport, hlaw⟩ := hstep.exists_total_seeded_evaluator
-  obtain ⟨cs, ds, hs⟩ := hsize
+  obtain ⟨cs, ds, hs⟩ := hsize.exists_le
   let bound (a : α) := cs * ((input a).length + 1) ^ ds
   let budget (a : α) := c * (bound a + 1) ^ d
   have hboundEff : ComputableTidilyInPolyTime bound input encUnary := by

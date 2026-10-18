@@ -190,14 +190,8 @@ public theorem computableTidilyInPolyTime {f : α → β} (h : ComputableTidilyI
     (hS : PolyBounded (fun a => (encIn a).length) S) :
     ComputableTidilyInPolyTime f encIn encMid :=
   let ⟨c, hc, _⟩ := h
-  have hb {U : α → ℕ} (hU : PolyBounded (fun a => (encIn a).length) U) :
-      PolyBounded (fun a => (encIn a).length) fun a => c * (U a + 1) :=
-    let ⟨k, d, hk⟩ := hU
-    ⟨c * (k + 1), d, fun a => by
-      have := hk a
-      have := Nat.one_le_pow d ((encIn a).length + 1) (Nat.succ_pos _)
-      nlinarith⟩
-  ⟨_, _, hb hT, hb hS, hc⟩
+  ⟨_, _, (PolyBounded.const c).mul (hT.add (.const 1)),
+    (PolyBounded.const c).mul (hS.add (.const 1)), hc⟩
 
 /-- A function whose encoded values are those of a function computable within the bounds. -/
 public theorem of_enc_eq {f : α → β} {g : α → γ} (hf : ComputableTidilyInO f encIn encMid T S)

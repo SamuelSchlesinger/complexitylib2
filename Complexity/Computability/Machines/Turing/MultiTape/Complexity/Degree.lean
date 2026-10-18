@@ -107,7 +107,7 @@ public theorem comp {size' : β → ℕ} {v : β → ℕ} {g : α → β} (hv : 
 
 public theorem polyBounded (h : DegreeBounded size u d) : PolyBounded size u :=
   let ⟨c, hu⟩ := h
-  ⟨c, d, hu⟩
+  .of_forall_le c d hu
 
 end DegreeBounded
 

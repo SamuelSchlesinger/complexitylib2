@@ -195,10 +195,11 @@ theorem exists_polynomialClock {k : ℕ} {State Oracle : Type} [Finite State] [D
     MultiTapeTM.PolynomialClock.exists_prepare coefficient degree
   have hb : PolyBounded List.length
       (fun input : List Bool => coefficient * (input.length + 1) ^ degree) :=
-    ⟨coefficient, degree, fun _ => le_rfl⟩
+    .of_forall_le coefficient degree (fun _ => le_rfl)
   have hp : PolyBounded List.length (fun input : List Bool => cp * (input.length + 1) ^ dp) :=
-    ⟨cp, dp, fun _ => le_rfl⟩
-  obtain ⟨c, d, hbound⟩ := hp.add (((PolyBounded.const 2).mul hb).add (PolyBounded.const 1))
+    .of_forall_le cp dp (fun _ => le_rfl)
+  obtain ⟨c, d, hbound⟩ :=
+    (hp.add (((PolyBounded.const 2).mul hb).add (PolyBounded.const 1))).exists_le
   refine ⟨k + r + 1, PrepareState ⊕ Clock.Control State, inferInstance, compile machine prepare,
     c, d, fun input Query OracleState spec coin query oracle coinLaw hcoin s => ?_⟩
   let budget := coefficient * (input.length + 1) ^ degree

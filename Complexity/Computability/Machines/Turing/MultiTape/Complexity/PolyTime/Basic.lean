@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
-public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
 /-!
 # Basic polynomial-time rules
@@ -34,13 +33,6 @@ rules for `fun_prop`.
 -/
 
 @[expose] public section
-
-/-- Apply a polynomial size bound to any input-size function. -/
-theorem Turing.MultiTapeTM.PolyBounded.of_polynomiallyBounded {α : Type*}
-    (size : α → ℕ) {bound : ℕ → ℕ} (hbound : Cslib.PolynomiallyBounded bound) :
-    Turing.MultiTapeTM.PolyBounded size (fun a => bound (size a)) := by
-  obtain ⟨c, d, h⟩ := Cslib.polynomiallyBounded_iff_le.mp hbound
-  exact ⟨c, d, fun a => h (size a)⟩
 
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
@@ -97,7 +89,9 @@ theorem sndWithEncoding {γ : Type} {encC : γ ↪ List Bool}
 /-- Every polynomial-time function admits explicit time and output degrees. -/
 theorem exists_degree {f : α → β} (hf : ComputableTidilyInPolyTime f encA encB) :
     ∃ d e, ComputableTidilyInDegree f encA encB d e := by
-  obtain ⟨t, s, ⟨ct, dt, ht⟩, ⟨cs, ds, hs⟩, hf⟩ := hf
+  obtain ⟨t, s, ht, hs, hf⟩ := hf
+  obtain ⟨ct, dt, ht⟩ := ht.exists_le
+  obtain ⟨cs, ds, hs⟩ := hs.exists_le
   exact ⟨max dt ds, max dt ds, .of_bounds
     (DegreeBounded.mono_deg ⟨ct, ht⟩ (le_max_left dt ds))
     (DegreeBounded.mono_deg ⟨cs, hs⟩ (le_max_right dt ds)) hf⟩

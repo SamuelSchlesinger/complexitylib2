@@ -40,7 +40,8 @@ open Turing Turing.MultiTapeTM Cslib.Logic.PL
 
 /-- Every NP problem reduces to SAT in polynomial time through its verifier's tableau. -/
 theorem SAT_npHard : NPHard encCNF SAT := by
-  rintro α enc A ⟨p, V, ⟨t, s, ⟨c, d, ht⟩, -, k, State, hfin, tm, htm⟩, hV⟩
+  rintro α enc A ⟨p, V, ⟨t, s, ht, -, k, State, hfin, tm, htm⟩, hV⟩
+  obtain ⟨c, d, ht⟩ := ht.exists_le
   have := Fintype.ofFinite State
   classical
   refine ⟨reduce tm p c d enc, computableTidilyInPolyTime_reduce tm p c d enc, fun a =>

@@ -150,7 +150,8 @@ bound. Binary proof addresses are represented by a polynomial-length table of qu
 theorem PCP_log_subset_NP (q : ℕ → ℕ) :
     PCP (fun n => Nat.log 2 n + 1) q enc ⊆ NP enc := by
   rintro A ⟨V, c, d, hV, hcoins, hqueries, hcomplete, hsound⟩
-  obtain ⟨C, D, hlength⟩ := (PCPVerifier.isPolyTime_queryTable hV hcoins).polyBounded_length
+  obtain ⟨C, D, hlength⟩ :=
+    (PCPVerifier.isPolyTime_queryTable hV hcoins).polyBounded_length.exists_le
   let p : Polynomial ℕ := Polynomial.C C * (Polynomial.X + 1) ^ D
   have hbound (a : α) : (V.queryTable a).length ≤ p.eval (enc a).length := by
     simpa [p] using (length_le_length_encList encNat (V.queryTable a)).trans (hlength a)

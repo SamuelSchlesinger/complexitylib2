@@ -55,7 +55,7 @@ theorem foldl' {list : γ → List α} {init : γ → β} {step : β → α → 
   obtain ⟨_, _, hlist⟩ := hlist.exists_degree
   obtain ⟨_, _, hinit⟩ := hinit.exists_degree
   obtain ⟨_, _, hstep⟩ := hstep.exists_degree
-  obtain ⟨c, d, hB⟩ := hB
+  obtain ⟨c, d, hB⟩ := hB.exists_le
   exact (ComputableTidilyInDegree.foldl' hlist hinit hstep
     (show DegreeBounded (fun x => (encIn x).length) B d from ⟨c, hB⟩)
     hstates).computableTidilyInPolyTime
@@ -76,7 +76,7 @@ theorem foldlWith {par : γ → π} {list : γ → List α} {init : γ → β}
   obtain ⟨_, _, hlist⟩ := hlist.exists_degree
   obtain ⟨_, _, hinit⟩ := hinit.exists_degree
   obtain ⟨_, _, hstep⟩ := hstep.exists_degree
-  obtain ⟨c, d, hB⟩ := hB
+  obtain ⟨c, d, hB⟩ := hB.exists_le
   exact (ComputableTidilyInDegree.foldlWith hpar hlist hinit hstep
     (show DegreeBounded (fun x => (encIn x).length) B d from ⟨c, hB⟩)
     hstates).computableTidilyInPolyTime

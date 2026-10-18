@@ -103,7 +103,7 @@ theorem OneWay.exists_fixedOutputLength {f : List Bool → List Bool} (hf : OneW
     ∃ (g : List Bool → List Bool) (length : ℕ → ℕ), OneWay g ∧
       (∀ input, (g input).length = length input.length) ∧
       ComputableTidilyInPolyTime length encUnary encUnary := by
-  obtain ⟨c, d, hsize⟩ := hf.polyTime.polyBounded_length
+  obtain ⟨c, d, hsize⟩ := hf.polyTime.polyBounded_length.exists_le
   let bound (n : ℕ) := c * (n + 1) ^ d
   have hbound : ComputableTidilyInPolyTime bound encUnary encUnary := by
     unfold bound

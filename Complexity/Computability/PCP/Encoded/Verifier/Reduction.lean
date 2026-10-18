@@ -86,7 +86,7 @@ theorem mem_PCP_of_gapReduction {graph : Input → Graph C} (width : ℕ)
     (by linarith : 1 - gap / 2 < 1)
   have hlength : ComputableTidilyInPolyTime (fun x => (graph x).edges.length)
       input encUnary := by fun_prop
-  obtain ⟨c, d, hbound⟩ := hlength.polyBounded_length
+  obtain ⟨c, d, hbound⟩ := hlength.polyBounded_length.exists_le
   have hpoly : PolynomiallyBounded (fun n => c * (n + 1) ^ d) := by fun_prop
   obtain ⟨constant, hconstant⟩ := hpoly.exists_clog_le_mul_log
   refine ⟨reductionVerifier graph width repeats decode eval,

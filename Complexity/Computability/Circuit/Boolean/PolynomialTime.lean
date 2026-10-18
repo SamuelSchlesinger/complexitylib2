@@ -59,7 +59,8 @@ preimage, under the encoding, of a language in `P/poly`. -/
 theorem PPoly.exists_of_polyTime {α : Type*} {enc : α ↪ List Bool} {f : α → Bool}
     (hf : ComputableTidilyInPolyTime f enc encBool) :
     ∃ L ∈ PPoly, ∀ a, f a = true ↔ enc a ∈ L := by
-  obtain ⟨t, s, ⟨c, d, ht⟩, -, k, State, hfin, tm, htm⟩ := hf
+  obtain ⟨t, s, ht, -, k, State, hfin, tm, htm⟩ := hf
+  obtain ⟨c, d, ht⟩ := ht.exists_le
   have := Fintype.ofFinite State
   classical
   refine ⟨acceptedWithin tm fun n => c * (n + 1) ^ d, acceptedWithin_mem_PPoly tm (by fun_prop),

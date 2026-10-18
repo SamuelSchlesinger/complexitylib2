@@ -26,9 +26,11 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   interface proposed in #590. Check #767 and its split #768 before adding space-to-time
   inclusions or overlapping class definitions; reconcile the local encoded, tidy-machine
   definitions of `P`/`NP` with its `DTIME`-based language classes.
-* **Polynomial bounds.** Reconcile CSLib's `PolynomiallyBounded` with the tidy calculus's
-  size-parameterized `PolyBounded`. `Foundations/Data/Nat/PolynomialBound/Closure.lean` is the
-  proposed next submission following #1067.
+* **Polynomial bounds.** The tidy calculus's size-parameterized `PolyBounded` adapts CSLib's
+  `PolynomiallyBounded` and shares its closure API. Coordinate this adaptation with the tidy
+  branch; preserve it when resynchronizing the vendored files.
+  `Foundations/Data/Nat/PolynomialBound/Closure.lean` is the proposed next submission following
+  #1067.
 * **Probabilistic programs.** Coordinate the shared `PFunctor.FreeM` API with #1086–#1089 and
   typed oracles with #1129. The copied PMF blocks have their own markers and removal instructions
   in [Probability/PMF.lean](Complexity/Probability/PMF.lean); remove only the merged blocks.

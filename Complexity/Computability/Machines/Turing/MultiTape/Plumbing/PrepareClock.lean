@@ -67,8 +67,8 @@ theorem exists_prepare (coefficient degree : ℕ) :
   obtain ⟨t, s, ht, _, k, State, hfinite, machine, hmachine⟩ :=
     computableTidilyInPolyTime_budget coefficient degree
   have hlength : PolyBounded List.length (fun input => (budget coefficient degree input).length) :=
-    ⟨coefficient, degree, fun _ => by simp [budget]⟩
-  obtain ⟨c, d, hbound⟩ := (ht.add hlength).add (PolyBounded.const 2)
+    .of_forall_le coefficient degree (fun _ => by simp [budget])
+  obtain ⟨c, d, hbound⟩ := ((ht.add hlength).add (PolyBounded.const 2)).exists_le
   refine ⟨k, State ⊕ RewindWorkState, inferInstance, machine.outputToWord, c, d, fun input => ?_⟩
   have hcompute : machine.ComputesTidilyInTimeAndSpace input (budget coefficient degree input)
       (t input) (s input) := hmachine input

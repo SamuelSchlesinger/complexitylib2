@@ -17,6 +17,29 @@ namespace ComplexityTests.PolyTimeContracts
 
 open Turing.MultiTapeTM
 
+-- The size adapter has exactly the original pointwise polynomial contract.
+example {α : Type*} (size cost : α → ℕ) :
+    PolyBounded size cost ↔ ∃ c d, ∀ a, cost a ≤ c * (size a + 1) ^ d :=
+  ⟨PolyBounded.exists_le, fun ⟨c, d, h⟩ => .of_forall_le c d h⟩
+
+example (cost : ℕ → ℕ) : PolyBounded id cost ↔ Cslib.PolynomiallyBounded cost :=
+  ⟨PolyBounded.polynomiallyBounded, PolyBounded.of_polynomiallyBounded id⟩
+
+-- Costs can depend on more than size; composing a nonmonotone upstream bound still works.
+example : PolyBounded (fun p : ℕ × ℕ => p.1)
+    (fun p => if min p.1 p.2 = 0 then 7 else min p.1 p.2) := by
+  have hbound : Cslib.PolynomiallyBounded (fun n => if n = 0 then 7 else n) := by fun_prop
+  exact (PolyBounded.of_polynomiallyBounded id hbound).comp
+    (PolyBounded.self.mono fun p => Nat.min_le_left p.1 p.2)
+
+-- A constant size cannot hide costs unbounded within that size, even at size zero.
+example : ¬ PolyBounded (fun _ : ℕ => 0) id := by
+  intro h
+  obtain ⟨c, d, h⟩ := h.exists_le
+  have hbad := h (c + 1)
+  simp only [id_eq, zero_add, one_pow, Nat.mul_one] at hbad
+  lia
+
 -- Fixed lists may contain higher-universe objects for which no bit encoding is supplied.
 example {ι : Type 1} (indices : List ι) (test : List Bool → ι → Bool)
     (htest : ∀ i ∈ indices,

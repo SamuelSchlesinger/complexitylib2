@@ -96,7 +96,8 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn {α β : Type}
     {input : α ↪ List Bool} {output : β ↪ List Bool} {f : α → β}
     (h : ComputableTidilyInPolyTime f input output) :
     Cslib.Probability.IsPPTOn input output (fun a => pure (f a)) := by
-  obtain ⟨t, s, ⟨c, d, ht⟩, _, k, State, hfinite, machine, hmachine⟩ := h
+  obtain ⟨t, s, ht, _, k, State, hfinite, machine, hmachine⟩ := h
+  obtain ⟨c, d, ht⟩ := ht.exists_le
   refine ⟨k, State, hfinite, Turing.MultiTapePTM.ofDeterministic machine, c, d, fun a => ?_⟩
   rw [Cslib.ProbComp.eval_pure, PMF.pure_map, Turing.MultiTapePTM.eval_runClosed_ofDeterministic]
   exact congrArg PMF.pure ((hmachine a).mono (ht a) le_rfl).runFrom_initCfg.2.symm

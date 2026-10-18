@@ -132,7 +132,8 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.isOraclePPTOn
     (h : ComputableTidilyInPolyTime f input output) :
     Cslib.Probability.IsOraclePPTOn (Operation := Operation) input output
       (fun a => pure (f a)) := by
-  obtain ⟨t, s, ⟨c, d, ht⟩, _, k, State, hfinite, machine, hmachine⟩ := h
+  obtain ⟨t, s, ht, _, k, State, hfinite, machine, hmachine⟩ := h
+  obtain ⟨c, d, ht⟩ := ht.exists_le
   refine ⟨inferInstance, k, State, hfinite,
     Turing.MultiTapePTM.ofDeterministic machine, c, d, fun a OracleState oracle state => ?_⟩
   rw [map_pure, Cslib.OracleComp.interpret_pure,

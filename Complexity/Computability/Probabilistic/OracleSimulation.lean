@@ -68,7 +68,7 @@ theorem IsOraclePPTOn.run_interpret_preprocess {Operation α β Caller State : T
       (OracleComp.interpret
         (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n)) (handler a))
           (program (prepare a))).run (initial a)) := by
-  obtain ⟨resourceCoeff, resourceDegree, hbound⟩ := hresources.polyBounded_length
+  obtain ⟨resourceCoeff, resourceDegree, hbound⟩ := hresources.polyBounded_length.exists_le
   let allowance := fun size => resourceCoeff * (2 * size + 2) ^ resourceDegree
   have hallowance : PolynomiallyBounded allowance := by unfold allowance; fun_prop
   have hbound' (a : Caller) (query : List Bool) :

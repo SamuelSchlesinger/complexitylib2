@@ -220,7 +220,7 @@ theorem PseudorandomGenerator.polyTime_length
 theorem PseudorandomGenerator.length_le {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (h : PseudorandomGenerator generator length) :
     ∃ c d : ℕ, ∀ n, length n ≤ c * (n + 1) ^ d := by
-  obtain ⟨c, d, hbound⟩ := h.polyTime.polyBounded_length
+  obtain ⟨c, d, hbound⟩ := h.polyTime.polyBounded_length.exists_le
   refine ⟨c, d, fun n => ?_⟩
   simpa [h.length_eq] using hbound (List.replicate n false)
 
