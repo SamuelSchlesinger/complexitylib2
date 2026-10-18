@@ -9970,3 +9970,15 @@ info: 'FiniteField.sum_units_eval_mul_add' depends on axioms: [propext, Classica
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms FiniteField.sum_units_eval_mul_add
+
+/--
+info: 'Cslib.TreeEval.proc_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.proc_eq
+
+/--
+info: 'Cslib.TreeEval.embed_eval_eq_proc' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.embed_eval_eq_proc

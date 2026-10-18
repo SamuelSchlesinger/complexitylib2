@@ -458,6 +458,8 @@ public import Complexity.Computability.QueryComplexity.Restriction
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
+public import Complexity.Computability.TreeEval.Basic
+public import Complexity.Computability.TreeEval.CookMertz
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
@@ -554,6 +556,7 @@ public import Complexity.Foundations.BooleanAnalysis.Linearity
 public import Complexity.Foundations.BooleanAnalysis.LowDegree
 public import Complexity.Foundations.BooleanAnalysis.LowDegreeParity
 public import Complexity.Foundations.BooleanAnalysis.MirrorSets
+public import Complexity.Foundations.BooleanAnalysis.MultilinearExtension
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.Combinatorics.CentralBinomial
