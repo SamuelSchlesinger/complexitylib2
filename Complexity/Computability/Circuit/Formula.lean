@@ -107,6 +107,19 @@ namespace Formula
 
 variable {σ : Signature.{v}} {n : ℕ} {U V : Type*}
 
+/-- Formulas have decidable equality when operation symbols do: compare the operations at the
+roots, then the arguments pointwise. -/
+instance decidableEq [DecidableEq σ.Op] : DecidableEq (Formula σ n)
+  | input i, input j => decidable_of_iff (i = j) (by simp)
+  | input _, gate _ _ => isFalse fun h => by cases h
+  | gate _ _, input _ => isFalse fun h => by cases h
+  | gate op args, gate op' args' =>
+    if hop : op = op' then by
+      subst hop
+      letI (j : Fin (σ.Arity op)) : Decidable (args j = args' j) := decidableEq (args j) (args' j)
+      exact decidable_of_iff (∀ j, args j = args' j) (by simp [funext_iff])
+    else isFalse fun h => by cases h; exact hop rfl
+
 /-- Evaluate a formula under an interpretation. -/
 def eval (F : Formula σ n) (I : Interpretation σ U) (x : Fin n → U) : U :=
   match F with

@@ -13,13 +13,30 @@ public import Complexity.Computability.Circuit.Rational.Detection
 /-!
 # Exact matrix evaluation and consequences of hitting lists
 
-These deductions use OpenAI's rational-formula semantics. Inverse is partial:
-every evaluated inverse node must have a genuine two-sided inverse.
+These deductions use OpenAI's rational-formula semantics. Inverse is partial: every evaluated
+inverse node must have a genuine two-sided inverse.
 
-A hitting list detects nonzeroness by an invertible value. With two extra
-syntax nodes in the size bound, it also detects admissibility, including for
-identically zero formulas. The executable tests here have correctness proofs;
-no polynomial bound for their rational arithmetic is asserted.
+A hitting list detects nonzeroness by an invertible value. With two extra syntax nodes in the size
+bound, it also detects admissibility, including for identically zero formulas. The executable
+tests here have correctness proofs; no polynomial bound for their rational arithmetic is asserted.
+
+## Main results
+
+* `Cslib.Circuits.Rational.Formula.evalMatrix?_eq_some_iff`: the executable evaluation returns
+  exactly the values of the evaluation relation.
+* `Cslib.Circuits.Rational.Hits.nonzero_iff`, `Cslib.Circuits.Rational.Hits.admissible_iff`,
+  `Cslib.Circuits.Rational.Hits.admissible_inv_iff_nonzero`: a hitting list detects nonzeroness
+  and admissibility.
+* `Cslib.Circuits.Rational.Hits.admissibilityTest_eq_true_iff`,
+  `Cslib.Circuits.Rational.Hits.nonzeroTest_eq_true_iff`: the finite tests decide admissibility
+  and nonzeroness.
+
+## References
+
+* From the complexitylib port [Schlesinger2026RationalHitting] at revision
+  add0aca8ee0d71e68969f2cb45cf91554a50f787 (file Complexitylib/RationalHitting/Evaluation.lean),
+  built on OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a.
 -/
 
 public section
@@ -37,7 +54,7 @@ theorem Nonzero.admissible {n : ℕ} {f : Formula n} (hf : Nonzero f) : Admissib
 
 /-- Positive dimension makes an invertible hitting value a nonzero witness. -/
 theorem Hits.nonzero_iff {n s : ℕ} {H : Output n} (hH : Hits s H)
-    (f : Formula n) (hf : f.size ≤ s) :
+    (f : Formula n) (hf : f.nodeCount ≤ s) :
     Nonzero f ↔ ∃ X ∈ H.tuples, ∃ v, Evaluates f X v ∧ IsUnit v :=
   Internal.hits_nonzero_iff hH f hf
 
@@ -46,15 +63,15 @@ theorem admissible_nonzero_or_add_one {n : ℕ} (f : Formula n) (hf : Admissible
     Nonzero f ∨ Nonzero (.add f (.const 1)) :=
   Internal.admissible_nonzero_or_add_one f hf
 
-/-- A hitting list with a size allowance of two also detects the domain of every formula. -/
+/-- A hitting list with an allowance of two more nodes also detects the domain of every formula. -/
 theorem Hits.admissible_iff {n s : ℕ} {H : Output n} (hH : Hits (s + 2) H)
-    (f : Formula n) (hf : f.size ≤ s) :
+    (f : Formula n) (hf : f.nodeCount ≤ s) :
     Admissible f ↔ ∃ X ∈ H.tuples, ∃ v, Evaluates f X v :=
   Internal.hits_admissible_iff hH f hf
 
 /-- An invertible hit turns a nonzero formula into one with an admissible inverse. -/
 theorem Hits.admissible_inv_iff_nonzero {n s : ℕ} {H : Output n} (hH : Hits s H)
-    (f : Formula n) (hf : f.size ≤ s) : Admissible (.inv f) ↔ Nonzero f :=
+    (f : Formula n) (hf : f.nodeCount ≤ s) : Admissible (.inv f) ↔ Nonzero f :=
   Internal.hits_admissible_inv_iff_nonzero hH f hf
 
 /-- The executable domain test searches exactly the defined evaluations on the list. -/
@@ -67,15 +84,15 @@ theorem Output.nonzeroTest_iff {n : ℕ} (H : Output n) (f : Formula n) :
     H.nonzeroTest f = true ↔ ∃ X ∈ H.tuples, ∃ v, Evaluates f X v ∧ IsUnit v :=
   Internal.nonzeroTest_iff H f
 
-/-- A hitting list for size `s + 2` decides admissibility of formulas of size at most `s`. -/
+/-- A hitting list for `s + 2` nodes decides admissibility of formulas with at most `s` nodes. -/
 theorem Hits.admissibilityTest_eq_true_iff {n s : ℕ} {H : Output n}
-    (hH : Hits (s + 2) H) (f : Formula n) (hf : f.size ≤ s) :
+    (hH : Hits (s + 2) H) (f : Formula n) (hf : f.nodeCount ≤ s) :
     H.admissibilityTest f = true ↔ Admissible f :=
   Internal.hits_admissibilityTest_eq_true_iff hH f hf
 
-/-- A hitting list for size `s` decides nonzeroness of formulas of size at most `s`. -/
+/-- A hitting list for `s` nodes decides nonzeroness of formulas with at most `s` nodes. -/
 theorem Hits.nonzeroTest_eq_true_iff {n s : ℕ} {H : Output n}
-    (hH : Hits s H) (f : Formula n) (hf : f.size ≤ s) :
+    (hH : Hits s H) (f : Formula n) (hf : f.nodeCount ≤ s) :
     H.nonzeroTest f = true ↔ Nonzero f :=
   Internal.hits_nonzeroTest_eq_true_iff hH f hf
 
