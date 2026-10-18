@@ -50,6 +50,8 @@ public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Padding
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Layer
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
@@ -202,6 +204,7 @@ public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
@@ -220,6 +223,7 @@ public import Complexity.Computability.Complexity.CookLevin.Parameters
 public import Complexity.Computability.Complexity.CookLevin.PolyTime
 public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Tableau
+public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.SAT
@@ -273,6 +277,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Bina
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
@@ -325,6 +330,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ExtendT
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Halting
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.InputFromTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputPrefix
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
@@ -608,6 +614,7 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
+public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Fin.Order
@@ -671,6 +678,7 @@ public import Complexity.Languages.Probabilistic.Selection
 public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.UniformNat
+public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Reduction
 public import Complexity.Logics.Propositional.CNF

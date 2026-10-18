@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.IndependentSet
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
 # Cliques
@@ -20,10 +22,18 @@ in the complement of the graph on its vertices (`Graph.compl`), so complementing
 ## Main definitions
 
 * `Cslib.Complexity.Clique`, `Cslib.Complexity.Graph.compl`.
+* `Cslib.Complexity.Clique.verifier`.
 
 ## Main results
 
 * `Cslib.Complexity.Graph.compl_mem_Clique_iff`: `(G.compl, m) ∈ Clique ↔ (G, m) ∈ IndependentSet`.
+* `Cslib.Complexity.Graph.computableTidilyInPolyTime_compl`: complementing a graph on its declared
+  vertices is polynomial-time.
+* `Cslib.Complexity.Clique.mem_NP`: `Clique ∈ NP (encPair encGraph encNat)`.
+* `Cslib.Complexity.polyTimeReducible_IndependentSet_Clique`: `IndependentSet` reduces to `Clique`
+  in polynomial time.
+* `Cslib.Complexity.Clique_npHard`: `Clique` is `NP`-hard.
+* `Cslib.Complexity.Clique_npComplete`: `Clique` is `NP`-complete.
 
 ## References
 
@@ -34,6 +44,8 @@ in the complement of the graph on its vertices (`Graph.compl`), so complementing
 @[expose] public section
 
 namespace Cslib.Complexity
+
+open Turing.MultiTapeTM Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 /-- The graphs with a clique of `m` of their vertices. -/
 def Clique : Set (Graph × ℕ) :=
@@ -80,6 +92,66 @@ theorem compl_mem_Clique_iff (G : Graph) (m : ℕ) :
       fun h u hu v hv huv => (compl_adj_iff (hS u hu) (hS v hv)).2 ⟨huv, h hu hv huv⟩⟩
   exact ⟨fun ⟨h₁, h₂⟩ => ⟨hpair.1 h₁, h₂⟩, fun ⟨h₁, h₂⟩ => ⟨hpair.2 h₁, h₂⟩⟩
 
+/-- Complementing a graph on its declared vertices is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_compl :
+    ComputableTidilyInPolyTime compl encGraph encGraph := by
+  have hdec : ∀ (G : Graph) (u v : ℕ),
+      decide (u ≠ v ∧ (u, v) ∉ G.2 ∧ (v, u) ∉ G.2) = (!decide (u = v) && !G.adjBool u v) := by
+    intro G u v
+    rw [Bool.eq_iff_iff]
+    simp only [decide_eq_true_eq, Bool.and_eq_true, Bool.not_eq_true', decide_eq_false_iff_not,
+      adjBool_eq_false_iff, toSimpleGraph, SimpleGraph.fromRel_adj, ne_eq, not_and, not_or]
+    tauto
+  unfold compl
+  simp_rw [hdec]
+  unfold adjBool encGraph
+  fun_prop
+
 end Graph
+
+namespace Clique
+
+/-- The verifier for `Clique`: select distinct declared vertices from the certificate mask, check
+that their count equals `m`, and check that every two distinct selected vertices are adjacent. -/
+def verifier : (Graph × ℕ) × List Bool → Bool :=
+  Graph.verifySubset Graph.adjBool
+
+/-- `Clique.verifier` verifies `Clique` with certificates as long as the encoded instance. -/
+theorem isVerifier :
+    IsVerifier (encPair encGraph encNat) Polynomial.X verifier Clique := by
+  have h := Graph.isVerifier_verifySubset (rel := Graph.adjBool)
+    (P := fun G u v => G.toSimpleGraph.Adj u v)
+    (fun G u v _ => by rw [Graph.adjBool_eq_true_iff])
+  intro x
+  simpa only [Clique, Set.mem_ofPred_eq, SimpleGraph.isNClique_iff, SimpleGraph.IsClique,
+    verifier] using h x
+
+/-- The `Clique` verifier is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier
+      (encPair (encPair encGraph encNat) encBits) encBool :=
+  Graph.computableTidilyInPolyTime_verifySubset Graph.computableTidilyInPolyTime_adjBool
+
+/-- `Clique` belongs to `NP`. -/
+theorem mem_NP : Clique ∈ NP (encPair encGraph encNat) :=
+  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+
+end Clique
+
+/-- `IndependentSet` reduces to `Clique` in polynomial time by complementing the graph on its
+declared vertices. -/
+theorem polyTimeReducible_IndependentSet_Clique :
+    PolyTimeReducible (encPair encGraph encNat) (encPair encGraph encNat) IndependentSet Clique :=
+  ⟨fun x => (x.1.compl, x.2), by fun_prop, fun ⟨G, m⟩ => (Graph.compl_mem_Clique_iff G m).symm⟩
+
+/-- `Clique` is `NP`-hard. -/
+theorem Clique_npHard : NPHard (encPair encGraph encNat) Clique :=
+  IndependentSet_npHard.trans polyTimeReducible_IndependentSet_Clique
+
+/-- **`Clique` is NP-complete.** -/
+theorem Clique_npComplete : NPComplete (encPair encGraph encNat) Clique :=
+  ⟨Clique.mem_NP, Clique_npHard⟩
 
 end Cslib.Complexity
