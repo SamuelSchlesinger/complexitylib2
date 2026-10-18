@@ -27,6 +27,8 @@ import ComplexityTests.EntropyPseudoentropy
 import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExplicitExpanders
+import ComplexityTests.FaginEncoding
+import ComplexityTests.FaginNP
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
@@ -56,6 +58,7 @@ import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MassProduction
+import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NegligibleSqrt
