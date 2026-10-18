@@ -9995,3 +9995,17 @@ info: 'Cslib.TreeEval.Reader.exists_run_eq' depends on axioms: [propext, Classic
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.TreeEval.Reader.exists_run_eq
+
+/--
+info: 'Turing.ReadMachine.computes_toStepMachine' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.ReadMachine.computes_toStepMachine
+
+/--
+info: 'Turing.ReadMachine.tidy_toStepMachine' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.ReadMachine.tidy_toStepMachine

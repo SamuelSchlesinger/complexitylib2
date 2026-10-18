@@ -255,6 +255,8 @@ public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.Shannon
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Computability.Machines.ReadMachine.Basic
+public import Complexity.Computability.Machines.ReadMachine.StepMachine
+public import Complexity.Computability.Machines.ReadMachine.Tidy
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Append
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Comp
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.CopyWord
@@ -273,6 +275,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arit
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BinaryCompare
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists

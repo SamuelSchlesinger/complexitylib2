@@ -95,6 +95,17 @@ theorem next_of_not_halt {c : Cfg σ} (h : m.halt c.state = false) :
       c.out ++ (m.step c.state (m.readBit x c.state)).2⟩ := by
   simp [next, h]
 
+/-- Halting configurations are fixed. -/
+theorem runFrom_of_halt {c : Cfg σ} (h : m.halt c.state = true) (n : ℕ) : m.runFrom x c n = c := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [runFrom_succ, show m.next x c = c by simp [next, h], ih]
+
+/-- After halting, the configuration stays. -/
+theorem run_eq_of_halt {n n' : ℕ} (h : m.halt (m.run x n).state = true) (hn : n ≤ n') :
+    m.run x n' = m.run x n := by
+  rw [show n' = n + (n' - n) by omega, run_add, runFrom_of_halt _ _ h]
+
 end ReadMachine
 
 end Turing
