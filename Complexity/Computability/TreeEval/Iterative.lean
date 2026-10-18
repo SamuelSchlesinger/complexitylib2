@@ -141,6 +141,11 @@ variable {T m unit}
 @[simp] theorem path_cons (fr : Frame) (st : List Frame) :
     path (fr :: st) = path st ++ [fr.dir] := rfl
 
+@[simp] theorem length_path (st : List Frame) : (path st).length = st.length := by
+  induction st with
+  | nil => rfl
+  | cons fr st ih => simp [path, ih]
+
 @[simp] theorem sgn_false : (sgn false : K) = 1 := rfl
 @[simp] theorem sgn_true : (sgn true : K) = -1 := rfl
 

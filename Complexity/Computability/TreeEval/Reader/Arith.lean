@@ -1,0 +1,273 @@
+/-
+Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Christian Reitwiessner
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.TreeEval.Reader.Defs
+public import Mathlib.FieldTheory.Finite.Basic
+public import Mathlib.Algebra.BigOperators.Fin
+
+/-!
+# Residues and registers of the Tree Evaluation read machine
+
+The read machine computes with natural numbers below a prime `p`; this file relates them to
+`ZMod p`. The residue operations cast to the field operations, and the register operations to
+those of `Cslib.TreeEval.Iter` on the registers read as field elements. The weight of a table entry
+casts to the value of the indicator polynomial of its inputs, so that the sums over the table give
+the multilinear extension of a gate.
+
+## Main definitions
+
+* `Cslib.TreeEval.Reader.Regs.toState`: the registers read in `ZMod p`.
+* `Cslib.TreeEval.Reader.Regs.WF`: registers of length `ℓ` holding residues below `p`.
+
+## Main results
+
+* `Cslib.TreeEval.Reader.cast_weight`: the weight casts to the product of `x` or `1 - x` over the
+  bits of the inputs.
+* `Cslib.TreeEval.Reader.eval_gatePoly_eq_sum`: the multilinear extension of an output bit of a
+  gate as a sum over the table indices `k < 4^ℓ`.
+-/
+
+@[expose] public section
+
+open MvPolynomial Cslib.BitString
+
+namespace Cslib.TreeEval
+
+namespace Reader
+
+variable {p : ℕ}
+
+/-! ### Residues -/
+
+section Cast
+
+@[simp] theorem cast_addMod (a b : ℕ) : ((addMod p a b : ℕ) : ZMod p) = a + b := by
+  simp [addMod]
+
+@[simp] theorem cast_mulMod (a b : ℕ) : ((mulMod p a b : ℕ) : ZMod p) = a * b := by
+  simp [mulMod]
+
+@[simp] theorem cast_negMod [NeZero p] (a : ℕ) : ((negMod p a : ℕ) : ZMod p) = -a := by
+  rw [negMod, ZMod.natCast_mod, Nat.cast_sub (Nat.mod_lt _ (NeZero.pos p)).le, ZMod.natCast_self,
+    ZMod.natCast_mod, zero_sub]
+
+@[simp] theorem cast_powMod (a n : ℕ) : ((powMod p a n : ℕ) : ZMod p) = (a : ZMod p) ^ n := by
+  induction n with
+  | zero => simp [powMod]
+  | succ n ih => simp [powMod, ih, pow_succ]
+
+@[simp] theorem cast_chi [NeZero p] (b : Bool) (x : ℕ) :
+    ((chi p b x : ℕ) : ZMod p) = if b then (x : ZMod p) else 1 - x := by
+  cases b <;> simp [chi, sub_eq_add_neg]
+
+theorem mulMod_lt (hp : 0 < p) (a b : ℕ) : mulMod p a b < p := Nat.mod_lt _ hp
+theorem addMod_lt (hp : 0 < p) (a b : ℕ) : addMod p a b < p := Nat.mod_lt _ hp
+theorem negMod_lt (hp : 0 < p) (a : ℕ) : negMod p a < p := Nat.mod_lt _ hp
+
+variable [Fact p.Prime]
+
+@[simp] theorem cast_sgnVal (neg : Bool) : ((sgnVal p neg : ℕ) : ZMod p) = Iter.sgn neg := by
+  cases neg
+  · simp [sgnVal, Iter.sgn]
+  · have := (Fact.out : p.Prime).one_lt
+    simp [sgnVal, Iter.sgn, Nat.cast_sub this.le]
+
+/-- Fermat: a nonzero residue to the power `p - 2` is its inverse. -/
+theorem pow_sub_two_eq_inv {a : ZMod p} (ha : a ≠ 0) : a ^ (p - 2) = a⁻¹ := by
+  have hp := (Fact.out : p.Prime).two_le
+  refine eq_inv_of_mul_eq_one_left ?_
+  rw [← pow_succ, show p - 2 + 1 = p - 1 by omega, ZMod.pow_card_sub_one_eq_one ha]
+
+theorem cast_unitInv {j : ℕ} (hj : j < p - 1) :
+    ((unitInv p j : ℕ) : ZMod p) = ((j + 1 : ℕ) : ZMod p)⁻¹ := by
+  have hp := (Fact.out : p.Prime).two_le
+  have h : ((j + 1 : ℕ) : ZMod p) ≠ 0 := by
+    rw [Ne, ZMod.natCast_eq_zero_iff]
+    exact Nat.not_dvd_of_pos_of_lt (by omega) (by omega)
+  rw [unitInv, cast_powMod, ← pow_sub_two_eq_inv h, Nat.cast_succ]
+
+/-- The unit of round `j` casts to the unit `Iter.zmodUnit p j`, for `j < p - 1`. -/
+theorem cast_unitVal {j : ℕ} (hj : j < p - 1) :
+    ((unitVal j : ℕ) : ZMod p) = (Iter.zmodUnit p j : ZMod p) := by
+  rw [unitVal, Iter.zmodUnit_val hj]
+
+/-- The inverse of the unit of round `j` casts to the inverse of `Iter.zmodUnit p j`. -/
+theorem cast_unitInv_eq {j : ℕ} (hj : j < p - 1) :
+    ((unitInv p j : ℕ) : ZMod p) = (((Iter.zmodUnit p j)⁻¹ : (ZMod p)ˣ) : ZMod p) := by
+  rw [cast_unitInv hj, Units.val_inv_eq_inv_val, Iter.zmodUnit_val hj]
+
+/-! ### Registers -/
+
+/-- The registers read as field elements: element `i` of register `r`, or `0`. -/
+def Regs.toState (p ℓ : ℕ) (R : Regs) : TreeEval.State (ZMod p) ℓ :=
+  fun r i => ((R.get r).getD i 0 : ZMod p)
+
+/-- Registers of length `ℓ` holding residues below `p`. -/
+def Regs.WF (p ℓ : ℕ) (R : Regs) : Prop :=
+  ∀ r, (R.get r).length = ℓ ∧ ∀ v ∈ R.get r, v < p
+
+@[simp] theorem Regs.get_set_self (R : Regs) (r : Fin 3) (l : List ℕ) : (R.set r l).get r = l := by
+  fin_cases r <;> rfl
+
+theorem Regs.get_set_of_ne (R : Regs) {r r' : Fin 3} (h : r' ≠ r) (l : List ℕ) :
+    (R.set r l).get r' = R.get r' := by
+  fin_cases r <;> fin_cases r' <;> first | rfl | exact absurd rfl h
+
+theorem Regs.get_set (R : Regs) (r r' : Fin 3) (l : List ℕ) :
+    (R.set r l).get r' = if r' = r then l else R.get r' := by
+  split_ifs with h
+  · subst h; exact R.get_set_self _ _
+  · exact R.get_set_of_ne h l
+
+variable {ℓ : ℕ}
+
+theorem toState_scale (R : Regs) (r : Fin 3) (a : ℕ) :
+    (R.scale p r a).toState p ℓ = scale r (a : ZMod p) (R.toState p ℓ) := by
+  funext r' i
+  by_cases h : r' = r
+  · subst h
+    simp only [Regs.toState, Regs.scale, TreeEval.scale, Regs.get_set_self, Function.update_self,
+      Pi.smul_apply, smul_eq_mul, List.getD_eq_getElem?_getD, List.getElem?_map]
+    rcases h' : (R.get r')[i.val]? with _ | v <;> simp [mulMod]
+  · simp [Regs.toState, Regs.scale, TreeEval.scale, Regs.get_set_of_ne _ h, h]
+
+omit [Fact p.Prime] in
+theorem Regs.WF.scale (hp : 0 < p) {R : Regs} (hR : R.WF p ℓ) (r : Fin 3) (a : ℕ) :
+    (R.scale p r a).WF p ℓ := by
+  intro r'
+  simp only [Regs.scale, Regs.get_set]
+  split_ifs with h
+  · subst h
+    exact ⟨by simp [(hR r').1], fun v hv => by
+      obtain ⟨w, -, rfl⟩ := List.mem_map.mp hv
+      exact mulMod_lt hp _ _⟩
+  · exact hR r'
+
+theorem toState_set_modifyAt (R : Regs) (t : Fin 3) (i : Fin ℓ) (hlen : (R.get t).length = ℓ)
+    (g : ℕ → ℕ) :
+    (R.set t (modifyAt (R.get t) i g)).toState p ℓ =
+      Function.update (R.toState p ℓ) t
+        (Function.update (R.toState p ℓ t) i (g ((R.get t).getD i 0) : ZMod p)) := by
+  funext r j
+  by_cases h : r = t
+  · subst h
+    by_cases hj : j = i
+    · subst hj
+      simp [Regs.toState, modifyAt, List.getD_eq_getElem?_getD, hlen]
+    · have : (i : ℕ) ≠ j := fun e => hj (Fin.ext e.symm)
+      simp [Regs.toState, modifyAt, List.getD_eq_getElem?_getD, this, hj]
+  · simp [Regs.toState, Regs.get_set_of_ne _ h, h]
+
+omit [Fact p.Prime] in
+theorem Regs.WF.set_modifyAt (hp : 0 < p) {R : Regs} (hR : R.WF p ℓ) (t : Fin 3) (i : ℕ) (a : ℕ) :
+    (R.set t (modifyAt (R.get t) i (addMod p a))).WF p ℓ := by
+  intro r
+  simp only [Regs.get_set]
+  split_ifs with h
+  · subst h
+    refine ⟨by simp [modifyAt, (hR r).1], fun v hv => ?_⟩
+    rcases List.mem_or_eq_of_mem_set hv with hv | rfl
+    · exact (hR r).2 v hv
+    · exact addMod_lt hp _ _
+  · exact hR r
+
+omit [Fact p.Prime] in
+theorem Regs.WF.subtractSums (hp : 0 < p) {R : Regs} (hR : R.WF p ℓ) (c : ℕ) (t : Fin 3)
+    (acc : List ℕ) : (subtractSums p c t acc R).WF p ℓ := by
+  intro r
+  simp only [TreeEval.Reader.subtractSums, Regs.get_set]
+  split_ifs with h
+  · subst h
+    refine ⟨by simp [(hR r).1], fun v hv => ?_⟩
+    obtain ⟨i, -, rfl⟩ := List.mem_map.mp hv
+    exact addMod_lt hp _ _
+  · exact hR r
+
+theorem toState_subtractSums (R : Regs) (c : ℕ) (t : Fin 3) (acc : List ℕ)
+    (hlen : (R.get t).length = ℓ) :
+    (subtractSums p c t acc R).toState p ℓ =
+      Function.update (R.toState p ℓ) t
+        fun i => R.toState p ℓ t i - (c : ZMod p) * (acc.getD i 0 : ZMod p) := by
+  funext r j
+  by_cases h : r = t
+  · subst h
+    have hj : (j : ℕ) < (R.get r).length := hlen ▸ j.isLt
+    simp [Regs.toState, TreeEval.Reader.subtractSums, List.getD_eq_getElem?_getD, hj,
+      sub_eq_add_neg]
+  · simp [Regs.toState, TreeEval.Reader.subtractSums, Regs.get_set_of_ne _ h, h]
+
+/-! ### Weights and the multilinear extension -/
+
+theorem cast_foldl_mulMod (F : ℕ → ℕ) (n : ℕ) :
+    (((List.range n).foldl (fun a j => mulMod p a (F j)) (1 % p) : ℕ) : ZMod p) =
+      ∏ j ∈ Finset.range n, (F j : ZMod p) := by
+  induction n with
+  | zero => simp
+  | succ n ih => rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil,
+      cast_mulMod, ih, Finset.prod_range_succ]
+
+/-- The weight casts to the product of `x` or `1 - x` over the low bits of `k`, times the same
+over its high bits for `y`. -/
+theorem cast_weight (k : ℕ) (x y : List ℕ) :
+    ((weight p ℓ k x y : ℕ) : ZMod p) =
+      (∏ j : Fin ℓ, if lowBits ℓ k j then (x.getD j 0 : ZMod p) else 1 - x.getD j 0) *
+        ∏ j : Fin ℓ, if highBits ℓ k j then (y.getD j 0 : ZMod p) else 1 - y.getD j 0 := by
+  rw [weight, cast_mulMod, cast_foldl_mulMod, cast_foldl_mulMod,
+    ← Fin.prod_univ_eq_prod_range (fun j => ((chi p (k.testBit j) (x.getD j 0) : ℕ) : ZMod p)),
+    ← Fin.prod_univ_eq_prod_range
+      (fun j => ((chi p (k.testBit (ℓ + j)) (y.getD j 0) : ℕ) : ZMod p))]
+  have : NeZero p := ⟨(Fact.out : p.Prime).ne_zero⟩
+  simp [lowBits, highBits]
+
+/-- The indices `k < 4^ℓ`, read as the low and high bits, enumerate the inputs of a gate. -/
+theorem sum_cube {M : Type*} [AddCommMonoid M] (G : (Fin ℓ ⊕ Fin ℓ → Bool) → M) :
+    ∑ a, G a = ∑ k ∈ Finset.range (4 ^ ℓ), G (Sum.elim (lowBits ℓ k) (highBits ℓ k)) := by
+  let E : (Fin ℓ ⊕ Fin ℓ → Bool) ≃ Fin (2 ^ (ℓ + ℓ)) :=
+    (Equiv.arrowCongr finSumFinEquiv finTwoEquiv.symm).trans finFunctionFinEquiv
+  have hE (k : Fin (2 ^ (ℓ + ℓ))) : E.symm k = Sum.elim (lowBits ℓ k) (highBits ℓ k) := by
+    funext ι
+    have key (n : ℕ) (x : Fin 2) (hx : (x : ℕ) = k / 2 ^ n % 2) :
+        finTwoEquiv x = (k : ℕ).testBit n := by
+      rw [Nat.testBit_eq_decide_div_mod_eq, ← hx]
+      fin_cases x <;> rfl
+    rcases ι with j | j
+    · simp only [E, Equiv.symm_trans_apply, Equiv.arrowCongr_symm, Equiv.symm_symm,
+        Equiv.arrowCongr_apply, Function.comp_apply, Sum.elim_inl, lowBits]
+      exact key j _ (by simp [finFunctionFinEquiv_symm_apply_val])
+    · simp only [E, Equiv.symm_trans_apply, Equiv.arrowCongr_symm, Equiv.symm_symm,
+        Equiv.arrowCongr_apply, Function.comp_apply, Sum.elim_inr, highBits]
+      exact key (ℓ + j) _ (by simp [finFunctionFinEquiv_symm_apply_val, Nat.add_comm])
+  rw [← E.symm.sum_comp, show 4 ^ ℓ = 2 ^ (ℓ + ℓ) by rw [← two_mul, pow_mul]; norm_num,
+    ← Fin.sum_univ_eq_sum_range (fun k => G (Sum.elim (lowBits ℓ k) (highBits ℓ k)))]
+  exact Finset.sum_congr rfl fun k _ => by rw [hE]
+
+/-- The value of the indicator polynomial of a point at any `z`. -/
+theorem eval_indicatorPoly' {ι : Type*} [Fintype ι] (a : ι → Bool) (z : ι → ZMod p) :
+    eval z (indicatorPoly a : MvPolynomial ι (ZMod p)) = ∏ i, if a i then z i else 1 - z i := by
+  simp [indicatorPoly, map_prod, apply_ite]
+
+/-- **The multilinear extension of an output bit as a sum over the table indices.** -/
+theorem eval_gatePoly_eq_sum (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (i : Fin ℓ)
+    (X Y : Fin ℓ → ZMod p) :
+    eval (Sum.elim X Y) (gatePoly f i) = ∑ k ∈ Finset.range (4 ^ ℓ),
+      bitVal (ZMod p) (f (lowBits ℓ k) (highBits ℓ k) i) *
+        ((∏ j : Fin ℓ, if lowBits ℓ k j then X j else 1 - X j) *
+          ∏ j : Fin ℓ, if highBits ℓ k j then Y j else 1 - Y j) := by
+  rw [gatePoly, multilinearExtension, map_sum]
+  simp only [map_mul, eval_C, eval_indicatorPoly', Fintype.prod_sum_type, Sum.elim_inl,
+    Sum.elim_inr]
+  rw [sum_cube (fun a => bitVal (ZMod p) (f (a ∘ Sum.inl) (a ∘ Sum.inr) i) *
+    ((∏ j, if a (Sum.inl j) then X j else 1 - X j) * ∏ j, if a (Sum.inr j) then Y j else 1 - Y j))]
+  rfl
+
+end Cast
+
+end Reader
+
+end Cslib.TreeEval

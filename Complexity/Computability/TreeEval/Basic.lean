@@ -91,6 +91,31 @@ def nodeAt : {h : ℕ} → Tree ℓ h → List Bool → Node ℓ
 @[simp] theorem nodeAt_node_true (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
     (l r : Tree ℓ h) (P : List Bool) : (node f l r).nodeAt (true :: P) = r.nodeAt P := rfl
 
+/-- Leaves are at depth `h`. -/
+theorem length_of_nodeAt_leaf {U : Tree ℓ h} {P : List Bool} {v : Fin ℓ → Bool}
+    (hP : U.nodeAt P = .leaf v) : P.length = h := by
+  induction U generalizing P with
+  | leaf w => cases P <;> simp_all [nodeAt]
+  | node f l r ihl ihr =>
+    rcases P with _ | ⟨b, P⟩
+    · simp at hP
+    · cases b
+      · simpa using ihl hP
+      · simpa using ihr hP
+
+/-- Gates are at depth less than `h`. -/
+theorem length_lt_of_nodeAt_gate {U : Tree ℓ h} {P : List Bool}
+    {f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool} (hP : U.nodeAt P = .gate f) :
+    P.length < h := by
+  induction U generalizing P with
+  | leaf w => cases P <;> simp_all [nodeAt]
+  | node f l r ihl ihr =>
+    rcases P with _ | ⟨b, P⟩
+    · simp
+    · cases b
+      · simpa using ihl hP
+      · simpa using ihr hP
+
 end Tree
 
 end Cslib.TreeEval
