@@ -3,6 +3,7 @@ import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
 import ComplexityTests.Axioms
+import ComplexityTests.BatchLookup
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.Broadcast

@@ -256,6 +256,37 @@ theorem unrouteSort_comp_sort [LinearOrder κ] (key : α → κ) (d : ℕ)
     unrouteSort d (sortTrace key d ascending x) (f ∘ sort key d ascending x) = f ∘ x := by
   rw [← routeSort_sortTrace, ← routeSort_comp, unrouteSort_routeSort]
 
+/-- Reversing saved decisions commutes with arbitrary pointwise transformations. -/
+theorem unrouteSort_comp (d : ℕ) (flags : Fin (sortTraceSize d) → Bool) (f : α → β)
+    (x : Fin (arity d) → α) : unrouteSort d flags (f ∘ x) = f ∘ unrouteSort d flags x := by
+  apply Function.LeftInverse.injective (unrouteSort_routeSort d flags)
+  rw [routeSort_unrouteSort, routeSort_comp, routeSort_unrouteSort]
+
+/-- Reversal reads the same original position for every payload type. This is deliberately
+not a simp lemma: rewriting the identity payload would expand the right-hand side again. -/
+theorem unrouteSort_apply (d : ℕ) (flags : Fin (sortTraceSize d) → Bool)
+    (x : Fin (arity d) → α) (i : Fin (arity d)) :
+    unrouteSort d flags x i = x (unrouteSort d flags id i) := by
+  simpa only [Function.comp_id, Function.comp_apply] using
+    congrFun (unrouteSort_comp d flags x id) i
+
+/-- Pointwise relations between two payload arrays survive reversal by the same saved trace. -/
+theorem unrouteSort_rel (d : ℕ) (flags : Fin (sortTraceSize d) → Bool)
+    (x : Fin (arity d) → α) (y : Fin (arity d) → β) (R : α → β → Prop)
+    (h : ∀ i, R (x i) (y i)) (i : Fin (arity d)) :
+    R (unrouteSort d flags x i) (unrouteSort d flags y i) := by
+  rw [unrouteSort_apply d flags x i, unrouteSort_apply d flags y i]
+  exact h _
+
+/-- Transfer specifications from sorted positions to literal original positions. -/
+theorem unrouteSort_rel_sort [LinearOrder κ] (key : α → κ) (d : ℕ)
+    (ascending : Bool) (x : Fin (arity d) → α) (y : Fin (arity d) → β)
+    (R : α → β → Prop) (h : ∀ i, R (sort key d ascending x i) (y i))
+    (i : Fin (arity d)) :
+    R (x i) (unrouteSort d (sortTrace key d ascending x) y i) := by
+  simpa only [unrouteSort_sort] using
+    unrouteSort_rel d (sortTrace key d ascending x) (sort key d ascending x) y R h i
+
 /-- A merge retains one decision for each comparator, or `d * 2^d / 2` decisions. -/
 theorem two_mul_mergeTraceSize (d : ℕ) : 2 * mergeTraceSize d = d * 2 ^ d := by
   induction d with

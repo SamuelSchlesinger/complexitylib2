@@ -58,9 +58,11 @@ Jukna coverage below is an additional target beyond the V1 port:
   restores uniquely keyed requests to their input-determined ranks, and has exact gate costs.
   [Saved-control sorting](Complexity/Computability/Circuit/Boolean/SortingTrace.lean) now records
   comparisons and reverses them on new payloads, with exact gate costs and no request identifiers.
-  Integrate this backend into lookup to remove the second sort and its rank bookkeeping.
-  Constructor runtime is not certified. Concrete batched lookup layouts, padding and bounds,
-  and the three mass-production results above remain to be ported.
+  [Batched table lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean) uses one sort,
+  shared broadcast, and saved swaps to return answers in query order, including repeated queries.
+  It includes concrete layouts, automatic padding, and exact gate counts; its bound is linear in
+  table size plus query count and field width, and quadratic in sorting depth. Constructor runtime
+  is not certified. The three mass-production results above remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,

@@ -23,6 +23,7 @@ public import Complexity.Computability.Circuit.Boolean.AltFormula.TopDown
 public import Complexity.Computability.Circuit.Boolean.AtLeast
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BarringtonClass
+public import Complexity.Computability.Circuit.Boolean.BatchLookup
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.Broadcast
@@ -59,6 +60,7 @@ public import Complexity.Computability.Circuit.Boolean.Parity
 public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.Circuit.Boolean.Propagation
 public import Complexity.Computability.Circuit.Boolean.Routing
+public import Complexity.Computability.Circuit.Boolean.RoutingValues
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Construction

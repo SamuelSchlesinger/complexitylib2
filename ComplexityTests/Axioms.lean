@@ -9272,3 +9272,94 @@ info: 'Cslib.Circuits.Boolean.cost_program_bitonicUnsortCircuit' depends on axio
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.cost_program_bitonicUnsortCircuit
+
+/--
+info: 'Cslib.BitonicSort.unrouteSort_rel_sort' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.unrouteSort_rel_sort
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_substituteCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_substituteCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_substituteCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_substituteCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_routeValuesCircuit_value_eq_true_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_routeValuesCircuit_value_eq_true_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_routeValuesCircuit_of_unique_source' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_routeValuesCircuit_of_unique_source
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_routeValuesCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_routeValuesCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.size_routeValuesCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_routeValuesCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.batchLookupCircuit.eval_withPadding' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.batchLookupCircuit.eval_withPadding
+
+/--
+info: 'Cslib.Circuits.Boolean.batchLookupCircuit.size_withPadding' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.batchLookupCircuit.size_withPadding
+
+/--
+info: 'Cslib.Circuits.Boolean.size_batchLookupCircuit_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_batchLookupCircuit_le
+
+/--
+info: 'Cslib.Circuits.Boolean.complexity_blockMap_le_lookup' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.complexity_blockMap_le_lookup
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_batchLookupCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_batchLookupCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.batchLookupCircuit.cost_program_withPadding' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.batchLookupCircuit.cost_program_withPadding

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 
@@ -27,6 +28,7 @@ assignment) is the substitution that replaces each bit by itself or by a constan
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.substitute`, `Cslib.Circuits.Boolean.appendInputs`.
+* `Cslib.Circuits.Boolean.substituteCircuit`: executable substitution with two shared constants.
 * `Cslib.BitString.PartialAssignment.toSubstitution`: a partial assignment as a substitution.
 
 ## Main results
@@ -53,21 +55,44 @@ def substitute (ρ : Fin N → Fin n ⊕ Bool) (x : Fin n → Bool) : Fin N → 
     {b : Bool} (h : ρ j = .inr b) : substitute ρ x j = b := by
   simp [substitute, h]
 
+/-- Implement a substitution using one shared gate for each Boolean constant.
+Both gates are included even when unused or when the output is empty. -/
+def substituteCircuit {n N : ℕ} (ρ : Fin N → Fin n ⊕ Bool) : Circuit signature n N :=
+  (Circuit.wiring signature (fun j => (ρ j).elim (Fin.castAdd 2)
+    (fun b => Fin.natAdd n (if b then 1 else 0)))).comp
+    ((Circuit.id signature n).append
+      (Circuit.pi fun i : Fin 2 => (Formula.const (i == 1)).toCircuit))
+
+/-- The shared-constant circuit implements its input substitution. -/
+@[simp] theorem eval_substituteCircuit {n N : ℕ} (ρ : Fin N → Fin n ⊕ Bool) (x : BitString n) :
+    (substituteCircuit ρ).eval interpretation x = substitute ρ x := by
+  funext j
+  cases h : ρ j with
+  | inl i => simp [substituteCircuit, substitute, h]
+  | inr b =>
+    cases b <;> simp [substituteCircuit, substitute, h]
+
+/-- Substitution charges each of the two shared constant gates once. -/
+theorem cost_program_substituteCircuit {n N : ℕ} (ρ : Fin N → Fin n ⊕ Bool)
+    (cost : signature.Op → ℕ) :
+    (substituteCircuit ρ).program.cost cost = cost (.const false) + cost (.const true) := by
+  unfold substituteCircuit
+  erw [Circuit.cost_program_comp, Circuit.cost_program_wiring, Circuit.cost_program_append,
+    Circuit.cost_program_pi]
+  simp [Circuit.id, Formula.cost_toCircuit, Fin.sum_univ_two, Formula.const]
+
+/-- The substitution circuit has exactly two gates, regardless of the output width. -/
+@[simp] theorem size_substituteCircuit {n N : ℕ} (ρ : Fin N → Fin n ⊕ Bool) :
+    (substituteCircuit ρ).size = 2 := by
+  simpa only [Program.cost_const, one_mul] using
+    cost_program_substituteCircuit ρ (fun _ => 1)
+
+
 /-- A substitution costs at most two gates, one for each constant. -/
 theorem complexity_substitute_le_two (ρ : Fin N → Fin n ⊕ Bool) :
     complexity interpretation (substitute ρ) ≤ 2 := by
-  have h : Synthesis interpretation (inputs n) (Set.range fun j x => substitute ρ x j)
-      (1 + 1 + 0) :=
-    ((Synthesis.const false).union (Synthesis.const true)).trans <| Synthesis.of_subset <| by
-      rintro _ ⟨j, rfl⟩
-      rcases hj : ρ j with i | b
-      · exact Or.inl ⟨i, funext fun x => (substitute_inl hj).symm⟩
-      · refine Or.inr ?_
-        cases b
-        · exact Or.inl (funext fun x => substitute_inr hj)
-        · exact Or.inr (funext fun x => substitute_inr hj)
-  obtain ⟨c, hc, hsize⟩ := h.exists_circuit_outputs
-  exact (complexity_le_of_computes c hc).trans hsize
+  simpa only [size_substituteCircuit] using
+    complexity_le_of_computes (substituteCircuit ρ) (eval_substituteCircuit ρ)
 
 /-- **Substitutions do not make functions harder.** Feeding the inputs of `f` from variables and
 constants costs at most two more gates than `f`. -/
