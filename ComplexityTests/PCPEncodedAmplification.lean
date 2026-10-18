@@ -62,6 +62,15 @@ private def evalConstraint (constraint : Bool) (_ _ : Bool) := constraint
 private def powered (g : Graph Bool) :=
   g.powerPreprocess evalConstraint false rotateReflection 1 2 walks
 
+-- The occurrence contract keeps each half-edge's supplied walk order.
+example : (exampleGraph.powerPreprocessEnumeration evalConstraint false rotateReflection 1 2
+    walks nodup_walks mem_walks).equiv ⟨8, by decide⟩ =
+      ((⟨0, by decide⟩, true), (fun _ => original), (fun _ => 0)) := by decide
+
+example : (exampleGraph.powerPreprocessEnumeration evalConstraint false rotateReflection 1 2
+    walks.reverse (by simpa using nodup_walks) (fun d => List.mem_reverse.mpr (mem_walks d))).equiv
+      ⟨0, by decide⟩ = ((⟨0, by decide⟩, false), (fun _ => loop), (fun _ => 1)) := by decide
+
 example : (powered exampleGraph).vertices = 2 := by decide
 
 example : (powered exampleGraph).edges.length = 16 := by decide
@@ -98,8 +107,8 @@ example (g : Graph Bool) :
     (powered g).toGraph (fun table => table) =
       (((g.regularPreprocess evalConstraint false reflection).power 1 2).toConstraintGraph.map
         (fun v => Graph.halfEdgeNumber (v.1.val, v.2))).comap
-          (g.powerPreprocessEdgeEquiv evalConstraint false rotateReflection 1 2
-            walks nodup_walks mem_walks) :=
+          (g.powerPreprocessEnumeration evalConstraint false rotateReflection 1 2
+            walks nodup_walks mem_walks).equiv :=
   g.toGraph_powerPreprocess evalConstraint false reflection rotateReflection rotateReflection_eq
     1 2 walks nodup_walks mem_walks
 

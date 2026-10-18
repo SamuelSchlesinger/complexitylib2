@@ -257,6 +257,20 @@ info: 'Cslib.Circuits.Program.trace_induction' depends on axioms:
 #print axioms Cslib.Circuits.Program.trace_induction
 
 /--
+info: 'Cslib.Circuits.Program.trace_rel' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.trace_rel
+
+/--
+info: 'Cslib.Circuits.Program.eval_rel' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Program.eval_rel
+
+/--
 info: 'Cslib.Circuits.Fusion.programAtoms_isCover' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -7164,6 +7178,12 @@ info: 'Cslib.PCP.Encoded.Graph.toGraph_append' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.PCP.Encoded.Graph.toGraph_append
+
+/--
+info: 'Cslib.PCP.Encoded.Graph.toGraph_eq_comap' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Encoded.Graph.toGraph_eq_comap
 
 /--
 info: 'Cslib.PCP.Encoded.Graph.satisfiable_addTrivial_iff' depends on axioms:

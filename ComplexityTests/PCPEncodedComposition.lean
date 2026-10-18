@@ -23,6 +23,12 @@ private def emptyCoins : List (Rand (Fin 0)) :=
 private def emptyGraph : Graph (Fin 0 → Fin 0 → Bool) :=
   ⟨2, [⟨0, 1, fun _ _ => false⟩]⟩
 
+-- All queries for one coin precede the next coin; the original edge index is retained.
+example : (emptyGraph.composeEnumeration (numberSlots emptyAlphabet).2 emptyCoins queries
+    (nodup_coins _) nodup_queries (mem_coins _) mem_queries).equiv
+      ⟨17, by rw [Graph.length_edges_compose]; decide⟩ =
+        ((⟨0, by decide⟩, emptyCoins[1]), queries[0]) := rfl
+
 example : (numberSlots emptyAlphabet).1 = 11 := by decide
 example : emptyCoins.length = 8 := by decide
 example : queries.length = 17 := by decide

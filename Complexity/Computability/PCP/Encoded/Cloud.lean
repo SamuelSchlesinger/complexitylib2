@@ -111,6 +111,12 @@ theorem mem_halfEdges_iff (g : Graph C) (p : ℕ × Bool) :
 theorem nodup_halfEdges (g : Graph C) : g.halfEdges.Nodup :=
   List.nodup_range.product (by decide)
 
+/-- Half-edge positions retain the original edge order, with its two ends adjacent. -/
+def halfEdgesEnumeration (g : Graph C) :
+    List.Enumeration g.halfEdges (fun p : Fin g.edges.length × Bool => (p.1.val, p.2)) :=
+  (List.Enumeration.range g.edges.length).prod
+    (List.Enumeration.ofNodup [false, true] (by decide) (by intro b; cases b <;> simp))
+
 /-- Cloud membership means that the edge exists and the selected endpoint is the vertex. -/
 @[simp]
 theorem mem_cloud_iff (g : Graph C) (fallback : C) (vertex : ℕ) (p : ℕ × Bool) :

@@ -44,6 +44,11 @@ private def exampleGraph : Graph Bool :=
 private def reduced : Graph (Option (Bool × Bool)) :=
   exampleGraph.degreeReduce false rotateReflection [()]
 
+-- Each half-edge's original edge occurs before its cloud edge.
+example : (exampleGraph.degreeReduceEnumeration false rotateReflection [()]
+    (by decide) (by intro d; cases d; simp)).equiv ⟨1, by decide⟩ =
+      ((⟨0, by decide⟩, false), Sum.inr ()) := by decide
+
 example : reduced = ⟨6,
     [⟨0, 1, some (false, false)⟩, ⟨0, 4, none⟩,
      ⟨1, 0, some (true, false)⟩, ⟨1, 5, none⟩,

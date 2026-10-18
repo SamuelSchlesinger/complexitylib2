@@ -596,6 +596,7 @@ public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.List.Basic
+public import Complexity.Foundations.Data.List.Equiv
 public import Complexity.Foundations.Data.List.OfFn
 public import Complexity.Foundations.Data.ListDecoding
 public import Complexity.Foundations.Data.Matrix.TotallyRegular

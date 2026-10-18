@@ -163,44 +163,32 @@ theorem length_edges_ofCNF (variableCount : ℕ) (φ : CNF ℕ) :
     (ofCNF variableCount φ).edges.length = φ.length * 3 := by
   simp [ofCNF, List.product, List.length_flatMap, List.sum_replicate]
 
-/-- The concrete edge list enumerates the mathematical clause-position pairs in order. -/
-def ofCNFEdgeEquiv (variableCount : ℕ) (φ : CNF ℕ) :
-    Fin (ofCNF variableCount φ).edges.length ≃ Fin φ.length × Fin 3 :=
-  (finCongr (List.length_map (f := cnfEdge φ))).trans
-    (listedDartEquiv φ.length (List.finRange 3) (List.nodup_finRange 3)
-      (fun _ => List.mem_finRange _))
-
-/-- Reading an encoded edge uses precisely the numbered clause and literal position. -/
-theorem get_edges_ofCNF (variableCount : ℕ) (φ : CNF ℕ)
-    (i : Fin (ofCNF variableCount φ).edges.length) :
-    (ofCNF variableCount φ).edges.get i =
-      cnfEdge φ ((ofCNFEdgeEquiv variableCount φ i).1.val,
-        (ofCNFEdgeEquiv variableCount φ i).2) := by
-  change (((List.range φ.length).product (List.finRange 3)).map (cnfEdge φ))[i.val] = _
-  simp only [List.getElem_map]
-  rfl
+/-- The concrete edge occurrences are indexed by clause and literal position. -/
+def ofCNFEnumeration (variableCount : ℕ) (φ : CNF ℕ) :
+    List.Enumeration (ofCNF variableCount φ).edges
+      (fun p : Fin φ.length × Fin 3 => cnfEdge φ (p.1.val, p.2)) :=
+  ((List.Enumeration.range φ.length).prod
+    (List.Enumeration.ofNodup (List.finRange 3) (List.nodup_finRange 3)
+      (fun _ => List.mem_finRange _))).map (cnfEdge φ)
 
 /-- The executable graph is exactly the existing mathematical graph with concrete numbering. -/
 theorem toGraph_ofCNF (variableCount : ℕ) (φ : CNF ℕ) :
     (ofCNF variableCount φ).toGraph id =
       ((ConstraintGraph.ofCNF φ).map cnfVertexNumber).comap
-        (ofCNFEdgeEquiv variableCount φ) := by
-  ext i a b
-  · simp only [toGraph, get_edges_ofCNF, cnfEdge, ConstraintGraph.comap,
-      ConstraintGraph.map, ConstraintGraph.ofCNF, Function.comp_def, cnfVertexNumber]
-  · simp only [toGraph, get_edges_ofCNF, cnfEdge, ConstraintGraph.comap,
-      ConstraintGraph.map, ConstraintGraph.ofCNF, Function.comp_def]
+        (ofCNFEnumeration variableCount φ).equiv := by
+  apply toGraph_eq_comap _ _ (ofCNFEnumeration variableCount φ)
+  · intro p
+    simp only [cnfEdge, ConstraintGraph.ofCNF, cnfVertexNumber]
+  · intro p
+    simp only [cnfEdge, ConstraintGraph.ofCNF]
     rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (Fin.isLt _), Option.getD_some]
-    cases φ[(ofCNFEdgeEquiv variableCount φ i).1][(ofCNFEdgeEquiv variableCount φ i).2.val]? <;>
-      rfl
-  · simp only [toGraph, get_edges_ofCNF, cnfEdge, ConstraintGraph.comap,
-      ConstraintGraph.map, ConstraintGraph.ofCNF, id_eq, Bool.and_eq_true,
-      clauseHolds_eq_true]
+    cases φ[p.1][p.2.val]? <;> rfl
+  · intro p a b
+    simp only [cnfEdge, ConstraintGraph.ofCNF, id_eq, Bool.and_eq_true, clauseHolds_eq_true]
     rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (Fin.isLt _), Option.getD_some]
     apply and_congr_right
     intro _
-    cases φ[(ofCNFEdgeEquiv variableCount φ i).1][(ofCNFEdgeEquiv variableCount φ i).2.val]? <;>
-      simp
+    cases φ[p.1][p.2.val]? <;> simp
 
 /-- The exact graph interpretation retains the mathematical unsatisfied value. -/
 theorem unsatVal_ofCNF (variableCount : ℕ) (φ : CNF ℕ) :

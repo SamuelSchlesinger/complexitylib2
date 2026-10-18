@@ -306,46 +306,19 @@ theorem nodup_composeDarts (coins : List (Rand α)) (queries : List Query)
   (List.nodup_range.product hcoins).product hqueries
 
 open Classical in
-/-- The exact edge enumeration identifies executable darts with mathematical tester edges. -/
-noncomputable def composeDartEquiv (coins : List (Rand α)) (queries : List Query)
-    (g : Graph (α → α → Bool)) (hcoins : coins.Nodup) (hqueries : queries.Nodup)
-    (hmemCoins : ∀ ω, ω ∈ coins) (hmemQueries : ∀ i, i ∈ queries) :
-    Fin (g.composeDarts coins queries).length ≃ (Fin g.edges.length × Rand α) × Query :=
-  (List.Nodup.getEquiv _ (g.nodup_composeDarts coins queries hcoins hqueries)).trans
-    { toFun := fun p => ((⟨p.val.1.1,
-        (g.mem_composeDarts_iff coins queries p.val).mp p.property |>.1⟩, p.val.1.2), p.val.2)
-      invFun := fun p => ⟨((p.1.1.val, p.1.2), p.2),
-        (g.mem_composeDarts_iff coins queries _).mpr
-          ⟨p.1.1.isLt, hmemCoins p.1.2, hmemQueries p.2⟩⟩
-      left_inv := fun _ => Subtype.ext rfl
-      right_inv := fun _ => Prod.ext (Prod.ext (Fin.ext rfl) rfl) rfl }
-
-/-- The output edge list retains its source dart list's exact order. -/
-noncomputable def composeEdgeEquiv (number : ComposeSlot α ≃ Fin width)
+/-- Composition retains the ordered edge, coin and query occurrences, even when stored
+edge values coincide. -/
+noncomputable def composeEnumeration (number : ComposeSlot α ≃ Fin width)
     (coins : List (Rand α)) (queries : List Query) (g : Graph (α → α → Bool))
     (hcoins : coins.Nodup) (hqueries : queries.Nodup)
     (hmemCoins : ∀ ω, ω ∈ coins) (hmemQueries : ∀ i, i ∈ queries) :
-    Fin (g.compose number coins queries).edges.length ≃ (Fin g.edges.length × Rand α) × Query :=
-  (finCongr (show (g.compose number coins queries).edges.length =
-    (g.composeDarts coins queries).length from List.length_map ..)).trans
-      (g.composeDartEquiv coins queries hcoins hqueries hmemCoins hmemQueries)
-
-/-- Reading an output edge evaluates its corresponding mathematical dart. -/
-theorem get_edges_compose (number : ComposeSlot α ≃ Fin width)
-    (coins : List (Rand α)) (queries : List Query) (g : Graph (α → α → Bool))
-    (hcoins : coins.Nodup) (hqueries : queries.Nodup)
-    (hmemCoins : ∀ ω, ω ∈ coins) (hmemQueries : ∀ i, i ∈ queries)
-    (j : Fin (g.compose number coins queries).edges.length) :
-    let p := g.composeEdgeEquiv number coins queries hcoins hqueries hmemCoins hmemQueries j
-    (g.compose number coins queries).edges.get j =
-      composeEdge number (g.edges.get p.1.1) p.1.1.val p.1.2 p.2 := by
-  dsimp only
-  change ((g.composeDarts coins queries).map _)[j.val] = _
-  rw [List.getElem_map]
-  congr 1
-  unfold edgeAt
-  rw [List.getD_eq_getElem]
-  rfl
+    List.Enumeration (g.compose number coins queries).edges
+      (fun p : (Fin g.edges.length × Rand α) × Query =>
+        composeEdge number (g.edgeAt (fun _ _ => false) p.1.1.val) p.1.1.val p.1.2 p.2) :=
+  (((List.Enumeration.range g.edges.length).prod
+    (List.Enumeration.ofNodup coins hcoins hmemCoins)).prod
+      (List.Enumeration.ofNodup queries hqueries hmemQueries)).map
+        (fun p => composeEdge number (g.edgeAt (fun _ _ => false) p.1.1) p.1.1 p.1.2 p.2)
 
 /-- Enumerating every coin and query once gives exactly the existing composed graph, with
 the specified vertex numbering and the explicit output edge order. -/
@@ -355,23 +328,23 @@ theorem toGraph_compose (number : ComposeSlot α ≃ Fin width)
     (hmemCoins : ∀ ω, ω ∈ coins) (hmemQueries : ∀ i, i ∈ queries) :
     (g.compose number coins queries).toGraph composeEval =
       ((g.toGraph id).compose.map (composeVertex number Fin.val)).comap
-        (g.composeEdgeEquiv number coins queries hcoins hqueries hmemCoins hmemQueries) := by
-  ext j
-  · simp only [toGraph, get_edges_compose number coins queries g hcoins hqueries hmemCoins
-      hmemQueries, composeEdge, ConstraintGraph.comap, ConstraintGraph.map,
-      ConstraintGraph.compose, LocalTest.toConstraintGraph, Function.comp_def,
-      composeVertex, composeOwner, Sum.elim_inr]
-  · simp only [toGraph, get_edges_compose number coins queries g hcoins hqueries hmemCoins
-      hmemQueries, composeEdge, ConstraintGraph.comap, ConstraintGraph.map,
-      ConstraintGraph.compose, LocalTest.toConstraintGraph, Function.comp_def,
-      ConstraintGraph.composeTest, LocalTest.mix, LocalTest.map]
+        (g.composeEnumeration number coins queries hcoins hqueries
+          hmemCoins hmemQueries).equiv := by
+  apply toGraph_eq_comap _ _ (g.composeEnumeration number coins queries hcoins hqueries
+    hmemCoins hmemQueries)
+  · intro p
+    rfl
+  · intro p
+    simp only [composeEdge, edgeAt, List.getD_eq_get, ConstraintGraph.compose,
+      LocalTest.toConstraintGraph, ConstraintGraph.composeTest,
+      LocalTest.mix, LocalTest.map, composeVertex]
     rw [Encoded.HadamardTester.query_eq, composePosition_eq]
     rfl
-  · simp only [toGraph, get_edges_compose number coins queries g hcoins hqueries hmemCoins
-      hmemQueries, composeEdge, ConstraintGraph.comap, ConstraintGraph.map,
-      ConstraintGraph.compose, LocalTest.toConstraintGraph, Function.comp_def,
-      ConstraintGraph.composeTest, LocalTest.mix, LocalTest.map, composeEval,
-      Bool.and_eq_true, beq_iff_eq, Encoded.HadamardTester.accepts_eq_true, id_eq]
+  · intro p a b
+    simp only [composeEdge, edgeAt, List.getD_eq_get, ConstraintGraph.compose,
+      LocalTest.toConstraintGraph, ConstraintGraph.composeTest, LocalTest.mix, LocalTest.map,
+      composeEval, Bool.and_eq_true, beq_iff_eq, Encoded.HadamardTester.accepts_eq_true,
+      toGraph, id_eq]
 
 /-- Exact interpretation and injective numbering preserve the mathematical composition value. -/
 theorem unsatVal_compose_eq (number : ComposeSlot α ≃ Fin width)

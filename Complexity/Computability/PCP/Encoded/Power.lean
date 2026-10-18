@@ -90,54 +90,17 @@ theorem length_edges_powerPreprocess [DecidableEq α] (eval : C → α → α �
   change (g.halfEdges ×ˢ walks).length = _
   rw [List.length_product, length_halfEdges]
 
-/-- The supplied killed walks enumerate each mathematical dart exactly once. -/
-def powerPreprocessDartEquiv [DecidableEq D] (g : Graph C) {T q : ℕ}
-    (walks : List (PowerLabel D T q)) (hwalks : walks.Nodup) (hmem : ∀ d, d ∈ walks) :
-    Fin (g.halfEdges.product walks).length ≃ (Fin g.edges.length × Bool) × PowerLabel D T q :=
-  (List.Nodup.getEquiv _ (g.nodup_halfEdges.product hwalks)).trans
-    { toFun := fun p =>
-        ((⟨p.val.1.1, (g.mem_halfEdges_iff p.val.1).mp
-          (List.mem_product.mp p.property).1⟩, p.val.1.2), p.val.2)
-      invFun := fun p =>
-        ⟨((p.1.1.val, p.1.2), p.2), List.mem_product.mpr
-          ⟨(g.mem_halfEdges_iff _).mpr p.1.1.isLt, hmem p.2⟩⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl }
-
-/-- The dart equivalence retains the supplied list order. -/
-theorem powerPreprocessDartEquiv_get [DecidableEq D] (g : Graph C) {T q : ℕ}
-    (walks : List (PowerLabel D T q)) (hwalks : walks.Nodup) (hmem : ∀ d, d ∈ walks)
-    (i : Fin (g.halfEdges.product walks).length) :
-    let dart := g.powerPreprocessDartEquiv walks hwalks hmem i
-    ((dart.1.1.val, dart.1.2), dart.2) = (g.halfEdges.product walks).get i := rfl
-
-/-- The output edge indices are exactly the mathematical killed-walk darts. -/
-def powerPreprocessEdgeEquiv [DecidableEq α] [DecidableEq D] (g : Graph C)
+/-- The ordered output occurrences are indexed by the mathematical killed-walk darts.
+Mapping darts to stored edges preserves multiplicities, including equal constraints. -/
+def powerPreprocessEnumeration [DecidableEq α] [DecidableEq D] (g : Graph C)
     (eval : C → α → α → Bool) (fallback : C) (rotate : ℕ × (ℕ × D) → ℕ × D)
     (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
     (hwalks : walks.Nodup) (hmem : ∀ d, d ∈ walks) :
-    Fin (g.powerPreprocess eval fallback rotate T q walks).edges.length ≃
-      (Fin g.edges.length × Bool) × PowerLabel D T q :=
-  (finCongr (show (g.powerPreprocess eval fallback rotate T q walks).edges.length =
-    (g.halfEdges.product walks).length from List.length_map ..)).trans
-      (g.powerPreprocessDartEquiv walks hwalks hmem)
-
-/-- Reading the output edge at an index computes the corresponding mathematical dart. -/
-theorem get_edges_powerPreprocess [DecidableEq α] [DecidableEq D] (g : Graph C)
-    (eval : C → α → α → Bool) (fallback : C) (rotate : ℕ × (ℕ × D) → ℕ × D)
-    (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
-    (hwalks : walks.Nodup) (hmem : ∀ d, d ∈ walks)
-    (i : Fin (g.powerPreprocess eval fallback rotate T q walks).edges.length) :
-    (g.powerPreprocess eval fallback rotate T q walks).edges.get i =
-      let dart := g.powerPreprocessEdgeEquiv eval fallback rotate T q walks hwalks hmem i
-      g.powerPreprocessEdge eval fallback rotate T q ((dart.1.1.val, dart.1.2), dart.2) := by
-  unfold powerPreprocessEdgeEquiv
-  simp only [Equiv.trans_apply]
-  rw [powerPreprocessDartEquiv_get]
-  change ((g.halfEdges.product walks).map
-    (g.powerPreprocessEdge eval fallback rotate T q))[i.val] = _
-  simp only [List.getElem_map]
-  rfl
+    List.Enumeration (g.powerPreprocess eval fallback rotate T q walks).edges
+      (fun dart : (Fin g.edges.length × Bool) × PowerLabel D T q =>
+        g.powerPreprocessEdge eval fallback rotate T q ((dart.1.1.val, dart.1.2), dart.2)) :=
+  (g.halfEdgesEnumeration.prod (List.Enumeration.ofNodup walks hwalks hmem)).map
+    (g.powerPreprocessEdge eval fallback rotate T q)
 
 section Correctness
 
@@ -183,22 +146,12 @@ theorem toGraph_powerPreprocess [DecidableEq D] (walks : List (PowerLabel D T q)
     (g.powerPreprocess eval fallback rotate T q walks).toGraph id =
       (((g.regularPreprocess eval fallback family).power T q).toConstraintGraph.map
         (fun v => halfEdgeNumber (v.1.val, v.2))).comap
-          (g.powerPreprocessEdgeEquiv eval fallback rotate T q walks hwalks hmem) := by
-  apply ConstraintGraph.ext
-  · funext i
-    change ((g.powerPreprocess eval fallback rotate T q walks).edges.get i).src = _
-    rw [get_edges_powerPreprocess g eval fallback rotate T q walks hwalks hmem]
-    rfl
-  · funext i
-    change ((g.powerPreprocess eval fallback rotate T q walks).edges.get i).dst = _
-    rw [get_edges_powerPreprocess g eval fallback rotate T q walks hwalks hmem,
-      dst_powerPreprocessEdge g eval fallback family rotate hrotate]
-    rfl
-  · funext i a b
-    change (((g.powerPreprocess eval fallback rotate T q walks).edges.get i).constraint a b =
-      true) = _
-    rw [get_edges_powerPreprocess g eval fallback rotate T q walks hwalks hmem]
-    exact propext (rel_powerPreprocessEdge g eval fallback family rotate hrotate T q _ a b)
+          (g.powerPreprocessEnumeration eval fallback rotate T q walks hwalks hmem).equiv := by
+  apply toGraph_eq_comap _ _ (g.powerPreprocessEnumeration eval fallback rotate T q
+    walks hwalks hmem)
+  · intro dart; rfl
+  · exact dst_powerPreprocessEdge g eval fallback family rotate hrotate T q
+  · exact rel_powerPreprocessEdge g eval fallback family rotate hrotate T q
 
 include hrotate in
 /-- Every destination is a numbered half-edge; malformed original vertex bounds are irrelevant. -/

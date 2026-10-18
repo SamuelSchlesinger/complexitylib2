@@ -175,65 +175,17 @@ def numberDart {edges : ℕ} (p : (Fin edges × Bool) × (Unit ⊕ D)) :
     (ℕ × Bool) × Option D :=
   ((p.1.1.val, p.1.2), p.2.elim (fun _ => none) some)
 
-/-- The output edge order enumerates the mathematical darts exactly once. -/
-def degreeReduceDartEquiv [DecidableEq D] (g : Graph C) (labels : List D)
-    (hlabels : labels.Nodup) (hmem : ∀ d, d ∈ labels) :
-    Fin (g.degreeReduceDarts labels).length ≃
-      (Fin g.edges.length × Bool) × (Unit ⊕ D) :=
-  (List.Nodup.getEquiv _ (g.nodup_degreeReduceDarts labels hlabels)).trans
-    { toFun := fun p =>
-        ((⟨p.val.1.1, ((g.mem_degreeReduceDarts_iff labels p.val).mp p.property).1⟩,
-          p.val.1.2), p.val.2.elim (.inl ()) .inr)
-      invFun := fun p =>
-        ⟨numberDart p, (g.mem_degreeReduceDarts_iff labels _).mpr
-          ⟨p.1.1.isLt, by
-            cases hp : p.2 with
-            | inl u => exact Or.inl (by simp [numberDart, hp])
-            | inr d => exact Or.inr ⟨d, hmem d, by simp [numberDart, hp]⟩⟩⟩
-      left_inv := by
-        rintro ⟨⟨⟨i, b⟩, _ | d⟩, h⟩ <;> rfl
-      right_inv := by
-        rintro ⟨⟨i, b⟩, u | d⟩
-        · cases u
-          rfl
-        · rfl }
-
-/-- The dart equivalence uses exactly the executable enumeration, including its order. -/
-theorem numberDart_degreeReduceDartEquiv [DecidableEq D] (g : Graph C) (labels : List D)
-    (hlabels : labels.Nodup) (hmem : ∀ d, d ∈ labels)
-    (i : Fin (g.degreeReduceDarts labels).length) :
-    numberDart (g.degreeReduceDartEquiv labels hlabels hmem i) =
-      (g.degreeReduceDarts labels).get i := by
-  change ((g.degreeReduceDarts labels).get i |>.1,
-    ((g.degreeReduceDarts labels).get i).2.elim (.inl ()) Sum.inr |>.elim
-      (fun _ => none) some) = _
-  apply Prod.ext
-  · rfl
-  · cases ((g.degreeReduceDarts labels).get i).2 <;> rfl
-
-/-- The computed edge list has the same indices as its source dart list. -/
-def degreeReduceEdgeEquiv [DecidableEq D] (g : Graph C) (fallback : C)
+/-- The ordered output occurrences are indexed by the mathematical degree-reduction darts.
+The original edge precedes the cloud edges at each half-edge. -/
+def degreeReduceEnumeration [DecidableEq D] (g : Graph C) (fallback : C)
     (rotate : ℕ × (ℕ × D) → ℕ × D) (labels : List D)
     (hlabels : labels.Nodup) (hmem : ∀ d, d ∈ labels) :
-    Fin (g.degreeReduce fallback rotate labels).edges.length ≃
-      (Fin g.edges.length × Bool) × (Unit ⊕ D) :=
-  (finCongr (show (g.degreeReduce fallback rotate labels).edges.length =
-    (g.degreeReduceDarts labels).length from List.length_map ..)).trans
-      (g.degreeReduceDartEquiv labels hlabels hmem)
-
-/-- Reading an output edge is exactly evaluating the corresponding mathematical dart. -/
-theorem get_edges_degreeReduce [DecidableEq D] (g : Graph C) (fallback : C)
-    (rotate : ℕ × (ℕ × D) → ℕ × D) (labels : List D)
-    (hlabels : labels.Nodup) (hmem : ∀ d, d ∈ labels)
-    (i : Fin (g.degreeReduce fallback rotate labels).edges.length) :
-    (g.degreeReduce fallback rotate labels).edges.get i =
-      g.degreeReduceEdge fallback rotate
-        (numberDart (g.degreeReduceEdgeEquiv fallback rotate labels hlabels hmem i)) := by
-  unfold degreeReduceEdgeEquiv
-  rw [Equiv.trans_apply, numberDart_degreeReduceDartEquiv]
-  change ((g.degreeReduceDarts labels).map (g.degreeReduceEdge fallback rotate))[i.val] = _
-  simp only [List.getElem_map]
-  rfl
+    List.Enumeration (g.degreeReduce fallback rotate labels).edges
+      (fun p : (Fin g.edges.length × Bool) × (Unit ⊕ D) =>
+        g.degreeReduceEdge fallback rotate (numberDart p)) :=
+  (g.halfEdgesEnumeration.prod ((List.Enumeration.singleton none).append
+    ((List.Enumeration.ofNodup labels hlabels hmem).map some))).map
+      (g.degreeReduceEdge fallback rotate)
 
 /-- The computed source is the numbered source half-edge. -/
 @[simp]
@@ -282,22 +234,13 @@ theorem toGraph_degreeReduce [DecidableEq α] [DecidableEq D] (labels : List D)
     ((g.degreeReduce fallback rotate labels).toGraph (degreeReduceEval eval)) =
       ((((g.toGraph eval).degreeReduce (g.cloudFamily eval fallback family)).toConstraintGraph).map
         (fun p => halfEdgeNumber (p.1.val, p.2))).comap
-          (g.degreeReduceEdgeEquiv fallback rotate labels hlabels hmem) := by
-  apply ConstraintGraph.ext
-  · funext i
-    change ((g.degreeReduce fallback rotate labels).edges.get i).src = _
-    rw [get_edges_degreeReduce g fallback rotate labels hlabels hmem, src_degreeReduceEdge]
+          (g.degreeReduceEnumeration fallback rotate labels hlabels hmem).equiv := by
+  apply toGraph_eq_comap _ _ (g.degreeReduceEnumeration fallback rotate labels hlabels hmem)
+  · intro p
+    simp only [src_degreeReduceEdge, numberDart]
     rfl
-  · funext i
-    change ((g.degreeReduce fallback rotate labels).edges.get i).dst = _
-    rw [get_edges_degreeReduce g fallback rotate labels hlabels hmem,
-      dst_degreeReduceEdge g eval fallback family rotate hrotate]
-    rfl
-  · funext i a b
-    change (degreeReduceEval eval
-      ((g.degreeReduce fallback rotate labels).edges.get i).constraint a b = true) = _
-    rw [get_edges_degreeReduce g fallback rotate labels hlabels hmem]
-    exact propext (rel_degreeReduceEdge g eval fallback family rotate _ a b)
+  · exact dst_degreeReduceEdge g eval fallback family rotate hrotate
+  · exact rel_degreeReduceEdge g eval fallback family rotate
 
 include hrotate in
 /-- Every generated endpoint is in the output vertex range. The original graph's declared

@@ -47,6 +47,7 @@ import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.KeyedSort
 import ComplexityTests.LinearHash
+import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
 import ComplexityTests.Logarithms
 import ComplexityTests.MachineClock

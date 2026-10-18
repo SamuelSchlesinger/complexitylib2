@@ -222,41 +222,24 @@ private theorem rotationEdges_represents {V : Type} (vertices : ℕ)
         number).comap e := by
   classical
   rw [rotationEdges_product, List.map_map]
-  let darts := (List.range vertices).product labels
   let edge := fun p : ℕ × D => Edge.mk p.1 (rotate (vertices, p)).1 truth
-  let e := (finCongr (List.length_map (f := edge))).trans
-    ((listedDartEquiv vertices labels hlabels hmem).trans
-      (Equiv.prodCongr eV (Equiv.refl D)))
-  refine ⟨e, ?_⟩
-  have he (i : Fin (darts.map edge).length) :
-      (darts.map edge).get i = edge
-        (((listedDartEquiv vertices labels hlabels hmem
-          (finCongr (List.length_map (f := edge)) i)).1.val),
-          (listedDartEquiv vertices labels hlabels hmem
-          (finCongr (List.length_map (f := edge)) i)).2) := by
-    change (darts.map edge)[i.val] = _
-    rw [List.getElem_map]
-    rfl
-  apply ConstraintGraph.ext
-  · funext i
-    change ((darts.map edge).get i).src = _
-    rw [he]
-    exact (hnumber _).symm
-  · funext i
-    change ((darts.map edge).get i).dst = _
-    rw [he]
-    dsimp only [edge]
+  let enumeration := (((List.Enumeration.range vertices).prod
+    (List.Enumeration.ofNodup labels hlabels hmem)).map edge).reindex
+      (Equiv.prodCongr eV (Equiv.refl D))
+  refine ⟨enumeration.equiv, ?_⟩
+  apply toGraph_eq_comap ⟨vertices, ((List.range vertices).product labels).map edge⟩ eval
+    enumeration
+  · intro p
+    simpa [edge, RegularConstraintGraph.toConstraintGraph] using
+      (hnumber (eV.symm p.1)).symm
+  · intro p
+    change (rotate (vertices, (eV.symm p.1).val, p.2)).1 = _
     rw [hrotate]
-    dsimp only [ConstraintGraph.comap, ConstraintGraph.map,
-      RegularConstraintGraph.toConstraintGraph, RegularConstraintGraph.unconstrained,
-      RotationMap.neighbor, RotationMap.reindex, RotationMap.reindexRot,
-      Equiv.trans_apply, Equiv.prodCongr_apply, Equiv.refl_apply, Function.comp_def, e]
-    simp only [Equiv.prodCongr_apply, Prod.map, Equiv.refl_apply,
-      Equiv.symm_apply_apply, hnumber]
-  · funext i a b
-    change (eval ((darts.map edge).get i).constraint a b = true) = True
-    rw [he]
-    simp [edge, htruth]
+    simp [RegularConstraintGraph.toConstraintGraph, RegularConstraintGraph.unconstrained,
+      RotationMap.neighbor, RotationMap.reindex, RotationMap.reindexRot, hnumber]
+  · intro p a b
+    simp [edge, htruth, RegularConstraintGraph.toConstraintGraph,
+      RegularConstraintGraph.unconstrained]
 
 section Correctness
 
@@ -311,7 +294,7 @@ theorem toGraph_preprocess [DecidableEq α] (htruth : ∀ a b, eval truth a b = 
     rw [← halfEdgeEquiv_val, Equiv.apply_symm_apply]
   have hg : ∃ e : Fin reduced.edges.length ≃ (Fin g.edges.length × Bool) × (Unit ⊕ D),
       reduced.toGraph (degreeReduceEval eval) = (R.toConstraintGraph.map number).comap e :=
-    ⟨g.degreeReduceEdgeEquiv fallback rotate labels hlabels hmem,
+    ⟨(g.degreeReduceEnumeration fallback rotate labels hlabels hmem).equiv,
       g.toGraph_degreeReduce eval fallback family rotate hrotate labels hlabels hmem⟩
   have hextra := rotationEdges_represents n rotate labels hlabels hmem
     (degreeReduceEval eval) accept htrue (family n) (hrotate n) eV number hnumber
