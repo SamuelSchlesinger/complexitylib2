@@ -83,6 +83,29 @@ scripts/coordinate assign scan-api worker-bob api
 scripts/coordinate assign scan-api worker-carol correctness
 ```
 
+Workers own their development's design and may delegate within its assigned scope, using separate
+worktrees and disjoint file ownership. Record every contributor; an implementation subagent cannot
+provide an independent final review of that work. The coordinator can send guidance without
+replacing worker reports or revoking claims, and can revise an unsubmitted goal or add paths:
+
+```bash
+scripts/coordinate instruct scan-api 'Use the existing encoded loop contract; report missing lemmas'
+scripts/coordinate revise scan-api 'Revised endpoint and acceptance criteria' Complexity/AdditionalPath
+```
+
+`revise` retains all existing paths and dependencies. Assigned epics cannot expand into another
+assigned scope; future unassigned plans may overlap until assignment. It preserves the worker's
+branch and claim; a submitted plan must be reopened
+before revision. `instruct` is advisory and does not change the acceptance criteria or approvals.
+Both commands leave completed records unchanged. Read coordinator guidance in `status --json`
+even when using an older checkout whose dashboard does not display it. At clean implementation
+checkpoints, merge current `main` to pick up shared APIs and tooling updates.
+
+Land large developments in independently useful milestones. Before submission, the coordinator
+records the remaining development as a continuation epic, then revises the current epic to the
+milestone actually delivered. A milestone's completion does not claim the whole development is
+finished. Its continuation may depend on the milestone via `plan ... --after EPIC`.
+
 Reviewers run `start EPIC api` or `start EPIC correctness`, which checks out the submitted commit
 in their own clean worktree. They record their review with
 `review EPIC KIND BASE HEAD approve|changes 'Scope, evidence, findings, and limitations'`.

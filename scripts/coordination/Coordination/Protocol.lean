@@ -175,6 +175,8 @@ inductive Command where
   | join (role : Role) (leaseSeconds : Nat) (token : Token) (takeover : Bool)
   | heartbeat
   | plan (epic : EpicId) (goal : String) (paths : List String) (dependencies : List EpicId)
+  | revise (epic : EpicId) (goal : String) (addPaths : List String)
+  | instruct (epic : EpicId) (text : String)
   | assign (epic : EpicId) (agent : AgentId) (kind : AssignmentKind) (replace : Bool)
   | start (epic : EpicId) (kind : AssignmentKind) (token : Token)
   | note (epic : EpicId) (kind : AssignmentKind) (text : String) (blocked : Bool)
@@ -335,6 +337,10 @@ private def occupiesScope (epic : Epic) : Bool :=
   | .working _ | .submitted _ => true
   | _ => false
 
+private def scopeAvailable (state : State) (epic : Epic) : Bool :=
+  state.epics.all fun other => other.id == epic.id || !occupiesScope other ||
+    !(epic.paths.any fun a => other.paths.any (scopesOverlap a))
+
 private def workOf (epic : Epic) : Except String Work :=
   match epic.phase with
   | .working work => pure work
@@ -440,6 +446,24 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
       paths := paths.eraseDups
       dependencies := dependencies.eraseDups }
     return result (putEpic state epic) "Epic planned"
+  | .revise id goal addPaths =>
+    let _ ← coordinator ctx state
+    let epic ← findEpic state id
+    match epic.phase with
+    | .unassigned | .working _ => pure ()
+    | _ => throw "Only unsubmitted plans can change; reopen a submission first"
+    check (!goal.isEmpty && addPaths.all validScope) "Goal and canonical scopes required"
+    let revised := { epic with goal, paths := (epic.paths ++ addPaths).eraseDups }
+    check (!occupiesScope epic || scopeAvailable state revised) "Scopes overlap an assigned epic"
+    return result (putEpic state revised) "Plan revised; existing scopes and claims preserved"
+  | .instruct id text =>
+    let _ ← coordinator ctx state
+    let epic ← findEpic state id
+    match epic.phase with
+    | .merged _ => throw "Completed epic records are immutable"
+    | _ => pure ()
+    check (!text.isEmpty) "Coordinator guidance is required"
+    return result (putEpic state { epic with report := text }) "Coordinator guidance recorded"
   | .assign id worker kind replace =>
     let _ ← coordinator ctx state
     let _ ← findAgent state worker
@@ -451,8 +475,7 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
         | .working work => pure (some work)
         | _ => throw "Reopen a submission before changing its implementation assignment"
       check (replaceable ctx (previous.bind (·.lease)) replace) "Work claim is live; explicitly replace it"
-      check (state.epics.all fun other => other.id == id || !occupiesScope other ||
-        !(epic.paths.any fun a => other.paths.any (scopesOverlap a))) "Scopes overlap an assigned epic"
+      check (scopeAvailable state epic) "Scopes overlap an assigned epic"
       let branch := "work/" ++ id.value ++ "/" ++ worker.value
       let resume := match previous with
         | some work => if work.assignee == worker then work.resume else some work.branch

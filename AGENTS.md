@@ -16,16 +16,21 @@ name with `scripts/coordinate join NAME`, then change into the printed worktree 
 Never edit the starting checkout or another agent's worktree. Keep each worktree's `.lake`
 directory separate; do not share mutable build outputs.
 
-The registered coordinator assigns implementation and review work. Read `scripts/coordinate status`,
-start only your assigned epic or review, and stay inside its scope. Report blockers and proposed
-scope changes on the board. Check assignments and renew your heartbeat at each meaningful
+The registered coordinator assigns implementation and review work. Read `scripts/coordinate status`
+and its `--json` form for coordinator guidance, start only your assigned epic or review, and stay
+inside its scope. Workers own the design and implementation of their developments and may delegate
+to subagents with separate worktrees and disjoint file ownership. Report all contributors so final
+reviews remain independent. Report blockers and proposed scope changes on the board.
+Check assignments and renew your heartbeat at each meaningful
 checkpoint and at least every five minutes; while idle, check about once a minute. After submitting
 work, remain available for reviews and follow-up assignments until asked to stop. If a lease or
 session is lost, stop editing and reacquire authorization through the board.
 
 Workers commit and push their assigned branches; only the coordinator lands work on `main`.
 Reviewers inspect the exact submitted commit, record findings, and leave fixes to its author.
-The coordinator owns design, dependencies, scope allocation, independent reviews, and integration.
+The coordinator owns shared architecture, dependencies, scope allocation, independent reviews,
+and integration. Large developments should produce independently useful, reviewable milestones;
+agree each milestone's endpoint and record the remaining development before submitting it.
 The board is shared state, not a process scheduler: these duties run while the agents are active.
 
 ## Lean development: use the Lean MCP server first
