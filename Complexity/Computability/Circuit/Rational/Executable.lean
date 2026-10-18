@@ -147,12 +147,12 @@ theorem encoded_spec (n s : ℕ) : encoded n s = encodeOutput (Generator.list n 
   rw [encoded, list_spec]
 
 /-- The hitting property and output-size bounds for the computed list. -/
-theorem exact_output (n s : ℕ) (hn : 1 ≤ n) (hs : 1 ≤ s) :
+theorem exact_output (n s : ℕ) (hs : 1 ≤ s) :
     (list n s).dimension ≤ 256 * (n + s + 1) ^ 10 ∧
     (encodeOutput (list n s)).length ≤ PolynomialBounds.outputConstant * (n + s + 1) ^ 104 ∧
     Hits s (list n s) := by
   rw [list_spec]
-  exact ⟨Generator.list_dimension_bound n s, Generator.list_output_bound n s hn,
+  exact ⟨Generator.list_dimension_bound n s, Generator.list_output_bound n s,
     Generator.list_hits n s hs⟩
 
 end Rational.ExecutableGenerator

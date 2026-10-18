@@ -210,14 +210,14 @@ def logarithmic (n s : ℕ) : ℕ :=
     3 * Parameters.ambientDimension n s * Parameters.gridSize n s
 
 /-- Fixed coefficient bounding the binary logarithm of integral entry magnitudes. -/
-def logConstant : ℕ := 64 + 64 + 3 * 16 * 24577
+def logConstant : ℕ := 64 + 64 + 3 * 16 * 49153
 
-theorem logarithmic_bound (n s : ℕ) (hn : 1 ≤ n) :
+theorem logarithmic_bound (n s : ℕ) :
     logarithmic n s ≤ logConstant * (n + s + 1) ^ 22 := by
   let m := n + s + 1
   have hm : 1 ≤ m := by dsimp [m]; omega
   have hM := Parameters.polynomial_M n s
-  have hH := Parameters.polynomial_H n s hn
+  have hH := Parameters.polynomial_H n s
   have h₁ : 4 * Parameters.ambientDimension n s ≤ 64 * m ^ 22 := by
     calc _ ≤ 4 * (16 * m ^ 5) := Nat.mul_le_mul_left 4 hM
          _ = 64 * m ^ 5 := by rw [← Nat.mul_assoc]
@@ -231,13 +231,13 @@ theorem logarithmic_bound (n s : ℕ) (hn : 1 ≤ n) :
          _ = 64 * m ^ 6 := by rw [show m ^ 6 = m ^ 5 * m from pow_succ m 5, Nat.mul_assoc]
          _ ≤ _ := lift_power _ _ _ _ hm (by omega)
   have h₃ : 3 * Parameters.ambientDimension n s * Parameters.gridSize n s ≤
-      (3 * 16 * 24577) * m ^ 22 := by
-    calc _ ≤ (3 * (16 * m ^ 5)) * (24577 * m ^ 17) :=
+      (3 * 16 * 49153) * m ^ 22 := by
+    calc _ ≤ (3 * (16 * m ^ 5)) * (49153 * m ^ 17) :=
            Nat.mul_le_mul (Nat.mul_le_mul_left 3 hM) hH
-         _ = (48 * m ^ 5) * (24577 * m ^ 17) := by rw [← Nat.mul_assoc 3 16]
-         _ = _ := mul_monomials 48 24577 m 5 17
+         _ = (48 * m ^ 5) * (49153 * m ^ 17) := by rw [← Nat.mul_assoc 3 16]
+         _ = _ := mul_monomials 48 49153 m 5 17
   unfold logarithmic logConstant
-  change _ ≤ (64 + 64 + 3 * 16 * 24577) * m ^ 22
+  change _ ≤ (64 + 64 + 3 * 16 * 49153) * m ^ 22
   rw [Nat.add_mul, Nat.add_mul]
   exact Nat.add_le_add (Nat.add_le_add h₁ h₂) h₃
 
@@ -261,16 +261,16 @@ theorem normalized_bits_bound (m D b : ℕ) (hm : 1 ≤ m)
 
 /-- Fixed coefficient in the bound on the complete binary output length. -/
 def outputConstant : ℕ :=
-  (2 * 256 + 3) + (2 * 24577 ^ 3 + 3) + 24577 ^ 3 * 256 * 256 * bitConstant
+  (2 * 256 + 3) + (2 * 49153 ^ 3 + 3) + 49153 ^ 3 * 256 * 256 * bitConstant
 
 theorem output_bits_bound (n m D L B : ℕ) (hm : 1 ≤ m) (hn : n ≤ m)
-    (hD : D ≤ 256 * m ^ 10) (hL : L ≤ 24577 ^ 3 * m ^ 51) (hB : B ≤ bitConstant * m ^ 32) :
+    (hD : D ≤ 256 * m ^ 10) (hL : L ≤ 49153 ^ 3 * m ^ 51) (hB : B ≤ bitConstant * m ^ 32) :
     2 * (D + 1) + 1 + 2 * (L + 1) + 1 + L * n * D * D * B ≤ outputConstant * m ^ 104 := by
   have hp := Nat.one_le_pow 104 m hm
   have hd : D ≤ 256 * m ^ 104 := hD.trans (lift_power _ _ _ _ hm (by omega))
-  have hl : L ≤ 24577 ^ 3 * m ^ 104 := hL.trans (lift_power _ _ _ _ hm (by omega))
-  have hproduct : L * n * D * D * B ≤ (24577 ^ 3 * 256 * 256 * bitConstant) * m ^ 104 := by
-    calc _ ≤ (24577 ^ 3 * m ^ 51) * m * (256 * m ^ 10) * (256 * m ^ 10) *
+  have hl : L ≤ 49153 ^ 3 * m ^ 104 := hL.trans (lift_power _ _ _ _ hm (by omega))
+  have hproduct : L * n * D * D * B ≤ (49153 ^ 3 * 256 * 256 * bitConstant) * m ^ 104 := by
+    calc _ ≤ (49153 ^ 3 * m ^ 51) * m * (256 * m ^ 10) * (256 * m ^ 10) *
           (bitConstant * m ^ 32) := by gcongr
       _ = _ := by ring
   unfold outputConstant
@@ -326,7 +326,7 @@ lemma output_entry_bit_bound (n N e H : ℕ) (hH : 1 ≤ H)
     rw [← he]
     exact tupleAt_bit_bound n N e H _ hH (fun l => by omega) hz a i j
 
-lemma list_output_bound (n s : ℕ) (hn : 1 ≤ n) :
+lemma list_output_bound (n s : ℕ) :
     (encodeOutput (list n s)).length ≤ PolynomialBounds.outputConstant * (n + s + 1) ^ 104 := by
   have hH : 1 ≤ Parameters.gridSize n s := by unfold Parameters.gridSize; omega
   have hb : ∀ X ∈ (list n s).tuples, ∀ a i j,
@@ -336,11 +336,11 @@ lemma list_output_bound (n s : ℕ) (hn : 1 ≤ n) :
       (Parameters.gridSize n s) hH X hX a i j).trans
     apply PolynomialBounds.normalized_bits_bound (hm := by omega)
     · exact list_dimension_bound n s
-    · exact PolynomialBounds.logarithmic_bound n s hn
+    · exact PolynomialBounds.logarithmic_bound n s
   apply (output_length_le (list n s) hb).trans
   apply PolynomialBounds.output_bits_bound (hm := by omega) (hn := by omega)
   · exact list_dimension_bound n s
-  · exact list_length_bound n s hn
+  · exact list_length_bound n s
   · exact Nat.le_refl _
 
 end Rational.Generator

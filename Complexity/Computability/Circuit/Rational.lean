@@ -38,7 +38,7 @@ deductions from the source result, without a claim of new priority.
 ## Main results
 
 * `Cslib.Circuits.Rational.hittingList_hits`: the list hits every admissible nonzero formula with
-  at most `s` nodes.
+  at most `s` nodes; for `s = 0` this is `Cslib.Circuits.Rational.hits_zero`.
 * `Cslib.Circuits.Rational.hittingList_dimension_le`,
   `Cslib.Circuits.Rational.hittingList_encoding_length_le`: polynomial bounds on the dimension and
   on the length of the binary encoding.
@@ -65,11 +65,17 @@ namespace Cslib.Circuits.Rational
 /-- The explicit, executable list of rational matrix substitutions. -/
 def hittingList (n s : ℕ) : Output n := ExecutableGenerator.list n s
 
+/-- Every list hits the formulas with at most `0` nodes, since every formula has a node. -/
+theorem hits_zero {n : ℕ} (H : Output n) : Hits 0 H := fun f hf =>
+  absurd hf (Nat.not_le_of_gt f.nodeCount_pos)
+
 /-- The generated list hits every admissible nonzero formula with at most `s` nodes at an invertible
-value. -/
-theorem hittingList_hits (n s : ℕ) (hs : 1 ≤ s) : Hits s (hittingList n s) := by
-  rw [hittingList, ExecutableGenerator.list_spec]
-  exact Generator.list_hits n s hs
+value. This holds for all `n` and `s`; for `s = 0` it is `hits_zero`. -/
+theorem hittingList_hits (n s : ℕ) : Hits s (hittingList n s) := by
+  rcases Nat.eq_zero_or_pos s with rfl | hs
+  · exact hits_zero _
+  · rw [hittingList, ExecutableGenerator.list_spec]
+    exact Generator.list_hits n s hs
 
 /-- The generated matrices have polynomially bounded dimension. -/
 theorem hittingList_dimension_le (n s : ℕ) :
@@ -77,44 +83,51 @@ theorem hittingList_dimension_le (n s : ℕ) :
   rw [hittingList, ExecutableGenerator.list_spec]
   exact Generator.list_dimension_bound n s
 
-/-- The complete reduced-rational binary encoding has polynomial length. -/
-theorem hittingList_encoding_length_le (n s : ℕ) (hn : 1 ≤ n) :
+/-- The complete reduced-rational binary encoding has polynomial length, for all `n` and `s`,
+including `n = 0`. -/
+theorem hittingList_encoding_length_le (n s : ℕ) :
     (encodeOutput (hittingList n s)).length ≤
       PolynomialBounds.outputConstant * (n + s + 1) ^ 104 := by
   rw [hittingList, ExecutableGenerator.list_spec]
-  exact Generator.list_output_bound n s hn
+  exact Generator.list_output_bound n s
 
 /-- Some matrix evaluation of the inverse is defined exactly when the formula is nonzero. -/
 theorem admissible_inv_iff_nonzero {n : ℕ} (f : Formula n) :
     Admissible (.inv f) ↔ Nonzero f :=
-  (hittingList_hits n (f.nodeCount + 2) (by lia)).admissible_inv_iff_nonzero f (by lia)
+  (hittingList_hits n f.nodeCount).admissible_inv_iff_nonzero f le_rfl
 
 /-- Every nonempty matrix domain has a witness of polynomially bounded dimension. -/
 theorem Admissible.exists_dimension_le {n : ℕ} {f : Formula n} (hf : Admissible f) :
     ∃ d, 0 < d ∧ d ≤ 256 * (n + f.nodeCount + 3) ^ 10 ∧
       ∃ (X : Tuple n d) (v : Mat d), Evaluates f X v := by
   obtain ⟨X, _, v, he⟩ :=
-    ((hittingList_hits n (f.nodeCount + 2) (by lia)).admissible_iff f le_rfl).mp hf
+    ((hittingList_hits n (f.nodeCount + 2)).admissible_iff f le_rfl).mp hf
   refine ⟨_, (hittingList n (f.nodeCount + 2)).dimension_pos, ?_, X, v, he⟩
   simpa only [Nat.add_assoc] using hittingList_dimension_le n (f.nodeCount + 2)
 
-/-- Test whether the formula has a defined positive-dimensional rational matrix evaluation. -/
+/-- Test whether the formula has a defined positive-dimensional rational matrix evaluation, by
+exact evaluation on the hitting list for `f.nodeCount + 2` nodes: the two extra nodes cover
+`f + 1`, which is nonzero wherever `f` is defined and zero. -/
 def Formula.admissible? {n : ℕ} (f : Formula n) : Bool :=
   (hittingList n (f.nodeCount + 2)).admissibilityTest f
 
-/-- Test whether the formula has a defined nonzero rational matrix evaluation. -/
+/-- Test whether the formula has a defined nonzero rational matrix evaluation, by searching the
+hitting list for `f.nodeCount + 2` nodes for an invertible value. A list for `f.nodeCount` nodes
+would suffice for this test; the same list as for `Formula.admissible?` is used. -/
 def Formula.nonzero? {n : ℕ} (f : Formula n) : Bool :=
   (hittingList n (f.nodeCount + 2)).nonzeroTest f
 
-/-- The generated finite domain test is correct, with no promise on the formula. -/
+/-- The generated finite domain test is correct, with no promise on the formula. It uses that the
+list hits formulas with `f.nodeCount + 2` nodes. -/
 theorem Formula.admissible?_eq_true_iff {n : ℕ} (f : Formula n) :
     f.admissible? = true ↔ Admissible f :=
-  (hittingList_hits n (f.nodeCount + 2) (by lia)).admissibilityTest_eq_true_iff f le_rfl
+  (hittingList_hits n (f.nodeCount + 2)).admissibilityTest_eq_true_iff f le_rfl
 
-/-- The generated finite nonzeroness test is correct, with no admissibility promise. -/
+/-- The generated finite nonzeroness test is correct, with no admissibility promise. It uses only
+that the list hits formulas with `f.nodeCount` nodes. -/
 theorem Formula.nonzero?_eq_true_iff {n : ℕ} (f : Formula n) :
     f.nonzero? = true ↔ Nonzero f :=
-  (hittingList_hits n (f.nodeCount + 2) (by lia)).nonzeroTest_eq_true_iff f (by lia)
+  (hittingList_hits n (f.nodeCount + 2)).nonzeroTest_eq_true_iff f (by lia)
 
 /-- Computed decidability of the existence of a defined matrix evaluation. -/
 instance decidableAdmissible {n : ℕ} (f : Formula n) : Decidable (Admissible f) :=

@@ -396,9 +396,12 @@ theorem polynomial_M (n s : ℕ) : ambientDimension n s ≤ 16 * (n + s + 1) ^ 5
           · exact delta_bound n s
        _ = _ := by ring
 
-theorem polynomial_H (n s : ℕ) (hn : 1 ≤ n) : gridSize n s ≤ 24577 * (n + s + 1) ^ 17 := by
+/-- The grid side length is polynomial in `n + s + 1`, for every `n`, including `n = 0`: the
+factor `s + 2` is bounded by `2 * (n + s + 1)`. -/
+theorem polynomial_H (n s : ℕ) : gridSize n s ≤ 49153 * (n + s + 1) ^ 17 := by
   have hp : 1 ≤ (n + s + 1) ^ 17 := Nat.one_le_iff_ne_zero.mpr (by positivity)
-  calc gridSize n s ≤ 1 + 3 * (n + s + 1) * (2 * (n + s + 1)) * (16 * (n + s + 1) ^ 5) ^ 3 := by
+  calc gridSize n s ≤
+        1 + 3 * (2 * (n + s + 1)) * (2 * (n + s + 1)) * (16 * (n + s + 1) ^ 5) ^ 3 := by
          unfold gridSize
          apply Nat.add_le_add_left
          apply Nat.mul_le_mul
@@ -406,7 +409,7 @@ theorem polynomial_H (n s : ℕ) (hn : 1 ≤ n) : gridSize n s ≤ 24577 * (n + 
            · exact Nat.mul_le_mul_left 3 (by omega)
            · exact B_bound n s
          · exact Nat.pow_le_pow_left (polynomial_M n s) 3
-       _ = 1 + 24576 * (n + s + 1) ^ 17 := by ring
+       _ = 1 + 49152 * (n + s + 1) ^ 17 := by ring
        _ ≤ _ := by omega
 
 end Rational.Parameters
@@ -434,19 +437,19 @@ theorem list_dimension_bound (n s : ℕ) : (list n s).dimension ≤ 256 * (n + s
              Nat.mul_le_mul (Parameters.polynomial_M n s) (hd.trans (Parameters.polynomial_M n s))
        _ = _ := by ring
 
-theorem list_length_bound (n s : ℕ) (hn : 1 ≤ n) :
-    (list n s).tuples.length ≤ 24577 ^ 3 * (n + s + 1) ^ 51 := by
+theorem list_length_bound (n s : ℕ) :
+    (list n s).tuples.length ≤ 49153 ^ 3 * (n + s + 1) ^ 51 := by
   calc _ ≤ (Parameters.gridSize n s) ^ 3 := length_output_le ..
-       _ ≤ (24577 * (n + s + 1) ^ 17) ^ 3 := Nat.pow_le_pow_left (Parameters.polynomial_H n s hn) 3
+       _ ≤ (49153 * (n + s + 1) ^ 17) ^ 3 := Nat.pow_le_pow_left (Parameters.polynomial_H n s) 3
        _ = _ := by rw [mul_pow, ← pow_mul]
 
 /-- The algebraic hitting property and the polynomial list-cardinality bound. -/
 theorem algebraic_generator : ∃ G : (n s : ℕ) → Output n,
-    ∀ n s, 1 ≤ n → 1 ≤ s →
+    ∀ n s, 1 ≤ s →
       (G n s).dimension ≤ 256 * (n + s + 1) ^ 10 ∧
-      (G n s).tuples.length ≤ 24577 ^ 3 * (n + s + 1) ^ 51 ∧ Hits s (G n s) := by
-  exact ⟨list, fun n s hn hs =>
-    ⟨list_dimension_bound n s, list_length_bound n s hn, list_hits n s hs⟩⟩
+      (G n s).tuples.length ≤ 49153 ^ 3 * (n + s + 1) ^ 51 ∧ Hits s (G n s) := by
+  exact ⟨list, fun n s hs =>
+    ⟨list_dimension_bound n s, list_length_bound n s, list_hits n s hs⟩⟩
 
 end
 end Rational.Generator
