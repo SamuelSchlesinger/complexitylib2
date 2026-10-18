@@ -14,6 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.BitString.Padding
 
 /-!
@@ -287,6 +289,28 @@ theorem computableTidilyInPolyTime_codeEdge
       (.const false) ?_
     exact ntm.computableTidilyInPolyTime_viewStepB.comp
       ((hsnd.comp (ComputableTidilyInPolyTime.fst _ _)).prod (ComputableTidilyInPolyTime.snd _ _))
+
+/-- The code of the initial view of a computed input is polynomial-time, for a polynomial-time
+width. -/
+theorem computableTidilyInPolyTime_viewCode_initView {width : α → ℕ} {word : α → List Bool}
+    (hwidth : ComputableTidilyInPolyTime width encA encUnary)
+    (hword : ComputableTidilyInPolyTime word encA encBits) :
+    ComputableTidilyInPolyTime (fun a => viewCode (width a) (ntm.initView (word a))) encA
+      encBits := by
+  have hinit := ComputableTidilyInPolyTime.finiteCfg_init (k := k) hword ntm.q₀
+  exact ComputableTidilyInPolyTime.bitsAppend (left := fun _ => [false]) (.const _)
+    (ComputableTidilyInPolyTime.bitsPadWord hwidth hinit.encoded)
+
+/-- The accepting code of a polynomial-time width is polynomial-time. -/
+theorem computableTidilyInPolyTime_acceptCode {width : α → ℕ}
+    (hwidth : ComputableTidilyInPolyTime width encA encUnary) :
+    ComputableTidilyInPolyTime (fun a => acceptCode (width a)) encA encBits := by
+  have hlength : ComputableTidilyInPolyTime (fun a => 2 * width a + 2) encA encUnary :=
+    ComputableTidilyInPolyTime.unary_add.comp
+      ((ComputableTidilyInPolyTime.unary_mul.comp
+        ((ComputableTidilyInPolyTime.const 2).prod hwidth)).prod
+        (ComputableTidilyInPolyTime.const 2))
+  exact (ComputableTidilyInPolyTime.bitsReplicate true).comp hlength
 
 end Certificate
 
