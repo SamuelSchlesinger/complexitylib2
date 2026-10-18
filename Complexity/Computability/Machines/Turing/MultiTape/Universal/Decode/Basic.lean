@@ -28,7 +28,7 @@ yields a valid encoded list, and the framed words of an encoded list are its enc
 
 * `Turing.MultiTapeTM.frames`: the framed words one after another in a word.
 * `Turing.MultiTapeTM.Decoder`: total decoders with tidy certificates of fixed degrees.
-* `Turing.MultiTapeTM.Decoder.unary`, `.option`, `.pair`, `.list`, `.congr`: decoders of unary
+* `Turing.MultiTapeTM.Decoder.unary`, `.option`, `.pair`, `.list`, `.map`: decoders of unary
   numbers, options, pairs and lists, and transport along an equivalence of encodings.
 
 ## Main results
@@ -217,7 +217,7 @@ def list (D : Decoder enc) : Decoder (encList enc) where
 
 /-- Transport a decoder to an encoding `enc'` agreeing with `enc` along `f`, where `g` is a right
 inverse of `f`. -/
-def congr (D : Decoder enc) (f : α → β) (g : β → α) (hfg : ∀ b, f (g b) = b)
+def map (D : Decoder enc) (f : α → β) (g : β → α) (hfg : ∀ b, f (g b) = b)
     (henc : ∀ a, enc' (f a) = enc a) : Decoder enc' where
   decode w := f (D.decode w)
   decode_enc b := by

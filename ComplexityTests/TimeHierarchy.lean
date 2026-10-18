@@ -37,10 +37,19 @@ example (d : Desc) (pad : List Bool) : decodeDesc (unframe (frame (eDesc d) ++ p
 
 /-- The empty word decodes to the description without work tapes or transitions. -/
 example : decodeDesc [] = ⟨0, 0, []⟩ := by
-  simp [decodeDesc, descDecoder, Decoder.congr, Decoder.pair, Decoder.list, Decoder.unary,
+  simp [decodeDesc, descDecoder, Decoder.map, Decoder.pair, Decoder.list, Decoder.unary,
     unframe, dropFrame]
 
-/-- A malformed word still decodes to a description, of polynomial encoded length. -/
+/-- Malformed words: a lone marker, and a unary number missing its closing symbol. -/
+example : decodeDesc [true] = ⟨0, 0, []⟩ := by
+  simp [decodeDesc, descDecoder, Decoder.map, Decoder.pair, Decoder.list, Decoder.unary,
+    unframe, dropFrame]
+
+example : decodeDesc [false, true, true] = ⟨0, 1, []⟩ := by
+  simp [decodeDesc, descDecoder, Decoder.map, Decoder.pair, Decoder.list, Decoder.unary,
+    unframe, dropFrame]
+
+/-- Every word decodes to a description of polynomial encoded length. -/
 example : ∃ e c : ℕ, ∀ w : List Bool, (eDesc (decodeDesc w)).length ≤ c * (w.length + 1) ^ e := by
   obtain ⟨_d, e, h⟩ := exists_computableTidilyInDegree_decodeDesc
   obtain ⟨c, hc⟩ := h.2
@@ -78,20 +87,25 @@ private def unitNum : Unit ↪ ℕ := ⟨fun _ => 0, fun _ _ _ => rfl⟩
 /-- On the padded description of a machine answering `b`, the diagonal answers `!b`, so the
 diagonal problem is neither empty nor everything. -/
 example (b : Bool) (pad : List Bool) :
-    diagonal (frame (eDesc (desc unitNum boolSym (answer b))) ++ pad) = !b := by
-  obtain ⟨hhalt, hout⟩ := runFrom_answer b (frame (eDesc (desc unitNum boolSym (answer b))) ++ pad)
-    (t := 2 ^ (frame (eDesc (desc unitNum boolSym (answer b))) ++ pad).length) Nat.one_le_two_pow
+    diagonal (frame (eDesc (desc unitNum eBit (answer b))) ++ pad) = !b := by
+  obtain ⟨hhalt, hout⟩ := runFrom_answer b (frame (eDesc (desc unitNum eBit (answer b))) ++ pad)
+    (t := 2 ^ (frame (eDesc (desc unitNum eBit (answer b))) ++ pad).length) Nat.one_le_two_pow
   exact diagonal_desc unitNum (answer b) pad hhalt hout
 
 /-! ### The separation -/
 
-/-- The diagonal is computed in exponential time, with an explicit constant. -/
+/-- The diagonal is computed in exponential time, up to a constant factor. -/
 example : ∃ c, ComputableTidilyInTimeAndSpace diagonal encBits encBool
     (fun x => c * (2 ^ (4 * x.length) + 1)) fun x => c * (2 ^ (2 * x.length) + 1) := by
   obtain ⟨c, h, -⟩ := computableTidilyInO_diagonal
   exact ⟨c, h⟩
 
 example : {x | diagonal x = true} ∉ P encBits := diagonal_not_mem_P
+
+/-- Plain machines do not compute the diagonal within a polynomial time bound either. -/
+example (c d : ℕ) (s : List Bool → ℕ) :
+    ¬ComputableInTimeAndSpace diagonal encBits encBool (fun x => c * (x.length + 1) ^ d) s :=
+  not_computableInTimeAndSpace_diagonal (.of_forall_le c d fun _ => le_rfl)
 
 /-! ### Axioms -/
 
@@ -100,6 +114,13 @@ info: 'Cslib.Complexity.diagonal_not_mem_P' depends on axioms: [propext, Classic
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.diagonal_not_mem_P
+
+/--
+info: 'Cslib.Complexity.not_computableInTimeAndSpace_diagonal' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.not_computableInTimeAndSpace_diagonal
 
 /--
 info: 'Cslib.Complexity.computableTidilyInO_diagonal' depends on axioms:
@@ -129,9 +150,9 @@ info: 'Turing.MultiTapeTM.frames_encList' depends on axioms: [propext, Classical
 #print axioms Turing.MultiTapeTM.frames_encList
 
 /--
-info: 'Cslib.Complexity.universal_bounds_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.Diagonal.universal_bounds_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.universal_bounds_le
+#print axioms Cslib.Complexity.Diagonal.universal_bounds_le
 
 end ComplexityTests.TimeHierarchy
