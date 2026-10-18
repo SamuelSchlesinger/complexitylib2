@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -35,6 +35,8 @@ A machine that never needs the input is run with its input head frozen (`freezeI
 ## Main results
 
 * `Turing.MultiTapeTM.transformsTapesAt_seq`: sequential composition.
+* `Turing.MultiTapeTM.TransformsTapesAt.seq_eq`: composition with normalized cursor, tape and
+  emitted-word equalities.
 * `Turing.MultiTapeTM.TransformsTapes.freezeInput`: a specification of `tm` gives one of
   `tm.freezeInput` at any position of the input head, which it keeps.
 * `Turing.MultiTapeTM.transformsTapesAt_rewindInput`: rewinding the input head.
@@ -155,6 +157,36 @@ theorem transformsTapesAt_seq {tm₀ : MultiTapeTM k Symbol State₀}
     refine (space_seq_le hrun₀ rfl (by rw [withState_wordsCfgAt, hrun₁]; rfl)).trans ?_
     simpa using Nat.add_le_add hspace₀ hspace₁
 
+-- upstream: candidate
+/-- Sequential composition with normalized cursor, tape and emitted-word equalities. -/
+theorem TransformsTapesAt.seq_eq {tm₀ : MultiTapeTM k Symbol State₀}
+    {tm₁ : MultiTapeTM k Symbol State₁}
+    {P : (input : List Symbol) → Fin (input.length + 2) → (Fin k → List Symbol) → Prop}
+    {R : List Symbol → Prop} {p₁ p₂ : ℕ} {ws₁ ws₂ : Fin k → List Symbol}
+    {e₀ e₁ : List Symbol} {t₀ s₀ t₁ s₁ : ℕ}
+    (h₀ : TransformsTapesAt tm₀ P
+      (fun input _ _ p' ws' e => R input ∧ p'.val = p₁ ∧ ws' = ws₁ ∧ e = e₀) t₀ s₀)
+    (h₁ : TransformsTapesAt tm₁ (fun input p ws => R input ∧ p.val = p₁ ∧ ws = ws₁)
+      (fun input _ _ p' ws' e => R input ∧ p'.val = p₂ ∧ ws' = ws₂ ∧ e = e₁) t₁ s₁) :
+    TransformsTapesAt (tm₀.seq tm₁) P
+      (fun input _ _ p' ws' e => R input ∧ p'.val = p₂ ∧ ws' = ws₂ ∧ e = e₀ ++ e₁)
+      (t₀ + t₁) (s₀ + s₁) :=
+  (transformsTapesAt_seq h₀ h₁ fun _ _ _ _ _ _ _ h => ⟨h.1, h.2.1, h.2.2.1⟩).imp
+    (fun _ _ _ h => h)
+    (by rintro _ _ _ _ _ _ _ ⟨_, _, _, _, ⟨hR, _, _, rfl⟩, ⟨_, hp, hws, rfl⟩, rfl⟩
+        exact ⟨hR, hp, hws, rfl⟩) le_rfl le_rfl
+
+/-- A fixed-input tape transformation, with its cursor equalities normalized. -/
+theorem TransformsTapes.transformsTapesAt_eq {tm : MultiTapeTM k Symbol State}
+    {x e : List Symbol} {ws₀ ws₁ : Fin k → List Symbol} {t s : ℕ}
+    (h : TransformsTapes tm (fun input ws => input = x ∧ ws = ws₀)
+      (fun _ _ ws' e' => ws' = ws₁ ∧ e' = e) t s) :
+    TransformsTapesAt tm (fun input p ws => input = x ∧ p.val = 1 ∧ ws = ws₀)
+      (fun input _ _ p' ws' e' => input = x ∧ p'.val = 1 ∧ ws' = ws₁ ∧ e' = e) t s :=
+  h.transformsTapesAt.imp (fun _ _ _ ⟨hin, hp, hws⟩ => ⟨Fin.ext hp, hin, hws⟩)
+    (fun _ _ _ _ _ _ ⟨hin, _, _⟩ ⟨hp, hws, he⟩ => ⟨hin, by simp [hp], hws, he⟩) le_rfl le_rfl
+
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 /-! ### Freezing the input head -/
 
 /-- `tm`, run as if on a blank input: it reads a blank on the input tape and never moves its input
@@ -209,6 +241,19 @@ theorem TransformsTapes.freezeInput {tm : MultiTapeTM k Symbol State}
       fun m _ => by rw [runFrom_atPos]; rfl]
     exact hsp
 
+-- upstream: candidate
+/-- A fixed tape transformation at an unchanged cursor, with normalized equalities. -/
+theorem TransformsTapes.freezeInput_eq {tm : MultiTapeTM k Symbol State}
+    {ws₀ ws₁ : Fin k → List Symbol} {e : List Symbol} {t s : ℕ}
+    (h : TransformsTapes tm (fun _ ws => ws = ws₀) (fun _ _ ws' e' => ws' = ws₁ ∧ e' = e) t s)
+    (x : List Symbol) (p : ℕ) :
+    TransformsTapesAt tm.freezeInput (fun input p' ws => input = x ∧ p'.val = p ∧ ws = ws₀)
+      (fun input _ _ p' ws' e' => input = x ∧ p'.val = p ∧ ws' = ws₁ ∧ e' = e) t s :=
+  h.freezeInput.imp (fun _ _ _ h => h.2.2)
+    (fun _ _ _ _ _ _ ⟨hin, hp, _⟩ ⟨hp', hws, he⟩ => ⟨hin, by simpa [hp'] using hp, hws, he⟩)
+    le_rfl le_rfl
+
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 /-! ### Rewinding the input head -/
 
 /-- `rewindInput` on a machine with `k` work tapes. -/

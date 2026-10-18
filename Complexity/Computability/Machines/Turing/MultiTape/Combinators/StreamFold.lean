@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -285,66 +285,43 @@ public theorem transformsTapesAt_streamLoop (hVN : V ≠ N) (hVF : V ≠ F) (hNF
     (fun _ _ _ ⟨hin, hp, hws⟩ => ⟨hin, by simp [hp, L], hws, rfl⟩)
     (fun _ _ _ _ _ _ _ ⟨hin, hp, hws, he⟩ => ⟨hin, hp.trans (by rw [hL]), hws, he⟩) le_rfl le_rfl
 
-/-- **The streaming fold on words.** The input `x` is the concatenation of the non-empty tokens
-`toks`, from each of which the reader `r` reads the content `cont j`. If `I` writes the initial
-state `vs 0` to tape `V`, and for every token `j` the machine `E` emits `es j` and `Nm` computes
-the next state `vs (j + 1)` from the state `vs j` followed by `cont j`, and `Fm` emits `ef` from
-the final state, then `streamTM` emits the words `es j` followed by `ef`, tidily. -/
+-- upstream: candidate
+/-- Initialize, run a streaming phase, emit from its final state and clean up. The phase
+specification owns the token reader, round callbacks and their resource accounting. -/
 public theorem computesTidily_streamTM (hVN : V ≠ N) (hVF : V ≠ F) (hNF : N ≠ F)
-    (toks : List (List Bool)) (htoks : ∀ t ∈ toks, t ≠ []) (cont vs es : ℕ → List Bool)
-    (ef : List Bool) {tI sI tF sF sR : ℕ} {tE sE tN sN : ℕ → ℕ}
-    (hread : ∀ j (hj : j < toks.length),
-      r.read r.q₀ (toks.flatten.drop ((toks.take j).flatten).length) = (cont j, toks[j].length))
-    (hI : TransformsTapes I (fun inp ws => inp = toks.flatten ∧ ws = fun _ => [])
-      (fun _ _ ws' em => ws' = Function.update (fun _ => []) V (vs 0) ∧ em = []) tI sI)
-    (hE : ∀ j < toks.length, TransformsTapes E
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs j ++ cont j))
-      (fun _ ws ws' em => ws' = ws ∧ em = es j) (tE j) (sE j))
-    (hN : ∀ j < toks.length, TransformsTapes Nm
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs j ++ cont j))
-      (fun _ ws ws' em => ws' = Function.update ws N (vs (j + 1)) ∧ em = []) (tN j) (sN j))
-    (hF : TransformsTapes Fm (fun _ ws => ws = Function.update (fun _ => []) V (vs toks.length))
-      (fun _ ws ws' em => ws' = ws ∧ em = ef) tF sF)
-    (hsR : ∀ j < toks.length, (vs j ++ cont j).length + 2 + (K - 1) +
-        (sE j + (sN j + (((vs j ++ cont j).length + 1 + K) + ((4 * (vs (j + 1)).length + K + 15) +
-          ((vs (j + 1)).length + 1 + K))))) ≤ sR) :
-    (streamTM r I E Nm Fm V N F hVN hVF hNF).ComputesTidilyInTimeAndSpace toks.flatten
-      (((List.range toks.length).map es).flatten ++ ef)
-      (tI + ((∑ j ∈ Finset.range toks.length, (streamRoundTime toks cont vs tE tN j + 1)) + 1) +
-        ((tF + 3 * ((vs toks.length).length + 1)) + (toks.flatten.length + 2)))
-      (sI + ((2 * K * sR + K) + ((sF + ((vs toks.length).length + 1 + K)) + K))) := by
-  set x := toks.flatten with hx
-  have hloop := transformsTapesAt_streamLoop (r := r) hVN hVF hNF toks htoks cont vs es hread
-    hE hN hsR
-  -- emitting from the final state and clearing it, with the input head frozen
-  have hF' : TransformsTapes Fm
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs toks.length))
-      (fun _ _ ws' em => ws' = Function.update (fun _ => []) V (vs toks.length) ∧ em = ef)
-      tF sF :=
-    hF.imp (fun _ _ h => h) (fun _ _ _ _ hws ⟨h, he⟩ => ⟨h.trans hws, he⟩) le_rfl le_rfl
+    (x v₀ v₁ em ef : List Bool) {tI sI tLoop sLoop tF sF : ℕ}
+    (hI : TransformsTapes I (fun inp ws => inp = x ∧ ws = fun _ => [])
+      (fun _ _ ws' e => ws' = Function.update (fun _ => []) V v₀ ∧ e = []) tI sI)
+    (hloop : TransformsTapesAt (whileInput (streamRound r E Nm V N F hVN hVF hNF))
+      (fun input p ws => input = x ∧ p.val = 1 ∧ ws = Function.update (fun _ => []) V v₀)
+      (fun input _ _ p' ws' e => input = x ∧ p'.val = 1 + x.length ∧
+        ws' = Function.update (fun _ => []) V v₁ ∧ e = em) tLoop sLoop)
+    (hF : TransformsTapes Fm (fun _ ws => ws = Function.update (fun _ => []) V v₁)
+      (fun _ ws ws' e => ws' = ws ∧ e = ef) tF sF) :
+    (streamTM r I E Nm Fm V N F hVN hVF hNF).ComputesTidilyInTimeAndSpace x (em ++ ef)
+      (tI + tLoop + ((tF + 3 * (v₁.length + 1)) + (x.length + 2)))
+      (sI + (sLoop + ((sF + (v₁.length + 1 + K)) + K))) := by
+  have hF' := hF.imp
+    (Q' := fun _ _ ws' e => ws' = Function.update (fun _ => []) V v₁ ∧ e = ef)
+    (fun _ _ h => h)
+    (fun _ _ _ _ hws ⟨h, he⟩ => ⟨h.trans hws, he⟩) le_rfl le_rfl
   have hclear : TransformsTapes ((clearWork Bool).extendTapes (tapeEmb V))
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs toks.length))
-      (fun _ _ ws' em => ws' = (fun _ => []) ∧ em = [])
-      (3 * ((vs toks.length).length + 1)) ((vs toks.length).length + 1 + K) :=
-    (transformsTapes_clearWork_tapeEmb V (vs toks.length)).imp (fun _ _ h => by simp [h])
+      (fun _ ws => ws = Function.update (fun _ => []) V v₁)
+      (fun _ _ ws' e => ws' = (fun _ => []) ∧ e = [])
+      (3 * (v₁.length + 1)) (v₁.length + 1 + K) :=
+    (transformsTapes_clearWork_tapeEmb V v₁).imp (fun _ _ h => by simp [h])
       (fun _ _ _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws]; simp, he⟩) le_rfl le_rfl
-  have hfin := (hF'.seq_eq hclear).freezeInput.imp
-    (P' := fun input _ ws => input = x ∧ ws = Function.update (fun _ => []) V (vs toks.length))
-    (fun _ _ _ h => h.2) (fun _ _ _ _ _ _ _ h => h) le_rfl le_rfl
-  have hend := transformsTapesAt_seq hfin (transformsTapesAt_rewindInput (k := K) x)
-    (fun _ _ _ _ _ _ h _ => h.1)
-  have hmain := transformsTapesAt_seq hloop hend
-    (fun _ _ _ _ _ _ _ ⟨hin, _, hws, _⟩ => ⟨hin, hws⟩)
-  have hall := transformsTapesAt_seq hI.transformsTapesAt hmain
-    (fun _ _ _ p' _ _ ⟨_, hin, _⟩ ⟨hp', hws', he⟩ => ⟨hin, by simp [hp'], hws'⟩)
-  refine (hall.transformsTapes ?_).imp (fun _ _ ⟨hin, hws⟩ => ⟨rfl, hin, hws⟩) ?_ ?_ ?_
-  · rintro _ _ _ _ _ _ ⟨_, _, _, _, -, ⟨_, _, _, _, -, ⟨_, _, _, _, -, ⟨hp, -⟩, -⟩, -⟩, -⟩
-    exact hp
-  · rintro _ _ _ _ _ ⟨_, _, _, _, ⟨-, -, rfl⟩, ⟨_, _, _, _, ⟨-, -, -, rfl⟩,
-      ⟨_, _, _, _, ⟨-, rfl, rfl⟩, ⟨-, rfl, rfl⟩, rfl⟩, rfl⟩, rfl⟩
-    simp
-  · omega
-  · omega
+  have hfin := (hF'.seq_eq hclear).freezeInput_eq x (1 + x.length)
+  have hrw := (transformsTapesAt_rewindInput (k := K) x).imp
+    (P' := fun input p ws => input = x ∧ p.val = 1 + x.length ∧ ws = (fun _ => []))
+    (Q' := fun input _ _ p' ws' e => input = x ∧ p'.val = 1 ∧ ws' = (fun _ => []) ∧ e = [])
+    (fun _ _ _ h => h.1)
+    (by rintro _ _ _ _ _ _ ⟨hin, _, rfl⟩ ⟨rfl, hws, he⟩
+        exact ⟨hin, rfl, hws, he⟩) le_rfl le_rfl
+  have hall := hI.transformsTapesAt_eq.seq_eq (hloop.seq_eq (hfin.seq_eq hrw))
+  refine (hall.transformsTapes (fun _ _ _ _ _ _ h => Fin.ext h.2.1)).imp
+    (fun _ _ ⟨hin, hws⟩ => ⟨hin, rfl, hws⟩)
+    (fun _ _ _ _ _ ⟨_, _, hws, he⟩ => ⟨hws, by simpa using he⟩) (by omega) (by omega)
 
 end Stream
 

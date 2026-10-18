@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -63,72 +63,53 @@ lemma passTapes_nil (hVC : V ≠ C) (v : List Bool) :
   · subst hl; simp [passTapes, hVC.symm]
   · simp [passTapes, hl]
 
-/-- **A pass.** If the streaming loop takes the state `vs 0` on tape `V` to `vs toks.length`,
-emitting the words `es j`, the end round emits `ee` and computes the next state `v'`, and `Cm`
-writes the flag `c'` from it, then a pass takes the state `vs 0` and any flag `c` to `v'` and the
-flag `c'`. -/
+-- upstream: candidate
+/-- Clear the continuation flag, run a streaming phase, then compute the end-of-pass state
+and flag and rewind the input. The phase owns the token and round specifications. -/
 public theorem transformsTapes_passTM (hVN : V ≠ N) (hVF : V ≠ F) (hNF : N ≠ F) (hVC : V ≠ C)
-    (toks : List (List Bool)) (htoks : ∀ t ∈ toks, t ≠ []) (cont vs es : ℕ → List Bool)
-    (ee v' c c' : List Bool) {sR tEe sEe tNe sNe tC sC : ℕ} {tE sE tN sN : ℕ → ℕ}
-    (hread : ∀ j (hj : j < toks.length),
-      r.read r.q₀ (toks.flatten.drop ((toks.take j).flatten).length) = (cont j, toks[j].length))
-    (hE : ∀ j < toks.length, TransformsTapes E
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs j ++ cont j))
-      (fun _ ws ws' em => ws' = ws ∧ em = es j) (tE j) (sE j))
-    (hN : ∀ j < toks.length, TransformsTapes Nm
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs j ++ cont j))
-      (fun _ ws ws' em => ws' = Function.update ws N (vs (j + 1)) ∧ em = []) (tN j) (sN j))
-    (hsR : ∀ j < toks.length, (vs j ++ cont j).length + 2 + (K - 1) +
-        (sE j + (sN j + (((vs j ++ cont j).length + 1 + K) + ((4 * (vs (j + 1)).length + K + 15) +
-          ((vs (j + 1)).length + 1 + K))))) ≤ sR)
-    (hEe : TransformsTapes Ee (fun _ ws => ws = Function.update (fun _ => []) V (vs toks.length))
-      (fun _ ws ws' em => ws' = ws ∧ em = ee) tEe sEe)
-    (hNe : TransformsTapes Ne (fun _ ws => ws = Function.update (fun _ => []) V (vs toks.length))
-      (fun _ ws ws' em => ws' = Function.update ws N v' ∧ em = []) tNe sNe)
+    (x v₀ v₁ em ee v' c c' : List Bool) {tLoop sLoop tEe sEe tNe sNe tC sC : ℕ}
+    (hloop : TransformsTapesAt (whileInput (streamRound r E Nm V N F hVN hVF hNF))
+      (fun input p ws => input = x ∧ p.val = 1 ∧ ws = Function.update (fun _ => []) V v₀)
+      (fun input _ _ p' ws' e => input = x ∧ p'.val = 1 + x.length ∧
+        ws' = Function.update (fun _ => []) V v₁ ∧ e = em) tLoop sLoop)
+    (hEe : TransformsTapes Ee (fun _ ws => ws = Function.update (fun _ => []) V v₁)
+      (fun _ ws ws' e => ws' = ws ∧ e = ee) tEe sEe)
+    (hNe : TransformsTapes Ne (fun _ ws => ws = Function.update (fun _ => []) V v₁)
+      (fun _ ws ws' e => ws' = Function.update ws N v' ∧ e = []) tNe sNe)
     (hC : TransformsTapes Cm (fun _ ws => ws = Function.update (fun _ => []) V v')
-      (fun _ ws ws' em => ws' = Function.update ws C c' ∧ em = []) tC sC) :
+      (fun _ ws ws' e => ws' = Function.update ws C c' ∧ e = []) tC sC) :
     TransformsTapes (passTM r E Nm Ee Ne Cm V N F C hVN hVF hNF)
-      (fun inp ws => inp = toks.flatten ∧ ws = passTapes V C (vs 0) c)
-      (fun _ _ ws' em => ws' = passTapes V C v' c' ∧
-        em = ((List.range toks.length).map es).flatten ++ ee)
-      (3 * (c.length + 1) +
-        ((∑ j ∈ Finset.range toks.length, (streamRoundTime toks cont vs tE tN j + 1) + 1) +
-        ((tEe + (tNe + (3 * ((vs toks.length).length + 1) + ((3 * v'.length + 10) +
-          3 * (v'.length + 1))))) + (tC + (toks.flatten.length + 2)))))
-      (c.length + 1 + K + ((2 * K * sR + K) +
-        ((sEe + (sNe + (((vs toks.length).length + 1 + K) + ((4 * v'.length + K + 15) +
+      (fun inp ws => inp = x ∧ ws = passTapes V C v₀ c)
+      (fun _ _ ws' e => ws' = passTapes V C v' c' ∧ e = em ++ ee)
+      (3 * (c.length + 1) + (tLoop +
+        ((tEe + (tNe + (3 * (v₁.length + 1) + ((3 * v'.length + 10) +
+          3 * (v'.length + 1))))) + (tC + (x.length + 2)))))
+      (c.length + 1 + K + (sLoop +
+        ((sEe + (sNe + ((v₁.length + 1 + K) + ((4 * v'.length + K + 15) +
           (v'.length + 1 + K))))) + (sC + K)))) := by
-  set x := toks.flatten with hx
   have hclear := ((transformsTapes_clearWork_tapeEmb C c).imp
-    (P' := fun inp ws => inp = x ∧ ws = passTapes V C (vs 0) c)
-    (Q' := fun inp _ ws' em => inp = x ∧ ws' = Function.update (fun _ => []) V (vs 0) ∧ em = [])
+    (P' := fun inp ws => inp = x ∧ ws = passTapes V C v₀ c)
+    (Q' := fun _ _ ws' e => ws' = Function.update (fun _ => []) V v₀ ∧ e = [])
     (fun _ _ ⟨_, h⟩ => by simp [h, passTapes])
-    (fun _ _ _ _ ⟨hin, h⟩ ⟨h', he⟩ => ⟨hin, by rw [h', h, passTapes, Function.update_idem,
-      ← passTapes, passTapes_nil hVC], he⟩) le_rfl le_rfl).transformsTapesAt
-  have hloop := transformsTapesAt_streamLoop (r := r) hVN hVF hNF toks htoks cont vs es hread
-    hE hN hsR
-  have hend := (transformsTapes_frozenRound hVN hVF hNF hEe hNe).freezeInput.imp
-    (P' := fun inp _ ws => inp = x ∧ ws = Function.update (fun _ => []) V (vs toks.length))
-    (fun _ _ _ h => h.2) (fun _ _ _ _ _ _ _ h => h) le_rfl le_rfl
-  have hflag := hC.freezeInput.imp
-    (P' := fun inp _ ws => inp = x ∧ ws = Function.update (fun _ => []) V v')
-    (Q' := fun inp _ _ _ ws' em => inp = x ∧ ws' = passTapes V C v' c' ∧ em = [])
-    (fun _ _ _ h => h.2) (fun _ _ _ _ _ _ ⟨hin, h⟩ ⟨_, h', he⟩ => ⟨hin, by rw [h', h]; rfl, he⟩)
-    le_rfl le_rfl
-  have hrw := transformsTapesAt_seq hflag (transformsTapesAt_rewindInput (k := K) x)
-    (fun _ _ _ _ _ _ h _ => h.1)
-  have h₃ := transformsTapesAt_seq hend hrw fun _ _ _ _ _ _ ⟨hin, _⟩ ⟨_, h, _⟩ => ⟨hin, h⟩
-  have h₂ := transformsTapesAt_seq hloop h₃ fun _ _ _ _ _ _ _ ⟨hin, _, h, _⟩ => ⟨hin, h⟩
-  have h₁ := transformsTapesAt_seq hclear h₂
-    fun _ _ _ _ _ _ ⟨hp, _⟩ ⟨hp', hin, h, _⟩ => ⟨hin, by simp [hp'], h⟩
-  refine (h₁.transformsTapes ?_).imp (fun _ _ h => ⟨rfl, h⟩) ?_ le_rfl le_rfl
-  · rintro _ _ _ _ _ _ ⟨_, _, _, _, -, ⟨_, _, _, _, -, ⟨_, _, _, _, -,
-      ⟨_, _, _, _, -, ⟨hp, -⟩, -⟩, -⟩, -⟩, -⟩
-    exact hp
-  · rintro _ _ _ _ _ ⟨_, _, _, _, ⟨-, -, -, rfl⟩, ⟨_, _, _, _, ⟨-, -, -, -, rfl⟩,
-      ⟨_, _, _, _, ⟨-, -, rfl⟩, ⟨_, _, _, _, ⟨-, h, rfl⟩, ⟨-, rfl, rfl⟩, rfl⟩, rfl⟩, rfl⟩, rfl⟩
-    exact ⟨h, by simp⟩
+    (fun _ _ _ _ ⟨_, h⟩ ⟨h', he⟩ => ⟨by rw [h', h, passTapes, Function.update_idem,
+      ← passTapes, passTapes_nil hVC], he⟩) le_rfl le_rfl).transformsTapesAt_eq
+  have hend := (transformsTapes_frozenRound hVN hVF hNF hEe hNe).freezeInput_eq x (1 + x.length)
+  have hflag := (hC.imp (Q' := fun _ _ ws' e => ws' = passTapes V C v' c' ∧ e = [])
+    (fun _ _ h => h)
+    (fun _ _ _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws]; rfl, he⟩) le_rfl le_rfl).freezeInput_eq x
+      (1 + x.length)
+  have hrw := (transformsTapesAt_rewindInput (k := K) x).imp
+    (P' := fun input p ws => input = x ∧ p.val = 1 + x.length ∧ ws = passTapes V C v' c')
+    (Q' := fun input _ _ p' ws' e => input = x ∧ p'.val = 1 ∧ ws' = passTapes V C v' c' ∧ e = [])
+    (fun _ _ _ h => h.1)
+    (by rintro _ _ _ _ _ _ ⟨hin, _, rfl⟩ ⟨rfl, hws, he⟩
+        exact ⟨hin, rfl, hws, he⟩) le_rfl le_rfl
+  have hall := hclear.seq_eq (hloop.seq_eq (hend.seq_eq (hflag.seq_eq hrw)))
+  refine (hall.transformsTapes (fun _ _ _ _ _ _ h => Fin.ext h.2.1)).imp
+    (fun _ _ ⟨hin, hws⟩ => ⟨hin, rfl, hws⟩)
+    (fun _ _ _ _ _ ⟨_, _, hws, he⟩ => ⟨hws, by simpa using he⟩) le_rfl le_rfl
 
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 /-- **The multi-pass fold.** If `I` writes the initial state `vs 0` to tape `V`, each pass `i`
 takes the state `vs i` and the flag `cs i` to the state `vs (i + 1)` and the flag `cs (i + 1)`,
 emitting `es i`, where the flag is blank at the start and exactly after the last pass `passes`, and

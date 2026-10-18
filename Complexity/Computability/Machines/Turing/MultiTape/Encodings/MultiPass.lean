@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -66,6 +66,7 @@ time is that of a streaming fold for every pass. The bounds `tMax`, `sMax` and `
 time and space of a round and of the end of a pass, and the lengths of the states and elements.
 Workspace also accounts for initialization and finalization, without a separate full-input-copy
 term. All these bounds may depend on the input. -/
+-- vendored: share token decoding and callback/copying bounds with the typed streaming phase.
 public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ ε ε' φ ω : Type*}
     {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool}
     {encE' : ε' ↪ List Bool} {encF : φ ↪ List Bool} {encIn : γ ↪ List Bool}
@@ -191,21 +192,6 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
   set n := l.length with hn
   set ps : ℕ → σ := passState (init x) next passEnd l with hps
   let ms (i j : ℕ) : σ := streamState (ps i) next l j
-  let toks := l.map tok
-  let cont' (j : ℕ) : List Bool := (l[j]?.map encA).getD []
-  have hcont (j : ℕ) (hj : j < n) : cont' j = encA l[j] := by
-    simp [cont', List.getElem?_eq_getElem hj]
-  have hx : encIn x = toks.flatten := by rw [hL, List.flatMap_def]
-  have htoks : ∀ t ∈ toks, t ≠ [] := by
-    intro t ht
-    obtain ⟨a, -, rfl⟩ := List.mem_map.mp ht
-    exact htok a
-  have hlen : toks.length = n := by simp [toks, n]
-  have hread' : ∀ j (hj : j < toks.length), r.read r.q₀ (toks.flatten.drop
-      ((toks.take j).flatten).length) = (cont' j, toks[j].length) := by
-    intro j hj
-    rw [drop_flatten_take toks hj]
-    simp [toks, hcont j (by omega), hread]
   -- uniform bounds on the parts
   set L := lMax x with hLdef
   set T := tMax x with hTdef
@@ -225,11 +211,8 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
     rcases Nat.lt_or_eq_of_le hi with hi | rfl
     · exact hmsS i (by omega) 0 (Nat.zero_le _)
     · exact hSlast x
-  have hnextS (i : ℕ) (hi : i ≤ passes x) (j : ℕ) (hj : j < n) :
-      next (ms i j, l[j]) = ms i (j + 1) := (streamState_succ _ _ _ hj).symm
   have hendS (i : ℕ) : passEnd (ms i n) = ps (i + 1) := rfl
   -- the passes
-  let es (i j : ℕ) : List Bool := (l[j]?.map fun a => encE (emit (ms i j, a))).getD []
   let cs (i : ℕ) : List Bool := if i = 0 then [] else flagWord (cont (ps i))
   let R := 3 * T + 60 * (D * (L + 1))
   let tP := 2 * (encIn x).length + (n + 1) * R + 100
@@ -240,7 +223,8 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
       ((tmPN.onWords true).extendTapes ePN) ((tmC.onWords true).extendTapes eC) V N F C hVN hVF hNF)
       (fun inp ws => inp = encIn x ∧ ws = passTapes V C (frame (encS (ps i))) (cs i))
       (fun _ _ ws' em => ws' = passTapes V C (frame (encS (ps (i + 1)))) (cs (i + 1)) ∧
-        em = ((List.range n).map (es i)).flatten ++ encE' (passEmit (ms i n))) tP sP := by
+        em = streamEmit next (fun p => encE (emit p)) (ps i) l ++ encE' (passEmit (ms i n)))
+      tP sP := by
     intro i hi
     have hT (j : ℕ) (hj : j < n) : tN (ms i j, l[j]) + tE (ms i j, l[j]) ≤ T := htMax x i hi j hj
     have hSm (j : ℕ) (hj : j < n) : sN (ms i j, l[j]) + sE (ms i j, l[j]) ≤ Sm :=
@@ -248,50 +232,46 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
     have hTe : tPE (ms i n) + tPN (ms i n) + tC (ps (i + 1)) ≤ T := htEnd x i hi
     have hSe : sPE (ms i n) + sPN (ms i n) + sC (ps (i + 1)) ≤ Sm := hsEnd x i hi
     have hAj (j : ℕ) (hj : j < n) : (encA l[j]).length ≤ L := hA x j hj
-    have hE' : ∀ j < toks.length, TransformsTapes ((tmE.inputFromWord true).extendTapes eE)
-        (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (ms i j)) ++ cont' j))
-        (fun _ ws ws' em => ws' = ws ∧ em = es i j) (T + 4)
-        (Sm + 6 * L + 3 * (M + 4) + 12) := by
-      intro j hj
-      have hjn : j < n := by omega
-      refine (hE (ms i j, l[j])).imp (fun _ _ hws => by rw [hws, hcont j hjn]; rfl)
-        (fun _ _ _ _ _ ⟨h, he⟩ => ⟨h, by rw [he]; simp [es, List.getElem?_eq_getElem hjn]⟩) ?_ ?_
-      · have := hT j hjn
-        omega
-      · have := hSm j hjn
-        have := hmsS i hi j hjn.le
-        have := hAj j hjn
-        simp only [encPair_apply, List.length_append, length_frame]
-        omega
-    have hN' : ∀ j < toks.length, TransformsTapes ((tmN.onWords true).extendTapes eN)
-        (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (ms i j)) ++ cont' j))
-        (fun _ ws ws' em => ws' = Function.update ws N (frame (encS (ms i (j + 1)))) ∧ em = [])
-        (T + 3 * (D * (L + 1)) + 7) (Sm + 3 * (D * (L + 1)) + 10 * L + 4 * (M + 4) + 20) := by
-      intro j hj
-      have hjn : j < n := by omega
-      have h₁ := hmsS i hi (j + 1) hjn
-      refine (hN (ms i j, l[j])).imp (fun _ _ hws => by rw [hws, hcont j hjn]; rfl)
-        (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; simp [hnextS i hi j hjn], he⟩) ?_ ?_
-      · have := hT j hjn
-        have := hmul cfr (by omega) _ h₁
-        have := hmul cN (by omega) _ h₁
-        simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, hnextS i hi j hjn]
-        omega
-      · have := hSm j hjn
-        have := hmsS i hi j hjn.le
-        have := hAj j hjn
-        have := hmul cfr (by omega) _ h₁
-        have := hmul cN (by omega) _ h₁
-        simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, hnextS i hi j hjn,
-          encPair_apply, List.length_append]
-        omega
+    have hloop := transformsTapesAt_streamLoop_encoded r tok htok hread hVN hVF hNF (ps i) l
+      next (fun p => encE (emit p)) hE hN
+      (roundCost := fun _ => 2 * T + 4 * (D * (L + 1)))
+      (sMax := Sm + 3 * (D * (L + 1)) + 16 * L + 7 * (M + 4) + 40) (lMax := L)
+      (by
+        intro j hj
+        have ht := hT j hj
+        have h₀ := hmsS i hi j hj.le
+        have h₁ := hmsS i hi (j + 1) hj
+        have ha := hAj j hj
+        have hm₁ := hmul cfr (by omega) _ h₁
+        have hm₂ := hmul cN (by omega) _ h₁
+        dsimp only [ms] at h₀ h₁ ht hm₁ hm₂
+        simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame,
+          ← streamState_succ (ps i) next l hj]
+        omega)
+      (by
+        intro j hj
+        have hs := hSm j hj
+        have h₀ := hmsS i hi j hj.le
+        have h₁ := hmsS i hi (j + 1) hj
+        have ha := hAj j hj
+        have hm₁ := hmul cfr (by omega) _ h₁
+        have hm₂ := hmul cN (by omega) _ h₁
+        dsimp only [ms] at h₀ h₁ hs hm₁ hm₂
+        simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame,
+          ← streamState_succ (ps i) next l hj, encPair_apply, List.length_append]
+        omega) (hmsS i hi) hAj
+    simp only [Finset.sum_const, Finset.card_range, smul_eq_mul] at hloop
+    rw [← hL x, ← hn] at hloop
+    have hpeak : Sm + 3 * (D * (L + 1)) + 16 * L + 7 * (M + 4) + 40 +
+        16 * L + 4 * (M + 4) + 26 ≤ sR := by omega
+    have hloop' := hloop.imp (fun _ _ _ h => h) (fun _ _ _ _ _ _ _ h => h) le_rfl
+      (Nat.add_le_add_right (Nat.mul_le_mul_left (2 * (M + 4)) hpeak) _)
     have hn₀ := hmsS i hi n le_rfl
     have hn₁ := hpsS (i + 1) (by omega)
     have hEe : TransformsTapes ((tmPE.inputFromWord true).extendTapes ePE)
-        (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (ms i toks.length))))
-        (fun _ ws ws' em => ws' = ws ∧ em = encE' (passEmit (ms i toks.length)))
+        (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (ms i n))))
+        (fun _ ws ws' em => ws' = ws ∧ em = encE' (passEmit (ms i n)))
         (T + 3 * (D * (L + 1)) + 4) (Sm + 3 * (D * (L + 1)) + 4 * L + 3 * (M + 4) + 12) := by
-      rw [hlen]
       refine (hPE (ms i n)).imp (fun _ _ h => h) (fun _ _ _ _ _ h => h) ?_ ?_
       · have := hTe
         have := hmul₂ cuf (by omega) _ hn₀
@@ -304,10 +284,9 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
         simp only [id_eq, encFramed_apply, length_frame]
         omega
     have hNe : TransformsTapes ((tmPN.onWords true).extendTapes ePN)
-        (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (ms i toks.length))))
+        (fun _ ws => ws = Function.update (fun _ => []) V (frame (encS (ms i n))))
         (fun _ ws ws' em => ws' = Function.update ws N (frame (encS (ps (i + 1)))) ∧ em = [])
         (T + 10 * (D * (L + 1)) + 7) (Sm + 20 * (D * (L + 1)) + 4 * (M + 4) + 20) := by
-      rw [hlen]
       refine (hPN (ms i n)).imp (fun _ _ h => h) (fun _ _ _ _ _ h => h) ?_ ?_
       · have := hTe
         have := hmul₂ cuf (by omega) _ hn₀
@@ -347,49 +326,24 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
         simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, encBool_apply,
           List.length_singleton, encBits_apply]
         omega
-    have hsR : ∀ j < toks.length, (frame (encS (ms i j)) ++ cont' j).length + 2 + (M + 4 - 1) +
-        ((Sm + 6 * L + 3 * (M + 4) + 12) + ((Sm + 3 * (D * (L + 1)) + 10 * L + 4 * (M + 4) + 20) +
-          (((frame (encS (ms i j)) ++ cont' j).length + 1 + (M + 4)) +
-            ((4 * (frame (encS (ms i (j + 1)))).length + (M + 4) + 15) +
-              ((frame (encS (ms i (j + 1)))).length + 1 + (M + 4)))))) ≤ sR := by
-      intro j hj
-      have hjn : j < n := by omega
-      have := hmsS i hi j hjn.le
-      have := hmsS i hi (j + 1) hjn
-      have := hAj j hjn
-      simp only [List.length_append, length_frame, hcont j hjn]
-      omega
-    have hsum : ∑ j ∈ Finset.range toks.length, (streamRoundTime toks cont'
-        (fun j => frame (encS (ms i j))) (fun _ => T + 4) (fun _ => T + 3 * (D * (L + 1)) + 7) j +
-          1) ≤ (encIn x).length + n * (2 * T + 4 * (D * (L + 1))) := by
-      refine (Finset.sum_le_sum fun j hj => (?_ : _ ≤ (toks[j]?.getD []).length +
-        (2 * T + 4 * (D * (L + 1))))).trans_eq ?_
-      · have hjn : j < n := by simp at hj; omega
-        have := hmsS i hi j hjn.le
-        have := hmsS i hi (j + 1) hjn
-        have := hAj j hjn
-        simp only [streamRoundTime, List.length_append, length_frame, hcont j hjn]
-        omega
-      · rw [Finset.sum_add_distrib, sum_length_getD, ← hx, Finset.sum_const, Finset.card_range,
-          smul_eq_mul, hlen]
     have hcs (i : ℕ) : (cs i).length ≤ 1 := by
       simp only [cs, flagWord]
       split_ifs <;> simp
-    refine (transformsTapes_passTM (r := r) hVN hVF hNF hVC toks htoks cont'
-      (fun j => frame (encS (ms i j))) (es i) (encE' (passEmit (ms i toks.length)))
-      (frame (encS (ps (i + 1)))) (cs i) (cs (i + 1)) hread' hE' hN' hsR hEe hNe hCm).imp
-      (fun _ _ ⟨hin, hws⟩ => ⟨hin.trans hx, hws⟩)
-      (fun _ _ _ _ _ ⟨hws, he⟩ => ⟨hws, by rw [he, hlen]⟩) ?_ ?_
+    refine (transformsTapes_passTM (r := r) hVN hVF hNF hVC (encIn x)
+      (frame (encS (ps i))) (frame (encS (ms i n)))
+      (streamEmit next (fun p => encE (emit p)) (ps i) l) (encE' (passEmit (ms i n)))
+      (frame (encS (ps (i + 1)))) (cs i) (cs (i + 1)) hloop' hEe hNe hCm).imp
+      (fun _ _ h => h) (fun _ _ _ _ _ h => h) ?_ ?_
     · have := hcs i
       have := hmsS i hi n le_rfl
       have hnR : n * (2 * T + 4 * (D * (L + 1))) ≤ n * R := Nat.mul_le_mul_left _ (by omega)
       have hR : (n + 1) * R = n * R + R := by ring
       have hRdef : R = 3 * T + 60 * (D * (L + 1)) := rfl
-      simp only [hlen, length_frame, tP, hR, ← hx] at hsum ⊢
+      simp only [length_frame, tP, hR]
       omega
     · have := hcs i
       have := hmsS i hi n le_rfl
-      simp only [hlen, length_frame, sP]
+      simp only [length_frame, sP]
       omega
   -- the initial state and the final emission
   have hP0 : (encS (init x)).length ≤ L := hpsS 0 (Nat.zero_le _)
@@ -420,15 +374,9 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
     have : cont (ps (passes x + 1)) = decide (passes x < passes x) := hpasses x _ le_rfl
     simp [cs, this, flagWord]
   have h := computesTidily_multiPassTM hVC (encIn x) (passes x) (fun i => frame (encS (ps i))) cs
-    (fun i => ((List.range n).map (es i)).flatten ++ encE' (passEmit (ms i n)))
+    (fun i => streamEmit next (fun p => encE (emit p)) (ps i) l ++ encE' (passEmit (ms i n)))
     (encF (finish (ps (passes x + 1)))) hI₀ hpass rfl hcs hlast hF₀
-  have hout : encOut (g x) = ((List.range (passes x + 1)).map fun i =>
-      ((List.range n).map (es i)).flatten ++ encE' (passEmit (ms i n))).flatten ++
-        encF (finish (ps (passes x + 1))) := by
-    rw [hg x]
-    simp only [streamEmit_eq]
-    rfl
-  rw [hout]
+  rw [hg x]
   have htPdef : tP = 2 * (encIn x).length + (n + 1) * R + 100 := rfl
   have hRdef : R = 3 * T + 60 * (D * (L + 1)) := rfl
   have hsRdef : sR = 2 * Sm + 6 * (D * (L + 1)) + 30 * L + 20 * (M + 4) + 100 := rfl
