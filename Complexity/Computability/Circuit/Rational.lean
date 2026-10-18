@@ -14,21 +14,48 @@ public import Complexity.Computability.Circuit.Rational.Executable
 /-!
 # Rational hitting lists, nonzeroness, and admissibility
 
-OpenAI's source constructs one uniform polynomial-time generator of rational
-matrix hitting lists for noncommutative rational formulas:
-https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/lean/OAI/Computability/RationalHitting/Main.lean
+A noncommutative rational formula is *nonzero* if it has a defined nonzero value at some
+substitution of square rational matrices of positive dimension, and *admissible* if it is defined
+at some such substitution. For all `n` and `s` there is an explicit, executable list of
+substitutions of rational matrices, of dimension and encoding length polynomial in `n + s`, at
+which every admissible nonzero formula in `n` variables with at most `s` nodes takes an invertible
+value somewhere (`hittingList_hits`). The construction is OpenAI's.
 
-The source runtime counts ordinary transitions of a fixed finite-state Mathlib
-`TM0` machine. Its inputs are two unary parameters separated by a nonblank
-symbol, and its output is the complete canonical binary encoding of the list.
-`Complexitylib.RationalHitting.PolynomialTime` transfers this generator to
-canonical `FP`, returning empty output on malformed binary inputs.
+The list yields executable tests for nonzeroness and admissibility, by exact rational matrix
+evaluation. The admissibility test needs a list for two extra syntax nodes: if `f` has a defined
+value, either `f` or `f + 1` has a nonzero value. The correctness theorems do not assert
+polynomial bit complexity of formula evaluation, and no running-time bound for the generator is
+proved here: a polynomial-time generator is future work (rational-hitting-runtime). These are
+deductions from the source result, without a claim of new priority.
 
-The additional executable tests decide nonzeroness and admissibility using exact
-rational matrix evaluation. The latter needs a list for two extra syntax nodes:
-if `f` has a defined value, either `f` or `f + 1` has a nonzero value. Their
-correctness theorems do not assert polynomial bit complexity of evaluation.
-These are deductions from the source result, without a claim of new priority.
+## Main definitions
+
+* `Cslib.Circuits.Rational.hittingList`: the list of matrix substitutions for `n` variables and
+  `s` nodes.
+* `Cslib.Circuits.Rational.Formula.admissible?`, `Cslib.Circuits.Rational.Formula.nonzero?`:
+  the executable tests.
+
+## Main results
+
+* `Cslib.Circuits.Rational.hittingList_hits`: the list hits every admissible nonzero formula with
+  at most `s` nodes.
+* `Cslib.Circuits.Rational.hittingList_dimension_le`,
+  `Cslib.Circuits.Rational.hittingList_encoding_length_le`: polynomial bounds on the dimension and
+  on the length of the binary encoding.
+* `Cslib.Circuits.Rational.admissible_inv_iff_nonzero`: the inverse of a formula is admissible
+  exactly when the formula is nonzero.
+* `Cslib.Circuits.Rational.Admissible.exists_dimension_le`: an admissible formula has a witness of
+  polynomially bounded dimension.
+* `Cslib.Circuits.Rational.Formula.admissible?_eq_true_iff`,
+  `Cslib.Circuits.Rational.Formula.nonzero?_eq_true_iff`: the tests are correct, so admissibility
+  and nonzeroness are decidable.
+
+## References
+
+* Adapted from OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Computability/RationalHitting/Main.lean), via the complexitylib port
+  [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -38,7 +65,8 @@ namespace Cslib.Circuits.Rational
 /-- The explicit, executable list of rational matrix substitutions. -/
 def hittingList (n s : ℕ) : Output n := ExecutableGenerator.list n s
 
-/-- The generated list hits every nonzero formula of bounded size with an invertible value. -/
+/-- The generated list hits every admissible nonzero formula with at most `s` nodes at an invertible
+value. -/
 theorem hittingList_hits (n s : ℕ) (hs : 1 ≤ s) : Hits s (hittingList n s) := by
   rw [hittingList, ExecutableGenerator.list_spec]
   exact Generator.list_hits n s hs
@@ -59,34 +87,34 @@ theorem hittingList_encoding_length_le (n s : ℕ) (hn : 1 ≤ n) :
 /-- Some matrix evaluation of the inverse is defined exactly when the formula is nonzero. -/
 theorem admissible_inv_iff_nonzero {n : ℕ} (f : Formula n) :
     Admissible (.inv f) ↔ Nonzero f :=
-  (hittingList_hits n (f.size + 2) (by lia)).admissible_inv_iff_nonzero f (by lia)
+  (hittingList_hits n (f.nodeCount + 2) (by lia)).admissible_inv_iff_nonzero f (by lia)
 
 /-- Every nonempty matrix domain has a witness of polynomially bounded dimension. -/
 theorem Admissible.exists_dimension_le {n : ℕ} {f : Formula n} (hf : Admissible f) :
-    ∃ d, 0 < d ∧ d ≤ 256 * (n + f.size + 3) ^ 10 ∧
+    ∃ d, 0 < d ∧ d ≤ 256 * (n + f.nodeCount + 3) ^ 10 ∧
       ∃ (X : Tuple n d) (v : Mat d), Evaluates f X v := by
   obtain ⟨X, _, v, he⟩ :=
-    ((hittingList_hits n (f.size + 2) (by lia)).admissible_iff f le_rfl).mp hf
-  refine ⟨_, (hittingList n (f.size + 2)).dimension_pos, ?_, X, v, he⟩
-  simpa only [Nat.add_assoc] using hittingList_dimension_le n (f.size + 2)
+    ((hittingList_hits n (f.nodeCount + 2) (by lia)).admissible_iff f le_rfl).mp hf
+  refine ⟨_, (hittingList n (f.nodeCount + 2)).dimension_pos, ?_, X, v, he⟩
+  simpa only [Nat.add_assoc] using hittingList_dimension_le n (f.nodeCount + 2)
 
 /-- Test whether the formula has a defined positive-dimensional rational matrix evaluation. -/
 def Formula.admissible? {n : ℕ} (f : Formula n) : Bool :=
-  (hittingList n (f.size + 2)).admissibilityTest f
+  (hittingList n (f.nodeCount + 2)).admissibilityTest f
 
 /-- Test whether the formula has a defined nonzero rational matrix evaluation. -/
 def Formula.nonzero? {n : ℕ} (f : Formula n) : Bool :=
-  (hittingList n (f.size + 2)).nonzeroTest f
+  (hittingList n (f.nodeCount + 2)).nonzeroTest f
 
 /-- The generated finite domain test is correct, with no promise on the formula. -/
 theorem Formula.admissible?_eq_true_iff {n : ℕ} (f : Formula n) :
     f.admissible? = true ↔ Admissible f :=
-  (hittingList_hits n (f.size + 2) (by lia)).admissibilityTest_eq_true_iff f le_rfl
+  (hittingList_hits n (f.nodeCount + 2) (by lia)).admissibilityTest_eq_true_iff f le_rfl
 
 /-- The generated finite nonzeroness test is correct, with no admissibility promise. -/
 theorem Formula.nonzero?_eq_true_iff {n : ℕ} (f : Formula n) :
     f.nonzero? = true ↔ Nonzero f :=
-  (hittingList_hits n (f.size + 2) (by lia)).nonzeroTest_eq_true_iff f (by lia)
+  (hittingList_hits n (f.nodeCount + 2) (by lia)).nonzeroTest_eq_true_iff f (by lia)
 
 /-- Computed decidability of the existence of a defined matrix evaluation. -/
 instance decidableAdmissible {n : ℕ} (f : Formula n) : Decidable (Admissible f) :=

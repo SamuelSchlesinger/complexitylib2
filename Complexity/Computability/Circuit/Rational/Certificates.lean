@@ -13,17 +13,42 @@ public import Complexity.Computability.Circuit.Rational.CyclotomicGrid
 /-!
 # Rational hitting lists: certificates
 
-Adapted from OpenAI's formalization at revision `adc7f1241b42e322a6451854ab7e4b4c146bf78a`.
-Source: https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/lean/OAI/Computability/RationalHitting/Certificates.lean
+A nonzero value of a rational formula at a rational matrix substitution becomes an invertible
+value after a generic quantum-deformation lift into a matrix ring over a Hahn series field
+(`Rational.formula_invertible_witness`); the domain of the original tree is preserved through a
+localization regular at the specialization point. The affine certificate pencils of a formula then
+yield nonzero determinant polynomials of bounded degree (`PencilCertificates.determinant_ne_zero`,
+`PencilCertificates.degree_le`), which the generator evaluates on an integer grid.
 
-Imports, namespaces, module visibility, documentation, and formatting are adapted
-for complexitylib. The source theorem statements and mathematical arguments are retained.
+## Main definitions
+
+* `Cslib.Circuits.Rational.LocalSpecialization.Regular`,
+  `Cslib.Circuits.Rational.LocalSpecialization.evaluate`: fractions regular at a point and their
+  evaluation.
+* `Cslib.Circuits.Rational.PencilCertificates.polynomial`,
+  `Cslib.Circuits.Rational.PencilCertificates.determinant`: the polynomial matrix certificate of
+  an affine pencil and its determinant.
+
+## Main results
+
+* `Cslib.Circuits.Rational.QuantumLift.formula_invertible_value`,
+  `Cslib.Circuits.Rational.formula_invertible_witness`: a nonzero value lifts to a defined
+  invertible value.
+* `Cslib.Circuits.Rational.PencilCertificates.determinant_ne_zero`,
+  `Cslib.Circuits.Rational.PencilCertificates.degree_le`: the certificate determinants are
+  nonzero polynomials of bounded total degree.
+
+## References
+
+* Adapted from OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Computability/RationalHitting/Certificates.lean), via the complexitylib port
+  [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
 
 namespace Cslib.Circuits
-
 
 namespace Rational.LocalSpecialization
 open IsLocalization Matrix
@@ -36,7 +61,7 @@ def denominators (ev : P →+* K) : Submonoid P where
   one_mem' := by simp
   mul_mem' := by
     intro x y hx hy
-    change ev (x*y) ≠ 0
+    change ev (x * y) ≠ 0
     rw [map_mul]
     exact mul_ne_zero hx hy
 
@@ -54,11 +79,11 @@ def evaluate (ev : P →+* K) : Regular ev →+* K :=
 The entire division algebra is deliberately not given a specialization. -/
 lemma evaluate_reflects_units (ev : P →+* K) (x : Regular ev)
     (hx : IsUnit (evaluate ev x)) : IsUnit x := by
-  obtain ⟨a,b,rfl⟩ := IsLocalization.exists_mk'_eq (denominators ev) x
+  obtain ⟨a, b, rfl⟩ := IsLocalization.exists_mk'_eq (denominators ev) x
   have heq : ev a = ev b * evaluate ev (IsLocalization.mk' (Regular ev) a b) :=
     (IsLocalization.lift_mk'_spec _ a _ b).mp rfl
   have ha : ev a ≠ 0 := by rw [heq]; exact mul_ne_zero b.property hx.ne_zero
-  let a' : denominators ev := ⟨a,ha⟩
+  let a' : denominators ev := ⟨a, ha⟩
   apply isUnit_iff_exists_inv.mpr
   exact ⟨IsLocalization.mk' (Regular ev) (b : P) a', IsLocalization.mk'_mul_mk'_eq_one a' b⟩
 
@@ -68,7 +93,7 @@ def intoField (ev : P →+* K) (j : P →+* E) (hj : Function.Injective j) :
   IsLocalization.lift (g := j) (fun y : denominators ev => isUnit_iff_ne_zero.mpr (by
     intro hz
     have hy : (y : P) = 0 := hj (hz.trans (map_zero j).symm)
-    exact y.property (by rw [hy,map_zero])))
+    exact y.property (by rw [hy, map_zero])))
 
 @[simp] lemma intoField_algebraMap (ev : P →+* K) (j : P →+* E)
     (hj : Function.Injective j) (p : P) :
@@ -133,11 +158,11 @@ theorem formula_invertible_value (hχ : χ.IsPrimitive) (f : Formula n)
   have ha' : f.Eval (eps.comp cO) (fun i => eps (X i)) a := by
     rw [hX, RingHom.ext_rat (eps.comp cO) (algebraMap ℚ _)]
     exact ha
-  obtain ⟨y,hy,hyval⟩ := ha'.lift eps (matrix_reflects_units ev)
+  obtain ⟨y, hy, hyval⟩ := ha'.lift eps (matrix_reflects_units ev)
   have hy0 : y ≠ 0 := by
     intro hz
     apply ha0
-    rw [← hyval,hz,map_zero]
+    rw [← hyval, hz, map_zero]
   have hinc : Function.Injective inc := Matrix.map_injective (intoField_injective ev _ _)
   have hb0 : inc y ≠ 0 := by
     intro hz
@@ -160,7 +185,7 @@ theorem formula_invertible_value (hχ : χ.IsPrimitive) (f : Formula n)
       simpa [Matrix.natCast_apply, ← HahnSeries.single_zero_natCast] using hh0
   let : CharZero (divisionSubring χ) :=
     (representation χ).charZero
-  refine ⟨inc y,hb,?_⟩
+  refine ⟨inc y, hb, ?_⟩
   apply Formula.Eval.unit_of_division_lift (representation χ) (c := Rat.castHom (divisionSubring χ))
     (X := fun i => liftD χ (W i)) (h := f) _ hb0
   rwa [RingHom.ext_rat ((representation χ).comp (Rat.castHom (divisionSubring χ)))
@@ -173,6 +198,8 @@ namespace Rational
 open Matrix
 noncomputable section
 
+/-- A nonzero value of a formula at a rational matrix substitution becomes a defined invertible
+value at some substitution of matrices over the Hahn series field `QuantumLift.Exponents ℂ`. -/
 theorem formula_invertible_witness {n d : ℕ} (hd : 0 < d) (f : Formula n)
     (W : Fin n → Matrix (Fin d) (Fin d) ℚ) (a : Matrix (Fin d) (Fin d) ℚ)
     (ha : f.Eval (algebraMap ℚ _) W a) (ha0 : a ≠ 0) :
@@ -194,7 +221,7 @@ theorem formula_invertible_witness {n d : ℕ} (hd : 0 < d) (f : Formula n)
   have hζ := Complex.isPrimitiveRoot_exp d (NeZero.ne d)
   let χ := AddChar.zmodChar d hζ.pow_eq_one
   have hχ : χ.IsPrimitive := AddChar.zmodChar_primitive_of_primitive_root d hζ
-  obtain ⟨b,hb,hbu⟩ := QuantumLift.formula_invertible_value χ hχ f
+  obtain ⟨b, hb, hbu⟩ := QuantumLift.formula_invertible_value χ hχ f
     (fun i => j (W i)) (j a) ha' ha0'
   let r := Matrix.reindexRingEquiv (HahnSeries QuantumLift.Exponents ℂ) (ZMod.finEquiv
     d).toEquiv.symm
@@ -211,6 +238,7 @@ open Matrix MvPolynomial
 open scoped BigOperators
 noncomputable section
 variable {K E : Type*} [Field K] [CharZero K] [Field E] [CharZero E]
+/-- The Laurent field over a field of characteristic zero has characteristic zero. -/
 instance laurentCharZero {E : Type*} [Field E] [CharZero E] : CharZero (LaurentReduction.F E) :=
   CharZero.of_addMonoidHom (HahnSeries.C : E →+* LaurentReduction.F E).toAddMonoidHom
     (map_one (HahnSeries.C : E →+* LaurentReduction.F E)) HahnSeries.C_injective
@@ -219,12 +247,12 @@ variable {n q M N : ℕ} [NeZero M]
 
 /-- Extract the homogeneous coefficient matrices of an affine pencil. -/
 def coefficients (L : Matrix (Fin q) (Fin q) (Affine.Form n)) :
-    Fin (n+1) → Matrix (Fin q) (Fin q) K :=
+    Fin (n + 1) → Matrix (Fin q) (Fin q) K :=
   fun i a b => (algebraMap ℚ K) (Affine.coeff (L a b) i)
 
 /-- Polynomial lifts for each homogeneous coordinate at the test points. -/
 def lifts (χ : AddChar (ZMod M) K) (N n : ℕ) :
-    Fin (n+1) → Matrix (ZMod M) (ZMod M) (MvPolynomial (Fin 3) K) :=
+    Fin (n + 1) → Matrix (ZMod M) (ZMod M) (MvPolynomial (Fin 3) K) :=
   fun i => ThreeLift.lift χ (PencilDeformation.test M N (i.val : K))
 
 /-- The polynomial matrix certificate for the affine pencil. -/
@@ -242,8 +270,8 @@ lemma polynomial_apply (χ : AddChar (ZMod M) K)
       lifts χ N n i a.2 b.2 := by
   unfold polynomial PencilDeformation.polynomial PencilDeformation.polyBlocks
   rw [ThreeLift.lift_sum]
-  simp only [Matrix.sum_apply,ThreeLift.lift_smul,Matrix.smul_apply,
-    MvPolynomial.smul_eq_C_mul,coefficients,lifts]
+  simp only [Matrix.sum_apply, ThreeLift.lift_smul, Matrix.smul_apply,
+    MvPolynomial.smul_eq_C_mul, coefficients, lifts]
 
 lemma specialized (χ : AddChar (ZMod M) K)
     (L : Matrix (Fin q) (Fin q) (Affine.Form n)) (x : Fin 3 → K) :
@@ -253,8 +281,8 @@ lemma specialized (χ : AddChar (ZMod M) K)
           (eval₂Hom (RingHom.id K) x).mapMatrix (lifts χ N n i)))) := by
   rw [Affine.homogeneous_flat]
   funext a b
-  simp only [RingHom.mapMatrix_apply,Matrix.map_apply,polynomial_apply,map_sum,map_mul,
-    eval₂Hom_C,RingHom.id_apply]
+  simp only [RingHom.mapMatrix_apply, Matrix.map_apply, polynomial_apply, map_sum, map_mul,
+    eval₂Hom_C, RingHom.id_apply]
 
 lemma block_eq (φ : K →+* E) (L : Matrix (Fin q) (Fin q) (Affine.Form n))
     {d : ℕ} (X : Fin n → Matrix (Fin d) (Fin d) E) :
@@ -266,19 +294,19 @@ lemma block_eq (φ : K →+* E) (L : Matrix (Fin q) (Fin q) (Affine.Form n))
       L.map (Affine.homogeneous (algebraMap ℚ _) (Fin.cases 1 X)) := by
     funext a b
     exact (Affine.homogeneous_one _ X (L a b)).symm
-  rw [hm,Affine.homogeneous_flat]
+  rw [hm, Affine.homogeneous_flat]
   funext a b
-  simp only [Rectangular.blockMatrix,Matrix.sum_apply,Matrix.kroneckerMap_apply,
-    RingHom.mapMatrix_apply,Matrix.map_apply,coefficients,hc]
+  simp only [Rectangular.blockMatrix, Matrix.sum_apply, Matrix.kroneckerMap_apply,
+    RingHom.mapMatrix_apply, Matrix.map_apply, coefficients, hc]
 
 lemma determinant_ne_zero (χ : AddChar (ZMod M) K) (hχ : χ.IsPrimitive)
     (φ : K →+* E) (L : Matrix (Fin q) (Fin q) (Affine.Form n))
     (B d : ℕ) (hq : 1 ≤ q) (hqB : q ≤ B) (hN : 1 ≤ N)
-    (hMN : M = N+2*(n+1)^3*B) (hM : B*(2*(n+1)^3*B) < M) (hd : 0 < d)
+    (hMN : M = N + 2 * (n + 1) ^ 3 * B) (hM : B * (2 * (n + 1) ^ 3 * B) < M) (hd : 0 < d)
     (X : Fin n → Matrix (Fin d) (Fin d) (LaurentReduction.F E))
     (hX : IsUnit (L.map (Affine.eval (algebraMap ℚ _) X))) :
     determinant χ N L ≠ 0 := by
-  apply PencilDeformation.det_ne_zero χ hχ φ (fun i : Fin (n+1) => (i.val : K))
+  apply PencilDeformation.det_ne_zero χ hχ φ (fun i : Fin (n + 1) => (i.val : K))
     (by intro i j h; apply Fin.ext; change (i.val : K) = (j.val : K) at h; exact
       Nat.cast_injective h) (coefficients L) B d
       (by omega) hq hqB hN hMN hM hd (Fin.cases 1 X)
@@ -289,10 +317,10 @@ lemma determinant_ne_zero (χ : AddChar (ZMod M) K) (hχ : χ.IsPrimitive)
 
 lemma degree_le (χ : AddChar (ZMod M) K)
     (L : Matrix (Fin q) (Fin q) (Affine.Form n)) :
-    (determinant χ N L).totalDegree ≤ 3*q*M^2 := by
-  have hh := FiniteGrid.det_totalDegree_le (polynomial χ N L) (3*M)
+    (determinant χ N L).totalDegree ≤ 3 * q * M ^ 2 := by
+  have hh := FiniteGrid.det_totalDegree_le (polynomial χ N L) (3 * M)
     (PencilDeformation.entry_degree χ (coefficients L) (fun i => (i.val : K)))
-  simp only [Fintype.card_prod,Fintype.card_fin,ZMod.card] at hh
+  simp only [Fintype.card_prod, Fintype.card_fin, ZMod.card] at hh
   exact hh.trans_eq (by ring)
 
 end
