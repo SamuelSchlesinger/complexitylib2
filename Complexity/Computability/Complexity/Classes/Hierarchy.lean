@@ -23,10 +23,18 @@ the whole of `x`, symbol by symbol under the fixed coding `false â†¦ 0`, `true â
 `2 ^ x.length` steps with the universal function, and negates the verdict: it returns `false`
 exactly when the described machine has halted with output `[true]` by then.
 
+The diagonal is itself computed, by one fixed machine, within time `O(2 ^ (4 * n))` and space
+`O(2 ^ (2 * n))` on inputs of length `n` (`Cslib.Complexity.computableTidilyInO_diagonal`). The
+bound charges decoding, converting the input to symbols, writing the clock `2 ^ n` in binary, the
+universal run and the final test; the universal run dominates, within time polynomial in `n` times
+`2 ^ (3 * n)` and space polynomial in `n` times `2 ^ n`, and one more factor `2 ^ n` absorbs the
+polynomials. The exponents are deliberately loose.
+
 No machine computing a Boolean function in polynomial time decides the diagonal problem
 [Arora and Barak, Theorem 3.1][AroraBarak09]. Its description, padded to a length where the machine
 halts within the exponential clock, is an input on which the diagonal returns the negation of the
-machine's answer (`Cslib.Complexity.diagonal_not_mem_P`).
+machine's answer (`Cslib.Complexity.diagonal_not_mem_P`). Together, the problem decided by an
+explicit exponential-time computation is not in `P`. No time-bounded classes are defined here.
 
 ## Main definitions
 
@@ -34,7 +42,10 @@ machine's answer (`Cslib.Complexity.diagonal_not_mem_P`).
 
 ## Main results
 
+* `Cslib.Complexity.computableTidilyInO_diagonal`: the diagonal in exponential time and space.
 * `Cslib.Complexity.diagonal_not_mem_P`: the diagonal problem is not in `P`.
+* `Cslib.Complexity.universal_bounds_le`: the resources of the universal run, in the sizes of its
+  input.
 
 ## References
 
