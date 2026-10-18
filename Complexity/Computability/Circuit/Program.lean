@@ -28,6 +28,7 @@ wires that reads the inputs and satisfies the equation of every gate is the trac
 * `Program.fanInAtMost_iff`: bounded fan-in, gate by gate.
 * `Program.trace_gate`, `Program.trace_gate_last`: the value of a gate.
 * `Program.trace_induction`: propagate a semantic invariant from inputs through gates.
+* `Program.trace_rel`, `Program.eval_rel`: lift a relation between two interpretations.
 * `Program.eq_trace_of_forall_gate`: the trace is the unique solution of the gate equations.
 -/
 
@@ -139,5 +140,25 @@ theorem Program.eq_trace_of_forall_gate {p : Program σ n g} {I : Interpretation
   rw [Program.trace, ← hgates, ← hv]
 
 end Trace
+
+/-- Two interpretations preserve a relation on every wire if the inputs are related and the
+operations occurring in the program preserve it. No condition is imposed on unused operations. -/
+theorem Program.trace_rel {U V : Type*} (p : Program σ n g)
+    {I : Interpretation σ U} {J : Interpretation σ V} {x : Fin n → U} {y : Fin n → V}
+    (R : U → V → Prop) (input : ∀ i, R (x i) (y i))
+    (gate : ∀ k a b, (∀ i, R (a i) (b i)) → R (I (p.lines k).op a) (J (p.lines k).op b))
+    (w : Wire n g) : R (p.trace I x w) (p.trace J y w) := by
+  refine p.wire_induction (P := fun w => R (p.trace I x w) (p.trace J y w))
+    input (fun k ih => ?_) w
+  rw [p.trace_gate, p.trace_gate]
+  exact gate k _ _ ih
+
+/-- Related inputs and gate interpretations give related gate values. -/
+theorem Program.eval_rel {U V : Type*} (p : Program σ n g)
+    {I : Interpretation σ U} {J : Interpretation σ V} {x : Fin n → U} {y : Fin n → V}
+    (R : U → V → Prop) (input : ∀ i, R (x i) (y i))
+    (gate : ∀ k a b, (∀ i, R (a i) (b i)) → R (I (p.lines k).op a) (J (p.lines k).op b))
+    (k : Fin g) : R (p.eval I x k) (p.eval J y k) :=
+  p.trace_rel R input gate (.gate k)
 
 end Cslib.Circuits

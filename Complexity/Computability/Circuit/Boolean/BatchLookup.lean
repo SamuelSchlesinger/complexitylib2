@@ -109,17 +109,15 @@ theorem size_withPadding_le {k v requests padding d : ℕ}
   batchOrCircuit.size_withPadding_le _ _ _ h
 
 /-- The least sorting depth accommodating all requests and one source per address. -/
-def depth (requests k : ℕ) : ℕ := Nat.clog 2 (requests + 2 ^ k)
+abbrev depth (requests k : ℕ) : ℕ := batchOrCircuit.depth requests (2 ^ k)
 
 /-- The number of unused destinations filling the next power-of-two record count. -/
-def padding (requests k : ℕ) : ℕ := BitonicSort.arity (depth requests k) - (requests + 2 ^ k)
+abbrev padding (requests k : ℕ) : ℕ := batchOrCircuit.padding requests (2 ^ k)
 
 /-- The canonical padding fills its sorting network exactly. -/
 theorem add_padding_eq_arity (requests k : ℕ) :
-    requests + (2 ^ k + padding requests k) = BitonicSort.arity (depth requests k) := by
-  have h := Nat.le_pow_clog (by decide : 1 < 2) (requests + 2 ^ k)
-  simp only [padding, depth, BitonicSort.arity_eq_two_pow]
-  lia
+    requests + (2 ^ k + padding requests k) = BitonicSort.arity (depth requests k) :=
+  batchOrCircuit.add_padding_eq_arity requests (2 ^ k)
 
 end batchLookupCircuit
 
@@ -153,7 +151,7 @@ theorem size_batchLookupCircuit_le {k v : ℕ} (table : BitString k → BitStrin
       gcongr
       rw [BitonicSort.arity_eq_two_pow]
       exact Nat.pow_clog_le_mul (by decide : 1 < 2) hn
-    _ = _ := by dsimp only [depth]; ring
+    _ = _ := by dsimp only [depth, batchOrCircuit.depth]; ring
 
 /-- Independent applications of any fixed table admit a shared lookup circuit. -/
 theorem complexity_blockMap_le_lookup {k v : ℕ} (table : BitString k → BitString v) (requests : ℕ) :

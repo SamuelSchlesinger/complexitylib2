@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.ShannonSynthesis
+import Complexity.Computability.Circuit.Support
 
 /-!
 # Stored circuit evaluation regression clients
@@ -55,6 +56,17 @@ private def shared : Circuit signature 1 4 :=
 example : shared.eval interpretation ![true] = ![false, true, false, false] := by
   decide +kernel
 
+-- A free negation and an expensive unused constant have different structural depths.
+-- Only designated outputs contribute to circuit depth or input support.
+private def weighted : signature.Op → ℕ
+  | .const _ => 7
+  | _ => 0
+
+example : shared.program.depthsWith weighted ⟨0, by decide⟩ = 0 ∧
+    shared.program.depthsWith weighted ⟨1, by decide⟩ = 7 ∧ shared.depthWith weighted = 0 ∧
+    shared.program.gateSupport ⟨1, by decide⟩ = ∅ ∧ shared.inputSupport = {0} := by
+  decide +kernel
+
 -- Zero inputs and outputs need neither operations nor an inhabited carrier.
 private def emptySignature : Signature where
   Op := Empty
@@ -77,6 +89,10 @@ private def constantSignature : Signature where
 
 private def naturalConstant : Circuit constantSignature 0 2 :=
   ⟨.gate .empty ⟨(), Fin.elim0⟩, fun _ => .gate 0⟩
+
+-- A nullary gate retains its weight, even though its support and input list are empty.
+example : naturalConstant.depthWith (fun _ => 9) = 9 ∧
+    naturalConstant.inputSupport = ∅ := by decide +kernel
 
 /-- info: (#[37, 37], 37) -/
 #guard_msgs in

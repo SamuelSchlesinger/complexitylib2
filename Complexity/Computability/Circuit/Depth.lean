@@ -8,6 +8,7 @@ module
 -- upstream: candidate (addition to `Circuit/Depth.lean`)
 
 public import Cslib.Computability.Circuit.Depth
+public import Complexity.Computability.Circuit.Program
 public import Mathlib.Data.Fintype.Fin
 public import Mathlib.Data.Finset.Lattice.Fold
 
@@ -106,6 +107,11 @@ private theorem foldl_max_zero {m : ℕ} (f : Fin m → ℕ) :
     Fin.foldl m (fun acc i => max acc (f i)) 0 = Finset.univ.sup f := by
   rw [Fin.foldl_max_eq_max_sup, Nat.zero_max]
 
+/-- The depth interpretation takes the largest argument depth and adds the operation's cost.
+In particular, a nullary gate contributes its own cost. -/
+def depthInterpretation (cost : σ.Op → ℕ) : Interpretation σ ℕ :=
+  fun op depths => Fin.foldl (σ.Arity op) (fun depth k => max depth (depths k)) 0 + cost op
+
 /-- The depth of a line when its operation costs `cost op`. -/
 def Line.depthWith (cost : σ.Op → ℕ) (line : Line σ n g) (wireDepths : Wire n g → ℕ) : ℕ :=
   Fin.foldl (σ.Arity line.op) (fun depth k => max depth (wireDepths (line.wires k))) 0 +
@@ -135,16 +141,21 @@ theorem Line.wireDepth_add_le_depthWith (cost : σ.Op → ℕ) (line : Line σ n
   simp only [Line.depthWith, Line.depth, Pi.one_apply]
   omega
 
+/-- Raising argument depths by at most `D` raises an operation's depth by at most `D`. -/
+theorem depthInterpretation_le_add (cost : σ.Op → ℕ) (op : σ.Op)
+    {depths depths' : Fin (σ.Arity op) → ℕ} {D : ℕ} (h : ∀ a, depths a ≤ depths' a + D) :
+    depthInterpretation cost op depths ≤ depthInterpretation cost op depths' + D := by
+  have : Finset.univ.sup depths ≤ Finset.univ.sup depths' + D :=
+    Finset.sup_le fun a _ => (h a).trans (Nat.add_le_add_right
+      (Finset.le_sup (f := depths') (Finset.mem_univ a)) _)
+  simp only [depthInterpretation, foldl_max_zero]
+  lia
+
 /-- Raising the depths of the wires by at most `D` raises the depth of a line by at most `D`. -/
 theorem Line.depthWith_le_add (cost : σ.Op → ℕ) (line : Line σ n g) {depths depths' : Wire n g → ℕ}
     {D : ℕ} (h : ∀ a, depths (line.wires a) ≤ depths' (line.wires a) + D) :
-    line.depthWith cost depths ≤ line.depthWith cost depths' + D := by
-  have : (Finset.univ.sup fun a => depths (line.wires a)) ≤
-      (Finset.univ.sup fun a => depths' (line.wires a)) + D :=
-    Finset.sup_le fun a _ => (h a).trans (Nat.add_le_add_right
-      (Finset.le_sup (f := fun a => depths' (line.wires a)) (Finset.mem_univ a)) _)
-  rw [Line.depthWith_eq_sup, Line.depthWith_eq_sup]
-  omega
+    line.depthWith cost depths ≤ line.depthWith cost depths' + D :=
+  depthInterpretation_le_add cost line.op h
 
 /-- A line reading only wires of depth zero has the depth of its cost. -/
 theorem Line.depthWith_eq_cost (cost : σ.Op → ℕ) (line : Line σ n g) {depths : Wire n g → ℕ}
@@ -159,12 +170,9 @@ theorem Line.depthWith_mono {cost cost' : σ.Op → ℕ} (hcost : ∀ op, cost o
   rw [Line.depthWith_eq_sup, Line.depthWith_eq_sup]
   exact Nat.add_le_add (Finset.sup_mono_fun fun _ _ => hdepths _) (hcost _)
 
-/-- The depth of every gate of a program when each operation `op` costs `cost op`. -/
-def Program.depthsWith (cost : σ.Op → ℕ) {g : ℕ} : Program σ n g → Fin g → ℕ
-  | .empty => Fin.elim0
-  | .gate p line =>
-    Fin.lastCases (line.depthWith cost (Wire.elim (fun _ => 0) (p.depthsWith cost)))
-      (p.depthsWith cost)
+/-- The depth of every gate is evaluation in the depth interpretation, with zero-depth inputs. -/
+def Program.depthsWith (cost : σ.Op → ℕ) (p : Program σ n g) : Fin g → ℕ :=
+  p.eval (depthInterpretation cost) (fun _ => 0)
 
 /-- The depth of every wire of a program when each operation `op` costs `cost op`. -/
 def Program.wireDepthsWith (cost : σ.Op → ℕ) (p : Program σ n g) : Wire n g → ℕ :=
@@ -179,12 +187,12 @@ def Program.wireDepthsWith (cost : σ.Op → ℕ) (p : Program σ n g) : Wire n 
 @[simp] theorem Program.depthsWith_gate_last (cost : σ.Op → ℕ) (p : Program σ n g)
     (line : Line σ n g) :
     (p.gate line).depthsWith cost (Fin.last g) = line.depthWith cost (p.wireDepthsWith cost) := by
-  simp [Program.depthsWith, Program.wireDepthsWith]
+  exact p.eval_gate_last line (depthInterpretation cost) (fun _ => 0)
 
 @[simp] theorem Program.depthsWith_gate_castSucc (cost : σ.Op → ℕ) (p : Program σ n g)
     (line : Line σ n g) (j : Fin g) :
     (p.gate line).depthsWith cost j.castSucc = p.depthsWith cost j := by
-  simp [Program.depthsWith]
+  exact p.eval_gate_castSucc line (depthInterpretation cost) (fun _ => 0) j
 
 @[simp] theorem Program.wireDepthsWith_gate_castSucc (cost : σ.Op → ℕ) (p : Program σ n g)
     (line : Line σ n g) (w : Wire n g) :
@@ -193,21 +201,8 @@ def Program.wireDepthsWith (cost : σ.Op → ℕ) (p : Program σ n g) : Wire n 
 
 /-- The depth of a gate is the depth of its line over the depths of the wires. -/
 theorem Program.depthsWith_eq_depthWith_lines (cost : σ.Op → ℕ) (p : Program σ n g) (k : Fin g) :
-    p.depthsWith cost k = (p.lines k).depthWith cost (p.wireDepthsWith cost) := by
-  induction p with
-  | empty => exact k.elim0
-  | @gate g p line ih =>
-    have h : (fun w => (p.gate line).wireDepthsWith cost (Wire.Renaming.castSucc w)) =
-        p.wireDepthsWith cost :=
-      funext fun w => by
-        rw [Wire.Renaming.castSucc_apply, Program.wireDepthsWith_gate_castSucc]
-    induction k using Fin.lastCases with
-    | last =>
-      rw [Program.lines_gate_last, Program.depthsWith_gate_last]
-      exact congrArg (line.depthWith cost) h.symm
-    | cast k =>
-      rw [Program.lines_gate_castSucc, Program.depthsWith_gate_castSucc, ih]
-      exact congrArg ((p.lines k).depthWith cost) h.symm
+    p.depthsWith cost k = (p.lines k).depthWith cost (p.wireDepthsWith cost) :=
+  (p.lines_eval (depthInterpretation cost) (fun _ => 0) k).symm
 
 /-- A gate is at least as deep as its cost. -/
 theorem Program.cost_le_depthsWith (cost : σ.Op → ℕ) (p : Program σ n g) (k : Fin g) :
@@ -217,15 +212,11 @@ theorem Program.cost_le_depthsWith (cost : σ.Op → ℕ) (p : Program σ n g) (
 /-- With unit costs, `Program.depthsWith` is `Program.depths`. -/
 @[simp] theorem Program.depthsWith_one (p : Program σ n g) :
     p.depthsWith 1 = p.depths := by
-  induction p with
-  | empty => exact funext fun k => k.elim0
-  | @gate g p line ih =>
-    have hw : p.wireDepthsWith 1 = p.wireDepths := by
-      funext w; cases w <;> simp [ih, Program.wireDepths]
-    funext k
-    induction k using Fin.lastCases with
-    | last => simp [hw]
-    | cast k => simp [ih]
+  symm
+  apply p.eq_eval_of_forall_lines_eval
+  intro k
+  change (p.lines k).depthWith 1 p.wireDepths = p.depths k
+  rw [Line.depthWith_one, p.depths_eq_depth_lines]
 
 /-- With unit costs, `Program.wireDepthsWith` is `Program.wireDepths`. -/
 @[simp] theorem Program.wireDepthsWith_one (p : Program σ n g) :
@@ -235,14 +226,10 @@ theorem Program.cost_le_depthsWith (cost : σ.Op → ℕ) (p : Program σ n g) (
 /-- `Program.depthsWith` is monotone in the costs. -/
 theorem Program.depthsWith_mono {cost cost' : σ.Op → ℕ} (hcost : ∀ op, cost op ≤ cost' op)
     (p : Program σ n g) (k : Fin g) : p.depthsWith cost k ≤ p.depthsWith cost' k := by
-  induction p with
-  | empty => exact k.elim0
-  | @gate g p line ih =>
-    have hw : ∀ w, p.wireDepthsWith cost w ≤ p.wireDepthsWith cost' w := fun w => by
-      cases w <;> simp [ih]
-    induction k using Fin.lastCases with
-    | last => simpa using line.depthWith_mono hcost hw
-    | cast k => simpa using ih k
+  apply p.eval_rel (· ≤ ·) (fun _ => le_rfl) _ k
+  intro k a b hab
+  simp only [depthInterpretation, foldl_max_zero]
+  exact Nat.add_le_add (Finset.sup_mono_fun fun i _ => hab i) (hcost _)
 
 /-- `Program.wireDepthsWith` is monotone in the costs. -/
 theorem Program.wireDepthsWith_mono {cost cost' : σ.Op → ℕ} (hcost : ∀ op, cost op ≤ cost' op)
@@ -303,26 +290,13 @@ theorem Circuit.depthWith_le_depth {cost : σ.Op → ℕ} (hcost : ∀ op, cost 
 costs as without. -/
 theorem Program.depthsWith_le_mul_depths {cost : σ.Op → ℕ} {b : ℕ} (p : Program σ n g)
     (h : ∀ k, cost (p.lines k).op ≤ b) (k : Fin g) : p.depthsWith cost k ≤ b * p.depths k := by
-  induction p with
-  | empty => exact k.elim0
-  | @gate g p line ih =>
-    have hw (w : Wire n g) : p.wireDepthsWith cost w ≤ b * p.wireDepths w := by
-      cases w with
-      | input i => simp
-      | gate j => exact ih (fun k => by simpa using h k.castSucc) j
-    induction k using Fin.lastCases with
-    | last =>
-      rw [Program.depthsWith_gate_last, Program.depths_gate_last]
-      obtain ⟨D, hD⟩ : ∃ D, line.depth p.wireDepths = D + 1 :=
-        ⟨_, (Nat.succ_pred_eq_of_pos (line.depth_pos p.wireDepths)).symm⟩
-      have hle := line.depthWith_le_add cost (depths' := fun _ => 0) (D := b * D) fun a => by
-        have := line.wireDepth_lt_depth p.wireDepths a
-        exact (hw _).trans ((Nat.mul_le_mul_left b (by omega : _ ≤ D)).trans_eq (zero_add _).symm)
-      rw [line.depthWith_eq_cost cost (depths := fun _ => 0) fun _ => rfl] at hle
-      have hop : cost line.op ≤ b := by simpa using h (Fin.last g)
-      rw [hD, Nat.mul_succ]
-      omega
-    | cast k => simpa using ih (fun k => by simpa using h k.castSucc) k
+  rw [← p.depthsWith_one]
+  apply p.eval_rel (fun a d => a ≤ b * d) (fun _ => by simp) _ k
+  intro j a d had
+  simp only [depthInterpretation, foldl_max_zero, Pi.one_apply, Nat.mul_add, Nat.mul_one]
+  apply Nat.add_le_add _ (h j)
+  exact Finset.sup_le fun i _ => (had i).trans
+    (Nat.mul_le_mul_left b (Finset.le_sup (f := d) (Finset.mem_univ i)))
 
 /-- If every gate of a program costs at most `b`, every wire is at most `b` times as deep with
 costs as without. -/

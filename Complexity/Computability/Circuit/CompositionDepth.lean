@@ -42,44 +42,19 @@ variable (P : Program σ n g₁) (feed : Fin k → Wire n g₁)
 /-- Continuing a program does not change the depths with costs of its wires. -/
 @[simp] theorem wireDepthsWith_append_castAdd (cost : σ.Op → ℕ) (q : Program σ k g₂)
     (w : Wire n g₁) :
-    (P.append feed q).wireDepthsWith cost (w.castAdd g₂) = P.wireDepthsWith cost w := by
-  induction q with
-  | empty => cases w <;> rfl
-  | gate q line ih =>
-    cases w with
-    | input i => rfl
-    | gate j =>
-      exact (Program.wireDepthsWith_gate_castSucc _ _ _ (Wire.gate (j.castAdd _))).trans ih
+    (P.append feed q).wireDepthsWith cost (w.castAdd g₂) = P.wireDepthsWith cost w :=
+  P.trace_append_castAdd feed (depthInterpretation cost) (fun _ => 0) q w
 
 /-- With costs, a wire of the continuation is at most as deep as in the continuation alone, plus
 the depth of the wires feeding it. -/
 theorem wireDepthsWith_append_appendedWire_le (cost : σ.Op → ℕ) {D : ℕ}
     (hD : ∀ i, P.wireDepthsWith cost (feed i) ≤ D) (q : Program σ k g₂) (w : Wire k g₂) :
     (P.append feed q).wireDepthsWith cost (appendedWire feed w) ≤ q.wireDepthsWith cost w + D := by
-  induction q with
-  | empty =>
-    cases w with
-    | input i => exact (wireDepthsWith_append_castAdd P feed cost .empty (feed i)).trans_le (by
-        simpa using hD i)
-    | gate j => exact j.elim0
-  | gate q line ih =>
-    cases w with
-    | input i =>
-      refine (wireDepthsWith_append_castAdd P feed cost _ (feed i)).trans_le ?_
-      simpa using hD i
-    | gate j =>
-      refine Fin.lastCases ?_ (fun j => ?_) j
-      · change ((P.append feed q).gate (line.mapWires (appendedWire feed))).depthsWith cost
-          (Fin.last _) ≤ (q.gate line).depthsWith cost (Fin.last _) + D
-        rw [Program.depthsWith_gate_last, Program.depthsWith_gate_last]
-        exact line.depthWith_le_add cost
-          (depths := fun w => (P.append feed q).wireDepthsWith cost (appendedWire feed w))
-          (depths' := q.wireDepthsWith cost) fun a => ih (line.wires a)
-      · change ((P.append feed q).gate (line.mapWires (appendedWire feed))).wireDepthsWith cost
-          (Wire.castSucc (Wire.gate (Fin.natAdd g₁ j))) ≤
-          (q.gate line).wireDepthsWith cost (Wire.castSucc (Wire.gate j)) + D
-        rw [Program.wireDepthsWith_gate_castSucc, Program.wireDepthsWith_gate_castSucc]
-        exact ih (.gate j)
+  change (P.append feed q).trace (depthInterpretation cost) (fun _ => 0)
+    (appendedWire feed w) ≤ q.trace (depthInterpretation cost) (fun _ => 0) w + D
+  rw [P.trace_append_appendedWire]
+  exact q.trace_rel (fun a b => a ≤ b + D) (fun i => (hD i).trans_eq (Nat.zero_add D).symm)
+    (fun j _ _ h => depthInterpretation_le_add cost (q.lines j).op h) w
 
 /-- Continuing a program does not change the depths of its wires. -/
 @[simp] theorem wireDepths_append_castAdd (q : Program σ k g₂) (w : Wire n g₁) :

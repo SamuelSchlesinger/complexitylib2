@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 public import Cslib.Computability.Circuit.Basic
+public import Complexity.Computability.Circuit.Program
 public import Mathlib.Data.Fin.SuccPred
 public import Mathlib.Data.Finset.Union
 public import Mathlib.Data.Fintype.Basic
@@ -53,6 +54,11 @@ theorem essentialAt_iff_not_dependsOn {f : (Fin n → U) → V} {i : Fin n} :
     exists_prop]
 
 
+/-- The support interpretation unions the supports of a gate's argument wires. -/
+def supportInterpretation (σ : Signature) (n : ℕ) : Interpretation σ (Finset (Fin n)) :=
+  fun _ supports => Finset.univ.biUnion supports
+
+
 /-- The original inputs supporting a line, given the support of each wire. -/
 def Line.inputSupport
     (line : Line σ n g)
@@ -71,18 +77,14 @@ def Line.inputSupport
 
 
 /-- The input support of every gate in a program. -/
-def Program.gateSupport : ∀ {g : ℕ}, Program σ n g → Fin g → Finset (Fin n)
-  | _, .empty => Fin.elim0
-  | _, .gate program line =>
-      let prior := program.gateSupport
-      let wireSupport := Wire.elim (fun k => {k}) prior
-      Fin.lastCases (line.inputSupport wireSupport) prior
+def Program.gateSupport (program : Program σ n g) : Fin g → Finset (Fin n) :=
+  program.eval (supportInterpretation σ n) (fun i => {i})
 
 
 /-- The input support of every input or gate wire in a program. -/
 def Program.wireSupport
     (program : Program σ n g) : Wire n g → Finset (Fin n) :=
-  Wire.elim (fun k => {k}) program.gateSupport
+  program.trace (supportInterpretation σ n) (fun i => {i})
 
 
 /-- An input wire is supported only by that input. -/
@@ -105,10 +107,8 @@ def Program.wireSupport
     (program : Program σ n g)
     (line : Line σ n g)
     (wire : Wire n g) :
-    (program.gate line).wireSupport wire.castSucc = program.wireSupport wire := by
-  cases wire with
-  | input i => rfl
-  | gate j => simp [Program.wireSupport, Program.gateSupport]
+    (program.gate line).wireSupport wire.castSucc = program.wireSupport wire :=
+  program.trace_gate_castSucc line (supportInterpretation σ n) (fun i => {i}) wire
 
 
 /-- The new gate is supported by precisely the inputs supporting the new line. -/
@@ -116,8 +116,8 @@ def Program.wireSupport
     (program : Program σ n g)
     (line : Line σ n g) :
     (program.gate line).gateSupport (Fin.last g) =
-      line.inputSupport program.wireSupport := by
-  simp only [Program.wireSupport, Program.gateSupport, Fin.lastCases_last]
+      line.inputSupport program.wireSupport :=
+  program.eval_gate_last line (supportInterpretation σ n) (fun i => {i})
 
 
 /-- The new wire is supported by precisely the inputs supporting the new line. -/
@@ -125,8 +125,8 @@ theorem Program.wireSupport_gate_last
     (program : Program σ n g)
     (line : Line σ n g) :
     (program.gate line).wireSupport (Wire.gate (Fin.last g)) =
-      line.inputSupport program.wireSupport := by
-  simp only [Program.wireSupport, Program.gateSupport, Wire.elim_gate, Fin.lastCases_last]
+      line.inputSupport program.wireSupport :=
+  program.gateSupport_gate_last line
 
 
 /-- The input support of every designated output wire in a circuit. -/
@@ -149,50 +149,6 @@ def Circuit.inputSupport (c : Circuit σ n m) : Finset (Fin n) :=
   simp [Circuit.inputSupport, Circuit.outputSupport]
 
 
-/-- Program gates agree whenever their supporting inputs agree. -/
-theorem Program.eval_congr
-    (program : Program σ n g)
-    (interpretation : Interpretation σ U)
-    (left right : Fin n → U)
-    (k : Fin g)
-    (agree : ∀ i ∈ program.gateSupport k, left i = right i) :
-    program.eval interpretation left k = program.eval interpretation right k := by
-  induction program with
-  | empty => exact Fin.elim0 k
-  | @gate g program line ih =>
-      revert agree
-      refine Fin.lastCases ?_ (fun j => ?_) k
-      · intro agree
-        simp only [Program.eval, Fin.lastCases_last]
-        unfold Line.eval
-        congr 1
-        funext argument
-        simp only [Function.comp_apply]
-        let wireSupport : Wire n g → Finset (Fin n) :=
-          Wire.elim (fun k => {k}) program.gateSupport
-        have agreeOnLine :
-            ∀ i ∈ line.inputSupport wireSupport, left i = right i := by
-          simpa [Program.gateSupport] using agree
-        have wireValueEqual (wire : Wire n g) :
-            (∀ i ∈ wireSupport wire, left i = right i) →
-            (Wire.elim left (program.eval interpretation left) wire : U) =
-              (Wire.elim right (program.eval interpretation right) wire : U) := by
-          cases wire with
-          | input i =>
-              intro h
-              simpa using h i (by simp [wireSupport])
-          | gate j =>
-              intro h
-              simpa using ih j (fun i hi =>
-                h i (by simpa [wireSupport] using hi))
-        exact wireValueEqual (line.wires argument) fun i hi =>
-          agreeOnLine i (Line.mem_inputSupport.mpr ⟨argument, hi⟩)
-      · intro agree
-        simp only [Program.eval, Fin.lastCases_castSucc]
-        apply ih j
-        simpa [Program.gateSupport] using agree
-
-
 /-- Program traces agree on any wire whose supporting inputs agree. -/
 theorem Program.trace_congr
     (program : Program σ n g)
@@ -202,18 +158,31 @@ theorem Program.trace_congr
     (agree : ∀ i ∈ program.wireSupport wire, left i = right i) :
     program.trace interpretation left wire =
       program.trace interpretation right wire := by
-  unfold Program.trace
   revert agree
-  cases wire with
-  | input input =>
-    intro agree
-    simpa using agree input (by simp [Program.wireSupport])
-  | gate gate =>
-    intro agree
-    simp only [Wire.elim_gate]
-    apply program.eval_congr interpretation left right gate
-    intro input present
-    exact agree input (by simpa [Program.wireSupport] using present)
+  refine program.wire_induction (P := fun wire =>
+    (∀ i ∈ program.wireSupport wire, left i = right i) →
+      program.trace interpretation left wire = program.trace interpretation right wire)
+    (fun i agree => agree i (Finset.mem_singleton_self i)) (fun k ih agree => ?_) wire
+  rw [program.trace_gate, program.trace_gate]
+  congr 1
+  funext a
+  apply ih a
+  intro i hi
+  apply agree i
+  change i ∈ program.trace (supportInterpretation σ n) (fun i => {i}) (.gate k)
+  rw [program.trace_gate]
+  exact Finset.mem_biUnion.mpr ⟨a, Finset.mem_univ a, hi⟩
+
+
+/-- Program gates agree whenever their supporting inputs agree. -/
+theorem Program.eval_congr
+    (program : Program σ n g)
+    (interpretation : Interpretation σ U)
+    (left right : Fin n → U)
+    (k : Fin g)
+    (agree : ∀ i ∈ program.gateSupport k, left i = right i) :
+    program.eval interpretation left k = program.eval interpretation right k :=
+  program.trace_congr interpretation left right (.gate k) agree
 
 
 /-- Circuit evaluation depends only on the circuit's structural input support. -/
