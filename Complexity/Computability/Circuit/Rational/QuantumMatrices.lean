@@ -12,13 +12,36 @@ public import Complexity.Computability.Circuit.Rational.QuantumSeries
 public import Mathlib.Algebra.Order.Monoid.Prod
 
 /-!
-# Rational hitting lists: quantum matrices
+# Weyl matrices and the quantum Fourier lift
 
-Adapted from OpenAI's formalization at revision `adc7f1241b42e322a6451854ab7e4b4c146bf78a`.
-Source: https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/lean/OAI/Computability/RationalHitting/QuantumMatrices.lean
+The Weyl matrices `D^a S^b` over `ZMod d`, built from a diagonal character matrix `D` and a
+cyclic shift `S`, multiply like monomials up to scalars, and for a primitive character they
+span all matrices by finite Fourier inversion. Assigning the Weyl unit of `(a, b)` to the
+exponent `(a, b) ∈ ℤ ×ₗ ℤ` makes the monomial-line Hahn series of `QuantumSeries` a division
+ring, which receives the Fourier lift of every matrix. Splitting matrix-valued Hahn series
+entrywise gives a matrix representation of this division ring over a commutative Hahn field.
 
-Imports, namespaces, module visibility, documentation, and formatting are adapted
-for complexitylib. The source theorem statements and mathematical arguments are retained.
+## Main definitions
+
+* `HahnMatrix.entry`, `HahnMatrix.split`: entries of matrix-valued Hahn series, and the ring
+  isomorphism onto matrices of Hahn series.
+* `QuantumMatrices.weyl`, `QuantumMatrices.weylUnit`: the Weyl matrix `D^a S^b` and its unit.
+* `QuantumMatrices.fourierCoeff`: the Fourier coefficient of a matrix at `(a, b)`.
+* `QuantumLift.divisionSubring`: the Weyl-monomial Hahn series, a division ring.
+* `QuantumLift.lift`, `QuantumLift.liftD`: the Fourier lift of a matrix.
+* `QuantumLift.representation`: the matrix representation of the division subring.
+
+## Main results
+
+* `QuantumMatrices.weyl_mul`: the Weyl commutation rule.
+* `QuantumMatrices.fourier_reconstruction`: Fourier inversion for a primitive character.
+
+## References
+
+* Adapted from OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Computability/RationalHitting/QuantumMatrices.lean), via the complexitylib port
+  [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -29,21 +52,12 @@ namespace Rational.HahnMatrix
 open HahnSeries Matrix
 open scoped BigOperators
 noncomputable section
-variable {Γ R S : Type*} [AddCommGroup Γ] [LinearOrder Γ] [IsOrderedAddMonoid Γ]
-  [Ring R] [Ring S]
-
-/-- Apply a ring homomorphism to every Hahn-series coefficient. -/
-def mapCoeff (φ : R →+* S) : HahnSeries Γ R →+* HahnSeries Γ S where
-  toFun x := x.map φ.toZeroHom
-  map_zero' := HahnSeries.map_zero φ.toZeroHom
-  map_one' := HahnSeries.map_one φ.toMonoidWithZeroHom
-  map_add' _ _ := HahnSeries.map_add φ.toAddMonoidHom
-  map_mul' _ _ := HahnSeries.map_mul φ.toNonUnitalRingHom
+variable {Γ R : Type*} [AddCommGroup Γ] [LinearOrder Γ] [IsOrderedAddMonoid Γ] [Ring R]
 
 lemma coeff_mul_support_superset (x y : HahnSeries Γ R) (a : Γ)
     (s t : Set Γ) (hs : s.IsPWO) (ht : t.IsPWO)
     (hxs : x.support ⊆ s) (hyt : y.support ⊆ t) :
-    (x*y).coeff a = ∑ ij ∈ Finset.antidiagonal hs ht a,
+    (x * y).coeff a = ∑ ij ∈ Finset.antidiagonal hs ht a,
       x.coeff ij.1 * y.coeff ij.2 := by
   rw [HahnSeries.coeff_mul]
   apply Finset.sum_subset
@@ -56,7 +70,7 @@ lemma coeff_mul_support_superset (x y : HahnSeries Γ R) (a : Γ)
     · simp [hx]
     by_cases hy : y.coeff ij.2 = 0
     · simp [hy]
-    exact False.elim (hnot (Finset.mem_antidiagonal.mpr ⟨hx,hy,hij.2.2⟩))
+    exact False.elim (hnot (Finset.mem_antidiagonal.mpr ⟨hx, hy, hij.2.2⟩))
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
@@ -64,15 +78,13 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 def entry (x : HahnSeries Γ (Matrix ι ι R)) (i j : ι) : HahnSeries Γ R :=
   x.map (⟨fun A => A i j, rfl⟩ : ZeroHom (Matrix ι ι R) R)
 
-@[simp] lemma entry_coeff.{v_1, v_2, v_4} {Γ : Type v_1} {R : Type v_2}
-  [LinearOrder Γ] [Ring R] {ι : Type v_4}
-  (x : HahnSeries Γ (Matrix ι ι R)) (i j : ι) (a : Γ) :
-  (Rational.HahnMatrix.entry x i j).coeff a = x.coeff a i j := rfl
+omit [AddCommGroup Γ] [IsOrderedAddMonoid Γ] [Fintype ι] [DecidableEq ι] in
+@[simp] lemma entry_coeff (x : HahnSeries Γ (Matrix ι ι R)) (i j : ι) (a : Γ) :
+    (entry x i j).coeff a = x.coeff a i j := rfl
 
-lemma entry_support.{v_1, v_2, v_4} {Γ : Type v_1} {R : Type v_2}
-  [LinearOrder Γ] [Ring R] {ι : Type v_4}
-  (x : HahnSeries Γ (Matrix ι ι R)) (i j : ι) :
-  (Rational.HahnMatrix.entry x i j).support ⊆ x.support := by
+omit [AddCommGroup Γ] [IsOrderedAddMonoid Γ] [Fintype ι] [DecidableEq ι] in
+lemma entry_support (x : HahnSeries Γ (Matrix ι ι R)) (i j : ι) :
+    (entry x i j).support ⊆ x.support := by
   intro a ha
   change x.coeff a ≠ 0
   intro h
@@ -86,11 +98,11 @@ def split : HahnSeries Γ (Matrix ι ι R) →+* Matrix ι ι (HahnSeries Γ R) 
     ext i j a
     change (1 : HahnSeries Γ (Matrix ι ι R)).coeff a i j =
       (if i = j then (1 : HahnSeries Γ R) else 0).coeff a
-    by_cases hi : i = j <;> by_cases ha : a = 0 <;> simp [hi,ha]
+    by_cases hi : i = j <;> by_cases ha : a = 0 <;> simp [hi, ha]
   map_add' x y := by ext i j a; rfl
   map_mul' x y := by
     ext i j a
-    change (x*y).coeff a i j = (∑ k, entry x i k * entry y k j).coeff a
+    change (x * y).coeff a i j = (∑ k, entry x i k * entry y k j).coeff a
     rw [HahnSeries.coeff_mul, Matrix.sum_apply, HahnSeries.coeff_sum]
     simp_rw [coeff_mul_support_superset _ _ a x.support y.support
       x.isPWO_support y.isPWO_support (entry_support x i _) (entry_support y _ j)]
@@ -102,34 +114,8 @@ lemma split_injective : Function.Injective (split (Γ := Γ) (R := R) (ι := ι)
   ext a i j
   exact congrArg (fun z : Matrix ι ι (HahnSeries Γ R) => (z i j).coeff a) h
 
-variable {K : Type*} [Field K]
-
-/-- Scalar series embedded as scalar matrices at each coefficient. -/
-def scalarSeries : HahnSeries Γ K →+* HahnSeries Γ (Matrix ι ι K) :=
-  mapCoeff (algebraMap K (Matrix ι ι K))
-
-lemma split_scalarSeries (x : HahnSeries Γ K) :
-    split (scalarSeries (ι := ι) x) = algebraMap (HahnSeries Γ K)
-      (Matrix ι ι (HahnSeries Γ K)) x := by
-  ext i j a
-  change (algebraMap K (Matrix ι ι K) (x.coeff a)) i j = _
-  by_cases h : i = j <;> simp [Matrix.algebraMap_matrix_apply, h, ]
-
-lemma scalarSeries_commute (x : HahnSeries Γ K) (y : HahnSeries Γ (Matrix ι ι K)) :
-    scalarSeries x * y = y * scalarSeries x := by
-  apply split_injective
-  rw [map_mul, map_mul, split_scalarSeries, Algebra.commutes]
-
-/-- The natural scalar-series algebra structure, derived through an injective
-matrix realization rather than assuming commutative matrix coefficients. -/
-@[instance_reducible]
-def seriesAlgebra : Algebra (HahnSeries Γ K) (HahnSeries Γ (Matrix ι ι K)) :=
-  (scalarSeries (Γ := Γ) (K := K) (ι := ι)).toAlgebra'
-    (fun x y => scalarSeries_commute x y)
-
 end
 end Rational.HahnMatrix
-
 
 namespace Rational.QuantumMatrices
 open Matrix
@@ -140,48 +126,49 @@ variable (χ : AddChar (ZMod d) K)
 
 /-- The Weyl monomial D^a S^b. -/
 def weyl (a b : ZMod d) : Matrix (ZMod d) (ZMod d) K :=
-  fun i j => if i = j+b then χ (a*i) else 0
+  fun i j => if i = j + b then χ (a * i) else 0
 
-@[simp] lemma weyl_zero.{v_1} {K : Type v_1} [Field K] {d : ℕ}
-  (χ : AddChar (ZMod d) K) : Rational.QuantumMatrices.weyl χ 0 0 = 1 := by
+omit [NeZero d] in
+@[simp] lemma weyl_zero : weyl χ 0 0 = 1 := by
   ext i j
   simp [weyl, Matrix.one_apply]
 
 lemma weyl_mul (a b c e : ZMod d) :
-    weyl χ a b * weyl χ c e = χ (-c*b) • weyl χ (a+c) (b+e) := by
+    weyl χ a b * weyl χ c e = χ (-c * b) • weyl χ (a + c) (b + e) := by
   classical
   ext i j
-  rw [Matrix.mul_apply, Finset.sum_eq_single (i-b)]
+  rw [Matrix.mul_apply, Finset.sum_eq_single (i - b)]
   · simp only [weyl, sub_add_cancel, ite_true, Matrix.smul_apply, smul_eq_mul]
-    have heq : i-b = j+e ↔ i = j+(b+e) := by constructor <;> intro h <;> linear_combination h
-    by_cases h : i = j+(b+e)
+    have heq : i - b = j + e ↔ i = j + (b + e) := by
+      constructor <;> intro h <;> linear_combination h
+    by_cases h : i = j + (b + e)
     · simp only [ite_eq_left (heq.mpr h), ite_eq_left h]
       rw [← AddChar.map_add_eq_mul, ← AddChar.map_add_eq_mul]
       congr 1
       ring
     · simp [heq, h]
   · intro k hk hne
-    have h : i ≠ k+b := by intro heq; apply hne; rw [heq]; ring
+    have h : i ≠ k + b := by intro heq; apply hne; rw [heq]; ring
     simp [weyl, h]
   · simp
 
 lemma weyl_inverse_right (a b : ZMod d) :
-    weyl χ a b * (χ (-a*b) • weyl χ (-a) (-b)) = 1 := by
+    weyl χ a b * (χ (-a * b) • weyl χ (-a) (-b)) = 1 := by
   rw [Matrix.mul_smul, weyl_mul, add_neg_cancel, add_neg_cancel, weyl_zero, smul_smul,
     ← AddChar.map_add_eq_mul]
-  have h : -a*b + -(-a)*b = 0 := by ring
+  have h : -a * b + -(-a) * b = 0 := by ring
   rw [h, AddChar.map_zero_eq_one, one_smul]
 
 lemma weyl_inverse_left (a b : ZMod d) :
-    (χ (-a*b) • weyl χ (-a) (-b)) * weyl χ a b = 1 := by
+    (χ (-a * b) • weyl χ (-a) (-b)) * weyl χ a b = 1 := by
   rw [Matrix.smul_mul, weyl_mul, neg_add_cancel, neg_add_cancel, weyl_zero, smul_smul,
     ← AddChar.map_add_eq_mul]
-  have h : -a*b + -a*(-b) = 0 := by ring
+  have h : -a * b + -a * (-b) = 0 := by ring
   rw [h, AddChar.map_zero_eq_one, one_smul]
 
 /-- A Weyl matrix with its explicit two-sided inverse. -/
 def weylUnit (a b : ZMod d) : (Matrix (ZMod d) (ZMod d) K)ˣ :=
-  ⟨weyl χ a b, χ (-a*b) • weyl χ (-a) (-b),
+  ⟨weyl χ a b, χ (-a * b) • weyl χ (-a) (-b),
     weyl_inverse_right χ a b, weyl_inverse_left χ a b⟩
 
 @[simp] lemma weylUnit_val (a b : ZMod d) : (weylUnit χ a b : Matrix _ _ K) = weyl χ a b := rfl
@@ -202,11 +189,11 @@ variable (χ : AddChar (ZMod d) K) (hχ : χ.IsPrimitive)
 
 /-- The coefficient of a Weyl matrix in the finite Fourier expansion. -/
 def fourierCoeff (R : Matrix (ZMod d) (ZMod d) K) (a b : ZMod d) : K :=
-  (d : K)⁻¹ * ∑ j, χ (-a*j) * R j (j-b)
+  (d : K)⁻¹ * ∑ j, χ (-a * j) * R j (j - b)
 
-lemma orthogonality.{v_1} {K : Type v_1} [Field K]  {d : ℕ}
-  [NeZero d] (χ : AddChar (ZMod d) K) (hχ : χ.IsPrimitive) (x : ZMod d) :
-  ∑ a, χ (a * x) = if x = 0 then ↑d else 0 := by
+omit [CharZero K] in
+include hχ in
+lemma orthogonality (x : ZMod d) : ∑ a, χ (a * x) = if x = 0 then ↑d else 0 := by
   classical
   by_cases hx : x = 0
   · simp [hx, ZMod.card]
@@ -215,7 +202,6 @@ lemma orthogonality.{v_1} {K : Type v_1} [Field K]  {d : ℕ}
 
 include hχ in
 /-- Fourier inversion on each cyclic matrix diagonal. -/
-
 theorem fourier_reconstruction (R : Matrix (ZMod d) (ZMod d) K) :
     (∑ a, ∑ b, fourierCoeff χ R a b • weyl χ a b) = R := by
   classical
@@ -223,9 +209,9 @@ theorem fourier_reconstruction (R : Matrix (ZMod d) (ZMod d) K) :
   simp only [Matrix.sum_apply, Matrix.smul_apply, smul_eq_mul, weyl]
   simp_rw [mul_ite, mul_zero]
   have heq (a : ZMod d) :
-      (∑ b, if i = j+b then fourierCoeff χ R a b * χ (a*i) else 0) =
-      fourierCoeff χ R a (i-j) * χ (a*i) := by
-    rw [Finset.sum_eq_single (i-j)]
+      (∑ b, if i = j + b then fourierCoeff χ R a b * χ (a * i) else 0) =
+      fourierCoeff χ R a (i - j) * χ (a * i) := by
+    rw [Finset.sum_eq_single (i - j)]
     · simp
     · intro b hb hne
       rw [ite_eq_right]
@@ -236,10 +222,10 @@ theorem fourier_reconstruction (R : Matrix (ZMod d) (ZMod d) K) :
   simp_rw [heq, fourierCoeff, mul_assoc, Finset.sum_mul]
   rw [← Finset.mul_sum, Finset.sum_comm]
   have hc (k : ZMod d) :
-      (∑ a, χ (-a*k) * R k (k-(i-j)) * χ (a*i)) =
-      (if i = k then (d : K) else 0) * R k (k-(i-j)) := by
+      (∑ a, χ (-a * k) * R k (k - (i - j)) * χ (a * i)) =
+      (if i = k then (d : K) else 0) * R k (k - (i - j)) := by
     calc
-      _ = (∑ a, χ (a*(i-k))) * R k (k-(i-j)) := by
+      _ = (∑ a, χ (a * (i - k))) * R k (k - (i - j)) := by
         rw [Finset.sum_mul]
         apply Finset.sum_congr rfl
         intro a ha
@@ -254,7 +240,6 @@ theorem fourier_reconstruction (R : Matrix (ZMod d) (ZMod d) K) :
 
 end
 end Rational.QuantumMatrices
-
 
 namespace Rational.QuantumLift
 open HahnSeries Matrix
@@ -273,16 +258,15 @@ abbrev Ambient := HahnSeries Exponents (Matrix (ZMod d) (ZMod d) K)
 def monomialUnit (g : Exponents) : (Matrix (ZMod d) (ZMod d) K)ˣ :=
   weylUnit χ (ofLex g).1 (ofLex g).2
 
-lemma monomialUnit_zero.{v_1} {K : Type v_1} [Field K]  {d : ℕ}
-  [NeZero d] (χ : AddChar (ZMod d) K) : Rational.QuantumLift.monomialUnit χ 0 = 1 := by
+omit [CharZero K] in
+lemma monomialUnit_zero : monomialUnit χ 0 = 1 := by
   simp [monomialUnit]
 
-lemma monomialUnit_mul.{v_1} {K : Type v_1} [Field K]  {d : ℕ}
-  [NeZero d] (χ : AddChar (ZMod d) K) (g h : Rational.QuantumLift.Exponents) :
-  ∃ c : K,
-    (Rational.QuantumLift.monomialUnit χ g : Matrix (ZMod d) (ZMod d) K) *
-        (Rational.QuantumLift.monomialUnit χ h : Matrix (ZMod d) (ZMod d) K) =
-      c • (Rational.QuantumLift.monomialUnit χ (g + h) : Matrix (ZMod d) (ZMod d) K) := by
+omit [CharZero K] in
+lemma monomialUnit_mul (g h : Exponents) :
+    ∃ c : K, (monomialUnit χ g : Matrix (ZMod d) (ZMod d) K) *
+        (monomialUnit χ h : Matrix (ZMod d) (ZMod d) K) =
+      c • (monomialUnit χ (g + h) : Matrix (ZMod d) (ZMod d) K) := by
   refine ⟨χ (-((ofLex h).1 : ZMod d) * ((ofLex g).2 : ZMod d)), ?_⟩
   simp [monomialUnit, weyl_mul]
 
@@ -290,6 +274,7 @@ lemma monomialUnit_mul.{v_1} {K : Type v_1} [Field K]  {d : ℕ}
 abbrev divisionSubring := coefficientRing (monomialUnit χ) (monomialUnit_zero χ)
     (monomialUnit_mul χ)
 
+/-- The division ring structure of `divisionSubring`. -/
 noncomputable instance : DivisionRing (divisionSubring χ) :=
   divisionRing (monomialUnit χ) (monomialUnit_zero χ) (monomialUnit_mul χ)
 

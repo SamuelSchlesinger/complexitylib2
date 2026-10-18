@@ -11,13 +11,36 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.PaddedRank
 
 /-!
-# Rational hitting lists: quantum series
+# Hahn series with coefficients on monomial lines
 
-Adapted from OpenAI's formalization at revision `adc7f1241b42e322a6451854ab7e4b4c146bf78a`.
-Source: https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/lean/OAI/Computability/RationalHitting/QuantumSeries.lean
+Given units `B g` of a `K`-algebra `R`, indexed by an ordered group `Γ` and multiplying like
+monomials up to scalars, the Hahn series over `R` whose `g`-th coefficient lies on the line
+`K ∙ B g` form a subring. Every nonzero element of this subring has a unit leading coefficient,
+and a noncommutative geometric series argument inverts it inside the subring, so the subring is
+a division ring. No commutativity of `R` is assumed; `HahnGeometric` adapts Mathlib's
+`HahnSeries.SummableFamily.powers`, which requires a commutative coefficient ring.
 
-Imports, namespaces, module visibility, documentation, and formatting are adapted
-for complexitylib. The source theorem statements and mathematical arguments are retained.
+## Main definitions
+
+* `QuantumSeries.line`: the coefficient line `K ∙ B g`.
+* `QuantumSeries.coefficientRing`: the subring of Hahn series with coefficients on these lines.
+* `HahnGeometric.geometricPowers`: the summable family of powers of a series of positive order.
+* `QuantumSeries.divisionRing`: the division ring structure on `coefficientRing`.
+
+## Main results
+
+* `HahnGeometric.one_sub_self_mul_hsum_geometricPowers`: `(1 - x) * ∑ xⁿ = 1`.
+* `HahnGeometric.normalized_right_inverse`: a right inverse of a series with unit leading
+  coefficient.
+* `QuantumSeries.coefficientRing_isUnit_or_eq_zero`: every element of `coefficientRing` is a
+  unit or zero.
+
+## References
+
+* Adapted from OpenAI's formalization [OpenAI2026RationalHitting] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Computability/RationalHitting/QuantumSeries.lean), via the complexitylib port
+  [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -36,24 +59,20 @@ quantum monomial. Lexicographic leading terms do not require a domain
 matrix coefficient ring. -/
 def line (B : Γ → Rˣ) (g : Γ) : Submodule K R := K ∙ (B g : R)
 
-lemma line_mul.{v_1, v_2, v_3} {Γ : Type v_1} {K : Type v_2}
-  {R : Type v_3} [AddCommGroup Γ] [Field K] [Ring R]
-  [Algebra K R] (B : Γ → Rˣ)
-  (hB : ∀ (g h : Γ), ∃ c : K, (B g : R) * (B h : R) = c • (B (g + h) : R))
-  {g h : Γ} {x y : R}
-  (hx : x ∈ Rational.QuantumSeries.line (K := K) B g)
-  (hy : y ∈ Rational.QuantumSeries.line (K := K) B h) :
-  x * y ∈ Rational.QuantumSeries.line (K := K) B (g + h) := by
+omit [LinearOrder Γ] [IsOrderedAddMonoid Γ] [Nontrivial R] in
+lemma line_mul (B : Γ → Rˣ)
+    (hB : ∀ (g h : Γ), ∃ c : K, (B g : R) * (B h : R) = c • (B (g + h) : R))
+    {g h : Γ} {x y : R} (hx : x ∈ line (K := K) B g) (hy : y ∈ line (K := K) B h) :
+    x * y ∈ line (K := K) B (g + h) := by
   obtain ⟨a, rfl⟩ := Submodule.mem_span_singleton.mp hx
   obtain ⟨b, rfl⟩ := Submodule.mem_span_singleton.mp hy
   obtain ⟨c, hc⟩ := hB g h
   rw [smul_mul_assoc, mul_smul_comm, hc, smul_smul, smul_smul]
-  exact Submodule.mem_span_singleton.mpr ⟨a*b*c, rfl⟩
+  exact Submodule.mem_span_singleton.mpr ⟨a * b * c, rfl⟩
 
-lemma line_isUnit.{v_1, v_2, v_3} {Γ : Type v_1} {K : Type v_2}
-  {R : Type v_3} [Field K] [Ring R]
-  [Algebra K R] (B : Γ → Rˣ) {g : Γ} {x : R}
-  (hx : x ∈ Rational.QuantumSeries.line (K := K) B g) (hne : x ≠ 0) : IsUnit x := by
+omit [AddCommGroup Γ] [LinearOrder Γ] [IsOrderedAddMonoid Γ] [Nontrivial R] in
+lemma line_isUnit (B : Γ → Rˣ) {g : Γ} {x : R} (hx : x ∈ line (K := K) B g) (hne : x ≠ 0) :
+    IsUnit x := by
   obtain ⟨a, rfl⟩ := Submodule.mem_span_singleton.mp hx
   have ha : a ≠ 0 := by intro h; simp [h] at hne
   rw [Algebra.smul_def]
@@ -61,7 +80,7 @@ lemma line_isUnit.{v_1, v_2, v_3} {Γ : Type v_1} {K : Type v_2}
 
 /-- The Hahn-series subring with each coefficient on its prescribed monomial line. -/
 def coefficientRing (B : Γ → Rˣ) (h0 : B 0 = 1)
-    (hB : ∀ g h, ∃ c : K, (B g : R)*(B h : R) = c • (B (g+h) : R)) :
+    (hB : ∀ g h, ∃ c : K, (B g : R) * (B h : R) = c • (B (g + h) : R)) :
     Subring (HahnSeries Γ R) where
   carrier := {x | ∀ g, x.coeff g ∈ line (K := K) B g}
   zero_mem' := fun g => (line (K := K) B g).zero_mem
@@ -88,7 +107,7 @@ def coefficientRing (B : Γ → Rˣ) (h0 : B 0 = 1)
     exact line_mul B hB (hx ij.1) (hy ij.2)
 
 lemma coefficientRing_noZeroDivisors (B : Γ → Rˣ) (h0 : B 0 = 1)
-    (hB : ∀ g h, ∃ c : K, (B g : R)*(B h : R) = c • (B (g+h) : R)) :
+    (hB : ∀ g h, ∃ c : K, (B g : R) * (B h : R) = c • (B (g + h) : R)) :
     NoZeroDivisors (coefficientRing B h0 hB) := by
   constructor
   intro x y hxy
@@ -105,16 +124,14 @@ lemma coefficientRing_noZeroDivisors (B : Γ → Rˣ) (h0 : B 0 = 1)
       (HahnSeries.leadingCoeff_ne_zero.mpr hy')
   have hh := congrArg (fun z : coefficientRing B h0 hB =>
     (z : HahnSeries Γ R).coeff ((x : HahnSeries Γ R).order + (y : HahnSeries Γ R).order)) hxy
-  change ((x : HahnSeries Γ R)*(y : HahnSeries Γ R)).coeff _ = 0 at hh
+  change ((x : HahnSeries Γ R) * (y : HahnSeries Γ R)).coeff _ = 0 at hh
   rw [HahnSeries.coeff_mul_order_add_order] at hh
   exact (hxu.mul hyu).ne_zero hh
 
 end
 end Rational.QuantumSeries
 
-
-/- Noncommutative version of the geometric Hahn-series argument used for the
-   quantum division lift in the main hitting-list construction. -/
+/-! ### Geometric series of Hahn series over a noncommutative ring -/
 namespace Rational.HahnGeometric
 open HahnSeries HahnSeries.SummableFamily Finset Function
 noncomputable section
@@ -143,9 +160,8 @@ theorem power_finite_co_support {x : R⟦Γ⟧} (hx : 0 < x.orderTop) (g : Γ) :
       simp only [mem_coe, Finset.mem_antidiagonal, HahnSeries.mem_support, ne_eq, Set.mem_iUnion]
       exact ⟨hj, ⟨n, hi⟩, add_comm j i⟩
 
-/-- A summable family of geometricPowers of a Hahn series `x`. If `x` has non-positive
-    `orderTop`, then
-return a junk value given by pretending `x = 0`. -/
+/-- The summable family of powers of a Hahn series `x`. If `x` does not have positive
+`orderTop`, this returns the junk value obtained by pretending `x = 0`. -/
 @[simps]
 def geometricPowers (x : R⟦Γ⟧) : SummableFamily Γ R ℕ where
   toFun n := (if 0 < x.orderTop then x else 0) ^ n
@@ -235,23 +251,22 @@ lemma normalized_pos (x : HahnSeries Γ R) (u : Rˣ)
 
 lemma normalized_right_inverse (x : HahnSeries Γ R) (u : Rˣ)
     (hu : x.leadingCoeff = (u : R)) :
-    x * ((geometricPowers (1-single (-x.order) (↑u⁻¹ : R)*x)).hsum *
+    x * ((geometricPowers (1 - single (-x.order) (↑u⁻¹ : R) * x)).hsum *
       single (-x.order) (↑u⁻¹ : R)) = 1 := by
   let v : HahnSeries Γ R := single (-x.order) (↑u⁻¹ : R)
   let v' : HahnSeries Γ R := single x.order (u : R)
   have hv : v' * v = 1 := by simp [v', v, single_mul_single]
   have hh := one_sub_self_mul_hsum_geometricPowers (normalized_pos x u hu)
   rw [sub_sub_cancel] at hh
-  change (v*x)*(geometricPowers (1-v*x)).hsum = 1 at hh
+  change (v * x) * (geometricPowers (1 - v * x)).hsum = 1 at hh
   calc
-    _ = (v'*((v*x)*(geometricPowers (1-v*x)).hsum))*v := by
+    _ = (v' * ((v * x) * (geometricPowers (1 - v * x)).hsum)) * v := by
       simp only [← mul_assoc, hv, one_mul]
       rfl
     _ = 1 := by rw [hh, mul_one, hv]
 
 end
 end Rational.HahnGeometric
-
 
 namespace Rational.QuantumSeries
 open HahnSeries HahnSeries.SummableFamily
@@ -261,30 +276,27 @@ noncomputable section
 variable {Γ K R : Type*} [AddCommGroup Γ] [LinearOrder Γ] [IsOrderedAddMonoid Γ]
   [Field K] [Ring R] [Algebra K R] [Nontrivial R]
 variable (B : Γ → Rˣ) (h0 : B 0 = 1)
-  (hB : ∀ g h, ∃ c : K, (B g : R)*(B h : R) = c • (B (g+h) : R))
+  (hB : ∀ g h, ∃ c : K, (B g : R) * (B h : R) = c • (B (g + h) : R))
 
-lemma line_inv_unit.{v_1, v_2, v_3} {Γ : Type v_1} {K : Type v_2}
-  {R : Type v_3} [AddCommGroup Γ] [Field K] [Ring R]
-  [Algebra K R] [Nontrivial R] (B : Γ → Rˣ) (h0 : B 0 = 1)
-  (hB : ∀ (g h : Γ), ∃ c : K, (B g : R) * (B h : R) = c • (B (g + h) : R))
-  {g : Γ} (u : Rˣ)
-  (hu : ↑u ∈ Rational.QuantumSeries.line (K := K) B g) :
-  ↑u⁻¹ ∈ Rational.QuantumSeries.line (K := K) B (-g) := by
+omit [LinearOrder Γ] [IsOrderedAddMonoid Γ] in
+include h0 hB in
+lemma line_inv_unit {g : Γ} (u : Rˣ) (hu : ↑u ∈ line (K := K) B g) :
+    ↑u⁻¹ ∈ line (K := K) B (-g) := by
   obtain ⟨a, ha⟩ := Submodule.mem_span_singleton.mp hu
   obtain ⟨c, hc⟩ := hB g (-g)
   rw [add_neg_cancel, h0, Units.val_one] at hc
-  have ha0 : a ≠ 0 := by intro h; simp [h] at ha; exact u.ne_zero ha.symm
+  have ha0 : a ≠ 0 := by intro h; simp only [h, zero_smul] at ha; exact u.ne_zero ha.symm
   have hc0 : c ≠ 0 := by
     intro h
     simp only [h, zero_smul] at hc
     exact ((B g).isUnit.mul (B (-g)).isUnit).ne_zero hc
-  have hy : (u : R) * ((a*c)⁻¹ • (B (-g) : R)) = 1 := by
+  have hy : (u : R) * ((a * c)⁻¹ • (B (-g) : R)) = 1 := by
     rw [← ha, smul_mul_assoc, mul_smul_comm, hc, smul_smul, smul_smul]
-    rw [show a*(a*c)⁻¹*c = 1 by field_simp, one_smul]
-  have heq : (↑u⁻¹ : R) = (a*c)⁻¹ • (B (-g) : R) := by
+    rw [show a * (a * c)⁻¹ * c = 1 by field_simp, one_smul]
+  have heq : (↑u⁻¹ : R) = (a * c)⁻¹ • (B (-g) : R) := by
     calc
       _ = (↑u⁻¹ : R) * 1 := (mul_one _).symm
-      _ = (↑u⁻¹ : R) * ((u : R) * ((a*c)⁻¹ • (B (-g) : R))) := by rw [hy]
+      _ = (↑u⁻¹ : R) * ((u : R) * ((a * c)⁻¹ • (B (-g) : R))) := by rw [hy]
       _ = _ := by rw [← mul_assoc]; simp
   rw [heq]
   exact Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_singleton _))
@@ -309,14 +321,14 @@ lemma hsum_mem {α : Type*} (x : SummableFamily Γ R α)
 
 lemma inverse_candidate_mem (x : HahnSeries Γ R)
     (hx : x ∈ coefficientRing B h0 hB) (u : Rˣ) (hu : x.leadingCoeff = (u : R)) :
-    (geometricPowers (1-single (-x.order) (↑u⁻¹ : R)*x)).hsum *
+    (geometricPowers (1 - single (-x.order) (↑u⁻¹ : R) * x)).hsum *
       single (-x.order) (↑u⁻¹ : R) ∈ coefficientRing B h0 hB := by
   have hline : x.leadingCoeff ∈ line (K := K) B x.order := by
     rw [leadingCoeff_eq]; exact hx _
   let v : HahnSeries Γ R := single (-x.order) (↑u⁻¹ : R)
   have hv : v ∈ coefficientRing B h0 hB :=
     single_mem B h0 hB (line_inv_unit B h0 hB u (hu ▸ hline))
-  let z : HahnSeries Γ R := 1-v*x
+  let z : HahnSeries Γ R := 1 - v * x
   have hz : z ∈ coefficientRing B h0 hB :=
     (coefficientRing B h0 hB).sub_mem (coefficientRing B h0 hB).one_mem
       ((coefficientRing B h0 hB).mul_mem hv hx)
@@ -328,7 +340,7 @@ lemma inverse_candidate_mem (x : HahnSeries Γ R)
   exact (coefficientRing B h0 hB).mul_mem (hsum_mem B h0 hB _ hpow) hv
 
 lemma inverse_exists (x : coefficientRing B h0 hB) (hx : x ≠ 0) :
-    ∃ y : coefficientRing B h0 hB, x*y = 1 := by
+    ∃ y : coefficientRing B h0 hB, x * y = 1 := by
   have hx' : (x : HahnSeries Γ R) ≠ 0 := by
     intro h; apply hx; exact Subtype.ext h
   have hline : (x : HahnSeries Γ R).leadingCoeff ∈
@@ -336,7 +348,7 @@ lemma inverse_exists (x : coefficientRing B h0 hB) (hx : x ≠ 0) :
     rw [leadingCoeff_eq]; exact x.property _
   obtain ⟨u, hu⟩ := line_isUnit (K := K) B hline (leadingCoeff_ne_zero.mpr hx')
   let y : HahnSeries Γ R := (geometricPowers
-    (1-single (-(x : HahnSeries Γ R).order) (↑u⁻¹ : R)*(x : HahnSeries Γ R))).hsum *
+    (1 - single (-(x : HahnSeries Γ R).order) (↑u⁻¹ : R) * (x : HahnSeries Γ R))).hsum *
       single (-(x : HahnSeries Γ R).order) (↑u⁻¹ : R)
   have hy : y ∈ coefficientRing B h0 hB :=
     inverse_candidate_mem B h0 hB x x.property u hu.symm
@@ -351,10 +363,10 @@ lemma coefficientRing_isUnit_or_eq_zero (x : coefficientRing B h0 hB) :
   left
   let := coefficientRing_noZeroDivisors B h0 hB
   obtain ⟨y, hy⟩ := inverse_exists B h0 hB x hx
-  have hh : y*x = 1 := by
-    have hz : x*(y*x-1) = 0 := by rw [mul_sub, ← mul_assoc, hy, one_mul, mul_one, sub_self]
+  have hh : y * x = 1 := by
+    have hz : x * (y * x - 1) = 0 := by rw [mul_sub, ← mul_assoc, hy, one_mul, mul_one, sub_self]
     exact sub_eq_zero.mp ((mul_eq_zero.mp hz).resolve_left hx)
-  exact ⟨⟨x,y,hy,hh⟩,rfl⟩
+  exact ⟨⟨x, y, hy, hh⟩, rfl⟩
 
 /-- An actual division ring containing all ordered quantum-monomial series;
 no finite-dimensional-domain or external division-algebra theorem is assumed. -/
