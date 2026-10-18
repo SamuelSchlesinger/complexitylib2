@@ -68,19 +68,10 @@ The port still includes substantial mathematical developments beyond the complet
 results. Track these by their public theorems, rather than by source-file counts.
 Jukna coverage below is an additional target beyond the V1 port:
 
-* **Circuit mass production.** Integrate the existing constructions from
-  [algebraic-circuits](https://github.com/SamuelSchlesinger/algebraic-circuits/blob/main/Algebraic/MassProduction.lean):
-  the exponential copy range, sharp real-rate coefficient `1 / (1 - gamma) + o(1)`, and
-  coefficient-one subexponential range. Preserve the exact gate-cost conventions and share
-  sorting, lookup and routing with other circuit clients. Start from
-  [padding](Complexity/Computability/Circuit/Boolean/MassProduction/Padding.lean),
-  [synthesis](Complexity/Computability/Circuit/Boolean/MassProduction/Synthesis.lean), and
-  [batched lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean); their module
-  documentation records the shared constructions and exact gate-cost contracts.
-  Constructor runtime remains uncertified. Uhlig's coefficient-one theorem through
-  `2 ^ o(n / log n)` copies is ported in
-  [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean); the exponential copy
-  range and the sharp real-rate coefficient remain to be ported.
+* **Mass-production constructor runtime.** Certify runtime separately from the native gate-cost
+  bounds in [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean) and
+  [sharp mass production](Complexity/Computability/Circuit/Boolean/MassProduction/Sharp.lean).
+  The current constructions choose information sets and line menus nonconstructively.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
