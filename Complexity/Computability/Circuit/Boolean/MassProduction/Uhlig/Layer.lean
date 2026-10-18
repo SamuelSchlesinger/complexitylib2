@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Code
+public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Replication
 public import Complexity.Foundations.Data.BitString.Basic
@@ -20,8 +20,8 @@ Split the input of `f` into a prefix of `p` bits and a suffix of `w` bits. For e
 `2 ^ p` prefixes, the restriction of `f` is a function of the suffix. Uhlig's code of these
 restrictions gives `2 ^ p + 1` resource functions on `w` bits (`resource`). Group `2 t` copies
 into `t` pairs. In each pair, every resource reads the suffix of the copy that uses it
-(`Uhlig.first`, `Uhlig.second`); each copy then sums its resources. Hence `t` copies of every
-resource yield `2 t` copies of `f`, at an overhead linear in `t`.
+(`BitString.Uhlig.first`, `BitString.Uhlig.second`); each copy then sums its resources. Hence
+`t` copies of every resource yield `2 t` copies of `f`, at an overhead linear in `t`.
 
 The routing and decoding gates are disjunctive normal forms of the two prefixes in a pair, so
 their number is polynomial in `2 ^ p` and `w`. This is far from optimal, but it is negligible in
@@ -56,7 +56,7 @@ does not certify the running time of any circuit constructor.
 
 namespace Cslib.Circuits.Boolean.MassProduction.Uhlig
 
-open Finset
+open Finset BitString.Uhlig
 
 variable {p w t : ℕ}
 

@@ -18,7 +18,7 @@ applies to a superpolynomial number of copies. Axiom checks record the headline 
 namespace ComplexityTests.MassProduction.Uhlig
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean Cslib.Circuits.Boolean.MassProduction
-open Cslib.Circuits.Boolean.MassProduction.Uhlig Filter
+open Cslib.Circuits.Boolean.MassProduction.Uhlig Cslib.BitString.Uhlig Filter
 
 /-! ### The recovery code -/
 

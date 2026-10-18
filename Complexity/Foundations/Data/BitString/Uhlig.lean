@@ -15,30 +15,29 @@ public import Mathlib.Algebra.Ring.BooleanRing
 # Uhlig's recovery code
 
 Uhlig's two-copy construction stores bits `x 0, …, x (M - 1)` as the `M + 1` adjacent sums
-`x 0, x 0 + x 1, …, x (M - 2) + x (M - 1), x (M - 1)`, where addition is exclusive or. Each bit
-is the sum of an initial segment of the code and also the sum of the complementary final
-segment. For two requests `a` and `b`, the smaller request uses the initial segment ending at
-its index and the larger request uses the final segment after its index. These recovery sets
-are disjoint even when `a = b`, so every code position serves at most one request.
+`x 0, x 0 ^^ x 1, …, x (M - 2) ^^ x (M - 1), x (M - 1)`. Sums of code positions are taken in
+the Boolean ring, where addition is exclusive or. Each bit is the sum of an initial segment of
+the code and also the sum of the complementary final segment. For two requests `a` and `b`, the
+smaller request uses the initial segment ending at its index and the larger request uses the
+final segment after its index. These recovery sets are disjoint even when `a = b`, so every code
+position serves at most one request.
 
 The code is stated for sequences indexed by `ℕ`; only the value at `M` must vanish.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.MassProduction.Uhlig.code`: the adjacent sums of a sequence.
-* `Cslib.Circuits.Boolean.MassProduction.Uhlig.first`,
-  `Cslib.Circuits.Boolean.MassProduction.Uhlig.second`: the code positions used by the first and
-  second of two requests.
+* `Cslib.BitString.Uhlig.code`: the adjacent sums of a sequence.
+* `Cslib.BitString.Uhlig.first`, `Cslib.BitString.Uhlig.second`: the code positions used by the
+  first and second of two requests.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.MassProduction.Uhlig.sum_range_code`: recovery from an initial segment.
-* `Cslib.Circuits.Boolean.MassProduction.Uhlig.sum_Ico_code`: recovery from a final segment.
-* `Cslib.Circuits.Boolean.MassProduction.Uhlig.second_eq_false_of_first`: the two recovery sets
-  are disjoint.
-* `Cslib.Circuits.Boolean.MassProduction.Uhlig.sum_first_code_route`,
-  `Cslib.Circuits.Boolean.MassProduction.Uhlig.sum_second_code_route`: each request recovers its
-  bit when every code position reads the input of the request that uses it.
+* `Cslib.BitString.Uhlig.sum_range_code`: recovery from an initial segment.
+* `Cslib.BitString.Uhlig.sum_Ico_code`: recovery from a final segment.
+* `Cslib.BitString.Uhlig.second_eq_false_of_first`: the two recovery sets are disjoint.
+* `Cslib.BitString.Uhlig.sum_first_code_route`, `Cslib.BitString.Uhlig.sum_second_code_route`:
+  each request recovers its bit when every code position reads the input of the request that
+  uses it.
 
 ## References
 
@@ -50,15 +49,15 @@ The code is stated for sequences indexed by `ℕ`; only the value at `M` must va
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.MassProduction.Uhlig
+namespace Cslib.BitString.Uhlig
 
 open Finset
 
 /-- Uhlig's code of a bit sequence: position `0` holds `x 0` and position `j + 1` holds
-`x j + x (j + 1)`. -/
+`x j ^^ x (j + 1)`. -/
 def code (x : ℕ → Bool) : ℕ → Bool
   | 0 => x 0
-  | j + 1 => x j + x (j + 1)
+  | j + 1 => x j ^^ x (j + 1)
 
 /-- The code positions up to `a` sum to `x a`. -/
 theorem sum_range_code (x : ℕ → Bool) (a : ℕ) : ∑ j ∈ range (a + 1), code x j = x a := by
@@ -144,4 +143,4 @@ theorem sum_second_code_route {Z : Type*} {h : Z → ℕ → Bool} {M b : ℕ}
       · exact absurd (second_eq_false_of_first hf) (by simp [hs])
     simp [hf]
 
-end Cslib.Circuits.Boolean.MassProduction.Uhlig
+end Cslib.BitString.Uhlig
