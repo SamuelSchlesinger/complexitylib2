@@ -592,6 +592,10 @@ public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
+public import Complexity.Foundations.Combinatorics.LineCode.Line
+public import Complexity.Foundations.Combinatorics.LineCode.Menu
+public import Complexity.Foundations.Combinatorics.LineCode.Menu.Collision
+public import Complexity.Foundations.Combinatorics.LineCode.Menu.Counting
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
 public import Complexity.Foundations.Combinatorics.Sunflower
