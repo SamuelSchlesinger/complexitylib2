@@ -15,6 +15,7 @@ private def usage : String := "Git coordination for Complexitylib (Lean executab
   scripts/coordinate join NAME [--coordinator] [--here] [--takeover] [--minutes N]
   scripts/coordinate status [--json]
   scripts/coordinate heartbeat
+  scripts/coordinate release-coordinator
   scripts/coordinate plan EPIC GOAL PATH... [--after DEPENDENCY...]
   scripts/coordinate revise EPIC GOAL [ADDITIONAL_PATH...]
   scripts/coordinate instruct EPIC TEXT
@@ -28,7 +29,7 @@ private def usage : String := "Git coordination for Complexitylib (Lean executab
   scripts/coordinate cancel
   scripts/coordinate land EPIC
 
-Coordinator: plan, revise, instruct, assign, reopen, unassign, cancel, land.
+Coordinator: plan, revise, instruct, assign, reopen, unassign, cancel, land, release-coordinator.
 Workers: commit and push the assigned branch before ready; never push main.
 Global options: --repo PATH, --remote NAME (before the command).
 "
@@ -122,6 +123,7 @@ private def command (repo : Repository) (args : List String) : IO Unit := do
   | ["status"] => dashboard (← readState repo); return
   | ["status", "--json"] => IO.println ((toJson (← readState repo)).pretty); return
   | ["heartbeat"] => run repo .heartbeat
+  | ["release-coordinator"] => releaseCoordinator repo
   | "plan" :: id :: goal :: remaining =>
     let (paths, after) := remaining.span (· != "--after")
     run repo (.plan ⟨id⟩ goal paths (after.drop 1 |>.map EpicId.mk))
