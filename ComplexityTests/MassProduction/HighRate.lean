@@ -83,7 +83,7 @@ example : Fintype.card {w : Fin 2 → Fin 3 // ∃ j, w j = 0} = 5 := by
 
 example : 0 < retainedDimension 2 1 := retainedDimension_pos (by norm_num) (by norm_num)
 
--- The rate bound at `P = 3`, `A = 4`, `m = 10`, the least `m` with `P * (A - 1) ≤ m`.
+-- The rate bound at `P = 3`, `A = 4`, `m = 10`, with `P * (A - 1) ≤ m`.
 example : 3 * 4 ^ 10 ≤ (3 + 1) * retainedDimension 4 10 :=
   retainedDimension_rate 4 10 3 (by norm_num) (by norm_num)
 

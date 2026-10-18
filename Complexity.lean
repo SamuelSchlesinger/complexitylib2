@@ -206,6 +206,7 @@ public import Complexity.Computability.Circuit.SumOfTerms
 public import Complexity.Computability.Circuit.SumOfTerms.Basic
 public import Complexity.Computability.Circuit.SumOfTerms.Coverage
 public import Complexity.Computability.Circuit.Support
+public import Complexity.Computability.Circuit.Synthesis
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Circuit.Wiring
 public import Complexity.Computability.Communication.KarchmerWigderson

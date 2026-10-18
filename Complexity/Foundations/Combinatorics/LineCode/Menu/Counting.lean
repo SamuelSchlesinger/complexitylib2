@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Combinatorics.SimpleGraph.Basic
 public import Mathlib.Data.Fintype.Pi
+import Complexity.Foundations.Combinatorics.FiniteCover
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Combinatorics.SimpleGraph.Acyclic
 import Mathlib.Data.Fintype.BigOperators
@@ -121,26 +122,10 @@ theorem exists_coveringMenu {σ α : Type*} [Fintype σ] [Fintype α] [Nonempty 
     (hσ : Fintype.card σ < 2 ^ (m * r)) :
     ∃ menu : Fin r → α, ∀ s, ∃ e, good s (menu e) := by
   classical
-  let U := univ.biUnion fun s => Fintype.piFinset fun _ : Fin r => ({a | ¬good s a} : Finset α)
-  have hU : #U * 2 ^ (m * r) < Fintype.card α ^ r * 2 ^ (m * r) := by
-    calc #U * 2 ^ (m * r)
-        ≤ (∑ s, #(Fintype.piFinset fun _ : Fin r => ({a | ¬good s a} : Finset α))) *
-            2 ^ (m * r) := Nat.mul_le_mul_right _ card_biUnion_le
-      _ = ∑ s, (#({a | ¬good s a} : Finset α) * 2 ^ m) ^ r := by
-          rw [sum_mul]
-          refine sum_congr rfl fun s _ => ?_
-          rw [Fintype.card_piFinset_const, mul_pow, pow_mul]
-      _ ≤ ∑ _s : σ, Fintype.card α ^ r := sum_le_sum fun s _ => Nat.pow_le_pow_left (hgood s) r
-      _ = Fintype.card σ * Fintype.card α ^ r := by rw [sum_const, card_univ, smul_eq_mul]
-      _ < 2 ^ (m * r) * Fintype.card α ^ r :=
-          Nat.mul_lt_mul_of_pos_right hσ (pow_pos Fintype.card_pos r)
-      _ = Fintype.card α ^ r * 2 ^ (m * r) := mul_comm _ _
-  have hU' : #U < #(univ : Finset (Fin r → α)) := by
-    rw [card_univ, Fintype.card_fun, Fintype.card_fin]
-    exact Nat.lt_of_mul_lt_mul_right hU
-  obtain ⟨menu, -, hmenu⟩ := exists_mem_notMem_of_card_lt_card hU'
-  refine ⟨menu, fun s => by_contra fun hs => hmenu ?_⟩
-  exact mem_biUnion.mpr ⟨s, mem_univ _, Fintype.mem_piFinset.mpr fun e =>
-    mem_filter.mpr ⟨mem_univ _, fun he => hs ⟨e, he⟩⟩⟩
+  apply Cslib.exists_cover_of_scaled_card_lt (fun a s => good s a) 1 (2 ^ m) r
+  · intro s
+    rw [Fintype.card_subtype, one_mul, Nat.mul_comm]
+    exact hgood s
+  · rwa [one_pow, mul_one, ← pow_mul]
 
 end Cslib.LineCode

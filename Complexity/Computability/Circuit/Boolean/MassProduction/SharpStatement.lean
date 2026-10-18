@@ -15,7 +15,8 @@ public import Mathlib.Order.Filter.AtTopBot.Basic
 # Statements of sharp mass production
 
 For a rational copy exponent `γ = num / den < 1`, sharp mass production bounds the cost of every
-allowed batch by `(1 + 1 / P) / (1 - γ) · 2 ^ n / n` for every precision `P`, eventually in `n`.
+allowed batch by `(1 + 1 / P) / (1 - γ) · 2 ^ n / n` for every positive precision `P`, eventually
+in `n`.
 The core form `SharpMassProducesThrough` allows `2 ^ (⌊γ n⌋ + 1)` copies, including zero copies;
 `SharpMassProducesAt` is the source's statement over the floor budget `rationalCopyBudget` and
 positive copy counts. The real-rate statement `RealSharpMassProduction` quantifies over real

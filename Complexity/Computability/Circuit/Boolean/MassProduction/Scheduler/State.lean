@@ -64,21 +64,6 @@ variable {K : Type*} [Field K] {ℓ b s D : ℕ}
 
 /-! ### Points -/
 
-/-- Point bits add coordinatewise. -/
-theorem pointBits_add (bits : K ≃+ BitString b) (u v : Fin ℓ → K) :
-    pointBits bits (u + v) = pointBits bits u + pointBits bits v := by
-  funext x
-  simp only [pointBits, Pi.add_apply, map_add]
-
-/-- Distinct points have distinct bits. -/
-theorem pointBits_injective (bits : K ≃+ BitString b) :
-    Function.Injective (pointBits (ℓ := ℓ) bits) := by
-  intro u v h
-  funext i
-  apply bits.injective
-  funext β
-  simpa only [pointBits, Equiv.symm_apply_apply] using congrFun h (finProdFinEquiv (i, β))
-
 variable [Fintype K] [DecidableEq K]
 
 /-- The punctured line lists the points `u + scalar c • v`. -/

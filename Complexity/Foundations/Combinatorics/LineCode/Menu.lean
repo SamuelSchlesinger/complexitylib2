@@ -29,7 +29,7 @@ every state (`card_filter_two_mul_card_isClean_lt_mul_two_pow_le`). A list of
 `menuLength g k L` independent tuples therefore fails some state with probability less than
 one (`exists_coveringMenu`), so a universal menu of that length exists.
 
-Here `menuLength g k L = ⌊g * (1 + 3 * L) / k⌋ + 1`; evaluating every entry of such a menu
+For `k > 0`, `menuLength g k L = ⌊g * (1 + 3 * L) / k⌋ + 1`; evaluating every entry of such a menu
 examines `k * menuLength g k L ≤ g * (1 + 3 * L) + k` candidate lines.
 
 ## Main definitions

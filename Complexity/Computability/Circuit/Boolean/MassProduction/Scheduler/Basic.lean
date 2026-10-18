@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Computability.Circuit.Synthesis
 public import Cslib.Computability.Circuit.Boolean.Synthesis
 public import Mathlib.Data.Fintype.Card
 public import Mathlib.Data.List.OfFn
@@ -15,15 +16,14 @@ public import Mathlib.Order.PiLex
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 import Complexity.Foundations.Data.List.OfFn
-import Cslib.Computability.Circuit.Composition
 import Mathlib.Data.List.Perm.Basic
 import Mathlib.Order.Interval.Finset.Fin
 
 /-!
 # Synthesis tools for the scheduler circuit
 
-Three generic tools assemble the scheduler: a circuit applied to available functions
-(`Synthesis.circuit`), shared prefix disjunctions (`Synthesis.prefixOr`), and two facts about
+The scheduler uses the shared circuit synthesis rule (`Synthesis.circuit`),
+shared prefix disjunctions (`Synthesis.prefixOr`), and two facts about
 sorted arrays: a permuted finite array is a reindexing (`List.Perm.exists_equiv_ofFn`), and in an
 array of flags sorted with true flags first, a position holds a true flag exactly when it precedes
 the number of true flags (`eq_true_iff_lt_card_of_sorted`).
@@ -33,7 +33,6 @@ certify the running time of any construction.
 
 ## Main results
 
-* `Cslib.Circuits.Synthesis.circuit`: a circuit on available functions costs its size.
 * `Cslib.Circuits.Synthesis.prefixOr`: all prefix disjunctions of `r` available functions.
 * `List.Perm.exists_equiv_ofFn`: permuted finite arrays differ by a permutation of positions.
 * `Cslib.Circuits.Boolean.eq_true_iff_lt_card_of_sorted`: positions of true sorted flags.
@@ -70,28 +69,7 @@ theorem List.Perm.exists_equiv_ofFn {α : Type*} {n : ℕ} {f g : Fin n → α}
 
 namespace Cslib.Circuits
 
-universe v u
-
-variable {σ : Signature.{v}} {U : Type u} {I : Interpretation σ U} {n : ℕ}
-
-/-- A circuit whose inputs are fed by available functions computes its outputs with as many
-additional gates as it has. The functions feeding the inputs may repeat. -/
-theorem Synthesis.circuit {s : Set ((Fin n → U) → U)} {m p : ℕ} (c : Circuit σ m p)
-    (g : Fin m → (Fin n → U) → U) (hg : ∀ i, g i ∈ s) :
-    Synthesis I s (Set.range fun j x => c.eval I (fun i => g i x) j) c.size := by
-  intro g₁ p₁ hp
-  choose wires hw using fun i => mem_available.mp (hp (hg i))
-  refine ⟨g₁ + c.size, p₁.append wires c.program, le_rfl, ?_, ?_⟩
-  · intro f hf
-    obtain ⟨w, hw'⟩ := mem_available.mp hf
-    exact mem_available.mpr ⟨w.castAdd c.size, fun x =>
-      (Program.trace_append_castAdd p₁ wires I x c.program w).trans (hw' x)⟩
-  · rintro _ ⟨j, rfl⟩
-    refine mem_available.mpr ⟨Program.appendedWire wires (c.outputs j), fun x => ?_⟩
-    rw [Program.trace_append_appendedWire]
-    have : (fun i => p₁.trace I x (wires i)) = fun i => g i x := funext fun i => hw i x
-    rw [this]
-    rfl
+variable {n : ℕ}
 
 namespace Boolean
 

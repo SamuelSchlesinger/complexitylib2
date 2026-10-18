@@ -254,7 +254,7 @@ theorem pipelineSizeBound : PipelineSizeBound 1444 4 := by
   exact complexity_directProduct_le_explicit_of_isScheduler bits scalar C place sched hsched hL f
 
 /-- **Sharp mass production from the circuit contracts.** If schedulers and the pipeline obey
-polynomial size bounds, then at every rational exponent `num / den < 1` and every precision `P`,
+polynomial size bounds, then at every rational exponent `num / den < 1` and positive precision `P`,
 eventually every function on `n` inputs has `k ≤ 2 ^ (⌊num n / den⌋ + 1)` copies of cost at most
 `(1 + 1 / P) den / (den - num) · 2 ^ n / n`. -/
 theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerSizeBound A₁ E₁)

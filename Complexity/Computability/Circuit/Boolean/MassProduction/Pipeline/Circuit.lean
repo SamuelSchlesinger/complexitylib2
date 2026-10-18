@@ -93,30 +93,7 @@ theorem directProductInput_eval_batchOrCircuit {input sources requests k v : ℕ
 
 /-! ### Encodings -/
 
-/-- The binary numeral of `i : Fin n` in `⌈log₂ n⌉` bits. -/
-def indexBits {n : ℕ} (i : Fin n) : BitString (Nat.clog 2 n) :=
-  (BitString.equivFin _).symm (Fin.castLE (Nat.le_pow_clog one_lt_two n) i)
-
-theorem indexBits_injective {n : ℕ} : Function.Injective (indexBits (n := n)) :=
-  (BitString.equivFin _).symm.injective.comp (Fin.castLE_injective _)
-
 variable {K : Type*} [Field K] [Fintype K] [DecidableEq K] {t p w ℓ b s copies : ℕ}
-
-/-- Points of `K ^ ℓ` are their bits. -/
-def pointEquiv (bits : K ≃+ BitString b) : (Fin ℓ → K) ≃ BitString (ℓ * b) where
-  toFun := pointBits bits
-  invFun y i := bits.symm fun r => y (finProdFinEquiv (i, r))
-  left_inv u := by
-    funext i
-    simp only [pointBits, Equiv.symm_apply_apply, AddEquiv.symm_apply_apply]
-  right_inv y := by
-    funext x
-    simp only [pointBits, AddEquiv.apply_symm_apply, Prod.mk.eta, Equiv.apply_symm_apply]
-
-omit [Fintype K] [DecidableEq K] in
-@[simp] theorem pointEquiv_apply (bits : K ≃+ BitString b) (u : Fin ℓ → K) :
-    pointEquiv bits u = pointBits bits u :=
-  rfl
 
 /-- Slots are numbered by a copy and the bits of a point. -/
 def slotEquiv : Fin copies × BitString (ℓ * b) ≃ Fin (copies * 2 ^ (ℓ * b)) :=
