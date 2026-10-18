@@ -233,7 +233,8 @@ info: 'Turing.MultiTapeNTM.RunPath.natAbs_lt_spaceUsedByTape' depends on axioms:
 #print axioms Turing.MultiTapeNTM.RunPath.natAbs_lt_spaceUsedByTape
 
 /--
-info: 'Cslib.Complexity.NPSPACE_eq_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.NPSPACE_eq_PSPACE' depends on axioms:
+[propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.NPSPACE_eq_PSPACE
