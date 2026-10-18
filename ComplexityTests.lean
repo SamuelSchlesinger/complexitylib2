@@ -48,6 +48,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.LinearHash

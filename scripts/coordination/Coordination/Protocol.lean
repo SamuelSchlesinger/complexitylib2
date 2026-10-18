@@ -174,6 +174,7 @@ structure Context where
 inductive Command where
   | join (role : Role) (leaseSeconds : Nat) (token : Token) (takeover : Bool)
   | heartbeat
+  | releaseCoordinator
   | plan (epic : EpicId) (goal : String) (paths : List String) (dependencies : List EpicId)
   | revise (epic : EpicId) (goal : String) (addPaths : List String)
   | instruct (epic : EpicId) (text : String)
@@ -435,6 +436,11 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
       coordinator := state.coordinator.map (renewLease ctx expires)
       integration := state.integration.map fun i => { i with lease := renewLease ctx expires i.lease }
       epics := state.epics.map (renewEpic ctx expires) } "Heartbeat renewed held generations"
+  | .releaseCoordinator =>
+    let _ ← coordinator ctx state
+    check state.integration.isNone "Finish or cancel integration before releasing the coordinator"
+    return result { state with coordinator := none }
+      "Coordinator released; work and reviews preserved. A fresh coordinator may join now."
   | .plan id goal paths dependencies =>
     let _ ← coordinator ctx state
     check (validName id.value) "Invalid epic ID"

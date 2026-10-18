@@ -181,6 +181,7 @@ public import Complexity.Computability.Circuit.Fusion.Semifilter
 public import Complexity.Computability.Circuit.Fusion.Simulation
 public import Complexity.Computability.Circuit.Fusion.SimulationContext
 public import Complexity.Computability.Circuit.InnerSize
+public import Complexity.Computability.Circuit.Iteration
 public import Complexity.Computability.Circuit.Linearize
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.MapOp
@@ -612,6 +613,10 @@ public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
 public import Complexity.Foundations.Combinatorics.Expander.Walk
 public import Complexity.Foundations.Combinatorics.Expander.Walk.WithInput
 public import Complexity.Foundations.Combinatorics.FiniteCover
+public import Complexity.Foundations.Combinatorics.FunctionalGraph
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.Checkpoints
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.Cycle
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.Powers
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
