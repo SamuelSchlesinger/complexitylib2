@@ -37,7 +37,10 @@ example {α κ : Type*} [LinearOrder κ] (key : α → κ) (x : Fin 1 → α) (a
     BitonicSort.sort key 0 ascending x = x := rfl
 
 example {k r : ℕ} (key : Fin k → Fin r) (ascending : Bool) (x : BitString (1 * r)) :
-    (bitonicSortCircuit key 0 ascending).eval interpretation x = x := rfl
+    (bitonicSortCircuit key 0 ascending).eval interpretation x = x := by
+  change BitString (BitonicSort.arity 0 * r) at x
+  simpa only [BitonicSort.sort, bitonicSortTraceCircuit.flatten_directProductInput] using
+    congrArg bitonicSortTraceCircuit.flatten (eval_bitonicSortCircuit key 0 ascending x)
 
 example : (bitonicSortCircuit (fun _ : Fin 1 => (0 : Fin 2)) 2 true).size = 120 := by
   have h := four_mul_size_bitonicSortCircuit (fun _ : Fin 1 => (0 : Fin 2)) 2 true
@@ -63,6 +66,14 @@ example {k r : ℕ} (key : Fin k → Fin r) (depth : ℕ) (x : BitString (Bitoni
 #guard_msgs in
 #eval ((bitonicSortCircuit (Fin.elim0 : Fin 0 → Fin 0) 3 true).evalVector
   interpretation Fin.elim0).toArray
+
+-- Empty records bypass the traced recursion, even at depths with enormous comparison counts.
+/-- info: (0, 0, 0) -/
+#guard_msgs in
+#eval
+  ((bitonicLayerCircuit (Fin.elim0 : Fin 0 → Fin 0) 1000000 false).size,
+    (bitonicMergeCircuit (Fin.elim0 : Fin 0 → Fin 0) 30 false).size,
+    (bitonicSortCircuit (Fin.elim0 : Fin 0 → Fin 0) 30 false).size)
 
 -- Four whole records are retained even when the key is empty.
 /-- info: #[false, false, false, true, true, true, true, false] -/
