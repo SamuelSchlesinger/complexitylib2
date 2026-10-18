@@ -89,10 +89,7 @@ def HasQueryBounds (program : OracleComp Response α) (size : Query → ℕ)
 /-- Returning a value makes no oracle call. -/
 theorem HasQueryBounds.pure (a : α) (size : Query → ℕ) (maxSize : ℕ) :
     (pure a : OracleComp Response α).HasQueryBounds size 0 maxSize := by
-  intro State oracle s s' result transcript h
-  change (result, s', transcript) ∈ (PMF.pure (a, s, [])).support at h
-  simp only [PMF.mem_support_pure_iff, Prod.mk.injEq] at h
-  simp [h.2.2]
+  simp +contextual [HasQueryBounds]
 
 /-- One typed query uses one call, independently of its answer or the oracle's private state. -/
 theorem HasQueryBounds.query (q : Query) (size : Query → ℕ) {maxSize : ℕ}
@@ -138,16 +135,13 @@ theorem HasQueryBounds.mono {program : OracleComp Response α} {size : Query →
     (program : OracleComp Response α) (size : Query → ℕ) (calls maxSize : ℕ) :
     (f <$> program).HasQueryBounds size calls maxSize ↔
       program.HasQueryBounds size calls maxSize := by
+  simp only [HasQueryBounds, interpret_map, StateT.run_map, PMF.monad_map_eq_map,
+    PMF.mem_support_map_iff]
   constructor
-  · intro h State oracle s s' result transcript hresult
-    apply h State oracle s s' (f result) transcript
-    simp only [interpret_map, StateT.run_map, PMF.monad_map_eq_map]
-    exact (PMF.mem_support_map_iff _ _ _).mpr ⟨(result, s', transcript), hresult, rfl⟩
-  · intro h State oracle s s' result transcript hresult
-    simp only [interpret_map, StateT.run_map, PMF.monad_map_eq_map,
-      PMF.mem_support_map_iff] at hresult
-    obtain ⟨⟨value, state⟩, hvalue, heq⟩ := hresult
+  · exact fun h S oracle s s' a transcript ha =>
+      h S oracle s s' (f a) transcript ⟨(a, s', transcript), ha, rfl⟩
+  · rintro h S oracle s s' b transcript ⟨⟨a, t, seen⟩, ha, heq⟩
     cases heq
-    exact h State oracle s s' value transcript hvalue
+    exact h S oracle s _ a _ ha
 
 end Cslib.OracleComp
