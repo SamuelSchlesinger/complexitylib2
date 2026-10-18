@@ -9964,3 +9964,9 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #guard_msgs (whitespace := lax) in
 #print axioms
   Cslib.Circuits.Boolean.WeightedThreshold.gateActivity_mul_rpow_le_of_circuit_hadamardCode
+
+/--
+info: 'FiniteField.sum_units_eval_mul_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteField.sum_units_eval_mul_add
