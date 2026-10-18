@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.Schedule
 public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpStatement
 public import Complexity.Computability.Circuit.Replication
 public import Cslib.Computability.Circuit.Boolean.Complexity
+import Complexity.Computability.Circuit.Boolean.MassProduction.Pipeline
 import Complexity.Computability.Circuit.Boolean.MassProduction.SharpParameters
 import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 import Complexity.Foundations.Combinatorics.LineCode.Field
@@ -236,5 +237,95 @@ theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Schedul
         ≤ A₁ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) +
           4 * A₂ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) := Nat.add_le_add hsched_le hpipe_le
       _ = (A₁ + 4 * A₂) * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) := by ring
+
+/-- The pipeline of `MassProduction.Pipeline` satisfies the composition contract. -/
+theorem pipelineBound : PipelineBound 1444 4 := by
+  intro K _ _ _ ℓ b s t p w copies L bits scalar C place sched hsched hL f
+  rw [Pipeline.succ_eq_card scalar]
+  exact complexity_directProduct_le_explicit_of_isScheduler bits scalar C place sched hsched hL f
+
+/-- **Sharp mass production from the circuit contracts.** If schedulers and the pipeline obey
+polynomial size bounds, then at every rational exponent `num / den < 1` and every precision `P`,
+eventually every function on `n` inputs has `k ≤ 2 ^ (⌊num n / den⌋ + 1)` copies of cost at most
+`(1 + 1 / P) den / (den - num) · 2 ^ n / n`. -/
+theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerBound A₁ E₁)
+    (hP : PipelineBound A₂ E₂) {num den : ℕ} (hnd : num < den) :
+    SharpMassProducesThrough num den := by
+  intro P
+  set X := 16 * (P + 1) with hXdef
+  have hX : 0 < X := by omega
+  have hden : 0 < den := by omega
+  obtain ⟨m₀, hm₀⟩ := eventually_atTop.mp (eventually_mul_complexity_single_le X)
+  set ℓ := Sharp.dimension num den X with hℓ
+  set h := Sharp.blockWidth num den X with hh
+  filter_upwards [Sharp.eventually_add_depth_le (X := X) hnd 9,
+    Sharp.eventually_le_blocks (num := num) (X := X) hden (X * (2 ^ (h * ℓ) - 1) + 1),
+    Sharp.eventually_le_suffixWidth (X := X) hnd hX (m₀ + 1),
+    Sharp.eventually_mul_two_pow_dimension_le (X := X) hnd.le X,
+    Sharp.eventually_overhead_le (X := X) hnd hX P ((A₁ + 4 * A₂) * 5 ^ (E₁ + E₂)) (E₁ + E₂)]
+    with n hbud hblocks hsuf hloss hover
+  intro f k hk
+  set p := Sharp.prefixWidth num den X n with hp
+  set w := Sharp.suffixWidth num den X n with hw
+  set m := Sharp.blocks num den X n with hm
+  set D := Sharp.depth num den n with hD
+  have hsplit : n = p + w := (Sharp.prefixWidth_add_suffixWidth hnd.le n).symm
+  -- Single copies on the suffix.
+  set L := (X + 1) * 2 ^ w / (X * w) with hLdef
+  have hXw : 0 < X * w := Nat.mul_pos hX (by omega)
+  have hL : ∀ g : BooleanFunction w, complexity Boolean.interpretation (single g) ≤ L := fun g =>
+    (Nat.le_div_iff_mul_le hXw).mpr (by
+      have := hm₀ w (by omega) g
+      calc complexity Boolean.interpretation (single g) * (X * w) =
+            X * w * complexity Boolean.interpretation (single g) := by ring
+        _ ≤ (X + 1) * 2 ^ w := this)
+  have hLspec : X * w * L ≤ (X + 1) * 2 ^ w := by
+    rw [mul_comm]; exact Nat.div_mul_le_self _ _
+  -- Transport `f` to the split input.
+  let f' : BooleanFunction (p + w) := fun y => f (y ∘ Fin.cast hsplit)
+  have hff' : (fun x : Fin n → Bool => f' (x ∘ Fin.cast hsplit.symm)) = f := by
+    funext x
+    simp only [f']
+    congr 1
+  obtain ⟨R, O, hcomp, hR, hO⟩ := exists_complexity_le_of_bounds (D := D) (h := h) (ℓ := ℓ)
+    (m := m) (p := p) (w := w) hS hP hX Sharp.blockWidth_pos (by omega)
+    Sharp.dimension_le_two_pow_blockWidth (by omega) hbud hloss hL f'
+  have hcost : massComplexity f k ≤ (R * L + O : ℕ) := by
+    calc massComplexity f k = massComplexity (fun x : Fin n → Bool =>
+          f' (x ∘ Fin.cast hsplit.symm)) k := by rw [hff']
+      _ ≤ massComplexity f' k := massComplexity_comp_wiring_le _ k
+      _ ≤ complexity Boolean.interpretation (directProduct f' k) := massComplexity_le_complexity
+      _ ≤ complexity Boolean.interpretation (directProduct f' (2 ^ D)) := by
+          exact_mod_cast complexity_directProduct_mono hk
+      _ ≤ (R * L + O : ℕ) := by exact_mod_cast hcomp
+  -- The overhead is negligible.
+  have hbase : 2 * (p + w) + ℓ * (h * m) + D + 4 ≤ 5 * (n + 1) := by
+    have h1 := Sharp.dimension_mul_fieldWidth_le (num := num) (den := den) (X := X) n
+    have h2 := Sharp.prefixWidth_le (X := X) hnd.le n
+    have h3 : D ≤ n + 1 := by
+      rw [hD, Sharp.depth]
+      have : num * n / den ≤ n := Nat.div_le_of_le_mul (by nlinarith)
+      omega
+    have h4 : ℓ * (h * m) ≤ n := by
+      rcases h1 with h1 | h1
+      · rw [← hℓ, ← hp] at h1; unfold Sharp.fieldWidth at h1; rw [← hh, ← hm] at h1; omega
+      · unfold Sharp.fieldWidth at h1; rw [← hh, ← hm] at h1; rw [h1, Nat.mul_zero]; omega
+    omega
+  have hO' : 2 * P * (den - num) * n * O ≤ den * 2 ^ n := by
+    refine le_trans ?_ hover
+    apply Nat.mul_le_mul_left
+    calc O ≤ (A₁ + 4 * A₂) * (2 ^ p + 2 ^ (D + h * m)) *
+          (2 * (p + w) + ℓ * (h * m) + D + 4) ^ (E₁ + E₂) := hO
+      _ ≤ (A₁ + 4 * A₂) * (2 ^ p + 2 ^ (D + h * m)) * (5 * (n + 1)) ^ (E₁ + E₂) := by
+          gcongr
+      _ = (A₁ + 4 * A₂) * 5 ^ (E₁ + E₂) * (2 ^ p + 2 ^ (D + h * m)) * (n + 1) ^ (E₁ + E₂) := by
+          rw [mul_pow]; ring
+  -- The leading coefficient.
+  have hfinal := Sharp.mul_add_le_of_slack (P := P)
+    (Sharp.mul_le_suffixWidth (X := X) hnd.le n) hsplit hR hLspec hO'
+  calc ((P * (den - num) * n : ℕ) : ℕ∞) * massComplexity f k
+      ≤ ((P * (den - num) * n : ℕ) : ℕ∞) * (R * L + O : ℕ) := by gcongr
+    _ = ((P * (den - num) * n * (R * L + O) : ℕ) : ℕ∞) := by push_cast; ring
+    _ ≤ ((P + 1) * den * 2 ^ n : ℕ) := by exact_mod_cast hfinal
 
 end Cslib.Circuits.Boolean.MassProduction
