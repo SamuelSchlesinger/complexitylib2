@@ -20,7 +20,8 @@ import Complexity.Computability.Probabilistic.Sampling
 Every problem in `Cslib.Complexity.NP` is decided in polynomial time by a nondeterministic
 machine with a binary alphabet and finitely many states, which guesses a certificate and runs the
 verifier on it: the inclusion of `NP` in nondeterministic polynomial time
-[Arora and Barak, Theorem 2.6][AroraBarak09].
+[Arora and Barak, Theorem 2.6][AroraBarak09]. The converse, and hence the characterization of
+`NP`, is in `Complexity.Computability.Complexity.Classes.NP.Nondeterministic`.
 
 The machine is built from the PPT calculus and its clock compiler rather than by hand. For a
 verifier `V` with certificates of length `p (enc a).length`, the probabilistic program that samples
