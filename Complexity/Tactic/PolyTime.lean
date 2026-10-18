@@ -40,6 +40,11 @@ namespace Cslib.Tactic.PolyTime
 
 open Turing.MultiTapeTM
 
+-- A fixed finite input type admits a lookup machine for any fixed encodings. This does not
+-- certify a uniform family whose input type grows with a runtime parameter.
+attribute [aesop safe apply (rule_sets := [PolyTime])]
+  ComputableTidilyInPolyTime.of_finite
+
 -- Boolean scans hide the element encoding in their result. Resolve the list certificate before
 -- searching for a joint callback certificate, including when the callback captures local values.
 attribute [program_certificate hlist]

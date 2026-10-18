@@ -18,6 +18,26 @@ namespace ComplexityTests.PolyTimeTactic
 
 open Turing.MultiTapeTM
 
+-- Finite-domain lookup works with arbitrary fixed encodings and an infinite output type.
+example {X Y : Type} [Finite X] (f : X → Y)
+    (input : X ↪ List Bool) (output : Y ↪ List Bool) :
+    ComputableTidilyInPolyTime f input output := by
+  polytime
+
+example (f : Bool → ℕ) : ComputableTidilyInPolyTime f encBool encUnary := by
+  polytime
+
+-- Fixed finite products also support lookup without a specialized callback certificate.
+example (f : Fin 7 × Bool → ℕ) :
+    ComputableTidilyInPolyTime f (encPair (encFinite (Fin 7)) encBool) encUnary := by
+  polytime
+
+-- A finite output alone does not certify an arbitrary function on an infinite input type.
+example (_f : ℕ → Bool) : True := by
+  fail_if_success
+    have : ComputableTidilyInPolyTime _f encUnary encBool := by polytime
+  trivial
+
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × List ℕ => (List.range p.1).flatMap fun i => p.2.map fun j => i + j)
     (encPair encUnary (encList encUnary)) (encList encUnary) := by
