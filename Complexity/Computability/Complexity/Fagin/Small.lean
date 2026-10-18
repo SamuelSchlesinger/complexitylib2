@@ -79,7 +79,7 @@ theorem realize_cardZeroSentence [Finite M] :
   exact ⟨Or.inl, fun h => h.resolve_right (not_infinite_iff_finite.2 inferInstance)⟩
 
 @[simp]
-theorem realize_cardOneSentence [Finite M] :
+theorem realize_cardOneSentence :
     M ⊨ (cardOneSentence : L.Sentence) ↔ Nat.card M = 1 := by
   have h1 : M ⊨ (cardOneSentence : L.Sentence) ↔ (∃ _ : M, True) ∧ ∀ a b : M, a = b := by
     simp [cardOneSentence, Sentence.Realize, Formula.Realize, Fin.snoc]

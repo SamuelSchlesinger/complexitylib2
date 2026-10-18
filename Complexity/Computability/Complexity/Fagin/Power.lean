@@ -328,7 +328,7 @@ include hk in
 /-- **The power isomorphism**: when `M` is expanded by the strict linear order of `e : M ≃ Fin n`,
  the structure interpreted by `v.powerInterpretation k har` is isomorphic to `Fin (n ^ k)` with
 `v.powerStructure (v.encode M e) (n ^ k)`. -/
-noncomputable def powerEquiv [L.IsRelational] (M : Type) [L.Structure M] {n : ℕ} (e : M ≃ Fin n) :
+noncomputable def powerEquiv (M : Type) [L.Structure M] {n : ℕ} (e : M ≃ Fin n) :
     letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e)
     letI := v.powerStructure (v.encode M e) (n ^ k)
     (v.powerInterpretation k har).Model M ≃[v.powerLanguage] Fin (n ^ k) :=
@@ -392,7 +392,7 @@ include hk in
 /-- Pulling back an existential second-order sentence `Ψ` over `v.powerLanguage` along
 `v.powerInterpretation k har` holds in `(M, orderRelOfEquiv e)` iff `Ψ` holds in `Fin (n ^ k)`
 with `v.powerStructure (v.encode M e) (n ^ k)`. -/
-theorem realize_onESOSentence_powerInterpretation [L.IsRelational]
+theorem realize_onESOSentence_powerInterpretation
     (M : Type) [L.Structure M] {n : ℕ} (e : M ≃ Fin n) (Ψ : ESO.Sentence v.powerLanguage) :
     (letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e);
       ((v.powerInterpretation k har).onESOSentence Ψ).Realize M) ↔

@@ -42,11 +42,14 @@ started on `u ++ w`, halts within `B - 1` steps with output `[true]` — equival
 
 ## References
 
-* [R. Fagin, *Generalized First-Order Spectra and Polynomial-Time Recognizable Sets*][Fagin74]
+* [R. Fagin, *Generalized first-order spectra and polynomial-time recognizable sets*][Fagin1974]
+* [N. Immerman, *Descriptive Complexity*][Immerman1999]
 * [C. H. Papadimitriou, *Computational Complexity*][Papadimitriou94], Theorem 8.3
 -/
 
 @[expose] public section
+
+universe u v
 
 namespace Cslib.Logic
 
@@ -1221,7 +1224,7 @@ end FO
 
 namespace Vocabulary
 
-variable {L : Language.{0, 0}} (v : Vocabulary L)
+variable {L : Language.{u, v}} (v : Vocabulary L)
   {m : ℕ} {State : Type} [Fintype State] [DecidableEq State]
   (tm : MultiTapeTM m Bool State)
 
