@@ -121,6 +121,12 @@ theorem ComputationPath.exists_halted_extension
   let q' : ntm.ComputationPath input := ⟨q, hhead⟩
   exact ⟨q', hlen, ht q' hlen.ge, hprefix⟩
 
+/-- A computation path extends by any step from its last configuration. -/
+theorem ComputationPath.exists_snoc (p : ntm.ComputationPath input) {c : Cfg k Symbol State input}
+    (h : ntm.Step p.last c) : ∃ q : ntm.ComputationPath input, q.time = p.time + 1 ∧ q.last = c :=
+  ⟨⟨p.toRunPath.snoc c h, by simpa using p.head_eq⟩, by simp [ComputationPath.time, RunPath.time],
+    by simp⟩
+
 /-- The machine accepts `input` when some computation path ends halted with output `[true]`. -/
 def Accepts (ntm : MultiTapeNTM k Bool State) (input : List Bool) : Prop :=
   ∃ p : ntm.ComputationPath input, p.last.Halted ∧ p.last.output = [true]
