@@ -357,4 +357,95 @@ theorem eventually_mul_two_pow_dimension_le (hnd : num ≤ den) (X' : ℕ) :
       _ ≤ 2 ^ prefixWidth num den X n := Nat.pow_le_pow_right (by norm_num) h
   · simp [h]
 
+/-- The prefix leaves a linear number of suffix bits: `n / ((X + 1) den) ≤ suffixWidth n`. -/
+theorem div_le_suffixWidth (hnd : num < den) (hX : 0 < X) (n : ℕ) :
+    n / ((X + 1) * den) ≤ suffixWidth num den X n := by
+  have h := mul_le_suffixWidth (X := X) hnd.le n
+  have h1 : n ≤ X * (den - num) * n := Nat.le_mul_of_pos_left n (Nat.mul_pos hX (by omega))
+  exact Nat.div_le_of_le_mul (by linarith)
+
+/-- The scheduler exponent leaves a linear number of bits:
+`n / dimension + depth n + fieldWidth n ≤ n + 1`. -/
+theorem div_le_sub_depth_add_fieldWidth (hnd : num < den) (n : ℕ) :
+    n / dimension num den X + depth num den n + fieldWidth num den X n ≤ n + 1 := by
+  have hℓ3 : 3 ≤ dimension num den X := three_le_dimension
+  -- `dimension * fieldWidth n ≤ n`.
+  have hF : dimension num den X * fieldWidth num den X n ≤ n := by
+    rcases dimension_mul_fieldWidth_le (num := num) (den := den) (X := X) n with h | h
+    · have := prefixWidth_le (X := X) hnd.le n
+      omega
+    · rw [h]; omega
+  -- `den * depth n ≤ num * n + den`.
+  have hD : den * depth num den n ≤ num * n + den := by
+    unfold depth
+    have := Nat.div_mul_le_self (num * n) den
+    nlinarith
+  -- `2 den + dimension * num ≤ dimension * den`, since `num < den`.
+  have h4 : 2 * den + dimension num den X * num ≤ dimension num den X * den := by
+    have hd : 2 * den ≤ dimension num den X := by unfold dimension; nlinarith
+    obtain ⟨e, he⟩ : ∃ e, den = num + 1 + e := ⟨den - num - 1, by omega⟩
+    have e1 : dimension num den X * den = dimension num den X * num +
+        dimension num den X * (1 + e) := by rw [he]; ring
+    have e2 : dimension num den X ≤ dimension num den X * (1 + e) :=
+      Nat.le_mul_of_pos_right _ (by omega)
+    omega
+  have hq : dimension num den X * (n / dimension num den X) ≤ n := Nat.mul_div_le n _
+  generalize dimension num den X = ℓ at *
+  -- Multiply the claim by `den * ℓ`.
+  refine Nat.le_of_mul_le_mul_left (c := den * ℓ) ?_ (Nat.mul_pos (by omega) (by omega))
+  have e1 : den * ℓ * (n / ℓ + depth num den n + fieldWidth num den X n) =
+      den * (ℓ * (n / ℓ)) + ℓ * (den * depth num den n) + den * (ℓ * fieldWidth num den X n) := by
+    ring
+  have h1 : den * (ℓ * (n / ℓ)) ≤ den * n := Nat.mul_le_mul_left _ hq
+  have h2 : ℓ * (den * depth num den n) ≤ ℓ * (num * n + den) := Nat.mul_le_mul_left _ hD
+  have h3 : den * (ℓ * fieldWidth num den X n) ≤ den * n := Nat.mul_le_mul_left _ hF
+  have e2 : ℓ * (num * n + den) = (ℓ * num) * n + ℓ * den := by ring
+  have h5 : (2 * den + ℓ * num) * n ≤ (ℓ * den) * n := Nat.mul_le_mul_right n h4
+  have e3 : den * ℓ * (n + 1) = (ℓ * den) * n + ℓ * den := by ring
+  have e4 : (2 * den + ℓ * num) * n = den * n + den * n + (ℓ * num) * n := by ring
+  omega
+
+/-- **The overhead is negligible.** For any polynomial factor `A (n + 1) ^ E`, eventually
+`2 P (den - num) n · A (2 ^ prefixWidth n + 2 ^ (depth n + fieldWidth n)) (n + 1) ^ E` is at most
+`den 2 ^ n`. -/
+theorem eventually_overhead_le (hnd : num < den) (hX : 0 < X) (P A E : ℕ) :
+    ∀ᶠ n in atTop, 2 * P * (den - num) * n *
+      (A * (2 ^ prefixWidth num den X n + 2 ^ (depth num den n + fieldWidth num den X n)) *
+        (n + 1) ^ E) ≤ den * 2 ^ n := by
+  set c := (X + 1) * den * dimension num den X with hc
+  have hcpos : 0 < c := Nat.mul_pos (Nat.mul_pos (by omega) (by omega))
+    (by have := three_le_dimension (num := num) (den := den) (X := X); omega)
+  filter_upwards [eventually_mul_pow_le_two_pow_div (8 * P * den * A) (E + 1) c hcpos]
+    with n hn
+  set p := prefixWidth num den X n
+  set q := depth num den n + fieldWidth num den X n
+  have hp : n / c + p ≤ n := by
+    have h1 := div_le_suffixWidth (X := X) hnd hX n
+    have h2 := prefixWidth_add_suffixWidth (X := X) hnd.le n
+    have : n / c ≤ n / ((X + 1) * den) := Nat.div_le_div_left (Nat.le_mul_of_pos_right _
+      (by have := three_le_dimension (num := num) (den := den) (X := X); omega))
+      (Nat.mul_pos (by omega) (by omega))
+    omega
+  have hq : n / c + q ≤ n + 1 := by
+    have h1 := div_le_sub_depth_add_fieldWidth (X := X) hnd n
+    have : n / c ≤ n / dimension num den X := Nat.div_le_div_left
+      (Nat.le_mul_of_pos_left _ (Nat.mul_pos (by omega) (by omega)))
+      (by have := three_le_dimension (num := num) (den := den) (X := X); omega)
+    omega
+  have hpow : 2 ^ p + 2 ^ q ≤ 4 * 2 ^ (n - n / c) := by
+    have h1 : 2 ^ p ≤ 2 ^ (n - n / c) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have h2 : 2 ^ q ≤ 2 * 2 ^ (n - n / c) := by
+      calc 2 ^ q ≤ 2 ^ (n - n / c + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+        _ = 2 * 2 ^ (n - n / c) := by rw [pow_succ]; ring
+    omega
+  have hsplit : 2 ^ n = 2 ^ (n / c) * 2 ^ (n - n / c) := by
+    rw [← pow_add]; congr 1; have := Nat.div_le_self n c; omega
+  have hgap : den - num ≤ den := Nat.sub_le _ _
+  calc 2 * P * (den - num) * n * (A * (2 ^ p + 2 ^ q) * (n + 1) ^ E)
+      ≤ 2 * P * den * (n + 1) * (A * (4 * 2 ^ (n - n / c)) * (n + 1) ^ E) := by gcongr; omega
+    _ = 8 * P * den * A * (n + 1) ^ (E + 1) * 2 ^ (n - n / c) := by ring
+    _ ≤ 2 ^ (n / c) * 2 ^ (n - n / c) := Nat.mul_le_mul_right _ hn
+    _ = 2 ^ n := hsplit.symm
+    _ ≤ den * 2 ^ n := Nat.le_mul_of_pos_left _ (by omega)
+
 end Cslib.Circuits.Boolean.MassProduction.Sharp
