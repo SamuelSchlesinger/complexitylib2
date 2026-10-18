@@ -13,6 +13,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 
 /-!
 # Testing the steps of views in polynomial time
@@ -247,6 +249,86 @@ theorem accepts_iff_reflTransGen_codeStep (hdec : ∀ finite, dec (encFiniteCfg 
     rcases hinv _ hreach with ⟨finite, hfinite, -⟩ | ⟨-, hacc⟩
     · simp [acceptCode, List.replicate_succ, decodeView] at hfinite
     · exact hacc
+
+/-! ### The edge test in polynomial time -/
+
+/-- The transducer of `Turing.MultiTapeNTM.unpadWord`: skip zeros up to the first one, then copy.
+Its state records whether the first one has been read. -/
+private def unpadT : MultiTapeTM.Transducer Bool Bool where
+  q₀ := false
+  step copying bit := if copying then (true, [bit]) else (bit, [])
+  final _ := []
+  length_step_le copying _ := by cases copying <;> simp
+  length_final_le _ := by simp
+
+private theorem unpadT_run (code : List Bool) :
+    unpadT.run false code = unpadWord code ∧ unpadT.run true code = code := by
+  induction code with
+  | nil => exact ⟨rfl, rfl⟩
+  | cons bit code ih =>
+    cases bit <;> simp [unpadT, unpadWord, MultiTapeTM.Transducer.run_cons] at ih ⊢ <;> simp [ih]
+
+theorem computableTidilyInPolyTime_unpadWord :
+    ComputableTidilyInPolyTime unpadWord encBits encBits :=
+  .of_linear (unpadT.computableTidilyInLinearTimeAndSpace fun code => (unpadT_run code).1.symm)
+
+omit [Finite State] in
+theorem decodeView_eq (code : List Bool) :
+    decodeView dec code = if code.headD true then none else dec (unpadWord code.tail) := by
+  rcases code with _ | ⟨_ | _, code⟩ <;> rfl
+
+section Certificate
+
+variable {α : Type} {encA : α ↪ List Bool}
+
+/-- Reading the view of a computed code is polynomial-time, for a polynomial-time decoder. -/
+theorem computableTidilyInPolyTime_decodeView
+    (hdec : ComputableTidilyInPolyTime dec encBits (encOption encFiniteCfg)) {code : α → List Bool}
+    (hcode : ComputableTidilyInPolyTime code encA encBits) :
+    ComputableTidilyInPolyTime (fun a => decodeView dec (code a)) encA
+      (encOption encFiniteCfg) := by
+  simp only [decodeView_eq]
+  exact (ComputableTidilyInPolyTime.headD true |>.comp hcode).cond (.const none)
+    (hdec.comp (computableTidilyInPolyTime_unpadWord.comp
+      (ComputableTidilyInPolyTime.tail (encA := encBool) |>.comp hcode)))
+
+theorem codeEdge_eq (code next : List Bool) : ntm.codeEdge dec code next =
+    (decodeView dec code).elim false fun finite =>
+      if next.headD false then
+        decide (finite.state = none) && decide (finite.output = [true])
+      else (decodeView dec next).elim false fun view => ntm.viewStepB (finite, view) := by
+  unfold codeEdge
+  rcases decodeView dec code with _ | finite
+  · rfl
+  · rcases next with _ | ⟨_ | _, next⟩
+    · rfl
+    · simp only [List.headD_cons, Bool.false_eq_true, ite_false]
+      cases decodeView dec (false :: next) <;> rfl
+    · rfl
+
+/-- **The edge test of codes is polynomial-time**, for a polynomial-time decoder. -/
+theorem computableTidilyInPolyTime_codeEdge
+    (hdec : ComputableTidilyInPolyTime dec encBits (encOption encFiniteCfg))
+    {code next : α → List Bool} (hcode : ComputableTidilyInPolyTime code encA encBits)
+    (hnext : ComputableTidilyInPolyTime next encA encBits) :
+    ComputableTidilyInPolyTime (fun a => ntm.codeEdge dec (code a) (next a)) encA encBool := by
+  classical
+  simp only [codeEdge_eq]
+  have hfst := ComputableTidilyInPolyTime.fst encA (encFiniteCfg (k := k) (State := State))
+  have hsnd := ComputableTidilyInPolyTime.snd encA (encFiniteCfg (k := k) (State := State))
+  refine (computableTidilyInPolyTime_decodeView hdec hcode).optionElimWithInput (.const false) ?_
+  refine ((ComputableTidilyInPolyTime.headD false).comp (hnext.comp hfst)).cond ?_ ?_
+  · exact ComputableTidilyInPolyTime.bool_and.comp
+      (((ComputableTidilyInPolyTime.of_finite fun state : Option State =>
+          decide (state = none)).comp (ComputableTidilyInPolyTime.finiteCfg_state.comp hsnd)).prod
+      (ComputableTidilyInPolyTime.decide_eq'
+        (ComputableTidilyInPolyTime.finiteCfg_output.comp hsnd) (.const [true])))
+  · refine (computableTidilyInPolyTime_decodeView hdec (hnext.comp hfst)).optionElimWithInput
+      (.const false) ?_
+    exact ntm.computableTidilyInPolyTime_viewStepB.comp
+      ((hsnd.comp (ComputableTidilyInPolyTime.fst _ _)).prod (ComputableTidilyInPolyTime.snd _ _))
+
+end Certificate
 
 end MultiTapeNTM
 
