@@ -45,10 +45,12 @@ time of any construction of them.
 
 ## References
 
-* Adapted from `lean/Proofs/{Iteration,Synthesis}.lean` in
+* `Circuit.iterate` and its semantics and costs follow `Algebraic/Iteration.lean` in
+  [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic],
+  with Mathlib's `Nat.iterate` in place of its own function iteration.
+* The retained orbits are adapted from `lean/Proofs/{Iteration,Synthesis}.lean` in
   [S. Schlesinger,
-  *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions],
-  replacing the iteration of the original complexity library by Mathlib's `Nat.iterate`.
+  *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/
 
 @[expose] public section

@@ -72,6 +72,11 @@ example : ∃ H : Finset ℕ, H ⊆ Finset.range 8 ∧ H.card * 2 ≤ (Finset.ra
   exists_checkpoints _ (Finset.range 8)
     (fun x hx => Finset.mem_range.mpr (by have := Finset.mem_range.mp hx; omega)) (by decide)
 
+-- States may live in any universe; the empty invariant set needs no checkpoints.
+example {α : Type 2} (f : α → α) : ∃ H : Finset α, H ⊆ ∅ ∧ H.card * 3 ≤ (∅ : Finset α).card ∧
+    ∀ x ∈ (∅ : Finset α), Repeats f x 3 ∨ ∃ d < 2 * 3, f^[d] x ∈ H :=
+  exists_checkpoints f ∅ (fun _ h => absurd h (Finset.notMem_empty _)) (by decide)
+
 -- The hypothesis `0 < L` is necessary: with `L = 0` no state satisfies the conclusion.
 example (f : ℕ → ℕ) (H : Finset ℕ) (x : ℕ) :
     ¬(Repeats f x 0 ∨ ∃ d < 2 * 0, f^[d] x ∈ H) := by
