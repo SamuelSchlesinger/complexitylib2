@@ -92,22 +92,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   tableau interpretation. The converse is new work even relative to V1.
 * **Further algebraic results.** Carry over the existing extractor and rational-matrix
   hitting-list developments, recording each endpoint's remaining hypotheses.
-* **Weighted threshold representations.** Formalize the remaining results in
+* **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
-  The [leaf-count rectangle theorem](Complexity/Computability/DecisionTree/Separable.lean) and
-  [inner-product leaf bound](Complexity/Computability/DecisionTree/InnerProduct.lean) are proved;
-  [native weighted circuits](Complexity/Computability/Circuit/Boolean/WeightedThreshold.lean)
-  have [comparison trees](Complexity/Computability/Circuit/Boolean/WeightedThreshold/TranscriptTree.lean)
-  with leaves bounded by attainable transcripts, whose
-  [activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activity.lean)
-  is the exact Hamming-ball count. Their
-  [inner-product inequality](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
-  is proved in exact squared form. Logarithmic and entropy consequences remain.
-  The [scalar-block capacity theorem](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Capacity.lean)
-  is ported from v1; connect native circuits to its semantic block decompositions. The explicit
-  source-reduction family and its threshold consequences remain to port. Further manuscript
-  results include scalar enumerative coding, pending-bias simulation, geometric cutting, and
-  integer-summary counting; the tree compiler also needs a syntactic linear-query certificate.
+  The exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
+  and [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
+  are proved. Port v1's remaining gate-count consequences and explicit source-reduction family.
+  Further manuscript work includes syntactic linear-query certificates, scalar enumerative
+  coding, pending-bias simulation, logarithmic and entropy bounds, geometric cutting,
+  integer-summary counting, and quadratic-potential representations.
 
 Further metacomplexity ports are outside the current scope: the circuitized anti-checker,
 hardness-magnification argument and MINKT/MINCKT developments will not be carried over. Retain

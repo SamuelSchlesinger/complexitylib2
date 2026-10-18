@@ -9769,3 +9769,24 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #guard_msgs (whitespace := lax) in
 #print axioms
   Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_circuit_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.cost_blockDecomposition' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.cost_blockDecomposition
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_four_pow_inputGates'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_four_pow_inputGates
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_four_pow_inputGates'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_four_pow_inputGates

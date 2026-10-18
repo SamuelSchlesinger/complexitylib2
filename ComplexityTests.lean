@@ -130,6 +130,7 @@ import ComplexityTests.ThreeCNF
 import ComplexityTests.ThreeCNFPolyTime
 import ComplexityTests.ThresholdActivity
 import ComplexityTests.ThresholdCapacity
+import ComplexityTests.ThresholdCapacityCircuit
 import ComplexityTests.ThresholdInnerProduct
 import ComplexityTests.ThresholdInnerProductActivity
 import ComplexityTests.ThresholdRectangles
