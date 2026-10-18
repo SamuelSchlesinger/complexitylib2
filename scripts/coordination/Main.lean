@@ -16,6 +16,8 @@ private def usage : String := "Git coordination for Complexitylib (Lean executab
   scripts/coordinate status [--json]
   scripts/coordinate heartbeat
   scripts/coordinate plan EPIC GOAL PATH... [--after DEPENDENCY...]
+  scripts/coordinate revise EPIC GOAL [ADDITIONAL_PATH...]
+  scripts/coordinate instruct EPIC TEXT
   scripts/coordinate assign EPIC WORKER [work|api|correctness] [--replace]
   scripts/coordinate start EPIC [work|api|correctness]
   scripts/coordinate note EPIC work|api|correctness TEXT [--blocked]
@@ -26,7 +28,7 @@ private def usage : String := "Git coordination for Complexitylib (Lean executab
   scripts/coordinate cancel
   scripts/coordinate land EPIC
 
-Coordinator: plan, assign, reopen, unassign, cancel, land.
+Coordinator: plan, revise, instruct, assign, reopen, unassign, cancel, land.
 Workers: commit and push the assigned branch before ready; never push main.
 Global options: --repo PATH, --remote NAME (before the command).
 "
@@ -72,8 +74,9 @@ private def dashboard (state : State) : IO Unit := do
   for epic in state.epics do
     IO.println s!"  {epic.id.value}: {epic.goal}"
     IO.println s!"    scope: {String.intercalate ", " epic.paths}"
+    unless epic.report.isEmpty do IO.println s!"    coordinator: {epic.report}"
     match epic.phase with
-    | .unassigned => IO.println s!"    unassigned; {epic.report}"
+    | .unassigned => IO.println "    unassigned"
     | .working work =>
       IO.println s!"    {work.assignee.value}: {
         if work.blocked then "blocked" else if work.lease.isSome then "active" else "assigned"}"
@@ -122,6 +125,8 @@ private def command (repo : Repository) (args : List String) : IO Unit := do
   | "plan" :: id :: goal :: remaining =>
     let (paths, after) := remaining.span (· != "--after")
     run repo (.plan ⟨id⟩ goal paths (after.drop 1 |>.map EpicId.mk))
+  | "revise" :: id :: goal :: addPaths => run repo (.revise ⟨id⟩ goal addPaths)
+  | ["instruct", id, text] => run repo (.instruct ⟨id⟩ text)
   | "assign" :: id :: worker :: options =>
     let replace := options.contains "--replace"
     let kinds := options.filter (· != "--replace")
