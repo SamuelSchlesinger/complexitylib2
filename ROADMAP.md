@@ -3,31 +3,32 @@
 Outstanding work and the rationale needed to guide it. See the [README](README.md) for
 completed reference developments.
 
-## First community release
+## Community handover
 
 Prepare the existing library as a usable successor to the original Complexitylib. Keep the
 public identity **Complexitylib**: computational complexity theory built on CSLib. AI assistance
 is a development method, and community participation includes mathematical review, API design,
 documentation and maintenance as well as proving new theorems.
 
-The release boundary is the existing documented developments, with these acceptance criteria:
+The handover covers the existing documented developments, with these acceptance criteria:
 
 * **Auditable claims.** Check each README result against its public statement, definitions,
   assumptions, encodings and resource model. Preserve nonconstructive and conditional boundaries;
   passing Lean does not establish that a statement matches its prose or literature source.
-* **Reproducible validation and review.** Run all six checks on the release revision, retain the
+* **Reproducible validation and review.** Run all six checks on the handover revision, retain the
   full-library axiom audit and representative clients, and record independent review with that
-  revision. Publish concise evidence with the release rather than relying on local build logs.
+  revision in the PR or commit description, following
+  [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
 * **A usable contribution path.** A new contributor can find a bounded task, the relevant APIs,
   source references, validation commands and review expectations without private conversation
   history or a maintainer's agent installation.
 * **An agreed handover.** Before announcing community hosting, agree the repository name,
   maintainers and merge responsibilities with CSLib Community. Verify CI and repository links
-  after transfer, publish an immutable release reference, and then point the original repository
-  to its successor. Organizational hosting does not imply acceptance into upstream CSLib.
+  after transfer, then point the original repository to its successor. Organizational hosting
+  does not imply acceptance into upstream CSLib.
 
 Completing every V1 port, Jukna chapter, or future resource-bound improvement is not a condition
-of this release. The work below remains available for subsequent, independently reviewed batches.
+of the handover. The work below remains available for subsequent, independently reviewed batches.
 
 ## Continuing priorities
 
@@ -106,7 +107,7 @@ worthwhile exercises. Open problems are separate research opportunities, not com
 requirements. Reuse Mathlib and CSLib for the supporting mathematics.
 
 Complete and review developments individually; book-wide coverage is a long-term program, not
-a prerequisite for usable releases. Organize modules by mathematical subject rather than book
+a prerequisite for using the library. Organize modules by mathematical subject rather than book
 chapter.
 
 The [almost-injective binary linear map](Complexity/Probability/BitString/LinearHash/Collisions.lean)

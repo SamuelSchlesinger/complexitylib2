@@ -76,8 +76,8 @@ the extracted artifact directory.
 This is the CSLib-based successor to
 [the original Complexitylib](https://github.com/SamuelSchlesinger/complexitylib). The two libraries
 have different APIs, and some original developments remain to be ported. APIs are still evolving;
-downstream projects should pin a commit. [ROADMAP.md](ROADMAP.md) separates the first community
-release from longer-term mathematical work.
+downstream projects should pin a commit. [ROADMAP.md](ROADMAP.md) separates the community handover
+from longer-term mathematical work.
 
 ## Project information
 
