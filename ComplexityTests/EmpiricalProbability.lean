@@ -67,6 +67,15 @@ example : ProbComp.eval (OracleComp.countTrue 2 (ProbComp.uniform Bool)) 1 = 1 /
   convert ENNReal.add_halves ((2 : ENNReal)⁻¹) using 1
   norm_num [div_eq_mul_inv, ← ENNReal.mul_inv]
 
+-- A distribution certificate transports an independently implemented sampler. Neither the
+-- infinite ambient type nor the many-to-one encoding requires a decoding operation.
+example (count : ℕ) :
+    ProbComp.eval (OracleComp.replicate count (pure 7 : ProbComp ℕ)) =
+      (ProbComp.eval (OracleComp.replicate count
+        (Bool.toNat <$> ProbComp.uniform Bool))).map (List.map (fun _ => 7)) := by
+  apply ProbComp.eval_replicate_map
+  exact (PMF.map_const _ _).symm
+
 example (confidence : ℕ) :
     ((ProbComp.eval (OracleComp.replicate ((confidence + 1) * 2 ^ 2)
       (ProbComp.uniform Bool))).toOuterMeasure {bits | ¬ ∃ bit ∈ bits, bit = true}).toReal ≤

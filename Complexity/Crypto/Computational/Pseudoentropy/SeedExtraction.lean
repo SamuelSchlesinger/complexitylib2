@@ -103,14 +103,13 @@ theorem observation_word_extraction {pair : SamplablePair} (saved : pair.SeedRea
   apply h.congr
   intro n
   have hpublic : ProbComp.eval (Prod.fst <$> pair.sample n) =
-      ProbComp.eval (pair.encode n <$> (Prod.fst <$> pair.latentSample n)) := by
+      (ProbComp.eval (Prod.fst <$> pair.latentSample n)).map (pair.encode n) := by
     simp only [ProbComp.eval_map, pair.eval_latentSample, pair.eval_sample,
       PMF.map_comp, Function.comp_def]
   dsimp only
-  rw [ProbComp.eval_replicate_congr hpublic
+  rw [ProbComp.eval_replicate_map hpublic
     (ExtractionSchedule.count n (saved.length n) (inverseSlack n))]
-  simp only [seededHash_eq_bind, OracleComp.replicate_map, ProbComp.eval_map, PMF.bind_map,
-    Function.comp_def]
+  simp only [seededHash_eq_bind, PMF.bind_map, Function.comp_def]
 
 /-- Extract the unused seed entropy, preserving the complete pair output and hash seed.
 The entropy chain rule pays for both the public observations and the labels already revealed. -/
@@ -186,25 +185,19 @@ theorem remainingSeed_word_extraction {pair : SamplablePair} (saved : pair.SeedR
   intro n
   let observe := fun value : pair.Observation n × Bool => (pair.encode n value.1, value.2)
   have hsource : ProbComp.eval (saved.sampleWithSeed n) =
-      ProbComp.eval ((fun result => (observe result.1, List.ofFn result.2)) <$>
-        saved.latentSampleWithSeed n) := by
-    simpa only [ProbComp.eval_map, saved.eval_latentSampleWithSeed] using
+      (ProbComp.eval (saved.latentSampleWithSeed n)).map
+        (fun result => (observe result.1, List.ofFn result.2)) := by
+    simpa only [saved.eval_latentSampleWithSeed] using
       saved.eval_sampleWithSeed n
-  have hpublic : ProbComp.eval (observe <$> pair.latentSample n) =
-      ProbComp.eval (pair.sample n) := by
-    simp only [ProbComp.eval_map, pair.eval_latentSample, pair.eval_sample, observe]
+  have hpublic : ProbComp.eval (pair.sample n) =
+      (ProbComp.eval (pair.latentSample n)).map observe := by
+    simp only [pair.eval_latentSample, pair.eval_sample, observe]
   have hreal := eval_replicate_extractLabels_map_pair observe List.ofFn
     (saved.latentSampleWithSeed n)
-    (ExtractionSchedule.count n (saved.length n) (inverseSlack n)) (key n) (hash n)
-  rw [ProbComp.eval_bind, ← ProbComp.eval_replicate_congr hsource] at hreal
-  have hideal : (extractLabelsIdeal (Output := BitString (outputBits n)) (pair.latentSample n)
-      (ExtractionSchedule.count n (saved.length n) (inverseSlack n)) (key n)).map
-        (fun result => (result.1.map observe, result.2)) =
-      extractLabelsIdeal (Output := BitString (outputBits n)) (pair.sample n)
-        (ExtractionSchedule.count n (saved.length n) (inverseSlack n)) (key n) := by
-    rw [extractLabelsIdeal_map_observation]
-    simp only [extractLabelsIdeal, ProbComp.eval_replicate_congr hpublic
-      (ExtractionSchedule.count n (saved.length n) (inverseSlack n))]
+    (ExtractionSchedule.count n (saved.length n) (inverseSlack n)) (key n) (hash n) hsource
+  have hideal := extractLabelsIdeal_map_observation (Output := BitString (outputBits n))
+    observe (pair.latentSample n)
+    (ExtractionSchedule.count n (saved.length n) (inverseSlack n)) (key n) hpublic
   have hleft := congrArg (fun law => law.bind (test n)) hreal.symm
   have hright := congrArg (fun law => law.bind (test n)) hideal
   simpa only [ProbComp.eval_bind, PMF.bind_map, Function.comp_def, observe] using

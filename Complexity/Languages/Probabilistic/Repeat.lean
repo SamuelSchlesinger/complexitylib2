@@ -27,6 +27,7 @@ is certified separately in `Computability.Probabilistic.Repeat`.
 
 * `Cslib.OracleComp.replicate_add`, `.replicate_snoc`: split an execution into segments.
 * `Cslib.ProbComp.eval_replicate`: finite outputs have the independent product law.
+* `Cslib.ProbComp.eval_replicate_map`: transport a sampling law through repeated draws.
 * `Cslib.ProbComp.eval_countTrue`: the success count is a sum of independent indicators.
 * `Cslib.ProbComp.countTrue_le`: every supported success count respects the trial budget.
 * `Cslib.ProbComp.eval_replicate_of_uniform`: realize the joint law from independent finite seeds.
@@ -123,6 +124,15 @@ theorem eval_replicate_congr {first second : ProbComp α} (h : eval first = eval
   induction count with
   | zero => rfl
   | succ count ih => simp only [OracleComp.replicate_succ, eval_bind, eval_map, h, ih]
+
+/-- An encoded sampling law lifts to repeated draws without requiring either type to be finite
+or the encoding to be injective. The order and multiplicity of all draws are preserved. -/
+theorem eval_replicate_map {β : Type} {source : ProbComp α} {encoded : ProbComp β}
+    {encode : α → β} (h : eval encoded = (eval source).map encode) (count : ℕ) :
+    eval (OracleComp.replicate count encoded) =
+      (eval (OracleComp.replicate count source)).map (List.map encode) := by
+  rw [← eval_map] at h
+  rw [eval_replicate_congr h, OracleComp.replicate_map, eval_map]
 
 /-- Repeated closed runs have the independent product law for any finite output distribution. -/
 theorem eval_replicate [Finite α] (count : ℕ) (program : ProbComp α) :

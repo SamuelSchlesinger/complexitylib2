@@ -38,6 +38,7 @@ finite-PMF metric without requiring a metric on the infinite ambient type of lis
 ## Main results
 
 * `eval_replicate_extractLabels`: exact agreement with the finite product experiment.
+* `eval_replicate_extractLabels_map_pair`: transport the complete experiment from a sampling law.
 * `extractLabels_dist_bind_le`: conditional entropy bounds every randomized finite-output test.
 * `extractLabels_indistinguishable`: statistical security for the common repetition schedule.
 * `isPPTOn_extractLabels`, `isPPTOn_extractLabels_list`: strict PPT with raw or framed labels.
@@ -76,14 +77,15 @@ noncomputable def extractLabelsIdeal {Observation Seed Output : Type}
     ((ProbComp.eval seed).bind (fun s => (PMF.uniformOfFintype Output).map (s, ·))).map
       (observed, ·))
 
-/-- Re-encoding the public marginal commutes with the ideal extraction experiment. -/
+/-- A sampling law for re-encoded observations transports the ideal extraction experiment. -/
 theorem extractLabelsIdeal_map_observation {α β Seed Output : Type}
     [Fintype Output] [Nonempty Output] (observe : α → β) (source : ProbComp α)
-    (count : ℕ) (seed : ProbComp Seed) :
+    (count : ℕ) (seed : ProbComp Seed) {encoded : ProbComp β}
+    (hsource : ProbComp.eval encoded = (ProbComp.eval source).map observe) :
     (extractLabelsIdeal (Output := Output) source count seed).map
       (fun result => (result.1.map observe, result.2)) =
-        extractLabelsIdeal (observe <$> source) count seed := by
-  simp only [extractLabelsIdeal, OracleComp.replicate_map, ProbComp.eval_map,
+        extractLabelsIdeal encoded count seed := by
+  simp only [extractLabelsIdeal, ProbComp.eval_replicate_map hsource,
     PMF.map_bind, PMF.map_comp, PMF.bind_map, Function.comp_def]
 
 /-- Forgetting side information leaves an independent public seed and uniform output. -/
@@ -94,13 +96,6 @@ theorem extractLabelsIdeal_map_snd {Observation Seed Output : Type}
       (ProbComp.eval seed).bind (fun key => (PMF.uniformOfFintype Output).map (key, ·)) := by
   simp only [extractLabelsIdeal, PMF.map_bind, PMF.map_comp, Function.comp_def, PMF.bind_const]
 
-/-- Re-encoding the public observations commutes with extraction of the hidden labels. -/
-theorem extractLabels_map_observation {α β Label Seed Output : Type} (observe : α → β)
-    (seed : ProbComp Seed) (hash : Seed → List Label → Output) (samples : List (α × Label)) :
-    extractLabels seed hash (samples.map (fun sample => (observe sample.1, sample.2))) =
-      (fun result => (result.1.map observe, result.2)) <$> extractLabels seed hash samples := by
-  simp only [extractLabels, map_bind, map_pure, List.map_map, Function.comp_def]
-
 /-- Re-encoding both fields changes only the hash's input representation and public output. -/
 theorem extractLabels_map_pair {α β Label Value Seed Output : Type}
     (observe : α → β) (encode : Label → Value) (seed : ProbComp Seed)
@@ -110,29 +105,20 @@ theorem extractLabels_map_pair {α β Label Value Seed Output : Type}
         extractLabels seed (fun key values => hash key (values.map encode)) samples := by
   simp only [extractLabels, map_bind, map_pure, List.map_map, Function.comp_def]
 
-/-- The full repeated experiment commutes with re-encoding observations and hash inputs. -/
+/-- A sampling law for re-encoded observations and hash inputs transports the full repeated
+experiment. Only the output distribution matters; the sampler need not be a syntactic map. -/
 theorem eval_replicate_extractLabels_map_pair {α β Label Value Seed Output : Type}
     (observe : α → β) (encode : Label → Value) (source : ProbComp (α × Label))
-    (count : ℕ) (seed : ProbComp Seed) (hash : Seed → List Value → Output) :
-    ProbComp.eval (OracleComp.replicate count
-      ((fun sample => (observe sample.1, encode sample.2)) <$> source) >>=
-        extractLabels seed hash) =
+    (count : ℕ) (seed : ProbComp Seed) (hash : Seed → List Value → Output)
+    {encoded : ProbComp (β × Value)}
+    (hsource : ProbComp.eval encoded =
+      (ProbComp.eval source).map (fun sample => (observe sample.1, encode sample.2))) :
+    ProbComp.eval (OracleComp.replicate count encoded >>= extractLabels seed hash) =
       (ProbComp.eval (OracleComp.replicate count source >>=
         extractLabels seed (fun key values => hash key (values.map encode)))).map
           (fun result => (result.1.map observe, result.2)) := by
-  rw [OracleComp.replicate_map]
-  simp only [bind_map_left, extractLabels_map_pair, ← map_bind, ProbComp.eval_map]
-
-/-- The observation map also commutes with a complete repeated extraction experiment. -/
-theorem eval_replicate_extractLabels_map {α β Label Seed Output : Type} (observe : α → β)
-    (source : ProbComp (α × Label)) (count : ℕ) (seed : ProbComp Seed)
-    (hash : Seed → List Label → Output) :
-    ProbComp.eval (OracleComp.replicate count
-      ((fun sample => (observe sample.1, sample.2)) <$> source) >>= extractLabels seed hash) =
-      (ProbComp.eval (OracleComp.replicate count source >>= extractLabels seed hash)).map
-        (fun result => (result.1.map observe, result.2)) := by
-  rw [OracleComp.replicate_map]
-  simp only [bind_map_left, extractLabels_map_observation, ← map_bind, ProbComp.eval_map]
+  simp only [ProbComp.eval_bind, ProbComp.eval_replicate_map hsource, PMF.bind_map,
+    Function.comp_def, extractLabels_map_pair, ProbComp.eval_map, PMF.map_bind]
 
 /-- Label extraction composes ordinary sampling, list projections, and an efficient hash. -/
 theorem isPPTOn_extractLabels {Param Observation Seed Output : Type} {input : Param ↪ List Bool}

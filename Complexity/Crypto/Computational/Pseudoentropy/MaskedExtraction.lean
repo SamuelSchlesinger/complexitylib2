@@ -242,14 +242,14 @@ theorem maskedSample_extract_dist_bind_le {α β Seed Output : Type} [Finite α]
   have hmasked : maskedSample source observe truth mask =
       (fun sample => (observe sample.1, sample.2)) <$> maskedSample source id truth mask := by
     simp only [maskedSample, map_bind, Functor.map_map, id_eq]
-  rw [hmasked, eval_replicate_extractLabels_map]
-  rw [show extractLabelsIdeal (Output := Output) (observe <$> source) count seed =
-      (extractLabelsIdeal (Output := Output) source count seed).map
-        (fun result => (result.1.map observe, result.2)) from
-    (extractLabelsIdeal_map_observation observe source count seed).symm]
+  rw [eval_replicate_extractLabels_map_pair observe id
+    (maskedSample source id truth mask) count seed hash
+      (by simpa only [ProbComp.eval_map, id_eq] using congrArg ProbComp.eval hmasked),
+    ← extractLabelsIdeal_map_observation observe source count seed
+      (ProbComp.eval_map observe source)]
   simpa only [extractLabelsIdeal, ProbComp.eval_replicate, ProbComp.eval_map,
     maskedSample_map_fst, PMF.map_id, PMF.bind_map, PMF.bind_bind, PMF.map_bind, PMF.map_comp,
-    Function.comp_def, List.map_ofFn] using hfull
+    Function.comp_def, List.map_ofFn, List.map_id] using hfull
 
 /-- Independent vote-masked labels provide at least their soft density per sample for
 extraction. The bound is uniform over all vote lists and thresholds of that density; the test
