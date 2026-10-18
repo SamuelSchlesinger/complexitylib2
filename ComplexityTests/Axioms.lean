@@ -9363,3 +9363,66 @@ info: 'Cslib.Circuits.Boolean.batchLookupCircuit.cost_program_withPadding' depen
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.batchLookupCircuit.cost_program_withPadding
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_batchOrCircuit_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_batchOrCircuit_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.batchOrCircuit.cost_program_withPadding' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.batchOrCircuit.cost_program_withPadding
+
+/--
+info: 'Cslib.Circuits.Boolean.batchOrCircuit.size_withPadding' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.batchOrCircuit.size_withPadding
+
+/--
+info: 'Cslib.Circuits.Boolean.size_batchOrCircuit_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_batchOrCircuit_le
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_adjacentDuplicateCircuit_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_adjacentDuplicateCircuit_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.eval_duplicateFlagsCircuit_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.eval_duplicateFlagsCircuit_iff
+
+/--
+info: 'Cslib.Circuits.Boolean.cost_program_duplicateFlagsCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.cost_program_duplicateFlagsCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.size_duplicateFlagsCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.size_duplicateFlagsCircuit
+
+/--
+info: 'Fin.exists_ne_apply_eq_iff_adjacent' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Fin.exists_ne_apply_eq_iff_adjacent

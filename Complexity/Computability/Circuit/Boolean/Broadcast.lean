@@ -86,13 +86,6 @@ private theorem cost_scans (count width : ℕ) (cost : signature.Op → ℕ) :
   simp only [scans, Circuit.cost_program_comp, Circuit.cost_program_replicate,
     cost_program_propagateCircuit, Circuit.cost_program_wiring, Nat.zero_add]
 
-/-- Compare adjacent selected keys once; the first record has no link. -/
-def links {input count keyWidth : ℕ} (key : Fin count → Fin keyWidth → Fin input) :
-    Circuit signature input count :=
-  Circuit.pi fun record => if h : 0 < record.val then
-    (equalBits (key ⟨record.val - 1, by lia⟩) (key record)).toCircuit
-  else (Formula.const false).toCircuit
-
 /-- Only false-tagged source records seed a value bit. -/
 def sources {input count width : ℕ} (tag : Fin count → Fin input)
     (payload : Fin count → Fin width → Fin input) : Circuit signature input (width * count) :=
@@ -104,7 +97,7 @@ def sources {input count width : ℕ} (tag : Fin count → Fin input)
 def values {input count keyWidth width : ℕ} (key : Fin count → Fin keyWidth → Fin input)
     (tag : Fin count → Fin input) (payload : Fin count → Fin width → Fin input) :
     Circuit signature input (width * count) :=
-  (scans count width).comp ((sources tag payload).append (links key))
+  (scans count width).comp ((sources tag payload).append (adjacentEqualityCircuit key))
 
 private theorem eval_sources {input count width : ℕ} (tag : Fin count → Fin input)
     (payload : Fin count → Fin width → Fin input) (x : BitString input)
@@ -126,22 +119,11 @@ private theorem cost_values {input count keyWidth width : ℕ}
     (key : Fin count → Fin keyWidth → Fin input) (tag : Fin count → Fin input)
     (payload : Fin count → Fin width → Fin input) (cost : signature.Op → ℕ) :
     (values key tag payload).program.cost cost =
-      (links key).program.cost cost + width *
+      (adjacentEqualityCircuit key).program.cost cost + width *
         (cost (.const false) + count * (cost .not + 2 * cost .and + cost .or)) := by
   simp only [values, Circuit.cost_program_comp, Circuit.cost_program_append,
     cost_scans, cost_sources]
   ring
-
-private theorem cost_links {input count keyWidth : ℕ} (key : Fin count → Fin keyWidth → Fin input)
-    (cost : signature.Op → ℕ) :
-    (links key).program.cost cost = if count = 0 then 0 else
-      cost (.const false) + (count - 1) *
-        (cost (.const true) + keyWidth * (3 * cost .and + 2 * cost .not + cost .or)) := by
-  cases count with
-  | zero => simp [links, Circuit.cost_program_pi]
-  | succ count =>
-    simp [links, Circuit.cost_program_pi, Fin.sum_univ_succ,
-      Formula.cost_toCircuit, cost_equalBits, Formula.const, Nat.add_comm]
 
 private def inputKey {input count keyWidth : ℕ} (key : Fin count → Fin keyWidth → Fin input)
     (x : BitString input) (index : ℕ) : BitString keyWidth :=
@@ -154,17 +136,17 @@ private theorem inputKey_fin {input count keyWidth : ℕ} (key : Fin count → F
 
 private theorem eval_links {input count keyWidth : ℕ} (key : Fin count → Fin keyWidth → Fin input)
     (x : BitString input) (record : Fin count) :
-    (links key).eval interpretation x record =
+    (adjacentEqualityCircuit key).eval interpretation x record =
       BitString.keyLinks (fun i => toLex (inputKey key x i)) record.val := by
   by_cases h : 0 < record.val
-  · simp only [links, Circuit.eval_pi, dite_eq_left h, Formula.eval_toCircuit]
+  · simp only [adjacentEqualityCircuit, Circuit.eval_pi, dite_eq_left h, Formula.eval_toCircuit]
     apply Bool.eq_iff_iff.mpr
     rw [Formula.eval_equalBits_iff]
     simp only [BitString.keyLinks, ite_eq_right (by lia : record.val ≠ 0),
       decide_eq_true_eq, toLex_inj]
     rw [inputKey_fin key x record, inputKey_fin key x ⟨record.val - 1, by lia⟩]
   · have hz : record.val = 0 := by lia
-    simp [links, BitString.keyLinks, hz]
+    simp [adjacentEqualityCircuit, BitString.keyLinks, hz]
 
 private theorem eval_values {input count keyWidth width : ℕ}
     (key : Fin count → Fin keyWidth → Fin input) (tag : Fin count → Fin input)
@@ -336,7 +318,7 @@ theorem cost_program_broadcastCircuit {headerWidth keyWidth : ℕ}
       width * (cost (.const false) + count * (cost .not + 2 * cost .and + cost .or)) := by
   simp only [broadcastCircuit, Circuit.cost_program_comp, Circuit.cost_program_append,
     Circuit.id, Circuit.cost_program_wiring, Nat.zero_add, Nat.add_zero,
-    broadcastCircuit.cost_values, broadcastCircuit.cost_links]
+    broadcastCircuit.cost_values, cost_program_adjacentEqualityCircuit]
 
 /-- Exact gate count, including constants and unused gates at empty dimensions. -/
 theorem size_broadcastCircuit {headerWidth keyWidth : ℕ} (key : Fin keyWidth → Fin headerWidth)

@@ -61,8 +61,13 @@ Jukna coverage below is an additional target beyond the V1 port:
   [Batched table lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean) uses one sort,
   shared broadcast, and saved swaps to return answers in query order, including repeated queries.
   It includes concrete layouts, automatic padding, and exact gate counts; its bound is linear in
-  table size plus query count and field width, and quadratic in sorting depth. Constructor runtime
-  is not certified. The three mass-production results above remain to be ported.
+  table size plus query count and field width, and quadratic in sorting depth. The same layout
+  supports [shared OR lookup](Complexity/Computability/Circuit/Boolean/BatchOr.lean) over dynamic
+  source records, including repeated and missing keys.
+  [Duplicate detection](Complexity/Computability/Circuit/Boolean/DuplicateFlags.lean) shares
+  adjacent-key tests and returns flags to their original positions using saved swaps.
+  These have exact weighted gate costs; constructor runtime is not certified. The three
+  mass-production results above remain to be ported.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,

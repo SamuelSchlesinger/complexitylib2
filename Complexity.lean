@@ -24,6 +24,7 @@ public import Complexity.Computability.Circuit.Boolean.AtLeast
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BarringtonClass
 public import Complexity.Computability.Circuit.Boolean.BatchLookup
+public import Complexity.Computability.Circuit.Boolean.BatchOr
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.Broadcast
@@ -31,6 +32,7 @@ public import Complexity.Computability.Circuit.Boolean.CompareSwap
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
+public import Complexity.Computability.Circuit.Boolean.DuplicateFlags
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
 public import Complexity.Computability.Circuit.Boolean.Equality
 public import Complexity.Computability.Circuit.Boolean.FanInTwo
@@ -586,6 +588,7 @@ public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Fin.Append
+public import Complexity.Foundations.Data.Fin.Order
 public import Complexity.Foundations.Data.Fin.Tuple
 public import Complexity.Foundations.Data.Finset.Expect
 public import Complexity.Foundations.Data.Finset.Sampling

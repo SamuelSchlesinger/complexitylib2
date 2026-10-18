@@ -4,6 +4,7 @@ import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
 import ComplexityTests.Axioms
 import ComplexityTests.BatchLookup
+import ComplexityTests.BatchOr
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.Broadcast
@@ -19,6 +20,7 @@ import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
+import ComplexityTests.DuplicateFlags
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy
