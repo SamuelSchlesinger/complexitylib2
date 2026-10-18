@@ -10,6 +10,12 @@ therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `
 
 ## Coordinated workers
 
+When asked to **"become the coordinator"**, follow
+[coordinator succession](CONTRIBUTING.md#coordinator-succession). Inspect the live shared board,
+register a fresh unique coordinator identity and use its new worktree. Preserve active worker
+assignments and exact submitted reviews; recover priorities from the board's goals, guidance and
+reports. Never reuse another agent's local identity or assume this chat contains current state.
+
 When asked to **"become a worker in complexitylib"**, follow the
 [Git coordination workflow](CONTRIBUTING.md#coordinated-agent-work). Register a unique worker
 name with `scripts/coordinate join NAME`, then change into the printed worktree before editing.

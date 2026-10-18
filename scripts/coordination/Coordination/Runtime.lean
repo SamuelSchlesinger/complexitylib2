@@ -183,6 +183,11 @@ def run (repo : Repository) (cmd : Command) : IO Outcome := do
   if let some action := outcome.checkout then checkout repo action
   return outcome
 
+/-- Planned handoff preserves the board and refuses to leave uncommitted integration work. -/
+def releaseCoordinator (repo : Repository) : IO Outcome := do
+  repo.clean (← repo.head)
+  run repo .releaseCoordinator
+
 def start (repo : Repository) (epic : EpicId) (kind : AssignmentKind) : IO Outcome := do
   repo.clean (← repo.head)
   let key := s!"start:{epic.value}:{reprStr kind}"

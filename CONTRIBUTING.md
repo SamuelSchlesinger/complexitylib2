@@ -157,6 +157,44 @@ The implementation separates typed protocol transitions in
 Run `lake -d scripts/coordination test --wfail` after changing it. Tests use temporary local remotes;
 they do not mutate the project's remote or exercise the mathematical library's proofs.
 
+### Coordinator succession
+
+The instruction **"become the coordinator"** means taking over the existing project and workers,
+not initializing a new board. Start from an up-to-date checkout of remote `main`, read `AGENTS.md`
+and `scripts/coordinate status --json`, then use a fresh unique name:
+
+```bash
+scripts/coordinate join coordinator-NAME --coordinator
+# Change into the worktree printed by join before issuing further commands or editing.
+scripts/coordinate status --json
+```
+
+If a coordinator still holds an unexpired lease, do not impersonate it or overwrite the journal.
+The outgoing coordinator should finish or cancel any integration reservation, commit and push
+its work, record pending decisions in the affected epics with `instruct`, and run from its clean
+worktree:
+
+```bash
+scripts/coordinate release-coordinator
+```
+
+This immediately releases coordinator authority, preserving worker claims, branches, submissions
+and reviews. It refuses an active integration reservation. Old credentials and heartbeats cannot
+recover coordinator authority; the outgoing agent must stop coordinating. If the release response
+is lost, inspect the board before retrying: a successor may already have joined. The registration
+of the outgoing agent remains in history; the board's `coordinator` lease is authoritative.
+If the outgoing coordinator is unavailable, use `join coordinator-NAME --coordinator --takeover`
+only after its lease expires plus the one-minute grace period.
+
+The incoming coordinator checks remote `main`, each submitted base/head and review verdict,
+worker reports, dependencies and overlapping scopes before acting. Preserve active work rather
+than reassigning it merely because the coordinating chat changed. Reacquire abandoned integration
+claims through the normal protocol and never copy local identity files. Review notes are durable
+in the journal; supporting files may be local to the previous machine. Obtain missing evidence or
+fresh reviews where needed. Thread-local subagents do not transfer: create replacement reviewers
+when necessary, without treating old active review claims as completed reviews. Continue recording
+priorities and unresolved decisions in the existing epic guidance, not a parallel task list.
+
 ## Documentation
 
 Keep each fact in one maintained location. The README explains the purpose and points to useful
