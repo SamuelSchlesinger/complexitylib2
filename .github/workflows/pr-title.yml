@@ -8,7 +8,7 @@ jobs:
   check-title:
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR title follows cslib's `type(scope): description` convention
+      - name: Check PR title
         env:
           TITLE: ${{ github.event.pull_request.title }}
         run: |
