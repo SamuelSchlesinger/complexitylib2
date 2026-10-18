@@ -87,6 +87,14 @@ theorem prod {f : α → β} {g : α → γ} (hf : ComputableTidilyInSpace f enc
   let ⟨_, hg⟩ := hg
   ⟨_, hf.prod hg⟩
 
+theorem append {f₁ : α → β} {f₂ : α → γ} {g : α → δ} {encD : δ ↪ List Bool}
+    (h₁ : ComputableTidilyInSpace f₁ encIn encB S₁) (h₂ : ComputableTidilyInSpace f₂ encIn encC S₂)
+    (hg : ∀ x, encD (g x) = encB (f₁ x) ++ encC (f₂ x)) :
+    ComputableTidilyInSpace g encIn encD fun x => S₁ x + S₂ x :=
+  let ⟨_, h₁⟩ := h₁
+  let ⟨_, h₂⟩ := h₂
+  ⟨_, h₁.append h₂ hg⟩
+
 theorem ite {c : α → Bool} {f g : α → β} {Sc : α → ℕ}
     (hc : ComputableTidilyInSpace c encIn encBool Sc) (hf : ComputableTidilyInSpace f encIn encB S₁)
     (hg : ComputableTidilyInSpace g encIn encB S₂) :

@@ -325,6 +325,58 @@ theorem subtractSums_inSpace {p c : α → ℕ} {t : α → Fin 3} {acc : α →
     refine .const_mul 8192 (((length_le harg).add hB).add (.const 1 _)))
   exact (set_inSpace hR ht hsub).of_enc_eq fun x => by rw [subtractSums_eq]
 
+theorem length_le_length_encList (l : List ℕ) : l.length ≤ (encList encNat l).length := by
+  rw [length_encList]
+  induction l with
+  | nil => simp
+  | cons a l ih => simp only [List.length_cons, List.map_cons, List.sum_cons]; omega
+
+/-- **The bits of a register**, `l.map (· == 1)`, encoded as themselves. -/
+theorem mapEqOne_inSpace :
+    ComputableTidilyInSpace (fun l : List ℕ => l.map (· == 1)) (encList encNat) encBits
+      fun l => 64 * ((encList encNat l).length + 1) := by
+  have hstep : ComputableTidilyInSpace (fun q : List Bool × ℕ => q.1 ++ [q.2 == 1])
+      (encPair encBits encNat) encBits fun q => 8 * ((encPair encBits encNat q).length + 1) := by
+    have hl : (fun q => (encPair encBits encNat q).length) ≼
+        fun q => 4 * ((encPair encBits encNat q).length + 1) := .of_le fun _ => by omega
+    have he := budget_comp natEq (budget_prod ((snd encBits encNat).weaken hl)
+      (budget_const (encB := encNat) 1 hl)) (.of_le_linear 2 4 fun q => by
+        have : (encNat 1).length = 1 := rfl
+        simp only [length_encPair]; omega)
+    have h := ComputableTidilyInSpace.append ((fst encBits encNat).weaken hl) he
+      (g := fun q : List Bool × ℕ => q.1 ++ [q.2 == 1]) (encD := encBits) fun q => by
+        cases hq : q.2 == 1 <;> simp_all [encBits_apply, encBool_apply]
+    exact h.weaken (.of_le fun _ => by omega)
+  have hlen (l : List ℕ) (i : ℕ) (hi : i ≤ l.length) :
+      (encBits ((l.take i).foldl (fun acc v => acc ++ [v == 1]) [])).length ≤
+        (encList encNat l).length := by
+    have hf (m : List ℕ) (acc : List Bool) :
+        (m.foldl (fun acc v => acc ++ [v == 1]) acc) = acc ++ m.map (· == 1) := by
+      induction m generalizing acc with
+      | nil => simp
+      | cons v m ih => simp [ih]
+    rw [hf, encBits_apply, List.nil_append, List.length_map]
+    have := List.length_take_le' i l
+    have := length_le_length_encList l
+    omega
+  have h := foldl (encL := encList encNat) (list := fun l : List ℕ => l)
+    (init := fun _ => ([] : List Bool)) (step := fun acc v => acc ++ [v == 1])
+    (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl))) (budget_const [] (.refl _)) hstep
+    (Q := fun l => 8 * (3 * (encList encNat l).length + 2))
+    (B := fun l => (encList encNat l).length)
+    (fun l i hi => by
+      have h₁ := hlen l i hi.le
+      have h₂ := length_le_encList_of_mem encNat (List.getElem_mem hi)
+      rw [length_encPair]; dsimp only; omega)
+    (fun l i hi => hlen l i hi)
+  refine h.mono_le (fun l => by omega) |>.of_enc_eq fun l => ?_
+  have hf (m : List ℕ) (acc : List Bool) :
+      (m.foldl (fun acc v => acc ++ [v == 1]) acc) = acc ++ m.map (· == 1) := by
+    induction m generalizing acc with
+    | nil => simp
+    | cons v m ih => simp [ih]
+  rw [hf, List.nil_append]
+
 end Reader
 
 end Cslib.TreeEval

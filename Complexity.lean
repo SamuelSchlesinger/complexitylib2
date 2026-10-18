@@ -482,6 +482,7 @@ public import Complexity.Computability.TreeEval.Reader.Arith
 public import Complexity.Computability.TreeEval.Reader.Cert.Offset
 public import Complexity.Computability.TreeEval.Reader.Cert.Regs
 public import Complexity.Computability.TreeEval.Reader.Cert.Residue
+public import Complexity.Computability.TreeEval.Reader.Cert.Step
 public import Complexity.Computability.TreeEval.Reader.Cert.Weight
 public import Complexity.Computability.TreeEval.Reader.Correct
 public import Complexity.Computability.TreeEval.Reader.Defs
