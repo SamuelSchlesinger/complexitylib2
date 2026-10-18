@@ -111,32 +111,36 @@ private theorem step_cfg {q : ClearShadowedState} {ip : Fin (input.length + 2)}
 
 variable {ip : Fin (input.length + 2)} {out : List Symbol}
 
+/-- A leftward scan preserves the control, tapes, input head and output, moving both work heads
+from `x` to `x - n`; the next step is then the action at the endpoint. -/
+private theorem runFrom_leftward (q : ClearShadowedState) (n : ℕ) (x : ℤ)
+    (W S : ℤ → Option Symbol)
+    (hstep : ∀ j < n,
+      (clearShadowed m₀ m₁).tr q (cfg (some q) ip W S (x - j) out).inputSymbol
+        ![W (x - j), S (x - j)] = action none none (-1) (some q)) :
+    (clearShadowed m₀ m₁).runFrom (cfg (some q) ip W S x out) (n + 1) =
+      (clearShadowed m₀ m₁).step (cfg (some q) ip W S (x - n) out) := by
+  let path : (clearShadowed m₀ m₁).RunPath input :=
+    ⟨n, fun j => cfg (some q) ip W S (x - j) out, fun j => by
+      simpa only [MultiTapeNTM.stepRel, Set.mem_ofPred_eq, MultiTapeTM.step_iff,
+        Fin.val_castSucc, Fin.val_succ, Nat.cast_add, Nat.cast_one,
+        sub_add_eq_sub_sub, Option.elim_none, SignType.coe_neg_one, ← sub_eq_add_neg] using
+        step_cfg (hstep j j.isLt)⟩
+  have hrun := (runPath_apply_eq_runFrom path (Fin.last n)).symm
+  simp only [path, RelSeries.head, Fin.val_zero, Nat.cast_zero, sub_zero, Fin.val_last] at hrun
+  rw [runFrom, Function.iterate_succ_apply', ← runFrom, hrun]
+
 /-- In state `left`, the heads move left over marked cells to the first blank shadow cell, and
 step back right. -/
 private theorem runFrom_left (n : ℕ) (x : ℤ) (W : ℤ → Option Symbol) {S : ℤ → Option Symbol}
     (hS : ∀ j < n, S (x - j) ≠ none) (hn : S (x - n) = none) :
     (clearShadowed m₀ m₁).runFrom (cfg (some .left) ip W S x out) (n + 1) =
       cfg (some .sweep) ip W S (x - n + 1) out := by
-  induction n generalizing x with
-  | zero =>
-    rw [runFrom_one, step_cfg (w₀ := none) (w₁ := none) (d := 1) (q' := some .sweep)
-      (by simp [clearShadowed, by simpa using hn])]
-    simp
-  | succ n ih =>
-    have hx : S x ≠ none := by simpa using hS 0 (by omega)
-    rw [runFrom, Function.iterate_succ_apply, ← runFrom,
-      step_cfg (w₀ := none) (w₁ := none) (d := -1) (q' := some .left)
-        (by simp [clearShadowed, Option.isNone_iff_eq_none, hx]), Option.elim_none,
-      Option.elim_none, ih (x + ((-1 : SignType) : ℤ)) (fun j hj => by
-        convert hS (j + 1) (by omega) using 2
-        simp only [SignType.coe_neg_one]
-        omega) (by
-        convert hn using 2
-        simp only [SignType.coe_neg_one]
-        omega)]
-    congr 1
-    simp only [SignType.coe_neg_one]
-    omega
+  rw [runFrom_leftward .left n x W S
+    (by intro j hj; simp [clearShadowed, Option.isNone_iff_eq_none, hS j hj])]
+  rw [step_cfg (w₀ := none) (w₁ := none) (d := 1) (q' := some .sweep)
+    (by simp [clearShadowed, hn])]
+  simp
 
 /-- In state `sweep`, the heads move right over the marked cells to the first blank shadow cell,
 blanking both tapes except for a mark `m₁` on the work tape at the start cell, and step back
@@ -194,27 +198,12 @@ private theorem runFrom_home (n : ℕ) (x : ℤ) (W S : ℤ → Option Symbol)
     (hW : ∀ j < n, W (x - j) = none) (hn : W (x - n) ≠ none) :
     (clearShadowed m₀ m₁).runFrom (cfg (some .home) ip W S x out) (n + 1) =
       cfg none ip (Function.update W (x - n) none) S (x - n) out := by
-  induction n generalizing x with
-  | zero =>
-    obtain ⟨m, hm⟩ := Option.ne_none_iff_exists'.1 (by simpa using hn)
-    rw [runFrom_one, step_cfg (w₀ := some none) (w₁ := none) (d := 0) (q' := none)
-      (by simp [clearShadowed, hm])]
-    simp
-  | succ n ih =>
-    have hx : W x = none := by simpa using hW 0 (by omega)
-    rw [runFrom, Function.iterate_succ_apply, ← runFrom,
-      step_cfg (w₀ := none) (w₁ := none) (d := -1) (q' := some .home)
-        (by simp [clearShadowed, hx]), Option.elim_none, Option.elim_none,
-      ih (x + ((-1 : SignType) : ℤ)) (fun j hj => by
-        convert hW (j + 1) (by omega) using 2
-        simp only [SignType.coe_neg_one]
-        omega) (by
-        convert hn using 2
-        simp only [SignType.coe_neg_one]
-        omega)]
-    rw [show x + ((-1 : SignType) : ℤ) - n = x - ↑(n + 1) by
-      simp only [SignType.coe_neg_one]
-      omega]
+  rw [runFrom_leftward .home n x W S
+    (by intro j hj; simp [clearShadowed, hW j hj])]
+  obtain ⟨m, hm⟩ := Option.ne_none_iff_exists'.1 hn
+  rw [step_cfg (w₀ := some none) (w₁ := none) (d := 0) (q' := none)
+    (by simp [clearShadowed, hm])]
+  simp
 
 /-- The first step marks the cell under the heads and moves left. -/
 private theorem step_start (W : ℤ → Option Symbol) (V : Finset ℤ) (x : ℤ) :
