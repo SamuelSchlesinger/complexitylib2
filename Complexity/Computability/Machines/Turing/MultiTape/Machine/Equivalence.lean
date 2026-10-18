@@ -64,6 +64,11 @@ def Config.emptyOracleEquiv : Config k Symbol State Empty input ≃ Cfg k Symbol
       exact oracle.elim
   right_inv _ := rfl
 
+/-- A configuration without communication channels is determined by its tapes. -/
+theorem Config.eq_iff_tapes_eq {cfg cfg' : Config k Symbol State Empty input} :
+    cfg = cfg' ↔ cfg.tapes = cfg'.tapes :=
+  Config.emptyOracleEquiv.injective.eq_iff.symm
+
 /-- Recover the deterministic upstream machine from an effect-free transition table. -/
 def toTM (machine : MultiTapeMachine k Symbol State Empty Id) : MultiTapeTM k Symbol State :=
   MultiTapeTM.ofTr machine.initial fun state symbol work =>

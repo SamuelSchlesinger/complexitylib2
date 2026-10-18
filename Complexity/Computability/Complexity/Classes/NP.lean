@@ -26,7 +26,10 @@ input length of the verifier is a function of the instance alone. And `p` is a p
 merely a polynomially bounded function: a reduction from an `NP` problem must be able to compute
 where the certificate ends, which an arbitrary bound would not allow.
 
-The characterisation by nondeterministic machines is not proved here.
+`NP` is exactly the class of problems decided in polynomial time by nondeterministic machines
+with a binary alphabet and finitely many states (`Cslib.Complexity.mem_NP_iff_decidableInPolyTime`
+in `Complexity.Computability.Complexity.Classes.NP.Nondeterministic`): such a machine guesses a
+certificate and verifies it, and conversely a verifier checks an encoded accepting computation.
 
 ## Main definitions
 

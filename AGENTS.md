@@ -26,10 +26,14 @@ checkpoint and at least every five minutes; while idle, check about once a minut
 work, remain available for reviews and follow-up assignments until asked to stop. If a lease or
 session is lost, stop editing and reacquire authorization through the board.
 
-Workers commit and push their assigned branches; only the coordinator lands work on `main`.
-Reviewers inspect the exact submitted commit, record findings, and leave fixes to its author.
-The coordinator owns shared architecture, dependencies, scope allocation, independent reviews,
-and integration. Large developments should produce independently useful, reviewable milestones;
+Workers self-review and validate their changes, then commit, push and submit their assigned branches.
+The coordinator arranges the independent API and correctness reviews centrally in the root thread,
+using independent local review subagents when useful, and owns integration and landing on `main`.
+Reviewers inspect the exact submitted commit and record findings read-only; fixes and integration
+edits happen separately. The coordinator may take over a frozen submission through the documented
+reopen/assign/start workflow, preserving contributors and obtaining fresh reviews after edits.
+The coordinator also owns shared architecture, dependencies and scope allocation.
+Large developments should produce independently useful, reviewable milestones;
 agree each milestone's endpoint and record the remaining development before submitting it.
 The board is shared state, not a process scheduler: these duties run while the agents are active.
 
