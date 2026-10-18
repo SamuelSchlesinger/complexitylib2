@@ -2,6 +2,7 @@ module  -- shake: keep-all --deprecated_module: ignore
 
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
+public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram

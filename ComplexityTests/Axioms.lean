@@ -9193,3 +9193,39 @@ info: 'Cslib.Circuits.Boolean.four_mul_size_routeCircuit' depends on axioms: [pr
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.four_mul_size_routeCircuit
+
+/--
+info: 'Cslib.BitonicSort.unrouteSort_routeSort' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.unrouteSort_routeSort
+
+/--
+info: 'Cslib.BitonicSort.routeSort_unrouteSort' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.routeSort_unrouteSort
+
+/--
+info: 'Cslib.BitonicSort.routeSort_sortTrace' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.routeSort_sortTrace
+
+/--
+info: 'Cslib.BitonicSort.unrouteSort_comp_sort' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.unrouteSort_comp_sort
+
+/--
+info: 'Cslib.BitonicSort.two_mul_mergeTraceSize' depends on axioms: [propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.two_mul_mergeTraceSize
+
+/--
+info: 'Cslib.BitonicSort.four_mul_sortTraceSize' depends on axioms: [propext]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitonicSort.four_mul_sortTraceSize

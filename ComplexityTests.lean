@@ -4,6 +4,7 @@ import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
 import ComplexityTests.Axioms
 import ComplexityTests.BitonicSort
+import ComplexityTests.BitonicTrace
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
