@@ -9648,3 +9648,17 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_eval_eq_of_transcript_eq
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_eval_eq_of_transcript_eq
+
+/--
+info: 'Cslib.BitString.card_mul_le_two_pow_of_hadamardCode_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.BitString.card_mul_le_two_pow_of_hadamardCode_eq
+
+/--
+info: 'Cslib.DecisionTree.two_pow_le_leafCount_sq_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.DecisionTree.two_pow_le_leafCount_sq_of_hadamardCode

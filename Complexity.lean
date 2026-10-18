@@ -225,6 +225,7 @@ public import Complexity.Computability.DecisionTree.CanonicalTree
 public import Complexity.Computability.DecisionTree.Certificate
 public import Complexity.Computability.DecisionTree.Fourier
 public import Complexity.Computability.DecisionTree.Influence
+public import Complexity.Computability.DecisionTree.InnerProduct
 public import Complexity.Computability.DecisionTree.Leaves
 public import Complexity.Computability.DecisionTree.NormalForm
 public import Complexity.Computability.DecisionTree.Parity
@@ -537,6 +538,7 @@ public import Complexity.Foundations.BooleanAnalysis.Fibers
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Foundations.BooleanAnalysis.FourierRestriction
 public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.BooleanAnalysis.HadamardRectangles
 public import Complexity.Foundations.BooleanAnalysis.HadamardTester
 public import Complexity.Foundations.BooleanAnalysis.HarmonicMean
 public import Complexity.Foundations.BooleanAnalysis.Influence
