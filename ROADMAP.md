@@ -34,7 +34,8 @@ completed reference developments.
 ## Remaining theorem developments
 
 The port still includes substantial mathematical developments beyond the completed reference
-results. Track these by their public theorems, rather than by source-file counts:
+results. Track these by their public theorems, rather than by source-file counts.
+Jukna coverage below is an additional target beyond the V1 port:
 
 * **Circuit mass production.** Integrate the existing constructions from
   [algebraic-circuits](https://github.com/SamuelSchlesinger/algebraic-circuits/blob/main/Algebraic/MassProduction.lean):
@@ -68,11 +69,39 @@ results. Track these by their public theorems, rather than by source-file counts
   [ESO-to-NP direction](https://github.com/SamuelSchlesinger/complexitylib/blob/dev/Complexitylib/DescriptiveComplexity/SecondOrder/PolynomialTime.lean);
   port its encoded structures and efficient certificate checker, then construct the converse
   tableau interpretation. The converse is new work even relative to V1.
-* **Further metacomplexity and algebraic results.** Carry over the existing extractor,
-  circuitized anti-checker, MINKT/MINCKT and rational-matrix hitting-list developments, recording
-  each endpoint's remaining hypotheses. The current anti-checker existence theorem does not
-  include the efficient generator or complete hardness-magnification argument; the latter also
-  has unfinished quantitative counting work in V1.
+* **Further algebraic results.** Carry over the existing extractor and rational-matrix
+  hitting-list developments, recording each endpoint's remaining hypotheses.
+
+Further metacomplexity ports are outside the current scope: the circuitized anti-checker,
+hardness-magnification argument and MINKT/MINCKT developments will not be carried over. Retain
+existing checked [MCSP definitions](Complexity/Computability/MCSP/Basic.lean),
+[succinct variants](Complexity/Computability/MCSP/Succinct.lean),
+[Shannon bounds](Complexity/Computability/MCSP/Shannon.lean) and
+[anti-checker existence](Complexity/Computability/MCSP/AntiChecker.lean).
+These do not include an efficient anti-checker generator or a hardness-magnification theorem.
+
+## Jukna coverage
+
+Formalize the established theorems, lemmas, constructions and exercise results throughout
+[Jukna's *Boolean Function Complexity: Advances and Frontiers* (2012)](https://web.vu.lt/mif/s.jukna/boolean/index.html),
+using the author's [errata](https://web.vu.lt/mif/s.jukna/boolean/misprints-BFC.html).
+Research problems remain explicitly open. Reuse Mathlib and CSLib for the supporting mathematics.
+
+This initial map follows the [contents](https://web.vu.lt/mif/s.jukna/boolean/TOC.pdf).
+The linked modules are starting points, not evidence of complete chapter coverage. Audit exact
+statements and hypotheses against each numbered result, including circuit bases, cost conventions,
+uniformity, explicitness and quantitative strength; a citation or related theorem is insufficient.
+
+| Chapters | Existing entry points | Next coverage work |
+| --- | --- | --- |
+| 1–2: foundations and Boolean analysis | [Circuit hierarchy](Complexity/Computability/Circuit/Boolean/Hierarchy.lean), [Shannon synthesis](Complexity/Computability/Circuit/Boolean/ShannonSynthesis.lean), [Fourier analysis](Complexity/Foundations/BooleanAnalysis/Fourier.lean) | Audit counting, graph complexity, degree and approximation results. |
+| 3–5: communication | [Protocols](Complexity/Computability/Communication/Protocol.lean), [Karchmer–Wigderson](Complexity/Computability/Communication/KarchmerWigderson.lean) | Complete matrix, randomized and multiparty results. |
+| 6–10: formulas and circuits | [Spira](Complexity/Computability/Circuit/Boolean/Spira.lean), [Khrapchenko](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), [monotone clique](Complexity/Computability/Circuit/Monotone/Clique/LowerBound.lean) | Audit remaining formula and monotone bounds; develop span programs and negation complexity. |
+| 11–13: depth restrictions and general gates | [Håstad](Complexity/Computability/Circuit/Boolean/Hastad.lean), [Smolensky](Complexity/Computability/Circuit/Boolean/Smolensky.lean), [symmetric gates](Complexity/Computability/Circuit/Boolean/ShallowSymmetric.lean) | Audit depth-three, threshold, entropy, wire and linear-operator bounds. |
+| 14–17: trees and branching programs | [Decision-tree certificates](Complexity/Computability/DecisionTree/Certificate.lean), [Barrington](Complexity/Computability/Circuit/Boolean/BarringtonClass.lean) | Complete bounded-read and bounded-time lower bounds and remaining tree results. |
+| 18–19: proof complexity | [Resolution soundness and completeness](Complexity/Logics/Propositional/Resolution.lean) | Add resolution complexity bounds and cutting-plane proofs. |
+| 20: barriers and further methods | [Fusion API](Complexity/Computability/Circuit/Fusion/Basic.lean), [Nisan–Wigderson core](Complexity/Computability/Kolmogorov/NisanWigderson.lean) | Match the book's generator, natural-proof, fusion and indirect lower-bound results. |
+| Appendix A: mathematical prerequisites | Mathlib and `Complexity/Foundations/` | Reuse existing statements and fill dependencies as clients require them. |
 
 ## Machine-class milestones
 
