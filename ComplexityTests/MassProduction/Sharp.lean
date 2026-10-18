@@ -66,7 +66,57 @@ example : ∃ num den P : ℕ, num < den ∧ 0 < P ∧ (1 / 2 : ℝ) < (num : �
     ((P : ℝ) + 1) * den ≤ (1 / (1 - 1 / 2) + 1 / 10) * P * ((den - num : ℕ) : ℝ) :=
   exists_rat_coefficient (by norm_num) (by norm_num) (by norm_num)
 
+/-! ### The unconditional theorems -/
+
+-- Rate `1 / 2`, precision `4`: eventually up to `2 ^ (⌊n / 2⌋ + 1)` copies of any function cost
+-- at most `(1 + 1/4) · 2 · 2 ^ n / n`.
+example : ∀ᶠ n in atTop, ∀ (f : (Fin n → Bool) → Bool) (k : ℕ), k ≤ 2 ^ (1 * n / 2 + 1) →
+    ((4 * (2 - 1) * n : ℕ) : ℕ∞) * massComplexity f k ≤ ((4 + 1) * 2 * 2 ^ n : ℕ) :=
+  sharpMassProducesThrough (num := 1) (den := 2) (by decide) 4
+
+-- Rate zero: a constant number of copies costs `(1 + 1/P) 2 ^ n / n`, Lupanov's coefficient.
+example (P : ℕ) : ∀ᶠ n in atTop, ∀ (f : (Fin n → Bool) → Bool) (k : ℕ), k ≤ 2 ^ (0 * n / 1 + 1) →
+    ((P * (1 - 0) * n : ℕ) : ℕ∞) * massComplexity f k ≤ ((P + 1) * 1 * 2 ^ n : ℕ) :=
+  sharpMassProducesThrough (num := 0) (den := 1) (by decide) P
+
+-- Exponential range at rate `9 / 10`, at every positive length with one constant.
+example : MassProducesAtAllLengths 9 10 := exponentialMassProduction 9 10 (by decide) (by decide)
+
+-- Real rates: `γ = 0.99`, `ε = 1`.
+example : ∃ cutoff : ℕ, ∀ n, cutoff ≤ n → ∀ (f : (Fin n → Bool) → Bool) (k : ℕ), 0 < k →
+    (k : ℝ) ≤ (2 : ℝ) ^ ((99 / 100 : ℝ) * n) → ∃ bound : ℕ, massComplexity f k ≤ bound ∧
+      (bound : ℝ) ≤ (1 / (1 - 99 / 100) + 1) * ((2 : ℝ) ^ n / n) :=
+  realSharpMassProduction _ (by norm_num) (by norm_num) 1 (by norm_num)
+
 /-! ### Axioms -/
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms sharpMassProducesThrough
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exponentialMassProduction
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms realSharpMassProduction
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.schedulerSizeBound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms schedulerSizeBound
 
 /--
 info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough_of_bounds' depends on
@@ -83,11 +133,11 @@ info: 'Cslib.Circuits.Boolean.MassProduction.exists_complexity_le_of_bounds' dep
 #print axioms exists_complexity_le_of_bounds
 
 /--
-info: 'Cslib.Circuits.Boolean.MassProduction.pipelineBound' depends on axioms:
+info: 'Cslib.Circuits.Boolean.MassProduction.pipelineSizeBound' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms pipelineBound
+#print axioms pipelineSizeBound
 
 /--
 info: 'Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction_of_sharp' depends on axioms:

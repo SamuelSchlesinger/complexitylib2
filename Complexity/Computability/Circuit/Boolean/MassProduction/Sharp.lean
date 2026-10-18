@@ -12,6 +12,7 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpState
 public import Complexity.Computability.Circuit.Replication
 public import Cslib.Computability.Circuit.Boolean.Complexity
 import Complexity.Computability.Circuit.Boolean.MassProduction.Pipeline
+import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler
 import Complexity.Computability.Circuit.Boolean.MassProduction.SharpParameters
 import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 import Complexity.Foundations.Combinatorics.LineCode.Field
@@ -34,22 +35,23 @@ The construction for `2 ^ D` copies of a function on `p + w` inputs:
    function of the suffix; there are `copies * card K ^ ℓ * b` of them.
 2. A scheduler circuit gives every request a punctured line through its information point, with
    the lines of distinct requests disjoint (`IsScheduler`). It exists, with near-linear size,
-   whenever universal menus exist (`SchedulerBound`), and they do under the direction budget
+   whenever universal menus exist (`SchedulerSizeBound`), and they do under the direction budget
    (`LineCode.exists_isUniversalMenu`).
 3. A pipeline looks up the information points, routes every suffix to the resources on its
-   line, evaluates each resource once and sums the returned bits (`PipelineBound`).
+   line, evaluates each resource once and sums the returned bits (`PipelineSizeBound`).
 
 With the parameters of `MassProduction.Sharp`, the resource bank costs
 `(1 + o(1)) / (1 - γ) · 2 ^ n / n` and every other circuit is exponentially smaller.
 
-`SchedulerBound` and `PipelineBound` are the two circuit-size contracts; this module derives the
-core sharp theorem from them (`sharpMassProducesThrough_of_bounds`). Sizes count every gate. These
+`SchedulerSizeBound` and `PipelineSizeBound` are the two circuit-size contracts; this module
+derives the core sharp theorem from them (`sharpMassProducesThrough_of_bounds`) and discharges
+both (`schedulerSizeBound`, `pipelineSizeBound`). Sizes count every gate. These
 are bounds on circuit size, not on the running time of any circuit constructor.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.MassProduction.SchedulerBound`: near-linear schedulers exist.
-* `Cslib.Circuits.Boolean.MassProduction.PipelineBound`: the finite composition bound.
+* `Cslib.Circuits.Boolean.MassProduction.SchedulerSizeBound`: near-linear schedulers exist.
+* `Cslib.Circuits.Boolean.MassProduction.PipelineSizeBound`: the finite composition bound.
 
 ## Main results
 
@@ -57,6 +59,13 @@ are bounds on circuit size, not on the running time of any circuit constructor.
   one input length.
 * `Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough_of_bounds`: the core sharp
   theorem from the two contracts.
+* `Cslib.Circuits.Boolean.MassProduction.schedulerSizeBound`,
+  `Cslib.Circuits.Boolean.MassProduction.pipelineSizeBound`: both contracts hold.
+* `Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough`,
+  `Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt`: the sharp coefficient
+  `1 / (1 - γ) + o(1)` at every rational exponent below one.
+* `Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction`: the exponential copy range.
+* `Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction`: real rates.
 
 ## References
 
@@ -73,7 +82,7 @@ open Filter BitString LineCode
 
 /-- Schedulers of size at most `A * 2 ^ D * (s + 1) * (D + ℓ * b + 2) ^ E` exist for `2 ^ D`
 requests whenever universal menus exist for every number of pending requests. -/
-def SchedulerBound (A E : ℕ) : Prop :=
+def SchedulerSizeBound (A E : ℕ) : Prop :=
   ∀ (K : Type) [Field K] [Fintype K] [DecidableEq K] (ℓ b s D : ℕ) (bits : K ≃+ BitString b)
     (scalar : Fin s ≃ {c : K // c ≠ 0}),
     (∀ k, 0 < k → k ≤ 2 ^ D → ∃ r, k * r ≤ 2 ^ D * (2 + 3 * (ℓ * b)) + 2 * k ∧
@@ -85,7 +94,7 @@ def SchedulerBound (A E : ℕ) : Prop :=
 the resource bank and an overhead of at most
 `A * (2 ^ p + t * (s + 1) + copies * (s + 1) ^ ℓ) * (p + w + ℓ * b + log₂ (t + copies) + 2) ^ E`
 gates. -/
-def PipelineBound (A E : ℕ) : Prop :=
+def PipelineSizeBound (A E : ℕ) : Prop :=
   ∀ (K : Type) [Field K] [Fintype K] [DecidableEq K] (ℓ b s t p w copies L : ℕ)
     (bits : K ≃+ BitString b) (scalar : Fin s ≃ {c : K // c ≠ 0}) (C : LineCode K ℓ)
     (_ : BitString p ↪ Fin copies × C.info × Fin b)
@@ -106,8 +115,8 @@ theorem pow_le_pow_add {B E E' : ℕ} {x : ℕ} (hx : x ≤ B) (hB : 1 ≤ B) : 
 code copy and single copies of size at most `L` on `w` inputs, the `2 ^ D` copies of every
 function on `p + w` inputs cost a resource bank `R * L` with `X R ≤ (X + 2) 2 ^ p`, plus an
 overhead `O` exponentially smaller than `2 ^ (p + w)`. -/
-theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerBound A₁ E₁)
-    (hP : PipelineBound A₂ E₂) {X p w ℓ h m D L : ℕ} (hX : 0 < X) (hh : 0 < h) (hm : 0 < m)
+theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerSizeBound A₁ E₁)
+    (hP : PipelineSizeBound A₂ E₂) {X p w ℓ h m D L : ℕ} (hX : 0 < X) (hh : 0 < h) (hm : 0 < m)
     (hℓh : ℓ ≤ 2 ^ h) (hrate : X * (2 ^ (h * ℓ) - 1) ≤ m)
     (hbudget : 9 + D ≤ (ℓ - 2) * (h * m))
     (hloss : X * (h * m) * 2 ^ (ℓ * (h * m)) ≤ 2 ^ p)
@@ -239,7 +248,7 @@ theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Schedul
       _ = (A₁ + 4 * A₂) * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) := by ring
 
 /-- The pipeline of `MassProduction.Pipeline` satisfies the composition contract. -/
-theorem pipelineBound : PipelineBound 1444 4 := by
+theorem pipelineSizeBound : PipelineSizeBound 1444 4 := by
   intro K _ _ _ ℓ b s t p w copies L bits scalar C place sched hsched hL f
   rw [Pipeline.succ_eq_card scalar]
   exact complexity_directProduct_le_explicit_of_isScheduler bits scalar C place sched hsched hL f
@@ -248,8 +257,8 @@ theorem pipelineBound : PipelineBound 1444 4 := by
 polynomial size bounds, then at every rational exponent `num / den < 1` and every precision `P`,
 eventually every function on `n` inputs has `k ≤ 2 ^ (⌊num n / den⌋ + 1)` copies of cost at most
 `(1 + 1 / P) den / (den - num) · 2 ^ n / n`. -/
-theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerBound A₁ E₁)
-    (hP : PipelineBound A₂ E₂) {num den : ℕ} (hnd : num < den) :
+theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerSizeBound A₁ E₁)
+    (hP : PipelineSizeBound A₂ E₂) {num den : ℕ} (hnd : num < den) :
     SharpMassProducesThrough num den := by
   intro P
   set X := 16 * (P + 1) with hXdef
@@ -327,5 +336,32 @@ theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Sch
       ≤ ((P * (den - num) * n : ℕ) : ℕ∞) * (R * L + O : ℕ) := by gcongr
     _ = ((P * (den - num) * n * (R * L + O) : ℕ) : ℕ∞) := by push_cast; ring
     _ ≤ ((P + 1) * den * 2 ^ n : ℕ) := by exact_mod_cast hfinal
+
+/-- The halving scheduler of `MassProduction.Scheduler` satisfies the scheduler contract. -/
+theorem schedulerSizeBound : SchedulerSizeBound 524288 5 :=
+  fun _ _ _ _ _ _ _ _ bits scalar hmenu => exists_isScheduler bits scalar hmenu
+
+/-- **Sharp mass production** at every rational exponent `num / den < 1`: for every precision
+`P`, eventually every function on `n` inputs has `k ≤ 2 ^ (⌊num n / den⌋ + 1)` copies of cost
+`c` with `P (den - num) n c ≤ (P + 1) den 2 ^ n`, that is, at most
+`(1 + 1 / P) / (1 - num / den) · 2 ^ n / n` when `P > 0`. -/
+theorem sharpMassProducesThrough {num den : ℕ} (hnd : num < den) :
+    SharpMassProducesThrough num den :=
+  sharpMassProducesThrough_of_bounds schedulerSizeBound pipelineSizeBound hnd
+
+/-- The source's sharp statement at every rational exponent below one. -/
+theorem sharpMassProducesAt {num den : ℕ} (hnd : num < den) : SharpMassProducesAt num den :=
+  (sharpMassProducesThrough hnd).sharpMassProducesAt
+
+/-- **Exponential-range mass production**: every fixed rational exponent below one has a
+constant coefficient at every positive input length. -/
+theorem exponentialMassProduction : ExponentialMassProduction :=
+  exponentialMassProduction_of_sharp fun _ _ hnd => sharpMassProducesThrough hnd
+
+/-- **Sharp mass production for real rates**: for every real `0 ≤ γ < 1` and every `ε > 0`,
+eventually every positive number of copies at most `2 ^ (γ n)` costs at most
+`(1 / (1 - γ) + ε) 2 ^ n / n`. -/
+theorem realSharpMassProduction : RealSharpMassProduction :=
+  realSharpMassProduction_of_sharp fun _ _ hnd => sharpMassProducesThrough hnd
 
 end Cslib.Circuits.Boolean.MassProduction
