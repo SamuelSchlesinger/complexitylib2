@@ -8,6 +8,7 @@ Authors: Samuel Schlesinger
 
 import Tests.Support
 import Tests.Runtime
+import Tests.Fetch
 import Coordination.Protocol
 
 /-!
@@ -614,7 +615,7 @@ open Coordination.Tests in
 
 private def runTests : IO UInt32 := do
   let mut failed := 0
-  let tests := protocolTests ++ gitTests ++ runtimeTests
+  let tests := protocolTests ++ gitTests ++ runtimeTests ++ fetchTests
   for (name, action) in tests do
     try
       action

@@ -55,8 +55,9 @@ def Repository.fetch (repo : Repository) (ref : String)
     throw <| IO.userError s!"Cannot read {ref}: {listed.stderr}"
   let temporary := "refs/coordination-fetch/" ++ (← nonce)
   try
+    -- An explicit destination still permits configured tracking-ref updates unless refmap is empty.
     discard <| repo.run #["fetch", "--quiet", "--no-tags", "--no-write-fetch-head",
-      repo.remote, s!"{ref}:{temporary}"]
+      "--refmap=", repo.remote, s!"{ref}:{temporary}"]
     return some <| line (← repo.run #["rev-parse", "--verify", temporary ++ "^{commit}"])
   finally
     discard <| repo.execute #["update-ref", "-d", temporary] none
