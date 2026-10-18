@@ -105,6 +105,7 @@ import ComplexityTests.PPTTactic
 import ComplexityTests.PRGStretch
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
+import ComplexityTests.PolyTimePlain
 import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeSum
 import ComplexityTests.PolyTimeTactic
