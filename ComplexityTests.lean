@@ -60,6 +60,7 @@ import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
+import ComplexityTests.NondeterministicVerifiers
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification

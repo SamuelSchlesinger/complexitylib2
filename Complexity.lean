@@ -202,6 +202,8 @@ public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
+public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
@@ -325,6 +327,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ExtendT
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Halting
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.InputFromTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputPrefix
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program

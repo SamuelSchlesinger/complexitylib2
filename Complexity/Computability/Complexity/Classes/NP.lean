@@ -26,7 +26,10 @@ input length of the verifier is a function of the instance alone. And `p` is a p
 merely a polynomially bounded function: a reduction from an `NP` problem must be able to compute
 where the certificate ends, which an arbitrary bound would not allow.
 
-The characterisation by nondeterministic machines is not proved here.
+Problems in `NP` are decided in polynomial time by nondeterministic machines, which guess a
+certificate and verify it (`Cslib.Complexity.decidableInPolyTime_of_mem_NP` in
+`Complexity.Computability.Complexity.Classes.NP.GuessVerify`). The converse, that a
+polynomial-time nondeterministic machine yields a verifier, is not proved here.
 
 ## Main definitions
 
