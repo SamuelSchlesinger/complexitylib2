@@ -16,10 +16,10 @@ import Complexity.Computability.Circuit.Boolean.Spira
 A De Morgan formula with at most `d` AND and OR gates on every path has at most `2 ^ d` leaves
 (`leafSize_le_two_pow_depthWith_binaryCost`), so a function all of whose formulas have at least `L`
 leaves has formula depth at least `⌈log₂ L⌉`, with negations free
-(`clog_le_formulaDepth_of_le_leafSize`). With Khrapchenko's bounds [Khrapchenko1971],
+(`clog_le_formulaDepth_of_le_leafSize`). With Khrapchenko's bounds
 [Jukna, Section 6.8][Jukna2012], the parity of `n` bits has formula depth at least `⌈log₂ n ^ 2⌉`
-(`clog_sq_le_formulaDepth_parity`), and the threshold function `Th^n_k` at least
-`⌈log₂ k (n + 1 - k)⌉` (`clog_mul_le_formulaDepth_threshold`).
+(`clog_sq_le_formulaDepth_parity`) [Khrapchenko1971], and the threshold function `Th^n_k` at least
+`⌈log₂ k (n + 1 - k)⌉` (`clog_mul_le_formulaDepth_threshold`) [Khrapchenko1971b].
 
 For parity this is tight up to one: Yablonskii's balanced formulas
 (`Circuit/Boolean/Yablonskii.lean`) give the upper bound `2 ⌈log₂ n⌉`. In particular the parity of
@@ -44,6 +44,8 @@ For parity this is tight up to one: Yablonskii's balanced formulas
 
 ## References
 
+* [V. M. Khrapchenko, *Method of determining lower bounds for the complexity of
+  Π-schemes*][Khrapchenko1971b]
 * [V. M. Khrapchenko, *Complexity of the realization of a linear function in the class of
   Π-circuits*][Khrapchenko1971]
 * [S. V. Yablonskii, *Realization of a linear function in the class of π-schemes*][Yablonskii1954]

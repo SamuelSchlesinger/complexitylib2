@@ -33,9 +33,10 @@ measure subadditive; a negation exchanges the sides.
 If every input of `A` has at least `s₁` neighbors in `B` and every input of `B` has at least `s₀`
 neighbors in `A`, a formula separating them has leaf size at least `s₀ s₁`
 (`Formula.mul_le_leafSize`). So "at least `k` of `n` bits" needs leaf size `k (n + 1 - k)`
-(`mul_le_leafSize_of_computes_threshold`), majority needs leaf size `⌊(n + 1) ^ 2 / 4⌋`
-(`sq_div_four_le_leafSize_of_computes_majority`), and the parity of `n` bits, which changes with
-every bit, needs leaf size `n ^ 2` (`sq_le_leafSize_of_computes_parity`) [Khrapchenko1971].
+(`mul_le_leafSize_of_computes_threshold`) and majority needs leaf size `⌊(n + 1) ^ 2 / 4⌋`
+(`sq_div_four_le_leafSize_of_computes_majority`) [Khrapchenko1971b], and the parity of `n` bits,
+which changes with every bit, needs leaf size `n ^ 2` (`sq_le_leafSize_of_computes_parity`)
+[Khrapchenko1971].
 Splitting the bits in halves, `x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives formulas of leaf size exactly
 `n ^ 2` when `n` is a power of two (`isLeast_leafSize_parity_two_pow`).
 
