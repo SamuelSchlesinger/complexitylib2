@@ -11,6 +11,7 @@ import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
+import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
@@ -151,6 +152,7 @@ import ComplexityTests.ThresholdInnerProduct
 import ComplexityTests.ThresholdInnerProductActivity
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
+import ComplexityTests.TimeHierarchy
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation
