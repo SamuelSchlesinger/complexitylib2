@@ -81,9 +81,26 @@ def Gate.Degenerate (g : Gate) : Prop :=
   (∃ b, g.left = .const b) ∨ (∃ b, g.right = .const b) ∨ g.left = g.right
 
 /-- A Boolean function of one bit is a constant or a literal. -/
-private theorem unary_cases (h : Bool → Bool) (x : Bool) :
+theorem unary_cases (h : Bool → Bool) (x : Bool) :
     h x = if h false = h true then h false else (x ^^ h false) := by
   cases x <;> cases h0 : h false <;> cases h1 : h true <;> simp_all
+
+/-- The literal computing the Boolean function `h` of one bit applied to the argument `a`. -/
+def unaryLit (h : Bool → Bool) (a : Arg) : Lit :=
+  if h false = h true then Lit.const (h false) else ⟨a, h false⟩
+
+theorem eval_unaryLit (h : Bool → Bool) (a : Arg) (val : ℕ → Bool) :
+    h (a.eval val) = (unaryLit h a).eval val := by
+  rw [unary_cases h (a.eval val)]
+  unfold unaryLit
+  split_ifs <;> simp [Lit.eval, Lit.const]
+
+theorem reads_of_unaryLit_reads {h : Bool → Bool} {a : Arg} {t : ℕ}
+    (hr : (unaryLit h a).Reads t) : a = .node t := by
+  unfold unaryLit at hr
+  split_ifs at hr
+  · simp [Lit.Reads, Lit.const] at hr
+  · exact hr
 
 theorem Gate.eval_lit {g : Gate} (hg : g.Degenerate) (val : ℕ → Bool) :
     g.eval val = g.lit.eval val := by
