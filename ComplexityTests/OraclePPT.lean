@@ -9,6 +9,7 @@ import Complexity.Computability.Probabilistic.OracleSimulation
 import Complexity.Computability.Probabilistic.Oracle.Parameter
 import Complexity.Computability.Probabilistic.Presample
 import Complexity.Computability.Probabilistic.Memoize
+import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Languages.Probabilistic.RandomOracle.Probabilistic
 import Complexity.Tactic.PPT
 
@@ -100,53 +101,18 @@ example (State : Type) (oracle : Bool → StateT State PMF Bool) (s : State) :
 example : IsOraclePPTOn (Operation := Bool) encBits encBits
     (fun word => pure (word ++ word)) := by fun_prop
 
-private def readHead : MultiTapePTM 0 Bool Bool Unit where
-  initial := false
-  tr state _ _ answer _ := if state then
-    .step ⟨0, Fin.elim0, answer (), none⟩ (fun _ => none) (fun _ => 0)
-    else .query () true
+/-- Request the empty word once and return at most the first reply bit. -/
+private noncomputable def requestHead (_ : List Bool) : WordOracleComp Unit (List Bool) :=
+  List.take 1 <$> ProbOracleComp.query ((), [])
 
--- Two instructions suffice to submit an empty request and copy at most one reply symbol.
-example : IsOraclePPTOn encBits encBits
-    (fun input => readHead.runOracle 2 input) := by
-  simpa using IsOraclePPTOn.of_machine (input := encBits) readHead 2 0
-
-private theorem readHead_law (State : Type)
-    (oracle : Unit × List Bool → StateT State PMF (List Bool)) (s : State) (input : List Bool) :
-    (OracleComp.interpret
-      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-        (readHead.runOracle 2 input)).run s =
-      ((oracle ((), [])).run s).map (fun (reply, state) => (reply.take 1, state)) := by
-  simp only [MultiTapePTM.runOracle, MultiTapePTM.run, MultiTapePTM.runFrom,
-    MultiTapePTM.runConfigFrom, MultiTapeMachine.runConfigFrom, readHead,
-    MultiTapeMachine.initialConfig, Cfg.init]
-  simp [OracleComp.interpret_bind, StateT.run_bind, StateT.run_map,
-    ProbOracleComp.run_interpret_sample, -ProbOracleComp.interpret_sample,
-    MultiTapeMachine.Config.receive, MultiTapeMachine.Config.step,
-    MultiTapeMachine.Config.answerSymbols, MultiTapeMachine.Channel.answerSymbol,
-    Turing.Action.apply, Function.comp_def, PMF.map, List.take_one, List.head?_eq_getElem?]
-
-private def requestHead (_ : List Bool) : WordOracleComp Unit (List Bool) := do
-  let reply ← ProbOracleComp.query ((), [])
-  return reply.take 1
-
--- The same certificate describes the functional program while retaining every oracle effect.
+-- The bounded-prefix query primitive certifies the client; no machine is written by hand.
 private theorem requestHead_isOraclePPTOn : IsOraclePPTOn encBits encBits requestHead := by
-  apply (IsOraclePPTOn.of_machine (input := encBits) readHead 2 0).congr
-  intro input State oracle state
-  simpa only [requestHead, encBits, Function.Embedding.coe_refl, id_eq, pow_zero, Nat.mul_one,
-    bind_pure_comp, OracleComp.interpret_map, StateT.run_map, PMF.monad_map_eq_map,
-    ProbOracleComp.interpret_query] using readHead_law State oracle state input
+  unfold requestHead
+  fun_prop
 
 -- Parameterization retains the concrete client's external call and its entire private-state law.
-private theorem requestHead_isOraclePPT : IsOraclePPT encBits (fun _ word => requestHead word) := by
-  apply IsOraclePPTOn.isOraclePPT
-  apply (IsOraclePPTOn.of_machine (input := encPair encUnary encBits) readHead 2 0).congr
-  intro pair State oracle state
-  simpa only [requestHead, encBits, Function.Embedding.coe_refl, id_eq, pow_zero, Nat.mul_one,
-    bind_pure_comp, OracleComp.interpret_map, StateT.run_map, PMF.monad_map_eq_map,
-    ProbOracleComp.interpret_query] using
-      readHead_law State oracle state (encPair encUnary encBits pair)
+private theorem requestHead_isOraclePPT : IsOraclePPT encBits (fun _ word => requestHead word) :=
+  IsOraclePPTOn.isOraclePPT (IsOraclePPTOn.query_take () (.const []) (.const 1))
 
 example : ∃ c d : ℕ, ∀ n input, ProbOracleComp.HasQueryBounds (requestHead input)
     (fun request => request.2.length) (c * (n + input.length + 2) ^ d)
@@ -188,7 +154,7 @@ example (word : List Bool) :
         (requestHead word)).run word) =
       (PMF.uniformOfFintype Bool).map (fun bit => ([bit], bit :: word)) := by
   rw [ProbOracleComp.eval_run_interpret]
-  simp only [requestHead, bind_pure_comp, OracleComp.interpret_map, StateT.run_map,
+  simp only [requestHead, OracleComp.interpret_map, StateT.run_map,
     ProbOracleComp.interpret_query, PMF.monad_map_eq_map]
   change PMF.map _ (ProbComp.eval (respond word ((), []) word)) = _
   simp [respond, PMF.map_comp, Function.comp_def]
@@ -252,15 +218,15 @@ example {β : Type} {output : β ↪ List Bool} {program : List Bool → WordOra
   exact ⟨hcache', by simpa only [encBits_apply] using hreply.trans (by lia), by
     simpa only [encBits_apply, Nat.add_assoc] using hgrowth⟩
 
--- The trace contains one external request despite two private draws and an unbounded reply.
+-- The trace contains one external request despite private draws and an unbounded reply.
 example (n : ℕ) :
     (OracleComp.interpret
       (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
         (OracleComp.withTranscript (fun _ : Unit × List Bool =>
           fun state : ℕ => PMF.pure (List.replicate n true, state + 1))))
-            (readHead.runOracle 2 [])).run (7, []) =
+            (requestHead [])).run (7, []) =
       PMF.pure ((List.replicate n true).take 1, 8, [⟨((), []), List.replicate n true⟩]) := by
-  rw [readHead_law]
+  rw [requestHead, OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query]
   simp [OracleComp.withTranscript, StateT.run]
 
 -- Returning an unrestricted oracle reply cannot satisfy a uniform strict polynomial clock.
