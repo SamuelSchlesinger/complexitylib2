@@ -32,6 +32,10 @@ with a binary alphabet and finitely many states (`Cslib.Complexity.mem_NP_iff_de
 in `Complexity.Computability.Complexity.Classes.NP.Nondeterministic`): such a machine guesses a
 certificate and verifies it, and conversely a verifier checks an encoded accepting computation.
 
+Verifiers are usually built from short certificates padded with `false` to the prescribed length
+(`Cslib.Complexity.IsVerifier.of_padding`); `Complexity.Computability.Complexity.Classes.NP.Witness`
+builds them from polynomial-time witness relations.
+
 The verifier's efficiency can equally be stated in upstream terms: some machine computes it, in the
 sense of `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`, within time and space bounded by
 polynomially bounded functions of the length of its encoded input, which pairs the instance with
@@ -46,6 +50,11 @@ the certificate (`Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfL
 
 * `Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfLength`: `NP` with verifiers
   computed in the sense of upstream `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`.
+* `Cslib.Complexity.IsVerifier.of_padding`: a verifier that accepts certificates of exactly the
+  prescribed length only for members, and accepts for every member some short prefix whatever
+  padding by `false` follows it, verifies with certificates of exactly that length.
+* `Cslib.Complexity.IsVerifier.guard`: guarding a verifier by a test on instances verifies the
+  members that pass the test.
 
 ## References
 
@@ -92,6 +101,36 @@ theorem mem_NP_iff_exists_computableInTimeAndSpaceOfLength {enc : α ↪ List Bo
     exact ⟨p, V, t, s, ht, hs, hV, hA⟩
   · rintro ⟨p, V, t, s, ht, -, hV, hA⟩
     exact ⟨p, V, hV.computableTidilyInPolyTime ht, hA⟩
+
+/-! ### Padded certificates -/
+
+section Padding
+
+variable {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool} {A : Set α}
+
+/-- **Padded certificates.** A verifier verifies `A` with certificates of length exactly
+`p (enc a).length` if it accepts certificates of that length only for members of `A`, and every
+member has a prefix `u` of at most that length which is accepted whatever padding by `false`
+follows it. -/
+theorem IsVerifier.of_padding
+    (sound : ∀ a w, w.length = p.eval (enc a).length → V (a, w) = true → a ∈ A)
+    (complete : ∀ a ∈ A, ∃ u : List Bool, u.length ≤ p.eval (enc a).length ∧
+      ∀ k, V (a, u ++ List.replicate k false) = true) :
+    IsVerifier enc p V A := fun a =>
+  ⟨fun ha =>
+    let ⟨u, hu, hV⟩ := complete a ha
+    ⟨u ++ List.replicate (p.eval (enc a).length - u.length) false, by
+      rw [List.length_append, List.length_replicate, Nat.add_sub_cancel' hu], hV _⟩,
+    fun ⟨w, hw, hV⟩ => sound a w hw hV⟩
+
+/-- Guarding a verifier by a test `c` on instances verifies the members of `A` that pass the
+test. -/
+theorem IsVerifier.guard {c : α → Bool} (h : IsVerifier enc p V A) :
+    IsVerifier enc p (fun x => c x.1 && V x) {a | c a = true ∧ a ∈ A} := fun a => by
+  simp only [Set.mem_ofPred_eq, Bool.and_eq_true, h a]
+  exact ⟨fun ⟨hc, w, hw, hV⟩ => ⟨w, hw, hc, hV⟩, fun ⟨w, hw, hc, hV⟩ => ⟨hc, w, hw, hV⟩⟩
+
+end Padding
 
 /-- The problems whose complements are in `NP`. -/
 def coNP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ NP enc}

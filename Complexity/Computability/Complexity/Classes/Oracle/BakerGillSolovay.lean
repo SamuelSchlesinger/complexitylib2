@@ -15,11 +15,11 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 /-!
 # An oracle relative to which `P` and `NP` differ
 
-For an oracle language `B`, the unary language `Cslib.Complexity.unaryLanguage B` consists of the
-words `1ⁿ` such that `B` has a word of length `n`. Baker, Gill and Solovay construct an oracle `B`
-for which this language is not in `P` relative to `B`, while it is in `NP` relative to every
-oracle (a certificate is a word of length `n` in `B`) [BakerGillSolovay1975]; we follow the proof
-of [Arora and Barak, Theorem 3.7][AroraBarak09].
+For an oracle language `B`, the unary length language `Cslib.Complexity.unaryLengthLanguage B`
+consists of the words `1ⁿ` such that `B` has a word of length `n`. Baker, Gill and Solovay
+construct an oracle `B` for which this language is not in `P` relative to `B`, while it is in `NP`
+relative to every oracle (a certificate is a word of length `n` in `B`) [BakerGillSolovay1975]; we
+follow the proof of [Arora and Barak, Theorem 3.7][AroraBarak09].
 
 The oracle diagonalizes against all candidate deciders at once
 (`Cslib.Complexity.exists_oracle_diagonal`). The candidates are the fair-coin tables with one
@@ -27,24 +27,26 @@ oracle channel and control states `Fin m`, under the clocks `c * (n + 1) ^ d`, r
 every coin fixed to `false`. They are countably many, and each makes at most one request per
 instruction, hence fewer than `2 ^ n` requests for all large `n`. Every decider in `P` relative to
 `B` is one of them on the instances `1ⁿ`
-(`Cslib.Probability.IsOraclePPTOn.exists_fin_run_pure_false`), so none decides the unary language
-(`Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle`).
+(`Cslib.Probability.IsOraclePPTOn.exists_fin_run_pure_false`), so none decides the unary length
+language (`Cslib.Complexity.exists_unaryLengthLanguage_notMem_PWithOracle`).
 
 The verifier checks that the instance consists of `true` symbols, by a two-state transducer, and
-makes one request: the certificate itself (`Cslib.Complexity.unaryLanguage_mem_NPWithOracle`).
+makes one request: the certificate itself
+(`Cslib.Complexity.unaryLengthLanguage_mem_NPWithOracle`).
 Relative to the diagonal oracle, `P` is therefore strictly contained in `NP`
 (`Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle`).
 
 ## Main definitions
 
-* `Cslib.Complexity.unaryLanguage`: the words `1ⁿ` such that the oracle has a word of length `n`.
+* `Cslib.Complexity.unaryLengthLanguage`: the words `1ⁿ` such that the oracle has a word of
+  length `n`.
 
 ## Main results
 
-* `Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle`: for some oracle `B`, the unary
-  language of `B` is not in `P` relative to `B`.
-* `Cslib.Complexity.unaryLanguage_mem_NPWithOracle`: the unary language of every oracle is in `NP`
-  relative to it.
+* `Cslib.Complexity.exists_unaryLengthLanguage_notMem_PWithOracle`: for some oracle `B`, the unary
+  length language of `B` is not in `P` relative to `B`.
+* `Cslib.Complexity.unaryLengthLanguage_mem_NPWithOracle`: the unary length language of every
+  oracle is in `NP` relative to it.
 * `Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle`,
   `Cslib.Complexity.exists_PWithOracle_ne_NPWithOracle`: relative to some oracle, `P ⊊ NP`.
 
@@ -61,12 +63,12 @@ namespace Cslib.Complexity
 open _root_.Turing _root_.Turing.MultiTapeTM Probability
 
 /-- The words `1ⁿ` such that `B` has a word of length `n`. -/
-def unaryLanguage (B : Set (List Bool)) : Set (List Bool) :=
+def unaryLengthLanguage (B : Set (List Bool)) : Set (List Bool) :=
   {x | (∀ b ∈ x, b = true) ∧ ∃ w ∈ B, w.length = x.length}
 
-theorem replicate_mem_unaryLanguage {B : Set (List Bool)} {n : ℕ} :
-    List.replicate n true ∈ unaryLanguage B ↔ ∃ w ∈ B, w.length = n := by
-  simp only [unaryLanguage, Set.mem_ofPred_eq, List.length_replicate]
+theorem replicate_mem_unaryLengthLanguage {B : Set (List Bool)} {n : ℕ} :
+    List.replicate n true ∈ unaryLengthLanguage B ↔ ∃ w ∈ B, w.length = n := by
+  simp only [unaryLengthLanguage, Set.mem_ofPred_eq, List.length_replicate]
   exact and_iff_right fun b hb => (List.eq_of_mem_replicate hb)
 
 namespace BakerGillSolovay
@@ -104,10 +106,10 @@ end BakerGillSolovay
 
 open BakerGillSolovay in
 /-- **Baker–Gill–Solovay, the lower bound** [Arora and Barak, Theorem 3.7][AroraBarak09]: for some
-oracle language `B`, the unary language of `B` is not decidable in polynomial time relative to
-`B`. -/
-theorem exists_unaryLanguage_notMem_PWithOracle :
-    ∃ B : Set (List Bool), unaryLanguage B ∉ PWithOracle B encBits := by
+oracle language `B`, the unary length language of `B` is not decidable in polynomial time relative
+to `B`. -/
+theorem exists_unaryLengthLanguage_notMem_PWithOracle :
+    ∃ B : Set (List Bool), unaryLengthLanguage B ∉ PWithOracle B encBits := by
   obtain ⟨B, hB⟩ := exists_oracle_diagonal Candidate.verdict Candidate.clock
     Candidate.eventually_clock_lt Candidate.length_queriesWith_verdict_le
   refine ⟨B, fun ⟨f, ⟨program, hcertificate, hprogram⟩, hf⟩ => ?_⟩
@@ -124,7 +126,7 @@ theorem exists_unaryLanguage_notMem_PWithOracle :
     simp only [Candidate.verdict, Candidate.clock, OracleComp.interpret_map]
     rw [hverdict]
     cases f (List.replicate n true) <;> rfl
-  rw [heq, ← hf, replicate_mem_unaryLanguage]
+  rw [heq, ← hf, replicate_mem_unaryLengthLanguage]
 
 namespace BakerGillSolovay
 
@@ -163,16 +165,16 @@ theorem computableTidilyInPolyTime_all_and :
 end BakerGillSolovay
 
 open Classical in
-/-- **The unary language is in `NP` relative to its oracle**: a certificate for `1ⁿ` is a word of
-length `n` in the oracle, checked with one request. -/
-theorem unaryLanguage_mem_NPWithOracle (B : Set (List Bool)) :
-    unaryLanguage B ∈ NPWithOracle B encBits := by
+/-- **The unary length language is in `NP` relative to its oracle**: a certificate for `1ⁿ` is a
+word of length `n` in the oracle, checked with one request. -/
+theorem unaryLengthLanguage_mem_NPWithOracle (B : Set (List Bool)) :
+    unaryLengthLanguage B ∈ NPWithOracle B encBits := by
   refine ⟨Polynomial.X, fun xu : List Bool × List Bool => xu.1.all id && decide (xu.2 ∈ B),
     ((computableInPolyTimeWithOracle_mem B).preprocess
       (ComputableTidilyInPolyTime.snd encBits encBits)).map_with
       (g := fun (xu : List Bool × List Bool) b => xu.1.all id && b)
       BakerGillSolovay.computableTidilyInPolyTime_all_and, fun x => ?_⟩
-  · simp only [unaryLanguage, Set.mem_ofPred_eq, Polynomial.eval_X, encBits,
+  · simp only [unaryLengthLanguage, Set.mem_ofPred_eq, Polynomial.eval_X, encBits,
       Function.Embedding.refl_apply, Bool.and_eq_true, List.all_eq_true, id, decide_eq_true_eq]
     constructor
     · rintro ⟨hall, w, hw, hlength⟩
@@ -184,9 +186,9 @@ theorem unaryLanguage_mem_NPWithOracle (B : Set (List Bool)) :
 relative to some oracle language, `P` is strictly contained in `NP`. -/
 theorem exists_PWithOracle_ssubset_NPWithOracle :
     ∃ B : Set (List Bool), PWithOracle B encBits ⊂ NPWithOracle B encBits := by
-  obtain ⟨B, hB⟩ := exists_unaryLanguage_notMem_PWithOracle
+  obtain ⟨B, hB⟩ := exists_unaryLengthLanguage_notMem_PWithOracle
   exact ⟨B, Set.ssubset_iff_subset_ne.mpr ⟨PWithOracle_subset_NPWithOracle B encBits,
-    fun h => hB (h ▸ unaryLanguage_mem_NPWithOracle B)⟩⟩
+    fun h => hB (h ▸ unaryLengthLanguage_mem_NPWithOracle B)⟩⟩
 
 /-- **Baker–Gill–Solovay**: relative to some oracle language, `P ≠ NP`. -/
 theorem exists_PWithOracle_ne_NPWithOracle :
