@@ -21,7 +21,7 @@ import Mathlib.Data.List.GetD
 # Circuit satisfiability
 
 `CircuitSAT` is the set of De Morgan circuits with one output that output true on some input
-[Arora and Barak, Section 6.1.2][AroraBarak09]. Circuits are encoded by
+[Arora and Barak, Section 6.1][AroraBarak09]. Circuits are encoded by
 `Cslib.Circuits.Boolean.encCircuit`: the number `n` of inputs in unary, then the gates in program
 order with wire numbers in binary, then the output wire. Since `n` is written in unary, the
 encoding is at least `n` bits long, and an assignment to the inputs fits in a certificate as long

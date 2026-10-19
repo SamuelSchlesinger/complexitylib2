@@ -15,7 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 # The circuit value problem
 
 The *circuit value problem* asks whether a Boolean circuit outputs true on a given input
-[Arora and Barak, Section 6.1.2][AroraBarak09]. Here an instance is a De Morgan circuit with one
+[Arora and Barak, Section 6.1][AroraBarak09]. Here an instance is a De Morgan circuit with one
 output and `n` inputs together with an input in `BitString n`, so every instance is well formed.
 It is encoded by the binary encoding of the circuit (`Cslib.Circuits.Boolean.encCircuit`: the
 number of inputs in unary, the gates in program order with wire numbers in binary, the output
