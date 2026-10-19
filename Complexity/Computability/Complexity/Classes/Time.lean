@@ -45,7 +45,8 @@ instances, with a bound `t : ℕ → ℕ` of the length `n` of the encoded insta
   [Arora and Barak, Definition 7.2][AroraBarak09].
 
 Each polynomial class of the library is the union of the corresponding classes of time
-`O(n ^ k)`, the textbook definitions [Arora and Barak, Definitions 1.13, 2.7, 7.2][AroraBarak09]:
+`O(n ^ k)`, as in the textbook [Arora and Barak, Definition 1.13, Theorem 2.6,
+Definition 7.2][AroraBarak09]:
 `P` (`Cslib.Complexity.mem_P_iff_exists_mem_DTIME`), `NP`
 (`Cslib.Complexity.mem_NP_iff_exists_mem_NTIME`, through the machine characterisation
 `Cslib.Complexity.mem_NP_iff_decidableInPolyTime`) and `BPP`
@@ -287,8 +288,8 @@ theorem mem_P_iff_exists_mem_DTIME {α : Type*} {enc : α ↪ List Bool} {A : Se
         have h₂ : 1 ≤ (n + 1) ^ k := Nat.one_le_pow _ _ (Nat.succ_pos n)
         nlinarith) h
 
-/-- **`NP` is the union of the classes `NTIME (n ^ k)`** [Arora and Barak, Definition 2.7,
-Theorem 2.6][AroraBarak09], through the characterisation of `NP` by nondeterministic machines. -/
+/-- **`NP` is the union of the classes `NTIME (n ^ k)`**, through the characterisation of `NP` by
+nondeterministic machines [Arora and Barak, Theorem 2.6][AroraBarak09]. -/
 theorem mem_NP_iff_exists_mem_NTIME {α : Type} {enc : α ↪ List Bool} {A : Set α} :
     A ∈ NP enc ↔ ∃ k, A ∈ NTIME enc (· ^ k) := by
   rw [mem_NP_iff_decidableInPolyTime]

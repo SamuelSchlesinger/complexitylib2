@@ -27,13 +27,13 @@ algorithms that never err and say "don't know" with probability at most `1 / 2`
 [Arora and Barak, Section 7.3][AroraBarak09]; the definition through expected polynomial running
 time defines the same class, but expected running time is not modelled here.
 
-`ZPP = RP ∩ coRP` (`Cslib.Complexity.ZPP_eq_RP_inter_coRP`) [Arora and Barak, Section 7.3]
-[AroraBarak09]. Answering `true` only on the answer `some true` decides a problem in `ZPP` with
-one-sided error, and so does answering `false` only on `some false` for its complement. Conversely,
-for one-sided-error deciders of a problem and of its complement, which read disjoint parts of the
-random string, the first accepting gives the answer `some true`, the second the answer `some false`,
-and neither errs; on a member the first accepts on at least half of the random strings, and on a
-non-member the second does.
+`ZPP = RP ∩ coRP` [Arora and Barak, Section 7.3][AroraBarak09]
+(`Cslib.Complexity.ZPP_eq_RP_inter_coRP`). Answering `true` only on the answer `some true` decides
+a problem in `ZPP` with one-sided error, and so does answering `false` only on `some false` for its
+complement. Conversely, for one-sided-error deciders of a problem and of its complement, which
+read disjoint parts of the random string, the first accepting gives the answer `some true`, the
+second the answer `some false`, and neither errs; on a member the first accepts on at least half of
+the random strings, and on a non-member the second does.
 
 ## Main definitions
 
