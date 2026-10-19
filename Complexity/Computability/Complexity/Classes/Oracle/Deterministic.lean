@@ -45,6 +45,11 @@ certificates come from countably many machines with control `Fin m`
 * `Cslib.Probability.IsOraclePPTOn.exists_run_pure_false`,
   `Cslib.Probability.IsOraclePPTOn.exists_fin_run_pure_false`: certificates of deterministic
   programs are deterministic runs of finite machines with a polynomial clock.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 3.4
+  (oracle Turing machines).
 -/
 
 @[expose] public section
