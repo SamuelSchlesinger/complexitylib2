@@ -50,9 +50,9 @@ injective `Cslib.Complexity.splitVarToNat`.
 * On a satisfiable formula, for every number `m ≥ ValiantVazirani.randomBits φ` of random bits,
   where `randomBits φ = hashBits φ + (n + 2) (n + 1) ≤ (n + 2) ^ 2`, at least a
   `3 / (32 (n + 3))` fraction of the random words of length `m` make the reduced formula uniquely
-  satisfiable (`ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT`). Arora and Barak state
-  the bound `1 / (8 v)` for `v` variables; here the constant is `3 / 32` and `n ≥ v` counts
-  occurrences, which bound the length of the encoded formula.
+  satisfiable (`ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT`). The number `n` counts
+  occurrences: it is at least the number of variables and at most the length of the encoded
+  formula.
 
 For the last point, the solutions of `φ` give a set `S` of bit strings of length `n`, of some size
 `s ≥ 1`. With `k = goodRows φ = ⌊log₂ s⌋ + 2` equations, `2 ^ k` lies between `2 s` and `4 s`,
@@ -861,6 +861,12 @@ def RPWithPromiseOracle (Q : PromiseProblem β) (encQ : β ↪ List Bool) (enc :
       ∀ A : Set (List Bool), Q.SolvedBy (fun b => decide (encQ b ∈ A)) →
         DecidesWithOneSidedError enc p
           (fun x => OracleComp.interpret (m := Id) (languageOracle A) (program x)) L}
+
+/-- Every problem in `RP` is in `RP` relative to every promise problem: its algorithm makes no
+request. -/
+theorem RP_subset_RPWithPromiseOracle (Q : PromiseProblem β) (encQ : β ↪ List Bool)
+    (enc : α ↪ List Bool) : RP enc ⊆ RPWithPromiseOracle Q encQ enc := fun _ ⟨p, V, hV, h⟩ =>
+  ⟨p, fun x => pure (V x), hV.isOraclePPTOn, fun _ _ => h⟩
 
 open Classical in
 /-- `RP` relative to a promise problem lies inside `RP` relative to every oracle language solving

@@ -26,11 +26,10 @@ chosen independently and uniformly from a finite set `W` and `val` is injective,
 sum of the weights of its elements. The *isolation lemma* of Mulmuley, Vazirani and Vazirani says
 that a nonempty family `F` of subsets of `U` then has a unique set of minimum weight, except with
 probability at most `|U| / |W|` (`Cslib.Probability.dens_minWeightSets_card_ne_one_le`)
-[Mulmuley, Vazirani and Vazirani][MulmuleyVaziraniVazirani1987],
-[Arora and Barak, Lemma 17.19][AroraBarak09]. With weights `1, …, N` for `N ≥ 2 |U|` the minimum
-is unique with probability at least `1 / 2`
-(`Cslib.Probability.half_le_dens_minWeightSets_card_eq_one`).
-The family is arbitrary: it need not be given explicitly, and it may be exponentially large.
+[Mulmuley, Vazirani and Vazirani][MulmuleyVaziraniVazirani1987]. With weights `1, …, N` for
+`N ≥ 2 |U|` the minimum is unique with probability at least `1 / 2`
+(`Cslib.Probability.half_le_dens_minWeightSets_card_eq_one`). The family is arbitrary: it need
+not be given explicitly, and it may be exponentially large.
 
 The proof follows Mulmuley, Vazirani and Vazirani. If two sets have minimum weight, some element
 `i` lies in one and not in the other, so `i` is *ambiguous*: some minimum-weight set contains it
@@ -43,18 +42,19 @@ weights may be natural numbers.
 
 * `Cslib.Probability.setWeight`: the weight of a set.
 * `Cslib.Probability.minWeightSets`: the sets of minimum weight in a family.
+* `Cslib.Probability.Ambiguous`: an element in some but not all sets of minimum weight.
 
 ## Main results
 
 * `Cslib.Probability.dens_minWeightSets_card_ne_one_le`: **the isolation lemma**.
 * `Cslib.Probability.one_sub_le_dens_minWeightSets_card_eq_one`: the same bound for success.
-* `Cslib.Probability.half_le_dens_minWeightSets_card_eq_one`: weights `1, …, 2 |U|`.
+* `Cslib.Probability.val_eq_of_ambiguous`: at most one label makes an element ambiguous.
+* `Cslib.Probability.half_le_dens_minWeightSets_card_eq_one`: weights `1, …, N`, `N ≥ 2 |U|`.
 
 ## References
 
 * [K. Mulmuley, U. V. Vazirani, V. V. Vazirani, *Matching is as easy as matrix
   inversion*][MulmuleyVaziraniVazirani1987]
-* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
 @[expose] public section

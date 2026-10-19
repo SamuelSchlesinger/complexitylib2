@@ -23,10 +23,10 @@ variables of the formula (`Cslib.Logic.PL.CNF.vars`).
 Valiant and Vazirani consider the promise problem `PromiseUSAT` whose yes-instances are the
 uniquely satisfiable formulas and whose no-instances are the unsatisfiable ones
 [Valiant and Vazirani][ValiantVazirani1986], [Arora and Barak, Section 17.4][AroraBarak09].
-Formulas with two or more satisfying assignments are outside the promise. A language of words
-solves `PromiseUSAT` under `encCNF` when it contains the encodings of the yes-instances and none
-of the no-instances; both `USAT` and `SAT` do (`solvedBy_USAT`, `solvedBy_SAT`).
-`PromiseUSAT` lies in `PromiseNP`, separated by `SAT` (`PromiseUSAT_mem_PromiseNP`).
+Formulas with two or more satisfying assignments are outside the promise, so a function solves
+`PromiseUSAT` when the set it accepts lies between `USAT` and `SAT` (`solvedBy_PromiseUSAT_iff`);
+deciding either `USAT` or `SAT` does (`solvedBy_USAT`, `solvedBy_SAT`). `PromiseUSAT` lies in
+`PromiseNP`, separated by `SAT` (`PromiseUSAT_mem_PromiseNP`).
 
 ## Main definitions
 
@@ -36,6 +36,7 @@ of the no-instances; both `USAT` and `SAT` do (`solvedBy_USAT`, `solvedBy_SAT`).
 ## Main results
 
 * `Cslib.Complexity.USAT_subset_SAT`: a uniquely satisfiable formula is satisfiable.
+* `Cslib.Complexity.solvedBy_PromiseUSAT_iff`: the solutions of `PromiseUSAT`.
 * `Cslib.Complexity.solvedBy_USAT`, `Cslib.Complexity.solvedBy_SAT`: deciding `USAT`, or `SAT`,
   solves `PromiseUSAT`.
 * `Cslib.Complexity.PromiseUSAT_mem_PromiseNP`: `PromiseUSAT` lies in `PromiseNP`.
@@ -79,7 +80,8 @@ def PromiseUSAT : PromiseProblem (CNF ℕ) := ⟨USAT, UNSAT, disjoint_USAT_UNSA
 
 @[simp] theorem no_PromiseUSAT : PromiseUSAT.no = UNSAT := rfl
 
-/-- A function solves `PromiseUSAT` when every set it accepts lies between `USAT` and `SAT`. -/
+/-- A function solves `PromiseUSAT` exactly when the set it accepts lies between `USAT` and
+`SAT`. -/
 theorem solvedBy_PromiseUSAT_iff {f : CNF ℕ → Bool} :
     PromiseUSAT.SolvedBy f ↔ USAT ⊆ {φ | f φ = true} ∧ {φ | f φ = true} ⊆ SAT := by
   simp only [SolvedBy, yes_PromiseUSAT, no_PromiseUSAT, mem_UNSAT, Bool.eq_false_iff]
