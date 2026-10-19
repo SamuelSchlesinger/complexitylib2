@@ -22,7 +22,8 @@ The coordinates where two functions agree and those where they differ make up al
 (`card_filter_eq_add_hammingDist`), so the Hamming distance is the number of coordinates times one
 minus the density of the coordinates of agreement (`hammingDist_eq_card_mul_one_sub_dens`). The
 relative Hamming distance is the probability that the two functions differ at a uniformly random
-coordinate (`hammingDist_div_eq_expect`).
+coordinate (`hammingDist_div_eq_expect`). A distance of at most `r + s` splits into one of at
+most `r` followed by one of at most `s` (`exists_hammingDist_le_and_hammingDist_le`).
 
 Two functions are at Hamming distance one when they differ at exactly one coordinate
 (`hammingDist_eq_one_iff`); changing one coordinate of a function to a new value moves it to
@@ -39,6 +40,7 @@ gives the same number (`card_hammingEdges_comm`, `card_hammingEdges_eq_sum_card_
 * `card_filter_eq_add_hammingDist`, `hammingDist_eq_card_mul_one_sub_dens`: the coordinates of
   agreement and of disagreement.
 * `hammingDist_div_eq_expect`: the relative Hamming distance is a probability.
+* `exists_hammingDist_le_and_hammingDist_le`: splitting a distance.
 * `hammingDist_eq_one_iff`: Hamming distance one.
 * `card_hammingEdges_eq_sum_card_filter`: counting the edges of the Hamming graph.
 -/
@@ -72,6 +74,30 @@ uniformly random coordinate. -/
 theorem hammingDist_div_eq_expect {𝕜 : Type*} [Semifield 𝕜] [CharZero 𝕜] (x y : ∀ i, β i) :
     (hammingDist x y : 𝕜) / Fintype.card ι = 𝔼 i, if x i ≠ y i then 1 else 0 := by
   rw [Fintype.expect_boole, nnratCast_dens, hammingDist]
+
+/-- **Splitting a distance**: between two functions at Hamming distance at most `r + s` lies a
+function at distance at most `r` from the first and at most `s` from the second. It takes the
+values of the second on at most `r` of the coordinates where the two differ, and the values of the
+first elsewhere. -/
+theorem exists_hammingDist_le_and_hammingDist_le {x y : ∀ i, β i} {r s : ℕ}
+    (h : hammingDist x y ≤ r + s) : ∃ z, hammingDist x z ≤ r ∧ hammingDist z y ≤ s := by
+  classical
+  set D := univ.filter fun i => x i ≠ y i
+  obtain ⟨A, hAD, hA⟩ := exists_subset_card_eq (min_le_right r #D)
+  refine ⟨fun i => if i ∈ A then y i else x i, ?_, ?_⟩
+  · have hfilter : (univ.filter fun i => x i ≠ if i ∈ A then y i else x i) = A := by
+      ext i
+      by_cases hi : i ∈ A
+      · simpa [hi] using (mem_filter.1 (hAD hi)).2
+      · simp [hi]
+    rw [hammingDist, hfilter, hA]
+    exact min_le_left _ _
+  · have hfilter : (univ.filter fun i => (if i ∈ A then y i else x i) ≠ y i) = D \ A := by
+      ext i
+      by_cases hi : i ∈ A <;> simp [hi, D]
+    have hD : #D ≤ r + s := h
+    rw [hammingDist, hfilter, card_sdiff_of_subset hAD, hA]
+    omega
 
 /-! ### Hamming distance one -/
 
