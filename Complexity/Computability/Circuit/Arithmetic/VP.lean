@@ -205,7 +205,7 @@ noncomputable def projection (ρ : τ → σ ⊕ K) : MvPolynomial τ K →ₐ[K
     projection ρ (X i) = Sum.elim X (fun a => C a) (ρ i) :=
   aeval_X _ i
 
-@[simp] theorem projection_C (ρ : τ → σ ⊕ K) (a : K) :
+theorem projection_C (ρ : τ → σ ⊕ K) (a : K) :
     projection ρ (C a : MvPolynomial τ K) = C a :=
   aeval_C _ a
 
