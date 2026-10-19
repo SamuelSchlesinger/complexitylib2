@@ -334,4 +334,75 @@ theorem evalStep_eq (s : EvalState α) : evalStep enc M fuel s =
 
 end Evaluation
 
+/-! ### The evaluation in polynomial space -/
+
+section Space
+
+open _root_.Turing _root_.Turing.MultiTapeTM ComputableTidilyInPolyTime
+
+variable {γ : Type} {input : γ ↪ List Bool}
+
+@[local fun_prop] private theorem max_pt {left right : γ → ℕ}
+    (hl : ComputableTidilyInPolyTime left input encNat)
+    (hr : ComputableTidilyInPolyTime right input encNat) :
+    ComputableTidilyInPolyTime (fun x => max (left x) (right x)) input encNat := by
+  simp only [max_def]
+  exact ite_decide (binary_le' hl hr) hr hl
+
+@[local fun_prop] private theorem min_pt {left right : γ → ℕ}
+    (hl : ComputableTidilyInPolyTime left input encNat)
+    (hr : ComputableTidilyInPolyTime right input encNat) :
+    ComputableTidilyInPolyTime (fun x => min (left x) (right x)) input encNat := by
+  simp only [min_def]
+  exact ite_decide (binary_le' hl hr) hl hr
+
+@[local fun_prop] private theorem twoPow_pt {count : γ → ℕ}
+    (h : ComputableTidilyInPolyTime count input encUnary) :
+    ComputableTidilyInPolyTime (fun x => 2 ^ count x) input encNat :=
+  ((ComputableTidilyInDegree.two_pow_length encUnary).computableTidilyInPolyTime.comp h).of_enc_eq
+    fun x => by simp [encUnary_apply]
+
+@[local fun_prop] private theorem firstCode_pt {count : γ → ℕ}
+    (h : ComputableTidilyInPolyTime count input encUnary) :
+    ComputableTidilyInPolyTime (fun x => firstCode (count x)) input encBits :=
+  bitsCons (const true) ((bitsReplicate false).comp h)
+
+@[local fun_prop] private theorem lastCode_pt {count : γ → ℕ} {word : γ → List Bool}
+    (h : ComputableTidilyInPolyTime count input encUnary)
+    (hword : ComputableTidilyInPolyTime word input encBits) :
+    ComputableTidilyInPolyTime (fun x => lastCode (count x) (word x)) input encBool := by
+  have hsucc : ComputableTidilyInPolyTime (· + 1) encUnary encUnary :=
+    ComputableTidilyInDegree.unary_succ.computableTidilyInPolyTime
+  exact decide_eq' hword ((bitsReplicate true).comp (hsucc.comp h))
+
+@[local fun_prop] private theorem incrementBits_pt {word : γ → List Bool}
+    (hword : ComputableTidilyInPolyTime word input encBits) :
+    ComputableTidilyInPolyTime (fun x => incrementBits (word x)) input encBits :=
+  computableTidilyInPolyTime_incrementBits.comp hword
+
+variable {α : Type} (enc : α ↪ List Bool) {k : ℕ} {Control : Type}
+  (M : _root_.Turing.MultiTapePTM k Bool Control Unit) (fuel : α → ℕ)
+
+/-- Frames, encoded by their fields. -/
+noncomputable abbrev encFrame : GameTree.Frame (List Bool) ↪ List Bool :=
+  encPair encBits (encPair encBits (encPair encNat encNat))
+
+/-- States of the evaluation, encoded by their fields. -/
+noncomputable abbrev encEvalState : EvalState α ↪ List Bool :=
+  encPair enc (encPair (encList encFrame) (encOption encNat))
+
+variable {enc fuel} (hfuel : ComputableTidilyInPolyTime fuel enc encUnary)
+include hfuel
+
+theorem computableTidilyInPolyTime_returnStep :
+    ComputableTidilyInPolyTime (fun s : EvalState α =>
+      (s.1, returnStep (fuel s.1) (2 ^ fuel s.1) s.2.1 (s.2.2.getD 0)))
+      (encEvalState enc) (encEvalState enc) := by
+  have hfuel' : ComputableTidilyInPolyTime (fun s : EvalState α => fuel s.1) (encEvalState enc)
+      encUnary := hfuel.comp (fst _ _)
+  unfold returnStep
+  fun_prop
+
+end Space
+
 end Cslib.Complexity.Interaction
