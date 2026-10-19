@@ -9,7 +9,8 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.RecordCircuit
-public import Complexity.Computability.Circuit.Boolean.CompareSwap
+public import Mathlib.Order.PiLex
+import Complexity.Computability.Circuit.Boolean.CompareSwap
 
 /-!
 # Linear scans for a least state and a first flagged position

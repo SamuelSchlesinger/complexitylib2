@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Computability.Circuit.Boolean.Iteration.RecordCircuit
+public import Complexity.Computability.Circuit.Boolean.Word
 public import Mathlib.Data.Nat.ModEq
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
@@ -216,7 +216,7 @@ def subMod (a b d : BitVec w) : BitVec w :=
   let rb := streamRemainder d fun i : Fin w => b.getLsbD i.val
   if ra.ult rb then ra + d - rb else ra - rb
 
-theorem sub_mod_eq_ite (a b d : ℕ) (hd : 0 < d) :
+theorem add_sub_mod_mod_eq_ite (a b d : ℕ) (hd : 0 < d) :
     (a + d - b % d) % d = if a % d < b % d then a % d + d - b % d else a % d - b % d := by
   have ha := Nat.mod_lt a hd
   have hb := Nat.mod_lt b hd
@@ -229,8 +229,8 @@ theorem sub_mod_eq_ite (a b d : ℕ) (hd : 0 < d) :
       Nat.mod_eq_of_lt (by omega)]
 
 /-- A modular difference is determined by the congruence it satisfies. -/
-theorem sub_mod_eq_of_modEq {a b c d : ℕ} (hd : 0 < d) (hc : c < d) (he : c + b ≡ a [MOD d]) :
-    (a + d - b % d) % d = c := by
+theorem add_sub_mod_mod_eq_of_modEq {a b c d : ℕ} (hd : 0 < d) (hc : c < d)
+    (he : c + b ≡ a [MOD d]) : (a + d - b % d) % d = c := by
   have hb := Nat.mod_lt b hd
   have h1 : (a + d - b % d) + b ≡ c + b [MOD d] :=
     calc (a + d - b % d) + b ≡ (a + d - b % d) + b % d [MOD d] :=
@@ -247,7 +247,7 @@ theorem toNat_subMod (a b d : BitVec w) (hd : 0 < d.toNat) (hw : 2 * d.toNat ≤
   have hra := toNat_streamRemainder d (fun i : Fin w => a.getLsbD i.val) hd hw
   have hrb := toNat_streamRemainder d (fun i : Fin w => b.getLsbD i.val) hd hw
   rw [word_getLsbD] at hra hrb
-  rw [sub_mod_eq_ite _ _ _ hd, subMod]
+  rw [add_sub_mod_mod_eq_ite _ _ _ hd, subMod]
   have hal := Nat.mod_lt a.toNat hd
   have hbl := Nat.mod_lt b.toNat hd
   simp only [BitVec.ult, decide_eq_true_eq, hra, hrb]

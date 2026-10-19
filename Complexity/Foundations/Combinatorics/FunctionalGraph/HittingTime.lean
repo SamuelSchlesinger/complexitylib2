@@ -78,6 +78,11 @@ theorem iterate_eq_iterate_iff_modEq (x : α) {a b : ℕ}
   · intro h
     exact h.sub ha hb Nat.ModEq.rfl
 
+/-- Every state of the orbit of a periodic state lies on its cycle. -/
+theorem iterate_mem_cycleSet {x : α} (hx : x ∈ periodicPts f) (j : ℕ) : f^[j] x ∈ cycleSet f x := by
+  rw [mem_cycleSet_iff, (transientDepth_eq_zero_iff f x).mpr hx, iterate_zero_apply]
+  exact iterate_mem_periodicOrbit hx j
+
 variable [LinearOrder α]
 
 theorem transientDepth_le_canonicalTime (x : α) : transientDepth f x ≤ canonicalTime f x := by

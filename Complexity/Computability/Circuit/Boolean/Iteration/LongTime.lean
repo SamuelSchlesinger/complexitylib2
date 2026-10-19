@@ -88,7 +88,7 @@ theorem toNat_compressedTime (f : BitString n → BitString n) (x : BitString n)
         ((word bits).toNat - 2 ^ n) % cycleLength f x := by
       rw [toNat_subMod _ _ _ (by omega) hw, hr, hell, BitVec.toNat_ofNat,
         Nat.mod_eq_of_lt (by omega : 2 ^ n < 2 ^ (n + 3))]
-      apply sub_mod_eq_of_modEq hp (Nat.mod_lt _ hp)
+      apply add_sub_mod_mod_eq_of_modEq hp (Nat.mod_lt _ hp)
       calc ((word bits).toNat - 2 ^ n) % cycleLength f x + 2 ^ n
           ≡ ((word bits).toNat - 2 ^ n) + 2 ^ n [MOD cycleLength f x] :=
             (Nat.mod_modEq _ _).add_right _
@@ -144,6 +144,8 @@ def longTimeBudget (n s m L : ℕ) : ℕ :=
     (m * (22 * (n + 3) + 3) + 50 * (n + 4) ^ 2 + 16 * (n + 3) + 1 + (5 * m + 2)) +
     (n + 3) * (40000 * powerBudget n s (2 ^ n) L + 4 * n)
 
+/-- **Long input times**, for times wider than the state: some circuit of size at most
+`longTimeBudget n c.size m L` iterates `c` for a number of steps given by `m > n` input bits. -/
 theorem long_time_circuit (c : Circuit signature n n) (m L : ℕ) (hnm : n < m) (hL : 0 < L)
     (hLN : L ≤ 2 ^ n) :
     ∃ out : Circuit signature (n + m) n,

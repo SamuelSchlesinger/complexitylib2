@@ -10,7 +10,6 @@ module
 public import Complexity.Foundations.Combinatorics.FunctionalGraph
 public import Mathlib.Data.Nat.Factorial.Basic
 public import Mathlib.Dynamics.PeriodicPts.Lemmas
-import Mathlib.Data.Nat.ModEq
 
 /-!
 # The cycle projection and eventual behaviour

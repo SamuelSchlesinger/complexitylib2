@@ -11,7 +11,6 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.Scan
 public import Complexity.Computability.Circuit.Boolean.Iteration.Remainder
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.HittingTime
-import Mathlib.Tactic.Linarith
 
 /-!
 # Canonical cycle labels as bit strings
@@ -140,7 +139,7 @@ theorem correctLabel_canonicalLabel (f : BitString n → BitString n) (x : BitSt
       (by rw [toNat_ofNat_cycleLength, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]; omega),
     toNat_ofNat_cycleLength, toNat_ofNat_phase, toNat_ofNat_phase, BitVec.toNat_ofNat,
     Nat.mod_eq_of_lt hj, phase_iterate]
-  exact sub_mod_eq_of_modEq hpos (phase_lt f x) (Nat.mod_modEq _ _).symm
+  exact add_sub_mod_mod_eq_of_modEq hpos (phase_lt f x) (Nat.mod_modEq _ _).symm
 
 /-- The bits of a label of available parts are available. -/
 theorem labelBits_wires_subset (s : Set (BooleanFunction a)) (c : BitString a → BitString n)
@@ -199,11 +198,6 @@ section Short
 
 variable (f : BitString n → BitString n) (K : ℕ) {x : BitString n}
   (hx : x ∈ Function.periodicPts f) (hK : cycleLength f x ≤ K)
-
-include hx in
-theorem iterate_mem_cycleSet (j : ℕ) : f^[j] x ∈ cycleSet f x := by
-  rw [mem_cycleSet_iff, (transientDepth_eq_zero_iff f x).mpr hx, Function.iterate_zero_apply]
-  exact Function.iterate_mem_periodicOrbit hx j
 
 include hx hK in
 theorem shortRepresentative_eq : shortRepresentative f K x = canonicalCycle f x := by
