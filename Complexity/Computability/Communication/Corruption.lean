@@ -24,9 +24,9 @@ part. Summing over the leaves labelled `z` (`Protocol.sum_filter_run_le_mul`), a
 `α (ν(f⁻¹(z)) - err) ≤ err + 2 ^ c δ` (`Corrupted.mul_sub_distributionalError_le`). So when `δ` is
 small, protocols with small error need many bits, with public coins too
 (`Corrupted.mul_sub_le_of_ecomplexityFun_le`, by Yao's principle). Unlike the discrepancy bound,
-the corruption bound uses only one side of the imbalance, which suits functions such as
-disjointness that have large rectangles on which they are almost constant
-[Kushilevitz and Nisan][KushilevitzNisan1997].
+the corruption bound constrains only the rectangles on which `f` is mostly `z`, so it applies to
+functions such as disjointness that have large monochromatic rectangles of another value, which
+make their discrepancy large [Kushilevitz and Nisan][KushilevitzNisan1997].
 
 ## Main definitions
 
