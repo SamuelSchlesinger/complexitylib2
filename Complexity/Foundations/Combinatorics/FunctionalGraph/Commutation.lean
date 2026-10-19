@@ -18,6 +18,8 @@ public import Mathlib.GroupTheory.Perm.Basic
 If `h` commutes with `f`, changing `f` to `g` can break commutation only at changed inputs
 or their preimages under `h`. For injective `h` on a finite type this gives at most twice as
 many defects as edited inputs. These facts support sparse-counter circuit bounds.
+For the related block characterization of almost-commuting permutations, see
+[Moreno and Rivera][MorenoRivera2016], as credited in the source formalization.
 
 ## Main definitions
 
