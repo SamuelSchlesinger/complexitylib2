@@ -179,7 +179,8 @@ variable [Finite α]
 /-- **First targets.** If the orbit of `x` reaches `P`, it first does so at the transient depth
 of `x` under the map that stops at `P`. -/
 theorem first_target_depth (P : α → Prop) [DecidablePred P] (x : α) (h : ∃ t, P (f^[t] x)) :
-    P (f^[transientDepth (absorb f P) x] x) ∧ ∀ j < transientDepth (absorb f P) x, ¬P (f^[j] x) := by
+    P (f^[transientDepth (absorb f P) x] x) ∧
+      ∀ j < transientDepth (absorb f P) x, ¬P (f^[j] x) := by
   have := Fintype.ofFinite α
   obtain ⟨t, -, hp, hfirst⟩ := exists_first_visit f P x h
   set g := absorb f P

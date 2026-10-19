@@ -111,7 +111,8 @@ theorem synthesis_threshold {a : ℕ} (s : Set (BooleanFunction a)) (μ : BitStr
         Synthesis interpretation src {fun x => decide (μ x ≤ (value x).toNat)} C) :
     Synthesis interpretation s (wordWires fun x => BitVec.ofNat (n + 2) (μ x))
       ((n + 1) * (C + 16 * (n + 3))) := by
-  have hbig (j : ℕ) (hj : j ≤ n) : 2 ^ j < 2 ^ (n + 2) := Nat.pow_lt_pow_right (by decide) (by omega)
+  have hbig (j : ℕ) (hj : j ≤ n) : 2 ^ j < 2 ^ (n + 2) :=
+    Nat.pow_lt_pow_right (by decide) (by omega)
   let value := fun j x => BitVec.ofNat (n + 2) (searchBelow n (μ x) j)
   let q := fun j => wordWires (value j)
   have hv (j : ℕ) (hj : j ≤ n) (x : BitString a) :

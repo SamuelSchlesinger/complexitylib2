@@ -155,8 +155,9 @@ theorem labelBits_wires_subset (s : Set (BooleanFunction a)) (c : BitString a �
     | right bit => simpa only [labelBits, Fin.append_right] using hp ⟨bit, rfl⟩
 
 /-- Correcting an available label costs one modular difference. -/
-theorem synthesis_correctLabel (s : Set (BooleanFunction a)) (r : BitString a → BitString (n + (w + w)))
-    (hr : wires r ⊆ s) (hc : ∀ b : Bool, (fun _ : BitString a => b) ∈ s) (j : ℕ) :
+theorem synthesis_correctLabel (s : Set (BooleanFunction a))
+    (r : BitString a → BitString (n + (w + w))) (hr : wires r ⊆ s)
+    (hc : ∀ b : Bool, (fun _ : BitString a => b) ∈ s) (j : ℕ) :
     Synthesis interpretation s (wires fun x => correctLabel (r x) j) (50 * (w + 1) ^ 2) := by
   have hlen : wordWires (fun x => labelLength (r x)) ⊆ s := by
     rintro _ ⟨i, rfl⟩
@@ -256,7 +257,8 @@ theorem shortLabel_eq_canonicalLabel : shortLabel f K x = canonicalLabel f x := 
   rw [toNat_subMod _ _ _ (by rwa [toNat_ofNat_cycleLength])
       (by rw [toNat_ofNat_cycleLength, Nat.pow_succ, Nat.pow_succ, Nat.pow_succ]; omega),
     toNat_ofNat_cycleLength, toNat_ofNat_phase, BitVec.toNat_ofNat,
-    show (0 : BitVec (n + 3)).toNat = 0 from rfl, Nat.zero_add, Nat.mod_eq_of_lt ((canonicalTime_lt_cycleLength f x hx).trans_le hl |>.trans
+    show (0 : BitVec (n + 3)).toNat = 0 from rfl, Nat.zero_add,
+    Nat.mod_eq_of_lt ((canonicalTime_lt_cycleLength f x hx).trans_le hl |>.trans
       (by simp only [Nat.pow_succ]; omega))]
   rfl
 

@@ -71,7 +71,8 @@ theorem active_mass_fixed_power (n : ℕ) (c : Circuit signature n n) (T L : ℕ
     (hLN : L ≤ 2 ^ n) :
     ∃ out : Circuit signature n n,
       out.Computes interpretation (c.eval interpretation)^[T] ∧
-      out.size ≤ 120000 * powerBudget n c.size (activeVertices (c.eval interpretation) L).card L := by
+      out.size ≤
+        120000 * powerBudget n c.size (activeVertices (c.eval interpretation) L).card L := by
   classical
   let f := c.eval interpretation
   by_cases hT : T < 4 * L

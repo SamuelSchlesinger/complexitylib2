@@ -167,7 +167,8 @@ theorem chooseRecord_eq_of_last {α : Type*} (flags : Fin R → Bool) (records :
     · rw [chooseRecord, dite_eq_left ht]
       by_cases he : j.val = t
       · rw [show (⟨t, ht⟩ : Fin R) = j from Fin.ext he.symm, hj, ite_eq_left rfl]
-      · rw [hlast ⟨t, ht⟩ (by simp only; omega) (by simp only; omega), ite_eq_right Bool.false_ne_true]
+      · rw [hlast ⟨t, ht⟩ (by simp only; omega) (by simp only; omega),
+          ite_eq_right Bool.false_ne_true]
         exact ih (by omega) fun i hi hit => hlast i hi (by omega)
     · rw [chooseRecord, dite_eq_right ht]
       exact ih (by have := j.isLt; omega) fun i hi hit => hlast i hi (by omega)
@@ -201,7 +202,8 @@ theorem firstIndex_spec (flags : Fin R → Bool) (j : Fin R) (hj : flags j = tru
 bit. -/
 theorem synthesis_firstIndex (s : Set (BooleanFunction a)) (flags : BitString a → Fin R → Bool)
     (hf : ∀ j, (fun x => flags x j) ∈ s) (hc : ∀ b : Bool, (fun _ : BitString a => b) ∈ s) :
-    Synthesis interpretation s (wordWires fun x => firstIndex (w := w) (flags x)) (R * (4 * w)) := by
+    Synthesis interpretation s (wordWires fun x => firstIndex (w := w) (flags x))
+      (R * (4 * w)) := by
   have h := synthesis_chooseRecord (w := w) s (fun x j => flags x j.rev)
     (fun _ j bit => (BitVec.ofNat w j.rev.val).getLsbD bit.val) (fun _ _ => false)
     (fun j => hf j.rev) (fun _ _ => hc _) fun _ => hc false
