@@ -17,7 +17,7 @@ import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 /-!
 # BPP collapses to P if NP does
 
-By the Sipser–Gács–Lautemann theorem [Lautemann][Lautemann1983],
+By the Sipser–Gács–Lautemann theorem [Sipser][Sipser1983], [Lautemann][Lautemann1983],
 [Arora and Barak, Theorem 7.15][AroraBarak09], `BPP` lies in the polynomial hierarchy
 (`Cslib.Complexity.BPP_subset_PH`), and the hierarchy collapses to `P` when `NP ⊆ P` for every
 encoding of instances (`Cslib.Complexity.PH_eq_P_of_NP_subset_P`). Hence `P = NP` implies
@@ -29,6 +29,7 @@ encoding of instances (`Cslib.Complexity.PH_eq_P_of_NP_subset_P`). Hence `P = NP
 
 ## References
 
+* [M. Sipser, *A complexity theoretic approach to randomness*][Sipser1983]
 * [C. Lautemann, *BPP and the polynomial hierarchy*][Lautemann1983]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
