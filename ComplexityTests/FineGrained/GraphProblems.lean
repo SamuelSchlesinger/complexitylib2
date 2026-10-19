@@ -64,6 +64,38 @@ example : SAT.toSparseIndependentSet [[]] ∉ IndependentSet := fun h => by
   obtain ⟨σ, hσ⟩ := (SAT.toSparseIndependentSet_mem_iff [[]]).1 h
   simp at hσ
 
+/-! ### The sparse diamond reduction -/
+
+/-- One diamond for the single variable of `ψ`, with a slot for each of its `8` occurrences:
+`2` tops, `3 * 8 + 3` row nodes and `8` clause nodes. Sipser's construction has a diamond for each
+occurrence, each with a pair of nodes for each clause: `9` tops, `8 * 27` row nodes and `8` clause
+nodes. -/
+example : (SAT.sparseDiamondGraph ψ).1.length = 37 ∧ (SAT.toDirHamPath ψ).1.1.length = 233 := by
+  decide +kernel
+
+example : (SAT.sparseDiamondGraph φ₁).1.length + (SAT.sparseDiamondGraph φ₁).2.length ≤
+    (23 * 2 + 1) * φ₁.length + 1 :=
+  SAT.length_sparseDiamondGraph_le (by decide)
+
+example : SAT.toSparseDirHamPath φ₁ ∈ DirHamPath :=
+  (SAT.toSparseDirHamPath_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
+
+example : SAT.toSparseHamCycle φ₁ ∈ HamCycle :=
+  (SAT.toSparseHamCycle_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
+
+example : SAT.toSparseHamCycle φ₂ ∉ HamCycle := fun h => by
+  obtain ⟨σ, hσ⟩ := (SAT.toSparseHamCycle_mem_iff φ₂).1 h
+  cases h : σ 0 <;> simp [φ₂, CNF.eval, Clause.eval, Literal.eval, h] at hσ
+
+/-- The formula with no clauses gives the graph of a single top, which a path visits without arcs;
+the empty clause gives a clause node that no detour reaches. -/
+example : SAT.toSparseDirHamPath [] = (([Diamond.topNode 0], []), Diamond.topNode 0,
+    Diamond.topNode 0) := by decide
+
+example : SAT.toSparseDirHamCycle [[]] ∉ DirHamCycle := fun h => by
+  obtain ⟨σ, hσ⟩ := (SAT.toSparseDirHamCycle_mem_iff [[]]).1 h
+  simp at hσ
+
 /-! ### The 3-coloring reduction -/
 
 example : (SAT.toThreeColoring φ₁).1.length + (SAT.toThreeColoring φ₁).2.length ≤
@@ -173,5 +205,61 @@ info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_Clique' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.ETH.not_decidableInSubexpTime_Clique
+
+/--
+info: 'Cslib.Complexity.Diamond.mem_DirHamPath_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Diamond.mem_DirHamPath_iff
+
+/--
+info: 'Cslib.Complexity.SAT.toSparseHamCycle_mem_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.toSparseHamCycle_mem_iff
+
+/--
+info: 'Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseHamCycle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseHamCycle
+
+/--
+info: 'Cslib.Complexity.SAT.length_toSparseHamCycle_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.length_toSparseHamCycle_le
+
+/--
+info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_HamCycle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.ETH.not_decidableInSubexpTime_HamCycle
+
+/--
+info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_HamPath' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.ETH.not_decidableInSubexpTime_HamPath
+
+/--
+info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_DirHamCycle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.ETH.not_decidableInSubexpTime_DirHamCycle
+
+/--
+info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_DirHamPath' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.ETH.not_decidableInSubexpTime_DirHamPath
 
 end ComplexityTests.FineGrained.GraphProblems

@@ -465,7 +465,9 @@ public import Complexity.Computability.Complexity.Problems.ExactThreeSAT
 public import Complexity.Computability.Complexity.Problems.Graph
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
+public import Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
+public import Complexity.Computability.Complexity.Problems.Hamiltonian.Sparse
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.IndependentSet.Sparse
