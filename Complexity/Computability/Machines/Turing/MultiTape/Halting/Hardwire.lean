@@ -60,10 +60,6 @@ section Runs
 
 variable {d D : Desc} {x X : List ℕ}
 
-/-- The machine described by `d` halts exactly when it halts with some output. -/
-theorem Desc.halts_iff_exists_computes : d.Halts x ↔ ∃ o, d.Computes x o := by
-  refine ⟨fun ⟨t, ht⟩ => ⟨_, t, Prod.ext rfl ht⟩, fun ⟨_, t, ht⟩ => ⟨t, by rw [ht]⟩⟩
-
 /-- A halted configuration is fixed by `stepOut`. -/
 theorem stepOut_of_state_eq_none {c : SCfg} (h : c.state = none) (out : List ℕ) :
     stepOut d x (c, out) = (c, out) := by

@@ -44,6 +44,8 @@ states and symbols they are the notions of the machine itself, under the renamin
 * `Turing.MultiTapeTM.Universal.Desc.halts_desc`,
   `Turing.MultiTapeTM.Universal.Desc.computes_desc`: on descriptions of machines, halting and
   outputs are those of the machines.
+* `Turing.MultiTapeTM.Universal.Desc.halts_iff_exists_computes`: a described machine halts exactly
+  when it halts with some output.
 
 ## References
 
@@ -114,6 +116,11 @@ def Desc.Halts (d : Desc) (x : List ℕ) : Prop :=
 /-- The machine described by `d` halts on the input `x` with output `out`. -/
 def Desc.Computes (d : Desc) (x : List ℕ) (out : List ℕ) : Prop :=
   ∃ t, simulate d x t = (out, true)
+
+/-- The machine described by `d` halts exactly when it halts with some output. -/
+theorem Desc.halts_iff_exists_computes {d : Desc} {x : List ℕ} :
+    d.Halts x ↔ ∃ o, d.Computes x o :=
+  ⟨fun ⟨t, ht⟩ => ⟨_, t, Prod.ext rfl ht⟩, fun ⟨_, t, ht⟩ => ⟨t, by rw [ht]⟩⟩
 
 variable {Symbol S : Type} [Fintype S] [Fintype Symbol] (eS : S ↪ ℕ) (eY : Symbol ↪ ℕ)
 
