@@ -15,7 +15,8 @@ public import Complexity.Logics.Propositional.CNF
 
 The constraint that the parity of the variables in a finite set `B` is `c` has a formula in
 conjunctive normal form with one clause for each assignment to `B` of the other parity, excluding
-that assignment (`CNF.parityOnEq`). Its clauses have `#B` literals each, and there are at most
+that assignment (`CNF.parityOnEq`); assignments to `B` are indexed by the subsets of `B` on which
+they are true. Its clauses have `#B` literals each, and there are at most
 `2 ^ #B` of them (`CNF.length_parityOnEq_le`).
 
 ## Main definitions
@@ -29,6 +30,11 @@ that assignment (`CNF.parityOnEq`). Its clauses have `#B` literals each, and the
 * `Cslib.Logic.PL.CNF.eval_parityOnEq_eq_true_iff`: `CNF.parityOnEq B c` holds exactly when the
   parity of the variables in `B` is `c`.
 * `Cslib.Logic.PL.CNF.length_parityOnEq_le`: it has at most `2 ^ #B` clauses.
+
+## References
+
+* [A. Urquhart, *Hard examples for resolution*][Urquhart1987], for parity constraints in
+  conjunctive normal form as the clauses of Tseitin formulas
 -/
 
 @[expose] public section
@@ -64,37 +70,40 @@ theorem Clause.mem_exclude {B : Finset ι} {y : ι → Bool} {l : Literal ι} :
   · rintro ⟨hi, rfl⟩
     exact ⟨i, hi, rfl, rfl⟩
 
-variable [Fintype ι] [DecidableEq ι]
+variable [DecidableEq ι]
 
-/-- A formula in conjunctive normal form saying that the parity of the variables in `B` is `c`: a
-clause excludes each assignment to `B` of the other parity. -/
+/-- A formula in conjunctive normal form saying that the parity of the variables in `B` is `c`: for
+each subset `A` of `B` such that the assignment true on `A` and false on the rest of `B` has the
+other parity, a clause excludes that assignment. -/
 noncomputable def CNF.parityOnEq (B : Finset ι) (c : Bool) : CNF ι :=
-  ({y : ι → Bool | (∀ i ∉ B, y i = false) ∧ parityOn B y ≠ c} : Finset _).toList.map
-    (Clause.exclude B)
+  ({A ∈ B.powerset | parityOn B (fun i => decide (i ∈ A)) ≠ c}).toList.map fun A =>
+    Clause.exclude B fun i => decide (i ∈ A)
 
+/-- **The semantics of parity constraints**: `CNF.parityOnEq B c` holds exactly when the parity of
+the variables in `B` is `c`. -/
 theorem CNF.eval_parityOnEq_eq_true_iff (B : Finset ι) (c : Bool) (x : ι → Bool) :
     (CNF.parityOnEq B c).eval x = true ↔ parityOn B x = c := by
-  simp only [CNF.parityOnEq, CNF.eval_map_eq_true_iff, mem_toList, mem_filter, mem_univ,
-    true_and, Clause.eval_exclude_eq_true_iff, and_imp]
+  simp only [CNF.parityOnEq, CNF.eval_map_eq_true_iff, mem_toList, mem_filter, mem_powerset,
+    Clause.eval_exclude_eq_true_iff, and_imp]
   constructor
   · intro h
     by_contra hne
     -- the assignment of `x` to `B` is excluded
-    have hpar : parityOn B (fun i => if i ∈ B then x i else false) = parityOn B x :=
-      parityOn_congr fun j hj => by simp [hj]
-    obtain ⟨i, hi, hxi⟩ := h (fun i => if i ∈ B then x i else false)
-      (fun i hi => by simp [hi]) (hpar ▸ hne)
-    simp [hi] at hxi
-  · intro hx y _ hy
+    have hx (i : ι) (hi : i ∈ B) : decide (i ∈ {j ∈ B | x j = true}) = x i := by
+      cases hxi : x i <;> simp [hi, hxi]
+    obtain ⟨i, hi, hxi⟩ := h _ (filter_subset _ _)
+      ((parityOn_congr hx).trans_ne hne)
+    exact hxi (hx i hi).symm
+  · intro hx A _ hA
     by_contra h
     push Not at h
-    exact hy ((parityOn_congr h).symm.trans hx)
+    exact hA ((parityOn_congr h).symm.trans hx)
 
 /-- A clause of `CNF.parityOnEq B c` excludes an assignment to `B`. -/
 theorem CNF.exists_eq_exclude_of_mem_parityOnEq {B : Finset ι} {c : Bool} {d : Clause ι}
     (hd : d ∈ CNF.parityOnEq B c) : ∃ y : ι → Bool, d = Clause.exclude B y := by
-  obtain ⟨y, -, rfl⟩ := List.mem_map.1 hd
-  exact ⟨y, rfl⟩
+  obtain ⟨A, -, rfl⟩ := List.mem_map.1 hd
+  exact ⟨_, rfl⟩
 
 /-- The clauses of `CNF.parityOnEq B c` have `#B` literals. -/
 theorem CNF.length_of_mem_parityOnEq {B : Finset ι} {c : Bool} {d : Clause ι}
@@ -102,19 +111,10 @@ theorem CNF.length_of_mem_parityOnEq {B : Finset ι} {c : Bool} {d : Clause ι}
   obtain ⟨y, rfl⟩ := CNF.exists_eq_exclude_of_mem_parityOnEq hd
   exact Clause.length_exclude B y
 
-/-- `CNF.parityOnEq B c` has at most `2 ^ #B` clauses: one per assignment to `B`. -/
+/-- `CNF.parityOnEq B c` has at most `2 ^ #B` clauses: one per subset of `B`. -/
 theorem CNF.length_parityOnEq_le (B : Finset ι) (c : Bool) :
     (CNF.parityOnEq B c).length ≤ 2 ^ #B := by
   rw [CNF.parityOnEq, List.length_map, length_toList, ← card_powerset]
-  refine card_le_card_of_injOn (fun y => {i ∈ B | y i = true}) (fun y _ => ?_)
-    fun y hy y' hy' h => ?_
-  · exact mem_powerset.2 (filter_subset _ _)
-  · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hy hy'
-    funext i
-    by_cases hi : i ∈ B
-    · have h' := congrArg (i ∈ ·) h
-      simp only [mem_filter, hi, true_and, eq_iff_iff] at h'
-      cases hyi : y i <;> cases hyi' : y' i <;> simp_all
-    · rw [hy.1 i hi, hy'.1 i hi]
+  exact card_filter_le _ _
 
 end Cslib.Logic.PL
