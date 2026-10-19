@@ -317,6 +317,7 @@ def ReplayInv (t : ℕ) (x : List Bool) (h : History) (i : ℕ) :
   | .error (some m) => h.length < i ∧ m.length < i
   | .error none => True
 
+/-- An instruction of the replay preserves the invariant. -/
 theorem replayInv_step {t : ℕ} {x : List Bool} {h : History} {i : ℕ}
     {acc : Except (Option (List Bool)) (FiniteConfig k Bool Control Unit × History)}
     (hacc : ReplayInv t x h i acc) (b : Bool) :
@@ -352,6 +353,7 @@ theorem replayInv_step {t : ℕ} {x : List Bool} {h : History} {i : ℕ}
             exact hspace.receive op next _ (List.length_take_le _ _)
           · trivial
 
+/-- The replay satisfies the invariant after all its coins. -/
 theorem replayInv_simulate (t : ℕ) (x : List Bool) (h : History) (r : List Bool) :
     ReplayInv t x h r.length (simulate M t x r h) := by
   suffices ∀ (l : List Bool) (acc) (i : ℕ), ReplayInv t x h i acc →
@@ -369,6 +371,7 @@ theorem replayInv_simulate (t : ℕ) (x : List Bool) (h : History) (r : List Boo
 /-- Truncate every reply of a history to its first `t` bits. -/
 def truncate (t : ℕ) (h : History) : History := h.map fun e => (e.1, e.2.take t)
 
+/-- An instruction of the replay reads replies only through their first `t` bits. -/
 theorem replayStep_truncate (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (h : History)
     (b : Bool) :
     (replayStep M t (cfg, h) b).map (fun p => (p.1, truncate t p.2)) =

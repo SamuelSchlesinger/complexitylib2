@@ -103,6 +103,7 @@ theorem idxOf_true_replicate_false_append (n : ℕ) (w : List Bool) :
   | succ n ih =>
     rw [List.replicate_succ, List.cons_append, List.idxOf_cons_ne _ (by simp), ih]
 
+/-- Decoding inverts coding. -/
 theorem decodeWord_encodeWord (L : ℕ) (w : List Bool) : decodeWord (encodeWord L w) = w := by
   rw [decodeWord, encodeWord, idxOf_true_replicate_false_append, List.drop_append]
   simp
@@ -133,6 +134,7 @@ theorem eq_replicate_append_decodeWord : ∀ {u : List Bool}, true ∈ u →
       exact congrArg _ this
     · simp [decodeWord]
 
+/-- Coding inverts decoding on the words of length `L + 1` with a `true`. -/
 theorem encodeWord_decodeWord {L : ℕ} {u : List Bool} (hu : u.length = L + 1) (ht : true ∈ u) :
     encodeWord L (decodeWord u) = u := by
   have h := eq_replicate_append_decodeWord ht
@@ -177,12 +179,14 @@ theorem iterate_firstCode (i : ℕ) :
 
 variable {L}
 
+/-- The `i`-th code has value `i + 1` and length `L + 1`. -/
 theorem lsbValue_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     lsbValue (incrementBits^[i] (firstCode L)) = i + 1 ∧
       (incrementBits^[i] (firstCode L)).length = L + 1 := by
   rw [iterate_firstCode]
   exact iterate_incrementBits (L + 1) (i + 1) (by simp only [codeCount] at hi; lia)
 
+/-- The last code is the `codeCount L`-th. -/
 theorem lastCode_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     lastCode L (incrementBits^[i] (firstCode L)) = decide (i + 1 = codeCount L) := by
   obtain ⟨hv, hl⟩ := lsbValue_iterate_firstCode hi
@@ -330,6 +334,7 @@ def evalTime (a : α) : ℕ := 2 ^ ((fuel a + 1) * (2 * fuel a + 1))
 noncomputable def evaluate (a : α) : ℕ :=
   ((evalStep enc M fuel)^[evalTime fuel a] (a, [], none)).2.2.getD 0
 
+/-- The evaluation keeps its instance and runs the game-tree evaluator. -/
 theorem iterate_evalStep (a : α) (st : List (GameTree.Frame (List Bool)) × Option ℕ) (j : ℕ) :
     (evalStep enc M fuel)^[j] (a, st) = (a, (GameTree.step (fuel a) (2 ^ fuel a)
       (firstCode (fuel a)) incrementBits (lastCode (fuel a))
@@ -364,6 +369,7 @@ def returnStep (L cap : ℕ) (st : List (GameTree.Frame (List Bool))) (v : ℕ) 
       else ((incrementBits f.1, firstCode L, min cap (f.2.2.1 + max f.2.2.2 v), 0) :: st.tail, none)
     else ((f.1, incrementBits f.2.1, f.2.2.1, max f.2.2.2 v) :: st.tail, none)
 
+/-- A value returned into the stack, by `returnStep`. -/
 theorem step_some_eq (L cap : ℕ) (leaf : List (List Bool × List Bool) → ℕ)
     (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
     GameTree.step L cap (firstCode L) incrementBits (lastCode L) leaf (st, some v) =
@@ -377,6 +383,7 @@ def pushStep (L : ℕ) (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
     List (GameTree.Frame (List Bool)) × Option ℕ :=
   if st.length = L then (st, some v) else ((firstCode L, firstCode L, v, 0) :: st, none)
 
+/-- A node without a returned value, by `pushStep`. -/
 theorem step_none_eq (L cap : ℕ) (leaf : List (List Bool × List Bool) → ℕ)
     (st : List (GameTree.Frame (List Bool))) :
     GameTree.step L cap (firstCode L) incrementBits (lastCode L) leaf (st, none) =
@@ -453,6 +460,7 @@ noncomputable abbrev encEvalState : EvalState α ↪ List Bool :=
 variable {enc fuel} (hfuel : ComputableTidilyInPolyTime fuel enc encUnary)
 include hfuel
 
+/-- Returning a value into the stack is polynomial-time. -/
 theorem computableTidilyInPolyTime_returnStep :
     ComputableTidilyInPolyTime (fun s : EvalState α =>
       (s.1, returnStep (fuel s.1) (2 ^ fuel s.1) s.2.1 (s.2.2.getD 0)))
@@ -462,6 +470,7 @@ theorem computableTidilyInPolyTime_returnStep :
   unfold returnStep
   fun_prop
 
+/-- Pushing a frame is polynomial-time. -/
 theorem computableTidilyInPolyTime_pushStep :
     ComputableTidilyInPolyTime (fun p : EvalState α × ℕ =>
       (p.1.1, pushStep (fuel p.1.1) p.1.2.1 p.2))

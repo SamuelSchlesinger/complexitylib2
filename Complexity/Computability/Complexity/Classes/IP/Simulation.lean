@@ -182,6 +182,7 @@ def lsbValue : List Bool → ℕ
   | false :: _ => rfl
   | true :: w => by simp [incrementBits, length_incrementBits w]
 
+/-- A word of length `m` has value below `2 ^ m`. -/
 theorem lsbValue_lt : ∀ w, lsbValue w < 2 ^ w.length
   | [] => by simp [lsbValue]
   | b :: w => by
@@ -190,6 +191,7 @@ theorem lsbValue_lt : ∀ w, lsbValue w < 2 ^ w.length
       simp only [lsbValue, Bool.toNat_false, Bool.toNat_true, zero_add, List.length_cons,
         pow_succ, gt_iff_lt] <;> lia
 
+/-- Below the largest value, increment adds one. -/
 theorem lsbValue_incrementBits : ∀ w, lsbValue w + 1 < 2 ^ w.length →
     lsbValue (incrementBits w) = lsbValue w + 1
   | [] => by simp [lsbValue]
@@ -202,6 +204,7 @@ theorem lsbValue_incrementBits : ∀ w, lsbValue w + 1 < 2 ^ w.length →
     rw [lsbValue_incrementBits w (by lia)]
     lia
 
+/-- Words of the same length are determined by their values. -/
 theorem lsbValue_injective : ∀ {w w' : List Bool}, w.length = w'.length →
     lsbValue w = lsbValue w' → w = w'
   | [], [], _, _ => rfl
@@ -217,6 +220,7 @@ theorem lsbValue_injective : ∀ {w w' : List Bool}, w.length = w'.length →
   | 0 => rfl
   | m + 1 => by simp [List.replicate_succ, lsbValue, lsbValue_replicate_false m]
 
+/-- The word of ones has the largest value. -/
 theorem lsbValue_replicate_true : ∀ m, lsbValue (List.replicate m true) + 1 = 2 ^ m
   | 0 => rfl
   | m + 1 => by
@@ -367,6 +371,7 @@ theorem accepts_eq_true_iff (x r : List Bool) (h : History) :
   · rw [hrun.1 _ hsim]
     cases rest <;> simp [Except.map, replayOutcome]
 
+/-- `accepts_eq_true_iff` for any number of coins equal to the length of the coins. -/
 theorem accepts_eq_true_iff_of_length {x r : List Bool} {t : ℕ} (hr : r.length = t)
     (h : History) : accepts M x r h = true ↔ outcome (coinProgram M t x r) h = .done true := by
   subst hr
@@ -565,6 +570,7 @@ def countAccepts (q : α × History) : ℕ :=
   ((countStep M enc)^[2 ^ fuel q.1] (q, List.replicate (fuel q.1) false, 0)).2.2
 
 open Classical in
+/-- After `j` rounds the count has tried the first `j` values of the counter. -/
 theorem iterate_countStep (q : α × History) (m j : ℕ) :
     (countStep M enc)^[j] (q, List.replicate m false, 0) =
       (q, incrementBits^[j] (List.replicate m false),
