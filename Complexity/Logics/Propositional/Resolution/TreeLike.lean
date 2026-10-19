@@ -21,19 +21,22 @@ nodes (`Cslib.Logic.PL.CNF.Derivation.size`). A tree-like derivation unfolds a r
 which a line may be used many times, and conversely gives a proof with at most as many lines
 (`Cslib.Logic.PL.CNF.Derivation.exists_isProof`).
 
-**Tree-like resolution is DPLL.** A decision tree whose leaves are clauses *finds a falsified
-clause* of `φ` (`Cslib.DecisionTree.FindsFalsifiedClause`) if, on every assignment, the leaf it
-reaches is a clause of `φ` that the assignment falsifies. These are the search trees of the
-procedure of [Davis, Logemann and Loveland][DavisLogemannLoveland1962] on `φ`. A tree-like
-refutation is such a tree, with one leaf for each leaf of the refutation, querying the variable
-resolved at each node (`Cslib.Logic.PL.CNF.Derivation.findsFalsifiedClause_toDecisionTree`).
+**Tree-like resolution and DPLL search trees.** A decision tree whose leaves are clauses *finds a
+falsified clause* of `φ` (`Cslib.DecisionTree.FindsFalsifiedClause`) if, on every assignment,
+the leaf it reaches is a clause of `φ` that the assignment falsifies. This models the search-tree
+certificates of [Davis, Logemann and Loveland][DavisLogemannLoveland1962], allowing repeated
+queries.
+The correspondence concerns certificates; no solver implementation or runtime bound is given.
+A tree-like refutation is such a tree, with one leaf for each leaf of the refutation, querying
+the variable resolved at each node
+(`Cslib.Logic.PL.CNF.Derivation.findsFalsifiedClause_toDecisionTree`).
 Conversely, a decision tree finding falsified clauses gives a tree-like refutation with fewer
 nodes than twice its number of leaves
 (`Cslib.DecisionTree.FindsFalsifiedClause.exists_derivation`): along a path, the clauses reached
 below each node resolve on the variable queried there to a clause falsified by the answers above
 it.
 
-**Short tree-like refutations are narrow** [Ben-Sasson and Wigderson, Theorem 3.1]
+**Short tree-like refutations are narrow** [Ben-Sasson and Wigderson, Theorem 3.3]
 [BenSassonWigderson2001]: a formula with clauses of width at most `k` and a tree-like refutation of
 at most `2 ^ b` nodes is refutable in width at most `k + b`
 (`Cslib.Logic.PL.CNF.RefutableInWidth.of_derivation`). The two subtrees of the root refute the two
@@ -353,7 +356,7 @@ variable {φ : CNF V}
 
 /-! ### Short tree-like refutations are narrow -/
 
-/-- **Short tree-like refutations are narrow** [Ben-Sasson and Wigderson, Theorem 3.1]
+/-- **Short tree-like refutations are narrow** [Ben-Sasson and Wigderson, Theorem 3.3]
 [BenSassonWigderson2001]. A formula whose clauses have width at most `k`, with a tree-like
 refutation of at most `2 ^ b` nodes, is refutable in width at most `k + b`. -/
 theorem RefutableInWidth.of_derivation {k b : ℕ} (hk : ∀ c ∈ φ, c.width ≤ k) {c : Clause V}

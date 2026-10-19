@@ -167,6 +167,7 @@ import ComplexityTests.ProbabilityToolkit2
 import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.ProofComplexity
+import ComplexityTests.ProofComplexity.Resolution
 import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
 import ComplexityTests.PseudoentropyExtraction

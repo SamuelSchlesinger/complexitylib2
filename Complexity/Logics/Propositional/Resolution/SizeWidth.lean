@@ -322,10 +322,12 @@ theorem RefutableInWidth.of_refutableInSize {k s N d b : ℕ} (hk : ∀ c ∈ φ
 
 /-! ### The size–width tradeoff -/
 
-/-- **The size–width tradeoff** [Ben-Sasson and Wigderson, Corollary 3.6][BenSassonWigderson2001].
+/-- **The size–width tradeoff** [Ben-Sasson and Wigderson, Theorem 3.5 and Corollary 3.6]
+[BenSassonWigderson2001].
 A formula whose clauses have width at most `k`, with at most `N` variables, that has a refutation
 of `s` lines has a refutation of width at most `k + 2 √(2 N log s) + 2`. Equivalently, a formula
-that needs width `w` needs refutations of at least `exp ((w - k - 2)² / 8N)` lines. -/
+that needs width `w ≥ k + 2`, with `N > 0`, needs refutations of at least
+`exp ((w - k - 2)² / 8N)` lines. -/
 theorem exists_refutableInWidth_le_of_refutableInSize {k s N : ℕ} (hk : ∀ c ∈ φ, c.width ≤ k)
     (hN : φ.vars.toFinset.card ≤ N) (hs : φ.RefutableInSize s) :
     ∃ w : ℕ, φ.RefutableInWidth w ∧
@@ -348,7 +350,7 @@ theorem exists_refutableInWidth_le_of_refutableInSize {k s N : ℕ} (hk : ∀ c 
         rcases ls with _ | ⟨c₀, _ | ⟨c₁, ls⟩⟩
         · simp at hnil
         · simpa using hnil
-        · simp at hlen
+        · simp only [List.length_cons] at hlen
           omega
       simp_all
   push Not at htriv

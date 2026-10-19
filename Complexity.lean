@@ -1009,6 +1009,9 @@ public import Complexity.Logics.Propositional.Parity.DepthThree
 public import Complexity.Logics.Propositional.ProofSystem
 public import Complexity.Logics.Propositional.QBF
 public import Complexity.Logics.Propositional.Resolution
+public import Complexity.Logics.Propositional.Resolution.Proof
+public import Complexity.Logics.Propositional.Resolution.SizeWidth
+public import Complexity.Logics.Propositional.Resolution.TreeLike
 public import Complexity.Logics.Propositional.SigmaThree
 public import Complexity.Logics.SecondOrder.Coloring
 public import Complexity.Logics.SecondOrder.Existential
