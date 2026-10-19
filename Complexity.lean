@@ -49,7 +49,10 @@ public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.DuplicateFlags
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
+public import Complexity.Computability.Circuit.Boolean.Encoding
+public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
 public import Complexity.Computability.Circuit.Boolean.Equality
+public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 public import Complexity.Computability.Circuit.Boolean.FanInTwo
 public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.Formula
@@ -275,10 +278,13 @@ public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Circuit.Synthesis
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Circuit.Wiring
+public import Complexity.Computability.Communication.Discrepancy
 public import Complexity.Computability.Communication.FoolingSet
 public import Complexity.Computability.Communication.Functions
 public import Complexity.Computability.Communication.KarchmerWigderson
+public import Complexity.Computability.Communication.Newman
 public import Complexity.Computability.Communication.Protocol
+public import Complexity.Computability.Communication.Randomized
 public import Complexity.Computability.Communication.Rank
 public import Complexity.Computability.Communication.Rectangle
 public import Complexity.Computability.Communication.RoundProtocol
@@ -336,6 +342,7 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.Classes.Time
+public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
@@ -357,8 +364,11 @@ public import Complexity.Computability.Complexity.FineGrained.Assignment
 public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.FineGrained.Exponents
 public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
+public import Complexity.Computability.Complexity.Problems.CircuitSAT
+public import Complexity.Computability.Complexity.Problems.CircuitValue
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.Coloring
+public import Complexity.Computability.Complexity.Problems.Graph
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
@@ -375,6 +385,7 @@ public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
 public import Complexity.Computability.Complexity.Problems.TQBF
 public import Complexity.Computability.Complexity.Problems.TSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
+public import Complexity.Computability.Complexity.Problems.USAT
 public import Complexity.Computability.Complexity.Problems.VertexCover
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.DecisionTree.Basic
@@ -403,6 +414,7 @@ public import Complexity.Computability.Kolmogorov.SelfDelimiting
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
+public import Complexity.Computability.MCSP.NP
 public import Complexity.Computability.MCSP.Shannon
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Append
@@ -840,6 +852,12 @@ public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.Code.Basic
+public import Complexity.Foundations.Data.Code.BerlekampWelch
+public import Complexity.Foundations.Data.Code.Linear
+public import Complexity.Foundations.Data.Code.ReedMuller
+public import Complexity.Foundations.Data.Code.ReedSolomon
+public import Complexity.Foundations.Data.Code.Singleton
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Fin.Order
 public import Complexity.Foundations.Data.Fin.Tuple
@@ -948,6 +966,7 @@ public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
 public import Complexity.Probability.Guessing
 public import Complexity.Probability.HashIsolation
+public import Complexity.Probability.Isolation
 public import Complexity.Probability.KWiseIndependent
 public import Complexity.Probability.KWiseIndependent.Polynomial
 public import Complexity.Probability.LocalLemma
