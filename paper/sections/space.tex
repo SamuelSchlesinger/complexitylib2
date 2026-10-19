@@ -90,3 +90,38 @@ for private coins and does not establish the public-coin AM protocol.
 \decl{Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean}{563}{Cslib.Complexity.GraphNonIsomorphism.isInteractiveProof_verifier}
 \decl{Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean}{603}{Cslib.Complexity.GraphNonIsomorphism.mem_IP}
 \end{result}
+
+
+\begin{result}
+\subsection{Cook--Mertz Tree Evaluation in small space}
+A valid instance is a perfect binary tree with every leaf at depth $H$, with $\ell$-bit values at
+its leaves and a gate
+$\{0,1\}^{\ell}\times\{0,1\}^{\ell}\to\{0,1\}^{\ell}$ at each internal node.
+The injective encoding gives $\ell,H$ in unary, followed by gate truth tables
+and leaf values in preorder. Write $n$ for its bit length and $b(k)$ for the
+length of the library's binary encoding of $k$.
+One fixed deterministic multi-tape Turing machine computes the root value on
+every encoded instance, using work space
+\[
+O\bigl((\ell+H+1)(b(\ell)+1)+b(n+1)\bigr),
+\]
+that is, $O((\ell+H+1)\log(\ell+2)+\log(n+2))$.
+The theorem allows zero value length and zero height. Input addressing costs
+are included, the output is streamed, and a running-time bound exists without
+an asserted asymptotic rate.
+
+Running once over every nonzero field element, the algebraic procedure preserves
+the other two registers while adding the
+scaled tree value to its target register over any finite field with
+$2\ell<|K|-1$. The concrete machine chooses a suitable prime, reads the encoded
+gates, and satisfies a proved state-size invariant. This formalizes the
+Cook--Mertz construction with Goldreich's value-length parametrization and
+exposition; the Lean development is by Christian Reitwiessner with disclosed
+AI assistance.\citep{CookMertz2024,Goldreich2024TreeEval}
+Correctness and resource bounds apply to valid encoded instances; malformed-input
+rejection is not proved. A separate $O(\log n\log\log n)$ corollary and the refined
+$O(\ell+H\log(\ell+2))$ parameter bound are not asserted here.
+\declat{aa72232abd8858a2c4103eb6aebc039e3b02f52d}{Complexity/Computability/TreeEval/Space.lean}{39}{Cslib.TreeEval.computableTidilyInSpace_eval}
+\declat{aa72232abd8858a2c4103eb6aebc039e3b02f52d}{Complexity/Computability/TreeEval/Instance.lean}{74}{Cslib.TreeEval.encode_injective}
+\declat{aa72232abd8858a2c4103eb6aebc039e3b02f52d}{Complexity/Computability/TreeEval/CookMertz.lean}{157}{Cslib.TreeEval.proc_eq}
+\end{result}
