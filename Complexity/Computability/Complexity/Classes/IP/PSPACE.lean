@@ -171,4 +171,49 @@ theorem injOn_decodeWord_iterate_firstCode :
   rw [(lsbValue_iterate_firstCode hi).1, (lsbValue_iterate_firstCode hj).1] at this
   lia
 
+/-! ### The value as a game tree -/
+
+section GameTree
+
+variable {R : Type} [Fintype R] (F : R → WordQueryComp Unit Bool)
+
+/-- The history coded by a game-tree history of codes, the most recent first. -/
+def decodeHistory (hs : List (List Bool × List Bool)) : History :=
+  (hs.map fun p => (decodeWord p.1, decodeWord p.2)).reverse
+
+@[simp] theorem decodeHistory_nil : decodeHistory [] = [] := rfl
+
+@[simp] theorem decodeHistory_cons (p : List Bool × List Bool) (hs : List (List Bool × List Bool)) :
+    decodeHistory (p :: hs) = decodeHistory hs ++ [(decodeWord p.1, decodeWord p.2)] := by
+  simp [decodeHistory]
+
+/-- The leaf value of a game-tree history: the number of accepting programs. -/
+noncomputable def leafValue (hs : List (List Bool × List Bool)) : ℕ :=
+  accepted F (decodeHistory hs)
+
+/-- **The value is the value of the game tree** of the codes of the short words, with sums capped
+at a bound on the number of coin values. -/
+theorem gameTree_value_eq {cap : ℕ} (hcap : Fintype.card R ≤ cap) (n : ℕ)
+    (hs : List (List Bool × List Bool)) :
+    GameTree.value (codeCount L) cap (firstCode L) incrementBits (leafValue F) n hs =
+      value F L n (decodeHistory hs) := by
+  have hle (n : ℕ) (h : History) : value F L n h ≤ cap :=
+    (value_le_card n h).trans ((Finset.card_le_univ _).trans hcap)
+  induction n generalizing hs with
+  | zero => exact min_eq_right (hle 0 _)
+  | succ n ih =>
+    rw [GameTree.value, ← min_eq_right (hle (n + 1) (decodeHistory hs)), value]
+    congr 2
+    simp only [ih, decodeHistory_cons]
+    have hsup (m : List Bool) : ((range (codeCount L)).sup fun j =>
+        value F L n (decodeHistory hs ++ [(m, decodeWord (incrementBits^[j] (firstCode L)))])) =
+        (shortWords L).sup fun y => value F L n (decodeHistory hs ++ [(m, y)]) := by
+      rw [← image_decodeWord_iterate_firstCode, Finset.sup_image]
+      rfl
+    simp only [hsup]
+    rw [← image_decodeWord_iterate_firstCode,
+      Finset.sum_image injOn_decodeWord_iterate_firstCode]
+
+end GameTree
+
 end Cslib.Complexity.Interaction
