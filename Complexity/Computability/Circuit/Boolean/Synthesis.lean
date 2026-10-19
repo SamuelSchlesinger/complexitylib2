@@ -9,6 +9,7 @@ module
 -- `Cslib/Computability/Circuit/Boolean/Complexity.lean`)
 
 public import Cslib.Computability.Circuit.Boolean.Complexity
+public import Complexity.Computability.Circuit.Complexity
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.Ring.BooleanRing
 import Mathlib.Data.Fintype.Pi
@@ -23,7 +24,8 @@ with the same truth values (`Synthesis.congr_iff`), a constant, bounded disjunct
 conjunctions with uniform costs, disjunctions of conjunctions of literals, that is of available
 functions and their negations (`Synthesis.any_all_literal`), exclusive ors and their finite
 sums, and arbitrary functions of a few selected inputs (`Synthesis.selected`). Also bounds on
-the circuit complexity of negations, conjunctions, disjunctions and exclusive ors.
+the circuit complexity of negations, conjunctions, disjunctions and exclusive ors, as instances
+of `Cslib.Circuits.complexity_single_unary_le` and `Cslib.Circuits.complexity_single_binary_le`.
 
 ## Main results
 
@@ -187,32 +189,17 @@ namespace Boolean
 /-- Negating the output costs one gate. -/
 theorem complexity_not_le (f : BooleanFunction n) :
     complexity interpretation (single fun x => !f x) ≤
-      complexity interpretation (single f) + 1 := by
-  have hnot : Synthesis interpretation (inputs 1) {fun y : Fin 1 → Bool => !y 0} 1 :=
-    (Synthesis.of_mem (s := inputs 1) ⟨0, rfl⟩).not
-  have h := complexity_comp_le (I := interpretation) (single f)
-    (single fun y : Fin 1 → Bool => !y 0)
-  have heq : (single fun y : Fin 1 → Bool => !y 0) ∘ single f = single fun x => !f x := by
-    funext x j
-    simp
-  rw [heq] at h
-  exact h.trans (Nat.add_le_add_left hnot.complexity_le _)
+      complexity interpretation (single f) + 1 :=
+  (complexity_single_unary_le not f).trans
+    (Nat.add_le_add_left (Synthesis.of_mem (s := inputs 1) ⟨0, rfl⟩).not.complexity_le _)
 
 /-- Combining two outputs with a binary operation that costs `c` gates on two inputs costs `c`
 gates. -/
 theorem complexity_binary_le (f g : BooleanFunction n) (op : Bool → Bool → Bool) {c : ℕ}
     (hop : Synthesis interpretation (inputs 2) {fun y : Fin 2 → Bool => op (y 0) (y 1)} c) :
     complexity interpretation (single fun x => op (f x) (g x)) ≤
-      complexity interpretation (single f) + complexity interpretation (single g) + c := by
-  have h := complexity_comp_le (I := interpretation)
-    (fun x => Fin.append (single f x) (single g x)) (single fun y : Fin 2 → Bool => op (y 0) (y 1))
-  have heq : (single fun y : Fin 2 → Bool => op (y 0) (y 1)) ∘
-      (fun x => Fin.append (single f x) (single g x)) = single fun x => op (f x) (g x) := by
-    funext x j
-    exact congrArg₂ op (Fin.append_left (single f x) (single g x) 0)
-      (Fin.append_right (single f x) (single g x) 0)
-  rw [heq] at h
-  exact h.trans (Nat.add_le_add (complexity_append_le _ _) hop.complexity_le)
+      complexity interpretation (single f) + complexity interpretation (single g) + c :=
+  (complexity_single_binary_le op f g).trans (Nat.add_le_add_left hop.complexity_le _)
 
 /-- A conjunction of two outputs costs one gate. -/
 theorem complexity_and_le (f g : BooleanFunction n) :

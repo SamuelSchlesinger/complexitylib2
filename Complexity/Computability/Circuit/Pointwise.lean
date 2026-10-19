@@ -7,7 +7,6 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Cslib.Computability.Circuit.Complexity
 public import Cslib.Computability.Circuit.Homomorphism
 public import Cslib.Computability.Circuit.Synthesis
 
@@ -33,9 +32,6 @@ as a sequence of functions, each obtained by applying a basis operation to earli
 functions, such as Hamming distances between wires, are statements about values of the lifted
 interpretation.
 
-The projections themselves cost nothing, and they are the only functions computed without gates
-(`Cslib.Circuits.complexity_single_proj`, `Cslib.Circuits.one_le_complexity_single`).
-
 ## Main definitions
 
 * `Cslib.Circuits.Interpretation.pointwise`: the pointwise lift of an interpretation.
@@ -49,8 +45,6 @@ The projections themselves cost nothing, and they are the only functions compute
   `Cslib.Circuits.available_eq_range_trace_pointwise`: wires carry truth tables.
 * `Cslib.Circuits.Circuit.eval_pointwise_proj`,
   `Cslib.Circuits.Circuit.computes_iff_eval_pointwise_proj`: outputs are truth tables.
-* `Cslib.Circuits.complexity_single_proj`, `Cslib.Circuits.one_le_complexity_single`: exactly the
-  projections are computed without gates.
 
 ## References
 
@@ -128,30 +122,5 @@ theorem Circuit.computes_iff_eval_pointwise_proj (c : Circuit σ n m) (I : Inter
     c.Computes I f ↔ c.eval (I.pointwise (Fin n → U)) (fun j x => x j) = fun o x => f x o := by
   simp only [funext_iff, Circuit.eval_pointwise_proj, Circuit.Computes]
   exact forall_comm
-
-/-! ### Projections -/
-
--- upstream: candidate (addition to `Cslib/Computability/Circuit/Complexity.lean`)
-
-variable {I : Interpretation σ U} [I.IsComplete]
-
-/-- The coordinate projections cost no gates. -/
-@[simp] theorem complexity_single_proj (i : Fin n) :
-    complexity I (single fun x : Fin n → U => x i) = 0 :=
-  complexity_wiring fun _ => i
-
-/-- A function that is not a coordinate projection needs a gate: circuits without gates compute
-projections. -/
-theorem one_le_complexity_single {f : (Fin n → U) → U} (hf : ∀ i, f ≠ fun x => x i) :
-    1 ≤ complexity I (single f) := by
-  by_contra h
-  obtain ⟨c, hc, hsize⟩ := exists_computes_size_eq_complexity (I := I) (f := single f)
-  cases hw : c.outputs 0 with
-  | input i =>
-    refine hf i (funext fun x => ?_)
-    have := congrFun (hc x) 0
-    simp only [Circuit.eval, Function.comp_apply, hw, Program.trace_input, single_apply] at this
-    exact this.symm
-  | gate j => exact absurd j.isLt (by omega)
 
 end Cslib.Circuits
