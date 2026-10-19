@@ -14,6 +14,9 @@ public import Mathlib.Algebra.Algebra.Operations
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RingTheory.MvPolynomial.Basic
 import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Data.Fintype.Powerset
+import Mathlib.Data.Nat.Choose.Bounds
+import Mathlib.Tactic.Linarith
 
 /-!
 # Low-degree functions on the Boolean cube
@@ -29,7 +32,8 @@ polynomials of total degree at most `D` give exactly the functions of degree at 
 (`BitString.lowDegree_eq_map_restrictTotalDegree`). Every function has degree at most the number
 of coordinates (`BitString.mem_lowDegree_self`), and the functions of degree at most `D` span a
 space of dimension at most the number of sets of at most `D` coordinates
-(`BitString.finrank_lowDegree_le`).
+(`BitString.finrank_lowDegree_le`), which is at most `(n + 1) ^ D` for `n` coordinates
+(`BitString.card_filter_card_le_le_pow`).
 
 These are the polynomials of Razborov's and Smolensky's approximation method
 [Razborov1987], [Smolensky1987].
@@ -46,6 +50,8 @@ These are the polynomials of Razborov's and Smolensky's approximation method
 * `Cslib.BitString.mem_lowDegree_self`: every function has degree at most the number of
   coordinates.
 * `Cslib.BitString.finrank_lowDegree_le`: the dimension of the functions of degree at most `D`.
+* `Cslib.BitString.card_filter_card_le_le_pow`: there are at most `(n + 1) ^ D` sets of at most
+  `D` of `n` coordinates.
 
 ## References
 
@@ -262,5 +268,41 @@ theorem finrank_lowDegree_le [StrongRankCondition R] (D : ℕ) :
     ext f
     simp]
   exact (finrank_span_finset_le_card _).trans card_image_le
+
+/-- `∑_{i ≤ D} n ^ i ≤ (n + 1) ^ D`. -/
+private theorem sum_range_pow_le_add_one_pow (n D : ℕ) :
+    ∑ i ∈ range (D + 1), n ^ i ≤ (n + 1) ^ D := by
+  induction D with
+  | zero => simp
+  | succ D ih =>
+    rw [sum_range_succ, pow_succ (n + 1) D]
+    have h : n ^ (D + 1) ≤ (n + 1) ^ D * n := by
+      rw [pow_succ]
+      exact Nat.mul_le_mul_right n (Nat.pow_le_pow_left (Nat.le_succ n) D)
+    linarith [mul_add ((n + 1) ^ D) n 1]
+
+/-- There are at most `(n + 1) ^ D` sets of at most `D` of the `n` coordinates. -/
+theorem card_filter_card_le_le_pow (D : ℕ) :
+    #{S : Finset ι | #S ≤ D} ≤ (Fintype.card ι + 1) ^ D := by
+  classical
+  have hfib : #{S : Finset ι | #S ≤ D} =
+      ∑ i ∈ range (D + 1), #{S ∈ ({S : Finset ι | #S ≤ D} : Finset _) | #S = i} :=
+    card_eq_sum_card_fiberwise fun S hS =>
+      mem_coe.2 (mem_range.2 (Nat.lt_succ_of_le (mem_filter.1 (mem_coe.1 hS)).2))
+  have hchoose (i : ℕ) (hi : i ∈ range (D + 1)) :
+      #{S ∈ ({S : Finset ι | #S ≤ D} : Finset _) | #S = i} = (Fintype.card ι).choose i := by
+    rw [← card_univ, ← card_powersetCard]
+    congr 1
+    ext S
+    simp only [mem_filter, mem_univ, true_and, mem_powersetCard, subset_univ]
+    constructor
+    · exact fun h => h.2
+    · exact fun h => ⟨h ▸ Nat.le_of_lt_succ (mem_range.1 hi), h⟩
+  rw [hfib, sum_congr rfl hchoose]
+  exact (sum_le_sum fun i _ => Nat.choose_le_pow _ i).trans (sum_range_pow_le_add_one_pow _ D)
+
+/-- The empty set has at most `D` coordinates, so there is at least one such set. -/
+theorem card_filter_card_le_pos (D : ℕ) : 0 < #{S : Finset ι | #S ≤ D} :=
+  card_pos.2 ⟨∅, by simp⟩
 
 end Cslib.BitString

@@ -69,6 +69,7 @@ import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FormulaDepth
+import ComplexityTests.FourierLearning
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
