@@ -365,6 +365,7 @@ public import Complexity.Computability.Complexity.Classes.IP.PSPACE
 public import Complexity.Computability.Complexity.Classes.IP.Repetition
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
+public import Complexity.Computability.Complexity.Classes.IP.TQBF.Tokens
 public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
