@@ -317,7 +317,9 @@ public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
 public import Complexity.Computability.Complexity.AffineDisperser.Program
 public import Complexity.Computability.Complexity.Classes.Alternation
 public import Complexity.Computability.Complexity.Classes.Alternation.Game
+public import Complexity.Computability.Complexity.Classes.Alternation.GuessVerify
 public import Complexity.Computability.Complexity.Classes.Alternation.NP
+public import Complexity.Computability.Complexity.Classes.Alternation.Savitch
 public import Complexity.Computability.Complexity.Classes.Alternation.TQBF
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.BPP.Amplification

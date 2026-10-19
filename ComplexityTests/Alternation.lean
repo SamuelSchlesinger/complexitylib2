@@ -5,15 +5,20 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.Alternation.NP
+import Complexity.Computability.Complexity.Classes.Alternation.Savitch
 import Complexity.Computability.Complexity.Classes.Alternation.TQBF
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
 /-!
-# Tests: alternating machines and `AP ⊆ PSPACE`
+# Tests: alternating machines and `AP = PSPACE`
 
 A one-state machine that emits its move and halts: existential, it accepts every input, and
 universal, it accepts none, so both labels matter; both decide their problems within one step,
-which puts `Set.univ` and `∅` in `AP` with explicit machines. Single-bit moves on concrete
-predicates, rounds of quantifiers on a concrete formula, and the axioms of the headline theorems.
+which puts `Set.univ` and `∅` in `AP` with explicit machines, and their games of moves are won and
+lost. Two game verifiers, one won by the existential player's first move and one lost to the
+universal player's, put `Set.univ` and `∅` in `AP` through the guess-then-verify machine.
+Single-bit moves on concrete predicates, rounds of quantifiers on a concrete formula, Savitch's
+midpoint game on a two-word graph, and the axioms of the headline theorems.
 -/
 
 namespace ComplexityTests.Alternation
@@ -104,6 +109,94 @@ example : ∃ (p : Polynomial ℕ) (V : List Bool × List Bool → Bool),
   exists_isGameVerifier_of_mem_AP
     ⟨_, PolyBounded.const 1, 0, Unit, inferInstance, emitMove true, decidesInTime_empty⟩
 
+/-- The existential machine wins its game of moves on every input. -/
+example (input : List Bool) : Alternation true (List.replicate (2 * 1) 1)
+    fun w => (emitMove false).strict.runClosedCoins w input = [true] :=
+  (MultiTapeATM.accepts_iff_alternation _ (runsInTime_emitMove false input)).mp
+    ⟨1, ((emitMove false).acceptsWithin_succ_of_existential (q := ()) rfl rfl).mpr
+      ⟨true, (next_emitMove false true input).1, (next_emitMove false true input).2⟩⟩
+
+/-- The universal machine loses its game of moves on every input. -/
+example (input : List Bool) : ¬Alternation true (List.replicate (2 * 1) 1)
+    fun w => (emitMove true).strict.runClosedCoins w input = [true] := by
+  rw [← MultiTapeATM.accepts_iff_alternation _ (runsInTime_emitMove true input),
+    MultiTapeATM.accepts_iff_acceptsWithin (runsInTime_emitMove true input),
+    (emitMove true).acceptsWithin_succ_of_universal (q := ()) rfl rfl]
+  intro h
+  have := (h false).2
+  rw [(next_emitMove true false input).2] at this
+  simp at this
+
+/-- Every list of one move halts the machine. -/
+example (u : Bool) (input : List Bool) :
+    (emitMove u).HaltsWithin 1 ((emitMove u).toPTM.toNTM.initCfg input) :=
+  MultiTapeATM.runsInTime_iff_haltsWithin.mp (runsInTime_emitMove u input)
+
+/-! ### Games won by the first or the second move -/
+
+/-- The game won when the first move is `true`. -/
+private def firstMove (x : List Bool × List Bool) : Bool := x.2.getD 0 false
+
+/-- The game won when the second move is `true`. -/
+private def secondMove (x : List Bool × List Bool) : Bool := x.2.getD 1 false
+
+private theorem computableTidilyInPolyTime_firstMove :
+    MultiTapeTM.ComputableTidilyInPolyTime firstMove (MultiTapeTM.encPair encBits encBits)
+      MultiTapeTM.encBool :=
+  MultiTapeTM.ComputableTidilyInPolyTime.bitsGetDWithInput
+    (MultiTapeTM.ComputableTidilyInPolyTime.snd encBits encBits)
+    (MultiTapeTM.ComputableTidilyInPolyTime.const 0) false
+
+private theorem computableTidilyInPolyTime_secondMove :
+    MultiTapeTM.ComputableTidilyInPolyTime secondMove (MultiTapeTM.encPair encBits encBits)
+      MultiTapeTM.encBool :=
+  MultiTapeTM.ComputableTidilyInPolyTime.bitsGetDWithInput
+    (MultiTapeTM.ComputableTidilyInPolyTime.snd encBits encBits)
+    (MultiTapeTM.ComputableTidilyInPolyTime.const 1) false
+
+/-- The existential player wins the game of one round by moving `true`. -/
+private theorem isGameVerifier_firstMove :
+    IsGameVerifier encBits 1 firstMove (Set.univ : Set (List Bool)) := fun a => by
+  rw [Polynomial.eval_one, show 2 * 1 = 2 * 0 + 1 + 1 from rfl, List.replicate_succ,
+    alternation_true_one_cons]
+  simp only [List.replicate_succ, alternation_false_one_cons, List.replicate_zero,
+    alternation_nil, firstMove, List.getD_cons_zero, Set.mem_univ, true_iff]
+  exact ⟨true, fun _ => rfl⟩
+
+/-- The universal player wins the game of one round by moving `false`. -/
+private theorem isGameVerifier_secondMove :
+    IsGameVerifier encBits 1 secondMove (∅ : Set (List Bool)) := fun a => by
+  rw [Polynomial.eval_one, show 2 * 1 = 2 * 0 + 1 + 1 from rfl, List.replicate_succ,
+    alternation_true_one_cons]
+  simp only [List.replicate_succ, alternation_false_one_cons, List.replicate_zero,
+    alternation_nil, secondMove, List.getD_cons_succ, List.getD_cons_zero, Set.mem_empty_iff_false,
+    false_iff, not_exists, not_forall]
+  exact fun _ => ⟨false, Bool.false_ne_true⟩
+
+/-- `Set.univ ∈ AP` through the guess-then-verify machine. -/
+example : (Set.univ : Set (List Bool)) ∈ AP encBits :=
+  isGameVerifier_firstMove.mem_AP computableTidilyInPolyTime_firstMove
+
+/-- `∅ ∈ AP` through the guess-then-verify machine. -/
+example : (∅ : Set (List Bool)) ∈ AP encBits :=
+  isGameVerifier_secondMove.mem_AP computableTidilyInPolyTime_secondMove
+
+/-- A game verifier gives a problem in `PSPACE`, and conversely. -/
+example : (∅ : Set (List Bool)) ∈ PSPACE encBits :=
+  mem_PSPACE_iff_exists_isGameVerifier.mpr
+    ⟨1, secondMove, computableTidilyInPolyTime_secondMove, isGameVerifier_secondMove⟩
+
+/-- `AP = PSPACE`, used to move a problem from one class to the other. -/
+example : (Set.univ : Set (List Bool)) ∈ PSPACE encBits :=
+  AP_eq_PSPACE ▸ isGameVerifier_firstMove.mem_AP computableTidilyInPolyTime_firstMove
+
+/-- A problem in `PSPACE` has a polynomial-time game verifier. -/
+example : ∃ (p : Polynomial ℕ) (V : List Bool × List Bool → Bool),
+    MultiTapeTM.ComputableTidilyInPolyTime V (MultiTapeTM.encPair encBits encBits)
+      MultiTapeTM.encBool ∧ IsGameVerifier encBits p V (Set.univ : Set (List Bool)) :=
+  exists_isGameVerifier_of_mem_PSPACE
+    (AP_eq_PSPACE ▸ isGameVerifier_firstMove.mem_AP computableTidilyInPolyTime_firstMove)
+
 /-! ### Single-bit moves -/
 
 /-- The existential player chooses the first move. -/
@@ -140,6 +233,32 @@ example : ¬Alternation true (List.replicate 2 1) fun z =>
     List.length_singleton, mul_one] at h
   rw [← h]
   decide
+
+/-! ### Savitch's midpoint game -/
+
+/-- The graph with one edge, from `[false]` to `[true]`. -/
+private def oneEdge (u v : List Bool) : Bool := decide (u = [false] ∧ v = [true])
+
+/-- The midpoint `[true]` and either half win the game at level `1`. -/
+example : Cslib.Reachability.midpointGame oneEdge 1 1 [false] [true] [true, false, false, true] =
+    true := by
+  decide
+
+/-- The existential player wins the midpoint game from `[false]` to `[true]`. -/
+example : Alternation true (List.replicate (2 * ((1 + 1) * 1)) 1)
+    fun z => Cslib.Reachability.midpointGame oneEdge 1 1 [false] [true] z = true :=
+  (Cslib.Reachability.alternation_midpointGame_iff 1 [false] [true]).mpr (by decide)
+
+/-- The existential player loses the midpoint game from `[true]` to `[false]`. -/
+example : ¬Alternation true (List.replicate (2 * ((1 + 1) * 1)) 1)
+    fun z => Cslib.Reachability.midpointGame oneEdge 1 1 [true] [false] z = true := by
+  rw [Cslib.Reachability.alternation_midpointGame_iff]
+  decide
+
+/-- Trailing moves do not change a game that reads only its first move. -/
+example : Alternation true ([1] ++ [1, 1]) (fun z => z.take 1 = [true]) ↔
+    Alternation true [1] (fun z => z.take 1 = [true]) :=
+  alternation_append_iff fun z => by simp only [List.sum_cons, List.sum_nil, List.take_take]; rfl
 
 /-! ### Axioms -/
 
@@ -189,5 +308,58 @@ info: 'Cslib.Complexity.NP_subset_AP' depends on axioms: [propext, Classical.cho
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.NP_subset_AP
+
+/--
+info: 'Cslib.Complexity.P_subset_AP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.P_subset_AP
+
+/--
+info: 'Cslib.Complexity.IsGameVerifier.mem_AP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.IsGameVerifier.mem_AP
+
+/--
+info: 'Turing.MultiTapeATM.guessVerify_spec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeATM.guessVerify_spec
+
+/--
+info: 'Cslib.Reachability.alternation_midpointGame_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Reachability.alternation_midpointGame_iff
+
+/--
+info: 'Cslib.Complexity.exists_isGameVerifier_of_mem_PSPACE' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.exists_isGameVerifier_of_mem_PSPACE
+
+/--
+info: 'Cslib.Complexity.PSPACE_subset_AP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PSPACE_subset_AP
+
+/--
+info: 'Cslib.Complexity.AP_eq_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.AP_eq_PSPACE
+
+/--
+info: 'Cslib.Complexity.mem_PSPACE_iff_exists_isGameVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PSPACE_iff_exists_isGameVerifier
 
 end ComplexityTests.Alternation
