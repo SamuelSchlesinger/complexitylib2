@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.IntegralLift
+import Mathlib.Data.Nat.Digits.Lemmas
 import Mathlib.LinearAlgebra.Matrix.AbsoluteValue
 
 /-!
@@ -18,9 +19,10 @@ Bounds on the length of the canonical binary encoding of the generated list. The
 matrices are `U₀⁻¹ * Uₐ` for integer matrices `Uₐ` with entries of absolute value at most
 `2 ^ b`; by Cramer's rule each entry is a ratio of two integer determinants, and the
 permutation-sum bound `|det A| ≤ d! * B ^ d` keeps both below `2 ^ (d * d + d * b + 1)`. Polynomial
-
-bookkeeping in the two unary parameters then bounds the full output length by a fixed
-polynomial of degree `104` in `n + s + 1`.
+bookkeeping in the parameters `n` and `s` then bounds the full output length by a fixed
+polynomial of degree `104` in `n + s + 1`. The bounds hold for all `n` and `s`, including `n = 0`;
+the source assumes `1 ≤ n`, and covering `n = 0` raises the grid-size coefficient from `24577` to
+`49153`, so the constant `outputConstant` is larger than the source's.
 
 ## Main definitions
 
@@ -54,7 +56,8 @@ open Matrix
 open scoped BigOperators
 
 lemma encodeNat_length (a : ℕ) : (encodeNat a).length = 2 * (Nat.digits 2 a).length + 1 := by
-  simp [encodeNat]
+  simp only [encodeNat, List.length_append, List.length_replicate, List.length_map,
+    List.length_cons, List.length_nil]
   omega
 
 lemma encodeNat_le (a L : ℕ) (ha : a < 2 ^ L) : (encodeNat a).length ≤ 2 * L + 1 := by
@@ -259,7 +262,9 @@ theorem normalized_bits_bound (m D b : ℕ) (hm : 1 ≤ m)
   rw [Nat.add_mul, Nat.mul_assoc, Nat.add_mul, Nat.add_mul, one_mul]
   omega
 
-/-- Fixed coefficient in the bound on the complete binary output length. -/
+/-- Fixed coefficient in the bound on the complete binary output length. It differs from the
+source's constant: the bound also covers `n = 0`, which raises the grid-size coefficient of
+`Parameters.polynomial_H` from `24577` to `49153`. -/
 def outputConstant : ℕ :=
   (2 * 256 + 3) + (2 * 49153 ^ 3 + 3) + 49153 ^ 3 * 256 * 256 * bitConstant
 

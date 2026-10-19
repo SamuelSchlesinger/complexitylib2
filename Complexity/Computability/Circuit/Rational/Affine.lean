@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Eval
+public import Mathlib.Algebra.Algebra.Rat
 public import Mathlib.LinearAlgebra.Matrix.Unique
 
 /-!
@@ -141,8 +142,9 @@ theorem card_index (f : Formula n) : Fintype.card f.Index = f.nodeCount + 1 := b
   | input i => simp [Index]
   | gate op args ih =>
     cases op <;>
-      simp [Index, Circuits.Formula.size, Circuits.Formula.leafSize, ratSignature,
-        Fin.sum_univ_two, ih] <;>
+      simp only [Index, ratSignature, Fintype.card_sum, Fintype.card_unique, ih,
+        Circuits.Formula.size, Circuits.Formula.leafSize, Fin.sum_univ_two, Finset.univ_eq_empty,
+        Finset.sum_empty, Finset.univ_unique, Fin.default_eq_zero, Finset.sum_singleton] <;>
       omega
 
 /-- The left row of the formula's linear realization. -/

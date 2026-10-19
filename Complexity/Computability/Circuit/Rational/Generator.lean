@@ -18,7 +18,7 @@ three-dimensional integer grid, keeps the points at which the normalizing matrix
 and emits the normalized rational matrix tuples. For every admissible nonzero formula with at most
 `s` nodes, the certificate determinants are nonzero polynomials of bounded degree, so some grid
 point avoids all their zeros; the tuple emitted there gives the formula a defined invertible value.
-The parameters are polynomial in the number of variables and the size bound.
+The parameters are polynomial in the number of variables and the node-count bound.
 
 ## Main definitions
 
@@ -31,7 +31,7 @@ The parameters are polynomial in the number of variables and the size bound.
 ## Main results
 
 * `Cslib.Circuits.Rational.Generator.output_hits`: the emitted list hits all formulas of bounded
-  size, once the parameters are large enough.
+  node count, once the parameters are large enough.
 * `Cslib.Circuits.Rational.Generator.list_hits`,
   `Cslib.Circuits.Rational.Generator.list_dimension_bound`,
   `Cslib.Circuits.Rational.Generator.list_length_bound`: the list hits, with polynomially bounded
@@ -95,7 +95,7 @@ def rationalLift (n N e : ℕ) (x : Fin 3 → ℕ) (i : Fin (n + 1)) : Mat (matr
 def tupleAt (n N e : ℕ) (x : Fin 3 → ℕ) : Tuple n (matrixDimension e) :=
   fun i => (rationalLift n N e x 0)⁻¹ * rationalLift n N e x i.succ
 
-/-- The filtering step tests only Z_0, and receives no formula. -/
+/-- The filtering step tests only the zeroth lifted matrix, and receives no formula. -/
 def atPoint (n N e : ℕ) (x : Fin 3 → ℕ) : Option (Tuple n (matrixDimension e)) :=
   if (rationalLift n N e x 0).det = 0 then none else some (tupleAt n N e x)
 
@@ -148,7 +148,7 @@ end Rational.Generator
 
 namespace Rational.Generator
 open Matrix MvPolynomial
-open scoped BigOperators
+open scoped BigOperators Rational.PolynomialHahn
 noncomputable section
 
 /-- The Hahn field containing the algebraic witnesses for the generator. -/
@@ -314,9 +314,10 @@ end Rational.Generator
 
 namespace Rational.Parameters
 
-/-- The parameters, with ambientDimension the least power of two strictly above BΔ. -/
+/-- The number `n + 1` of matrices in a lifted tuple: one per variable, and the normalizing
+matrix. -/
 def w (n : ℕ) := n + 1
-/-- Rank parameter for formulas of the given size. -/
+/-- Rank parameter for formulas of the given node count. -/
 def rankBound (s : ℕ) := 2 * s + 1
 /-- Dimension allowance in the rank expansion argument. -/
 def delta (n s : ℕ) := 2 * (w n) ^ 3 * rankBound s
@@ -412,7 +413,7 @@ end Rational.Parameters
 namespace Rational.Generator
 noncomputable section
 
-/-- The list with all parameters fixed by the unary inputs. -/
+/-- The list with all parameters fixed by `n` and `s`. -/
 def list (n s : ℕ) : Output n :=
   output n (Parameters.truncation n s) (Parameters.exponent n s) (Parameters.gridSize n s)
 

@@ -30,7 +30,9 @@ import Complexity.Computability.Circuit.Simulation
 A formula over a signature is a tree of operation symbols with inputs at its leaves, that is, a
 circuit in which every gate is read once. It is evaluated under an interpretation like a circuit
 (`Formula.eval`). Formulas are the free monad on the polynomial functor of the signature; a
-dedicated inductive type gives them readable constructors and structural induction.
+dedicated inductive type gives them readable constructors and structural induction. Equality of
+formulas is decidable, constructively, when equality of operation symbols is
+(`Formula.decidableEq`), so concrete formulas can be compared by `decide`.
 
 The *leaf size* `Formula.leafSize` counts the input leaves, the measure of formula lower bounds
 [Jukna, Chapter 6][Jukna2012]. Nullary operations, such as constants, are not counted: constants

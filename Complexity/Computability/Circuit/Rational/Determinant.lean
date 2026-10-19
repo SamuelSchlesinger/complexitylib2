@@ -9,15 +9,19 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.EncodingBounds
+public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
+import Batteries.Data.Vector.Lemmas
+import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 
 /-!
 # A staged division-free integer determinant
 
-An executable determinant for integer matrices that runs in polynomially many ring operations.
-It runs the stages of Bird's division-free algorithm, but stores every intermediate stage as a
-dense table of row vectors. Mathlib's `BirdDet.birdDet` represents each stage as a function and
-recomputes its entries recursively, which takes exponential time, and `Matrix.det` is a
-permutation sum. The result is proved equal to `Matrix.det`.
+An executable determinant for integer matrices. It runs the stages of Bird's division-free
+algorithm, but stores every intermediate stage as a dense table of row vectors, so that each stage
+is computed from the materialized previous one. This is meant to avoid recomputation: Mathlib's
+`BirdDet.birdDet` represents each stage as a function whose entries are recomputed recursively,
+and `Matrix.det` is a permutation sum. No bound on the number of ring
+operations is proved here; the result is proved equal to `Matrix.det`.
 
 ## Main definitions
 
@@ -45,10 +49,6 @@ namespace Cslib.Circuits
 namespace Rational.DeterminantAlgorithm
 open Matrix
 open scoped BigOperators
-
-@[simp] lemma vector_get_ofFn {α : Type*} {n : ℕ} (f : Fin n → α) (i : Fin n) :
-    (Vector.ofFn f).get i = f i := by
-  simp [Vector.get, Fin.cast]
 
 /-- A dense square integer matrix stored as a vector of row vectors. -/
 abbrev Table (n : ℕ) := Vector (Vector ℤ n) n
@@ -98,7 +98,8 @@ lemma sumFrom_eq_sum_Ico {n lo : ℕ} (f : ℕ → ℤ) :
 lemma sumFrom_fin_tail {n : ℕ} (i : Fin n) (f : ℕ → ℤ) :
     BirdDet.sumFrom n (i.val + 1) f = ∑ k ∈ Finset.Ioi i, f k.val := by
   rw [sumFrom_eq_sum_Ico]
-  calc _ = ∑ k ∈ (Finset.range n).filter (i.val < ·), f k := by congr; ext; simp; omega
+  calc _ = ∑ k ∈ (Finset.range n).filter (i.val < ·), f k := by
+         congr; ext; simp only [Finset.mem_Ico, Finset.mem_filter, Finset.mem_range]; omega
        _ = ∑ k ∈ Finset.range n, if i.val < k then f k else 0 := by rw [Finset.sum_filter]
        _ = ∑ k : Fin n, if i.val < k.val then f k.val else 0 := by rw [← Fin.sum_univ_eq_sum_range]
        _ = _ := by simp [← Finset.sum_filter, Finset.filter_lt_eq_Ioi]

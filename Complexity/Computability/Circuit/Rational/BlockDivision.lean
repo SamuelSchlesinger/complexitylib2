@@ -29,7 +29,7 @@ representation `D →+* Matrix κ κ E`, is either invertible or loses at least 
 ## Main results
 
 * `Rational.PolynomialHahn.charZero`: Hahn series over a characteristic-zero ring have
-  characteristic zero.
+  characteristic zero (a scoped instance, available after `open Rational.PolynomialHahn`).
 * `Rational.PolynomialHahn.embed_injective`: the Hahn-series embedding is injective.
 * `Rational.BlockDivision.rank_gap`: a block-embedded matrix is invertible or has rank at most
   `(|m| - 1) * |κ|`.
@@ -54,9 +54,10 @@ open Rational.QuantumLift (Exponents)
 open scoped BigOperators
 noncomputable section
 
-/-- Hahn series over a coefficient ring of characteristic zero have characteristic zero. -/
-instance charZero {Γ R : Type*} [AddCommMonoid Γ] [PartialOrder Γ] [IsOrderedCancelAddMonoid Γ]
-    [NonAssocSemiring R] [CharZero R] : CharZero (HahnSeries Γ R) :=
+/-- Hahn series over a coefficient ring of characteristic zero have characteristic zero. It is
+scoped, since both the class and the type are Mathlib's. -/
+scoped instance charZero {Γ R : Type*} [AddCommMonoid Γ] [PartialOrder Γ]
+    [IsOrderedCancelAddMonoid Γ] [NonAssocSemiring R] [CharZero R] : CharZero (HahnSeries Γ R) :=
   CharZero.of_addMonoidHom (HahnSeries.C : R →+* HahnSeries Γ R).toAddMonoidHom
     (map_one (HahnSeries.C : R →+* HahnSeries Γ R)) HahnSeries.C_injective
 

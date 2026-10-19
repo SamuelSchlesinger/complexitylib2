@@ -25,8 +25,8 @@ The list yields executable tests for nonzeroness and admissibility, by exact rat
 evaluation. The admissibility test needs a list for two extra syntax nodes: if `f` has a defined
 value, either `f` or `f + 1` has a nonzero value. The correctness theorems do not assert
 polynomial bit complexity of formula evaluation, and no running-time bound for the generator is
-proved here: a polynomial-time generator is future work (rational-hitting-runtime). These are
-deductions from the source result, without a claim of new priority.
+proved here: a polynomial-time generator is future work. These are deductions from the source
+result, without a claim of new priority.
 
 ## Main definitions
 
@@ -84,7 +84,8 @@ theorem hittingList_dimension_le (n s : ℕ) :
   exact Generator.list_dimension_bound n s
 
 /-- The complete reduced-rational binary encoding has polynomial length, for all `n` and `s`,
-including `n = 0`. -/
+including `n = 0`. The constant `PolynomialBounds.outputConstant` differs from the source's, which
+assumes `1 ≤ n`: covering `n = 0` raises the grid-size coefficient from `24577` to `49153`. -/
 theorem hittingList_encoding_length_le (n s : ℕ) :
     (encodeOutput (hittingList n s)).length ≤
       PolynomialBounds.outputConstant * (n + s + 1) ^ 104 := by

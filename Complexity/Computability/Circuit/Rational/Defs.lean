@@ -10,8 +10,8 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Formula
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
-public import Mathlib.Data.Nat.Digits.Lemmas
-public import Mathlib.Tactic
+public import Mathlib.Data.Nat.Digits.Defs
+import Mathlib.Tactic.FinCases
 
 /-!
 # Rational hitting lists: the model
@@ -22,12 +22,12 @@ evaluated relationally in any ring with a rational structure map: an inverse nod
 actual two-sided inverse of its operand's value, so evaluation is partial. A formula is
 *admissible* if some substitution of square rational matrices of positive dimension lies in its
 domain, and *nonzero* if some such substitution yields a nonzero value. A finite list of matrix
-substitutions *hits* the formulas of size at most `s` if every admissible nonzero such formula
-has an invertible value at some substitution on the list.
+substitutions *hits* the formulas of node count at most `s` if every admissible nonzero such
+formula has an invertible value at some substitution on the list.
 
-The size of a formula, as in the source, counts every syntax-tree node: input leaves, constants
-and operations (`Formula.nodeCount`, the native gate count `Formula.size` plus the leaf count
-`Formula.leafSize`).
+The node count of a formula, the source's size measure, counts every syntax-tree node: input
+leaves, constants and operations (`Formula.nodeCount`, the native gate count `Formula.size` plus
+the leaf count `Formula.leafSize`).
 
 ## Main definitions
 

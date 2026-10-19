@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Determinant
+import Batteries.Data.Vector.Lemmas
 
 /-!
 # The executable hitting-list generator
@@ -23,7 +24,7 @@ noncomputable specification.
 
 * `Rational.ExecutableGenerator.atPoint`: the normalized tuple at one grid point, if any.
 * `Rational.ExecutableGenerator.output`: the computable list for fixed parameters.
-* `Rational.ExecutableGenerator.list`: the computable list for unary inputs `n` and `s`.
+* `Rational.ExecutableGenerator.list`: the computable list for `n` variables and `s` nodes.
 * `Rational.ExecutableGenerator.encoded`: its binary encoding.
 
 ## Main results

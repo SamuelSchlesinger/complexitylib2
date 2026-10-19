@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.SmallExpansion
+public import Mathlib.LinearAlgebra.Matrix.Rank
 
 /-!
 # Rectangular kernels of block evaluations

@@ -192,6 +192,7 @@ end Rational.QuantumLift
 
 namespace Rational
 open Matrix
+open scoped Rational.PolynomialHahn
 noncomputable section
 
 /-- A nonzero value of a formula at a rational matrix substitution becomes a defined invertible
@@ -231,7 +232,7 @@ end Rational
 
 namespace Rational.PencilCertificates
 open Matrix MvPolynomial
-open scoped BigOperators
+open scoped BigOperators Rational.PolynomialHahn
 noncomputable section
 variable {K E : Type*} [Field K] [CharZero K] [Field E] [CharZero E]
 

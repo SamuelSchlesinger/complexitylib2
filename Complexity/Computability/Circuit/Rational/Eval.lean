@@ -19,6 +19,11 @@ transported along ring homomorphisms, and they lift back along homomorphisms ref
 The second part collects facts on two-by-two block matrices over a possibly noncommutative ring,
 notably the Schur-complement criterion for invertibility of a block matrix with a zero corner.
 
+## Main definitions
+
+* `Cslib.Circuits.Rational.NoncommBlocks.matMul`: matrix multiplication over a possibly
+  noncommutative ring.
+
 ## Main results
 
 * `Cslib.Circuits.Rational.Formula.Eval.unique`: a formula has at most one value.

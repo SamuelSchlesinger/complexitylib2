@@ -100,8 +100,7 @@ lemma basis_apply (e : ℕ) (i : Fin (degree e)) :
   rw [basis, Basis.reindex_apply]
   exact (powerBasis e).basis_eq_pow _
 
-/-- The cyclotomic quotient contains
- `ℚ`, so it has characteristic zero. -/
+/-- The cyclotomic quotient contains `ℚ`, so it has characteristic zero. -/
 instance charZero (e : ℕ) : CharZero (R e) := algebraRat.charZero (R e)
 
 /-- The cyclotomic quotient is finite-dimensional over `ℚ`. -/

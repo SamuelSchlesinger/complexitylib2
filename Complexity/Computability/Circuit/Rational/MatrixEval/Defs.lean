@@ -28,6 +28,11 @@ bound.
 * `Cslib.Circuits.Rational.Output.admissibilityTest`, `Cslib.Circuits.Rational.Output.nonzeroTest`:
   search a list for a defined, respectively an invertible, value.
 
+## Main results
+
+* `Cslib.Circuits.Rational.Formula.evalMatrix?_add` and its siblings: the executable evaluation
+  unfolds along the constructors.
+
 ## References
 
 * From the complexitylib port [Schlesinger2026RationalHitting] at revision

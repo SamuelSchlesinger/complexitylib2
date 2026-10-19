@@ -9,6 +9,12 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Affine
+public import Mathlib.Algebra.Polynomial.Derivative
+public import Mathlib.Algebra.Polynomial.Roots
+public import Mathlib.Algebra.Polynomial.Taylor
+public import Mathlib.LinearAlgebra.Matrix.Basis
+import Mathlib.LinearAlgebra.Vandermonde
+import Mathlib.RingTheory.Polynomial.Pochhammer
 
 /-!
 # Wronskians of polynomial families

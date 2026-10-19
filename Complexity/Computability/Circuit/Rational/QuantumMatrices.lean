@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.QuantumSeries
 public import Mathlib.Algebra.Order.Monoid.Prod
+public import Mathlib.NumberTheory.LegendreSymbol.AddCharacter
 
 /-!
 # Weyl matrices and the quantum Fourier lift

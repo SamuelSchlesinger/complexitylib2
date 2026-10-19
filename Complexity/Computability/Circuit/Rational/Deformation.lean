@@ -251,7 +251,7 @@ end Rational.ThreeLift
 namespace Rational.PencilDeformation
 open Matrix Polynomial MvPolynomial
 open TestPolynomial LaurentReduction
-open scoped BigOperators
+open scoped BigOperators Rational.PolynomialHahn
 noncomputable section
 variable {K E : Type*} [Field K] [CharZero K] [Field E] [CharZero E]
 variable {w q M N : ℕ} [NeZero M]
