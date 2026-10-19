@@ -16,8 +16,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 # The difference class DP
 
 `DP` is the class of intersections of an NP language and a coNP language, equivalently differences
-of two NP languages [Papadimitriou][Papadimitriou94]. It is not the intersection of the classes
-`NP` and `coNP`. All completeness statements use polynomial-time many-one reductions and arbitrary
+of two NP languages [Papadimitriou][Papadimitriou94]. The definition takes intersections of
+languages; it does not require a language to belong to both `NP` and `coNP`. Completeness uses
+polynomial-time many-one reductions and arbitrary
 injective instance encodings.
 
 ## Main definitions
