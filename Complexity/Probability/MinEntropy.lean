@@ -21,9 +21,10 @@ distribution is called a `k`-source. A `(k, ε)`-source is within statistical di
 `k`-source. These are the weak random sources from which randomness extractors produce nearly
 uniform bits [Chor, Goldreich][ChorGoldreich1988], [Vadhan, Chapter 6][Vadhan2012].
 
-Min-entropy never exceeds Shannon entropy, bounds the collision probability, and is preserved by
-mixtures: a mixture of `k`-sources is a `k`-source. Conversely, every `k`-source is a mixture of
-flat `k`-sources (`Cslib.Probability.PMF.exists_eq_bind_uniformOfFinset_of_le_minEntropy`).
+Min-entropy never exceeds Shannon entropy and bounds the collision probability. A mixture of
+`k`-sources is a `k`-source; conversely, every `k`-source is a mixture of flat `k`-sources
+(`Cslib.Probability.PMF.exists_eq_bind_uniformOfFinset_of_le_minEntropy`). Discarding rare heavy
+outcomes turns a distribution into a `(k, ε)`-source (`isSource_of_heavy_le`).
 
 ## Main definitions
 
@@ -61,8 +62,8 @@ variable {α β : Type*}
 
 /-! ### Min-entropy -/
 
-/-- Min-entropy in bits: the least information content of a possible outcome. It equals
-`-log₂ max_a p(a)`; `le_minEntropy_iff` characterizes its lower bounds by masses. -/
+/-- Min-entropy in bits: the least information content `-log₂ p(a)` of a possible outcome `a`.
+Its lower bounds are upper bounds on the outcome probabilities (`le_minEntropy_iff`). -/
 noncomputable def minEntropy (p : PMF α) : ℝ := ⨅ a : p.support, surprisal p a
 
 /-- On the support, a lower information bound is exactly an upper probability bound. -/
@@ -134,7 +135,7 @@ theorem minEntropy_le_logb_card [Fintype α] (p : PMF α) :
     minEntropy p ≤ Real.logb 2 (Fintype.card α) :=
   (minEntropy_le_entropy p).trans (entropy_le_log_card p)
 
-/-- The flat distribution on `K` outcomes has min-entropy `log₂ K`. -/
+/-- The uniform distribution on a nonempty finite set `s` has min-entropy `log₂ |s|`. -/
 theorem minEntropy_uniformOfFinset (s : Finset α) (hs : s.Nonempty) :
     minEntropy (uniformOfFinset s hs) = Real.logb 2 s.card := by
   classical

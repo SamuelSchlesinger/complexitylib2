@@ -20,8 +20,7 @@ exactly `K` outcomes (`exists_eq_bind_uniformOfFinset`). In particular, for a na
 every `k`-source is a mixture of flat `k`-sources, the uniform distributions on sets of `2^k`
 outcomes [Chor, Goldreich][ChorGoldreich1988], [Vadhan, Chapter 6][Vadhan2012]. Since mixtures of
 `k`-sources are `k`-sources (`le_minEntropy_bind`), this characterizes the `k`-sources
-(`le_minEntropy_iff_exists_eq_bind_uniformOfFinset`). Results about extractors therefore need
-only be proved for flat sources whenever their error is convex in the source.
+(`le_minEntropy_iff_exists_eq_bind_uniformOfFinset`).
 
 The proof is combinatorial. Scaled by `K`, the masses form a point of `[0, 1]^α` with coordinate
 sum `K`. Moving weight between two coordinates strictly between `0` and `1` writes such a point
