@@ -297,6 +297,7 @@ public import Complexity.Computability.Communication.TopDown.Adversary
 public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
+public import Complexity.Computability.Complexity.AffineDisperser
 public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomial
 public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
@@ -793,6 +794,7 @@ public import Complexity.Foundations.BooleanAnalysis.MirrorSets
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.Combinatorics.AffineDisperser
+public import Complexity.Foundations.Combinatorics.AffineDisperser.AffineSubspace
 public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Combinatorics.AffineDisperser.CubeSum
