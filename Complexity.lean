@@ -38,7 +38,6 @@ public import Complexity.Computability.Circuit.Boolean.DuplicateFlags
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
-public import Complexity.Computability.Circuit.Boolean.Encoding.MCSP
 public import Complexity.Computability.Circuit.Boolean.Equality
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 public import Complexity.Computability.Circuit.Boolean.FanInTwo
@@ -375,6 +374,7 @@ public import Complexity.Computability.Kolmogorov.SelfDelimiting
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
+public import Complexity.Computability.MCSP.NP
 public import Complexity.Computability.MCSP.Shannon
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Append

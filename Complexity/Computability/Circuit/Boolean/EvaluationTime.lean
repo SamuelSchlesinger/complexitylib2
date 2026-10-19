@@ -9,11 +9,8 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Mathlib.Data.List.GetD
 
 /-!
@@ -46,6 +43,8 @@ length.
 * `Cslib.Circuits.Program.evalCode_code`: on the code of a program, `evalCode` lists the inputs and
   the gate values.
 * `Cslib.Circuits.Circuit.eval_eq_getD`: circuit evaluation through the code.
+* `Cslib.Circuits.Circuit.eval_eq_evalOutput`: the same for De Morgan circuits, through
+  `Cslib.Circuits.Boolean.evalOutput`.
 * `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalCode`,
   `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`: evaluation of De Morgan gate lists
   is polynomial-time.
@@ -145,28 +144,6 @@ private def gateValue : Op × Bool × Bool → Bool
 private theorem interpretation_eq_gateValue (op : Op) (f : ℕ → Bool) :
     (interpretation op fun a => f a) = gateValue (op, f 0, f 1) := by
   cases op <;> rfl
-
-/-- Lookup in a computed list at a computed binary index is polynomial-time: the index is first
-capped at the length of the list, beyond which every lookup returns the default. -/
-private theorem listGetD_binary {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
-    {encL : List α ↪ List Bool} [ListEncoding encA encL] [SizedListEncoding encA encL]
-    {l : γ → List α} {i : γ → ℕ} (d : α) (hl : ComputableTidilyInPolyTime l encIn encL)
-    (hi : ComputableTidilyInPolyTime i encIn encNat) :
-    ComputableTidilyInPolyTime (fun x => (l x).getD (i x) d) encIn encA := by
-  have hlen : ComputableTidilyInPolyTime (fun x => (l x).length) encIn encUnary :=
-    (length encA).comp hl
-  have hcap : ComputableTidilyInPolyTime (fun x => min (i x) (l x).length) encIn encUnary := by
-    refine binary_to_unary_bounded ?_ hlen fun _ => Nat.min_le_right _ _
-    have hlen' := unary_to_binary.comp hlen
-    simp only [Function.comp_def] at hlen'
-    simpa only [Nat.min_def] using ite_decide (binary_le' hi hlen') hi hlen'
-  have heq : (fun x => (l x).getD (i x) d) = fun x => (l x).getD (min (i x) (l x).length) d := by
-    funext x
-    rcases le_total (i x) (l x).length with h | h
-    · rw [Nat.min_eq_left h]
-    · rw [Nat.min_eq_right h, List.getD_eq_default _ _ h, List.getD_eq_default _ _ le_rfl]
-  rw [heq]
-  exact (listGetD d).comp (hl.prod hcap)
 
 /-- One evaluation step: append the value of a gate. -/
 private theorem computableTidilyInPolyTime_step :

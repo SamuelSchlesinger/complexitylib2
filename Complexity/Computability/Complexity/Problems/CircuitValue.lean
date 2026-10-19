@@ -21,7 +21,7 @@ It is encoded by the binary encoding of the circuit (`Cslib.Circuits.Boolean.enc
 number of inputs in unary, the gates in program order with wire numbers in binary, the output
 wire) followed by the input bits.
 
-The circuit value problem is in `P` (`Cslib.Complexity.CircuitValue_mem_P`): the decider
+The circuit value problem is in `P` (`Cslib.Complexity.CircuitValue.mem_P`): the decider
 evaluates the gate list with the polynomial-time evaluator
 `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`. Ladner showed that it is
 `P`-complete under logarithmic-space reductions [Ladner1975]; that is not proved here.
@@ -34,7 +34,7 @@ evaluates the gate list with the polynomial-time evaluator
 ## Main results
 
 * `Cslib.Complexity.CircuitValue.computableTidilyInPolyTime_eval`: evaluation is polynomial-time.
-* `Cslib.Complexity.CircuitValue_mem_P`: the circuit value problem is in `P`.
+* `Cslib.Complexity.CircuitValue.mem_P`: the circuit value problem is in `P`.
 
 ## References
 
@@ -100,11 +100,13 @@ theorem computableTidilyInPolyTime_eval :
   rw [funext eval_eq_evalOutput]
   exact hout.comp hraw
 
-end CircuitValue
-
 /-- **The circuit value problem is in `P`**, for the binary encoding of circuits followed by the
 input bits. -/
-theorem CircuitValue_mem_P : CircuitValue ∈ P encCircuitValue :=
-  ⟨_, CircuitValue.computableTidilyInPolyTime_eval, fun _ => Iff.rfl⟩
+theorem mem_P : CircuitValue ∈ P encCircuitValue :=
+  ⟨_, computableTidilyInPolyTime_eval, fun _ => Iff.rfl⟩
+
+end CircuitValue
+
+@[deprecated (since := "2026-10-19")] alias CircuitValue_mem_P := CircuitValue.mem_P
 
 end Cslib.Complexity

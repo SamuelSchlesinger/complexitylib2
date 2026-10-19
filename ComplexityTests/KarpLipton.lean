@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Circuit.Boolean.Encoding.MCSP
+import Complexity.Computability.MCSP.NP
 import Complexity.Computability.Complexity.Problems.CircuitSAT
 import Complexity.Computability.Complexity.Problems.CircuitValue
 
@@ -203,10 +203,10 @@ info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_readCertificate' depend
 #print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_readCertificate
 
 /--
-info: 'Cslib.Complexity.CircuitValue_mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CircuitValue.mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Complexity.CircuitValue_mem_P
+#print axioms Cslib.Complexity.CircuitValue.mem_P
 
 /--
 info: 'Cslib.Complexity.CircuitSAT.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]

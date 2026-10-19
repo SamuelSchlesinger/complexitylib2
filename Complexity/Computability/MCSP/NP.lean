@@ -95,7 +95,7 @@ def verifier (p : Instance × List Bool) : Bool :=
 
 /-- Reading the bits of an input, least significant first, gives its number in the order of
 `BitString.equivFin`. -/
-theorem binaryValue_reverse_ofFn {n : ℕ} (y : BitString n) :
+private theorem binaryValue_reverse_ofFn {n : ℕ} (y : BitString n) :
     BitString.binaryValue (List.ofFn y).reverse = BitString.equivFin n y := by
   have hbit (b : Bool) : ((finTwoEquiv.symm b : Fin 2) : ℕ) = b.toNat := by cases b <;> rfl
   induction n with
@@ -136,31 +136,8 @@ theorem certLength_le (x : Instance) :
 
 /-- `MCSP.verifier` verifies MCSP, with certificates of length `certPolynomial`. -/
 theorem isVerifier : IsVerifier encInstance certPolynomial verifier MCSP := by
-  intro x
-  set S := budget x.arity x.threshold with hSdef
-  constructor
-  · intro hx
-    have hS : complexity interpretation (single x.function) ≤ S :=
-      le_min hx (complexity_le_two_pow_mul_add_one _)
-    obtain ⟨c, hc, hsize⟩ := exists_computes_size_eq_complexity (I := interpretation)
-      (f := single x.function)
-    have hcS : c.size ≤ S := hsize ▸ hS
-    refine ⟨certificate x.arity S c.code.1 (c.outputs 0).toNat ++ List.replicate
-      (certPolynomial.eval (encInstance x).length - certLength x.arity S) false, ?_, ?_⟩
-    · rw [List.length_append, length_certificate_code c hcS, List.length_replicate,
-        Nat.add_sub_cancel' (certLength_le x)]
-    · have hcode : Program.IsCodeFrom signature x.arity 0 c.code.1 := by
-        rw [← Program.isSome_ofCode_iff, Circuit.code, Program.ofCode_code]
-        rfl
-      simp only [verifier, ← hSdef, readCertificate_certificate_code_append c hcS,
-        Bool.and_eq_true, codeCheck_eq_true_iff.2 hcode, decide_eq_true_eq, List.all_eq_true,
-        beq_iff_eq, true_and]
-      refine ⟨by rw [Circuit.length_code_fst]; exact (c.outputs 0).toNat_lt, fun y hy => ?_⟩
-      obtain ⟨y, rfl⟩ : ∃ y' : BitString x.arity, List.ofFn y' = y :=
-        ⟨fun i => y[i.val]'(by rw [BitString.mem_enumList.1 hy]; exact i.isLt),
-          List.ext_getElem (by simp [BitString.mem_enumList.1 hy]) fun _ _ _ => by simp⟩
-      rw [← Circuit.eval_eq_evalOutput, hc y, tableValue_ofFn, single_apply]
-  · rintro ⟨w, -, hw⟩
+  refine IsVerifier.of_padding (fun x w _ hw => ?_) fun x hx => ?_
+  · set S := budget x.arity x.threshold with hSdef
     set r := readCertificate x.arity S w
     simp only [verifier, ← hSdef, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
       beq_iff_eq, codeCheck_eq_true_iff] at hw
@@ -179,6 +156,26 @@ theorem isVerifier : IsVerifier encInstance certPolynomial verifier MCSP := by
     · calc c.size = r.1.length := by rw [← Circuit.length_code_fst, hc]
         _ ≤ S := length_readCertificate_le _ _ _
         _ ≤ x.threshold := Nat.min_le_left _ _
+  · set S := budget x.arity x.threshold with hSdef
+    have hS : complexity interpretation (single x.function) ≤ S :=
+      le_min hx (complexity_le_two_pow_mul_add_one _)
+    obtain ⟨c, hc, hsize⟩ := exists_computes_size_eq_complexity (I := interpretation)
+      (f := single x.function)
+    have hcS : c.size ≤ S := hsize ▸ hS
+    have hcode : Program.IsCodeFrom signature x.arity 0 c.code.1 := by
+      rw [← Program.isSome_ofCode_iff, Circuit.code, Program.ofCode_code]
+      rfl
+    refine ⟨certificate x.arity S c.code.1 (c.outputs 0).toNat, ?_, fun k => ?_⟩
+    · rw [length_certificate_code c hcS]
+      exact certLength_le x
+    · simp only [verifier, ← hSdef, readCertificate_certificate_code_append c hcS,
+        Bool.and_eq_true, codeCheck_eq_true_iff.2 hcode, decide_eq_true_eq, List.all_eq_true,
+        beq_iff_eq, true_and]
+      refine ⟨by rw [Circuit.length_code_fst]; exact (c.outputs 0).toNat_lt, fun y hy => ?_⟩
+      obtain ⟨y, rfl⟩ : ∃ y' : BitString x.arity, List.ofFn y' = y :=
+        ⟨fun i => y[i.val]'(by rw [BitString.mem_enumList.1 hy]; exact i.isLt),
+          List.ext_getElem (by simp [BitString.mem_enumList.1 hy]) fun _ _ _ => by simp⟩
+      rw [← Circuit.eval_eq_evalOutput, hc y, tableValue_ofFn, single_apply]
 
 /-! ### Polynomial time -/
 

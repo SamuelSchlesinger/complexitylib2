@@ -50,6 +50,10 @@ polynomial-time test `codeCheck` tells the codes of circuits apart (`codeCheck_e
 * `Cslib.Circuits.Boolean.computableTidilyInPolyTime_readCertificate`,
   `Cslib.Circuits.Boolean.computableTidilyInPolyTime_codeCheck`: reading certificates and checking
   codes are polynomial-time.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 6.1][AroraBarak09]
 -/
 
 @[expose] public section

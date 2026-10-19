@@ -49,7 +49,8 @@ clause and the conjunction of the finished clauses at fixed offsets from the end
   exactly when the formula is.
 * `Cslib.Complexity.SAT.polyTimeReducible_CircuitSAT`: `SAT` reduces to `CircuitSAT` in
   polynomial time.
-* `Cslib.Complexity.CircuitSAT_npComplete`: circuit satisfiability is `NP`-complete.
+* `Cslib.Complexity.CircuitSAT_npHard`, `Cslib.Complexity.CircuitSAT_npComplete`: circuit
+  satisfiability is `NP`-hard and `NP`-complete.
 
 ## References
 
@@ -83,17 +84,11 @@ def verifier (p : (Σ n, Circuit signature n 1) × List Bool) : Bool :=
 /-- `CircuitSAT.verifier` verifies `CircuitSAT` with certificates as long as the encoded
 circuit. -/
 theorem isVerifier : IsVerifier (encCircuit 1) Polynomial.X verifier CircuitSAT := by
-  intro c
-  simp only [mem_CircuitSAT, Polynomial.eval_X, verifier]
-  constructor
-  · rintro ⟨x, hx⟩
-    refine ⟨List.ofFn x ++ List.replicate ((encCircuit 1 c).length - c.1) false, ?_, ?_⟩
-    · simp [Nat.add_sub_cancel' (le_length_encCircuit c)]
-    · convert hx using 3 with i
-      rw [List.getD_append _ _ _ _ (by simp), List.getD_eq_getElem _ _ (by simp),
-        List.getElem_ofFn]
-  · rintro ⟨w, -, hw⟩
-    exact ⟨_, hw⟩
+  refine IsVerifier.of_padding (fun c w _ hw => ⟨_, hw⟩) fun c ⟨x, hx⟩ => ?_
+  refine ⟨List.ofFn x, by simpa using le_length_encCircuit c, fun k => ?_⟩
+  rw [verifier]
+  convert hx using 3 with i
+  rw [List.getD_append _ _ _ _ (by simp), List.getD_eq_getElem _ _ (by simp), List.getElem_ofFn]
 
 /-- The verifier evaluates the code of the circuit on the first bits of the certificate. -/
 theorem verifier_eq_evalOutput (p : (Σ n, Circuit signature n 1) × List Bool) :
@@ -179,7 +174,7 @@ theorem isCodeFrom_circuitBlock {n k i : ℕ} (b e : Bool) (hi : e = false → i
   · simp [circuitBlock, Program.IsCodeFrom]
     omega
 
-theorem isCodeFrom_flatMap (φ : CNF ℕ) (steps : List (Literal ℕ × Bool)) (k : ℕ)
+theorem isCodeFrom_circuitBlocks (φ : CNF ℕ) (steps : List (Literal ℕ × Bool)) (k : ℕ)
     (h : ∀ s ∈ steps, s.2 = false → s.1.1 ∈ φ.vars) :
     Program.IsCodeFrom signature φ.vars.length (3 * k + 3) ((steps.zipIdx k).flatMap fun s =>
       circuitBlock (φ.vars.length + 3 * s.2) (φ.vars.idxOf s.1.1.1) s.1.1.2 s.1.2) := by
@@ -209,7 +204,7 @@ theorem isSome_ofCode_circuitCode (φ : CNF ℕ) :
   refine ⟨?_, rfl, ?_⟩
   · rw [circuitCode, circuitGates, Program.isCodeFrom_append]
     refine ⟨by simp [Program.IsCodeFrom], ?_⟩
-    simpa using isCodeFrom_flatMap φ (circuitSteps φ) 0 fun s hs =>
+    simpa using isCodeFrom_circuitBlocks φ (circuitSteps φ) 0 fun s hs =>
       mem_vars_of_mem_circuitSteps hs
   · simp [circuitCode, length_circuitGates]
     omega

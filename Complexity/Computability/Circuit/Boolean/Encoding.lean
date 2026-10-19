@@ -84,34 +84,34 @@ namespace Wire
 
 /-- Wires numbered inputs first: input `i` is `i` and gate `j` is `inputCount + j`, the order of
 `Circuit.trace`. -/
-def finEquiv (inputCount gateCount : ℕ) :
+def equivFin (inputCount gateCount : ℕ) :
     Wire inputCount gateCount ≃ Fin (inputCount + gateCount) :=
   (equiv inputCount gateCount).trans finSumFinEquiv
 
-@[simp] theorem finEquiv_input (i : Fin n) : finEquiv n k (input i) = Fin.castAdd k i := rfl
+@[simp] theorem equivFin_input (i : Fin n) : equivFin n k (input i) = Fin.castAdd k i := rfl
 
-@[simp] theorem finEquiv_gate (j : Fin k) : finEquiv n k (gate j) = Fin.natAdd n j := rfl
+@[simp] theorem equivFin_gate (j : Fin k) : equivFin n k (gate j) = Fin.natAdd n j := rfl
 
 /-- The number of a wire: input `i` is `i` and gate `j` is `inputCount + j`. -/
-def toNat (w : Wire n k) : ℕ := (finEquiv n k w).val
+def toNat (w : Wire n k) : ℕ := (equivFin n k w).val
 
 @[simp] theorem toNat_input (i : Fin n) : (input i : Wire n k).toNat = i := rfl
 
 @[simp] theorem toNat_gate (j : Fin k) : (gate j : Wire n k).toNat = n + j := rfl
 
-theorem toNat_lt (w : Wire n k) : w.toNat < n + k := (finEquiv n k w).isLt
+theorem toNat_lt (w : Wire n k) : w.toNat < n + k := (equivFin n k w).isLt
 
 /-- The wire with number `i`, for `i < inputCount + gateCount`. -/
-def ofNat (i : ℕ) (h : i < n + k) : Wire n k := (finEquiv n k).symm ⟨i, h⟩
+def ofNat (i : ℕ) (h : i < n + k) : Wire n k := (equivFin n k).symm ⟨i, h⟩
 
 @[simp] theorem ofNat_toNat (w : Wire n k) : ofNat w.toNat w.toNat_lt = w :=
-  (finEquiv n k).symm_apply_apply w
+  (equivFin n k).symm_apply_apply w
 
 @[simp] theorem toNat_ofNat (i : ℕ) (h : i < n + k) : (ofNat i h : Wire n k).toNat = i := by
   simp [ofNat, toNat]
 
 theorem toNat_injective : Function.Injective (toNat : Wire n k → ℕ) :=
-  fun _ _ h => (finEquiv n k).injective (Fin.ext h)
+  fun _ _ h => (equivFin n k).injective (Fin.ext h)
 
 end Wire
 
