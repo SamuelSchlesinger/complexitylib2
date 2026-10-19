@@ -40,7 +40,7 @@ the number `n` of distinct declared vertices (`Graph.vertexCoverNum_eq`). For a 
 clauses of exactly three literals (`Cslib.Complexity.GapExactThreeSAT`), Karp's graph has `n = 3 m`
 vertices, a satisfiable formula has a cover of `2 m` vertices, and if every assignment satisfies at
 most `s * m` clauses every cover has at least `(3 - s) * m = (1 + (1 - s) / 2) * 2 m` vertices
-[Arora and Barak, Section 11.1][AroraBarak09].
+[Arora and Barak, Chapter 11][AroraBarak09].
 
 From the gap `1 - 1 / (3 * 2 ^ 77)` of MAX-3SAT (`Cslib.Complexity.GapThreeSAT_npHard`), it is
 NP-hard to approximate the independence number and the clique number within `1 - 1 / (3 * 2 ^ 77)`
