@@ -224,6 +224,10 @@ public import Complexity.Computability.Complexity.Classes.Hierarchy
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
+public import Complexity.Computability.Complexity.Classes.Oracle
+public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
+public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
+public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
