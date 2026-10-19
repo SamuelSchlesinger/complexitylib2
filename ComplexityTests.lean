@@ -208,6 +208,7 @@ import ComplexityTests.RationalHitting.Determinant
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
+import ComplexityTests.Reingold
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
