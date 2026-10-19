@@ -495,7 +495,7 @@ def shortDesc (x : List Bool) : Bool := decide (2 ^ (unframe x).length ≤ x.len
 
 /-- Shortness compares the length of the description with the number of binary digits of the
 length of the word. -/
-theorem shortDesc_iff (x : List Bool) :
+theorem shortDesc_eq_decide (x : List Bool) :
     shortDesc x = decide ((unframe x).length + 1 ≤ (encNat x.length).length) := by
   rw [shortDesc, encNat_apply, Nat.size_eq_bits_len]
   exact decide_eq_decide.mpr (Nat.lt_size.symm.trans Nat.lt_iff_add_one_le)
@@ -523,7 +523,7 @@ theorem computableTidilyInO_shortDesc :
     simp only [Function.comp_apply, length_encPair, encUnary_apply,
       List.length_replicate] at h₁ h₂ ⊢
     omega
-  · simp only [Function.comp_apply, shortDesc_iff]
+  · simp only [Function.comp_apply, shortDesc_eq_decide]
 
 /-- The space of the universal run grows with the number of steps. -/
 theorem runBound_le_succ (D N J : ℕ) : runBound D N J ≤ runBound D N (J + 1) := by
