@@ -11,7 +11,7 @@ public import Complexity.Computability.Communication.Randomized
 public import Complexity.Computability.Communication.Rectangle
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Mathlib.Data.Matrix.Mul
-import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
+import Complexity.Foundations.BooleanAnalysis.HadamardRectangles
 import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Probability.PMF
 import Mathlib.Tactic.Linarith
@@ -20,30 +20,24 @@ import Mathlib.Tactic.Positivity
 /-!
 # The discrepancy bound and the inner product
 
-Sums over the inputs of a protocol split into sums over the rectangles of its leaves
-(`Protocol.sum_eq_sum_leaves`). Two lower-bound methods follow.
+The *discrepancy* of `f : X → Y → Bool` under a distribution `ν` on `X × Y` is the largest
+imbalance `|ν(S ∩ f⁻¹ false) - ν(S ∩ f⁻¹ true)|` over rectangles `S = A × B` (`discrepancy`)
+[Kushilevitz and Nisan, Chapter 3][KushilevitzNisan1997]. The output of a protocol is constant on
+each leaf rectangle, so its correlation with `f` under `ν`, which is `1 - 2 ε` for a protocol
+erring with probability `ε` on inputs drawn from `ν`, is at most the number of leaves times the
+discrepancy (`Protocol.abs_sum_mul_signVal_le`, splitting the sum by
+`Protocol.sum_eq_sum_leaves`). Hence a protocol sending `c` bits with error `1 / 2 - γ` under `ν`
+has `2 γ ≤ 2 ^ c disc_ν(f)` (`Protocol.two_mul_le_two_pow_mul_discrepancy`), and by averaging the
+same holds for public-coin protocols with error `1 / 2 - γ` on every input
+(`PublicCoin.two_mul_le_two_pow_mul_discrepancy`).
 
-*The weighted area bound.* If `f` is constantly `z` only on rectangles of weight at most `K`, the
-inputs where `f` is `z` have weight at most `K` times the number of leaves labelled `z`, for every
-protocol computing `f` (`Protocol.sum_filter_le_mul`); counting every input once is the area
-bound `Protocol.card_filter_le_mul`.
-
-*The discrepancy bound.* The *discrepancy* of `f : X → Y → Bool` under a distribution `ν` on
-`X × Y` is the largest imbalance `|ν(S ∩ f⁻¹ false) - ν(S ∩ f⁻¹ true)|` over rectangles
-`S = A × B` (`discrepancy`) [Kushilevitz and Nisan, Chapter 3][KushilevitzNisan1997]. The output
-of a protocol is constant on each leaf rectangle, so its correlation with `f` under `ν`, which is
-`1 - 2 ε` for a protocol erring with probability `ε` on inputs drawn from `ν`, is at most the
-number of leaves times the discrepancy (`Protocol.abs_sum_mul_signVal_le`). Hence a protocol
-sending `c` bits with error `1 / 2 - γ` under `ν` has `2 γ ≤ 2 ^ c disc_ν(f)`
-(`Protocol.two_mul_le_two_pow_mul_discrepancy`), and by averaging the same holds for public-coin
-protocols with error `1 / 2 - γ` on every input (`PublicCoin.two_mul_le_two_pow_mul_discrepancy`).
-
-*The inner product.* Lindsey's lemma (`Matrix.sq_sum_bilinear_mul_two_pow_rank_le`) bounds the
+For the inner product, Lindsey's lemma (`Matrix.sq_sum_bilinear_mul_two_pow_rank_le`) bounds the
 signed sum of the inner product modulo two over a rectangle `A × B` of `n`-bit strings by
 `√(|A| |B| 2 ^ n)` (`BitString.sq_sum_signVal_dotProduct_le`), so under the uniform distribution
 the inner product has discrepancy at most `2 ^ (-n / 2)`
 (`discrepancy_dotProduct_sq_mul_two_pow_le`). So public-coin protocols for the inner product with
-error `1 / 2 - γ` send `c` bits with `(2 γ)² 2 ^ n ≤ 4 ^ c`, and with error `1 / 3` at least
+error `1 / 2 - γ` send `c` bits with `(2 γ)² 2 ^ n ≤ 4 ^ c`
+(`PublicCoin.Solves.sq_mul_two_pow_le_four_pow_of_dotProduct`), and with error `1 / 3` at least
 `(n - 3) / 2` bits: `R(IP) = Ω(n)` (`PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three`)
 [Chor and Goldreich][ChorGoldreich1988].
 
@@ -53,12 +47,8 @@ error `1 / 2 - γ` send `c` bits with `(2 γ)² 2 ^ n ≤ 4 ^ c`, and with error
 
 ## Main results
 
-* `Cslib.Communication.Protocol.sum_eq_sum_leaves`: sums over the leaf rectangles.
-* `Cslib.Communication.Protocol.sum_filter_le_mul`: the weighted area bound.
 * `Cslib.Communication.Protocol.two_mul_le_two_pow_mul_discrepancy`,
   `Cslib.Communication.PublicCoin.two_mul_le_two_pow_mul_discrepancy`: the discrepancy bound.
-* `Cslib.BitString.sq_sum_signVal_dotProduct_le`: Lindsey's lemma for signed sums of the inner
-  product over rectangles.
 * `Cslib.Communication.discrepancy_dotProduct_sq_mul_two_pow_le`: the discrepancy of the inner
   product.
 * `Cslib.Communication.PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three`,
@@ -80,50 +70,6 @@ namespace Cslib.Communication
 open Finset BitString Probability
 
 variable {X Y Z : Type*}
-
-/-! ### Sums over leaf rectangles -/
-
-namespace Protocol
-
-variable [Fintype X] [Fintype Y]
-
-open Classical in
-/-- **Sums over leaf rectangles.** A sum over all pairs of inputs is the sum, over the leaves of a
-protocol, of the sums over their rectangles. -/
-theorem sum_eq_sum_leaves {M : Type*} [AddCommMonoid M] (p : Protocol X Y Z) (g : X → Y → M) :
-    ∑ x, ∑ y, g x y =
-      ∑ i, ∑ x with x ∈ p.leafAlice i, ∑ y with y ∈ p.leafBob i, g x y := by
-  rw [← Fintype.sum_prod_type', ← sum_fiberwise univ (fun q : X × Y => p.leaf q.1 q.2)]
-  refine sum_congr rfl fun i _ => ?_
-  rw [← sum_product']
-  refine sum_congr ?_ fun _ _ => rfl
-  ext q
-  simp [leaf_eq_iff]
-
-/-- **The weighted area bound.** If `f` is constantly `z` only on rectangles of weight at most `K`
-under `w`, then for every protocol computing `f` the inputs where `f` is `z` have weight at most
-`K` times the number of leaves labelled `z`. The weights may be negative. -/
-theorem sum_filter_le_mul [DecidableEq Z] {p : Protocol X Y Z} {f : X → Y → Z} (hp : p.run = f)
-    (z : Z) (w : X → Y → ℝ) {K : ℝ}
-    (hK : ∀ (A : Finset X) (B : Finset Y), (∀ x ∈ A, ∀ y ∈ B, f x y = z) →
-      ∑ x ∈ A, ∑ y ∈ B, w x y ≤ K) :
-    ∑ q : X × Y with f q.1 q.2 = z, w q.1 q.2 ≤ #{i | p.leafOutput i = z} * K := by
-  classical
-  rw [sum_filter, Fintype.sum_prod_type' (fun x y => if f x y = z then w x y else 0),
-    p.sum_eq_sum_leaves, card_eq_sum_ones, Nat.cast_sum, sum_mul, sum_filter]
-  refine sum_le_sum fun i _ => ?_
-  have hrect : ∀ x ∈ ({x | x ∈ p.leafAlice i} : Finset X),
-      ∀ y ∈ ({y | y ∈ p.leafBob i} : Finset Y), f x y = p.leafOutput i := fun x hx y hy => by
-    rw [← hp, run_eq_leafOutput (mem_filter.mp hx).2 (mem_filter.mp hy).2]
-  split_ifs with hi
-  · rw [Nat.cast_one, one_mul]
-    refine le_of_eq_of_le (sum_congr rfl fun x hx => sum_congr rfl fun y hy => ?_)
-      (hK _ _ fun x hx y hy => (hrect x hx y hy).trans hi)
-    simp [(hrect x hx y hy).trans hi]
-  · refine (sum_eq_zero fun x hx => sum_eq_zero fun y hy => ?_).le
-    simp [hrect x hx y hy, hi]
-
-end Protocol
 
 /-! ### Discrepancy -/
 
@@ -211,7 +157,7 @@ theorem sum_mul_signVal_eq [Fintype X] [Fintype Y] (p : Protocol X Y Bool) (ν :
   rw [mul_assoc, signVal_mul_signVal]
   by_cases h : f q.1 q.2 = p.run q.1 q.2
   · simp [h]
-  · simp [h]
+  · simp only [h, ite_false, Set.mem_ofPred_eq, not_false_eq_true, ite_true]
     ring
 
 /-- **The discrepancy bound** for deterministic protocols: a protocol erring with probability at
@@ -256,30 +202,6 @@ end PublicCoin
 
 /-! ### The inner product -/
 
-/-- **Lindsey's lemma for the inner product**: the signed sum of the inner product modulo two over
-a rectangle `A × B` of bit strings indexed by `ι` is at most `√(|A| |B| 2 ^ |ι|)` in absolute
-value. -/
-theorem _root_.Cslib.BitString.sq_sum_signVal_dotProduct_le {ι : Type*} [Fintype ι]
-    (A B : Finset (ι → Bool)) :
-    (∑ x ∈ A, ∑ y ∈ B, signVal (x ⬝ᵥ y)) ^ 2 ≤ #A * #B * 2 ^ Fintype.card ι := by
-  classical
-  let e : Bool ≃+* ZMod 2 := (ZMod.ringEquivOfPrime Bool Nat.prime_two (by decide)).symm
-  let g : (ι → Bool) ↪ (ι → ZMod 2) :=
-    ⟨fun x i => e (x i), fun _ _ h => funext fun i => e.injective (congrFun h i)⟩
-  have hdot (x y : ι → Bool) : g x ⬝ᵥ g y = e (x ⬝ᵥ y) :=
-    (e.toRingHom.map_dotProduct x y).symm
-  have hsign (b : Bool) : (-1 : ℝ) ^ (e b).val = signVal b := by
-    cases b <;> norm_num [show false = (0 : Bool) from rfl,
-      show true = (1 : Bool) from rfl, show (1 : ZMod 2).val = 1 from rfl, signVal]
-  have hL := Matrix.sq_sum_bilinear_mul_two_pow_rank_le
-    (1 : Matrix ι ι (ZMod 2)) (A.map g) (B.map g) (fun _ => 1) (fun _ => 1)
-    (fun _ => by norm_num) (fun _ => by norm_num)
-  simp only [sum_map, Matrix.one_mulVec, Matrix.rank_one, card_map, one_mul, hdot,
-    hsign] at hL
-  have hp : (0 : ℝ) < 2 ^ Fintype.card ι := by positivity
-  refine (mul_le_mul_iff_left₀ hp).mp ?_
-  linarith
-
 /-- **The inner product has discrepancy at most `2 ^ (-n / 2)`** under the uniform distribution on
 pairs of `n`-bit strings, in the form `disc² · 2 ^ n ≤ 1`. -/
 theorem discrepancy_dotProduct_sq_mul_two_pow_le (n : ℕ) :
@@ -313,7 +235,7 @@ theorem discrepancy_dotProduct_sq_mul_two_pow_le (n : ℕ) :
 /-- **Randomized protocols for the inner product**: a public-coin protocol computing the inner
 product modulo two of two `n`-bit strings with error at most `1 / 2 - γ`, for `γ ≥ 0`, and sending
 at most `c` bits has `(2 γ)² 2 ^ n ≤ 4 ^ c`. -/
-theorem PublicCoin.Solves.sq_mul_two_pow_le_four_pow {n c : ℕ} {γ : ℝ}
+theorem PublicCoin.Solves.sq_mul_two_pow_le_four_pow_of_dotProduct {n c : ℕ} {γ : ℝ}
     {μ : PublicCoin (BitString n) (BitString n) Bool}
     (hμ : μ.Solves (1 / 2 - γ) (fun x y b => x ⬝ᵥ y = b) Set.univ Set.univ) (hc : μ.depth ≤ c)
     (hγ : 0 ≤ γ) : (2 * γ) ^ 2 * 2 ^ n ≤ 4 ^ c := by
@@ -341,7 +263,7 @@ theorem PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three (n : ℕ) :
     obtain ⟨μ, hμ, hc⟩ := PublicCoin.ecomplexity_le_iff.mp h.le
     have hμ' : μ.Solves (1 / 2 - 1 / 6) (fun x y b => x ⬝ᵥ y = b) Set.univ Set.univ :=
       hμ.mono (by norm_num) subset_rfl subset_rfl
-    have hbound := hμ'.sq_mul_two_pow_le_four_pow hc (by norm_num)
+    have hbound := hμ'.sq_mul_two_pow_le_four_pow_of_dotProduct hc (by norm_num)
     have hreal : (2 : ℝ) ^ n ≤ 9 * 4 ^ c := by nlinarith
     have hnat : 2 ^ n < 2 ^ (2 * c + 4) := by
       have : 2 ^ n ≤ 9 * 4 ^ c := by exact_mod_cast hreal

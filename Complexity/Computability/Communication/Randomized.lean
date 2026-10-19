@@ -11,6 +11,7 @@ public import Complexity.Computability.Communication.Protocol
 public import Cslib.Foundations.Data.BitString
 public import Cslib.Probability.PMF
 public import Mathlib.Basic.Real.Basic
+import Complexity.Probability.Minimax
 import Complexity.Probability.PMF
 import Mathlib.Order.SuccPred.ENat
 
@@ -39,9 +40,10 @@ random bits from public coins (`PrivateCoin.toPublicCoin`,
 
 If a public-coin protocol has error at most `ε` on every pair of inputs from `A × B`, then for every
 distribution `ν` on `A × B` some protocol it can draw has error at most `ε` on inputs drawn from `ν`
-(`PublicCoin.Solves.exists_distributionalError_le`). This averaging argument is the easy direction
-of Yao's principle [Yao1977], and turns lower bounds on deterministic protocols over a distribution
-into lower bounds on randomized ones.
+(`PublicCoin.Solves.exists_distributionalError_le`). This averaging argument
+(`Probability.PMF.exists_mem_support_toOuterMeasure_le`) is the easy direction of Yao's principle
+[Yao1977], and turns lower bounds on deterministic protocols over a distribution into lower bounds
+on randomized ones.
 
 ## Main definitions
 
@@ -154,48 +156,9 @@ theorem solves_pure (hp : p.Solves R A B) (hε : 0 ≤ ε) :
 errs with probability at most `ε` on inputs drawn from `ν`. -/
 theorem Solves.exists_distributionalError_le (h : μ.Solves ε R A B) (ν : PMF (X × Y))
     (hν : ∀ q ∈ ν.support, q.1 ∈ A ∧ q.2 ∈ B) :
-    ∃ p ∈ μ.support, p.distributionalError ν R ≤ ε := by
-  classical
-  obtain ⟨q₀, hq₀⟩ := ν.support_nonempty
-  have hε : 0 ≤ ε := errorProb_nonneg.trans (h _ (hν q₀ hq₀).1 _ (hν q₀ hq₀).2)
-  -- The error of the protocol drawn from `μ`, averaged over `ν`, is at most `ε`.
-  set err : Protocol X Y Z → ENNReal := fun p => ν.toOuterMeasure {q | ¬R q.1 q.2 (p.run q.1 q.2)}
-  have havg : ∑' p, μ p * err p ≤ ENNReal.ofReal ε := by
-    have hswap : ∑' p, μ p * err p =
-        ∑' q, ν q * μ.toOuterMeasure {p | ¬R q.1 q.2 (p.run q.1 q.2)} := by
-      simp only [err, PMF.toOuterMeasure_apply, Set.indicator_apply, Set.mem_ofPred_eq,
-        ← ENNReal.tsum_mul_left]
-      rw [ENNReal.tsum_comm]
-      refine tsum_congr fun q => tsum_congr fun p => ?_
-      split_ifs <;> simp [mul_comm]
-    rw [hswap]
-    calc ∑' q, ν q * μ.toOuterMeasure {p | ¬R q.1 q.2 (p.run q.1 q.2)}
-        ≤ ∑' q, ν q * ENNReal.ofReal ε := by
-          refine ENNReal.tsum_le_tsum fun q => ?_
-          by_cases hq : q ∈ ν.support
-          · gcongr
-            rw [← ENNReal.ofReal_toReal (PMF.toOuterMeasure_ne_top μ _)]
-            exact ENNReal.ofReal_le_ofReal (h _ (hν q hq).1 _ (hν q hq).2)
-          · simp [(PMF.apply_eq_zero_iff ν q).mpr hq]
-      _ = ENNReal.ofReal ε := by rw [ENNReal.tsum_mul_right, ν.tsum_coe, one_mul]
-  -- Some protocol in the support does at least as well as the average.
-  obtain ⟨p, hp, hle⟩ : ∃ p ∈ μ.support, err p ≤ ∑' p, μ p * err p := by
-    by_contra! hlt
-    obtain ⟨p₀, hp₀⟩ := μ.support_nonempty
-    have htop : ∑' p, μ p * err p ≠ ⊤ := ne_top_of_lt (hlt p₀ hp₀)
-    have := ENNReal.tsum_lt_tsum (f := fun p => μ p * ∑' p, μ p * err p)
-      (g := fun p => μ p * err p) (i := p₀)
-      (by rwa [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul])
-      (fun p => by
-        by_cases hp : p ∈ μ.support
-        · gcongr
-          exact (hlt p hp).le
-        · simp [(PMF.apply_eq_zero_iff μ p).mpr hp])
-      (ENNReal.mul_lt_mul_right ((PMF.mem_support_iff μ p₀).mp hp₀) (PMF.apply_ne_top μ p₀)
-        (hlt p₀ hp₀))
-    rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul] at this
-    exact lt_irrefl _ this
-  exact ⟨p, hp, ENNReal.toReal_le_of_le_ofReal hε (hle.trans havg)⟩
+    ∃ p ∈ μ.support, p.distributionalError ν R ≤ ε :=
+  PMF.exists_mem_support_toOuterMeasure_le μ ν (fun p q => ¬R q.1 q.2 (p.run q.1 q.2))
+    fun q hq => h _ (hν q hq).1 _ (hν q hq).2
 
 theorem ecomplexity_le_depth (h : μ.Solves ε R A B) : ecomplexity ε R A B ≤ μ.depth :=
   iInf_le (fun μ : {μ : PublicCoin X Y Z // μ.Solves ε R A B} => μ.1.depth) ⟨μ, h⟩
