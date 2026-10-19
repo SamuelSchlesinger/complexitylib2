@@ -107,8 +107,8 @@ of the handover. The work below remains available for subsequent, independently 
 
 1. **First-order reductions and projections, with machine and uniformity bridges.** Complete
    these milestones in order of their dependencies. Each requires public Lean results, a
-   nonvacuous client, an exposition of the proof, and independent mathematical, API and
-   proof-translation reviews of the completed revision.
+   nonvacuous client, a theorem-index entry, and independent mathematical, API and
+   statement-index reviews of the completed revision.
 
    - [ ] **FO reductions and projections.** Build on
      [FO.Interpretation](Complexity/Logics/FirstOrder/Interpretation.lean), its truth-preserving
@@ -262,7 +262,7 @@ These do not include an efficient anti-checker generator or a hardness-magnifica
 ## Finishing the recovered developments
 
 Complete bounded endpoints on ordinary branches, with the six checks and independent API,
-correctness and proof-translation reviews before closing a milestone. Retain the FO-reduction
+correctness and statement-index reviews before closing a milestone. Retain the FO-reduction
 and machine-characterization priorities above. Start the continuation with the existing
 sparse-counter source proofs; then close the native NL complement theorem. The Arthur–Merlin
 and hardness-amplification developments have their own prerequisites and should be split at the

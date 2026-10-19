@@ -126,26 +126,25 @@ following [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
   non-vacuous, do definitions match the cited literature. Reviewers report findings; fixes are
   made separately.
 
-## Human-readable proof exposition
+## Human-readable theorem index
 
-`paper/main.tex` is the human-readable companion to the Lean proofs. Its purpose is to
-translate the arguments actually used in Lean, including definitions, hypotheses, intermediate
-lemmas and quantitative reasoning. Explain dependencies through precise declaration links and
-credit mathematical sources and earlier formalizations. Do not substitute a different textbook
-proof or describe an unproved endpoint as complete.
+`paper/main.tex` is a curated index of proved statements, not a translation of proof bodies.
+Each entry states the result, its hypotheses, model and quantitative bounds, important scope
+limitations, and links to exact Lean declarations. Credit mathematical sources and earlier
+formalizations. Do not describe an unproved endpoint as complete; keep outstanding work in
+`ROADMAP.md`. Preserve Samuel's editorial choices.
 
-Before opening or updating **every AI-authored PR**, synchronize the affected paper exposition
-with the final Lean changes. A proof change needs corresponding prose even when its theorem
-statement is unchanged. Add a proof section when a changed mathematical development is not yet
-covered; repair source links after moves or renames. For changes with no mathematical or
-expository effect, explicitly explain that assessment in the PR instead of making cosmetic edits.
+Before opening or updating **every AI-authored PR**, check the index against the final Lean
+changes. Update affected statements, assumptions, limitations and links, and add entries for
+new headline results. Proof-only refactors with unchanged statements and scope need no prose
+rewrite; explicitly record the no-impact assessment in the PR, as for other unaffected changes.
+The index is curated, so internal helper lemmas do not each need an entry.
 
-Obtain an independent AI review of the changed translation against the final Lean definitions,
-statements and proof bodies. Record the reviewed revisions, scope, findings and resolutions in
-the PR. This supplements the API and correctness reviews; it is not a Lean proof that the prose
-is equivalent. Build the PDF, inspect the rendered pages, and verify declaration links. Preserve
-Samuel's editorial choices and keep proposed or unreviewed coverage visibly distinct from
-reviewed exposition.
+Obtain an independent AI review of changed entries against the final Lean definitions and
+statements, checking quantifiers, models and resource bounds. Record the reviewed revisions,
+scope, findings and resolutions in the PR. This supplements the API and correctness reviews;
+it is not a Lean proof that the prose is equivalent. Build the PDF, inspect the rendered pages,
+and verify declaration links. Do not imply human editorial approval from an AI review.
 
 ## Design commitments (do not re-litigate casually)
 
