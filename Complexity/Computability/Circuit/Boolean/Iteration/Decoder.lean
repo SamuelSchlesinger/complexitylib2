@@ -72,7 +72,7 @@ theorem hitValue_spec (f : BitString n → BitString n) (T K d : ℕ) (x : BitSt
     · change (BitVec.ofNat w d).toNat ≤ (BitVec.ofNat w K).toNat
       simpa only [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hK,
         Nat.mod_eq_of_lt (hd.trans_lt hK)] using hd
-  rw [hitValue, selectBits_of_toNat_lt _ _ (by omega) (by rw [he]; omega)]
+  rw [hitValue, selectBits_of_toNat_lt _ _ (by rw [he]; omega)]
   simp only [he, ← Function.iterate_add_apply]
   congr 1
   omega
@@ -85,8 +85,7 @@ theorem repeatedValue_spec (f : BitString n → BitString n) (T K i j : ℕ) (x 
   have hs := repeatWordIndex_spec (f := f) (x := x)
     (BitVec.ofNat w i) (BitVec.ofNat w j) (by rwa [hiw, hjw]) (by rwa [hjw]) hK hT
     (by rwa [hiw, hjw])
-  rw [repeatedValue, selectBits_of_toNat_lt _ _ (by omega)
-    (by have := hs.2.1; rw [hjw] at this; omega)]
+  rw [repeatedValue, selectBits_of_toNat_lt _ _ (by have := hs.2.1; rw [hjw] at this; omega)]
   exact hs.2.2
 
 /-- A witness pair determines the state at time `T`. -/

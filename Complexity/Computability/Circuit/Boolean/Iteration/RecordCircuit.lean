@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.Record
 public import Complexity.Computability.Circuit.Synthesis
+public import Complexity.Computability.Circuit.Boolean.Equality
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -49,15 +50,24 @@ variable {n w R : ℕ}
 def wires {m : ℕ} (a : BitString n → BitString m) : Set (BooleanFunction n) :=
   Set.range fun i x => a x i
 
+/-- Equality of two available bit strings, by the native equality formula. -/
 theorem synthesis_bits_eq {m : ℕ} (s : Set (BooleanFunction n))
     (a b : BitString n → BitString m) (ha : wires a ⊆ s) (hb : wires b ⊆ s) :
     Synthesis interpretation s {fun x => decide (a x = b x)} (6 * m + 1) := by
-  have h := Synthesis.word_eq (s := s) (fun x => word (a x)) (fun x => word (b x))
-    (fun i => by simpa using ha ⟨i, rfl⟩) fun i => by simpa using hb ⟨i, rfl⟩
-  have he (x : BitString n) : word (a x) = word (b x) ↔ a x = b x :=
-    ⟨fun h => funext fun i => by simpa using congrArg (fun v : BitVec m => v.getLsbD i.val) h,
-      congrArg word⟩
-  simpa only [he] using h
+  have h := Synthesis.circuit (I := interpretation) (s := s)
+    (Formula.equalBits (Fin.castAdd m) (Fin.natAdd m)).toCircuit
+    (Fin.append (fun i x => a x i) fun i x => b x i) fun i => by
+      induction i using Fin.addCases with
+      | left i => simpa only [Fin.append_left] using ha ⟨i, rfl⟩
+      | right i => simpa only [Fin.append_right] using hb ⟨i, rfl⟩
+  refine h.mono Set.Subset.rfl ?_ (by simp)
+  rintro _ rfl
+  refine ⟨0, funext fun x => Bool.eq_iff_iff.mpr ?_⟩
+  have hl : (fun i => Fin.append (fun i x => a x i) (fun i x => b x i) i x) ∘ Fin.castAdd m =
+      a x := funext fun i => by simp only [Function.comp_apply, Fin.append_left]
+  have hr : (fun i => Fin.append (fun i x => a x i) (fun i x => b x i) i x) ∘ Fin.natAdd m =
+      b x := funext fun i => by simp only [Function.comp_apply, Fin.append_right]
+  simp only [Formula.eval_toCircuit, Formula.eval_equalBits_iff, decide_eq_true_eq, hl, hr]
 
 theorem synthesis_bits_mux {m : ℕ} (s : Set (BooleanFunction n))
     (a b : BitString n → BitString m) (flag : BooleanFunction n)

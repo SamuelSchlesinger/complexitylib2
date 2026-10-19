@@ -112,7 +112,7 @@ def residueWord {w : ℕ} (T K : ℕ) (period : BitVec w) : BitVec w :=
 theorem residueWord_toNat {w T K : ℕ} (period : BitVec w)
     (hK : K < 2 ^ w) (hp : 0 < period.toNat) (hpK : period.toNat ≤ K) :
     (residueWord T K period).toNat = T % period.toNat := by
-  rw [residueWord, selectBits_of_toNat_lt _ _ (by omega) (by omega), word_getLsbD,
+  rw [residueWord, selectBits_of_toNat_lt _ _ (by omega), word_getLsbD,
     BitVec.toNat_ofNat]
   exact Nat.mod_eq_of_lt ((Nat.mod_lt _ hp).trans_le (hpK.trans hK.le))
 

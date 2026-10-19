@@ -29,14 +29,21 @@ example : ∃ c : Circuit signature 4 2,
         word (fun j : Fin 2 => x ⟨j + 2, by omega⟩)).getLsbD i.val) ∧ c.size ≤ 25 :=
   (Synthesis.word_add (s := inputs 4) (fun x => word fun j : Fin 2 => x ⟨j, by omega⟩)
     (fun x => word fun j : Fin 2 => x ⟨j + 2, by omega⟩)
-    (fun i => ⟨⟨i, by omega⟩, by funext x; simp⟩)
-    (fun i => ⟨⟨i + 2, by omega⟩, by funext x; simp⟩)).exists_circuit_outputs
+    (fun i => ⟨⟨i, by omega⟩, funext fun x =>
+      (getLsbD_word (fun j : Fin 2 => x ⟨j, by omega⟩) i).symm⟩)
+    (fun i => ⟨⟨i + 2, by omega⟩, funext fun x =>
+      (getLsbD_word (fun j : Fin 2 => x ⟨j + 2, by omega⟩) i).symm⟩)).exists_circuit_outputs
 
 -- Table selection is exact in range and all-false out of range.
 example : selectBits (BitVec.ofNat 2 1) ![![true, false], ![false, true]] = ![false, true] := by
   decide
 
 example : selectBits (BitVec.ofNat 2 3) ![![true, false], ![false, true]] = ![false, false] := by
+  decide
+
+-- Positions beyond the index range are never selected, so oversized tables do not alias.
+example : selectBits (BitVec.ofNat 1 0) ![![true, false], ![false, false], ![false, true]] =
+    ![true, false] := by
   decide
 
 /-! ### Residues and records -/
