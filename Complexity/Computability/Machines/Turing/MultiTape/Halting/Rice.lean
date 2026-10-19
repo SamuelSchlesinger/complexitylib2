@@ -345,6 +345,105 @@ theorem stepOut_runCfg {X : List ℕ} {c : SCfg} {q : ℕ} (hq : c.state = some 
     wtape_apply_outAct, vcells, List.map_append, List.cons_append, Option.toList_none,
     List.append_nil]
 
+/-- The run of the description of `tm` on the input `x`, with its output. -/
+noncomputable def run (x : List ℕ) (t : ℕ) : SCfg × List ℕ :=
+  (stepOut (desc eS eBit tm) x)^[t] (init (desc eS eBit tm), [])
+
+/-- While the description of `tm` runs, `dispatch eS tm d` runs it after writing the marker. -/
+theorem iterate_runCfg {x : List ℕ} (hx : inputSymbol x 1 ∈ bitSyms) {u : ℕ}
+    (hrun : ∀ t < u, ∃ q e, (run eS tm x t).1.state = some q ∧
+      (desc eS eBit tm).table.find? (·.1 = (run eS tm x t).1.key x q) = some e ∧
+      e.2.workTapes.length ≤ (run eS tm x t).1.workTapes.length) :
+    ∀ t ≤ u, (stepOut (dispatch eS tm d) x)^[t + 1] (init (dispatch eS tm d), []) =
+      (runCfg d (run eS tm x t).1 (run eS tm x t).2, []) := by
+  intro t ht
+  induction t with
+  | zero =>
+    have he : ((⟨0, inputSymbol x 1, none :: rest d k⟩,
+        ⟨.zero, [(some (some marker), .pos)], none, some (4 * eS tm.q₀ + 1)⟩) : Key × Act) ∈
+          markerEntries eS tm d ++ branchEntries d k :=
+      List.mem_append_left _ (List.mem_map.mpr ⟨_, hx, rfl⟩)
+    have hf := find?_prep eS tm d he
+    rw [show ((⟨0, inputSymbol x 1, none :: rest d k⟩ : Key)) =
+        (init (dispatch eS tm d)).key x 0 by
+      simp only [SCfg.key, init, dispatch, rest, List.replicate_succ, List.replicate_add,
+        List.map_cons, List.map_append, List.map_replicate]
+      rfl] at hf
+    rw [Function.iterate_one, stepOut, step_of_find? rfl hf]
+    simp only [init, dispatch, run, Function.iterate_zero, id, runCfg, desc, Option.elim_some,
+      Act.apply, moveInput, List.replicate_succ, applyTapes, applyTapes_nil, Option.toList_none,
+      List.append_nil, List.replicate_add]
+    rfl
+  | succ t ih =>
+    obtain ⟨q, e, hq, he, hlen⟩ := hrun t (by omega)
+    rw [Function.iterate_succ_apply', ih (by omega), stepOut_runCfg eS tm d hq he hlen]
+    simp only [run, Function.iterate_succ_apply']
+    rfl
+
+/-- **The run of `tm` on `w`, from a tidy computation**: the description of `tm` runs, with a
+transition for every key it meets, until it halts with the input head on the first symbol, blank
+work tapes and the output `b :: v`. -/
+theorem exists_run_of_computesTidily {w : List Bool} {o : List Bool} {t₀ s₀ : ℕ}
+    (htm : tm.ComputesTidilyInTimeAndSpace w o t₀ s₀) :
+    ∃ u, (∀ t < u, ∃ q e, (run eS tm (w.map eBit) t).1.state = some q ∧
+        (desc eS eBit tm).table.find? (·.1 = (run eS tm (w.map eBit) t).1.key (w.map eBit) q) =
+          some e ∧ e.2.workTapes.length ≤ (run eS tm (w.map eBit) t).1.workTapes.length) ∧
+      (run eS tm (w.map eBit) u).1.state = none ∧ (run eS tm (w.map eBit) u).1.inputPos = 1 ∧
+      (run eS tm (w.map eBit) u).1.workTapes.map Tape.read = List.replicate k none ∧
+      (run eS tm (w.map eBit) u).2 = o.map eBit := by
+  classical
+  obtain ⟨p, hhead, hlast, -, -⟩ := computesTidily_iff.mp htm
+  have hNp : tm.runFrom (tm.initCfg w) p.time = p.last := by
+    rw [initCfg_eq_wordsCfg, ← hhead]
+    exact (runPath_last_eq_runFrom p).symm
+  have hex : ∃ t, (tm.runFrom (tm.initCfg w) t).state = none := ⟨p.time, by rw [hNp, hlast]; rfl⟩
+  have hp : (tm.runFrom (tm.initCfg w) p.time).state = none := by rw [hNp, hlast]; rfl
+  have hNu : tm.runFrom (tm.initCfg w) (Nat.find hex) = wordsCfg w none (fun _ => []) o := by
+    rw [← hlast, ← hNp]
+    exact (runFrom_eq_of_halt tm _ (Nat.find_min' hex hp) (Nat.find_spec hex)).symm
+  refine ⟨Nat.find hex, fun t ht => ?_, ?_⟩
+  · obtain ⟨q, hq⟩ := Option.ne_none_iff_exists'.mp (Nat.find_min hex ht)
+    obtain ⟨h₁, h₂⟩ := toCfg_iterate eS eBit tm w t
+    have hst : (run eS tm (w.map eBit) t).1.state = some (eS q) := by
+      have := congrArg Cfg.state h₁
+      simp only [Cfg.map_state, hq, Option.map_some, SCfg.toCfg] at this
+      exact this.symm
+    have hkey : (run eS tm (w.map eBit) t).1.key (w.map eBit) (eS q) =
+        key (eS q) ((tm.runFrom (tm.initCfg w) t).inputSymbol.map eBit)
+          (Option.map eBit ∘ (tm.runFrom (tm.initCfg w) t).workTapeSymbols) := by
+      simp only [run]
+      rw [SCfg.key_eq_key_toCfg h₂ _, ← h₁, Cfg.inputSymbol_map]
+      rfl
+    refine ⟨eS q, _, hst, by rw [hkey, find?_desc], ?_⟩
+    simp [Act.ofAction, h₂.length_workTapes, run]
+  · obtain ⟨h₁, h₂⟩ := toCfg_iterate eS eBit tm w (Nat.find hex)
+    rw [hNu] at h₁
+    simp only [run]
+    generalize (stepOut (desc eS eBit tm) (w.map eBit))^[Nat.find hex]
+      (init (desc eS eBit tm), []) = c at h₁ h₂ ⊢
+    obtain ⟨hk, hle⟩ := h₂
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · have := congrArg Cfg.state h₁
+      simp only [Cfg.map_state, wordsCfg, Option.map_none, SCfg.toCfg] at this
+      exact this.symm
+    · have := congrArg (fun c => c.inputPos.val) h₁
+      simp only [Cfg.map_inputPos, wordsCfg, Fin.val_cast, SCfg.toCfg] at this
+      have h1 : (1 : Fin (w.length + 2)).val = 1 := rfl
+      rw [h1] at this
+      simp only [List.length_map] at hle this
+      omega
+    · refine List.ext_getElem (by simp [hk]) fun i hi _ => ?_
+      have hi' : i < k := by simpa [hk] using hi
+      have hi'' : i < c.1.workTapes.length := by simpa using hi
+      have hc := congrFun (congrArg (fun c => c.workTapes ⟨i, hi'⟩) h₁) c.1.workTapes[i].head
+      simp only [Cfg.map_workTapes, wordsCfg, tapeOfList_nil, Option.map_none, SCfg.toCfg,
+        List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi'', Option.getD_some] at hc
+      simp only [List.getElem_map, List.getElem_replicate, Tape.read_eq_cellAt_head]
+      exact hc.symm
+    · have := congrArg Cfg.output h₁
+      simp only [Cfg.map_output, wordsCfg, SCfg.toCfg] at this
+      exact this.symm
+
 end Dispatch
 
 end Universal
