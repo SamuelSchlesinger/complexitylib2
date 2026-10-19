@@ -23,6 +23,7 @@ the result, and so on, until `tm` produces the empty word, and then outputs the 
 the empty one. The machine keeps the current word on one work tape and the next word on another.
 A round copies the next word to the current tape and computes the new next word from it with `tm`.
 Rounds are repeated by `Turing.MultiTapePTM.repeatUntilBlank` until the next word is empty.
+The tape layout helpers are module-private, as in the deterministic construction.
 
 Each round makes exactly the oracle calls of `tm` on the current word, with the external oracle
 state left by the previous round. The final round's program returns the empty word, and the loop
@@ -45,8 +46,6 @@ then halts; no further round is executed.
 Adapts `Combinators/IterateWhile` (vendored crei:crei/tidy-universal @7f7c0696), by Christian
 Reitwiessner, and cslib's `Plumbing/RepeatUntilBlank` to probabilistic oracle machines.
 -/
-
-@[expose] public section
 
 namespace Turing.MultiTapePTM
 
@@ -163,21 +162,21 @@ theorem words_injective : Function.Injective (fun p : List Bool × List Bool =>
 /-! ### The deterministic phases -/
 
 /-- The states of `Turing.MultiTapePTM.IterateWhile.prepareRound`. -/
-abbrev PrepareState : Type :=
+public abbrev PrepareState : Type :=
   (Unit ⊕ RewindWorkState) ⊕
     (MarkWorkState ⊕ ((Unit ⊕ RewindState) ⊕ RewindWorkState) ⊕ MarkWorkState) ⊕
       (Unit ⊕ RewindWorkState)
 
 /-- The states of `Turing.MultiTapePTM.IterateWhile.finish`. -/
-abbrev FinishState : Type :=
+public abbrev FinishState : Type :=
   (MarkWorkState ⊕ (Unit ⊕ RewindState) ⊕ MarkWorkState) ⊕ (Unit ⊕ RewindWorkState)
 
 /-- The states of `Turing.MultiTapePTM.iterateWhileRound`. -/
-abbrev RoundState (State : Type) : Type :=
+public abbrev RoundState (State : Type) : Type :=
   PrepareState ⊕ (MarkWorkState ⊕ (State ⊕ RewindWorkState) ⊕ MarkWorkState)
 
 /-- The states of `Turing.MultiTapePTM.iterateWhile`. -/
-abbrev MachineState (State : Type) : Type :=
+public abbrev MachineState (State : Type) : Type :=
   ((Unit ⊕ RewindState) ⊕ RewindWorkState) ⊕
     (RepeatUntilBlankState (RoundState State) ⊕ FinishState)
 
@@ -236,14 +235,15 @@ open IterateWhile
 
 /-- One round: move the next word to the current tape, then apply `tm` from the current tape to
 the next tape, using `mark` to flag the left end of words. -/
-noncomputable def iterateWhileRound (tm : MultiTapePTM k Bool State Operation) (mark : Bool) :
+public noncomputable def iterateWhileRound (tm : MultiTapePTM k Bool State Operation)
+    (mark : Bool) :
     MultiTapePTM (k + 1 + 2) Bool (RoundState State) Operation :=
   (ofDeterministic (prepareRound k mark)).seq (tm.onWords mark)
 
 /-- `tm`, applied repeatedly while its result is non-empty, using `mark` to flag the left end of
 words: load the input to the next tape, repeat rounds until the next tape is empty, then output
 the current word and clear its tape. -/
-noncomputable def iterateWhile (tm : MultiTapePTM k Bool State Operation) (mark : Bool) :
+public noncomputable def iterateWhile (tm : MultiTapePTM k Bool State Operation) (mark : Bool) :
     MultiTapePTM (k + 1 + 2) Bool (MachineState State) Operation :=
   (ofDeterministic (loadWord Bool (nextTape k))).seq
     ((repeatUntilBlank (nextTape k) (tm.iterateWhileRound mark)).seq
@@ -278,7 +278,7 @@ rounds, and the empty word from every word reached after `r` rounds, all these w
 at most `L`, then `tm.iterateWhile mark` tidily computes `OracleComp.iterate r step`. Each round
 makes exactly the oracle calls of `tm` on its word, with the external oracle state left by the
 previous round, and no round follows the one producing the empty word. -/
-theorem ComputesTidily.iterateWhile {tm : MultiTapePTM k Bool State Operation} (mark : Bool)
+public theorem ComputesTidily.iterateWhile {tm : MultiTapePTM k Bool State Operation} (mark : Bool)
     {r t L : ℕ} {w₀ : List Bool}
     {step : List Bool → ProbOracleComp (fun _ : Operation × List Bool => List Bool) (List Bool)}
     (invariant : ℕ → List Bool → Prop) (hbase : invariant 0 w₀)

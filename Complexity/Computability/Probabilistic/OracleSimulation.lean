@@ -10,8 +10,7 @@ module
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
-import Complexity.Computability.Probabilistic.Realization.OracleSimulation
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Probabilistic.Oracle.Substitution
 
 /-!
 # Efficient stateful oracle substitution
@@ -23,7 +22,9 @@ The proof charges the native interpreter, captured inputs, requests, replies and
 
 The machine, clock, finite configurations and query bounds remain internal. Individually efficient
 calls alone do not suffice: repeatedly doubling the state does not satisfy a resource allowance
-that depends only on the caller and request.
+that depends only on the caller and request. The theorem is the closed case of open substitution
+(`Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess_open`): a sampled closed handler makes
+no external call.
 
 ## Main results
 
@@ -68,37 +69,11 @@ theorem IsOraclePPTOn.run_interpret_preprocess {Operation α β Caller State : T
       (OracleComp.interpret
         (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n)) (handler a))
           (program (prepare a))).run (initial a)) := by
-  obtain ⟨resourceCoeff, resourceDegree, hbound⟩ := hresources.polyBounded_length.exists_le
-  let allowance := fun size => resourceCoeff * (2 * size + 2) ^ resourceDegree
-  have hallowance : PolynomiallyBounded allowance := by unfold allowance; fun_prop
-  have hbound' (a : Caller) (query : List Bool) :
-      resources a query ≤ allowance ((input a).length + query.length) := by
-    have h := hbound (a, query)
-    simp only [encUnary_apply, List.length_replicate, length_encPair, encBits_apply] at h
-    exact h.trans (Nat.mul_le_mul_left resourceCoeff
-      (Nat.pow_le_pow_left (by lia) resourceDegree))
-  obtain ⟨_, k, Control, hfinite, machine, c, d, hrealize⟩ := hprogram
-  let _ := hfinite
-  have hword : ComputableTidilyInPolyTime (fun a => source (prepare a)) input encBits :=
-    hprepare.of_enc_eq (fun _ => rfl)
-  have hcount : ComputableTidilyInPolyTime
-      (fun a => c * ((source (prepare a)).length + 1) ^ d) input encUnary := by
-    have hclock : ComputableTidilyInPolyTime (fun n => c * (n + 1) ^ d) encUnary encUnary := by
-      fun_prop
-    exact hclock.comp (ComputableTidilyInPolyTime.length_bits.comp hword)
-  have hrun := OracleSimulation.isPPTOn_run machine hword hcount hhandler hinitial
-    invariant hinit hallowance (fun a request state hstate result hresult => by
-      obtain ⟨hstate', hreply, hgrowth⟩ := hpreserve a request state hstate result hresult
-      exact ⟨hstate', hreply.trans (hbound' a request.2),
-        hgrowth.trans (Nat.add_le_add_left (hbound' a request.2) _)⟩)
-  apply isPPTOn_iff_encoded.mpr
-  refine (isPPTOn_iff_encoded.mp hrun).congr ?_
-  intro a
-  have h := hrealize (prepare a) State
-    (fun request state => ProbComp.eval (handler a request state)) (initial a)
-  rw [OracleComp.interpret_map, StateT.run_map, PMF.monad_map_eq_map] at h
-  simp only [ProbComp.eval_map, ProbOracleComp.eval_run_interpret]
-  rw [← h, PMF.map_comp]
-  rfl
+  refine ((hprogram.run_interpret_preprocess_open (External := Empty)
+    (handler := fun a request state => ProbOracleComp.sample (handler a request state))
+    hprepare hhandler.isOraclePPTOn hinitial invariant hinit hresources
+    fun a request state hstate result hresult => hpreserve a request state hstate result
+      (ProbOracleComp.support_sample_subset _ hresult)).congr fun a _ _ _ => ?_).isPPTOn
+  rw [ProbOracleComp.sample_run_interpret]
 
 end Cslib.Probability
