@@ -341,6 +341,9 @@ public import Complexity.Computability.Complexity.Classes.Alternation.GuessVerif
 public import Complexity.Computability.Complexity.Classes.Alternation.NP
 public import Complexity.Computability.Complexity.Classes.Alternation.Savitch
 public import Complexity.Computability.Complexity.Classes.Alternation.TQBF
+public import Complexity.Computability.Complexity.Classes.ArthurMerlin
+public import Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplification
+public import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.BPP.Collapse
