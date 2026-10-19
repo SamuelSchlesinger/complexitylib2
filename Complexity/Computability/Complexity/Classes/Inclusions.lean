@@ -24,7 +24,7 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 # Inclusions between complexity classes
 
 The inclusions between the standard classes that papers cite in their preliminaries
-[Arora and Barak, Chapters 2, 4 and 7][AroraBarak09], [Sipser, Chapters 8 and 10][Sipser2013]:
+[Arora and Barak, Chapters 2, 4, 5 and 7][AroraBarak09], [Sipser, Chapters 8 and 10][Sipser2013]:
 
 * `P ⊆ BPP` (`Cslib.Complexity.P_subset_BPP`): a decider ignores its random string.
 * `NP ⊆ PP` (`Cslib.Complexity.NP_subset_PP`): accept on half of the random strings outright, and
@@ -39,6 +39,15 @@ The inclusions between the standard classes that papers cite in their preliminar
   (`Cslib.Complexity.NPSPACE_subset_PSPACE`).
 * `PSPACE ⊆ EXP` (`Cslib.Complexity.PSPACE_subset_EXP`): Savitch's decider runs within time
   exponential in a polynomial (`Cslib.Reachability.computableTidilyInO_savitch`).
+* `PH ⊆ PSPACE` (`Cslib.Complexity.PH_subset_PSPACE`): `PSPACE` contains `P`, is closed under
+  complement (`Cslib.Complexity.compl_mem_PSPACE`), under polynomial-time reductions
+  (`Cslib.Complexity.PolyTimeReducible.mem_PSPACE`) and under polynomially bounded existential
+  quantification (`Cslib.Complexity.setOf_exists_mem_PSPACE`), so it evaluates the alternating
+  quantifiers of every level of the hierarchy one at a time. The existential quantifier over the
+  words `w` of length `ℓ` is reachability within two steps from the all-zero word to the all-one
+  word of width `ℓ + 1`, along edges to `true :: w` for the accepted `w` and from every word
+  starting with `true` to the all-one word; Savitch's algorithm decides it at depth `1`,
+  enumerating the candidates in place and reusing the space of the decider for each.
 
 With `Cslib.Complexity.P_subset_NP`, these give the chain `P ⊆ NP ⊆ PSPACE ⊆ EXP`. The other
 inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subset_PSPACE`),
@@ -55,12 +64,17 @@ inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subs
 * `Turing.MultiTapeNTM.RunsInTime.runsInSpace`: space is at most time.
 * `Cslib.Complexity.NP_subset_NPSPACE`, `Cslib.Complexity.NP_subset_PSPACE`.
 * `Cslib.Complexity.PSPACE_subset_EXP`, `Cslib.Complexity.NP_subset_EXP`.
+* `Cslib.Complexity.mem_PSPACE_iff_computableTidilyInO`: `PSPACE` in the quantitative calculus.
+* `Cslib.Complexity.compl_mem_PSPACE`, `Cslib.Complexity.PolyTimeReducible.mem_PSPACE`,
+  `Cslib.Complexity.setOf_exists_mem_PSPACE`: closure properties of `PSPACE`.
+* `Cslib.Complexity.SigmaP_subset_PSPACE`, `Cslib.Complexity.PH_subset_PSPACE`.
 
 ## References
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 * [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
 * [J. Gill, *Computational complexity of probabilistic Turing machines*][Gill1977]
+* [L. Stockmeyer, *The polynomial-time hierarchy*][Stockmeyer1976]
 -/
 
 @[expose] public section
@@ -211,7 +225,7 @@ theorem NP_subset_NPSPACE : NP enc ⊆ NPSPACE enc := by
   exact ⟨k, State, hfinite, ntm, fun a => k * (t a + 1), (PolyBounded.const k).mul
     (ht.add (.const 1)), fun a => ⟨(hdec a).1.runsInSpace, (hdec a).2⟩⟩
 
-/-- **`NP ⊆ PSPACE`** [Arora and Barak, Section 4.2][AroraBarak09]: `NP ⊆ NPSPACE`, and
+/-- **`NP ⊆ PSPACE`** [Arora and Barak, Theorem 4.2][AroraBarak09]: `NP ⊆ NPSPACE`, and
 `NPSPACE = PSPACE` by Savitch's theorem. -/
 theorem NP_subset_PSPACE : NP enc ⊆ PSPACE enc :=
   NP_subset_NPSPACE.trans NPSPACE_subset_PSPACE
@@ -477,5 +491,69 @@ theorem setOf_exists_mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set (
     omega
   · simp only [Set.mem_ofPred_eq, hB, id]
     exact (savitch_existsEdge f x (ℓ x)).symm
+
+/-! ### The polynomial hierarchy -/
+
+/-- The pairs `(a, u)` from which alternating quantifiers over blocks of certificates of the
+lengths `ps`, starting with `∃` if `q` is `true`, lead to `V (a, u ++ w) = true`. -/
+private def alternationSet (enc : α ↪ List Bool) (q : Bool) (ps : List (Polynomial ℕ))
+    (V : α × List Bool → Bool) : Set (α × List Bool) :=
+  {x | Alternation q (ps.map fun p => p.eval (enc x.1).length) fun w => V (x.1, x.2 ++ w) = true}
+
+/-- Alternating quantifiers over a polynomial-time verifier are decided in polynomial space, one
+quantifier at a time: an existential block by `Cslib.Complexity.setOf_exists_mem_PSPACE`, a
+universal block as the complement of an existential block for the negated verifier. -/
+private theorem alternationSet_mem_PSPACE (ps : List (Polynomial ℕ)) :
+    ∀ (q : Bool) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool →
+        alternationSet enc q ps V ∈ PSPACE (encPair enc encBits) := by
+  induction ps with
+  | nil =>
+    intro q V hV
+    exact P_subset_PSPACE ⟨V, hV, fun x => by simp [alternationSet]⟩
+  | cons p ps ih =>
+    have hex (V : α × List Bool → Bool)
+        (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) :
+        alternationSet enc true (p :: ps) V ∈ PSPACE (encPair enc encBits) := by
+      -- the remaining quantifiers, after the first block of certificates
+      have hB : {y : (α × List Bool) × List Bool | (y.1.1, y.1.2 ++ y.2) ∈
+          alternationSet enc false ps V} ∈ PSPACE (encPair (encPair enc encBits) encBits) :=
+        PolyTimeReducible.mem_PSPACE ⟨fun y => (y.1.1, y.1.2 ++ y.2),
+          ((ComputableTidilyInPolyTime.fst _ _).comp (.fst _ _)).prod
+            (ComputableTidilyInPolyTime.bitsAppend
+              ((ComputableTidilyInPolyTime.snd _ _).comp (.fst _ _)) (.snd _ _)),
+          fun _ => Iff.rfl⟩ (ih false V hV)
+      have hℓ : ComputableTidilyInPolyTime (fun x : α × List Bool => p.eval (enc x.1).length)
+          (encPair enc encBits) encUnary :=
+        ((ComputableTidilyInPolyTime.unary_eval p).comp
+          (ComputableTidilyInPolyTime.encoding_length enc)).comp (.fst _ _)
+      convert setOf_exists_mem_PSPACE hB hℓ using 1
+      ext x
+      simp only [alternationSet, List.map_cons, alternation_true_cons, Set.mem_ofPred_eq,
+        List.append_assoc]
+    intro q V hV
+    cases q
+    · -- a universal block is the complement of an existential block
+      convert compl_mem_PSPACE (hex (fun x => !V x) (ComputableTidilyInPolyTime.bool_not.comp hV))
+        using 1
+      ext x
+      simp only [alternationSet, Set.mem_ofPred_eq, Set.mem_compl_iff, not_alternation,
+        Bool.not_true]
+      exact alternation_congr fun w => by simp
+    · exact hex V hV
+
+/-- **Every level of the polynomial hierarchy is within `PSPACE`.** -/
+theorem SigmaP_subset_PSPACE (k : ℕ) : SigmaP k enc ⊆ PSPACE enc := by
+  rintro A ⟨ps, V, -, hV, hA⟩
+  refine PolyTimeReducible.mem_PSPACE ⟨fun a => (a, []),
+    ComputableTidilyInPolyTime.id'.prod (.const []), fun a => ?_⟩
+    (alternationSet_mem_PSPACE ps true V hV)
+  simp [alternationSet, hA a]
+
+/-- **`PH ⊆ PSPACE`** [Arora and Barak, Chapter 5][AroraBarak09],
+[Stockmeyer][Stockmeyer1976]: the quantifiers of a level of the hierarchy are evaluated one at a
+time, reusing the space for every certificate. -/
+theorem PH_subset_PSPACE : PH enc ⊆ PSPACE enc :=
+  Set.iUnion_subset SigmaP_subset_PSPACE
 
 end Cslib.Complexity
