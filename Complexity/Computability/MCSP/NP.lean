@@ -37,11 +37,16 @@ so they stay polynomially long in the length of the table.
 
 * `Cslib.MCSP.encInstance`: the encoding of instances.
 * `Cslib.MCSP.verifier`: the verifier.
+* `Cslib.MCSP.tableVerifier`: the verifier on the bits of a truth table and a threshold.
 
 ## Main results
 
+* `Cslib.MCSP.mem_of_verifier_eq_true`, `Cslib.MCSP.exists_verifier_append`: the verifier accepts
+  some certificate exactly for the instances in MCSP, certificates of a fixed length suffice, and
+  bits after them are ignored.
 * `Cslib.MCSP.isVerifier`: the verifier is correct.
-* `Cslib.MCSP.computableTidilyInPolyTime_verifier`: the verifier is polynomial-time.
+* `Cslib.MCSP.computableTidilyInPolyTime_verifier`,
+  `Cslib.MCSP.computableTidilyInPolyTime_tableVerifier`: the verifiers are polynomial-time.
 * `Cslib.MCSP.mem_NP`: MCSP is in `NP`.
 
 ## References
@@ -134,67 +139,81 @@ theorem certLength_le (x : Instance) :
     Polynomial.eval_X, Polynomial.eval_one, Polynomial.eval_ofNat, certLength]
   nlinarith
 
+/-- **Soundness of the verifier.** An instance with an accepted certificate, of any length, is
+in MCSP. -/
+theorem mem_of_verifier_eq_true {x : Instance} {w : List Bool} (hw : verifier (x, w) = true) :
+    x ∈ MCSP := by
+  set S := budget x.arity x.threshold with hSdef
+  set r := readCertificate x.arity S w
+  simp only [verifier, ← hSdef, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+    beq_iff_eq, codeCheck_eq_true_iff] at hw
+  obtain ⟨⟨hcode, hout⟩, hall⟩ := hw
+  have hsome : (Circuit.ofCode x.arity 1 (r.1, [r.2]) : Option (Circuit signature _ 1)).isSome :=
+    Circuit.isSome_ofCode_iff.2 ⟨hcode, rfl, by simpa using hout⟩
+  set c : Circuit signature x.arity 1 := (Circuit.ofCode x.arity 1 (r.1, [r.2])).get hsome
+  have hc : c.code = (r.1, [r.2]) := Circuit.code_of_ofCode_eq_some (Option.some_get _).symm
+  have houtput : (c.outputs 0).toNat = r.2 := by
+    have := congrArg (fun p => p.2.headD 0) hc
+    simpa [Circuit.code] using this
+  refine complexity_le_iff.2 ⟨c, fun y => funext fun j => ?_, ?_⟩
+  · rw [Fin.fin_one_eq_zero j, Circuit.eval_eq_evalOutput, houtput, show c.code.1 = r.1 by
+      rw [hc], hall _ (BitString.mem_enumList.2 (List.length_ofFn)), tableValue_ofFn,
+      single_apply]
+  · calc c.size = r.1.length := by rw [← Circuit.length_code_fst, hc]
+      _ ≤ S := length_readCertificate_le _ _ _
+      _ ≤ x.threshold := Nat.min_le_left _ _
+
+/-- **Completeness of the verifier.** Every instance in MCSP has a certificate of length
+`certLength x.arity (budget x.arity x.threshold)` that is accepted whatever bits follow it. -/
+theorem exists_verifier_append {x : Instance} (hx : x ∈ MCSP) :
+    ∃ u : List Bool, u.length = certLength x.arity (budget x.arity x.threshold) ∧
+      ∀ extra, verifier (x, u ++ extra) = true := by
+  set S := budget x.arity x.threshold with hSdef
+  have hS : complexity interpretation (single x.function) ≤ S :=
+    le_min hx (complexity_le_two_pow_mul_add_one _)
+  obtain ⟨c, hc, hsize⟩ := exists_computes_size_eq_complexity (I := interpretation)
+    (f := single x.function)
+  have hcS : c.size ≤ S := hsize ▸ hS
+  have hcode : Program.IsCodeFrom signature x.arity 0 c.code.1 := by
+    rw [← Program.isSome_ofCode_iff, Circuit.code, Program.ofCode_code]
+    rfl
+  refine ⟨certificate x.arity S c.code.1 (c.outputs 0).toNat, length_certificate_code c hcS,
+    fun extra => ?_⟩
+  simp only [verifier, ← hSdef, readCertificate_certificate_code_append c hcS,
+    Bool.and_eq_true, codeCheck_eq_true_iff.2 hcode, decide_eq_true_eq, List.all_eq_true,
+    beq_iff_eq, true_and]
+  refine ⟨by rw [Circuit.length_code_fst]; exact (c.outputs 0).toNat_lt, fun y hy => ?_⟩
+  obtain ⟨y, rfl⟩ : ∃ y' : BitString x.arity, List.ofFn y' = y :=
+    ⟨fun i => y[i.val]'(by rw [BitString.mem_enumList.1 hy]; exact i.isLt),
+      List.ext_getElem (by simp [BitString.mem_enumList.1 hy]) fun _ _ _ => by simp⟩
+  rw [← Circuit.eval_eq_evalOutput, hc y, tableValue_ofFn, single_apply]
+
 /-- `MCSP.verifier` verifies MCSP, with certificates of length `certPolynomial`. -/
 theorem isVerifier : IsVerifier encInstance certPolynomial verifier MCSP := by
-  refine IsVerifier.of_padding (fun x w _ hw => ?_) fun x hx => ?_
-  · set S := budget x.arity x.threshold with hSdef
-    set r := readCertificate x.arity S w
-    simp only [verifier, ← hSdef, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
-      beq_iff_eq, codeCheck_eq_true_iff] at hw
-    obtain ⟨⟨hcode, hout⟩, hall⟩ := hw
-    have hsome : (Circuit.ofCode x.arity 1 (r.1, [r.2]) : Option (Circuit signature _ 1)).isSome :=
-      Circuit.isSome_ofCode_iff.2 ⟨hcode, rfl, by simpa using hout⟩
-    set c : Circuit signature x.arity 1 := (Circuit.ofCode x.arity 1 (r.1, [r.2])).get hsome
-    have hc : c.code = (r.1, [r.2]) := Circuit.code_of_ofCode_eq_some (Option.some_get _).symm
-    have houtput : (c.outputs 0).toNat = r.2 := by
-      have := congrArg (fun p => p.2.headD 0) hc
-      simpa [Circuit.code] using this
-    refine complexity_le_iff.2 ⟨c, fun y => funext fun j => ?_, ?_⟩
-    · rw [Fin.fin_one_eq_zero j, Circuit.eval_eq_evalOutput, houtput, show c.code.1 = r.1 by
-        rw [hc], hall _ (BitString.mem_enumList.2 (List.length_ofFn)), tableValue_ofFn,
-        single_apply]
-    · calc c.size = r.1.length := by rw [← Circuit.length_code_fst, hc]
-        _ ≤ S := length_readCertificate_le _ _ _
-        _ ≤ x.threshold := Nat.min_le_left _ _
-  · set S := budget x.arity x.threshold with hSdef
-    have hS : complexity interpretation (single x.function) ≤ S :=
-      le_min hx (complexity_le_two_pow_mul_add_one _)
-    obtain ⟨c, hc, hsize⟩ := exists_computes_size_eq_complexity (I := interpretation)
-      (f := single x.function)
-    have hcS : c.size ≤ S := hsize ▸ hS
-    have hcode : Program.IsCodeFrom signature x.arity 0 c.code.1 := by
-      rw [← Program.isSome_ofCode_iff, Circuit.code, Program.ofCode_code]
-      rfl
-    refine ⟨certificate x.arity S c.code.1 (c.outputs 0).toNat, ?_, fun k => ?_⟩
-    · rw [length_certificate_code c hcS]
-      exact certLength_le x
-    · simp only [verifier, ← hSdef, readCertificate_certificate_code_append c hcS,
-        Bool.and_eq_true, codeCheck_eq_true_iff.2 hcode, decide_eq_true_eq, List.all_eq_true,
-        beq_iff_eq, true_and]
-      refine ⟨by rw [Circuit.length_code_fst]; exact (c.outputs 0).toNat_lt, fun y hy => ?_⟩
-      obtain ⟨y, rfl⟩ : ∃ y' : BitString x.arity, List.ofFn y' = y :=
-        ⟨fun i => y[i.val]'(by rw [BitString.mem_enumList.1 hy]; exact i.isLt),
-          List.ext_getElem (by simp [BitString.mem_enumList.1 hy]) fun _ _ _ => by simp⟩
-      rw [← Circuit.eval_eq_evalOutput, hc y, tableValue_ofFn, single_apply]
+  refine IsVerifier.of_padding (fun x w _ hw => mem_of_verifier_eq_true hw) fun x hx => ?_
+  obtain ⟨u, hu, hV⟩ := exists_verifier_append hx
+  exact ⟨u, hu ▸ certLength_le x, fun k => hV _⟩
 
 /-! ### Polynomial time -/
 
 open ComputableTidilyInPolyTime
 
-/-- The verifier on the table bits, the threshold and the certificate, with `n` read from the
-length of the table. -/
-private def rawVerifier (r : (List Bool × ℕ) × List Bool) : Bool :=
+/-- The verifier on the bits of a truth table, a threshold and a certificate, with the number of
+inputs read from the length of the table: `MCSP.verifier` on raw data
+(`Cslib.MCSP.verifier_eq_tableVerifier`), defined on every list of bits. -/
+def tableVerifier (r : (List Bool × ℕ) × List Bool) : Bool :=
   let n := Nat.log 2 r.1.1.length
   let c := readCertificate n (min r.1.2 (r.1.1.length * (2 * n + 3) + 1)) r.2
   (codeCheck n c.1 && decide (c.2 < n + c.1.length)) &&
     (BitString.enumList n).all fun y => evalOutput y c.1 c.2 == tableValue r.1.1 y
 
-private theorem verifier_eq_rawVerifier (p : Instance × List Bool) :
-    verifier p = rawVerifier ((List.ofFn p.1.table, p.1.threshold), p.2) := by
-  simp only [rawVerifier, List.length_ofFn, Nat.log_pow Nat.one_lt_two]
+theorem verifier_eq_tableVerifier (p : Instance × List Bool) :
+    verifier p = tableVerifier ((List.ofFn p.1.table, p.1.threshold), p.2) := by
+  simp only [tableVerifier, List.length_ofFn, Nat.log_pow Nat.one_lt_two]
   rfl
 
-private theorem computableTidilyInPolyTime_rawVerifier : ComputableTidilyInPolyTime rawVerifier
+/-- The verifier on raw data is polynomial-time. -/
+theorem computableTidilyInPolyTime_tableVerifier : ComputableTidilyInPolyTime tableVerifier
     (encPair (encPair encBits encNat) encBits) encBool := by
   have hn : ComputableTidilyInPolyTime (fun r : (List Bool × ℕ) × List Bool =>
       Nat.log 2 r.1.1.length) (encPair (encPair encBits encNat) encBits) encUnary :=
@@ -249,7 +268,7 @@ private theorem computableTidilyInPolyTime_rawVerifier : ComputableTidilyInPolyT
         (bitsReverse.comp (snd _ _))) false
     exact beq (computableTidilyInPolyTime_evalOutput (snd _ _) (hc.comp (fst _ _)).fst'
       (hc.comp (fst _ _)).snd') hvalue
-  unfold rawVerifier
+  unfold tableVerifier
   exact bool_and' (bool_and' (computableTidilyInPolyTime_codeCheck hn hc.fst')
     (binary_lt' hc.snd' (unary_to_binary.comp (unary_add.comp
       (hn.prod ((length_list encGate).comp hc.fst')))))) (allWithInput henum htest)
@@ -261,8 +280,8 @@ theorem computableTidilyInPolyTime_verifier :
       (fun p : Instance × List Bool => ((List.ofFn p.1.table, p.1.threshold), p.2))
       (encPair encInstance encBits) (encPair (encPair encBits encNat) encBits) :=
     .of_eq fun _ => rfl
-  rw [funext verifier_eq_rawVerifier]
-  exact computableTidilyInPolyTime_rawVerifier.comp hraw
+  rw [funext verifier_eq_tableVerifier]
+  exact computableTidilyInPolyTime_tableVerifier.comp hraw
 
 /-- **MCSP is in `NP`**, for instances encoded by their truth table and the threshold in
 binary. -/

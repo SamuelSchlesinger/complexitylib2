@@ -1,5 +1,6 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
+import ComplexityTests.AffineDisperserCorollary
 import ComplexityTests.AffineDisperserLowerBound
 import ComplexityTests.AffineDisperserRuntime
 import ComplexityTests.Alternation
@@ -73,7 +74,9 @@ import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
 import ComplexityTests.Iteration.Batch
+import ComplexityTests.Iteration.Dynamics
 import ComplexityTests.IterationFoundations
+import ComplexityTests.Kannan
 import ComplexityTests.KarpLipton
 import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
@@ -167,6 +170,7 @@ import ComplexityTests.PseudoentropySeed
 import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
+import ComplexityTests.PseudorandomObjects
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
