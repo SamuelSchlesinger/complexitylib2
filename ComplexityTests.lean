@@ -55,6 +55,7 @@ import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
+import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
 import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
