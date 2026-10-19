@@ -19,9 +19,9 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Real
 # The threshold of the explicit affine disperser
 
 The explicit disperser on `N` bits is nonconstant on affine subspaces of dimension greater than
-`threshold N`. With `ℓ = ⌊log₂ N⌋`, `L = ⌊ℓ / 3⌋` and `n`, `r`, `s`, `t` as in
-`Cslib.AffineDisperser.threshold`, every term is at most a constant times `N / (ℓ + 1)`, except
-`2 r (r + 1)`, which is small because `n` is large:
+`explicitThreshold N`. With `ℓ = ⌊log₂ N⌋`, `L = ⌊ℓ / 3⌋` and `n`, `r`, `s`, `t` as in
+`Cslib.AffineDisperser.explicitThreshold`, every term is at most a constant times `N / (ℓ + 1)`,
+except `2 r (r + 1)`, which is small because `n` is large:
 
 * the unread bits number `N - r n < n ≤ N / (ℓ + 1) ^ 2`, and `n t, ⌊n r / t⌋ ≤ N / (ℓ + 1)`;
 * the subfield term is `r s ≤ N / (L + 1) ≤ 3 N / (ℓ + 1)`;
@@ -30,16 +30,16 @@ The explicit disperser on `N` bits is nonconstant on affine subspaces of dimensi
   product is at least `4 ^ L / (4 L + 1) ^ (4 ⌊√L⌋ + 5) ≥ √(8 (ℓ + 1) N)` for large `N` by
   Chebyshev's bounds.
 
-Hence `(ℓ + 1) * threshold N ≤ 6 N` for all large `N`
-(`Cslib.AffineDisperser.eventually_threshold_le`), and the threshold is `O(N / log N)`.
+Hence `(ℓ + 1) * explicitThreshold N ≤ 6 N` for all large `N`
+(`Cslib.AffineDisperser.eventually_explicitThreshold_le`), and the threshold is `O(N / log N)`.
 
 ## Main results
 
-* `Cslib.AffineDisperser.eventually_threshold_le`: `(⌊log₂ N⌋ + 1) * threshold N ≤ 6 N` for all
-  large `N`.
-* `Cslib.AffineDisperser.eventually_threshold_lt`: `threshold N < N` for all large `N`, so the
-  disperser theorem is not vacuous.
-* `Cslib.AffineDisperser.isBigO_threshold`: `threshold N = O(N / log N)`.
+* `Cslib.AffineDisperser.eventually_explicitThreshold_le`:
+  `(⌊log₂ N⌋ + 1) * explicitThreshold N ≤ 6 N` for all large `N`.
+* `Cslib.AffineDisperser.eventually_explicitThreshold_lt`: `explicitThreshold N < N` for all large
+  `N`, so the disperser theorem is not vacuous.
+* `Cslib.AffineDisperser.isBigO_explicitThreshold`: `explicitThreshold N = O(N / log N)`.
 -/
 
 @[expose] public section
@@ -99,10 +99,10 @@ theorem eventually_chebyshevFactor_le :
 theorem tendsto_log_two_atTop : Tendsto (Nat.log 2) atTop atTop :=
   tendsto_atTop_atTop.2 fun b => ⟨2 ^ b, fun _ hN => Nat.le_log_of_pow_le one_lt_two hN⟩
 
-/-- **The threshold is `O(N / log N)`**, with exact constants: `(⌊log₂ N⌋ + 1) * threshold N ≤ 6 N`
-for all large `N`. -/
-theorem eventually_threshold_le :
-    ∀ᶠ N in atTop, (Nat.log 2 N + 1) * threshold N ≤ 6 * N := by
+/-- **The threshold is `O(N / log N)`**, with exact constants:
+`(⌊log₂ N⌋ + 1) * explicitThreshold N ≤ 6 N` for all large `N`. -/
+theorem eventually_explicitThreshold_le :
+    ∀ᶠ N in atTop, (Nat.log 2 N + 1) * explicitThreshold N ≤ 6 * N := by
   obtain ⟨ℓ₁, hℓ₁⟩ := eventually_atTop.1 (eventually_mul_pow_le_two_pow 16 7)
   obtain ⟨L₂, hL₂⟩ := eventually_atTop.1 eventually_chebyshevFactor_le
   filter_upwards [tendsto_log_two_atTop.eventually_ge_atTop (ℓ₁ + 3 * L₂ + 3)] with N hN
@@ -147,7 +147,7 @@ theorem eventually_threshold_le :
       _ ≤ N / (ℓ + 1) := hT ▸ Nat.div_mul_le_self _ _
   have hnrt : n * r / symDegree N ≤ N / (ℓ + 1) :=
     Nat.div_le_div_right (by rw [mul_comm]; exact hrn)
-  have hthr : threshold N ≤ T + 2 * (r * (r + 1)) + N / (L + 1) + 2 * (N / (ℓ + 1)) := by
+  have hthr : explicitThreshold N ≤ T + 2 * (r * (r + 1)) + N / (L + 1) + 2 * (N / (ℓ + 1)) := by
     change N - r * n + (r * max (r + 1) (subfieldExp N) + r * (r + 1) + n * symDegree N +
       n * r / symDegree N) ≤ _
     omega
@@ -171,7 +171,8 @@ theorem eventually_threshold_le :
             rw [mul_pow, ← pow_mul]
             ring_nf
       have hP2 : 64 * (3 * L + 3) * 8 ^ L ≤ P ^ 2 := by
-        refine Nat.le_of_mul_le_mul_left ?_ (by positivity : 0 < (4 * L + 1) ^ (8 * Nat.sqrt L + 10))
+        refine Nat.le_of_mul_le_mul_left ?_
+          (by positivity : 0 < (4 * L + 1) ^ (8 * Nat.sqrt L + 10))
         calc (4 * L + 1) ^ (8 * Nat.sqrt L + 10) * (64 * (3 * L + 3) * 8 ^ L)
             = 64 * (3 * L + 3) * (4 * L + 1) ^ (8 * Nat.sqrt L + 10) * 8 ^ L := by ring
           _ ≤ 2 ^ L * 8 ^ L := Nat.mul_le_mul_right _ hcheb
@@ -222,25 +223,25 @@ theorem eventually_threshold_le :
       _ ≤ 3 * N := Nat.mul_le_mul_left _ (Nat.mul_div_le N (L + 1))
   have hC : (ℓ + 1) * (N / (ℓ + 1)) ≤ N := Nat.mul_div_le N (ℓ + 1)
   have hD : N / (ℓ + 1) ≤ N / 2 := Nat.div_le_div_left (by omega) two_pos
-  calc (ℓ + 1) * threshold N
+  calc (ℓ + 1) * explicitThreshold N
       ≤ (ℓ + 1) * (T + 2 * (r * (r + 1)) + N / (L + 1) + 2 * (N / (ℓ + 1))) :=
         Nat.mul_le_mul_left _ hthr
     _ = (ℓ + 1) * T + 2 * ((ℓ + 1) * (r * (r + 1))) + (ℓ + 1) * (N / (L + 1)) +
         2 * ((ℓ + 1) * (N / (ℓ + 1))) := by ring
     _ ≤ 6 * N := by omega
 
-/-- The disperser theorem is not vacuous: `threshold N < N` for all large `N`. -/
-theorem eventually_threshold_lt : ∀ᶠ N in atTop, threshold N < N := by
-  filter_upwards [eventually_threshold_le, tendsto_log_two_atTop.eventually_ge_atTop 6,
+/-- The disperser theorem is not vacuous: `explicitThreshold N < N` for all large `N`. -/
+theorem eventually_explicitThreshold_lt : ∀ᶠ N in atTop, explicitThreshold N < N := by
+  filter_upwards [eventually_explicitThreshold_le, tendsto_log_two_atTop.eventually_ge_atTop 6,
     eventually_gt_atTop 0] with N h hℓ hN
-  have : 7 * threshold N ≤ 6 * N := le_trans (Nat.mul_le_mul_right _ (by omega)) h
+  have : 7 * explicitThreshold N ≤ 6 * N := le_trans (Nat.mul_le_mul_right _ (by omega)) h
   omega
 
 /-- **The threshold is `O(N / log N)`**. -/
-theorem isBigO_threshold :
-    (fun N : ℕ => (threshold N : ℝ)) =O[atTop] fun N => (N : ℝ) / Real.log N := by
+theorem isBigO_explicitThreshold :
+    (fun N : ℕ => (explicitThreshold N : ℝ)) =O[atTop] fun N => (N : ℝ) / Real.log N := by
   refine Asymptotics.IsBigO.of_bound 6 ?_
-  filter_upwards [eventually_threshold_le, eventually_ge_atTop 2] with N h hN2
+  filter_upwards [eventually_explicitThreshold_le, eventually_ge_atTop 2] with N h hN2
   have hN2' : (2 : ℝ) ≤ N := by exact_mod_cast hN2
   have hlogpos : 0 < Real.log N := Real.log_pos (by linarith)
   rw [Real.norm_natCast, Real.norm_of_nonneg (by positivity)]
@@ -255,9 +256,9 @@ theorem isBigO_threshold :
     have h4 : 0 < Real.log 2 := Real.log_pos one_lt_two
     push_cast at h2
     nlinarith
-  have h' : ((Nat.log 2 N + 1 : ℕ) : ℝ) * threshold N ≤ 6 * N := by exact_mod_cast h
+  have h' : ((Nat.log 2 N + 1 : ℕ) : ℝ) * explicitThreshold N ≤ 6 * N := by exact_mod_cast h
   push_cast at h'
   rw [← mul_div_assoc, le_div_iff₀ hlogpos]
-  nlinarith [(Nat.cast_nonneg (threshold N) : (0 : ℝ) ≤ threshold N)]
+  nlinarith [(Nat.cast_nonneg (explicitThreshold N) : (0 : ℝ) ≤ explicitThreshold N)]
 
 end Cslib.AffineDisperser

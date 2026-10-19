@@ -46,12 +46,12 @@ the price of the subfield term `r s ≤ N / (L + 1)`, so our threshold is `O(N /
 ## Main definitions
 
 * `Cslib.AffineDisperser.explicitDisperser`: the explicit function on `N` bits.
-* `Cslib.AffineDisperser.threshold`: the dimension threshold `d(N)`.
+* `Cslib.AffineDisperser.explicitThreshold`: the dimension threshold `d(N)`.
 
 ## Main results
 
 * `Cslib.AffineDisperser.exists_explicitDisperser_ne`: `explicitDisperser N` is nonconstant on
-  every affine subspace of `BitString N` of dimension greater than `threshold N`.
+  every affine subspace of `BitString N` of dimension greater than `explicitThreshold N`.
 
 ## References
 
@@ -97,7 +97,7 @@ def subfieldExp (N : ℕ) : ℕ :=
 
 /-- **The dimension threshold** `d(N) = N - r n + r * max (r + 1) s + r * (r + 1) + n t + ⌊n r / t⌋`
 of the explicit disperser on `N` bits. -/
-def threshold (N : ℕ) : ℕ :=
+def explicitThreshold (N : ℕ) : ℕ :=
   N - numBlocks N * fieldDegree N +
     (numBlocks N * max (numBlocks N + 1) (subfieldExp N) + numBlocks N * (numBlocks N + 1) +
       fieldDegree N * symDegree N + fieldDegree N * numBlocks N / symDegree N)
@@ -127,12 +127,12 @@ abbrev ExplicitField (N : ℕ) : Type :=
   GaloisField 2 (fieldDegree N)
 
 /-- The monomials indexing the basis of `ExplicitField N`. -/
-abbrev Monomial (N : ℕ) : Type :=
+abbrev ExplicitMonomial (N : ℕ) : Type :=
   (j : Fin (degreePrimes N).length) → Fin (degreePrime N j)
 
 /-- The monomial basis of `ExplicitField N` in roots of the irreducible polynomials of least code of
 the prime degrees. -/
-noncomputable def explicitBasis (N : ℕ) : Basis (Monomial N) (ZMod 2) (ExplicitField N) :=
+noncomputable def explicitBasis (N : ℕ) : Basis (ExplicitMonomial N) (ZMod 2) (ExplicitField N) :=
   compositeBasis (degreePrime N) (degreePrime_prime N) (degreePrime_injective N)
 
 theorem numBlocks_mul_le (N : ℕ) : numBlocks N * fieldDegree N ≤ N :=
@@ -140,7 +140,7 @@ theorem numBlocks_mul_le (N : ℕ) : numBlocks N * fieldDegree N ≤ N :=
 
 /-- The input position of coordinate `J` of block `i`: blocks follow each other, and coordinates
 within a block are numbered in the mixed-radix order of `finPiFinEquiv`. -/
-def explicitPos (N : ℕ) (q : Fin (numBlocks N) × Monomial N) : Fin N :=
+def explicitPos (N : ℕ) (q : Fin (numBlocks N) × ExplicitMonomial N) : Fin N :=
   Fin.castLE (numBlocks_mul_le N) (finProdFinEquiv (q.1, finPiFinEquiv q.2))
 
 theorem explicitPos_injective (N : ℕ) : Function.Injective (explicitPos N) := by
@@ -165,9 +165,9 @@ theorem lt_of_prime_dvd_fieldDegree {N q : ℕ} (hq : q.Prime) (hqn : q ∣ fiel
 
 /-- **An explicit affine disperser** [BenSassonKopparty2012, Theorem 7.3]: `explicitDisperser N`
 is nonconstant on every affine subspace of `BitString N` of dimension greater than
-`threshold N`. -/
+`explicitThreshold N`. -/
 theorem exists_explicitDisperser_ne {N : ℕ} (A : AffineSubspace Bool (BitString N))
-    (hA : threshold N < finrank Bool A.direction) :
+    (hA : explicitThreshold N < finrank Bool A.direction) :
     ∃ x ∈ A, ∃ y ∈ A, explicitDisperser N x ≠ explicitDisperser N y :=
   exists_traceSymBits_ne (GaloisField.finrank 2 (fieldDegree_ne_zero N))
     (card_subfield_le_of_lt_prime (GaloisField.finrank 2 (fieldDegree_ne_zero N))

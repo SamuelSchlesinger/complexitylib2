@@ -8,13 +8,11 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Mathlib.Data.Nat.Prime.Defs
-public import Mathlib.Algebra.BigOperators.Group.List.Basic
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
-import Mathlib.NumberTheory.Chebyshev
+public import Mathlib.Algebra.BigOperators.Group.List.Basic
+public import Mathlib.Data.Nat.Prime.Defs
 public import Mathlib.Order.Interval.Finset.Nat
-import Mathlib.Data.Nat.Sqrt
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.NumberTheory.Chebyshev
 
 /-!
 # Products of primes in an interval

@@ -45,7 +45,8 @@ When every prime factor of `n` exceeds `L`, proper subfields of `𝔽_{2 ^ n}` h
 * `Cslib.AffineDisperser.irreducible_leastIrreducible`,
   `Cslib.AffineDisperser.natDegree_leastIrreducible`: `leastIrreducible p` is irreducible of degree
   `p`.
-* `Cslib.AffineDisperser.leastIrreducible_le`: no smaller code is irreducible of degree `p`.
+* `Cslib.AffineDisperser.exists_code_leastIrreducible`: the code of `leastIrreducible p` lies in
+  `[2 ^ p, 2 ^ (p + 1))`, and no smaller code is irreducible of degree `p`.
 * `Cslib.AffineDisperser.card_subfield_le_of_lt_prime`: the subfield bound.
 -/
 
@@ -75,6 +76,30 @@ theorem polyOfCode_two_mul_add (m : ℕ) (b : ZMod 2) :
   · rw [polyOfCode, ite_eq_right h.ne', show (2 * m + b.val) / 2 = m by omega]
     rw [Nat.cast_add, Nat.cast_mul, ZMod.natCast_self, zero_mul, zero_add, ZMod.natCast_zmod_val]
 
+/-- The code `m ≠ 0` gives a nonzero polynomial of degree `⌊log₂ m⌋`. -/
+theorem polyOfCode_ne_zero_and_natDegree {m : ℕ} (hm : m ≠ 0) :
+    polyOfCode m ≠ 0 ∧ (polyOfCode m).natDegree = Nat.log 2 m := by
+  induction m using Nat.strong_induction_on with
+  | _ m ih =>
+    rcases lt_or_ge m 2 with h | h
+    · obtain rfl : m = 1 := by omega
+      have h1 : polyOfCode 1 = 1 := by
+        simpa [polyOfCode_zero, ZMod.val_one] using polyOfCode_two_mul_add 0 1
+      rw [h1, Nat.log_one_right]
+      exact ⟨one_ne_zero, natDegree_one⟩
+    · obtain ⟨hne, hdeg⟩ := ih (m / 2) (by omega) (by omega)
+      have heq : polyOfCode m = X * polyOfCode (m / 2) + C (m : ZMod 2) := by
+        rw [polyOfCode, ite_eq_right hm, add_comm]
+      have hd : (polyOfCode m).natDegree = Nat.log 2 m := by
+        rw [heq, natDegree_add_C, natDegree_X_mul hne, hdeg,
+          ← Nat.log_of_one_lt_of_le one_lt_two h]
+      refine ⟨fun h0 => ?_, hd⟩
+      rw [h0, natDegree_zero, Nat.log_of_one_lt_of_le one_lt_two h] at hd
+      omega
+
+theorem natDegree_polyOfCode {m : ℕ} (hm : m ≠ 0) : (polyOfCode m).natDegree = Nat.log 2 m :=
+  (polyOfCode_ne_zero_and_natDegree hm).2
+
 /-- Every binary polynomial has a code. -/
 theorem polyOfCode_surjective : Function.Surjective polyOfCode := by
   intro g
@@ -85,7 +110,8 @@ theorem polyOfCode_surjective : Function.Surjective polyOfCode := by
       have := polyOfCode_two_mul_add 0 (g.coeff 0)
       rw [mul_zero, zero_add, polyOfCode_zero, mul_zero, add_zero] at this
       rw [this, ← eq_C_of_natDegree_eq_zero hd]
-    · obtain ⟨m, hm⟩ := ih (d - 1) (by omega) g.divX (by rw [natDegree_divX_eq_natDegree_tsub_one, hd])
+    · obtain ⟨m, hm⟩ := ih (d - 1) (by omega) g.divX
+        (by rw [natDegree_divX_eq_natDegree_tsub_one, hd])
       refine ⟨2 * m + (g.coeff 0).val, ?_⟩
       rw [polyOfCode_two_mul_add, hm, add_comm, X_mul_divX_add]
 
@@ -128,12 +154,22 @@ theorem natDegree_leastIrreducible {p : ℕ} (hp : p ≠ 0) : (leastIrreducible 
   rw [leastIrreducible_eq hp]
   exact (Nat.find_spec (exists_code_irreducible hp)).2
 
-/-- `leastIrreducible p` has the least code: no smaller code is irreducible of degree `p`. -/
-theorem leastIrreducible_le {p : ℕ} (hp : p ≠ 0) {m : ℕ} (hm : Irreducible (polyOfCode m))
-    (hmp : (polyOfCode m).natDegree = p) :
-    ∃ m' ≤ m, leastIrreducible p = polyOfCode m' := by
+/-- **The exhaustive search**: `leastIrreducible p` is `polyOfCode m` for a code
+`2 ^ p ≤ m < 2 ^ (p + 1)` such that no smaller code is irreducible of degree `p`. -/
+theorem exists_code_leastIrreducible {p : ℕ} (hp : p ≠ 0) :
+    ∃ m, 2 ^ p ≤ m ∧ m < 2 ^ (p + 1) ∧ leastIrreducible p = polyOfCode m ∧
+      ∀ m' < m, ¬ (Irreducible (polyOfCode m') ∧ (polyOfCode m').natDegree = p) := by
   classical
-  exact ⟨_, Nat.find_min' (exists_code_irreducible hp) ⟨hm, hmp⟩, leastIrreducible_eq hp⟩
+  have hspec := Nat.find_spec (exists_code_irreducible hp)
+  set m := Nat.find (exists_code_irreducible hp)
+  have hm0 : m ≠ 0 := by
+    intro h
+    rw [h, polyOfCode_zero] at hspec
+    exact hspec.1.ne_zero rfl
+  have hlog := (natDegree_polyOfCode hm0).symm.trans hspec.2
+  refine ⟨m, ?_, ?_, leastIrreducible_eq hp, fun m' hm' => Nat.find_min _ hm'⟩
+  · exact hlog ▸ Nat.pow_log_le_self 2 hm0
+  · exact hlog ▸ Nat.lt_pow_succ_log_self one_lt_two m
 
 /-- A nonzero binary polynomial is monic. -/
 theorem monic_of_ne_zero {g : (ZMod 2)[X]} (hg : g ≠ 0) : g.Monic := by
