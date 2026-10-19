@@ -21,11 +21,12 @@ import Mathlib.LinearAlgebra.Lagrange
 The *Reed–Solomon code* of dimension `k` with evaluation points `α : ι → F` in a field `F`
 consists of the words `i ↦ p (α i)` of values of the polynomials `p` of degree less than `k`
 (`Cslib.Code.reedSolomon`) [ReedSolomon1960], [GuruswamiRudraSudan2019],
-[MacWilliams and Sloane, Chapter 10][MacWilliamsSloane1977]. It is a linear code of length `n = |ι|`. When the points are distinct, a nonzero polynomial of
-degree less than `k` vanishes at fewer than `k` of them, so a nonzero codeword has weight at least
-`n - k + 1` (`Cslib.Code.le_hammingNorm_of_mem_reedSolomon`); the product of `X - α i` over
-`k - 1` of the points shows that this is attained, so for `1 ≤ k ≤ n` the minimum distance is
-exactly `n - k + 1` (`Cslib.Code.minDist_reedSolomon`). For `k ≤ n` the polynomials of degree less
+[MacWilliams and Sloane, Chapter 10][MacWilliamsSloane1977]. It is a linear code of length
+`n = |ι|`. When the points are distinct, a nonzero polynomial of degree less than `k` vanishes at
+fewer than `k` of them, so a nonzero codeword has weight at least `n - k + 1`
+(`Cslib.Code.le_hammingNorm_of_mem_reedSolomon`); the product of `X - α i` over `k - 1` of the
+points shows that this is attained, so for `1 ≤ k ≤ n` the minimum distance is exactly
+`n - k + 1` (`Cslib.Code.minDist_reedSolomon`). For `k ≤ n` the polynomials of degree less
 than `k` are determined by their values, so the code has dimension `k`
 (`Cslib.Code.finrank_reedSolomon`). Dimension plus minimum distance is `n + 1`: Reed–Solomon codes
 meet the Singleton bound `Cslib.Code.finrank_add_le_card_add_one` with equality.
