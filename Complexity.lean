@@ -65,6 +65,7 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpState
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Layer
+public import Complexity.Computability.Circuit.Boolean.Metric
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
@@ -185,6 +186,7 @@ public import Complexity.Computability.Circuit.Iteration
 public import Complexity.Computability.Circuit.Linearize
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.MapOp
+public import Complexity.Computability.Circuit.Metric
 public import Complexity.Computability.Circuit.Monotone.Basic
 public import Complexity.Computability.Circuit.Monotone.Clique.Approximator
 public import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
@@ -240,6 +242,12 @@ public import Complexity.Computability.Complexity.CookLevin.Parameters
 public import Complexity.Computability.Complexity.CookLevin.PolyTime
 public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Tableau
+public import Complexity.Computability.Complexity.Fagin.Converse
+public import Complexity.Computability.Complexity.Fagin.Layout
+public import Complexity.Computability.Complexity.Fagin.Power
+public import Complexity.Computability.Complexity.Fagin.Small
+public import Complexity.Computability.Complexity.Fagin.StrictVerifier
+public import Complexity.Computability.Complexity.Fagin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.IndependentSet
@@ -284,6 +292,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Id
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Ite
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.MultiPass
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Reverse
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.StreamFold
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyZeroSpace
@@ -740,6 +749,7 @@ public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.SigmaThree
 public import Complexity.Logics.SecondOrder.Coloring
 public import Complexity.Logics.SecondOrder.Existential
+public import Complexity.Logics.SecondOrder.Projection
 public import Complexity.Logics.SecondOrder.Reduction
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative

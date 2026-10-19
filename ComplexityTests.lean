@@ -11,6 +11,7 @@ import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
+import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
@@ -27,6 +28,7 @@ import ComplexityTests.EntropyPseudoentropy
 import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExplicitExpanders
+import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
 import ComplexityTests.FiniteControl
