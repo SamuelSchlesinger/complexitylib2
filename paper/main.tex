@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\titlespacing*{\subsection}{0pt}{1.3ex plus .2ex}{.5ex}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black,
+  citecolor=blue!45!black]{hyperref}
+\usepackage{fancyvrb}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist{nosep,leftmargin=*}
+\newcommand{\cc}[1]{\mathsf{#1}}
+\newcommand{\lean}[1]{\nolinkurl{#1}}
+\newcommand{\source}[2]{\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/263e7321/#1}{#2}}
+\newcommand{\sparseSource}[2]{\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/904ac4e1/#1}{#2}}
+\newcommand{\choice}[1]{\par{\small\color{blue!45!black}\textbf{For discussion.} #1}\par}
+\newtheorem*{theorem}{Theorem}
+\title{Complexitylib:\\Human-readable proofs from the Lean formalization}
+\author{}
+\date{Working outline and proof translations\\19 October 2026}
+\hypersetup{pdftitle={Complexitylib: Human-readable proofs from the Lean formalization},
+  pdfsubject={Annotated outline and proof translations for author discussion}}
+\begin{document}
+\begin{center}
+{\LARGE Complexitylib:\\[.25em]
+Human-readable proofs from the Lean formalization\par}
+\vspace{.8em}
+Working outline and proof translations\\19 October 2026
+\end{center}
+\begin{quote}\small
+This is an annotated plan with Cook--Levin and sparse-counter proof translations.
+The paper is intended as an AI-reviewed explanation of the arguments in Lean;
+the other chapters are proposed. The author controls selection and wording.
+Cook--Levin links refer to revision \texttt{263e7321}; sparse-counter links
+identify the implementation accompanying that section.
+\end{quote}
+{\small\setlength{\parskip}{0.4em}
+\input{sections/outline}}
+\clearpage
+\input{sections/cook-levin}
+\clearpage
+\input{sections/sparse-counter}
+\begingroup
+\raggedright
+\bibliographystyle{plainnat}
+\bibliography{../references}
+\endgroup
+\end{document}

@@ -87,6 +87,7 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Residue
 public import Complexity.Computability.Circuit.Boolean.Iteration.Scan
 public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
 public import Complexity.Computability.Circuit.Boolean.Iteration.SharedDictionary
+public import Complexity.Computability.Circuit.Boolean.Iteration.SparseDisplacement
 public import Complexity.Computability.Circuit.Boolean.Iteration.Target
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.KeyedSort
@@ -882,6 +883,7 @@ public import Complexity.Foundations.Combinatorics.FiniteCover
 public import Complexity.Foundations.Combinatorics.FunctionalGraph
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Active
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Checkpoints
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.Commutation
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Cycle
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.HittingTime
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Powers
