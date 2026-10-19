@@ -93,23 +93,25 @@ theorem card_flower_singleton_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 �
     · rw [card_singleton]
       exact hθ 0
 
-/-- At most `2 N θ (c - 1)` clauses of size `c ≥ 1` survive in a sparse clause set. -/
-theorem card_filter_card_eq_le_of_sparse [Fintype V] {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j)
-    {ψ : ClauseSet V}
-    (hsparse : Sparse θ ψ) {c : ℕ} (hc : 1 ≤ c) :
-    (ψ.filter (·.card = c)).card ≤ 2 * Fintype.card V * θ (c - 1) := by
+/-- At most `2 N θ (c - 1)` clauses of size `c ≥ 1` survive in a sparse clause set whose variables
+are among `N` given ones. -/
+theorem card_filter_card_eq_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V}
+    (hsparse : Sparse θ ψ) (U : Finset V) (hU : ∀ C ∈ ψ, ∀ l ∈ C, l.1 ∈ U) {c : ℕ} (hc : 1 ≤ c) :
+    (ψ.filter (·.card = c)).card ≤ 2 * U.card * θ (c - 1) := by
   have hflower := card_flower_singleton_le_of_sparse hθ hsparse hc
-  have hsub : ψ.filter (·.card = c) ⊆ univ.biUnion fun l : Literal V => flower ψ c {l} := by
+  have hsub : ψ.filter (·.card = c) ⊆
+      (U ×ˢ (univ : Finset Bool)).biUnion fun l => flower ψ c {l} := by
     intro C hC
     obtain ⟨hCψ, hcard⟩ := mem_filter.mp hC
     obtain ⟨l, hl⟩ : C.Nonempty := by rw [← card_pos, hcard]; omega
-    exact mem_biUnion.mpr ⟨l, mem_univ _, mem_flower.mpr ⟨hCψ, hcard, by simpa using hl⟩⟩
+    exact mem_biUnion.mpr ⟨l, mem_product.mpr ⟨hU C hCψ l hl, mem_univ _⟩,
+      mem_flower.mpr ⟨hCψ, hcard, by simpa using hl⟩⟩
   calc (ψ.filter (·.card = c)).card
-      ≤ (univ.biUnion fun l : Literal V => flower ψ c {l}).card := card_le_card hsub
-    _ ≤ ∑ l : Literal V, (flower ψ c {l}).card := card_biUnion_le
-    _ ≤ ∑ _l : Literal V, θ (c - 1) := sum_le_sum fun l _ => hflower l
-    _ = 2 * Fintype.card V * θ (c - 1) := by
-      rw [sum_const, card_univ, card_literal, smul_eq_mul]
+      ≤ ((U ×ˢ (univ : Finset Bool)).biUnion fun l => flower ψ c {l}).card := card_le_card hsub
+    _ ≤ ∑ l ∈ U ×ˢ (univ : Finset Bool), (flower ψ c {l}).card := card_biUnion_le
+    _ ≤ ∑ _l ∈ U ×ˢ (univ : Finset Bool), θ (c - 1) := sum_le_sum fun l _ => hflower l
+    _ = 2 * U.card * θ (c - 1) := by
+      rw [sum_const, card_product, card_univ, Fintype.card_bool, smul_eq_mul, Nat.mul_comm _ 2]
 
 namespace Path
 
@@ -319,12 +321,13 @@ theorem card_newContaining_lt {j c : ℕ} (hj : j ≤ P.len) {b : Finset (Litera
     have := (P.choice x' hx'len).2.2 (P.heart x' ∪ b) hheavy
     omega
 
-/-- **Counting introduced clauses.** If the last node is sparse, the introduced clauses of size
-`c ≥ 1` number at most `2 N θ (c - 1) + ∑_{1 ≤ h < c} 2 θ (c - h) · #(introduced, size h)`. -/
-theorem card_introducedOfCard_le [Fintype V] (hleaf : Sparse θ (P.node P.len)) {c : ℕ}
-    (hc : 1 ≤ c) :
+/-- **Counting introduced clauses.** If the last node is sparse and the variables of the root are
+among the `N` variables of `U`, the introduced clauses of size `c ≥ 1` number at most
+`2 N θ (c - 1) + ∑_{1 ≤ h < c} 2 θ (c - h) · #(introduced, size h)`. -/
+theorem card_introducedOfCard_le (hleaf : Sparse θ (P.node P.len)) (U : Finset V)
+    (hU : ∀ C ∈ P.node 0, ∀ l ∈ C, l.1 ∈ U) {c : ℕ} (hc : 1 ≤ c) :
     (P.introducedOfCard c).card ≤
-      2 * Fintype.card V * θ (c - 1) +
+      2 * U.card * θ (c - 1) +
         ∑ h ∈ Ico 1 c, 2 * θ (c - h) * (P.introducedOfCard h).card := by
   -- every introduced clause of size `c` survives to the leaf or is eliminated later
   have hcover : P.introducedOfCard c ⊆ (P.node P.len).filter (·.card = c) ∪
@@ -398,11 +401,13 @@ theorem card_introducedOfCard_le [Fintype V] (hleaf : Sparse θ (P.node P.len)) 
           ((range P.len).biUnion fun m =>
             ((P.introAt m).filter (·.card < c)).biUnion fun b => P.newContaining m c b).card :=
         card_union_le _ _
-    _ ≤ 2 * Fintype.card V * θ (c - 1) + ∑ m ∈ range P.len, ∑ b ∈ (P.introAt m).filter (·.card < c),
+    _ ≤ 2 * U.card * θ (c - 1) + ∑ m ∈ range P.len, ∑ b ∈ (P.introAt m).filter (·.card < c),
           (P.newContaining m c b).card := by
-        refine add_le_add (card_filter_card_eq_le_of_sparse hθ hleaf hc) ?_
+        refine add_le_add (card_filter_card_eq_le_of_sparse hθ hleaf U (fun C hC l hl => ?_) hc) ?_
+        · obtain ⟨D, hD, hCD⟩ := refines_of_le hθ (Nat.zero_le _) le_rfl C hC
+          exact hU D hD l (hCD hl)
         exact card_biUnion_le.trans (sum_le_sum fun m _ => card_biUnion_le)
-    _ ≤ 2 * Fintype.card V * θ (c - 1) +
+    _ ≤ 2 * U.card * θ (c - 1) +
           ∑ h ∈ Ico 1 c, 2 * θ (c - h) * (P.introducedOfCard h).card :=
         Nat.add_le_add_left hsum _
 
