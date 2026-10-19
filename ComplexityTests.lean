@@ -50,6 +50,7 @@ import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
+import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
