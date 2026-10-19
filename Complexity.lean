@@ -364,6 +364,7 @@ public import Complexity.Computability.Complexity.Classes.IP.OptimalProver
 public import Complexity.Computability.Complexity.Classes.IP.PSPACE
 public import Complexity.Computability.Complexity.Classes.IP.Repetition
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
+public import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
 public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
@@ -1174,6 +1175,7 @@ public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.Parity.DepthThree
 public import Complexity.Logics.Propositional.ProofSystem
 public import Complexity.Logics.Propositional.QBF
+public import Complexity.Logics.Propositional.QBF.Arithmetization
 public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Complexity.Logics.Propositional.Resolution.SizeWidth
