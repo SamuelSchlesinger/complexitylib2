@@ -203,7 +203,8 @@ example : KColoring.verifier 3 (([0], []), [true, true, true]) = false := rfl
 -- With `k = 0`, exactly the graphs without declared vertices are colorable.
 example : KColoring.verifier 0 (([], [(0, 1)]), []) = true := rfl
 example : KColoring.verifier 0 (([0], []), []) = false := rfl
-example : (([], [(0, 1)]) : Graph) ∈ KColoring 0 := mem_KColoring_iff.2 ⟨fun _ => 0, by simp, by simp⟩
+example : (([], [(0, 1)]) : Graph) ∈ KColoring 0 :=
+  mem_KColoring_iff.2 ⟨fun _ => 0, by simp, by simp⟩
 example : (([0], []) : Graph) ∉ KColoring 0 := by
   rw [mem_KColoring_iff]
   rintro ⟨c, hc, -⟩

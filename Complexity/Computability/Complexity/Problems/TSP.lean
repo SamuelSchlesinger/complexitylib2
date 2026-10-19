@@ -34,9 +34,9 @@ conventions are the following.
 * Distances and the budget are binary (`encTSP`).
 
 `TSP` is in `NP`. As for the Hamiltonian problems, a certificate names an ordering of the cities,
-decoded by `Graph.decodeVertexList` from the list `0, …, n - 1` of cities; it has length `m ^ 2`
-for instances of encoded length `m`. The verifier checks that the ordering lists every city exactly
-once, and compares the length of its tour with the budget using the binary arithmetic of
+decoded by `Graph.decodeVertexList` from the list `0, …, D.length - 1` of cities; it has length
+`m ^ 2` for instances of encoded length `m`. The verifier checks that the ordering lists every city
+exactly once, and compares the length of its tour with the budget using the binary arithmetic of
 `PolyTime/Nat/Binary.lean`, so distances and budgets of any size are handled without unary
 expansion.
 
