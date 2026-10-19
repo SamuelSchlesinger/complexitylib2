@@ -344,6 +344,11 @@ public import Complexity.Computability.Complexity.Fagin.Small
 public import Complexity.Computability.Complexity.Fagin.StrictVerifier
 public import Complexity.Computability.Complexity.Fagin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Verifier
+public import Complexity.Computability.Complexity.FineGrained
+public import Complexity.Computability.Complexity.FineGrained.Assignment
+public import Complexity.Computability.Complexity.FineGrained.BruteForce
+public import Complexity.Computability.Complexity.FineGrained.Exponents
+public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.Coloring
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism

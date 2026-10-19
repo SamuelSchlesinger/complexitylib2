@@ -37,6 +37,7 @@ import ComplexityTests.ExplicitExpanders
 import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
+import ComplexityTests.FineGrained
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
