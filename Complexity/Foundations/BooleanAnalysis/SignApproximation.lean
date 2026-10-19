@@ -69,7 +69,7 @@ noncomputable def signRound (g : (ι → Bool) → ℝ) (x : ι → Bool) : Bool
 
 /-- If the sign of `r` differs from the bit `b`, then `r` is at distance at least one from the
 sign of `b`. -/
-theorem one_le_sq_signVal_sub_of_decide_ne {b : Bool} {r : ℝ} (h : decide (r < 0) ≠ b) :
+private theorem one_le_sq_signVal_sub_of_decide_ne {b : Bool} {r : ℝ} (h : decide (r < 0) ≠ b) :
     1 ≤ (signVal b - r) ^ 2 := by
   cases b
   · have hr : r < 0 := by simpa using h

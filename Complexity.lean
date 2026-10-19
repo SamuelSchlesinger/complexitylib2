@@ -509,9 +509,6 @@ public import Complexity.Computability.Kolmogorov.Partrec
 public import Complexity.Computability.Kolmogorov.SelfDelimiting
 public import Complexity.Computability.Kolmogorov.Uncomputability
 public import Complexity.Computability.Languages.Slice
-public import Complexity.Computability.Learning.AC0
-public import Complexity.Computability.Learning.Basic
-public import Complexity.Computability.Learning.LowDegree
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.NP
@@ -1187,6 +1184,9 @@ public import Complexity.Logics.SecondOrder.Coloring
 public import Complexity.Logics.SecondOrder.Existential
 public import Complexity.Logics.SecondOrder.Projection
 public import Complexity.Logics.SecondOrder.Reduction
+public import Complexity.MachineLearning.UniformLearning.AC0
+public import Complexity.MachineLearning.UniformLearning.Basic
+public import Complexity.MachineLearning.UniformLearning.LowDegree
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
