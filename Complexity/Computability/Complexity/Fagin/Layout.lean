@@ -20,8 +20,8 @@ input tape word `u = frame (encStructure a)` and its length `u.length` as unary 
 Because `encStructure a = frame (encUnary a.1) ++ (a.2.flatMap frame)` and
 `u = frame (encStructure a)`, every stage of the binary encoding is an application of
 `Turing.MultiTapeTM.frame` at some starting offset `base`. We therefore axiomatize a single
-stride-2 framing step (`frameChunkSentence`) in first-order logic using the linear order `powerLt`
-on `Fin B`:
+stride-2 framing step (`FO.frameChunkSentence`) in first-order logic using the linear order
+`powerLt` on `Fin B`:
 * given a domain formula `inDom(j)` (`j < w.length`), a bit formula `inBit(j)` (`w[j] = true`), and
   a unary relation `baseRel` holding of `{base}`,
 * a binary relation `mapRel(j, p)` tracks `p = base + 2 * j` for `j ≤ w.length`, writing `true` at
@@ -33,8 +33,8 @@ length, and one final instance reconstructs `frame (encStructure a)` and its len
 
 ## Main definitions
 
-* `Cslib.Logic.FO.closeAll`, `Cslib.Logic.FO.closeEx`, `Cslib.Logic.FO.isZeroF`,
-  `Cslib.Logic.FO.isMaxF`, `Cslib.Logic.FO.succF`: first-order formula combinators on `Fin B`.
+* `Cslib.Logic.FO.frameChunkSentence`: the first-order sentence axiomatizing a single stride-2
+  framing step on `Fin B`.
 * `Cslib.Logic.Vocabulary.inputVarLanguage`: the two unary relation symbols `uBitSym` and `uLenSym`
   representing the framed input word `u = frame (encStructure a)` and its length on `Fin B`.
 * `Cslib.Logic.Vocabulary.layoutESOSentence`: the existential second-order sentence over
@@ -42,13 +42,18 @@ length, and one final instance reconstructs `frame (encStructure a)` and its len
 
 ## Main results
 
-* `Cslib.Logic.FO.realize_frameChunkSentence_iff`: `frameChunkSentence` holds on `Fin B` (for the
-  canonical stride-2 map) iff `nextBaseRel` is `{base + (frame w).length}` and `outBitRel` agrees
-  with `frame w` on `[base, base + (frame w).length)`.
-* `Cslib.Logic.Vocabulary.realize_layoutESOSentence_iff`: for well-formed `a` with
+* `Cslib.Logic.FO.getElem?_frame_eq_of_realize_frameChunkSentence`,
+  `Cslib.Logic.FO.realize_frameChunkSentence_of_canonical`: soundness and completeness of
+  `frameChunkSentence` on `Fin B`.
+* `Cslib.Logic.Vocabulary.realize_layoutESOSentence`: for well-formed `a` with
   `(frame (encStructure a)).length < B`, `v.layoutESOSentence` holds on `Fin B` iff `uLenSym` holds
   solely of `(frame (encStructure a)).length` and `uBitSym` agrees with `frame (encStructure a)`
   below `(frame (encStructure a)).length`.
+
+## References
+
+* [R. Fagin, *Generalized first-order spectra and polynomial-time recognizable sets*][Fagin1974]
+* [N. Immerman, *Descriptive Complexity*][Immerman1999]
 -/
 
 @[expose] public section
@@ -157,239 +162,55 @@ theorem forall_getElem?_append_iff (u w : List Bool) (P : ℕ → Prop) :
       rw [List.getElem?_append_right hle]
       exact hw p hle hp
 
-/-! ### First-order formula combinators on `Fin B` -/
+/-! ### Generic stride-2 framing sentence -/
 
 namespace FO
 
 variable {L' : Language.{u, v}}
-
-/-- Universal closure of a formula over a finite type of free variables. -/
-noncomputable def closeAll (V : Type) [Finite V] (φ : L'.Formula V) : L'.Sentence :=
-  (Formula.iAlls V (φ.relabel Sum.inr)).relabel Empty.elim
-
-/-- Existential closure of a formula over a finite type of free variables. -/
-noncomputable def closeEx (V : Type) [Finite V] (φ : L'.Formula V) : L'.Sentence :=
-  ∼(closeAll V (∼φ))
-
-@[simp]
-theorem realize_closeAll {M : Type*} [L'.Structure M] (V : Type) [Finite V] (φ : L'.Formula V) :
-    (closeAll V φ).Realize M ↔ ∀ v : V → M, φ.Realize v := by
-  simp only [closeAll, Sentence.Realize, Formula.realize_relabel, Formula.realize_iAlls]
-  refine forall_congr' fun v => ?_
-  have h : (Sum.elim ((default : Empty → M) ∘ Empty.elim) v ∘ Sum.inr) = v := by
-    funext x; rfl
-  rw [h]
-
-@[simp]
-theorem realize_closeEx {M : Type*} [L'.Structure M] (V : Type) [Finite V] (φ : L'.Formula V) :
-    (closeEx V φ).Realize M ↔ ∃ v : V → M, φ.Realize v := by
-  simp [closeEx]
-
-@[simp]
-theorem realize_iInf_sentence {M : Type*} [L'.Structure M] {ι : Type*} [Finite ι]
-    (f : ι → L'.Sentence) :
-    Sentence.Realize M (Formula.iInf f) ↔ ∀ i, Sentence.Realize M (f i) := by
-  simp [Sentence.Realize]
-
-/-- Relabel a single-variable formula `φ : L'.Formula (Fin 1)` to free variable `u : V`. -/
-def atVar (φ : L'.Formula (Fin 1)) {V : Type*} (u : V) : L'.Formula V :=
-  φ.relabel (fun _ => u)
-
-@[simp]
-theorem realize_atVar {M : Type*} [L'.Structure M] (φ : L'.Formula (Fin 1)) {V : Type*}
-    (v : V → M) (u : V) :
-    (atVar φ u).Realize v ↔ φ.Realize ![v u] := by
-  rw [atVar, Formula.realize_relabel]
-  refine iff_of_eq (congrArg φ.Realize (funext fun i => ?_))
-  rw [Subsingleton.elim i 0]
-  rfl
-
-/-- Equality of two free variables as a formula. -/
-def varEq {V : Type*} (u w : V) : L'.Formula V :=
-  Term.equal (.var u) (.var w)
-
-/-- Application of a unary relation symbol to a free variable. -/
-def rel₁ {V : Type*} (r : L'.Relations 1) (u : V) : L'.Formula V :=
-  Relations.formula₁ r (.var u)
-
-/-- Application of a binary relation symbol to two free variables. -/
-def rel₂ {V : Type*} (r : L'.Relations 2) (u w : V) : L'.Formula V :=
-  Relations.formula₂ r (.var u) (.var w)
-
-@[simp]
-theorem realize_varEq {M : Type*} [L'.Structure M] {V : Type*} (v : V → M) (u w : V) :
-    (varEq (L' := L') u w).Realize v ↔ v u = v w := by
-  simp [varEq]
-
-@[simp]
-theorem realize_rel₁_var {M : Type*} [L'.Structure M] {V : Type*} (v : V → M)
-    (r : L'.Relations 1) (u : V) :
-    (rel₁ r u).Realize v ↔ RelMap r ![v u] := by
-  simp [rel₁]
-
-@[simp]
-theorem realize_rel₂_var {M : Type*} [L'.Structure M] {V : Type*} (v : V → M)
-    (r : L'.Relations 2) (u w : V) :
-    (rel₂ r u w).Realize v ↔ RelMap r ![v u, v w] := by
-  simp [rel₂]
-
-/-- The strict order formula `u < w` with respect to a binary relation symbol `lt`. -/
-def ltF (lt : L'.Relations 2) {V : Type*} (u w : V) : L'.Formula V :=
-  rel₂ lt u w
-
-/-- The weak order formula `u ≤ w` (`¬ (w < u)`) with respect to `lt`. -/
-def leF (lt : L'.Relations 2) {V : Type*} (u w : V) : L'.Formula V :=
-  ∼(ltF lt w u)
-
-/-- The formula `∀ z, ¬ (z < u)`, characterizing the minimum element `0` of `Fin B`. -/
-def isZeroF (lt : L'.Relations 2) {V : Type*} (u : V) : L'.Formula V :=
-  ∀' ∼(lt.boundedFormula₂ &0 (.var (.inl u)))
-
-/-- The formula `∀ z, ¬ (u < z)`, characterizing the maximum element `B - 1` of `Fin B`. -/
-def isMaxF (lt : L'.Relations 2) {V : Type*} (u : V) : L'.Formula V :=
-  ∀' ∼(lt.boundedFormula₂ (.var (.inl u)) &0)
-
-/-- The successor formula `u < w ∧ ∀ z, ¬ (u < z) ∨ ¬ (z < w)`, characterizing
-`(w : ℕ) = (u : ℕ) + 1` on `Fin B`. -/
-def succF (lt : L'.Relations 2) {V : Type*} (u w : V) : L'.Formula V :=
-  ltF lt u w ⊓ ∀' (∼(lt.boundedFormula₂ (.var (.inl u)) &0) ⊔
-    ∼(lt.boundedFormula₂ &0 (.var (.inl w))))
-
-section FinOrder
-
-variable {B : ℕ} [L'.Structure (Fin B)] {lt : L'.Relations 2}
-  (hlt : ∀ x : Fin 2 → Fin B, RelMap lt x ↔ x 0 < x 1)
-
-include hlt
-
-theorem realize_ltF {V : Type*} (v : V → Fin B) (u w : V) :
-    (ltF lt u w).Realize v ↔ v u < v w := by
-  simp [ltF, hlt]
-
-theorem realize_leF {V : Type*} (v : V → Fin B) (u w : V) :
-    (leF lt u w).Realize v ↔ v u ≤ v w := by
-  simp [leF, realize_ltF hlt]
-
-theorem realize_isZeroF {V : Type*} (v : V → Fin B) (u : V) :
-    (isZeroF lt u).Realize v ↔ (v u : ℕ) = 0 := by
-  have h1 : (isZeroF lt u).Realize v ↔ ∀ z : Fin B, ¬ (z < v u) := by
-    simp [isZeroF, Formula.Realize, hlt, Fin.snoc]
-  rw [h1]
-  constructor
-  · intro h
-    by_contra hne
-    have h0 : 0 < (v u : ℕ) := by omega
-    have hB : 0 < B := h0.trans (v u).2
-    have := h ⟨0, hB⟩
-    simp only [Fin.lt_def] at this
-    omega
-  · intro h z
-    simp only [Fin.lt_def, h]
-    omega
-
-theorem realize_isMaxF {V : Type*} (v : V → Fin B) (u : V) :
-    (isMaxF lt u).Realize v ↔ (v u : ℕ) = B - 1 := by
-  have h1 : (isMaxF lt u).Realize v ↔ ∀ z : Fin B, ¬ (v u < z) := by
-    simp [isMaxF, Formula.Realize, hlt, Fin.snoc]
-  rw [h1]
-  have hu := (v u).2
-  constructor
-  · intro h
-    by_contra hne
-    have hlt' : (v u : ℕ) + 1 < B := by omega
-    have := h ⟨(v u : ℕ) + 1, hlt'⟩
-    simp only [Fin.lt_def] at this
-    omega
-  · intro h z
-    have hz := z.2
-    simp only [Fin.lt_def]
-    omega
-
-theorem realize_succF {V : Type*} (v : V → Fin B) (u w : V) :
-    (succF lt u w).Realize v ↔ (v w : ℕ) = (v u : ℕ) + 1 := by
-  have h1 : (succF lt u w).Realize v ↔
-      v u < v w ∧ ∀ z : Fin B, ¬ (v u < z) ∨ ¬ (z < v w) := by
-    rw [succF, Formula.realize_inf, realize_ltF hlt]
-    simp [Formula.Realize, hlt, Fin.snoc]
-  rw [h1]
-  have hu := (v u).2
-  have hw := (v w).2
-  constructor
-  · rintro ⟨hlt', hmid⟩
-    rw [Fin.lt_def] at hlt'
-    by_contra hne
-    have hlt1 : (v u : ℕ) + 1 < (v w : ℕ) := by omega
-    have hltB : (v u : ℕ) + 1 < B := hlt1.trans hw
-    rcases hmid ⟨(v u : ℕ) + 1, hltB⟩ with h | h
-    · simp only [Fin.lt_def] at h; omega
-    · simp only [Fin.lt_def] at h; omega
-  · intro h
-    refine ⟨by simp only [Fin.lt_def, h]; omega, fun z => ?_⟩
-    simp only [Fin.lt_def]
-    omega
-
-/-! ### Generic stride-2 framing sentence -/
-
-/-- Given a domain formula `inDom : L'.Formula (Fin 1)` holding of `< M`, the formula
-`isFirstOutF lt inDom u` asserts `¬ inDom(u) ∧ ∀ k < u, inDom(k)`, holding solely of `M`. -/
-noncomputable def isFirstOutF (lt : L'.Relations 2) (inDom : L'.Formula (Fin 1))
-    {V : Type*} (u : V) : L'.Formula V :=
-  ∼(atVar inDom u) ⊓
-    Formula.iAlls (Fin 1) (ltF lt (.inr 0) (.inl u) ⟹ atVar inDom (.inr 0))
-
-theorem realize_isFirstOutF {inDom : L'.Formula (Fin 1)} {M : ℕ} (hMB : M < B)
-    (hdom : ∀ j : Fin B, inDom.Realize ![j] ↔ (j : ℕ) < M) {V : Type*}
-    (v : V → Fin B) (u : V) :
-    (isFirstOutF lt inDom u).Realize v ↔ (v u : ℕ) = M := by
-  simp only [isFirstOutF, Formula.realize_inf, Formula.realize_not, Formula.realize_iAlls,
-    Formula.realize_imp, realize_atVar, Sum.elim_inl, Sum.elim_inr, realize_ltF hlt, hdom]
-  constructor
-  · rintro ⟨hge, hlt_all⟩
-    by_contra hne
-    have hgt : M < (v u : ℕ) := by omega
-    have hM := hlt_all ![⟨M, hMB⟩] (by simpa [Fin.lt_def] using hgt)
-    simp at hM
-  · intro heq
-    refine ⟨by omega, fun k hk => ?_⟩
-    rw [Fin.lt_def] at hk
-    omega
 
 /-- The first-order sentence axiomatizing a single stride-2 framing step on `Fin B`:
 starting at `baseRel`, the binary relation `mapRel(j, p)` maps `j ≤ w.length` to `base + 2 * j`,
 writes `[true, w[j]]` into `outBitRel` at `base + 2 * j` and `base + 2 * j + 1`, writes the
 terminator `false` at `base + 2 * w.length`, and sets `nextBaseRel` to
 `{base + 2 * w.length + 1}`. -/
-noncomputable def frameChunkSentence (lt : L'.Relations 2)
+noncomputable def frameChunkSentence (r : L'.Relations 2)
     (inDom inBit : L'.Formula (Fin 1))
     (baseRel nextBaseRel : L'.Relations 1) (mapRel : L'.Relations 2)
     (outBitRel : L'.Relations 1) : L'.Sentence :=
   -- 1. Functionality of `mapRel`: `mapRel(j, p₁) ∧ mapRel(j, p₂) → p₁ = p₂`
   closeAll (Fin 3) ((rel₂ mapRel 0 1 ⊓ rel₂ mapRel 0 2) ⟹ varEq 1 2) ⊓
   -- 2. Base step at `j = 0`: `mapRel(0, p) ↔ baseRel(p)`
-  closeAll (Fin 2) (isZeroF lt 0 ⟹ (rel₂ mapRel 0 1 ⇔ rel₁ baseRel 1)) ⊓
+  closeAll (Fin 2) (isZero r 0 ⟹ (rel₂ mapRel 0 1 ⇔ rel₁ baseRel 1)) ⊓
   -- 3. Inductive step for `j` in `inDom`:
   closeAll (Fin 1) (atVar inDom 0 ⟹
     Formula.iExs (Fin 4) (
       rel₂ mapRel (.inl 0) (.inr 0) ⊓
-      succF lt (.inr 0) (.inr 1) ⊓
-      succF lt (.inr 1) (.inr 2) ⊓
-      succF lt (.inl 0) (.inr 3) ⊓
+      succ r (.inr 0) (.inr 1) ⊓
+      succ r (.inr 1) (.inr 2) ⊓
+      succ r (.inl 0) (.inr 3) ⊓
       rel₂ mapRel (.inr 3) (.inr 2) ⊓
       rel₁ outBitRel (.inr 0) ⊓
       (rel₁ outBitRel (.inr 1) ⇔ atVar inBit (.inl 0)))) ⊓
   -- 4. Terminator step at the first element `j` outside `inDom`:
-  closeAll (Fin 1) (isFirstOutF lt inDom 0 ⟹
+  closeAll (Fin 1) (isFirstOut r inDom 0 ⟹
     Formula.iExs (Fin 2) (
       rel₂ mapRel (.inl 0) (.inr 0) ⊓
-      succF lt (.inr 0) (.inr 1) ⊓
+      succ r (.inr 0) (.inr 1) ⊓
       ∼(rel₁ outBitRel (.inr 0)) ⊓
       Formula.iAlls (Fin 1) (rel₁ nextBaseRel (.inr 0) ⇔ varEq (.inr 0) (.inl (.inr 1)))))
+
+section FinOrder
+
+variable {B : ℕ} [L'.Structure (Fin B)] {r : L'.Relations 2}
+  (hlt : ∀ x : Fin 2 → Fin B, RelMap r x ↔ x 0 < x 1)
+
+include hlt
 
 /-- Soundness of `frameChunkSentence`: when `baseRel` holds solely of `base` and
 `base + (frame w).length < B`, any realization of `frameChunkSentence` forces `nextBaseRel` to hold
 solely of `base + (frame w).length` and `outBitRel` to agree with `frame w` on
 `[base, base + (frame w).length)`. -/
-theorem realize_frameChunkSentence_imp
+theorem getElem?_frame_eq_of_realize_frameChunkSentence
     {inDom inBit : L'.Formula (Fin 1)}
     {baseRel nextBaseRel : L'.Relations 1} {mapRel : L'.Relations 2}
     {outBitRel : L'.Relations 1}
@@ -397,7 +218,7 @@ theorem realize_frameChunkSentence_imp
     (hdom : ∀ j : Fin B, inDom.Realize ![j] ↔ (j : ℕ) < w.length)
     (hbit : ∀ j : Fin B, (j : ℕ) < w.length → (inBit.Realize ![j] ↔ w[(j : ℕ)]? = some true))
     (hbase : ∀ z : Fin B, RelMap baseRel ![z] ↔ (z : ℕ) = base)
-    (hreal : (frameChunkSentence lt inDom inBit baseRel nextBaseRel mapRel outBitRel).Realize
+    (hreal : (frameChunkSentence r inDom inBit baseRel nextBaseRel mapRel outBitRel).Realize
       (Fin B)) :
     (∀ z : Fin B, RelMap nextBaseRel ![z] ↔ (z : ℕ) = base + (frame w).length) ∧
       (∀ p : Fin B, base ≤ (p : ℕ) → (p : ℕ) < base + (frame w).length →
@@ -406,9 +227,9 @@ theorem realize_frameChunkSentence_imp
   have hMB : w.length < B := by omega
   simp only [frameChunkSentence, Sentence.realize_inf, realize_closeAll,
     Formula.realize_imp, Formula.realize_inf, Formula.realize_iff, Formula.realize_not,
-    Formula.realize_iExs, Formula.realize_iAlls, realize_rel₂_var, realize_rel₁_var,
-    realize_varEq, realize_isZeroF hlt, realize_succF hlt, realize_atVar,
-    realize_isFirstOutF hlt hMB hdom, Sum.elim_inl, Sum.elim_inr] at hreal
+    Formula.realize_iExs, Formula.realize_iAlls, realize_rel₂, realize_rel₁,
+    realize_varEq, realize_isZero hlt, realize_succ hlt, realize_atVar,
+    realize_isFirstOut hlt hMB hdom, Sum.elim_inl, Sum.elim_inr] at hreal
   rcases hreal with ⟨⟨⟨hfunc, hzero⟩, hstep⟩, hend⟩
   -- Prove by induction on `m ≤ w.length` that `mapRel` maps `⟨m, _⟩` uniquely to `base + 2 * m`.
   have hmap : ∀ m ≤ w.length, ∀ (j p : Fin B), (j : ℕ) = m →
@@ -503,14 +324,14 @@ theorem realize_frameChunkSentence_of_canonical
       RelMap mapRel ![j, p] ↔ (j : ℕ) ≤ w.length ∧ (p : ℕ) = base + 2 * (j : ℕ))
     (hout : ∀ p : Fin B, base ≤ (p : ℕ) → (p : ℕ) < base + (frame w).length →
       (RelMap outBitRel ![p] ↔ (frame w)[(p : ℕ) - base]? = some true)) :
-    (frameChunkSentence lt inDom inBit baseRel nextBaseRel mapRel outBitRel).Realize (Fin B) := by
+    (frameChunkSentence r inDom inBit baseRel nextBaseRel mapRel outBitRel).Realize (Fin B) := by
   have hlen : (frame w).length = 2 * w.length + 1 := length_frame w
   have hMB : w.length < B := by omega
   simp only [frameChunkSentence, Sentence.realize_inf, realize_closeAll,
     Formula.realize_imp, Formula.realize_inf, Formula.realize_iff, Formula.realize_not,
-    Formula.realize_iExs, Formula.realize_iAlls, realize_rel₂_var, realize_rel₁_var,
-    realize_varEq, realize_isZeroF hlt, realize_succF hlt, realize_atVar,
-    realize_isFirstOutF hlt hMB hdom, Sum.elim_inl, Sum.elim_inr]
+    Formula.realize_iExs, Formula.realize_iAlls, realize_rel₂, realize_rel₁,
+    realize_varEq, realize_isZero hlt, realize_succ hlt, realize_atVar,
+    realize_isFirstOut hlt hMB hdom, Sum.elim_inl, Sum.elim_inr]
   refine ⟨⟨⟨?_, ?_⟩, ?_⟩, ?_⟩
   · intro v ⟨h1, h2⟩
     rw [hmap] at h1 h2
@@ -692,7 +513,7 @@ def layoutOuterMap : v.layoutMatrixLanguage.Relations 2 :=
 (`base_{v.count + 1}` is `rawLen`). -/
 noncomputable def layoutInRaw : v.layoutMatrixLanguage.Formula (Fin 1) :=
   Formula.iExs (Fin 1) (FO.rel₁ (v.layoutBase (Fin.last (v.count + 1))) (.inr 0) ⊓
-    FO.ltF v.layoutLt (.inl 0) (.inr 0))
+    FO.lt v.layoutLt (.inl 0) (.inr 0))
 
 /-- The first-order matrix of `v.layoutESOSentence`:
 1. `base_0` holds solely of `0`,
@@ -703,7 +524,7 @@ noncomputable def layoutInRaw : v.layoutMatrixLanguage.Formula (Fin 1) :=
 4. the outer chunk frames `encStructure a` (`inDom = layoutInRaw`, `inBit = rawBit`) from `base_0`
    to `uLen` into `uBit`. -/
 noncomputable def layoutMatrix : v.layoutMatrixLanguage.Sentence :=
-  FO.closeAll (Fin 1) (FO.rel₁ (v.layoutBase 0) 0 ⇔ FO.isZeroF v.layoutLt 0) ⊓
+  FO.closeAll (Fin 1) (FO.rel₁ (v.layoutBase 0) 0 ⇔ FO.isZero v.layoutLt 0) ⊓
   FO.frameChunkSentence v.layoutLt (FO.rel₁ v.layoutIsElem 0) ⊤
     (v.layoutBase 0) (v.layoutBase 1) (v.layoutChunkMap 0) v.layoutRawBit ⊓
   (Formula.iInf fun i : Fin v.count =>
@@ -727,7 +548,7 @@ well-formed input `a` with `(frame (encStructure a)).length < B`, an interpretat
 `inputVarLanguage` satisfies `v.layoutESOSentence` iff `I_in true` (`uLenSym`) holds solely of
 `(frame (encStructure a)).length` and `I_in false` (`uBitSym`) agrees with `frame (encStructure a)`
 on all positions `< (frame (encStructure a)).length`. -/
-theorem realize_layoutESOSentence_iff {a : EncodedStructure} (ha : v.WellFormed a) {B : ℕ}
+theorem realize_layoutESOSentence {a : EncodedStructure} (ha : v.WellFormed a) {B : ℕ}
     (hB : (frame (encStructure a)).length < B)
     (I_in : ∀ b : Bool, Set (Fin ((fun _ : Bool => 1) b) → Fin B)) :
     (letI := v.powerStructure a B;
@@ -742,15 +563,73 @@ theorem realize_layoutESOSentence_iff {a : EncodedStructure} (ha : v.WellFormed 
   have hrawB : (encStructure a).length < B := by
     have := length_frame (encStructure a)
     omega
+  have hb0 : 0 + (frame (encUnary a.1)).length < B := by
+    have := v.length_encStructurePrefix_le a (Nat.zero_le v.count)
+    rw [v.encStructurePrefix_zero, v.encStructurePrefix_count ha] at this
+    omega
+  have hb_idx (idx : Fin v.count) :
+      (v.encStructurePrefix a idx.1).length + (frame (v.table a (v.symbol idx))).length < B := by
+    have h1 := v.length_encStructurePrefix_le a (by omega : idx.1 + 1 ≤ v.count)
+    rw [v.encStructurePrefix_count ha] at h1
+    rw [← List.length_append, ← v.encStructurePrefix_succ a idx]
+    omega
+  have hdom0 (R : ∀ i : LayoutVar v.count, Set (Fin (layoutArity v.count i) → Fin B)) (j : Fin B) :
+      letI := ESO.varLanguage.structure (arity := layoutArity v.count) R
+      (FO.rel₁ v.layoutIsElem (0 : Fin 1)).Realize ![j] ↔ (j : ℕ) < (encUnary a.1).length := by
+    let _ := ESO.varLanguage.structure (arity := layoutArity v.count) R
+    rw [FO.realize_rel₁]; simp [encUnary_apply]; rfl
+  have hbit0 (R : ∀ i : LayoutVar v.count, Set (Fin (layoutArity v.count i) → Fin B))
+      (j : Fin B) (hj : (j : ℕ) < (encUnary a.1).length) :
+      letI := ESO.varLanguage.structure (arity := layoutArity v.count) R
+      ((⊤ : v.layoutMatrixLanguage.Formula (Fin 1)).Realize ![j] ↔
+        (encUnary a.1)[(j : ℕ)]? = some true) := by
+    let _ := ESO.varLanguage.structure (arity := layoutArity v.count) R
+    simp only [Formula.realize_top, true_iff, encUnary_apply]
+    rw [List.getElem?_eq_getElem (by simpa using hj), List.getElem_replicate]
+  have hdom_idx (R : ∀ i : LayoutVar v.count, Set (Fin (layoutArity v.count i) → Fin B))
+      (idx : Fin v.count) (j : Fin B) :
+      letI := ESO.varLanguage.structure (arity := layoutArity v.count) R
+      (FO.rel₁ (v.layoutInTable idx) (0 : Fin 1)).Realize ![j] ↔
+        (j : ℕ) < (v.table a (v.symbol idx)).length := by
+    let _ := ESO.varLanguage.structure (arity := layoutArity v.count) R
+    rw [FO.realize_rel₁, Vocabulary.WellFormed.length_table v ha (v.symbol idx)]
+    exact v.relMap_powerInTable a B idx ![j]
+  have hbit_idx (R : ∀ i : LayoutVar v.count, Set (Fin (layoutArity v.count i) → Fin B))
+      (idx : Fin v.count) (j : Fin B) (hj : (j : ℕ) < (v.table a (v.symbol idx)).length) :
+      letI := ESO.varLanguage.structure (arity := layoutArity v.count) R
+      ((FO.rel₁ (v.layoutTableBit idx) (0 : Fin 1)).Realize ![j] ↔
+        (v.table a (v.symbol idx))[(j : ℕ)]? = some true) := by
+    let _ := ESO.varLanguage.structure (arity := layoutArity v.count) R
+    have hlen_table := Vocabulary.WellFormed.length_table v ha (v.symbol idx)
+    rw [FO.realize_rel₁]
+    change ((j : ℕ) < a.1 ^ (v.symbol idx).1 ∧
+      (v.table a (v.symbol idx)).getD (j : ℕ) false = true) ↔ _
+    rw [← hlen_table, and_iff_right hj, List.getD_eq_getElem _ _ hj,
+      List.getElem?_eq_getElem hj, Option.some.injEq]
+  have hdom_outer (R : ∀ i : LayoutVar v.count, Set (Fin (layoutArity v.count i) → Fin B))
+      (hbase_last : letI := ESO.varLanguage.structure (arity := layoutArity v.count) R;
+        ∀ z : Fin B, RelMap (v.layoutBase (Fin.last (v.count + 1))) ![z] ↔
+          (z : ℕ) = (encStructure a).length)
+      (j : Fin B) :
+      letI := ESO.varLanguage.structure (arity := layoutArity v.count) R
+      v.layoutInRaw.Realize ![j] ↔ (j : ℕ) < (encStructure a).length := by
+    let _ := ESO.varLanguage.structure (arity := layoutArity v.count) R
+    have hlt : ∀ x : Fin 2 → Fin B, RelMap v.layoutLt x ↔ x 0 < x 1 := fun _ => Iff.rfl
+    simp only [layoutInRaw, Formula.realize_iExs, Formula.realize_inf,
+      FO.realize_rel₁, FO.realize_lt hlt, Sum.elim_inl, Sum.elim_inr, Matrix.cons_val_zero]
+    refine ⟨fun ⟨y, hy, hjy⟩ => ?_, fun hj => ⟨![⟨(encStructure a).length, hrawB⟩],
+      (hbase_last _).2 rfl, by simpa [Fin.lt_def] using hj⟩⟩
+    have hy' := (hbase_last (y 0)).1 hy
+    rw [Fin.lt_def] at hjy; omega
   constructor
   · -- Soundness: any witness `R` for `layoutMatrix` forces `uLen` and `uBit`.
     rintro ⟨R, hR⟩
     let _ := ESO.varLanguage.structure (arity := layoutArity v.count) R
     have hlt : ∀ x : Fin 2 → Fin B, RelMap v.layoutLt x ↔ x 0 < x 1 := fun _ => Iff.rfl
     simp only [layoutMatrix, Sentence.realize_inf, FO.realize_closeAll,
-      Formula.realize_iff, FO.realize_iInf_sentence, FO.realize_rel₁_var,
-      FO.realize_isZeroF hlt] at hR
+      Formula.realize_iff, FO.realize_rel₁, FO.realize_isZero hlt] at hR
     rcases hR with ⟨⟨⟨hbase0, hchunk0⟩, hchunks⟩, houter⟩
+    rw [Sentence.Realize, Formula.realize_iInf] at hchunks
     have hbase0' : ∀ z : Fin B, RelMap (v.layoutBase 0) ![z] ↔ (z : ℕ) = 0 := fun z =>
       hbase0 ![z]
     -- Prove by induction on `m ≤ v.count` that `base_{m+1}` is `(encStructurePrefix a m).length`
@@ -763,68 +642,26 @@ theorem realize_layoutESOSentence_iff {a : EncodedStructure} (ha : v.WellFormed 
       intro m hm
       induction m with
       | zero =>
-        have hb0 : 0 + (frame (encUnary a.1)).length < B := by
-          have := v.length_encStructurePrefix_le a (Nat.zero_le v.count)
-          rw [v.encStructurePrefix_zero, v.encStructurePrefix_count ha] at this
-          omega
-        have hdom0 : ∀ j : Fin B,
-            (FO.rel₁ v.layoutIsElem (0 : Fin 1)).Realize ![j] ↔
-              (j : ℕ) < (encUnary a.1).length := by
-          intro j
-          rw [FO.realize_rel₁_var]
-          simp [encUnary_apply]
-          rfl
-        have hbit0 : ∀ j : Fin B, (j : ℕ) < (encUnary a.1).length →
-            ((⊤ : v.layoutMatrixLanguage.Formula (Fin 1)).Realize ![j] ↔
-              (encUnary a.1)[(j : ℕ)]? = some true) := by
-          intro j hj
-          simp only [Formula.realize_top, true_iff, encUnary_apply]
-          rw [List.getElem?_eq_getElem (by simpa using hj), List.getElem_replicate]
         obtain ⟨hnext, hout⟩ :=
-          FO.realize_frameChunkSentence_imp hlt hb0 hdom0 hbit0 hbase0' hchunk0
+          FO.getElem?_frame_eq_of_realize_frameChunkSentence hlt hb0 (hdom0 R) (hbit0 R)
+            hbase0' hchunk0
         simp only [Nat.zero_add, Nat.sub_zero, ← v.encStructurePrefix_zero a] at hnext hout
         exact ⟨hnext, fun p hp => hout p (Nat.zero_le _) hp⟩
       | succ m ih =>
-        have hi : m < v.count := by omega
-        let idx : Fin v.count := ⟨m, hi⟩
+        let idx : Fin v.count := ⟨m, by omega⟩
         obtain ⟨hbase_m, hout_m⟩ := ih (by omega)
-        have hlen_table : (v.table a (v.symbol idx)).length = a.1 ^ v.arity idx :=
-          Vocabulary.WellFormed.length_table v ha (v.symbol idx)
         have hsucc_eq := v.encStructurePrefix_succ a idx
         have hb_m : (v.encStructurePrefix a m).length +
-            (frame (v.table a (v.symbol idx))).length < B := by
-          have h1 := v.length_encStructurePrefix_le a hm
-          rw [v.encStructurePrefix_count ha] at h1
-          have h2 : (v.encStructurePrefix a m).length +
-              (frame (v.table a (v.symbol idx))).length =
-              (v.encStructurePrefix a (m + 1)).length := by
-            rw [← List.length_append, ← hsucc_eq]
-          omega
-        have hdom_m : ∀ j : Fin B,
-            (FO.rel₁ (v.layoutInTable idx) (0 : Fin 1)).Realize ![j] ↔
-              (j : ℕ) < (v.table a (v.symbol idx)).length := by
-          intro j
-          rw [FO.realize_rel₁_var, hlen_table]
-          exact v.relMap_powerInTable a B idx ![j]
-        have hbit_m : ∀ j : Fin B, (j : ℕ) < (v.table a (v.symbol idx)).length →
-            ((FO.rel₁ (v.layoutTableBit idx) (0 : Fin 1)).Realize ![j] ↔
-              (v.table a (v.symbol idx))[(j : ℕ)]? = some true) := by
-          intro j hj
-          rw [FO.realize_rel₁_var]
-          change ((j : ℕ) < a.1 ^ v.arity idx ∧
-            (v.table a (v.symbol idx)).getD (j : ℕ) false = true) ↔ _
-          rw [← hlen_table, and_iff_right hj, List.getD_eq_getElem _ _ hj,
-            List.getElem?_eq_getElem hj, Option.some.injEq]
+            (frame (v.table a (v.symbol idx))).length < B := hb_idx idx
         obtain ⟨hnext, hout⟩ :=
-          FO.realize_frameChunkSentence_imp hlt hb_m hdom_m hbit_m hbase_m (hchunks idx)
-        refine ⟨?_, ?_⟩
-        · intro z
-          change RelMap (v.layoutBase idx.succ.succ) ![z] ↔
+          FO.getElem?_frame_eq_of_realize_frameChunkSentence hlt hb_m (hdom_idx R idx)
+            (hbit_idx R idx) hbase_m (hchunks idx)
+        refine ⟨fun z => ?_, fun p hp => ?_⟩
+        · change RelMap (v.layoutBase idx.succ.succ) ![z] ↔
             (z : ℕ) = (v.encStructurePrefix a (idx.1 + 1)).length
           rw [hsucc_eq, List.length_append]
           exact hnext z
-        · intro p hp
-          change (p : ℕ) < (v.encStructurePrefix a (idx.1 + 1)).length at hp
+        · change (p : ℕ) < (v.encStructurePrefix a (idx.1 + 1)).length at hp
           change RelMap v.layoutRawBit ![p] ↔
             (v.encStructurePrefix a (idx.1 + 1))[(p : ℕ)]? = some true
           rw [hsucc_eq] at hp ⊢
@@ -844,32 +681,13 @@ theorem realize_layoutESOSentence_iff {a : EncodedStructure} (ha : v.WellFormed 
     -- Specialize `hprefix` at `m = v.count`.
     obtain ⟨hbase_last, hout_last⟩ := hprefix v.count (le_refl _)
     rw [v.encStructurePrefix_count ha] at hbase_last hout_last
-    -- Now apply `realize_frameChunkSentence_imp` to the outer framing step.
-    have hdom_outer : ∀ j : Fin B,
-        v.layoutInRaw.Realize ![j] ↔ (j : ℕ) < (encStructure a).length := by
-      intro j
-      simp only [layoutInRaw, Formula.realize_iExs, Formula.realize_inf,
-        FO.realize_rel₁_var, FO.realize_ltF hlt, Sum.elim_inl, Sum.elim_inr,
-        Matrix.cons_val_zero]
-      have hlast_eq : (Fin.last (v.count + 1)) = ⟨v.count + 1, by omega⟩ := rfl
-      rw [hlast_eq]
-      constructor
-      · rintro ⟨y, hy, hjy⟩
-        have hy' := (hbase_last (y 0)).1 hy
-        rw [Fin.lt_def] at hjy
-        omega
-      · intro hj
-        refine ⟨![⟨(encStructure a).length, hrawB⟩], (hbase_last _).2 rfl, ?_⟩
-        simpa [Fin.lt_def] using hj
     have hbit_outer : ∀ j : Fin B, (j : ℕ) < (encStructure a).length →
         ((FO.rel₁ v.layoutRawBit (0 : Fin 1)).Realize ![j] ↔
-          (encStructure a)[(j : ℕ)]? = some true) := by
-      intro j hj
-      rw [FO.realize_rel₁_var, Matrix.cons_val_zero]
-      exact hout_last j hj
-    have hb_outer : 0 + (frame (encStructure a)).length < B := by omega
+          (encStructure a)[(j : ℕ)]? = some true) := fun j hj => by
+      rw [FO.realize_rel₁, Matrix.cons_val_zero]; exact hout_last j hj
     obtain ⟨hnext_outer, hout_outer⟩ :=
-      FO.realize_frameChunkSentence_imp hlt hb_outer hdom_outer hbit_outer hbase0' houter
+      FO.getElem?_frame_eq_of_realize_frameChunkSentence hlt (by omega)
+        (hdom_outer R hbase_last) hbit_outer hbase0' houter
     simp only [Nat.zero_add, Nat.sub_zero] at hnext_outer hout_outer
     exact ⟨hnext_outer, fun p hp => hout_outer p (Nat.zero_le _) hp⟩
   · -- Completeness: construct the canonical relation assignment `R` for `layoutMatrix`.
@@ -910,90 +728,42 @@ theorem realize_layoutESOSentence_iff {a : EncodedStructure} (ha : v.WellFormed 
         rw [List.take_append_drop, List.take_of_length_le (by simp)]
       rw [hsub, List.getElem?_append_left hp]
     simp only [layoutMatrix, Sentence.realize_inf, FO.realize_closeAll,
-      Formula.realize_iff, FO.realize_iInf_sentence, FO.realize_rel₁_var,
-      FO.realize_isZeroF hlt]
-    refine ⟨⟨⟨fun x => hbase0 (x 0), ?_⟩, fun idx => ?_⟩, ?_⟩
+      Formula.realize_iff, FO.realize_rel₁, FO.realize_isZero hlt]
+    refine ⟨⟨⟨fun x => hbase0 (x 0), ?_⟩, ?_⟩, ?_⟩
     · -- Chunk 0 (`encUnary a.1`)
-      have hb0 : 0 + (frame (encUnary a.1)).length < B := by
-        have := v.length_encStructurePrefix_le a (Nat.zero_le v.count)
-        rw [v.encStructurePrefix_zero, v.encStructurePrefix_count ha] at this
-        omega
-      have hdom0 : ∀ j : Fin B,
-          (FO.rel₁ v.layoutIsElem (0 : Fin 1)).Realize ![j] ↔ (j : ℕ) < (encUnary a.1).length := by
-        intro j
-        rw [FO.realize_rel₁_var]
-        simp [encUnary_apply]
-        rfl
-      have hbit0 : ∀ j : Fin B, (j : ℕ) < (encUnary a.1).length →
-          ((⊤ : v.layoutMatrixLanguage.Formula (Fin 1)).Realize ![j] ↔
-            (encUnary a.1)[(j : ℕ)]? = some true) := by
-        intro j hj
-        simp only [Formula.realize_top, true_iff, encUnary_apply]
-        rw [List.getElem?_eq_getElem (by simpa using hj), List.getElem_replicate]
       have hnext0 : ∀ z : Fin B,
           RelMap (v.layoutBase 1) ![z] ↔ (z : ℕ) = 0 + (frame (encUnary a.1)).length := by
-        intro z
-        rw [hbase_char]
-        simp [baseAt, v.encStructurePrefix_zero]
+        intro z; rw [hbase_char]; simp [baseAt, v.encStructurePrefix_zero]
       have hmap0 : ∀ j p : Fin B,
           RelMap (v.layoutChunkMap 0) ![j, p] ↔
             (j : ℕ) ≤ (encUnary a.1).length ∧ (p : ℕ) = 0 + 2 * (j : ℕ) := by
-        intro j p
-        change ((j : ℕ) ≤ a.1 ∧ (p : ℕ) = 2 * (j : ℕ)) ↔ _
-        simp
+        intro j p; change ((j : ℕ) ≤ a.1 ∧ (p : ℕ) = 2 * (j : ℕ)) ↔ _; simp
       have hout0 : ∀ p : Fin B, 0 ≤ (p : ℕ) → (p : ℕ) < 0 + (frame (encUnary a.1)).length →
           (RelMap v.layoutRawBit ![p] ↔ (frame (encUnary a.1))[(p : ℕ) - 0]? = some true) := by
         intro p _ hp
         simpa [v.encStructurePrefix_zero] using hraw_prefix 0 (Nat.zero_le _) p
           (by simpa [v.encStructurePrefix_zero] using hp)
-      exact FO.realize_frameChunkSentence_of_canonical hlt hb0 hdom0 hbit0 hbase0 hnext0 hmap0 hout0
+      exact FO.realize_frameChunkSentence_of_canonical hlt hb0 (hdom0 R) (hbit0 R) hbase0
+        hnext0 hmap0 hout0
     · -- Chunk `idx + 1` (table `idx`)
-      have hlen_table : (v.table a (v.symbol idx)).length = a.1 ^ v.arity idx :=
-        Vocabulary.WellFormed.length_table v ha (v.symbol idx)
+      rw [Sentence.Realize, Formula.realize_iInf]
+      intro idx
       have hsucc_eq := v.encStructurePrefix_succ a idx
-      have hb_idx : (v.encStructurePrefix a idx.1).length +
-          (frame (v.table a (v.symbol idx))).length < B := by
-        have h1 := v.length_encStructurePrefix_le a (by omega : idx.1 + 1 ≤ v.count)
-        rw [v.encStructurePrefix_count ha] at h1
-        rw [← List.length_append, ← hsucc_eq]
-        omega
-      have hdom_idx : ∀ j : Fin B,
-          (FO.rel₁ (v.layoutInTable idx) (0 : Fin 1)).Realize ![j] ↔
-            (j : ℕ) < (v.table a (v.symbol idx)).length := by
-        intro j
-        rw [FO.realize_rel₁_var, hlen_table]
-        exact v.relMap_powerInTable a B idx ![j]
-      have hbit_idx : ∀ j : Fin B, (j : ℕ) < (v.table a (v.symbol idx)).length →
-          ((FO.rel₁ (v.layoutTableBit idx) (0 : Fin 1)).Realize ![j] ↔
-            (v.table a (v.symbol idx))[(j : ℕ)]? = some true) := by
-        intro j hj
-        rw [FO.realize_rel₁_var]
-        change ((j : ℕ) < a.1 ^ v.arity idx ∧
-          (v.table a (v.symbol idx)).getD (j : ℕ) false = true) ↔ _
-        rw [← hlen_table, and_iff_right hj, List.getD_eq_getElem _ _ hj,
-          List.getElem?_eq_getElem hj, Option.some.injEq]
       have hbase_idx : ∀ z : Fin B,
           RelMap (v.layoutBase idx.succ.castSucc) ![z] ↔
             (z : ℕ) = (v.encStructurePrefix a idx.1).length := by
-        intro z
-        rw [hbase_char]
-        simp [baseAt]
+        intro z; rw [hbase_char]; simp [baseAt]
       have hnext_idx : ∀ z : Fin B,
           RelMap (v.layoutBase idx.succ.succ) ![z] ↔
             (z : ℕ) = (v.encStructurePrefix a idx.1).length +
               (frame (v.table a (v.symbol idx))).length := by
-        intro z
-        rw [hbase_char, ← List.length_append, ← hsucc_eq]
-        simp [baseAt]
+        intro z; rw [hbase_char, ← List.length_append, ← hsucc_eq]; simp [baseAt]
       have hmap_idx : ∀ j p : Fin B,
           RelMap (v.layoutChunkMap idx.succ) ![j, p] ↔
             (j : ℕ) ≤ (v.table a (v.symbol idx)).length ∧
               (p : ℕ) = (v.encStructurePrefix a idx.1).length + 2 * (j : ℕ) := by
-        intro j p
-        rw [hlen_table]
-        change ![j, p] ∈ R (.inr (.inl idx.succ)) ↔ _
-        simp [R]
-        rfl
+        intro j p; rw [Vocabulary.WellFormed.length_table v ha (v.symbol idx)]
+        change ![j, p] ∈ R (.inr (.inl idx.succ)) ↔ _; simp [R]; rfl
       have hout_idx : ∀ p : Fin B,
           (v.encStructurePrefix a idx.1).length ≤ (p : ℕ) →
           (p : ℕ) < (v.encStructurePrefix a idx.1).length +
@@ -1005,52 +775,25 @@ theorem realize_layoutESOSentence_iff {a : EncodedStructure} (ha : v.WellFormed 
         have hp' : (p : ℕ) < (v.encStructurePrefix a (idx.1 + 1)).length := by
           rw [hsucc_eq, List.length_append]; exact hhi
         rw [hraw_prefix (idx.1 + 1) (by omega) p hp', hsucc_eq, List.getElem?_append_right hlo]
-      exact FO.realize_frameChunkSentence_of_canonical hlt hb_idx hdom_idx hbit_idx hbase_idx
-        hnext_idx hmap_idx hout_idx
+      exact FO.realize_frameChunkSentence_of_canonical hlt (hb_idx idx) (hdom_idx R idx)
+        (hbit_idx R idx) hbase_idx hnext_idx hmap_idx hout_idx
     · -- Outer chunk (`frame (encStructure a)`)
-      have hb_outer : 0 + (frame (encStructure a)).length < B := by omega
       have hbase_last : ∀ z : Fin B,
           RelMap (v.layoutBase (Fin.last (v.count + 1))) ![z] ↔
             (z : ℕ) = (encStructure a).length := by
-        intro z
-        rw [hbase_char]
-        simp [baseAt, v.encStructurePrefix_count ha]
-      have hdom_outer : ∀ j : Fin B,
-          v.layoutInRaw.Realize ![j] ↔ (j : ℕ) < (encStructure a).length := by
-        intro j
-        simp only [layoutInRaw, Formula.realize_iExs, Formula.realize_inf,
-          FO.realize_rel₁_var, FO.realize_ltF hlt, Sum.elim_inl, Sum.elim_inr,
-          Matrix.cons_val_zero]
-        constructor
-        · rintro ⟨y, hy, hjy⟩
-          have hy' := (hbase_last (y 0)).1 hy
-          rw [Fin.lt_def] at hjy
-          omega
-        · intro hj
-          refine ⟨![⟨(encStructure a).length, hrawB⟩], (hbase_last _).2 rfl, ?_⟩
-          simpa [Fin.lt_def] using hj
-      have hbit_outer : ∀ j : Fin B, (j : ℕ) < (encStructure a).length →
-          ((FO.rel₁ v.layoutRawBit (0 : Fin 1)).Realize ![j] ↔
-            (encStructure a)[(j : ℕ)]? = some true) := fun _ _ => Iff.rfl
+        intro z; rw [hbase_char]; simp [baseAt, v.encStructurePrefix_count ha]
       have hnext_outer : ∀ z : Fin B,
           RelMap v.layoutULen ![z] ↔ (z : ℕ) = 0 + (frame (encStructure a)).length := by
-        intro z
-        rw [Nat.zero_add]
-        exact huLen z
+        intro z; rw [Nat.zero_add]; exact huLen z
       have hmap_outer : ∀ j p : Fin B,
           RelMap v.layoutOuterMap ![j, p] ↔
             (j : ℕ) ≤ (encStructure a).length ∧ (p : ℕ) = 0 + 2 * (j : ℕ) := by
-        intro j p
-        change ((j : ℕ) ≤ (encStructure a).length ∧ (p : ℕ) = 2 * (j : ℕ)) ↔ _
-        simp
+        intro j p; change ((j : ℕ) ≤ (encStructure a).length ∧ (p : ℕ) = 2 * (j : ℕ)) ↔ _; simp
       have hout_outer : ∀ p : Fin B, 0 ≤ (p : ℕ) → (p : ℕ) < 0 + (frame (encStructure a)).length →
           (RelMap v.layoutUBit ![p] ↔ (frame (encStructure a))[(p : ℕ) - 0]? = some true) := by
-        intro p _ hp
-        rw [Nat.zero_add] at hp
-        rw [Nat.sub_zero]
-        exact huBit p hp
-      exact FO.realize_frameChunkSentence_of_canonical hlt hb_outer hdom_outer hbit_outer hbase0
-        hnext_outer hmap_outer hout_outer
+        intro p _ hp; rw [Nat.zero_add] at hp; rw [Nat.sub_zero]; exact huBit p hp
+      exact FO.realize_frameChunkSentence_of_canonical hlt (by omega) (hdom_outer R hbase_last)
+        (fun _ _ => Iff.rfl) hbase0 hnext_outer hmap_outer hout_outer
 
 end Vocabulary
 

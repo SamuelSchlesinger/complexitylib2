@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Enc
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Mathlib.Algebra.Polynomial.Eval.Defs
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # The class NP
@@ -31,10 +32,20 @@ with a binary alphabet and finitely many states (`Cslib.Complexity.mem_NP_iff_de
 in `Complexity.Computability.Complexity.Classes.NP.Nondeterministic`): such a machine guesses a
 certificate and verifies it, and conversely a verifier checks an encoded accepting computation.
 
+The verifier's efficiency can equally be stated in upstream terms: some machine computes it, in the
+sense of `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`, within time and space bounded by
+polynomially bounded functions of the length of its encoded input, which pairs the instance with
+the certificate (`Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfLength`).
+
 ## Main definitions
 
 * `Cslib.Complexity.IsVerifier`: the verifier condition.
 * `Cslib.Complexity.NP`, `Cslib.Complexity.coNP`.
+
+## Main results
+
+* `Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfLength`: `NP` with verifiers
+  computed in the sense of upstream `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`.
 
 ## References
 
@@ -65,6 +76,22 @@ theorem mem_NP {enc : α ↪ List Bool} {A : Set α} :
     A ∈ NP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A :=
   Iff.rfl
+
+/-- **`NP` in upstream terms:** `A ∈ NP enc` exactly when, for a polynomial `p`, some verifier for
+`A` with certificates of length `p` is computed by a machine with a binary alphabet and finitely
+many states within time and space bounded by polynomially bounded functions of the length of the
+encoded pair of an instance and a certificate. -/
+theorem mem_NP_iff_exists_computableInTimeAndSpaceOfLength {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ NP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool) (t s : ℕ → ℕ),
+      PolynomiallyBounded t ∧ PolynomiallyBounded s ∧
+        ComputableInTimeAndSpaceOfLength V (encPair enc encBits) encBool t s ∧
+          IsVerifier enc p V A := by
+  constructor
+  · rintro ⟨p, V, hV, hA⟩
+    obtain ⟨t, s, ht, hs, hV⟩ := hV.exists_computableInTimeAndSpaceOfLength
+    exact ⟨p, V, t, s, ht, hs, hV, hA⟩
+  · rintro ⟨p, V, t, s, ht, -, hV, hA⟩
+    exact ⟨p, V, hV.computableTidilyInPolyTime ht, hA⟩
 
 /-- The problems whose complements are in `NP`. -/
 def coNP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ NP enc}

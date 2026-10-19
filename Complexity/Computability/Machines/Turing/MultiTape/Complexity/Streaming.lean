@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Reverse
-import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -31,6 +31,9 @@ cells, excluding the read-only input and write-only output; retained accumulator
   and workspace independent of `l.length`.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec`: invariant
   wrapper for paired bit-list streaming folds.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum`: stream `k` rounds
+  of a state map from `(s, k)`, emitting per round, with cumulative round costs and workspace
+  independent of `k`.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream`: the uniform-round
   specialization.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_stream_spec`: an invariant
@@ -40,10 +43,11 @@ cells, excluding the read-only input and write-only output; retained accumulator
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.map_bits`: a bitwise map emits its output
   as it scans, in linear time and zero work space.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.reverse_bits`,
+  `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits`,
   `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.dropLast_bits`,
-  `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast_bits`,
+  `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast?_toList_bits`,
   `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast?_bits`: linear-time zero-workspace
-  bit-list reversal, prefix (`List.dropLast`), and last-bit (`List.getLast?.toList`,
+  bit-list reversal, unary length, prefix (`List.dropLast`), and last-bit (`List.getLast?.toList`,
   `List.getLast?`) primitives.
 
 ## References
@@ -362,12 +366,117 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec {σ : Typ
     (fun p i hi => hsize p i hi _ (htrace p i hi)),
     fun p => by simpa using htrace p p.2.length le_rfl⟩
 
+/-- A fold whose step ignores its token iterates the state map, `j` times after `j` tokens. -/
+theorem streamState_replicate {σ α : Type*} (f : σ → σ) (s : σ) (a : α) {k j : ℕ} (hj : j ≤ k) :
+    streamState s (fun p : σ × α => f p.1) (List.replicate k a) j = f^[j] s := by
+  rw [streamState, List.take_replicate, Nat.min_eq_left hj]
+  induction j generalizing s with
+  | zero => rfl
+  | succ j ih =>
+    rw [List.replicate_succ, List.foldl_cons, ih _ (by omega), Function.iterate_succ_apply]
+
+/-- Stream `k` rounds of a state map `f` from `(s, k)` on `encPair enc encUnary`. Round `i` emits
+`emit (f^[i] s)` directly to the output, and the final state is finished by `finish`. The unary
+count is read from the input tape one bit per round and never copied, so workspace holds only the
+current state and the callbacks. `R x i` charges round `i`: the step, the emission, and the current
+and next encoded states; `Q` and `B` bound peak callback workspace and encoded state size. -/
+theorem ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum {σ : Type} {enc : σ ↪ List Bool}
+    {f : σ → σ} {emit finish : σ → List Bool} {tN sN tE sE tF sF : σ → ℕ}
+    (hnext : ComputableTidilyInTimeAndSpace f enc enc tN sN)
+    (hemit : ComputableTidilyInTimeAndSpace emit enc encBits tE sE)
+    (hfinish : ComputableTidilyInTimeAndSpace finish enc encBits tF sF)
+    {R : σ × ℕ → ℕ → ℕ} {Q B : σ × ℕ → ℕ}
+    (hcost : ∀ x i, i < x.2 → tN (f^[i] x.1) + tE (f^[i] x.1) + (enc (f^[i] x.1)).length +
+      (enc (f^[i + 1] x.1)).length + 1 ≤ R x i)
+    (hspace : ∀ x i, i < x.2 → sN (f^[i] x.1) + sE (f^[i] x.1) ≤ Q x)
+    (hstate : ∀ x i, i ≤ x.2 → (enc (f^[i] x.1)).length ≤ B x) :
+    ∃ c, ComputableTidilyInTimeAndSpace
+      (fun x : σ × ℕ => ((List.range x.2).map fun i => emit (f^[i] x.1)).flatten ++
+        finish (f^[x.2] x.1))
+      (encPair enc encUnary) encBits
+      (fun x => c * (tF (f^[x.2] x.1) + (∑ i ∈ Finset.range x.2, R x i) + B x + 1))
+      (fun x => c * (sF (f^[x.2] x.1) + Q x + B x + 1)) := by
+  -- each round reads its state from the stream state paired with the token bit
+  obtain ⟨cfst, hfst⟩ := PairEncoding.fst (enc₁ := enc) (enc₂ := encBool)
+    (enc := encPair enc encBool)
+  obtain ⟨cN, hN⟩ := hnext.comp_linear hfst
+  obtain ⟨cE, hE⟩ := hemit.comp_linear hfst
+  obtain ⟨D, hD⟩ : ∃ D, D = 6 * cfst + cN + cE + 2 := ⟨_, rfl⟩
+  have hst (x : σ × ℕ) (j : ℕ) (hj : j ≤ x.2) :
+      streamState x.1 (f ∘ Prod.fst) (List.replicate x.2 true) j = f^[j] x.1 :=
+    streamState_replicate f x.1 true hj
+  let reader : InputReader Bool Unit := ⟨(), fun _ b => (none, some b)⟩
+  have hsf := ComputableTidilyInTimeAndSpace.streamFold_pair_sum
+    (g := fun x : σ × ℕ => ((List.range x.2).map fun i => emit (f^[i] x.1)).flatten ++
+      finish (f^[x.2] x.1))
+    (encIn := encPair enc encUnary) (encOut := encBits)
+    reader (fun b => [b]) (fun _ => List.cons_ne_nil _ _)
+    (fun a rest => by simp [reader, InputReader.read])
+    Prod.fst (fun x => List.replicate x.2 true) (fun x => by simp [encPair_apply, encUnary_apply])
+    hN hE hfinish
+    (fun x => by
+      rw [streamEmit_eq, List.length_replicate, hst x x.2 le_rfl]
+      simp only [encBits_apply]
+      congr 2
+      refine List.map_congr_left fun j hj => ?_
+      have hj' := List.mem_range.mp hj
+      simp [hj', hst x j hj'.le])
+    (roundCost := fun x i => D * R x i) (sMax := fun x => D * (Q x + B x + 1))
+    (lMax := fun x => B x + 1) ?_ ?_ ?_ (fun _ _ _ => by simp)
+  · obtain ⟨c, h⟩ := hsf
+    have hn (x : σ × ℕ) : x.2 ≤ ∑ i ∈ Finset.range x.2, R x i := by
+      calc x.2 = ∑ _i ∈ Finset.range x.2, 1 := by simp
+        _ ≤ _ := Finset.sum_le_sum fun i hi => by
+          have := hcost x i (Finset.mem_range.mp hi)
+          omega
+    refine ⟨c * (D + 4), h.mono (fun x => ?_) (fun x => ?_)⟩ <;>
+      simp only [List.length_replicate, hst x x.2 le_rfl, ← Finset.mul_sum, Nat.mul_assoc] <;>
+      refine Nat.mul_le_mul_left c ?_
+    · have h₀ := hstate x 0 (Nat.zero_le _)
+      have := hn x
+      simp only [length_encPair, encUnary_apply, List.length_replicate,
+        Function.iterate_zero_apply] at h₀ ⊢
+      nlinarith
+    · nlinarith
+  · intro x i hi
+    have hi' : i < x.2 := by simpa using hi
+    have hc := hcost x i hi'
+    have hm := Nat.mul_le_mul_left (6 * cfst + cN + cE + 1)
+      (show (enc (f^[i] x.1)).length + 1 ≤ R x i by omega)
+    simp only [length_encPair, encBool_apply, List.length_singleton, List.getElem_replicate,
+      hst x i hi'.le, hst x (i + 1) hi']
+    subst hD
+    nlinarith
+  · intro x i hi
+    have hi' : i < x.2 := by simpa using hi
+    have hs := hspace x i hi'
+    have hm := Nat.mul_le_mul_left (6 * cfst + cN + cE)
+      (Nat.succ_le_succ (hstate x i hi'.le))
+    simp only [length_encPair, encBool_apply, List.length_singleton, List.getElem_replicate,
+      hst x i hi'.le]
+    subst hD
+    nlinarith
+  · intro x i hi
+    rw [hst x i (by simpa using hi)]
+    exact (hstate x i (by simpa using hi)).trans (Nat.le_succ _)
+
 /-- Reverse a bit list tidily in `2 * l.length + 2` steps and zero work-tape space, using the
 two-state zero-work-tape primitive `Turing.MultiTapeTM.reverseInput`. -/
 theorem ComputableTidilyInTimeAndSpace.reverse_bits :
     ComputableTidilyInTimeAndSpace List.reverse encBits encBits
       (fun l => 2 * l.length + 2) (fun _ => 0) :=
   computableTidilyInTimeAndSpace_reverse fun _ => rfl
+
+/-- The length of a bit list, emitted in unary while scanning, in `4 * l.length + 8` steps and
+zero work-tape space. -/
+theorem ComputableTidilyInTimeAndSpace.length_bits :
+    ComputableTidilyInTimeAndSpace List.length encBits encUnary
+      (fun l => 4 * l.length + 8) (fun _ => 0) := by
+  obtain ⟨k, State, hfin, tm, htm⟩ := map_bits (fun _ => true)
+  refine ⟨k, State, hfin, tm, fun l => ?_⟩
+  have hmap : List.map (fun _ => true) l = encUnary l.length := by
+    simp [encUnary_apply, List.map_const']
+  exact hmap ▸ htm l
 
 /-- Drop the last bit of a bit list (`List.dropLast`) tidily in `4 * l.length + 8` steps and zero
 work-tape space, using a three-state (`Option Bool`) finite-state transducer that buffers one
@@ -397,57 +506,41 @@ theorem ComputableTidilyInTimeAndSpace.dropLast_bits :
   | cons b l =>
     simpa only [τ, Transducer.run_cons, List.nil_append, encBits_apply] using (hrun b l).symm
 
-/-- Extract the last bit of a bit list (`l.getLast?.toList`) tidily in `4 * l.length + 8` steps
-and zero work-tape space, using a three-state (`Option Bool`) finite-state transducer that retains
-the most recently seen symbol and emits it at the end of the input. -/
-theorem ComputableTidilyInTimeAndSpace.getLast_bits :
+/-- The finite-state transducer that remembers the last bit read and ends with `final` of it. -/
+private def lastBitT (final : Option Bool → List Bool) (hfinal : ∀ q, (final q).length ≤ 2) :
+    Transducer Bool (Option Bool) where
+  q₀ := none
+  step _ b := (some b, [])
+  final := final
+  length_step_le _ _ := by simp
+  length_final_le := hfinal
+
+private lemma run_lastBitT (final : Option Bool → List Bool) (hfinal : ∀ q, (final q).length ≤ 2)
+    (l : List Bool) :
+    (lastBitT final hfinal).run (lastBitT final hfinal).q₀ l = final l.getLast? := by
+  suffices ∀ q, (lastBitT final hfinal).run q l = final (l.getLast?.or q) from
+    (this none).trans (by rw [Option.or_none])
+  induction l with
+  | nil => intro q; rfl
+  | cons b l ih =>
+    intro q
+    rw [Transducer.run_cons, ih, List.getLast?_cons]
+    cases l.getLast? <;> rfl
+
+/-- Extract the last bit of a bit list as a 0-or-1-element list (`l.getLast?.toList`) tidily in
+`4 * l.length + 8` steps and zero work-tape space. -/
+theorem ComputableTidilyInTimeAndSpace.getLast?_toList_bits :
     ComputableTidilyInTimeAndSpace (fun l : List Bool => l.getLast?.toList) encBits encBits
-      (fun l => 4 * l.length + 8) (fun _ => 0) := by
-  let τ : Transducer Bool (Option Bool) :=
-    { q₀ := none
-      step _ b := (some b, [])
-      final q := q.toList
-      length_step_le _ _ := by simp
-      length_final_le q := by cases q <;> simp }
-  have hrun (prev : Bool) (l : List Bool) :
-      τ.run (some prev) l = [(prev :: l).getLast (List.cons_ne_nil _ _)] := by
-    induction l generalizing prev with
-    | nil => rfl
-    | cons b l ih =>
-      simpa only [τ, Transducer.run_cons, List.nil_append, List.getLast_cons_cons] using ih b
-  refine τ.computableTidilyInTimeAndSpace ?_
-  intro l
-  cases l with
-  | nil => rfl
-  | cons b l =>
-    simpa only [τ, Transducer.run_cons, List.nil_append, encBits_apply,
-      List.getLast?_eq_some_getLast (List.cons_ne_nil b l), Option.toList_some] using
-        (hrun b l).symm
+      (fun l => 4 * l.length + 8) (fun _ => 0) :=
+  (lastBitT Option.toList fun q => by cases q <;> simp).computableTidilyInTimeAndSpace fun l =>
+    (run_lastBitT Option.toList _ l).symm
 
 /-- Extract the last bit of a bit list as an `Option Bool` (`l.getLast?`) tidily in
 `4 * l.length + 8` steps and zero work-tape space. -/
 theorem ComputableTidilyInTimeAndSpace.getLast?_bits :
     ComputableTidilyInTimeAndSpace (List.getLast? (α := Bool)) encBits (encOption encBool)
-      (fun l => 4 * l.length + 8) (fun _ => 0) := by
-  let τ : Transducer Bool (Option Bool) :=
-    { q₀ := none
-      step _ b := (some b, [])
-      final q := encOption encBool q
-      length_step_le _ _ := by simp
-      length_final_le q := by cases q <;> simp }
-  have hrun (prev : Bool) (l : List Bool) :
-      τ.run (some prev) l = [true, (prev :: l).getLast (List.cons_ne_nil _ _)] := by
-    induction l generalizing prev with
-    | nil => rfl
-    | cons b l ih =>
-      simpa only [τ, Transducer.run_cons, List.nil_append, List.getLast_cons_cons] using ih b
-  refine τ.computableTidilyInTimeAndSpace ?_
-  intro l
-  cases l with
-  | nil => rfl
-  | cons b l =>
-    simpa only [τ, encBits_apply, Transducer.run_cons, List.nil_append, encOption_some,
-      encBool_apply, List.getLast?_eq_some_getLast (List.cons_ne_nil b l)] using
-        (hrun b l).symm
+      (fun l => 4 * l.length + 8) (fun _ => 0) :=
+  (lastBitT (encOption encBool) fun q => by cases q <;> simp).computableTidilyInTimeAndSpace
+    fun l => (run_lastBitT (encOption encBool) _ l).symm
 
 end Turing.MultiTapeTM

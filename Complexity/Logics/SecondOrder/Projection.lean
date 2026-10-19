@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.SecondOrder.Existential
-public import Mathlib.Data.Finset.Sort
 public import Mathlib.SetTheory.Cardinal.NatCard
+import Mathlib.Data.Finset.Sort
 
 /-!
 # Existential projection of relation variables and guessed linear orders
@@ -25,7 +25,19 @@ guessing an arbitrary strict linear order on a finite domain [Fagin, Proof of Th
 relation symbol `ltSym`, constrained by `isStrictLinearOrderSentence` to be irreflexive, transitive,
 and trichotomous. On a finite structure `M`, the expansions satisfying `isStrictLinearOrderSentence`
 are precisely the linear orders `orderRelOfEquiv e` induced by bijections `e : M ≃ Fin (Nat.card M)`
-(`realize_isStrictLinearOrderSentence_iff`).
+(`realize_isStrictLinearOrderSentence`).
+
+## Implementation notes
+
+`orderLanguage` is defined as `varLanguage (fun _ : Unit => 2)` (with strict `<` symbol `ltSym` and
+`isStrictLinearOrderSentence`) rather than Mathlib's `Language.order` for two reasons:
+1. Existential second-order quantification (`ESO.Sentence` and `ESO.Sentence.project`) quantifies
+   over relation blocks of the form `varLanguage arity` adjoined via `Language.sum`. Defining
+   `orderLanguage` directly as `varLanguage (fun _ : Unit => 2)` makes `Sentence.withLinearOrder` an
+   immediate instance of `Sentence.project`.
+2. Mathlib's `Language.order` represents a weak order `≤` (`Language.IsOrdered`), whereas the
+   colexicographic tuple order in Fagin's power interpretation compares the highest differing
+   coordinate via an irreflexive strict `<` relation.
 
 ## Main definitions
 
@@ -45,10 +57,10 @@ are precisely the linear orders `orderRelOfEquiv e` induced by bijections `e : M
 
 * `Cslib.Logic.ESO.Sentence.realize_project`: `Φ.project` holds in `M` iff `Φ` holds in some
   expansion of `M` by relations for `ar₀`.
-* `Cslib.Logic.ESO.realize_isStrictLinearOrderSentence_iff`: on a finite domain `M`, a binary
+* `Cslib.Logic.ESO.realize_isStrictLinearOrderSentence`: on a finite domain `M`, a binary
   relation satisfies `isStrictLinearOrderSentence` iff it is `orderRelOfEquiv e` for some
   `e : M ≃ Fin (Nat.card M)`.
-* `Cslib.Logic.ESO.Sentence.realize_withLinearOrder_iff`: on a finite structure `M`,
+* `Cslib.Logic.ESO.Sentence.realize_withLinearOrder`: on a finite structure `M`,
   `Φ.withLinearOrder` holds iff `Φ` holds on `(M, orderRelOfEquiv e)` for some numbering
   `e : M ≃ Fin (Nat.card M)`.
 * `Cslib.Logic.ESO.Definable.of_withLinearOrder`: a class characterized on every finite structure
@@ -183,7 +195,8 @@ theorem relMap_ltSym {N : Type w} (R : ∀ _ : Unit, Set (Fin 2 → N)) (x : Fin
   Iff.rfl
 
 /-- Unfolding `isStrictLinearOrderSentence` into irreflexivity, transitivity, and trichotomy. -/
-theorem realize_isStrictLinearOrderSentence {N : Type w} (R : ∀ _ : Unit, Set (Fin 2 → N)) :
+private theorem realize_isStrictLinearOrderSentence_aux {N : Type w}
+    (R : ∀ _ : Unit, Set (Fin 2 → N)) :
     (letI := varLanguage.structure (arity := fun _ : Unit => 2) R;
       N ⊨ isStrictLinearOrderSentence) ↔
       ((∀ a : N, ![a, a] ∉ R ()) ∧
@@ -198,7 +211,7 @@ theorem realize_isStrictLinearOrderSentence {N : Type w} (R : ∀ _ : Unit, Set 
 theorem realize_isStrictLinearOrderSentence_orderRelOfEquiv {N : Type w} {n : ℕ} (e : N ≃ Fin n) :
     (letI := varLanguage.structure (arity := fun _ : Unit => 2) (orderRelOfEquiv e);
       N ⊨ isStrictLinearOrderSentence) := by
-  rw [realize_isStrictLinearOrderSentence]
+  rw [realize_isStrictLinearOrderSentence_aux]
   refine ⟨⟨fun a => ?_, fun a b c ⟨h₁, h₂⟩ => ?_⟩, fun a b => ?_⟩
   · change ¬ (e a < e a)
     exact lt_irrefl _
@@ -210,14 +223,14 @@ theorem realize_isStrictLinearOrderSentence_orderRelOfEquiv {N : Type w} {n : �
 
 /-- On a finite type `N`, a binary relation satisfies `isStrictLinearOrderSentence` iff it is
 `orderRelOfEquiv e` for some bijection `e : N ≃ Fin (Nat.card N)`. -/
-theorem realize_isStrictLinearOrderSentence_iff {N : Type w} [Finite N]
+theorem realize_isStrictLinearOrderSentence {N : Type w} [Finite N]
     (R : ∀ _ : Unit, Set (Fin 2 → N)) :
     (letI := varLanguage.structure (arity := fun _ : Unit => 2) R;
       N ⊨ isStrictLinearOrderSentence) ↔
       ∃ e : N ≃ Fin (Nat.card N), R = orderRelOfEquiv e := by
   constructor
   · intro h
-    rcases (realize_isStrictLinearOrderSentence R).1 h with ⟨⟨hirr, htrans⟩, htri⟩
+    rcases (realize_isStrictLinearOrderSentence_aux R).1 h with ⟨⟨hirr, htrans⟩, htri⟩
     let r : N → N → Prop := fun a b => ![a, b] ∈ R ()
     have : Std.Irrefl r := ⟨hirr⟩
     have : IsTrans N r := ⟨fun a b c hab hbc => htrans a b c ⟨hab, hbc⟩⟩
@@ -244,7 +257,7 @@ def withLinearOrder (Φ : Sentence (L.sum orderLanguage)) : Sentence L :=
 
 /-- On a finite structure `M`, `Φ.withLinearOrder` holds iff `Φ` holds on `(M, orderRelOfEquiv e)`
 for some numbering `e : M ≃ Fin (Nat.card M)`. -/
-theorem realize_withLinearOrder_iff [Finite M] (Φ : Sentence (L.sum orderLanguage)) :
+theorem realize_withLinearOrder [Finite M] (Φ : Sentence (L.sum orderLanguage)) :
     Φ.withLinearOrder.Realize M ↔
       ∃ e : M ≃ Fin (Nat.card M),
         letI := varLanguage.structure (arity := fun _ : Unit => 2) (orderRelOfEquiv e)
@@ -255,7 +268,7 @@ theorem realize_withLinearOrder_iff [Finite M] (Φ : Sentence (L.sum orderLangua
     let _ := varLanguage.structure (arity := fun _ : Unit => 2) R
     obtain ⟨hlin, hΦ⟩ := (realize_inf (M := M)).1 hR
     rw [realize_ofSentence, LHom.realize_onSentence] at hlin
-    obtain ⟨e, rfl⟩ := (realize_isStrictLinearOrderSentence_iff R).1 hlin
+    obtain ⟨e, rfl⟩ := (realize_isStrictLinearOrderSentence R).1 hlin
     exact ⟨e, hΦ⟩
   · rintro ⟨e, hΦ⟩
     let _ := varLanguage.structure (arity := fun _ : Unit => 2) (orderRelOfEquiv e)
@@ -276,7 +289,7 @@ theorem Definable.of_withLinearOrder {K : Set (Bundled.{w} L.Structure)}
         Φ.Realize M) :
     Definable K := by
   refine ⟨Φ.withLinearOrder, fun M _ => ?_⟩
-  rw [Sentence.realize_withLinearOrder_iff]
+  rw [Sentence.realize_withLinearOrder]
   exact ⟨fun hM => ⟨Finite.equivFin M, (hΦ M (Finite.equivFin M)).1 hM⟩,
     fun ⟨e, h⟩ => (hΦ M e).2 h⟩
 
