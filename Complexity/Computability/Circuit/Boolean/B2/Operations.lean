@@ -990,6 +990,679 @@ theorem Valid.swap {S : State n} (hS : S.Valid f) {x Q : ℕ} {c : Bool} {T : Fi
     rw [hσid val hval.1]
     rfl
 
+
+/-! ### Quadratic reparameterisation (QR) -/
+
+/-- Along an affine family on which the pair `(x, y)` is tame, the product
+`(u x + α) (u y + β)` is affine. -/
+theorem isAffine_mul_of_pairTame {k : ℕ} {τ : BitString k → ℕ → Bool} (hτ : IsAffine τ)
+    {x y : ℕ} (ht : PairTame τ (x, y)) (α β : Bool) :
+    IsAffine fun u => (τ u x + α) * (τ u y + β) := by
+  intro u v w
+  dsimp only
+  have hy := congrFun (hτ u v w) y
+  have hx := congrFun (hτ u v w) x
+  simp only [Pi.add_apply] at hx hy
+  rcases ht with ht | ht | ht
+  · have h0 : ∀ u', τ u' x = τ 0 x := fun u' => ht u' 0
+    rw [h0 (u + v + w), h0 u, h0 v, h0 w, hy]
+    generalize τ 0 x = a; generalize τ u y = b₁; generalize τ v y = b₂; generalize τ w y = b₃
+    revert a b₁ b₂ b₃ α β; decide
+  · have h0 : ∀ u', τ u' y = τ 0 y := fun u' => ht u' 0
+    rw [h0 (u + v + w), h0 u, h0 v, h0 w, hx]
+    generalize τ 0 y = a; generalize τ u x = b₁; generalize τ v x = b₂; generalize τ w x = b₃
+    revert a b₁ b₂ b₃ α β; decide
+  · have h0 : ∀ u', τ u' x = τ u' y + (τ 0 x + τ 0 y) := fun u' => by
+      have := ht u' 0
+      simp only at this
+      rw [← this]
+      generalize τ u' x = a; generalize τ u' y = b
+      revert a b; decide
+    rw [h0 (u + v + w), h0 u, h0 v, h0 w, hy]
+    generalize τ 0 x + τ 0 y = a; generalize τ u y = b₁; generalize τ v y = b₂
+    generalize τ w y = b₃
+    revert a b₁ b₂ b₃ α β; decide
+
+/-- The quadratic reparameterisation: for an AND-type gate `G = (x + α)(y + β) + γ` whose only
+child is the XOR-type gate `D = G + z + c`, where `z` is an isolated parameter, substitute
+`z = D + G + c` in the parameter map, turn `D` into a parameter (it computes the new parameter
+`w` of the source), delete the gates `G` and `D`, and pair `x` with `y`. -/
+def quad (S : State n) (x y z G D : ℕ) (α β γ c : Bool) : State n :=
+  { S with
+    params := insert D (S.params.erase z)
+    gates := (S.gates.erase D).erase G
+    pairs := insert (x, y) S.pairs
+    phi := fun val => S.phi (Function.update val z (val D + ((val x + α) * (val y + β) + γ) + c)) }
+
+/-- The hypotheses of the quadratic reparameterisation. -/
+structure QuadOK (S : State n) (x y z G D : ℕ) (α β γ c : Bool) : Prop where
+  mem_x : x ∈ S.params
+  mem_y : y ∈ S.params
+  mem_z : z ∈ S.params
+  unpaired_x : ¬ S.Paired x
+  unpaired_y : ¬ S.Paired y
+  unpaired_z : ¬ S.Paired z
+  x_ne_y : x ≠ y
+  x_ne_z : x ≠ z
+  y_ne_z : y ≠ z
+  mem_G : G ∈ S.gates
+  mem_D : D ∈ S.gates
+  G_ne_D : G ≠ D
+  eval_G : ∀ val, (S.gate G).eval val = (val x + α) * (val y + β) + γ
+  eval_D : ∀ val, (S.gate D).eval val = val G + val z + c
+  children_G : S.children G = {.inl D}
+  children_z : S.children z = {.inl D}
+  out_G : ¬ S.out.Reads G
+  out_z : ¬ S.out.Reads z
+
+@[simp] theorem quad_params (S : State n) (x y z G D : ℕ) (α β γ c : Bool) :
+    (S.quad x y z G D α β γ c).params = insert D (S.params.erase z) := rfl
+
+@[simp] theorem quad_pairs (S : State n) (x y z G D : ℕ) (α β γ c : Bool) :
+    (S.quad x y z G D α β γ c).pairs = insert (x, y) S.pairs := rfl
+
+theorem quad_size {S : State n} {x y z G D : ℕ} {α β γ c : Bool}
+    (h : S.QuadOK x y z G D α β γ c) : (S.quad x y z G D α β γ c).size + 2 = S.size := by
+  have h1 := Finset.card_erase_add_one h.mem_D
+  have h2 := Finset.card_erase_add_one (Finset.mem_erase.2 ⟨h.G_ne_D, h.mem_G⟩)
+  simp only [SemiCircuit.size] at *
+  change ((S.gates.erase D).erase G).card + S.eqns.card + 2 = _
+  omega
+
+theorem quad_children_subset (S : State n) (x y z G D : ℕ) (α β γ c : Bool) (w : ℕ) :
+    (S.quad x y z G D α β γ c).children w ⊆ ((S.children w).erase (.inl D)).erase (.inl G) := by
+  intro v hv
+  rcases v with K | e
+  · simp only [SemiCircuit.inl_mem_children] at hv
+    change K ∈ (S.gates.erase D).erase G ∧ _ at hv
+    obtain ⟨hK, hr⟩ := hv
+    simp only [Finset.mem_erase] at hK ⊢
+    exact ⟨fun he => hK.1 (Sum.inl.inj he), fun he => hK.2.1 (Sum.inl.inj he),
+      (SemiCircuit.inl_mem_children _).2 ⟨hK.2.2, hr⟩⟩
+  · simp only [SemiCircuit.inr_mem_children] at hv
+    simp only [Finset.mem_erase, ne_eq, reduceCtorEq, not_false_eq_true, true_and]
+    exact (SemiCircuit.inr_mem_children _).2 hv
+
+/-- The quadratic reparameterisation preserves validity. -/
+theorem Valid.quad {S : State n} (hS : S.Valid f) {x y z G D : ℕ} {α β γ c : Bool}
+    (h : S.QuadOK x y z G D α β γ c) : (S.quad x y z G D α β γ c).Valid f := by
+  have hgp : ∀ {i}, i ∈ S.gates → i ∉ S.params := fun hg hp =>
+    Finset.disjoint_left.1 hS.wf.disjoint_params_gates hp hg
+  have hga : ∀ {i}, i ∈ S.gates → i ∉ S.aux := fun hg ha =>
+    Finset.disjoint_left.1 hS.wf.disjoint_aux_gates ha hg
+  have hzterms : ∀ e ∈ S.eqns, z ∉ (S.eqn e).terms := fun e he hz => by
+    have : Sum.inr e ∈ S.children z := (SemiCircuit.inr_mem_children _).2 ⟨he, hz⟩
+    rw [h.children_z] at this
+    simp at this
+  have hGterms : ∀ e ∈ S.eqns, G ∉ (S.eqn e).terms := fun e he =>
+    notMem_terms_of_mem_gates hS h.mem_G he
+  have hDterms : ∀ e ∈ S.eqns, D ∉ (S.eqn e).terms := fun e he =>
+    notMem_terms_of_mem_gates hS h.mem_D he
+  have hzreads : ∀ K ∈ S.gates, K ≠ D → ¬ (S.gate K).Reads z := fun K hK hKD hr => by
+    have : Sum.inl K ∈ S.children z := (SemiCircuit.inl_mem_children _).2 ⟨hK, hr⟩
+    rw [h.children_z] at this
+    exact hKD (Sum.inl.inj (Finset.mem_singleton.1 this))
+  have hGreads : ∀ K ∈ S.gates, K ≠ D → ¬ (S.gate K).Reads G := fun K hK hKD hr => by
+    have : Sum.inl K ∈ S.children G := (SemiCircuit.inl_mem_children _).2 ⟨hK, hr⟩
+    rw [h.children_G] at this
+    exact hKD (Sum.inl.inj (Finset.mem_singleton.1 this))
+  have hzG : z ≠ G := fun he => hgp h.mem_G (he ▸ h.mem_z)
+  have hxG : x ≠ G := fun he => hgp h.mem_G (he ▸ h.mem_x)
+  have hyG : y ≠ G := fun he => hgp h.mem_G (he ▸ h.mem_y)
+  have hDz : D ≠ z := fun he => hgp h.mem_D (he ▸ h.mem_z)
+  have hDx : D ≠ x := fun he => hgp h.mem_D (he ▸ h.mem_x)
+  have hDy : D ≠ y := fun he => hgp h.mem_D (he ▸ h.mem_y)
+  let Gq : (ℕ → Bool) → Bool := fun val => (val x + α) * (val y + β) + γ
+  let σ : (ℕ → Bool) → ℕ → Bool := fun val =>
+    Function.update (Function.update val z (val D + Gq val + c)) G (Gq val)
+  have hσ : ∀ val i, i ≠ z → i ≠ G → σ val i = val i := fun val i hz hG => by
+    simp only [σ, Function.update_of_ne hG, Function.update_of_ne hz]
+  have hσz : ∀ val, σ val z = val D + Gq val + c := fun val => by
+    simp only [σ, Function.update_of_ne hzG, Function.update_self]
+  have hσG : ∀ val, σ val G = Gq val := fun val => by simp only [σ, Function.update_self]
+  have hGqσ : ∀ val, Gq (σ val) = Gq val := fun val => by
+    simp only [Gq, hσ val x h.x_ne_z hxG, hσ val y h.y_ne_z hyG]
+  have hlive : ∀ i, i ∈ S.live → i ≠ z → i ≠ G → i ∈ (S.quad x y z G D α β γ c).live := by
+    intro i hi hiz hiG
+    simp only [SemiCircuit.live, Finset.mem_union] at hi ⊢
+    change (i ∈ insert D (S.params.erase z) ∨ i ∈ S.aux) ∨ i ∈ (S.gates.erase D).erase G
+    simp only [Finset.mem_insert, Finset.mem_erase]
+    by_cases hiD : i = D
+    · exact Or.inl (Or.inl (Or.inl hiD))
+    · tauto
+  have hwf : (S.quad x y z G D α β γ c).WellFormed := by
+    refine
+      { disjoint_params_aux := ?_
+        disjoint_params_gates := ?_
+        disjoint_aux_gates := Finset.disjoint_of_subset_right
+          ((Finset.erase_subset _ _).trans (Finset.erase_subset _ _)) hS.wf.disjoint_aux_gates
+        reads_lt := fun K hK i hi hr => hS.wf.reads_lt K
+          (Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hK)) i
+          (Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hi)) hr
+        reads_live := fun K hK i hr => ?_
+        terms_subset := fun e he t ht => ?_
+        card_terms_le := hS.wf.card_terms_le
+        out_live := fun i hi => hlive i (hS.wf.out_live i hi) (fun he => h.out_z (he ▸ hi))
+          (fun he => h.out_G (he ▸ hi))
+        solvable := fun u => ?_
+        unique := fun val val' hagree heq heq' a ha => ?_ }
+    · rw [Finset.disjoint_left]
+      intro i hi ha
+      change i ∈ insert D (S.params.erase z) at hi
+      rcases Finset.mem_insert.1 hi with rfl | hi
+      · exact hga h.mem_D ha
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_params_aux (Finset.mem_of_mem_erase hi) ha
+    · rw [Finset.disjoint_left]
+      intro i hi hg
+      change i ∈ insert D (S.params.erase z) at hi
+      change i ∈ (S.gates.erase D).erase G at hg
+      rcases Finset.mem_insert.1 hi with rfl | hi
+      · exact Finset.notMem_erase i _ (Finset.mem_of_mem_erase hg)
+      · exact hgp (Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hg))
+          (Finset.mem_of_mem_erase hi)
+    · change K ∈ (S.gates.erase D).erase G at hK
+      have hKD := Finset.ne_of_mem_erase (Finset.mem_of_mem_erase hK)
+      have hK' := Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hK)
+      exact hlive i (hS.wf.reads_live K hK' i hr) (fun he => hzreads K hK' hKD (he ▸ hr))
+        (fun he => hGreads K hK' hKD (he ▸ hr))
+    · have := hS.wf.terms_subset e he ht
+      have htz : t ≠ z := fun he' => hzterms e he (he' ▸ ht)
+      change t ∈ insert D (S.params.erase z) ∪ S.aux
+      simp only [Finset.mem_union, Finset.mem_insert, Finset.mem_erase] at this ⊢
+      tauto
+    · obtain ⟨val, hu, heq⟩ := hS.wf.solvable u
+      refine ⟨Function.update val D (u D), fun j hj => ?_, fun e he => ?_⟩
+      · change j ∈ insert D (S.params.erase z) at hj
+        rcases Finset.mem_insert.1 hj with rfl | hj
+        · exact Function.update_self _ _ _
+        · rw [Function.update_of_ne (show j ≠ D from fun he =>
+            hgp h.mem_D (he ▸ Finset.mem_of_mem_erase hj)),
+            hu j (Finset.mem_of_mem_erase hj)]
+      · exact (Equation.holds_congr fun i hi =>
+          Function.update_of_ne (show i ≠ D from fun he' => hDterms e he (he' ▸ hi)) _ _).2
+            (heq e he)
+    · have hold : ∀ w : ℕ → Bool, S.EqnsHold w → S.EqnsHold (Function.update w z false) :=
+        fun w hw e he => (Equation.holds_congr fun i hi =>
+          Function.update_of_ne (show i ≠ z from fun he' => hzterms e he (he' ▸ hi)) _ _).2
+            (hw e he)
+      have := hS.wf.unique _ _ (fun j hj => by
+          by_cases hjz : j = z
+          · subst hjz; simp only [Function.update_self]
+          · simp only [Function.update_of_ne hjz]
+            exact hagree j (Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hjz, hj⟩)))
+        (hold val heq) (hold val' heq') a ha
+      have haz : a ≠ z := fun he => Finset.disjoint_left.1 hS.wf.disjoint_params_aux
+        (he ▸ h.mem_z) ha
+      simpa only [Function.update_of_ne haz] using this
+  refine hS.of_map σ hwf ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  · intro pr hpr
+    rcases Finset.mem_insert.1 hpr with rfl | hpr
+    · exact ⟨Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨h.x_ne_z, h.mem_x⟩),
+        Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨h.y_ne_z, h.mem_y⟩), h.x_ne_y⟩
+    · obtain ⟨h1, h2, h12⟩ := hS.pair_mem pr hpr
+      have hz1 : pr.1 ≠ z := fun he => h.unpaired_z ⟨pr, hpr, Or.inl he⟩
+      have hz2 : pr.2 ≠ z := fun he => h.unpaired_z ⟨pr, hpr, Or.inr he⟩
+      exact ⟨Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hz1, h1⟩),
+        Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hz2, h2⟩), h12⟩
+  · have hnew : ∀ pr ∈ S.pairs, x ≠ pr.1 ∧ x ≠ pr.2 ∧ y ≠ pr.1 ∧ y ≠ pr.2 := fun pr hpr =>
+      ⟨fun he => h.unpaired_x ⟨pr, hpr, Or.inl he.symm⟩,
+        fun he => h.unpaired_x ⟨pr, hpr, Or.inr he.symm⟩,
+        fun he => h.unpaired_y ⟨pr, hpr, Or.inl he.symm⟩,
+        fun he => h.unpaired_y ⟨pr, hpr, Or.inr he.symm⟩⟩
+    intro pr hpr pr' hpr' hne
+    rcases Finset.mem_insert.1 hpr with rfl | hpr <;>
+      rcases Finset.mem_insert.1 hpr' with rfl | hpr'
+    · exact absurd rfl hne
+    · exact hnew pr' hpr'
+    · obtain ⟨h1, h2, h3, h4⟩ := hnew pr hpr
+      exact ⟨Ne.symm h1, Ne.symm h3, Ne.symm h2, Ne.symm h4⟩
+    · exact hS.pairs_disjoint pr hpr pr' hpr' hne
+  · intro val
+    refine hS.phi_congr _ _ fun j hj => ?_
+    have hjG : j ≠ G := fun he => hgp h.mem_G (he ▸ hj)
+    simp only [σ, Function.update_of_ne hjG]
+    rfl
+  · intro val val' hv j hj
+    have hjG : j ≠ G := fun he => hgp h.mem_G (he ▸ hj)
+    by_cases hjz : j = z
+    · subst hjz
+      have hD := hv D (Finset.mem_insert_self _ _)
+      have hx := hv x (Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨h.x_ne_z, h.mem_x⟩))
+      have hy := hv y (Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨h.y_ne_z, h.mem_y⟩))
+      simp only [hσz, Gq, hD, hx, hy]
+    · rw [hσ val j hjz hjG, hσ val' j hjz hjG]
+      exact hv j (Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hjz, hj⟩))
+  · intro val val' hv j hj
+    rcases Finset.mem_insert.1 hj with rfl | hj
+    · have hz := hv z h.mem_z
+      have hx := hv x h.mem_x
+      have hy := hv y h.mem_y
+      rw [hσ val x h.x_ne_z hxG, hσ val' x h.x_ne_z hxG] at hx
+      rw [hσ val y h.y_ne_z hyG, hσ val' y h.y_ne_z hyG] at hy
+      rw [hσz, hσz] at hz
+      simp only [Gq, hx, hy] at hz
+      simpa using hz
+    · have := hv j (Finset.mem_of_mem_erase hj)
+      have hjG : j ≠ G := fun he => hgp h.mem_G (he ▸ Finset.mem_of_mem_erase hj)
+      rwa [hσ val j (Finset.ne_of_mem_erase hj) hjG,
+        hσ val' j (Finset.ne_of_mem_erase hj) hjG] at this
+  · intro k τ hτ htame
+    refine ⟨fun u => Function.update (τ u) z (τ u D + Gq (τ u) + c), ?_, fun pr hpr => ?_,
+      fun u j hj => ?_⟩
+    · refine isAffine_update hτ z fun u v w => ?_
+      have hm := isAffine_mul_of_pairTame hτ (htame (x, y) (Finset.mem_insert_self _ _)) α β u v w
+      have hD := congrFun (hτ u v w) D
+      simp only [Pi.add_apply] at hm hD
+      simp only [Gq, hD, hm]
+      generalize τ u D = a₁; generalize τ v D = a₂; generalize τ w D = a₃
+      generalize (τ u x + α) * (τ u y + β) = b₁; generalize (τ v x + α) * (τ v y + β) = b₂
+      generalize (τ w x + α) * (τ w y + β) = b₃
+      cases a₁ <;> cases a₂ <;> cases a₃ <;> cases b₁ <;> cases b₂ <;> cases b₃ <;> cases γ <;>
+        cases c <;> rfl
+    · have hz1 : pr.1 ≠ z := fun he => h.unpaired_z ⟨pr, hpr, Or.inl he⟩
+      have hz2 : pr.2 ≠ z := fun he => h.unpaired_z ⟨pr, hpr, Or.inr he⟩
+      rcases htame pr (Finset.mem_insert_of_mem hpr) with ht | ht | ht
+      · exact Or.inl fun u v => by
+          simp only [Function.update_of_ne hz1]; exact ht u v
+      · exact Or.inr (Or.inl fun u v => by
+          simp only [Function.update_of_ne hz2]; exact ht u v)
+      · exact Or.inr (Or.inr fun u v => by
+          simp only [Function.update_of_ne hz1, Function.update_of_ne hz2]; exact ht u v)
+    · have hjG : j ≠ G := fun he => hgp h.mem_G (he ▸ hj)
+      simp only [σ, Function.update_of_ne hjG]
+  · intro val hval
+    refine ⟨fun e he => (Equation.holds_congr fun i hi => hσ val i
+      (fun he' => hzterms e he (he' ▸ hi)) (fun he' => hGterms e he (he' ▸ hi))).2 (hval.1 e he),
+      fun K hK => ?_⟩
+    by_cases hKG : K = G
+    · subst hKG
+      rw [hσG, h.eval_G, ← hGqσ]
+    · by_cases hKD : K = D
+      · subst hKD
+        rw [hσ val K hDz hKG, h.eval_D, hσG, hσz]
+        generalize val K = a; generalize Gq val = b
+        cases a <;> cases b <;> cases c <;> rfl
+      · have hK' : K ∈ (S.quad x y z G D α β γ c).gates :=
+          Finset.mem_erase.2 ⟨hKG, Finset.mem_erase.2 ⟨hKD, hK⟩⟩
+        have hKz : K ≠ z := fun he => hgp hK (he ▸ h.mem_z)
+        rw [hσ val K hKz hKG, hval.2 K hK']
+        exact Gate.eval_congr fun i hi => (hσ val i (fun he => hzreads K hK hKD (he ▸ hi))
+          (fun he => hGreads K hK hKD (he ▸ hi))).symm
+  · intro val _
+    exact Lit.eval_congr fun i hi => (hσ val i (fun he => h.out_z (he ▸ hi))
+      (fun he => h.out_G (he ▸ hi))).symm
+
+/-! ### Moving affine gates into the affine system -/
+
+/-- An operation of `B₂` is affine when its multilinear expression has no product term. -/
+def IsAffineOp (op : Bool → Bool → Bool) : Prop :=
+  (op false false ^^ op true false ^^ op false true ^^ op true true) = false
+
+instance (op : Bool → Bool → Bool) : Decidable (IsAffineOp op) :=
+  inferInstanceAs (Decidable (_ = _))
+
+/-- Add the argument `a` with coefficient `b` to the terms and right-hand side of an
+equation. -/
+def addArg (p : Finset ℕ × Bool) (b : Bool) (a : Arg) : Finset ℕ × Bool :=
+  if b then
+    match a with
+    | .node t => (toggle p.1 t, p.2)
+    | .const v => (p.1, p.2 ^^ v)
+  else p
+
+theorem sum_addArg (p : Finset ℕ × Bool) (b : Bool) (a : Arg) (val : ℕ → Bool) :
+    ∑ i ∈ (addArg p b a).1, val i + (addArg p b a).2 =
+      ∑ i ∈ p.1, val i + p.2 + (b && a.eval val) := by
+  unfold addArg
+  cases b
+  · exact (add_zero _).symm
+  · cases a with
+    | node t =>
+      simp only [ite_true, sum_toggle, Arg.eval_node, Bool.true_and]
+      generalize ∑ i ∈ p.1, val i = s; generalize val t = v; generalize p.2 = r
+      revert s v r; decide
+    | const v =>
+      simp only [ite_true, Arg.eval_const, Bool.true_and]
+      generalize ∑ i ∈ p.1, val i = s; generalize p.2 = r
+      revert s v r; decide
+
+theorem mem_addArg {p : Finset ℕ × Bool} {b : Bool} {a : Arg} {z : ℕ}
+    (h : z ∈ (addArg p b a).1) : z ∈ p.1 ∨ a = .node z := by
+  unfold addArg at h
+  cases b
+  · exact Or.inl h
+  · cases a with
+    | node t =>
+      by_cases hzt : z = t
+      · exact Or.inr (by rw [hzt])
+      · exact Or.inl ((mem_toggle.1 h).2 hzt)
+    | const v => exact Or.inl h
+
+theorem card_addArg_le (p : Finset ℕ × Bool) (b : Bool) (a : Arg) :
+    (addArg p b a).1.card ≤ p.1.card + 1 := by
+  unfold addArg
+  cases b
+  · exact Nat.le_succ _
+  · cases a with
+    | node t => exact card_toggle_le _ _
+    | const v => exact Nat.le_succ _
+
+/-- The equation `J + b₁ t₁ + b₂ t₂ = c` replacing the affine gate
+`J = b₁ t₁ + b₂ t₂ + c`. -/
+def affEqn (g : Gate) (J : ℕ) : Equation :=
+  let c₀ := g.op false false
+  let p := addArg (addArg ({J}, c₀) (g.op true false ^^ c₀) g.left) (g.op false true ^^ c₀)
+    g.right
+  ⟨p.1, p.2⟩
+
+theorem affEqn_holds {g : Gate} (hg : IsAffineOp g.op) (J : ℕ) (val : ℕ → Bool) :
+    (affEqn g J).Holds val ↔ val J = g.eval val := by
+  unfold affEqn Equation.Holds
+  dsimp only
+  have h1 := sum_addArg ({J}, g.op false false) (g.op true false ^^ g.op false false) g.left val
+  have h2 := sum_addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
+    g.left) (g.op false true ^^ g.op false false) g.right val
+  rw [Finset.sum_singleton] at h1
+  dsimp only at h1
+  rw [h1] at h2
+  unfold Gate.eval
+  unfold IsAffineOp at hg
+  generalize ∑ i ∈ (addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
+    g.left) (g.op false true ^^ g.op false false) g.right).1, val i = s at h2 ⊢
+  generalize (addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
+    g.left) (g.op false true ^^ g.op false false) g.right).2 = r at h2 ⊢
+  generalize g.left.eval val = l at h2 ⊢
+  generalize g.right.eval val = rr at h2 ⊢
+  generalize val J = j at h2 ⊢
+  cases l <;> cases rr <;>
+  · revert h2 hg
+    generalize g.op false false = a
+    generalize g.op true false = b
+    generalize g.op false true = c
+    generalize g.op true true = d
+    revert s r j a b c d; decide
+
+theorem mem_affEqn {g : Gate} {J z : ℕ} (h : z ∈ (affEqn g J).terms) : z = J ∨ g.Reads z := by
+  unfold affEqn at h
+  rcases mem_addArg h with h | h
+  · rcases mem_addArg h with h | h
+    · exact Or.inl (Finset.mem_singleton.1 h)
+    · exact Or.inr (Or.inl h)
+  · exact Or.inr (Or.inr h)
+
+theorem card_affEqn_le (g : Gate) (J : ℕ) : (affEqn g J).terms.card ≤ 3 := by
+  unfold affEqn
+  have h1 := card_addArg_le ({J}, g.op false false) (g.op true false ^^ g.op false false) g.left
+  have h2 := card_addArg_le (addArg ({J}, g.op false false)
+    (g.op true false ^^ g.op false false) g.left) (g.op false true ^^ g.op false false) g.right
+  simp only [Finset.card_singleton] at h1
+  exact h2.trans (by omega)
+
+/-- Move the affine gate `J` into the affine system as the auxiliary variable `J` with the new
+equation `e`. -/
+def moveAffine (S : State n) (J e : ℕ) : State n :=
+  { S with
+    gates := S.gates.erase J
+    aux := insert J S.aux
+    eqns := insert e S.eqns
+    eqn := Function.update S.eqn e (affEqn (S.gate J) J) }
+
+/-- The hypotheses of moving a gate into the affine system: `J` is an affine gate reading no
+gates and `e` is a fresh equation name. -/
+structure MoveOK (S : State n) (J e : ℕ) : Prop where
+  mem : J ∈ S.gates
+  fresh : e ∉ S.eqns
+  affine : IsAffineOp (S.gate J).op
+  inputs : ∀ i, (S.gate J).Reads i → i ∉ S.gates
+
+@[simp] theorem moveAffine_params (S : State n) (J e : ℕ) :
+    (S.moveAffine J e).params = S.params := rfl
+
+@[simp] theorem moveAffine_pairs (S : State n) (J e : ℕ) :
+    (S.moveAffine J e).pairs = S.pairs := rfl
+
+theorem moveAffine_size {S : State n} {J e : ℕ} (h : S.MoveOK J e) :
+    (S.moveAffine J e).size = S.size := by
+  have h1 := Finset.card_erase_add_one h.mem
+  have h2 := Finset.card_insert_of_notMem h.fresh
+  simp only [SemiCircuit.size] at *
+  change (S.gates.erase J).card + (insert e S.eqns).card = _
+  omega
+
+theorem moveAffine_gates_card {S : State n} {J e : ℕ} (h : S.MoveOK J e) :
+    (S.moveAffine J e).gates.card + 1 = S.gates.card :=
+  Finset.card_erase_add_one h.mem
+
+/-- Moving a gate into the affine system does not increase the degree of any parameter. -/
+theorem moveAffine_deg_le {S : State n} (hS : S.Valid f) {J e : ℕ} (h : S.MoveOK J e)
+    {z : ℕ} (hz : z ∈ S.params) : (S.moveAffine J e).deg z ≤ S.deg z := by
+  have hzJ : z ≠ J := fun he => Finset.disjoint_left.1 hS.wf.disjoint_params_gates hz (he ▸ h.mem)
+  have hsub : (S.moveAffine J e).children z ⊆
+      ((S.children z).erase (.inl J)).image id ∪
+        (if Sum.inl J ∈ S.children z then {.inr e} else ∅) := by
+    intro w hw
+    rcases w with K | e'
+    · simp only [SemiCircuit.inl_mem_children] at hw
+      change K ∈ S.gates.erase J ∧ _ at hw
+      refine Finset.mem_union_left _ (Finset.mem_image.2 ⟨.inl K, Finset.mem_erase.2
+        ⟨fun he => by cases Sum.inl.inj he; exact Finset.notMem_erase _ _ hw.1, ?_⟩, rfl⟩)
+      exact (SemiCircuit.inl_mem_children _).2 ⟨Finset.mem_of_mem_erase hw.1, hw.2⟩
+    · simp only [SemiCircuit.inr_mem_children] at hw
+      change e' ∈ insert e S.eqns ∧ z ∈ (Function.update S.eqn e _ e').terms at hw
+      by_cases hee : e' = e
+      · subst hee
+        rw [Function.update_self] at hw
+        rcases mem_affEqn hw.2 with h' | h'
+        · exact absurd h' hzJ
+        · refine Finset.mem_union_right _ ?_
+          rw [ite_eq_left ((SemiCircuit.inl_mem_children _).2 ⟨h.mem, h'⟩)]
+          exact Finset.mem_singleton_self _
+      · rw [Function.update_of_ne hee] at hw
+        refine Finset.mem_union_left _ (Finset.mem_image.2 ⟨.inr e', Finset.mem_erase.2
+          ⟨Sum.inr_ne_inl, (SemiCircuit.inr_mem_children _).2
+            ⟨Finset.mem_of_mem_insert_of_ne hw.1 hee, hw.2⟩⟩, rfl⟩)
+  refine (Finset.card_le_card hsub).trans ((Finset.card_union_le _ _).trans ?_)
+  rw [Finset.image_id]
+  unfold SemiCircuit.deg
+  split_ifs with hJ
+  · rw [Finset.card_singleton, Finset.card_erase_add_one hJ]
+  · rw [Finset.card_empty, add_zero, Finset.erase_eq_of_notMem hJ]
+
+/-- Moving an affine gate reading no gates into the affine system preserves validity. -/
+theorem Valid.moveAffine {S : State n} (hS : S.Valid f) {J e : ℕ} (h : S.MoveOK J e) :
+    (S.moveAffine J e).Valid f := by
+  set g := S.gate J
+  have hJp : J ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_gates hp h.mem
+  have hJa : J ∉ S.aux := fun ha => Finset.disjoint_left.1 hS.wf.disjoint_aux_gates ha h.mem
+  have hgJ : ¬ g.Reads J := fun hr => h.inputs J hr h.mem
+  have hgpa : ∀ i, g.Reads i → i ∈ S.params ∪ S.aux := fun i hi => by
+    have := hS.wf.reads_live J h.mem i hi
+    simp only [SemiCircuit.live, Finset.mem_union] at this
+    rcases this with hpa | hg
+    · exact Finset.mem_union.2 hpa
+    · exact absurd hg (h.inputs i hi)
+  have heqn : ∀ e' ∈ S.eqns, (S.moveAffine J e).eqn e' = S.eqn e' := fun e' he' =>
+    Function.update_of_ne (show e' ≠ e from fun he => h.fresh (he ▸ he')) _ _
+  have heqns : ∀ val, (S.moveAffine J e).EqnsHold val ↔
+      S.EqnsHold val ∧ (affEqn g J).Holds val := fun val => by
+    constructor
+    · intro hv
+      refine ⟨fun e' he' => ?_, ?_⟩
+      · rw [← heqn e' he']; exact hv e' (Finset.mem_insert_of_mem he')
+      · have := hv e (Finset.mem_insert_self _ _)
+        change (Function.update S.eqn e _ e).Holds val at this
+        rwa [Function.update_self] at this
+    · rintro ⟨hv, hJv⟩ e' he'
+      rcases Finset.mem_insert.1 he' with rfl | he'
+      · change (Function.update S.eqn e' _ e').Holds val
+        rwa [Function.update_self]
+      · rw [heqn e' he']; exact hv e' he'
+  have hlive : (S.moveAffine J e).live = S.live := by
+    ext i
+    simp only [SemiCircuit.live, Finset.mem_union]
+    change (i ∈ S.params ∨ i ∈ insert J S.aux) ∨ i ∈ S.gates.erase J ↔ _
+    simp only [Finset.mem_insert, Finset.mem_erase]
+    constructor
+    · rintro ((hp | (rfl | ha)) | ⟨-, hg⟩)
+      · exact Or.inl (Or.inl hp)
+      · exact Or.inr h.mem
+      · exact Or.inl (Or.inr ha)
+      · exact Or.inr hg
+    · rintro ((hp | ha) | hg)
+      · exact Or.inl (Or.inl hp)
+      · exact Or.inl (Or.inr (Or.inr ha))
+      · by_cases hiJ : i = J
+        · exact Or.inl (Or.inr (Or.inl hiJ))
+        · exact Or.inr ⟨hiJ, hg⟩
+  refine hS.of_phi rfl rfl rfl ?_ ?_
+  · refine
+      { disjoint_params_aux := ?_
+        disjoint_params_gates := Finset.disjoint_of_subset_right (Finset.erase_subset _ _)
+          hS.wf.disjoint_params_gates
+        disjoint_aux_gates := ?_
+        reads_lt := fun K hK i hi hr => hS.wf.reads_lt K (Finset.mem_of_mem_erase hK) i
+          (Finset.mem_of_mem_erase hi) hr
+        reads_live := fun K hK i hr => hlive ▸ hS.wf.reads_live K (Finset.mem_of_mem_erase hK) i hr
+        terms_subset := fun e' he' t ht => ?_
+        card_terms_le := fun e' he' => ?_
+        out_live := fun i hi => hlive ▸ hS.wf.out_live i hi
+        solvable := fun u => ?_
+        unique := fun val val' hagree heq heq' a ha => ?_ }
+    · rw [Finset.disjoint_left]
+      intro i hp ha
+      change i ∈ insert J S.aux at ha
+      rcases Finset.mem_insert.1 ha with rfl | ha
+      · exact hJp hp
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp ha
+    · rw [Finset.disjoint_left]
+      intro i ha hg
+      change i ∈ insert J S.aux at ha
+      change i ∈ S.gates.erase J at hg
+      rcases Finset.mem_insert.1 ha with rfl | ha
+      · exact Finset.notMem_erase i _ hg
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_aux_gates ha (Finset.mem_of_mem_erase hg)
+    · change t ∈ S.params ∪ insert J S.aux
+      rcases Finset.mem_insert.1 he' with rfl | he'
+      · change t ∈ (Function.update S.eqn e' _ e').terms at ht
+        rw [Function.update_self] at ht
+        rcases mem_affEqn ht with rfl | ht
+        · exact Finset.mem_union_right _ (Finset.mem_insert_self _ _)
+        · rcases Finset.mem_union.1 (hgpa t ht) with hp | ha
+          · exact Finset.mem_union_left _ hp
+          · exact Finset.mem_union_right _ (Finset.mem_insert_of_mem ha)
+      · rw [heqn e' he'] at ht
+        rcases Finset.mem_union.1 (hS.wf.terms_subset e' he' ht) with hp | ha
+        · exact Finset.mem_union_left _ hp
+        · exact Finset.mem_union_right _ (Finset.mem_insert_of_mem ha)
+    · rcases Finset.mem_insert.1 he' with rfl | he'
+      · change (Function.update S.eqn e' _ e').terms.card ≤ 3
+        rw [Function.update_self]
+        exact card_affEqn_le _ _
+      · rw [heqn e' he']; exact hS.wf.card_terms_le e' he'
+    · obtain ⟨val, hu, heq⟩ := hS.wf.solvable u
+      have hw : ∀ i, i ≠ J → Function.update val J (g.eval val) i = val i := fun i hi =>
+        Function.update_of_ne hi _ _
+      refine ⟨Function.update val J (g.eval val), fun j hj => (hw j fun he => hJp (he ▸ hj)).trans
+        (hu j hj), (heqns _).2 ⟨fun e' he' => (Equation.holds_congr fun i hi => hw i fun he =>
+          notMem_terms_of_mem_gates hS h.mem he' (he ▸ hi)).2 (heq e' he'), ?_⟩⟩
+      rw [affEqn_holds h.affine, Function.update_self]
+      exact Gate.eval_congr fun i hi => (hw i fun he => hgJ (he ▸ hi)).symm
+    · obtain ⟨heq, hJv⟩ := (heqns val).1 heq
+      obtain ⟨heq', hJv'⟩ := (heqns val').1 heq'
+      have hagree' := hS.wf.unique val val' hagree heq heq'
+      change a ∈ insert J S.aux at ha
+      rcases Finset.mem_insert.1 ha with rfl | ha
+      · rw [(affEqn_holds h.affine _ _).1 hJv, (affEqn_holds h.affine _ _).1 hJv']
+        refine Gate.eval_congr fun i hi => ?_
+        rcases Finset.mem_union.1 (hgpa i hi) with hp | ha
+        · exact hagree i hp
+        · exact hagree' i ha
+      · exact hagree' a ha
+  · intro val hval
+    obtain ⟨heq, hJv⟩ := (heqns val).1 hval.1
+    refine hS.computes val ⟨heq, fun K hK => ?_⟩
+    by_cases hKJ : K = J
+    · subst hKJ; exact (affEqn_holds h.affine _ _).1 hJv
+    · exact hval.2 K (Finset.mem_erase.2 ⟨hKJ, hK⟩)
+
+/-! ### Rewiring a gate -/
+
+/-- Replace the gate `J` by the gate `g`. -/
+def rewire (S : State n) (J : ℕ) (g : Gate) : State n :=
+  { S with gate := Function.update S.gate J g }
+
+/-- The hypotheses of rewiring: `g` reads only parameters and computes the value of `J`
+whenever all other gates take their values. -/
+structure RewireOK (S : State n) (J : ℕ) (g : Gate) : Prop where
+  mem : J ∈ S.gates
+  reads : ∀ i, g.Reads i → i ∈ S.params
+  value : ∀ val, (∀ K ∈ S.gates, K ≠ J → val K = (S.gate K).eval val) →
+    g.eval val = (S.gate J).eval val
+
+@[simp] theorem rewire_params (S : State n) (J : ℕ) (g : Gate) :
+    (S.rewire J g).params = S.params := rfl
+
+@[simp] theorem rewire_pairs (S : State n) (J : ℕ) (g : Gate) :
+    (S.rewire J g).pairs = S.pairs := rfl
+
+theorem rewire_size (S : State n) (J : ℕ) (g : Gate) : (S.rewire J g).size = S.size := rfl
+
+theorem rewire_gates (S : State n) (J : ℕ) (g : Gate) : (S.rewire J g).gates = S.gates := rfl
+
+theorem inl_mem_children_rewire (S : State n) (J : ℕ) (g : Gate) (z K : ℕ) :
+    Sum.inl K ∈ (S.rewire J g).children z ↔
+      K ∈ S.gates ∧ (if K = J then g.Reads z else (S.gate K).Reads z) := by
+  rw [SemiCircuit.inl_mem_children]
+  change K ∈ S.gates ∧ (Function.update S.gate J g K).Reads z ↔ _
+  by_cases hKJ : K = J
+  · subst hKJ; rw [Function.update_self, ite_eq_left rfl]
+  · rw [Function.update_of_ne hKJ, ite_eq_right hKJ]
+
+theorem inr_mem_children_rewire (S : State n) (J : ℕ) (g : Gate) (z e : ℕ) :
+    Sum.inr e ∈ (S.rewire J g).children z ↔ Sum.inr e ∈ S.children z := by
+  simp only [SemiCircuit.inr_mem_children]
+  rfl
+
+/-- Rewiring a gate preserves validity. -/
+theorem Valid.rewire {S : State n} (hS : S.Valid f) {J : ℕ} {g : Gate} (h : S.RewireOK J g) :
+    (S.rewire J g).Valid f := by
+  have hgate : ∀ K, K ≠ J → (S.rewire J g).gate K = S.gate K := fun K hK =>
+    Function.update_of_ne hK _ _
+  have hgateJ : (S.rewire J g).gate J = g := Function.update_self _ _ _
+  refine hS.of_phi rfl rfl rfl ?_ ?_
+  · refine
+      { disjoint_params_aux := hS.wf.disjoint_params_aux
+        disjoint_params_gates := hS.wf.disjoint_params_gates
+        disjoint_aux_gates := hS.wf.disjoint_aux_gates
+        reads_lt := fun K hK i hi hr => ?_
+        reads_live := fun K hK i hr => ?_
+        terms_subset := hS.wf.terms_subset
+        card_terms_le := hS.wf.card_terms_le
+        out_live := hS.wf.out_live
+        solvable := hS.wf.solvable
+        unique := hS.wf.unique }
+    · by_cases hKJ : K = J
+      · subst hKJ
+        rw [hgateJ] at hr
+        exact absurd hi fun hg => Finset.disjoint_left.1 hS.wf.disjoint_params_gates
+          (h.reads i hr) hg
+      · rw [hgate K hKJ] at hr; exact hS.wf.reads_lt K hK i hi hr
+    · by_cases hKJ : K = J
+      · subst hKJ
+        rw [hgateJ] at hr
+        simp only [SemiCircuit.live, Finset.mem_union]
+        exact Or.inl (Or.inl (h.reads i hr))
+      · rw [hgate K hKJ] at hr; exact hS.wf.reads_live K hK i hr
+  · intro val hval
+    have hothers : ∀ K ∈ S.gates, K ≠ J → val K = (S.gate K).eval val := fun K hK hKJ => by
+      rw [← hgate K hKJ]; exact hval.2 K hK
+    refine hS.computes val ⟨hval.1, fun K hK => ?_⟩
+    by_cases hKJ : K = J
+    · subst hKJ
+      rw [← h.value val hothers, ← hgateJ]
+      exact hval.2 K hK
+    · exact hothers K hK hKJ
+
 end State
 
 end Cslib.Circuits.Boolean.B2
