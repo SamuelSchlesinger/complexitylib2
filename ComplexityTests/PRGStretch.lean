@@ -105,9 +105,38 @@ example (seed : List Bool) (i : ℕ) :
     (PRGStretch.seedAt expand seed i).length = seed.length :=
   PRGStretch.length_seedAt_of_forall length_expand seed i
 
+-- `expand` always emits `false`; `shiftIn` emits the last bit of its seed, so from
+-- `[false, false, true]` its three rounds emit `true`, `false`, `false`, and the order of the
+-- emitted bits is observable.
+private def shiftIn (seed : List Bool) : List Bool := [true] ++ seed
+
+private theorem length_shiftIn (s : List Bool) : (shiftIn s).length = s.length + 1 := by
+  simp [shiftIn]
+
+-- `forwardIterate` streams the emitted bits in generation order before the reversed final seed.
+example : PRGStretch.forwardIterate shiftIn 3 [false, false, true] =
+    [true, false, false, true, true, true] := by decide
+
+-- `stretch` retains the final seed followed by the emitted bits in reverse generation order, not in
+-- generation order.
+example : PRGStretch.stretch shiftIn (fun _ => 3) [false, false, true] =
+    [true, true, true, false, false, true] := by decide
+
+example : PRGStretch.stretch shiftIn (fun _ => 3) [false, false, true] ≠
+    [true, true, true, true, false, false] := by decide
+
+example : (PRGStretch.forwardIterate shiftIn 3 [false, false, true]).reverse =
+    PRGStretch.stretch shiftIn (fun _ => 3) [false, false, true] :=
+  PRGStretch.reverse_forwardIterate_eq_iterate_of_forall length_shiftIn _ 3
+
 private theorem expand_degree :
     ComputableTidilyInDegree expand encBits encBits 1 1 := by
   unfold expand
+  fun_prop (disch := first | apply le_refl | lia)
+
+private theorem shiftIn_degree :
+    ComputableTidilyInDegree shiftIn encBits encBits 1 1 := by
+  unfold shiftIn
   fun_prop (disch := first | apply le_refl | lia)
 
 -- Quantitative cumulative-time and round-independent workspace for `forwardIterate` on a concrete
@@ -142,23 +171,24 @@ example : ∃ (tGen : List Bool → ℕ) (csG c : ℕ),
       simpa [PRGStretch.length_seedAt_of_forall length_expand] using
         hcsG (PRGStretch.seedAt expand p.1 i))
 
--- Quantitative cumulative-time and workspace for `PRGStretch.stretch` with a linear round count.
+-- Quantitative cumulative-time and workspace for `PRGStretch.stretch` with a linear round count, on
+-- the generator whose emitted bits vary.
 example : ∃ (tGen : List Bool → ℕ) (tCount sCount : ℕ → ℕ) (csG c : ℕ),
-    ComputableTidilyInTimeAndSpace (PRGStretch.stretch expand (fun n => n + n + 1)) encBits encBits
+    ComputableTidilyInTimeAndSpace (PRGStretch.stretch shiftIn (fun n => n + n + 1)) encBits encBits
       (fun seed => c * (tCount seed.length + seed.length + (seed.length + seed.length + 1) +
         (∑ i ∈ Finset.range (seed.length + seed.length + 1),
-          (tGen (PRGStretch.seedAt expand seed i) + seed.length + 1)) + 1))
+          (tGen (PRGStretch.seedAt shiftIn seed i) + seed.length + 1)) + 1))
       (fun seed => c * (sCount seed.length + csG * (seed.length + 1) + seed.length +
         (seed.length + seed.length + 1) + 1)) := by
-  obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := expand_degree
+  obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := shiftIn_degree
   have hcount_deg : ComputableTidilyInDegree (fun n : ℕ => n + n + 1) encUnary encUnary 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
   obtain ⟨⟨tCount, sCount, _, _, hcount⟩, -⟩ := hcount_deg
   refine ⟨tGen, tCount, sCount, csG, ?_⟩
-  exact PRGStretch.computableTidilyInTimeAndSpace_stretch length_expand hgen hcount
+  exact PRGStretch.computableTidilyInTimeAndSpace_stretch length_shiftIn hgen hcount
     (fun seed i _ => by
-      simpa [PRGStretch.length_seedAt_of_forall length_expand] using
-        hcsG (PRGStretch.seedAt expand seed i))
+      simpa [PRGStretch.length_seedAt_of_forall length_shiftIn] using
+        hcsG (PRGStretch.seedAt shiftIn seed i))
 
 -- Degree-level quantitative certificate: a linear-time generator `(dGen = 1, eGen = 1)` stretched
 -- for `n + n + 1` rounds `(dCount = 1, eCount = 1)` has time/space degree

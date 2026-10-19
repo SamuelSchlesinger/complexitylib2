@@ -370,6 +370,26 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_pair_sum' de
 #print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_pair_sum
 
 /--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_sum_after' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_sum_after
+
+/--
+info: 'Turing.MultiTapeTM.transformsTapesAt_streamLoop_after' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.transformsTapesAt_streamLoop_after
+
+/--
+info: 'Turing.MultiTapeTM.computesTidily_streamTM_after' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.computesTidily_streamTM_after
+
+/--
 info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]

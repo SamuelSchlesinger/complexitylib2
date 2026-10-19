@@ -34,6 +34,9 @@ the work tapes.
   by single-pass and multi-pass folds.
 * `Turing.MultiTapeTM.transformsTapesAt_streamLoop_encoded_after`: a typed streaming phase
   starting after a prefix on the input tape.
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_sum_after`: streaming folds
+  after an initialization phase that writes the framed initial state and may move the input head
+  past a prefix, with cumulative round costs and peak workspace bounds.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_sum`: streaming folds with
   cumulative computation and copying costs, and peak workspace bounds.
 * `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.streamFold_pair_sum`: streaming folds whose
@@ -42,7 +45,9 @@ the work tapes.
 
 The cumulative theorem generalizes Christian Reitwiessner's original encoding-layer proof.
 The typed phase shares token decoding, callback adaptation and copying bounds with multi-pass
-folds; the uniform-round corollary reuses the complete single-pass construction.
+folds. `streamFold_sum_after` owns the machine and its resource proof once: `streamFold_sum`
+computes the initial state from the whole input, `streamFold_pair_sum` reads it from a framed
+input prefix, and the uniform-round corollary reuses the complete single-pass construction.
 -/
 
 namespace Turing.MultiTapeTM
@@ -112,94 +117,6 @@ public theorem read_rawFrameReader (w rest : List Bool) :
       rawFrameReader.read_cons_of_some (q' := true) _ rfl,
       rawFrameReader.read_cons_of_some (q' := false) _ rfl, ih]
     simp [rawFrameReader, Nat.add_assoc]
-
--- upstream: candidate
-/-- **The streaming loop after an input prefix.** Started at input position `1 + pre.length` on
-`pre ++ toks.flatten` with `vs 0` on tape `V`, the loop reads the tokens `toks`, leaves
-`vs toks.length` on tape `V`, emits the words `es j`, and stops at the end of the input. -/
-public theorem transformsTapesAt_streamLoop_after {Q SE SN : Type*} {K : ℕ}
-    {r : InputReader Bool Q} {E : MultiTapeTM K Bool SE} {Nm : MultiTapeTM K Bool SN}
-    {V N F : Fin K} (hVN : V ≠ N) (hVF : V ≠ F) (hNF : N ≠ F)
-    (pre : List Bool) (toks : List (List Bool)) (htoks : ∀ t ∈ toks, t ≠ [])
-    (cont vs es : ℕ → List Bool) {sR : ℕ} {tE sE tN sN : ℕ → ℕ}
-    (hread : ∀ j (hj : j < toks.length),
-      r.read r.q₀ (toks.flatten.drop ((toks.take j).flatten).length) = (cont j, toks[j].length))
-    (hE : ∀ j < toks.length, TransformsTapes E
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs j ++ cont j))
-      (fun _ ws ws' em => ws' = ws ∧ em = es j) (tE j) (sE j))
-    (hN : ∀ j < toks.length, TransformsTapes Nm
-      (fun _ ws => ws = Function.update (fun _ => []) V (vs j ++ cont j))
-      (fun _ ws ws' em => ws' = Function.update ws N (vs (j + 1)) ∧ em = []) (tN j) (sN j))
-    (hsR : ∀ j < toks.length, (vs j ++ cont j).length + 2 + (K - 1) +
-        (sE j + (sN j + (((vs j ++ cont j).length + 1 + K) + ((4 * (vs (j + 1)).length + K + 15) +
-          ((vs (j + 1)).length + 1 + K))))) ≤ sR) :
-    TransformsTapesAt (whileInput (streamRound r E Nm V N F hVN hVF hNF))
-      (fun input p ws => input = pre ++ toks.flatten ∧ p.val = 1 + pre.length ∧
-        ws = Function.update (fun _ => []) V (vs 0))
-      (fun input _ _ p' ws' em => input = pre ++ toks.flatten ∧
-        p'.val = 1 + (pre ++ toks.flatten).length ∧
-        ws' = Function.update (fun _ => []) V (vs toks.length) ∧
-        em = ((List.range toks.length).map es).flatten)
-      (∑ j ∈ Finset.range toks.length, (streamRoundTime toks cont vs tE tN j + 1) + 1)
-      (2 * K * sR + K) := by
-  set x := pre ++ toks.flatten with hx
-  let L (j : ℕ) : ℕ := pre.length + ((toks.take j).flatten).length
-  have hpos (j : ℕ) : 1 + L j < x.length + 2 := by
-    have := (List.take_sublist j toks).flatten.length_le
-    simp only [x, L, List.length_append]
-    omega
-  let P (n : ℕ) (input : List Bool) (p : Fin (input.length + 2)) (ws : Fin K → List Bool)
-      (em : List Bool) : Prop :=
-    input = x ∧ p.val = 1 + L n ∧ ws = Function.update (fun _ => []) V (vs n) ∧
-      em = ((List.range n).map es).flatten
-  have hround : ∀ n < toks.length, ∀ acc, TransformsTapesAt (streamRound r E Nm V N F hVN hVF hNF)
-      (fun input p ws => P n input p ws acc)
-      (fun input _ _ p' ws' e => P (n + 1) input p' ws' (acc ++ e))
-      (streamRoundTime toks cont vs tE tN n) sR := by
-    intro n hn acc
-    let p₀ : Fin (x.length + 2) := ⟨1 + L n, hpos n⟩
-    have hrd : r.read r.q₀ (x.drop (p₀.val - 1)) = (cont n, toks[n].length) := by
-      have hdrop : x.drop (p₀.val - 1) = toks.flatten.drop ((toks.take n).flatten).length := by
-        simp only [p₀, L, hx, Nat.add_sub_cancel_left]
-        rw [← List.drop_drop, List.drop_left]
-      rw [hdrop]
-      exact hread n hn
-    have h := transformsTapesAt_streamRound (r := r) hVN hVF hNF x p₀ (by simp [p₀]) (vs n)
-      (hE := by rw [hrd]; exact hE n hn) (hN := by rw [hrd]; exact hN n hn)
-    simp only [hrd] at h
-    refine h.imp (fun _ _ _ ⟨hin, hp, hws, _⟩ => ⟨hin, hp, hws⟩) ?_ ?_ ?_
-    · rintro _ _ _ p' ws' em ⟨rfl, -, -, rfl⟩ ⟨hp', hws', rfl⟩
-      refine ⟨rfl, ?_, hws', by simp [List.range_succ]⟩
-      rw [hp']
-      change (1 + (pre.length + ((toks.take n).flatten).length)) + toks[n].length =
-        1 + (pre.length + ((toks.take (n + 1)).flatten).length)
-      rw [length_flatten_take_succ toks hn]
-      omega
-    · simp [streamRoundTime, List.getElem?_eq_getElem hn]
-    · exact hsR n hn
-  have hmore : ∀ n < toks.length, ∀ input p ws em, P n input p ws em →
-      inputSymbolAt input p ≠ none := by
-    rintro n hn input p ws em ⟨rfl, hp, -, -⟩
-    have hlt : L n < x.length := by
-      have h₁ := length_flatten_take_succ toks hn
-      have h₂ := hpos (n + 1)
-      have : 0 < toks[n].length := List.length_pos_iff.mpr (htoks _ (List.getElem_mem hn))
-      simp only [x, L, List.length_append] at h₂ ⊢
-      omega
-    simp only [inputSymbolAt, hp]
-    split_ifs
-    · omega
-    · rw [Nat.add_sub_cancel_left, List.getElem?_eq_getElem hlt]
-      simp
-  have hL : L toks.length = x.length := by
-    simp only [L, x, List.take_length, List.length_append]
-  refine (transformsTapesAt_whileInput hround hmore
-    (R := fun input p ws em => P toks.length input p ws em)
-    (fun input p ws em h => ⟨by
-      obtain ⟨rfl, hp, -, -⟩ := h
-      simp [inputSymbolAt, hp, hL], h⟩)).imp
-    (fun _ _ _ ⟨hin, hp, hws⟩ => ⟨hin, by simp [hp, L], hws, rfl⟩)
-    (fun _ _ _ _ _ _ _ ⟨hin, hp, hws, he⟩ => ⟨hin, hp.trans (by rw [hL]), hws, he⟩) le_rfl le_rfl
 
 -- upstream: candidate
 /-- A typed streaming phase starting after an input prefix `pre`. -/
@@ -337,58 +254,199 @@ public theorem transformsTapesAt_streamLoop_encoded {α σ : Type u} {Q SE SN : 
     next emit hE hN hcost hspace hstate helem
 
 -- upstream: candidate
-open Sequential in
-/-- Initialize with an input-advancing phase `I`, run a streaming phase starting after `pre`, emit
-from its final state and clean up. -/
-public theorem computesTidily_streamTM_after {Q SI SE SN SF : Type*} {K : ℕ}
-    {r : InputReader Bool Q} {I : MultiTapeTM K Bool SI}
-    {E : MultiTapeTM K Bool SE} {Nm : MultiTapeTM K Bool SN} {Fm : MultiTapeTM K Bool SF}
-    {V N F : Fin K} (hVN : V ≠ N) (hVF : V ≠ F) (hNF : N ≠ F)
-    (x pre v₀ v₁ em ef : List Bool) {tI sI tLoop sLoop tF sF : ℕ}
-    (hI : TransformsTapesAt I (fun inp p ws => inp = x ∧ p.val = 1 ∧ ws = fun _ => [])
-      (fun _ _ _ p' ws' e => p'.val = 1 + pre.length ∧
-        ws' = Function.update (fun _ => []) V v₀ ∧ e = []) tI sI)
-    (hloop : TransformsTapesAt (whileInput (streamRound r E Nm V N F hVN hVF hNF))
-      (fun input p ws => input = x ∧ p.val = 1 + pre.length ∧
-        ws = Function.update (fun _ => []) V v₀)
-      (fun input _ _ p' ws' e => input = x ∧ p'.val = 1 + x.length ∧
-        ws' = Function.update (fun _ => []) V v₁ ∧ e = em) tLoop sLoop)
-    (hF : TransformsTapes Fm (fun _ ws => ws = Function.update (fun _ => []) V v₁)
-      (fun _ ws ws' e => ws' = ws ∧ e = ef) tF sF) :
-    (I.seq ((whileInput (streamRound r E Nm V N F hVN hVF hNF)).seq
-      ((Fm.seq ((clearWork Bool).extendTapes (tapeEmb V))).freezeInput.seq
-        (rewindInputOn K Bool)))).ComputesTidilyInTimeAndSpace x (em ++ ef)
-      (tI + tLoop + ((tF + 3 * (v₁.length + 1)) + (x.length + 2)))
-      (sI + (sLoop + ((sF + (v₁.length + 1 + K)) + K))) := by
-  have hI' := hI.imp
-    (Q' := fun input _ _ p' ws' e => input = x ∧ p'.val = 1 + pre.length ∧
-      ws' = Function.update (fun _ => []) V v₀ ∧ e = [])
-    (fun _ _ _ h => h) (fun _ _ _ _ _ _ ⟨hin, _, _⟩ h => ⟨hin, h⟩) le_rfl le_rfl
-  have hF' := hF.imp
-    (Q' := fun _ _ ws' e => ws' = Function.update (fun _ => []) V v₁ ∧ e = ef)
-    (fun _ _ h => h)
-    (fun _ _ _ _ hws ⟨h, he⟩ => ⟨h.trans hws, he⟩) le_rfl le_rfl
-  have hclear : TransformsTapes ((clearWork Bool).extendTapes (tapeEmb V))
-      (fun _ ws => ws = Function.update (fun _ => []) V v₁)
-      (fun _ _ ws' e => ws' = (fun _ => []) ∧ e = [])
-      (3 * (v₁.length + 1)) (v₁.length + 1 + K) :=
-    (transformsTapes_clearWork_tapeEmb V v₁).imp (fun _ _ h => by simp [h])
-      (fun _ _ _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws]; simp, he⟩) le_rfl le_rfl
-  have hfin := (hF'.seq_eq hclear).freezeInput_eq x (1 + x.length)
-  have hrw := (transformsTapesAt_rewindInput (k := K) x).imp
-    (P' := fun input p ws => input = x ∧ p.val = 1 + x.length ∧ ws = (fun _ => []))
-    (Q' := fun input _ _ p' ws' e => input = x ∧ p'.val = 1 ∧ ws' = (fun _ => []) ∧ e = [])
-    (fun _ _ _ h => h.1)
-    (by rintro _ _ _ _ _ _ ⟨hin, _, rfl⟩ ⟨rfl, hws, he⟩
-        exact ⟨hin, rfl, hws, he⟩) le_rfl le_rfl
-  have hall := hI'.seq_eq (hloop.seq_eq (hfin.seq_eq hrw))
-  refine (hall.transformsTapes (fun _ _ _ _ _ _ h => Fin.ext h.2.1)).imp
-    (fun _ _ ⟨hin, hws⟩ => ⟨hin, rfl, hws⟩)
-    (fun _ _ _ _ _ ⟨_, _, hws, he⟩ => ⟨hws, by simpa using he⟩) (by omega) (by omega)
-
+/-- **Streaming folds after an initialization phase.** The input `encIn x` is a prefix `pre x`
+followed by the concatenated non-empty tokens `tok a` of the elements `elems x`, from each of which
+the finite-state reader `r` reads `encA a`. On any selection `e` of tapes, the initializer `I e`
+starts at the start of the input on blank tapes, writes the framed initial state
+`frame (encS (init x))` to the selected tape `e (Fin.last kI)`, emits nothing and moves the input
+head just past `pre x`, in time `tI x` and space `sI x` plus one cell for each unselected tape. If
+`next`, `emit` and `finish` are tidily computable, and `g x` is encoded by the words emitted by the
+fold over `elems x` followed by `finish` of its final state, then `g` is tidily computable. The
+tokens are streamed directly from the input tape, which is never copied. The time bound sums the
+initialization, the actual round costs `roundCost` (each round's computation, current and next
+states, decoded element storage and control), finalization, input scanning and cleanup. Workspace
+adds the initialization's to the peak callback workspace `sMax` and the stored-word bound `lMax`;
+output is emitted directly and does not count as workspace. -/
+public theorem ComputableTidilyInTimeAndSpace.streamFold_sum_after {α σ : Type u} {γ ε φ ω : Type*}
+    {encA : α ↪ List Bool} {encS : σ ↪ List Bool} {encE : ε ↪ List Bool} {encF : φ ↪ List Bool}
+    {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {Q : Type} [Finite Q]
+    (r : InputReader Bool Q) (tok : α → List Bool) (htok : ∀ a, tok a ≠ [])
+    (hread : ∀ a rest, r.read r.q₀ (tok a ++ rest) = (encA a, (tok a).length))
+    (pre : γ → List Bool) (elems : γ → List α)
+    (hL : ∀ x, encIn x = pre x ++ (elems x).flatMap tok)
+    {init : γ → σ} {next : σ × α → σ} {emit : σ × α → ε} {finish : σ → φ} {g : γ → ω}
+    {kI : ℕ} {SI : Type} [Finite SI]
+    (I : ∀ {K : ℕ}, (Fin (kI + 1) ↪ Fin K) → MultiTapeTM K Bool SI)
+    {tI sI : γ → ℕ} {tN sN tE sE : σ × α → ℕ} {tF sF : σ → ℕ}
+    (hinit : ∀ {K : ℕ} (e : Fin (kI + 1) ↪ Fin K) (x : γ), TransformsTapesAt (I e)
+      (fun inp p ws => inp = encIn x ∧ p.val = 1 ∧ ws = fun _ => [])
+      (fun _ _ _ p' ws' em => p'.val = 1 + (pre x).length ∧
+        ws' = Function.update (fun _ => []) (e (Fin.last kI)) (frame (encS (init x))) ∧ em = [])
+      (tI x) (sI x + (K - (kI + 1))))
+    (hnext : ComputableTidilyInTimeAndSpace next (encPair encS encA) encS tN sN)
+    (hemit : ComputableTidilyInTimeAndSpace emit (encPair encS encA) encE tE sE)
+    (hfinish : ComputableTidilyInTimeAndSpace finish encS encF tF sF)
+    (hg : ∀ x, encOut (g x) = streamEmit next (fun p => encE (emit p)) (init x) (elems x) ++
+      encF (finish (streamState (init x) next (elems x) (elems x).length)))
+    {roundCost : γ → ℕ → ℕ} {sMax lMax : γ → ℕ}
+    (hcost : ∀ x j (hj : j < (elems x).length),
+      tN (streamState (init x) next (elems x) j, (elems x)[j]) +
+        tE (streamState (init x) next (elems x) j, (elems x)[j]) +
+        (encS (streamState (init x) next (elems x) j)).length +
+        (encS (streamState (init x) next (elems x) (j + 1))).length +
+        (encA (elems x)[j]).length + 1 ≤ roundCost x j)
+    (hsMax : ∀ x j (hj : j < (elems x).length),
+      sN (streamState (init x) next (elems x) j, (elems x)[j]) +
+        sE (streamState (init x) next (elems x) j, (elems x)[j]) ≤ sMax x)
+    (hS : ∀ x, ∀ j ≤ (elems x).length,
+      (encS (streamState (init x) next (elems x) j)).length ≤ lMax x)
+    (hA : ∀ x j (hj : j < (elems x).length), (encA (elems x)[j]).length ≤ lMax x) :
+    ∃ c, ComputableTidilyInTimeAndSpace g encIn encOut
+      (fun x => c * (tI x + tF (streamState (init x) next (elems x) (elems x).length) +
+        (encIn x).length + (∑ j ∈ Finset.range (elems x).length, roundCost x j) + lMax x + 1))
+      (fun x => c * (sI x + sF (streamState (init x) next (elems x) (elems x).length) + sMax x +
+        lMax x + 1)) := by
+  -- the framed next state, and finalization from the framed final state
+  obtain ⟨cfr, hfr⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := id) (encIn := encS)
+    (encOut := encFramed encS) fun _ => rfl
+  -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
+  obtain ⟨cN, hN'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr hnext
+  obtain ⟨cuf, huf⟩ := ComputableTidilyInLinearTimeAndSpace.of_unframe (f := id)
+    (encIn := encFramed encS) (encOut := encS) fun s => by simp
+  -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
+  obtain ⟨cF, hF'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfinish huf
+  obtain ⟨kE, SE, _, tmE, htmE⟩ := hemit
+  obtain ⟨kN, SN, _, tmN, htmN⟩ := hN'
+  obtain ⟨kF, SF, _, tmF, htmF⟩ := hF'
+  -- the tapes: those of the machines, then the state `V`, the next state `N` and a flag `F`
+  obtain ⟨M, hM⟩ : ∃ M, M = kI + kE + kN + kF + 8 := ⟨_, rfl⟩
+  let V : Fin (M + 3) := ⟨M, by omega⟩
+  let N : Fin (M + 3) := ⟨M + 1, by omega⟩
+  let F : Fin (M + 3) := ⟨M + 2, by omega⟩
+  have hVN : V ≠ N := by simp [V, N, Fin.ext_iff]
+  have hVF : V ≠ F := by simp [V, F, Fin.ext_iff]
+  have hNF : N ≠ F := by simp [N, F, Fin.ext_iff]
+  obtain ⟨eI, heI⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.last kI) V
+  obtain ⟨eE, heE⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.natAdd kE (0 : Fin 2)) V
+  obtain ⟨eN, heN, heN'⟩ := exists_embedding_eq₂ (K := M + 3) (by omega)
+    (i := Fin.natAdd (kN + 1) (0 : Fin 2)) (o := (Fin.last kN).castAdd 2)
+    (by simp [Fin.ext_iff]) hVN
+  obtain ⟨eF, heF⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.natAdd kF (0 : Fin 2)) V
+  refine ⟨(40 * M + 200) * (cfr + cN + cuf + cF + M + 100), _, _, inferInstance,
+    streamTM r (I eI) ((tmE.inputFromWord true).extendTapes eE)
+      ((tmN.onWords true).extendTapes eN) ((tmF.inputFromWord true).extendTapes eF)
+      V N F hVN hVF hNF, fun x => ?_⟩
+  set l := elems x with hl
+  set n := l.length with hn
+  let st := streamState (init x) next l
+  set L := lMax x with hLdef
+  have hSj (j : ℕ) (hj : j ≤ n) : (encS (st j)).length ≤ L := hS x j hj
+  have hI := hinit eI x
+  rw [heI] at hI
+  have hE := fun p => (htmE p).inputFromWord_extendTapes true heE
+  have hN := fun p => (htmN p).onWords_extendTapes true heN heN'
+  have hloop := transformsTapesAt_streamLoop_encoded_after r tok htok hread hVN hVF hNF (pre x)
+    (init x) l next (fun p => encE (emit p)) hE hN
+    (roundCost := fun j => (cfr + cN + 60) * roundCost x j)
+    (sMax := sMax x + (cfr + cN + 10 * M + 40) * (L + 1)) (lMax := L) ?_ ?_ (hS x) (hA x)
+  · simp only [← Finset.mul_sum] at hloop
+    rw [← hL x] at hloop
+    have h := computesTidily_streamTM_after (r := r) hVN hVF hNF (encIn x) (pre x)
+      (frame (encS (init x))) (frame (encS (st n)))
+      (streamEmit next (fun p => encE (emit p)) (init x) l) (encF (finish (st n)))
+      hI hloop ((htmF (st n)).inputFromWord_extendTapes true heF)
+    rw [hg x]
+    have hSn : (encS (st n)).length ≤ L := hSj n le_rfl
+    set D := cfr + cN + cuf + cF + M + 100 with hD
+    refine h.mono ?_ ?_
+    · simp only [id_eq, encFramed_apply, length_frame, st] at hSn ⊢
+      rw [← hl, ← hn, ← hLdef]
+      clear_value D L
+      have hD1 : 1 ≤ D := by omega
+      have f₂ := Nat.mul_le_mul (show cuf ≤ D by omega)
+        (show 2 * (encS (streamState (init x) next l n)).length + 1 + 1 ≤ 2 * (L + 1) by omega)
+      have f₃ := Nat.mul_le_mul (show cF ≤ D by omega) (Nat.add_le_add_right hSn 1)
+      have f₄ := Nat.mul_le_mul_right (∑ j ∈ Finset.range n, roundCost x j)
+        (show cfr + cN + 60 ≤ D by lia)
+      have f₅ := Nat.mul_le_mul_right (tI x + tF (streamState (init x) next l n) +
+        (encIn x).length + (∑ j ∈ Finset.range n, roundCost x j) + L + 1)
+        (show 26 * D ≤ (40 * M + 200) * D from Nat.mul_le_mul_right _ (by omega))
+      have f₆ := Nat.le_mul_of_pos_left (tI x) hD1
+      have f₇ := Nat.le_mul_of_pos_left (tF (streamState (init x) next l n)) hD1
+      have f₈ := Nat.le_mul_of_pos_left (encIn x).length hD1
+      have f₉ := Nat.mul_le_mul_right (L + 1) (show 20 ≤ D by omega)
+      have hlen : ((elems x).flatMap tok).length ≤ (encIn x).length := by
+        rw [hL x, List.length_append]
+        omega
+      have f₁₀ : ((elems x).flatMap tok).length ≤ D * (encIn x).length := hlen.trans f₈
+      have z₁ := Nat.zero_le (D * L)
+      have z₂ := Nat.zero_le (D * ∑ j ∈ Finset.range n, roundCost x j)
+      ring_nf at f₂ f₃ f₄ f₅ f₆ f₇ f₈ f₉ f₁₀ z₁ ⊢
+      linarith
+    · simp only [id_eq, encFramed_apply, length_frame, st] at hSn ⊢
+      rw [← hl, ← hn, ← hLdef]
+      have hpeak : sMax x + (cfr + cN + 10 * M + 40) * (L + 1) + 16 * L + 4 * (M + 3) + 26 ≤
+          sMax x + (cfr + cN + 20 * M + 100) * (L + 1) := by nlinarith
+      clear_value D L
+      have hD1 : 1 ≤ D := by omega
+      have hED : cfr + cN + 20 * M + 100 ≤ 20 * D := by omega
+      have g₁ := Nat.mul_le_mul_left (2 * (M + 3)) hpeak
+      have g₂ : 2 * (M + 3) * ((cfr + cN + 20 * M + 100) * (L + 1)) ≤
+          (40 * M + 120) * (D * (L + 1)) :=
+        (Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ hED)).trans_eq (by ring)
+      have g₃ : 2 * (M + 3) * sMax x ≤ (40 * M + 200) * D * sMax x :=
+        Nat.mul_le_mul_right _ ((show 2 * (M + 3) ≤ 40 * M + 200 by omega).trans
+          (Nat.le_mul_of_pos_right _ hD1))
+      have g₄ : sI x ≤ (40 * M + 200) * D * sI x :=
+        Nat.le_mul_of_pos_left _ (Nat.mul_pos (by omega) hD1)
+      have g₅ : sF (streamState (init x) next l n) ≤
+          (40 * M + 200) * D * sF (streamState (init x) next l n) :=
+        Nat.le_mul_of_pos_left _ (Nat.mul_pos (by omega) hD1)
+      have g₇ := Nat.mul_le_mul (show cuf ≤ D by omega)
+        (show 2 * (encS (streamState (init x) next l n)).length + 1 + 1 ≤ 2 * (L + 1) by omega)
+      have g₈ := Nat.mul_le_mul (show cF ≤ D by omega) (Nat.add_le_add_right hSn 1)
+      have q₂ : L + 1 ≤ D * (L + 1) := Nat.le_mul_of_pos_left _ hD1
+      have : kI ≤ M := by omega
+      have : kF ≤ M := by omega
+      have : M ≤ D := by omega
+      have hd₁ : M + 3 - (kI + 1) ≤ M + 2 := by omega
+      have hd₂ : M + 3 - (kF + 2) ≤ M + 1 := by omega
+      generalize M + 3 - (kI + 1) = d₁ at hd₁ ⊢
+      generalize M + 3 - (kF + 2) = d₂ at hd₂ ⊢
+      have z₁ := Nat.zero_le (D * L)
+      ring_nf at g₁ g₂ g₃ g₄ g₅ g₇ g₈ q₂ z₁ ⊢
+      linarith
+  · intro j hj
+    have ht := hcost x j hj
+    have hnext : next (st j, l[j]) = st (j + 1) := (streamState_succ _ _ _ hj).symm
+    have hsize : (encS (st (j + 1))).length + 1 ≤ roundCost x j := by lia
+    have hm₁ := Nat.mul_le_mul_left cfr hsize
+    have hm₂ := Nat.mul_le_mul_left cN hsize
+    dsimp only [st, l] at hnext hm₁ hm₂ ⊢
+    simp only [Function.comp_apply, id_eq, encFramed_apply, hnext, length_frame]
+    linarith only [ht, hm₁, hm₂]
+  · intro j hj
+    have h₀ := hSj j hj.le
+    have h₁ := hSj (j + 1) hj
+    have ha := hA x j hj
+    have hs := hsMax x j hj
+    have hnext : next (st j, l[j]) = st (j + 1) := (streamState_succ _ _ _ hj).symm
+    have hm₁ := Nat.mul_le_mul_left cfr (Nat.add_le_add_right h₁ 1)
+    have hm₂ := Nat.mul_le_mul_left cN (Nat.add_le_add_right h₁ 1)
+    dsimp only [st, l] at hnext hm₁ hm₂ h₀ h₁ ⊢
+    simp only [← hLdef] at ha
+    simp only [Function.comp_apply, id_eq, encFramed_apply, hnext, length_frame,
+      encPair_apply, List.length_append]
+    have : kE ≤ M := by omega
+    have : kN ≤ M := by omega
+    have : M + 3 - (kE + 2) ≤ M + 1 := by omega
+    have : M + 3 - (kN + 1 + 2) ≤ M := by omega
+    have := Nat.zero_le (M * L)
+    linarith
 
 -- upstream: candidate
--- vendored: generalize the original proof to sum actual round costs; retain the assembly once.
+-- vendored: generalize the original proof to sum actual round costs; the machine and resource
+-- proof are shared with `streamFold_sum_after`.
 /-- **Streaming folds with cumulative round costs.** The input `x` is encoded by concatenating the
 non-empty tokens `tok a` of the elements `elems x`, from each of which the finite-state reader `r`
 reads `encA a`. If `init`, `next`, `emit` and `finish` are tidily computable, and `g x` is encoded
@@ -429,142 +487,36 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold_sum {α σ : Type u} {�
         (encIn x).length + (∑ j ∈ Finset.range (elems x).length, roundCost x j) + lMax x + 1))
       (fun x => c * (sI x + sF (streamState (init x) next (elems x) (elems x).length) + sMax x +
         lMax x + 1)) := by
-  -- the framed initial state and the framed next state
+  -- the initial state is computed from the whole input and framed onto the selected tape
   obtain ⟨cfr, hfr⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := id) (encIn := encS)
     (encOut := encFramed encS) fun _ => rfl
   -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
   obtain ⟨cI, hI'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr hinit
-  obtain ⟨cN, hN'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr hnext
-  obtain ⟨cuf, huf⟩ := ComputableTidilyInLinearTimeAndSpace.of_unframe (f := id)
-    (encIn := encFramed encS) (encOut := encS) fun s => by simp
-  -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
-  obtain ⟨cF, hF'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfinish huf
   obtain ⟨kI, SI, _, tmI, htmI⟩ := hI'
-  obtain ⟨kE, SE, _, tmE, htmE⟩ := hemit
-  obtain ⟨kN, SN, _, tmN, htmN⟩ := hN'
-  obtain ⟨kF, SF, _, tmF, htmF⟩ := hF'
-  -- the tapes: those of the machines, then the state `V`, the next state `N` and a flag `F`
-  obtain ⟨M, hM⟩ : ∃ M, M = kI + kE + kN + kF + 8 := ⟨_, rfl⟩
-  let V : Fin (M + 3) := ⟨M, by omega⟩
-  let N : Fin (M + 3) := ⟨M + 1, by omega⟩
-  let F : Fin (M + 3) := ⟨M + 2, by omega⟩
-  have hVN : V ≠ N := by simp [V, N, Fin.ext_iff]
-  have hVF : V ≠ F := by simp [V, F, Fin.ext_iff]
-  have hNF : N ≠ F := by simp [N, F, Fin.ext_iff]
-  obtain ⟨eI, heI⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.last kI) V
-  obtain ⟨eE, heE⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.natAdd kE (0 : Fin 2)) V
-  obtain ⟨eN, heN, heN'⟩ := exists_embedding_eq₂ (K := M + 3) (by omega)
-    (i := Fin.natAdd (kN + 1) (0 : Fin 2)) (o := (Fin.last kN).castAdd 2)
-    (by simp [Fin.ext_iff]) hVN
-  obtain ⟨eF, heF⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.natAdd kF (0 : Fin 2)) V
-  refine ⟨(40 * M + 200) * (cfr + cN + cI + cuf + cF + M + 100), _, _, inferInstance,
-    streamTM r ((tmI.outputToWord).extendTapes eI)
-    ((tmE.inputFromWord true).extendTapes eE) ((tmN.onWords true).extendTapes eN)
-    ((tmF.inputFromWord true).extendTapes eF) V N F hVN hVF hNF, fun x => ?_⟩
-  set l := elems x with hl
-  set n := l.length with hn
-  let st := streamState (init x) next l
-  set L := lMax x with hLdef
-  have hSj (j : ℕ) (hj : j ≤ n) : (encS (st j)).length ≤ L := hS x j hj
-  have hE := fun p => (htmE p).inputFromWord_extendTapes true heE
-  have hN := fun p => (htmN p).onWords_extendTapes true heN heN'
-  have hloop := transformsTapesAt_streamLoop_encoded r tok htok hread hVN hVF hNF (init x) l
-    next (fun p => encE (emit p)) hE hN
-    (roundCost := fun j => (cfr + cN + 60) * roundCost x j)
-    (sMax := sMax x + (cfr + cN + 10 * M + 40) * (L + 1)) (lMax := L) ?_ ?_ (hS x) (hA x)
-  · simp only [← Finset.mul_sum] at hloop
-    rw [← hL x] at hloop
-    have h := computesTidily_streamTM (r := r) hVN hVF hNF (encIn x)
-      (frame (encS (init x))) (frame (encS (st n)))
-      (streamEmit next (fun p => encE (emit p)) (init x) l) (encF (finish (st n)))
-      ((htmI x).outputToWord_onTape heI) hloop ((htmF (st n)).inputFromWord_extendTapes true heF)
-    rw [hg x]
-    have hS0 : (encS (init x)).length ≤ L := hSj 0 (Nat.zero_le _)
-    have hSn : (encS (st n)).length ≤ L := hSj n le_rfl
-    set D := cfr + cN + cI + cuf + cF + M + 100 with hD
-    refine h.mono ?_ ?_
-    · simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, st] at hSn ⊢
-      rw [← hl, ← hn, ← hLdef]
-      clear_value D L
-      have hD1 : 1 ≤ D := by omega
-      have f₁ := Nat.mul_le_mul (show cfr + cI ≤ D by omega) (Nat.add_le_add_right hS0 1)
-      have f₂ := Nat.mul_le_mul (show cuf ≤ D by omega)
-        (show 2 * (encS (streamState (init x) next l n)).length + 1 + 1 ≤ 2 * (L + 1) by omega)
-      have f₃ := Nat.mul_le_mul (show cF ≤ D by omega) (Nat.add_le_add_right hSn 1)
-      have f₄ := Nat.mul_le_mul_right (∑ j ∈ Finset.range n, roundCost x j)
-        (show cfr + cN + 60 ≤ D by lia)
-      have f₅ := Nat.mul_le_mul_right (tI x + tF (streamState (init x) next l n) +
-        (encIn x).length + (∑ j ∈ Finset.range n, roundCost x j) + L + 1)
-        (show 26 * D ≤ (40 * M + 200) * D from Nat.mul_le_mul_right _ (by omega))
-      have f₆ := Nat.le_mul_of_pos_left (tI x) hD1
-      have f₇ := Nat.le_mul_of_pos_left (tF (streamState (init x) next l n)) hD1
-      have f₈ := Nat.le_mul_of_pos_left (encIn x).length hD1
-      have f₉ := Nat.mul_le_mul_right (L + 1) (show 20 ≤ D by omega)
-      have z₁ := Nat.zero_le (D * L)
-      have z₂ := Nat.zero_le (D * ∑ j ∈ Finset.range n, roundCost x j)
-      ring_nf at f₁ f₂ f₃ f₄ f₅ f₆ f₇ f₈ f₉ z₁ ⊢
-      linarith
-    · simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, st] at hSn ⊢
-      rw [← hl, ← hn, ← hLdef]
-      have hpeak : sMax x + (cfr + cN + 10 * M + 40) * (L + 1) + 16 * L + 4 * (M + 3) + 26 ≤
-          sMax x + (cfr + cN + 20 * M + 100) * (L + 1) := by nlinarith
-      clear_value D L
-      have hD1 : 1 ≤ D := by omega
-      have hED : cfr + cN + 20 * M + 100 ≤ 20 * D := by omega
-      have g₁ := Nat.mul_le_mul_left (2 * (M + 3)) hpeak
-      have g₂ : 2 * (M + 3) * ((cfr + cN + 20 * M + 100) * (L + 1)) ≤
-          (40 * M + 120) * (D * (L + 1)) :=
-        (Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ hED)).trans_eq (by ring)
-      have g₃ : 2 * (M + 3) * sMax x ≤ (40 * M + 200) * D * sMax x :=
-        Nat.mul_le_mul_right _ ((show 2 * (M + 3) ≤ 40 * M + 200 by omega).trans
-          (Nat.le_mul_of_pos_right _ hD1))
-      have g₄ : sI x ≤ (40 * M + 200) * D * sI x :=
-        Nat.le_mul_of_pos_left _ (Nat.mul_pos (by omega) hD1)
-      have g₅ : sF (streamState (init x) next l n) ≤
-          (40 * M + 200) * D * sF (streamState (init x) next l n) :=
-        Nat.le_mul_of_pos_left _ (Nat.mul_pos (by omega) hD1)
-      have g₆ := Nat.mul_le_mul (show cfr + cI ≤ D by omega) (Nat.add_le_add_right hS0 1)
-      have g₇ := Nat.mul_le_mul (show cuf ≤ D by omega)
-        (show 2 * (encS (streamState (init x) next l n)).length + 1 + 1 ≤ 2 * (L + 1) by omega)
-      have g₈ := Nat.mul_le_mul (show cF ≤ D by omega) (Nat.add_le_add_right hSn 1)
-      have q₂ : L + 1 ≤ D * (L + 1) := Nat.le_mul_of_pos_left _ hD1
-      have : kI ≤ M := by omega
-      have : kF ≤ M := by omega
-      have : M ≤ D := by omega
-      have hd₁ : M + 3 - (kI + 1) ≤ M + 2 := by omega
-      have hd₂ : M + 3 - (kF + 2) ≤ M + 1 := by omega
-      generalize M + 3 - (kI + 1) = d₁ at hd₁ ⊢
-      generalize M + 3 - (kF + 2) = d₂ at hd₂ ⊢
-      have z₁ := Nat.zero_le (D * L)
-      ring_nf at g₁ g₂ g₃ g₄ g₅ g₆ g₇ g₈ q₂ z₁ ⊢
-      linarith
-  · intro j hj
-    have ht := hcost x j hj
-    have hnext : next (st j, l[j]) = st (j + 1) := (streamState_succ _ _ _ hj).symm
-    have hsize : (encS (st (j + 1))).length + 1 ≤ roundCost x j := by lia
-    have hm₁ := Nat.mul_le_mul_left cfr hsize
-    have hm₂ := Nat.mul_le_mul_left cN hsize
-    dsimp only [st, l] at hnext hm₁ hm₂ ⊢
-    simp only [Function.comp_apply, id_eq, encFramed_apply, hnext, length_frame]
-    linarith only [ht, hm₁, hm₂]
-  · intro j hj
-    have h₀ := hSj j hj.le
-    have h₁ := hSj (j + 1) hj
-    have ha := hA x j hj
-    have hs := hsMax x j hj
-    have hnext : next (st j, l[j]) = st (j + 1) := (streamState_succ _ _ _ hj).symm
-    have hm₁ := Nat.mul_le_mul_left cfr (Nat.add_le_add_right h₁ 1)
-    have hm₂ := Nat.mul_le_mul_left cN (Nat.add_le_add_right h₁ 1)
-    dsimp only [st, l] at hnext hm₁ hm₂ h₀ h₁ ⊢
-    simp only [← hLdef] at ha
-    simp only [Function.comp_apply, id_eq, encFramed_apply, hnext, length_frame,
-      encPair_apply, List.length_append]
-    have : kE ≤ M := by omega
-    have : kN ≤ M := by omega
-    have : M + 3 - (kE + 2) ≤ M + 1 := by omega
-    have : M + 3 - (kN + 1 + 2) ≤ M := by omega
-    have := Nat.zero_le (M * L)
-    linarith
+  obtain ⟨C, hC⟩ : ∃ C, C = cfr + cI + 6 := ⟨_, rfl⟩
+  have hsum := streamFold_sum_after r tok htok hread (fun _ => []) elems hL
+    (fun e => tmI.outputToWord.extendTapes e) (tI := fun x => tI x + C * (lMax x + 1))
+    (sI := fun x => sI x + C * (lMax x + 1) + kI) (fun e x => ?_)
+    hnext hemit hfinish hg hcost hsMax hS hA
+  · obtain ⟨c, h⟩ := hsum
+    refine ⟨c * (C + kI + 1), h.mono (fun x => ?_) (fun x => ?_)⟩ <;> rw [Nat.mul_assoc] <;>
+      refine Nat.mul_le_mul_left c ?_
+    · generalize tI x = a, tF (streamState (init x) next (elems x) (elems x).length) = b,
+        (encIn x).length = e, ∑ j ∈ Finset.range (elems x).length, roundCost x j = s, lMax x = L
+      nlinarith [Nat.mul_le_mul_left C (show L + 1 ≤ a + b + e + s + L + 1 by omega),
+        Nat.zero_le (kI * (a + b + e + s + L + 1))]
+    · generalize sI x = a, sF (streamState (init x) next (elems x) (elems x).length) = b,
+        sMax x = s, lMax x = L
+      nlinarith [Nat.mul_le_mul_left C (show L + 1 ≤ a + b + s + L + 1 by omega),
+        Nat.mul_le_mul_left kI (show 1 ≤ a + b + s + L + 1 by omega)]
+  · have h₀ : (encS (init x)).length + 1 ≤ lMax x + 1 :=
+      Nat.succ_le_succ (hS x 0 (Nat.zero_le _))
+    have h₁ := Nat.mul_le_mul_left cfr h₀
+    have h₂ := Nat.mul_le_mul_left cI h₀
+    refine ((htmI x).outputToWord_onTape rfl).transformsTapesAt_eq.imp (fun _ _ _ h => h)
+      (fun _ _ _ _ _ _ _ ⟨_, hp, hws, he⟩ => ⟨hp, by simpa using hws, he⟩) ?_ ?_ <;>
+    · simp only [Function.comp_apply, id_eq, encFramed_apply, length_frame, hC]
+      nlinarith
 
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 -- vendored: derived from `streamFold_sum` to share the machine and resource proof.
@@ -660,151 +612,32 @@ public theorem ComputableTidilyInTimeAndSpace.streamFold_pair_sum {α σ : Type 
         (encIn x).length + (∑ j ∈ Finset.range (elems x).length, roundCost x j) + lMax x + 1))
       (fun x => c * (sF (streamState (init x) next (elems x) (elems x).length) + sMax x +
         lMax x + 1)) := by
-  obtain ⟨cfr, hfr⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := id) (encIn := encS)
-    (encOut := encFramed encS) fun _ => rfl
-  obtain ⟨cN, hN'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr hnext
-  obtain ⟨cuf, huf⟩ := ComputableTidilyInLinearTimeAndSpace.of_unframe (f := id)
-    (encIn := encFramed encS) (encOut := encS) fun s => by simp
-  obtain ⟨cF, hF'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfinish huf
-  obtain ⟨kE, SE, _, tmE, htmE⟩ := hemit
-  obtain ⟨kN, SN, _, tmN, htmN⟩ := hN'
-  obtain ⟨kF, SF, _, tmF, htmF⟩ := hF'
-  obtain ⟨M, hM⟩ : ∃ M, M = kE + kN + kF + 8 := ⟨_, rfl⟩
-  let V : Fin (M + 3) := ⟨M, by omega⟩
-  let N : Fin (M + 3) := ⟨M + 1, by omega⟩
-  let F : Fin (M + 3) := ⟨M + 2, by omega⟩
-  have hVN : V ≠ N := by simp [V, N, Fin.ext_iff]
-  have hVF : V ≠ F := by simp [V, F, Fin.ext_iff]
-  have hNF : N ≠ F := by simp [N, F, Fin.ext_iff]
-  obtain ⟨eE, heE⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.natAdd kE (0 : Fin 2)) V
-  obtain ⟨eN, heN, heN'⟩ := exists_embedding_eq₂ (K := M + 3) (by omega)
-    (i := Fin.natAdd (kN + 1) (0 : Fin 2)) (o := (Fin.last kN).castAdd 2)
-    (by simp [Fin.ext_iff]) hVN
-  obtain ⟨eF, heF⟩ := exists_embedding_eq (K := M + 3) (by omega) (Fin.natAdd kF (0 : Fin 2)) V
-  refine ⟨(40 * M + 200) * (cfr + cN + cuf + cF + M + 100), _, _, inferInstance,
-    (appendRead rawFrameReader V).seq ((whileInput (streamRound r
-      ((tmE.inputFromWord true).extendTapes eE) ((tmN.onWords true).extendTapes eN)
-      V N F hVN hVF hNF)).seq
-      ((((tmF.inputFromWord true).extendTapes eF).seq
-        ((clearWork Bool).extendTapes (tapeEmb V))).freezeInput.seq (rewindInputOn (M + 3) Bool))),
-    fun x => ?_⟩
-  set l := elems x with hl
-  set n := l.length with hn
-  let st := streamState (init x) next l
-  set L := lMax x with hLdef
-  have hSj (j : ℕ) (hj : j ≤ n) : (encS (st j)).length ≤ L := hS x j hj
-  have hE := fun p => (htmE p).inputFromWord_extendTapes true heE
-  have hN := fun p => (htmN p).onWords_extendTapes true heN heN'
-  have hread_init : rawFrameReader.read rawFrameReader.q₀ ((encIn x).drop 0) =
-      (frame (encS (init x)), (frame (encS (init x))).length) := by
-    rw [List.drop_zero, hL x]
-    exact read_rawFrameReader (encS (init x)) (l.flatMap tok)
-  have hI : TransformsTapesAt (appendRead rawFrameReader V)
-      (fun inp p ws => inp = encIn x ∧ p.val = 1 ∧ ws = fun _ => [])
-      (fun _ _ _ p' ws' e => p'.val = 1 + (frame (encS (init x))).length ∧
-        ws' = Function.update (fun _ => []) V (frame (encS (init x))) ∧ e = [])
-      (2 * (frame (encS (init x))).length + 4)
-      ((frame (encS (init x))).length + 2 + (M + 2)) := by
-    have hraw := transformsTapesAt_appendRead rawFrameReader V (encIn x) 1 (by simp) []
-    simp only [Fin.val_one, Nat.sub_self, hread_init, List.length_nil, List.nil_append] at hraw
-    refine hraw.imp (fun _ _ ws ⟨hin, hp, hws⟩ => ⟨hin, hp, by simp [hws]⟩) ?_ (by omega) le_rfl
-    rintro _ _ ws p' ws' e ⟨_, _, rfl⟩ ⟨hp', hws', he⟩
-    exact ⟨hp', hws', he⟩
-  have hloop := transformsTapesAt_streamLoop_encoded_after r tok htok hread hVN hVF hNF
-    (frame (encS (init x))) (init x) l next (fun p => encE (emit p)) hE hN
-    (roundCost := fun j => (cfr + cN + 60) * roundCost x j)
-    (sMax := sMax x + (cfr + cN + 10 * M + 40) * (L + 1)) (lMax := L) ?_ ?_ (hS x) (hA x)
-  · simp only [← Finset.mul_sum] at hloop
-    rw [← hL x] at hloop
-    have h := computesTidily_streamTM_after (r := r) hVN hVF hNF (encIn x)
-      (frame (encS (init x))) (frame (encS (init x))) (frame (encS (st n)))
-      (streamEmit next (fun p => encE (emit p)) (init x) l) (encF (finish (st n)))
-      hI hloop ((htmF (st n)).inputFromWord_extendTapes true heF)
-    rw [hg x]
-    have hS0 : (encS (init x)).length ≤ L := hSj 0 (Nat.zero_le _)
-    have hSn : (encS (st n)).length ≤ L := hSj n le_rfl
-    set D := cfr + cN + cuf + cF + M + 100 with hD
-    refine h.mono ?_ ?_
-    · simp only [id_eq, encFramed_apply, length_frame, st] at hI hSn ⊢
-      rw [← hl, ← hn, ← hLdef]
-      clear_value D L
-      have hD1 : 1 ≤ D := by omega
-      have f₁ : 2 * (2 * (encS (init x)).length + 1) + 4 ≤ 4 * (L + 1) + 2 := by omega
-      have f₂ := Nat.mul_le_mul (show cuf ≤ D by omega)
-        (show 2 * (encS (streamState (init x) next l n)).length + 1 + 1 ≤ 2 * (L + 1) by omega)
-      have f₃ := Nat.mul_le_mul (show cF ≤ D by omega) (Nat.add_le_add_right hSn 1)
-      have f₄ := Nat.mul_le_mul_right (∑ j ∈ Finset.range n, roundCost x j)
-        (show cfr + cN + 60 ≤ D by lia)
-      have f₅ := Nat.mul_le_mul_right (tF (streamState (init x) next l n) +
-        (encIn x).length + (∑ j ∈ Finset.range n, roundCost x j) + L + 1)
-        (show 26 * D ≤ (40 * M + 200) * D from Nat.mul_le_mul_right _ (by omega))
-      have f₇ := Nat.le_mul_of_pos_left (tF (streamState (init x) next l n)) hD1
-      have f₈ := Nat.le_mul_of_pos_left (encIn x).length hD1
-      have f₉ := Nat.mul_le_mul_right (L + 1) (show 20 ≤ D by omega)
-      have hlen_le : ((elems x).flatMap tok).length ≤ (encIn x).length := by
+  -- the framed initial state is read from the input prefix, leaving the cursor on the tokens
+  have hsum := streamFold_sum_after r tok htok hread (fun x => frame (encS (init x))) elems
+    hL (kI := 0) (fun e => appendRead rawFrameReader (e (Fin.last 0)))
+    (tI := fun x => 2 * (frame (encS (init x))).length + 4)
+    (sI := fun x => (frame (encS (init x))).length + 2) (fun e x => ?_)
+    hnext hemit hfinish hg hcost hsMax hS hA
+  · obtain ⟨c, h⟩ := hsum
+    refine ⟨c * 5, h.mono (fun x => ?_) (fun x => ?_)⟩
+    · have hpre : (frame (encS (init x))).length ≤ (encIn x).length := by
         rw [hL x, List.length_append]
         omega
-      have f₁₀ : ((elems x).flatMap tok).length ≤ D * (encIn x).length :=
-        hlen_le.trans f₈
-      have z₁ := Nat.zero_le (D * L)
-      have z₂ := Nat.zero_le (D * ∑ j ∈ Finset.range n, roundCost x j)
-      ring_nf at f₁ f₂ f₃ f₄ f₅ f₇ f₈ f₉ f₁₀ z₁ ⊢
-      linarith
-    · simp only [id_eq, encFramed_apply, length_frame, st] at hI hSn ⊢
-      rw [← hl, ← hn, ← hLdef]
-      have hpeak : sMax x + (cfr + cN + 10 * M + 40) * (L + 1) + 16 * L + 4 * (M + 3) + 26 ≤
-          sMax x + (cfr + cN + 20 * M + 100) * (L + 1) := by nlinarith
-      clear_value D L
-      have hD1 : 1 ≤ D := by omega
-      have hED : cfr + cN + 20 * M + 100 ≤ 20 * D := by omega
-      have g₁ := Nat.mul_le_mul_left (2 * (M + 3)) hpeak
-      have g₂ : 2 * (M + 3) * ((cfr + cN + 20 * M + 100) * (L + 1)) ≤
-          (40 * M + 120) * (D * (L + 1)) :=
-        (Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ hED)).trans_eq (by ring)
-      have g₃ : 2 * (M + 3) * sMax x ≤ (40 * M + 200) * D * sMax x :=
-        Nat.mul_le_mul_right _ ((show 2 * (M + 3) ≤ 40 * M + 200 by omega).trans
-          (Nat.le_mul_of_pos_right _ hD1))
-      have g₅ : sF (streamState (init x) next l n) ≤
-          (40 * M + 200) * D * sF (streamState (init x) next l n) :=
-        Nat.le_mul_of_pos_left _ (Nat.mul_pos (by omega) hD1)
-      have g₆ : 2 * (encS (init x)).length + 1 + 2 + (M + 2) ≤ 2 * (L + 1) + M + 3 := by omega
-      have g₇ := Nat.mul_le_mul (show cuf ≤ D by omega)
-        (show 2 * (encS (streamState (init x) next l n)).length + 1 + 1 ≤ 2 * (L + 1) by omega)
-      have g₈ := Nat.mul_le_mul (show cF ≤ D by omega) (Nat.add_le_add_right hSn 1)
-      have q₂ : L + 1 ≤ D * (L + 1) := Nat.le_mul_of_pos_left _ hD1
-      have : kF ≤ M := by omega
-      have : M ≤ D := by omega
-      have hd₂ : M + 3 - (kF + 2) ≤ M + 1 := by omega
-      generalize M + 3 - (kF + 2) = d₂ at hd₂ ⊢
-      have z₁ := Nat.zero_le (D * L)
-      ring_nf at g₁ g₂ g₃ g₅ g₆ g₇ g₈ q₂ z₁ ⊢
-      linarith
-  · intro j hj
-    have ht := hcost x j hj
-    have hnext : next (st j, l[j]) = st (j + 1) := (streamState_succ _ _ _ hj).symm
-    have hsize : (encS (st (j + 1))).length + 1 ≤ roundCost x j := by lia
-    have hm₁ := Nat.mul_le_mul_left cfr hsize
-    have hm₂ := Nat.mul_le_mul_left cN hsize
-    dsimp only [st, l] at hnext hm₁ hm₂ ⊢
-    simp only [Function.comp_apply, id_eq, encFramed_apply, hnext, length_frame]
-    linarith only [ht, hm₁, hm₂]
-  · intro j hj
-    have h₀ := hSj j hj.le
-    have h₁ := hSj (j + 1) hj
-    have ha := hA x j hj
-    have hs := hsMax x j hj
-    have hnext : next (st j, l[j]) = st (j + 1) := (streamState_succ _ _ _ hj).symm
-    have hm₁ := Nat.mul_le_mul_left cfr (Nat.add_le_add_right h₁ 1)
-    have hm₂ := Nat.mul_le_mul_left cN (Nat.add_le_add_right h₁ 1)
-    dsimp only [st, l] at hnext hm₁ hm₂ h₀ h₁ ⊢
-    simp only [← hLdef] at ha
-    simp only [Function.comp_apply, id_eq, encFramed_apply, hnext, length_frame,
-      encPair_apply, List.length_append]
-    have : kE ≤ M := by omega
-    have : kN ≤ M := by omega
-    have : M + 3 - (kE + 2) ≤ M + 1 := by omega
-    have : M + 3 - (kN + 1 + 2) ≤ M := by omega
-    have := Nat.zero_le (M * L)
-    linarith
+      rw [Nat.mul_assoc]
+      exact Nat.mul_le_mul_left c (by omega)
+    · have h₀ : (encS (init x)).length ≤ lMax x := hS x 0 (Nat.zero_le _)
+      simp only [length_frame]
+      rw [Nat.mul_assoc]
+      exact Nat.mul_le_mul_left c (by omega)
+  · have hread_init : rawFrameReader.read rawFrameReader.q₀ ((encIn x).drop 0) =
+        (frame (encS (init x)), (frame (encS (init x))).length) := by
+      rw [List.drop_zero, hL x]
+      exact read_rawFrameReader (encS (init x)) ((elems x).flatMap tok)
+    have hraw := transformsTapesAt_appendRead rawFrameReader (e (Fin.last 0)) (encIn x) 1
+      (by simp) []
+    simp only [Fin.val_one, Nat.sub_self, hread_init, List.length_nil, List.nil_append] at hraw
+    refine hraw.imp (fun _ _ ws ⟨hin, hp, hws⟩ => ⟨hin, hp, by simp [hws]⟩) ?_ (by omega) le_rfl
+    rintro _ _ ws p' ws' em ⟨_, _, rfl⟩ ⟨hp', hws', hem⟩
+    exact ⟨hp', hws', hem⟩
 
 end Turing.MultiTapeTM
