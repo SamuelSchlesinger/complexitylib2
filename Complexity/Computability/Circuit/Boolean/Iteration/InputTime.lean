@@ -22,7 +22,7 @@ of size `40000 * powerBudget n s (2 ^ n) L`, an `m`-bit time costs at most
 `m * (40000 * powerBudget n s (2 ^ n) L + 4 * n)` (`variable_time`), and
 `m * (120000 * optimizedBudget n s (2 ^ n) + 4 * n)` with the balanced parameter
 (`variable_time_optimized`). The cost is linear in `m`; a bound additive in `m`, which first
-reduces the time modulo the cycle length, needs cycle labels and is not proved here.
+reduces the time modulo the cycle length, is `variable_time_additive` in `Iteration.LongTime`.
 
 The circuits are native De Morgan circuits: every NOT, AND and OR gate and every constant is
 charged, while wiring and fanout are free. They exist for each `m`, because the fixed-power
