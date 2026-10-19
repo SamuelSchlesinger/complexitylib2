@@ -13,7 +13,10 @@ import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
+import ComplexityTests.CircuitHamming.Approximation
+import ComplexityTests.CircuitHamming.Continuity
 import ComplexityTests.CircuitHamming.Gates
+import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
@@ -153,9 +156,14 @@ import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
+import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
+import ComplexityTests.RationalHitting.Determinant
+import ComplexityTests.RationalHitting.IntBinary
+import ComplexityTests.RationalHitting.Lift
+import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
 import ComplexityTests.RotationWalk
