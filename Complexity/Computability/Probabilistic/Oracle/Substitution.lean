@@ -7,7 +7,6 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Probabilistic.Oracle.Parameter
 public import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.Realization.OpenOracleSimulation
 import Complexity.Languages.Probabilistic.Oracle.Simulation
@@ -22,16 +21,16 @@ stateful oracle, whose replies may be arbitrarily long. The result is again stri
 returning the original result and the handler's final state, and it preserves the complete joint
 law of the result, the handler's state and the external oracle's state.
 
-As for closed substitution (`Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess`), a local
-invariant and an efficiently computed additive allowance bound each reply given to the program
-and the encoded private storage added per call. Individually efficient calls alone do not
-suffice: repeatedly doubling the handler's state is efficient per call but not overall.
+A local invariant and an efficiently computed additive allowance bound each reply given to the
+program and the encoded private storage added per call. Individually efficient calls alone do
+not suffice: repeatedly doubling the handler's state is efficient per call but not overall.
+Closed substitution (`Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess`) is the special
+case of a sampled closed handler without external channels.
 
 ## Main results
 
 * `Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess_open`: open substitution with
   captured caller data, a local state invariant and an efficiently computed resource allowance.
-* `Cslib.Probability.IsOraclePPT.run_interpret_preprocess_open`: the parameterized form.
 
 ## References
 
@@ -44,13 +43,6 @@ Extends `Computability/Probabilistic/OracleSimulation.lean` on the cslib `crypto
 namespace Cslib.Probability
 
 open Turing.MultiTapeTM
-
-/-- A program returning its declared encoding has the same strict oracle PPT certificates. -/
-theorem IsOraclePPTOn.iff_encoded {Operation α β : Type} [DecidableEq Operation]
-    {input : α ↪ List Bool} {output : β ↪ List Bool} {program : α → WordOracleComp Operation β} :
-    IsOraclePPTOn input output program ↔
-      IsOraclePPTOn input encBits (fun a => output <$> program a) := by
-  simp only [IsOraclePPTOn, encBits, Function.Embedding.coe_refl, id_map]
 
 /-- Substitute a stateful handler with its own external calls into an oracle program. The
 substituted program is strict oracle PPT and preserves the joint law of the result, the
@@ -121,36 +113,5 @@ theorem IsOraclePPTOn.run_interpret_preprocess_open
   rw [hout, OracleComp.interpret_map, StateT.run_map, OracleComp.interpret_map, StateT.run_map,
     ProbOracleComp.run_interpret_run_interpret, ProbOracleComp.run_interpret_run_interpret,
     hrealize]
-
-/-- Supply a stateful handler with its own external calls to a parameterized oracle program. The
-result retains the handler's final state and every external oracle's state, and a local
-invariant charges reply length and all added encoded storage. -/
-theorem IsOraclePPT.run_interpret_preprocess_open {Operation External β Caller State : Type}
-    [DecidableEq Operation] [Finite Operation] [DecidableEq External] [Finite External]
-    {output : β ↪ List Bool} {program : ℕ → List Bool → WordOracleComp Operation β}
-    {input : Caller ↪ List Bool} {stateEncoding : State ↪ List Bool}
-    {handler : Caller → Operation × List Bool → State →
-      WordOracleComp External (List Bool × State)}
-    {prepare : Caller → ℕ × List Bool} {initial : Caller → State}
-    {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input (encPair encUnary encBits))
-    (hhandler : IsOraclePPTOn
-      (encPair input (encPair (encPair (encFinite Operation) encBits) stateEncoding))
-      (encPair encBits stateEncoding) (fun pair => handler pair.1 pair.2.1 pair.2.2))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
-    (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
-      (encPair input encBits) encUnary)
-    (hpreserve : ∀ a request state, invariant a state →
-      ∀ result ∈ ProbOracleComp.support (handler a request state),
-        invariant a result.2 ∧ result.1.length ≤ resources a request.2 ∧
-        (stateEncoding result.2).length ≤ (stateEncoding state).length + resources a request.2) :
-    IsOraclePPTOn input (encPair output stateEncoding) (fun a =>
-      (OracleComp.interpret
-        (ProbOracleComp.handler
-          (fun n => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin n))) (handler a))
-          (program (prepare a).1 (prepare a).2)).run (initial a)) :=
-  hprogram.on.run_interpret_preprocess_open hprepare hhandler hinitial invariant hinit
-    hresources hpreserve
 
 end Cslib.Probability

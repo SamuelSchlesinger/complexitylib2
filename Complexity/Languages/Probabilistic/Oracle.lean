@@ -34,6 +34,8 @@ is not automatically a strict PPT operation.
 * `Cslib.ProbOracleComp.run_interpret_sample`: private sampling leaves oracle state unchanged.
 * `Cslib.ProbOracleComp.run_interpret_lift_sample`: a stateful handler with external calls
   forwards private sampling unchanged.
+* `Cslib.ProbOracleComp.sample_run_interpret`: sampling a closed stateful execution is the
+  execution of the sampled handler.
 * `Cslib.ProbOracleComp.eval_interpret`: closed handlers commute with probability interpretation.
 * `Cslib.ProbOracleComp.eval_run_interpret`: closed handler programs preserve the joint state law.
 
@@ -135,6 +137,25 @@ theorem run_interpret_lift_sample {Query' : Type} {spec' : Query' → Type}
       (sample program)).run s = (·, s) <$> sample program := by
   rw [interpret_sample, OracleComp.run_interpret_lift]
   rfl
+
+/-- Sampling a closed stateful execution is the execution of the sampled handler: both make the
+same private draws and retain the same final handler state. -/
+theorem sample_run_interpret {Query' : Type} {spec' : Query' → Type}
+    (oracle : (q : Query) → StateT State ProbComp (spec q)) (program : ProbOracleComp spec α)
+    (s : State) :
+    sample (spec := spec') ((OracleComp.interpret
+      (handler (fun n => StateT.lift (ProbComp.unifFin n)) oracle) program).run s) =
+      (OracleComp.interpret (handler (fun n => StateT.lift (sample (ProbComp.unifFin n)))
+        (fun q state => sample (oracle q state))) program).run s := by
+  have hsample : IsMonadHom ProbComp (ProbOracleComp spec') (sample (spec := spec')) :=
+    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩)
+      (fun n => OracleComp.query (spec := probOracleSpec spec') (Sum.inl n))
+  rw [OracleComp.map_run_interpret hsample]
+  congr 2
+  funext q state
+  cases q with
+  | inl n => simp [handler, StateT.lift]
+  | inr q => rfl
 
 /-- Closed handlers have the same probability law when interpreted before or after evaluation. -/
 theorem eval_interpret (oracle : (q : Query) → ProbComp (spec q))

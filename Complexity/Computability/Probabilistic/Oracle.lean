@@ -104,6 +104,12 @@ theorem congr {program program' : α → WordOracleComp Operation β}
   refine ⟨hops, k, Control, hfinite, machine, c, d, fun a State oracle s => ?_⟩
   simpa only [OracleComp.interpret_map, StateT.run_map, heq] using h a State oracle s
 
+/-- A program returning its declared encoding has the same strict oracle PPT certificates. -/
+theorem iff_encoded {program : α → WordOracleComp Operation β} :
+    IsOraclePPTOn input output program ↔
+      IsOraclePPTOn input Turing.MultiTapeTM.encBits (fun a => output <$> program a) := by
+  simp only [IsOraclePPTOn, Turing.MultiTapeTM.encBits, Function.Embedding.coe_refl, id_map]
+
 /-- Every supported encoded output has polynomial length, independently of all oracle replies. -/
 theorem length_le {program : α → WordOracleComp Operation β}
     (h : IsOraclePPTOn input output program) :

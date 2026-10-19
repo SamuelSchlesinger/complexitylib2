@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Probabilistic.Oracle.Substitution
+import Complexity.Computability.Probabilistic.Oracle.Parameter
 import Complexity.Computability.Probabilistic.Oracle.Memoize
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
