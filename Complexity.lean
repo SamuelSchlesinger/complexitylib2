@@ -870,6 +870,7 @@ public import Complexity.Foundations.Data.Code.Concatenation
 public import Complexity.Foundations.Data.Code.Hadamard
 public import Complexity.Foundations.Data.Code.HammingBound
 public import Complexity.Foundations.Data.Code.Johnson
+public import Complexity.Foundations.Data.Code.Justesen
 public import Complexity.Foundations.Data.Code.Linear
 public import Complexity.Foundations.Data.Code.LocalDecoding
 public import Complexity.Foundations.Data.Code.ReedMuller
