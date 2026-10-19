@@ -106,7 +106,7 @@ private theorem sum_mul_exp_sub_mean_le {β : Type*} [Fintype β] (q : PMF β) (
     div_pow, sq_abs]
   ring
 
-/-- Changing a coordinate outside `s` commutes with filling the coordinates in `s` from `y`. -/
+/-- The coordinates of `y` outside `s` do not affect `s.piecewise y z`. -/
 private theorem piecewise_update_left {s : Finset ι} {i : ι} (hi : i ∉ s) (y z : ∀ i, α i)
     (v : α i) : s.piecewise (Function.update y i v) z = s.piecewise y z :=
   s.piecewise_congr (fun _ hj => Function.update_of_ne (ne_of_mem_of_not_mem hj hi) ..)
