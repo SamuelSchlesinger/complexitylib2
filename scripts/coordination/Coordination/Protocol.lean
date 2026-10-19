@@ -126,8 +126,9 @@ structure Submission where
 
 structure Completion where
   snapshot : Snapshot
-  /-- The commit published as `main`: the reviewed head when it was fast-forwarded, otherwise the
-  merge commit landing it. Absent in records written before merge landings existed. -/
+  /-- The commit published as `main` by the landing, shared by every epic of a batch: the reviewed
+  head when it alone was fast-forwarded, otherwise the final merge commit. Absent in records
+  written before merge landings existed or rewritten by older checkouts. -/
   landed : Option Oid := none
   summary : String
   api : Review
@@ -159,7 +160,8 @@ structure Epic where
 structure Integration where
   lease : Lease
   /-- The landing must still extend exactly this commit. Absent in records written before merge
-  landings existed. -/
+  landings existed or rewritten by older checkouts; landing then relies on the observed `main`
+  and the guarded publication. -/
   main : Option Oid := none
   candidates : List Candidate
   deriving BEq, Repr
@@ -231,7 +233,7 @@ inductive Command where
   | review (epic : EpicId) (kind : ReviewKind) (snapshot : Snapshot)
       (verdict : Verdict) (note : String)
   | reserve (epics : List EpicId) (token : Token)
-  | land (candidates : List Candidate) (landed : Oid) (validation : String)
+  | land (candidates : List Candidate) (main landed : Oid) (validation : String)
   | cancel
   deriving BEq, Repr, ToJson, FromJson
 
@@ -691,32 +693,42 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
     let candidates := batch.map fun (epic, s, _, _) => { epic := epic.id, snapshot := s.snapshot }
     disjoint ctx main candidates
     if let some previous := state.integration then
-      if previous.candidates == candidates && holds ctx previous.lease then
-        -- A retry after a failed validation integrates against the main observed now.
-        let state := { state with integration := some { previous with main := some main } }
-        return result state (if previous.main == some main then
+      -- A retry after a failed validation integrates against the main observed now, also after an
+      -- older checkout reduced the reservation to its first candidate and dropped its main.
+      let reduced := previous.main.isNone && previous.candidates.head? == candidates.head?
+      if holds ctx previous.lease && (previous.candidates == candidates || reduced) then
+        let renewed := { previous with main := some main, candidates }
+        return result { state with integration := some renewed } (if renewed == previous then
           "Integration already reserved by this held generation"
           else "Integration reservation renewed against the current main")
       check (previous.lease.expires + grace < ctx.now) "Integration is reserved; finish or cancel it"
     let integration : Integration := { lease := makeLease ctx agent token, main := some main, candidates }
     return result { state with integration := some integration } "Integration reserved"
-  | .land candidates landed validation =>
+  | .land candidates main landed validation =>
     let _ ← coordinator ctx state
     let some integration := state.integration | throw "Integration reservation is absent"
     check (holds ctx integration.lease) "Integration generation was lost"
-    check (integration.candidates == candidates) "Integration reservation changed"
-    let some reserved := integration.main
-      | throw "Integration reservation does not record its main; cancel and land again"
-    let some main := ctx.main | throw "Main was not observed"
-    check (reserved == main) "Main moved since the integration reservation; cancel and land again"
+    -- Older checkouts that rewrite the board keep only the first candidate and drop `main`, so the
+    -- batch is verified again below instead of being compared with the whole reservation.
+    check (integration.candidates.head? == candidates.head?) "Integration reservation changed"
+    check (integration.main.all (· == main))
+      "Main moved since the integration reservation; cancel and land again"
+    check (ctx.main == some main) "Main moved during integration; cancel and land again"
     let batch ← approvedBatch ctx state (candidates.map (·.epic))
     check (ctx.cleanHead == some landed) "Validated clean head differs from the landing"
-    check (landed != main && ancestorOf ctx main landed) "Landing must extend the reserved main"
+    check (landed != main && ancestorOf ctx main landed) "Landing must extend the integrated main"
     for (candidate, epic, s, _, _) in candidates.zip batch do
       check (s.snapshot == candidate.snapshot) "Reviewed snapshot changed after reservation"
       check (ctx.ancestry.contains candidate.snapshot && ancestorOf ctx candidate.snapshot.head landed)
         s!"Landing omits the reviewed head of {epic.id.value}"
     disjoint ctx main candidates
+    let reviewed ← candidates.mapM fun c =>
+      observedDiff ctx c.snapshot s!"Paths changed by {c.epic.value}"
+    let landedPaths ← observedDiff ctx { base := main, head := landed } "Paths changed by the landing"
+    let extra := landedPaths.filter fun path =>
+      !generatedRoots.contains path && !reviewed.any (·.contains path)
+    check extra.isEmpty s!"The landing changes {", ".intercalate extra} beyond the reviewed \
+      snapshots; cancel and land again"
     check (!validation.isEmpty) "Validation evidence is required"
     let mut state := state
     for (epic, s, api, correctness) in batch do

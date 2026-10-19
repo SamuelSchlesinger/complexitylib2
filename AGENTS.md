@@ -121,8 +121,8 @@ lake exe checkInitImports
    beside cslib's `BooleanFunction`. Bit strings add with `+` (Mathlib's `BooleanRing Bool`),
    single bits with `^^`.
 7. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
-   (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …); add new entries in
-   cslib's format.
+   (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …). The coordinator adds
+   new entries, in cslib's format, in docs-only epics; report the ones you need.
 
 ## Proof hygiene
 

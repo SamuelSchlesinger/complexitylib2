@@ -159,16 +159,17 @@ def context (repo : Repository) (self : Identity) (state : State) (cmd : Command
       if let some s := submitted state id then
         let (ancestry, diffs) ← evidence repo id s main
         ctx := { ctx with ancestry := ctx.ancestry ++ ancestry, diffs := ctx.diffs ++ diffs }
-  | .land candidates landed _ =>
+  | .land candidates onto landed _ =>
     repo.clean landed.value
-    let main : Oid := ⟨← requiredRef repo mainRef⟩
+    let landing : Snapshot := { base := onto, head := landed }
     ctx := { ctx with
-      main := some main
+      main := some ⟨← requiredRef repo mainRef⟩
       cleanHead := some landed
-      ancestry := ← observedAncestry repo [{ base := main, head := landed }] }
+      ancestry := ← observedAncestry repo [landing]
+      diffs := [{ range := landing, paths := ← repo.changedPaths onto.value landed.value }] }
     for candidate in candidates do
       if let some s := submitted state candidate.epic then
-        let (ancestry, diffs) ← evidence repo candidate.epic s main
+        let (ancestry, diffs) ← evidence repo candidate.epic s onto
         let included ← observedAncestry repo [{ base := candidate.snapshot.head, head := landed }]
         ctx := { ctx with
           ancestry := ctx.ancestry ++ ancestry ++ included
@@ -294,7 +295,10 @@ def join (repo : Repository) (name : AgentId) (role : Role) (here takeover : Boo
 def ready (repo : Repository) (epic : EpicId) (summary : String) : IO Outcome := do
   let head ← repo.head
   let main ← requiredRef repo mainRef
-  let base := line (← repo.run #["merge-base", main, head])
+  let found ← repo.execute #["merge-base", main, head] none
+  let base := line found.stdout
+  unless found.exitCode == 0 && !base.isEmpty do
+    throw <| IO.userError "The branch shares no history with main; start the work from main"
   let paths ← repo.changedPaths base head
   run repo (.submit epic { base := ⟨base⟩, head := ⟨head⟩ } paths summary)
 
@@ -352,7 +356,9 @@ private def merge (repo : Repository) (candidate : Candidate) (regenerate : Repo
     discard <| repo.execute #["merge", "--abort"] none
     let detail := if conflicts.isEmpty then "" else s!" with conflicts in {", ".intercalate conflicts}"
     throw <| IO.userError s!"Merging the reviewed head of {name} onto main failed{detail}: {
-      attempt.stdout}{attempt.stderr}Reopen, merge main and obtain new reviews."
+      attempt.stdout}{attempt.stderr}The integration reservation is kept; run \
+      `scripts/coordinate cancel` to release it, then reopen {name}, merge main and obtain new \
+      reviews."
   try
     for root in unmerged do
       IO.FS.writeFile (repo.root / root) (← repo.run #["show", ":2:" ++ root])
@@ -391,9 +397,12 @@ def land (repo : Repository) (epics : List EpicId)
     | throw <| IO.userError "Integration reservation is absent"
   let some main := integration.main
     | throw <| IO.userError "Integration reservation does not record its main; cancel and land again"
-  let landed ← integrate repo main integration.candidates regenerate
+  -- The batch is the listed epics: an older checkout may reduce the stored reservation meanwhile.
+  let candidates ← epics.mapM fun epic => do
+    pure { epic, snapshot := (← submission reserved.state epic).snapshot : Candidate }
+  let landed ← integrate repo main candidates regenerate
   let validation ← checks repo
   discard <| run repo .heartbeat
-  run repo (.land integration.candidates landed validation)
+  run repo (.land candidates main landed validation)
 
 end Coordination.Runtime

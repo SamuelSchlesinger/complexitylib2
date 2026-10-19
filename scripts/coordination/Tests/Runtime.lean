@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (repository coordination tests)
 import Coordination.Runtime
 import Tests.Support
+import Tests.Legacy
 
 /-! Runtime regressions use real linked worktrees and private local origins. Expiry is set
 explicitly in the fixture's journal instead of waiting for a wall-clock lease to elapse. -/
@@ -385,7 +386,12 @@ private def testLandingRefusesTextualConflict : IO Unit := withFixture fun fixtu
   let alice ← implement crew id "allowed" "alice" (addFile · "allowed/x/y.txt")
   discard <| approve crew id alice
   let moved ← moveMain crew "allowed/x"
-  expectError (Runtime.land crew.lead [id] stubChecks regenerate) "conflicts"
+  let refusal ← try
+      discard <| Runtime.land crew.lead [id] stubChecks regenerate
+      pure ""
+    catch error => pure error.toString
+  check (["conflicts", "reservation is kept", "scripts/coordinate cancel"].all fun part =>
+    (refusal.splitOn part).length > 1) s!"Conflict refusal does not explain the kept reservation: {refusal}"
   check ((← fixture.ref Git.mainRef) == moved) "Refused landing changed main"
   check ((← crew.lead.run #["--no-optional-locks", "status", "--porcelain"]).isEmpty)
     "Refused merge left the coordinator worktree dirty"
@@ -420,6 +426,46 @@ private def testLandingBatchesDisjointEpics : IO Unit := withFixture fun fixture
     "Intermediate merge has inconsistent roots"
   for id in [first, second] do
     check ((← landedCommit outcome.state id) == some ⟨landed⟩) s!"{id.value} did not record the landed main"
+
+/-- An older checkout's heartbeat during validation reduces the reservation to its first epic
+and drops its main; the listed batch still lands. -/
+private def testLandingSurvivesOlderCheckoutRewrite : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let first : EpicId := ⟨"feature"⟩
+  let second : EpicId := ⟨"second"⟩
+  let alice ← implement crew first "allowed" "alice" (addFile · "allowed/c.txt")
+  let bob ← implement crew second "other" "bob" (addFile · "other/d.txt")
+  let firstSnapshot ← approve crew first alice
+  let secondSnapshot ← approve crew second bob
+  let moved ← moveMain crew "allowed/b.txt"
+  let rewritingChecks (_ : Git.Repository) : IO String := do
+    legacyHeartbeat crew.primary ⟨"bob"⟩
+    let some (_, json) ← crew.primary.readBoard | throw <| IO.userError "Missing board"
+    let state : State ← IO.ofExcept (fromJson? json)
+    check (state.integration.any fun i => i.main.isNone && i.candidates.map (·.epic) == [first])
+      "The older checkout did not reduce the reservation"
+    pure "Focused runtime validation passed"
+  let outcome ← Runtime.land crew.lead [first, second] rewritingChecks regenerate
+  let landed ← fixture.ref Git.mainRef
+  for commit in [moved, firstSnapshot.head.value, secondSnapshot.head.value] do
+    check (← crew.primary.ancestor commit landed) s!"Landed main omits {commit}"
+  let files := (← git fixture.origin #["ls-tree", "-r", "--name-only", landed]).splitOn "\n"
+  check (["allowed/b.txt", "allowed/c.txt", "other/d.txt"].all files.contains)
+    "Landed tree lost a change"
+  for id in [first, second] do
+    check ((← landedCommit outcome.state id) == some ⟨landed⟩) s!"{id.value} did not record the landed main"
+  check outcome.state.integration.isNone "Landing retained the reduced reservation"
+
+/-- `ready` explains a branch that does not descend from `main` at all. -/
+private def testReadyRefusesUnrelatedHistory : IO Unit := withFixture fun fixture => do
+  let primary ← fixture.open
+  initState primary
+  let alice ← joined primary "alice"
+  discard <| alice.run #["switch", "--quiet", "--orphan", "unrelated"]
+  IO.FS.writeFile (alice.root / "unrelated.txt") "unrelated\n"
+  discard <| alice.run #["add", "unrelated.txt"]
+  discard <| alice.run #["commit", "--quiet", "-m", "unrelated history"]
+  expectError (Runtime.ready alice ⟨"feature"⟩ "Unrelated history") "shares no history with main"
 
 private def testLandingRefusesOverlappingBatch : IO Unit := withFixture fun fixture => do
   let crew ← crew fixture
@@ -460,26 +506,12 @@ private def testReservationSurvivesValidationFailure : IO Unit := withFixture fu
     "Same-owner reservation retry replaced or lost original lease"
   check ((← fixture.ref Git.boardRef) == before) "Reservation continuation changed accepted lease"
   Runtime.validate lead "true" #[]
-  discard <| Runtime.run lead (.land [{ epic := id, snapshot }] snapshot.head "Focused runtime validation passed")
+  discard <| Runtime.run lead (.land [{ epic := id, snapshot }] snapshot.base snapshot.head
+    "Focused runtime validation passed")
   check ((← fixture.ref Git.mainRef) == snapshot.head.value) "Recovered integration did not publish"
   match (← Runtime.getEpic (← Runtime.readState lead) id).phase with
   | .merged _ => pure ()
   | _ => throw <| IO.userError "Recovered integration did not complete journal"
-
-/-- The board as decoded by checkouts that predate batch landings. -/
-private structure LegacyIntegration where
-  epic : EpicId
-  lease : Lease
-  snapshot : Snapshot
-  deriving FromJson
-
-private structure LegacyState where
-  version : Nat
-  agents : List Agent
-  epics : List Epic
-  coordinator : Option Lease
-  integration : Option LegacyIntegration
-  deriving FromJson
 
 private def testReservationReadableByOlderCheckouts : IO Unit := withFixture fun fixture => do
   let (lead, id, snapshot) ← approvedRuntime fixture
@@ -523,7 +555,8 @@ private def testCoordinatorHandoff : IO Unit := withFixture fun fixture => do
   expectError (Runtime.releaseCoordinator successor) "Finish or cancel"
   let submitted ← Runtime.submission (← Runtime.readState successor) id
   Runtime.checkout successor (.review submitted.work.branch snapshot)
-  discard <| Runtime.run successor (.land [{ epic := id, snapshot }] snapshot.head "Previously reviewed fixture")
+  discard <| Runtime.run successor (.land [{ epic := id, snapshot }] snapshot.base snapshot.head
+    "Previously reviewed fixture")
   check ((← fixture.ref Git.mainRef) == snapshot.head.value) "Successor could not land reviewed work"
 
 /-- Runtime coverage is intentionally separate from pure transition and transport tests. -/
@@ -544,6 +577,8 @@ def runtimeTests : List (String × IO Unit) := [
   ("runtime landing refuses a main move on a reviewed file", testLandingRefusesOverlappingMainMove),
   ("runtime landing refuses a textual conflict and leaves a clean worktree", testLandingRefusesTextualConflict),
   ("runtime landing batches two disjoint epics in one call", testLandingBatchesDisjointEpics),
-  ("runtime landing refuses a batch whose epics overlap", testLandingRefusesOverlappingBatch)]
+  ("runtime landing refuses a batch whose epics overlap", testLandingRefusesOverlappingBatch),
+  ("runtime batch lands after an older checkout reduces the reservation", testLandingSurvivesOlderCheckoutRewrite),
+  ("runtime ready explains unrelated history", testReadyRefusesUnrelatedHistory)]
 
 end Coordination.Tests

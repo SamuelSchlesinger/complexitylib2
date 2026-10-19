@@ -140,8 +140,13 @@ tree. The six project checks and the coordination tests then run once on the fin
 snapshot and the landed `main` commit. A `main` that changed a reviewed file, conflicts textually
 or moved again after the reservation, a withdrawn review, lost lease, dirty worktree, or failed
 check prevents landing, and nothing is published; overlapping work is reopened, merges `main` and
-obtains new reviews. Servers without atomic push support are rejected. Validation failures retain
-the reservation for retry; `cancel` releases it.
+obtains new reviews. Servers without atomic push support are rejected. Validation failures and
+refused merges retain the reservation for retry; `cancel` releases it. Landing verifies every
+listed epic again and requires the final tree to differ from `main` only in their files and the
+roots. Checkouts that predate batch landings can still read and update the board. Their rewrites
+keep only a reservation's first epic and drop its recorded `main`, which landing tolerates by
+publishing only onto the `main` it merged onto; they also drop the landed commit of completed
+records, which is metadata only.
 
 Sessions last four hours by default (`join --minutes N` changes this). Heartbeats renew only held,
 unexpired generations. After expiry plus a one-minute grace period, `join NAME --here --takeover`
