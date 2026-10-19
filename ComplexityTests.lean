@@ -60,6 +60,7 @@ import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
 import ComplexityTests.FineGrained
+import ComplexityTests.FineGrained.GraphProblems
 import ComplexityTests.FineGrained.Sparsification
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteFieldUnitSum
