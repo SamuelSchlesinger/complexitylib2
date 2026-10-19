@@ -49,7 +49,7 @@ open BitString Finset
 
 namespace DecisionTree
 
-variable {ι : Type*}
+variable {ι β : Type*}
 
 /-- Some assignment agrees with `a` off `S` and has exactly `m` true bits in `S`. -/
 private theorem exists_eq_off_card_filter_eq (S : Finset ι) (a : ι → Bool) {m : ℕ}
@@ -71,9 +71,9 @@ private theorem exists_eq_off_card_filter_eq (S : Finset ι) (a : ι → Bool) {
 /-- **Adversary argument for symmetric functions.** If, on the inputs agreeing with `a` off a set
 `S` of free coordinates, a tree's output depends only on the number of true free bits, through a
 profile `g` that changes between two consecutive counts `m, m + 1 ≤ #S`, then the tree has depth
-at least `#S`. -/
-theorem card_le_depth_of_eval_eq_comp_card_filter (t : DecisionTree ι Bool) (S : Finset ι)
-    (a : ι → Bool) (g : ℕ → Bool) (m : ℕ)
+at least `#S`. The output type is arbitrary. -/
+theorem card_le_depth_of_eval_eq_comp_card_filter (t : DecisionTree ι β) (S : Finset ι)
+    (a : ι → Bool) (g : ℕ → β) (m : ℕ)
     (ht : ∀ x : ι → Bool, (∀ j ∉ S, x j = a j) → t.eval x = g #(S.filter fun j => x j = true))
     (hm : m + 1 ≤ #S) (hg : g m ≠ g (m + 1)) : #S ≤ t.depth := by
   classical
