@@ -77,4 +77,232 @@ example : True := by
         encBits encBits := by polytime
   trivial
 
+/-! ### Quantitative cumulative-time, workspace and degree tests -/
+
+private theorem length_expand (s : List Bool) : (expand s).length = s.length + 1 := by
+  simp [expand]
+
+-- Forward streaming representation emits bits in forward order followed by the reversed final seed,
+-- and reversing it once recovers `PRGStretch.iterate` across zero rounds, empty seeds and
+-- multi-round executions.
+example : PRGStretch.forwardIterate expand 3 [true, false] =
+    [false, false, false, false, true] := by decide
+
+example : PRGStretch.forwardIterate expand 0 [true, false] = [false, true] := rfl
+
+example : PRGStretch.forwardIterate expand 2 [] = [false, false] := by decide
+
+example (seed : List Bool) (k : ℕ) :
+    (PRGStretch.forwardIterate expand k seed).reverse =
+      PRGStretch.iterate expand seed.length k seed :=
+  PRGStretch.reverse_forwardIterate_eq_iterate_of_forall length_expand seed k
+
+example (seed : List Bool) (k : ℕ) :
+    (PRGStretch.forwardIterate expand k seed).length = seed.length + k :=
+  PRGStretch.length_forwardIterate_of_forall length_expand seed k
+
+example (seed : List Bool) (i : ℕ) :
+    (PRGStretch.seedAt expand seed i).length = seed.length :=
+  PRGStretch.length_seedAt_of_forall length_expand seed i
+
+-- `expand` always emits `false`; `shiftIn` emits the last bit of its seed, so from
+-- `[false, false, true]` its three rounds emit `true`, `false`, `false`, and the order of the
+-- emitted bits is observable.
+private def shiftIn (seed : List Bool) : List Bool := [true] ++ seed
+
+private theorem length_shiftIn (s : List Bool) : (shiftIn s).length = s.length + 1 := by
+  simp [shiftIn]
+
+-- `forwardIterate` streams the emitted bits in generation order before the reversed final seed.
+example : PRGStretch.forwardIterate shiftIn 3 [false, false, true] =
+    [true, false, false, true, true, true] := by decide
+
+-- `stretch` retains the final seed followed by the emitted bits in reverse generation order, not in
+-- generation order.
+example : PRGStretch.stretch shiftIn (fun _ => 3) [false, false, true] =
+    [true, true, true, false, false, true] := by decide
+
+example : PRGStretch.stretch shiftIn (fun _ => 3) [false, false, true] ≠
+    [true, true, true, true, false, false] := by decide
+
+example : (PRGStretch.forwardIterate shiftIn 3 [false, false, true]).reverse =
+    PRGStretch.stretch shiftIn (fun _ => 3) [false, false, true] :=
+  PRGStretch.reverse_forwardIterate_eq_iterate_of_forall length_shiftIn _ 3
+
+private theorem expand_degree :
+    ComputableTidilyInDegree expand encBits encBits 1 1 := by
+  unfold expand
+  fun_prop (disch := first | apply le_refl | lia)
+
+private theorem shiftIn_degree :
+    ComputableTidilyInDegree shiftIn encBits encBits 1 1 := by
+  unfold shiftIn
+  fun_prop (disch := first | apply le_refl | lia)
+
+-- Quantitative cumulative-time and round-independent workspace for `forwardIterate` on a concrete
+-- length-expanding generator.
+example : ∃ (tGen : List Bool → ℕ) (csG c : ℕ),
+    ComputableTidilyInTimeAndSpace
+      (fun p : List Bool × ℕ => PRGStretch.forwardIterate expand p.2 p.1)
+      (encPair encBits encUnary) encBits
+      (fun p => c * (p.1.length + p.2 +
+        (∑ i ∈ Finset.range p.2, (tGen (PRGStretch.seedAt expand p.1 i) + p.1.length + 1)) + 1))
+      (fun p => c * (csG * (p.1.length + 1) + p.1.length + 1)) := by
+  obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := expand_degree
+  refine ⟨tGen, csG, ?_⟩
+  exact PRGStretch.computableTidilyInTimeAndSpace_forwardIterate length_expand hgen
+    (fun p i _ => by
+      simpa [PRGStretch.length_seedAt_of_forall length_expand] using
+        hcsG (PRGStretch.seedAt expand p.1 i))
+
+-- Quantitative cumulative-time and workspace (charging the `(n + k)`-bit reversal buffer) for
+-- `PRGStretch.iterate` on `(seed, count)`.
+example : ∃ (tGen : List Bool → ℕ) (csG c : ℕ),
+    ComputableTidilyInTimeAndSpace
+      (fun p : List Bool × ℕ => PRGStretch.iterate expand p.1.length p.2 p.1)
+      (encPair encBits encUnary) encBits
+      (fun p => c * (p.1.length + p.2 +
+        (∑ i ∈ Finset.range p.2, (tGen (PRGStretch.seedAt expand p.1 i) + p.1.length + 1)) + 1))
+      (fun p => c * (csG * (p.1.length + 1) + p.1.length + p.2 + 1)) := by
+  obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := expand_degree
+  refine ⟨tGen, csG, ?_⟩
+  exact PRGStretch.computableTidilyInTimeAndSpace_iterate_pair length_expand hgen
+    (fun p i _ => by
+      simpa [PRGStretch.length_seedAt_of_forall length_expand] using
+        hcsG (PRGStretch.seedAt expand p.1 i))
+
+-- Quantitative cumulative-time and workspace for `PRGStretch.stretch` with a linear round count, on
+-- the generator whose emitted bits vary.
+example : ∃ (tGen : List Bool → ℕ) (tCount sCount : ℕ → ℕ) (csG c : ℕ),
+    ComputableTidilyInTimeAndSpace (PRGStretch.stretch shiftIn (fun n => n + n + 1)) encBits encBits
+      (fun seed => c * (tCount seed.length + seed.length + (seed.length + seed.length + 1) +
+        (∑ i ∈ Finset.range (seed.length + seed.length + 1),
+          (tGen (PRGStretch.seedAt shiftIn seed i) + seed.length + 1)) + 1))
+      (fun seed => c * (sCount seed.length + csG * (seed.length + 1) + seed.length +
+        (seed.length + seed.length + 1) + 1)) := by
+  obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := shiftIn_degree
+  have hcount_deg : ComputableTidilyInDegree (fun n : ℕ => n + n + 1) encUnary encUnary 1 1 := by
+    fun_prop (disch := first | apply le_refl | lia)
+  obtain ⟨⟨tCount, sCount, _, _, hcount⟩, -⟩ := hcount_deg
+  refine ⟨tGen, tCount, sCount, csG, ?_⟩
+  exact PRGStretch.computableTidilyInTimeAndSpace_stretch length_shiftIn hgen hcount
+    (fun seed i _ => by
+      simpa [PRGStretch.length_seedAt_of_forall length_shiftIn] using
+        hcsG (PRGStretch.seedAt shiftIn seed i))
+
+-- Degree-level quantitative certificate: a linear-time generator `(dGen = 1, eGen = 1)` stretched
+-- for `n + n + 1` rounds `(dCount = 1, eCount = 1)` has time/space degree
+-- `max 1 (1 + max 1 1) = 2` and output degree `max 1 1 = 1`.
+example : ComputableTidilyInDegree
+    (PRGStretch.stretch expand (fun n => n + n + 1)) encBits encBits 2 1 := by
+  have hcount : ComputableTidilyInDegree (fun n : ℕ => n + n + 1) encUnary encUnary 1 1 := by
+    fun_prop (disch := first | apply le_refl | lia)
+  have h := PRGStretch.computableTidilyInDegree_stretch length_expand expand_degree hcount
+  fail_if_success
+    have : ComputableTidilyInDegree
+        (PRGStretch.stretch expand (fun n => n + n + 1)) encBits encBits 1 1 := h.mono
+  exact h.mono
+
+-- A linear-time generator stretched for a quadratic round count `(dCount = 2, eCount = 2)` has
+-- time/space degree `max 2 (2 + max 1 1) = 3` and output degree `max 1 2 = 2`.
+example (count : ℕ → ℕ) (hcount : ComputableTidilyInDegree count encUnary encUnary 2 2) :
+    ComputableTidilyInDegree (PRGStretch.stretch expand count) encBits encBits 3 2 := by
+  have h := PRGStretch.computableTidilyInDegree_stretch length_expand expand_degree hcount
+  fail_if_success
+    have : ComputableTidilyInDegree (PRGStretch.stretch expand count) encBits encBits 2 2 := h.mono
+  fail_if_success
+    have : ComputableTidilyInDegree (PRGStretch.stretch expand count) encBits encBits 3 1 := h.mono
+  exact h.mono
+
+-- Recover `ComputableTidilyInPolyTime` directly from the quantitative stretch theorem.
+example : ComputableTidilyInPolyTime
+    (PRGStretch.stretch expand (fun n => n * n + 1)) encBits encBits :=
+  PRGStretch.polyTime_stretch_of_length_eq length_expand
+    (by unfold expand; fun_prop) (by fun_prop)
+
+-- Quantitative captured-parameter certificate for `PRGStretch.iterate`.
+example : ∃ (tGen : Bool × List Bool → ℕ) (csG c : ℕ),
+    ComputableTidilyInTimeAndSpace
+      (fun x : (Bool × List Bool) × ℕ =>
+        PRGStretch.iterate (fun s => s ++ [x.1.1]) x.1.2.length x.2 x.1.2)
+      (encPair (encPair encBool encBits) encUnary) encBits
+      (fun x => c * ((encBool x.1.1).length + x.1.2.length + x.2 +
+        (∑ i ∈ Finset.range x.2,
+          (tGen (x.1.1, PRGStretch.seedAt (fun s => s ++ [x.1.1]) x.1.2 i) +
+            (encBool x.1.1).length + x.1.2.length + 1)) + 1))
+      (fun x => c * (csG * ((encPair encBool encBits x.1).length + 1) +
+        (encBool x.1.1).length + x.1.2.length + x.2 + 1)) := by
+  have hgen_deg : ComputableTidilyInDegree
+      (fun p : Bool × List Bool => p.2 ++ [p.1]) (encPair encBool encBits) encBits 1 1 := by
+    have hsingleton : ComputableTidilyInDegree
+        (fun p : Bool × List Bool => [p.1]) (encPair encBool encBits) encBits 1 0 :=
+      (ComputableTidilyInDegree.of_finite (fun b : Bool => [b])).comp
+        (ComputableTidilyInDegree.fst encBool encBits) |>.mono
+    exact (ComputableTidilyInDegree.snd encBool encBits).append hsingleton (fun _ => rfl) |>.mono
+  obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := hgen_deg
+  refine ⟨tGen, csG, ?_⟩
+  refine PRGStretch.computableTidilyInTimeAndSpace_iterate_captured
+    (generator := fun b s => s ++ [b]) (fun _ _ => by simp) hgen (fun x i _ => ?_)
+  have hlen_seed : (PRGStretch.seedAt (fun s => s ++ [x.1.1]) x.1.2 i).length = x.1.2.length :=
+    PRGStretch.length_seedAt_of_forall (fun _ => by simp) x.1.2 i
+  have h := hcsG (x.1.1, PRGStretch.seedAt (fun s => s ++ [x.1.1]) x.1.2 i)
+  simp only [length_encPair, encBits_apply, hlen_seed, pow_one] at h ⊢
+  exact h
+
+/--
+info: 'Cslib.Crypto.PRGStretch.reverse_forwardIterate_eq_iterate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.reverse_forwardIterate_eq_iterate
+
+/--
+info: 'Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_forwardIterate' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_forwardIterate
+
+/--
+info: 'Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_iterate_pair' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_iterate_pair
+
+/--
+info: 'Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_stretch' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_stretch
+
+/--
+info: 'Cslib.Crypto.PRGStretch.computableTidilyInDegree_stretch' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.computableTidilyInDegree_stretch
+
+/--
+info: 'Cslib.Crypto.PRGStretch.polyTime_stretch_of_length_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.polyTime_stretch_of_length_eq
+
+/--
+info: 'Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_iterate_captured' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_iterate_captured
+
+/--
+info: 'Cslib.Crypto.PRGStretch.pseudorandomGenerator' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.pseudorandomGenerator
+
 end ComplexityTests.PRGStretch
