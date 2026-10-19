@@ -14,15 +14,16 @@ public import Complexity.Foundations.Data.BitString.Weight
 # Query complexity measures of threshold functions
 
 The threshold function `Th^n_j` says that at least `j` of `n` bits are true. A coordinate `i` is
-sensitive for it at `x` exactly when `x` has weight `j` and `x i` is true, or weight `j - 1` and
-`x i` is false (`BitString.isSensitiveCoord_threshold_iff`). So the sensitivity is `j` at an
-input of weight `j` and `n + 1 - j` at an input of weight `j - 1`. Conversely `j` true bits
+sensitive for it at `x` exactly when `x` has weight `j` and `x i` is true, or (for `j ≥ 1`) weight
+`j - 1` and `x i` is false (`BitString.isSensitiveCoord_threshold_iff`). So the sensitivity is `j`
+at an input of weight `j` and `n + 1 - j` at an input of weight `j - 1`. Conversely `j` true bits
 certify the value `1` and `n + 1 - j` false bits certify the value `0`
 (`QueryComplexity.certificateComplexityAt_threshold_le`). With `s(f) ≤ bs(f) ≤ C(f)` all three
 measures agree: for `1 ≤ j ≤ n`,
 `s(Th^n_j) = bs(Th^n_j) = C(Th^n_j) = max(j, n + 1 - j)`.
-In particular majority has sensitivity `⌊n/2⌋ + 1`. For the disjunction `OR_n = Th^n_1` a
-single true bit certifies the value `1`, while certifying the value `0` takes all `n` bits.
+In particular majority has sensitivity `⌊n/2⌋ + 1` for `n ≥ 1`. The disjunction `OR_n = Th^n_1`
+is sensitive to every bit at the all-false input, so `bs(OR_n) = n`. A single true bit certifies
+its value `1`, while certifying the value `0` takes all `n` bits.
 The measures are those of [BuhrmanDeWolf2002].
 
 ## Main results
@@ -32,6 +33,7 @@ The measures are those of [BuhrmanDeWolf2002].
   `Cslib.QueryComplexity.certificateComplexity_threshold`: `s`, `bs` and `C` of `Th^n_j` are
   `max(j, n + 1 - j)` for `1 ≤ j ≤ n`.
 * `Cslib.BitString.sensitivity_majority`: `s(MAJ_n) = ⌊n/2⌋ + 1` for `n ≥ 1`.
+* `Cslib.QueryComplexity.blockSensitivity_threshold_one_right`: `bs(OR_n) = n`.
 * `Cslib.QueryComplexity.certificateComplexity_threshold_one_right`: `C(OR_n) = n`.
 * `Cslib.QueryComplexity.certificateComplexityFor_threshold_one_right_true`,
   `Cslib.QueryComplexity.certificateComplexityFor_threshold_one_right_false`: `C₁(OR_n) = 1` for
@@ -54,7 +56,7 @@ variable {n j : ℕ}
 namespace BitString
 
 /-- A coordinate is sensitive for `Th^n_j` exactly when it is a true bit of an input of weight
-`j`, or a false bit of an input of weight `j - 1`. -/
+`j`, or (for `j ≥ 1`) a false bit of an input of weight `j - 1`. -/
 theorem isSensitiveCoord_threshold_iff (x : BitString n) (i : Fin n) :
     IsSensitiveCoord (threshold n j) x i ↔
       x i = true ∧ weight x = j ∨ x i = false ∧ weight x + 1 = j := by
@@ -79,7 +81,8 @@ theorem sensitivityAt_threshold_of_weight_eq {x : BitString n} (hx : weight x = 
     simp [isSensitiveCoord_threshold_iff, hx]
   rw [sensitivityAt, this, ← weight, hx]
 
-/-- At an input of weight `j - 1`, the sensitive coordinates of `Th^n_j` are its false bits. -/
+/-- At an input of weight `j - 1`, for `j ≥ 1`, the sensitive coordinates of `Th^n_j` are its
+false bits. -/
 theorem sensitivityAt_threshold_of_weight_add_one_eq {x : BitString n} (hx : weight x + 1 = j) :
     sensitivityAt (threshold n j) x = n + 1 - j := by
   have : sensitiveCoords (threshold n j) x = univ.filter fun i => x i = false := by
@@ -171,15 +174,22 @@ theorem certificateComplexity_threshold (hj : 1 ≤ j) (hjn : j ≤ n) :
 
 /-! ### Disjunction -/
 
+/-- The disjunction of `n` bits is sensitive to every bit at the all-false input. -/
+theorem sensitivityAt_threshold_one_right :
+    sensitivityAt (threshold n 1) (fun _ => false) = n := by
+  rw [sensitivityAt_threshold_of_weight_add_one_eq (by simp [weight]), Nat.add_sub_cancel]
+
+/-- The disjunction of `n` bits has block sensitivity `n`. -/
+theorem blockSensitivity_threshold_one_right : blockSensitivity (threshold n 1) = n :=
+  le_antisymm (blockSensitivity_le_card _) (sensitivityAt_threshold_one_right.symm.trans_le
+    ((sensitivityAt_le_sensitivity _ _).trans (sensitivity_le_blockSensitivity _)))
+
 /-- Certifying the value `0` of the disjunction at the all-false input takes every bit. -/
 theorem certificateComplexityAt_threshold_one_right :
-    certificateComplexityAt (threshold n 1) (fun _ => false) = n := by
-  refine le_antisymm (certificateComplexityAt_le_card _ _) ?_
-  have hs := sensitivityAt_threshold_of_weight_add_one_eq (n := n) (j := 1)
-    (x := fun _ => false) (by simp [weight])
-  have := (sensitivityAt_le_blockSensitivityAt (threshold n 1) fun _ => false).trans
-    (blockSensitivityAt_le_certificateComplexityAt _ _)
-  omega
+    certificateComplexityAt (threshold n 1) (fun _ => false) = n :=
+  le_antisymm (certificateComplexityAt_le_card _ _) (sensitivityAt_threshold_one_right.symm.trans_le
+    ((sensitivityAt_le_blockSensitivityAt _ _).trans
+      (blockSensitivityAt_le_certificateComplexityAt _ _)))
 
 /-- **Certificate complexity of disjunction**: `C(OR_n) = n`. -/
 theorem certificateComplexity_threshold_one_right : certificateComplexity (threshold n 1) = n :=

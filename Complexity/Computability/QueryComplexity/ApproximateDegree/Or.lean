@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.NisanSzegedy
+public import Complexity.Computability.QueryComplexity.Threshold
 public import Mathlib.RingTheory.Polynomial.Chebyshev
 import Complexity.Computability.QueryComplexity.Symmetrization
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.RootsExtrema
@@ -79,21 +80,6 @@ namespace Cslib.QueryComplexity
 open BitString Polynomial
 
 variable {n : ℕ}
-
-/-- The disjunction of `n` bits is sensitive to every bit at the all-false input. -/
-theorem sensitivityAt_threshold_one_right :
-    sensitivityAt (threshold n 1) (fun _ => false) = n := by
-  have h : sensitiveCoords (threshold n 1) (fun _ => false) = Finset.univ :=
-    Finset.eq_univ_of_forall fun i => mem_sensitiveCoords.2 (by
-      rw [IsSensitiveCoord, threshold_one_right, threshold_one_right]
-      simp only [Bool.not_false, ne_eq, decide_eq_decide]
-      exact fun h => absurd (h.1 ⟨i, by simp⟩) (by simp))
-  rw [sensitivityAt, h, Finset.card_univ, Fintype.card_fin]
-
-/-- The disjunction of `n` bits has block sensitivity `n`. -/
-theorem blockSensitivity_threshold_one_right : blockSensitivity (threshold n 1) = n :=
-  le_antisymm (blockSensitivity_le_card _) (sensitivityAt_threshold_one_right.symm.trans_le
-    ((sensitivityAt_le_sensitivity _ _).trans (sensitivity_le_blockSensitivity _)))
 
 /-- **The approximate degree of disjunction is at least `√(n / 6)`**: `n ≤ 6 adeg(OR_n)²`. -/
 theorem card_le_six_mul_approxDegree_threshold_one_right_sq :
