@@ -51,18 +51,33 @@ forms are `Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P` and
 `Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH`; the theorem keeps `P ≠ NP` as an explicit
 hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`).
 
+## Main definitions
+
+* `Cslib.Complexity.Ladner.padBounded`: the padding reduction from `SAT` to `SATH` along a bounded
+  exponent.
+* `Cslib.Complexity.Ladner.shrink`, `Cslib.Complexity.Ladner.selfReduce`: the self-reduction of
+  `SAT` along a reduction to `SATH`.
+* `Cslib.Complexity.Ladner.smallSAT`: the finite table of the short satisfiable formulas.
+
 ## Main results
 
 * `Cslib.Complexity.PolyTimeReducible.mem_P`, `Cslib.Complexity.P_subset_NP`: `P` is closed under
   polynomial-time reductions and contained in `NP`.
+* `Cslib.Complexity.Ladner.P_eq_NP_of_SAT_mem_P`: if `SAT ∈ P`, then `P = NP` for every encoding.
 * `Cslib.Complexity.Ladner.exists_H_le_of_mem_P`: if `SATH ∈ P`, `H` is bounded.
-* `Cslib.Complexity.Ladner.SATH_mem_P_of_frequently_H_eq`: if `H` takes a value infinitely often,
-  `SATH ∈ P`.
-* `Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P`: if `SATH ∈ P`, then `SAT ∈ P`.
-* `Cslib.Complexity.Ladner.SAT_mem_P_of_NPHard_SATH`: if `SATH` is `NP`-hard, then `SAT ∈ P`.
-* `Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P`,
-  `Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH`: the unconditional forms.
-* `Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`: **Ladner's theorem**.
+* `Cslib.Complexity.Ladner.reducible_of_H_le`: if `H` is bounded, `SAT` reduces to `SATH`.
+* `Cslib.Complexity.Ladner.SATH_mem_P_of_frequently_H_eq`,
+  `Cslib.Complexity.Ladner.tendsto_H_of_not_mem_P`: if `H` takes a value infinitely often,
+  `SATH ∈ P`; so if `SATH ∉ P`, `H` tends to infinity.
+* `Cslib.Complexity.Ladner.SAT_mem_P_of_reducible_of_tendsto`: if `SAT` reduces to `SATH` and `H`
+  tends to infinity, then `SAT ∈ P`.
+* Unconditionally, `SATH` is in `NP` (`Cslib.Complexity.Ladner.SATH_mem_NP`), in `P` only if `SAT`
+  is (`Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P`), `NP`-hard only if `SAT ∈ P`
+  (`Cslib.Complexity.Ladner.SAT_mem_P_of_NPHard_SATH`), and in `P` or `NP`-complete only if
+  `P = NP` (`Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P`,
+  `Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH`).
+* `Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`: **Ladner's theorem**, under the
+  hypothesis `P ≠ NP`.
 
 ## References
 

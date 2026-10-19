@@ -26,13 +26,14 @@ exponent `Cslib.Complexity.Ladner.H` defined here.
 `H n` is the least index `i < log₂ (log₂ n)` of a machine agreeing with the language itself on the
 words with indices below `n`, or `log₂ (log₂ n)` if there is none. Words are indexed by `ℕ`
 (`Cslib.Complexity.Ladner.word`); the words with indices below `n` have length at most `log₂ n` and
-include every word of length less than `log₂ (n + 1) - 1`. The machine with index `i` is the one
-described at the start of the `i`-th word (`Turing.MultiTapeTM.Universal.decodeDesc`), run by the
-universal function, so every machine has arbitrarily large indices. On a word of length `l` it is
-allowed `(2 * l + 2) ^ i` steps, a clock exceeding every polynomial time bound at large enough
-indices, but never more than `n`. Arora and Barak allow `i * l ^ i` steps and estimate the cost;
-capping the clock at `n` keeps the computation of `H n` polynomial in `n` without any asymptotic
-estimate, and for every fixed machine and word the cap stops mattering once `n` is large.
+include every word whose length `l` satisfies `2 ^ (l + 1) ≤ n + 1`. The machine with index `i`
+is the one described at the start of the `i`-th word (`Turing.MultiTapeTM.Universal.decodeDesc`),
+run by the universal function, so every machine has arbitrarily large indices. On a word of
+length `l` it is allowed `(2 * l + 2) ^ i` steps, a clock exceeding every polynomial time bound at
+large enough indices, but never more than `n`. Arora and Barak allow `i * l ^ i` steps and estimate
+the cost; capping the clock at `n` keeps the computation of `H n` polynomial in `n` without any
+asymptotic estimate, and for every fixed machine and word the cap stops mattering once `n` is
+large.
 
 Whether a word with index below `n` belongs to the language depends only on the values `H m` with
 `m < n`. `H` is therefore defined by recursion on tables of its earlier values

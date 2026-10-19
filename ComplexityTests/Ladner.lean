@@ -9,8 +9,8 @@ import Complexity.Computability.Complexity.Classes.Ladner
 /-! Words by index, padding and its inverse on boundary words, capped powers, decoding formulas,
 short satisfiability by certificates, concrete members and non-members of Ladner's language, a
 concrete machine agreeing and disagreeing with it, the padding reduction and the rounds of the
-self-reduction on concrete formulas, and the axioms of the polynomial-time certificates, the two
-holes and Ladner's theorem. -/
+self-reduction on concrete formulas, the unconditional form, and the axioms of the polynomial-time
+certificates, the two holes and Ladner's theorem. -/
 
 namespace ComplexityTests.Ladner
 
@@ -165,6 +165,12 @@ example : encCNF [] ∈ smallSAT 1 :=
 example : encCNF falseCNF ∉ smallSAT 10 := fun h =>
   falseCNF_not_mem_SAT ((mem_smallSAT (by decide)).mp h)
 
+/-- The unconditional form: Ladner's language is in `NP`, in `P` only if `SAT` is, and
+`NP`-complete only if `P = NP`. -/
+example : SATH ∈ NP encBits ∧ (SATH ∈ P encBits → SAT ∈ P encCNF) ∧
+    (NPComplete encBits SATH → P encBits = NP encBits) :=
+  ⟨SATH_mem_NP, SAT_mem_P_of_SATH_mem_P, fun h => P_eq_NP_of_NPComplete_SATH h encBits⟩
+
 /-- Ladner's theorem for the canonical encoding of languages. -/
 example (h : P encBits ≠ NP encBits) :
     ∃ L : Set (List Bool), L ∈ NP encBits ∧ L ∉ P encBits ∧ ¬NPComplete encBits L :=
@@ -199,6 +205,20 @@ info: 'Cslib.Complexity.Ladner.exists_H_le_of_mem_P' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.Ladner.exists_H_le_of_mem_P
+
+/--
+info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P
+
+/--
+info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_NPHard_SATH' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_NPHard_SATH
 
 /--
 info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_reducible_of_tendsto' depends on axioms:
