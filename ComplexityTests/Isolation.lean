@@ -89,6 +89,22 @@ example (m : ℕ) (hm : randomBits [[(0, true)]] ≤ m) :
 
 example : randomBits [[(0, true)]] = 8 := by decide
 
+open Classical in
+/-- The same bound as a density: at least `3 / 128`. -/
+example (m : ℕ) (hm : randomBits [[(0, true)]] ≤ m) :
+    3 / (32 * (1 + 3)) ≤ Finset.dens (Finset.univ.filter fun r : Fin m → Bool =>
+      reduce ([[(0, true)]], List.ofFn r) ∈ USAT) :=
+  three_div_le_dens_reduce_mem_USAT (φ := [[(0, true)]]) ⟨fun _ => true, rfl⟩ hm
+
+/-- The hash family is the affine hash over `Bool`. -/
+example (p : (Fin 2 → BitString 3) × BitString 2) (x : BitString 3) :
+    hash p x = affineHash (m := Fin 2) (n := Fin 3) (F := Bool) p x :=
+  hash_eq_affineHash p x
+
+/-- Words of three bits represent `5`. -/
+example : ∃ u : Fin 3 → Bool, BitString.binaryValue (List.ofFn u) = 5 :=
+  BitString.exists_binaryValue_eq (by norm_num)
+
 /-- An unsatisfiable formula stays unsatisfiable. -/
 example (r : List Bool) : reduce ([[(0, true)], [(0, false)]], r) ∈ UNSAT := by
   refine reduce_mem_UNSAT (fun ⟨σ, hσ⟩ => ?_) r
@@ -198,6 +214,27 @@ info: 'Cslib.Probability.dens_minWeightSets_card_ne_one_le' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.dens_minWeightSets_card_ne_one_le
+
+/--
+info: 'Cslib.Probability.one_sub_le_dens_minWeightSets_card_eq_one' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.one_sub_le_dens_minWeightSets_card_eq_one
+
+/--
+info: 'Cslib.Complexity.RPWithPromiseOracle_subset_RPWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.RPWithPromiseOracle_subset_RPWithOracle
+
+/--
+info: 'Cslib.Complexity.ValiantVazirani.three_div_le_dens_reduce_mem_USAT' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.ValiantVazirani.three_div_le_dens_reduce_mem_USAT
 
 /--
 info: 'Cslib.Probability.half_le_dens_minWeightSets_card_eq_one' depends on axioms:

@@ -15,16 +15,18 @@ public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Probability.BitString.LinearHash
-public import Complexity.Probability.PairwiseIndependentHash
+public import Complexity.Probability.PairwiseIndependentHash.Affine
+public import Complexity.Probability.UniformNat
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Sum
 import Complexity.Computability.Probabilistic.Oracle.Composition
+import Complexity.Foundations.Data.Finset.Sampling
 import Complexity.Logics.Propositional.CNF.PolyTime
 import Complexity.Probability.PairwiseIndependentHash.Shift
+import Mathlib.Data.Fin.Tuple.Take
 import Mathlib.Data.List.GetD
-import Mathlib.Data.Nat.Size
 
 /-!
 # The Valiant–Vazirani theorem
@@ -50,15 +52,17 @@ injective `Cslib.Complexity.splitVarToNat`.
 * On a satisfiable formula, for every number `m ≥ ValiantVazirani.randomBits φ` of random bits,
   where `randomBits φ = hashBits φ + (n + 2) (n + 1) ≤ (n + 2) ^ 2`, at least a
   `3 / (32 (n + 3))` fraction of the random words of length `m` make the reduced formula uniquely
-  satisfiable (`ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT`). The number `n` counts
-  occurrences: it is at least the number of variables and at most the length of the encoded
-  formula.
+  satisfiable (`ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT`,
+  `ValiantVazirani.three_div_le_dens_reduce_mem_USAT`). The number `n` counts occurrences: it is
+  at least the number of variables and at most the length of the encoded formula, so the bound is
+  `Ω(1 / |φ|)`, weaker than the textbook bound `1 / (8 v)` in the number `v` of variables.
 
 For the last point, the solutions of `φ` give a set `S` of bit strings of length `n`, of some size
 `s ≥ 1`. With `k = goodRows φ = ⌊log₂ s⌋ + 2` equations, `2 ^ k` lies between `2 s` and `4 s`,
 so by the lemma of Valiant and Vazirani for the pairwise independent affine hash family
-(`ValiantVazirani.isPairwiseIndependentHash_hash`,
-`Cslib.Probability.IsPairwiseIndependentHash.three_sixteenths_le_dens_filter_card_filter_eq_one`)
+(`ValiantVazirani.isPairwiseIndependentHash_hash`; the family is `Cslib.Probability.affineHash`
+over `Bool`, `ValiantVazirani.hash_eq_affineHash`),
+`Cslib.Probability.IsPairwiseIndependentHash.three_sixteenths_le_dens_filter_card_filter_eq_one`
 exactly one solution satisfies the equations with probability at least `3 / 16`; the reduced
 formula is then uniquely satisfiable (`ValiantVazirani.reduceWith_mem_USAT`).
 
@@ -74,9 +78,11 @@ the Valiant–Vazirani reduction on `11 (N + 3)` independent blocks of random bi
 bounds the number of variable occurrences, asks the oracle about each reduced formula
 (`queryAny`), and accepts when it answers yes once. On a no-instance every reduced formula is
 unsatisfiable, so the oracle answers no; on a yes-instance some reduced formula is uniquely
-satisfiable except with probability at most `(1 - 3 / (32 (N + 3))) ^ (11 (N + 3)) < 1 / 2`
-(`ValiantVazirani.two_pow_le_two_mul_card_exists_row`). In particular `NP ⊆ RP^USAT`
-(`NP_subset_RPWithOracle_USAT`).
+satisfiable except with probability at most `(1 - 3 / (32 (N + 3))) ^ (11 (N + 3)) ≤ 1 / 2`
+(`ValiantVazirani.two_pow_le_two_mul_card_exists_row`, from the repeated-trials bound
+`Fintype.half_le_dens_filter_exists_apply_mem`). In particular `NP ⊆ RP^USAT`
+(`NP_subset_RPWithOracle_USAT`); this form is weak, since `USAT` as a language is `coNP`-hard,
+and the promise version carries the Valiant–Vazirani content.
 
 ## Main definitions
 
@@ -91,8 +97,9 @@ satisfiable except with probability at most `(1 - 3 / (32 (N + 3))) ^ (11 (N + 3
 
 * `Cslib.Complexity.ValiantVazirani.computableTidilyInPolyTime_reduce`: polynomial time.
 * `Cslib.Complexity.ValiantVazirani.reduce_mem_UNSAT`: soundness.
-* `Cslib.Complexity.ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT`: success
-  probability `Ω(1 / n)`.
+* `Cslib.Complexity.ValiantVazirani.three_mul_two_pow_le_card_reduce_mem_USAT`,
+  `Cslib.Complexity.ValiantVazirani.three_div_le_dens_reduce_mem_USAT`: success probability
+  `Ω(1 / n)`.
 * `Cslib.Complexity.computableInPolyTimeWithOracle_any_mem`: asking a list of words.
 * `Cslib.Complexity.NP_subset_RPWithPromiseOracle_PromiseUSAT`: `NP ⊆ RP^PromiseUSAT`.
 * `Cslib.Complexity.NP_subset_RPWithOracle_USAT`: `NP ⊆ RP^USAT`.
@@ -185,37 +192,25 @@ theorem computableTidilyInPolyTime_hashCNF :
   unfold hashCNF
   fun_prop
 
-private theorem foldl_binary_lt (word : List Bool) (acc : ℕ) :
-    word.foldl (fun value bit => 2 * value + bit.toNat) acc < (acc + 1) * 2 ^ word.length := by
-  induction word generalizing acc with
-  | nil => simp
-  | cons bit word ih =>
-    rw [List.foldl_cons, List.length_cons, pow_succ]
-    refine (ih _).trans_le ?_
-    have := Bool.toNat_le bit
-    nlinarith [Nat.one_le_two_pow (n := word.length)]
+/-- The selector ranges over the dyadic range of `φ.vars.length + 2`: the least power of two
+above it. -/
+theorem two_pow_hashBits (φ : CNF ℕ) :
+    2 ^ hashBits φ = Probability.dyadicSize (φ.vars.length + 2) :=
+  rfl
 
-/-- A binary word of length `n` has value below `2 ^ n`. -/
-theorem binaryValue_lt_two_pow (word : List Bool) :
-    BitString.binaryValue word < 2 ^ word.length := by
-  simpa [BitString.binaryValue] using foldl_binary_lt word 0
-
-/-- `2 ^ hashBits φ` is the least power of two above `φ.vars.length + 2`, at most twice
-`φ.vars.length + 3`. -/
-theorem two_pow_hashBits_le (φ : CNF ℕ) : 2 ^ hashBits φ ≤ 2 * (φ.vars.length + 3) := by
-  have := Nat.pow_log_le_self 2 (x := φ.vars.length + 2) (by omega)
-  rw [hashBits, pow_succ]
-  omega
+/-- `2 ^ hashBits φ` is at most twice `φ.vars.length + 3`. -/
+theorem two_pow_hashBits_le (φ : CNF ℕ) : 2 ^ hashBits φ ≤ 2 * (φ.vars.length + 3) :=
+  (two_pow_hashBits φ).trans_le (Probability.dyadicSize_le _)
 
 /-- Every number of equations up to `φ.vars.length + 2` can be selected. -/
 theorem lt_two_pow_hashBits (φ : CNF ℕ) : φ.vars.length + 2 < 2 ^ hashBits φ :=
-  Nat.lt_pow_succ_log_self (by decide) _
+  (two_pow_hashBits φ).symm ▸ Probability.lt_dyadicSize _
 
 private theorem binaryValue_take_hashBits (φ : CNF ℕ) (r : List Bool) :
     BitString.binaryValue (r.take (hashBits φ)) =
       BitString.boundedBinaryValue (2 * φ.vars.length + 5) (r.take (hashBits φ)) := by
   rw [BitString.boundedBinaryValue_eq, Nat.min_eq_right]
-  have h1 := binaryValue_lt_two_pow (r.take (hashBits φ))
+  have h1 := BitString.binaryValue_lt_two_pow (r.take (hashBits φ))
   have h2 : 2 ^ (r.take (hashBits φ)).length ≤ 2 ^ hashBits φ :=
     Nat.pow_le_pow_right (by norm_num) (by simp)
   have h3 := two_pow_hashBits_le φ
@@ -321,9 +316,18 @@ theorem eq_add_sum_of_step {z f : ℕ → Bool} {c : Bool} {n : ℕ} (h0 : z 0 =
     rfl
 
 /-- The affine hash `x ↦ A x + b` of bit strings, with seed a matrix `A` of `k` rows and an
-offset `b`. -/
+offset `b`: `Cslib.Probability.affineHash` over `Bool` (`hash_eq_affineHash`), with the rows as
+bit strings. -/
 def hash {k n : ℕ} (p : (Fin k → BitString n) × BitString k) (x : BitString n) : BitString k :=
   BitString.LinearHash.hash p.1 x + p.2
+
+/-- The hash is the affine hash over `Bool`. Its pairwise independence
+(`Cslib.Probability.isPairwiseIndependentHash_affineHash`) is proved over fields, and `Bool` is
+not one, so `isPairwiseIndependentHash_hash` proves it separately. -/
+theorem hash_eq_affineHash {k n : ℕ} (p : (Fin k → BitString n) × BitString k)
+    (x : BitString n) :
+    hash p x = Probability.affineHash (m := Fin k) (n := Fin n) (F := Bool) p x :=
+  rfl
 
 /-- **The affine hash family of bit strings is pairwise independent**: for distinct inputs, the
 rows reach every difference of hash values. -/
@@ -338,7 +342,11 @@ theorem isPairwiseIndependentHash_hash (k n : ℕ) :
   refine ⟨fun i => Pi.single j (c i), funext fun i => ?_⟩
   change (Pi.single j (c i) ⬝ᵥ x₁) - (Pi.single j (c i) ⬝ᵥ x₂) = c i
   rw [single_dotProduct, single_dotProduct]
-  cases h₁ : x₁ j <;> cases h₂ : x₂ j <;> cases c i <;> simp_all <;> rfl
+  generalize x₁ j = a at hj ⊢
+  generalize x₂ j = b at hj ⊢
+  generalize c i = d
+  revert a b d
+  decide
 
 /-- The variables `vars` read off an assignment of the original variables. -/
 def point (vars : List ℕ) (σ : ℕ → Bool) : BitString vars.length := fun j => σ vars[j]
@@ -615,7 +623,7 @@ theorem three_mul_two_pow_le_card_isolates {φ : CNF ℕ} (hφ : φ.Satisfiable)
 /-- A prefix of a word given by its bits. -/
 theorem take_ofFn {m a : ℕ} (h : a ≤ m) (r : Fin m → Bool) :
     (List.ofFn r).take a = List.ofFn fun i : Fin a => r (Fin.castLE h i) :=
-  List.ext_getElem (by simp [h]) fun i _ _ => by simp
+  (Fin.ofFn_take_eq_take_ofFn h r).symm
 
 /-- A suffix of a word given by its bits. -/
 theorem drop_ofFn {m a : ℕ} (h : a ≤ m) (r : Fin m → Bool) :
@@ -706,26 +714,6 @@ theorem card_filter_seed {k width : ℕ}
   · simp only
     rw [matrix_ofFn_append, offset_ofFn_append, Equiv.apply_symm_apply]
 
-private theorem foldl_replicate_false (n : ℕ) :
-    (List.replicate n false).foldl (fun value bit => 2 * value + bit.toNat) 0 = 0 := by
-  induction n with
-  | zero => rfl
-  | succ n ih => rw [List.replicate_succ', List.foldl_append, ih]; rfl
-
-/-- Every number below `2 ^ t` is the binary value of some word of `t` bits. -/
-theorem exists_binaryValue_eq {t k : ℕ} (hk : k < 2 ^ t) :
-    ∃ u : Fin t → Bool, BitString.binaryValue (List.ofFn u) = k := by
-  have hlen : k.bits.length ≤ t := by
-    rw [Nat.size_eq_bits_len]
-    exact Nat.size_le.2 hk
-  set w := List.replicate (t - k.bits.length) false ++ k.bits.reverse with hw
-  have hwlen : w.length = t := by simp [hw]; omega
-  refine ⟨fun i => w[i.val]'(by omega), ?_⟩
-  rw [show (List.ofFn fun i : Fin t => w[i.val]'(by omega)) = w from
-    List.ext_getElem (by simp [hwlen]) fun i _ _ => by simp]
-  rw [hw, BitString.binaryValue, List.foldl_append, foldl_replicate_false,
-    ← BitString.binaryValue, BitString.binaryValue_reverse_bits]
-
 open Classical in
 /-- The random words of length `m` for which the reduction outputs a uniquely satisfiable formula
 are at least `3 / (16 * 2 ^ hashBits φ)` of all words, once `m` covers the selector bits and
@@ -755,7 +743,7 @@ theorem three_mul_two_pow_le_card {φ : CNF ℕ} (hφ : φ.Satisfiable) {m : ℕ
   simp only [and_true, Finset.filter_true, Finset.card_univ, Fintype.card_fun,
     Fintype.card_bool, Fintype.card_fin, matrix_take, offset_take] at hrest
   rw [card_filter_seed (fun p => Isolates φ p)] at hrest
-  obtain ⟨u, hu⟩ := exists_binaryValue_eq (goodRows_lt_two_pow_hashBits φ)
+  obtain ⟨u, hu⟩ := BitString.exists_binaryValue_eq (goodRows_lt_two_pow_hashBits φ)
   have hone : 1 ≤ (Finset.univ.filter fun u : Fin t → Bool =>
       BitString.binaryValue (List.ofFn u) = k).card :=
     Finset.card_pos.2 ⟨u, by simpa using hu⟩
@@ -798,7 +786,9 @@ open Classical in
 /-- **The Valiant–Vazirani reduction succeeds with probability `Ω(1 / n)`.** For a satisfiable
 formula `φ` with `n = φ.vars.length` variable occurrences and any number `m ≥ randomBits φ` of
 random bits, the reduced formula is uniquely satisfiable for at least a `3 / (32 (n + 3))`
-fraction of the random words of length `m`. -/
+fraction of the random words of length `m`. Since `n` counts occurrences, not variables, this is
+`Ω(1 / |φ|)` in the length of the formula, weaker than the textbook bound `1 / (8 v)` in the
+number `v` of variables. -/
 theorem three_mul_two_pow_le_card_reduce_mem_USAT {φ : CNF ℕ} (hφ : φ ∈ SAT) {m : ℕ}
     (hm : randomBits φ ≤ m) :
     3 * 2 ^ m ≤ 32 * (φ.vars.length + 3) *
@@ -812,6 +802,20 @@ theorem three_mul_two_pow_le_card_reduce_mem_USAT {φ : CNF ℕ} (hφ : φ ∈ S
   refine h.trans (Nat.mul_le_mul_right _ ?_)
   have := two_pow_hashBits_le φ
   omega
+
+open Classical in
+/-- **The Valiant–Vazirani success probability as a density**: for a satisfiable formula `φ` with
+`n = φ.vars.length` variable occurrences and `m ≥ randomBits φ`, a uniformly random word of
+length `m` makes the reduced formula uniquely satisfiable with probability at least
+`3 / (32 (n + 3))`. -/
+theorem three_div_le_dens_reduce_mem_USAT {φ : CNF ℕ} (hφ : φ ∈ SAT) {m : ℕ}
+    (hm : randomBits φ ≤ m) :
+    3 / (32 * (φ.vars.length + 3)) ≤ Finset.dens
+      (Finset.univ.filter fun r : Fin m → Bool => reduce (φ, List.ofFn r) ∈ USAT) := by
+  have h := three_mul_two_pow_le_card_reduce_mem_USAT hφ hm
+  rw [Finset.dens, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin,
+    div_le_div_iff₀ (by positivity) (by positivity), mul_comm (Finset.card _ : ℚ≥0)]
+  exact_mod_cast h
 
 end Cslib.Complexity.ValiantVazirani
 
@@ -955,7 +959,7 @@ theorem interpret_queryAny (A : Set (List Bool)) (words : List (List Bool)) :
         ([], acc || words.any fun word => decide (word ∈ A)) := by
     intro words
     induction words with
-    | nil => intro acc; simp; rfl
+    | nil => intro acc; simp only [List.length_nil, List.any_nil, Bool.or_false]; rfl
     | cons word words ih =>
       intro acc
       rw [List.length_cons, OracleComp.iterate_succ_bind, OracleComp.interpret_bind]
@@ -967,7 +971,7 @@ theorem interpret_queryAny (A : Set (List Bool)) (words : List (List Bool)) :
       simp [Bool.or_assoc]
   unfold queryAny
   rw [OracleComp.interpret_map, key]
-  simp
+  simp only [Bool.false_or]
   rfl
 
 open Classical in
@@ -981,82 +985,39 @@ theorem computableInPolyTimeWithOracle_any_mem (A : Set (List Bool)) :
 
 namespace ValiantVazirani
 
-private theorem one_sub_pow_le {y : ℚ} (hy0 : 0 ≤ y) (hy1 : y ≤ 1) (n : ℕ) :
-    (1 - y) ^ n * (1 + n * y) ≤ 1 := by
-  calc (1 - y) ^ n * (1 + n * y) ≤ (1 - y) ^ n * (1 + y) ^ n :=
-        mul_le_mul_of_nonneg_left (one_add_mul_le_pow (by linarith) n)
-          (pow_nonneg (by linarith) n)
-    _ = (1 - y ^ 2) ^ n := by rw [← mul_pow]; ring
-    _ ≤ 1 := pow_le_one₀ (by nlinarith) (by nlinarith)
-
 open Classical in
 /-- **Amplification by independent rows.** If at least a `3 / (32 M)` fraction of the words of
 length `W` are good, then among the words of `11 M` rows of `W` bits, at least half have a good
-row. -/
+row: the repeated-trials bound `Fintype.half_le_dens_filter_exists_apply_mem`, transferred along
+the block decomposition. -/
 theorem two_pow_le_two_mul_card_exists_row {M W : ℕ} (hM : 0 < M) (good : List Bool → Prop)
     [DecidablePred good]
     (hgood : 3 * 2 ^ W ≤
       32 * M * (Finset.univ.filter fun b : Fin W → Bool => good (List.ofFn b)).card) :
     2 ^ (11 * M * W) ≤ 2 * (Finset.univ.filter fun r : Fin (11 * M * W) → Bool =>
       ∃ b ∈ BitString.listRows (11 * M) W (List.ofFn r), good b).card := by
-  set T := 11 * M
-  set G := (Finset.univ.filter fun b : Fin W → Bool => good (List.ofFn b)).card
-  set F := (Finset.univ.filter fun b : Fin W → Bool => ¬good (List.ofFn b)).card
-  have hFG : F + G = 2 ^ W := by
-    have := Finset.card_filter_add_card_filter_not (s := (Finset.univ : Finset (Fin W → Bool)))
-      fun b => ¬good (List.ofFn b)
-    simpa [F, G, add_comm] using this
-  -- the words with no good row
-  have hbad : (Finset.univ.filter fun r : Fin (T * W) → Bool =>
-      ¬∃ b ∈ BitString.listRows T W (List.ofFn r), good b).card = F ^ T := by
-    have hrows (r : Fin (T * W) → Bool) : BitString.listRows T W (List.ofFn r) =
-        List.ofFn fun j => List.ofFn (BitString.block r j) := by
-      rw [BitString.listRows_eq_ofFn, BitString.ofList_ofFn]
-    simp only [hrows, List.mem_ofFn, not_exists, not_and, forall_exists_index,
-      forall_apply_eq_imp_iff]
-    rw [show F ^ T = (Fintype.piFinset fun _ : Fin T => Finset.univ.filter
-        fun b : Fin W → Bool => ¬good (List.ofFn b)).card by
-      rw [Fintype.card_piFinset, Finset.prod_const, Finset.card_univ, Fintype.card_fin]]
+  set s := Finset.univ.filter fun b : Fin W → Bool => good (List.ofFn b) with hs
+  have hMq : (0 : ℚ) < M := by exact_mod_cast hM
+  have hq : (3 / (32 * M) : ℚ) ≤ (s.dens : ℚ) := by
+    rw [Finset.dens, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin]
+    push_cast
+    rw [div_le_div_iff₀ (by positivity) (by positivity)]
+    have : (3 * 2 ^ W : ℚ) ≤ 32 * M * s.card := by exact_mod_cast hgood
+    linarith
+  have h := Fintype.half_le_dens_filter_exists_apply_mem (ι := Fin (11 * M)) (s := s) (𝕜 := ℚ)
+    (by positivity) hq (by rw [Fintype.card_fin]; push_cast; field_simp; norm_num)
+  have hcard : (Finset.univ.filter fun r : Fin (11 * M * W) → Bool =>
+      ∃ b ∈ BitString.listRows (11 * M) W (List.ofFn r), good b).card =
+      (Finset.univ.filter fun ω : Fin (11 * M) → BitString W => ∃ j, ω j ∈ s).card := by
     refine Finset.card_equiv BitString.blocksEquiv fun r => ?_
-    simp [Fintype.mem_piFinset]
-  -- the probability estimate
-  have hineq : 2 * F ^ T ≤ (2 ^ W) ^ T := by
-    have hq : (0 : ℚ) < 2 ^ W := by positivity
-    have hy := one_sub_pow_le (y := 3 / (32 * M)) (by positivity)
-      (by rw [div_le_one (by positivity)]; have : (1 : ℚ) ≤ M := by exact_mod_cast hM
-          linarith) T
-    have hx : (F : ℚ) / 2 ^ W ≤ 1 - 3 / (32 * M) := by
-      have hG : (3 : ℚ) * 2 ^ W ≤ 32 * M * G := by exact_mod_cast hgood
-      have hFG' : (F : ℚ) + G = 2 ^ W := by exact_mod_cast hFG
-      have hG' : 3 * 2 ^ W / (32 * M) ≤ (G : ℚ) := by
-        rw [div_le_iff₀ (by positivity)]
-        linarith
-      rw [div_le_iff₀ hq]
-      calc (F : ℚ) = 2 ^ W - G := by linarith
-        _ ≤ 2 ^ W - 3 * 2 ^ W / (32 * M) := by linarith
-        _ = (1 - 3 / (32 * M)) * 2 ^ W := by ring
-    have hT : (1 : ℚ) + T * (3 / (32 * M)) = 65 / 32 := by
-      have : (M : ℚ) ≠ 0 := by exact_mod_cast hM.ne'
-      simp only [T, Nat.cast_mul, Nat.cast_ofNat]
-      field_simp
-      ring
-    rw [hT] at hy
-    have hpow : ((F : ℚ) / 2 ^ W) ^ T ≤ (1 - 3 / (32 * M)) ^ T :=
-      pow_le_pow_left₀ (by positivity) hx T
-    have : (2 : ℚ) * F ^ T ≤ (2 ^ W) ^ T := by
-      rw [div_pow, div_le_iff₀ (by positivity)] at hpow
-      nlinarith [pow_pos hq T]
-    exact_mod_cast this
-  have hall := Finset.card_filter_add_card_filter_not
-    (s := (Finset.univ : Finset (Fin (T * W) → Bool)))
-    fun r => ∃ b ∈ BitString.listRows T W (List.ofFn r), good b
-  rw [hbad, Finset.card_univ, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin] at hall
-  have h2 : (2 : ℕ) ^ (T * W) = (2 ^ W) ^ T := by rw [mul_comm, pow_mul]
-  have key : 2 ^ (T * W) ≤ 2 * (Finset.univ.filter fun r : Fin (T * W) → Bool =>
-      ∃ b ∈ BitString.listRows T W (List.ofFn r), good b).card := by omega
-  convert key using 3
-  ext r
-  simp only [Finset.mem_filter]
+    simp [BitString.listRows_eq_ofFn, hs]
+  rw [Finset.dens, Fintype.card_fun, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin,
+    Fintype.card_fin, ← hcard] at h
+  push_cast at h
+  rw [le_div_iff₀ (by positivity), ← pow_mul, mul_comm W] at h
+  exact_mod_cast (by push_cast; linarith : ((2 ^ (11 * M * W) : ℕ) : ℚ) ≤
+    ((2 * (Finset.univ.filter fun r : Fin (11 * M * W) → Bool =>
+      ∃ b ∈ BitString.listRows (11 * M) W (List.ofFn r), good b).card : ℕ) : ℚ))
 
 end ValiantVazirani
 
@@ -1120,7 +1081,11 @@ theorem NP_subset_RPWithOracle_of_solvedBy {A : Set (List Bool)}
   (NP_subset_RPWithPromiseOracle_PromiseUSAT enc).trans
     (RPWithPromiseOracle_subset_RPWithOracle hA enc)
 
-/-- **`NP ⊆ RP^USAT`**, with the encodings of the uniquely satisfiable formulas as oracle. -/
+/-- **`NP ⊆ RP^USAT`**, with the encodings of the uniquely satisfiable formulas as oracle. This
+form is weak: `USAT` as a language is `coNP`-hard, so even `P` relative to it contains `NP`. The
+Valiant–Vazirani content is the promise version `NP_subset_RPWithPromiseOracle_PromiseUSAT`,
+whose algorithm only relies on the oracle's answers on uniquely satisfiable and unsatisfiable
+formulas. -/
 theorem NP_subset_RPWithOracle_USAT (enc : α ↪ List Bool) :
     NP enc ⊆ RPWithOracle (encCNF '' USAT) enc := by
   classical
