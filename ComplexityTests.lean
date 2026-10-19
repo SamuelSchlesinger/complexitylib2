@@ -68,6 +68,7 @@ import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
+import ComplexityTests.KarpLipton
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.Ladner
