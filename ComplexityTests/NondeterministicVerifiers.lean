@@ -4,11 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.Classes.NP.GuessVerify
+import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 
-/-! Nondeterministic acceptance and time bounds on concrete stuck and fair-coin machines, and
-guess-and-verify deciders for verifier `NP`, including empty instances. -/
+/-! Nondeterministic acceptance and time bounds on concrete stuck and fair-coin machines,
+guess-and-verify deciders for verifier `NP`, and verifiers checking encoded accepting
+computations, including empty instances and padded certificates. -/
 
 namespace ComplexityTests.NondeterministicVerifiers
 
@@ -172,7 +173,7 @@ example (input : List Bool) : ¬fork.RunsInTime input 1 := by
   simp [Cfg.Halted, stuckAction] at this
 
 /-- Two steps bound every branch: the stuck branch has no second step. -/
-example (input : List Bool) : fork.RunsInTime input 2 := by
+private theorem runsInTime_fork (input : List Bool) : fork.RunsInTime input 2 := by
   intro p hp
   have hlen : 1 < p.length := hp
   have h₀ : fork.Step (p.toRunPath (Fin.castSucc ⟨0, by omega⟩))
@@ -278,6 +279,131 @@ example : MultiTapeNTM.DecidableInPolyTime {a : Bool × ℕ | a.1 = true}
   exact (ComputableTidilyInPolyTime.fst encBool encNat).comp
     (ComputableTidilyInPolyTime.fst (encPair encBool encNat) encBits)
 
+/-! ### Checking encoded accepting computations -/
+
+/-- A fixed machine's checker is inferred under any encoding of instances. -/
+example {k : ℕ} {State α : Type} [Finite State] (ntm : MultiTapeNTM k Bool State)
+    (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime (ntm.checkChoices enc) (encPair enc encBits) encBool := by
+  fun_prop
+
+/-- Checker inference composes with ordinary projections and a runtime guard. -/
+example {k : ℕ} {State α : Type} [Finite State] (ntm : MultiTapeNTM k Bool State)
+    (enc : α ↪ List Bool) :
+    ComputableTidilyInPolyTime
+      (fun x : (α × List Bool) × Bool => if x.2 then ntm.checkChoices enc x.1 else false)
+      (encPair (encPair enc encBits) encBool) encBool := by
+  fun_prop
+
+/-- The fair coin decides the universal problem within one step: some branch emits `[true]`. -/
+private theorem decides_coin : coin.toNTM.DecidesInTime encBits Set.univ fun _ => 1 :=
+  fun a => ⟨runsInTime_coin a, by
+    simp only [Set.mem_univ, true_iff]
+    obtain ⟨p, -, hhalt, hout⟩ := exists_path_coin true a
+    exact ⟨p, hhalt, hout⟩⟩
+
+example : (Set.univ : Set (List Bool)) ∈ NP encBits :=
+  mem_NP_of_decidableInPolyTime ⟨_, .const 1, 0, Unit, inferInstance, coin.toNTM, decides_coin⟩
+
+/-- The stuck machine yields the empty problem: its stuck branch rejects. -/
+example : (∅ : Set (List Bool)) ∈ NP encBits :=
+  mem_NP_of_decidableInPolyTime ⟨_, .const 1, 0, Unit, inferInstance, stuck,
+    fun a => ⟨runsInTime_stuck a, by simpa using not_accepts_stuck a⟩⟩
+
+/-- No certificate encodes an accepting computation of the stuck machine: choosing beyond its
+(absent) permitted actions rejects. -/
+example (w : List Bool) : stuck.checkChoices encBits ([], w) = false := by
+  rw [MultiTapeNTM.checkChoices, decide_eq_false_iff_not]
+  exact fun h => not_accepts_stuck [] (MultiTapeNTM.accepts_of_runClosedCoins_choiceTable h)
+
+/-- The accepting computation of the fair coin, padded arbitrarily, is accepted. -/
+example (padding : List Bool) : ∃ coins : List Bool,
+    coins.length ≤ Nat.card (Action 0 Bool Unit) ∧
+      coin.toNTM.checkChoices encBits ([], coins ++ padding) = true := by
+  obtain ⟨p, hp, hhalt, hout⟩ := exists_path_coin true []
+  obtain ⟨coins, hlen, hcoins⟩ := MultiTapeNTM.exists_runClosedCoins_choiceTable p hhalt hout
+  refine ⟨coins, by simpa [hp] using hlen, ?_⟩
+  simp [MultiTapeNTM.checkChoices, hcoins]
+
+/-- The explicit certificate length: one step of the fair coin needs at most `Nat.card` coins. -/
+example : IsVerifier encBits
+    (Polynomial.C (Nat.card (Action 0 Bool Unit) * 1) * (Polynomial.X + 1) ^ 0)
+    (coin.toNTM.checkChoices encBits) Set.univ :=
+  (decides_coin.mono fun _ => by simp).isVerifier
+
+/-- A stuck branch beside an accepting one: the fork's problem is still in `NP`. -/
+private theorem decides_fork : fork.DecidesInTime encBits Set.univ fun _ => 2 := by
+  intro input
+  refine ⟨runsInTime_fork _, ?_⟩
+  · simp only [Set.mem_univ, true_iff]
+    have hstep : fork.Step (fork.initCfg (encBits input))
+        (acceptAction.apply (fork.initCfg (encBits input))) :=
+      ⟨acceptAction, ⟨rfl, .inl rfl⟩, rfl⟩
+    refine ⟨⟨(RelSeries.singleton _ _).cons (fork.initCfg (encBits input)) hstep, rfl⟩, ?_, ?_⟩ <;>
+      simp [acceptAction]
+
+example : (Set.univ : Set (List Bool)) ∈ NP encBits :=
+  mem_NP_of_decidableInPolyTime ⟨_, .const 2, 0, Bool, inferInstance, fork, decides_fork⟩
+
+/-- Emit `true`, then run forever. -/
+private def emitLoop : MultiTapeTM 0 Bool Bool :=
+  MultiTapeTM.ofTr false fun q _ _ =>
+    { inputTape := 0, workTapes := Fin.elim0, output := if q then none else some true,
+      state := some true }
+
+private theorem isSome_state_runFrom_emitLoop (input : List Bool) (t : ℕ) :
+    (emitLoop.runFrom (emitLoop.initCfg input) t).state.isSome := by
+  induction t with
+  | zero => rfl
+  | succ t ih =>
+    obtain ⟨q, hq⟩ := Option.isSome_iff_exists.mp ih
+    rw [MultiTapeTM.runFrom, Function.iterate_succ_apply', ← MultiTapeTM.runFrom,
+      MultiTapeTM.step_of_state hq]
+    simp [emitLoop, Action.apply]
+
+/-- After one step, `emitLoop` has emitted `[true]` and is still running. -/
+example : (emitLoop.runFrom (emitLoop.initCfg []) 1).output = [true] ∧
+    (emitLoop.runFrom (emitLoop.initCfg []) 1).state = some true := by
+  change (emitLoop.step (emitLoop.initCfg [])).output = _ ∧ (emitLoop.step _).state = _
+  rw [MultiTapeTM.step_of_state (q := false) rfl]
+  simp [emitLoop, Action.apply]
+
+/-- A running prefix `[true]` is not acceptance: no certificate is accepted for `emitLoop`. -/
+example (input w : List Bool) :
+    emitLoop.toMultiTapeNTM.choiceTable.runClosedCoins w input ≠ [true] := by
+  intro h
+  obtain ⟨p, hhalt, -⟩ := MultiTapeNTM.accepts_of_runClosedCoins_choiceTable h
+  have hlast := MultiTapeTM.computationPath_last_eq_runFrom p
+  have hsome := isSome_state_runFrom_emitLoop input p.time
+  rw [← hlast, show p.last.state = none from hhalt] at hsome
+  exact absurd hsome (by simp)
+
+/-- The encoded rejecting branch of the fair coin is rejected, although the coin accepts. -/
+example : ∃ coins : List Bool, coin.toNTM.checkChoices encBits ([], coins) = false := by
+  obtain ⟨p, -, hhalt, hout⟩ := exists_path_coin false []
+  obtain ⟨coins, -, hcoins⟩ := MultiTapeNTM.ChoiceTable.exists_coins_runPath p.toRunPath
+  have hsim : MultiTapeNTM.ChoiceTable.simCfg p.last = MultiTapeNTM.ChoiceTable.haltCfg p.last := by
+    simp only [MultiTapeNTM.ChoiceTable.simCfg, show p.last.state = none from hhalt]
+  refine ⟨coins, ?_⟩
+  rw [MultiTapeNTM.checkChoices, decide_eq_false_iff_not]
+  change ¬coin.toNTM.choiceTable.runClosedCoins coins [] = [true]
+  rw [MultiTapePTM.runClosedCoins, MultiTapePTM.tapes_runClosedConfigFromCoins,
+    ← MultiTapePTM.initCfg_toNTM, MultiTapeNTM.ChoiceTable.initCfg_choiceTable, ← p.head_eq,
+    hcoins, hsim]
+  simp [MultiTapeNTM.ChoiceTable.haltCfg, hout]
+
+/-- Halting with `[true, true]` is rejected under every certificate. -/
+example (w : List Bool) : twice.toMultiTapeNTM.checkChoices encBits ([], w) = false := by
+  rw [MultiTapeNTM.checkChoices, decide_eq_false_iff_not]
+  change ¬twice.toMultiTapeNTM.choiceTable.runClosedCoins w [] = [true]
+  intro h
+  have hacc := MultiTapeNTM.accepts_of_runClosedCoins_choiceTable h
+  rw [MultiTapeNTM.accepts_iff_exists_time_eq (runsInTime_twice [])] at hacc
+  obtain ⟨p, hp, hout⟩ := hacc
+  have hlast := MultiTapeTM.computationPath_last_eq_runFrom p
+  rw [show p.time = 2 from hp, runFrom_twice] at hlast
+  simp [hlast] at hout
+
 /-! ### Axioms -/
 
 /--
@@ -328,5 +454,47 @@ info: 'Cslib.Complexity.decidableInPolyTime_of_mem_NP' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.decidableInPolyTime_of_mem_NP
+
+/--
+info: 'Cslib.Complexity.mem_NP_iff_decidableInPolyTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_NP_iff_decidableInPolyTime
+
+/--
+info: 'Cslib.Complexity.mem_NP_of_decidableInPolyTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_NP_of_decidableInPolyTime
+
+/--
+info: 'Turing.MultiTapeNTM.DecidesInTime.isVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.DecidesInTime.isVerifier
+
+/--
+info: 'Turing.MultiTapeNTM.computableTidilyInPolyTime_checkChoices' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.computableTidilyInPolyTime_checkChoices
+
+/--
+info: 'Turing.MultiTapeNTM.accepts_of_runClosedCoins_choiceTable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.accepts_of_runClosedCoins_choiceTable
+
+/--
+info: 'Turing.MultiTapeNTM.exists_runClosedCoins_choiceTable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.exists_runClosedCoins_choiceTable
 
 end ComplexityTests.NondeterministicVerifiers

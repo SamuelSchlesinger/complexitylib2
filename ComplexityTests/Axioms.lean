@@ -786,6 +786,20 @@ info: 'Cslib.Complexity.decidableInPolyTime_of_mem_NP' depends on axioms:
 #print axioms Cslib.Complexity.decidableInPolyTime_of_mem_NP
 
 /--
+info: 'Cslib.Complexity.mem_NP_of_decidableInPolyTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_NP_of_decidableInPolyTime
+
+/--
+info: 'Cslib.Complexity.mem_NP_iff_decidableInPolyTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_NP_iff_decidableInPolyTime
+
+/--
 info: 'Cslib.Logic.ESO.Definable.queryLanguage_mem_NP' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -8888,6 +8902,62 @@ info: 'Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le' d
 #print axioms Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le
 
 /--
+info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.exists_isScheduler' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.exists_isScheduler
+
+/--
+info: 'Cslib.Circuits.Boolean.MassProduction.complexity_directProduct_le_of_isScheduler' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.MassProduction.complexity_directProduct_le_of_isScheduler
+
+/--
+info: 'Cslib.LineCode.HighRate.exists_lineCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.LineCode.HighRate.exists_lineCode
+
+/--
+info: 'Cslib.LineCode.exists_isUniversalMenu' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.LineCode.exists_isUniversalMenu
+
+/--
 info: 'Cslib.Circuits.Boolean.eval_mintermCircuit' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -10041,3 +10111,28 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #guard_msgs (whitespace := lax) in
 #print axioms
   Cslib.Circuits.Boolean.WeightedThreshold.gateActivity_mul_rpow_le_of_circuit_hadamardCode
+
+/--
+info: 'Cslib.FunctionalGraph.exists_checkpoints' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.FunctionalGraph.exists_checkpoints
+
+/--
+info: 'Cslib.FunctionalGraph.card_range_iterate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.FunctionalGraph.card_range_iterate
+
+/-- info: 'Cslib.Circuits.Circuit.cost_program_iterate' does not depend on any axioms -/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Circuit.cost_program_iterate
+
+/--
+info: 'Cslib.Circuits.Synthesis.orbit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Synthesis.orbit

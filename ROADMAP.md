@@ -3,6 +3,79 @@
 Outstanding work and the rationale needed to guide it. See the [README](README.md) for
 completed reference developments.
 
+## Long-term coverage and reuse
+
+The long-term bar is to support formalizing every paper appearing in the
+[Electronic Colloquium on Computational Complexity](https://eccc.weizmann.ac.il/colloquium/call_for_papers/).
+Across successive papers, the additional work should increasingly be their new mathematics:
+standard models, representation changes, reductions, resource certificates and proof techniques
+should come from the library. This is an amortized goal. A new method may require substantial
+infrastructure once; later developments should reuse it instead of rebuilding it. Count that
+infrastructure's implementation and maintenance cost when assessing the improvement.
+
+### Catalogue the classes and theorems
+
+Build an auditable coverage index spanning the complete
+[Complexity Zoo](https://complexityzoo.net/Complexity_Zoo), including its hierarchies, nonuniform
+and communication classes, and extend it with the canonical problems and theorems needed by ECCC
+papers. The Zoo supplies a catalogue and references; verify definitions and results against their
+primary sources. This is a coverage target, not a claim that the catalogue is already formalized.
+
+Each entry should record its source and aliases, precise model and conventions, existing Lean
+declarations, missing prerequisites, and status: unassessed, definition only, partial development,
+or verified theorem. Track containments, separations, closure properties, complete problems and
+reductions separately. A defined class or a combinatorial lemma does not establish its advertised
+machine characterization, completeness theorem or efficient construction.
+
+Cover decision, function, search, counting, promise, distributional and parameterized problems.
+Keep uniformity, advice, oracle access, error gaps, resource measures and reduction types explicit.
+Share class operators and their closure theorems where they derive families of variants. Keep
+canonical definitions in their mathematical modules; the index should link to them rather than
+maintain a second set of definitions. Existing module docstrings, source markers and the detailed
+milestones below remain the authority for their respective facts.
+
+### Extend the mathematical canon
+
+This map adds long-term directions to the concrete developments below. It follows the breadth of
+[ECCC's scope](https://eccc.weizmann.ac.il/colloquium/call_for_papers/) and the Zoo, rather than the
+contents of the original port. Entries are targets for coverage audits and substantial theorem
+developments, not assertions that every prerequisite is missing or assignments to current workers.
+
+| Area | Coverage to establish or extend |
+| --- | --- |
+| Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. Preserve each reduction's resource bound. |
+| Space and alternation | The [machine-class milestones](#machine-class-milestones), native `NPSPACE = PSPACE`, TQBF completeness and `AP = PSPACE`. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
+| Counting and modular classes | Extend `#P`, `GapP` and `PP` with counting reductions and machine characterizations, permanent completeness, parity/modular and counting hierarchies, Toda's theorem, and the oracle-algorithm form of Stockmeyer approximate counting. |
+| Interactive and probabilistic proofs | Efficient interactive verifier semantics, sumcheck and arithmetization, MA/AM and public/private coins, `IP = PSPACE`, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
+| Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
+| Algebraic and arithmetic complexity | VP/VNP, algebraic reductions and complete polynomials; determinant/permanent and formula/branching-program models; identity testing and hitting sets; tensor and rank methods, including explicit field and characteristic assumptions. |
+| Approximation and constraint satisfaction | Gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
+| Pseudorandomness and coding | Hardness versus randomness, space-bounded generators, extractors/condensers, limited independence, explicit expanders, and list/local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
+| Complexity-theoretic cryptography | Extend the existing OWF/PRG/PRF results with reusable adaptive reductions, commitments, zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
+| Communication, queries and data structures | Randomized and multiparty protocols, discrepancy and information complexity, direct-sum/product results, lifting theorems, and reductions to streaming, sketching and cell-probe lower bounds. Reuse upstream query models. |
+| Proof complexity | Extend resolution soundness/completeness with proof length, width and space, pigeonhole/Tseitin lower bounds, Cook–Reckhow systems and simulations, Frege, cutting planes, polynomial calculus and sum-of-squares. |
+| Average-case complexity and learning | Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |
+| Property and distribution testing | Distance and access models, one/two-sided and tolerant testing, query/sample bounds, canonical graph/algebraic/distribution testers and lower bounds. |
+| Fine-grained and parameterized complexity | Fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; FPT/XP, W/A hierarchies, kernelization, parameter-preserving reductions and lower bounds. |
+| Total search and computational games | FNP/TFNP and canonical subclasses such as PLS, PPAD, PPA, PPP and CLS; local search, fixed-point and equilibrium problems, with explicit totality and solution-preserving reductions. |
+| Logic and descriptive complexity | Finish Fagin's theorem, then logical characterizations of additional resource classes, fixed-point and order-invariant queries, and uniform translations between syntax, structures and algorithms. |
+| Kolmogorov complexity and metacomplexity | Machine-backed descriptions/decoders and invariance, resource-bounded descriptions, MCSP variants and connections to learning, cryptography and lower bounds. Revisit deferred results through independently reviewed developments. |
+| Quantum complexity | Reusable circuit/channel/measurement semantics, uniformity and approximation costs, BQP/QMA and related query, communication and interactive classes, amplification, containments and complete problems. Reuse suitable quantum foundations rather than create incompatible models. |
+
+### Measure reuse across papers
+
+Use a growing, source-pinned sample of papers across these areas as demanding clients, including
+papers chosen after an API was designed. For each, identify the exact claims and assumptions,
+reused declarations, genuinely new mathematics, missing standard dependencies, and representation
+or automation friction. Promote recurring obligations into shared APIs only after demonstrating
+reuse; a framework is not successful merely because its first client compiles.
+
+Measure the whole sequence of developments: shared code plus clients, proof and interface size,
+elaboration/checking cost, and remaining manual machine or encoding work. The desired trend is
+less repeated foundational work per paper while preserving readable proofs and exact quantitative
+statements. Novel arguments will still require novel proofs. Keep this catalogue and evidence
+linked to declarations and reviewed revisions, rather than adding parallel narrative inventories.
+
 ## Community handover
 
 Prepare the existing library as a usable successor to the original Complexitylib. Keep the
@@ -68,25 +141,20 @@ The port still includes substantial mathematical developments beyond the complet
 results. Track these by their public theorems, rather than by source-file counts.
 Jukna coverage below is an additional target beyond the V1 port:
 
-* **Circuit mass production.** Integrate the existing constructions from
-  [algebraic-circuits](https://github.com/SamuelSchlesinger/algebraic-circuits/blob/main/Algebraic/MassProduction.lean):
-  the exponential copy range, sharp real-rate coefficient `1 / (1 - gamma) + o(1)`, and
-  coefficient-one subexponential range. Preserve the exact gate-cost conventions and share
-  sorting, lookup and routing with other circuit clients. Start from
-  [padding](Complexity/Computability/Circuit/Boolean/MassProduction/Padding.lean),
-  [synthesis](Complexity/Computability/Circuit/Boolean/MassProduction/Synthesis.lean), and
-  [batched lookup](Complexity/Computability/Circuit/Boolean/BatchLookup.lean); their module
-  documentation records the shared constructions and exact gate-cost contracts.
-  Constructor runtime remains uncertified. Uhlig's coefficient-one theorem through
-  `2 ^ o(n / log n)` copies is ported in
-  [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean); the exponential copy
-  range and the sharp real-rate coefficient remain to be ported.
+* **Mass-production constructor runtime.** Certify runtime separately from the native gate-cost
+  bounds in [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean) and
+  [sharp mass production](Complexity/Computability/Circuit/Boolean/MassProduction/Sharp.lean).
+  The current constructions choose information sets and line menus nonconstructively.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
   sparse-counter and affine-controller bounds, and hard-power counting. It already uses CSLib
-  circuits and some mass-production infrastructure. Nonuniform circuit existence does not
-  certify the preprocessing algorithm's runtime.
+  circuits and some mass-production infrastructure. The
+  [functional-graph foundations](Complexity/Foundations/Combinatorics/FunctionalGraph.lean)
+  (transient and cycle structure, checkpoint packing, exact distinct-power counts) and
+  [native circuit iteration](Complexity/Computability/Circuit/Iteration.lean) with retained
+  orbits are in place; the fixed-power theorem and its consequences remain. Nonuniform circuit
+  existence does not certify the preprocessing algorithm's runtime.
 * **Fagin's theorem.** Complete the connection between ESO-definable queries on finite relational
   structures and NP. The [encoded structures](Complexity/Logics/FirstOrder/Encoding.lean) and
   [polynomial-time certificate checker](Complexity/Computability/Complexity/Fagin/Verifier.lean)
@@ -104,8 +172,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   entropy and asymptotic activity bounds, geometric cutting, integer-summary counting,
   and quadratic-potential representations.
 
-Further metacomplexity ports are outside the current scope: the circuitized anti-checker,
-hardness-magnification argument and MINKT/MINCKT developments will not be carried over. Retain
+The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
+MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
+return as independently scoped, reviewed developments rather than automatic legacy ports. Retain
 existing checked [MCSP definitions](Complexity/Computability/MCSP/Basic.lean),
 [succinct variants](Complexity/Computability/MCSP/Succinct.lean),
 [Shannon bounds](Complexity/Computability/MCSP/Shannon.lean) and
@@ -154,9 +223,6 @@ space bounds. Further class-level work needs resource certificates for the actua
 * machine-level hierarchy theorems and `P ⊊ EXP`; a tight tape-indexed hierarchy needs a separate
   linear-overhead simulation, and an `f log f` hierarchy needs the corresponding simulation bound;
 * logspace composition, Savitch, `NL ⊆ P`, `NL = coNL`, `PH ⊆ PSPACE` and Sipser–Lautemann;
-* the reverse direction of nondeterministic-machine/verifier equivalence: the
-  [guess-and-verify construction](Complexity/Computability/Complexity/Classes/NP/GuessVerify.lean)
-  gives polynomial-time NTMs from verifiers; verifiers from polynomial-time NTMs remain;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.

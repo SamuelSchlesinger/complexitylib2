@@ -11,10 +11,11 @@ public import Cslib.Foundations.Data.BitString
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Data.Fintype.Pi
+public import Mathlib.Data.Nat.Log
 import Mathlib.Data.Fintype.BigOperators
 
 /-!
-# Counting and adding bit strings
+# Counting, numbering and adding bit strings
 
 There are `2 ^ n` strings of `n` bits (`BitString.card`), numbered `0, …, 2 ^ n - 1` by reading
 their bits as binary digits, least significant first (`BitString.equivFin`).
@@ -31,10 +32,12 @@ Boolean functions, are combined with `^^`.
 ## Main definitions
 
 * `Cslib.BitString.equivFin`: the numbering of the strings of `n` bits by `Fin (2 ^ n)`.
+* `Cslib.BitString.indexBits`: a finite index represented in `⌈log₂ n⌉` bits.
 
 ## Main results
 
 * `Cslib.BitString.card`: the number of strings of `n` bits.
+* `Cslib.BitString.indexBits_injective`: distinct finite indices have distinct encodings.
 * `Cslib.BitString.add_self`, `Cslib.BitString.add_cancel_left`,
   `Cslib.BitString.add_cancel_right`: every bit string is its own negative.
 
@@ -58,6 +61,14 @@ variable (n) in
 the least significant bit first. -/
 def equivFin : BitString n ≃ Fin (2 ^ n) :=
   (Equiv.arrowCongr (Equiv.refl (Fin n)) finTwoEquiv.symm).trans finFunctionFinEquiv
+
+/-- The binary numeral of `i : Fin n` in `⌈log₂ n⌉` bits. -/
+def indexBits (i : Fin n) : BitString (Nat.clog 2 n) :=
+  (equivFin _).symm (Fin.castLE (Nat.le_pow_clog one_lt_two n) i)
+
+/-- Distinct finite indices have distinct binary numerals. -/
+theorem indexBits_injective : Function.Injective (indexBits (n := n)) :=
+  (equivFin _).symm.injective.comp (Fin.castLE_injective _)
 
 variable {ι : Type*}
 
