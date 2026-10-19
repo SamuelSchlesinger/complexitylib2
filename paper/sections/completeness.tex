@@ -4,9 +4,13 @@
 \subsection{Cook--Levin and its complement}
 SAT is NP-complete and UNSAT is coNP-complete under tidy polynomial-time
 many-one reductions, using the library's encoding \lean{encCNF} of CNF formulas.
-Reduction efficiency is proved, not assumed.\citep[Section 2.3]{AroraBarak09}
+Reduction efficiency is proved, not assumed. SAT is also NP-complete
+when every clause has exactly three literal occurrences:
+repeated literals are permitted. This does not establish the variant requiring
+three distinct literals per clause.\citep[Section 2.3]{AroraBarak09}
 \decl{Complexity/Computability/Complexity/CookLevin/Completeness.lean}{52}{Cslib.Complexity.CookLevin.SAT_npComplete}
 \decl{Complexity/Computability/Complexity/CookLevin/Completeness.lean}{56}{Cslib.Complexity.CookLevin.UNSAT_coNPComplete}
+\decl{Complexity/Computability/Complexity/Problems/ExactThreeSAT.lean}{175}{Cslib.Complexity.ExactThreeSAT_npComplete}
 \end{result}
 
 \begin{result}
@@ -59,4 +63,21 @@ of its clauses. Clauses are counted with multiplicity. This is the explicit gap
 obtained from the formalized PCP construction; no optimal approximation threshold
 is asserted.\citep{AroraLundMotwaniSudanSzegedy1998,Dinur2007}
 \decl{Complexity/Computability/PCP/Approximation/MaxThreeSAT.lean}{469}{Cslib.Complexity.GapThreeSAT_npHard}
+\end{result}
+
+\begin{result}
+\subsection{PCP without random bits}
+For the same nonadaptive polynomial-time verifier model,
+\[
+\cc{PCP}(0,0)=\cc P,\qquad
+A\in\cc{NP}\ \Longleftrightarrow\
+\exists k\in\mathbb N,\ A\in\cc{PCP}\bigl(0,n\mapsto(n+1)^k\bigr).
+\]
+The class definition allows constant multiples of the query bound. With no
+random bits, perfect completeness and soundness at most $1/2$ force deterministic
+acceptance of an appropriate proof for a member and rejection of every proof
+for a nonmember. These identities hold for each injective bit-string encoding.
+\citep[Chapter 11]{AroraBarak09}
+\decl{Complexity/Computability/Complexity/Classes/PCP/ZeroRandomness.lean}{58}{Cslib.Complexity.PCP_zero_zero}
+\decl{Complexity/Computability/Complexity/Classes/PCP/ZeroRandomness.lean}{146}{Cslib.Complexity.mem_NP_iff_exists_PCP_zero}
 \end{result}

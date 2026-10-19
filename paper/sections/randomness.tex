@@ -13,6 +13,14 @@ polynomially bounded bit-string witnesses and a polynomial-time predicate.
 \end{result}
 
 \begin{result}
+As a consequence of the hierarchy collapse, if $\cc{NP}\subseteq\cc{P}$ for
+every type and injective bit-string encoding, then $\cc{BPP}=\cc{P}$ for every
+such encoded problem class. The formal premise quantifies over all encodings,
+rather than assuming equality only at one chosen encoding.\citep{AroraBarak09}
+\decl{Complexity/Computability/Complexity/Classes/BPP/Collapse.lean}{45}{Cslib.Complexity.BPP_eq_P_of_NP_subset_P}
+\end{result}
+
+\begin{result}
 \subsection{Toda's theorem}
 \[
 \cc{PH}\subseteq\cc{P}^{\#\cc{P}}.
@@ -50,4 +58,24 @@ problems. The Nisan--Wigderson generator and exhaustive seed search have certifi
 polynomial time. Worst-case exponential circuit hardness alone is not the
 hypothesis proved sufficient here.\citep{NisanWigderson1994}
 \decl{Complexity/Computability/Complexity/Classes/BPP/Derandomization.lean}{307}{Cslib.Complexity.P_eq_BPP_of_isAverageCaseHard}
+\end{result}
+
+\begin{result}
+\subsection{Counting algebra and the GapP characterization of PP}
+For each fixed encoding, $\#\cc{P}$ is closed under pointwise addition and
+multiplication, and $\cc{GapP}$ under addition, subtraction and multiplication;
+the constant natural-valued and integer-valued functions belong to the
+respective classes. Moreover,
+\[
+A\in\cc{PP}\quad\Longleftrightarrow\quad
+\exists g\in\cc{GapP}\ \forall x,\quad x\in A\ \Longleftrightarrow\ g(x)>0.
+\]
+Here $\#\cc{P}$ counts accepting certificates of a deterministic polynomial-time
+verifier of polynomial certificate length; $\cc{GapP}$ consists of differences
+of two such counts. These are verifier characterizations. The corresponding
+nondeterministic-machine characterizations remain unfinished.
+\citep{Valiant1979,FennerFortnowKurtz1994}
+\decl{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{105}{Cslib.Complexity.SharpP.subsemiring}
+\decl{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{201}{Cslib.Complexity.GapP.subring}
+\decl{Complexity/Computability/Complexity/Classes/PP/Characterization.lean}{182}{Cslib.Complexity.mem_PP_iff_exists_GapP}
 \end{result}

@@ -32,7 +32,7 @@ neither in P nor NP-complete under polynomial-time many-one reductions.
 The witness is a padded satisfiability language with a polynomial-time padding
 exponent. This is a conditional intermediate-degree theorem; it does not assume
 an intermediate problem as additional input.\citep[Theorem 3.3]{AroraBarak09}
-\decl{Complexity/Computability/Complexity/Classes/Ladner.lean}{426}{Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete}
+\decl{Complexity/Computability/Complexity/Classes/Ladner.lean}{445}{Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete}
 \end{result}
 
 \begin{result}
@@ -60,4 +60,17 @@ self-reduction and evaluation of circuit advice are part of the development.
 The circuit hypothesis is nonuniform.\citep{KarpLipton1980}
 \decl{Complexity/Computability/Complexity/Classes/PH/KarpLipton.lean}{320}{Cslib.Complexity.PH_eq_SigmaP_two_of_SAT}
 \decl{Complexity/Computability/Complexity/Classes/PH/KarpLipton.lean}{328}{Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_PPoly}
+\end{result}
+
+\begin{result}
+\subsection{Plain Kolmogorov complexity is uncomputable}
+Let $K(x)$ be the minimum bit-string description length of $x\in\mathbb N$
+under the library's universal partial-computable description method. Then
+$K(x)\to\infty$ as $x\to\infty$, but every total computable unbounded function
+$f:\mathbb N\to\mathbb N$ satisfies $K(x)<f(x)$ for infinitely many $x$.
+In particular, $K$ is not computable. This is plain complexity, often denoted
+$C$ in the literature, not prefix-free complexity.\citep{LiVitanyi2019}
+\decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{82}{Cslib.Kolmogorov.DescriptionMethod.tendsto_complexity_universal}
+\decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{184}{Cslib.Kolmogorov.DescriptionMethod.frequently_complexity_universal_lt_of_computable}
+\decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{208}{Cslib.Kolmogorov.DescriptionMethod.not_computable_complexity_universal}
 \end{result}

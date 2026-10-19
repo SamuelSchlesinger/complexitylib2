@@ -29,3 +29,48 @@ error reduction and extractor evaluation costs are separate obligations.
 \citep{AjtaiKomlosSzemeredi1987,Kahale1995,Vadhan2012}
 \decl{Complexity/Foundations/Combinatorics/Expander/Hitting.lean}{207}{Cslib.RotationMap.dens_filter_forall_walkAt_mem_le}
 \end{result}
+
+\begin{result}
+\subsection{The Nisan--Szegedy bound on relevant coordinates}
+If a Boolean function on a finite cube, read as the sign $(-1)^{f(x)}$,
+has no nonzero Fourier coefficients on sets of more than $d$ coordinates,
+then at most $d\,2^{d-1}$ coordinates are relevant: flipping an irrelevant
+coordinate never changes the value. For $d=0$ the function has no relevant
+coordinates; the formal natural exponent uses truncated subtraction.
+The Fourier coefficients use the uniform measure on the cube.
+\citep{NisanSzegedy1994,ODonnell2014}
+\decl{Complexity/Foundations/BooleanAnalysis/RelevantCoordinates.lean}{103}{Cslib.BitString.card_filter_exists_update_ne_le}
+\end{result}
+
+\begin{result}
+\subsection{Fourier bounds for decision trees}
+Suppose a deterministic decision tree has structural depth $d$ and $L$ leaves.
+For any real-valued readout of its output bounded in absolute value by one,
+the sum of absolute Fourier coefficients is at most $L\le2^d$.
+For a Boolean readout, written as signs, each coefficient is an integer multiple
+of $2^{-\max(d-1,0)}$, and at most $L\,2^{\max(d-1,0)}$ coefficients are nonzero.
+Repeated queries and unreachable branches are allowed; structural size only
+weakens these upper bounds. This is a spectral statement, not a formalized
+learning algorithm.\citep{KushilevitzMansour1993,ODonnell2014}
+\decl{Complexity/Computability/DecisionTree/SpectralNorm.lean}{72}{Cslib.DecisionTree.sum_abs_fourierCoeff_le_leafCount}
+\decl{Complexity/Computability/DecisionTree/Granularity.lean}{84}{Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one}
+\decl{Complexity/Computability/DecisionTree/SpectralNorm.lean}{113}{Cslib.DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le}
+\end{result}
+
+\begin{result}
+\subsection{A degree-dependent obstruction to perfect expansion}
+For an undirected $D$-regular multigraph on $N\ge2$ vertices, with $D\ge1$,
+let $\lambda$ be the norm of its normalized walk operator on mean-zero functions.
+Then
+\[
+\frac{N-D}{D(N-1)}\le\lambda^2.
+\]
+In particular $\lambda\ge1/\sqrt{2D}$ if $N\ge2D$.
+The rotation-map model permits loops and parallel edges. The complete graph
+with one loop at each vertex has $D=N$ and $\lambda=0$, attaining the first
+bound. This finite trace bound is not the asymptotic Alon--Boppana theorem.
+\citep{HooryLinialWigderson2006}
+\decl{Complexity/Foundations/Combinatorics/Expander/LowerBound.lean}{91}{Cslib.RotationMap.div_le_sq_spectralExpansion}
+\decl{Complexity/Foundations/Combinatorics/Expander/LowerBound.lean}{195}{Cslib.RotationMap.one_div_sqrt_two_mul_le_spectralExpansion}
+\decl{Complexity/Foundations/Combinatorics/Expander/LowerBound.lean}{77}{Cslib.RotationMap.spectralExpansion_complete}
+\end{result}

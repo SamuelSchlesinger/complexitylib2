@@ -50,10 +50,15 @@ pairs in $A\times B$ at Hamming distance one. Its input-leaf count $L$ (constant
 |E(A,B)|^2\le |A|\,|B|\,L.
 \]
 In particular, parity on $n$ bits requires at least $n^2$ leaves; for $n=2^k$
-this is attained. These are formula leaf bounds, not bounds on circuits with
-shared subcomputations.\citep{Khrapchenko1971b,Khrapchenko1971}
-\decl{Complexity/Computability/Circuit/Boolean/Khrapchenko.lean}{139}{Cslib.Circuits.Formula.sq_card_hammingEdges_le}
-\decl{Complexity/Computability/Circuit/Boolean/Khrapchenko.lean}{392}{Cslib.Circuits.Boolean.isLeast_leafSize_parity_two_pow}
+this is attained. Yablonskii's construction gives, for $n=2^k+r$ with
+$0\le r\le2^k$, a parity formula with at most $2^k(2^k+3r)$ leaves;
+for every $n$ there is one with $8L\le9n^2$.
+These are formula leaf bounds, not bounds on circuits with shared subcomputations.
+\citep{Khrapchenko1971b,Khrapchenko1971,Yablonskii1954,Jukna2012}
+\decl{Complexity/Computability/Circuit/Boolean/Khrapchenko.lean}{144}{Cslib.Circuits.Formula.sq_card_hammingEdges_le}
+\decl{Complexity/Computability/Circuit/Boolean/Khrapchenko.lean}{428}{Cslib.Circuits.Boolean.isLeast_leafSize_parity_two_pow}
+\decl{Complexity/Computability/Circuit/Boolean/Yablonskii.lean}{167}{Cslib.Circuits.Boolean.exists_formula_parity_two_pow_add}
+\decl{Complexity/Computability/Circuit/Boolean/Yablonskii.lean}{182}{Cslib.Circuits.Boolean.exists_formula_parity_eight_mul_leafSize_le}
 \end{result}
 
 \begin{result}
@@ -164,4 +169,21 @@ inputs in the effective sense above, then
 This statement requires the rectangle hypothesis on both fibers; it is not an
 unconditional lower bound for every Boolean function.\citep{Schlesinger2026Algebraic}
 \decl{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{150}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_four_pow_inputGates}
+\end{result}
+
+\begin{result}
+\subsection{Exact parity formula depth at powers of two}
+Let $d(f)$ be minimum De Morgan formula depth, counting binary AND/OR gates
+and making negations free. For $n\ge1$,
+\[
+\lceil\log_2(n^2)\rceil\le d(\mathrm{PARITY}_n)
+ \le2\lceil\log_2 n\rceil,
+\qquad d(\mathrm{PARITY}_{2^k})=2k.
+\]
+The lower bound comes from formula leaf count, and the upper bound from
+the parity construction. This does not assert the exact minimum for every
+non-power-of-two arity.\citep{Khrapchenko1971b,Yablonskii1954,Jukna2012}
+\decl{Complexity/Computability/Circuit/Boolean/KhrapchenkoDepth.lean}{73}{Cslib.Circuits.Boolean.clog_sq_le_formulaDepth_parity}
+\decl{Complexity/Computability/Circuit/Boolean/Yablonskii.lean}{194}{Cslib.Circuits.Boolean.formulaDepth_parity_le_two_mul_clog}
+\decl{Complexity/Computability/Circuit/Boolean/KhrapchenkoDepth.lean}{88}{Cslib.Circuits.Boolean.formulaDepth_parity_two_pow}
 \end{result}
