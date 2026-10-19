@@ -62,6 +62,7 @@ inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subs
 
 * `Cslib.Complexity.P_subset_BPP`, `Cslib.Complexity.NP_subset_PP`.
 * `Cslib.Complexity.compl_mem_PP`, `Cslib.Complexity.PP_eq_preimage_compl_PP`.
+* `Cslib.Complexity.coNP_subset_PP`.
 * `Turing.MultiTapeNTM.RunsInTime.runsInSpace`: space is at most time.
 * `Cslib.Complexity.NP_subset_NPSPACE`, `Cslib.Complexity.NP_subset_PSPACE`.
 * `Cslib.Complexity.PSPACE_subset_EXP`, `Cslib.Complexity.NP_subset_EXP`.
@@ -216,6 +217,10 @@ theorem PP_eq_preimage_compl_PP (enc : α ↪ List Bool) : PP enc = compl ⁻¹'
   ext A
   refine ⟨compl_mem_PP, fun hA => ?_⟩
   simpa using compl_mem_PP hA
+
+/-- **`coNP ⊆ PP`**: `NP ⊆ PP` and `PP` is closed under complement. -/
+theorem coNP_subset_PP : coNP enc ⊆ PP enc := fun _ hA => by
+  simpa using compl_mem_PP (NP_subset_PP hA)
 
 /-! ### Space -/
 

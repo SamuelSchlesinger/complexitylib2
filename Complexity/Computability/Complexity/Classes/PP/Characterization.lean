@@ -21,8 +21,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 
 `PP` (`Cslib.Complexity.PP`) is defined by a strict majority of accepted random strings
 [Gill][Gill1977]. This file proves that a non-strict majority defines the same class, that `PP`
-is closed under polynomial-time reductions and contains `coNP`, and the characterisations of `PP`
-through `#P` and `GapP` [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994].
+is closed under polynomial-time reductions, and the characterisations of `PP` through `#P` and
+`GapP` [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994].
 
 * **Non-strict majority.** A verifier decides `A` by strict majority exactly when its negation
   decides the complement `Aᶜ` by non-strict majority
@@ -34,8 +34,9 @@ through `#P` and `GapP` [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994].
   `q (|f a|)` random bits. Since `|f a|` is polynomial in `|a|`, the random string is padded to a
   polynomial `r(|a|)`; the ignored bits multiply the counts on both sides of the majority
   condition by the same power of two.
-* **`#P`.** `A ∈ PP` exactly when `a ∈ A ↔ 2 ^ q(n) < 2 f(a)` for some `f ∈ #P` and an arbitrary
-  polynomial `q`, where `n` is the length of the encoded instance
+* **`#P`.** `A ∈ PP` exactly when `a ∈ A ↔ 2 ^ q(n) < 2 f(a)` for some `f ∈ #P` and some
+  polynomial `q`, not necessarily the length of the certificates counted by `f`, where `n` is the
+  length of the encoded instance
   (`Cslib.Complexity.mem_PP_iff_exists_SharpP`). For `f` counting the certificates of length
   `k = p(n)` that `V` accepts and `j = q(n)`, the verifier on random strings of length
   `k + j + 2` lets the first bit choose: on `true` it accepts the `2 f(a)` strings formed by a
@@ -53,7 +54,6 @@ through `#P` and `GapP` [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994].
 
 * `Cslib.Complexity.mem_PP_iff_decidesByNonstrictMajority`: non-strict majority defines `PP`.
 * `Cslib.Complexity.PolyTimeReducible.mem_PP`: `PP` is closed under polynomial-time reductions.
-* `Cslib.Complexity.coNP_subset_PP`.
 * `Cslib.Complexity.mem_PP_iff_exists_SharpP`, `Cslib.Complexity.mem_PP_iff_exists_GapP`.
 
 ## References
@@ -137,9 +137,6 @@ theorem PolyTimeReducible.mem_PP {β : Type} {encB : β ↪ List Bool} {A : Set 
   rw [hAB a, hWB (f a), hj, acceptCount_andVerifier_true, pow_add, ← mul_assoc]
   exact (Nat.mul_lt_mul_right (by positivity)).symm
 
-/-- **`coNP ⊆ PP`**: `NP ⊆ PP` and `PP` is closed under complement. -/
-theorem coNP_subset_PP : coNP enc ⊆ PP enc := fun A hA => by
-  simpa using compl_mem_PP (NP_subset_PP hA)
 
 /-! ### `PP` through `#P` and `GapP` -/
 
