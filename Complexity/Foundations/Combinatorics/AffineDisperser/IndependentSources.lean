@@ -330,6 +330,22 @@ private theorem exists_tau {ι : Type*} [Fintype ι] (a : ι → ZMod n → F) (
   rw [hℓsucc, hδ'i] at hp1
   exact hp1
 
+omit [NeZero n] in
+private theorem permanent_eq_zero_of_kills {τ : Fin k → ZMod n} {ρ : ZMod n} (h : Kills a τ ρ) :
+    (Matrix.of fun l m : Fin k => a (τ l - ρ - (m : ℕ)) ^ 2 ^ (m : ℕ)).permanent = 0 := by
+  obtain ⟨l, hl⟩ := h
+  refine Finset.sum_eq_zero fun σ _ => Finset.prod_eq_zero (Finset.mem_univ (σ.symm l)) ?_
+  simp [hl]
+
+omit [NeZero n] in
+private theorem permanent_ne_zero_of_isTriangular [CharP F 2] {τ : Fin k → ZMod n}
+    (h : IsTriangular a τ) :
+    (Matrix.of fun l m : Fin k => a (τ l - (m : ℕ)) ^ 2 ^ (m : ℕ)).permanent ≠ 0 := by
+  rw [← det_eq_permanent, Matrix.det_of_isUpperTriangular]
+  · exact Finset.prod_ne_zero_iff.2 fun l _ => pow_ne_zero _ (h.1 l)
+  · intro l m hml
+    simp [h.2 l m hml]
+
 end Choice
 
 variable [Finite F] [Algebra (ZMod 2) F]
@@ -347,6 +363,91 @@ theorem exists_trace_mul_prod_det_mooreMatrix_ne_zero {ι : Type*} [Fintype ι] 
     {μ : F} (hμ : μ ≠ 0) :
     ∃ u : (i : ι) → Fin (k i) → F, (∀ i l, u i l ∈ Y i) ∧
       Algebra.trace (ZMod 2) F (μ * ∏ i, (mooreMatrix (u i)).det) ≠ 0 := by
-  sorry
+  classical
+  have := charP_two (F := F)
+  cases nonempty_fintype F
+  have hn0 : 0 < n := hn ▸ Module.finrank_pos
+  have : NeZero n := ⟨hn0.ne'⟩
+  have hcard : Fintype.card F = 2 ^ n := by
+    rw [Module.card_eq_pow_finrank (K := ZMod 2) (V := F), ZMod.card, hn]
+  -- the coefficient vectors of image-subspace polynomials of the `Y i`
+  have hpat : ∀ i, ∃ a : ZMod n → F, (∀ x, linearizedEval a x ∈ Y i) ∧
+      CoeffPattern n (finrank (ZMod 2) (Y i)) a :=
+    fun i => exists_coeffPattern hn hs (Y i) (by have := hkY i; omega) (hsY i)
+  choose a ha hpa using hpat
+  -- the monomial that will have a nonzero coefficient
+  obtain ⟨i₁, -, hi₁⟩ := Finset.exists_max_image Finset.univ (fun i => finrank (ZMod 2) (Y i))
+    ⟨i₀, Finset.mem_univ _⟩
+  obtain ⟨τ, hτ, hkill⟩ := exists_tau a (fun i => finrank (ZMod 2) (Y i)) k hpa hk hkY i₁
+    (fun i => hi₁ i (Finset.mem_univ i))
+    (lt_of_lt_of_le hsum (by have := hi₁ i₀ (Finset.mem_univ _); omega))
+  -- the coefficients of `w ↦ Tr (μ ∏ᵢ Δ(Qᵢ ∘ wᵢ))`
+  let P : (i : ι) → (Fin (k i) → ZMod n) → F := fun i σ =>
+    (Matrix.of fun l m : Fin (k i) => a i (σ l - (m : ℕ)) ^ 2 ^ (m : ℕ)).permanent
+  let C : ((i : ι) → Fin (k i) → ZMod n) → F := fun τ' =>
+    ∑ ρ ∈ Finset.range n, μ ^ 2 ^ ρ * ∏ i, P i (fun l => τ' i l - (ρ : ZMod n)) ^ 2 ^ ρ
+  have hexp : ∀ w : (i : ι) → Fin (k i) → F,
+      algebraMap (ZMod 2) F (Algebra.trace (ZMod 2) F
+        (μ * ∏ i, (mooreMatrix fun l => linearizedEval (a i) (w i l)).det)) =
+      ∑ τ' : (i : ι) → Fin (k i) → ZMod n, C τ' * ∏ i, ∏ l, w i l ^ 2 ^ (τ' i l).val := by
+    intro w
+    rw [FiniteField.algebraMap_trace_eq_sum_pow, hn, Nat.card_zmod]
+    simp_rw [det_eq_permanent, permanent_mooreMatrix_linearizedEval hn]
+    have hrot : ∀ (ρ : ℕ) (i : ι),
+        (∑ σ : Fin (k i) → ZMod n, P i σ * ∏ l, w i l ^ 2 ^ (σ l).val) ^ 2 ^ ρ =
+          ∑ σ : Fin (k i) → ZMod n,
+            P i (fun l => σ l - (ρ : ZMod n)) ^ 2 ^ ρ * ∏ l, w i l ^ 2 ^ (σ l).val := by
+      intro ρ i
+      rw [sum_pow_char_pow]
+      refine Fintype.sum_equiv (Equiv.addRight fun _ => (ρ : ZMod n)) _ _ fun σ => ?_
+      simp only [Equiv.coe_addRight, Pi.add_apply, add_sub_cancel_right, mul_pow]
+      congr 1
+      rw [← Finset.prod_pow]
+      refine Finset.prod_congr rfl fun l _ => ?_
+      rw [← pow_mul, ← pow_add, pow_two_pow_mod hn (w i l) ((σ l).val + ρ), ZMod.val_add,
+        ZMod.val_natCast, Nat.add_mod_mod]
+    simp only [P] at hrot
+    simp_rw [mul_pow, ← Finset.prod_pow, hrot, Fintype.prod_sum, Finset.mul_sum]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun τ' _ => ?_
+    simp only [C, P, Finset.sum_mul, Finset.prod_mul_distrib, mul_assoc]
+  by_contra hcon
+  push Not at hcon
+  -- every coefficient vanishes, since reduced monomials are independent
+  have hC : ∀ τ', C τ' = 0 := by
+    intro τ'
+    refine eq_zero_of_forall_sum_mul_prod_pow_eq_zero (σ := Σ i, Fin (k i))
+      (fun τ' v => 2 ^ (τ' v.1 v.2).val) ?_ ?_ C (fun x => ?_) τ'
+    · intro τ₁ τ₂ h
+      funext i l
+      exact ZMod.val_injective _ (Nat.pow_right_injective le_rfl (congrFun h ⟨i, l⟩))
+    · intro τ' v
+      rw [hcard]
+      exact Nat.pow_lt_pow_right (by norm_num) (ZMod.val_lt _)
+    · have h0 : Algebra.trace (ZMod 2) F
+          (μ * ∏ i, (mooreMatrix fun l => linearizedEval (a i) (x ⟨i, l⟩)).det) = 0 :=
+        hcon (fun i l => linearizedEval (a i) (x ⟨i, l⟩)) fun i l => ha i _
+      have := hexp fun i l => x ⟨i, l⟩
+      beta_reduce at this
+      rw [h0, map_zero] at this
+      rw [this]
+      exact Finset.sum_congr rfl fun τ' _ => by rw [Fintype.prod_sigma]
+  -- but the coefficient of the chosen monomial is `μ ∏ᵢ per(Mᵢ[τᵢ]) ≠ 0`
+  refine (show C τ ≠ 0 from ?_) (hC τ)
+  simp only [C]
+  rw [Finset.sum_eq_single_of_mem 0 (Finset.mem_range.2 hn0)]
+  · simp only [pow_zero, pow_one, Nat.cast_zero, sub_zero]
+    exact mul_ne_zero hμ
+      (Finset.prod_ne_zero_iff.2 fun i _ => permanent_ne_zero_of_isTriangular (hτ i))
+  · intro ρ hρ hρ0
+    have hρ' : (ρ : ZMod n) ≠ 0 := by
+      intro h
+      have := congrArg ZMod.val h
+      rw [ZMod.val_cast_of_lt (Finset.mem_range.1 hρ), ZMod.val_zero] at this
+      exact hρ0 this
+    obtain ⟨i, hi⟩ := hkill _ hρ'
+    refine mul_eq_zero_of_right _ (Finset.prod_eq_zero (Finset.mem_univ i) ?_)
+    rw [show P i (fun l => τ i l - (ρ : ZMod n)) = 0 from permanent_eq_zero_of_kills hi]
+    exact zero_pow (pow_ne_zero _ two_ne_zero)
 
 end Cslib.AffineDisperser
