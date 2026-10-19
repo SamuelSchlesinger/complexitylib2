@@ -395,4 +395,24 @@ theorem occurrences_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {�
         rw [sum_const, card_univ, Fintype.card_bool, smul_eq_mul, sum_Ico_eq_sum_range]
         simp
 
+/-- **Sparse clause sets are small.** A sparse clause set of width `k` over the `N` variables of
+`U` has at most `2 (∑_{c < k} θ c) N + 1` clauses: every clause but the empty one mentions a
+variable. -/
+theorem card_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V}
+    (hsparse : Sparse θ ψ) (hk : ∀ C ∈ ψ, C.card ≤ k) (U : Finset V)
+    (hU : ∀ C ∈ ψ, ∀ l ∈ C, l.1 ∈ U) :
+    ψ.card ≤ 2 * (∑ c ∈ range k, θ c) * U.card + 1 := by
+  have hsub : ψ ⊆ insert ∅ (U.biUnion fun v => ψ.filter fun C => ∃ l ∈ C, l.1 = v) := by
+    intro C hC
+    rcases C.eq_empty_or_nonempty with rfl | ⟨l, hl⟩
+    · exact mem_insert_self _ _
+    · exact mem_insert_of_mem (mem_biUnion.mpr ⟨l.1, hU C hC l hl, mem_filter.mpr ⟨hC, l, hl, rfl⟩⟩)
+  calc ψ.card ≤ (insert ∅ (U.biUnion fun v => ψ.filter fun C => ∃ l ∈ C, l.1 = v)).card :=
+        card_le_card hsub
+    _ ≤ (U.biUnion fun v => ψ.filter fun C => ∃ l ∈ C, l.1 = v).card + 1 := card_insert_le _ _
+    _ ≤ (∑ v ∈ U, ψ.occurrences v) + 1 := Nat.add_le_add_right card_biUnion_le _
+    _ ≤ (∑ _v ∈ U, 2 * ∑ c ∈ range k, θ c) + 1 :=
+        Nat.add_le_add_right (sum_le_sum fun v _ => occurrences_le_of_sparse hθ hsparse hk v) _
+    _ = 2 * (∑ c ∈ range k, θ c) * U.card + 1 := by rw [sum_const, smul_eq_mul, Nat.mul_comm]
+
 end Cslib.Logic.PL.ClauseSet.Sparsification
