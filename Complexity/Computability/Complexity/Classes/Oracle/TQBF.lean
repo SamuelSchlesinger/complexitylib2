@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.Space.TQBF
-public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Complexity.Computability.Complexity.Classes.Oracle.Space
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
@@ -198,7 +197,7 @@ def kindDecoder : Decoder encKind where
       rw [kindIndex_kindOfIndex]).exists_degree
 
 /-- Token lists are decoded element by element. -/
-def tokensDecoder : Decoder (encList encToken) := .list (.pair kindDecoder Ladner.natDecoder)
+def tokensDecoder : Decoder (encList encToken) := .list (.pair kindDecoder .nat)
 
 /-- Whether a token list is the token list of a formula. -/
 def wellFormed (ts : List (QBF.Kind × ℕ)) : Bool := decide (ts.foldl wfStep (true, 1) = (true, 0))
