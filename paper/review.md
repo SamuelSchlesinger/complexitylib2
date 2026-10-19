@@ -577,3 +577,23 @@ Independent reviews of the exact commits, against their merge base `0c1dab07`:
 Validation: all six gates passed on the integration revision; the PDF builds with no undefined
 references, and the two new entries were rendered and inspected. These are AI reviews, not human
 editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 2: sharp Håstad bound and parity outside FO (2026-10-19)
+
+Integrated `fa8e0065` (`ac0-sharp`), adding the entries "Håstad's theorem with the sharp
+exponent" and "Parity is not first-order definable" (`circuits.tex`), and pointing the existing
+random-restriction entry to the sharp exponent.
+
+Independent reviews of the exact commit against `0c1dab07`:
+
+- Correctness review (depth convention, constants, comparison with Hastad.lean, TopDown.lean and
+  ShallowSymmetric.lean, nondegeneracy of the FO[Arb] statement): the Lean is approved. Blocking
+  finding in the paper draft, resolved here: only the base bound, not every derived form, is
+  stated for negation-counting depth and for formulas. Also noted that constants are nullary
+  AND/OR gates.
+- API review: APPROVE; non-blocking duplication and helper-placement findings were returned to
+  the author as follow-up commits.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no undefined
+references. These are AI reviews, not human editorial approval or machine-checked equivalence of
+prose and Lean.
