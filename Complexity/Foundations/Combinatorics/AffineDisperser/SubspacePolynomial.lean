@@ -78,31 +78,59 @@ namespace IsLinearized
 variable {P Q : F[X]}
 
 theorem zero : IsLinearized (0 : F[X]) := by
-  sorry
+  intro i hi
+  simp at hi
 
 theorem add (hP : IsLinearized P) (hQ : IsLinearized Q) : IsLinearized (P + Q) := by
-  sorry
+  intro i hi
+  rcases Finset.mem_union.1 (support_add hi) with h | h
+  exacts [hP i h, hQ i h]
 
 theorem C_mul (hP : IsLinearized P) (c : F) : IsLinearized (C c * P) := by
-  sorry
+  intro i hi
+  rw [Polynomial.mem_support_iff, coeff_C_mul] at hi
+  exact hP i (Polynomial.mem_support_iff.2 (right_ne_zero_of_mul hi))
 
 theorem X_pow_two_pow (j : ℕ) : IsLinearized (X ^ 2 ^ j : F[X]) := by
-  sorry
+  intro i hi
+  rw [Polynomial.mem_support_iff, coeff_X_pow] at hi
+  split_ifs at hi with h
+  · exact ⟨j, h⟩
+  · exact absurd rfl hi
 
 theorem sq [CharP F 2] (hP : IsLinearized P) : IsLinearized (P ^ 2) := by
-  sorry
+  intro i hi
+  rw [← map_frobenius_expand 2, Polynomial.mem_support_iff, coeff_map, coeff_expand two_pos] at hi
+  split_ifs at hi with h
+  · obtain ⟨j, hj⟩ := hP (i / 2) (Polynomial.mem_support_iff.2 fun h0 => hi (by rw [h0, map_zero]))
+    exact ⟨j + 1, by rw [pow_succ, ← hj, Nat.div_mul_cancel h]⟩
+  · exact absurd (map_zero _) hi
 
 theorem coeff_zero (hP : IsLinearized P) : P.coeff 0 = 0 := by
-  sorry
+  by_contra h
+  obtain ⟨j, hj⟩ := hP 0 (Polynomial.mem_support_iff.2 h)
+  exact pow_ne_zero j two_ne_zero hj.symm
 
 /-- A linearized polynomial composes additively. -/
 theorem comp_add [CharP F 2] (hP : IsLinearized P) (f g : F[X]) :
     P.comp (f + g) = P.comp f + P.comp g := by
-  sorry
+  simp only [comp_eq_sum_left, Polynomial.sum_def, ← Finset.sum_add_distrib, ← mul_add]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  obtain ⟨j, rfl⟩ := hP i hi
+  rw [add_pow_char_pow]
+
+theorem comp_sub [CharP F 2] (hP : IsLinearized P) (f g : F[X]) :
+    P.comp (f - g) = P.comp f - P.comp g := by
+  rw [eq_sub_iff_add_eq, ← hP.comp_add, sub_add_cancel]
 
 theorem eval_add [CharP F 2] (hP : IsLinearized P) (x y : F) :
     P.eval (x + y) = P.eval x + P.eval y := by
-  sorry
+  have h := hP.comp_add (C x) (C y)
+  rw [← C_add, comp_C, comp_C, comp_C, ← C_add] at h
+  exact C_injective h
+
+theorem eval_zero (hP : IsLinearized P) : P.eval 0 = 0 := by
+  rw [← coeff_zero_eq_eval_zero, hP.coeff_zero]
 
 end IsLinearized
 
@@ -115,10 +143,10 @@ noncomputable def IsLinearized.toLinearMap [Algebra (ZMod 2) F] {P : F[X]} (hP :
     F →ₗ[ZMod 2] F :=
   AddMonoidHom.toZModLinearMap 2
     { toFun := P.eval
-      map_zero' := by
-        sorry
+      map_zero' := hP.eval_zero
       map_add' := by
-        sorry }
+        have := charP_two (F := F)
+        exact hP.eval_add }
 
 @[simp]
 theorem IsLinearized.toLinearMap_apply [Algebra (ZMod 2) F] {P : F[X]} (hP : IsLinearized P)
@@ -133,21 +161,64 @@ variable [Algebra (ZMod 2) F]
 noncomputable def subspacePoly {m : ℕ} (b : Fin m → F) : F[X] :=
   ∏ c : Fin m → ZMod 2, (X - C (∑ l, c l • b l))
 
-theorem subspacePoly_monic {m : ℕ} (b : Fin m → F) : (subspacePoly b).Monic := by
-  sorry
+theorem subspacePoly_monic {m : ℕ} (b : Fin m → F) : (subspacePoly b).Monic :=
+  monic_prod_of_monic _ _ fun _ _ => monic_X_sub_C _
 
 theorem natDegree_subspacePoly {m : ℕ} (b : Fin m → F) :
     (subspacePoly b).natDegree = 2 ^ m := by
-  sorry
+  rw [subspacePoly, natDegree_prod_of_monic _ _ fun _ _ => monic_X_sub_C _]
+  simp only [natDegree_X_sub_C, Finset.sum_const, Finset.card_univ, Fintype.card_fun, ZMod.card,
+    Fintype.card_fin, smul_eq_mul, mul_one]
+
+/-- The subspace polynomial of `Fin.snoc b v` is `P * P.comp (X - C v)` for `P` the subspace
+polynomial of `b`. -/
+theorem subspacePoly_snoc {m : ℕ} (b : Fin m → F) (v : F) :
+    subspacePoly (Fin.snoc b v : Fin (m + 1) → F) =
+      subspacePoly b * (subspacePoly b).comp (X - C v) := by
+  rw [subspacePoly, ← (Fin.snocEquiv fun _ => ZMod 2).prod_comp, Fintype.prod_prod_type]
+  have huniv : (Finset.univ : Finset (ZMod 2)) = {0, 1} := by decide
+  rw [huniv, Finset.prod_pair (by decide), subspacePoly, prod_comp]
+  congr 1
+  · refine Finset.prod_congr rfl fun c _ => ?_
+    simp [Fin.snocEquiv, Fin.sum_univ_castSucc]
+  · refine Finset.prod_congr rfl fun c _ => ?_
+    simp only [Fin.snocEquiv, Equiv.coe_fn_mk, Fin.sum_univ_castSucc, Fin.snoc_castSucc,
+      Fin.snoc_last, one_smul, sub_comp, X_comp, C_comp, C_add]
+    ring
 
 /-- Subspace polynomials are linearized [Ore1933]. -/
 theorem isLinearized_subspacePoly {m : ℕ} (b : Fin m → F) : IsLinearized (subspacePoly b) := by
-  sorry
+  have := charP_two (F := F)
+  induction m with
+  | zero =>
+    have : subspacePoly b = X := by simp [subspacePoly]
+    rw [this, ← pow_one X, ← pow_zero 2]
+    exact IsLinearized.X_pow_two_pow 0
+  | succ m ih =>
+    rw [← Fin.snoc_init_self b, subspacePoly_snoc]
+    set P := subspacePoly (Fin.init b)
+    have hP : IsLinearized P := ih _
+    have hcomp : P.comp (X - C (b (Fin.last m))) = P + C (P.eval (-b (Fin.last m))) := by
+      rw [sub_eq_add_neg, ← C_neg, hP.comp_add, comp_X, comp_C]
+    rw [hcomp, mul_add, ← pow_two, mul_comm]
+    exact hP.sq.add (hP.C_mul _)
 
 /-- The roots of the subspace polynomial of `b` are the `𝔽₂`-span of `b`. -/
 theorem eval_subspacePoly_eq_zero_iff {m : ℕ} (b : Fin m → F) (x : F) :
     (subspacePoly b).eval x = 0 ↔ x ∈ Submodule.span (ZMod 2) (Set.range b) := by
-  sorry
+  rw [Submodule.mem_span_range_iff_exists_fun, subspacePoly, eval_prod, Finset.prod_eq_zero_iff]
+  simp only [Finset.mem_univ, true_and, eval_sub, eval_X, eval_C]
+  exact exists_congr fun c => by rw [sub_eq_zero, eq_comm]
+
+/-- Every subspace of a finite-dimensional space is spanned by a family indexed by its
+dimension. -/
+theorem exists_span_range_eq [Finite F] (W : Submodule (ZMod 2) F) :
+    ∃ b : Fin (finrank (ZMod 2) W) → F, Submodule.span (ZMod 2) (Set.range b) = W := by
+  cases nonempty_fintype F
+  refine ⟨fun l => ((Module.finBasis (ZMod 2) W l : W) : F), ?_⟩
+  rw [show (fun l => ((Module.finBasis (ZMod 2) W l : W) : F)) =
+      W.subtype ∘ Module.finBasis (ZMod 2) W from rfl, Set.range_comp, ← Submodule.map_span,
+    (Module.finBasis (ZMod 2) W).span_eq, Submodule.map_top, Submodule.range_subtype]
 
 /-- **Image-subspace polynomial** [BenSassonKopparty2012, Lemma 3.7]: every `𝔽₂`-subspace `W` of a
 finite field `F` is the image of a monic linearized polynomial of degree
@@ -156,7 +227,87 @@ theorem exists_isLinearized_range_eq [Finite F] (W : Submodule (ZMod 2) F) :
     ∃ Q : F[X], IsLinearized Q ∧ Q.Monic ∧
       Q.natDegree = 2 ^ (finrank (ZMod 2) F - finrank (ZMod 2) W) ∧
       ∀ y, y ∈ W ↔ ∃ x, Q.eval x = y := by
-  sorry
+  classical
+  have := charP_two (F := F)
+  cases nonempty_fintype F
+  have hcard : Fintype.card F = 2 ^ finrank (ZMod 2) F := by
+    rw [Module.card_eq_pow_finrank (K := ZMod 2) (V := F), ZMod.card]
+  have hdn : finrank (ZMod 2) W ≤ finrank (ZMod 2) F := Submodule.finrank_le W
+  -- the kernel-subspace polynomial `P` of `W`
+  obtain ⟨b, hb⟩ := exists_span_range_eq W
+  have hP : IsLinearized (subspacePoly b) := isLinearized_subspacePoly b
+  have hkerP : LinearMap.ker hP.toLinearMap = W := by
+    ext x
+    rw [LinearMap.mem_ker, IsLinearized.toLinearMap_apply, eval_subspacePoly_eq_zero_iff, hb]
+  -- `Q` is the kernel-subspace polynomial of the image of `P`
+  have hK' : finrank (ZMod 2) (LinearMap.range hP.toLinearMap) =
+      finrank (ZMod 2) F - finrank (ZMod 2) W := by
+    have := LinearMap.finrank_range_add_finrank_ker hP.toLinearMap
+    rw [hkerP] at this
+    omega
+  obtain ⟨b', hb'⟩ := exists_span_range_eq (LinearMap.range hP.toLinearMap)
+  have hQ : IsLinearized (subspacePoly b') := isLinearized_subspacePoly b'
+  have hQdeg : (subspacePoly b').natDegree = 2 ^ (finrank (ZMod 2) F - finrank (ZMod 2) W) := by
+    rw [natDegree_subspacePoly, hK']
+  refine ⟨subspacePoly b', hQ, subspacePoly_monic b', hQdeg, ?_⟩
+  -- `Q ∘ P = X ^ q - X`
+  have hq1 : 1 < Fintype.card F := Fintype.one_lt_card
+  have hQP : (subspacePoly b').comp (subspacePoly b) = X ^ Fintype.card F - X := by
+    have hdeg : IsMonicOfDegree ((subspacePoly b').comp (subspacePoly b)) (Fintype.card F) := by
+      refine ⟨?_, (subspacePoly_monic b').comp (subspacePoly_monic b) ?_⟩
+      · rw [natDegree_comp, hQdeg, natDegree_subspacePoly, ← pow_add, hcard,
+          Nat.sub_add_cancel hdn]
+      · rw [natDegree_subspacePoly]
+        exact pow_ne_zero _ two_ne_zero
+    have hX : IsMonicOfDegree (X ^ Fintype.card F - X : F[X]) (Fintype.card F) := by
+      rw [isMonicOfDegree_iff]
+      refine ⟨(FiniteField.X_pow_card_sub_X_natDegree_eq F hq1).le, ?_⟩
+      have h1 : (1 : ℕ) ≠ Fintype.card F := hq1.ne
+      simp [coeff_X, h1]
+    have hlt := hdeg.natDegree_sub_lt hq1.ne_bot hX
+    rw [← sub_eq_zero]
+    refine eq_zero_of_natDegree_lt_card_of_eval_eq_zero _ (f := id) Function.injective_id
+      (fun x => ?_) hlt
+    have hPx : (subspacePoly b).eval x ∈ LinearMap.range hP.toLinearMap := ⟨x, rfl⟩
+    rw [← hb', ← eval_subspacePoly_eq_zero_iff] at hPx
+    simp [eval_comp, hPx, FiniteField.pow_card]
+  -- hence `P ∘ Q = X ^ q - X`
+  have hPQ : (subspacePoly b).comp (subspacePoly b') = X ^ Fintype.card F - X := by
+    have h1 : ((subspacePoly b).comp (subspacePoly b')).comp (subspacePoly b) =
+        (X ^ Fintype.card F - X : F[X]).comp (subspacePoly b) := by
+      rw [comp_assoc, hQP, hP.comp_sub, ← expand_eq_comp_X_pow,
+        FiniteField.Polynomial.expand_card, comp_X, sub_comp, X_pow_comp, X_comp]
+    have h2 : ((subspacePoly b).comp (subspacePoly b') - (X ^ Fintype.card F - X)).comp
+        (subspacePoly b) = 0 := by
+      rw [sub_comp, h1, sub_self]
+    rcases comp_eq_zero_iff.1 h2 with h | ⟨-, h⟩
+    · exact sub_eq_zero.1 h
+    · have := congrArg natDegree h
+      rw [natDegree_C, natDegree_subspacePoly] at this
+      exact absurd this (pow_ne_zero _ two_ne_zero)
+  have hrange : ∀ x, (subspacePoly b').eval x ∈ W := fun x => by
+    have h0 : (subspacePoly b).eval ((subspacePoly b').eval x) = 0 := by
+      rw [← eval_comp, hPQ]
+      simp [FiniteField.pow_card]
+    have := (eval_subspacePoly_eq_zero_iff b _).1 h0
+    rwa [hb] at this
+  -- the image of `Q` is all of `W`, by counting
+  have hkerQ : LinearMap.ker hQ.toLinearMap = LinearMap.range hP.toLinearMap := by
+    ext x
+    rw [LinearMap.mem_ker, IsLinearized.toLinearMap_apply, eval_subspacePoly_eq_zero_iff, hb']
+  have hle : LinearMap.range hQ.toLinearMap ≤ W := by
+    rintro _ ⟨x, rfl⟩
+    exact hrange x
+  have heq : LinearMap.range hQ.toLinearMap = W := by
+    refine Submodule.eq_of_le_of_finrank_eq hle ?_
+    have := LinearMap.finrank_range_add_finrank_ker hQ.toLinearMap
+    rw [hkerQ] at this
+    omega
+  intro y
+  refine ⟨fun hy => ?_, fun ⟨x, hx⟩ => hx ▸ hrange x⟩
+  rw [← heq] at hy
+  obtain ⟨x, rfl⟩ := hy
+  exact ⟨x, rfl⟩
 
 /-! ### Coefficient vectors indexed by `ZMod n` -/
 
@@ -169,20 +320,110 @@ def linearizedEval {n : ℕ} [NeZero n] (a : ZMod n → F) (x : F) : F :=
 `m % n`. -/
 theorem pow_two_pow_mod [Finite F] {n : ℕ} (hn : finrank (ZMod 2) F = n) (x : F) (m : ℕ) :
     x ^ 2 ^ m = x ^ 2 ^ (m % n) := by
-  sorry
+  cases nonempty_fintype F
+  have hcard : Fintype.card F = 2 ^ n := by
+    rw [Module.card_eq_pow_finrank (K := ZMod 2) (V := F), ZMod.card, hn]
+  have key : ∀ q r : ℕ, x ^ 2 ^ (n * q + r) = x ^ 2 ^ r := by
+    intro q r
+    induction q with
+    | zero => simp
+    | succ q ih =>
+      rw [show n * (q + 1) + r = (n * q + r) + n by ring, pow_add, pow_mul, ih, ← hcard,
+        FiniteField.pow_card]
+  conv_lhs => rw [← Nat.div_add_mod m n]
+  exact key _ _
 
 /-- Raising a linearized function to the power `2 ^ k` rotates its coefficient vector. -/
 theorem linearizedEval_pow_two_pow [Finite F] {n : ℕ} [NeZero n] (hn : finrank (ZMod 2) F = n)
     (a : ZMod n → F) (k : ℕ) (x : F) :
     linearizedEval a x ^ 2 ^ k = linearizedEval (fun j => a (j - (k : ZMod n)) ^ 2 ^ k) x := by
-  sorry
+  have := charP_two (F := F)
+  rw [linearizedEval, sum_pow_char_pow, linearizedEval]
+  refine Fintype.sum_equiv (Equiv.addRight (k : ZMod n)) _ _ fun j => ?_
+  rw [Equiv.coe_addRight, add_sub_cancel_right, mul_pow, ← pow_mul, ← pow_add,
+    pow_two_pow_mod hn x (j.val + k), ZMod.val_add, ZMod.val_natCast, Nat.add_mod_mod]
 
+omit [Algebra (ZMod 2) F] in
+theorem linearizedEval_sub_mul {n : ℕ} [NeZero n] (a b : ZMod n → F) (c x : F) :
+    linearizedEval (fun j => b j - c * a j) x = linearizedEval b x - c * linearizedEval a x := by
+  simp only [linearizedEval, sub_mul, Finset.sum_sub_distrib, Finset.mul_sum, mul_assoc]
+
+omit [Algebra (ZMod 2) F] in
 /-- **Root bound for linearized functions**: if the coefficients of `b` vanish from position `m`
 on and the function vanishes on at least `2 ^ m` points, then `b = 0`. -/
 theorem eq_zero_of_linearizedEval_eq_zero {n : ℕ} [NeZero n] {b : ZMod n → F} {m : ℕ}
     (hb : ∀ j, m ≤ j.val → b j = 0) (S : Finset F) (hS : 2 ^ m ≤ S.card)
     (h : ∀ x ∈ S, linearizedEval b x = 0) : b = 0 := by
-  sorry
+  classical
+  rcases Nat.eq_zero_or_pos m with rfl | hm
+  · funext j
+    exact hb j (Nat.zero_le _)
+  set p : F[X] := ∑ j, C (b j) * X ^ 2 ^ j.val with hp
+  have heval : ∀ x, p.eval x = linearizedEval b x := fun x => by
+    simp [hp, linearizedEval, eval_finsetSum]
+  have hdeg : p.natDegree < S.card := by
+    have : p.natDegree ≤ 2 ^ (m - 1) := by
+      refine natDegree_sum_le_of_forall_le _ _ fun j _ => ?_
+      by_cases hj : b j = 0
+      · simp [hj]
+      · have : j.val < m := not_le.1 fun h => hj (hb j h)
+        exact (natDegree_C_mul_X_pow_le _ _).trans (Nat.pow_le_pow_right two_pos (by omega))
+    calc p.natDegree ≤ 2 ^ (m - 1) := this
+      _ < 2 ^ m := Nat.pow_lt_pow_right (by norm_num) (by omega)
+      _ ≤ S.card := hS
+  have hp0 : p = 0 := by
+    refine eq_zero_of_natDegree_lt_card_of_eval_eq_zero p (f := ((↑) : S → F))
+      Subtype.val_injective (fun x => ?_) (by simpa using hdeg)
+    rw [heval]
+    exact h x x.2
+  funext j
+  have := congrArg (fun q => q.coeff (2 ^ j.val)) hp0
+  simp only [hp, finsetSum_coeff, coeff_C_mul_X_pow, coeff_zero] at this
+  rw [Finset.sum_eq_single j] at this
+  · simpa using this
+  · intro j' _ hj'
+    rw [ite_eq_right_iff]
+    intro h
+    exact absurd (ZMod.val_injective _ (Nat.pow_right_injective le_rfl h).symm) hj'
+  · simp
+
+/-- If every element `y` of a subspace `W` satisfies `y ^ 2 ^ k = c * y` with `0 < k < n`, then
+`W` embeds into the proper subfield fixed by the `k`-th power of Frobenius. -/
+theorem exists_subfield_card_le [Finite F] {n k : ℕ} (hn : finrank (ZMod 2) F = n) (hk0 : 0 < k)
+    (hkn : k < n) (W : Submodule (ZMod 2) F) (c : F) (h : ∀ y ∈ W, y ^ 2 ^ k = c * y) :
+    ∃ K : Subfield F, K ≠ ⊤ ∧ Nat.card W ≤ Nat.card K := by
+  classical
+  cases nonempty_fintype F
+  have := charP_two (F := F)
+  let K := RingHom.eqLocusField (iterateFrobenius F 2 k) (RingHom.id F)
+  have hmem : ∀ x, x ∈ K ↔ x ^ 2 ^ k = x := fun x => by
+    simp [K, RingHom.eqLocusField, iterateFrobenius_def]
+  refine ⟨K, fun hK => ?_, ?_⟩
+  · have hall : ∀ x : F, x ^ 2 ^ k = x := fun x => (hmem x).1 (hK ▸ Subfield.mem_top x)
+    have h1 : 1 < 2 ^ k := Nat.one_lt_two_pow hk0.ne'
+    have hcard : Fintype.card F = 2 ^ n := by
+      rw [Module.card_eq_pow_finrank (K := ZMod 2) (V := F), ZMod.card, hn]
+    refine FiniteField.X_pow_card_sub_X_ne_zero F h1
+      (eq_zero_of_natDegree_lt_card_of_eval_eq_zero _ (f := id) Function.injective_id
+        (fun x => by simp [hall x]) ?_)
+    rw [FiniteField.X_pow_card_sub_X_natDegree_eq F h1, hcard]
+    exact Nat.pow_lt_pow_right (by norm_num) hkn
+  · by_cases hW : ∃ y₀ ∈ W, y₀ ≠ 0
+    · obtain ⟨y₀, hy₀W, hy₀⟩ := hW
+      have hc : c ≠ 0 := by
+        rintro rfl
+        have := h y₀ hy₀W
+        rw [zero_mul] at this
+        exact hy₀ (pow_eq_zero_iff (pow_ne_zero _ two_ne_zero) |>.1 this)
+      let f : W → K := fun y => ⟨y / y₀, (hmem _).2 (by
+        rw [div_pow, h y y.2, h y₀ hy₀W, mul_div_mul_left _ _ hc])⟩
+      exact Nat.card_le_card_of_injective f fun y y' hyy' =>
+        Subtype.ext ((div_left_inj' hy₀).1 (congrArg Subtype.val hyy'))
+    · push Not at hW
+      have : Nat.card W = 1 := Nat.card_eq_one_iff_unique.2
+        ⟨⟨fun y y' => Subtype.ext (by rw [hW y y.2, hW y' y'.2])⟩, ⟨0⟩⟩
+      rw [this]
+      exact Nat.one_le_iff_ne_zero.2 Nat.card_pos.ne'
 
 /-- The zero pattern of the coefficient vector `a` of an image-subspace polynomial of a
 `d`-dimensional subspace that lies in no multiple of a proper subfield
@@ -204,6 +445,144 @@ theorem exists_coeffPattern [Finite F] {n s : ℕ} [NeZero n] (hn : finrank (ZMo
     (hs : ∀ K : Subfield F, K ≠ ⊤ → Nat.card K ≤ 2 ^ s) (W : Submodule (ZMod 2) F)
     (hW : 0 < finrank (ZMod 2) W) (hsW : s < finrank (ZMod 2) W) :
     ∃ a : ZMod n → F, (∀ x, linearizedEval a x ∈ W) ∧ CoeffPattern n (finrank (ZMod 2) W) a := by
-  sorry
+  classical
+  have := charP_two (F := F)
+  cases nonempty_fintype F
+  obtain ⟨Q, hQ, hQm, hQdeg, hQW⟩ := exists_isLinearized_range_eq W
+  obtain ⟨d, hd⟩ : ∃ d, finrank (ZMod 2) W = d := ⟨_, rfl⟩
+  rw [hd] at hQdeg hW hsW ⊢
+  rw [hn] at hQdeg
+  have hdn : d ≤ n := hd ▸ hn ▸ Submodule.finrank_le W
+  -- the coefficient vector of `Q`
+  let a : ZMod n → F := fun j => Q.coeff (2 ^ j.val)
+  have hQa : ∀ x, Q.eval x = linearizedEval a x := by
+    have hpoly : Q = ∑ j : ZMod n, C (a j) * X ^ 2 ^ j.val := by
+      ext i
+      rw [finsetSum_coeff]
+      simp only [coeff_C_mul_X_pow]
+      by_cases hi : ∃ e < n, i = 2 ^ e
+      · obtain ⟨e, he, rfl⟩ := hi
+        rw [Finset.sum_eq_single (e : ZMod n)]
+        · simp [a, ZMod.val_cast_of_lt he]
+        · intro j _ hj
+          rw [ite_eq_right_iff]
+          intro h
+          refine absurd ?_ hj
+          rw [Nat.pow_right_injective le_rfl h, ZMod.natCast_zmod_val]
+        · simp
+      · push Not at hi
+        rw [Finset.sum_eq_zero fun j _ =>
+          ite_eq_right_iff.2 fun h => absurd h (hi j.val (ZMod.val_lt j))]
+        by_contra hne
+        obtain ⟨e, rfl⟩ := hQ i (Polynomial.mem_support_iff.2 hne)
+        have hle := le_natDegree_of_ne_zero hne
+        rw [hQdeg] at hle
+        exact hi e (lt_of_le_of_lt ((Nat.pow_le_pow_iff_right (by norm_num)).1 hle) (by omega)) rfl
+    intro x
+    conv_lhs => rw [hpoly]
+    simp [linearizedEval, eval_finsetSum]
+  have hlead : a ((n - d : ℕ) : ZMod n) = 1 := by
+    simp only [a, ZMod.val_cast_of_lt (show n - d < n by omega)]
+    rw [← hQdeg]
+    exact hQm
+  have hcan : ∀ c, 1 ≤ c → c < d → a ((n - d + c : ℕ) : ZMod n) = 0 := by
+    intro c hc1 hcd
+    simp only [a, ZMod.val_cast_of_lt (show n - d + c < n by omega)]
+    apply coeff_eq_zero_of_natDegree_lt
+    rw [hQdeg]
+    exact Nat.pow_lt_pow_right (by norm_num) (by omega)
+  -- the kernel of `Q` has `2 ^ (n - d)` elements
+  set S : Finset F := Finset.univ.filter fun x => Q.eval x = 0 with hSdef
+  have hScard : S.card = 2 ^ (n - d) := by
+    have hrange : LinearMap.range hQ.toLinearMap = W := by
+      ext y
+      rw [LinearMap.mem_range, hQW y]
+      rfl
+    have hker : finrank (ZMod 2) (LinearMap.ker hQ.toLinearMap) = n - d := by
+      have := LinearMap.finrank_range_add_finrank_ker hQ.toLinearMap
+      rw [hrange, hd, hn] at this
+      omega
+    have h1 := Module.card_eq_pow_finrank (K := ZMod 2) (V := LinearMap.ker hQ.toLinearMap)
+    rw [ZMod.card, hker] at h1
+    rw [← h1, hSdef, ← Fintype.card_subtype]
+    exact Fintype.card_congr (Equiv.subtypeEquivRight fun x => by simp)
+  have hSzero : ∀ x ∈ S, linearizedEval a x = 0 := fun x hx => by
+    rw [← hQa]
+    exact (Finset.mem_filter.1 hx).2
+  have hmemW : ∀ x, linearizedEval a x ∈ W := fun x => by
+    rw [← hQa]
+    exact (hQW _).2 ⟨x, rfl⟩
+  refine ⟨a, hmemW, ⟨hdn, by rw [hlead]; exact one_ne_zero, hcan, ?_, ?_⟩⟩
+  · -- the constant coefficient is nonzero
+    intro h0
+    set b : ZMod n → F := fun j => a (j - ((n - 1 : ℕ) : ZMod n)) ^ 2 ^ (n - 1)
+    have hshift : ∀ j : ZMod n, j - ((n - 1 : ℕ) : ZMod n) = j + 1 := fun j => by
+      rw [Nat.cast_sub NeZero.one_le, ZMod.natCast_self, Nat.cast_one, zero_sub, sub_neg_eq_add]
+    have hb : ∀ j : ZMod n, n - d ≤ j.val → b j = 0 := by
+      intro j hj
+      simp only [b, hshift]
+      have hjn := ZMod.val_lt j
+      rcases Nat.lt_or_ge (j.val + 1) n with hlt | hge
+      · have : j + 1 = ((n - d + (j.val + 1 - (n - d)) : ℕ) : ZMod n) := by
+          rw [show n - d + (j.val + 1 - (n - d)) = j.val + 1 by omega, Nat.cast_add,
+            ZMod.natCast_zmod_val, Nat.cast_one]
+        rw [this, hcan _ (by omega) (by omega)]
+        exact zero_pow (pow_ne_zero _ two_ne_zero)
+      · have : j + 1 = 0 := by
+          rw [← ZMod.natCast_zmod_val j, ← Nat.cast_one, ← Nat.cast_add,
+            show j.val + 1 = n by omega, ZMod.natCast_self]
+        rw [this, h0]
+        exact zero_pow (pow_ne_zero _ two_ne_zero)
+    have hb0 := eq_zero_of_linearizedEval_eq_zero hb S hScard.ge fun x hx => by
+      rw [← linearizedEval_pow_two_pow hn, hSzero x hx]
+      exact zero_pow (pow_ne_zero _ two_ne_zero)
+    have := congrFun hb0 (((n - d : ℕ) : ZMod n) + ((n - 1 : ℕ) : ZMod n))
+    simp only [b, add_sub_cancel_right, hlead, one_pow, Pi.zero_apply] at this
+    exact one_ne_zero this
+  · -- the gap property
+    intro ρ hρ1 hρd
+    by_contra hall
+    push Not at hall
+    set k := n - d + 1 - ρ with hk
+    set b : ZMod n → F := fun j => a (j - (k : ZMod n)) ^ 2 ^ k
+    set c₀ := b ((n - d : ℕ) : ZMod n)
+    have hb : ∀ j : ZMod n, n - d ≤ j.val → b j - c₀ * a j = 0 := by
+      intro j hj
+      have hjn := ZMod.val_lt j
+      rcases Nat.eq_or_lt_of_le hj with heq | hlt
+      · have : j = ((n - d : ℕ) : ZMod n) := by rw [heq, ZMod.natCast_zmod_val]
+        rw [this, hlead, mul_one, sub_self]
+      · have hj' : j = ((n - d + (j.val - (n - d)) : ℕ) : ZMod n) := by
+          rw [show n - d + (j.val - (n - d)) = j.val by omega, ZMod.natCast_zmod_val]
+        have haj : a j = 0 := by
+          rw [hj']
+          exact hcan _ (by omega) (by omega)
+        have hbj : b j = 0 := by
+          simp only [b]
+          have : j - (k : ZMod n) = ((ρ + (j.val - (n - d) - 1) : ℕ) : ZMod n) := by
+            rw [sub_eq_iff_eq_add, ← Nat.cast_add]
+            conv_lhs => rw [← ZMod.natCast_zmod_val j]
+            congr 1
+            omega
+          rw [this, hall _ (by omega)]
+          exact zero_pow (pow_ne_zero _ two_ne_zero)
+        rw [haj, hbj, mul_zero, sub_zero]
+    have hb0 := eq_zero_of_linearizedEval_eq_zero (b := fun j => b j - c₀ * a j) hb S hScard.ge
+      fun x hx => by
+        rw [linearizedEval_sub_mul, hSzero x hx, mul_zero, sub_zero,
+          ← linearizedEval_pow_two_pow hn, hSzero x hx]
+        exact zero_pow (pow_ne_zero _ two_ne_zero)
+    have hW' : ∀ y ∈ W, y ^ 2 ^ k = c₀ * y := by
+      intro y hy
+      obtain ⟨x, rfl⟩ := (hQW y).1 hy
+      have := congrArg (fun f => linearizedEval f x) hb0
+      simp only [linearizedEval_sub_mul] at this
+      rw [hQa, linearizedEval_pow_two_pow hn]
+      simpa [linearizedEval, sub_eq_zero] using this
+    obtain ⟨K, hK, hcard⟩ := exists_subfield_card_le hn (by omega) (by omega) W c₀ hW'
+    have hWcard : Nat.card W = 2 ^ d := by
+      rw [Module.natCard_eq_pow_finrank (K := ZMod 2) (V := W), Nat.card_zmod, hd]
+    have := (hWcard ▸ hcard).trans (hs K hK)
+    exact absurd ((Nat.pow_le_pow_iff_right (by norm_num)).1 this) (by omega)
 
 end Cslib.FiniteField
