@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Logics.Propositional.CNF.ExactlyOne
+public import Complexity.Logics.Propositional.CNF
 public import Mathlib.Data.Fintype.Pi
 
 /-!
@@ -37,9 +37,6 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 * `Cslib.Logic.PL.CNF.modelCount_eq_card_filter`: counting satisfying assignments through a map.
 * `Cslib.Logic.PL.CNF.modelCount_relabel`: injective relabelling preserves the count.
 * `Cslib.Logic.PL.CNF.modelCount_pos_iff`, `Cslib.Logic.PL.CNF.modelCount_eq_one_iff`.
-* `Cslib.Logic.PL.CNF.mem_vars`, `Cslib.Logic.PL.CNF.vars_relabel`,
-  `Cslib.Logic.PL.Clause.fst_mem_of_mem_imp`, `Cslib.Logic.PL.CNF.fst_mem_of_mem_exactlyOne`, …:
-  the variables of formulas and of the usual clause constructions.
 
 ## References
 
@@ -50,56 +47,7 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 
 namespace Cslib.Logic.PL
 
-variable {V W : Type*}
-
-/-- A variable of a formula is the variable of a literal of one of its clauses. -/
-theorem CNF.mem_vars {φ : CNF V} {v : V} : v ∈ φ.vars ↔ ∃ c ∈ φ, ∃ b, (v, b) ∈ c := by
-  simp only [CNF.vars, List.mem_map, List.mem_flatten, Prod.exists]
-  constructor
-  · rintro ⟨_, b, ⟨c, hc, hl⟩, rfl⟩
-    exact ⟨c, hc, b, hl⟩
-  · rintro ⟨c, hc, b, hl⟩
-    exact ⟨v, b, ⟨c, hc, hl⟩, rfl⟩
-
-/-- Relabelling renames the variables, occurrence by occurrence. -/
-theorem CNF.vars_relabel (f : V → W) (φ : CNF V) : (φ.relabel f).vars = φ.vars.map f := by
-  simp [CNF.vars, CNF.relabel, Clause.relabel, List.map_flatten, Function.comp_def]
-
-/-- The variables of an implication are its hypotheses and its conclusion. -/
-theorem Clause.fst_mem_of_mem_impLits {hyps : List (Literal V)} {concl : V} {l : Literal V}
-    (hl : l ∈ Clause.impLits hyps concl) : (∃ h ∈ hyps, l.1 = h.1) ∨ l.1 = concl := by
-  simp only [Clause.impLits, List.mem_append, List.mem_map, List.mem_singleton] at hl
-  rcases hl with ⟨h, hh, rfl⟩ | rfl
-  · exact Or.inl ⟨h, hh, rfl⟩
-  · exact Or.inr rfl
-
-/-- The variables of an implication are its hypotheses and its conclusion. -/
-theorem Clause.fst_mem_of_mem_imp {hyps : List V} {concl : V} {l : Literal V}
-    (hl : l ∈ Clause.imp hyps concl) : l.1 ∈ hyps ∨ l.1 = concl := by
-  rcases Clause.fst_mem_of_mem_impLits hl with ⟨h, hh, he⟩ | he
-  · obtain ⟨v, hv, rfl⟩ := List.mem_map.1 hh
-    exact Or.inl (he ▸ hv)
-  · exact Or.inr he
-
-variable [DecidableEq V]
-
-/-- The variables of `CNF.atMostOne vs` are among `vs`. -/
-theorem CNF.fst_mem_of_mem_atMostOne {vs : List V} {c : Clause V} (hc : c ∈ CNF.atMostOne vs)
-    {l : Literal V} (hl : l ∈ c) : l.1 ∈ vs := by
-  simp only [CNF.atMostOne, List.mem_flatMap, List.mem_map, List.mem_filter] at hc
-  obtain ⟨x, hx, y, ⟨hy, -⟩, rfl⟩ := hc
-  simp only [List.mem_cons, List.not_mem_nil, or_false] at hl
-  rcases hl with rfl | rfl
-  exacts [hx, hy]
-
-/-- The variables of `CNF.exactlyOne vs` are among `vs`. -/
-theorem CNF.fst_mem_of_mem_exactlyOne {vs : List V} {c : Clause V}
-    (hc : c ∈ CNF.exactlyOne vs) {l : Literal V} (hl : l ∈ c) : l.1 ∈ vs := by
-  rcases List.mem_append.1 hc with hc | hc
-  · obtain rfl := List.mem_singleton.1 hc
-    obtain ⟨v, hv, rfl⟩ := List.mem_map.1 hl
-    exact hv
-  · exact CNF.fst_mem_of_mem_atMostOne hc hl
+variable {V W : Type*} [DecidableEq V]
 
 /-- The assignment of all variables extending an assignment `τ` of the variables of `φ` by
 `false`. -/

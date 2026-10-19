@@ -29,6 +29,8 @@ twice. The quadratic size is the same as for unordered pairs, and the semantics
 * `Cslib.Logic.PL.CNF.eval_exactlyOne`: the semantics.
 * `Cslib.Logic.PL.CNF.eq_true_iff_of_eval_exactlyOne`: once one variable of the list is known to
   be true, every variable of the list is true exactly when it is that one.
+* `Cslib.Logic.PL.CNF.fst_mem_of_mem_exactlyOne`: the variables of the constraints are those of
+  the list.
 
 ## References
 
@@ -76,6 +78,24 @@ theorem CNF.eval_atMostOne (σ : V → Bool) (vs : List V) :
       exact hne (h y hy hσx (by simpa using hσy)).symm
     · left
       simpa using hσx
+
+/-- The variables of `CNF.atMostOne vs` are among `vs`. -/
+theorem CNF.fst_mem_of_mem_atMostOne {vs : List V} {c : Clause V} (hc : c ∈ CNF.atMostOne vs)
+    {l : Literal V} (hl : l ∈ c) : l.1 ∈ vs := by
+  simp only [CNF.atMostOne, List.mem_flatMap, List.mem_map, List.mem_filter] at hc
+  obtain ⟨x, hx, y, ⟨hy, -⟩, rfl⟩ := hc
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hl
+  rcases hl with rfl | rfl
+  exacts [hx, hy]
+
+/-- The variables of `CNF.exactlyOne vs` are among `vs`. -/
+theorem CNF.fst_mem_of_mem_exactlyOne {vs : List V} {c : Clause V}
+    (hc : c ∈ CNF.exactlyOne vs) {l : Literal V} (hl : l ∈ c) : l.1 ∈ vs := by
+  rcases List.mem_append.1 hc with hc | hc
+  · obtain rfl := List.mem_singleton.1 hc
+    obtain ⟨v, hv, rfl⟩ := List.mem_map.1 hl
+    exact hv
+  · exact CNF.fst_mem_of_mem_atMostOne hc hl
 
 theorem CNF.eval_exactlyOne (σ : V → Bool) (vs : List V) :
     (CNF.exactlyOne vs).eval σ = true ↔

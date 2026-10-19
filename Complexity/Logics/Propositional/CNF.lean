@@ -43,6 +43,8 @@ says that this preserves satisfiability.
 * `Cslib.Logic.PL.CNF.eval_eq_true_iff`, `Cslib.Logic.PL.Clause.eval_eq_true_iff`: the semantics
   as quantifiers over clauses and literals.
 * `Cslib.Logic.PL.CNF.eval_congr`: a formula only depends on its variables.
+* `Cslib.Logic.PL.CNF.mem_vars`, `Cslib.Logic.PL.CNF.vars_relabel`,
+  `Cslib.Logic.PL.Clause.fst_mem_of_mem_imp`: the variables of formulas and implications.
 * `Cslib.Logic.PL.CNF.satisfiable_relabel`: injective relabelling preserves satisfiability.
 
 ## References
@@ -126,6 +128,15 @@ def CNF.vars (φ : CNF V) : List V := φ.flatten.map Prod.fst
 theorem CNF.length_vars (φ : CNF V) : φ.vars.length = (φ.map List.length).sum := by
   simp [CNF.vars, List.length_flatten, Function.comp_def]
 
+/-- A variable of a formula is the variable of a literal of one of its clauses. -/
+theorem CNF.mem_vars {φ : CNF V} {v : V} : v ∈ φ.vars ↔ ∃ c ∈ φ, ∃ b, (v, b) ∈ c := by
+  simp only [CNF.vars, List.mem_map, List.mem_flatten, Prod.exists]
+  constructor
+  · rintro ⟨_, b, ⟨c, hc, hl⟩, rfl⟩
+    exact ⟨c, hc, b, hl⟩
+  · rintro ⟨c, hc, b, hl⟩
+    exact ⟨v, b, ⟨c, hc, hl⟩, rfl⟩
+
 /-- A formula only depends on the values of its variables. -/
 theorem CNF.eval_congr {σ τ : V → Bool} {φ : CNF V} (h : ∀ v ∈ φ.vars, σ v = τ v) :
     φ.eval σ = φ.eval τ := by
@@ -172,6 +183,22 @@ def Clause.imp (hyps : List V) (concl : V) : Clause V :=
     (Clause.imp hyps concl).eval σ = true ↔ ((∀ h ∈ hyps, σ h = true) → σ concl = true) := by
   simp [Clause.imp]
 
+/-- The variables of an implication are its hypotheses and its conclusion. -/
+theorem Clause.fst_mem_of_mem_impLits {hyps : List (Literal V)} {concl : V} {l : Literal V}
+    (hl : l ∈ Clause.impLits hyps concl) : (∃ h ∈ hyps, l.1 = h.1) ∨ l.1 = concl := by
+  simp only [Clause.impLits, List.mem_append, List.mem_map, List.mem_singleton] at hl
+  rcases hl with ⟨h, hh, rfl⟩ | rfl
+  · exact Or.inl ⟨h, hh, rfl⟩
+  · exact Or.inr rfl
+
+/-- The variables of an implication are its hypotheses and its conclusion. -/
+theorem Clause.fst_mem_of_mem_imp {hyps : List V} {concl : V} {l : Literal V}
+    (hl : l ∈ Clause.imp hyps concl) : l.1 ∈ hyps ∨ l.1 = concl := by
+  rcases Clause.fst_mem_of_mem_impLits hl with ⟨h, hh, he⟩ | he
+  · obtain ⟨v, hv, rfl⟩ := List.mem_map.1 hh
+    exact Or.inl (he ▸ hv)
+  · exact Or.inr he
+
 /-! ### Relabelling -/
 
 /-- Rename the variables of a clause along `f`. -/
@@ -199,6 +226,10 @@ def CNF.relabel (f : V → W) (φ : CNF V) : CNF W := φ.map (Clause.relabel f)
 
 @[simp] theorem Clause.length_relabel (f : V → W) (c : Clause V) :
     (c.relabel f).length = c.length := List.length_map _
+
+/-- Relabelling renames the variables, occurrence by occurrence. -/
+theorem CNF.vars_relabel (f : V → W) (φ : CNF V) : (φ.relabel f).vars = φ.vars.map f := by
+  simp [CNF.vars, CNF.relabel, Clause.relabel, List.map_flatten, Function.comp_def]
 
 /-- Relabelling along an injective map preserves satisfiability. An assignment of the new
 variables restricts to the old ones, and an assignment of the old variables extends along `f`. -/
