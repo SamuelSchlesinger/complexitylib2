@@ -33,8 +33,7 @@ example : ([[(0, true), (1, true)]] : CNF ℕ) ∉ USAT := by
   rintro ⟨σ, -, h⟩
   have h₀ := h (fun v => v == 0) rfl 0 (by simp [CNF.vars])
   have h₁ := h (fun v => v == 1) rfl 0 (by simp [CNF.vars])
-  simp at h₀ h₁
-  exact absurd (h₀.symm.trans h₁) (by decide)
+  exact absurd (h₀.trans h₁.symm) (by decide)
 
 /-- `x₀ ∧ ¬x₀` is a no-instance of `PromiseUSAT`. -/
 example : ([[(0, true)], [(0, false)]] : CNF ℕ) ∈ PromiseUSAT.no := by
