@@ -135,6 +135,7 @@ import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.RandomOracle
+import ComplexityTests.RationalHitting
 import ComplexityTests.Relativization
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing

@@ -30,7 +30,9 @@ import Complexity.Computability.Circuit.Simulation
 A formula over a signature is a tree of operation symbols with inputs at its leaves, that is, a
 circuit in which every gate is read once. It is evaluated under an interpretation like a circuit
 (`Formula.eval`). Formulas are the free monad on the polynomial functor of the signature; a
-dedicated inductive type gives them readable constructors and structural induction.
+dedicated inductive type gives them readable constructors and structural induction. Equality of
+formulas is decidable, constructively, when equality of operation symbols is
+(`Formula.decidableEq`), so concrete formulas can be compared by `decide`.
 
 The *leaf size* `Formula.leafSize` counts the input leaves, the measure of formula lower bounds
 [Jukna, Chapter 6][Jukna2012]. Nullary operations, such as constants, are not counted: constants
@@ -106,6 +108,19 @@ inductive Formula (σ : Signature.{v}) (n : ℕ) : Type v where
 namespace Formula
 
 variable {σ : Signature.{v}} {n : ℕ} {U V : Type*}
+
+/-- Formulas have decidable equality when operation symbols do: compare the operations at the
+roots, then the arguments pointwise. -/
+instance decidableEq [DecidableEq σ.Op] : DecidableEq (Formula σ n)
+  | input i, input j => decidable_of_iff (i = j) (by simp)
+  | input _, gate _ _ => isFalse fun h => by cases h
+  | gate _ _, input _ => isFalse fun h => by cases h
+  | gate op args, gate op' args' =>
+    if hop : op = op' then by
+      subst hop
+      letI (j : Fin (σ.Arity op)) : Decidable (args j = args' j) := decidableEq (args j) (args' j)
+      exact decidable_of_iff (∀ j, args j = args' j) (by simp [funext_iff])
+    else isFalse fun h => by cases h; exact hop rfl
 
 /-- Evaluate a formula under an interpretation. -/
 def eval (F : Formula σ n) (I : Interpretation σ U) (x : Fin n → U) : U :=
