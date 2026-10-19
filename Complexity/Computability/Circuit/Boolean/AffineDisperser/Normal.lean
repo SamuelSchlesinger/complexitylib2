@@ -7,8 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Reduction
-public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Reparameterisation
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Rewiring
 
 /-!
@@ -16,11 +15,11 @@ public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Rewiring
 
 The six preliminary reductions of [Mishra and Santhanam, Section 4.1][MishraSanthanam2026], each
 a step of gate elimination (`State.Step`) from a state whose configuration it names. Every
-reduction but the deletions is a `State.Reduction`, so its accounting is that of
-`State.Reduction.step`.
+reduction but the deletion (D4) of `State.Valid.unit_delete` is a `State.Reduction`, so its
+accounting is that of `State.Reduction.step` or `State.Reduction.step_of_delete`.
 
 * Case 1, `State.DeletionAvailable`: one of the deletions (D1)–(D4) applies
-  (`State.Valid.step_of_deletion`).
+  (`State.Valid.step_of_deletion`, in `AffineDisperser.Deletion`).
 * Case 2, `State.AndOnIsolated`: an AND-type gate reads an unpaired isolated parameter `z` and
   another parameter `w`; fixing `w` makes the gate constant and `z` unused
   (`State.Valid.step_of_andOnIsolated`).
@@ -43,14 +42,14 @@ AND-type gate.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.AffineDisperser.State.DeletionAvailable`, `State.AndOnIsolated`,
-  `State.DegeneratePair`, `State.PartnersShareChild`, `State.PairInSystem`, `State.AndOnPair`:
-  the configurations of the preliminary reductions.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.AndOnIsolated`, `State.DegeneratePair`,
+  `State.PartnersShareChild`, `State.PairInSystem`, `State.AndOnPair`: the configurations of
+  Cases 2 to 6.
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Normal`: normal states.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_of_deletion`, `step_of_andOnIsolated`,
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_of_andOnIsolated`,
   `step_of_degeneratePair`, `step_of_partnersShareChild`, `step_of_pairInSystem`,
   `step_of_andOnPair`: the preliminary reductions are steps of gate elimination.
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_or_normal`: a state where no affine
@@ -72,140 +71,6 @@ namespace State
 
 variable {n : ℕ} {f : BooleanFunction n}
 
-theorem children_eq_singleton {S : State n} {p : ℕ} {H : ℕ ⊕ ℕ} (h1 : S.deg p = 1)
-    (hH : H ∈ S.children p) : S.children p = {H} := by
-  obtain ⟨a, ha⟩ := Finset.card_eq_one.1 h1
-  rw [ha] at hH ⊢; rw [Finset.mem_singleton.1 hH]
-
-/-! ### Case 1: deletions -/
-
-/-- The configuration of Case 1: one of the deletions (D1)–(D4) applies. An equation has at most
-two terms (D3); a gate computes, on the solutions of the affine system, a constant or a literal of
-one of its inputs (D1); a gate other than the output has no children (D2); or an unpaired
-parameter has an equation as its only child (D4). -/
-def DeletionAvailable (S : State n) : Prop :=
-  (∃ e ∈ S.eqns, (S.eqn e).terms.card ≤ 2) ∨
-  (∃ J ∈ S.gates, ∃ ℓ : Lit, (∀ t, ℓ.Reads t → (S.gate J).Reads t) ∧
-    ∀ val, S.EqnsHold val → (S.gate J).eval val = ℓ.eval val) ∨
-  (∃ J ∈ S.gates, (∀ K ∈ S.gates, ¬ (S.gate K).Reads J) ∧ ¬ S.out.Reads J) ∨
-  (∃ x ∈ S.unpaired, ∃ e, S.children x = {.inr e})
-
-/-- In a valid state with `d < a`, the output is not a literal of a parameter, by
-Lemma 2.3. -/
-theorem Valid.not_out_reads_param {S : State n} {d : ℕ} (hS : S.Valid f)
-    (hf : IsAffineDisperser f d) (ha : d < S.a) {x : ℕ} (hx : x ∈ S.params) :
-    ¬ S.out.Reads x := by
-  intro hr
-  refine hS.out_not_affine hf ha S.out.neg (Finset.singleton_subset_iff.2 hx) fun val _ => ?_
-  rw [Finset.sum_singleton]
-  unfold Lit.eval
-  unfold Lit.Reads at hr
-  rw [hr, Arg.eval_node]
-  cases S.out.neg <;> cases val x <;> rfl
-
-/-- (D4): an unpaired parameter `x` whose only child is the equation `e` is exchanged with an
-auxiliary variable depending on it and then deleted with `e`; this keeps `a` and lowers `W`. -/
-theorem Valid.unit_delete {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
-    (ha : d < S.a) {x e : ℕ} (hx : x ∈ S.unpaired) (hc : S.children x = {.inr e}) :
-    ∃ S' : State n, S'.Valid f ∧ S'.m = S.m ∧ S'.s + 1 = S.s ∧ S'.a = S.a ∧ S'.q = S.q ∧
-      S'.W + 1 ≤ S.W := by
-  obtain ⟨hxp, hxu⟩ := mem_unpaired.1 hx
-  have hex : Sum.inr e ∈ S.children x := by rw [hc]; exact Finset.mem_singleton_self _
-  obtain ⟨he, hxe⟩ := (SemiCircuit.inr_mem_children _).1 hex
-  obtain ⟨Q, hQ, c, T, hT, hxT⟩ := SemiCircuit.exists_affineIn_of_mem_terms hS.wf hxp he hxe
-  have hsw : S.SwapOK x Q c T := ⟨hxp, hxu, hQ, hT, hxT⟩
-  have hS₁ := hS.swap hsw
-  have hQp : Q ∉ S.params := fun hp => hS.wf.notMem_aux_of_mem_params hp hQ
-  have hQx : Q ≠ x := fun he' => hQp (he' ▸ hxp)
-  have hdrop : (S.swap x Q c T).DropEqnOK e x := by
-    refine ⟨he, Finset.mem_insert_self _ _, hxe, fun e' he' hee hxe' => ?_, fun K hK hr => ?_,
-      hS.not_out_reads_param hf ha hxp⟩
-    · have : Sum.inr e' ∈ S.children x := (SemiCircuit.inr_mem_children _).2 ⟨he', hxe'⟩
-      rw [hc, Finset.mem_singleton] at this
-      exact hee (Sum.inr.inj this)
-    · have : Sum.inl K ∈ S.children x := (SemiCircuit.inl_mem_children _).2 ⟨hK, hr⟩
-      rw [hc] at this
-      simp at this
-  have hS' := hS₁.dropEqn hdrop
-  set S' := (S.swap x Q c T).dropEqn e x
-  have hparams : S'.params = insert Q (S.params.erase x) := rfl
-  have hpairs : S'.pairs = S.pairs := rfl
-  have hsize : S'.size + 1 = S.size := dropEqn_size hdrop
-  have hm : S'.m = S.m := by
-    simp only [m, hparams]
-    rw [Finset.card_insert_of_notMem fun h => hQp (Finset.mem_of_mem_erase h),
-      Finset.card_erase_add_one hxp]
-  have hq : S'.q = S.q := by simp [q, hpairs]
-  have ha' : S'.a = S.a := by simp only [a, hm, hq]
-  have hchildren : ∀ z, S'.children z = (S.children z).erase (.inr e) := fun z => by
-    rw [dropEqn_children, swap_children]
-  -- the potential
-  have hN : S.params ⊆ insert Q S.params := Finset.subset_insert _ _
-  have hN' : S'.params ⊆ insert Q S.params := by
-    rw [hparams]; exact Finset.insert_subset_insert _ (Finset.erase_subset _ _)
-  have hpt : ∀ z ∈ insert Q S.params, S'.wt z + (if z = x then 6 else 0) ≤
-      S.wt z + (if z = Q then 7 else 0) := by
-    intro z _
-    by_cases hzx : z = x
-    · subst hzx
-      have h1 : S'.wt z = 0 := wt_of_notMem_params (by
-        rw [hparams, Finset.mem_insert, Finset.mem_erase]; tauto)
-      have h2 : S.wt z = 6 := by
-        rw [wt_of_mem hx, SemiCircuit.deg, hc, Finset.card_singleton, weight_one]
-      rw [h1, h2, ite_eq_left rfl, ite_eq_right hQx.symm]
-    · rw [ite_eq_right hzx]
-      by_cases hzQ : z = Q
-      · subst hzQ
-        rw [ite_eq_left rfl, wt_of_notMem_params hQp]
-        have := S'.wt_le_seven z
-        omega
-      · rw [ite_eq_right hzQ]
-        by_cases hu : z ∈ S'.unpaired
-        · obtain ⟨hzp, hzu⟩ := mem_unpaired.1 hu
-          rw [hparams, Finset.mem_insert, Finset.mem_erase] at hzp
-          have hzS : z ∈ S.unpaired := mem_unpaired.2 ⟨(hzp.resolve_left hzQ).2,
-            (paired_congr hpairs).not.1 hzu⟩
-          rw [wt_of_mem hu, wt_of_mem hzS, add_zero]
-          refine weight_mono (Finset.card_le_card ?_)
-          rw [hchildren]; exact Finset.erase_subset _ _
-        · rw [wt_of_notMem hu]; omega
-  have hW := W_add_le hN hN' _ _ hpt
-  rw [sum_ite_eq_of_mem (Finset.mem_insert_of_mem hxp),
-    sum_ite_eq_of_mem (Finset.mem_insert_self _ _)] at hW
-  have hs : S'.s + 1 = S.s := hsize
-  exact ⟨S', hS', hm, hs, ha', hq, by omega⟩
-/-- (D4) as a step of gate elimination. -/
-theorem Valid.step_unit {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
-    (ha : d < S.a) {x e : ℕ} (hx : x ∈ S.unpaired) (hc : S.children x = {.inr e}) :
-    ∃ S', Step f S S' := by
-  obtain ⟨S', hS', hm, hs, ha', -, hW⟩ := hS.unit_delete hf ha hx hc
-  exact ⟨S', hS', by omega, by omega, by omega, by omega⟩
-
-/-- A gate has at most two parameters as parents. -/
-theorem card_filter_inl_mem_children_le (S : State n) (J : ℕ) :
-    (S.params.filter fun u => Sum.inl J ∈ S.children u).card ≤ 2 :=
-  (Finset.card_le_card fun _ hu => Finset.mem_filter.2 ⟨(Finset.mem_filter.1 hu).1,
-    ((SemiCircuit.inl_mem_children _).1 (Finset.mem_filter.1 hu).2).2⟩).trans
-    ((S.gate J).card_filter_reads_le _)
-
-/-- **Case 1** of the preliminary reductions: a deletion lowers `s`, keeps `a` and does not
-increase `W`. -/
-theorem Valid.step_of_deletion {S : State n} {d : ℕ} (hS : S.Valid f)
-    (hf : IsAffineDisperser f d) (ha : d < S.a) (h : S.DeletionAvailable) :
-    ∃ S', Step f S S' := by
-  rcases h with ⟨e, he, hcard⟩ | ⟨J, hJ, ℓ, hreads, hval⟩ | ⟨J, hJ, hun, hout⟩ | ⟨x, hx, e, hc⟩
-  · obtain ⟨S', h⟩ := hS.exists_reduction_delete (N := .inr e) ⟨he, hcard⟩
-    exact ⟨S', h.step_of_delete hS ((Finset.card_le_card fun u hu =>
-      ((SemiCircuit.inr_mem_children _).1 (Finset.mem_filter.1 hu).2).2).trans hcard)⟩
-  · exact ⟨_, (hS.reduction_deleteGate ⟨hJ, hreads, Or.inl hval⟩
-      fun _ _ => List.mem_singleton_self _).step_of_delete hS
-      (S.card_filter_inl_mem_children_le J)⟩
-  · exact ⟨_, ((hS.reduction_deleteGate (ℓ := Lit.const false) (T := [])
-      ⟨hJ, fun t ht => by simp [Lit.Reads, Lit.const] at ht, Or.inr ⟨hun, hout⟩⟩
-      fun t ht => by simp [Lit.Reads, Lit.const] at ht).mono (by simp)).step_of_delete hS
-      (S.card_filter_inl_mem_children_le J)⟩
-  · exact hS.step_unit hf ha hx hc
-
 /-! ### Case 2: an AND-type gate on an isolated parameter -/
 
 /-- The configuration of Case 2: an AND-type gate reads an unpaired isolated parameter `z` and
@@ -222,10 +87,7 @@ otherwise the partner of `w` becomes unpaired, `Δa = 0` and `ΔW ≤ -4`. -/
 theorem Valid.step_of_andOnIsolated {S : State n} (hS : S.Valid f) (h : S.AndOnIsolated) :
     ∃ S', Step f S S' := by
   obtain ⟨G, hG, z, w, hand, hargs, hz, hz1, hw, hzw⟩ := h
-  have hGz : (S.gate G).Reads z := by
-    rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
-  have hGw : (S.gate G).Reads w := by
-    rcases hargs with ⟨-, hr⟩ | ⟨hl, -⟩; exacts [Or.inr hr, Or.inl hl]
+  obtain ⟨hGz, hGw⟩ := Gate.reads_of_args hargs
   have hcz := children_eq_singleton hz1 ((SemiCircuit.inl_mem_children _).2 ⟨hG, hGz⟩)
   obtain ⟨b, c, hc⟩ := Gate.exists_const_of_not_isAffineOp hand hargs
   obtain ⟨S', h⟩ : ∃ S', Reduction f S S' {w} [.inl G] [] := by
@@ -264,6 +126,18 @@ theorem Valid.step_of_andOnIsolated {S : State n} (hS : S.Valid f) (h : S.AndOnI
       Finset.card_pos.2 ⟨_, (SemiCircuit.inl_mem_children _).2 ⟨hG, hGw⟩⟩)
     rw [wt_of_mem hwu, Finset.sum_eq_zero fun u _ => ite_eq_right fun h' => hwp h'.paired] at hW
     omega
+
+/-- When Case 2 does not apply, an unpaired parameter read by an AND-type gate together with
+another parameter has degree at least two. -/
+theorem two_le_deg_of_not_andOnIsolated {S : State n} (h2 : ¬ S.AndOnIsolated) {G x y : ℕ}
+    (hG : G ∈ S.gates) (hand : ¬ IsAffineOp (S.gate G).op)
+    (hargs : ((S.gate G).left = .node x ∧ (S.gate G).right = .node y) ∨
+      ((S.gate G).left = .node y ∧ (S.gate G).right = .node x))
+    (hxu : x ∈ S.unpaired) (hy : y ∈ S.params) (hxy : x ≠ y) : 2 ≤ S.deg x := by
+  have h1 : 1 ≤ S.deg x := Finset.card_pos.2
+    ⟨_, (SemiCircuit.inl_mem_children _).2 ⟨hG, (Gate.reads_of_args hargs).1⟩⟩
+  by_contra hlt
+  exact h2 ⟨G, hG, x, y, hand, hargs, hxu, by omega, hy, hxy⟩
 
 /-! ### Moving affine gates -/
 
@@ -414,6 +288,7 @@ theorem deletionAvailable_of_unary {S : State n} {J : ℕ} (hJ : J ∈ S.gates)
   · refine ⟨⟨(S.gate J).right, (S.gate J).op false false⟩, fun t ht => Or.inr ht, fun val _ => ?_⟩
     simp only [Gate.eval, Lit.eval]
     cases (S.gate J).left.eval val <;> cases (S.gate J).right.eval val <;> simp [h1, h2, h3]
+
 /-- A gate with a constant operation computes a constant, so (D1) applies. -/
 theorem deletionAvailable_of_const_op {S : State n} {J : ℕ} (hJ : J ∈ S.gates)
     (h : ∀ a b, (S.gate J).op a b = (S.gate J).op false false) : S.DeletionAvailable :=
@@ -449,6 +324,14 @@ theorem Valid.eq_insert_of_mem_terms {S : State n} (hS : S.Valid f) (hdel : ¬ S
 /-- The configuration of Case 4: two partners have a common child. -/
 def PartnersShareChild (S : State n) : Prop :=
   ∃ pr ∈ S.pairs, ∃ H, H ∈ S.children pr.1 ∧ H ∈ S.children pr.2
+
+/-- When Case 4 does not apply, partners have no common child. -/
+theorem notMem_children_of_isPartner {S : State n} (h4 : ¬ S.PartnersShareChild) {p r : ℕ}
+    (hpr : S.IsPartner p r) {N : ℕ ⊕ ℕ} (hNp : N ∈ S.children p) : N ∉ S.children r :=
+  fun hNr => by
+    obtain ⟨pr, hpr', ⟨h1, h2⟩ | ⟨h1, h2⟩⟩ := hpr
+    · exact h4 ⟨pr, hpr', N, h1 ▸ hNp, h2 ▸ hNr⟩
+    · exact h4 ⟨pr, hpr', N, h2 ▸ hNr, h1 ▸ hNp⟩
 
 /-- **Case 4** of the preliminary reductions: if partners `p` and `r` have a common child `H`,
 impose `p = r + c` so that `H` becomes constant and delete it; `r` becomes unused:
@@ -529,10 +412,7 @@ theorem Valid.step_of_pairInSystem {S : State n} {d : ℕ} (hS : S.Valid f)
   have hrp := hS.partner_ne hpr
   obtain ⟨Hr, hHr⟩ := Finset.card_pos.1 (show 0 < S.deg r by
     rw [deg_eq_one_of_not_degeneratePair h3 hr hpr.symm.paired]; omega)
-  have hHrp : Hr ∉ S.children p := fun hHp => by
-    obtain ⟨pr, hpr', ⟨h1, h2⟩ | ⟨h1, h2⟩⟩ := hpr
-    · exact h4 ⟨pr, hpr', Hr, h1 ▸ hHp, h2 ▸ hHr⟩
-    · exact h4 ⟨pr, hpr', Hr, h2 ▸ hHr, h1 ▸ hHp⟩
+  have hHrp : Hr ∉ S.children p := fun hHp => notMem_children_of_isPartner h4 hpr hHp hHr
   -- fix `r` and delete its child
   obtain ⟨S₂, h⟩ : ∃ S₂, Reduction f S S₂ {r} [Hr] [Hr] := by
     have h₁ := hS.reduction_fixConst hr false
@@ -601,10 +481,7 @@ theorem Valid.step_of_andOnPair {S : State n} (hS : S.Valid f) (hexcl : S.Exclus
     (h5 : ¬ S.PairInSystem) (h : S.AndOnPair) : ∃ S', Step f S S' := by
   obtain ⟨G, hG, p, w, hand, hargs, hpp, hw, hpw⟩ := h
   have hp := hS.mem_params_of_paired hpp
-  have hGp : (S.gate G).Reads p := by
-    rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
-  have hGw : (S.gate G).Reads w := by
-    rcases hargs with ⟨-, hr⟩ | ⟨hl, -⟩; exacts [Or.inr hr, Or.inl hl]
+  obtain ⟨hGp, hGw⟩ := Gate.reads_of_args hargs
   have hcp := children_eq_singleton (deg_eq_one_of_not_degeneratePair h3 hp hpp)
     ((SemiCircuit.inl_mem_children _).2 ⟨hG, hGp⟩)
   obtain ⟨r, hpr⟩ := exists_partner hpp
@@ -612,13 +489,8 @@ theorem Valid.step_of_andOnPair {S : State n} (hS : S.Valid f) (hexcl : S.Exclus
   have hrpaired := hpr.symm.paired
   obtain ⟨Hr, hHr⟩ := Finset.card_pos.1 (show 0 < S.deg r by
     rw [deg_eq_one_of_not_degeneratePair h3 hr hrpaired]; omega)
-  -- a common child of `p` and `r` would make Case 4 applicable
-  have hcommon : ∀ N, N ∈ S.children p → N ∉ S.children r := by
-    intro N hNp hNr
-    obtain ⟨pr, hpr', ⟨h1, h2⟩ | ⟨h1, h2⟩⟩ := hpr
-    · exact h4 ⟨pr, hpr', N, h1 ▸ hNp, h2 ▸ hNr⟩
-    · exact h4 ⟨pr, hpr', N, h2 ▸ hNr, h1 ▸ hNp⟩
-  have hGr : Sum.inl G ∉ S.children r := hcommon _ (by rw [hcp]; exact Finset.mem_singleton_self _)
+  have hGr : Sum.inl G ∉ S.children r :=
+    notMem_children_of_isPartner h4 hpr (by rw [hcp]; exact Finset.mem_singleton_self _)
   obtain ⟨Hg, rfl⟩ : ∃ Hg, Hr = .inl Hg := by
     rcases Hr with Hg | e
     · exact ⟨Hg, rfl⟩
@@ -629,13 +501,8 @@ theorem Valid.step_of_andOnPair {S : State n} (hS : S.Valid f) (hexcl : S.Exclus
     rintro rfl; exact hGr ((SemiCircuit.inl_mem_children _).2 ⟨hG, hGw⟩)
   have hwpart : ¬ S.IsPartner r w := fun h' => hpw (hS.isPartner_unique hpr.symm h')
   -- an unpaired `w` is not isolated, else Case 2 applies
-  have hwdeg : w ∈ S.unpaired → 2 ≤ S.deg w := fun hwu => by
-    have h1 : 1 ≤ S.deg w := Finset.card_pos.2 ⟨_, (SemiCircuit.inl_mem_children _).2 ⟨hG, hGw⟩⟩
-    by_contra hlt
-    refine h2 ⟨G, hG, w, p, hand, ?_, hwu, by omega, hp, Ne.symm hpw⟩
-    rcases hargs with ⟨hl, hr'⟩ | ⟨hl, hr'⟩
-    · exact Or.inr ⟨hl, hr'⟩
-    · exact Or.inl ⟨hl, hr'⟩
+  have hwdeg : w ∈ S.unpaired → 2 ≤ S.deg w := fun hwu =>
+    two_le_deg_of_not_andOnIsolated h2 hG hand hargs.symm hwu hp hpw.symm
   -- fix `r`, fix `w` so that `G` becomes constant, and delete `G` and `Hg`
   obtain ⟨b, c, hc⟩ := Gate.exists_const_of_not_isAffineOp hand hargs
   have h₁ := hS.reduction_fixConst hr false
@@ -734,12 +601,7 @@ theorem Valid.step_or_normal {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAf
     exact hdel (Or.inr (Or.inr (Or.inr ⟨x, hxu, e, children_eq_singleton h1 hex⟩)))
   · have hxu : x ∈ S.unpaired :=
       mem_unpaired.2 ⟨hx, fun hp => h6 ⟨G, hG, x, y, hand, hargs, hp, hy, hxy⟩⟩
-    refine ⟨hxu, ?_⟩
-    have hGx : (S.gate G).Reads x := by
-      rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
-    have h1 : 1 ≤ S.deg x := Finset.card_pos.2 ⟨_, (SemiCircuit.inl_mem_children _).2 ⟨hG, hGx⟩⟩
-    by_contra hlt
-    exact h2 ⟨G, hG, x, y, hand, hargs, hxu, by omega, hy, hxy⟩
+    exact ⟨hxu, two_le_deg_of_not_andOnIsolated h2 hG hand hargs hxu hy hxy⟩
 
 end State
 

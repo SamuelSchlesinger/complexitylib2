@@ -290,6 +290,12 @@ theorem args_of_reads {g : Gate} {z z' : ℕ} (hzz : z ≠ z') (hz : g.Reads z)
   · exact Or.inr ⟨hz', hz⟩
   · exact absurd (Arg.node.inj (hz.symm.trans hz')) hzz
 
+/-- A gate whose arguments are `x` and `y`, in either order, reads both. -/
+theorem reads_of_args {g : Gate} {x y : ℕ} (h : (g.left = .node x ∧ g.right = .node y) ∨
+    (g.left = .node y ∧ g.right = .node x)) : g.Reads x ∧ g.Reads y := by
+  rcases h with ⟨hl, hr⟩ | ⟨hl, hr⟩
+  exacts [⟨Or.inl hl, Or.inr hr⟩, ⟨Or.inr hr, Or.inl hl⟩]
+
 /-- A gate reading two distinct internal values reads nothing else. -/
 theorem eq_or_eq_of_reads {g : Gate} {a b i : ℕ} (hab : a ≠ b) (ha : g.Reads a)
     (hb : g.Reads b) (hi : g.Reads i) : i = a ∨ i = b := by

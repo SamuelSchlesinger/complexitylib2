@@ -14,9 +14,9 @@ Non-vacuity and axiom checks for `Complexity.Computability.Circuit.Boolean.Affin
 hypothesis of Theorem 4.1 is satisfiable, and the theorem gives a concrete bound.
 -/
 
-namespace Cslib.Circuits.Boolean.AffineDisperser.Tests
+namespace ComplexityTests.AffineDisperserLowerBound
 
-open Cslib.Circuits Cslib.BitString
+open Cslib Cslib.Circuits Cslib.BitString Cslib.Circuits.Boolean.AffineDisperser
 
 /-! ### Affine dispersers exist -/
 
@@ -100,4 +100,4 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.exists_isAffineDisperser
 
-end Cslib.Circuits.Boolean.AffineDisperser.Tests
+end ComplexityTests.AffineDisperserLowerBound

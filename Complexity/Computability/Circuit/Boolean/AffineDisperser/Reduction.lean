@@ -94,7 +94,6 @@ def Deletable (S : State n) : ℕ ⊕ ℕ → Prop
   | .inl J => J ∈ S.gates ∧ (S.gate J).Degenerate
   | .inr e => e ∈ S.eqns ∧ (S.eqn e).terms.card ≤ 2
 
-
 /-- The children of a parameter fixed to a constant are deletable. -/
 theorem deletable_fixConst_child {S : State n} (hS : S.Valid f) {p : ℕ} (P : Finset (ℕ × ℕ))
     (b : Bool) {N : ℕ ⊕ ℕ} (hN : N ∈ S.children p) :

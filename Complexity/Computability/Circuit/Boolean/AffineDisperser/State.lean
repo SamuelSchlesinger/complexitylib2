@@ -33,7 +33,8 @@ number of equations. The *weight* of an unpaired parameter of degree `k` is `0`,
 
   `W = 2 s + 3 q + ∑_{x unpaired} wt(x)`  (equation (5) of the source).
 
-Proposition 2.2 of the source: the image of `Φ` contains an affine subspace of dimension `a`
+Proposition 2.2 of the source: the image of `Φ` contains the image of an injective affine map
+from `BitString a`, informally an affine subspace of dimension `a`
 (`State.Valid.exists_affine_embedding`), so the output of a valid state for an affine disperser
 for dimension `d ≤ a` is not constant (`State.Valid.exists_out_ne_of_le`). Restricting one more
 parameter to an affine function of the others keeps dimension `a - 1`, so when `d < a` the output
@@ -258,8 +259,8 @@ theorem Valid.exists_out_ne {f : BooleanFunction n} {d : ℕ} (hS : S.Valid f)
   exact huv
 
 /-- **Proposition 2.2** of [Mishra and Santhanam][MishraSanthanam2026]: the image of the
-parameter map of a valid state contains an affine subspace of dimension `a`, the image of an
-injective affine map from `BitString a`. -/
+parameter map of a valid state contains the image of an injective affine map from
+`BitString a`. -/
 theorem Valid.exists_affine_embedding {f : BooleanFunction n} (hS : S.Valid f) :
     ∃ g : BitString S.a → BitString n, IsAffine g ∧ Function.Injective g ∧
       ∀ u, ∃ val, S.Consistent val ∧ g u = S.phi val := by
@@ -416,11 +417,6 @@ theorem W_add_le {S S' : State n} {N : Finset ℕ} (hN : S.params ⊆ N) (hN' : 
   have := Finset.sum_le_sum h
   rw [Finset.sum_add_distrib, Finset.sum_add_distrib] at this
   omega
-
-/-- The sum of an indicator. -/
-theorem sum_ite_eq_of_mem {N : Finset ℕ} {a : ℕ} (ha : a ∈ N) (c : ℕ) :
-    ∑ x ∈ N, (if x = a then c else 0) = c := by
-  rw [Finset.sum_ite_eq' N a, ite_eq_left ha]
 
 /-- Unpaired parameters of a state with the same pairs and fewer parameters were unpaired. -/
 theorem mem_unpaired_of {S S' : State n} {x : ℕ} (hx : x ∈ S'.unpaired) (hp : x ∈ S.params)

@@ -112,6 +112,95 @@ theorem Valid.exists_reduction_restrict_deleteConst {S : State n} (hS : S.Valid 
         Gate.eval_subst_update hℓx]
       exact hBc val)⟩
 
+/-- Case 7 when the shared second child `B` of `x` and `y` is a gate: on one of the lines `x = c`,
+`y = c` or `x = y + c` both `G` and `B` are constant, and restricting to it deletes both. -/
+theorem Valid.exists_reduction_sharedGate {S : State n} (hS : S.Valid f) {G x y B : ℕ}
+    (h : S.MinimalAnd G x y) (hcx : S.children x = {.inl G, .inl B})
+    (hcy : S.children y = {.inl G, .inl B}) (hBG : B ≠ G) :
+    ∃ S' x' y', ((x' = x ∧ y' = y) ∨ (x' = y ∧ y' = x)) ∧
+      Reduction f S S' {x'} [.inl G, .inl B] [] := by
+  obtain ⟨hB, hBx⟩ := (SemiCircuit.inl_mem_children _).1
+    (show Sum.inl B ∈ S.children x by simp [hcx])
+  obtain ⟨-, hBy⟩ := (SemiCircuit.inl_mem_children _).1
+    (show Sum.inl B ∈ S.children y by simp [hcy])
+  obtain ⟨φ, hφ, hG⟩ := h.exists_op
+  obtain ⟨ψ, -, hBψ⟩ := Gate.exists_op_of_args (Gate.args_of_reads h.ne hBx hBy)
+  have hyx := h.ne.symm
+  have hBGr : ¬ (S.gate B).Reads G := fun hr =>
+    (Gate.eq_or_eq_of_reads h.ne hBx hBy hr).elim (fun he => h.ne_gate hS h.mem_params_x he.symm)
+      fun he => h.ne_gate hS h.mem_params_y he.symm
+  have hconst : ∀ x' (c : Bool), ∀ t, (Lit.const c).Reads t → t ∈ S.params ∧ t ≠ x' ∧
+      S.children x' ⊆ S.children t ∧ (S.Paired x' → S.IsPartner x' t) := fun _ _ t ht => by
+    simp [Lit.Reads, Lit.const] at ht
+  rcases exists_line_const (h := ψ) hφ with ⟨c, hφc, hψc⟩ | ⟨c, hφc, hψc⟩ | ⟨c, hφc, hψc⟩
+  · -- the line `x = c`
+    obtain ⟨S', hred⟩ := hS.exists_reduction_restrict_deleteConst h.mem_params_x (hconst x c) h.mem
+      hB hBG hBGr (c₁ := φ c false) (c₂ := ψ c false)
+      (fun val => by rw [hG, Lit.eval_const, Function.update_self, Function.update_of_ne hyx]
+                     exact hφc _)
+      (fun val => by rw [hBψ, Lit.eval_const, Function.update_self, Function.update_of_ne hyx]
+                     exact hψc _)
+    exact ⟨S', x, y, Or.inl ⟨rfl, rfl⟩, hred⟩
+  · -- the line `y = c`
+    obtain ⟨S', hred⟩ := hS.exists_reduction_restrict_deleteConst h.mem_params_y (hconst y c) h.mem
+      hB hBG hBGr (c₁ := φ false c) (c₂ := ψ false c)
+      (fun val => by rw [hG, Lit.eval_const, Function.update_self, Function.update_of_ne h.ne]
+                     exact hφc _)
+      (fun val => by rw [hBψ, Lit.eval_const, Function.update_self, Function.update_of_ne h.ne]
+                     exact hψc _)
+    exact ⟨S', y, x, Or.inr ⟨rfl, rfl⟩, hred⟩
+  · -- the line `x = y + c`
+    obtain ⟨S', hred⟩ := hS.exists_reduction_restrict_deleteConst (ℓ := ⟨.node y, c⟩)
+      h.mem_params_x (fun t ht => by
+        cases ht
+        exact ⟨h.mem_params_y, hyx, by rw [hcx, hcy],
+          fun hp => absurd hp (mem_unpaired.1 h.unpaired_x).2⟩)
+      h.mem hB hBG hBGr (c₁ := φ c false) (c₂ := ψ c false)
+      (fun val => by rw [hG, Function.update_self, Function.update_of_ne hyx]; exact hφc _)
+      (fun val => by rw [hBψ, Function.update_self, Function.update_of_ne hyx]; exact hψc _)
+    exact ⟨S', x, y, Or.inl ⟨rfl, rfl⟩, hred⟩
+
+/-- Case 7 when the shared second child of `x` and `y` is an equation `v + x + y = rhs`:
+restricting to the line `x = y + c` on which `G` is constant makes the equation read `v = rhs + c`,
+and both are deleted. -/
+theorem Valid.exists_reduction_sharedEqn {S : State n} (hS : S.Valid f) (hN : S.Normal)
+    {G x y e : ℕ} (h : S.MinimalAnd G x y) (hcx : S.children x = {.inl G, .inr e})
+    (hcy : S.children y = {.inl G, .inr e}) :
+    ∃ S', Reduction f S S' {x} [.inl G, .inr e] [] := by
+  obtain ⟨he, hxe⟩ := (SemiCircuit.inr_mem_children _).1
+    (show Sum.inr e ∈ S.children x by simp [hcx])
+  obtain ⟨-, hye⟩ := (SemiCircuit.inr_mem_children _).1
+    (show Sum.inr e ∈ S.children y by simp [hcy])
+  obtain ⟨φ, hφ, hG⟩ := h.exists_op
+  have hyx := h.ne.symm
+  obtain ⟨v, hva, hvx, hvy, hterms⟩ := hS.eq_insert_of_mem_terms hN.no_deletion he
+    h.mem_params_x h.mem_params_y h.ne hxe hye
+  have hvG : v ≠ G := fun he' => hS.wf.notMem_gates_of_mem_aux hva (he' ▸ h.mem)
+  obtain ⟨c, hφc⟩ : ∃ c, ∀ b, φ (b ^^ c) b = φ c false := by
+    rcases exists_line_const (h := fun a b => a ^^ b) hφ with ⟨c, -, hc⟩ | ⟨c, -, hc⟩ | ⟨c, hc, -⟩
+    · simpa using hc true
+    · simpa using hc true
+    · exact ⟨c, hc⟩
+  have hxy' : Arg.node y ≠ Arg.node x := fun he => hyx (Arg.node.inj he)
+  have h₁ := hS.reduction_restrict (ℓ := ⟨.node y, c⟩) h.mem_params_x fun t ht => by
+    cases ht
+    exact ⟨h.mem_params_y, hyx, by rw [hcx, hcy],
+      fun hp => absurd hp (mem_unpaired.1 h.unpaired_x).2⟩
+  have h₂ := h₁.valid.reduction_deleteConst (J := G) (c := φ c false) h.mem fun val _ => by
+    rw [restrict_gate, Gate.eval_subst_update hxy', hG, Function.update_self,
+      Function.update_of_ne hyx]
+    exact hφc _
+  exact ⟨_, (h₁.trans_delete h₂).trans_delete
+    (h₂.valid.reduction_deleteEqn (e := e) (v := v) (ℓ := Lit.const ((S.eqn e).rhs ^^ c))
+      (T := []) ⟨he, hva, fun val => by
+        rw [deleteGate_eqn, Equation.holds_subst_update (by simp [Lit.const]), restrict_eqn,
+          Equation.holds_subst_update hxy', Lit.eval_const]
+        simp only [Lit.eval, Arg.eval_node]
+        rw [Equation.holds_update_iff hterms hvx hvy h.ne, Function.update_of_ne hvG]
+        simp [Lit.const],
+        fun t ht => by simp [Lit.Reads, Lit.const] at ht⟩
+      fun t ht => by simp [Lit.Reads, Lit.const] at ht)⟩
+
 /-- **Case 7** of [Mishra and Santhanam, Section 4.3][MishraSanthanam2026]: if both inputs `x`,
 `y` of the minimal AND have degree two and share their second child `B`, restrict to a line of
 `𝔽₂²` on which both `G` and `B` are constant (`exists_line_const`) and delete both; the other
@@ -128,93 +217,16 @@ theorem Valid.step_of_sharedSecondChild {S : State n} (hS : S.Valid f) (hN : S.N
   have hcy : S.children y = {.inl G, B} := (Finset.eq_of_subset_of_card_le
     (by simp [Finset.insert_subset_iff, h.mem_children_y, hBy])
     (by rw [hpair]; exact hy2.le)).symm
-  obtain ⟨φ, hφ, hG⟩ := h.exists_op
-  have hxG := h.ne_gate hS h.mem_params_x
-  have hyG := h.ne_gate hS h.mem_params_y
-  have hyx := h.ne.symm
-  have hxu : ¬ S.Paired x := (mem_unpaired.1 h.unpaired_x).2
-  have hyu : ¬ S.Paired y := (mem_unpaired.1 h.unpaired_y).2
-  -- the literal `y + c`, to which `x` may be restricted
-  have hline : ∀ c : Bool, ∀ t, (⟨.node y, c⟩ : Lit).Reads t → t ∈ S.params ∧ t ≠ x ∧
-      S.children x ⊆ S.children t ∧ (S.Paired x → S.IsPartner x t) := fun c t ht => by
-    cases ht
-    exact ⟨h.mem_params_y, hyx, by rw [hcx, hcy], fun hp => absurd hp hxu⟩
-  have hconst : ∀ x' (c : Bool), ∀ t, (Lit.const c).Reads t → t ∈ S.params ∧ t ≠ x' ∧
-      S.children x' ⊆ S.children t ∧ (S.Paired x' → S.IsPartner x' t) := fun _ _ t ht => by
-    simp [Lit.Reads, Lit.const] at ht
   suffices key : ∃ S' x' y', ((x' = x ∧ y' = y) ∨ (x' = y ∧ y' = x)) ∧
       Reduction f S S' {x'} [.inl G, B] [] by
     obtain ⟨S', x', y', hxy', hred⟩ := key
     rcases hxy' with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
     · exact ⟨S', hred.step_of_shared hS h.unpaired_x h.unpaired_y h.ne hx2 hy2 hcy⟩
-    · exact ⟨S', hred.step_of_shared hS h.unpaired_y h.unpaired_x hyx hy2 hx2 hcx⟩
+    · exact ⟨S', hred.step_of_shared hS h.unpaired_y h.unpaired_x h.ne.symm hy2 hx2 hcx⟩
   rcases B with Bg | e
-  · -- `B` is a gate reading `x` and `y`
-    obtain ⟨hBg, hBgx⟩ := (SemiCircuit.inl_mem_children _).1 hBx
-    obtain ⟨-, hBgy⟩ := (SemiCircuit.inl_mem_children _).1 hBy
-    obtain ⟨ψ, -, hB⟩ := Gate.exists_op_of_args (Gate.args_of_reads h.ne hBgx hBgy)
-    have hBgG : Bg ≠ G := fun he => hBG (by rw [he])
-    have hBgGr : ¬ (S.gate Bg).Reads G := fun hr =>
-      (Gate.eq_or_eq_of_reads h.ne hBgx hBgy hr).elim (fun he => hxG he.symm)
-        fun he => hyG he.symm
-    rcases exists_line_const (h := ψ) hφ with ⟨c, hφc, hψc⟩ | ⟨c, hφc, hψc⟩ | ⟨c, hφc, hψc⟩
-    · -- the line `x = c`
-      obtain ⟨S', hred⟩ := hS.exists_reduction_restrict_deleteConst h.mem_params_x
-        (hconst x c) h.mem hBg hBgG hBgGr (c₁ := φ c false) (c₂ := ψ c false)
-        (fun val => by
-          rw [hG, Lit.eval_const, Function.update_self, Function.update_of_ne hyx]
-          exact hφc _)
-        (fun val => by
-          rw [hB, Lit.eval_const, Function.update_self, Function.update_of_ne hyx]
-          exact hψc _)
-      exact ⟨S', x, y, Or.inl ⟨rfl, rfl⟩, hred⟩
-    · -- the line `y = c`
-      obtain ⟨S', hred⟩ := hS.exists_reduction_restrict_deleteConst h.mem_params_y
-        (hconst y c) h.mem hBg hBgG hBgGr (c₁ := φ false c) (c₂ := ψ false c)
-        (fun val => by
-          rw [hG, Lit.eval_const, Function.update_self, Function.update_of_ne h.ne]
-          exact hφc _)
-        (fun val => by
-          rw [hB, Lit.eval_const, Function.update_self, Function.update_of_ne h.ne]
-          exact hψc _)
-      exact ⟨S', y, x, Or.inr ⟨rfl, rfl⟩, hred⟩
-    · -- the line `x = y + c`
-      obtain ⟨S', hred⟩ := hS.exists_reduction_restrict_deleteConst h.mem_params_x
-        (hline c) h.mem hBg hBgG hBgGr (c₁ := φ c false) (c₂ := ψ c false)
-        (fun val => by
-          rw [hG, Function.update_self, Function.update_of_ne hyx]
-          exact hφc _)
-        (fun val => by
-          rw [hB, Function.update_self, Function.update_of_ne hyx]
-          exact hψc _)
-      exact ⟨S', x, y, Or.inl ⟨rfl, rfl⟩, hred⟩
-  · -- `B` is an equation `v + x + y = rhs`, constant on the lines `x = y + c` only
-    obtain ⟨he, hxe⟩ := (SemiCircuit.inr_mem_children _).1 hBx
-    obtain ⟨-, hye⟩ := (SemiCircuit.inr_mem_children _).1 hBy
-    obtain ⟨v, hva, hvx, hvy, hterms⟩ := hS.eq_insert_of_mem_terms hN.no_deletion he
-      h.mem_params_x h.mem_params_y h.ne hxe hye
-    have hvG : v ≠ G := fun he' => hS.wf.notMem_gates_of_mem_aux hva (he' ▸ h.mem)
-    obtain ⟨c, hφc⟩ : ∃ c, ∀ b, φ (b ^^ c) b = φ c false := by
-      rcases exists_line_const (h := fun a b => a ^^ b) hφ with ⟨c, -, hc⟩ | ⟨c, -, hc⟩ | ⟨c, hc, -⟩
-      · simpa using hc true
-      · simpa using hc true
-      · exact ⟨c, hc⟩
-    have hxy' : Arg.node y ≠ Arg.node x := fun he => hyx (Arg.node.inj he)
-    have h₁ := hS.reduction_restrict h.mem_params_x (hline c)
-    have h₂ := h₁.valid.reduction_deleteConst (J := G) (c := φ c false) h.mem fun val _ => by
-      rw [restrict_gate, Gate.eval_subst_update hxy', hG, Function.update_self,
-        Function.update_of_ne hyx]
-      exact hφc _
-    exact ⟨_, x, y, Or.inl ⟨rfl, rfl⟩, (h₁.trans_delete h₂).trans_delete
-      (h₂.valid.reduction_deleteEqn (e := e) (v := v) (ℓ := Lit.const ((S.eqn e).rhs ^^ c))
-        (T := []) ⟨he, hva, fun val => by
-          rw [deleteGate_eqn, Equation.holds_subst_update (by simp [Lit.const]), restrict_eqn,
-            Equation.holds_subst_update hxy', Lit.eval_const]
-          simp only [Lit.eval, Arg.eval_node]
-          rw [Equation.holds_update_iff hterms hvx hvy h.ne, Function.update_of_ne hvG]
-          simp [Lit.const],
-          fun t ht => by simp [Lit.Reads, Lit.const] at ht⟩
-        fun t ht => by simp [Lit.Reads, Lit.const] at ht)⟩
+  · exact hS.exists_reduction_sharedGate h hcx hcy fun he => hBG (by rw [he])
+  · obtain ⟨S', hred⟩ := hS.exists_reduction_sharedEqn hN h hcx hcy
+    exact ⟨S', x, y, Or.inl ⟨rfl, rfl⟩, hred⟩
 
 /-! ### Case 8: fixing an input -/
 

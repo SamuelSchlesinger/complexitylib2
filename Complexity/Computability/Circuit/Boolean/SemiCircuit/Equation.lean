@@ -205,7 +205,6 @@ theorem holds_update_iff {E : Equation} {v p r : ℕ} (hterms : E.terms = {v, p,
 
 end Equation
 
-
 /-! ### Moving affine gates into the affine system -/
 
 /-- Add the argument `a` with coefficient `b` to the terms and right-hand side of an

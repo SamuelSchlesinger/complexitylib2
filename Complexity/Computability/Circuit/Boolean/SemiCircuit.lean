@@ -269,7 +269,6 @@ theorem children_subst_subset (v : ℕ) (ℓ : Lit) (z : ℕ) :
 
 theorem size_subst (v : ℕ) (ℓ : Lit) : (C.subst v ℓ).size = C.size := rfl
 
-
 /-! ### Solutions of the affine system -/
 
 theorem Equation.holds_add_add {E : Equation} {val val' val'' : ℕ → Bool} (h : E.Holds val)

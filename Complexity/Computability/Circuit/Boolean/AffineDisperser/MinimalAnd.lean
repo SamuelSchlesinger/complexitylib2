@@ -132,8 +132,8 @@ theorem Valid.preparation_swap {S : State n} (hS : S.Valid f) {x Q : ℕ} {c : B
           rfl
         · rw [wt_of_notMem hu₁]; omega
   have hW := W_add_le hN hN' _ _ hpt
-  rw [sum_ite_eq_of_mem (Finset.mem_insert_of_mem hxp),
-    sum_ite_eq_of_mem (Finset.mem_insert_self _ _)] at hW
+  rw [Finset.sum_ite_eq_of_mem' _ _ _ (Finset.mem_insert_of_mem hxp),
+    Finset.sum_ite_eq_of_mem' _ _ _ (Finset.mem_insert_self _ _)] at hW
   have hs : S₁.s = S.s := rfl
   have hq : S₁.q = S.q := rfl
   omega
@@ -279,8 +279,7 @@ theorem Valid.exists_param_of_aux_input {S : State n} (hS : S.Valid f) (hN : S.N
       2 ≤ S.deg Q := by
   obtain ⟨c, T, hT⟩ := hS.wf.exists_affineIn hQ
   have hQp : Q ∉ S.params := fun hp => hS.wf.notMem_aux_of_mem_params hp hQ
-  have hGQ : (S.gate G).Reads Q := by
-    rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
+  have hGQ : (S.gate G).Reads Q := (Gate.reads_of_args hargs).1
   by_cases hTo : ∃ x ∈ T, x ≠ o
   · obtain ⟨x, hxT, hxo⟩ := hTo
     obtain ⟨e, he, hxe⟩ := hT.mem_terms hS.wf hQp hxT
@@ -502,13 +501,11 @@ theorem mem_params_x (h : S.MinimalAnd G x y) : x ∈ S.params := (mem_unpaired.
 
 theorem mem_params_y (h : S.MinimalAnd G x y) : y ∈ S.params := (mem_unpaired.1 h.unpaired_y).1
 
-theorem mem_children_x (h : S.MinimalAnd G x y) : Sum.inl G ∈ S.children x := by
-  refine (SemiCircuit.inl_mem_children _).2 ⟨h.mem, ?_⟩
-  rcases h.args with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
+theorem mem_children_x (h : S.MinimalAnd G x y) : Sum.inl G ∈ S.children x :=
+  (SemiCircuit.inl_mem_children _).2 ⟨h.mem, (Gate.reads_of_args h.args).1⟩
 
-theorem mem_children_y (h : S.MinimalAnd G x y) : Sum.inl G ∈ S.children y := by
-  refine (SemiCircuit.inl_mem_children _).2 ⟨h.mem, ?_⟩
-  rcases h.args with ⟨-, hr⟩ | ⟨hl, -⟩; exacts [Or.inr hr, Or.inl hl]
+theorem mem_children_y (h : S.MinimalAnd G x y) : Sum.inl G ∈ S.children y :=
+  (SemiCircuit.inl_mem_children _).2 ⟨h.mem, (Gate.reads_of_args h.args).2⟩
 
 /-- The minimal AND computes an AND-type operation of its inputs. -/
 theorem exists_op (h : S.MinimalAnd G x y) : ∃ φ : Bool → Bool → Bool, ¬ IsAffineOp φ ∧

@@ -19,15 +19,16 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 Over `𝔽₂`, a map between additive groups is *affine* when it preserves sums of three points:
 `g (x + y + z) = g x + g y + g z` (`Cslib.BitString.IsAffine`). For maps between `𝔽₂`-vector
-spaces this is exactly the usual notion, a translate of a linear map, since `b + b + b = b`.
-The affine subspaces of dimension `d` of the cube `BitString n` are exactly the images of the
-injective affine maps from `BitString d`.
+spaces this is meant to be the usual notion, a translate of a linear map, and the images of the
+injective affine maps from `BitString d` are meant to be the affine subspaces of dimension `d` of
+the cube `BitString n`; neither correspondence is formalized here, and everything below is stated
+in terms of affine maps.
 
 A Boolean function `f` on `n` bits is an *affine disperser for dimension `d`* when it is
-nonconstant on every affine subspace of dimension `d`
-(`Cslib.BitString.IsAffineDisperser`): composed with any injective affine map from
-`BitString d`, it takes both values. Dispersers for dimension `d` are dispersers for every larger
-dimension (`IsAffineDisperser.mono`), and no function is a disperser for dimension `0`
+nonconstant on the image of every injective affine map from `BitString d`
+(`Cslib.BitString.IsAffineDisperser`), informally on every affine subspace of dimension `d`.
+Dispersers for dimension `d` are dispersers for every larger dimension
+(`IsAffineDisperser.mono`), and no function is a disperser for dimension `0`
 (`not_isAffineDisperser_zero`).
 
 Affine dispersers exist for every dimension `d` with `n (d + 1) + 1 < 2 ^ d`
@@ -72,7 +73,8 @@ theorem isAffine_const {α β : Type*} [Add α] [AddGroup β] (h : ∀ b : β, b
     IsAffine (fun _ : α => c) := fun _ _ _ => by rw [h, zero_add]
 
 /-- `f` is an affine disperser for dimension `d`: it is nonconstant on the image of every
-injective affine map from `BitString d`, that is, on every affine subspace of dimension `d`. -/
+injective affine map from `BitString d`. Informally these images are the affine subspaces of
+dimension `d`; that correspondence is not formalized here. -/
 def IsAffineDisperser {n : ℕ} (f : BitString n → Bool) (d : ℕ) : Prop :=
   ∀ g : BitString d → BitString n, IsAffine g → Function.Injective g → ∃ x y, f (g x) ≠ f (g y)
 

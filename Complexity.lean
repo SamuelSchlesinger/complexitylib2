@@ -21,8 +21,8 @@ public import Complexity.Computability.Circuit.Arithmetic.Waring.Basic
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Compilation
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Elimination
-public import Complexity.Computability.Circuit.Boolean.AffineDisperser.LowerBound
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.MinimalAnd
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Normal
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Operations
