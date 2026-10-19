@@ -73,10 +73,12 @@ def key (r : Record n w) : Lex (Fin (n + 1) → Bool) := toLex (Fin.cons r.paddi
 /-- The key coordinates of an encoded record. -/
 def keyBits : Fin (n + 1) → Fin (width n w) := Fin.castAdd (w + n + 1)
 
+/-- The bits of a record: padding flag and state, then checkpoint flag, index and payload. -/
 def encode (r : Record n w) : BitString (width n w) :=
   Fin.append (Fin.cons r.padding r.state)
     (Fin.cons r.checkpoint (Fin.append (fun i => r.index.getLsbD i.val) r.payload))
 
+/-- The record with the given bits; inverse to `encode`. -/
 def decode (bits : BitString (width n w)) : Record n w where
   padding := bits (Fin.castAdd (w + n + 1) 0)
   state i := bits (Fin.castAdd (w + n + 1) i.succ)
@@ -181,12 +183,15 @@ theorem valid_initial (f : BitString n → BitString n) (T K : ℕ)
 /-- What a collision certifies: the prefix reaches a checkpoint, or it repeats. -/
 inductive Witness (f : BitString n → BitString n) (T K : ℕ) (checkpoints : Fin M → BitString n)
     (x : BitString n) : Record n w → Record n w → Prop
+  /-- A stored checkpoint followed by the prefix state at time `d` that equals it. -/
   | hitLeft (h : Fin M) (d : ℕ) (hd : d ≤ K) (heq : f^[d] x = checkpoints h) :
       Witness f T K checkpoints x
         (stored (checkpoints h) (f^[T - K] (checkpoints h))) (query (f^[d] x) d)
+  /-- The prefix state at time `d` followed by the checkpoint it equals. -/
   | hitRight (h : Fin M) (d : ℕ) (hd : d ≤ K) (heq : f^[d] x = checkpoints h) :
       Witness f T K checkpoints x (query (f^[d] x) d)
         (stored (checkpoints h) (f^[T - K] (checkpoints h)))
+  /-- Two different times of the prefix with equal states. -/
   | repeated (i j : ℕ) (hi : i ≤ K) (hj : j ≤ K) (hne : i ≠ j) (heq : f^[i] x = f^[j] x) :
       Witness f T K checkpoints x (query (f^[i] x) i) (query (f^[j] x) j)
 

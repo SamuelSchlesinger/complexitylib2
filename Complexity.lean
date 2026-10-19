@@ -43,6 +43,9 @@ public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
 public import Complexity.Computability.Circuit.Boolean.Iteration.Decoder
+public import Complexity.Computability.Circuit.Boolean.Iteration.Encoded
+public import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
+public import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
 public import Complexity.Computability.Circuit.Boolean.Iteration.Record
 public import Complexity.Computability.Circuit.Boolean.Iteration.RecordCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.Residue
