@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.Classes.BPP.KarpLipton
 import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
+import Complexity.Computability.Complexity.Classes.SPP.FewP
 import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 
 /-! Structural corollaries of the class theorems: clients of the collapses on concrete encodings,
@@ -53,6 +54,12 @@ example (h : PromiseUSAT ∈ PromiseP encCNF) : NP encBits = RP encBits :=
 example (h : USAT ∈ P encCNF) : NP encCNF = RP encCNF :=
   NP_eq_RP_of_USAT_mem_P h encCNF
 
+/-! ### `FewP ⊆ SPP` -/
+
+/-- A problem in `P`, hence in `UP` and `FewP`, is in `SPP`. -/
+example : (Set.univ : Set (List Bool)) ∈ SPP encBits :=
+  FewP_subset_SPP (UP_subset_FewP (P_subset_UP univ_mem_P))
+
 /-! ### Axiom guards -/
 
 /--
@@ -63,26 +70,29 @@ info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_BPP' depends on axioms:
 #print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_BPP
 
 /--
-info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime' depends on
+  axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime
 
 /--
-info: 'Cslib.Complexity.PWithOracle_eq_P' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.PWithOracle_eq_P' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.PWithOracle_eq_P
 
 /--
-info: 'Cslib.Complexity.NPWithOracle_eq_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.NPWithOracle_eq_NP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.NPWithOracle_eq_NP
 
 /--
-info: 'Cslib.Complexity.RPWithOracle_eq_RP' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.RPWithOracle_eq_RP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.RPWithOracle_eq_RP
@@ -100,5 +110,11 @@ info: 'Cslib.Complexity.NP_eq_RP_of_USAT_mem_P' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.NP_eq_RP_of_USAT_mem_P
+
+/--
+info: 'Cslib.Complexity.FewP_subset_SPP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.FewP_subset_SPP
 
 end ComplexityTests.ClassCorollaries
