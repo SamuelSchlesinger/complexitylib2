@@ -193,13 +193,6 @@ info: 'Cslib.Complexity.Ladner.SATH_mem_NP' depends on axioms:
 #print axioms Cslib.Complexity.Ladner.SATH_mem_NP
 
 /--
-info: 'Cslib.Complexity.Ladner.computableTidilyInPolyTime_universal' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.computableTidilyInPolyTime_universal
-
-/--
 info: 'Cslib.Complexity.Ladner.exists_H_le_of_mem_P' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

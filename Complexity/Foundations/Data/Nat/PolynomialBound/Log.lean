@@ -17,7 +17,9 @@ Polynomially bounded functions have logarithmic logarithms: if `s` is polynomial
 `⌈log₂ (s n)⌉` is at most `e (⌊log₂ n⌋ + 1)` for a constant `e`
 (`PolynomiallyBounded.exists_clog_le_mul_log`). Conversely, `2` to the power `c (⌊log₂ n⌋ + 1)`
 is polynomially bounded (`polynomiallyBounded_two_pow_mul_log`). These are the conversions between
-depth `O(log n)` and size `n ^ O(1)` in circuit complexity.
+depth `O(log n)` and size `n ^ O(1)` in circuit complexity. Logarithmic bounds
+`c (⌊log₂ n⌋ + 1)` are themselves polynomially bounded
+(`polynomiallyBounded_mul_log2_add_one`).
 
 Here `⌊log₂ n⌋ + 1`, written `Nat.log 2 n + 1`, is the number of binary digits of `n` with `0`
 written as one digit, that is `max n.size 1`, which unlike `Nat.size n` is positive at `n = 0`.
@@ -27,6 +29,7 @@ written as one digit, that is `max n.size 1`, which unlike `Nat.size n` is posit
 * `Cslib.PolynomiallyBounded.exists_clog_le_mul_log`: the logarithm of a polynomially bounded
   function is `O(log n)`.
 * `Cslib.polynomiallyBounded_two_pow_mul_log`: `2 ^ O(log n)` is polynomially bounded.
+* `Cslib.polynomiallyBounded_mul_log2_add_one`: `O(log n)` is polynomially bounded.
 -/
 
 @[expose] public section
@@ -44,6 +47,13 @@ theorem polynomiallyBounded_two_pow_mul_log (c : ℕ) :
   calc 2 ^ (c * (Nat.log 2 n + 1)) = 2 ^ c * (2 ^ Nat.log 2 n) ^ c := by
         rw [mul_add, mul_one, pow_add, mul_comm c, pow_mul, mul_comm]
     _ ≤ 2 ^ c * (n + 1) ^ c := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left h c)
+
+/-- `c (log₂ n + 1)` is polynomially bounded: it is at most `c (n + 1)`. -/
+theorem polynomiallyBounded_mul_log2_add_one (c : ℕ) :
+    PolynomiallyBounded fun n => c * (Nat.log2 n + 1) :=
+  polynomiallyBounded_iff_le.2 ⟨c, 1, fun n => by
+    rw [pow_one]
+    exact Nat.mul_le_mul_left c (Nat.succ_le_succ (Nat.log2_le_self n))⟩
 
 /-- The binary logarithm of a polynomially bounded function is at most `e (⌊log₂ n⌋ + 1)` for a
 constant `e`. -/

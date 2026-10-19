@@ -131,18 +131,6 @@ theorem median_median_distrib (f g h k l : ι → Bool) :
     decide
   exact key (f i) (g i) (h i) (k i) (l i)
 
-/-! ### Parities on symmetric differences -/
-
-/-- The parity on a symmetric difference is the exclusive or of the parities: the bits in both
-sets are counted twice. -/
-private theorem parityOn_symmDiff [DecidableEq ι] (S T : Finset ι) (x : ι → Bool) :
-    parityOn (symmDiff S T) x = (parityOn S x ^^ parityOn T x) := by
-  have hsdiff := sum_sdiff (f := x) (inter_subset_union : S ∩ T ⊆ S ∪ T)
-  have hunion := sum_union_inter (s₁ := S) (s₂ := T) (f := x)
-  rw [symmDiff_eq_sup_sdiff_inf, parityOn_eq_sum, parityOn_eq_sum, parityOn_eq_sum,
-    ← Bool.add_eq_xor, ← hunion, ← hsdiff, add_assoc, BooleanRing.add_self, add_zero]
-  rfl
-
 section Fintype
 
 variable [Fintype ι]
