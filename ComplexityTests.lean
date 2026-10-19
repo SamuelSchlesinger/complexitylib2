@@ -84,6 +84,7 @@ import ComplexityTests.Halting
 import ComplexityTests.HardCore
 import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
+import ComplexityTests.HastadSharp
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
