@@ -26,8 +26,11 @@ sum of its values on the punctured line `Cslib.LineCode.puncturedLine x v` of th
 `x + c • v` with `c ≠ 0`.
 
 The *line decoder* `Cslib.Code.lineDecode w x v` reads a received word `w` at the `q - 1` points of
-that punctured line only (`Cslib.Code.lineDecode_congr`) and returns minus their sum
-[GuruswamiRudraSudan2019]. On a codeword it returns the value at `x` for every direction
+that punctured line only (`Cslib.Code.lineDecode_congr`) and returns minus their sum. This is the
+basic local decoder of Reed–Muller codes, which interpolates the restriction of the received word
+to a random line through `x` [Arora and Barak, Chapter 19][AroraBarak09],
+[GuruswamiRudraSudan2019]; interpolating a polynomial of degree below `q - 1` from all `q - 1`
+points other than `x` gives minus their sum at `x`. On a codeword it returns the value at `x` for every direction
 (`Cslib.Code.lineDecode_eq_of_mem_reedMuller`), and on a corrupted codeword it still does whenever
 the punctured line avoids the corrupted points (`Cslib.Code.lineDecode_eq_of_disjoint`). By the
 blocking bound `Cslib.LineCode.card_filter_not_disjoint_puncturedLine_le`, every corrupted point
@@ -55,6 +58,7 @@ than half of the nonzero directions recover `f x` at every point `x`
 
 ## References
 
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Chapter 19
 * [V. Guruswami, A. Rudra, M. Sudan, *Essential Coding Theory*]
   [GuruswamiRudraSudan2019]
 -/

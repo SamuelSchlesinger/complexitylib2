@@ -21,9 +21,9 @@ import Mathlib.FieldTheory.Finiteness
 /-!
 # Justesen codes
 
-Let `F` be a finite field with `q` elements whose elements are written as `b` bits through an
-additive bijection `φ : F ≃+ BitString b`, for example a field of characteristic two with `2 ^ b`
-elements (`Cslib.LineCode.nonempty_addEquiv_bitString`). The *Justesen code* [Justesen1972],
+Let `F` be a finite field whose elements are written as `b` bits through an additive bijection
+`φ : F ≃+ BitString b`, so that `F` has `q = 2 ^ b` elements; every field of characteristic two with
+`2 ^ b` elements has such a bijection (`Cslib.LineCode.nonempty_addEquiv_bitString`). The *Justesen code* [Justesen1972],
 [GuruswamiRudraSudan2019] of outer dimension `K` concatenates the Reed–Solomon code of dimension
 `K` whose evaluation points are the `q - 1` nonzero elements `u` of `F` with inner codes that vary
 with the position: the symbol `a` at the position `u` becomes the `2 * b` bits of `(a, u * a)`, its
@@ -45,8 +45,9 @@ With the binomial estimate `V(r) * 4 ^ (2 * b) ≤ 4 ^ r * 5 ^ (2 * b)`
 code of length `n = 32 * s * (2 ^ (16 * s) - 1)` with `2 ^ k` codewords, where `n ≤ 4 * k`, and
 minimum distance at least `n / 128` (`Cslib.Code.justesenCode_asymptoticallyGood`); the lengths
 grow without bound with `s`, while the rate stays at least `1 / 4` and the relative distance at
-least `1 / 128`. These constants are not optimized: [Justesen1972] obtains relative distance
-approaching `(1 - 2 R) H⁻¹(1 / 2) ≈ 0.11 * (1 - 2 R)` at rate `R < 1 / 2`.
+least `1 / 128`. These constants are not optimized: estimating `V(r)` by the binary entropy
+function `H` instead gives relative distance approaching `(1 - 2 R) H⁻¹(1 / 2) ≈ 0.11 * (1 - 2 R)`
+at rate `R < 1 / 2` [GuruswamiRudraSudan2019]; this is not formalized here.
 
 ## Main definitions
 
