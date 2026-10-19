@@ -36,7 +36,16 @@ pull request #767 (open), whose classes are indexed by languages rather than enc
 binary alphabet and finitely many states within logarithmic space
 (`Turing.MultiTapeNTM.DecidesInSpace`): every computation prefix on `enc a` stays within the bound,
 and `a ∈ A` exactly when some computation path halts with output `[true]`. No time bound is
-imposed, and branches need not halt.
+imposed.
+
+**Halting convention.** Branches need not halt: a branch may run forever or end stuck, and
+neither accepts. This is looser than [Sipser, Definition 8.1][Sipser2013], which asks every branch
+of a nondeterministic logspace decider to halt, so `NL enc` contains the textbook class, and every
+upper bound proved here for `NL enc` (`Cslib.Complexity.NL_subset_P`,
+`Cslib.Complexity.NL_subset_NPSPACE`) holds for the textbook class as well. The two classes
+coincide by the standard clock argument: a shortest accepting path repeats no view, and there are
+polynomially many reachable views, so a counter of logarithmic length can cut every branch off
+without losing acceptance. That converse inclusion is not formalized here.
 
 `Cslib.Complexity.LogSpaceReducible encA encB A B` asks for a logspace function mapping instances
 of `A` to instances of `B`, preserving membership [Sipser, Section 8.5][Sipser2013]. Logspace
@@ -87,7 +96,8 @@ def L (enc : α ↪ List Bool) : Set (Set α) :=
 /-- The problems decided by one nondeterministic machine within logarithmic space with respect to
 the encoding `enc`: every computation prefix on `enc a` visits at most `c * (Nat.log2 n + 1)`
 work-tape cells, where `n` is the length of `enc a`, and `a ∈ A` exactly when some computation path
-halts with output `[true]`. -/
+halts with output `[true]`. Branches need not halt, unlike [Sipser, Definition 8.1][Sipser2013]: a
+branch that runs forever or ends stuck does not accept (see the module docstring). -/
 def NL (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State) (c : ℕ),
     ntm.DecidesInSpace enc A fun a => c * (Nat.log2 (enc a).length + 1)}
@@ -137,21 +147,15 @@ theorem L_subset_P : L enc ⊆ P enc := by
   rintro A ⟨f, hf, hA⟩
   exact ⟨f, hf.computableTidilyInPolyTime, hA⟩
 
-/-- The logarithmic bounds are polynomially bounded. -/
-private theorem polyBounded_log (c : ℕ) :
-    PolyBounded (fun a => (enc a).length) fun a => c * (Nat.log2 (enc a).length + 1) :=
-  .of_forall_le c 1 fun a => Nat.mul_le_mul_left c (by
-    simpa using Nat.log2_le_self (enc a).length)
-
 /-- **Deterministic logarithmic space is within polynomial space.** -/
 theorem L_subset_PSPACE : L enc ⊆ PSPACE enc := by
   rintro A ⟨f, ⟨t, c, hf⟩, hA⟩
-  exact ⟨f, ⟨t, _, polyBounded_log c, hf⟩, hA⟩
+  exact ⟨f, ⟨t, _, polyBounded_log (fun a => (enc a).length) c, hf⟩, hA⟩
 
 /-- **Nondeterministic logarithmic space is within nondeterministic polynomial space.** -/
 theorem NL_subset_NPSPACE : NL enc ⊆ NPSPACE enc := by
   rintro A ⟨k, State, hfinite, ntm, c, h⟩
-  exact ⟨k, State, hfinite, ntm, _, polyBounded_log c, h⟩
+  exact ⟨k, State, hfinite, ntm, _, polyBounded_log (fun a => (enc a).length) c, h⟩
 
 /-! ### Logspace reductions -/
 
