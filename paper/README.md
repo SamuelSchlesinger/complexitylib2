@@ -1,9 +1,15 @@
-# Human-readable proof companion
+# Index of proved statements
 
-This manuscript translates the arguments actually used in the Lean formalization.
-The draft contains an annotated coverage plan and Cook–Levin and sparse-counter proof translations;
-other chapters are proposed, not completed translations. Samuel controls the wording,
-selection and organization. The copy remains a working draft for editorial discussion.
+`main.tex` and `main.pdf` present a curated, human-readable index of thirteen
+landmark results, grouped by subject. Each entry states the result, its assumptions
+and model, important limitations, and links to exact Lean declarations. It is not
+an exhaustive API reference. Samuel controls selection, organization and wording.
+
+Edit `sections/statements.tex` to revise or extend the index. Source links currently
+refer to library revision `d2c5e5812794ca1a39cf126de44e236789623215`.
+The earlier proof translations remain available in Git history at that revision.
+Outstanding development priorities belong in `../ROADMAP.md`, not as speculative
+chapters in the index.
 
 Build from the repository root:
 
@@ -11,19 +17,12 @@ Build from the repository root:
 latexmk -pdf -interaction=nonstopmode -halt-on-error -cd paper/main.tex
 ```
 
-Output: `paper/main.pdf`. Sources share the repository's `references.bib`.
-Edit `sections/outline.tex` for scope, `sections/cook-levin.tex` for Cook–Levin, and
-`sections/sparse-counter.tex` for the sparse-counter argument.
-Cook–Levin links to the proof route at library revision `263e7321`; the sparse-counter
-section links to `904ac4e1`.
-It treats the local machine step-equation lemma and compositional resource rules
-as named prerequisites; it does not claim to translate all imported proofs.
+The bibliography is shared with the library (`../references.bib`). Every AI-authored
+PR must check the index and update affected statements, assumptions, limitations
+and links; new headline results need entries. Proof-only changes with unchanged
+statements and scope may record a no-impact assessment instead. See AGENTS.md and
+CONTRIBUTING.md for the policy. Changed entries require independent AI review
+against the final Lean definitions and statements, plus PDF build and visual checks.
 
-Every AI-authored PR must synchronize affected exposition, including proof changes
-that preserve theorem statements, and obtain independent AI review against the final
-Lean revision. See AGENTS.md and CONTRIBUTING.md for the repository policy. Record
-no-impact assessments explicitly for changes without mathematical/expository effects.
-An AI review is not a machine-checked equivalence proof or human editorial approval.
-
-This draft was prepared with Codex assistance. Review evidence is recorded in
-`review.md`; proposed coverage must remain distinct from completed translations.
+Prepared with Codex assistance. Review evidence is in `review.md`; an AI review is
+neither a machine-checked equivalence proof nor human editorial approval.

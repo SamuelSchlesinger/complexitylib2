@@ -10,15 +10,16 @@ For mathematical changes, state the public claim and its important assumptions. 
 <!-- Record commands/outcomes and the tested revision. Mention representative clients,
 independent review, resolved findings and remaining limitations. Do not claim review not yet done. -->
 
-## Proof exposition
+## Theorem index
 
-<!-- Every AI-authored PR must synchronize paper/main.tex and its included sections with
-its final Lean changes. Translate the actual arguments, including changed proofs with unchanged
-statements. For a change with no mathematical or exposition impact, state why explicitly. -->
+<!-- Every AI-authored PR must check paper/main.tex and its included sections against its
+final Lean changes. Update affected statements, assumptions, limitations and declaration links;
+add new headline results. Explain no-impact assessments, including proof-only changes that
+preserve statements and scope. Internal helper lemmas need no separate entry. -->
 
-- Affected proof sections and declaration links:
-- Independent AI translation review (reviewer, exact Lean/prose revisions, findings/resolutions):
-- PDF build and rendered-page check:
+- Affected entries and declaration links, or reason the index is unaffected:
+- Independent AI index review (reviewer, exact Lean/prose revisions, findings/resolutions):
+- PDF build and rendered-page check (when changed):
 
 ## AI assistance
 

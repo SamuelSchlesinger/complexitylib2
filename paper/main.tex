@@ -2,50 +2,39 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[margin=1in]{geometry}
-\usepackage{microtype}
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage{xcolor}
-\usepackage{enumitem}
-\usepackage{titlesec}
-\titlespacing*{\subsection}{0pt}{1.3ex plus .2ex}{.5ex}
+\usepackage{microtype,amsmath,amssymb,xcolor,enumitem,titlesec}
+\titlespacing*{\section}{0pt}{1.5ex plus .2ex}{.7ex}
+\titlespacing*{\subsection}{0pt}{1.3ex plus .2ex}{.4ex}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black,
   citecolor=blue!45!black]{hyperref}
-\usepackage{fancyvrb}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{0.55em}
+\setlength{\parskip}{0.45em}
 \setlist{nosep,leftmargin=*}
 \newcommand{\cc}[1]{\mathsf{#1}}
 \newcommand{\lean}[1]{\nolinkurl{#1}}
-\newcommand{\source}[2]{\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/263e7321/#1}{#2}}
-\newcommand{\sparseSource}[2]{\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/904ac4e1/#1}{#2}}
-\newcommand{\choice}[1]{\par{\small\color{blue!45!black}\textbf{For discussion.} #1}\par}
-\newtheorem*{theorem}{Theorem}
-\title{Complexitylib:\\Human-readable proofs from the Lean formalization}
-\author{}
-\date{Working outline and proof translations\\19 October 2026}
-\hypersetup{pdftitle={Complexitylib: Human-readable proofs from the Lean formalization},
-  pdfsubject={Annotated outline and proof translations for author discussion}}
+\newcommand{\decl}[3]{\par{\footnotesize\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/d2c5e5812794ca1a39cf126de44e236789623215/#1\#L#2}{\nolinkurl{#3}}}\par}
+\hypersetup{pdftitle={Complexitylib: An index of proved statements},
+  pdfsubject={Selected formalized results, assumptions, and Lean declaration links}}
 \begin{document}
 \begin{center}
-{\LARGE Complexitylib:\\[.25em]
-Human-readable proofs from the Lean formalization\par}
-\vspace{.8em}
-Working outline and proof translations\\19 October 2026
+{\LARGE Complexitylib:\\[.2em]An index of proved statements\par}
+\vspace{.5em}
+19 October 2026
 \end{center}
-\begin{quote}\small
-This is an annotated plan with Cook--Levin and sparse-counter proof translations.
-The paper is intended as an AI-reviewed explanation of the arguments in Lean;
-the other chapters are proposed. The author controls selection and wording.
-Cook--Levin links refer to revision \texttt{263e7321}; sparse-counter links
-identify the implementation accompanying that section.
-\end{quote}
-{\small\setlength{\parskip}{0.4em}
-\input{sections/outline}}
+This is a curated index of thirteen results in the Lean library, not an exhaustive
+API reference. Each entry gives the statement, its model or assumptions, and a link
+to the formal declaration. Links are pinned to revision \texttt{d2c5e581}.
+The wording and selection remain open to Samuel's editorial direction.
+
+Unless specified otherwise, class statements hold for any type of instances with
+an injective encoding into finite bit strings; input size is encoded length.
+Resource bounds and reductions refer to the library's machine definitions.
+Source citations credit the mathematics; linked modules also record formalization authors.
+This index was prepared and reviewed with AI assistance; prose is not machine checked.
+
+\input{sections/statements}
 \clearpage
-\input{sections/cook-levin}
-\clearpage
-\input{sections/sparse-counter}
 \begingroup
 \raggedright
 \bibliographystyle{plainnat}
