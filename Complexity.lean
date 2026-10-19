@@ -907,10 +907,13 @@ public import Complexity.Foundations.Data.Code.Concatenation
 public import Complexity.Foundations.Data.Code.Hadamard
 public import Complexity.Foundations.Data.Code.HammingBound
 public import Complexity.Foundations.Data.Code.Johnson
+public import Complexity.Foundations.Data.Code.Justesen
 public import Complexity.Foundations.Data.Code.Linear
+public import Complexity.Foundations.Data.Code.LocalDecoding
 public import Complexity.Foundations.Data.Code.ReedMuller
 public import Complexity.Foundations.Data.Code.ReedSolomon
 public import Complexity.Foundations.Data.Code.Singleton
+public import Complexity.Foundations.Data.Code.Sudan
 public import Complexity.Foundations.Data.Fin.Append
 public import Complexity.Foundations.Data.Fin.Order
 public import Complexity.Foundations.Data.Fin.Tuple
