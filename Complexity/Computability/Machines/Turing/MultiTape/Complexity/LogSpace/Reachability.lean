@@ -15,6 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Foundations.Data.Nat.Log
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -41,7 +42,7 @@ configuration graph, which has polynomially many vertices [Sipser, Section 8.4][
 * `Turing.MultiTapeNTM.reflTransGen_viewSucc_iff`: the successor lists give the reachable views.
 * `Turing.MultiTapeNTM.searchAccepts_iff`: enough rounds decide acceptance.
 * `Turing.MultiTapeNTM.computableTidilyInPolyTime_viewSucc`: the successors in polynomial time.
-* `Turing.MultiTapeNTM.computableTidilyInPolyTime_expand`: a round in polynomial time.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.expand`: a round in polynomial time.
 * `Turing.MultiTapeNTM.exists_computableTidilyInPolyTime_searchAccepts`: under a logarithmic space
   bound, enough rounds of breadth-first search run in polynomial time.
 
