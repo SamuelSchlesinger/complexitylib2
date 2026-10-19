@@ -107,7 +107,7 @@ section Simp
 
 variable (z : Z) (send : X → Bool) (send' : Y → Bool) (p₀ p₁ : Protocol X Y Z) (x : X) (y : Y)
 
-@[simp] theorem leaf_output : (output z : Protocol X Y Z).leaf x y = (0 : Fin 1) :=
+@[simp] theorem leaf_output : (output z : Protocol X Y Z).leaf x y = ⟨0, Nat.zero_lt_one⟩ :=
   rfl
 
 @[simp] theorem leaf_alice : (alice send p₀ p₁).leaf x y =
@@ -118,7 +118,8 @@ variable (z : Z) (send : X → Bool) (send' : Y → Bool) (p₀ p₁ : Protocol 
     cond (send' y) (Fin.natAdd p₀.leaves (p₁.leaf x y)) (Fin.castAdd p₁.leaves (p₀.leaf x y)) :=
   rfl
 
-@[simp] theorem leafOutput_output (i : Fin 1) : (output z : Protocol X Y Z).leafOutput i = z :=
+@[simp] theorem leafOutput_output (i : Fin (output z : Protocol X Y Z).leaves) :
+    (output z : Protocol X Y Z).leafOutput i = z :=
   rfl
 
 @[simp] theorem leafOutput_alice_castAdd (i : Fin p₀.leaves) :
@@ -137,7 +138,7 @@ variable (z : Z) (send : X → Bool) (send' : Y → Bool) (p₀ p₁ : Protocol 
     (bob send' p₀ p₁).leafOutput (Fin.natAdd p₀.leaves i) = p₁.leafOutput i :=
   Fin.append_right _ _ i
 
-@[simp] theorem leafAlice_output (i : Fin 1) :
+@[simp] theorem leafAlice_output (i : Fin (output z : Protocol X Y Z).leaves) :
     (output z : Protocol X Y Z).leafAlice i = Set.univ :=
   rfl
 
@@ -158,7 +159,8 @@ variable (z : Z) (send : X → Bool) (send' : Y → Bool) (p₀ p₁ : Protocol 
     (bob send' p₀ p₁).leafAlice (Fin.natAdd p₀.leaves i) = p₁.leafAlice i :=
   Fin.append_right _ _ i
 
-@[simp] theorem leafBob_output (i : Fin 1) : (output z : Protocol X Y Z).leafBob i = Set.univ :=
+@[simp] theorem leafBob_output (i : Fin (output z : Protocol X Y Z).leaves) :
+    (output z : Protocol X Y Z).leafBob i = Set.univ :=
   rfl
 
 @[simp] theorem leafBob_alice_castAdd (i : Fin p₀.leaves) :

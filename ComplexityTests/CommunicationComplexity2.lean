@@ -49,6 +49,26 @@ private theorem depth_eqPublicCoin (n : ℕ) : PublicCoin.depth (eqPublicCoin n)
   obtain ⟨r, -, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hp
   simp [eqProtocol]
 
+/-- Two distinct bit strings have the same parity on exactly half of all subsets. -/
+private theorem card_agree_mul_two {n : ℕ} {x y : BitString n} (hxy : x ≠ y) :
+    #{r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} * 2 = 2 ^ n := by
+  have hv : x + y ≠ 0 := fun h => hxy (by
+    have := congrArg (· + y) h
+    simpa [add_assoc] using this)
+  have hcount := two_mul_card_dotProduct_eq_true_add (x + y)
+  simp only [hv, ↓reduceIte, add_zero, Fintype.card_fin] at hcount
+  have hagree : #{r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} =
+      #{r : BitString n | ¬(x + y) ⬝ᵥ r = true} := by
+    congr 1
+    ext r
+    simp only [mem_filter, mem_univ, true_and, add_dotProduct]
+    cases x ⬝ᵥ r <;> cases y ⬝ᵥ r <;> decide
+  have := card_filter_add_card_filter_not (s := univ) fun r : BitString n => (x + y) ⬝ᵥ r = true
+  rw [card_univ, BitString.card] at this
+  set a := #{r : BitString n | (x + y) ⬝ᵥ r = true}
+  set b := #{r : BitString n | ¬(x + y) ⬝ᵥ r = true}
+  omega
+
 /-- The random-parity protocol errs only on unequal inputs, with probability one half. -/
 private theorem solves_eqPublicCoin (n : ℕ) :
     PublicCoin.Solves (eqPublicCoin n) (1 / 2) (fun x y b => equality x y = b) Set.univ
@@ -62,37 +82,84 @@ private theorem solves_eqPublicCoin (n : ℕ) :
   rw [sum_const, nsmul_eq_mul]
   by_cases hxy : x = y
   · simp [hxy]
-  · have hv : x + y ≠ 0 := fun h => hxy (by
-      have := congrArg (· + y) h
-      simpa [add_assoc] using this)
-    have hcount := two_mul_card_dotProduct_eq_true_add (x + y)
-    simp only [hv, ↓reduceIte, add_zero, Fintype.card_fin] at hcount
-    have hagree (r : BitString n) : (x ⬝ᵥ r = y ⬝ᵥ r) ↔ ¬(x + y) ⬝ᵥ r = true := by
-      rw [add_dotProduct]
-      cases x ⬝ᵥ r <;> cases y ⬝ᵥ r <;> decide
-    have hset : #{r : BitString n | ¬decide (x = y) = decide (x ⬝ᵥ r = y ⬝ᵥ r)} =
-        #{r : BitString n | ¬(x + y) ⬝ᵥ r = true} := by
+  · have hset : #{r : BitString n | ¬decide (x = y) = decide (x ⬝ᵥ r = y ⬝ᵥ r)} =
+        #{r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} := by
       congr 1
       ext r
-      simp [hxy, hagree r]
-    have hfalse : #{r : BitString n | ¬(x + y) ⬝ᵥ r = true} * 2 = 2 ^ n := by
-      have := card_filter_add_card_filter_not (s := univ) fun r : BitString n => (x + y) ⬝ᵥ r = true
-      rw [card_univ, BitString.card] at this
-      set a := #{r : BitString n | (x + y) ⬝ᵥ r = true}
-      set b := #{r : BitString n | ¬(x + y) ⬝ᵥ r = true}
-      omega
-    rw [hset]
-    have hpos : (0 : ℝ) < 2 ^ n := by positivity
-    rw [← div_eq_mul_inv, div_le_iff₀ (by exact_mod_cast hpos)]
-    have : (#{r : BitString n | ¬(x + y) ⬝ᵥ r = true} : ℝ) * 2 = 2 ^ n := by exact_mod_cast hfalse
+      simp [hxy]
+    rw [hset, ← div_eq_mul_inv, div_le_iff₀ (by positivity)]
+    have : (#{r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} : ℝ) * 2 = 2 ^ n := by
+      exact_mod_cast card_agree_mul_two hxy
     push_cast
     linarith
 
--- Equality has public-coin complexity at most two with error one half, against `n + 1`
--- deterministically.
+-- Equality has public-coin complexity at most two with error one half. A coin flip with no
+-- communication also has error one half, so this only checks the protocol.
 example (n : ℕ) : PublicCoin.ecomplexityFun (1 / 2) (equality : BitString n → BitString n → Bool)
     ≤ 2 :=
   (PublicCoin.ecomplexity_le_depth (solves_eqPublicCoin n)).trans (depth_eqPublicCoin n)
+
+/-! ### Equality with error one quarter -/
+
+/-- Bob announces whether his parities agree with the parities `a` and `b` that Alice sent. -/
+private def eqCheck {n : ℕ} (r : BitString n × BitString n) (a b : Bool) :
+    Protocol (BitString n) (BitString n) Bool :=
+  .bob (fun y => decide (y ⬝ᵥ r.1 = a ∧ y ⬝ᵥ r.2 = b)) (.output false) (.output true)
+
+/-- With shared random bits `r`, Alice sends `x ⬝ᵥ r.1` and `x ⬝ᵥ r.2`, and Bob announces whether
+`y ⬝ᵥ r.1` and `y ⬝ᵥ r.2` agree with them. -/
+private def eqProtocol₂ {n : ℕ} (r : BitString n × BitString n) :
+    Protocol (BitString n) (BitString n) Bool :=
+  .alice (fun x => x ⬝ᵥ r.1)
+    (.alice (fun x => x ⬝ᵥ r.2) (eqCheck r false false) (eqCheck r false true))
+    (.alice (fun x => x ⬝ᵥ r.2) (eqCheck r true false) (eqCheck r true true))
+
+private theorem run_eqProtocol₂ {n : ℕ} (r : BitString n × BitString n) (x y : BitString n) :
+    (eqProtocol₂ r).run x y = decide (x ⬝ᵥ r.1 = y ⬝ᵥ r.1 ∧ x ⬝ᵥ r.2 = y ⬝ᵥ r.2) := by
+  simp only [eqProtocol₂, eqCheck, Protocol.run_alice, Protocol.run_bob, Protocol.run_output]
+  cases x ⬝ᵥ r.1 <;> cases x ⬝ᵥ r.2 <;> cases y ⬝ᵥ r.1 <;> cases y ⬝ᵥ r.2 <;> rfl
+
+/-- Two independent random parities for equality. -/
+private noncomputable def eqPublicCoin₂ (n : ℕ) : PublicCoin (BitString n) (BitString n) Bool :=
+  (Probability.PMF.uniformOfFintype (BitString n × BitString n)).map eqProtocol₂
+
+private theorem depth_eqPublicCoin₂ (n : ℕ) : PublicCoin.depth (eqPublicCoin₂ n) ≤ 3 := by
+  refine PublicCoin.depth_le_iff.mpr fun p hp => ?_
+  obtain ⟨r, -, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hp
+  simp [eqProtocol₂, eqCheck]
+
+/-- Two independent random parities err only on unequal inputs, with probability one quarter. -/
+private theorem solves_eqPublicCoin₂ (n : ℕ) :
+    PublicCoin.Solves (eqPublicCoin₂ n) (1 / 4) (fun x y b => equality x y = b) Set.univ
+      Set.univ := by
+  classical
+  intro x _ y _
+  rw [PublicCoin.errorProb, eqPublicCoin₂, PMF.toOuterMeasure_map_apply,
+    Probability.PMF.toOuterMeasure_apply_toReal, ← sum_filter]
+  simp only [Probability.PMF.uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast,
+    Fintype.card_prod, BitString.card, Set.mem_preimage, Set.mem_ofPred_eq, run_eqProtocol₂,
+    equality]
+  rw [sum_const, nsmul_eq_mul]
+  by_cases hxy : x = y
+  · simp [hxy]
+  · have hset : #{r : BitString n × BitString n |
+          ¬decide (x = y) = decide (x ⬝ᵥ r.1 = y ⬝ᵥ r.1 ∧ x ⬝ᵥ r.2 = y ⬝ᵥ r.2)} =
+        #(({r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} : Finset _) ×ˢ
+          ({r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} : Finset _)) := by
+      congr 1
+      ext r
+      simp [hxy]
+    rw [hset, card_product, ← div_eq_mul_inv, div_le_iff₀ (by positivity)]
+    have : (#{r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} : ℝ) * 2 = 2 ^ n := by
+      exact_mod_cast card_agree_mul_two hxy
+    push_cast
+    nlinarith
+
+-- Equality has public-coin complexity at most three with error one quarter, against `n + 1`
+-- deterministically.
+example (n : ℕ) : PublicCoin.ecomplexityFun (1 / 4) (equality : BitString n → BitString n → Bool)
+    ≤ 3 :=
+  (PublicCoin.ecomplexity_le_depth (solves_eqPublicCoin₂ n)).trans (depth_eqPublicCoin₂ n)
 
 example : Protocol.ecomplexityFun (equality : BitString 3 → BitString 3 → Bool) = 4 :=
   ecomplexity_equality (by decide)
@@ -124,15 +191,15 @@ example {Z : Type*} (n : ℕ) {R : BitString n → BitString n → Z → Prop} {
       PublicCoin.ecomplexity ε R Set.univ Set.univ + Nat.clog 2 ⌈n / δ ^ 2⌉₊ :=
   PrivateCoin.ecomplexity_le_add_clog (n := n) (by simp) (by simp) hδ
 
--- Equality with private coins and error `3 / 4` needs at most `2 + ⌈log₂ 16 n⌉` bits.
+-- Equality with private coins and error `3 / 8` needs at most `3 + ⌈log₂ 64 n⌉` bits.
 example (n : ℕ) :
-    PrivateCoin.ecomplexityFun (1 / 2 + 1 / 4) (equality : BitString n → BitString n → Bool) ≤
-      2 + Nat.clog 2 ⌈n / (1 / 4 : ℝ) ^ 2⌉₊ :=
+    PrivateCoin.ecomplexityFun (1 / 4 + 1 / 8) (equality : BitString n → BitString n → Bool) ≤
+      3 + Nat.clog 2 ⌈n / (1 / 8 : ℝ) ^ 2⌉₊ :=
   (PrivateCoin.ecomplexity_le_add_clog (n := n) (by simp) (by simp) (by norm_num)).trans
     (by
       gcongr
-      exact (PublicCoin.ecomplexity_le_depth (solves_eqPublicCoin n)).trans
-        (depth_eqPublicCoin n))
+      exact (PublicCoin.ecomplexity_le_depth (solves_eqPublicCoin₂ n)).trans
+        (depth_eqPublicCoin₂ n))
 
 /-! ### The weighted area bound -/
 

@@ -279,6 +279,7 @@ public import Complexity.Computability.Circuit.Synthesis
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Circuit.Wiring
 public import Complexity.Computability.Communication.Discrepancy
+public import Complexity.Computability.Communication.Distributional
 public import Complexity.Computability.Communication.FoolingSet
 public import Complexity.Computability.Communication.Functions
 public import Complexity.Computability.Communication.KarchmerWigderson
@@ -968,6 +969,7 @@ public import Complexity.Probability.Isolation
 public import Complexity.Probability.KWiseIndependent
 public import Complexity.Probability.KWiseIndependent.Polynomial
 public import Complexity.Probability.LocalLemma
+public import Complexity.Probability.Minimax
 public import Complexity.Probability.PMF
 public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PMF.Map
