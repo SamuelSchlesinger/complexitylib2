@@ -21,6 +21,9 @@ languages; it does not require a language to belong to both `NP` and `coNP`. Com
 polynomial-time many-one reductions and arbitrary
 injective instance encodings.
 
+The complement class `coDP` consists of unions of an NP and a coNP language; its
+union and reduction closure are immediate duals of the DP results.
+
 ## Main definitions
 
 * `Cslib.Complexity.DP`, `Cslib.Complexity.DPHard`, `Cslib.Complexity.DPComplete`.
@@ -96,5 +99,29 @@ theorem NPComplete.prod_coNPComplete {encA : α ↪ List Bool} {encB : β ↪ Li
     obtain ⟨f, hf, hCf⟩ := hA.2 encC C₁ h₁
     obtain ⟨g, hg, hCg⟩ := hB.2 encC C₂ h₂
     exact ⟨fun a => (f a, g a), hf.prod hg, fun a => by simp [hCf a, hCg a]⟩
+
+/-- The complement of the difference class DP. -/
+def coDP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ DP enc}
+
+/-- coDP consists of unions of an NP language and a coNP language. -/
+theorem mem_coDP_iff_union : A ∈ coDP enc ↔
+    ∃ B ∈ NP enc, ∃ C ∈ coNP enc, A = B ∪ C := by
+  constructor
+  · rintro ⟨B, hB, C, hC, h⟩
+    refine ⟨Cᶜ, hC, Bᶜ, by simpa [mem_coNP] using hB, ?_⟩
+    have := congrArg Compl.compl h
+    simpa [Set.compl_inter, Set.union_comm] using this
+  · rintro ⟨B, hB, C, hC, rfl⟩
+    exact ⟨Cᶜ, hC, Bᶜ, by simpa [mem_coNP] using hB, by
+      simp [Set.inter_comm]⟩
+
+/-- Union closure is dual to intersection closure of DP. -/
+theorem union_mem_coDP (hA : A ∈ coDP enc) (hB : B ∈ coDP enc) : A ∪ B ∈ coDP enc := by
+  simpa [coDP] using inter_mem_DP hA hB
+
+/-- Polynomial-time reductions preserve coDP. -/
+theorem PolyTimeReducible.mem_coDP {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ coDP encB) : A ∈ coDP enc :=
+  h.compl.mem_DP hB
 
 end Cslib.Complexity
