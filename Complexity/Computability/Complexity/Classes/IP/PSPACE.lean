@@ -445,6 +445,68 @@ theorem computableTidilyInPolySpace_evalStep [Finite Control] [Inhabited α] :
         (computableTidilyInPolySpace_leaf M hfuel)))).congr fun s => ?_
   rw [evalStep_eq]
 
+omit hfuel in
+/-- A number at most `2 ^ L` has a binary encoding of length at most `L + 1`. -/
+private theorem length_encNat_le {m L : ℕ} (h : m ≤ 2 ^ L) : (encNat m).length ≤ L + 1 := by
+  rw [encNat_apply, Nat.size_eq_bits_len]
+  exact Nat.size_le.mpr (h.trans_lt (Nat.pow_lt_pow_right (by norm_num) (by lia)))
+
+omit hfuel in
+/-- **The states of the evaluation are of polynomial size.** -/
+theorem length_encEvalState_iterate_le (a : α) (j : ℕ) :
+    (encEvalState enc ((evalStep enc M fuel)^[j] (a, [], none))).length ≤
+      2 * (enc a).length + 2 * fuel a * (14 * fuel a + 21) + fuel a + 4 := by
+  rw [iterate_evalStep]
+  have hgood := GameTree.good_iterate_step (D := fuel a) (cap := 2 ^ fuel a)
+    (first := firstCode (fuel a)) (next := incrementBits) (last := lastCode (fuel a))
+    (leaf := leafValue (coinFamily M (fuel a) (enc a)))
+    (P := fun u => u.length = fuel a + 1) (by simp [firstCode])
+    (fun u hu => by simpa using hu) j
+  set st := (GameTree.step (fuel a) (2 ^ fuel a) (firstCode (fuel a)) incrementBits
+    (lastCode (fuel a)) (leafValue (coinFamily M (fuel a) (enc a))))^[j] ([], none)
+  have hframe : ∀ f ∈ st.1, (encFrame f).length ≤ 7 * fuel a + 10 := by
+    intro f hf
+    obtain ⟨hu, hw, hs, ha⟩ := hgood.frames f hf
+    have hs' := length_encNat_le hs
+    have ha' := length_encNat_le ha
+    simp only [encFrame, length_encPair, encBits_apply, hu, hw] at hs' ha' ⊢
+    lia
+  have hlist := length_encList_le encFrame st.1 hframe
+  have hdepth := Nat.mul_le_mul_right (2 * (7 * fuel a + 10) + 1) hgood.length
+  have hret : (encOption encNat st.2).length ≤ fuel a + 2 := by
+    rcases hst : st.2 with _ | v
+    · simp
+    · have := length_encNat_le (hgood.value v hst)
+      simp only [encOption_some, List.length_cons]
+      lia
+  simp only [encEvalState, length_encPair]
+  nlinarith
+
+/-- **The evaluation within polynomial space.** -/
+theorem computableTidilyInPolySpace_evaluate [Finite Control] [Inhabited α] :
+    ComputableTidilyInPolySpace (evaluate enc M fuel) enc encNat := by
+  have hn : ComputableTidilyInPolyTime (evalTime fuel) enc encNat := by
+    have hexp : ComputableTidilyInPolyTime (fun a => (fuel a + 1) * (2 * fuel a + 1)) enc
+        encUnary := by
+      have h1 := unary_add.comp (hfuel.prod (const (encMid := encUnary) 1))
+      have h2 := unary_add.comp ((unary_mul.comp ((const (encMid := encUnary) 2).prod hfuel)).prod
+        (const (encMid := encUnary) 1))
+      exact unary_mul.comp (h1.prod h2)
+    exact twoPow_pt hexp
+  have hinit : ComputableTidilyInPolyTime (fun a : α => ((a, [], none) : EvalState α)) enc
+      (encEvalState enc) := by fun_prop
+  have hlen := hfuel.polyBounded_length
+  simp only [encUnary_apply, List.length_replicate] at hlen
+  have hit := ComputableTidilyInPolySpace.iterate hn (.of_polyTime hinit)
+    (computableTidilyInPolySpace_evalStep M hfuel)
+    (B := fun a => 2 * (enc a).length + 2 * fuel a * (14 * fuel a + 21) + fuel a + 4)
+    (((((PolyBounded.const 2).mul .self).add (((PolyBounded.const 2).mul hlen).mul
+      (((PolyBounded.const 14).mul hlen).add (.const 21)))).add hlen).add (.const 4))
+    (fun a j _ => length_encEvalState_iterate_le M a j)
+  have hpost : ComputableTidilyInPolyTime (fun s : EvalState α => s.2.2.getD 0)
+      (encEvalState enc) encNat := by fun_prop
+  exact (ComputableTidilyInPolySpace.of_polyTime hpost).comp hit
+
 end Space
 
 end Cslib.Complexity.Interaction
