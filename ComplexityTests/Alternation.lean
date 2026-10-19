@@ -16,9 +16,9 @@ A one-state machine that emits its move and halts: existential, it accepts every
 universal, it accepts none, so both labels matter; both decide their problems within one step,
 which puts `Set.univ` and `∅` in `AP` with explicit machines, and their games of moves are won and
 lost. Two game verifiers, one won by the existential player's first move and one lost to the
-universal player's, put `Set.univ` and `∅` in `AP` through the guess-then-verify machine. Single-bit
-moves on concrete predicates, rounds of quantifiers on a concrete formula, Savitch's midpoint game on
-a two-word graph, and the axioms of the headline theorems.
+universal player's, put `Set.univ` and `∅` in `AP` through the guess-then-verify machine.
+Single-bit moves on concrete predicates, rounds of quantifiers on a concrete formula, Savitch's
+midpoint game on a two-word graph, and the axioms of the headline theorems.
 -/
 
 namespace ComplexityTests.Alternation
