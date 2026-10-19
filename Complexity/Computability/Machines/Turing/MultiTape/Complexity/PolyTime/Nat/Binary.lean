@@ -11,7 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arit
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
-import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Mathlib.Data.List.GetD
 import Mathlib.Data.Nat.Bitwise
 
@@ -42,6 +42,7 @@ multiplication.
 
 ## Main results
 
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsToNat`: binary decoding of arbitrary words.
 * `Nat.size_add_le`: a sum has at most one binary digit more than its summands together.
 * `Nat.lt_iff_exists_testBit`: strict order through the highest differing bit.
 * `Nat.size_add_le_max`, `Nat.size_mul_le`, `Nat.size_pow_le`, `Nat.size_sum_le`: binary lengths
@@ -239,6 +240,13 @@ end Turing.MultiTapeTM.BinarySub
 
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
+/-- Decode arbitrary little-endian bit words to binary naturals. -/
+@[fun_prop]
+theorem bitsToNat : ComputableTidilyInPolyTime ofBits encBits encNat := by
+  obtain ⟨d, e, h⟩ := Decoder.nat.computable
+  exact h.computableTidilyInPolyTime
+
+
 /-- The binary digits of a natural number, as a raw bit string. -/
 @[fun_prop]
 theorem natBits : ComputableTidilyInPolyTime Nat.bits encNat encBits := of_eq fun _ => rfl
@@ -410,9 +418,7 @@ theorem binary_sub : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 - p.2
     (encL := encList (encPair encBool encBool)) (encB := encPair encBool encBits)
     (init := fun _ => (false, [])) hpairs (const _) hstep (growth := 1)
     (fun s d => by simp [BinarySub.subStep])
-  have hread : ComputableTidilyInPolyTime ofBits encBits encNat := by
-    obtain ⟨d, e, h⟩ := Decoder.nat.computable
-    exact h.computableTidilyInPolyTime
+  have hread : ComputableTidilyInPolyTime ofBits encBits encNat := bitsToNat
   have h := ((fst encBool encBits).comp hfold).ite' (const 0)
     (hread.comp ((snd encBool encBits).comp hfold))
   convert h using 1

@@ -186,20 +186,8 @@ def language (k : ℕ) : Language Bool :=
 
 /-- Lists of the same length with the same binary value are equal. -/
 theorem binaryValue_injective {u v : List Bool} (hlen : u.length = v.length)
-    (h : BitString.binaryValue u = BitString.binaryValue v) : u = v := by
-  induction u using List.reverseRecOn generalizing v with
-  | nil => simpa [eq_comm] using hlen
-  | append_singleton u a ih =>
-    obtain ⟨v, b, rfl⟩ : ∃ v' b, v = v' ++ [b] :=
-      ⟨v.dropLast, v.getLast (List.ne_nil_of_length_pos (by simp at hlen; omega)),
-        (List.dropLast_append_getLast _).symm⟩
-    simp only [List.length_append, List.length_singleton, Nat.add_right_cancel_iff] at hlen
-    rw [BitString.binaryValue_snoc, BitString.binaryValue_snoc] at h
-    have hab : a = b := by
-      cases a <;> cases b <;> simp only [Bool.toNat_false, Bool.toNat_true] at h <;>
-        first | rfl | omega
-    subst hab
-    rw [ih hlen (by omega)]
+    (h : BitString.binaryValue u = BitString.binaryValue v) : u = v :=
+  BitString.binaryValue_injective_of_length_eq hlen h
 
 theorem IsFirstHard.unique {k n : ℕ} {T₁ T₂ : List Bool} (h₁ : IsFirstHard k n T₁)
     (h₂ : IsFirstHard k n T₂) : T₁ = T₂ :=
@@ -494,20 +482,14 @@ theorem isAlternatingVerifier_verifier (k : ℕ) :
 
 /-- Reading the binary digits of a reversed word, least significant first, gives the value of the
 word, most significant first. -/
-theorem ofBits_reverse (w : List Bool) : ofBits w.reverse = BitString.binaryValue w := by
-  rw [ofBits, List.foldr_reverse, BitString.binaryValue]
-  congr 1
-  funext v b
-  rw [Nat.bit_val]
+theorem ofBits_reverse (w : List Bool) : ofBits w.reverse = BitString.binaryValue w :=
+  Turing.MultiTapeTM.ofBits_reverse w
 
 open ComputableTidilyInPolyTime in
 /-- The binary value of a word is polynomial-time, in binary. -/
 theorem computableTidilyInPolyTime_binaryValue :
-    ComputableTidilyInPolyTime BitString.binaryValue encBits encNat := by
-  obtain ⟨d, e, h⟩ := Decoder.nat.computable
-  rw [show BitString.binaryValue = fun w => ofBits w.reverse from funext fun w =>
-    (ofBits_reverse w).symm]
-  exact h.computableTidilyInPolyTime.comp bitsReverse
+    ComputableTidilyInPolyTime BitString.binaryValue encBits encNat :=
+  bitsBinaryValue
 
 open ComputableTidilyInPolyTime in
 /-- The verifier for Kannan's language is polynomial-time. -/

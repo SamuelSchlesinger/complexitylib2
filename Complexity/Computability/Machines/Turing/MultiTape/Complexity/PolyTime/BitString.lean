@@ -13,8 +13,10 @@ public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.WordCount
 public import Complexity.Computability.BitString.Padding
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 
 /-!
 # Polynomial-time bit-list operations
@@ -26,6 +28,8 @@ polynomial bound on the complete encoded output. The operations are total on emp
 
 ## Main results
 
+* `Turing.MultiTapeTM.ofBits_reverse`: agreement of the two binary-word conventions.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBinaryValue`: binary-valued word decoding.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsToList`, `.listToBits`: encoding conversion.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFlatten`: concatenate computed raw words.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFrame`, `.bitsPadWord`: self-delimiting
@@ -58,6 +62,13 @@ Adapted from `Computability/Probabilistic/BitString.lean` and
 @[expose] public section
 
 namespace Turing.MultiTapeTM
+
+/-- Reversing a most-significant-first word gives its little-endian binary decoding. -/
+theorem ofBits_reverse (w : List Bool) : ofBits w.reverse = Cslib.BitString.binaryValue w := by
+  rw [ofBits, List.foldr_reverse, Cslib.BitString.binaryValue]
+  congr 1
+  funext v b
+  rw [Nat.bit_val]
 
 /-- The encoding charges every bit and every delimiter in the enumerated words. -/
 theorem length_encList_enumList (count : ℕ) :
@@ -395,6 +406,12 @@ theorem bitsWordLt {α : Type} {input : α ↪ List Bool} {x y : α → List Boo
   unfold Cslib.BitString.wordLt
   fun_prop
 
+
+/-- Decode arbitrary most-significant-first bit words to binary naturals. -/
+@[fun_prop]
+theorem bitsBinaryValue :
+    ComputableTidilyInPolyTime Cslib.BitString.binaryValue encBits encNat := by
+  simpa only [Function.comp_def, ofBits_reverse] using bitsToNat.comp bitsReverse
 
 end ComputableTidilyInPolyTime
 

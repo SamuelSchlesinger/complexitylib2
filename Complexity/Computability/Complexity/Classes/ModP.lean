@@ -38,6 +38,9 @@ composite moduli.
 * `Cslib.Complexity.inter_mem_ModP`, `Cslib.Complexity.compl_mem_ModP`,
   `Cslib.Complexity.union_mem_ModP`: prime-modulus closure.
 
+The complement class `coModP` is defined by zero residues. For prime moduli it equals
+`ModP`, by the complement theorem above; no such equality is asserted for composite moduli.
+
 ## References
 
 * [L. Fortnow, *Counting Complexity*][Fortnow1997], Classification 4.7.
@@ -130,5 +133,30 @@ theorem union_mem_ModP (hk : k.Prime) (hA : A ∈ ModP k enc) (hB : B ∈ ModP k
     A ∪ B ∈ ModP k enc := by
   simpa [Set.compl_inter] using
     compl_mem_ModP hk (inter_mem_ModP hk (compl_mem_ModP hk hA) (compl_mem_ModP hk hB))
+
+/-- The complementary modular class: a #P count is divisible by the fixed modulus. -/
+def coModP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ ModP k enc}
+
+/-- Zero residues characterize the complementary modular class. -/
+theorem mem_coModP_iff_exists_SharpP :
+    A ∈ coModP k enc ↔ ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ f a % k = 0 := by
+  constructor
+  · rintro ⟨f, hf, h⟩
+    exact ⟨f, hf, fun a => by simpa using not_congr (h a)⟩
+  · rintro ⟨f, hf, h⟩
+    exact ⟨f, hf, fun a => by simpa using not_congr (h a)⟩
+
+/-- Complementary modular counting is closed under polynomial-time reductions. -/
+theorem PolyTimeReducible.mem_coModP {β : Type} {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ coModP k encB) : A ∈ coModP k enc :=
+  h.compl.mem_ModP hB
+
+/-- For prime moduli, complement closure identifies the two modular classes. -/
+theorem coModP_eq_ModP (hk : k.Prime) : coModP k enc = ModP k enc := by
+  ext A
+  constructor
+  · intro h
+    simpa using compl_mem_ModP hk h
+  · exact compl_mem_ModP hk
 
 end Cslib.Complexity

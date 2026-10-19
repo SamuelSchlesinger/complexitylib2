@@ -1,5 +1,73 @@
 # Theorem-index review
 
+## Wide gaps and the Boolean hierarchy, 19 October 2026
+
+Lean source revision: `814e76e29fa938afaed4e1bd5763fa490bc39ca9`.
+Prose revision: `eeb1ffcffcff6e93d192966fb44f9ca91365bb82`.
+Base: `aa916f216902f1975b4b3e3e62e896f1f7c38304`.
+
+Samuel requested implementation of the next Zoo batch and authorized independent
+review followed by direct integration into main for this session, without a PR.
+The batch adds US, coDP, coModP, finite Boolean-hierarchy levels, WPP and LWPP.
+A reusable bridge embeds binary-output polynomial-time natural functions into
+#P and binary-output integer functions into GapP. Fixed-width binary counting and
+decoding lemmas are shared with existing Kannan and graph-nonisomorphism proofs;
+those earlier public statements are unchanged. The index adds two numbered entries
+and contextual FP-to-counting, US and complementary-class results.
+
+Independent Codex reviews:
+
+- `proof_api` approved source `814e76e2` after checking all committed source,
+  imports, tests and bibliography against reviewed hashes. One should-fix finding
+  identified remaining duplicate binary decoding in Kannan. It was resolved by
+  sharing the decoding bridge and retaining compatibility aliases; the fix received
+  a fresh review. The final public Decoder/proof-only Nat.Binary import boundary
+  was also reviewed. No outstanding findings.
+- `proof_correctness` approved source `814e76e2`, checking exact threshold counts,
+  binary output-size bounds, signed targets, unary length dependence, US no-instance
+  multiplicity, the difference-hierarchy convention, reductions, prime-modulus
+  equality and concrete clients. The helper refactor and import delta received
+  fresh review. No findings.
+- `resume_alternation` approved prose `eeb1ffcf` against source `814e76e2`, checking
+  models, quantifiers, resource bounds, limitations, sources, counts and all 30 new
+  declaration anchors. No findings. All independent reviews were read-only.
+
+Sources: Fortnow Theorem 3.5 for the FP counting bridge; Blass–Gurevich for US;
+Cai et al. for the Boolean hierarchy; Fenner–Fortnow–Kurtz and
+Hemaspaandra et al. Definitions 2.4–2.5 for WPP/LWPP. Elementary algebraic
+consequences are identified in the module and index text. Bibliography changes
+are isolated in commit `f3822ac7`.
+
+All six project gates passed on the final source: strict build and test with
+`--wfail --iofail`, `mk_all --check`, `lint`, `lint-style` and `checkInitImports`.
+A preceding validation caught two proof-search timeouts when binary arithmetic
+was exposed publicly through the bit-string module. Narrowing the public import
+to Decoder resolved both; no heartbeat limits were increased. Tests cover
+nonconstant languages, negative exponentially large LWPP targets, nonidentity
+reductions, US no-instances with two witnesses, composite moduli, hierarchy
+levels and 21 headline axiom guards. No Lean changes followed the successful gates.
+
+The rebuilt PDF has 29 pages, 72 numbered entries, 198 declaration links and
+87 references. All pages were rendered and inspected. After pinning the final
+source, the pages were rendered again: only page 1 changed visually, and it was
+reinspected. All 30 new PDF link annotations match checked declaration lines at
+`814e76e2`. The final LaTeX log has no warnings or underfull/overfull boxes.
+Existing bibliography metadata warnings are unchanged. AI review does not imply
+human editorial approval, a proof that prose and Lean are equivalent, or CSLib
+maintainer acceptance. Machine characterizations, lowness, robustness and stronger
+hierarchy endpoints remain explicitly outside the completed scope in ROADMAP.md.
+
+Final artifact hashes:
+
+~~~text
+12265e1eadc49edc6364acdce8f4a850042b5f602e05fa4aa385987ff88c6069  paper/main.tex
+d8468f4ccc67fbb9d1c44f2bd31c8b7b40b27a892e0946fd1b07741294a1ace6  paper/sections/randomness.tex
+af80f3c844d4087d1ec54547f0e2b28e812bb0a3e25d77e35eef47ada0a3b22c  paper/sections/completeness.tex
+aa827c0cf56e649c5e6134a6735afdae1466ff18d7f3491f9a67844000b74253  paper/README.md
+7daead0487ea2a3a0f0431b3dc341999d177e4f942ff67f53b66e9a52ec31e7e  references.bib
+6f696ce4d764dd9bf0971ebd0d55240675f24dcceedd8f74f8ac1b616dc2224e  paper/main.pdf
+~~~
+
 ## Small counting classes, 19 October 2026
 
 Lean source revision: `2f492c03c060ed95662dd942ef7feca1bebda7aa`.

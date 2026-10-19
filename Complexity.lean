@@ -343,6 +343,7 @@ public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.BPP.Collapse
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
+public import Complexity.Computability.Complexity.Classes.BooleanHierarchy
 public import Complexity.Computability.Complexity.Classes.CeqP
 public import Complexity.Computability.Complexity.Classes.DP
 public import Complexity.Computability.Complexity.Classes.EXP
@@ -409,6 +410,7 @@ public import Complexity.Computability.Complexity.Classes.SPP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
+public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
@@ -424,7 +426,9 @@ public import Complexity.Computability.Complexity.Classes.Toda.Counting
 public import Complexity.Computability.Complexity.Classes.Toda.Hierarchy
 public import Complexity.Computability.Complexity.Classes.Toda.Isolation
 public import Complexity.Computability.Complexity.Classes.UP
+public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
+public import Complexity.Computability.Complexity.Classes.WPP
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
