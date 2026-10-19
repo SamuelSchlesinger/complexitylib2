@@ -31,7 +31,8 @@ buffer at the cost of one instruction, submitting a request costs one instructio
 bit is the first cell of the answer tape, read by the answer head with no further instruction.
 The oracle's own computation is not charged. The certificate quantifies over every handler, not
 only language oracles, so the program, not the oracle, determines which requests are made; the
-machine's clock also bounds their number and length (`IsOraclePPTOn.query_bounds`).
+machine's clock also bounds their number and length
+(`Cslib.Probability.IsOraclePPTOn.query_bounds`).
 
 The classes relativize `P` and `NP` by this one substitution: `PWithOracle A enc` and
 `NPWithOracle A enc` are `Cslib.Complexity.P` and `Cslib.Complexity.NP` with
