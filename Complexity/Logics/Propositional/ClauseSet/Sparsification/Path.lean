@@ -24,11 +24,28 @@ across steps. So the length of a branch is at most the number of introduced clau
 A new clause of size `c` that does not survive to the last node is *eliminated* by a smaller clause
 introduced later. The key estimate (`card_newContaining_lt`, [Calabro, Lemma 5.9][Calabro2009]) is
 that fewer than `2 θ (c - h)` new clauses of size `c` containing a fixed clause of size `h < c` can
-be present at once. When the last node is sparse, it has fewer than `2 N θ (c - 1)` clauses of size
-`c`. Together these bound the number of introduced clauses of size `c` by
+be present at once. When the last node is sparse and the variables of the root are among `N` given
+ones, it has fewer than `2 N θ (c - 1)` clauses of size `c`. Together these bound the number of
+introduced clauses of size `c` by
 `2 N θ (c - 1) + ∑_{h < c} 2 θ (c - h) · #(introduced clauses of size h)`
 (`card_introducedOfCard_le`). Each petal step with petals of size `j` introduces at least `θ j`
 clauses of size `j` (`mul_card_petalSteps_le`).
+
+## Main definitions
+
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Path`: a branch of the procedure.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Refines`: every clause is contained in another.
+
+## Main results
+
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Path.len_le_card_introduced`: a branch is no longer
+  than its number of introduced clauses.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Path.card_newContaining_lt`: few new clauses contain a
+  fixed clause.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Path.card_introducedOfCard_le`: the recursive bound on
+  the introduced clauses.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Path.mul_card_petalSteps_le`: petal steps introduce
+  many clauses.
 
 ## References
 

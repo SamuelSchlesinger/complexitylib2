@@ -20,16 +20,37 @@ import Mathlib.Tactic.Positivity
 # Sparsification -- explicit thresholds and the leaf count
 
 For a width `k ≥ 1` and a parameter `α ≥ 1`, let `X = 2 k α` and take the thresholds
-`θ 0 = 1`, `θ j = α X ^ (2 j - 1)` (`threshold`). Then along every branch ending in a sparse node,
-at most `N X ^ (2 c - 1)` clauses of size `c` are introduced (`Path.card_introducedOfCard_le_pow`),
-by induction on `c` from the recursive bound of the path analysis: the products
-`θ (c - h) · X ^ (2 h - 1)` all equal `α X ^ (2 c - 2)`, and `2 α c ≤ X`. Hence every branch has
-length at most `Λ = N k X ^ (2 k)` and at most `(k - 1) N / α` petal steps.
+`θ 0 = 1`, `θ j = α X ^ (2 j - 1)` (`threshold`). Then along every branch from a clause set whose
+variables are among `N` given ones, ending in a sparse node, at most `N X ^ (2 c - 1)` clauses of
+size `c` are introduced (`Path.card_introducedOfCard_le_pow`), by induction on `c` from the
+recursive bound of the path analysis: the products `θ (c - h) · X ^ (2 h - 1)` all equal
+`α X ^ (2 c - 2)`, and `2 α c ≤ X`. Hence every branch has length at most `Λ = N k X ^ (2 k)`, at
+most `(k - 1) N / α` petal steps, and nodes with at most `Λ` more clauses than the root.
 
-A leaf is determined by the positions of its petal steps among the first `Λ` steps, so there are
-at most `∑_{j ≤ (k - 1) N / α} (Λ choose j)` leaves (`exists_leaves`). The leaves are sparse, so
-every variable occurs in at most `2 ∑_{c < k} θ c` of their clauses
-(`occurrences_le_of_sparse`).
+For any branching rule, a leaf word is determined by the positions of its petal steps among the
+first `Λ` steps (`BranchingRule.IsLeafWord.eq_of_getD_eq`), so there are at most
+`∑_{j ≤ (k - 1) N / α} (Λ choose j)` leaf words (`BranchingRule.card_le_of_isLeafWord`), and the
+canonical rule gives a family of that many leaves (`exists_leaves`). The leaves are sparse, so
+every variable occurs in at most `2 ∑_{c < k} θ c` of their clauses (`occurrences_le_of_sparse`),
+and they have at most `2 (∑_{c < k} θ c) N + 1` clauses (`card_le_of_sparse`).
+
+## Main definitions
+
+* `Cslib.Logic.PL.ClauseSet.Sparsification.threshold`: the explicit thresholds.
+
+## Main results
+
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Path.len_le`,
+  `Cslib.Logic.PL.ClauseSet.Sparsification.Path.mul_card_petal_le`,
+  `Cslib.Logic.PL.ClauseSet.Sparsification.Path.card_node_le`: branches are short, have few petal
+  steps and small nodes.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.card_le_of_isLeafWord`: the number of
+  leaves of any branching rule.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.IsNodeWord.card_walk_le`: the states of
+  the tree are small.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.exists_leaves`: the leaves of the canonical rule.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.occurrences_le_of_sparse`,
+  `Cslib.Logic.PL.ClauseSet.Sparsification.card_le_of_sparse`: sparse clause sets are sparse.
 
 ## References
 

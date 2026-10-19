@@ -34,6 +34,8 @@ of their clauses.
 
 ## Main results
 
+* `Cslib.Logic.PL.ClauseSet.Sparsification.exists_sum_choose_le`: the leaf count is below
+  `2 ^ (ε N)` for a suitable parameter.
 * `Cslib.Logic.PL.ClauseSet.sparsification`: the lemma for clause sets.
 * `Cslib.Logic.PL.CNF.sparsification`: the lemma for formulas in conjunctive normal form.
 

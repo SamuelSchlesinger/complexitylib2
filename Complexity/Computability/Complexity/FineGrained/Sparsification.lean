@@ -355,7 +355,8 @@ theorem computableTidilyInPolyTime_inner (K α : ℕ) :
   fun_prop
 
 theorem computableTidilyInPolyTime_root (k : ℕ) :
-    ComputableTidilyInPolyTime (fun φ : CNF ℕ => (([root k φ], false) : State)) encCNF encState := by
+    ComputableTidilyInPolyTime (fun φ : CNF ℕ => (([root k φ], false) : State)) encCNF
+      encState := by
   have h := computableTidilyInPolyTime_normalize encNat
   unfold root encState encCNF
   fun_prop
