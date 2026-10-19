@@ -480,6 +480,7 @@ public import Complexity.Computability.Complexity.Problems.TQBF
 public import Complexity.Computability.Complexity.Problems.TSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Problems.USAT
+public import Complexity.Computability.Complexity.Problems.USTCON
 public import Complexity.Computability.Complexity.Problems.VertexCover
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.DecisionTree.Basic
@@ -857,6 +858,8 @@ public import Complexity.Computability.TreeEval.Reader.Invariant
 public import Complexity.Computability.TreeEval.Reader.Size
 public import Complexity.Computability.TreeEval.Reader.Tuple
 public import Complexity.Computability.TreeEval.Space
+public import Complexity.Computability.USTCON.Reader.Correct
+public import Complexity.Computability.USTCON.Reader.Defs
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
@@ -1008,6 +1011,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Products
 public import Complexity.Foundations.Combinatorics.Expander.Random
 public import Complexity.Foundations.Combinatorics.Expander.Reindex
 public import Complexity.Foundations.Combinatorics.Expander.Reingold
+public import Complexity.Foundations.Combinatorics.Expander.ReingoldEval
 public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.SlotGraph
