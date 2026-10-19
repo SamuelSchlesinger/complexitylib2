@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser
 public import Cslib.Foundations.Data.BitString
+public import Complexity.Foundations.BooleanAnalysis.LowDegree
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 public import Mathlib.LinearAlgebra.Basis.Defs
@@ -37,7 +38,9 @@ dimension `d` onto one of dimension at least `d - (N - r n)`, and
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.bitEquiv`: the ring isomorphism `ZMod 2 ≃+* Bool`.
+* `Cslib.AffineDisperser.bitEquiv`: the ring isomorphism `ZMod 2 ≃+* Bool`, which is Mathlib's
+  `ZMod.ringEquivOfPrime` (`Cslib.AffineDisperser.bitEquiv_eq_ringEquivOfPrime`); its inverse is
+  `Cslib.BitString.bitVal (ZMod 2)`.
 * `Cslib.AffineDisperser.readField`: `r` field elements read from a bit string.
 * `Cslib.AffineDisperser.traceSymBits`: `traceSym` on bit strings.
 
@@ -66,6 +69,22 @@ def bitEquiv : ZMod 2 ≃+* Bool where
   right_inv := by decide
   map_mul' := by decide
   map_add' := by decide
+
+/-- `bitEquiv` is Mathlib's `ZMod.ringEquivOfPrime` for the two-element field `Bool`, as a
+computable definition. -/
+theorem bitEquiv_eq_ringEquivOfPrime :
+    bitEquiv = ZMod.ringEquivOfPrime Bool Nat.prime_two (by simp) :=
+  RingEquiv.toRingHom_injective (RingHom.ext_zmod _ _)
+
+/-- `bitEquiv.symm` reads a bit as `0` or `1`, as `Cslib.BitString.bitVal` does. -/
+theorem bitEquiv_symm_apply (b : Bool) : bitEquiv.symm b = BitString.bitVal (ZMod 2) b := by
+  cases b <;> rfl
+
+@[simp]
+theorem bitEquiv_symm_false : bitEquiv.symm false = 0 := rfl
+
+@[simp]
+theorem bitEquiv_symm_true : bitEquiv.symm true = 1 := rfl
 
 variable {F : Type*} [Field F] [Algebra (ZMod 2) F] {ι : Type*} [Fintype ι] {r N : ℕ}
 

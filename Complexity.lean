@@ -297,11 +297,21 @@ public import Complexity.Computability.Communication.TopDown.Adversary
 public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
+public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomial
+public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
+public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
+public import Complexity.Computability.Complexity.AffineDisperser.Program
+public import Complexity.Computability.Complexity.Classes.Alternation
+public import Complexity.Computability.Complexity.Classes.Alternation.Game
+public import Complexity.Computability.Complexity.Classes.Alternation.NP
+public import Complexity.Computability.Complexity.Classes.Alternation.TQBF
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.Hierarchy
+public import Complexity.Computability.Complexity.Classes.Hierarchy.Space
+public import Complexity.Computability.Complexity.Classes.Hierarchy.SpaceUniversal
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
@@ -316,6 +326,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
+public import Complexity.Computability.Complexity.Classes.NP.SelfReduction
 public import Complexity.Computability.Complexity.Classes.NP.Witness
 public import Complexity.Computability.Complexity.Classes.Oracle
 public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
@@ -332,6 +343,7 @@ public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
 public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Complexity.Classes.PH.Collapse
+public import Complexity.Computability.Complexity.Classes.PH.KarpLipton
 public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.Promise.Basic
