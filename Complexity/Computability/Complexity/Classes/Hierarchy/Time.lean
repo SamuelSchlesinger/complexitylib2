@@ -654,9 +654,10 @@ def timeDiagonal (J : ℕ → ℕ) (x : List Bool) : Bool :=
   if Diagonal.shortDesc x then clockedDiagonal J x else false
 
 open Diagonal in
-/-- **The clocked diagonal is decidable within the time of the universal machine**: within time and
-space `O((n + 1) ^ 5 * (J n + 1) ^ 3)` on inputs of length `n`, for a time-constructible clock `J`,
-charging the shortness test, decoding, the symbols, the clock, the universal run and the test. -/
+/-- **The clocked diagonal is computable within the time of the universal machine**: within time
+and space `O((n + 1) ^ 5 * (J n + 1) ^ 3)` on inputs of length `n`, for a time-constructible clock
+`J`, charging the shortness test, decoding, the symbols, the clock, the universal run and the
+test. -/
 theorem computableTidilyInO_timeDiagonal {J : ℕ → ℕ} (hJ : TimeConstructible J) :
     ComputableTidilyInO (timeDiagonal J) encBits encBool
       (fun x => (x.length + 1) ^ 5 * (J x.length + 1) ^ 3)
@@ -716,10 +717,10 @@ theorem computableTidilyInO_timeDiagonal {J : ℕ → ℕ} (hJ : TimeConstructib
       omega
     · omega
 
-/-- **The diagonal argument for time.** The clocked diagonal is not decidable within time `O(f)`
-when every `c * f n + c` is eventually below the clock: on its own description, padded to a short
-one beyond the point where the clock dominates, a machine deciding it would answer the negation of
-its answer. -/
+/-- **The diagonal argument for time.** The problem of the clocked diagonal is not decidable within
+time `O(f)` when every `c * f n + c` is eventually below the clock: on its own description, padded
+to a short one beyond the point where the clock dominates, a machine deciding it would answer the
+negation of its answer. -/
 theorem setOf_timeDiagonal_not_mem_DTIME {f J : ℕ → ℕ}
     (hJ : ∀ c, ∀ᶠ n in atTop, c * f n + c ≤ J n) :
     {x | timeDiagonal J x = true} ∉ DTIME encBits f := by
@@ -754,7 +755,8 @@ theorem setOf_timeDiagonal_not_mem_DTIME {f J : ℕ → ℕ}
   revert hgx
   cases g (frame (eDesc (desc eS eBit tm)) ++ pad) <;> decide
 
-/-- The clocked diagonal is decidable within time `O((n + 1) ^ 5 * (J n + 1) ^ 3)`. -/
+/-- The problem of the clocked diagonal is decidable within time
+`O((n + 1) ^ 5 * (J n + 1) ^ 3)`. -/
 theorem setOf_timeDiagonal_mem_DTIME {J : ℕ → ℕ} (hJ : TimeConstructible J) :
     {x | timeDiagonal J x = true} ∈ DTIME encBits fun n => (n + 1) ^ 5 * (J n + 1) ^ 3 :=
   setOf_mem_DTIME_of_computableTidilyInO (computableTidilyInO_timeDiagonal hJ)
