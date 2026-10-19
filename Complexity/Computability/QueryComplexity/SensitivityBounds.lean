@@ -15,13 +15,13 @@ public import Complexity.Computability.QueryComplexity.NisanSzegedy
 Huang's theorem `deg(f) ≤ s(f)²` [Huang2019] and the Nisan–Szegedy bound `bs(f) ≤ 2 deg(f)²`
 [NisanSzegedy1994] give `bs(f) ≤ 2 s(f)⁴`
 (`QueryComplexity.blockSensitivity_le_two_mul_sensitivity_pow_four`). Combined with Nisan's
-`C(f) ≤ s(f) bs(f)` [Nisan1991] and `D(f) ≤ C(f) bs(f)` [BealsBuhrmanCleveMoscaDeWolf2001] this
+`C(f) ≤ s(f) bs(f)` [Nisan1991] and `D(f) ≤ C(f) bs(f)` [BealsBuhrmanCleveMoscaDeWolf2001], which
+give `D(f) ≤ s(f) bs(f)²` (`DecisionTree.complexity_le_sensitivity_mul_blockSensitivity_sq`), this
 bounds certificate and decision tree complexity polynomially in sensitivity:
-`C(f) ≤ 2 s(f)⁵` and `D(f) ≤ s(f) bs(f)² ≤ 4 s(f)⁹`.
+`C(f) ≤ 2 s(f)⁵` and `D(f) ≤ 4 s(f)⁹`.
 
 ## Main results
 
-* `Cslib.DecisionTree.complexity_le_sensitivity_mul_blockSensitivity_sq`: `D(f) ≤ s(f) bs(f)²`.
 * `Cslib.QueryComplexity.certificateComplexity_le_two_mul_sensitivity_pow_five`:
   `C(f) ≤ 2 s(f)⁵`.
 * `Cslib.DecisionTree.complexity_le_four_mul_sensitivity_pow_nine`: `D(f) ≤ 4 s(f)⁹`.
@@ -58,13 +58,6 @@ end QueryComplexity
 namespace DecisionTree
 
 open QueryComplexity
-
-/-- `D(f) ≤ s(f) bs(f)²`, from `D(f) ≤ C(f) bs(f)` and Nisan's `C(f) ≤ s(f) bs(f)`. -/
-theorem complexity_le_sensitivity_mul_blockSensitivity_sq (f : BooleanFunction n) :
-    complexity f ≤ sensitivity f * blockSensitivity f ^ 2 :=
-  (complexity_le_certificateComplexity_mul_blockSensitivity f).trans
-    ((Nat.mul_le_mul_right _
-      (certificateComplexity_le_sensitivity_mul_blockSensitivity f)).trans_eq (by ring))
 
 /-- **Decision tree complexity is polynomial in sensitivity**: `D(f) ≤ 4 s(f)⁹`, from
 `D(f) ≤ s(f) bs(f)²` and `bs(f) ≤ 2 s(f)⁴`. -/
