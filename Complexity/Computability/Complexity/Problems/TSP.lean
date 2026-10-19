@@ -12,6 +12,7 @@ import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Mathlib.Data.List.GetD
 
 /-!
@@ -32,6 +33,13 @@ conventions are the following.
   distances from each city of `p` to the next one, the last city returning to the first.
 * Distances and the budget are binary (`encTSP`).
 
+`TSP` is in `NP`. As for the Hamiltonian problems, a certificate names an ordering of the cities,
+decoded by `Graph.decodeVertexList` from the list `0, …, n - 1` of cities; it has length `m ^ 2`
+for instances of encoded length `m`. The verifier checks that the ordering lists every city exactly
+once, and compares the length of its tour with the budget using the binary arithmetic of
+`PolyTime/Nat/Binary.lean`, so distances and budgets of any size are handled without unary
+expansion.
+
 The reduction `HamCycle.toTSP` from `HamCycle` takes the distinct declared vertices of a graph as
 cities, at distance `1` when they are adjacent and `2` otherwise, with the number `n` of cities as
 the budget. A closed tour has `n` steps of length at least `1`, so it has length at most `n`
@@ -42,19 +50,24 @@ with fewer than three vertices have no Hamiltonian cycle and are mapped to a fix
 
 * `Cslib.Complexity.encTSP`, `Cslib.Complexity.TSP.dist`, `Cslib.Complexity.TSP.tourLength`,
   `Cslib.Complexity.TSP`.
+* `Cslib.Complexity.TSP.verifier`.
 * `Cslib.Complexity.HamCycle.cities`, `Cslib.Complexity.HamCycle.toTSP`.
 
 ## Main results
 
 * `Cslib.Complexity.TSP.tourLength_eq_sum`: the tour length as a sum over the positions of the
   tour.
+* `Cslib.Complexity.TSP.computableTidilyInPolyTime_tourLength`: tour lengths are polynomial-time.
+* `Cslib.Complexity.TSP.isVerifier`, `Cslib.Complexity.TSP.mem_NP`: `TSP ∈ NP encTSP`.
 * `Cslib.Complexity.HamCycle.toTSP_mem_iff`: `toTSP G ∈ TSP ↔ G ∈ HamCycle`.
 * `Cslib.Complexity.HamCycle.computableTidilyInPolyTime_toTSP`: the reduction is polynomial-time.
 * `Cslib.Complexity.polyTimeReducible_HamCycle_TSP`, `Cslib.Complexity.TSP_npHard`: `HamCycle`
   reduces to `TSP` in polynomial time, so `TSP` is `NP`-hard.
+* `Cslib.Complexity.TSP_npComplete`: `TSP` is `NP`-complete.
 
 ## References
 
+* [M. R. Garey and D. S. Johnson, *Computers and Intractability*][GareyJohnson1979]
 * [C. H. Papadimitriou, *Computational Complexity*][Papadimitriou94]
 -/
 
@@ -111,6 +124,106 @@ theorem tourLength_eq_sum (D : List (List ℕ)) (p : List ℕ) :
     cases p with
     | nil => simp at hk
     | cons a l => rfl
+
+/-! ### Membership in `NP` -/
+
+/-- Lookup in a computed list at a computed binary index is polynomial-time: the index is first
+capped at the length of the list, beyond which every lookup returns the default. -/
+private theorem listGetD_binary {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
+    {encL : List α ↪ List Bool} [ListEncoding encA encL] [SizedListEncoding encA encL]
+    {l : γ → List α} {i : γ → ℕ} (d : α) (hl : ComputableTidilyInPolyTime l encIn encL)
+    (hi : ComputableTidilyInPolyTime i encIn encNat) :
+    ComputableTidilyInPolyTime (fun x => (l x).getD (i x) d) encIn encA := by
+  have hlen : ComputableTidilyInPolyTime (fun x => (l x).length) encIn encUnary :=
+    (length encA).comp hl
+  have hcap : ComputableTidilyInPolyTime (fun x => min (i x) (l x).length) encIn encUnary := by
+    refine binary_to_unary_bounded ?_ hlen fun _ => Nat.min_le_right _ _
+    have hlen' := unary_to_binary.comp hlen
+    simp only [Function.comp_def] at hlen'
+    simpa only [Nat.min_def] using ite_decide (binary_le' hi hlen') hi hlen'
+  have heq : (fun x => (l x).getD (i x) d) = fun x => (l x).getD (min (i x) (l x).length) d := by
+    funext x
+    rcases le_total (i x) (l x).length with h | h
+    · rw [Nat.min_eq_left h]
+    · rw [Nat.min_eq_right h, List.getD_eq_default _ _ h, List.getD_eq_default _ _ le_rfl]
+  rw [heq]
+  exact (listGetD d).comp (hl.prod hcap)
+
+/-- The length of a tour is polynomial-time in the distance matrix and the tour, both with binary
+entries: it is a binary sum over the positions of the tour, and a city beyond the matrix is looked
+up at an index capped by the number of rows. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_tourLength :
+    ComputableTidilyInPolyTime (fun x : List (List ℕ) × List ℕ => tourLength x.1 x.2)
+      (encPair (encList (encList encNat)) (encList encNat)) encNat := by
+  have heq : (fun x : List (List ℕ) × List ℕ => tourLength x.1 x.2) = fun x =>
+      ((List.range x.2.length).map fun k =>
+        dist x.1 ((x.2 ++ [x.2.headD 0]).getD k 0)
+          ((x.2 ++ [x.2.headD 0]).getD (k + 1) 0)).sum := by
+    funext ⟨D, p⟩
+    cases p <;> rw [tourLength_eq_sum] <;> rfl
+  rw [heq]
+  refine binary_sum.comp (mapWithInput (by fun_prop) ?_)
+  have hq : ComputableTidilyInPolyTime
+      (fun q : (List (List ℕ) × List ℕ) × ℕ => q.1.2 ++ [q.1.2.headD 0])
+      (encPair (encPair (encList (encList encNat)) (encList encNat)) encUnary)
+      (encList encNat) := by
+    fun_prop
+  have hrow : ComputableTidilyInPolyTime
+      (fun q : (List (List ℕ) × List ℕ) × ℕ =>
+        q.1.1.getD ((q.1.2 ++ [q.1.2.headD 0]).getD q.2 0) [])
+      (encPair (encPair (encList (encList encNat)) (encList encNat)) encUnary)
+      (encList encNat) :=
+    listGetD_binary [] (by fun_prop) ((listGetD 0).comp (hq.prod (snd _ _)))
+  exact listGetD_binary 0 hrow
+    ((listGetD 0).comp (hq.prod (unary_add.comp ((snd _ _).prod (const 1)))))
+
+/-- The verifier for `TSP`: decode a list of cities from the certificate (`Graph.decodeVertexList`
+applied to the cities `0, …, n - 1`) and check that it lists every city exactly once and that the
+closed tour visiting the cities in this order has length at most the budget. -/
+def verifier : (List (List ℕ) × ℕ) × List Bool → Bool :=
+  Graph.verifyOrdering (fun x => List.range x.1.length) fun x p => decide (tourLength x.1 p ≤ x.2)
+
+/-- `TSP.verifier` verifies `TSP` with certificates of length `n ^ 2` for instances of encoded
+length `n`. -/
+theorem isVerifier : IsVerifier encTSP (Polynomial.X ^ 2) verifier TSP := by
+  rintro ⟨D, b⟩
+  have hmem : (D, b) ∈ TSP ↔ ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ List.range D.length) ∧
+      tourLength D p ≤ b := by
+    refine exists_congr fun p => ?_
+    rw [← and_assoc]
+    refine and_congr_left fun _ => ⟨fun h => ⟨h.nodup_iff.2 List.nodup_range, fun _ => h.mem_iff⟩,
+      fun h => (List.perm_ext_iff_of_nodup h.1 List.nodup_range).2 h.2⟩
+  rw [hmem]
+  refine Graph.isVerifier_verifyOrdering (V := fun x : List (List ℕ) × ℕ => List.range x.1.length)
+    (P := fun x p => tourLength x.1 p ≤ x.2) (fun x => ?_) (fun _ _ => decide_eq_true_iff) (D, b)
+  rw [List.length_range]
+  refine (length_le_length_encList (encList encNat) x.1).trans ?_
+  simp only [encTSP, length_encPair]
+  omega
+
+/-- The `TSP` verifier is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier (encPair encTSP encBits) encBool := by
+  have hV : ComputableTidilyInPolyTime (fun x : List (List ℕ) × ℕ => List.range x.1.length) encTSP
+      (encList encNat) := by
+    unfold encTSP
+    simpa only [Function.comp_def, List.map_id'] using (map unary_to_binary).comp
+      (range.comp ((length_list (encList encNat)).comp (fst (encList (encList encNat)) encNat)))
+  have hD : ComputableTidilyInPolyTime (fun q : (List (List ℕ) × ℕ) × List ℕ => q.1.1)
+      (encPair encTSP (encList encNat)) (encList (encList encNat)) := by
+    unfold encTSP
+    exact (fst _ _).comp (fst _ _)
+  have hb : ComputableTidilyInPolyTime (fun q : (List (List ℕ) × ℕ) × List ℕ => q.1.2)
+      (encPair encTSP (encList encNat)) encNat := by
+    unfold encTSP
+    exact (snd _ _).comp (fst _ _)
+  have hlen := computableTidilyInPolyTime_tourLength.comp (hD.prod (snd _ (encList encNat)))
+  exact Graph.computableTidilyInPolyTime_verifyOrdering hV (binary_le' hlen hb)
+
+/-- `TSP` belongs to `NP`. -/
+theorem mem_NP : TSP ∈ NP encTSP := ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end TSP
 
@@ -324,5 +437,9 @@ theorem polyTimeReducible_HamCycle_TSP : PolyTimeReducible encGraph encTSP HamCy
 /-- `TSP` is `NP`-hard. -/
 theorem TSP_npHard : NPHard encTSP TSP :=
   HamCycle_npHard.trans polyTimeReducible_HamCycle_TSP
+
+/-- `TSP` is `NP`-complete. -/
+theorem TSP_npComplete : NPComplete encTSP TSP :=
+  ⟨TSP.mem_NP, TSP_npHard⟩
 
 end Cslib.Complexity

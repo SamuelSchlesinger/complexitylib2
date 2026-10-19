@@ -47,6 +47,7 @@ example : NPComplete encGraph DirHamCycle := DirHamCycle_npComplete
 example : NPComplete (encPair encGraph (encPair encNat encNat)) HamPath := HamPath_npComplete
 example : NPComplete encGraph HamCycle := HamCycle_npComplete
 example : NPHard encTSP TSP := TSP_npHard
+example : NPComplete encTSP TSP := TSP_npComplete
 
 example : PolyTimeReducible encCNF (encPair encGraph (encPair encNat encNat)) ThreeSAT DirHamPath :=
   polyTimeReducible_ThreeSAT_DirHamPath
@@ -477,5 +478,11 @@ info: 'Cslib.Complexity.TSP_npHard' depends on axioms: [propext, Classical.choic
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.TSP_npHard
+
+/--
+info: 'Cslib.Complexity.TSP_npComplete' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.TSP_npComplete
 
 end ComplexityTests.NPCompleteGraphs

@@ -48,6 +48,7 @@ declared vertices; a target `m > n` is mapped to the unsatisfiable target `n + 1
 
 ## References
 
+* [M. R. Garey and D. S. Johnson, *Computers and Intractability*][GareyJohnson1979]
 * [R. M. Karp, *Reducibility among combinatorial problems*][Karp1972]
 * [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
 -/
