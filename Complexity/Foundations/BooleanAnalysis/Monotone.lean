@@ -34,16 +34,27 @@ or antitone Boolean function on `n` coordinates with variance `σ²` has total i
 
 ## Main results
 
+* `Cslib.BitString.derivative_signVal_nonneg_of_monotone`,
+  `Cslib.BitString.derivative_signVal_nonpos_of_antitone`: the sign of the derivatives of a
+  monotone or antitone function.
 * `Cslib.BitString.abs_fourierCoeff_singleton_le_influence`: a degree-one coefficient is at most
   the influence in absolute value.
 * `Cslib.BitString.influence_eq_fourierCoeff_singleton_of_monotone`,
   `Cslib.BitString.influence_eq_neg_fourierCoeff_singleton_of_antitone`: the influences of a
   monotone or antitone function are its degree-one coefficients, up to sign.
+* `Cslib.BitString.fourierCoeff_singleton_nonneg_of_monotone`,
+  `Cslib.BitString.fourierCoeff_singleton_nonpos_of_antitone`: the sign of the degree-one
+  coefficients of a monotone or antitone function.
 * `Cslib.BitString.sum_fourierCoeff_singleton_sq_le`: the degree-one weight is at most the
-  variance.
+  variance; `Cslib.BitString.expect_sub_expect_sq_signVal_le_one`: a Boolean function has variance
+  at most one.
+* `Cslib.BitString.sum_influence_sq_le_of_monotone`: the squared influences of a monotone function
+  sum to at most its variance.
 * `Cslib.BitString.totalInfluence_le_sqrt_card_mul_of_monotone`,
-  `Cslib.BitString.totalInfluence_le_sqrt_card_of_monotone`: monotone functions have total
-  influence at most `√(n σ²) ≤ √n`; likewise for antitone functions.
+  `Cslib.BitString.totalInfluence_le_sqrt_card_of_monotone`,
+  `Cslib.BitString.totalInfluence_le_sqrt_card_mul_of_antitone`,
+  `Cslib.BitString.totalInfluence_le_sqrt_card_of_antitone`: monotone and antitone functions have
+  total influence at most `√(n σ²) ≤ √n`.
 
 ## References
 
@@ -58,13 +69,6 @@ open Finset Function
 open scoped BigOperators
 
 variable {ι : Type*} [DecidableEq ι] {f : (ι → Bool) → Bool}
-
-/-- The derivative of a Boolean function read as signs takes the values `0` and `±1`, so its
-square is its absolute value. -/
-theorem sq_derivative_signVal (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) :
-    derivative i (fun x => signVal (f x)) x ^ 2 = |derivative i (fun x => signVal (f x)) x| := by
-  simp only [derivative]
-  cases f (update x i false) <;> cases f (update x i true) <;> norm_num
 
 /-- The derivative of a monotone Boolean function read as signs is nonnegative: raising bit `i`
 from `false` (sign `1`) to `true` (sign `-1`) can only raise the value. -/

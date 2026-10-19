@@ -205,6 +205,10 @@ theorem chi_eq_prod_signVal (S : Finset ι) (x : ι → Bool) :
     chi ℝ S x = ∏ i ∈ S, signVal (x i) :=
   prod_congr rfl fun i _ => (signVal_eq_neg_one_pow (x i)).symm
 
+/-- The real character of a single coordinate is the sign of that bit. -/
+theorem chi_singleton (i : ι) (x : ι → Bool) : chi ℝ {i} x = signVal (x i) := by
+  rw [chi_eq_prod_signVal, prod_singleton]
+
 /-- The real character of `S` is the real sign of the parity of the bits in `S`. -/
 theorem chi_eq_signVal_parityOn (S : Finset ι) (x : ι → Bool) :
     chi ℝ S x = signVal (parityOn S x) := by

@@ -52,10 +52,6 @@ open scoped BigOperators
 
 variable {ι : Type*}
 
-/-- The real character of a single coordinate is the sign of that bit. -/
-theorem chi_singleton (i : ι) (x : ι → Bool) : chi ℝ {i} x = signVal (x i) := by
-  rw [chi_eq_prod_signVal, prod_singleton]
-
 /-- **Decomposition along a bit**: reading `f₁` where bit `i` is `true` and `f₀` where it is
 `false` is the average of `f₀` and `f₁` plus `χ_{i}` times half their difference. -/
 theorem cond_eq_add_chi_mul (i : ι) (f₀ f₁ : (ι → Bool) → ℝ) (x : ι → Bool) :
