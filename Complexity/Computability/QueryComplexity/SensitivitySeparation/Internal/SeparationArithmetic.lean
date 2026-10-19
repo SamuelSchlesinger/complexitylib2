@@ -103,13 +103,6 @@ theorem quantitative_ratio_of_bounds {I : Type} [Fintype I]
   · exact_mod_cast hb
   · positivity
 
-/-- At depth nine, `2 ^ 9 / (4 * (9 + 2) ^ 2) = 128 / 121`. -/
-theorem depth_nine_ratio :
-    (2 : ℝ) ^ 9 / (4 * ((9 : ℝ) + 2) ^ 2) = 128 / 121 := by norm_num
-
-/-- The depth-nine ratio exceeds one: `1 < 128 / 121`. -/
-theorem depth_nine_ratio_gt_one : (1 : ℝ) < 128 / 121 := by norm_num
-
 /-- For `0 < M`, `128 / 121 ≤ M ^ 2 * (2 * M ^ 2 + 1) ^ 9 / (22 * M ^ 10) ^ 2`. -/
 theorem depth_nine_seed_ratio {M : ℝ} (hM : 0 < M) :
     (128 : ℝ) / 121 ≤ M ^ 2 * (2 * M ^ 2 + 1) ^ 9 / (22 * M ^ 10) ^ 2 := by

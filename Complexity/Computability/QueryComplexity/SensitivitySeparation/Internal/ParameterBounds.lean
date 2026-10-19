@@ -87,12 +87,6 @@ theorem parameter_epsilon_budget {d M : ℕ} (hd : 1 ≤ d) (hM : 9 ^ (d + 1) �
       field_simp
       nlinarith [Real.sq_sqrt hpos.le]
 
-/-- If `1 ≤ d` and `9 ^ (d + 1) ≤ M`, then `max (Nat.ceil (Real.sqrt M)) 16 / M ≤ 2 / 3 ^ (d + 1)`
-in `ℝ`. -/
-theorem parameter_epsilon_le {d M : ℕ} (hd : 1 ≤ d) (hM : 9 ^ (d + 1) ≤ M) :
-    ((max (Nat.ceil (Real.sqrt (M : ℝ))) 16 : ℕ) : ℝ) / M ≤ 2 / 3 ^ (d + 1) := by
-  exact (le_div_iff₀ (by positivity)).2 (parameter_epsilon_budget hd hM)
-
 /-- If `1 ≤ d` and `9 ^ (d + 1) ≤ M`, then `max (Nat.ceil (Real.sqrt M)) 16 / M ≤ 2 / Real.sqrt M`
 and `2 / Real.sqrt M ≤ 2 / 3 ^ (d + 1)` in `ℝ`. -/
 theorem parameter_epsilon_sqrt {d M : ℕ} (hd : 1 ≤ d) (hM : 9 ^ (d + 1) ≤ M) :

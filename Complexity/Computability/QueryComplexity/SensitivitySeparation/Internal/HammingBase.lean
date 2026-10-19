@@ -209,18 +209,6 @@ theorem ballPredicate_eq_nearestDistance [Fintype C] [Nonempty C]
     ballPredicate centers R x = decide (nearestDistance centers x ≤ R) := by
   simp [ballPredicate, nearestDistance, Finset.inf'_le_iff]
 
-/-- A one-bit flip decreases the distance to the nearest center by at most one. -/
-theorem nearestDistance_le_flip_add_one [Fintype C] [Nonempty C]
-    (centers : C → I → Bool) (x : I → Bool) (i : I) :
-    nearestDistance centers x ≤ nearestDistance centers (flip x {i}) + 1 := by
-  obtain ⟨c, _, hc⟩ := Finset.exists_mem_eq_inf' Finset.univ_nonempty
-    (fun c => hammingDist (flip x {i}) (centers c))
-  apply (Finset.inf'_le _ (Finset.mem_univ c)).trans
-  change hammingDist x (centers c) ≤
-    (Finset.univ.inf' Finset.univ_nonempty fun c => hammingDist (flip x {i}) (centers c)) + 1
-  rw [hc]
-  exact hammingDist_le_flip_add_one x (centers c) i
-
 end Internal
 
 end

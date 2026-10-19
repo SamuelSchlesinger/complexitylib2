@@ -130,11 +130,6 @@ theorem sensitivityAt_eq_zero_iff (f : (I → Bool) → Bool) (x : I → Bool) :
     sensitivityAt f x = 0 ↔ ∀ i, f (flip x {i}) = f x := by
   simp [sensitivityAt, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
 
-/-- If flipping coordinate `i` changes the value `f x`, then `0 < sensitivityAt f x`. -/
-theorem sensitivityAt_pos (f : (I → Bool) → Bool) (x : I → Bool) (i : I)
-    (hi : f (flip x {i}) ≠ f x) : 0 < sensitivityAt f x :=
-  Finset.card_pos.mpr ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hi⟩⟩
-
 open scoped Classical in
 /-- The sensitivity of `f` is attained: some input `x` has
 `sensitivityAt f x = sensitivity f`. -/

@@ -199,11 +199,6 @@ theorem initialFamily_joint (d M : ℕ) (b : Bool) :
   rw [he]
   simp
 
-/-- For `M ≠ 0`, the all-`false` input is at distance `L` from the nearest row center. -/
-theorem nearestDistance_blockCenter_zero (M L : ℕ) [NeZero M] :
-    nearestDistance (blockCenter (M := M) (L := L)) (fun _ => false) = L := by
-  simp [nearestDistance, hammingDist_zero_blockCenter]
-
 end Internal
 
 end

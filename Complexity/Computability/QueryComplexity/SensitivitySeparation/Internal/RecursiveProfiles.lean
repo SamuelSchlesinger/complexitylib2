@@ -149,12 +149,6 @@ theorem jointSensitivityAt_le_left {I : Type} [Fintype I]
   intro i hi
   exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, (Finset.mem_filter.mp hi).2.1⟩
 
-/-- Joint sensitivity at a point is symmetric in the two predicates. -/
-theorem jointSensitivityAt_comm {I : Type} [Fintype I]
-    (f g : (I → Bool) → Bool) (x : I → Bool) :
-    jointSensitivityAt f g x = jointSensitivityAt g f x := by
-  simp only [jointSensitivityAt, and_comm]
-
 /-- A family indexed by `Fin 1` has no two distinct indices, so its joint profile is `0`. -/
 theorem jointSensitivity_one {I : Type} [Fintype I]
     (F : Fin 1 → (I → Bool) → Bool) (b : Bool) : jointSensitivity F b = 0 := by

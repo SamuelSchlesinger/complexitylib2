@@ -70,11 +70,6 @@ def iterateCompose {I : Type} (f : (I → Bool) → Bool) :
   | 0 => fun x => x ()
   | m + 1 => compose f (iterateCompose f m)
 
-/-- The one-fold iterate is `f` applied to `fun i => x (i, ())`. -/
-theorem iterateCompose_one {I : Type} (f : (I → Bool) → Bool)
-    (x : IterateCoord I 1 → Bool) :
-    iterateCompose f 1 x = f (fun i => x (i, ())) := rfl
-
 /-- If `f` rejects the all-false input, then so does every iterate `iterateCompose f m`. -/
 theorem iterateCompose_zero {I : Type} (f : (I → Bool) → Bool)
     (hf : f (fun _ => false) = false) (m : ℕ) :
