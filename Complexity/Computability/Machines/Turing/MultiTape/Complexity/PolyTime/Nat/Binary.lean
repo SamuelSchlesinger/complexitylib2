@@ -60,6 +60,8 @@ multiplication.
   composition rules for `fun_prop`.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mul'`, `.binary_sub'`, `.binary_pow'`:
   composition rules for `fun_prop`.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_testBit`: a bit of a binary number at a
+  unary position.
 -/
 
 @[expose] public section
@@ -433,5 +435,15 @@ theorem binary_sub' {α : Type} {input : α ↪ List Bool} {left right : α → 
     (hright : ComputableTidilyInPolyTime right input encNat) :
     ComputableTidilyInPolyTime (fun a => left a - right a) input encNat :=
   binary_sub.comp (hleft.prod hright)
+
+/-- Read the bit of a computed binary number at a computed unary position. -/
+@[fun_prop]
+theorem binary_testBit {α : Type} {input : α ↪ List Bool} {n i : α → ℕ}
+    (hn : ComputableTidilyInPolyTime n input encNat)
+    (hi : ComputableTidilyInPolyTime i input encUnary) :
+    ComputableTidilyInPolyTime (fun a => (n a).testBit (i a)) input encBool := by
+  refine ((bitsGetD false).comp ((natBits.comp hn).prod hi)).of_enc_eq fun a => ?_
+  simp only [Function.comp_apply, Nat.testBit_eq_inth, ← List.getD_default_eq_getI]
+  rfl
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime

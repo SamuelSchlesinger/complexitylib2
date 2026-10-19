@@ -24,15 +24,16 @@ A computation in polynomial time relative to `A` is the clocked run, with every 
 `false`, of a finite oracle machine (`Cslib.Probability.IsOraclePPTOn.exists_fin_run_pure_false`).
 That run iterates one instruction on finite storage (`Turing.MultiTapePTM.answerStep`), which
 answers a query with the decider of `A` on the pending request. Against an oracle computed in
-polynomial time the instruction is polynomial-time (`Turing.MultiTapePTM.answerStep_pt`), the
-storage grows by a bounded amount per instruction, and the clock is polynomial, so the run is
-polynomial-time (`Turing.MultiTapePTM.computableTidilyInPolyTime_run`,
+polynomial time the instruction is polynomial-time
+(`Turing.MultiTapePTM.computableTidilyInPolyTime_answerStep`), the storage grows by a bounded amount
+per instruction, and the clock is polynomial, so the run is polynomial-time
+(`Turing.MultiTapePTM.computableTidilyInPolyTime_run`,
 `Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime`).
 
 ## Main results
 
-* `Turing.MultiTapePTM.answerStep_pt`: an instruction against a polynomial-time oracle is
-  polynomial-time.
+* `Turing.MultiTapePTM.computableTidilyInPolyTime_answerStep`: an instruction against a
+  polynomial-time oracle is polynomial-time.
 * `Turing.MultiTapePTM.computableTidilyInPolyTime_run`: a clocked run against a polynomial-time
   oracle is polynomial-time.
 * `Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime`: polynomial time
@@ -57,7 +58,8 @@ variable {k : ℕ} {Control Operation : Type} [DecidableEq Operation] [Finite Co
 /-- **An instruction against a polynomial-time oracle is polynomial-time.** Against an oracle
 answering `[g w]` to a request `w`, with `g` polynomial-time, an instruction is polynomial-time in
 the encoded configuration: it either installs `g` of the pending request or is local. -/
-theorem answerStep_pt {g : List Bool → Bool} (hg : ComputableTidilyInPolyTime g encBits encBool) :
+theorem computableTidilyInPolyTime_answerStep {g : List Bool → Bool}
+    (hg : ComputableTidilyInPolyTime g encBits encBool) :
     ComputableTidilyInPolyTime (machine.answerStep fun q => [g q.2]) encFiniteConfig
       encFiniteConfig := by
   have h : ComputableTidilyInPolyTime (fun cfg => if (machine.pendingQuery cfg).isSome then
@@ -102,8 +104,9 @@ theorem computableTidilyInPolyTime_run [Finite Operation] {α : Type} {input : �
       (fun a => cf * ((input a).length + c * ((input a).length + 1) ^ d + 1 + 1)) :=
     PolyBounded.mono (PolyBounded.of_polynomiallyBounded (fun a => (input a).length)
       (bound := fun L => cf * (L + c * (L + 1) ^ d + 1 + 1)) (by fun_prop)) fun _ => le_rfl
-  have hit := ComputableTidilyInPolyTime.iterate hcount hinit (machine.answerStep_pt hg) hbound
-    fun a i hi => (hcf _ _ _ _ (hspace a i)).trans (Nat.mul_le_mul_left cf (by omega))
+  have hit := ComputableTidilyInPolyTime.iterate hcount hinit
+    (machine.computableTidilyInPolyTime_answerStep hg) hbound fun a i hi =>
+      (hcf _ _ _ _ (hspace a i)).trans (Nat.mul_le_mul_left cf (by omega))
   have hout : ComputableTidilyInPolyTime
       (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output) encFiniteConfig
       encBits := by fun_prop

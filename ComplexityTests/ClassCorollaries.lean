@@ -15,9 +15,12 @@ and axiom guards. -/
 
 namespace ComplexityTests.ClassCorollaries
 
-open Cslib Cslib.Complexity Turing.MultiTapeTM
+open Cslib Cslib.Complexity Cslib.Probability Turing.MultiTapeTM
 
 /-! ### `NP ⊆ BPP ⇒ PH = Σ₂` -/
+
+example (h : SAT ∈ BPP encCNF) : PH encBits = SigmaP 2 encBits :=
+  PH_eq_SigmaP_two_of_SAT_mem_BPP h
 
 /-- The collapse applies to languages over `Bool`, with words encoded as themselves. -/
 example (h : ∀ {β : Type} (encB : β ↪ List Bool), NP encB ⊆ BPP encB) :
@@ -47,6 +50,12 @@ example : ∃ A ∈ P encBits,
   exists_mem_P_solvedBy_of_mem_PromiseP Decoder.nat
     (ofSet_mem_PromiseP.2 ⟨fun _ => true, .const true, fun _ => by simp⟩)
 
+/-- `RP` relative to the promise problem of all numbers is `RP`. -/
+example {α : Type} (enc : α ↪ List Bool) :
+    RPWithPromiseOracle (PromiseProblem.ofSet (Set.univ : Set ℕ)) encNat enc = RP enc :=
+  RPWithPromiseOracle_eq_RP Decoder.nat
+    (ofSet_mem_PromiseP.2 ⟨fun _ => true, .const true, fun _ => by simp⟩) enc
+
 /-! ### Valiant–Vazirani collapses -/
 
 example (h : PromiseUSAT ∈ PromiseP encCNF) : NP encBits = RP encBits :=
@@ -60,6 +69,17 @@ example (h : USAT ∈ P encCNF) : NP encCNF = RP encCNF :=
 example : (Set.univ : Set (List Bool)) ∈ PWithPPOracle encBits :=
   P_subset_PWithPPOracle univ_mem_P
 
+example : (Set.univ : Set (List Bool)) ∈ PWithPPOracle encBits :=
+  PP_subset_PWithPPOracle (BPP_subset_PP (P_subset_BPP univ_mem_P))
+
+example {α : Type} (enc : α ↪ List Bool) : PWithOracle Set.univ enc ⊆ PWithPPOracle enc :=
+  PWithOracle_subset_PWithPPOracle (BPP_subset_PP (P_subset_BPP univ_mem_P))
+
+example {α : Type} {enc : α ↪ List Bool} {L : Set α} (hL : L ∈ PWithPPOracle enc) :
+    ∃ (β : Type) (encβ : β ↪ List Bool) (B : Set β), B ∈ PP encβ ∧
+      L ∈ PWithOracle (encβ '' B) enc :=
+  mem_PWithOracle_image hL
+
 /-- Binary search for the constant `1 ∈ #P` reads its bit `0`. -/
 example : (Set.univ : Set (List Bool)) ∈ PWithPPOracle encBits :=
   mem_PWithPPOracle_of_testBit SharpP.one_mem (p := 0) fun _ => by simp
@@ -70,6 +90,16 @@ example : (BinarySearch.step 5)^[3] (0, 3) = (5, 0) := by decide
 example {α : Type} (enc : α ↪ List Bool) : PH enc ⊆ PWithPPOracle enc :=
   PH_subset_PWithPPOracle
 
+example {α : Type} (enc : α ↪ List Bool) :
+    BPOp enc (ParityP (encPair enc encBits)) ⊆ PWithPPOracle enc :=
+  BPOp_ParityP_subset_PWithPPOracle
+
+/-- Binary search on the codes of a word, with one round more than its length, is strict oracle
+PPT. -/
+example : IsOraclePPTOn encBits encNat (fun w => OracleComp.interpret ProbOracleComp.query
+    (BinarySearch.search w (w.length + 1))) :=
+  BinarySearch.isOraclePPTOn_search ComputableTidilyInPolyTime.id' (by fun_prop)
+
 example {α : Type} (enc : α ↪ List Bool) : PWithSharpPOracle enc ⊆ PWithPPOracle enc :=
   PWithSharpPOracle_subset_PWithPPOracle
 
@@ -77,8 +107,8 @@ open Classical in
 /-- Binary search against the oracle of `k ≤ 5`, on codes `(u, k)`, finds `5` in three rounds. -/
 example (u : List Bool) :
     OracleComp.interpret (m := Id) (languageOracle {w | ∃ k ≤ 5, w = encPair encBits encNat (u, k)})
-      (search u 3) = 5 :=
-  interpret_id_search (fun k => ⟨fun ⟨j, hj, h⟩ =>
+      (BinarySearch.search u 3) = 5 :=
+  BinarySearch.interpret_id_search (fun k => ⟨fun ⟨j, hj, h⟩ =>
     (Prod.mk.inj ((encPair encBits encNat).injective h)).2 ▸ hj, fun hk => ⟨k, hk, rfl⟩⟩)
     (by norm_num)
 
@@ -87,6 +117,16 @@ example (u : List Bool) :
 /-- A problem in `P`, hence in `UP` and `FewP`, is in `SPP`. -/
 example : (Set.univ : Set (List Bool)) ∈ SPP encBits :=
   FewP_subset_SPP (UP_subset_FewP (P_subset_UP univ_mem_P))
+
+/-- Every word has exactly two accepted certificates of length one, so the problem of all words
+is in `FewP` with ambiguity two. -/
+theorem univ_mem_FewP_two : (Set.univ : Set (List Bool)) ∈ FewP encBits :=
+  ⟨fun _ => 2, ⟨1, fun _ => true, .const true, fun _ => by simp⟩, 2, fun _ => by simp,
+    fun _ => by simp⟩
+
+/-- A problem of `FewP` with two witnesses on every instance is in `SPP`. -/
+example : (Set.univ : Set (List Bool)) ∈ SPP encBits :=
+  FewP_subset_SPP univ_mem_FewP_two
 
 /-! ### Axiom guards -/
 
@@ -171,5 +211,61 @@ info: 'Cslib.Complexity.PH_subset_PWithPPOracle' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.PH_subset_PWithPPOracle
+
+/--
+info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_SAT_mem_BPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_SAT_mem_BPP
+
+/--
+info: 'Cslib.Complexity.RPWithPromiseOracle_eq_RP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.RPWithPromiseOracle_eq_RP
+
+/--
+info: 'Cslib.Complexity.PP_subset_PWithPPOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PP_subset_PWithPPOracle
+
+/--
+info: 'Cslib.Complexity.PWithOracle_subset_PWithPPOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PWithOracle_subset_PWithPPOracle
+
+/--
+info: 'Cslib.Complexity.mem_PWithOracle_image' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PWithOracle_image
+
+/--
+info: 'Cslib.Complexity.BinarySearch.isOraclePPTOn_search' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BinarySearch.isOraclePPTOn_search
+
+/--
+info: 'Cslib.Complexity.BinarySearch.interpret_id_search' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BinarySearch.interpret_id_search
+
+/--
+info: 'Cslib.Complexity.BPOp_ParityP_subset_PWithPPOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BPOp_ParityP_subset_PWithPPOracle
 
 end ComplexityTests.ClassCorollaries

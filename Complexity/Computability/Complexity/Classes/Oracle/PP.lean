@@ -43,36 +43,38 @@ oracle and the answers on words that are not codes are arbitrary.
 A bit of a value `f b` of a function `f ∈ #P` is computed in `P^PP` by binary search: the
 problem `{(b, k) | k ≤ f b}` is in `PP`, by the characterisation through `GapP`
 (`Cslib.Complexity.setOf_le_mem_PP`), and `N` queries `lo + 2 ^ (j - 1) ≤ f b`, for
-`j = N, …, 1`, determine `f b < 2 ^ N` (`Cslib.Complexity.BinarySearch.iterate_step`,
-`Cslib.Complexity.interpret_id_search`), within strict oracle PPT
-(`Cslib.Complexity.isOraclePPTOn_search`). Hence a problem decided by one bit of a `#P` value is in
-`P^PP` (`Cslib.Complexity.mem_PWithPPOracle_of_testBit`), and with the form of Toda's theorem that
-decides every problem in the polynomial hierarchy by such a bit
-(`Cslib.Complexity.exists_SharpP_testBit_of_mem_BPOp_ParityP`), **Toda's theorem `PH ⊆ P^PP`**
-[Toda][Toda1991] (`Cslib.Complexity.PH_subset_PWithPPOracle`).
-
-More generally `P^#P ⊆ P^PP` (`Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle`): every
-request of a `P^#P` program for bit `i` of `f b`, sent as the code `(b, i)`, is answered by a
-binary search (`Cslib.Complexity.bitQuery`), substituted into the program by open oracle
+`j = N, …, 1`, determine `f b < 2 ^ N` (`Cslib.Complexity.BinarySearch.fst_iterate_step`,
+`Cslib.Complexity.BinarySearch.interpret_id_search`), within strict oracle PPT
+(`Cslib.Complexity.BinarySearch.isOraclePPTOn_search`). Hence `P^#P ⊆ P^PP`
+(`Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle`): every request of a `P^#P` program
+for bit `i` of `f b`, sent as the code `(b, i)`, is answered by a binary search
+(`Cslib.Complexity.BinarySearch.bitQuery`), substituted into the program by open oracle
 substitution (`Cslib.Probability.IsOraclePPTOn.run_interpret_preprocess_open`). The search reads
 the code of `b` and the position `i` from the request without decoding `b`, and runs for
-`r (n) + 1` rounds, for the length `n` of the request and `f b ≤ 2 ^ r (|b|)`. The classes do not
-count queries.
+`r (n) + 1` rounds, for the length `n` of the request and `f b ≤ 2 ^ r (|b|)`.
+
+With Toda's theorem `PH ⊆ P^#P` (`Cslib.Complexity.PH_subset_PWithSharpPOracle`), this gives
+**Toda's theorem `PH ⊆ P^PP`** [Toda][Toda1991] (`Cslib.Complexity.PH_subset_PWithPPOracle`).
+The classes do not count queries.
 
 ## Main definitions
 
 * `Cslib.Complexity.PWithPPOracle`: polynomial time with a `PP` oracle.
-* `Cslib.Complexity.BinarySearch.step`, `Cslib.Complexity.search`: binary search, by itself and
-  with an oracle.
-* `Cslib.Complexity.bitQuery`: answering a bit request to a `#P` function by binary search.
+* `Cslib.Complexity.BinarySearch.step`, `Cslib.Complexity.BinarySearch.search`: binary search, by
+  itself and with an oracle.
+* `Cslib.Complexity.BinarySearch.bitQuery`: answering a bit request to a `#P` function by binary
+  search.
 
 ## Main results
 
 * `Cslib.Complexity.P_subset_PWithPPOracle`, `Cslib.Complexity.PP_subset_PWithPPOracle`:
   `P ⊆ P^PP` and `PP ⊆ P^PP`.
+* `Cslib.Complexity.PWithOracle_subset_PWithPPOracle`, `Cslib.Complexity.mem_PWithOracle_image`:
+  `P^A ⊆ P^PP` for `A ∈ PP`, and `P^PP` lies in `P` relative to the codes of a `PP` problem.
 * `Cslib.Complexity.setOf_le_mem_PP`: comparing with a `#P` value is in `PP`.
-* `Cslib.Complexity.interpret_id_search`, `Cslib.Complexity.isOraclePPTOn_search`: binary search
-  with an oracle is correct and strict oracle PPT.
+* `Cslib.Complexity.BinarySearch.interpret_id_search`,
+  `Cslib.Complexity.BinarySearch.isOraclePPTOn_search`: binary search with an oracle is correct
+  and strict oracle PPT.
 * `Cslib.Complexity.mem_PWithPPOracle_of_testBit`: one bit of a `#P` value is in `P^PP`.
 * `Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle`: `P^#P ⊆ P^PP`.
 * `Cslib.Complexity.BPOp_ParityP_subset_PWithPPOracle`: `BP·⊕P ⊆ P^PP`.
@@ -126,6 +128,27 @@ theorem PP_subset_PWithPPOracle : PP enc ⊆ PWithPPOracle enc := by
     rw [languageOracle_apply, ← hA a]
     by_cases hm : enc a ∈ A <;> simp [hm]
 
+open Classical in
+/-- **`P^A ⊆ P^PP` for `A ∈ PP`**: a polynomial-time oracle program relative to a language in
+`PP` over words encoded as themselves decides its problem against every oracle agreeing with that
+language, since every word is a code. -/
+theorem PWithOracle_subset_PWithPPOracle {A : Set (List Bool)} (hA : A ∈ PP encBits) :
+    PWithOracle A enc ⊆ PWithPPOracle enc := by
+  rintro L ⟨f, ⟨program, hcert, hprogram⟩, hL⟩
+  refine ⟨List Bool, encBits, A, hA, program, hcert, fun A' hA' a => ?_⟩
+  obtain rfl : A' = A := Set.ext fun w => hA' w
+  rw [hL a, hprogram a]
+
+/-- **`P^PP` lies in polynomial time relative to the codes of a `PP` problem**: against the image
+of its `PP` problem under the encoding, the program of a problem in `P^PP` decides it. -/
+theorem mem_PWithOracle_image (hL : L ∈ PWithPPOracle enc) :
+    ∃ (β : Type) (encβ : β ↪ List Bool) (B : Set β), B ∈ PP encβ ∧
+      L ∈ PWithOracle (encβ '' B) enc := by
+  classical
+  obtain ⟨β, encβ, B, hB, program, hprogram, h⟩ := hL
+  exact ⟨β, encβ, B, hB, _, ⟨program, hprogram, fun _ => rfl⟩,
+    h _ fun _ => encβ.injective.mem_set_image⟩
+
 /-! ### Comparing with a `#P` value -/
 
 /-- **Comparing with a `#P` value is in `PP`**: for `f ∈ #P`, the pairs `(a, k)` with `k ≤ f a`,
@@ -149,7 +172,7 @@ def step (F : ℕ) (s : ℕ × ℕ) : ℕ × ℕ :=
   if s.2 = 0 then s else (if s.1 + 2 ^ (s.2 - 1) ≤ F then s.1 + 2 ^ (s.2 - 1) else s.1, s.2 - 1)
 
 /-- **Binary search finds `F < 2 ^ N` in `N` rounds.** -/
-theorem iterate_step {F N : ℕ} (hF : F < 2 ^ N) : ((step F)^[N] (0, N)).1 = F := by
+theorem fst_iterate_step {F N : ℕ} (hF : F < 2 ^ N) : ((step F)^[N] (0, N)).1 = F := by
   have key (t : ℕ) (ht : t ≤ N) : ∃ lo, (step F)^[t] (0, N) = (lo, N - t) ∧ lo ≤ F ∧
       F < lo + 2 ^ (N - t) := by
     induction t with
@@ -168,10 +191,8 @@ theorem iterate_step {F N : ℕ} (hF : F < 2 ^ N) : ((step F)^[N] (0, N)).1 = F 
   obtain ⟨lo, hlo, hle, hlt⟩ := key N le_rfl
   rw [hlo]
   simp only [Nat.sub_self, pow_zero] at hlt
-  simp only
+  dsimp only
   omega
-
-end BinarySearch
 
 /-! ### Binary search with an oracle -/
 
@@ -186,17 +207,8 @@ def searchQuery (u : List Bool) (s : ℕ × ℕ) : WordQueryComp Unit (ℕ × �
 def search (u : List Bool) (N : ℕ) : WordQueryComp Unit ℕ :=
   Prod.fst <$> OracleComp.iterate N (searchQuery u) (0, N)
 
-private theorem interpret_iterate {ι κ : Type} {spec : OracleSpec.{0, 0} ι}
-    {target : OracleSpec.{0, 0} κ} (handler : (q : ι) → OracleComp target (spec q)) {σ : Type}
-    (n : ℕ) (step : σ → OracleComp spec σ) (s : σ) :
-    OracleComp.interpret handler (OracleComp.iterate n step s) =
-      OracleComp.iterate n (fun s => OracleComp.interpret handler (step s)) s := by
-  induction n with
-  | zero => rfl
-  | succ n ih => simp only [OracleComp.iterate_succ, OracleComp.interpret_bind, ih]
-
 /-- A round of the search as a program with private coins and word queries. -/
-theorem interpret_searchQuery (u : List Bool) (s : ℕ × ℕ) :
+private theorem interpret_searchQuery (u : List Bool) (s : ℕ × ℕ) :
     OracleComp.interpret ProbOracleComp.query (searchQuery u s) =
       if s.2 = 0 then pure s else
         (fun reply => (if reply == [true] then s.1 + 2 ^ (s.2 - 1) else s.1, s.2 - 1)) <$>
@@ -238,7 +250,7 @@ theorem interpret_id_search {F N : ℕ} {A : Set (List Bool)} {u : List Bool}
     (OracleComp.iterate N (searchQuery u) (0, N))).1 = F
   rw [OracleComp.interpret_id_iterate]
   simp only [interpret_id_searchQuery hA]
-  exact BinarySearch.iterate_step hF
+  exact fst_iterate_step hF
 
 /-- **Binary search is strict oracle PPT**: `N` rounds, with `N` computed in unary, each building
 one request and reading one reply bit, on states of a binary number below `2 ^ N` and a unary
@@ -248,7 +260,7 @@ theorem isOraclePPTOn_search {input : α ↪ List Bool} {u : α → List Bool} {
     (hN : ComputableTidilyInPolyTime N input encUnary) :
     IsOraclePPTOn input encNat
       (fun a => OracleComp.interpret ProbOracleComp.query (search (u a) (N a))) := by
-  simp only [search, OracleComp.interpret_map, interpret_iterate]
+  simp only [search, OracleComp.interpret_map, OracleComp.interpret_iterate]
   have hinit : ComputableTidilyInPolyTime (fun a => ((0 : ℕ), N a)) input
       (encPair encNat encUnary) :=
     (ComputableTidilyInPolyTime.const 0).prod hN
@@ -298,18 +310,7 @@ theorem isOraclePPTOn_search {input : α ↪ List Bool} {u : α → List Bool} {
     (((PolyBounded.const 3).mul hN.polyBounded).add (.const 1)) hbound).1.map
     (ComputableTidilyInPolyTime.fst encNat encUnary)
 
-/-- Reading a bit of a binary number at a unary position is polynomial-time. -/
-theorem computableTidilyInPolyTime_testBit {input : α ↪ List Bool} {n i : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n input encNat)
-    (hi : ComputableTidilyInPolyTime i input encUnary) :
-    ComputableTidilyInPolyTime (fun a => (n a).testBit (i a)) input encBool := by
-  have h : ComputableTidilyInPolyTime (fun a => (((n a).bits)[i a]?).getD false) input encBool := by
-    fun_prop
-  refine h.of_enc_eq fun a => ?_
-  rw [Nat.testBit_eq_inth, List.getI_eq_getElem?_getD]
-  rfl
-
-/-! ### `P^#P ⊆ P^PP` -/
+/-! ### Answering bit requests -/
 
 /-- The handler answering a request for bit `i` of `f b`, sent as the code
 `encPair encβ encNat (b, i)`, by binary search for `f b < 2 ^ N` with `N = r (n) + 1` rounds,
@@ -348,6 +349,11 @@ theorem interpret_id_bitQuery {β : Type} {encβ : β ↪ List Bool} {f : β →
   · rw [Nat.min_eq_right hi, Nat.testBit_eq_false_of_lt hfN,
       Nat.testBit_eq_false_of_lt (hfN.trans_le (Nat.pow_le_pow_right (by norm_num) hi))]
 
+end BinarySearch
+
+/-! ### `P^#P ⊆ P^PP` -/
+
+open BinarySearch in
 /-- **`P^#P ⊆ P^PP`**: every request of a `P^#P` program for a bit of a `#P` value `f b` is
 answered by binary search with queries `k ≤ f b` to the `PP` problem `{(b, k) | k ≤ f b}`. -/
 theorem PWithSharpPOracle_subset_PWithPPOracle : PWithSharpPOracle enc ⊆ PWithPPOracle enc := by
@@ -371,7 +377,7 @@ theorem PWithSharpPOracle_subset_PWithPPOracle : PWithSharpPOracle enc ⊆ PWith
     have hlast : ComputableTidilyInPolyTime (fun pair : List Bool × ℕ =>
         [pair.2.testBit (min (ofBits (dropFrame pair.1)) (r.eval pair.1.length + 1))])
         (encPair encBits encNat) encBits :=
-      (computableTidilyInPolyTime_testBit (ComputableTidilyInPolyTime.snd encBits encNat)
+      (ComputableTidilyInPolyTime.binary_testBit (ComputableTidilyInPolyTime.snd encBits encNat)
         hindex).of_enc_eq fun pair => (encBool_apply _).symm
     have hG : IsOraclePPTOn encBits encBits (fun w : List Bool =>
         OracleComp.interpret ProbOracleComp.query (bitQuery r ((), w))) := by

@@ -895,15 +895,6 @@ def queryAnyStep (s : List (List Bool) × Bool) : WordQueryComp Unit (List (List
 def queryAny (words : List (List Bool)) : WordQueryComp Unit Bool :=
   Prod.snd <$> OracleComp.iterate words.length queryAnyStep (words, false)
 
-private theorem interpret_iterate {ι κ : Type} {spec : OracleSpec.{0, 0} ι}
-    {target : OracleSpec.{0, 0} κ} (handler : (q : ι) → OracleComp target (spec q)) {σ : Type}
-    (n : ℕ) (step : σ → OracleComp spec σ) (s : σ) :
-    OracleComp.interpret handler (OracleComp.iterate n step s) =
-      OracleComp.iterate n (fun s => OracleComp.interpret handler (step s)) s := by
-  induction n with
-  | zero => rfl
-  | succ n ih => simp only [OracleComp.iterate_succ, OracleComp.interpret_bind, ih]
-
 private theorem interpret_queryAnyStep (s : List (List Bool) × Bool) :
     OracleComp.interpret ProbOracleComp.query (queryAnyStep s) =
       if s.1.isEmpty then pure s else
@@ -918,7 +909,7 @@ and reads one reply bit, and the list shrinks. -/
 theorem isOraclePPTOn_queryAny :
     IsOraclePPTOn (encList encBits) encBool
       (fun words => OracleComp.interpret ProbOracleComp.query (queryAny words)) := by
-  simp only [queryAny, OracleComp.interpret_map, interpret_iterate]
+  simp only [queryAny, OracleComp.interpret_map, OracleComp.interpret_iterate]
   refine IsOraclePPTOn.map (IsOraclePPTOn.iterate_of_bounded_growth
     (stateEncoding := encPair (encList encBits) encBool) (by fun_prop) (by fun_prop) ?_
     (growth := 0) ?_) (by fun_prop)
