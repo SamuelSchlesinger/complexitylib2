@@ -16,6 +16,45 @@ chosen nonconstructively, without a certified preprocessing runtime.
 \end{result}
 
 \begin{result}
+\subsection{An input time for an arbitrary finite-state map}
+With $f,s,n,L$ as in the fixed-power result, define
+\[
+B=L s+(n+1)^3\left(L+\left\lfloor\frac{2^n}{L}\right\rfloor+1\right).
+\]
+For every $m\in\mathbb N$, one circuit on $n+m$ inputs computes $f^T(x)$ for
+all $n$-bit states $x$ and all $m$-bit times $0\le T<2^m$, using at most
+\[
+m(40000B+4n)
+\]
+gates. The time is supplied least-significant bit first. This theorem allows
+noninvertible maps; its linear dependence on the time width differs from the
+additive sparse-counter bound below. Circuit existence is nonuniform, with no
+certified checkpoint-construction runtime.\citep{Schlesinger2026IteratedFunctions}
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/InputTime.lean}{146}{Cslib.Circuits.Boolean.Iteration.variable_time}
+\end{result}
+
+\begin{result}
+\subsection{Batched iteration with a shared table}
+Let a size-$s$ native De Morgan circuit compute $f$ on $n$ bits. For integers
+$0\le r\le2^n$ and $1\le L\le2^n$, put
+\[
+B_r=rLs+(n+1)^3\left(rL+\left\lfloor\frac{2^n}{L}\right\rfloor+1\right).
+\]
+For every fixed $T\in\mathbb N$, one circuit applies $f^T$ to $r$ independent
+states with at most $100000B_r$ gates. With a separate $m$-bit input time for
+each state, a circuit of size at most
+\[
+m(100000B_r+4rn)
+\]
+computes all $r$ answers. The table term $\lfloor2^n/L\rfloor$ is charged once
+in $B_r$, rather than once per state. All gates, including constants, are
+charged. These are nonuniform size bounds, not certified preprocessing or
+circuit-generation times.\citep{Schlesinger2026IteratedFunctions}
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/Batch.lean}{253}{Cslib.Circuits.Boolean.Iteration.batched_fixed_power}
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/Batch.lean}{395}{Cslib.Circuits.Boolean.Iteration.batched_variable_time}
+\end{result}
+
+\begin{result}
 \subsection*{Sparse-counter conventions}
 Write $W_n=\mathbb Z/2^n\mathbb Z$ for the $n$-bit words, represented
 least-significant bit first, and let $c(x)=x+1$. For maps on $W_n$, put
@@ -43,7 +82,7 @@ is supplied. The assertion includes $n=0$.
 \end{result}
 
 \begin{result}
-\subsection{Every fixed signed power}
+\subsection{Fixed signed powers and coordinate transfer}
 For every permutation $f$ of $W_n$ and every integer $T$, a circuit computes $f^T$
 with size at most
 \[
@@ -53,10 +92,11 @@ The size bound is independent of the magnitude and sign of $T$. The quantifiers
 are ``for every $T$, there exists a circuit'': $T$ is fixed, not an additional
 input to a single circuit.
 \decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{208}{Cslib.Circuits.Boolean.Iteration.sparse_counter_power}
+
 \end{result}
 
 \begin{result}
-\subsection{Transfer through supplied coordinates}
+\textbf{Coordinate transfer.}
 Let $f,g,e$ be permutations of $W_n$ such that $e(g(x))=e(x)+1$ for every $x$.
 Suppose circuits $E$ and $E^{-1}$ compute $e$ and its inverse, respectively.
 For every $T\in\mathbb Z$, there is a circuit for $f^T$ with size at most
@@ -79,7 +119,7 @@ circuit-generation algorithm is asserted.\citep{Schlesinger2026IteratedFunctions
 \end{result}
 
 \begin{result}
-\subsection{Variable-time iteration}
+\subsection{Sparse-counter input times and cycle labels}
 For every permutation $f$ of $W_n$ and every $m\in\mathbb N$, there is a native
 De Morgan circuit with $n+m$ inputs and $n$ outputs computing
 \[
@@ -94,10 +134,11 @@ parentheses. One circuit handles all initial states and all $m$-bit times.
 The bound includes constants, comparisons and selection gates, and permits
 $n=0$ or $m=0$.
 \decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{115}{Cslib.Circuits.Boolean.Iteration.sparse_counter_variable_time}
+
 \end{result}
 
 \begin{result}
-\subsection{Canonical coordinates at linear table cost}
+\textbf{Canonical coordinates.}
 For every permutation $f$ of $W_n$, there is a circuit with $n$ inputs and
 $n+2(n+2)$ outputs computing the canonical cycle representative, cycle length
 and phase of the input. Its size is at most
@@ -108,10 +149,11 @@ The representative is the numerically least word on the cycle. The phase is
 the forward distance from that representative, modulo the cycle length.
 The period and phase each occupy $n+2$ bits, so even a period of $2^n$ fits.
 \decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{126}{Cslib.Circuits.Boolean.Iteration.sparse_counter_labels}
+
 \end{result}
 
 \begin{result}
-\subsection{Variable time through supplied coordinates}
+\textbf{Coordinate transfer.}
 Let $f,g,e$ be permutations of $W_n$ satisfying $e(g(x))=e(x)+1$, with supplied
 circuits $E$ and $E^{-1}$ for $e$ and its inverse. For every time width $m$, a
 circuit computing $(x,T)\mapsto f^T(x)$ has size at most

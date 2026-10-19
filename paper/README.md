@@ -1,9 +1,11 @@
 # Index of proved statements
 
-`main.tex` and `main.pdf` present a curated, human-readable index of 48 entries covering significant
+`main.tex` and `main.pdf` present a curated, human-readable index of 50 entries covering significant
 results, grouped by subject. Each entry states the result, its assumptions
 and model, important limitations, and links to exact Lean declarations. It is not
-an exhaustive API reference. Samuel controls selection, organization and wording.
+an exhaustive API reference. Standalone entries emphasize substantial endpoints;
+coordinate-transfer corollaries and supporting constructions stay with the results
+they support, and basic membership facts may appear as short contextual notes. Samuel controls selection, organization and wording.
 
 `sections/statements.tex` lists the subject files in reading order. Edit the relevant
 subject file in `sections/` to revise or extend the index. All declaration links point
