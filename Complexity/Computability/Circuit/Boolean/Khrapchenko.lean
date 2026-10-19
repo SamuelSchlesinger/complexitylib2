@@ -352,6 +352,33 @@ theorem two_mul_log_le_depth_of_computes_parity {F : Formula signature n}
 
 /-! ### Formulas for parity -/
 
+/-- The parity of the `a + b` consecutive bits from `o` on is the exclusive or of the parities of
+the first `a` and the last `b` of them. -/
+theorem parityOn_consecutive_add (o a b : ℕ) (x : BitString n) :
+    parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + (a + b)} : Finset (Fin n)) x =
+      (parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + a} : Finset (Fin n)) x ^^
+        parityOn ({i | o + a ≤ (i : ℕ) ∧ (i : ℕ) < o + a + b} : Finset (Fin n)) x) := by
+  have hsplit : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + (a + b)} : Finset (Fin n)) =
+      ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + a} : Finset (Fin n)) ∪
+        ({i | o + a ≤ (i : ℕ) ∧ (i : ℕ) < o + a + b} : Finset (Fin n)) := by
+    ext i
+    simp only [mem_filter, mem_univ, true_and, mem_union]
+    omega
+  rw [hsplit, parityOn_union]
+  rw [disjoint_left]
+  intro i hi hi'
+  simp only [mem_filter, mem_univ, true_and] at hi hi'
+  omega
+
+/-- The parity of the single bit `o` is that bit. -/
+theorem parityOn_consecutive_one (o : ℕ) (h : o < n) (x : BitString n) :
+    parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 1} : Finset (Fin n)) x = x ⟨o, h⟩ := by
+  have : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 1} : Finset (Fin n)) = insert ⟨o, h⟩ ∅ := by
+    ext i
+    simp only [mem_filter, mem_univ, true_and, insert_empty, mem_singleton, Fin.ext_iff]
+    omega
+  rw [this, parityOn_insert (notMem_empty _), parityOn_empty, Bool.xor_false]
+
 /-- A De Morgan formula for the parity of the `2 ^ k` bits from `o` on, of leaf size `4 ^ k`. -/
 def parityFormula : (k o : ℕ) → o + 2 ^ k ≤ n → Formula signature n
   | 0, o, h => .input ⟨o, by rw [pow_zero] at h; omega⟩
@@ -359,32 +386,22 @@ def parityFormula : (k o : ℕ) → o + 2 ^ k ≤ n → Formula signature n
     (parityFormula k o (by rw [pow_succ] at h; omega)).xor
       (parityFormula k (o + 2 ^ k) (by rw [pow_succ] at h; omega))
 
+/-- The formula `parityFormula k o` computes the parity of the `2 ^ k` bits from `o` on. -/
 theorem eval_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) (x : BitString n) :
     (parityFormula k o h).eval interpretation x =
       parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k} : Finset (Fin n)) x := by
   induction k generalizing o with
   | zero =>
-    have : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ 0} : Finset (Fin n)) =
-        insert (⟨o, by rw [pow_zero] at h; omega⟩ : Fin n) ∅ := by
-      ext i
-      simp only [mem_filter, mem_univ, true_and, pow_zero, insert_empty, mem_singleton,
-        Fin.ext_iff]
-      omega
-    rw [this, parityOn_insert (notMem_empty _), parityOn_empty, Bool.xor_false]
+    rw [pow_zero, parityOn_consecutive_one o (by rw [pow_zero] at h; omega)]
     rfl
   | succ k ih =>
-    have hsplit : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ (k + 1)} : Finset (Fin n)) =
-        ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k} : Finset (Fin n)) ∪
-          ({i | o + 2 ^ k ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k + 2 ^ k} : Finset (Fin n)) := by
-      ext i
-      simp only [mem_filter, mem_univ, true_and, mem_union, pow_succ]
-      omega
-    rw [parityFormula, Formula.eval_xor, ih, ih, hsplit, parityOn_union]
-    rw [disjoint_left]
-    intro i hi hi'
-    simp only [mem_filter, mem_univ, true_and] at hi hi'
+    rw [parityFormula, Formula.eval_xor, ih, ih, ← parityOn_consecutive_add]
+    congr 1
+    ext i
+    simp only [mem_filter, mem_univ, true_and, pow_succ]
     omega
 
+/-- The formula `parityFormula k o` has leaf size `4 ^ k`. -/
 theorem leafSize_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) :
     (parityFormula k o h).leafSize = 4 ^ k := by
   induction k generalizing o with

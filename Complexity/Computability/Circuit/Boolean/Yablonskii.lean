@@ -61,33 +61,6 @@ open Finset
 
 variable {n : ℕ}
 
-/-- The parity of the `a + b` bits from `o` on is the exclusive or of the parities of the first `a`
-and the last `b` of them. -/
-private theorem parityOn_consecutive_add (o a b : ℕ) (x : BitString n) :
-    parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + (a + b)} : Finset (Fin n)) x =
-      (parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + a} : Finset (Fin n)) x ^^
-        parityOn ({i | o + a ≤ (i : ℕ) ∧ (i : ℕ) < o + a + b} : Finset (Fin n)) x) := by
-  have hsplit : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + (a + b)} : Finset (Fin n)) =
-      ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + a} : Finset (Fin n)) ∪
-        ({i | o + a ≤ (i : ℕ) ∧ (i : ℕ) < o + a + b} : Finset (Fin n)) := by
-    ext i
-    simp only [mem_filter, mem_univ, true_and, mem_union]
-    omega
-  rw [hsplit, parityOn_union]
-  rw [disjoint_left]
-  intro i hi hi'
-  simp only [mem_filter, mem_univ, true_and] at hi hi'
-  omega
-
-/-- The parity of the single bit `o` is that bit. -/
-private theorem parityOn_consecutive_one (o : ℕ) (h : o < n) (x : BitString n) :
-    parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 1} : Finset (Fin n)) x = x ⟨o, h⟩ := by
-  have : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 1} : Finset (Fin n)) = insert ⟨o, h⟩ ∅ := by
-    ext i
-    simp only [mem_filter, mem_univ, true_and, insert_empty, mem_singleton, Fin.ext_iff]
-    omega
-  rw [this, parityOn_insert (notMem_empty _), parityOn_empty, Bool.xor_false]
-
 /-- **Yablonskii's formula** for the parity of the `2 ^ k + r` bits from `o` on, where `r ≤ 2 ^ k`:
 the exclusive or of such formulas for the first `2 ^ (k - 1) + ⌊r / 2⌋` and the remaining
 `2 ^ (k - 1) + ⌈r / 2⌉` bits. For `r = 0` it is `parityFormula k o` (`yablonskiiFormula_zero`). -/
