@@ -27,10 +27,11 @@ computing `f` with error `ε` (`QueryComplexity.randomizedComplexity`) [BuhrmanD
 bounded-error complexity `R(f)` of the literature is `R_{1/3}(f)`.
 
 Deterministic trees are randomized trees that draw one tree, so `R_ε(f) ≤ D(f)` for `ε ≥ 0`
-(`DecisionTree.randomizedComplexity_le_complexity`); with error `0` every tree that can be drawn
-computes `f`, so `R_0(f) = D(f)` (`QueryComplexity.randomizedComplexity_zero`); and a fair coin
-guesses a Boolean value correctly with probability `1/2`, so `R_ε(f) = 0` for Boolean-valued `f`
-and `ε ≥ 1/2` (`QueryComplexity.randomizedComplexity_eq_zero_of_le`).
+(`DecisionTree.randomizedComplexity_le_complexity`). With error `0` every tree that can be drawn
+computes `f`, so `R_0(f) = D(f)` (`QueryComplexity.randomizedComplexity_zero`); zero-error
+complexity in the literature usually counts the expected number of queries instead, which can be
+smaller. A fair coin guesses a Boolean value correctly with probability `1/2`, so `R_ε(f) = 0` for
+Boolean-valued `f` and `ε ≥ 1/2` (`QueryComplexity.randomizedComplexity_eq_zero_of_le`).
 
 If a randomized tree computes `f` with error `ε`, then for every distribution `ν` on the inputs
 some tree that it can draw errs with probability at most `ε` on inputs drawn from `ν`
@@ -294,7 +295,8 @@ theorem randomizedComplexity_antitone (hε : 0 ≤ ε) (hεε' : ε ≤ ε') :
   let ⟨_, hμ, hd⟩ := exists_computes_depth_eq_randomizedComplexity hε f
   (randomizedComplexity_le_depth (hμ.mono hεε')).trans_eq hd
 
-/-- With error `0` randomness does not help: `R_0(f) = D(f)`. -/
+/-- With error `0` randomness does not help: `R_0(f) = D(f)`. The cost here is the worst case over
+the coins, unlike the expected number of queries of zero-error (Las Vegas) complexity. -/
 theorem randomizedComplexity_zero (f : (ι → Bool) → β) :
     randomizedComplexity 0 f = DecisionTree.complexity f := by
   obtain ⟨t, ht, hd⟩ := DecisionTree.exists_computes_depth_eq_complexity f
