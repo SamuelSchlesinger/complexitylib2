@@ -189,7 +189,7 @@ theorem natDegree_polyOfBits_append_true (l : List Bool) :
   rw [degree_X_pow]
   exact degree_polyOfBits_lt l
 
-theorem length_bits {m : ℕ} (hm : m ≠ 0) : m.bits.length = Nat.log 2 m + 1 := by
+theorem length_bits_of_ne_zero {m : ℕ} (hm : m ≠ 0) : m.bits.length = Nat.log 2 m + 1 := by
   obtain ⟨l, hl⟩ := bits_getLast hm
   have h := natDegree_polyOfBits_append_true l
   rw [← hl, polyOfBits_bits, natDegree_polyOfCode hm] at h
