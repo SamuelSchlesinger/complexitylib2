@@ -8,8 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.NP
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.Order.Group.Int
 public import Mathlib.Data.Fintype.Pi
+import Complexity.Foundations.Data.BitString.WordCount
 
 /-!
 # The counting classes #P and GapP
@@ -36,6 +38,7 @@ definition. The characterisations by nondeterministic machines are not proved he
 ## Main results
 
 * `Cslib.Complexity.mem_NP_iff_exists_SharpP`: `NP` consists of the supports of functions in `#P`.
+* `Cslib.Complexity.acceptCount_add`: counting accepted strings by their prefixes.
 * `Cslib.Complexity.SharpP.exists_le_two_pow`: functions in `#P` are at most exponential.
 * `Cslib.Complexity.GapP.neg`: `GapP` is closed under negation.
 
@@ -83,6 +86,20 @@ theorem acceptCount_add_card_filter_eq_false :
   simpa only [acceptCount, Bool.not_eq_true, Finset.card_univ, Fintype.card_fun, Fintype.card_bool,
     Fintype.card_fin] using this
 
+/-- **Counting strings by their prefixes**: the strings of length `m + n` accepted by `V` are the
+strings `u ++ w`, with `u` of length `m` and `w` of length `n` accepted with the prefix `u`. -/
+theorem acceptCount_add (V : α × List Bool → Bool) (a : α) (m n : ℕ) :
+    acceptCount V a (m + n) =
+      ∑ u : Fin m → Bool, acceptCount (fun x => V (x.1, List.ofFn u ++ x.2)) a n := by
+  have h := BitString.card_filter_ofFn_add m n fun u w => V (a, u ++ w) = true
+  simp only [List.take_append_drop] at h
+  exact h
+
+/-- Verifiers that agree on an instance accept the same strings with it. -/
+theorem acceptCount_congr {W : α × List Bool → Bool} (h : ∀ w, V (a, w) = W (a, w)) (n : ℕ) :
+    acceptCount V a n = acceptCount W a n := by
+  simp only [acceptCount, h]
+
 end acceptCount
 
 /-- The functions counting the certificates that a polynomial-time verifier accepts, with
@@ -118,6 +135,10 @@ theorem mem_NP_iff_exists_SharpP {A : Set α} :
     exact ⟨p, V, hV, fun a => by rw [h a, hf a, acceptCount_pos_iff]⟩
 
 namespace SharpP
+
+/-- The zero function is in `#P`: no certificate is accepted. -/
+theorem zero_mem : (0 : α → ℕ) ∈ SharpP enc :=
+  ⟨0, fun _ => false, .const false, fun _ => by simp [acceptCount]⟩
 
 /-- A function in `#P` is at most exponential in the length of the encoded instance. -/
 theorem exists_le_two_pow {f : α → ℕ} (hf : f ∈ SharpP enc) :
