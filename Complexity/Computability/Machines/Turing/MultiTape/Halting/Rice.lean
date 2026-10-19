@@ -511,4 +511,84 @@ theorem Desc.computes_dispatch {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ)
 
 end Universal
 
+open Universal
+
+/-! ### The recursion theorem and Rice's theorem -/
+
+/-- The behaviour, on inputs of bits, of the machine described by the word `w`: the relation
+between the inputs on which it halts and the outputs it halts with. -/
+def behaviour (w x : List Bool) (o : List ℕ) : Prop :=
+  (decodeDesc w).Computes (x.map eBit) o
+
+/-- Building the description of a word into itself, as an input prefix, is computable in
+polynomial time. -/
+theorem computableTidilyInPolyTime_selfHardwire :
+    ComputableTidilyInPolyTime (fun y : List Bool => eDesc (hardwire (decodeDesc y) (frame y)))
+      encBits encBits := by
+  obtain ⟨_, _, hdec⟩ := exists_computableTidilyInDegree_decodeDesc
+  have hpair := hdec.computableTidilyInPolyTime.prod (ComputableTidilyInPolyTime.bitsFrame encBits)
+  exact (ComputableTidilyInPolyTime.of_eq (f := fun d : Desc => eDesc d) (encIn := eDesc)
+    (encMid := encBits) fun _ => rfl).comp (computableTidilyInPolyTime_hardwire.comp hpair)
+
+/-- **A recursion theorem.** For every computable verdict `f` on words and descriptions `d false`,
+`d true`, some word `e` describes a machine behaving on inputs of bits as `d (f e)` does: a machine
+can make its whole behaviour depend on a computable verdict about its own description. It is built
+by Kleene's construction: a machine reads a word `y` before its input, computes the verdict on the
+description of the machine described by `y` with `y` built in, and dispatches on it; `e` is that
+description for `y` the description of the machine itself. -/
+theorem exists_behaviour_eq {f : List Bool → Bool} (hf : IsComputable f encBits encBool)
+    (d : Bool → Desc) : ∃ e : List Bool, ∀ (x : List Bool) (o : List ℕ),
+      (decodeDesc e).Computes (x.map eBit) o ↔ (d (f e)).Computes (x.map eBit) o := by
+  set s : List Bool → List Bool := fun y => eDesc (hardwire (decodeDesc y) (frame y))
+  have hs : IsComputable s encBits encBits := computableTidilyInPolyTime_selfHardwire.isComputable
+  have hcons : IsComputable (fun p : Bool × List Bool => p.1 :: p.2) (encPair encBool encBits)
+      encBits :=
+    (ComputableTidilyInPolyTime.bitsCons (ComputableTidilyInPolyTime.fst _ _)
+      (ComputableTidilyInPolyTime.snd _ _)).isComputable
+  have hg : IsComputable (fun p : List Bool × List Bool => f (s p.1) :: p.2)
+      (encPair encBits encBits) encBits :=
+    hcons.comp ((hf.comp (hs.comp (ComputableTidilyInPolyTime.fst encBits encBits).isComputable)).prod
+      (ComputableTidilyInPolyTime.snd encBits encBits).isComputable)
+  obtain ⟨_, _, k, State, hfin, tm, htm⟩ := hg.exists_computableTidilyInTimeAndSpace
+  have := Fintype.ofFinite State
+  set eS : State ↪ ℕ := (Fintype.equivFin State).toEmbedding.trans Fin.valEmbedding
+  set T := dispatch eS tm d
+  have hsT : s (eDesc T) = eDesc (hardwire T (frame (eDesc T))) := by
+    simp only [s, decodeDesc_eDesc]
+  refine ⟨s (eDesc T), fun x o => ?_⟩
+  have h := Desc.computes_dispatch (w := frame (eDesc T) ++ x) (b := f (s (eDesc T))) (v := x) eS
+    tm d (htm (eDesc T, x)) o
+  rw [hsT, decodeDesc_eDesc, Desc.computes_hardwire]
+  rwa [hsT] at h
+
+/-- **Rice's theorem.** Every nontrivial property of the behaviour of machines is undecidable on
+their descriptions: if `C` contains the behaviour of the machine described by some word and not that
+of the machine described by another, then the set of words describing machines whose behaviour is
+in `C` is undecidable [Rice][Rice1953] [Sipser, Problem 5.28][Sipser2013]. -/
+theorem rice {C : Set (List Bool → List ℕ → Prop)} {w₀ w₁ : List Bool} (h₀ : behaviour w₀ ∉ C)
+    (h₁ : behaviour w₁ ∈ C) : ¬IsDecidable {w | behaviour w ∈ C} encBits := by
+  intro hdec
+  obtain ⟨f, hf, hP⟩ := hdec.exists_isComputable
+  obtain ⟨e, he⟩ := exists_behaviour_eq hf fun b => decodeDesc (if b then w₀ else w₁)
+  have hbeh : behaviour e = behaviour (if f e then w₀ else w₁) :=
+    funext fun x => funext fun o => propext (he x o)
+  have hmem := hP e
+  simp only [Set.mem_ofPred_eq, hbeh] at hmem
+  cases hfe : f e
+  · simp only [hfe, Bool.false_eq_true, ↓reduceIte, iff_false] at hmem
+    exact hmem h₁
+  · simp only [hfe, ↓reduceIte, iff_true] at hmem
+    exact h₀ hmem
+
+/-- **Rice's theorem, for sets of words.** A set of words that holds of a word or not according to
+the behaviour of the machine it describes, and is neither empty nor everything, is undecidable. -/
+theorem not_isDecidable_of_behaviour {P : Set (List Bool)}
+    (hP : ∀ w w', behaviour w = behaviour w' → w ∈ P → w' ∈ P) {w₀ w₁ : List Bool} (h₀ : w₀ ∉ P)
+    (h₁ : w₁ ∈ P) : ¬IsDecidable P encBits := by
+  have hset : {w | behaviour w ∈ {B | ∃ w ∈ P, behaviour w = B}} = P := by
+    ext w
+    exact ⟨fun ⟨w', hw', h⟩ => hP w' w h hw', fun hw => ⟨w, hw, rfl⟩⟩
+  rw [← hset]
+  exact rice (fun ⟨w, hw, h⟩ => h₀ (hP w w₀ h hw)) ⟨w₁, h₁, rfl⟩
+
 end Turing.MultiTapeTM
