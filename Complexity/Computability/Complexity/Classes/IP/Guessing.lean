@@ -22,7 +22,8 @@ not `b`. This is the round of the private-coin protocol for graph non-isomorphis
 
 If the two message distributions are `δ`-close, in the sense that the expectations of every
 `[0, 1]`-valued function differ by at most `δ`, then every prover is accepted with probability at
-most `(1 + δ) / 2` (`acceptProb_guessingRound_le`); identical distributions give soundness `1 / 2`.
+most `(1 + δ) / 2` (`acceptProb_guessingRound_le`); identical distributions give soundness `1 / 2`
+(`acceptProb_guessingRound_le_half`).
 If they have disjoint supports, the prover answering `true` exactly on the possible messages for
 `true` is always accepted (`acceptProb_guessingProver`). A round whose messages are sampled by a
 strict PPT program is strict oracle PPT (`isOraclePPTOn_guessingRound`): the verifier reads only
@@ -39,6 +40,8 @@ one bit of the reply.
 
 * `Cslib.Complexity.acceptProb_guessingRound`: acceptance averages the guessing probabilities.
 * `Cslib.Complexity.acceptProb_guessingRound_le`: close message distributions give soundness.
+* `Cslib.Complexity.acceptProb_guessingRound_le_half`: identical message distributions give
+  soundness `1 / 2`.
 * `Cslib.Complexity.acceptProb_guessingProver`: disjoint supports give perfect completeness.
 * `Cslib.Complexity.isOraclePPTOn_guessingRound`: efficiency.
 
@@ -125,6 +128,14 @@ theorem acceptProb_guessingRound_le {message : Bool → ProbComp (List Bool)} {�
     _ ≤ 1 + δ := by
         gcongr
         exact tsum_mul_le_one _ fun m => P.guessProb_add_le_one _ m
+
+/-- **Soundness one half.** If the messages for the two secret bits have the same law, every
+prover is accepted with probability at most `1 / 2`. -/
+theorem acceptProb_guessingRound_le_half {message : Bool → ProbComp (List Bool)}
+    (h : ProbComp.eval (message true) = ProbComp.eval (message false)) (P : Prover Unit) :
+    acceptProb (guessingRound message) P ≤ 1 / 2 :=
+  (acceptProb_guessingRound_le (δ := 0) (fun _ _ => by rw [h, add_zero]) P).trans_eq
+    (by rw [add_zero])
 
 open scoped Classical in
 /-- The prover of a guessing round answering `true` exactly on the possible messages for the

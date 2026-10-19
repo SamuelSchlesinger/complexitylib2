@@ -78,16 +78,21 @@ example : acceptProb (GraphNonIsomorphism.verifier (path, triangle))
 /-- The cheating prover that always names the second graph. -/
 private noncomputable def alwaysSecond : Prover Unit := Prover.const [true]
 
+private theorem guessProb_alwaysSecond (m : List Bool) (b : Bool) :
+    alwaysSecond.guessProb alwaysSecond.init m b = if b = true then 1 else 0 := by
+  cases b <;> simp [Prover.guessProb, alwaysSecond, Prover.const, StateT.run]
+
+/-- The cheating prover passes every guessing round with probability exactly one half. -/
+private theorem acceptProb_guessingRound_alwaysSecond (message : Bool → ProbComp (List Bool)) :
+    acceptProb (guessingRound message) alwaysSecond = 1 / 2 := by
+  simp only [acceptProb_guessingRound, guessProb_alwaysSecond, Bool.false_eq_true, ↓reduceIte,
+    mul_zero, tsum_zero, zero_add, mul_one, PMF.tsum_coe]
+
 -- Naming the second graph regardless of the message wins exactly half of the rounds, for every
 -- pair of graphs: the bound `1 / 2 + 1 / 32` of one round is nearly attained.
 theorem acceptProb_round_alwaysSecond (x : Graph × Graph) :
-    acceptProb (GraphNonIsomorphism.round x) alwaysSecond = 1 / 2 := by
-  rw [GraphNonIsomorphism.round, acceptProb_guessingRound]
-  have h (m : List Bool) (b : Bool) : alwaysSecond.guessProb alwaysSecond.init m b =
-      if b = true then 1 else 0 := by
-    cases b <;> simp [Prover.guessProb, alwaysSecond, Prover.const, StateT.run]
-  simp only [h, Bool.false_eq_true, ↓reduceIte, mul_zero, tsum_zero, zero_add, mul_one,
-    PMF.tsum_coe]
+    acceptProb (GraphNonIsomorphism.round x) alwaysSecond = 1 / 2 :=
+  acceptProb_guessingRound_alwaysSecond _
 
 -- On the isomorphic pair `(path, path')` every prover, the cheating one included, passes both
 -- rounds with probability at most `(17 / 32) ^ 2 < 1 / 3`.
@@ -119,6 +124,14 @@ example : (∅ : Set (List Bool)) ∈ IP encBits :=
     exact le_trans (by norm_num : 2 ≤ 3 * 1)
       (Nat.mul_le_mul_left 3 (Finset.card_pos.2
         ⟨fun _ => false, Finset.mem_filter.2 ⟨Finset.mem_univ _, trivial⟩⟩))⟩⟩
+
+-- A guessing round whose message does not depend on the secret bit is passed with probability at
+-- most one half by every prover, and the cheating prover attains it.
+example (P : Prover Unit) : acceptProb (guessingRound fun _ => pure [true]) P ≤ 1 / 2 :=
+  acceptProb_guessingRound_le_half rfl P
+
+example : acceptProb (guessingRound fun _ => pure [true]) alwaysSecond = 1 / 2 :=
+  acceptProb_guessingRound_alwaysSecond _
 
 -- Zero repetitions accept every prover.
 example (round : WordOracleComp Unit Bool) (P : Prover Unit) :
@@ -157,6 +170,11 @@ example (round : WordOracleComp Unit Bool) (P : Prover Unit) :
 #guard_msgs in
 #print axioms acceptProb_guessingRound_le
 
+/-- info: 'Cslib.Complexity.acceptProb_guessingRound_le_half' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms acceptProb_guessingRound_le_half
+
 /-- info: 'Cslib.Complexity.acceptProb_guessingProver' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -176,6 +194,18 @@ example (round : WordOracleComp Unit Bool) (P : Prover Unit) :
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms GraphNonIsomorphism.acceptProb_round_le
+
+/-- info: 'Cslib.Complexity.GraphNonIsomorphism.isInteractiveProof_round' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms GraphNonIsomorphism.isInteractiveProof_round
+
+/-- info: 'Cslib.Complexity.GraphNonIsomorphism.acceptProb_verifier_prover' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms GraphNonIsomorphism.acceptProb_verifier_prover
 
 /-- info: 'Cslib.Complexity.GraphNonIsomorphism.mem_IP' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

@@ -31,8 +31,10 @@ prover names the graph it picked. On non-isomorphic graphs the relabelings of th
 different graphs, so an unbounded prover always names the right one. On isomorphic graphs they
 have the same distribution, so no prover is right with probability more than `1 / 2`.
 
-A strict fair-coin verifier cannot sample a uniformly random permutation of `n` vertices exactly
-when `n!` is not a power of two. The verifier here relabels by random keys instead: it draws an
+With a uniformly random relabeling the two message laws would be equal on isomorphic graphs and
+one round would have soundness error exactly `1 / 2` (`acceptProb_guessingRound_le_half`). A strict
+fair-coin verifier cannot sample a uniformly random permutation of `n` vertices exactly when `n!` is
+not a power of two. The verifier here relabels by random keys instead: it draws an
 independent key of `keyWidth n` bits for each of the `n` distinct vertices, with
 `2 ^ keyWidth n ≥ 16 * n * n`, and sends the adjacency matrix with the vertices listed in
 increasing order of their keys, ties broken by position (`relabel`). Completeness stays exactly
