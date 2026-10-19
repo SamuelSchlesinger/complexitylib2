@@ -134,6 +134,39 @@ theorem eq_of_covering {r : ℕ} (k : Fin r → ℕ) (hk : StrictAnti k) (hk0 : 
   rw [show j = (v.1 : Fin r) from this]
   exact v.1.2
 
+/-- **Averaging**: some `t`-element subset `I` of `S` carries at least a `t / |S|` share of
+`∑_{i ∈ S} d i`. -/
+theorem exists_subset_card_eq_mul_sum_le {ι : Type*} (S : Finset ι) (d : ι → ℕ)
+    {t : ℕ} (ht : t ≤ S.card) :
+    ∃ I ⊆ S, I.card = t ∧ t * ∑ i ∈ S, d i ≤ S.card * ∑ i ∈ I, d i := by
+  classical
+  obtain ⟨I, hI, hmax⟩ := Finset.exists_max_image (S.powersetCard t) (fun I => ∑ i ∈ I, d i)
+    (Finset.powersetCard_nonempty.2 ht)
+  obtain ⟨hIS, hIcard⟩ := Finset.mem_powersetCard.1 hI
+  refine ⟨I, hIS, hIcard, ?_⟩
+  -- no element outside `I` beats an element of `I`
+  have hex : ∀ i ∈ I, ∀ j ∈ S \ I, d j ≤ d i := by
+    intro i hi j hj
+    rw [Finset.mem_sdiff] at hj
+    have hjI : j ∉ I.erase i := fun h => hj.2 (Finset.mem_of_mem_erase h)
+    have := hmax (insert j (I.erase i)) (Finset.mem_powersetCard.2
+      ⟨Finset.insert_subset hj.1 ((Finset.erase_subset _ _).trans hIS), by
+        rw [Finset.card_insert_of_notMem hjI, Finset.card_erase_of_mem hi, hIcard]
+        have := Finset.card_pos.2 ⟨i, hi⟩
+        omega⟩)
+    rw [Finset.sum_insert hjI, ← Finset.add_sum_erase I d hi] at this
+    omega
+  have h1 : t * ∑ j ∈ S \ I, d j ≤ (S \ I).card * ∑ i ∈ I, d i := by
+    calc t * ∑ j ∈ S \ I, d j = ∑ j ∈ S \ I, ∑ _i ∈ I, d j := by
+          rw [Finset.mul_sum]
+          simp [Finset.sum_const, hIcard]
+      _ ≤ ∑ j ∈ S \ I, ∑ i ∈ I, d i :=
+          Finset.sum_le_sum fun j hj => Finset.sum_le_sum fun i hi => hex i hi j hj
+      _ = (S \ I).card * ∑ i ∈ I, d i := by rw [Finset.sum_const, smul_eq_mul]
+  rw [← Finset.sum_sdiff hIS, ← Finset.card_sdiff_add_card_eq_card hIS, hIcard, mul_add,
+    add_mul]
+  omega
+
 variable {F : Type*} [Field F] [Finite F]
 
 /-- A proper subfield `K` of a finite field `F` satisfies `|K| ^ 2 ≤ |F|`. -/
@@ -187,6 +220,160 @@ theorem exists_traceSym_ne {n s r t : ℕ} (hn : finrank (ZMod 2) F = n)
     (hA : r * max (r + 1) s + r * (r + 1) + n * t + n * r / t <
       finrank (ZMod 2) A.direction) :
     ∃ x ∈ A, ∃ y ∈ A, traceSym μ r t x ≠ traceSym μ r t y := by
-  sorry
+  classical
+  have := charP_two (F := F)
+  cases nonempty_fintype F
+  set M := max (r + 1) s with hM
+  have h2 : n * r < t * (n * r / t + 1) := Nat.lt_mul_div_succ (n * r) ht
+  generalize n * r / t = q at hA h2
+  -- the pivot spaces of the direction of `A`
+  let Y : Fin r → Submodule (ZMod 2) F := pivotSpace A.direction
+  let d : Fin r → ℕ := fun i => finrank (ZMod 2) (Y i)
+  have hsumd : ∑ i, d i = finrank (ZMod 2) A.direction := sum_finrank_pivotSpace A.direction
+  have hdn : ∀ i, d i ≤ n := fun i => hn ▸ Submodule.finrank_le _
+  let k : Fin r → ℕ := fun i => r + 1 - i
+  -- the blocks of dimension above `M`
+  let S := Finset.univ.filter fun i => M < d i
+  have hS : finrank (ZMod 2) A.direction ≤ r * M + ∑ i ∈ S, d i := by
+    have hsmall : ∑ i ∈ Finset.univ.filter (fun i => ¬ M < d i), d i ≤ r * M := by
+      calc ∑ i ∈ Finset.univ.filter (fun i => ¬ M < d i), d i
+          ≤ ∑ _i ∈ Finset.univ.filter (fun i => ¬ M < d i), M :=
+            Finset.sum_le_sum fun i hi => not_lt.1 (Finset.mem_filter.1 hi).2
+        _ ≤ ∑ _i : Fin r, M := Finset.sum_le_sum_of_subset (Finset.filter_subset _ _)
+        _ = r * M := by simp
+    have := Finset.sum_filter_add_sum_filter_not Finset.univ (fun i => M < d i) d
+    change ∑ i ∈ S, d i + _ = _ at this
+    omega
+  have hSr : S.card ≤ r := by simpa using Finset.card_filter_le Finset.univ fun i => M < d i
+  have hSn : ∑ i ∈ S, d i ≤ S.card * n := by
+    calc ∑ i ∈ S, d i ≤ ∑ _i ∈ S, n := Finset.sum_le_sum fun i _ => hdn i
+      _ = S.card * n := by simp
+  have hSt : t ≤ S.card := by
+    by_contra h
+    have : S.card * n ≤ t * n := Nat.mul_le_mul_right _ (by omega)
+    have : S.card * n + n ≤ t * n := by
+      rw [← Nat.succ_mul]
+      exact Nat.mul_le_mul_right _ (by omega)
+    rw [mul_comm n t] at hA
+    omega
+  obtain ⟨I₀, hI₀S, hI₀card, hI₀sum⟩ := exists_subset_card_eq_mul_sum_le S d hSt
+  have hI₀big : ∀ i ∈ I₀, M < d i := fun i hi => (Finset.mem_filter.1 (hI₀S hi)).2
+  have hkM : ∀ i, k i ≤ M := fun i => by simp only [k, hM]; omega
+  -- `I₀` has `∑ (dᵢ - kᵢ) > n`
+  have hI₀ : n < ∑ i ∈ I₀, (d i - k i) := by
+    set X := ∑ i ∈ I₀, d i
+    have h1 : t * (finrank (ZMod 2) A.direction - r * M) ≤ r * X :=
+      (Nat.mul_le_mul_left t (by omega)).trans (hI₀sum.trans (Nat.mul_le_mul_right _ hSr))
+    have h3 : r * (r + 1) + n * t + q + 1 ≤ finrank (ZMod 2) A.direction - r * M := by
+      omega
+    have h4 := (Nat.mul_le_mul_left t h3).trans h1
+    have e1 : t * (r * (r + 1) + n * t + q + 1) =
+        t * (r * (r + 1)) + t * (n * t) + t * (q + 1) := by ring
+    have e2 : r * (t * (r + 1) + n) = t * (r * (r + 1)) + n * r := by ring
+    rw [e1] at h4
+    have h5 : r * (t * (r + 1) + n) < r * X := by
+      rw [e2]
+      omega
+    have hX : t * (r + 1) + n < X := Nat.lt_of_mul_lt_mul_left h5
+    have hsplit : ∑ i ∈ I₀, (d i - k i) + ∑ i ∈ I₀, k i = X := by
+      rw [← Finset.sum_add_distrib]
+      exact Finset.sum_congr rfl fun i hi => Nat.sub_add_cancel ((hkM i).trans (hI₀big i hi).le)
+    have hk : ∑ i ∈ I₀, k i ≤ t * (r + 1) := by
+      calc ∑ i ∈ I₀, k i ≤ ∑ _i ∈ I₀, (r + 1) := Finset.sum_le_sum fun i _ => Nat.sub_le _ _
+        _ = t * (r + 1) := by simp [hI₀card]
+    omega
+  -- families in the pivot spaces with nonzero trace of the product of Moore determinants
+  have hI₀ne : I₀.Nonempty := Finset.card_pos.1 (hI₀card ▸ ht)
+  obtain ⟨u, huY, hu⟩ := exists_trace_mul_prod_det_mooreMatrix_ne_zero (ι := I₀) hn hs
+    (fun i => Y i) (fun i => k i)
+    (fun i => show 2 ≤ r + 1 - ((i : Fin r) : ℕ) by have := (i.1 : Fin r).isLt; omega)
+    (fun i => lt_of_le_of_lt (hkM i) (hI₀big i i.2))
+    (fun i => lt_of_le_of_lt (le_max_right _ _) (hI₀big i i.2)) ⟨hI₀ne.choose, hI₀ne.choose_spec⟩
+    (by
+      rw [Finset.sum_coe_sort I₀ fun i => d i - k i]
+      omega)
+    hμ
+  -- lift them to `A.direction`, vanishing below their block
+  have hlift : ∀ (i : I₀) (l : Fin (k i)), ∃ v ∈ A.direction, (∀ j < (i : Fin r), v j = 0) ∧
+      v i = u i l := fun i l => mem_pivotSpace.1 (huY i l)
+  choose v hvA hvlow hvdiag using hlift
+  -- a base point
+  have hAne : (A : Set (Fin r → F)).Nonempty := by
+    rw [AffineSubspace.nonempty_iff_ne_bot]
+    rintro rfl
+    rw [AffineSubspace.direction_bot, finrank_bot] at hA
+    omega
+  obtain ⟨γ, hγ⟩ := hAne
+  -- the cube spanned by the lifted directions
+  let κ := Σ i : I₀, Fin (k i)
+  let x : (κ → ZMod 2) → Fin r → F := fun c => (∑ q : κ, c q • v q.1 q.2) +ᵥ γ
+  have hxA : ∀ c, x c ∈ A := fun c => AffineSubspace.vadd_mem_of_mem_direction
+    (Submodule.sum_mem _ fun q _ => Submodule.smul_mem _ _ (hvA _ _)) hγ
+  by_contra hcon
+  push Not at hcon
+  -- a constant function has zero cube sum
+  have hzero : ∑ c : κ → ZMod 2, traceSym μ r t (x c) = 0 := by
+    have hκ : 0 < Fintype.card κ :=
+      Fintype.card_pos_iff.2 ⟨⟨⟨_, hI₀ne.choose_spec⟩, ⟨0, by simp only [k]; omega⟩⟩⟩
+    rw [Finset.sum_congr rfl fun c _ => hcon _ (hxA c) _ hγ, Finset.sum_const, Finset.card_univ,
+      Fintype.card_fun, ZMod.card, nsmul_eq_mul, Nat.cast_pow,
+      show ((2 : ℕ) : ZMod 2) = 0 from rfl, zero_pow hκ.ne', zero_mul]
+  -- the product of the powers of the coordinates, as a product of affine forms
+  have hprod : ∀ (J : Finset (Fin r)) (c : κ → ZMod 2),
+      ∏ j ∈ J, x c j ^ (2 ^ (r + 1 - j) - 1) =
+        ∏ p : (Σ j : J, Fin (k j)), ((γ p.1) ^ 2 ^ (p.2 : ℕ) +
+          ∑ q : κ, c q • (v q.1 q.2 p.1 ^ 2 ^ (p.2 : ℕ))) := by
+    intro J c
+    rw [← Finset.prod_coe_sort J, Fintype.prod_sigma]
+    refine Finset.prod_congr rfl fun j _ => ?_
+    rw [pow_two_pow_sub_one_eq_prod]
+    refine Finset.prod_congr rfl fun m _ => ?_
+    simp only [x, vadd_eq_add, Pi.add_apply, Finset.sum_apply, Pi.smul_apply]
+    rw [add_comm, add_pow_char_pow, sum_pow_char_pow]
+    simp_rw [smul_pow, ZMod.pow_card_pow]
+  have hk_anti : StrictAnti k := fun i j hij => by
+    simp only [k]
+    have := j.2
+    have : (i : ℕ) < j := hij
+    omega
+  -- the terms `J ≠ I₀` vanish
+  have hne : ∀ J ∈ Finset.univ.powersetCard t, J ≠ I₀ →
+      ∑ c : κ → ZMod 2, ∏ j ∈ J, x c j ^ (2 ^ (r + 1 - j) - 1) = 0 := by
+    intro J hJ hJI
+    simp_rw [hprod J]
+    refine Cslib.sum_cube_prod_affine_eq_zero _ _ fun ℓ hcov => ?_
+    by_contra hall
+    push Not at hall
+    refine hJI (eq_of_covering k hk_anti (fun i => by simp only [k]; omega) I₀ J
+      (by rw [(Finset.mem_powersetCard.1 hJ).2, hI₀card]) ℓ hcov fun p q hpq => ?_)
+    by_contra hlt
+    push Not at hlt
+    exact hall p q hpq (by rw [hvlow q.1 q.2 _ hlt, zero_pow (pow_ne_zero _ two_ne_zero)])
+  -- the term `J = I₀` is the product of the Moore determinants
+  have hI₀term : ∑ c : κ → ZMod 2, ∏ j ∈ I₀, x c j ^ (2 ^ (r + 1 - j) - 1) =
+      ∏ i : I₀, (mooreMatrix (u i)).det := by
+    simp_rw [hprod I₀]
+    rw [Cslib.sum_cube_prod_affine_eq_permanent, ← det_eq_permanent, ← Matrix.det_transpose]
+    have hblock : (Matrix.of fun p q : κ => v q.1 q.2 p.1 ^ 2 ^ (p.2 : ℕ)).transpose.BlockTriangular
+        Sigma.fst := by
+      intro q p hpq
+      simp only [Matrix.transpose_apply, Matrix.of_apply]
+      rw [hvlow q.1 q.2 _ hpq, zero_pow (pow_ne_zero _ two_ne_zero)]
+    rw [hblock.det_fintype]
+    refine Finset.prod_congr rfl fun i _ => ?_
+    rw [← Matrix.det_reindex_self (Equiv.sigmaSubtype i)]
+    congr 1
+    ext l m
+    show v i l i ^ 2 ^ (m : ℕ) = u i l ^ 2 ^ (m : ℕ)
+    rw [hvdiag]
+  -- comparing the two computations of the cube sum
+  apply hu
+  have hsum : ∑ c : κ → ZMod 2, traceSym μ r t (x c) =
+      Algebra.trace (ZMod 2) F (μ * ∏ i : I₀, (mooreMatrix (u i)).det) := by
+    simp only [traceSym]
+    rw [← map_sum, ← Finset.mul_sum, Finset.sum_comm,
+      Finset.sum_eq_single_of_mem I₀ (Finset.mem_powersetCard.2 ⟨Finset.subset_univ _, hI₀card⟩)
+        hne, hI₀term]
+  rw [← hsum, hzero]
 
 end Cslib.AffineDisperser
