@@ -310,6 +310,7 @@ public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
 public import Complexity.Computability.Complexity.Classes.NP.Witness
+public import Complexity.Computability.Complexity.Classes.Operators
 public import Complexity.Computability.Complexity.Classes.Oracle
 public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
 public import Complexity.Computability.Complexity.Classes.Oracle.Closure
@@ -326,6 +327,7 @@ public import Complexity.Computability.Complexity.Classes.PCP.NP
 public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
+public import Complexity.Computability.Complexity.Classes.ParityP
 public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Classes.Promise.Circuit
 public import Complexity.Computability.Complexity.Classes.RP
@@ -340,6 +342,10 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.Classes.Time
+public import Complexity.Computability.Complexity.Classes.Toda
+public import Complexity.Computability.Complexity.Classes.Toda.Counting
+public import Complexity.Computability.Complexity.Classes.Toda.Hierarchy
+public import Complexity.Computability.Complexity.Classes.Toda.Isolation
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses

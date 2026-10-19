@@ -18,7 +18,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 /-!
 # Toda's theorem
 
-Toda's theorem [Toda][Toda1991], [Arora and Barak, Theorem 17.14][AroraBarak09]: the polynomial
+Toda's theorem [Toda][Toda1991], [Arora and Barak, Section 17.4][AroraBarak09]: the polynomial
 hierarchy lies in `BP·⊕P` (`Cslib.Complexity.PH_subset_BPOp_ParityP`), which lies in polynomial
 time with an oracle for a function in `#P`
 (`Cslib.Complexity.BPOp_ParityP_subset_PWithSharpPOracle`), so `PH ⊆ P^#P`
@@ -52,6 +52,7 @@ decides the problem: Toda's theorem holds with a single query, `PH ⊆ P^#P[1]`.
 
 ## Main results
 
+* `Cslib.Complexity.P_subset_PWithSharpPOracle`: `P ⊆ P^#P`.
 * `Cslib.Complexity.exists_SharpP_testBit_of_mem_BPOp_ParityP`: a problem in `BP·⊕P` is decided
   by a bit at a polynomial position of a function in `#P`.
 * `Cslib.Complexity.BPOp_ParityP_subset_PWithSharpPOracle`: **`BP·⊕P ⊆ P^#P`**.
@@ -90,6 +91,14 @@ def PWithSharpPOracle (enc : α ↪ List Bool) : Set (Set α) :=
 theorem mem_PWithSharpPOracle {L : Set α} :
     L ∈ PWithSharpPOracle enc ↔ ∃ f ∈ SharpP enc, L ∈ PWithOracle (bitGraph enc f) enc :=
   Iff.rfl
+
+/-- The zero function is in `#P`: no certificate is accepted. -/
+theorem zero_mem_SharpP : (0 : α → ℕ) ∈ SharpP enc :=
+  ⟨0, fun _ => false, .const false, fun _ => by simp [acceptCount]⟩
+
+/-- **`P ⊆ P^#P`**: a polynomial-time decider makes no query, here to the bit graph of `0`. -/
+theorem P_subset_PWithSharpPOracle : P enc ⊆ PWithSharpPOracle enc := fun _ hL =>
+  ⟨0, zero_mem_SharpP, P_subset_PWithOracle _ enc hL⟩
 
 /-- **One bit of a `#P` value is in `P^#P`**: a problem decided by the bit at a polynomial position
 of a function in `#P` is in `P^#P`, with one query. -/

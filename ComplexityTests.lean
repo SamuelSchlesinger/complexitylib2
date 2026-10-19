@@ -196,6 +196,7 @@ import ComplexityTests.ThresholdInnerProductActivity
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
+import ComplexityTests.Toda
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation
