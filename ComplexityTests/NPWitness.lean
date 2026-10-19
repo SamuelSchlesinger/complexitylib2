@@ -6,6 +6,10 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.Classes.NP.Witness
 import Complexity.Computability.Complexity.Problems.Clique
+import Complexity.Computability.Complexity.Problems.Coloring
+import Complexity.Computability.Complexity.Problems.GraphIsomorphism
+import Complexity.Computability.Complexity.Problems.TSP
+import Complexity.Computability.Complexity.Problems.VertexCover
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Complexity.Problems.ThreeSAT
 import Complexity.Tactic.PolyTime
@@ -14,8 +18,9 @@ import Complexity.Tactic.PolyTime
 # NP membership from witness relations
 
 A toy witness relation through the builder with a total decoder (even numbers, witnessed by their
-halves), a toy subset problem through the subset builder (lists with `k` distinct entries),
-malformed and boundary certificates, closure under reductions, and axiom guards.
+halves), a toy subset problem through the subset builder (lists with `k` distinct entries), the
+same problem through ordering witnesses, malformed and boundary certificates, the verifier of
+`VertexCover` as a subset verifier, unary blocks, closure under reductions, and axiom guards.
 -/
 
 namespace ComplexityTests.NPWitness
@@ -139,6 +144,60 @@ example : ¬∃ w : List Bool, w.length = Polynomial.X.eval (encPair (encList en
   simp only [Finset.card_singleton] at this
   omega
 
+/-! ### Ordering witnesses: distinct entries again -/
+
+/-- Checks that an ordering has `k` entries. -/
+def hasLength (x : List ℕ × ℕ) (p : List ℕ) : Bool := decide (p.length = x.2)
+
+-- A list has `k` distinct entries exactly when some ordering of them, each listed once, has `k`
+-- entries; the ordering is the witness.
+example : {x : List ℕ × ℕ | ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ x.1) ∧ p.length = x.2} ∈
+    NP (encPair (encList encNat) encNat) :=
+  Graph.mem_NP_of_ordering (check := hasLength) (ComputableTidilyInPolyTime.fst _ _)
+    ((ComputableTidilyInPolyTime.unary_to_binary.comp
+      ((ComputableTidilyInPolyTime.length_list encNat).comp (ComputableTidilyInPolyTime.snd _ _))
+      ).decide_eq' (by fun_prop))
+    fun _ _ => decide_eq_true_iff
+
+-- Orderings list every distinct entry exactly once, and nothing else.
+example : Graph.enumeratesBool [2, 1, 2] [1, 2] = true := rfl
+example : Graph.enumeratesBool [2, 1, 2] [1, 2, 2] = false := rfl
+example : Graph.enumeratesBool [2, 1, 2] [1] = false := rfl
+example : Graph.enumeratesBool [2, 1, 2] [1, 2, 3] = false := rfl
+example : Graph.enumeratesBool [] [] = true := rfl
+
+-- The full mask selects each entry at its first occurrence.
+example : selectDistinct [3, 5, 3, 7] (List.replicate 4 true) = [3, 5, 7] := rfl
+example : Graph.distinctVertices ([2, 1, 2, 1], []) = [2, 1] := rfl
+example :
+    (selectDistinct [3, 5, 3, 7] (List.replicate 4 true)).length = [3, 5, 3, 7].toFinset.card :=
+  length_selectDistinct_replicate _
+
+/-! ### Vertex covers through the subset verifier -/
+
+/-- The path `1 - 2 - 3`. -/
+def path3 : Graph := ([1, 2, 3], [(1, 2), (2, 3)])
+
+-- In: the middle vertex covers both edges.
+example : VertexCover.verifier ((path3, 1), [false, true, false]) = true := rfl
+-- Out: an end vertex leaves an edge uncovered, and a cover of the wrong size is rejected.
+example : VertexCover.verifier ((path3, 1), [true, false, false]) = false := rfl
+example : VertexCover.verifier ((path3, 1), [true, true, false]) = false := rfl
+-- A repeated declared vertex is selected only at its first occurrence.
+example : VertexCover.verifier (((([2, 2, 1, 3], [(1, 2), (2, 3)]) : Graph), 1),
+    [true, true, false, false]) = true := rfl
+example : VertexCover.verifier (((([2, 2, 1, 3], [(1, 2), (2, 3)]) : Graph), 1),
+    [false, true, false, false]) = false := rfl
+
+/-! ### Unary blocks -/
+
+-- Blocks of width `3` writing `2` and `0`; counting the set bits of a block reads its number.
+example : unaryBlocks 3 6 (fun a => [2, 0].getD a 0) = [true, true, false, false, false, false] :=
+  rfl
+example : ((List.range 3).countP fun c =>
+    (unaryBlocks 3 6 (fun a => [2, 0].getD a 0)).getD (3 * 0 + c) false) = 2 :=
+  countP_unaryBlocks (f := fun a => [2, 0].getD a 0) (by decide) (by decide)
+
 /-! ### Closure under reductions -/
 
 example : SAT ∈ NP encCNF := polyTimeReducible_SAT_ThreeSAT.mem_NP ThreeSAT.mem_NP
@@ -223,5 +282,95 @@ info: 'Cslib.Complexity.Graph.isVerifier_verifySubset' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.Graph.isVerifier_verifySubset
+
+/--
+info: 'Cslib.Complexity.Graph.mem_NP_of_ordering' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Graph.mem_NP_of_ordering
+
+/--
+info: 'Cslib.Complexity.countP_unaryBlocks' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.countP_unaryBlocks
+
+/--
+info: 'Cslib.Complexity.VertexCover.isVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.VertexCover.isVerifier
+
+/--
+info: 'Cslib.Complexity.VertexCover.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.VertexCover.mem_NP
+
+/--
+info: 'Cslib.Complexity.KColoring.isVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.KColoring.isVerifier
+
+/--
+info: 'Cslib.Complexity.KColoring.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.KColoring.mem_NP
+
+/--
+info: 'Cslib.Complexity.DirHamPath.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.DirHamPath.mem_NP
+
+/--
+info: 'Cslib.Complexity.DirHamCycle.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.DirHamCycle.mem_NP
+
+/--
+info: 'Cslib.Complexity.HamPath.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.HamPath.mem_NP
+
+/--
+info: 'Cslib.Complexity.HamCycle.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.HamCycle.mem_NP
+
+/--
+info: 'Cslib.Complexity.TSP.isVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.TSP.isVerifier
+
+/--
+info: 'Cslib.Complexity.TSP.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.TSP.mem_NP
+
+/--
+info: 'Cslib.Complexity.GraphIsomorphism.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.GraphIsomorphism.mem_NP
 
 end ComplexityTests.NPWitness
