@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
 public import Complexity.Computability.Complexity.Reduction
+import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -49,6 +50,9 @@ becomes a triangle.
   polynomial-time.
 * `Cslib.Complexity.polyTimeReducible_DirHamPath_HamPath`,
   `Cslib.Complexity.polyTimeReducible_DirHamCycle_HamCycle`.
+* `Cslib.Complexity.HamPath_npHard`, `Cslib.Complexity.HamPath_npComplete`,
+  `Cslib.Complexity.HamCycle_npHard`, `Cslib.Complexity.HamCycle_npComplete`: the undirected
+  problems are `NP`-complete.
 
 ## References
 
@@ -571,5 +575,21 @@ theorem polyTimeReducible_DirHamCycle_HamCycle :
     PolyTimeReducible encGraph encGraph DirHamCycle HamCycle :=
   ⟨Graph.split, Graph.computableTidilyInPolyTime_split,
     fun G => (Graph.split_mem_HamCycle_iff G).symm⟩
+
+/-- `HamPath` is `NP`-hard. -/
+theorem HamPath_npHard : NPHard (encPair encGraph (encPair encNat encNat)) HamPath :=
+  DirHamPath_npHard.trans polyTimeReducible_DirHamPath_HamPath
+
+/-- **`HamPath` is NP-complete.** -/
+theorem HamPath_npComplete : NPComplete (encPair encGraph (encPair encNat encNat)) HamPath :=
+  ⟨HamPath.mem_NP, HamPath_npHard⟩
+
+/-- `HamCycle` is `NP`-hard. -/
+theorem HamCycle_npHard : NPHard encGraph HamCycle :=
+  DirHamCycle_npHard.trans polyTimeReducible_DirHamCycle_HamCycle
+
+/-- **`HamCycle` is NP-complete.** -/
+theorem HamCycle_npComplete : NPComplete encGraph HamCycle :=
+  ⟨HamCycle.mem_NP, HamCycle_npHard⟩
 
 end Cslib.Complexity

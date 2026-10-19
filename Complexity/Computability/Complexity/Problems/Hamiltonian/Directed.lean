@@ -57,6 +57,8 @@ vertex that no arc enters. The top of the first diamond is such a vertex, which 
 * `Cslib.Complexity.polyTimeReducible_SAT_DirHamPath`,
   `Cslib.Complexity.polyTimeReducible_ThreeSAT_DirHamPath`, `Cslib.Complexity.DirHamPath_npHard`,
   `Cslib.Complexity.polyTimeReducible_SAT_DirHamCycle`, `Cslib.Complexity.DirHamCycle_npHard`.
+* `Cslib.Complexity.DirHamPath_npComplete`, `Cslib.Complexity.DirHamCycle_npComplete`: the
+  directed problems are `NP`-complete.
 
 ## References
 
@@ -1135,5 +1137,14 @@ theorem polyTimeReducible_SAT_DirHamCycle : PolyTimeReducible encCNF encGraph SA
 /-- `DirHamCycle` is `NP`-hard. -/
 theorem DirHamCycle_npHard : NPHard encGraph DirHamCycle :=
   CookLevin.SAT_npHard.trans polyTimeReducible_SAT_DirHamCycle
+
+/-- **`DirHamPath` is NP-complete.** -/
+theorem DirHamPath_npComplete :
+    NPComplete (encPair encGraph (encPair encNat encNat)) DirHamPath :=
+  ⟨DirHamPath.mem_NP, DirHamPath_npHard⟩
+
+/-- **`DirHamCycle` is NP-complete.** -/
+theorem DirHamCycle_npComplete : NPComplete encGraph DirHamCycle :=
+  ⟨DirHamCycle.mem_NP, DirHamCycle_npHard⟩
 
 end Cslib.Complexity
