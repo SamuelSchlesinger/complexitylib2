@@ -59,6 +59,7 @@ public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hamming
 public import Complexity.Computability.Circuit.Boolean.HardCore
+public import Complexity.Computability.Circuit.Boolean.HardnessAmplification
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
@@ -293,6 +294,8 @@ public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
 public import Complexity.Computability.Complexity.Classes.BPP
+public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
+public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.Hierarchy
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Space
@@ -744,6 +747,7 @@ public import Complexity.Crypto.Primitives.PRG.Game
 public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit
+public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Derandomization
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
@@ -961,6 +965,7 @@ public import Complexity.Probability.Chernoff
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Concentration
 public import Complexity.Probability.Conditioning
+public import Complexity.Probability.Divergence
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
@@ -980,6 +985,7 @@ public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 public import Complexity.Probability.Product
 public import Complexity.Probability.Quantile
+public import Complexity.Probability.Shearer
 public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
