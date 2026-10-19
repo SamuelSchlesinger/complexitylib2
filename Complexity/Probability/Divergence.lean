@@ -29,8 +29,9 @@ support of `p` is contained in that of `q`, and is then the finite sum
   entropy of `p` is at most its cross-entropy `∑ a, p a * surprisal q a`.
 * Entropy is the logarithm of the alphabet size minus the divergence from uniform.
 * Mutual information, `H(X) + H(Y) - H(X, Y)`, is the divergence of the joint law from the
-  product of its marginals. Hence entropy is subadditive, with equality exactly for independent
-  pairs, and conditioning cannot increase entropy.
+  product of its marginals. Entropy is subadditive and conditioning cannot increase it; by the
+  equality case of Gibbs' inequality, subadditivity is an equality exactly for independent
+  pairs.
 * Pinsker's inequality `2 δ(p, q)² ≤ D(p ‖ q)` for the statistical distance `δ`. It is proved
   for arbitrary probability measures and events, following the variational proof: Gibbs'
   inequality for an exponentially tilted measure (Mathlib's `integral_llr_tilted_right`) and
@@ -45,9 +46,13 @@ Divergences are in nats and entropies in bits, so the bridges divide by `log 2`.
 * `Cslib.Probability.PMF.klDiv_toMeasure_map_le`: data processing for deterministic maps.
 * `Cslib.Probability.PMF.sum_mul_log_div_nonneg`, `.sum_mul_log_div_eq_zero_iff`: Gibbs.
 * `Cslib.Probability.PMF.entropy_le_sum_mul_surprisal`: entropy is at most cross-entropy.
+* `Cslib.Probability.PMF.entropy_le_logb_card_of_support_subset`: entropy is at most the
+  logarithm of the support size.
 * `Cslib.Probability.PMF.entropy_eq_logb_card_sub_klDiv`: entropy and divergence from uniform.
 * `Cslib.Probability.PMF.entropy_map_fst_add_entropy_map_snd_sub_entropy`: mutual information.
-* `Cslib.Probability.PMF.entropy_le_entropy_map_fst_add_entropy_map_snd`: subadditivity.
+* `Cslib.Probability.PMF.entropy_le_entropy_map_fst_add_entropy_map_snd`: subadditivity, with
+  equality exactly for independent pairs
+  (`Cslib.Probability.PMF.entropy_eq_entropy_map_fst_add_entropy_map_snd_iff`).
 * `Cslib.Probability.PMF.conditionalEntropy_le_entropy_map_snd`: conditioning reduces entropy.
 * `Cslib.Probability.ofReal_two_mul_sq_measureReal_sub_le_klDiv`: Pinsker for an event.
 * `Cslib.Probability.PMF.ofReal_two_mul_dist_sq_le_klDiv`,
@@ -56,8 +61,8 @@ Divergences are in nats and entropies in bits, so the bridges divide by `log 2`.
 ## References
 
 * [T. M. Cover, J. A. Thomas, *Elements of Information Theory*][CoverThomas2006],
-  Theorems 2.6.3 (Gibbs), 2.6.4 (uniform maximizes entropy), 2.6.6 (subadditivity) and
-  Lemma 11.6.1 (Pinsker).
+  Theorems 2.6.3 (Gibbs), 2.6.4 (uniform maximizes entropy), 2.6.5 (conditioning reduces
+  entropy), Section 2.3 and Theorem 2.4.1 (mutual information) and Lemma 11.6.1 (Pinsker).
 -/
 
 @[expose] public section
@@ -70,10 +75,10 @@ variable {α β : Type*}
 
 /-! ### Pinsker's inequality for an event -/
 
-/-- **Pinsker's inequality** for a single event: the probabilities of a measurable event under
-two probability measures differ by at most `sqrt (klDiv μ ν / 2)`, the divergence in nats. The
-statement holds unconditionally since `klDiv μ ν = ∞` when `μ` is not absolutely continuous with
-respect to `ν` or the log-likelihood ratio is not integrable. -/
+/-- **Pinsker's inequality** for a single event: `2 (μ s - ν s)² ≤ klDiv μ ν`, the divergence in
+nats, for probability measures and a measurable event `s`. The statement holds unconditionally
+since `klDiv μ ν = ∞` when `μ` is not absolutely continuous with respect to `ν` or the
+log-likelihood ratio is not integrable. -/
 theorem ofReal_two_mul_sq_measureReal_sub_le_klDiv {mα : MeasurableSpace α}
     {μ ν : Measure α} [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     {s : Set α} (hs : MeasurableSet s) :
@@ -114,7 +119,6 @@ theorem ofReal_two_mul_sq_measureReal_sub_le_klDiv {mα : MeasurableSpace α}
     have h := (hasSubgaussianMGF_of_mem_Icc (μ := ν) hX.aemeasurable (ae_of_all _ hXmem)).mgf_le t
     rw [hmean, show (fun x => X x - ν.real s) = fun x => X x + -ν.real s from
       funext fun _ => sub_eq_add_neg _ _, mgf_add_const] at h
-    have hpos := Real.exp_pos (t * -ν.real s)
     rw [mgf] at h
     calc ∫ x, Real.exp (t * X x) ∂ν
         = ((∫ x, Real.exp (t * X x) ∂ν) * Real.exp (t * -ν.real s)) *
@@ -123,7 +127,10 @@ theorem ofReal_two_mul_sq_measureReal_sub_le_klDiv {mα : MeasurableSpace α}
       _ ≤ Real.exp ((‖(1 : ℝ) - 0‖₊ / 2) ^ 2 * t ^ 2 / 2) * Real.exp (t * ν.real s) :=
           mul_le_mul_of_nonneg_right h (Real.exp_pos _).le
       _ = Real.exp (t * ν.real s + t ^ 2 / 8) := by
-          rw [← Real.exp_add]; congr 1; norm_num; ring
+          rw [← Real.exp_add, sub_zero, nnnorm_one]
+          congr 1
+          push_cast
+          ring
   have hlog : Real.log (∫ x, Real.exp (t * X x) ∂ν) ≤ t * ν.real s + t ^ 2 / 8 :=
     (Real.log_le_iff_le_exp (integral_exp_pos hexp)).mpr hhoeffding
   have hint_f : ∫ x, t * X x ∂μ = t * μ.real s := by
@@ -328,6 +335,16 @@ private theorem bind_map_prodMk_apply (p : PMF α) (q : PMF β) (pair : α × β
   simp only [PMF.map, Function.comp_def]
   exact bind_pair_apply p (fun _ => q) pair.1 pair.2
 
+/-- A joint law is supported where the product of its marginals is. -/
+private theorem support_subset_bind_map_prodMk (joint : PMF (α × β)) :
+    joint.support ⊆
+      ((joint.map Prod.fst).bind fun a => (joint.map Prod.snd).map (a, ·)).support := by
+  intro pair hpair
+  rw [PMF.mem_support_iff, bind_map_prodMk_apply]
+  exact mul_ne_zero
+    (ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hpair) (le_map_apply joint _ pair)))
+    (ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hpair) (le_map_apply joint _ pair)))
+
 /-- The product of two PMF measures is the measure of the PMF sampling independently. -/
 theorem toMeasure_bind_map_prodMk [Countable α] [Countable β]
     [MeasurableSpace α] [MeasurableSingletonClass α]
@@ -351,38 +368,28 @@ theorem entropy_map_fst_add_entropy_map_snd_sub_entropy [Finite α] [Finite β]
           Real.log 2 := by
   let := Fintype.ofFinite α
   let := Fintype.ofFinite β
-  set first := joint.map Prod.fst
-  set second := joint.map Prod.snd
-  have hfirst (pair : α × β) (h : joint pair ≠ 0) : first pair.1 ≠ 0 :=
-    ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr h) (le_map_apply joint Prod.fst pair))
-  have hsecond (pair : α × β) (h : joint pair ≠ 0) : second pair.2 ≠ 0 :=
-    ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr h) (le_map_apply joint Prod.snd pair))
-  have hsupport : joint.support ⊆ (first.bind fun a => second.map (a, ·)).support := by
-    intro pair hpair
-    rw [PMF.mem_support_iff, bind_map_prodMk_apply]
-    exact mul_ne_zero (hfirst pair hpair) (hsecond pair hpair)
-  rw [← toMeasure_bind_map_prodMk, toReal_klDiv_toMeasure hsupport]
+  rw [← toMeasure_bind_map_prodMk, toReal_klDiv_toMeasure (support_subset_bind_map_prodMk joint)]
   have hterm (pair : α × β) : (joint pair).toReal * Real.log ((joint pair).toReal /
-      ((first.bind fun a => second.map (a, ·)) pair).toReal) =
+      (((joint.map Prod.fst).bind fun a => (joint.map Prod.snd).map (a, ·)) pair).toReal) =
         -Real.negMulLog (joint pair).toReal -
-          (joint pair).toReal * Real.log (first pair.1).toReal -
-            (joint pair).toReal * Real.log (second pair.2).toReal := by
+          (joint pair).toReal * Real.log ((joint.map Prod.fst) pair.1).toReal -
+            (joint pair).toReal * Real.log ((joint.map Prod.snd) pair.2).toReal := by
     by_cases hp : joint pair = 0
     · simp [hp]
     have hp' : (joint pair).toReal ≠ 0 := ENNReal.toReal_ne_zero.mpr ⟨hp, PMF.apply_ne_top _ _⟩
-    have h1 : (first pair.1).toReal ≠ 0 :=
-      ENNReal.toReal_ne_zero.mpr ⟨hfirst pair hp, PMF.apply_ne_top _ _⟩
-    have h2 : (second pair.2).toReal ≠ 0 :=
-      ENNReal.toReal_ne_zero.mpr ⟨hsecond pair hp, PMF.apply_ne_top _ _⟩
+    have h1 : ((joint.map Prod.fst) pair.1).toReal ≠ 0 :=
+      ENNReal.toReal_ne_zero.mpr ⟨ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hp)
+        (le_map_apply joint Prod.fst pair)), PMF.apply_ne_top _ _⟩
+    have h2 : ((joint.map Prod.snd) pair.2).toReal ≠ 0 :=
+      ENNReal.toReal_ne_zero.mpr ⟨ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hp)
+        (le_map_apply joint Prod.snd pair)), PMF.apply_ne_top _ _⟩
     rw [bind_map_prodMk_apply, ENNReal.toReal_mul, Real.log_div hp' (mul_ne_zero h1 h2),
       Real.log_mul h1 h2, Real.negMulLog]
     ring
   simp only [hterm, Finset.sum_sub_distrib]
-  have h1 := sum_map_mul joint Prod.fst (fun a => Real.log (first a).toReal)
-  have h2 := sum_map_mul joint Prod.snd (fun b => Real.log (second b).toReal)
-  rw [← h1, ← h2]
-  simp only [entropy_eq_sum, Real.negMulLog, first, second]
-  simp only [neg_mul, Finset.sum_neg_distrib]
+  rw [← sum_map_mul joint Prod.fst (fun a => Real.log ((joint.map Prod.fst) a).toReal),
+    ← sum_map_mul joint Prod.snd (fun b => Real.log ((joint.map Prod.snd) b).toReal)]
+  simp only [entropy_eq_sum, Real.negMulLog, neg_mul, Finset.sum_neg_distrib]
   ring
 
 variable [Finite α] [Finite β]
@@ -424,13 +431,7 @@ theorem entropy_eq_entropy_map_fst_add_entropy_map_snd_iff (joint : PMF (α × �
       exact h.resolve_right hlog.ne'
     rcases ENNReal.toReal_eq_zero_iff _ |>.mp h0 with h0 | htop
     · exact PMF.toMeasure_injective (klDiv_eq_zero_iff.mp h0)
-    · exfalso
-      refine absurd htop (hne.mpr ?_)
-      intro pair hpair
-      rw [PMF.mem_support_iff, bind_map_prodMk_apply]
-      exact mul_ne_zero
-        (ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hpair) (le_map_apply joint _ pair)))
-        (ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hpair) (le_map_apply joint _ pair)))
+    · exact absurd htop (hne.mpr (support_subset_bind_map_prodMk joint))
   · intro heq
     rw [← heq, klDiv_self, ENNReal.toReal_zero, zero_div] at h
     linarith

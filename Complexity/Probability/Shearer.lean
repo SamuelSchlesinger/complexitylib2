@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.Divergence
-public import Mathlib.Data.Finset.Sort
 
 /-!
 # Shearer's lemma and Han's inequality
