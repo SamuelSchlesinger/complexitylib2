@@ -509,6 +509,9 @@ public import Complexity.Computability.Kolmogorov.Partrec
 public import Complexity.Computability.Kolmogorov.SelfDelimiting
 public import Complexity.Computability.Kolmogorov.Uncomputability
 public import Complexity.Computability.Languages.Slice
+public import Complexity.Computability.Learning.AC0
+public import Complexity.Computability.Learning.Basic
+public import Complexity.Computability.Learning.LowDegree
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.NP
@@ -970,6 +973,7 @@ public import Complexity.Foundations.BooleanAnalysis.MultilinearExtension
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.BooleanAnalysis.RelevantCoordinates
+public import Complexity.Foundations.BooleanAnalysis.SignApproximation
 public import Complexity.Foundations.Combinatorics.AffineDisperser
 public import Complexity.Foundations.Combinatorics.AffineDisperser.AffineSubspace
 public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
