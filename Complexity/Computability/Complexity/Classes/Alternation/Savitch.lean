@@ -321,7 +321,8 @@ theorem computableTidilyInPolyTime_savitchVerifier :
     (growth := fun x => 2 * savitchWidth (enc := enc) ntm c d x.1)
     (ComputableTidilyInPolyTime.polyBounded (by unfold savitchWidth; fun_prop)) fun x s => by
       unfold midpointStep
-      split <;> simp [length_midpointMoves] <;> omega
+      split <;> simp only [length_encPair, encBits_apply, List.length_drop,
+        length_midpointMoves] <;> omega
   have hfst := ComputableTidilyInPolyTime.fst encBits (encPair encBits encBits)
   have hsnd := (ComputableTidilyInPolyTime.fst encBits encBits).comp
     (ComputableTidilyInPolyTime.snd encBits (encPair encBits encBits))
