@@ -62,39 +62,6 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Kolmogorov complexity and metacomplexity | Machine-backed descriptions/decoders and invariance, resource-bounded descriptions, MCSP variants and connections to learning, cryptography and lower bounds. Revisit deferred results through independently reviewed developments. |
 | Quantum complexity | Reusable circuit/channel/measurement semantics, uniformity and approximation costs, BQP/QMA and related query, communication and interactive classes, amplification, containments and complete problems. Reuse suitable quantum foundations rather than create incompatible models. |
 
-### Coverage priorities
-
-A weighted audit of the results that complexity papers most often cite in their preliminaries
-(October 2026) ranks the following developments by citation gain per unit of work. Each entry
-names its endpoints; verify statements against the primary sources when starting one.
-
-1. **Probability toolkit.** Multiplicative Chernoff bounds, k-wise independence and its moment
-   tail bound, the Lovász Local Lemma, KL divergence with Pinsker and Shearer, min-entropy and
-   flat sources, and McDiarmid's inequality.
-2. **Resource-class spine.** Parametric `DTIME`, `NTIME`, `DSPACE`, `NSPACE` and `BPTIME`; `E`,
-   `NEXP` and `ZPP`; the standard inclusions; class-level error reduction; padding; and the
-   polynomial-hierarchy collapse lemmas.
-3. **Circuits as data.** A binary circuit encoding with certified evaluation, CircuitSAT
-   NP-completeness and `MCSP ∈ NP`, search-to-decision for SAT, Karp–Lipton, Kannan and Meyer.
-4. **Natural proofs.** Natural properties and the Razborov–Rudich barrier from pseudorandom
-   function families.
-5. **Communication complexity.** Rectangles, fooling sets and the rank bound; randomized protocols
-   and Newman's theorem; discrepancy and inner product; set disjointness.
-6. **Query complexity.** Exact and approximate degree, the Nisan–Szegedy relations, symmetrization,
-   Huang's sensitivity theorem and randomized query complexity.
-7. **Algebraic codes.** Reed–Solomon and Reed–Muller distance, the Singleton and Johnson bounds,
-   unique and list decoding, concatenation and local decoding.
-8. **Fine-grained hypotheses.** ETH, SETH and the orthogonal-vectors hypothesis, with the
-   consequences that follow from the formalized sparsification lemma.
-9. **Isolation and counting.** Valiant–Vazirani, the isolation lemma, `⊕P`, Toda's theorem and
-   Stockmeyer's approximate counting at class level.
-10. **Hardness amplification.** The hard-core lemma, Yao's XOR lemma and the
-    Impagliazzo–Wigderson derandomization endpoints, building on Nisan–Wigderson.
-
-Further priorities are small-bias spaces, expander walks and extractors; `NL = coNL` and the
-space hierarchy; sumcheck, Arthur–Merlin protocols and `IP = PSPACE`; hypercontractivity and
-influence theorems; and inapproximability consequences of the PCP theorem.
-
 ### Measure reuse across papers
 
 Use a growing, source-pinned sample of papers across these areas as demanding clients, including
@@ -180,15 +147,16 @@ Jukna coverage below is an additional target beyond the V1 port:
   The current constructions choose information sets and line menus nonconstructively.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
-  square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
-  sparse-counter and affine-controller bounds, and hard-power counting. It already uses CSLib
+  input-time and batched iteration, navigation and hitting times, sparse-counter and
+  affine-controller bounds, and hard-power counting. It already uses CSLib
   circuits and some mass-production infrastructure. The
   [functional-graph foundations](Complexity/Foundations/Combinatorics/FunctionalGraph.lean)
   (transient and cycle structure, checkpoint packing, exact distinct-power counts) and
   [native circuit iteration](Complexity/Computability/Circuit/Iteration.lean) with retained
-  orbits are in place, as is the [fixed-power theorem](Complexity/Computability/Circuit/Boolean/Iteration.lean)
-  with its encoded and record forms; the remaining source developments build on it. Nonuniform
-  circuit existence does not certify the preprocessing algorithm's runtime.
+  orbits are in place, as are the [fixed-power theorem](Complexity/Computability/Circuit/Boolean/Iteration.lean),
+  its encoded and burn-in forms, the optimized square-root bounds and permutation inversion; the
+  remaining source developments build on them. Nonuniform circuit existence does not certify the
+  preprocessing algorithm's runtime.
 * **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
   are ported; certify the generator's polynomial runtime, charging all arithmetic and storage
   growth. Carry over the remaining extractor developments, recording each endpoint's hypotheses.
@@ -249,9 +217,10 @@ uniformity, explicitness and quantitative strength; a citation or related theore
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
-* the space hierarchy, building on the [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean)
-  and `P ⊊ EXP`; a tight tape-indexed hierarchy needs a separate linear-overhead simulation, and
-  an `f log f` time hierarchy needs the corresponding simulation bound;
+* the space hierarchy, which needs a space-budgeted universal simulation; the
+  [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
+  are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
+  linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
 * `NL = coNL` and `PH ⊆ PSPACE`, building on the landed logspace composition, `NL ⊆ P`, Savitch
   and Sipser–Lautemann;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
