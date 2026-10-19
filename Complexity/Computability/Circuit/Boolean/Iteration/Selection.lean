@@ -32,6 +32,8 @@ all-pairs priority test.
   between different records adjacent.
 * `Cslib.Circuits.Boolean.Iteration.chooseRecord_spec`: a flagged record is selected if any.
 * `Cslib.Circuits.Boolean.Iteration.synthesis_chooseRecord`: the cost of the scan.
+* `Cslib.Circuits.Boolean.Iteration.synthesis_flaggedRecords`: construct and select records,
+  sharing each flag across the output bits.
 
 ## References
 
@@ -180,5 +182,27 @@ theorem synthesis_chooseRecord {n w : ℕ} (s : Set (BooleanFunction n))
         (Or.inl (hf ⟨t, ht⟩)) (Or.inl (hr ⟨t, ht⟩ bit))
         (Or.inr (Synthesis.subset_stages q le_rfl ⟨bit, rfl⟩))
     simpa [q, chooseRecord, ht, ite_apply, Nat.mul_comm] using h
+
+/-- Construct all flagged records and select one, sharing every flag across its
+output bits. The all-false fallback is an already available constant. -/
+theorem synthesis_flaggedRecords {n w : ℕ} (s : Set (BooleanFunction n))
+    (flags : Fin R → (Fin n → Bool) → Bool)
+    (records : Fin R → (Fin n → Bool) → Fin w → Bool) (K : ℕ)
+    (hz : (fun _ => false) ∈ s)
+    (hrows : ∀ j, Synthesis Boolean.interpretation s
+      ({flags j} ∪ Set.range (fun i x => records j x i)) K) :
+    Synthesis Boolean.interpretation s
+      (Set.range fun i x => chooseRecord (fun j => flags j x)
+        (fun j => records j x) (fun _ => false) R i)
+      (R * (K + 4 * w)) := by
+  have hall := Synthesis.iUnion
+    (fun j => {flags j} ∪ Set.range (fun i x => records j x i)) (fun _ => K) hrows
+  have hselect := synthesis_chooseRecord
+    (s ∪ ⋃ j, {flags j} ∪ Set.range (fun i x => records j x i))
+    (fun x j => flags j x) (fun x j => records j x) (fun _ _ => false)
+    (fun j => Or.inr (Set.mem_iUnion.mpr ⟨j, Or.inl rfl⟩))
+    (fun j bit => Or.inr (Set.mem_iUnion.mpr ⟨j, Or.inr ⟨bit, rfl⟩⟩))
+    (fun _ => Or.inl hz)
+  simpa [Nat.mul_add] using hall.trans hselect
 
 end Cslib.Circuits.Boolean.Iteration

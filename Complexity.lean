@@ -68,6 +68,11 @@ public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
 public import Complexity.Computability.Circuit.Boolean.Iteration.Active
 public import Complexity.Computability.Circuit.Boolean.Iteration.Batch
+public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Basic
+public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Circuit
+public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Decode
+public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Encode
+public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Time
 public import Complexity.Computability.Circuit.Boolean.Iteration.Decoder
 public import Complexity.Computability.Circuit.Boolean.Iteration.Depth
 public import Complexity.Computability.Circuit.Boolean.Iteration.DepthSearch
@@ -84,10 +89,12 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Record
 public import Complexity.Computability.Circuit.Boolean.Iteration.RecordCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.Remainder
 public import Complexity.Computability.Circuit.Boolean.Iteration.Residue
+public import Complexity.Computability.Circuit.Boolean.Iteration.ResidueAdd
 public import Complexity.Computability.Circuit.Boolean.Iteration.Scan
 public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
 public import Complexity.Computability.Circuit.Boolean.Iteration.SharedDictionary
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseDisplacement
+public import Complexity.Computability.Circuit.Boolean.Iteration.SparseTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Target
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.KeyedSort

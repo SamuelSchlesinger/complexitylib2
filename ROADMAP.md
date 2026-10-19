@@ -263,21 +263,21 @@ These do not include an efficient anti-checker generator or a hardness-magnifica
 
 Complete bounded endpoints on ordinary branches, with the six checks and independent API,
 correctness and statement-index reviews before closing a milestone. Retain the FO-reduction
-and machine-characterization priorities above. Start the continuation with the existing
-sparse-counter source proofs; then close the native NL complement theorem. The Arthur–Merlin
+and machine-characterization priorities above. Continue with sparse-counter
+navigation from the existing source proofs; then close the native NL complement theorem. The Arthur–Merlin
 and hardness-amplification developments have their own prerequisites and should be split at the
 following endpoints, rather than submitted as class definitions or conditional wrappers alone.
 
 | Development | First independently useful endpoint | Remaining endpoint and dependencies |
 | --- | --- | --- |
-| Iterated functions M2b | Port sparse-counter centralizer and signed fixed powers, including both charged coordinate conversions, from source `c4cfa198`. The implementation is [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean); it does not close the whole M2b scope. | Construct sparse interval charts and decoding; derive additive input-time and navigation bounds specialized to sparse counter modifications. General input-time and batch results already exist. Affine controllers and hard-power counting are later milestones. |
+| Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Both ports follow source `c4cfa198`. | Port sparse-counter navigation, visit schedules and hitting-time bounds using the new charts. General input-time and batch results already exist. Affine controllers and hard-power counting are later milestones; these results do not close the whole M2b scope. |
 | NL = coNL | A streaming inductive-counting algorithm with soundness/completeness and logarithmic-size counters and state, reusing [InductiveCounting](Complexity/Foundations/Relation/InductiveCounting.lean). Its certificates must be checked without retaining a whole reachable set. | Compile the procedure to the native NTM model, certify every computation prefix's logspace bound, and prove complement closure. Explicitly handle configuration enumeration, input access and the existing potentially nonhalting-branch convention. Close the clocked/textbook-model bridge; general space-constructible Savitch bounds are separate. |
 | Arthur–Merlin | Native polynomial-time MA and AM verifier semantics, error reduction and the basic NP/BPP/MA/AM inclusions, with concrete protocols. | Prove AM containment in the second universal PH level; implement the set-size lower-bound protocol and derive GNI in AM. Existing private-coin GNI in IP does not provide the public-coin protocol. |
 | Worst-case-hardness derandomization | A quantitative worst-case-to-average-case reconstruction theorem, with explicit input-length and circuit-size losses and an efficiently evaluable amplified function. Select and justify a complete amplification route; the existing small-error line decoder is not a local list decoder. | Preserve membership in E, instantiate the existing average-case-hardness derandomization theorem and prove the worst-case-hardness implication P = BPP. Specify eventual versus infinitely-often hardness. The EXP-not-in-P/poly BFNW endpoint is a later milestone. |
 
 Do not mark the last three rows complete from an abstract algorithm, a class definition, or an
 assumed reconstruction theorem: their machine/resource and quantitative conclusions are part of
-acceptance. The manuscript translates each completed argument and labels pending steps explicitly.
+acceptance. The theorem index records completed statements with their assumptions and scope.
 
 ## Jukna coverage
 

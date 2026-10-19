@@ -1,12 +1,13 @@
 # Index of proved statements
 
-`main.tex` and `main.pdf` present a curated, human-readable index of thirteen
+`main.tex` and `main.pdf` present a curated, human-readable index of sixteen
 landmark results, grouped by subject. Each entry states the result, its assumptions
 and model, important limitations, and links to exact Lean declarations. It is not
 an exhaustive API reference. Samuel controls selection, organization and wording.
 
-Edit `sections/statements.tex` to revise or extend the index. Source links currently
-refer to library revision `d2c5e5812794ca1a39cf126de44e236789623215`.
+Edit `sections/statements.tex` to revise or extend the index. The original entries link to library revision
+`d2c5e5812794ca1a39cf126de44e236789623215`; the variable-time entries link to the
+implementation revision recorded in `review.md`.
 The earlier proof translations remain available in Git history at that revision.
 Outstanding development priorities belong in `../ROADMAP.md`, not as speculative
 chapters in the index.

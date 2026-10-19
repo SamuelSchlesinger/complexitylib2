@@ -39,3 +39,35 @@ This is a statement-index review, not a new audit of the Lean proofs or a formal
 proof of prose equivalence. No human editorial approval is claimed. Samuel retains
 control over selection and wording. Earlier proof translations and their reviews
 remain in Git history at the pinned library revision.
+
+## Sparse-counter variable-time circuits
+
+The three entries in section 5 and the updated conventions in `main.tex` were
+independently reviewed by Codex agent `resume_alternation` against implementation
+`6bbebfe6d438e495f3981b9d6d1734d936bcc5af`. Verdict: approve, no findings.
+The preceding thirteen entries are unchanged. The reviewer checked the two
+quantitative bounds, the charged coordinate conversions, the state/time input split,
+zero widths, numeric representative order, phase direction and nonuniform scope.
+All three new declaration anchors match the pinned source. The updated roadmap
+correctly leaves sparse navigation, visit schedules, hitting times, affine controllers
+and hard-power counting outstanding.
+
+Reviewed SHA-256 hashes:
+
+- `sections/statements.tex`:
+  `0397532c33c2b53ad8b17b9576d216609595b7f164cd46765a9959a930695441`
+- `main.tex`:
+  `f09eeeee22179b4bd7c0bfd8855a6a6a90027014364cd6443b6fc2a13dc4c02b`
+- `../ROADMAP.md`:
+  `78f883d658e582069de4517cf40f211b37f03e6c1827cc5378c44e9ad5699414`
+
+The six implementation gates passed, and independent Codex API and correctness
+reviewers approved the exact implementation commit. Resolved findings clarified
+reduced-residue preconditions and additive constants in summary bounds; the full
+linter also identified a redundant global simp attribute, which was removed.
+The named theorem remains available. No mathematical endpoint was weakened.
+
+The six-page PDF builds without warnings or overfull/underfull boxes. The authoring
+agent rendered and visually inspected every page and checked all nineteen pinned
+Lean declaration links. The index now contains sixteen entries. This review does
+not claim machine-checked prose equivalence or human editorial approval.

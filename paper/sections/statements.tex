@@ -159,3 +159,52 @@ Both coordinate conversions are charged. The theorem does not assert that an
 arbitrary cycle has cheap coordinates or complete the general iterated-function
 circuit-bound program.
 \decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{217}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_power}
+
+
+\clearpage
+\section{Sparse counters with an input iteration count}
+
+Keep the notation $W_n$, $c$ and $D$ from the preceding section. Here a circuit
+reads an $n$-bit initial state $x$ and an $m$-bit nonnegative integer $T$, both
+least-significant bit first. The permutation is fixed when choosing the circuit.
+The chart and circuit are chosen nonuniformly; no efficient preprocessing or
+circuit-generation algorithm is asserted.\citep{Schlesinger2026IteratedFunctions}
+
+\subsection{Variable-time iteration}
+For every permutation $f$ of $W_n$ and every $m\in\mathbb N$, there is a native
+De Morgan circuit with $n+m$ inputs and $n$ outputs computing
+\[
+(x,T)\longmapsto f^T(x),\qquad 0\leq T<2^m,
+\]
+of size at most
+\[
+1000(n+3)(|D(f,c)|+m+1).
+\]
+The dependence on the edit count and time width is additive inside the
+parentheses. One circuit handles all initial states and all $m$-bit times.
+The bound includes constants, comparisons and selection gates, and permits
+$n=0$ or $m=0$.
+\timeDecl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{115}{Cslib.Circuits.Boolean.Iteration.sparse_counter_variable_time}
+
+\subsection{Canonical coordinates at linear table cost}
+For every permutation $f$ of $W_n$, there is a circuit with $n$ inputs and
+$n+2(n+2)$ outputs computing the canonical cycle representative, cycle length
+and phase of the input. Its size is at most
+\[
+500(n+3)(|D(f,c)|+1).
+\]
+The representative is the numerically least word on the cycle. The phase is
+the forward distance from that representative, modulo the cycle length.
+The period and phase each occupy $n+2$ bits, so even a period of $2^n$ fits.
+\timeDecl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{126}{Cslib.Circuits.Boolean.Iteration.sparse_counter_labels}
+
+\subsection{Variable time through supplied coordinates}
+Let $f,g,e$ be permutations of $W_n$ satisfying $e(g(x))=e(x)+1$, with supplied
+circuits $E$ and $E^{-1}$ for $e$ and its inverse. For every time width $m$, a
+circuit computing $(x,T)\mapsto f^T(x)$ has size at most
+\[
+|E|+|E^{-1}|+1000(n+3)(|D(f,g)|+m+1).
+\]
+The $m$ time bits pass through unchanged to the iteration stage. Both state
+coordinate conversions are charged once, independently of $m$.
+\timeDecl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{147}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_variable_time}
