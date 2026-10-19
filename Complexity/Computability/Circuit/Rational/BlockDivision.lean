@@ -14,11 +14,11 @@ public import Complexity.Computability.Circuit.Rational.QuantumMatrices
 # Block division and rank specialization
 
 Three algebraic tools for the rational hitting lists. Bivariate polynomials embed injectively
-into Hahn series over the lexicographically ordered group `ℤ ×ₗ ℤ`. A square block matrix over a
-division ring `D`, flattened through a faithful matrix representation `D →+* Matrix κ κ E`, is
-either invertible or loses at least `|κ|` in rank (block elimination). Finally, specializing the
-entries of a matrix along a `K`-algebra map `P →ₐ[K] K` cannot raise its rank over any field
-into which `P` embeds.
+into Hahn series over the lexicographically ordered group `QuantumLift.Exponents = ℤ ×ₗ ℤ`.
+A square block matrix over a division ring `D`, flattened through a faithful matrix
+representation `D →+* Matrix κ κ E`, is either invertible or loses at least `|κ|` in rank
+(block elimination). Finally, specializing the entries of a matrix along a `K`-algebra map
+`P →ₐ[K] K` cannot raise its rank over any field into which `P` embeds.
 
 ## Main definitions
 
@@ -28,6 +28,8 @@ into which `P` embeds.
 
 ## Main results
 
+* `Rational.PolynomialHahn.charZero`: Hahn series over a characteristic-zero ring have
+  characteristic zero.
 * `Rational.PolynomialHahn.embed_injective`: the Hahn-series embedding is injective.
 * `Rational.BlockDivision.rank_gap`: a block-embedded matrix is invertible or has rank at most
   `(|m| - 1) * |κ|`.
@@ -48,11 +50,15 @@ namespace Cslib.Circuits
 
 namespace Rational.PolynomialHahn
 open HahnSeries MvPolynomial
+open Rational.QuantumLift (Exponents)
 open scoped BigOperators
 noncomputable section
 
-/-- Lexicographically ordered integer exponents for two-variable monomials. -/
-abbrev Exponents := ℤ ×ₗ ℤ
+/-- Hahn series over a coefficient ring of characteristic zero have characteristic zero. -/
+instance charZero {Γ R : Type*} [AddCommMonoid Γ] [PartialOrder Γ] [IsOrderedCancelAddMonoid Γ]
+    [NonAssocSemiring R] [CharZero R] : CharZero (HahnSeries Γ R) :=
+  CharZero.of_addMonoidHom (HahnSeries.C : R →+* HahnSeries Γ R).toAddMonoidHom
+    (map_one (HahnSeries.C : R →+* HahnSeries Γ R)) HahnSeries.C_injective
 
 variable {K : Type*} [Field K]
 

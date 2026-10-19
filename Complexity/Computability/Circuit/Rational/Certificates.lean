@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.CyclotomicGrid
+import Mathlib.LinearAlgebra.Matrix.CharP
 
 /-!
 # Rational hitting lists: certificates
@@ -178,11 +179,6 @@ theorem formula_invertible_value (hχ : χ.IsPrimitive) (f : Formula n)
     have hh := hy.map inc
     rw [hiX, RingHom.ext_rat (inc.comp cO) (algebraMap ℚ _)] at hh
     exact hh
-  let : CharZero (Matrix (ZMod d) (ZMod d) (HahnSeries Exponents K)) :=
-    charZero_of_inj_zero fun m hm => by
-      have hh := congrFun (congrFun hm (0 : ZMod d)) (0 : ZMod d)
-      have hh0 := congrArg (fun z : HahnSeries Exponents K => z.coeff 0) hh
-      simpa [Matrix.natCast_apply, ← HahnSeries.single_zero_natCast] using hh0
   let : CharZero (divisionSubring χ) :=
     (representation χ).charZero
   refine ⟨inc y, hb, ?_⟩
@@ -238,10 +234,6 @@ open Matrix MvPolynomial
 open scoped BigOperators
 noncomputable section
 variable {K E : Type*} [Field K] [CharZero K] [Field E] [CharZero E]
-/-- The Laurent field over a field of characteristic zero has characteristic zero. -/
-instance laurentCharZero {E : Type*} [Field E] [CharZero E] : CharZero (LaurentReduction.F E) :=
-  CharZero.of_addMonoidHom (HahnSeries.C : E →+* LaurentReduction.F E).toAddMonoidHom
-    (map_one (HahnSeries.C : E →+* LaurentReduction.F E)) HahnSeries.C_injective
 
 variable {n q M N : ℕ} [NeZero M]
 
