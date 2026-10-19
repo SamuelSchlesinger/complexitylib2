@@ -309,4 +309,9 @@ theorem PolyTimeReducible.mem_NP {encB : β ↪ List Bool} {B : Set β}
     refine ⟨u, by rw [hu]; simpa using hle a, fun k => ?_⟩
     simpa only [List.take_left' hu] using hWu
 
+/-- `coNP` is closed under polynomial-time reductions. -/
+theorem PolyTimeReducible.mem_coNP {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ coNP encB) : A ∈ coNP enc :=
+  h.compl.mem_NP hB
+
 end Cslib.Complexity
