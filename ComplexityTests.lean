@@ -165,6 +165,7 @@ import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
+import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant

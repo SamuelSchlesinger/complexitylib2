@@ -667,10 +667,13 @@ public import Complexity.Computability.QueryComplexity.ApproximateDegree.Or
 public import Complexity.Computability.QueryComplexity.Degree
 public import Complexity.Computability.QueryComplexity.Huang
 public import Complexity.Computability.QueryComplexity.NisanSzegedy
+public import Complexity.Computability.QueryComplexity.Randomized
+public import Complexity.Computability.QueryComplexity.Randomized.Nisan
 public import Complexity.Computability.QueryComplexity.Relations
 public import Complexity.Computability.QueryComplexity.Restriction
 public import Complexity.Computability.QueryComplexity.Sensitivity.Hypercube
 public import Complexity.Computability.QueryComplexity.Symmetrization
+public import Complexity.Computability.QueryComplexity.Yao
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
