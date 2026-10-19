@@ -70,6 +70,7 @@ import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers

@@ -250,8 +250,15 @@ public import Complexity.Computability.Complexity.Fagin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Computability.Complexity.Problems.IntegerProgramming
+public import Complexity.Computability.Complexity.Problems.Knapsack
+public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
+public import Complexity.Computability.Complexity.Problems.SubsetSum
+public import Complexity.Computability.Complexity.Problems.SubsetSum.Binary
+public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
+public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.DecisionTree.Basic
