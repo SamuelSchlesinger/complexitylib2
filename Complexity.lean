@@ -297,6 +297,10 @@ public import Complexity.Computability.Communication.TopDown.Adversary
 public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
+public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomial
+public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
+public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
+public import Complexity.Computability.Complexity.AffineDisperser.Program
 public import Complexity.Computability.Complexity.Classes.Alternation
 public import Complexity.Computability.Complexity.Classes.Alternation.Game
 public import Complexity.Computability.Complexity.Classes.Alternation.NP

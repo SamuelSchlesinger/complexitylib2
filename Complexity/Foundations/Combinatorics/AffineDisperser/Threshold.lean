@@ -12,7 +12,7 @@ public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
 public import Mathlib.Analysis.Asymptotics.Defs
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.Order.Filter.AtTopBot.Basic
-import Mathlib.Analysis.SpecificLimits.Normed
+import Cslib.Foundations.Data.Nat.Asymptotics
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 /-!
@@ -40,36 +40,32 @@ Hence `(ℓ + 1) * explicitThreshold N ≤ 6 N` for all large `N`
 * `Cslib.AffineDisperser.eventually_explicitThreshold_lt`: `explicitThreshold N < N` for all large
   `N`, so the disperser theorem is not vacuous.
 * `Cslib.AffineDisperser.isBigO_explicitThreshold`: `explicitThreshold N = O(N / log N)`.
+
+## References
+
+* [E. Ben-Sasson, S. Kopparty, *Affine dispersers from subspace polynomials*][BenSassonKopparty2012]
+* [P. L. Chebyshev, *Mémoire sur les nombres premiers*][Chebyshev1852]
 -/
 
 @[expose] public section
 
 namespace Cslib.AffineDisperser
 
-open Filter
+open Filter Explicit
 
 /-- Exponentials beat polynomials: `c * (n + 1) ^ k ≤ 2 ^ n` for all large `n`. -/
-theorem eventually_mul_pow_le_two_pow (c k : ℕ) : ∀ᶠ n : ℕ in atTop, c * (n + 1) ^ k ≤ 2 ^ n := by
-  have h := (tendsto_pow_const_div_const_pow_of_one_lt k (one_lt_two : (1 : ℝ) < 2)).const_mul
-    ((c : ℝ) * 2 ^ k)
-  rw [mul_zero] at h
-  filter_upwards [h.eventually (gt_mem_nhds one_pos), eventually_ge_atTop 1] with n hn hn1
-  have hn1' : (1 : ℝ) ≤ n := by exact_mod_cast hn1
-  have hpos : (0 : ℝ) < 2 ^ n := by positivity
-  rw [← mul_div_assoc, div_lt_one hpos] at hn
-  have h2 : ((n : ℝ) + 1) ^ k ≤ 2 ^ k * (n : ℝ) ^ k := by
-    rw [← mul_pow]
-    exact pow_le_pow_left₀ (by positivity) (by linarith) k
-  have : (c : ℝ) * (n + 1) ^ k ≤ 2 ^ n := by
-    calc (c : ℝ) * (n + 1) ^ k ≤ c * (2 ^ k * n ^ k) :=
-          mul_le_mul_of_nonneg_left h2 (Nat.cast_nonneg c)
-      _ = c * 2 ^ k * n ^ k := by ring
-      _ ≤ 2 ^ n := hn.le
-  exact_mod_cast this
+private theorem eventually_mul_pow_le_two_pow (c k : ℕ) :
+    ∀ᶠ n : ℕ in atTop, c * (n + 1) ^ k ≤ 2 ^ n := by
+  filter_upwards [Nat.eventually_mul_pow_le_pow (c * 2 ^ k) k one_lt_two,
+    eventually_ge_atTop 1] with n hn hn1
+  calc c * (n + 1) ^ k ≤ c * (2 * n) ^ k :=
+        Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by omega) k)
+    _ = c * 2 ^ k * n ^ k := by rw [mul_pow, mul_assoc]
+    _ ≤ 2 ^ n := hn
 
 /-- The Chebyshev factor is small: `64 (3 L + 3) (4 L + 1) ^ (8 ⌊√L⌋ + 10) ≤ 2 ^ L` for all large
 `L`. -/
-theorem eventually_chebyshevFactor_le :
+private theorem eventually_chebyshevFactor_le :
     ∀ᶠ L : ℕ in atTop, 64 * (3 * L + 3) * (4 * L + 1) ^ (8 * Nat.sqrt L + 10) ≤ 2 ^ L := by
   obtain ⟨Q, hQ⟩ := eventually_atTop.1 (eventually_mul_pow_le_two_pow 500 2)
   obtain ⟨S, hS⟩ := eventually_atTop.1 (eventually_mul_pow_le_two_pow 384 2)
@@ -96,10 +92,10 @@ theorem eventually_chebyshevFactor_le :
     _ = 2 ^ (s + q * (8 * s + 10)) := by rw [← pow_mul, ← pow_add]
     _ ≤ 2 ^ L := Nat.pow_le_pow_right two_pos h3
 
-theorem tendsto_log_two_atTop : Tendsto (Nat.log 2) atTop atTop :=
+private theorem tendsto_log_two_atTop : Tendsto (Nat.log 2) atTop atTop :=
   tendsto_atTop_atTop.2 fun b => ⟨2 ^ b, fun _ hN => Nat.le_log_of_pow_le one_lt_two hN⟩
 
-/-- **The threshold is `O(N / log N)`**, with exact constants:
+/-- **The threshold is `O(N / log N)`**, with the explicit constant `6`:
 `(⌊log₂ N⌋ + 1) * explicitThreshold N ≤ 6 N` for all large `N`. -/
 theorem eventually_explicitThreshold_le :
     ∀ᶠ N in atTop, (Nat.log 2 N + 1) * explicitThreshold N ≤ 6 * N := by
