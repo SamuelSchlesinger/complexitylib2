@@ -32,6 +32,8 @@ is not automatically a strict PPT operation.
 
 * `Cslib.ProbOracleComp.interpret_sample`: embedded sampling uses only the sampling handler.
 * `Cslib.ProbOracleComp.run_interpret_sample`: private sampling leaves oracle state unchanged.
+* `Cslib.ProbOracleComp.run_interpret_lift_sample`: a stateful handler with external calls
+  forwards private sampling unchanged.
 * `Cslib.ProbOracleComp.eval_interpret`: closed handlers commute with probability interpretation.
 * `Cslib.ProbOracleComp.eval_run_interpret`: closed handler programs preserve the joint state law.
 
@@ -123,6 +125,16 @@ theorem run_interpret_sample (oracle : (q : Query) → StateT State PMF (spec q)
         (ProbComp.eval program).map (·, s) := by
   rw [interpret_sample]
   exact OracleComp.run_interpret_lift ProbComp.unifOracle program s
+
+/-- A stateful handler that itself has private coins and external calls forwards every private
+draw as a fresh sample, leaving its own state unchanged. -/
+theorem run_interpret_lift_sample {Query' : Type} {spec' : Query' → Type}
+    (oracle : (q : Query) → StateT State (ProbOracleComp spec') (spec q))
+    (program : ProbComp α) (s : State) :
+    (OracleComp.interpret (handler (fun n => StateT.lift (sample (ProbComp.unifFin n))) oracle)
+      (sample program)).run s = (·, s) <$> sample program := by
+  rw [interpret_sample, OracleComp.run_interpret_lift]
+  rfl
 
 /-- Closed handlers have the same probability law when interpreted before or after evaluation. -/
 theorem eval_interpret (oracle : (q : Query) → ProbComp (spec q))
