@@ -220,6 +220,290 @@ theorem language_not_mem_SIZE (k c : ℕ) : language k ∉ SIZE fun n => c * (n 
   have hpos : 1 ≤ (n + 1) ^ k := Nat.one_le_pow _ _ (by omega)
   nlinarith
 
+
+/-! ### Truth tables in MCSP -/
+
+/-- The MCSP instance of a truth table of length `2 ^ m`. -/
+def tableInstance (m s : ℕ) (T : List Bool) (hT : T.length = 2 ^ m) : MCSP.Instance :=
+  ⟨m, fun i => T[i.val]'(by rw [hT]; exact i.isLt), s⟩
+
+theorem ofFn_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
+    List.ofFn (tableInstance m s T hT).table = T := by
+  change List.ofFn (fun i : Fin (2 ^ m) => T[i.val]'(by rw [hT]; exact i.isLt)) = T
+  exact List.ext_getElem (by simp [hT]) fun _ _ _ => by simp
+
+theorem function_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
+    (tableInstance m s T hT).function = tableFunction m T := by
+  funext y
+  rw [← MCSP.tableValue_ofFn, ofFn_tableInstance]
+  rfl
+
+/-- An accepted certificate for a truth table of length `2 ^ m` bounds the complexity of its
+function. -/
+theorem complexity_le_of_tableVerifier {m s : ℕ} {T c : List Bool} (hT : T.length = 2 ^ m)
+    (h : MCSP.tableVerifier ((T, s), c) = true) :
+    complexity interpretation (single (tableFunction m T)) ≤ s := by
+  have := MCSP.mem_of_verifier_eq_true (x := tableInstance m s T hT) (w := c)
+    (by rw [MCSP.verifier_eq_tableVerifier, ofFn_tableInstance]; exact h)
+  rwa [MCSP.mem_iff, function_tableInstance] at this
+
+/-- A truth table of length `2 ^ m` whose function has at most `s` gates has a certificate of
+length `certLength m (MCSP.budget m s)`, accepted whatever bits follow it. -/
+theorem exists_tableVerifier_append {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m)
+    (h : complexity interpretation (single (tableFunction m T)) ≤ s) :
+    ∃ u : List Bool, u.length = certLength m (MCSP.budget m s) ∧
+      ∀ extra, MCSP.tableVerifier ((T, s), u ++ extra) = true := by
+  obtain ⟨u, hu, hV⟩ := MCSP.exists_verifier_append (x := tableInstance m s T hT)
+    (by rw [MCSP.mem_iff, function_tableInstance]; exact h)
+  refine ⟨u, hu, fun extra => ?_⟩
+  rw [← hV extra, MCSP.verifier_eq_tableVerifier, ofFn_tableInstance]
+  rfl
+
+/-! ### The `Σ₃` verifier -/
+
+/-- The length of the blocks holding truth tables. -/
+def tableBound (k n : ℕ) : ℕ := 2 ^ (k + 3) * (n + 1) ^ (k + 3)
+
+/-- The length of the blocks holding circuits. -/
+def certBound (k n : ℕ) : ℕ := certLength ((k + 3) * (n + 1)) ((n + 1) ^ (k + 1))
+
+theorem certLength_le_certBound (k n : ℕ) :
+    certLength (arity k n) (MCSP.budget (arity k n) (threshold k n)) ≤ certBound k n := by
+  have hm := arity_le k n
+  have hs : MCSP.budget (arity k n) (threshold k n) ≤ (n + 1) ^ (k + 1) := Nat.min_le_left _ _
+  unfold certBound certLength
+  gcongr
+
+/-- The truth table in the first bits of a block. -/
+def table (k n : ℕ) (w : List Bool) : List Bool := w.take (2 ^ arity k n)
+
+/-- **The `Σ₃` verifier for Kannan's language.** On `(x, w₁ ++ w₂ ++ w₃)`, where `w₁` has
+`tableBound` bits and `w₂` has `tableBound + certBound` bits, it reads a truth table `T` from
+`w₁`, a truth table `T'` and a circuit `c` from `w₂` and a circuit `c'` from `w₃`. It accepts when
+`c` is not a circuit for `T`, `c'` is a circuit for `T'` if `T'` comes before `T`, and `T` gives
+`true` on the first `arity` bits of `x`. -/
+def verifier (k : ℕ) (p : List Bool × List Bool) : Bool :=
+  (!MCSP.tableVerifier ((table k p.1.length p.2, threshold k p.1.length),
+      p.2.drop (2 * tableBound k p.1.length)) &&
+    (!decide (BitString.binaryValue (table k p.1.length (p.2.drop (tableBound k p.1.length))) <
+        BitString.binaryValue (table k p.1.length p.2)) ||
+      MCSP.tableVerifier ((table k p.1.length (p.2.drop (tableBound k p.1.length)),
+        threshold k p.1.length),
+        p.2.drop (2 * tableBound k p.1.length + certBound k p.1.length)))) &&
+    MCSP.tableValue (table k p.1.length p.2) (p.1.take (arity k p.1.length))
+
+theorem verifier_append {k : ℕ} (x : List Bool) {w₁ w₂ : List Bool}
+    (h₁ : w₁.length = tableBound k x.length)
+    (h₂ : w₂.length = tableBound k x.length + certBound k x.length) (w₃ : List Bool) :
+    verifier k (x, w₁ ++ (w₂ ++ w₃)) =
+      ((!MCSP.tableVerifier ((table k x.length w₁, threshold k x.length),
+          w₂.drop (tableBound k x.length) ++ w₃) &&
+        (!decide (BitString.binaryValue (table k x.length w₂) <
+            BitString.binaryValue (table k x.length w₁)) ||
+          MCSP.tableVerifier ((table k x.length w₂, threshold k x.length), w₃))) &&
+        MCSP.tableValue (table k x.length w₁) (x.take (arity k x.length))) := by
+  have hM := two_pow_arity_le k x.length
+  have hw₁ : table k x.length (w₁ ++ (w₂ ++ w₃)) = table k x.length w₁ :=
+    List.take_append_of_le_length (by rw [h₁]; exact hM)
+  have hw₂ : table k x.length ((w₁ ++ (w₂ ++ w₃)).drop (tableBound k x.length)) =
+      table k x.length w₂ := by
+    rw [← h₁, List.drop_left]
+    exact List.take_append_of_le_length (by rw [h₂]; exact hM.trans (Nat.le_add_right _ _))
+  have hc : (w₁ ++ (w₂ ++ w₃)).drop (2 * tableBound k x.length) =
+      w₂.drop (tableBound k x.length) ++ w₃ := by
+    rw [Nat.two_mul, ← List.drop_drop, ← h₁, List.drop_left, h₁,
+      List.drop_append_of_le_length (by rw [h₂]; exact Nat.le_add_right _ _)]
+  have hc' : (w₁ ++ (w₂ ++ w₃)).drop (2 * tableBound k x.length + certBound k x.length) = w₃ := by
+    rw [← List.append_assoc]
+    exact List.drop_left' (by rw [List.length_append, h₁, h₂]; ring)
+  simp only [verifier, hw₁, hw₂, hc, hc']
+
+theorem length_table {k n : ℕ} {w : List Bool} (hw : 2 ^ arity k n ≤ w.length) :
+    (table k n w).length = 2 ^ arity k n := by
+  rw [table, List.length_take, Nat.min_eq_left hw]
+
+theorem table_append {k n : ℕ} {T : List Bool} (hT : T.length = 2 ^ arity k n) (w : List Bool) :
+    table k n (T ++ w) = T := by
+  rw [table, ← hT, List.take_left]
+
+/-- The polynomial `tableBound`. -/
+noncomputable def tablePoly (k : ℕ) : Polynomial ℕ :=
+  Polynomial.C (2 ^ (k + 3)) * (Polynomial.X + 1) ^ (k + 3)
+
+/-- The polynomial `certBound`. -/
+noncomputable def certPoly (k : ℕ) : Polynomial ℕ :=
+  (Polynomial.X + 1) ^ (k + 1) + (Polynomial.C (k + 3) * (Polynomial.X + 1) +
+    (Polynomial.X + 1) ^ (k + 1)) + (Polynomial.X + 1) ^ (k + 1) *
+      (3 + 2 * (Polynomial.C (k + 3) * (Polynomial.X + 1) + (Polynomial.X + 1) ^ (k + 1)))
+
+@[simp] theorem eval_tablePoly (k n : ℕ) : (tablePoly k).eval n = tableBound k n := by
+  simp [tablePoly, tableBound]
+
+@[simp] theorem eval_certPoly (k n : ℕ) : (certPoly k).eval n = certBound k n := by
+  simp [certPoly, certBound, certLength]
+
+/-- The verifier verifies Kannan's language through three alternating blocks of certificates. -/
+theorem isAlternatingVerifier_verifier (k : ℕ) :
+    IsAlternatingVerifier encBits true [tablePoly k, tablePoly k + certPoly k, certPoly k]
+      (verifier k) (language k) := by
+  intro x
+  simp only [List.map_cons, List.map_nil, encBits_apply, Polynomial.eval_add, eval_tablePoly,
+    eval_certPoly, alternation_true_cons, alternation_false_cons, alternation_nil, List.append_nil]
+  have hM : 2 ^ arity k x.length ≤ tableBound k x.length := two_pow_arity_le k x.length
+  constructor
+  · rintro ⟨T, hT, hval⟩
+    refine ⟨T ++ List.replicate (tableBound k x.length - 2 ^ arity k x.length) false,
+      by simp [hT.1.1]; omega, fun w₂ h₂ => ?_⟩
+    have hT' : (table k x.length w₂).length = 2 ^ arity k x.length :=
+      length_table (by rw [h₂]; exact hM.trans (Nat.le_add_right _ _))
+    -- a certificate for the earlier table `T'`, if it comes before `T`
+    obtain ⟨w₃, h₃, hw₃⟩ : ∃ w₃ : List Bool, w₃.length = certBound k x.length ∧
+        (BitString.binaryValue (table k x.length w₂) < BitString.binaryValue T →
+          MCSP.tableVerifier ((table k x.length w₂, threshold k x.length), w₃) = true) := by
+      by_cases hlt : BitString.binaryValue (table k x.length w₂) < BitString.binaryValue T
+      · have heasy : complexity interpretation (single (tableFunction (arity k x.length)
+            (table k x.length w₂))) ≤ threshold k x.length :=
+          not_lt.1 fun h => absurd (hT.2 _ ⟨hT', h⟩) (not_le.2 hlt)
+        obtain ⟨u, hu, hV⟩ := exists_tableVerifier_append hT' heasy
+        refine ⟨u ++ List.replicate (certBound k x.length - u.length) false, ?_, fun _ => hV _⟩
+        have := certLength_le_certBound k x.length
+        simp only [List.length_append, List.length_replicate]
+        omega
+      · exact ⟨List.replicate (certBound k x.length) false, by simp, fun h => absurd h hlt⟩
+    refine ⟨w₃, h₃, ?_⟩
+    rw [verifier_append x (by simp [hT.1.1]; omega) h₂, table_append hT.1.1]
+    simp only [Bool.and_eq_true, Bool.not_eq_true', Bool.or_eq_true, decide_eq_false_iff_not,
+      not_lt]
+    refine ⟨⟨?_, ?_⟩, hval⟩
+    · cases hc : MCSP.tableVerifier ((T, threshold k x.length),
+        w₂.drop (tableBound k x.length) ++ w₃)
+      · rfl
+      · exact absurd (complexity_le_of_tableVerifier hT.1.1 hc) (not_le.2 hT.1.2)
+    · by_cases hlt : BitString.binaryValue (table k x.length w₂) < BitString.binaryValue T
+      · exact Or.inr (hw₃ hlt)
+      · exact Or.inl (not_lt.1 hlt)
+  · rintro ⟨w₁, h₁, h⟩
+    have hT : (table k x.length w₁).length = 2 ^ arity k x.length :=
+      length_table (by rw [h₁]; exact hM)
+    -- the verifier's answer on a second block
+    have key (w₂ : List Bool) (h₂ : w₂.length = tableBound k x.length + certBound k x.length) :
+        ∃ w₃ : List Bool, w₃.length = certBound k x.length ∧
+          MCSP.tableVerifier ((table k x.length w₁, threshold k x.length),
+            w₂.drop (tableBound k x.length) ++ w₃) = false ∧
+          (BitString.binaryValue (table k x.length w₂) <
+              BitString.binaryValue (table k x.length w₁) →
+            MCSP.tableVerifier ((table k x.length w₂, threshold k x.length), w₃) = true) ∧
+          MCSP.tableValue (table k x.length w₁) (x.take (arity k x.length)) = true := by
+      obtain ⟨w₃, h₃, hV⟩ := h w₂ h₂
+      rw [verifier_append x h₁ h₂] at hV
+      simp only [Bool.and_eq_true, Bool.not_eq_true', Bool.or_eq_true, decide_eq_false_iff_not,
+        not_lt] at hV
+      exact ⟨w₃, h₃, hV.1.1, fun hlt => hV.1.2.resolve_left (not_le.2 hlt), hV.2⟩
+    have hpad (u : List Bool) (hu : u.length ≤ tableBound k x.length + certBound k x.length) :
+        (u ++ List.replicate (tableBound k x.length + certBound k x.length - u.length)
+          false).length =
+          tableBound k x.length + certBound k x.length := by
+      simp only [List.length_append, List.length_replicate]
+      omega
+    refine ⟨table k x.length w₁, ⟨⟨hT, ?_⟩, fun T' hT' => ?_⟩, ?_⟩
+    · -- no circuit within the threshold computes the table
+      by_contra hle
+      obtain ⟨u, hu, hV⟩ := exists_tableVerifier_append hT (not_lt.1 hle)
+      have hlen : (List.replicate (tableBound k x.length) false ++ u).length ≤
+          tableBound k x.length + certBound k x.length := by
+        have := certLength_le_certBound k x.length
+        simp only [List.length_append, List.length_replicate]
+        omega
+      obtain ⟨w₃, -, hw, -⟩ := key _ (hpad _ hlen)
+      rw [List.append_assoc, List.drop_left' (by simp), List.append_assoc, hV] at hw
+      exact Bool.noConfusion hw
+    · -- every earlier table has a circuit within the threshold
+      by_contra hlt
+      have hlen : T'.length ≤ tableBound k x.length + certBound k x.length := by
+        rw [hT'.1]
+        exact hM.trans (Nat.le_add_right _ _)
+      obtain ⟨w₃, -, -, hw, -⟩ := key _ (hpad _ hlen)
+      rw [table_append hT'.1] at hw
+      exact absurd (complexity_le_of_tableVerifier hT'.1 (hw (not_le.1 hlt))) (not_le.2 hT'.2)
+    · obtain ⟨w₃, -, -, -, hw⟩ := key _ (hpad [] (Nat.zero_le _))
+      exact hw
+
+/-! ### Polynomial time -/
+
+/-- Reading the binary digits of a reversed word, least significant first, gives the value of the
+word, most significant first. -/
+theorem ofBits_reverse (w : List Bool) : ofBits w.reverse = BitString.binaryValue w := by
+  rw [ofBits, List.foldr_reverse, BitString.binaryValue]
+  congr 1
+  funext v b
+  rw [Nat.bit_val]
+
+open ComputableTidilyInPolyTime in
+/-- The binary value of a word is polynomial-time, in binary. -/
+theorem computableTidilyInPolyTime_binaryValue :
+    ComputableTidilyInPolyTime BitString.binaryValue encBits encNat := by
+  obtain ⟨d, e, h⟩ := Decoder.nat.computable
+  rw [show BitString.binaryValue = fun w => ofBits w.reverse from funext fun w =>
+    (ofBits_reverse w).symm]
+  exact h.computableTidilyInPolyTime.comp bitsReverse
+
+open ComputableTidilyInPolyTime in
+/-- The verifier for Kannan's language is polynomial-time. -/
+theorem computableTidilyInPolyTime_verifier (k : ℕ) :
+    ComputableTidilyInPolyTime (verifier k) (encPair encBits encBits) encBool := by
+  have hn : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => p.1.length)
+      (encPair encBits encBits) encUnary :=
+    length_bits.comp (fst _ _)
+  have hm : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => arity k p.1.length)
+      (encPair encBits encBits) encUnary := by
+    unfold arity
+    fun_prop
+  have htb : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => tableBound k p.1.length)
+      (encPair encBits encBits) encUnary := by
+    unfold tableBound
+    fun_prop
+  have hcb : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => certBound k p.1.length)
+      (encPair encBits encBits) encUnary := by
+    unfold certBound certLength
+    fun_prop
+  have hs : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => threshold k p.1.length)
+      (encPair encBits encBits) encNat := by
+    refine unary_to_binary.comp ?_
+    fun_prop
+  have hM : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => 2 ^ arity k p.1.length)
+      (encPair encBits encBits) encUnary :=
+    binary_to_unary_bounded (binary_two_pow.comp hm) htb fun p => two_pow_arity_le k _
+  have hT : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => table k p.1.length p.2)
+      (encPair encBits encBits) encBits :=
+    bitsTakeWithInput (snd _ _) hM
+  have hT' : ComputableTidilyInPolyTime (fun p : List Bool × List Bool =>
+      table k p.1.length (p.2.drop (tableBound k p.1.length))) (encPair encBits encBits) encBits :=
+    bitsTakeWithInput (bitsDropWithInput (snd _ _) htb) hM
+  have hc : ComputableTidilyInPolyTime (fun p : List Bool × List Bool =>
+      p.2.drop (2 * tableBound k p.1.length)) (encPair encBits encBits) encBits :=
+    bitsDropWithInput (snd _ _) (by fun_prop)
+  have hc' : ComputableTidilyInPolyTime (fun p : List Bool × List Bool =>
+      p.2.drop (2 * tableBound k p.1.length + certBound k p.1.length))
+      (encPair encBits encBits) encBits :=
+    bitsDropWithInput (snd _ _) (by fun_prop)
+  have hval : ComputableTidilyInPolyTime (fun p : List Bool × List Bool =>
+      MCSP.tableValue (table k p.1.length p.2) (p.1.take (arity k p.1.length)))
+      (encPair encBits encBits) encBool := by
+    unfold MCSP.tableValue
+    exact bitsGetDWithInput hT (bitsBoundedBinaryValueWithInput (length_bits.comp hT)
+      (bitsReverse.comp (bitsTakeWithInput (fst _ _) hm))) false
+  unfold verifier
+  exact bool_and' (bool_and' (bool_not.comp (MCSP.computableTidilyInPolyTime_tableVerifier.comp
+    ((hT.prod hs).prod hc))) (bool_or.comp ((bool_not.comp (binary_lt'
+      (computableTidilyInPolyTime_binaryValue.comp hT')
+      (computableTidilyInPolyTime_binaryValue.comp hT))).prod
+        (MCSP.computableTidilyInPolyTime_tableVerifier.comp ((hT'.prod hs).prod hc'))))) hval
+
+/-- **Kannan's language is in `Σ₃`.** -/
+theorem language_mem_SigmaP_three (k : ℕ) :
+    (language k : Set (List Bool)) ∈ SigmaP 3 encBits :=
+  ⟨_, verifier k, rfl, computableTidilyInPolyTime_verifier k, isAlternatingVerifier_verifier k⟩
+
 end Kannan
 
 end Cslib.Complexity
