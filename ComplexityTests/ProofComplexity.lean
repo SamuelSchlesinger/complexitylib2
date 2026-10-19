@@ -11,8 +11,8 @@ import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 # Tests: proof systems
 
 A concrete proof system on all words and its simulations; the proof system of the `SAT` verifier
-on a concrete proof and a malformed word; the existence of a polynomially bounded proof system for
-`SAT`; and the axioms of the headline theorems.
+on accepted and rejected certificates; total decoding of a malformed word; the existence of a
+polynomially bounded proof system for `SAT`; and the axioms of the headline theorems.
 -/
 
 namespace ComplexityTests.ProofComplexity
@@ -77,6 +77,42 @@ example : ∃ P : ProofSystem encCNF SAT, P.PolynomiallyBounded :=
   (ProofSystem.exists_polynomiallyBounded_iff_mem_NP (L := SAT) cnfDecoder
     ⟨φ, fun _ => true, rfl⟩).2
     SAT.mem_NP
+
+/-! ### Total decoding of malformed words -/
+
+private def bitsDecoder : Decoder encBits where
+  decode := id
+  decode_enc _ := rfl
+  computable := ⟨1, 1, .of_eq fun _ => rfl⟩
+
+private theorem isVerifier_univ :
+    IsVerifier encBits 0 (fun _ => true) (Set.univ : Set (List Bool)) := by
+  intro a
+  constructor
+  · intro _
+    exact ⟨[], by simp, rfl⟩
+  · intro _
+    trivial
+
+/-- Every decoded word is accepted with an empty certificate; the default is `[true]`. -/
+private noncomputable def decodedWordsProofSystem : ProofSystem encBits Set.univ :=
+  .ofVerifier bitsDecoder (.const true) isVerifier_univ (a₀ := [true]) (Set.mem_univ _)
+
+/-- The empty word has no framed instance, but total decoding still accepts it. -/
+example : ¬ ∃ a w : List Bool, frame a ++ w = [] := by
+  rintro ⟨a, w, h⟩
+  have := congrArg List.length h
+  simp [length_frame] at this
+
+private theorem decodedWordsProofSystem_nil : decodedWordsProofSystem [] = [] := by
+  change (if ProofSystem.verifierAccepts bitsDecoder 0 (fun _ => true) [] then _ else _) = []
+  simp [ProofSystem.verifierAccepts, ProofSystem.verifierInstance, dropFrame, unframe,
+    bitsDecoder]
+
+/-- A malformed proof can prove the decoded instance instead of the default. -/
+example : decodedWordsProofSystem [] ≠ [true] := by
+  rw [decodedWordsProofSystem_nil]
+  decide
 
 /-! ### Axioms -/
 

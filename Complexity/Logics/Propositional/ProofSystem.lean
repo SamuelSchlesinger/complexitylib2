@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+import Cslib.Foundations.Data.Polynomial.Monotone
 import Complexity.Computability.Complexity.Classes.NP.Witness
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
@@ -41,9 +42,9 @@ which are `coNP`-complete by the Cook–Levin theorem, this reads: `NP = coNP` e
 propositional refutation system is polynomially bounded
 (`Cslib.Complexity.ProofSystem.NP_eq_coNP_iff_exists_polynomiallyBounded`).
 
-Proofs are words over `Bool`, as in [CookReckhow1979]; proof systems whose proofs are structured
-objects are presented through an encoding of those objects, with malformed words proving a fixed
-member.
+Proofs are words over `Bool`, as in [CookReckhow1979]. The verifier construction uses a total
+decoder: even a malformed word can decode to an instance with an accepted certificate. It proves
+that instance when the verifier and certificate-length checks pass, and a fixed member otherwise.
 
 ## Main definitions
 
@@ -135,14 +136,6 @@ every proof for `P` into a proof for `Q` of the same member. -/
 def PSimulates (Q P : ProofSystem enc L) : Prop :=
   ∃ t : List Bool → List Bool, ComputableTidilyInPolyTime t encBits encBits ∧ ∀ π, Q (t π) = P π
 
-/-- Evaluation of a polynomial with natural coefficients is monotone. -/
-private theorem eval_mono (p : Polynomial ℕ) {m n : ℕ} (h : m ≤ n) : p.eval m ≤ p.eval n := by
-  induction p using Polynomial.induction_on with
-  | C a => simp
-  | add p q hp hq => simpa using Nat.add_le_add hp hq
-  | monomial k a _ =>
-    simpa using Nat.mul_le_mul_left a (Nat.pow_le_pow_left h (k + 1))
-
 namespace Simulates
 
 variable {P Q R : ProofSystem enc L}
@@ -161,7 +154,7 @@ theorem trans (hRQ : R.Simulates Q) (hQP : Q.Simulates P) : R.Simulates P := by
   obtain ⟨π'', hπ'', hlen''⟩ := hq π'
   exact ⟨π'', hπ''.trans hπ', by
     rw [Polynomial.eval_comp]
-    exact hlen''.trans (eval_mono q hlen')⟩
+    exact hlen''.trans (q.eval_mono hlen')⟩
 
 end Simulates
 
@@ -200,7 +193,7 @@ theorem PolynomiallyBounded.of_simulates {P Q : ProofSystem enc L} (hP : P.Polyn
   obtain ⟨π', hπ', hlen'⟩ := hq π
   exact ⟨π', hπ', by
     rw [Polynomial.eval_comp]
-    exact hlen'.trans (eval_mono q hlen)⟩
+    exact hlen'.trans (q.eval_mono hlen)⟩
 
 /-! ### Polynomially bounded proof systems and `NP` -/
 
@@ -238,9 +231,10 @@ def verifierAccepts (D : Decoder enc) (p : Polynomial ℕ) (V : α × List Bool 
   V (verifierInstance D π, dropFrame π) &&
     decide ((dropFrame π).length = p.eval (enc (verifierInstance D π)).length)
 
-/-- The **proof system of a verifier** `V` for `L`, with a default member `a₀`. A proof is the
-framed encoding of an instance followed by a certificate of the prescribed length that `V`
-accepts; it proves that instance. Any other word proves `a₀`. -/
+/-- The **proof system of a verifier** `V` for `L`, with a default member `a₀`. Each word is
+decoded into an instance and a certificate using the total decoder `D`, `unframe` and `dropFrame`.
+It proves the decoded instance if `V` accepts and the certificate has the prescribed length;
+otherwise it proves `a₀`. A malformed frame can pass these checks. -/
 def ofVerifier (D : Decoder enc) (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
     (hVL : IsVerifier enc p V L) {a₀ : α} (ha₀ : a₀ ∈ L) : ProofSystem enc L where
   toFun π := if verifierAccepts D p V π then verifierInstance D π else a₀
