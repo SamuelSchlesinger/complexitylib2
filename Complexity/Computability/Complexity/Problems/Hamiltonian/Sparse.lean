@@ -238,11 +238,6 @@ theorem toSparseHamCycle_mem_iff (φ : CNF ℕ) : toSparseHamCycle φ ∈ HamCyc
 
 /-! ### Size -/
 
-private theorem length_flatMap_le {α β : Type*} {l : List α} {f : α → List β} {k : ℕ}
-    (h : ∀ a ∈ l, (f a).length ≤ k) : (l.flatMap f).length ≤ k * l.length := by
-  rw [List.length_flatMap, mul_comm]
-  simpa using List.sum_le_length_nsmul (l.map fun a => (f a).length) k (by simpa using h)
-
 /-- The rows have at most as many slots in total as `φ` has occurrences of variables. -/
 theorem sum_sparseSlots_le (φ : CNF ℕ) :
     ((List.range (ThreeSAT.distinctVars φ).length).map (sparseSlots φ)).sum ≤ φ.vars.length := by
@@ -284,9 +279,7 @@ theorem length_sparseDiamondGraph_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c ∈ �
     (sparseDiamondGraph φ).1.length + (sparseDiamondGraph φ).2.length ≤
       (23 * k + 1) * φ.length + 1 := by
   have h := length_sparseDiamondGraph_le' φ
-  have hL : φ.vars.length ≤ k * φ.length := by
-    rw [CNF.length_vars, mul_comm]
-    simpa using List.sum_le_length_nsmul (φ.map List.length) k (by simpa using hφ)
+  have hL := CNF.length_vars_le_mul_length hφ
   nlinarith
 
 /-- The closed sparse diamond graph has linear size. -/

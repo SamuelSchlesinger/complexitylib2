@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 import Complexity.Computability.Complexity.FineGrained.Assignment
+import Complexity.Foundations.Data.List.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -83,11 +84,11 @@ def vertices (φ : CNF ℕ) : List ℕ :=
     φ.zipIdx.flatMap fun c => (List.range c.1.length).map (occurrenceVertex c.2)
 
 /-- The edges between the two literals of each variable. -/
-def variableEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
+def literalEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
   (ThreeSAT.distinctVars φ).map fun x => (literalVertex φ (x, true), literalVertex φ (x, false))
 
 /-- The edges between any two positions of a clause. -/
-def clauseEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
+def cliqueEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
   φ.zipIdx.flatMap fun c => (List.range c.1.length).flatMap fun j =>
     (List.range c.1.length).map fun j' => (occurrenceVertex c.2 j, occurrenceVertex c.2 j')
 
@@ -97,7 +98,7 @@ def conflictEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
     c.1.zipIdx.map fun l => (occurrenceVertex c.2 l.2, literalVertex φ (l.1.1, !l.1.2))
 
 /-- The edges of the graph. -/
-def edges (φ : CNF ℕ) : List (ℕ × ℕ) := variableEdges φ ++ clauseEdges φ ++ conflictEdges φ
+def edges (φ : CNF ℕ) : List (ℕ × ℕ) := literalEdges φ ++ cliqueEdges φ ++ conflictEdges φ
 
 end SparseIndependentSet
 
@@ -155,14 +156,14 @@ theorem mem_vertices {v : ℕ} : v ∈ vertices φ ↔ (∃ x ∈ φ.vars, ∃ b
   · rintro ⟨i, hi, j, hj, rfl⟩
     exact ⟨φ[i], i, mem_zipIdx_iff.2 ⟨hi, rfl⟩, j, hj, rfl⟩
 
-theorem mem_variableEdges {e : ℕ × ℕ} : e ∈ variableEdges φ ↔
+theorem mem_literalEdges {e : ℕ × ℕ} : e ∈ literalEdges φ ↔
     ∃ x ∈ φ.vars, e = (literalVertex φ (x, true), literalVertex φ (x, false)) := by
-  simp only [variableEdges, List.mem_map, ThreeSAT.mem_distinctVars]
+  simp only [literalEdges, List.mem_map, ThreeSAT.mem_distinctVars]
   exact ⟨fun ⟨x, hx, he⟩ => ⟨x, hx, he.symm⟩, fun ⟨x, hx, he⟩ => ⟨x, hx, he.symm⟩⟩
 
-theorem mem_clauseEdges {e : ℕ × ℕ} : e ∈ clauseEdges φ ↔ ∃ (i : ℕ) (hi : i < φ.length),
+theorem mem_cliqueEdges {e : ℕ × ℕ} : e ∈ cliqueEdges φ ↔ ∃ (i : ℕ) (hi : i < φ.length),
     ∃ j < φ[i].length, ∃ j' < φ[i].length, e = (occurrenceVertex i j, occurrenceVertex i j') := by
-  simp only [clauseEdges, List.mem_flatMap, List.mem_map, List.mem_range, Prod.exists]
+  simp only [cliqueEdges, List.mem_flatMap, List.mem_map, List.mem_range, Prod.exists]
   constructor
   · rintro ⟨c, i, hc, j, hj, j', hj', rfl⟩
     obtain ⟨hi, rfl⟩ := mem_zipIdx_iff.1 hc
@@ -237,7 +238,7 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
       subst huv
       have hbb : b ≠ b' := fun h => hne (by rw [h])
       have he : (literalVertex φ (x, true), literalVertex φ (x, false)) ∈ edges φ :=
-        List.mem_append_left _ (List.mem_append_left _ (mem_variableEdges.2 ⟨x, hx, rfl⟩))
+        List.mem_append_left _ (List.mem_append_left _ (mem_literalEdges.2 ⟨x, hx, rfl⟩))
       cases b <;> cases b'
       · exact hbb rfl
       · exact hind _ hv _ hu (Ne.symm hne) he
@@ -246,7 +247,7 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
     · subst huv
       have he : (occurrenceVertex i j, occurrenceVertex i j') ∈ edges φ :=
         List.mem_append_left _ (List.mem_append_right _
-          (mem_clauseEdges.2 ⟨i, hi, j, hj, j', hj', rfl⟩))
+          (mem_cliqueEdges.2 ⟨i, hi, j, hj, j', hj', rfl⟩))
       exact hind _ hu _ hv hne he
   -- so every block holds exactly one
   have himage : S.image block = B := by
@@ -272,7 +273,7 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
   -- the two literal vertices of a variable are not both in `S`
   have hboth : ∀ x ∈ φ.vars, literalVertex φ (x, true) ∈ S → literalVertex φ (x, false) ∉ S :=
     fun x hx h₁ h₂ => hind _ h₁ _ h₂ (by simp [literalVertex_inj hx])
-      (List.mem_append_left _ (List.mem_append_left _ (mem_variableEdges.2 ⟨x, hx, rfl⟩)))
+      (List.mem_append_left _ (List.mem_append_left _ (mem_literalEdges.2 ⟨x, hx, rfl⟩)))
   refine ⟨fun x => decide (literalVertex φ (x, true) ∈ S),
     (CNF.eval_eq_true_iff _ _).2 fun cl hcl => ?_⟩
   obtain ⟨i, hi, rfl⟩ := List.getElem_of_mem hcl
@@ -332,7 +333,7 @@ private theorem mem_of_satisfiable (h : φ.Satisfiable) :
       intro u hu v hv huv he
       simp only [edges, List.mem_append] at he
       rcases he with (he | he) | he
-      · obtain ⟨x, hx, he⟩ := mem_variableEdges.1 he
+      · obtain ⟨x, hx, he⟩ := mem_literalEdges.1 he
         simp only [Prod.mk.injEq] at he
         obtain ⟨rfl, rfl⟩ := he
         rcases Finset.mem_union.1 hu with hu | hu
@@ -347,7 +348,7 @@ private theorem mem_of_satisfiable (h : φ.Satisfiable) :
             exact literalVertex_ne_occurrenceVertex _ _ _ hi
         · obtain ⟨i, hi⟩ := hO.1 hu
           exact literalVertex_ne_occurrenceVertex _ _ _ hi
-      · obtain ⟨i, hi, j, hj, j', hj', he⟩ := mem_clauseEdges.1 he
+      · obtain ⟨i, hi, j, hj, j', hj', he⟩ := mem_cliqueEdges.1 he
         simp only [Prod.mk.injEq] at he
         obtain ⟨rfl, rfl⟩ := he
         have hocc : ∀ {k}, occurrenceVertex i k ∈ L ∪ O → k = J ⟨i, hi⟩ := fun hk => by
@@ -406,16 +407,6 @@ theorem toSparseIndependentSet_mem_iff (φ : CNF ℕ) :
 
 /-! ### Size -/
 
-private theorem length_flatMap_le {α β : Type*} {l : List α} {f : α → List β} {k : ℕ}
-    (h : ∀ a ∈ l, (f a).length ≤ k) : (l.flatMap f).length ≤ k * l.length := by
-  rw [List.length_flatMap, mul_comm]
-  simpa using List.sum_le_length_nsmul (l.map fun a => (f a).length) k (by simpa using h)
-
-private theorem length_distinctVars_le (φ : CNF ℕ) :
-    (ThreeSAT.distinctVars φ).length ≤ φ.vars.length := by
-  simp only [ThreeSAT.distinctVars, List.length_map]
-  exact (List.length_filter_le _ _).trans (by simp)
-
 open SparseIndependentSet in
 /-- **The graph has linear size.** On formulas with `m` clauses of at most `k` literals, the graph
 of `toSparseIndependentSet` has at most `(k ^ 2 + 5 k) m` vertices and edges in total, counted as
@@ -428,28 +419,25 @@ theorem length_toSparseIndependentSet_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c �
     obtain ⟨hi, rfl⟩ := mem_zipIdx_iff.1 hc
     exact hφ _ (List.getElem_mem hi)
   have hn : (ThreeSAT.distinctVars φ).length ≤ k * φ.length :=
-    (length_distinctVars_le φ).trans (by
-      have := CNF.numVars_le_mul_length hφ
-      rw [CNF.length_vars, mul_comm]
-      simpa using List.sum_le_length_nsmul (φ.map List.length) k (by simpa using hφ))
+    (ThreeSAT.length_distinctVars φ).trans_le (CNF.numVars_le_mul_length hφ)
   have hV₁ : ((ThreeSAT.distinctVars φ).flatMap
       fun x => [literalVertex φ (x, true), literalVertex φ (x, false)]).length ≤
-      2 * (ThreeSAT.distinctVars φ).length :=
-    length_flatMap_le fun _ _ => by simp
+      (ThreeSAT.distinctVars φ).length * 2 :=
+    List.length_flatMap_le fun _ _ => by simp
   have hV₂ : (φ.zipIdx.flatMap fun c => (List.range c.1.length).map (occurrenceVertex c.2)).length
-      ≤ k * φ.length := by
-    simpa using length_flatMap_le (l := φ.zipIdx) fun c hc => by simpa using hzip c hc
-  have hE₁ : (variableEdges φ).length ≤ (ThreeSAT.distinctVars φ).length := by
-    simp [variableEdges]
-  have hE₂ : (clauseEdges φ).length ≤ k * k * φ.length := by
-    refine (length_flatMap_le (l := φ.zipIdx) (k := k * k) fun c hc => ?_).trans_eq
+      ≤ φ.length * k := by
+    simpa using List.length_flatMap_le (l := φ.zipIdx) fun c hc => by simpa using hzip c hc
+  have hE₁ : (literalEdges φ).length ≤ (ThreeSAT.distinctVars φ).length := by
+    simp [literalEdges]
+  have hE₂ : (cliqueEdges φ).length ≤ φ.length * (k * k) := by
+    refine (List.length_flatMap_le (l := φ.zipIdx) (k := k * k) fun c hc => ?_).trans_eq
       (by rw [List.length_zipIdx])
     have := hzip c hc
     simp only [List.length_flatMap, List.length_map, List.length_range, List.map_const',
       List.sum_replicate, smul_eq_mul]
     exact Nat.mul_le_mul this this
-  have hE₃ : (conflictEdges φ).length ≤ k * φ.length :=
-    (length_flatMap_le (l := φ.zipIdx) (k := k) fun c hc => by simpa using hzip c hc).trans_eq
+  have hE₃ : (conflictEdges φ).length ≤ φ.length * k :=
+    (List.length_flatMap_le (l := φ.zipIdx) (k := k) fun c hc => by simpa using hzip c hc).trans_eq
       (by rw [List.length_zipIdx])
   simp only [toSparseIndependentSet, vertices, edges, List.length_append]
   nlinarith
@@ -481,13 +469,13 @@ theorem computableTidilyInPolyTime_toSparseIndependentSet :
       (encList encNat) := by
     unfold vertices
     fun_prop
-  have hE₁ : ComputableTidilyInPolyTime variableEdges (encList (encList (encPair encNat encBool)))
+  have hE₁ : ComputableTidilyInPolyTime literalEdges (encList (encList (encPair encNat encBool)))
       (encList (encPair encNat encNat)) := by
-    unfold variableEdges
+    unfold literalEdges
     fun_prop
-  have hE₂ : ComputableTidilyInPolyTime clauseEdges (encList (encList (encPair encNat encBool)))
+  have hE₂ : ComputableTidilyInPolyTime cliqueEdges (encList (encList (encPair encNat encBool)))
       (encList (encPair encNat encNat)) := by
-    unfold clauseEdges
+    unfold cliqueEdges
     fun_prop
   have hE₃ : ComputableTidilyInPolyTime conflictEdges (encList (encList (encPair encNat encBool)))
       (encList (encPair encNat encNat)) := by

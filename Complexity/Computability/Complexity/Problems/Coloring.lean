@@ -14,6 +14,7 @@ import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
@@ -62,6 +63,8 @@ remaining three, so `KColoring k` is `NP`-complete for every `k ≥ 3`.
   `Cslib.Complexity.polyTimeReducible_ThreeSAT_ThreeColoring`,
   `Cslib.Complexity.ThreeColoring_npHard`, `Cslib.Complexity.ThreeColoring_npComplete`:
   `ThreeColoring` is `NP`-complete.
+* `Cslib.Complexity.SAT.length_toThreeColoring_le`: the graph of the 3-coloring reduction has
+  linearly many vertices and edges for clauses of bounded width.
 * `Cslib.Complexity.SAT.toKColoring_mem_iff`: `toKColoring m φ ∈ KColoring (m + 3) ↔ φ ∈ SAT`.
 * `Cslib.Complexity.polyTimeReducible_SAT_KColoring`, `Cslib.Complexity.KColoring_npHard`,
   `Cslib.Complexity.KColoring_npComplete`: `KColoring k` is `NP`-complete for `k ≥ 3`.
@@ -519,6 +522,39 @@ theorem computableTidilyInPolyTime_toThreeColoring :
     exact unary_to_binary.comp (by fun_prop)
   unfold toThreeColoring coloringEdges clauseEdges stageEdges variableEdges encGraph
   fun_prop
+
+/-! ### Size -/
+
+/-- **The 3-coloring reduction has linear size.** On formulas with `m` clauses of at most `k`
+literals, the graph of `SAT.toThreeColoring` has at most `(24 k + 12) m + 9` vertices and edges in
+total, counted as listed. -/
+theorem length_toThreeColoring_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c ∈ φ, c.length ≤ k) :
+    (toThreeColoring φ).1.length + (toThreeColoring φ).2.length ≤ (24 * k + 12) * φ.length + 9 := by
+  have hzip : ∀ c ∈ φ.zipIdx, c.1.length ≤ k := fun c hc => by
+    obtain ⟨hi, hcl⟩ := List.getElem?_eq_some_iff.1 (List.mem_zipIdx_iff_getElem?.1 hc)
+    exact hcl ▸ hφ _ (List.getElem_mem hi)
+  have hvars := CNF.length_vars_le_mul_length hφ
+  have h₁ : (φ.vars.flatMap (variableEdges φ)).length ≤ φ.vars.length * 3 :=
+    List.length_flatMap_le fun _ _ => by simp [variableEdges]
+  have h₂ : (φ.zipIdx.flatMap fun c => clauseEdges φ c.2 c.1).length ≤
+      φ.length * (5 * k + 4) := by
+    simpa using List.length_flatMap_le (l := φ.zipIdx) fun c hc => by
+      have hst := List.length_flatMap_le (l := c.1.zipIdx) (k := 5)
+        (f := fun l => stageEdges φ c.2 l.2 l.1) fun _ _ => by simp [stageEdges]
+      simp only [List.length_zipIdx] at hst
+      simp only [clauseEdges, List.length_append, List.length_cons, List.length_nil]
+      have := hzip c hc
+      nlinarith
+  have hE : (coloringEdges φ).length ≤ (8 * k + 4) * φ.length + 3 := by
+    simp only [coloringEdges, List.length_append, List.length_cons, List.length_nil]
+    nlinarith
+  have hV : (toThreeColoring φ).1.length = 2 * (coloringEdges φ).length := by
+    simp only [toThreeColoring, List.length_flatMap, List.length_cons, List.length_nil,
+      List.map_const', List.sum_replicate, smul_eq_mul]
+    ring
+  rw [hV]
+  simp only [toThreeColoring]
+  nlinarith
 
 /-! ### More colors -/
 

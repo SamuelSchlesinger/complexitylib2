@@ -54,7 +54,6 @@ decider runs within time `2 ^ (δ μ)` times a polynomial.
 
 ## Main results
 
-* `Cslib.Complexity.SAT.length_toThreeColoring_le`: the 3-coloring reduction has linear size.
 * `Cslib.Complexity.ETH.not_decidableInSubexpTime_ThreeColoring`: no `2 ^ o(|V| + |E|)` algorithm
   for 3-coloring.
 * `Cslib.Complexity.ETH.not_decidableInSubexpTime_IndependentSet`,
@@ -86,46 +85,6 @@ namespace Cslib.Complexity
 
 open Cslib.Logic.PL Turing.MultiTapeTM
 
-/-! ### The size of the 3-coloring reduction -/
-
-private theorem length_flatMap_le {α β : Type*} {l : List α} {f : α → List β} {k : ℕ}
-    (h : ∀ a ∈ l, (f a).length ≤ k) : (l.flatMap f).length ≤ k * l.length := by
-  rw [List.length_flatMap, mul_comm]
-  simpa using List.sum_le_length_nsmul (l.map fun a => (f a).length) k (by simpa using h)
-
-/-- **The 3-coloring reduction has linear size.** On formulas with `m` clauses of at most `k`
-literals, the graph of `SAT.toThreeColoring` has at most `(24 k + 12) m + 9` vertices and edges in
-total, counted as listed. -/
-theorem SAT.length_toThreeColoring_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c ∈ φ, c.length ≤ k) :
-    (toThreeColoring φ).1.length + (toThreeColoring φ).2.length ≤ (24 * k + 12) * φ.length + 9 := by
-  have hzip : ∀ c ∈ φ.zipIdx, c.1.length ≤ k := fun c hc => by
-    obtain ⟨hi, hcl⟩ := List.getElem?_eq_some_iff.1 (List.mem_zipIdx_iff_getElem?.1 hc)
-    exact hcl ▸ hφ _ (List.getElem_mem hi)
-  have hvars : φ.vars.length ≤ k * φ.length := by
-    rw [CNF.length_vars, mul_comm]
-    simpa using List.sum_le_length_nsmul (φ.map List.length) k (by simpa using hφ)
-  have h₁ : (φ.vars.flatMap (variableEdges φ)).length ≤ 3 * φ.vars.length :=
-    length_flatMap_le fun _ _ => by simp [variableEdges]
-  have h₂ : (φ.zipIdx.flatMap fun c => clauseEdges φ c.2 c.1).length ≤
-      (5 * k + 4) * φ.length := by
-    simpa using length_flatMap_le (l := φ.zipIdx) fun c hc => by
-      have hst := length_flatMap_le (l := c.1.zipIdx) (k := 5)
-        (f := fun l => stageEdges φ c.2 l.2 l.1) fun _ _ => by simp [stageEdges]
-      simp only [List.length_zipIdx] at hst
-      simp only [clauseEdges, List.length_append, List.length_cons, List.length_nil]
-      have := hzip c hc
-      nlinarith
-  have hE : (coloringEdges φ).length ≤ (8 * k + 4) * φ.length + 3 := by
-    simp only [coloringEdges, List.length_append, List.length_cons, List.length_nil]
-    nlinarith
-  have hV : (toThreeColoring φ).1.length = 2 * (coloringEdges φ).length := by
-    simp only [toThreeColoring, List.length_flatMap, List.length_cons, List.length_nil,
-      List.map_const', List.sum_replicate, smul_eq_mul]
-    ring
-  rw [hV]
-  simp only [toThreeColoring]
-  nlinarith
-
 /-! ### Lower bounds -/
 
 /-- **No `2 ^ o(|V| + |E|)` algorithm for 3-coloring under ETH** [CyganEtAl2015, Chapter 14]:
@@ -135,7 +94,8 @@ edges. -/
 theorem ETH.not_decidableInSubexpTime_ThreeColoring (h : ETH) :
     ¬DecidableInSubexpTime ThreeColoring encGraph fun G => G.1.length + G.2.length :=
   h.not_decidableInSubexpTime_of_reduction SAT.computableTidilyInPolyTime_toThreeColoring
-    (fun φ _ => SAT.toThreeColoring_mem_iff φ) (k := 84 + 9) fun φ hφ => by
+    -- `(24 * 3 + 12) m + 9 ≤ 93 m + 93`
+    (fun φ _ => SAT.toThreeColoring_mem_iff φ) (k := 93) fun φ hφ => by
       have := SAT.length_toThreeColoring_le hφ
       nlinarith
 
@@ -174,7 +134,7 @@ theorem ETH.not_decidableInSubexpTime_VertexCover (h : ETH) :
     (fun φ _ => (IndependentSet.toVertexCover_mem_iff _).trans
       (SAT.toSparseIndependentSet_mem_iff φ)) (k := 24) fun φ hφ => by
       have := SAT.length_toSparseIndependentSet_le hφ
-      simp only [Function.comp, IndependentSet.toVertexCover] at this ⊢
+      simp only [Function.comp_apply, IndependentSet.toVertexCover] at this ⊢
       omega
 
 /-- **No `2 ^ o(|V|)` algorithm for clique under ETH** [CyganEtAl2015, Chapter 14]: for some
