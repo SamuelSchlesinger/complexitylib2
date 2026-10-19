@@ -325,6 +325,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Tran
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
@@ -406,7 +407,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compl
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Correct
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
-public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.InPlace
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space

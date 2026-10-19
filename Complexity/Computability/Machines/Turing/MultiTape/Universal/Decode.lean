@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Complexity
-public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 
 /-!
 # Decoding descriptions of machines
@@ -17,7 +17,7 @@ Every word decodes to a description of a machine (`Turing.MultiTapeTM.Universal.
 the decoder inverts the encoding `Turing.MultiTapeTM.Universal.eDesc` of descriptions, returns a
 description of polynomial encoded length on every other word, and is tidily computable within
 bounds of fixed degrees. It is assembled from the generic decoders of
-`Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode.Basic` along the fields of a
+`Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder` along the fields of a
 description, its transitions, their keys and their actions.
 
 A description framed at the start of a word is recovered whatever follows it

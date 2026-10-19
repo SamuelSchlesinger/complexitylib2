@@ -50,8 +50,10 @@ an explicit exponential-time computation is not in `P`. No time-bounded classes 
 * `Cslib.Complexity.diagonal_not_mem_P`: the diagonal problem is not in `P`.
 * `Cslib.Complexity.not_computableInTimeAndSpace_diagonal`: no plain machine computes the
   diagonal within a polynomial time bound.
-* `Cslib.Complexity.universal_bounds_le`: the resources of the universal run, in the sizes of its
-  input.
+* `Cslib.Complexity.diagonal_desc`, `Cslib.Complexity.not_forall_halted_diagonal`: the reusable
+  diagonal core: the negated answer on a padded description, and the diagonal argument itself.
+* `Cslib.Complexity.Diagonal.universal_bounds_le`: the resources of the universal run, in the
+  sizes of its input.
 
 ## References
 
@@ -88,28 +90,28 @@ namespace Diagonal
 /-! ### The symbols of the input -/
 
 /-- The code of a bit list with every `true` doubled: `false ↦ [false]`, `true ↦ [true, true]`. -/
-def doubled (b : Bool) : List Bool := if b then [true, true] else [false]
+def trueDoubled (b : Bool) : List Bool := if b then [true, true] else [false]
 
 /-- Bit lists with every `true` doubled. -/
-def encDoubled : List Bool ↪ List Bool :=
-  ⟨fun x => x.flatMap doubled, fun x y h => by
+def encTrueDoubled : List Bool ↪ List Bool :=
+  ⟨fun x => x.flatMap trueDoubled, fun x y h => by
     induction x generalizing y with
     | nil => cases y with
       | nil => rfl
-      | cons b y => cases b <;> simp [doubled] at h
+      | cons b y => cases b <;> simp [trueDoubled] at h
     | cons a x ih => cases y with
-      | nil => cases a <;> simp [doubled] at h
+      | nil => cases a <;> simp [trueDoubled] at h
       | cons b y =>
-        cases a <;> cases b <;> simp only [doubled, List.flatMap_cons, Bool.false_eq_true,
+        cases a <;> cases b <;> simp only [trueDoubled, List.flatMap_cons, Bool.false_eq_true,
           ↓reduceIte, List.cons_append, List.nil_append, List.cons.injEq, true_and,
           reduceCtorEq, false_and] at h ⊢ <;> exact ih _ h⟩
 
 /-- Doubles every `true`. -/
-def doubleT : Transducer Bool Unit where
+def trueDoubleT : Transducer Bool Unit where
   q₀ := ()
-  step _ b := ((), doubled b)
+  step _ b := ((), trueDoubled b)
   final _ := []
-  length_step_le _ b := by cases b <;> simp [doubled]
+  length_step_le _ b := by cases b <;> simp [trueDoubled]
   length_final_le _ := by simp
 
 /-- Reads a doubled word as the framed unary symbols `0` for `false` and `1` for `true`. -/
@@ -123,7 +125,7 @@ def symbolsT : Transducer Bool Bool where
   length_step_le q b := by cases q <;> cases b <;> simp
   length_final_le _ := by simp
 
-theorem doubleT_run (x : List Bool) : doubleT.run () x = encDoubled x := by
+theorem trueDoubleT_run (x : List Bool) : trueDoubleT.run () x = encTrueDoubled x := by
   induction x with
   | nil => rfl
   | cons b x ih =>
@@ -131,25 +133,25 @@ theorem doubleT_run (x : List Bool) : doubleT.run () x = encDoubled x := by
     rfl
 
 theorem symbolsT_run (x : List Bool) :
-    symbolsT.run false (encDoubled x) = encList encUnary (x.map eBit) := by
+    symbolsT.run false (encTrueDoubled x) = encList encUnary (x.map eBit) := by
   induction x with
   | nil => rfl
   | cons b x ih =>
     cases b
-    · change (false :: symbolsT.run false (encDoubled x)) = _
+    · change (false :: symbolsT.run false (encTrueDoubled x)) = _
       rw [ih]
       rfl
-    · change (true :: true :: false :: symbolsT.run false (encDoubled x)) = _
+    · change (true :: true :: false :: symbolsT.run false (encTrueDoubled x)) = _
       rw [ih]
       rfl
 
 /-- The input as symbols, in linear time and space. -/
 theorem computableTidilyInDegree_map_eBit :
     ComputableTidilyInDegree (fun x : List Bool => x.map eBit) encBits (encList encUnary) 1 1 :=
-  (ComputableTidilyInDegree.of_linear (encIn := encDoubled)
+  (ComputableTidilyInDegree.of_linear (encIn := encTrueDoubled)
     (symbolsT.computableTidilyInLinearTimeAndSpace fun x => (symbolsT_run x).symm)).comp
-    (ComputableTidilyInDegree.of_linear (encIn := encBits) (encMid := encDoubled) (f := id)
-      (doubleT.computableTidilyInLinearTimeAndSpace fun x => (doubleT_run x).symm))
+    (ComputableTidilyInDegree.of_linear (encIn := encBits) (encMid := encTrueDoubled) (f := id)
+      (trueDoubleT.computableTidilyInLinearTimeAndSpace fun x => (trueDoubleT_run x).symm))
 
 end Diagonal
 
@@ -220,17 +222,6 @@ theorem not_computableInTimeAndSpace_diagonal {t s : List Bool → ℕ}
 namespace Diagonal
 
 /-! ### The resources of the diagonal -/
-
-/-- A polynomially bounded function is bounded by a constant multiple of `2 ^ n`. -/
-theorem exists_le_mul_two_pow {p : ℕ → ℕ} (hp : PolynomiallyBounded p) :
-    ∃ C, ∀ n, p n ≤ C * 2 ^ n := by
-  obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hp.eventually_lt_two_pow
-  refine ⟨∑ m ∈ Finset.range N, p m + 1, fun n => ?_⟩
-  have hpow : 1 ≤ 2 ^ n := Nat.one_le_two_pow
-  rcases le_or_gt N n with hn | hn
-  · exact (hN n hn).le.trans (Nat.le_mul_of_pos_left _ (Nat.succ_pos _))
-  · have := Finset.single_le_sum (f := p) (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr hn)
-    exact this.trans ((Nat.le_succ _).trans (Nat.le_mul_of_pos_right _ hpow))
 
 /-- **The resources of the universal run.** If the encoded description, the encoded input and the
 number of digits `L` of the clock have length at most `B`, the time of the universal function on
@@ -381,7 +372,7 @@ theorem computableTidilyInO_diagonal :
   obtain ⟨cD, hcD⟩ := hdesc.length_le
   obtain ⟨cO, hcO⟩ := hU.length_le
   -- one power of two absorbs every polynomial factor
-  obtain ⟨C, hC⟩ := exists_le_mul_two_pow
+  obtain ⟨C, hC⟩ := PolynomiallyBounded.exists_le_mul_two_pow
     (p := fun n => (cD * ((n + 1) ^ max 1 (1 * dd) + 1) + (n + 1) ^ max 1 (1 * dd) + 4 * n + 2) ^ 5)
     (by fun_prop)
   set K := 100100 + 44100 * (cO + 1) ^ 2 with hK
