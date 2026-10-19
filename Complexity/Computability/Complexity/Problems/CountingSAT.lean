@@ -30,12 +30,15 @@ ones of this library, following [Fortnow, Section 4][Fortnow1997].
 * `USAT`, exactly one satisfying assignment (`SharpSAT.mem_USAT_iff`), is `US`-complete
   [Blass and Gurevich][BlassGurevich1982];
 * `ModSAT k`, a number of satisfying assignments not divisible by `k`, is `ModP k`-complete, and
-  its complement is `coModP k`-complete, for every modulus `k`;
+  its complement is `coModP k`-complete, for every modulus `k`; the modular classes are those of
+  [Cai and Hemachandra][CaiHemachandra1990] and
+  [Beigel, Gill and Hertrampf][BeigelGillHertrampf1990];
 * `SharpSATAtLeast`, the pairs `(φ, m)` of a formula and a number in binary such that `φ` has at
   least `m` satisfying assignments, is `PP`-complete; it is a threshold variant of the majority
   problem MAJSAT [Gill][Gill1977], [Papadimitriou, Chapter 11][Papadimitriou94];
 * `SharpSATExact`, the pairs `(φ, m)` such that `φ` has exactly `m` satisfying assignments, is
-  `C=P`-complete, and its complement is `coC=P`-complete.
+  `C=P`-complete, and its complement is `coC=P`-complete; `C=P` and complete problems for it
+  were introduced by [Wagner][Wagner1986].
 
 The first four follow one pattern (`polyTimeComplete_sharpSAT`): a problem in the class is
 `{a | Q (f a)}` for some `f ∈ #P`, and the parsimonious reduction `r` for `f` reduces it to
@@ -68,6 +71,11 @@ with the count `2 ^ p(n)`. In both cases the number `m` is computed in polynomia
 * [C. H. Papadimitriou, S. Zachos, *Two remarks on the power of counting*][PapadimitriouZachos1983]
 * [A. Blass, Y. Gurevich, *On the unique satisfiability problem*][BlassGurevich1982]
 * [J. Gill, *Computational complexity of probabilistic Turing machines*][Gill1977]
+* [J.-Y. Cai, L. A. Hemachandra, *On the power of parity polynomial time*][CaiHemachandra1990]
+* [R. Beigel, J. Gill, U. Hertrampf, *Counting classes: thresholds, parity, mods, and
+  fewness*][BeigelGillHertrampf1990]
+* [K. W. Wagner, *The complexity of combinatorial problems with succinct input
+  representation*][Wagner1986]
 * [L. Fortnow, *Counting Complexity*][Fortnow1997]
 * [C. H. Papadimitriou, *Computational Complexity*][Papadimitriou94]
 -/
