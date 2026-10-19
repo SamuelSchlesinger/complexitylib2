@@ -8,9 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.PMF
-public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Analysis.Convex.StdSimplex
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Topology.Sion
+import Complexity.Computability.QueryComplexity.Yao
 
 /-!
 # Averaging and the minimax principle for finite distributions
@@ -29,11 +29,18 @@ guarantees of randomized algorithms [Yao1977].
 * *The minimax theorem* [vonNeumann1928]: for finitely many strategies and inputs, the converse
   holds. If against every distribution `ν` on the inputs some strategy has expected loss at most
   `ε`, then some distribution `μ` on the strategies has expected loss at most `ε` on every input
-  (`exists_forall_sum_mul_le`). It follows from Sion's minimax theorem
-  (`Sion.exists_isSaddlePointOn`) applied to the expected loss on the standard simplices
-  [Sion1958]. For the probability of failing, only the inputs need to be finite: strategies
-  failing on the same inputs are interchangeable, so `μ` can be taken with finite support
-  (`exists_forall_toOuterMeasure_le`). This is the hard direction of Yao's principle.
+  (`exists_forall_sum_mul_le`). This is the minimax theorem on the standard simplex
+  (`Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`, from Sion's theorem
+  [Sion1958]), read through the correspondence between distributions on a finite type and points
+  of the standard simplex (`ofStdSimplex`, `toStdSimplex`). For the probability of failing, only
+  the inputs need to be finite: strategies failing on the same inputs are interchangeable, so `μ`
+  can be taken with finite support (`exists_forall_toOuterMeasure_le`). This is the hard
+  direction of Yao's principle.
+
+## Main definitions
+
+* `Cslib.Probability.PMF.ofStdSimplex`, `Cslib.Probability.PMF.toStdSimplex`: distributions on a
+  finite type as points of the standard simplex.
 
 ## Main results
 
@@ -56,7 +63,7 @@ guarantees of randomized algorithms [Yao1977].
 namespace Cslib.Probability.PMF
 
 open scoped ENNReal
-open Finset
+open Convexity Finset
 
 variable {α β : Type*}
 
@@ -135,94 +142,47 @@ section Minimax
 
 variable {I J : Type*} [Fintype I] [Fintype J]
 
-/-- The probability vectors on a finite type: the standard simplex in `I → ℝ`. -/
-private def simplex (I : Type*) [Fintype I] : Set (I → ℝ) :=
-  {w | (∀ i, 0 ≤ w i) ∧ ∑ i, w i = 1}
+/-- The distribution on a finite type whose probabilities are the weights of a point of the
+standard simplex. -/
+noncomputable def ofStdSimplex (p : StdSimplex ℝ I) : PMF I :=
+  PMF.ofFintype (fun i => ENNReal.ofReal (p.weights i)) (by
+    rw [← ENNReal.ofReal_sum_of_nonneg fun i _ => p.weights_nonneg i, p.total_of_fintype,
+      ENNReal.ofReal_one])
 
-private theorem convex_simplex : Convex ℝ (simplex I) := by
-  refine fun f hf g hg a b ha hb hab => ⟨fun x => ?_, ?_⟩
-  · simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
-    exact add_nonneg (mul_nonneg ha (hf.1 x)) (mul_nonneg hb (hg.1 x))
-  · simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, sum_add_distrib, ← mul_sum, hf.2, hg.2,
-      mul_one, hab]
+@[simp] theorem toReal_ofStdSimplex (p : StdSimplex ℝ I) (i : I) :
+    (ofStdSimplex p i).toReal = p.weights i :=
+  ENNReal.toReal_ofReal (p.weights_nonneg i)
 
-private theorem isCompact_simplex : IsCompact (simplex I) := by
-  have hclosed : IsClosed (simplex I) := by
-    have : simplex I = (⋂ i, {w : I → ℝ | 0 ≤ w i}) ∩ {w | ∑ i, w i = 1} := by
-      ext w
-      simp [simplex]
-    rw [this]
-    exact (isClosed_iInter fun i => isClosed_le continuous_const (continuous_apply i)).inter
-      (isClosed_eq (continuous_finsetSum _ fun i _ => continuous_apply i) continuous_const)
-  refine (isCompact_Icc (a := (0 : I → ℝ)) (b := 1)).of_isClosed_subset hclosed
-    fun w hw => ⟨fun i => hw.1 i, fun i => ?_⟩
-  rw [Pi.one_apply, ← hw.2]
-  exact single_le_sum (fun j _ => hw.1 j) (mem_univ i)
+/-- The point of the standard simplex whose weights are the probabilities of a distribution on a
+finite type. -/
+noncomputable def toStdSimplex (μ : PMF I) : StdSimplex ℝ I where
+  weights := Finsupp.equivFunOnFinite.symm fun i => (μ i).toReal
+  nonneg _ := ENNReal.toReal_nonneg
+  total := by
+    rw [Finsupp.sum_fintype _ _ (by simp)]
+    simpa using sum_toReal μ
 
-private theorem single_mem_simplex [DecidableEq I] (i : I) : Pi.single i 1 ∈ simplex I :=
-  ⟨fun j => by by_cases h : j = i <;> simp [h], by simp⟩
+@[simp] theorem weights_toStdSimplex (μ : PMF I) (i : I) :
+    (toStdSimplex μ).weights i = (μ i).toReal :=
+  rfl
 
-/-- The probability vector of a distribution. -/
-private theorem toReal_mem_simplex (π : PMF I) : (fun i => (π i).toReal) ∈ simplex I :=
-  ⟨fun _ => ENNReal.toReal_nonneg, sum_toReal π⟩
+@[simp] theorem ofStdSimplex_toStdSimplex (μ : PMF I) : ofStdSimplex (toStdSimplex μ) = μ :=
+  PMF.ext fun i => by
+    rw [← ENNReal.ofReal_toReal (PMF.apply_ne_top μ i), ← weights_toStdSimplex]
+    rfl
 
-/-- The distribution of a probability vector. -/
-private noncomputable def ofSimplex (w : I → ℝ) (hw : w ∈ simplex I) : PMF I :=
-  PMF.ofFintype (fun i => ENNReal.ofReal (w i)) (by
-    rw [← ENNReal.ofReal_sum_of_nonneg fun i _ => hw.1 i, hw.2, ENNReal.ofReal_one])
-
-private theorem toReal_ofSimplex (w : I → ℝ) (hw : w ∈ simplex I) (i : I) :
-    (ofSimplex w hw i).toReal = w i :=
-  ENNReal.toReal_ofReal (hw.1 i)
-
-/-- The expected loss `∑ i j, x i y j M i j` is linear in `x` for fixed `y`. -/
-private noncomputable def payoffLeft (M : I → J → ℝ) (y : J → ℝ) : (I → ℝ) →ₗ[ℝ] ℝ where
-  toFun x := ∑ i, ∑ j, x i * y j * M i j
-  map_add' x x' := by simp only [Pi.add_apply, add_mul, sum_add_distrib]
-  map_smul' c x := by simp only [Pi.smul_apply, smul_eq_mul, mul_sum, mul_assoc, RingHom.id_apply]
-
-/-- The expected loss `∑ i j, x i y j M i j` is linear in `y` for fixed `x`. -/
-private noncomputable def payoffRight (M : I → J → ℝ) (x : I → ℝ) : (J → ℝ) →ₗ[ℝ] ℝ where
-  toFun y := ∑ i, ∑ j, x i * y j * M i j
-  map_add' y y' := by simp only [Pi.add_apply, mul_add, add_mul, sum_add_distrib]
-  map_smul' c y := by
-    simp only [Pi.smul_apply, smul_eq_mul, mul_sum, RingHom.id_apply]
-    exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => by ring
-
-/-- **The minimax theorem for finite games** [von Neumann]. Let `M i j` be the loss of a strategy
-`i` on an input `j`. If against every distribution `ν` on the inputs some strategy has expected
-loss at most `ε`, then some distribution `μ` on the strategies has expected loss at most `ε` on
-every input. This is the hard direction of Yao's principle; it follows from Sion's theorem
-(`Sion.exists_isSaddlePointOn`). -/
+/-- **The minimax theorem for finite games** [vonNeumann1928], for distributions. Let `M i j` be
+the loss of a strategy `i` on an input `j`. If against every distribution `ν` on the inputs some
+strategy has expected loss at most `ε`, then some distribution `μ` on the strategies has expected
+loss at most `ε` on every input. This is the hard direction of Yao's principle; it is
+`Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`, from Sion's theorem, read
+through `ofStdSimplex`. -/
 theorem exists_forall_sum_mul_le [Nonempty I] (M : I → J → ℝ) {ε : ℝ}
     (h : ∀ ν : PMF J, ∃ i, ∑ j, (ν j).toReal * M i j ≤ ε) :
     ∃ μ : PMF I, ∀ j, ∑ i, (μ i).toReal * M i j ≤ ε := by
-  classical
-  cases isEmpty_or_nonempty J with
-  | inl _ => exact ⟨PMF.pure (Classical.arbitrary I), fun j => isEmptyElim j⟩
-  | inr _ =>
-  set f : (I → ℝ) → (J → ℝ) → ℝ := fun x y => ∑ i, ∑ j, x i * y j * M i j with hf
-  have hcont : Continuous fun p : (I → ℝ) × (J → ℝ) => f p.1 p.2 := by
-    simp only [hf]
-    fun_prop
-  obtain ⟨a, ha, b, hb, hab⟩ := Sion.exists_isSaddlePointOn (f := f)
-    ⟨_, single_mem_simplex (Classical.arbitrary I)⟩ convex_simplex isCompact_simplex
-    (fun y _ =>
-      (hcont.comp (Continuous.prodMk_left y)).lowerSemicontinuous.lowerSemicontinuousOn _)
-    (fun y _ => ((payoffLeft M y).convexOn convex_simplex).quasiconvexOn)
-    convex_simplex ⟨_, single_mem_simplex (Classical.arbitrary J)⟩ isCompact_simplex
-    (fun x _ =>
-      (hcont.comp (Continuous.prodMk_right x)).upperSemicontinuous.upperSemicontinuousOn _)
-    (fun x _ => ((payoffRight M x).concaveOn convex_simplex).quasiconcaveOn)
-  obtain ⟨i, hi⟩ := h (ofSimplex b hb)
-  refine ⟨ofSimplex a ha, fun j => ?_⟩
-  have hle := hab _ (single_mem_simplex i) _ (single_mem_simplex j)
-  simp only [hf, Pi.single_apply, mul_ite, ite_mul, mul_one, one_mul, mul_zero, zero_mul,
-    sum_ite_eq', mem_univ, ite_true] at hle
-  rw [sum_comm] at hle
-  simp only [sum_ite_eq', mem_univ, ite_true] at hle
-  simp only [toReal_ofSimplex] at hi ⊢
-  exact hle.trans hi
+  obtain ⟨p, hp⟩ := StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le M fun q => by
+    simpa using h (ofStdSimplex q)
+  exact ⟨ofStdSimplex p, by simpa using hp⟩
 
 /-- The probability of an event in a finite space as a sum. -/
 private theorem toReal_toOuterMeasure_eq_sum {γ : Type*} [Fintype γ] (π : PMF γ) (s : Set γ)

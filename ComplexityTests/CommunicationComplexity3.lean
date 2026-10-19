@@ -36,6 +36,10 @@ private theorem pennies (ν : PMF Bool) :
   · exact ⟨true, by simpa using hν⟩
   · exact ⟨false, by simp only [Fintype.sum_bool]; norm_num; linarith⟩
 
+-- Distributions on a finite type are points of the standard simplex.
+example (μ : PMF Bool) : Probability.PMF.ofStdSimplex (Probability.PMF.toStdSimplex μ) = μ := by
+  simp
+
 -- So some mixed guess costs at most one half on every input.
 example : ∃ μ : PMF Bool, ∀ j, ∑ i, (μ i).toReal * (if i = j then 1 else 0 : ℝ) ≤ 1 / 2 :=
   Probability.PMF.exists_forall_sum_mul_le _ pennies
