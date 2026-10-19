@@ -13,6 +13,7 @@ import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
 import ComplexityTests.CircuitHamming.Approximation
+import ComplexityTests.CircuitHamming.Continuity
 import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
