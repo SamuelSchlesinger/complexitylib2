@@ -12,7 +12,8 @@ import ComplexityTests.FaginNP
 
 This test file exercises the converse direction of Fagin's theorem and the full equivalence:
 * length-checked verifiers (`strictVerifier`),
-* existential projection of relation variables and guessed strict linear orders,
+* existential projection of relation variables and guessed strict linear orders, including the
+  unfolding of `isStrictLinearOrderSentence` on an infinite domain,
 * small-domain (`n ≤ 1`) truth-table sentences including nullary relations on the empty structure,
 * little-endian colexicographic tuple ordering and the `k`-tuple power interpretation,
 * input-tape layout synthesis (`layoutESOSentence`) and tableau axiomatization
@@ -87,6 +88,29 @@ example : ¬ (letI := nullaryVocabulary.decode (0, [ [false] ]);
   exact mt (Vocabulary.relMap_decode (v := nullaryVocabulary) (a := (0, [ [false] ]))
     nullarySymbol _).1 (by decide +kernel)
 
+/-! ### Guessed strict linear orders on arbitrary domains -/
+
+/-- The usual strict order `<` on `ℕ`, as an interpretation of `orderLanguage`. -/
+def natLt : ∀ _ : Unit, Set (Fin 2 → ℕ) := fun _ => {x | x 0 < x 1}
+
+/-- The empty binary relation on `ℕ`, as an interpretation of `orderLanguage`. -/
+def natEmpty : ∀ _ : Unit, Set (Fin 2 → ℕ) := fun _ => ∅
+
+/-- On an infinite domain, where `realize_isStrictLinearOrderSentence` does not apply, the
+unfolding lemma shows that the usual order `<` on `ℕ` satisfies `isStrictLinearOrderSentence`. -/
+example : (letI := varLanguage.structure (arity := fun _ : Unit => 2) natLt;
+    ℕ ⊨ isStrictLinearOrderSentence) :=
+  (realize_isStrictLinearOrderSentence_iff_irrefl_trans_trichotomous natLt).2
+    ⟨⟨fun a => lt_irrefl a, fun a _ c h => (lt_trans h.1 h.2 : a < c)⟩,
+      fun a b => lt_trichotomy a b⟩
+
+/-- The empty relation on `ℕ` is not a strict linear order: trichotomy fails at `0, 1`. -/
+example : ¬ (letI := varLanguage.structure (arity := fun _ : Unit => 2) natEmpty;
+    ℕ ⊨ isStrictLinearOrderSentence) := by
+  rw [realize_isStrictLinearOrderSentence_iff_irrefl_trans_trichotomous]
+  rintro ⟨-, htri⟩
+  simpa [natEmpty] using htri 0 1
+
 /-! ### Little-endian tuple order (`tupleIndex_lt_iff`) -/
 
 /-- `tupleIndex` is little-endian (`x 0 + n * x 1`), so its strict order compares the highest
@@ -109,9 +133,11 @@ theorem colorable_definable_of_mem_NP (n : ℕ) :
 def triangle : EncodedStructure :=
   (3, [ [false, true, true, true, false, true, true, true, false] ])
 
-/-- **Semantic end-to-end test**: the existential second-order sentence produced by
-`Definable.of_queryLanguage_mem_NP` for 2-colorability holds on the decoded 2-vertex edge and
-fails on the decoded 3-vertex triangle. -/
+/-- **Semantic test of the `Definable` statement**: any existential second-order sentence
+characterizing 2-colorability, such as the one whose existence `Definable.of_queryLanguage_mem_NP`
+asserts, holds on the decoded 2-vertex edge and fails on the decoded 3-vertex triangle. This
+exercises structure decoding (`Vocabulary.decode`) and the statement of `ESO.Definable`, not the
+sentence built in the proof. -/
 example :
     ∃ Φ : ESO.Sentence Language.graph,
       (∀ (M : Bundled.{0} Language.graph.Structure) [Finite M],

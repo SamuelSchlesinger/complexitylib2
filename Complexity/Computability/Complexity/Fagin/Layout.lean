@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Fagin.Power
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 
 /-!
 # Existential second-order layout of framed structure encodings
@@ -42,7 +43,7 @@ length, and one final instance reconstructs `frame (encStructure a)` and its len
 
 ## Main results
 
-* `Cslib.Logic.FO.getElem?_frame_eq_of_realize_frameChunkSentence`,
+* `Cslib.Logic.FO.nextBase_and_getElem?_frame_of_realize_frameChunkSentence`,
   `Cslib.Logic.FO.realize_frameChunkSentence_of_canonical`: soundness and completeness of
   `frameChunkSentence` on `Fin B`.
 * `Cslib.Logic.Vocabulary.realize_layoutESOSentence`: for well-formed `a` with
@@ -63,104 +64,6 @@ universe u v
 open FirstOrder Language Structure BoundedFormula Turing.MultiTapeTM
 
 namespace Cslib.Logic
-
-/-! ### Indexed bit access in `frame w` -/
-
-theorem getElem?_frame_two_mul_length (w : List Bool) :
-    (frame w)[2 * w.length]? = some false := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    have hidx : 2 * (b :: w).length = 2 * w.length + 2 := by simp; omega
-    rw [hidx, frame_cons]
-    exact ih
-
-theorem getElem?_frame_two_mul {w : List Bool} {j : ℕ} (hj : j < w.length) :
-    (frame w)[2 * j]? = some true := by
-  induction w generalizing j with
-  | nil => simp at hj
-  | cons b w ih =>
-    cases j with
-    | zero => rfl
-    | succ j =>
-      have hj' : j < w.length := by simpa using hj
-      have hidx : 2 * (j + 1) = 2 * j + 2 := by omega
-      rw [hidx, frame_cons]
-      exact ih hj'
-
-theorem getElem?_frame_two_mul_add_one {w : List Bool} {j : ℕ} (hj : j < w.length) :
-    (frame w)[2 * j + 1]? = w[j]? := by
-  induction w generalizing j with
-  | nil => simp at hj
-  | cons b w ih =>
-    cases j with
-    | zero => rfl
-    | succ j =>
-      have hj' : j < w.length := by simpa using hj
-      have hidx : 2 * (j + 1) + 1 = (2 * j + 1) + 2 := by omega
-      rw [hidx, frame_cons]
-      exact ih hj'
-
-/-- A predicate `P : ℕ → Prop` agrees with `frame w` shifted by `base` on
-`[base, base + (frame w).length)` iff it is `false` at `base + 2 * w.length` and, for each
-`j < w.length`, is `true` at `base + 2 * j` and agrees with `w[j]` at `base + 2 * j + 1`. -/
-theorem forall_getElem?_frame_iff (w : List Bool) (base : ℕ) (P : ℕ → Prop) :
-    (∀ p, base ≤ p → p < base + (frame w).length →
-        (P p ↔ (frame w)[p - base]? = some true)) ↔
-      (¬ P (base + 2 * w.length) ∧
-        ∀ j < w.length, P (base + 2 * j) ∧ (P (base + 2 * j + 1) ↔ w[j]? = some true)) := by
-  rw [length_frame]
-  constructor
-  · intro h
-    refine ⟨?_, fun j hj => ⟨?_, ?_⟩⟩
-    · have h0 := h (base + 2 * w.length) (by omega) (by omega)
-      rw [Nat.add_sub_cancel_left, getElem?_frame_two_mul_length] at h0
-      simpa using h0
-    · have h1 := h (base + 2 * j) (by omega) (by omega)
-      rw [Nat.add_sub_cancel_left, getElem?_frame_two_mul hj] at h1
-      simpa using h1
-    · have h2 := h (base + 2 * j + 1) (by omega) (by omega)
-      have hsub : base + 2 * j + 1 - base = 2 * j + 1 := by omega
-      rw [hsub, getElem?_frame_two_mul_add_one hj] at h2
-      exact h2
-  · rintro ⟨hend, hstep⟩ p hlo hhi
-    by_cases hlast : p = base + 2 * w.length
-    · subst hlast
-      rw [Nat.add_sub_cancel_left, getElem?_frame_two_mul_length]
-      simp [hend]
-    · have hd : p - base < 2 * w.length := by omega
-      let j := (p - base) / 2
-      have hj : j < w.length := by omega
-      rcases Nat.mod_two_eq_zero_or_one (p - base) with hmod | hmod
-      · have hp : p = base + 2 * j := by omega
-        have hsub : p - base = 2 * j := by omega
-        rw [hsub, getElem?_frame_two_mul hj, hp]
-        simp [(hstep j hj).1]
-      · have hp : p = base + 2 * j + 1 := by omega
-        have hsub : p - base = 2 * j + 1 := by omega
-        rw [hsub, getElem?_frame_two_mul_add_one hj, hp]
-        exact (hstep j hj).2
-
-theorem forall_getElem?_append_iff (u w : List Bool) (P : ℕ → Prop) :
-    (∀ p < (u ++ w).length, (P p ↔ (u ++ w)[p]? = some true)) ↔
-      (∀ p < u.length, (P p ↔ u[p]? = some true)) ∧
-        (∀ p, u.length ≤ p → p < u.length + w.length →
-          (P p ↔ w[p - u.length]? = some true)) := by
-  rw [List.length_append]
-  constructor
-  · intro h
-    refine ⟨fun p hp => ?_, fun p hlo hhi => ?_⟩
-    · have hp' := h p (by omega)
-      rwa [List.getElem?_append_left hp] at hp'
-    · have hp' := h p hhi
-      rwa [List.getElem?_append_right hlo] at hp'
-  · rintro ⟨hu, hw⟩ p hp
-    by_cases hlt : p < u.length
-    · rw [List.getElem?_append_left hlt]
-      exact hu p hlt
-    · have hle : u.length ≤ p := by omega
-      rw [List.getElem?_append_right hle]
-      exact hw p hle hp
 
 /-! ### Generic stride-2 framing sentence -/
 
@@ -210,7 +113,7 @@ include hlt
 `base + (frame w).length < B`, any realization of `frameChunkSentence` forces `nextBaseRel` to hold
 solely of `base + (frame w).length` and `outBitRel` to agree with `frame w` on
 `[base, base + (frame w).length)`. -/
-theorem getElem?_frame_eq_of_realize_frameChunkSentence
+theorem nextBase_and_getElem?_frame_of_realize_frameChunkSentence
     {inDom inBit : L'.Formula (Fin 1)}
     {baseRel nextBaseRel : L'.Relations 1} {mapRel : L'.Relations 2}
     {outBitRel : L'.Relations 1}
@@ -643,7 +546,7 @@ theorem realize_layoutESOSentence {a : EncodedStructure} (ha : v.WellFormed a) {
       induction m with
       | zero =>
         obtain ⟨hnext, hout⟩ :=
-          FO.getElem?_frame_eq_of_realize_frameChunkSentence hlt hb0 (hdom0 R) (hbit0 R)
+          FO.nextBase_and_getElem?_frame_of_realize_frameChunkSentence hlt hb0 (hdom0 R) (hbit0 R)
             hbase0' hchunk0
         simp only [Nat.zero_add, Nat.sub_zero, ← v.encStructurePrefix_zero a] at hnext hout
         exact ⟨hnext, fun p hp => hout p (Nat.zero_le _) hp⟩
@@ -654,7 +557,7 @@ theorem realize_layoutESOSentence {a : EncodedStructure} (ha : v.WellFormed a) {
         have hb_m : (v.encStructurePrefix a m).length +
             (frame (v.table a (v.symbol idx))).length < B := hb_idx idx
         obtain ⟨hnext, hout⟩ :=
-          FO.getElem?_frame_eq_of_realize_frameChunkSentence hlt hb_m (hdom_idx R idx)
+          FO.nextBase_and_getElem?_frame_of_realize_frameChunkSentence hlt hb_m (hdom_idx R idx)
             (hbit_idx R idx) hbase_m (hchunks idx)
         refine ⟨fun z => ?_, fun p hp => ?_⟩
         · change RelMap (v.layoutBase idx.succ.succ) ![z] ↔
@@ -686,7 +589,7 @@ theorem realize_layoutESOSentence {a : EncodedStructure} (ha : v.WellFormed a) {
           (encStructure a)[(j : ℕ)]? = some true) := fun j hj => by
       rw [FO.realize_rel₁, Matrix.cons_val_zero]; exact hout_last j hj
     obtain ⟨hnext_outer, hout_outer⟩ :=
-      FO.getElem?_frame_eq_of_realize_frameChunkSentence hlt (by omega)
+      FO.nextBase_and_getElem?_frame_of_realize_frameChunkSentence hlt (by omega)
         (hdom_outer R hbase_last) hbit_outer hbase0' houter
     simp only [Nat.zero_add, Nat.sub_zero] at hnext_outer hout_outer
     exact ⟨hnext_outer, fun p hp => hout_outer p (Nat.zero_le _) hp⟩
