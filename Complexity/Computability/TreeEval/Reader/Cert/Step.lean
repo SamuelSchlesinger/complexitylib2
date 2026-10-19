@@ -38,9 +38,6 @@ namespace Reader
 
 open Turing MultiTapeTM ComputableTidilyInSpace Iter
 
-/-- The default frame. -/
-abbrev dfr : Frame := ⟨0, 0, false, 0⟩
-
 /-- The total length of the registers and of the sums of a tuple. -/
 def regLen (x : Tuple) : ℕ :=
   x.regs.1.length + x.regs.2.1.length + x.regs.2.2.length + x.acc.length
@@ -202,111 +199,6 @@ theorem mkCtl_inSpace {t : β → Fin 7} {a b : β → ℕ} {acc : β → List �
   budget_prod ht (budget_prod ha (budget_prod hb hacc))
 
 end Build
-
-/-! ### The step with tests in place of matches -/
-
-/-- Whether a mode is a call. -/
-def _root_.Cslib.TreeEval.Iter.Mode.isCall : Mode → Bool
-  | .call _ _ => true
-  | .ret => false
-
-/-- The sign of a call. -/
-def _root_.Cslib.TreeEval.Iter.Mode.neg : Mode → Bool
-  | .call neg _ => neg
-  | .ret => false
-
-/-- The target of a call. -/
-def _root_.Cslib.TreeEval.Iter.Mode.target : Mode → Fin 3
-  | .call _ t => t
-  | .ret => 0
-
-/-- The tuple with new registers, stack, mode and control state. -/
-abbrev Tuple.with (x : Tuple) (R : Regs) (st : List Frame) (m : Mode)
-    (c : Fin 7 × ℕ × ℕ × List ℕ) : Tuple :=
-  (((x.ell, x.height, x.p), R), (st, m), c)
-
-/-- The step of the iterative procedure, with tests in place of matches. -/
-def runStepF (x : Tuple) : Tuple × List Bool :=
-  let fr := x.stack.headD dfr
-  let st := x.stack.tail
-  let t := x.mode.target
-  if x.mode.isCall then
-    if x.stack.length = x.height then (x.withCtl (4, 0, 0, []), [])
-    else (x.with (x.regs.scale x.p (t + 1) (unitVal 0)) (⟨0, 0, x.mode.neg, t⟩ :: x.stack)
-      (.call false (t + 1)) runCtl, [])
-  else if x.stack.isEmpty then (x.withCtl (6, 0, 0, []), (x.regs.get 2).map (· == 1))
-  else if fr.phase = 0 then
-    (x.with (x.regs.scale x.p (fr.target + 2) (unitVal fr.round)) ({ fr with phase := 1 } :: st)
-      (.call false (fr.target + 2)) runCtl, [])
-  else if fr.phase = 1 then (x.withCtl (5, 0, 0, List.replicate x.ell 0), [])
-  else if fr.phase = 2 then
-    (x.with (x.regs.scale x.p (fr.target + 1) (unitInv x.p fr.round)) ({ fr with phase := 3 } :: st)
-      (.call true (fr.target + 2)) runCtl, [])
-  else if fr.round + 1 < x.p - 1 then
-    (x.with ((x.regs.scale x.p (fr.target + 2) (unitInv x.p fr.round)).scale x.p (fr.target + 1)
-      (unitVal (fr.round + 1))) (⟨fr.round + 1, 0, fr.neg, fr.target⟩ :: st)
-      (.call false (fr.target + 1)) runCtl, [])
-  else (x.with (x.regs.scale x.p (fr.target + 2) (unitInv x.p fr.round)) st .ret runCtl, [])
-
-/-- The step, with tests in place of matches. -/
-def stepF (y : Tuple × Bool) : Tuple × List Bool :=
-  let x := y.1
-  let b := y.2
-  let fr := x.stack.headD dfr
-  if x.tag = 0 then
-    if b then (x.withCtl (0, x.n₁ + 1, 0, []), [])
-    else ((((x.n₁, x.height, x.p), x.regs), x.2.1, (1, 0, 0, [])), [])
-  else if x.tag = 1 then
-    if b then (x.withCtl (1, x.n₁ + 1, 0, []), [])
-    else ((((x.ell, x.n₁, x.p), x.regs), x.2.1, (2, 2 * x.ell + 2, 2, [])), [])
-  else if x.tag = 2 then
-    if x.n₂ < x.n₁ then
-      if x.n₁ % x.n₂ = 0 then (x.withCtl (2, x.n₁ + 1, 2, []), [])
-      else (x.withCtl (2, x.n₁, x.n₂ + 1, []), [])
-    else ((((x.ell, x.height, x.n₁),
-      (List.replicate x.ell 0, List.replicate x.ell 0, List.replicate x.ell 0)),
-      ([], .call false 2), runCtl), [])
-  else if x.tag = 3 then runStepF x
-  else if x.tag = 4 then
-    if x.mode.isCall then
-      if x.n₁ < x.ell then
-        (x.with (x.regs.set x.mode.target (modifyAt (x.regs.get x.mode.target) x.n₁
-          (addMod x.p (if b then sgnVal x.p x.mode.neg else 0)))) x.stack x.mode
-          (4, x.n₁ + 1, 0, []), [])
-      else (x.with x.regs x.stack .ret runCtl, [])
-    else (x, [])
-  else if x.tag = 5 then
-    if x.stack.isEmpty then (x, [])
-    else if x.n₁ < tableLength x.ell then
-      if b then
-        (x.withCtl (5, x.n₁ + 1, 0, modifyAt x.acc (x.n₁ % x.ell) (addMod x.p
-          (weight x.p x.ell (x.n₁ / x.ell) (x.regs.get (fr.target + 1))
-            (x.regs.get (fr.target + 2))))), [])
-      else (x.withCtl (5, x.n₁ + 1, 0, x.acc), [])
-    else (x.with (subtractSums x.p (sgnVal x.p fr.neg) fr.target x.acc x.regs)
-      ({ fr with phase := 2 } :: x.stack.tail) (.call true (fr.target + 1)) runCtl, [])
-  else (x, [])
-
-theorem runStepF_eq (x : Tuple) : runStepF x = runStepT x := by
-  obtain ⟨⟨⟨e, h, p⟩, R⟩, ⟨st, m⟩, c⟩ := x
-  rcases m with ⟨neg, t⟩ | _
-  · simp only [runStepF, runStepT, Mode.isCall, Mode.target, Mode.neg, Tuple.stack,
-      Tuple.height, ↓reduceIte]
-  · rcases st with _ | ⟨⟨j, ph, ng, tg⟩, st⟩
-    · rfl
-    · fin_cases ph <;> simp only [runStepF, runStepT, Mode.isCall, Tuple.stack, Tuple.mode,
-        List.isEmpty_cons, List.headD_cons, List.tail_cons] <;> rfl
-
-theorem stepF_eq (y : Tuple × Bool) : stepF y = stepT y.1 y.2 := by
-  obtain ⟨⟨⟨⟨e, h, p⟩, R⟩, ⟨st, m⟩, ⟨tag, n₁, n₂, acc⟩⟩, b⟩ := y
-  fin_cases tag
-  · rfl
-  · rfl
-  · rfl
-  · exact runStepF_eq _
-  · rcases m with ⟨neg, t⟩ | _ <;> rfl
-  · rcases st with _ | ⟨fr, st⟩ <;> rfl
-  · rfl
 
 /-! ### The branches of the step -/
 
@@ -568,7 +460,7 @@ theorem hRun : ComputableTidilyInSpace (fun _ : Tuple × Bool => runCtl) encStep
 
 /-- The steps of the iterative procedure. -/
 theorem branch3_inSpace :
-    ComputableTidilyInSpace (fun y : Tuple × Bool => runStepF y.1) encStepInT encStepOut
+    ComputableTidilyInSpace (fun y : Tuple × Bool => runStepT y.1) encStepInT encStepOut
       stepBudget := by
   have ht := hModeFinite (encB := encReg) Mode.target
   have hcall := hModeFinite (encB := encBool) Mode.isCall
@@ -626,25 +518,19 @@ theorem branch3_inSpace :
               (out_inSpace (withRegsModeCtl_inSpace hR3 hRest
                 (budget_const (encB := encMode) .ret len_le_stepBudget) hRun)))))))).of_enc_eq
     fun y => ?_
-  simp only [runStepF, decide_eq_true_eq]
+  simp only [runStepT, decide_eq_true_eq]
   rfl
 
 end Branches
 
 /-- **The step within its space budget.** -/
-theorem stepF_inSpace : ComputableTidilyInSpace stepF encStepInT encStepOut stepBudget := by
+theorem stepT_inSpace : ComputableTidilyInSpace stepT encStepInT encStepOut stepBudget := by
   have ht (k : Fin 7) := budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = k)) hTag
   refine (budget_ite (ht 0) branch0_inSpace (budget_ite (ht 1) branch1_inSpace
     (budget_ite (ht 2) branch2_inSpace (budget_ite (ht 3) branch3_inSpace
       (budget_ite (ht 4) branch4_inSpace (budget_ite (ht 5) branch5_inSpace
         (out_inSpace hTup))))))).of_enc_eq fun y => ?_
-  simp only [stepF, decide_eq_true_eq]
-
-/-- The step on tuples within its space budget. -/
-theorem stepT_inSpace :
-    ComputableTidilyInSpace (fun y : Tuple × Bool => stepT y.1 y.2) encStepInT encStepOut
-      stepBudget :=
-  stepF_inSpace.of_enc_eq fun y => by rw [stepF_eq]
+  simp only [stepT, decide_eq_true_eq]
 
 end Reader
 

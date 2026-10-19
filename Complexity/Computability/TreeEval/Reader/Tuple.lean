@@ -82,30 +82,57 @@ def addrT (x : Tuple) : Option ℕ :=
   else if x.tag = 5 then some (offsetT x x.stack.tail + x.n₁)
   else none
 
+/-- Whether a mode is a call. -/
+def _root_.Cslib.TreeEval.Iter.Mode.isCall : Mode → Bool
+  | .call _ _ => true
+  | .ret => false
+
+/-- The sign of a call. -/
+def _root_.Cslib.TreeEval.Iter.Mode.neg : Mode → Bool
+  | .call neg _ => neg
+  | .ret => false
+
+/-- The target of a call. -/
+def _root_.Cslib.TreeEval.Iter.Mode.target : Mode → Fin 3
+  | .call _ t => t
+  | .ret => 0
+
+/-- The default frame, standing for the top of an empty stack. -/
+abbrev dfr : Frame := ⟨0, 0, false, 0⟩
+
+/-- The tuple with new registers, stack, mode and control state. -/
+abbrev Tuple.with (x : Tuple) (R : Regs) (st : List Frame) (m : Mode)
+    (c : Fin 7 × ℕ × ℕ × List ℕ) : Tuple :=
+  (((x.ell, x.height, x.p), R), (st, m), c)
+
 /-- The steps of the iterative procedure on tuples. -/
 def runStepT (x : Tuple) : Tuple × List Bool :=
-  match x.mode, x.stack with
-  | .call neg t, st =>
-    if st.length = x.height then (x.withCtl (4, 0, 0, []), [])
-    else ((((x.ell, x.height, x.p), x.regs.scale x.p (t + 1) (unitVal 0)),
-      (⟨0, 0, neg, t⟩ :: st, .call false (t + 1)), runCtl), [])
-  | .ret, [] => (x.withCtl (6, 0, 0, []), (x.regs.get 2).map (· == 1))
-  | .ret, fr :: st =>
-    match fr.phase with
-    | 0 => ((((x.ell, x.height, x.p), x.regs.scale x.p (fr.target + 2) (unitVal fr.round)),
-        ({ fr with phase := 1 } :: st, .call false (fr.target + 2)), runCtl), [])
-    | 1 => (x.withCtl (5, 0, 0, List.replicate x.ell 0), [])
-    | 2 => ((((x.ell, x.height, x.p), x.regs.scale x.p (fr.target + 1) (unitInv x.p fr.round)),
-        ({ fr with phase := 3 } :: st, .call true (fr.target + 2)), runCtl), [])
-    | 3 =>
-      let R := x.regs.scale x.p (fr.target + 2) (unitInv x.p fr.round)
-      if fr.round + 1 < x.p - 1 then
-        ((((x.ell, x.height, x.p), R.scale x.p (fr.target + 1) (unitVal (fr.round + 1))),
-          (⟨fr.round + 1, 0, fr.neg, fr.target⟩ :: st, .call false (fr.target + 1)), runCtl), [])
-      else ((((x.ell, x.height, x.p), R), (st, .ret), runCtl), [])
+  let fr := x.stack.headD dfr
+  let st := x.stack.tail
+  let t := x.mode.target
+  if x.mode.isCall then
+    if x.stack.length = x.height then (x.withCtl (4, 0, 0, []), [])
+    else (x.with (x.regs.scale x.p (t + 1) (unitVal 0)) (⟨0, 0, x.mode.neg, t⟩ :: x.stack)
+      (.call false (t + 1)) runCtl, [])
+  else if x.stack.isEmpty then (x.withCtl (6, 0, 0, []), (x.regs.get 2).map (· == 1))
+  else if fr.phase = 0 then
+    (x.with (x.regs.scale x.p (fr.target + 2) (unitVal fr.round)) ({ fr with phase := 1 } :: st)
+      (.call false (fr.target + 2)) runCtl, [])
+  else if fr.phase = 1 then (x.withCtl (5, 0, 0, List.replicate x.ell 0), [])
+  else if fr.phase = 2 then
+    (x.with (x.regs.scale x.p (fr.target + 1) (unitInv x.p fr.round)) ({ fr with phase := 3 } :: st)
+      (.call true (fr.target + 2)) runCtl, [])
+  else if fr.round + 1 < x.p - 1 then
+    (x.with ((x.regs.scale x.p (fr.target + 2) (unitInv x.p fr.round)).scale x.p (fr.target + 1)
+      (unitVal (fr.round + 1))) (⟨fr.round + 1, 0, fr.neg, fr.target⟩ :: st)
+      (.call false (fr.target + 1)) runCtl, [])
+  else (x.with (x.regs.scale x.p (fr.target + 2) (unitInv x.p fr.round)) st .ret runCtl, [])
 
-/-- The step on tuples. -/
-def stepT (x : Tuple) (b : Bool) : Tuple × List Bool :=
+/-- The step on tuples, given the bit read. -/
+def stepT (y : Tuple × Bool) : Tuple × List Bool :=
+  let x := y.1
+  let b := y.2
+  let fr := x.stack.headD dfr
   if x.tag = 0 then
     if b then (x.withCtl (0, x.n₁ + 1, 0, []), [])
     else ((((x.n₁, x.height, x.p), x.regs), x.2.1, (1, 0, 0, [])), [])
@@ -121,25 +148,23 @@ def stepT (x : Tuple) (b : Bool) : Tuple × List Bool :=
       ([], .call false 2), runCtl), [])
   else if x.tag = 3 then runStepT x
   else if x.tag = 4 then
-    match x.mode with
-    | .call neg t =>
+    if x.mode.isCall then
       if x.n₁ < x.ell then
-        ((((x.ell, x.height, x.p), x.regs.set t (modifyAt (x.regs.get t) x.n₁
-          (addMod x.p (if b then sgnVal x.p neg else 0)))), x.2.1, (4, x.n₁ + 1, 0, [])), [])
-      else ((x.1, (x.stack, .ret), runCtl), [])
-    | .ret => (x, [])
+        (x.with (x.regs.set x.mode.target (modifyAt (x.regs.get x.mode.target) x.n₁
+          (addMod x.p (if b then sgnVal x.p x.mode.neg else 0)))) x.stack x.mode
+          (4, x.n₁ + 1, 0, []), [])
+      else (x.with x.regs x.stack .ret runCtl, [])
+    else (x, [])
   else if x.tag = 5 then
-    match x.stack with
-    | fr :: st =>
-      if x.n₁ < tableLength x.ell then
-        if b then
-          (x.withCtl (5, x.n₁ + 1, 0, modifyAt x.acc (x.n₁ % x.ell) (addMod x.p
-            (weight x.p x.ell (x.n₁ / x.ell) (x.regs.get (fr.target + 1))
-              (x.regs.get (fr.target + 2))))), [])
-        else (x.withCtl (5, x.n₁ + 1, 0, x.acc), [])
-      else ((((x.ell, x.height, x.p), subtractSums x.p (sgnVal x.p fr.neg) fr.target x.acc x.regs),
-        ({ fr with phase := 2 } :: st, .call true (fr.target + 1)), runCtl), [])
-    | [] => (x, [])
+    if x.stack.isEmpty then (x, [])
+    else if x.n₁ < tableLength x.ell then
+      if b then
+        (x.withCtl (5, x.n₁ + 1, 0, modifyAt x.acc (x.n₁ % x.ell) (addMod x.p
+          (weight x.p x.ell (x.n₁ / x.ell) (x.regs.get (fr.target + 1))
+            (x.regs.get (fr.target + 2))))), [])
+      else (x.withCtl (5, x.n₁ + 1, 0, x.acc), [])
+    else (x.with (subtractSums x.p (sgnVal x.p fr.neg) fr.target x.acc x.regs)
+      ({ fr with phase := 2 } :: x.stack.tail) (.call true (fr.target + 1)) runCtl, [])
   else (x, [])
 
 theorem haltT_toTuple (s : State) : haltT s.toTuple = machine.halt s := by
@@ -151,7 +176,7 @@ theorem addrT_toTuple (s : State) : addrT s.toTuple = addr s := by
   cases c <;> rfl
 
 theorem stepT_toTuple (s : State) (b : Bool) :
-    stepT s.toTuple b = ((machine.step s b).1.toTuple, (machine.step s b).2) := by
+    stepT (s.toTuple, b) = ((machine.step s b).1.toTuple, (machine.step s b).2) := by
   obtain ⟨e, h, p, R, st, m, c⟩ := s
   cases c with
   | hdrLength n => cases b <;> rfl
@@ -163,8 +188,9 @@ theorem stepT_toTuple (s : State) (b : Bool) :
   | run =>
     rcases m with ⟨neg, t⟩ | _
     · by_cases h₁ : st.length = h <;>
-        simp [Tuple.tag, Tuple.ell, Tuple.height, Tuple.p, Tuple.regs, Tuple.stack, Tuple.mode,
-          Tuple.withCtl, stepT, runStepT, machine, step, runStep, State.toTuple, Ctl.toTuple, h₁]
+        simp [Tuple.tag, Tuple.height, Tuple.p, Tuple.regs, Tuple.stack, Tuple.mode,
+          Tuple.withCtl, Mode.isCall, Mode.target, Mode.neg, stepT, runStepT, machine, step,
+          runStep, State.toTuple, Ctl.toTuple, h₁]
     · rcases st with _ | ⟨⟨j, ph, ng, tg⟩, st⟩
       · rfl
       · fin_cases ph
@@ -172,19 +198,20 @@ theorem stepT_toTuple (s : State) (b : Bool) :
         · rfl
         · rfl
         · by_cases h₁ : j + 1 < p - 1 <;>
-            simp [Tuple.tag, Tuple.ell, Tuple.height, Tuple.p, Tuple.regs, Tuple.stack, Tuple.mode,
-              stepT, runStepT, machine, step, runStep, State.toTuple, Ctl.toTuple, h₁]
+            simp [Tuple.tag, Tuple.p, Tuple.regs, Tuple.stack, Tuple.mode,
+              Mode.isCall, stepT, runStepT, machine, step, runStep, State.toTuple, Ctl.toTuple, h₁]
   | leaf i =>
     rcases m with ⟨neg, t⟩ | _
     · by_cases h₁ : i < e <;> cases b <;>
-        simp [Tuple.tag, Tuple.n₁, Tuple.ell, Tuple.height, Tuple.p, Tuple.regs, Tuple.stack,
-          Tuple.mode, stepT, machine, step, State.toTuple, Ctl.toTuple, h₁]
+        simp [Tuple.tag, Tuple.n₁, Tuple.ell, Tuple.p, Tuple.regs, Tuple.stack,
+          Tuple.mode, Mode.isCall, Mode.target, Mode.neg, stepT, machine, step, State.toTuple,
+          Ctl.toTuple, h₁]
     · rfl
   | scan k acc =>
     rcases st with _ | ⟨fr, st⟩
     · rfl
     · by_cases h₁ : k < tableLength e <;> cases b <;>
-        simp [Tuple.tag, Tuple.n₁, Tuple.acc, Tuple.ell, Tuple.height, Tuple.p, Tuple.regs,
+        simp [Tuple.tag, Tuple.n₁, Tuple.acc, Tuple.ell, Tuple.p, Tuple.regs,
           Tuple.stack, Tuple.withCtl, stepT, machine, step, State.toTuple, Ctl.toTuple, h₁]
   | done => rfl
 
