@@ -27,6 +27,8 @@ by `Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, if and only if
 
 ## Main definitions
 
+* `Cslib.Logic.FO.TableauRels`: bundle of the 12 relation-symbol families used by the first-order
+  tableau formulas.
 * `Cslib.Logic.FO.tableauESOSentence`: the existential second-order sentence encoding an accepting
   computation of `tm` on `u ++ w` within `B - 1` steps.
 * `Cslib.Logic.Vocabulary.tableauESOSentence`: specialization to
@@ -34,9 +36,9 @@ by `Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, if and only if
 
 ## Main results
 
-* `Cslib.Logic.FO.realize_tableauESOSentence_iff`: on `Fin B`, `tableauESOSentence` holds iff some
+* `Cslib.Logic.FO.realize_tableauESOSentence`: on `Fin B`, `tableauESOSentence` holds iff some
   certificate `w` with `u.length + w.length + 1 < B` is accepted within `B - 1` steps.
-* `Cslib.Logic.Vocabulary.realize_tableauESOSentence_iff`: on `Fin B`, `v.tableauESOSentence tm`
+* `Cslib.Logic.Vocabulary.realize_tableauESOSentence`: on `Fin B`, `v.tableauESOSentence tm`
   holds iff `CookLevin.tableau tm u L (B - 1)` is satisfiable for some `L` with
   `u.length + L + 1 < B`.
 
@@ -88,83 +90,99 @@ def tableauArity (m : ℕ) (State : Type) : TableauVar m State → ℕ
   | .inl _ => 1
   | .inr _ => 2
 
+/-- Bundle of the 12 relation-symbol families used by the first-order tableau formulas over `L'`. -/
+structure TableauRels (L' : Language.{0, 0}) (m : ℕ) (State : Type) where
+  /-- Strict linear order `<` on `Fin B`. -/
+  lt : L'.Relations 2
+  /-- Unary relation holding of the unique element `z = u.length`. -/
+  uLen : L'.Relations 1
+  /-- Unary relation holding of `p < u.length` when `u[p] = true`. -/
+  uBit : L'.Relations 1
+  /-- Unary relation holding of the unique certificate end position `e = u.length + w.length`. -/
+  endPos : L'.Relations 1
+  /-- Unary relation holding of `j ∈ (u.length, e]` when `w[j - 1 - u.length] = true`. -/
+  certBit : L'.Relations 1
+  /-- Unary relation family for `(Feature.state q).Holds (cfg t)`. -/
+  state : Option State → L'.Relations 1
+  /-- Unary relation family for `(Feature.out o).Holds (cfg t)`. -/
+  out : OutView → L'.Relations 1
+  /-- Binary relation for `(Feature.inPos j).Holds (cfg t)`. -/
+  inPos : L'.Relations 2
+  /-- Binary relation family for `(Feature.head i (+a)).Holds (cfg t)`. -/
+  headPos : Fin m → L'.Relations 2
+  /-- Binary relation family for `(Feature.head i (-a)).Holds (cfg t)`. -/
+  headNeg : Fin m → L'.Relations 2
+  /-- Binary relation family for `(Feature.cell i (+a) s).Holds (cfg t)`. -/
+  cellPos : Fin m → Option Bool → L'.Relations 2
+  /-- Binary relation family for `(Feature.cell i (-a) s).Holds (cfg t)`. -/
+  cellNeg : Fin m → Option Bool → L'.Relations 2
+
 section Formulas
 
-variable {L' : Language.{0, 0}} (lt : L'.Relations 2)
-  (uLenRel uBitRel endPosRel certBitRel : L'.Relations 1)
+variable {L' : Language.{0, 0}} {m : ℕ} {State : Type} (r : TableauRels L' m State)
 
-/-- Sentence asserting that `endPosRel` holds of a unique element `e`, and that `uLen ≤ e` and `e`
+/-- Sentence asserting that `r.endPos` holds of a unique element `e`, and that `r.uLen ≤ e` and `e`
 is not the maximum element (`e + 1 < B`). -/
 noncomputable def endPosSentence : L'.Sentence :=
   closeEx (Fin 1) (
-    rel₁ endPosRel 0 ⊓
-      Formula.iExs (Fin 1) (rel₁ uLenRel (.inr 0) ⊓ leF lt (.inr 0) (.inl 0)) ⊓
-      ∼(isMaxF lt 0)) ⊓
-    closeAll (Fin 2) ((rel₁ endPosRel 0 ⊓ rel₁ endPosRel 1) ⟹ varEq 0 1)
+    rel₁ r.endPos 0 ⊓
+      Formula.iExs (Fin 1) (rel₁ r.uLen (.inr 0) ⊓ le r.lt (.inr 0) (.inl 0)) ⊓
+      ∼(isMax r.lt 0)) ⊓
+    closeAll (Fin 2) ((rel₁ r.endPos 0 ⊓ rel₁ r.endPos 1) ⟹ varEq 0 1)
 
 /-- Formula expressing `inputAt (u ++ w) j = s` at variable `vJ : V`. -/
 noncomputable def inputAtFormula (s : Option Bool) {V : Type*} (vJ : V) : L'.Formula V :=
   match s with
   | none =>
-    isZeroF lt vJ ⊔
-      Formula.iExs (Fin 1) (rel₁ endPosRel (.inr 0) ⊓ ltF lt (.inr 0) (.inl vJ))
+    isZero r.lt vJ ⊔
+      Formula.iExs (Fin 1) (rel₁ r.endPos (.inr 0) ⊓ lt r.lt (.inr 0) (.inl vJ))
   | some true =>
     Formula.iExs (Fin 2) (
-      succF lt (.inr 0) (.inl vJ) ⊓ rel₁ uLenRel (.inr 1) ⊓
-        ltF lt (.inr 0) (.inr 1) ⊓ rel₁ uBitRel (.inr 0)) ⊔
+      succ r.lt (.inr 0) (.inl vJ) ⊓ rel₁ r.uLen (.inr 1) ⊓
+        lt r.lt (.inr 0) (.inr 1) ⊓ rel₁ r.uBit (.inr 0)) ⊔
       Formula.iExs (Fin 2) (
-        rel₁ uLenRel (.inr 0) ⊓ rel₁ endPosRel (.inr 1) ⊓
-          ltF lt (.inr 0) (.inl vJ) ⊓ leF lt (.inl vJ) (.inr 1) ⊓ rel₁ certBitRel (.inl vJ))
+        rel₁ r.uLen (.inr 0) ⊓ rel₁ r.endPos (.inr 1) ⊓
+          lt r.lt (.inr 0) (.inl vJ) ⊓ le r.lt (.inl vJ) (.inr 1) ⊓ rel₁ r.certBit (.inl vJ))
   | some false =>
     Formula.iExs (Fin 2) (
-      succF lt (.inr 0) (.inl vJ) ⊓ rel₁ uLenRel (.inr 1) ⊓
-        ltF lt (.inr 0) (.inr 1) ⊓ ∼(rel₁ uBitRel (.inr 0))) ⊔
+      succ r.lt (.inr 0) (.inl vJ) ⊓ rel₁ r.uLen (.inr 1) ⊓
+        lt r.lt (.inr 0) (.inr 1) ⊓ ∼(rel₁ r.uBit (.inr 0))) ⊔
       Formula.iExs (Fin 2) (
-        rel₁ uLenRel (.inr 0) ⊓ rel₁ endPosRel (.inr 1) ⊓
-          ltF lt (.inr 0) (.inl vJ) ⊓ leF lt (.inl vJ) (.inr 1) ⊓ ∼(rel₁ certBitRel (.inl vJ)))
+        rel₁ r.uLen (.inr 0) ⊓ rel₁ r.endPos (.inr 1) ⊓
+          lt r.lt (.inr 0) (.inl vJ) ⊓ le r.lt (.inl vJ) (.inr 1) ⊓ ∼(rel₁ r.certBit (.inl vJ)))
 
 /-- Formula expressing `(Feature.inRead s).Holds (cfg t)` at time variable `vT : V`. -/
-noncomputable def inReadFormula (inPosRel : L'.Relations 2) (s : Option Bool)
-    {V : Type*} (vT : V) : L'.Formula V :=
+noncomputable def inReadFormula (s : Option Bool) {V : Type*} (vT : V) : L'.Formula V :=
   Formula.iExs (Fin 1) (
-    rel₂ inPosRel (.inl vT) (.inr 0) ⊓
-      inputAtFormula lt uLenRel uBitRel endPosRel certBitRel s (.inr 0))
+    rel₂ r.inPos (.inl vT) (.inr 0) ⊓ inputAtFormula r s (.inr 0))
 
 /-- Formula expressing `(Feature.read i s).Holds (cfg t)` at time variable `vT : V`. -/
-noncomputable def readFormula {m : ℕ} (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
-    (i : Fin m) (s : Option Bool) {V : Type*} (vT : V) : L'.Formula V :=
+noncomputable def readFormula (i : Fin m) (s : Option Bool) {V : Type*} (vT : V) : L'.Formula V :=
   Formula.iExs (Fin 1) (
-    (rel₂ (headPosRel i) (.inl vT) (.inr 0) ⊓ rel₂ (cellPosRel i s) (.inl vT) (.inr 0)) ⊔
-      (rel₂ (headNegRel i) (.inl vT) (.inr 0) ⊓ rel₂ (cellNegRel i s) (.inl vT) (.inr 0)))
+    (rel₂ (r.headPos i) (.inl vT) (.inr 0) ⊓ rel₂ (r.cellPos i s) (.inl vT) (.inr 0)) ⊔
+      (rel₂ (r.headNeg i) (.inl vT) (.inr 0) ⊓ rel₂ (r.cellNeg i s) (.inl vT) (.inr 0)))
 
 /-- Formula expressing `(Feature.sit y).Holds (cfg t)` at time variable `vT : V`. -/
-noncomputable def sitFormula {m : ℕ} {State : Type}
-    (stateRel : Option State → L'.Relations 1) (inPosRel : L'.Relations 2)
-    (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
-    (y : Situation m State) {V : Type*} (vT : V) : L'.Formula V :=
-  rel₁ (stateRel (some y.1)) vT ⊓
-    inReadFormula lt uLenRel uBitRel endPosRel certBitRel inPosRel y.2.1 vT ⊓
-    Formula.iInf fun i : Fin m =>
-      readFormula headPosRel headNegRel cellPosRel cellNegRel i (y.2.2 i) vT
+noncomputable def sitFormula (y : Situation m State) {V : Type*} (vT : V) : L'.Formula V :=
+  rel₁ (r.state (some y.1)) vT ⊓
+    inReadFormula r y.2.1 vT ⊓
+    Formula.iInf fun i : Fin m => readFormula r i (y.2.2 i) vT
 
 /-- Formula expressing that the input head moves to `vJ` from its position at time `vT` under
 direction `d`. -/
-noncomputable def inPosPrevFormula (inPosRel : L'.Relations 2) (d : SignType)
-    {V : Type*} (vT vJ : V) : L'.Formula V :=
+noncomputable def inPosPrevFormula (d : SignType) {V : Type*} (vT vJ : V) : L'.Formula V :=
   match d with
-  | .zero => rel₂ inPosRel vT vJ
+  | .zero => rel₂ r.inPos vT vJ
   | .neg =>
-    (isZeroF lt vJ ⊓ rel₂ inPosRel vT vJ) ⊔
-      Formula.iExs (Fin 1) (succF lt (.inl vJ) (.inr 0) ⊓ rel₂ inPosRel (.inl vT) (.inr 0))
+    (isZero r.lt vJ ⊓ rel₂ r.inPos vT vJ) ⊔
+      Formula.iExs (Fin 1) (succ r.lt (.inl vJ) (.inr 0) ⊓ rel₂ r.inPos (.inl vT) (.inr 0))
   | .pos =>
     Formula.iExs (Fin 1) (
-      rel₁ endPosRel (.inr 0) ⊓ succF lt (.inr 0) (.inl vJ) ⊓
-        rel₂ inPosRel (.inl vT) (.inl vJ)) ⊔
+      rel₁ r.endPos (.inr 0) ⊓ succ r.lt (.inr 0) (.inl vJ) ⊓
+        rel₂ r.inPos (.inl vT) (.inl vJ)) ⊔
       Formula.iExs (Fin 2) (
-        rel₁ endPosRel (.inr 1) ⊓ leF lt (.inr 0) (.inr 1) ⊓
-          succF lt (.inr 0) (.inl vJ) ⊓ rel₂ inPosRel (.inl vT) (.inr 0))
+        rel₁ r.endPos (.inr 1) ⊓ le r.lt (.inr 0) (.inr 1) ⊓
+          succ r.lt (.inr 0) (.inl vJ) ⊓ rel₂ r.inPos (.inl vT) (.inr 0))
 
 /-- Formula expressing that a work-tape head moves to signed offset `vA` from its position at time
 `vT` under effective direction `d` (where `d = .pos` means moving away from `0` and `d = .neg`
@@ -174,146 +192,98 @@ noncomputable def headPrevFormula (headSame headOpp : L'.Relations 2) (d : SignT
   match d with
   | .zero => rel₂ headSame vT vA
   | .pos =>
-    (isZeroF lt vA ⊓ Formula.iExs (Fin 1) (
-        succF lt (.inl vA) (.inr 0) ⊓ rel₂ headOpp (.inl vT) (.inr 0))) ⊔
+    (isZero r.lt vA ⊓ Formula.iExs (Fin 1) (
+        succ r.lt (.inl vA) (.inr 0) ⊓ rel₂ headOpp (.inl vT) (.inr 0))) ⊔
       Formula.iExs (Fin 1) (
-        succF lt (.inr 0) (.inl vA) ⊓ rel₂ headSame (.inl vT) (.inr 0))
+        succ r.lt (.inr 0) (.inl vA) ⊓ rel₂ headSame (.inl vT) (.inr 0))
   | .neg =>
     Formula.iExs (Fin 1) (
-      succF lt (.inl vA) (.inr 0) ⊓ rel₂ headSame (.inl vT) (.inr 0))
+      succ r.lt (.inl vA) (.inr 0) ⊓ rel₂ headSame (.inl vT) (.inr 0))
 
-variable {m : ℕ} {State : Type} [Fintype State] [DecidableEq State]
-  (tm : MultiTapeTM m Bool State)
+variable [Fintype State] [DecidableEq State] (tm : MultiTapeTM m Bool State)
 
 /-- Right-hand side of the step equation for `state q'` at time `vT`. -/
-noncomputable def stateStepRHS (stateRel : Option State → L'.Relations 1)
-    (inPosRel : L'.Relations 2) (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
-    (q' : Option State) {V : Type*} (vT : V) : L'.Formula V :=
-  (rel₁ (stateRel none) vT ⊓ if q' = none then ⊤ else ⊥) ⊔
+noncomputable def stateStepRHS (q' : Option State) {V : Type*} (vT : V) : L'.Formula V :=
+  (rel₁ (r.state none) vT ⊓ if q' = none then ⊤ else ⊥) ⊔
     Formula.iSup fun y : Situation m State =>
-      (if (tm.actionOf y).state = q' then ⊤ else ⊥) ⊓
-        sitFormula lt uLenRel uBitRel endPosRel certBitRel stateRel inPosRel
-          headPosRel headNegRel cellPosRel cellNegRel y vT
+      (if (tm.actionOf y).state = q' then ⊤ else ⊥) ⊓ sitFormula r y vT
 
 /-- Right-hand side of the step equation for `out o` at time `vT`. -/
-noncomputable def outStepRHS (stateRel : Option State → L'.Relations 1)
-    (outRel : OutView → L'.Relations 1) (inPosRel : L'.Relations 2)
-    (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
-    (o : OutView) {V : Type*} (vT : V) : L'.Formula V :=
-  (rel₁ (stateRel none) vT ⊓ rel₁ (outRel o) vT) ⊔
+noncomputable def outStepRHS (o : OutView) {V : Type*} (vT : V) : L'.Formula V :=
+  (rel₁ (r.state none) vT ⊓ rel₁ (r.out o) vT) ⊔
     Formula.iSup fun p : Situation m State × OutView =>
       (if p.2.push (tm.actionOf p.1).output = o then ⊤ else ⊥) ⊓
-        sitFormula lt uLenRel uBitRel endPosRel certBitRel stateRel inPosRel
-          headPosRel headNegRel cellPosRel cellNegRel p.1 vT ⊓
-        rel₁ (outRel p.2) vT
+        sitFormula r p.1 vT ⊓ rel₁ (r.out p.2) vT
 
 /-- Right-hand side of the step equation for `inPos` at time `vT` and position `vJ`. -/
-noncomputable def inPosStepRHS (stateRel : Option State → L'.Relations 1)
-    (inPosRel : L'.Relations 2) (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
-    {V : Type*} (vT vJ : V) : L'.Formula V :=
-  (rel₁ (stateRel none) vT ⊓ rel₂ inPosRel vT vJ) ⊔
+noncomputable def inPosStepRHS {V : Type*} (vT vJ : V) : L'.Formula V :=
+  (rel₁ (r.state none) vT ⊓ rel₂ r.inPos vT vJ) ⊔
     Formula.iSup fun y : Situation m State =>
-      sitFormula lt uLenRel uBitRel endPosRel certBitRel stateRel inPosRel
-        headPosRel headNegRel cellPosRel cellNegRel y vT ⊓
-      inPosPrevFormula lt endPosRel inPosRel (tm.actionOf y).inputTape vT vJ
+      sitFormula r y vT ⊓ inPosPrevFormula r (tm.actionOf y).inputTape vT vJ
 
 /-- Right-hand side of the step equation for a work-tape head at time `vT` and offset `vA`, with
 orientation `sign` (`1` for `+a`, `-1` for `-a`). -/
-noncomputable def headStepRHS (stateRel : Option State → L'.Relations 1)
-    (inPosRel : L'.Relations 2) (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
-    (headSame headOpp : L'.Relations 2) (sign : SignType) (i : Fin m)
+noncomputable def headStepRHS (headSame headOpp : L'.Relations 2) (sign : SignType) (i : Fin m)
     {V : Type*} (vT vA : V) : L'.Formula V :=
-  (rel₁ (stateRel none) vT ⊓ rel₂ headSame vT vA) ⊔
+  (rel₁ (r.state none) vT ⊓ rel₂ headSame vT vA) ⊔
     Formula.iSup fun y : Situation m State =>
-      sitFormula lt uLenRel uBitRel endPosRel certBitRel stateRel inPosRel
-        headPosRel headNegRel cellPosRel cellNegRel y vT ⊓
-      headPrevFormula lt headSame headOpp (sign * ((tm.actionOf y).workTapes i).2) vT vA
+      sitFormula r y vT ⊓
+        headPrevFormula r headSame headOpp (sign * ((tm.actionOf y).workTapes i).2) vT vA
 
 /-- Right-hand side of the step equation for a work-tape cell at time `vT` and offset `vA`. -/
-noncomputable def cellStepRHS (stateRel : Option State → L'.Relations 1)
-    (inPosRel : L'.Relations 2) (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
-    (headSame : L'.Relations 2) (cellSame : Option Bool → L'.Relations 2)
+noncomputable def cellStepRHS (headSame : L'.Relations 2) (cellSame : Option Bool → L'.Relations 2)
     (i : Fin m) (s : Option Bool) {V : Type*} (vT vA : V) : L'.Formula V :=
-  (rel₂ (cellSame s) vT vA ⊓
-      (rel₁ (stateRel none) vT ⊔ ∼(rel₂ headSame vT vA))) ⊔
+  (rel₂ (cellSame s) vT vA ⊓ (rel₁ (r.state none) vT ⊔ ∼(rel₂ headSame vT vA))) ⊔
     Formula.iSup fun p : Situation m State × Option Bool =>
       (if ((tm.actionOf p.1).workTapes i).1.getD p.2 = s then ⊤ else ⊥) ⊓
-        sitFormula lt uLenRel uBitRel endPosRel certBitRel stateRel inPosRel
-          headPosRel headNegRel cellPosRel cellNegRel p.1 vT ⊓
-        rel₂ headSame vT vA ⊓ rel₂ (cellSame p.2) vT vA
+        sitFormula r p.1 vT ⊓ rel₂ headSame vT vA ⊓ rel₂ (cellSame p.2) vT vA
 
 /-- Sentence fixing all basic features at `t = 0`. -/
-noncomputable def initSentence (stateRel : Option State → L'.Relations 1)
-    (outRel : OutView → L'.Relations 1) (inPosRel : L'.Relations 2)
-    (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2) : L'.Sentence :=
+noncomputable def initSentence : L'.Sentence :=
   closeAll (Fin 1) (
-    isZeroF lt 0 ⟹
+    isZero r.lt 0 ⟹
       ((Formula.iInf fun q : Option State =>
-          rel₁ (stateRel q) 0 ⇔ (if q = some tm.q₀ then ⊤ else ⊥)) ⊓
+          rel₁ (r.state q) 0 ⇔ (if q = some tm.q₀ then ⊤ else ⊥)) ⊓
         (Formula.iInf fun o : OutView =>
-          rel₁ (outRel o) 0 ⇔ (if o = .empty then ⊤ else ⊥)) ⊓
+          rel₁ (r.out o) 0 ⇔ (if o = .empty then ⊤ else ⊥)) ⊓
         Formula.iAlls (Fin 1) (
-          rel₂ inPosRel (.inl 0) (.inr 0) ⇔
-            Formula.iExs (Fin 1) (isZeroF lt (.inr 0) ⊓ succF lt (.inr 0) (.inl (.inr 0)))) ⊓
+          rel₂ r.inPos (.inl 0) (.inr 0) ⇔
+            Formula.iExs (Fin 1) (isZero r.lt (.inr 0) ⊓ succ r.lt (.inr 0) (.inl (.inr 0)))) ⊓
         Formula.iInf fun i : Fin m =>
           Formula.iAlls (Fin 1) (
-            (rel₂ (headPosRel i) (.inl 0) (.inr 0) ⇔ isZeroF lt (.inr 0)) ⊓
-              (rel₂ (headNegRel i) (.inl 0) (.inr 0) ⇔ isZeroF lt (.inr 0)) ⊓
+            (rel₂ (r.headPos i) (.inl 0) (.inr 0) ⇔ isZero r.lt (.inr 0)) ⊓
+              (rel₂ (r.headNeg i) (.inl 0) (.inr 0) ⇔ isZero r.lt (.inr 0)) ⊓
               Formula.iInf fun s : Option Bool =>
-                (rel₂ (cellPosRel i s) (.inl 0) (.inr 0) ⇔ (if s = none then ⊤ else ⊥)) ⊓
-                  (rel₂ (cellNegRel i s) (.inl 0) (.inr 0) ⇔ (if s = none then ⊤ else ⊥)))))
+                (rel₂ (r.cellPos i s) (.inl 0) (.inr 0) ⇔ (if s = none then ⊤ else ⊥)) ⊓
+                  (rel₂ (r.cellNeg i s) (.inl 0) (.inr 0) ⇔ (if s = none then ⊤ else ⊥)))))
 
 /-- Sentence imposing the step equations from `t` to `t + 1` for all basic features. -/
-noncomputable def stepSentence (stateRel : Option State → L'.Relations 1)
-    (outRel : OutView → L'.Relations 1) (inPosRel : L'.Relations 2)
-    (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2) : L'.Sentence :=
+noncomputable def stepSentence : L'.Sentence :=
   closeAll (Fin 2) (
-    succF lt 0 1 ⟹
+    succ r.lt 0 1 ⟹
       ((Formula.iInf fun q' : Option State =>
-          rel₁ (stateRel q') 1 ⇔
-            stateStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-              headPosRel headNegRel cellPosRel cellNegRel q' 0) ⊓
+          rel₁ (r.state q') 1 ⇔ stateStepRHS r tm q' 0) ⊓
         (Formula.iInf fun o : OutView =>
-          rel₁ (outRel o) 1 ⇔
-            outStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel outRel inPosRel
-              headPosRel headNegRel cellPosRel cellNegRel o 0) ⊓
+          rel₁ (r.out o) 1 ⇔ outStepRHS r tm o 0) ⊓
         Formula.iAlls (Fin 1) (
-          rel₂ inPosRel (.inl 1) (.inr 0) ⇔
-            inPosStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-              headPosRel headNegRel cellPosRel cellNegRel (.inl 0) (.inr 0)) ⊓
+          rel₂ r.inPos (.inl 1) (.inr 0) ⇔ inPosStepRHS r tm (.inl 0) (.inr 0)) ⊓
         Formula.iInf fun i : Fin m =>
           Formula.iAlls (Fin 1) (
-            (rel₂ (headPosRel i) (.inl 1) (.inr 0) ⇔
-                headStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-                  headPosRel headNegRel cellPosRel cellNegRel
-                  (headPosRel i) (headNegRel i) .pos i (.inl 0) (.inr 0)) ⊓
-              (rel₂ (headNegRel i) (.inl 1) (.inr 0) ⇔
-                headStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-                  headPosRel headNegRel cellPosRel cellNegRel
-                  (headNegRel i) (headPosRel i) .neg i (.inl 0) (.inr 0)) ⊓
+            (rel₂ (r.headPos i) (.inl 1) (.inr 0) ⇔
+                headStepRHS r tm (r.headPos i) (r.headNeg i) .pos i (.inl 0) (.inr 0)) ⊓
+              (rel₂ (r.headNeg i) (.inl 1) (.inr 0) ⇔
+                headStepRHS r tm (r.headNeg i) (r.headPos i) .neg i (.inl 0) (.inr 0)) ⊓
               Formula.iInf fun s : Option Bool =>
-                (rel₂ (cellPosRel i s) (.inl 1) (.inr 0) ⇔
-                    cellStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-                      headPosRel headNegRel cellPosRel cellNegRel
-                      (headPosRel i) (cellPosRel i) i s (.inl 0) (.inr 0)) ⊓
-                  (rel₂ (cellNegRel i s) (.inl 1) (.inr 0) ⇔
-                    cellStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-                      headPosRel headNegRel cellPosRel cellNegRel
-                      (headNegRel i) (cellNegRel i) i s (.inl 0) (.inr 0)))))
+                (rel₂ (r.cellPos i s) (.inl 1) (.inr 0) ⇔
+                    cellStepRHS r tm (r.headPos i) (r.cellPos i) i s (.inl 0) (.inr 0)) ⊓
+                  (rel₂ (r.cellNeg i s) (.inl 1) (.inr 0) ⇔
+                    cellStepRHS r tm (r.headNeg i) (r.cellNeg i) i s (.inl 0) (.inr 0)))))
 
 /-- Sentence asking that at the maximum time step `B - 1`, the machine is halted (`state none`)
 with output `[true]` (`out (.one true)`). -/
-noncomputable def acceptSentence (stateRel : Option State → L'.Relations 1)
-    (outRel : OutView → L'.Relations 1) : L'.Sentence :=
+noncomputable def acceptSentence : L'.Sentence :=
   closeAll (Fin 1) (
-    isMaxF lt 0 ⟹ (rel₁ (stateRel none) 0 ⊓ rel₁ (outRel (.one true)) 0))
+    isMax r.lt 0 ⟹ (rel₁ (r.state none) 0 ⊓ rel₁ (r.out (.one true)) 0))
 
 end Formulas
 
@@ -322,27 +292,21 @@ end Formulas
 section Semantics
 
 variable {L' : Language.{0, 0}} {B : ℕ} [L'.Structure (Fin B)]
-  {lt : L'.Relations 2} (hlt : ∀ x : Fin 2 → Fin B, RelMap lt x ↔ x 0 < x 1)
-  {uLenRel uBitRel endPosRel certBitRel : L'.Relations 1}
-  {m : ℕ} {State : Type}
+  {m : ℕ} {State : Type} {r : TableauRels L' m State}
+  (hlt : ∀ x : Fin 2 → Fin B, RelMap r.lt x ↔ x 0 < x 1)
   {tm : MultiTapeTM m Bool State}
-  {stateRel : Option State → L'.Relations 1}
-  {outRel : OutView → L'.Relations 1}
-  {inPosRel : L'.Relations 2}
-  {headPosRel headNegRel : Fin m → L'.Relations 2}
-  {cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2}
 
 include hlt in
 /-- Soundness of `endPosSentence`: extracts the unique certificate end position `e : Fin B` with
 `u.length ≤ e` and `e + 1 < B`. -/
-theorem realize_endPosSentence_imp {u : List Bool}
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (h : (Fin B) ⊨ endPosSentence lt uLenRel endPosRel) :
+theorem exists_of_realize_endPosSentence {u : List Bool}
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (h : (Fin B) ⊨ endPosSentence r) :
     ∃ e : Fin B, u.length ≤ (e : ℕ) ∧ (e : ℕ) + 1 < B ∧
-      ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = (e : ℕ) := by
+      ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = (e : ℕ) := by
   simp only [endPosSentence, Sentence.realize_inf, realize_closeEx, realize_closeAll,
     Formula.realize_inf, Formula.realize_not, Formula.realize_imp, Formula.realize_iExs,
-    realize_rel₁_var, realize_leF hlt, realize_isMaxF hlt, realize_varEq,
+    realize_rel₁, realize_le hlt, realize_isMax hlt, realize_varEq,
     Sum.elim_inl, Sum.elim_inr] at h
   obtain ⟨⟨yE, ⟨hE, ⟨yU, hU, hle⟩⟩, hnotMax⟩, huniq⟩ := h
   have hU_eq : (yU 0 : ℕ) = u.length := (huLen (yU 0)).1 hU
@@ -361,12 +325,12 @@ include hlt in
 /-- Completeness of `endPosSentence`. -/
 theorem realize_endPosSentence_of_canonical {u : List Bool} {e : ℕ}
     (hle : u.length ≤ e) (heB : e + 1 < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = e) :
-    (Fin B) ⊨ endPosSentence lt uLenRel endPosRel := by
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = e) :
+    (Fin B) ⊨ endPosSentence r := by
   simp only [endPosSentence, Sentence.realize_inf, realize_closeEx, realize_closeAll,
     Formula.realize_inf, Formula.realize_not, Formula.realize_imp, Formula.realize_iExs,
-    realize_rel₁_var, realize_leF hlt, realize_isMaxF hlt, realize_varEq,
+    realize_rel₁, realize_le hlt, realize_isMax hlt, realize_varEq,
     Sum.elim_inl, Sum.elim_inr]
   refine ⟨⟨![(⟨e, by omega⟩ : Fin B)], ⟨(hend _).2 rfl, ⟨![(⟨u.length, by omega⟩ : Fin B)],
     (huLen _).2 rfl, ?_⟩⟩, ?_⟩, fun y ⟨h0, h1⟩ => ?_⟩
@@ -378,18 +342,18 @@ include hlt in
 /-- Semantic characterization of `inputAtFormula`. -/
 theorem realize_inputAtFormula {u w : List Bool}
     (heB : u.length + w.length + 1 < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
     (s : Option Bool) {V : Type*} (vJ : V) (env : V → Fin B) :
-    (inputAtFormula lt uLenRel uBitRel endPosRel certBitRel s vJ).Realize env ↔
+    (inputAtFormula r s vJ).Realize env ↔
       inputAt (u ++ w) (env vJ : ℕ) = s := by
   rcases s with _ | (_ | _)
   · -- `s = none`
-    simp only [inputAtFormula, Formula.realize_sup, realize_isZeroF hlt, Formula.realize_iExs,
-      Formula.realize_inf, realize_rel₁_var, realize_ltF hlt, Sum.elim_inl, Sum.elim_inr,
+    simp only [inputAtFormula, Formula.realize_sup, realize_isZero hlt, Formula.realize_iExs,
+      Formula.realize_inf, realize_rel₁, realize_lt hlt, Sum.elim_inl, Sum.elim_inr,
       Fin.lt_def]
     constructor
     · rintro (hj0 | ⟨yE, hE, hltE⟩)
@@ -407,8 +371,8 @@ theorem realize_inputAtFormula {u w : List Bool}
         omega
   · -- `s = some false`
     simp only [inputAtFormula, Formula.realize_sup, Formula.realize_iExs, Formula.realize_inf,
-      Formula.realize_not, realize_succF hlt, realize_rel₁_var, realize_ltF hlt,
-      realize_leF hlt, Sum.elim_inl, Sum.elim_inr, Fin.lt_def, Fin.le_def]
+      Formula.realize_not, realize_succ hlt, realize_rel₁, realize_lt hlt,
+      realize_le hlt, Sum.elim_inl, Sum.elim_inr, Fin.lt_def, Fin.le_def]
     constructor
     · rintro (⟨y, ⟨⟨hp, hU⟩, hltU⟩, hnotBit⟩ | ⟨y, ⟨⟨⟨hU, hE⟩, hgtU⟩, hleE⟩, hnotCert⟩)
       · have hU' := (huLen (y 1)).1 hU
@@ -456,8 +420,8 @@ theorem realize_inputAtFormula {u w : List Bool}
         decide
   · -- `s = some true`
     simp only [inputAtFormula, Formula.realize_sup, Formula.realize_iExs, Formula.realize_inf,
-      realize_succF hlt, realize_rel₁_var, realize_ltF hlt,
-      realize_leF hlt, Sum.elim_inl, Sum.elim_inr, Fin.lt_def, Fin.le_def]
+      realize_succ hlt, realize_rel₁, realize_lt hlt,
+      realize_le hlt, Sum.elim_inl, Sum.elim_inr, Fin.lt_def, Fin.le_def]
     constructor
     · rintro (⟨y, ⟨⟨hp, hU⟩, hltU⟩, hBit⟩ | ⟨y, ⟨⟨⟨hU, hE⟩, hgtU⟩, hleE⟩, hCert⟩)
       · have hU' := (huLen (y 1)).1 hU
@@ -500,39 +464,35 @@ theorem realize_inputAtFormula {u w : List Bool}
         rw [hcert (env vJ) (by omega) (by omega)]
         exact htrue
 
-/-- Predicate stating that the relation symbols at time `t : Fin B` agree with a configuration
-`cfg : Cfg m Bool State input`. -/
-structure AgreesAt (stateRel : Option State → L'.Relations 1)
-    (outRel : OutView → L'.Relations 1) (inPosRel : L'.Relations 2)
-    (headPosRel headNegRel : Fin m → L'.Relations 2)
-    (cellPosRel cellNegRel : Fin m → Option Bool → L'.Relations 2)
+/-- Predicate stating that the relation symbols of `r` at time `t : Fin B` agree with a
+configuration `cfg : Cfg m Bool State input`. -/
+structure TableauRels.AgreesAt (r : TableauRels L' m State)
     {input : List Bool} (cfg : Cfg m Bool State input) (t : Fin B) : Prop where
-  state : ∀ q : Option State, RelMap (stateRel q) ![t] ↔ (Feature.state q).Holds cfg
-  out : ∀ o : OutView, RelMap (outRel o) ![t] ↔ (Feature.out o).Holds cfg
-  inPos : ∀ j : Fin B, RelMap inPosRel ![t, j] ↔ (Feature.inPos (j : ℕ)).Holds cfg
+  state : ∀ q : Option State, RelMap (r.state q) ![t] ↔ (Feature.state q).Holds cfg
+  out : ∀ o : OutView, RelMap (r.out o) ![t] ↔ (Feature.out o).Holds cfg
+  inPos : ∀ j : Fin B, RelMap r.inPos ![t, j] ↔ (Feature.inPos (j : ℕ)).Holds cfg
   headPos : ∀ (i : Fin m) (a : Fin B),
-    RelMap (headPosRel i) ![t, a] ↔ (Feature.head i (a : ℤ)).Holds cfg
+    RelMap (r.headPos i) ![t, a] ↔ (Feature.head i (a : ℤ)).Holds cfg
   headNeg : ∀ (i : Fin m) (a : Fin B),
-    RelMap (headNegRel i) ![t, a] ↔ (Feature.head i (-(a : ℤ))).Holds cfg
+    RelMap (r.headNeg i) ![t, a] ↔ (Feature.head i (-(a : ℤ))).Holds cfg
   cellPos : ∀ (i : Fin m) (s : Option Bool) (a : Fin B),
-    RelMap (cellPosRel i s) ![t, a] ↔ (Feature.cell i (a : ℤ) s).Holds cfg
+    RelMap (r.cellPos i s) ![t, a] ↔ (Feature.cell i (a : ℤ) s).Holds cfg
   cellNeg : ∀ (i : Fin m) (s : Option Bool) (a : Fin B),
-    RelMap (cellNegRel i s) ![t, a] ↔ (Feature.cell i (-(a : ℤ)) s).Holds cfg
+    RelMap (r.cellNeg i s) ![t, a] ↔ (Feature.cell i (-(a : ℤ)) s).Holds cfg
 
 include hlt in
 /-- Semantic characterization of `inReadFormula` under `AgreesAt`. -/
 theorem realize_inReadFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     (s : Option Bool) {V : Type*} (vT : V) (env : V → Fin B) (ht : env vT = t) :
-    (inReadFormula lt uLenRel uBitRel endPosRel certBitRel inPosRel s vT).Realize env ↔
-      (Feature.inRead s).Holds cfg := by
-  simp only [inReadFormula, Formula.realize_iExs, Formula.realize_inf, realize_rel₂_var,
+    (inReadFormula r s vT).Realize env ↔ (Feature.inRead s).Holds cfg := by
+  simp only [inReadFormula, Formula.realize_iExs, Formula.realize_inf, realize_rel₂,
     realize_inputAtFormula hlt heB huLen huBit hend hcert, Sum.elim_inl, Sum.elim_inr, ht,
     hA.inPos, holds_inPos, holds_inRead, Cfg.inputSymbol_eq_inputAt]
   constructor
@@ -544,13 +504,11 @@ theorem realize_inReadFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)
 
 /-- Semantic characterization of `readFormula` under `AgreesAt`. -/
 theorem realize_readFormula {input : List Bool} {cfg : Cfg m Bool State input} {t : Fin B}
-    (hb : ∀ i : Fin m, |cfg.workTapePos i| < B)
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+    (hb : ∀ i : Fin m, |cfg.workTapePos i| < B) (hA : r.AgreesAt cfg t)
     (i : Fin m) (s : Option Bool) {V : Type*} (vT : V) (env : V → Fin B) (ht : env vT = t) :
-    (readFormula headPosRel headNegRel cellPosRel cellNegRel i s vT).Realize env ↔
-      (Feature.read i s).Holds cfg := by
+    (readFormula r i s vT).Realize env ↔ (Feature.read i s).Holds cfg := by
   simp only [readFormula, Formula.realize_iExs, Formula.realize_sup, Formula.realize_inf,
-    realize_rel₂_var, Sum.elim_inl, Sum.elim_inr, ht,
+    realize_rel₂, Sum.elim_inl, Sum.elim_inr, ht,
     hA.headPos, hA.headNeg, hA.cellPos, hA.cellNeg,
     holds_head, holds_cell, holds_read, Cfg.workTapeSymbols]
   constructor
@@ -572,17 +530,15 @@ include hlt in
 /-- Semantic characterization of `sitFormula` under `AgreesAt`. -/
 theorem realize_sitFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B) (hb : ∀ i : Fin m, |cfg.workTapePos i| < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     (y : Situation m State) {V : Type*} (vT : V) (env : V → Fin B) (ht : env vT = t) :
-    (sitFormula lt uLenRel uBitRel endPosRel certBitRel stateRel inPosRel
-      headPosRel headNegRel cellPosRel cellNegRel y vT).Realize env ↔
-      (Feature.sit y).Holds cfg := by
-  simp only [sitFormula, Formula.realize_inf, Formula.realize_iInf, realize_rel₁_var, ht,
+    (sitFormula r y vT).Realize env ↔ (Feature.sit y).Holds cfg := by
+  simp only [sitFormula, Formula.realize_inf, Formula.realize_iInf, realize_rel₁, ht,
     hA.state, realize_inReadFormula hlt heB huLen huBit hend hcert hA _ vT env ht,
     realize_readFormula hb hA _ _ vT env ht, holds_sit_iff, and_assoc]
 
@@ -590,21 +546,21 @@ include hlt in
 /-- Semantic characterization of `inPosPrevFormula` under `AgreesAt`. -/
 theorem realize_inPosPrevFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B)
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
+    (hA : r.AgreesAt cfg t)
     (d : SignType) {V : Type*} (vT vJ : V) (env : V → Fin B) (ht : env vT = t) :
-    (inPosPrevFormula lt endPosRel inPosRel d vT vJ).Realize env ↔
+    (inPosPrevFormula r d vT vJ).Realize env ↔
       moveInputPosNat (u ++ w).length cfg.inputPos.val d = (env vJ : ℕ) := by
   have hp : cfg.inputPos.val < u.length + w.length + 2 := by simpa using cfg.inputPos.isLt
   have hlen : (u ++ w).length = u.length + w.length := List.length_append
   rcases d with _ | _ | _
   · -- `d = .zero`
-    simp only [inPosPrevFormula, realize_rel₂_var, ht, hA.inPos, holds_inPos,
+    simp only [inPosPrevFormula, realize_rel₂, ht, hA.inPos, holds_inPos,
       moveInputPosNat, SignType.zero_eq_zero, SignType.coe_zero]
     omega
   · -- `d = .neg`
     simp only [inPosPrevFormula, Formula.realize_sup, Formula.realize_inf,
-      realize_isZeroF hlt, Formula.realize_iExs, realize_succF hlt, realize_rel₂_var,
+      realize_isZero hlt, Formula.realize_iExs, realize_succ hlt, realize_rel₂,
       Sum.elim_inl, Sum.elim_inr, ht, hA.inPos, holds_inPos,
       moveInputPosNat, SignType.neg_eq_neg_one, SignType.coe_neg_one]
     constructor
@@ -616,8 +572,8 @@ theorem realize_inPosPrevFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++
         refine ⟨![(⟨cfg.inputPos.val, by omega⟩ : Fin B)], by dsimp; omega, rfl⟩
   · -- `d = .pos`
     simp only [inPosPrevFormula, Formula.realize_sup, Formula.realize_inf,
-      Formula.realize_iExs, realize_rel₁_var, realize_succF hlt, realize_leF hlt,
-      realize_rel₂_var, Sum.elim_inl, Sum.elim_inr, Fin.le_def, ht, hA.inPos, holds_inPos,
+      Formula.realize_iExs, realize_rel₁, realize_succ hlt, realize_le hlt,
+      realize_rel₂, Sum.elim_inl, Sum.elim_inr, Fin.le_def, ht, hA.inPos, holds_inPos,
       moveInputPosNat, SignType.pos_eq_one, SignType.coe_one]
     constructor
     · rintro (⟨y, ⟨hE, hsucc⟩, hpj⟩ | ⟨y, ⟨⟨⟨hE, hle⟩, hsucc⟩, hp0⟩⟩)
@@ -643,17 +599,17 @@ theorem realize_headPrevFormula {headSame headOpp : L'.Relations 2} {t : Fin B}
     (hSame : ∀ a : Fin B, RelMap headSame ![t, a] ↔ pos = sign * (a : ℤ))
     (hOpp : ∀ a : Fin B, RelMap headOpp ![t, a] ↔ pos = -sign * (a : ℤ))
     (d : SignType) {V : Type*} (vT vA : V) (env : V → Fin B) (ht : env vT = t) :
-    (headPrevFormula lt headSame headOpp d vT vA).Realize env ↔
+    (headPrevFormula r headSame headOpp d vT vA).Realize env ↔
       pos + sign * (d : ℤ) = sign * (env vA : ℤ) := by
   have hb' : |pos| < (B : ℤ) - 1 := by omega
   rw [abs_lt] at hb'
   rcases d with _ | _ | _
   · -- `d = .zero`
-    simp only [headPrevFormula, realize_rel₂_var, ht, hSame,
+    simp only [headPrevFormula, realize_rel₂, ht, hSame,
       SignType.zero_eq_zero, SignType.coe_zero, mul_zero, add_zero]
   · -- `d = .neg`
     simp only [headPrevFormula, Formula.realize_iExs, Formula.realize_inf,
-      realize_succF hlt, realize_rel₂_var, Sum.elim_inl, Sum.elim_inr, ht, hSame,
+      realize_succ hlt, realize_rel₂, Sum.elim_inl, Sum.elim_inr, ht, hSame,
       SignType.neg_eq_neg_one, SignType.coe_neg_one]
     constructor
     · rintro ⟨y, hsucc, hpos⟩
@@ -665,7 +621,7 @@ theorem realize_headPrevFormula {headSame headOpp : L'.Relations 2} {t : Fin B}
       rcases hsign with rfl | rfl <;> omega
   · -- `d = .pos`
     simp only [headPrevFormula, Formula.realize_sup, Formula.realize_inf,
-      realize_isZeroF hlt, Formula.realize_iExs, realize_succF hlt, realize_rel₂_var,
+      realize_isZero hlt, Formula.realize_iExs, realize_succ hlt, realize_rel₂,
       Sum.elim_inl, Sum.elim_inr, ht, hSame, hOpp,
       SignType.pos_eq_one, SignType.coe_one, mul_one]
     constructor
@@ -690,18 +646,16 @@ include hlt in
 theorem realize_stateStepRHS [DecidableEq State]
     {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B) (hb : ∀ i : Fin m, |cfg.workTapePos i| < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     (q' : Option State) {V : Type*} (vT : V) (env : V → Fin B) (ht : env vT = t) :
-    (stateStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-      headPosRel headNegRel cellPosRel cellNegRel q' vT).Realize env ↔
-      (Feature.state q').Holds (tm.step cfg) := by
+    (stateStepRHS r tm q' vT).Realize env ↔ (Feature.state q').Holds (tm.step cfg) := by
   simp only [stateStepRHS, Formula.realize_sup, Formula.realize_inf, Formula.realize_iSup,
-    realize_rel₁_var, ht, hA.state,
+    realize_rel₁, ht, hA.state,
     realize_sitFormula hlt heB hb huLen huBit hend hcert hA _ vT env ht]
   rw [holds_step_state_iff tm q']
   refine or_congr ⟨fun ⟨h, hq⟩ => ⟨h, by split_ifs at hq with h' <;> simp_all⟩,
@@ -714,20 +668,17 @@ include hlt in
 /-- Semantic characterization of `outStepRHS` under `AgreesAt`. -/
 theorem realize_outStepRHS {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B) (hb : ∀ i : Fin m, |cfg.workTapePos i| < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     (o : OutView) {V : Type*} (vT : V) (env : V → Fin B) (ht : env vT = t) :
-    letI := Classical.typeDecidableEq State
-    (outStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel outRel inPosRel
-      headPosRel headNegRel cellPosRel cellNegRel o vT).Realize env ↔
-      (Feature.out o).Holds (tm.step cfg) := by
+    (outStepRHS r tm o vT).Realize env ↔ (Feature.out o).Holds (tm.step cfg) := by
   classical
   simp only [outStepRHS, Formula.realize_sup, Formula.realize_inf, Formula.realize_iSup,
-    realize_rel₁_var, ht, hA.state, hA.out,
+    realize_rel₁, ht, hA.state, hA.out,
     realize_sitFormula hlt heB hb huLen huBit hend hcert hA _ vT env ht]
   rw [holds_step_out_iff tm o]
   refine or_congr Iff.rfl ?_
@@ -740,20 +691,17 @@ include hlt in
 /-- Semantic characterization of `inPosStepRHS` under `AgreesAt`. -/
 theorem realize_inPosStepRHS {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B) (hb : ∀ i : Fin m, |cfg.workTapePos i| < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     {V : Type*} (vT vJ : V) (env : V → Fin B) (ht : env vT = t) :
-    letI := Classical.typeDecidableEq State
-    (inPosStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-      headPosRel headNegRel cellPosRel cellNegRel vT vJ).Realize env ↔
-      (Feature.inPos (env vJ : ℕ)).Holds (tm.step cfg) := by
+    (inPosStepRHS r tm vT vJ).Realize env ↔ (Feature.inPos (env vJ : ℕ)).Holds (tm.step cfg) := by
   classical
   simp only [inPosStepRHS, Formula.realize_sup, Formula.realize_inf, Formula.realize_iSup,
-    realize_rel₁_var, realize_rel₂_var, ht, hA.state, hA.inPos,
+    realize_rel₁, realize_rel₂, ht, hA.state, hA.inPos,
     realize_sitFormula hlt heB hb huLen huBit hend hcert hA _ vT env ht,
     realize_inPosPrevFormula hlt heB hend hA _ vT vJ env ht]
   rcases hq : cfg.state with _ | q
@@ -765,28 +713,25 @@ include hlt in
 /-- Semantic characterization of `headStepRHS` (positive orientation) under `AgreesAt`. -/
 theorem realize_headPosStepRHS {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B) (hb : ∀ i : Fin m, |cfg.workTapePos i| + 1 < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     (i : Fin m) {V : Type*} (vT vA : V) (env : V → Fin B) (ht : env vT = t) :
-    letI := Classical.typeDecidableEq State
-    (headStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-      headPosRel headNegRel cellPosRel cellNegRel
-      (headPosRel i) (headNegRel i) .pos i vT vA).Realize env ↔
+    (headStepRHS r tm (r.headPos i) (r.headNeg i) .pos i vT vA).Realize env ↔
       (Feature.head i (env vA : ℤ)).Holds (tm.step cfg) := by
   classical
   have hb' : ∀ i : Fin m, |cfg.workTapePos i| < B := fun i => by have := hb i; omega
   have hSame : ∀ a' : Fin B,
-      RelMap (headPosRel i) ![t, a'] ↔ cfg.workTapePos i = 1 * (a' : ℤ) := by
+      RelMap (r.headPos i) ![t, a'] ↔ cfg.workTapePos i = 1 * (a' : ℤ) := by
     intro a'; simpa using hA.headPos i a'
   have hOpp : ∀ a' : Fin B,
-      RelMap (headNegRel i) ![t, a'] ↔ cfg.workTapePos i = -1 * (a' : ℤ) := by
+      RelMap (r.headNeg i) ![t, a'] ↔ cfg.workTapePos i = -1 * (a' : ℤ) := by
     intro a'; simpa using hA.headNeg i a'
   simp only [headStepRHS, Formula.realize_sup, Formula.realize_inf, Formula.realize_iSup,
-    realize_rel₁_var, realize_rel₂_var, ht, hA.state, hA.headPos,
+    realize_rel₁, realize_rel₂, ht, hA.state, hA.headPos,
     realize_sitFormula hlt heB hb' huLen huBit hend hcert hA _ vT env ht,
     realize_headPrevFormula hlt (hb i) (Or.inl rfl) hSame hOpp _ vT vA env ht,
     SignType.pos_eq_one, one_mul]
@@ -799,30 +744,27 @@ include hlt in
 /-- Semantic characterization of `headStepRHS` (negative orientation) under `AgreesAt`. -/
 theorem realize_headNegStepRHS {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B) (hb : ∀ i : Fin m, |cfg.workTapePos i| + 1 < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     (i : Fin m) {V : Type*} (vT vA : V) (env : V → Fin B) (ht : env vT = t) :
-    letI := Classical.typeDecidableEq State
-    (headStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-      headPosRel headNegRel cellPosRel cellNegRel
-      (headNegRel i) (headPosRel i) .neg i vT vA).Realize env ↔
+    (headStepRHS r tm (r.headNeg i) (r.headPos i) .neg i vT vA).Realize env ↔
       (Feature.head i (-(env vA : ℤ))).Holds (tm.step cfg) := by
   classical
   have hb' : ∀ i : Fin m, |cfg.workTapePos i| < B := fun i => by have := hb i; omega
   have hSame : ∀ a' : Fin B,
-      RelMap (headNegRel i) ![t, a'] ↔ cfg.workTapePos i = -1 * (a' : ℤ) := by
+      RelMap (r.headNeg i) ![t, a'] ↔ cfg.workTapePos i = -1 * (a' : ℤ) := by
     intro a'; simpa using hA.headNeg i a'
   have hOpp : ∀ a' : Fin B,
-      RelMap (headPosRel i) ![t, a'] ↔ cfg.workTapePos i = -(-1) * (a' : ℤ) := by
+      RelMap (r.headPos i) ![t, a'] ↔ cfg.workTapePos i = -(-1) * (a' : ℤ) := by
     intro a'; simpa using hA.headPos i a'
   have hneg_coe : ∀ d : SignType, ((-1 : ℤ) * ((SignType.neg * d : SignType) : ℤ)) = (d : ℤ) := by
     rintro (_ | _ | _) <;> rfl
   simp only [headStepRHS, Formula.realize_sup, Formula.realize_inf, Formula.realize_iSup,
-    realize_rel₁_var, realize_rel₂_var, ht, hA.state, hA.headNeg,
+    realize_rel₁, realize_rel₂, ht, hA.state, hA.headNeg,
     realize_sitFormula hlt heB hb' huLen huBit hend hcert hA _ vT env ht,
     realize_headPrevFormula hlt (hb i) (Or.inr rfl) hSame hOpp _ vT vA env ht,
     hneg_coe, neg_one_mul]
@@ -835,25 +777,22 @@ include hlt in
 /-- Semantic characterization of `cellStepRHS` under `AgreesAt`. -/
 theorem realize_cellStepRHS {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
     (heB : u.length + w.length + 1 < B) (hb : ∀ i : Fin m, |cfg.workTapePos i| < B)
-    (huLen : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
-    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap uBitRel ![p] ↔ u[(p : ℕ)]? = some true))
-    (hend : ∀ z : Fin B, RelMap endPosRel ![z] ↔ (z : ℕ) = u.length + w.length)
+    (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
+    (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
+    (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-      (RelMap certBitRel ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
-    (hA : AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel cfg t)
+      (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true))
+    (hA : r.AgreesAt cfg t)
     (i : Fin m) (s : Option Bool) (z : ℤ)
     (headSame : L'.Relations 2) (cellSame : Option Bool → L'.Relations 2)
     {V : Type*} (vT vA : V) (env : V → Fin B) (ht : env vT = t)
     (hhead : RelMap headSame ![t, env vA] ↔ (Feature.head i z).Holds cfg)
     (hcell : ∀ s', RelMap (cellSame s') ![t, env vA] ↔ (Feature.cell i z s').Holds cfg) :
-    letI := Classical.typeDecidableEq State
-    (cellStepRHS lt uLenRel uBitRel endPosRel certBitRel tm stateRel inPosRel
-      headPosRel headNegRel cellPosRel cellNegRel
-      headSame cellSame i s vT vA).Realize env ↔
+    (cellStepRHS r tm headSame cellSame i s vT vA).Realize env ↔
       (Feature.cell i z s).Holds (tm.step cfg) := by
   classical
   simp only [cellStepRHS, Formula.realize_sup, Formula.realize_inf, Formula.realize_not,
-    Formula.realize_iSup, realize_rel₁_var, realize_rel₂_var, ht, hA.state, hhead, hcell,
+    Formula.realize_iSup, realize_rel₁, realize_rel₂, ht, hA.state, hhead, hcell,
     realize_sitFormula hlt heB hb huLen huBit hend hcert hA _ vT env ht]
   rw [holds_step_cell_iff tm z s]
   refine or_congr Iff.rfl ?_
@@ -864,14 +803,11 @@ theorem realize_cellStepRHS {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} 
 
 include hlt in
 /-- Semantic characterization of `initSentence`: it holds iff `AgreesAt` holds at `t = 0`. -/
-theorem realize_initSentence_iff [DecidableEq State] {input : List Bool} (hB1 : 1 < B) :
-    (Fin B) ⊨ initSentence lt tm stateRel outRel inPosRel headPosRel headNegRel
-      cellPosRel cellNegRel ↔
-      AgreesAt stateRel outRel inPosRel headPosRel headNegRel cellPosRel cellNegRel
-        (tm.initCfg input) (⟨0, by omega⟩ : Fin B) := by
+theorem realize_initSentence [DecidableEq State] {input : List Bool} (hB1 : 1 < B) :
+    (Fin B) ⊨ initSentence r tm ↔ r.AgreesAt (tm.initCfg input) (⟨0, by omega⟩ : Fin B) := by
   simp only [initSentence, realize_closeAll, Formula.realize_imp, Formula.realize_inf,
     Formula.realize_iInf, Formula.realize_iff, Formula.realize_iAlls, Formula.realize_iExs,
-    realize_isZeroF hlt, realize_rel₁_var, realize_rel₂_var, realize_succF hlt,
+    realize_isZero hlt, realize_rel₁, realize_rel₂, realize_succ hlt,
     Sum.elim_inl, Sum.elim_inr]
   have h1_iff : ∀ j : Fin B,
       (∃ y : Fin 1 → Fin B, (y 0 : ℕ) = 0 ∧ (j : ℕ) = (y 0 : ℕ) + 1) ↔ (j : ℕ) = 1 := by
@@ -937,65 +873,25 @@ variable {L₀ : Language.{0, 0}} (lt : L₀.Relations 2) (uLenRel uBitRel : L�
 abbrev tableauMatrixLanguage (m : ℕ) (State : Type) : Language.{0, 0} :=
   L₀.sum (ESO.varLanguage (arity := tableauArity m State))
 
-/-- `lt` in `tableauMatrixLanguage`. -/
-def tableauLt : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 2 :=
-  Sum.inl lt
-
-/-- `uLenRel` in `tableauMatrixLanguage`. -/
-def tableauULen : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 1 :=
-  Sum.inl uLenRel
-
-/-- `uBitRel` in `tableauMatrixLanguage`. -/
-def tableauUBit : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 1 :=
-  Sum.inl uBitRel
-
-/-- `endPos` relation variable in `tableauMatrixLanguage`. -/
-def tableauEndPos : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 1 :=
-  Sum.inr ⟨.inl (.inl ()), rfl⟩
-
-/-- `certBit` relation variable in `tableauMatrixLanguage`. -/
-def tableauCertBit : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 1 :=
-  Sum.inr ⟨.inl (.inr (.inl ())), rfl⟩
-
-/-- `state q` relation variable in `tableauMatrixLanguage`. -/
-def tableauState (q : Option State) : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 1 :=
-  Sum.inr ⟨.inl (.inr (.inr (.inl q))), rfl⟩
-
-/-- `out o` relation variable in `tableauMatrixLanguage`. -/
-def tableauOut (o : OutView) : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 1 :=
-  Sum.inr ⟨.inl (.inr (.inr (.inr o))), rfl⟩
-
-/-- `inPos` relation variable in `tableauMatrixLanguage`. -/
-def tableauInPos : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 2 :=
-  Sum.inr ⟨.inr (.inl ()), rfl⟩
-
-/-- `head i (+a)` relation variable in `tableauMatrixLanguage`. -/
-def tableauHeadPos (i : Fin m) : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 2 :=
-  Sum.inr ⟨.inr (.inr (.inl i)), rfl⟩
-
-/-- `head i (-a)` relation variable in `tableauMatrixLanguage`. -/
-def tableauHeadNeg (i : Fin m) : (tableauMatrixLanguage (L₀ := L₀) m State).Relations 2 :=
-  Sum.inr ⟨.inr (.inr (.inr (.inl i))), rfl⟩
-
-/-- `cell i (+a) s` relation variable in `tableauMatrixLanguage`. -/
-def tableauCellPos (i : Fin m) (s : Option Bool) :
-    (tableauMatrixLanguage (L₀ := L₀) m State).Relations 2 :=
-  Sum.inr ⟨.inr (.inr (.inr (.inr (.inl (i, s))))), rfl⟩
-
-/-- `cell i (-a) s` relation variable in `tableauMatrixLanguage`. -/
-def tableauCellNeg (i : Fin m) (s : Option Bool) :
-    (tableauMatrixLanguage (L₀ := L₀) m State).Relations 2 :=
-  Sum.inr ⟨.inr (.inr (.inr (.inr (.inr (i, s))))), rfl⟩
+/-- The canonical `TableauRels` bundle in `tableauMatrixLanguage`. -/
+def tableauRels : TableauRels (tableauMatrixLanguage (L₀ := L₀) m State) m State where
+  lt := Sum.inl lt
+  uLen := Sum.inl uLenRel
+  uBit := Sum.inl uBitRel
+  endPos := Sum.inr ⟨.inl (.inl ()), rfl⟩
+  certBit := Sum.inr ⟨.inl (.inr (.inl ())), rfl⟩
+  state q := Sum.inr ⟨.inl (.inr (.inr (.inl q))), rfl⟩
+  out o := Sum.inr ⟨.inl (.inr (.inr (.inr o))), rfl⟩
+  inPos := Sum.inr ⟨.inr (.inl ()), rfl⟩
+  headPos i := Sum.inr ⟨.inr (.inr (.inl i)), rfl⟩
+  headNeg i := Sum.inr ⟨.inr (.inr (.inr (.inl i))), rfl⟩
+  cellPos i s := Sum.inr ⟨.inr (.inr (.inr (.inr (.inl (i, s))))), rfl⟩
+  cellNeg i s := Sum.inr ⟨.inr (.inr (.inr (.inr (.inr (i, s))))), rfl⟩
 
 /-- The first-order matrix of `tableauESOSentence`. -/
 noncomputable def tableauMatrix : (tableauMatrixLanguage (L₀ := L₀) m State).Sentence :=
-  endPosSentence (tableauLt lt) (tableauULen uLenRel) tableauEndPos ⊓
-    initSentence (tableauLt lt) tm tableauState tableauOut tableauInPos
-      tableauHeadPos tableauHeadNeg tableauCellPos tableauCellNeg ⊓
-    stepSentence (tableauLt lt) (tableauULen uLenRel) (tableauUBit uBitRel)
-      tableauEndPos tableauCertBit tm tableauState tableauOut tableauInPos
-      tableauHeadPos tableauHeadNeg tableauCellPos tableauCellNeg ⊓
-    acceptSentence (tableauLt lt) tableauState tableauOut
+  let r := tableauRels (m := m) (State := State) lt uLenRel uBitRel
+  endPosSentence r ⊓ initSentence r tm ⊓ stepSentence r tm ⊓ acceptSentence r
 
 /-- The existential second-order sentence asserting that `tm`, started on `u ++ w` for some
 certificate `w` with `u.length + w.length + 1 < B`, halts within `B - 1` steps with output
@@ -1006,7 +902,7 @@ noncomputable def tableauESOSentence : ESO.Sentence L₀ where
   matrix := tableauMatrix lt uLenRel uBitRel tm
 
 /-- **Correctness of `tableauESOSentence` on `Fin B`.** -/
-theorem realize_tableauESOSentence_iff {B : ℕ} [L₀.Structure (Fin B)]
+theorem realize_tableauESOSentence {B : ℕ} [L₀.Structure (Fin B)]
     (hlt0 : ∀ x : Fin 2 → Fin B, RelMap lt x ↔ x 0 < x 1)
     {u : List Bool} (huB : u.length + 1 < B)
     (huLen0 : ∀ z : Fin B, RelMap uLenRel ![z] ↔ (z : ℕ) = u.length)
@@ -1017,38 +913,33 @@ theorem realize_tableauESOSentence_iff {B : ℕ} [L₀.Structure (Fin B)]
         (tm.runFrom (tm.initCfg (u ++ w)) (B - 1)).output = [true] := by
   classical
   have hB1 : 1 < B := by omega
+  let r := tableauRels (m := m) (State := State) lt uLenRel uBitRel
   rw [tableauESOSentence, ESO.Sentence.Realize]
   constructor
   · -- Soundness
     rintro ⟨R, hmat⟩
     let _ := ESO.varLanguage.structure (arity := tableauArity m State) R
-    have hlt : ∀ x : Fin 2 → Fin B, RelMap (tableauLt lt (m := m) (State := State)) x ↔ x 0 < x 1 :=
-      hlt0
-    have huLen : ∀ z : Fin B,
-        RelMap (tableauULen uLenRel (m := m) (State := State)) ![z] ↔ (z : ℕ) = u.length := huLen0
+    have hlt : ∀ x : Fin 2 → Fin B,
+        RelMap (tableauRels (m := m) (State := State) lt uLenRel uBitRel).lt x ↔ x 0 < x 1 := hlt0
+    have huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length := huLen0
     have huBit : ∀ p : Fin B, (p : ℕ) < u.length →
-        (RelMap (tableauUBit uBitRel (m := m) (State := State)) ![p] ↔ u[(p : ℕ)]? = some true) :=
-      huBit0
+        (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true) := huBit0
     simp only [tableauMatrix, Sentence.realize_inf] at hmat
     obtain ⟨⟨⟨hendSent, hinitSent⟩, hstepSent⟩, haccSent⟩ := hmat
-    obtain ⟨e, hle_e, heB, hend⟩ := realize_endPosSentence_imp hlt huLen hendSent
+    obtain ⟨e, hle_e, heB, hend⟩ := exists_of_realize_endPosSentence hlt huLen hendSent
     let L := (e : ℕ) - u.length
     have he_eq : u.length + L = (e : ℕ) := by omega
     let w : List Bool :=
       (List.range L).map fun k =>
         if hk : u.length + 1 + k < B then
-          decide (RelMap (tableauCertBit (L₀ := L₀) (m := m) (State := State))
-            ![(⟨u.length + 1 + k, hk⟩ : Fin B)])
+          decide (RelMap r.certBit ![(⟨u.length + 1 + k, hk⟩ : Fin B)])
         else false
     have hw_len : w.length = L := by simp [w]
     have hwB : u.length + w.length + 1 < B := by omega
-    have hend' : ∀ z : Fin B,
-        RelMap (tableauEndPos (L₀ := L₀) (m := m) (State := State)) ![z] ↔
-          (z : ℕ) = u.length + w.length := by
+    have hend' : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length := by
       intro z; rw [hend z, hw_len, he_eq]
     have hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-        (RelMap (tableauCertBit (L₀ := L₀) (m := m) (State := State)) ![j] ↔
-          w[(j : ℕ) - 1 - u.length]? = some true) := by
+        (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true) := by
       intro j hgt hle
       have hk_lt : (j : ℕ) - 1 - u.length < L := by omega
       have hj_eq : u.length + 1 + ((j : ℕ) - 1 - u.length) = (j : ℕ) := by omega
@@ -1060,17 +951,15 @@ theorem realize_tableauESOSentence_iff {B : ℕ} [L₀.Structure (Fin B)]
       rw [hfin_eq]
     -- Unpack `stepSentence` at any `(t, t')` with `t' = t + 1`.
     simp only [stepSentence, realize_closeAll, Formula.realize_imp, Formula.realize_inf,
-      Formula.realize_iInf, Formula.realize_iff, Formula.realize_iAlls, realize_succF hlt,
-      realize_rel₁_var, realize_rel₂_var, Sum.elim_inl, Sum.elim_inr] at hstepSent
+      Formula.realize_iInf, Formula.realize_iff, Formula.realize_iAlls, realize_succ hlt,
+      realize_rel₁, realize_rel₂, Sum.elim_inl, Sum.elim_inr] at hstepSent
     -- Prove `AgreesAt` by induction on `n < B`.
     have hAgrees : ∀ (n : ℕ) (hn : n < B),
-        AgreesAt (tableauState (L₀ := L₀)) tableauOut tableauInPos tableauHeadPos tableauHeadNeg
-          tableauCellPos tableauCellNeg
-          (tm.runFrom (tm.initCfg (u ++ w)) n) ⟨n, hn⟩ := by
+        r.AgreesAt (tm.runFrom (tm.initCfg (u ++ w)) n) ⟨n, hn⟩ := by
       intro n hn
       induction n with
       | zero =>
-        simpa [runFrom] using (realize_initSentence_iff hlt hB1).1 hinitSent
+        simpa [runFrom] using (realize_initSentence hlt hB1).1 hinitSent
       | succ n ih =>
         let t : Fin B := ⟨n, by omega⟩
         let t' : Fin B := ⟨n + 1, hn⟩
@@ -1102,18 +991,18 @@ theorem realize_tableauESOSentence_iff {B : ℕ} [L₀.Structure (Fin B)]
               (.inl 0) (.inr 0) (Sum.elim ![t, t'] ![a]) rfl)
         · exact ((hs_work i ![a]).2 s).1.trans
             (realize_cellStepRHS hlt hwB hb' huLen huBit hend' hcert hA_t i s (a : ℤ)
-              (tableauHeadPos i) (tableauCellPos i)
+              (r.headPos i) (r.cellPos i)
               (.inl 0 : Fin 2 ⊕ Fin 1) (.inr 0) (Sum.elim ![t, t'] ![a]) rfl
               (hA_t.headPos i a) (fun s' => hA_t.cellPos i s' a))
         · exact ((hs_work i ![a]).2 s).2.trans
             (realize_cellStepRHS hlt hwB hb' huLen huBit hend' hcert hA_t i s (-(a : ℤ))
-              (tableauHeadNeg i) (tableauCellNeg i)
+              (r.headNeg i) (r.cellNeg i)
               (.inl 0 : Fin 2 ⊕ Fin 1) (.inr 0) (Sum.elim ![t, t'] ![a]) rfl
               (hA_t.headNeg i a) (fun s' => hA_t.cellNeg i s' a))
     -- Specialize `hAgrees` at `B - 1`.
     have hA_last := hAgrees (B - 1) (by omega)
     simp only [acceptSentence, realize_closeAll, Formula.realize_imp, Formula.realize_inf,
-      realize_isMaxF hlt, realize_rel₁_var] at haccSent
+      realize_isMax hlt, realize_rel₁] at haccSent
     obtain ⟨hstate_last, hout_last⟩ := haccSent ![(⟨B - 1, by omega⟩ : Fin B)] (by dsimp)
     refine ⟨w, hwB, (hA_last.state none).1 hstate_last, ?_⟩
     exact OutView.ofList_eq_one_iff.1 ((hA_last.out (.one true)).1 hout_last)
@@ -1141,32 +1030,26 @@ theorem realize_tableauESOSentence_iff {B : ℕ} [L₀.Structure (Fin B)]
         {x : Fin 2 → Fin B | (Feature.cell i (-(x 1 : ℤ)) s).Holds (cfgAt (x 0))}
     refine ⟨R, ?_⟩
     let _ := ESO.varLanguage.structure (arity := tableauArity m State) R
-    have hlt : ∀ x : Fin 2 → Fin B, RelMap (tableauLt lt (m := m) (State := State)) x ↔ x 0 < x 1 :=
-      hlt0
-    have huLen : ∀ z : Fin B,
-        RelMap (tableauULen uLenRel (m := m) (State := State)) ![z] ↔ (z : ℕ) = u.length := huLen0
+    have hlt : ∀ x : Fin 2 → Fin B,
+        RelMap (tableauRels (m := m) (State := State) lt uLenRel uBitRel).lt x ↔ x 0 < x 1 := hlt0
+    have huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length := huLen0
     have huBit : ∀ p : Fin B, (p : ℕ) < u.length →
-        (RelMap (tableauUBit uBitRel (m := m) (State := State)) ![p] ↔ u[(p : ℕ)]? = some true) :=
-      huBit0
-    have hend : ∀ z : Fin B,
-        RelMap (tableauEndPos (L₀ := L₀) (m := m) (State := State)) ![z] ↔
-          (z : ℕ) = u.length + w.length := fun _ => Iff.rfl
+        (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true) := huBit0
+    have hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length :=
+      fun _ => Iff.rfl
     have hcert : ∀ j : Fin B, u.length < (j : ℕ) → (j : ℕ) ≤ u.length + w.length →
-        (RelMap (tableauCertBit (L₀ := L₀) (m := m) (State := State)) ![j] ↔
-          w[(j : ℕ) - 1 - u.length]? = some true) := fun _ _ _ => Iff.rfl
-    have hAgrees : ∀ t : Fin B,
-        AgreesAt (tableauState (L₀ := L₀)) tableauOut tableauInPos tableauHeadPos tableauHeadNeg
-          tableauCellPos tableauCellNeg (cfgAt t) t := by
-      intro t
-      exact ⟨fun _ => Iff.rfl, fun _ => Iff.rfl, fun _ => Iff.rfl, fun _ _ => Iff.rfl,
+        (RelMap r.certBit ![j] ↔ w[(j : ℕ) - 1 - u.length]? = some true) :=
+      fun _ _ _ => Iff.rfl
+    have hAgrees : ∀ t : Fin B, r.AgreesAt (cfgAt t) t := fun _ =>
+      ⟨fun _ => Iff.rfl, fun _ => Iff.rfl, fun _ => Iff.rfl, fun _ _ => Iff.rfl,
         fun _ _ => Iff.rfl, fun _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl⟩
     simp only [tableauMatrix, Sentence.realize_inf]
     refine ⟨⟨⟨?_, ?_⟩, ?_⟩, ?_⟩
     · exact realize_endPosSentence_of_canonical hlt (Nat.le_add_right _ _) hwB huLen hend
-    · exact (realize_initSentence_iff hlt hB1).2 (hAgrees ⟨0, by omega⟩)
+    · exact (realize_initSentence hlt hB1).2 (hAgrees ⟨0, by omega⟩)
     · simp only [stepSentence, realize_closeAll, Formula.realize_imp, Formula.realize_inf,
-        Formula.realize_iInf, Formula.realize_iff, Formula.realize_iAlls, realize_succF hlt,
-        realize_rel₁_var, realize_rel₂_var, Sum.elim_inl, Sum.elim_inr]
+        Formula.realize_iInf, Formula.realize_iff, Formula.realize_iAlls, realize_succ hlt,
+        realize_rel₁, realize_rel₂, Sum.elim_inl, Sum.elim_inr]
       intro y hsucc
       let t := y 0
       let t' := y 1
@@ -1181,8 +1064,7 @@ theorem realize_tableauESOSentence_iff {B : ℕ} [L₀.Structure (Fin B)]
       have hstep_eq : cfgAt t' = tm.step (cfgAt t) := by
         dsimp [cfgAt]
         rw [hsucc, runFrom_succ]
-      have hA_t' : AgreesAt (tableauState (L₀ := L₀)) tableauOut tableauInPos
-          tableauHeadPos tableauHeadNeg tableauCellPos tableauCellNeg (tm.step (cfgAt t)) t' := by
+      have hA_t' : r.AgreesAt (tm.step (cfgAt t)) t' := by
         rw [← hstep_eq]
         exact hAgrees t'
       refine ⟨⟨⟨fun q' => ?_, fun o => ?_⟩, fun yJ => ?_⟩,
@@ -1202,16 +1084,16 @@ theorem realize_tableauESOSentence_iff {B : ℕ} [L₀.Structure (Fin B)]
             (.inl 0) (.inr 0) (Sum.elim y yA) rfl).symm
       · exact (hA_t'.cellPos i s (yA 0)).trans
           (realize_cellStepRHS hlt hwB hb' huLen huBit hend hcert hA_t i s (yA 0 : ℤ)
-            (tableauHeadPos i) (tableauCellPos i)
+            (r.headPos i) (r.cellPos i)
             (.inl 0 : Fin 2 ⊕ Fin 1) (.inr 0) (Sum.elim y yA) rfl
             (hA_t.headPos i (yA 0)) (fun s' => hA_t.cellPos i s' (yA 0))).symm
       · exact (hA_t'.cellNeg i s (yA 0)).trans
           (realize_cellStepRHS hlt hwB hb' huLen huBit hend hcert hA_t i s (-(yA 0 : ℤ))
-            (tableauHeadNeg i) (tableauCellNeg i)
+            (r.headNeg i) (r.cellNeg i)
             (.inl 0 : Fin 2 ⊕ Fin 1) (.inr 0) (Sum.elim y yA) rfl
             (hA_t.headNeg i (yA 0)) (fun s' => hA_t.cellNeg i s' (yA 0))).symm
     · simp only [acceptSentence, realize_closeAll, Formula.realize_imp, Formula.realize_inf,
-        realize_isMaxF hlt, realize_rel₁_var]
+        realize_isMax hlt, realize_rel₁]
       intro y hmax
       change (Feature.state none).Holds (tm.runFrom (tm.initCfg (u ++ w)) (y 0 : ℕ)) ∧
         (Feature.out (.one true)).Holds (tm.runFrom (tm.initCfg (u ++ w)) (y 0 : ℕ))
@@ -1238,7 +1120,7 @@ noncomputable def tableauESOSentence :
 specification for `u`, `(v.tableauESOSentence tm).Realize (Fin B)` holds if and only if
 `CookLevin.tableau tm u L (B - 1)` is satisfiable for some certificate length `L` with
 `u.length + L + 1 < B`. -/
-theorem realize_tableauESOSentence_iff (a : EncodedStructure) (B : ℕ)
+theorem realize_tableauESOSentence (a : EncodedStructure) (B : ℕ)
     (I_in : ∀ b : Bool, Set (Fin ((fun _ : Bool => 1) b) → Fin B))
     {u : List Bool} (huB : u.length + 1 < B)
     (huLen : ∀ z : Fin B, ![z] ∈ I_in true ↔ (z : ℕ) = u.length)
@@ -1251,7 +1133,7 @@ theorem realize_tableauESOSentence_iff (a : EncodedStructure) (B : ℕ)
         (CookLevin.tableau tm u L (B - 1)).Satisfiable := by
   let _ := v.powerStructure a B
   let _ := ESO.varLanguage.structure (arity := fun _ : Bool => 1) I_in
-  have h := FO.realize_tableauESOSentence_iff (L₀ := v.powerLanguage.sum inputVarLanguage)
+  have h := FO.realize_tableauESOSentence (L₀ := v.powerLanguage.sum inputVarLanguage)
     (Sum.inl v.powerLt) (Sum.inr uLenSym) (Sum.inr uBitSym) tm
     (fun _ => Iff.rfl) huB huLen huBit
   rw [tableauESOSentence, h]
