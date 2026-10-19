@@ -17,10 +17,11 @@ import Mathlib.Tactic.Ring
 An integer-valued function of the output of a decision tree of depth `d` has Fourier coefficients
 that are integer multiples of `2 ^ (-d)`
 (`DecisionTree.exists_fourierCoeff_eq_intCast_div_two_pow_depth`): a leaf has integer
-coefficients, and each node averages coefficients of its subtrees, halving the denominator. In
-particular a Boolean function computed by a decision tree of depth `d`, read as signs, has
-coefficients in `2 ^ (-d) ℤ`
-(`DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth`)
+coefficients, and each node averages coefficients of its subtrees, halving the denominator. A bit
+read as a sign is `signVal b = 1 - 2 [b]`, one minus twice an integer, so a Boolean function
+computed by a decision tree of depth `d ≥ 1`, read as signs, has coefficients in `2 ^ (1 - d) ℤ`,
+and one computed by a tree of depth `0` has integer coefficients
+(`DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one`)
 [O'Donnell, Section 3.2][ODonnell2014]. The depth is structural, so unreachable paths only weaken
 the bound.
 
@@ -28,8 +29,8 @@ the bound.
 
 * `Cslib.DecisionTree.exists_fourierCoeff_eq_intCast_div_two_pow_depth`: granularity for
   integer-valued functions of decision trees.
-* `Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth`: granularity for
-  Boolean functions of decision trees.
+* `Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one`:
+  granularity for Boolean functions of decision trees.
 
 ## References
 
@@ -78,16 +79,26 @@ theorem exists_fourierCoeff_eq_intCast_div_two_pow_depth (g : β → ℤ) (t : D
     ring
 
 /-- **Granularity of decision trees** for Boolean functions: a Boolean function of the output of
-a decision tree of depth `d`, read as signs, has Fourier coefficients in `2 ^ (-d) ℤ`
-[O'Donnell, Section 3.2][ODonnell2014]. -/
-theorem exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth (g : β → Bool)
+a decision tree of depth `d`, read as signs, has Fourier coefficients in `2 ^ (1 - d) ℤ` when
+`d ≥ 1`, and integer coefficients when `d = 0` [O'Donnell, Section 3.2][ODonnell2014]. -/
+theorem exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one (g : β → Bool)
     (t : DecisionTree ι β) (S : Finset ι) :
-    ∃ m : ℤ, fourierCoeff (fun x => signVal (g (t.eval x))) S = m / 2 ^ t.depth := by
+    ∃ m : ℤ, fourierCoeff (fun x => signVal (g (t.eval x))) S = m / 2 ^ (t.depth - 1) := by
+  obtain ⟨m, hm⟩ : ∃ m : ℤ, fourierCoeff (fun x => ((if g (t.eval x) then 1 else 0 : ℤ) : ℝ)) S =
+      m / 2 ^ (t.depth - 1 + 1) :=
+    exists_eq_intCast_div_two_pow_of_le
+      (exists_fourierCoeff_eq_intCast_div_two_pow_depth (fun b => if g b then 1 else 0) t S)
+      (by omega)
   have h : (fun x => signVal (g (t.eval x))) =
-      fun x => ((if g (t.eval x) then -1 else 1 : ℤ) : ℝ) := by
+      fun x => 1 - 2 * ((if g (t.eval x) then 1 else 0 : ℤ) : ℝ) := by
     funext x
-    cases hb : g (t.eval x) <;> simp
-  rw [h]
-  exact exists_fourierCoeff_eq_intCast_div_two_pow_depth (fun b => if g b then -1 else 1) t S
+    cases g (t.eval x) <;> norm_num
+  refine ⟨(if S = ∅ then 2 ^ (t.depth - 1) else 0) - m, ?_⟩
+  rw [h, fourierCoeff_sub, fourierCoeff_const, fourierCoeff_const_mul, hm, pow_succ]
+  split_ifs
+  · push_cast
+    field_simp
+  · push_cast
+    ring
 
 end Cslib.DecisionTree

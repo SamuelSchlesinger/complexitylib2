@@ -10166,11 +10166,11 @@ info: 'Cslib.BitString.card_filter_influence_ne_zero_le' depends on axioms:
 #print axioms Cslib.BitString.card_filter_influence_ne_zero_le
 
 /--
-info: 'Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth' depends on axioms:
+info: 'Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth
+#print axioms Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one
 
 /--
 info: 'Cslib.DecisionTree.sum_abs_fourierCoeff_le_leafCount' depends on axioms:

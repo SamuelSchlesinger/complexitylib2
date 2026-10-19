@@ -25,21 +25,20 @@ spectral norm at most the number of leaves of the tree
 and on `{i} ∆ S`, and `S ↦ {i} ∆ S` permutes the sets. Since a tree of depth `d` has at most
 `2 ^ d` leaves (`DecisionTree.leafCount_le_two_pow_depth`), the spectral norm is also at most
 `2 ^ d`. Together with granularity, each nonzero coefficient of a Boolean function of a tree of
-depth `d` has absolute value at least `2 ^ (-d)`, so such a function has at most
-`leafCount * 2 ^ d` nonzero coefficients
-(`DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le`). The leaf count and the depth are
-structural, so unreachable leaves and paths only weaken the bounds.
+depth `d ≥ 1` has absolute value at least `2 ^ (1 - d)`, so such a function has at most
+`leafCount * 2 ^ (d - 1)` nonzero coefficients
+(`DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le`) [O'Donnell, Section 3.2][ODonnell2014].
+The leaf count and the depth are structural, so unreachable leaves and paths only weaken the bounds.
 
 ## Main results
 
-* `Cslib.DecisionTree.leafCount_le_two_pow_depth`: a tree of depth `d` has at most `2 ^ d` leaves.
 * `Cslib.DecisionTree.sum_abs_fourierCoeff_le_leafCount`: the spectral norm of a `[-1, 1]`-valued
   function of a decision tree is at most its number of leaves.
 * `Cslib.DecisionTree.sum_abs_fourierCoeff_signVal_le_leafCount`,
   `Cslib.DecisionTree.sum_abs_fourierCoeff_signVal_le_two_pow_depth`: the same for Boolean
   functions, and the bound by `2 ^ depth`.
 * `Cslib.DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le`: the Fourier sparsity of a
-  Boolean function of a decision tree is at most `leafCount * 2 ^ depth`.
+  Boolean function of a decision tree is at most `leafCount * 2 ^ (depth - 1)`.
 
 ## References
 
@@ -108,30 +107,32 @@ theorem sum_abs_fourierCoeff_signVal_le_two_pow_depth (g : β → Bool) (t : Dec
     (by exact_mod_cast leafCount_le_two_pow_depth t)
 
 /-- **Fourier sparsity of decision trees**: a Boolean function of the output of a decision tree of
-depth `d`, read as signs, has at most `leafCount * 2 ^ d` nonzero Fourier coefficients, since each
-of them has absolute value at least `2 ^ (-d)`. -/
+depth `d`, read as signs, has at most `leafCount * 2 ^ (d - 1)` nonzero Fourier coefficients, since
+each of them has absolute value at least `2 ^ (1 - d)` (at least `1` when `d = 0`)
+[O'Donnell, Section 3.2][ODonnell2014]. -/
 theorem card_filter_fourierCoeff_signVal_ne_zero_le (g : β → Bool) (t : DecisionTree ι β) :
-    #{S | fourierCoeff (fun x => signVal (g (t.eval x))) S ≠ 0} ≤ t.leafCount * 2 ^ t.depth := by
+    #{S | fourierCoeff (fun x => signVal (g (t.eval x))) S ≠ 0} ≤
+      t.leafCount * 2 ^ (t.depth - 1) := by
   set c := fourierCoeff (fun x => signVal (g (t.eval x)))
-  have hpos : (0 : ℝ) < 2 ^ t.depth := by positivity
-  have hge (S : Finset ι) (hS : c S ≠ 0) : 1 ≤ 2 ^ t.depth * |c S| := by
-    obtain ⟨m, hm⟩ : ∃ m : ℤ, c S = m / 2 ^ t.depth :=
-      exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth g t S
+  have hpos : (0 : ℝ) < 2 ^ (t.depth - 1) := by positivity
+  have hge (S : Finset ι) (hS : c S ≠ 0) : 1 ≤ 2 ^ (t.depth - 1) * |c S| := by
+    obtain ⟨m, hm⟩ : ∃ m : ℤ, c S = m / 2 ^ (t.depth - 1) :=
+      exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one g t S
     have hm0 : m ≠ 0 := by
       rintro rfl
       exact hS (by rw [hm, Int.cast_zero, zero_div])
     rw [hm, abs_div, abs_of_pos hpos, mul_div_cancel₀ _ hpos.ne']
     exact_mod_cast Int.one_le_abs hm0
-  have h : (#{S | c S ≠ 0} : ℝ) ≤ t.leafCount * 2 ^ t.depth :=
+  have h : (#{S | c S ≠ 0} : ℝ) ≤ t.leafCount * 2 ^ (t.depth - 1) :=
     calc (#{S | c S ≠ 0} : ℝ) = ∑ S with c S ≠ 0, (1 : ℝ) := by rw [sum_const, nsmul_one]
-      _ ≤ ∑ S with c S ≠ 0, 2 ^ t.depth * |c S| :=
+      _ ≤ ∑ S with c S ≠ 0, 2 ^ (t.depth - 1) * |c S| :=
           sum_le_sum fun S hS => hge S (mem_filter.1 hS).2
-      _ ≤ ∑ S, 2 ^ t.depth * |c S| :=
+      _ ≤ ∑ S, 2 ^ (t.depth - 1) * |c S| :=
           sum_le_sum_of_subset_of_nonneg (filter_subset _ _) fun _ _ _ => by positivity
-      _ = 2 ^ t.depth * ∑ S, |c S| := (mul_sum _ _ _).symm
-      _ ≤ 2 ^ t.depth * t.leafCount :=
+      _ = 2 ^ (t.depth - 1) * ∑ S, |c S| := (mul_sum _ _ _).symm
+      _ ≤ 2 ^ (t.depth - 1) * t.leafCount :=
           mul_le_mul_of_nonneg_left (sum_abs_fourierCoeff_signVal_le_leafCount g t) hpos.le
-      _ = t.leafCount * 2 ^ t.depth := mul_comm _ _
+      _ = t.leafCount * 2 ^ (t.depth - 1) := mul_comm _ _
   exact_mod_cast h
 
 end Cslib.DecisionTree
