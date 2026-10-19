@@ -19,8 +19,10 @@ import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
+import ComplexityTests.Code
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
+import ComplexityTests.CommunicationComplexity2
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
@@ -63,8 +65,10 @@ import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.InteractiveProofs
+import ComplexityTests.Isolation
 import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
+import ComplexityTests.KarpLipton
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.Ladner

@@ -196,6 +196,22 @@ theorem nodup_selectDistinct (l : List γ) (w : List Bool) : (selectDistinct l w
   simp only [List.mem_filter, Bool.and_eq_true, decide_eq_true_eq] at hu hv
   rw [← hu.2.2, ← hv.2.2]
 
+/-- The full mask selects every entry of `l`, at its first occurrence. -/
+theorem mem_selectDistinct_replicate {l : List γ} {v : γ} :
+    v ∈ selectDistinct l (List.replicate l.length true) ↔ v ∈ l := by
+  rw [mem_selectDistinct, and_iff_left_iff_imp]
+  intro hv
+  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate_of_lt (List.idxOf_lt_length_iff.2 hv)]
+  rfl
+
+/-- The full mask selects as many entries as `l` has distinct entries. -/
+theorem length_selectDistinct_replicate (l : List γ) :
+    (selectDistinct l (List.replicate l.length true)).length = l.toFinset.card := by
+  rw [← List.toFinset_card_of_nodup (nodup_selectDistinct _ _)]
+  congr 1
+  ext v
+  simp only [List.mem_toFinset, mem_selectDistinct_replicate]
+
 /-- The entries of `l` selected by the mask of a set `S` of entries of `l`, followed by any bits,
 are the elements of `S`. -/
 theorem toFinset_selectDistinct_map_append {l : List γ} {S : Finset γ} (hS : ∀ v ∈ S, v ∈ l)
