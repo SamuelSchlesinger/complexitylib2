@@ -307,8 +307,10 @@ public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Circuit.Synthesis
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Circuit.Wiring
+public import Complexity.Computability.Communication.Amplification
 public import Complexity.Computability.Communication.Corruption
 public import Complexity.Computability.Communication.Discrepancy
+public import Complexity.Computability.Communication.Disjointness
 public import Complexity.Computability.Communication.Distributional
 public import Complexity.Computability.Communication.Equality
 public import Complexity.Computability.Communication.FoolingSet
@@ -1035,6 +1037,7 @@ public import Complexity.Foundations.Combinatorics.LineCode.Menu
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Collision
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Counting
 public import Complexity.Foundations.Combinatorics.MajorityVote
+public import Complexity.Foundations.Combinatorics.PowersetTail
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.LowerBound
@@ -1202,6 +1205,7 @@ public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
 public import Complexity.Probability.Guessing
 public import Complexity.Probability.HashIsolation
+public import Complexity.Probability.IID
 public import Complexity.Probability.Isolation
 public import Complexity.Probability.KWiseIndependent
 public import Complexity.Probability.KWiseIndependent.Polynomial
