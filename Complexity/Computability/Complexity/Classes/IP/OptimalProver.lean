@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Computability.Complexity.Classes.Oracle
-public import Mathlib.Data.Set.Finite.List
+public import Complexity.Foundations.Data.BitString.ShortWords
 
 /-!
 # The optimal prover against private coins
@@ -26,7 +26,7 @@ that sent exactly the messages of the history; what remains of each of them is
 The value of a history (`Cslib.Complexity.Interaction.value`) counts the programs that accept on
 it, plus, for every next message, the best value over the replies. The best reply cannot depend
 on the coins: it is chosen once for all the programs sending that message. Sums and maxima range
-over the words of length at most `L` (`Cslib.Complexity.Interaction.shortWords`), which suffices for
+over the words of length at most `L` (`Cslib.BitString.shortWords`), which suffices for
 a bounded family (`Cslib.Complexity.Interaction.IsBounded`): every program makes at most `D`
 requests, every message has length at most `L`, and only the first `L` bits of a reply matter.
 
@@ -172,15 +172,9 @@ theorem acceptFrom_query_bind (P : Prover Unit) (s : P.State) (m : List Bool)
 
 /-! ### The value of a history -/
 
-/-- The words of length at most `L`. -/
-noncomputable def shortWords (L : ℕ) : Finset (List Bool) :=
-  (List.finite_length_le Bool L).toFinset
-
-@[simp] theorem mem_shortWords {L : ℕ} {w : List Bool} :
-    w ∈ shortWords L ↔ w.length ≤ L := by
-  simp [shortWords]
-
-theorem nil_mem_shortWords (L : ℕ) : [] ∈ shortWords L := by simp
+@[deprecated (since := "2026-10-19")] alias shortWords := BitString.shortWords
+@[deprecated (since := "2026-10-19")] alias mem_shortWords := BitString.mem_shortWords
+@[deprecated (since := "2026-10-19")] alias nil_mem_shortWords := BitString.nil_mem_shortWords
 
 variable {R : Type} [Fintype R] (F : R → WordQueryComp Unit Bool) (L : ℕ)
 
@@ -193,7 +187,7 @@ noncomputable def accepted (h : History) : ℕ :=
 next message of length at most `L`, the best value over the replies of length at most `L`. -/
 noncomputable def value : ℕ → History → ℕ
   | 0, h => accepted F h
-  | n + 1, h => accepted F h + ∑ m ∈ shortWords L, (shortWords L).sup fun y =>
+  | n + 1, h => accepted F h + ∑ m ∈ BitString.shortWords L, (BitString.shortWords L).sup fun y =>
       value n (h ++ [(m, y)])
 
 /-- A family of programs makes at most `D` requests, sends messages of length at most `L`, and
@@ -247,7 +241,8 @@ theorem value_le_card (n : ℕ) (h : History) :
     exact nofun
   | succ n ih =>
     simp only [value, accepted]
-    have hstep (m : List Bool) : ((shortWords L).sup fun y => value F L n (h ++ [(m, y)])) ≤
+    have hstep (m : List Bool) :
+        ((BitString.shortWords L).sup fun y => value F L n (h ++ [(m, y)])) ≤
         (Finset.univ.filter fun r => outcome (F r) h = .ask m).card :=
       Finset.sup_le fun y _ => (ih _).trans (Finset.card_le_card fun r hr => by
         simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hr ⊢
@@ -277,7 +272,7 @@ it sends a message of length at most `L`, the prover answers and what remains co
 theorem acceptFrom_after_eq (P : Prover Unit) (s : P.State) (p : WordQueryComp Unit Bool)
     (h : History) (hp : ∀ m, outcome p h = .ask m → m.length ≤ L) :
     acceptFrom P s (after p h) = (if outcome p h = .done true then 1 else 0) +
-      ∑ m ∈ shortWords L, ∑' ys : List Bool × P.State,
+      ∑ m ∈ BitString.shortWords L, ∑' ys : List Bool × P.State,
         (P.respond ((), m)).run s ys * acceptFrom P ys.2 (after p (h ++ [(m, ys.1)])) := by
   simp only [after_append]
   unfold outcome at hp ⊢
@@ -289,7 +284,7 @@ theorem acceptFrom_after_eq (P : Prover Unit) (s : P.State) (p : WordQueryComp U
   · simp only [hah] at hp
     simp only [reduceCtorEq, ite_false, zero_add, Option.bind_some, after]
     obtain ⟨⟨⟩, m⟩ := q
-    have hm : m ∈ shortWords L := mem_shortWords.mpr (hp m rfl)
+    have hm : m ∈ BitString.shortWords L := BitString.mem_shortWords.mpr (hp m rfl)
     rw [Finset.sum_eq_single_of_mem m hm fun m' _ hm' => by simp [hm']]
     simp only [ite_true]
     exact acceptFrom_query_bind P s m next
@@ -331,7 +326,7 @@ theorem sum_acceptFrom_after_le (hF : IsBounded F D L) (P : Prover Unit) (n : �
     calc ∑' ys : List Bool × P.State, ∑ r, (P.respond ((), m)).run s ys *
           acceptFrom P ys.2 (after (F r) (h ++ [(m, ys.1)]))
         ≤ ∑' ys : List Bool × P.State, (P.respond ((), m)).run s ys *
-          ((shortWords L).sup fun y => value F L n (h ++ [(m, y)]) : ℕ) := by
+          ((BitString.shortWords L).sup fun y => value F L n (h ++ [(m, y)]) : ℕ) := by
           refine ENNReal.tsum_le_tsum fun ys => ?_
           rw [← Finset.mul_sum]
           refine mul_le_mul_right ?_ _
@@ -340,7 +335,7 @@ theorem sum_acceptFrom_after_le (hF : IsBounded F D L) (P : Prover Unit) (n : �
             lia) ys.2).trans ?_
           rw [value_take hF]
           exact Nat.cast_le.mpr (Finset.le_sup (f := fun y => value F L n (h ++ [(m, y)]))
-            (mem_shortWords.mpr (List.length_take_le _ _)))
+            (BitString.mem_shortWords.mpr (List.length_take_le _ _)))
       _ = _ := by rw [ENNReal.tsum_mul_right, PMF.tsum_coe, one_mul]
 
 /-- **No prover beats the value**: for a bounded family, every prover makes the programs accept
@@ -358,23 +353,23 @@ variable (F L)
 /-- A reply of length at most `L` that is best for the message `m` after the history `h`, with `n`
 rounds to go after it. -/
 noncomputable def bestReply (n : ℕ) (h : History) (m : List Bool) : List Bool :=
-  ((shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
-    ⟨[], nil_mem_shortWords L⟩).choose
+  ((BitString.shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
+    ⟨[], BitString.nil_mem_shortWords L⟩).choose
 
 theorem bestReply_mem (n : ℕ) (h : History) (m : List Bool) :
-    bestReply F L n h m ∈ shortWords L :=
-  ((shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
-    ⟨[], nil_mem_shortWords L⟩).choose_spec.1
+    bestReply F L n h m ∈ BitString.shortWords L :=
+  ((BitString.shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
+    ⟨[], BitString.nil_mem_shortWords L⟩).choose_spec.1
 
 /-- The best reply attains the best value. -/
 theorem value_bestReply (n : ℕ) (h : History) (m : List Bool) :
     value F L n (h ++ [(m, bestReply F L n h m)]) =
-      (shortWords L).sup fun y => value F L n (h ++ [(m, y)]) :=
+      (BitString.shortWords L).sup fun y => value F L n (h ++ [(m, y)]) :=
   le_antisymm (Finset.le_sup (f := fun y => value F L n (h ++ [(m, y)]))
       (bestReply_mem F L n h m))
     (Finset.sup_le fun y hy =>
-      ((shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
-        ⟨[], nil_mem_shortWords L⟩).choose_spec.2 y hy)
+      ((BitString.shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
+        ⟨[], BitString.nil_mem_shortWords L⟩).choose_spec.2 y hy)
 
 /-- The optimal prover: its state is the history so far, and it answers every message with a best
 reply for the rounds left of `D`. -/
