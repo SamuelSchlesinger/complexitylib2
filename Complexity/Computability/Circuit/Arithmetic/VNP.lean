@@ -26,8 +26,8 @@ relates different `n`, so `VNP` is nonuniform. The definition makes sense over e
 semiring `K`.
 
 A family is *VNP-complete* when it lies in `VNP K` and every family in `VNP K` is a p-projection of
-it. Valiant's theorem that the permanent is VNP-complete needs the characteristic of `K` to differ
-from two; in characteristic two the permanent is the determinant, which is in `VP`.
+it. A VNP-complete family is in `VP` exactly when `VNP ⊆ VP`. Valiant's theorem that the permanent
+is VNP-complete over fields of characteristic other than two is not proved here.
 
 ## Main definitions
 
@@ -100,7 +100,7 @@ theorem projection_booleanSum (ρ : Fin k → Fin n ⊕ K) (P : MvPolynomial (Fi
       simp [booleanAssignment, liftProjection, h]
   | right i => cases e i <;> simp [booleanAssignment, liftProjection]
 
-/-- The members of a Boolean sum have no larger degree than the summed polynomial. -/
+/-- A Boolean sum has no larger degree than the summed polynomial. -/
 theorem totalDegree_booleanSum_le (P : MvPolynomial (Fin (n + m)) K) :
     (booleanSum m P).totalDegree ≤ P.totalDegree :=
   totalDegree_finsetSum_le fun _ _ => totalDegree_projection_le _ _

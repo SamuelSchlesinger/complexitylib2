@@ -25,7 +25,7 @@ determinants. Over every commutative ring `K` the determinant family is in `VP K
 The circuit runs Bird's division-free algorithm [Bird2011], whose correctness is Mathlib's
 `BirdDet` development; `Cslib.Circuits.Rational.DeterminantAlgorithm` executes the same
 algorithm on integer matrices. Bird's algorithm, like Berkowitz's [Berkowitz1984], uses only
-additions, multiplications and the constant `-1`, so no field or characteristic hypothesis is
+additions, multiplications and integer constants, so no field or characteristic hypothesis is
 needed. It runs `n - 1` stages. Each stage multiplies the previous matrix, with its diagonal
 replaced by negated suffix sums and its lower triangle cleared, by the input matrix; each of its
 `n ^ 2` entries costs at most `3 * n + 3` gates. Common subexpressions are not shared across
@@ -54,10 +54,10 @@ obtained from a synthesis bound, not constructed by a certified uniform procedur
 * [R. S. Bird, *A simple division-free algorithm for computing determinants*][Bird2011]
 * [S. J. Berkowitz, *On computing the determinant in small parallel time using a small number of
   processors*][Berkowitz1984]
-* The bridge lemmas generalize to every commutative ring the integer versions in
-  `Complexity/Computability/Circuit/Rational/Determinant.lean`, which restate lemmas private to
+* The private bridge lemmas copy, over every commutative ring, lemmas and proofs private to
   Mathlib's `Mathlib/LinearAlgebra/Matrix/Determinant/Bird/Correctness.lean` (Copyright (c) 2026
-  Paul Cadman, Apache 2.0).
+  Paul Cadman, Apache 2.0), following their integer restatement in
+  `Complexity/Computability/Circuit/Rational/Determinant.lean`.
 -/
 
 @[expose] public section

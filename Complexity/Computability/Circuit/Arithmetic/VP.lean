@@ -28,14 +28,15 @@ Arithmetic circuits are the library's circuits over `Cslib.Circuits.arithSignatu
 and multiplication of fan-in two and a constant gate for each element of `K`. A circuit computes a
 polynomial *formally*: it is evaluated in `MvPolynomial (Fin n) K` at the variables
 (`Cslib.Circuits.Circuit.polynomial`). Over a finite field this is stronger than computing the
-polynomial function. Size counts every gate, constants included. Bürgisser counts only arithmetic
-operations; since an operation reads at most two constants, this changes sizes by at most a factor
-of three and does not change the class.
+polynomial function. Size counts every gate, constant gates included, and there is no subtraction
+gate. Bürgisser counts arithmetic operations, subtraction among them, with constants free;
+translating between the two conventions changes sizes by at most a constant factor and does not
+change the class (a remark, not formalized here).
 
 The definitions are those of the literature, with three points made explicit.
 
 * **Degree.** The degree bound is part of the definition of `VP`, as in Valiant's. Small circuits
-  alone do not suffice: `X ^ 2 ^ n` has circuits with `n` multiplications but is not in `VP`
+  alone do not suffice: `X ^ 2 ^ n` has circuits with at most `n` gates but is not in `VP`
   (`exists_circuit_pow_two_pow`, `powTwoPowFamily_not_mem_VP`).
 * **Uniformity.** `VP` is nonuniform. Nothing relates the circuits for different `n`, and no
   machine is required to construct them.
@@ -333,8 +334,8 @@ theorem VP.isPFamily {f : PolynomialFamily K} (hf : f ∈ VP K) : f.IsPFamily :=
   hf.1
 
 /-- `VP` is closed under p-projections [Bürgisser, Chapter 2][Burgisser2000]. A projection
-cannot raise the degree, but it can introduce unused variables, so the number of variables is
-required to be polynomially bounded. -/
+cannot raise the degree, but `f` may have arbitrarily many variables that it does not use, so the
+number of variables of `f` is required to be polynomially bounded. -/
 theorem VP.of_isPProjection {f g : PolynomialFamily K} (hg : g ∈ VP K)
     (hfg : f.IsPProjection g) (hvars : PolynomiallyBounded f.vars) : f ∈ VP K := by
   obtain ⟨⟨hgvars, hgdeg⟩, c, hc, hcg⟩ := hg
@@ -367,7 +368,7 @@ noncomputable def powTwoPowFamily (K : Type u) [CommSemiring K] : PolynomialFami
   vars _ := 1
   poly n := X 0 ^ 2 ^ n
 
-/-- Repeated squaring computes `X ^ 2 ^ n` with `n` multiplications. -/
+/-- Repeated squaring computes `X ^ 2 ^ n` with at most `n` gates. -/
 theorem exists_circuit_pow_two_pow (n : ℕ) : ∃ c : Circuit (arithSignature K) 1 1,
     c.polynomial 0 = (powTwoPowFamily K).poly n ∧ c.size ≤ n := by
   have h : ∀ t, Synthesis (arithInterpretationWith K C) (inputs 1)
