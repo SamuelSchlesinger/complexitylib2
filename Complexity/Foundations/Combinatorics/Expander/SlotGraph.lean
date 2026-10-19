@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Hom
 public import Complexity.Foundations.Combinatorics.Expander.Perm
+public import Mathlib.Data.Fintype.Inv
 public import Mathlib.GroupTheory.Perm.Cycle.Basic
 
 /-!
@@ -21,9 +22,9 @@ simple graph `G` on `V` is replaced by a cycle of *slots* `(v, w)`, one for each
 `v` of a potential edge `{v, w}`. The slots of `v` are joined in the cyclic order of a permutation
 `σ` of `V` with a single cycle (such as `finRotate n` on `Fin n`), and the slot `(v, w)` is joined
 to the slot `(w, v)` when `v` and `w` are adjacent, and carries a self-loop otherwise.
-The result, `Cslib.RotationMap.ofSimpleGraph G σ`, is a `3`-regular multigraph on `V × V`, and
+The result, `Cslib.RotationMap.slotGraph G σ`, is a `3`-regular multigraph on `V × V`, and
 `(w, b)` is reachable from `(v, a)` exactly when `w` is reachable from `v` in `G`
-(`reachable_ofSimpleGraph_iff`).
+(`reachable_slotGraph_iff`).
 
 To reach a prescribed label type `B`, the labels are extended along an embedding `D ↪ B`; the new
 labels carry self-loops (`Cslib.RotationMap.extendLabels`). This keeps the simple graph of the
@@ -37,7 +38,8 @@ spectral expanders (`Cslib.RotationMap.spectralExpansion_le_of_preconnected`).
 * `Cslib.RotationMap.decodeLabel`: the partial inverse of an embedding of labels.
 * `Cslib.RotationMap.extendLabels`: extend the labels of a rotation map by self-loops.
 * `Cslib.RotationMap.slotSwap`: the involution of the slots exchanging the two ends of an edge.
-* `Cslib.RotationMap.ofSimpleGraph`: the `3`-regular slot graph of a simple graph.
+* `Cslib.RotationMap.SlotLabel`, `Cslib.RotationMap.slotGraph`: the `3`-regular slot graph of a
+  simple graph and its labels.
 
 ## Main results
 
@@ -45,7 +47,7 @@ spectral expanders (`Cslib.RotationMap.spectralExpansion_le_of_preconnected`).
   simple graph.
 * `Cslib.RotationMap.card_le_two_mul_card_filter_neighbor_extendLabels_eq`: enough new labels
   make at least half of the edges self-loops.
-* `Cslib.RotationMap.reachable_ofSimpleGraph_iff`: the slot graph has the connectivity of the
+* `Cslib.RotationMap.reachable_slotGraph_iff`: the slot graph has the connectivity of the
   simple graph.
 
 ## References
@@ -66,13 +68,10 @@ section ExtendLabels
 
 variable [Fintype D] [DecidableEq B]
 
-/-- The label of `D` that `enc` maps to `b`, if there is one. -/
+/-- The label of `D` that `enc` maps to `b`, if there is one, by Mathlib's computable inverse
+`Function.Embedding.invOfMemRange` on the range of `enc`. -/
 def decodeLabel (enc : D ↪ B) (b : B) : Option D :=
-  if h : ∃ i, enc i = b then
-    some (univ.choose (fun i ↦ enc i = b) <| by
-      obtain ⟨i, hi⟩ := h
-      exact ⟨i, ⟨mem_univ i, hi⟩, fun j hj ↦ enc.injective (hj.2.trans hi.symm)⟩)
-  else none
+  if h : b ∈ Set.range enc then some (enc.invOfMemRange ⟨b, h⟩) else none
 
 /-- `decodeLabel enc` is the partial inverse of `enc`. -/
 theorem decodeLabel_eq_some_iff (enc : D ↪ B) {b : B} {i : D} :
@@ -82,9 +81,9 @@ theorem decodeLabel_eq_some_iff (enc : D ↪ B) {b : B} {i : D} :
   · rw [Option.some_inj]
     constructor
     · rintro rfl
-      exact choose_property (fun i ↦ enc i = b) univ _
-    · intro hi
-      exact enc.injective ((choose_property (fun i ↦ enc i = b) univ _).trans hi.symm)
+      exact enc.left_inv_of_invOfMemRange ⟨b, h⟩
+    · rintro rfl
+      exact enc.right_inv_of_invOfMemRange i
   · exact ⟨fun h' ↦ h'.elim, fun hi ↦ (h ⟨i, hi⟩).elim⟩
 
 /-- `decodeLabel enc` recovers the labels of `D`. -/
@@ -176,12 +175,18 @@ theorem slotSwap_involutive : Function.Involutive (slotSwap G) := by
   · simp [slotSwap, h, h.symm]
   · simp [slotSwap, h]
 
+/-- The three labels of the slot graph: `inl ()` for the edge of `G` at a slot, and
+`inr ((), (), false)` and `inr ((), (), true)` for the cycle of the slots of a vertex, forwards and
+backwards. -/
+abbrev SlotLabel : Type :=
+  Unit ⊕ Unit × (Unit × Bool)
+
 /-- The **slot graph** of a simple graph `G` on `V`, a `3`-regular multigraph on the slots `V × V`
 [Reingold, Section 4][Reingold2008]: the edge `inl ()` at `(v, w)` leads to `(w, v)` if
 `v` and `w` are adjacent and is a self-loop otherwise, and the edges `inr ((), (), false)` and
 `inr ((), (), true)` lead to `(v, σ w)` and `(v, σ⁻¹ w)`, so that the slots of each vertex form the
 cycles of `σ`. -/
-def ofSimpleGraph (σ : Equiv.Perm V) : RotationMap (V × V) (Unit ⊕ Unit × (Unit × Bool)) :=
+def slotGraph (σ : Equiv.Perm V) : RotationMap (V × V) SlotLabel :=
   (ofInvolutive (slotSwap G) (slotSwap_involutive G)).union
     ((loops V Unit).tensor (ofPerms fun _ : Unit ↦ σ))
 
@@ -189,43 +194,43 @@ variable (σ : Equiv.Perm V)
 
 /-- The edge `inl ()` exchanges the two ends of an edge of `G`. -/
 @[simp]
-theorem neighbor_ofSimpleGraph_inl (p : V × V) :
-    (ofSimpleGraph G σ).neighbor p (.inl ()) = slotSwap G p :=
+theorem neighbor_slotGraph_inl (p : V × V) :
+    (slotGraph G σ).neighbor p (.inl ()) = slotSwap G p :=
   rfl
 
 /-- The edge `inr ((), (), false)` at `(v, w)` leads to `(v, σ w)`. -/
 @[simp]
-theorem neighbor_ofSimpleGraph_inr_false (p : V × V) :
-    (ofSimpleGraph G σ).neighbor p (.inr ((), (), false)) = (p.1, σ p.2) :=
+theorem neighbor_slotGraph_inr_false (p : V × V) :
+    (slotGraph G σ).neighbor p (.inr ((), (), false)) = (p.1, σ p.2) :=
   rfl
 
 /-- The edge `inr ((), (), true)` at `(v, w)` leads to `(v, σ⁻¹ w)`. -/
 @[simp]
-theorem neighbor_ofSimpleGraph_inr_true (p : V × V) :
-    (ofSimpleGraph G σ).neighbor p (.inr ((), (), true)) = (p.1, σ.symm p.2) :=
+theorem neighbor_slotGraph_inr_true (p : V × V) :
+    (slotGraph G σ).neighbor p (.inr ((), (), true)) = (p.1, σ.symm p.2) :=
   rfl
 
 /-- The slot graph has three labels. -/
-theorem card_ofSimpleGraph_label : Fintype.card (Unit ⊕ Unit × (Unit × Bool)) = 3 :=
+theorem card_slotLabel : Fintype.card SlotLabel = 3 :=
   rfl
 
 /-- The slots of a vertex are reachable from each other along the cycles of `σ`. -/
-theorem reachable_ofSimpleGraph_zpow (v w : V) (i : ℤ) :
-    (ofSimpleGraph G σ).toSimpleGraph.Reachable (v, w) (v, (σ ^ i) w) := by
+theorem reachable_slotGraph_zpow (v w : V) (i : ℤ) :
+    (slotGraph G σ).toSimpleGraph.Reachable (v, w) (v, (σ ^ i) w) := by
   induction i using Int.induction_on with
   | zero => rfl
   | succ i ih =>
     rw [add_comm, zpow_add, zpow_one, Equiv.Perm.mul_apply]
-    exact ih.trans ((ofSimpleGraph G σ).reachable_neighbor (v, (σ ^ i) w) (.inr ((), (), false)))
+    exact ih.trans ((slotGraph G σ).reachable_neighbor (v, (σ ^ i) w) (.inr ((), (), false)))
   | pred i ih =>
     rw [sub_eq_add_neg, add_comm, zpow_add, zpow_neg_one, Equiv.Perm.mul_apply,
       Equiv.Perm.inv_def]
-    exact ih.trans ((ofSimpleGraph G σ).reachable_neighbor (v, (σ ^ (-(i : ℤ))) w)
+    exact ih.trans ((slotGraph G σ).reachable_neighbor (v, (σ ^ (-(i : ℤ))) w)
       (.inr ((), (), true)))
 
 /-- Every edge of the slot graph stays at a vertex of `G` or follows an edge of `G`. -/
-theorem reachable_fst_of_reachable_ofSimpleGraph {p q : V × V}
-    (h : (ofSimpleGraph G σ).toSimpleGraph.Reachable p q) : G.Reachable p.1 q.1 := by
+theorem reachable_fst_of_reachable_slotGraph {p q : V × V}
+    (h : (slotGraph G σ).toSimpleGraph.Reachable p q) : G.Reachable p.1 q.1 := by
   rw [SimpleGraph.reachable_iff_reflTransGen] at h
   induction h with
   | refl => rfl
@@ -233,7 +238,7 @@ theorem reachable_fst_of_reachable_ofSimpleGraph {p q : V × V}
     obtain ⟨-, i, rfl⟩ := hxy
     refine ih.trans ?_
     rcases i with _ | ⟨_, _, _ | _⟩
-    · rw [neighbor_ofSimpleGraph_inl, slotSwap]
+    · rw [neighbor_slotGraph_inl, slotSwap]
       split_ifs with hadj
       · exact hadj.reachable
       · rfl
@@ -242,20 +247,20 @@ theorem reachable_fst_of_reachable_ofSimpleGraph {p q : V × V}
 
 /-- **The slot graph has the connectivity of the simple graph**: if `σ` has a single cycle, the slot
 `(w, b)` is reachable from `(v, a)` exactly when `w` is reachable from `v` in `G`. -/
-theorem reachable_ofSimpleGraph_iff (hσ : ∀ a b, σ.SameCycle a b) {v w a b : V} :
-    (ofSimpleGraph G σ).toSimpleGraph.Reachable (v, a) (w, b) ↔ G.Reachable v w := by
-  refine ⟨reachable_fst_of_reachable_ofSimpleGraph G σ, fun h ↦ ?_⟩
-  have hcycle (u a b : V) : (ofSimpleGraph G σ).toSimpleGraph.Reachable (u, a) (u, b) := by
+theorem reachable_slotGraph_iff (hσ : ∀ a b, σ.SameCycle a b) {v w a b : V} :
+    (slotGraph G σ).toSimpleGraph.Reachable (v, a) (w, b) ↔ G.Reachable v w := by
+  refine ⟨reachable_fst_of_reachable_slotGraph G σ, fun h ↦ ?_⟩
+  have hcycle (u a b : V) : (slotGraph G σ).toSimpleGraph.Reachable (u, a) (u, b) := by
     obtain ⟨i, rfl⟩ := hσ a b
-    exact reachable_ofSimpleGraph_zpow G σ u a i
+    exact reachable_slotGraph_zpow G σ u a i
   rw [SimpleGraph.reachable_iff_reflTransGen] at h
   induction h generalizing b with
   | refl => exact hcycle v a b
   | @tail x y _ hxy ih =>
-    have hswap : (ofSimpleGraph G σ).neighbor (x, y) (.inl ()) = (y, x) := by
-      rw [neighbor_ofSimpleGraph_inl, slotSwap, ite_eq_left hxy]
+    have hswap : (slotGraph G σ).neighbor (x, y) (.inl ()) = (y, x) := by
+      rw [neighbor_slotGraph_inl, slotSwap, ite_eq_left hxy]
       rfl
-    exact (@ih y).trans ((hswap ▸ (ofSimpleGraph G σ).reachable_neighbor (x, y) (.inl ())).trans
+    exact (@ih y).trans ((hswap ▸ (slotGraph G σ).reachable_neighbor (x, y) (.inl ())).trans
       (hcycle y x b))
 
 end Slots

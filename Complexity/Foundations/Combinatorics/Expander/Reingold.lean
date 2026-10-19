@@ -35,7 +35,8 @@ Each vertex of `G_ℓ` lies over a vertex of `G`, its `root`.
 (`min_le_one_sub_spectralExpansion_reingoldStep`). After `ℓ` steps the gap is at least
 `min ((6 / 5) ^ ℓ γ) (1 / 5)` (`min_pow_le_one_sub_spectralExpansion_reingold`). Reingold takes
 the eighth power of `G ⓩ H`, for a `D`-regular base graph on `D ^ 16` vertices with
-`λ(H) ≤ 1 / 2`, and obtains `λ ↦ max (λ ^ 2) (1 / 2)` [Reingold, Lemma 3.2][Reingold2008]; taking
+`λ(H) ≤ 1 / 2`, and obtains `λ ↦ max (λ ^ 2) (1 / 2)` in the proof of
+[Reingold, Lemma 3.2][Reingold2008]; taking
 the square, with the base graph of the zig-zag tower, the gap grows by the factor `6 / 5` instead,
 which changes only the constant in the number of steps.
 
@@ -131,18 +132,6 @@ theorem Hom.reingold_apply {V W : Type u} {G : RotationMap V B} {G' : RotationMa
   | succ ℓ ih => exact Prod.ext (ih x.1) rfl
 
 section Projection
-
-variable {V W D' : Type*}
-
-/-- If every edge of `G'` joins vertices whose images under `π` are reachable from each other in
-`G`, so does every walk. -/
-theorem reachable_neighbor_pow_of_forall {D : Type*} (G : RotationMap V D)
-    (G' : RotationMap W D') (π : W → V)
-    (hπ : ∀ x i, G.toSimpleGraph.Reachable (π x) (π (G'.neighbor x i))) :
-    ∀ (t : ℕ) (x : W) (k : Fin t → D'),
-      G.toSimpleGraph.Reachable (π x) (π ((G'.pow t).neighbor x k))
-  | 0, _, _ => .refl _
-  | t + 1, x, k => (hπ x (k 0)).trans (reachable_neighbor_pow_of_forall G G' π hπ t _ _)
 
 /-- Every edge of `G_ℓ` joins two vertices over vertices of `G` reachable from each other. -/
 theorem reachable_root_neighbor_reingold {V : Type u} (G : RotationMap V B) :

@@ -10,7 +10,7 @@ import Complexity.Foundations.Combinatorics.Expander.LowerBound
 /-!
 # Reingold's transformation tests
 
-The concrete theorem `Cslib.Reachability.reachable_iff_exists_reingoldGraph` has no hypotheses
+The concrete theorem `Cslib.Reachability.Reingold.reachable_iff_exists_walk` has no hypotheses
 beyond decidability of adjacency; its two directions are exercised on the complete and the empty
 graph on two vertices. The bundled hypotheses of the generic statements are discharged: the regular
 rotation map of every simple graph has at least half self-loops at every vertex, the connected
@@ -22,36 +22,36 @@ The complete graph with self-loops, of spectral expansion `0`, shows the hypothe
 
 namespace ComplexityTests.Reingold
 
-open Cslib Cslib.RotationMap Cslib.Reachability
+open Cslib Cslib.RotationMap Cslib.Reachability.Reingold
 
 -- On the complete graph on two vertices, the vertex `1` is reached from `0` by a short walk.
-example : ∃ k : Fin (reingoldLength 2) → ReingoldLabel,
-    (((reingoldGraph (⊤ : SimpleGraph (Fin 2))).pow (reingoldLength 2)).neighbor
-      (reingoldStart 0) k).root.1 = 1 :=
-  (reachable_iff_exists_reingoldGraph ⊤ 0 1).1 (SimpleGraph.Adj.reachable (by decide))
+example : ∃ k : Fin (walkLength (Nat.clog 2 2)) → Label,
+    (((graph (⊤ : SimpleGraph (Fin 2)) (Nat.clog 2 2)).pow (walkLength (Nat.clog 2 2))).neighbor
+      (start 0 (Nat.clog 2 2)) k).root.1 = 1 :=
+  (reachable_iff_exists_walk ⊤ 0 1).1 (SimpleGraph.Adj.reachable (by decide))
 
 -- On the empty graph on two vertices, no walk from `0` ends over `1`.
-example (k : Fin (reingoldLength 2) → ReingoldLabel) :
-    (((reingoldGraph (⊥ : SimpleGraph (Fin 2))).pow (reingoldLength 2)).neighbor
-      (reingoldStart 0) k).root.1 ≠ 1 := by
+example (k : Fin (walkLength 1) → Label) :
+    (((graph (⊥ : SimpleGraph (Fin 2)) 1).pow (walkLength 1)).neighbor (start 0 1) k).root.1 ≠
+      1 := by
   intro h
-  have := (reachable_iff_exists_reingoldGraph ⊥ 0 1).2 ⟨k, h⟩
+  have := (reachable_iff_exists_walk_of_le_two_pow ⊥ (by norm_num) 0 1).2 ⟨k, h⟩
   rw [SimpleGraph.reachable_bot] at this
   exact absurd this (by decide)
 
 -- The hypotheses of the generic statements are satisfiable: the base graph is a good expander.
-example : reingoldBase.spectralExpansion ≤ 1 / 5 :=
-  spectralExpansion_reingoldBase_le
+example : base.spectralExpansion ≤ 1 / 5 :=
+  spectralExpansion_base_le
 
 -- The regular rotation map of any simple graph has at least half self-loops at every vertex.
 example {n : ℕ} (G : SimpleGraph (Fin n)) [DecidableRel G.Adj] (v : Fin n × Fin n) :
-    Fintype.card ReingoldLabel ≤ 2 * Finset.card {b | (reingoldInput G).neighbor v b = v} :=
-  card_le_two_mul_card_filter_neighbor_reingoldInput_eq G v
+    Fintype.card Label ≤ 2 * Finset.card {b | (input G).neighbor v b = v} :=
+  card_le_two_mul_card_filter_neighbor_input_eq G v
 
 -- The connected component of a vertex satisfies the connectivity hypothesis of the spectral gap.
 example {n : ℕ} (G : SimpleGraph (Fin n)) [DecidableRel G.Adj] (s : Fin n × Fin n) :
-    ((reingoldInput G).componentGraph s).toSimpleGraph.Preconnected :=
-  (reingoldInput G).preconnected_componentGraph s
+    ((input G).componentGraph s).toSimpleGraph.Preconnected :=
+  (input G).preconnected_componentGraph s
 
 -- The walk hypothesis is satisfiable: in the complete graph with self-loops one step reaches
 -- every vertex.
@@ -59,11 +59,11 @@ example (u v : Fin 3) : ∃ k : Fin 1 → Fin 3, ((complete (Fin 3)).pow 1).neig
   (complete (Fin 3)).exists_neighbor_pow_eq (by rw [spectralExpansion_complete]; norm_num) u v
 
 /--
-info: 'Cslib.Reachability.reachable_iff_exists_reingoldGraph' depends on axioms:
+info: 'Cslib.Reachability.Reingold.reachable_iff_exists_walk' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Reachability.reachable_iff_exists_reingoldGraph
+#print axioms Cslib.Reachability.Reingold.reachable_iff_exists_walk
 
 /--
 info: 'Cslib.RotationMap.reachable_iff_exists_root_neighbor_pow_reingold' depends on axioms:
@@ -101,10 +101,10 @@ info: 'Cslib.RotationMap.exists_neighbor_pow_eq' depends on axioms:
 #print axioms Cslib.RotationMap.exists_neighbor_pow_eq
 
 /--
-info: 'Cslib.RotationMap.reachable_ofSimpleGraph_iff' depends on axioms:
+info: 'Cslib.RotationMap.reachable_slotGraph_iff' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.reachable_ofSimpleGraph_iff
+#print axioms Cslib.RotationMap.reachable_slotGraph_iff
 
 end ComplexityTests.Reingold
