@@ -31,7 +31,8 @@ violated edge leaves a falsified clause, and each edge produces at most `|α| ^ 
 clauses.
 From the gap of Dinur's construction (`Cslib.Complexity.GapTwoCSP_npHard`) over `128 = 2 ^ 7`
 symbols, MAX-3SAT is NP-hard to approximate within `1 - 1 / (3 * 2 ^ 77)`: the loss is the factor
-`128 ^ 2 * 12 = 3 * 2 ^ 16`.
+`128 ^ 2 * 12 = 3 * 2 ^ 16`. That MAX-3SAT is NP-hard to approximate within some constant is due to
+Arora, Lund, Motwani, Sudan and Szegedy [AroraLundMotwaniSudanSzegedy1998].
 
 ## Main definitions
 
@@ -52,6 +53,8 @@ symbols, MAX-3SAT is NP-hard to approximate within `1 - 1 / (3 * 2 ^ 77)`: the l
 
 ## References
 
+* [S. Arora, C. Lund, R. Motwani, M. Sudan, M. Szegedy, *Proof verification and the hardness of
+  approximation problems*][AroraLundMotwaniSudanSzegedy1998]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Chapter 11][AroraBarak09]
 * [I. Dinur, *The PCP theorem by gap amplification*][Dinur2007]
 -/
@@ -457,10 +460,10 @@ theorem polyTimeReducible_GapTwoCSP_GapThreeSAT {α : Type} [Fintype α] {k : �
       exact ((div_le_div_of_nonneg_right ((mem_no_GapTwoCSP hs).1 hg) (by rw [hlen]; positivity)))
         |>.trans (Graph.div_le_unsatVal_toThreeSAT_toCNF e pairs hpairs g)
 
-/-- **MAX-3SAT is NP-hard to approximate** [Arora and Barak, Chapter 11][AroraBarak09]:
-distinguishing satisfiable formulas with at most three literals per clause from those in which
-every assignment satisfies at most the proportion `1 - 1 / (3 * 2 ^ 77)` of the clauses is
-NP-hard. The constant comes from Dinur's gap `2 ^ (-61)` over `128 = 2 ^ 7` symbols
+/-- **MAX-3SAT is NP-hard to approximate** [AroraLundMotwaniSudanSzegedy1998], [Arora and Barak,
+Chapter 11][AroraBarak09]: distinguishing satisfiable formulas with at most three literals per
+clause from those in which every assignment satisfies at most the proportion `1 - 1 / (3 * 2 ^ 77)`
+of the clauses is NP-hard. The constant comes from Dinur's gap `2 ^ (-61)` over `128 = 2 ^ 7` symbols
 (`GapTwoCSP_npHard`), divided by `128 ^ 2 * 12 = 3 * 2 ^ 16` clauses per edge. -/
 theorem GapThreeSAT_npHard : PromiseProblem.NPHard encCNF (GapThreeSAT (1 - 1 / (3 * 2 ^ 77))) := by
   have hcard : Fintype.card (Bool × (Fin 6 → Bool)) = 128 := by
