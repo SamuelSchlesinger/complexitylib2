@@ -156,6 +156,7 @@ import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.Relativization
+import ComplexityTests.ResourceClasses
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
