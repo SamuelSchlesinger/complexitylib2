@@ -21,8 +21,9 @@ import Mathlib.Data.Fintype.Pi
 A family of functions `h i : X → Y`, indexed by a seed `i` drawn uniformly from a finite type `ι`,
 is *`k`-wise independent* (`Cslib.Probability.IsKWiseIndependentHash`) if for every set `T` of at
 most `k` points the restriction of `h i` to `T` is uniformly distributed on `T → Y`: the values at
-any `k` distinct points are independent and uniform [Vadhan, Section 3.5.5][Vadhan2012]. For
-`k = 2` these are the pairwise independent families `Cslib.Probability.IsPairwiseIndependentHash`
+any `k` distinct points are independent and uniform [Vadhan, Section 3.5.5][Vadhan2012]; Wegman and
+Carter call such families *strongly universal_k* [WegmanCarter1981]. For `k ≥ 2` they are pairwise
+independent in the sense of `Cslib.Probability.IsPairwiseIndependentHash`
 (`Cslib.Probability.IsKWiseIndependentHash.isPairwiseIndependentHash`). As in the pairwise case,
 probabilities over the seed are densities `Finset.dens` and averages are uniform expectations
 `𝔼 i`.
@@ -52,8 +53,9 @@ tuples gives a better constant.
 * `Cslib.Probability.isKWiseIndependentHash_of_surjective`: an additive family whose restrictions
   to sets of at most `k` points are onto is `k`-wise independent.
 * `Cslib.Probability.IsKWiseIndependentHash.expect_sum_pow_le`: the `2 m`-th moment bound.
-* `Cslib.Probability.IsKWiseIndependentHash.dens_filter_le_abs_sum_sub_expect`: the tail bound for
-  scores in `[0, 1]`.
+* `Cslib.Probability.IsKWiseIndependentHash.dens_filter_le_abs_sum`,
+  `Cslib.Probability.IsKWiseIndependentHash.dens_filter_le_abs_sum_sub_expect`: the tail bounds for
+  centered scores in `[-1, 1]` and for scores in `[0, 1]`.
 
 ## References
 
