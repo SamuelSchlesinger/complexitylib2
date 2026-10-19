@@ -21,7 +21,7 @@ that `A i` is (lopsidedly) independent of the events outside `Γ i ∪ {i}`: for
 indices avoiding `Γ i` and `i`, the probability that `A i` occurs while no `A j` with `j ∈ s`
 occurs is at most `μ (A i)` times the probability that no `A j` with `j ∈ s` occurs. This holds
 with equality when `A i` is mutually independent of the events `A j` with `j ∉ Γ i ∪ {i}`, so `Γ`
-may be the neighbourhood map of a dependency graph [Alon and Spencer, Section 5.1][AlonSpencer2016];
+may be the neighborhood map of a dependency graph [Alon and Spencer, Section 5.1][AlonSpencer2016];
 the inequality is the lopsided condition of Erdős and Spencer [ErdosSpencer1991].
 
 * **Asymmetric form** (`Cslib.Probability.prod_one_sub_le_measureReal_iInter_compl`): if
@@ -40,7 +40,7 @@ In a finite product space `Cslib.Probability.PMF.pi p`, events determined by dis
 coordinates are independent (`Cslib.Probability.PMF.toOuterMeasure_pi_inter_eq_mul`). So if each
 event `A i` is determined by the coordinates in a set `vbl i`, the events sharing no coordinate
 with `A i` satisfy the hypothesis, giving the variable version of the local lemma used for
-satisfiability and colouring problems (`Cslib.Probability.PMF.prod_one_sub_le_pi_iInter_compl`,
+satisfiability and coloring problems (`Cslib.Probability.PMF.prod_one_sub_le_pi_iInter_compl`,
 `Cslib.Probability.PMF.pi_iInter_compl_pos`) [MoserTardos2010].
 
 ## Main results

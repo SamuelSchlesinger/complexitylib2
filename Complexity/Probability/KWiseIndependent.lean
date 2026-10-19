@@ -21,7 +21,7 @@ import Mathlib.Data.Fintype.Pi
 A family of functions `h i : X → Y`, indexed by a seed `i` drawn uniformly from a finite type `ι`,
 is *`k`-wise independent* (`Cslib.Probability.IsKWiseIndependentHash`) if for every set `T` of at
 most `k` points the restriction of `h i` to `T` is uniformly distributed on `T → Y`: the values at
-any `k` distinct points are independent and uniform [Vadhan, Definition 3.31][Vadhan2012]. For
+any `k` distinct points are independent and uniform [Vadhan, Section 3.5.5][Vadhan2012]. For
 `k = 2` these are the pairwise independent families `Cslib.Probability.IsPairwiseIndependentHash`
 (`Cslib.Probability.IsKWiseIndependentHash.isPairwiseIndependentHash`). As in the pairwise case,
 probabilities over the seed are densities `Finset.dens` and averages are uniform expectations
@@ -34,8 +34,9 @@ product of functions of the values at `k` points is the product of their average
 centered bounded scores, a tuple of points contributes only when every point occurs at least twice,
 so at most `m` distinct points occur. This gives the `2 m`-th moment bound
 `𝔼 (∑ x ∈ S, Z x) ^ (2 m) ≤ m ^ (2 m) |S| ^ m`, and Markov's inequality gives the tail bound
-`Pr[|∑ x ∈ S, Z x| ≥ a] ≤ (m² |S| / a²) ^ m`, the `k`-th moment method for limited independence
-[Bellare and Rompel][BellareRompel1994].
+`Pr[|∑ x ∈ S, Z x| ≥ a] ≤ (m² |S| / a²) ^ m`. This is the `k`-th moment method for limited
+independence of Bellare and Rompel [BellareRompel1994], whose sharper counting of the contributing
+tuples gives a better constant.
 
 ## Main definitions
 

@@ -18,7 +18,7 @@ import Mathlib.LinearAlgebra.Lagrange
 For a finite field `F`, the polynomials of degree less than `k`, evaluated as maps `F → F` and
 indexed by their coefficient vectors `c : Fin k → F` (`Cslib.Probability.polynomialHash`), form a
 `k`-wise independent hash family (`Cslib.Probability.isKWiseIndependentHash_polynomialHash`)
-[Vadhan, Construction 3.32 and Proposition 3.33][Vadhan2012]: by Lagrange interpolation, every
+[Vadhan, Section 3.5.5][Vadhan2012]: by Lagrange interpolation, every
 assignment of values to at most `k` points is attained by a polynomial of degree less than `k`,
 and evaluation depends additively on the coefficients, so the surjectivity criterion
 `Cslib.Probability.isKWiseIndependentHash_of_surjective` applies. The seed consists of `k` field
@@ -73,8 +73,8 @@ end Def
 
 variable {F : Type*} [Field F] [Fintype F] [DecidableEq F]
 
-/-- **The polynomial hash family is `k`-wise independent** [Vadhan, Proposition 3.33]
-[Vadhan2012]: over a finite field `F`, the polynomials of degree less than `k` with uniformly
+/-- **The polynomial hash family is `k`-wise independent** [Vadhan, Section 3.5.5][Vadhan2012]:
+over a finite field `F`, the polynomials of degree less than `k` with uniformly
 random coefficients take independent uniform values at any `k` distinct points. -/
 theorem isKWiseIndependentHash_polynomialHash (k : ℕ) :
     IsKWiseIndependentHash k (polynomialHash : (Fin k → F) → F → F) := by

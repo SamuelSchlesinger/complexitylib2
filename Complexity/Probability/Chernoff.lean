@@ -20,7 +20,9 @@ import Mathlib.Probability.ProbabilityMassFunction.Integrals
 Let `X = ∑ i, score i (outcome i)` be a sum of independent scores with values in `[0, 1]`, the
 coordinates of `outcome` drawn from the product `Cslib.Probability.PMF.pi p`, and let `μ` bound
 its mean `∑ i, ∑ a, p i a * score i a`. The multiplicative Chernoff bounds compare `X` with
-multiples of `μ` [Mitzenmacher and Upfal, Theorems 4.4 and 4.5][MitzenmacherUpfal2017]:
+multiples of `μ`; Mitzenmacher and Upfal prove them for sums of independent `0`/`1` trials with
+`μ` the mean [Mitzenmacher and Upfal, Section 4.2][MitzenmacherUpfal2017], and the same proofs
+apply to `[0, 1]`-valued scores and to a bound `μ` on the mean in the appropriate direction:
 
 * if the mean is at most `μ`, then `X ≥ (1 + δ) μ` with probability at most
   `exp (μ (δ - (1 + δ) log (1 + δ)))`, hence at most `exp (-δ² μ / (2 + δ))`, and at most
@@ -74,7 +76,7 @@ private theorem exp_mul_le_one_add_mul {s : ℝ} (hs : s ∈ Set.Icc 0 1) (t : �
     _ = 1 + s * (Real.exp t - 1) := by ring
 
 /-- Scores in `[0, 1]` on the support have a nonnegative mean. -/
-theorem mean_nonneg (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
+private theorem mean_nonneg (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
     (hscore : ∀ i a, a ∈ (p i).support → score i a ∈ Set.Icc 0 1) :
     0 ≤ ∑ i, ∑ a, (p i a).toReal * score i a := by
   refine Finset.sum_nonneg fun i _ => Finset.sum_nonneg fun a _ => ?_
@@ -153,10 +155,10 @@ theorem pi_sum_le_le_exp (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
   rw [Real.exp_add]
   exact h.trans (mul_le_mul_of_nonneg_left (mgf_pi_sum_le p score hscore t) (Real.exp_pos _).le)
 
-/-- **The sharp multiplicative Chernoff bound** [Mitzenmacher and Upfal, Theorem 4.4 (1)]
+/-- **The sharp multiplicative Chernoff bound** [Mitzenmacher and Upfal, Section 4.2]
 [MitzenmacherUpfal2017]: if independent scores in `[0, 1]` have mean at most `μ`, their sum is at
 least `(1 + δ) μ` with probability at most `exp (μ (δ - (1 + δ) log (1 + δ)))`, that is,
-`(exp δ / (1 + δ) ^ (1 + δ)) ^ μ`. -/
+`(exp δ / (1 + δ) ^ (1 + δ)) ^ μ`, for every `δ ≥ 0`. -/
 theorem pi_sum_ge_one_add_mul_le_exp (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
     (hscore : ∀ i a, a ∈ (p i).support → score i a ∈ Set.Icc 0 1) {μ δ : ℝ}
     (hμ : ∑ i, ∑ a, (p i a).toReal * score i a ≤ μ) (hδ : 0 ≤ δ) :
@@ -169,9 +171,9 @@ theorem pi_sum_ge_one_add_mul_le_exp (p : ∀ i, PMF (α i)) (score : ∀ i, α 
   gcongr
   nlinarith
 
-/-- **The multiplicative Chernoff bound** [Mitzenmacher and Upfal, Theorem 4.4]
-[MitzenmacherUpfal2017]: if independent scores in `[0, 1]` have mean at most `μ`, their sum is at
-least `(1 + δ) μ` with probability at most `exp (-δ² μ / (2 + δ))`, for every `δ ≥ 0`. -/
+/-- **The multiplicative Chernoff bound**: if independent scores in `[0, 1]` have mean at most
+`μ`, their sum is at least `(1 + δ) μ` with probability at most `exp (-δ² μ / (2 + δ))`, for every
+`δ ≥ 0`. This follows from the sharp bound and `2 δ / (2 + δ) ≤ log (1 + δ)`. -/
 theorem pi_sum_ge_one_add_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
     (hscore : ∀ i a, a ∈ (p i).support → score i a ∈ Set.Icc 0 1) {μ δ : ℝ}
     (hμ : ∑ i, ∑ a, (p i a).toReal * score i a ≤ μ) (hδ : 0 ≤ δ) :
@@ -187,7 +189,7 @@ theorem pi_sum_ge_one_add_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → �
   field_simp
   ring
 
-/-- **The multiplicative Chernoff bound for `δ ≤ 1`** [Mitzenmacher and Upfal, Theorem 4.4 (2)]
+/-- **The multiplicative Chernoff bound for `δ ≤ 1`** [Mitzenmacher and Upfal, Section 4.2]
 [MitzenmacherUpfal2017]: if independent scores in `[0, 1]` have mean at most `μ`, their sum is at
 least `(1 + δ) μ` with probability at most `exp (-δ² μ / 3)`, for `0 ≤ δ ≤ 1`. -/
 theorem pi_sum_ge_one_add_mul_of_le_one (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
@@ -210,8 +212,9 @@ private theorem exp_neg_le_quadratic {δ : ℝ} (hδ : 0 ≤ δ) :
     mul_le_mul_of_nonneg_left hq (show (0 : ℝ) ≤ 1 - δ + δ ^ 2 / 2 by nlinarith)]
 
 /-- **The multiplicative Chernoff bound for the lower tail** [Mitzenmacher and Upfal,
-Theorem 4.5 (2)][MitzenmacherUpfal2017]: if independent scores in `[0, 1]` have mean at least `μ`,
-their sum is at most `(1 - δ) μ` with probability at most `exp (-δ² μ / 2)`, for every `δ ≥ 0`. -/
+Section 4.2][MitzenmacherUpfal2017]: if independent scores in `[0, 1]` have mean at least `μ`,
+their sum is at most `(1 - δ) μ` with probability at most `exp (-δ² μ / 2)`, for every `δ ≥ 0`.
+The proof takes the parameter `t = -δ` and uses `exp (-δ) ≤ 1 - δ + δ² / 2`. -/
 theorem pi_sum_le_one_sub_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
     (hscore : ∀ i a, a ∈ (p i).support → score i a ∈ Set.Icc 0 1) {μ δ : ℝ}
     (hμ : μ ≤ ∑ i, ∑ a, (p i a).toReal * score i a) (hδ : 0 ≤ δ) :
@@ -230,7 +233,7 @@ theorem pi_sum_le_one_sub_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → �
       μ * (Real.exp (-δ) - 1) := mul_le_mul_of_nonpos_right hμ hexp
   nlinarith [mul_le_mul_of_nonneg_left (exp_neg_le_quadratic hδ) hμ0]
 
-/-- **The two-sided multiplicative Chernoff bound** [Mitzenmacher and Upfal, Corollary 4.6]
+/-- **The two-sided multiplicative Chernoff bound** [Mitzenmacher and Upfal, Section 4.2]
 [MitzenmacherUpfal2017]: a sum of independent scores in `[0, 1]` deviates from its mean by at
 least `δ` times the mean with probability at most `2 exp (-δ² mean / 3)`, for `0 ≤ δ ≤ 1`. -/
 theorem pi_abs_sum_sub_mean_ge_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
