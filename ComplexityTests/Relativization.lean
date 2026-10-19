@@ -71,6 +71,11 @@ example (A : Set (List Bool)) :
     ComputableInPolyTimeWithOracle A (fun _ : List Bool => false) encBits encBool :=
   (ComputableTidilyInPolyTime.const false).computableInPolyTimeWithOracle A
 
+/-- `fun_prop` lifts polynomial-time certificates to every oracle. -/
+example (A : Set (List Bool)) :
+    ComputableInPolyTimeWithOracle A (fun x : List Bool => x.reverse) encBits encBits := by
+  fun_prop
+
 /-- `P` relative to `A` contains `A`, and lies inside `NP` relative to `A`. -/
 example (A : Set (List Bool)) : A ∈ NPWithOracle A encBits :=
   PWithOracle_subset_NPWithOracle A encBits (mem_PWithOracle_self A)

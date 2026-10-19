@@ -18,7 +18,8 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 For an oracle language `B`, the unary language `Cslib.Complexity.unaryLanguage B` consists of the
 words `1ⁿ` such that `B` has a word of length `n`. Baker, Gill and Solovay construct an oracle `B`
 for which this language is not in `P` relative to `B`, while it is in `NP` relative to every
-oracle (a certificate is a word of length `n` in `B`) [Arora and Barak, Theorem 3.7][AroraBarak09].
+oracle (a certificate is a word of length `n` in `B`) [BakerGillSolovay1975]; we follow the proof
+of [Arora and Barak, Theorem 3.7][AroraBarak09].
 
 The oracle diagonalizes against all candidate deciders at once
 (`Cslib.Complexity.exists_oracle_diagonal`). The candidates are the fair-coin tables with one
@@ -49,6 +50,7 @@ Relative to the diagonal oracle, `P` is therefore strictly contained in `NP`
 
 ## References
 
+* [T. Baker, J. Gill, R. Solovay, *Relativizations of the P =? NP Question*][BakerGillSolovay1975]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -178,8 +180,8 @@ theorem unaryLanguage_mem_NPWithOracle (B : Set (List Bool)) :
     · rintro ⟨w, hlength, hall, hw⟩
       exact ⟨hall, w, hw, hlength⟩
 
-/-- **Baker–Gill–Solovay** [Arora and Barak, Theorem 3.7][AroraBarak09]: relative to some oracle
-language, `P` is strictly contained in `NP`. -/
+/-- **Baker–Gill–Solovay** [BakerGillSolovay1975], [Arora and Barak, Theorem 3.7][AroraBarak09]:
+relative to some oracle language, `P` is strictly contained in `NP`. -/
 theorem exists_PWithOracle_ssubset_NPWithOracle :
     ∃ B : Set (List Bool), PWithOracle B encBits ⊂ NPWithOracle B encBits := by
   obtain ⟨B, hB⟩ := exists_unaryLanguage_notMem_PWithOracle

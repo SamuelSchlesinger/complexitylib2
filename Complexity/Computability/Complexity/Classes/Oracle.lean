@@ -164,6 +164,7 @@ theorem interpret_languageOracle_congr {A B : Set (List Bool)} (program : WordQu
 word-query program computes `f` against `A`, and one finite machine under one polynomial clock
 realizes the program against every stateful oracle, charging request construction and reply
 access. -/
+@[fun_prop]
 def ComputableInPolyTimeWithOracle (A : Set (List Bool)) (f : α → β) (input : α ↪ List Bool)
     (output : β ↪ List Bool) : Prop :=
   ∃ program : α → WordQueryComp Unit β,
@@ -172,6 +173,7 @@ def ComputableInPolyTimeWithOracle (A : Set (List Bool)) (f : α → β) (input 
 
 /-- A polynomial-time computation makes no request, so it is polynomial time relative to every
 oracle. -/
+@[fun_prop]
 theorem _root_.Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTimeWithOracle
     {f : α → β} {input : α ↪ List Bool} {output : β ↪ List Bool}
     (h : ComputableTidilyInPolyTime f input output) (A : Set (List Bool)) :
