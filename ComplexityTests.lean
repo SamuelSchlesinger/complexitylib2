@@ -1,6 +1,7 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserLowerBound
+import ComplexityTests.Alternation
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
@@ -20,6 +21,8 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.Code
+import ComplexityTests.Code.Concatenation
+import ComplexityTests.Code.Johnson
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
@@ -68,6 +71,7 @@ import ComplexityTests.HierarchyTheorems
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
+import ComplexityTests.Iteration.Batch
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpLipton
 import ComplexityTests.KarpReductions
@@ -165,6 +169,7 @@ import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
+import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
@@ -173,6 +178,7 @@ import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
+import ComplexityTests.ResourceClasses2
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
@@ -186,6 +192,7 @@ import ComplexityTests.SourceComplexity
 import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
+import ComplexityTests.SpaceHierarchy
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
