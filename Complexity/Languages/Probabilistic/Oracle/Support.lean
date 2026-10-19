@@ -28,6 +28,13 @@ valid for every shared oracle and every reply length.
 * `Cslib.ProbOracleComp.support_sample_subset`: private samples stay in their closed support.
 * `Cslib.ProbOracleComp.iterate_invariant`: an invariant preserved by every possible step holds
   for every possible result of a bounded loop.
+
+## References
+
+Generalizes the supported loop invariants of `Computability/Probabilistic/Adaptive.lean` on the
+cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8` to programs with external
+calls, for the loop rules adapted from Christian Reitwiessner's `Combinators/IterateWhile`
+(crei:crei/tidy-universal @7f7c0696).
 -/
 
 @[expose] public section
