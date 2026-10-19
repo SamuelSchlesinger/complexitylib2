@@ -30,8 +30,8 @@ lemma, which rules out subexponential time in `m` under the exponential time hyp
 * for independent set, the reduction with variable edges
   `Cslib.Complexity.SAT.toSparseIndependentSet`, with at most `(k ^ 2 + 5 k) m`
   (`Cslib.Complexity.SAT.length_toSparseIndependentSet_le`). Karp's reduction
-  `Cslib.Complexity.SAT.toIndependentSet` has `3 m` vertices on such formulas, but can have
-  quadratically many edges;
+  `Cslib.Complexity.SAT.toIndependentSet` has at most `3 m` vertices on formulas with clauses of
+  at most three literals, but can have quadratically many edges;
 * for vertex cover, the same graph with the complementary target
   (`Cslib.Complexity.IndependentSet.toVertexCover`);
 * for clique, the complement of the same graph on its vertices (`Cslib.Complexity.Graph.compl`),
@@ -45,8 +45,9 @@ to a polynomial in the length of the encoded instance, and a lower bound says: f
 decider runs within time `2 ^ (δ μ)` times a polynomial.
 
 The diamond reduction to Hamiltonian paths and cycles (`Cslib.Complexity.SAT.toDirHamPath`) has a
-row of `3 m + 3` vertices for each of the up to `3 m` variable occurrences, so `Θ(m ^ 2)` vertices
-and edges; it only rules out time `2 ^ o(√(|V| + |E|))` and is not used here.
+row of `3 m + 3` vertices for each variable occurrence, so up to `Θ(m ^ 2)` vertices and edges on
+formulas with `m` clauses of three literals. Through it the exponential time hypothesis rules out
+only time `2 ^ o(√(|V| + |E|))`; this is not stated here.
 
 ## Main results
 
