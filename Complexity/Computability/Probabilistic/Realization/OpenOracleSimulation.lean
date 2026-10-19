@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Probabilistic.Oracle.Composition
-import Complexity.Languages.Probabilistic.Oracle.Simulation
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Mathlib.Tactic.Linarith
 
