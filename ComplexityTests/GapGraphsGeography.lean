@@ -5,14 +5,18 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.PCP.Approximation.IndependentSet
+import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography
 
 /-!
-# Tests: inapproximability of independent sets, cliques and vertex covers
+# Tests: inapproximability of graph problems, and Generalized Geography
 
 Minimization gap problems on a concrete objective; the values of small graphs; yes- and
 no-instances of the gap problems of MAX-E3SAT, maximum independent set, maximum clique and minimum
 vertex cover at the constants of the hardness theorems, so that their NP-hardness statements are not
-vacuous; and the axioms of the headline theorems.
+vacuous. Small instances of Generalized Geography won and lost by the first player, including
+undeclared targets and revisits; members and non-members of `TQBFCNF`, including a formula with a
+free variable, and their images under the reduction to Generalized Geography. The axioms of the
+headline theorems.
 -/
 
 namespace ComplexityTests.GapGraphsGeography
@@ -100,6 +104,64 @@ example : (∃ x, x ∈ (GapVertexCover (1 + 1 / (3 * 2 ^ 78))).yes) ∧
   rw [show (1 + (1 - s₀) / 2 : ℝ) = 1 + 1 / (3 * 2 ^ 78) by norm_num] at h
   exact nonempty_of_polyTimeReducible h satFormula_mem_yes contradiction_mem_no
 
+/-! ### Generalized Geography -/
+
+/-- With one arc from the start, the first player moves and the second player is stuck. -/
+example : ((([0, 1], [(0, 1)]) : Graph), 0) ∈ GeneralizedGeography := by
+  rw [mem_GeneralizedGeography, Graph.geographyWins_iff]
+  refine ⟨1, by simp, by simp, by simp, ?_⟩
+  rw [Graph.geographyWins_iff]
+  simp
+
+/-- On a path of two arcs, the second player makes the last move. -/
+example : ((([0, 1, 2], [(0, 1), (1, 2)]) : Graph), 0) ∉ GeneralizedGeography := by
+  rw [mem_GeneralizedGeography, Graph.not_geographyWins_iff]
+  intro w hw _ _
+  obtain rfl : w = 1 := by simpa using hw
+  rw [Graph.geographyWins_iff]
+  refine ⟨2, by simp, by simp, by simp, ?_⟩
+  rw [Graph.geographyWins_iff]
+  simp
+
+/-- An arc to an undeclared vertex is not a move. -/
+example : ((([0], [(0, 1)]) : Graph), 0) ∉ GeneralizedGeography := by
+  rw [mem_GeneralizedGeography, Graph.geographyWins_iff]
+  simp
+
+/-- On a cycle of two arcs, the second player cannot return to the visited start. -/
+example : ((([0, 1], [(0, 1), (1, 0)]) : Graph), 0) ∈ GeneralizedGeography := by
+  rw [mem_GeneralizedGeography, Graph.geographyWins_iff]
+  refine ⟨1, by simp, by simp, by simp, ?_⟩
+  rw [Graph.geographyWins_iff]
+  simp
+
+/-- `∃ x₀, ∀ x₁, x₀` is true. -/
+private theorem mem_TQBFCNF_ex :
+    (([(0, 1)], [[(0, true)]]) : List (ℕ × ℕ) × CNF ℕ) ∈ TQBFCNF := by
+  rw [TQBFCNF, Set.mem_ofPred_eq, mem_TQBF]
+  decide
+
+/-- `∃ x₀, ∀ x₁, x₁` is false. -/
+private theorem notMem_TQBFCNF_all :
+    (([(0, 1)], [[(1, true)]]) : List (ℕ × ℕ) × CNF ℕ) ∉ TQBFCNF := by
+  rw [TQBFCNF, Set.mem_ofPred_eq, mem_TQBF]
+  decide
+
+/-- `∃ x₀, ∀ x₁, x₂` has a free variable. -/
+private theorem notMem_TQBFCNF_free :
+    (([(0, 1)], [[(2, false)]]) : List (ℕ × ℕ) × CNF ℕ) ∉ TQBFCNF := by
+  rw [TQBFCNF, Set.mem_ofPred_eq, mem_TQBF]
+  decide
+
+example : Geography.reduce ([(0, 1)], [[(0, true)]]) ∈ GeneralizedGeography :=
+  (Geography.reduce_mem_iff _).2 mem_TQBFCNF_ex
+
+example : Geography.reduce ([(0, 1)], [[(1, true)]]) ∉ GeneralizedGeography :=
+  fun h => notMem_TQBFCNF_all ((Geography.reduce_mem_iff _).1 h)
+
+example : Geography.reduce ([(0, 1)], [[(2, false)]]) ∉ GeneralizedGeography :=
+  fun h => notMem_TQBFCNF_free ((Geography.reduce_mem_iff _).1 h)
+
 /-! ### Axioms -/
 
 /--
@@ -129,5 +191,33 @@ info: 'Cslib.Complexity.GapVertexCover_npHard' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.GapVertexCover_npHard
+
+/--
+info: 'Cslib.Complexity.TQBFCNF_pspaceComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.TQBFCNF_pspaceComplete
+
+/--
+info: 'Cslib.Complexity.GeneralizedGeography_mem_PSPACE' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.GeneralizedGeography_mem_PSPACE
+
+/--
+info: 'Cslib.Complexity.GeneralizedGeography_pspaceHard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.GeneralizedGeography_pspaceHard
+
+/--
+info: 'Cslib.Complexity.GeneralizedGeography_pspaceComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.GeneralizedGeography_pspaceComplete
 
 end ComplexityTests.GapGraphsGeography

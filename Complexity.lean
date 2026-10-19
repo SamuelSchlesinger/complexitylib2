@@ -417,12 +417,16 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.Classes.Space
+public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography
+public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Membership
+public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
 public import Complexity.Computability.Complexity.Classes.Space.TQBF
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Evaluation
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Formula
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
+public import Complexity.Computability.Complexity.Classes.Space.TQBF.Prenex
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.Classes.Time
 public import Complexity.Computability.Complexity.Classes.Toda
@@ -460,6 +464,7 @@ public import Complexity.Computability.Complexity.Problems.CircuitValue
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.Coloring
 public import Complexity.Computability.Complexity.Problems.ExactThreeSAT
+public import Complexity.Computability.Complexity.Problems.GeneralizedGeography
 public import Complexity.Computability.Complexity.Problems.Graph
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
