@@ -32,6 +32,7 @@ import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
+import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
@@ -67,6 +68,7 @@ import ComplexityTests.HierarchyTheorems
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
+import ComplexityTests.Iteration.Batch
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpLipton
 import ComplexityTests.KarpReductions
@@ -148,6 +150,7 @@ import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.ProbabilityToolkit
+import ComplexityTests.ProbabilityToolkit2
 import ComplexityTests.Programs
 import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
@@ -170,6 +173,7 @@ import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
+import ComplexityTests.ResourceClasses2
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
