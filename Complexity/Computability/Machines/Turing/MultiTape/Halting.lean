@@ -25,9 +25,10 @@ self-application forms ask the same of a word run on itself
 (`Turing.MultiTapeTM.selfHaltingProblem`, `Turing.MultiTapeTM.selfAcceptanceProblem`). None of the
 four is decidable [Turing][Turing1936] [Sipser, Theorems 4.11 and 5.1][Sipser2013].
 
-All four results come from one diagonal argument, that of
-`Cslib.Complexity.not_forall_halted_diagonal` without the clock. A machine run on its own
-description can make its behaviour depend on any computable verdict about that description
+All four results come from one diagonal argument, that of the time hierarchy theorem
+(`Cslib.Complexity.not_forall_halted_diagonal`, in
+`Complexity.Computability.Complexity.Classes.Hierarchy`) without the clock. A machine run on its own
+description can make its behavior depend on any computable verdict about that description
 (`Turing.MultiTapeTM.exists_self_desc`): `Turing.MultiTapeTM.partialize` turns a total machine
 computing the verdict, followed by a choice of a partial result for each verdict, into a machine
 that diverges or halts with the chosen output. So no computable verdict is `true` on the
@@ -41,17 +42,20 @@ self-application forms). The undecidability of the four sets of words follows
 (`Turing.MultiTapeTM.not_isDecidable_of_separates_self_desc`), the encoded-pair forms through the
 mapping reduction `w ↦ (w, w)`.
 
-`Turing.MultiTapeTM.not_isDecidable_of_separates_self_desc` is Rice's theorem for the behaviour of
-machines on their own descriptions. The classical theorem [Rice][Rice1953], about the behaviour on
+`Turing.MultiTapeTM.not_isDecidable_of_separates_self_desc` is Rice's theorem for the behavior of
+machines on their own descriptions. The classical theorem [Rice][Rice1953], about the behavior on
 all inputs, is `Turing.MultiTapeTM.rice` in
 `Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice`; it needs in addition an s-m-n
 theorem for descriptions (`Turing.MultiTapeTM.Universal.hardwire`).
 
-Mathlib proves the same theorems for its own model of computation, partial recursive codes:
-`ComputablePred.halting_problem` says that, for each `n`, no computable predicate decides whether
-the code `c` halts on `n`, as `Turing.MultiTapeTM.not_isDecidable_haltingProblem` says of the
-machines described by words, and `ComputablePred.rice` is Rice's theorem for codes. Transferring
-them would need simulations in both directions between codes and the machines of this library,
+Mathlib proves corresponding theorems for its own model of computation, partial recursive codes.
+`ComputablePred.halting_problem` fixes the input: for each `n`, no computable predicate decides
+whether the code `c` halts on `n`. Its native counterpart, for each input of bits, is
+`Turing.MultiTapeTM.not_isDecidable_halts`, a corollary of Rice's theorem in
+`Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice`; the halting problem here,
+`Turing.MultiTapeTM.haltingProblem`, takes the input as part of the instance instead.
+`ComputablePred.rice` and `ComputablePred.rice₂` are Rice's theorem for codes. Transferring these
+results would need simulations in both directions between codes and the machines of this library,
 which are not developed here, so the native results are proved directly, on the universal
 simulation of Christian Reitwiessner (`Turing.MultiTapeTM.Universal.simulate_desc`) and the decoder
 of descriptions (`Turing.MultiTapeTM.Universal.decodeDesc_eDesc`).
@@ -64,7 +68,7 @@ of descriptions (`Turing.MultiTapeTM.Universal.decodeDesc_eDesc`).
 ## Main results
 
 * `Turing.MultiTapeTM.IsComputable.exists_partialize`: computable partial results are the
-  behaviours of machines.
+  behaviors of machines.
 * `Turing.MultiTapeTM.exists_self_desc`, `Turing.MultiTapeTM.not_separates_self_desc`:
   self-reference by self-application, and the diagonal argument.
 * `Turing.MultiTapeTM.halting_problem`, `Turing.MultiTapeTM.halting_problem_self`: no computable
@@ -75,7 +79,7 @@ of descriptions (`Turing.MultiTapeTM.Universal.decodeDesc_eDesc`).
   `Turing.MultiTapeTM.not_isDecidable_selfHaltingProblem`,
   `Turing.MultiTapeTM.not_isDecidable_acceptanceProblem`,
   `Turing.MultiTapeTM.not_isDecidable_selfAcceptanceProblem`: the four problems are undecidable.
-* `Turing.MultiTapeTM.not_isDecidable_of_separates_self_desc`: Rice's theorem for the behaviour of
+* `Turing.MultiTapeTM.not_isDecidable_of_separates_self_desc`: Rice's theorem for the behavior of
   machines on their own descriptions.
 
 ## References
@@ -94,7 +98,7 @@ open Universal
 
 /-! ### Machines from computable partial results -/
 
-/-- **Computable partial results are the behaviours of machines**: if `f` is computable with
+/-- **Computable partial results are the behaviors of machines**: if `f` is computable with
 results encoded by `encPartial`, some machine with a binary alphabet and finitely many states
 halts on `encIn a` with output `o` exactly when `f a = some o`, and diverges when `f a = none`. -/
 theorem IsComputable.exists_partialize {α : Type*} {encIn : α ↪ List Bool}
@@ -122,9 +126,9 @@ theorem exists_self_desc {f : List Bool → Bool} (hf : IsComputable f encBits e
     htm _⟩
 
 /-- **The diagonal argument.** No computable verdict on words is `false` on the description of
-every machine whose behaviour on its own description is `r₀` and `true` on the description of
-every machine whose behaviour on its own description is `r₁`: some machine behaves on its own
-description as `r₀` when the verdict is `true`, and as `r₁` when it is `false`. A behaviour is a
+every machine whose behavior on its own description is `r₀` and `true` on the description of
+every machine whose behavior on its own description is `r₁`: some machine behaves on its own
+description as `r₀` when the verdict is `true`, and as `r₁` when it is `false`. A behavior is a
 partial result: `none` for divergence, `some o` for halting with output `o`. -/
 theorem not_separates_self_desc {f : List Bool → Bool} (hf : IsComputable f encBits encBool)
     (r₀ r₁ : Option (List Bool))
@@ -254,9 +258,9 @@ theorem desc_mem_selfAcceptanceProblem_iff :
       tm.Computes (eDesc (desc eS eBit tm)) [true] := by
   rw [mem_selfAcceptanceProblem, decodeDesc_eDesc, ← List.map_singleton, Desc.computes_desc]
 
-/-- **Rice's theorem for the behaviour on self-descriptions.** A set of words containing the
-description of every machine whose behaviour on its own description is `r₁`, and the description of
-no machine whose behaviour on its own description is `r₀`, is undecidable. -/
+/-- **Rice's theorem for the behavior on self-descriptions.** A set of words containing the
+description of every machine whose behavior on its own description is `r₁`, and the description of
+no machine whose behavior on its own description is `r₀`, is undecidable. -/
 theorem not_isDecidable_of_separates_self_desc {P : Set (List Bool)} (r₀ r₁ : Option (List Bool))
     (h₀ : ∀ ⦃k : ℕ⦄ ⦃State : Type⦄ [Fintype State] (eS : State ↪ ℕ)
       (tm : MultiTapeTM k Bool State), (∀ o, tm.Computes (eDesc (desc eS eBit tm)) o ↔ o ∈ r₀) →

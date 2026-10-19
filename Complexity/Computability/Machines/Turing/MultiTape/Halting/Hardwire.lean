@@ -23,27 +23,27 @@ polynomial time is proved in `Complexity.Computability.Machines.Turing.MultiTape
 The machine first writes a marker, then `p`, then a copy of its input on a new work tape, the
 *virtual input tape*, and rewinds that tape to the marker. It then runs the transitions of `d`
 with every reading and every move of the input head redirected to the virtual input tape
-(`Turing.MultiTapeTM.Universal.redirect`): the marker stands for the blank left of the input,
-and moves are clamped at both ends as the input head's are. The redirected run is the run of `d`,
-step for step (`Turing.MultiTapeTM.Universal.iterate_stepOut_redirect`), since on the virtual
-input tape the redirected transitions read what `d` reads on its input. Redirection is
+(`Turing.MultiTapeTM.Universal.Redirect.redirect`): the marker stands for the blank left of the
+input, and moves are clamped at both ends as the input head's are. The redirected run is the run
+of `d`, step for step (`Turing.MultiTapeTM.Universal.Redirect.iterate_stepOut_redirect`), since on
+the virtual input tape the redirected transitions read what `d` reads on its input. Redirection is
 independent of the prefix and is reused, after other preparations of the virtual input tape, in
 `Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice`.
 
 ## Main definitions
 
-* `Turing.MultiTapeTM.Universal.vtape`: a virtual input tape.
-* `Turing.MultiTapeTM.Universal.redirect`: transitions reading the input from the virtual input
-  tape.
+* `Turing.MultiTapeTM.Universal.Redirect.vtape`: a virtual input tape.
+* `Turing.MultiTapeTM.Universal.Redirect.redirect`: transitions reading the input from the
+  virtual input tape.
 * `Turing.MultiTapeTM.Universal.hardwire`: the description with an input prefix built in.
 
 ## Main results
 
 * `Turing.MultiTapeTM.Universal.Desc.computes_iff_of_iterate`: a description whose run is, after
   some steps, the image of the run of another description computes the same outputs.
-* `Turing.MultiTapeTM.Universal.iterate_stepOut_redirect`: redirected runs.
+* `Turing.MultiTapeTM.Universal.Redirect.iterate_stepOut_redirect`: redirected runs.
 * `Turing.MultiTapeTM.Universal.Desc.computes_hardwire`,
-  `Turing.MultiTapeTM.Universal.Desc.halts_hardwire`: the behaviour of `hardwire d p`.
+  `Turing.MultiTapeTM.Universal.Desc.halts_hardwire`: the behavior of `hardwire d p`.
 
 ## References
 
@@ -54,11 +54,13 @@ independent of the prefix and is reused, after other preparations of the virtual
 
 namespace Turing.MultiTapeTM.Universal
 
+namespace Redirect
+
 /-! ### Runs of descriptions -/
 
 section Runs
 
-variable {d D : Desc} {x X : List ℕ}
+variable {d : Desc} {x : List ℕ}
 
 /-- A halted configuration is fixed by `stepOut`. -/
 theorem stepOut_of_state_eq_none {c : SCfg} (h : c.state = none) (out : List ℕ) :
@@ -102,6 +104,16 @@ theorem find?_eq_some_of_mem {l : List (Key × Act)} {e : Key × Act} (hmem : e 
     simpa using this
   rw [he', Prod.ext hk (huniq e' (List.mem_of_find?_eq_some he') hk)]
 
+end Runs
+
+end Redirect
+
+section Runs
+
+open Redirect
+
+variable {d D : Desc} {x X : List ℕ}
+
 /-- **Runs agreeing after some steps.** If, after `u` steps, the run of `D` on `X` is the image
 under `F` of the run of `d` on `x`, with the same outputs, and `F` preserves exactly the halted
 configurations, then `D` and `d` halt with the same outputs. -/
@@ -133,6 +145,8 @@ theorem Desc.computes_iff_of_iterate (F : SCfg → SCfg)
     rwa [Prod.mk.injEq, Option.isNone_iff_eq_none] at ht
 
 end Runs
+
+namespace Redirect
 
 /-! ### Virtual input tapes -/
 
@@ -257,13 +271,6 @@ end VTape
 
 section Tapes
 
-/-- Applying actions keeps the number of work tapes. -/
-theorem length_applyTapes (ts : List Tape) (as : List TapeAct) :
-    (applyTapes ts as).length = ts.length := by
-  induction ts generalizing as with
-  | nil => rfl
-  | cons t ts ih => cases as <;> simp [applyTapes, ih]
-
 theorem applyTapes_nil (ts : List Tape) : applyTapes ts [] = ts := by
   cases ts <;> rfl
 
@@ -299,13 +306,13 @@ theorem inputPos_step_le (hc : c.inputPos ≤ xs.length + 1) :
     · exact moveInput_le hc _
 
 /-- A step keeps the number of work tapes. -/
-theorem length_step_workTapes : (step d xs c).1.workTapes.length = c.workTapes.length := by
+theorem length_workTapes_step : (step d xs c).1.workTapes.length = c.workTapes.length := by
   obtain ⟨_ | q, p, ws⟩ := c
   · rfl
   · simp only [step]
     split
     · rfl
-    · exact length_applyTapes _ _
+    · exact length_applyTapes_eq _ _
 
 end Tapes
 
@@ -336,7 +343,7 @@ def redirectEntry (φ : ℕ → ℕ) (r : Option ℕ) (pre : List (Option ℕ)) 
       adj e.2.workTapes), e.2.output, e.2.state.map φ⟩)
 
 /-- **Redirected transitions**: the transitions of `table` reading the input from the virtual
-input tape (`Turing.MultiTapeTM.Universal.redirectEntry`). -/
+input tape (`Turing.MultiTapeTM.Universal.Redirect.redirectEntry`). -/
 def redirect (φ : ℕ → ℕ) (r : Option ℕ) (pre : List (Option ℕ)) (suf : ℕ)
     (adj : List TapeAct → List TapeAct) (table : List (Key × Act)) : List (Key × Act) :=
   table.flatMap fun e => (vlift e.1.input).map (redirectEntry φ r pre suf adj e)
@@ -447,11 +454,20 @@ theorem iterate_stepOut_redirect (hφ : φ.Injective)
       show stepOut D X (redirectCfg φ rp base l xs preT sufT c, out) =
         (redirectCfg φ rp base l xs preT sufT (stepOut d xs (c, out)).1,
           (stepOut d xs (c, out)).2) by simp only [stepOut, hs]]
-    exact ih (inputPos_step_le hc) (length_step_workTapes.trans hn) _
+    exact ih (inputPos_step_le hc) (length_workTapes_step.trans hn) _
 
 end Step
 
 /-! ### Rewinding the virtual input tape -/
+
+@[simp]
+theorem read_blank : Tape.blank.read = none :=
+  rfl
+
+theorem map_read_replicate_blank (k : ℕ) :
+    (List.replicate k Tape.blank).map Tape.read = List.replicate k none := by
+  simp only [List.map_replicate]
+  rfl
 
 @[simp]
 theorem eBit_false : eBit false = 0 :=
@@ -521,7 +537,13 @@ theorem iterate_stepOut_rewind {D : Desc} {X : List ℕ} {q next rp : ℕ} {rest
           vtape_move_neg (by omega)]]
     exact ih (by omega)
 
+end Redirect
+
 /-! ### Building in an input prefix -/
+
+namespace Hardwire
+
+open Redirect
 
 /-- The transitions writing the marker and the prefix `p` on the virtual input tape, before `k`
 blank work tapes, whatever the input head reads: the marker in the state `0`, and the `i`-th symbol
@@ -540,18 +562,24 @@ def copyEntries (k : ℕ) : List (Key × Act) :=
     (⟨4, some 1, none :: List.replicate k none⟩, ⟨.pos, [(some (some 1), .pos)], none, some 4⟩),
     (⟨4, none, none :: List.replicate k none⟩, ⟨.zero, [], none, some 2⟩)]
 
+end Hardwire
+
+open Redirect Hardwire in
 /-- **The description `d` with the input prefix `p` built in.** It writes the marker and `p` on a
-new first work tape, the virtual input tape (`Turing.MultiTapeTM.Universal.writeEntries`), copies
-the input after them (`Turing.MultiTapeTM.Universal.copyEntries`), rewinds that tape
-(`Turing.MultiTapeTM.Universal.rewindEntries`) and runs the transitions of `d` reading the input
-from it (`Turing.MultiTapeTM.Universal.redirect`). These steps use even states, and the states of
-`d` become odd. -/
+new first work tape, the virtual input tape
+(`Turing.MultiTapeTM.Universal.Hardwire.writeEntries`), copies the input after them
+(`Turing.MultiTapeTM.Universal.Hardwire.copyEntries`), rewinds that tape
+(`Turing.MultiTapeTM.Universal.Redirect.rewindEntries`) and runs the transitions of `d` reading
+the input from it (`Turing.MultiTapeTM.Universal.Redirect.redirect`). These steps use even states,
+and the states of `d` become odd. -/
 def hardwire (d : Desc) (p : List Bool) : Desc :=
   ⟨d.tapes + 1, 0, writeEntries p d.tapes ++ copyEntries d.tapes ++
     rewindEntries 2 none (List.replicate d.tapes none) (2 * d.q₀ + 1) ++
     redirect (fun q => 2 * q + 1) none [] 0 id d.table⟩
 
 namespace Hardwire
+
+open Redirect
 
 /-- The action of the preparing transitions of `hardwire d p`, as a function of their keys. -/
 def act (p : List Bool) (q₀ : ℕ) (key : Key) : Act :=
@@ -629,15 +657,6 @@ theorem find?_redirect_hardwire (d : Desc) (p : List Bool) (q : ℕ) (ws : List 
 section Run
 
 variable (d : Desc) (p x : List Bool)
-
-@[simp]
-theorem read_blank : Tape.blank.read = none :=
-  rfl
-
-theorem map_read_replicate_blank (k : ℕ) :
-    (List.replicate k Tape.blank).map Tape.read = List.replicate k none := by
-  simp only [List.map_replicate]
-  rfl
 
 /-- A step through a preparing transition. -/
 theorem stepOut_of_mem_prep {c : SCfg} {q : ℕ} (hq : c.state = some q) {e : Key × Act}
@@ -753,7 +772,8 @@ theorem iterate_prepare :
         cases b <;> simp) [] (v := ((p ++ x).map eBit).length + 1)
     le_rfl
   rw [show 2 * (p.length + x.length) + 4 =
-      (((p ++ x).map eBit).length + 1 + 1) + 1 + (p.length + 1 + x.length) by simp; omega,
+      (((p ++ x).map eBit).length + 1 + 1) + 1 + (p.length + 1 + x.length) by
+        simp only [List.length_map, List.length_append]; omega,
     Function.iterate_add_apply, iterate_copy d p x le_rfl, hw, Function.iterate_succ_apply,
     hend, wtape_vcells, hrw]
   simp [redirectCfg, init, Tape.blank]
@@ -762,8 +782,8 @@ end Run
 
 end Hardwire
 
-open Hardwire in
-/-- **The behaviour of `hardwire d p`**: on every input of bits `x`, it halts with output `o`
+open Redirect Hardwire in
+/-- **The behavior of `hardwire d p`**: on every input of bits `x`, it halts with output `o`
 exactly when `d` halts on `p ++ x` with output `o`. -/
 theorem Desc.computes_hardwire (d : Desc) (p x : List Bool) (o : List ℕ) :
     (hardwire d p).Computes (x.map eBit) o ↔ d.Computes ((p ++ x).map eBit) o := by

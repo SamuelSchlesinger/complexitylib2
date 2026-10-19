@@ -87,24 +87,12 @@ theorem Computes.output_eq_of_halted {output : List Symbol} (h : tm.Computes inp
 theorem halts_iff_exists_computes : tm.Halts input ↔ ∃ output, tm.Computes input output :=
   ⟨fun ⟨t, ht⟩ => ⟨_, t, ht, rfl⟩, fun ⟨_, h⟩ => h.halts⟩
 
-/-- After the run has halted, no new cells are visited. -/
-theorem space_le_space_of_halted (cfg : Cfg k Symbol State input) {u : ℕ}
-    (hu : (tm.runFrom cfg u).Halted) (t : ℕ) : tm.space cfg t ≤ tm.space cfg u := by
-  change ∑ i, tm.spaceUsedByTape cfg t i ≤ ∑ i, tm.spaceUsedByTape cfg u i
-  refine Finset.sum_le_sum fun i _ => Finset.card_le_card fun z hz => ?_
-  simp only [visitedByTapeHead, Finset.mem_image, Finset.mem_univ, true_and] at hz ⊢
-  obtain ⟨n, rfl⟩ := hz
-  by_cases hn : (n : ℕ) ≤ u
-  · exact ⟨⟨n, by omega⟩, rfl⟩
-  · exact ⟨Fin.last u, by rw [runFrom_eq_of_halt tm cfg (by omega : u ≤ n) hu]; rfl⟩
-
 /-- **An output computed without bounds is computed within bounds**: the time at which the machine
 halts, and the space it has used by then. -/
 theorem Computes.exists_computesInTimeAndSpace {output : List Symbol}
     (h : tm.Computes input output) : ∃ t s, tm.ComputesInTimeAndSpace input output t s :=
   let ⟨u, hu, _⟩ := h
-  ⟨u, _, h, runsInTime_of_halted hu,
-    runsInSpace_iff.mpr (space_le_space_of_halted (tm.initCfg input) hu)⟩
+  ⟨u, _, h, runsInTime_of_halted hu, runsInSpace_of_halted hu le_rfl⟩
 
 namespace Universal
 

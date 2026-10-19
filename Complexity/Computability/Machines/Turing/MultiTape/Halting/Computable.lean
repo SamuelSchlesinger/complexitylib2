@@ -26,8 +26,11 @@ that is, when its Boolean indicator is computable.
 Computable functions compose (`Turing.MultiTapeTM.IsComputable.comp`): both machines are first put
 into the tidy normal form
 (`Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace`), whose
-machines compose. Every resource-bounded notion of the library gives computable functions,
-and decidable sets are closed under complement.
+machines compose. Functions computable within bounds in the senses of
+`Turing.MultiTapeTM.ComputableInTimeAndSpace`, `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace`,
+`Turing.MultiTapeTM.ComputableTidilyInO`, `Turing.MultiTapeTM.ComputableTidilyInDegree` and
+`Turing.MultiTapeTM.ComputableTidilyInPolyTime` are computable (their `.isComputable` lemmas), and
+decidable sets are closed under complement.
 
 These are the decidable sets of [Sipser, Definition 3.6][Sipser2013], for the library's native
 multi-tape machines. Mathlib's `ComputablePred` is the analogous notion for its partial recursive

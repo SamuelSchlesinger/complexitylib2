@@ -13,19 +13,23 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 /-!
 # Rice's theorem
 
-Every nontrivial property of the behaviour of machines is undecidable on their descriptions
-(`Turing.MultiTapeTM.rice`) [Rice][Rice1953] [Sipser, Problem 5.28][Sipser2013]. The behaviour of
-the machine described by a word `w` (`Turing.MultiTapeTM.behaviour`) relates each input of bits on
-which it halts to the output it halts with; a property of behaviours is nontrivial when the
+Every nontrivial property of the behavior of machines is undecidable on their descriptions
+(`Turing.MultiTapeTM.rice`) [Rice][Rice1953] [Sipser, Problem 5.28][Sipser2013]. The behavior of
+the machine described by a word `w` (`Turing.MultiTapeTM.behavior`) relates each input of bits on
+which it halts to the output it halts with; a property of behaviors is nontrivial when the
 machine described by some word has it and the machine described by another does not. Equivalently,
-a set of words that depends only on the behaviour of the machines they describe, and is neither
-empty nor everything, is undecidable (`Turing.MultiTapeTM.not_isDecidable_of_behaviour`).
+a set of words that depends only on the behavior of the machines they describe, and is neither
+empty nor everything, is undecidable (`Turing.MultiTapeTM.not_isDecidable_of_behavior`).
 
-The proof goes through a recursion theorem (`Turing.MultiTapeTM.exists_behaviour_eq`)
-[Sipser, Theorem 6.3][Sipser2013]: for every computable verdict `f` on words and descriptions
-`d false` and `d true`, some word `e` describes a machine behaving as `d (f e)`. Applied to a
-decider of the property, with `d true` outside the property and `d false` inside it, it gives a word
-describing a machine inside the property exactly when it is outside.
+The proof goes through the two-way case of Kleene's recursion theorem
+(`Turing.MultiTapeTM.exists_behavior_eq`) [Sipser, Theorem 6.3][Sipser2013]: for every computable
+verdict `f` on words and descriptions `d false` and `d true`, some word `e` describes a machine
+behaving as `d (f e)`. The full theorem allows any computable transformation of descriptions in
+place of the choice between `d false` and `d true`; the choice is all that Rice's theorem needs.
+Applied to a decider of the property, with `d true` outside the property and `d false` inside it,
+it gives a word describing a machine inside the property exactly when it is outside. For each
+input of bits `x`, halting on `x` is such a property (`Turing.MultiTapeTM.not_isDecidable_halts`),
+the native form of Mathlib's `ComputablePred.halting_problem`.
 
 The recursion theorem is Kleene's construction, from two constructions on descriptions. The s-m-n
 theorem builds an input prefix into a description (`Turing.MultiTapeTM.Universal.hardwire`), in
@@ -37,18 +41,19 @@ describes the machine described by `y` with `y` built in. Then `e = s t` describ
 runs the machine described by `t` on `y = t` and `x`, so behaves as `d (f (s t))`. No universal
 machine is needed: `d false` and `d true` are fixed, and their transitions are part of the
 description of the dispatching machine, reading their input from the work tape as in
-`Turing.MultiTapeTM.Universal.redirect`.
+`Turing.MultiTapeTM.Universal.Redirect.redirect`.
 
 ## Main definitions
 
-* `Turing.MultiTapeTM.behaviour`: the behaviour of the machine described by a word.
+* `Turing.MultiTapeTM.behavior`: the behavior of the machine described by a word.
 * `Turing.MultiTapeTM.Universal.dispatch`: dispatching on the first bit computed by a machine.
 
 ## Main results
 
-* `Turing.MultiTapeTM.Universal.Desc.computes_dispatch`: the behaviour of a dispatching machine.
-* `Turing.MultiTapeTM.exists_behaviour_eq`: the recursion theorem.
-* `Turing.MultiTapeTM.rice`, `Turing.MultiTapeTM.not_isDecidable_of_behaviour`: Rice's theorem.
+* `Turing.MultiTapeTM.Universal.Desc.computes_dispatch`: the behavior of a dispatching machine.
+* `Turing.MultiTapeTM.exists_behavior_eq`: the two-way case of the recursion theorem.
+* `Turing.MultiTapeTM.rice`, `Turing.MultiTapeTM.not_isDecidable_of_behavior`: Rice's theorem.
+* `Turing.MultiTapeTM.not_isDecidable_halts`: halting on a fixed input is undecidable.
 
 ## References
 
@@ -61,6 +66,8 @@ description of the dispatching machine, reading their input from the work tape a
 namespace Turing.MultiTapeTM
 
 namespace Universal
+
+open Redirect
 
 /-! ### Finding transitions -/
 
@@ -124,6 +131,8 @@ theorem SCfg.key_eq_key_toCfg {k : ℕ} {x : List ℕ} {s : SCfg} (hs : s.WellSh
 
 /-! ### Dispatching on a computed bit -/
 
+namespace Dispatch
+
 /-- The action on the virtual input tape writing there the symbol `o` emitted by a transition. -/
 def outAct (o : Option ℕ) : TapeAct :=
   o.elim (none, .zero) fun s => (some (some s), .pos)
@@ -131,8 +140,6 @@ def outAct (o : Option ℕ) : TapeAct :=
 /-- The states of the description `d b` in `Turing.MultiTapeTM.Universal.dispatch`. -/
 def dstate (b : Bool) (q : ℕ) : ℕ :=
   4 * q + 2 + b.toNat
-
-namespace Dispatch
 
 variable {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ) (tm : MultiTapeTM k Bool S)
   (d : Bool → Desc)
@@ -246,11 +253,11 @@ theorem find?_prep {e : Key × Act} (he : e ∈ markerEntries eS tm d ++ branchE
     · rw [(prep_spec eS tm d (List.mem_append_right _ he')).2, (prep_spec eS tm d he).2, hk]
     · have := state_redirectEntries d he'
       rw [hk] at this
-      simp at this
+      simp only [Bool.toNat_false] at this
       omega
     · have := state_redirectEntries d he'
       rw [hk] at this
-      simp at this
+      simp only [Bool.toNat_true] at this
       omega
 
 /-- For the states of `tm`, the transitions found are those of `tm`, writing the output on the
@@ -559,9 +566,9 @@ open Universal
 
 /-! ### The recursion theorem and Rice's theorem -/
 
-/-- The behaviour, on inputs of bits, of the machine described by the word `w`: the relation
+/-- The behavior, on inputs of bits, of the machine described by the word `w`: the relation
 between the inputs on which it halts and the outputs it halts with. -/
-def behaviour (w x : List Bool) (o : List ℕ) : Prop :=
+def behavior (w x : List Bool) (o : List ℕ) : Prop :=
   (decodeDesc w).Computes (x.map eBit) o
 
 /-- Building the description of a word into itself, as an input prefix, is computable in
@@ -574,13 +581,15 @@ theorem computableTidilyInPolyTime_selfHardwire :
   exact (ComputableTidilyInPolyTime.of_eq (f := fun d : Desc => eDesc d) (encIn := eDesc)
     (encMid := encBits) fun _ => rfl).comp (computableTidilyInPolyTime_hardwire.comp hpair)
 
-/-- **A recursion theorem.** For every computable verdict `f` on words and descriptions `d false`,
-`d true`, some word `e` describes a machine behaving on inputs of bits as `d (f e)` does: a machine
-can make its whole behaviour depend on a computable verdict about its own description. It is built
-by Kleene's construction: a machine reads a word `y` before its input, computes the verdict on the
-description of the machine described by `y` with `y` built in, and dispatches on it; `e` is that
-description for `y` the description of the machine itself. -/
-theorem exists_behaviour_eq {f : List Bool → Bool} (hf : IsComputable f encBits encBool)
+/-- **Kleene's recursion theorem, in its two-way case.** For every computable verdict `f` on words
+and descriptions `d false`, `d true`, some word `e` describes a machine behaving on inputs of bits
+as `d (f e)` does: a machine can make its whole behavior depend on a computable verdict about its
+own description. The full recursion theorem allows any computable transformation of descriptions
+in place of the choice between `d false` and `d true`. The proof is Kleene's construction: a
+machine reads a word `y` before its input, computes the verdict on the description of the machine
+described by `y` with `y` built in, and dispatches on it; `e` is that description for `y` the
+description of the machine itself. -/
+theorem exists_behavior_eq {f : List Bool → Bool} (hf : IsComputable f encBits encBool)
     (d : Bool → Desc) : ∃ e : List Bool, ∀ (x : List Bool) (o : List ℕ),
       (decodeDesc e).Computes (x.map eBit) o ↔ (d (f e)).Computes (x.map eBit) o := by
   set s : List Bool → List Bool := fun y => eDesc (hardwire (decodeDesc y) (frame y))
@@ -605,16 +614,16 @@ theorem exists_behaviour_eq {f : List Bool → Bool} (hf : IsComputable f encBit
   rw [hsT, decodeDesc_eDesc, Desc.computes_hardwire]
   rwa [hsT] at h
 
-/-- **Rice's theorem.** Every nontrivial property of the behaviour of machines is undecidable on
-their descriptions: if `C` contains the behaviour of the machine described by some word and not that
-of the machine described by another, then the set of words describing machines whose behaviour is
+/-- **Rice's theorem.** Every nontrivial property of the behavior of machines is undecidable on
+their descriptions: if `C` contains the behavior of the machine described by some word and not that
+of the machine described by another, then the set of words describing machines whose behavior is
 in `C` is undecidable [Rice][Rice1953] [Sipser, Problem 5.28][Sipser2013]. -/
-theorem rice {C : Set (List Bool → List ℕ → Prop)} {w₀ w₁ : List Bool} (h₀ : behaviour w₀ ∉ C)
-    (h₁ : behaviour w₁ ∈ C) : ¬IsDecidable {w | behaviour w ∈ C} encBits := by
+theorem rice {C : Set (List Bool → List ℕ → Prop)} {w₀ w₁ : List Bool} (h₀ : behavior w₀ ∉ C)
+    (h₁ : behavior w₁ ∈ C) : ¬IsDecidable {w | behavior w ∈ C} encBits := by
   intro hdec
   obtain ⟨f, hf, hP⟩ := hdec.exists_isComputable
-  obtain ⟨e, he⟩ := exists_behaviour_eq hf fun b => decodeDesc (if b then w₀ else w₁)
-  have hbeh : behaviour e = behaviour (if f e then w₀ else w₁) :=
+  obtain ⟨e, he⟩ := exists_behavior_eq hf fun b => decodeDesc (if b then w₀ else w₁)
+  have hbeh : behavior e = behavior (if f e then w₀ else w₁) :=
     funext fun x => funext fun o => propext (he x o)
   have hmem := hP e
   simp only [Set.mem_ofPred_eq, hbeh] at hmem
@@ -625,14 +634,66 @@ theorem rice {C : Set (List Bool → List ℕ → Prop)} {w₀ w₁ : List Bool}
     exact h₀ hmem
 
 /-- **Rice's theorem, for sets of words.** A set of words that holds of a word or not according to
-the behaviour of the machine it describes, and is neither empty nor everything, is undecidable. -/
-theorem not_isDecidable_of_behaviour {P : Set (List Bool)}
-    (hP : ∀ w w', behaviour w = behaviour w' → w ∈ P → w' ∈ P) {w₀ w₁ : List Bool} (h₀ : w₀ ∉ P)
+the behavior of the machine it describes, and is neither empty nor everything, is undecidable.
+This is the counterpart of Mathlib's `ComputablePred.rice₂` for partial recursive codes. -/
+theorem not_isDecidable_of_behavior {P : Set (List Bool)}
+    (hP : ∀ w w', behavior w = behavior w' → w ∈ P → w' ∈ P) {w₀ w₁ : List Bool} (h₀ : w₀ ∉ P)
     (h₁ : w₁ ∈ P) : ¬IsDecidable P encBits := by
-  have hset : {w | behaviour w ∈ {B | ∃ w ∈ P, behaviour w = B}} = P := by
+  have hset : {w | behavior w ∈ {B | ∃ w ∈ P, behavior w = B}} = P := by
     ext w
     exact ⟨fun ⟨w', hw', h⟩ => hP w' w h hw', fun hw => ⟨w, hw, rfl⟩⟩
   rw [← hset]
   exact rice (fun ⟨w, hw, h⟩ => h₀ (hP w w₀ h hw)) ⟨w₁, h₁, rfl⟩
+
+/-! ### Halting on a fixed input -/
+
+section FixedInput
+
+open Universal.Redirect
+
+/-- A description without transitions: it halts at once. -/
+private def haltDesc : Desc := ⟨0, 0, []⟩
+
+/-- A description staying in place forever on every input of bits. -/
+private def loopDesc : Desc := ⟨0, 0, bitSyms.map fun i => (⟨0, i, []⟩, ⟨.zero, [], none, some 0⟩)⟩
+
+private theorem computes_haltDesc (x : List ℕ) : haltDesc.Computes x [] :=
+  ⟨1, rfl⟩
+
+private theorem iterate_stepOut_loopDesc (x : List Bool) (t : ℕ) :
+    (stepOut loopDesc (x.map eBit))^[t] (init loopDesc, []) = (init loopDesc, []) := by
+  have he : ((⟨0, inputSymbol (x.map eBit) 1, []⟩, ⟨.zero, [], none, some 0⟩) : Key × Act) ∈
+      loopDesc.table := List.mem_map.mpr ⟨_, inputSymbol_map_eBit_mem x 1, rfl⟩
+  have hf := find?_eq_some_of_mem he fun e' he' _ => by
+    obtain ⟨i, -, rfl⟩ := List.mem_map.mp he'
+    rfl
+  have hstep : stepOut loopDesc (x.map eBit) (init loopDesc, []) = (init loopDesc, []) := by
+    rw [stepOut, step_of_find? (c := init loopDesc) (q := 0) rfl hf]
+    rfl
+  exact Function.iterate_fixed hstep t
+
+private theorem not_computes_loopDesc (x : List Bool) (o : List ℕ) :
+    ¬loopDesc.Computes (x.map eBit) o := fun ⟨t, ht⟩ => by
+  have := congrArg Prod.snd ht
+  simp only [simulate, iterate_stepOut_loopDesc] at this
+  exact Bool.false_ne_true this
+
+/-- **Halting on a fixed input is undecidable**: for every input of bits `x`, no computable
+function decides, of a word, whether the machine it describes halts on `x`. This is the native
+counterpart of Mathlib's `ComputablePred.halting_problem`, a corollary of Rice's theorem. -/
+theorem not_isDecidable_halts (x : List Bool) :
+    ¬IsDecidable {w | (decodeDesc w).Halts (x.map eBit)} encBits := by
+  have hset : {w | (decodeDesc w).Halts (x.map eBit)} =
+      {w | behavior w ∈ {B : List Bool → List ℕ → Prop | ∃ o, B x o}} := by
+    ext w
+    exact Desc.halts_iff_exists_computes
+  rw [hset]
+  refine rice (w₀ := eDesc loopDesc) (w₁ := eDesc haltDesc) (fun ⟨o, h⟩ => ?_) ⟨[], ?_⟩
+  · rw [behavior, decodeDesc_eDesc] at h
+    exact not_computes_loopDesc x o h
+  · rw [behavior, decodeDesc_eDesc]
+    exact computes_haltDesc _
+
+end FixedInput
 
 end Turing.MultiTapeTM

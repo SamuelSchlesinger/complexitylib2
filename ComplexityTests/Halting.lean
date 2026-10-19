@@ -10,9 +10,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 
 /-! Concrete machines that halt and loop, their descriptions inside and outside the halting and
 acceptance problems, the machines diverging on a verdict, the diagonal machine against candidate
-deciders, a nontrivial property of self-applied behaviour for Rice's theorem, decidable sets and
+deciders, a nontrivial property of self-applied behavior for Rice's theorem, decidable sets and
 reductions, input prefixes built into descriptions, the recursion theorem, Rice's theorem for a
-nontrivial property of behaviour, and axiom guards. -/
+nontrivial property of behavior, and axiom guards. -/
 
 namespace ComplexityTests.Halting
 
@@ -117,7 +117,7 @@ example : (answer false).partialize.Halts (eDesc (desc pNum eBit (answer false).
   rw [Computes.halts_partialize (r := some []) (answer_computes false _)]
   rfl
 
-/-! ### Rice's theorem for the behaviour on self-descriptions -/
+/-! ### Rice's theorem for the behavior on self-descriptions -/
 
 /-- The words whose machine halts on them with the empty output. -/
 def haltsEmpty : Set (List Bool) := {w | (decodeDesc w).Computes (w.map eBit) []}
@@ -225,14 +225,14 @@ example : ComputableTidilyInPolyTime (fun dp : Desc × List Bool => hardwire dp.
 
 /-! ### The recursion theorem and Rice's theorem -/
 
-theorem behaviour_answer (b : Bool) (x : List Bool) :
-    behaviour (eDesc (desc unitNum eBit (answer b))) x [eBit b] := by
-  rw [behaviour, decodeDesc_eDesc, ← List.map_singleton, Desc.computes_desc]
+theorem behavior_answer (b : Bool) (x : List Bool) :
+    behavior (eDesc (desc unitNum eBit (answer b))) x [eBit b] := by
+  rw [behavior, decodeDesc_eDesc, ← List.map_singleton, Desc.computes_desc]
   exact answer_computes b x
 
-theorem not_behaviour_spin (x : List Bool) (o : List ℕ) :
-    ¬behaviour (eDesc (desc unitNum eBit spin)) x o := fun h => by
-  rw [behaviour, decodeDesc_eDesc] at h
+theorem not_behavior_spin (x : List Bool) (o : List ℕ) :
+    ¬behavior (eDesc (desc unitNum eBit spin)) x o := fun h => by
+  rw [behavior, decodeDesc_eDesc] at h
   exact not_halts_spin x ((Desc.halts_desc unitNum eBit spin x).mp
     (Desc.halts_iff_exists_computes.mpr ⟨o, h⟩))
 
@@ -240,21 +240,26 @@ theorem not_behaviour_spin (x : List Bool) (o : List ℕ) :
 example : ∃ e : List Bool, ∀ (x : List Bool) (o : List ℕ),
     (decodeDesc e).Computes (x.map eBit) o ↔
       (desc unitNum eBit (answer true)).Computes (x.map eBit) o :=
-  exists_behaviour_eq (f := fun _ => true) (ComputableTidilyInDegree.const true).isComputable
+  exists_behavior_eq (f := fun _ => true) (ComputableTidilyInDegree.const true).isComputable
     fun _ => desc unitNum eBit (answer true)
 
 /-- **Rice's theorem** for the nontrivial property of halting on the empty input: the description
 of `answer false` has it and that of `spin` does not, so it is undecidable. -/
-example : ¬IsDecidable {w | behaviour w ∈ {B : List Bool → List ℕ → Prop | ∃ o, B [] o}}
+example : ¬IsDecidable {w | behavior w ∈ {B : List Bool → List ℕ → Prop | ∃ o, B [] o}}
     encBits :=
   rice (w₀ := eDesc (desc unitNum eBit spin)) (w₁ := eDesc (desc unitNum eBit (answer false)))
-    (fun ⟨o, h⟩ => not_behaviour_spin [] o h) ⟨_, behaviour_answer false []⟩
+    (fun ⟨o, h⟩ => not_behavior_spin [] o h) ⟨_, behavior_answer false []⟩
 
 /-- The descriptions of machines accepting every input are undecidable. -/
-example : ¬IsDecidable {w | ∀ x, behaviour w x [eBit true]} encBits :=
-  not_isDecidable_of_behaviour (fun _ _ h hw x => h ▸ hw x)
+example : ¬IsDecidable {w | ∀ x, behavior w x [eBit true]} encBits :=
+  not_isDecidable_of_behavior (fun _ _ h hw x => h ▸ hw x)
     (w₀ := eDesc (desc unitNum eBit spin)) (w₁ := eDesc (desc unitNum eBit (answer true)))
-    (fun h => not_behaviour_spin [] _ (h [])) (behaviour_answer true)
+    (fun h => not_behavior_spin [] _ (h [])) (behavior_answer true)
+
+/-- Halting on the empty input is undecidable, as Mathlib's `ComputablePred.halting_problem` says
+for partial recursive codes. -/
+example : ¬IsDecidable {w | (decodeDesc w).Halts (([] : List Bool).map eBit)} encBits :=
+  not_isDecidable_halts []
 
 /-! ### Axioms -/
 
@@ -384,11 +389,11 @@ info: 'Turing.MultiTapeTM.Universal.Desc.computes_dispatch' depends on axioms:
 #print axioms Turing.MultiTapeTM.Universal.Desc.computes_dispatch
 
 /--
-info: 'Turing.MultiTapeTM.exists_behaviour_eq' depends on axioms:
+info: 'Turing.MultiTapeTM.exists_behavior_eq' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.exists_behaviour_eq
+#print axioms Turing.MultiTapeTM.exists_behavior_eq
 
 /--
 info: 'Turing.MultiTapeTM.rice' depends on axioms:
@@ -398,10 +403,17 @@ info: 'Turing.MultiTapeTM.rice' depends on axioms:
 #print axioms Turing.MultiTapeTM.rice
 
 /--
-info: 'Turing.MultiTapeTM.not_isDecidable_of_behaviour' depends on axioms:
+info: 'Turing.MultiTapeTM.not_isDecidable_of_behavior' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.not_isDecidable_of_behaviour
+#print axioms Turing.MultiTapeTM.not_isDecidable_of_behavior
+
+/--
+info: 'Turing.MultiTapeTM.not_isDecidable_halts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.not_isDecidable_halts
 
 end ComplexityTests.Halting

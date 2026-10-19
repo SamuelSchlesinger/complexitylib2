@@ -156,6 +156,10 @@ theorem computableTidilyInPolyTime_option_map {α β : Type} {encA : α ↪ List
   funext x
   cases value x <;> rfl
 
+namespace Hardwire
+
+open Redirect
+
 theorem vlift_eq_elim (i : Option ℕ) :
     vlift i = i.elim [some marker, none] fun b => if b = marker then [] else [some b] := by
   cases i <;> rfl
@@ -182,19 +186,22 @@ theorem computableTidilyInPolyTime_writeEntries :
   unfold writeEntries
   fun_prop
 
-theorem computableTidilyInPolyTime_redirect_hardwire :
+theorem computableTidilyInPolyTime_redirect :
     ComputableTidilyInPolyTime (fun d : Desc => redirect (fun q => 2 * q + 1) none [] 0 id d.table)
       eDesc (encList (encPair eKey eAct)) := by
   simp only [redirect, redirectEntry_hardwire, vlift_eq_elim, vmove]
   fun_prop
 
+end Hardwire
+
+open Redirect Hardwire in
 /-- **The s-m-n theorem**: the description with an input prefix built in,
 `Turing.MultiTapeTM.Universal.hardwire d p`, is computed from `d` and `p` in polynomial time. -/
 theorem computableTidilyInPolyTime_hardwire :
     ComputableTidilyInPolyTime (fun dp : Desc × List Bool => hardwire dp.1 dp.2)
       (encPair eDesc encBits) eDesc := by
   have hw := computableTidilyInPolyTime_writeEntries
-  have hr := computableTidilyInPolyTime_redirect_hardwire.comp (fst eDesc encBits)
+  have hr := computableTidilyInPolyTime_redirect.comp (fst eDesc encBits)
   simp only [Function.comp_def] at hr
   unfold hardwire copyEntries rewindEntries
   fun_prop
