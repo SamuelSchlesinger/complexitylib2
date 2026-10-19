@@ -13,6 +13,7 @@ public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.MCSP.NP
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+import Complexity.Computability.Complexity.Classes.PH.KarpLipton
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -25,17 +26,47 @@ import Cslib.Foundations.Data.Nat.Asymptotics
 /-!
 # Kannan's theorem
 
-For every `k`, some language in `Σ₂` has no circuits of size `O(n ^ k)`
-[Kannan][Kannan1982], [Arora and Barak, Exercise 6.5][AroraBarak09].
+For every `k`, some language in `Σ₂` has no circuits of size `O(n ^ k)`: it lies in no class
+`SIZE (c (n + 1) ^ k)` (`Cslib.Complexity.exists_mem_SigmaP_two_notMem_SIZE`)
+[Kannan][Kannan1982], [Arora and Barak, Chapter 6][AroraBarak09]. Size counts gates, as in
+`Cslib.Circuits.Boolean.SIZE`.
+
+Kannan's language (`Cslib.Complexity.Kannan.language`) is first built in `Σ₃`. At input length
+`n`, let `m = (k + 3) (⌊log₂ (n + 1)⌋ + 1)`; the language evaluates, on the first `m` bits of the
+input, the function of the first truth table on `m` inputs, in lexicographic order, that needs
+more than `(n + 1) ^ (k + 1)` gates. Shannon's counting argument provides such tables at all
+large lengths. Fixing the inputs after the first `m` to `false` turns the slice of the language
+at length `n` into the hard function and adds at most two gates, so the language is in no
+`SIZE (c (n + 1) ^ k)` (`Cslib.Complexity.Kannan.language_notMem_SIZE`). A truth table has at
+most `2 ^ (k + 3) (n + 1) ^ (k + 3)` bits and the MCSP verifier checks circuits for it in
+polynomial time, so a `Σ₃` verifier guesses the table `T`, then for every table `T'` and every
+circuit `c` of at most `(n + 1) ^ (k + 1)` gates guesses such a circuit `c'`, and checks that `c`
+does not compute `T`, that `c'` computes `T'` if `T'` comes before `T`, and that `T` gives `true`
+on the input (`Cslib.Complexity.Kannan.language_mem_SigmaP_three`).
+
+The theorem splits on whether `SAT` has circuits of polynomial size. If some language in `P/poly`
+has preimage `SAT` under `encCNF`, the Karp–Lipton theorem
+(`Cslib.Complexity.PH_eq_SigmaP_two_of_SAT`) collapses the polynomial hierarchy to `Σ₂`, so
+Kannan's language is in `Σ₂`. Otherwise the encodings of the satisfiable formulas, a problem in
+`NP ⊆ Σ₂` (`Cslib.Complexity.image_SAT_mem_NP`), have no circuits of polynomial size at all. The
+proof does not say which of the two languages witnesses the theorem.
 
 ## Main definitions
 
 * `Cslib.Complexity.Kannan.language`: a language in `Σ₃` without circuits of size `O(n ^ k)`.
+* `Cslib.Complexity.Kannan.verifier`: its `Σ₃` verifier.
 
 ## Main results
 
-* `Cslib.Complexity.Kannan.language_not_mem_SIZE`: Kannan's language has no circuits of size
+* `Cslib.Complexity.mem_NP_image`: the encodings of the members of a problem in `NP` form a
+  problem in `NP` on words, when the encoding has a decoder.
+* `Cslib.Complexity.image_SAT_mem_NP`: the encodings of the satisfiable formulas form a problem in
+  `NP` on words.
+* `Cslib.Complexity.Kannan.language_notMem_SIZE`: Kannan's language has no circuits of size
   `O(n ^ k)`.
+* `Cslib.Complexity.Kannan.language_mem_SigmaP_three`: Kannan's language is in `Σ₃`.
+* `Cslib.Complexity.exists_mem_SigmaP_two_notMem_SIZE`: **Kannan's theorem**, for every `k` some
+  language in `Σ₂` has no circuits of size `O(n ^ k)`.
 
 ## References
 
@@ -191,7 +222,8 @@ theorem exists_isFirstHard {k n : ℕ} (h : ∃ T, IsHard k n T) : ∃ T, IsFirs
 theorem tableFunction_ofFn_truthTable (m : ℕ) (f : BooleanFunction m) :
     tableFunction m (List.ofFn (MCSP.truthTable m f)) = f := by
   funext y
-  exact MCSP.tableValue_ofFn ⟨m, MCSP.truthTable m f, 0⟩ y |>.trans (by simp [MCSP.Instance.function])
+  exact (MCSP.tableValue_ofFn ⟨m, MCSP.truthTable m f, 0⟩ y).trans
+    (by simp [MCSP.Instance.function])
 
 /-- **Shannon's counting argument**: hard truth tables exist at all large lengths. -/
 theorem eventually_exists_isHard (k : ℕ) : ∀ᶠ n in atTop, ∃ T, IsHard k n T := by
@@ -241,7 +273,7 @@ theorem threshold_lt_complexity_slice {k n : ℕ} {T : List Bool} (hT : IsFirstH
   rfl
 
 /-- **Kannan's language has no circuits of size `O(n ^ k)`.** -/
-theorem language_not_mem_SIZE (k c : ℕ) : language k ∉ SIZE fun n => c * (n + 1) ^ k := by
+theorem language_notMem_SIZE (k c : ℕ) : language k ∉ SIZE fun n => c * (n + 1) ^ k := by
   intro hL
   obtain ⟨n, ⟨T, hT⟩, hm, hc⟩ := ((eventually_exists_isHard k).and
     ((eventually_arity_le k).and (eventually_ge_atTop (c + 2)))).exists
@@ -253,7 +285,6 @@ theorem language_not_mem_SIZE (k c : ℕ) : language k ∉ SIZE fun n => c * (n 
     exact Nat.mul_le_mul_left _ (by omega)
   have hpos : 1 ≤ (n + 1) ^ k := Nat.one_le_pow _ _ (by omega)
   nlinarith
-
 
 /-! ### Truth tables in MCSP -/
 
@@ -313,9 +344,10 @@ def table (k n : ℕ) (w : List Bool) : List Bool := w.take (2 ^ arity k n)
 
 /-- **The `Σ₃` verifier for Kannan's language.** On `(x, w₁ ++ w₂ ++ w₃)`, where `w₁` has
 `tableBound` bits and `w₂` has `tableBound + certBound` bits, it reads a truth table `T` from
-`w₁`, a truth table `T'` and a circuit `c` from `w₂` and a circuit `c'` from `w₃`. It accepts when
-`c` is not a circuit for `T`, `c'` is a circuit for `T'` if `T'` comes before `T`, and `T` gives
-`true` on the first `arity` bits of `x`. -/
+`w₁`, a truth table `T'` and a circuit certificate `c` from `w₂` and a circuit certificate `c'`
+from `w₃`, as `MCSP.tableVerifier` reads them with the threshold `threshold k x.length`. It
+accepts when `c` is not a circuit within the threshold for `T`, `c'` is one for `T'` if `T'` comes
+before `T`, and `T` gives `true` on the first `arity` bits of `x`. -/
 def verifier (k : ℕ) (p : List Bool × List Bool) : Bool :=
   (!MCSP.tableVerifier ((table k p.1.length p.2, threshold k p.1.length),
       p.2.drop (2 * tableBound k p.1.length)) &&
@@ -539,5 +571,26 @@ theorem language_mem_SigmaP_three (k : ℕ) :
   ⟨_, verifier k, rfl, computableTidilyInPolyTime_verifier k, isAlternatingVerifier_verifier k⟩
 
 end Kannan
+
+/-! ### Kannan's theorem -/
+
+open Kannan in
+/-- **Kannan's theorem**: for every `k`, some language in `Σ₂` has no circuits of size
+`O(n ^ k)`, that is, lies in no class `SIZE (c (n + 1) ^ k)` [Kannan][Kannan1982]. If some
+language in `P/poly` has preimage `SAT` under `encCNF`, the Karp–Lipton theorem collapses the
+polynomial hierarchy to `Σ₂` and Kannan's language, in `Σ₃`, is in `Σ₂`; otherwise the encodings
+of the satisfiable formulas, in `NP ⊆ Σ₂`, have no circuits of polynomial size. -/
+theorem exists_mem_SigmaP_two_notMem_SIZE (k : ℕ) :
+    ∃ L : Language Bool, (L : Set (List Bool)) ∈ SigmaP 2 encBits ∧
+      ∀ c, L ∉ SIZE fun n => c * (n + 1) ^ k := by
+  by_cases hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈ SAT ↔ encCNF φ ∈ L
+  · refine ⟨language k, ?_, language_notMem_SIZE k⟩
+    rw [← PH_eq_SigmaP_two_of_SAT hSAT]
+    exact SigmaP_subset_PH 3 (language_mem_SigmaP_three k)
+  · have hNP : encCNF '' SAT ∈ SigmaP 1 encBits := SigmaP_one ▸ image_SAT_mem_NP
+    refine ⟨encCNF '' SAT, SigmaP_mono (by norm_num : 1 ≤ 2) hNP,
+      fun c hc => hSAT ⟨encCNF '' SAT, mem_PPoly_iff_exists_mem_SIZE.2
+        ⟨max c k, SIZE_mono (fun n => ?_) hc⟩, fun φ => encCNF.injective.mem_set_image.symm⟩⟩
+    exact Nat.mul_le_mul (le_max_left c k) (Nat.pow_le_pow_right n.succ_pos (le_max_right c k))
 
 end Cslib.Complexity
