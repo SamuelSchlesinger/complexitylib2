@@ -9,9 +9,11 @@ module
 
 public import Complexity.Init
 public import Mathlib.Algebra.Algebra.ZMod
+public import Mathlib.Data.ZMod.Defs
 public import Mathlib.LinearAlgebra.Matrix.Permanent
-public import Mathlib.Data.ZMod.Basic
-import Mathlib
+import Mathlib.Algebra.Field.ZMod
+import Mathlib.Data.Fintype.Option
+import Mathlib.Tactic.FinCases
 
 /-!
 # Sums of products of affine forms over the Boolean cube

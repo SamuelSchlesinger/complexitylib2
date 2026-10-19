@@ -8,10 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Mathlib.LinearAlgebra.Dimension.Finrank
-public import Mathlib.LinearAlgebra.Pi
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
-import Mathlib
+public import Mathlib.LinearAlgebra.Pi
+import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
 # Pivot spaces of a subspace of a product

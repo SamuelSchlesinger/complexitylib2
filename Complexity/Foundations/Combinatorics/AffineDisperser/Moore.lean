@@ -12,7 +12,10 @@ public import Complexity.Foundations.Combinatorics.AffineDisperser.CubeSum
 public import Complexity.Foundations.Combinatorics.AffineDisperser.SubspacePolynomial
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.LinearAlgebra.Matrix.Permanent
-import Mathlib
+import Mathlib.Algebra.CharP.Lemmas
+import Mathlib.Algebra.Field.ZMod
+import Mathlib.Algebra.Ring.GeomSum
+import Mathlib.FieldTheory.Finite.Basic
 
 /-!
 # Moore determinants in characteristic two

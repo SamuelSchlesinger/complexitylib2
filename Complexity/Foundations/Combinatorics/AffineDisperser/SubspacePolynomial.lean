@@ -10,13 +10,18 @@ module
 public import Complexity.Init
 public import Mathlib.Algebra.Algebra.ZMod
 public import Mathlib.Algebra.Field.Subfield.Basic
-public import Mathlib.Algebra.Polynomial.Eval.Defs
-public import Mathlib.Algebra.Polynomial.Degree.Defs
-public import Mathlib.Algebra.Polynomial.Monic
 public import Mathlib.Algebra.Module.ZMod
-public import Mathlib.LinearAlgebra.Dimension.Finrank
+public import Mathlib.Algebra.Polynomial.Monic
 public import Mathlib.Data.ZMod.Basic
-import Mathlib
+public import Mathlib.LinearAlgebra.Dimension.Finrank
+import Mathlib.Algebra.CharP.Algebra
+import Mathlib.Algebra.CharP.Lemmas
+import Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree
+import Mathlib.Algebra.Polynomial.Expand
+import Mathlib.Algebra.Polynomial.Roots
+import Mathlib.FieldTheory.Finite.Basic
+import Mathlib.FieldTheory.Finiteness
+import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
 # Linearized and subspace polynomials over fields of characteristic two
@@ -428,13 +433,19 @@ theorem exists_subfield_card_le [Finite F] {n k : ℕ} (hn : finrank (ZMod 2) F 
 /-- The zero pattern of the coefficient vector `a` of an image-subspace polynomial of a
 `d`-dimensional subspace that lies in no multiple of a proper subfield
 [BenSassonKopparty2012, Lemma 3.10]: the leading coefficient sits at `n - d`, the `d - 1`
-positions above it vanish, the constant coefficient is nonzero, and every other window of
+positions above it vanish, the constant coefficient is nonzero, and every window of
 `d - 1` consecutive positions starting in `[1, n - d]` meets a nonzero coefficient. -/
 structure CoeffPattern (n d : ℕ) [NeZero n] (a : ZMod n → F) : Prop where
+  /-- The dimension is at most the degree of the field. -/
   le : d ≤ n
+  /-- The leading coefficient sits at position `n - d`. -/
   lead : a ((n - d : ℕ) : ZMod n) ≠ 0
+  /-- The `d - 1` positions above the leading one vanish. -/
   canonical : ∀ c, 1 ≤ c → c < d → a ((n - d + c : ℕ) : ZMod n) = 0
+  /-- The constant coefficient is nonzero. -/
   zero_ne : a 0 ≠ 0
+  /-- Every window of `d - 1` consecutive positions starting in `[1, n - d]` meets a nonzero
+  coefficient. -/
   gap : ∀ ρ : ℕ, 1 ≤ ρ → ρ + d ≤ n → ∃ c < d - 1, a ((ρ + c : ℕ) : ZMod n) ≠ 0
 
 /-- **Structural lemma** [BenSassonKopparty2012, Lemma 3.10], for subspaces larger than every

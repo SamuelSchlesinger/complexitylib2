@@ -11,7 +11,14 @@ public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
 public import Complexity.Foundations.Combinatorics.AffineDisperser.PivotSpace
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
-import Mathlib
+import Mathlib.Algebra.CharP.Lemmas
+import Mathlib.Data.Finset.Powerset
+import Mathlib.FieldTheory.Finite.Basic
+import Mathlib.FieldTheory.Finiteness
+import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Basic
+import Mathlib.LinearAlgebra.Matrix.Block
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Positivity
 
 /-!
 # Affine dispersers from subspace polynomials
@@ -364,7 +371,7 @@ theorem exists_traceSym_ne {n s r t : ℕ} (hn : finrank (ZMod 2) F = n)
     rw [← Matrix.det_reindex_self (Equiv.sigmaSubtype i)]
     congr 1
     ext l m
-    show v i l i ^ 2 ^ (m : ℕ) = u i l ^ 2 ^ (m : ℕ)
+    change v i l i ^ 2 ^ (m : ℕ) = u i l ^ 2 ^ (m : ℕ)
     rw [hvdiag]
   -- comparing the two computations of the cube sum
   apply hu

@@ -9,8 +9,11 @@ module
 
 public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Moore
-public import Mathlib.FieldTheory.Finite.Trace
-import Mathlib
+public import Mathlib.RingTheory.Trace.Defs
+import Mathlib.Algebra.CharP.Lemmas
+import Mathlib.FieldTheory.Finite.Polynomial
+import Mathlib.FieldTheory.Finite.Trace
+import Mathlib.LinearAlgebra.Matrix.Block
 
 /-!
 # Products of Moore determinants of independent subspaces
