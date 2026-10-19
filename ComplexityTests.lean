@@ -1,6 +1,8 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserLowerBound
+import ComplexityTests.AffineDisperserRuntime
+import ComplexityTests.Alternation
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
@@ -20,6 +22,8 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.Code
+import ComplexityTests.Code.Concatenation
+import ComplexityTests.Code.Johnson
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
@@ -72,6 +76,7 @@ import ComplexityTests.Iteration.Batch
 import ComplexityTests.Iteration.Dynamics
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpLipton
+import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.Ladner
@@ -166,6 +171,7 @@ import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
+import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
@@ -188,6 +194,7 @@ import ComplexityTests.SourceComplexity
 import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
+import ComplexityTests.SpaceHierarchy
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
