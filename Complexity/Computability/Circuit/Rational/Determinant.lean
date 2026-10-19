@@ -40,6 +40,9 @@ operations is proved here; the result is proved equal to `Matrix.det`.
   adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
   lean/OAI/Computability/RationalHitting/Determinant.lean), via the complexitylib port
   [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
+* The bridge lemmas restate lemmas that are private in Mathlib's Bird determinant development
+  (`Mathlib/LinearAlgebra/Matrix/Determinant/Bird/Correctness.lean`, Copyright (c) 2026 Paul
+  Cadman, Apache 2.0).
 -/
 
 @[expose] public section
@@ -86,7 +89,10 @@ def determinant : {n : ℕ} → Table n → ℤ
   | 0, _ => 1
   | k + 1, A => (-1 : ℤ) ^ k * denote (stages A k) 0 0
 
-/-! ### Bridges between the matrix specification and the array determinant -/
+/-! ### Bridges between the matrix specification and the array determinant
+
+These lemmas restate, for this file's use, lemmas that are private in Mathlib's
+`Mathlib/LinearAlgebra/Matrix/Determinant/Bird/Correctness.lean` (by Paul Cadman). -/
 
 lemma sumFrom_eq_sum_Ico {n lo : ℕ} (f : ℕ → ℤ) :
     BirdDet.sumFrom n lo f = ∑ k ∈ Finset.Ico lo n, f k := by

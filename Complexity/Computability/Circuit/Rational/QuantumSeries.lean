@@ -41,6 +41,9 @@ a division ring. No commutativity of `R` is assumed; `HahnGeometric` adapts Math
   adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
   lean/OAI/Computability/RationalHitting/QuantumSeries.lean), via the complexitylib port
   [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
+* The geometric series construction `HahnGeometric` adapts Mathlib's
+  `HahnSeries.SummableFamily.powers` (`Mathlib/RingTheory/HahnSeries/Summable.lean`,
+  Copyright (c) 2021 Aaron Anderson, Apache 2.0) from commutative to arbitrary coefficient rings.
 -/
 
 @[expose] public section
@@ -131,7 +134,11 @@ lemma coefficientRing_noZeroDivisors (B : Γ → Rˣ) (h0 : B 0 = 1)
 end
 end Rational.QuantumSeries
 
-/-! ### Geometric series of Hahn series over a noncommutative ring -/
+/-! ### Geometric series of Hahn series over a noncommutative ring
+
+This section adapts Mathlib's `HahnSeries.SummableFamily.powers` and its lemmas
+(`Mathlib/RingTheory/HahnSeries/Summable.lean`, by Aaron Anderson), whose coefficient ring must be
+commutative, to an arbitrary ring of coefficients. -/
 namespace Rational.HahnGeometric
 open HahnSeries HahnSeries.SummableFamily Finset Function
 noncomputable section
