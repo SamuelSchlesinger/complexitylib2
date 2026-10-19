@@ -45,6 +45,12 @@ polynomial `p` in first-order logic.
   `strictVerifier enc p V` and the time bound `T` covers certificates of length `p |enc a|`, a
   problem instance `a` belongs to `A` iff `tableau tm (frame (enc a)) L T` is satisfiable for some
   `L ≤ M` (for any bound `M ≥ p |enc a|`).
+
+## References
+
+* [R. Fagin, *Generalized first-order spectra and polynomial-time recognizable sets*][Fagin1974]
+* [N. Immerman, *Descriptive Complexity*][Immerman1999]
+* [C. H. Papadimitriou, *Computational Complexity*][Papadimitriou94]
 -/
 
 @[expose] public section

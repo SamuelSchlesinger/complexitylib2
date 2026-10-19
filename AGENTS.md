@@ -38,7 +38,8 @@ using independent local review subagents when useful, and owns integration and l
 Reviewers inspect the exact submitted commit and record findings read-only; fixes and integration
 edits happen separately. The coordinator may take over a frozen submission through the documented
 reopen/assign/start workflow, preserving contributors and obtaining fresh reviews after edits.
-The coordinator also owns shared architecture, dependencies and scope allocation.
+The coordinator also owns shared architecture, dependencies and scope allocation; it batches
+`ROADMAP.md`, `UPSTREAM.md` and `references.bib` updates in docs-only epics.
 Large developments should produce independently useful, reviewable milestones;
 agree each milestone's endpoint and record the remaining development before submitting it.
 The board is shared state, not a process scheduler: these duties run while the agents are active.
@@ -120,8 +121,8 @@ lake exe checkInitImports
    beside cslib's `BooleanFunction`. Bit strings add with `+` (Mathlib's `BooleanRing Bool`),
    single bits with `^^`.
 7. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
-   (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …); add new entries in
-   cslib's format.
+   (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …). The coordinator adds
+   new entries, in cslib's format, in docs-only epics; report the ones you need.
 
 ## Proof hygiene
 
@@ -130,8 +131,9 @@ lake exe checkInitImports
 - Never put `[simp]` on machine step functions or transition tables (goals explode).
 - Non-terminal `simp` only as `simp only`; definitions as terms, not `by` blocks, where possible.
 - `ComplexityTests/Axioms.lean` audits all declarations stored in imported `Complexity` modules
-  for dependencies beyond `propext`, `Classical.choice` and `Quot.sound`. Add named checks there
-  for headline theorems as well.
+  for dependencies beyond `propext`, `Classical.choice` and `Quot.sound` and keeps its existing
+  named guards. Add named `#print axioms` guards for an epic's headline theorems to the epic's
+  own test module.
 - Watch for vacuous hypotheses: when a structure bundles bounds, provide at least one instance in
   the test suite.
 

@@ -7,9 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.SecondOrder.Projection
-public import Mathlib.SetTheory.Cardinal.NatCard
 
 /-!
 # Small structures and cardinality splitting
@@ -22,18 +22,16 @@ Over a fixed finite relational vocabulary `v : Vocabulary L`, however, there are
 isomorphism classes of structures of cardinality `0` or `1`: every relation table has length
 `n ^ a ≤ 1`, so an isomorphism-closed class `K` restricted to `Nat.card M ≤ 1` is determined by a
 finite Boolean table of first-order sentences and is therefore first-order definable
-(`FO.Definable.inter_card_le_one`). Combining this with the first-order sentence `cardGeTwoSentence`
-(`∃ x y, x ≠ y`) reduces existential second-order definability of any isomorphism-closed class `K`
-to agreeing with `K` on finite structures of cardinality at least `2`
-(`ESO.Definable.of_card_ge_two`).
+(`FO.Definable.inter_card_le_one`). Combining this with Mathlib's `Sentence.cardGe L 2` reduces
+existential second-order definability of any isomorphism-closed class `K` to agreeing with `K` on
+finite structures of cardinality at least `2` (`ESO.Definable.of_card_ge_two`).
 
 ## Main definitions
 
-* `Cslib.Logic.FO.cardZeroSentence`, `Cslib.Logic.FO.cardOneSentence`,
-  `Cslib.Logic.FO.cardGeTwoSentence`: first-order sentences for `Nat.card M = 0`, `Nat.card M = 1`,
-  and `2 ≤ Nat.card M`.
-* `Cslib.Logic.FO.truthTableSentence`: the first-order sentence expressing a predicate `P` on the
-  truth values of a finite family of sentences `φ : Fin m → L.Sentence`.
+* `Cslib.Logic.Vocabulary.nullarySymbolSentence`, `Cslib.Logic.Vocabulary.constTupleSentence`:
+  first-order sentences reading the single bit of each nullary or singleton relation table.
+* `Cslib.Logic.Vocabulary.encodeOfZero`, `Cslib.Logic.Vocabulary.encodeOfOne`: the canonical
+  `EncodedStructure` of cardinality `0` or `1` with given single-bit tables.
 
 ## Main results
 
@@ -42,6 +40,14 @@ to agreeing with `K` on finite structures of cardinality at least `2`
 * `Cslib.Logic.ESO.Definable.of_card_ge_two`: to show `ESO.Definable K` for an isomorphism-closed
   class `K`, it suffices to exhibit an `ESO.Sentence` that agrees with `K` on finite structures with
   `2 ≤ Nat.card M`.
+* `Cslib.Logic.ESO.Definable.of_withLinearOrder_card_ge_two`: to show `ESO.Definable K` for an
+  isomorphism-closed class `K`, it suffices to exhibit an `ESO.Sentence (L.sum orderLanguage)` that
+  agrees with `K` on finite structures with `2 ≤ Nat.card M` under every numbering.
+
+## References
+
+* [R. Fagin, *Generalized first-order spectra and polynomial-time recognizable sets*][Fagin1974]
+* [N. Immerman, *Descriptive Complexity*][Immerman1999]
 -/
 
 @[expose] public section
@@ -50,88 +56,15 @@ universe u v w
 
 open FirstOrder Language Structure CategoryTheory BoundedFormula
 
-namespace Cslib.Logic.FO
+namespace Cslib.Logic
 
-variable {L : Language.{u, v}} {M : Type w} [L.Structure M]
-
-/-! ### Cardinality sentences -/
-
-/-- The first-order sentence `∀ x, x ≠ x`, which holds in `M` iff `M` is empty. -/
-def cardZeroSentence : L.Sentence :=
-  ∀' ∼(&0 =' &0)
-
-/-- The first-order sentence `(∃ x, x = x) ∧ ∀ x y, x = y`, which holds in `M` iff `M` has a
-unique element. -/
-def cardOneSentence : L.Sentence :=
-  (∃' (&0 =' &0)) ⊓ ∀' ∀' (&0 =' &1)
-
-/-- The first-order sentence `∃ x y, x ≠ y`, which holds in `M` iff `M` has at least two distinct
-elements. -/
-def cardGeTwoSentence : L.Sentence :=
-  ∃' ∃' ∼(&0 =' &1)
-
-@[simp]
-theorem realize_cardZeroSentence [Finite M] :
-    M ⊨ (cardZeroSentence : L.Sentence) ↔ Nat.card M = 0 := by
-  have h1 : M ⊨ (cardZeroSentence : L.Sentence) ↔ IsEmpty M := by
-    simp [cardZeroSentence, Sentence.Realize, Formula.Realize, isEmpty_iff]
-  rw [h1, Nat.card_eq_zero]
-  exact ⟨Or.inl, fun h => h.resolve_right (not_infinite_iff_finite.2 inferInstance)⟩
-
-@[simp]
-theorem realize_cardOneSentence :
-    M ⊨ (cardOneSentence : L.Sentence) ↔ Nat.card M = 1 := by
-  have h1 : M ⊨ (cardOneSentence : L.Sentence) ↔ (∃ _ : M, True) ∧ ∀ a b : M, a = b := by
-    simp [cardOneSentence, Sentence.Realize, Formula.Realize, Fin.snoc]
-  rw [h1, Nat.card_eq_one_iff_exists]
-  constructor
-  · rintro ⟨⟨a, -⟩, hall⟩
-    exact ⟨a, fun b => hall b a⟩
-  · rintro ⟨a, ha⟩
-    exact ⟨⟨a, trivial⟩, fun x y => (ha x).trans (ha y).symm⟩
-
-@[simp]
-theorem realize_cardGeTwoSentence [Finite M] :
-    M ⊨ (cardGeTwoSentence : L.Sentence) ↔ 2 ≤ Nat.card M := by
-  have h1 : M ⊨ (cardGeTwoSentence : L.Sentence) ↔ ∃ x y : M, x ≠ y := by
-    simp [cardGeTwoSentence, Sentence.Realize, Formula.Realize, Fin.snoc]
-  rw [h1, ← nontrivial_iff, ← Finite.one_lt_card_iff_nontrivial]
-  omega
-
-theorem Definable.card_ge_two :
-    Definable {M : Bundled.{w} L.Structure | 2 ≤ Nat.card M} :=
-  ⟨cardGeTwoSentence, fun _ _ => realize_cardGeTwoSentence.symm⟩
-
-/-! ### Finite Boolean tables of sentences -/
-
-/-- Given `m` sentences `φ` and a predicate `P` on bit vectors `Fin m → Bool`, the first-order
-sentence asserting that the truth values `i ↦ (M ⊨ φ i)` satisfy `P`. -/
-noncomputable def truthTableSentence {m : ℕ} (φ : Fin m → L.Sentence)
-    (P : (Fin m → Bool) → Prop) : L.Sentence :=
-  BoundedFormula.iSup fun s : {s : Fin m → Bool // P s} =>
-    BoundedFormula.iInf fun i : Fin m => if s.1 i then φ i else ∼(φ i)
-
-open scoped Classical in
-@[simp]
-theorem realize_truthTableSentence {m : ℕ} (φ : Fin m → L.Sentence)
-    (P : (Fin m → Bool) → Prop) :
-    M ⊨ truthTableSentence φ P ↔ P (fun i => decide (M ⊨ φ i)) := by
-  simp only [truthTableSentence, Sentence.Realize, Formula.Realize, BoundedFormula.realize_iSup,
-    BoundedFormula.realize_iInf, Subtype.exists]
-  have hiff (s : Fin m → Bool) (i : Fin m) :
-      BoundedFormula.Realize (if s i = true then φ i else ∼(φ i))
-        (default : Empty → M) default ↔ s i = decide (M ⊨ φ i) := by
-    cases s i
-    · simpa [Sentence.Realize, Formula.Realize] using (@decide_eq_false_iff_not (M ⊨ φ i) _).symm
-    · simpa [Sentence.Realize, Formula.Realize] using (@decide_eq_true_iff (M ⊨ φ i) _).symm
-  simp only [hiff, ← funext_iff]
-  exact ⟨fun ⟨s, hs, h⟩ => h ▸ hs, fun h => ⟨_, h, rfl⟩⟩
+variable {L : Language.{u, v}}
 
 /-! ### Small structures over a finite vocabulary -/
 
-section Vocabulary
+namespace Vocabulary
 
-variable [L.IsRelational] (v : Vocabulary L)
+variable (v : Vocabulary L)
 
 /-- The sentence testing whether a relation symbol `r` is nullary and holds on the empty tuple. -/
 def nullaryRelSentence : (Σ n, L.Relations n) → L.Sentence
@@ -162,7 +95,6 @@ def encodeOfOne (s : Fin v.count → Bool) : EncodedStructure :=
   (1, List.ofFn fun i : Fin v.count => [s i])
 
 open scoped Classical in
-omit [L.IsRelational] in
 theorem relTable_eq_of_equiv_fin_zero {N : Type} [L.Structure N] (e : N ≃ Fin 0)
     (r : Σ n, L.Relations n) :
     Vocabulary.relTable N e r =
@@ -178,14 +110,12 @@ theorem relTable_eq_of_equiv_fin_zero {N : Type} [L.Structure N] (e : N ≃ Fin 
   · simp [Vocabulary.relTable]
 
 open scoped Classical in
-omit [L.IsRelational] in
 theorem encode_eq_encodeOfZero {N : Type} [L.Structure N] (e : N ≃ Fin 0) :
-    v.encode N e = encodeOfZero v (fun i => decide (N ⊨ nullarySymbolSentence v i)) := by
+    v.encode N e = v.encodeOfZero (fun i => decide (N ⊨ v.nullarySymbolSentence i)) := by
   refine Prod.ext rfl (congrArg List.ofFn (funext fun i => ?_))
   exact relTable_eq_of_equiv_fin_zero e (v.symbol i)
 
 open scoped Classical in
-omit [L.IsRelational] in
 theorem relTable_eq_of_equiv_fin_one {N : Type} [L.Structure N] (e : N ≃ Fin 1)
     (r : Σ n, L.Relations n) :
     Vocabulary.relTable N e r = [decide (N ⊨ constTupleRelSentence r)] := by
@@ -210,32 +140,37 @@ theorem relTable_eq_of_equiv_fin_one {N : Type} [L.Structure N] (e : N ≃ Fin 1
     exact h (e.symm 0)
 
 open scoped Classical in
-omit [L.IsRelational] in
 theorem encode_eq_encodeOfOne {N : Type} [L.Structure N] (e : N ≃ Fin 1) :
-    v.encode N e = encodeOfOne v (fun i => decide (N ⊨ constTupleSentence v i)) := by
+    v.encode N e = v.encodeOfOne (fun i => decide (N ⊨ v.constTupleSentence i)) := by
   refine Prod.ext rfl (congrArg List.ofFn (funext fun i => ?_))
   exact relTable_eq_of_equiv_fin_one e (v.symbol i)
+
+end Vocabulary
+
+namespace FO
+
+variable [L.IsRelational] (v : Vocabulary L)
 
 include v in
 /-- For any isomorphism-closed class `K` over a finite relational vocabulary, the restriction of
 `K` to empty structures (`Nat.card M = 0`) is first-order definable. -/
 theorem Definable.inter_card_eq_zero {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K) :
     Definable {M : Bundled.{0} L.Structure | M ∈ K ∧ Nat.card M = 0} := by
-  refine ⟨cardZeroSentence ⊓ truthTableSentence (nullarySymbolSentence v)
-    (fun s => v.decoded (encodeOfZero v s) ∈ K), fun M _ => ?_⟩
-  rw [Sentence.realize_inf, realize_cardZeroSentence, realize_truthTableSentence]
+  refine ⟨cardEqSentence L 0 ⊓ truthTableSentence v.nullarySymbolSentence
+    (fun s => v.decoded (v.encodeOfZero s) ∈ K), fun M _ => ?_⟩
+  rw [Sentence.realize_inf, realize_cardEqSentence, realize_truthTableSentence]
   constructor
   · rintro ⟨hM, h0⟩
     refine ⟨h0, ?_⟩
     have e : M ≃ Fin 0 := h0 ▸ Finite.equivFin M
     have heqv := v.decodeEncodeEquiv M e
     have hmem : v.decoded (v.encode M e) ∈ K := (hK heqv).1 hM
-    rwa [encode_eq_encodeOfZero v e] at hmem
+    rwa [v.encode_eq_encodeOfZero e] at hmem
   · rintro ⟨h0, hdec⟩
     refine ⟨?_, h0⟩
     have e : M ≃ Fin 0 := h0 ▸ Finite.equivFin M
     have heqv := v.decodeEncodeEquiv M e
-    rw [← encode_eq_encodeOfZero v e] at hdec
+    rw [← v.encode_eq_encodeOfZero e] at hdec
     exact (hK heqv).2 hdec
 
 include v in
@@ -243,21 +178,21 @@ include v in
 `K` to singleton structures (`Nat.card M = 1`) is first-order definable. -/
 theorem Definable.inter_card_eq_one {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K) :
     Definable {M : Bundled.{0} L.Structure | M ∈ K ∧ Nat.card M = 1} := by
-  refine ⟨cardOneSentence ⊓ truthTableSentence (constTupleSentence v)
-    (fun s => v.decoded (encodeOfOne v s) ∈ K), fun M _ => ?_⟩
-  rw [Sentence.realize_inf, realize_cardOneSentence, realize_truthTableSentence]
+  refine ⟨cardEqSentence L 1 ⊓ truthTableSentence v.constTupleSentence
+    (fun s => v.decoded (v.encodeOfOne s) ∈ K), fun M _ => ?_⟩
+  rw [Sentence.realize_inf, realize_cardEqSentence, realize_truthTableSentence]
   constructor
   · rintro ⟨hM, h1⟩
     refine ⟨h1, ?_⟩
     have e : M ≃ Fin 1 := h1 ▸ Finite.equivFin M
     have heqv := v.decodeEncodeEquiv M e
     have hmem : v.decoded (v.encode M e) ∈ K := (hK heqv).1 hM
-    rwa [encode_eq_encodeOfOne v e] at hmem
+    rwa [v.encode_eq_encodeOfOne e] at hmem
   · rintro ⟨h1, hdec⟩
     refine ⟨?_, h1⟩
     have e : M ≃ Fin 1 := h1 ▸ Finite.equivFin M
     have heqv := v.decodeEncodeEquiv M e
-    rw [← encode_eq_encodeOfOne v e] at hdec
+    rw [← v.encode_eq_encodeOfOne e] at hdec
     exact (hK heqv).2 hdec
 
 include v in
@@ -279,13 +214,11 @@ theorem Definable.inter_card_le_one {K : Set (Bundled.{0} L.Structure)} (hK : Is
   rw [heq]
   exact (Definable.inter_card_eq_zero v hK).union (Definable.inter_card_eq_one v hK)
 
-end Vocabulary
+end FO
 
-end Cslib.Logic.FO
+namespace ESO
 
-namespace Cslib.Logic.ESO
-
-variable {L : Language.{u, v}} [L.IsRelational]
+variable [L.IsRelational]
 
 /-- To prove that an isomorphism-closed class `K` over a finite relational vocabulary is
 existential second-order definable, it suffices to exhibit an existential second-order sentence
@@ -295,10 +228,10 @@ theorem Definable.of_card_ge_two (v : Vocabulary L) {K : Set (Bundled.{0} L.Stru
     (hΦ : ∀ (M : Bundled.{0} L.Structure) [Finite M], 2 ≤ Nat.card M → (M ∈ K ↔ Φ.Realize M)) :
     Definable K := by
   obtain ⟨φ_small, hsmall⟩ := FO.Definable.inter_card_le_one v hK
-  refine ⟨Sentence.ofSentence φ_small ⊔ (Sentence.ofSentence FO.cardGeTwoSentence ⊓ Φ),
+  refine ⟨Sentence.ofSentence φ_small ⊔ (Sentence.ofSentence (Sentence.cardGe L 2) ⊓ Φ),
     fun M _ => ?_⟩
   rw [Sentence.realize_sup, Sentence.realize_ofSentence, Sentence.realize_inf,
-    Sentence.realize_ofSentence, FO.realize_cardGeTwoSentence, ← hsmall M]
+    Sentence.realize_ofSentence, FO.realize_cardGe_iff_le_card, ← hsmall M]
   change M ∈ K ↔ (M ∈ K ∧ Nat.card M ≤ 1) ∨ (2 ≤ Nat.card M ∧ Φ.Realize M)
   by_cases h2 : 2 ≤ Nat.card M
   · rw [hΦ M h2]
@@ -320,8 +253,10 @@ theorem Definable.of_withLinearOrder_card_ge_two (v : Vocabulary L)
           Φ.Realize M)) :
     Definable K := by
   refine Definable.of_card_ge_two v hK Φ.withLinearOrder fun M _ h2 => ?_
-  rw [Sentence.realize_withLinearOrder_iff]
+  rw [Sentence.realize_withLinearOrder]
   exact ⟨fun hM => ⟨Finite.equivFin M, (hΦ M (Finite.equivFin M) h2).1 hM⟩,
     fun ⟨e, h⟩ => (hΦ M e h2).2 h⟩
 
-end Cslib.Logic.ESO
+end ESO
+
+end Cslib.Logic

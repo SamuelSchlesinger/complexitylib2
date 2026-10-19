@@ -54,6 +54,8 @@ spelled out.
 
 ## Main results
 
+* `Cslib.Logic.tupleIndex_lt_pow_iff`, `Cslib.Logic.tupleIndex_lt_iff`: arithmetic characterizations
+  of `< n ^ a` and `<` on `tupleIndex`.
 * `Cslib.Logic.Vocabulary.decodeEncodeEquiv`: decoding an encoding of `M` gives a structure
   isomorphic to `M`.
 * `Cslib.Logic.Vocabulary.wellFormed_iff`: an input is well formed exactly when it is the
@@ -101,6 +103,101 @@ theorem tupleIndex_comp_cast {n k l : ℕ} (h : k = l) (x : Fin l → Fin n) :
     tupleIndex (x ∘ Fin.cast h) = tupleIndex x := by
   subst h
   rfl
+
+theorem tupleIndex_snoc {n k : ℕ} (x : Fin (k + 1) → Fin n) :
+    tupleIndex x = tupleIndex (x ∘ Fin.castSucc) + (x (Fin.last k) : ℕ) * n ^ k := by
+  simp only [tupleIndex_apply, Fin.sum_univ_castSucc, Function.comp_apply, Fin.val_castSucc,
+    Fin.val_last]
+
+/-- When all coordinates of `x : Fin k → Fin n` at indices `≥ a` are zero, `tupleIndex x` equals
+the index of its prefix of length `a`. -/
+theorem tupleIndex_eq_of_high_zero {n a : ℕ} :
+    ∀ {k : ℕ} (ha : a ≤ k) {x : Fin k → Fin n}
+      (_ : ∀ i : Fin k, a ≤ (i : ℕ) → (x i : ℕ) = 0),
+      tupleIndex x = tupleIndex (fun j : Fin a => x (Fin.castLE ha j))
+  | k, ha, x, hx => by
+    obtain rfl | hlt := eq_or_lt_of_le ha
+    · rfl
+    · cases k with
+      | zero => omega
+      | succ k =>
+        rw [tupleIndex_snoc x, hx (Fin.last k) (by simp; omega), Nat.zero_mul, Nat.add_zero]
+        exact tupleIndex_eq_of_high_zero (x := x ∘ Fin.castSucc) (Nat.lt_succ_iff.1 hlt)
+          (fun i hi => hx i.castSucc (by simpa using hi))
+
+/-- For `a ≤ k`, a `k`-tuple has index `< n ^ a` iff all coordinates at indices `≥ a` are zero. -/
+theorem tupleIndex_lt_pow_iff {n a : ℕ} :
+    ∀ {k : ℕ} (_ : a ≤ k) (x : Fin k → Fin n),
+      tupleIndex x < n ^ a ↔ ∀ i : Fin k, a ≤ (i : ℕ) → (x i : ℕ) = 0
+  | k, ha, x => by
+    obtain rfl | hlt := eq_or_lt_of_le ha
+    · exact ⟨fun _ i hi => absurd i.2 (by omega), fun _ => tupleIndex_lt x⟩
+    · cases k with
+      | zero => omega
+      | succ k =>
+        have ha' : a ≤ k := Nat.lt_succ_iff.1 hlt
+        constructor
+        · intro hlt' i hi
+          rw [tupleIndex_snoc x] at hlt'
+          have hlast : (x (Fin.last k) : ℕ) = 0 := by
+            by_contra hne
+            have hn : 1 ≤ n := by have := (x (Fin.last k)).2; omega
+            have h1 : n ^ a ≤ n ^ k := Nat.pow_le_pow_right hn ha'
+            have h2 : n ^ k ≤ (x (Fin.last k) : ℕ) * n ^ k :=
+              Nat.le_mul_of_pos_left _ (by omega)
+            omega
+          induction i using Fin.lastCases with
+          | last => exact hlast
+          | cast i =>
+            rw [hlast, Nat.zero_mul, Nat.add_zero] at hlt'
+            exact (tupleIndex_lt_pow_iff ha' (x ∘ Fin.castSucc)).1 hlt' i (by simpa using hi)
+        · intro hx
+          rw [tupleIndex_eq_of_high_zero ha hx]
+          exact tupleIndex_lt _
+
+/-- The numerical order on `tupleIndex` is the colexicographic order on `Fin k → Fin n`
+(comparing at the most significant coordinate where the tuples differ). -/
+theorem tupleIndex_lt_iff {n : ℕ} :
+    ∀ {k : ℕ} (x y : Fin k → Fin n),
+      tupleIndex x < tupleIndex y ↔
+        ∃ i : Fin k, x i < y i ∧ ∀ j : Fin k, i < j → x j = y j
+  | 0, x, y => by simp [tupleIndex_apply]
+  | k + 1, x, y => by
+    rw [tupleIndex_snoc x, tupleIndex_snoc y]
+    have hx := tupleIndex_lt (x ∘ Fin.castSucc)
+    have hy := tupleIndex_lt (y ∘ Fin.castSucc)
+    have hsplit : tupleIndex (x ∘ Fin.castSucc) + (x (Fin.last k) : ℕ) * n ^ k <
+        tupleIndex (y ∘ Fin.castSucc) + (y (Fin.last k) : ℕ) * n ^ k ↔
+        x (Fin.last k) < y (Fin.last k) ∨
+          (x (Fin.last k) = y (Fin.last k) ∧
+            tupleIndex (x ∘ Fin.castSucc) < tupleIndex (y ∘ Fin.castSucc)) := by
+      rcases lt_trichotomy (x (Fin.last k)) (y (Fin.last k)) with hlt | heq | hgt
+      · have hle : ((x (Fin.last k) : ℕ) + 1) * n ^ k ≤ (y (Fin.last k) : ℕ) * n ^ k :=
+          Nat.mul_le_mul_right (n ^ k) hlt
+        rw [Nat.add_mul, Nat.one_mul] at hle
+        exact ⟨fun _ => Or.inl hlt, fun _ => by omega⟩
+      · simp [heq]
+      · have hle : ((y (Fin.last k) : ℕ) + 1) * n ^ k ≤ (x (Fin.last k) : ℕ) * n ^ k :=
+          Nat.mul_le_mul_right (n ^ k) hgt
+        rw [Nat.add_mul, Nat.one_mul] at hle
+        have hnot1 : ¬ (x (Fin.last k) < y (Fin.last k)) := by omega
+        have hnot2 : x (Fin.last k) ≠ y (Fin.last k) := by omega
+        exact ⟨fun h => by omega, fun h => h.elim (fun h => absurd h hnot1)
+          (fun ⟨h, _⟩ => absurd h hnot2)⟩
+    rw [hsplit, tupleIndex_lt_iff (x ∘ Fin.castSucc) (y ∘ Fin.castSucc)]
+    constructor
+    · rintro (hlt | ⟨heq, i, hi, hj⟩)
+      · exact ⟨Fin.last k, hlt, fun j hj => absurd (Fin.le_last j) (not_le_of_gt hj)⟩
+      · refine ⟨i.castSucc, hi, fun j hjlt => ?_⟩
+        induction j using Fin.lastCases with
+        | last => exact heq
+        | cast j => exact hj j (Fin.castSucc_lt_castSucc_iff.1 hjlt)
+    · rintro ⟨i, hi, hj⟩
+      induction i using Fin.lastCases with
+      | last => exact Or.inl hi
+      | cast i =>
+        refine Or.inr ⟨hj (Fin.last k) (Fin.castSucc_lt_last i), i, hi, fun j hlt => ?_⟩
+        exact hj j.castSucc (Fin.castSucc_lt_castSucc_iff.2 hlt)
 
 /-! ### Vocabularies and inputs -/
 

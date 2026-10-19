@@ -28,7 +28,7 @@ Framed-list and option rules infer the payload encoding from the representation 
   the components' output-size bounds.
 * `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsReverse`,
   `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsDropLast`,
-  `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast`,
+  `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?ToList`,
   `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?`,
   `Turing.MultiTapeTM.ComputableTidilyInDegree.optionBoolToList`,
   `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsAppend`,
@@ -59,7 +59,8 @@ attribute [fun_prop] ComputableTidilyInDegree.const ComputableTidilyInDegree.fst
   ComputableTidilyInDegree.int_succ ComputableTidilyInDegree.int_pred
   ComputableTidilyInO.foldl_bits_finite ComputableTidilyInTimeAndSpace.map_bits
   ComputableTidilyInTimeAndSpace.reverse_bits ComputableTidilyInTimeAndSpace.dropLast_bits
-  ComputableTidilyInTimeAndSpace.getLast_bits ComputableTidilyInTimeAndSpace.getLast?_bits
+  ComputableTidilyInTimeAndSpace.length_bits ComputableTidilyInTimeAndSpace.getLast?_toList_bits
+  ComputableTidilyInTimeAndSpace.getLast?_bits
 
 namespace ComputableTidilyInDegree
 
@@ -110,10 +111,10 @@ theorem bitsDropLast :
 /-- Extract the last bit of a raw bit list as a 0-or-1-element list in linear time and constant
 output size. -/
 @[fun_prop]
-theorem bitsGetLast :
+theorem bitsGetLast?ToList :
     ComputableTidilyInDegree (fun l : List Bool => l.getLast?.toList) encBits encBits 1 0 :=
   ⟨⟨_, _, ⟨8, fun _ => by simp; omega⟩, ⟨0, fun _ => by simp⟩,
-    ComputableTidilyInTimeAndSpace.getLast_bits⟩,
+    ComputableTidilyInTimeAndSpace.getLast?_toList_bits⟩,
     ⟨1, fun l => by simp [Option.length_toList_le]⟩⟩
 
 /-- Extract the last bit of a raw bit list as an `Option Bool` in linear time and constant output
