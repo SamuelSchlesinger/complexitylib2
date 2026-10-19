@@ -986,6 +986,7 @@ public import Complexity.Probability.BitString.LinearHash.Collisions
 public import Complexity.Probability.BitString.List
 public import Complexity.Probability.BitString.List.All
 public import Complexity.Probability.BitString.List.Vote
+public import Complexity.Probability.BoundedDifferences
 public import Complexity.Probability.Chernoff
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Concentration
@@ -1000,6 +1001,9 @@ public import Complexity.Probability.Isolation
 public import Complexity.Probability.KWiseIndependent
 public import Complexity.Probability.KWiseIndependent.Polynomial
 public import Complexity.Probability.LocalLemma
+public import Complexity.Probability.MinEntropy
+public import Complexity.Probability.MinEntropy.Flat
+public import Complexity.Probability.MinEntropy.LeftoverHash
 public import Complexity.Probability.PMF
 public import Complexity.Probability.PMF.Expect
 public import Complexity.Probability.PMF.Map
