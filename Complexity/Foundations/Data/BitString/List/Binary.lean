@@ -9,6 +9,8 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.Nat.Bits
+import Mathlib.Data.List.Induction
+import Mathlib.Data.Nat.Size
 
 /-!
 # Saturating binary decoding
@@ -25,6 +27,8 @@ bounded on arbitrary input words; it agrees with capping the full mathematical b
 
 * `boundedBinaryValue_eq`: incremental saturation equals a single final cap.
 * `boundedBinaryValue_le`: every output is at most the cap.
+* `binaryValue_lt_two_pow`, `exists_binaryValue_eq`: the words of `t` bits represent exactly the
+  numbers below `2 ^ t`.
 
 ## References
 
@@ -91,5 +95,37 @@ theorem binaryValue_replicate_true (k : ℕ) :
       Bool.toNat_true] at *
     rw [Nat.pow_succ]
     lia
+
+/-- A word of `n` bits represents a number below `2 ^ n`. -/
+theorem binaryValue_lt_two_pow (word : List Bool) : binaryValue word < 2 ^ word.length := by
+  induction word using List.reverseRecOn with
+  | nil => simp [binaryValue]
+  | append_singleton word bit ih =>
+    rw [binaryValue_snoc, List.length_append, List.length_singleton, Nat.pow_succ]
+    cases bit <;> simp <;> omega
+
+/-- Leading zeros do not change the represented number. -/
+theorem binaryValue_replicate_false_append (n : ℕ) (word : List Bool) :
+    binaryValue (List.replicate n false ++ word) = binaryValue word := by
+  have h : (List.replicate n false).foldl (fun value bit => 2 * value + bit.toNat) 0 = 0 := by
+    induction n with
+    | zero => rfl
+    | succ n ih => rw [List.replicate_succ', List.foldl_append, ih]; rfl
+  rw [binaryValue, List.foldl_append, h, ← binaryValue]
+
+/-- Every number below `2 ^ t` is represented by a word of `t` bits. -/
+theorem exists_binaryValue_eq {t k : ℕ} (hk : k < 2 ^ t) :
+    ∃ u : Fin t → Bool, binaryValue (List.ofFn u) = k := by
+  have hlen : k.bits.length ≤ t := by
+    rw [Nat.size_eq_bits_len]
+    exact Nat.size_le.2 hk
+  set w := List.replicate (t - k.bits.length) false ++ k.bits.reverse with hw
+  have hwlen : w.length = t := by
+    simp only [hw, List.length_append, List.length_replicate, List.length_reverse]
+    omega
+  refine ⟨fun i => w[i.val]'(by omega), ?_⟩
+  rw [show (List.ofFn fun i : Fin t => w[i.val]'(by omega)) = w from
+    List.ext_getElem (by simp [hwlen]) fun i _ _ => by simp]
+  rw [hw, binaryValue_replicate_false_append, binaryValue_reverse_bits]
 
 end Cslib.BitString

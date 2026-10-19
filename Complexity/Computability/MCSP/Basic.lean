@@ -24,8 +24,8 @@ that need more than `s₂ n` gates [OliveiraPichSanthanam2019, Definition 2.4].
 The truth table of `f` lists its `2 ^ n` values in the order of `BitString.equivFin`. Circuits are
 De Morgan circuits, and their size counts every AND, OR, NOT and constant gate, so the measure is
 cslib's `complexity interpretation (single f)`; see `Cslib.Computability.Circuit.Boolean.Basic`.
-Only the semantics of the problems is defined here, not an encoding of their instances as
-strings, so nothing is said about their computational complexity.
+Only the semantics of the problems is defined here. An encoding of the instances of MCSP as
+strings, and the proof that MCSP is in `NP` for it, are in `Complexity.Computability.MCSP.NP`.
 
 The yes-instances of MCSP on functions of `n` inputs at threshold `s` are the truth tables of
 cslib's `computableFunctions n s`, so there are as many of them as such functions
