@@ -414,6 +414,28 @@ theorem ofFn_restrict_greedy (h : m ≤ (greedyMasks ℓ n a).length) (i : Fin m
       restrictMask (greedyMasks ℓ n a)[i] (List.ofFn z) :=
   ofFn_restrict_ofMasks _ _ _ _ i z
 
+/-- The Nisan–Wigderson generator on lists: for each mask `w` of `masks`, the value of `g` on the
+first `n` bits of the seed `z` at the ones of `w`. -/
+def listGenerator (g : List Bool → Bool) (n : ℕ) (masks : List (List Bool)) (z : List Bool) :
+    List Bool :=
+  masks.map fun w => g ((restrictMask w z).take n)
+
+/-- With the first `m` masks of the greedy design, the generator on lists is the Nisan–Wigderson
+generator of `Design.greedy` and of the function `g` on words of `n` bits. -/
+theorem listGenerator_take_greedyMasks (h : m ≤ (greedyMasks ℓ n a).length)
+    (g : List Bool → Bool) (z : Fin ℓ → Bool) :
+    listGenerator g n ((greedyMasks ℓ n a).take m) (List.ofFn z) =
+      List.ofFn (generator (Design.greedy ℓ n a m h) (fun x => g (List.ofFn x)) z) := by
+  refine List.ext_getElem (by simp [listGenerator, h]) fun i hi hi' => ?_
+  rw [List.length_ofFn] at hi'
+  simp only [listGenerator, List.getElem_map, List.getElem_take, List.getElem_ofFn,
+    generator_apply]
+  have hrestrict := ofFn_restrict_greedy h ⟨i, hi'⟩ z
+  have hlen : (restrictMask (greedyMasks ℓ n a)[i] (List.ofFn z)).length ≤ n :=
+    (congrArg List.length hrestrict).symm.trans_le (List.length_ofFn).le
+  rw [List.take_of_length_le hlen, hrestrict]
+  rfl
+
 /-! ### Fooling small circuits, in counting form -/
 
 section Counting
