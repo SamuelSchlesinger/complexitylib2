@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Circuit.Rational.Parameters
+import Complexity.Computability.Circuit.Rational.Runtime.Parameters
 
 /-!
 # Polynomial-time parameters of the rational hitting list

@@ -24,8 +24,8 @@ the later stages use these parameters as loop counts, dimensions and moduli. The
 dimension allowance and the threshold `rankBound s * delta n s` are fixed polynomials. The
 exponent is a binary logarithm of the threshold. The ambient dimension `2 ^ (exponent + 1)` is the
 power of two at the ceiling logarithm of the threshold plus one
-(`Parameters.ambientDimension_eq`), and the cyclotomic degree is half of it. The truncation, the grid size and the matrix dimension follow by
-unary arithmetic.
+(`Parameters.ambientDimension_eq`), and the cyclotomic degree is half of it. The truncation, the
+grid size and the matrix dimension follow by unary arithmetic.
 
 Each certificate is stated compositionally, for parameters computed in unary from an arbitrary
 input, and registered with `fun_prop`.
