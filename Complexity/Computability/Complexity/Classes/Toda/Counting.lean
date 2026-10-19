@@ -330,7 +330,8 @@ theorem card_filter_subsetTest (acc : List Bool → Bool) {K k : ℕ} (Z : ℕ) 
           rw [← Option.some.inj hw]
           split
           · exact (h ⟨j, hjK⟩).1 (by simpa)
-          · exact (hzero _).2 ((h ⟨j, hjK⟩).2 (by simp; omega))
+          · rename_i hjk
+            exact (hzero _).2 ((h ⟨j, hjK⟩).2 (Nat.le_of_not_lt hjk))
         · exact absurd hw (by simp)
     · simp only [List.all_eq_true, List.mem_range]
       constructor
@@ -396,7 +397,9 @@ theorem computableTidilyInPolyTime_unaryTest {γ : Type} {input : γ ↪ List Bo
 theorem ofFn_unary {K k : ℕ} (hk : k ≤ K) :
     List.ofFn (fun i : Fin K => decide ((i : ℕ) < k)) =
       List.replicate k true ++ List.replicate (K - k) false := by
-  apply List.ext_getElem (by simp; omega)
+  apply List.ext_getElem (by
+    simp only [List.length_ofFn, List.length_append, List.length_replicate]
+    omega)
   intro i h₁ h₂
   simp only [List.length_ofFn] at h₁
   rw [List.getElem_ofFn]
@@ -433,7 +436,7 @@ theorem sum_unaryTest (K : ℕ) (F : ℕ → ℕ) :
       exact ⟨by omega, by rw [hu, ofFn_unary (by omega)]⟩
   rw [himage, Finset.sum_image]
   · refine Finset.sum_congr rfl fun i hi => ?_
-    rw [hcount _ (by simp at hi; omega)]
+    rw [hcount _ (Nat.succ_le_of_lt (mem_range.1 hi))]
   · intro i hi j hj h
     simp only [coe_range, Set.mem_Iio] at hi hj
     have := congrArg (fun kb => (List.ofFn kb).count true) h
@@ -534,7 +537,7 @@ theorem card_filter_countingTest (accept : List Bool → List Bool → Bool) (K 
     · rename_i hu
       simp only [hu, Bool.true_and, Bool.and_eq_true, hC]
     · rename_i hu
-      simp [Bool.not_eq_true] at hu
+      simp only [Bool.not_eq_true] at hu
       simp [hu]
   simp only [h2]
   rw [sum_unaryTest]
@@ -595,7 +598,7 @@ theorem cast_card_filter_countingTest (accept : List Bool → List Bool → Bool
   refine sum_congr rfl fun r _ => ?_
   rw [← sum_range_neg_two_pow_mul_choose_zmod]
   refine sum_congr rfl fun i hi => ?_
-  rw [cast_parityCoeff (by simp at hi; omega)]
+  rw [cast_parityCoeff (Nat.le_of_lt (mem_range.1 hi))]
 
 /-- **The `#P` test**: after a bit `true`, a free bit and the counting test; after a bit
 `false`, a word of `R` bits not all `true`, then `false`s. -/
