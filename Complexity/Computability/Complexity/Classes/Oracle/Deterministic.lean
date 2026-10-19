@@ -17,7 +17,7 @@ import Mathlib.Data.Fintype.Option
 A certificate of `Cslib.Complexity.ComputableInPolyTimeWithOracle` is a fair-coin machine that
 reproduces a deterministic program against every stateful oracle. Fixing all of its coins to
 `false` gives a deterministic run of the same machine, itself a word-query program
-(`Turing.MultiTapeMachine.run` with the coin program `pure false`). Its result against every
+(`Turing.MultiTapePTM.run` with the coin program `pure false`). Its result against every
 answer function is the program's (`Cslib.Probability.IsOraclePPTOn.exists_run_pure_false`): the
 coin-fixed run is one of the supported runs of the certificate, whose result is determined. The
 run makes at most one request per instruction

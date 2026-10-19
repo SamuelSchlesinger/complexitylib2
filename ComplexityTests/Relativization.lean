@@ -4,10 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Complexity.Classes.Hierarchy
 import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
 
 /-! Requests of adaptive word-query programs under language oracles, locality, membership in the
-oracle classes, the unary language, candidate deciders and the Baker–Gill–Solovay lower bound. -/
+oracle classes, the unary language, candidate deciders, the diagonal oracle and the
+Baker–Gill–Solovay separation. -/
 
 namespace ComplexityTests.Relativization
 
@@ -35,13 +37,14 @@ example : OracleComp.queriesWith (languageOracle ∅) adaptive = [((), [true])] 
 
 /-- The answer is whether both words are in the oracle. -/
 example : OracleComp.interpret (m := Id) (languageOracle {[true], [false]}) adaptive = true := by
-  simp only [adaptive, OracleComp.interpret_id_query_bind, languageOracle_apply]
-  simp [languageOracle_apply]
+  simp only [adaptive, OracleComp.interpret_id_query_bind, languageOracle_apply, Set.mem_insert_iff,
+    Set.mem_singleton_iff, true_or, or_true, decide_true, ↓reduceIte]
   rfl
 
 example : OracleComp.interpret (m := Id) (languageOracle {[true]}) adaptive = false := by
-  simp only [adaptive, OracleComp.interpret_id_query_bind, languageOracle_apply]
-  simp [languageOracle_apply]
+  simp only [adaptive, OracleComp.interpret_id_query_bind, languageOracle_apply,
+    Set.mem_singleton_iff, decide_true, ↓reduceIte, List.cons.injEq, Bool.false_eq_true, and_true,
+    decide_false]
   rfl
 
 /-- Locality: words that are never requested do not matter. -/
@@ -76,6 +79,11 @@ example (A : Set (List Bool)) : A ∈ NPWithOracle A encBits :=
 example (A : Set (List Bool)) : {w : List Bool | w.reverse ∈ A} ∈ PWithOracle A encBits :=
   PolyTimeReducible.mem_PWithOracle ⟨List.reverse, by fun_prop, fun _ => Iff.rfl⟩
     (mem_PWithOracle_self A)
+
+/-- The oracle adds power: the time-hierarchy diagonal language is not in `P`, but it is in `P`
+relative to itself. -/
+example : ∃ A : Set (List Bool), A ∈ PWithOracle A encBits ∧ A ∉ P encBits :=
+  ⟨_, mem_PWithOracle_self _, diagonal_not_mem_P⟩
 
 /-! ### The unary language -/
 
@@ -116,6 +124,28 @@ example (A : Set (List Bool)) (n : ℕ) :
 example : unaryLanguage {[true, false]} ∈ NPWithOracle {[true, false]} encBits :=
   unaryLanguage_mem_NPWithOracle _
 
+/-- `NP` relative to an oracle is closed under reductions: prepending `true` reduces to the unary
+language. -/
+example (B : Set (List Bool)) :
+    {x : List Bool | true :: x ∈ unaryLanguage B} ∈ NPWithOracle B encBits :=
+  PolyTimeReducible.mem_NPWithOracle ⟨List.cons true, by fun_prop, fun _ => Iff.rfl⟩
+    (unaryLanguage_mem_NPWithOracle B)
+
+/-! ### The diagonal oracle -/
+
+/-- At length `n`, ask whether `0ⁿ` is in the oracle. -/
+def zeros (n : ℕ) : WordQueryComp Unit Bool :=
+  (fun reply => decide (reply = [true])) <$> OracleComp.query ((), List.replicate n false)
+
+/-- One request per length is fewer than `2 ^ n` from `n = 1` on, so some oracle defeats `zeros`
+on the question whether it has a word of length `n`. -/
+example : ∃ B : Set (List Bool), ∃ n, ¬(OracleComp.interpret (m := Id) (languageOracle B)
+    (zeros n) = true ↔ ∃ w ∈ B, w.length = n) := by
+  obtain ⟨B, hB⟩ := exists_oracle_diagonal (ι := Unit) (fun _ => zeros) (fun _ _ => 1)
+    (fun _ => Filter.eventually_atTop.mpr ⟨1, fun n hn => Nat.one_lt_two_pow (by omega)⟩)
+    (fun _ n A => by simp [zeros])
+  exact ⟨B, hB ()⟩
+
 /-! ### Axioms -/
 
 /--
@@ -124,6 +154,59 @@ info: 'Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle' depends on axio
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle
+
+/--
+info: 'Cslib.Complexity.exists_PWithOracle_ne_NPWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.exists_PWithOracle_ne_NPWithOracle
+
+/--
+info: 'Cslib.Complexity.PWithOracle_subset_NPWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PWithOracle_subset_NPWithOracle
+
+/--
+info: 'Cslib.Complexity.PolyTimeReducible.mem_PWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PolyTimeReducible.mem_PWithOracle
+
+/--
+info: 'Cslib.Complexity.P_subset_PWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.P_subset_PWithOracle
+
+/--
+info: 'Cslib.Complexity.NP_subset_NPWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NP_subset_NPWithOracle
+
+/--
+info: 'Cslib.Complexity.mem_PWithOracle_self' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PWithOracle_self
+
+/--
+info: 'Cslib.Complexity.computableInPolyTimeWithOracle_mem' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.computableInPolyTimeWithOracle_mem
+
+/-- info: 'Cslib.OracleComp.interpret_id_congr' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Cslib.OracleComp.interpret_id_congr
 
 /--
 info: 'Cslib.Complexity.unaryLanguage_mem_NPWithOracle' depends on axioms:
@@ -140,11 +223,11 @@ info: 'Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle' depends on axioms:
 #print axioms Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle
 
 /--
-info: 'Cslib.Complexity.exists_unaryLanguage_not_mem_PWithOracle' depends on axioms:
+info: 'Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_unaryLanguage_not_mem_PWithOracle
+#print axioms Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle
 
 /--
 info: 'Cslib.Complexity.exists_oracle_diagonal' depends on axioms:

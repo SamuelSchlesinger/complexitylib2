@@ -27,7 +27,7 @@ every coin fixed to `false`. They are countably many, and each makes at most one
 instruction, hence fewer than `2 ^ n` requests for all large `n`. Every decider in `P` relative to
 `B` is one of them on the instances `1ⁿ`
 (`Cslib.Probability.IsOraclePPTOn.exists_fin_run_pure_false`), so none decides the unary language
-(`Cslib.Complexity.exists_unaryLanguage_not_mem_PWithOracle`).
+(`Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle`).
 
 The verifier checks that the instance consists of `true` symbols, by a two-state transducer, and
 makes one request: the certificate itself (`Cslib.Complexity.unaryLanguage_mem_NPWithOracle`).
@@ -40,7 +40,7 @@ Relative to the diagonal oracle, `P` is therefore strictly contained in `NP`
 
 ## Main results
 
-* `Cslib.Complexity.exists_unaryLanguage_not_mem_PWithOracle`: for some oracle `B`, the unary
+* `Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle`: for some oracle `B`, the unary
   language of `B` is not in `P` relative to `B`.
 * `Cslib.Complexity.unaryLanguage_mem_NPWithOracle`: the unary language of every oracle is in `NP`
   relative to it.
@@ -104,7 +104,7 @@ open BakerGillSolovay in
 /-- **Baker–Gill–Solovay, the lower bound** [Arora and Barak, Theorem 3.7][AroraBarak09]: for some
 oracle language `B`, the unary language of `B` is not decidable in polynomial time relative to
 `B`. -/
-theorem exists_unaryLanguage_not_mem_PWithOracle :
+theorem exists_unaryLanguage_notMem_PWithOracle :
     ∃ B : Set (List Bool), unaryLanguage B ∉ PWithOracle B encBits := by
   obtain ⟨B, hB⟩ := exists_oracle_diagonal Candidate.verdict Candidate.clock
     Candidate.eventually_clock_lt Candidate.length_queriesWith_verdict_le
@@ -182,7 +182,7 @@ theorem unaryLanguage_mem_NPWithOracle (B : Set (List Bool)) :
 language, `P` is strictly contained in `NP`. -/
 theorem exists_PWithOracle_ssubset_NPWithOracle :
     ∃ B : Set (List Bool), PWithOracle B encBits ⊂ NPWithOracle B encBits := by
-  obtain ⟨B, hB⟩ := exists_unaryLanguage_not_mem_PWithOracle
+  obtain ⟨B, hB⟩ := exists_unaryLanguage_notMem_PWithOracle
   exact ⟨B, Set.ssubset_iff_subset_ne.mpr ⟨PWithOracle_subset_NPWithOracle B encBits,
     fun h => hB (h ▸ unaryLanguage_mem_NPWithOracle B)⟩⟩
 
