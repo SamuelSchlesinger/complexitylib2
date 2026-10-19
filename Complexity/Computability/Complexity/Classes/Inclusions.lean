@@ -8,8 +8,11 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.EXP
+public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Complexity.Classes.PP
+public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -305,5 +308,174 @@ theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
 /-- **`NP ⊆ EXP`**, through `PSPACE`. -/
 theorem NP_subset_EXP : NP enc ⊆ EXP enc :=
   NP_subset_PSPACE.trans PSPACE_subset_EXP
+
+/-! ### Closure properties of `PSPACE` -/
+
+/-- A polynomial-time function is tidily computable within polynomial bounds. -/
+private theorem exists_computableTidilyInO_of_polyTime {β γ : Type} {encIn : β ↪ List Bool}
+    {encOut : γ ↪ List Bool} {f : β → γ} (h : ComputableTidilyInPolyTime f encIn encOut) :
+    ∃ T S, PolyBounded (fun b => (encIn b).length) T ∧ PolyBounded (fun b => (encIn b).length) S ∧
+      ComputableTidilyInO f encIn encOut T S :=
+  let ⟨t, s, ht, hs, hf⟩ := h
+  ⟨t, fun b => t b + s b, ht, ht.add hs, ⟨1, hf.mono (fun _ => by omega)
+    fun _ => by dsimp only; omega, fun b => by have := hf.length_le b; dsimp only; omega⟩⟩
+
+/-- **`PSPACE` in the quantitative calculus**: a problem is in `PSPACE` exactly when a Boolean
+function deciding it is tidily computable within some time and within space polynomial in the
+length of the encoded instance. -/
+theorem mem_PSPACE_iff_computableTidilyInO : A ∈ PSPACE enc ↔ ∃ (f : α → Bool) (T S : α → ℕ),
+    ComputableTidilyInO f enc encBool T S ∧ PolyBounded (fun a => (enc a).length) S ∧
+      ∀ a, a ∈ A ↔ f a = true := by
+  constructor
+  · rintro ⟨f, ⟨t, s, hs, hf⟩, hA⟩
+    obtain ⟨c, hc⟩ := ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace hf
+    exact ⟨f, fun a => 2 * t a + 3 * s a + c, s, .of_bounds hc (c + 1) (fun a => by nlinarith)
+      (fun a => by nlinarith) fun a => by
+        simp only [encBool_apply, List.length_singleton]
+        exact Nat.mul_pos (Nat.succ_pos c) (Nat.succ_pos (s a)),
+      hs, hA⟩
+  · rintro ⟨f, T, S, ⟨c, hc, -⟩, hS, hA⟩
+    exact ⟨f, ⟨_, _, (PolyBounded.const c).mul (hS.add (.const 1)), hc.computableInTimeAndSpace⟩,
+      hA⟩
+
+/-- **`PSPACE` is closed under complement**: negate the answer. -/
+theorem compl_mem_PSPACE (hA : A ∈ PSPACE enc) : Aᶜ ∈ PSPACE enc := by
+  obtain ⟨f, T, S, hf, hS, hA⟩ := mem_PSPACE_iff_computableTidilyInO.mp hA
+  have hnot := (ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encBool)
+    Bool.not).inO_one.comp_linear hf
+  refine mem_PSPACE_iff_computableTidilyInO.mpr ⟨_, T, S, hnot, hS, fun a => ?_⟩
+  simp [hA a]
+
+/-- **`PSPACE` is closed under polynomial-time reductions.** -/
+theorem PolyTimeReducible.mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ PSPACE encB) : A ∈ PSPACE enc := by
+  obtain ⟨g, hg, hAB⟩ := h
+  obtain ⟨f, T, S, hf, hS, hB⟩ := mem_PSPACE_iff_computableTidilyInO.mp hB
+  obtain ⟨Tg, Sg, -, hSg, hgO⟩ := exists_computableTidilyInO_of_polyTime hg
+  exact mem_PSPACE_iff_computableTidilyInO.mpr ⟨f ∘ g, _, _, hf.comp hgO,
+    hSg.add (hS.comp hg.polyBounded_length), fun a => (hAB a).trans (hB (g a))⟩
+
+/-- The edges of the graph on words of width `n + 1` whose reachability within two steps from the
+all-zero word to the all-one word is a bounded existential over `f`: an edge from the all-zero word
+to `true :: w` when `f (x, w)`, and from every word starting with `true` to the all-one word. -/
+private def existsEdge {β : Type} (f : β × List Bool → Bool) (x : β) (u v : List Bool) : Bool :=
+  if !(u.any fun b => b) && v.headD false then f (x, v.tail)
+  else u.headD false && !(v.any fun b => !b)
+
+/-- Savitch's algorithm at depth `1` on the edges of `existsEdge` decides the bounded
+existential. -/
+private theorem savitch_existsEdge {β : Type} (f : β × List Bool → Bool) (x : β) (n : ℕ) :
+    Cslib.Reachability.savitch (existsEdge f x) (n + 1) 1 (List.replicate (n + 1) false)
+      (List.replicate (n + 1) true) = true ↔ ∃ w : List Bool, w.length = n ∧ f (x, w) = true := by
+  rw [Cslib.Reachability.savitch_eq]
+  simp only [Cslib.Reachability.reach, List.any_eq_true, Cslib.BitString.mem_enumList,
+    Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq]
+  constructor
+  · rintro ⟨m, hm, h₁ | h₁, h₂ | h₂⟩
+    · subst h₁
+      exact absurd h₂ (by simp [List.replicate_succ])
+    · subst h₁
+      refine ⟨List.replicate n true, List.length_replicate .., ?_⟩
+      simpa [existsEdge, List.replicate_succ] using h₂
+    · subst h₂
+      refine ⟨List.replicate n true, List.length_replicate .., ?_⟩
+      simpa [existsEdge, List.replicate_succ] using h₁
+    · obtain ⟨b, w, rfl⟩ := List.exists_cons_of_length_eq_add_one hm
+      refine ⟨w, by simpa using hm, ?_⟩
+      cases b <;> simp_all [existsEdge, List.replicate_succ]
+  · rintro ⟨w, hw, hf⟩
+    refine ⟨true :: w, by simp [hw], Or.inr ?_, Or.inr ?_⟩
+    · simp [existsEdge, List.replicate_succ, hf]
+    · simp [existsEdge, List.replicate_succ]
+
+/-- **`PSPACE` is closed under polynomially bounded existential quantification**: if `B ⊆ β × List
+Bool` is in `PSPACE` and `ℓ` is polynomial-time, then so is the set of the `x` for which some word
+`w` of length `ℓ x` has `(x, w) ∈ B`. The candidates are enumerated in place: this is reachability
+within two steps between two words of width `ℓ x + 1` (`existsEdge`), which Savitch's algorithm
+decides at depth `1`, reusing the space of the decider of `B` for every candidate
+(`Cslib.Reachability.computableTidilyInO_savitch`). -/
+theorem setOf_exists_mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set (β × List Bool)}
+    {ℓ : β → ℕ} (hB : B ∈ PSPACE (encPair encB encBits))
+    (hℓ : ComputableTidilyInPolyTime ℓ encB encUnary) :
+    {x | ∃ w : List Bool, w.length = ℓ x ∧ (x, w) ∈ B} ∈ PSPACE encB := by
+  obtain ⟨f, T, S, hf, hS, hB⟩ := mem_PSPACE_iff_computableTidilyInO.mp hB
+  set encQ := encPair encB (encPair encBits encBits)
+  -- the edge test: polynomial-time tests around one call of the decider of `B`
+  have hg : ComputableTidilyInPolyTime (fun q : β × List Bool × List Bool => (q.1, q.2.2.tail))
+      encQ (encPair encB encBits) :=
+    (ComputableTidilyInPolyTime.fst _ _).prod
+      (ComputableTidilyInPolyTime.bitsTail.comp
+        ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _)))
+  have hc : ComputableTidilyInPolyTime
+      (fun q : β × List Bool × List Bool => !(q.2.1.any fun b => b) && q.2.2.headD false)
+      encQ encBool :=
+    ComputableTidilyInPolyTime.bool_and.comp
+      ((ComputableTidilyInPolyTime.bool_not.comp
+        (ComputableTidilyInPolyTime.bitsAnyWithInput (test := fun _ b => b)
+          ((ComputableTidilyInPolyTime.fst _ _).comp (.snd _ _)) (.snd _ _))).prod
+        ((ComputableTidilyInPolyTime.headD (encA := encBool) false).comp
+          ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _))))
+  have he : ComputableTidilyInPolyTime
+      (fun q : β × List Bool × List Bool => q.2.1.headD false && !(q.2.2.any fun b => !b))
+      encQ encBool :=
+    ComputableTidilyInPolyTime.bool_and.comp
+      (((ComputableTidilyInPolyTime.headD (encA := encBool) false).comp
+        ((ComputableTidilyInPolyTime.fst _ _).comp (.snd _ _))).prod
+        (ComputableTidilyInPolyTime.bool_not.comp
+          (ComputableTidilyInPolyTime.bitsAnyWithInput (test := fun _ b => !b)
+            ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _))
+            (ComputableTidilyInPolyTime.bool_not.comp (.snd _ _)))))
+  obtain ⟨Tg, Sg, -, hSg, hgO⟩ := exists_computableTidilyInO_of_polyTime hg
+  obtain ⟨Tc, Sc, -, hSc, hcO⟩ := exists_computableTidilyInO_of_polyTime hc
+  obtain ⟨Te, Se, -, hSe, heO⟩ := exists_computableTidilyInO_of_polyTime he
+  have hedge := hcO.ite (hf.comp hgO) heO
+  -- the arguments of Savitch's algorithm
+  have hin : ComputableTidilyInPolyTime
+      (fun x => (x, ℓ x + 1, 1, List.replicate (ℓ x + 1) false, List.replicate (ℓ x + 1) true))
+      encB (Cslib.Reachability.encArgs encB) := by
+    have hw : ComputableTidilyInPolyTime (fun x => ℓ x + 1) encB encUnary :=
+      ComputableTidilyInPolyTime.unary_add.comp (hℓ.prod (.const 1))
+    exact ComputableTidilyInPolyTime.id'.prod (hw.prod ((ComputableTidilyInPolyTime.const 1).prod
+      (((ComputableTidilyInPolyTime.bitsReplicate false).comp hw).prod
+        ((ComputableTidilyInPolyTime.bitsReplicate true).comp hw))))
+  obtain ⟨Ti, Si, -, hSi, hinO⟩ := exists_computableTidilyInO_of_polyTime hin
+  have h := Cslib.Reachability.computableTidilyInO_savitch (edge := existsEdge f) (par := id)
+    hedge hinO (fun _ => List.length_replicate ..) fun _ => List.length_replicate ..
+  -- the space is polynomial
+  have hSedge : PolyBounded (fun q => (encQ q).length) fun q =>
+      Sc q + if !(q.2.1.any fun b => b) && q.2.2.headD false then Sg q + S (q.1, q.2.2.tail)
+        else Se q :=
+    (hSc.add (hSg.add (hS.comp hg.polyBounded_length) |>.add hSe)).mono fun q => by
+      split_ifs <;> omega
+  obtain ⟨cE, dE, hcE⟩ := hSedge.exists_le
+  have hℓ' : PolyBounded (fun x => (encB x).length) ℓ :=
+    hℓ.polyBounded_length.mono fun x => by simp [encUnary_apply]
+  have hG : PolyBounded (fun x => (encB x).length)
+      fun x => 2 * (encB x).length + 3 * ℓ x + 6 :=
+    (((PolyBounded.const 2).mul .self).add ((PolyBounded.const 3).mul hℓ')).add (.const 6)
+  have hpow : PolyBounded (fun x => (encB x).length)
+      fun x => cE * (2 * (encB x).length + 3 * ℓ x + 6) ^ dE :=
+    PolyBounded.comp (size' := id) (v := fun n => cE * n ^ dE)
+      (PolyBounded.of_polynomiallyBounded (bound := fun n => cE * n ^ dE) id (by fun_prop)) hG
+  refine mem_PSPACE_iff_computableTidilyInO.mpr ⟨_, _, _, h, ?_, fun x => ?_⟩
+  · refine (((hSi.add ((PolyBounded.const 2).mul (hℓ'.add (.const 3)))).add .self).add
+      hpow).mono fun x => ?_
+    have hmax : Cslib.Reachability.edgeMax (fun q : β × List Bool × List Bool =>
+        Sc q + if (!(q.2.1.any fun b => b) && q.2.2.headD false) = true then
+          Sg q + S (q.1, q.2.2.tail) else Se q) x (ℓ x + 1) ≤
+        cE * (2 * (encB x).length + 3 * ℓ x + 6) ^ dE :=
+      listMax_le fun u hu => listMax_le fun v hv => by
+        refine (hcE _).trans (Nat.mul_le_mul_left cE (Nat.pow_le_pow_left ?_ dE))
+        simp only [encQ, length_encPair, encBits_apply, Cslib.BitString.mem_enumList.mp hu,
+          Cslib.BitString.mem_enumList.mp hv]
+        omega
+    change Si x + (1 + 1) * (1 + (ℓ x + 1) + 1) + (encB x).length +
+        Cslib.Reachability.edgeMax (fun q : β × List Bool × List Bool =>
+          Sc q + if (!(q.2.1.any fun b => b) && q.2.2.headD false) = true then
+            Sg q + S (q.1, q.2.2.tail) else Se q) x (ℓ x + 1) ≤
+      Si x + 2 * (ℓ x + 3) + (encB x).length + cE * (2 * (encB x).length + 3 * ℓ x + 6) ^ dE
+    omega
+  · simp only [Set.mem_ofPred_eq, hB, id]
+    exact (savitch_existsEdge f x (ℓ x)).symm
 
 end Cslib.Complexity
