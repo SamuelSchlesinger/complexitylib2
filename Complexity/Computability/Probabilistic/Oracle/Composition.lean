@@ -29,6 +29,8 @@ unbounded reply is not oracle PPT (`ComplexityTests.OraclePPT`).
 
 * `Cslib.Probability.IsOraclePPTOn.query_take`: one external call returning a reply prefix.
 * `Cslib.Probability.IsPPTOn.isOraclePPTOn`: closed PPT programs are oracle PPT via `sample`.
+* `Cslib.Probability.IsOraclePPTOn.isPPTOn`: conversely, a sampled closed program certified
+  without external channels is closed PPT.
 * `Cslib.Probability.IsOraclePPTOn.bind`, `.bind_with`, `.pair`, `.keep_input`, `.map`,
   `.map_with`, `.preprocess`: composition with charged intermediate data.
 * `Cslib.Probability.IsOraclePPTOn.cond`, `.ite`, `.finite_cases`: dispatch to one branch.
@@ -238,5 +240,20 @@ theorem IsPPTOn.isOraclePPTOn [Finite Operation] {program : α → ProbComp γ}
     fun a State oracle s => ?_⟩
   rw [run_interpret_runOracle_ofClosed, ← h a, ← ProbOracleComp.sample_map,
     ProbOracleComp.run_interpret_sample, ProbComp.eval_map]
+
+/-- A sampled closed program certified without external channels is closed strict PPT: the
+realizing machine has no channels, so it is a closed machine with the same output law. -/
+theorem IsOraclePPTOn.isPPTOn {program : α → ProbComp γ}
+    (h : IsOraclePPTOn (Operation := Empty) input output
+      (fun a => ProbOracleComp.sample (program a))) :
+    IsPPTOn input output program := by
+  obtain ⟨_, k, Control, hfinite, machine, c, d, h⟩ := h
+  refine ⟨k, Control, hfinite, machine, c, d, fun a => ?_⟩
+  have h := congrArg (PMF.map Prod.fst) (h a Unit (fun q => q.1.elim) ())
+  rw [← ProbOracleComp.sample_map, ProbOracleComp.run_interpret_sample,
+    runOracle_eq_sample_runClosed, ProbOracleComp.run_interpret_sample,
+    PMF.map_comp, PMF.map_comp, ProbComp.eval_map] at h
+  have hid : (Prod.fst ∘ fun word : List Bool => (word, ())) = id := rfl
+  rwa [hid, PMF.map_id, PMF.map_id] at h
 
 end Cslib.Probability

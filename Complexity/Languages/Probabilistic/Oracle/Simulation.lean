@@ -25,6 +25,8 @@ the distribution relating two state representations. These are specializations o
 * `Cslib.ProbOracleComp.run_interpret_map_state_of_invariant`: state representation on an invariant.
 * `Cslib.ProbOracleComp.run_interpret_map_state`: deterministic representation of oracle state.
 * `Cslib.ProbOracleComp.run_interpret_readOnly`: preserve a fixed external environment.
+* `Cslib.ProbOracleComp.run_interpret_run_interpret`: a handler with private coins and external
+  calls, followed by the external oracle, is one stateful handler on the joint state.
 
 ## References
 
@@ -140,5 +142,35 @@ theorem run_interpret_map_state (oracle : (q : Query) → StateT State PMF (spec
           (represent s) := by
   exact run_interpret_map_state_of_invariant oracle oracle' represent (fun _ => True)
     (by simp) (fun q state _ => step q state) program s trivial
+
+/-- A stateful handler that draws private coins and calls an external oracle, followed by that
+oracle, is one stateful handler on the joint state. Private draws stay fresh, and the result, the
+handler's state and the external oracle's state are retained jointly. -/
+theorem run_interpret_run_interpret {Query' : Type} {spec' : Query' → Type}
+    {Hidden External : Type}
+    (inner : (q : Query) → StateT Hidden (ProbOracleComp spec') (spec q))
+    (oracle : (q : Query') → StateT External PMF (spec' q))
+    (program : ProbOracleComp spec α) (hidden : Hidden) (external : External) :
+    (OracleComp.interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
+      ((OracleComp.interpret (handler (fun n => StateT.lift (sample (ProbComp.unifFin n))) inner)
+        program).run hidden)).run external =
+    ((OracleComp.interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n))
+      (fun q state => ((OracleComp.interpret
+        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
+          ((inner q).run state.1)).run state.2).map
+            (fun result => (result.1.1, result.1.2, result.2)))) program).run
+        (hidden, external)).map (fun result => ((result.1, result.2.1), result.2.2)) := by
+  rw [OracleComp.run_interpret_run_interpret, _root_.PMF.monad_map_eq_map]
+  congr 3
+  funext q state
+  cases q with
+  | inl n =>
+    change PMF.map _ ((OracleComp.interpret (m := StateT External PMF) _
+      ((StateT.lift (sample (ProbComp.unifFin n))).run state.1)).run state.2) = _
+    simp only [StateT.run_lift, OracleComp.interpret_bind, OracleComp.interpret_pure,
+      StateT.run_bind, StateT.run_pure, interpret_sample, ProbComp.unifFin,
+      OracleComp.interpret_query]
+    simp [handler, StateT.lift, PMF.map, Function.comp_def]
+  | inr q => rfl
 
 end Cslib.ProbOracleComp

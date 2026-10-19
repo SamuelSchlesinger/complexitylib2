@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Convolution
+public import Complexity.Foundations.Data.BitString.Hamming
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -19,8 +20,9 @@ A Boolean function on the cube is *linear* when it turns sums into sums,
 `f (x + y) = (f x ^^ f y)`, where bit strings add coordinatewise modulo two (`x + y`, through
 Mathlib's Boolean ring structure on `Bool`) and single bits by exclusive or (`^^`). The linear
 functions are exactly the parities (`BitString.exists_eq_parityOn_iff`, with `parityOn_add`).
-Distinct parities differ on half of the inputs (`BitString.two_mul_hammingDist_parityOn`), and a
-linear function that is not constantly `false` takes the value `true` on half of the inputs
+Distinct parities differ on half of the inputs (`BitString.two_mul_hammingDist_parityOn`, from
+`Complexity.Foundations.Data.BitString.Hamming`), and a linear function that is not constantly
+`false` takes the value `true` on half of the inputs
 (`BitString.expect_boole_eq_one_div_two_of_map_add`).
 
 The *Blum–Luby–Rubinfeld test* queries `f` at independent uniformly random `x` and `y` and at
@@ -42,7 +44,6 @@ Hamming distance from `f` to the parity on `S` (`BitString.fourierCoeff_signVal`
 ## Main results
 
 * `Cslib.BitString.exists_eq_parityOn_iff`: the linear Boolean functions are the parities.
-* `Cslib.BitString.two_mul_hammingDist_parityOn`: distinct parities differ on half the inputs.
 * `Cslib.BitString.expect_boole_eq_one_div_two_of_map_add`: nonzero linear functions are
   balanced.
 * `Cslib.BitString.blrAcceptance_eq_sum_fourierCoeff_pow_three`: the acceptance probability in
@@ -102,16 +103,6 @@ theorem exists_eq_parityOn_iff [Finite ι] {f : (ι → Bool) → Bool} :
     _ = parityOn {i | a i = true} x := by simp only [parityOn, filter_filter, and_comm]
 
 variable [Fintype ι] [DecidableEq ι]
-
-/-! ### Distance between parities -/
-
-/-- **Distinct parities differ on half of the inputs.** -/
-theorem two_mul_hammingDist_parityOn {S T : Finset ι} (h : S ≠ T) :
-    2 * hammingDist (parityOn S) (parityOn T) = 2 ^ Fintype.card ι := by
-  have hcorr := expect_signVal_mul_signVal (parityOn S) (parityOn T)
-  simp only [← chi_eq_signVal_parityOn, expect_chi_mul_chi, h, ite_false] at hcorr
-  rw [eq_sub_iff_add_eq, zero_add, div_eq_one_iff_eq (by positivity)] at hcorr
-  exact_mod_cast hcorr
 
 /-- **Nonzero linear functions are balanced**: a Boolean function that turns sums of bit strings
 into the exclusive or of its values, and is not constantly `false`, takes the value `true` with

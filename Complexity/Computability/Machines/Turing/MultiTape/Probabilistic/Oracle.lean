@@ -30,6 +30,8 @@ reply reading still use ordinary machine instructions.
 * `Turing.MultiTapePTM.run_interpret_runOracle_ofDeterministic`: deterministic embedding preserves
   the output and external oracle state.
 * `Turing.MultiTapePTM.runOracle_ofClosed`: a closed machine's oracle run is its sampled closed run.
+* `Turing.MultiTapePTM.runOracle_eq_sample_runClosed`: without external channels, the oracle run is
+  the sampled closed run.
 
 ## References
 
@@ -136,6 +138,17 @@ theorem runOracle_ofClosed (machine : MultiTapePTM k Symbol State) (fuel : ℕ)
       congr 2
       funext oracle
       exact oracle.elim
+
+/-- A machine without external channels never calls the external oracle: its oracle run is its
+sampled closed run. -/
+theorem runOracle_eq_sample_runClosed (machine : MultiTapePTM k Symbol State) (fuel : ℕ)
+    (input : List Symbol) :
+    machine.runOracle fuel input = ProbOracleComp.sample (machine.runClosed fuel input) := by
+  simp only [runOracle, runClosed, run, runFrom, runConfigFrom, ProbOracleComp.sample,
+    OracleComp.interpret_map, MultiTapeMachine.interpret_runConfigFrom]
+  congr 2
+  funext oracle
+  exact oracle.elim
 
 /-- A closed machine's oracle run preserves every external oracle state and has the closed
 output distribution. -/

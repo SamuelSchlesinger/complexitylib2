@@ -29,13 +29,15 @@ There is one oracle specification and one interpreter; stateful execution uses `
 * `Cslib.OracleComp.run_interpret_map_state_of_invariant`: deterministic state representation.
 * `Cslib.OracleComp.map_run_interpret`: a monad morphism commutes with stateful interpretation.
 * `Cslib.OracleComp.run_interpret_lift`: lifted effects preserve the complete private state.
+* `Cslib.OracleComp.run_interpret_run_interpret`: a stateful handler whose effects are oracle
+  calls, followed by a stateful oracle for those calls, is one handler on the joint state.
 -/
 
 @[expose] public section
 
 namespace Cslib.OracleComp
 
-universe u v
+universe u v w
 
 variable {ι : Type u} {spec : OracleSpec.{u, v} ι} {α State State' : Type v}
 
@@ -152,5 +154,30 @@ theorem map_run_interpret {m n : Type v → Type*} [Monad m] [Monad n]
     f ((interpret oracle program).run s) =
       (interpret (m := StateT State n) (fun q state => f (oracle q state)) program).run s :=
   congrFun ((hf.stateT State).map_pfunctorFreeMLiftM (P := ⟨ι, spec⟩) oracle program) s
+
+/-- Running a program against a stateful handler whose own effects are oracle calls, and then
+running those calls against a stateful oracle, is one stateful execution on the joint state. The
+result, the handler's final state and the oracle's final state are retained jointly. -/
+theorem run_interpret_run_interpret {κ : Type w} {target : OracleSpec.{w, v} κ}
+    {Hidden External : Type v} {m : Type v → Type*} [Monad m] [LawfulMonad m]
+    (handler : (q : ι) → StateT Hidden (OracleComp target) (spec q))
+    (oracle : (q : κ) → StateT External m (target q))
+    (program : OracleComp spec α) (hidden : Hidden) (external : External) :
+    (interpret oracle ((interpret handler program).run hidden)).run external =
+      (fun result => ((result.1, result.2.1), result.2.2)) <$>
+        (interpret (m := StateT (Hidden × External) m) (fun q state =>
+          (fun result => (result.1.1, result.1.2, result.2)) <$>
+            (interpret oracle ((handler q).run state.1)).run state.2) program).run
+          (hidden, external) := by
+  induction program using PFunctor.FreeM.induction generalizing hidden external with
+  | pure a => simp
+  | lift_bind q cont ih =>
+    change (interpret oracle ((interpret handler (query q >>= cont)).run hidden)).run external =
+      _ <$> (interpret (m := StateT (Hidden × External) m) _ (query q >>= cont)).run
+        (hidden, external)
+    simp only [interpret_bind, interpret_query, StateT.run_bind, map_bind]
+    simp only [StateT.run, bind_map_left]
+    exact bind_congr fun (result : (spec q × Hidden) × External) =>
+      ih result.1.1 result.1.2 result.2
 
 end Cslib.OracleComp

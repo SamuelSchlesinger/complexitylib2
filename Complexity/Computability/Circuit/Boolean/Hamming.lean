@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Metric
-public import Complexity.Computability.Circuit.Pointwise
+import Complexity.Foundations.Data.BitString.Hamming
 
 /-!
 # Hamming-far functions that share their computation

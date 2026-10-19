@@ -25,15 +25,19 @@ geometry is exact. For `f g h : ι → Bool` on a finite set `ι`:
 * adding a fixed point, which is the coordinatewise exclusive or, and negation are isometries
   (`Cslib.BitString.hammingDist_add_right`, `Cslib.BitString.hammingDist_not`);
 * the cube is a median algebra for the coordinatewise majority
-  `m(f,g,h) = (f ∧ g) ∨ (g ∧ h) ∨ (h ∧ f)` (`Cslib.BitString.median`): it satisfies the majority
-  law, symmetry and the associative law, and it distributes over itself. The median lies between
-  any two of its arguments and minimizes the total distance to the three of them.
+  `m(f,g,h) = (f ∧ g) ∨ (g ∧ h) ∨ (h ∧ f)` (`Cslib.BitString.median`), the lattice median of the
+  distributive lattice `ι → Bool`: it satisfies the majority law, symmetry and the associative law,
+  and it distributes over itself. The median lies between any two of its arguments and minimizes
+  the total distance to the three of them.
 
-The truth tables of Boolean functions are points of the cube `(ι → Bool) → Bool`. Two distinct
-coordinate projections `x ↦ x i` and `x ↦ x j` are the parities on `{i}` and `{j}`, so they differ
-on exactly half of the inputs (`Cslib.BitString.two_mul_hammingDist_proj`), and so do their shifts
-`f + x_i` and `f + x_j` by any common function `f`
-(`Cslib.BitString.two_mul_hammingDist_add_proj`), however complicated `f` is.
+The truth tables of Boolean functions are points of the cube `(ι → Bool) → Bool`. The parities on
+two distinct sets `S` and `T` disagree exactly where the parity on the symmetric difference
+`S ∆ T` is true, which happens on half of the inputs, so they differ on exactly half of the inputs
+(`Cslib.BitString.two_mul_hammingDist_parityOn`). Two distinct coordinate projections `x ↦ x i`
+and `x ↦ x j` are the parities on `{i}` and `{j}`, so they differ on exactly half of the inputs
+(`Cslib.BitString.two_mul_hammingDist_proj`), and so do their shifts `f + x_i` and `f + x_j` by
+any common function `f` (`Cslib.BitString.two_mul_hammingDist_add_proj`), however complicated `f`
+is.
 
 ## Main definitions
 
@@ -49,9 +53,10 @@ on exactly half of the inputs (`Cslib.BitString.two_mul_hammingDist_proj`), and 
   `Cslib.BitString.hammingDist_not`: isometries.
 * `Cslib.BitString.median_self_left`, `Cslib.BitString.median_swap_left`,
   `Cslib.BitString.median_swap_right`, `Cslib.BitString.median_assoc`: the median algebra laws.
-* `Cslib.BitString.median_median`: distributivity.
+* `Cslib.BitString.median_median_distrib`: distributivity.
 * `Cslib.BitString.hammingDist_add_hammingDist_median`, `Cslib.BitString.hammingDist_median_le`:
   betweenness and minimality of the median.
+* `Cslib.BitString.two_mul_hammingDist_parityOn`: distinct parities are half the cube apart.
 * `Cslib.BitString.two_mul_hammingDist_proj`, `Cslib.BitString.hammingDist_proj_div`,
   `Cslib.BitString.two_mul_hammingDist_add_proj`: projections and their shifts are half the cube
   apart.
@@ -72,7 +77,9 @@ variable {ι : Type*}
 
 /-! ### The median -/
 
-/-- The median of three points: their coordinatewise majority `(f ∧ g) ∨ (g ∧ h) ∨ (h ∧ f)`. -/
+/-- The median of three points: their coordinatewise majority `(f ∧ g) ∨ (g ∧ h) ∨ (h ∧ f)`.
+This is the lattice median `(f ⊓ g) ⊔ (g ⊓ h) ⊔ (h ⊓ f)` of the distributive lattice
+`ι → Bool`. -/
 def median (f g h : ι → Bool) : ι → Bool :=
   fun i => f i && g i || g i && h i || h i && f i
 
@@ -113,7 +120,7 @@ theorem median_assoc (f g h k : ι → Bool) :
   exact key (f i) (g i) (h i) (k i)
 
 /-- **The median distributes over itself.** -/
-theorem median_median (f g h k l : ι → Bool) :
+theorem median_median_distrib (f g h k l : ι → Bool) :
     median (median f g h) k l = median (median f k l) (median g k l) (median h k l) := by
   funext i
   have key : ∀ a b c d e : Bool,
@@ -123,6 +130,18 @@ theorem median_median (f g h k l : ι → Bool) :
           (c && d || d && e || e && c) && (a && d || d && e || e && a)) := by
     decide
   exact key (f i) (g i) (h i) (k i) (l i)
+
+/-! ### Parities on symmetric differences -/
+
+/-- The parity on a symmetric difference is the exclusive or of the parities: the bits in both
+sets are counted twice. -/
+private theorem parityOn_symmDiff [DecidableEq ι] (S T : Finset ι) (x : ι → Bool) :
+    parityOn (symmDiff S T) x = (parityOn S x ^^ parityOn T x) := by
+  have hsdiff := sum_sdiff (f := x) (inter_subset_union : S ∩ T ⊆ S ∪ T)
+  have hunion := sum_union_inter (s₁ := S) (s₂ := T) (f := x)
+  rw [symmDiff_eq_sup_sdiff_inf, parityOn_eq_sum, parityOn_eq_sum, parityOn_eq_sum,
+    ← Bool.add_eq_xor, ← hunion, ← hsdiff, add_assoc, BooleanRing.add_self, add_zero]
+  rfl
 
 section Fintype
 
@@ -232,21 +251,31 @@ theorem hammingDist_median_le (f g h k : ι → Bool) :
     decide
   exact key (f i) (g i) (h i) (k i)
 
-/-! ### Coordinate projections -/
+/-! ### Parities and coordinate projections -/
 
 variable [DecidableEq ι]
 
-/-- **Two distinct coordinate projections differ on exactly half of the inputs**: they disagree
-where the parity on `{i, j}` is true. -/
+/-- **Distinct parities differ on exactly half of the inputs**: they disagree where the parity on
+the symmetric difference is true. -/
+theorem two_mul_hammingDist_parityOn {S T : Finset ι} (h : S ≠ T) :
+    2 * hammingDist (parityOn S) (parityOn T) = 2 ^ Fintype.card ι := by
+  have hfilter : (univ.filter fun x : ι → Bool => parityOn S x ≠ parityOn T x) =
+      univ.filter fun x => parityOn (symmDiff S T) x = true := by
+    refine filter_congr fun x _ => ?_
+    rw [parityOn_symmDiff]
+    cases parityOn S x <;> cases parityOn T x <;> decide
+  have hne : (symmDiff S T).Nonempty := symmDiff_nonempty.2 h
+  rw [hammingDist, hfilter, card_filter_parityOn_eq hne, mul_comm,
+    Nat.two_pow_pred_mul_two (Fintype.card_pos_iff.2 ⟨hne.choose⟩)]
+
+/-- **Two distinct coordinate projections differ on exactly half of the inputs**: they are the
+parities on `{i}` and `{j}`. -/
 theorem two_mul_hammingDist_proj {i j : ι} (hij : i ≠ j) :
     2 * hammingDist (fun x : ι → Bool => x i) (fun x => x j) = 2 ^ Fintype.card ι := by
-  have hfilter : (univ.filter fun x : ι → Bool => x i ≠ x j) =
-      univ.filter fun x => parityOn {i, j} x = true := by
-    refine filter_congr fun x _ => ?_
-    rw [parityOn_eq_sum, sum_pair hij]
-    cases x i <;> cases x j <;> decide
-  rw [hammingDist, hfilter, card_filter_parityOn_eq (insert_nonempty i {j}), mul_comm,
-    Nat.two_pow_pred_mul_two (Fintype.card_pos_iff.2 ⟨i⟩)]
+  have hproj (k : ι) : (fun x : ι → Bool => x k) = parityOn {k} :=
+    funext fun x => by rw [parityOn_eq_sum, sum_singleton]
+  rw [hproj i, hproj j]
+  exact two_mul_hammingDist_parityOn (singleton_injective.ne hij)
 
 /-- The relative Hamming distance between two distinct coordinate projections is one half. -/
 theorem hammingDist_proj_div {𝕜 : Type*} [Semifield 𝕜] [CharZero 𝕜] {i j : ι} (hij : i ≠ j) :

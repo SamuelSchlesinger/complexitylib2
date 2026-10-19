@@ -27,6 +27,12 @@ time bound; such a path neither halts nor accepts. When no configuration is stuc
 computation path within the bound extends to a halted one of exactly the bound
 (`Turing.MultiTapeNTM.ComputationPath.exists_halted_extension`).
 
+A machine decides `A` within space `s` (`Turing.MultiTapeNTM.DecidesInSpace`) when on every
+encoded instance every computation prefix visits at most `s a` work-tape cells (upstream
+`Turing.MultiTapeNTM.RunsInSpace`), and `a ∈ A` exactly when some computation path accepts. No
+time bound is imposed: a branch may run forever or end stuck, and neither accepts. Textbook
+definitions ask every branch to halt [Sipser, Definition 8.1][Sipser2013]; this predicate does not.
+
 `Turing.MultiTapeNTM.DecidableInPolyTime` asks for one machine with a binary alphabet and finitely
 many states, and one polynomially bounded time bound, for all instances. Like
 `Turing.MultiTapeTM.ComputableTidilyInPolyTime`, it is relative to the encoding of instances.
@@ -35,6 +41,7 @@ many states, and one polynomially bounded time bound, for all instances. Like
 
 * `Turing.MultiTapeNTM.Accepts`: some computation path halts with output `[true]`.
 * `Turing.MultiTapeNTM.DecidesInTime`: a machine decides a problem within a time bound.
+* `Turing.MultiTapeNTM.DecidesInSpace`: a machine decides a problem within a space bound.
 * `Turing.MultiTapeNTM.DecidableInTime`, `Turing.MultiTapeNTM.DecidableInPolyTime`: some finite
   binary machine decides a problem within a time bound, or within a polynomial time bound.
 
@@ -51,6 +58,7 @@ many states, and one polynomially bounded time bound, for all instances. Like
 ## References
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
 -/
 
 @[expose] public section
@@ -169,5 +177,19 @@ theorem DecidesInTime.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List 
     {t t' : α → ℕ} (h : ntm.DecidesInTime enc A t) (ht : ∀ a, t a ≤ t' a) :
     ntm.DecidesInTime enc A t' :=
   fun a => ⟨(h a).1.mono (ht a), (h a).2⟩
+
+/-- `ntm` decides `A` within space `s` relative to the encoding `enc`: on every encoded instance
+`enc a`, every computation prefix visits at most `s a` work-tape cells, and `a ∈ A` exactly when
+some computation path accepts. No time bound is imposed: a branch may run forever or end stuck,
+and neither accepts. -/
+def DecidesInSpace (ntm : MultiTapeNTM k Bool State) (enc : α ↪ List Bool) (A : Set α)
+    (s : α → ℕ) : Prop :=
+  ∀ a, ntm.RunsInSpace (enc a) (s a) ∧ (a ∈ A ↔ ntm.Accepts (enc a))
+
+/-- Space bounds can be increased. -/
+theorem DecidesInSpace.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List Bool} {A : Set α}
+    {s s' : α → ℕ} (h : ntm.DecidesInSpace enc A s) (hs : ∀ a, s a ≤ s' a) :
+    ntm.DecidesInSpace enc A s' :=
+  fun a => ⟨(h a).1.mono (hs a), (h a).2⟩
 
 end Turing.MultiTapeNTM
