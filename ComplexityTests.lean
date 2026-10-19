@@ -27,6 +27,8 @@ import ComplexityTests.EntropyPseudoentropy
 import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExplicitExpanders
+import ComplexityTests.FaginEncoding
+import ComplexityTests.FaginNP
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
@@ -45,6 +47,8 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.IterationFoundations
+import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.LinearHash
 import ComplexityTests.ListEnumeration
@@ -56,11 +60,17 @@ import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MassProduction
+import ComplexityTests.MassProduction.HighRate
+import ComplexityTests.MassProduction.Menu
+import ComplexityTests.MassProduction.Pipeline
+import ComplexityTests.MassProduction.Scheduler
+import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
+import ComplexityTests.NondeterministicVerifiers
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
