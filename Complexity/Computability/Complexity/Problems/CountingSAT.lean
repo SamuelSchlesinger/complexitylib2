@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Classes.ModP
 public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Problems.SharpSAT
 public import Complexity.Computability.Complexity.Problems.USAT
-public import Complexity.Computability.Complexity.Reduction.Completeness
+public import Complexity.Computability.Complexity.Reduction
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Complexity.CookLevin.Counting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

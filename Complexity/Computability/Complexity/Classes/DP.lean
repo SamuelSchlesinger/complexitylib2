@@ -26,7 +26,9 @@ union and reduction closure are immediate duals of the DP results.
 
 ## Main definitions
 
-* `Cslib.Complexity.DP`, `Cslib.Complexity.DPHard`, `Cslib.Complexity.DPComplete`.
+* `Cslib.Complexity.DP`.
+* `Cslib.Complexity.DPHard`, `Cslib.Complexity.DPComplete`: the instances of
+  `Cslib.Complexity.PolyTimeHard` and `Cslib.Complexity.PolyTimeComplete` for `DP`.
 
 ## Main results
 
@@ -53,11 +55,14 @@ def DP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ B ∈ NP enc, ∃ C ∈ coNP enc, A = B ∩ C}
 
 /-- Every DP language, over any injective binary encoding, reduces to this language. -/
-def DPHard (enc : α ↪ List Bool) (A : Set α) : Prop :=
-  ∀ {β : Type} (encB : β ↪ List Bool) (B : Set β), B ∈ DP encB → PolyTimeReducible encB enc B A
+abbrev DPHard (enc : α ↪ List Bool) (A : Set α) : Prop := PolyTimeHard @DP enc A
 
 /-- DP membership and hardness under polynomial-time many-one reductions. -/
-def DPComplete (enc : α ↪ List Bool) (A : Set α) : Prop := A ∈ DP enc ∧ DPHard enc A
+abbrev DPComplete (enc : α ↪ List Bool) (A : Set α) : Prop := PolyTimeComplete @DP enc A
+
+theorem polyTimeHard_DP_iff : PolyTimeHard @DP enc A ↔ DPHard enc A := Iff.rfl
+
+theorem polyTimeComplete_DP_iff : PolyTimeComplete @DP enc A ↔ DPComplete enc A := Iff.rfl
 
 /-- DP is exactly the differences of two NP languages. -/
 theorem mem_DP_iff_diff : A ∈ DP enc ↔ ∃ B ∈ NP enc, ∃ C ∈ NP enc, A = B \ C := by
