@@ -6,6 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.Problems.Coloring
 import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
+import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
+import Complexity.Computability.Complexity.Problems.TSP
 import Complexity.Computability.Complexity.Problems.VertexCover
 import Complexity.Tactic.PolyTime
 
@@ -13,7 +15,9 @@ import Complexity.Tactic.PolyTime
 # NP-complete graph problem tests
 
 Concrete, boundary, `fun_prop`, and axiom checks for `VertexCover`, `KColoring`,
-`ThreeColoring`, and the directed Hamiltonian path and cycle reductions.
+`ThreeColoring`, and the directed Hamiltonian path and cycle reductions, with the headline
+`NP`-completeness results of all the graph problems. The Hamiltonian verifiers, the vertex-splitting
+reductions and `TSP` are tested in `ComplexityTests/NPCompleteGraphs/`.
 -/
 
 namespace ComplexityTests.NPCompleteGraphs
@@ -37,8 +41,12 @@ example : PolyTimeReducible encCNF encGraph ThreeSAT ThreeColoring :=
 example : PolyTimeReducible encCNF (encPair encGraph encNat) SAT VertexCover :=
   polyTimeReducible_SAT_IndependentSet.trans polyTimeReducible_IndependentSet_VertexCover
 
-example : NPHard (encPair encGraph (encPair encNat encNat)) DirHamPath := DirHamPath_npHard
-example : NPHard encGraph DirHamCycle := DirHamCycle_npHard
+example : NPComplete (encPair encGraph (encPair encNat encNat)) DirHamPath :=
+  DirHamPath_npComplete
+example : NPComplete encGraph DirHamCycle := DirHamCycle_npComplete
+example : NPComplete (encPair encGraph (encPair encNat encNat)) HamPath := HamPath_npComplete
+example : NPComplete encGraph HamCycle := HamCycle_npComplete
+example : NPHard encTSP TSP := TSP_npHard
 
 example : PolyTimeReducible encCNF (encPair encGraph (encPair encNat encNat)) ThreeSAT DirHamPath :=
   polyTimeReducible_ThreeSAT_DirHamPath
@@ -435,5 +443,39 @@ info: 'Cslib.Complexity.KColoring_npComplete' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.KColoring_npComplete
+
+/--
+info: 'Cslib.Complexity.DirHamPath_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.DirHamPath_npComplete
+
+/--
+info: 'Cslib.Complexity.DirHamCycle_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.DirHamCycle_npComplete
+
+/--
+info: 'Cslib.Complexity.HamPath_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.HamPath_npComplete
+
+/--
+info: 'Cslib.Complexity.HamCycle_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.HamCycle_npComplete
+
+/--
+info: 'Cslib.Complexity.TSP_npHard' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.TSP_npHard
 
 end ComplexityTests.NPCompleteGraphs
