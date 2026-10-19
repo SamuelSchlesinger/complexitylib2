@@ -39,6 +39,14 @@ level `0` are odd, those of the blocks of the midpoint recursion even, and the s
 blocks of the top level are fixed to the codes of the initial view and of acceptance. The
 alternating characterization `AP = PSPACE` is not proved here.
 
+Boundary cases: there is no empty formula, since every formula has a token
+(`Cslib.Logic.PL.QBF.tokens_ne_nil`), so no instance of `TQBF` has an empty encoding. The formulas
+without variables are built from `top` and `bot` and are decided by their value; formulas with a
+free variable are not in `TQBF`, even when they are valid. The empty conjunction is `top` and the
+empty clause `bot` (`Cslib.Logic.PL.QBF.conj`, `Cslib.Logic.PL.QBF.ofClause`). The formulas
+produced by the reduction always quantify over some variables: their codes have width at least `2`,
+even on the empty input.
+
 ## Main definitions
 
 * `Cslib.Complexity.PSPACEHard`, `Cslib.Complexity.PSPACEComplete`.

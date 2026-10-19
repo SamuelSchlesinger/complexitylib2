@@ -9,8 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Evaluation
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List

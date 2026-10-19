@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Formula
 public import Complexity.Computability.Complexity.CookLevin.Correctness
 public import Complexity.Computability.Complexity.CookLevin.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Savitch
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
+import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 
 /-!
 # The reduction to `TQBF`
@@ -22,14 +22,17 @@ code from the code of the initial view, along the edges between the codes of its
 quantified Boolean formula [Sipser, Theorem 8.9][Sipser2013]
 [Arora and Barak, Theorem 4.13][AroraBarak09]: Savitch's formula
 (`Cslib.Complexity.TQBF.savitchFormula`) on the codes, of width `w = 2 * W + 2` for the width `W`
-of the codes, at depth `w`.
+of the codes, at depth `w`. Each of its `w` levels has `O(w)` tokens, so it has `O(w ^ 2)` tokens
+besides those of its formula of level `0`; it is computed in polynomial time in
+`Cslib.Computability.Complexity.Classes.Space.TQBF.PolyTime`.
 
 Its formula of level `0` must express one step or none between the words held by two blocks. The
-step test of codes is polynomial-time, so some tidy machine computes, on `encPair enc encBits
-(a, x ++ y)`, the Boolean `Cslib.Reachability.reach e w 0 x y` for the edge test `e` of the codes,
-within a polynomial time bound `T`. Its Cook–Levin tableau (`Cslib.Complexity.CookLevin.tableau`)
-on the inputs `frame (enc a) ++ z` with `|z| = 2 * w`, unrolled for `T` steps, has a satisfying
-assignment with certificate bits `z` exactly when the machine accepts `frame (enc a) ++ z`
+step test of codes is polynomial-time (`Cslib.Complexity.TQBF.computableTidilyInPolyTime_edgeTest`),
+so some tidy machine computes, on `encPair enc encBits (a, x ++ y)`, the Boolean
+`Cslib.Reachability.reach e w 0 x y` for the edge test `e` of the codes, within a polynomial time
+bound `T`. Its Cook–Levin tableau (`Cslib.Complexity.CookLevin.tableau`) on the inputs
+`frame (enc a) ++ z` with `|z| = 2 * w`, unrolled for `T` steps, has a satisfying assignment with
+certificate bits `z` exactly when the machine accepts `frame (enc a) ++ z`
 (`Cslib.Complexity.CookLevin.exists_eval_tableau_iff`). The formula of level `0`
 (`Cslib.Complexity.TQBF.baseFormula`) numbers the variables of the tableau by odd numbers, links
 its certificate variables to the source and target blocks of level `0`, and quantifies all of them
@@ -110,7 +113,10 @@ def certVar (w j : ℕ) : ℕ := if j < w then blockVar 0 0 j else blockVar 1 0 
 /-- The certificate variables read the words held by the source and target blocks of level `0`. -/
 theorem map_certVar (σ : ℕ → Bool) (w : ℕ) :
     (List.range (2 * w)).map (fun j => σ (certVar w j)) = block σ w 0 0 ++ block σ w 1 0 := by
-  refine List.ext_getElem (by simp [block, blockVars]; omega) fun j h₁ h₂ => ?_
+  have hlen : ((List.range (2 * w)).map fun j => σ (certVar w j)).length =
+      (block σ w 0 0 ++ block σ w 1 0).length := by
+    rw [List.length_map, List.length_range, List.length_append, length_block, length_block, two_mul]
+  refine List.ext_getElem hlen fun j h₁ h₂ => ?_
   simp only [List.length_map, List.length_range] at h₁
   simp only [List.getElem_map, List.getElem_range, certVar]
   by_cases hj : j < w
@@ -267,7 +273,7 @@ theorem reduce_mem_TQBF_iff {kV : ℕ} {StateV : Type} [Fintype StateV] [Decidab
       (edgeTime enc ntm c d cV dV a)) w).eval σ =
         reach ntm.codeEdge w 0 (block σ w 0 0) (block σ w 1 0) := by
     set z := block σ w 0 0 ++ block σ w 1 0
-    have hz : z.length = 2 * w := by simp [z, length_block]; omega
+    have hz : z.length = 2 * w := by simp only [z, List.length_append, length_block]; omega
     have hrun := (htm (a, z)).runFrom_initCfg
     have hlen : (encPair enc encBits (a, z)).length = 2 * (enc a).length + 2 * w + 1 := by
       rw [length_encPair, encBits_apply, hz]
