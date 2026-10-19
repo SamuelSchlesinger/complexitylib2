@@ -359,8 +359,7 @@ lemma entry_degree (χ : AddChar (ZMod M) K)
 end
 end Rational.PencilDeformation
 
-namespace
- Rational.ThreeLift
+namespace Rational.ThreeLift
 open Matrix Polynomial MvPolynomial
 open QuantumMatrices
 open scoped BigOperators

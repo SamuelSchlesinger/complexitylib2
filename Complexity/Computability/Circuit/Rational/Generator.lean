@@ -154,11 +154,6 @@ noncomputable section
 /-- The Hahn field containing the algebraic witnesses for the generator. -/
 abbrev WitnessField := HahnSeries QuantumLift.Exponents ℂ
 
-/-- The witness field has characteristic zero. -/
-instance witnessCharZero : CharZero WitnessField :=
-  CharZero.of_addMonoidHom (HahnSeries.C : ℂ →+* WitnessField).toAddMonoidHom
-    (map_one (HahnSeries.C : ℂ →+* WitnessField)) HahnSeries.C_injective
-
 /-- Embed the cyclotomic field into the Hahn witness field. -/
 def witnessEmbedding (e : ℕ) : CyclotomicRing.R e →+* WitnessField :=
   (HahnSeries.C : ℂ →+* WitnessField).comp (CyclotomicRing.intoComplex e).toRingHom

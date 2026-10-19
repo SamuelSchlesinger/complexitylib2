@@ -82,8 +82,7 @@ instance modulus_irreducible (e : ℕ) : Fact (Irreducible (modulus e)) :=
 /-- The rational cyclotomic quotient used for the matrix construction. -/
 abbrev R (e : ℕ) := AdjoinRoot (modulus e)
 
-lemma
- modulus_monic (e : ℕ) : (modulus e).Monic := by
+lemma modulus_monic (e : ℕ) : (modulus e).Monic := by
   simpa [modulus] using monic_X_pow_add_C (1 : ℚ) (pow_ne_zero e (by norm_num : (2 : ℕ) ≠ 0))
 
 lemma modulus_natDegree (e : ℕ) : (modulus e).natDegree = degree e := by
@@ -190,8 +189,7 @@ theorem simultaneous (P : List (MvPolynomial (Fin k) K))
   have hdeg : P.prod.totalDegree ≤ P.length * d := by
     refine (totalDegree_list_prod P).trans ?_
     simpa using List.sum_le_length_nsmul (P.map totalDegree) d (by simpa using hd)
-  obtain
- ⟨x, hx, hxp⟩ := exists_eval_ne_zero P.prod hprod S (hdeg.trans_lt hS)
+  obtain ⟨x, hx, hxp⟩ := exists_eval_ne_zero P.prod hprod S (hdeg.trans_lt hS)
   refine ⟨x, hx, ?_⟩
   intro p hp hz
   apply hxp

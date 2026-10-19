@@ -245,8 +245,7 @@ theorem isUnit_of_rank_gt (φ : D →+* Matrix κ κ E)
 end
 end Rational.BlockDivision
 
-namespace
- Rational.RankSpecialization
+namespace Rational.RankSpecialization
 open Matrix
 noncomputable section
 variable {K P E ι : Type*} [Field K] [CommRing P] [Field E]
