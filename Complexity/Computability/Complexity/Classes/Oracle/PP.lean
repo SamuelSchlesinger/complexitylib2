@@ -159,8 +159,7 @@ theorem iterate_step {F N : ℕ} (hF : F < 2 ^ N) : ((step F)^[N] (0, N)).1 = F 
       rw [Function.iterate_succ_apply', hlo]
       obtain ⟨j, hj⟩ : ∃ j, N - t = j + 1 := ⟨N - t - 1, by omega⟩
       have hj' : N - (t + 1) = j := by omega
-      rw [hj] at hlt
-      rw [pow_succ] at hlt
+      rw [hj, pow_succ] at hlt
       unfold step
       simp only [hj, Nat.add_one_ne_zero, ite_false, Nat.add_sub_cancel, hj']
       split_ifs with h
