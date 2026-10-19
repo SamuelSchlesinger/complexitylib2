@@ -91,7 +91,7 @@ def Op.ofBits : Bool × Bool × Bool → Op
   | (true, true, false) => .and
   | (_, _, true) => .or
 
-@[simp] theorem Op.ofBits_bits (op : Op) :
+theorem Op.ofBits_bits (op : Op) :
     Op.ofBits (op.bits.getD 0 false, op.bits.getD 1 false, op.bits.getD 2 false) = op := by
   cases op with
   | const b => cases b <;> rfl
