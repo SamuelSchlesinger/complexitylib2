@@ -781,6 +781,215 @@ theorem Valid.step_case3 {S : State n} (hS : S.Valid f) (hexcl : S.Exclusive) (h
     have ha' : S'.a = S.a := by simp only [a]; omega
     exact ⟨S', hS', by omega, by rw [ha']; omega⟩
 
+
+/-! ### Case 4 -/
+
+theorem Equation.subst_terms_node {E : Equation} {v t : ℕ} {c : Bool} (hv : v ∈ E.terms)
+    (ht : t ∈ E.terms) (htv : t ≠ v) :
+    (E.subst v ⟨.node t, c⟩).terms = (E.terms.erase v).erase t := by
+  simp only [Equation.subst, hv, ite_true, toggle]
+  rw [ite_eq_left (Finset.mem_erase.2 ⟨htv, ht⟩)]
+
+/-- The operation is a projection or a negated projection: `x ↦ c + x` or `y ↦ c + y`. -/
+def IsUnaryOp (op : Bool → Bool → Bool) : Prop :=
+  (op true false = !op false false ∧ op false true = op false false ∧
+      op true true = !op false false) ∨
+    (op true false = op false false ∧ op false true = !op false false ∧
+      op true true = !op false false)
+
+/-- An operation that is not a projection or a negated projection is constant on a diagonal
+`{(c + a, a)}` for a suitable `c`, and likewise on `{(a, c + a)}`. -/
+theorem exists_diag_const (op : Bool → Bool → Bool) :
+    ((∃ c, op c false = op (!c) true) ∧ (∃ c, op false c = op true (!c))) ∨ IsUnaryOp op := by
+  by_cases h0 : op false false = op true true
+  · exact Or.inl ⟨⟨false, h0⟩, ⟨false, h0⟩⟩
+  · by_cases h1 : op true false = op false true
+    · exact Or.inl ⟨⟨true, h1⟩, ⟨true, h1.symm⟩⟩
+    · right
+      unfold IsUnaryOp
+      revert h0 h1
+      generalize op false false = a₀; generalize op true false = b₀
+      generalize op false true = c₀; generalize op true true = d₀
+      revert a₀ b₀ c₀ d₀; decide
+
+/-- A gate whose operation is a projection or a negated projection computes a literal of an
+input, so (D1) applies. -/
+theorem deletionAvailable_of_unary {S : State n} {J : ℕ} (hJ : J ∈ S.gates)
+    (h : IsUnaryOp (S.gate J).op) : S.DeletionAvailable := by
+  refine Or.inr (Or.inl ⟨J, hJ, ?_⟩)
+  rcases h with ⟨h1, h2, h3⟩ | ⟨h1, h2, h3⟩
+  · refine ⟨⟨(S.gate J).left, (S.gate J).op false false⟩, fun t ht => Or.inl ht, fun val _ => ?_⟩
+    simp only [Gate.eval, Lit.eval]
+    cases (S.gate J).left.eval val <;> cases (S.gate J).right.eval val <;> simp [h1, h2, h3]
+  · refine ⟨⟨(S.gate J).right, (S.gate J).op false false⟩, fun t ht => Or.inr ht, fun val _ => ?_⟩
+    simp only [Gate.eval, Lit.eval]
+    cases (S.gate J).left.eval val <;> cases (S.gate J).right.eval val <;> simp [h1, h2, h3]
+
+/-- Case 4 applies: two partners have a common child. -/
+def Case4 (S : State n) : Prop :=
+  ∃ pr ∈ S.pairs, ∃ H, H ∈ S.children pr.1 ∧ H ∈ S.children pr.2
+
+theorem deg_eq_one_of_not_case3 {S : State n} (h3 : ¬ S.Case3) {p : ℕ} (hp : p ∈ S.params)
+    (hpp : S.Paired p) : S.deg p = 1 := by
+  by_contra h
+  exact h3 ⟨p, hp, hpp, by omega⟩
+
+theorem children_eq_singleton {S : State n} {p : ℕ} {H : ℕ ⊕ ℕ} (h1 : S.deg p = 1)
+    (hH : H ∈ S.children p) : S.children p = {H} := by
+  obtain ⟨a, ha⟩ := Finset.card_eq_one.1 h1
+  rw [ha] at hH ⊢; rw [Finset.mem_singleton.1 hH]
+
+/-- **Case 4** of the preliminary reductions: if partners `p` and `r` have a common child `H`,
+impose `p = r + c'` so that `H` becomes constant and delete it; `r` becomes unused:
+`Δa = 0`, `ΔW ≤ -5`. -/
+theorem Valid.step_case4 {S : State n} (hS : S.Valid f) (hdel : ¬ S.DeletionAvailable)
+    (h3 : ¬ S.Case3) (h : S.Case4) : ∃ S', Step f S S' := by
+  obtain ⟨pr, hpr, H, hHp, hHr⟩ := h
+  obtain ⟨hp, hr, hpr12⟩ := hS.pair_mem pr hpr
+  set p := pr.1
+  set r := pr.2
+  have hpp : S.Paired p := ⟨pr, hpr, Or.inl rfl⟩
+  have hrp : S.Paired r := ⟨pr, hpr, Or.inr rfl⟩
+  have hcp := children_eq_singleton (deg_eq_one_of_not_case3 h3 hp hpp) hHp
+  have hcr := children_eq_singleton (deg_eq_one_of_not_case3 h3 hr hrp) hHr
+  have hrok : ∀ c : Bool, S.RestrictOK p ⟨.node r, c⟩ (S.pairsAvoid p) := fun c =>
+    { mem := hp
+      reads := fun y hy => by cases hy; exact ⟨hr, Ne.symm hpr12⟩
+      subset := Finset.filter_subset _ _
+      avoid := fun pr' hpr' => (Finset.mem_filter.1 hpr').2
+      drop := fun pr' hpr' hP => by
+        have hpr'p : pr'.1 = p ∨ pr'.2 = p := by
+          by_contra hc
+          push Not at hc
+          exact hP (Finset.mem_filter.2 ⟨hpr', hc⟩)
+        have := hS.pair_unique hpr' hpr hpr'p (Or.inl rfl)
+        subst this
+        exact ⟨hpr'p, fun y hy => by cases hy; exact Or.inr rfl⟩ }
+  -- restrict and delete `H`, with a target that is not a parameter
+  obtain ⟨c, S', t, hstep, htarget⟩ : ∃ c S' t, DelStep f (S.restrict p ⟨.node r, c⟩
+      (S.pairsAvoid p)) S' H t ∧ ∀ z ∈ S.params, z ≠ p → t ≠ some z := by
+    rcases H with G | e
+    · obtain ⟨hG, hGp⟩ := (SemiCircuit.inl_mem_children _).1 hHp
+      obtain ⟨-, hGr⟩ := (SemiCircuit.inl_mem_children _).1 hHr
+      have hargs := Gate.args_of_reads hpr12 hGp hGr
+      rcases exists_diag_const (S.gate G).op with ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩ | hun
+      · obtain ⟨c, hdeg, hlit⟩ : ∃ c, ((S.gate G).subst p ⟨.node r, c⟩).Degenerate ∧
+            ((S.gate G).subst p ⟨.node r, c⟩).lit.target = none := by
+          generalize S.gate G = g at hargs hc₁ hc₂ ⊢
+          obtain ⟨op, l, rr⟩ := g
+          simp only at hc₁ hc₂
+          have hrp' : Arg.node r ≠ Arg.node p := fun h => hpr12 (Arg.node.inj h).symm
+          rcases hargs with ⟨hl, hr'⟩ | ⟨hl, hr'⟩
+          · simp only at hl hr'
+            subst hl hr'
+            refine ⟨c₁, Or.inr (Or.inr ?_), ?_⟩
+            · simp [Gate.subst, Arg.substArg, hrp']
+            · simp [Gate.subst, Arg.substArg, Gate.substNeg, Gate.lit, hrp', hc₁, Lit.target,
+                Lit.const]
+          · simp only at hl hr'
+            subst hl hr'
+            refine ⟨c₂, Or.inr (Or.inr ?_), ?_⟩
+            · simp [Gate.subst, Arg.substArg, hrp']
+            · simp [Gate.subst, Arg.substArg, Gate.substNeg, Gate.lit, hrp', hc₂, Lit.target,
+                Lit.const]
+        have hS₁ := hS.restrict (hrok c)
+        have hok : (S.restrict p ⟨.node r, c⟩ (S.pairsAvoid p)).DeleteGateOK G
+            ((S.gate G).subst p ⟨.node r, c⟩).lit :=
+          ⟨hG, fun t ht => Gate.reads_of_lit_reads ht, Or.inl fun val _ => Gate.eval_lit hdeg val⟩
+        refine ⟨c, _, _, hS₁.delStep_deleteGate hok, fun z _ _ => ?_⟩
+        rw [hlit]; simp
+      · exact absurd (deletionAvailable_of_unary hG hun) hdel
+    · obtain ⟨he, hpe⟩ := (SemiCircuit.inr_mem_children _).1 hHp
+      obtain ⟨-, hre⟩ := (SemiCircuit.inr_mem_children _).1 hHr
+      have hS₁ := hS.restrict (hrok false)
+      have hterms := Equation.subst_terms_node (c := false) hpe hre hpr12.symm
+      have hcard : ((S.eqn e).subst p ⟨.node r, false⟩).terms.card ≤ 2 := by
+        rw [hterms, Finset.card_erase_of_mem (Finset.mem_erase.2 ⟨hpr12.symm, hre⟩),
+          Finset.card_erase_of_mem hpe]
+        have := hS.wf.card_terms_le e he
+        omega
+      obtain ⟨S', t, hstep, -⟩ := hS₁.exists_delStep (N := .inr e) ⟨he, hcard⟩
+      refine ⟨false, S', t, hstep, fun z hz hzp ht => ?_⟩
+      have hze := hstep.target z ht
+      obtain ⟨-, hze⟩ := (SemiCircuit.inr_mem_children _).1 hze
+      change z ∈ ((S.eqn e).subst p ⟨.node r, false⟩).terms at hze
+      -- the substituted equation would have only parameters as terms
+      have hsub : ((S.restrict p ⟨.node r, false⟩ (S.pairsAvoid p)).eqn e).terms ⊆
+          (S.restrict p ⟨.node r, false⟩ (S.pairsAvoid p)).params := by
+        intro i hi
+        change i ∈ ((S.eqn e).subst p ⟨.node r, false⟩).terms at hi
+        have hcard1 : ((S.eqn e).subst p ⟨.node r, false⟩).terms.card ≤ 1 := by
+          have h3' : 3 ≤ (S.eqn e).terms.card := by
+            by_contra hlt
+            exact hdel (Or.inl ⟨e, he, by omega⟩)
+          rw [hterms, Finset.card_erase_of_mem (Finset.mem_erase.2 ⟨hpr12.symm, hre⟩),
+            Finset.card_erase_of_mem hpe]
+          have := hS.wf.card_terms_le e he
+          omega
+        have := Finset.card_le_one.1 hcard1 i hi z hze
+        subst this
+        exact Finset.mem_erase.2 ⟨hzp, hz⟩
+      have hempty := hS₁.terms_eq_empty_of_subset he hsub
+      change ((S.eqn e).subst p ⟨.node r, false⟩).terms = ∅ at hempty
+      rw [hempty] at hze
+      exact Finset.notMem_empty _ hze
+  have hS' := hstep.valid
+  have hparams : S'.params = S.params.erase p := hstep.params
+  have hpairs : S'.pairs = S.pairsAvoid p := hstep.pairs
+  have hsize : S'.size + 1 = S.size := hstep.size
+  have hm : S'.m + 1 = S.m := by
+    simp only [m, hparams]; exact Finset.card_erase_add_one hp
+  have hqp := hS.pairsAvoid_card p
+  rw [ite_eq_left hpp] at hqp
+  have hq' : S'.q + 1 = S.q := by unfold q; rw [hpairs]; exact hqp
+  -- children of the other parameters do not grow, and `r` becomes unused
+  have hchild : ∀ u ∈ S.params, u ≠ p → u ≠ r → S'.children u ⊆ S.children u := by
+    intro u hu hup hur
+    have := hstep.children u (Finset.mem_erase.2 ⟨hup, hu⟩) (htarget u hu hup)
+    rw [restrict_children, SemiCircuit.children_subst hup (fun h => hur (Arg.node.inj h).symm)]
+      at this
+    exact this.trans (Finset.erase_subset _ _)
+  have hr0 : S'.deg r = 0 := by
+    have := hstep.children r (Finset.mem_erase.2 ⟨hpr12.symm, hr⟩) (htarget r hr hpr12.symm)
+    rw [restrict_children] at this
+    have hsub := (this.trans (Finset.erase_subset_erase _
+      (SemiCircuit.children_subst_subset p _ r)))
+    rw [hcp, hcr, Finset.union_self, Finset.erase_singleton] at hsub
+    exact Finset.card_eq_zero.2 (Finset.subset_empty.1 hsub)
+  have hpt : ∀ u ∈ S.params, S'.wt u + 0 ≤ S.wt u + 0 := by
+    intro u hu
+    by_cases hup : u = p
+    · rw [hup, wt_of_notMem_params (by rw [hparams]; exact Finset.notMem_erase _ _)]; omega
+    · by_cases hur : u = r
+      · rw [hur]; unfold wt; split_ifs <;> simp [hr0]
+      · by_cases hu' : u ∈ S'.unpaired
+        · have hus : u ∈ S.unpaired := by
+            refine mem_unpaired.2 ⟨hu, fun ⟨pr', hpr', h'⟩ => (mem_unpaired.1 hu').2 ?_⟩
+            refine ⟨pr', ?_, h'⟩
+            rw [hpairs]
+            refine Finset.mem_filter.2 ⟨hpr', ?_, ?_⟩
+            · intro h1
+              have := hS.pair_unique hpr' hpr (Or.inl h1) (Or.inl rfl)
+              subst this
+              rcases h' with h' | h'
+              · exact hup h'.symm
+              · exact hur h'.symm
+            · intro h2
+              have := hS.pair_unique hpr' hpr (Or.inr h2) (Or.inl rfl)
+              subst this
+              rcases h' with h' | h'
+              · exact hup h'.symm
+              · exact hur h'.symm
+          rw [wt_of_mem hu', wt_of_mem hus]
+          exact Nat.add_le_add_right (weight_mono (Finset.card_le_card (hchild u hu hup hur))) _
+        · rw [wt_of_notMem hu']; omega
+  have hW := W_add_le (S := S) (S' := S') le_rfl (by rw [hparams]; exact Finset.erase_subset _ _)
+    _ _ hpt
+  simp only [Finset.sum_const_zero] at hW
+  have hs : S'.s + 1 = S.s := hsize
+  have ha' : S'.a = S.a := by simp only [a]; omega
+  exact ⟨S', hS', by omega, by rw [ha']; omega⟩
+
 end State
 
 end Cslib.Circuits.Boolean.B2
