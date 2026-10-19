@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Foundations.BooleanAnalysis.KahnKalaiLinial
+import Complexity.Foundations.BooleanAnalysis.FriedgutJunta
 
-/-! Instances, non-vacuity witnesses and axiom guards for the Kahn–Kalai–Linial theorem and
-Talagrand's inequality. -/
+/-! Instances, non-vacuity witnesses and axiom guards for the Kahn–Kalai–Linial theorem,
+Talagrand's inequality and Friedgut's junta theorem. -/
 
 namespace ComplexityTests.KahnKalaiLinialFriedgut
 
@@ -57,6 +57,40 @@ example : 𝔼 x, (signVal (and₂ x) - 𝔼 y, signVal (and₂ y)) ^ 2 ≤
       Real.log (influence i fun x => signVal (and₂ x))⁻¹ :=
   expect_sub_expect_sq_le_six_mul_sum_influence_div_log and₂ influence_and₂_lt_one
 
+/-! ### Friedgut's junta theorem -/
+
+-- The bound on the total influence can be the total influence itself: every Boolean function is
+-- `ε`-close to a function of at most `4 I ^ 3 / (9 ε ^ 2) · 81 ^ (I / ε)` coordinates.
+example (f : (ι → Bool) → Bool) {ε : ℝ} (hε : 0 < ε) :
+    ∃ (J : Finset ι) (g : (ι → Bool) → Bool),
+      (#J : ℝ) ≤ 4 * totalInfluence (fun x => signVal (f x)) ^ 3 / (9 * ε ^ 2) *
+        81 ^ (totalInfluence (fun x => signVal (f x)) / ε) ∧
+      DependsOn g (J : Set ι) ∧ (hammingDist f g : ℝ) / 2 ^ Fintype.card ι ≤ ε :=
+  exists_dependsOn_hammingDist_div_le_of_totalInfluence_le f hε le_rfl
+
+-- The exponential form at `ε = 1 / 4` for a function of `n` bits of total influence at most `2`:
+-- it is `1/4`-close to a function of at most `3 · 2 ^ 64` coordinates.
+example {n : ℕ} (f : (Fin n → Bool) → Bool) (hf : totalInfluence (fun x => signVal (f x)) ≤ 2) :
+    ∃ (J : Finset (Fin n)) (g : (Fin n → Bool) → Bool),
+      (#J : ℝ) ≤ 3 * 2 ^ (8 * 2 / (1 / 4) : ℝ) ∧ DependsOn g (J : Set (Fin n)) ∧
+        (hammingDist f g : ℝ) / 2 ^ Fintype.card (Fin n) ≤ 1 / 4 :=
+  exists_card_le_three_mul_two_rpow_dependsOn_hammingDist_div_le f (by norm_num) (by norm_num) hf
+
+-- The hypothesis of the exponential form is satisfiable by a nonconstant function: the
+-- conjunction of two bits has total influence at most two.
+example : totalInfluence (fun x => signVal (and₂ x)) ≤ 2 := by
+  have h := totalInfluence_le_mul_expect_sq (fun x => signVal (and₂ x))
+  simp only [sq, signVal_mul_self, Fintype.card_fin, Nat.cast_ofNat] at h
+  rw [expect_const univ_nonempty] at h
+  linarith
+
+-- A function concentrated on the subsets of all coordinates is a junta on all of them.
+example (f : (ι → Bool) → Bool) :
+    ∃ g : (ι → Bool) → Bool, DependsOn g (univ : Finset ι) ∧
+      (hammingDist f g : ℝ) / 2 ^ Fintype.card ι ≤
+        ∑ S with ¬S ⊆ univ, fourierCoeff (fun x => signVal (f x)) S ^ 2 :=
+  exists_dependsOn_hammingDist_div_le_sum f univ
+
 /--
 info: 'Cslib.BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -86,5 +120,29 @@ info: 'Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_a
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_add_log
+
+/--
+info: 'Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum
+
+/--
+info: 'Cslib.BitString.sum_filter_not_subset_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.sum_filter_not_subset_fourierCoeff_sq_le
+
+/--
+info: 'Cslib.BitString.exists_dependsOn_hammingDist_div_le_of_totalInfluence_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.exists_dependsOn_hammingDist_div_le_of_totalInfluence_le
+
+/--
+info: 'Cslib.BitString.exists_card_le_three_mul_two_rpow_dependsOn_hammingDist_div_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.exists_card_le_three_mul_two_rpow_dependsOn_hammingDist_div_le
 
 end ComplexityTests.KahnKalaiLinialFriedgut

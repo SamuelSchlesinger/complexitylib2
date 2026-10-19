@@ -14,15 +14,13 @@ import Mathlib.Analysis.Complex.ExponentialBounds
 /-!
 # The Kahn–Kalai–Linial theorem and Talagrand's inequality
 
-Read a Boolean function `f` as the function `F = (-1) ^ f` with values `±1`. The
+Read a Boolean function `f` as the function `F = (-1) ^ f` with values `±1`. By the Poincaré
+inequality the influences of `F` on its `n` coordinates average at least `Var[F] / n`; the
 **Kahn–Kalai–Linial theorem** says that some coordinate has influence at least
-`c · Var[F] · log n / n` on `F`, for `n` coordinates and an absolute constant `c > 0`: up to the
-constant, the influences of a balanced function cannot all be as small as `1 / n`, the influences
-of the parity or the majority, unlike in the case of the real functions [KahnKalaiLinial1988]. We
-prove it with `c = 1 / 12`
-(`BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence`), through the form proved
-by O'Donnell: if every coordinate has influence at most `δ`, then the total influence is at least
-`1 / 6 · Var[F] · log (1 / δ)`
+`c · Var[F] · log n / n`, for an absolute constant `c > 0` [KahnKalaiLinial1988]. We prove it
+with `c = 1 / 12` (`BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence`),
+through its edge-isoperimetric form in O'Donnell's exposition: if every coordinate has influence
+at most `δ`, then the total influence is at least `1 / 6 · Var[F] · log (1 / δ)`
 (`BitString.expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence`)
 [O'Donnell, Section 9.6][ODonnell2014]. Here `Var[F]` is written
 `𝔼 x, (F x - 𝔼 y, F y) ^ 2`, the Fourier weight of `F` on the nonempty sets.
@@ -57,6 +55,8 @@ gives Talagrand's inequality.
 * `Cslib.BitString.mul_noiseStability_derivative`: the noise stability of a derivative.
 * `Cslib.BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le`: hypercontractivity
   bounds the low-degree weight on the sets containing a coordinate.
+* `Cslib.BitString.one_le_mul_log_three_div_log_or_one_lt_mul_one_third_pow`: the degree
+  threshold of the argument.
 * `Cslib.BitString.expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence`: the
   Kahn–Kalai–Linial theorem, in the form "small influences force large total influence".
 * `Cslib.BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence`: the
@@ -155,27 +155,36 @@ theorem sum_filter_mem_fourierCoeff_sq_div_card_le_influence (f : (ι → Bool) 
   refine sum_le_sum fun S hS => div_le_self (sq_nonneg _) ?_
   exact Nat.one_le_cast.2 (card_pos.2 ⟨i, (mem_filter.1 hS).2⟩)
 
-/-- For `A > 1` and `m ≥ 1`, `1 / m ≤ log 3 / log A + A 3 ^ (-m)`: if `3 ^ m ≥ A` then
-`m ≥ log A / log 3`, and otherwise `A 3 ^ (-m) > 1`. -/
-private theorem inv_le_log_div_log_add {A : ℝ} (hA : 1 < A) {m : ℕ} (hm : 1 ≤ m) :
-    (m : ℝ)⁻¹ ≤ log 3 / log A + A * (1 / 3) ^ m := by
+/-- **The degree threshold**: for `A > 1`, every `m` satisfies `1 ≤ m log 3 / log A` or
+`1 < A 3 ^ (-m)`, according as `3 ^ m ≥ A` or not. -/
+theorem one_le_mul_log_three_div_log_or_one_lt_mul_one_third_pow {A : ℝ} (hA : 1 < A) (m : ℕ) :
+    1 ≤ m * (log 3 / log A) ∨ 1 < A * (1 / 3) ^ m := by
   have hlogA : 0 < log A := log_pos hA
-  have hlog3 : 0 < log 3 := log_pos (by norm_num)
-  have hm' : (1 : ℝ) ≤ m := Nat.one_le_cast.2 hm
   rcases le_or_gt A (3 ^ m) with h | h
-  · have hle : log A ≤ m * log 3 := by
+  · left
+    have hle : log A ≤ m * log 3 := by
       rw [← log_pow]
       exact log_le_log (by linarith) h
-    have h1 : (m : ℝ)⁻¹ ≤ log 3 / log A := by
-      rw [inv_le_iff_one_le_mul₀ (by linarith), div_mul_eq_mul_div, le_div_iff₀ hlogA, one_mul]
-      linarith
-    have h2 : 0 ≤ A * (1 / 3 : ℝ) ^ m := by positivity
-    linarith
-  · have h1 : 1 < A * (1 / 3 : ℝ) ^ m := by
-      rw [one_div, inv_pow, ← div_eq_mul_inv, one_lt_div (by positivity)]
+    rw [mul_div_assoc', le_div_iff₀ hlogA, one_mul]
+    exact hle
+  · right
+    rw [one_div, inv_pow, ← div_eq_mul_inv, one_lt_div (by positivity)]
+    exact h
+
+/-- For `A > 1` and `m ≥ 1`, `1 / m ≤ log 3 / log A + A 3 ^ (-m)`. -/
+private theorem inv_le_log_div_log_add {A : ℝ} (hA : 1 < A) {m : ℕ} (hm : 1 ≤ m) :
+    (m : ℝ)⁻¹ ≤ log 3 / log A + A * (1 / 3) ^ m := by
+  have hm' : (0 : ℝ) < m := Nat.cast_pos.2 hm
+  have h3 : 0 ≤ log 3 / log A := div_nonneg (log_pos (by norm_num)).le (log_pos hA).le
+  have hpow : 0 ≤ A * (1 / 3 : ℝ) ^ m := by
+    have : (0 : ℝ) < A := by linarith
+    positivity
+  rcases one_le_mul_log_three_div_log_or_one_lt_mul_one_third_pow hA m with h | h
+  · have : (m : ℝ)⁻¹ ≤ log 3 / log A := by
+      rw [inv_le_iff_one_le_mul₀ hm', mul_comm]
       exact h
-    have h2 : (m : ℝ)⁻¹ ≤ 1 := inv_le_one_of_one_le₀ hm'
-    have h3 : 0 ≤ log 3 / log A := div_nonneg hlog3.le hlogA.le
+    linarith
+  · have : (m : ℝ)⁻¹ ≤ 1 := inv_le_one_of_one_le₀ (Nat.one_le_cast.2 hm)
     linarith
 
 /-- **The weight on the sets containing a coordinate**: for a Boolean function read as signs and
@@ -277,10 +286,11 @@ theorem sum_filter_mem_fourierCoeff_sq_div_card_mul_log_le (f : (ι → Bool) �
 
 /-! ### The Kahn–Kalai–Linial theorem -/
 
-/-- **The Kahn–Kalai–Linial theorem, total influence form**: if every coordinate has influence at
-most `δ` on a Boolean function read as signs `F`, then `Var[F] · log (1 / δ) ≤ 6 I[F]`, that is,
-the total influence is at least `1/6 · Var[F] · log (1 / δ)` [KahnKalaiLinial1988]
-[O'Donnell, Section 9.6][ODonnell2014]. For `δ ≥ 1` the left side is at most zero. -/
+/-- **The Kahn–Kalai–Linial theorem, edge-isoperimetric form**: if every coordinate has influence
+at most `δ` on a Boolean function read as signs `F`, then `Var[F] · log (1 / δ) ≤ 6 I[F]`, that
+is, the total influence is at least `1/6 · Var[F] · log (1 / δ)` [KahnKalaiLinial1988]
+[Talagrand1994] [O'Donnell, Section 9.6][ODonnell2014]. For `δ ≥ 1` the left side is at most
+zero. -/
 theorem expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence (f : (ι → Bool) → Bool) {δ : ℝ}
     (hδ : ∀ i, influence i (fun x => signVal (f x)) ≤ δ) :
     (𝔼 x, (signVal (f x) - 𝔼 y, signVal (f y)) ^ 2) * log δ⁻¹ ≤
