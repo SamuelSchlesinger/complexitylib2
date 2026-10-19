@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Data.ENat.Lattice
 public import Mathlib.InformationTheory.Hamming
+import Mathlib.Order.SuccPred.ENat
 
 /-!
 # The minimum distance of a code
@@ -18,8 +19,8 @@ A *code* is a set `C` of words `∀ i, β i` over the alphabets `β i` at the fi
 coordinates `i : ι`. Its *minimum distance* `Cslib.Code.minDist C` is the least Hamming distance
 between two distinct codewords, and `⊤` when `C` has at most one codeword
 [MacWilliams and Sloane, Chapter 1][MacWilliamsSloane1977]. A bound `d ≤ minDist C` says exactly
-that distinct codewords differ on at least `d` coordinates (`Cslib.Code.le_minDist`). When `C` has
-two distinct codewords the minimum is attained (`Cslib.Code.exists_hammingDist_eq_minDist`).
+that distinct codewords differ on at least `d` coordinates (`Cslib.Code.le_minDist_iff`). When `C`
+has two distinct codewords the minimum is attained (`Cslib.Code.exists_hammingDist_eq_minDist`).
 
 A word within distance `e` of two codewords determines them when `2 e < minDist C`: the code
 *uniquely decodes* up to `e` errors (`Cslib.Code.eq_of_hammingDist_le_of_two_mul_lt_minDist`).
@@ -30,8 +31,10 @@ A word within distance `e` of two codewords determines them when `2 e < minDist 
 
 ## Main results
 
-* `Cslib.Code.le_minDist`: lower bounds on the minimum distance.
-* `Cslib.Code.minDist_eq_top`: the minimum distance is `⊤` exactly for codes with at most one word.
+* `Cslib.Code.le_minDist_iff`, `Cslib.Code.natCast_lt_minDist_iff`: lower bounds on the minimum
+  distance.
+* `Cslib.Code.minDist_eq_top_iff`: the minimum distance is `⊤` exactly for codes with at most one
+  word.
 * `Cslib.Code.exists_hammingDist_eq_minDist`: the minimum distance is attained.
 * `Cslib.Code.eq_of_hammingDist_le_of_two_mul_lt_minDist`: unique decoding below half the minimum
   distance.
@@ -57,31 +60,42 @@ variable {C D : Set (∀ i, β i)} {x y : ∀ i, β i} {d : ℕ∞}
 
 /-- The minimum distance is at least `d` iff distinct codewords differ on at least `d`
 coordinates. -/
-theorem le_minDist : d ≤ minDist C ↔ ∀ x ∈ C, ∀ y ∈ C, x ≠ y → d ≤ hammingDist x y := by
+theorem le_minDist_iff : d ≤ minDist C ↔ ∀ x ∈ C, ∀ y ∈ C, x ≠ y → d ≤ hammingDist x y := by
   simp only [minDist, le_iInf_iff]
+
+@[deprecated (since := "2026-10-19")] alias le_minDist := le_minDist_iff
+
+/-- The minimum distance exceeds `r` iff distinct codewords differ on more than `r`
+coordinates. -/
+theorem natCast_lt_minDist_iff {r : ℕ} :
+    (r : ℕ∞) < minDist C ↔ ∀ x ∈ C, ∀ y ∈ C, x ≠ y → r < hammingDist x y := by
+  rw [← ENat.natCast_add_one_le_iff, le_minDist_iff]
+  simp only [ENat.natCast_add_one_le_iff, Nat.cast_lt]
 
 theorem minDist_le_hammingDist (hx : x ∈ C) (hy : y ∈ C) (hxy : x ≠ y) :
     minDist C ≤ hammingDist x y :=
-  le_minDist.1 le_rfl x hx y hy hxy
+  le_minDist_iff.1 le_rfl x hx y hy hxy
 
 /-- A subcode has at least the minimum distance of the code. -/
 theorem minDist_anti (h : C ⊆ D) : minDist D ≤ minDist C :=
-  le_minDist.2 fun _ hx _ hy hxy => minDist_le_hammingDist (h hx) (h hy) hxy
+  le_minDist_iff.2 fun _ hx _ hy hxy => minDist_le_hammingDist (h hx) (h hy) hxy
 
 /-- The minimum distance is `⊤` exactly for codes with at most one codeword. -/
-theorem minDist_eq_top : minDist C = ⊤ ↔ C.Subsingleton := by
-  rw [← top_le_iff, le_minDist]
+theorem minDist_eq_top_iff : minDist C = ⊤ ↔ C.Subsingleton := by
+  rw [← top_le_iff, le_minDist_iff]
   refine ⟨fun h x hx y hy => ?_, fun h x hx y hy hxy => absurd (h hx hy) hxy⟩
   by_contra hxy
   exact ENat.natCast_ne_top _ (top_le_iff.1 (h x hx y hy hxy))
 
+@[deprecated (since := "2026-10-19")] alias minDist_eq_top := minDist_eq_top_iff
+
 @[simp]
 theorem minDist_empty : minDist (∅ : Set (∀ i, β i)) = ⊤ :=
-  minDist_eq_top.2 Set.subsingleton_empty
+  minDist_eq_top_iff.2 Set.subsingleton_empty
 
 @[simp]
 theorem minDist_singleton (x : ∀ i, β i) : minDist {x} = ⊤ :=
-  minDist_eq_top.2 Set.subsingleton_singleton
+  minDist_eq_top_iff.2 Set.subsingleton_singleton
 
 /-- A code with two distinct codewords has two codewords at exactly the minimum distance. -/
 theorem exists_hammingDist_eq_minDist (h : C.Nontrivial) :
@@ -91,7 +105,7 @@ theorem exists_hammingDist_eq_minDist (h : C.Nontrivial) :
   have hS : S.Nonempty := ⟨_, x, hx, y, hy, hxy, rfl⟩
   obtain ⟨x, hx, y, hy, hxy, hmin⟩ := Nat.sInf_mem hS
   refine ⟨x, hx, y, hy, hxy, le_antisymm ?_ (minDist_le_hammingDist hx hy hxy)⟩
-  refine le_minDist.2 fun x' hx' y' hy' hxy' => ?_
+  refine le_minDist_iff.2 fun x' hx' y' hy' hxy' => ?_
   rw [hmin]
   exact Nat.cast_le.2 (Nat.sInf_le ⟨x', hx', y', hy', hxy', rfl⟩)
 

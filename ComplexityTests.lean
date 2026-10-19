@@ -20,6 +20,8 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.Code
+import ComplexityTests.Code.Concatenation
+import ComplexityTests.Code.Johnson
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
@@ -165,6 +167,7 @@ import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
+import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
