@@ -39,9 +39,11 @@ milestones below remain the authority for their respective facts.
 The verifier-based `UP` and `CeqP` developments, basic Boolean closures, exact-count
 polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are implemented.
 The next counting milestones remain the nondeterministic-machine characterizations of
-`#P` and `GapP`, and an unambiguous-machine characterization of `UP`; none is implied by
-the new verifier definitions. Develop further modular counting classes and counting
-reductions on these APIs, preserving exact multiplicities when required.
+`#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
+none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
+now have verifier-based definitions and basic closure/containment developments. Extend these
+with stronger fewness containments, counting reductions and oracle results, preserving exact
+multiplicities when required. The current modular Boolean closures require a prime modulus.
 
 ### Extend the mathematical canon
 
