@@ -9,6 +9,7 @@ module
 
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Entropy
+import Complexity.Probability.StatisticalDistance
 
 /-!
 # Min-entropy and weak random sources
@@ -40,6 +41,8 @@ flat `k`-sources (`Cslib.Probability.PMF.exists_eq_bind_uniformOfFinset_of_le_mi
 * `Cslib.Probability.PMF.collisionProbability_le_rpow_neg_minEntropy`: collision probability is
   at most `2^(-H∞)`.
 * `Cslib.Probability.PMF.isSource_zero_iff`: a `(k, 0)`-source is a `k`-source.
+* `Cslib.Probability.PMF.isSource_of_heavy_le`: discarding rare heavy outcomes gives a
+  `(k, ε)`-source.
 
 ## References
 
@@ -212,5 +215,28 @@ theorem IsSource.of_statisticallyClose [Fintype α] {p q : PMF α} {k : ℝ} {ε
     (h : IsSource q k ε) (hpq : StatisticallyClose p q δ) : IsSource p k (δ + ε) :=
   let ⟨r, hr, hclose⟩ := h
   ⟨r, hr, hpq.trans hclose⟩
+
+/-- **Smoothing by discarding heavy outcomes.** If the outcomes of probability more than `2⁻ᵏ`
+have total probability at most `δ < 1`, the distribution is a `(k + log₂ (1 - δ), δ)`-source.
+Conditioning on the light outcomes moves it by the discarded probability and multiplies each
+remaining mass by at most `1 / (1 - δ)`. For `δ ≤ 1 / 2` the min-entropy loss is at most one bit. -/
+theorem isSource_of_heavy_le [Fintype α] (p : PMF α) {k : ℝ} {δ : ℝ≥0} (hδ : (δ : ℝ) < 1)
+    (hheavy : (p.toOuterMeasure {a | 2 ^ (-k) < (p a).toReal}).toReal ≤ δ) :
+    IsSource p (k + Real.logb 2 (1 - δ)) δ := by
+  let light := {a | (p a).toReal ≤ 2 ^ (-k)}
+  have hpartition : (p.toOuterMeasure light).toReal +
+      (p.toOuterMeasure {a | 2 ^ (-k) < (p a).toReal}).toReal = 1 := by
+    simpa only [light, Set.compl_ofPred, not_le] using toOuterMeasure_toReal_add_compl p light
+  have hlight : 1 - δ ≤ (p.toOuterMeasure light).toReal := by linarith
+  have hevent := (toOuterMeasure_toReal_pos_iff p light).mp (by linarith)
+  refine ⟨p.filter light hevent, (le_minEntropy_iff _).mpr fun a => ?_, ?_⟩
+  · rw [filter_apply_toReal]
+    split_ifs with ha
+    · rw [neg_add, Real.rpow_add two_pos, Real.rpow_neg zero_le_two (Real.logb 2 (1 - δ)),
+        Real.rpow_logb two_pos (by norm_num) (by linarith), ← div_eq_mul_inv]
+      exact div_le_div₀ (by positivity) ha (by linarith) hlight
+    · positivity
+  · rw [StatisticallyClose, dist_filter]
+    simpa only [light, Set.compl_ofPred, not_le] using hheavy
 
 end Cslib.Probability.PMF
