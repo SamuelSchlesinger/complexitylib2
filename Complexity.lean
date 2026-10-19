@@ -205,7 +205,6 @@ public import Complexity.Computability.Circuit.Rational.Certificates
 public import Complexity.Computability.Circuit.Rational.CyclotomicGrid
 public import Complexity.Computability.Circuit.Rational.Deformation
 public import Complexity.Computability.Circuit.Rational.Defs
-public import Complexity.Computability.Circuit.Rational.Detection
 public import Complexity.Computability.Circuit.Rational.Determinant
 public import Complexity.Computability.Circuit.Rational.EncodingBounds
 public import Complexity.Computability.Circuit.Rational.Eval
