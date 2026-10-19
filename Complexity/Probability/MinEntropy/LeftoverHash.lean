@@ -16,10 +16,10 @@ public import Complexity.Probability.UniversalHash
 The leftover hash lemma for `(k, ε)`-sources: hashing a `(k, ε)`-source with an independent
 two-universal seed, which stays public, gives a distribution within
 `ε + √(|Output| · 2⁻ᵏ) / 2` of the seed paired with an independent uniform value. With
-`log₂ |Output| + 2 log₂ (1 / δ) ≤ k` the error is at most `ε + δ / 2`, so a two-universal family is a
-strong extractor that loses `2 log₂ (1 / δ)` bits of min-entropy [Vadhan, Chapter 6][Vadhan2012],
-[Håstad, Impagliazzo, Levin, Luby][HILL1999]. With public side information it suffices that every
-possible conditional source is a `(k, ε)`-source.
+`log₂ |Output| + 2 log₂ (1 / δ) ≤ k` the error is at most `ε + δ / 2`, so a two-universal family
+is a strong extractor that loses `2 log₂ (1 / δ)` bits of min-entropy
+[Vadhan, Chapter 6][Vadhan2012], [Håstad, Impagliazzo, Levin, Luby][HILL1999]. With public side
+information it suffices that every possible conditional source is a `(k, ε)`-source.
 
 These are corollaries of the pointwise-mass form `IsTwoUniversal.leftover_hash_of_mass_le` and of
 `dist_seededHash_le`. Sources with rare heavy outcomes are `(k, ε)`-sources by
