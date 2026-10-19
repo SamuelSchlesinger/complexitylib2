@@ -73,6 +73,7 @@ import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
 import ComplexityTests.Iteration.Batch
+import ComplexityTests.Iteration.Dynamics
 import ComplexityTests.IterationFoundations
 import ComplexityTests.Kannan
 import ComplexityTests.KarpLipton
