@@ -887,6 +887,7 @@ public import Complexity.Probability.Chernoff
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Concentration
 public import Complexity.Probability.Conditioning
+public import Complexity.Probability.Divergence
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
@@ -905,6 +906,7 @@ public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 public import Complexity.Probability.Product
 public import Complexity.Probability.Quantile
+public import Complexity.Probability.Shearer
 public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
