@@ -10,11 +10,12 @@ module
 public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Complexity.Classes.NP.SelfReduction
-public import Complexity.Computability.Complexity.Classes.PH
+public import Complexity.Computability.Complexity.Classes.PH.Collapse
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Cslib.Foundations.Data.Polynomial.Monotone
 
 /-!
 # The Karp–Lipton theorem
@@ -31,7 +32,9 @@ problem in `NP` (`Cslib.Complexity.mem_NP_setOf_exists_append`), which the Cook�
 self-reduction (`Cslib.Complexity.SAT.search`) of a formula `f (a, u)` asks about, and then checks,
 for every `u`, that the self-reduction answered by the guessed circuits finds a satisfying
 assignment of `f (a, u)`. A satisfying assignment proves `(a, u)` in the problem whatever circuits
-were guessed, and correct circuits always find one when there is one.
+were guessed, and correct circuits always find one when there is one. Since `Π₂ ⊆ Σ₂` holds for
+every encoding of instances, the hierarchy collapses to `Σ₂`
+(`Cslib.Complexity.PH_eq_SigmaP_of_PiP_subset_SigmaP`).
 
 The guessed circuits are listed in an advice string (`Cslib.Circuits.Boolean.familyAdvice`): the
 circuits `C 0, …, C N`, each in the certificate format of
@@ -56,7 +59,9 @@ is read from the block at position `x.length` and evaluated on `x`
 * `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT`: if `SAT` has circuits of polynomial size,
   then `Π₂ ⊆ Σ₂`.
 * `Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT`: under the same hypothesis, `Π₂ = Σ₂`.
-* `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_NP_subset_PPoly`: the same from `NP ⊆ P/poly`.
+* `Cslib.Complexity.PH_eq_SigmaP_two_of_SAT`: **the Karp–Lipton theorem**, if `SAT` has circuits
+  of polynomial size, then `PH = Σ₂`.
+* `Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_PPoly`: if `NP ⊆ P/poly`, then `PH = Σ₂`.
 
 ## References
 
@@ -164,14 +169,6 @@ open Cslib.Logic.PL Circuits Circuits.Boolean Turing.MultiTapeTM ComputableTidil
 
 variable {α : Type} {enc : α ↪ List Bool}
 
--- TODO: replace by `Polynomial.eval_mono_nat` of `Classes/PH/Collapse.lean` once it lands.
-private theorem eval_mono_nat (p : Polynomial ℕ) {n m : ℕ} (h : n ≤ m) :
-    p.eval n ≤ p.eval m := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq => simpa only [Polynomial.eval_add] using Nat.add_le_add hp hq
-  | monomial d c =>
-    simpa only [Polynomial.eval_monomial] using Nat.mul_le_mul_left c (Nat.pow_le_pow_left h d)
-
 /-! ### The inner quantifier -/
 
 /-- **The inner quantifier of a `Π₂` verifier is in `NP`.** For a polynomial-time `V`, the pairs
@@ -185,7 +182,7 @@ theorem mem_NP_setOf_exists_append {V : α × List Bool → Bool}
   · exact hV.comp ((fst _ _).fst'.prod (bitsAppend (fst _ _).snd' (bitsTakeWithInput (snd _ _)
       ((unary_eval q).comp ((encoding_length enc).comp (fst _ _).fst')))))
   · have hle : q.eval (enc y.1).length ≤ q.eval (encPair enc encBits y).length :=
-      eval_mono_nat q (length_le_encPair_left _ _ _)
+      q.eval_mono (length_le_encPair_left _ _ _)
     constructor
     · rintro ⟨v, hv, hV⟩
       refine ⟨v ++ List.replicate (q.eval (encPair enc encBits y).length - v.length) false,
@@ -315,11 +312,22 @@ theorem PiP_two_eq_SigmaP_two_of_SAT (hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈ SAT
   simpa using compl_mem_PiP_of_mem_SigmaP
     (PiP_two_subset_SigmaP_two_of_SAT hSAT enc (compl_mem_PiP_of_mem_SigmaP hA))
 
-/-- **Karp–Lipton, `NP ⊆ P/poly` gives `Π₂ ⊆ Σ₂`.** If every problem in `NP`, with any encoding
-of its instances, is the preimage of a language in `P/poly`, then `Π₂ ⊆ Σ₂`. -/
-theorem PiP_two_subset_SigmaP_two_of_NP_subset_PPoly
-    (h : ∀ {β : Type} (encB : β ↪ List Bool), ∀ B ∈ NP encB, ∃ L ∈ PPoly, ∀ b, b ∈ B ↔ encB b ∈ L)
-    (enc : α ↪ List Bool) : PiP 2 enc ⊆ SigmaP 2 enc :=
-  PiP_two_subset_SigmaP_two_of_SAT (h encCNF SAT SAT.mem_NP) enc
+/-! ### The collapse -/
+
+/-- **The Karp–Lipton theorem.** If some language in `P/poly` contains exactly the encodings of the
+satisfiable formulas, then the polynomial hierarchy collapses to its second level: `PH = Σ₂`, for
+every encoding of instances. -/
+theorem PH_eq_SigmaP_two_of_SAT (hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈ SAT ↔ encCNF φ ∈ L) :
+    PH enc = SigmaP 2 enc :=
+  PH_eq_SigmaP_of_PiP_subset_SigmaP (by norm_num) fun encB =>
+    PiP_two_subset_SigmaP_two_of_SAT hSAT encB
+
+/-- **The Karp–Lipton theorem, `NP ⊆ P/poly ⇒ PH = Σ₂`.** If every problem in `NP`, with any
+encoding of its instances, is the preimage of a language in `P/poly`, then `PH = Σ₂`, for every
+encoding of instances. -/
+theorem PH_eq_SigmaP_two_of_NP_subset_PPoly
+    (h : ∀ {β : Type} (encB : β ↪ List Bool), ∀ B ∈ NP encB, ∃ L ∈ PPoly, ∀ b, b ∈ B ↔ encB b ∈ L) :
+    PH enc = SigmaP 2 enc :=
+  PH_eq_SigmaP_two_of_SAT (h encCNF SAT SAT.mem_NP)
 
 end Cslib.Complexity

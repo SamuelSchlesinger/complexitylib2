@@ -71,6 +71,7 @@ import ComplexityTests.Iteration
 import ComplexityTests.Iteration.Batch
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpLipton
+import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.Ladner
