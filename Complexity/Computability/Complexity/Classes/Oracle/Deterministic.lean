@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.Oracle
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ChoiceTable
 import Mathlib.Basic.Finite.Prod
 import Mathlib.Data.Fintype.Option
 
@@ -41,7 +42,9 @@ certificates come from countably many machines with control `Fin m`
   one request per instruction.
 * `Turing.MultiTapePTM.mem_support_runConfigFrom_pure`: a coin-fixed run is supported by the
   fair-coin run.
-* `Turing.MultiTapePTM.runFrom_relabel`, `Turing.MultiTapePTM.finite`.
+* `Turing.MultiTapeMachine.Action.instFinite`, `Turing.MultiTapePTM.finite`: finitely many
+  instructions and fair-coin tables.
+* `Turing.MultiTapePTM.runFrom_relabel`: relabelling preserves runs.
 * `Cslib.Probability.IsOraclePPTOn.exists_run_pure_false`,
   `Cslib.Probability.IsOraclePPTOn.exists_fin_run_pure_false`: certificates of deterministic
   programs are deterministic runs of finite machines with a polynomial clock.
@@ -93,6 +96,16 @@ theorem Config.mapState_receive [DecidableEq Oracle] (e : State → State')
     (answer : List Symbol) :
     (cfg.mapState e).receive oracle (e next) answer = (cfg.receive oracle next answer).mapState e :=
   rfl
+
+/-- Finitely many symbols, states and channels give finitely many instructions. -/
+instance Action.instFinite [Finite Symbol] [Finite State] [Finite Oracle] :
+    Finite (Action k Symbol State Oracle) :=
+  Finite.of_injective (fun a : Action k Symbol State Oracle => match a with
+    | .step action symbol move => (Sum.inl (action, symbol, move) :
+        (Turing.Action k Symbol State × (Oracle → Option Symbol) × (Oracle → SignType)) ⊕
+          (Oracle × State))
+    | .query oracle next => Sum.inr (oracle, next)) fun a b h => by
+      cases a <;> cases b <;> simp_all
 
 /-- **A deterministic run makes at most one request per instruction**, under every answer
 function. -/
@@ -199,17 +212,6 @@ omit [DecidableEq Oracle] in
 /-- Finitely many symbols, states and channels give finitely many fair-coin tables. -/
 instance finite [Finite Symbol] [Finite State] [Finite Oracle] :
     Finite (MultiTapePTM k Symbol State Oracle) := by
-  have hTuring : Finite (Turing.Action k Symbol State) :=
-    Finite.of_injective (fun a : Turing.Action k Symbol State =>
-      (a.inputTape, a.workTapes, a.output, a.state)) fun a b h => by
-        cases a; cases b; simp only [Prod.mk.injEq] at h; obtain ⟨rfl, rfl, rfl, rfl⟩ := h; rfl
-  have hAction : Finite (MultiTapeMachine.Action k Symbol State Oracle) :=
-    Finite.of_injective (fun a : MultiTapeMachine.Action k Symbol State Oracle => match a with
-      | .step action symbol move => (Sum.inl (action, symbol, move) :
-          (Turing.Action k Symbol State × (Oracle → Option Symbol) × (Oracle → SignType)) ⊕
-            (Oracle × State))
-      | .query oracle next => Sum.inr (oracle, next)) fun a b h => by
-        cases a <;> cases b <;> simp_all
   have : Finite ((Oracle → Option Symbol) → Bool →
       MultiTapeMachine.Action k Symbol State Oracle) := inferInstance
   have : Finite ((Fin k → Option Symbol) → (Oracle → Option Symbol) → Bool →

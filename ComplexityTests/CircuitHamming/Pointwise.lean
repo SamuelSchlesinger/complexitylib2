@@ -6,11 +6,9 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Pointwise
 import Complexity.Computability.Circuit.Boolean.Synthesis
-import Mathlib.Tactic.FinCases
 
 /-! Truth tables of small De Morgan circuits under the pointwise lift, on two and three inputs,
-with zero inputs and with an empty set of points; the costs of projections and the one-gate lower
-bound on two and three inputs. -/
+with zero inputs and with an empty set of points. -/
 
 namespace ComplexityTests.CircuitHamming.Pointwise
 
@@ -111,32 +109,6 @@ example (a : Fin 2 → Empty → Bool) :
     nand.eval (interpretation.pointwise Empty) a 0 = Empty.elim :=
   funext fun e => e.elim
 
-/-! ### Projections and the first gate -/
-
-example : complexity interpretation (single fun x : BitString 2 => x 1) = 0 :=
-  complexity_single_proj 1
-
-example : complexity interpretation (single fun x : BitString 3 => x 2) = 0 :=
-  complexity_single_proj 2
-
-/-- The conjunction of two inputs costs exactly one gate. -/
-example : complexity interpretation (single fun x : BitString 2 => x 0 && x 1) = 1 := by
-  refine le_antisymm ?_ (one_le_complexity_single fun i h => ?_)
-  · have h := complexity_and_le (fun x : BitString 2 => x 0) fun x => x 1
-    rw [complexity_single_proj, complexity_single_proj] at h
-    exact h
-  · fin_cases i
-    · exact absurd (congrFun h ![true, false]) (by decide)
-    · exact absurd (congrFun h ![false, true]) (by decide)
-
-/-- The conjunction of three inputs needs at least one gate. -/
-example : 1 ≤ complexity interpretation (single fun x : BitString 3 => x 0 && x 1 && x 2) :=
-  one_le_complexity_single fun i h => by
-    fin_cases i
-    · exact absurd (congrFun h ![true, false, false]) (by decide)
-    · exact absurd (congrFun h ![false, true, false]) (by decide)
-    · exact absurd (congrFun h ![false, false, true]) (by decide)
-
 /-! ### Axioms -/
 
 /--
@@ -166,19 +138,5 @@ info: 'Cslib.Circuits.Circuit.computes_iff_eval_pointwise_proj' depends on axiom
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Circuit.computes_iff_eval_pointwise_proj
-
-/--
-info: 'Cslib.Circuits.complexity_single_proj' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms complexity_single_proj
-
-/--
-info: 'Cslib.Circuits.one_le_complexity_single' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms one_le_complexity_single
 
 end ComplexityTests.CircuitHamming.Pointwise

@@ -116,23 +116,12 @@ theorem mem_L_iff : A ∈ L enc ↔ ∃ c₁ c₂ t,
     nlinarith [Nat.zero_le (Nat.log2 (enc a).length)]
 
 /-- **Deterministic logarithmic space is within nondeterministic logarithmic space**: a
-deterministic machine is a nondeterministic one with one computation path. -/
+deterministic machine is a nondeterministic one with one computation path
+(`Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_decidesInSpace`). -/
 theorem L_subset_NL : L enc ⊆ NL enc := by
-  rintro A ⟨f, ⟨t, c, k, State, hfinite, tm, htm⟩, hA⟩
-  refine ⟨k, State, hfinite, tm.toMultiTapeNTM, c, fun a => ?_⟩
-  obtain ⟨⟨u, hhalt, hout⟩, -, hspace⟩ := htm a
-  refine ⟨hspace, ?_⟩
-  rw [hA a, MultiTapeNTM.accepts_iff_exists_time_eq (runsInTime_of_halted hhalt)]
-  constructor
-  · intro hf
-    refine ⟨MultiTapeNTM.ComputationPath.ofDeterministic tm (enc a) u, rfl, ?_⟩
-    rw [MultiTapeTM.computationPath_last_eq_runFrom]
-    change (tm.runFrom _ u).output = _
-    rw [hout, hf]
-    rfl
-  · rintro ⟨q, hq, hout'⟩
-    rw [MultiTapeTM.computationPath_last_eq_runFrom, hq, hout] at hout'
-    exact List.head_eq_of_cons_eq hout'
+  rintro A ⟨f, ⟨t, c, hf⟩, hA⟩
+  obtain ⟨k, State, hfinite, ntm, h⟩ := hf.exists_decidesInSpace hA
+  exact ⟨k, State, hfinite, ntm, c, h⟩
 
 /-- **`L` is closed under complement**: negate the decider, a composition of logspace
 functions. -/

@@ -17,7 +17,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 `Clique` is the set of graphs with a clique of a given number of their vertices [Arora and Barak,
 Section 2.4][AroraBarak09]. A set of vertices is independent in a graph exactly when it is a clique
 in the complement of the graph on its vertices (`Graph.compl`), so complementing the graph reduces
-`IndependentSet` to `Clique` [Karp1972].
+`IndependentSet` to `Clique` [Karp1972]. The verifier is `Cslib.Complexity.Graph.verifySubset` for
+adjacency, an instance of the subset-witness verifier `Cslib.Complexity.subsetVerifier`.
 
 ## Main definitions
 

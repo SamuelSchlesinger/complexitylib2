@@ -16,10 +16,12 @@ import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
+import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
+import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CyclicFeedback
@@ -49,7 +51,9 @@ import ComplexityTests.GeneratorPadding
 import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
 import ComplexityTests.GoldreichLevin
+import ComplexityTests.Halting
 import ComplexityTests.HardCore
+import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
@@ -83,6 +87,8 @@ import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NPCompleteGraphs.TSP
 import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
+import ComplexityTests.NPWitness
+import ComplexityTests.NaturalProofs
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
@@ -132,6 +138,7 @@ import ComplexityTests.PolynomialClock
 import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
+import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.Programs
 import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
@@ -144,6 +151,7 @@ import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
+import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
@@ -151,6 +159,7 @@ import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
+import ComplexityTests.ResourceClasses
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime

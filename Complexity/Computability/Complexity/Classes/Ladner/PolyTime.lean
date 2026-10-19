@@ -9,15 +9,13 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-public import Mathlib.Data.List.DropRight
 import Complexity.Computability.Complexity.Classes.Hierarchy
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
-import Complexity.Computability.Kolmogorov.SelfDelimiting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
-import Mathlib.Data.Nat.Size
+import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 
 /-!
 # Ladner's language in polynomial time and in NP
@@ -36,16 +34,16 @@ membership in the padded language along the table. A word with index below `n` h
 indices below `n` as certificates (`Cslib.Complexity.Ladner.bruteSAT_iff`). Every intermediate
 value is polynomial in `n`, and the polynomial-time calculus certifies the composite.
 
-The certificate rests on general tools proved first: total decoders for binary numbers, Booleans
-and formulas (`Cslib.Complexity.Ladner.cnfDecoder`), capped powers on unary numbers
+The certificate rests on general tools: a total decoder for formulas
+(`Cslib.Complexity.Ladner.cnfDecoder`, built from `Turing.MultiTapeTM.Decoder.nat` and
+`Turing.MultiTapeTM.Decoder.bool`), capped powers on unary numbers
 (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`), the universal function with its
-number of steps in unary (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_universal`), and the
-words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`).
+number of steps in unary (`Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`), and
+the words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`).
 
 ## Main definitions
 
-* `Cslib.Complexity.Ladner.natDecoder`, `Cslib.Complexity.Ladner.boolDecoder`,
-  `Cslib.Complexity.Ladner.cnfDecoder`: total decoders.
+* `Cslib.Complexity.Ladner.cnfDecoder`: the total decoder of formulas.
 * `Cslib.Complexity.Ladner.capPow`: powers capped at a bound.
 * `Cslib.Complexity.Ladner.padCheckAt`, `Cslib.Complexity.Ladner.padCheck`: the formula padded in a
   word, if any.
@@ -56,8 +54,6 @@ words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`).
 ## Main results
 
 * `Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`: capped powers in unary.
-* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_universal`: the universal function, with its
-  number of steps in unary, is polynomial-time.
 * `Cslib.Complexity.Ladner.mem_padSAT_iff`: membership in a padded language through `padCheck`.
 * `Cslib.Complexity.Ladner.computableTidilyInPolyTime_padCheck`: `padCheck` is polynomial-time for a
   polynomial-time exponent function.
@@ -77,83 +73,10 @@ namespace Cslib.Complexity.Ladner
 open Turing.MultiTapeTM Turing.MultiTapeTM.Universal ComputableTidilyInPolyTime
 open Cslib.Logic.PL
 
-/-! ### Decoders -/
-
-theorem rdropWhile_append {α : Type*} (p : α → Bool) (l₁ l₂ : List α) :
-    (l₁ ++ l₂).rdropWhile p =
-      if l₂.rdropWhile p = [] then l₁.rdropWhile p else l₁ ++ l₂.rdropWhile p := by
-  simp only [List.rdropWhile, List.reverse_append, List.dropWhile_append]
-  by_cases h : l₂.reverse.dropWhile p = []
-  · simp [h]
-  · simp [h]
-
-theorem bits_eq_nil_iff {n : ℕ} : n.bits = [] ↔ n = 0 := by
-  rw [← List.length_eq_zero_iff, Nat.size_eq_bits_len, Nat.size_eq_zero]
-
-/-- Binary digits, least significant first, read as a number. -/
-def ofBits (w : List Bool) : ℕ := w.foldr Nat.bit 0
-
-/-- The binary digits of a word read as a number are the word up to its last `true`. -/
-theorem bits_ofBits (w : List Bool) : (ofBits w).bits = w.rdropWhile (!·) := by
-  induction w with
-  | nil => simp [ofBits]
-  | cons b w ih =>
-    rw [ofBits, List.foldr_cons, ← ofBits, ← List.singleton_append, rdropWhile_append, ← ih]
-    by_cases h : ofBits w = 0 ∧ b = false
-    · obtain ⟨h₀, rfl⟩ := h
-      simp [h₀]
-    · rw [Nat.bits_append_bit _ _ fun h₀ => by simpa [h₀] using h]
-      by_cases h₀ : ofBits w = 0
-      · obtain rfl : b = true := by simpa [h₀] using h
-        simp [h₀, List.rdropWhile_singleton]
-      · simp only [bits_eq_nil_iff, h₀, ↓reduceIte]
-        rfl
-
-/-- Drops the `false`s at the start of a word. -/
-def dropFalsesT : Transducer Bool Bool where
-  q₀ := false
-  step
-    | false, false => (false, [])
-    | _, b => (true, [b])
-  final _ := []
-  length_step_le q b := by cases q <;> cases b <;> simp
-  length_final_le _ := by simp
-
-theorem dropFalsesT_run_true (w : List Bool) : dropFalsesT.run true w = w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih => exact congrArg (b :: ·) ih
-
-theorem dropFalsesT_run (w : List Bool) : dropFalsesT.run false w = w.dropWhile (!·) := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    cases b
-    · exact ih
-    · exact congrArg (true :: ·) (dropFalsesT_run_true w)
-
-/-- Binary numbers are decoded from their digits up to the last `true`. -/
-def natDecoder : Decoder encNat where
-  decode := ofBits
-  -- a tactic proof keeps `Kolmogorov.SelfDelimiting` a proof-only import
-  decode_enc n := by exact Nat.foldr_bit_bits n
-  computable := by
-    have hd : ComputableTidilyInPolyTime (fun w : List Bool => w.dropWhile (!·)) encBits encBits :=
-      of_linear (dropFalsesT.computableTidilyInLinearTimeAndSpace fun w =>
-        (dropFalsesT_run w).symm)
-    have h : ComputableTidilyInPolyTime (fun w : List Bool => (w.reverse.dropWhile (!·)).reverse)
-        encBits encBits := by
-      fun_prop
-    exact (h.of_enc_eq fun w => by rw [encNat_apply, bits_ofBits]; rfl).exists_degree
-
-/-- Booleans are decoded from the first symbol. -/
-def boolDecoder : Decoder encBool where
-  decode w := w.headD false
-  decode_enc _ := rfl
-  computable := (headD (encA := encBool) (encL := encBits) false).exists_degree
+/-! ### Decoding formulas -/
 
 /-- Formulas in conjunctive normal form are decoded along their encoding. -/
-def cnfDecoder : Decoder encCNF := .list (.list (.pair natDecoder boolDecoder))
+def cnfDecoder : Decoder encCNF := .list (.list (.pair .nat .bool))
 
 /-- The formula decoded from a word. -/
 def decodeCNF (w : List Bool) : CNF ℕ := cnfDecoder.decode w
@@ -212,84 +135,6 @@ theorem computableTidilyInPolyTime_capPow {α : Type} {input : α ↪ List Bool}
     (hcap : ComputableTidilyInPolyTime cap input encUnary) :
     ComputableTidilyInPolyTime (fun x => capPow (base x) (exp x) (cap x)) input encUnary :=
   computableTidilyInPolyTime_capPow_pair.comp (hbase.prod (hexp.prod hcap))
-
-/-! ### The universal function with a unary clock -/
-
-theorem runBound_mono {D N t t' : ℕ} (h : t ≤ t') : runBound D N t ≤ runBound D N t' := by
-  unfold runBound ctxBound cfgBound tapeBound
-  gcongr
-
-/-- The time and space of the universal function, polynomially in the length of its input with
-the number of steps in unary. -/
-theorem universal_bounds_unary (i : Desc × List ℕ × ℕ) :
-    (i.2.2 + 1) * (stepBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 +
-        runBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 +
-          ((encNat i.2.2).length + 1) ^ 2) + ((eIn i).length + 1) ^ 2 ≤
-      100025 * ((encPair eDesc (encPair (encList encUnary) encUnary) i).length + 1) ^ 8 ∧
-    runBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 + (eIn i).length ≤
-      205 * ((encPair eDesc (encPair (encList encUnary) encUnary) i).length + 1) ^ 3 := by
-  obtain ⟨d, x, t⟩ := i
-  set n := (encPair eDesc (encPair (encList encUnary) encUnary) (d, x, t)).length with hn
-  have hlen : n = 2 * descLen d + 1 + (2 * (encList encUnary x).length + 1 + t) := by
-    simp [hn, descLen]
-  have hL := length_encNat_le t
-  have hIn : (eIn (d, x, t)).length ≤ 5 * n + 2 := by
-    simp only [eIn, length_encPair]
-    simp only [descLen] at hlen
-    omega
-  obtain ⟨h₁, h₂⟩ := Diagonal.universal_bounds_le (D := descLen d)
-    (N := (encList encUnary x).length) (J := t + 1) (B := n) (L := (encNat t).length)
-    (by omega) (by omega) (by omega) (by omega)
-  have hstep := stepBound_mono (D := descLen d) (N := (encList encUnary x).length) le_rfl le_rfl
-    (Nat.le_add_right t 1)
-  have hrun := runBound_mono (D := descLen d) (N := (encList encUnary x).length)
-    (Nat.le_add_right t 1)
-  have ht : t + 1 ≤ n + 1 := by omega
-  have hpow : (t + 1) ^ 3 ≤ (n + 1) ^ 3 := Nat.pow_le_pow_left ht 3
-  simp only at h₁ h₂ hstep hrun ⊢
-  constructor
-  · have hA : (t + 1) * (stepBound (descLen d) (encList encUnary x).length t +
-        runBound (descLen d) (encList encUnary x).length t + ((encNat t).length + 1) ^ 2) ≤
-        100000 * (n + 1) ^ 5 * (n + 1) ^ 3 :=
-      calc _ ≤ (t + 1 + 1) * (stepBound (descLen d) (encList encUnary x).length (t + 1) +
-            runBound (descLen d) (encList encUnary x).length (t + 1) +
-              ((encNat t).length + 1) ^ 2) := Nat.mul_le_mul (by omega) (by omega)
-        _ ≤ _ := h₁
-        _ ≤ _ := Nat.mul_le_mul_left _ hpow
-    have hB : ((eIn (d, x, t)).length + 1) ^ 2 ≤ 25 * (n + 1) ^ 8 := by
-      calc _ ≤ (5 * (n + 1)) ^ 2 := Nat.pow_le_pow_left (by omega) 2
-        _ = 25 * (n + 1) ^ 2 := by ring
-        _ ≤ 25 * (n + 1) ^ 8 := Nat.mul_le_mul_left _
-            (Nat.pow_le_pow_right (by omega) (by omega))
-    have : 100000 * (n + 1) ^ 5 * (n + 1) ^ 3 = 100000 * (n + 1) ^ 8 := by ring
-    omega
-  · have hA : runBound (descLen d) (encList encUnary x).length t ≤ 200 * (n + 1) ^ 3 :=
-      calc _ ≤ _ := hrun
-        _ ≤ 200 * (n + 1) ^ 2 * (t + 1) := h₂
-        _ ≤ 200 * (n + 1) ^ 2 * (n + 1) := Nat.mul_le_mul_left _ ht
-        _ = 200 * (n + 1) ^ 3 := by ring
-    have hB : 5 * n + 2 ≤ 5 * (n + 1) ^ 3 := by
-      have : n + 1 ≤ (n + 1) ^ 3 := Nat.le_self_pow (by omega) _
-      omega
-    omega
-
-/-- **The universal function with a unary clock is polynomial-time**: written in unary, the number
-of steps counts towards the length of the input. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_universal :
-    ComputableTidilyInPolyTime universal
-      (encPair eDesc (encPair (encList encUnary) encUnary)) eOut := by
-  have hconv : ComputableTidilyInPolyTime (fun i : Desc × List ℕ × ℕ => i)
-      (encPair eDesc (encPair (encList encUnary) encUnary)) eIn := by
-    have : (fun i : Desc × List ℕ × ℕ => i) = fun i => (i.1, i.2.1, i.2.2) := rfl
-    rw [this]
-    fun_prop
-  obtain ⟨d, e, hdeg⟩ := hconv.exists_degree
-  exact (computableTidilyInO_universal.comp hdeg.inO).computableTidilyInPolyTime
-    ((PolyBounded.of_forall_le 1 d fun _ => by simp).add
-      (PolyBounded.of_forall_le 100025 8 fun i => (universal_bounds_unary i).1))
-    ((PolyBounded.of_forall_le 1 d fun _ => by simp).add
-      (PolyBounded.of_forall_le 205 3 fun i => (universal_bounds_unary i).2))
 
 /-! ### Words by index -/
 
