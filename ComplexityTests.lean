@@ -51,7 +51,6 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
-import ComplexityTests.IntBinary
 import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpReductions
@@ -138,6 +137,7 @@ import ComplexityTests.QueryComplexity
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
+import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.RotationWalk
