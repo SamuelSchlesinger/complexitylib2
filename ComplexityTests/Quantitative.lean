@@ -398,6 +398,22 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_
 #print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec
 
 /--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum
+
+/--
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits
+
+/--
 info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.reverse_bits' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
@@ -414,12 +430,12 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.dropLast_bits' depends 
 #print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.dropLast_bits
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast_bits' depends on axioms: [propext,
+info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast?_toList_bits' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
 -/
 #guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast_bits
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast?_toList_bits
 
 /--
 info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.getLast?_bits' depends on axioms: [propext,
@@ -442,10 +458,12 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsDropLast' depends on axio
 #print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.bitsDropLast
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?ToList' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
 -/
 #guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast
+#print axioms Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?ToList
 
 /--
 info: 'Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?' depends on axioms: [propext, Classical.choice, Quot.sound]

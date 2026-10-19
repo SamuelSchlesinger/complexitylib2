@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
 public import Complexity.Languages.Probabilistic.Oracle
 
 /-!
@@ -21,12 +22,14 @@ reply reading still use ordinary machine instructions.
 ## Main definitions
 
 * `Turing.MultiTapePTM.runOracle`: the clocked run as a `ProbOracleComp` program.
+* `Turing.MultiTapePTM.ofClosed`: a closed machine with unused external channels.
 
 ## Main results
 
 * `Turing.MultiTapePTM.length_output_runOracle_le`: the clock bounds supported output lengths.
 * `Turing.MultiTapePTM.run_interpret_runOracle_ofDeterministic`: deterministic embedding preserves
   the output and external oracle state.
+* `Turing.MultiTapePTM.runOracle_ofClosed`: a closed machine's oracle run is its sampled closed run.
 
 ## References
 
@@ -79,5 +82,70 @@ theorem run_interpret_runOracle_ofDeterministic (machine : MultiTapeTM k Symbol 
     (PMF.uniformOfFintype Bool)
   intro state
   simp only [ProbOracleComp.run_interpret_sample, ProbComp.eval_uniform]
+
+/-- A closed fair-coin machine with external channels that it never reads or writes. -/
+def ofClosed (machine : MultiTapePTM k Symbol State) : MultiTapePTM k Symbol State Operation where
+  initial := machine.initial
+  tr state symbol work _ bit := match machine.tr state symbol work Empty.elim bit with
+    | .step action _ _ => .step action (fun _ => none) (fun _ => 0)
+    | .query oracle _ => oracle.elim
+
+/-- Running a closed machine with external channels samples its closed run: the program makes no
+external call, so it preserves every external oracle state. -/
+theorem runOracle_ofClosed (machine : MultiTapePTM k Symbol State) (fuel : ℕ)
+    (input : List Symbol) :
+    (ofClosed (Operation := Operation) machine).runOracle fuel input =
+      ProbOracleComp.sample (machine.runClosed fuel input) := by
+  let embed (cfg : Config k Symbol State Empty input) : Config k Symbol State Operation input :=
+    { tapes := cfg.tapes }
+  have hsim := MultiTapeMachine.runConfigFrom_map machine
+    (ofClosed (Operation := Operation) machine)
+    (fun choices => choices <$> ProbOracleComp.sample
+      (spec := fun _ : Operation × List Symbol => List Symbol) (ProbComp.uniform Bool))
+    (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool))
+    (fun oracle _ => oracle.elim) (fun op word => ProbOracleComp.query (op, word)) embed
+    (fun cfg => by
+      cases hs : cfg.tapes.state with
+      | none => simp [MultiTapeMachine.runConfigFrom, embed, hs]
+      | some state =>
+        have hanswer : cfg.answerSymbols = Empty.elim := funext fun oracle => oracle.elim
+        dsimp only [embed]
+        simp only [MultiTapeMachine.runConfigFrom, hs, hanswer, bind_map_left, map_bind]
+        congr 1
+        funext bit
+        cases htr : machine.tr state cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols Empty.elim
+            bit with
+        | step action symbol move =>
+          simp only [ofClosed, htr, map_pure]
+          rfl
+        | query oracle next => exact oracle.elim)
+  calc (ofClosed (Operation := Operation) machine).runOracle fuel input
+      = (fun final => final.tapes.output) <$> MultiTapeMachine.runConfigFrom
+          (ofClosed (Operation := Operation) machine)
+          (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool))
+          (fun op word => ProbOracleComp.query (op, word)) fuel
+          (embed (machine.initialConfig input)) := rfl
+    _ = (fun final => final.tapes.output) <$> MultiTapeMachine.runConfigFrom machine
+          (fun choices => choices <$> ProbOracleComp.sample
+            (spec := fun _ : Operation × List Symbol => List Symbol) (ProbComp.uniform Bool))
+          (fun oracle _ => oracle.elim) fuel (machine.initialConfig input) := by
+      rw [hsim, Functor.map_map]
+    _ = ProbOracleComp.sample (machine.runClosed fuel input) := by
+      simp only [runClosed, run, runFrom, runConfigFrom, ProbOracleComp.sample,
+        OracleComp.interpret_map, MultiTapeMachine.interpret_runConfigFrom]
+      congr 2
+      funext oracle
+      exact oracle.elim
+
+/-- A closed machine's oracle run preserves every external oracle state and has the closed
+output distribution. -/
+theorem run_interpret_runOracle_ofClosed (machine : MultiTapePTM k Bool State)
+    (oracle : Operation × List Bool → StateT OracleState PMF (List Bool))
+    (fuel : ℕ) (input : List Bool) (s : OracleState) :
+    (OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
+        ((ofClosed machine).runOracle fuel input)).run s =
+      (ProbComp.eval (machine.runClosed fuel input)).map (·, s) := by
+  rw [runOracle_ofClosed, ProbOracleComp.run_interpret_sample]
 
 end Turing.MultiTapePTM
