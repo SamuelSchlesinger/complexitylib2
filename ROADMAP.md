@@ -70,7 +70,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. Preserve each reduction's resource bound. |
 | Space and alternation | Build on native `NPSPACE = PSPACE`, TQBF completeness, `NL ⊆ P`, [PH ⊆ PSPACE](Complexity/Computability/Complexity/Classes/Inclusions.lean) and [AP = PSPACE](Complexity/Computability/Complexity/Classes/Alternation/Savitch.lean). Extend the [machine-class milestones](#machine-class-milestones), alternating time/space classes and bounded-alternation characterizations of PH. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
 | Counting and modular classes | Build on `#P`, `GapP`, `PP`, [parity-P](Complexity/Computability/Complexity/Classes/ParityP.lean) and [Toda's PH ⊆ P^#P theorem](Complexity/Computability/Complexity/Classes/Toda.lean), with a fixed polynomial-time program correct against every oracle answering the counting function's bits. Extend counting reductions and machine characterizations, permanent completeness, modular/counting hierarchies and the oracle-algorithm form of Stockmeyer approximate counting. |
-| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. Prove the converse through sumcheck and arithmetization; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
+| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. The Shamir–Shen algebraic protocol for TQBF, with perfect completeness and soundness against every prover, is [proved](Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean); realize it in the IP machine model to obtain PSPACE ⊆ IP; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
 | Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), and [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings. Prove permanent VNP-completeness with its characteristic assumptions, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | Gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
@@ -262,14 +262,15 @@ Jukna coverage below is an additional target beyond the V1 port:
 * **Further PCP consequences.** Build the FGLSS clique-hardness reduction on the existing
   [gap-preserving reductions](Complexity/Computability/PCP/Approximation.lean) and certified PCP
   construction; retain the exact gap and reduction runtime.
-* **Randomized communication and information.** Prove the `Ω(n)` bounded-error randomized
-  disjointness lower bound, building on [Yao's minimax principle](Complexity/Computability/Communication/Distributional.lean)
-  and [corruption bounds](Complexity/Computability/Communication/Corruption.lean). Develop
+* **Randomized communication and information.** The `Ω(n)` bounded-error randomized disjointness
+  lower bound is [proved](Complexity/Computability/Communication/Disjointness.lean); derive
+  Raz–Wigderson's monotone depth bound for matching from it. Develop
   information complexity and its reductions to streaming and sketching lower bounds.
 * **List decoding.** Extend [Sudan's Reed–Solomon list-decoding theorem](Complexity/Foundations/Data/Code/Sudan.lean)
   to Guruswami–Sudan list decoding. Keep interpolation, list-size/agreement guarantees and
   uniform decoding runtime as separate obligations.
-* **Hypercontractivity and formula lower bounds.** Extend the existing
+* **Hypercontractivity and formula lower bounds.** KKL, Talagrand's inequality and Friedgut's junta
+  theorem are [proved](Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean). Extend the existing
   [hypercontractivity results for p ≤ 2 ≤ q](Complexity/Foundations/BooleanAnalysis/Hypercontractivity.lean)
   and their Boolean-analysis applications. Continue formula lower bounds beyond the existing
   [Khrapchenko bound](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), following the

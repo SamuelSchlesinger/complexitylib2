@@ -618,3 +618,28 @@ Independent reviews of the exact commits against `0c1dab07`:
 Validation: all six gates passed on the integration revision; the PDF builds with no undefined
 references. These are AI reviews, not human editorial approval or machine-checked equivalence of
 prose and Lean.
+
+## Coverage batch 4: KKL and Friedgut, the QBF protocol, and randomized disjointness (2026-10-19)
+
+Integrated `f355a73f` (`kkl-friedgut`), `b18f4389` (`ip-pspace` milestone 1) and `aba42b50`
+(`disjointness` milestone 1), adding "The Kahn--Kalai--Linial theorem and Talagrand's inequality"
+and "Friedgut's junta theorem" (`analysis.tex`), "The algebraic protocol for quantified Boolean
+formulas" (`space.tex`) and "Randomized communication complexity of disjointness"
+(`communication.tex`).
+
+Independent reviews of the exact commits against `0c1dab07`:
+
+- Correctness review: APPROVE for all three (standard influence and variance definitions; Lean's
+  log and division conventions do not trivialize the statements; the prover model quantifies over
+  all stateful, adaptive, randomized strategies with no information leak; the corruption lemma and
+  amplification constants were recomputed). Wording findings resolved in the entries: Friedgut's
+  witness description is marked as the proof's, zero-influence terms are read as zero, round degree
+  and formula size are defined, the verifier is described as Shamir--Shen-style, and the
+  disjointness caveat now states how the distribution differs from Razborov's.
+- API review: APPROVE for all three; non-blocking duplication and placement findings were returned to
+  the authors. The fourth epic in this review batch (Tseitin) has one required fix outstanding and is
+  not integrated.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no errors or
+undefined references. These are AI reviews, not human editorial approval or machine-checked
+equivalence of prose and Lean.

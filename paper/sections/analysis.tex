@@ -15,6 +15,45 @@ hypercontractive parameter regimes.\citep{Bonami1970,ODonnell2014}
 \end{result}
 
 \begin{result}
+\subsection{The Kahn--Kalai--Linial theorem and Talagrand's inequality}
+Let $f$ be a Boolean function on a finite cube with $n\ge1$ coordinates, read as
+the sign $F=(-1)^{f}$, with influences $\mathrm{Inf}_i[F]$ (the probability that
+flipping bit $i$ changes $f$), total influence $I[F]=\sum_i\mathrm{Inf}_i[F]$, and
+variance $\mathrm{Var}[F]$, all for the uniform measure. Then some coordinate has
+\[
+\mathrm{Inf}_i[F]\ge\frac{\mathrm{Var}[F]\,\log n}{12\,n}.
+\]
+This follows from the edge-isoperimetric form: if every influence is at most
+$\delta$, then $\mathrm{Var}[F]\log(1/\delta)\le 6\,I[F]$. If every influence is
+less than one, $\mathrm{Var}[F]\le6\sum_i\mathrm{Inf}_i[F]/\log(1/\mathrm{Inf}_i[F])$
+(Talagrand), and for every $f$,
+$\mathrm{Var}[F]\le7\sum_i\mathrm{Inf}_i[F]/(1+\log(1/\mathrm{Inf}_i[F]))$; terms with
+$\mathrm{Inf}_i[F]=0$ contribute $0$. Logarithms are natural; constants are those of the
+formal proof, not optimized. The proof applies the library's $(4/3,2)$-hypercontractive
+inequality to the derivatives $D_iF$.\citep{KahnKalaiLinial1988,Talagrand1994,ODonnell2014}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{310}{Cslib.BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{294}{Cslib.BitString.expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{371}{Cslib.BitString.expect_sub_expect_sq_le_six_mul_sum_influence_div_log}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{390}{Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_add_log}
+\end{result}
+
+\begin{result}
+\subsection{Friedgut's junta theorem}
+Let $f$ be a Boolean function on a finite cube whose sign $F=(-1)^f$ has total
+influence $I[F]\le K$, and let $\varepsilon>0$. Then there are a set $J$ of at most
+$\frac{4K^3}{9\varepsilon^2}\,81^{K/\varepsilon}$ coordinates and a Boolean function
+$g$ depending only on the coordinates in $J$ with $\Pr_x[f(x)\ne g(x)]\le\varepsilon$;
+for $0<\varepsilon\le1$ one may take $|J|\le3\cdot2^{8K/\varepsilon}$. In the proof, $J$ is
+the set of coordinates of influence above an explicit threshold and $g$ is the sign of
+the average of $F$ over the other coordinates. The low-degree part of O'Donnell's
+spectral concentration statement (sets of size at most $I[F]/\varepsilon$) is not
+formalized.\citep{Friedgut1998,ODonnell2014}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/FriedgutJunta.lean}{217}{Cslib.BitString.exists_dependsOn_hammingDist_div_le_of_totalInfluence_le}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/FriedgutJunta.lean}{285}{Cslib.BitString.exists_card_le_three_mul_two_rpow_dependsOn_hammingDist_div_le}
+\end{result}
+
+
+\begin{result}
 \subsection{Expander-walk hitting bound}
 Let a finite undirected regular graph be represented by a rotation map with
 nonempty vertex and port sets, and let $\lambda$ be its nonconstant spectral
