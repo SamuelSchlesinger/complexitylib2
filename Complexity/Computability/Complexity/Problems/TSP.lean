@@ -233,7 +233,7 @@ namespace HamCycle
 
 /-- The cities of `HamCycle.toTSP G`: the distinct declared vertices of `G`, in the order of their
 first occurrences. -/
-def cities (G : Graph) : List ℕ := Graph.selectVertices G.1 (List.replicate G.1.length true)
+def cities (G : Graph) : List ℕ := G.distinctVertices
 
 /-- The reduction from `HamCycle` to `TSP` [Papadimitriou, Section 9.3][Papadimitriou94]: the
 cities are the distinct declared vertices, at distance `1` when they are adjacent and `2`
@@ -246,14 +246,10 @@ def toTSP (G : Graph) : List (List ℕ) × ℕ :=
     (cities G).length)
 
 /-- The cities of `G` are its declared vertices. -/
-theorem mem_cities {G : Graph} {v : ℕ} : v ∈ cities G ↔ v ∈ G.1 := by
-  rw [cities, Graph.mem_selectVertices, and_iff_left_iff_imp]
-  intro hv
-  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate,
-    ite_eq_left (List.idxOf_lt_length_iff.2 hv), Option.getD_some]
+theorem mem_cities {G : Graph} {v : ℕ} : v ∈ cities G ↔ v ∈ G.1 := Graph.mem_distinctVertices
 
 /-- The cities of `G` are distinct. -/
-theorem nodup_cities (G : Graph) : (cities G).Nodup := Graph.nodup_selectVertices _ _
+theorem nodup_cities (G : Graph) : (cities G).Nodup := G.nodup_distinctVertices
 
 private theorem dist_map {V : List ℕ} {G : Graph} {i j : ℕ} (hi : i < V.length)
     (hj : j < V.length) :
@@ -412,10 +408,8 @@ theorem toTSP_mem_iff (G : Graph) : toTSP G ∈ TSP ↔ G ∈ HamCycle := by
 and the distances and the budget are written in binary. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_toTSP : ComputableTidilyInPolyTime toTSP encGraph encTSP := by
-  have hV : ComputableTidilyInPolyTime cities encGraph (encList encNat) := by
-    have := bitsReplicate true
-    unfold cities encGraph
-    fun_prop
+  have hV : ComputableTidilyInPolyTime cities encGraph (encList encNat) :=
+    Graph.computableTidilyInPolyTime_distinctVertices
   have hn : ComputableTidilyInPolyTime (fun G => (cities G).length) encGraph encUnary :=
     (length_list _).comp hV
   have hrow : ComputableTidilyInPolyTime

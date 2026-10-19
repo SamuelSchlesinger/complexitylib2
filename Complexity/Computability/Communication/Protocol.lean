@@ -22,7 +22,10 @@ the worst case, and a protocol of depth `d` has at most `2 ^ d` leaves
 inputs from `A × B` when its value on every such pair is related to the pair (`Solves`), and a
 protocol solves `R` when its output does (`Protocol.Solves`); the communication complexity of `R`
 on `A × B` is the least depth of a protocol solving it, or `⊤` if there is none
-(`Protocol.ecomplexity`) [Kushilevitz and Nisan, Chapter 5][KushilevitzNisan1997].
+(`Protocol.ecomplexity`) [Kushilevitz and Nisan, Chapter 5][KushilevitzNisan1997]. The
+communication complexity of computing a function `f` is that of the relation `f x y = z` on all
+inputs (`Protocol.ecomplexityFun`). A protocol can be run on transformed inputs
+(`Protocol.comap`).
 
 ## Main definitions
 
@@ -31,6 +34,8 @@ on `A × B` is the least depth of a protocol solving it, or `⊤` if there is no
 * `Cslib.Communication.Protocol.run`, `Cslib.Communication.Protocol.depth`,
   `Cslib.Communication.Protocol.leaves`, `Cslib.Communication.Protocol.Solves`.
 * `Cslib.Communication.Protocol.ecomplexity`: the communication complexity of a relation.
+* `Cslib.Communication.Protocol.ecomplexityFun`: the communication complexity of a function.
+* `Cslib.Communication.Protocol.comap`: running a protocol on transformed inputs.
 
 ## Main results
 
@@ -39,6 +44,8 @@ on `A × B` is the least depth of a protocol solving it, or `⊤` if there is no
 * `Cslib.Communication.Protocol.ecomplexity_le_iff`,
   `Cslib.Communication.Protocol.le_ecomplexity_iff`: upper and lower bounds on communication
   complexity.
+* `Cslib.Communication.Protocol.ecomplexityFun_le_iff`,
+  `Cslib.Communication.Protocol.le_ecomplexityFun_iff`: the same for functions.
 
 ## References
 
@@ -194,6 +201,64 @@ theorem le_ecomplexity_iff {k : ℕ∞} :
 /-- Solving a relation on larger sets is harder. -/
 theorem ecomplexity_mono (hA : A' ⊆ A) (hB : B' ⊆ B) : ecomplexity R A' B' ≤ ecomplexity R A B :=
   le_iInf fun p => iInf_le_of_le ⟨p.1, p.2.mono hA hB⟩ le_rfl
+
+/-! ### Computing a function -/
+
+section Fun
+
+/-- The communication complexity of computing `f` on all inputs: the least depth of a protocol
+whose output is `f x y` on every `x` and `y`, or `⊤` if there is none. It is `ecomplexity` of the
+relation `f x y = z` on all inputs. -/
+noncomputable def ecomplexityFun (f : X → Y → Z) : ℕ∞ :=
+  ecomplexity (fun x y z => f x y = z) Set.univ Set.univ
+
+variable {f : X → Y → Z}
+
+private theorem solves_univ_iff_run_eq :
+    p.Solves (fun x y z => f x y = z) Set.univ Set.univ ↔ p.run = f :=
+  ⟨fun h => funext₂ fun x y => (h x trivial y trivial).symm, fun h x _ y _ => by rw [h]⟩
+
+theorem ecomplexityFun_le_depth (hp : p.run = f) : ecomplexityFun f ≤ p.depth :=
+  ecomplexity_le_depth (solves_univ_iff_run_eq.mpr hp)
+
+theorem ecomplexityFun_le_iff {k : ℕ} :
+    ecomplexityFun f ≤ k ↔ ∃ p : Protocol X Y Z, p.run = f ∧ p.depth ≤ k := by
+  simp only [ecomplexityFun, ecomplexity_le_iff, solves_univ_iff_run_eq]
+
+theorem le_ecomplexityFun_iff {k : ℕ∞} :
+    k ≤ ecomplexityFun f ↔ ∀ p : Protocol X Y Z, p.run = f → k ≤ p.depth := by
+  simp only [ecomplexityFun, le_ecomplexity_iff, solves_univ_iff_run_eq]
+
+end Fun
+
+/-! ### Changing the inputs -/
+
+variable {X' Y' : Type*}
+
+/-- The protocol `p` run on `f x'` and `g y'`: Alice computes her bits from `f x'` and Bob his
+from `g y'`. -/
+def comap (f : X' → X) (g : Y' → Y) : Protocol X Y Z → Protocol X' Y' Z
+  | output z => output z
+  | alice send p₀ p₁ => alice (fun x => send (f x)) (p₀.comap f g) (p₁.comap f g)
+  | bob send p₀ p₁ => bob (fun y => send (g y)) (p₀.comap f g) (p₁.comap f g)
+
+@[simp] theorem run_comap (f : X' → X) (g : Y' → Y) (p : Protocol X Y Z) (x : X') (y : Y') :
+    (p.comap f g).run x y = p.run (f x) (g y) := by
+  induction p with
+  | output z => rfl
+  | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [comap, ih₀, ih₁]
+
+@[simp] theorem depth_comap (f : X' → X) (g : Y' → Y) (p : Protocol X Y Z) :
+    (p.comap f g).depth = p.depth := by
+  induction p with
+  | output z => rfl
+  | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [comap, ih₀, ih₁]
+
+@[simp] theorem leaves_comap (f : X' → X) (g : Y' → Y) (p : Protocol X Y Z) :
+    (p.comap f g).leaves = p.leaves := by
+  induction p with
+  | output z => rfl
+  | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [comap, ih₀, ih₁]
 
 end Protocol
 
