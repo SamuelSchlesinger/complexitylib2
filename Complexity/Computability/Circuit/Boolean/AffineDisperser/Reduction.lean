@@ -201,6 +201,12 @@ theorem trans {S₁ S₂ : State n} {F₁ F₂ : Finset ℕ} {D₁ D₂ T₁ T�
     rw [List.mem_append, not_or] at hN
     exact h₂.deletable N hN.2 (h₁.deletable N hN.1 h)
 
+/-- A reduction followed by a reduction restricting nothing. -/
+theorem trans_delete {S₁ S₂ : State n} {D₂ T₂ : List (ℕ ⊕ ℕ)} (h₁ : Reduction f S S₁ F D T)
+    (h₂ : Reduction f S₁ S₂ ∅ D₂ T₂) : Reduction f S S₂ F (D ++ D₂) (T ++ T₂) := by
+  have h := h₁.trans h₂
+  rwa [Finset.union_empty] at h
+
 /-- A reduction may record more deletions as possibly rerouting to parameters. -/
 theorem mono (h : Reduction f S S' F D T) {T' : List (ℕ ⊕ ℕ)} (hT : ∀ N ∈ T, N ∈ T') :
     Reduction f S S' F D T' :=

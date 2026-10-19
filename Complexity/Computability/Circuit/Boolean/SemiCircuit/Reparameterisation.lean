@@ -147,6 +147,15 @@ theorem WellFormed.swap (hC : C.WellFormed) {x Q : ℕ} {c : Bool} {T : Finset �
 def quad (C : SemiCircuit) (z G D : ℕ) : SemiCircuit :=
   { C with params := insert D (C.params.erase z), gates := (C.gates.erase D).erase G }
 
+theorem mem_live_quad {z G D i : ℕ} (hi : i ∈ C.live) (hiz : i ≠ z) (hiG : i ≠ G) :
+    i ∈ (C.quad z G D).live := by
+  simp only [live, Finset.mem_union] at hi ⊢
+  change (i ∈ insert D (C.params.erase z) ∨ i ∈ C.aux) ∨ i ∈ (C.gates.erase D).erase G
+  simp only [Finset.mem_insert, Finset.mem_erase]
+  by_cases hiD : i = D
+  · exact Or.inl (Or.inl (Or.inl hiD))
+  · tauto
+
 /-- The configuration of the quadratic reparameterisation: an AND-type gate
 `G = (x + α)(y + β) + γ` on the distinct parameters `x` and `y`, whose only child is the XOR-type
 gate `D = G + z + c`, where `D` is the only child of the parameter `z`, and neither `G` nor `z` is
@@ -190,15 +199,6 @@ theorem not_reads_G {K : ℕ} (hK : K ∈ C.gates) (hKD : K ≠ D) : ¬ (C.gate 
     rw [h.children_G] at this
     exact hKD (Sum.inl.inj (Finset.mem_singleton.1 this))
 
-theorem mem_live {i : ℕ} (hi : i ∈ C.live) (hiz : i ≠ z) (hiG : i ≠ G) :
-    i ∈ (C.quad z G D).live := by
-  simp only [live, Finset.mem_union] at hi ⊢
-  change (i ∈ insert D (C.params.erase z) ∨ i ∈ C.aux) ∨ i ∈ (C.gates.erase D).erase G
-  simp only [Finset.mem_insert, Finset.mem_erase]
-  by_cases hiD : i = D
-  · exact Or.inl (Or.inl (Or.inl hiD))
-  · tauto
-
 end QuadOK
 
 /-- The quadratic reparameterisation preserves well-formedness. -/
@@ -215,7 +215,7 @@ theorem WellFormed.quad (hC : C.WellFormed) {x y z G D : ℕ} {α β γ c : Bool
       reads_live := fun K hK i hr => ?_
       terms_subset := fun e he t ht => ?_
       card_terms_le := hC.card_terms_le
-      out_live := fun i hi => h.mem_live (hC.out_live i hi) (fun he => h.out_z (he ▸ hi))
+      out_live := fun i hi => mem_live_quad (hC.out_live i hi) (fun he => h.out_z (he ▸ hi))
         (fun he => h.out_G (he ▸ hi))
       solvable := fun u => ?_
       unique := fun val val' hagree heq heq' a ha => ?_ }
@@ -232,7 +232,7 @@ theorem WellFormed.quad (hC : C.WellFormed) {x y z G D : ℕ} {α β γ c : Bool
   · change K ∈ (C.gates.erase D).erase G at hK
     have hKD := Finset.ne_of_mem_erase (Finset.mem_of_mem_erase hK)
     have hK' := Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hK)
-    exact h.mem_live (hC.reads_live K hK' i hr) (fun he => h.not_reads_z hK' hKD (he ▸ hr))
+    exact mem_live_quad (hC.reads_live K hK' i hr) (fun he => h.not_reads_z hK' hKD (he ▸ hr))
       (fun he => h.not_reads_G hK' hKD (he ▸ hr))
   · have := hC.terms_subset e he ht
     have htz : t ≠ z := fun he' => h.notMem_terms_z he (he' ▸ ht)

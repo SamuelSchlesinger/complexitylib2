@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.AffineDisperser.MinimalAnd
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Elimination
 
 /-!
 # Lemma 4.2: one step of gate elimination
