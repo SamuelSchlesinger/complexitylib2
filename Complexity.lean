@@ -1016,6 +1016,8 @@ public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 public import Complexity.Probability.Product
 public import Complexity.Probability.Quantile
 public import Complexity.Probability.Shearer
+public import Complexity.Probability.SmallBias
+public import Complexity.Probability.SmallBias.Powering
 public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat

@@ -168,6 +168,7 @@ import ComplexityTests.PseudoentropySeed
 import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
+import ComplexityTests.PseudorandomObjects
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
