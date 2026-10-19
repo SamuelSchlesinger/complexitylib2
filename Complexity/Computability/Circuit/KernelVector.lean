@@ -32,6 +32,7 @@ The entries of the matrix may be arbitrary available functions of the circuit's 
 ## Main results
 
 * `Cslib.Circuits.Synthesis.full_firstFlags`: the first nonzero entry.
+* `Cslib.Circuits.Synthesis.full_nonzero`: the indicator of a nonzero vector.
 * `Cslib.Circuits.Synthesis.full_kernelStep`: one elimination step.
 * `Cslib.Circuits.Synthesis.full_kernelVec`: a kernel vector.
 -/
@@ -108,8 +109,9 @@ theorem full_firstFlags (b : Fin n → (Fin N → F) → F) (hb : ∀ i, b i ∈
   refine ⟨i, funext fun x => ?_⟩
   simp only [firstFlags_eq_prefixZero, hval i i.2.le]
 
-/-- One if the vector of available functions is nonzero, zero otherwise; `n + 1` gates. -/
-private theorem full_nonzero (v : Fin n → (Fin N → F) → F) (hv : ∀ l, v l ∈ s) :
+/-- The indicator that a vector of `n` available functions is nonzero costs `n + 1` gates of the
+full binary basis. -/
+theorem full_nonzero (v : Fin n → (Fin N → F) → F) (hv : ∀ l, v l ∈ s) :
     Synthesis (fullInterpretation (k := 2)) s
       {fun x => if (fun l => v l x) = 0 then 0 else 1} (n + 1) := by
   let g : ℕ → (Fin N → F) → F := fun i => if h : i < n then v ⟨i, h⟩ else fun _ => 0
