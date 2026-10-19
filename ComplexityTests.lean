@@ -140,6 +140,7 @@ import ComplexityTests.SATPolyTime
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.SipserLautemann
 import ComplexityTests.Smoke
 import ComplexityTests.SortingTrace
 import ComplexityTests.SourceComplexity
