@@ -95,6 +95,7 @@ public import Complexity.Computability.Circuit.Boolean.Metric
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.NaturalProof
+public import Complexity.Computability.Circuit.Boolean.NaturalProof.Generator
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
 public import Complexity.Computability.Circuit.Boolean.NegationNormalForm
 public import Complexity.Computability.Circuit.Boolean.NonconstantCost
@@ -727,6 +728,7 @@ public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
+public import Complexity.Crypto.Primitives.PRG.Circuit
 public import Complexity.Crypto.Primitives.PRG.Game
 public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson

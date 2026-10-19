@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.MCSP.Basic
-public import Cslib.Crypto.Primitives.PRG.Defs
+public import Complexity.Crypto.Primitives.PRG.Circuit
 import Complexity.Computability.MCSP.Shannon
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
@@ -35,18 +35,19 @@ with `s` gates from uniformly random functions, by a circuit with `t` gates and 
 density (`not_secure_truthTableGenerator`). Asymptotically, no `P/poly`-natural property is
 useful against `P/poly` if some keyed family with members of polynomial circuit size is
 *exponentially secure*, pseudorandom against circuits of size `2 ^ (c n)` with error `2 ^ (-c n)`
-for every `c` (`IsExponentiallySecure`, `not_isUseful_PPoly_of_isNatural`).
+for every `c` (`Cslib.Crypto.PRG.IsExponentiallySecure`, `not_isUseful_PPoly_of_isNatural`).
 
 Razborov and Rudich obtain such a family from a pseudorandom generator secure against circuits of
 size `2 ^ (k ^ ε)` on seeds of length `k`, by the construction of Goldreich, Goldwasser and Micali
 [GGM1986] with keys of length polynomial in `n`. That derivation, with its circuit-size analysis,
-is `Cslib.Crypto.GGM.isExponentiallySecure_booleanFamily` in
-`Complexity.Crypto.Computational.GGM.Circuit`, which also states the barrier from such a generator
-(`Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator`).
+is `Cslib.Crypto.GGM.isExponentiallySecure_booleanFamily`, and the barrier from such a generator
+is `Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator`
+(`Complexity.Computability.Circuit.Boolean.NaturalProof.Generator`).
 
 Security is cslib's concrete security of generators (`Cslib.Crypto.PRG.Generator.Secure`), for the
-generator mapping a key to the truth table of its function (`truthTableGenerator`), against the
-deterministic tests computed by De Morgan circuits with at most `t` gates (`IsCircuitTest`). These
+generator mapping a key to the truth table of its function (`Cslib.Crypto.PRG.truthTableGenerator`),
+against the deterministic tests computed by De Morgan circuits with at most `t` gates
+(`Cslib.Crypto.PRG.IsCircuitTest`). These
 tests read the whole truth table, that is they query the function at every input, as the
 distinguisher of Razborov and Rudich does. Circuit sizes count every AND, OR, NOT and constant
 gate.
@@ -62,20 +63,15 @@ in `P/poly` (`truthTableLanguage_setOf_lt_complexity_notMem_PPoly`) [KabanetsCai
 
 * `Cslib.Circuits.Boolean.truthTableTest`: the test deciding a property from truth tables.
 * `Cslib.Circuits.Boolean.truthTableLanguage`: the truth tables of a property, as a language.
-* `Cslib.Circuits.Boolean.IsLarge`, `Cslib.Circuits.Boolean.IsNatural`,
-  `Cslib.Circuits.Boolean.IsUseful`: large, natural and useful properties.
-* `Cslib.Circuits.Boolean.IsCircuitTest`: the tests computed by circuits with at most `t` gates.
-* `Cslib.Circuits.Boolean.truthTableGenerator`: a keyed family of Boolean functions, as a
-  generator of truth tables.
-* `Cslib.Circuits.Boolean.IsExponentiallySecure`: keyed families pseudorandom against circuits of
-  size `2 ^ (c n)` with error `2 ^ (-c n)`, for every `c`.
+* `Cslib.Circuits.Boolean.NaturalProof.IsLarge`, `Cslib.Circuits.Boolean.NaturalProof.IsNatural`,
+  `Cslib.Circuits.Boolean.NaturalProof.IsUseful`: large, natural and useful properties.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.isUseful_PPoly_iff`: usefulness against `P/poly` as a bound on the
   circuit complexity of every function with the property.
-* `Cslib.Circuits.Boolean.IsNatural.PPoly_of_P`: `P`-natural properties, decided in time
-  polynomial in the length of the truth table, are `P/poly`-natural.
+* `Cslib.Circuits.Boolean.NaturalProof.IsNatural.PPoly_of_P`: `P`-natural properties, decided
+  in time polynomial in the length of the truth table, are `P/poly`-natural.
 * `Cslib.Circuits.Boolean.advantage_truthTableGenerator_truthTableTest`: the advantage of the
   Razborov–Rudich distinguisher is the density of the property.
 * `Cslib.Circuits.Boolean.not_secure_truthTableGenerator`: the barrier for one input length,
@@ -102,6 +98,7 @@ in `P/poly` (`truthTableLanguage_setOf_lt_complexity_notMem_PPoly`) [KabanetsCai
 namespace Cslib.Circuits.Boolean
 
 open Filter MCSP
+open Crypto.PRG (IsCircuitTest IsExponentiallySecure truthTableGenerator truthTableGenerator_apply)
 open scoped NNReal Finset
 
 variable {n : ℕ}
@@ -156,6 +153,10 @@ theorem ofFn_mem_truthTableLanguage {C : ∀ n, Set (BooleanFunction n)} {T : Bi
   rw [Bool.eq_iff_iff, Language.slice_eq_true_iff, ofFn_mem_truthTableLanguage,
     truthTableTest_eq_true_iff]
 
+variable {Γ Γ' Λ Λ' : Set (Language Bool)} {C C' : ∀ n, Set (BooleanFunction n)}
+
+namespace NaturalProof
+
 /-- **Largeness** [RazborovRudich1997]: for some `c`, eventually at least a `2 ^ (-c n)` fraction
 of the `2 ^ 2 ^ n` Boolean functions on `n` inputs lie in `C n`. -/
 def IsLarge (C : ∀ n, Set (BooleanFunction n)) : Prop :=
@@ -174,8 +175,6 @@ every polynomial bound, eventually every function in `C n` needs more gates
 (`isUseful_PPoly_iff`). -/
 def IsUseful (Λ : Set (Language Bool)) (C : ∀ n, Set (BooleanFunction n)) : Prop :=
   ∀ L ∈ Λ, ∀ᶠ n in atTop, L.slice n ∉ C n
-
-variable {Γ Γ' Λ Λ' : Set (Language Bool)} {C C' : ∀ n, Set (BooleanFunction n)}
 
 theorem IsLarge.mono (hC : IsLarge C) (h : ∀ n, C n ⊆ C' n) : IsLarge C' := by
   obtain ⟨c, hc⟩ := hC
@@ -214,6 +213,10 @@ theorem IsUseful.eventually_lt_complexity (hC : IsUseful Λ C) {s : ℕ → ℕ}
   rw [Language.slice_ofSlices] at hgn
   exact hgn (by simpa only [g, dite_eq_left hex] using hex.choose_spec.1)
 
+end NaturalProof
+
+open NaturalProof
+
 /-- **Usefulness against `P/poly`**, in the form of [RazborovRudich1997]: for every polynomially
 bounded `s`, eventually every function in `C n` needs more than `s n` gates. -/
 theorem isUseful_PPoly_iff :
@@ -249,36 +252,16 @@ theorem exists_complexity_truthTableTest_le (hC : truthTableLanguage C ∈ PPoly
 /-- A property that is natural for the class `P`, applied to truth tables, is `P/poly`-natural:
 a problem decided in time polynomial in the length of the truth table has circuits of polynomial
 size (`PPoly.of_mem_P`). -/
-theorem IsNatural.PPoly_of_P
+theorem NaturalProof.IsNatural.PPoly_of_P
     (hC : IsNatural {L : Language Bool | (L : Set (List Bool)) ∈ Complexity.P
       Turing.MultiTapeTM.encBits} C) : IsNatural PPoly C :=
   hC.mono (fun _ hL => PPoly.of_mem_P hL) fun _ => le_rfl
 
 /-! ### The Razborov–Rudich distinguisher -/
 
-/-- The tests on `m`-bit strings computed by De Morgan circuits with at most `t` gates: the
-deterministic tests whose circuit complexity is at most `t`. As the admissible adversaries of
-`Cslib.Crypto.PRG.Generator.Secure`, they express security against circuits of size `t`. -/
-def IsCircuitTest {m : ℕ} (t : ℕ) (adversary : Crypto.PRG.Adversary (BitString m)) : Prop :=
-  ∃ test : BooleanFunction m, complexity interpretation (single test) ≤ t ∧
-    adversary = fun x => PMF.pure (test x)
-
 section Generator
 
-variable {Key : Type*}
-
-/-- The generator mapping a key to the truth table of the function `F key`. Its security against
-`IsCircuitTest t` is the pseudorandomness of the keyed family `F` against circuits with at most
-`t` gates that read the whole truth table, that is that query the function at every input. -/
-def truthTableGenerator (F : Key → BooleanFunction n) :
-    Crypto.PRG.Generator Key (BitString (2 ^ n)) :=
-  ⟨fun key => truthTable n (F key)⟩
-
-@[simp] theorem truthTableGenerator_apply (F : Key → BooleanFunction n) (key : Key) :
-    truthTableGenerator F key = truthTable n (F key) :=
-  rfl
-
-variable [Fintype Key] [Nonempty Key]
+variable {Key : Type*} [Fintype Key] [Nonempty Key]
 
 /-- **The Razborov–Rudich distinguisher** [RazborovRudich1997, Section 4]. If no function of the
 keyed family `F` lies in `C`, the test deciding `C` from truth tables never accepts the truth table
@@ -321,16 +304,6 @@ end Generator
 section Family
 
 variable {Key : ℕ → Type*} [∀ n, Fintype (Key n)] [∀ n, Nonempty (Key n)]
-
-/-- A keyed family `F` of Boolean functions is *exponentially secure* against circuits when, for
-every `c`, eventually no test computed with at most `2 ^ (c n)` gates distinguishes the truth
-table of `F n key`, for a uniformly random key, from a uniformly random truth table with advantage
-more than `2 ^ (-c n)`. This is the hypothesis of the natural proofs barrier
-[RazborovRudich1997, Section 4]. The tests read the whole truth table, that is they query the
-function at every input. -/
-def IsExponentiallySecure (F : ∀ n, Key n → BooleanFunction n) : Prop :=
-  ∀ c, ∀ᶠ n in atTop,
-    (truthTableGenerator (F n)).Secure (IsCircuitTest (2 ^ (c * n))) (2 ^ (c * n))⁻¹
 
 /-- **The natural proofs barrier** for `P/poly` [RazborovRudich1997, Section 4]. Suppose that for
 each `n` a keyed family `F n` of Boolean functions on `n` inputs has members with at most `s n`

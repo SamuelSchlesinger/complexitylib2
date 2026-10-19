@@ -7,13 +7,16 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.NaturalProof
 public import Complexity.Crypto.Computational.GGM.Evaluation
-public import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
+public import Complexity.Crypto.Primitives.PRG.Circuit
+public import Complexity.Foundations.Data.BitString.Block
+public import Cslib.Foundations.Data.Nat.PolynomialBound
 import Complexity.Computability.Circuit.Boolean.Word
+import Complexity.Computability.Circuit.Complexity
 import Complexity.Computability.Circuit.Synthesis
 import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 import Complexity.Foundations.Data.Finset.Expect
+import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 import Cslib.Crypto.Primitives.PRG.Basic
 
@@ -22,15 +25,16 @@ import Cslib.Crypto.Primitives.PRG.Basic
 
 The construction of Goldreich, Goldwasser and Micali [GGM1986] turns a length-doubling generator
 `G` with seeds of `k` bits into a keyed family of functions: the key labels the root of a binary
-tree of depth `n`, the two children of a node labelled `s` are labelled by the two halves of
-`G s`, and the value at an input `x` of `n` bits is the label of the leaf reached by following `x`
-(`evalBits`). This is the list-based `Cslib.Crypto.GGM.eval` for words of fixed width
-(`ofFn_evalBits`). Keeping the first bit of the label gives a keyed family of Boolean functions
-(`booleanFamily`), the family used by Razborov and Rudich [RazborovRudich1997, Section 4].
+tree of depth `n`, the two children of a node labelled `s` are labelled by the two blocks of `k`
+bits of `G s` (`Cslib.BitString.block`), and the value at an input `x` of `n` bits is the label
+of the leaf reached by following `x` (`evalBits`). This is the list-based `Cslib.Crypto.GGM.eval`
+for words of fixed width (`ofFn_evalBits`). Keeping the first bit of the label gives a keyed
+family of Boolean functions (`booleanFamily`), the family used by Razborov and Rudich
+[RazborovRudich1997, Section 4].
 
 This module proves the nonuniform security of that family with concrete losses. Circuit sizes
 count every AND, OR, NOT and constant gate of the De Morgan basis, and the tests are deterministic
-circuits on the whole truth table (`Cslib.Circuits.Boolean.IsCircuitTest`), which query the
+circuits on the whole truth table (`Cslib.Crypto.PRG.IsCircuitTest`), which query the
 function at every input. Write `C` for the circuit complexity of `G` as a function with `2 k`
 outputs.
 
@@ -42,16 +46,16 @@ outputs.
   `(2 ^ n - 1) ε` (`secure_truthTableGenerator_booleanFamily`). The proof is the hybrid argument
   over the levels of the tree. The hybrid at depth `j` labels the `2 ^ j` nodes at depth `j`
   uniformly at random; between depths `j` and `j + 1`, the `2 ^ j` expansions are replaced by
-  uniform strings one at a time. Fixing all of them but one turns a test of truth tables into a
-  test of that expansion, which computes the subtree below it; every bit of the truth table is
-  then a constant or a bit of an evaluation along at most `n` levels.
-* **Asymptotics.** A family of generators of polynomial circuit complexity that resists circuits
-  of size `2 ^ m` with advantage `2 ^ (-m)` on seeds of length `k ≥ m ^ d`
-  (`Cslib.Crypto.PRG.IsSubexponentiallySecure`, implied by security against circuits of size
-  `2 ^ (k ^ ε)` with advantage `2 ^ (-k ^ ε)` for `d ε ≥ 1`) gives, with keys of length
-  `(n + 1) ^ (2 d)`, an exponentially secure family (`isExponentiallySecure_booleanFamily`). By
-  the natural proofs barrier, no `P/poly`-natural property is then useful against `P/poly`
-  (`Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator`).
+  uniform strings one at a time (`Cslib.Crypto.PRG.abs_expect_comp_sub_expect_le`). Fixing all
+  of them but one turns a test of truth tables into a test of that expansion, which computes the
+  subtree below it; every bit of the truth table is then a constant or a bit of an evaluation
+  along at most `n` levels.
+* **Asymptotics.** A family of generators of polynomial circuit complexity that, for all long
+  seeds, resists circuits of size `2 ^ m` with advantage `2 ^ (-m)` on seeds of length
+  `k ≥ m ^ d` (`Cslib.Crypto.PRG.IsSubexponentiallySecure`) gives, with keys of length
+  `(n + 1) ^ (2 d + 1)`, an exponentially secure family (`isExponentiallySecure_booleanFamily`).
+  The natural proofs barrier from such generators is
+  `Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator`.
 
 The adaptive hybrids of `Cslib.Crypto.GGM.hybridGame` concern uniform oracle adversaries and are
 not used here: a circuit reading the whole truth table queries every leaf, so the hybrids are over
@@ -61,8 +65,6 @@ complete levels of the tree.
 
 * `Cslib.Crypto.GGM.evalBits`: evaluation of the GGM tree with labels of fixed width.
 * `Cslib.Crypto.GGM.booleanFamily`: the GGM family of Boolean functions.
-* `Cslib.Crypto.PRG.IsSubexponentiallySecure`: generators resisting circuits of size
-  `2 ^ (k ^ (1 / d))`.
 
 ## Main results
 
@@ -71,12 +73,8 @@ complete levels of the tree.
   `n (C + 4 k) + 2`.
 * `Cslib.Crypto.GGM.secure_truthTableGenerator_booleanFamily`: security against circuits, with
   explicit loss in size and advantage.
-* `Cslib.Crypto.PRG.IsSubexponentiallySecure.of_rpow`: security against circuits of size
-  `2 ^ (k ^ ε)` gives subexponential security.
 * `Cslib.Crypto.GGM.isExponentiallySecure_booleanFamily`: subexponentially secure generators give
   exponentially secure families.
-* `Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator`: the natural proofs
-  barrier from subexponentially secure generators.
 
 ## References
 
@@ -88,25 +86,22 @@ complete levels of the tree.
 
 namespace Cslib.Crypto.GGM
 
-open Cslib.Circuits Cslib.Circuits.Boolean Cslib.MCSP Finset Function
+open Cslib.Circuits Cslib.Circuits.Boolean Cslib.MCSP Filter Finset Function
+open PRG (IsCircuitTest IsExponentiallySecure truthTableGenerator truthTableGenerator_apply)
 open scoped BigOperators NNReal
 
 variable {k n : ℕ}
 
 /-! ### Evaluation with labels of fixed width -/
 
-/-- The half of a string of length `2 k` selected by a bit: the first `k` bits for `false`, the
-last `k` bits for `true`. -/
-def half (y : BitString (2 * k)) (bit : Bool) : BitString k :=
-  fun i => y ⟨bit.toNat * k + i, by cases bit <;> simp <;> omega⟩
-
 /-- Evaluate the GGM tree with labels of width `k` [GGM1986]: starting from the seed, replace the
 label by the half of its expansion selected by each query bit in turn, from the first bit of the
-query to the last. -/
+query to the last. The halves are the two blocks of `k` bits (`Cslib.BitString.block`), the first
+for `false` and the second for `true`. -/
 def evalBits (G : PRG.Generator (BitString k) (BitString (2 * k))) :
     {n : ℕ} → BitString k → BitString n → BitString k
   | 0, seed, _ => seed
-  | _ + 1, seed, x => evalBits G (half (G seed) (x 0)) (Fin.tail x)
+  | _ + 1, seed, x => evalBits G (BitString.block (G seed) (finTwoEquiv.symm (x 0))) (Fin.tail x)
 
 @[simp] theorem evalBits_zero (G : PRG.Generator (BitString k) (BitString (2 * k)))
     (seed : BitString k) (x : BitString 0) : evalBits G seed x = seed :=
@@ -114,7 +109,8 @@ def evalBits (G : PRG.Generator (BitString k) (BitString (2 * k))) :
 
 theorem evalBits_succ (G : PRG.Generator (BitString k) (BitString (2 * k)))
     (seed : BitString k) (x : BitString (n + 1)) :
-    evalBits G seed x = evalBits G (half (G seed) (x 0)) (Fin.tail x) :=
+    evalBits G seed x =
+      evalBits G (BitString.block (G seed) (finTwoEquiv.symm (x 0))) (Fin.tail x) :=
   rfl
 
 /-- A generator of fixed-width strings as a generator of lists: it reads the first `k` bits of its
@@ -123,13 +119,13 @@ def listGenerator (G : PRG.Generator (BitString k) (BitString (2 * k))) :
     List Bool → List Bool :=
   fun seed => List.ofFn (G fun i => seed.getD i false)
 
-/-- The half selected by a bit is the child selected by `Cslib.Crypto.GGM.selectChild`. -/
-theorem ofFn_half (y : BitString (2 * k)) (bit : Bool) :
-    List.ofFn (half y bit) = selectChild k (List.ofFn y) bit := by
+/-- The block selected by a bit is the child selected by `Cslib.Crypto.GGM.selectChild`. -/
+private theorem ofFn_block (y : BitString (2 * k)) (bit : Bool) :
+    List.ofFn (BitString.block y (finTwoEquiv.symm bit)) = selectChild k (List.ofFn y) bit := by
   apply List.ext_getElem
   · cases bit <;> simp [selectChild] <;> omega
   · intro i _ _
-    cases bit <;> simp [selectChild, half]
+    cases bit <;> simp [selectChild, finProdFinEquiv, finTwoEquiv, Nat.add_comm]
 
 /-- **Agreement with the list construction.** Evaluation with labels of fixed width is
 `Cslib.Crypto.GGM.eval` for the generator read as a generator of lists. -/
@@ -141,7 +137,7 @@ theorem ofFn_evalBits (G : PRG.Generator (BitString k) (BitString (2 * k)))
   | succ n ih =>
     rw [evalBits_succ, ih, List.ofFn_succ, eval_cons]
     congr 1
-    rw [child, List.length_ofFn, ofFn_half, listGenerator]
+    rw [child, List.length_ofFn, ofFn_block, listGenerator]
     congr 3
     funext i
     simp
@@ -166,10 +162,10 @@ theorem complexity_evalBits_le (G : PRG.Generator (BitString k) (BitString (2 * 
     rw [h, complexity_wiring, zero_mul]
   | succ n ih =>
     have h : (fun seed : BitString k => evalBits G seed x) =
-        (fun seed => evalBits G seed (Fin.tail x)) ∘ (fun y => y ∘ fun i : Fin k =>
-          (⟨(x 0).toNat * k + i, by cases x 0 <;> simp <;> omega⟩ : Fin (2 * k))) ∘ ⇑G := rfl
-    have hstep := complexity_comp_le (I := interpretation) ⇑G (fun y => y ∘ fun i : Fin k =>
-      (⟨(x 0).toNat * k + i, by cases x 0 <;> simp <;> omega⟩ : Fin (2 * k)))
+        (fun seed => evalBits G seed (Fin.tail x)) ∘
+          (fun y => y ∘ fun i : Fin k => finProdFinEquiv (finTwoEquiv.symm (x 0), i)) ∘ ⇑G := rfl
+    have hstep := complexity_comp_le (I := interpretation) ⇑G
+      (fun y => y ∘ fun i : Fin k => finProdFinEquiv (finTwoEquiv.symm (x 0), i))
     rw [complexity_wiring, add_zero] at hstep
     rw [h]
     calc _ ≤ _ := complexity_comp_le _ _
@@ -178,16 +174,15 @@ theorem complexity_evalBits_le (G : PRG.Generator (BitString k) (BitString (2 * 
       _ = (n + 1) * complexity interpretation ⇑G := by ring
 
 /-- One bit of the evaluation along a fixed query of length `n`, as a function of a string of
-length `2 k` whose selected half is the seed, costs at most `n` copies of a circuit for the
+length `2 k` whose selected block is the seed, costs at most `n` copies of a circuit for the
 generator. -/
-theorem complexity_evalBits_half_le (G : PRG.Generator (BitString k) (BitString (2 * k)))
-    (bit : Bool) (x : BitString n) (i : Fin k) :
-    complexity interpretation (single fun y => evalBits G (half y bit) x i) ≤
+theorem complexity_evalBits_block_le (G : PRG.Generator (BitString k) (BitString (2 * k)))
+    (b : Fin 2) (x : BitString n) (i : Fin k) :
+    complexity interpretation (single fun y => evalBits G (BitString.block y b) x i) ≤
       n * complexity interpretation ⇑G := by
-  have h : (single fun y => evalBits G (half y bit) x i) =
+  have h : (single fun y => evalBits G (BitString.block y b) x i) =
       (fun z => z ∘ fun _ : Fin 1 => i) ∘ (fun seed => evalBits G seed x) ∘
-        (fun y => y ∘ fun i : Fin k =>
-          (⟨bit.toNat * k + i, by cases bit <;> simp <;> omega⟩ : Fin (2 * k))) := rfl
+        (fun y => y ∘ fun i : Fin k => finProdFinEquiv (b, i)) := rfl
   rw [h]
   refine (complexity_comp_le _ _).trans ?_
   rw [complexity_wiring, add_zero]
@@ -218,21 +213,25 @@ theorem synthesis_evalBits {N : ℕ} (G : PRG.Generator (BitString k) (BitString
       convert h using 3 with j
       funext z
       exact (congrFun (hc (seed z)) j).symm
-    -- the half selected by the first query bit, by one multiplexer per bit
+    -- the block selected by the first query bit, by one multiplexer per bit
     have h2 : Synthesis interpretation (s ∪ Set.range fun j z => G (seed z) j)
-        (Set.range fun i z => half (G (seed z)) (query z 0) i) (4 * k) := by
+        (Set.range fun i z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)) i)
+        (4 * k) := by
       have h := Synthesis.family (I := interpretation)
         (s := s ∪ Set.range fun j z => G (seed z) j)
-        (fun i : Fin k => fun z => half (G (seed z)) (query z 0) i) (fun _ => 4) fun i => by
+        (fun i : Fin k => fun z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)) i)
+        (fun _ => 4) fun i => by
           have hmux := Synthesis.mux (s := s ∪ Set.range fun j z => G (seed z) j)
-            (Or.inl (hquery 0)) (Or.inr ⟨⟨1 * k + i, by omega⟩, rfl⟩)
-            (Or.inr ⟨⟨0 * k + i, by omega⟩, rfl⟩)
+            (Or.inl (hquery 0)) (Or.inr ⟨finProdFinEquiv (1, i), rfl⟩)
+            (Or.inr ⟨finProdFinEquiv (0, i), rfl⟩)
           convert hmux using 2
           funext z
           cases query z 0 <;> rfl
       simpa [mul_comm] using h
-    have h3 := ih (s := s ∪ Set.range fun i z => half (G (seed z)) (query z 0) i)
-      (fun z => half (G (seed z)) (query z 0)) (fun z => Fin.tail (query z))
+    have h3 := ih
+      (s := s ∪ Set.range fun i z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)) i)
+      (fun z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)))
+      (fun z => Fin.tail (query z))
       (fun i => Or.inr ⟨i, rfl⟩) (fun i => Or.inl (hquery i.succ))
     exact ((h1.trans h2).trans h3).mono Set.Subset.rfl Set.Subset.rfl (le_of_eq (by ring))
 
@@ -249,76 +248,14 @@ theorem complexity_booleanFamily_le [NeZero k]
   exact (hconst.trans h).mono Set.Subset.rfl (Set.singleton_subset_iff.2 ⟨0, rfl⟩)
     (le_of_eq (add_comm _ _))
 
-/-! ### The hybrid argument for independent samples -/
+/-! ### Uniform labels -/
 
-section Independent
+section Uniform
 
-variable {ι α β : Type*} [Fintype ι] [DecidableEq ι] [Fintype α] [Nonempty α] [Fintype β]
-  [Nonempty β]
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-- Resampling one coordinate of a uniformly random function keeps it uniformly random. -/
-private theorem expect_expect_update (F : (ι → α) → ℝ) (i : ι) :
-    𝔼 s, 𝔼 a, F (update s i a) = 𝔼 s, F s := by
-  let e : Equiv.Perm ((ι → α) × α) :=
-    Function.Involutive.toPerm (fun p => (update p.1 i p.2, p.1 i)) fun p => by simp
-  calc 𝔼 s, 𝔼 a, F (update s i a) = 𝔼 p : (ι → α) × α, F (e p).1 :=
-        (Fintype.expect_prod_type (fun p : (ι → α) × α => F (e p).1)).symm
-    _ = 𝔼 p : (ι → α) × α, F p.1 := Fintype.expect_equiv e _ _ fun _ => rfl
-    _ = 𝔼 s, F s := Fintype.expect_comp_fst F
-
-/-- **The hybrid argument for independent samples.** Let `T` be a statistic of `ι`-indexed tuples
-in `β`. If, with all other coordinates fixed, replacing `g a` for a uniform `a` by a uniform `b` at
-one coordinate changes the average of `T` by at most `ε`, then replacing every coordinate changes
-it by at most `|ι| ε`. -/
-private theorem abs_expect_comp_sub_expect_le (g : α → β) (T : (ι → β) → ℝ) {ε : ℝ}
-    (hT : ∀ (c : ι → β) (i : ι), |𝔼 a, T (update c i (g a)) - 𝔼 b, T (update c i b)| ≤ ε) :
-    |𝔼 s : ι → α, T (fun i => g (s i)) - 𝔼 y : ι → β, T y| ≤ Fintype.card ι * ε := by
-  -- the hybrid in which the coordinates in `S` are uniform
-  let v : Finset ι → (ι → α) → (ι → β) → ι → β := fun S s y j => if j ∈ S then y j else g (s j)
-  let H : Finset ι → ℝ := fun S => 𝔼 s, 𝔼 y, T (v S s y)
-  have hstep (i : ι) (S : Finset ι) (hi : i ∉ S) : |H S - H (insert i S)| ≤ ε := by
-    have hS : H S = 𝔼 s, 𝔼 y, 𝔼 a, T (update (v S s y) i (g a)) := by
-      change 𝔼 s, 𝔼 y, T (v S s y) = _
-      rw [← expect_expect_update (fun s => 𝔼 y, T (v S s y)) i]
-      refine expect_congr rfl fun s _ => ?_
-      rw [expect_comm]
-      refine expect_congr rfl fun y _ => expect_congr rfl fun a _ => congrArg T ?_
-      funext j
-      by_cases hj : j = i
-      · subst hj; simp [v, hi]
-      · simp [v, hj]
-    have hS' : H (insert i S) = 𝔼 s, 𝔼 y, 𝔼 b, T (update (v S s y) i b) := by
-      change 𝔼 s, 𝔼 y, T (v (insert i S) s y) = _
-      refine expect_congr rfl fun s _ => ?_
-      rw [← expect_expect_update (fun y => T (v (insert i S) s y)) i]
-      refine expect_congr rfl fun y _ => expect_congr rfl fun b _ => congrArg T ?_
-      funext j
-      by_cases hj : j = i
-      · subst hj; simp [v]
-      · simp [v, hj]
-    rw [hS, hS', ← expect_sub_distrib]
-    refine (abs_expect_le _ _).trans ?_
-    refine (expect_le_expect fun s _ => ?_).trans_eq (Fintype.expect_const ε)
-    rw [← expect_sub_distrib]
-    refine (abs_expect_le _ _).trans ?_
-    refine (expect_le_expect fun y _ => ?_).trans_eq (Fintype.expect_const ε)
-    exact hT _ i
-  have hind (S : Finset ι) : |H ∅ - H S| ≤ S.card * ε := by
-    induction S using Finset.induction_on with
-    | empty => simp
-    | insert i S hi ih =>
-      calc |H ∅ - H (insert i S)| ≤ |H ∅ - H S| + |H S - H (insert i S)| := abs_sub_le _ _ _
-        _ ≤ S.card * ε + ε := add_le_add ih (hstep i S hi)
-        _ = (insert i S).card * ε := by rw [card_insert_of_notMem hi]; push_cast; ring
-  have h0 : H ∅ = 𝔼 s : ι → α, T (fun i => g (s i)) := by
-    simp only [H, v, notMem_empty, ite_false, Fintype.expect_const]
-  have h1 : H univ = 𝔼 y : ι → β, T y := by
-    simp only [H, v, mem_univ, ite_true, Fintype.expect_const]
-  simpa only [h0, h1, card_univ] using hind univ
-
-omit [DecidableEq ι] [Fintype α] [Nonempty α] [Fintype β] [Nonempty β] in
 /-- The first bits of uniformly random labels are uniformly random. -/
-private theorem expect_comp_apply_zero [DecidableEq ι] [NeZero k] (F : (ι → Bool) → ℝ) :
+private theorem expect_comp_apply_zero [NeZero k] (F : (ι → Bool) → ℝ) :
     𝔼 L : ι → BitString k, F (fun x => L x 0) = 𝔼 f, F f := by
   obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (NeZero.ne k)
   let e : (ι → Fin (k + 1) → Bool) ≃ (ι → Bool) × (ι → Fin k → Bool) :=
@@ -327,7 +264,7 @@ private theorem expect_comp_apply_zero [DecidableEq ι] [NeZero k] (F : (ι → 
   rw [← Fintype.expect_comp_fst (β := ι → Fin k → Bool) F]
   exact Fintype.expect_equiv e _ _ fun _ => rfl
 
-end Independent
+end Uniform
 
 /-! ### The GGM hybrids -/
 
@@ -341,9 +278,19 @@ private def leaves (G : PRG.Generator (BitString k) (BitString (2 * k))) (j m : 
     (h : j + m = n) (labels : BitString j → BitString k) (x : BitString n) : BitString k :=
   evalBits G (labels fun i : Fin j => x ⟨i, by omega⟩) fun i : Fin m => x ⟨j + i, by omega⟩
 
-/-- The labels at depth `j + 1` given by the expansions of the labels at depth `j`. -/
-private def reshape (Y : BitString j → BitString (2 * k)) : BitString (j + 1) → BitString k :=
-  fun p => half (Y (Fin.init p)) (p (Fin.last j))
+/-- The labels at depth `j + 1` given by the expansions of the labels at depth `j`: the label of
+`p` is the block of the expansion at `Fin.init p` selected by its last bit. Expansions and labels
+determine each other. -/
+private def reshape : (BitString j → BitString (2 * k)) ≃ (BitString (j + 1) → BitString k) :=
+  ((Equiv.piCongrRight fun _ : BitString j => (BitString.blocksEquiv (m := 2) (k := k)).trans
+    (Equiv.arrowCongr finTwoEquiv (Equiv.refl (BitString k)))).trans
+    (Equiv.curry (BitString j) Bool (BitString k)).symm).trans
+    (Equiv.arrowCongr ((Fin.snocEquiv fun _ : Fin (j + 1) => Bool).symm.trans
+      (Equiv.prodComm _ _)).symm (Equiv.refl (BitString k)))
+
+private theorem reshape_apply (Y : BitString j → BitString (2 * k)) (p : BitString (j + 1)) :
+    reshape Y p = BitString.block (Y (Fin.init p)) (finTwoEquiv.symm (p (Fin.last j))) :=
+  rfl
 
 /-- Expanding one level of a hybrid tree. -/
 private theorem leaves_succ (G : PRG.Generator (BitString k) (BitString (2 * k)))
@@ -359,21 +306,6 @@ private theorem leaves_succ (G : PRG.Generator (BitString k) (BitString (2 * k))
   ext
   simp only
   omega
-
-/-- The expansions of the labels at depth `j` determine the labels at depth `j + 1`, and
-conversely. -/
-private theorem bijective_reshape :
-    Bijective (reshape : (BitString j → BitString (2 * k)) → BitString (j + 1) → BitString k) := by
-  refine (Fintype.bijective_iff_injective_and_card _).2 ⟨fun Y Y' hY => ?_, ?_⟩
-  · funext q i
-    by_cases hi : (i : ℕ) < k
-    · have := congrFun (congrFun hY (Fin.snoc (α := fun _ => Bool) q false)) ⟨i, hi⟩
-      simpa [reshape, half, Fin.init_snoc, Fin.snoc_last] using this
-    · have := congrFun (congrFun hY (Fin.snoc (α := fun _ => Bool) q true)) ⟨i - k, by omega⟩
-      simp only [reshape, half, Fin.init_snoc, Fin.snoc_last, Bool.toNat_true, one_mul] at this
-      convert this using 2 <;> ext <;> simp <;> omega
-  · simp only [Fintype.card_fun, Fintype.card_bool, Fintype.card_fin, ← pow_mul]
-    ring_nf
 
 variable [NeZero k]
 
@@ -402,9 +334,9 @@ private theorem abs_hybridProb_sub_le (G : PRG.Generator (BitString k) (BitStrin
   have h1 : hybridProb G D (j + 1) m (by omega) = 𝔼 Y : BitString j → BitString (2 * k),
       (if D (truthTable n fun x => leaves G (j + 1) m (by omega) (reshape Y) x 0)
         then 1 else 0 : ℝ) :=
-    (Fintype.expect_bijective _ bijective_reshape _ _ fun _ => rfl).symm
+    (Fintype.expect_equiv reshape _ _ fun _ => rfl).symm
   rw [h0, h1]
-  simpa [BitString, Fintype.card_fun] using abs_expect_comp_sub_expect_le ⇑G
+  simpa [BitString, Fintype.card_fun] using PRG.abs_expect_comp_sub_expect_le ⇑G
     (fun Y => (if D (truthTable n fun x => leaves G (j + 1) m (by omega) (reshape Y) x 0)
       then 1 else 0 : ℝ)) hε
 
@@ -432,19 +364,19 @@ private theorem complexity_slice_le (G : PRG.Generator (BitString k) (BitString 
   by_cases hp : Fin.init p = q
   · have he : (fun y => truthTable n (fun x =>
         leaves G (j + 1) m h (reshape (update c q y)) x 0) i) =
-        fun y => evalBits G (half y (p (Fin.last j))) (fun l : Fin m => x ⟨j + 1 + l, by omega⟩)
-          0 := by
-      funext y
-      simp only [truthTable_apply, leaves, reshape]
-      rw [← hp, update_self]
-    rw [he]
-    exact (complexity_evalBits_half_le G _ _ 0).trans (Nat.le_succ _)
-  · have he : (fun y => truthTable n (fun x =>
-        leaves G (j + 1) m h (reshape (update c q y)) x 0) i) =
-        fun _ => evalBits G (half (c (Fin.init p)) (p (Fin.last j)))
+        fun y => evalBits G (BitString.block y (finTwoEquiv.symm (p (Fin.last j))))
           (fun l : Fin m => x ⟨j + 1 + l, by omega⟩) 0 := by
       funext y
-      simp only [truthTable_apply, leaves, reshape]
+      simp only [truthTable_apply, leaves, reshape_apply]
+      rw [← hp, update_self]
+    rw [he]
+    exact (complexity_evalBits_block_le G _ _ 0).trans (Nat.le_succ _)
+  · have he : (fun y => truthTable n (fun x =>
+        leaves G (j + 1) m h (reshape (update c q y)) x 0) i) =
+        fun _ => evalBits G (BitString.block (c (Fin.init p)) (finTwoEquiv.symm (p (Fin.last j))))
+          (fun l : Fin m => x ⟨j + 1 + l, by omega⟩) 0 := by
+      funext y
+      simp only [truthTable_apply, leaves, reshape_apply]
       rw [update_of_ne hp]
     rw [he]
     exact (Synthesis.const _).complexity_le.trans (Nat.le_add_left _ _)
@@ -525,85 +457,42 @@ theorem secure_truthTableGenerator_booleanFamily [NeZero k]
     NNReal.coe_pow, NNReal.coe_ofNat, NNReal.coe_one]
   exact h
 
-end Cslib.Crypto.GGM
-
-namespace Cslib.Crypto.PRG
-
-open scoped NNReal
-
-/-- A family of length-doubling generators is *subexponentially secure* against circuits, with
-exponent `1 / d`, when on seeds of length `k` no test computed with at most `2 ^ m` gates has
-advantage more than `2 ^ (-m)` against `G k`, for every `m` with `m ^ d ≤ k`. Up to rounding,
-`G k` resists circuits of size `2 ^ (k ^ ε)` with advantage `2 ^ (-k ^ ε)` for `ε = 1 / d`, the
-hypothesis of [RazborovRudich1997]. -/
-def IsSubexponentiallySecure (G : ∀ k, Generator (BitString k) (BitString (2 * k))) (d : ℕ) :
-    Prop :=
-  ∀ k m, m ^ d ≤ k → (G k).Secure (Circuits.Boolean.IsCircuitTest (2 ^ m)) (2 ^ m)⁻¹
-
-/-- A generator family secure against circuits of size `2 ^ (k ^ ε)` with advantage
-`2 ^ (-k ^ ε)`, for some `ε > 0`, is subexponentially secure with exponent `1 / d` for every
-`d ≥ 1 / ε`. -/
-theorem IsSubexponentiallySecure.of_rpow {G : ∀ k, Generator (BitString k) (BitString (2 * k))}
-    {ε : ℝ} {d : ℕ} (hd : 1 ≤ d * ε)
-    (hG : ∀ k, (G k).Secure (Circuits.Boolean.IsCircuitTest ⌊(2 : ℝ) ^ ((k : ℝ) ^ ε)⌋₊)
-      ((2 : ℝ≥0) ^ ((k : ℝ) ^ ε))⁻¹) :
-    IsSubexponentiallySecure G d := by
-  intro k m hm
-  have hmk : (m : ℝ) ≤ (k : ℝ) ^ ε := by
-    rcases Nat.eq_zero_or_pos m with rfl | hm0
-    · simp only [CharP.cast_eq_zero]; positivity
-    have hε : 0 < ε := by
-      rcases le_or_gt ε 0 with h | h
-      · nlinarith [(Nat.cast_nonneg d : (0 : ℝ) ≤ d)]
-      · exact h
-    calc (m : ℝ) = (m : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
-      _ ≤ (m : ℝ) ^ ((d : ℝ) * ε) := Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hm0) hd
-      _ = ((m : ℝ) ^ d) ^ ε := by rw [Real.rpow_mul (by positivity), Real.rpow_natCast]
-      _ ≤ (k : ℝ) ^ ε := Real.rpow_le_rpow (by positivity) (by exact_mod_cast hm) hε.le
-  have hsize : 2 ^ m ≤ ⌊(2 : ℝ) ^ ((k : ℝ) ^ ε)⌋₊ := by
-    refine Nat.le_floor ?_
-    rw [Nat.cast_pow, Nat.cast_ofNat, ← Real.rpow_natCast]
-    exact Real.rpow_le_rpow_of_exponent_le one_le_two hmk
-  have herr : ((2 : ℝ≥0) ^ ((k : ℝ) ^ ε))⁻¹ ≤ (2 ^ m)⁻¹ := by
-    refine inv_anti₀ (by positivity) ?_
-    rw [← NNReal.rpow_natCast]
-    exact NNReal.rpow_le_rpow_of_exponent_le one_le_two hmk
-  exact ((hG k).of_admissible fun A ⟨test, htest, hA⟩ => ⟨test, htest.trans hsize, hA⟩).mono herr
-
-end Cslib.Crypto.PRG
-
-namespace Cslib.Crypto.GGM
-
-open Cslib.Circuits Cslib.Circuits.Boolean Filter
-open scoped NNReal
+/-! ### Asymptotic security -/
 
 /-- **The GGM family from a subexponentially secure generator is exponentially secure**
 [GGM1986], [RazborovRudich1997, Section 4]. Let `G` be a family of length-doubling generators of
 polynomial circuit complexity, subexponentially secure with exponent `1 / d`. With keys of length
-`(n + 1) ^ (2 d)`, the GGM functions on `n` inputs are pseudorandom against circuits of size
-`2 ^ (c n)` with error `2 ^ (-c n)` for every `c` and all large `n`. -/
+`(n + 1) ^ (2 d + 1)`, the GGM functions on `n` inputs are pseudorandom against circuits of size
+`2 ^ (c n)` with error `2 ^ (-c n)` for every `c` and all large `n`: the generator on these keys
+resists circuits of size `2 ^ (n ^ 2)`. -/
 theorem isExponentiallySecure_booleanFamily
     {G : ∀ k, PRG.Generator (BitString k) (BitString (2 * k))} {d : ℕ}
     (hsize : PolynomiallyBounded fun k => complexity interpretation ⇑(G k))
     (hG : PRG.IsSubexponentiallySecure G d) :
-    IsExponentiallySecure fun n => booleanFamily (G ((n + 1) ^ (2 * d))) n := by
+    IsExponentiallySecure fun n => booleanFamily (G ((n + 1) ^ (2 * d + 1))) n := by
   intro c
+  -- the keys are eventually long enough for the security of the generator
+  have hkey : ∀ᶠ n in atTop, ∀ m, m ^ d ≤ (n + 1) ^ (2 * d + 1) →
+      (G ((n + 1) ^ (2 * d + 1))).Secure (IsCircuitTest (2 ^ m)) (2 ^ m)⁻¹ :=
+    (tendsto_atTop_mono (fun n => (Nat.le_succ n).trans (Nat.le_self_pow (by omega) _))
+      tendsto_id).eventually hG
   have hpoly : PolynomiallyBounded fun n =>
-      n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d))) + 1 := by
-    have := hsize.comp (g := fun n => (n + 1) ^ (2 * d)) (by fun_prop)
+      n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d + 1))) + 1 := by
+    have := hsize.comp (g := fun n => (n + 1) ^ (2 * d + 1)) (by fun_prop)
     fun_prop
-  filter_upwards [hpoly.eventually_lt_two_pow, eventually_ge_atTop (c + 3)] with n hn hc
+  filter_upwards [hkey, hpoly.eventually_lt_two_pow, eventually_ge_atTop (c + 3)] with n hG hn hc
   -- the generator resists circuits with `2 ^ (n ^ 2)` gates
-  have hsec : (G ((n + 1) ^ (2 * d))).Secure (IsCircuitTest (2 ^ (n ^ 2))) (2 ^ (n ^ 2))⁻¹ :=
-    hG _ _ (by
+  have hsec : (G ((n + 1) ^ (2 * d + 1))).Secure (IsCircuitTest (2 ^ (n ^ 2))) (2 ^ (n ^ 2))⁻¹ :=
+    hG _ (by
       rw [← pow_mul]
-      exact Nat.pow_le_pow_left (Nat.le_succ n) _)
+      exact (Nat.pow_le_pow_left (Nat.le_succ n) _).trans
+        (Nat.pow_le_pow_right (Nat.succ_pos n) (Nat.le_succ _)))
   -- which exceeds the size of the reduction
-  have hsize : 2 ^ (c * n) + 2 ^ n * (n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d))) + 1)
-      ≤ 2 ^ (n ^ 2) := by
+  have hsize : 2 ^ (c * n) +
+      2 ^ n * (n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d + 1))) + 1) ≤ 2 ^ (n ^ 2) := by
     have h1 : 2 ^ (c * n) ≤ 2 ^ ((c + 3) * n - 1) := Nat.pow_le_pow_right two_pos (by
       rw [add_mul]; omega)
-    have h2 : 2 ^ n * (n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d))) + 1) ≤
+    have h2 : 2 ^ n * (n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d + 1))) + 1) ≤
         2 ^ ((c + 3) * n - 1) := by
       calc _ ≤ 2 ^ n * 2 ^ n := Nat.mul_le_mul_left _ hn.le
         _ = 2 ^ (2 * n) := by rw [← pow_add, two_mul]
@@ -628,26 +517,3 @@ theorem isExponentiallySecure_booleanFamily
         rw [mul_inv, ← mul_assoc, mul_inv_cancel₀ (by positivity), one_mul]
 
 end Cslib.Crypto.GGM
-
-namespace Cslib.Circuits.Boolean
-
-/-- **The natural proofs barrier from pseudorandom generators** [RazborovRudich1997, Section 4].
-If a family of length-doubling generators of polynomial circuit complexity is subexponentially
-secure against circuits, then no `P/poly`-natural property is useful against `P/poly`. The GGM
-functions with keys of length polynomial in the number of inputs form an exponentially secure keyed
-family whose members have circuits of polynomial size
-(`Cslib.Crypto.GGM.isExponentiallySecure_booleanFamily`,
-`Cslib.Crypto.GGM.complexity_booleanFamily_le`). -/
-theorem not_isUseful_PPoly_of_isNatural_of_generator
-    {G : ∀ k, Crypto.PRG.Generator (BitString k) (BitString (2 * k))} {d : ℕ}
-    (hsize : PolynomiallyBounded fun k => complexity interpretation ⇑(G k))
-    (hG : Crypto.PRG.IsSubexponentiallySecure G d) {C : ∀ n, Set (BooleanFunction n)}
-    (hC : IsNatural PPoly C) : ¬ IsUseful PPoly C := by
-  have hkey : PolynomiallyBounded fun n => (n + 1) ^ (2 * d) := by fun_prop
-  have hcomp := hsize.comp hkey
-  exact not_isUseful_PPoly_of_isNatural (s := fun n =>
-      n * (complexity interpretation ⇑(G ((n + 1) ^ (2 * d))) + 4 * (n + 1) ^ (2 * d)) + 2)
-    (by fun_prop) (fun n => Crypto.GGM.complexity_booleanFamily_le _ n)
-    (Crypto.GGM.isExponentiallySecure_booleanFamily hsize hG) hC
-
-end Cslib.Circuits.Boolean
