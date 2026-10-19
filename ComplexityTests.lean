@@ -20,6 +20,8 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.Code
+import ComplexityTests.Code.Concatenation
+import ComplexityTests.Code.Johnson
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2

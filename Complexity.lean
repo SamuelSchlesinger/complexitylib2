@@ -852,6 +852,10 @@ public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.Code.Basic
 public import Complexity.Foundations.Data.Code.BerlekampWelch
+public import Complexity.Foundations.Data.Code.Concatenation
+public import Complexity.Foundations.Data.Code.Hadamard
+public import Complexity.Foundations.Data.Code.HammingBound
+public import Complexity.Foundations.Data.Code.Johnson
 public import Complexity.Foundations.Data.Code.Linear
 public import Complexity.Foundations.Data.Code.ReedMuller
 public import Complexity.Foundations.Data.Code.ReedSolomon
