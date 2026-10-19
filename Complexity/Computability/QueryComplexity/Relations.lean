@@ -10,27 +10,29 @@ module
 public import Complexity.Computability.DecisionTree.Certificate
 
 /-!
-# Nisan's relations between query complexity measures
+# Relations between block sensitivity, certificate and decision tree complexity
 
-Two relations of Nisan [Nisan1991] bound certificate and decision tree complexity by block
-sensitivity, so that all three are polynomially related [BuhrmanDeWolf2002].
+Block sensitivity bounds certificate and decision tree complexity polynomially, so that the three
+are polynomially related [BuhrmanDeWolf2002].
 
-* `C(f) ≤ s(f) bs(f)` (`QueryComplexity.certificateComplexity_le_sensitivity_mul_blockSensitivity`).
-  Take a largest family of pairwise disjoint minimal sensitive blocks at `x`. Every block of it has
-  at most `s(f)` coordinates (`IsMinimalSensitiveBlock.card_le_sensitivity`), and their union is a
-  certificate for `x`: an input agreeing with `x` on it but with a different value differs from `x`
-  on a sensitive block disjoint from the family, which contains a minimal one and would enlarge the
-  family.
+* `C(f) ≤ s(f) bs(f)`, due to Nisan [Nisan1991]
+  (`QueryComplexity.certificateComplexity_le_sensitivity_mul_blockSensitivity`). Take a largest
+  family of pairwise disjoint minimal sensitive blocks at `x`. Every block of it has at most `s(f)`
+  coordinates (`IsMinimalSensitiveBlock.card_le_sensitivity`), and their union is a certificate for
+  `x`: an input agreeing with `x` on it but with a different value differs from `x` on a sensitive
+  block disjoint from the family, which contains a minimal one and would enlarge the family.
 * `D(f) ≤ bs₀(f) C₁(f) ≤ C(f) bs(f)`, where `bs_b(f)` and `C_b(f)` are the largest block
   sensitivity and certificate complexity at an input of value `b`
-  (`DecisionTree.complexity_le_blockSensitivityFor_mul_certificateComplexityFor`). Query a
-  smallest certificate of an input of value `1`. If the function restricted by the answers is not
-  constant `1`, every input of value `0` of the restricted function has one more sensitive block in
-  the original function, the coordinates of the certificate on which it differs from the input of
-  value `1`, so its block sensitivity has dropped.
+  (`DecisionTree.complexity_le_blockSensitivityFor_mul_certificateComplexityFor`). This is a
+  one-sided form of the bound `D(f) ≤ C₁(f) bs(f)` of Beals, Buhrman, Cleve, Mosca and de Wolf
+  [BealsBuhrmanCleveMoscaDeWolf2001] ([BuhrmanDeWolf2002], Theorem 11). Query a smallest
+  certificate of an input of value `1`. Every input of value `0` of the function restricted by the
+  answers has one more sensitive block in the original function, the coordinates of the
+  certificate on which it differs from the input of value `1`, so its block sensitivity has
+  dropped.
 
 With `C(f) ≤ s(f) bs(f) ≤ bs(f)²` this gives `D(f) ≤ bs(f)³`
-(`DecisionTree.complexity_le_blockSensitivity_pow_three`).
+(`DecisionTree.complexity_le_blockSensitivity_pow_three`; [BuhrmanDeWolf2002], Corollary 1).
 
 ## Main definitions
 
@@ -53,6 +55,8 @@ With `C(f) ≤ s(f) bs(f) ≤ bs(f)²` this gives `D(f) ≤ bs(f)³`
 ## References
 
 * [N. Nisan, *CREW PRAMs and decision trees*][Nisan1991]
+* [R. Beals, H. Buhrman, R. Cleve, M. Mosca, R. de Wolf, *Quantum lower bounds by
+  polynomials*][BealsBuhrmanCleveMoscaDeWolf2001]
 * [H. Buhrman, R. de Wolf, *Complexity measures and decision tree complexity:
   a survey*][BuhrmanDeWolf2002]
 -/
@@ -247,8 +251,7 @@ theorem blockSensitivityAt_comp_piecewise_add_one_le {w : BitString n} {S : Fins
   have := card_le_blockSensitivityAt hG
   rwa [card_insert_of_notMem hB₀F, card_image_of_injOn hinj, ← hFcard] at this
 
-/-- Restricting by the answers to a certificate of an input of value `1` lowers `bs₀(f)` unless the
-restricted function is constant `1`. -/
+/-- Restricting by the answers to a certificate of an input of value `1` lowers `bs₀(f)`. -/
 theorem blockSensitivityFor_comp_piecewise_false_le {w : BitString n} {S : Finset (Fin n)}
     (hS : IsCertificate f w S) (hw : f w = true) (a : BitString n) {m : ℕ}
     (hm : blockSensitivityFor f false ≤ m + 1) :
@@ -265,7 +268,9 @@ namespace DecisionTree
 
 open QueryComplexity
 
-/-- **Nisan's bound on decision tree complexity**: `D(f) ≤ bs₀(f) C₁(f)`. -/
+/-- **Decision tree complexity from block sensitivity and certificates**: `D(f) ≤ bs₀(f) C₁(f)`, a
+one-sided form of the bound `D(f) ≤ C₁(f) bs(f)` of Beals, Buhrman, Cleve, Mosca and de Wolf
+[BealsBuhrmanCleveMoscaDeWolf2001]. -/
 theorem complexity_le_blockSensitivityFor_mul_certificateComplexityFor (f : BooleanFunction n) :
     complexity f ≤ blockSensitivityFor f false * certificateComplexityFor f true := by
   suffices ∀ m (f : BooleanFunction n), blockSensitivityFor f false ≤ m →
@@ -302,7 +307,7 @@ theorem complexity_le_blockSensitivityFor_mul_certificateComplexityFor (f : Bool
     rw [hScard, Nat.succ_mul, add_comm]
     exact Nat.add_le_add_left (certificateComplexityAt_le_certificateComplexityFor hw) _
 
-/-- **Nisan's bound**: `D(f) ≤ C(f) bs(f)`. -/
+/-- `D(f) ≤ C(f) bs(f)` [BealsBuhrmanCleveMoscaDeWolf2001]. -/
 theorem complexity_le_certificateComplexity_mul_blockSensitivity (f : BooleanFunction n) :
     complexity f ≤ certificateComplexity f * blockSensitivity f :=
   (complexity_le_blockSensitivityFor_mul_certificateComplexityFor f).trans (by
@@ -310,7 +315,8 @@ theorem complexity_le_certificateComplexity_mul_blockSensitivity (f : BooleanFun
     exact Nat.mul_le_mul (certificateComplexityFor_le_certificateComplexity f true)
       (blockSensitivityFor_le_blockSensitivity f false))
 
-/-- **Decision tree complexity is at most the cube of block sensitivity**: `D(f) ≤ bs(f)³`. -/
+/-- **Decision tree complexity is at most the cube of block sensitivity**: `D(f) ≤ bs(f)³`
+[BealsBuhrmanCleveMoscaDeWolf2001]. -/
 theorem complexity_le_blockSensitivity_pow_three (f : BooleanFunction n) :
     complexity f ≤ blockSensitivity f ^ 3 :=
   (complexity_le_certificateComplexity_mul_blockSensitivity f).trans (by

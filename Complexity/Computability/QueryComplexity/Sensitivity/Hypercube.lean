@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Fourier
-public import Mathlib.Analysis.SpecialFunctions.Sqrt
+public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
@@ -21,8 +21,12 @@ Every set `V` of more than half of the points of the cube `ι → Bool` contains
 `V` has at least `√|S|` neighbors in `V` in the directions of `S`
 (`BitString.exists_mem_sqrt_card_le_card_update_mem`).
 
-The proof is Huang's, with the eigenvalue count done by comparing dimensions, so no interlacing is
-needed. Order the coordinates and sign the edge from `x` in direction `i` by the character of the
+The theorem and its signed adjacency matrix, which squares to `|ι|`, are Huang's [Huang2019].
+Huang counts eigenvalues with Cauchy's interlacing theorem, which Mathlib lacks; here a dimension
+count replaces it. Mathlib's `Archive/Sensitivity.lean` formalizes the case `S = univ`, but the
+Archive cannot be imported.
+
+Order the coordinates and sign the edge from `x` in direction `i` by the character of the
 coordinates of `S` below `i`. The resulting signed adjacency operator `A` along `S`
 (`BitString.signedAdjacency`) squares to `|S|` (`BitString.signedAdjacency_signedAdjacency`),
 because the two paths around every square of the cube carry opposite signs. So its eigenspaces for

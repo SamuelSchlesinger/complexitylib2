@@ -22,7 +22,7 @@ monomials of at most `D` coordinates, that is, the least `D` with `f ∈ BitStri
 it is also the least total degree of a polynomial that agrees with `f` on the cube. Over `ℝ` the
 characters `χ_S` and the monomials of at most `D` coordinates span the same functions, so the
 total degree is the largest size of a set with a nonzero Fourier coefficient
-(`BitString.mem_lowDegree_iff_fourierCoeff`,
+(`BitString.mem_lowDegree_iff_fourierCoeff_eq_zero`,
 `BitString.exists_card_eq_totalDegree_fourierCoeff_ne_zero`).
 
 The degree `deg(f)` of a Boolean function is the total degree of its values `0` and `1` read in
@@ -44,8 +44,8 @@ degree at most `d` over any commutative ring, since a node querying `i` computes
 
 * `Cslib.BitString.totalDegree_le_iff_mem_lowDegree`: the total degree is the least `D` with
   `f ∈ lowDegree R ι D`.
-* `Cslib.BitString.mem_lowDegree_iff_fourierCoeff`: over `ℝ`, low degree is the vanishing of the
-  Fourier coefficients on larger sets.
+* `Cslib.BitString.mem_lowDegree_iff_fourierCoeff_eq_zero`: over `ℝ`, low degree is the vanishing
+  of the Fourier coefficients on larger sets.
 * `Cslib.BitString.exists_card_eq_totalDegree_fourierCoeff_ne_zero`: the total degree is attained
   by a nonzero Fourier coefficient.
 * `Cslib.DecisionTree.comp_eval_mem_lowDegree`: decision trees of depth `d` compute functions of
@@ -54,8 +54,8 @@ degree at most `d` over any commutative ring, since a node querying `i` computes
   depend on reading its values as bits or as signs.
 * `Cslib.DecisionTree.degree_le_complexity`: `deg(f) ≤ D(f)`.
 * `Cslib.QueryComplexity.degree_parity`, `Cslib.QueryComplexity.degree_threshold_self`,
-  `Cslib.QueryComplexity.degree_threshold_one`: parity, conjunction and disjunction of `n` bits
-  have degree `n`.
+  `Cslib.QueryComplexity.degree_threshold_one_right`: parity, conjunction and disjunction of `n`
+  bits have degree `n`.
 
 ## References
 
@@ -140,7 +140,7 @@ theorem fourierCoeff_eq_zero_of_mem_lowDegree (hf : f ∈ lowDegree ℝ ι D) {S
 
 /-- **Low degree is Fourier degree**: a real function is a combination of monomials of at most `D`
 coordinates exactly when its Fourier coefficients on sets of more than `D` coordinates vanish. -/
-theorem mem_lowDegree_iff_fourierCoeff :
+theorem mem_lowDegree_iff_fourierCoeff_eq_zero :
     f ∈ lowDegree ℝ ι D ↔ ∀ S : Finset ι, D < #S → fourierCoeff f S = 0 := by
   refine ⟨fun hf S hS => fourierCoeff_eq_zero_of_mem_lowDegree hf hS, fun h => ?_⟩
   have hf : f = ∑ S, fourierCoeff f S • chi ℝ S := by
@@ -161,16 +161,16 @@ theorem card_le_totalDegree_of_fourierCoeff_ne_zero {S : Finset ι} (h : fourier
 
 /-- The total degree of a real function is at most `D` exactly when its Fourier coefficients vanish
 on the sets of more than `D` coordinates. -/
-theorem totalDegree_le_iff_fourierCoeff :
+theorem totalDegree_le_iff_fourierCoeff_eq_zero :
     totalDegree f ≤ D ↔ ∀ S : Finset ι, D < #S → fourierCoeff f S = 0 :=
-  totalDegree_le_iff_mem_lowDegree.trans mem_lowDegree_iff_fourierCoeff
+  totalDegree_le_iff_mem_lowDegree.trans mem_lowDegree_iff_fourierCoeff_eq_zero
 
 /-- **The total degree is attained**: a real function of positive total degree has a nonzero
 Fourier coefficient on a set of exactly its total degree coordinates. -/
 theorem exists_card_eq_totalDegree_fourierCoeff_ne_zero (h : totalDegree f ≠ 0) :
     ∃ S : Finset ι, #S = totalDegree f ∧ fourierCoeff f S ≠ 0 := by
   have hlt : ¬ totalDegree f ≤ totalDegree f - 1 := by omega
-  rw [totalDegree_le_iff_fourierCoeff] at hlt
+  rw [totalDegree_le_iff_fourierCoeff_eq_zero] at hlt
   push Not at hlt
   obtain ⟨S, hS, hne⟩ := hlt
   exact ⟨S, le_antisymm (card_le_totalDegree_of_fourierCoeff_ne_zero hne) (by omega), hne⟩
@@ -301,7 +301,7 @@ theorem degree_threshold_self : degree (threshold n n) = n := by
 
 /-- The disjunction of `n` bits has degree `n`: it is the negation of the conjunction of the
 negated bits. -/
-theorem degree_threshold_one : degree (threshold n 1) = n := by
+theorem degree_threshold_one_right : degree (threshold n 1) = n := by
   have h : threshold n 1 = fun x => !threshold n n fun i => !x i := by
     funext x
     rw [threshold_one_right, threshold_self, ← decide_not]

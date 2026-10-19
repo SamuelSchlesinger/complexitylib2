@@ -41,7 +41,7 @@ private theorem sensitivityAt_and {n : ℕ} :
 
 example {n : ℕ} : degree (threshold n 1) = n ∧ sensitivity (threshold n 1) = n ∧
     DecisionTree.complexity (threshold n 1) = n :=
-  ⟨degree_threshold_one,
+  ⟨degree_threshold_one_right,
     le_antisymm (sensitivity_le_card _) (sensitivityAt_or.symm.trans_le
       (sensitivityAt_le_sensitivity _ _)),
     DecisionTree.complexity_eq_card_of_sensitivityAt_eq_card sensitivityAt_or⟩
@@ -83,10 +83,27 @@ example : sensitivity address = 2 ∧ blockSensitivity address = 2 ∧
     certificateComplexityFor address true = 2 := by
   refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> decide
 
-/-- Huang's theorem bounds the degree of majority of three bits by `s² = 4`. -/
-example : degree (majority 3) ≤ 4 := by
-  have h := degree_le_sensitivity_sq (majority 3)
-  rwa [show sensitivity (majority 3) = 2 by decide] at h
+/-- Read as signs, majority of three bits has Fourier coefficient `-1/2` on all three coordinates:
+the sum defining it, computed over `ℤ`, is `-4`. -/
+private theorem fourierCoeff_majority_three_univ :
+    fourierCoeff (fun x : BitString 3 => signVal (majority 3 x)) univ = -1 / 2 := by
+  have hint : ∑ x : BitString 3, (if majority 3 x then (-1 : ℤ) else 1) * chi ℤ univ x = -4 := by
+    decide
+  have hreal : ∑ x : BitString 3, signVal (majority 3 x) * chi ℝ univ x = -4 := by
+    rw [← show ((-4 : ℤ) : ℝ) = -4 by norm_num, ← hint]
+    push_cast [signVal, chi]
+    rfl
+  rw [fourierCoeff_eq_sum, hreal, Fintype.card_fin]
+  norm_num
+
+/-- Majority of three bits has degree `3` but sensitivity `2`: the degree can exceed the
+sensitivity, within Huang's bound `deg ≤ s² = 4`. -/
+example : degree (majority 3) = 3 ∧ sensitivity (majority 3) = 2 := by
+  refine ⟨le_antisymm (degree_le_card _) ?_, by decide⟩
+  have h := card_le_degree_of_fourierCoeff_ne_zero (f := majority 3) (S := univ) (by
+    rw [fourierCoeff_majority_three_univ]
+    norm_num)
+  rwa [card_univ, Fintype.card_fin] at h
 
 /-- Nisan's bounds for the address function: `C ≤ s bs = 4` and `D ≤ bs₀ C₁ = 4`. -/
 example : certificateComplexity address ≤ 4 ∧ DecisionTree.complexity address ≤ 4 := by
@@ -147,10 +164,10 @@ example {ι : Type*} [LinearOrder ι] (S : Finset ι) (v : (ι → Bool) → ℝ
 /-! ### Axiom checks for headline theorems -/
 
 /--
-info: 'Cslib.BitString.mem_lowDegree_iff_fourierCoeff' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.BitString.mem_lowDegree_iff_fourierCoeff_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.mem_lowDegree_iff_fourierCoeff
+#print axioms Cslib.BitString.mem_lowDegree_iff_fourierCoeff_eq_zero
 
 /--
 info: 'Cslib.DecisionTree.degree_le_complexity' depends on axioms: [propext, Classical.choice, Quot.sound]
