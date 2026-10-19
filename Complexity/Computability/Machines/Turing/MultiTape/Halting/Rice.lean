@@ -174,9 +174,9 @@ end Dispatch
 
 open Dispatch in
 /-- **Dispatching on a computed bit.** The description runs the machine `tm`, buffering its output
-on a new first work tape, the virtual input tape; when `tm` halts with output `b :: v`, it runs the
-description `d b` on `v`, reading it from the virtual input tape
-(`Turing.MultiTapeTM.Universal.Desc.computes_dispatch`). -/
+on a new first work tape, the virtual input tape; when `tm` halts with output `b :: v` and blank
+work tapes, as after a tidy computation, it runs the description `d b` on `v`, reading it from the
+virtual input tape (`Turing.MultiTapeTM.Universal.Desc.computes_dispatch`). -/
 noncomputable def dispatch {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ) (tm : MultiTapeTM k Bool S)
     (d : Bool → Desc) : Desc :=
   ⟨k + width d + 1, 0, markerEntries eS tm d ++ runEntries eS tm d ++ branchEntries d k ++
