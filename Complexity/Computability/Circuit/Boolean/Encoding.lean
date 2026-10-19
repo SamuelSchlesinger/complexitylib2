@@ -27,7 +27,9 @@ Decoding (`Program.ofCode`, `Circuit.ofCode`) checks that every line has as many
 operation's arity and reads only inputs and earlier gates, and that the outputs are wires of the
 circuit. It inverts coding (`Circuit.ofCode_code`), and every list it accepts is the code of the
 circuit it returns (`Circuit.code_of_ofCode_eq_some`); so a list of gates that passes these checks
-is a circuit, with the usual semantics. All of this is defined for an arbitrary signature.
+is a circuit, with the usual semantics. The lists it accepts are described by `Program.IsCodeFrom`
+(`Program.isSome_ofCode_iff`, `Circuit.isSome_ofCode_iff`). All of this is defined for an
+arbitrary signature.
 
 For the De Morgan basis, an operation is written as its number `Boolean.Op.toNat` in unary and a
 wire number in binary (`Boolean.encGate`). A circuit with `n` inputs and `m` outputs is encoded by
@@ -44,6 +46,7 @@ logarithmically many bits.
   as lists of gates.
 * `Cslib.Circuits.Line.ofCode`, `Cslib.Circuits.Program.ofCode`, `Cslib.Circuits.Circuit.ofCode`:
   decoding, with the well-formedness checks.
+* `Cslib.Circuits.Program.IsCodeFrom`: the lists of gates that are codes of programs.
 * `Cslib.Circuits.Boolean.encOp`, `Cslib.Circuits.Boolean.encGate`,
   `Cslib.Circuits.Boolean.encCode`, `Cslib.Circuits.Boolean.encCircuit`: binary encodings of De
   Morgan circuits.
@@ -54,6 +57,8 @@ logarithmically many bits.
   coding.
 * `Cslib.Circuits.Program.code_of_ofCode_eq_some`, `Cslib.Circuits.Circuit.code_of_ofCode_eq_some`:
   an accepted list is the code of the decoded circuit.
+* `Cslib.Circuits.Program.isSome_ofCode_iff`, `Cslib.Circuits.Circuit.isSome_ofCode_iff`: the
+  lists that decode.
 * `Cslib.Circuits.Circuit.code_injective`: coding is injective.
 * `Cslib.Circuits.Boolean.le_length_encCircuit`: the encoding is at least as long as the number of
   inputs.
@@ -188,10 +193,10 @@ def IsCodeFrom (σ : Signature.{v}) (n : ℕ) : ℕ → List (σ.Op × List ℕ)
   | k, g :: gates =>
     (g.2.length = σ.Arity g.1 ∧ ∀ i ∈ g.2, i < n + k) ∧ IsCodeFrom σ n (k + 1) gates
 
-instance (k : ℕ) (gates : List (σ.Op × List ℕ)) : Decidable (IsCodeFrom σ n k gates) := by
-  induction gates generalizing k with
-  | nil => exact isTrue trivial
-  | cons g gates ih => exact @instDecidableAnd _ _ inferInstance (ih (k + 1))
+instance instDecidableIsCodeFrom :
+    (k : ℕ) → (gates : List (σ.Op × List ℕ)) → Decidable (IsCodeFrom σ n k gates)
+  | _, [] => isTrue trivial
+  | k, _ :: gates => @instDecidableAnd _ _ inferInstance (instDecidableIsCodeFrom (k + 1) gates)
 
 @[simp] theorem isCodeFrom_nil (k : ℕ) : IsCodeFrom σ n k [] := trivial
 
@@ -376,7 +381,7 @@ def encCircuit (m : ℕ) : (Σ n, Circuit signature n m) ↪ List Bool :=
 theorem encCircuit_apply (c : Σ n, Circuit signature n m) :
     encCircuit m c = encPair encUnary encCode (c.1, c.2.code) := rfl
 
-/-- The encoding of a circuit is longer than its number of inputs. -/
+/-- The encoding of a circuit is at least as long as its number of inputs. -/
 theorem le_length_encCircuit (c : Σ n, Circuit signature n m) : c.1 ≤ (encCircuit m c).length := by
   rw [encCircuit_apply, length_encPair]
   simp only [encUnary_apply, List.length_replicate]
