@@ -288,14 +288,6 @@ theorem computableTidilyInPolyTime_relabel {γ : Type} {input : γ ↪ List Bool
 
 /-! ### Relabeling by random keys -/
 
-private theorem binaryValue_lt (word : List Bool) :
-    BitString.binaryValue word < 2 ^ word.length := by
-  induction word using List.reverseRecOn with
-  | nil => simp [BitString.binaryValue]
-  | append_singleton word bit ih =>
-    rw [BitString.binaryValue_snoc, List.length_append, List.length_singleton, pow_succ]
-    cases bit <;> simp <;> omega
-
 private theorem binaryValue_injective {word word' : List Bool} (hlen : word.length = word'.length)
     (h : BitString.binaryValue word = BitString.binaryValue word') : word = word' := by
   induction word using List.reverseRecOn generalizing word' with
@@ -321,7 +313,7 @@ def keyValue {w : ℕ} (row : BitString w) : ℕ :=
 theorem keyValue_injective (w : ℕ) : Function.Injective (keyValue (w := w)) := by
   intro r r' h
   have hlt (r : BitString w) : BitString.binaryValue (List.ofFn r) ≤ 2 ^ w := by
-    simpa using (binaryValue_lt (List.ofFn r)).le
+    simpa using (BitString.binaryValue_lt_two_pow (List.ofFn r)).le
   simp only [keyValue, BitString.boundedBinaryValue_eq, Nat.min_eq_right (hlt _)] at h
   exact List.ofFn_injective (binaryValue_injective (by simp) h)
 
