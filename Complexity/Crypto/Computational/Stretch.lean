@@ -44,8 +44,12 @@ workspace during the streaming loop, and then apply one linear-time zero-workspa
 ## Main results
 
 * `PRGStretch.polyTime_iterate`: captured functional iteration has a uniform TM certificate.
-* `PRGStretch.computableTidilyInTimeAndSpace_forwardIterate`: streaming `k` expansions in forward
-  order with cumulative time and `k`-independent workspace `O(Q + n + 1)`.
+* `PRGStretch.forwardIterate_eq`: the forward representation emits each round's bit in generation
+  order, then the reversed final seed.
+* `PRGStretch.computableTidilyInTimeAndSpace_forwardIterate`,
+  `PRGStretch.computableTidilyInTimeAndSpace_forwardIterate_captured`: streaming `k` expansions in
+  forward order with cumulative time and `k`-independent workspace `O(Q + n + 1)`, both clients of
+  `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum`.
 * `PRGStretch.computableTidilyInTimeAndSpace_iterate_pair`,
   `PRGStretch.computableTidilyInTimeAndSpace_iterate_captured`,
   `PRGStretch.computableTidilyInTimeAndSpace_stretch`,
@@ -236,17 +240,8 @@ theorem length_seedAt {generator : List Bool → List Bool} {seed : List Bool}
 theorem streamState_replicate_eq_seedAt (generator : List Bool → List Bool) (seed : List Bool)
     (count j : ℕ) (hj : j ≤ count) :
     streamState seed (fun p : List Bool × Bool => seedStep generator p.1)
-      (List.replicate count true) j = seedAt generator seed j := by
-  have haux : ∀ (m : ℕ) (s : List Bool),
-      (List.replicate m true).foldl (fun acc _ => seedStep generator acc) s =
-        (seedStep generator)^[m] s := by
-    intro m
-    induction m with
-    | zero => intro s; rfl
-    | succ m ih =>
-      intro s
-      rw [List.replicate_succ, List.foldl_cons, ih, Function.iterate_succ_apply]
-  rw [streamState, List.take_replicate, Nat.min_eq_left hj, haux, seedAt]
+      (List.replicate count true) j = seedAt generator seed j :=
+  streamState_replicate (seedStep generator) seed true hj
 
 /-- Expanding `seed ++ suffix` for `count` rounds produces `seedAt generator seed count`, followed
 by the emitted bits in reverse generation order, followed by `suffix`. -/
@@ -305,12 +300,56 @@ theorem length_forwardIterate_of_forall {generator : List Bool → List Bool}
     (forwardIterate generator count seed).length = seed.length + count :=
   length_forwardIterate (fun s hs => by rw [hlen, hs]) count
 
+/-- `forwardIterate` emits the bits of the rounds in generation order, then the reversed final
+seed. -/
+theorem forwardIterate_eq (generator : List Bool → List Bool) (count : ℕ) (seed : List Bool) :
+    forwardIterate generator count seed =
+      ((List.range count).map fun i => emitBit generator (seedAt generator seed i)).flatten ++
+        (seedAt generator seed count).reverse := by
+  rw [forwardIterate, streamEmit_eq, List.length_replicate]
+  congr 2
+  refine List.map_congr_left fun i hi => ?_
+  have hi' := List.mem_range.mp hi
+  simp [hi', streamState_replicate_eq_seedAt generator seed count i hi'.le]
+
+private theorem iterate_seedStep (generator : List Bool → List Bool) (seed : List Bool) (i : ℕ) :
+    (seedStep generator)^[i] seed = seedAt generator seed i := rfl
+
+/-- A captured parameter stays fixed while the seed follows its trajectory. -/
+private theorem iterate_seedStep_captured {α : Type} (generator : α → List Bool → List Bool)
+    (q : α × List Bool) (i : ℕ) :
+    (fun q : α × List Bool => (q.1, seedStep (generator q.1) q.2))^[i] q =
+      (q.1, seedAt (generator q.1) q.2 i) := by
+  induction i with
+  | zero => rfl
+  | succ i ih => rw [Function.iterate_succ_apply', ih, seedAt_succ]
+
+/-- Reversing a forward certificate yields `iterate`, charging the `(n + k)`-bit reversal
+buffer. -/
+private theorem iterate_of_forwardIterate {γ : Type} {encIn : γ ↪ List Bool}
+    {generator : γ → List Bool → List Bool} {seed : γ → List Bool} {count : γ → ℕ}
+    (hlen : ∀ x s, (generator x s).length = s.length + 1) {t s : γ → ℕ}
+    (h : ComputableTidilyInTimeAndSpace (fun x => forwardIterate (generator x) (count x) (seed x))
+      encIn encBits t s) :
+    ∃ c, ComputableTidilyInTimeAndSpace
+      (fun x => iterate (generator x) (seed x).length (count x) (seed x)) encIn encBits
+      (fun x => c * (t x + (seed x).length + count x + 1))
+      (fun x => c * (s x + (seed x).length + count x + 1)) := by
+  obtain ⟨c, hrev⟩ := ComputableTidilyInTimeAndSpace.reverse_bits.comp h
+  have heq : (List.reverse ∘ fun x => forwardIterate (generator x) (count x) (seed x)) =
+      fun x => iterate (generator x) (seed x).length (count x) (seed x) :=
+    funext fun x => reverse_forwardIterate_eq_iterate_of_forall (hlen x) (seed x) (count x)
+  rw [heq] at hrev
+  refine ⟨c + 13, hrev.mono (fun x => ?_) (fun x => ?_)⟩ <;>
+  · simp only [encBits_apply, length_forwardIterate_of_forall (hlen x)]
+    nlinarith
+
 /-- **Quantitative streaming certificate for `forwardIterate`.** On input `(seed, count)` encoded
 with `encPair encBits encUnary`, `forwardIterate` streams `count` rounds directly from the unary
 suffix on the input tape, emitting each round's bit in generation order and finishing with the
-reversed final seed. Because `streamFold_pair_sum` executes the `emit` and `next` callbacks
-sequentially in each round, both generator evaluations are accounted for in the round cost;
-workspace is `O(Q + seed.length + 1)`, independent of the round count `count`. -/
+reversed final seed. Each round runs the generator twice, once for the next seed and once for the
+emitted bit, and both runs are charged; workspace is `O(Q + seed.length + 1)`, independent of the
+round count `count`. -/
 theorem computableTidilyInTimeAndSpace_forwardIterate
     {generator : List Bool → List Bool} {tGen sGen : List Bool → ℕ}
     (hlen : ∀ s, (generator s).length = s.length + 1)
@@ -323,84 +362,37 @@ theorem computableTidilyInTimeAndSpace_forwardIterate
       (fun p => c * (p.1.length + p.2 +
         (∑ i ∈ Finset.range p.2, (tGen (seedAt generator p.1 i) + p.1.length + 1)) + 1))
       (fun p => c * (Q p + p.1.length + 1)) := by
-  obtain ⟨cfst, hfst⟩ := PairEncoding.fst (enc₁ := encBits) (enc₂ := encBool)
-    (enc := encPair encBits encBool)
-  obtain ⟨c₁, hgen_fst⟩ := hgen.comp hfst
-  obtain ⟨c₂, hnext₀⟩ := ComputableTidilyInTimeAndSpace.dropLast_bits.comp hgen_fst
-  obtain ⟨c₃, hemit₀⟩ := ComputableTidilyInTimeAndSpace.getLast_bits.comp hgen_fst
-  set c_step := 3 * cfst + c₁ + c₂ + c₃ + 40
-  have hnext : ComputableTidilyInTimeAndSpace
-      (fun q : List Bool × Bool => seedStep generator q.1)
-      (encPair encBits encBool) encBits
-      (fun q => tGen q.1 + c_step * (q.1.length + 1))
-      (fun q => sGen q.1 + c_step * (q.1.length + 1)) := by
-    change ComputableTidilyInTimeAndSpace (fun q : List Bool × Bool => seedStep generator q.1)
-      (encPair encBits encBool) encBits _ _ at hnext₀
-    refine hnext₀.mono (fun q => ?_) (fun q => ?_) <;>
-      · simp only [Function.comp_apply, length_encPair, encBits_apply, encBool_apply,
-          List.length_singleton, hlen q.1, c_step]
-        ring_nf
-        omega
-  have hemit : ComputableTidilyInTimeAndSpace
-      (fun q : List Bool × Bool => emitBit generator q.1)
-      (encPair encBits encBool) encBits
-      (fun q => tGen q.1 + c_step * (q.1.length + 1))
-      (fun q => sGen q.1 + c_step * (q.1.length + 1)) := by
-    change ComputableTidilyInTimeAndSpace (fun q : List Bool × Bool => emitBit generator q.1)
-      (encPair encBits encBool) encBits _ _ at hemit₀
-    refine hemit₀.mono (fun q => ?_) (fun q => ?_) <;>
-      · simp only [Function.comp_apply, length_encPair, encBits_apply, encBool_apply,
-          List.length_singleton, hlen q.1, c_step]
-        ring_nf
-        omega
-  let reader : InputReader Bool Unit := ⟨(), fun _ b => (none, some b)⟩
-  set Kstep := 2 * c_step + 4
-  obtain ⟨c, h⟩ := ComputableTidilyInTimeAndSpace.streamFold_pair_sum
-    (g := fun p : List Bool × ℕ => forwardIterate generator p.2 p.1)
-    (encIn := encPair encBits encUnary) (encOut := encBits)
-    reader (fun b => [b]) (fun _ => List.cons_ne_nil _ _)
-    (fun a rest => by simp [reader, InputReader.read])
-    Prod.fst (fun p => List.replicate p.2 true)
-    (fun p => by simp [encPair_apply, encUnary_apply])
-    hnext hemit ComputableTidilyInTimeAndSpace.reverse_bits
-    (fun p => by
-      simp only [forwardIterate, encBits_apply, List.length_replicate,
-        streamState_replicate_eq_seedAt generator p.1 p.2 p.2 le_rfl])
-    (roundCost := fun p i =>
-      Kstep * (tGen (seedAt generator p.1 i) + p.1.length + 1))
-    (sMax := fun p => 2 * Q p + Kstep * (p.1.length + 1))
-    (lMax := fun p => p.1.length + 1)
-    (fun p i hi => by
-      have hi' : i < p.2 := by simpa using hi
-      rw [streamState_replicate_eq_seedAt generator p.1 p.2 i hi'.le,
-        streamState_replicate_eq_seedAt generator p.1 p.2 (i + 1) hi']
-      simp only [encBits_apply, encBool_apply, List.length_singleton,
-        length_seedAt_of_forall hlen, Kstep]
+  obtain ⟨c₁, hnext₀⟩ := ComputableTidilyInTimeAndSpace.dropLast_bits.comp hgen
+  obtain ⟨c₂, hemit₀⟩ := ComputableTidilyInTimeAndSpace.getLast?_toList_bits.comp hgen
+  obtain ⟨K, hK⟩ : ∃ K, K = c₁ + c₂ + 30 := ⟨_, rfl⟩
+  have hnext : ComputableTidilyInTimeAndSpace (seedStep generator) encBits encBits
+      (fun s => tGen s + K * (s.length + 1)) (fun s => sGen s + K * (s.length + 1)) :=
+    hnext₀.mono (fun s => by simp only [encBits_apply, hlen]; nlinarith)
+      (fun s => by simp only [encBits_apply, hlen]; nlinarith)
+  have hemit : ComputableTidilyInTimeAndSpace (emitBit generator) encBits encBits
+      (fun s => tGen s + K * (s.length + 1)) (fun s => sGen s + K * (s.length + 1)) :=
+    hemit₀.mono (fun s => by simp only [encBits_apply, hlen]; nlinarith)
+      (fun s => by simp only [encBits_apply, hlen]; nlinarith)
+  obtain ⟨c, h⟩ := hnext.iterate_unary_stream_sum hemit
+    ComputableTidilyInTimeAndSpace.reverse_bits
+    (R := fun p i => (2 * K + 2) * (tGen (seedAt generator p.1 i) + p.1.length + 1))
+    (Q := fun p => 2 * Q p + 2 * K * (p.1.length + 1)) (B := fun p => p.1.length)
+    (fun p i _ => by
+      simp only [iterate_seedStep, encBits_apply, length_seedAt_of_forall hlen]
       nlinarith)
     (fun p i hi => by
-      have hi' : i < p.2 := by simpa using hi
-      have hsp := hspace p i hi'
-      rw [streamState_replicate_eq_seedAt generator p.1 p.2 i hi'.le]
-      simp only [length_seedAt_of_forall hlen, Kstep]
+      have := hspace p i hi
+      simp only [iterate_seedStep, length_seedAt_of_forall hlen]
       nlinarith)
-    (fun p i hi => by
-      have hi' : i ≤ p.2 := by simpa using hi
-      rw [encBits_apply, streamState_replicate_eq_seedAt generator p.1 p.2 i hi',
-        length_seedAt_of_forall hlen]
-      omega)
-    (fun _ _ _ => by simp)
-  refine ⟨c * (Kstep + 10), h.mono (fun p => ?_) (fun p => ?_)⟩
-  · have hsum_nonneg :
-        0 ≤ ∑ i ∈ Finset.range p.2, (tGen (seedAt generator p.1 i) + p.1.length + 1) :=
-      Nat.zero_le _
-    simp only [encPair_apply, length_frame, encBits_apply, encUnary_apply, List.length_append,
-      List.length_replicate, streamState_replicate_eq_seedAt generator p.1 p.2 p.2 le_rfl,
-      length_seedAt_of_forall hlen, ← Finset.mul_sum, Nat.mul_assoc]
-    apply Nat.mul_le_mul_left c
-    nlinarith
-  · rw [Nat.mul_assoc]
-    apply Nat.mul_le_mul_left c
-    nlinarith
+    (fun p i _ => by simp only [iterate_seedStep, encBits_apply, length_seedAt_of_forall hlen]; rfl)
+  refine ⟨c * (2 * K + 6), ?_⟩
+  simp only [forwardIterate_eq]
+  refine h.mono (fun p => ?_) (fun p => ?_) <;>
+    simp only [iterate_seedStep, length_seedAt_of_forall hlen, ← Finset.mul_sum, Nat.mul_assoc] <;>
+    refine Nat.mul_le_mul_left c ?_
+  · generalize ∑ i ∈ Finset.range p.2, (tGen (seedAt generator p.1 i) + p.1.length + 1) = S
+    nlinarith [Nat.zero_le (K * p.1.length), Nat.zero_le (K * p.2)]
+  · nlinarith [Nat.zero_le (K * Q p)]
 
 /-- **Quantitative cumulative-time and workspace certificate for `PRGStretch.iterate`.**
 Composing `forwardIterate` with the linear-time zero-workspace reversal primitive
@@ -421,19 +413,12 @@ theorem computableTidilyInTimeAndSpace_iterate_pair
         (∑ i ∈ Finset.range p.2, (tGen (seedAt generator p.1 i) + p.1.length + 1)) + 1))
       (fun p => c * (Q p + p.1.length + p.2 + 1)) := by
   obtain ⟨c₁, hfwd⟩ := computableTidilyInTimeAndSpace_forwardIterate hlen hgen hspace
-  obtain ⟨c₂, hrev⟩ := ComputableTidilyInTimeAndSpace.reverse_bits.comp hfwd
-  have heq : (List.reverse ∘ fun p : List Bool × ℕ => forwardIterate generator p.2 p.1) =
-      fun p : List Bool × ℕ => iterate generator p.1.length p.2 p.1 := by
-    funext p
-    exact reverse_forwardIterate_eq_iterate_of_forall hlen p.1 p.2
-  rw [heq] at hrev
-  refine ⟨c₁ + c₂ + 20, hrev.mono (fun p => ?_) (fun p => ?_)⟩
-  · have hsum_nonneg :
-        0 ≤ ∑ i ∈ Finset.range p.2, (tGen (seedAt generator p.1 i) + p.1.length + 1) :=
-      Nat.zero_le _
-    simp only [encBits_apply, length_forwardIterate_of_forall hlen]
-    nlinarith
-  · simp only [encBits_apply, length_forwardIterate_of_forall hlen]
+  obtain ⟨c₂, h⟩ := iterate_of_forwardIterate (generator := fun _ => generator)
+    (seed := Prod.fst) (count := Prod.snd) (fun _ => hlen) hfwd
+  refine ⟨c₂ * (c₁ + 1), h.mono (fun p => ?_) (fun p => ?_)⟩ <;> rw [Nat.mul_assoc] <;>
+    refine Nat.mul_le_mul_left c₂ ?_ <;> rw [Nat.add_mul, Nat.one_mul]
+  · omega
+  · have := Nat.mul_le_mul_left c₁ (Nat.le_add_right (Q p + p.1.length) p.2)
     nlinarith
 
 /-- **Quantitative cumulative-time and workspace certificate for `PRGStretch.stretch`.**
@@ -454,14 +439,7 @@ theorem computableTidilyInTimeAndSpace_stretch
         (∑ i ∈ Finset.range (count seed.length),
           (tGen (seedAt generator seed i) + seed.length + 1)) + 1))
       (fun seed => c * (sCount seed.length + Q seed + seed.length + count seed.length + 1)) := by
-  have hlen_unary : ComputableTidilyInTimeAndSpace (fun seed : List Bool => seed.length)
-      encBits encUnary (fun seed => 4 * seed.length + 8) (fun _ => 0) := by
-    obtain ⟨k, State, hfin, tm, htm⟩ := ComputableTidilyInTimeAndSpace.map_bits (fun _ => true)
-    refine ⟨k, State, hfin, tm, fun seed => ?_⟩
-    have hmap : List.map (fun _ => true) seed = encUnary seed.length := by
-      simp [encUnary_apply, List.map_const']
-    exact hmap ▸ htm seed
-  obtain ⟨c₁, hcnt_seed⟩ := hcount.comp hlen_unary
+  obtain ⟨c₁, hcnt_seed⟩ := hcount.comp ComputableTidilyInTimeAndSpace.length_bits
   obtain ⟨c₂, hpair⟩ := PairEncoding.pair_mono
     (enc := encPair encBits encUnary) computableTidilyInTimeAndSpace_id hcnt_seed
   obtain ⟨c₃, hiter⟩ := computableTidilyInTimeAndSpace_iterate_pair hlen hgen
@@ -470,7 +448,7 @@ theorem computableTidilyInTimeAndSpace_stretch
       (Finset.mem_range.mpr hi))
   obtain ⟨c₄, hcomp⟩ := hiter.comp hpair
   have heq : ((fun p : List Bool × ℕ => iterate generator p.1.length p.2 p.1) ∘
-      fun seed : List Bool => (id seed, (count ∘ fun s : List Bool => s.length) seed)) =
+      fun seed : List Bool => (id seed, (count ∘ List.length) seed)) =
       stretch generator count := rfl
   rw [heq] at hcomp
   refine ⟨c₂ * c₁ + 25 * c₂ + c₃ + c₄ + 30, hcomp.mono (fun seed => ?_) (fun seed => ?_)⟩
@@ -578,6 +556,98 @@ theorem polyTime_stretch_of_length_eq {generator : List Bool → List Bool} {cou
       DegreeBounded.mono_deg ⟨csC, hcsC⟩ (le_max_right _ _), hcount_ts⟩, ⟨clC, hclC⟩⟩
   exact (computableTidilyInDegree_stretch hlen hgen_deg hcount_deg).computableTidilyInPolyTime
 
+/-- **Quantitative streaming certificate for `forwardIterate` with a captured parameter.** On input
+`((a, seed), count)` encoded with `encPair (encPair encParam encBits) encUnary`, the streaming state
+holds `(a, seed_i)` on `encPair encParam encBits`, so the captured parameter length
+`(encParam a).length` is charged alongside `seed.length` in each round's copying cost and in the
+workspace bound, which stays independent of `count`. -/
+theorem computableTidilyInTimeAndSpace_forwardIterate_captured {α : Type}
+    {encParam : α ↪ List Bool} {generator : α → List Bool → List Bool}
+    {tGen sGen : α × List Bool → ℕ}
+    (hlen : ∀ a s, (generator a s).length = s.length + 1)
+    (hgen : ComputableTidilyInTimeAndSpace (fun p : α × List Bool => generator p.1 p.2)
+      (encPair encParam encBits) encBits tGen sGen)
+    {Q : (α × List Bool) × ℕ → ℕ}
+    (hspace : ∀ x i, i < x.2 → sGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) ≤ Q x) :
+    ∃ c, ComputableTidilyInTimeAndSpace
+      (fun x : (α × List Bool) × ℕ => forwardIterate (generator x.1.1) x.2 x.1.2)
+      (encPair (encPair encParam encBits) encUnary) encBits
+      (fun x => c * ((encParam x.1.1).length + x.1.2.length + x.2 +
+        (∑ i ∈ Finset.range x.2,
+          (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
+            (encParam x.1.1).length + x.1.2.length + 1)) + 1))
+      (fun x => c * (Q x + (encParam x.1.1).length + x.1.2.length + 1)) := by
+  let encS := encPair encParam encBits
+  obtain ⟨cpar, hpar⟩ := PairEncoding.fst (enc₁ := encParam) (enc₂ := encBits) (enc := encS)
+  obtain ⟨csnd, hsnd⟩ := PairEncoding.snd (enc₁ := encParam) (enc₂ := encBits) (enc := encS)
+  obtain ⟨c₁, hdrop⟩ := ComputableTidilyInTimeAndSpace.dropLast_bits.comp hgen
+  obtain ⟨cpair, hnext₀⟩ := PairEncoding.pair_mono (enc := encS) hpar hdrop
+  obtain ⟨c₂, hemit₀⟩ := ComputableTidilyInTimeAndSpace.getLast?_toList_bits.comp hgen
+  obtain ⟨c₃, hfin₀⟩ := ComputableTidilyInTimeAndSpace.reverse_bits.comp hsnd
+  obtain ⟨K, hK⟩ : ∃ K, K = cpair * (cpar + c₁ + 30) + c₂ + c₃ + csnd + 30 := ⟨_, rfl⟩
+  have hseed (q : α × List Bool) : q.2.length + 1 ≤ (encS q).length + 1 := by
+    simp only [encS, length_encPair, encBits_apply]
+    omega
+  have hnext : ComputableTidilyInTimeAndSpace
+      (fun q : α × List Bool => (q.1, seedStep (generator q.1) q.2)) encS encS
+      (fun q => cpair * tGen q + K * ((encS q).length + 1))
+      (fun q => cpair * sGen q + K * ((encS q).length + 1)) := by
+    refine hnext₀.mono (fun q => ?_) (fun q => ?_) <;>
+    · have hd : (encS (q.1, (generator q.1 q.2).dropLast)).length = (encS q).length := by
+        simp only [encS, length_encPair, encBits_apply, List.length_dropLast, hlen,
+          Nat.add_sub_cancel]
+      have hs := hseed q
+      have hKE := Nat.mul_le_mul_right ((encS q).length + 1)
+        (show cpair * (cpar + c₁ + 30) ≤ K by omega)
+      have hc := Nat.mul_le_mul_left cpair (show 8 * q.2.length + 26 + c₁ + (encS q).length ≤
+        (c₁ + 30) * ((encS q).length + 1) by nlinarith)
+      simp only [Function.comp_apply, encBits_apply, hlen, hd]
+      nlinarith
+  have hemit : ComputableTidilyInTimeAndSpace
+      (fun q : α × List Bool => emitBit (generator q.1) q.2) encS encBits
+      (fun q => tGen q + K * ((encS q).length + 1))
+      (fun q => sGen q + K * ((encS q).length + 1)) := by
+    refine hemit₀.mono (fun q => ?_) (fun q => ?_) <;>
+    · have hs := hseed q
+      have hKE := Nat.mul_le_mul_right ((encS q).length + 1) (show c₂ + 30 ≤ K by omega)
+      simp only [encBits_apply, hlen]
+      nlinarith
+  have hfin : ComputableTidilyInTimeAndSpace (fun q : α × List Bool => q.2.reverse) encS encBits
+      (fun q => K * ((encS q).length + 1)) (fun q => K * ((encS q).length + 1)) := by
+    refine hfin₀.mono (fun q => ?_) (fun q => ?_) <;>
+    · have hs := hseed q
+      have hKE := Nat.mul_le_mul_right ((encS q).length + 1) (show csnd + c₃ + 30 ≤ K by omega)
+      simp only [encBits_apply]
+      nlinarith
+  have hS (x : (α × List Bool) × ℕ) (i : ℕ) :
+      (encS (x.1.1, seedAt (generator x.1.1) x.1.2 i)).length =
+        2 * (encParam x.1.1).length + x.1.2.length + 1 := by
+    simp only [encS, length_encPair, encBits_apply, length_seedAt_of_forall (hlen x.1.1)]
+    omega
+  obtain ⟨c, h⟩ := hnext.iterate_unary_stream_sum hemit hfin
+    (R := fun x i => (cpair + 4 * K + 6) * (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
+      (encParam x.1.1).length + x.1.2.length + 1))
+    (Q := fun x => (cpair + 1) * Q x + 4 * K * ((encParam x.1.1).length + x.1.2.length + 1))
+    (B := fun x => 2 * (encParam x.1.1).length + x.1.2.length + 1)
+    (fun x i _ => by
+      simp only [iterate_seedStep_captured, hS]
+      nlinarith)
+    (fun x i hi => by
+      have := hspace x i hi
+      simp only [iterate_seedStep_captured, hS]
+      nlinarith)
+    (fun x i _ => by simp only [iterate_seedStep_captured, hS]; rfl)
+  simp only [iterate_seedStep_captured, hS] at h
+  refine ⟨c * (cpair + 6 * K + 10), ?_⟩
+  simp only [forwardIterate_eq]
+  refine h.mono (fun x => ?_) (fun x => ?_) <;>
+    simp only [← Finset.mul_sum, Nat.mul_assoc] <;> refine Nat.mul_le_mul_left c ?_
+  · generalize ∑ i ∈ Finset.range x.2, (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
+      (encParam x.1.1).length + x.1.2.length + 1) = S
+    nlinarith [Nat.zero_le (K * (encParam x.1.1).length), Nat.zero_le (K * x.1.2.length),
+      Nat.zero_le (K * x.2), Nat.zero_le (cpair * x.2)]
+  · nlinarith [Nat.zero_le (K * Q x), Nat.zero_le (cpair * Q x)]
+
 /-- **Quantitative cumulative-time and workspace certificate for `PRGStretch.iterate` with a
 captured parameter.** On input `((a, seed), count)` encoded with
 `encPair (encPair encParam encBits) encUnary`, the streaming state holds `(a, seed_i)` on
@@ -599,174 +669,15 @@ theorem computableTidilyInTimeAndSpace_iterate_captured {α : Type}
           (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
             (encParam x.1.1).length + x.1.2.length + 1)) + 1))
       (fun x => c * (Q x + (encParam x.1.1).length + x.1.2.length + x.2 + 1)) := by
-  let encS := encPair encParam encBits
-  obtain ⟨cfst, hfst⟩ := PairEncoding.fst (enc₁ := encS) (enc₂ := encBool)
-    (enc := encPair encS encBool)
-  obtain ⟨cfst_par, hfst_par⟩ := PairEncoding.fst (enc₁ := encParam) (enc₂ := encBits)
-    (enc := encS)
-  obtain ⟨cpar, hpar⟩ := hfst_par.comp hfst
-  obtain ⟨c₁, hgen_fst⟩ := hgen.comp hfst
-  obtain ⟨c₂, hdrop⟩ := ComputableTidilyInTimeAndSpace.dropLast_bits.comp hgen_fst
-  obtain ⟨cnext, hnext₀⟩ := PairEncoding.pair_mono (enc := encS) hpar hdrop
-  obtain ⟨c₃, hemit₀⟩ := ComputableTidilyInTimeAndSpace.getLast_bits.comp hgen_fst
-  obtain ⟨csnd, hsnd⟩ := PairEncoding.snd (enc₁ := encParam) (enc₂ := encBits) (enc := encS)
-  obtain ⟨cfin, hfin₀⟩ := ComputableTidilyInTimeAndSpace.reverse_bits.comp hsnd
-  set c_step := 12 * cnext * cfst + 4 * cnext * cfst_par + cnext * cpar + cnext * c₁ +
-    cnext * c₂ + 60 * cnext + 6 * cfst + c₁ + c₃ + 50
-  have hnext : ComputableTidilyInTimeAndSpace
-      (fun q : (α × List Bool) × Bool => (q.1.1, seedStep (generator q.1.1) q.1.2))
-      (encPair encS encBool) encS
-      (fun q => cnext * tGen q.1 + c_step * ((encParam q.1.1).length + q.1.2.length + 1))
-      (fun q => cnext * sGen q.1 + c_step * ((encParam q.1.1).length + q.1.2.length + 1)) := by
-    change ComputableTidilyInTimeAndSpace
-      (fun q : (α × List Bool) × Bool => (q.1.1, seedStep (generator q.1.1) q.1.2))
-      (encPair encS encBool) encS _ _ at hnext₀
-    refine hnext₀.mono (fun q => ?_) (fun q => ?_) <;>
-      · have hdrop_len : ((generator q.1.1 q.1.2).dropLast).length = q.1.2.length := by
-          rw [List.length_dropLast, hlen, Nat.add_sub_cancel]
-        simp only [Function.comp_apply, encS, length_encPair, encBits_apply, encBool_apply,
-          List.length_singleton, hlen q.1.1 q.1.2, hdrop_len, c_step]
-        ring_nf
-        omega
-  have hemit : ComputableTidilyInTimeAndSpace
-      (fun q : (α × List Bool) × Bool => emitBit (generator q.1.1) q.1.2)
-      (encPair encS encBool) encBits
-      (fun q => tGen q.1 + c_step * ((encParam q.1.1).length + q.1.2.length + 1))
-      (fun q => sGen q.1 + c_step * ((encParam q.1.1).length + q.1.2.length + 1)) := by
-    change ComputableTidilyInTimeAndSpace
-      (fun q : (α × List Bool) × Bool => emitBit (generator q.1.1) q.1.2)
-      (encPair encS encBool) encBits _ _ at hemit₀
-    refine hemit₀.mono (fun q => ?_) (fun q => ?_) <;>
-      · simp only [Function.comp_apply, encS, length_encPair, encBits_apply, encBool_apply,
-          List.length_singleton, hlen q.1.1 q.1.2, c_step]
-        ring_nf
-        omega
-  set c_fin := 3 * csnd + cfin + 15
-  have hfin : ComputableTidilyInTimeAndSpace
-      (fun s : α × List Bool => s.2.reverse) encS encBits
-      (fun s => c_fin * ((encParam s.1).length + s.2.length + 1))
-      (fun s => c_fin * ((encParam s.1).length + s.2.length + 1)) := by
-    change ComputableTidilyInTimeAndSpace (fun s : α × List Bool => s.2.reverse)
-      encS encBits _ _ at hfin₀
-    refine hfin₀.mono (fun s => ?_) (fun s => ?_) <;>
-      · simp only [encS, length_encPair, encBits_apply, c_fin, Nat.add_mul, Nat.mul_add]
-        nlinarith
-  let reader : InputReader Bool Unit := ⟨(), fun _ b => (none, some b)⟩
-  set Kstep := cnext + 2 * c_step + 6
-  have hstate_eq (s₀ : α × List Bool) (k j : ℕ) (hj : j ≤ k) :
-      streamState s₀
-        (fun p : (α × List Bool) × Bool => (p.1.1, seedStep (generator p.1.1) p.1.2))
-        (List.replicate k true) j = (s₀.1, seedAt (generator s₀.1) s₀.2 j) := by
-    rcases s₀ with ⟨a, s⟩
-    have haux : ∀ (m : ℕ) (s : List Bool),
-        (List.replicate m true).foldl
-          (fun (acc : α × List Bool) _ => (acc.1, seedStep (generator acc.1) acc.2)) (a, s) =
-          (a, (seedStep (generator a))^[m] s) := by
-      intro m
-      induction m with
-      | zero => intro s; rfl
-      | succ m ih =>
-        intro s
-        rw [List.replicate_succ, List.foldl_cons, ih, Function.iterate_succ_apply]
-    rw [streamState, List.take_replicate, Nat.min_eq_left hj, haux, seedAt]
-  have hemit_eq (s₀ : α × List Bool) (k : ℕ) :
-      streamEmit
-        (fun p : (α × List Bool) × Bool => (p.1.1, seedStep (generator p.1.1) p.1.2))
-        (fun p => emitBit (generator p.1.1) p.1.2)
-        s₀ (List.replicate k true) =
-      streamEmit
-        (fun p : List Bool × Bool => seedStep (generator s₀.1) p.1)
-        (fun p => emitBit (generator s₀.1) p.1)
-        s₀.2 (List.replicate k true) := by
-    rcases s₀ with ⟨a, s⟩
-    induction k generalizing s with
-    | zero => rfl
-    | succ k ih =>
-      rw [List.replicate_succ, streamEmit, streamEmit, ih]
-  obtain ⟨c_stream, hstream₀⟩ := ComputableTidilyInTimeAndSpace.streamFold_pair_sum
-    (g := fun x : (α × List Bool) × ℕ =>
-      forwardIterate (generator x.1.1) x.2 x.1.2)
-    (encIn := encPair encS encUnary) (encOut := encBits)
-    reader (fun b => [b]) (fun _ => List.cons_ne_nil _ _)
-    (fun a rest => by simp [reader, InputReader.read])
-    Prod.fst (fun x => List.replicate x.2 true)
-    (fun x => by simp [encPair_apply, encUnary_apply])
-    hnext hemit hfin
-    (fun x => by
-      simp only [forwardIterate, encBits_apply, List.length_replicate,
-        hstate_eq x.1 x.2 x.2 le_rfl, hemit_eq])
-    (roundCost := fun x i =>
-      Kstep * (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
-        (encParam x.1.1).length + x.1.2.length + 1))
-    (sMax := fun x => (cnext + 1) * Q x + Kstep * ((encParam x.1.1).length + x.1.2.length + 1))
-    (lMax := fun x => 2 * (encParam x.1.1).length + x.1.2.length + 2)
-    (fun x i hi => by
-      have hi' : i < x.2 := by simpa using hi
-      rw [hstate_eq x.1 x.2 i hi'.le, hstate_eq x.1 x.2 (i + 1) hi']
-      simp only [encS, length_encPair, encBits_apply, encBool_apply, List.length_singleton,
-        length_seedAt_of_forall (hlen x.1.1), Kstep]
-      nlinarith)
-    (fun x i hi => by
-      have hi' : i < x.2 := by simpa using hi
-      have hsp := hspace x i hi'
-      rw [hstate_eq x.1 x.2 i hi'.le]
-      simp only [length_seedAt_of_forall (hlen x.1.1), Kstep]
-      nlinarith)
-    (fun x i hi => by
-      have hi' : i ≤ x.2 := by simpa using hi
-      rw [hstate_eq x.1 x.2 i hi']
-      simp only [encS, length_encPair, encBits_apply,
-        length_seedAt_of_forall (hlen x.1.1)]
-      omega)
-    (fun _ _ _ => by simp)
-  set c_fwd := c_stream * (Kstep + c_fin + 10)
-  have hstream : ComputableTidilyInTimeAndSpace
-      (fun x : (α × List Bool) × ℕ => forwardIterate (generator x.1.1) x.2 x.1.2)
-      (encPair encS encUnary) encBits
-      (fun x => c_fwd * ((encParam x.1.1).length + x.1.2.length + x.2 +
-        (∑ i ∈ Finset.range x.2,
-          (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
-            (encParam x.1.1).length + x.1.2.length + 1)) + 1))
-      (fun x => c_fwd * (Q x + (encParam x.1.1).length + x.1.2.length + 1)) := by
-    refine hstream₀.mono (fun x => ?_) (fun x => ?_)
-    · have hsum_nonneg : 0 ≤ ∑ i ∈ Finset.range x.2,
-          (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
-            (encParam x.1.1).length + x.1.2.length + 1) := Nat.zero_le _
-      have hfn : streamState x.1
-          (fun p : (α × List Bool) × Bool => (p.1.1, seedStep (generator p.1.1) p.1.2))
-          (List.replicate x.2 true) (List.replicate x.2 true).length =
-          (x.1.1, seedAt (generator x.1.1) x.1.2 x.2) := by
-        rw [List.length_replicate]
-        exact hstate_eq x.1 x.2 x.2 le_rfl
-      rw [hfn]
-      simp only [encS, length_encPair, encBits_apply, encUnary_apply, List.length_replicate,
-        length_seedAt_of_forall (hlen x.1.1), ← Finset.mul_sum, c_fwd, Nat.mul_assoc]
-      apply Nat.mul_le_mul_left c_stream
-      nlinarith
-    · have hfn : streamState x.1
-          (fun p : (α × List Bool) × Bool => (p.1.1, seedStep (generator p.1.1) p.1.2))
-          (List.replicate x.2 true) (List.replicate x.2 true).length =
-          (x.1.1, seedAt (generator x.1.1) x.1.2 x.2) := by
-        rw [List.length_replicate]
-        exact hstate_eq x.1 x.2 x.2 le_rfl
-      rw [hfn]
-      simp only [length_seedAt_of_forall (hlen x.1.1), Kstep, c_fwd, Nat.mul_assoc]
-      apply Nat.mul_le_mul_left c_stream
-      nlinarith
-  obtain ⟨c_rev, hrev⟩ := ComputableTidilyInTimeAndSpace.reverse_bits.comp hstream
-  have heq : (List.reverse ∘ fun x : (α × List Bool) × ℕ =>
-      forwardIterate (generator x.1.1) x.2 x.1.2) =
-      fun x : (α × List Bool) × ℕ => iterate (generator x.1.1) x.1.2.length x.2 x.1.2 := by
-    funext x
-    exact reverse_forwardIterate_eq_iterate_of_forall (hlen x.1.1) x.1.2 x.2
-  rw [heq] at hrev
-  refine ⟨c_fwd + c_rev + 20, hrev.mono (fun x => ?_) (fun x => ?_)⟩
-  · have hsum_nonneg : 0 ≤ ∑ i ∈ Finset.range x.2,
-        (tGen (x.1.1, seedAt (generator x.1.1) x.1.2 i) +
-          (encParam x.1.1).length + x.1.2.length + 1) := Nat.zero_le _
-    simp only [encBits_apply, length_forwardIterate_of_forall (hlen x.1.1)]
-    nlinarith
-  · simp only [encBits_apply, length_forwardIterate_of_forall (hlen x.1.1)]
+  obtain ⟨c₁, hfwd⟩ := computableTidilyInTimeAndSpace_forwardIterate_captured hlen hgen hspace
+  obtain ⟨c₂, h⟩ := iterate_of_forwardIterate
+    (generator := fun x : (α × List Bool) × ℕ => generator x.1.1) (seed := fun x => x.1.2)
+    (count := Prod.snd) (fun x => hlen x.1.1) hfwd
+  refine ⟨c₂ * (c₁ + 1), h.mono (fun x => ?_) (fun x => ?_)⟩ <;> rw [Nat.mul_assoc] <;>
+    refine Nat.mul_le_mul_left c₂ ?_ <;> rw [Nat.add_mul, Nat.one_mul]
+  · omega
+  · have := Nat.mul_le_mul_left c₁
+      (Nat.le_add_right (Q x + (encParam x.1.1).length + x.1.2.length) x.2)
     nlinarith
 
 /-- Hybrid `i` has `i` genuinely random suffix bits and `total - i` seed expansions left. -/
@@ -1066,7 +977,7 @@ theorem pseudorandomGenerator {generator : List Bool → List Bool} {count : ℕ
     (hpositive : ∀ n, 0 < count n) :
     PseudorandomGenerator (stretch generator count) (fun n => n + count n) := by
   refine PseudorandomGenerator.of_indistinguishable
-    (polyTime_stretch_of_length_eq hgenerator.length_eq hgenerator.polyTime hcount) ?_ ?_
+    (polyTime_stretch hgenerator.polyTime hcount) ?_ ?_
     (indistinguishable hgenerator hcount)
   · intro seed
     exact length_iterate hgenerator.length_eq _ _ _

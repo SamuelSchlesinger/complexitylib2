@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Data.Fintype.Card
 public import Mathlib.Dynamics.PeriodicPts.Lemmas
+import Mathlib.Data.Nat.ModEq
 
 /-!
 # Orbits in finite functional graphs
@@ -75,6 +76,16 @@ theorem iterate_add_mod_sub {x : α} {i j T : ℕ} (hij : i ≤ j) (heq : f^[i] 
     (hT : i ≤ T) : f^[i + (T - i) % (j - i)] x = f^[T] x := by
   rw [Nat.add_comm i, iterate_add_apply, (isPeriodicPt_of_iterate_eq hij heq).iterate_mod_apply,
     ← iterate_add_apply, Nat.sub_add_cancel hT]
+
+variable {f} in
+/-- After a repeat, two later times that agree modulo the repeat interval give the same state. -/
+theorem iterate_eq_iterate_of_mod_eq {x : α} {i j r T : ℕ} (hij : i ≤ j)
+    (heq : f^[i] x = f^[j] x) (hr : i ≤ r) (hT : i ≤ T) (hmod : r % (j - i) = T % (j - i)) :
+    f^[r] x = f^[T] x := by
+  have hsub : (r - i) % (j - i) = (T - i) % (j - i) :=
+    Nat.ModEq.add_right_cancel' i (by
+      simpa only [Nat.ModEq, Nat.sub_add_cancel hr, Nat.sub_add_cancel hT] using hmod)
+  rw [← iterate_add_mod_sub hij heq hr, ← iterate_add_mod_sub hij heq hT, hsub]
 
 /-! ### First visits -/
 

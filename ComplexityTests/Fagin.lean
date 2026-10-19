@@ -17,8 +17,9 @@ This test file exercises the converse direction of Fagin's theorem and the full 
 * little-endian colexicographic tuple ordering and the `k`-tuple power interpretation,
 * input-tape layout synthesis (`layoutESOSentence`) and tableau axiomatization
   (`tableauESOSentence`, `npPowerSentence`),
-* the converse theorem `Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP` and the full equivalence
-  `Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP`, and
+* the converse theorem `Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP` and the full equivalences
+  `Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP` and
+  `Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP`, and
 * axiom hygiene checks for all headline theorems.
 -/
 
@@ -54,22 +55,22 @@ example : strictVerifier encStructure allMarkedLayout.polynomial
 
 /-! ### Small-domain and nullary-relation boundaries -/
 
-/-- `cardZeroSentence` holds on `Fin 0` and fails on `Fin 1`. -/
+/-- `cardEqSentence Language.graph 0` holds on `Fin 0` and fails on `Fin 1`. -/
 example : (letI := graphVocabulary.decode (0, [ [] ]);
-    (Fin 0) ⊨ (FO.cardZeroSentence : Language.graph.Sentence)) :=
+    (Fin 0) ⊨ FO.cardEqSentence Language.graph 0) :=
   letI := graphVocabulary.decode (0, [ [] ])
-  FO.realize_cardZeroSentence.2 (by simp)
+  (FO.realize_cardEqSentence 0).2 (by simp)
 
 example : ¬ (letI := graphVocabulary.decode (1, [ [false] ]);
-    (Fin 1) ⊨ (FO.cardZeroSentence : Language.graph.Sentence)) := by
+    (Fin 1) ⊨ FO.cardEqSentence Language.graph 0) := by
   let _ := graphVocabulary.decode (1, [ [false] ])
-  rw [FO.realize_cardZeroSentence]
+  rw [FO.realize_cardEqSentence]
   simp
 
 /-- On the empty domain `Fin 0`, `nullarySymbolSentence` and `truthTableSentence` distinguish the
 two nullary structures `(0, [[true]])` and `(0, [[false]])`. -/
 example : (letI := nullaryVocabulary.decode (0, [ [true] ]);
-    (Fin 0) ⊨ FO.truthTableSentence (FO.nullarySymbolSentence nullaryVocabulary)
+    (Fin 0) ⊨ FO.truthTableSentence nullaryVocabulary.nullarySymbolSentence
       fun s => s ⟨0, by decide⟩ = true) := by
   classical
   let _ := nullaryVocabulary.decode (0, [ [true] ])
@@ -78,7 +79,7 @@ example : (letI := nullaryVocabulary.decode (0, [ [true] ]);
     nullarySymbol _).2 (by decide +kernel)
 
 example : ¬ (letI := nullaryVocabulary.decode (0, [ [false] ]);
-    (Fin 0) ⊨ FO.truthTableSentence (FO.nullarySymbolSentence nullaryVocabulary)
+    (Fin 0) ⊨ FO.truthTableSentence nullaryVocabulary.nullarySymbolSentence
       fun s => s ⟨0, by decide⟩ = true) := by
   classical
   let _ := nullaryVocabulary.decode (0, [ [false] ])
@@ -103,6 +104,39 @@ theorem colorable_definable_of_mem_NP (n : ℕ) :
       ∃ f : M → Fin n, ∀ x y, RelMap adj ![x, y] → f x ≠ f y} :=
   Definable.of_queryLanguage_mem_NP graphVocabulary (Definable.colorable n).isoClosed
     (colorable_mem_NP n)
+
+/-- The triangle: three vertices, all distinct pairs adjacent. -/
+def triangle : EncodedStructure :=
+  (3, [ [false, true, true, true, false, true, true, true, false] ])
+
+/-- **Semantic end-to-end test**: the existential second-order sentence produced by
+`Definable.of_queryLanguage_mem_NP` for 2-colorability holds on the decoded 2-vertex edge and
+fails on the decoded 3-vertex triangle. -/
+example :
+    ∃ Φ : ESO.Sentence Language.graph,
+      (∀ (M : Bundled.{0} Language.graph.Structure) [Finite M],
+        (∃ f : M → Fin 2, ∀ x y, RelMap adj ![x, y] → f x ≠ f y) ↔ Φ.Realize M) ∧
+      (letI := graphVocabulary.decode edge; Φ.Realize (Fin edge.1)) ∧
+      ¬ (letI := graphVocabulary.decode triangle; Φ.Realize (Fin triangle.1)) := by
+  obtain ⟨Φ, hΦ⟩ := colorable_definable_of_mem_NP 2
+  refine ⟨Φ, fun M _ => hΦ M, ?_, ?_⟩
+  · let _ := graphVocabulary.decode edge
+    exact (hΦ ⟨Fin edge.1, inferInstance⟩).1 ⟨id, fun x y h => (relMap_decode_edge x y).1 h⟩
+  · let _ := graphVocabulary.decode triangle
+    rw [← hΦ ⟨Fin triangle.1, inferInstance⟩]
+    rintro ⟨f, hf⟩
+    have h01 : f (0 : Fin 3) ≠ f (1 : Fin 3) :=
+      hf (0 : Fin 3) (1 : Fin 3)
+        ((Vocabulary.relMap_decode graphVocabulary triangle adj _).2 (by decide +kernel))
+    have h02 : f (0 : Fin 3) ≠ f (2 : Fin 3) :=
+      hf (0 : Fin 3) (2 : Fin 3)
+        ((Vocabulary.relMap_decode graphVocabulary triangle adj _).2 (by decide +kernel))
+    have h12 : f (1 : Fin 3) ≠ f (2 : Fin 3) :=
+      hf (1 : Fin 3) (2 : Fin 3)
+        ((Vocabulary.relMap_decode graphVocabulary triangle adj _).2 (by decide +kernel))
+    revert h01 h02 h12
+    generalize f (0 : Fin 3) = c0, f (1 : Fin 3) = c1, f (2 : Fin 3) = c2
+    fin_cases c0 <;> fin_cases c1 <;> fin_cases c2 <;> decide
 
 /-- **Fagin's equivalence on directed graphs**: for any isomorphism-closed class `K` of finite
 directed graphs, `ESO.Definable K ↔ graphVocabulary.queryLanguage K ∈ NP encStructure`. -/
@@ -149,11 +183,11 @@ info: 'Cslib.Logic.ESO.Sentence.realize_project' depends on axioms:
 #print axioms Cslib.Logic.ESO.Sentence.realize_project
 
 /--
-info: 'Cslib.Logic.ESO.realize_isStrictLinearOrderSentence_iff' depends on axioms:
+info: 'Cslib.Logic.ESO.realize_isStrictLinearOrderSentence' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.realize_isStrictLinearOrderSentence_iff
+#print axioms Cslib.Logic.ESO.realize_isStrictLinearOrderSentence
 
 /--
 info: 'Cslib.Logic.ESO.Definable.of_withLinearOrder' depends on axioms:
@@ -184,25 +218,25 @@ info: 'Cslib.Logic.ESO.Definable.of_powerLanguage' depends on axioms:
 #print axioms Cslib.Logic.ESO.Definable.of_powerLanguage
 
 /--
-info: 'Cslib.Logic.Vocabulary.realize_layoutESOSentence_iff' depends on axioms:
+info: 'Cslib.Logic.Vocabulary.realize_layoutESOSentence' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.realize_layoutESOSentence_iff
+#print axioms Cslib.Logic.Vocabulary.realize_layoutESOSentence
 
 /--
-info: 'Cslib.Logic.Vocabulary.realize_tableauESOSentence_iff' depends on axioms:
+info: 'Cslib.Logic.Vocabulary.realize_tableauESOSentence' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.realize_tableauESOSentence_iff
+#print axioms Cslib.Logic.Vocabulary.realize_tableauESOSentence
 
 /--
-info: 'Cslib.Logic.Vocabulary.realize_npPowerSentence_iff' depends on axioms:
+info: 'Cslib.Logic.Vocabulary.realize_npPowerSentence' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.realize_npPowerSentence_iff
+#print axioms Cslib.Logic.Vocabulary.realize_npPowerSentence
 
 /--
 info: 'Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP' depends on axioms:
@@ -217,6 +251,13 @@ info: 'Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP
+
+/--
+info: 'Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP
 
 /--
 info: 'Cslib.Logic.Vocabulary.definable_iff_queryLanguage_mem_NP' depends on axioms:
