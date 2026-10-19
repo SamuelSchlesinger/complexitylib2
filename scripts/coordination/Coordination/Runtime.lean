@@ -291,14 +291,27 @@ def join (repo : Repository) (name : AgentId) (role : Role) (here takeover : Boo
     IO.FS.removeFile pendingPath
     return worker.root
 
-/-- Submit the worktree's head; the reviewed base is the latest `main` commit it contains. -/
+/-- Git configuration pinned for landing merges, so that user settings cannot move files by
+rename detection or resolve conflicts from recorded resolutions. -/
+def mergeConfig : Array String := #["-c", "merge.renames=false", "-c", "merge.directoryRenames=false",
+  "-c", "rerere.enabled=false", "-c", "rerere.autoupdate=false"]
+
+/-- All best common ancestors of two commits; empty when their histories are unrelated. -/
+def mergeBases (repo : Repository) (left right : String) : IO (List String) := do
+  let found ← repo.execute #["merge-base", "--all", left, right] none
+  unless found.exitCode == 0 || found.exitCode == 1 do
+    throw <| IO.userError s!"git merge-base failed: {found.stderr}"
+  return (found.stdout.splitOn "\n").filter (!·.isEmpty)
+
+/-- Submit the worktree's head; the reviewed base is its unique merge base with `main`. -/
 def ready (repo : Repository) (epic : EpicId) (summary : String) : IO Outcome := do
   let head ← repo.head
   let main ← requiredRef repo mainRef
-  let found ← repo.execute #["merge-base", main, head] none
-  let base := line found.stdout
-  unless found.exitCode == 0 && !base.isEmpty do
-    throw <| IO.userError "The branch shares no history with main; start the work from main"
+  let base ← match ← mergeBases repo main head with
+    | [base] => pure base
+    | [] => throw <| IO.userError "The branch shares no history with main; start the work from main"
+    | _ => throw <| IO.userError <|
+      "The branch has several merge bases with main; merge main into it so that its base is unique"
   let paths ← repo.changedPaths base head
   run repo (.submit epic { base := ⟨base⟩, head := ⟨head⟩ } paths summary)
 
@@ -341,13 +354,36 @@ def mergeMessage (candidate : Candidate) : String :=
   s!"merge: land {candidate.epic.value}\n\nReviewed base {candidate.snapshot.base.value}, head {
     candidate.snapshot.head.value}\n"
 
+private def keptReservation (name : String) : String :=
+  s!"The integration reservation is kept; run `scripts/coordinate cancel` to release it, then \
+    reopen {name}, merge main and obtain new reviews."
+
+/-- A landing step from `tip` to `result` changes exactly the candidate's reviewed paths, apart
+from the generated roots, and leaves each of them as in the reviewed head. -/
+def verifyStep (repo : Repository) (tip result : String) (candidate : Candidate) : IO Unit := do
+  let nonRoot (paths : List String) := paths.filter (!generatedRoots.contains ·)
+  let snapshot := candidate.snapshot
+  let reviewed := nonRoot (← repo.changedPaths snapshot.base.value snapshot.head.value)
+  let changed := nonRoot (← repo.changedPaths tip result)
+  let unreviewed := changed.filter (!reviewed.contains ·)
+  let unlike := (reviewed.filter (!changed.contains ·) ++
+    (← repo.changedPaths result snapshot.head.value).filter reviewed.contains).eraseDups
+  unless unreviewed.isEmpty && unlike.isEmpty do
+    let parts :=
+      (if unreviewed.isEmpty then [] else [s!"change unreviewed paths {", ".intercalate unreviewed}"]) ++
+      (if unlike.isEmpty then [] else [s!"leave {", ".intercalate unlike} unlike its reviewed head"])
+    throw <| IO.userError s!"Landing {candidate.epic.value} would {" and ".intercalate parts}. {
+      keptReservation candidate.epic.value}"
+
 /-- Merge a reviewed head onto the detached HEAD. Conflicts are tolerated only in the generated
-roots, which are reset to the `main` side and regenerated on the merged tree before the merge
-commit is created. -/
+roots, which are reset to the `main` side and regenerated on the merged tree. The merged tree must
+pass `verifyStep` before the merge commit is created, and the commit must record that tree. -/
 private def merge (repo : Repository) (candidate : Candidate) (regenerate : Repository → IO Unit) :
     IO Unit := do
   let name := candidate.epic.value
-  let attempt ← repo.execute #["merge", "--no-ff", "--no-commit", candidate.snapshot.head.value] none
+  let tip ← repo.head
+  let attempt ← repo.execute
+    (mergeConfig ++ #["merge", "--no-ff", "--no-commit", candidate.snapshot.head.value]) none
   let unmerged ← if attempt.exitCode == 0 then pure [] else
     (fun paths => (paths.splitOn "\x00").dropLast) <$>
       repo.run #["diff", "--name-only", "--diff-filter=U", "-z"]
@@ -356,28 +392,43 @@ private def merge (repo : Repository) (candidate : Candidate) (regenerate : Repo
     discard <| repo.execute #["merge", "--abort"] none
     let detail := if conflicts.isEmpty then "" else s!" with conflicts in {", ".intercalate conflicts}"
     throw <| IO.userError s!"Merging the reviewed head of {name} onto main failed{detail}: {
-      attempt.stdout}{attempt.stderr}The integration reservation is kept; run \
-      `scripts/coordinate cancel` to release it, then reopen {name}, merge main and obtain new \
-      reviews."
-  try
-    for root in unmerged do
-      IO.FS.writeFile (repo.root / root) (← repo.run #["show", ":2:" ++ root])
-    regenerate repo
-    let roots ← generatedRoots.filterM fun (root : String) => (repo.root / root).pathExists
-    unless roots.isEmpty do discard <| repo.run (#["add", "--"] ++ roots.toArray)
-    discard <| repo.run #["commit", "--quiet", "-m", mergeMessage candidate]
-  catch error =>
-    discard <| repo.execute #["merge", "--abort"] none
-    throw error
+      attempt.stdout}{attempt.stderr}{keptReservation name}"
+  let tree ← try
+      for root in unmerged do
+        IO.FS.writeFile (repo.root / root) (← repo.run #["show", ":2:" ++ root])
+      regenerate repo
+      let roots ← generatedRoots.filterM fun (root : String) => (repo.root / root).pathExists
+      unless roots.isEmpty do discard <| repo.run (#["add", "--"] ++ roots.toArray)
+      let tree := line (← repo.run #["write-tree"])
+      verifyStep repo tip tree candidate
+      discard <| repo.run #["commit", "--quiet", "--no-verify", "-m", mergeMessage candidate]
+      pure tree
+    catch error =>
+      discard <| repo.execute #["merge", "--abort"] none
+      throw error
+  unless line (← repo.run #["rev-parse", "HEAD^{tree}"]) == tree do
+    throw <| IO.userError s!"The merge commit landing {name} differs from its verified tree. {
+      keptReservation name}"
 
-/-- Build the commit to publish as `main` in this worktree: each reviewed head in order is
-fast-forwarded when its base is the current tip and merged otherwise. -/
+/-- Build the commit to publish as `main` in this worktree. Each reviewed head in order must have
+its reviewed base as the unique merge base with the current tip; it is fast-forwarded when that
+base is the tip and merged otherwise. -/
 def integrate (repo : Repository) (main : Oid) (candidates : List Candidate)
     (regenerate : Repository → IO Unit) : IO Oid := do
   discard <| repo.run #["switch", "--detach", main.value]
   for candidate in candidates do
-    if candidate.snapshot.base.value == (← repo.head) then
-      discard <| repo.run #["switch", "--detach", candidate.snapshot.head.value]
+    let name := candidate.epic.value
+    let base := candidate.snapshot.base.value
+    let head := candidate.snapshot.head.value
+    let tip ← repo.head
+    let bases ← mergeBases repo tip head
+    unless bases == [base] do
+      throw <| IO.userError s!"The merge base of main and the reviewed head of {name} is {
+        ", ".intercalate bases}, not its reviewed base {base}: the head contains commits that \
+        reached main after review. {keptReservation name}"
+    if base == tip then
+      verifyStep repo tip head candidate
+      discard <| repo.run #["switch", "--detach", head]
     else
       merge repo candidate regenerate
   let landed ← repo.head

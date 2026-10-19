@@ -319,10 +319,14 @@ private def addFile (repo : Git.Repository) (path : String) : IO String := do
   discard <| repo.run #["commit", "--quiet", "-m", s!"add {path}"]
   repo.head
 
+/-- Publish the primary checkout's HEAD as origin's `main`. -/
+private def publishMain (crew : Crew) : IO Unit := do
+  discard <| crew.primary.run #["push", "--quiet", "origin", "HEAD:" ++ Git.mainRef]
+
 /-- Advance origin's `main` from the primary checkout. -/
 private def moveMain (crew : Crew) (path : String) : IO String := do
   let moved ← addFile crew.primary path
-  discard <| crew.primary.run #["push", "--quiet", "origin", "HEAD:" ++ Git.mainRef]
+  publishMain crew
   pure moved
 
 private def stubChecks (_ : Git.Repository) : IO String := pure "Focused runtime validation passed"
@@ -467,6 +471,101 @@ private def testReadyRefusesUnrelatedHistory : IO Unit := withFixture fun fixtur
   discard <| alice.run #["commit", "--quiet", "-m", "unrelated history"]
   expectError (Runtime.ready alice ⟨"feature"⟩ "Unrelated history") "shares no history with main"
 
+/-- A reviewed head that contains another epic's commits, backed out before submission (found by
+the correctness review). Once that epic lands, git's merge base is no longer the reviewed base and
+a merge would delete the landed file; landing refuses and leaves `main` untouched. -/
+private def testLandingRefusesMergeBaseDrift : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let first : EpicId := ⟨"feature"⟩
+  let second : EpicId := ⟨"second"⟩
+  let alice ← implement crew first "allowed" "alice" (addFile · "allowed/c.txt")
+  let aliceHead ← alice.head
+  let bob ← implement crew second "other" "bob" fun repo => do
+    discard <| repo.run #["merge", "--quiet", "--no-ff", "--no-edit", aliceHead]
+    discard <| repo.run #["rm", "--quiet", "allowed/c.txt"]
+    regenerate repo
+    discard <| repo.run #["add", "--", "Complexity.lean"]
+    discard <| repo.run #["commit", "--quiet", "-m", "back out the experiment"]
+    addFile repo "other/d.txt"
+  discard <| approve crew first alice
+  let secondSnapshot ← approve crew second bob
+  let reviewed ← crew.primary.changedPaths secondSnapshot.base.value secondSnapshot.head.value
+  check (!reviewed.contains "allowed/c.txt" && reviewed.contains "other/d.txt")
+    s!"Unexpected reviewed diff {reviewed}"
+  discard <| Runtime.land crew.lead [first] stubChecks regenerate
+  check ((← fixture.ref Git.mainRef) == aliceHead) "First epic did not fast-forward"
+  expectError (Runtime.land crew.lead [second] stubChecks regenerate) "not its reviewed base"
+  check ((← fixture.ref Git.mainRef) == aliceHead) "Refused landing changed main"
+  check ((← crew.lead.run #["--no-optional-locks", "status", "--porcelain"]).isEmpty)
+    "Refused landing left the coordinator worktree dirty"
+  match (← Runtime.getEpic (← Runtime.readState crew.lead) second).phase with
+  | Phase.submitted _ => pure ()
+  | _ => throw <| IO.userError "Refused landing changed the epic's phase"
+  discard <| Runtime.run crew.lead .cancel
+
+/-- Main renames a directory in which the epic adds a file. Under a configuration that enables
+rename detection and recorded resolutions, the pinned merge keeps the reviewed file at its
+reviewed path. -/
+private def testLandingPinsMergeConfiguration : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  for (key, value) in [("merge.renames", "true"), ("merge.directoryRenames", "true"),
+      ("rerere.enabled", "true"), ("rerere.autoupdate", "true")] do
+    discard <| git fixture.repository #["config", key, value]
+  let id : EpicId := ⟨"feature"⟩
+  discard <| moveMain crew "allowed/x/old.txt"
+  let alice ← implement crew id "allowed" "alice" (addFile · "allowed/x/new.txt")
+  let snapshot ← approve crew id alice
+  discard <| crew.primary.run #["mv", "allowed/x", "allowed/z"]
+  regenerate crew.primary
+  discard <| crew.primary.run #["add", "-A"]
+  discard <| crew.primary.run #["commit", "--quiet", "-m", "rename directory"]
+  publishMain crew
+  let moved ← fixture.ref Git.mainRef
+  discard <| Runtime.land crew.lead [id] stubChecks regenerate
+  let landed ← fixture.ref Git.mainRef
+  check ((← git fixture.origin #["rev-list", "--parents", "-n", "1", landed]) ==
+    s!"{landed} {moved} {snapshot.head.value}") "Main is not a merge of the renamed main and the head"
+  let files := (← git fixture.origin #["ls-tree", "-r", "--name-only", landed]).splitOn "\n"
+  check (files.contains "allowed/x/new.txt" && !files.contains "allowed/z/new.txt" &&
+    files.contains "allowed/z/old.txt") s!"The merge moved the reviewed file: {files}"
+  check ((← crew.lead.run #["--no-optional-locks", "status", "--porcelain"]).isEmpty)
+    "Landing left the coordinator worktree dirty"
+
+/-- The landing invariant: a step changes exactly the reviewed paths, apart from the generated
+roots, and leaves each of them as in the reviewed head. -/
+private def testStepVerification : IO Unit := withFixture fun fixture => do
+  let repository ← fixture.open
+  let head ← fixture.commit "allowed/c.txt" "reviewed\n"
+  let candidate : Candidate := {epic := ⟨"feature"⟩, snapshot := {base := ⟨fixture.base⟩, head := ⟨head⟩}}
+  Runtime.verifyStep repository fixture.base head candidate
+  let roots ← fixture.commit "Complexity.lean" "import allowed/c.txt\n"
+  Runtime.verifyStep repository fixture.base roots candidate
+  let extra ← fixture.commit "outside.txt" "unreviewed\n"
+  expectError (Runtime.verifyStep repository fixture.base extra candidate) "unreviewed paths outside.txt"
+  expectError (Runtime.verifyStep repository fixture.base fixture.base candidate)
+    "allowed/c.txt unlike its reviewed head"
+  discard <| repository.run #["switch", "--quiet", "--detach", fixture.base]
+  let altered ← fixture.commit "allowed/c.txt" "altered\n"
+  expectError (Runtime.verifyStep repository fixture.base altered candidate)
+    "allowed/c.txt unlike its reviewed head"
+  discard <| repository.run #["switch", "--quiet", "--detach", fixture.base]
+  let renamed ← fixture.commit "allowed/z/c.txt" "reviewed\n"
+  expectError (Runtime.verifyStep repository fixture.base renamed candidate)
+    "unreviewed paths allowed/z/c.txt"
+
+/-- `ready` refuses a branch with several merge bases with `main` (criss-cross merges). -/
+private def testReadyRefusesAmbiguousBase : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let alice ← joined crew.primary "alice"
+  let branchSide ← commitAt alice "branch side\n"
+  let mainSide ← fixture.commit "outside.txt" "main side\n"
+  discard <| crew.primary.run #["merge", "--quiet", "--no-ff", "--no-edit", branchSide]
+  publishMain crew
+  discard <| alice.run #["merge", "--quiet", "--no-ff", "--no-edit", mainSide]
+  let main ← Runtime.requiredRef alice Git.mainRef
+  check ((← Runtime.mergeBases alice main (← alice.head)).length == 2) "Fixture is not a criss-cross"
+  expectError (Runtime.ready alice ⟨"feature"⟩ "Criss-cross history") "several merge bases"
+
 private def testLandingRefusesOverlappingBatch : IO Unit := withFixture fun fixture => do
   let crew ← crew fixture
   let first : EpicId := ⟨"feature"⟩
@@ -579,6 +678,10 @@ def runtimeTests : List (String × IO Unit) := [
   ("runtime landing batches two disjoint epics in one call", testLandingBatchesDisjointEpics),
   ("runtime landing refuses a batch whose epics overlap", testLandingRefusesOverlappingBatch),
   ("runtime batch lands after an older checkout reduces the reservation", testLandingSurvivesOlderCheckoutRewrite),
-  ("runtime ready explains unrelated history", testReadyRefusesUnrelatedHistory)]
+  ("runtime ready explains unrelated history", testReadyRefusesUnrelatedHistory),
+  ("runtime ready refuses several merge bases with main", testReadyRefusesAmbiguousBase),
+  ("runtime landing refuses a head whose merge base drifted from its reviewed base", testLandingRefusesMergeBaseDrift),
+  ("runtime landing pins merge configuration against renames and rerere", testLandingPinsMergeConfiguration),
+  ("runtime landing step changes exactly the reviewed paths as reviewed", testStepVerification)]
 
 end Coordination.Tests
