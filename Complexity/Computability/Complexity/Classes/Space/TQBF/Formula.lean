@@ -246,19 +246,19 @@ theorem tokens_exs (vs : List ℕ) (φ : QBF ℕ) :
     (exs vs φ).tokens = vs.map (fun v => (Kind.ex, v)) ++ φ.tokens := by
   induction vs with
   | nil => rfl
-  | cons v vs ih => simp [exs, tokens] at ih ⊢; exact ih
+  | cons v vs ih => simpa [exs, tokens] using ih
 
 theorem tokens_alls (vs : List ℕ) (φ : QBF ℕ) :
     (alls vs φ).tokens = vs.map (fun v => (Kind.all, v)) ++ φ.tokens := by
   induction vs with
   | nil => rfl
-  | cons v vs ih => simp [alls, tokens] at ih ⊢; exact ih
+  | cons v vs ih => simpa [alls, tokens] using ih
 
 theorem tokens_conj (l : List (QBF ℕ)) :
     (conj l).tokens = l.flatMap (fun φ => (Kind.and, 0) :: φ.tokens) ++ [(Kind.top, 0)] := by
   induction l with
   | nil => rfl
-  | cons φ l ih => simp [conj, tokens] at ih ⊢; exact ih
+  | cons φ l ih => simpa [conj, tokens] using ih
 
 theorem tokens_imp (φ ψ : QBF ℕ) :
     (imp φ ψ).tokens = (Kind.or, 0) :: (Kind.not, 0) :: (φ.tokens ++ ψ.tokens) := rfl
@@ -279,10 +279,10 @@ theorem tokens_ofCNF (φ : CNF ℕ) : (ofCNF φ).tokens = φ.flatMap (fun c => (
       c.flatMap (fun l => (Kind.or, 0) :: (lit l.1 l.2).tokens) ++ [(Kind.bot, 0)] := by
     induction c with
     | nil => rfl
-    | cons l c ih => simp [ofClause, tokens] at ih ⊢; exact ih
+    | cons l c ih => simpa [ofClause, tokens] using ih
   induction φ with
   | nil => rfl
-  | cons c φ ih => simp [ofCNF, tokens, hc] at ih ⊢; exact ih
+  | cons c φ ih => simpa [ofCNF, tokens, hc] using ih
 
 end Cslib.Logic.PL.QBF
 
