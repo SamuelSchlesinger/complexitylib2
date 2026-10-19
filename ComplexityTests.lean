@@ -1,5 +1,6 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
+import ComplexityTests.AffineDisperserLowerBound
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
@@ -36,6 +37,7 @@ import ComplexityTests.ExplicitExpanders
 import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
+import ComplexityTests.FineGrained
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
