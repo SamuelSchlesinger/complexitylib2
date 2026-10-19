@@ -150,6 +150,7 @@ import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.ProbabilityToolkit2
+import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
