@@ -9,18 +9,19 @@ import Complexity.Computability.QueryComplexity.Monotone
 import Complexity.Computability.QueryComplexity.SensitivityBounds
 import Complexity.Computability.QueryComplexity.Threshold
 
-/-! Query complexity of threshold, majority and monotone functions, one-sided bounds and the
-evasiveness of symmetric functions: concrete values checked against the general formulas,
-witnesses that the monotonicity and symmetry hypotheses are satisfiable, and axiom guards for the
-headline theorems. -/
+/-! Sensitivity, block sensitivity, certificate and decision tree complexity of threshold,
+majority, monotone and symmetric functions, one-sided bounds and polynomial bounds in sensitivity:
+concrete values checked against the general formulas, witnesses that the monotonicity and symmetry
+hypotheses are satisfiable, and axiom guards for the headline theorems. -/
 
-namespace ComplexityTests.QueryComplexity.Relations
+namespace ComplexityTests.QueryComplexity.Sensitivity
 
 open Cslib Cslib.BitString Cslib.QueryComplexity Finset
 
 /-! ### Threshold functions -/
 
-/-- The formula `max(j, n + 1 - j)` agrees with exhaustive computation on four bits. -/
+/-- The sensitivity of `Th^4_2`, computed exhaustively, is `max(2, 4 + 1 - 2) = 3`, and so is its
+certificate complexity by the general formula. -/
 example : sensitivity (threshold 4 2) = 3 ∧ certificateComplexity (threshold 4 2) = 3 := by
   refine ⟨by decide, ?_⟩
   rw [certificateComplexity_threshold (by norm_num) (by norm_num)]
@@ -40,6 +41,10 @@ example : certificateComplexityFor (threshold 3 1) true = 1 ∧
     certificateComplexityFor_threshold_one_right_false, certificateComplexity_threshold_one_right⟩
 
 example : certificateComplexityFor (threshold 3 1) true = 1 := by decide
+
+example {n : ℕ} : sensitivityAt (threshold n 1) (fun _ => false) = n ∧
+    blockSensitivity (threshold n 1) = n :=
+  ⟨sensitivityAt_threshold_one_right, blockSensitivity_threshold_one_right⟩
 
 /-! ### Evasiveness -/
 
@@ -70,6 +75,30 @@ example {n : ℕ} : certificateComplexity (majority n) = sensitivity (majority n
   ⟨certificateComplexity_eq_sensitivity_of_monotone (monotone_threshold _),
     blockSensitivity_eq_sensitivity_of_monotone (monotone_threshold _)⟩
 
+/-- A monotone function that is not symmetric: `x₀ ∧ (x₁ ∨ x₂)`. -/
+abbrev andOr : BooleanFunction 3 := fun x => x 0 && (x 1 || x 2)
+
+theorem monotone_andOr : Monotone andOr := fun x y hxy => by
+  change (x 0 && (x 1 || x 2)) ≤ (y 0 && (y 1 || y 2))
+  have h0 := hxy 0
+  have h1 := hxy 1
+  have h2 := hxy 2
+  revert h0 h1 h2
+  cases x 0 <;> cases x 1 <;> cases x 2 <;> cases y 0 <;> cases y 1 <;> cases y 2 <;> decide
+
+example : ¬ andOr.IsSymmetric := fun h => by
+  exact absurd (h ![true, true, false] ![false, true, true] (by decide)) (by decide)
+
+/-- For `x₀ ∧ (x₁ ∨ x₂)`, `C = bs = s = 2`, the sensitivity computed exhaustively. -/
+example : certificateComplexity andOr = 2 ∧ blockSensitivity andOr = 2 := by
+  rw [certificateComplexity_eq_sensitivity_of_monotone monotone_andOr,
+    blockSensitivity_eq_sensitivity_of_monotone monotone_andOr]
+  exact ⟨by decide, by decide⟩
+
+example : DecisionTree.complexity andOr ≤ 4 :=
+  (DecisionTree.complexity_le_sensitivity_sq_of_monotone monotone_andOr).trans_eq
+    (by rw [show sensitivity andOr = 2 by decide]; rfl)
+
 /-- The one-sided sensitivity is computable. -/
 example : sensitivityFor (threshold 3 1) false = 3 ∧ sensitivityFor (threshold 3 1) true = 1 := by
   refine ⟨?_, ?_⟩ <;> decide
@@ -78,16 +107,21 @@ example {n : ℕ} (f : BooleanFunction n) :
     certificateComplexityFor f true ≤ sensitivityFor f false * blockSensitivityFor f true ∧
       DecisionTree.complexity f ≤ blockSensitivityFor f true * certificateComplexityFor f false ∧
       DecisionTree.complexity f ≤
-        blockSensitivityFor f false * sensitivityFor f false * blockSensitivityFor f true :=
+        blockSensitivityFor f false * sensitivityFor f false * blockSensitivityFor f true ∧
+      DecisionTree.complexity f ≤
+        blockSensitivityFor f false * blockSensitivityFor f true * sensitivity f :=
   ⟨certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor f true,
     DecisionTree.complexity_le_blockSensitivityFor_not_mul_certificateComplexityFor f false,
     DecisionTree.complexity_le_blockSensitivityFor_mul_sensitivityFor_mul_blockSensitivityFor
-      f true⟩
+      f true,
+    DecisionTree.complexity_le_blockSensitivityFor_mul_blockSensitivityFor_mul_sensitivity f⟩
 
 example {n : ℕ} (f : BooleanFunction n) :
     certificateComplexity f ≤ 2 * sensitivity f ^ 5 ∧
+      DecisionTree.complexity f ≤ sensitivity f * blockSensitivity f ^ 2 ∧
       DecisionTree.complexity f ≤ 4 * sensitivity f ^ 9 :=
   ⟨certificateComplexity_le_two_mul_sensitivity_pow_five f,
+    DecisionTree.complexity_le_sensitivity_mul_blockSensitivity_sq f,
     DecisionTree.complexity_le_four_mul_sensitivity_pow_nine f⟩
 
 /-! ### Axiom checks for headline theorems -/
@@ -128,4 +162,4 @@ info: 'Cslib.DecisionTree.complexity_le_four_mul_sensitivity_pow_nine' depends o
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.DecisionTree.complexity_le_four_mul_sensitivity_pow_nine
 
-end ComplexityTests.QueryComplexity.Relations
+end ComplexityTests.QueryComplexity.Sensitivity
