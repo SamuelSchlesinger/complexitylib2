@@ -65,6 +65,7 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpState
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Layer
+public import Complexity.Computability.Circuit.Boolean.Metric
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
@@ -185,6 +186,7 @@ public import Complexity.Computability.Circuit.Iteration
 public import Complexity.Computability.Circuit.Linearize
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.MapOp
+public import Complexity.Computability.Circuit.Metric
 public import Complexity.Computability.Circuit.Monotone.Basic
 public import Complexity.Computability.Circuit.Monotone.Clique.Approximator
 public import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
