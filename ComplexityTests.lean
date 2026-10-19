@@ -71,6 +71,7 @@ import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NPCompleteGraphs
+import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers

@@ -10,6 +10,10 @@ module
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Mathlib.Combinatorics.SimpleGraph.Hamiltonian
 public import Mathlib.Data.List.Cycle
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Data.List.GetD
 
 /-!
 # Hamiltonian paths and cycles
@@ -33,16 +37,44 @@ used.
   makes the one-vertex graph Hamiltonian. `mem_HamPath_iff` and `mem_HamCycle_iff` restate them
   with lists of vertices.
 
+All four problems are in `NP`. A certificate names an ordering of the distinct declared vertices:
+for a vertex list of length `m`, it is read as one block of `m` bits for each distinct declared
+vertex, and each block names the entry of the vertex list whose position is its number of set bits
+(`Graph.decodeVertexList`). The verifiers check that the decoded list contains every declared
+vertex exactly once and nothing else (`Graph.verifyOrdering`), and then the endpoint, length and
+edge conditions. Every ordering has a certificate of length `n ^ 2` for instances of encoded
+length `n`. Path instances `(G, s, t)` are encoded by `encPair encGraph (encPair encNat encNat)`,
+cycle instances by `encGraph`.
+
 ## Main definitions
 
 * `Cslib.Complexity.Graph.IsDirHamPath`, `Cslib.Complexity.DirHamPath`.
 * `Cslib.Complexity.Graph.IsDirHamCycle`, `Cslib.Complexity.DirHamCycle`.
 * `Cslib.Complexity.HamPath`, `Cslib.Complexity.HamCycle`.
+* `Cslib.Complexity.Graph.arcBool`, `Cslib.Complexity.Graph.chainBool`,
+  `Cslib.Complexity.Graph.cycleChainBool`, `Cslib.Complexity.Graph.enumeratesBool`: executable
+  tests on lists of vertices.
+* `Cslib.Complexity.Graph.decodeVertexList`, `Cslib.Complexity.Graph.verifyOrdering`: verifying
+  orderings of the declared vertices.
+* `Cslib.Complexity.DirHamPath.verifier`, `Cslib.Complexity.DirHamCycle.verifier`,
+  `Cslib.Complexity.HamPath.verifier`, `Cslib.Complexity.HamCycle.verifier`.
 
 ## Main results
 
 * `Cslib.Complexity.mem_HamPath_iff`: undirected Hamiltonian paths as lists of vertices.
 * `Cslib.Complexity.mem_HamCycle_iff`: undirected Hamiltonian cycles as lists of vertices.
+* `Cslib.Complexity.Graph.exists_decodeVertexList_eq`,
+  `Cslib.Complexity.Graph.isVerifier_verifyOrdering`: every ordering of the declared vertices has
+  a certificate of quadratic length, so `verifyOrdering` verifies existence of an ordering with a
+  decidable property.
+* `Cslib.Complexity.DirHamPath.isVerifier`, `Cslib.Complexity.DirHamPath.mem_NP`:
+  `DirHamPath ∈ NP (encPair encGraph (encPair encNat encNat))`.
+* `Cslib.Complexity.DirHamCycle.isVerifier`, `Cslib.Complexity.DirHamCycle.mem_NP`:
+  `DirHamCycle ∈ NP encGraph`.
+* `Cslib.Complexity.HamPath.isVerifier`, `Cslib.Complexity.HamPath.mem_NP`:
+  `HamPath ∈ NP (encPair encGraph (encPair encNat encNat))`.
+* `Cslib.Complexity.HamCycle.isVerifier`, `Cslib.Complexity.HamCycle.mem_NP`:
+  `HamCycle ∈ NP encGraph`.
 
 ## References
 
@@ -233,5 +265,477 @@ theorem mem_HamCycle_iff {G : Graph} :
     · rw [hdrop]
       exact @List.count_eq_one_of_mem _ instBEqOfDecidableEq _ _ _ (nodup_liftVertices hV hnd)
         ((mem_liftVertices hV v).2 ((hcov v).2 v.2))
+
+/-! ### Verifying lists of vertices -/
+
+open Turing.MultiTapeTM ComputableTidilyInPolyTime
+
+namespace Graph
+
+/-- Executable arc test of a directed graph: `(u, v)` is an edge of `G`. -/
+def arcBool (G : Graph) (u v : ℕ) : Bool := G.2.any fun e => decide (e = (u, v))
+
+/-- `arcBool` decides whether `(u, v)` is an edge of the list. -/
+@[simp]
+theorem arcBool_eq_true_iff (G : Graph) (u v : ℕ) : G.arcBool u v = true ↔ (u, v) ∈ G.2 := by
+  simp [arcBool]
+
+/-- Testing for an arc in an encoded graph is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_arcBool :
+    ComputableTidilyInPolyTime (fun p : (Graph × ℕ) × ℕ => p.1.1.arcBool p.1.2 p.2)
+      (encPair (encPair encGraph encNat) encNat) encBool := by
+  unfold arcBool encGraph
+  fun_prop
+
+/-- Executable test that `r` holds between all consecutive entries of `p`. -/
+def chainBool (r : ℕ → ℕ → Bool) (p : List ℕ) : Bool :=
+  (List.range (p.length - 1)).all fun i => r (p.getD i 0) (p.getD (i + 1) 0)
+
+/-- `chainBool r` decides `List.IsChain R` when `r` decides `R`. -/
+theorem chainBool_eq_true_iff {r : ℕ → ℕ → Bool} {R : ℕ → ℕ → Prop}
+    (hr : ∀ u v, r u v = true ↔ R u v) {p : List ℕ} : chainBool r p = true ↔ p.IsChain R := by
+  rw [List.isChain_iff_getElem]
+  simp only [chainBool, List.all_eq_true, List.mem_range, hr]
+  constructor
+  · intro h i hi
+    have := h i (by omega)
+    rwa [List.getD_eq_getElem _ _ (by omega), List.getD_eq_getElem _ _ hi] at this
+  · intro h i hi
+    rw [List.getD_eq_getElem _ _ (by omega), List.getD_eq_getElem _ _ (by omega)]
+    exact h i (by omega)
+
+/-- Executable test that `r` holds between all consecutive entries of `p` read cyclically: from
+each entry to the next one, and from the last entry to the first. -/
+def cycleChainBool (r : ℕ → ℕ → Bool) (p : List ℕ) : Bool :=
+  (List.range p.length).all fun i =>
+    r (p.getD i 0) (p.getD (if i + 1 = p.length then 0 else i + 1) 0)
+
+/-- `cycleChainBool r` decides `Cycle.Chain R` when `r` decides `R`: the empty list passes, and a
+one-entry list `[a]` passes exactly when `R a a`. -/
+theorem cycleChainBool_eq_true_iff {r : ℕ → ℕ → Bool} {R : ℕ → ℕ → Prop}
+    (hr : ∀ u v, r u v = true ↔ R u v) {p : List ℕ} :
+    cycleChainBool r p = true ↔ (p : Cycle ℕ).Chain R := by
+  rw [Cycle.chain_coe_iff_isChain_append_take_one, List.isChain_iff_getElem]
+  simp only [cycleChainBool, List.all_eq_true, List.mem_range, hr]
+  cases p with
+  | nil => simp
+  | cons a l =>
+    simp only [List.take_succ_cons, List.take_zero]
+    have hlen : (a :: l ++ [a]).length = (a :: l).length + 1 := List.length_append
+    have key : ∀ i (hi : i < (a :: l).length),
+        (a :: l ++ [a])[i]'(by omega) = (a :: l).getD i 0 ∧
+        (a :: l ++ [a])[i + 1]'(by omega) =
+          (a :: l).getD (if i + 1 = (a :: l).length then 0 else i + 1) 0 := by
+      intro i hi
+      refine ⟨by rw [List.getElem_append_left hi, List.getD_eq_getElem _ _ hi], ?_⟩
+      split_ifs with h
+      · rw [List.getElem_append_right (by omega)]
+        simp [h]
+      · rw [List.getElem_append_left (by omega), List.getD_eq_getElem _ _ (by omega)]
+    constructor
+    · intro h i hi
+      have hi' : i < (a :: l).length := by omega
+      rw [(key i hi').1, (key i hi').2]
+      exact h i hi'
+    · intro h i hi
+      rw [← (key i hi).1, ← (key i hi).2]
+      exact h i (by omega)
+
+/-- Executable test that `p` lists every vertex of `V` exactly once and nothing else. -/
+def enumeratesBool (V p : List ℕ) : Bool :=
+  (V.all fun v => p.any fun u => decide (u = v)) &&
+    (p.all fun u => V.any fun v => decide (v = u)) &&
+    p.zipIdx.all fun e => decide (p.idxOf e.1 = e.2)
+
+/-- `enumeratesBool V p` holds exactly when `p` lists the members of `V` without repetition. -/
+theorem enumeratesBool_eq_true_iff {V p : List ℕ} :
+    enumeratesBool V p = true ↔ p.Nodup ∧ ∀ v, v ∈ p ↔ v ∈ V := by
+  have hnodup : (∀ e ∈ p.zipIdx, p.idxOf e.1 = e.2) ↔ p.Nodup := by
+    constructor
+    · intro h
+      rw [List.nodup_iff_injective_get]
+      rintro ⟨i, hi⟩ ⟨j, hj⟩ hij
+      simp only [List.get_eq_getElem] at hij
+      have hi' : p.idxOf p[i] = i := h (p[i], i) (List.mem_zipIdx_iff_getElem?.2 (by simp))
+      have hj' : p.idxOf p[j] = j := h (p[j], j) (List.mem_zipIdx_iff_getElem?.2 (by simp))
+      rw [hij] at hi'
+      exact Fin.ext (hi'.symm.trans hj')
+    · intro hnd e he
+      obtain ⟨hlt, heq⟩ := List.getElem?_eq_some_iff.1 (List.mem_zipIdx_iff_getElem?.1 he)
+      rw [← heq, hnd.idxOf_getElem]
+  simp only [enumeratesBool, Bool.and_eq_true, List.all_eq_true, List.any_eq_true,
+    decide_eq_true_eq, hnodup]
+  constructor
+  · rintro ⟨⟨hV, hp⟩, hnd⟩
+    refine ⟨hnd, fun v => ⟨fun hv => ?_, fun hv => ?_⟩⟩
+    · obtain ⟨u, hu, rfl⟩ := hp v hv
+      exact hu
+    · obtain ⟨u, hu, rfl⟩ := hV v hv
+      exact hu
+  · rintro ⟨hnd, hmem⟩
+    exact ⟨⟨fun v hv => ⟨v, (hmem v).2 hv, rfl⟩, fun u hu => ⟨u, (hmem u).1 hu, rfl⟩⟩, hnd⟩
+
+private theorem countP_range_lt (k m : ℕ) :
+    (List.range k).countP (fun c => decide (c < m)) = min m k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    simp only [List.range_succ, List.countP_append, ih, List.countP_singleton, decide_eq_true_eq]
+    split_ifs <;> omega
+
+/-- The list of vertices described by a certificate `w`, for a vertex list `V` of length `m`: `w`
+is read as blocks of `m` bits, one for each distinct vertex of `V`, and the block numbered `a`
+names the entry of `V` whose position is its number of set bits, or `0` if there is none. -/
+def decodeVertexList (V : List ℕ) (w : List Bool) : List ℕ :=
+  (List.range V.dedup.length).map fun a =>
+    V.getD ((List.range V.length).countP fun c => w.getD (V.length * a + c) false) 0
+
+/-- Every list of the distinct vertices of `V`, each listed once, is described by a certificate
+of length `n ^ 2`, for every `n` at least the length of `V`. -/
+theorem exists_decodeVertexList_eq {V p : List ℕ} (hp : p.Nodup) (hpV : ∀ v, v ∈ p ↔ v ∈ V)
+    {n : ℕ} (hn : V.length ≤ n) : ∃ w : List Bool, w.length = n ^ 2 ∧ decodeVertexList V w = p := by
+  have hlen : p.length = V.dedup.length :=
+    ((List.perm_ext_iff_of_nodup hp (List.nodup_dedup V)).2 fun v => by
+      rw [List.mem_dedup]
+      exact hpV v).length_eq
+  have hle : V.dedup.length ≤ V.length := (List.dedup_sublist V).length_le
+  let w := (List.range (n ^ 2)).map fun j =>
+    decide (j % V.length < V.idxOf (p.getD (j / V.length) 0))
+  refine ⟨w, by simp [w], List.ext_getElem (by simp [decodeVertexList, hlen]) fun a ha ha' => ?_⟩
+  have hidx : V.idxOf p[a] < V.length := List.idxOf_lt_length_iff.2 ((hpV _).1 (List.getElem_mem _))
+  have hcount : ((List.range V.length).countP fun c => w.getD (V.length * a + c) false) =
+      V.idxOf p[a] := by
+    rw [← min_eq_left hidx.le, ← countP_range_lt]
+    refine List.countP_congr fun c hc => ?_
+    rw [List.mem_range] at hc
+    have hm : 0 < V.length := by omega
+    have hbound : V.length * a + c < n ^ 2 := by
+      calc V.length * a + c < V.length * (a + 1) := by rw [Nat.mul_succ]; omega
+        _ ≤ n * n := Nat.mul_le_mul hn (by omega)
+        _ = n ^ 2 := (sq n).symm
+    have hdiv : (V.length * a + c) / V.length = a := by
+      rw [Nat.mul_add_div hm, Nat.div_eq_of_lt hc, Nat.add_zero]
+    have hmod : (V.length * a + c) % V.length = c := by
+      rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hc]
+    simp only [w, List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hbound,
+      Option.map_some, Option.getD_some, hdiv, hmod, List.getElem?_eq_getElem ha']
+  simp only [decodeVertexList, List.getElem_map, List.getElem_range]
+  rw [hcount, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hidx, Option.getD_some,
+    List.getElem_idxOf hidx]
+
+/-- Verify a vertex ordering problem: decode a list of vertices from the certificate
+(`decodeVertexList`), check that it lists every vertex of `V x` exactly once, and test it with
+`check`. -/
+def verifyOrdering {α : Type} (V : α → List ℕ) (check : α → List ℕ → Bool)
+    (x : α × List Bool) : Bool :=
+  let p := decodeVertexList (V x.1) x.2
+  enumeratesBool (V x.1) p && check x.1 p
+
+/-- `verifyOrdering` verifies the existence of an ordering of the vertices satisfying `P`, with
+certificates of length `n ^ 2` for instances of encoded length `n`, as long as `check` decides
+`P` and the vertex list is not longer than the encoded instance. -/
+theorem isVerifier_verifyOrdering {α : Type} {enc : α ↪ List Bool} {V : α → List ℕ}
+    {check : α → List ℕ → Bool} {P : α → List ℕ → Prop}
+    (hV : ∀ a, (V a).length ≤ (enc a).length) (hcheck : ∀ a p, check a p = true ↔ P a p) :
+    IsVerifier enc (Polynomial.X ^ 2) (verifyOrdering V check)
+      {a | ∃ p, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ V a) ∧ P a p} := by
+  intro a
+  simp only [Set.mem_ofPred_eq, Polynomial.eval_pow, Polynomial.eval_X, verifyOrdering,
+    Bool.and_eq_true, enumeratesBool_eq_true_iff, hcheck]
+  constructor
+  · rintro ⟨p, hnd, hmem, hP⟩
+    obtain ⟨w, hw, hdec⟩ := exists_decodeVertexList_eq hnd hmem (hV a)
+    exact ⟨w, hw, by rw [hdec]; exact ⟨⟨hnd, hmem⟩, hP⟩⟩
+  · rintro ⟨w, -, ⟨hnd, hmem⟩, hP⟩
+    exact ⟨_, hnd, hmem, hP⟩
+
+/-! ### Polynomial-time verification -/
+
+/-- Testing whether `r` holds between consecutive entries of a computed list is polynomial-time,
+for an input-dependent polynomial-time test `r`. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_chainBool {γ : Type} {encIn : γ ↪ List Bool}
+    {r : γ → ℕ → ℕ → Bool} {p : γ → List ℕ}
+    (hr : ComputableTidilyInPolyTime (fun q : (γ × ℕ) × ℕ => r q.1.1 q.1.2 q.2)
+      (encPair (encPair encIn encNat) encNat) encBool)
+    (hp : ComputableTidilyInPolyTime p encIn (encList encNat)) :
+    ComputableTidilyInPolyTime (fun x => chainBool (r x) (p x)) encIn encBool := by
+  have hget : ∀ {i : γ × ℕ → ℕ}, ComputableTidilyInPolyTime i (encPair encIn encUnary) encUnary →
+      ComputableTidilyInPolyTime (fun q => (p q.1).getD (i q) 0) (encPair encIn encUnary) encNat :=
+    fun hi => (listGetD 0).comp ((hp.comp (fst _ _)).prod hi)
+  unfold chainBool
+  exact allWithInput (by fun_prop) (hr.comp (((fst _ _).prod (hget (snd _ _))).prod
+    (hget (unary_add.comp ((snd _ _).prod (const 1))))))
+
+/-- Testing whether `r` holds between cyclically consecutive entries of a computed list is
+polynomial-time, for an input-dependent polynomial-time test `r`. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_cycleChainBool {γ : Type} {encIn : γ ↪ List Bool}
+    {r : γ → ℕ → ℕ → Bool} {p : γ → List ℕ}
+    (hr : ComputableTidilyInPolyTime (fun q : (γ × ℕ) × ℕ => r q.1.1 q.1.2 q.2)
+      (encPair (encPair encIn encNat) encNat) encBool)
+    (hp : ComputableTidilyInPolyTime p encIn (encList encNat)) :
+    ComputableTidilyInPolyTime (fun x => cycleChainBool (r x) (p x)) encIn encBool := by
+  have hget : ∀ {i : γ × ℕ → ℕ}, ComputableTidilyInPolyTime i (encPair encIn encUnary) encUnary →
+      ComputableTidilyInPolyTime (fun q => (p q.1).getD (i q) 0) (encPair encIn encUnary) encNat :=
+    fun hi => (listGetD 0).comp ((hp.comp (fst _ _)).prod hi)
+  have hsucc : ComputableTidilyInPolyTime (fun q : γ × ℕ => q.2 + 1) (encPair encIn encUnary)
+      encUnary := unary_add.comp ((snd _ _).prod (const 1))
+  have hnext : ComputableTidilyInPolyTime
+      (fun q : γ × ℕ => if q.2 + 1 = (p q.1).length then 0 else q.2 + 1)
+      (encPair encIn encUnary) encUnary :=
+    ite_decide (hsucc.decide_eq' ((length_list encNat).comp (hp.comp (fst _ _)))) (const 0) hsucc
+  unfold cycleChainBool
+  exact allWithInput (by fun_prop) (hr.comp (((fst _ _).prod (hget (snd _ _))).prod (hget hnext)))
+
+/-- Testing whether a list lists every vertex of another exactly once is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_enumeratesBool :
+    ComputableTidilyInPolyTime (fun x : List ℕ × List ℕ => enumeratesBool x.1 x.2)
+      (encPair (encList encNat) (encList encNat)) encBool := by
+  unfold enumeratesBool
+  fun_prop
+
+private theorem length_dedup_eq (V : List ℕ) :
+    V.dedup.length = (selectVertices V (List.replicate V.length true)).length := by
+  rw [← List.toFinset_card_of_nodup (nodup_selectVertices V _), ← List.card_toFinset]
+  congr 1
+  ext v
+  simp only [List.mem_toFinset, mem_selectVertices, iff_self_and]
+  intro hv
+  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate,
+    ite_eq_left (List.idxOf_lt_length_iff.2 hv), Option.getD_some]
+
+/-- Decoding a list of vertices from a certificate is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_decodeVertexList :
+    ComputableTidilyInPolyTime (fun x : List ℕ × List Bool => decodeVertexList x.1 x.2)
+      (encPair (encList encNat) encBits) (encList encNat) := by
+  have hn : ComputableTidilyInPolyTime (fun x : List ℕ × List Bool => x.1.dedup.length)
+      (encPair (encList encNat) encBits) encUnary := by
+    simp only [length_dedup_eq]
+    have := bitsReplicate true
+    fun_prop
+  have hblock : ComputableTidilyInPolyTime
+      (fun q : (List ℕ × List Bool) × ℕ =>
+        (List.range q.1.1.length).countP fun c => q.1.2.getD (q.1.1.length * q.2 + c) false)
+      (encPair (encPair (encList encNat) encBits) encUnary) encUnary := by
+    fun_prop
+  unfold decodeVertexList
+  fun_prop
+
+/-- `verifyOrdering` is polynomial-time whenever the vertex list and the test `check` are. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifyOrdering {α : Type} {enc : α ↪ List Bool}
+    {V : α → List ℕ} {check : α → List ℕ → Bool}
+    (hV : ComputableTidilyInPolyTime V enc (encList encNat))
+    (hcheck : ComputableTidilyInPolyTime (fun q : α × List ℕ => check q.1 q.2)
+      (encPair enc (encList encNat)) encBool) :
+    ComputableTidilyInPolyTime (verifyOrdering V check) (encPair enc encBits) encBool := by
+  have hV' : ComputableTidilyInPolyTime (fun x : α × List Bool => V x.1) (encPair enc encBits)
+      (encList encNat) := hV.comp (fst _ _)
+  have hp : ComputableTidilyInPolyTime (fun x : α × List Bool => decodeVertexList (V x.1) x.2)
+      (encPair enc encBits) (encList encNat) :=
+    computableTidilyInPolyTime_decodeVertexList.comp (hV'.prod (snd _ _))
+  exact (computableTidilyInPolyTime_enumeratesBool.comp (hV'.prod hp)).bool_and'
+    (hcheck.comp ((fst _ _).prod hp))
+
+end Graph
+
+/-! ### Membership in `NP` -/
+
+private theorem length_vertices_le_encGraph (G : Graph) : G.1.length ≤ (encGraph G).length := by
+  calc G.1.length ≤ (encList encNat G.1).length := length_le_length_encList encNat G.1
+    _ ≤ (encGraph G).length := by
+        simp only [encGraph, length_encPair]
+        omega
+
+private theorem length_vertices_le_encPath (x : Graph × ℕ × ℕ) :
+    x.1.1.length ≤ (encPair encGraph (encPair encNat encNat) x).length := by
+  refine (length_vertices_le_encGraph x.1).trans ?_
+  simp only [length_encPair]
+  omega
+
+/-- The endpoint and edge checks of the path verifiers are polynomial-time for a polynomial-time
+edge test `r`. -/
+private theorem computableTidilyInPolyTime_pathCheck {r : Graph → ℕ → ℕ → Bool}
+    (hr : ComputableTidilyInPolyTime (fun q : (Graph × ℕ) × ℕ => r q.1.1 q.1.2 q.2)
+      (encPair (encPair encGraph encNat) encNat) encBool) :
+    ComputableTidilyInPolyTime (fun q : (Graph × ℕ × ℕ) × List ℕ =>
+        decide (q.2.head? = some q.1.2.1) && decide (q.2.getLast? = some q.1.2.2) &&
+          Graph.chainBool (r q.1.1) q.2)
+      (encPair (encPair encGraph (encPair encNat encNat)) (encList encNat)) encBool := by
+  have hp : ComputableTidilyInPolyTime (fun q : (Graph × ℕ × ℕ) × List ℕ => q.2)
+      (encPair (encPair encGraph (encPair encNat encNat)) (encList encNat)) (encList encNat) :=
+    snd _ _
+  have hs : ComputableTidilyInPolyTime (fun q : (Graph × ℕ × ℕ) × List ℕ => some q.1.2.1)
+      (encPair (encPair encGraph (encPair encNat encNat)) (encList encNat)) (encOption encNat) :=
+    (optionSome encNat).comp (by fun_prop)
+  have ht : ComputableTidilyInPolyTime (fun q : (Graph × ℕ × ℕ) × List ℕ => some q.1.2.2)
+      (encPair (encPair encGraph (encPair encNat encNat)) (encList encNat)) (encOption encNat) :=
+    (optionSome encNat).comp (by fun_prop)
+  have hproj : ComputableTidilyInPolyTime
+      (fun q : (((Graph × ℕ × ℕ) × List ℕ) × ℕ) × ℕ => ((q.1.1.1.1, q.1.2), q.2))
+      (encPair (encPair (encPair (encPair encGraph (encPair encNat encNat)) (encList encNat))
+        encNat) encNat)
+      (encPair (encPair encGraph encNat) encNat) := by
+    fun_prop
+  simp only [← List.head?_reverse]
+  exact bool_and' (bool_and' (((head? encNat).comp hp).decide_eq' hs)
+      (((head? encNat).comp ((listReverse encNat).comp hp)).decide_eq' ht))
+    (Graph.computableTidilyInPolyTime_chainBool (hr.comp hproj) hp)
+
+/-- The cyclic edge check of the cycle verifiers is polynomial-time for a polynomial-time edge
+test `r`. -/
+private theorem computableTidilyInPolyTime_cycleCheck {r : Graph → ℕ → ℕ → Bool}
+    (hr : ComputableTidilyInPolyTime (fun q : (Graph × ℕ) × ℕ => r q.1.1 q.1.2 q.2)
+      (encPair (encPair encGraph encNat) encNat) encBool) :
+    ComputableTidilyInPolyTime (fun q : Graph × List ℕ => Graph.cycleChainBool (r q.1) q.2)
+      (encPair encGraph (encList encNat)) encBool := by
+  have hproj : ComputableTidilyInPolyTime
+      (fun q : ((Graph × List ℕ) × ℕ) × ℕ => ((q.1.1.1, q.1.2), q.2))
+      (encPair (encPair (encPair encGraph (encList encNat)) encNat) encNat)
+      (encPair (encPair encGraph encNat) encNat) := by
+    fun_prop
+  exact Graph.computableTidilyInPolyTime_cycleChainBool (hr.comp hproj) (snd _ _)
+
+namespace DirHamPath
+
+/-- The verifier for `DirHamPath`: decode a list of vertices from the certificate
+(`Graph.decodeVertexList`) and check that it lists every declared vertex exactly once, starts at
+`s`, ends at `t`, and that consecutive vertices are joined by arcs. -/
+def verifier : (Graph × ℕ × ℕ) × List Bool → Bool :=
+  Graph.verifyOrdering (fun x => x.1.1) fun x p =>
+    decide (p.head? = some x.2.1) && decide (p.getLast? = some x.2.2) &&
+      Graph.chainBool x.1.arcBool p
+
+/-- `DirHamPath.verifier` verifies `DirHamPath` with certificates of length `n ^ 2` for instances
+of encoded length `n`. -/
+theorem isVerifier :
+    IsVerifier (encPair encGraph (encPair encNat encNat)) (Polynomial.X ^ 2) verifier DirHamPath :=
+  Graph.isVerifier_verifyOrdering
+    (P := fun (x : Graph × ℕ × ℕ) p => p.head? = some x.2.1 ∧ p.getLast? = some x.2.2 ∧
+      p.IsChain fun u v => (u, v) ∈ x.1.2)
+    length_vertices_le_encPath fun x p => by
+      simp only [Bool.and_eq_true, decide_eq_true_eq,
+        Graph.chainBool_eq_true_iff (Graph.arcBool_eq_true_iff x.1), and_assoc]
+
+/-- The `DirHamPath` verifier is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier
+      (encPair (encPair encGraph (encPair encNat encNat)) encBits) encBool :=
+  Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
+    (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_arcBool)
+
+/-- `DirHamPath` belongs to `NP`. -/
+theorem mem_NP : DirHamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+
+end DirHamPath
+
+namespace DirHamCycle
+
+/-- The verifier for `DirHamCycle`: decode a list of vertices from the certificate
+(`Graph.decodeVertexList`) and check that it is nonempty, lists every declared vertex exactly
+once, and that cyclically consecutive vertices are joined by arcs. -/
+def verifier : Graph × List Bool → Bool :=
+  Graph.verifyOrdering (fun G => G.1) fun G p =>
+    decide (p ≠ []) && Graph.cycleChainBool G.arcBool p
+
+/-- `DirHamCycle.verifier` verifies `DirHamCycle` with certificates of length `n ^ 2` for graphs
+of encoded length `n`. -/
+theorem isVerifier : IsVerifier encGraph (Polynomial.X ^ 2) verifier DirHamCycle :=
+  Graph.isVerifier_verifyOrdering
+    (P := fun (G : Graph) p => p ≠ [] ∧ (p : Cycle ℕ).Chain fun u v => (u, v) ∈ G.2)
+    length_vertices_le_encGraph fun G p => by
+      simp only [Bool.and_eq_true, decide_eq_true_eq,
+        Graph.cycleChainBool_eq_true_iff (Graph.arcBool_eq_true_iff G)]
+
+/-- The `DirHamCycle` verifier is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier (encPair encGraph encBits) encBool :=
+  Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
+    (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
+      Graph.computableTidilyInPolyTime_arcBool))
+
+/-- `DirHamCycle` belongs to `NP`. -/
+theorem mem_NP : DirHamCycle ∈ NP encGraph :=
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+
+end DirHamCycle
+
+namespace HamPath
+
+/-- The verifier for `HamPath`: decode a list of vertices from the certificate
+(`Graph.decodeVertexList`) and check that it lists every declared vertex exactly once, starts at
+`s`, ends at `t`, and that consecutive vertices are adjacent. -/
+def verifier : (Graph × ℕ × ℕ) × List Bool → Bool :=
+  Graph.verifyOrdering (fun x => x.1.1) fun x p =>
+    decide (p.head? = some x.2.1) && decide (p.getLast? = some x.2.2) &&
+      Graph.chainBool x.1.adjBool p
+
+/-- `HamPath.verifier` verifies `HamPath` with certificates of length `n ^ 2` for instances of
+encoded length `n`. -/
+theorem isVerifier :
+    IsVerifier (encPair encGraph (encPair encNat encNat)) (Polynomial.X ^ 2) verifier HamPath := by
+  rintro ⟨G, s, t⟩
+  rw [mem_HamPath_iff]
+  refine Graph.isVerifier_verifyOrdering
+    (P := fun (x : Graph × ℕ × ℕ) p => p.head? = some x.2.1 ∧ p.getLast? = some x.2.2 ∧
+      p.IsChain x.1.toSimpleGraph.Adj)
+    length_vertices_le_encPath (fun x p => ?_) (G, s, t)
+  simp only [Bool.and_eq_true, decide_eq_true_eq,
+    Graph.chainBool_eq_true_iff (Graph.adjBool_eq_true_iff x.1), and_assoc]
+
+/-- The `HamPath` verifier is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier
+      (encPair (encPair encGraph (encPair encNat encNat)) encBits) encBool :=
+  Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
+    (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_adjBool)
+
+/-- `HamPath` belongs to `NP`. -/
+theorem mem_NP : HamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+
+end HamPath
+
+namespace HamCycle
+
+/-- The verifier for `HamCycle`: decode a list of vertices from the certificate
+(`Graph.decodeVertexList`) and check that it has at least three vertices, lists every declared
+vertex exactly once, and that cyclically consecutive vertices are adjacent. -/
+def verifier : Graph × List Bool → Bool :=
+  Graph.verifyOrdering (fun G => G.1) fun G p =>
+    decide (3 ≤ p.length) && Graph.cycleChainBool G.adjBool p
+
+/-- `HamCycle.verifier` verifies `HamCycle` with certificates of length `n ^ 2` for graphs of
+encoded length `n`. -/
+theorem isVerifier : IsVerifier encGraph (Polynomial.X ^ 2) verifier HamCycle := by
+  intro G
+  rw [mem_HamCycle_iff]
+  refine Graph.isVerifier_verifyOrdering
+    (P := fun (G : Graph) p => 3 ≤ p.length ∧ (p : Cycle ℕ).Chain G.toSimpleGraph.Adj)
+    length_vertices_le_encGraph (fun G p => ?_) G
+  simp only [Bool.and_eq_true, decide_eq_true_eq,
+    Graph.cycleChainBool_eq_true_iff (Graph.adjBool_eq_true_iff G)]
+
+/-- The `HamCycle` verifier is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier (encPair encGraph encBits) encBool :=
+  Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
+    (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
+      Graph.computableTidilyInPolyTime_adjBool))
+
+/-- `HamCycle` belongs to `NP`. -/
+theorem mem_NP : HamCycle ∈ NP encGraph :=
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+
+end HamCycle
 
 end Cslib.Complexity
