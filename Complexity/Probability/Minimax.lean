@@ -103,15 +103,16 @@ theorem exists_mem_support_tsum_mul_le (μ : PMF α) (ν : PMF β) (loss : α �
         · simp [(PMF.apply_eq_zero_iff ν b).mpr hb]
     _ = ε := by rw [ENNReal.tsum_mul_right, ν.tsum_coe, one_mul]
 
-/-- **The averaging argument** for events, the easy direction of Yao's principle: if a strategy
-drawn from `μ` fails on every input that `ν` can produce with probability at most `ε`, then some
-strategy that `μ` can produce fails on an input drawn from `ν` with probability at most `ε`. The
-sample spaces may be infinite. -/
+/-- The probability of an event as the mean of its indicator. -/
 private theorem toOuterMeasure_eq_tsum_mul_ite {γ : Type*} (π : PMF γ) (s : Set γ)
     [DecidablePred (· ∈ s)] : π.toOuterMeasure s = ∑' c, π c * if c ∈ s then 1 else 0 := by
   rw [PMF.toOuterMeasure_apply]
   exact tsum_congr fun c => by by_cases hc : c ∈ s <;> simp [hc]
 
+/-- **The averaging argument** for events, the easy direction of Yao's principle: if a strategy
+drawn from `μ` fails on every input that `ν` can produce with probability at most `ε`, then some
+strategy that `μ` can produce fails on an input drawn from `ν` with probability at most `ε`. The
+sample spaces may be infinite. -/
 theorem exists_mem_support_toOuterMeasure_le (μ : PMF α) (ν : PMF β) (E : α → β → Prop)
     {ε : ℝ} (h : ∀ b ∈ ν.support, (μ.toOuterMeasure {a | E a b}).toReal ≤ ε) :
     ∃ a ∈ μ.support, (ν.toOuterMeasure {b | E a b}).toReal ≤ ε := by
