@@ -110,9 +110,21 @@ example : (triangle, 1) ∉ VertexCover := by
   simp only [Finset.mem_singleton] at h₀₁ h₁₂ h₂₀
   omega
 
+-- Covers have exactly `k` vertices: the triangle has one of all three vertices, but none of four.
+example : (triangle, 3) ∈ VertexCover := by
+  rw [mem_VertexCover_iff]
+  refine ⟨{0, 1, 2}, by decide, fun u hu _ _ _ => Or.inl ?_, rfl⟩
+  simpa [triangle] using hu
+
+example : (triangle, 4) ∉ VertexCover := fun h =>
+  absurd (mem_VertexCover_iff_exists_card_le.1 h).1 (by decide)
+
 -- Empty graph: `k = 0` is accepted and `k = 1` is rejected.
 example : VertexCover.verifier ((([], []), 0), []) = true := rfl
 example : VertexCover.verifier ((([], []), 1), [true]) = false := rfl
+example : ((([], []) : Graph), 0) ∈ VertexCover := mem_VertexCover_iff.2 ⟨∅, by simp, by simp, rfl⟩
+example : ((([], []) : Graph), 1) ∉ VertexCover := fun h =>
+  absurd (mem_VertexCover_iff_exists_card_le.1 h).1 (by decide)
 
 -- Duplicate vertices count once: two copies of `0` do not make a cover with two vertices.
 example : VertexCover.verifier ((([0, 0, 1], [(0, 1)]), 2), [true, true, false]) = false := rfl
@@ -191,6 +203,11 @@ example : KColoring.verifier 3 (([0], []), [true, true, true]) = false := rfl
 -- With `k = 0`, exactly the graphs without declared vertices are colorable.
 example : KColoring.verifier 0 (([], [(0, 1)]), []) = true := rfl
 example : KColoring.verifier 0 (([0], []), []) = false := rfl
+example : (([], [(0, 1)]) : Graph) ∈ KColoring 0 := mem_KColoring_iff.2 ⟨fun _ => 0, by simp, by simp⟩
+example : (([0], []) : Graph) ∉ KColoring 0 := by
+  rw [mem_KColoring_iff]
+  rintro ⟨c, hc, -⟩
+  exact Nat.not_lt_zero _ (hc 0 (by simp))
 
 -- Duplicate vertices share the block of their first occurrence; undeclared edges are ignored.
 example : KColoring.verifier 2

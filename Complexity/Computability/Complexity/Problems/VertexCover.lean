@@ -23,6 +23,12 @@ declared vertices (`SimpleGraph.induce`), and covers through `SimpleGraph.IsVert
 with an undeclared endpoint and self-loops are therefore ignored, and repeated vertex entries
 count once.
 
+The cover has exactly `k` distinct vertices, matching `IndependentSet`. Since a set of declared
+vertices containing a cover is a cover, this agrees with the textbook formulation "a cover of at
+most `k` vertices" for every `k` up to the number `n` of distinct declared vertices, and
+`VertexCover` rejects every `k > n` (`mem_VertexCover_iff_exists_card_le`). In particular a graph
+without declared vertices belongs to `VertexCover` only with `k = 0`.
+
 A set of declared vertices is a vertex cover exactly when the remaining declared vertices form an
 independent set (`SimpleGraph.isIndepSet_compl_iff_isVertexCover`), so
 `IndependentSet.toVertexCover` maps `(G, m)` to `(G, n - m)`, where `n` is the number of distinct
@@ -36,6 +42,8 @@ declared vertices; a target `m > n` is mapped to the unsatisfiable target `n + 1
 
 ## Main results
 
+* `Cslib.Complexity.mem_VertexCover_iff_exists_card_le`: covers of exactly `k` vertices versus
+  covers of at most `k` vertices.
 * `Cslib.Complexity.IndependentSet.toVertexCover_mem_iff`:
   `toVertexCover x ∈ VertexCover ↔ x ∈ IndependentSet`.
 * `Cslib.Complexity.IndependentSet.computableTidilyInPolyTime_toVertexCover`: the reduction is
@@ -65,11 +73,28 @@ def VertexCover : Set (Graph × ℕ) :=
   {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧
     (x.1.toSimpleGraph.induce {v | v ∈ x.1.1}).IsVertexCover {v | ↑v ∈ S} ∧ S.card = x.2}
 
+/-- Membership in `VertexCover` as a finite set of `k` declared vertices meeting every edge between
+declared vertices. -/
 theorem mem_VertexCover_iff {G : Graph} {k : ℕ} :
     (G, k) ∈ VertexCover ↔ ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ G.1) ∧
       (∀ u ∈ G.1, ∀ v ∈ G.1, G.toSimpleGraph.Adj u v → u ∈ S ∨ v ∈ S) ∧ S.card = k := by
   refine exists_congr fun S => and_congr_right fun _ => and_congr_left fun _ => ?_
   exact ⟨fun h u hu v hv huv => @h ⟨u, hu⟩ ⟨v, hv⟩ huv, fun h u v huv => h u u.2 v v.2 huv⟩
+
+/-- `VertexCover` through covers of at most `k` vertices: `(G, k) ∈ VertexCover` exactly when `k`
+is at most the number of distinct declared vertices and some cover has at most `k` vertices. -/
+theorem mem_VertexCover_iff_exists_card_le {G : Graph} {k : ℕ} :
+    (G, k) ∈ VertexCover ↔ k ≤ G.1.toFinset.card ∧ ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ G.1) ∧
+      (∀ u ∈ G.1, ∀ v ∈ G.1, G.toSimpleGraph.Adj u v → u ∈ S ∨ v ∈ S) ∧ S.card ≤ k := by
+  rw [mem_VertexCover_iff]
+  constructor
+  · rintro ⟨S, hSV, hS, rfl⟩
+    exact ⟨Finset.card_le_card fun v hv => List.mem_toFinset.2 (hSV v hv), S, hSV, hS, le_rfl⟩
+  · rintro ⟨hk, S, hSV, hS, hcard⟩
+    obtain ⟨T, hST, hTV, hT⟩ := Finset.exists_subsuperset_card_eq
+      (fun v hv => List.mem_toFinset.2 (hSV v hv)) hcard hk
+    exact ⟨T, fun v hv => List.mem_toFinset.1 (hTV hv),
+      fun u hu v hv huv => (hS u hu v hv huv).imp (@hST u) (@hST v), hT⟩
 
 namespace IndependentSet
 

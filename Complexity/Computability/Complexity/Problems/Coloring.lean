@@ -23,7 +23,8 @@ declared vertices can be colored with `k` colors so that adjacent vertices get d
 [Karp1972]; `ThreeColoring` is `KColoring 3`. Graphs are read through
 `Cslib.Complexity.Graph.toSimpleGraph` restricted to the declared vertices (`SimpleGraph.induce`),
 and colorings through `SimpleGraph.Colorable`. Edges with an undeclared endpoint and self-loops
-are therefore ignored.
+are therefore ignored. A graph without declared vertices belongs to every `KColoring k`, and for
+`k = 0` these are the only members.
 
 A certificate for `KColoring k` gives each declared vertex `k` bits, at the position of its first
 occurrence; the color is the number of set bits, which must be below `k`.
