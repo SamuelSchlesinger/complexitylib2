@@ -18,8 +18,10 @@ function with its arguments exchanged, and relabelling the leaves by `g` (`Proto
 `g` of the function; neither changes the depth. So the communication complexity of a function is
 invariant under exchanging the arguments (`Protocol.ecomplexityFun_swap`), does not increase under
 relabelling the outputs or transforming the inputs (`Protocol.ecomplexityFun_map_le`,
-`Protocol.ecomplexityFun_comap_le`), and is unchanged by an invertible relabelling such as negation
-(`Protocol.ecomplexityFun_not`).
+`Protocol.ecomplexityFun_comap_le`), and is unchanged by an injective (left-invertible) relabelling
+such as negation (`Protocol.ecomplexityFun_map_of_leftInverse`, `Protocol.ecomplexityFun_not`). All
+of these follow from `Protocol.ecomplexityFun_le_of_forall`: a function is no harder than another if
+every protocol for the latter yields one of no greater depth for the former.
 
 Together with the trivial protocol `Protocol.ecomplexityFun_le_succ`, in which Alice sends her `n`
 bits and Bob announces the value, this gives the other trivial upper bounds
@@ -37,6 +39,8 @@ for Bob).
 
 ## Main results
 
+* `Cslib.Communication.Protocol.ecomplexityFun_le_of_forall`: comparing communication complexities
+  through a transformation of protocols.
 * `Cslib.Communication.Protocol.ecomplexityFun_swap`: exchanging the arguments.
 * `Cslib.Communication.Protocol.ecomplexityFun_map_le`,
   `Cslib.Communication.Protocol.ecomplexityFun_map_of_leftInverse`,
@@ -130,7 +134,7 @@ def map (g : Z → Z') : Protocol X Y Z → Protocol X Y Z'
 
 /-- If every protocol computing `f` yields one of no greater depth computing `f'`, then `f'` is
 no harder than `f`. -/
-private theorem ecomplexityFun_le_of_forall {f : X → Y → Z} {f' : X' → Y' → Z'}
+theorem ecomplexityFun_le_of_forall {f : X → Y → Z} {f' : X' → Y' → Z'}
     (h : ∀ p : Protocol X Y Z, p.run = f →
       ∃ q : Protocol X' Y' Z', q.run = f' ∧ q.depth ≤ p.depth) :
     ecomplexityFun f' ≤ ecomplexityFun f :=
@@ -149,7 +153,8 @@ theorem ecomplexityFun_map_le (g : Z → Z') (f : X → Y → Z) :
     ecomplexityFun (fun x y => g (f x y)) ≤ ecomplexityFun f :=
   ecomplexityFun_le_of_forall fun p hp => ⟨p.map g, by funext x y; simp [hp], by simp⟩
 
-/-- An invertible relabelling of the outputs does not change the communication complexity. -/
+/-- An injective relabelling `g` of the outputs, given with a left inverse `g'`, does not change
+the communication complexity. -/
 theorem ecomplexityFun_map_of_leftInverse {g : Z → Z'} {g' : Z' → Z}
     (hg : Function.LeftInverse g' g) (f : X → Y → Z) :
     ecomplexityFun (fun x y => g (f x y)) = ecomplexityFun f := by

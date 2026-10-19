@@ -94,8 +94,21 @@ theorem isFoolingSet_greaterThan {L : Type*} [LinearOrder L] [DecidableEq X] {e 
     simp only [greaterThan, decide_eq_false_iff_not, not_lt] at h h'
     rw [he (le_antisymm h' h)]
 
+/-- In a partial order, the diagonal pairs form a fooling set for `≤` with value `true`, by
+antisymmetry. -/
+theorem isFoolingSet_le [PartialOrder X] [DecidableLE X] [DecidableEq X] (s : Finset X) :
+    IsFoolingSet (fun x y => decide (x ≤ y)) true (s.image fun x => (x, x)) := by
+  simp only [IsFoolingSet, mem_image]
+  refine ⟨?_, ?_⟩
+  · rintro _ ⟨x, -, rfl⟩
+    simp
+  · rintro _ ⟨x, -, rfl⟩ _ ⟨x', -, rfl⟩ h h'
+    simp only [decide_eq_true_eq] at h h'
+    rw [le_antisymm h h']
+
 /-- **Equality on a finite set needs more than `log₂` of its size bits**: a protocol computing
-equality on a set of at least two elements sends `d` bits with `|X| < 2 ^ d`. -/
+equality on a set of at least two elements sends `d` bits with `|X| < 2 ^ d`. The exact cost,
+`⌈log₂ |X|⌉ + 1`, is `ecomplexityFun_equality`. -/
 theorem card_lt_two_pow_of_run_eq_equality [Fintype X] [DecidableEq X] (hX : 1 < Fintype.card X)
     {p : Protocol X X Bool} (hp : p.run = equality) : Fintype.card X < 2 ^ p.depth := by
   obtain ⟨x, y, hxy⟩ := Fintype.one_lt_card_iff.mp hX
@@ -116,7 +129,8 @@ theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
   have h := (isFoolingSet_greaterThan Function.injective_id univ).card_lt_two_pow hp hz
   rwa [card_image_of_injective _ fun x y h => congrArg Prod.fst h, card_univ] at h
 
-/-- **Equality of `n` bits needs `n + 1` bits**, for `0 < n`. -/
+/-- **Equality of `n` bits needs `n + 1` bits**, for `0 < n`. This is the case of bit strings of
+`ecomplexityFun_equality`, the exact cost of equality on any finite set. -/
 theorem ecomplexity_equality (hn : 0 < n) :
     Protocol.ecomplexity (fun (x y : BitString n) b => equality x y = b) Set.univ Set.univ =
       n + 1 := by

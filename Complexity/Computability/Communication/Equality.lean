@@ -13,14 +13,14 @@ public import Complexity.Computability.Communication.Operations
 /-!
 # Equality on a finite set
 
-Equality of `n`-bit strings needs `n + 1` bits (`ecomplexity_equality`)
+Equality of `n`-bit strings needs `n + 1` bits for `0 < n` (`ecomplexity_equality`)
 [Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997]. More generally, equality on a finite
 type `X` with at least two elements has communication complexity exactly `⌈log₂ |X|⌉ + 1`
-(`ecomplexityFun_equality`). The upper bound is the trivial protocol
-(`Protocol.ecomplexityFun_le_clog_card_succ`). The fooling-set bound only gives `|X| < 2 ^ d` for a
-protocol sending `d` bits (`card_lt_two_pow_of_run_eq_equality`), which is weaker when `|X|` is
-not a power of two. The lower bound instead follows the protocol tree: if a protocol computes
-equality on a rectangle `A × B` that contains a pair of distinct elements, then
+(`ecomplexityFun_equality`), which is `n + 1` for the `n`-bit strings. The upper bound is the
+trivial protocol (`Protocol.ecomplexityFun_le_clog_card_succ`). The fooling-set bound only gives
+`|X| < 2 ^ d` for a protocol sending `d` bits (`card_lt_two_pow_of_run_eq_equality`), which is
+weaker when `|X|` is not a power of two. The lower bound instead follows the protocol tree: if a
+protocol computes equality on a rectangle `A × B` that contains a pair of distinct elements, then
 `2 |A ∩ B| ≤ 2 ^ d` (`two_mul_card_inter_le_two_pow_of_solves_equality`). Indeed, the first bit
 splits `A` (or `B`) in two; a part meeting `B` (or `A`) only in pairs of equal elements contains at
 most one element of `A ∩ B`, and the other part carries the induction.
