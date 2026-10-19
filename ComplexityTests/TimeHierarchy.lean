@@ -100,7 +100,7 @@ example : ∃ c, ComputableTidilyInTimeAndSpace diagonal encBits encBool
   obtain ⟨c, h, -⟩ := computableTidilyInO_diagonal
   exact ⟨c, h⟩
 
-example : {x | diagonal x = true} ∉ P encBits := diagonal_not_mem_P
+example : {x | diagonal x = true} ∉ P encBits := diagonal_notMem_P
 
 /-- Plain machines do not compute the diagonal within a polynomial time bound either. -/
 example (c d : ℕ) (s : List Bool → ℕ) :
@@ -110,10 +110,10 @@ example (c d : ℕ) (s : List Bool → ℕ) :
 /-! ### Axioms -/
 
 /--
-info: 'Cslib.Complexity.diagonal_not_mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.diagonal_notMem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.diagonal_not_mem_P
+#print axioms Cslib.Complexity.diagonal_notMem_P
 
 /--
 info: 'Cslib.Complexity.not_computableInTimeAndSpace_diagonal' depends on axioms:

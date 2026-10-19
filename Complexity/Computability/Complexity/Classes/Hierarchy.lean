@@ -18,11 +18,13 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 /-!
 # A decidable problem outside P
 
-The diagonal function `Cslib.Complexity.diagonal` reads a description of a machine framed at the
-start of its input `x` (`Turing.MultiTapeTM.Universal.decodeDesc`), runs the described machine on
-the whole of `x`, symbol by symbol under the fixed coding `false ↦ 0`, `true ↦ 1`, for
-`2 ^ x.length` steps with the universal function, and negates the verdict: it returns `false`
-exactly when the described machine has halted with output `[true]` by then.
+The clocked diagonal `Cslib.Complexity.clockedDiagonal J` reads a description of a machine framed
+at the start of its input `x` (`Turing.MultiTapeTM.Universal.decodeDesc`), runs the described
+machine on the whole of `x`, symbol by symbol under the fixed coding `false ↦ 0`, `true ↦ 1`, for
+`J x.length` steps with the universal function, and negates the verdict: it returns `false`
+exactly when the described machine has halted with output `[true]` by then. The diagonal function
+`Cslib.Complexity.diagonal` is the clocked diagonal with clock `2 ^ n`; other clocks give the time
+hierarchy theorem in `Complexity.Computability.Complexity.Classes.Hierarchy.Time`.
 
 The diagonal is itself computed, by one fixed machine, within time `O(2 ^ (4 * n))` and space
 `O(2 ^ (2 * n))` on inputs of length `n` (`Cslib.Complexity.computableTidilyInO_diagonal`). The
@@ -35,23 +37,25 @@ No machine computing a Boolean function in polynomial time decides the diagonal 
 diagonal argument of the time hierarchy theorem [Arora and Barak, Theorem 3.1][AroraBarak09]. Its
 description, padded to a length where the machine halts within the exponential clock, is an input
 on which the diagonal returns the negation of the machine's answer
-(`Cslib.Complexity.diagonal_not_mem_P`). The argument uses only that the machine halts with its
+(`Cslib.Complexity.diagonal_notMem_P`). The argument uses only that the machine halts with its
 answer within a polynomial time bound, so it applies to plain, not necessarily tidy, machines as
 well (`Cslib.Complexity.not_computableInTimeAndSpace_diagonal`). Together, the problem decided by
 an explicit exponential-time computation is not in `P`. No time-bounded classes are defined here.
 
 ## Main definitions
 
-* `Cslib.Complexity.diagonal`: the diagonal function.
+* `Cslib.Complexity.clockedDiagonal`: the diagonal with a clock.
+* `Cslib.Complexity.diagonal`: the diagonal function, with clock `2 ^ n`.
 
 ## Main results
 
 * `Cslib.Complexity.computableTidilyInO_diagonal`: the diagonal in exponential time and space.
-* `Cslib.Complexity.diagonal_not_mem_P`: the diagonal problem is not in `P`.
+* `Cslib.Complexity.diagonal_notMem_P`: the diagonal problem is not in `P`.
 * `Cslib.Complexity.not_computableInTimeAndSpace_diagonal`: no plain machine computes the
   diagonal within a polynomial time bound.
-* `Cslib.Complexity.diagonal_desc`, `Cslib.Complexity.not_forall_halted_diagonal`: the reusable
-  diagonal core: the negated answer on a padded description, and the diagonal argument itself.
+* `Cslib.Complexity.clockedDiagonal_desc`, `Cslib.Complexity.diagonal_desc`,
+  `Cslib.Complexity.not_forall_halted_diagonal`: the reusable diagonal core: the negated answer on
+  a padded description, and the diagonal argument itself.
 * `Cslib.Complexity.Diagonal.universal_bounds_le`: the resources of the universal run, in the
   sizes of its input.
 
@@ -79,11 +83,19 @@ def verdict (r : List ℕ × Bool) : Bool := !(r.2 && decide (r.1 = [eBit true])
 
 end Diagonal
 
-/-- **The diagonal function.** Run the machine described at the start of `x` on `x`, under the
-coding `Turing.MultiTapeTM.Universal.eBit` of bits by `0` and `1`, for `2 ^ x.length` steps, and
+/-- **The diagonal with clock `J`.** Run the machine described at the start of `x` on `x`, under the
+coding `Turing.MultiTapeTM.Universal.eBit` of bits by `0` and `1`, for `J x.length` steps, and
 return `false` exactly when it has halted with output `[true]`. -/
-def diagonal (x : List Bool) : Bool :=
-  Diagonal.verdict (universal (decodeDesc (unframe x), x.map eBit, 2 ^ x.length))
+def clockedDiagonal (J : ℕ → ℕ) (x : List Bool) : Bool :=
+  Diagonal.verdict (universal (decodeDesc (unframe x), x.map eBit, J x.length))
+
+/-- **The diagonal function**, the clocked diagonal with clock `2 ^ n`: run the machine described
+at the start of `x` on `x` for `2 ^ x.length` steps, and return `false` exactly when it has halted
+with output `[true]`. -/
+def diagonal : List Bool → Bool := clockedDiagonal (2 ^ ·)
+
+/-- The diagonal is the clocked diagonal with clock `2 ^ n`. -/
+theorem clockedDiagonal_two_pow : clockedDiagonal (2 ^ ·) = diagonal := rfl
 
 namespace Diagonal
 
@@ -155,6 +167,20 @@ theorem computableTidilyInDegree_map_eBit :
 
 end Diagonal
 
+/-- On its padded description, the clocked diagonal negates the answer of a machine that halts
+within the clock. -/
+theorem clockedDiagonal_desc {k : ℕ} {State : Type} [Fintype State] (eS : State ↪ ℕ)
+    (tm : MultiTapeTM k Bool State) (pad : List Bool) (J : ℕ → ℕ) {b : Bool}
+    (hhalt : (tm.runFrom (tm.initCfg (frame (eDesc (desc eS eBit tm)) ++ pad))
+      (J (frame (eDesc (desc eS eBit tm)) ++ pad).length)).Halted)
+    (hout : (tm.runFrom (tm.initCfg (frame (eDesc (desc eS eBit tm)) ++ pad))
+      (J (frame (eDesc (desc eS eBit tm)) ++ pad).length)).output = [b]) :
+    clockedDiagonal J (frame (eDesc (desc eS eBit tm)) ++ pad) = !b := by
+  rw [clockedDiagonal, decodeDesc_unframe_frame_append, universal_desc, hout]
+  simp only [List.map_cons, List.map_nil, Cfg.Halted] at hhalt ⊢
+  rw [hhalt]
+  cases b <;> simp [Diagonal.verdict, eBit]
+
 /-- On its padded description, the diagonal negates the answer of a machine that halts within the
 exponential clock. -/
 theorem diagonal_desc {k : ℕ} {State : Type} [Fintype State] (eS : State ↪ ℕ)
@@ -163,11 +189,8 @@ theorem diagonal_desc {k : ℕ} {State : Type} [Fintype State] (eS : State ↪ �
       (2 ^ (frame (eDesc (desc eS eBit tm)) ++ pad).length)).Halted)
     (hout : (tm.runFrom (tm.initCfg (frame (eDesc (desc eS eBit tm)) ++ pad))
       (2 ^ (frame (eDesc (desc eS eBit tm)) ++ pad).length)).output = [b]) :
-    diagonal (frame (eDesc (desc eS eBit tm)) ++ pad) = !b := by
-  rw [diagonal, decodeDesc_unframe_frame_append, universal_desc, hout]
-  simp only [List.map_cons, List.map_nil, Cfg.Halted] at hhalt ⊢
-  rw [hhalt]
-  cases b <;> simp [Diagonal.verdict, eBit]
+    diagonal (frame (eDesc (desc eS eBit tm)) ++ pad) = !b :=
+  clockedDiagonal_desc eS tm pad (2 ^ ·) hhalt hout
 
 /-- **The diagonal argument.** No finite binary machine halts within a polynomially bounded time
 `t x` with output `[diagonal x]` on every input `x`: on its own description, padded beyond the
@@ -194,7 +217,7 @@ theorem not_forall_halted_diagonal {k : ℕ} {State : Type} [Finite State]
 
 /-- **The diagonal problem is not in `P`**, by the diagonal argument of the time hierarchy
 theorem [Arora and Barak, Theorem 3.1][AroraBarak09]. -/
-theorem diagonal_not_mem_P : {x | diagonal x = true} ∉ P encBits := by
+theorem diagonal_notMem_P : {x | diagonal x = true} ∉ P encBits := by
   rintro ⟨f, ⟨t, s, ht, -, k, State, hfinite, tm, htm⟩, hf⟩
   have hfx (x : List Bool) : f x = diagonal x := by
     cases h : diagonal x
@@ -205,6 +228,8 @@ theorem diagonal_not_mem_P : {x | diagonal x = true} ∉ P encBits := by
   exact not_forall_halted_diagonal tm ht fun x => by
     obtain ⟨hhalt, hout⟩ := ComputesTidilyInTimeAndSpace.runFrom_initCfg (htm x)
     exact ⟨hhalt, hout.trans (by rw [encBool_apply, hfx])⟩
+
+@[deprecated (since := "2026-10-19")] alias diagonal_not_mem_P := diagonal_notMem_P
 
 /-- **No plain machine computes the diagonal in polynomial time**: the separation does not depend
 on tidy normal forms. -/

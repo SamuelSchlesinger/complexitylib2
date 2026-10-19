@@ -270,6 +270,7 @@ public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
 public import Complexity.Computability.Complexity.Classes.IP.Guessing
 public import Complexity.Computability.Complexity.Classes.IP.Repetition
+public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
 public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
@@ -308,6 +309,8 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Formula
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
+public import Complexity.Computability.Complexity.Classes.Time
+public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness
@@ -720,11 +723,17 @@ public import Complexity.Foundations.BooleanAnalysis.MirrorSets
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.Combinatorics.AffineDisperser
+public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Combinatorics.AffineDisperser.CubeSum
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
 public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Moore
 public import Complexity.Foundations.Combinatorics.AffineDisperser.PivotSpace
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Primes
 public import Complexity.Foundations.Combinatorics.AffineDisperser.SubspacePolynomial
+public import Complexity.Foundations.Combinatorics.AffineDisperser.TensorBasis
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
