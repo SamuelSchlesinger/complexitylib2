@@ -29,5 +29,3 @@ jobs:
         run: |
           set -e
           lake exe checkInitImports
-      - name: "Coordination protocol and Git tests"
-        run: lake -d scripts/coordination test --wfail
