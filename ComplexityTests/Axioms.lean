@@ -10136,3 +10136,115 @@ info: 'Cslib.Circuits.Synthesis.orbit' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Synthesis.orbit
+
+/--
+info: 'Cslib.BitString.totalInfluence_le_sqrt_card_of_monotone' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.totalInfluence_le_sqrt_card_of_monotone
+
+/--
+info: 'Cslib.BitString.totalInfluence_signVal_le_of_degree' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.totalInfluence_signVal_le_of_degree
+
+/--
+info: 'Cslib.BitString.two_pow_card_le_two_pow_mul_card_ne_zero' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.two_pow_card_le_two_pow_mul_card_ne_zero
+
+/--
+info: 'Cslib.BitString.card_filter_influence_ne_zero_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.card_filter_influence_ne_zero_le
+
+/--
+info: 'Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth
+
+/--
+info: 'Cslib.DecisionTree.sum_abs_fourierCoeff_le_leafCount' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.DecisionTree.sum_abs_fourierCoeff_le_leafCount
+
+/--
+info: 'Cslib.Circuits.Boolean.exists_formula_parity_two_pow_add' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.exists_formula_parity_two_pow_add
+
+/--
+info: 'Cslib.Circuits.Boolean.formulaDepth_parity_two_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.formulaDepth_parity_two_pow
+
+/--
+info: 'Cslib.Circuits.Boolean.sq_div_four_le_leafSize_of_computes_majority' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.sq_div_four_le_leafSize_of_computes_majority
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.not_computable_complexity_universal' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.not_computable_complexity_universal
+
+/--
+info: 'Cslib.Kolmogorov.DescriptionMethod.tendsto_complexity_universal' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Kolmogorov.DescriptionMethod.tendsto_complexity_universal
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.oneWay' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PseudorandomGenerator.oneWay
+
+/--
+info: 'Cslib.Crypto.exists_oneWay_iff_exists_pseudorandomGenerator' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.exists_oneWay_iff_exists_pseudorandomGenerator
+
+/--
+info: 'Cslib.RotationMap.sqrt_le_spectralExpansion' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.sqrt_le_spectralExpansion
+
+/--
+info: 'Cslib.exists_card_eq_pow_not_containsSunflower' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.exists_card_eq_pow_not_containsSunflower
+
+/--
+info: 'Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase
