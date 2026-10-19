@@ -277,7 +277,7 @@ theorem acceptCount_trialsVerifier (W : α × List Bool → Bool) (a : α) (u r 
   change (univ.filter fun w : Fin (T * (M + Z + 1)) → Bool =>
     trialsVerifier W a u r (List.ofFn σ) M Z T B (List.ofFn w) = true).card = _
   unfold trialsVerifier
-  rw [card_filter_listRows_all T (M + Z + 1) fun j b =>
+  rw [BitString.card_filter_listRows_all T (M + Z + 1) fun j b =>
     succTest (trialVerifier W a u r M (j % (M + 3)) (BitString.listRow B j (List.ofFn σ))) b]
   refine Finset.prod_congr rfl fun j _ => ?_
   have hseed : BitString.listRow B j (List.ofFn σ) = List.ofFn (BitString.blocksEquiv σ j) := by

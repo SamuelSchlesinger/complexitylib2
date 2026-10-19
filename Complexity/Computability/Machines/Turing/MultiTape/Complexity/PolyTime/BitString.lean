@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.Enumeration
+public import Complexity.Foundations.Data.BitString.WordCount
 public import Complexity.Computability.BitString.Padding
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -42,6 +43,7 @@ polynomial bound on the complete encoded output. The operations are total on emp
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBoundedBinaryValue`: capped binary decoding
   to unary, with every intermediate accumulator bounded by the supplied cap.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsReplicate`: repeat a fixed bit.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsWordLt`: lexicographic word comparison.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsRowWithInput`: read one fixed-width row.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsRowsWithInput`: read a runtime number of rows.
 
@@ -381,6 +383,16 @@ theorem bitsXorWithInput {α : Type} {input : α ↪ List Bool}
     ComputableTidilyInPolyTime (fun a => Cslib.BitString.listXor (width a) (words a))
       input encBits := by
   unfold Cslib.BitString.listXor
+  fun_prop
+
+
+/-- Lexicographic comparison of equal-length words is polynomial-time. -/
+@[fun_prop]
+theorem bitsWordLt {α : Type} {input : α ↪ List Bool} {x y : α → List Bool}
+    (hx : ComputableTidilyInPolyTime x input encBits)
+    (hy : ComputableTidilyInPolyTime y input encBits) :
+    ComputableTidilyInPolyTime (fun c => Cslib.BitString.wordLt (x c) (y c)) input encBool := by
+  unfold Cslib.BitString.wordLt
   fun_prop
 
 

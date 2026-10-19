@@ -53,7 +53,6 @@ first failure has probability at most `2 ^ M * 2 ^ (-(E + M + 1))`, the second a
 
 ## Main results
 
-* `Cslib.Complexity.Toda.card_filter_listRows_all`: counting words by a condition on each row.
 * `Cslib.Complexity.Toda.odd_one_add_prod_one_add`: the parity form of a disjunction.
 * `Cslib.Complexity.Toda.hashesToZero_ofFn_iff`: the test is the affine hash hitting `0`.
 * `Cslib.Complexity.Toda.three_mul_two_pow_le_card_filter_card_eq_one`: isolation with
@@ -76,37 +75,6 @@ namespace Cslib.Complexity.Toda
 open Finset Turing.MultiTapeTM
 
 /-! ### Counting words -/
-
-/-- **Counting words by rows**: the words of `T` rows of `B` bits whose `j`-th row satisfies
-`g j` for every `j` are counted by the product of the counts of the rows. -/
-theorem card_filter_listRows_all (T B : ℕ) (g : ℕ → List Bool → Bool) :
-    (univ.filter fun v : Fin (T * B) → Bool =>
-      ((BitString.listRows T B (List.ofFn v)).zipIdx.all fun p => g p.2 p.1) = true).card =
-      ∏ j : Fin T, (univ.filter fun w : Fin B → Bool => g j (List.ofFn w) = true).card := by
-  classical
-  have hrows (v : Fin (T * B) → Bool) : BitString.listRows T B (List.ofFn v) =
-      List.ofFn fun j => List.ofFn (BitString.blocksEquiv v j) := by
-    rw [BitString.listRows_eq_ofFn, BitString.ofList_ofFn]
-    rfl
-  have hall (F : Fin T → List Bool) :
-      ((List.ofFn F).zipIdx.all fun p => g p.2 p.1) = true ↔ ∀ j : Fin T, g j (F j) = true := by
-    simp only [List.all_eq_true, Prod.forall]
-    constructor
-    · intro h j
-      apply h
-      rw [List.mem_zipIdx_iff_getElem?]
-      simp
-    · intro h w i hw
-      rw [List.mem_zipIdx_iff_getElem?, List.getElem?_ofFn] at hw
-      simp only at hw
-      split at hw
-      · rename_i hi
-        rw [← Option.some.inj hw]
-        exact h ⟨i, hi⟩
-      · exact absurd hw (by simp)
-  rw [← Fintype.card_piFinset]
-  refine Finset.card_equiv BitString.blocksEquiv fun v => ?_
-  simp only [mem_filter, mem_univ, true_and, Fintype.mem_piFinset, hrows, hall]
 
 /-- A product of naturals is odd exactly when every factor is. -/
 theorem odd_prod_iff {ι : Type*} {s : Finset ι} (f : ι → ℕ) :

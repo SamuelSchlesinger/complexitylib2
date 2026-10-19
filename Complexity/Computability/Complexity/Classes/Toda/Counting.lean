@@ -13,7 +13,7 @@ public import Complexity.Foundations.Data.BitString.List
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Order.PiLex
 import Complexity.Computability.Complexity.Classes.ValiantVazirani
-import Complexity.Foundations.Data.BitString.WordCount
+public import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -41,7 +41,7 @@ whose terms with `i ≥ K` vanish modulo `2 ^ K`
 replaced by naturals equal to them modulo `2 ^ K` (`Cslib.Complexity.Toda.parityCoeff`), and
 `choose (f r) k` counts the `k`-element sets of accepted witnesses, written as strictly
 increasing lists of `k` words for the lexicographic order
-(`Cslib.Complexity.Toda.card_filter_strictMono`, `Cslib.Complexity.Toda.wordLt_ofFn_iff`). So
+(`Cslib.Complexity.Toda.card_filter_strictMono`, `Cslib.BitString.wordLt_ofFn_iff`). So
 the words accepted by `Cslib.Complexity.Toda.countingTest` — a size `k ≤ K` in unary, one of
 `parityCoeff K (k - 1)` coefficient words, a random string `r` and a strictly increasing list of
 `k` accepted witnesses, padded with zero words — number
@@ -59,7 +59,7 @@ odd number of accepted witnesses (`Cslib.Complexity.Toda.testBit_card_filter_sha
 ## Main definitions
 
 * `Cslib.Complexity.Toda.parityCoeff`: the coefficients of the amplification.
-* `Cslib.Complexity.Toda.wordLt`: the lexicographic order on words of equal length.
+* `Cslib.BitString.wordLt`: the lexicographic order on words of equal length.
 * `Cslib.Complexity.Toda.countingTest`, `Cslib.Complexity.Toda.sharpTest`: the word tests of the
   counting functions.
 
@@ -213,49 +213,6 @@ theorem card_filter_strictMono {β : Type*} [LinearOrder β] [Fintype β] (A : F
     simp only [mem_filter, mem_univ, true_and]
     exact ⟨(s.orderEmbOfFin hs.2).strictMono, fun i => hs.1 (orderEmbOfFin_mem s hs.2 i)⟩
 
-/-- The lexicographic order on words of equal length: `x` is below `y` at the first position
-where they differ. -/
-def wordLt (x y : List Bool) : Bool :=
-  (List.range x.length).any fun i =>
-    ((List.range i).all fun j => x.getD j false == y.getD j false) &&
-      (!x.getD i false && y.getD i false)
-
-@[fun_prop]
-theorem computableTidilyInPolyTime_wordLt {γ : Type} {input : γ ↪ List Bool} {x y : γ → List Bool}
-    (hx : ComputableTidilyInPolyTime x input encBits)
-    (hy : ComputableTidilyInPolyTime y input encBits) :
-    ComputableTidilyInPolyTime (fun c => wordLt (x c) (y c)) input encBool := by
-  unfold wordLt
-  fun_prop
-
-/-- On bit strings, `wordLt` is the lexicographic order. -/
-theorem wordLt_ofFn_iff {Z : ℕ} (x y : Fin Z → Bool) :
-    wordLt (List.ofFn x) (List.ofFn y) = true ↔ toLex x < toLex y := by
-  have hget (z : Fin Z → Bool) (j : ℕ) (hj : j < Z) : (List.ofFn z).getD j false = z ⟨j, hj⟩ := by
-    rw [List.getD_eq_getElem _ _ (by simpa using hj), List.getElem_ofFn]
-  change _ ↔ ∃ i, (∀ j, j < i → x j = y j) ∧ x i < y i
-  simp only [wordLt, List.any_eq_true, List.mem_range, List.length_ofFn, Bool.and_eq_true,
-    List.all_eq_true, beq_iff_eq, Bool.not_eq_true']
-  constructor
-  · rintro ⟨i, hi, hall, hx, hy⟩
-    refine ⟨⟨i, hi⟩, fun j hj => ?_, ?_⟩
-    · have := hall j hj
-      rwa [hget x j (by omega), hget y j (by omega)] at this
-    · rw [hget x i hi] at hx
-      rw [hget y i hi] at hy
-      rw [hx, hy]
-      decide
-  · rintro ⟨i, hall, hlt⟩
-    refine ⟨i, i.2, fun j hj => ?_, ?_, ?_⟩
-    · rw [hget x j (by omega), hget y j (by omega)]
-      exact hall ⟨j, by omega⟩ hj
-    · rw [hget x i i.2]
-      revert hlt
-      cases x i <;> cases y i <;> decide
-    · rw [hget y i i.2]
-      revert hlt
-      cases x i <;> cases y i <;> decide
-
 /-- A tuple increasing at every step is strictly increasing. -/
 theorem strictMono_of_lt_succ {β : Type*} [Preorder β] {k : ℕ} {g : Fin k → β}
     (h : ∀ (i : ℕ) (hi : i + 1 < k), g ⟨i, by omega⟩ < g ⟨i + 1, hi⟩) : StrictMono g := by
@@ -269,7 +226,7 @@ def subsetTest (acc : List Bool → Bool) (K Z k : ℕ) (zs : List Bool) : Bool 
   ((BitString.listRows K Z zs).zipIdx.all fun p =>
       if p.2 < k then acc p.1 else !(p.1.any fun b => b)) &&
     (List.range (k - 1)).all fun i =>
-      wordLt (BitString.listRow Z i zs) (BitString.listRow Z (i + 1) zs)
+      BitString.wordLt (BitString.listRow Z i zs) (BitString.listRow Z (i + 1) zs)
 
 @[fun_prop]
 theorem computableTidilyInPolyTime_subsetTest {γ : Type} {input : γ ↪ List Bool}
@@ -338,9 +295,9 @@ theorem card_filter_subsetTest (acc : List Bool → Bool) {K k : ℕ} (Z : ℕ) 
       constructor
       · intro h i hi
         have := h i (by omega)
-        rwa [hrow v i (by omega), hrow v (i + 1) (by omega), wordLt_ofFn_iff] at this
+        rwa [hrow v i (by omega), hrow v (i + 1) (by omega), BitString.wordLt_ofFn_iff] at this
       · intro h i hi
-        rw [hrow v i (by omega), hrow v (i + 1) (by omega), wordLt_ofFn_iff]
+        rw [hrow v i (by omega), hrow v (i + 1) (by omega), BitString.wordLt_ofFn_iff]
         exact h i (by omega)
   rw [show (univ.filter fun zs : Fin (K * Z) → Bool => subsetTest acc K Z k (List.ofFn zs) = true)
       = univ.filter fun zs => P (BitString.blocksEquiv zs) by simp only [htest]]
@@ -395,21 +352,6 @@ theorem computableTidilyInPolyTime_unaryTest {γ : Type} {input : γ ↪ List Bo
   unfold unaryTest
   fun_prop
 
-theorem ofFn_unary {K k : ℕ} (hk : k ≤ K) :
-    List.ofFn (fun i : Fin K => decide ((i : ℕ) < k)) =
-      List.replicate k true ++ List.replicate (K - k) false := by
-  apply List.ext_getElem (by
-    simp only [List.length_ofFn, List.length_append, List.length_replicate]
-    omega)
-  intro i h₁ h₂
-  simp only [List.length_ofFn] at h₁
-  rw [List.getElem_ofFn]
-  by_cases hik : i < k
-  · rw [List.getElem_append_left (by simpa using hik)]
-    simp [hik]
-  · rw [List.getElem_append_right (by simpa using hik)]
-    simp [hik]
-
 /-- Summing over the words passing the unary test of length `K` sums over the sizes
 `1, …, K`. -/
 theorem sum_unaryTest (K : ℕ) (F : ℕ → ℕ) :
@@ -419,7 +361,7 @@ theorem sum_unaryTest (K : ℕ) (F : ℕ → ℕ) :
   rw [← Finset.sum_filter]
   set u : ℕ → Fin K → Bool := fun k i => decide ((i : ℕ) < k) with hu
   have hcount (k : ℕ) (hk : k ≤ K) : (List.ofFn (u k)).count true = k := by
-    rw [hu, ofFn_unary hk]
+    rw [hu, BitString.ofFn_decide_lt hk]
     simp [List.count_replicate]
   have himage : (univ.filter fun kb : Fin K → Bool => unaryTest K (List.ofFn kb) = true) =
       (range K).image fun i => u (i + 1) := by
@@ -431,10 +373,10 @@ theorem sum_unaryTest (K : ℕ) (F : ℕ → ℕ) :
       have hle : (List.ofFn kb).count true ≤ K := (List.count_le_length).trans (by simp)
       refine ⟨(List.ofFn kb).count true - 1, by omega, ?_⟩
       apply List.ofFn_injective
-      rw [Nat.sub_add_cancel hpos, hu, ofFn_unary hle, ← hkb]
+      rw [Nat.sub_add_cancel hpos, hu, BitString.ofFn_decide_lt hle, ← hkb]
     · rintro ⟨i, hi, rfl⟩
       rw [hcount _ (by omega)]
-      exact ⟨by omega, by rw [hu, ofFn_unary (by omega)]⟩
+      exact ⟨by omega, by rw [hu, BitString.ofFn_decide_lt (by omega)]⟩
   rw [himage, Finset.sum_image]
   · refine Finset.sum_congr rfl fun i hi => ?_
     rw [hcount _ (Nat.succ_le_of_lt (mem_range.1 hi))]

@@ -57,9 +57,9 @@ example : Odd (1 + ∏ j : Fin 3, (1 + ![2, 3, 4] j)) := by decide
 example : ∑ i ∈ range 5, (-2 : ℤ) ^ i * ((5 : ℕ).choose (i + 1) : ℤ) = 1 := by decide
 
 /-- The lexicographic order on words of equal length. -/
-example : wordLt [false, true] [true, false] = true := by decide
+example : BitString.wordLt [false, true] [true, false] = true := by decide
 
-example : wordLt [true, false] [true, false] = false := by decide
+example : BitString.wordLt [true, false] [true, false] = false := by decide
 
 /-- The coefficients of the amplification modulo `2 ^ 3`: `1, 6, 4`, that is `1, -2, 4`. -/
 example : (parityCoeff 3 0, parityCoeff 3 1, parityCoeff 3 2) = (1, 6, 4) := by decide
