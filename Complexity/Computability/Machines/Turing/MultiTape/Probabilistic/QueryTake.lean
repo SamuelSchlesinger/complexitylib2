@@ -45,6 +45,13 @@ input head.
 * `Turing.MultiTapePTM.RunsWords.seq_bind`: sequence two `RunsWords` phases.
 * `Turing.MultiTapePTM.computesTidily_coinMachine`: tidy specification of `coinMachine`.
 * `Turing.MultiTapePTM.computesTidily_queryTakePTM`: tidy specification of `queryTakePTM`.
+
+## References
+
+`RunsWords` and `ComputesTidily` adapt the deterministic `TransformsTapes` and tidy-machine
+notions of cslib's `Plumbing/TransformsTapes` and `Plumbing/Tidy`, by Christian Reitwiessner, in
+the run form of crei:crei/tidy-universal @7f7c0696, to the probabilistic oracle machines of the
+cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
 @[expose] public section
