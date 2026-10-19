@@ -13,6 +13,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.List
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+import Complexity.Foundations.Data.BitString.List.Binary
 import Mathlib.Data.List.GetD
 
 /-!
@@ -49,6 +50,8 @@ up a variable with a large binary label does not require a certificate as long a
   predicate matches or occurrences of a computed value.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD`: lookup by a unary index.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listGetD_binary`: lookup by a binary index,
+  which is capped at the length of the list.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.getElem?`: optional lookup in computed lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.listIsEmpty`, `.listIsEmpty'`, `.bitsIsEmpty`,
   `.head?`: inspect a list without a default element, with inference rules for framed and raw lists.
@@ -662,6 +665,39 @@ theorem bitsGetDWithInput {list : γ → List Bool} {index : γ → ℕ}
     (hindex : ComputableTidilyInPolyTime index encIn encUnary) (fallback : Bool) :
     ComputableTidilyInPolyTime (fun x => (list x).getD (index x) fallback) encIn encBool :=
   (bitsGetD fallback).comp (hlist.prod hindex)
+
+/-- Lookup in a computed list at a computed binary index. The index is first capped at the length
+of the list, reading its binary digits most significant first and capping every partial value, so
+an index far beyond the list costs only its binary length; beyond the list every lookup returns
+the default. -/
+theorem listGetD_binary {encL : List α ↪ List Bool} [ListEncoding encA encL]
+    [SizedListEncoding encA encL] {l : γ → List α} {i : γ → ℕ} (d : α)
+    (hl : ComputableTidilyInPolyTime l encIn encL)
+    (hi : ComputableTidilyInPolyTime i encIn encNat) :
+    ComputableTidilyInPolyTime (fun x => (l x).getD (i x) d) encIn encA := by
+  have hlen : ComputableTidilyInPolyTime (fun x => (l x).length) encIn encUnary :=
+    (length encA).comp hl
+  have hcap : ComputableTidilyInPolyTime
+      (fun x => Cslib.BitString.boundedBinaryValue (l x).length (encNat (i x)).reverse)
+      encIn encUnary := by
+    apply foldlWith (encA := encBool) (encL := encBits) (encP := encUnary)
+      (par := fun x => (l x).length) (list := fun x => (encNat (i x)).reverse)
+      (step := fun cap value bit => min cap (2 * value + bit.toNat))
+      hlen (bitsReverse.comp hi.encoded) (const 0) (by fun_prop) (B := fun x => (l x).length)
+    · simpa only [encUnary_apply, List.length_replicate] using hlen.polyBounded_length
+    · intro x j _
+      simpa only [encUnary_apply, List.length_replicate, Cslib.BitString.boundedBinaryValue] using
+        Cslib.BitString.boundedBinaryValue_le (l x).length ((encNat (i x)).reverse.take j)
+  have heq : (fun x => (l x).getD (i x) d) = fun x =>
+      (l x).getD (Cslib.BitString.boundedBinaryValue (l x).length (encNat (i x)).reverse) d := by
+    funext x
+    rw [Cslib.BitString.boundedBinaryValue_eq, encNat_apply,
+      Cslib.BitString.binaryValue_reverse_bits]
+    rcases le_total (i x) (l x).length with h | h
+    · rw [Nat.min_eq_right h]
+    · rw [Nat.min_eq_left h, List.getD_eq_default _ _ h, List.getD_eq_default _ _ le_rfl]
+  rw [heq]
+  exact (listGetD d).comp (hl.prod hcap)
 
 /-- Number the entries of a framed list with unary indices, charging the list and every index. -/
 @[fun_prop]
