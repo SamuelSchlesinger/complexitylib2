@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
@@ -44,6 +45,8 @@ development is built on.
 * `Cslib.Complexity.mem_P_iff_exists_decidableInTimeAndSpace`: `P` in terms of upstream
   `Turing.MultiTapeTM.DecidableInTimeAndSpace` with polynomially bounded time and space.
 * `Cslib.Complexity.mem_P_of_decidableInTimeAndSpace`: a polynomial time bound alone suffices.
+* `Cslib.Complexity.compl_mem_P`, `Cslib.Complexity.P_eq_preimage_compl_P`: `P` is closed under
+  complement.
 
 ## References
 
@@ -89,5 +92,14 @@ theorem mem_P_of_decidableInTimeAndSpace {enc : α ↪ List Bool} {A : Set α} {
     (h : DecidableInTimeAndSpace A enc (fun a => t (enc a).length) s) : A ∈ P enc :=
   let ⟨f, hf, hA⟩ := decidableInTimeAndSpace_iff.mp h
   ⟨f, hf.computableTidilyInPolyTime ht, hA⟩
+
+/-- **`P` is closed under complement**: negate the answer of the decider. -/
+theorem compl_mem_P {enc : α ↪ List Bool} {A : Set α} (hA : A ∈ P enc) : Aᶜ ∈ P enc :=
+  let ⟨f, hf, h⟩ := hA
+  ⟨fun a => !f a, ComputableTidilyInPolyTime.bool_not.comp hf, fun a => by simp [h a]⟩
+
+/-- `P` equals its preimage under complement. -/
+theorem P_eq_preimage_compl_P (enc : α ↪ List Bool) : P enc = compl ⁻¹' P enc :=
+  Set.ext fun _ => ⟨compl_mem_P, fun h => by simpa using compl_mem_P h⟩
 
 end Cslib.Complexity
