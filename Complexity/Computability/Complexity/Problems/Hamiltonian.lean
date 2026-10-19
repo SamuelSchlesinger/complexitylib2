@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Computability.Complexity.Problems.Graph
 public import Mathlib.Combinatorics.SimpleGraph.Hamiltonian
 public import Mathlib.Data.List.Cycle
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
@@ -37,14 +37,15 @@ used.
   makes the one-vertex graph Hamiltonian. `mem_HamPath_iff` and `mem_HamCycle_iff` restate them
   with lists of vertices.
 
-All four problems are in `NP`. A certificate names an ordering of the distinct declared vertices:
-for a vertex list of length `m`, it is read as one block of `m` bits for each distinct declared
-vertex, and each block names the entry of the vertex list whose position is its number of set bits
-(`Graph.decodeVertexList`). The verifiers check that the decoded list contains every declared
-vertex exactly once and nothing else (`Graph.verifyOrdering`), and then the endpoint, length and
-edge conditions. Every ordering has a certificate of length `n ^ 2` for instances of encoded
-length `n`. Path instances `(G, s, t)` are encoded by `encPair encGraph (encPair encNat encNat)`,
-cycle instances by `encGraph`.
+All four problems are in `NP`, with the path or cycle, a list of vertices, as witness
+(`Graph.mem_NP_of_ordering`). They also have explicit verifiers with certificates of length
+`n ^ 2` for instances of encoded length `n`. Such a certificate names an ordering of the distinct
+declared vertices: for a vertex list of length `m`, it is read as one block of `m` bits for each
+distinct declared vertex, and each block names the entry of the vertex list whose position is its
+number of set bits (`Graph.decodeVertexList`). The verifiers check that the decoded list contains
+every declared vertex exactly once and nothing else (`Graph.verifyOrdering`), and then the
+endpoint, length and edge conditions. Path instances `(G, s, t)` are encoded by
+`encPair encGraph (encPair encNat encNat)`, cycle instances by `encGraph`.
 
 ## Main definitions
 
@@ -52,8 +53,7 @@ cycle instances by `encGraph`.
 * `Cslib.Complexity.Graph.IsDirHamCycle`, `Cslib.Complexity.DirHamCycle`.
 * `Cslib.Complexity.HamPath`, `Cslib.Complexity.HamCycle`.
 * `Cslib.Complexity.Graph.arcBool`, `Cslib.Complexity.Graph.chainBool`,
-  `Cslib.Complexity.Graph.cycleChainBool`, `Cslib.Complexity.Graph.enumeratesBool`: executable
-  tests on lists of vertices.
+  `Cslib.Complexity.Graph.cycleChainBool`: executable tests on lists of vertices.
 * `Cslib.Complexity.Graph.decodeVertexList`, `Cslib.Complexity.Graph.verifyOrdering`: verifying
   orderings of the declared vertices.
 * `Cslib.Complexity.DirHamPath.verifier`, `Cslib.Complexity.DirHamCycle.verifier`,
@@ -343,48 +343,6 @@ theorem cycleChainBool_eq_true_iff {r : ℕ → ℕ → Bool} {R : ℕ → ℕ �
       rw [← (key i hi).1, ← (key i hi).2]
       exact h i (by omega)
 
-/-- Executable test that `p` lists every vertex of `V` exactly once and nothing else. -/
-def enumeratesBool (V p : List ℕ) : Bool :=
-  (V.all fun v => p.any fun u => decide (u = v)) &&
-    (p.all fun u => V.any fun v => decide (v = u)) &&
-    p.zipIdx.all fun e => decide (p.idxOf e.1 = e.2)
-
-/-- `enumeratesBool V p` holds exactly when `p` lists the members of `V` without repetition. -/
-theorem enumeratesBool_eq_true_iff {V p : List ℕ} :
-    enumeratesBool V p = true ↔ p.Nodup ∧ ∀ v, v ∈ p ↔ v ∈ V := by
-  have hnodup : (∀ e ∈ p.zipIdx, p.idxOf e.1 = e.2) ↔ p.Nodup := by
-    constructor
-    · intro h
-      rw [List.nodup_iff_injective_get]
-      rintro ⟨i, hi⟩ ⟨j, hj⟩ hij
-      simp only [List.get_eq_getElem] at hij
-      have hi' : p.idxOf p[i] = i := h (p[i], i) (List.mem_zipIdx_iff_getElem?.2 (by simp))
-      have hj' : p.idxOf p[j] = j := h (p[j], j) (List.mem_zipIdx_iff_getElem?.2 (by simp))
-      rw [hij] at hi'
-      exact Fin.ext (hi'.symm.trans hj')
-    · intro hnd e he
-      obtain ⟨hlt, heq⟩ := List.getElem?_eq_some_iff.1 (List.mem_zipIdx_iff_getElem?.1 he)
-      rw [← heq, hnd.idxOf_getElem]
-  simp only [enumeratesBool, Bool.and_eq_true, List.all_eq_true, List.any_eq_true,
-    decide_eq_true_eq, hnodup]
-  constructor
-  · rintro ⟨⟨hV, hp⟩, hnd⟩
-    refine ⟨hnd, fun v => ⟨fun hv => ?_, fun hv => ?_⟩⟩
-    · obtain ⟨u, hu, rfl⟩ := hp v hv
-      exact hu
-    · obtain ⟨u, hu, rfl⟩ := hV v hv
-      exact hu
-  · rintro ⟨hnd, hmem⟩
-    exact ⟨⟨fun v hv => ⟨v, (hmem v).2 hv, rfl⟩, fun u hu => ⟨u, (hmem u).1 hu, rfl⟩⟩, hnd⟩
-
-private theorem countP_range_lt (k m : ℕ) :
-    (List.range k).countP (fun c => decide (c < m)) = min m k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    simp only [List.range_succ, List.countP_append, ih, List.countP_singleton, decide_eq_true_eq]
-    split_ifs <;> omega
-
 /-- The list of vertices described by a certificate `w`, for a vertex list `V` of length `m`: `w`
 is read as blocks of `m` bits, one for each distinct vertex of `V`, and the block numbered `a`
 names the entry of `V` whose position is its number of set bits, or `0` if there is none. -/
@@ -401,28 +359,15 @@ theorem exists_decodeVertexList_eq {V p : List ℕ} (hp : p.Nodup) (hpV : ∀ v,
       rw [List.mem_dedup]
       exact hpV v).length_eq
   have hle : V.dedup.length ≤ V.length := (List.dedup_sublist V).length_le
-  let w := (List.range (n ^ 2)).map fun j =>
-    decide (j % V.length < V.idxOf (p.getD (j / V.length) 0))
-  refine ⟨w, by simp [w], List.ext_getElem (by simp [decodeVertexList, hlen]) fun a ha ha' => ?_⟩
+  refine ⟨unaryBlocks V.length (n ^ 2) fun a => V.idxOf (p.getD a 0), length_unaryBlocks ..,
+    List.ext_getElem (by simp [decodeVertexList, hlen]) fun a ha ha' => ?_⟩
   have hidx : V.idxOf p[a] < V.length := List.idxOf_lt_length_iff.2 ((hpV _).1 (List.getElem_mem _))
-  have hcount : ((List.range V.length).countP fun c => w.getD (V.length * a + c) false) =
-      V.idxOf p[a] := by
-    rw [← min_eq_left hidx.le, ← countP_range_lt]
-    refine List.countP_congr fun c hc => ?_
-    rw [List.mem_range] at hc
-    have hm : 0 < V.length := by omega
-    have hbound : V.length * a + c < n ^ 2 := by
-      calc V.length * a + c < V.length * (a + 1) := by rw [Nat.mul_succ]; omega
-        _ ≤ n * n := Nat.mul_le_mul hn (by omega)
-        _ = n ^ 2 := (sq n).symm
-    have hdiv : (V.length * a + c) / V.length = a := by
-      rw [Nat.mul_add_div hm, Nat.div_eq_of_lt hc, Nat.add_zero]
-    have hmod : (V.length * a + c) % V.length = c := by
-      rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hc]
-    simp only [w, List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hbound,
-      Option.map_some, Option.getD_some, hdiv, hmod, List.getElem?_eq_getElem ha']
+  have hcount := countP_unaryBlocks (N := n ^ 2) (f := fun a => V.idxOf (p.getD a 0)) (a := a)
+    (by rw [List.getD_eq_getElem _ _ ha']; exact hidx.le)
+    (calc V.length * (a + 1) ≤ n * n := Nat.mul_le_mul hn (by omega)
+      _ = n ^ 2 := (sq n).symm)
   simp only [decodeVertexList, List.getElem_map, List.getElem_range]
-  rw [hcount, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hidx, Option.getD_some,
+  rw [hcount, List.getD_eq_getElem _ _ ha', List.getD_eq_getElem _ _ hidx,
     List.getElem_idxOf hidx]
 
 /-- Verify a vertex ordering problem: decode a list of vertices from the certificate
@@ -490,24 +435,6 @@ theorem computableTidilyInPolyTime_cycleChainBool {γ : Type} {encIn : γ ↪ Li
   unfold cycleChainBool
   exact allWithInput (by fun_prop) (hr.comp (((fst _ _).prod (hget (snd _ _))).prod (hget hnext)))
 
-/-- Testing whether a list lists every vertex of another exactly once is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_enumeratesBool :
-    ComputableTidilyInPolyTime (fun x : List ℕ × List ℕ => enumeratesBool x.1 x.2)
-      (encPair (encList encNat) (encList encNat)) encBool := by
-  unfold enumeratesBool
-  fun_prop
-
-private theorem length_dedup_eq (V : List ℕ) :
-    V.dedup.length = (selectVertices V (List.replicate V.length true)).length := by
-  rw [← List.toFinset_card_of_nodup (nodup_selectVertices V _), ← List.card_toFinset]
-  congr 1
-  ext v
-  simp only [List.mem_toFinset, mem_selectVertices, iff_self_and]
-  intro hv
-  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate,
-    ite_eq_left (List.idxOf_lt_length_iff.2 hv), Option.getD_some]
-
 /-- Decoding a list of vertices from a certificate is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_decodeVertexList :
@@ -515,7 +442,7 @@ theorem computableTidilyInPolyTime_decodeVertexList :
       (encPair (encList encNat) encBits) (encList encNat) := by
   have hn : ComputableTidilyInPolyTime (fun x : List ℕ × List Bool => x.1.dedup.length)
       (encPair (encList encNat) encBits) encUnary := by
-    simp only [length_dedup_eq]
+    simp only [← List.card_toFinset, ← length_selectDistinct_replicate]
     have := bitsReplicate true
     fun_prop
   have hblock : ComputableTidilyInPolyTime
@@ -546,15 +473,9 @@ end Graph
 
 /-! ### Membership in `NP` -/
 
-private theorem length_vertices_le_encGraph (G : Graph) : G.1.length ≤ (encGraph G).length := by
-  calc G.1.length ≤ (encList encNat G.1).length := length_le_length_encList encNat G.1
-    _ ≤ (encGraph G).length := by
-        simp only [encGraph, length_encPair]
-        omega
-
 private theorem length_vertices_le_encPath (x : Graph × ℕ × ℕ) :
     x.1.1.length ≤ (encPair encGraph (encPair encNat encNat) x).length := by
-  refine (length_vertices_le_encGraph x.1).trans ?_
+  refine x.1.length_vertices_le_encGraph.trans ?_
   simp only [length_encPair]
   omega
 
@@ -630,9 +551,17 @@ theorem computableTidilyInPolyTime_verifier :
   Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
     (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_arcBool)
 
-/-- `DirHamPath` belongs to `NP`. -/
+/-- `DirHamPath` belongs to `NP`, with the path as witness (`Graph.mem_NP_of_ordering`). -/
 theorem mem_NP : DirHamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  Graph.mem_NP_of_ordering
+    (check := fun (x : Graph × ℕ × ℕ) p => decide (p.head? = some x.2.1) &&
+      decide (p.getLast? = some x.2.2) && Graph.chainBool x.1.arcBool p)
+    (P := fun (x : Graph × ℕ × ℕ) p => p.head? = some x.2.1 ∧ p.getLast? = some x.2.2 ∧
+      p.IsChain fun u v => (u, v) ∈ x.1.2)
+    (by unfold encGraph; fun_prop)
+    (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_arcBool) fun x p => by
+      simp only [Bool.and_eq_true, decide_eq_true_eq,
+        Graph.chainBool_eq_true_iff (Graph.arcBool_eq_true_iff x.1), and_assoc]
 
 end DirHamPath
 
@@ -650,7 +579,7 @@ of encoded length `n`. -/
 theorem isVerifier : IsVerifier encGraph (Polynomial.X ^ 2) verifier DirHamCycle :=
   Graph.isVerifier_verifyOrdering
     (P := fun (G : Graph) p => p ≠ [] ∧ (p : Cycle ℕ).Chain fun u v => (u, v) ∈ G.2)
-    length_vertices_le_encGraph fun G p => by
+    Graph.length_vertices_le_encGraph fun G p => by
       simp only [Bool.and_eq_true, decide_eq_true_eq,
         Graph.cycleChainBool_eq_true_iff (Graph.arcBool_eq_true_iff G)]
 
@@ -662,9 +591,16 @@ theorem computableTidilyInPolyTime_verifier :
     (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
       Graph.computableTidilyInPolyTime_arcBool))
 
-/-- `DirHamCycle` belongs to `NP`. -/
+/-- `DirHamCycle` belongs to `NP`, with the cycle as witness (`Graph.mem_NP_of_ordering`). -/
 theorem mem_NP : DirHamCycle ∈ NP encGraph :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  Graph.mem_NP_of_ordering
+    (check := fun (G : Graph) p => decide (p ≠ []) && Graph.cycleChainBool G.arcBool p)
+    (P := fun (G : Graph) p => p ≠ [] ∧ (p : Cycle ℕ).Chain fun u v => (u, v) ∈ G.2)
+    (by unfold encGraph; fun_prop)
+    (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
+      Graph.computableTidilyInPolyTime_arcBool)) fun G p => by
+      simp only [Bool.and_eq_true, decide_eq_true_eq,
+        Graph.cycleChainBool_eq_true_iff (Graph.arcBool_eq_true_iff G)]
 
 end DirHamCycle
 
@@ -699,9 +635,19 @@ theorem computableTidilyInPolyTime_verifier :
   Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
     (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_adjBool)
 
-/-- `HamPath` belongs to `NP`. -/
-theorem mem_NP : HamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+/-- `HamPath` belongs to `NP`, with the path as witness (`Graph.mem_NP_of_ordering`). -/
+theorem mem_NP : HamPath ∈ NP (encPair encGraph (encPair encNat encNat)) := by
+  have hset : HamPath = {x : Graph × ℕ × ℕ | ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ x.1.1) ∧
+      p.head? = some x.2.1 ∧ p.getLast? = some x.2.2 ∧ p.IsChain x.1.toSimpleGraph.Adj} :=
+    Set.ext fun _ => mem_HamPath_iff
+  rw [hset]
+  exact Graph.mem_NP_of_ordering
+    (check := fun (x : Graph × ℕ × ℕ) p => decide (p.head? = some x.2.1) &&
+      decide (p.getLast? = some x.2.2) && Graph.chainBool x.1.adjBool p)
+    (by unfold encGraph; fun_prop)
+    (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_adjBool) fun x p => by
+      simp only [Bool.and_eq_true, decide_eq_true_eq,
+        Graph.chainBool_eq_true_iff (Graph.adjBool_eq_true_iff x.1), and_assoc]
 
 end HamPath
 
@@ -721,7 +667,7 @@ theorem isVerifier : IsVerifier encGraph (Polynomial.X ^ 2) verifier HamCycle :=
   rw [mem_HamCycle_iff]
   refine Graph.isVerifier_verifyOrdering
     (P := fun (G : Graph) p => 3 ≤ p.length ∧ (p : Cycle ℕ).Chain G.toSimpleGraph.Adj)
-    length_vertices_le_encGraph (fun G p => ?_) G
+    Graph.length_vertices_le_encGraph (fun G p => ?_) G
   simp only [Bool.and_eq_true, decide_eq_true_eq,
     Graph.cycleChainBool_eq_true_iff (Graph.adjBool_eq_true_iff G)]
 
@@ -733,9 +679,19 @@ theorem computableTidilyInPolyTime_verifier :
     (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
       Graph.computableTidilyInPolyTime_adjBool))
 
-/-- `HamCycle` belongs to `NP`. -/
-theorem mem_NP : HamCycle ∈ NP encGraph :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+/-- `HamCycle` belongs to `NP`, with the cycle as witness (`Graph.mem_NP_of_ordering`). -/
+theorem mem_NP : HamCycle ∈ NP encGraph := by
+  have hset : HamCycle = {G : Graph | ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ G.1) ∧
+      3 ≤ p.length ∧ (p : Cycle ℕ).Chain G.toSimpleGraph.Adj} :=
+    Set.ext fun _ => mem_HamCycle_iff
+  rw [hset]
+  exact Graph.mem_NP_of_ordering
+    (check := fun (G : Graph) p => decide (3 ≤ p.length) && Graph.cycleChainBool G.adjBool p)
+    (by unfold encGraph; fun_prop)
+    (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
+      Graph.computableTidilyInPolyTime_adjBool)) fun G p => by
+      simp only [Bool.and_eq_true, decide_eq_true_eq,
+        Graph.cycleChainBool_eq_true_iff (Graph.adjBool_eq_true_iff G)]
 
 end HamCycle
 

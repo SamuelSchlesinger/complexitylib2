@@ -7,13 +7,14 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Computability.Complexity.Problems.Graph
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Mathlib.Combinatorics.SimpleGraph.Coloring.Vertex
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Data.List.GetD
 
 /-!
 # Graph coloring
@@ -26,8 +27,11 @@ and colorings through `SimpleGraph.Colorable`. Edges with an undeclared endpoint
 are therefore ignored. A graph without declared vertices belongs to every `KColoring k`, and for
 `k = 0` these are the only members.
 
-A certificate for `KColoring k` gives each declared vertex `k` bits, at the position of its first
-occurrence; the color is the number of set bits, which must be below `k`.
+`KColoring k` is in `NP`, with the list of colors of the declared vertices, at the positions of
+their first occurrences, as witness (`Cslib.Complexity.mem_NP_of_witness`). The explicit verifier
+`KColoring.verifier k` reads certificates of `k` bits per symbol of the encoded graph instead: it
+gives each declared vertex `k` bits, at the position of its first occurrence, and the color is the
+number of set bits, which must be below `k`.
 
 The reduction `SAT.toThreeColoring` is the palette, variable and clause gadget construction for
 3-colorability, a standard exercise [Sipser, Chapter 7][Sipser2013]. Three palette vertices `T`, `F`
@@ -117,20 +121,6 @@ def verifier (k : ℕ) (x : Graph × List Bool) : Bool :=
   x.1.1.all fun u => decide (colorOf k x.1.1 x.2 u < k) &&
     x.1.1.all fun v => !(x.1.adjBool u v && decide (colorOf k x.1.1 x.2 u = colorOf k x.1.1 x.2 v))
 
-private theorem countP_range_lt (k m : ℕ) :
-    (List.range k).countP (fun c => decide (c < m)) = min m k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    simp only [List.range_succ, List.countP_append, ih, List.countP_singleton, decide_eq_true_eq]
-    split_ifs <;> omega
-
-private theorem length_vertices_le (G : Graph) : G.1.length ≤ (encGraph G).length := by
-  calc G.1.length ≤ (encList encNat G.1).length := length_le_length_encList encNat G.1
-    _ ≤ (encGraph G).length := by
-        simp only [encGraph, length_encPair]
-        omega
-
 /-- `KColoring.verifier k` verifies `KColoring k` with certificates of `k` bits per symbol of the
 encoded graph. -/
 theorem isVerifier (k : ℕ) :
@@ -141,27 +131,18 @@ theorem isVerifier (k : ℕ) :
     Bool.and_eq_false_iff, Graph.adjBool_eq_false_iff, decide_eq_false_iff_not]
   constructor
   · rintro ⟨c, hc, hadj⟩
-    let w := (List.range (k * (encGraph G).length)).map fun j =>
-      decide (j % k < c (G.1.getD (j / k) 0))
-    have hcol : ∀ v ∈ G.1, colorOf k G.1 w v = c v := by
+    have hcol : ∀ v ∈ G.1,
+        colorOf k G.1 (unaryBlocks k (k * (encGraph G).length) fun i => c (G.1.getD i 0)) v =
+          c v := by
       intro v hv
       have hlt : G.1.idxOf v < G.1.length := List.idxOf_lt_length_iff.2 hv
-      have hlen := length_vertices_le G
-      have hk : 0 < k := Nat.zero_lt_of_lt (hc v hv)
-      rw [colorOf, ← min_eq_left (hc v hv).le, ← countP_range_lt]
-      refine List.countP_congr fun c' hc' => ?_
-      rw [List.mem_range] at hc'
-      have hidx : k * G.1.idxOf v + c' < k * (encGraph G).length := by
-        calc k * G.1.idxOf v + c' < k * (G.1.idxOf v + 1) := by rw [Nat.mul_succ]; omega
-          _ ≤ k * (encGraph G).length := Nat.mul_le_mul_left k (by omega)
-      have hdiv : (k * G.1.idxOf v + c') / k = G.1.idxOf v := by
-        rw [Nat.mul_add_div hk, Nat.div_eq_of_lt hc', Nat.add_zero]
-      have hmod : (k * G.1.idxOf v + c') % k = c' := by
-        rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hc']
-      simp only [w, List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hidx,
-        Option.map_some, Option.getD_some, hdiv, hmod, List.getElem?_eq_getElem hlt,
-        List.getElem_idxOf hlt]
-    refine ⟨w, by simp [w], fun u hu => ⟨by rw [hcol u hu]; exact hc u hu, fun v hv => ?_⟩⟩
+      have hget : G.1.getD (G.1.idxOf v) 0 = v := by
+        rw [List.getD_eq_getElem _ _ hlt, List.getElem_idxOf hlt]
+      have hlen := G.length_vertices_le_encGraph
+      rw [colorOf, countP_unaryBlocks (by rw [hget]; exact (hc v hv).le)
+        (Nat.mul_le_mul_left k (by omega)), hget]
+    refine ⟨_, length_unaryBlocks .., fun u hu => ⟨by rw [hcol u hu]; exact hc u hu,
+      fun v hv => ?_⟩⟩
     rw [hcol u hu, hcol v hv]
     by_cases huv : G.toSimpleGraph.Adj u v
     · exact Or.inr (hadj u hu v hv huv)
@@ -210,9 +191,73 @@ theorem computableTidilyInPolyTime_verifier (k : ℕ) :
       (bool_and' (Graph.computableTidilyInPolyTime_adjBool.comp hproj)
         ((hcol.comp (fst _ _)).decide_eq' (hcol.comp hproj'))))))
 
-/-- `KColoring k` belongs to `NP`. -/
-theorem mem_NP (k : ℕ) : KColoring k ∈ NP encGraph :=
-  ⟨_, verifier k, computableTidilyInPolyTime_verifier k, isVerifier k⟩
+private theorem getD_map_idxOf {V : List ℕ} {c : ℕ → ℕ} {u : ℕ} (hu : u ∈ V) :
+    (V.map c).getD (V.idxOf u) 0 = c u := by
+  have hlt := List.idxOf_lt_length_iff.2 hu
+  rw [List.getD_eq_getElem _ _ (by simpa using hlt), List.getElem_map, List.getElem_idxOf hlt]
+
+/-- `KColoring k` belongs to `NP`, with the colors of the declared vertices, listed in unary at
+the positions of their first occurrences, as witness (`Cslib.Complexity.mem_NP_of_witness`). -/
+theorem mem_NP (k : ℕ) : KColoring k ∈ NP encGraph := by
+  have hset : KColoring k = {G | ∃ cs : List ℕ, (∀ u ∈ G.1, cs.getD (G.1.idxOf u) 0 < k) ∧
+      ∀ u ∈ G.1, ∀ v ∈ G.1, G.toSimpleGraph.Adj u v →
+        cs.getD (G.1.idxOf u) 0 ≠ cs.getD (G.1.idxOf v) 0} := by
+    ext G
+    rw [mem_KColoring_iff]
+    refine ⟨fun ⟨c, hc, hadj⟩ => ⟨G.1.map c, fun u hu => ?_, fun u hu v hv huv => ?_⟩,
+      fun ⟨_, h⟩ => ⟨_, h⟩⟩
+    · rw [getD_map_idxOf hu]
+      exact hc u hu
+    · rw [getD_map_idxOf hu, getD_map_idxOf hv]
+      exact hadj u hu v hv huv
+  rw [hset]
+  refine mem_NP_of_witness (Decoder.list Decoder.unary)
+    (p := Polynomial.C (2 * k + 1) * Polynomial.X)
+    (check := fun x : Graph × List ℕ => x.1.1.all fun u =>
+      decide (x.2.getD (x.1.1.idxOf u) 0 < k) && x.1.1.all fun v =>
+        !(x.1.adjBool u v && decide (x.2.getD (x.1.1.idxOf u) 0 = x.2.getD (x.1.1.idxOf v) 0)))
+    ?_ (fun G cs => ?_) fun G cs hcs => ?_
+  · have hV : ComputableTidilyInPolyTime (fun x : Graph × List ℕ => x.1.1)
+        (encPair encGraph (encList encUnary)) (encList encNat) := by
+      unfold encGraph
+      fun_prop
+    have hcol : ComputableTidilyInPolyTime
+        (fun p : (Graph × List ℕ) × ℕ => p.1.2.getD (p.1.1.1.idxOf p.2) 0)
+        (encPair (encPair encGraph (encList encUnary)) encNat) encUnary := by
+      unfold encGraph
+      fun_prop
+    have hproj : ComputableTidilyInPolyTime
+        (fun p : ((Graph × List ℕ) × ℕ) × ℕ => ((p.1.1.1, p.1.2), p.2))
+        (encPair (encPair (encPair encGraph (encList encUnary)) encNat) encNat)
+        (encPair (encPair encGraph encNat) encNat) := by fun_prop
+    have hproj' : ComputableTidilyInPolyTime
+        (fun p : ((Graph × List ℕ) × ℕ) × ℕ => (p.1.1, p.2))
+        (encPair (encPair (encPair encGraph (encList encUnary)) encNat) encNat)
+        (encPair (encPair encGraph (encList encUnary)) encNat) := by fun_prop
+    exact allWithInput hV (bool_and' (unary_lt' hcol (const k))
+      (allWithInput (hV.comp (fst _ _)) (bool_not.comp
+        (bool_and' (Graph.computableTidilyInPolyTime_adjBool.comp hproj)
+          ((hcol.comp (fst _ _)).decide_eq' (hcol.comp hproj'))))))
+  · simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.not_eq_true',
+      Bool.and_eq_false_iff, Graph.adjBool_eq_false_iff, decide_eq_false_iff_not]
+    refine ⟨fun h => ⟨fun u hu => (h u hu).1, fun u hu v hv huv => ((h u hu).2 v hv).resolve_left
+      (not_not.2 huv)⟩, fun ⟨hlt, hadj⟩ u hu => ⟨hlt u hu, fun v hv => ?_⟩⟩
+    by_cases huv : G.toSimpleGraph.Adj u v
+    · exact Or.inr (hadj u hu v hv huv)
+    · exact Or.inl huv
+  · refine ⟨G.1.map fun u => cs.getD (G.1.idxOf u) 0,
+      ⟨fun u hu => by rw [getD_map_idxOf hu]; exact hcs.1 u hu, fun u hu v hv huv => by
+        rw [getD_map_idxOf hu, getD_map_idxOf hv]; exact hcs.2 u hu v hv huv⟩, ?_⟩
+    rw [length_encList, List.map_map]
+    refine (List.sum_le_length_nsmul _ (2 * k + 1) fun n hn => ?_).trans ?_
+    · obtain ⟨u, hu, rfl⟩ := List.mem_map.1 hn
+      have := hcs.1 u hu
+      simp only [Function.comp_apply, encUnary_apply, List.length_replicate]
+      omega
+    · simp only [List.length_map, smul_eq_mul, Polynomial.eval_mul, Polynomial.eval_C,
+        Polynomial.eval_X]
+      rw [Nat.mul_comm]
+      exact Nat.mul_le_mul_left _ G.length_vertices_le_encGraph
 
 end KColoring
 
