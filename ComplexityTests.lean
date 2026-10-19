@@ -197,6 +197,7 @@ import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.PseudorandomObjects
+import ComplexityTests.QBFProtocol
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
