@@ -9,6 +9,7 @@ import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
 import ComplexityTests.Axioms
+import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BitonicSort

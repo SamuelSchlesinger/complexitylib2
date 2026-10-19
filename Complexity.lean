@@ -343,6 +343,8 @@ public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.BPP.Collapse
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
+public import Complexity.Computability.Complexity.Classes.CeqP
+public import Complexity.Computability.Complexity.Classes.DP
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.Hierarchy
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Space
@@ -364,6 +366,7 @@ public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Complexity.Classes.NP.Closure
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
 public import Complexity.Computability.Complexity.Classes.NP.SelfReduction
@@ -381,6 +384,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 public import Complexity.Computability.Complexity.Classes.Oracle.Space
 public import Complexity.Computability.Complexity.Classes.Oracle.TQBF
 public import Complexity.Computability.Complexity.Classes.P
+public import Complexity.Computability.Complexity.Classes.P.Closure
 public import Complexity.Computability.Complexity.Classes.P.Complement
 public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
@@ -394,6 +398,7 @@ public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Complexity.Classes.ParityP
+public import Complexity.Computability.Complexity.Classes.ParityP.Closure
 public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Classes.Promise.Circuit
 public import Complexity.Computability.Complexity.Classes.RP
@@ -415,6 +420,7 @@ public import Complexity.Computability.Complexity.Classes.Toda
 public import Complexity.Computability.Complexity.Classes.Toda.Counting
 public import Complexity.Computability.Complexity.Classes.Toda.Hierarchy
 public import Complexity.Computability.Complexity.Classes.Toda.Isolation
+public import Complexity.Computability.Complexity.Classes.UP
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
@@ -454,6 +460,7 @@ public import Complexity.Computability.Complexity.Problems.Knapsack
 public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
+public import Complexity.Computability.Complexity.Problems.SATUNSAT
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
