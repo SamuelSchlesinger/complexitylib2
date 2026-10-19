@@ -263,7 +263,7 @@ end Synthesis
 of every `n × n` matrix over every commutative `K`-algebra, its entries supplied in row-major
 order. -/
 theorem exists_circuit_det_eval (n : ℕ) : ∃ c : Circuit (arithSignature K) (n * n) 1,
-    c.size ≤ 3 * n ^ 4 + 4 ∧ ∀ {R : Type u} [CommRing R] [Algebra K R]
+    c.size ≤ 3 * n ^ 4 + 4 ∧ ∀ {R : Type*} [CommRing R] [Algebra K R]
       (A : Matrix (Fin n) (Fin n) R),
       c.eval (arithInterpretationWith K (algebraMap K R))
         (fun k => A (finProdFinEquiv.symm k).1 (finProdFinEquiv.symm k).2) 0 = A.det := by
