@@ -18,10 +18,10 @@ The branching step of the sparsification procedure on formulas in conjunctive no
 list operations: reduction (`CNF.Sparsification.reduce`), flowers and petals, the children
 (`CNF.Sparsification.child`) and a computed heavy-heart choice (`CNF.Sparsification.choice`).
 
-Formulas are kept in a normal form (`CNF.Sparsification.Good`): no clause repeats a literal or has
-more than `k` literals, no two clauses have the same literals, and no clause strictly contains
-another. Then a formula and its clause set have the same number of clauses, and the list
-operations compute the clause-set operations of `Cslib.Logic.PL.ClauseSet.Sparsification`
+Formulas are kept in a normal form (`CNF.Sparsification.Normalized`): no clause repeats a literal or
+has more than `k` literals, no two clauses have the same literals, and no clause strictly contains
+another. Then a formula and its clause set have the same number of clauses, and the list operations
+compute the clause-set operations of `Cslib.Logic.PL.ClauseSet.Sparsification`
 (`CNF.Sparsification.toClauseSet_child`). Any formula of width `k` is brought into normal form by
 `CNF.Sparsification.normalize`.
 
@@ -37,7 +37,7 @@ tree applies.
 
 * `Cslib.Logic.PL.CNF.Sparsification.child`, `.choice`, `.next`: the list-level step.
 * `Cslib.Logic.PL.CNF.Sparsification.isSparse`: the list-level test for sparseness.
-* `Cslib.Logic.PL.CNF.Sparsification.Good`, `.normalize`: the normal form.
+* `Cslib.Logic.PL.CNF.Sparsification.Normalized`, `.normalize`: the normal form.
 * `Cslib.Logic.PL.CNF.Sparsification.rule`: the list-level branching rule.
 
 ## Main results
@@ -243,31 +243,32 @@ theorem toClauseSet_child {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) (
 /-- The normal form of the list-level procedure, for width `k`: no clause repeats a literal or
 has more than `k` literals, no two clauses have the same literals, and no clause strictly contains
 another. -/
-structure Good (k : ℕ) (ψ : CNF V) : Prop where
+structure Normalized (k : ℕ) (ψ : CNF V) : Prop where
   nodup : ∀ C ∈ ψ, C.Nodup
   length_le : ∀ C ∈ ψ, C.length ≤ k
   nodup_toFinset : (ψ.map List.toFinset).Nodup
   reduced : Reduced ψ.toClauseSet
 
 /-- A formula in normal form has as many clauses as its clause set. -/
-theorem Good.card_toClauseSet {k : ℕ} {ψ : CNF V} (h : Good k ψ) :
+theorem Normalized.card_toClauseSet {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) :
     ψ.toClauseSet.card = ψ.length := by
   rw [CNF.toClauseSet, List.toFinset_card_of_nodup h.nodup_toFinset, List.length_map]
 
-theorem Good.card_le {k : ℕ} {ψ : CNF V} (h : Good k ψ) : ∀ C ∈ ψ.toClauseSet, C.card ≤ k := by
+theorem Normalized.card_le {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) :
+    ∀ C ∈ ψ.toClauseSet, C.card ≤ k := by
   intro C hC
   obtain ⟨D, hD, rfl⟩ := mem_toClauseSet.mp hC
   rw [List.toFinset_card_of_nodup (h.nodup D hD)]
   exact h.length_le D hD
 
-theorem Good.length_flower {k : ℕ} {ψ : CNF V} (h : Good k ψ) (c : ℕ) (H : Clause V) :
+theorem Normalized.length_flower {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) (c : ℕ) (H : Clause V) :
     (flower ψ c H).length =
       (ClauseSet.Sparsification.flower ψ.toClauseSet c H.toFinset).card := by
   have hsub : flower ψ c H <+ ψ := List.filter_sublist
   rw [← toClauseSet_flower h.nodup, CNF.toClauseSet,
     List.toFinset_card_of_nodup ((hsub.map _).nodup h.nodup_toFinset), List.length_map]
 
-theorem heavy_eq_true_iff {θ : ℕ → ℕ} {k : ℕ} {ψ : CNF V} (h : Good k ψ) {c : ℕ}
+theorem heavy_eq_true_iff {θ : ℕ → ℕ} {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) {c : ℕ}
     {H : Clause V} (hH : H.Nodup) :
     heavy θ ψ (c, H) = true ↔ Heavy θ ψ.toClauseSet c H.toFinset := by
   simp only [heavy, Bool.and_eq_true, decide_eq_true_eq, Heavy,
@@ -325,14 +326,14 @@ theorem mem_candidates {k : ℕ} {ψ : CNF V} {x : ℕ × Clause V} (hx : x ∈ 
   obtain ⟨H, hH, rfl⟩ := List.mem_map.mp hx
   exact ⟨C, hC, rfl, mem_hearts hH⟩
 
-theorem Good.nodup_of_mem_candidates {k : ℕ} {ψ : CNF V} (h : Good k ψ) {x : ℕ × Clause V}
-    (hx : x ∈ candidates k ψ) : x.2.Nodup := by
+theorem Normalized.nodup_of_mem_candidates {k : ℕ} {ψ : CNF V} (h : Normalized k ψ)
+    {x : ℕ × Clause V} (hx : x ∈ candidates k ψ) : x.2.Nodup := by
   obtain ⟨C, hC, -, hsub⟩ := mem_candidates hx
   exact hsub.nodup (h.nodup C hC)
 
 /-- Every heavy heart of a formula in normal form is a candidate. -/
-theorem Good.exists_mem_candidates {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V}
-    (h : Good k ψ) {c : ℕ} {H' : Finset (Literal V)} (hH' : Heavy θ ψ.toClauseSet c H') :
+theorem Normalized.exists_mem_candidates {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V}
+    (h : Normalized k ψ) {c : ℕ} {H' : Finset (Literal V)} (hH' : Heavy θ ψ.toClauseSet c H') :
     ∃ H, (c, H) ∈ candidates k ψ ∧ H.toFinset = H' := by
   obtain ⟨C', hC'⟩ := hH'.flower_nonempty hθ
   obtain ⟨hC'ψ, hcard, hsub⟩ := ClauseSet.Sparsification.mem_flower.mp hC'
@@ -341,7 +342,7 @@ theorem Good.exists_mem_candidates {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) 
   refine ⟨H, List.mem_flatMap.mpr ⟨C, hC, List.mem_map.mpr ⟨H, hH, ?_⟩⟩, hHeq⟩
   rw [← hcard, List.toFinset_card_of_nodup (h.nodup C hC)]
 
-theorem rank_lt {k : ℕ} {ψ : CNF V} (h : Good k ψ) {x : ℕ × Clause V}
+theorem rank_lt {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) {x : ℕ × Clause V}
     (hx : x ∈ candidates k ψ) : rank k x < (k + 1) * (k + 1) + 1 := by
   obtain ⟨C, hC, hx1, -⟩ := mem_candidates hx
   have h₁ : C.length * (k + 1) ≤ k * (k + 1) := Nat.mul_le_mul_right _ (h.length_le C hC)
@@ -387,7 +388,7 @@ private theorem exists_of_head?_flatMap_range {α : Type*} (g : ℕ → List α)
 
 /-- **The computed choice is valid.** At a formula in normal form that is not sparse, the computed
 choice is a heavy heart with the smallest clause size, and among those the largest heart. -/
-theorem choice_spec {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V} (h : Good k ψ)
+theorem choice_spec {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V} (h : Normalized k ψ)
     (hns : ¬ Sparse θ ψ.toClauseSet) :
     Choice θ ψ.toClauseSet (choice θ k ψ).1 (choice θ k ψ).2.toFinset ∧
       (choice θ k ψ).2.Nodup := by
@@ -444,7 +445,7 @@ theorem choice_spec {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ :
 
 /-- The list-level test decides sparseness of formulas in normal form. -/
 theorem isSparse_eq_true_iff {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V}
-    (h : Good k ψ) : isSparse θ k ψ = true ↔ Sparse θ ψ.toClauseSet := by
+    (h : Normalized k ψ) : isSparse θ k ψ = true ↔ Sparse θ ψ.toClauseSet := by
   simp only [isSparse, Bool.not_eq_true', List.any_eq_false]
   constructor
   · intro hno c H' hH'
@@ -460,9 +461,9 @@ theorem reduce_nodup_toFinset {ψ : CNF V} (h : (ψ.map List.toFinset).Nodup) :
   ((reduce_sublist ψ).map _).nodup h
 
 /-- **The children are in normal form.** -/
-theorem good_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V} (h : Good k ψ)
+theorem normalized_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V} (h : Normalized k ψ)
     {c : ℕ} {H : Clause V} (hH : H.Nodup) (hheavy : Heavy θ ψ.toClauseSet c H.toFinset)
-    (b : Bool) : Good k (child ψ c H b) := by
+    (b : Bool) : Normalized k (child ψ c H b) := by
   have hsub : child ψ c H b <+ ψ ++ intro ψ c H b := reduce_sublist _
   -- the introduced clauses are new, distinct, without repetitions and narrower
   have hintro : ∀ C ∈ intro ψ c H b, C.Nodup ∧
@@ -514,31 +515,31 @@ theorem good_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : 
   · rw [child, toClauseSet_reduce]
     exact reduced_reduce _
 
-theorem toClauseSet_next {θ : ℕ → ℕ} {k : ℕ} {ψ : CNF V} (h : Good k ψ) (b : Bool) :
+theorem toClauseSet_next {θ : ℕ → ℕ} {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) (b : Bool) :
     (next θ k ψ b).toClauseSet = ClauseSet.Sparsification.child ψ.toClauseSet
       (choice θ k ψ).1 (choice θ k ψ).2.toFinset b :=
   toClauseSet_child h.nodup _ _ b
 
-theorem good_next {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V} (h : Good k ψ)
-    (hns : ¬ Sparse θ ψ.toClauseSet) (b : Bool) : Good k (next θ k ψ b) :=
-  good_child hθ h (choice_spec hθ h hns).2 (choice_spec hθ h hns).1.1 b
+theorem normalized_next {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V} (h : Normalized k ψ)
+    (hns : ¬ Sparse θ ψ.toClauseSet) (b : Bool) : Normalized k (next θ k ψ b) :=
+  normalized_child hθ h (choice_spec hθ h hns).2 (choice_spec hθ h hns).1.1 b
 
 /-! ### The branching rule -/
 
 /-- **The list-level branching rule**, on formulas in normal form: the computed choice, and at a
 sparse formula no step. -/
 def rule {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) (k : ℕ) :
-    BranchingRule θ V {ψ : CNF V // Good k ψ} where
+    BranchingRule θ V {ψ : CNF V // Normalized k ψ} where
   toClauseSet ψ := ψ.1.toClauseSet
   next ψ b := if hs : isSparse θ k ψ.1 = true then ψ else
-    ⟨next θ k ψ.1 b, good_next hθ ψ.2 (fun h => hs ((isSparse_eq_true_iff hθ ψ.2).mpr h)) b⟩
+    ⟨next θ k ψ.1 b, normalized_next hθ ψ.2 (fun h => hs ((isSparse_eq_true_iff hθ ψ.2).mpr h)) b⟩
   exists_choice_next ψ hns := by
     have hs : ¬ isSparse θ k ψ.1 = true := fun hs => hns ((isSparse_eq_true_iff hθ ψ.2).mp hs)
     refine ⟨_, _, (choice_spec hθ ψ.2 hns).1, fun b => ?_⟩
     simp only [hs]
     exact toClauseSet_next ψ.2 b
 
-theorem rule_next_val {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} (ψ : {ψ : CNF V // Good k ψ})
+theorem rule_next_val {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} (ψ : {ψ : CNF V // Normalized k ψ})
     (hs : isSparse θ k ψ.1 = false) (b : Bool) : ((rule hθ k).next ψ b).1 = next θ k ψ.1 b := by
   simp [rule, hs]
 
@@ -635,8 +636,8 @@ theorem toClauseSet_normalize (φ : CNF V) :
   simp [CNF.toClauseSet, List.map_map, Function.comp_def, toFinset_dedup]
 
 /-- **Normalization.** Every formula of width `k` has a normal form with the same solutions. -/
-theorem good_normalize {k : ℕ} {φ : CNF V} (hφ : ∀ C ∈ φ, C.length ≤ k) :
-    Good k (normalize φ) := by
+theorem normalized_normalize {k : ℕ} {φ : CNF V} (hφ : ∀ C ∈ φ, C.length ≤ k) :
+    Normalized k (normalize φ) := by
   have hsub : normalize φ <+ φ.map dedup :=
     (reduce_sublist _).trans (dedupClauses_sublist _)
   refine ⟨fun C hC => ?_, fun C hC => ?_, ?_, ?_⟩

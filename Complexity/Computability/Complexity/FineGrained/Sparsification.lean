@@ -24,12 +24,13 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 
 The sparsification lemma of Impagliazzo, Paturi and Zane [ImpagliazzoPaturiZane2001] on the native
 machines: a depth-first search of the sparsification tree, with a decider applied at its leaves,
-runs within time `2 ^ (ε n)` times a polynomial, plus the time of the decider on formulas with at
-most `c n + 1` clauses. Hence a decider for `k`-SAT within time `2 ^ (δ m)` times a polynomial,
-on formulas with `m` clauses, gives one within time `2 ^ ((ε + c δ) n)` times a polynomial, on
-formulas with `n` variables (`Cslib.Complexity.exists_decidableInExpTime_numVars_of_length`), and
-the exponential time hypothesis says that 3SAT is not decidable in subexponential time in the
-number of clauses (`Cslib.Complexity.ETH_iff_not_decidableInSubexpTime_length`).
+runs within time `2 ^ (ε n)` times the sum of a polynomial and the time of the decider on formulas
+with at most `c n + 1` clauses, on formulas with `n` variables. Hence a decider for `k`-SAT within
+time `2 ^ (δ m)` times a polynomial, on formulas with `m` clauses, gives one within time
+`2 ^ ((ε + c δ) n)` times a polynomial, on formulas with `n` variables
+(`Cslib.Complexity.exists_decidableInExpTime_numVars_of_length`), and the exponential time
+hypothesis says that 3SAT is not decidable in subexponential time in the number of clauses
+(`Cslib.Complexity.ETH_iff_not_decidableInSubexpTime_length`).
 
 The search (`Cslib.Complexity.Sparsify.search`) keeps a stack of formulas and an accumulator
 (`Cslib.Complexity.Sparsify.step`). It starts from the normal form of the formula
@@ -38,11 +39,12 @@ the decider, and at any other formula it pushes the two children of the list-lev
 (`Cslib.Logic.PL.CNF.Sparsification.next`), which is polynomial-time. This is the depth-first
 search of the branching tree of the list-level rule
 (`Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.exists_iterate_searchStep`), so it visits
-every leaf within twice the number of leaves of steps, at most `2 ^ (ε n)` up to a constant
-(`Cslib.Logic.PL.ClauseSet.Sparsification.exists_sum_choose_le`); the stack holds at most
-`O(n)` formulas of the tree, each with `O(n + m)` clauses; and the leaves, being sparse, have at
+every leaf within twice the number of leaves of steps, which is at most `2 ^ (ε n)` up to a
+constant for the thresholds given by
+`Cslib.Logic.PL.ClauseSet.Sparsification.exists_sum_choose_le`. Meanwhile the stack holds at most
+`O(n)` formulas of the tree, each with `O(n + m)` clauses, and the leaves, being sparse, have at
 most `c n + 1` clauses (`Cslib.Logic.PL.ClauseSet.Sparsification.card_le_of_sparse`). The search
-runs a fixed number `2 ^ (n / M + 2)` of rounds, the last ones on the empty stack.
+runs a fixed number `2 ^ (n / M + 2)` of rounds, the last ones on the empty stack, for `ε = 1 / M`.
 
 ## Main definitions
 
@@ -111,11 +113,11 @@ def search (K α k M : ℕ) (g : CNF ℕ → Bool) (φ : CNF ℕ) : Bool :=
 variable {K α : ℕ} (hK : 1 ≤ K) (hα : 1 ≤ α)
 
 /-- The list-level branching rule for width `K` and the thresholds `threshold K α`. -/
-abbrev rule : BranchingRule (threshold K α) ℕ {ψ : CNF ℕ // Good K ψ} :=
+abbrev rule : BranchingRule (threshold K α) ℕ {ψ : CNF ℕ // Normalized K ψ} :=
   CNF.Sparsification.rule (one_le_threshold hK hα) K
 
 include hK hα in
-theorem step_map (g : CNF ℕ → Bool) (stk : List {ψ : CNF ℕ // Good K ψ}) (acc : Bool) :
+theorem step_map (g : CNF ℕ → Bool) (stk : List {ψ : CNF ℕ // Normalized K ψ}) (acc : Bool) :
     step K α g (stk.map Subtype.val, acc) =
       Prod.map (List.map Subtype.val) id
         ((rule hK hα).searchStep (g ∘ Subtype.val) (stk, acc)) := by
@@ -131,7 +133,7 @@ theorem step_map (g : CNF ℕ → Bool) (stk : List {ψ : CNF ℕ // Good K ψ})
       simp [step, BranchingRule.searchStep, hs, hs', rule, CNF.Sparsification.rule]
 
 include hK hα in
-theorem iterate_step_map (g : CNF ℕ → Bool) (n : ℕ) (stk : List {ψ : CNF ℕ // Good K ψ})
+theorem iterate_step_map (g : CNF ℕ → Bool) (n : ℕ) (stk : List {ψ : CNF ℕ // Normalized K ψ})
     (acc : Bool) :
     (step K α g)^[n] (stk.map Subtype.val, acc) =
       Prod.map (List.map Subtype.val) id
@@ -151,11 +153,11 @@ theorem iterate_step_nil (g : CNF ℕ → Bool) (n : ℕ) (acc : Bool) :
 
 /-! ### The root -/
 
-theorem good_root {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : Good K (root k φ) := by
+theorem normalized_root {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : Normalized K (root k φ) := by
   unfold root
   split_ifs with h
   · simp only [List.all_eq_true, decide_eq_true_eq] at h
-    exact good_normalize fun C hC => (h C hC).trans hkK
+    exact normalized_normalize fun C hC => (h C hC).trans hkK
   · exact ⟨by simp, by simp, by simp, by simp [CNF.toClauseSet, ClauseSet.Sparsification.Reduced]⟩
 
 /-- Every clause of the root has the literals of a clause of the formula. -/
@@ -177,8 +179,8 @@ theorem length_root_le (k : ℕ) (φ : CNF ℕ) : (root k φ).length ≤ φ.leng
   · exact Nat.zero_le _
 
 /-- The root as a state of the list-level rule. -/
-def rootState {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : {ψ : CNF ℕ // Good K ψ} :=
-  ⟨root k φ, good_root hkK φ⟩
+def rootState {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : {ψ : CNF ℕ // Normalized K ψ} :=
+  ⟨root k φ, normalized_root hkK φ⟩
 
 theorem mem_vars_of_mem_root {k : ℕ} {φ : CNF ℕ} :
     ∀ C ∈ (root k φ).toClauseSet, ∀ l ∈ C, l.1 ∈ φ.vars.toFinset := by
@@ -213,9 +215,9 @@ theorem length_walk_le (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) :
       (rootState hkK φ).1.toClauseSet.card + φ.vars.toFinset.card * (K * base K α ^ (2 * K)) :=
     BranchingRule.IsNodeWord.card_walk_le hK hα (rootState hkK φ).2.reduced
       (rootState hkK φ).2.card_le φ.vars.toFinset mem_vars_of_mem_root hw
-  rw [Good.card_toClauseSet ((rule hK hα).walk (rootState hkK φ) w).2] at h
+  rw [Normalized.card_toClauseSet ((rule hK hα).walk (rootState hkK φ) w).2] at h
   refine h.trans (Nat.add_le_add_right ?_ _)
-  rw [Good.card_toClauseSet (rootState hkK φ).2]
+  rw [Normalized.card_toClauseSet (rootState hkK φ).2]
   exact length_root_le k φ
 
 /-- **The leaves are small.** The sparse states of the tree have at most `c n + 1` clauses, for
@@ -226,7 +228,7 @@ theorem length_walk_le_of_isSparse (hw : (rule hK hα).IsNodeWord (rootState hkK
       2 * (∑ j ∈ Finset.range K, threshold K α j) * φ.numVars + 1 := by
   set ψ := (rule hK hα).walk (rootState hkK φ) w
   have hsparse := (isSparse_eq_true_iff (one_le_threshold hK hα) ψ.2).mp hs
-  rw [← Good.card_toClauseSet ψ.2]
+  rw [← Normalized.card_toClauseSet ψ.2]
   refine ClauseSet.Sparsification.card_le_of_sparse (one_le_threshold hK hα) hsparse ψ.2.card_le
     φ.vars.toFinset fun C' hC' l hl => ?_
   obtain ⟨C, hC, rfl⟩ := mem_toClauseSet.mp hC'
@@ -261,7 +263,7 @@ theorem iterate_step {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M) (g : CN
     (step K α g)^[rounds M φ] ([root k φ], false) =
       ([], decide (∃ w, (rule hK hα).IsLeafWord (rootState hkK φ) w ∧
         g ((rule hK hα).walk (rootState hkK φ) w).1 = true)) ∧
-    ∀ i, ∃ (stk : List {ψ : CNF ℕ // Good K ψ}) (acc : Bool),
+    ∀ i, ∃ (stk : List {ψ : CNF ℕ // Normalized K ψ}) (acc : Bool),
       (step K α g)^[i] ([root k φ], false) = (stk.map Subtype.val, acc) ∧
       stk.length ≤ φ.numVars * (K * base K α ^ (2 * K)) + 1 ∧
       ∀ t ∈ stk, ∃ w, (rule hK hα).IsNodeWord (rootState hkK φ) w ∧
@@ -443,7 +445,7 @@ theorem length_encCNF_walk_le {w : List Bool} (hw : (rule hK hα).IsNodeWord (ro
   obtain ⟨D, hD, hCD⟩ := exists_of_mem_walk hK hα hkK hw hC
   exact length_encLiteral_le hD (List.mem_toFinset.mp (hCD (List.mem_toFinset.mpr hl)))
 
-theorem length_encState_le {stk : List {ψ : CNF ℕ // Good K ψ}} {acc : Bool}
+theorem length_encState_le {stk : List {ψ : CNF ℕ // Normalized K ψ}} {acc : Bool}
     (hstk : stk.length ≤ φ.numVars * (K * base K α ^ (2 * K)) + 1)
     (hmem : ∀ t ∈ stk, ∃ w, (rule hK hα).IsNodeWord (rootState hkK φ) w ∧
       (rule hK hα).walk (rootState hkK φ) w = t) :
@@ -470,8 +472,10 @@ noncomputable def leafTime (K α : ℕ) (δ : ℝ) (c e : ℕ) (φ : CNF ℕ) : 
     ((nodeBound K α φ : ℝ) + 1) ^ e) + c⌉₊
 
 include hK hα in
-/-- **The search runs in time `2 ^ (n / M)` times the time of a round**: within time
-`2 ^ (n / M)` times a polynomial and the time of the decider on the leaves. -/
+/-- **The time of the rounds.** The search is computed within `rounds M φ + 1` times the bound on
+a round: a polynomial in the length of the encoded states (`stateBound`), plus the time bound of
+the decider on the leaves (`leafTime`), plus the cost of the counter; and within polynomial time
+for the start. -/
 theorem exists_computableTidilyInO_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M)
     {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ} (hg : ComputableTidilyInO g encCNF encBool t t)
     {δ : ℝ} (hδ : 0 ≤ δ) {c e : ℕ}
@@ -526,8 +530,9 @@ theorem exists_computableTidilyInO_search {k M : ℕ} (hkK : k ≤ K) (hM : Leaf
 
 include hK hα in
 /-- **The time of the search.** With a decider within time `2 ^ (δ m)` times a polynomial, on
-formulas with `m` clauses, the search decides within time `2 ^ ((1 / M + c δ) n)` times a
-polynomial, on formulas with `n` variables, for `c = occBound K α`. -/
+formulas with `m` clauses, the formulas accepted by the search are decidable within time
+`2 ^ ((1 / M + c δ) n)` times a polynomial, on formulas with `n` variables, for
+`c = occBound K α`. -/
 theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M)
     {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ} (hg : ComputableTidilyInO g encCNF encBool t t)
     {δ : ℝ} (hδ : 0 ≤ δ) {c e : ℕ}
