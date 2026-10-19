@@ -4,11 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Crypto.Computational.OneWay.BPP
 import Complexity.Crypto.Computational.OneWay.MCSP
 import Complexity.Crypto.Computational.OneWay.NP
 
 /-! One-way functions against structural hypotheses: the preimage-prefix problem, the
-search-to-decision inverter and `OWF ⇒ P ≠ NP`; the truth-table distinguisher and Kabanets–Cai.
+search-to-decision inverter, `OWF ⇒ P ≠ NP` and `OWF ⇒ NP ⊄ BPP`; the truth-table distinguisher
+and Kabanets–Cai.
 The hypotheses of the inverter and distinguisher lemmas are discharged for concrete functions and
 deciders; one-wayness and `MCSP ∈ BPP` are open and are not instantiated. -/
 
@@ -38,6 +41,25 @@ example : preimageSearch (fun p => decide (p.2.2 <+: p.2.1 ∧ p.2.1.length = p.
 -- The inverter lemma applies: the identity is not one-way, by its own inverse.
 example : ¬ OneWay id :=
   not_oneWay_of_lengthInverse Prod.snd (ComputableTidilyInPolyTime.snd _ _) fun _ => rfl
+
+/-- The preimage-prefix problem of a constant function is in `P`: an image has a preimage of
+length `n` with a given prefix exactly when it is the constant and the prefix is short enough. -/
+theorem preimagePrefix_const_mem_P :
+    preimagePrefix (fun _ => ([] : List Bool)) ∈ P encPreimagePrefix := by
+  refine ⟨fun p => p.2.1.isEmpty && decide (p.2.2.length ≤ p.1), by fun_prop,
+    fun ⟨n, y, u⟩ => ⟨fun ⟨x, hx, hux, hy⟩ => ?_, fun h => ?_⟩⟩
+  · subst hy
+    have hle : u.length ≤ n := (hux.length_le).trans_eq hx
+    simpa using hle
+  · simp only [Bool.and_eq_true, List.isEmpty_iff, decide_eq_true_eq] at h
+    obtain ⟨rfl, hu⟩ := h
+    exact ⟨u ++ List.replicate (n - u.length) false, by simp; omega, List.prefix_append _ _, rfl⟩
+
+-- The randomized inverter applies once the preimage-prefix problem is in `BPP`.
+example : ∃ inverter : Inverter, Probability.IsPPT encBits inverter ∧
+    ∀ n, 1 / 2 ≤ Game.succProbability
+      (ProbComp.eval (inversionGame (fun _ => ([] : List Bool)) inverter n)) :=
+  exists_inverter_of_preimagePrefix_mem_BPP (P_subset_BPP preimagePrefix_const_mem_P)
 
 -- Against a deterministic oracle, `queryTable` collects the first reply bits, `false` for an
 -- empty reply.
@@ -95,6 +117,34 @@ info: 'Cslib.Crypto.OneWay.SAT_notMem_P' depends on axioms: [propext, Classical.
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.OneWay.SAT_notMem_P
+
+/--
+info: 'Cslib.Complexity.PolyTimeReducible.mem_BPP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PolyTimeReducible.mem_BPP
+
+/--
+info: 'Cslib.Crypto.half_le_succProbability_inversionGame' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.half_le_succProbability_inversionGame
+
+/--
+info: 'Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP
+
+/--
+info: 'Cslib.Crypto.OneWay.SAT_notMem_BPP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.SAT_notMem_BPP
 
 /--
 info: 'Cslib.Crypto.exists_complexity_restriction_le' depends on axioms:

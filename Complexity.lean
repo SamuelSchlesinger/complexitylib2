@@ -346,6 +346,7 @@ public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.BPP.Collapse
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
+public import Complexity.Computability.Complexity.Classes.BPP.Reduction
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy
 public import Complexity.Computability.Complexity.Classes.CeqP
 public import Complexity.Computability.Complexity.Classes.DP
@@ -876,6 +877,7 @@ public import Complexity.Crypto.Computational.HardCore
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
+public import Complexity.Crypto.Computational.OneWay.BPP
 public import Complexity.Crypto.Computational.OneWay.Collision
 public import Complexity.Crypto.Computational.OneWay.MCSP
 public import Complexity.Crypto.Computational.OneWay.NP

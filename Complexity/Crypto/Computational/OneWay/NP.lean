@@ -40,7 +40,9 @@ deterministic polynomial-time algorithm inverts `f` on every image
 `P` either (`Cslib.Crypto.OneWay.SAT_notMem_P`).
 
 One-wayness is the uniform notion of `Cslib.Crypto.OneWay`: the inverter is uniform strict PPT
-and receives the unary length of the sampled input. The inverter built here is deterministic.
+and receives the unary length of the sampled input. The inverter built here is deterministic; the
+randomized version, for a decision procedure in `BPP`, is in
+`Complexity.Crypto.Computational.OneWay.BPP`.
 
 ## Main definitions
 
@@ -51,6 +53,8 @@ and receives the unary length of the sampled input. The inverter built here is d
 
 * `Cslib.Crypto.preimagePrefix_mem_NP`: the preimage-prefix problem of a polynomial-time
   function is in `NP`.
+* `Cslib.Crypto.apply_preimageSearch`, `Cslib.Crypto.preimageSearch_congr`: with correct answers
+  the search finds a preimage, and only the answers to its own `n` queries matter.
 * `Cslib.Crypto.exists_inverse_of_preimagePrefix_mem_P`: if it is in `P`, a deterministic
   polynomial-time algorithm finds a preimage of every image.
 * `Cslib.Crypto.not_oneWay_of_lengthInverse`: an efficient deterministic inverter that is told
@@ -193,16 +197,50 @@ theorem apply_preimageSearch {D : ℕ × List Bool × List Bool → Bool}
   rw [heq]
   exact hfx'
 
+/-- The search with `D'` follows the search with `D` as long as `D'` answers the queries of the
+search with `D` as `D` does. -/
+theorem iterate_preimageSearchStep_congr {D D' : ℕ × List Bool × List Bool → Bool}
+    {q : ℕ × List Bool} : ∀ i, (∀ j < i, D' (q.1, q.2, (preimageSearchStep D q)^[j] [] ++ [false]) =
+      D (q.1, q.2, (preimageSearchStep D q)^[j] [] ++ [false])) →
+    (preimageSearchStep D' q)^[i] [] = (preimageSearchStep D q)^[i] []
+  | 0, _ => rfl
+  | i + 1, h => by
+    rw [Function.iterate_succ_apply', Function.iterate_succ_apply',
+      iterate_preimageSearchStep_congr i fun j hj => h j (by omega)]
+    simp only [preimageSearchStep, h i (by omega)]
+
+/-- A decision procedure that answers the queries of the search with `D` as `D` does finds the
+same word. Only these `q.1` queries matter, not correctness on all instances. -/
+theorem preimageSearch_congr {D D' : ℕ × List Bool × List Bool → Bool} {q : ℕ × List Bool}
+    (h : ∀ j < q.1, D' (q.1, q.2, (preimageSearchStep D q)^[j] [] ++ [false]) =
+      D (q.1, q.2, (preimageSearchStep D q)^[j] [] ++ [false])) :
+    preimageSearch D' q = preimageSearch D q :=
+  iterate_preimageSearchStep_congr q.1 h
+
+/-- **The search is polynomial-time** when the decision procedure is, also for a decision
+procedure `D x` and a target `q x` that depend on the input `x`. -/
+theorem computableTidilyInPolyTime_preimageSearch_of_input {γ : Type} {encIn : γ ↪ List Bool}
+    {D : γ → ℕ × List Bool × List Bool → Bool} {q : γ → ℕ × List Bool}
+    (hD : ComputableTidilyInPolyTime (fun p : γ × (ℕ × List Bool × List Bool) => D p.1 p.2)
+      (encPair encIn encPreimagePrefix) encBool)
+    (hq : ComputableTidilyInPolyTime q encIn (encPair encUnary encBits)) :
+    ComputableTidilyInPolyTime (fun x => preimageSearch (D x) (q x)) encIn encBits := by
+  unfold preimageSearch
+  refine iterateWithInput_of_bounded_growth hq.fst' (const []) ?_ ⟨.const 1, fun x u => ?_⟩
+  · have hinst : ComputableTidilyInPolyTime (fun p : γ × List Bool =>
+        (p.1, ((q p.1).1, (q p.1).2, p.2 ++ [false])))
+        (encPair encIn encBits) (encPair encIn encPreimagePrefix) :=
+      (fst _ _).prod ((hq.comp (fst _ _)).fst'.prod ((hq.comp (fst _ _)).snd'.prod
+        (bitsAppend (snd _ _) (const [false]))))
+    unfold preimageSearchStep
+    exact bitsAppend (snd _ _) (bitsCons (bool_not.comp (hD.comp hinst)) (const []))
+  · simp [preimageSearchStep]
+
 /-- **The search is polynomial-time** when the decision procedure is. -/
 theorem computableTidilyInPolyTime_preimageSearch {D : ℕ × List Bool × List Bool → Bool}
     (hD : ComputableTidilyInPolyTime D encPreimagePrefix encBool) :
-    ComputableTidilyInPolyTime (preimageSearch D) (encPair encUnary encBits) encBits := by
-  unfold preimageSearch
-  refine iterateWithInput_of_bounded_growth (fst _ _) (const []) ?_
-    ⟨.const 1, fun q u => ?_⟩
-  · unfold preimageSearchStep
-    fun_prop
-  · simp [preimageSearchStep]
+    ComputableTidilyInPolyTime (preimageSearch D) (encPair encUnary encBits) encBits :=
+  computableTidilyInPolyTime_preimageSearch_of_input (D := fun _ => D) (hD.comp (snd _ _)) id'
 
 /-- **Inversion from the preimage-prefix problem.** If the preimage-prefix problem of `f` is in
 `P`, a deterministic polynomial-time algorithm, told the length of the input, finds a preimage of
