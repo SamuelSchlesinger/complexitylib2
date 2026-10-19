@@ -55,11 +55,28 @@ example (C : Circuit Unbounded.signature (17 ^ 2 * 100 ^ 2) 1)
     2 ^ 100 ≤ (Finset.univ.filter fun k => (C.program.lines k).op ≠ .not).card :=
   Unbounded.two_pow_le_card_andOr_of_computes_parity hC (by norm_num) hd (by norm_num)
 
+/-- The number of conjunctions and disjunctions is the AND/OR cost of the program. -/
+example (C : Circuit Unbounded.signature (17 ^ 2 * 100 ^ 2) 1)
+    (hC : C.Computes Unbounded.interpretation (single (parity _)))
+    (hd : C.depthWith Unbounded.andOrCost ≤ 3) :
+    2 ^ 100 ≤ C.program.cost Unbounded.andOrCost :=
+  Unbounded.cost_andOrCost_eq_card C.program ▸
+    Unbounded.two_pow_le_card_andOr_of_computes_parity hC (by norm_num) hd (by norm_num)
+
 /-- When depth counts negations, the bound has the same form. -/
 example (C : Circuit Unbounded.signature 1700 1)
     (hC : C.Computes Unbounded.interpretation (single (parity 1700)))
     (hd : C.depth ≤ 2) : 2 ^ 100 ≤ C.size :=
   Unbounded.two_pow_le_size_of_computes_parity_of_depth_le hC (by norm_num) hd (by norm_num)
+
+/-- The step that ends the argument: a formula in disjunctive normal form with terms of at most
+two literals does not compute the parity of three free bits, up to negation. -/
+example (D : Logic.PL.DNF (Fin 3)) (hD : ∀ t ∈ D, t.length ≤ 2) (c : Bool) :
+    ¬ ∀ y, D.eval y = (parity 3 y != c) := by
+  have h := Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne
+    (ρ := BitString.PartialAssignment.empty) (D := D)
+    (fun t ht => by simpa using Nat.lt_succ_of_le (hD t ht)) (by simp) c
+  simpa using h
 
 /-! ### Parity is not first-order definable -/
 
@@ -156,6 +173,13 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Unbounded.two_pow_le_size_of_formula_computes_parity_of_depthWith_le
+
+/--
+info: 'Cslib.Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne
 
 /--
 info: 'Cslib.Circuits.Boolean.ModelChecking.not_eventually_forall_realize_expansion_iff_even'

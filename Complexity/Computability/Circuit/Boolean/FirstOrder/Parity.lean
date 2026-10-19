@@ -13,8 +13,6 @@ public import Mathlib.SetTheory.Cardinal.Finite
 import Complexity.Computability.Circuit.Boolean.Hastad
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
-import Mathlib.Algebra.BigOperators.Fin
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -36,7 +34,8 @@ The proof combines the two directions of the correspondence between first-order 
 constant-depth circuits. A sentence is decided on the structures with `n` elements, given by
 their atomic facts, by an unbounded fan-in formula of depth independent of `n` and size
 polynomial in `n` (`ModelChecking.toUnbounded`). Substituting the input bits for the facts
-`P(a)` and constants for the facts about the numerical relations (`Formula.bind`) gives
+`P(a)` and constants for the facts about the numerical relations (`Formula.bind`,
+`Formula.depth_bind_le`, `Formula.size_bind_le`, `ModelChecking.leafSize_toUnbounded_le`) gives
 formulas of constant depth and polynomial size on `n` inputs computing parity, against Håstad's
 theorem (`Unbounded.two_pow_le_size_of_formula_computes_parity`).
 
@@ -52,8 +51,6 @@ unary numerical relation holding of one element.
 
 ## Main results
 
-* `Cslib.Circuits.Formula.depth_bind_le`, `Cslib.Circuits.Formula.size_bind_le`: substitution
-  into formulas.
 * `Cslib.Circuits.Boolean.ModelChecking.not_eventually_forall_realize_expansion_iff_even`: parity
   is not first-order definable with arbitrary numerical relations.
 * `Cslib.Circuits.Boolean.ModelChecking.not_forall_realize_iff_even_card`: parity is not
@@ -69,88 +66,11 @@ unary numerical relation holding of one element.
 
 @[expose] public section
 
-namespace Cslib.Circuits
-
-/-! ### Substitution into formulas -/
-
-namespace Formula
-
-variable {σ : Signature} {n m : ℕ}
-
-/-- Substituting formulas of depth at most `c` for the inputs raises the depth by at most `c`. -/
-theorem depth_bind_le {s : Fin n → Formula σ m} {c : ℕ} (hs : ∀ i, (s i).depth ≤ c)
-    (F : Formula σ n) : (F.bind s).depth ≤ F.depth + c := by
-  induction F with
-  | input i => simpa using hs i
-  | gate op args ih =>
-    rw [gate_bind, depth_gate, depth_gate]
-    have : (Finset.univ.sup fun j => ((args j).bind s).depth) ≤
-        (Finset.univ.sup fun j => (args j).depth) + c :=
-      Finset.sup_le fun j _ => (ih j).trans (Nat.add_le_add_right
-        (Finset.le_sup (f := fun j => (args j).depth) (Finset.mem_univ j)) c)
-    omega
-
-/-- Substituting formulas of at most `c` operation nodes for the inputs adds at most `c` nodes for
-each leaf. -/
-theorem size_bind_le {s : Fin n → Formula σ m} {c : ℕ} (hs : ∀ i, (s i).size ≤ c)
-    (F : Formula σ n) : (F.bind s).size ≤ F.size + F.leafSize * c := by
-  induction F with
-  | input i => simpa using hs i
-  | gate op args ih =>
-    rw [gate_bind, size_gate, size_gate, leafSize_gate, Finset.sum_mul]
-    have := Finset.sum_le_sum fun j (_ : j ∈ Finset.univ) => ih j
-    rw [Finset.sum_add_distrib] at this
-    omega
-
-end Formula
-
-namespace Boolean.ModelChecking
+namespace Cslib.Circuits.Boolean.ModelChecking
 
 open FirstOrder FirstOrder.Language Finset
 
-variable {L : Language} [L.IsRelational] {n N : ℕ}
-
-/-! ### Leaves of the translation -/
-
-/-- **The number of leaves is polynomial in the universe.** -/
-theorem leafSize_toUnbounded_le (e : Atom L n ≃ Fin N) {k : ℕ} (φ : L.BoundedFormula Empty k)
-    (xs : Fin k → Fin n) : (toUnbounded e φ xs).leafSize ≤ (n + 2) ^ foSize φ := by
-  induction φ with
-  | falsum => simp [toUnbounded, constUnbounded]
-  | equal t₁ t₂ =>
-    simp only [toUnbounded, constUnbounded]
-    split_ifs <;> simp
-  | rel R ts => simp [toUnbounded, foSize]
-  | imp φ ψ ihφ ihψ =>
-    have h₁ := ihφ xs
-    have h₂ := ihψ xs
-    simp only [toUnbounded, Formula.leafSize_gate, Fin.sum_univ_two, Matrix.cons_val_zero,
-      Matrix.cons_val_one, Fin.sum_univ_one, foSize]
-    have hφ : (n + 2) ^ foSize φ ≤ (n + 2) ^ (foSize φ + foSize ψ) :=
-      Nat.pow_le_pow_right (by omega) (by omega)
-    have hψ : (n + 2) ^ foSize ψ ≤ (n + 2) ^ (foSize φ + foSize ψ) :=
-      Nat.pow_le_pow_right (by omega) (by omega)
-    rw [pow_succ]
-    nlinarith
-  | all φ ih =>
-    simp only [toUnbounded, Formula.leafSize_gate, foSize]
-    have hsum : ∑ a : Fin n, (toUnbounded e φ (Fin.snoc xs a)).leafSize ≤
-        n * (n + 2) ^ foSize φ :=
-      (Finset.sum_le_card_nsmul _ _ _ fun a _ => ih _).trans_eq (by simp)
-    refine hsum.trans ?_
-    rw [pow_succ, mul_comm]
-    exact Nat.mul_le_mul_left _ (by omega)
-
-/-- The translation of a sentence decides it on every structure, through its atomic facts. -/
-theorem eval_toUnbounded_atomsOf (e : Atom L n ≃ Fin N) {M : Type*} [L.Structure M]
-    (eM : M ≃ Fin n) (φ : L.Sentence) :
-    (toUnbounded e φ Fin.elim0).eval Unbounded.interpretation (atomsOf (L := L) eM ∘ e.symm) =
-      true ↔ M ⊨ φ :=
-  ((eval_toUnbounded e _ φ Fin.elim0).trans (by
-      rw [Sentence.Realize, Formula.Realize,
-        Subsingleton.elim (Empty.elim : Empty → Model (atomsOf (L := L) eM)) default,
-        Subsingleton.elim (Fin.elim0 : Fin 0 → Model (atomsOf (L := L) eM)) default])).trans
-    (realize_iff_atomsOf eM φ).symm
+variable {L : Language} [L.IsRelational] {n : ℕ}
 
 /-! ### Expansions by a unary relation -/
 
@@ -317,6 +237,4 @@ theorem not_forall_realize_iff_even_card [Finite (Σ l, L.Relations l)] (P : L.R
   rw [← hcard]
   exact h _ (hn'.symm ▸ hn)
 
-end Boolean.ModelChecking
-
-end Cslib.Circuits
+end Cslib.Circuits.Boolean.ModelChecking
