@@ -14,6 +14,7 @@
 \newcommand{\cc}[1]{\mathsf{#1}}
 \newcommand{\lean}[1]{\nolinkurl{#1}}
 \newcommand{\decl}[3]{\par{\footnotesize\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/d2c5e5812794ca1a39cf126de44e236789623215/#1\#L#2}{\nolinkurl{#3}}}\par}
+\newcommand{\timeDecl}[3]{\par{\footnotesize\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/6bbebfe6d438e495f3981b9d6d1734d936bcc5af/#1\#L#2}{\nolinkurl{#3}}}\par}
 \hypersetup{pdftitle={Complexitylib: An index of proved statements},
   pdfsubject={Selected formalized results, assumptions, and Lean declaration links}}
 \begin{document}
@@ -22,9 +23,10 @@
 \vspace{.5em}
 19 October 2026
 \end{center}
-This is a curated index of thirteen results in the Lean library, not an exhaustive
+This is a curated index of sixteen results in the Lean library, not an exhaustive
 API reference. Each entry gives the statement, its model or assumptions, and a link
-to the formal declaration. Links are pinned to revision \texttt{d2c5e581}.
+to the formal declaration. Links are pinned to revision \texttt{d2c5e581}; the variable-time additions
+link to their implementation revision.
 The wording and selection remain open to Samuel's editorial direction.
 
 Unless specified otherwise, class statements hold for any type of instances with
