@@ -71,20 +71,104 @@ theorem eq_of_covering {r : ℕ} (k : Fin r → ℕ) (hk : StrictAnti k) (hk0 : 
     (ℓ : (Σ j : J, Fin (k j)) → Option (Σ i : I, Fin (k i)))
     (hcov : ∀ v, ∃ p, ℓ p = some v) (hmono : ∀ p v, ℓ p = some v → (v.1 : Fin r) ≤ p.1) :
     J = I := by
-  sorry
+  classical
+  choose sec hsec using hcov
+  -- weight `1 / k i` on every slot of block `i`
+  let w : Fin r → ℚ := fun i => 1 / (k i : ℚ)
+  have hw_pos : ∀ i, 0 < w i := fun i => by
+    have := hk0 i
+    positivity
+  have hsumI : ∑ v : (Σ i : I, Fin (k i)), w v.1 = I.card := by
+    rw [Fintype.sum_sigma]
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, w]
+    rw [Finset.sum_congr rfl fun i _ => mul_one_div_cancel (by have := hk0 i; positivity)]
+    simp
+  have hsumJ : ∑ p : (Σ j : J, Fin (k j)), w p.1 = J.card := by
+    rw [Fintype.sum_sigma]
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, w]
+    rw [Finset.sum_congr rfl fun j _ => mul_one_div_cancel (by have := hk0 j; positivity)]
+    simp
+  have hsec_inj : Function.Injective sec := fun v v' h =>
+    Option.some_injective _ ((hsec v).symm.trans ((congrArg ℓ h).trans (hsec v')))
+  have hle : ∀ v, w v.1 ≤ w (sec v).1 := fun v => by
+    have h := hk.antitone (hmono (sec v) v (hsec v))
+    exact one_div_le_one_div_of_le (by have := hk0 (sec v).1; positivity) (by exact_mod_cast h)
+  have h1 : ∑ v : (Σ i : I, Fin (k i)), w v.1 ≤ ∑ v, w (sec v).1 :=
+    Finset.sum_le_sum fun v _ => hle v
+  have himage : ∑ v : (Σ i : I, Fin (k i)), w (sec v).1 =
+      ∑ p ∈ Finset.univ.image sec, w p.1 :=
+    (Finset.sum_image (f := fun p : (Σ j : J, Fin (k j)) => w p.1)
+      fun v _ v' _ h => hsec_inj h).symm
+  have h2 : ∑ v : (Σ i : I, Fin (k i)), w (sec v).1 ≤ ∑ p : (Σ j : J, Fin (k j)), w p.1 := by
+    rw [himage]
+    exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
+      fun p _ _ => (hw_pos _).le
+  have hcardQ : ((I.card : ℕ) : ℚ) = J.card := by rw [hcard]
+  -- every slot of `J` is the chosen preimage of a slot of `I`
+  have hsurj : Function.Surjective sec := by
+    intro p
+    by_contra hp
+    push Not at hp
+    have : ∑ v : (Σ i : I, Fin (k i)), w (sec v).1 < ∑ p : (Σ j : J, Fin (k j)), w p.1 := by
+      rw [himage]
+      refine Finset.sum_lt_sum_of_subset (Finset.subset_univ _) (Finset.mem_univ p) ?_ (hw_pos _)
+        fun _ _ _ => (hw_pos _).le
+      rw [Finset.mem_image]
+      rintro ⟨v, -, hv⟩
+      exact hp v hv
+    linarith
+  -- and lies in the same block
+  have hblock : ∀ v, ((sec v).1 : Fin r) = v.1 := by
+    intro v
+    by_contra hne
+    have hlt : w v.1 < w (sec v).1 := by
+      have h := hk (lt_of_le_of_ne (hmono (sec v) v (hsec v)) (Ne.symm hne))
+      exact one_div_lt_one_div_of_lt (by have := hk0 (sec v).1; positivity) (by exact_mod_cast h)
+    have : ∑ v : (Σ i : I, Fin (k i)), w v.1 < ∑ v, w (sec v).1 :=
+      Finset.sum_lt_sum (fun v _ => hle v) ⟨v, Finset.mem_univ _, hlt⟩
+    linarith
+  refine Finset.eq_of_subset_of_card_le (fun j hj => ?_) hcard.ge
+  obtain ⟨v, hv⟩ := hsurj ⟨⟨j, hj⟩, ⟨0, hk0 j⟩⟩
+  have := hblock v
+  rw [hv] at this
+  rw [show j = (v.1 : Fin r) from this]
+  exact v.1.2
 
 variable {F : Type*} [Field F] [Finite F]
 
 /-- A proper subfield `K` of a finite field `F` satisfies `|K| ^ 2 ≤ |F|`. -/
 theorem card_sq_le_of_ne_top {K : Subfield F} (hK : K ≠ ⊤) : Nat.card K ^ 2 ≤ Nat.card F := by
-  sorry
+  rw [Module.natCard_eq_pow_finrank (K := K) (V := F)]
+  refine Nat.pow_le_pow_right Nat.card_pos ?_
+  by_contra h
+  have h1 : finrank K F = 1 := by
+    have := Module.finrank_pos (R := K) (M := F)
+    omega
+  apply hK
+  have hbij : Function.Bijective (Subtype.val : K → F) :=
+    Subtype.val_injective.bijective_of_nat_card_le
+      (by rw [Module.natCard_eq_pow_finrank (K := K) (V := F), h1, pow_one])
+  exact eq_top_iff.2 fun x _ => by
+    obtain ⟨y, rfl⟩ := hbij.2 x
+    exact y.2
 
 variable [Algebra (ZMod 2) F]
 
 /-- In a field with `2 ^ n` elements every proper subfield has at most `2 ^ (n / 2)` elements. -/
 theorem card_subfield_le {n : ℕ} (hn : finrank (ZMod 2) F = n) (K : Subfield F) (hK : K ≠ ⊤) :
     Nat.card K ≤ 2 ^ (n / 2) := by
-  sorry
+  have := charP_two (F := F)
+  cases nonempty_fintype F
+  have : CharP K 2 := K.subtype.charP Subtype.val_injective 2
+  have : Fintype K := Fintype.ofFinite K
+  obtain ⟨e, -, he⟩ := FiniteField.card K 2
+  have hF : Nat.card F = 2 ^ n := by
+    rw [Module.natCard_eq_pow_finrank (K := ZMod 2) (V := F), Nat.card_zmod, hn]
+  have hsq := card_sq_le_of_ne_top hK
+  rw [Nat.card_eq_fintype_card (α := K), he, hF, ← pow_mul] at hsq
+  rw [Nat.card_eq_fintype_card (α := K), he]
+  exact Nat.pow_le_pow_right two_pos
+    (by have := (Nat.pow_le_pow_iff_right (by norm_num : 1 < 2)).1 hsq; omega)
 
 /-- **Ben-Sasson and Kopparty's symmetric-power function** on `r` blocks of a field `F`
 [BenSassonKopparty2012, Theorem 7.3]: the trace of `μ` times the `t`-th elementary symmetric
