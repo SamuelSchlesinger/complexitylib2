@@ -31,20 +31,20 @@ optimal: two disjoint triangles are six edges without a sunflower with three pet
 
 ## Main definitions
 
-* `Cslib.functionGraph`: the graph of a function on a finite type, as a finite set.
-* `Cslib.graphFamily`: the graphs of all functions `ι → β`.
-* `Cslib.twoTriangles`: the edges of two disjoint triangles.
+* `Cslib.Sunflower.functionGraph`: the graph of a function on a finite type, as a finite set.
+* `Cslib.Sunflower.graphFamily`: the graphs of all functions `ι → β`.
+* `Cslib.Sunflower.twoTriangles`: the edges of two disjoint triangles.
 
 ## Main results
 
-* `Cslib.not_containsSunflower_graphFamily`: the graph family has no sunflower with `|β| + 1`
-  petals.
+* `Cslib.Sunflower.not_containsSunflower_graphFamily`: the graph family has no sunflower with
+  `|β| + 1` petals.
 * `Cslib.exists_card_eq_pow_not_containsSunflower`: `(p - 1) ^ w` sets of size `w` without a
   sunflower with `p` petals.
 * `Cslib.containsSunflower_iff_le_card`: for sets of size at most one, a sunflower with `p` petals
   exists exactly when there are at least `p` sets.
-* `Cslib.not_containsSunflower_twoTriangles`: six sets of size two without a sunflower with three
-  petals.
+* `Cslib.Sunflower.not_containsSunflower_twoTriangles`: six sets of size two without a sunflower
+  with three petals.
 
 ## References
 
@@ -59,7 +59,7 @@ open Finset
 
 /-! ### Graphs of functions -/
 
-section Graph
+namespace Sunflower
 
 variable {ι β : Type*} [Fintype ι]
 
@@ -137,7 +137,9 @@ theorem not_containsSunflower_graphFamily [Nonempty β] :
   obtain ⟨s, hs, t, ht, hst⟩ := one_lt_card.1 (show 1 < #S by omega)
   exact hst ((hsub s hs).trans (hKsub t ht) |>.antisymm ((hsub t ht).trans (hKsub s hs)))
 
-end Graph
+end Sunflower
+
+open Sunflower
 
 /-- **Erdős–Rado lower bound.** For `p ≥ 2` there are `(p - 1) ^ w` sets of size `w` without a
 sunflower with `p` petals: the graphs of all functions `Fin w → Fin (p - 1)`. -/
@@ -168,6 +170,8 @@ theorem containsSunflower_iff_le_card {α : Type*} [DecidableEq α] {F : Finset 
 
 /-! ### Two disjoint triangles -/
 
+namespace Sunflower
+
 /-- The six edges of two disjoint triangles on `Fin 6`. -/
 def twoTriangles : Finset (Finset (Fin 6)) :=
   {{0, 1}, {1, 2}, {0, 2}, {3, 4}, {4, 5}, {3, 5}}
@@ -195,5 +199,7 @@ theorem not_containsSunflower_twoTriangles : ¬ ContainsSunflower 3 twoTriangles
   have hu : u ∈ ({s, t, u} : Finset (Finset (Fin 6))) := by simp
   exact twoTriangles_triples s (hSF hs) t (hSF ht) u (hSF hu) hst hsu htu
     ⟨(hK hs ht hst).trans (hK hs hu hsu).symm, (hK hs ht hst).trans (hK ht hu htu).symm⟩
+
+end Sunflower
 
 end Cslib
