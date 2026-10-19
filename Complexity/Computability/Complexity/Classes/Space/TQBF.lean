@@ -16,8 +16,8 @@ import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 
 A problem is `PSPACE`-hard when every problem in `PSPACE`, with any encoding of its instances,
 reduces to it in polynomial time (`Cslib.Complexity.PolyTimeReducible`), and `PSPACE`-complete when
-it is moreover in `PSPACE` [Arora and Barak, Definition 4.9][AroraBarak09]
-[Sipser, Definition 8.8][Sipser2013].
+it is moreover in `PSPACE` [Arora and Barak, Section 4.2][AroraBarak09]
+[Sipser, Section 8.3][Sipser2013].
 
 The true closed quantified Boolean formulas (`Cslib.Complexity.TQBF`) form a `PSPACE`-complete
 problem [Sipser, Theorem 8.9][Sipser2013] [Arora and Barak, Theorem 4.13][AroraBarak09]:

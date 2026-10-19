@@ -19,7 +19,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 
 `TQBF` is the set of true closed quantified Boolean formulas over variables numbered by `ℕ`:
 formulas without free variables whose value is `true` [Sipser, Section 8.3][Sipser2013]
-[Arora and Barak, Definition 4.10][AroraBarak09]. A closed formula has the same value under every
+[Arora and Barak, Section 4.2][AroraBarak09]. A closed formula has the same value under every
 assignment (`Cslib.Logic.PL.QBF.eval_eq_of_closed`), so the assignment `fun _ => false` in the
 definition is immaterial. Instances are formulas, not words, and every formula is an instance:
 formulas with a free variable are simply not in `TQBF`. Formulas are not required to be in prenex
