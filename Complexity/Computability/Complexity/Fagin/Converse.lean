@@ -288,7 +288,7 @@ theorem definable_iff_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational
 /-- **Fagin's theorem** (hypothesis-free form): a class `K` of finite relational structures over a
 language `L` with a finite vocabulary `v` is existential second-order definable if and only if `K`
 is closed under isomorphism and its query language `v.queryLanguage K` belongs to
-`NP encStructure`. -/
+`NP encStructure` [Fagin, Theorem 6][Fagin1974], [Immerman, Theorem 7.8][Immerman1999]. -/
 theorem definable_iff_isoClosed_and_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
     (v : Vocabulary L) {K : Set (Bundled.{0} L.Structure)} :
     Definable K ↔ IsoClosed K ∧ v.queryLanguage K ∈ NP encStructure :=
