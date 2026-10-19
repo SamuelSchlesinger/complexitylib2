@@ -27,7 +27,7 @@ private def usage : String := "Git coordination for Complexitylib (Lean executab
   scripts/coordinate reopen EPIC REASON
   scripts/coordinate unassign EPIC REASON
   scripts/coordinate cancel
-  scripts/coordinate land EPIC
+  scripts/coordinate land EPIC...
 
 Coordinator: plan, revise, instruct, assign, reopen, unassign, cancel, land, release-coordinator.
 Workers: commit and push the assigned branch before ready; never push main.
@@ -90,7 +90,10 @@ private def dashboard (state : State) : IO Unit := do
       IO.println s!"    api: {reviewStatus submitted.reviews.api}"
       IO.println s!"    correctness: {reviewStatus submitted.reviews.correctness}"
     | .merged completed =>
-      IO.println s!"    merged: {completed.snapshot.head.value}; {completed.validation}"
+      let landed := match completed.landed with
+        | some landed => if landed == completed.snapshot.head then "" else s!" as {landed.value}"
+        | none => ""
+      IO.println s!"    merged: {completed.snapshot.head.value}{landed}; {completed.validation}"
 
 private structure JoinOptions where
   role : Role := .worker
@@ -150,7 +153,7 @@ private def command (repo : Repository) (args : List String) : IO Unit := do
   | ["reopen", id, reason] => run repo (.reopen ⟨id⟩ reason)
   | ["unassign", id, reason] => run repo (.unassign ⟨id⟩ reason)
   | ["cancel"] => run repo .cancel
-  | ["land", id] => land repo ⟨id⟩
+  | "land" :: ids@(_ :: _) => land repo (ids.map EpicId.mk)
   | _ => throw <| IO.userError "Unrecognized command; use scripts/coordinate --help"
   IO.println outcome.message
 
