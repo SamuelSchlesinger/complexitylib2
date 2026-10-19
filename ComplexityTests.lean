@@ -114,6 +114,7 @@ import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
+import ComplexityTests.PCPApproximation
 import ComplexityTests.PCPCompleteness
 import ComplexityTests.PCPEncoded
 import ComplexityTests.PCPEncodedAmplification

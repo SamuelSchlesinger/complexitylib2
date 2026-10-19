@@ -601,6 +601,10 @@ public import Complexity.Computability.PCP.Amplification
 public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family
 public import Complexity.Computability.PCP.Amplifier
+public import Complexity.Computability.PCP.Approximation
+public import Complexity.Computability.PCP.Approximation.LabelCover
+public import Complexity.Computability.PCP.Approximation.MaxCSP
+public import Complexity.Computability.PCP.Approximation.MaxThreeSAT
 public import Complexity.Computability.PCP.AssignmentTester
 public import Complexity.Computability.PCP.AssignmentTester.Selection
 public import Complexity.Computability.PCP.Completeness
