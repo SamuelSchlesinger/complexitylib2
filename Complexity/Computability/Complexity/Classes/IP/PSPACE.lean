@@ -190,7 +190,8 @@ def decodeHistory (hs : List (List Bool × List Bool)) : History :=
 
 @[simp] theorem decodeHistory_nil : decodeHistory [] = [] := rfl
 
-@[simp] theorem decodeHistory_cons (p : List Bool × List Bool) (hs : List (List Bool × List Bool)) :
+@[simp] theorem decodeHistory_cons (p : List Bool × List Bool)
+    (hs : List (List Bool × List Bool)) :
     decodeHistory (p :: hs) = decodeHistory hs ++ [(decodeWord p.1, decodeWord p.2)] := by
   simp [decodeHistory]
 

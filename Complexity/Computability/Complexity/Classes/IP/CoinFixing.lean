@@ -39,8 +39,8 @@ through their first `t` bits. So the programs of `t` coins form a bounded family
 
 ## Main definitions
 
-* `Cslib.Complexity.Interaction.coinStep`, `Cslib.Complexity.Interaction.coinProgram`: the program of
-  fixed coins.
+* `Cslib.Complexity.Interaction.coinStep`, `Cslib.Complexity.Interaction.coinProgram`: the program
+  of fixed coins.
 * `Cslib.Complexity.Interaction.replayStep`, `Cslib.Complexity.Interaction.simulate`: the
   deterministic replay.
 
@@ -84,7 +84,8 @@ section CoinFixing
 variable {S : Type} (oracle : Unit × List Bool → StateT S PMF (List Bool))
 
 /-- The handler of the private coins and of the prover `o`. -/
-local notation "handler" o => ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) o
+local notation "handler" o =>
+  ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) o
 
 /-- An instruction with a fixed coin makes the requests of `coinStep`. -/
 theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : Bool)
@@ -118,13 +119,14 @@ theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool) (cfg : FiniteConfig 
 
 /-- An instruction drawing a fair coin averages the instructions with fixed coins. -/
 theorem run_interpret_finiteStep_sample
-    (query : Unit → List Bool → ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
+    (query : Unit → List Bool →
+      ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
     (cfg : FiniteConfig k Bool Control Unit) (s : S) :
     (OracleComp.interpret (handler oracle) (M.finiteStep
       (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) query cfg)).run s =
       (PMF.uniformOfFintype Bool).bind fun b =>
-        (OracleComp.interpret (handler oracle) (M.finiteStep (fun choices => choices <$> pure b) query
-          cfg)).run s := by
+        (OracleComp.interpret (handler oracle) (M.finiteStep (fun choices => choices <$> pure b)
+          query cfg)).run s := by
   unfold MultiTapeMachine.finiteStep
   cases cfg.tapes.state with
   | none =>
@@ -138,10 +140,12 @@ theorem run_interpret_finiteStep_sample
 
 /-- A clocked loop drawing fair coins averages the loops with fixed coins. -/
 theorem run_interpret_iterate_eq_coins
-    (query : Unit → List Bool → ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
+    (query : Unit → List Bool →
+      ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
     (n : ℕ) (cfg : FiniteConfig k Bool Control Unit) (s : S) :
     (OracleComp.interpret (handler oracle) (OracleComp.iterate n (M.finiteStep
-      (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) query) cfg)).run s =
+      (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) query)
+        cfg)).run s =
       (BitString.uniformList n).bind fun r =>
         (OracleComp.interpret (handler oracle) (r.foldlM (fun cfg b => M.finiteStep
           (fun choices => choices <$> pure b) query cfg) cfg)).run s := by
@@ -149,8 +153,8 @@ theorem run_interpret_iterate_eq_coins
   | zero => simp
   | succ n ih =>
     rw [OracleComp.iterate_succ_bind, OracleComp.interpret_bind, StateT.run_bind,
-      Probability.PMF.monad_bind_eq_bind, run_interpret_finiteStep_sample, BitString.uniformList_succ,
-      PMF.bind_bind, PMF.bind_bind]
+      Probability.PMF.monad_bind_eq_bind, run_interpret_finiteStep_sample,
+      BitString.uniformList_succ, PMF.bind_bind, PMF.bind_bind]
     congr 1
     funext b
     simp only [ih, PMF.bind_map, Function.comp_def, List.foldlM_cons, OracleComp.interpret_bind,
@@ -187,13 +191,16 @@ theorem acceptProb_eq_sum {V : WordOracleComp Unit Bool} {t : ℕ} {x : List Boo
           (M.runOracle t x)).run s)
     (P : Prover Unit) :
     acceptProb V P =
-      (2 ^ t)⁻¹ * ∑ r : Fin t → Bool, acceptFrom P P.init (some (coinProgram M t x (List.ofFn r))) := by
-  have h := congrArg (fun μ => μ.map (fun z => decide (z.1 = [true])) true) (hV P.State P.respond P.init)
+      (2 ^ t)⁻¹ * ∑ r : Fin t → Bool,
+        acceptFrom P P.init (some (coinProgram M t x (List.ofFn r))) := by
+  have h := congrArg (fun μ => μ.map (fun z => decide (z.1 = [true])) true)
+    (hV P.State P.respond P.init)
   rw [OracleComp.interpret_map, StateT.run_map, run_interpret_runOracle_eq_coins,
     _root_.PMF.monad_map_eq_map, PMF.map_comp] at h
   have hl : acceptProb V P = ((OracleComp.interpret (ProbOracleComp.handler
       (fun n => StateT.lift (ProbComp.unifOracle n)) P.respond) V).run P.init).map
-        ((fun z => decide (z.1 = [true])) ∘ fun p => (Turing.MultiTapeTM.encBool p.1, p.2)) true := by
+        ((fun z => decide (z.1 = [true])) ∘ fun p => (Turing.MultiTapeTM.encBool p.1, p.2))
+          true := by
     rw [acceptProb]
     congr 2
     funext z
@@ -228,10 +235,12 @@ def replayStep (t : ℕ) (p : FiniteConfig k Bool Control Unit × History) (b : 
 /-- The replay of `M` on the input `x` with the coins `r` against the history `h`. -/
 def simulate (t : ℕ) (x r : List Bool) (h : History) :
     Except (Option (List Bool)) (FiniteConfig k Bool Control Unit × History) :=
-  r.foldl (fun acc b => acc.bind fun p => replayStep M t p b) (.ok (FiniteConfig.init M.initial x, h))
+  r.foldl (fun acc b => acc.bind fun p => replayStep M t p b)
+    (.ok (FiniteConfig.init M.initial x, h))
 
 /-- The replay of an instruction is `replayStep`. -/
-theorem replay_coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : Bool) (h : History) :
+theorem replay_coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : Bool)
+    (h : History) :
     (replay (coinStep M t cfg b)).run h = replayStep M t (cfg, h) b := by
   unfold coinStep MultiTapeMachine.finiteStep replayStep
   simp only
@@ -253,9 +262,10 @@ theorem replay_coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : 
         split_ifs with hm <;> simp [hm]
 
 /-- A fold in the state and exception monad is a fold of results. -/
-theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε) β) (l : List γ) (b : β)
-    (s : σ) :
-    (l.foldlM g b).run s = l.foldl (fun acc c => acc.bind fun p => (g p.1 c).run p.2) (.ok (b, s)) := by
+theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε) β) (l : List γ)
+    (b : β) (s : σ) :
+    (l.foldlM g b).run s =
+      l.foldl (fun acc c => acc.bind fun p => (g p.1 c).run p.2) (.ok (b, s)) := by
   have hsplit (l : List γ) (x : Except ε (β × σ)) :
       l.foldl (fun acc c => acc.bind fun p => (g p.1 c).run p.2) x =
         x.bind fun p => l.foldl (fun acc c => acc.bind fun p => (g p.1 c).run p.2) (.ok p) := by
@@ -277,7 +287,8 @@ theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε)
     exact ih p.1 p.2
 
 /-- A replay of a fold is a fold of replays. -/
-theorem replay_foldlM {β γ : Type} (f : β → γ → WordQueryComp Unit β) (l : List γ) (b : β) :
+theorem replay_foldlM {β γ : Type} (f : β → γ → WordQueryComp Unit β) (l : List γ)
+    (b : β) :
     replay (l.foldlM f b) = l.foldlM (fun b c => replay (f b c)) b :=
   (PFunctor.FreeM.isMonadHom_liftM (P := ⟨Unit × List Bool, fun _ => List Bool⟩)
     replayAnswer).map_listFoldlM _ _ _

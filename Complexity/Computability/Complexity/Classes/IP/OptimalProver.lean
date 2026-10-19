@@ -198,9 +198,11 @@ theorem acceptFrom_query_bind (P : Prover Unit) (s : P.State) (m : List Bool)
 /-! ### The value of a history -/
 
 /-- The words of length at most `L`. -/
-noncomputable def shortWords (L : ℕ) : Finset (List Bool) := (List.finite_length_le Bool L).toFinset
+noncomputable def shortWords (L : ℕ) : Finset (List Bool) :=
+  (List.finite_length_le Bool L).toFinset
 
-@[simp] theorem mem_shortWords {L : ℕ} {w : List Bool} : w ∈ shortWords L ↔ w.length ≤ L := by
+@[simp] theorem mem_shortWords {L : ℕ} {w : List Bool} :
+    w ∈ shortWords L ↔ w.length ≤ L := by
   simp [shortWords]
 
 theorem nil_mem_shortWords (L : ℕ) : [] ∈ shortWords L := by simp
@@ -232,8 +234,9 @@ structure IsBounded (D L : ℕ) : Prop where
 variable {F L} {D : ℕ}
 
 /-- The value of a history depends only on the outcomes of its extensions. -/
-theorem value_congr {h h' : History} (hh : ∀ r e, outcome (F r) (h ++ e) = outcome (F r) (h' ++ e))
-    (n : ℕ) : value F L n h = value F L n h' := by
+theorem value_congr {h h' : History}
+    (hh : ∀ r e, outcome (F r) (h ++ e) = outcome (F r) (h' ++ e)) (n : ℕ) :
+    value F L n h = value F L n h' := by
   induction n generalizing h h' with
   | zero =>
     simp only [value, accepted]

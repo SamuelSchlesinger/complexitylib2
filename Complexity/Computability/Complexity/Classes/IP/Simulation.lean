@@ -320,9 +320,11 @@ def accepts (x r : List Bool) (h : History) : Bool :=
 
 /-- The live replay follows the replay while it succeeds, and dies when it fails. -/
 private theorem foldl_aliveStep (t : ℕ) (l : List Bool)
-    (acc : Except (Option (List Bool)) (MultiTapeMachine.FiniteConfig k Bool Control Unit × History))
+    (acc : Except (Option (List Bool))
+      (MultiTapeMachine.FiniteConfig k Bool Control Unit × History))
     (s : AliveState k Control)
-    (hs : (∀ p, acc = .ok p → s = (p.1, p.2, true)) ∧ (∀ e, acc = .error e → s.2.2 = false)) :
+    (hs : (∀ p, acc = .ok p → s = (p.1, p.2, true)) ∧
+      (∀ e, acc = .error e → s.2.2 = false)) :
     (∀ p, l.foldl (fun acc b => acc.bind fun p => replayStep M t p b) acc = .ok p →
         l.foldl (aliveStep M t) s = (p.1, p.2, true)) ∧
       (∀ e, l.foldl (fun acc b => acc.bind fun p => replayStep M t p b) acc = .error e →
@@ -347,7 +349,8 @@ private theorem foldl_aliveStep (t : ℕ) (l : List Bool)
 accepts after the history. -/
 theorem accepts_eq_true_iff (x r : List Bool) (h : History) :
     accepts M x r h = true ↔ outcome (coinProgram M r.length x r) h = .done true := by
-  have hrun := foldl_aliveStep M r.length r (.ok (MultiTapeMachine.FiniteConfig.init M.initial x, h))
+  have hrun := foldl_aliveStep M r.length r
+    (.ok (MultiTapeMachine.FiniteConfig.init M.initial x, h))
     (MultiTapeMachine.FiniteConfig.init M.initial x, h, true)
     ⟨fun p hp => by simp only [Except.ok.injEq] at hp; subst hp; rfl, fun e he => by cases he⟩
   rw [outcome_coinProgram]

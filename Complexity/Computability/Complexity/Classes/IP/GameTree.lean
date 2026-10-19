@@ -18,26 +18,26 @@ import Mathlib.Tactic.Ring
 /-!
 # Evaluating a game tree with an explicit stack
 
-A game tree of depth `D` alternates a sum over the messages and a maximum over the replies: the
-value of a node with `n + 1` rounds to go is its leaf value plus, for every message, the largest
-value over the replies of the child reached by the message and the reply
-(`Cslib.Complexity.GameTree.value`). Messages and replies are the first `N` iterates `next^[i] first`
-of an enumeration, of which `last` recognizes the final one, and a node is identified by the
-messages and replies leading to it, the most recent first. Every sum is capped at `cap`, so that
-all numbers stay below `cap`; the cap does not change values that are at most `cap`.
+A game tree alternates a sum over the messages and a maximum over the replies. The value of a node
+with `n + 1` rounds to go is its leaf value plus, for every message, the largest value over the
+replies of the child reached by the message and the reply; a node with no rounds to go has its leaf
+value (`Cslib.Complexity.GameTree.value`). The messages and the replies are the first `N` iterates
+`next^[i] first` of an enumeration, whose last one `last` recognizes, and a node is identified by
+the messages and replies leading to it, the most recent first. Every value is capped at `cap`, so
+that all numbers stay at most `cap`; the cap does not change values that are at most `cap`.
 
 The evaluator (`Cslib.Complexity.GameTree.step`) is the depth-first traversal with an explicit
-stack: a frame stores the current message and reply of a node, the capped sum over the earlier
-messages, starting at the leaf value, and the maximum over the earlier replies to the current
-message. The value of a node with `n` rounds to go is returned after
-`Cslib.Complexity.GameTree.time N n` steps (`Cslib.Complexity.GameTree.iterate_step_node`), at most
-`(N + 1) ^ (2 * n + 1)` (`Cslib.Complexity.GameTree.time_le`), and the evaluation from the empty
+stack. A frame stores the current message and reply of a node, the capped sum over the earlier
+messages, which starts at the leaf value, and the maximum over the earlier replies to the current
+message. A node with `n` rounds to go returns its value to the same stack after
+`Cslib.Complexity.GameTree.time N n` steps (`Cslib.Complexity.GameTree.iterate_step_node`), at
+most `(N + 1) ^ (2 * n + 1)` (`Cslib.Complexity.GameTree.time_le`); the evaluation from the empty
 stack then stays put (`Cslib.Complexity.GameTree.iterate_step_eval`). Along the way the stack holds
-at most `D` frames, each storing two iterates and two numbers at most `cap`
-(`Cslib.Complexity.GameTree.Good`, `Cslib.Complexity.GameTree.good_iterate_step`), so the evaluator
-runs in space polynomial in `D`, the size of the iterates and the size of `cap`. This is the
-polynomial-space evaluation of the optimal prover in the proof of `IP ⊆ PSPACE`
-[Arora and Barak, Theorem 8.19][AroraBarak09].
+at most `D` frames, the depth of the root, each storing two iterates and two numbers at most `cap`
+(`Cslib.Complexity.GameTree.Good`, `Cslib.Complexity.GameTree.good_iterate_step`). So the evaluator
+runs in space polynomial in `D`, the size of the iterates and the size of `cap`, in time
+exponential in `D`. This is the polynomial-space evaluation of the optimal prover in the proof of
+`IP ⊆ PSPACE` [Arora and Barak, Chapter 8][AroraBarak09].
 
 ## Main definitions
 
@@ -50,6 +50,7 @@ polynomial-space evaluation of the optimal prover in the proof of `IP ⊆ PSPACE
 
 * `Cslib.Complexity.GameTree.iterate_step_node`: a node returns its value.
 * `Cslib.Complexity.GameTree.iterate_step_eval`: the evaluation from the empty stack.
+* `Cslib.Complexity.GameTree.time_le`: the number of steps.
 * `Cslib.Complexity.GameTree.good_iterate_step`: the states stay small.
 
 ## References
@@ -163,13 +164,15 @@ theorem iterate_step_node (n : ℕ) (st : List (Frame X)) (hst : st.length + n =
       simp only [history_cons, F, step, hlast i hi, hlast j hj, decide_eq_true_eq]
       rw [hmax]
       by_cases hj' : j + 1 < N
-      · rw [ite_eq_right (by lia : ¬ j + 1 = N), ite_eq_left hj', ← Function.iterate_succ_apply' next]
+      · rw [ite_eq_right (by lia : ¬ j + 1 = N), ite_eq_left hj',
+          ← Function.iterate_succ_apply' next]
       · have hjN : j + 1 = N := by lia
         have hsum : min cap (S i + M i (j + 1)) = S (i + 1) := by
           simp only [S, partialSum, min_cap_add, sum_range_succ, M, partialMax, hjN, add_assoc]
         rw [ite_eq_left hjN, ite_eq_right hj', hsum]
         by_cases hi' : i + 1 < N
-        · rw [ite_eq_right (by lia : ¬ i + 1 = N), ite_eq_left hi', ← Function.iterate_succ_apply' next]
+        · rw [ite_eq_right (by lia : ¬ i + 1 = N), ite_eq_left hi',
+            ← Function.iterate_succ_apply' next]
           simp [M, partialMax]
         · rw [ite_eq_left (by lia : i + 1 = N), ite_eq_right hi', show i + 1 = N by lia]
     -- the replies to one message
