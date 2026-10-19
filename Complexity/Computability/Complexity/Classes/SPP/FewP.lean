@@ -22,12 +22,12 @@ import Complexity.Foundations.Data.BitString.WordCount
 /-!
 # FewP is in SPP
 
-Köbler, Schöning and Torán showed `FewP ⊆ SPP` [Köbler, Schöning and
-Torán][KoeblerSchoeningToran1992], [Fortnow, Section 4][Fortnow1997]. For a problem in `FewP`, let
-`T` be the set of certificates of length `P` accepted on an instance, of size `m ≤ q`. The subsets
+`FewP ⊆ SPP` [Köbler, Schöning, Toda and Torán][KoeblerSchoeningTodaToran1992], in the gap
+formulation of [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994]. For a problem in `FewP`, let
+`T` be the set of certificates of length `len` accepted on an instance, of size `m ≤ q`. The subsets
 `U ⊆ T` cancel in pairs by parity: `∑ U ⊆ T, (-1) ^ |U| = (1 - 1) ^ m` is `1` when `m = 0` and `0`
 otherwise. Every subset has at most `q` elements, so it is listed, in increasing order, in `q`
-slots of `P + 1` bits, each a flag followed by a certificate. The numbers `E` and `O` of such
+slots of `len + 1` bits, each a flag followed by a certificate. The numbers `E` and `O` of such
 listings of the subsets of even and of odd size are counted by polynomial-time verifiers, so they
 are in `#P`, and `1 + O - E` is a `GapP` function equal to `1` on members and `0` on the other
 instances.
@@ -59,8 +59,9 @@ exactly when `c` is the largest certificate above the last one listed.
 
 ## References
 
-* [J. Köbler, U. Schöning, J. Torán, *Graph isomorphism is low for PP*][KoeblerSchoeningToran1992]
-* [L. Fortnow, *Counting Complexity*][Fortnow1997]
+* [J. Köbler, U. Schöning, S. Toda, J. Torán, *Turing machines with few accepting computations
+  and low sets for PP*][KoeblerSchoeningTodaToran1992]
+* [S. Fenner, L. Fortnow, S. Kurtz, *Gap-definable counting classes*][FennerFortnowKurtz1994]
 -/
 
 @[expose] public section
@@ -99,51 +100,41 @@ def sign (s : State) : ℤ := if s.1 then (if s.2.1 then -1 else 1) else 0
 
 /-- The sign of a state is its acceptance for the even parity minus its acceptance for the odd
 parity. -/
-theorem sign_eq_sub (s : State) : sign s =
+private theorem sign_eq_sub (s : State) : sign s =
     (if accepts false s = true then 1 else 0) - (if accepts true s = true then 1 else 0) := by
   obtain ⟨ok, par, _⟩ := s
   cases ok <;> cases par <;> simp [accepts, sign]
 
-/-- The certificates of length `P` accepted by `acc` that may be listed after the state `s`: above
+/-- The certificates of length `len` accepted by `acc` that may be listed after the state `s`: above
 the last certificate listed, if any. -/
-def above (acc : List Bool → Bool) (P : ℕ) (s : State) : Finset (Fin P → Bool) :=
+def above (acc : List Bool → Bool) (len : ℕ) (s : State) : Finset (Fin len → Bool) :=
   univ.filter fun x => acc (List.ofFn x) = true ∧
     (s.2.2.2.1 = false ∨ binaryValue s.2.2.2.2 < binaryValue (List.ofFn x))
 
-/-- The words of `k` slots of `P + 1` bits read from the state `s`, counted with the sign of the
+/-- The words of `k` slots of `len + 1` bits read from the state `s`, counted with the sign of the
 final state. -/
-def signedSum (acc : List Bool → Bool) (P k : ℕ) (s : State) : ℤ :=
-  ∑ w : Fin (k * (P + 1)) → Bool, sign ((listRows k (P + 1) (List.ofFn w)).foldl (step acc) s)
+def signedSum (acc : List Bool → Bool) (len k : ℕ) (s : State) : ℤ :=
+  ∑ w : Fin (k * (len + 1)) → Bool, sign ((listRows k (len + 1) (List.ofFn w)).foldl (step acc) s)
 
-variable {acc : List Bool → Bool} {P : ℕ}
+variable {acc : List Bool → Bool} {len : ℕ}
 
 /-- Sums over the words of equal lengths agree. -/
-theorem sum_ofFn_congr {M : Type*} [AddCommMonoid M] (F : List Bool → M) {n n' : ℕ}
+private theorem sum_ofFn_congr {M : Type*} [AddCommMonoid M] (F : List Bool → M) {n n' : ℕ}
     (h : n = n') : ∑ w : Fin n → Bool, F (List.ofFn w) = ∑ w : Fin n' → Bool, F (List.ofFn w) := by
   subst h
   rfl
 
-/-- The rows of a word whose first row is `u`. -/
-theorem listRows_succ_append (k width : ℕ) {u : List Bool} (hu : u.length = width)
-    (v : List Bool) : listRows (k + 1) width (u ++ v) = u :: listRows k width v := by
-  simp only [listRows, List.range_succ_eq_map, List.map_cons, List.map_map]
-  congr 1
-  · simp [listRow, ← hu]
-  · refine List.map_congr_left fun row _ => ?_
-    simp only [Function.comp_apply, listRow, Nat.succ_mul, ← List.drop_drop, Nat.add_comm _ width]
-    rw [← hu, List.drop_left]
-
 /-- The signed count of `k + 1` slots, by the first slot. -/
-theorem signedSum_succ (k : ℕ) (s : State) :
-    signedSum acc P (k + 1) s = ∑ c : Fin P → Bool,
-      (signedSum acc P k (step acc s (false :: List.ofFn c)) +
-        signedSum acc P k (step acc s (true :: List.ofFn c))) := by
+private theorem signedSum_succ (k : ℕ) (s : State) :
+    signedSum acc len (k + 1) s = ∑ c : Fin len → Bool,
+      (signedSum acc len k (step acc s (false :: List.ofFn c)) +
+        signedSum acc len k (step acc s (true :: List.ofFn c))) := by
   unfold signedSum
-  rw [sum_ofFn_congr (fun l => sign ((listRows (k + 1) (P + 1) l).foldl (step acc) s))
-    (show (k + 1) * (P + 1) = (P + 1) + k * (P + 1) by ring),
-    ← (Fin.appendEquiv (P + 1) (k * (P + 1))).sum_comp, Fintype.sum_prod_type]
-  simp only [show ∀ (u : Fin (P + 1) → Bool) (v : Fin (k * (P + 1)) → Bool),
-    List.ofFn (Fin.appendEquiv (P + 1) (k * (P + 1)) (u, v)) = List.ofFn u ++ List.ofFn v from
+  rw [sum_ofFn_congr (fun l => sign ((listRows (k + 1) (len + 1) l).foldl (step acc) s))
+    (show (k + 1) * (len + 1) = (len + 1) + k * (len + 1) by ring),
+    ← (Fin.appendEquiv (len + 1) (k * (len + 1))).sum_comp, Fintype.sum_prod_type]
+  simp only [show ∀ (u : Fin (len + 1) → Bool) (v : Fin (k * (len + 1)) → Bool),
+    List.ofFn (Fin.appendEquiv (len + 1) (k * (len + 1)) (u, v)) = List.ofFn u ++ List.ofFn v from
       fun u v => List.ofFn_fin_append u v]
   rw [← (Fin.consEquiv fun _ => Bool).sum_comp, Fintype.sum_prod_type, Fintype.sum_bool,
     ← Finset.sum_add_distrib]
@@ -153,8 +144,8 @@ theorem signedSum_succ (k : ℕ) (s : State) :
   congr 1 <;> refine Finset.sum_congr rfl fun v _ => ?_ <;>
     rw [listRows_succ_append _ _ (by simp), List.foldl_cons]
 
-/-- In a nonempty finite set of words of length `P`, exactly one has the largest binary value. -/
-theorem card_filter_isGreatest {A : Finset (Fin P → Bool)} (hA : A.Nonempty) :
+/-- In a nonempty finite set of words of length `len`, exactly one has the largest binary value. -/
+private theorem card_filter_isGreatest {A : Finset (Fin len → Bool)} (hA : A.Nonempty) :
     (A.filter fun c => ∀ x ∈ A, binaryValue (List.ofFn x) ≤ binaryValue (List.ofFn c)).card =
       1 := by
   obtain ⟨c, hc, hmax⟩ := A.exists_max_image (fun x => binaryValue (List.ofFn x)) hA
@@ -165,9 +156,9 @@ theorem card_filter_isGreatest {A : Finset (Fin P → Bool)} (hA : A.Nonempty) :
 
 /-- Listing `c` leaves no accepted certificate above it exactly when `c` is the largest accepted
 certificate that may be listed. -/
-theorem above_eq_empty_iff {s : State} {c : Fin P → Bool} (hc : c ∈ above acc P s)
-    (o p e : Bool) : above acc P (o, p, e, true, List.ofFn c) = ∅ ↔
-      ∀ x ∈ above acc P s, binaryValue (List.ofFn x) ≤ binaryValue (List.ofFn c) := by
+private theorem above_eq_empty_iff {s : State} {c : Fin len → Bool} (hc : c ∈ above acc len s)
+    (o p e : Bool) : above acc len (o, p, e, true, List.ofFn c) = ∅ ↔
+      ∀ x ∈ above acc len s, binaryValue (List.ofFn x) ≤ binaryValue (List.ofFn c) := by
   simp only [above, mem_filter, mem_univ, true_and, Bool.true_eq_false, false_or] at hc ⊢
   rw [Finset.eq_empty_iff_forall_notMem]
   simp only [mem_filter, mem_univ, true_and, not_and, not_lt]
@@ -177,7 +168,7 @@ theorem above_eq_empty_iff {s : State} {c : Fin P → Bool} (hc : c ∈ above ac
   exact absurd (h x ⟨hx, hc.2.imp_right fun hp => hp.trans hlt⟩) (not_le.2 hlt)
 
 /-- A flagged slot read from a well-formed state before any empty slot. -/
-theorem step_true_cons (par started : Bool) (prev : List Bool) (c : Fin P → Bool) :
+private theorem step_true_cons (par started : Bool) (prev : List Bool) (c : Fin len → Bool) :
     step acc (true, par, false, started, prev) (true :: List.ofFn c) =
       (acc (List.ofFn c) && (!started || decide (binaryValue prev < binaryValue (List.ofFn c))),
         !par, false, true, List.ofFn c) :=
@@ -185,9 +176,9 @@ theorem step_true_cons (par started : Bool) (prev : List Bool) (c : Fin P → Bo
 
 /-- A flagged slot holding `c` keeps the state `(true, par, false, started, prev)` well formed
 exactly when `c` may be listed after it. -/
-theorem cond_eq_true_iff {par started : Bool} {prev : List Bool} {c : Fin P → Bool} :
+private theorem cond_eq_true_iff {par started : Bool} {prev : List Bool} {c : Fin len → Bool} :
     (acc (List.ofFn c) && (!started || decide (binaryValue prev < binaryValue (List.ofFn c)))) =
-      true ↔ c ∈ above acc P (true, par, false, started, prev) := by
+      true ↔ c ∈ above acc len (true, par, false, started, prev) := by
   cases started <;> simp [above]
 
 /-- **The signed count of the listings.** From a well-formed state, the words of `k` slots,
@@ -195,13 +186,13 @@ counted with the sign of the parity of the certificates listed, sum to the sign 
 when an empty slot has been read or no accepted certificate is above the last one listed, and to
 `0` otherwise, provided at most `k` accepted certificates are above it. -/
 theorem signedSum_eq (k : ℕ) (s : State)
-    (hk : s.1 = true → s.2.2.1 = false → (above acc P s).card ≤ k) :
-    signedSum acc P k s = if s.2.2.1 = false ∧ (above acc P s).Nonempty then 0 else sign s := by
+    (hk : s.1 = true → s.2.2.1 = false → (above acc len s).card ≤ k) :
+    signedSum acc len k s = if s.2.2.1 = false ∧ (above acc len s).Nonempty then 0 else sign s := by
   induction k generalizing s with
   | zero =>
     unfold signedSum
-    rw [sum_ofFn_congr (fun l => sign ((listRows 0 (P + 1) l).foldl (step acc) s))
-      (Nat.zero_mul (P + 1))]
+    rw [sum_ofFn_congr (fun l => sign ((listRows 0 (len + 1) l).foldl (step acc) s))
+      (Nat.zero_mul (len + 1))]
     simp only [listRows, List.range_zero, List.map_nil, List.foldl_nil, Finset.univ_unique,
       Finset.sum_singleton]
     split_ifs with h
@@ -225,10 +216,10 @@ theorem signedSum_eq (k : ℕ) (s : State)
         ih _ (fun h => absurd h (by rw [hfail]; decide))]
       simp [sign, hfail]
     -- an empty first slot
-    have hsum₀ : ∑ c : Fin P → Bool, signedSum acc P k
+    have hsum₀ : ∑ c : Fin len → Bool, signedSum acc len k
         (step acc (true, par, ended, started, prev) (false :: List.ofFn c)) =
           if par then -1 else 1 := by
-      have hc (c : Fin P → Bool) : signedSum acc P k
+      have hc (c : Fin len → Bool) : signedSum acc len k
           (step acc (true, par, ended, started, prev) (false :: List.ofFn c)) =
             if (!(List.ofFn c).any (fun b => b)) = true then (if par then -1 else 1) else 0 := by
         have hstep : step acc (true, par, ended, started, prev) (false :: List.ofFn c) =
@@ -242,14 +233,14 @@ theorem signedSum_eq (k : ℕ) (s : State)
     cases ended
     · -- before any empty slot
       have hcard := hk rfl rfl
-      set A := above acc P (true, par, false, started, prev) with hA
-      have hc (c : Fin P → Bool) : signedSum acc P k
+      set A := above acc len (true, par, false, started, prev) with hA
+      have hc (c : Fin len → Bool) : signedSum acc len k
           (step acc (true, par, false, started, prev) (true :: List.ofFn c)) =
             if c ∈ A ∧ ∀ x ∈ A, binaryValue (List.ofFn x) ≤ binaryValue (List.ofFn c) then
               (if par then 1 else -1) else 0 := by
         rw [step_true_cons]
         by_cases hmem : c ∈ A
-        · have hsub : above acc P (true, !par, false, true, List.ofFn c) ⊆ A.erase c := by
+        · have hsub : above acc len (true, !par, false, true, List.ofFn c) ⊆ A.erase c := by
             intro x hx
             simp only [hA, above, mem_filter, mem_univ, true_and, Bool.true_eq_false,
               false_or] at hmem hx
@@ -259,7 +250,7 @@ theorem signedSum_eq (k : ℕ) (s : State)
             rcases hmem.2 with h | h
             · exact Or.inl h
             · exact Or.inr (h.trans hx.2)
-          have hle : (above acc P (true, !par, false, true, List.ofFn c)).card ≤ k := by
+          have hle : (above acc len (true, !par, false, true, List.ofFn c)).card ≤ k := by
             have := card_le_card hsub
             rw [card_erase_of_mem hmem] at this
             omega
@@ -267,12 +258,12 @@ theorem signedSum_eq (k : ℕ) (s : State)
             (fun _ _ => hle)]
           have hiff := above_eq_empty_iff hmem true (!par) false
           by_cases hmax : ∀ x ∈ A, binaryValue (List.ofFn x) ≤ binaryValue (List.ofFn c)
-          · have hempty : ¬ (above acc P (true, !par, false, true, List.ofFn c)).Nonempty :=
+          · have hempty : ¬ (above acc len (true, !par, false, true, List.ofFn c)).Nonempty :=
               Finset.not_nonempty_iff_eq_empty.2 (hiff.2 hmax)
             rw [ite_eq_right_of_eq_false _ _ (eq_false fun h => hempty h.2),
               ite_eq_left_of_eq_true _ _ (eq_true ⟨hmem, hmax⟩)]
             cases par <;> rfl
-          · have hne : (above acc P (true, !par, false, true, List.ofFn c)).Nonempty :=
+          · have hne : (above acc len (true, !par, false, true, List.ofFn c)).Nonempty :=
               Finset.nonempty_iff_ne_empty.2 fun h => hmax (hiff.1 h)
             rw [ite_eq_left_of_eq_true _ _ (eq_true ⟨rfl, hne⟩),
               ite_eq_right_of_eq_false _ _ (eq_false fun h => hmax h.2)]
@@ -296,7 +287,7 @@ theorem signedSum_eq (k : ℕ) (s : State)
       · rw [Finset.not_nonempty_iff_eq_empty.1 hne]
         simp [sign]
     · -- after an empty slot only the words of `false`s are well formed
-      have hfail (c : Fin P → Bool) : signedSum acc P k
+      have hfail (c : Fin len → Bool) : signedSum acc len k
           (step acc (true, par, true, started, prev) (true :: List.ofFn c)) = 0 := by
         have hstep : (step acc (true, par, true, started, prev) (true :: List.ofFn c)).1 =
             false := by
@@ -311,8 +302,8 @@ theorem signedSum_eq (k : ℕ) (s : State)
 variable {α : Type}
 
 /-- The verifier counting the listings of parity `b`: on an instance `a`, the certificate, read as
-`q` slots of `P + 1` bits, where `P = p (enc a).length`, is a well-formed increasing listing of
-certificates of length `P` accepted by `V` with a number of certificates of parity `b`. -/
+`q` slots of `len + 1` bits, where `len = p (enc a).length`, is a well-formed increasing listing of
+certificates of length `len` accepted by `V` with a number of certificates of parity `b`. -/
 def verifier (enc : α ↪ List Bool) (p q : Polynomial ℕ) (V : α × List Bool → Bool) (b : Bool)
     (x : α × List Bool) : Bool :=
   accepts b ((listRows (q.eval (enc x.1).length) (p.eval (enc x.1).length + 1) x.2).foldl
@@ -323,7 +314,7 @@ abbrev encState : State ↪ List Bool :=
   encPair encBool (encPair encBool (encPair encBool (encPair encBool encBits)))
 
 /-- A slot grows the encoded state by at most its length. -/
-theorem length_encState_step (acc : List Bool → Bool) (s : State) (slot : List Bool) :
+private theorem length_encState_step (acc : List Bool → Bool) (s : State) (slot : List Bool) :
     (encState (step acc s slot)).length ≤ (encState s).length + slot.length := by
   unfold step
   split <;> simp only [length_encPair, encBool_apply, List.length_singleton, encBits_apply,
@@ -367,10 +358,11 @@ end SortedSubsets
 variable {α : Type} {enc : α ↪ List Bool}
 
 open SortedSubsets in
-/-- **`FewP ⊆ SPP`** [Köbler, Schöning and Torán][KoeblerSchoeningToran1992]. For a problem in
-`FewP` whose instances have at most `q` accepted certificates, the numbers `E` and `O` of
-increasing listings, in `q` slots, of sets of accepted certificates of even and of odd size are in
-`#P`, and `1 + O - E`, in `GapP`, is `1` on members and `0` on the other instances. -/
+/-- **`FewP ⊆ SPP`** [Köbler, Schöning, Toda and Torán][KoeblerSchoeningTodaToran1992],
+[Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994]. For a problem in `FewP` whose instances have
+at most `q` accepted certificates, the numbers `E` and `O` of increasing listings, in `q` slots, of
+sets of accepted certificates of even and of odd size are in `#P`, and `1 + O - E`, in `GapP`, is
+`1` on members and `0` on the other instances. -/
 theorem FewP_subset_SPP : FewP enc ⊆ SPP enc := by
   rintro A ⟨f, ⟨p, V, hV, hf⟩, q, hq, hA⟩
   set E : α → ℕ := fun a =>

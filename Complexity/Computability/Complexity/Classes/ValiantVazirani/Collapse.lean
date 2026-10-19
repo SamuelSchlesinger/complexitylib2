@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
 import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
 
 /-!
@@ -22,19 +23,21 @@ running its decider (`Cslib.Complexity.ComputableInPolyTimeWithOracle.computable
 so `RP^A = RP` for `A ∈ P` (`Cslib.Complexity.RPWithOracle_eq_RP`). Hence, if `PromiseUSAT` has a
 polynomial-time solver, then `NP = RP`, for every encoding of instances
 (`Cslib.Complexity.NP_eq_RP_of_PromiseUSAT_mem_PromiseP`). In particular `USAT ∈ P` implies
-`NP = RP` (`Cslib.Complexity.NP_eq_RP_of_USAT_mem_P`).
+`NP = RP` (`Cslib.Complexity.NP_eq_RP_of_USAT_mem_P`); this form is weak, since `USAT` as a
+language is `coNP`-hard.
 
 A polynomial-time solver of a promise problem is a function on its instances; the oracle
 algorithm asks about words. Under an encoding with a total decoder (`Turing.MultiTapeTM.Decoder`),
 such as that of formulas, the solver composed with the decoder is an oracle language in `P` that
-solves the promise problem (`Cslib.Complexity.exists_mem_P_solvedBy_of_mem_PromiseP`).
+solves the promise problem (`Cslib.Complexity.exists_mem_P_solvedBy_of_mem_PromiseP`), and `RP`
+relative to such a promise problem is `RP` (`Cslib.Complexity.RPWithPromiseOracle_eq_RP`).
 
 ## Main results
 
 * `Cslib.Complexity.RPWithOracle_eq_RP`: `RP^A = RP` for `A ∈ P`.
 * `Cslib.Complexity.exists_mem_P_solvedBy_of_mem_PromiseP`: a promise problem in `PromiseP`
   under a decodable encoding is solved by an oracle language in `P`.
-* `Cslib.Complexity.RPWithPromiseOracle_subset_RP`: `RP` relative to a promise problem in
+* `Cslib.Complexity.RPWithPromiseOracle_eq_RP`: `RP` relative to a promise problem in
   `PromiseP`, under a decodable encoding, is `RP`.
 * `Cslib.Complexity.NP_eq_RP_of_PromiseUSAT_mem_PromiseP`: if `PromiseUSAT ∈ PromiseP`, then
   `NP = RP`.
@@ -74,7 +77,7 @@ theorem exists_mem_P_solvedBy_of_mem_PromiseP {Q : PromiseProblem β} {encQ : β
     fun _ => Iff.rfl⟩, ?_⟩
   simpa [D.decode_enc] using hsolve
 
-/-- **`RP` relative to a promise problem in `PromiseP` is `RP`**, under an encoding of its
+/-- `RP` relative to a promise problem in `PromiseP` lies in `RP`, under an encoding of its
 instances with a total decoder. -/
 theorem RPWithPromiseOracle_subset_RP {Q : PromiseProblem β} {encQ : β ↪ List Bool}
     (D : Decoder encQ) (hQ : Q ∈ PromiseP encQ) (enc : α ↪ List Bool) :
@@ -82,14 +85,23 @@ theorem RPWithPromiseOracle_subset_RP {Q : PromiseProblem β} {encQ : β ↪ Lis
   let ⟨_, hA, hsolve⟩ := exists_mem_P_solvedBy_of_mem_PromiseP D hQ
   (RPWithPromiseOracle_subset_RPWithOracle hsolve enc).trans (RPWithOracle_eq_RP hA enc).subset
 
+/-- **`RP` relative to a promise problem in `PromiseP` is `RP`**, under an encoding of its
+instances with a total decoder. -/
+theorem RPWithPromiseOracle_eq_RP {Q : PromiseProblem β} {encQ : β ↪ List Bool}
+    (D : Decoder encQ) (hQ : Q ∈ PromiseP encQ) (enc : α ↪ List Bool) :
+    RPWithPromiseOracle Q encQ enc = RP enc :=
+  Set.Subset.antisymm (RPWithPromiseOracle_subset_RP D hQ enc)
+    (RP_subset_RPWithPromiseOracle Q encQ enc)
+
 /-- **Valiant–Vazirani: if `PromiseUSAT` has a polynomial-time solver, then `NP = RP`**, for every
 encoding of instances. -/
 theorem NP_eq_RP_of_PromiseUSAT_mem_PromiseP (h : PromiseUSAT ∈ PromiseP encCNF)
     (enc : α ↪ List Bool) : NP enc = RP enc :=
   Set.Subset.antisymm ((NP_subset_RPWithPromiseOracle_PromiseUSAT enc).trans
-    (RPWithPromiseOracle_subset_RP (.list (.list (.pair .nat .bool))) h enc)) RP_subset_NP
+    (RPWithPromiseOracle_subset_RP Ladner.cnfDecoder h enc)) RP_subset_NP
 
-/-- **Valiant–Vazirani: if `USAT ∈ P`, then `NP = RP`**, for every encoding of instances. -/
+/-- **Valiant–Vazirani: if `USAT ∈ P`, then `NP = RP`**, for every encoding of instances. This
+form is weak: `USAT` as a language is `coNP`-hard. -/
 theorem NP_eq_RP_of_USAT_mem_P (h : USAT ∈ P encCNF) (enc : α ↪ List Bool) :
     NP enc = RP enc :=
   NP_eq_RP_of_PromiseUSAT_mem_PromiseP ⟨USAT, h, subset_rfl, disjoint_USAT_UNSAT⟩ enc
