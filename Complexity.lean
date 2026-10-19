@@ -683,6 +683,12 @@ public import Complexity.Foundations.BooleanAnalysis.LowDegreeParity
 public import Complexity.Foundations.BooleanAnalysis.MirrorSets
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
+public import Complexity.Foundations.Combinatorics.AffineDisperser
+public import Complexity.Foundations.Combinatorics.AffineDisperser.CubeSum
+public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Moore
+public import Complexity.Foundations.Combinatorics.AffineDisperser.PivotSpace
+public import Complexity.Foundations.Combinatorics.AffineDisperser.SubspacePolynomial
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
