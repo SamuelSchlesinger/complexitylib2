@@ -463,6 +463,15 @@ theorem holds_subst_update {E : Equation} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg 
   exact holds_congr fun i hi =>
     (Function.update_of_ne (by rintro rfl; exact notMem_subst hℓ hi) _ _).symm
 
+/-- Once `p = r + c`, the equation `v + p + r = rhs` reads `v = rhs + c`. -/
+theorem holds_update_iff {E : Equation} {v p r : ℕ} (hterms : E.terms = {v, p, r})
+    (hvp : v ≠ p) (hvr : v ≠ r) (hpr : p ≠ r) (val : ℕ → Bool) (c : Bool) :
+    E.Holds (Function.update val p (val r ^^ c)) ↔ val v = (E.rhs ^^ c) := by
+  rw [Equation.Holds, hterms, Finset.sum_insert (by simp [hvp, hvr]), Finset.sum_pair hpr]
+  simp only [Function.update_self, Function.update_of_ne hvp, Function.update_of_ne hpr.symm]
+  generalize val v = a; generalize val r = b; generalize E.rhs = d
+  revert a b c d; decide
+
 end Equation
 
 /-- The literal computed by a gate with a constant argument or two equal arguments. -/
