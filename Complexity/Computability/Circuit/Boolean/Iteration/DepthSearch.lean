@@ -235,7 +235,7 @@ theorem depth_circuit (c : Circuit signature n n) (L : ℕ) (hL : 0 < L) (hLN : 
   omega
 
 /-- The threshold search costs at most a factor `(n + 1) ^ 2` more than a fixed power. -/
-theorem depthBudget_le (n s L : ℕ) (hL : 0 < L) :
+theorem depthBudget_le (n s L : ℕ) :
     depthBudget n s L ≤ 200000 * (n + 1) ^ 2 * powerBudget n s (2 ^ n) L := by
   set B := powerBudget n s (2 ^ n) L
   have hb : (n + 1) ^ 3 ≤ B := by
@@ -263,7 +263,7 @@ theorem depth_circuit_optimized (c : Circuit signature n n) :
   obtain ⟨out, hout, hs⟩ := depth_circuit c L hL hLN
   refine ⟨out, hout, ?_⟩
   have hs' : (out.size : ℝ) ≤ 200000 * (n + 1 : ℝ) ^ 2 * (powerBudget n c.size (2 ^ n) L : ℝ) := by
-    exact_mod_cast hs.trans (depthBudget_le n c.size L hL)
+    exact_mod_cast hs.trans (depthBudget_le n c.size L)
   have h := mul_le_mul_of_nonneg_left ho (show 0 ≤ 200000 * (n + 1 : ℝ) ^ 2 by positivity)
   nlinarith
 
