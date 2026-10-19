@@ -351,6 +351,11 @@ theorem accepts_eq_true_iff (x r : List Bool) (h : History) :
   · rw [hrun.1 _ hsim]
     cases rest <;> simp [Except.map, replayOutcome]
 
+theorem accepts_eq_true_iff_of_length {x r : List Bool} {t : ℕ} (hr : r.length = t)
+    (h : History) : accepts M x r h = true ↔ outcome (coinProgram M t x r) h = .done true := by
+  subst hr
+  exact accepts_eq_true_iff M x r h
+
 /-! ### The live replay in polynomial time -/
 
 section PolyTime
@@ -527,6 +532,84 @@ theorem computableTidilyInPolyTime_accepts :
   exact hpost.comp h
 
 end PolyTime
+
+/-! ### Counting the accepting coins -/
+
+section Count
+
+variable {α : Type} (enc : α ↪ List Bool) (fuel : α → ℕ)
+
+/-- One round of the count: test the coins, add the verdict, and move on to the next coins. -/
+def countStep (s : (α × History) × List Bool × ℕ) : (α × History) × List Bool × ℕ :=
+  (s.1, incrementBits s.2.1, s.2.2 + if accepts M (enc s.1.1) s.2.1 s.1.2 then 1 else 0)
+
+/-- The number of accepting values of `fuel a` coins after the history `h`, counted by trying the
+coins one after another with a binary counter. -/
+def countAccepts (q : α × History) : ℕ :=
+  ((countStep M enc)^[2 ^ fuel q.1] (q, List.replicate (fuel q.1) false, 0)).2.2
+
+open Classical in
+theorem iterate_countStep (q : α × History) (m j : ℕ) :
+    (countStep M enc)^[j] (q, List.replicate m false, 0) =
+      (q, incrementBits^[j] (List.replicate m false),
+        ((Finset.range j).filter fun i =>
+          accepts M (enc q.1) (incrementBits^[i] (List.replicate m false)) q.2).card) := by
+  induction j with
+  | zero => simp
+  | succ j ih =>
+    rw [Function.iterate_succ_apply', ih]
+    simp only [countStep, Function.iterate_succ_apply', Prod.mk.injEq, true_and]
+    rw [Finset.range_add_one, Finset.filter_insert]
+    split_ifs with hacc
+    · rw [Finset.card_insert_of_notMem (by simp)]
+    · rfl
+
+open Classical in
+/-- **The count of accepting coins**: `countAccepts` is the number of coin values of `fuel a` coins
+whose programs accept after the history. -/
+theorem countAccepts_eq_accepted (q : α × History) :
+    countAccepts M enc fuel q = accepted (coinFamily M (fuel q.1) (enc q.1)) q.2 := by
+  rw [countAccepts, iterate_countStep, accepted]
+  simp only
+  set t := fuel q.1
+  refine Finset.card_bij' (fun i _ j => (incrementBits^[i] (List.replicate t false)).getD j false)
+    (fun f _ => lsbValue (List.ofFn f)) ?_ ?_ ?_ ?_
+  · intro i hi
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_univ, true_and] at hi ⊢
+    obtain ⟨_, hl⟩ := iterate_incrementBits t i hi.1
+    have hofFn : List.ofFn (fun j : Fin t =>
+        (incrementBits^[i] (List.replicate t false)).getD j false) =
+        incrementBits^[i] (List.replicate t false) := by
+      refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
+      simp [List.getElem?_eq_getElem h₂]
+    rw [coinFamily, hofFn]
+    exact (accepts_eq_true_iff_of_length M hl _).mp hi.2
+  · intro f hf
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_univ, true_and] at hf ⊢
+    have hlt := lsbValue_lt (List.ofFn f)
+    rw [List.length_ofFn] at hlt
+    refine ⟨hlt, ?_⟩
+    have := iterate_incrementBits_lsbValue (List.ofFn f)
+    rw [List.length_ofFn] at this
+    rw [this]
+    exact (accepts_eq_true_iff_of_length M (List.length_ofFn (f := f)) _).mpr hf
+  · intro i hi
+    simp only [Finset.mem_filter, Finset.mem_range] at hi
+    obtain ⟨hv, hl⟩ := iterate_incrementBits t i hi.1
+    have hofFn : List.ofFn (fun j : Fin t =>
+        (incrementBits^[i] (List.replicate t false)).getD j false) =
+        incrementBits^[i] (List.replicate t false) := by
+      refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
+      simp [List.getElem?_eq_getElem h₂]
+    rw [hofFn, hv]
+  · intro f _
+    funext j
+    have := iterate_incrementBits_lsbValue (List.ofFn f)
+    rw [List.length_ofFn] at this
+    rw [this]
+    simp
+
+end Count
 
 end Interaction
 
