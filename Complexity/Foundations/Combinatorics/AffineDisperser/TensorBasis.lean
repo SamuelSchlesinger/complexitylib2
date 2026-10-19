@@ -43,6 +43,8 @@ irreducible polynomials of the small degrees `pᵢ`, which can be found by exhau
 
 * `Cslib.AffineDisperser.top_le_span_prod_pow`: the monomials span `E`.
 * `Cslib.AffineDisperser.prodPowBasis_apply`: the basis vectors are the monomials.
+* `Cslib.AffineDisperser.prodPowBasis_mul_prodPowBasis`: the structure constants of the basis,
+  from the remainders of the powers `αᵢ ^ e`, `e < 2 mᵢ`.
 -/
 
 @[expose] public section
@@ -179,5 +181,24 @@ theorem prodPowBasis_apply (hm : Pairwise (Nat.Coprime on m)) (hE : finrank K E 
     (hα : ∀ i, (minpoly K (α i)).natDegree = m i) (J : (i : ι) → Fin (m i)) :
     prodPowBasis hm hE hα J = ∏ i, α i ^ (J i : ℕ) := by
   simp [prodPowBasis]
+
+/-- **Structure constants of the monomial basis.** If each power `αᵢ ^ e`, `e < 2 mᵢ`, is the
+combination `∑_d c i e d • αᵢ ^ d` of the powers below `mᵢ`, then the product of the monomial
+basis vectors of `J` and `K` is the combination of those of `M` with the coefficients
+`∏ᵢ c i (Jᵢ + Kᵢ) Mᵢ`. The coefficients depend only on the `c i`, not on the `αᵢ`. -/
+theorem prodPowBasis_mul_prodPowBasis (hm : Pairwise (Nat.Coprime on m))
+    (hE : finrank K E = ∏ i, m i) (hα : ∀ i, (minpoly K (α i)).natDegree = m i)
+    (c : (i : ι) → ℕ → Fin (m i) → K)
+    (hc : ∀ i, ∀ e < 2 * m i, α i ^ e = ∑ d, c i e d • α i ^ (d : ℕ))
+    (J J' : (i : ι) → Fin (m i)) :
+    prodPowBasis hm hE hα J * prodPowBasis hm hE hα J' =
+      ∑ M, (∏ i, c i (J i + J' i) (M i)) • prodPowBasis hm hE hα M := by
+  simp only [prodPowBasis_apply]
+  rw [← Finset.prod_mul_distrib]
+  simp_rw [← pow_add]
+  rw [Finset.prod_congr rfl fun i _ => hc i _ (by have := (J i).2; have := (J' i).2; omega),
+    Finset.prod_univ_sum, Fintype.piFinset_univ]
+  refine Finset.sum_congr rfl fun M _ => ?_
+  simp_rw [Algebra.smul_def, Finset.prod_mul_distrib, map_prod]
 
 end Cslib.AffineDisperser

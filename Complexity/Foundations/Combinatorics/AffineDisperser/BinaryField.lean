@@ -193,7 +193,8 @@ theorem exists_aeval_leastIrreducible_eq_zero {p n : ℕ} (hp : p ≠ 0) (hn : n
 
 open Classical in
 /-- A root of `leastIrreducible p` in `𝔽_{2 ^ n}`, which exists when `p ∣ n` and `p, n ≠ 0`
-(`0` when there is none). -/
+(`0` when there is none). The root is chosen arbitrarily; the explicit disperser does not depend
+on the choice (`Cslib.AffineDisperser.traceSymBits_rootBasis_eq_explicitDisperser`). -/
 noncomputable def binaryRoot (p n : ℕ) : GaloisField 2 n :=
   if h : ∃ α : GaloisField 2 n, aeval α (leastIrreducible p) = 0 then h.choose else 0
 

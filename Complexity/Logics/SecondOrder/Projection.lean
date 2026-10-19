@@ -57,6 +57,9 @@ are precisely the linear orders `orderRelOfEquiv e` induced by bijections `e : M
 
 * `Cslib.Logic.ESO.Sentence.realize_project`: `Φ.project` holds in `M` iff `Φ` holds in some
   expansion of `M` by relations for `ar₀`.
+* `Cslib.Logic.ESO.realize_isStrictLinearOrderSentence_iff_irrefl_trans_trichotomous`: on any
+  domain, a binary relation satisfies `isStrictLinearOrderSentence` iff it is irreflexive,
+  transitive, and trichotomous.
 * `Cslib.Logic.ESO.realize_isStrictLinearOrderSentence`: on a finite domain `M`, a binary
   relation satisfies `isStrictLinearOrderSentence` iff it is `orderRelOfEquiv e` for some
   `e : M ≃ Fin (Nat.card M)`.
@@ -194,8 +197,9 @@ theorem relMap_ltSym {N : Type w} (R : ∀ _ : Unit, Set (Fin 2 → N)) (x : Fin
     (varLanguage.structure (arity := fun _ : Unit => 2) R).RelMap ltSym x ↔ x ∈ R () :=
   Iff.rfl
 
-/-- Unfolding `isStrictLinearOrderSentence` into irreflexivity, transitivity, and trichotomy. -/
-private theorem realize_isStrictLinearOrderSentence_aux {N : Type w}
+/-- On any type `N` (finite or not), a binary relation satisfies `isStrictLinearOrderSentence` iff
+it is irreflexive, transitive, and trichotomous. -/
+theorem realize_isStrictLinearOrderSentence_iff_irrefl_trans_trichotomous {N : Type w}
     (R : ∀ _ : Unit, Set (Fin 2 → N)) :
     (letI := varLanguage.structure (arity := fun _ : Unit => 2) R;
       N ⊨ isStrictLinearOrderSentence) ↔
@@ -211,7 +215,7 @@ private theorem realize_isStrictLinearOrderSentence_aux {N : Type w}
 theorem realize_isStrictLinearOrderSentence_orderRelOfEquiv {N : Type w} {n : ℕ} (e : N ≃ Fin n) :
     (letI := varLanguage.structure (arity := fun _ : Unit => 2) (orderRelOfEquiv e);
       N ⊨ isStrictLinearOrderSentence) := by
-  rw [realize_isStrictLinearOrderSentence_aux]
+  rw [realize_isStrictLinearOrderSentence_iff_irrefl_trans_trichotomous]
   refine ⟨⟨fun a => ?_, fun a b c ⟨h₁, h₂⟩ => ?_⟩, fun a b => ?_⟩
   · change ¬ (e a < e a)
     exact lt_irrefl _
@@ -230,7 +234,8 @@ theorem realize_isStrictLinearOrderSentence {N : Type w} [Finite N]
       ∃ e : N ≃ Fin (Nat.card N), R = orderRelOfEquiv e := by
   constructor
   · intro h
-    rcases (realize_isStrictLinearOrderSentence_aux R).1 h with ⟨⟨hirr, htrans⟩, htri⟩
+    rcases (realize_isStrictLinearOrderSentence_iff_irrefl_trans_trichotomous R).1 h with
+      ⟨⟨hirr, htrans⟩, htri⟩
     let r : N → N → Prop := fun a b => ![a, b] ∈ R ()
     have : Std.Irrefl r := ⟨hirr⟩
     have : IsTrans N r := ⟨fun a b c hab hbc => htrans a b c ⟨hab, hbc⟩⟩

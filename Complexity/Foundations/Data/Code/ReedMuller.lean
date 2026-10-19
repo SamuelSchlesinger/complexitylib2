@@ -42,6 +42,8 @@ not covered by it.
 * `Cslib.Code.card_sub_mul_pow_le_mul_hammingNorm_of_mem_reedMuller`,
   `Cslib.Code.card_sub_mul_pow_le_mul_hammingDist_of_mem_reedMuller`: the Schwartz–Zippel distance
   bound.
+* `Cslib.Code.le_minDist_reedMuller`: the minimum distance in `m + 1` variables is at least
+  `(q - d) * q ^ m`.
 * `Cslib.Code.minDist_reedMuller`: for `d < q` the minimum distance in `m + 1` variables is
   `(q - d) * q ^ m`.
 

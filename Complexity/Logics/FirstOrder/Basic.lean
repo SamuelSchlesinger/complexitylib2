@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Mathlib.ModelTheory.Complexity
+public import Mathlib.ModelTheory.Semantics
 public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
@@ -17,7 +17,7 @@ public import Mathlib.SetTheory.Cardinal.Finite
 This file provides reusable first-order formula and sentence combinators over `FirstOrder.Language`:
 * universal and existential closure (`FO.closeAll`, `FO.closeEx`) over finite free-variable types,
 * variable relabeling, equality, and unary/binary relation application (`FO.atVar`, `FO.varEq`,
-  `FO.rel₁`, `FO.rel₂`, `FO.eqOfPred`),
+  `FO.rel₁`, `FO.rel₂`),
 * order-theoretic formulas (`FO.lt`, `FO.le`, `FO.isZero`, `FO.isMax`, `FO.succ`, `FO.isFirstOut`)
   with respect to a binary relation symbol interpreted as `<` on `Fin B`, and
 * finite-domain cardinality sentences (`FO.cardEqSentence`, built from `Sentence.cardGe`) and finite
@@ -27,8 +27,8 @@ This file provides reusable first-order formula and sentence combinators over `F
 
 * `Cslib.Logic.FO.closeAll`, `Cslib.Logic.FO.closeEx`: universal and existential closure of a
   first-order formula over a finite type of free variables.
-* `Cslib.Logic.FO.atVar`, `Cslib.Logic.FO.varEq`, `Cslib.Logic.FO.rel₁`, `Cslib.Logic.FO.rel₂`,
-  `Cslib.Logic.FO.eqOfPred`: atomic and finite-case formula combinators.
+* `Cslib.Logic.FO.atVar`, `Cslib.Logic.FO.varEq`, `Cslib.Logic.FO.rel₁`, `Cslib.Logic.FO.rel₂`:
+  atomic formula combinators.
 * `Cslib.Logic.FO.lt`, `Cslib.Logic.FO.le`, `Cslib.Logic.FO.isZero`, `Cslib.Logic.FO.isMax`,
   `Cslib.Logic.FO.succ`, `Cslib.Logic.FO.isFirstOut`: order formulas on `Fin B`.
 * `Cslib.Logic.FO.cardEqSentence`: sentence asserting `Nat.card M = n` on finite structures.
@@ -68,7 +68,7 @@ noncomputable def closeAll (V : Type) [Finite V] (φ : L.Formula V) : L.Sentence
 
 /-- Existential closure of a formula over a finite type of free variables. -/
 noncomputable def closeEx (V : Type) [Finite V] (φ : L.Formula V) : L.Sentence :=
-  ∼(closeAll V (∼φ))
+  Formula.iExs V (φ.relabel Sum.inr)
 
 @[simp]
 theorem realize_closeAll {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ : L.Formula V) :
@@ -82,7 +82,11 @@ theorem realize_closeAll {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ 
 @[simp]
 theorem realize_closeEx {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ : L.Formula V) :
     (closeEx V φ).Realize M ↔ ∃ v : V → M, φ.Realize v := by
-  simp [closeEx]
+  simp only [closeEx, Sentence.Realize, Formula.realize_iExs, Formula.realize_relabel]
+  refine exists_congr fun v => ?_
+  have h : (Sum.elim (default : Empty → M) v ∘ Sum.inr) = v := by
+    funext x; rfl
+  rw [h]
 
 /-- Relabel a single-variable formula `φ : L.Formula (Fin 1)` to free variable `u : V`. -/
 def atVar (φ : L.Formula (Fin 1)) {V : Type*} (u : V) : L.Formula V :=
@@ -125,19 +129,6 @@ theorem realize_rel₂ {M : Type w} [L.Structure M] {V : Type*} (v : V → M)
     (r : L.Relations 2) (u w : V) :
     (rel₂ r u w).Realize v ↔ RelMap r ![v u, v w] := by
   simp [rel₂]
-
-/-- Finite conjunction over `s : α` asserting `f s ↔ s = a`. -/
-noncomputable def eqOfPred {α : Type*} [Finite α] [DecidableEq α] {V : Type*}
-    (a : α) (f : α → L.Formula V) : L.Formula V :=
-  Formula.iInf fun s : α => if s = a then f s else ∼(f s)
-
-@[simp]
-theorem realize_eqOfPred {M : Type w} [L.Structure M] {α : Type*} [Finite α] [DecidableEq α]
-    {V : Type*} (v : V → M) (a : α) (f : α → L.Formula V) :
-    (eqOfPred a f).Realize v ↔ ∀ s : α, (f s).Realize v ↔ s = a := by
-  simp only [eqOfPred, Formula.realize_iInf]
-  refine forall_congr' fun s => ?_
-  by_cases h : s = a <;> simp [h]
 
 /-! ### Order combinators on `Fin B` -/
 

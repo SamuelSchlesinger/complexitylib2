@@ -43,7 +43,7 @@ variable {ι R M : Type*} [Fintype ι] [Ring R] [AddCommGroup M] [Module R M] [D
 least `d`. -/
 theorem le_minDist_iff_hammingNorm (C : Submodule R (ι → M)) {d : ℕ∞} :
     d ≤ minDist (C : Set (ι → M)) ↔ ∀ x ∈ C, x ≠ 0 → d ≤ hammingNorm x := by
-  rw [le_minDist]
+  rw [le_minDist_iff]
   refine ⟨fun h x hx hx0 => ?_, fun h x hx y hy hxy => ?_⟩
   · rw [← hammingDist_zero_right]
     exact h x hx 0 C.zero_mem hx0
