@@ -30,7 +30,6 @@ from which `two_pow_lt_leaves_of_run_eq_dotProduct` follows, gives only about ha
 
 ## Main results
 
-* `Cslib.BitString.sum_ite_dotProduct`: character orthogonality for the inner product.
 * `Cslib.Communication.signMatrix_dotProduct_mul_self`: the sign matrix of the inner product is a
   Hadamard matrix.
 * `Cslib.Communication.rank_signMatrix_dotProduct`: it has full rank.
@@ -49,26 +48,6 @@ from which `two_pow_lt_leaves_of_run_eq_dotProduct` follows, gives only about ha
 open Finset
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-namespace Cslib.BitString
-
-/-- **Character orthogonality for the inner product.** The signs `(-1) ^ (w ⬝ᵥ y)` cancel over all
-bit strings `y` unless `w = 0`. -/
-theorem sum_ite_dotProduct {R : Type*} [Ring R] (w : ι → Bool) :
-    ∑ y : ι → Bool, (if w ⬝ᵥ y then (-1 : R) else 1) =
-      if w = 0 then 2 ^ Fintype.card ι else 0 := by
-  have h := Communication.two_mul_card_dotProduct_eq_true_add w
-  have hsplit := card_filter_add_card_filter_not (s := (univ : Finset (ι → Bool)))
-    fun y => w ⬝ᵥ y = true
-  simp only [card_univ, Fintype.card_fun, Fintype.card_bool] at hsplit
-  rw [sum_ite, sum_const, sum_const, nsmul_eq_mul, nsmul_eq_mul, mul_neg, mul_one, mul_one]
-  split_ifs at h ⊢ with hw
-  · subst hw
-    simp [zero_dotProduct]
-  · have e : #{y | ¬w ⬝ᵥ y = true} = #{y | w ⬝ᵥ y = true} := by omega
-    rw [e, neg_add_cancel]
-
-end Cslib.BitString
 
 namespace Cslib.Communication
 
