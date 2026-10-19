@@ -25,7 +25,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   shared encodings and calculus through CSLib issue #611, including the `TapeEncodable`
   interface proposed in #590. Check #767 and its split #768 before adding space-to-time
   inclusions or overlapping class definitions; reconcile the local encoded, tidy-machine
-  definitions of `P`/`NP` with its `DTIME`-based language classes. Selected-tape specifications
+  definitions of `P`/`NP` with its `DTIME`-based language classes. The local `L`, `PSPACE`,
+  `DTIME` and `EXP` (`Classes/LogSpace`, `Classes/Space`, `Classes/Hierarchy/Time`, `Classes/EXP`)
+  use #767's shapes over encoded instances; once #767 lands, derive them from its language-indexed
+  classes rather than keeping parallel definitions. Selected-tape specifications
   formerly in `Combinators/StreamFold` and `Encodings/MultiPass` now live beside the plumbing
   operations; preserve their exact space bounds when resynchronizing the copied files.
 * **Polynomial bounds.** The tidy calculus's size-parameterized `PolyBounded` adapts CSLib's
@@ -72,6 +75,7 @@ agreement during upstream review.
 | `Computability/Machines/Turing/MultiTape/Plumbing/Shadow` | Put general run lemmas in `TapeLemmas`. |
 | `Turing.Action.instFinite` in `Computability/Machines/Turing/MultiTape/Machine/ChoiceTable` | Place beside `Action` in `Computability/Machines/Turing/MultiTape/Configuration`. |
 | `Computability/Machines/Turing/MultiTape/Plumbing/ExtendTapesView` | Derive the old `tapeEmb`/`noTapes` lemmas from `viewCfg`; `oneTapeCfg i = viewCfg (tapeEmb i)` by `rfl`. |
+| `Computability/Machines/Turing/MultiTape/Probabilistic/IterateWhile` | Its private tape helpers parallel the vendored deterministic `Combinators/IterateWhile`; share them once the tidy branch exposes them. |
 | `Computability/Machines/Turing/MultiTape/Combinators/TidyNormalForm` | Place `runFrom_nop_withState` beside `runFrom_nop_one`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Decoder` | Total decoders with tidy certificates; add to the tidy branch's `Encodings` beside `Option`/`Pair`/`List`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |

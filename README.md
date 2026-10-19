@@ -31,6 +31,24 @@ machine calculus.
 
 * [Cook–Levin](Complexity/Computability/Complexity/CookLevin/Completeness.lean): SAT NP-completeness
   and UNSAT coNP-completeness, including the polynomial-time tableau reduction.
+* Structural complexity: [Ladner's theorem](Complexity/Computability/Complexity/Classes/Ladner.lean),
+  a [Baker–Gill–Solovay](Complexity/Computability/Complexity/Classes/Oracle/BakerGillSolovay.lean) oracle with
+  `P^A ≠ NP^A`, the [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and
+  [`P ⊊ EXP`](Complexity/Computability/Complexity/Classes/EXP.lean),
+  [`NPSPACE = PSPACE`](Complexity/Computability/Complexity/Classes/Space/Savitch.lean),
+  [TQBF PSPACE-completeness](Complexity/Computability/Complexity/Classes/Space/TQBF.lean),
+  [`NL ⊆ P`](Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean),
+  [Sipser–Gács–Lautemann](Complexity/Computability/Complexity/Classes/PH/SipserLautemann.lean) and
+  [`BPP ⊆ P/poly`](Complexity/Computability/Circuit/Boolean/PolynomialTime.lean).
+* [Interactive proofs](Complexity/Computability/Complexity/Classes/IP.lean): `NP ⊆ IP` and a private-coin protocol for
+  graph non-isomorphism.
+* NP-completeness of [3-coloring](Complexity/Computability/Complexity/Problems/Coloring.lean),
+  [Hamiltonian cycle](Complexity/Computability/Complexity/Problems/Hamiltonian.lean), [TSP](Complexity/Computability/Complexity/Problems/TSP.lean),
+  [subset sum](Complexity/Computability/Complexity/Problems/SubsetSum.lean) and further graph and number problems, by
+  polynomial-time reductions.
+* [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): a class of finite relational structures is
+  definable in existential second-order logic exactly when it is closed under isomorphism and
+  in NP.
 * [One-way functions to PRGs](Complexity/Crypto/Computational/OneWayToPRG.lean) and
   [adaptive PRFs](Complexity/Crypto/Computational/OneWayToPRF.lean), including
   [Goldreich–Levin](Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean),

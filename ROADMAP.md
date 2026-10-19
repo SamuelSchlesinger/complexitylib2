@@ -44,7 +44,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Area | Coverage to establish or extend |
 | --- | --- |
 | Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. Preserve each reduction's resource bound. |
-| Space and alternation | The [machine-class milestones](#machine-class-milestones), native `NPSPACE = PSPACE`, TQBF completeness and `AP = PSPACE`. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
+| Space and alternation | Building on native `NPSPACE = PSPACE`, TQBF completeness and `NL ⊆ P`: the [machine-class milestones](#machine-class-milestones), alternation and `AP = PSPACE`. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
 | Counting and modular classes | Extend `#P`, `GapP` and `PP` with counting reductions and machine characterizations, permanent completeness, parity/modular and counting hierarchies, Toda's theorem, and the oracle-algorithm form of Stockmeyer approximate counting. |
 | Interactive and probabilistic proofs | Efficient interactive verifier semantics, sumcheck and arithmetization, MA/AM and public/private coins, `IP = PSPACE`, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
@@ -58,9 +58,42 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Property and distribution testing | Distance and access models, one/two-sided and tolerant testing, query/sample bounds, canonical graph/algebraic/distribution testers and lower bounds. |
 | Fine-grained and parameterized complexity | Fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; FPT/XP, W/A hierarchies, kernelization, parameter-preserving reductions and lower bounds. |
 | Total search and computational games | FNP/TFNP and canonical subclasses such as PLS, PPAD, PPA, PPP and CLS; local search, fixed-point and equilibrium problems, with explicit totality and solution-preserving reductions. |
-| Logic and descriptive complexity | Finish Fagin's theorem, then logical characterizations of additional resource classes, fixed-point and order-invariant queries, and uniform translations between syntax, structures and algorithms. |
+| Logic and descriptive complexity | Building on [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): logical characterizations of additional resource classes, fixed-point and order-invariant queries, and uniform translations between syntax, structures and algorithms. |
 | Kolmogorov complexity and metacomplexity | Machine-backed descriptions/decoders and invariance, resource-bounded descriptions, MCSP variants and connections to learning, cryptography and lower bounds. Revisit deferred results through independently reviewed developments. |
 | Quantum complexity | Reusable circuit/channel/measurement semantics, uniformity and approximation costs, BQP/QMA and related query, communication and interactive classes, amplification, containments and complete problems. Reuse suitable quantum foundations rather than create incompatible models. |
+
+### Coverage priorities
+
+A weighted audit of the results that complexity papers most often cite in their preliminaries
+(October 2026) ranks the following developments by citation gain per unit of work. Each entry
+names its endpoints; verify statements against the primary sources when starting one.
+
+1. **Probability toolkit.** Multiplicative Chernoff bounds, k-wise independence and its moment
+   tail bound, the Lovász Local Lemma, KL divergence with Pinsker and Shearer, min-entropy and
+   flat sources, and McDiarmid's inequality.
+2. **Resource-class spine.** Parametric `DTIME`, `NTIME`, `DSPACE`, `NSPACE` and `BPTIME`; `E`,
+   `NEXP` and `ZPP`; the standard inclusions; class-level error reduction; padding; and the
+   polynomial-hierarchy collapse lemmas.
+3. **Circuits as data.** A binary circuit encoding with certified evaluation, CircuitSAT
+   NP-completeness and `MCSP ∈ NP`, search-to-decision for SAT, Karp–Lipton, Kannan and Meyer.
+4. **Natural proofs.** Natural properties and the Razborov–Rudich barrier from pseudorandom
+   function families.
+5. **Communication complexity.** Rectangles, fooling sets and the rank bound; randomized protocols
+   and Newman's theorem; discrepancy and inner product; set disjointness.
+6. **Query complexity.** Exact and approximate degree, the Nisan–Szegedy relations, symmetrization,
+   Huang's sensitivity theorem and randomized query complexity.
+7. **Algebraic codes.** Reed–Solomon and Reed–Muller distance, the Singleton and Johnson bounds,
+   unique and list decoding, concatenation and local decoding.
+8. **Fine-grained hypotheses.** ETH, SETH and the orthogonal-vectors hypothesis, with the
+   consequences that follow from the formalized sparsification lemma.
+9. **Isolation and counting.** Valiant–Vazirani, the isolation lemma, `⊕P`, Toda's theorem and
+   Stockmeyer's approximate counting at class level.
+10. **Hardness amplification.** The hard-core lemma, Yao's XOR lemma and the
+    Impagliazzo–Wigderson derandomization endpoints, building on Nisan–Wigderson.
+
+Further priorities are small-bias spaces, expander walks and extractors; `NL = coNL` and the
+space hierarchy; sumcheck, Arthur–Merlin protocols and `IP = PSPACE`; hypercontractivity and
+influence theorems; and inapproximability consequences of the PCP theorem.
 
 ### Measure reuse across papers
 
@@ -153,16 +186,12 @@ Jukna coverage below is an additional target beyond the V1 port:
   [functional-graph foundations](Complexity/Foundations/Combinatorics/FunctionalGraph.lean)
   (transient and cycle structure, checkpoint packing, exact distinct-power counts) and
   [native circuit iteration](Complexity/Computability/Circuit/Iteration.lean) with retained
-  orbits are in place; the fixed-power theorem and its consequences remain. Nonuniform circuit
-  existence does not certify the preprocessing algorithm's runtime.
-* **Fagin's theorem.** Complete the connection between ESO-definable queries on finite relational
-  structures and NP. The [encoded structures](Complexity/Logics/FirstOrder/Encoding.lean) and
-  [polynomial-time certificate checker](Complexity/Computability/Complexity/Fagin/Verifier.lean)
-  now establish ESO → NP, including empty domains and nullary relations. The remaining direction
-  is a tableau interpretation proving that every isomorphism-closed NP query is ESO-definable;
-  this is new work even relative to V1.
-* **Further algebraic results.** Carry over the existing extractor and rational-matrix
-  hitting-list developments, recording each endpoint's remaining hypotheses.
+  orbits are in place, as is the [fixed-power theorem](Complexity/Computability/Circuit/Boolean/Iteration.lean)
+  with its encoded and record forms; the remaining source developments build on it. Nonuniform
+  circuit existence does not certify the preprocessing algorithm's runtime.
+* **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
+  are ported; certify the generator's polynomial runtime, charging all arithmetic and storage
+  growth. Carry over the remaining extractor developments, recording each endpoint's hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
@@ -220,9 +249,11 @@ uniformity, explicitness and quantitative strength; a citation or related theore
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
-* machine-level hierarchy theorems and `P ⊊ EXP`; a tight tape-indexed hierarchy needs a separate
-  linear-overhead simulation, and an `f log f` hierarchy needs the corresponding simulation bound;
-* logspace composition, Savitch, `NL ⊆ P`, `NL = coNL`, `PH ⊆ PSPACE` and Sipser–Lautemann;
+* the space hierarchy, building on the [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean)
+  and `P ⊊ EXP`; a tight tape-indexed hierarchy needs a separate linear-overhead simulation, and
+  an `f log f` time hierarchy needs the corresponding simulation bound;
+* `NL = coNL` and `PH ⊆ PSPACE`, building on the landed logspace composition, `NL ⊆ P`, Savitch
+  and Sipser–Lautemann;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.
