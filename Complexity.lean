@@ -80,6 +80,7 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Laye
 public import Complexity.Computability.Circuit.Boolean.Metric
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
+public import Complexity.Computability.Circuit.Boolean.NaturalProof
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
 public import Complexity.Computability.Circuit.Boolean.NegationNormalForm
 public import Complexity.Computability.Circuit.Boolean.NonconstantCost
