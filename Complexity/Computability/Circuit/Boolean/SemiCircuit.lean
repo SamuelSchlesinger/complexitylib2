@@ -160,7 +160,8 @@ theorem eval_congr {o : Lit} {val val' : ℕ → Bool} (h : ∀ i, o.Reads i →
   unfold eval
   rw [Arg.eval_congr h]
 
-theorem not_reads_subst {o : Lit} {v : ℕ} {ℓ : Lit} (hℓ : ¬ ℓ.Reads v) : ¬ (o.subst v ℓ).Reads v := by
+theorem not_reads_subst {o : Lit} {v : ℕ} {ℓ : Lit} (hℓ : ¬ ℓ.Reads v) :
+    ¬ (o.subst v ℓ).Reads v := by
   unfold subst Reads
   split_ifs with ho
   · exact hℓ
@@ -806,19 +807,30 @@ theorem deg_eq (t : ℕ) : C.deg t = (C.gateChildren t).card + (C.eqnChildren t)
   simp [children, eqnChildren]
 
 /-- A semi-circuit is well formed when its roles are disjoint, gates read constants or internal
-values (gates only with smaller names), equations have at most three terms among the parameters and auxiliary
-variables, the output reads a constant or an internal value, and the affine system is fair: every
-assignment of the parameters extends to a solution, whose auxiliary values are unique. -/
+values (gates only with smaller names), equations have at most three terms among the parameters
+and auxiliary variables, the output reads a constant or an internal value, and the affine system
+is fair: every assignment of the parameters extends to a solution, whose auxiliary values are
+unique. -/
 structure WellFormed : Prop where
+  /-- Parameters and auxiliary variables are distinct. -/
   disjoint_params_aux : Disjoint C.params C.aux
+  /-- Parameters and gates are distinct. -/
   disjoint_params_gates : Disjoint C.params C.gates
+  /-- Auxiliary variables and gates are distinct. -/
   disjoint_aux_gates : Disjoint C.aux C.gates
+  /-- A gate reads only gates with smaller names. -/
   reads_lt : ∀ J ∈ C.gates, ∀ i ∈ C.gates, (C.gate J).Reads i → i < J
+  /-- A gate reads only constants and internal values. -/
   reads_live : ∀ J ∈ C.gates, ∀ i, (C.gate J).Reads i → i ∈ C.live
+  /-- Equations contain only parameters and auxiliary variables. -/
   terms_subset : ∀ e ∈ C.eqns, (C.eqn e).terms ⊆ C.params ∪ C.aux
+  /-- Every equation has at most three terms. -/
   card_terms_le : ∀ e ∈ C.eqns, (C.eqn e).terms.card ≤ 3
+  /-- The output reads a constant or an internal value. -/
   out_live : ∀ i, C.out.arg = .node i → i ∈ C.live
+  /-- Every assignment of the parameters extends to a solution of the affine system. -/
   solvable : ∀ u : ℕ → Bool, ∃ val, (∀ j ∈ C.params, val j = u j) ∧ C.EqnsHold val
+  /-- The solution determines the auxiliary variables (fairness). -/
   unique : ∀ val val' : ℕ → Bool, (∀ j ∈ C.params, val j = val' j) → C.EqnsHold val →
     C.EqnsHold val' → ∀ v ∈ C.aux, val v = val' v
 

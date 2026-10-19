@@ -32,25 +32,27 @@ The accounting is done once for all reductions:
 * a parameter that no deletion of `T` reroutes to keeps at most its children outside `D`
   (`State.Reduction.wt_le_weight`), and an unpaired parameter rerouted to only by deletions of
   constraints with another parameter as a parent does not gain weight in an *exclusive* state
-  (`State.Reduction.wt_le_wt`);
+  (`State.Reduction.wt_le_of_exclusive`);
 * the potential: `W' + 2 |D| + 3 k + ∑_{x ∈ F} wt(x) ≤ W` plus the pointwise gains
-  (`State.Reduction.W_le`), and a reduction with `W' + 14 |F| ≤ W + 14 k` is a step of gate
-  elimination (`State.Reduction.step`).
+  (`State.Reduction.W_le`), and a reduction restricting at most two parameters with
+  `W' + 14 |F| ≤ W + 14 k` is a step of gate elimination (`State.Reduction.step`).
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Step`: a step of gate elimination.
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Reduction`: reductions.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Deletable`: constraints deletable by (D1) or (D3).
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Exclusive`: no constraint has an unpaired isolated parameter
-  and another parameter as parents.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Deletable`: constraints deletable by (D1) or
+  (D3).
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Exclusive`: no constraint has an unpaired
+  isolated parameter and another parameter as parents.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.fixConst`: fixing a parameter to a constant.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Reduction.W_le`: the potential of a reduction.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Reduction.step`: reductions as steps of gate elimination.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_reduction_deleteAll`: deleting deletable
-  constraints.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Reduction.step`: reductions as steps of gate
+  elimination.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_reduction_deleteAll`: deleting
+  deletable constraints.
 
 ## References
 
@@ -138,13 +140,20 @@ deleted constraints and gain none, unless a deletion of a constraint of `T` that
 children reroutes to it; and the other constraints stay deletable. -/
 structure Reduction (f : BooleanFunction n) (S S' : State n) (F : Finset ℕ)
     (D T : List (ℕ ⊕ ℕ)) : Prop where
+  /-- The new state is valid. -/
   valid : S'.Valid f
+  /-- The restricted names are parameters. -/
   subset : F ⊆ S.params
+  /-- The restricted parameters are removed. -/
   params : S'.params = S.params \ F
+  /-- The pairs meeting the restricted parameters are dropped. -/
   pairs : S'.pairs = S.pairs.filter fun pr => ¬ (pr.1 ∈ F ∨ pr.2 ∈ F)
+  /-- The deleted constraints are removed. -/
   size : S'.size + D.length = S.size
+  /-- A remaining parameter gains no child, unless a deletion of `T` reroutes to it. -/
   children : ∀ u ∈ S'.params,
     S'.children u ⊆ S.children u \ D.toFinset ∨ ∃ N ∈ T, N ∈ S.children u
+  /-- The other constraints stay deletable. -/
   deletable : ∀ N, N ∉ D → S.Deletable N → S'.Deletable N
 
 namespace Reduction

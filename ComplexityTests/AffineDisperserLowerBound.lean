@@ -66,31 +66,36 @@ example : 7 * 1 ≤ 2 * firstBit.size + 14 * 1 :=
 /-! ### Axioms -/
 
 /--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.seven_mul_le_two_mul_size_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.AffineDisperser.seven_mul_le_two_mul_size_add'
+depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.AffineDisperser.seven_mul_le_two_mul_size_add
 
 /--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_step' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_step'
+depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_step
 
 /--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_affine_embedding' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_affine_embedding'
+depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_affine_embedding
 
 /--
-info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.out_not_affine' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.AffineDisperser.State.Valid.out_not_affine'
+depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.AffineDisperser.State.Valid.out_not_affine
 
 /--
-info: 'Cslib.BitString.exists_isAffineDisperser' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.BitString.exists_isAffineDisperser'
+depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.exists_isAffineDisperser

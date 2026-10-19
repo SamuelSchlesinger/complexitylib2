@@ -20,7 +20,7 @@ The proof follows Section 4 of the source. Movable affine gates are moved into t
 first (`State.Valid.preparation_moveAffine`); then one of the preliminary reductions is a step, or
 the state is normal (`State.Valid.step_or_normal`). In a normal state the minimal gate is an
 AND-type gate on two distinct inputs among the parameters and auxiliary variables
-(`State.Valid.clean_minGate`). An auxiliary input is exchanged with a parameter
+(`State.Valid.exists_minGate`). An auxiliary input is exchanged with a parameter
 (`State.Valid.exists_preparation_auxIn_lt`), a child of the minimal AND reading one of its inputs
 is rerouted (`State.Valid.exists_preparation_childIn_lt`), and the analysis restarts; once neither
 applies, eliminating the minimal AND is a step (`State.Valid.step_of_minimalAnd`). The preparatory
@@ -75,7 +75,7 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
   · exact hstep
   -- the minimal AND
   obtain ⟨hne, hand, t₁, t₂, hl, hr, ht12, ht₁, ht₂⟩ :=
-    hS.clean_minGate hf ha hN.not_movable hN.no_deletion
+    hS.exists_minGate hf ha hN.not_movable hN.no_deletion
   have hG : S.gates.min' hne ∈ S.gates := Finset.min'_mem _ _
   -- an auxiliary input is exchanged with a parameter
   by_cases haux : t₁ ∈ S.aux ∨ t₂ ∈ S.aux

@@ -10,9 +10,50 @@ module
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Normal
 
 /-!
-# The minimal AND
+# Restructuring and eliminating the minimal AND
 
-Sections 4.2 and 4.3 of [Mishra and Santhanam][MishraSanthanam2026].
+Sections 4.2 and 4.3 of [Mishra and Santhanam][MishraSanthanam2026]. In a normal state with
+`d < a` (`State.Normal`), the minimal gate is an AND-type gate `G` on two distinct inputs among
+the parameters and auxiliary variables (`State.Valid.exists_minGate`).
+
+*Restructuring* (Section 4.2) uses preparatory operations (`State.Preparation`), which keep `m`,
+`s` and `q` and do not increase `W`. An auxiliary input of `G` is exchanged with a parameter it
+depends on by the affine reparameterisation (`State.Valid.exists_preparation_auxIn_lt`), and a
+child of `G` reading an input of `G` is relabelled to read both inputs instead
+(`State.Valid.exists_preparation_childIn_lt`). Afterwards `G` is a *minimal AND*
+(`State.MinimalAnd`, `State.Valid.exists_minimalAnd`): it reads two unpaired parameters `x` and
+`y` with `2 ≤ deg y ≤ deg x`, no child of `G` reads them, and `G` is not the output and has a
+child.
+
+*Elimination* (Section 4.3) is a step of gate elimination (`State.Valid.step_of_minimalAnd`):
+
+* Case 7, `State.SharedSecondChild`: `deg x = deg y = 2` and `x`, `y` share their second child
+  `B`; restricting to a line of `𝔽₂²` on which `G` and `B` are constant (`exists_line_const`)
+  deletes both (`State.Valid.step_of_sharedSecondChild`), `ΔW ≤ -18`, `Δa = -1`;
+* the bottleneck configuration, `State.Bottleneck`: `deg x = 2` and the unique child `D` of `G`
+  reads an unpaired isolated parameter `z`. If `D` is AND-type, fixing `x` and `y` makes `G` and
+  `D` constant (Case 9, `ΔW ≤ -28`, `Δa = -2`); otherwise `D` is XOR-type and the quadratic
+  reparameterisation deletes `G` and `D` (Case 10, `State.Valid.step_quad`, `ΔW ≤ -14`,
+  `Δa = -1`); both in `State.Valid.step_of_bottleneck`;
+* Case 8, otherwise: fixing `x` so that `G` becomes constant deletes all children of `x` and of
+  `G` (`State.Valid.step_fixInput`), `Δa = -1`; only the unpaired isolated parameters below `G`
+  can gain weight, at most `deg G` of them (`State.Valid.card_isolated_le`).
+
+## Main definitions
+
+* `Cslib.Circuits.Boolean.AffineDisperser.State.MinimalAnd`: the minimal AND.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.SharedSecondChild`,
+  `Cslib.Circuits.Boolean.AffineDisperser.State.Bottleneck`: the configurations of Section 4.3.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.auxIn`,
+  `Cslib.Circuits.Boolean.AffineDisperser.State.childIn`: the measures of the restructuring.
+
+## Main results
+
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_preparation_auxIn_lt`,
+  `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_preparation_childIn_lt`: the
+  restructuring.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_of_minimalAnd`: eliminating the
+  minimal AND.
 
 ## References
 
@@ -172,7 +213,7 @@ theorem deletionAvailable_of_dependent {S : State n} {J t t' : ℕ} (hJ : J ∈ 
     unfold Gate.eval
     rw [hl, hr, Arg.eval_node, Arg.eval_node, hc val hval]
 
-/-! ### The minimal gate of a clean state -/
+/-! ### The minimal gate of a normal state -/
 
 /-- The output of a valid state with `d < a` is not a literal of an auxiliary variable. -/
 theorem Valid.not_out_reads_aux {S : State n} {d : ℕ} (hS : S.Valid f)
@@ -189,7 +230,7 @@ theorem Valid.not_out_reads_aux {S : State n} {d : ℕ} (hS : S.Valid f)
 /-- In a valid state with `d < a` where no affine gate can be moved and no deletion applies,
 there are gates, and the minimal one is an AND-type gate reading two distinct inputs among the
 parameters and auxiliary variables. -/
-theorem Valid.clean_minGate {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
+theorem Valid.exists_minGate {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
     (ha : d < S.a) (hmov : ∀ J, ¬ S.Movable J) (hdel : ¬ S.DeletionAvailable) :
     ∃ h : S.gates.Nonempty, ¬ IsAffineOp (S.gate (S.gates.min' h)).op ∧
       ∃ t₁ t₂, (S.gate (S.gates.min' h)).left = .node t₁ ∧
@@ -429,17 +470,28 @@ theorem Valid.exists_preparation_childIn_lt {S : State n} (hS : S.Valid f)
 parameters `x` and `y` with `2 ≤ deg y ≤ deg x`, no child of `G` reads `x` or `y`, and `G` is not
 the output and has a child. -/
 structure MinimalAnd (S : State n) (G x y : ℕ) : Prop where
+  /-- `G` is a gate. -/
   mem : G ∈ S.gates
+  /-- `G` is AND-type. -/
   and_op : ¬ IsAffineOp (S.gate G).op
+  /-- `G` reads `x` and `y`. -/
   args : ((S.gate G).left = .node x ∧ (S.gate G).right = .node y) ∨
     ((S.gate G).left = .node y ∧ (S.gate G).right = .node x)
+  /-- `x` is unpaired. -/
   unpaired_x : x ∈ S.unpaired
+  /-- `y` is unpaired. -/
   unpaired_y : y ∈ S.unpaired
+  /-- `x` and `y` are distinct. -/
   ne : x ≠ y
+  /-- `y` has degree at least two. -/
   deg_y : 2 ≤ S.deg y
+  /-- `x` has degree at least that of `y`. -/
   deg_le : S.deg y ≤ S.deg x
+  /-- No child of `G` reads `x` or `y`. -/
   children : ∀ K ∈ S.gates, (S.gate K).Reads G → ¬ (S.gate K).Reads x ∧ ¬ (S.gate K).Reads y
+  /-- `G` is not the output. -/
   not_out : ¬ S.out.Reads G
+  /-- `G` has a child. -/
   has_child : ∃ K ∈ S.gates, (S.gate K).Reads G
 
 namespace MinimalAnd
@@ -673,11 +725,11 @@ theorem Valid.card_isolated_le {S : State n} (hS : S.Valid f) {G : ℕ} (hG : G 
     (fun u => if hu : ∃ N ∈ S.children G, N ∈ S.children u then hu.choose else .inl G)
     (fun u hu => ?_) (fun u hu u' hu' heq => ?_)
   · obtain ⟨-, -, -, hex⟩ := Finset.mem_filter.1 hu
-    simp only [dif_pos hex]
+    simp only [dite_eq_left hex]
     exact hex.choose_spec.1
   · obtain ⟨hus, -, -, hex⟩ := Finset.mem_filter.1 (Finset.mem_coe.1 hu)
     obtain ⟨hus', -, -, hex'⟩ := Finset.mem_filter.1 (Finset.mem_coe.1 hu')
-    simp only [dif_pos hex, dif_pos hex'] at heq
+    simp only [dite_eq_left hex, dite_eq_left hex'] at heq
     have h₁ := hex.choose_spec
     have h₂ := hex'.choose_spec
     rw [heq] at h₁

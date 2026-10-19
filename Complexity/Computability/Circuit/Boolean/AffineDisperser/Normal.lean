@@ -31,21 +31,28 @@ reduction but the deletions is a `State.Reduction`, so its accounting is that of
 * Case 6, `State.AndOnPair`: an AND-type gate reads a paired parameter and another parameter
   (`State.Valid.step_of_andOnPair`).
 
-When no affine gate can be moved and neither Case 1 nor Case 2 applies, the state is exclusive
-(`State.Valid.exclusive`): no constraint has an unpaired isolated parameter and another parameter
-as parents.
+Before them, affine gates reading no gates are moved into the affine system
+(`State.Valid.preparation_moveAffine`). When no affine gate can be moved and neither Case 1 nor
+Case 2 applies, the state is exclusive (`State.Valid.exclusive`): no constraint has an unpaired
+isolated parameter and another parameter as parents. When none of the six cases applies, the
+state is *normal* (`State.Normal`, `State.Valid.step_or_normal`): it is exclusive, every parameter
+of the affine system is unpaired of degree at least two, and so is every parameter read by an
+AND-type gate.
 
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.AffineDisperser.State.DeletionAvailable`, `State.AndOnIsolated`,
   `State.DegeneratePair`, `State.PartnersShareChild`, `State.PairInSystem`, `State.AndOnPair`:
   the configurations of the preliminary reductions.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Normal`: normal states.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_of_deletion`, `step_of_andOnIsolated`,
   `step_of_degeneratePair`, `step_of_partnersShareChild`, `step_of_pairInSystem`,
   `step_of_andOnPair`: the preliminary reductions are steps of gate elimination.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_or_normal`: a state where no affine
+  gate can be moved has a step or is normal.
 
 ## References
 
@@ -355,7 +362,8 @@ theorem Valid.step_of_degeneratePair {S : State n} (hS : S.Valid f) (hexcl : S.E
         have := h.wt_le_weight (u := u) (fun _ hN => absurd hN List.not_mem_nil)
         rw [Finset.card_eq_zero.1 hdeg, Finset.empty_sdiff, Finset.card_empty, weight_zero] at this
         omega
-      · exact Nat.add_le_add_right (h.wt_le_of_exclusive hS hexcl (fun x hx hxu => hnot x u hxu (Or.inl hx) hur hup)
+      · exact Nat.add_le_add_right (h.wt_le_of_exclusive hS hexcl
+          (fun x hx hxu => hnot x u hxu (Or.inl hx) hur hup)
           fun _ hN => absurd hN List.not_mem_nil) _
     simp only [Finset.sum_singleton, wt_of_paired hpr.symm.paired,
       hS.card_pairsMeeting_singleton, ite_eq_left hpr.symm.paired,
@@ -687,8 +695,11 @@ theorem Valid.step_of_andOnPair {S : State n} (hS : S.Valid f) (hexcl : S.Exclus
 /-- A state in which no affine gate can be moved and no preliminary reduction applies, recorded by
 the consequences used to restructure and eliminate the minimal AND. -/
 structure Normal (S : State n) : Prop where
+  /-- No affine gate reading no gates remains. -/
   not_movable : ∀ J, ¬ S.Movable J
+  /-- No deletion applies. -/
   no_deletion : ¬ S.DeletionAvailable
+  /-- No constraint has an unpaired isolated parameter and another parameter as parents. -/
   exclusive : S.Exclusive
   /-- Every parameter occurring in the affine system is unpaired of degree at least two. -/
   system_param : ∀ x ∈ S.params, ∀ e ∈ S.eqns, x ∈ (S.eqn e).terms →
@@ -717,12 +728,16 @@ theorem Valid.step_or_normal {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAf
   · exact Or.inl (hS.step_of_pairInSystem hf ha hexcl h3 h4 h5)
   by_cases h6 : S.AndOnPair
   · exact Or.inl (hS.step_of_andOnPair hexcl h2 h3 h4 h5 h6)
-  refine Or.inr ⟨hmov, hdel, hexcl, fun x hx e he hxe => ?_, fun G hG hand x y hargs hx hy hxy => ?_⟩
+  refine Or.inr ⟨hmov, hdel, hexcl, fun x hx e he hxe => ?_,
+    fun G hG hand x y hargs hx hy hxy => ?_⟩
   · have hxu : x ∈ S.unpaired := mem_unpaired.2 ⟨hx, fun hp => h5 ⟨x, hp, e, he, hxe⟩⟩
     have hex : Sum.inr e ∈ S.children x := (SemiCircuit.inr_mem_children _).2 ⟨he, hxe⟩
     refine ⟨hxu, ?_⟩
     by_contra hlt
-    have h1 : S.deg x = 1 := by have := Finset.card_pos.2 ⟨_, hex⟩; unfold SemiCircuit.deg at *; omega
+    have h1 : S.deg x = 1 := by
+      have := Finset.card_pos.2 ⟨_, hex⟩
+      change 0 < S.deg x at this
+      omega
     exact hdel (Or.inr (Or.inr (Or.inr ⟨x, hxu, e, children_eq_singleton h1 hex⟩)))
   · have hxu : x ∈ S.unpaired :=
       mem_unpaired.2 ⟨hx, fun hp => h6 ⟨G, hG, x, y, hand, hargs, hp, hy, hxy⟩⟩

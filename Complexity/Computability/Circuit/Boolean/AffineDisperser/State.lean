@@ -40,17 +40,30 @@ parameter to an affine function of the others keeps dimension `a - 1`, so when `
 is not constant there either (`State.Valid.false_of_fix`); in particular it is not an affine
 function of the parameters (`State.Valid.out_not_affine`, part of Lemma 2.3 of the source).
 
+Writing `State.wt S x` for the weight of `x` if it is an unpaired parameter of `S` and `0`
+otherwise, the potentials of two states compare name by name (`State.W_add_le`). A *step* of gate
+elimination (`State.Step`) is a move to a valid state with smaller `m + s`, `Δa ∈ {0, -1, -2}` and
+`ΔW ≤ 14 Δa`, as in Lemma 4.2 of the source; a *preparatory operation* (`State.Preparation`) keeps
+`m`, `s` and `q` and does not increase `W`.
+
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.AffineDisperser.State`, `Cslib.Circuits.Boolean.AffineDisperser.State.Valid`: states.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.m`, `q`, `a`, `s`, `W`: the counted quantities and the
-  potential, with `Cslib.Circuits.Boolean.AffineDisperser.weight`.
+* `Cslib.Circuits.Boolean.AffineDisperser.State`,
+  `Cslib.Circuits.Boolean.AffineDisperser.State.Valid`: states.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.m`, `q`, `a`, `s`, `W`: the counted quantities
+  and the potential, with `Cslib.Circuits.Boolean.AffineDisperser.weight`.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Step`,
+  `Cslib.Circuits.Boolean.AffineDisperser.State.Preparation`: steps and preparatory operations.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.IsPartner`,
+  `Cslib.Circuits.Boolean.AffineDisperser.State.pairsMeeting`: partners and the pairs meeting a
+  set of parameters.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_affine_embedding`: Proposition 2.2.
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.false_of_fix`,
   `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.out_not_affine`: Lemma 2.3.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.W_add_le`: comparing potentials name by name.
 
 ## References
 
@@ -139,14 +152,21 @@ parameters, and an injective parameter map that depends only on the parameters a
 along every affine family of assignments on which each pair has a constant member or a constant
 sum, such that the output of every consistent assignment is the value of `f` at its image. -/
 structure Valid (f : BooleanFunction n) : Prop where
+  /-- The semi-circuit is well formed. -/
   wf : S.WellFormed
+  /-- Pairs consist of two distinct parameters. -/
   pair_mem : ∀ pr ∈ S.pairs, pr.1 ∈ S.params ∧ pr.2 ∈ S.params ∧ pr.1 ≠ pr.2
+  /-- Distinct pairs are disjoint. -/
   pairs_disjoint : ∀ pr ∈ S.pairs, ∀ pr' ∈ S.pairs, pr ≠ pr' →
     pr.1 ≠ pr'.1 ∧ pr.1 ≠ pr'.2 ∧ pr.2 ≠ pr'.1 ∧ pr.2 ≠ pr'.2
+  /-- The parameter map depends only on the parameters. -/
   phi_congr : ∀ val val', (∀ j ∈ S.params, val j = val' j) → S.phi val = S.phi val'
+  /-- The parameter map is affine along affine families on which every pair is tame. -/
   phi_affine : ∀ (k : ℕ) (σ : BitString k → ℕ → Bool), IsAffine σ →
     (∀ pr ∈ S.pairs, PairTame σ pr) → IsAffine (S.phi ∘ σ)
+  /-- The parameter map is injective on the parameters. -/
   phi_injective : ∀ val val', S.phi val = S.phi val' → ∀ j ∈ S.params, val j = val' j
+  /-- Every consistent assignment outputs `f` at its image. -/
   computes : ∀ val, S.Consistent val → S.out.eval val = f (S.phi val)
 
 /-! ### Spreading bits over a finite set of names -/
@@ -411,19 +431,29 @@ theorem mem_unpaired_of {S S' : State n} {x : ℕ} (hx : x ∈ S'.unpaired) (hp 
 [Mishra and Santhanam][MishraSanthanam2026]: `S'` is valid, `m + s` decreases,
 `Δa ∈ {0, -1, -2}` and `ΔW ≤ 14 Δa`, written without subtraction. -/
 structure Step (f : BooleanFunction n) (S S' : State n) : Prop where
+  /-- The new state is valid. -/
   valid : S'.Valid f
+  /-- `m + s` decreases. -/
   lt : S'.m + S'.s < S.m + S.s
+  /-- `a` does not increase. -/
   a_le : S'.a ≤ S.a
+  /-- `a` decreases by at most two. -/
   le_a : S.a ≤ S'.a + 2
+  /-- `ΔW ≤ 14 Δa`. -/
   potential : S'.W + 14 * S.a ≤ S.W + 14 * S'.a
 
 /-- A preparatory operation of gate elimination from `S` to `S'`: `S'` is valid, with the same
 `m`, `s` and `q` as `S` and no larger potential. -/
 structure Preparation (f : BooleanFunction n) (S S' : State n) : Prop where
+  /-- The new state is valid. -/
   valid : S'.Valid f
+  /-- The number of parameters is kept. -/
   m_eq : S'.m = S.m
+  /-- The size is kept. -/
   s_eq : S'.s = S.s
+  /-- The number of pairs is kept. -/
   q_eq : S'.q = S.q
+  /-- The potential does not increase. -/
   W_le : S'.W ≤ S.W
 
 theorem Preparation.a_eq {S S' : State n} (h : Preparation f S S') : S'.a = S.a := by

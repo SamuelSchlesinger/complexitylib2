@@ -28,7 +28,8 @@ parameters:
   reparameterisation (AR);
 * `State.quad`: the quadratic reparameterisation (QR) deleting an AND-type gate and the XOR-type
   gate reading it;
-* `State.moveAffine`: moving an affine gate reading no gates into the affine system;
+* `State.moveAffine`: moving an affine gate reading no gates into the affine system, as the
+  equation `SemiCircuit.affEqn`;
 * `State.rewire`: replacing a gate by one computing the same value on consistent assignments,
   used to reroute the children of the minimal AND.
 
@@ -38,9 +39,9 @@ assignments to the old ones (`State.Valid.of_map`).
 ## Main results
 
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.of_map`: transporting validity.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.restrict`, `Valid.deleteGate`, `Valid.deleteEqn`,
-  `Valid.dropEqn`, `Valid.dropTrivialEqn`, `Valid.swap`, `Valid.quad`, `Valid.moveAffine`,
-  `Valid.rewire`: the operations preserve validity.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.restrict`, `Valid.deleteGate`,
+  `Valid.deleteEqn`, `Valid.dropEqn`, `Valid.dropTrivialEqn`, `Valid.swap`, `Valid.quad`,
+  `Valid.moveAffine`, `Valid.rewire`: the operations preserve validity.
 
 ## References
 
@@ -394,7 +395,8 @@ theorem Valid.deleteGate {S : State n} (hS : S.Valid f) {J : ℕ} {ℓ : Lit}
     change (i ∈ S.params ∨ i ∈ S.aux) ∨ i ∈ S.gates.erase J
     rw [Finset.mem_erase]
     tauto
-  have hreads_live : ∀ t, ℓ.Reads t → t ∈ S.live := fun t ht => hS.wf.reads_live J h.mem t (h.reads t ht)
+  have hreads_live : ∀ t, ℓ.Reads t → t ∈ S.live := fun t ht =>
+    hS.wf.reads_live J h.mem t (h.reads t ht)
   refine hS.of_phi rfl rfl rfl ?_ ?_
   · refine
       { disjoint_params_aux := hS.wf.disjoint_params_aux
@@ -948,7 +950,8 @@ theorem Valid.swap {S : State n} (hS : S.Valid f) {x Q : ℕ} {c : Bool} {T : Fi
   · intro val val' hv j hj
     rcases Finset.mem_insert.1 hj with rfl | hj
     · have h1 := hv x h.mem
-      rw [hσx, hσx, Finset.sum_congr rfl fun i hi => (hσ val i (Finset.ne_of_mem_erase hi)).symm.trans
+      rw [hσx, hσx, Finset.sum_congr rfl fun i hi =>
+        (hσ val i (Finset.ne_of_mem_erase hi)).symm.trans
         ((hv i (Finset.mem_of_mem_erase (hTx i hi))).trans
           (hσ val' i (Finset.ne_of_mem_erase hi)))] at h1
       simpa using h1
