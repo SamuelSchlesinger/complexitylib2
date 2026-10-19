@@ -239,6 +239,7 @@ public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
 public import Complexity.Computability.Complexity.Classes.Oracle
 public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
+public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.P

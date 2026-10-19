@@ -68,6 +68,15 @@ example (A : Set (List Bool)) :
     ComputableInPolyTimeWithOracle A (fun _ : List Bool => false) encBits encBool :=
   (ComputableTidilyInPolyTime.const false).computableInPolyTimeWithOracle A
 
+/-- `P` relative to `A` contains `A`, and lies inside `NP` relative to `A`. -/
+example (A : Set (List Bool)) : A ∈ NPWithOracle A encBits :=
+  PWithOracle_subset_NPWithOracle A encBits (mem_PWithOracle_self A)
+
+/-- A reduction to the oracle language: words whose reversal is in `A`. -/
+example (A : Set (List Bool)) : {w : List Bool | w.reverse ∈ A} ∈ PWithOracle A encBits :=
+  PolyTimeReducible.mem_PWithOracle ⟨List.reverse, by fun_prop, fun _ => Iff.rfl⟩
+    (mem_PWithOracle_self A)
+
 /-! ### The unary language -/
 
 example : [true, true] ∈ unaryLanguage {[false, true]} :=
@@ -103,7 +112,32 @@ example (A : Set (List Bool)) (n : ℕ) :
         (fun _ => none) (fun _ => 0)⟩, 0, 0⟩ n) = false := by
   constructor <;> rfl
 
+/-- The unary language of every oracle is in `NP` relative to it. -/
+example : unaryLanguage {[true, false]} ∈ NPWithOracle {[true, false]} encBits :=
+  unaryLanguage_mem_NPWithOracle _
+
 /-! ### Axioms -/
+
+/--
+info: 'Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle
+
+/--
+info: 'Cslib.Complexity.unaryLanguage_mem_NPWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.unaryLanguage_mem_NPWithOracle
+
+/--
+info: 'Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle
 
 /--
 info: 'Cslib.Complexity.exists_unaryLanguage_not_mem_PWithOracle' depends on axioms:

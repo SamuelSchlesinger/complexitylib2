@@ -1,0 +1,161 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Complexity.Classes.Oracle
+public import Complexity.Computability.Complexity.Reduction
+public import Complexity.Computability.Probabilistic.Oracle.Composition
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+
+/-!
+# Closure properties of the oracle classes
+
+Polynomial time relative to an oracle composes with polynomial-time pre- and postprocessing
+(`Cslib.Complexity.ComputableInPolyTimeWithOracle.preprocess`,
+`Cslib.Complexity.ComputableInPolyTimeWithOracle.map`), through the compositional rules of strict
+oracle PPT. One request decides the oracle language itself
+(`Cslib.Complexity.computableInPolyTimeWithOracle_mem`): the request is copied onto the query
+buffer, and only the first bit of the reply is read.
+
+Hence `P` relative to `A` contains `A` and lies inside `NP` relative to `A`, and both classes are
+closed under polynomial-time many-one reductions of the problem
+(`Cslib.Complexity.PolyTimeReducible.mem_PWithOracle`,
+`Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle`). For `NP` the certificates are padded to a
+polynomial of the instance length, and the verifier reads only the prefix of the length the
+reduced instance requires.
+
+## Main results
+
+* `Cslib.Complexity.ComputableInPolyTimeWithOracle.preprocess`,
+  `Cslib.Complexity.ComputableInPolyTimeWithOracle.map`,
+  `Cslib.Complexity.ComputableInPolyTimeWithOracle.map_with`: pre- and postprocessing.
+* `Cslib.Complexity.computableInPolyTimeWithOracle_mem`, `Cslib.Complexity.mem_PWithOracle_self`:
+  one request decides the oracle language.
+* `Cslib.Complexity.PWithOracle_subset_NPWithOracle`.
+* `Cslib.Complexity.PolyTimeReducible.mem_PWithOracle`,
+  `Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle`: closure under reductions.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+-/
+
+@[expose] public section
+
+namespace Cslib.Complexity
+
+open Probability _root_.Turing.MultiTapeTM
+
+variable {α β γ : Type} {A : Set (List Bool)} {input : α ↪ List Bool} {middle : β ↪ List Bool}
+  {output : γ ↪ List Bool}
+
+namespace ComputableInPolyTimeWithOracle
+
+/-- Polynomial-time preprocessing of the argument. -/
+theorem preprocess {f : β → γ} {g : α → β} (hf : ComputableInPolyTimeWithOracle A f middle output)
+    (hg : ComputableTidilyInPolyTime g input middle) :
+    ComputableInPolyTimeWithOracle A (fun a => f (g a)) input output :=
+  let ⟨program, hprogram, heq⟩ := hf
+  ⟨fun a => program (g a), hprogram.preprocess hg, fun a => heq (g a)⟩
+
+/-- Polynomial-time postprocessing of the result, which may also use the argument. -/
+theorem map_with {f : α → β} {g : α → β → γ}
+    (hf : ComputableInPolyTimeWithOracle A f input middle)
+    (hg : ComputableTidilyInPolyTime (fun pair => g pair.1 pair.2) (encPair input middle) output) :
+    ComputableInPolyTimeWithOracle A (fun a => g a (f a)) input output := by
+  obtain ⟨program, hprogram, heq⟩ := hf
+  refine ⟨fun a => g a <$> program a, ?_, fun a => ?_⟩
+  · simpa only [OracleComp.interpret_map] using hprogram.map_with hg
+  · rw [OracleComp.interpret_map, heq]
+    rfl
+
+/-- Polynomial-time postprocessing of the result. -/
+theorem map {f : α → β} {g : β → γ} (hf : ComputableInPolyTimeWithOracle A f input middle)
+    (hg : ComputableTidilyInPolyTime g middle output) :
+    ComputableInPolyTimeWithOracle A (fun a => g (f a)) input output := by
+  obtain ⟨program, hprogram, heq⟩ := hf
+  refine ⟨fun a => g <$> program a, ?_, fun a => ?_⟩
+  · simpa only [OracleComp.interpret_map] using hprogram.map hg
+  · rw [OracleComp.interpret_map, heq]
+    rfl
+
+end ComputableInPolyTimeWithOracle
+
+open Classical in
+/-- **One request decides the oracle language.** The word is copied onto the query buffer and
+the first bit of the reply is read. -/
+theorem computableInPolyTimeWithOracle_mem (A : Set (List Bool)) :
+    ComputableInPolyTimeWithOracle A (fun w => decide (w ∈ A)) encBits encBool := by
+  refine ⟨fun w => (fun reply => decide (reply = [true])) <$>
+    (List.take 1 <$> OracleComp.query ((), w)), ?_, fun w => ?_⟩
+  · simp only [OracleComp.interpret_map, OracleComp.interpret_query]
+    exact (IsOraclePPTOn.query_take () (request := id) (limit := fun _ => 1) (by fun_prop)
+      (by fun_prop)).map (by fun_prop)
+  · change decide (List.take 1 (languageOracle A ((), w)) = [true]) = decide (w ∈ A)
+    rw [languageOracle_apply]
+    cases decide (w ∈ A) <;> rfl
+
+/-- **`P` relative to `A` contains `A`.** -/
+theorem mem_PWithOracle_self (A : Set (List Bool)) : A ∈ PWithOracle A encBits := by
+  classical
+  exact ⟨_, computableInPolyTimeWithOracle_mem A, fun w => decide_eq_true_iff.symm⟩
+
+/-- **`P` relative to `A` lies inside `NP` relative to `A`**: a decider ignores the empty
+certificate. -/
+theorem PWithOracle_subset_NPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
+    PWithOracle A enc ⊆ NPWithOracle A enc := fun _ ⟨f, hf, h⟩ =>
+  ⟨0, fun aw => f aw.1, hf.preprocess (ComputableTidilyInPolyTime.fst enc encBits), fun a => by
+    simp only [Polynomial.eval_zero, List.length_eq_zero_iff, exists_eq_left, h]⟩
+
+/-- **`P` relative to an oracle is closed under polynomial-time reductions.** -/
+theorem PolyTimeReducible.mem_PWithOracle {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {L : Set α} {L' : Set β} (h : PolyTimeReducible encA encB L L')
+    (hL' : L' ∈ PWithOracle A encB) : L ∈ PWithOracle A encA :=
+  let ⟨g, hg, hL⟩ := h
+  let ⟨f, hf, hL'⟩ := hL'
+  ⟨fun a => f (g a), hf.preprocess hg, fun a => (hL a).trans (hL' (g a))⟩
+
+/-- Polynomials with natural coefficients are monotone on the naturals. -/
+private theorem eval_le_eval {p : Polynomial ℕ} {m n : ℕ} (h : m ≤ n) : p.eval m ≤ p.eval n := by
+  induction p using Polynomial.induction_on' with
+  | add p q hp hq => simpa only [Polynomial.eval_add] using Nat.add_le_add hp hq
+  | monomial k a =>
+    simpa only [Polynomial.eval_monomial] using Nat.mul_le_mul_left a (Nat.pow_le_pow_left h k)
+
+/-- **`NP` relative to an oracle is closed under polynomial-time reductions.** The certificates
+are padded to a polynomial of the instance length; the verifier reads the prefix of the length
+required by the reduced instance. -/
+theorem PolyTimeReducible.mem_NPWithOracle {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {L : Set α} {L' : Set β} (h : PolyTimeReducible encA encB L L')
+    (hL' : L' ∈ NPWithOracle A encB) : L ∈ NPWithOracle A encA := by
+  obtain ⟨g, hg, hL⟩ := h
+  obtain ⟨p, V, hV, hL'⟩ := hL'
+  obtain ⟨c, d, hlen⟩ := hg.polyBounded_length.exists_le
+  -- the certificate length of the reduced instance, as a polynomial of the instance length
+  set q : Polynomial ℕ := p.comp (Polynomial.C c * (Polynomial.X + 1) ^ d) with hq
+  have hpq (a : α) : p.eval (encB (g a)).length ≤ q.eval (encA a).length := by
+    rw [hq, Polynomial.eval_comp]
+    exact eval_le_eval (by simpa using hlen a)
+  refine ⟨q, fun aw => V (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length)),
+    hV.preprocess (f := V) (g := fun aw : α × List Bool =>
+      (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length))) (by fun_prop), fun a => ?_⟩
+  rw [hL a, hL' (g a)]
+  constructor
+  · rintro ⟨w, hw, hV⟩
+    refine ⟨w ++ List.replicate (q.eval (encA a).length - w.length) false, ?_, ?_⟩
+    · rw [List.length_append, List.length_replicate, hw]
+      exact Nat.add_sub_cancel' (hw ▸ hpq a)
+    · simpa [← hw] using hV
+  · rintro ⟨w, hw, hV⟩
+    refine ⟨w.take (p.eval (encB (g a)).length), ?_, hV⟩
+    rw [List.length_take, hw]
+    exact Nat.min_eq_left (hpq a)
+
+end Cslib.Complexity

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
+public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
@@ -28,6 +29,11 @@ instruction, hence fewer than `2 ^ n` requests for all large `n`. Every decider 
 (`Cslib.Probability.IsOraclePPTOn.exists_fin_run_pure_false`), so none decides the unary language
 (`Cslib.Complexity.exists_unaryLanguage_not_mem_PWithOracle`).
 
+The verifier checks that the instance consists of `true` symbols, by a two-state transducer, and
+makes one request: the certificate itself (`Cslib.Complexity.unaryLanguage_mem_NPWithOracle`).
+Relative to the diagonal oracle, `P` is therefore strictly contained in `NP`
+(`Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle`).
+
 ## Main definitions
 
 * `Cslib.Complexity.unaryLanguage`: the words `1ⁿ` such that the oracle has a word of length `n`.
@@ -36,6 +42,10 @@ instruction, hence fewer than `2 ^ n` requests for all large `n`. Every decider 
 
 * `Cslib.Complexity.exists_unaryLanguage_not_mem_PWithOracle`: for some oracle `B`, the unary
   language of `B` is not in `P` relative to `B`.
+* `Cslib.Complexity.unaryLanguage_mem_NPWithOracle`: the unary language of every oracle is in `NP`
+  relative to it.
+* `Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle`,
+  `Cslib.Complexity.exists_PWithOracle_ne_NPWithOracle`: relative to some oracle, `P ⊊ NP`.
 
 ## References
 
@@ -113,5 +123,73 @@ theorem exists_unaryLanguage_not_mem_PWithOracle :
     rw [hverdict]
     cases f (List.replicate n true) <;> rfl
   rw [heq, ← hf, replicate_mem_unaryLanguage]
+
+namespace BakerGillSolovay
+
+/-- Tracks whether every symbol read so far is `true`, and emits the verdict at the end. -/
+def allTrue : Transducer Bool Bool where
+  q₀ := true
+  step q b := (q && b, [])
+  final q := [q]
+  length_step_le _ _ := by simp
+  length_final_le _ := by simp
+
+theorem allTrue_run (q : Bool) (x : List Bool) : allTrue.run q x = [q && x.all id] := by
+  induction x generalizing q with
+  | nil => simp [allTrue]
+  | cons b x ih =>
+    rw [Transducer.run_cons, ih]
+    simp [allTrue, Bool.and_assoc]
+
+/-- Whether the first word consists of `true` symbols only, beside a Boolean, in polynomial
+time. -/
+theorem computableTidilyInPolyTime_all_and :
+    ComputableTidilyInPolyTime
+      (fun pair : (List Bool × List Bool) × Bool => pair.1.1.all id && pair.2)
+      (encPair (encPair encBits encBits) encBool) encBool := by
+  have hall : ComputableTidilyInPolyTime (fun x : List Bool => x.all id) encBits encBool :=
+    (ComputableTidilyInDegree.of_linear (allTrue.computableTidilyInLinearTimeAndSpace fun x => by
+      rw [allTrue_run]; simp [encBits, allTrue])).computableTidilyInPolyTime
+  have hand : ComputableTidilyInPolyTime (fun q : Bool × Bool => q.1 && q.2)
+      (encPair encBool encBool) encBool :=
+    (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool) (encMid := encBool)
+      fun q : Bool × Bool => q.1 && q.2).computableTidilyInPolyTime
+  exact hand.comp ((hall.comp ((ComputableTidilyInPolyTime.fst encBits encBits).comp
+    (ComputableTidilyInPolyTime.fst (encPair encBits encBits) encBool))).prod
+    (ComputableTidilyInPolyTime.snd (encPair encBits encBits) encBool))
+
+end BakerGillSolovay
+
+open Classical in
+/-- **The unary language is in `NP` relative to its oracle**: a certificate for `1ⁿ` is a word of
+length `n` in the oracle, checked with one request. -/
+theorem unaryLanguage_mem_NPWithOracle (B : Set (List Bool)) :
+    unaryLanguage B ∈ NPWithOracle B encBits := by
+  refine ⟨Polynomial.X, fun xu : List Bool × List Bool => xu.1.all id && decide (xu.2 ∈ B),
+    ((computableInPolyTimeWithOracle_mem B).preprocess
+      (ComputableTidilyInPolyTime.snd encBits encBits)).map_with
+      (g := fun (xu : List Bool × List Bool) b => xu.1.all id && b)
+      BakerGillSolovay.computableTidilyInPolyTime_all_and, fun x => ?_⟩
+  · simp only [unaryLanguage, Set.mem_ofPred_eq, Polynomial.eval_X, encBits,
+      Function.Embedding.refl_apply, Bool.and_eq_true, List.all_eq_true, id, decide_eq_true_eq]
+    constructor
+    · rintro ⟨hall, w, hw, hlength⟩
+      exact ⟨w, hlength, hall, hw⟩
+    · rintro ⟨w, hlength, hall, hw⟩
+      exact ⟨hall, w, hw, hlength⟩
+
+/-- **Baker–Gill–Solovay** [Arora and Barak, Theorem 3.7][AroraBarak09]: relative to some oracle
+language, `P` is strictly contained in `NP`. -/
+theorem exists_PWithOracle_ssubset_NPWithOracle :
+    ∃ B : Set (List Bool), PWithOracle B encBits ⊂ NPWithOracle B encBits := by
+  obtain ⟨B, hB⟩ := exists_unaryLanguage_not_mem_PWithOracle
+  exact ⟨B, Set.ssubset_iff_subset_ne.mpr ⟨PWithOracle_subset_NPWithOracle B encBits,
+    fun h => hB (h ▸ unaryLanguage_mem_NPWithOracle B)⟩⟩
+
+/-- **Baker–Gill–Solovay**: relative to some oracle language, `P ≠ NP`. -/
+theorem exists_PWithOracle_ne_NPWithOracle :
+    ∃ B : Set (List Bool), PWithOracle B encBits ≠ NPWithOracle B encBits :=
+  let ⟨B, hB⟩ := exists_PWithOracle_ssubset_NPWithOracle
+  ⟨B, hB.ne⟩
 
 end Cslib.Complexity
