@@ -23,12 +23,13 @@ import Mathlib.FieldTheory.Finiteness
 
 Let `F` be a finite field whose elements are written as `b` bits through an additive bijection
 `φ : F ≃+ BitString b`, so that `F` has `q = 2 ^ b` elements; every field of characteristic two with
-`2 ^ b` elements has such a bijection (`Cslib.LineCode.nonempty_addEquiv_bitString`). The *Justesen code* [Justesen1972],
-[GuruswamiRudraSudan2019] of outer dimension `K` concatenates the Reed–Solomon code of dimension
-`K` whose evaluation points are the `q - 1` nonzero elements `u` of `F` with inner codes that vary
-with the position: the symbol `a` at the position `u` becomes the `2 * b` bits of `(a, u * a)`, its
-*Wozencraft encoding* `Cslib.Code.wozencraft` (`Cslib.Code.justesen`, `Cslib.Code.justesenCode`).
-No search over inner codes is involved, which is what makes the construction explicit.
+`2 ^ b` elements has such a bijection (`Cslib.LineCode.nonempty_addEquiv_bitString`). The *Justesen
+code* [Justesen1972], [GuruswamiRudraSudan2019] of outer dimension `K` concatenates the Reed–Solomon
+code of dimension `K` whose evaluation points are the `q - 1` nonzero elements `u` of `F` with inner
+codes that vary with the position: the symbol `a` at the position `u` becomes the `2 * b` bits of
+`(a, u * a)`, its *Wozencraft encoding* `Cslib.Code.wozencraft` (`Cslib.Code.justesen`,
+`Cslib.Code.justesenCode`). No search over inner codes is involved, which is what makes the
+construction explicit.
 
 Nonzero symbols at distinct positions have distinct Wozencraft encodings, since `(a, u * a)`
 determines `a` and then `u` (`Cslib.Code.wozencraft_inj`). Two distinct Reed–Solomon codewords

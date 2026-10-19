@@ -27,19 +27,19 @@ sum of its values on the punctured line `Cslib.LineCode.puncturedLine x v` of th
 
 The *line decoder* `Cslib.Code.lineDecode w x v` reads a received word `w` at the `q - 1` points of
 that punctured line only (`Cslib.Code.lineDecode_congr`) and returns minus their sum. This is the
-basic local decoder of Reed–Muller codes, which interpolates the restriction of the received word
-to a random line through `x` [Arora and Barak, Chapter 19][AroraBarak09],
-[GuruswamiRudraSudan2019]; interpolating a polynomial of degree below `q - 1` from all `q - 1`
-points other than `x` gives minus their sum at `x`. On a codeword it returns the value at `x` for every direction
+basic local decoder of Reed–Muller codes, which interpolates the restriction of the received word to
+a random line through `x` [Arora and Barak, Chapter 19][AroraBarak09], [GuruswamiRudraSudan2019];
+interpolating a polynomial of degree below `q - 1` from all `q - 1` points other than `x` gives
+minus their sum at `x`. On a codeword it returns the value at `x` for every direction
 (`Cslib.Code.lineDecode_eq_of_mem_reedMuller`), and on a corrupted codeword it still does whenever
 the punctured line avoids the corrupted points (`Cslib.Code.lineDecode_eq_of_disjoint`). By the
 blocking bound `Cslib.LineCode.card_filter_not_disjoint_puncturedLine_le`, every corrupted point
-other than `x` lies on the punctured lines of only `q - 1` of the `q ^ m - 1` nonzero directions,
-so at most `(q - 1) * Δ(w, f)` nonzero directions make the decoder err
+other than `x` lies on the punctured lines of only `q - 1` of the `q ^ m - 1` nonzero directions, so
+at most `(q - 1) * Δ(w, f)` nonzero directions make the decoder err
 (`Cslib.Code.card_filter_lineDecode_ne_le`): for a uniformly random nonzero direction the decoder
 reads `f x` from `w` with `q - 1` queries except with probability at most
-`(q - 1) * Δ(w, f) / (q ^ m - 1)`. In particular, if `2 * (q - 1) * Δ(w, f) < q ^ m - 1`, more
-than half of the nonzero directions recover `f x` at every point `x`
+`(q - 1) * Δ(w, f) / (q ^ m - 1)`. In particular, if `2 * (q - 1) * Δ(w, f) < q ^ m - 1`, more than
+half of the nonzero directions recover `f x` at every point `x`
 (`Cslib.Code.lt_two_mul_card_filter_lineDecode_eq`).
 
 ## Main definitions
