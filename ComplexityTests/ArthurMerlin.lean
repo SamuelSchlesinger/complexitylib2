@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
+import Complexity.Computability.Complexity.Classes.ArthurMerlin.Collapse
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound
 import Complexity.Computability.Complexity.Classes.Inclusions
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
@@ -78,6 +79,18 @@ example (e : Polynomial ℕ) : ∃ (p q : Polynomial ℕ) (V : _ × List Bool �
 
 example : {w : List Bool | w.headD false = true} ∈ AM encBits :=
   SBP_subset_AM (MA_subset_SBP head_mem_MA)
+
+example : GraphNonIsomorphism ∈ PiP 2 (encPair encGraph encGraph) :=
+  AM_subset_PiP_two GraphNonIsomorphism.mem_AM
+
+/-- Projecting an `AM` problem on pairs: the words whose first bit, followed by one more bit, is
+`true`. -/
+example : {w : List Bool | ∃ v : List Bool, v.length = (1 : Polynomial ℕ).eval (encBits w).length ∧
+    (w, v) ∈ {y : List Bool × List Bool | y.1.headD false = true}} ∈ AM encBits := by
+  refine mem_AM_of_exists (MA_subset_AM (BPP_subset_MA (P_subset_BPP ?_))) 1
+  exact ⟨fun y => y.1.headD false, by fun_prop, fun _ => Iff.rfl⟩
+
+example : (3 : ℕ).factorial = 6 := rfl
 
 /-! ### Axiom guards -/
 
@@ -166,5 +179,43 @@ info: 'Cslib.Complexity.mem_AM_of_card_certifiedSet' depends on axioms: [propext
 /-- info: 'Cslib.Complexity.SBP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Cslib.Complexity.SBP_subset_AM
+
+/--
+info: 'Cslib.Complexity.GraphNonIsomorphism.mem_AM' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.GraphNonIsomorphism.mem_AM
+
+/--
+info: 'Cslib.Complexity.mem_AM_of_exists' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.mem_AM_of_exists
+
+/--
+info: 'Cslib.Complexity.SigmaP_two_subset_AM_of_coNP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.SigmaP_two_subset_AM_of_coNP_subset_AM
+
+/--
+info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_coNP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_coNP_subset_AM
+
+/--
+info: 'Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM
+
+/--
+info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism
 
 end ComplexityTests.ArthurMerlin
