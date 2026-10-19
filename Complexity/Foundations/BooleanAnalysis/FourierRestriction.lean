@@ -25,11 +25,20 @@ restriction on sets of at least `m` coordinates is the weight of `f` on the sets
 least `m` coordinates (`BitString.expect_sum_fourierCoeff_piecewise_sq`)
 [O'Donnell, Section 3.3][ODonnell2014].
 
+Averaging over the fixed bits instead of over their squares averages the twists away: the average
+of `f` over the coordinates outside `J` keeps the coefficients of `f` on the subsets of `J` and
+kills the others (`BitString.fourierCoeff_expect_piecewise`), so it is the part of the Fourier
+expansion of `f` on the subsets of `J` (`BitString.expect_piecewise_eq_sum`), at mean square
+distance from `f` the weight of `f` outside the subsets of `J`
+(`BitString.expect_sub_expect_piecewise_sq`).
+
 ## Main results
 
 * `Cslib.BitString.fourierCoeff_piecewise`: the coefficients of a restriction.
 * `Cslib.BitString.expect_sum_fourierCoeff_piecewise_sq`: the expected weight of a restriction
   above a degree.
+* `Cslib.BitString.fourierCoeff_expect_piecewise`, `Cslib.BitString.expect_piecewise_eq_sum`: the
+  average over the coordinates outside a set.
 
 ## References
 
@@ -112,5 +121,48 @@ theorem expect_sum_fourierCoeff_piecewise_sq (f : (ι → Bool) → ℝ) (J : Fi
         refine sum_congr rfl fun U _ => ?_
         rw [sum_ite_eq]
         simp
+
+/-! ### Averaging out the coordinates outside a set -/
+
+/-- **The Fourier coefficients of the average over the coordinates outside `J`**: averaging keeps
+the coefficients on the subsets of `J` and kills the others. -/
+theorem fourierCoeff_expect_piecewise (f : (ι → Bool) → ℝ) (J S : Finset ι) :
+    fourierCoeff (fun x => 𝔼 z, f (J.piecewise x z)) S =
+      if S ⊆ J then fourierCoeff f S else 0 := by
+  have h : fourierCoeff (fun x => 𝔼 z, f (J.piecewise x z)) S =
+      𝔼 z, fourierCoeff (fun x => f (J.piecewise x z)) S := by
+    simp only [fourierCoeff, expect_mul]
+    exact expect_comm _ _ _
+  simp only [h, fourierCoeff_piecewise]
+  rw [expect_sum_comm]
+  simp only [← mul_expect, expect_chi, sdiff_eq_empty_iff_subset, mul_ite, mul_one, mul_zero]
+  split_ifs with hS
+  · have hSmem : S ∈ ({U | U ∩ J = S} : Finset (Finset ι)) :=
+      mem_filter.2 ⟨mem_univ S, inter_eq_left.2 hS⟩
+    rw [sum_eq_single_of_mem S hSmem fun U hU hUS => ?_, ite_eq_left hS]
+    -- another set meeting `J` in `S` has elements outside `J`
+    rw [mem_filter] at hU
+    exact ite_eq_right fun hUJ => hUS (by rw [← hU.2, inter_eq_left.2 hUJ])
+  · refine sum_eq_zero fun U hU => ?_
+    rw [mem_filter] at hU
+    exact ite_eq_right fun hUJ => hS (by rw [← hU.2]; exact inter_subset_right)
+
+/-- **The average over the coordinates outside `J`** is the part of the Fourier expansion on the
+subsets of `J`. -/
+theorem expect_piecewise_eq_sum (f : (ι → Bool) → ℝ) (J : Finset ι) (x : ι → Bool) :
+    𝔼 z, f (J.piecewise x z) = ∑ S with S ⊆ J, fourierCoeff f S * chi ℝ S x := by
+  rw [← sum_fourierCoeff_mul_chi (fun x => 𝔼 z, f (J.piecewise x z)) x, sum_filter]
+  refine sum_congr rfl fun S _ => ?_
+  rw [fourierCoeff_expect_piecewise]
+  split_ifs <;> simp
+
+/-- The mean square distance from `f` to its average over the coordinates outside `J` is the
+Fourier weight of `f` outside the subsets of `J`. -/
+theorem expect_sub_expect_piecewise_sq (f : (ι → Bool) → ℝ) (J : Finset ι) :
+    𝔼 x, (f x - 𝔼 z, f (J.piecewise x z)) ^ 2 = ∑ S with ¬S ⊆ J, fourierCoeff f S ^ 2 := by
+  rw [expect_sq_eq_sum_fourierCoeff_sq, sum_filter]
+  refine sum_congr rfl fun S _ => ?_
+  rw [fourierCoeff_sub, fourierCoeff_expect_piecewise]
+  split_ifs <;> simp
 
 end Cslib.BitString

@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity
-import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
@@ -33,10 +32,11 @@ one (`BitString.expect_sub_expect_sq_le_six_mul_sum_influence_div_log`) [Talagra
 
 ## Proof
 
-The derivative `Dᵢ F` takes the values `0` and `±1`, so `‖Dᵢ F‖_{4/3} ^ 2 = Infᵢ[F] ^ (3/2)`, and
-the `(4/3, 2)`-Hypercontractivity Theorem `Stab_{1/3}[Dᵢ F] ≤ ‖Dᵢ F‖_{4/3} ^ 2` bounds the
-low-degree part of the Fourier weight on the sets containing `i`
-(`BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le`):
+The derivative `Dᵢ F` takes the values `0` and `±1`, so `‖Dᵢ F‖_{4/3} ^ 2 = Infᵢ[F] ^ (3/2)`
+(`BitString.lpNorm_derivative_signVal`), and the `(4/3, 2)`-Hypercontractivity Theorem
+`Stab_{1/3}[Dᵢ F] ≤ ‖Dᵢ F‖_{4/3} ^ 2` bounds the low-degree part of the Fourier weight on the sets
+containing `i` (`BitString.mul_noiseStability_derivative`,
+`BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le`):
 
   `∑_{S ∋ i} 3 ^ (-|S|) F̂(S) ^ 2 = 1/3 · Stab_{1/3}[Dᵢ F] ≤ 1/3 · Infᵢ[F] ^ (3/2)`.
 
@@ -52,11 +52,8 @@ gives Talagrand's inequality.
 
 ## Main results
 
-* `Cslib.BitString.mul_noiseStability_derivative`: the noise stability of a derivative.
 * `Cslib.BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le`: hypercontractivity
   bounds the low-degree weight on the sets containing a coordinate.
-* `Cslib.BitString.one_le_mul_log_three_div_log_or_one_lt_mul_one_third_pow`: the degree
-  threshold of the argument.
 * `Cslib.BitString.expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence`: the
   Kahn–Kalai–Linial theorem, in the form "small influences force large total influence".
 * `Cslib.BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence`: the
@@ -82,39 +79,7 @@ open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-! ### The noise stability of a derivative -/
-
-/-- **The noise stability of a derivative**: `ρ Stab_ρ[Dᵢ f]` weighs the squared coefficient of
-`f` on each set containing `i` by `ρ` to the size of the set. -/
-theorem mul_noiseStability_derivative (ρ : ℝ) (i : ι) (f : (ι → Bool) → ℝ) :
-    ρ * noiseStability ρ (derivative i f) = ∑ S with i ∈ S, ρ ^ #S * fourierCoeff f S ^ 2 := by
-  rw [noiseStability_eq_sum, sum_filter_mem_eq_sum_filter_notMem i, sum_filter, mul_sum]
-  refine sum_congr rfl fun T _ => ?_
-  rw [fourierCoeff_derivative]
-  split_ifs with hT
-  · simp
-  · rw [card_insert_of_notMem hT, pow_succ]
-    ring
-
-omit [Fintype ι] in
-/-- A power of the absolute value of the derivative of a Boolean function, read as signs, is the
-absolute value: the derivative takes the values `0` and `±1`. -/
-theorem abs_derivative_signVal_rpow (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) {p : ℝ}
-    (hp : p ≠ 0) :
-    |derivative i (fun x => signVal (f x)) x| ^ p = |derivative i (fun x => signVal (f x)) x| := by
-  simp only [derivative]
-  cases f (Function.update x i false) <;> cases f (Function.update x i true) <;>
-    norm_num [Real.zero_rpow hp]
-
-/-- The `L^p` norm of the derivative of a Boolean function, read as signs, is the `p`-th root of
-the influence. -/
-theorem lpNorm_derivative_signVal (f : (ι → Bool) → Bool) (i : ι) {p : ℝ} (hp : p ≠ 0) :
-    lpNorm p (derivative i fun x => signVal (f x)) =
-      influence i (fun x => signVal (f x)) ^ p⁻¹ := by
-  rw [lpNorm, influence]
-  congr 1
-  refine expect_congr rfl fun x _ => ?_
-  rw [abs_derivative_signVal_rpow f i x hp, sq_derivative_signVal]
+/-! ### Hypercontractivity on the derivatives -/
 
 /-- **Hypercontractivity bounds the low-degree weight on the sets containing a coordinate**: for a
 Boolean function read as signs, `∑_{S ∋ i} 3 ^ (-|S|) F̂(S) ^ 2 ≤ 1/3 · Infᵢ[F] ^ (3/2)`, by the
@@ -321,13 +286,7 @@ theorem exists_expect_sub_expect_sq_mul_log_card_div_le_influence [Nonempty ι]
   have hn : 1 ≤ n := Nat.one_le_cast.2 Fintype.card_pos
   have hn0 : 0 < n := by linarith
   have hV0 : 0 ≤ V := expect_nonneg fun _ _ => sq_nonneg _
-  have hV1 : V ≤ 1 := by
-    have h := expect_sub_expect_sq_eq_sum_fourierCoeff_sq F
-    have h1 := sum_fourierCoeff_sq_signVal f
-    rw [sum_filter] at h
-    change V = _ at h
-    rw [h, ← h1]
-    exact sum_le_sum fun S _ => by split_ifs; exacts [le_rfl, sq_nonneg _]
+  have hV1 : V ≤ 1 := expect_sub_expect_sq_signVal_le_one f
   have hI : totalInfluence F ≤ n * δ :=
     calc totalInfluence F ≤ ∑ _j : ι, δ := sum_le_sum fun j _ => hi j (mem_univ j)
       _ = n * δ := by rw [sum_const, card_univ, nsmul_eq_mul]
@@ -356,13 +315,6 @@ theorem exists_expect_sub_expect_sq_mul_log_card_div_le_influence [Nonempty ι]
       nlinarith
 
 /-! ### Talagrand's inequality -/
-
-/-- The influence of a coordinate on a Boolean function read as signs is at most one. -/
-theorem influence_signVal_le_one (f : (ι → Bool) → Bool) (i : ι) :
-    influence i (fun x => signVal (f x)) ≤ 1 := by
-  refine (influence_le_expect_sq i _).trans_eq ?_
-  simp only [sq, signVal_mul_self]
-  exact expect_const univ_nonempty 1
 
 /-- **Talagrand's inequality**: for a Boolean function read as signs `F` whose influences are all
 less than one, `Var[F] ≤ 6 ∑ᵢ Infᵢ[F] / log (1 / Infᵢ[F])` [Talagrand1994]. A coordinate of
