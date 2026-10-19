@@ -139,6 +139,31 @@ theorem eval_subst {o : Lit} {v : ℕ} {ℓ : Lit} {val : ℕ → Bool} (h : val
     cases ℓ.arg.eval val <;> cases o.neg <;> cases ℓ.neg <;> rfl
   · rfl
 
+/-- The literal reads the internal value `t`. -/
+def Reads (o : Lit) (t : ℕ) : Prop :=
+  o.arg = .node t
+
+theorem eval_congr {o : Lit} {val val' : ℕ → Bool} (h : ∀ i, o.Reads i → val i = val' i) :
+    o.eval val = o.eval val' := by
+  unfold eval
+  rw [Arg.eval_congr h]
+
+theorem not_reads_subst {o : Lit} {v : ℕ} {ℓ : Lit} (hℓ : ¬ ℓ.Reads v) : ¬ (o.subst v ℓ).Reads v := by
+  unfold subst Reads
+  split_ifs with ho
+  · exact hℓ
+  · exact ho
+
+theorem reads_of_reads_subst {o : Lit} {v : ℕ} {ℓ : Lit} {z : ℕ} (h : (o.subst v ℓ).Reads z) :
+    o.Reads z ∨ (o.Reads v ∧ ℓ.Reads z) := by
+  unfold subst Reads at *
+  split_ifs at h with ho
+  · exact Or.inr ⟨ho, h⟩
+  · exact Or.inl h
+
+theorem subst_of_not_reads {o : Lit} {v : ℕ} {ℓ : Lit} (h : ¬ o.Reads v) : o.subst v ℓ = o :=
+  ite_eq_right (show ¬ o.arg = .node v from h)
+
 end Lit
 
 /-- A gate of the acyclic part: an operation of the full binary basis `B₂` applied to two
@@ -222,6 +247,18 @@ theorem reads_of_reads_subst {g : Gate} {v : ℕ} {ℓ : Lit} {z : ℕ} (h : (g.
   · exact Or.inr ⟨Or.inl h', h''⟩
   · exact Or.inl (Or.inr h')
   · exact Or.inr ⟨Or.inr h', h''⟩
+
+theorem not_reads_subst {g : Gate} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v) :
+    ¬ (g.subst v ℓ).Reads v := by
+  intro h
+  simp only [Reads, subst, Arg.substArg] at h
+  rcases h with h | h <;> split_ifs at h with h' <;> first | exact hℓ h | exact h' h
+
+theorem eval_subst_of_not_reads {g : Gate} {v : ℕ} {ℓ : Lit} (h : ¬ g.Reads v) (val : ℕ → Bool) :
+    (g.subst v ℓ).eval val = g.eval val := by
+  unfold Reads at h
+  push Not at h
+  simp only [eval, subst, Arg.substArg, substNeg, ite_eq_right h.1, ite_eq_right h.2, Bool.xor_false]
 
 end Gate
 
@@ -331,6 +368,26 @@ theorem card_subst_le {E : Equation} {v : ℕ} {ℓ : Lit} :
             card_toggle_le _ _
         _ = E.terms.card := by omega
   · exact le_rfl
+
+theorem notMem_subst {E : Equation} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v) :
+    v ∉ (E.subst v ℓ).terms := by
+  intro h
+  unfold subst at h
+  split_ifs at h with hv
+  · rcases ℓ with ⟨_ | t, c⟩
+    · exact Finset.notMem_erase v _ h
+    · have ht : v ≠ t := fun h' => hℓ (by simp [h'])
+      exact Finset.notMem_erase v _ ((mem_toggle.1 h).2 ht)
+  · exact hv h
+
+theorem subst_of_notMem {E : Equation} {v : ℕ} {ℓ : Lit} (h : v ∉ E.terms) : E.subst v ℓ = E := by
+  unfold subst
+  rw [ite_eq_right h]
+
+theorem holds_congr {E : Equation} {val val' : ℕ → Bool} (h : ∀ i ∈ E.terms, val i = val' i) :
+    E.Holds val ↔ E.Holds val' := by
+  unfold Holds
+  rw [Finset.sum_congr rfl h]
 
 end Equation
 
