@@ -141,16 +141,15 @@ tip, merges with rename detection and recorded resolutions disabled, and must ch
 epic's reviewed files, leaving each as in the reviewed head. The six project checks and the
 coordination tests then run once on the final tree, and `main` and every completed board record
 are published atomically; each record keeps the reviewed snapshot and the landed `main` commit.
-A `main` that changed a reviewed file, conflicts textually
-or moved again after the reservation, a withdrawn review, lost lease, dirty worktree, or failed
-check prevents landing, and nothing is published; overlapping work is reopened, merges `main` and
-obtains new reviews. Servers without atomic push support are rejected. Validation failures and
-refused merges retain the reservation for retry; `cancel` releases it. Landing verifies every
-listed epic again and requires the final tree to differ from `main` only in their files and the
-roots. Checkouts that predate batch landings can still read and update the board. Their rewrites
-keep only a reservation's first epic and drop its recorded `main`, which landing tolerates by
-publishing only onto the `main` it merged onto; they also drop the landed commit of completed
-records, which is metadata only.
+A `main` that changed a reviewed file, conflicts textually or moved again after the reservation, a
+withdrawn review, lost lease, dirty worktree, or failed check prevents landing, and nothing is
+published; overlapping work is reopened, merges `main` and obtains new reviews. Servers without
+atomic push support are rejected. Validation failures and refused merges retain the reservation for
+retry; `cancel` releases it. Landing verifies every listed epic again and requires the final tree to
+differ from `main` only in their files and the roots. Checkouts that predate batch landings can
+still read and update the board. Their rewrites keep only a reservation's first epic and drop its
+recorded `main`, which landing tolerates by publishing only onto the `main` it merged onto; they
+also drop the landed commit of completed records, which is metadata only.
 
 Disjoint files and the six checks catch breakage, not changes of meaning: an unchanged statement
 can depend on a definition that another epic changed. Reviewers of later epics should consider

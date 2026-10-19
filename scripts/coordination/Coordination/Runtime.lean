@@ -170,10 +170,13 @@ def context (repo : Repository) (self : Identity) (state : State) (cmd : Command
     for candidate in candidates do
       if let some s := submitted state candidate.epic then
         let (ancestry, diffs) ← evidence repo candidate.epic s onto
-        let included ← observedAncestry repo [{ base := candidate.snapshot.head, head := landed }]
+        let reviewed : Snapshot := { base := candidate.snapshot.head, head := landed }
+        let included ← observedAncestry repo [reviewed]
+        let drift : Diff := {
+          range := reviewed, paths := ← repo.changedPaths reviewed.base.value landed.value }
         ctx := { ctx with
           ancestry := ctx.ancestry ++ ancestry ++ included
-          diffs := ctx.diffs ++ diffs }
+          diffs := ctx.diffs ++ diffs ++ [drift] }
   | _ => pure ()
   return ctx
 

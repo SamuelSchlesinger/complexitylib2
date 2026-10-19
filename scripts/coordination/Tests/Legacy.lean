@@ -36,7 +36,8 @@ structure LegacyCompletion where
   deriving BEq, ToJson, FromJson
 
 /-- The board of checkouts that predate batch landings. Epics use the current records, which
-agree with the legacy ones except for the `landed` field of completed epics. -/
+agree with the legacy ones except for the `landed` field of completed epics; `legacyHeartbeat`
+clears that field as an older checkout's rewrite does. -/
 structure LegacyState where
   version : Nat := 1
   agents : List Agent := []
@@ -49,7 +50,11 @@ structure LegacyState where
 renews the agent and writes back only the legacy fields. -/
 def legacyHeartbeat (repository : Git.Repository) (agent : AgentId) : IO Unit := do
   discard <| repository.update ({} : LegacyState) "older checkout heartbeat" fun state =>
-    pure ({state with agents := state.agents.map fun a =>
-      if a.actor.agent == agent then {a with expires := a.expires + 1} else a}, none)
+    pure ({state with
+      agents := state.agents.map fun a =>
+        if a.actor.agent == agent then {a with expires := a.expires + 1} else a
+      epics := state.epics.map fun epic => match epic.phase with
+        | .merged completed => {epic with phase := .merged {completed with landed := none}}
+        | _ => epic}, none)
 
 end Coordination.Tests

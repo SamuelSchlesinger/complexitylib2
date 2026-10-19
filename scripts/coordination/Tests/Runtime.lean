@@ -459,6 +459,36 @@ private def testLandingSurvivesOlderCheckoutRewrite : IO Unit := withFixture fun
   for id in [first, second] do
     check ((← landedCommit outcome.state id) == some ⟨landed⟩) s!"{id.value} did not record the landed main"
   check outcome.state.integration.isNone "Landing retained the reduced reservation"
+  -- A later rewrite by an older checkout erases the landed commit, which is metadata only.
+  legacyHeartbeat crew.primary ⟨"bob"⟩
+  for id in [first, second] do
+    check ((← landedCommit (← Runtime.readState crew.lead) id).isNone)
+      s!"An older checkout's rewrite kept the landed commit of {id.value}"
+
+/-- A hand-made landing whose commit alters a reviewed file after integration is refused (fixture
+idea from the correctness review); the untampered integration still lands. -/
+private def testLandingRefusesTamperedContent : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let id : EpicId := ⟨"feature"⟩
+  let alice ← implement crew id "allowed" "alice" (addFile · "allowed/c.txt")
+  let snapshot ← approve crew id alice
+  let moved ← moveMain crew "allowed/b.txt"
+  let (self, token) ← Runtime.claim crew.lead "integration"
+  discard <| Runtime.dispatch crew.lead self (.reserve [id] token)
+  Runtime.finishClaim crew.lead "integration" token
+  let candidate : Candidate := {epic := id, snapshot}
+  let merged ← Runtime.integrate crew.lead ⟨moved⟩ [candidate] regenerate
+  IO.FS.writeFile (crew.lead.root / "allowed/c.txt") "tampered\n"
+  discard <| crew.lead.run #["commit", "--quiet", "-am", "tamper with a reviewed file"]
+  let tampered ← crew.lead.head
+  let before ← fixture.ref Git.boardRef
+  expectError (Runtime.run crew.lead (.land [candidate] ⟨moved⟩ ⟨tampered⟩ "Hand-made landing"))
+    "allowed/c.txt unlike the reviewed head of feature"
+  check ((← fixture.ref Git.mainRef) == moved) "Tampered landing changed main"
+  check ((← fixture.ref Git.boardRef) == before) "Tampered landing changed the board"
+  discard <| crew.lead.run #["switch", "--quiet", "--detach", merged.value]
+  discard <| Runtime.run crew.lead (.land [candidate] ⟨moved⟩ merged "Focused runtime validation passed")
+  check ((← fixture.ref Git.mainRef) == merged.value) "Untampered integration did not land"
 
 /-- `ready` explains a branch that does not descend from `main` at all. -/
 private def testReadyRefusesUnrelatedHistory : IO Unit := withFixture fun fixture => do
@@ -682,6 +712,7 @@ def runtimeTests : List (String × IO Unit) := [
   ("runtime ready refuses several merge bases with main", testReadyRefusesAmbiguousBase),
   ("runtime landing refuses a head whose merge base drifted from its reviewed base", testLandingRefusesMergeBaseDrift),
   ("runtime landing pins merge configuration against renames and rerere", testLandingPinsMergeConfiguration),
-  ("runtime landing step changes exactly the reviewed paths as reviewed", testStepVerification)]
+  ("runtime landing step changes exactly the reviewed paths as reviewed", testStepVerification),
+  ("runtime hand-made landing that alters a reviewed file is refused", testLandingRefusesTamperedContent)]
 
 end Coordination.Tests

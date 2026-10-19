@@ -708,9 +708,10 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
     let _ ← coordinator ctx state
     let some integration := state.integration | throw "Integration reservation is absent"
     check (holds ctx integration.lease) "Integration generation was lost"
-    -- Older checkouts that rewrite the board keep only the first candidate and drop `main`, so the
-    -- batch is verified again below instead of being compared with the whole reservation.
-    check (integration.candidates.head? == candidates.head?) "Integration reservation changed"
+    -- Older checkouts that rewrite the board keep only the first candidate and drop `main`; such a
+    -- reduced reservation is matched by its first candidate, and the batch is verified again below.
+    check (if integration.main.isSome then integration.candidates == candidates
+      else integration.candidates.head? == candidates.head?) "Integration reservation changed"
     check (integration.main.all (· == main))
       "Main moved since the integration reservation; cancel and land again"
     check (ctx.main == some main) "Main moved during integration; cancel and land again"
@@ -729,6 +730,14 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
       !generatedRoots.contains path && !reviewed.any (·.contains path)
     check extra.isEmpty s!"The landing changes {", ".intercalate extra} beyond the reviewed \
       snapshots; cancel and land again"
+    for (candidate, paths) in candidates.zip reviewed do
+      let name := candidate.epic.value
+      let drift ← if candidate.snapshot.head == landed then pure [] else
+        observedDiff ctx { base := candidate.snapshot.head, head := landed }
+          s!"Paths differing between the reviewed head of {name} and the landing"
+      let unlike := drift.filter fun path => !generatedRoots.contains path && paths.contains path
+      check unlike.isEmpty s!"The landing leaves {", ".intercalate unlike} unlike the reviewed head \
+        of {name}; cancel and land again"
     check (!validation.isEmpty) "Validation evidence is required"
     let mut state := state
     for (epic, s, api, correctness) in batch do

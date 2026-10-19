@@ -561,10 +561,12 @@ private def advanced : Oid := ⟨"advanced-main"⟩
 private def mergeCommit : Oid := ⟨"merge-commit"⟩
 
 /-- The coordinator observing `main` at `tip`, ahead of the reviewed base by `moved`, and its
-worktree at `landed`, a commit containing both that differs from `tip` in `landing`. -/
+worktree at `landed`, a commit containing both that differs from `tip` in `landing` and from the
+reviewed head in `drift`. -/
 private def movedContext (tip : Oid := advanced)
     (moved : List String := ["outside.txt", "Complexity.lean"]) (landed : Oid := mergeCommit)
-    (landing : List String := ["allowed/a.txt", "Complexity.lean"]) : Context :=
+    (landing : List String := ["allowed/a.txt", "Complexity.lean"])
+    (drift : List String := ["outside.txt", "Complexity.lean"]) : Context :=
   let lead := leadContext
   { lead with
     main := some tip
@@ -572,7 +574,8 @@ private def movedContext (tip : Oid := advanced)
     ancestry := [exampleSnapshot, { base := exampleSnapshot.base, head := tip },
       { base := exampleSnapshot.head, head := landed }, { base := tip, head := landed }]
     diffs := lead.diffs ++ [{ range := { base := exampleSnapshot.base, head := tip }, paths := moved },
-      { range := { base := tip, head := landed }, paths := landing }] }
+      { range := { base := tip, head := landed }, paths := landing },
+      { range := { base := exampleSnapshot.head, head := landed }, paths := drift }] }
 
 private def testReadyAcceptsAncestorBase : IO Unit := do
   let state ← protocolState 1
@@ -629,6 +632,10 @@ private def testLandAfterMainMoved : IO Unit := do
   reject {lead with cleanHead := some exampleSnapshot.head} reserved landing "worktree not at landing"
   reject (movedContext (landing := ["allowed/a.txt", "stray.txt"])) reserved landing
     "landing carries unreviewed content"
+  reject (movedContext (drift := ["outside.txt", "allowed/a.txt"])) reserved landing
+    "landing alters a reviewed file"
+  reject {lead with diffs := lead.diffs.filter (·.range.base != exampleSnapshot.head)} reserved landing
+    "unobserved difference from the reviewed head"
   reject lead reserved (.land [candidate] exampleSnapshot.base mergeCommit "stale")
     "landing onto another main than the reservation's"
   -- Main moving again after the reservation refuses until the reservation is renewed.
@@ -677,7 +684,9 @@ private def batchContext (secondPaths : List String := ["other/b.txt"])
       { base := exampleSnapshot.head, head := batchLanded },
       { base := secondSnapshot.head, head := batchLanded }]
     diffs := lead.diffs ++ [{ range := secondSnapshot, paths := secondPaths },
-      { range := { base := exampleSnapshot.base, head := batchLanded }, paths := landing }] }
+      { range := { base := exampleSnapshot.base, head := batchLanded }, paths := landing },
+      { range := { base := exampleSnapshot.head, head := batchLanded }, paths := ["other/b.txt"] },
+      { range := { base := secondSnapshot.head, head := batchLanded }, paths := ["allowed/a.txt"] }] }
 
 private def testBatchLanding : IO Unit := do
   let state ← batchState
@@ -693,6 +702,8 @@ private def testBatchLanding : IO Unit := do
     "landing part of a batch publishes unreviewed content"
   reject lead reserved (.land [secondCandidate, candidate] exampleSnapshot.base batchLanded "reordered")
     "first candidate differs from the reservation"
+  reject (batchContext (landing := ["allowed/a.txt"])) reserved
+    (.land [candidate] exampleSnapshot.base batchLanded "subset") "intact reservation lists another batch"
   reject (batchContext ["allowed/a.txt"]) reserved landing "overlap observed at landing"
   reject {lead with ancestry := lead.ancestry.erase { base := secondSnapshot.head, head := batchLanded }}
     reserved landing "landing omits the second head"
