@@ -643,3 +643,18 @@ Independent reviews of the exact commits against `0c1dab07`:
 Validation: all six gates passed on the integration revision; the PDF builds with no errors or
 undefined references. These are AI reviews, not human editorial approval or machine-checked
 equivalence of prose and Lean.
+
+## Coverage batch 5: one-way function consequences and Kabanets–Cai (2026-10-19)
+
+Integrated `ad94a1a8` (`owf-metacomplexity`), adding "One-way functions separate P and BPP from NP"
+and "Kabanets--Cai: MCSP in BPP rules out one-way functions" (`crypto.tex`).
+
+Independent correctness and API reviews of the exact commit against `0c1dab07`: APPROVE on both
+(library OWF, PRF, BPP and MCSP definitions untouched; the MCSP hypothesis is full membership in
+BPP; the distinguisher is a genuine oracle-PPT adversary; the circuit bound is uniform in the key;
+the advantage bound and BPP inverter were checked). Wording findings resolved in the entries: the
+threshold remark now states that the hypothesis covers all thresholds, sizes are "at most", and the
+error parameter's length L is defined. Non-blocking API findings were returned to the author.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
