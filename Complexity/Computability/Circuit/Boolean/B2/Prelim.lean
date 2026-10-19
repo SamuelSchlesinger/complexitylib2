@@ -161,9 +161,10 @@ theorem Valid.not_out_reads_param {S : State n} {d : ℕ} (hS : S.Valid f)
 
 /-- (D4): an unpaired parameter `x` whose only child is the equation `e` is exchanged with an
 auxiliary variable depending on it and then deleted with `e`; this keeps `a` and lowers `W`. -/
-theorem Valid.step_unit {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
+theorem Valid.unit_delete {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
     (ha : d < S.a) {x e : ℕ} (hx : x ∈ S.unpaired) (hc : S.children x = {.inr e}) :
-    ∃ S', Step f S S' := by
+    ∃ S' : State n, S'.Valid f ∧ S'.m = S.m ∧ S'.s + 1 = S.s ∧ S'.a = S.a ∧ S'.q = S.q ∧
+      S'.W + 1 ≤ S.W := by
   obtain ⟨hxp, hxu⟩ := mem_unpaired.1 hx
   have hex : Sum.inr e ∈ S.children x := by rw [hc]; exact Finset.mem_singleton_self _
   obtain ⟨he, hxe⟩ := (SemiCircuit.inr_mem_children _).1 hex
@@ -228,9 +229,14 @@ theorem Valid.step_unit {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineD
   rw [sum_ite_eq_of_mem (Finset.mem_insert_of_mem hxp),
     sum_ite_eq_of_mem (Finset.mem_insert_self _ _)] at hW
   have hs : S'.s + 1 = S.s := hsize
-  refine ⟨S', hS', ?_, ?_⟩
-  · rw [hm]; omega
-  · rw [ha']; omega
+  exact ⟨S', hS', hm, hs, ha', hq, by omega⟩
+
+/-- (D4) as a step of gate elimination. -/
+theorem Valid.step_unit {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
+    (ha : d < S.a) {x e : ℕ} (hx : x ∈ S.unpaired) (hc : S.children x = {.inr e}) :
+    ∃ S', Step f S S' := by
+  obtain ⟨S', hS', hm, hs, ha', -, hW⟩ := hS.unit_delete hf ha hx hc
+  exact ⟨S', hS', by omega, by omega⟩
 
 /-- **Case 1** of the preliminary reductions: a deletion lowers `s` and `W` and keeps `a`. -/
 theorem Valid.step_of_deletion {S : State n} {d : ℕ} (hS : S.Valid f)
@@ -540,6 +546,97 @@ theorem Valid.step_case2 {S : State n} (hS : S.Valid f) (h : S.Case2) : ∃ S', 
     rw [ite_eq_right hwp] at hq
     have hq' : S'.q = S.q := by simpa [q, hpairs] using hq
     have ha' : S.a ≤ S'.a + 1 := by simp only [a]; omega
+    omega
+
+
+/-! ### Consequences of the inapplicability of Cases 1 and 2 -/
+
+/-- An affine gate reading no gates, which is moved into the affine system before the
+preliminary reductions. -/
+def Movable (S : State n) (J : ℕ) : Prop :=
+  J ∈ S.gates ∧ IsAffineOp (S.gate J).op ∧ ∀ i, (S.gate J).Reads i → i ∉ S.gates
+
+/-- No constraint has both an unpaired isolated parameter and another parameter as parents. -/
+def Exclusive (S : State n) : Prop :=
+  ∀ z ∈ S.unpaired, S.deg z = 1 → ∀ N ∈ S.children z, ∀ z' ∈ S.params, z' ≠ z →
+    N ∉ S.children z'
+
+/-- A gate reading two distinct internal values reads exactly them. -/
+theorem Gate.args_of_reads {g : Gate} {z z' : ℕ} (hzz : z ≠ z') (hz : g.Reads z)
+    (hz' : g.Reads z') : (g.left = .node z ∧ g.right = .node z') ∨
+      (g.left = .node z' ∧ g.right = .node z) := by
+  unfold Gate.Reads at hz hz'
+  rcases hz with hz | hz <;> rcases hz' with hz' | hz'
+  · exact absurd (Arg.node.inj (hz.symm.trans hz')) hzz
+  · exact Or.inl ⟨hz, hz'⟩
+  · exact Or.inr ⟨hz', hz⟩
+  · exact absurd (Arg.node.inj (hz.symm.trans hz')) hzz
+
+/-- **Consequence of Cases 1 and 2** of [Mishra and Santhanam][MishraSanthanam2026]: when no
+affine gate can be moved, no deletion applies and Case 2 does not apply, the unique child of an
+unpaired isolated parameter is a gate whose other input is not a parameter. -/
+theorem exclusive_of {S : State n} (hS : S.Valid f) (hmov : ∀ J, ¬ S.Movable J)
+    (hdel : ¬ S.DeletionAvailable) (h2 : ¬ S.Case2) : S.Exclusive := by
+  intro z hz hz1 N hN z' hz' hzz hN'
+  have hzp := (mem_unpaired.1 hz).1
+  have hcz : S.children z = {N} := by
+    obtain ⟨a, ha⟩ := Finset.card_eq_one.1 hz1
+    rw [ha] at hN ⊢; rw [Finset.mem_singleton.1 hN]
+  rcases N with G | e
+  · obtain ⟨hG, hGz⟩ := (SemiCircuit.inl_mem_children _).1 hN
+    obtain ⟨-, hGz'⟩ := (SemiCircuit.inl_mem_children _).1 hN'
+    have hargs := Gate.args_of_reads (Ne.symm hzz) hGz hGz'
+    by_cases haff : IsAffineOp (S.gate G).op
+    · refine hmov G ⟨hG, haff, fun i hi hig => ?_⟩
+      have hip : i ∈ S.params := by
+        rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩ <;> rcases hi with hi | hi
+        · rw [hl] at hi; cases hi; exact hzp
+        · rw [hr] at hi; cases hi; exact hz'
+        · rw [hl] at hi; cases hi; exact hz'
+        · rw [hr] at hi; cases hi; exact hzp
+      exact Finset.disjoint_left.1 hS.wf.disjoint_params_gates hip hig
+    · exact h2 ⟨G, hG, z, z', haff, hargs, hz, hz1, hz', Ne.symm hzz⟩
+  · exact hdel (Or.inr (Or.inr (Or.inr ⟨z, hz, e, hcz⟩)))
+
+/-- After restricting parameters to constants and deleting a chain of constraints, an unpaired
+parameter `u` of an exclusive state does not gain weight, provided every deletion targeting `u`
+deletes a constraint having another parameter as a parent. -/
+theorem weight_le_of_chain {S S₁ S' : State n} {l : List ((ℕ ⊕ ℕ) × Option ℕ)}
+    (hexcl : S.Exclusive) (hchain : Chain f S₁ S' l) {u : ℕ} (hu : u ∈ S.unpaired)
+    (hu₁ : u ∈ S₁.params) (hc₁ : S₁.children u = S.children u)
+    (hparents : ∀ q ∈ l, q.2 = some u → q.1 ∈ S.children u →
+      ∃ r ∈ S.params, r ≠ u ∧ q.1 ∈ S.children r) :
+    weight (S'.deg u) ≤ weight (S.deg u) := by
+  rcases hchain.children_cases hu₁ with hsub | ⟨q, hq, hqu, hq₁⟩
+  · refine weight_mono (Finset.card_le_card ?_)
+    rw [← hc₁]; exact hsub.trans Finset.sdiff_subset
+  · rw [hc₁] at hq₁
+    obtain ⟨r, hr, hru, hqr⟩ := hparents q hq hqu hq₁
+    have hdeg : 1 ≤ S.deg u := Finset.card_pos.2 ⟨_, hq₁⟩
+    rcases Nat.lt_or_ge 1 (S.deg u) with h | h
+    · rw [weight_of_two_le h]; exact weight_le_seven _
+    · exact absurd hqr (hexcl u hu (by omega) q.1 hq₁ r hr hru)
+
+/-- The children of a parameter `p` fixed to a constant are deletable. -/
+theorem deletable_fixConst {S : State n} (hS : S.Valid f) {p : ℕ} (b : Bool) {N : ℕ ⊕ ℕ}
+    (hN : N ∈ S.children p) : (S.fixConst p b).Deletable N := by
+  rcases N with J | e
+  · obtain ⟨hJ, hr⟩ := (SemiCircuit.inl_mem_children _).1 hN
+    refine ⟨hJ, ?_⟩
+    change ((S.gate J).subst p (Lit.const b)).Degenerate
+    unfold Gate.Degenerate
+    change (∃ c, (S.gate J).left.substArg p (Arg.const b) = .const c) ∨
+      (∃ c, (S.gate J).right.substArg p (Arg.const b) = .const c) ∨ _
+    rcases hr with hr | hr
+    · exact Or.inl ⟨b, by rw [hr]; simp [Arg.substArg]⟩
+    · exact Or.inr (Or.inl ⟨b, by rw [hr]; simp [Arg.substArg]⟩)
+  · obtain ⟨he, hpe⟩ := (SemiCircuit.inr_mem_children _).1 hN
+    refine ⟨he, ?_⟩
+    change ((S.eqn e).subst p (Lit.const b)).terms.card ≤ 2
+    have h3 := hS.wf.card_terms_le e he
+    have : ((S.eqn e).subst p (Lit.const b)).terms = (S.eqn e).terms.erase p := by
+      simp [Equation.subst, hpe, Lit.const]
+    rw [this, Finset.card_erase_of_mem hpe]
     omega
 
 end State
