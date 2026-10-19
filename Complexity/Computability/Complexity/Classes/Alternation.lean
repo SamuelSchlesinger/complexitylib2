@@ -20,8 +20,8 @@ labelled existential or universal. Here it is a closed fair-coin table
 with such a labelling (`Turing.MultiTapeATM`): at a running configuration the two transitions of
 the table are the two moves (`Turing.MultiTapeATM.next`), as for the two transition functions of
 Arora and Barak. A step of the machine is a step of the nondeterministic machine
-`Turing.MultiTapePTM.toNTM` of the table, so no configuration is stuck, and time and space bounds
-are those of that nondeterministic machine.
+`Turing.MultiTapePTM.toNTM` of the table, so no configuration is stuck, and time bounds are those of
+that nondeterministic machine (`Turing.MultiTapeNTM.RunsInTime`).
 
 Acceptance is the least fixed point of the labelling: a halted configuration accepts when its
 output is exactly `[true]`, an existential configuration when one of its two moves leads to an
@@ -45,7 +45,8 @@ instances.
 ## Main definitions
 
 * `Turing.MultiTapeATM`: an alternating machine, a fair-coin table with universal states.
-* `Turing.MultiTapeATM.next`: the configuration after a move.
+* `Turing.MultiTapeATM.next`, `Turing.MultiTapeATM.action`: the configuration after a move, and
+  the action of a move.
 * `Turing.MultiTapeATM.AcceptsWithin`, `Turing.MultiTapeATM.Accepts`: acceptance.
 * `Turing.MultiTapeATM.DecidesInTime`, `Turing.MultiTapeATM.DecidableInPolyTime`: deciding a
   problem within a time bound.
@@ -54,8 +55,11 @@ instances.
 ## Main results
 
 * `Turing.MultiTapeATM.AcceptsWithin.mono`: acceptance within `n` moves is acceptance within more.
+* `Turing.MultiTapeATM.runsInTime_iff_stepCoins`: time bounds through lists of moves.
 * `Turing.MultiTapeATM.accepts_iff_acceptsWithin`: under a time bound `t`, acceptance is
   acceptance within `t` moves.
+* `Turing.MultiTapeATM.accepts_iff_toNTM_accepts`: without universal states, acceptance is
+  acceptance by the nondeterministic machine of the table.
 
 ## References
 
@@ -87,7 +91,18 @@ noncomputable def next (atm : MultiTapeATM k Symbol State) (b : Bool)
     (c : Cfg k Symbol State input) : Cfg k Symbol State input :=
   (atm.toPTM.withCoin b).toTM.step c
 
+/-- The action of the move `b` at a state and read symbols. -/
+def action (atm : MultiTapeATM k Symbol State) (state : State) (symbol : Option Symbol)
+    (work : Fin k → Option Symbol) (b : Bool) : Turing.Action k Symbol State :=
+  MultiTapeMachine.Action.emptyOracleEquiv (atm.toPTM.tr state symbol work Empty.elim b)
+
 variable (atm : MultiTapeATM k Symbol State)
+
+/-- A move from a running configuration applies its action. -/
+theorem next_of_state {c : Cfg k Symbol State input} {q : State} (h : c.state = some q)
+    (b : Bool) : atm.next b c = (atm.action q c.inputSymbol c.workTapeSymbols b).apply c := by
+  rw [next, MultiTapeTM.step_of_state h, MultiTapeMachine.toTM, MultiTapeTM.tr_ofTr]
+  rfl
 
 /-- A halted configuration has no other move. -/
 theorem next_of_halted {c : Cfg k Symbol State input} (h : c.state = none) (b : Bool) :
@@ -218,6 +233,21 @@ theorem state_stepCoins_eq_none (h : atm.toPTM.toNTM.RunsInTime input t)
   rw [← hlast]
   exact h ⟨p, hhead⟩ (by simp [MultiTapeNTM.ComputationPath.time, MultiTapeNTM.RunPath.time, hp])
 
+/-- **Time bounds through moves.** Every computation path of at least `t` steps ends halted
+exactly when every list of `t` moves from the initial configuration reaches a halted
+configuration. -/
+theorem runsInTime_iff_stepCoins : atm.toPTM.toNTM.RunsInTime input t ↔
+    ∀ coins : List Bool, coins.length = t →
+      (atm.toPTM.stepCoins coins (atm.toPTM.toNTM.initCfg input)).state = none := by
+  refine ⟨fun h _ hlen => state_stepCoins_eq_none h hlen, fun h p hp => ?_⟩
+  have ht : t < p.length + 1 := Nat.lt_succ_of_le hp
+  obtain ⟨coins, hlen, hcoins⟩ := (atm.toPTM.exists_runPath_toNTM_iff).mp
+    ⟨p.toRunPath.take ⟨t, ht⟩, RelSeries.head_take .., rfl, RelSeries.last_take _ _⟩
+  have hhalt : (p.toRunPath ⟨t, ht⟩).Halted := by
+    rw [← hcoins, show p.head = atm.toPTM.toNTM.initCfg input from p.head_eq]
+    exact h coins hlen
+  exact (MultiTapeNTM.RunPath.last_eq_of_halted p.toRunPath _ hhalt) ▸ hhalt
+
 end Time
 
 /-- **Acceptance under a time bound.** If every computation path of at least `t` steps ends
@@ -227,6 +257,60 @@ theorem accepts_iff_acceptsWithin {atm : MultiTapeATM k Bool State} {input : Lis
     atm.Accepts input ↔ atm.AcceptsWithin t (atm.toPTM.toNTM.initCfg input) :=
   ⟨fun ⟨_, hn⟩ => hn.of_halted_stepCoins fun _ hlen => state_stepCoins_eq_none h hlen,
     fun ht => ⟨t, ht⟩⟩
+
+/-! ### Machines without universal states -/
+
+section Existential
+
+variable {atm : MultiTapeATM k Bool State} {input : List Bool}
+
+/-- Without universal states, a configuration accepts within `n` moves exactly when some list of
+`n` moves reaches a halted configuration with output `[true]`. -/
+theorem acceptsWithin_iff_exists_stepCoins (h : ∀ q, atm.universal q = false) {n : ℕ}
+    {c : Cfg k Bool State input} :
+    atm.AcceptsWithin n c ↔ ∃ coins : List Bool, coins.length = n ∧
+      (atm.toPTM.stepCoins coins c).state = none ∧
+        (atm.toPTM.stepCoins coins c).output = [true] := by
+  induction n generalizing c with
+  | zero =>
+    simp only [AcceptsWithin, List.length_eq_zero_iff, exists_eq_left, MultiTapePTM.stepCoins_nil]
+  | succ n ih =>
+    rcases hs : c.state with _ | q
+    · rw [atm.acceptsWithin_of_halted hs]
+      constructor
+      · intro hout
+        exact ⟨List.replicate (n + 1) false, List.length_replicate .., by
+          rw [stepCoins_of_halted atm hs]; exact ⟨hs, hout⟩⟩
+      · rintro ⟨coins, -, -, hout⟩
+        rwa [stepCoins_of_halted atm hs] at hout
+    · rw [atm.acceptsWithin_succ_of_existential hs (h q)]
+      constructor
+      · rintro ⟨b, hb⟩
+        obtain ⟨coins, hlen, hcoins⟩ := ih.mp hb
+        exact ⟨b :: coins, by simp [hlen], hcoins⟩
+      · rintro ⟨coins, hlen, hcoins⟩
+        obtain ⟨b, coins, rfl⟩ := List.exists_cons_of_length_eq_add_one hlen
+        exact ⟨b, ih.mpr ⟨coins, by simpa using hlen, hcoins⟩⟩
+
+/-- **Without universal states an alternating machine is nondeterministic**: under a time bound,
+it accepts exactly when the nondeterministic machine of its table accepts. -/
+theorem accepts_iff_toNTM_accepts (h : ∀ q, atm.universal q = false) {t : ℕ}
+    (ht : atm.toPTM.toNTM.RunsInTime input t) :
+    atm.Accepts input ↔ atm.toPTM.toNTM.Accepts input := by
+  rw [accepts_iff_acceptsWithin ht, acceptsWithin_iff_exists_stepCoins h,
+    MultiTapeNTM.accepts_iff_exists_time_eq ht]
+  constructor
+  · rintro ⟨coins, hlen, -, hout⟩
+    obtain ⟨p, hhead, hp, hlast⟩ :=
+      (atm.toPTM.exists_runPath_toNTM_iff (c := atm.toPTM.toNTM.initCfg input)).mpr
+        ⟨coins, hlen, rfl⟩
+    exact ⟨⟨p, hhead⟩, hp, hlast ▸ hout⟩
+  · rintro ⟨p, hp, hout⟩
+    obtain ⟨coins, hlen, hcoins⟩ := (atm.toPTM.exists_runPath_toNTM_iff).mp
+      ⟨p.toRunPath, p.head_eq, hp, rfl⟩
+    exact ⟨coins, hlen, state_stepCoins_eq_none ht hlen, hcoins ▸ hout⟩
+
+end Existential
 
 /-! ### Deciding problems -/
 

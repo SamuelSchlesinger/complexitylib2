@@ -280,6 +280,10 @@ public import Complexity.Computability.Communication.TopDown.Adversary
 public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
+public import Complexity.Computability.Complexity.Classes.Alternation
+public import Complexity.Computability.Complexity.Classes.Alternation.Game
+public import Complexity.Computability.Complexity.Classes.Alternation.NP
+public import Complexity.Computability.Complexity.Classes.Alternation.TQBF
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.Hierarchy

@@ -20,12 +20,12 @@ player that the state labels. This file makes the order of the players fixed: an
 a universal move per step. The strict table of a machine (`Turing.MultiTapeATM.strict`) spends two
 coins on each step of the machine: it stores the first coin, and on the second takes the step of
 the machine with the second coin in a universal state and with the first in an existential state.
-The coin that is not used is a vacuous move. Hence the machine accepts within `t` moves exactly
-when, in the game of `2 * t` single-bit moves alternately chosen by an existential and a universal
-player, the existential player has a strategy against which the strict table, replayed from the
-moves, emits `[true]` (`Turing.MultiTapeATM.acceptsWithin_iff_alternation`). The moves are the
-blocks of length `1` of the alternating quantifiers `Cslib.Complexity.Alternation` of the
-polynomial hierarchy.
+The coin that is not used is a vacuous move. Hence, if every branch halts within `t` steps, the
+machine accepts within `t` moves exactly when the existential player wins the game of `2 * t`
+single-bit moves, alternately chosen by an existential and a universal player, in which the
+existential player wins when the strict table, replayed from the moves, emits `[true]`
+(`Turing.MultiTapeATM.acceptsWithin_iff_alternation`). The moves are the blocks of length `1` of the
+alternating quantifiers `Cslib.Complexity.Alternation` of the polynomial hierarchy.
 
 Replaying a fixed finite fair-coin table is polynomial-time
 (`Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins`), so every problem in `AP` has a
@@ -36,7 +36,6 @@ polynomial `p` such that `a ∈ A` exactly when the existential player wins the 
 
 ## Main definitions
 
-* `Turing.MultiTapeATM.action`: the action of a move.
 * `Turing.MultiTapeATM.strict`: the strict table, two coins per step.
 * `Cslib.Complexity.IsGameVerifier`: a verifier of a game of polynomially many moves.
 
@@ -143,20 +142,6 @@ open MultiTapeMachine Cslib.Complexity
 
 variable {k : ℕ} {Symbol State : Type} {input : List Symbol}
 
-/-! ### The action of a move -/
-
-/-- The action of the move `b` at a state and read symbols. -/
-def action (atm : MultiTapeATM k Symbol State) (state : State) (symbol : Option Symbol)
-    (work : Fin k → Option Symbol) (b : Bool) : Turing.Action k Symbol State :=
-  Action.emptyOracleEquiv (atm.toPTM.tr state symbol work Empty.elim b)
-
-/-- A move from a running configuration applies its action. -/
-theorem next_of_state (atm : MultiTapeATM k Symbol State) {c : Cfg k Symbol State input}
-    {q : State} (h : c.state = some q) (b : Bool) :
-    atm.next b c = (atm.action q c.inputSymbol c.workTapeSymbols b).apply c := by
-  rw [next, MultiTapeTM.step_of_state h, MultiTapeMachine.toTM, MultiTapeTM.tr_ofTr]
-  rfl
-
 /-! ### The strict table -/
 
 namespace Strict
@@ -202,7 +187,8 @@ theorem step_strict {c : Cfg k Symbol (State × Option Bool) input} {s : State �
 theorem step_cfg_none {c : Cfg k Symbol State input} {q : State} (h : c.state = some q)
     (x : Bool) : (atm.strict.withCoin x).toTM.step (cfg c none) = cfg c (some x) := by
   rw [step_strict atm (s := (q, none)) (by simp [cfg, h])]
-  apply Cfg.ext <;> simp [Strict.action, cfg, Action.apply, h] <;> rfl
+  simp only [Strict.action, Action.apply, cfg, Cfg.mapState, h, Option.map_some,
+    moveInputPos_zero, SignType.coe_zero, add_zero, Option.toList_none, List.append_nil]
 
 /-- With a stored coin, the strict table takes the step of the machine with the coin of the
 player of its state. -/
@@ -295,7 +281,8 @@ variable {α : Type} {enc : α ↪ List Bool}
 
 /-- `V` verifies `A` through a game of `p (enc a).length` rounds of two single-bit moves, the first
 chosen by an existential player and the second by a universal player: `a ∈ A` exactly when the
-existential player has a strategy against which `V (a, w) = true` for the moves `w`. -/
+existential player wins, that is, can choose its moves so that `V (a, w) = true` for the moves `w`
+whatever the universal player chooses. -/
 def IsGameVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Bool → Bool)
     (A : Set α) : Prop :=
   ∀ a, a ∈ A ↔ Alternation true (List.replicate (2 * p.eval (enc a).length) 1)
