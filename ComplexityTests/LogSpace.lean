@@ -1,0 +1,237 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+import Complexity.Computability.Complexity.Classes.LogSpace
+import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
+
+/-! Logarithmic space: a nontrivial problem in `L` decided in constant workspace, complements,
+reductions and composition, a nondeterministic machine with a branch running forever, the
+bounds at inputs of length zero and one, codes of views without their input, breadth-first search
+on small graphs, and axiom guards for the headline results. -/
+
+namespace ComplexityTests.LogSpace
+
+open Cslib Cslib.Complexity Turing Turing.MultiTapeTM
+
+/-! ### The logarithmic bound at short inputs -/
+
+/-- An input of length zero is granted `c` cells, not zero: each work tape costs a cell. -/
+example (c : ℕ) : c * (Nat.log2 ([] : List Bool).length + 1) = c := by simp
+
+/-- An input of length one is granted the same `c` cells. -/
+example (c : ℕ) : c * (Nat.log2 [true].length + 1) = c := by simp
+
+/-! ### A nontrivial problem in `L`: odd parity, in constant workspace -/
+
+/-- Whether a word has an odd number of ones. -/
+private def oddOnes (word : List Bool) : Bool := word.foldl (fun b x => b ^^ x) false
+
+private theorem oddOnes_true : oddOnes [true, false, true, true] = true := by decide
+
+private theorem oddOnes_false : oddOnes [true, true] = false := by decide
+
+/-- The parity fold runs with constant workspace, hence in logarithmic space. -/
+private theorem computableInLogSpace_oddOnes : ComputableInLogSpace oddOnes encBits encBool := by
+  obtain ⟨c, h, -⟩ := ComputableTidilyInO.foldl_bits_finite encBool (fun b x => b ^^ x) false
+  exact ⟨_, c, h.computableInTimeAndSpace.mono (fun _ => le_rfl) fun _ =>
+    by simpa using Nat.le_mul_of_pos_right c (Nat.succ_pos _)⟩
+
+/-- The words with an odd number of ones. -/
+private def OddOnes : Set (List Bool) := {word | oddOnes word = true}
+
+example : OddOnes ∈ L encBits := ⟨oddOnes, computableInLogSpace_oddOnes, fun _ => Iff.rfl⟩
+
+/-- `L` is closed under complement: the words with an even number of ones. -/
+example : OddOnesᶜ ∈ L encBits :=
+  compl_mem_L ⟨oddOnes, computableInLogSpace_oddOnes, fun _ => Iff.rfl⟩
+
+example : OddOnes ∈ NL encBits :=
+  L_subset_NL ⟨oddOnes, computableInLogSpace_oddOnes, fun _ => Iff.rfl⟩
+
+/-- Through `NL ⊆ P`, by breadth-first search on the views of the deterministic machine. -/
+example : OddOnes ∈ P encBits :=
+  NL_subset_P (L_subset_NL ⟨oddOnes, computableInLogSpace_oddOnes, fun _ => Iff.rfl⟩)
+
+example : OddOnes ∈ PSPACE encBits :=
+  L_subset_PSPACE ⟨oddOnes, computableInLogSpace_oddOnes, fun _ => Iff.rfl⟩
+
+/-- The `DSPACE(log₂)` shape of cslib pull request #767. -/
+example : ∃ c₁ c₂ t, DecidableInTimeAndSpace OddOnes encBits t
+    fun w => c₁ * Nat.log2 (encBits w).length + c₂ :=
+  mem_L_iff.mp ⟨oddOnes, computableInLogSpace_oddOnes, fun _ => Iff.rfl⟩
+
+/-! ### Composition and reductions -/
+
+/-- Composition with a function on a finite type. -/
+example : ComputableInLogSpace (fun w => !oddOnes w) encBits encBool :=
+  (ComputableInLogSpace.of_finite (encIn := encBool) not).comp computableInLogSpace_oddOnes
+
+/-- Composition after the identity. -/
+example : ComputableInLogSpace (oddOnes ∘ fun w : List Bool => w) encBits encBool :=
+  computableInLogSpace_oddOnes.comp .id
+
+/-- Reversal is computable in zero workspace, so it reduces the words with an odd number of ones to
+the words whose reversal has an odd number of ones. -/
+example : LogSpaceReducible encBits encBits OddOnes {w | oddOnes w.reverse = true} := by
+  refine ⟨List.reverse, ⟨_, 0,
+    ComputableTidilyInTimeAndSpace.reverse_bits.computableInTimeAndSpace.mono (fun _ => le_rfl)
+      fun _ => Nat.zero_le _⟩, fun w => ?_⟩
+  simp [OddOnes]
+
+example : LogSpaceReducible encBits encBits OddOnes OddOnes := .refl _ _
+
+example : LogSpaceReducible encBits encBits OddOnesᶜ OddOnesᶜ := (LogSpaceReducible.refl _ _).compl
+
+example : PolyTimeReducible encBits encBits OddOnes OddOnes :=
+  (LogSpaceReducible.refl _ _).polyTimeReducible
+
+/-! ### A nondeterministic machine with a branch running forever -/
+
+/-- Halt with output `[true]`. -/
+private def acceptAction : Action 0 Bool Bool :=
+  { inputTape := 0, workTapes := Fin.elim0, output := some true, state := none }
+
+/-- Stay in the initial state, emitting nothing. -/
+private def loopAction : Action 0 Bool Bool :=
+  { inputTape := 0, workTapes := Fin.elim0, output := none, state := some false }
+
+/-- From its only running state, either accept or loop forever. -/
+private def loopOrAccept : MultiTapeNTM 0 Bool Bool where
+  q₀ := false
+  Tr q _ _ action := q = false ∧ (action = acceptAction ∨ action = loopAction)
+
+private theorem accepts_loopOrAccept (input : List Bool) : loopOrAccept.Accepts input := by
+  have hstep : loopOrAccept.Step (loopOrAccept.initCfg input)
+      (acceptAction.apply (loopOrAccept.initCfg input)) := ⟨acceptAction, ⟨rfl, .inl rfl⟩, rfl⟩
+  refine ⟨⟨(RelSeries.singleton _ _).cons (loopOrAccept.initCfg input) hstep, rfl⟩, ?_, ?_⟩ <;>
+    simp [acceptAction]
+
+/-- A branch may run forever: the problem is still in `NL`, with any space constant. -/
+private theorem univ_mem_NL : (Set.univ : Set (List Bool)) ∈ NL encBits :=
+  ⟨0, Bool, inferInstance, loopOrAccept, 0, fun a =>
+    ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_loopOrAccept a⟩⟩
+
+/-- Breadth-first search ignores the looping branch. -/
+example : (Set.univ : Set (List Bool)) ∈ P encBits := NL_subset_P univ_mem_NL
+
+/-! ### Codes of views without their input -/
+
+/-- The initial views on two inputs of length one have the same code without their input, so the
+input hypothesis of `coreCode_injective` cannot be dropped. -/
+example : MultiTapeNTM.coreCode (loopOrAccept.initView [true]) =
+    MultiTapeNTM.coreCode (loopOrAccept.initView [false]) := rfl
+
+example : loopOrAccept.initView [true] ≠ loopOrAccept.initView [false] := by
+  intro h
+  simpa [MultiTapeNTM.initView, FiniteCfg.init] using congrArg FiniteCfg.input h
+
+/-! ### Breadth-first search on small graphs -/
+
+/-- A path `0 → 1 → 2 → 3`. -/
+private def pathSucc (n : ℕ) : List ℕ := if n < 3 then [n + 1] else []
+
+/-- Each round finds the next vertex. -/
+example : Reachability.search pathSucc 2 0 = [0, 1, 2] := by decide
+
+/-- Once all vertices are found, further rounds add nothing. -/
+example : Reachability.search pathSucc 7 0 = [0, 1, 2, 3] := by decide
+
+/-- A cycle `0 → 1 → 2 → 0`: no vertex is found twice. -/
+example : Reachability.search (fun n => [(n + 1) % 3]) 5 0 = [0, 1, 2] := by decide
+
+/-- No successors: only the start is found. -/
+example : Reachability.search (fun _ : ℕ => []) 4 7 = [7] := by decide
+
+/-! ### Axiom guards -/
+
+/-- info: 'Cslib.Complexity.NL_subset_P' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NL_subset_P
+
+/-- info: 'Cslib.Complexity.L_subset_NL' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.L_subset_NL
+
+/-- info: 'Cslib.Complexity.L_subset_P' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.L_subset_P
+
+/-- info: 'Cslib.Complexity.mem_L_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_L_iff
+
+/-- info: 'Cslib.Complexity.compl_mem_L' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.compl_mem_L
+
+/--
+info: 'Cslib.Complexity.LogSpaceReducible.mem_L' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.LogSpaceReducible.mem_L
+
+/--
+info: 'Cslib.Complexity.LogSpaceReducible.trans' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.LogSpaceReducible.trans
+
+/--
+info: 'Turing.MultiTapeTM.ComputableInLogSpace.comp' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInLogSpace.comp
+
+/--
+info: 'Turing.MultiTapeTM.ComputableInLogSpace.computableTidilyInPolyTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInLogSpace.computableTidilyInPolyTime
+
+/--
+info: 'Turing.MultiTapeTM.haltsAt_le_card' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.haltsAt_le_card
+
+/--
+info: 'Turing.MultiTapeNTM.length_le_of_nodup_reachable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.length_le_of_nodup_reachable
+
+/--
+info: 'Turing.MultiTapeNTM.searchAccepts_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.searchAccepts_iff
+
+/--
+info: 'Turing.MultiTapeNTM.exists_computableTidilyInPolyTime_searchAccepts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.exists_computableTidilyInPolyTime_searchAccepts
+
+/--
+info: 'Cslib.Reachability.mem_search_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Reachability.mem_search_iff
+
+end ComplexityTests.LogSpace
