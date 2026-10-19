@@ -387,7 +387,8 @@ theorem ComputesTidily.outputToWord_of_le {machine : MultiTapePTM k Bool State O
     obtain ⟨⟨w, hw, hmidTapes⟩, _⟩ := (h []).mem_support oracle s cfg₀ rfl hbuf hmid
     have hstart : (Sequential.start rew (OutputToTape.config mid)).tapes =
         outCfg (wordsCfg x (some (rewindWork Bool).q₀) (fun _ => []) w) := by
-      simp [Sequential.start, OutputToTape.config, hmidTapes, outCfg]
+      simp only [Sequential.start, OutputToTape.config, outCfg, hmidTapes, id_eq,
+        List.nil_append, wordsCfg_state, wordsCfg_inputPos, wordsCfg_output, wordsCfg_workTapePos]
       rfl
     rw [run_interpret_runOracleConfigFrom_ofDeterministic, hstart,
       runFrom_rewindLast (hl OracleState oracle s w s₁ hw),
@@ -413,12 +414,15 @@ theorem ComputesTidily.outputToWord_of_le {machine : MultiTapePTM k Bool State O
       obtain ⟨⟨w, hw, hmidTapes⟩, _⟩ := (h []).mem_support oracle s cfg₀ rfl hbuf hmid
       have hstart : (Sequential.start rew (OutputToTape.config mid)).tapes =
           outCfg (wordsCfg x (some (rewindWork Bool).q₀) (fun _ => []) w) := by
-        simp [Sequential.start, OutputToTape.config, hmidTapes, outCfg]
+        simp only [Sequential.start, OutputToTape.config, outCfg, hmidTapes, id_eq,
+          List.nil_append, wordsCfg_state, wordsCfg_inputPos, wordsCfg_output,
+          wordsCfg_workTapePos]
         rfl
       have hout : mid.tapes.output = w := by rw [hmidTapes]; rfl
       rw [run_interpret_runOracleConfigFrom_ofDeterministic, hstart,
         runFrom_rewindLast (hl OracleState oracle s w s₁ hw), hout]
-      simp [Sequential.right, Cfg.mapState]
+      simp only [Sequential.right, Cfg.mapState, PMF.pure_map, wordsCfg_state, Option.map_none,
+        wordsCfg_inputPos, wordsCfg_output]
       rfl
     · have hlaw := ((h []) OracleState oracle s cfg₀ rfl hbuf).1
       have hmapOut := congrArg
@@ -540,8 +544,9 @@ theorem RunsWords.inputFromWord {machine : MultiTapePTM k Bool State Operation}
   have hstartReady : Sequential.start midM ready =
       Sequential.left eraseF (InputFromTape.config mark cfgIn x 1) := by
     refine Config.ext ?_ rfl
-    simp [Sequential.start, Sequential.left, ready, InputFromTape.config, cfgIn,
-      inCfg_wordsCfg, Cfg.withState, Cfg.mapState]
+    simp only [Sequential.start, Cfg.withState, inCfg_wordsCfg, Int.reduceNeg, Sequential.left,
+      Cfg.mapState, InputFromTape.config, Option.elim_some, Cfg.mk.injEq, Option.some.injEq,
+      and_self, and_true, cfgIn, ready]
     rfl
   have hinRun :
       machine.inputFromTape.runOracleConfigFrom time (InputFromTape.config mark cfgIn x 1) =

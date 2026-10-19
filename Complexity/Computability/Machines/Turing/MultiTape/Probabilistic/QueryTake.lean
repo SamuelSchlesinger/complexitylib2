@@ -474,7 +474,8 @@ theorem seq_bind {first : MultiTapePTM k Bool State₀ Operation}
       rw [hright, hsecondLaw, hmidTapes, hg a s₁, PMF.map_comp]
       congr 1
       funext ⟨b, s₂⟩
-      simp [Cfg.mapState, List.append_assoc]
+      simp only [Cfg.mapState, List.append_assoc, Function.comp_apply, wordsCfg_state,
+        Option.map_none, wordsCfg_inputPos, wordsCfg_output, Prod.mk.injEq, and_true]
       rfl
     rw [hcongr]
     have hmapBind :
@@ -804,7 +805,8 @@ theorem run_copyReply (x : List Bool)
     · funext other
       by_cases heq : other = op
       · subst other
-        simp [config, ch']
+        simp only [config, List.append_assoc, Nat.cast_add, Nat.cast_one, Function.update_idem,
+          Function.update_self, Channel.mk.injEq, true_and, ch']
         lia
       · simp [config, ch', heq]
 
@@ -928,7 +930,8 @@ theorem run_frame (x : List Bool)
       refine Prod.ext (Config.ext ?_ ?_) rfl
       · refine Cfg.ext_zero_tapes rfl ?_ rfl
         apply Fin.ext
-        simp [config, frame_cons]
+        simp only [config, List.length_append, List.length_cons, List.length_nil, zero_add,
+          Nat.reduceAdd, length_frame, frame_cons, Nat.add_right_cancel_iff]
         lia
       · funext other
         by_cases heq : other = op

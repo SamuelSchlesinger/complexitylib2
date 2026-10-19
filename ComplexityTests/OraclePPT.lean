@@ -154,7 +154,7 @@ example (word : List Bool) :
         (requestHead word)).run word) =
       (PMF.uniformOfFintype Bool).map (fun bit => ([bit], bit :: word)) := by
   rw [ProbOracleComp.eval_run_interpret]
-  simp only [requestHead, bind_pure_comp, OracleComp.interpret_map, StateT.run_map,
+  simp only [requestHead, OracleComp.interpret_map, StateT.run_map,
     ProbOracleComp.interpret_query, PMF.monad_map_eq_map]
   change PMF.map _ (ProbComp.eval (respond word ((), []) word)) = _
   simp [respond, PMF.map_comp, Function.comp_def]
