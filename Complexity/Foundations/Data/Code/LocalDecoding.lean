@@ -74,7 +74,7 @@ variable {F : Type*} [Field F] [Fintype F] {m d : ℕ}
 omit [Fintype F] in
 /-- The restriction of a polynomial `P` in `m` variables to the line `c ↦ x + c • v`: a polynomial
 in `c` of degree at most the total degree of `P`. -/
-private theorem exists_natDegree_le_and_eval_eq (P : MvPolynomial (Fin m) F) (x v : Fin m → F) :
+theorem exists_natDegree_le_and_eval_eq (P : MvPolynomial (Fin m) F) (x v : Fin m → F) :
     ∃ g : Polynomial F, g.natDegree ≤ P.totalDegree ∧
       ∀ c : F, g.eval c = MvPolynomial.eval (x + c • v) P := by
   let line : Fin m → Polynomial F := fun i => Polynomial.C (x i) + Polynomial.C (v i) * Polynomial.X
