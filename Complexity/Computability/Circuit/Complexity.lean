@@ -16,17 +16,19 @@ public import Mathlib.Algebra.BigOperators.Fin
 Bounds on the complexity of single functions and of several functions computed side by side.
 
 The coordinate projections cost nothing, and they are the only functions computed without gates,
-since a circuit without gates outputs one of its inputs. Applying an operation to the outputs of
-circuits costs at most the complexity of the operation on fresh inputs: compute the arguments,
-then feed them to a circuit for the operation. Computing `m` functions of the same inputs at once
-costs at most the sum of their complexities: the circuits are placed next to each other.
+since a circuit without gates outputs one of its inputs. Applying a unary or binary operation to
+functions costs at most their complexities plus the complexity of the operation on fresh inputs:
+compute the arguments, then feed them to a circuit for the operation. Computing `m` functions of
+the same inputs at once costs at most the sum of their complexities: the circuits are placed next
+to each other.
 
 ## Main results
 
 * `Cslib.Circuits.complexity_single_proj`, `Cslib.Circuits.one_le_complexity_single`: exactly the
   projections are computed without gates.
 * `Cslib.Circuits.complexity_single_unary_le`, `Cslib.Circuits.complexity_single_binary_le`:
-  applying an operation to outputs costs its complexity on fresh inputs.
+  applying an operation to functions costs at most their complexities plus its complexity on
+  fresh inputs.
 * `Cslib.Circuits.ecomplexity_pi_le`, `Cslib.Circuits.complexity_pi_le`: computing functions side
   by side costs at most the sum of their complexities.
 
