@@ -85,15 +85,74 @@ example (n t m : ℕ) :
     simp at hS
   simp [fourierCoeff_const, hS]
 
+/--
+info: 'Cslib.BitString.signRound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms signRound
+
+/--
+info: 'Cslib.BitString.hammingDist_signRound_sum_mul_chi_div_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms hammingDist_signRound_sum_mul_chi_div_le
+
+/--
+info: 'Cslib.Learning.uniformExamples_eq_pi' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms uniformExamples_eq_pi
+
+/--
+info: 'Cslib.Learning.Learner.learns_ofHypothesis_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Learner.learns_ofHypothesis_iff
+
+/--
+info: 'Cslib.Learning.uniform_abs_empiricalCoeff_sub_ge_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms uniform_abs_empiricalCoeff_sub_ge_le
+
+/--
+info: 'Cslib.Learning.uniform_error_lowDegreeHypothesis_gt_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms uniform_error_lowDegreeHypothesis_gt_le
+
+/--
+info: 'Cslib.Learning.lowDegreeLearner_learns' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms lowDegreeLearner_learns
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes_of_depth_le'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Unbounded.sum_fourierCoeff_sq_le_of_computes_of_depth_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.lowDegreeLearner_learns_of_depth_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Unbounded.lowDegreeLearner_learns_of_depth_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.lowDegreeLearner_learns_lmnDegree' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Unbounded.lowDegreeLearner_learns_lmnDegree
 
 end ComplexityTests.FourierLearning
