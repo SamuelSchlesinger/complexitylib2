@@ -7,9 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Probabilistic.Oracle.Tidy
+public import Complexity.Computability.Probabilistic.Oracle.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
 # Clean realizations of arbitrary oracle PPT certificates
@@ -26,6 +28,10 @@ identical requests, and preserves the complete joint law of the output and exter
 ## Main results
 
 * `Cslib.Probability.IsTidyOraclePPTOn.finiteStep`: one truncated interpreter step is clean.
+* `Cslib.Probability.IsTidyOraclePPTOn.runOracle`: every clocked oracle machine run is clean.
+* `Cslib.Probability.IsOraclePPTOn.isTidyOraclePPTOn`,
+  `Cslib.Probability.isOraclePPTOn_iff_isTidyOraclePPTOn`: every strict oracle PPT certificate
+  has a clean realization with the same joint output and external-state law.
 
 ## References
 
@@ -115,5 +121,81 @@ theorem IsTidyOraclePPTOn.finiteStep [Fintype Operation] [Finite Control]
             ((pair.1.2.channels channel).1, pair.1.1)) (by fun_prop)).map_with
           (f := fun pair answer => pair.1.2.receive channel next answer) (by fun_prop)
         simpa only [Functor.map_map, bind_pure_comp] using hreply
+
+/-- Every clocked run of a finite-control oracle machine is a clean phase. The interpreter loop
+retains finite storage, runs exactly as many steps as the clock, and copies each reply only up to
+the clock, which bounds every reply position the original run can read. -/
+theorem IsTidyOraclePPTOn.runOracle [Finite Operation] [Finite Control]
+    (machine : _root_.Turing.MultiTapePTM k Bool Control Operation) (c d : ℕ) :
+    IsTidyOraclePPTOn encBits encBits
+      (fun word : List Bool => machine.runOracle (c * (word.length + 1) ^ d) word) := by
+  let _ := Fintype.ofFinite Operation
+  obtain ⟨cf, hconfigurationSize⟩ :=
+    length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Operation)
+  let clock (word : List Bool) : ℕ := c * (word.length + 1) ^ d
+  have hclock : ComputableTidilyInPolyTime clock encBits encUnary := by
+    dsimp only [clock]
+    fun_prop
+  have hstart : ComputableTidilyInPolyTime
+      (fun word => FiniteConfig.init (k := k) (Oracle := Operation) machine.initial word)
+      encBits encFiniteConfig := by fun_prop
+  let step (word : List Bool) (cfg : FiniteConfig k Bool Control Operation) :
+      WordOracleComp Operation (FiniteConfig k Bool Control Operation) :=
+    machine.finiteStep (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool))
+      (fun op query => List.take (clock word) <$> ProbOracleComp.query (op, query)) cfg
+  have hstep : IsTidyOraclePPTOn (encPair encBits encFiniteConfig) encFiniteConfig
+      (fun pair => step pair.1 pair.2) :=
+    (IsTidyOraclePPTOn.finiteStep machine).preprocess
+      (prepare := fun pair : List Bool × FiniteConfig k Bool Control Operation =>
+        (clock pair.1, pair.2)) (by fun_prop)
+  have hloop := (IsTidyOraclePPTOn.iterateWith_spec hclock hstart hstep
+    (fun word i cfg => FiniteConfig.SpaceBound word.length i (clock word) cfg)
+    (fun word => FiniteConfig.spaceBound_init _ _ _)
+    (by
+      intro word i cfg _ hcfg next hnext
+      cases hstate : cfg.tapes.state with
+      | none =>
+        simp only [step, MultiTapeMachine.finiteStep, hstate] at hnext
+        exact (ProbOracleComp.eq_of_mem_support_pure hnext) ▸
+          hcfg.mono le_rfl (Nat.le_succ i) le_rfl
+      | some control =>
+        simp only [step, MultiTapeMachine.finiteStep, hstate] at hnext
+        obtain ⟨action, _, hnext⟩ := ProbOracleComp.mem_support_bind hnext
+        cases action with
+        | step action symbol move =>
+          exact (ProbOracleComp.eq_of_mem_support_pure hnext) ▸ hcfg.step action symbol move
+        | query channel control =>
+          obtain ⟨answer, hanswer, hnext⟩ := ProbOracleComp.mem_support_bind hnext
+          obtain ⟨reply, _, rfl⟩ := ProbOracleComp.mem_support_map hanswer
+          exact (ProbOracleComp.eq_of_mem_support_pure hnext) ▸
+            hcfg.receive channel control _ (List.length_take_le _ _))
+    (size := fun word => cf * (word.length + clock word + clock word + 1))
+    ((PolyBounded.const cf).mul
+      (((PolyBounded.self.add hclock.polyBounded).add hclock.polyBounded).add (.const 1)))
+    (fun word i cfg hi hcfg => (hconfigurationSize _ _ _ cfg hcfg).trans
+      (Nat.mul_le_mul_left cf (by lia)))).1
+  refine (hloop.map (by fun_prop : ComputableTidilyInPolyTime
+    (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output)
+    encFiniteConfig encBits)).congr fun word State oracle s => ?_
+  rw [← finiteRunFrom_take_runOracle]
+  rfl
+
+/-- Every strict oracle PPT certificate has a clean realization. The realization makes the same
+adaptive external calls with the same requests in the same order, and has the same joint law of
+output and external oracle state, for every stateful handler and arbitrarily long replies. -/
+theorem IsOraclePPTOn.isTidyOraclePPTOn {α β : Type} {input : α ↪ List Bool}
+    {output : β ↪ List Bool} {program : α → WordOracleComp Operation β}
+    (h : IsOraclePPTOn input output program) : IsTidyOraclePPTOn input output program := by
+  obtain ⟨_, k, Control, _, machine, c, d, h⟩ := h
+  exact IsTidyOraclePPTOn.iff_encoded.mpr
+    (((IsTidyOraclePPTOn.runOracle machine c d).preprocess
+      (ComputableTidilyInPolyTime.encode input)).congr fun a State oracle s =>
+        (h a State oracle s).symm)
+
+/-- Strict oracle PPT certificates are exactly the clean polynomial-time realizations. -/
+theorem isOraclePPTOn_iff_isTidyOraclePPTOn {α β : Type} {input : α ↪ List Bool}
+    {output : β ↪ List Bool} {program : α → WordOracleComp Operation β} :
+    IsOraclePPTOn input output program ↔ IsTidyOraclePPTOn input output program :=
+  ⟨IsOraclePPTOn.isTidyOraclePPTOn, IsTidyOraclePPTOn.isOraclePPTOn⟩
 
 end Cslib.Probability

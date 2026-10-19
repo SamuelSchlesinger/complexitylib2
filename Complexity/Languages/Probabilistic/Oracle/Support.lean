@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Oracle
+public import Complexity.Languages.Probabilistic.Iteration
 
 /-!
 # Possible results of randomized oracle programs
@@ -25,6 +26,8 @@ valid for every shared oracle and every reply length.
 * `Cslib.ProbOracleComp.mem_support_bind`: a possible result of a sequence factors through a
   possible intermediate result.
 * `Cslib.ProbOracleComp.support_sample_subset`: private samples stay in their closed support.
+* `Cslib.ProbOracleComp.iterate_invariant`: an invariant preserved by every possible step holds
+  for every possible result of a bounded loop.
 -/
 
 @[expose] public section
@@ -80,5 +83,24 @@ theorem support_sample_subset (program : ProbComp α) :
   rw [run_interpret_sample, PMF.mem_support_map_iff] at h
   obtain ⟨a, ha, heq⟩ := h
   exact (Prod.mk.inj heq).1 ▸ ha
+
+/-- An invariant indexed by the number of completed steps holds for every possible result of a
+bounded loop when every possible step preserves it. -/
+theorem iterate_invariant {σ : Type} {step : σ → ProbOracleComp spec σ} {count : ℕ}
+    {initial : σ} (invariant : ℕ → σ → Prop) (hbase : invariant 0 initial)
+    (hpreserve : ∀ i state, i < count → invariant i state →
+      ∀ next ∈ support (step state), invariant (i + 1) next) :
+    ∀ state ∈ support (OracleComp.iterate count step initial), invariant count state := by
+  induction count with
+  | zero =>
+    intro state hstate
+    exact (eq_of_mem_support_pure hstate) ▸ hbase
+  | succ count ih =>
+    intro state hstate
+    rw [OracleComp.iterate_succ] at hstate
+    obtain ⟨middle, hmiddle, hstate⟩ := mem_support_bind hstate
+    exact hpreserve count middle (Nat.lt_succ_self count)
+      (ih (fun i state hi => hpreserve i state (Nat.lt_succ_of_lt hi)) middle hmiddle)
+      state hstate
 
 end Cslib.ProbOracleComp

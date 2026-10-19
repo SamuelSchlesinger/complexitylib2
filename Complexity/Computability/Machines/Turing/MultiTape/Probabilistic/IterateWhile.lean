@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Cop
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Loop
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.ClearWork
+import Complexity.Languages.Probabilistic.Oracle.Support
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Ring
 
@@ -34,8 +35,6 @@ then halts; no further round is executed.
 
 ## Main results
 
-* `Cslib.ProbOracleComp.iterate_invariant`: an invariant preserved by every supported step holds
-  after a bounded loop, for every stateful external oracle.
 * `Turing.MultiTapePTM.ComputesTidily.iterateWhile`: if `tm` tidily computes `step w` from every
   word `w` reached in the first `r` rounds and the empty word in round `r`, then
   `tm.iterateWhile mark` tidily computes `OracleComp.iterate r step`, preserving the joint law of
@@ -48,46 +47,6 @@ Reitwiessner, and cslib's `Plumbing/RepeatUntilBlank` to probabilistic oracle ma
 -/
 
 @[expose] public section
-
-namespace Cslib.ProbOracleComp
-
-variable {Query σ : Type} {spec : Query → Type}
-
-/-- An invariant indexed by the number of completed steps holds after a bounded loop, for every
-stateful external oracle, when every supported step preserves it. -/
-theorem iterate_invariant (step : σ → ProbOracleComp spec σ) (invariant : ℕ → σ → Prop)
-    {count : ℕ} {initial : σ} (hbase : invariant 0 initial)
-    (hpreserve : ∀ n < count, ∀ s, invariant n s →
-      ∀ (State : Type) (oracle : (q : Query) → StateT State PMF (spec q)) (st st' : State) (s' : σ),
-        (s', st') ∈ ((OracleComp.interpret
-          (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-          (step s)).run st).support →
-        invariant (n + 1) s')
-    (State : Type) (oracle : (q : Query) → StateT State PMF (spec q)) (st st' : State) (s' : σ)
-    (h : (s', st') ∈ ((OracleComp.interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-      (OracleComp.iterate count step initial)).run st).support) :
-    invariant count s' := by
-  suffices hle : ∀ m ≤ count, ∀ s' st', (s', st') ∈ ((OracleComp.interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-      (OracleComp.iterate m step initial)).run st).support → invariant m s' from
-    hle count le_rfl s' st' h
-  intro m
-  induction m with
-  | zero =>
-    intro _ s' st' h
-    simp only [OracleComp.iterate_zero, OracleComp.interpret_pure, StateT.run_pure,
-      Probability.PMF.monad_pure_eq_pure, PMF.mem_support_pure_iff, Prod.mk.injEq] at h
-    rw [h.1]
-    exact hbase
-  | succ m ih =>
-    intro hm s' st' h
-    rw [OracleComp.iterate_succ, OracleComp.interpret_bind, StateT.run_bind,
-      Probability.PMF.monad_bind_eq_bind] at h
-    obtain ⟨⟨mid, st₁⟩, hmid, h⟩ := (PMF.mem_support_bind_iff _ _ _).mp h
-    exact hpreserve m (by lia) mid (ih (by lia) mid st₁ hmid) State oracle st₁ st' s' h
-
-end Cslib.ProbOracleComp
 
 namespace Turing.MultiTapePTM
 
@@ -406,9 +365,9 @@ theorem ComputesTidily.iterateWhile {tm : MultiTapePTM k Bool State Operation} (
     simp only [last, OracleComp.interpret_pure, StateT.run_pure,
       Probability.PMF.monad_pure_eq_pure, PMF.mem_support_pure_iff, Prod.mk.injEq] at hp
     obtain ⟨rfl, -⟩ := hp
-    have hmidInv := ProbOracleComp.iterate_invariant step' inv (count := r) ⟨hbase, by simp⟩
-      (fun n hn p hp _ oracle st st' p' hp' => (hpres n hn p hp _ oracle st st' p' hp').1)
-      _ oracle s s₁ mid hmid
+    have hmidInv := ProbOracleComp.iterate_invariant inv ⟨hbase, by simp⟩
+      (fun n p hn hp p' ⟨_, oracle', st, st', hp'⟩ => (hpres n hn p hp _ oracle' st st' p' hp').1)
+      mid (ProbOracleComp.mem_support_of_mem oracle hmid)
     exact ⟨rfl, hlength r le_rfl mid.2 hmidInv.1⟩
   have hinner (out : List Bool) := (hloop out).seq_pure_right
     (second := ofDeterministic (finish k mark)) (t₂ := 5 * L + 11)

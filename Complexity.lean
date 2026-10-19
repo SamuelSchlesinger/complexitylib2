@@ -475,6 +475,8 @@ public import Complexity.Computability.Probabilistic.Finite
 public import Complexity.Computability.Probabilistic.LinearHash
 public import Complexity.Computability.Probabilistic.Memoize
 public import Complexity.Computability.Probabilistic.Oracle
+public import Complexity.Computability.Probabilistic.Oracle.Composition
+public import Complexity.Computability.Probabilistic.Oracle.Iteration
 public import Complexity.Computability.Probabilistic.Oracle.Normalization
 public import Complexity.Computability.Probabilistic.Oracle.Parameter
 public import Complexity.Computability.Probabilistic.Oracle.Tidy
