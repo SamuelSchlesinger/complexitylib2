@@ -10,6 +10,12 @@ module
 public import Complexity.Computability.Complexity.Classes.IP.GameTree
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.Space
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 
 /-!
 # `IP ⊆ PSPACE`
@@ -215,5 +221,79 @@ theorem gameTree_value_eq {cap : ℕ} (hcap : Fintype.card R ≤ cap) (n : ℕ)
       Finset.sum_image injOn_decodeWord_iterate_firstCode]
 
 end GameTree
+
+/-! ### Polynomial-time parts -/
+
+section PolyTime
+
+open _root_.Turing _root_.Turing.MultiTapeTM ComputableTidilyInPolyTime
+
+/-- Decoding a word is polynomial-time. -/
+theorem computableTidilyInPolyTime_decodeWord :
+    ComputableTidilyInPolyTime decodeWord encBits encBits := by
+  have hidx : ComputableTidilyInPolyTime (fun u : List Bool => u.idxOf true + 1) encBits
+      encUnary := by
+    have h := (idxOf encBool).comp (bitsToList.prod (const (encMid := encBool) true))
+    have hsucc : ComputableTidilyInPolyTime (· + 1) encUnary encUnary :=
+      ComputableTidilyInDegree.unary_succ.computableTidilyInPolyTime
+    exact hsucc.comp h
+  exact bitsDropWithInput id' hidx
+
+/-- Decoding a history is polynomial-time. -/
+theorem computableTidilyInPolyTime_decodeHistory :
+    ComputableTidilyInPolyTime decodeHistory (encList (encPair encBits encBits)) encHistory := by
+  have hd := computableTidilyInPolyTime_decodeWord
+  unfold decodeHistory
+  fun_prop
+
+end PolyTime
+
+/-! ### The evaluation -/
+
+section Evaluation
+
+variable {α : Type} (enc : α ↪ List Bool) {k : ℕ} {Control : Type}
+  (M : _root_.Turing.MultiTapePTM k Bool Control Unit) (fuel : α → ℕ)
+
+/-- The states of the evaluation: the instance, the stack and the value being returned. -/
+abbrev EvalState (α : Type) := α × List (GameTree.Frame (List Bool)) × Option ℕ
+
+/-- One step of the evaluation of the game tree of the verifier `M` on `a`, with `fuel a` coins,
+rounds and message lengths. -/
+noncomputable def evalStep (s : EvalState α) : EvalState α :=
+  (s.1, GameTree.step (fuel s.1) (2 ^ fuel s.1) (firstCode (fuel s.1)) incrementBits
+    (lastCode (fuel s.1)) (leafValue (coinFamily M (fuel s.1) (enc s.1))) s.2)
+
+/-- The number of steps of the evaluation, a bound on `GameTree.time`. -/
+def evalTime (a : α) : ℕ := 2 ^ ((fuel a + 1) * (2 * fuel a + 1))
+
+/-- The value computed by the evaluation. -/
+noncomputable def evaluate (a : α) : ℕ :=
+  ((evalStep enc M fuel)^[evalTime fuel a] (a, [], none)).2.2.getD 0
+
+theorem iterate_evalStep (a : α) (st : List (GameTree.Frame (List Bool)) × Option ℕ) (j : ℕ) :
+    (evalStep enc M fuel)^[j] (a, st) = (a, (GameTree.step (fuel a) (2 ^ fuel a)
+      (firstCode (fuel a)) incrementBits (lastCode (fuel a))
+        (leafValue (coinFamily M (fuel a) (enc a))))^[j] st) := by
+  induction j generalizing st with
+  | zero => rfl
+  | succ j ih => rw [Function.iterate_succ_apply, Function.iterate_succ_apply, ← ih]; rfl
+
+/-- **The evaluation computes the value** of the verifier on `a`. -/
+theorem evaluate_eq (a : α) :
+    evaluate enc M fuel a = value (coinFamily M (fuel a) (enc a)) (fuel a) (fuel a) [] := by
+  have hN : 0 < codeCount (fuel a) := by
+    simp only [codeCount]
+    have := Nat.one_lt_two_pow (n := fuel a + 1) (by lia)
+    lia
+  have htime : GameTree.time (codeCount (fuel a)) (fuel a) ≤ evalTime fuel a := by
+    refine (GameTree.time_le _).trans (le_of_eq ?_)
+    rw [evalTime, codeCount, Nat.sub_add_cancel (Nat.one_le_two_pow), ← pow_mul]
+  rw [evaluate, iterate_evalStep, GameTree.iterate_step_eval hN
+    (fun i hi => lastCode_iterate_firstCode hi) htime]
+  simp only [Option.getD_some]
+  rw [gameTree_value_eq _ (by simp), decodeHistory_nil]
+
+end Evaluation
 
 end Cslib.Complexity.Interaction
