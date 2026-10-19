@@ -56,7 +56,11 @@ private noncomputable def satProofSystem : ProofSystem encCNF SAT :=
 /-- The assignment `x₀ ↦ true`, `x₁ ↦ true`, padded, proves `φ`. -/
 example : satProofSystem (frame (encCNF φ) ++
     ([true, true] ++ List.replicate ((encCNF φ).length - 2) false)) = φ :=
-  ProofSystem.ofVerifier_frame_append _ _ _ _ (by simp [encCNF]; decide) rfl
+  ProofSystem.ofVerifier_frame_append _ _ _ _ (by
+    have h : 2 ≤ (encCNF φ).length := by decide
+    simp only [List.length_append, List.length_cons, List.length_nil, List.length_replicate,
+      Polynomial.eval_X]
+    omega) rfl
 
 /-- No certificate satisfies `ψ`, so a word starting with `ψ` proves the default formula `φ`. -/
 example (w : List Bool) : satProofSystem (frame (encCNF ψ) ++ w) = φ := by
