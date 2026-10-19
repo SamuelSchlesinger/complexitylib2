@@ -116,14 +116,14 @@ example :
       true := rfl
 
 -- A repeated entry is selected only at its first occurrence.
-example : selectMask [1, 1, 2] [true, true, false] = [1] := rfl
+example : selectDistinct [1, 1, 2] [true, true, false] = [1] := rfl
 example :
     subsetVerifier (fun x : List ℕ × ℕ => x.1) hasCount (([1, 1, 2], 2), [true, true, false]) =
       false := rfl
 
 -- Missing mask bits are `false`, and bits beyond the candidates are ignored.
-example : selectMask [1, 1, 2] [false, false, true, true, true] = [2] := rfl
-example : selectMask [1, 1, 2] [] = [] := rfl
+example : selectDistinct [1, 1, 2] [false, false, true, true, true] = [2] := rfl
+example : selectDistinct [1, 1, 2] [] = [] := rfl
 
 -- Boundary: the empty set of the empty list.
 example : subsetVerifier (fun x : List ℕ × ℕ => x.1) hasCount (([], 0), []) = true := rfl
@@ -176,7 +176,8 @@ info: 'Cslib.Complexity.isVerifier_witnessVerifier' depends on axioms:
 #print axioms Cslib.Complexity.isVerifier_witnessVerifier
 
 /--
-info: 'Cslib.Complexity.mem_NP_of_witness' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.mem_NP_of_witness' depends on axioms:
+[propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.mem_NP_of_witness

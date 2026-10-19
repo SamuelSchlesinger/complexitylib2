@@ -38,7 +38,7 @@ supported:
   that encode no witness;
 * sets of candidates from a list computed from the instance
   (`Cslib.Complexity.mem_NP_of_subsetWitness`): bit `i` of the certificate selects the `i`-th
-  candidate at its first occurrence (`Cslib.Complexity.selectMask`), missing bits are `false`,
+  candidate at its first occurrence (`Cslib.Complexity.selectDistinct`), missing bits are `false`,
   and bits beyond the candidates are ignored;
 * bit strings read with default `false`, directly through `IsVerifier.of_padding`, as for the
   assignments of `SAT`.
@@ -53,15 +53,11 @@ only that prefix of the certificate, and `IsVerifier.of_padding` handles the res
 
 * `Cslib.Complexity.witnessVerifier`: the verifier of a witness relation, parsing certificates
   with a decoder.
-* `Cslib.Complexity.selectMask`, `Cslib.Complexity.subsetVerifier`: the distinct entries of a
+* `Cslib.Complexity.selectDistinct`, `Cslib.Complexity.subsetVerifier`: the distinct entries of a
   list selected by a mask, and the verifier of a subset problem.
 
 ## Main results
 
-* `Cslib.Complexity.IsVerifier.of_padding`: a verifier that accepts some short prefix with any
-  padding, for every member and only for members, verifies with certificates of exactly the
-  prescribed length.
-* `Cslib.Complexity.IsVerifier.guard`: a test on instances restricts the verified problem.
 * `Cslib.Complexity.witnessVerifier_eq_true_iff`: the witness verifier accepts exactly a framed
   encoded witness that passes the check, followed by any bits.
 * `Cslib.Complexity.isVerifier_witnessVerifier`, `Cslib.Complexity.mem_NP_of_witness`: a relation
@@ -84,30 +80,6 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 variable {α β γ : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}
   {A : Set α}
-
-/-! ### Padded certificates -/
-
-/-- **Padded certificates.** A verifier verifies `A` with certificates of length exactly
-`p (enc a).length` if it accepts certificates of that length only for members of `A`, and every
-member has a prefix `u` of at most that length which is accepted whatever padding by `false`
-follows it. -/
-theorem IsVerifier.of_padding
-    (sound : ∀ a w, w.length = p.eval (enc a).length → V (a, w) = true → a ∈ A)
-    (complete : ∀ a ∈ A, ∃ u : List Bool, u.length ≤ p.eval (enc a).length ∧
-      ∀ k, V (a, u ++ List.replicate k false) = true) :
-    IsVerifier enc p V A := fun a =>
-  ⟨fun ha =>
-    let ⟨u, hu, hV⟩ := complete a ha
-    ⟨u ++ List.replicate (p.eval (enc a).length - u.length) false, by
-      rw [List.length_append, List.length_replicate, Nat.add_sub_cancel' hu], hV _⟩,
-    fun ⟨w, hw, hV⟩ => sound a w hw hV⟩
-
-/-- Guarding a verifier by a test `c` on instances verifies the members of `A` that pass the
-test. -/
-theorem IsVerifier.guard {c : α → Bool} (h : IsVerifier enc p V A) :
-    IsVerifier enc p (fun x => c x.1 && V x) {a | c a = true ∧ a ∈ A} := fun a => by
-  simp only [Set.mem_ofPred_eq, Bool.and_eq_true, h a]
-  exact ⟨fun ⟨hc, w, hw, hV⟩ => ⟨w, hw, hc, hV⟩, fun ⟨w, hw, hc, hV⟩ => ⟨hc, w, hw, hV⟩⟩
 
 /-! ### Witnesses parsed by a decoder -/
 
@@ -195,13 +167,15 @@ variable [DecidableEq γ]
 
 /-- The distinct entries of `l` selected by the mask `w`: position `i` of `l` is kept when bit `i`
 of `w` is `true` and `i` is the first occurrence of its entry in `l`. Missing bits are `false`, and
-bits beyond the length of `l` are ignored. -/
-def selectMask (l : List γ) (w : List Bool) : List γ :=
+bits beyond the length of `l` are ignored. Unlike `Cslib.Complexity.maskSelect`, which keeps every
+selected position and so selects sub-multisets, a repeated entry is selected at most once, so the
+selection describes a set. -/
+def selectDistinct (l : List γ) (w : List Bool) : List γ :=
   (l.zipIdx.filter fun e => w.getD e.2 false && decide (l.idxOf e.1 = e.2)).map Prod.fst
 
-theorem mem_selectMask {l : List γ} {w : List Bool} {v : γ} :
-    v ∈ selectMask l w ↔ v ∈ l ∧ w.getD (l.idxOf v) false = true := by
-  simp only [selectMask, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
+theorem mem_selectDistinct {l : List γ} {w : List Bool} {v : γ} :
+    v ∈ selectDistinct l w ↔ v ∈ l ∧ w.getD (l.idxOf v) false = true := by
+  simp only [selectDistinct, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
     Bool.and_eq_true, decide_eq_true_eq, Prod.exists]
   constructor
   · rintro ⟨u, i, ⟨hi, hw, hidx⟩, rfl⟩
@@ -210,7 +184,7 @@ theorem mem_selectMask {l : List γ} {w : List Bool} {v : γ} :
     have hlt : l.idxOf v < l.length := List.idxOf_lt_length_iff.2 hv
     exact ⟨v, l.idxOf v, ⟨by simp [hlt], hw, rfl⟩, rfl⟩
 
-theorem nodup_selectMask (l : List γ) (w : List Bool) : (selectMask l w).Nodup := by
+theorem nodup_selectDistinct (l : List γ) (w : List Bool) : (selectDistinct l w).Nodup := by
   have hzip : l.zipIdx.Nodup := by
     rw [List.Nodup, List.pairwise_iff_getElem]
     intro i j hi hj hij h
@@ -224,8 +198,8 @@ theorem nodup_selectMask (l : List γ) (w : List Bool) : (selectMask l w).Nodup 
 
 /-- The entries of `l` selected by the mask of a set `S` of entries of `l`, followed by any bits,
 are the elements of `S`. -/
-theorem toFinset_selectMask_map_append {l : List γ} {S : Finset γ} (hS : ∀ v ∈ S, v ∈ l)
-    (u : List Bool) : (selectMask l (l.map (fun v => decide (v ∈ S)) ++ u)).toFinset = S := by
+theorem toFinset_selectDistinct_map_append {l : List γ} {S : Finset γ} (hS : ∀ v ∈ S, v ∈ l)
+    (u : List Bool) : (selectDistinct l (l.map (fun v => decide (v ∈ S)) ++ u)).toFinset = S := by
   have hget : ∀ v ∈ l,
       (l.map (fun v => decide (v ∈ S)) ++ u).getD (l.idxOf v) false = decide (v ∈ S) := by
     intro v hv
@@ -233,22 +207,22 @@ theorem toFinset_selectMask_map_append {l : List γ} {S : Finset γ} (hS : ∀ v
     rw [List.getD_append _ _ _ _ (by simpa using hlt),
       List.getD_eq_getElem _ _ (by simpa using hlt), List.getElem_map, List.getElem_idxOf hlt]
   ext v
-  rw [List.mem_toFinset, mem_selectMask]
+  rw [List.mem_toFinset, mem_selectDistinct]
   exact ⟨fun ⟨hv, h⟩ => of_decide_eq_true ((hget v hv).symm.trans h),
     fun hv => ⟨hS v hv, (hget v (hS v hv)).trans (decide_eq_true hv)⟩⟩
 
 /-- Selecting the entries of a list from a mask is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_selectMask (encγ : γ ↪ List Bool) :
-    ComputableTidilyInPolyTime (fun x : List γ × List Bool => selectMask x.1 x.2)
+theorem computableTidilyInPolyTime_selectDistinct (encγ : γ ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun x : List γ × List Bool => selectDistinct x.1 x.2)
       (encPair (encList encγ) encBits) (encList encγ) := by
-  unfold selectMask
+  unfold selectDistinct
   fun_prop
 
 /-- The verifier of a subset problem over the candidates `vs a`: select candidates by the
-certificate mask (`selectMask`) and check the selected list. -/
+certificate mask (`selectDistinct`) and check the selected list. -/
 def subsetVerifier (vs : α → List γ) (check : α × List γ → Bool) (x : α × List Bool) : Bool :=
-  check (x.1, selectMask (vs x.1) x.2)
+  check (x.1, selectDistinct (vs x.1) x.2)
 
 /-- **Subset witnesses.** Let the candidates `vs a` be at most `p (enc a).length` many, and let
 `check` decide `P a` on the duplicate-free lists of candidates. Then `subsetVerifier vs check`
@@ -260,14 +234,14 @@ theorem isVerifier_subsetVerifier {vs : α → List γ}
     (hP : ∀ a l, l.Nodup → (∀ v ∈ l, v ∈ vs a) → (check (a, l) = true ↔ P a l.toFinset)) :
     IsVerifier enc p (subsetVerifier vs check)
       {a | ∃ S : Finset γ, (∀ v ∈ S, v ∈ vs a) ∧ P a S} := by
-  have hsub (a : α) (w : List Bool) : ∀ v ∈ selectMask (vs a) w, v ∈ vs a :=
-    fun _ hv => (mem_selectMask.1 hv).1
+  have hsub (a : α) (w : List Bool) : ∀ v ∈ selectDistinct (vs a) w, v ∈ vs a :=
+    fun _ hv => (mem_selectDistinct.1 hv).1
   refine IsVerifier.of_padding (fun a w _ h => ?_) fun a ⟨S, hS, hPS⟩ => ?_
   · exact ⟨_, fun v hv => hsub a w v (List.mem_toFinset.1 hv),
-      (hP a _ (nodup_selectMask _ _) (hsub a w)).1 h⟩
+      (hP a _ (nodup_selectDistinct _ _) (hsub a w)).1 h⟩
   · refine ⟨(vs a).map (fun v => decide (v ∈ S)), by simpa using hvs a, fun k => ?_⟩
-    refine (hP a _ (nodup_selectMask _ _) (hsub a _)).2 ?_
-    rwa [toFinset_selectMask_map_append hS]
+    refine (hP a _ (nodup_selectDistinct _ _) (hsub a _)).2 ?_
+    rwa [toFinset_selectDistinct_map_append hS]
 
 /-- The verifier of a subset problem is polynomial-time when the candidates and the check are. -/
 @[fun_prop]
@@ -275,7 +249,7 @@ theorem computableTidilyInPolyTime_subsetVerifier {encγ : γ ↪ List Bool} {vs
     (hvs : ComputableTidilyInPolyTime vs enc (encList encγ)) {check : α × List γ → Bool}
     (hcheck : ComputableTidilyInPolyTime check (encPair enc (encList encγ)) encBool) :
     ComputableTidilyInPolyTime (subsetVerifier vs check) (encPair enc encBits) encBool :=
-  hcheck.comp ((fst enc encBits).prod ((computableTidilyInPolyTime_selectMask encγ).comp
+  hcheck.comp ((fst enc encBits).prod ((computableTidilyInPolyTime_selectDistinct encγ).comp
     ((hvs.comp (fst enc encBits)).prod (snd enc encBits))))
 
 /-- **NP membership of subset problems.** If the candidates `vs a` and the check of the selected

@@ -11,7 +11,6 @@ public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Logics.Propositional.CNF
-import Complexity.Computability.Complexity.Classes.NP.Witness
 
 /-!
 # The satisfiability problem

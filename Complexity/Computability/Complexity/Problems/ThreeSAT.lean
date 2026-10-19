@@ -12,7 +12,6 @@ public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Sum
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Mathlib.Data.Nat.Pairing
-import Complexity.Computability.Complexity.Classes.NP.Witness
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List

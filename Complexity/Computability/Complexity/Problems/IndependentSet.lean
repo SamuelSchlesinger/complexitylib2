@@ -110,25 +110,25 @@ theorem computableTidilyInPolyTime_adjBool :
 
 /-- Select distinct declared vertices from `V` using the certificate mask `w`: position `i` of `V`
 is kept when bit `i` of `w` is `true` and `i` is the first occurrence of that vertex in `V`. This is
-`Cslib.Complexity.selectMask` on vertex lists (`selectVertices_eq_selectMask`). -/
+`Cslib.Complexity.selectDistinct` on vertex lists (`selectVertices_eq_selectDistinct`). -/
 def selectVertices (V : List ℕ) (w : List Bool) : List ℕ :=
   (V.zipIdx.filter fun p => w.getD p.2 false && decide (V.idxOf p.1 = p.2)).map Prod.fst
 
-theorem selectVertices_eq_selectMask : selectVertices = selectMask := rfl
+theorem selectVertices_eq_selectDistinct : selectVertices = selectDistinct := rfl
 
 theorem mem_selectVertices {V : List ℕ} {w : List Bool} {v : ℕ} :
     v ∈ selectVertices V w ↔ v ∈ V ∧ w.getD (V.idxOf v) false = true :=
-  mem_selectMask
+  mem_selectDistinct
 
 theorem nodup_selectVertices (V : List ℕ) (w : List Bool) : (selectVertices V w).Nodup :=
-  nodup_selectMask V w
+  nodup_selectDistinct V w
 
 /-- Selecting distinct declared vertices from a certificate mask is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_selectVertices :
     ComputableTidilyInPolyTime (fun p : List ℕ × List Bool => selectVertices p.1 p.2)
       (encPair (encList encNat) encBits) (encList encNat) :=
-  computableTidilyInPolyTime_selectMask encNat
+  computableTidilyInPolyTime_selectDistinct encNat
 
 /-- Verify a cardinality-`m` vertex subset problem with pairwise relation `rel`: select distinct
 declared vertices from `G.1` by the certificate mask, compare the selected count with `m` in

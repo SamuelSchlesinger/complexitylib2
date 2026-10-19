@@ -43,7 +43,8 @@ open scoped List
 variable {α : Type}
 
 /-- The entries of `l` at the positions where `w` is `true`; positions beyond the end of `w` are
-not selected. -/
+not selected. Repeated entries may be selected repeatedly, so masks select sub-multisets; for sets,
+`Cslib.Complexity.selectDistinct` selects each entry at most once. -/
 def maskSelect (l : List α) (w : List Bool) : List α :=
   (l.zipIdx.filter fun p => w.getD p.2 false).map Prod.fst
 
