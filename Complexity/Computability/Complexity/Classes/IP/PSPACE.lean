@@ -403,6 +403,48 @@ theorem computableTidilyInPolyTime_returnStep :
   unfold returnStep
   fun_prop
 
+theorem computableTidilyInPolyTime_pushStep :
+    ComputableTidilyInPolyTime (fun p : EvalState α × ℕ =>
+      (p.1.1, pushStep (fuel p.1.1) p.1.2.1 p.2))
+      (encPair (encEvalState enc) encNat) (encEvalState enc) := by
+  have hfuel' : ComputableTidilyInPolyTime (fun p : EvalState α × ℕ => fuel p.1.1)
+      (encPair (encEvalState enc) encNat) encUnary := hfuel.comp (by fun_prop)
+  unfold pushStep
+  fun_prop
+
+/-- **The leaf value within polynomial space**: the count of accepting coins, capped. -/
+theorem computableTidilyInPolySpace_leaf [Finite Control] [Inhabited α] :
+    ComputableTidilyInPolySpace (fun s : EvalState α => min (2 ^ fuel s.1)
+      (leafValue (coinFamily M (fuel s.1) (enc s.1)) (GameTree.history s.2.1)))
+      (encEvalState enc) encNat := by
+  have hcount := computableTidilyInPolySpace_countAccepts M enc fuel hfuel
+  have hdec := computableTidilyInPolyTime_decodeHistory
+  have harg : ComputableTidilyInPolyTime (fun s : EvalState α =>
+      (s.1, decodeHistory (GameTree.history s.2.1))) (encEvalState enc)
+      (encPair enc encHistory) := by
+    unfold GameTree.history
+    fun_prop
+  have hcap : ComputableTidilyInPolyTime (fun s : EvalState α => 2 ^ fuel s.1)
+      (encEvalState enc) encNat := twoPow_pt (hfuel.comp (fst _ _))
+  have hmin : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => min p.1 p.2) (encPair encNat encNat)
+      encNat := by fun_prop
+  refine ((ComputableTidilyInPolySpace.of_polyTime hmin).comp
+    ((ComputableTidilyInPolySpace.of_polyTime hcap).prod (hcount.comp
+      (ComputableTidilyInPolySpace.of_polyTime harg)))).congr fun s => ?_
+  simp only [leafValue, countAccepts_eq_accepted]
+
+/-- **A step of the evaluation within polynomial space.** -/
+theorem computableTidilyInPolySpace_evalStep [Finite Control] [Inhabited α] :
+    ComputableTidilyInPolySpace (evalStep enc M fuel) (encEvalState enc) (encEvalState enc) := by
+  have hcond : ComputableTidilyInPolyTime (fun s : EvalState α => s.2.2.isSome)
+      (encEvalState enc) encBool := by fun_prop
+  refine (ComputableTidilyInPolySpace.ite (.of_polyTime hcond)
+    (.of_polyTime (computableTidilyInPolyTime_returnStep hfuel))
+    ((ComputableTidilyInPolySpace.of_polyTime (computableTidilyInPolyTime_pushStep hfuel)).comp
+      ((ComputableTidilyInPolySpace.of_polyTime id').prod
+        (computableTidilyInPolySpace_leaf M hfuel)))).congr fun s => ?_
+  rw [evalStep_eq]
+
 end Space
 
 end Cslib.Complexity.Interaction
