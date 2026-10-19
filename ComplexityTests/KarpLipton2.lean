@@ -24,7 +24,8 @@ open Cslib.Circuits Cslib.Circuits.Boolean Cslib.Complexity Cslib.Logic.PL Turin
 
 /-- A brute-force decision procedure for `SAT`: try every certificate with one bit for each literal
 occurrence. -/
-def bruteSAT (ψ : CNF ℕ) : Bool := (BitString.enumList ψ.vars.length).any fun w => SAT.verifier (ψ, w)
+def bruteSAT (ψ : CNF ℕ) : Bool :=
+  (BitString.enumList ψ.vars.length).any fun w => SAT.verifier (ψ, w)
 
 /-- The brute-force procedure decides `SAT`, so it meets the hypothesis of
 `SAT.verifier_search` at every length. -/
@@ -51,9 +52,11 @@ example : SAT.verifier (φ₁, SAT.search bruteSAT φ₁) = true := by decide
 example : SAT.verifier (φ₁, SAT.search bruteSAT φ₁) = true :=
   SAT.verifier_search (fun ψ _ => bruteSAT_iff ψ) ⟨fun v => v == 1, by decide⟩
 
+/-- `x₀ ∧ ¬x₀`. -/
+def φ₂ : CNF ℕ := [[(0, true)], [(0, false)]]
+
 -- On an unsatisfiable formula, no certificate is accepted.
-example : SAT.verifier ([[(0, true)], [(0, false)]], SAT.search bruteSAT [[(0, true)], [(0, false)]]) =
-    false := by decide
+example : SAT.verifier (φ₂, SAT.search bruteSAT φ₂) = false := by decide
 
 -- With wrong answers, the self-reduction can miss a satisfying assignment.
 example : SAT.search (fun _ => true) φ₁ = [true, true, true] := by decide
