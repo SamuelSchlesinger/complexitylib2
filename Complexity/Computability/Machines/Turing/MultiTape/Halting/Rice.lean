@@ -140,6 +140,213 @@ noncomputable def dispatch {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ) (tm
   ⟨k + width d + 1, 0, markerEntries eS tm d ++ runEntries eS tm d ++ branchEntries d k ++
     redirectEntries d k false ++ redirectEntries d k true⟩
 
+namespace Dispatch
+
+variable {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ) (tm : MultiTapeTM k Bool S)
+  (d : Bool → Desc)
+
+/-! #### The transitions of `dispatch eS tm d` -/
+
+/-- The action of the transitions writing the marker, rewinding and branching, as a function of
+their keys. -/
+def prepAct (key : Key) : Act :=
+  if key.state = 0 then ⟨.zero, [(some (some marker), .pos)], none, some (4 * eS tm.q₀ + 1)⟩
+  else if key.state = 4 then
+    if key.work.head? = some (some marker) then ⟨.zero, [(none, .pos)], none, some 8⟩
+    else ⟨.zero, [(none, .neg)], none, some 4⟩
+  else ⟨.neg, [(some (some marker), .pos)], none,
+    some (if key.work.head? = some (some (eBit true)) then dstate true (d true).q₀
+      else dstate false (d false).q₀)⟩
+
+theorem table_dispatch : (dispatch eS tm d).table = markerEntries eS tm d ++ runEntries eS tm d ++
+    branchEntries d k ++ redirectEntries d k false ++ redirectEntries d k true :=
+  rfl
+
+omit [Fintype S] in
+theorem prep_spec {e : Key × Act} (he : e ∈ markerEntries eS tm d ++ branchEntries d k) :
+    (e.1.state = 0 ∨ e.1.state = 4 ∨ e.1.state = 8) ∧ e.2 = prepAct eS tm d e.1 := by
+  simp only [markerEntries, branchEntries, rewindEntries, bitSyms, List.mem_append, List.mem_map,
+    List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with ⟨r, -, rfl⟩ | (⟨r, -, (⟨s, hs, rfl⟩ | rfl)⟩ | ⟨r, -, b, hb, rfl⟩)
+  · simp [prepAct]
+  · rcases hs with rfl | rfl | rfl <;> simp [prepAct, marker]
+  · simp [prepAct]
+  · rcases hb with rfl | rfl <;> simp [prepAct, marker]
+
+theorem state_runEntries {e : Key × Act} (he : e ∈ runEntries eS tm d) : e.1.state % 4 = 1 := by
+  obtain ⟨e', -, rfl⟩ := List.mem_map.mp he
+  simp
+
+theorem state_redirectEntries {b : Bool} {e : Key × Act} (he : e ∈ redirectEntries d k b) :
+    e.1.state % 4 = 2 + b.toNat := by
+  simp only [redirectEntries, redirect, List.mem_flatMap, List.mem_map] at he
+  obtain ⟨e', -, s, -, rfl⟩ := he
+  cases b
+  · simp [redirectEntry, dstate]
+  · simp only [redirectEntry, dstate, Bool.toNat_true]
+    omega
+
+/-- Each transition writing the marker, rewinding or branching is the one found for its key. -/
+theorem find?_prep {e : Key × Act} (he : e ∈ markerEntries eS tm d ++ branchEntries d k) :
+    (dispatch eS tm d).table.find? (·.1 = e.1) = some e := by
+  refine find?_eq_some_of_mem ?_ fun e' he' hk => ?_
+  · rw [table_dispatch]
+    simp only [List.mem_append] at he ⊢
+    tauto
+  · have hs := (prep_spec eS tm d he).1
+    rw [table_dispatch] at he'
+    simp only [List.mem_append] at he'
+    rcases he' with (((he' | he') | he') | he') | he'
+    · rw [(prep_spec eS tm d (List.mem_append_left _ he')).2, (prep_spec eS tm d he).2, hk]
+    · have := state_runEntries eS tm d he'
+      rw [hk] at this
+      omega
+    · rw [(prep_spec eS tm d (List.mem_append_right _ he')).2, (prep_spec eS tm d he).2, hk]
+    · have := state_redirectEntries d he'
+      rw [hk] at this
+      simp at this
+      omega
+    · have := state_redirectEntries d he'
+      rw [hk] at this
+      simp at this
+      omega
+
+/-- For the states of `tm`, the transitions found are those of `tm`, writing the output on the
+virtual input tape. -/
+theorem find?_run (q : ℕ) (i : Option ℕ) (ws : List (Option ℕ)) :
+    (dispatch eS tm d).table.find?
+        (·.1 = ⟨4 * q + 1, i, none :: (ws ++ List.replicate (width d) none)⟩) =
+      ((desc eS eBit tm).table.find? (·.1 = ⟨q, i, ws⟩)).map fun e =>
+        (⟨4 * e.1.state + 1, e.1.input, none :: (e.1.work ++ List.replicate (width d) none)⟩,
+          ⟨e.2.inputTape, outAct e.2.output :: e.2.workTapes, none,
+            some (e.2.state.elim 4 fun q => 4 * q + 1)⟩) := by
+  rw [table_dispatch, find?_append_of_forall_not' fun e he => ?_,
+    find?_append_of_forall_not' fun e he => ?_, find?_append_of_forall_not' fun e he => ?_,
+    find?_append_of_forall_not fun e he => ?_, runEntries, List.find?_map]
+  · congr 2
+    funext e
+    obtain ⟨⟨q', i', w'⟩, a⟩ := e
+    simp only [Function.comp_apply, Key.mk.injEq, List.cons.injEq, true_and,
+      List.append_cancel_right_eq, decide_eq_decide]
+    constructor
+    · rintro ⟨h₁, rfl, rfl⟩
+      exact ⟨by omega, rfl, rfl⟩
+    · rintro ⟨rfl, rfl, rfl⟩
+      exact ⟨rfl, rfl, rfl⟩
+  · have := (prep_spec eS tm d (List.mem_append_left _ he)).1
+    simp only [decide_eq_false_iff_not]
+    intro h
+    rw [h] at this
+    dsimp only at this
+    omega
+  · have := (prep_spec eS tm d (List.mem_append_right _ he)).1
+    simp only [decide_eq_false_iff_not]
+    intro h
+    rw [h] at this
+    dsimp only at this
+    omega
+  · have := state_redirectEntries d he
+    simp only [decide_eq_false_iff_not]
+    intro h
+    rw [h] at this
+    simp at this
+  · have := state_redirectEntries d he
+    simp only [decide_eq_false_iff_not]
+    intro h
+    rw [h] at this
+    simp at this
+
+/-- For the states of `d b` and an input head reading a blank, the transitions found are those of
+`d b`, redirected. -/
+theorem find?_redirectEntries (b : Bool) (q : ℕ) (ws : List (Option ℕ)) :
+    (dispatch eS tm d).table.find? (·.1 = ⟨dstate b q, none, ws⟩) =
+      (redirectEntries d k b).find? (·.1 = ⟨dstate b q, none, ws⟩) := by
+  have hprep : ∀ e ∈ markerEntries eS tm d ++ runEntries eS tm d ++ branchEntries d k,
+      decide (e.1 = ⟨dstate b q, none, ws⟩) = false := by
+    intro e he
+    simp only [decide_eq_false_iff_not]
+    intro h
+    have hb := Bool.toNat_le b
+    simp only [List.mem_append] at he
+    rcases he with (he | he) | he
+    · have := (prep_spec eS tm d (List.mem_append_left _ he)).1
+      rw [h] at this
+      simp only [dstate] at this
+      omega
+    · have := state_runEntries eS tm d he
+      rw [h] at this
+      simp only [dstate] at this
+      omega
+    · have := (prep_spec eS tm d (List.mem_append_right _ he)).1
+      rw [h] at this
+      simp only [dstate] at this
+      omega
+  cases b
+  · rw [table_dispatch, find?_append_of_forall_not' fun e he => ?_,
+      find?_append_of_forall_not hprep]
+    have := state_redirectEntries d he
+    simp only [decide_eq_false_iff_not]
+    intro h
+    rw [h] at this
+    simp only [dstate, Bool.toNat_true, Bool.toNat_false] at this
+    omega
+  · rw [table_dispatch, find?_append_of_forall_not fun e he => ?_]
+    rcases List.mem_append.mp he with he | he
+    · exact hprep e he
+    · have := state_redirectEntries d he
+      simp only [decide_eq_false_iff_not]
+      intro h
+      rw [h] at this
+      simp only [dstate, Bool.toNat_true, Bool.toNat_false] at this
+      omega
+
+/-! #### Running `tm` -/
+
+/-- The configuration of `dispatch eS tm d` standing for the configuration `c` of the description
+of `tm`, with the output `out` so far written on the virtual input tape. -/
+def runCfg (c : SCfg) (out : List ℕ) : SCfg :=
+  ⟨some (c.state.elim 4 fun q => 4 * q + 1), c.inputPos,
+    wtape (vcells out) :: (c.workTapes ++ List.replicate (width d) Tape.blank)⟩
+
+theorem applyTapes_append_of_length_le {ts us : List Tape} {as : List TapeAct}
+    (h : as.length ≤ ts.length) : applyTapes (ts ++ us) as = applyTapes ts as ++ us := by
+  induction ts generalizing as with
+  | nil =>
+    rw [List.length_eq_zero_iff.mp (Nat.le_zero.mp h)]
+    simp [applyTapes_nil, applyTapes]
+  | cons t ts ih =>
+    cases as with
+    | nil => simp [applyTapes]
+    | cons a as => simp [applyTapes, ih (by simpa using h)]
+
+theorem wtape_apply_outAct (cs : List (Option ℕ)) (o : Option ℕ) :
+    (wtape cs).apply (outAct o) = wtape (cs ++ o.toList.map some) := by
+  cases o with
+  | none => simp [outAct, Tape.apply, Tape.move]
+  | some s => simpa [outAct, Tape.apply] using wtape_write_move cs (some s)
+
+/-- A step of `tm` is a step of `dispatch eS tm d`, which emits nothing. -/
+theorem stepOut_runCfg {X : List ℕ} {c : SCfg} {q : ℕ} (hq : c.state = some q) {e : Key × Act}
+    (he : (desc eS eBit tm).table.find? (·.1 = c.key X q) = some e)
+    (hlen : e.2.workTapes.length ≤ c.workTapes.length) (out : List ℕ) :
+    stepOut (dispatch eS tm d) X (runCfg d c out, []) =
+      (runCfg d (step (desc eS eBit tm) X c).1 (out ++ (step (desc eS eBit tm) X c).2.toList),
+        []) := by
+  have hkey : (runCfg d c out).key X (4 * q + 1) = ⟨4 * q + 1, inputSymbol X c.inputPos,
+      none :: (c.workTapes.map Tape.read ++ List.replicate (width d) none)⟩ := by
+    simp [runCfg, SCfg.key]
+  have hf := find?_run eS tm d q (inputSymbol X c.inputPos) (c.workTapes.map Tape.read)
+  rw [show (⟨q, inputSymbol X c.inputPos, c.workTapes.map Tape.read⟩ : Key) = c.key X q from rfl,
+    he, Option.map_some, ← hkey] at hf
+  rw [stepOut, step_of_find? (c := runCfg d c out) (q := 4 * q + 1) (by simp [runCfg, hq]) hf,
+    step_of_find? hq he]
+  obtain ⟨st, p, ws⟩ := c
+  simp only [runCfg, Act.apply, applyTapes, applyTapes_append_of_length_le hlen,
+    wtape_apply_outAct, vcells, List.map_append, List.cons_append, Option.toList_none,
+    List.append_nil]
+
+end Dispatch
+
 end Universal
 
 end Turing.MultiTapeTM
