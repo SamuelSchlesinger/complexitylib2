@@ -153,9 +153,8 @@ theorem unpad_pad (u : List Bool) (k : ℕ) : unpad (pad u k) = (u, k) := by
   rw [unpad, hrev, idxOf_false_replicate_append, length_pad,
     show u.length + 1 + k - (k + 1) = u.length by omega, pad, List.take_left' rfl]
 
-theorem pad_injective {u u' : List Bool} {k k' : ℕ} (h : pad u k = pad u' k') :
-    u = u' ∧ k = k' := by
-  simpa using congrArg unpad h
+theorem pad_inj {u u' : List Bool} {k k' : ℕ} : pad u k = pad u' k' ↔ u = u' ∧ k = k' :=
+  ⟨fun h => by simpa using congrArg unpad h, fun ⟨hu, hk⟩ => hu ▸ hk ▸ rfl⟩
 
 /-- A word with a `false` is a run of `true`s up to its first `false`, and what follows. -/
 theorem eq_replicate_idxOf_false {l : List Bool} (hl : false ∈ l) :
@@ -190,7 +189,7 @@ theorem pad_mem_padSAT_iff {e : ℕ → ℕ} {φ : Logic.PL.CNF ℕ} {k : ℕ} :
     pad (encCNF φ) k ∈ padSAT e ↔ φ ∈ SAT ∧ k = (encCNF φ).length ^ e (encCNF φ).length := by
   constructor
   · rintro ⟨ψ, hψ, h⟩
-    obtain ⟨h₁, rfl⟩ := pad_injective h
+    obtain ⟨h₁, rfl⟩ := pad_inj.mp h
     obtain rfl := encCNF.injective h₁
     exact ⟨hψ, rfl⟩
   · rintro ⟨hφ, rfl⟩

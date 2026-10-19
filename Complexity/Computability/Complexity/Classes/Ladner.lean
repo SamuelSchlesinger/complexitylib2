@@ -9,9 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
 public import Complexity.Computability.Complexity.Classes.P
-public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.Reduction
 public import Mathlib.Data.Set.Finite.List
+import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
@@ -67,7 +67,7 @@ hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`).
 * `Cslib.Complexity.Ladner.exists_H_le_of_mem_P`: if `SATH ∈ P`, `H` is bounded.
 * `Cslib.Complexity.Ladner.reducible_of_H_le`: if `H` is bounded, `SAT` reduces to `SATH`.
 * `Cslib.Complexity.Ladner.SATH_mem_P_of_frequently_H_eq`,
-  `Cslib.Complexity.Ladner.tendsto_H_of_not_mem_P`: if `H` takes a value infinitely often,
+  `Cslib.Complexity.Ladner.tendsto_H_of_notMem_P`: if `H` takes a value infinitely often,
   `SATH ∈ P`; so if `SATH ∉ P`, `H` tends to infinity.
 * `Cslib.Complexity.Ladner.SAT_mem_P_of_reducible_of_tendsto`: if `SAT` reduces to `SATH` and `H`
   tends to infinity, then `SAT ∈ P`.
@@ -113,7 +113,7 @@ theorem P_eq_NP_of_SAT_mem_P (h : SAT ∈ P encCNF) {α : Type} (enc : α ↪ Li
   P_subset_NP.antisymm fun A hA => (CookLevin.SAT_npComplete.2 enc A hA).mem_P h
 
 /-- `P ≠ NP`, for any encoding, puts `SAT` outside `P`. -/
-theorem SAT_not_mem_P {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) : SAT ∉ P encCNF :=
+theorem SAT_notMem_P {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) : SAT ∉ P encCNF :=
   fun hSAT => h (P_eq_NP_of_SAT_mem_P hSAT enc)
 
 /-! ### A machine deciding Ladner's language bounds the exponent -/
@@ -244,7 +244,7 @@ theorem SATH_mem_P_of_frequently_H_eq {i : ℕ} (h : ∃ᶠ n in Filter.atTop, H
     cases b <;> decide
 
 /-- **If `SATH` is not in `P`, then `H` tends to infinity.** -/
-theorem tendsto_H_of_not_mem_P (h : SATH ∉ P encBits) :
+theorem tendsto_H_of_notMem_P (h : SATH ∉ P encBits) :
     Filter.Tendsto H Filter.atTop Filter.atTop := by
   refine Filter.tendsto_atTop.mpr fun C => ?_
   have hne (i : ℕ) : ∀ᶠ n in Filter.atTop, H n ≠ i :=
@@ -259,7 +259,7 @@ theorem tendsto_H_of_not_mem_P (h : SATH ∉ P encBits) :
 /-- The unsatisfiable formula with one empty clause. -/
 def falseCNF : CNF ℕ := [[]]
 
-theorem falseCNF_not_mem_SAT : falseCNF ∉ SAT := by
+theorem falseCNF_notMem_SAT : falseCNF ∉ SAT := by
   rintro ⟨σ, hσ⟩
   simp [falseCNF, CNF.eval, Clause.eval] at hσ
 
@@ -278,7 +278,7 @@ theorem shrink_mem_SAT_iff {R : CNF ℕ → List Bool} (hR : ∀ φ, φ ∈ SAT 
   · rfl
   · rw [hR φ, SATH, mem_padSAT_iff]
     cases padCheck H (R φ) with
-    | none => simp [falseCNF_not_mem_SAT]
+    | none => simp [falseCNF_notMem_SAT]
     | some ψ => simp
 
 /-- **A round of the self-reduction shortens long formulas.** Let `R` have output length at most
@@ -393,7 +393,7 @@ applies, or `H` tends to infinity, and the second hole applies to the reduction 
 theorem SAT_mem_P_of_NPHard_SATH (h : NPHard encBits SATH) : SAT ∈ P encCNF := by
   by_cases hP : SATH ∈ P encBits
   · exact SAT_mem_P_of_SATH_mem_P hP
-  · exact SAT_mem_P_of_reducible_of_tendsto (h encCNF SAT SAT.mem_NP) (tendsto_H_of_not_mem_P hP)
+  · exact SAT_mem_P_of_reducible_of_tendsto (h encCNF SAT SAT.mem_NP) (tendsto_H_of_notMem_P hP)
 
 /-! ### Ladner's theorem -/
 
@@ -408,7 +408,7 @@ theorem P_eq_NP_of_NPComplete_SATH (h : NPComplete encBits SATH) {α : Type}
   P_eq_NP_of_SAT_mem_P (SAT_mem_P_of_NPHard_SATH h.2) enc
 
 /-- If `P ≠ NP`, Ladner's language is not in `P`. -/
-theorem SATH_not_mem_P {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
+theorem SATH_notMem_P {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
     SATH ∉ P encBits :=
   fun hP => h (P_eq_NP_of_SATH_mem_P hP enc)
 
@@ -422,7 +422,7 @@ neither in `P` nor `NP`-complete: Ladner's language `SATH` [Arora and Barak, The
 3.3][AroraBarak09]. -/
 theorem exists_NP_not_P_not_NPComplete {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
     ∃ L : Set (List Bool), L ∈ NP encBits ∧ L ∉ P encBits ∧ ¬NPComplete encBits L :=
-  ⟨SATH, SATH_mem_NP, SATH_not_mem_P h, not_NPComplete_SATH h⟩
+  ⟨SATH, SATH_mem_NP, SATH_notMem_P h, not_NPComplete_SATH h⟩
 
 end Ladner
 

@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Mathlib.Data.List.DropRight
 import Complexity.Computability.Complexity.Classes.Hierarchy
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
+import Complexity.Computability.Kolmogorov.SelfDelimiting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
@@ -108,17 +109,6 @@ theorem bits_ofBits (w : List Bool) : (ofBits w).bits = w.rdropWhile (!·) := by
       · simp only [bits_eq_nil_iff, h₀, ↓reduceIte]
         rfl
 
-theorem ofBits_bits (n : ℕ) : ofBits n.bits = n := by
-  induction n using Nat.binaryRec with
-  | zero => simp [ofBits]
-  | bit b n ih =>
-    by_cases h : n = 0 → b = true
-    · rw [Nat.bits_append_bit _ _ h, ofBits, List.foldr_cons, ← ofBits, ih]
-    · obtain ⟨rfl, hb⟩ := not_imp.mp h
-      simp only [Bool.not_eq_true] at hb
-      subst hb
-      simp [ofBits]
-
 /-- Drops the `false`s at the start of a word. -/
 def dropFalsesT : Transducer Bool Bool where
   q₀ := false
@@ -145,7 +135,8 @@ theorem dropFalsesT_run (w : List Bool) : dropFalsesT.run false w = w.dropWhile 
 /-- Binary numbers are decoded from their digits up to the last `true`. -/
 def natDecoder : Decoder encNat where
   decode := ofBits
-  decode_enc := ofBits_bits
+  -- a tactic proof keeps `Kolmogorov.SelfDelimiting` a proof-only import
+  decode_enc n := by exact Nat.foldr_bit_bits n
   computable := by
     have hd : ComputableTidilyInPolyTime (fun w : List Bool => w.dropWhile (!·)) encBits encBits :=
       of_linear (dropFalsesT.computableTidilyInLinearTimeAndSpace fun w =>

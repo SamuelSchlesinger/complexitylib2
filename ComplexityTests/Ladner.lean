@@ -151,7 +151,7 @@ example : P encBits ⊆ NP encBits := P_subset_NP
 example (C : ℕ) : padBounded C [] = [false, true] := by
   simp [padBounded, encCNF, capPow, H_zero, pad]
 
-example : falseCNF ∉ SAT := falseCNF_not_mem_SAT
+example : falseCNF ∉ SAT := falseCNF_notMem_SAT
 
 /-- A round of the self-reduction keeps short formulas. -/
 example (R : CNF ℕ → List Bool) : shrink R 1 [] = [] := by
@@ -163,7 +163,7 @@ example : encCNF [] ∈ smallSAT 1 :=
 
 /-- An unsatisfiable formula is not in the finite table. -/
 example : encCNF falseCNF ∉ smallSAT 10 := fun h =>
-  falseCNF_not_mem_SAT ((mem_smallSAT (by decide)).mp h)
+  falseCNF_notMem_SAT ((mem_smallSAT (by decide)).mp h)
 
 /-- The unconditional form: Ladner's language is in `NP`, in `P` only if `SAT` is, and
 `NP`-complete only if `P = NP`. -/
