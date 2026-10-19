@@ -83,9 +83,13 @@ theorem totalInfluence_signVal_le_of_degree (f : (ι → Bool) → Bool) {d : �
 private theorem indicator_half_sub_ne_zero_le (a b : ℝ) :
     (if (a - b) / 2 ≠ 0 then (1 : ℝ) else 0) ≤
       (if a ≠ 0 then 1 else 0) + (if b ≠ 0 then 1 else 0) := by
-  by_cases ha : a = 0 <;> by_cases hb : b = 0 <;>
-    simp only [ha, hb, ne_eq, sub_self, zero_div, not_true_eq_false, not_false_eq_true,
-      ite_true, ite_false] <;> (try split_ifs) <;> norm_num
+  by_cases hab : a = 0 ∧ b = 0
+  · simp [hab.1, hab.2]
+  · have h₁ : (if (a - b) / 2 ≠ 0 then (1 : ℝ) else 0) ≤ 1 := by
+      split_ifs <;> norm_num
+    have h₂ : (1 : ℝ) ≤ (if a ≠ 0 then 1 else 0) + (if b ≠ 0 then 1 else 0) := by
+      split_ifs <;> simp_all
+    exact h₁.trans h₂
 
 /-- **A derivative is nonzero at most twice as often as the function**: the density of the points
 where the derivative of `h` in `i` is nonzero is at most twice the density of the points where `h`
