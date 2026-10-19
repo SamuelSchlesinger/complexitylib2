@@ -13,6 +13,7 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Order.PiLex
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
+import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Prod
 import Mathlib.Data.List.GetD
@@ -43,6 +44,7 @@ represent sets of words.
 * `Cslib.BitString.card_filter_binaryValue_lt`: exact counts below a binary threshold.
 * `Cslib.BitString.card_filter_ofFn_add`, `Cslib.BitString.card_filter_ofFn_succ`: counting
   words by a prefix or by their first bit.
+* `Cslib.BitString.card_filter_take`: counting words by a condition on a prefix.
 * `Cslib.BitString.card_filter_listRows_all`: counting words by a condition on each row.
 * `Cslib.BitString.card_filter_not_any`, `Cslib.BitString.card_filter_all`: the constant words.
 * `Cslib.BitString.ofFn_decide_lt`: the unary word of `k` bits `true` among `K`.
@@ -78,6 +80,16 @@ theorem card_filter_ofFn_add (m n : ℕ) (g : List Bool → List Bool → Prop)
     rw [List.ofFn_fin_append, List.take_left' List.length_ofFn, List.drop_left' List.length_ofFn]
   rw [hmap, card_filter, Fintype.sum_prod_type]
   simp only [card_filter]
+
+/-- **Counting words by a prefix.** For `k ≤ K`, the words of `K` bits whose prefix of length `k`
+satisfies `g` are `2 ^ (K - k)` times as many as the words of `k` bits satisfying `g`. -/
+theorem card_filter_take {k K : ℕ} (h : k ≤ K) (g : List Bool → Prop) [DecidablePred g] :
+    #{r : Fin K → Bool | g ((List.ofFn r).take k)} =
+      2 ^ (K - k) * #{r : Fin k → Bool | g (List.ofFn r)} := by
+  obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le h
+  rw [card_filter_ofFn_add k j fun u _ => g u, Nat.add_sub_cancel_left, card_filter, mul_sum]
+  refine sum_congr rfl fun u _ => ?_
+  by_cases hu : g (List.ofFn u) <;> simp [hu]
 
 /-- **Counting words by their first bit.** -/
 theorem card_filter_ofFn_succ (n : ℕ) (g : List Bool → Prop) [DecidablePred g] :

@@ -41,6 +41,8 @@ is `Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent`.
 ## Main results
 
 * `Cslib.BitString.listRows_ofFn`: the rows of a word of `k * m` bits are its blocks.
+* `Cslib.BitString.two_pow_mul_card_filter_card_filter_block_le`: majority votes of `12 e` blocks
+  err on at most a `2 ^ (-e)` fraction.
 * `Cslib.Complexity.DecidesWithBoundedError.repeatMajority`: `12 q(n)` majority votes reduce the
   error to `2 ^ (-q(n))`.
 * `Cslib.Complexity.computableTidilyInPolyTime_repeatMajority`: majority votes take polynomial
@@ -62,6 +64,37 @@ namespace Cslib.BitString
 theorem listRows_ofFn {k m : ℕ} (x : BitString (k * m)) :
     listRows k m (List.ofFn x) = List.ofFn fun i => List.ofFn (block x i) := by
   rw [listRows_eq_ofFn, ofList_ofFn]
+
+open Finset in
+/-- **Majority votes of blocks.** If at least two thirds of the strings of `m` bits satisfy `g`,
+then at most a `2 ^ (-e)` fraction of the strings of `2 R = 12 e` blocks of `m` bits have at most
+`R` blocks satisfying `g`: the exponential-moment bound `Cslib.card_filter_card_filter_le_le`, with
+`2 * 8 ^ 6 ≤ 9 ^ 6`. -/
+theorem two_pow_mul_card_filter_card_filter_block_le {m e R : ℕ} (hR : R = 6 * e)
+    (g : BitString m → Prop) [DecidablePred g] (hg : 2 * 2 ^ m ≤ 3 * #{s | g s}) :
+    2 ^ e * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R} ≤ 2 ^ (2 * R * m) := by
+  have hmaj := card_filter_card_filter_le_le (univ.filter g)
+    (by simpa only [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool] using hg) R
+  rw [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool, ← pow_mul, Nat.mul_comm m] at hmaj
+  have hc : 9 ^ R * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R} ≤
+      8 ^ R * 2 ^ (2 * R * m) := by
+    refine (Nat.mul_le_mul_left _ ?_).trans hmaj
+    rw [← card_map blocksEquiv.toEmbedding]
+    refine card_le_card fun ω hω => ?_
+    obtain ⟨x, hx, rfl⟩ := mem_map.1 hω
+    refine mem_filter.2 ⟨mem_univ _, ?_⟩
+    simpa only [mem_filter, mem_univ, true_and, Equiv.coe_toEmbedding, blocksEquiv_apply] using hx
+  have hq : 2 ^ e * 8 ^ R ≤ 9 ^ R := by
+    subst hR
+    simp only [pow_mul, ← mul_pow]
+    exact Nat.pow_le_pow_left (by norm_num) _
+  refine Nat.le_of_mul_le_mul_left ?_ (by positivity : 0 < 9 ^ R)
+  calc 9 ^ R * (2 ^ e * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R})
+      = 2 ^ e * (9 ^ R * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R}) := by
+        ring
+    _ ≤ 2 ^ e * (8 ^ R * 2 ^ (2 * R * m)) := Nat.mul_le_mul_left _ hc
+    _ = 2 ^ e * 8 ^ R * 2 ^ (2 * R * m) := by ring
+    _ ≤ 9 ^ R * 2 ^ (2 * R * m) := Nat.mul_le_mul_right _ hq
 
 end Cslib.BitString
 
@@ -112,22 +145,6 @@ theorem repeatMajority_ofFn {r p : Polynomial ℕ} {V : α × List Bool → Bool
       (univ.filter fun i => V (a, List.ofFn (BitString.block x i)) = true).card) := by
   rw [repeatMajority, BitString.listRows_ofFn, List.countP_ofFn, card_filter]
 
-/-- If `G` contains at least two thirds of the strings of `m` bits, then at most an `(8 / 9) ^ R`
-fraction of the strings of `2 R` blocks of `m` bits have at most `R` blocks in `G`. -/
-private theorem nine_pow_mul_card_le {m R : ℕ}
-    {G : Finset (BitString m)} (hG : 2 * 2 ^ m ≤ 3 * G.card) {S : Finset (BitString (2 * R * m))}
-    (hS : ∀ x ∈ S, (univ.filter fun i => BitString.block x i ∈ G).card ≤ R) :
-    9 ^ R * S.card ≤ 8 ^ R * 2 ^ (2 * R * m) := by
-  have hmaj := card_filter_card_filter_le_le G
-    (by simpa only [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool] using hG) R
-  rw [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool, ← pow_mul, Nat.mul_comm m] at hmaj
-  refine (Nat.mul_le_mul_left _ ?_).trans hmaj
-  rw [← card_map BitString.blocksEquiv.toEmbedding]
-  refine card_le_card fun ω hω => ?_
-  obtain ⟨x, hx, rfl⟩ := mem_map.1 hω
-  refine mem_filter.2 ⟨mem_univ _, ?_⟩
-  exact (card_le_card fun i hi => mem_filter.2 (mem_filter.1 hi)).trans (hS x hx)
-
 /-- **Error reduction for `BPP`** [Arora and Barak, Section 7.4.1][AroraBarak09]. The strict
 majority of `12 q(n)` runs of a bounded-error decider, on independent blocks of random bits, errs on
 at most a `2 ^ (-q(n))` fraction of the random strings. -/
@@ -139,40 +156,27 @@ theorem DecidesWithBoundedError.repeatMajority {p : Polynomial ℕ} {V : α × L
       2 * (6 * q).eval (enc a).length * p.eval (enc a).length := by
     simp only [Polynomial.eval_mul, Polynomial.eval_ofNat]
     ring
+  have hR : (6 * q).eval (enc a).length = 6 * q.eval (enc a).length := by simp
   rw [hlen]
-  set m := p.eval (enc a).length
-  set R := (6 * q).eval (enc a).length
-  have hq : 2 ^ q.eval (enc a).length * 8 ^ R ≤ 9 ^ R := by
-    simp only [R, Polynomial.eval_mul, Polynomial.eval_ofNat, pow_mul, ← mul_pow]
-    exact Nat.pow_le_pow_left (by norm_num) _
-  -- a `(8 / 9) ^ R` fraction is at most a `2 ^ (-q(n))` fraction
-  have hbound {S : Finset (BitString (2 * R * m))} {G : Finset (BitString m)}
-      (hG : 2 * 2 ^ m ≤ 3 * G.card)
-      (hS : ∀ x ∈ S, (univ.filter fun i => BitString.block x i ∈ G).card ≤ R) :
-      2 ^ q.eval (enc a).length * S.card ≤ 2 ^ (2 * R * m) := by
-    have hc := nine_pow_mul_card_le hG hS
-    refine Nat.le_of_mul_le_mul_left ?_ (by positivity : 0 < 9 ^ R)
-    calc 9 ^ R * (2 ^ q.eval (enc a).length * S.card)
-        = 2 ^ q.eval (enc a).length * (9 ^ R * S.card) := by ring
-      _ ≤ 2 ^ q.eval (enc a).length * (8 ^ R * 2 ^ (2 * R * m)) := Nat.mul_le_mul_left _ hc
-      _ = 2 ^ q.eval (enc a).length * 8 ^ R * 2 ^ (2 * R * m) := by ring
-      _ ≤ 9 ^ R * 2 ^ (2 * R * m) := Nat.mul_le_mul_right _ hq
   constructor
   · -- on a member, the majority rejects only when at most `R` runs accept
     intro ha
-    refine hbound ((h a).1 ha) fun x hx => ?_
+    refine (Nat.mul_le_mul_left _ (card_le_card fun x hx => ?_)).trans
+      (BitString.two_pow_mul_card_filter_card_filter_block_le hR
+        (fun s => V (a, List.ofFn s) = true) ((h a).1 ha))
     rw [mem_filter, repeatMajority_ofFn, decide_eq_false_iff_not, not_lt] at hx
-    simpa only [mem_filter, mem_univ, true_and] using hx.2
+    exact mem_filter.2 ⟨mem_univ _, hx.2⟩
   · -- on a non-member, the majority accepts only when at most `R` runs reject
     intro ha
-    refine hbound ((h a).2 ha) fun x hx => ?_
+    refine (Nat.mul_le_mul_left _ (card_le_card fun x hx => ?_)).trans
+      (BitString.two_pow_mul_card_filter_card_filter_block_le hR
+        (fun s => V (a, List.ofFn s) = false) ((h a).2 ha))
     rw [mem_filter, repeatMajority_ofFn, decide_eq_true_iff] at hx
-    replace hx : R < (univ.filter fun i : Fin (2 * R) =>
-      V (a, List.ofFn (BitString.block x i)) = true).card := hx.2
-    have hsum := card_filter_add_card_filter_not (s := (univ : Finset (Fin (2 * R))))
+    have hsum := card_filter_add_card_filter_not (s := (univ : Finset (Fin (2 *
+      (6 * q).eval (enc a).length))))
       fun i => V (a, List.ofFn (BitString.block x i)) = true
     simp only [Bool.not_eq_true, card_univ, Fintype.card_fin] at hsum
-    simp only [mem_filter, mem_univ, true_and]
+    refine mem_filter.2 ⟨mem_univ _, ?_⟩
     omega
 
 /-- Error at most `2 ^ (-q(n)) ≤ 1 / 4` is bounded error. -/

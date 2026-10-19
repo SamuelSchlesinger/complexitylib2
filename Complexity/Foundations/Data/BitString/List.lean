@@ -25,6 +25,10 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 ## Main results
 
 * `Cslib.BitString.ofList_ofFn`, `Cslib.BitString.ofFn_ofList`: representation round trips.
+* `Cslib.BitString.ofList_append_of_le`, `Cslib.BitString.ofList_ofFn_append`: fixed-width views
+  ignore bits beyond their width.
+* `Cslib.BitString.exists_take_ofFn_iff`, `Cslib.BitString.forall_take_ofFn_iff`: quantifying over
+  longer strings through their prefixes.
 * `Cslib.BitString.listRows_eq_ofFn`: agreement with the finite block representation.
 * `Cslib.BitString.ofFn_blocksEquiv_symm`: packing fixed-width rows is list concatenation.
 
@@ -53,6 +57,41 @@ theorem ofFn_ofList {n : ℕ} {word : List Bool} (hlen : word.length = n) :
   apply List.ext_getElem (by simp)
   intro i hi hi'
   simp [ofList, List.getD, List.getElem?_eq_getElem hi']
+
+/-- The fixed-width view of a word does not see bits beyond its width. -/
+theorem ofList_append_of_le {n : ℕ} {u : List Bool} (hu : n ≤ u.length) (v : List Bool) :
+    ofList n (u ++ v) = ofList n u := by
+  funext i
+  simp only [ofList, List.getD_eq_getElem?_getD]
+  rw [List.getElem?_append_left (by omega)]
+
+/-- Reading `n` bits of a word that starts with `n` given bits returns them. -/
+theorem ofList_ofFn_append {n : ℕ} (bits : BitString n) (word : List Bool) :
+    ofList n (List.ofFn bits ++ word) = bits := by
+  rw [ofList_append_of_le (by simp), ofList_ofFn]
+
+/-- A string of `k ≤ K` bits padded with `false` to `K` bits has the original string as its
+prefix of length `k`. -/
+theorem take_ofFn_ofList {k K : ℕ} (h : k ≤ K) (y : BitString k) :
+    (List.ofFn (ofList K (List.ofFn y))).take k = List.ofFn y := by
+  apply List.ext_getElem (by simp [h])
+  intro i hi _
+  simp only [List.length_take, List.length_ofFn] at hi
+  simp [ofList, List.getD_eq_getElem?_getD, show i < k by omega]
+
+/-- **Prefixes and existential quantifiers.** For `k ≤ K`, some string of `K` bits has a prefix of
+length `k` satisfying `g` iff some string of `k` bits does. -/
+theorem exists_take_ofFn_iff {k K : ℕ} (h : k ≤ K) {g : List Bool → Prop} :
+    (∃ y : BitString K, g ((List.ofFn y).take k)) ↔ ∃ y : BitString k, g (List.ofFn y) :=
+  ⟨fun ⟨y, hy⟩ => ⟨ofList k ((List.ofFn y).take k), by
+      rwa [ofFn_ofList (by simp [h])]⟩,
+    fun ⟨y, hy⟩ => ⟨ofList K (List.ofFn y), by rwa [take_ofFn_ofList h]⟩⟩
+
+/-- **Prefixes and universal quantifiers.** For `k ≤ K`, every string of `K` bits has a prefix of
+length `k` satisfying `g` iff every string of `k` bits does. -/
+theorem forall_take_ofFn_iff {k K : ℕ} (h : k ≤ K) {g : List Bool → Prop} :
+    (∀ y : BitString K, g ((List.ofFn y).take k)) ↔ ∀ y : BitString k, g (List.ofFn y) := by
+  simpa only [not_exists, not_not] using (exists_take_ofFn_iff h (g := fun w => ¬g w)).not
 
 /-- Packing fixed-width rows in the block representation is ordinary list concatenation. -/
 theorem ofFn_blocksEquiv_symm {count width : ℕ} (rows : Fin count → BitString width) :

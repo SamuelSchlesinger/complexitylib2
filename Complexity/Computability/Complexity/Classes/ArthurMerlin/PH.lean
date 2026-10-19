@@ -15,6 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Combinatorics.Lautemann
+import Complexity.Foundations.Data.BitString.List.Operations
 import Mathlib.Data.List.GetD
 
 /-!
@@ -78,13 +79,6 @@ namespace ArthurMerlin
 
 /-! ### Fixed-width rows -/
 
-/-- The fixed-width view of a word does not see bits beyond its width. -/
-private theorem ofList_append_of_le {n : ℕ} {u : List Bool} (hu : n ≤ u.length) (v : List Bool) :
-    BitString.ofList n (u ++ v) = BitString.ofList n u := by
-  funext i
-  simp only [BitString.ofList]
-  exact List.getD_append _ _ _ _ (by omega)
-
 /-- Row `0` of a word is its fixed-width view. -/
 private theorem listRow_zero (m : ℕ) (w : List Bool) :
     BitString.listRow m 0 w = List.ofFn (BitString.ofList m w) := by
@@ -94,13 +88,6 @@ private theorem listRow_zero (m : ℕ) (w : List Bool) :
   by_cases h : i < w.length <;>
     simp [BitString.listRow, BitString.ofList, List.getElem_append, List.getD_eq_getElem?_getD,
       h]
-
-/-- Bitwise xor of the lists of two bit strings is the list of their sum. -/
-private theorem zipWith_xor_ofFn {m : ℕ} (x y : BitString m) :
-    List.zipWith Bool.xor (List.ofFn x) (List.ofFn y) = List.ofFn (x + y) := by
-  apply List.ext_getElem (by simp)
-  intro i _ _
-  simp [Bool.add_eq_xor]
 
 /-! ### The `Σ₂` verifier of a Merlin–Arthur verifier -/
 
@@ -144,13 +131,13 @@ theorem sigmaTwoVerifier_append_ofFn {q k p : Polynomial ℕ} {W : α × List Bo
   · rintro ⟨i, hi, h⟩
     refine ⟨⟨i, hi⟩, ?_⟩
     rwa [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ ⟨i, hi⟩,
-      ofList_append_of_le (by simp [hw]), listRow_zero, BitString.ofList_ofFn,
-      zipWith_xor_ofFn] at h
+      BitString.ofList_append_of_le (by simp [hw]), listRow_zero, BitString.ofList_ofFn,
+      ← BitString.ofFn_add] at h
   · rintro ⟨i, h⟩
     refine ⟨i, i.2, ?_⟩
     rwa [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ i,
-      ofList_append_of_le (by simp [hw]), listRow_zero, BitString.ofList_ofFn,
-      zipWith_xor_ofFn]
+      BitString.ofList_append_of_le (by simp [hw]), listRow_zero, BitString.ofList_ofFn,
+      ← BitString.ofFn_add]
 
 /-- **Merlin–Arthur verifiers in `Σ₂`.** If `W` is a Merlin–Arthur verifier for `A` with error at
 most `2 ^ (-e(n))` and random strings of `p(n)` bits, and `k(n)` shifts satisfy `p(n) < e(n) k(n)`
@@ -234,11 +221,11 @@ theorem piTwoVerifier_append {k p q : Polynomial ℕ} {W : α × List Bool → B
     have h := h i i.2
     rwa [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ i,
       BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ i,
-      ofList_append_of_le (by simp [hu]), listRow_zero, zipWith_xor_ofFn] at h
+      BitString.ofList_append_of_le (by simp [hu]), listRow_zero, ← BitString.ofFn_add] at h
   · intro h i hi
     rw [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ ⟨i, hi⟩,
       BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ ⟨i, hi⟩,
-      ofList_append_of_le (by simp [hu]), listRow_zero, zipWith_xor_ofFn]
+      BitString.ofList_append_of_le (by simp [hu]), listRow_zero, ← BitString.ofFn_add]
     exact h ⟨i, hi⟩
 
 /-- **Arthur–Merlin verifiers in `Π₂`.** If `W` is an Arthur–Merlin verifier for `A` with error at
@@ -268,7 +255,7 @@ theorem isAlternatingVerifier_piTwoVerifier {e k p q : Polynomial ℕ} {W : α �
       simpa only [mem_compl, mem_filter, mem_univ, true_and, not_not] using hr i
     choose Y hY using hY
     refine ⟨List.ofFn r ++ List.ofFn (BitString.blocksEquiv.symm Y), by simp, ?_⟩
-    rw [piTwoVerifier_append hw, ofList_append_of_le (by simp), BitString.ofList_ofFn,
+    rw [piTwoVerifier_append hw, BitString.ofList_append_of_le (by simp), BitString.ofList_ofFn,
       List.drop_left' List.length_ofFn, BitString.ofList_ofFn, BitString.block_blocksEquiv_symm]
     exact hY
   · -- some shifts carry every random string outside the strings with an accepted reply

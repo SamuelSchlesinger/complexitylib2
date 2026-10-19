@@ -57,8 +57,6 @@ the second level of the polynomial hierarchy in
 
 ## Main results
 
-* `Cslib.BitString.card_filter_take`, `Cslib.BitString.exists_take_iff`: bits beyond a prefix
-  scale counts and do not matter to existential quantifiers.
 * `Cslib.Complexity.NP_subset_MA`, `Cslib.Complexity.BPP_subset_MA`.
 * `Cslib.Complexity.PolyTimeReducible.mem_MA`, `Cslib.Complexity.PolyTimeReducible.mem_AM`:
   closure under polynomial-time many-one reductions.
@@ -72,50 +70,6 @@ the second level of the polynomial hierarchy in
 -/
 
 @[expose] public section
-
-namespace Cslib.BitString
-
-open Finset
-
-/-- Cutting the concatenation of blocks into its blocks recovers them. -/
-@[simp] theorem block_blocksEquiv_symm {m k : ℕ} (z : Fin m → BitString k) :
-    block (blocksEquiv.symm z) = z :=
-  blocksEquiv.apply_symm_apply z
-
-/-- A string of `k ≤ K` bits padded with `false` to `K` bits has the original string as its
-prefix of length `k`. -/
-theorem take_ofFn_ofList {k K : ℕ} (h : k ≤ K) (y : BitString k) :
-    (List.ofFn (ofList K (List.ofFn y))).take k = List.ofFn y := by
-  apply List.ext_getElem (by simp [h])
-  intro i hi _
-  simp only [List.length_take, List.length_ofFn] at hi
-  simp [ofList, List.getD_eq_getElem?_getD, show i < k by omega]
-
-/-- **Prefixes and existential quantifiers.** For `k ≤ K`, some string of `K` bits has a prefix of
-length `k` satisfying `g` iff some string of `k` bits does. -/
-theorem exists_take_iff {k K : ℕ} (h : k ≤ K) {g : List Bool → Prop} :
-    (∃ y : BitString K, g ((List.ofFn y).take k)) ↔ ∃ y : BitString k, g (List.ofFn y) :=
-  ⟨fun ⟨y, hy⟩ => ⟨ofList k ((List.ofFn y).take k), by
-      rwa [ofFn_ofList (by simp [h])]⟩,
-    fun ⟨y, hy⟩ => ⟨ofList K (List.ofFn y), by rwa [take_ofFn_ofList h]⟩⟩
-
-/-- **Prefixes and universal quantifiers.** For `k ≤ K`, every string of `K` bits has a prefix of
-length `k` satisfying `g` iff every string of `k` bits does. -/
-theorem forall_take_iff {k K : ℕ} (h : k ≤ K) {g : List Bool → Prop} :
-    (∀ y : BitString K, g ((List.ofFn y).take k)) ↔ ∀ y : BitString k, g (List.ofFn y) := by
-  simpa only [not_exists, not_not] using (exists_take_iff h (g := fun w => ¬g w)).not
-
-/-- **Counting by prefixes.** For `k ≤ K`, the strings of `K` bits whose prefix of length `k`
-satisfies `g` are `2 ^ (K - k)` times as many as the strings of `k` bits satisfying `g`. -/
-theorem card_filter_take {k K : ℕ} (h : k ≤ K) (g : List Bool → Prop) [DecidablePred g] :
-    #{r : BitString K | g ((List.ofFn r).take k)} =
-      2 ^ (K - k) * #{r : BitString k | g (List.ofFn r)} := by
-  obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le h
-  rw [card_filter_ofFn_add k j fun u _ => g u, Nat.add_sub_cancel_left, card_filter, mul_sum]
-  refine sum_congr rfl fun u _ => ?_
-  by_cases hu : g (List.ofFn u) <;> simp [hu]
-
-end Cslib.BitString
 
 namespace Cslib.Complexity
 
@@ -328,7 +282,7 @@ theorem PolyTimeReducible.mem_AM {encB : β ↪ List Bool} {B : Set β}
           (p.eval (encB (f a)).length) ++ (List.ofFn y).take (q.eval (encB (f a)).length)) = true) ↔
         ∃ y : Fin (q.eval (encB (f a)).length) → Bool,
           V (f a, (List.ofFn r).take (p.eval (encB (f a)).length) ++ List.ofFn y) = true :=
-    BitString.exists_take_iff (hQe a)
+    BitString.exists_take_ofFn_iff (hQe a)
       (g := fun w => V (f a, (List.ofFn r).take (p.eval (encB (f a)).length) ++ w) = true)
   have hall (r : Fin (P.eval (enc a).length) → Bool) :
       (∀ y : Fin (Q.eval (enc a).length) → Bool, V (f a, (List.ofFn r).take
@@ -336,7 +290,7 @@ theorem PolyTimeReducible.mem_AM {encB : β ↪ List Bool} {B : Set β}
             false) ↔
         ∀ y : Fin (q.eval (encB (f a)).length) → Bool,
           V (f a, (List.ofFn r).take (p.eval (encB (f a)).length) ++ List.ofFn y) = false :=
-    BitString.forall_take_iff (hQe a)
+    BitString.forall_take_ofFn_iff (hQe a)
       (g := fun w => V (f a, (List.ofFn r).take (p.eval (encB (f a)).length) ++ w) = false)
   simp only [hex, hall]
   have hpow : 2 ^ P.eval (enc a).length =

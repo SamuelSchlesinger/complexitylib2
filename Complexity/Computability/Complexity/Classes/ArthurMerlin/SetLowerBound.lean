@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Classes.SBP
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Probability.BitString.AffineHash
 
+import Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplification
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -102,25 +103,12 @@ private theorem ofFn_eq_append {k j : ℕ} (y : BitString (k + j)) :
   congr 1
   exact ((Fin.appendEquiv k j).apply_symm_apply y).symm
 
-/-- The fixed-width view of a string followed by any bits is the string. -/
-private theorem ofList_ofFn_append {k : ℕ} (x : BitString k) (w : List Bool) :
-    BitString.ofList k (List.ofFn x ++ w) = x := by
-  funext i
-  simp [BitString.ofList, List.getD_eq_getElem?_getD, List.getElem?_append_left]
-
 /-- A string has no bit `true` exactly when it is zero. -/
 private theorem not_any_ofFn_eq_true_iff {k : ℕ} (v : BitString k) :
     (!(List.ofFn v).any fun b => b) = true ↔ v = 0 := by
   simp only [Bool.not_eq_eq_eq_not, Bool.not_true, List.any_eq_false, List.mem_ofFn,
     forall_exists_index, forall_apply_eq_imp_iff, Bool.not_eq_true]
   exact ⟨fun h => funext h, fun h i => by rw [h]; rfl⟩
-
-/-- Error at most `1 / 4` is error at most `1 / 3`. -/
-private theorem two_mul_two_pow_le_of_four_mul_le {k : ℕ} (g : BitString k → Prop)
-    [DecidablePred g] (h : 4 * #{r | ¬g r} ≤ 2 ^ k) : 2 * 2 ^ k ≤ 3 * #{r | g r} := by
-  have hsum : #{r | g r} + #{r | ¬g r} = 2 ^ k := by
-    rw [card_filter_add_card_filter_not, card_univ, BitString.card]
-  omega
 
 /-! ### Amplification and normalisation -/
 
@@ -224,7 +212,7 @@ theorem verifier_ofFn_append {N c m T : Polynomial ℕ} {ℓ : α → ℕ} {R : 
   have hhash : BitString.LinearHash.wordHash (m.eval n) (List.ofFn r) (List.ofFn e) =
       List.ofFn (BitString.LinearHash.hash
         (BitString.block ((Fin.appendEquiv _ _).symm r).1) e) := by
-    rw [BitString.LinearHash.wordHash_eq_ofFn, hr, ofList_ofFn_append]
+    rw [BitString.LinearHash.wordHash_eq_ofFn, hr, BitString.ofList_ofFn_append]
   rw [hdrop, hdrop', htake, List.take_left' List.length_ofFn, hhash, hoffset,
     ← BitString.ofFn_add, not_any_ofFn_eq_true_iff, and_assoc]
   refine and_congr ⟨fun h i => ?_, fun h i hi => ?_⟩ Iff.rfl
@@ -318,7 +306,7 @@ theorem mem_AM_of_card_certifiedSet {N c : Polynomial ℕ} {R : α × List Bool 
   constructor
   · -- members: the amplified set has at least `4 ⬝ 2 ^ m(n)` elements
     intro ha
-    refine two_mul_two_pow_le_of_four_mul_le _ ?_
+    refine BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_
     have hbig : 4 * Fintype.card (BitString (m.eval n)) ≤
         #(amplifiedSet S (T.eval n) (ℓ a)) := by
       rw [hY, hcard, ← h4, hsplit]
@@ -328,7 +316,7 @@ theorem mem_AM_of_card_certifiedSet {N c : Polynomial ℕ} {R : α × List Bool 
     exact this
   · -- non-members: the amplified set has at most `2 ^ m(n) / 4` elements
     intro ha
-    refine two_mul_two_pow_le_of_four_mul_le _ ?_
+    refine BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_
     have hsmall : 4 * #(amplifiedSet S (T.eval n) (ℓ a)) ≤
         Fintype.card (BitString (m.eval n)) := by
       have h32 : 32 * #S ^ 5 ≤ K a ^ 5 := by
