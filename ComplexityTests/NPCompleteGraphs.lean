@@ -29,6 +29,7 @@ example : NPComplete (encPair encGraph encNat) VertexCover := VertexCover_npComp
 example (k : ℕ) : KColoring k ∈ NP encGraph := KColoring.mem_NP k
 example : NPHard encGraph ThreeColoring := ThreeColoring_npHard
 example : NPComplete encGraph ThreeColoring := ThreeColoring_npComplete
+example : NPComplete encGraph (KColoring 4) := KColoring_npComplete (by norm_num)
 
 example : PolyTimeReducible encCNF encGraph ThreeSAT ThreeColoring :=
   polyTimeReducible_ThreeSAT_ThreeColoring
@@ -57,13 +58,16 @@ example : ComputableTidilyInPolyTime (KColoring.verifier 3) (encPair encGraph en
 
 example : ComputableTidilyInPolyTime SAT.toThreeColoring encCNF encGraph := by fun_prop
 
+example : ComputableTidilyInPolyTime (SAT.toKColoring 2) encCNF encGraph := by fun_prop
+
 example : ComputableTidilyInPolyTime SAT.toDirHamPath encCNF
     (encPair encGraph (encPair encNat encNat)) := by
   fun_prop
 
 example : ComputableTidilyInPolyTime SAT.toDirHamCycle encCNF encGraph := by fun_prop
 
-example : ComputableTidilyInPolyTime (fun φ => IndependentSet.toVertexCover (SAT.toIndependentSet φ))
+example : ComputableTidilyInPolyTime
+    (fun φ => IndependentSet.toVertexCover (SAT.toIndependentSet φ))
     encCNF (encPair encGraph encNat) := by
   fun_prop
 
@@ -180,8 +184,8 @@ example : KColoring.verifier 0 (([], [(0, 1)]), []) = true := rfl
 example : KColoring.verifier 0 (([0], []), []) = false := rfl
 
 -- Duplicate vertices share the block of their first occurrence; undeclared edges are ignored.
-example : KColoring.verifier 2 (([0, 1, 0], [(0, 1), (1, 7), (7, 0)]), [false, false, true, false]) =
-    true := rfl
+example : KColoring.verifier 2
+    (([0, 1, 0], [(0, 1), (1, 7), (7, 0)]), [false, false, true, false]) = true := rfl
 
 /-! ### The 3-coloring gadget -/
 
@@ -219,6 +223,17 @@ example : SAT.toThreeColoring [[(0, true)], [(0, false)]] ∉ ThreeColoring := b
 -- A clause of width four is handled by the chain of OR gadgets.
 example : SAT.toThreeColoring [[(0, false), (1, false), (2, false), (3, true)]] ∈ ThreeColoring :=
   (SAT.toThreeColoring_mem_iff _).2 ⟨fun _ => true, rfl⟩
+
+-- Universal vertices for more colors: four colors for the gadget graph with one universal vertex.
+example : (SAT.toKColoring 1 []).2 =
+    [(0, 1), (1, 4), (4, 0), (12, 0), (12, 1), (12, 1), (12, 4), (12, 4), (12, 0)] := by
+  decide
+example : SAT.toKColoring 1 [[(0, true)]] ∈ KColoring 4 :=
+  (SAT.toKColoring_mem_iff 1 _).2 ⟨fun _ => true, rfl⟩
+example : SAT.toKColoring 2 [[(0, true)], [(0, false)]] ∉ KColoring 5 := by
+  rw [SAT.toKColoring_mem_iff]
+  rintro ⟨σ, hσ⟩
+  cases h : σ 0 <;> simp [h] at hσ
 
 /-! ### Directed Hamiltonian paths and cycles -/
 
@@ -297,13 +312,15 @@ info: 'Cslib.Complexity.IndependentSet.computableTidilyInPolyTime_toVertexCover'
 #print axioms Cslib.Complexity.IndependentSet.computableTidilyInPolyTime_toVertexCover
 
 /--
-info: 'Cslib.Complexity.VertexCover.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.VertexCover.mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.VertexCover.mem_NP
 
 /--
-info: 'Cslib.Complexity.VertexCover_npHard' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.VertexCover_npHard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.VertexCover_npHard
@@ -392,7 +409,8 @@ info: 'Cslib.Complexity.polyTimeReducible_ThreeSAT_DirHamPath' depends on axioms
 #print axioms Cslib.Complexity.polyTimeReducible_ThreeSAT_DirHamPath
 
 /--
-info: 'Cslib.Complexity.DirHamPath_npHard' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.DirHamPath_npHard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.DirHamPath_npHard
@@ -403,5 +421,19 @@ info: 'Cslib.Complexity.DirHamCycle_npHard' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.DirHamCycle_npHard
+
+/--
+info: 'Cslib.Complexity.SAT.toKColoring_mem_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.toKColoring_mem_iff
+
+/--
+info: 'Cslib.Complexity.KColoring_npComplete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.KColoring_npComplete
 
 end ComplexityTests.NPCompleteGraphs

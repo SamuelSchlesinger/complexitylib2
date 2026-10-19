@@ -28,21 +28,25 @@ are therefore ignored.
 A certificate for `KColoring k` gives each declared vertex `k` bits, at the position of its first
 occurrence; the color is the number of set bits, which must be below `k`.
 
-The reduction `SAT.toThreeColoring` is the palette, variable and clause gadget construction
-[Sipser, Problem 7.29][Sipser2013]. Three palette vertices `T`, `F` and `B` form a triangle; the
-two literals of each variable form a triangle with `B`, so they take the colors of `T` and `F` in
-some order. The gadget of a clause is a chain of OR gadgets: its stage `0` is adjacent to `T` and
-`B`, hence colored like `F`; stage `j + 1` is a triangle attached to the output of stage `j` and to
-the `j`-th literal, whose output can take the color of `T` exactly when one of them does; and the
-output of the last stage is adjacent to `F` and `B`, hence colored like `T`. Chaining handles
-clauses of every width, including the empty clause, so the reduction is from `SAT`; it also
-reduces `ThreeSAT` after rejecting clauses with more than three literals.
+The reduction `SAT.toThreeColoring` is the palette, variable and clause gadget construction for
+3-colorability, a standard exercise [Sipser, Chapter 7][Sipser2013]. Three palette vertices `T`, `F`
+and `B` form a triangle; the two literals of each variable form a triangle with `B`, so they take
+the colors of `T` and `F` in some order. The gadget of a clause is a chain of OR gadgets: its stage
+`0` is adjacent to `T` and `B`, hence colored like `F`; stage `j + 1` is a triangle attached to the
+output of stage `j` and to the `j`-th literal, whose output can take the color of `T` exactly when
+one of them does; and the output of the last stage is adjacent to `F` and `B`, hence colored like
+`T`. Chaining handles clauses of every width, including the empty clause, so the reduction is from
+`SAT`; it also reduces `ThreeSAT` after rejecting clauses with more than three literals.
+
+For `k = m + 3` colors, `SAT.toKColoring m` adds `m` universal vertices adjacent to every vertex
+and to each other. They take `m` colors of their own, and the gadget vertices are colored with the
+remaining three, so `KColoring k` is `NP`-complete for every `k ≥ 3`.
 
 ## Main definitions
 
 * `Cslib.Complexity.KColoring`, `Cslib.Complexity.ThreeColoring`.
 * `Cslib.Complexity.KColoring.colorOf`, `Cslib.Complexity.KColoring.verifier`.
-* `Cslib.Complexity.SAT.toThreeColoring`.
+* `Cslib.Complexity.SAT.toThreeColoring`, `Cslib.Complexity.SAT.toKColoring`.
 
 ## Main results
 
@@ -56,6 +60,9 @@ reduces `ThreeSAT` after rejecting clauses with more than three literals.
   `Cslib.Complexity.polyTimeReducible_ThreeSAT_ThreeColoring`,
   `Cslib.Complexity.ThreeColoring_npHard`, `Cslib.Complexity.ThreeColoring_npComplete`:
   `ThreeColoring` is `NP`-complete.
+* `Cslib.Complexity.SAT.toKColoring_mem_iff`: `toKColoring m φ ∈ KColoring (m + 3) ↔ φ ∈ SAT`.
+* `Cslib.Complexity.polyTimeReducible_SAT_KColoring`, `Cslib.Complexity.KColoring_npHard`,
+  `Cslib.Complexity.KColoring_npComplete`: `KColoring k` is `NP`-complete for `k ≥ 3`.
 
 ## References
 
@@ -485,6 +492,18 @@ private theorem gadgetColoring_ne {φ : CNF ℕ} {σ : ℕ → Bool} (hσ : φ.e
           gadgetColoring_literal σ hlv, hφi, hgetD, hsucc] <;>
         split_ifs <;> omega
 
+private theorem gadgetColoring_lt {φ : CNF ℕ} {σ : ℕ → Bool} (n : ℕ) :
+    gadgetColoring φ σ n < 3 := by
+  unfold gadgetColoring
+  split
+  · exact Nat.mod_lt _ (by norm_num)
+  · unfold literalColor; split_ifs <;> simp
+  · dsimp only
+    split
+    · split_ifs <;> simp
+    · split_ifs <;> simp
+    · unfold outputColor; split_ifs <;> simp
+
 /-- **Correctness of the 3-coloring reduction.** A formula is satisfiable exactly when its gadget
 graph is 3-colorable. -/
 theorem toThreeColoring_mem_iff (φ : CNF ℕ) : toThreeColoring φ ∈ ThreeColoring ↔ φ ∈ SAT := by
@@ -497,16 +516,7 @@ theorem toThreeColoring_mem_iff (φ : CNF ℕ) : toThreeColoring φ ∈ ThreeCol
     simp only [toThreeColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
     exact ⟨ne_of_mem_coloringEdges he, Or.inl he⟩
   · rintro ⟨σ, hσ⟩
-    refine ⟨gadgetColoring φ σ, fun v _ => ?_, fun u _ v _ huv => ?_⟩
-    · unfold gadgetColoring
-      split
-      · exact Nat.mod_lt _ (by norm_num)
-      · unfold literalColor; split_ifs <;> simp
-      · dsimp only
-        split
-        · split_ifs <;> simp
-        · split_ifs <;> simp
-        · unfold outputColor; split_ifs <;> simp
+    refine ⟨gadgetColoring φ σ, fun v _ => gadgetColoring_lt v, fun u _ v _ huv => ?_⟩
     · simp only [toThreeColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj] at huv
       rcases huv.2 with h | h
       · exact gadgetColoring_ne hσ _ h
@@ -528,6 +538,184 @@ theorem computableTidilyInPolyTime_toThreeColoring :
     unfold gadgetVertex
     exact unary_to_binary.comp (by fun_prop)
   unfold toThreeColoring coloringEdges clauseEdges stageEdges variableEdges encGraph
+  fun_prop
+
+/-! ### More colors -/
+
+/-- The `r`-th universal vertex of the reduction to `KColoring (m + 3)`. -/
+def universalVertex (r : ℕ) : ℕ := Nat.pair 3 r
+
+/-- The edges of the gadget graph of `φ` together with `m` universal vertices, each adjacent to
+every vertex of the gadget graph and to the other universal vertices. -/
+def kColoringEdges (m : ℕ) (φ : CNF ℕ) : List (ℕ × ℕ) :=
+  coloringEdges φ ++ (List.range m).flatMap fun r =>
+    ((coloringEdges φ).flatMap fun e => [e.1, e.2]).map (fun v => (universalVertex r, v)) ++
+      (List.range r).map fun r' => (universalVertex r, universalVertex r')
+
+/-- The reduction from `SAT` to `KColoring (m + 3)`: the gadget graph of `φ` with `m` universal
+vertices, which take `m` colors of their own. -/
+def toKColoring (m : ℕ) (φ : CNF ℕ) : Graph :=
+  ((kColoringEdges m φ).flatMap fun e => [e.1, e.2], kColoringEdges m φ)
+
+/-- Gadget vertices are labelled with tags `0`, `1` and `2`. -/
+private theorem unpair_fst_lt_of_mem_coloringEdges {φ : CNF ℕ} {e : ℕ × ℕ}
+    (he : e ∈ coloringEdges φ) : e.1.unpair.1 < 3 ∧ e.2.unpair.1 < 3 := by
+  simp only [coloringEdges, clauseEdges, stageEdges, variableEdges, List.mem_append,
+    List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with (he | ⟨x, -, he⟩) | ⟨⟨cl, i⟩, -, he | ⟨⟨l, j⟩, -, he⟩⟩
+  · rcases he with rfl | rfl | rfl <;> simp [paletteVertex]
+  · rcases he with rfl | rfl | rfl <;> simp [paletteVertex, literalVertex]
+  · rcases he with rfl | rfl | rfl | rfl <;> simp [paletteVertex, gadgetVertex]
+  · rcases he with rfl | rfl | rfl | rfl | rfl <;> simp [gadgetVertex, literalVertex]
+
+private theorem mem_kColoringEdges {m : ℕ} {φ : CNF ℕ} {e : ℕ × ℕ} :
+    e ∈ kColoringEdges m φ ↔ e ∈ coloringEdges φ ∨
+      (∃ r < m, ∃ v ∈ (coloringEdges φ).flatMap (fun e => [e.1, e.2]),
+        e = (universalVertex r, v)) ∨
+      (∃ r < m, ∃ r' < r, e = (universalVertex r, universalVertex r')) := by
+  simp only [kColoringEdges, List.mem_append, List.mem_flatMap, List.mem_map, List.mem_range]
+  constructor
+  · rintro (h | ⟨r, hr, ⟨v, hv, rfl⟩ | ⟨r', hr', rfl⟩⟩)
+    · exact Or.inl h
+    · exact Or.inr (Or.inl ⟨r, hr, v, hv, rfl⟩)
+    · exact Or.inr (Or.inr ⟨r, hr, r', hr', rfl⟩)
+  · rintro (h | ⟨r, hr, v, hv, rfl⟩ | ⟨r, hr, r', hr', rfl⟩)
+    · exact Or.inl h
+    · exact Or.inr ⟨r, hr, Or.inl ⟨v, hv, rfl⟩⟩
+    · exact Or.inr ⟨r, hr, Or.inr ⟨r', hr', rfl⟩⟩
+
+/-- The rank of `x` among the natural numbers outside `S`. -/
+private theorem card_filter_not_mem_lt {S : Finset ℕ} {n x : ℕ}
+    (hS : S ⊆ Finset.range (n + 3)) (hcard : S.card = n) (hx : x ∉ S) (hxlt : x < n + 3) :
+    ((Finset.range x).filter (· ∉ S)).card < 3 := by
+  have htot := Finset.card_filter_add_card_filter_not (s := Finset.range (n + 3)) (· ∈ S)
+  rw [Finset.filter_mem_eq_inter, Finset.inter_eq_right.2 hS, hcard, Finset.card_range] at htot
+  have hsub : insert x ((Finset.range x).filter (· ∉ S)) ⊆
+      (Finset.range (n + 3)).filter (· ∉ S) := by
+    intro y hy
+    simp only [Finset.mem_insert, Finset.mem_filter, Finset.mem_range] at hy ⊢
+    rcases hy with rfl | ⟨hy, hyS⟩
+    · exact ⟨hxlt, hx⟩
+    · exact ⟨by omega, hyS⟩
+  have := Finset.card_le_card hsub
+  rw [Finset.card_insert_of_notMem (by simp)] at this
+  omega
+
+private theorem card_filter_not_mem_strictMono {S : Finset ℕ} {x y : ℕ} (hx : x ∉ S)
+    (hxy : x < y) :
+    ((Finset.range x).filter (· ∉ S)).card < ((Finset.range y).filter (· ∉ S)).card := by
+  refine Finset.card_lt_card ((Finset.ssubset_iff_of_subset
+    (Finset.filter_subset_filter _ (Finset.range_subset_range.2 hxy.le))).2 ⟨x, ?_, ?_⟩)
+  · simp [hxy, hx]
+  · simp
+
+/-- **Correctness of the `(m + 3)`-coloring reduction.** A formula is satisfiable exactly when its
+gadget graph with `m` universal vertices is `(m + 3)`-colorable. -/
+theorem toKColoring_mem_iff (m : ℕ) (φ : CNF ℕ) :
+    toKColoring m φ ∈ KColoring (m + 3) ↔ φ ∈ SAT := by
+  rw [mem_KColoring_iff]
+  have hadj_of : ∀ {e : ℕ × ℕ}, e ∈ kColoringEdges m φ → e.1 ≠ e.2 →
+      (toKColoring m φ).toSimpleGraph.Adj e.1 e.2 := fun he hne => by
+    simp only [toKColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
+    exact ⟨hne, Or.inl he⟩
+  have hU : ∀ {r v : ℕ}, v ∈ (coloringEdges φ).flatMap (fun e => [e.1, e.2]) →
+      universalVertex r ≠ v := fun hv h => by
+    obtain ⟨e, he, hv⟩ := List.mem_flatMap.1 hv
+    have := unpair_fst_lt_of_mem_coloringEdges he
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hv
+    rcases hv with rfl | rfl <;> simp [← h, universalVertex] at this
+  constructor
+  · rintro ⟨c, hlt, hadj⟩
+    have hE : ∀ e ∈ kColoringEdges m φ, e.1 ≠ e.2 →
+        c e.1 ≠ c e.2 ∧ c e.1 < m + 3 ∧ c e.2 < m + 3 := fun e he hne => by
+      obtain ⟨h₁, h₂⟩ := mem_endpoints he
+      exact ⟨hadj _ h₁ _ h₂ (hadj_of he hne), hlt _ h₁, hlt _ h₂⟩
+    have hT : (paletteVertex 0, paletteVertex 1) ∈ coloringEdges φ := by simp [coloringEdges]
+    have hTv : paletteVertex 0 ∈ (coloringEdges φ).flatMap (fun e => [e.1, e.2]) :=
+      (mem_endpoints hT).1
+    -- The universal vertices take `m` distinct colors.
+    set S := (Finset.range m).image fun r => c (universalVertex r) with hSdef
+    have hUU : ∀ r < m, ∀ r' < r, c (universalVertex r) ≠ c (universalVertex r') :=
+      fun r hr r' hr' => (hE _ (mem_kColoringEdges.2 (Or.inr (Or.inr ⟨r, hr, r', hr', rfl⟩)))
+        (by simp [universalVertex]; omega)).1
+    have hUlt : ∀ r < m, c (universalVertex r) < m + 3 := fun r hr =>
+      (hE _ (mem_kColoringEdges.2 (Or.inr (Or.inl ⟨r, hr, _, hTv, rfl⟩))) (hU hTv)).2.1
+    have hcard : S.card = m := by
+      rw [Finset.card_image_of_injOn, Finset.card_range]
+      intro r hr r' hr' h
+      simp only [Finset.coe_range, Set.mem_Iio] at hr hr'
+      by_contra hne
+      rcases Nat.lt_or_gt_of_ne hne with h' | h'
+      · exact hUU r' hr' r h' h.symm
+      · exact hUU r hr r' h' h
+    have hSsub : S ⊆ Finset.range (m + 3) := by
+      intro x hx
+      obtain ⟨r, hr, rfl⟩ := Finset.mem_image.1 hx
+      exact Finset.mem_range.2 (hUlt r (Finset.mem_range.1 hr))
+    -- Gadget vertices avoid the colors of the universal vertices.
+    have hnot : ∀ {v}, v ∈ (coloringEdges φ).flatMap (fun e => [e.1, e.2]) → c v ∉ S :=
+      fun hv hS => by
+        obtain ⟨r, hr, hrv⟩ := Finset.mem_image.1 hS
+        exact (hE _ (mem_kColoringEdges.2 (Or.inr (Or.inl ⟨r, Finset.mem_range.1 hr, _, hv,
+          rfl⟩))) (hU hv)).1 hrv
+    refine satisfiable_of_coloring (c := fun v => ((Finset.range (c v)).filter (· ∉ S)).card)
+      fun e he => ?_
+    obtain ⟨h₁, h₂⟩ := mem_endpoints he
+    obtain ⟨hne, hlt₁, hlt₂⟩ := hE e (mem_kColoringEdges.2 (Or.inl he))
+      (ne_of_mem_coloringEdges he)
+    refine ⟨fun h => ?_, card_filter_not_mem_lt hSsub hcard (hnot h₁) hlt₁,
+      card_filter_not_mem_lt hSsub hcard (hnot h₂) hlt₂⟩
+    rcases Nat.lt_or_gt_of_ne hne with h' | h'
+    · exact (card_filter_not_mem_strictMono (hnot h₁) h').ne h
+    · exact (card_filter_not_mem_strictMono (hnot h₂) h').ne h.symm
+  · rintro ⟨σ, hσ⟩
+    let c : ℕ → ℕ := fun v => if v.unpair.1 = 3 then 3 + v.unpair.2 else gadgetColoring φ σ v
+    have hcU : ∀ r, c (universalVertex r) = 3 + r := fun r => by simp [c, universalVertex]
+    have hcG : ∀ {v}, v ∈ (coloringEdges φ).flatMap (fun e => [e.1, e.2]) →
+        c v = gadgetColoring φ σ v := fun hv => by
+      obtain ⟨e, he, hv⟩ := List.mem_flatMap.1 hv
+      have := unpair_fst_lt_of_mem_coloringEdges he
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hv
+      rcases hv with rfl | rfl
+      · simp [c, Nat.ne_of_lt this.1]
+      · simp [c, Nat.ne_of_lt this.2]
+    have hEc : ∀ e ∈ kColoringEdges m φ, c e.1 ≠ c e.2 ∧ c e.1 < m + 3 ∧ c e.2 < m + 3 := by
+      intro e he
+      rcases mem_kColoringEdges.1 he with he | ⟨r, hr, v, hv, rfl⟩ | ⟨r, hr, r', hr', rfl⟩
+      · obtain ⟨h₁, h₂⟩ := mem_endpoints he
+        rw [hcG h₁, hcG h₂]
+        have := gadgetColoring_lt (φ := φ) (σ := σ) e.1
+        have := gadgetColoring_lt (φ := φ) (σ := σ) e.2
+        exact ⟨gadgetColoring_ne hσ e he, by omega, by omega⟩
+      · simp only [hcU, hcG hv]
+        have := gadgetColoring_lt (φ := φ) (σ := σ) v
+        omega
+      · simp only [hcU]
+        omega
+    refine ⟨c, fun v hv => ?_, fun u _ v _ huv => ?_⟩
+    · obtain ⟨e, he, hv⟩ := List.mem_flatMap.1 hv
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hv
+      rcases hv with rfl | rfl
+      · exact (hEc e he).2.1
+      · exact (hEc e he).2.2
+    · simp only [toKColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj] at huv
+      rcases huv.2 with h | h
+      · exact (hEc _ h).1
+      · exact (hEc _ h).1.symm
+
+/-- The reduction `toKColoring m` is computable in polynomial time for every fixed `m`. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_toKColoring (m : ℕ) :
+    ComputableTidilyInPolyTime (toKColoring m) encCNF encGraph := by
+  have hG := computableTidilyInPolyTime_toThreeColoring
+  have hU : ComputableTidilyInPolyTime (fun r => universalVertex r) encUnary encNat :=
+    unary_to_binary.comp (show ComputableTidilyInPolyTime (fun r => Nat.pair 3 r) _ _ by
+      fun_prop)
+  have hrange : ComputableTidilyInPolyTime (fun _ : CNF ℕ => List.range m) encCNF
+      (encList encUnary) := const _
+  have hE : ComputableTidilyInPolyTime coloringEdges encCNF (encList (encPair encNat encNat)) :=
+    (snd (encList encNat) (encList (encPair encNat encNat))).comp hG
+  unfold toKColoring kColoringEdges
   fun_prop
 
 end SAT
@@ -561,5 +749,21 @@ theorem ThreeColoring_npHard : NPHard encGraph ThreeColoring :=
 /-- **`ThreeColoring` is NP-complete.** -/
 theorem ThreeColoring_npComplete : NPComplete encGraph ThreeColoring :=
   ⟨KColoring.mem_NP 3, ThreeColoring_npHard⟩
+
+/-- For `k ≥ 3`, `SAT` reduces to `KColoring k` in polynomial time via `SAT.toKColoring (k - 3)`.
+-/
+theorem polyTimeReducible_SAT_KColoring {k : ℕ} (hk : 3 ≤ k) :
+    PolyTimeReducible encCNF encGraph SAT (KColoring k) := by
+  obtain ⟨m, rfl⟩ : ∃ m, k = m + 3 := ⟨k - 3, by omega⟩
+  exact ⟨SAT.toKColoring m, SAT.computableTidilyInPolyTime_toKColoring m,
+    fun φ => (SAT.toKColoring_mem_iff m φ).symm⟩
+
+/-- For `k ≥ 3`, `KColoring k` is `NP`-hard. -/
+theorem KColoring_npHard {k : ℕ} (hk : 3 ≤ k) : NPHard encGraph (KColoring k) :=
+  CookLevin.SAT_npHard.trans (polyTimeReducible_SAT_KColoring hk)
+
+/-- **For `k ≥ 3`, `KColoring k` is NP-complete.** -/
+theorem KColoring_npComplete {k : ℕ} (hk : 3 ≤ k) : NPComplete encGraph (KColoring k) :=
+  ⟨KColoring.mem_NP k, KColoring_npHard hk⟩
 
 end Cslib.Complexity
