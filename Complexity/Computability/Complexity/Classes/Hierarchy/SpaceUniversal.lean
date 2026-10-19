@@ -45,13 +45,29 @@ machine fit, encoded, within the budget (`Turing.MultiTapeTM.Universal.universal
 
 ## Main results
 
+* `Turing.MultiTapeTM.Universal.budgetStep_iterate`: the run within the budget is the run of the
+  simulation up to some step.
 * `Turing.MultiTapeTM.Universal.universalSpace_eq_of_le`,
   `Turing.MultiTapeTM.Universal.universalSpace_desc`: within the budget, the universal function.
-* `Turing.MultiTapeTM.Universal.computableTidilyInO_universalSpace`: it is tidily computable in
+* `Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universalSpace`,
+  `Turing.MultiTapeTM.Universal.computableTidilyInO_universalSpace`: it is tidily computable in
   space linear in `budgetSpace`.
 * `Turing.MultiTapeTM.Universal.budgetSpace_le`: `budgetSpace` is linear in the description, the
   budget and the lengths of the number of steps and of the length of the input in binary, plus
   the largest symbol of the input.
+
+## Implementation notes
+
+The fold reuses the parts of the in-place fold (`Turing.MultiTapeTM.Universal.foldNext`,
+`Turing.MultiTapeTM.Universal.stepAt`, `Turing.MultiTapeTM.Universal.foldEnd`) on the state of the
+in-place fold. The events of the input, the extraction of the parts the initial state reads and the
+bounds on the countdown restate private lemmas of `Turing.MultiTapeTM.Universal.InPlace` for the
+encoding `Turing.MultiTapeTM.Universal.eInS`, whose input ends in a budget.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Theorem 9.3][Sipser2013]: the
+  simulation within a space budget in the proof of the space hierarchy theorem.
 -/
 
 namespace Turing.MultiTapeTM.Universal
@@ -442,7 +458,8 @@ lemma keepTwo_deg : ComputableTidilyInDegree
 
 /-- The initial state, in the space of the description, the number of steps and the budget. -/
 public lemma foldInitS_inO : ComputableTidilyInO foldInitS eInS eSSt
-    (fun i => (eInS i).length + ((encPair eDesc (encPair encNat encUnary) (i.1, i.2.2)).length + 1) ^ 2)
+    (fun i => (eInS i).length +
+      ((encPair eDesc (encPair encNat encUnary) (i.1, i.2.2)).length + 1) ^ 2)
     fun i => (encPair eDesc (encPair encNat encUnary) (i.1, i.2.2)).length + 1 := by
   have hext := ComputableTidilyInO.of_transducer extractS (f := fun i : Desc × List ℕ × ℕ × ℕ =>
     (i.1, i.2.2)) (encIn := eInS) (encOut := encPair eDesc (encPair encNat encUnary))

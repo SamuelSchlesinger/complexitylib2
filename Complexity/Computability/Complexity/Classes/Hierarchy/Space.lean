@@ -17,7 +17,90 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 /-!
 # Deterministic space classes and the space hierarchy theorem
 
-TODO
+`Cslib.Complexity.DSPACE enc s` consists of the problems that some machine with a binary alphabet
+and finitely many states decides within space `c₁ * s n + c₂`, for constants `c₁` and `c₂`, on
+instances whose encoding under `enc` has length `n`, within some time bound of `n` (upstream
+`Turing.MultiTapeTM.DecidableInTimeAndSpace`) [Sipser, Definition 8.1][Sipser2013]. This is the
+definition of the classes proposed upstream in cslib pull request #767, stated for encoded
+instances, beside `Cslib.Complexity.DTIME`. Space counts the visited work-tape cells: the input
+tape is read-only and the output tape write-only. The time bound is no restriction
+(`Cslib.Complexity.mem_DSPACE_iff`): a machine that halts within space `s n` halts within the
+number of its configurations, `(n + 2) * 2 ^ O(s n)`, a function of `n`
+(`Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow`). So
+`DSPACE s ⊆ DTIME ((n + 2) * 2 ^ (c * s n))` for a constant `c` of the decider
+(`Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE`), and `DTIME t ⊆ DSPACE t`. As in #767, `L` is
+`DSPACE (log₂)` and `PSPACE` the union of the classes `DSPACE (n ^ k)`.
+
+A bound `s` is *space-constructible* (`Cslib.Complexity.SpaceConstructible`) when such a machine
+computes `s n` in binary from any word of length `n` within space `O(s n)`; time-constructible
+bounds are, and so are `n`, `(n + 1) ^ k` for `k ≥ 1` and `2 ^ n`.
+
+## The space hierarchy theorem
+
+`Cslib.Complexity.spaceDiagonal G` runs the machine described at the start of its input `x`, when
+the description is short (`Cslib.Complexity.Diagonal.shortDesc`), on `x` with the universal machine
+within a space budget (`Turing.MultiTapeTM.Universal.universalSpace`): for `2 ^ G n` steps, with
+the configurations of the simulation encoded within `G n` bits. It negates the verdict, and answers
+`false` on other inputs. The budgeted universal machine is the in-place universal run with a budget
+test at the end of each pass, within space linear in the description, the budget and the lengths
+of the clock and of `n` in binary (`Turing.MultiTapeTM.Universal.budgetSpace_le`). The diagonal
+also holds its input, to test shortness and to convert it to symbols, so it takes space
+`O(n + G n)` (`Cslib.Complexity.computableTidilyInO_spaceDiagonal`) and decides a problem in
+`DSPACE G` when `n ≤ G n` (`Cslib.Complexity.setOf_spaceDiagonal_mem_DSPACE`).
+
+Let a machine decide the same problem within space `c₁ * f n + c₂`, where every `c * f n + c` is
+eventually below `G n`. It halts within its number of configurations, `(n + 2) * 2 ^ O(f n)`, which
+is eventually below the clock. The configurations of its simulation take `O(f n + log n)` bits,
+with a factor linear in its description: the overhead of the universal machine is a constant factor
+for each simulated machine, eventually within the budget. So on its own description, padded, the
+diagonal answers the negation of its answer (`Cslib.Complexity.setOf_spaceDiagonal_notMem_DSPACE`).
+Hence the space hierarchy theorem [Stearns, Hartmanis and Lewis][StearnsHartmanisLewis1965],
+[Sipser, Theorem 9.3][Sipser2013], [Arora and Barak, Theorem 4.8][AroraBarak09]:
+
+* `DSPACE f ⊂ DSPACE g` for a space-constructible `g` with `n ≤ g n`, when every `c * f n + c` is
+  eventually below `g n` (`Cslib.Complexity.DSPACE_ssubset_DSPACE`);
+* `DSPACE (n ^ k) ⊂ DSPACE (n ^ (k + 1))` (`Cslib.Complexity.DSPACE_pow_ssubset_DSPACE_pow_succ`);
+* `L ⊂ PSPACE` (`Cslib.Complexity.L_ssubset_PSPACE`).
+
+The gap `f = o(g)` is the textbook one. The lower bound `n ≤ g n`, where the textbook asks
+`log n ≤ g n`, is the space the diagonal takes to hold its input; hierarchies below linear space
+are not claimed here.
+
+## Main definitions
+
+* `Cslib.Complexity.DSPACE`: deterministic space classes.
+* `Cslib.Complexity.SpaceConstructible`: space-constructible bounds.
+* `Cslib.Complexity.spaceDiagonal`: the diagonal within a space budget.
+
+## Main results
+
+* `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_of_length`,
+  `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow`: the configuration-counting
+  bound on the time of a space-bounded computation.
+* `Cslib.Complexity.mem_DSPACE_iff`, `Cslib.Complexity.mem_L_iff_mem_DSPACE`,
+  `Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE`: `DSPACE` with any time bound, `L` and
+  `PSPACE` through `DSPACE`.
+* `Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE`, `Cslib.Complexity.DTIME_subset_DSPACE`:
+  space and time.
+* `Cslib.Complexity.spaceDiagonal_desc`: the diagonal negates the answer of a machine on its padded
+  description, within the clock and the budget.
+* `Cslib.Complexity.setOf_spaceDiagonal_mem_DSPACE`,
+  `Cslib.Complexity.setOf_spaceDiagonal_notMem_DSPACE`: the diagonal within space `G` is decidable
+  within space `O(G)`, and not within space `O(f)` for `f = o(G)`.
+* `Cslib.Complexity.DSPACE_ssubset_DSPACE`: the space hierarchy theorem.
+* `Cslib.Complexity.DSPACE_pow_ssubset_DSPACE_pow_succ`, `Cslib.Complexity.L_ssubset_PSPACE`: its
+  corollaries.
+
+## References
+
+* [R. E. Stearns, J. Hartmanis, P. M. Lewis II, *Hierarchies of memory limited
+  computations*][StearnsHartmanisLewis1965]
+* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+
+The padded diagonal argument follows the time hierarchy theorem
+(`Complexity.Computability.Complexity.Classes.Hierarchy.Time`), here on Christian Reitwiessner's
+in-place universal interpreter within a space budget.
 -/
 
 @[expose] public section
@@ -133,6 +216,15 @@ theorem DSPACE_mono_of_eventually_le {s₁ s₂ : ℕ → ℕ} (h : ∀ᶠ n in 
   rw [Nat.mul_add] at this
   omega
 
+/-- `DSPACE` depends on the space bound only up to a constant factor and an additive constant. -/
+theorem DSPACE_subset_of_le_mul_add {s₁ s₂ : ℕ → ℕ} (c d : ℕ) (h : ∀ n, s₁ n ≤ c * s₂ n + d) :
+    DSPACE enc s₁ ⊆ DSPACE enc s₂ := by
+  rintro A ⟨c₁, c₂, t, hA⟩
+  refine ⟨c₁ * c, c₁ * d + c₂, t, ComputableInTimeAndSpace.mono hA (fun _ => le_rfl) fun a => ?_⟩
+  have := Nat.mul_le_mul_left c₁ (h (enc a).length)
+  rw [Nat.mul_add, ← Nat.mul_assoc] at this
+  omega
+
 /-- **Time bounds space**: a machine visits at most one new cell per work tape and step, so
 `DTIME t ⊆ DSPACE t`. -/
 theorem DTIME_subset_DSPACE {t : ℕ → ℕ} : DTIME enc t ⊆ DSPACE enc t := by
@@ -222,16 +314,33 @@ theorem TimeConstructible.spaceConstructible {t : ℕ → ℕ} (ht : TimeConstru
   exact ⟨k * c + k, fun n => c * t n + c, ComputableInTimeAndSpace.mono h (fun _ => le_rfl)
     fun x => by dsimp only; nlinarith⟩
 
-/-- `n` is space-constructible: count the length of the word in binary. -/
-theorem spaceConstructible_id : SpaceConstructible fun n => n := by
-  obtain ⟨c, h, -⟩ := ComputableTidilyInO.lengthNat
-  exact ⟨2 * c, fun n => c * ((n + 1) ^ 2 + 1), h.computableInTimeAndSpace.mono
-    (fun _ => le_rfl) fun x => by simp only [encBits_apply]; nlinarith⟩
+/-- A tidy computation of `s n` in binary within space `O(s n)` makes `s` space-constructible:
+it halts within a time bound of `n`, its number of configurations. -/
+theorem SpaceConstructible.of_computableTidilyInO {s : ℕ → ℕ} {T S : List Bool → ℕ} (c : ℕ)
+    (h : ComputableTidilyInO (fun x : List Bool => s x.length) encBits encNat T S)
+    (hS : ∀ x, S x ≤ c * s x.length + c) : SpaceConstructible s := by
+  obtain ⟨k, hk, -⟩ := h
+  obtain ⟨t, ht⟩ := ComputableInTimeAndSpace.exists_time_of_length
+    (s := fun n => k * (c * s n + c + 1)) (hk.computableInTimeAndSpace.mono (fun _ => le_rfl)
+      fun x => Nat.mul_le_mul_left k (by have := hS x; simp only [encBits_apply]; omega))
+  exact ⟨k * (c + 1), t, ComputableInTimeAndSpace.mono ht (fun _ => le_rfl) fun x => by
+    dsimp only; nlinarith⟩
 
-/-- `(n + 1) ^ k` is space-constructible for `k ≥ 2`. -/
-theorem spaceConstructible_succ_pow {k : ℕ} (hk : 2 ≤ k) :
-    SpaceConstructible fun n => (n + 1) ^ k :=
-  (timeConstructible_succ_pow hk).spaceConstructible
+/-- `n` is space-constructible: count the length of the word in binary. -/
+theorem spaceConstructible_id : SpaceConstructible fun n => n :=
+  .of_computableTidilyInO 1 ComputableTidilyInO.lengthNat fun x => by omega
+
+/-- `n + 1` is space-constructible. -/
+theorem spaceConstructible_succ : SpaceConstructible fun n => n + 1 :=
+  .of_computableTidilyInO 2 (ComputableTidilyInO.natSucc.comp ComputableTidilyInO.lengthNat)
+    fun x => by have := Universal.length_encNat_le x.length; omega
+
+/-- `(n + 1) ^ k` is space-constructible for `k ≥ 1`. -/
+theorem spaceConstructible_succ_pow {k : ℕ} (hk : 1 ≤ k) :
+    SpaceConstructible fun n => (n + 1) ^ k := by
+  rcases Nat.eq_or_lt_of_le hk with rfl | hk
+  · simpa using spaceConstructible_succ
+  · exact (timeConstructible_succ_pow hk).spaceConstructible
 
 /-- `2 ^ n` is space-constructible. -/
 theorem spaceConstructible_two_pow : SpaceConstructible (2 ^ ·) :=
@@ -328,6 +437,27 @@ theorem setOf_spaceDiagonal_mem_DSPACE {G : ℕ → ℕ} (hG : SpaceConstructibl
   have := hn x.length
   simp only [encBits_apply]
   nlinarith
+
+open Diagonal in
+/-- On a short padded description, the diagonal within space `G` negates the answer of a machine
+that halts within the clock `2 ^ G n` and whose simulated configurations fit within the budget
+`G n`. -/
+theorem spaceDiagonal_desc {k : ℕ} {State : Type} [Fintype State] (eS : State ↪ ℕ)
+    (tm : MultiTapeTM k Bool State) (pad : List Bool) (G : ℕ → ℕ) {b : Bool}
+    (hshort : shortDesc (frame (eDesc (desc eS eBit tm)) ++ pad) = true)
+    (hbudget : cfgSpace (desc eS eBit tm) ((frame (eDesc (desc eS eBit tm)) ++ pad).map eBit)
+      (2 ^ G (frame (eDesc (desc eS eBit tm)) ++ pad).length) ≤
+      G (frame (eDesc (desc eS eBit tm)) ++ pad).length)
+    (hhalt : (tm.runFrom (tm.initCfg (frame (eDesc (desc eS eBit tm)) ++ pad))
+      (2 ^ G (frame (eDesc (desc eS eBit tm)) ++ pad).length)).Halted)
+    (hout : (tm.runFrom (tm.initCfg (frame (eDesc (desc eS eBit tm)) ++ pad))
+      (2 ^ G (frame (eDesc (desc eS eBit tm)) ++ pad).length)).output = [b]) :
+    spaceDiagonal G (frame (eDesc (desc eS eBit tm)) ++ pad) = !b := by
+  simp only [spaceDiagonal, hshort, ↓reduceIte]
+  rw [decodeDesc_unframe_frame_append, universalSpace_desc eS eBit tm _ _ _ hbudget]
+  simp only [Cfg.Halted] at hhalt
+  rw [hhalt, hout]
+  cases b <;> rfl
 
 /-- Eventually, `n + 1` has at most `n / 4` binary digits. -/
 private theorem eventually_four_mul_length_encNat_le :
@@ -427,12 +557,8 @@ theorem setOf_spaceDiagonal_notMem_DSPACE {f G : ℕ → ℕ} (hn : ∀ n, n ≤
     omega
   -- so the diagonal negates the answer of the decider
   have hd : spaceDiagonal G x = !g x := by
-    simp only [spaceDiagonal, hshort, ↓reduceIte]
-    rw [← hx, decodeDesc_unframe_frame_append, hx,
-      universalSpace_desc eS eBit tm x _ _ hbudget]
-    simp only [Cfg.Halted] at hhalt
-    rw [hhalt, hout]
-    cases g x <;> rfl
+    subst hx
+    exact spaceDiagonal_desc eS tm pad G hshort hbudget hhalt hout
   have hgx := hg x
   simp only [Set.mem_ofPred_eq, hd] at hgx
   revert hgx
@@ -461,11 +587,34 @@ theorem L_ssubset_PSPACE : L encBits ⊂ PSPACE encBits := by
   have hL : L encBits ⊆ DSPACE encBits fun n => n := fun A hA =>
     DSPACE_mono (fun n => (Nat.log2_le_self n)) (mem_L_iff_mem_DSPACE.mp hA)
   refine (Set.ssubset_iff_of_subset L_subset_PSPACE).mpr ⟨_, DSPACE_subset_PSPACE (by fun_prop)
-    (setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow le_rfl)
+    (setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow (by norm_num))
       fun n => (Nat.le_succ n).trans (Nat.le_self_pow two_ne_zero _)), fun h =>
     setOf_spaceDiagonal_notMem_DSPACE (f := fun n => n)
       (fun n => (Nat.le_succ n).trans (Nat.le_self_pow two_ne_zero _)) (fun c => ?_) (hL h)⟩
   filter_upwards [eventually_ge_atTop c] with n hc
+  nlinarith
+
+/-- **Polynomial space has a strict hierarchy**: `DSPACE (n ^ k) ⊂ DSPACE (n ^ (k + 1))`
+[Sipser, Corollary 9.4][Sipser2013]. The diagonal within space `(n + 1) ^ (k + 1)` separates
+them. -/
+theorem DSPACE_pow_ssubset_DSPACE_pow_succ (k : ℕ) :
+    DSPACE encBits (· ^ k) ⊂ DSPACE encBits (· ^ (k + 1)) := by
+  have hn (n : ℕ) : n ≤ (n + 1) ^ (k + 1) :=
+    (Nat.le_succ n).trans (Nat.le_self_pow (by omega) _)
+  have hsub : DSPACE encBits (· ^ k) ⊆ DSPACE encBits (· ^ (k + 1)) :=
+    DSPACE_subset_of_le_mul_add 1 1 fun n => by
+      rcases Nat.eq_zero_or_pos n with rfl | hpos
+      · rcases Nat.eq_zero_or_pos k with rfl | hk <;> simp_all
+      · have : n ^ k ≤ n ^ (k + 1) := Nat.pow_le_pow_right hpos (Nat.le_succ k)
+        omega
+  refine (Set.ssubset_iff_of_subset hsub).mpr ⟨_, DSPACE_subset_of_le_mul_add (2 ^ (k + 1)) 1
+    (fun n => succ_pow_le n (k + 1))
+    (setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow (by omega)) hn),
+    setOf_spaceDiagonal_notMem_DSPACE hn fun c => ?_⟩
+  filter_upwards [eventually_ge_atTop (2 * c)] with n hc
+  have h₁ : n ^ k ≤ (n + 1) ^ k := Nat.pow_le_pow_left (Nat.le_succ n) k
+  have h₂ : 1 ≤ (n + 1) ^ k := Nat.one_le_pow _ _ (by omega)
+  have e : (n + 1) ^ (k + 1) = (n + 1) ^ k * (n + 1) := pow_succ ..
   nlinarith
 
 end Cslib.Complexity
