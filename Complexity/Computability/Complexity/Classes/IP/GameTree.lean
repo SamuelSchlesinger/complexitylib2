@@ -156,7 +156,7 @@ theorem iterate_step_node (n : ℕ) (st : List (Frame X)) (hst : st.length + n =
           else if i + 1 < N then ((next^[i + 1] first, next^[0] first, S (i + 1), M (i + 1) 0) ::
             st, none)
           else (st, some (S N)) := by
-      rw [Function.iterate_succ_apply', ih _ (by simp; lia)]
+      rw [Function.iterate_succ_apply', ih _ (by simp only [List.length_cons]; lia)]
       have hmax : max (M i j) (value N cap first next leaf n
           ((next^[i] first, next^[j] first) :: history st)) = M i (j + 1) := by
         simp only [M, partialMax, range_add_one, sup_insert]
@@ -263,7 +263,7 @@ theorem Good.step {P : X → Prop} (hfirst : P first) (hnext : ∀ x, P x → P 
   · simp only [GameTree.step]
     split_ifs with hD
     · exact ⟨h.length, h.frames, by simp⟩
-    · refine ⟨by simp; have := h.length; lia, ?_, by simp⟩
+    · refine ⟨by simp only [List.length_cons]; have := h.length; lia, ?_, by simp⟩
       intro f hf
       rcases List.mem_cons.mp hf with rfl | hf
       · exact ⟨hfirst, hfirst, min_le_left _ _, Nat.zero_le _⟩
@@ -274,7 +274,10 @@ theorem Good.step {P : X → Prop} (hfirst : P first) (hnext : ∀ x, P x → P 
     have hf0 := h.frames _ (List.mem_cons_self ..)
     have hrest : ∀ f ∈ st, P f.1 ∧ P f.2.1 ∧ f.2.2.1 ≤ cap ∧ f.2.2.2 ≤ cap :=
       fun f hf => h.frames f (List.mem_cons_of_mem _ hf)
-    have hlen : st.length ≤ D := by have := h.length; simp at this; lia
+    have hlen : st.length ≤ D := by
+      have := h.length
+      simp only [List.length_cons] at this
+      lia
     simp only [GameTree.step]
     split_ifs
     · exact ⟨hlen, hrest, by simp⟩

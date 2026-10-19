@@ -109,7 +109,7 @@ theorem decodeWord_encodeWord (L : ℕ) (w : List Bool) : decodeWord (encodeWord
 
 theorem length_encodeWord {L : ℕ} {w : List Bool} (hw : w.length ≤ L) :
     (encodeWord L w).length = L + 1 := by
-  simp [encodeWord]
+  simp only [encodeWord, List.length_append, List.length_replicate, List.length_cons]
   lia
 
 theorem true_mem_encodeWord (L : ℕ) (w : List Bool) : true ∈ encodeWord L w := by
@@ -117,7 +117,7 @@ theorem true_mem_encodeWord (L : ℕ) (w : List Bool) : true ∈ encodeWord L w 
 
 theorem length_decodeWord_le {L : ℕ} {u : List Bool} (hu : u.length = L + 1) :
     (decodeWord u).length ≤ L := by
-  simp [decodeWord]
+  simp only [decodeWord, List.length_drop]
   lia
 
 /-- A word with a `true` is its first `true` preceded by zeros and followed by its decoding. -/
@@ -147,7 +147,7 @@ theorem lsbValue_pos_of_true_mem : ∀ {u : List Bool}, true ∈ u → 0 < lsbVa
     rcases List.mem_cons.mp h with rfl | h
     · simp [lsbValue]
     · have := lsbValue_pos_of_true_mem h
-      simp [lsbValue]
+      simp only [lsbValue]
       lia
 
 /-- A word without `true` has value `0`. -/
@@ -181,7 +181,7 @@ theorem lsbValue_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     lsbValue (incrementBits^[i] (firstCode L)) = i + 1 ∧
       (incrementBits^[i] (firstCode L)).length = L + 1 := by
   rw [iterate_firstCode]
-  exact iterate_incrementBits (L + 1) (i + 1) (by simp [codeCount] at hi; lia)
+  exact iterate_incrementBits (L + 1) (i + 1) (by simp only [codeCount] at hi; lia)
 
 theorem lastCode_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     lastCode L (incrementBits^[i] (firstCode L)) = decide (i + 1 = codeCount L) := by
@@ -220,7 +220,7 @@ theorem image_decodeWord_iterate_firstCode :
     have hpos := lsbValue_pos_of_true_mem (true_mem_encodeWord L w)
     have hlt := lsbValue_lt (encodeWord L w)
     rw [hlen] at hlt
-    refine ⟨lsbValue (encodeWord L w) - 1, by simp [codeCount]; lia, ?_⟩
+    refine ⟨lsbValue (encodeWord L w) - 1, by simp only [codeCount]; lia, ?_⟩
     rw [iterate_firstCode, Nat.sub_add_cancel hpos, ← hlen, iterate_incrementBits_lsbValue,
       decodeWord_encodeWord]
 

@@ -186,12 +186,16 @@ theorem lsbValue_lt : ∀ w, lsbValue w < 2 ^ w.length
   | [] => by simp [lsbValue]
   | b :: w => by
     have := lsbValue_lt w
-    cases b <;> simp [lsbValue, pow_succ] <;> lia
+    cases b <;>
+      simp only [lsbValue, Bool.toNat_false, Bool.toNat_true, zero_add, List.length_cons,
+        pow_succ, gt_iff_lt] <;> lia
 
 theorem lsbValue_incrementBits : ∀ w, lsbValue w + 1 < 2 ^ w.length →
     lsbValue (incrementBits w) = lsbValue w + 1
   | [] => by simp [lsbValue]
-  | false :: w => fun _ => by simp [incrementBits, lsbValue]; lia
+  | false :: w => fun _ => by
+    simp only [incrementBits, lsbValue, Bool.toNat_true, Bool.toNat_false, zero_add]
+    lia
   | true :: w => fun h => by
     simp only [lsbValue, List.length_cons, pow_succ, Bool.toNat_true, incrementBits,
       Bool.toNat_false] at h ⊢
@@ -204,7 +208,7 @@ theorem lsbValue_injective : ∀ {w w' : List Bool}, w.length = w'.length →
   | b :: w, b' :: w', hl, hv => by
     simp only [lsbValue] at hv
     have hb : b = b' := by
-      cases b <;> cases b' <;> first | rfl | (simp at hv; lia)
+      cases b <;> cases b' <;> first | rfl | (simp only [Bool.toNat_false, Bool.toNat_true, zero_add] at hv; lia)
     subst hb
     exact congrArg _ (lsbValue_injective (by simpa using hl) (by lia))
 
@@ -651,7 +655,9 @@ theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
     (B := fun q => 2 * (encPair enc encHistory q).length + 3 * fuel q.1 + 5)
     ((((PolyBounded.const 2).mul .self).add ((PolyBounded.const 3).mul
       (hlen.comp (g := Prod.fst) (size' := fun a => (enc a).length)
-        (PolyBounded.of_forall_le 1 1 fun q => by simp; lia)))).add (.const 5))
+        (PolyBounded.of_forall_le 1 1 fun q => by
+          simp only [encPair_apply, List.length_append, length_frame, pow_one, one_mul]
+          lia)))).add (.const 5))
     (fun q j hj => ?_)
   · exact (ComputableTidilyInPolySpace.of_polyTime
       ((ComputableTidilyInPolyTime.snd _ _).snd')).comp hit

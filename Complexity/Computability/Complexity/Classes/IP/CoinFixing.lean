@@ -346,7 +346,7 @@ theorem replayInv_step {t : ℕ} {x : List Bool} {h : History} {i : ℕ}
           obtain ⟨m, y⟩ := e
           simp only
           split_ifs
-          · refine ⟨⟨pre ++ [(m, y)], by simp [hpre], by simp; lia⟩, ?_⟩
+          · refine ⟨⟨pre ++ [(m, y)], by simp [hpre], by simp only [List.length_append, List.length_cons, List.length_nil, zero_add]; lia⟩, ?_⟩
             exact hspace.receive op next _ (List.length_take_le _ _)
           · trivial
 

@@ -131,31 +131,6 @@ def outcome (p : WordQueryComp Unit Bool) (h : History) : Outcome :=
   | some (.pure b) => .done b
   | some (.liftBind q _) => .ask q.2
 
-/-- A program that does not send the messages of a history does not send those of any extension
-of it. -/
-theorem outcome_append_of_ne_ask {p : WordQueryComp Unit Bool} {h : History}
-    (hp : ∀ m, outcome p h ≠ .ask m) (x : List Bool × List Bool) (e : History) :
-    outcome p (h ++ x :: e) = .invalid := by
-  unfold outcome at hp ⊢
-  rw [after_append]
-  rcases hah : after p h with _ | ⟨b⟩ | ⟨q, next⟩
-  · rfl
-  · rfl
-  · simp only [hah] at hp
-    exact absurd rfl (hp q.2)
-
-/-- After a message other than the one sent, nothing remains. -/
-theorem after_append_singleton_of_ne {p : WordQueryComp Unit Bool} {h : History} {m m' : List Bool}
-    (hp : outcome p h = .ask m) (hm : m' ≠ m) (y : List Bool) :
-    after p (h ++ [(m', y)]) = none := by
-  unfold outcome at hp
-  rw [after_append]
-  rcases hah : after p h with _ | ⟨b⟩ | ⟨q, next⟩ <;> simp only [hah, reduceCtorEq] at hp
-  simp only [Outcome.ask.injEq] at hp
-  subst hp
-  change (if m' = q.2 then after (next y) [] else none) = none
-  simp [hm]
-
 /-- A program that is still in play after a one-step extension sent its message. -/
 theorem outcome_eq_ask_of_after_append_singleton {p : WordQueryComp Unit Bool} {h : History}
     {m y : List Bool} (hp : (after p (h ++ [(m, y)])).isSome) : outcome p h = .ask m := by
@@ -260,30 +235,6 @@ theorem value_take (hF : IsBounded F D L) (n : ℕ) (h : History) (m y : List Bo
   value_congr (fun r e => by
     simpa only [List.append_assoc, List.singleton_append] using hF.reply r h m y e) n
 
-/-- A history that no program follows has value `0`. -/
-theorem value_eq_zero {h : History} (hh : ∀ r e, outcome (F r) (h ++ e) = .invalid) (n : ℕ) :
-    value F L n h = 0 := by
-  induction n generalizing h with
-  | zero =>
-    simp only [value, accepted, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
-    intro r _
-    have := hh r []
-    rw [List.append_nil] at this
-    rw [this]
-    exact nofun
-  | succ n ih =>
-    have hacc : accepted F h = 0 := by
-      simp only [accepted, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
-      intro r _
-      have := hh r []
-      rw [List.append_nil] at this
-      rw [this]
-      exact nofun
-    simp only [value, hacc, zero_add]
-    refine Finset.sum_eq_zero fun m _ => ?_
-    refine le_antisymm (Finset.sup_le fun y _ => (ih fun r e => ?_).le) (Nat.zero_le _)
-    simpa only [List.append_assoc, List.singleton_append] using hh r ((m, y) :: e)
-
 open Classical in
 /-- **The value is at most the number of coin values** whose programs follow the history. -/
 theorem value_le_card (n : ℕ) (h : History) :
@@ -384,7 +335,7 @@ theorem sum_acceptFrom_after_le (hF : IsBounded F D L) (P : Prover Unit) (n : �
           refine ENNReal.tsum_le_tsum fun ys => ?_
           rw [← Finset.mul_sum]
           refine mul_le_mul_right ?_ _
-          refine (ih (h ++ [(m, ys.1)]) (by simp; lia) ys.2).trans ?_
+          refine (ih (h ++ [(m, ys.1)]) (by simp only [List.length_append, List.length_cons, List.length_nil, zero_add]; lia) ys.2).trans ?_
           rw [value_take hF]
           exact Nat.cast_le.mpr (Finset.le_sup (f := fun y => value F L n (h ++ [(m, y)]))
             (mem_shortWords.mpr (List.length_take_le _ _)))
@@ -473,7 +424,7 @@ theorem sum_acceptFrom_optimalProver_after (hF : IsBounded F D L) (n : ℕ) (h :
       simp only [optimalProver, hD]
     simp only [StateT.run, hrespond, PMF.pure_apply, ite_mul, one_mul, zero_mul]
     rw [Finset.sum_congr rfl fun r _ => tsum_ite_eq _ _, ← value_bestReply]
-    exact_mod_cast ih _ (by simp; lia)
+    exact_mod_cast ih _ (by simp only [List.length_append, List.length_cons, List.length_nil, zero_add]; lia)
 
 /-- **The optimal prover attains the value**: for a bounded family, it makes the programs accept
 with probabilities summing to the value of the empty history. -/
