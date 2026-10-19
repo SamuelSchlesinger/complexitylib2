@@ -4,6 +4,7 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
+public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
@@ -256,6 +257,8 @@ public import Complexity.Computability.Complexity.Classes.Promise.Circuit
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
+public import Complexity.Computability.Complexity.Classes.Space
+public import Complexity.Computability.Complexity.Classes.Space.Savitch
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness
@@ -351,6 +354,10 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Window
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Decode
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Reachability
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
@@ -387,6 +394,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Machine.OutputT
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.Map
 public import Complexity.Computability.Machines.Turing.MultiTape.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.OutView
