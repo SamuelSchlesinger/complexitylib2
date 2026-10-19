@@ -12,6 +12,8 @@ import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
+import ComplexityTests.CircuitHamming.Gates
+import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
 import ComplexityTests.CompareSwap
@@ -50,6 +52,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
@@ -71,10 +74,12 @@ import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
 import ComplexityTests.OneWayNormalization
+import ComplexityTests.OracleComposition
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
@@ -109,6 +114,7 @@ import ComplexityTests.PPTTactic
 import ComplexityTests.PRGStretch
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
+import ComplexityTests.PolyTimePlain
 import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeSum
 import ComplexityTests.PolyTimeTactic
@@ -130,12 +136,14 @@ import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.RandomOracle
+import ComplexityTests.RationalHitting
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.SipserLautemann
 import ComplexityTests.Smoke
 import ComplexityTests.SortingTrace
 import ComplexityTests.SourceComplexity

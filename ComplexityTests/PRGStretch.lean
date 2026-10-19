@@ -190,6 +190,20 @@ example : ∃ (tGen : List Bool → ℕ) (tCount sCount : ℕ → ℕ) (csG c : 
       simpa [PRGStretch.length_seedAt_of_forall length_shiftIn] using
         hcsG (PRGStretch.seedAt shiftIn seed i))
 
+-- Zero rounds through the quantitative certificate: the cumulative sum is empty and no generator
+-- workspace is needed, so `stretch` costs `O(tCount n + n + 1)` time and `O(sCount n + n + 1)`
+-- space.
+example : ∃ (tCount sCount : ℕ → ℕ) (c : ℕ),
+    ComputableTidilyInTimeAndSpace (PRGStretch.stretch shiftIn (fun _ => 0)) encBits encBits
+      (fun seed => c * (tCount seed.length + seed.length + 1))
+      (fun seed => c * (sCount seed.length + seed.length + 1)) := by
+  obtain ⟨⟨tGen, sGen, _, _, hgen⟩, -⟩ := shiftIn_degree
+  obtain ⟨⟨tCount, sCount, _, _, hcount⟩, -⟩ :=
+    ComputableTidilyInDegree.const (encIn := encUnary) (encMid := encUnary) 0
+  obtain ⟨c, h⟩ := PRGStretch.computableTidilyInTimeAndSpace_stretch length_shiftIn hgen hcount
+    (Q := fun _ => 0) (fun _ i hi => absurd hi (Nat.not_lt_zero i))
+  exact ⟨tCount, sCount, c, h.mono (fun seed => by simp) (fun seed => by simp)⟩
+
 -- Degree-level quantitative certificate: a linear-time generator `(dGen = 1, eGen = 1)` stretched
 -- for `n + n + 1` rounds `(dCount = 1, eCount = 1)` has time/space degree
 -- `max 1 (1 + max 1 1) = 2` and output degree `max 1 1 = 1`.
@@ -290,6 +304,14 @@ info: 'Cslib.Crypto.PRGStretch.polyTime_stretch_of_length_eq' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.Crypto.PRGStretch.polyTime_stretch_of_length_eq
+
+/--
+info: 'Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_forwardIterate_captured' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_forwardIterate_captured
 
 /--
 info: 'Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_iterate_captured' depends on axioms: [propext,

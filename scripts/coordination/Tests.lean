@@ -9,6 +9,7 @@ Authors: Samuel Schlesinger
 import Tests.Support
 import Tests.Runtime
 import Tests.Fetch
+import Tests.Legacy
 import Coordination.Protocol
 
 /-!
@@ -235,6 +236,7 @@ private def testMalformedBoardRefused : IO Unit := withFixture fun fixture => do
 
 private def exampleSnapshot : Snapshot := {base := ⟨"base"⟩, head := ⟨"head"⟩}
 private def feature : EpicId := ⟨"feature"⟩
+private def candidate : Candidate := { epic := feature, snapshot := exampleSnapshot }
 private def coordToken : Token := ⟨"coordinator-generation"⟩
 private def workToken : Token := ⟨"work-generation"⟩
 private def apiToken : Token := ⟨"api-generation"⟩
@@ -250,6 +252,7 @@ private def context (name : String) (tokens : List Token := [])
   branchHead := some snapshot.head
   cleanHead := some snapshot.head
   ancestry := [snapshot]
+  diffs := [{ range := snapshot, paths := ["allowed/a.txt"] }]
 }
 
 private def leadContext (snapshot := exampleSnapshot) : Context :=
@@ -297,25 +300,27 @@ private def protocolState (stage : Nat) (snapshot := exampleSnapshot) : IO State
   state ← transition correctness state
     (.review feature .correctness snapshot .approve "Independent correctness review")
   if stage == 3 then return state
-  transition lead state (.reserve feature integrationToken)
+  transition lead state (.reserve [feature] integrationToken)
 
 private def testProtocolFullFlow : IO Unit := do
   let lead := leadContext
   let submitted ← protocolState 2
-  reject lead submitted (.reserve feature integrationToken) "missing both reviews"
+  reject lead submitted (.reserve [feature] integrationToken) "missing both reviews"
   let approved ← protocolState 3
-  let reserved ← transition lead approved (.reserve feature integrationToken)
-  let retried ← transition lead reserved (.reserve feature integrationToken)
+  let reserved ← transition lead approved (.reserve [feature] integrationToken)
+  let retried ← transition lead reserved (.reserve [feature] integrationToken)
   check (retried == reserved) "Same pending integration generation was not idempotent"
   let outcome ← IO.ofExcept <| Coordination.apply lead reserved
-    (.land feature exampleSnapshot "Validation complete")
-  check (outcome.publication == .atomicLanding exampleSnapshot) "Land did not require atomic publication"
+    (.land [candidate] exampleSnapshot.base exampleSnapshot.head "Validation complete")
+  check (outcome.publication == .atomicLanding exampleSnapshot.base exampleSnapshot.head)
+    "Land did not require atomic publication of the reviewed head onto its base"
   check outcome.state.integration.isNone "Landing retained an integration lease"
   match (← epic outcome.state).phase with
   | .merged completed =>
     check (completed.api.reviewer.agent != completed.correctness.reviewer.agent)
       "Completion did not retain two independent reviewers"
     check (completed.snapshot == exampleSnapshot) "Completion changed reviewed snapshot"
+    check (completed.landed == some exampleSnapshot.head) "Completion did not record the landed commit"
     check (completed.validation == "Validation complete") "Completion dropped validation evidence"
   | _ => throw <| IO.userError "Land did not complete epic"
   reject lead outcome.state (.reopen feature "edit merged work") "reopening merged work"
@@ -357,7 +362,7 @@ private def testStaleReviewsAndChangedHead : IO Unit := do
     (.review feature .api exampleSnapshot .approve "dirty reviewer") "reviewer must inspect clean exact head"
   let state ← transition lead state (.reopen feature "revision")
   reject fresh state (.review feature .api exampleSnapshot .approve "old snapshot") "review after reopen"
-  reject lead state (.reserve feature integrationToken) "reopen revoked approvals"
+  reject lead state (.reserve [feature] integrationToken) "reopen revoked approvals"
 
 private def testReviewRestartAndChangesRecovery : IO Unit := do
   let state ← protocolState 3
@@ -366,12 +371,12 @@ private def testReviewRestartAndChangesRecovery : IO Unit := do
   match (← submission state).reviews.api with
   | .active _ _ _ => pure ()
   | _ => throw <| IO.userError "Restart retained a finished approval"
-  reject leadContext state (.reserve feature integrationToken) "re-review must revoke old approval"
+  reject leadContext state (.reserve [feature] integrationToken) "re-review must revoke old approval"
   let state ← transition api state (.review feature .api exampleSnapshot .changes "Changes requested")
-  reject leadContext state (.reserve feature integrationToken) "requested changes"
+  reject leadContext state (.reserve [feature] integrationToken) "requested changes"
   let state ← transition api state (.start feature .api apiToken)
   let state ← transition api state (.review feature .api exampleSnapshot .approve "Concern resolved")
-  discard <| transition leadContext state (.reserve feature integrationToken)
+  discard <| transition leadContext state (.reserve [feature] integrationToken)
 
 private def testAuthorAndReviewerIndependence : IO Unit := do
   let state ← protocolState 1
@@ -458,7 +463,7 @@ private def testPlanRevision : IO Unit := do
   reject lead reserved (.revise feature "Changed during integration" []) "reserved plan is frozen"
   let reopened ← transition lead reserved (.reopen feature "Review a changed contract")
   discard <| transition lead reopened (.revise feature "Reopened endpoint" [])
-  let merged ← transition lead reserved (.land feature exampleSnapshot "Checks passed")
+  let merged ← transition lead reserved (.land [candidate] exampleSnapshot.base exampleSnapshot.head "Checks passed")
   reject lead merged (.revise feature "Rewrite completed history" []) "merged plan is immutable"
 
 private def testCoordinatorGuidance : IO Unit := do
@@ -490,7 +495,7 @@ private def testCoordinatorGuidance : IO Unit := do
   | .working work => check (work.report == "Independent progress report") "Worker report was lost"
   | _ => throw <| IO.userError "Guidance changed work phase"
   let reserved ← protocolState 4
-  let merged ← transition lead reserved (.land feature exampleSnapshot "Checks passed")
+  let merged ← transition lead reserved (.land [candidate] exampleSnapshot.base exampleSnapshot.head "Checks passed")
   reject lead merged (.instruct feature "Rewrite completed history") "completed record is immutable"
 
 private def testIntegrationAndSessionGenerations : IO Unit := do
@@ -499,12 +504,12 @@ private def testIntegrationAndSessionGenerations : IO Unit := do
   let state ← transition lead state .cancel
   let nextToken : Token := ⟨"next-integration-generation"⟩
   let fresh := {lead with heldTokens := [coordToken, nextToken]}
-  let state ← transition fresh state (.reserve feature nextToken)
-  reject lead state (.land feature exampleSnapshot "stale reservation") "stale integration generation"
+  let state ← transition fresh state (.reserve [feature] nextToken)
+  reject lead state (.land [candidate] exampleSnapshot.base exampleSnapshot.head "stale reservation") "stale integration generation"
   reject {fresh with main := some ⟨"new-main"⟩} state
-    (.land feature exampleSnapshot "main moved") "stale main before publish"
+    (.land [candidate] exampleSnapshot.base exampleSnapshot.head "main moved") "stale main before publish"
   reject {fresh with cleanHead := none} state
-    (.land feature exampleSnapshot "dirty candidate") "dirty publish"
+    (.land [candidate] exampleSnapshot.base exampleSnapshot.head "dirty candidate") "dirty publish"
   reject {fresh with now := 1301} state .heartbeat "expired session"
   let takeover := {context "alice" [] with
     actor := {agent := ⟨"alice"⟩, session := ⟨"replacement-session"⟩}, now := 1361}
@@ -517,7 +522,7 @@ private def testCoordinatorRelease : IO Unit := do
   reject (context "alice" [workToken]) state .releaseCoordinator "worker cannot release coordinator"
   reject (context "lead") state .releaseCoordinator "release requires held generation"
   reject {lead with now := 1301} state .releaseCoordinator "expired coordinator cannot release"
-  let reserved ← transition lead state (.reserve feature integrationToken)
+  let reserved ← transition lead state (.reserve [feature] integrationToken)
   reject lead reserved .releaseCoordinator "active integration must finish or cancel"
   let released ← transition lead state .releaseCoordinator
   check released.coordinator.isNone "Release retained coordinator authority"
@@ -532,9 +537,9 @@ private def testCoordinatorRelease : IO Unit := do
   reject lead joined .releaseCoordinator "old coordinator cannot release successor"
   let renewed ← transition lead joined .heartbeat
   check (renewed.coordinator == joined.coordinator) "Old heartbeat renewed successor authority"
-  reject lead renewed (.reserve feature integrationToken) "old coordinator cannot reserve"
+  reject lead renewed (.reserve [feature] integrationToken) "old coordinator cannot reserve"
   let successor := {successor with heldTokens := [token, integrationToken]}
-  discard <| transition successor renewed (.reserve feature integrationToken)
+  discard <| transition successor renewed (.reserve [feature] integrationToken)
 
 private def testDependenciesAndConflictingStarts : IO Unit := do
   let state ← protocolState 0
@@ -552,6 +557,247 @@ private def testDependenciesAndConflictingStarts : IO Unit := do
   let restarted ← transition alice working (.start feature .work workToken)
   check (restarted == working) "Retrying the same pending work generation was not idempotent"
 
+private def advanced : Oid := ⟨"advanced-main"⟩
+private def mergeCommit : Oid := ⟨"merge-commit"⟩
+
+/-- The coordinator observing `main` at `tip`, ahead of the reviewed base by `moved`, and its
+worktree at `landed`, a commit containing both that differs from `tip` in `landing` and from the
+reviewed head in `drift`. -/
+private def movedContext (tip : Oid := advanced)
+    (moved : List String := ["outside.txt", "Complexity.lean"]) (landed : Oid := mergeCommit)
+    (landing : List String := ["allowed/a.txt", "Complexity.lean"])
+    (drift : List String := ["outside.txt", "Complexity.lean"]) : Context :=
+  let lead := leadContext
+  { lead with
+    main := some tip
+    cleanHead := some landed
+    ancestry := [exampleSnapshot, { base := exampleSnapshot.base, head := tip },
+      { base := exampleSnapshot.head, head := landed }, { base := tip, head := landed }]
+    diffs := lead.diffs ++ [{ range := { base := exampleSnapshot.base, head := tip }, paths := moved },
+      { range := { base := tip, head := landed }, paths := landing },
+      { range := { base := exampleSnapshot.head, head := landed }, paths := drift }] }
+
+private def testReadyAcceptsAncestorBase : IO Unit := do
+  let state ← protocolState 1
+  let alice := {context "alice" [workToken] with
+    main := some advanced
+    ancestry := [exampleSnapshot, { base := exampleSnapshot.base, head := advanced }]}
+  let submit := Command.submit feature exampleSnapshot ["allowed/a.txt"] "Based on an older main"
+  let submitted ← transition alice state submit
+  check ((← submission submitted).snapshot == exampleSnapshot) "Ancestor base was not recorded"
+  reject {alice with ancestry := [exampleSnapshot]} state submit "base not observed on main"
+  reject {alice with main := none} state submit "main not observed"
+  let empty : Snapshot := {exampleSnapshot with head := exampleSnapshot.base}
+  let stale := {alice with
+    cleanHead := some empty.head
+    branchHead := some empty.head
+    ancestry := alice.ancestry ++ [empty]}
+  reject stale state (.submit feature empty ["allowed/a.txt"] "nothing") "base equal to head"
+  discard <| transition (context "alice" [workToken]) state submit
+
+private def testOverlappingPaths : IO Unit := do
+  check (overlappingPaths ["allowed/a.txt", "Complexity.lean", "ComplexityTests.lean"]
+    ["Complexity.lean", "ComplexityTests.lean", "other.txt"] == []) "Generated roots counted as overlap"
+  check (overlappingPaths ["a", "b", "b"] ["c", "b", "b"] == ["b"]) "Overlap was lost or duplicated"
+  check (overlappingPaths [] ["a"] == [] && overlappingPaths ["a"] [] == []) "Empty side overlapped"
+
+private def testLandAfterMainMoved : IO Unit := do
+  let approved ← protocolState 3
+  let lead := movedContext
+  let landing := Command.land [candidate] advanced mergeCommit "Checks passed on the merged tree"
+  let reserved ← transition lead approved (.reserve [feature] integrationToken)
+  let some original := reserved.integration | throw <| IO.userError "Missing reservation"
+  check (original.main == some advanced && original.candidates == [candidate])
+    "Reservation did not record the observed main and candidates"
+  let outcome ← IO.ofExcept <| Coordination.apply lead reserved landing
+  check (outcome.publication == .atomicLanding advanced mergeCommit)
+    "Landing did not publish the merge onto the reserved main"
+  match (← epic outcome.state).phase with
+  | .merged completed =>
+    check (completed.snapshot == exampleSnapshot && completed.landed == some mergeCommit)
+      "Completion lost the reviewed snapshot or the landed commit"
+  | _ => throw <| IO.userError "Merge landing did not complete epic"
+  let overlapping := movedContext (moved := ["allowed/a.txt"])
+  reject overlapping approved (.reserve [feature] integrationToken) "main moved on a reviewed file"
+  reject overlapping reserved landing "main moved on a reviewed file at landing"
+  reject {lead with diffs := leadContext.diffs} reserved landing "unobserved main changes"
+  reject {lead with ancestry := lead.ancestry.erase { base := exampleSnapshot.head, head := mergeCommit }}
+    reserved landing "landing omits the reviewed head"
+  reject {lead with ancestry := lead.ancestry.erase { base := advanced, head := mergeCommit }}
+    reserved landing "landing does not extend main"
+  reject {lead with ancestry := lead.ancestry.erase { base := exampleSnapshot.base, head := advanced }}
+    reserved landing "base not on main"
+  reject {lead with cleanHead := some advanced} reserved (.land [candidate] advanced advanced "none")
+    "landing equal to main"
+  reject {lead with cleanHead := some exampleSnapshot.head} reserved landing "worktree not at landing"
+  reject (movedContext (landing := ["allowed/a.txt", "stray.txt"])) reserved landing
+    "landing carries unreviewed content"
+  reject (movedContext (drift := ["outside.txt", "allowed/a.txt"])) reserved landing
+    "landing alters a reviewed file"
+  reject {lead with diffs := lead.diffs.filter (·.range.base != exampleSnapshot.head)} reserved landing
+    "unobserved difference from the reviewed head"
+  reject lead reserved (.land [candidate] exampleSnapshot.base mergeCommit "stale")
+    "landing onto another main than the reservation's"
+  -- Main moving again after the reservation refuses until the reservation is renewed.
+  let newer : Oid := ⟨"newer-main"⟩
+  let later := movedContext (tip := newer)
+  reject later reserved landing "main moved after reservation"
+  let renewed ← transition later reserved (.reserve [feature] integrationToken)
+  check (renewed.integration.any fun i => i.main == some newer && i.lease == original.lease)
+    "Renewal replaced the lease or kept the stale main"
+  reject later renewed landing "landing onto the previous main after renewal"
+  discard <| transition later renewed (.land [candidate] newer mergeCommit "Checks passed")
+
+private def second : EpicId := ⟨"second"⟩
+private def secondSnapshot : Snapshot := {base := ⟨"base"⟩, head := ⟨"second-head"⟩}
+private def secondCandidate : Candidate := { epic := second, snapshot := secondSnapshot }
+private def batchLanded : Oid := ⟨"batch-merge"⟩
+
+/-- Two approved epics by different authors on the same `main`, ready to land together. -/
+private def batchState : IO State := do
+  let lead := leadContext
+  let bob := {context "replacement" [workToken] secondSnapshot with
+    diffs := [{ range := secondSnapshot, paths := ["other/b.txt"] }]}
+  let api := context "api-reviewer" [apiToken] secondSnapshot
+  let correctness := context "correctness-reviewer" [correctnessToken] secondSnapshot
+  let mut state ← protocolState 3
+  state ← transition lead state (.plan second "Second scoped feature" ["other"] [])
+  state ← transition lead state (.assign second ⟨"replacement"⟩ .work false)
+  state ← transition bob state (.start second .work workToken)
+  state ← transition bob state (.submit second secondSnapshot ["other/b.txt"] "Second feature ready")
+  state ← transition lead state (.assign second ⟨"api-reviewer"⟩ .api false)
+  state ← transition api state (.start second .api apiToken)
+  state ← transition api state (.review second .api secondSnapshot .approve "Independent API review")
+  state ← transition lead state (.assign second ⟨"correctness-reviewer"⟩ .correctness false)
+  state ← transition correctness state (.start second .correctness correctnessToken)
+  transition correctness state
+    (.review second .correctness secondSnapshot .approve "Independent correctness review")
+
+/-- The coordinator observing both snapshots and a landing that contains both heads and
+differs from `main` in `landing`. -/
+private def batchContext (secondPaths : List String := ["other/b.txt"])
+    (landing : List String := ["allowed/a.txt", "other/b.txt", "Complexity.lean"]) : Context :=
+  let lead := leadContext
+  { lead with
+    cleanHead := some batchLanded
+    ancestry := [exampleSnapshot, secondSnapshot, { base := exampleSnapshot.base, head := batchLanded },
+      { base := exampleSnapshot.head, head := batchLanded },
+      { base := secondSnapshot.head, head := batchLanded }]
+    diffs := lead.diffs ++ [{ range := secondSnapshot, paths := secondPaths },
+      { range := { base := exampleSnapshot.base, head := batchLanded }, paths := landing },
+      { range := { base := exampleSnapshot.head, head := batchLanded }, paths := ["other/b.txt"] },
+      { range := { base := secondSnapshot.head, head := batchLanded }, paths := ["allowed/a.txt"] }] }
+
+private def testBatchLanding : IO Unit := do
+  let state ← batchState
+  let lead := batchContext
+  reject lead state (.reserve [] integrationToken) "empty batch"
+  reject lead state (.reserve [feature, feature] integrationToken) "epic listed twice"
+  reject (batchContext ["allowed/a.txt"]) state (.reserve [feature, second] integrationToken)
+    "overlapping epics"
+  let reserved ← transition lead state (.reserve [feature, second] integrationToken)
+  let landing := Command.land [candidate, secondCandidate] exampleSnapshot.base batchLanded
+    "Checks passed once on the final tree"
+  reject lead reserved (.land [candidate] exampleSnapshot.base batchLanded "partial batch")
+    "landing part of a batch publishes unreviewed content"
+  reject lead reserved (.land [secondCandidate, candidate] exampleSnapshot.base batchLanded "reordered")
+    "first candidate differs from the reservation"
+  reject (batchContext (landing := ["allowed/a.txt"])) reserved
+    (.land [candidate] exampleSnapshot.base batchLanded "subset") "intact reservation lists another batch"
+  reject (batchContext ["allowed/a.txt"]) reserved landing "overlap observed at landing"
+  reject {lead with ancestry := lead.ancestry.erase { base := secondSnapshot.head, head := batchLanded }}
+    reserved landing "landing omits the second head"
+  reject lead reserved (.reserve [feature] integrationToken) "different batch while reserved"
+  -- An older checkout keeps only the first candidate and drops main: the batch still lands, and a
+  -- retry restores the reservation under the same lease.
+  let reduced := {reserved with integration := reserved.integration.map fun i =>
+    {i with main := none, candidates := i.candidates.take 1}}
+  discard <| transition lead reduced landing
+  let restored ← transition lead reduced (.reserve [feature, second] integrationToken)
+  check (restored.integration == reserved.integration) "Retry did not restore the reduced reservation"
+  let outcome ← IO.ofExcept <| Coordination.apply lead reserved landing
+  check (outcome.publication == .atomicLanding exampleSnapshot.base batchLanded)
+    "Batch did not publish one landing"
+  check outcome.state.integration.isNone "Batch landing retained integration"
+  for id in [feature, second] do
+    match (outcome.state.epics.find? (·.id == id)).map (·.phase) with
+    | some (Phase.merged completed) =>
+      check (completed.landed == some batchLanded) s!"{id.value} lost the landed commit"
+    | _ => throw <| IO.userError s!"{id.value} was not merged by the batch"
+  -- A dependency may land earlier in the same batch, but not later.
+  let dependent := {state with epics := state.epics.map fun e =>
+    if e.id == second then {e with dependencies := [feature]} else e}
+  reject lead dependent (.reserve [second, feature] integrationToken) "dependency later in batch"
+  discard <| transition lead dependent (.reserve [feature, second] integrationToken)
+
+private def decodes {α : Type} [BEq α] [FromJson α] (json : Json) (expected : α) : Bool :=
+  match (fromJson? json : Except String α) with
+  | .ok value => value == expected
+  | .error _ => false
+
+private def testIntegrationRecordCompatibility : IO Unit := do
+  let lease : Lease := {holder := leadContext.actor, token := integrationToken, expires := 1300}
+  let batch : Integration := {lease, main := some advanced, candidates := [candidate, secondCandidate]}
+  check (decodes (toJson batch) batch) "Batch reservation did not round-trip"
+  check (decodes (toJson batch) {epic := feature, lease, snapshot := exampleSnapshot : LegacyIntegration})
+    "Older readers cannot decode the first candidate of a new reservation"
+  let single : Integration := {lease, main := none, candidates := [candidate]}
+  let written := toJson {epic := feature, lease, snapshot := exampleSnapshot : LegacyIntegration}
+  check (decodes written single) "Legacy reservation was not decoded"
+  check (decodes (toJson single) single) "Single reservation did not round-trip"
+  let mixed := (toJson batch).setObjVal! "epic" (toJson second)
+  check (decodes mixed batch) "Candidates were not preferred over legacy fields"
+  check (decodes (toJson ({} : State)) ({} : State)) "Empty board did not round-trip"
+  let review : Review := {
+    reviewer := leadContext.actor, snapshot := exampleSnapshot, verdict := .approve
+    note := "Independent review", time := 1000 }
+  let completed : Completion := {
+    snapshot := exampleSnapshot, summary := "Landed earlier", api := review, correctness := review
+    validation := "Checks passed", landedBy := leadContext.actor, landedAt := 1000 }
+  let old : LegacyCompletion := {
+    snapshot := exampleSnapshot, summary := "Landed earlier", api := review, correctness := review
+    validation := "Checks passed", landedBy := leadContext.actor, landedAt := 1000 }
+  check (decodes (toJson old) completed) "Completed record of an older checkout did not load"
+  check (decodes (toJson {completed with landed := some mergeCommit}) old)
+    "Older readers cannot decode a completed record with its landed commit"
+
+/-- An older checkout's rewrite drops the reservation's main; landing still publishes only onto
+the exact main it integrated, so a main that moves meanwhile refuses at publication. -/
+private def testDroppedMainGuardsPublication : IO Unit := withFixture fun fixture => do
+  let repository ← fixture.open
+  let head ← fixture.commit "allowed/a.txt" "reviewed candidate\n"
+  let snapshot : Snapshot := {base := ⟨fixture.base⟩, head := ⟨head⟩}
+  let lead := leadContext snapshot
+  let reserved ← protocolState 4 snapshot
+  let reduced := {reserved with integration := reserved.integration.map fun i =>
+    {i with main := none, candidates := i.candidates.take 1}}
+  let landing := Command.land [{epic := feature, snapshot}] snapshot.base snapshot.head "Checks passed"
+  reject {lead with main := some ⟨"moved-main"⟩} reduced landing "observed main moved"
+  let outcome ← IO.ofExcept <| Coordination.apply lead reduced landing
+  check (outcome.publication == .atomicLanding snapshot.base snapshot.head)
+    "Publication is not guarded by the integrated main"
+  discard <| repository.update ({} : State) "seed reduced reservation"
+    (fun _ => pure (reduced, none)) true
+  configure fixture.origin
+  let tree ← git fixture.origin #["rev-parse", fixture.base ++ "^{tree}"]
+  let moved ← git fixture.origin #["commit-tree", tree, "-p", fixture.base] (some "main moved\n")
+  let before ← fixture.ref Git.boardRef
+  let fired ← IO.mkRef false
+  let racing := {repository with execute := fun args input => do
+    if args[0]? == some "push" && args.contains "--atomic" && !(← fired.get) then
+      fired.set true
+      discard <| git fixture.origin #["update-ref", Git.mainRef, moved, fixture.base]
+    repository.execute args input}
+  expectError (racing.update ({} : State) "land reduced reservation" fun state => do
+    let outcome ← IO.ofExcept <| Coordination.apply lead state landing
+    let publish := match outcome.publication with
+      | .boardOnly => none
+      | .atomicLanding main landed => some {base := main.value, head := landed.value}
+    pure (outcome.state, publish)) "Push rejected"
+  check (← fired.get) "Main move hook did not run"
+  check ((← fixture.ref Git.mainRef) == moved) "Guarded publication overwrote the moved main"
+  check ((← fixture.ref Git.boardRef) == before) "Refused landing advanced the board"
+
 /-- The real journal stores the same State ADT used by the pure protocol, including landing. -/
 private def testProtocolThroughGit : IO Unit := withFixture fun fixture => do
   let repository ← fixture.open
@@ -562,7 +808,7 @@ private def testProtocolThroughGit : IO Unit := withFixture fun fixture => do
       let outcome ← IO.ofExcept <| Coordination.apply ctx state command
       let landing := match outcome.publication with
         | .boardOnly => none
-        | .atomicLanding snap => some {base := snap.base.value, head := snap.head.value}
+        | .atomicLanding main landed => some {base := main.value, head := landed.value}
       pure (outcome.state, landing)) true
   let lead := leadContext snapshot
   let alice := context "alice" [workToken] snapshot
@@ -586,18 +832,19 @@ private def testProtocolThroughGit : IO Unit := withFixture fun fixture => do
   repository.clean head
   let changed ← repository.changedPaths fixture.base head
   discard <| drive alice (.submit feature snapshot changed "Real Git observations checked")
-  expectError (drive lead (.reserve feature integrationToken)) "approval"
+  expectError (drive lead (.reserve [feature] integrationToken)) "approval"
   discard <| drive lead (.assign feature api.actor.agent .api false)
   discard <| drive api (.start feature .api apiToken)
   discard <| drive api (.review feature .api snapshot .approve "Independent API evidence")
-  expectError (drive lead (.reserve feature integrationToken)) "approval"
+  expectError (drive lead (.reserve [feature] integrationToken)) "approval"
   discard <| drive lead (.assign feature correctness.actor.agent .correctness false)
   discard <| drive correctness (.start feature .correctness correctnessToken)
   discard <| drive correctness (.review feature .correctness snapshot .approve "Independent correctness evidence")
-  discard <| drive lead (.reserve feature integrationToken)
+  discard <| drive lead (.reserve [feature] integrationToken)
   check ((← fixture.ref Git.mainRef) == fixture.base) "Reservation prematurely published main"
   let before ← fixture.ref Git.boardRef
-  let landed ← drive lead (.land feature snapshot "Focused integration validation passed")
+  let landed ← drive lead (.land [{ epic := feature, snapshot }] snapshot.base snapshot.head
+    "Focused integration validation passed")
   check ((← fixture.ref Git.mainRef) == head) "Protocol did not atomically publish candidate"
   check ((← git fixture.origin #["rev-parse", Git.boardRef ++ "^"]) == before) "Landing journal parent changed"
   let some (_, json) ← repository.readBoard | throw <| IO.userError "Missing landed state"
@@ -619,6 +866,12 @@ private def protocolTests : List (String × IO Unit) := [
   ("integration, expiry and session replacement fence old authority", testIntegrationAndSessionGenerations),
   ("planned coordinator release preserves reviews and fences old authority", testCoordinatorRelease),
   ("dependencies, conflicting starts and idempotent claim retry", testDependenciesAndConflictingStarts),
+  ("ready accepts a base that is an ancestor of the observed main", testReadyAcceptsAncestorBase),
+  ("reservation and completion records stay readable across checkout versions", testIntegrationRecordCompatibility),
+  ("dropped reservation main still guards publication onto the integrated main", testDroppedMainGuardsPublication),
+  ("overlapping paths ignore the generated roots", testOverlappingPaths),
+  ("landing after main moved merges disjoint changes and refuses overlap", testLandAfterMainMoved),
+  ("batch landing requires pairwise disjoint epics and in-order dependencies", testBatchLanding),
   ("actual protocol state flows through local Git to atomic publish", testProtocolThroughGit)]
 
 private def gitTests : List (String × IO Unit) := [

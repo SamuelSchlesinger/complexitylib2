@@ -26,6 +26,9 @@ Typed query encodings are not hidden inside this contract: any translation must 
 account for its computation. In particular, an unbounded oracle reply cannot be returned for
 free. The machine clock bounds every supported output even when the handler returns a longer word.
 
+`Oracle.Normalization` shows that every certificate also has a clean, intrinsically halting
+realization with the same joint law, and `Oracle.Composition` composes certificates.
+
 ## Main definitions
 
 * `Cslib.Probability.WordOracleComp`: private randomness and named word requests/replies.
