@@ -343,6 +343,7 @@ public import Complexity.Computability.Complexity.Classes.Alternation.Savitch
 public import Complexity.Computability.Complexity.Classes.Alternation.TQBF
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplification
+public import Complexity.Computability.Complexity.Classes.ArthurMerlin.Collapse
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin.GraphNonIsomorphism
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound
