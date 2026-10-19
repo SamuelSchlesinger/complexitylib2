@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Complexity.Classes.ParityP
 public import Complexity.Computability.Complexity.Classes.Toda.Isolation
+import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -423,7 +424,7 @@ theorem acceptCount_padWitness (W : α × List Bool → Bool) (a : α) (r : List
   simp only [List.take_left' hlen, List.drop_left' hlen, Bool.and_eq_true]
   split
   · rename_i hW
-    have := card_filter_not_any D
+    have := BitString.card_filter_not_any D
     simp only [Finset.card_filter] at this
     simp only [hW, true_and]
     exact this

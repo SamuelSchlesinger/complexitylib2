@@ -10,8 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.Operators
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import Mathlib.Algebra.BigOperators.Ring.Nat
-import Mathlib.Logic.Equiv.Fin.Basic
+import Complexity.Foundations.Data.BitString.WordCount
 
 /-!
 # The class parity-P
@@ -27,10 +26,8 @@ in `#P` is odd (`Cslib.Complexity.mem_ParityP_iff_exists_SharpP`).
 `⊕P` is closed under complement (`Cslib.Complexity.compl_mem_ParityP`): the verifier
 `Cslib.Complexity.succVerifier V` accepts the string of `false`s and the strings `true :: w` with
 `V (a, w) = true`, so it accepts exactly one string more than `V`, one bit longer
-(`Cslib.Complexity.acceptCount_succVerifier`). Splitting words into a prefix and the rest
-(`Cslib.Complexity.card_filter_ofFn_add`, `Cslib.Complexity.acceptCount_add`) or into their
-first bit and the rest (`Cslib.Complexity.card_filter_ofFn_succ`) are the other counting steps
-used for parity classes.
+(`Cslib.Complexity.acceptCount_succVerifier`), by counting words by their first bit
+(`Cslib.BitString.card_filter_ofFn_succ`).
 
 ## Main definitions
 
@@ -40,8 +37,6 @@ used for parity classes.
 
 ## Main results
 
-* `Cslib.Complexity.card_filter_ofFn_add`, `Cslib.Complexity.card_filter_ofFn_succ`,
-  `Cslib.Complexity.acceptCount_add`: counting words by their prefixes.
 * `Cslib.Complexity.acceptCount_succVerifier`, `Cslib.Complexity.acceptCount_succTest`: one more
   accepted string.
 * `Cslib.Complexity.mem_ParityP`, `Cslib.Complexity.mem_ParityP_iff_exists_SharpP`: `⊕P` through
@@ -66,81 +61,6 @@ variable {α : Type}
 
 section Counting
 
-/-- **Counting words by their prefixes**: the words of length `m + n` are the words `u ++ w`
-with `u` of length `m` and `w` of length `n`. -/
-theorem card_filter_ofFn_add (m n : ℕ) (g : List Bool → List Bool → Prop)
-    [∀ u w, Decidable (g u w)] :
-    (Finset.univ.filter fun v : Fin (m + n) → Bool =>
-      g ((List.ofFn v).take m) ((List.ofFn v).drop m)).card =
-      ∑ u : Fin m → Bool,
-        (Finset.univ.filter fun w : Fin n → Bool => g (List.ofFn u) (List.ofFn w)).card := by
-  classical
-  rw [← Finset.card_map (Fin.appendEquiv m n).symm.toEmbedding]
-  have hmap : (Finset.univ.filter fun v : Fin (m + n) → Bool =>
-      g ((List.ofFn v).take m) ((List.ofFn v).drop m)).map
-        (Fin.appendEquiv m n).symm.toEmbedding =
-      Finset.univ.filter fun x : (Fin m → Bool) × (Fin n → Bool) =>
-        g (List.ofFn x.1) (List.ofFn x.2) := by
-    ext x
-    simp only [Finset.mem_map_equiv, Equiv.symm_symm, Finset.mem_filter, Finset.mem_univ,
-      true_and]
-    change g ((List.ofFn (Fin.append x.1 x.2)).take m)
-      ((List.ofFn (Fin.append x.1 x.2)).drop m) ↔ _
-    rw [List.ofFn_fin_append, List.take_left' List.length_ofFn, List.drop_left' List.length_ofFn]
-  rw [hmap, Finset.card_filter, Fintype.sum_prod_type]
-  simp only [Finset.card_filter]
-
-/-- **Counting words by their first bit.** -/
-theorem card_filter_ofFn_succ (n : ℕ) (g : List Bool → Prop) [DecidablePred g] :
-    (Finset.univ.filter fun v : Fin (n + 1) → Bool => g (List.ofFn v)).card =
-      (Finset.univ.filter fun w : Fin n → Bool => g (true :: List.ofFn w)).card +
-        (Finset.univ.filter fun w : Fin n → Bool => g (false :: List.ofFn w)).card := by
-  classical
-  rw [← Finset.card_map (Fin.consEquiv fun _ => Bool).symm.toEmbedding]
-  have hmap : (Finset.univ.filter fun v : Fin (n + 1) → Bool => g (List.ofFn v)).map
-      (Fin.consEquiv fun _ => Bool).symm.toEmbedding =
-      Finset.univ.filter fun x : Bool × (Fin n → Bool) => g (x.1 :: List.ofFn x.2) := by
-    ext x
-    simp only [Finset.mem_map_equiv, Equiv.symm_symm, Finset.mem_filter, Finset.mem_univ,
-      true_and]
-    change g (List.ofFn (Fin.cons x.1 x.2 : Fin (n + 1) → Bool)) ↔ _
-    rw [List.ofFn_succ]
-    simp
-  rw [hmap, Finset.card_filter, Fintype.sum_prod_type, Fintype.sum_bool]
-  simp only [Finset.card_filter]
-
-/-- Only the word of `false`s has no bit `true`. -/
-theorem card_filter_not_any (n : ℕ) :
-    (Finset.univ.filter fun w : Fin n → Bool =>
-      (!(List.ofFn w).any fun b => b) = true).card = 1 := by
-  rw [Finset.card_eq_one]
-  refine ⟨fun _ => false, Finset.ext fun w => ?_⟩
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Bool.not_eq_eq_eq_not, Bool.not_true,
-    List.any_eq_false, List.mem_ofFn, forall_exists_index, forall_apply_eq_imp_iff,
-    Finset.mem_singleton, Bool.not_eq_true]
-  exact ⟨fun h => funext h, fun h i => by rw [h]⟩
-
-/-- Only the word of `true`s has all bits `true`. -/
-theorem card_filter_all (n : ℕ) :
-    (Finset.univ.filter fun w : Fin n → Bool =>
-      ((List.ofFn w).all fun b => b) = true).card = 1 := by
-  rw [Finset.card_eq_one]
-  refine ⟨fun _ => true, Finset.ext fun w => ?_⟩
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, List.all_eq_true, List.mem_ofFn,
-    forall_exists_index, forall_apply_eq_imp_iff, Finset.mem_singleton]
-  exact ⟨fun h => funext h, fun h i => by rw [h]⟩
-
-variable {V : α × List Bool → Bool} {a : α}
-
-/-- **Counting strings by their prefixes**: the strings of length `m + n` accepted by `V` are the
-strings `u ++ w`, with `u` of length `m` and `w` of length `n` accepted with the prefix `u`. -/
-theorem acceptCount_add (V : α × List Bool → Bool) (a : α) (m n : ℕ) :
-    acceptCount V a (m + n) =
-      ∑ u : Fin m → Bool, acceptCount (fun x => V (x.1, List.ofFn u ++ x.2)) a n := by
-  have h := card_filter_ofFn_add m n fun u w => V (a, u ++ w) = true
-  simp only [List.take_append_drop] at h
-  exact h
-
 /-- The word test accepting one word more than `g`, one bit longer: the word of `false`s, and
 `true :: w` for every word `w` accepted by `g`. -/
 def succTest (g : List Bool → Bool) (w : List Bool) : Bool :=
@@ -162,9 +82,9 @@ theorem acceptCount_succVerifier (V : α × List Bool → Bool) (a : α) (n : �
     simp [succVerifier, succTest]
   have h₂ : (Finset.univ.filter fun w : Fin n → Bool =>
       succVerifier V (a, false :: List.ofFn w) = true).card = 1 := by
-    simpa [succVerifier, succTest] using card_filter_not_any n
-  rw [acceptCount, acceptCount, card_filter_ofFn_succ n fun w => succVerifier V (a, w) = true, h₁,
-    h₂]
+    simpa [succVerifier, succTest] using BitString.card_filter_not_any n
+  rw [acceptCount, acceptCount,
+    BitString.card_filter_ofFn_succ n fun w => succVerifier V (a, w) = true, h₁, h₂]
 
 /-- **One more accepted word**: `succTest g` accepts exactly one word of length `n + 1` more than
 `g` accepts words of length `n`. -/
@@ -176,11 +96,6 @@ theorem acceptCount_succTest (g : List Bool → Bool) (a : α) (n : ℕ) :
 theorem odd_acceptCount_succVerifier_iff (V : α × List Bool → Bool) (a : α) (n : ℕ) :
     Odd (acceptCount (succVerifier V) a (n + 1)) ↔ ¬Odd (acceptCount V a n) := by
   rw [acceptCount_succVerifier, Nat.odd_add_one]
-
-/-- Verifiers that agree on an instance accept the same strings with it. -/
-theorem acceptCount_congr {W : α × List Bool → Bool} (h : ∀ w, V (a, w) = W (a, w)) (n : ℕ) :
-    acceptCount V a n = acceptCount W a n := by
-  simp only [acceptCount, h]
 
 end Counting
 

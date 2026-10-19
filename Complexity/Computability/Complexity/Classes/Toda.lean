@@ -7,9 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.Oracle
+public import Complexity.Computability.Complexity.Classes.Oracle.Counting
 public import Complexity.Computability.Complexity.Classes.Toda.Hierarchy
-import Complexity.Computability.Complexity.Classes.Oracle.Closure
 import Complexity.Computability.Complexity.Classes.Toda.Counting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -22,37 +21,22 @@ Toda's theorem [Toda][Toda1991], [Arora and Barak, Section 17.4][AroraBarak09]: 
 hierarchy lies in `BP·⊕P` (`Cslib.Complexity.PH_subset_BPOp_ParityP`), which lies in polynomial
 time with an oracle for a function in `#P`
 (`Cslib.Complexity.BPOp_ParityP_subset_PWithSharpPOracle`), so `PH ⊆ P^#P`
-(`Cslib.Complexity.PH_subset_PWithSharpPOracle`).
+(`Cslib.Complexity.PH_subset_PWithSharpPOracle`), for the class `P^#P` of
+`Cslib.Complexity.PWithSharpPOracle`: one polynomial-time oracle program, correct against every
+oracle language answering the bits of a function in `#P`.
 
-## Polynomial time with a `#P` oracle
-
-The oracle classes of `Cslib.Complexity.PWithOracle` query languages. A function `f : α → ℕ` is
-queried through its *bit graph* (`Cslib.Complexity.bitGraph`): the words
-`encPair enc encNat (a, i)` such that bit `i` of `f a` is `1`. `P^#P` relative to the encoding
-`enc` (`Cslib.Complexity.PWithSharpPOracle`) consists of the problems in polynomial time relative
-to the bit graph of some function in `#P` with respect to `enc`. For the identity encoding
-`encBits` of words this is the usual class `P^#P`, polynomial time with oracle access to the bits
-of a counting function on words; for another encoding, the counting function takes instances of
-the same type, and the oracle answers no on words that encode no pair of an instance and an
-index.
-
-## The second inclusion with one query
+## One bit of a `#P` value
 
 For a problem in `BP·⊕P`, decided with bounded error by the parity of the number `f r` of
 witnesses of a verifier on random strings `r` of length `R`,
-`Complexity.Computability.Complexity.Classes.Toda.Counting` gives a function in `#P` whose bit
-`R + 1` says whether more than half of the random strings have `f r` odd
-(`Cslib.Complexity.exists_SharpP_testBit_of_mem_BPOp_ParityP`). So one query to the bit graph
-decides the problem: Toda's theorem holds with a single query, `PH ⊆ P^#P[1]`.
-
-## Main definitions
-
-* `Cslib.Complexity.bitGraph`: the bits of a function, as an oracle language.
-* `Cslib.Complexity.PWithSharpPOracle`: polynomial time with a `#P` oracle.
+`Complexity.Computability.Complexity.Classes.Toda.Counting` gives a function in `#P` on the same
+instances whose bit `R + 1` says whether more than half of the random strings have `f r` odd
+(`Cslib.Complexity.exists_SharpP_testBit_of_mem_BPOp_ParityP`). The program deciding the problem
+in `P^#P` (`Cslib.Complexity.mem_PWithSharpPOracle_of_testBit`) asks for this bit with a single
+query, as in Toda's `PH ⊆ P^#P[1]`; the class `PWithSharpPOracle` itself does not count queries.
 
 ## Main results
 
-* `Cslib.Complexity.P_subset_PWithSharpPOracle`: `P ⊆ P^#P`.
 * `Cslib.Complexity.exists_SharpP_testBit_of_mem_BPOp_ParityP`: a problem in `BP·⊕P` is decided
   by a bit at a polynomial position of a function in `#P`.
 * `Cslib.Complexity.BPOp_ParityP_subset_PWithSharpPOracle`: **`BP·⊕P ⊆ P^#P`**.
@@ -71,51 +55,6 @@ namespace Cslib.Complexity
 open Finset Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool}
-
-/-! ### Polynomial time with a `#P` oracle -/
-
-/-- The bit graph of `f : α → ℕ`: the words `encPair enc encNat (a, i)` such that bit `i` of
-`f a` is `1`. -/
-def bitGraph (enc : α ↪ List Bool) (f : α → ℕ) : Set (List Bool) :=
-  encPair enc encNat '' {x | (f x.1).testBit x.2}
-
-theorem encPair_mem_bitGraph {f : α → ℕ} {a : α} {i : ℕ} :
-    encPair enc encNat (a, i) ∈ bitGraph enc f ↔ (f a).testBit i :=
-  (encPair enc encNat).injective.mem_set_image
-
-/-- **`P^#P`**: the problems decidable in polynomial time relative to the bit graph of a function
-in `#P`, with respect to the encoding `enc` of instances. -/
-def PWithSharpPOracle (enc : α ↪ List Bool) : Set (Set α) :=
-  {L | ∃ f ∈ SharpP enc, L ∈ PWithOracle (bitGraph enc f) enc}
-
-theorem mem_PWithSharpPOracle {L : Set α} :
-    L ∈ PWithSharpPOracle enc ↔ ∃ f ∈ SharpP enc, L ∈ PWithOracle (bitGraph enc f) enc :=
-  Iff.rfl
-
-/-- The zero function is in `#P`: no certificate is accepted. -/
-theorem zero_mem_SharpP : (0 : α → ℕ) ∈ SharpP enc :=
-  ⟨0, fun _ => false, .const false, fun _ => by simp [acceptCount]⟩
-
-/-- **`P ⊆ P^#P`**: a polynomial-time decider makes no query, here to the bit graph of `0`. -/
-theorem P_subset_PWithSharpPOracle : P enc ⊆ PWithSharpPOracle enc := fun _ hL =>
-  ⟨0, zero_mem_SharpP, P_subset_PWithOracle _ enc hL⟩
-
-/-- **One bit of a `#P` value is in `P^#P`**: a problem decided by the bit at a polynomial position
-of a function in `#P` is in `P^#P`, with one query. -/
-theorem mem_PWithSharpPOracle_of_testBit {L : Set α} {f : α → ℕ} (hf : f ∈ SharpP enc)
-    {p : Polynomial ℕ} (h : ∀ a, a ∈ L ↔ (f a).testBit (p.eval (enc a).length)) :
-    L ∈ PWithSharpPOracle enc := by
-  classical
-  refine ⟨f, hf, ?_⟩
-  have hq : ComputableTidilyInPolyTime (fun a => encPair enc encNat (a, p.eval (enc a).length))
-      enc encBits :=
-    ComputableTidilyInPolyTime.encoded (f := fun a => (a, p.eval (enc a).length))
-      (ComputableTidilyInPolyTime.id'.prod
-        (ComputableTidilyInPolyTime.unary_to_binary.comp (f := fun n : ℕ => n)
-          (g := fun a => p.eval (enc a).length) (by fun_prop)))
-  refine ⟨fun a => decide (encPair enc encNat (a, p.eval (enc a).length) ∈ bitGraph enc f),
-    (computableInPolyTimeWithOracle_mem _).preprocess hq, fun a => ?_⟩
-  rw [h a, decide_eq_true_iff, encPair_mem_bitGraph]
 
 /-! ### `BP·⊕P ⊆ P^#P` -/
 
@@ -168,16 +107,17 @@ theorem exists_SharpP_testBit_of_mem_BPOp_ParityP {L : Set α}
     have := hno ha
     omega
 
-/-- **`BP·⊕P ⊆ P^#P`**, with one query: a problem decided with bounded error by a problem in `⊕P`
-about pairs of an instance and a random string is decided in polynomial time by one query to the
-bit graph of a function in `#P`. -/
+/-- **`BP·⊕P ⊆ P^#P`**: a problem decided with bounded error by a problem in `⊕P` about pairs of
+an instance and a random string is in `P^#P`, decided by a program asking for one bit of a
+function in `#P`. -/
 theorem BPOp_ParityP_subset_PWithSharpPOracle :
     BPOp enc (ParityP (encPair enc encBits)) ⊆ PWithSharpPOracle enc := fun _ hL =>
   let ⟨_, hf, _, h⟩ := exists_SharpP_testBit_of_mem_BPOp_ParityP hL
   mem_PWithSharpPOracle_of_testBit hf h
 
-/-- **Toda's theorem: `PH ⊆ P^#P`.** Every problem in the polynomial hierarchy is decidable in
-polynomial time with one query to the bit graph of a function in `#P`. -/
+/-- **Toda's theorem: `PH ⊆ P^#P`.** Every problem in the polynomial hierarchy is decided by a
+polynomial-time oracle program, asking for one bit of a function in `#P`, against every oracle
+language answering the bits of that function. -/
 theorem PH_subset_PWithSharpPOracle : PH enc ⊆ PWithSharpPOracle enc :=
   PH_subset_BPOp_ParityP.trans BPOp_ParityP_subset_PWithSharpPOracle
 

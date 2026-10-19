@@ -346,6 +346,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle
 public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
 public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 public import Complexity.Computability.Complexity.Classes.Oracle.Collapse
+public import Complexity.Computability.Complexity.Classes.Oracle.Counting
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
@@ -900,6 +901,7 @@ public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.WordCount
 public import Complexity.Foundations.Data.Code.Basic
 public import Complexity.Foundations.Data.Code.BerlekampWelch
 public import Complexity.Foundations.Data.Code.Concatenation

@@ -13,6 +13,7 @@ public import Complexity.Foundations.Data.BitString.List
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Order.PiLex
 import Complexity.Computability.Complexity.Classes.ValiantVazirani
+import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -471,7 +472,7 @@ theorem card_filter_coeffTest {K k : ℕ} (hk : 1 ≤ k) (hkK : k ≤ K) :
     Fintype.card_fin] at hsplit
   have hK : K - (K + 1 - k) = k - 1 := by omega
   rw [hK] at hsplit
-  have hall := card_filter_not_any (K + 1 - k)
+  have hall := BitString.card_filter_not_any (K + 1 - k)
   have hsum := Finset.card_filter_add_card_filter_not
     (s := (univ : Finset (Fin (K + 1 - k) → Bool)))
     (fun u => (!(List.ofFn u).any fun b => b) = true)
@@ -517,7 +518,7 @@ theorem card_filter_countingTest (accept : List Bool → List Bool → Bool) (K 
     coeffTest K k ((List.ofFn w).take K) = true ∧
       subsetTest (accept (((List.ofFn w).drop K).take R)) K Z k ((List.ofFn w).drop (K + R)) =
         true).card with hC
-  have h1 := card_filter_ofFn_add K (K + (R + K * Z))
+  have h1 := BitString.card_filter_ofFn_add K (K + (R + K * Z))
     (fun u v => countingTest accept K R Z (u ++ v) = true)
   simp only [List.take_append_drop] at h1
   rw [h1]
@@ -546,7 +547,7 @@ theorem card_filter_countingTest (accept : List Bool → List Bool → Bool) (K 
   rw [hC]
   simp only
   -- split off the coefficient bits
-  have h3 := card_filter_ofFn_add K (R + K * Z) (fun u v => coeffTest K (i + 1) u = true ∧
+  have h3 := BitString.card_filter_ofFn_add K (R + K * Z) (fun u v => coeffTest K (i + 1) u = true ∧
     subsetTest (accept (v.take R)) K Z (i + 1) (v.drop R) = true)
   have h3' : (univ.filter fun w : Fin (K + (R + K * Z)) → Bool =>
       coeffTest K (i + 1) ((List.ofFn w).take K) = true ∧
@@ -567,7 +568,8 @@ theorem card_filter_countingTest (accept : List Bool → List Bool → Bool) (K 
   have hY' : Y = ∑ r : Fin R → Bool,
       ((univ.filter fun z : Fin Z → Bool => accept (List.ofFn r) (List.ofFn z) = true).card).choose
         (i + 1) := by
-    rw [hY, card_filter_ofFn_add R (K * Z) (fun u v => subsetTest (accept u) K Z (i + 1) v = true)]
+    rw [hY, BitString.card_filter_ofFn_add R (K * Z)
+      (fun u v => subsetTest (accept u) K Z (i + 1) v = true)]
     exact sum_congr rfl fun r _ => card_filter_subsetTest _ Z (by omega)
   have hsum : ∑ u : Fin K → Bool, (univ.filter fun w : Fin (R + K * Z) → Bool =>
       coeffTest K (i + 1) (List.ofFn u) = true ∧
@@ -614,14 +616,15 @@ theorem card_filter_sharpTest (accept : List Bool → List Bool → Bool) (R Z :
         countingTest accept (R + 1) R Z (List.ofFn w) = true).card + (2 ^ R - 1) := by
   classical
   set LH := (R + 1) + ((R + 1) + (R + (R + 1) * Z))
-  rw [card_filter_ofFn_succ (LH + 1) (fun l => sharpTest accept R Z l = true)]
+  rw [BitString.card_filter_ofFn_succ (LH + 1) (fun l => sharpTest accept R Z l = true)]
   have h1 : (univ.filter fun w : Fin (LH + 1) → Bool =>
       sharpTest accept R Z (true :: List.ofFn w) = true).card =
       2 * (univ.filter fun w : Fin LH → Bool =>
         countingTest accept (R + 1) R Z (List.ofFn w) = true).card := by
     simp only [sharpTest, List.headD_cons, Bool.true_and, Bool.not_true, Bool.false_and,
       Bool.or_false, List.drop_succ_cons]
-    rw [card_filter_ofFn_succ LH (fun l => countingTest accept (R + 1) R Z (l.drop 1) = true)]
+    rw [BitString.card_filter_ofFn_succ LH
+      (fun l => countingTest accept (R + 1) R Z (l.drop 1) = true)]
     simp only [List.drop_succ_cons, List.drop_zero]
     ring
   have h2 : (univ.filter fun w : Fin (LH + 1) → Bool =>
@@ -631,11 +634,11 @@ theorem card_filter_sharpTest (accept : List Bool → List Bool → Bool) (R Z :
     have := ValiantVazirani.card_filter_take_drop (m := LH + 1) (a := R) (by omega)
       (fun u => (!(u.all fun b => b)) = true) (fun v => (!(v.any fun b => b)) = true)
     simp only [Bool.and_eq_true]
-    rw [this, card_filter_not_any, mul_one]
+    rw [this, BitString.card_filter_not_any, mul_one]
     have hsum := Finset.card_filter_add_card_filter_not (s := (univ : Finset (Fin R → Bool)))
       (fun u => ((List.ofFn u).all fun b => b) = true)
     simp only [card_univ, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin,
-      card_filter_all] at hsum
+      BitString.card_filter_all] at hsum
     have : (univ.filter fun u : Fin R → Bool => (!(List.ofFn u).all fun b => b) = true) =
         univ.filter fun u => ¬((List.ofFn u).all fun b => b) = true := by
       ext u; simp

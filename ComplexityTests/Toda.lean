@@ -80,6 +80,26 @@ example (e : Polynomial ℕ) : IsRandomParityRep encBits 1 e 0 0
     (fun _ u => u.headD false = true) :=
   isRandomParityRep_base 1 e fun y => y.2.headD false
 
+/-! ### Counting-oracle answers outside valid codes -/
+
+/-- Even the empty word may receive either oracle answer: it is not a pair code. -/
+example {β : Type} (enc : β ↪ List Bool) (f : β → ℕ) :
+    AnswersBits enc f (bitGraph enc f ∪ {[]}) := by
+  intro b i
+  have hne : encPair enc encNat (b, i) ≠ [] := by
+    intro h
+    have := length_encPair (enc₁ := enc) (enc₂ := encNat) (b, i)
+    rw [h] at this
+    simp only [List.length_nil] at this
+    lia
+  simpa only [Set.mem_union, Set.mem_singleton_iff, hne, or_false] using
+    answersBits_bitGraph enc f b i
+
+/-- The zero function's empty bit graph is also a valid oracle. -/
+example : AnswersBits encBits (fun _ => 0) ∅ := by
+  intro b i
+  simp
+
 /-! ### Toda's theorem -/
 
 /-- `P ⊆ P^#P`. -/
