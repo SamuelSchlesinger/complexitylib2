@@ -117,6 +117,7 @@ import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.RandomOracle
+import ComplexityTests.RationalHitting
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
