@@ -42,6 +42,7 @@ public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hamming
+public import Complexity.Computability.Circuit.Boolean.HardCore
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
@@ -125,6 +126,7 @@ public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Capacit
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.InnerProduct
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
 public import Complexity.Computability.Circuit.Boolean.Word
+public import Complexity.Computability.Circuit.Boolean.XorLemma
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth
@@ -280,8 +282,13 @@ public import Complexity.Computability.Complexity.Classes.NP.Witness
 public import Complexity.Computability.Complexity.Classes.Oracle
 public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
 public import Complexity.Computability.Complexity.Classes.Oracle.Closure
+public import Complexity.Computability.Complexity.Classes.Oracle.Collapse
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
+public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
+public import Complexity.Computability.Complexity.Classes.Oracle.Simulation
+public import Complexity.Computability.Complexity.Classes.Oracle.Space
+public import Complexity.Computability.Complexity.Classes.Oracle.TQBF
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
@@ -708,11 +715,17 @@ public import Complexity.Foundations.BooleanAnalysis.MirrorSets
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.Combinatorics.AffineDisperser
+public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Combinatorics.AffineDisperser.CubeSum
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
 public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Moore
 public import Complexity.Foundations.Combinatorics.AffineDisperser.PivotSpace
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Primes
 public import Complexity.Foundations.Combinatorics.AffineDisperser.SubspacePolynomial
+public import Complexity.Foundations.Combinatorics.AffineDisperser.TensorBasis
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
