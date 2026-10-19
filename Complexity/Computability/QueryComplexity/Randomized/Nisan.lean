@@ -42,6 +42,9 @@ within `ε` of `f` when `μ` computes `f` with error `ε`. So `adeg_ε(f) ≤ R_
   `(1 - 2ε) bs(f) ≤ R_ε(f)` for `ε ≥ 0`.
 * `Cslib.QueryComplexity.blockSensitivity_le_three_mul_randomizedComplexity`: `bs(f) ≤ 3 R(f)`.
 * `Cslib.QueryComplexity.approxDegree_le_randomizedComplexity`: `adeg_ε(f) ≤ R_ε(f)`.
+* `Cslib.RandomizedDecisionTree.Computes.one_sub_two_mul_mul_blockSensitivity_le_depth`,
+  `Cslib.RandomizedDecisionTree.Computes.approxDegree_le_depth`: the same bounds for the depth of
+  one randomized decision tree computing `f` with error `ε`.
 * `Cslib.DecisionTree.one_sub_two_mul_pow_three_mul_complexity_le`: `(1 - 2ε)³ D(f) ≤ R_ε(f)³`
   for `ε ≥ 0`.
 * `Cslib.DecisionTree.complexity_le_mul_randomizedComplexity_pow_three`: `D(f) ≤ 27 R(f)³`.
@@ -63,7 +66,7 @@ open Convexity Finset BitString RandomizedDecisionTree
 
 namespace QueryComplexity
 
-variable {n : ℕ} {f : BooleanFunction n} {μ : RandomizedDecisionTree (Fin n) Bool} {ε : ℝ}
+variable {n : ℕ} {f : BooleanFunction n}
 
 /-- A tree that misses a sensitive block on `x` errs on `x` or on `x` with the block flipped. -/
 private theorem one_le_err_add_err {t : DecisionTree (Fin n) Bool} {x : BitString n} {B : Block n}
@@ -79,9 +82,17 @@ private theorem one_le_err_add_err {t : DecisionTree (Fin n) Bool} {x : BitStrin
   · simp only [h, ↓reduceIte]
     split_ifs <;> norm_num
 
+end QueryComplexity
+
+namespace RandomizedDecisionTree
+
+open QueryComplexity
+
+variable {n : ℕ} {f : BooleanFunction n} {μ : RandomizedDecisionTree (Fin n) Bool} {ε : ℝ}
+
 /-- **Nisan's bound for one randomized decision tree**: if `μ` computes `f` with error `ε`, then
 `(1 - 2ε) bs(f) ≤ depth μ`. -/
-theorem one_sub_two_mul_mul_blockSensitivity_le_depth (h : μ.Computes ε f) :
+theorem Computes.one_sub_two_mul_mul_blockSensitivity_le_depth (h : μ.Computes ε f) :
     (1 - 2 * ε) * blockSensitivity f ≤ μ.depth := by
   classical
   -- an input and a family of pairwise disjoint sensitive blocks attaining `bs(f)`
@@ -140,23 +151,9 @@ theorem one_sub_two_mul_mul_blockSensitivity_le_depth (h : μ.Computes ε f) :
     ring
   linarith
 
-/-- **Nisan's bound**: `(1 - 2ε) bs(f) ≤ R_ε(f)` for `ε ≥ 0`. -/
-theorem one_sub_two_mul_mul_blockSensitivity_le_randomizedComplexity (hε : 0 ≤ ε)
-    (f : BooleanFunction n) : (1 - 2 * ε) * blockSensitivity f ≤ randomizedComplexity ε f := by
-  obtain ⟨μ, hμ, hd⟩ := exists_computes_depth_eq_randomizedComplexity hε f
-  exact hd ▸ one_sub_two_mul_mul_blockSensitivity_le_depth hμ
-
-/-- **Nisan's bound** for bounded error: `bs(f) ≤ 3 R(f)`, for `R = R_{1/3}`. -/
-theorem blockSensitivity_le_three_mul_randomizedComplexity (f : BooleanFunction n) :
-    blockSensitivity f ≤ 3 * randomizedComplexity (1 / 3) f := by
-  have := one_sub_two_mul_mul_blockSensitivity_le_randomizedComplexity
-    (by norm_num : (0 : ℝ) ≤ 1 / 3) f
-  have h : (blockSensitivity f : ℝ) ≤ 3 * randomizedComplexity (1 / 3) f := by linarith
-  exact_mod_cast h
-
 /-- A randomized decision tree computing `f` with error `ε` gives a real function of degree at most
 its depth within `ε` of `f`: the probability that the tree drawn outputs `1`. -/
-theorem approxDegree_le_depth (h : μ.Computes ε f) : approxDegree ε f ≤ μ.depth := by
+theorem Computes.approxDegree_le_depth (h : μ.Computes ε f) : approxDegree ε f ≤ μ.depth := by
   classical
   set p : BitString n → ℝ := ∑ t ∈ μ.weights.support, μ.weights t • fun y => bitVal ℝ (t.eval y)
   have hp (y : BitString n) : p y = μ.weights.sum fun t w => w * bitVal ℝ (t.eval y) := by
@@ -180,6 +177,26 @@ theorem approxDegree_le_depth (h : μ.Computes ε f) : approxDegree ε f ≤ μ.
         cases t.eval y <;> cases f y <;> simp
     _ ≤ ε := h y
 
+end RandomizedDecisionTree
+
+namespace QueryComplexity
+
+variable {n : ℕ} {ε : ℝ}
+
+/-- **Nisan's bound**: `(1 - 2ε) bs(f) ≤ R_ε(f)` for `ε ≥ 0`. -/
+theorem one_sub_two_mul_mul_blockSensitivity_le_randomizedComplexity (hε : 0 ≤ ε)
+    (f : BooleanFunction n) : (1 - 2 * ε) * blockSensitivity f ≤ randomizedComplexity ε f := by
+  obtain ⟨μ, hμ, hd⟩ := exists_computes_depth_eq_randomizedComplexity hε f
+  exact hd ▸ hμ.one_sub_two_mul_mul_blockSensitivity_le_depth
+
+/-- **Nisan's bound** for bounded error: `bs(f) ≤ 3 R(f)`, for `R = R_{1/3}`. -/
+theorem blockSensitivity_le_three_mul_randomizedComplexity (f : BooleanFunction n) :
+    blockSensitivity f ≤ 3 * randomizedComplexity (1 / 3) f := by
+  have := one_sub_two_mul_mul_blockSensitivity_le_randomizedComplexity
+    (by norm_num : (0 : ℝ) ≤ 1 / 3) f
+  have h : (blockSensitivity f : ℝ) ≤ 3 * randomizedComplexity (1 / 3) f := by linarith
+  exact_mod_cast h
+
 /-- **Approximate degree is at most randomized complexity**: `adeg_ε(f) ≤ R_ε(f)`. -/
 theorem approxDegree_le_randomizedComplexity (ε : ℝ) (f : BooleanFunction n) :
     approxDegree ε f ≤ randomizedComplexity ε f := by
@@ -189,7 +206,7 @@ theorem approxDegree_le_randomizedComplexity (ε : ℝ) (f : BooleanFunction n) 
     obtain ⟨p, -, hp⟩ := hD
     exact absurd ((abs_nonneg _).trans (hp fun _ => false)) (not_le.2 hε)
   obtain ⟨μ, hμ, hd⟩ := exists_computes_depth_eq_randomizedComplexity hε f
-  exact hd ▸ approxDegree_le_depth hμ
+  exact hd ▸ hμ.approxDegree_le_depth
 
 end QueryComplexity
 
