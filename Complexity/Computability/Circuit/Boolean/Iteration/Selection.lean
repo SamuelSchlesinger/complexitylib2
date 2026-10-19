@@ -126,6 +126,15 @@ theorem chooseRecord_map {β : Type*} (g : α → β) (flags : Fin R → Bool)
     simp only [chooseRecord]
     split_ifs <;> simp only [Function.comp_apply, ih]
 
+/-- If no record is flagged, the scan returns the fallback. -/
+theorem chooseRecord_of_forall_eq_false (flags : Fin R → Bool) (records : Fin R → α)
+    (fallback : α) (h : ∀ j, flags j = false) (t : ℕ) :
+    chooseRecord flags records fallback t = fallback := by
+  induction t with
+  | zero => rfl
+  | succ t ih => simp only [chooseRecord, h, Bool.false_eq_true, ite_false, ih, dite_eq_ite,
+      ite_self]
+
 /-- If some record among the first `t` is flagged, the scan returns a flagged record. -/
 theorem chooseRecord_spec (flags : Fin R → Bool) (records : Fin R → α) (fallback : α)
     (t : ℕ) (hex : ∃ j : Fin R, j.val < t ∧ flags j = true) :
