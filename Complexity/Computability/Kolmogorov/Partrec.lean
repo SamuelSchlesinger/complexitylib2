@@ -76,7 +76,7 @@ namespace Cslib.Kolmogorov
 open Encodable Denumerable Nat.Partrec
 
 /-- Folding `Nat.bit` over a binary string is primitive recursive. -/
-private theorem primrec_foldr_bit : Primrec fun l : List Bool => l.foldr Nat.bit 0 := by
+theorem primrec_foldr_bit : Primrec fun l : List Bool => l.foldr Nat.bit 0 := by
   have hbit : Primrec₂ fun (_ : List Bool) (bn : Bool × ℕ) => Nat.bit bn.1 bn.2 :=
     Primrec₂.mk <| (Primrec.cond (Primrec.fst.comp Primrec.snd)
       (Primrec.nat_double_succ.comp (Primrec.snd.comp Primrec.snd))
