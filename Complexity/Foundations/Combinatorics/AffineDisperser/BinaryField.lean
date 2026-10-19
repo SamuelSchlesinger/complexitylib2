@@ -62,9 +62,11 @@ noncomputable def polyOfCode (m : ℕ) : (ZMod 2)[X] :=
   if m = 0 then 0 else C (m : ZMod 2) + X * polyOfCode (m / 2)
 decreasing_by omega
 
+@[simp]
 theorem polyOfCode_zero : polyOfCode 0 = 0 := by
   rw [polyOfCode, ite_eq_left rfl]
 
+/-- Appending the bit `b` below the code `m` multiplies by `X` and adds the constant `b`. -/
 theorem polyOfCode_two_mul_add (m : ℕ) (b : ZMod 2) :
     polyOfCode (2 * m + b.val) = C b + X * polyOfCode m := by
   have hb : b.val < 2 := ZMod.val_lt b
@@ -171,12 +173,10 @@ theorem exists_code_leastIrreducible {p : ℕ} (hp : p ≠ 0) :
   · exact hlog ▸ Nat.pow_log_le_self 2 hm0
   · exact hlog ▸ Nat.lt_pow_succ_log_self one_lt_two m
 
-/-- A nonzero binary polynomial is monic. -/
-theorem monic_of_ne_zero {g : (ZMod 2)[X]} (hg : g ≠ 0) : g.Monic := by
-  exact (by decide : ∀ c : ZMod 2, c ≠ 0 → c = 1) _ (leadingCoeff_ne_zero.2 hg)
-
+/-- `leastIrreducible p` is monic, as every nonzero binary polynomial is. -/
 theorem monic_leastIrreducible {p : ℕ} (hp : p ≠ 0) : (leastIrreducible p).Monic :=
-  monic_of_ne_zero (irreducible_leastIrreducible hp).ne_zero
+  (by decide : ∀ c : ZMod 2, c ≠ 0 → c = 1) _
+    (leadingCoeff_ne_zero.2 (irreducible_leastIrreducible hp).ne_zero)
 
 /-- `leastIrreducible p` has a root in `𝔽_{2 ^ n}` when `p ∣ n`. -/
 theorem exists_aeval_leastIrreducible_eq_zero {p n : ℕ} (hp : p ≠ 0) (hn : n ≠ 0) (hpn : p ∣ n) :
@@ -192,7 +192,8 @@ theorem exists_aeval_leastIrreducible_eq_zero {p n : ℕ} (hp : p ≠ 0) (hn : n
     AdjoinRoot.mk_self, map_zero]⟩
 
 open Classical in
-/-- A root of `leastIrreducible p` in `𝔽_{2 ^ n}`, for `p ∣ n` (`0` otherwise). -/
+/-- A root of `leastIrreducible p` in `𝔽_{2 ^ n}`, which exists when `p ∣ n` and `p, n ≠ 0`
+(`0` when there is none). -/
 noncomputable def binaryRoot (p n : ℕ) : GaloisField 2 n :=
   if h : ∃ α : GaloisField 2 n, aeval α (leastIrreducible p) = 0 then h.choose else 0
 

@@ -25,8 +25,8 @@ explicitly. With `ℓ = ⌊log₂ N⌋`:
   the primes in `(L, 4 L]` with product at most `N / (ℓ + 1) ^ 2`
   (`Cslib.AffineDisperser.degreePrimes`, `Cslib.AffineDisperser.fieldDegree`);
 * `F = 𝔽_{2 ^ n}` with the monomial basis in roots of the irreducible polynomials of least code of
-  the prime degrees (`Cslib.AffineDisperser.compositeBasis`), so field arithmetic needs only
-  exhaustive searches over `2 ^ (4 L + 1) ≤ 2 N ^ (4 / 3)` codes;
+  the prime degrees (`Cslib.AffineDisperser.compositeBasis`); each of these polynomials is found
+  by an exhaustive search over fewer than `2 ^ (4 L + 1) ≤ 2 N ^ (4 / 3)` codes;
 * `r = ⌊N / n⌋` blocks of `n` bits, read from the first `r n` input bits, block after block, each
   block in the mixed-radix order of the monomials (`Cslib.AffineDisperser.explicitPos`);
 * `t = ℓ + 1` and `μ = 1`.
@@ -39,9 +39,10 @@ affine subspace of `BitString N` of dimension greater than
 (`Cslib.AffineDisperser.exists_explicitDisperser_ne`).
 
 Ben-Sasson and Kopparty take `n` prime and reach dimension `6 N ^ (4 / 5)`
-[BenSassonKopparty2012]; a prime degree needs an irreducible polynomial of degree about `N ^ (1/5)`,
-which no simple search finds in polynomial time. The composite degree keeps the search small at
-the price of the subfield term `r s ≤ N / (L + 1)`, so our threshold is `O(N / log N)`.
+[BenSassonKopparty2012]; the field then needs an irreducible polynomial of large prime degree,
+which exhaustive search cannot find in polynomial time. The composite degree keeps every search
+small at the price of the subfield term `r s ≤ N / (L + 1)`, so our threshold is `O(N / log N)`
+(`Cslib.AffineDisperser.eventually_explicitThreshold_le`).
 
 ## Main definitions
 
