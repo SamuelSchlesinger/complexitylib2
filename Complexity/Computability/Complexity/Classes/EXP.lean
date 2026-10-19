@@ -15,26 +15,35 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 # Exponential time
 
 `Cslib.Complexity.EXP enc` is the union of the deterministic time classes
-`Cslib.Complexity.DTIME enc (2 ^ n ^ k)` over `k` [Arora and Barak][AroraBarak09], as in the
-classes proposed upstream in cslib pull request #767. There `P` is the union of the classes
-`DTIME (n ^ k)`; the class `Cslib.Complexity.P` agrees with it
-(`Cslib.Complexity.mem_P_iff_exists_mem_DTIME`), so `P enc ⊆ EXP enc`
-(`Cslib.Complexity.P_subset_EXP`).
+`Cslib.Complexity.DTIME enc (2 ^ n ^ k)` over `k`, and `Cslib.Complexity.E enc` the union of the
+classes `DTIME enc (2 ^ (k * n))`, as in the classes proposed upstream in cslib pull request #767.
+Their nondeterministic counterparts `Cslib.Complexity.NEXP enc` and `Cslib.Complexity.NE enc` are
+the unions of the classes `Cslib.Complexity.NTIME enc (2 ^ n ^ k)` and `NTIME enc (2 ^ (k * n))`
+[Arora and Barak, Sections 2.1 and 2.6][AroraBarak09].
 
-The inclusion is strict for problems on bit words (`Cslib.Complexity.P_ssubset_EXP`): the diagonal
-problem of `Cslib.Complexity.diagonal` is decided within time `O(2 ^ (4 * n))`, which is within
-`2 ^ n ^ 2` from `n = 4` on, and is not in `P` by the diagonal argument of the time hierarchy
-theorem [Arora and Barak, Theorem 3.1][AroraBarak09], [Sipser, Theorem 9.10][Sipser2013].
+`P` is the union of the classes `DTIME (n ^ k)` (`Cslib.Complexity.mem_P_iff_exists_mem_DTIME`)
+and `NP` that of the classes `NTIME (n ^ k)` (`Cslib.Complexity.mem_NP_iff_exists_mem_NTIME`), so
+`P ⊆ E ⊆ EXP`, `NP ⊆ NE ⊆ NEXP`, and each deterministic class is within its nondeterministic
+counterpart (`Cslib.Complexity.DTIME_subset_NTIME`).
+
+The inclusion `P ⊆ EXP` is strict for problems on bit words (`Cslib.Complexity.P_ssubset_EXP`):
+the diagonal problem of `Cslib.Complexity.diagonal` is decided within time `O(2 ^ (4 * n))`, which
+is within `2 ^ n ^ 2` from `n = 4` on, and is not in `P` by the diagonal argument of the time
+hierarchy theorem [Arora and Barak, Theorem 3.1][AroraBarak09], [Sipser, Theorem 9.10][Sipser2013].
 
 ## Main definitions
 
-* `Cslib.Complexity.EXP`: deterministic exponential time.
+* `Cslib.Complexity.E`, `Cslib.Complexity.EXP`: deterministic exponential time.
+* `Cslib.Complexity.NE`, `Cslib.Complexity.NEXP`: nondeterministic exponential time.
 
 ## Main results
 
-* `Cslib.Complexity.mem_P_iff_exists_mem_DTIME`: `P` is the union of the classes of time
-  `O(n ^ k)`.
-* `Cslib.Complexity.P_subset_EXP`: polynomial time is within exponential time.
+* `Cslib.Complexity.P_subset_E`, `Cslib.Complexity.E_subset_EXP`,
+  `Cslib.Complexity.P_subset_EXP`: polynomial time is within exponential time.
+* `Cslib.Complexity.NP_subset_NE`, `Cslib.Complexity.NE_subset_NEXP`,
+  `Cslib.Complexity.NP_subset_NEXP`: the same for nondeterministic time.
+* `Cslib.Complexity.E_subset_NE`, `Cslib.Complexity.EXP_subset_NEXP`: determinism is a special
+  case.
 * `Cslib.Complexity.P_ssubset_EXP`: polynomial time is strictly within exponential time.
 
 ## References
@@ -58,29 +67,73 @@ def EXP (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, DTIME enc fun n => 2 ^
 theorem mem_EXP_iff : A ∈ EXP enc ↔ ∃ k, A ∈ DTIME enc fun n => 2 ^ n ^ k :=
   Set.mem_iUnion
 
-/-- **`P` is the union of the classes `DTIME (n ^ k)`**, the definition of `P` in the classes
-proposed upstream. -/
-theorem mem_P_iff_exists_mem_DTIME : A ∈ P enc ↔ ∃ k, A ∈ DTIME enc (· ^ k) := by
-  constructor
-  · intro hA
-    obtain ⟨t, s, ⟨d, hd⟩, -, h⟩ := mem_P_iff_exists_decidableInTimeAndSpace.mp hA
-    refine ⟨d, DTIME_mono_of_eventually_le hd ⟨1, 0, s, ?_⟩⟩
-    simpa only [one_mul, add_zero] using h
-  · rintro ⟨k, c₁, c₂, s, h⟩
-    exact mem_P_of_decidableInTimeAndSpace (t := fun n => c₁ * n ^ k + c₂)
-      (.of_forall_le (c₁ + c₂) k fun n => by
-        have h₁ : n ^ k ≤ (n + 1) ^ k := Nat.pow_le_pow_left (Nat.le_succ n) k
-        have h₂ : 1 ≤ (n + 1) ^ k := Nat.one_le_pow _ _ (Nat.succ_pos n)
-        nlinarith) h
+/-- The problems decidable within time `O(2 ^ (k * n))` for some `k`, on instances whose encoding
+under `enc` has length `n`. -/
+def E (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, DTIME enc fun n => 2 ^ (k * n)
 
-/-- **Polynomial time is within exponential time.** -/
-theorem P_subset_EXP : P enc ⊆ EXP enc := by
-  intro A hA
-  obtain ⟨k, hk⟩ := mem_P_iff_exists_mem_DTIME.mp hA
-  refine mem_EXP_iff.mpr ⟨1, DTIME_mono_of_eventually_le ?_ hk⟩
+theorem mem_E_iff : A ∈ E enc ↔ ∃ k, A ∈ DTIME enc fun n => 2 ^ (k * n) :=
+  Set.mem_iUnion
+
+/-- The problems decidable by a nondeterministic machine within time `O(2 ^ n ^ k)` for some `k`,
+on instances whose encoding under `enc` has length `n`. -/
+def NEXP (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, NTIME enc fun n => 2 ^ n ^ k
+
+theorem mem_NEXP_iff : A ∈ NEXP enc ↔ ∃ k, A ∈ NTIME enc fun n => 2 ^ n ^ k :=
+  Set.mem_iUnion
+
+/-- The problems decidable by a nondeterministic machine within time `O(2 ^ (k * n))` for some
+`k`, on instances whose encoding under `enc` has length `n`. -/
+def NE (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, NTIME enc fun n => 2 ^ (k * n)
+
+theorem mem_NE_iff : A ∈ NE enc ↔ ∃ k, A ∈ NTIME enc fun n => 2 ^ (k * n) :=
+  Set.mem_iUnion
+
+/-- A polynomial is eventually below `2 ^ n`. -/
+private theorem eventually_pow_le_two_pow (k : ℕ) : ∀ᶠ n in atTop, n ^ k ≤ 2 ^ (1 * n) := by
   filter_upwards [PolynomiallyBounded.eventually_lt_two_pow (f := (· ^ k)) (by fun_prop)]
     with n hn
-  simpa only [pow_one] using hn.le
+  simpa only [one_mul] using hn.le
+
+/-- `2 ^ (k * n)` is eventually below `2 ^ n ^ 2`. -/
+private theorem eventually_two_pow_mul_le (k : ℕ) : ∀ᶠ n in atTop, 2 ^ (k * n) ≤ 2 ^ n ^ 2 := by
+  filter_upwards [eventually_ge_atTop k] with n hn
+  exact Nat.pow_le_pow_right (by norm_num) (by rw [sq]; exact Nat.mul_le_mul_right n hn)
+
+/-- **Polynomial time is within linear exponential time.** -/
+theorem P_subset_E : P enc ⊆ E enc := fun _ hA =>
+  let ⟨k, hk⟩ := mem_P_iff_exists_mem_DTIME.mp hA
+  mem_E_iff.mpr ⟨1, DTIME_mono_of_eventually_le (eventually_pow_le_two_pow k) hk⟩
+
+/-- **Linear exponential time is within exponential time.** -/
+theorem E_subset_EXP : E enc ⊆ EXP enc := fun _ hA =>
+  let ⟨k, hk⟩ := mem_E_iff.mp hA
+  mem_EXP_iff.mpr ⟨2, DTIME_mono_of_eventually_le (eventually_two_pow_mul_le k) hk⟩
+
+/-- **Nondeterministic polynomial time is within nondeterministic linear exponential time.** -/
+theorem NP_subset_NE {α : Type} {enc : α ↪ List Bool} : NP enc ⊆ NE enc := fun _ hA =>
+  let ⟨k, hk⟩ := mem_NP_iff_exists_mem_NTIME.mp hA
+  mem_NE_iff.mpr ⟨1, NTIME_mono_of_eventually_le (eventually_pow_le_two_pow k) hk⟩
+
+/-- **Nondeterministic linear exponential time is within nondeterministic exponential time.** -/
+theorem NE_subset_NEXP : NE enc ⊆ NEXP enc := fun _ hA =>
+  let ⟨k, hk⟩ := mem_NE_iff.mp hA
+  mem_NEXP_iff.mpr ⟨2, NTIME_mono_of_eventually_le (eventually_two_pow_mul_le k) hk⟩
+
+/-- **Nondeterministic polynomial time is within nondeterministic exponential time.** -/
+theorem NP_subset_NEXP {α : Type} {enc : α ↪ List Bool} : NP enc ⊆ NEXP enc :=
+  NP_subset_NE.trans NE_subset_NEXP
+
+theorem E_subset_NE : E enc ⊆ NE enc := fun _ hA =>
+  let ⟨k, hk⟩ := mem_E_iff.mp hA
+  mem_NE_iff.mpr ⟨k, DTIME_subset_NTIME hk⟩
+
+theorem EXP_subset_NEXP : EXP enc ⊆ NEXP enc := fun _ hA =>
+  let ⟨k, hk⟩ := mem_EXP_iff.mp hA
+  mem_NEXP_iff.mpr ⟨k, DTIME_subset_NTIME hk⟩
+
+/-- **Polynomial time is within exponential time.** -/
+theorem P_subset_EXP : P enc ⊆ EXP enc :=
+  P_subset_E.trans E_subset_EXP
 
 /-- The diagonal problem is in exponential time. -/
 theorem setOf_diagonal_mem_EXP : {x | diagonal x = true} ∈ EXP encBits :=

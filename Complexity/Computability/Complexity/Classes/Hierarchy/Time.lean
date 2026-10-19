@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.Hierarchy
+public import Complexity.Computability.Complexity.Classes.Time
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -15,17 +16,15 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
-# Deterministic time classes and the time hierarchy theorem
+# The time hierarchy theorem
 
-`Cslib.Complexity.DTIME enc t` consists of the problems that some machine with a binary alphabet
-and finitely many states decides within time `c₁ * t n + c₂`, for constants `c₁` and `c₂`, on
-instances whose encoding under `enc` has length `n`, with any space bound (upstream
-`Turing.MultiTapeTM.DecidableInTimeAndSpace`) [Arora and Barak, Definition 1.12][AroraBarak09].
-This is the definition of the classes proposed upstream in cslib pull request #767, stated for
-encoded instances, with bounds that are functions of the length of the encoded instance. A bound
-`t` is *time-constructible* (`Cslib.Complexity.TimeConstructible`) when such a machine computes
-`t n` in binary from any word of length `n` within time `O(t n)`; so are `2 ^ n` and `(n + 1) ^ k`
-for `k ≥ 2`.
+The deterministic time class `Cslib.Complexity.DTIME enc t` of
+`Complexity.Computability.Complexity.Classes.Time` consists of the problems that some machine with
+a binary alphabet and finitely many states decides within time `c₁ * t n + c₂`, for constants `c₁`
+and `c₂`, on instances whose encoding under `enc` has length `n`. A bound `t` is
+*time-constructible* (`Cslib.Complexity.TimeConstructible`) when such a machine computes `t n` in
+binary from any word of length `n` within time `O(t n)`; so are `2 ^ n` and `(n + 1) ^ k` for
+`k ≥ 2`.
 
 ## The time hierarchy theorem
 
@@ -58,7 +57,6 @@ logarithmic overhead and is not claimed here.
 
 ## Main definitions
 
-* `Cslib.Complexity.DTIME`: deterministic time classes.
 * `Cslib.Complexity.TimeConstructible`: time-constructible bounds.
 * `Cslib.Complexity.timeDiagonal`: the clocked diagonal on short descriptions.
 
@@ -233,55 +231,6 @@ namespace Cslib.Complexity
 open Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal Filter
 
 variable {α : Type*}
-
-/-! ### Time classes -/
-
-/-- The problems decidable within time `O(t n)`, that is `c₁ * t n + c₂` for constants `c₁` and
-`c₂`, on instances whose encoding under `enc` has length `n`, by a machine with a binary alphabet
-and finitely many states, with any space bound. -/
-def DTIME (enc : α ↪ List Bool) (t : ℕ → ℕ) : Set (Set α) :=
-  {A | ∃ c₁ c₂ : ℕ, ∃ s : ℕ → ℕ,
-    DecidableInTimeAndSpace A enc (fun a => c₁ * t (enc a).length + c₂) fun a => s (enc a).length}
-
-/-- `DTIME` is monotone in the time bound. -/
-theorem DTIME_mono {enc : α ↪ List Bool} {t₁ t₂ : ℕ → ℕ} (h : ∀ n, t₁ n ≤ t₂ n) :
-    DTIME enc t₁ ⊆ DTIME enc t₂ := by
-  rintro A ⟨c₁, c₂, s, hA⟩
-  exact ⟨c₁, c₂, s, ComputableInTimeAndSpace.mono hA
-    (fun a => Nat.add_le_add_right (Nat.mul_le_mul_left _ (h _)) _) fun _ => le_rfl⟩
-
-/-- `DTIME` only depends on the time bound eventually: the finitely many other values are absorbed
-by the additive constant. -/
-theorem DTIME_mono_of_eventually_le {enc : α ↪ List Bool} {t₁ t₂ : ℕ → ℕ}
-    (h : ∀ᶠ n in atTop, t₁ n ≤ t₂ n) : DTIME enc t₁ ⊆ DTIME enc t₂ := by
-  obtain ⟨N, hN⟩ := eventually_atTop.mp h
-  rintro A ⟨c₁, c₂, s, hA⟩
-  refine ⟨c₁, c₁ * ∑ n ∈ Finset.range N, t₁ n + c₂, s,
-    ComputableInTimeAndSpace.mono hA (fun a => ?_) fun _ => le_rfl⟩
-  have : t₁ (enc a).length ≤ t₂ (enc a).length + ∑ n ∈ Finset.range N, t₁ n := by
-    rcases le_or_gt N (enc a).length with h | h
-    · have := hN _ h
-      omega
-    · have := Finset.single_le_sum (f := t₁) (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr h)
-      omega
-  have := Nat.mul_le_mul_left c₁ this
-  rw [Nat.mul_add] at this
-  omega
-
-/-- A Boolean function on words, tidily computable within bounds of the length of the word,
-decides a problem within the corresponding time. -/
-theorem setOf_mem_DTIME_of_computableTidilyInO {f : List Bool → Bool} {T S : List Bool → ℕ}
-    {t s : ℕ → ℕ} (h : ComputableTidilyInO f encBits encBool T S) (hT : ∀ x, T x ≤ t x.length)
-    (hS : ∀ x, S x ≤ s x.length) : {x | f x = true} ∈ DTIME encBits t := by
-  obtain ⟨c, hc, -⟩ := h
-  refine ⟨c, c, fun n => c * (s n + 1), decidableInTimeAndSpace_iff.mpr ⟨f, ?_, fun x => Iff.rfl⟩⟩
-  refine hc.computableInTimeAndSpace.mono (fun x => ?_) fun x => ?_
-  · simp only [encBits_apply]
-    have := Nat.mul_le_mul_left c (hT x)
-    rw [Nat.mul_add, Nat.mul_one]
-    omega
-  · simp only [encBits_apply]
-    exact Nat.mul_le_mul_left c (Nat.add_le_add_right (hS x) 1)
 
 /-! ### Time-constructible bounds -/
 
