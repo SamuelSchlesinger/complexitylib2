@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Communication.Functions
-public import Complexity.Computability.Communication.RankLeaves
+public import Complexity.Computability.Communication.Rank
 import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 import Mathlib.Tactic.Ring
 
