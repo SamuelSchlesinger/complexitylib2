@@ -1,0 +1,53 @@
+\section{Randomness and counting}
+
+\begin{result}
+\subsection{Sipser--G\'acs--Lautemann}
+\[
+\cc{BPP}\subseteq\Sigma^p_2\cap\Pi^p_2.
+\]
+For the library's bounded-error polynomial-time class, membership has both an
+existential--universal and a universal--existential characterization with
+polynomially bounded bit-string witnesses and a polynomial-time predicate.
+\citep{Sipser1983,Lautemann1983}
+\decl{Complexity/Computability/Complexity/Classes/PH/SipserLautemann.lean}{489}{Cslib.Complexity.BPP_subset_SigmaP_two_inter_PiP_two}
+\end{result}
+
+\begin{result}
+\subsection{Toda's theorem}
+\[
+\cc{PH}\subseteq\cc{P}^{\#\cc{P}}.
+\]
+Here $\#\cc{P}$ counts witnesses of polynomial-time verifiers. The target class
+uses a polynomial-time oracle program answering decision problems via bits of
+one such counting function. The program is fixed before the oracle is chosen
+and must work for every oracle language agreeing on valid encoded queries;
+off-code answers are arbitrary. The target class has no separate query-count
+parameter. The nondeterministic-machine characterization of $\#\cc{P}$
+remains separate unfinished work.\citep{Toda1991}
+\decl{Complexity/Computability/Complexity/Classes/Toda.lean}{121}{Cslib.Complexity.PH_subset_PWithSharpPOracle}
+\end{result}
+
+\begin{result}
+\subsection{Adleman's theorem}
+\[
+\cc{BPP}\subseteq\cc{P/poly}.
+\]
+Every bounded-error polynomial-time language has a nonuniform family of
+polynomial-size De Morgan circuits. The result also covers encoded problems by
+taking the preimage of a bit-string language. It does not provide a uniform
+algorithm to choose the successful random strings or construct the circuits.
+\citep{Adleman1978,AroraBarak09}
+\decl{Complexity/Computability/Circuit/Boolean/PolynomialTime.lean}{172}{Cslib.Circuits.Boolean.PPoly.exists_of_mem_BPP}
+\end{result}
+
+\begin{result}
+\subsection{Derandomization from average-case hardness}
+Suppose a language $L$ belongs to $\cc{E}=\cc{DTIME}(2^{O(n)})$ and there is a
+positive integer $c$ such that, for every sufficiently large $n$, every De Morgan
+circuit of size at most $s_n=2^{\lfloor n/c\rfloor}$ agrees with $L$ on at most
+$1/2+1/s_n$ of the $n$-bit inputs. Then $\cc{P}=\cc{BPP}$, uniformly for encoded
+problems. The Nisan--Wigderson generator and exhaustive seed search have certified
+polynomial time. Worst-case exponential circuit hardness alone is not the
+hypothesis proved sufficient here.\citep{NisanWigderson1994}
+\decl{Complexity/Computability/Complexity/Classes/BPP/Derandomization.lean}{307}{Cslib.Complexity.P_eq_BPP_of_isAverageCaseHard}
+\end{result}

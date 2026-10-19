@@ -1,210 +1,35 @@
-\section{Completeness and verification}
+% Subject order for the curated theorem tour.
+\input{sections/completeness}
 
-\subsection{Cook--Levin and its complement}
-SAT is NP-complete and UNSAT is coNP-complete under tidy polynomial-time
-many-one reductions, using the library's encoding \lean{encCNF} of CNF formulas.
-Reduction efficiency is proved, not assumed.\citep[Section 2.3]{AroraBarak09}
-\decl{Complexity/Computability/Complexity/CookLevin/Completeness.lean}{52}{Cslib.Complexity.CookLevin.SAT_npComplete}
-\decl{Complexity/Computability/Complexity/CookLevin/Completeness.lean}{56}{Cslib.Complexity.CookLevin.UNSAT_coNPComplete}
+\Needspace{12\baselineskip}
+\input{sections/structure}
 
-\subsection{Circuit Value belongs to P}
-Given a one-output De Morgan circuit and an input of the matching arity, deciding
-whether its output is true is in P. Instances are well formed by their type;
-\lean{encCircuitValue} encodes the circuit and input bits. The standard
-P-completeness theorem under logspace reductions is not yet formalized here.
-\citep{Ladner1975}
-\decl{Complexity/Computability/Complexity/Problems/CircuitValue.lean}{105}{Cslib.Complexity.CircuitValue.mem_P}
+\Needspace{12\baselineskip}
+\input{sections/space}
 
-\subsection{The PCP theorem}
-\[
-\cc{NP}=\cc{PCP}(O(\log n),O(1)).
-\]
-The verifier is polynomial-time and nonadaptive, has perfect completeness and
-soundness at most $1/2$, and uses logarithmically many random bits and constantly
-many queries. In the Lean equality the bound functions are
-$\lfloor\log_2 n\rfloor+1$ (with Lean's natural-number logarithm) and $1$;
-the class definition allows constant multiples of both. It does not assert
-one query.\citep{Dinur2007}
-\decl{Complexity/Computability/PCP/Completeness.lean}{81}{Cslib.Complexity.NP_eq_PCP_log}
+\Needspace{12\baselineskip}
+\input{sections/randomness}
 
-\clearpage
-\section{Space and alternation}
+\Needspace{12\baselineskip}
+\input{sections/crypto}
 
-\subsection{Nondeterministic logspace lies in polynomial time}
-\[
-\cc{NL}\subseteq\cc{P}.
-\]
-NL is defined by native nondeterministic machines with logarithmic space bounded
-on every computation prefix and acceptance by an accepting path. A polynomial-time
-decider exists even though the nondeterministic machine's other branches need not
-halt. This entry does not assert the still-outstanding native $\cc{NL}=\cc{coNL}$
-theorem.\citep[Section 8.5]{Sipser2013}
-\decl{Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean}{44}{Cslib.Complexity.NL_subset_P}
+\Needspace{12\baselineskip}
+\input{sections/circuits}
 
-\subsection{Savitch's theorem for polynomial space}
-\[
-\cc{NPSPACE}=\cc{PSPACE}.
-\]
-Both classes are machine-defined. Nondeterministic acceptance is by an accepting
-path, with every path respecting the space bound; the deterministic decider is
-total. This is the equality of polynomial-space classes, not a statement of the
-fully parameterized $\cc{NSPACE}(s)\subseteq\cc{DSPACE}(s^2)$ theorem.
-\citep[Corollary 8.6]{Sipser2013}
-\decl{Complexity/Computability/Complexity/Classes/Space/Savitch.lean}{54}{Cslib.Complexity.NPSPACE_eq_PSPACE}
+\Needspace{12\baselineskip}
+\input{sections/proofs}
 
-\subsection{Alternating polynomial time equals polynomial space}
-\[
-\cc{AP}=\cc{PSPACE}.
-\]
-AP uses the library's native alternating machines and a polynomial time bound.
-The equality is with the same machine-defined PSPACE used above; it is not merely
-an equality of abstract game predicates.\citep{ChandraKozenStockmeyer1981}
-\decl{Complexity/Computability/Complexity/Classes/Alternation/Savitch.lean}{385}{Cslib.Complexity.AP_eq_PSPACE}
+\Needspace{12\baselineskip}
+\input{sections/communication}
 
-\subsection{Interactive proofs lie in polynomial space}
-\[
-\cc{IP}\subseteq\cc{PSPACE}.
-\]
-IP uses a private-coin verifier realized by one fair-coin oracle machine and a
-polynomial clock valid against every stateful prover. Provers may be randomized
-and computationally unbounded; completeness is at least $2/3$ and soundness at
-most $1/3$. The converse $\cc{PSPACE}\subseteq\cc{IP}$ is not yet formalized here.
-\citep[Chapter 8]{AroraBarak09}
-\decl{Complexity/Computability/Complexity/Classes/IP/PSPACE.lean}{620}{Cslib.Complexity.IP_subset_PSPACE}
+\Needspace{12\baselineskip}
+\input{sections/analysis}
 
-\clearpage
-\section{Randomness, counting and arithmetic circuits}
+\Needspace{12\baselineskip}
+\input{sections/coding}
 
-\subsection{Sipser--G\'acs--Lautemann}
-\[
-\cc{BPP}\subseteq\Sigma^p_2\cap\Pi^p_2.
-\]
-For the library's bounded-error polynomial-time class, membership has both an
-existential--universal and a universal--existential characterization with
-polynomially bounded bit-string witnesses and a polynomial-time predicate.
-\citep{Sipser1983,Lautemann1983}
-\decl{Complexity/Computability/Complexity/Classes/PH/SipserLautemann.lean}{489}{Cslib.Complexity.BPP_subset_SigmaP_two_inter_PiP_two}
+\Needspace{12\baselineskip}
+\input{sections/synthesis}
 
-\subsection{Toda's theorem}
-\[
-\cc{PH}\subseteq\cc{P}^{\#\cc{P}}.
-\]
-Here $\#\cc{P}$ counts witnesses of polynomial-time verifiers. The target class
-uses a polynomial-time oracle program answering decision problems via bits of
-one such counting function. The program is fixed before the oracle is chosen
-and must work for every oracle language agreeing on valid encoded queries;
-off-code answers are arbitrary. The target class has no separate query-count
-parameter. The nondeterministic-machine characterization of $\#\cc{P}$
-remains separate unfinished work.\citep{Toda1991}
-\decl{Complexity/Computability/Complexity/Classes/Toda.lean}{121}{Cslib.Complexity.PH_subset_PWithSharpPOracle}
-
-\subsection{Polynomial-size circuits for the determinant}
-For every commutative ring $K$ and $n\in\mathbb N$, the generic $n\times n$
-determinant has a division-free arithmetic circuit over $K$ of size at most
-\[
-3n^4+4.
-\]
-Consequently its polynomial family belongs to $\cc{VP}$ over $K$. The same circuit
-evaluates determinants over every commutative $K$-algebra, with matrix entries
-supplied in row-major order. This is a gate-count assertion, not a certified
-uniform circuit-generation bound.\citep{Bird2011,Valiant1979Algebra}
-\decl{Complexity/Computability/Circuit/Arithmetic/Determinant.lean}{256}{Cslib.Circuits.Arithmetic.exists_circuit_det}
-\decl{Complexity/Computability/Circuit/Arithmetic/Determinant.lean}{265}{Cslib.Circuits.Arithmetic.exists_circuit_det_eval}
-\decl{Complexity/Computability/Circuit/Arithmetic/Determinant.lean}{281}{Cslib.Circuits.Arithmetic.detFamily_mem_VP}
-
-\clearpage
-\section{Circuits for sparse counter modifications}
-
-Write $W_n=\mathbb Z/2^n\mathbb Z$ for the $n$-bit words, represented
-least-significant bit first, and let $c(x)=x+1$. For maps on $W_n$, put
-\[
-D(f,g)=\{x\in W_n:f(x)\ne g(x)\}.
-\]
-Circuit size below counts native De Morgan gates, including constants,
-comparisons, selection and addition. These are nonuniform existence results:
-they provide no efficient algorithm for constructing the correction table.
-The port follows Schlesinger's iterated-functions development; the source credits Moreno and Rivera for the related block characterization
-of almost-commuting permutations.
-\citep{Schlesinger2026IteratedFunctions,MorenoRivera2016}
-
-\subsection{Maps commuting with an edited counter}
-For any maps $f,h:W_n\to W_n$, if $h$ is injective and $h\circ f=f\circ h$, then
-there is a circuit computing all $n$ output bits of $h$ with size at most
-\[
-100(n+1)(|D(f,c)|+1).
-\]
-There is no assumption that $f$ is a permutation or that a small circuit for $f$
-is supplied. The assertion includes $n=0$.
-\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{197}{Cslib.Circuits.Boolean.Iteration.sparse_counter_centralizer}
-
-\subsection{Every fixed signed power}
-For every permutation $f$ of $W_n$ and every integer $T$, a circuit computes $f^T$
-with size at most
-\[
-100(n+1)(|D(f,c)|+1).
-\]
-The size bound is independent of the magnitude and sign of $T$. The quantifiers
-are ``for every $T$, there exists a circuit'': $T$ is fixed, not an additional
-input to a single circuit.
-\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{208}{Cslib.Circuits.Boolean.Iteration.sparse_counter_power}
-
-\subsection{Transfer through supplied coordinates}
-Let $f,g,e$ be permutations of $W_n$ such that $e(g(x))=e(x)+1$ for every $x$.
-Suppose circuits $E$ and $E^{-1}$ compute $e$ and its inverse, respectively.
-For every $T\in\mathbb Z$, there is a circuit for $f^T$ with size at most
-\[
-|E|+|E^{-1}|+100(n+1)(|D(f,g)|+1).
-\]
-Both coordinate conversions are charged. The theorem does not assert that an
-arbitrary cycle has cheap coordinates or complete the general iterated-function
-circuit-bound program.
-\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{217}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_power}
-
-
-\clearpage
-\section{Sparse counters with an input iteration count}
-
-Keep the notation $W_n$, $c$ and $D$ from the preceding section. Here a circuit
-reads an $n$-bit initial state $x$ and an $m$-bit nonnegative integer $T$, both
-least-significant bit first. The permutation is fixed when choosing the circuit.
-The chart and circuit are chosen nonuniformly; no efficient preprocessing or
-circuit-generation algorithm is asserted.\citep{Schlesinger2026IteratedFunctions}
-
-\subsection{Variable-time iteration}
-For every permutation $f$ of $W_n$ and every $m\in\mathbb N$, there is a native
-De Morgan circuit with $n+m$ inputs and $n$ outputs computing
-\[
-(x,T)\longmapsto f^T(x),\qquad 0\leq T<2^m,
-\]
-of size at most
-\[
-1000(n+3)(|D(f,c)|+m+1).
-\]
-The dependence on the edit count and time width is additive inside the
-parentheses. One circuit handles all initial states and all $m$-bit times.
-The bound includes constants, comparisons and selection gates, and permits
-$n=0$ or $m=0$.
-\timeDecl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{115}{Cslib.Circuits.Boolean.Iteration.sparse_counter_variable_time}
-
-\subsection{Canonical coordinates at linear table cost}
-For every permutation $f$ of $W_n$, there is a circuit with $n$ inputs and
-$n+2(n+2)$ outputs computing the canonical cycle representative, cycle length
-and phase of the input. Its size is at most
-\[
-500(n+3)(|D(f,c)|+1).
-\]
-The representative is the numerically least word on the cycle. The phase is
-the forward distance from that representative, modulo the cycle length.
-The period and phase each occupy $n+2$ bits, so even a period of $2^n$ fits.
-\timeDecl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{126}{Cslib.Circuits.Boolean.Iteration.sparse_counter_labels}
-
-\subsection{Variable time through supplied coordinates}
-Let $f,g,e$ be permutations of $W_n$ satisfying $e(g(x))=e(x)+1$, with supplied
-circuits $E$ and $E^{-1}$ for $e$ and its inverse. For every time width $m$, a
-circuit computing $(x,T)\mapsto f^T(x)$ has size at most
-\[
-|E|+|E^{-1}|+1000(n+3)(|D(f,g)|+m+1).
-\]
-The $m$ time bits pass through unchanged to the iteration stage. Both state
-coordinate conversions are charged once, independently of $m$.
-\timeDecl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{147}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_variable_time}
+\Needspace{12\baselineskip}
+\input{sections/iteration}

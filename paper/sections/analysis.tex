@@ -1,0 +1,31 @@
+\section{Boolean analysis and expander walks}
+
+\begin{result}
+\subsection{Hypercontractivity on the Boolean cube}
+For a real-valued function on a finite Boolean cube with uniform probability
+measure, $1\le p\le2\le q<\infty$, and
+$0\le\rho\le\sqrt{(p-1)/(q-1)}$, the noise operator satisfies
+\[
+\|T_\rho f\|_q\le\|f\|_p.
+\]
+This includes the $(2,4)$ inequality at $\rho=1/\sqrt3$. The indexed theorem
+covers the range $p\le2\le q$ and finite real exponents; it is not a claim of all
+hypercontractive parameter regimes.\citep{Bonami1970,ODonnell2014}
+\decl{Complexity/Foundations/BooleanAnalysis/Hypercontractivity.lean}{202}{Cslib.BitString.lpNorm_noiseOp_le_lpNorm}
+\end{result}
+
+\begin{result}
+\subsection{Expander-walk hitting bound}
+Let a finite undirected regular graph be represented by a rotation map with
+nonempty vertex and port sets, and let $\lambda$ be its nonconstant spectral
+operator-norm bound. Start a walk at a uniform vertex and choose each port
+uniformly. If each set $B_i$ has density at most $0\le\mu\le1$, then
+\[
+\Pr[v_i\in B_i\text{ for every }0\le i\le t]
+ \le \mu\bigl(\mu+\lambda(1-\mu)\bigr)^t.
+\]
+The sets may vary with time. This is a finite probability bound; machine-level
+error reduction and extractor evaluation costs are separate obligations.
+\citep{AjtaiKomlosSzemeredi1987,Kahale1995,Vadhan2012}
+\decl{Complexity/Foundations/Combinatorics/Expander/Hitting.lean}{207}{Cslib.RotationMap.dens_filter_forall_walkAt_mem_le}
+\end{result}

@@ -5,16 +5,20 @@
 \usepackage{microtype,amsmath,amssymb,xcolor,enumitem,titlesec}
 \titlespacing*{\section}{0pt}{1.5ex plus .2ex}{.7ex}
 \titlespacing*{\subsection}{0pt}{1.3ex plus .2ex}{.4ex}
+\usepackage{needspace,tocloft}
+\setlength{\cftbeforesecskip}{2pt}
+\newenvironment{result}{\par\noindent\begin{minipage}{\linewidth}}{\end{minipage}\par}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black,
   citecolor=blue!45!black]{hyperref}
+\clubpenalty=10000
+\widowpenalty=10000
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.45em}
 \setlist{nosep,leftmargin=*}
 \newcommand{\cc}[1]{\mathsf{#1}}
 \newcommand{\lean}[1]{\nolinkurl{#1}}
-\newcommand{\decl}[3]{\par{\footnotesize\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/d2c5e5812794ca1a39cf126de44e236789623215/#1\#L#2}{\nolinkurl{#3}}}\par}
-\newcommand{\timeDecl}[3]{\par{\footnotesize\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/6bbebfe6d438e495f3981b9d6d1734d936bcc5af/#1\#L#2}{\nolinkurl{#3}}}\par}
+\newcommand{\decl}[3]{\par{\footnotesize\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/cec38657ddf1b93dd1be123e86d0ecdd9728c610/#1\#L#2}{\nolinkurl{#3}}}\par}
 \hypersetup{pdftitle={Complexitylib: An index of proved statements},
   pdfsubject={Selected formalized results, assumptions, and Lean declaration links}}
 \begin{document}
@@ -23,18 +27,30 @@
 \vspace{.5em}
 19 October 2026
 \end{center}
-This is a curated index of sixteen results in the Lean library, not an exhaustive
-API reference. Each entry gives the statement, its model or assumptions, and a link
-to the formal declaration. Links are pinned to revision \texttt{d2c5e581}; the variable-time additions
-link to their implementation revision.
-The wording and selection remain open to Samuel's editorial direction.
+This tour collects 48 entries spanning the library's significant results, from
+machine complexity and descriptive logic to cryptography, circuit lower bounds,
+proof complexity, communication, coding and circuit synthesis. Some entries group
+closely related theorems. It is a statement index, not an exhaustive API reference
+or a translation of proof bodies. Each entry identifies its hypotheses, model,
+quantitative guarantee and scope, with links pinned to library revision
+\texttt{cec38657}. Selection and wording remain open to Samuel's editorial direction.
 
-Unless specified otherwise, class statements hold for any type of instances with
-an injective encoding into finite bit strings; input size is encoded length.
-Resource bounds and reductions refer to the library's machine definitions.
-Source citations credit the mathematics; linked modules also record formalization authors.
-This index was prepared and reviewed with AI assistance; prose is not machine checked.
+Unless specified otherwise, encoded decision problems use an injective encoding
+into finite bit strings, and input size is encoded length. Class statements and
+reductions refer to the library's machine definitions. Circuit-family results are
+nonuniform unless uniformity is explicitly asserted. A circuit-size bound does
+not by itself certify a constructor's runtime; a decoder's correctness does not
+by itself certify its running time. Assumptions such as one-way functions or
+circuit hardness are premises of implications, not established existence results.
 
+Source citations credit the mathematics; linked modules record formalization
+authors and port provenance. This index was prepared and independently reviewed
+with AI assistance. Lean checks the formal declarations; the prose-to-Lean
+comparison is a separate review, not a machine-checked equivalence proof.
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+\clearpage
 \input{sections/statements}
 \clearpage
 \begingroup

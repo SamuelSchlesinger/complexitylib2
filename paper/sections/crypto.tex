@@ -1,0 +1,46 @@
+\section{Cryptographic constructions}
+
+The one-way functions and pseudorandom objects below use the library's bit-string
+security experiments and machine-certified efficiency predicates. Security is
+asymptotic against uniform strict polynomial-time probabilistic adversaries.
+In the one-wayness game, $x$ is uniform among $n$-bit strings; the inverter receives
+unary $n$ and $f(x)$ and succeeds with any preimage, even one of a different length.
+The function need not preserve length.
+
+\begin{result}
+\subsection{Goldreich--Levin hard-core predicate}
+For every one-way function $f$, the inner product $\langle x,r\rangle$ over
+$\mathbb F_2$ is a hard-core predicate for the padded map $(x,r)\mapsto(f(x),r)$.
+The formal construction splits a seed into equal halves and retains an optional
+spare bit, covering every seed length. The predicate is polynomial-time computable;
+every uniform PPT predictor has negligible advantage over a fair guess.
+\citep{GoldreichLevin1989}
+\decl{Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean}{159}{Cslib.Crypto.GoldreichLevin.padded_hardCore}
+\end{result}
+
+\begin{result}
+\subsection{Pseudorandom generators from arbitrary one-way functions}
+Every uniform one-way function implies a deterministic polynomial-time
+pseudorandom generator expanding each $n$-bit seed to $n+1$ bits, secure against
+uniform strict PPT distinguishers. The proof follows Holenstein's
+pseudoentropy route to the H\aa stad--Impagliazzo--Levin--Luby theorem.
+OWF existence is the sole cryptographic assumption: no entropy estimate or
+nonuniform advice is supplied as an extra hypothesis. The result does not claim
+optimized construction exponents.\citep{HILL1999,Holenstein2006}
+\decl{Complexity/Crypto/Computational/OneWayToPRG.lean}{54}{Cslib.Crypto.OneWay.exists_pseudorandomGenerator}
+\end{result}
+
+\begin{result}
+\subsection{GGM and adaptive pseudorandom functions}
+Every uniform pseudorandom generator gives an efficiently evaluable
+pseudorandom function family by polynomial stretching and the GGM tree
+construction. Security holds against uniform adaptive strict polynomial-time
+oracle adversaries, not just fixed query lists. At parameter $n$, keys, valid
+queries and answers have $n$ bits; both games answer malformed queries with the
+empty word. Adversaries receive the unary parameter and an empty auxiliary word.
+Consequently every uniform
+one-way function implies such a PRF. These are conditional security implications,
+not assertions that one-way functions exist.\citep{GGM1986,Holenstein2006}
+\decl{Complexity/Crypto/Computational/GGM/Security.lean}{97}{Cslib.Crypto.PseudorandomGenerator.exists_pseudorandomFunction}
+\decl{Complexity/Crypto/Computational/OneWayToPRF.lean}{46}{Cslib.Crypto.OneWay.exists_pseudorandomFunction}
+\end{result}

@@ -1,0 +1,33 @@
+\section{Arithmetic circuits and simultaneous computation}
+
+\begin{result}
+\subsection{Polynomial-size circuits for the determinant}
+For every commutative ring $K$ and $n\in\mathbb N$, the generic $n\times n$
+determinant has a division-free arithmetic circuit over $K$ of size at most
+\[
+3n^4+4.
+\]
+Consequently its polynomial family belongs to $\cc{VP}$ over $K$. The same circuit
+evaluates determinants over every commutative $K$-algebra, with matrix entries
+supplied in row-major order. This is a gate-count assertion, not a certified
+uniform circuit-generation bound.\citep{Bird2011,Valiant1979Algebra}
+\decl{Complexity/Computability/Circuit/Arithmetic/Determinant.lean}{256}{Cslib.Circuits.Arithmetic.exists_circuit_det}
+\decl{Complexity/Computability/Circuit/Arithmetic/Determinant.lean}{265}{Cslib.Circuits.Arithmetic.exists_circuit_det_eval}
+\decl{Complexity/Computability/Circuit/Arithmetic/Determinant.lean}{281}{Cslib.Circuits.Arithmetic.detFamily_mem_VP}
+\end{result}
+
+\begin{result}
+\subsection{Sharp circuit mass production}
+Fix real $0\le\gamma<1$ and $\varepsilon>0$. For every sufficiently large $n$,
+every Boolean function $f$ on $n$ bits, and every integer $1\le k\le2^{\gamma n}$,
+one circuit computes $f$ independently on $k$ disjoint $n$-bit input blocks with
+nonconstant-gate cost at most
+\[
+\left(\frac{1}{1-\gamma}+\varepsilon\right)\frac{2^n}{n}.
+\]
+The cutoff depends on $\gamma,\varepsilon$, not on $f,k$. Here NOT, AND and OR
+each cost one and constants cost zero, unlike the total-gate convention used in
+other entries. The construction is nonuniform and supplies no certified runtime
+for choosing its tables.\citep{Schlesinger2026MassProduction}
+\decl{Complexity/Computability/Circuit/Boolean/MassProduction/Sharp.lean}{364}{Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction}
+\end{result}

@@ -1,0 +1,63 @@
+\section{Logic, diagonalization and the polynomial hierarchy}
+
+\begin{result}
+\subsection{Fagin's theorem}
+For a finite relational vocabulary, a class of finite structures is definable
+by an existential second-order sentence exactly when it is closed under
+isomorphism and its encoded query language belongs to NP. The encoding gives
+universe size in unary and framed relation truth tables; malformed tables are
+rejected. Both directions
+connect the logical semantics to the machine-backed verifier class; structures
+of cardinality zero and one are included.\citep{Fagin1974,Immerman1999}
+\decl{Complexity/Computability/Complexity/Fagin/Converse.lean}{292}{Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP}
+\end{result}
+
+\begin{result}
+\subsection{Polynomial time is strictly smaller than exponential time}
+For languages of finite bit strings,
+\[
+\cc{P}\subsetneq\cc{EXP}.
+\]
+The separating language is given by a machine diagonalization. Here EXP is the
+union of deterministic time classes with bounds $2^{n^k}$. The supporting time
+hierarchy uses a polynomial simulation gap; this entry does not claim the sharp
+$f\log f$ hierarchy.\citep[Chapter 3]{AroraBarak09}
+\decl{Complexity/Computability/Complexity/Classes/EXP.lean}{147}{Cslib.Complexity.P_ssubset_EXP}
+\end{result}
+
+\begin{result}
+\subsection{Ladner's theorem}
+If $\cc{P}\ne\cc{NP}$, there exists a language of bit strings in NP which is
+neither in P nor NP-complete under polynomial-time many-one reductions.
+The witness is a padded satisfiability language with a polynomial-time padding
+exponent. This is a conditional intermediate-degree theorem; it does not assume
+an intermediate problem as additional input.\citep[Theorem 3.3]{AroraBarak09}
+\decl{Complexity/Computability/Complexity/Classes/Ladner.lean}{426}{Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete}
+\end{result}
+
+\begin{result}
+\subsection{A Baker--Gill--Solovay oracle separation}
+There exists an oracle language $A$ such that
+\[
+\cc{P}^{A}\subsetneq\cc{NP}^{A}.
+\]
+The classes use the library's certified polynomial-time oracle programs and
+oracle verifiers. This is the separating-oracle half of the relativization
+phenomenon, rather than a claim here of both a separating and a collapsing
+oracle.\citep{BakerGillSolovay1975}
+\decl{Complexity/Computability/Complexity/Classes/Oracle/BakerGillSolovay.lean}{187}{Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle}
+\end{result}
+
+\begin{result}
+\subsection{Karp--Lipton collapse}
+If SAT has polynomial-size Boolean circuits on its encoded inputs, then
+\[
+\cc{PH}=\Sigma^p_2.
+\]
+In particular this follows if every NP problem, under its encoding, is the
+preimage of a language in P/poly. The polynomial-time computation of the
+self-reduction and evaluation of circuit advice are part of the development.
+The circuit hypothesis is nonuniform.\citep{KarpLipton1980}
+\decl{Complexity/Computability/Complexity/Classes/PH/KarpLipton.lean}{320}{Cslib.Complexity.PH_eq_SigmaP_two_of_SAT}
+\decl{Complexity/Computability/Complexity/Classes/PH/KarpLipton.lean}{328}{Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_PPoly}
+\end{result}

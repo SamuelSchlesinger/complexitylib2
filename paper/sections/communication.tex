@@ -1,0 +1,37 @@
+\section{Communication and formulas}
+
+\begin{result}
+\subsection{Karchmer--Wigderson correspondence}
+For a Boolean function on $n>0$ bits, minimum De Morgan formula depth, counting
+AND/OR gates and making negations free, equals deterministic communication
+complexity of the following relation: Alice receives a true input, Bob a false
+input, and they must output a coordinate on which the inputs differ. The equality
+uses the library's worst-case protocol depth and extended-natural complexity.
+\citep{KarchmerWigderson1990}
+\decl{Complexity/Computability/Circuit/Boolean/KarchmerWigderson.lean}{282}{Cslib.Circuits.Boolean.formulaDepth_eq_ecomplexity}
+\end{result}
+
+\begin{result}
+\subsection{Yao's minimax principle}
+For finite input spaces and a nonempty output space, the public-coin communication
+complexity of a relation with worst-case error at most $\varepsilon$ equals the
+supremum, over input distributions, of the minimum deterministic communication
+cost with distributional error at most $\varepsilon$. Both directions are proved,
+including the minimax step; the result is not only the easy averaging lower bound.
+Costs are worst-case numbers of communicated bits.\citep{Yao1977,KushilevitzNisan1997}
+\decl{Complexity/Computability/Communication/Distributional.lean}{158}{Cslib.Communication.PublicCoin.ecomplexity_eq_iSup_distributionalComplexity}
+\end{result}
+
+\begin{result}
+\subsection{Newman's theorem}
+If each party's input space has cardinality at most $2^n$, then for every
+$\delta>0$, private-coin communication complexity at error $\varepsilon+\delta$
+is at most public-coin complexity at error $\varepsilon$ plus
+\[
+\left\lceil\log_2\left\lceil n/\delta^2\right\rceil\right\rceil
+\]
+bits. The formal expression uses natural ceiling and \lean{Nat.clog}, including
+its zero-argument convention. The shared finite sample of protocols is chosen
+existentially, without a certified procedure to construct it.\citep{Newman1991}
+\decl{Complexity/Computability/Communication/Newman.lean}{168}{Cslib.Communication.PrivateCoin.ecomplexity_le_add_clog}
+\end{result}

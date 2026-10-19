@@ -1,0 +1,28 @@
+\section{Reed--Solomon decoding}
+
+\begin{result}
+\subsection{Berlekamp--Welch unique decoding}
+Let $\alpha_1,\ldots,\alpha_n$ be distinct points of a field, and let $w$ be a
+received word. If $2e+k\le n$, the decoder returns a polynomial $P$ exactly when
+$\deg P<k$ and its evaluation word differs from $w$ in at most $e$ positions.
+It returns failure exactly when no such polynomial exists. The formal decoder
+chooses a solution of the key equations noncomputably; its correctness is proved,
+but polynomial decoding runtime is not certified.\citep{WelchBerlekamp1986,GuruswamiRudraSudan2019}
+\decl{Complexity/Foundations/Data/Code/BerlekampWelch.lean}{265}{Cslib.Code.berlekampWelch_eq_some_iff}
+\decl{Complexity/Foundations/Data/Code/BerlekampWelch.lean}{275}{Cslib.Code.berlekampWelch_eq_none_iff}
+\end{result}
+
+\begin{result}
+\subsection{Sudan's list-decoding guarantee}
+For distinct field evaluation points, $k\ge2$, and a natural number $D$ satisfying
+\[
+2(k-1)n<(D+1)(D+2),
+\]
+Sudan's decoder lists exactly the polynomials of degree below $k$ agreeing with
+the received word at more than $D$ positions. The number of listed polynomials
+is at most $\lfloor D/(k-1)\rfloor$. Interpolation and root containment are proved;
+the interpolant is chosen noncomputably, and no decoding runtime or
+Guruswami--Sudan multiplicity improvement is asserted.\citep{Sudan1997,GuruswamiRudraSudan2019}
+\decl{Complexity/Foundations/Data/Code/Sudan.lean}{327}{Cslib.Code.mem_sudan_iff_of_lt}
+\decl{Complexity/Foundations/Data/Code/Sudan.lean}{301}{Cslib.Code.card_sudan_mul_le}
+\end{result}
