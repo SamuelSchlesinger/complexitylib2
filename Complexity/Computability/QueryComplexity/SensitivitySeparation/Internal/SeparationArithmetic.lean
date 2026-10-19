@@ -106,9 +106,7 @@ theorem quantitative_ratio_of_bounds {I : Type} [Fintype I]
 /-- For `0 < M`, `128 / 121 ≤ M ^ 2 * (2 * M ^ 2 + 1) ^ 9 / (22 * M ^ 10) ^ 2`. -/
 theorem depth_nine_seed_ratio {M : ℝ} (hM : 0 < M) :
     (128 : ℝ) / 121 ≤ M ^ 2 * (2 * M ^ 2 + 1) ^ 9 / (22 * M ^ 10) ^ 2 := by
-  have h := seed_ratio_lower 9 hM
-  norm_num at h ⊢
-  exact h
+  convert seed_ratio_lower 9 hM using 1 <;> norm_num
 
 /-- For `0 < M`, in `ℕ`, `1 < 22 * M ^ 10` and `(22 * M ^ 10) ^ 2 < M ^ 2 * (2 * M ^ 2 + 1) ^ 9`. -/
 theorem depth_nine_seed_gap (M : ℕ) (hM : 0 < M) :
@@ -136,10 +134,7 @@ theorem quantitative_ratio_tendsto :
     have h := hb.const_mul (16 : ℝ)
     convert h using 1
     · funext d
-      simp only [Function.comp_apply]
-      push_cast
-      rw [pow_add]
-      norm_num
+      simp only [Function.comp_apply, Nat.cast_add, Nat.cast_ofNat, pow_add]
       ring
     · simp
   have hr : Tendsto (fun d : ℕ => 4 * ((d : ℝ) + 2) ^ 2 / (2 : ℝ) ^ d)

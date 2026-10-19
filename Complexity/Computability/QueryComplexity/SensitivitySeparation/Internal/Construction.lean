@@ -64,7 +64,8 @@ noncomputable section
 namespace Internal
 
 /-- Extend the initial Hamming-ball predicates to all index counts. -/
-def constructionBase (d M : ℕ) := baseExtension (d + 1) (initialFamily d M)
+def constructionBase (d M : ℕ) : (h : ℕ) → Fin h → (Fin M × Fin (d + 2) → Bool) → Bool :=
+  baseExtension (d + 1) (initialFamily d M)
 
 /-- Coordinates for the regular-tournament construction at a given level. -/
 abbrev ConstructionCoordinates (d M r n : ℕ) :=

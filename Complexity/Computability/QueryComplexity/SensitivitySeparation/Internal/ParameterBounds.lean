@@ -48,18 +48,16 @@ namespace Internal
 theorem parameter_ge_eighty_one {d M : ℕ} (hd : 1 ≤ d) (hM : 9 ^ (d + 1) ≤ M) :
     81 ≤ M := by
   have hp : (9 : ℕ) ^ 2 ≤ 9 ^ (d + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
-  norm_num at hp
-  exact hp.trans hM
+  exact le_trans (by norm_num) (hp.trans hM)
 
 /-- For `81 ≤ M`, `max (Nat.ceil (Real.sqrt M)) 16 ≤ 2 * Real.sqrt M` in `ℝ`. -/
 theorem ceil_sqrt_max_le_two_sqrt {M : ℕ} (hM : 81 ≤ M) :
     (max (Nat.ceil (Real.sqrt (M : ℝ))) 16 : ℕ) ≤ 2 * Real.sqrt (M : ℝ) := by
   have hs : (9 : ℝ) ≤ Real.sqrt (M : ℝ) := by
     apply Real.le_sqrt_of_sq_le
-    norm_num
-    exact_mod_cast hM
+    exact le_trans (by norm_num) (show (81 : ℝ) ≤ M by exact_mod_cast hM)
   have hc := Nat.ceil_lt_add_one (Real.sqrt_nonneg (M : ℝ))
-  push_cast
+  rw [Nat.cast_max, Nat.cast_ofNat]
   exact max_le (by linarith) (by linarith)
 
 /-- If `9 ^ (d + 1) ≤ M`, then `3 ^ (d + 1) ≤ Real.sqrt M`. -/

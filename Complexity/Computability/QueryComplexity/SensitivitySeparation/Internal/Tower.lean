@@ -62,9 +62,9 @@ def TowerCoordinates (k r : ℕ) (I : Type) : ℕ → Type
 instance towerCoordinatesFintype (k r : ℕ) (I : Type) [Fintype I] :
     (n : ℕ) → Fintype (TowerCoordinates k r I n)
   | 0 => inferInstanceAs (Fintype I)
-  | n + 1 => by
+  | n + 1 =>
     letI := towerCoordinatesFintype k r I n
-    exact inferInstanceAs (Fintype ((Fin k × Fin r) × TowerCoordinates k r I n))
+    inferInstanceAs (Fintype ((Fin k × Fin r) × TowerCoordinates k r I n))
 
 /-- Index type for the disjoint sensitive blocks after each recursive level. -/
 def TowerBlockIndex (k : ℕ) (K : Type) : ℕ → Type
@@ -75,9 +75,9 @@ def TowerBlockIndex (k : ℕ) (K : Type) : ℕ → Type
 instance towerBlockIndexFintype (k : ℕ) (K : Type) [Fintype K] :
     (n : ℕ) → Fintype (TowerBlockIndex k K n)
   | 0 => inferInstanceAs (Fintype K)
-  | n + 1 => by
+  | n + 1 =>
     letI := towerBlockIndexFintype k K n
-    exact inferInstanceAs (Fintype (Fin k × TowerBlockIndex k K n))
+    inferInstanceAs (Fintype (Fin k × TowerBlockIndex k K n))
 
 /-- Iterate the tournament construction, adding a predicate index at each preceding level. -/
 def towerFamily {k r : ℕ} {I : Type} (T : Tournament k)

@@ -48,13 +48,11 @@ namespace Internal
 
 /-- For `0 < M`, the number of labels `Nat.ceil (Real.sqrt M)` is positive. -/
 theorem construction_label_count_pos {M : ℕ} (hM : 0 < M) :
-    0 < Nat.ceil (Real.sqrt (M : ℝ)) := by
-  have h := le_ceil_sqrt_sq M
-  by_contra hn
-  have he : Nat.ceil (Real.sqrt (M : ℝ)) = 0 := by omega
-  rw [he] at h
-  norm_num at h
-  omega
+    0 < Nat.ceil (Real.sqrt (M : ℝ)) :=
+  Nat.pos_of_ne_zero fun he => by
+    have h := le_ceil_sqrt_sq M
+    rw [he, zero_pow two_ne_zero] at h
+    omega
 
 /-- For `1 ≤ d` and `9 ^ (d + 1) ≤ M` there is a nonconstant Boolean function `f` on
 `constructionDimension d M (Nat.ceil (Real.sqrt M)) > 0` variables with
