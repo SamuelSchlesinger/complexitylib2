@@ -88,6 +88,9 @@ example : [true] ∉ unaryLanguage {[], [true, true]} := fun h => by
 
 /-! ### Candidate deciders -/
 
+/-- The candidates are countably many. -/
+example : Countable BakerGillSolovay.Candidate := inferInstance
+
 open BakerGillSolovay in
 /-- A candidate with a machine that halts at once and a zero clock: its verdict makes no request
 and rejects, against every oracle. -/

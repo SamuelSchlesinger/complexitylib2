@@ -46,7 +46,7 @@ instruction, hence fewer than `2 ^ n` requests for all large `n`. Every decider 
 
 namespace Cslib.Complexity
 
-open Turing Turing.MultiTapeTM Probability
+open _root_.Turing _root_.Turing.MultiTapeTM Probability
 
 /-- The words `1ⁿ` such that `B` has a word of length `n`. -/
 def unaryLanguage (B : Set (List Bool)) : Set (List Bool) :=
@@ -62,12 +62,6 @@ namespace BakerGillSolovay
 /-- A candidate decider: a fair-coin table with `k` work tapes, control `Fin m` and one oracle
 channel, together with the constants `c` and `d` of its clock `c * (n + 1) ^ d`. -/
 abbrev Candidate : Type := Σ k m : ℕ, MultiTapePTM k Bool (Fin m) Unit × ℕ × ℕ
-
-instance : Countable Candidate := by
-  have (k m : ℕ) : Countable (MultiTapePTM k Bool (Fin m) Unit) :=
-    have := MultiTapePTM.finite (k := k) (Symbol := Bool) (State := Fin m) (Oracle := Unit)
-    inferInstance
-  infer_instance
 
 /-- The clock `c * (n + 1) ^ d` of a candidate on inputs of length `n`. -/
 def Candidate.clock (candidate : Candidate) (n : ℕ) : ℕ :=

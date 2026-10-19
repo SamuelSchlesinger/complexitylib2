@@ -197,7 +197,7 @@ theorem run_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query} (e : State â
 
 omit [DecidableEq Oracle] in
 /-- Finitely many symbols, states and channels give finitely many fair-coin tables. -/
-theorem finite [Finite Symbol] [Finite State] [Finite Oracle] :
+instance finite [Finite Symbol] [Finite State] [Finite Oracle] :
     Finite (MultiTapePTM k Symbol State Oracle) := by
   have hTuring : Finite (Turing.Action k Symbol State) :=
     Finite.of_injective (fun a : Turing.Action k Symbol State =>
