@@ -510,7 +510,8 @@ theorem iterate_stepOut_rewind {D : Desc} {X : List ℕ} {q next rp : ℕ} {rest
       · rcases hw a (List.mem_of_mem_drop (List.mem_of_mem_head? h)) with rfl | rfl <;>
           simp [bitSyms]
     have he := hD (⟨q, inputSymbol X rp, (vtape base l w (v + 1)).read :: rest.map Tape.read⟩,
-      ⟨.zero, [(none, .neg)], none, some q⟩) (by simp [rewindEntries, List.mem_map]; exact hs)
+      ⟨.zero, [(none, .neg)], none, some q⟩)
+      (List.mem_append_left _ (List.mem_map.mpr ⟨_, hs, rfl⟩))
     rw [Function.iterate_succ_apply,
       show stepOut D X (⟨some q, rp, vtape base l w (v + 1) :: rest⟩, out) =
         (⟨some q, rp, vtape base l w v :: rest⟩, out) by
