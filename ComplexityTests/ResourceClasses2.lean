@@ -17,20 +17,20 @@ open Cslib Cslib.Complexity Turing Turing.MultiTapeTM
 
 /-- Cutting blocks of lengths `X + 1` and `2` at `2`, namely `3` and `2`, to their lengths at `1`,
 namely `2` and `2`. -/
-example : extractBlocks [.X + 1, 2] 1 2 [true, false, true, false, true] =
+example : truncateBlocks [.X + 1, 2] 1 2 [true, false, true, false, true] =
     [true, false, false, true] := by
-  simp [extractBlocks]
+  simp [truncateBlocks]
 
 /-- Cutting at equal lengths keeps the concatenated blocks. -/
-example : extractBlocks [.X, .X] 2 2 [true, false, true, true] = [true, false, true, true] := by
-  simp [extractBlocks]
+example : truncateBlocks [.X, .X] 2 2 [true, false, true, true] = [true, false, true, true] := by
+  simp [truncateBlocks]
 
 /-- The quantifiers over longer blocks, cut, are the quantifiers over shorter blocks. -/
 example (P : List Bool → Prop) :
     Alternation true ([Polynomial.X, 1].map fun p => p.eval 3)
-        (fun w => P (extractBlocks [.X, 1] 1 3 w)) ↔
+        (fun w => P (truncateBlocks [.X, 1] 1 3 w)) ↔
       Alternation true ([Polynomial.X, 1].map fun p => p.eval 1) P :=
-  alternation_extractBlocks (by norm_num)
+  alternation_truncateBlocks (by norm_num)
 
 example {α : Type} (enc : α ↪ List Bool) {k : ℕ} (hk : 1 ≤ k)
     (h : ∀ {β : Type} (encB : β ↪ List Bool), PiP k encB ⊆ SigmaP k encB) :
@@ -61,6 +61,17 @@ example {α : Type} (enc : α ↪ List Bool)
     (h : ∀ {β : Type} (encB : β ↪ List Bool), SigmaP 3 encB ⊆ SigmaP 2 encB) :
     PH enc = SigmaP 2 enc :=
   PH_eq_SigmaP_of_SigmaP_succ_subset_SigmaP h
+
+/-- At `k = 0` the hypothesis `Π₀ ⊆ Σ₀` holds outright, both levels being `P`, which is why the
+collapse from `Πₖ ⊆ Σₖ` needs `1 ≤ k`. -/
+example {β : Type} (encB : β ↪ List Bool) : PiP 0 encB ⊆ SigmaP 0 encB := by
+  rw [PiP_zero, SigmaP_zero]
+
+/-- At `k = 0`, `Σ₁ ⊆ Σ₀` is `NP ⊆ P`, which collapses `PH` to `Σ₀ = P`. -/
+example {α : Type} (enc : α ↪ List Bool)
+    (h : ∀ {β : Type} (encB : β ↪ List Bool), NP encB ⊆ P encB) : PH enc = SigmaP 0 enc :=
+  PH_eq_SigmaP_of_SigmaP_succ_subset_SigmaP fun encB => by
+    simpa only [zero_add, SigmaP_one, SigmaP_zero] using h encB
 
 /-! ### Axioms -/
 

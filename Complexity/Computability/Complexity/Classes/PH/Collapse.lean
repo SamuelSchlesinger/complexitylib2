@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Cslib.Foundations.Data.Polynomial.Monotone
 
 /-!
 # Collapses of the polynomial hierarchy
@@ -27,14 +28,14 @@ problem `A` in `Σₖ₊₁`, the pairs `(a, w₁)` of an instance and a first c
 remaining `k` alternating quantifiers accept form a problem `B` in `Πₖ`, with respect to the
 encoding of pairs. Its blocks of certificates are lengths of the instance `a`, while `Πₖ` asks for
 polynomials in the length of the encoded pair; the verifier reads longer blocks and cuts each to
-its first bits (`Cslib.Complexity.extractBlocks`), which does not change the quantifiers
-(`Cslib.Complexity.alternation_extractBlocks`). Then `B` is in `Σₖ`, and the existential
+its first bits (`Cslib.Complexity.truncateBlocks`), which does not change the quantifiers
+(`Cslib.Complexity.alternation_truncateBlocks`). Then `B` is in `Σₖ`, and the existential
 quantifier over `w₁` merges with the first quantifier of `B`, whose block lengths are polynomials
 in the length of the encoded pair `(a, w₁)`, hence in the length of `enc a`.
 
 ## Main definitions
 
-* `Cslib.Complexity.extractBlocks`: cut blocks of certificates to shorter blocks.
+* `Cslib.Complexity.truncateBlocks`: cut blocks of certificates to shorter blocks.
 
 ## Main results
 
@@ -61,38 +62,29 @@ open Turing.MultiTapeTM
 
 /-- The blocks of `w` of lengths `p.eval m`, for the polynomials `p` of `ps` in order, each cut to
 its first `p.eval n` bits. -/
-def extractBlocks : List (Polynomial ℕ) → ℕ → ℕ → List Bool → List Bool
+def truncateBlocks : List (Polynomial ℕ) → ℕ → ℕ → List Bool → List Bool
   | [], _, _, _ => []
-  | p :: ps, n, m, w => w.take (p.eval n) ++ extractBlocks ps n m (w.drop (p.eval m))
-
-/-- Polynomials with natural coefficients are monotone. -/
-theorem _root_.Polynomial.eval_mono_nat (p : Polynomial ℕ) {n m : ℕ} (h : n ≤ m) :
-    p.eval n ≤ p.eval m := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq => simpa only [Polynomial.eval_add] using Nat.add_le_add hp hq
-  | monomial d c =>
-    simpa only [Polynomial.eval_monomial] using Nat.mul_le_mul_left c (Nat.pow_le_pow_left h d)
+  | p :: ps, n, m, w => w.take (p.eval n) ++ truncateBlocks ps n m (w.drop (p.eval m))
 
 /-- **Cutting longer blocks does not change alternating quantifiers**: quantifying over blocks of
 lengths `p.eval m` and cutting each to `p.eval n ≤ p.eval m` bits quantifies over all blocks of
 lengths `p.eval n`. -/
-theorem alternation_extractBlocks {ps : List (Polynomial ℕ)} {n m : ℕ} (h : n ≤ m) :
-    ∀ {q : Bool} {P : List Bool → Prop},
-      Alternation q (ps.map fun p => p.eval m) (fun w => P (extractBlocks ps n m w)) ↔
-        Alternation q (ps.map fun p => p.eval n) P := by
-  induction ps with
-  | nil => intro q P; simp [extractBlocks]
+theorem alternation_truncateBlocks {ps : List (Polynomial ℕ)} {n m : ℕ} (h : n ≤ m) {q : Bool}
+    {P : List Bool → Prop} :
+    Alternation q (ps.map fun p => p.eval m) (fun w => P (truncateBlocks ps n m w)) ↔
+      Alternation q (ps.map fun p => p.eval n) P := by
+  induction ps generalizing q P with
+  | nil => simp [truncateBlocks]
   | cons p ps ih =>
-    intro q P
-    have hle := p.eval_mono_nat h
+    have hle := p.eval_mono h
     -- a long block, appended to anything, cuts to its first `p.eval n` bits
     have hcut (w v : List Bool) (hw : w.length = p.eval m) :
-        extractBlocks (p :: ps) n m (w ++ v) = w.take (p.eval n) ++ extractBlocks ps n m v := by
-      simp only [extractBlocks, List.take_append_of_le_length (hw ▸ hle),
+        truncateBlocks (p :: ps) n m (w ++ v) = w.take (p.eval n) ++ truncateBlocks ps n m v := by
+      simp only [truncateBlocks, List.take_append_of_le_length (hw ▸ hle),
         List.drop_left' hw]
     have key (w : List Bool) (hw : w.length = p.eval m) {q : Bool} :
         Alternation q (ps.map fun p => p.eval m)
-          (fun v => P (extractBlocks (p :: ps) n m (w ++ v))) ↔
+          (fun v => P (truncateBlocks (p :: ps) n m (w ++ v))) ↔
         Alternation q (ps.map fun p => p.eval n) fun v => P (w.take (p.eval n) ++ v) :=
       (alternation_congr fun v => by rw [hcut w v hw]).trans
         (ih (P := fun v => P (w.take (p.eval n) ++ v)))
@@ -124,16 +116,15 @@ theorem alternation_extractBlocks {ps : List (Polynomial ℕ)} {n m : ℕ} (h : 
 
 /-- Cutting blocks is polynomial-time, for a fixed list of polynomials and lengths `n`, `m` computed
 in unary. -/
-theorem computableTidilyInPolyTime_extractBlocks {γ : Type} {encIn : γ ↪ List Bool}
+theorem computableTidilyInPolyTime_truncateBlocks {γ : Type} {encIn : γ ↪ List Bool}
     (ps : List (Polynomial ℕ)) {N M : γ → ℕ}
     (hN : ComputableTidilyInPolyTime N encIn encUnary)
-    (hM : ComputableTidilyInPolyTime M encIn encUnary) :
-    ∀ {W : γ → List Bool}, ComputableTidilyInPolyTime W encIn encBits →
-      ComputableTidilyInPolyTime (fun x => extractBlocks ps (N x) (M x) (W x)) encIn encBits := by
-  induction ps with
-  | nil => intro W _; exact .const []
+    (hM : ComputableTidilyInPolyTime M encIn encUnary) {W : γ → List Bool}
+    (hW : ComputableTidilyInPolyTime W encIn encBits) :
+    ComputableTidilyInPolyTime (fun x => truncateBlocks ps (N x) (M x) (W x)) encIn encBits := by
+  induction ps generalizing W with
+  | nil => exact .const []
   | cons p ps ih =>
-    intro W hW
     exact ComputableTidilyInPolyTime.bitsAppend
       (ComputableTidilyInPolyTime.bitsTakeWithInput hW
         ((ComputableTidilyInPolyTime.unary_eval p).comp hN))
@@ -171,16 +162,16 @@ theorem SigmaP_succ_subset_SigmaP {k : ℕ} (hk : 1 ≤ k)
     simp only [length_encPair]
     omega
   have hB : B ∈ PiP k (encPair enc encBits) := by
-    refine ⟨ps, fun z => V (z.1.1, z.1.2 ++ extractBlocks ps (enc z.1.1).length
+    refine ⟨ps, fun z => V (z.1.1, z.1.2 ++ truncateBlocks ps (enc z.1.1).length
       (encPair enc encBits z.1).length z.2), hlen', ?_, fun y => ?_⟩
     · have hfst := (ComputableTidilyInPolyTime.fst (encPair enc encBits) encBits)
       exact hV.comp (((ComputableTidilyInPolyTime.fst _ _).comp hfst).prod
         (ComputableTidilyInPolyTime.bitsAppend ((ComputableTidilyInPolyTime.snd _ _).comp hfst)
-          (computableTidilyInPolyTime_extractBlocks ps
+          (computableTidilyInPolyTime_truncateBlocks ps
             ((ComputableTidilyInPolyTime.encoding_length enc).comp
               ((ComputableTidilyInPolyTime.fst _ _).comp hfst))
             ((ComputableTidilyInPolyTime.encoding_length _).comp hfst) (.snd _ _))))
-    · exact (alternation_extractBlocks (hle y)
+    · exact (alternation_truncateBlocks (hle y)
         (P := fun w => V (y.1, y.2 ++ w) = true)).symm
   obtain ⟨rs, V', hrs, hV', hB'⟩ := h hB
   obtain ⟨r, rs, rfl⟩ := List.exists_cons_of_length_eq_add_one
