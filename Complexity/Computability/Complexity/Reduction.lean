@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Complexity.Classes.P
 
 /-!
 # Polynomial-time many-one reductions
@@ -35,6 +36,7 @@ polynomial-time, reducibility, and is stated for `Primcodable` types; it is not 
 
 * `Cslib.Complexity.PolyTimeReducible.refl`, `Cslib.Complexity.PolyTimeReducible.trans`:
   polynomial-time reducibility is a preorder.
+* `Cslib.Complexity.PolyTimeReducible.mem_P`: `P` is closed under polynomial-time reductions.
 * `Cslib.Complexity.NPHard.trans`, `Cslib.Complexity.coNPHard.trans`: hardness transfers along
   polynomial-time reductions.
 * `Cslib.Complexity.PolyTimeReducible.compl`: a reduction between problems is one between their
@@ -94,6 +96,13 @@ theorem PolyTimeReducible.trans (hAB : PolyTimeReducible encA encB A B)
   let ⟨f, hf, hAB⟩ := hAB
   let ⟨g, hg, hBC⟩ := hBC
   ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hBC (f a))⟩
+
+/-- **`P` is closed under polynomial-time reductions.** -/
+theorem PolyTimeReducible.mem_P (hAB : PolyTimeReducible encA encB A B) (hB : B ∈ P encB) :
+    A ∈ P encA :=
+  let ⟨f, hf, hAB⟩ := hAB
+  let ⟨g, hg, hB⟩ := hB
+  ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hB (f a))⟩
 
 /-- `NP`-hardness transfers along a polynomial-time reduction. -/
 theorem NPHard.trans (hA : NPHard encA A) (hAB : PolyTimeReducible encA encB A B) :

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Complexity.Classes.NP.Witness
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Reduction
 public import Mathlib.Combinatorics.SimpleGraph.Clique
@@ -29,7 +30,8 @@ literal in each clause without contradictions, which is exactly a satisfying ass
 
 Vertices and target sizes use binary encoding (`encNat`). A certificate masks the declared vertex
 list at first occurrences so duplicate vertex entries cannot inflate the selected set, and checks
-the selected count in binary without unary expansion of `m`.
+the selected count in binary without unary expansion of `m`. The verifier is an instance of the
+subset-witness verifier `Cslib.Complexity.subsetVerifier`, which handles the certificate length.
 
 ## Main definitions
 
@@ -107,49 +109,33 @@ theorem computableTidilyInPolyTime_adjBool :
   fun_prop
 
 /-- Select distinct declared vertices from `V` using the certificate mask `w`: position `i` of `V`
-is kept when bit `i` of `w` is `true` and `i` is the first occurrence of that vertex in `V`. -/
+is kept when bit `i` of `w` is `true` and `i` is the first occurrence of that vertex in `V`. This is
+`Cslib.Complexity.selectDistinct` on vertex lists (`selectVertices_eq_selectDistinct`). -/
 def selectVertices (V : List ℕ) (w : List Bool) : List ℕ :=
   (V.zipIdx.filter fun p => w.getD p.2 false && decide (V.idxOf p.1 = p.2)).map Prod.fst
 
-theorem mem_selectVertices {V : List ℕ} {w : List Bool} {v : ℕ} :
-    v ∈ selectVertices V w ↔ v ∈ V ∧ w.getD (V.idxOf v) false = true := by
-  simp only [selectVertices, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
-    Bool.and_eq_true, decide_eq_true_eq, Prod.exists]
-  constructor
-  · rintro ⟨u, i, ⟨hi, hw, hidx⟩, rfl⟩
-    exact ⟨List.mem_of_getElem? hi, hidx ▸ hw⟩
-  · rintro ⟨hv, hw⟩
-    have hlt : V.idxOf v < V.length := List.idxOf_lt_length_iff.2 hv
-    exact ⟨v, V.idxOf v, ⟨by simp [hlt], hw, rfl⟩, rfl⟩
+theorem selectVertices_eq_selectDistinct : selectVertices = selectDistinct := rfl
 
-theorem nodup_selectVertices (V : List ℕ) (w : List Bool) : (selectVertices V w).Nodup := by
-  have hzip : V.zipIdx.Nodup := by
-    rw [List.Nodup, List.pairwise_iff_getElem]
-    intro i j hi hj hij h
-    have := congrArg Prod.snd h
-    simp only [List.getElem_zipIdx, Nat.zero_add] at this
-    omega
-  have hfilter := hzip.filter (fun p => w.getD p.2 false && decide (V.idxOf p.1 = p.2))
-  refine hfilter.map_on ?_
-  rintro ⟨u, i⟩ hu ⟨v, j⟩ hv (rfl : u = v)
-  simp only [List.mem_filter, Bool.and_eq_true, decide_eq_true_eq] at hu hv
-  rw [← hu.2.2, ← hv.2.2]
+theorem mem_selectVertices {V : List ℕ} {w : List Bool} {v : ℕ} :
+    v ∈ selectVertices V w ↔ v ∈ V ∧ w.getD (V.idxOf v) false = true :=
+  mem_selectDistinct
+
+theorem nodup_selectVertices (V : List ℕ) (w : List Bool) : (selectVertices V w).Nodup :=
+  nodup_selectDistinct V w
 
 /-- Selecting distinct declared vertices from a certificate mask is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_selectVertices :
     ComputableTidilyInPolyTime (fun p : List ℕ × List Bool => selectVertices p.1 p.2)
-      (encPair (encList encNat) encBits) (encList encNat) := by
-  unfold selectVertices
-  fun_prop
+      (encPair (encList encNat) encBits) (encList encNat) :=
+  computableTidilyInPolyTime_selectDistinct encNat
 
 /-- Verify a cardinality-`m` vertex subset problem with pairwise relation `rel`: select distinct
-declared vertices from `G.1`, compare the selected count with `m` in binary, and test `rel` on all
-distinct selected pairs. -/
-def verifySubset (rel : Graph → ℕ → ℕ → Bool) (x : (Graph × ℕ) × List Bool) : Bool :=
-  let S := selectVertices x.1.1.1 x.2
-  decide (S.length = x.1.2) &&
-    S.all fun u => S.all fun v => decide (u = v) || rel x.1.1 u v
+declared vertices from `G.1` by the certificate mask, compare the selected count with `m` in
+binary, and test `rel` on all distinct selected pairs. -/
+def verifySubset (rel : Graph → ℕ → ℕ → Bool) : (Graph × ℕ) × List Bool → Bool :=
+  subsetVerifier (fun x => x.1.1) fun y =>
+    decide (y.2.length = y.1.2) && y.2.all fun u => y.2.all fun v => decide (u = v) || rel y.1.1 u v
 
 /-- A graph has no more declared vertices than the length of its encoded instance. -/
 theorem length_vertices_le (x : Graph × ℕ) :
@@ -169,59 +155,16 @@ theorem isVerifier_verifySubset {rel : Graph → ℕ → ℕ → Bool} {P : Grap
     (hrel : ∀ G u v, u ≠ v → (rel G u v = true ↔ P G u v)) :
     IsVerifier (encPair encGraph encNat) Polynomial.X (verifySubset rel)
       {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧ (S : Set ℕ).Pairwise (P x.1) ∧ S.card = x.2} := by
-  classical
-  rintro ⟨G, m⟩
-  simp only [Set.mem_ofPred_eq, Polynomial.eval_X, verifySubset]
-  constructor
-  · rintro ⟨S, hSV, hpair, hcard⟩
-    let w := G.1.map (fun v => decide (v ∈ S)) ++
-      List.replicate ((encPair encGraph encNat (G, m)).length - G.1.length) false
-    have hw_len : w.length = (encPair encGraph encNat (G, m)).length := by
-      dsimp only [w]
-      rw [List.length_append, List.length_map, List.length_replicate,
-        Nat.add_sub_cancel' (length_vertices_le (G, m))]
-    have htoFinset : (selectVertices G.1 w).toFinset = S := by
-      ext v
-      rw [List.mem_toFinset, mem_selectVertices]
-      constructor
-      · rintro ⟨hv, hw⟩
-        have hlt : G.1.idxOf v < G.1.length := List.idxOf_lt_length_iff.2 hv
-        have hlt' : G.1.idxOf v < (G.1.map fun u => decide (u ∈ S)).length := by simpa using hlt
-        dsimp only [w] at hw
-        rw [List.getD_eq_getElem?_getD, List.getElem?_append_left hlt', List.getElem?_map,
-          List.getElem?_eq_getElem hlt, List.getElem_idxOf hlt] at hw
-        exact of_decide_eq_true hw
-      · intro hv
-        have hvG : v ∈ G.1 := hSV v hv
-        have hlt : G.1.idxOf v < G.1.length := List.idxOf_lt_length_iff.2 hvG
-        have hlt' : G.1.idxOf v < (G.1.map fun u => decide (u ∈ S)).length := by simpa using hlt
-        refine ⟨hvG, ?_⟩
-        dsimp only [w]
-        rw [List.getD_eq_getElem?_getD, List.getElem?_append_left hlt', List.getElem?_map,
-          List.getElem?_eq_getElem hlt, List.getElem_idxOf hlt]
-        exact decide_eq_true hv
-    have hlen_eq : (selectVertices G.1 w).length = m := by
-      rw [← List.toFinset_card_of_nodup (nodup_selectVertices G.1 w), htoFinset, hcard]
-    refine ⟨w, hw_len, ?_⟩
-    simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.or_eq_true]
-    refine ⟨hlen_eq, fun u hu v hv => ?_⟩
-    by_cases huv : u = v
+  refine isVerifier_subsetVerifier (fun x => by simpa using length_vertices_le x)
+    fun x l hl _ => ?_
+  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.or_eq_true,
+    List.toFinset_card_of_nodup hl, List.coe_toFinset]
+  refine ⟨fun ⟨hlen, h⟩ => ⟨fun u hu v hv huv => ?_, hlen⟩,
+    fun ⟨h, hlen⟩ => ⟨hlen, fun u hu v hv => ?_⟩⟩
+  · exact (hrel x.1 u v huv).1 ((h u hu v hv).resolve_left huv)
+  · by_cases huv : u = v
     · exact Or.inl huv
-    · have huS : u ∈ S := htoFinset ▸ List.mem_toFinset.2 hu
-      have hvS : v ∈ S := htoFinset ▸ List.mem_toFinset.2 hv
-      exact Or.inr ((hrel G u v huv).2 (hpair huS hvS huv))
-  · rintro ⟨w, -, hw⟩
-    simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.or_eq_true] at hw
-    obtain ⟨hlen, hpair⟩ := hw
-    refine ⟨(selectVertices G.1 w).toFinset, fun v hv => ?_, ?_, ?_⟩
-    · exact (mem_selectVertices.1 (List.mem_toFinset.1 hv)).1
-    · intro u hu v hv huv
-      have hu' : u ∈ selectVertices G.1 w := List.mem_toFinset.1 hu
-      have hv' : v ∈ selectVertices G.1 w := List.mem_toFinset.1 hv
-      rcases hpair u hu' v hv' with rfl | h
-      · exact (huv rfl).elim
-      · exact (hrel G u v huv).1 h
-    · rw [List.toFinset_card_of_nodup (nodup_selectVertices G.1 w), hlen]
+    · exact Or.inr ((hrel x.1 u v huv).2 (h hu hv huv))
 
 @[fun_prop]
 private theorem bool_or' {α : Type} {encA : α ↪ List Bool} {left right : α → Bool}
@@ -237,34 +180,16 @@ theorem computableTidilyInPolyTime_verifySubset {rel : Graph → ℕ → ℕ →
       (encPair (encPair encGraph encNat) encNat) encBool) :
     ComputableTidilyInPolyTime (verifySubset rel)
       (encPair (encPair encGraph encNat) encBits) encBool := by
-  have hS : ComputableTidilyInPolyTime
-      (fun x : (Graph × ℕ) × List Bool => selectVertices x.1.1.1 x.2)
-      (encPair (encPair encGraph encNat) encBits) (encList encNat) := by
-    unfold encGraph
-    fun_prop
-  have hlen : ComputableTidilyInPolyTime
-      (fun x : (Graph × ℕ) × List Bool => (selectVertices x.1.1.1 x.2).length)
-      (encPair (encPair encGraph encNat) encBits) encNat :=
-    unary_to_binary.comp ((length_list encNat).comp hS)
-  have hcard : ComputableTidilyInPolyTime
-      (fun x : (Graph × ℕ) × List Bool => decide ((selectVertices x.1.1.1 x.2).length = x.1.2))
-      (encPair (encPair encGraph encNat) encBits) encBool :=
-    hlen.decide_eq' (by unfold encGraph; fun_prop)
-  have hpair : ComputableTidilyInPolyTime
-      (fun x : (Graph × ℕ) × List Bool =>
-        (selectVertices x.1.1.1 x.2).all fun u =>
-          (selectVertices x.1.1.1 x.2).all fun v => decide (u = v) || rel x.1.1 u v)
-      (encPair (encPair encGraph encNat) encBits) encBool := by
-    apply allWithInput hS
-    apply allWithInput (hS.comp (fst _ _))
+  refine computableTidilyInPolyTime_subsetVerifier (encγ := encNat)
+    (by unfold encGraph; fun_prop) (bool_and' ?_ ?_)
+  · exact (unary_to_binary.comp ((length_list encNat).comp (snd _ _))).decide_eq' (by fun_prop)
+  · apply allWithInput (snd _ _)
+    apply allWithInput ((snd _ _).comp (fst _ _))
     have hproj : ComputableTidilyInPolyTime
-        (fun p : (((Graph × ℕ) × List Bool) × ℕ) × ℕ => ((p.1.1.1.1, p.1.2), p.2))
-        (encPair (encPair (encPair (encPair encGraph encNat) encBits) encNat) encNat)
+        (fun p : (((Graph × ℕ) × List ℕ) × ℕ) × ℕ => ((p.1.1.1.1, p.1.2), p.2))
+        (encPair (encPair (encPair (encPair encGraph encNat) (encList encNat)) encNat) encNat)
         (encPair (encPair encGraph encNat) encNat) := by fun_prop
-    apply bool_or'
-    · fun_prop
-    · exact hrel.comp hproj
-  exact hcard.bool_and' hpair
+    exact bool_or' (by fun_prop) (hrel.comp hproj)
 
 end Graph
 

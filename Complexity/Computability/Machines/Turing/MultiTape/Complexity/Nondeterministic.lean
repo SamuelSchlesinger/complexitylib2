@@ -54,6 +54,9 @@ many states, and one polynomially bounded time bound, for all instances. Like
   witnessed by a computation path of exactly `t` steps.
 * `Turing.MultiTapeNTM.ComputationPath.exists_halted_extension`: without stuck configurations,
   every computation path within a time bound is a prefix of a halted one.
+* `Turing.MultiTapeTM.ComputesFunInTimeAndSpace.decidesInSpace`,
+  `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_decidesInSpace`: a deterministic decider
+  within space `s` is a nondeterministic one with one computation path.
 
 ## References
 
@@ -191,5 +194,40 @@ theorem DecidesInSpace.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List
     {s s' : α → ℕ} (h : ntm.DecidesInSpace enc A s) (hs : ∀ a, s a ≤ s' a) :
     ntm.DecidesInSpace enc A s' :=
   fun a => ⟨(h a).1.mono (hs a), (h a).2⟩
+
+/-- **A deterministic decider is a nondeterministic decider** with one computation path: a machine
+computing a Boolean function `f` within time `t` and space `s` decides, as a nondeterministic
+machine, the problem where `f` is `true` within space `s`. Its prefixes and its halted extensions
+visit no more cells than the run, and it accepts exactly when it halts with output `[true]`. -/
+theorem _root_.Turing.MultiTapeTM.ComputesFunInTimeAndSpace.decidesInSpace
+    {tm : MultiTapeTM k Bool State} {enc : α ↪ List Bool} {f : α → Bool} {t s : α → ℕ}
+    {A : Set α} (htm : tm.ComputesFunInTimeAndSpace enc MultiTapeTM.encBool f t s)
+    (hA : ∀ a, a ∈ A ↔ f a = true) : tm.toMultiTapeNTM.DecidesInSpace enc A s := by
+  intro a
+  obtain ⟨⟨u, hhalt, hout⟩, -, hspace⟩ := htm a
+  refine ⟨hspace, ?_⟩
+  rw [hA a, accepts_iff_exists_time_eq (MultiTapeTM.runsInTime_of_halted hhalt)]
+  constructor
+  · intro hf
+    refine ⟨ComputationPath.ofDeterministic tm (enc a) u, rfl, ?_⟩
+    rw [MultiTapeTM.computationPath_last_eq_runFrom]
+    change (tm.runFrom _ u).output = _
+    rw [hout, hf]
+    rfl
+  · rintro ⟨q, hq, hout'⟩
+    rw [MultiTapeTM.computationPath_last_eq_runFrom, hq, hout] at hout'
+    exact List.head_eq_of_cons_eq hout'
+
+/-- A Boolean function computable within time `t` and space `s` decides the problem where it is
+`true` by some nondeterministic machine with a binary alphabet and finitely many states, within
+space `s`. -/
+theorem _root_.Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_decidesInSpace
+    {enc : α ↪ List Bool} {f : α → Bool} {t s : α → ℕ} {A : Set α}
+    (h : MultiTapeTM.ComputableInTimeAndSpace f enc MultiTapeTM.encBool t s)
+    (hA : ∀ a, a ∈ A ↔ f a = true) :
+    ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State),
+      ntm.DecidesInSpace enc A s :=
+  let ⟨k, State, hfinite, tm, htm⟩ := h
+  ⟨k, State, hfinite, tm.toMultiTapeNTM, htm.decidesInSpace hA⟩
 
 end Turing.MultiTapeNTM

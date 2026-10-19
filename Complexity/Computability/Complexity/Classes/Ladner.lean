@@ -45,8 +45,11 @@ is in `NP` (`Cslib.Complexity.Ladner.SATH_mem_NP`), because `H` is polynomial-ti
   decided by a finite table, so `SAT` is in `P`
   (`Cslib.Complexity.Ladner.SAT_mem_P_of_reducible_of_tendsto`).
 
-Since `SAT` is `NP`-complete (`Cslib.Complexity.CookLevin.SAT_npComplete`), `SAT ∈ P` gives
-`P = NP` for every encoding (`Cslib.Complexity.Ladner.P_eq_NP_of_SAT_mem_P`). The unconditional
+An `NP`-complete problem in `P` gives `P = NP` for every encoding
+(`Cslib.Complexity.NPComplete.P_eq_NP_of_mem_P`), since `P` is closed under polynomial-time
+reductions (`Cslib.Complexity.PolyTimeReducible.mem_P`). Since `SAT` is `NP`-complete
+(`Cslib.Complexity.CookLevin.SAT_npComplete`), `SAT ∈ P` gives `P = NP`
+(`Cslib.Complexity.Ladner.P_eq_NP_of_SAT_mem_P`). The unconditional
 forms are `Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P` and
 `Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH`; the theorem keeps `P ≠ NP` as an explicit
 hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`).
@@ -61,8 +64,9 @@ hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`).
 
 ## Main results
 
-* `Cslib.Complexity.PolyTimeReducible.mem_P`, `Cslib.Complexity.P_subset_NP`: `P` is closed under
-  polynomial-time reductions and contained in `NP`.
+* `Cslib.Complexity.P_subset_NP`: `P` is contained in `NP`.
+* `Cslib.Complexity.NPComplete.P_eq_NP_of_mem_P`: an `NP`-complete problem in `P` gives `P = NP`
+  for every encoding.
 * `Cslib.Complexity.Ladner.P_eq_NP_of_SAT_mem_P`: if `SAT ∈ P`, then `P = NP` for every encoding.
 * `Cslib.Complexity.Ladner.exists_H_le_of_mem_P`: if `SATH ∈ P`, `H` is bounded.
 * `Cslib.Complexity.Ladner.reducible_of_H_le`: if `H` is bounded, `SAT` reduces to `SATH`.
@@ -90,27 +94,26 @@ namespace Cslib.Complexity
 
 open Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal Cslib.Logic.PL
 
-/-! ### `P` under reductions -/
-
-/-- **`P` is closed under polynomial-time reductions.** -/
-theorem PolyTimeReducible.mem_P {α β : Type*} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
-    {A : Set α} {B : Set β} (hAB : PolyTimeReducible encA encB A B) (hB : B ∈ P encB) :
-    A ∈ P encA :=
-  let ⟨f, hf, hAB⟩ := hAB
-  let ⟨g, hg, hB⟩ := hB
-  ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hB (f a))⟩
+/-! ### `P` and `NP`-complete problems -/
 
 /-- **`P ⊆ NP`**: a decider is a verifier ignoring its certificate. -/
 theorem P_subset_NP {α : Type} {enc : α ↪ List Bool} : P enc ⊆ NP enc :=
   fun _ ⟨f, hf, hA⟩ => ⟨0, fun x => f x.1, hf.comp (ComputableTidilyInPolyTime.fst enc encBits),
     fun a => (hA a).trans ⟨fun h => ⟨[], by simp, h⟩, fun ⟨_, _, h⟩ => h⟩⟩
 
+/-- **An `NP`-complete problem in `P` gives `P = NP`**, for every encoding of instances: every
+problem in `NP` reduces to it, and `P` is closed under polynomial-time reductions. -/
+theorem NPComplete.P_eq_NP_of_mem_P {β : Type} {encB : β ↪ List Bool} {B : Set β}
+    (hB : NPComplete encB B) (h : B ∈ P encB) {α : Type} (enc : α ↪ List Bool) :
+    P enc = NP enc :=
+  P_subset_NP.antisymm fun A hA => (hB.2 enc A hA).mem_P h
+
 namespace Ladner
 
 /-- If `SAT` is in `P`, then `P = NP` for every encoding of instances. -/
 theorem P_eq_NP_of_SAT_mem_P (h : SAT ∈ P encCNF) {α : Type} (enc : α ↪ List Bool) :
     P enc = NP enc :=
-  P_subset_NP.antisymm fun A hA => (CookLevin.SAT_npComplete.2 enc A hA).mem_P h
+  CookLevin.SAT_npComplete.P_eq_NP_of_mem_P h enc
 
 /-- `P ≠ NP`, for any encoding, puts `SAT` outside `P`. -/
 theorem SAT_notMem_P {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) : SAT ∉ P encCNF :=

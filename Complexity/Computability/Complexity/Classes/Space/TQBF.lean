@@ -7,7 +7,6 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
 import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 
@@ -15,9 +14,9 @@ import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 # `TQBF` is `PSPACE`-complete
 
 A problem is `PSPACE`-hard when every problem in `PSPACE`, with any encoding of its instances,
-reduces to it in polynomial time (`Cslib.Complexity.PolyTimeReducible`), and `PSPACE`-complete when
-it is moreover in `PSPACE` [Arora and Barak, Section 4.2][AroraBarak09]
-[Sipser, Section 8.3][Sipser2013].
+reduces to it in polynomial time (`Cslib.Complexity.PSPACEHard`), and `PSPACE`-complete when it is
+moreover in `PSPACE` (`Cslib.Complexity.PSPACEComplete`) [Arora and Barak, Section
+4.2][AroraBarak09] [Sipser, Section 8.3][Sipser2013].
 
 The true closed quantified Boolean formulas (`Cslib.Complexity.TQBF`) form a `PSPACE`-complete
 problem [Sipser, Theorem 8.9][Sipser2013] [Arora and Barak, Theorem 4.13][AroraBarak09]:
@@ -47,13 +46,8 @@ empty clause `bot` (`Cslib.Logic.PL.QBF.conj`, `Cslib.Logic.PL.QBF.ofClause`). T
 produced by the reduction always quantify over some variables: their codes have width at least `2`,
 even on the empty input.
 
-## Main definitions
-
-* `Cslib.Complexity.PSPACEHard`, `Cslib.Complexity.PSPACEComplete`.
-
 ## Main results
 
-* `Cslib.Complexity.PSPACEHard.trans`: hardness transfers along polynomial-time reductions.
 * `Cslib.Complexity.TQBF_pspaceHard`: `TQBF` is `PSPACE`-hard.
 * `Cslib.Complexity.TQBF_pspaceComplete`: `TQBF` is `PSPACE`-complete.
 
@@ -68,21 +62,6 @@ even on the empty input.
 namespace Cslib.Complexity
 
 open _root_.Turing _root_.Turing.MultiTapeTM
-
-/-- Every problem in `PSPACE`, with any encoding of its instances, reduces to `B` in polynomial
-time. -/
-def PSPACEHard {β : Type*} (encB : β ↪ List Bool) (B : Set β) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ PSPACE enc → PolyTimeReducible enc encB A B
-
-/-- `B` is in `PSPACE` and every problem in `PSPACE` reduces to it. -/
-def PSPACEComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop :=
-  B ∈ PSPACE encB ∧ PSPACEHard encB B
-
-/-- `PSPACE`-hardness transfers along a polynomial-time reduction. -/
-theorem PSPACEHard.trans {β γ : Type*} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
-    {B : Set β} {C : Set γ} (hB : PSPACEHard encB B) (hBC : PolyTimeReducible encB encC B C) :
-    PSPACEHard encC C :=
-  fun enc A hA => (hB enc A hA).trans hBC
 
 /-- **`TQBF` is `PSPACE`-hard** [Sipser, Theorem 8.9][Sipser2013]
 [Arora and Barak, Theorem 4.13][AroraBarak09]: every problem decided by a deterministic machine
