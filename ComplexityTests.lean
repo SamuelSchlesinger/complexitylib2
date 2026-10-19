@@ -2,6 +2,7 @@ import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserLowerBound
 import ComplexityTests.AffineDisperserRuntime
+import ComplexityTests.AlgebraicComplexity
 import ComplexityTests.Alternation
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
