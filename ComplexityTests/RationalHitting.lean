@@ -12,7 +12,10 @@ import Complexity.Computability.Circuit.Rational
 Concrete formulas, their node counts, explicit admissibility and nonzeroness witnesses on `1 × 1`
 and `2 × 2` rational matrices, formulas outside the domain, exact matrix evaluation, the boundary
 cases `s = 0` and `n = 0`, and nonvacuity checks for the headline theorems. The hitting list itself
-is astronomically long and is never evaluated; only its dimension is computed, by the kernel.
+is astronomically long and is never evaluated; only its dimension is computed, by the kernel. The
+executable pieces of the generator are run instead: the staged determinant, single grid points,
+and the generator on a grid of side `2` or `4` with the parameters for `n = s = 0`, whose output
+is fed to the finite tests. The finite tests are also run on a hand-built `2 × 2` list.
 -/
 
 namespace ComplexityTests.RationalHitting
@@ -162,6 +165,30 @@ example : commutator.nonzero? = true := (Formula.nonzero?_eq_true_iff _).mpr non
 example : Decidable (Admissible commutator) := inferInstance
 example : Decidable (Nonzero (.inv cancel)) := inferInstance
 
+/-! ### The finite tests on a small hand-built list -/
+
+/-- A two-element list of `2 × 2` substitutions for one variable: a singular nilpotent matrix and
+an invertible unipotent one. -/
+def smallList : Output 1 := ⟨2, two_pos, [![e01], ![unipotent]]⟩
+
+/-- The singular substitution alone. -/
+def singularList : Output 1 := ⟨2, two_pos, [![e01]]⟩
+
+-- Compiled: the variable is invertible at `unipotent`, so its inverse is defined there; `x₀ - x₀`
+-- is defined but zero everywhere, so its inverse is defined nowhere; at `e01` alone the variable
+-- is singular and its inverse undefined.
+/-- info: [true, true, false, true, false, false, false, true] -/
+#guard_msgs in
+#eval [
+  smallList.nonzeroTest (.var 0),
+  smallList.admissibilityTest (.inv (.var 0)),
+  smallList.nonzeroTest cancel,
+  smallList.admissibilityTest cancel,
+  smallList.admissibilityTest (.inv cancel),
+  singularList.nonzeroTest (.var 0),
+  singularList.admissibilityTest (.inv (.var 0)),
+  singularList.admissibilityTest (.var 0)]
+
 -- A small-dimension witness exists for every admissible formula.
 example : ∃ d, 0 < d ∧ d ≤ 256 * (2 + 9 + 3) ^ 10 ∧
     ∃ (X : Tuple 2 d) (v : Mat d), Evaluates commutator X v := by
@@ -197,6 +224,65 @@ example (n s : ℕ) : (hittingList n s).dimension =
 
 example : (hittingList 0 0).dimension = 8 := by decide
 example : (hittingList 1 1).dimension = 32768 := by decide
+
+-- The parameters for `n = s = 0`: the grid has side `385`, so the list is never computed in full.
+/-- info: [2, 1, 4, 385] -/
+#guard_msgs in
+#eval [Parameters.truncation 0 0, Parameters.exponent 0 0, Parameters.ambientDimension 0 0,
+  Parameters.gridSize 0 0]
+
+/-! ### Executable pieces of the generator -/
+
+-- The staged division-free determinant, compiled.
+/-- info: [5, -2, 0, 1] -/
+#guard_msgs in
+#eval [DeterminantAlgorithm.determinant (DeterminantAlgorithm.tabulate !![2, 1; 1, 3]),
+  DeterminantAlgorithm.determinant (DeterminantAlgorithm.tabulate !![1, 2; 3, 4]),
+  DeterminantAlgorithm.determinant (DeterminantAlgorithm.tabulate !![1, 2, 3; 4, 5, 6; 7, 8, 9]),
+  DeterminantAlgorithm.determinant (DeterminantAlgorithm.tabulate (1 : Matrix (Fin 4) (Fin 4) ℤ))]
+
+-- Two grid points of the generator for `n = s = 0`, with `8 × 8` integer lift matrices: the
+-- normalizing matrix is tested for singularity by the staged determinant, and is singular at the
+-- first point only.
+/-- info: [false, true] -/
+#guard_msgs in
+#eval [ExecutableGenerator.atPoint 0 (Parameters.truncation 0 0) (Parameters.exponent 0 0)
+    ![1, 1, 1] |>.isSome,
+  ExecutableGenerator.atPoint 0 (Parameters.truncation 0 0) (Parameters.exponent 0 0)
+    ![1, 2, 1] |>.isSome]
+
+-- The generator with the parameters for `n = s = 0` (dimension `8`), on the grid of side `4`
+-- instead of `385`: `48` of the `64` points survive the singularity test.
+/-- info: 48 -/
+#guard_msgs in
+#eval (ExecutableGenerator.output 0 (Parameters.truncation 0 0) (Parameters.exponent 0 0)
+  4).tuples.length
+
+/-- The generator for one variable with the parameters for `n = s = 0` and a grid of side `2`; a
+list of `8 × 8` rational matrices, small enough to compute in full. -/
+def smallGenerated : Output 1 :=
+  ExecutableGenerator.output 1 (Parameters.truncation 0 0) (Parameters.exponent 0 0) 2
+
+-- Its length, the diagonal of its first matrix, and the domain test run on it. The determinant
+-- test is not run here: `Matrix.det` is a permutation sum, which takes over ten seconds per
+-- `8 × 8` determinant in the interpreter; it is checked on the `2 × 2` list above.
+/-- info: 4 -/
+#guard_msgs in
+#eval smallGenerated.tuples.length
+
+/-- info: some [-5 / 4, -5 / 4, -5 / 4, -5 / 4, 1 / 4, 1 / 4, 1 / 4, 1 / 4] -/
+#guard_msgs in
+#eval smallGenerated.tuples.head?.map fun X => (List.finRange 8).map fun i => X 0 i i
+
+/-- info: [true, true] -/
+#guard_msgs in
+#eval [smallGenerated.admissibilityTest cancel,
+  smallGenerated.admissibilityTest (.mul (.var 0) (.add (.var 0) (.const 1)))]
+
+/-! ### The encoding-length constant -/
+
+example : PolynomialBounds.outputConstant = 18805804774818203755428413960 := by decide
+example : PolynomialBounds.outputConstant < 2 * 10 ^ 28 := by decide
 
 /-! ### Nonvacuity of the headline theorems -/
 
