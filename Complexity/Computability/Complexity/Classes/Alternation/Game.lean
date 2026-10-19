@@ -32,7 +32,10 @@ Replaying a fixed finite fair-coin table is polynomial-time
 polynomial-time game verifier (`Cslib.Complexity.IsGameVerifier`): a polynomial-time `V` and a
 polynomial `p` such that `a ∈ A` exactly when the existential player wins the game of
 `2 * p (enc a).length` moves with `V (a, ·)` as the winning condition
-(`Cslib.Complexity.exists_isGameVerifier_of_mem_AP`).
+(`Cslib.Complexity.exists_isGameVerifier_of_mem_AP`). Conversely, the guess-then-verify machine
+plays the game of a polynomial-time game verifier
+(`Cslib.Complexity.IsGameVerifier.mem_AP`, in
+`Complexity.Computability.Complexity.Classes.Alternation.GuessVerify`).
 
 ## Main definitions
 

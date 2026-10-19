@@ -40,7 +40,8 @@ when the machine accepts `enc a`. Under such a bound, acceptance is acceptance w
 the problems decided within polynomial time by alternating machines with a binary alphabet and
 finitely many states [Arora and Barak, Section 5.3][AroraBarak09] [Sipser, Section
 10.3][Sipser2013]. Like `Turing.MultiTapeNTM.DecidableInPolyTime`, it is relative to the encoding of
-instances.
+instances. It is `PSPACE` (`Cslib.Complexity.AP_eq_PSPACE`, in
+`Complexity.Computability.Complexity.Classes.Alternation.Savitch`).
 
 ## Main definitions
 

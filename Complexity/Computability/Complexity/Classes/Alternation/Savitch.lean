@@ -18,9 +18,56 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
-# `PSPACE ⊆ AP` by Savitch's midpoint game
+# `AP = PSPACE`
 
-TODO
+Savitch's midpoint recursion (`Cslib.Reachability.reach`) is a game
+[Chandra, Kozen and Stockmeyer][ChandraKozenStockmeyer1981]: to show that `v` is reachable from
+`u` within `2 ^ (i + 1)` steps, the existential player names a midpoint `m`, the universal player
+picks one of the two halves, from `u` to `m` or from `m` to `v`, and the game goes on at level `i`;
+at level `0`, `v` must be `u` or one edge away. With single-bit moves
+(`Cslib.Reachability.midpointGame`), a level takes `w` rounds in which the existential player
+writes a midpoint of width `w` (`Cslib.Reachability.midpointMoves`; the universal player's moves
+there do not matter) and one round in which the universal player picks the half. The existential
+player wins the game of `2 * ((w + 1) * i)` moves exactly when the recursion holds at level `i`
+(`Cslib.Reachability.alternation_midpointGame_iff`). The winning condition is a loop over the
+levels (`Cslib.Reachability.midpointGame_eq_iterate`), polynomial-time in the moves.
+
+A problem in `PSPACE` is decided by a nondeterministic machine within polynomial space, and
+acceptance is Savitch's recursion on the codes of its finite views, at depth the width of the codes
+(`Turing.MultiTapeNTM.savitchDecide_eq_true_iff`). The midpoint game on these codes
+(`Cslib.Complexity.savitchVerifier`) is therefore a polynomial-time game verifier of the problem,
+once its number of moves is padded to a polynomial in the length of the instance; moves after those
+of the game do not matter (`Cslib.Complexity.alternation_append_iff`). The guess-then-verify machine
+plays the game (`Cslib.Complexity.IsGameVerifier.mem_AP`), so `PSPACE ⊆ AP`
+(`Cslib.Complexity.PSPACE_subset_AP`). With `AP ⊆ PSPACE` (`Cslib.Complexity.AP_subset_PSPACE`),
+this is `AP = PSPACE` (`Cslib.Complexity.AP_eq_PSPACE`) [Chandra, Kozen and
+Stockmeyer][ChandraKozenStockmeyer1981] [Sipser, Section 10.3][Sipser2013]
+[Arora and Barak, Section 5.3][AroraBarak09]: the problems with polynomial-time game verifiers are
+exactly those in `PSPACE` (`Cslib.Complexity.mem_PSPACE_iff_exists_isGameVerifier`). Like `AP` and
+`PSPACE`, the statements are relative to the encoding of instances.
+
+## Main definitions
+
+* `Cslib.Reachability.midpointMoves`, `Cslib.Reachability.midpointGame`: Savitch's midpoint game.
+* `Cslib.Reachability.midpointStep`: a level of the game.
+* `Cslib.Complexity.savitchVerifier`: the midpoint game on the codes of the views of a machine.
+
+## Main results
+
+* `Cslib.Complexity.alternation_append_iff`: trailing moves that do not matter.
+* `Cslib.Reachability.alternation_midpointGame_iff`: the midpoint game is Savitch's recursion.
+* `Cslib.Complexity.computableTidilyInPolyTime_savitchVerifier`: the game is polynomial-time.
+* `Cslib.Complexity.exists_isGameVerifier_of_mem_PSPACE`: every problem in `PSPACE` has a
+  polynomial-time game verifier.
+* `Cslib.Complexity.PSPACE_subset_AP`, `Cslib.Complexity.AP_eq_PSPACE`: `AP = PSPACE`.
+* `Cslib.Complexity.mem_PSPACE_iff_exists_isGameVerifier`: `PSPACE` is the class of games of
+  polynomially many moves with a polynomial-time winning condition.
+
+## References
+
+* [A. K. Chandra, D. C. Kozen, L. J. Stockmeyer, *Alternation*][ChandraKozenStockmeyer1981]
+* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
 @[expose] public section
@@ -67,9 +114,11 @@ open Cslib.Complexity
 def midpointMoves (w : ℕ) (z : List Bool) : List Bool :=
   (List.range w).map fun j => z.getD (2 * j) false
 
+/-- A midpoint has width `w`. -/
 theorem length_midpointMoves (w : ℕ) (z : List Bool) : (midpointMoves w z).length = w := by
   simp [midpointMoves]
 
+/-- The first round of a level writes the first bit of the midpoint. -/
 theorem midpointMoves_cons_cons (w : ℕ) (x y : Bool) (z : List Bool) :
     midpointMoves (w + 1) (x :: y :: z) = x :: midpointMoves w z := by
   simp [midpointMoves, List.range_succ_eq_map, Nat.mul_succ]
@@ -79,8 +128,8 @@ theorem midpointMoves_take {w n : ℕ} (hn : 2 * w ≤ n) (z : List Bool) :
     midpointMoves w (z.take n) = midpointMoves w z := by
   refine List.map_congr_left fun j hj => ?_
   rw [List.mem_range] at hj
-  simp only [List.getD_eq_getElem?_getD]
-  rw [List.getElem?_take_of_lt (by omega)]
+  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+    List.getElem?_take_of_lt (by omega)]
 
 /-- **Savitch's midpoint game** on words of width `w`, at level `i`, between `u` and `v`. At level
 `0` the existential player wins when `v` is `u` or one edge away. At level `i + 1`, in each of
@@ -91,7 +140,8 @@ def midpointGame (edge : List Bool → List Bool → Bool) (w : ℕ) :
     ℕ → List Bool → List Bool → List Bool → Bool
   | 0, u, v, _ => reach edge w 0 u v
   | i + 1, u, v, z =>
-    if z.getD (2 * w + 1) false then midpointGame edge w i (midpointMoves w z) v (z.drop (2 * w + 2))
+    if z.getD (2 * w + 1) false then
+      midpointGame edge w i (midpointMoves w z) v (z.drop (2 * w + 2))
     else midpointGame edge w i u (midpointMoves w z) (z.drop (2 * w + 2))
 
 variable {edge : List Bool → List Bool → Bool} {w : ℕ}
@@ -119,8 +169,9 @@ theorem midpointGame_take (i : ℕ) (u v z : List Bool) :
 /-- The existential player chooses a midpoint in `w` rounds. -/
 theorem alternation_midpointMoves (j : ℕ) {ns : List ℕ} :
     ∀ R : List Bool → List Bool → Prop,
-      Alternation true (List.replicate (2 * j) 1 ++ ns) (fun z => R (midpointMoves j z) (z.drop (2 * j)))
-        ↔ ∃ m : List Bool, m.length = j ∧ Alternation true ns (R m) := by
+      Alternation true (List.replicate (2 * j) 1 ++ ns)
+        (fun z => R (midpointMoves j z) (z.drop (2 * j))) ↔
+      ∃ m : List Bool, m.length = j ∧ Alternation true ns (R m) := by
   induction j with
   | zero =>
     intro R
@@ -251,8 +302,9 @@ theorem computableTidilyInPolyTime_savitchVerifier :
       (encPair enc encBits) encUnary :=
     (MultiTapeNTM.computableTidilyInPolyTime_codeWidth c d).comp
       (ComputableTidilyInPolyTime.fst enc encBits)
-  have hw : ComputableTidilyInPolyTime (fun x : α × List Bool => savitchWidth (enc := enc) ntm c d x.1)
-      (encPair enc encBits) encUnary := by
+  have hw : ComputableTidilyInPolyTime
+      (fun x : α × List Bool => savitchWidth (enc := enc) ntm c d x.1) (encPair enc encBits)
+      encUnary := by
     unfold savitchWidth
     fun_prop
   have hinit : ComputableTidilyInPolyTime (fun x : α × List Bool =>
@@ -260,11 +312,13 @@ theorem computableTidilyInPolyTime_savitchVerifier :
         MultiTapeNTM.acceptCode (ntm.codeWidth c d (enc x.1)), x.2))
       (encPair enc encBits) (encPair encBits (encPair encBits encBits)) :=
     (MultiTapeNTM.computableTidilyInPolyTime_viewCode_initView hwidth
-      ((ComputableTidilyInPolyTime.encode enc).comp (ComputableTidilyInPolyTime.fst enc encBits))).prod
+      ((ComputableTidilyInPolyTime.encode enc).comp
+        (ComputableTidilyInPolyTime.fst enc encBits))).prod
       ((MultiTapeNTM.computableTidilyInPolyTime_acceptCode hwidth).prod
         (ComputableTidilyInPolyTime.snd enc encBits))
   have hloop := ComputableTidilyInPolyTime.iterateWith_of_bounded_growth hw hw hinit
-    computableTidilyInPolyTime_midpointStep (growth := fun x => 2 * savitchWidth (enc := enc) ntm c d x.1)
+    computableTidilyInPolyTime_midpointStep
+    (growth := fun x => 2 * savitchWidth (enc := enc) ntm c d x.1)
     (ComputableTidilyInPolyTime.polyBounded (by unfold savitchWidth; fun_prop)) fun x s => by
       unfold midpointStep
       split <;> simp [length_midpointMoves] <;> omega
@@ -311,7 +365,8 @@ theorem exists_isGameVerifier_of_mem_PSPACE (h : A ∈ PSPACE enc) :
       (enc a).length := by
     rw [heval]
     exact Nat.mul_le_mul_left 2 (hr a)
-  rw [(hA a).2, ← MultiTapeNTM.savitchDecide_eq_true_iff (hA a).1 (hcd a), MultiTapeNTM.savitchDecide,
+  rw [(hA a).2, ← MultiTapeNTM.savitchDecide_eq_true_iff (hA a).1 (hcd a),
+    MultiTapeNTM.savitchDecide,
     savitch_eq, ← Nat.add_sub_cancel' hle, List.replicate_add, alternation_append_iff
       fun z => by rw [Cslib.Complexity.sum_replicate_one, savitchVerifier, savitchVerifier,
         midpointGame_take]]
