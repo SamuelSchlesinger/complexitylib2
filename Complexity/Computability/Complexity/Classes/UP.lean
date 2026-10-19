@@ -17,10 +17,13 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 
 `UP` is defined using polynomial-time verifiers with at most one accepting certificate of the
 specified polynomial length on every input. This file uses the verifier formulation; it does not
-assert an unambiguous nondeterministic-machine characterization.
+assert an unambiguous nondeterministic-machine characterization. The `coUP` extension uses
+the standard complement-class convention; its containments and reduction closure below are
+elementary consequences of the corresponding UP results and complement closure of P and parity-P.
 
 ## Main definitions
 
+* `Cslib.Complexity.coUP`: complements of UP languages.
 * `Cslib.Complexity.UP`: languages whose characteristic function belongs to `#P`.
 
 ## Main results
@@ -93,5 +96,30 @@ theorem PolyTimeReducible.mem_UP {β : Type} {encB : β ↪ List Bool} {B : Set 
   obtain ⟨f, hf, hle, hB⟩ := hB
   exact ⟨f ∘ g, SharpP.comp_mem hf hg, fun a => hle (g a),
     fun a => (hAB a).trans (hB (g a))⟩
+
+/-- Complements of unambiguous polynomial-time languages, using the usual `co` convention. -/
+def coUP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ UP enc}
+
+theorem mem_coUP : A ∈ coUP enc ↔ Aᶜ ∈ UP enc := Iff.rfl
+
+@[simp]
+theorem compl_mem_coUP : Aᶜ ∈ coUP enc ↔ A ∈ UP enc := by simp [coUP]
+
+/-- Deterministic polynomial time is contained in coUP by closure under complement. -/
+theorem P_subset_coUP : P enc ⊆ coUP enc :=
+  fun _ h => P_subset_UP (compl_mem_P h)
+
+/-- Complementing `UP ⊆ NP` gives `coUP ⊆ coNP`. -/
+theorem coUP_subset_coNP : coUP enc ⊆ coNP enc := fun _ h => UP_subset_NP h
+
+/-- Parity-P is closed under complement, so it contains coUP as well as UP. -/
+theorem coUP_subset_ParityP : coUP enc ⊆ ParityP enc := by
+  intro A hA
+  simpa using compl_mem_ParityP (UP_subset_ParityP hA)
+
+/-- Polynomial-time reductions preserve coUP by complementing source and target. -/
+theorem PolyTimeReducible.mem_coUP {β : Type} {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ coUP encB) : A ∈ coUP enc :=
+  h.compl.mem_UP hB
 
 end Cslib.Complexity
