@@ -11,6 +11,7 @@ import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
+import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
@@ -27,6 +28,7 @@ import ComplexityTests.EntropyPseudoentropy
 import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExplicitExpanders
+import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
 import ComplexityTests.FiniteControl
@@ -47,6 +49,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.LinearHash
@@ -147,6 +150,7 @@ import ComplexityTests.ThresholdInnerProduct
 import ComplexityTests.ThresholdInnerProductActivity
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
+import ComplexityTests.TimeHierarchy
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation
