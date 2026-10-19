@@ -36,7 +36,11 @@ public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.DuplicateFlags
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
+public import Complexity.Computability.Circuit.Boolean.Encoding
+public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
+public import Complexity.Computability.Circuit.Boolean.Encoding.MCSP
 public import Complexity.Computability.Circuit.Boolean.Equality
+public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 public import Complexity.Computability.Circuit.Boolean.FanInTwo
 public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.Formula
@@ -310,6 +314,8 @@ public import Complexity.Computability.Complexity.Fagin.Small
 public import Complexity.Computability.Complexity.Fagin.StrictVerifier
 public import Complexity.Computability.Complexity.Fagin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Verifier
+public import Complexity.Computability.Complexity.Problems.CircuitSAT
+public import Complexity.Computability.Complexity.Problems.CircuitValue
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.Coloring
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
