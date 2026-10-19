@@ -13,6 +13,7 @@ public import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Cslib.Foundations.Data.Polynomial.Monotone
 
 /-!
 # Closure properties of the oracle classes
@@ -40,7 +41,8 @@ reduced instance requires.
   one request decides the oracle language.
 * `Cslib.Complexity.PWithOracle_subset_NPWithOracle`.
 * `Cslib.Complexity.PolyTimeReducible.mem_PWithOracle`,
-  `Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle`: closure under reductions.
+  `Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle`: closure under polynomial-time many-one
+  reductions.
 
 ## References
 
@@ -114,7 +116,7 @@ theorem PWithOracle_subset_NPWithOracle (A : Set (List Bool)) (enc : α ↪ List
   ⟨0, fun aw => f aw.1, hf.preprocess (ComputableTidilyInPolyTime.fst enc encBits), fun a => by
     simp only [Polynomial.eval_zero, List.length_eq_zero_iff, exists_eq_left, h]⟩
 
-/-- **`P` relative to an oracle is closed under polynomial-time reductions.** -/
+/-- **`P` relative to an oracle is closed under polynomial-time many-one reductions.** -/
 theorem PolyTimeReducible.mem_PWithOracle {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {L : Set α} {L' : Set β} (h : PolyTimeReducible encA encB L L')
     (hL' : L' ∈ PWithOracle A encB) : L ∈ PWithOracle A encA :=
@@ -122,16 +124,9 @@ theorem PolyTimeReducible.mem_PWithOracle {encA : α ↪ List Bool} {encB : β �
   let ⟨f, hf, hL'⟩ := hL'
   ⟨fun a => f (g a), hf.preprocess hg, fun a => (hL a).trans (hL' (g a))⟩
 
-/-- Polynomials with natural coefficients are monotone on the naturals. -/
-private theorem eval_le_eval {p : Polynomial ℕ} {m n : ℕ} (h : m ≤ n) : p.eval m ≤ p.eval n := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq => simpa only [Polynomial.eval_add] using Nat.add_le_add hp hq
-  | monomial k a =>
-    simpa only [Polynomial.eval_monomial] using Nat.mul_le_mul_left a (Nat.pow_le_pow_left h k)
-
-/-- **`NP` relative to an oracle is closed under polynomial-time reductions.** The certificates
-are padded to a polynomial of the instance length; the verifier reads the prefix of the length
-required by the reduced instance. -/
+/-- **`NP` relative to an oracle is closed under polynomial-time many-one reductions.** The
+certificates are padded to a polynomial of the instance length; the verifier reads the prefix of
+the length required by the reduced instance. -/
 theorem PolyTimeReducible.mem_NPWithOracle {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {L : Set α} {L' : Set β} (h : PolyTimeReducible encA encB L L')
     (hL' : L' ∈ NPWithOracle A encB) : L ∈ NPWithOracle A encA := by
@@ -142,7 +137,7 @@ theorem PolyTimeReducible.mem_NPWithOracle {encA : α ↪ List Bool} {encB : β 
   set q : Polynomial ℕ := p.comp (Polynomial.C c * (Polynomial.X + 1) ^ d) with hq
   have hpq (a : α) : p.eval (encB (g a)).length ≤ q.eval (encA a).length := by
     rw [hq, Polynomial.eval_comp]
-    exact eval_le_eval (by simpa using hlen a)
+    exact p.eval_mono (by simpa using hlen a)
   refine ⟨q, fun aw => V (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length)),
     hV.preprocess (f := V) (g := fun aw : α × List Bool =>
       (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length))) (by fun_prop), fun a => ?_⟩
