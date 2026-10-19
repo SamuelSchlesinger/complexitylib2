@@ -919,12 +919,13 @@ theorem realize_tableauESOSentence {B : ℕ} [L₀.Structure (Fin B)]
   · -- Soundness
     rintro ⟨R, hmat⟩
     let _ := ESO.varLanguage.structure (arity := tableauArity m State) R
-    have hlt : ∀ x : Fin 2 → Fin B,
-        RelMap (tableauRels (m := m) (State := State) lt uLenRel uBitRel).lt x ↔ x 0 < x 1 := hlt0
+    have hlt : ∀ x : Fin 2 → Fin B, RelMap r.lt x ↔ x 0 < x 1 := hlt0
     have huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length := huLen0
     have huBit : ∀ p : Fin B, (p : ℕ) < u.length →
         (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true) := huBit0
-    simp only [tableauMatrix, Sentence.realize_inf] at hmat
+    change (endPosSentence r ⊓ initSentence r tm ⊓ stepSentence r tm ⊓ acceptSentence r).Realize
+      (Fin B) at hmat
+    simp only [Sentence.realize_inf] at hmat
     obtain ⟨⟨⟨hendSent, hinitSent⟩, hstepSent⟩, haccSent⟩ := hmat
     obtain ⟨e, hle_e, heB, hend⟩ := exists_of_realize_endPosSentence hlt huLen hendSent
     let L := (e : ℕ) - u.length
@@ -1030,8 +1031,7 @@ theorem realize_tableauESOSentence {B : ℕ} [L₀.Structure (Fin B)]
         {x : Fin 2 → Fin B | (Feature.cell i (-(x 1 : ℤ)) s).Holds (cfgAt (x 0))}
     refine ⟨R, ?_⟩
     let _ := ESO.varLanguage.structure (arity := tableauArity m State) R
-    have hlt : ∀ x : Fin 2 → Fin B,
-        RelMap (tableauRels (m := m) (State := State) lt uLenRel uBitRel).lt x ↔ x 0 < x 1 := hlt0
+    have hlt : ∀ x : Fin 2 → Fin B, RelMap r.lt x ↔ x 0 < x 1 := hlt0
     have huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length := huLen0
     have huBit : ∀ p : Fin B, (p : ℕ) < u.length →
         (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true) := huBit0
@@ -1043,7 +1043,9 @@ theorem realize_tableauESOSentence {B : ℕ} [L₀.Structure (Fin B)]
     have hAgrees : ∀ t : Fin B, r.AgreesAt (cfgAt t) t := fun _ =>
       ⟨fun _ => Iff.rfl, fun _ => Iff.rfl, fun _ => Iff.rfl, fun _ _ => Iff.rfl,
         fun _ _ => Iff.rfl, fun _ _ _ => Iff.rfl, fun _ _ _ => Iff.rfl⟩
-    simp only [tableauMatrix, Sentence.realize_inf]
+    change (endPosSentence r ⊓ initSentence r tm ⊓ stepSentence r tm ⊓ acceptSentence r).Realize
+      (Fin B)
+    simp only [Sentence.realize_inf]
     refine ⟨⟨⟨?_, ?_⟩, ?_⟩, ?_⟩
     · exact realize_endPosSentence_of_canonical hlt (Nat.le_add_right _ _) hwB huLen hend
     · exact (realize_initSentence hlt hB1).2 (hAgrees ⟨0, by omega⟩)
