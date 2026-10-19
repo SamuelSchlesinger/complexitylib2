@@ -159,6 +159,10 @@ import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
+import ComplexityTests.RationalHitting.Determinant
+import ComplexityTests.RationalHitting.IntBinary
+import ComplexityTests.RationalHitting.Lift
+import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
 import ComplexityTests.RotationWalk
