@@ -453,7 +453,9 @@ public import Complexity.Computability.Complexity.FineGrained
 public import Complexity.Computability.Complexity.FineGrained.Assignment
 public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.FineGrained.Exponents
+public import Complexity.Computability.Complexity.FineGrained.GraphProblems
 public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
+public import Complexity.Computability.Complexity.FineGrained.Reduction
 public import Complexity.Computability.Complexity.FineGrained.Sparsification
 public import Complexity.Computability.Complexity.Problems.CircuitSAT
 public import Complexity.Computability.Complexity.Problems.CircuitValue
@@ -466,6 +468,7 @@ public import Complexity.Computability.Complexity.Problems.Hamiltonian
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
 public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Computability.Complexity.Problems.IndependentSet.Sparse
 public import Complexity.Computability.Complexity.Problems.IntegerProgramming
 public import Complexity.Computability.Complexity.Problems.Knapsack
 public import Complexity.Computability.Complexity.Problems.Partition
