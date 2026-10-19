@@ -21,6 +21,41 @@ rather than assuming equality only at one chosen encoding.\citep{AroraBarak09}
 \end{result}
 
 \begin{result}
+\subsection{Arthur--Merlin classes}
+For every fixed injective encoding,
+\[
+\cc{NP}\cup\cc{BPP}\subseteq\cc{MA}\subseteq\cc{AM}\subseteq\Pi^p_2,\qquad
+\cc{MA}\subseteq\Sigma^p_2\cap\Pi^p_2,\qquad \cc{MA}\subseteq\cc{SBP}.
+\]
+MA and AM are two-message public-coin classes given by deterministic polynomial-time
+verifiers reading one concatenated string: Merlin's proof of $q(n)$ bits and Arthur's
+$p(n)$ coins, in that order for MA and in the reverse order for AM, with
+$p,q\in\mathbb{N}[X]$ and exact message lengths. Completeness is at least $2/3$ and
+soundness at most $1/3$, stated as counts of random strings. Both classes are closed under
+polynomial-time many-one reductions. Majority votes reduce the error to $2^{-e(n)}$ for
+every polynomial $e$; for MA the proof length is fixed before $e$ is chosen, and for AM
+Arthur's rows are answered in parallel. The $\Sigma_2$ and $\Pi_2$ placements use
+Lautemann's covering lemma with $12p+1$ shifts after amplification; MA $\subseteq$ SBP
+counts accepted proof--coin pairs. Interactive-machine characterizations, round collapse
+$\cc{AM}[k]=\cc{AM}$ and $\cc{SBP}\subseteq\cc{AM}$ are not formalized.
+\citep{Babai1985,BabaiMoran1988,BoehlerGlasserMeister2006}\citep[Section 8.2]{AroraBarak09}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{143}{Cslib.Complexity.MA}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{170}{Cslib.Complexity.AM}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{190}{Cslib.Complexity.NP_subset_MA}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{204}{Cslib.Complexity.BPP_subset_MA}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{218}{Cslib.Complexity.PolyTimeReducible.mem_MA}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{288}{Cslib.Complexity.PolyTimeReducible.mem_AM}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{240}{Cslib.Complexity.mem_MA_iff_exists_forall_errorExponent}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{399}{Cslib.Complexity.mem_AM_iff_forall_errorExponent}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{415}{Cslib.Complexity.MA_subset_AM}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{494}{Cslib.Complexity.MA_subset_SBP}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{305}{Cslib.Complexity.MA_subset_SigmaP_two}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{318}{Cslib.Complexity.AM_subset_PiP_two}
+\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{333}{Cslib.Complexity.MA_subset_SigmaP_two_inter_PiP_two}
+\end{result}
+
+
+\begin{result}
 \subsection{Toda's theorem}
 \[
 \cc{PH}\subseteq\cc{P}^{\#\cc{P}}.
@@ -289,8 +324,8 @@ amplification. The definitions follow Watson's formulation of the class
 introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
 characterization of AWPP.\citep{BoehlerGlasserMeister2006}
 \citep[Definition 2]{Watson2012}\citep{Fenner2003}
-Counting-machine characterizations, $\cc{MA}\subseteq\cc{SBP}\subseteq\cc{AM}$,
-Uniform AWPP amplification to input-dependent error and PP-lowness remain
+Counting-machine characterizations, $\cc{SBP}\subseteq\cc{AM}$,
+uniform AWPP amplification to input-dependent error and PP-lowness remain
 outstanding. The following entry adds fixed amplification and Boolean closure.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{90}{Cslib.Complexity.BPP_subset_SBP}

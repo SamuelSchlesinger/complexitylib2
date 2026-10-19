@@ -71,6 +71,36 @@ require symmetry or the triangle inequality.\citep{Karp1972,GareyJohnson1979,Sip
 \end{result}
 
 \begin{result}
+\subsection{Exponential lower bounds for graph problems under ETH}
+Assume the exponential time hypothesis. Then for each of the following problems there is
+$\delta>0$ such that it is not decidable within time $2^{\delta\mu}$ times a polynomial in the
+length of the encoded instance: three-colorability with $\mu=|V|+|E|$; independent set and
+vertex cover (graph with binary target) with $\mu=|V|+|E|$; independent set and clique with
+$\mu=|V|$. A graph is a list of declared vertices and a list of edges, and $|V|$, $|E|$ are the
+list lengths with repetitions; they bound the distinct counts, so the lower bounds for
+distinct counts follow. The predicate negated allows the decider to depend on $\delta$. Each
+bound composes a polynomial-time reduction from 3-CNF formulas whose output measure is linear
+in the number $m$ of clauses with the sparsification lemma, under which ETH excludes
+$2^{o(m)}$ for 3SAT. Independent set, vertex cover and clique use the variable-edge reduction
+of Garey and Johnson, with at most $(k^2+5k)m$ vertices and edges for clauses of width at most
+$k$, rather than Karp's occurrence graph, which can have quadratically many edges;
+three-colorability uses the gadget reduction, with at most $(24k+12)m+9$. Hamiltonian cycle is
+not covered here: the formalized diamond reduction can have size up to $\Theta(m^2)$.
+\citep{ImpagliazzoPaturiZane2001,CyganEtAl2015,LokshtanovMarxSaurabh2011,GareyJohnson1979}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{126}{Cslib.Complexity.ETH.not_decidableInSubexpTime_ThreeColoring}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{137}{Cslib.Complexity.ETH.not_decidableInSubexpTime_IndependentSet}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{148}{Cslib.Complexity.ETH.not_decidableInSubexpTime_IndependentSet_vertices}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{159}{Cslib.Complexity.ETH.not_decidableInSubexpTime_VertexCover}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{174}{Cslib.Complexity.ETH.not_decidableInSubexpTime_Clique}
+The transfer lemma holds for arbitrary measures and reductions of linear size.
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/FineGrained/Reduction.lean}{182}{Cslib.Complexity.ETH.not_decidableInSubexpTime_of_reduction}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/FineGrained/Reduction.lean}{104}{Cslib.Complexity.DecidableInExpTime.of_reduction}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/Problems/IndependentSet/Sparse.lean}{403}{Cslib.Complexity.SAT.toSparseIndependentSet_mem_iff}
+\declat{b6f69ede59f309d0ff7c133f54db082cae0013cb}{Complexity/Computability/Complexity/Problems/IndependentSet/Sparse.lean}{423}{Cslib.Complexity.SAT.length_toSparseIndependentSet_le}
+\end{result}
+
+
+\begin{result}
 \textbf{Circuit evaluation.}
 Given a one-output De Morgan circuit and an input of the matching arity, deciding
 whether its output is true is in P. Instances are well formed by their type;

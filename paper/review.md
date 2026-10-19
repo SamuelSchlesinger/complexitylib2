@@ -556,3 +556,24 @@ b3aadb3e3a3e6199be6ac1452ffcc24b770062eff2db499cf6aa481d7271739b  paper/sections
 fb18b863ba3cee9dc5a0e6686d24d7f3028073cfc0ac3534980987a617e4cb77  references.bib
 cea453e9e2b3b390fa62131e49e6ac2498a8598a019b49806cf497d137bb3cd6  paper/main.pdf
 ```
+
+## Coverage batch 1: Arthur–Merlin classes and ETH lower bounds (2026-10-19)
+
+Integrated `fbd9aed2` (Arthur–Merlin milestone 1) and `b6f69ede` (ETH lower bounds for graph
+problems) into `main`, adding the entries "Arthur--Merlin classes" (`randomness.tex`) and
+"Exponential lower bounds for graph problems under ETH" (`completeness.tex`), and updating the
+SBP entry's outstanding list to SBP ⊆ AM only.
+
+Independent reviews of the exact commits, against their merge base `0c1dab07`:
+
+- Correctness review (statements, definitions against Babai 1985, Arora–Barak §8.2, Cygan et al.
+  Ch. 14 and Impagliazzo–Paturi–Zane; nonvacuity probes; axiom audits; paper drafts): APPROVE for
+  both, no blocking findings. Resolved wording findings: the ETH entry now gives a separate δ for
+  each problem and says the diamond reduction can have size up to Θ(m²).
+- API review (conventions, placement, duplication, bibliography): APPROVE for both. Non-blocking
+  placement and duplication findings (BitString helpers, private list lemmas) were returned to the
+  authors as follow-up commits.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no undefined
+references, and the two new entries were rendered and inspected. These are AI reviews, not human
+editorial approval or machine-checked equivalence of prose and Lean.
