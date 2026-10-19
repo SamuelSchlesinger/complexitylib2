@@ -70,12 +70,9 @@ theorem set_inSpace {R : α → Regs} {t : α → Fin 3} {l : α → List ℕ}
   fin_cases r <;> rfl
 
 theorem length_mulMod_le (p a v : ℕ) :
-    (encNat (mulMod p a v)).length ≤ (encNat p).length + (encNat a).length + (encNat v).length := by
-  rcases Nat.eq_zero_or_pos p with rfl | hp
-  · simp only [mulMod, Nat.mod_zero]
-    exact (length_encNat_mul_le a v).trans (by omega)
-  · have := ComputableTidilyInO.length_encNat_mono (Nat.mod_lt (a * v) hp).le
-    simp only [mulMod]; omega
+    (encNat (mulMod p a v)).length ≤ (encNat p).length + (encNat a).length + (encNat v).length :=
+  (ComputableTidilyInO.length_encNat_mono (Nat.mod_le _ _)).trans
+    ((length_encNat_mul_le a v).trans (by omega))
 
 theorem length_encList_map_mulMod_le (p a : ℕ) (l : List ℕ) :
     (encList encNat (l.map (mulMod p a))).length ≤
@@ -107,8 +104,7 @@ theorem scale_inSpace {p a : α → ℕ} {R : α → Regs} {r : α → Fin 3}
         fun q => (encPair (encPair encNat encNat) encNat q).length + 1 := .of_le fun _ => by omega
     have h₁ := (fst (encPair encNat encNat) encNat).weaken hl₀
     have h₂ := (snd (encPair encNat encNat) encNat).weaken hl₀
-    exact budget_comp mulMod_inSpace (budget_prod (fst' h₁) (budget_prod (snd' h₁) h₂))
-      (.of_le_linear 2 2 fun q => by simp only [length_encPair]; omega)
+    exact budget_comp_linear mulMod_inSpace (budget_prod (fst' h₁) (budget_prod (snd' h₁) h₂))
   have hmap := mapWith hf hpa hl
   have hmap' : ComputableTidilyInSpace (fun x => ((R x).get (r x)).map (mulMod (p x) (a x)))
       encIn (encList encNat) Bs := by
@@ -136,15 +132,6 @@ theorem scale_inSpace {p a : α → ℕ} {R : α → Regs} {r : α → Fin 3}
       nlinarith
   exact set_inSpace hR hr hmap'
 
-theorem length_addMod_le (p a v : ℕ) :
-    (encNat (addMod p a v)).length ≤
-      (encNat p).length + (encNat a).length + (encNat v).length + 1 := by
-  rcases Nat.eq_zero_or_pos p with rfl | hp
-  · simp only [addMod, Nat.mod_zero]
-    exact (length_encNat_add_le_add a v).trans (by omega)
-  · have := ComputableTidilyInO.length_encNat_mono (Nat.mod_lt (a + v) hp).le
-    simp only [addMod]; omega
-
 /-- **Changing one entry by adding a residue**, `modifyAt l i (addMod p c)`. -/
 theorem modifyAt_inSpace {l : α → List ℕ} {i p c : α → ℕ}
     (hl : ComputableTidilyInSpace l encIn (encList encNat) Bs)
@@ -153,10 +140,8 @@ theorem modifyAt_inSpace {l : α → List ℕ} {i p c : α → ℕ}
     (hc : ComputableTidilyInSpace c encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => modifyAt (l x) (i x) (addMod (p x) (c x))) encIn
       (encList encNat) Bs := by
-  have hv := budget_comp getD (budget_prod hl hi) (length_mul_bigOLe (budget_prod hl hi) 8)
-  have hv' := budget_comp addMod_inSpace (budget_prod hp (budget_prod hc hv))
-    ((BigOLe.of_le fun _ => by rw [one_mul]).trans
-      (length_mul_bigOLe (budget_prod hp (budget_prod hc hv)) 1))
+  have hv := budget_comp_lin getD (linear_mul _) (budget_prod hl hi)
+  have hv' := budget_comp_linear addMod_inSpace (budget_prod hp (budget_prod hc hv))
   refine (budget_comp set (budget_prod hl (budget_prod hi hv')) ?_).of_enc_eq fun x => rfl
   obtain ⟨c₁, h₁⟩ := length_le (budget_prod hl hi)
   obtain ⟨c₂, h₂⟩ := length_le hv'
@@ -223,22 +208,16 @@ theorem subStep_inSpace :
   have hacc := snd' (snd' hpar)
   have hj := fst' (snd' hs)
   have hout := snd' (snd' hs)
-  have ha := budget_comp getD (budget_prod hacc hj) (length_mul_bigOLe (budget_prod hacc hj) 8)
-  have hm := budget_comp mulMod_inSpace (budget_prod hp (budget_prod hc ha))
-    ((BigOLe.of_le fun _ => by rw [one_mul]).trans
-      (length_mul_bigOLe (budget_prod hp (budget_prod hc ha)) 1))
-  have hn := budget_comp negMod_inSpace (budget_prod hp hm)
-    ((BigOLe.of_le fun _ => by rw [one_mul]).trans (length_mul_bigOLe (budget_prod hp hm) 1))
-  have he := budget_comp addMod_inSpace (budget_prod hp (budget_prod hv hn))
-    ((BigOLe.of_le fun _ => by rw [one_mul]).trans
-      (length_mul_bigOLe (budget_prod hp (budget_prod hv hn)) 1))
+  have ha := budget_comp_lin getD (linear_mul _) (budget_prod hacc hj)
+  have hm := budget_comp_linear mulMod_inSpace (budget_prod hp (budget_prod hc ha))
+  have hn := budget_comp_linear negMod_inSpace (budget_prod hp hm)
+  have he := budget_comp_linear addMod_inSpace (budget_prod hp (budget_prod hv hn))
   have hsnoc : ComputableTidilyInSpace (fun p : List ℕ × ℕ => p.1 ++ [p.2])
       (encPair (encList encNat) encNat) (encList encNat)
       fun p => (encPair (encList encNat) encNat p).length :=
     of_inO (ComputableTidilyInDegree.snoc encNat).inO_one
   have happ := budget_comp_linear hsnoc (budget_prod hout he)
-  have hsucc := budget_comp natSucc hj ((BigOLe.of_le fun _ => by omega).trans
-    (length_mul_bigOLe hj 1))
+  have hsucc := budget_comp_lin natSucc linear_succ hj
   exact budget_prod hpar (budget_prod hsucc happ)
 
 theorem length_encList_mapIdx_le (l : List ℕ) (f : ℕ → ℕ → ℕ) (P : ℕ)
@@ -333,10 +312,8 @@ theorem mapEqOne_inSpace :
       (encPair encBits encNat) encBits fun q => 8 * ((encPair encBits encNat q).length + 1) := by
     have hl : (fun q => (encPair encBits encNat q).length) ≼
         fun q => 4 * ((encPair encBits encNat q).length + 1) := .of_le fun _ => by omega
-    have he := budget_comp natEq (budget_prod ((snd encBits encNat).weaken hl)
-      (budget_const (encB := encNat) 1 hl)) (.of_le_linear 2 4 fun q => by
-        have : (encNat 1).length = 1 := rfl
-        simp only [length_encPair]; omega)
+    have he := budget_comp_linear natEq (budget_prod ((snd encBits encNat).weaken hl)
+      (budget_const (encB := encNat) 1 hl))
     have h := ComputableTidilyInSpace.append ((fst encBits encNat).weaken hl) he
       (g := fun q : List Bool × ℕ => q.1 ++ [q.2 == 1]) (encD := encBits) fun q => by
         cases hq : q.2 == 1 <;> simp_all [encBits_apply, encBool_apply]

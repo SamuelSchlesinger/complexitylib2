@@ -37,11 +37,6 @@ variable {α β γ δ : Type} {encIn : α ↪ List Bool} {encB : β ↪ List Boo
 
 /-! ### Computing within a space budget -/
 
-/-- A multiple of the length of a value computed within a budget is within it. -/
-theorem length_mul_bigOLe {f : α → β} (h : ComputableTidilyInSpace f encIn encB Bs) (k : ℕ) :
-    (fun x => k * ((encB (f x)).length + 1)) ≼ Bs :=
-  .const_mul k (h.length_le.add (.const 1 _))
-
 theorem budget_comp {f : α → β} {g : β → γ} {Sg : β → ℕ}
     (hg : ComputableTidilyInSpace g encB encC Sg) (hf : ComputableTidilyInSpace f encIn encB Bs)
     (hS : (fun x => Sg (f x)) ≼ Bs) : ComputableTidilyInSpace (fun x => g (f x)) encIn encC Bs :=
@@ -52,6 +47,21 @@ theorem budget_comp_linear {f : α → β} {g : β → γ}
     (hf : ComputableTidilyInSpace f encIn encB Bs) :
     ComputableTidilyInSpace (fun x => g (f x)) encIn encC Bs :=
   budget_comp hg hf hf.length_le
+
+/-- A multiple of the length of the argument, plus a constant, is linear in it. -/
+theorem linear_mul (k : ℕ) : (fun b => k * ((encB b).length + 1)) ≼ fun b => (encB b).length :=
+  ⟨k, fun _ => le_rfl⟩
+
+theorem linear_succ : (fun b => (encB b).length + 1) ≼ fun b => (encB b).length :=
+  ⟨1, fun _ => by dsimp only; omega⟩
+
+/-- **Composition with a function computed in space linear in its argument**: no side condition,
+as the argument is computed within the budget. -/
+theorem budget_comp_lin {f : α → β} {g : β → γ} {Sg : β → ℕ}
+    (hg : ComputableTidilyInSpace g encB encC Sg) (hSg : Sg ≼ fun b => (encB b).length)
+    (hf : ComputableTidilyInSpace f encIn encB Bs) :
+    ComputableTidilyInSpace (fun x => g (f x)) encIn encC Bs :=
+  budget_comp_linear (hg.weaken hSg) hf
 
 theorem budget_prod {f : α → β} {g : α → γ} (hf : ComputableTidilyInSpace f encIn encB Bs)
     (hg : ComputableTidilyInSpace g encIn encC Bs) :
@@ -71,6 +81,17 @@ theorem budget_finite {f : α → β} [Finite β] (g : β → γ)
     (hf : ComputableTidilyInSpace f encIn encB Bs) :
     ComputableTidilyInSpace (fun x => g (f x)) encIn encC Bs :=
   budget_comp_linear (of_finite g) hf
+
+/-- **Iterating a step computed in linear space**, a computed number of times, within a budget
+that covers the states. -/
+theorem budget_iterate [Inhabited β] {n : α → ℕ} {init : α → β} {step : β → β} {B : α → ℕ}
+    (hn : ComputableTidilyInSpace n encIn encNat Bs)
+    (hinit : ComputableTidilyInSpace init encIn encB Bs)
+    (hstep : ComputableTidilyInSpace step encB encB fun b => (encB b).length)
+    (hstate : ∀ x, ∀ k ≤ n x, (encB (step^[k] (init x))).length ≤ B x) (hB : B ≼ Bs) :
+    ComputableTidilyInSpace (fun x => step^[n x] (init x)) encIn encB Bs :=
+  (iterate hn hinit hstep hstate hstate).weaken
+    ((((BigOLe.refl _).add (.refl _)).add hB).add hB |>.add hn.length_le)
 
 /-! ### Arithmetic -/
 

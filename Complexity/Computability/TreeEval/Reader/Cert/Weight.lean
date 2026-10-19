@@ -148,12 +148,6 @@ theorem length_halfStep_le (p k o : ℕ) (x : List ℕ) (j : ℕ) :
           exact (Nat.mod_lt _ hp).le)
       omega
 
-theorem length_le_encList_getD (x : List ℕ) (j : ℕ) :
-    (encNat (x.getD j 0)).length ≤ (encList encNat x).length := by
-  by_cases h : j < x.length
-  · rw [List.getD_eq_getElem _ _ h]; exact length_le_encList_of_mem encNat (List.getElem_mem h)
-  · rw [List.getD_eq_default _ _ (by omega)]; exact Nat.zero_le _
-
 /-- The encoding of the states of `halfStep`. -/
 abbrev encHalf : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ ↪ List Bool :=
   encPair (encPair encNat3 (encList encNat)) (encPair encNat encNat)
@@ -171,24 +165,14 @@ theorem halfStep_inSpace :
   have ho := snd' (snd' hpko)
   have hj := fst' hja
   have ha := snd' hja
-  have hsucc := budget_comp natSucc hj (.of_le_linear 2 2 fun s => by
-    simp only [length_encPair]; omega)
-  have hoj := budget_comp natAdd (budget_prod ho hj) (.of_le_linear 2 2 fun s => by
-    simp only [length_encPair]; omega)
+  have hsucc := budget_comp_lin natSucc linear_succ hj
+  have hoj := budget_comp_lin natAdd linear_succ (budget_prod ho hj)
   have hbit := budget_comp testBit_inSpace (budget_prod hk hoj) (.of_le_linear 64 64 fun s => by
     have := length_encNat_add_le_add s.1.1.2.2 s.2.1
     simp only [length_encPair] at this ⊢; omega)
-  have hxj := budget_comp getD (budget_prod hx hj) (.of_le_linear 64 64 fun s => by
-    simp only [length_encPair]; omega)
-  have hc := budget_comp chi_inSpace (budget_prod (budget_prod hp hxj) hbit)
-    (.of_le_linear 64 64 fun s => by
-      have := length_le_encList_getD s.1.2 s.2.1
-      simp only [length_encPair, encBool_apply, List.length_singleton] at this ⊢; omega)
-  have hm := budget_comp mulMod_inSpace (budget_prod hp (budget_prod ha hc))
-    (.of_le_linear 64 64 fun s => by
-      have h₁ := length_chi_le s.1.1.1 (s.1.1.2.1.testBit (s.1.1.2.2 + s.2.1)) (s.1.2.getD s.2.1 0)
-      have h₂ := length_le_encList_getD s.1.2 s.2.1
-      simp only [length_encPair] at h₁ h₂ ⊢; omega)
+  have hxj := budget_comp_lin getD (linear_mul _) (budget_prod hx hj)
+  have hc := budget_comp_linear chi_inSpace (budget_prod (budget_prod hp hxj) hbit)
+  have hm := budget_comp_linear mulMod_inSpace (budget_prod hp (budget_prod ha hc))
   exact budget_prod hpar (budget_prod hsucc hm)
 
 /-- The encoding of the arguments of half of a weight. -/
@@ -205,20 +189,15 @@ theorem half_inSpace :
   have hpar := (fst (encPair encNat3 (encList encNat)) encNat).weaken hl
   have hn := (snd (encPair encNat3 (encList encNat)) encNat).weaken hl
   have hp := fst' (fst' hpar)
-  have hone := budget_comp natMod (budget_prod (budget_const (encB := encNat) 1 hl) hp)
-    (.of_le_linear 64 64 fun h => by
-      have h₁ : (encNat 1).length = 1 := rfl
-      simp only [length_encPair]; omega)
+  have hone := budget_comp_lin natMod (linear_mul _)
+    (budget_prod (budget_const (encB := encNat) 1 hl) hp)
   have hinit := budget_prod hpar (budget_prod (budget_const (encB := encNat) 0 hl) hone)
   have hlen (h : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ) (j : ℕ) (hj : j ≤ h.2) :
       (encHalf (halfStep^[j] (h.1, 0, 1 % h.1.1.1))).length ≤
         4 * ((encHalfIn h).length + h.2 + 1) := by
     obtain ⟨⟨⟨p, k, o⟩, x⟩, n⟩ := h
     have h₁ := length_halfStep_le p k o x j
-    have h₂ : (encNat j).length ≤ n := by
-      have : (encNat j).length ≤ j := by
-        rw [length_encNat_eq_size]; exact Nat.size_le.mpr Nat.lt_two_pow_self
-      omega
+    have h₂ : (encNat j).length ≤ n := (length_encNat_le_self j).trans hj
     rw [iterate_halfStep] at h₁ ⊢
     simp only [length_encPair] at h₁ h₂ ⊢
     omega
@@ -241,48 +220,22 @@ theorem weight_inSpace :
       encWeightIn encNat fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := by
   have hl : (fun w => (encWeightIn w).length) ≼ fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1)
     := .of_le fun _ => by omega
+  have hℓle : (fun w : (ℕ × ℕ × ℕ) × List ℕ × List ℕ => w.1.2.1) ≼
+      fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := .of_le fun _ => by omega
   have hpkl := (fst encNat3 (encPair (encList encNat) (encList encNat))).weaken hl
   have hxy := (snd encNat3 (encPair (encList encNat) (encList encNat))).weaken hl
   have hp := fst' hpkl
   have hℓ := fst' (snd' hpkl)
   have hk := snd' (snd' hpkl)
-  have hx := fst' hxy
-  have hy := snd' hxy
-  have hS (o : (ℕ × ℕ × ℕ) × List ℕ × List ℕ → ℕ) (z : (ℕ × ℕ × ℕ) × List ℕ × List ℕ → List ℕ)
-      (ho : (fun w => (encNat (o w)).length) ≼ fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1))
-      (hz : (fun w => (encList encNat (z w)).length) ≼
-        fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1)) :
-      (fun w => 256 * ((encHalfIn (((w.1.1, w.1.2.2, o w), z w), w.1.2.1)).length +
-        w.1.2.1 + 1)) ≼ fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := by
-    obtain ⟨c₁, hc₁⟩ := ho
-    obtain ⟨c₂, hc₂⟩ := hz
-    refine ⟨2048 * (c₁ + c₂ + 1), fun w => ?_⟩
-    have h₁ := hc₁ w
-    have h₂ := hc₂ w
-    dsimp only at h₁ h₂ ⊢
-    generalize hW : 64 * ((encWeightIn w).length + w.1.2.1 + 1) = W at h₁ h₂ ⊢
-    have h₃ : (encNat w.1.1).length + (encNat w.1.2.2).length + (encNat w.1.2.1).length +
-        w.1.2.1 + 1 ≤ W := by
-      rw [← hW]; simp only [length_encPair]; omega
-    simp only [length_encPair]
-    rw [show 2048 * (c₁ + c₂ + 1) * (W + 1) = 2048 * (c₁ * (W + 1)) + 2048 * (c₂ * (W + 1)) +
-      2048 * (W + 1) by ring]
-    omega
-  have hzero : (fun w : (ℕ × ℕ × ℕ) × List ℕ × List ℕ => (encNat 0).length) ≼
-      fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := .const _ _
-  have hlo := budget_comp half_inSpace (budget_prod (budget_prod (budget_prod hp
-    (budget_prod hk (budget_const (encB := encNat) 0 hl))) hx) hℓ)
-    (hS (fun _ => 0) (fun w => w.2.1) hzero (.of_le fun w => by simp only [length_encPair]; omega))
-  have hhi := budget_comp half_inSpace (budget_prod (budget_prod (budget_prod hp
-    (budget_prod hk hℓ)) hy) hℓ)
-    (hS (fun w => w.1.2.1) (fun w => w.2.2) (.of_le fun w => by simp only [length_encPair]; omega)
-      (.of_le fun w => by simp only [length_encPair]; omega))
-  refine (budget_comp mulMod_inSpace (budget_prod hp (budget_prod hlo hhi))
-    (.of_le_linear 64 64 fun w => ?_)).of_enc_eq fun w => by rw [weight_eq]
-  have h₁ := length_halfStep_le w.1.1 w.1.2.2 0 w.2.1 w.1.2.1
-  have h₂ := length_halfStep_le w.1.1 w.1.2.2 w.1.2.1 w.2.2 w.1.2.1
-  simp only [length_encPair] at h₁ h₂ ⊢
-  omega
+  have hlo₀ := budget_prod (budget_prod (budget_prod hp
+    (budget_prod hk (budget_const (encB := encNat) 0 hl))) (fst' hxy)) hℓ
+  have hhi₀ := budget_prod (budget_prod (budget_prod hp (budget_prod hk hℓ)) (snd' hxy)) hℓ
+  have hlo := budget_comp half_inSpace hlo₀
+    (.const_mul 256 (((length_le hlo₀).add hℓle).add (.const 1 _)))
+  have hhi := budget_comp half_inSpace hhi₀
+    (.const_mul 256 (((length_le hhi₀).add hℓle).add (.const 1 _)))
+  exact (budget_comp_linear mulMod_inSpace (budget_prod hp (budget_prod hlo hhi))).of_enc_eq
+    fun w => by rw [weight_eq]
 
 end Reader
 

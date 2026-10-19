@@ -231,13 +231,7 @@ theorem hNil :
 
 theorem hSucc {n : Tuple × Bool → ℕ} (hn : ComputableTidilyInSpace n encStepInT encNat stepBudget) :
     ComputableTidilyInSpace (fun y => n y + 1) encStepInT encNat stepBudget :=
-  budget_comp natSucc hn ((length_le hn).add (.const 1 _))
-
-theorem hTest {f : Tuple × Bool → Bool} {β : Type} {encB : β ↪ List Bool} [Finite β]
-    {g : Tuple × Bool → β} (hg : ComputableTidilyInSpace g encStepInT encB stepBudget)
-    (t : β → Bool) (h : ∀ y, f y = t (g y)) :
-    ComputableTidilyInSpace f encStepInT encBool stepBudget :=
-  (budget_finite t hg).of_enc_eq fun y => by rw [h]
+  budget_comp_lin natSucc linear_succ hn
 
 /-- The header: reading the value length. -/
 theorem branch0_inSpace :
@@ -258,8 +252,7 @@ theorem branch1_inSpace :
       encStepInT encStepOut stepBudget := by
   have h2e : ComputableTidilyInSpace (fun y : Tuple × Bool => 2 * y.1.ell + 2) encStepInT encNat
       stepBudget := by
-    have h := budget_comp natAdd (budget_prod hEll hEll)
-      ((BigOLe.of_le fun _ => by omega).trans (length_mul_bigOLe (budget_prod hEll hEll) 1))
+    have h := budget_comp_lin natAdd linear_succ (budget_prod hEll hEll)
     exact (hSucc (hSucc h)).of_enc_eq fun y => by congr 1; omega
   exact budget_ite hBit
     (out_inSpace (withCtl_inSpace (mkCtl_inSpace (hConstTag 1) (hSucc hN₁) (hConstNat 0) hNil)))
@@ -283,10 +276,8 @@ theorem branch2_inSpace :
         (List.replicate y.1.ell 0, List.replicate y.1.ell 0, List.replicate y.1.ell 0)),
         ([], .call false 2), runCtl), []))
       encStepInT encStepOut stepBudget := by
-  have hlt := budget_comp natLt (budget_prod hN₂ hN₁)
-    ((length_le (budget_prod hN₂ hN₁)).add (.const 1 _))
-  have hmod := budget_comp natMod (budget_prod hN₁ hN₂)
-    (.const_mul 16 ((length_le (budget_prod hN₁ hN₂)).add (.const 1 _)))
+  have hlt := budget_comp_lin natLt linear_succ (budget_prod hN₂ hN₁)
+  have hmod := budget_comp_lin natMod (linear_mul _) (budget_prod hN₁ hN₂)
   have hz := budget_comp_linear natIsZero hmod
   have hzeros : ComputableTidilyInSpace (fun y : Tuple × Bool =>
       ((List.replicate y.1.ell 0, List.replicate y.1.ell 0, List.replicate y.1.ell 0) : Regs))
@@ -309,13 +300,13 @@ theorem branch2_inSpace :
 theorem hLt {a b : Tuple × Bool → ℕ} (ha : ComputableTidilyInSpace a encStepInT encNat stepBudget)
     (hb : ComputableTidilyInSpace b encStepInT encNat stepBudget) :
     ComputableTidilyInSpace (fun y => decide (a y < b y)) encStepInT encBool stepBudget :=
-  budget_comp natLt (budget_prod ha hb) ((length_le (budget_prod ha hb)).add (.const 1 _))
+  budget_comp_lin natLt linear_succ (budget_prod ha hb)
 
 theorem hSgnVal {p : Tuple × Bool → ℕ} {neg : Tuple × Bool → Bool}
     (hp : ComputableTidilyInSpace p encStepInT encNat stepBudget)
     (hneg : ComputableTidilyInSpace neg encStepInT encBool stepBudget) :
     ComputableTidilyInSpace (fun y => sgnVal (p y) (neg y)) encStepInT encNat stepBudget :=
-  (budget_ite hneg (budget_comp natPred hp ((length_le hp).add (.const 1 _))) (hConstNat 1))
+  (budget_ite hneg (budget_comp_lin natPred linear_succ hp) (hConstNat 1))
     |>.of_enc_eq fun y => by simp only [sgnVal]
 
 theorem withRegsModeCtl_inSpace {R : Tuple × Bool → Regs} {st : Tuple × Bool → List Frame}
@@ -394,8 +385,7 @@ theorem branch5_inSpace :
     (of_inO (.of_linear (ListEncoding.isEmpty (enc₁ := encFrame) (enc := encList encFrame)))) hStack
   have hG := budget_comp tableLength_inSpace hEll (.const_mul 4096 (ell_le_stepBudget.add
     (.const 1 _)))
-  have hdm := budget_comp natDivMod (budget_prod hN₁ hEll)
-    (.const_mul 16 ((length_le (budget_prod hN₁ hEll)).add (.const 1 _)))
+  have hdm := budget_comp_lin natDivMod (linear_mul _) (budget_prod hN₁ hEll)
   have hk := fst' hdm
   have hi := snd' hdm
   have hx := get_inSpace hRegs (hRegPlus 1)
@@ -464,10 +454,8 @@ theorem branch3_inSpace :
       stepBudget := by
   have ht := hModeFinite (encB := encReg) Mode.target
   have hcall := hModeFinite (encB := encBool) Mode.isCall
-  have hlenEq := budget_comp natEq (budget_prod (budget_comp length hStack
+  have hlenEq := budget_comp_linear natEq (budget_prod (budget_comp length hStack
     (.const_mul 8 ((length_le hStack).add (.const 1 _)))) hHeight)
-    (length_le (budget_prod (budget_comp length hStack
-      (.const_mul 8 ((length_le hStack).add (.const 1 _)))) hHeight))
   have hempty := budget_comp_linear
     (of_inO (.of_linear (ListEncoding.isEmpty (enc₁ := encFrame) (enc := encList encFrame)))) hStack
   have hph (k : Fin 4) := hTopFinite (encB := encBool) fun g => decide (g.1 = k)
@@ -479,8 +467,7 @@ theorem branch3_inSpace :
     have := length_encNat_add_le_add (y.1.stack.headD dfr).round 1
     have : (encNat 1).length = 1 := rfl
     omega
-  have hinv := budget_comp unitInv_inSpace (budget_prod hP hRound)
-    (.const_mul 64 ((length_le (budget_prod hP hRound)).add (.const 1 _)))
+  have hinv := budget_comp_linear unitInv_inSpace (budget_prod hP hRound)
   have hR2 := scaleT_inSpace hRegs (hRegPlus 1) hinv (fun _ _ => rfl) fun y => by
     have := length_unitInv_le y.1.p (y.1.stack.headD dfr).round; dsimp only; omega
   have hR3 := scaleT_inSpace hRegs (hRegPlus 2) hinv (fun _ _ => rfl) fun y => by
@@ -494,7 +481,7 @@ theorem branch3_inSpace :
   have hout := budget_comp mapEqOne_inSpace (get_inSpace hRegs (budget_const 2 len_le_stepBudget))
     (.const_mul 64 ((length_le (get_inSpace hRegs (budget_const 2 len_le_stepBudget))).add
       (.const 1 _)))
-  have hnext := hLt (hSucc hRound) (budget_comp natPred hP ((length_le hP).add (.const 1 _)))
+  have hnext := hLt (hSucc hRound) (budget_comp_lin natPred linear_succ hP)
   refine (budget_ite hcall
     (budget_ite hlenEq
       (out_inSpace (withCtl_inSpace (mkCtl_inSpace (hConstTag 4) (hConstNat 0) (hConstNat 0) hNil)))

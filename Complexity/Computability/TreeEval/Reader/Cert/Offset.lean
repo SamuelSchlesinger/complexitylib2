@@ -13,15 +13,15 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSp
 /-!
 # Offsets of nodes within linear work space
 
-The offset of the node at the path of a stack is a sum over the frames of the stack, innermost
-first: a frame at depth `i` adds the length of a table and, if it calls its right child, the length
-of the body of the left one. With the lengths computed by iteration, it is tidily computable within
-work space linear in the encoded stack, the height and the value length.
+The offset of the node at a path is a fold over the path from the root: a step adds the length of
+a table and, to the right child, the length of the body of the left one. With the lengths computed
+by iteration, and the path read off the stack, it is tidily computable within work space linear in
+the encoded stack, the height and the value length.
 
 ## Main results
 
-* `Cslib.TreeEval.Reader.pathOffset_path_eq_foldl`: the offset as a fold over the stack.
-* `Cslib.TreeEval.Reader.offset_inSpace`: the offset within linear work space.
+* `Cslib.TreeEval.Reader.foldl_pathStep`: the offset as a fold over the path.
+* `Cslib.TreeEval.Reader.pathOffset_inSpace`: the offset within linear work space.
 -/
 
 @[expose] public section
@@ -32,72 +32,11 @@ namespace Reader
 
 open Turing MultiTapeTM ComputableTidilyInSpace Iter
 
-/-- The lengths of the bodies of subtrees, by iteration. -/
-theorem bodyLength_eq_iterate (ℓ d : ℕ) :
-    bodyLength ℓ d = (fun b => tableLength ℓ + 2 * b)^[d] ℓ := by
-  induction d with
-  | zero => rfl
-  | succ d ih => rw [Function.iterate_succ_apply', ← ih]; rfl
-
 theorem bodyLength_add_tableLength_le (ℓ d : ℕ) :
     bodyLength ℓ d + tableLength ℓ ≤ 2 ^ d * (ℓ + tableLength ℓ) := by
   induction d with
   | zero => simp [bodyLength]
   | succ d ih => rw [bodyLength, pow_succ]; nlinarith
-
-/-- A step of the offset: the contribution of a frame at the stack index `m`, on
-`((ℓ, G, base), m, acc)`. -/
-def offStep (s : (ℕ × ℕ × ℕ) × ℕ × ℕ) (fr : Frame) : (ℕ × ℕ × ℕ) × ℕ × ℕ :=
-  (s.1, s.2.1 + 1, s.2.2 + s.1.2.1 + if fr.dir then bodyLength s.1.1 (s.1.2.2 + s.2.1) else 0)
-
-/-- The contributions of the frames of a stack, the innermost at the stack index `m`. -/
-def offSum (ℓ base : ℕ) : ℕ → List Frame → ℕ
-  | _, [] => 0
-  | m, fr :: st => tableLength ℓ + (if fr.dir then bodyLength ℓ (base + m) else 0) +
-      offSum ℓ base (m + 1) st
-
-theorem offSum_succ (ℓ base m : ℕ) (st : List Frame) :
-    offSum ℓ base (m + 1) st = offSum ℓ (base + 1) m st := by
-  induction st generalizing m with
-  | nil => rfl
-  | cons fr st ih => simp only [offSum, ih, show base + (m + 1) = base + 1 + m by omega]
-
-theorem foldl_offStep (ℓ base : ℕ) (st : List Frame) (m acc : ℕ) :
-    st.foldl offStep ((ℓ, tableLength ℓ, base), m, acc) =
-      ((ℓ, tableLength ℓ, base), m + st.length, acc + offSum ℓ base m st) := by
-  induction st generalizing m acc with
-  | nil => simp [offSum]
-  | cons fr st ih =>
-    rw [List.foldl_cons, offStep, ih, List.length_cons, offSum]
-    simp only [Prod.mk.injEq, true_and]
-    omega
-
-theorem pathOffset_append (ℓ : ℕ) (P : List Bool) (b : Bool) :
-    ∀ d, P.length < d → pathOffset ℓ d (P ++ [b]) =
-      pathOffset ℓ d P + tableLength ℓ + if b then bodyLength ℓ (d - 1 - P.length) else 0 := by
-  induction P with
-  | nil =>
-    intro d hd
-    obtain ⟨d, rfl⟩ : ∃ e, d = e + 1 := ⟨d - 1, by simp at hd; omega⟩
-    simp [pathOffset]
-  | cons a P ih =>
-    intro d hd
-    obtain ⟨d, rfl⟩ : ∃ e, d = e + 1 := ⟨d - 1, by simp at hd; omega⟩
-    simp only [List.cons_append, pathOffset, List.length_cons]
-    rw [ih d (by simp at hd; omega), show d + 1 - 1 - (P.length + 1) = d - 1 - P.length by omega]
-    omega
-
-/-- **The offset as a sum over the stack.** -/
-theorem pathOffset_path_eq (ℓ : ℕ) :
-    ∀ (st : List Frame) d, st.length ≤ d → pathOffset ℓ d (path st) = offSum ℓ (d - st.length) 0 st
-  | [], d, _ => by simp [path, pathOffset, offSum]
-  | fr :: st, d, hd => by
-    simp only [List.length_cons] at hd
-    rw [path_cons, pathOffset_append ℓ _ _ d (by simp; omega),
-      pathOffset_path_eq ℓ st d (by omega), offSum, offSum_succ, length_path, List.length_cons,
-      show d - (st.length + 1) + 1 = d - st.length by omega,
-      show d - 1 - st.length = d - (st.length + 1) + 0 by omega]
-    omega
 
 /-! ### Folding over the path -/
 
@@ -173,21 +112,17 @@ theorem tableLength_inSpace :
     (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl))).weaken hl
   have hstep : ComputableTidilyInSpace (fun x : ℕ => x * 4) encNat encNat
       fun x => 64 * ((encNat x).length + 1) :=
-    (budget_comp natMul (budget_prod (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
-      (budget_const (encB := encNat) 4 (.refl _))) (.of_le_linear 64 256 fun x => by
-        have : (encNat 4).length = 3 := rfl
-        simp only [length_encPair, id_eq]; omega)).weaken (.of_le fun x => by omega)
+    (budget_comp_lin natMul (linear_mul _) (budget_prod
+      (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
+      (budget_const (encB := encNat) 4 (.refl _)))).weaken (.of_le fun x => by omega)
   have h := iterate (n := fun ℓ : ℕ => ℓ) hid (budget_const (encB := encNat) 1 hl) hstep
     (Q := fun ℓ => 64 * (2 * ℓ + 2)) (B := fun ℓ => 2 * ℓ + 1)
     (fun ℓ k hk => by rw [iterate_mul_four]; have := length_encNat_pow_four k; omega)
     (fun ℓ k hk => by rw [iterate_mul_four]; have := length_encNat_pow_four k; omega)
   have hl' : (fun ℓ => 1024 * (ℓ + 1)) ≼ fun ℓ => 4096 * (ℓ + 1) := .of_le fun _ => by omega
-  refine (budget_comp natMul (budget_prod (h.mono_le fun ℓ => ?_) (hid.weaken hl'))
-    (.of_le_linear 64 64 fun ℓ => ?_)).of_enc_eq fun ℓ => by rw [iterate_mul_four]; rfl
-  · have := length_encNat_le_self ℓ; omega
-  · have := length_encNat_pow_four ℓ
-    have := length_encNat_le_self ℓ
-    simp only [length_encPair, iterate_mul_four]; omega
+  refine (budget_comp_lin natMul (linear_mul _) (budget_prod (h.mono_le fun ℓ => ?_)
+    (hid.weaken hl'))).of_enc_eq fun ℓ => by rw [iterate_mul_four]; rfl
+  have := length_encNat_le_self ℓ; omega
 
 theorem length_encNat_two_pow (k : ℕ) : (encNat (2 ^ k)).length ≤ k + 1 := by
   rw [length_encNat_eq_size]
@@ -227,11 +162,8 @@ theorem bodyLength_inSpace :
         fun q => 64 * ((encPair encNat encNat q).length + 1) := .of_le fun _ => by omega
     have hG := (fst encNat encNat).weaken hl₀
     have hb := (snd encNat encNat).weaken hl₀
-    have h2b := budget_comp natAdd (budget_prod hb hb) (.of_le_linear 2 2 fun q => by
-      simp only [length_encPair]; omega)
-    have hsum := budget_comp natAdd (budget_prod hG h2b) (.of_le_linear 4 4 fun q => by
-      have := length_encNat_add_le_add q.2 q.2
-      simp only [length_encPair] at this ⊢; omega)
+    have h2b := budget_comp_lin natAdd linear_succ (budget_prod hb hb)
+    have hsum := budget_comp_lin natAdd linear_succ (budget_prod hG h2b)
     exact (budget_prod hG hsum).of_enc_eq fun q => by simp [bodyStep, two_mul]
   have hG := budget_comp tableLength_inSpace ((fst encNat encNat).weaken hl)
     (.of_le_linear 1 0 fun q => by omega)
@@ -348,24 +280,13 @@ theorem pathStep'_inSpace :
   have hd := fst' (snd' hs)
   have hacc := snd' (snd' hs)
   have hz := budget_comp_linear natIsZero hd
-  have hd₁ := budget_comp natPred hd (.of_le fun q => by simp only [length_encPair]; omega)
+  have hd₁ := budget_comp_lin natPred linear_succ hd
   have hG := budget_comp tableLength_inSpace hℓ (.of_le_linear 1 0 fun q => by omega)
   have hB := budget_comp bodyLength_inSpace (budget_prod hℓ hd₁) (.of_le_linear 1 0 fun q => by
     dsimp only; omega)
   have hBif := budget_ite hb hB (budget_const (encB := encNat) 0 hl)
-  have hsum₁ := budget_comp natAdd (budget_prod hacc hG) (.of_le_linear 2 2 fun q => by
-    have := length_tableLength_le q.1.1
-    have := length_encNat_le_self q.1.1
-    simp only [length_encPair] at *; omega)
-  have hsum := budget_comp natAdd (budget_prod hsum₁ hBif) (.of_le_linear 4 4 fun q => by
-    have h₁ := length_tableLength_le q.1.1
-    have h₂ := length_encNat_add_le_add q.1.2.2 (tableLength q.1.1)
-    have h₃ := length_bodyLength_le q.1.1 (q.1.2.1 - 1)
-    have h₄ := length_encNat_le_self q.1.1
-    have h₅ : (encNat (if q.2 then bodyLength q.1.1 (q.1.2.1 - 1) else 0)).length ≤
-        (encNat (bodyLength q.1.1 (q.1.2.1 - 1))).length := by split <;> simp
-    simp only [length_encPair] at *
-    omega)
+  have hsum₁ := budget_comp_lin natAdd linear_succ (budget_prod hacc hG)
+  have hsum := budget_comp_lin natAdd linear_succ (budget_prod hsum₁ hBif)
   refine (budget_ite hz hs (budget_prod hℓ (budget_prod hd₁ hsum))).of_enc_eq fun q => ?_
   simp only [pathStep', pathStep]
   by_cases h : q.1.2.1 = 0 <;> simp [h]
