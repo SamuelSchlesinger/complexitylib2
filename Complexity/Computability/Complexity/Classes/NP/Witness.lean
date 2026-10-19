@@ -1,0 +1,322 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Complexity.Reduction
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Mathlib.Data.Finset.Card
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Data.List.GetD
+
+/-!
+# NP membership from witness relations
+
+Membership in `Cslib.Complexity.NP` asks for a verifier whose certificates have length exactly
+`p (enc a).length`. Problems are usually given by a witness relation instead: `a` belongs to the
+problem when some witness `b` with `R a b` exists, the witnesses of a member can be chosen of
+polynomial length, and `R` is decidable in polynomial time
+[Papadimitriou, Proposition 9.1][Papadimitriou94]. This file turns such relations into membership
+in `NP`, handling the exact-length convention in one place.
+
+A certificate is a witness prefix padded with `false` to the required length, and the verifier
+ignores the padding (`Cslib.Complexity.IsVerifier.of_padding`). Three kinds of witnesses are
+supported:
+
+* witnesses `b : β` with an encoding `encW` that has a decoder `Turing.MultiTapeTM.Decoder`
+  (`Cslib.Complexity.mem_NP_of_witness`): the certificate is `frame (encW b)` followed by padding.
+  The verifier `Cslib.Complexity.witnessVerifier` decodes the framed prefix of the certificate,
+  re-encodes the decoded witness to reject malformed certificates, and checks the witness
+  (`Cslib.Complexity.witnessVerifier_eq_true_iff`). The decoder is what makes the parsing
+  polynomial-time: a check that is polynomial-time on encoded witnesses says nothing about words
+  that encode no witness;
+* sets of candidates from a list computed from the instance
+  (`Cslib.Complexity.mem_NP_of_subsetWitness`): bit `i` of the certificate selects the `i`-th
+  candidate at its first occurrence (`Cslib.Complexity.selectMask`), missing bits are `false`,
+  and bits beyond the candidates are ignored;
+* bit strings read with default `false`, directly through `IsVerifier.of_padding`, as for the
+  assignments of `SAT`.
+
+`NP` is also closed under polynomial-time reductions (`Cslib.Complexity.PolyTimeReducible.mem_NP`,
+the unrelativized counterpart of `Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle`).
+Certificates for the original instance have a length polynomial in its own length, while the
+verifier of the target expects a length determined by the reduced instance, so the verifier reads
+only that prefix of the certificate, and `IsVerifier.of_padding` handles the rest.
+
+## Main definitions
+
+* `Cslib.Complexity.witnessVerifier`: the verifier of a witness relation, parsing certificates
+  with a decoder.
+* `Cslib.Complexity.selectMask`, `Cslib.Complexity.subsetVerifier`: the distinct entries of a
+  list selected by a mask, and the verifier of a subset problem.
+
+## Main results
+
+* `Cslib.Complexity.IsVerifier.of_padding`: a verifier that accepts some short prefix with any
+  padding, for every member and only for members, verifies with certificates of exactly the
+  prescribed length.
+* `Cslib.Complexity.IsVerifier.guard`: a test on instances restricts the verified problem.
+* `Cslib.Complexity.witnessVerifier_eq_true_iff`: the witness verifier accepts exactly a framed
+  encoded witness that passes the check, followed by any bits.
+* `Cslib.Complexity.isVerifier_witnessVerifier`, `Cslib.Complexity.mem_NP_of_witness`: a relation
+  with polynomially short witnesses decided in polynomial time defines a problem in `NP`.
+* `Cslib.Complexity.isVerifier_subsetVerifier`, `Cslib.Complexity.mem_NP_of_subsetWitness`:
+  subset problems over polynomial-time candidate lists with polynomial-time checks are in `NP`.
+* `Cslib.Complexity.PolyTimeReducible.mem_NP`: `NP` is closed under polynomial-time reductions.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+* [C. H. Papadimitriou, *Computational Complexity*][Papadimitriou94]
+-/
+
+@[expose] public section
+
+namespace Cslib.Complexity
+
+open Turing.MultiTapeTM ComputableTidilyInPolyTime
+
+variable {α β γ : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}
+  {A : Set α}
+
+/-! ### Padded certificates -/
+
+/-- **Padded certificates.** A verifier verifies `A` with certificates of length exactly
+`p (enc a).length` if it accepts certificates of that length only for members of `A`, and every
+member has a prefix `u` of at most that length which is accepted whatever padding by `false`
+follows it. -/
+theorem IsVerifier.of_padding
+    (sound : ∀ a w, w.length = p.eval (enc a).length → V (a, w) = true → a ∈ A)
+    (complete : ∀ a ∈ A, ∃ u : List Bool, u.length ≤ p.eval (enc a).length ∧
+      ∀ k, V (a, u ++ List.replicate k false) = true) :
+    IsVerifier enc p V A := fun a =>
+  ⟨fun ha =>
+    let ⟨u, hu, hV⟩ := complete a ha
+    ⟨u ++ List.replicate (p.eval (enc a).length - u.length) false, by
+      rw [List.length_append, List.length_replicate, Nat.add_sub_cancel' hu], hV _⟩,
+    fun ⟨w, hw, hV⟩ => sound a w hw hV⟩
+
+/-- Guarding a verifier by a test `c` on instances verifies the members of `A` that pass the
+test. -/
+theorem IsVerifier.guard {c : α → Bool} (h : IsVerifier enc p V A) :
+    IsVerifier enc p (fun x => c x.1 && V x) {a | c a = true ∧ a ∈ A} := fun a => by
+  simp only [Set.mem_ofPred_eq, Bool.and_eq_true, h a]
+  exact ⟨fun ⟨hc, w, hw, hV⟩ => ⟨w, hw, hc, hV⟩, fun ⟨w, hw, hc, hV⟩ => ⟨hc, w, hw, hV⟩⟩
+
+/-! ### Witnesses parsed by a decoder -/
+
+section Witness
+
+variable {encW : β ↪ List Bool}
+
+/-- The verifier of the witness relation decided by `check`. It decodes the framed prefix of the
+certificate with `D`, rejects the certificate unless it starts with the framed encoding of the
+decoded witness, and checks that witness. -/
+def witnessVerifier (D : Decoder encW) (check : α × β → Bool) (x : α × List Bool) : Bool :=
+  decide (frame (encW (D.decode (unframe x.2))) ++ dropFrame x.2 = x.2) &&
+    check (x.1, D.decode (unframe x.2))
+
+/-- **Malformed certificates are rejected.** `witnessVerifier D check` accepts exactly the
+certificates that consist of the framed encoding of a witness accepted by `check`, followed by any
+bits. -/
+theorem witnessVerifier_eq_true_iff {D : Decoder encW} {check : α × β → Bool} {a : α}
+    {w : List Bool} :
+    witnessVerifier D check (a, w) = true ↔
+      ∃ b v, w = frame (encW b) ++ v ∧ check (a, b) = true := by
+  simp only [witnessVerifier, Bool.and_eq_true, decide_eq_true_eq]
+  constructor
+  · rintro ⟨hw, hcheck⟩
+    exact ⟨_, _, hw.symm, hcheck⟩
+  · rintro ⟨b, v, rfl, hcheck⟩
+    simpa [D.decode_enc] using hcheck
+
+/-- A certificate framing the encoding of a witness, followed by any bits, is checked as that
+witness. -/
+@[simp]
+theorem witnessVerifier_frame_append (D : Decoder encW) (check : α × β → Bool) (a : α) (b : β)
+    (v : List Bool) : witnessVerifier D check (a, frame (encW b) ++ v) = check (a, b) := by
+  simp [witnessVerifier, D.decode_enc]
+
+/-- **Witness relations.** If `check` decides `R` and every member has a witness whose encoding has
+length at most `p (enc a).length`, then `witnessVerifier D check` verifies `{a | ∃ b, R a b}` with
+certificates of length `2 * p + 1`: a framed encoded witness, followed by padding. -/
+theorem isVerifier_witnessVerifier (D : Decoder encW) {check : α × β → Bool} {R : α → β → Prop}
+    (hR : ∀ a b, check (a, b) = true ↔ R a b)
+    (hp : ∀ a b, R a b → ∃ b', R a b' ∧ (encW b').length ≤ p.eval (enc a).length) :
+    IsVerifier enc (2 * p + 1) (witnessVerifier D check) {a | ∃ b, R a b} := by
+  refine IsVerifier.of_padding (fun a w _ h => ?_) fun a ⟨b, hb⟩ => ?_
+  · obtain ⟨b, -, -, hcheck⟩ := witnessVerifier_eq_true_iff.1 h
+    exact ⟨b, (hR a b).1 hcheck⟩
+  obtain ⟨b', hb', hlen⟩ := hp a b hb
+  refine ⟨frame (encW b'), ?_, fun k => ?_⟩
+  · simp only [length_frame, Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_ofNat,
+      Polynomial.eval_one]
+    omega
+  · rw [witnessVerifier_frame_append]
+    exact (hR a b').2 hb'
+
+/-- The verifier of a witness relation is polynomial-time when its check is. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_witnessVerifier (D : Decoder encW) {check : α × β → Bool}
+    (hcheck : ComputableTidilyInPolyTime check (encPair enc encW) encBool) :
+    ComputableTidilyInPolyTime (witnessVerifier D check) (encPair enc encBits) encBool := by
+  obtain ⟨_, _, hD⟩ := D.computable
+  have hdecode : ComputableTidilyInPolyTime (fun x : α × List Bool => D.decode (unframe x.2))
+      (encPair enc encBits) encW :=
+    hD.computableTidilyInPolyTime.comp (unframe.comp (snd enc encBits))
+  exact bool_and' (decide_eq' (bitsAppend ((bitsFrame encW).comp hdecode)
+    (dropFrame.comp (snd enc encBits))) (snd enc encBits))
+    (hcheck.comp ((fst enc encBits).prod hdecode))
+
+/-- **NP membership from a witness relation** [Papadimitriou, Proposition 9.1][Papadimitriou94].
+If `check` decides the relation `R` in polynomial time, the witness encoding has a decoder, and
+every member has a witness whose encoding has length at most `p (enc a).length`, then
+`{a | ∃ b, R a b}` is in `NP`. -/
+theorem mem_NP_of_witness (D : Decoder encW) {check : α × β → Bool} {R : α → β → Prop}
+    (hcheck : ComputableTidilyInPolyTime check (encPair enc encW) encBool)
+    (hR : ∀ a b, check (a, b) = true ↔ R a b)
+    (hp : ∀ a b, R a b → ∃ b', R a b' ∧ (encW b').length ≤ p.eval (enc a).length) :
+    {a | ∃ b, R a b} ∈ NP enc :=
+  ⟨_, _, computableTidilyInPolyTime_witnessVerifier D hcheck, isVerifier_witnessVerifier D hR hp⟩
+
+end Witness
+
+/-! ### Subset witnesses -/
+
+section Subset
+
+variable [DecidableEq γ]
+
+/-- The distinct entries of `l` selected by the mask `w`: position `i` of `l` is kept when bit `i`
+of `w` is `true` and `i` is the first occurrence of its entry in `l`. Missing bits are `false`, and
+bits beyond the length of `l` are ignored. -/
+def selectMask (l : List γ) (w : List Bool) : List γ :=
+  (l.zipIdx.filter fun e => w.getD e.2 false && decide (l.idxOf e.1 = e.2)).map Prod.fst
+
+theorem mem_selectMask {l : List γ} {w : List Bool} {v : γ} :
+    v ∈ selectMask l w ↔ v ∈ l ∧ w.getD (l.idxOf v) false = true := by
+  simp only [selectMask, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
+    Bool.and_eq_true, decide_eq_true_eq, Prod.exists]
+  constructor
+  · rintro ⟨u, i, ⟨hi, hw, hidx⟩, rfl⟩
+    exact ⟨List.mem_of_getElem? hi, hidx ▸ hw⟩
+  · rintro ⟨hv, hw⟩
+    have hlt : l.idxOf v < l.length := List.idxOf_lt_length_iff.2 hv
+    exact ⟨v, l.idxOf v, ⟨by simp [hlt], hw, rfl⟩, rfl⟩
+
+theorem nodup_selectMask (l : List γ) (w : List Bool) : (selectMask l w).Nodup := by
+  have hzip : l.zipIdx.Nodup := by
+    rw [List.Nodup, List.pairwise_iff_getElem]
+    intro i j hi hj hij h
+    have := congrArg Prod.snd h
+    simp only [List.getElem_zipIdx, Nat.zero_add] at this
+    omega
+  refine (hzip.filter _).map_on ?_
+  rintro ⟨u, i⟩ hu ⟨v, j⟩ hv (rfl : u = v)
+  simp only [List.mem_filter, Bool.and_eq_true, decide_eq_true_eq] at hu hv
+  rw [← hu.2.2, ← hv.2.2]
+
+/-- The entries of `l` selected by the mask of a set `S` of entries of `l`, followed by any bits,
+are the elements of `S`. -/
+theorem toFinset_selectMask_map_append {l : List γ} {S : Finset γ} (hS : ∀ v ∈ S, v ∈ l)
+    (u : List Bool) : (selectMask l (l.map (fun v => decide (v ∈ S)) ++ u)).toFinset = S := by
+  have hget : ∀ v ∈ l,
+      (l.map (fun v => decide (v ∈ S)) ++ u).getD (l.idxOf v) false = decide (v ∈ S) := by
+    intro v hv
+    have hlt : l.idxOf v < l.length := List.idxOf_lt_length_iff.2 hv
+    rw [List.getD_append _ _ _ _ (by simpa using hlt),
+      List.getD_eq_getElem _ _ (by simpa using hlt), List.getElem_map, List.getElem_idxOf hlt]
+  ext v
+  rw [List.mem_toFinset, mem_selectMask]
+  exact ⟨fun ⟨hv, h⟩ => of_decide_eq_true ((hget v hv).symm.trans h),
+    fun hv => ⟨hS v hv, (hget v (hS v hv)).trans (decide_eq_true hv)⟩⟩
+
+/-- Selecting the entries of a list from a mask is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_selectMask (encγ : γ ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun x : List γ × List Bool => selectMask x.1 x.2)
+      (encPair (encList encγ) encBits) (encList encγ) := by
+  unfold selectMask
+  fun_prop
+
+/-- The verifier of a subset problem over the candidates `vs a`: select candidates by the
+certificate mask (`selectMask`) and check the selected list. -/
+def subsetVerifier (vs : α → List γ) (check : α × List γ → Bool) (x : α × List Bool) : Bool :=
+  check (x.1, selectMask (vs x.1) x.2)
+
+/-- **Subset witnesses.** Let the candidates `vs a` be at most `p (enc a).length` many, and let
+`check` decide `P a` on the duplicate-free lists of candidates. Then `subsetVerifier vs check`
+verifies the problem of having a set `S` of candidates with `P a S`, with certificates of length
+`p`: the mask of `S`, followed by padding. -/
+theorem isVerifier_subsetVerifier {vs : α → List γ}
+    (hvs : ∀ a, (vs a).length ≤ p.eval (enc a).length) {check : α × List γ → Bool}
+    {P : α → Finset γ → Prop}
+    (hP : ∀ a l, l.Nodup → (∀ v ∈ l, v ∈ vs a) → (check (a, l) = true ↔ P a l.toFinset)) :
+    IsVerifier enc p (subsetVerifier vs check)
+      {a | ∃ S : Finset γ, (∀ v ∈ S, v ∈ vs a) ∧ P a S} := by
+  have hsub (a : α) (w : List Bool) : ∀ v ∈ selectMask (vs a) w, v ∈ vs a :=
+    fun _ hv => (mem_selectMask.1 hv).1
+  refine IsVerifier.of_padding (fun a w _ h => ?_) fun a ⟨S, hS, hPS⟩ => ?_
+  · exact ⟨_, fun v hv => hsub a w v (List.mem_toFinset.1 hv),
+      (hP a _ (nodup_selectMask _ _) (hsub a w)).1 h⟩
+  · refine ⟨(vs a).map (fun v => decide (v ∈ S)), by simpa using hvs a, fun k => ?_⟩
+    refine (hP a _ (nodup_selectMask _ _) (hsub a _)).2 ?_
+    rwa [toFinset_selectMask_map_append hS]
+
+/-- The verifier of a subset problem is polynomial-time when the candidates and the check are. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_subsetVerifier {encγ : γ ↪ List Bool} {vs : α → List γ}
+    (hvs : ComputableTidilyInPolyTime vs enc (encList encγ)) {check : α × List γ → Bool}
+    (hcheck : ComputableTidilyInPolyTime check (encPair enc (encList encγ)) encBool) :
+    ComputableTidilyInPolyTime (subsetVerifier vs check) (encPair enc encBits) encBool :=
+  hcheck.comp ((fst enc encBits).prod ((computableTidilyInPolyTime_selectMask encγ).comp
+    ((hvs.comp (fst enc encBits)).prod (snd enc encBits))))
+
+/-- **NP membership of subset problems.** If the candidates `vs a` and the check of the selected
+candidates are polynomial-time, and `check` decides `P a` on duplicate-free lists of candidates,
+then having a set `S` of candidates with `P a S` is in `NP`. -/
+theorem mem_NP_of_subsetWitness {encγ : γ ↪ List Bool} {vs : α → List γ}
+    (hvs : ComputableTidilyInPolyTime vs enc (encList encγ)) {check : α × List γ → Bool}
+    (hcheck : ComputableTidilyInPolyTime check (encPair enc (encList encγ)) encBool)
+    {P : α → Finset γ → Prop}
+    (hP : ∀ a l, l.Nodup → (∀ v ∈ l, v ∈ vs a) → (check (a, l) = true ↔ P a l.toFinset)) :
+    {a | ∃ S : Finset γ, (∀ v ∈ S, v ∈ vs a) ∧ P a S} ∈ NP enc := by
+  obtain ⟨c, d, hle⟩ := hvs.polyBounded_length.exists_le
+  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d, _,
+    computableTidilyInPolyTime_subsetVerifier hvs hcheck,
+    isVerifier_subsetVerifier (fun a => ?_) hP⟩
+  simpa using (length_le_length_encList encγ (vs a)).trans (hle a)
+
+end Subset
+
+/-! ### Closure under reductions -/
+
+/-- **`NP` is closed under polynomial-time reductions.** The verifier of `A` runs the verifier of
+`B` on the reduced instance and on the prefix of the certificate whose length the verifier of `B`
+expects. For the oracle classes, see `Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle`. -/
+theorem PolyTimeReducible.mem_NP {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ NP encB) : A ∈ NP enc := by
+  obtain ⟨f, hf, hAB⟩ := h
+  obtain ⟨q, W, hW, hWB⟩ := hB
+  have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
+    (unary_eval q).comp ((encoding_length encB).comp hf)
+  obtain ⟨c, d, hle⟩ := hlen.polyBounded.exists_le
+  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d,
+    fun x => W (f x.1, x.2.take (q.eval (encB (f x.1)).length)), ?_,
+    IsVerifier.of_padding (fun a w hw h => ?_) fun a ha => ?_⟩
+  · exact hW.comp ((hf.comp (fst enc encBits)).prod
+      (bitsTakeWithInput (snd enc encBits) (hlen.comp (fst enc encBits))))
+  · refine (hAB a).2 ((hWB (f a)).2 ⟨_, List.length_take_of_le ?_, h⟩)
+    rw [hw]
+    simpa using hle a
+  · obtain ⟨u, hu, hWu⟩ := (hWB (f a)).1 ((hAB a).1 ha)
+    refine ⟨u, by rw [hu]; simpa using hle a, fun k => ?_⟩
+    simpa only [List.take_left' hu] using hWu
+
+end Cslib.Complexity

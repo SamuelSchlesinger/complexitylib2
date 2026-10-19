@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Logics.Propositional.CNF
+import Complexity.Computability.Complexity.Classes.NP.Witness
 
 /-!
 # The satisfiability problem
@@ -22,7 +23,8 @@ words, so `UNSAT` is exactly the complement of `SAT`; there are no ill-formed en
 to either side.
 
 The Cook–Levin theorem says that `SAT` is `NP`-complete [Arora and Barak, Theorem
-2.10][AroraBarak09]. The verifier's correctness is proved here (`SAT.isVerifier`), its
+2.10][AroraBarak09]. The verifier's correctness is proved here (`SAT.isVerifier`, through
+`Cslib.Complexity.IsVerifier.of_padding`, which handles the certificate length), its
 polynomial-time bound and `SAT ∈ NP` are proved in `Problems/SAT/PolyTime.lean`, and the tableau
 reduction and `NP`-completeness are proved in `CookLevin/`.
 
@@ -85,23 +87,18 @@ theorem length_vars_le (φ : CNF ℕ) : φ.vars.length ≤ (encCNF φ).length :=
         List.sum_le_sum fun c _ => length_le_length_encList _ c
     _ ≤ (encCNF φ).length := sum_length_le_length_encList _ φ
 
-/-- `SAT.verifier` verifies `SAT` with certificates as long as the encoded formula. -/
+/-- `SAT.verifier` verifies `SAT` with certificates as long as the encoded formula: a satisfying
+assignment, listed in order of first occurrence, is a prefix the verifier accepts whatever padding
+follows it. -/
 theorem isVerifier : IsVerifier encCNF Polynomial.X verifier SAT := by
-  intro φ
-  simp only [mem_SAT, Polynomial.eval_X, verifier]
-  constructor
-  · rintro ⟨τ, hτ⟩
-    refine ⟨φ.vars.map τ ++ List.replicate ((encCNF φ).length - φ.vars.length) false, ?_, ?_⟩
-    · simp [Nat.add_sub_cancel' (length_vars_le φ)]
-    · rw [CNF.eval_congr fun v hv => ?_]
-      · exact hτ
-      · have hlt : φ.vars.idxOf v < φ.vars.length := List.idxOf_lt_length_iff.2 hv
-        have hlt' : φ.vars.idxOf v < (φ.vars.map τ).length := by simpa using hlt
-        rw [assignment, List.getD_eq_getElem?_getD, List.getElem?_append_left hlt',
-          List.getElem?_map, List.getElem?_eq_getElem hlt, List.getElem_idxOf hlt]
-        rfl
-  · rintro ⟨w, -, hw⟩
-    exact ⟨_, hw⟩
+  refine IsVerifier.of_padding (fun φ w _ h => ⟨_, h⟩) fun φ ⟨τ, hτ⟩ => ?_
+  refine ⟨φ.vars.map τ, by simpa using length_vars_le φ, fun k => ?_⟩
+  refine (CNF.eval_congr fun v hv => ?_).trans hτ
+  have hlt : φ.vars.idxOf v < φ.vars.length := List.idxOf_lt_length_iff.2 hv
+  have hlt' : φ.vars.idxOf v < (φ.vars.map τ).length := by simpa using hlt
+  rw [assignment, List.getD_eq_getElem?_getD, List.getElem?_append_left hlt', List.getElem?_map,
+    List.getElem?_eq_getElem hlt, List.getElem_idxOf hlt]
+  rfl
 
 end SAT
 
