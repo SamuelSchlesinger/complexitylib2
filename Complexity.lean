@@ -234,6 +234,7 @@ public import Complexity.Computability.Circuit.Rational.QuantumMatrices
 public import Complexity.Computability.Circuit.Rational.QuantumSeries
 public import Complexity.Computability.Circuit.Rational.Rectangular
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
+public import Complexity.Computability.Circuit.Rational.Runtime.Lift
 public import Complexity.Computability.Circuit.Rational.Runtime.Parameters
 public import Complexity.Computability.Circuit.Rational.SmallExpansion
 public import Complexity.Computability.Circuit.Rational.Wronskian

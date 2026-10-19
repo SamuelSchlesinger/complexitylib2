@@ -138,6 +138,7 @@ import ComplexityTests.QueryComplexity
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
+import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
