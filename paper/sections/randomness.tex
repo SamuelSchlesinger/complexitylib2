@@ -83,6 +83,12 @@ nondeterministic-machine characterizations remain unfinished.
 \decl{Complexity/Computability/Complexity/Classes/PP/Characterization.lean}{182}{Cslib.Complexity.mem_PP_iff_exists_GapP}
 \declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{230}{Cslib.Complexity.SharpP.comp_mem}
 \declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{251}{Cslib.Complexity.GapP.comp_mem}
+Polynomial-time functions with binary natural output belong to $\#\cc{P}$;
+those with binary integer output belong to $\cc{GapP}$. The bound is on output
+bit length, so the numeric values may be exponential in input length.
+\citep[Theorem 3.5]{Fortnow1997}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{41}{Cslib.Complexity.SharpP.of_polyTime}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{58}{Cslib.Complexity.GapP.of_polyTime}
 \end{result}
 
 \begin{result}
@@ -115,6 +121,17 @@ corresponding UP containments.
 \declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/UP.lean}{74}{Cslib.Complexity.UP_subset_NP}
 \declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/UP.lean}{82}{Cslib.Complexity.UP_subset_ParityP}
 \declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/UP.lean}{90}{Cslib.Complexity.PolyTimeReducible.mem_UP}
+The unique-solution class US instead asks that the accepting count equal one
+exactly on members; no-instances may have zero or multiple witnesses. We prove
+$\cc{UP}\cup\cc{coNP}\subseteq\cc{US}\subseteq\cc{C}_{=}\cc{P}$,
+intersection closure, and polynomial-time many-one reduction closure.
+The definition follows Blass--Gurevich; these containments are elementary count
+identities. Unique-SAT completeness is not asserted here.\citep{BlassGurevich1982}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{46}{Cslib.Complexity.UP_subset_US}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{51}{Cslib.Complexity.coNP_subset_US}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{59}{Cslib.Complexity.US_subset_CeqP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{66}{Cslib.Complexity.inter_mem_US}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{72}{Cslib.Complexity.PolyTimeReducible.mem_US}
 \end{result}
 
 \begin{result}
@@ -205,4 +222,41 @@ proofs are elementary algebraic consequences of the existing counting APIs.
 \declat{2f492c03c060ed95662dd942ef7feca1bebda7aa}{Complexity/Computability/Complexity/Classes/ModP.lean}{107}{Cslib.Complexity.compl_mem_ModP}
 \declat{2f492c03c060ed95662dd942ef7feca1bebda7aa}{Complexity/Computability/Complexity/Classes/ModP.lean}{99}{Cslib.Complexity.inter_mem_ModP}
 \declat{2f492c03c060ed95662dd942ef7feca1bebda7aa}{Complexity/Computability/Complexity/Classes/ModP.lean}{129}{Cslib.Complexity.union_mem_ModP}
+The complement class $\cc{coMod}_{k}\cc{P}$ uses zero residues of a
+$\#\cc{P}$ count. It is closed under polynomial-time many-one reductions
+for every modulus, and equals $\cc{Mod}_{k}\cc{P}$ for prime $k$.
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/ModP.lean}{141}{Cslib.Complexity.mem_coModP_iff_exists_SharpP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/ModP.lean}{150}{Cslib.Complexity.PolyTimeReducible.mem_coModP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/ModP.lean}{155}{Cslib.Complexity.coModP_eq_ModP}
+\end{result}
+
+\begin{result}
+\subsection{Wide counting gaps}
+For every fixed injective encoding,
+\[
+\cc{SPP}\subseteq\cc{LWPP}\subseteq\cc{WPP}
+\subseteq\cc{C}_{=}\cc{P}\cap\cc{coC}_{=}\cc{P}.
+\]
+In WPP there are a GapP function $g$ and a polynomial-time, binary-integer
+function $f$, nonzero on every input, with $g(x)=f(x)$ on members and $g(x)=0$
+on nonmembers. LWPP restricts the target to $f(|x|)$, with $f$ computable from
+unary length and nonzero on every natural argument, including zero. Negative
+and exponentially large targets are allowed. Both classes are closed under
+complement, union and intersection; WPP also has polynomial-time many-one
+reduction closure. The proofs use exact-gap algebra and the FP-to-GapP bridge.
+These verifier-based statements follow the definitions of Fenner--Fortnow--Kurtz,
+as restated by Hemaspaandra et al.; they do not establish counting-machine
+characterizations, oracle lowness, or robustness under multiple target values.
+\citep{FennerFortnowKurtz1994}\citep[Definitions 2.4--2.5]{HemaspaandraEtAl2018}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{65}{Cslib.Complexity.SPP_subset_LWPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{70}{Cslib.Complexity.LWPP_subset_WPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{76}{Cslib.Complexity.WPP_subset_CeqP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{82}{Cslib.Complexity.WPP_subset_coCeqP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{89}{Cslib.Complexity.compl_mem_WPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{97}{Cslib.Complexity.inter_mem_WPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{107}{Cslib.Complexity.union_mem_WPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{120}{Cslib.Complexity.compl_mem_LWPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{129}{Cslib.Complexity.inter_mem_LWPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{139}{Cslib.Complexity.union_mem_LWPP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{112}{Cslib.Complexity.PolyTimeReducible.mem_WPP}
 \end{result}

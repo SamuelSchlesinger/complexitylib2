@@ -27,6 +27,33 @@ The definition permits distinct NP and coNP components; it does not require
 the resulting language to belong to both classes.\citep{Papadimitriou94}
 \declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/DP.lean}{87}{Cslib.Complexity.NPComplete.prod_coNPComplete}
 \declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Problems/SATUNSAT.lean}{40}{Cslib.Complexity.SATUNSAT_dpComplete}
+The complement class coDP consists of unions of an NP language and a coNP
+language; it is closed under union and polynomial-time many-one reductions.
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/DP.lean}{107}{Cslib.Complexity.mem_coDP_iff_union}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/DP.lean}{119}{Cslib.Complexity.union_mem_coDP}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/DP.lean}{123}{Cslib.Complexity.PolyTimeReducible.mem_coDP}
+\end{result}
+
+\begin{result}
+\subsection{The Boolean hierarchy over NP}
+Using the difference-hierarchy convention,
+\[
+\cc{BH}_0=\{\varnothing\},\qquad
+\cc{BH}_{n+1}=\{B\setminus D:B\in\cc{NP},\ D\in\cc{BH}_n\}.
+\]
+We prove $\cc{BH}_1=\cc{NP}$ and $\cc{BH}_2=\cc{DP}$, monotonicity of
+levels, complement membership one level higher, and polynomial-time many-one
+reduction closure at each fixed level. Consequently the union of the finite
+levels is closed under complement. The construction and inverse-image theorem
+are generic over the base class of sets; NP supplies the complexity instance.
+This follows the difference presentation of the Boolean hierarchy; no separation
+between levels or hierarchy-collapse theorem is asserted.\citep{CaiEtAl1988}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{96}{Cslib.Complexity.BH_one}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{99}{Cslib.Complexity.BH_two}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{105}{Cslib.Complexity.BH_mono}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{111}{Cslib.Complexity.compl_mem_BH_succ}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{116}{Cslib.Complexity.compl_mem_BooleanHierarchy}
+\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{122}{Cslib.Complexity.PolyTimeReducible.mem_BH}
 \end{result}
 
 \begin{result}

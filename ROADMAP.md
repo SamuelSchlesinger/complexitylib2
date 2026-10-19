@@ -43,7 +43,13 @@ The next counting milestones remain the nondeterministic-machine characterizatio
 none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. Extend these
 with stronger fewness containments, counting reductions and oracle results, preserving exact
-multiplicities when required. The current modular Boolean closures require a prime modulus.
+multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
+implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
+hierarchy, WPP and LWPP now have definitions and elementary containments/closures.
+The binary-output FP-to-#P/GapP bridge is available. Remaining extensions include
+US/Unique-SAT completeness, stronger Boolean-hierarchy closure and collapse results,
+LWPP reduction closure and multiple-target robustness, and WPP/LWPP oracle lowness.
+These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
 
