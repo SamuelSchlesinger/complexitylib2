@@ -40,6 +40,7 @@ public import Complexity.Computability.Circuit.Boolean.FanInTwo
 public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
+public import Complexity.Computability.Circuit.Boolean.Hamming
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
@@ -200,6 +201,7 @@ public import Complexity.Computability.Circuit.Monotone.KarchmerWigderson
 public import Complexity.Computability.Circuit.Monotone.Set
 public import Complexity.Computability.Circuit.Parallel
 public import Complexity.Computability.Circuit.Pi
+public import Complexity.Computability.Circuit.Pointwise
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Replication
 public import Complexity.Computability.Circuit.Simulation
@@ -659,6 +661,7 @@ public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Broadcast
 public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.Flip
+public import Complexity.Foundations.Data.BitString.Hamming
 public import Complexity.Foundations.Data.BitString.Hoeffding
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
