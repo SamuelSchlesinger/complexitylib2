@@ -6,8 +6,10 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.AC0
 import Complexity.MachineLearning.UniformLearning.AC0
+import Complexity.MachineLearning.UniformLearning.KushilevitzMansour
 
-/-! Nonvacuity checks for learning from uniform random examples and the low-degree algorithm. -/
+/-! Nonvacuity checks for learning from uniform random examples and the low-degree algorithm, and
+for learning with membership queries and the Kushilevitz–Mansour algorithm. -/
 
 namespace ComplexityTests.FourierLearning
 
@@ -118,6 +120,41 @@ example (n t m : ℕ) :
     simp at hS
   simp [fourierCoeff_const, hS]
 
+/-! ### The Kushilevitz–Mansour algorithm -/
+
+-- For the set of all coordinates, a bucket holds a single set.
+example (F : BitString 3 → ℝ) (S : Finset (Fin 3)) :
+    bucketWeight F univ S = fourierCoeff F S ^ 2 :=
+  bucketWeight_univ F S
+
+-- The search over `n` coordinates weighs `n + 1` levels.
+example : (searchLevels (List.finRange 3)).length = 4 := by simp
+
+/-- The queries of the Kushilevitz–Mansour algorithm: `m (2 n + 3)` for `n` coordinates. -/
+example (n m : ℕ) (θ : ℝ) :
+    (kmLearner (Fin n) m θ).QueriesAtMost (m * (2 * n + 3)) := by
+  simpa using kmLearner_queriesAtMost (ι := Fin n) (m := m) θ
+
+/-- A parity has spectral norm one, so the Kushilevitz–Mansour algorithm learns all parities, for
+every error and confidence, from the number of samples it requires. -/
+example (n : ℕ) {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ) :
+    (kmLearner (Fin n) ⌈512 * 1 ^ 4 / ε ^ 4 * Real.log (2 * (n + 2) * 2 ^ n / δ)⌉₊
+      (ε / (2 * 1))).Learns (PMF.uniformOfFintype _) {f | ∃ U, f = parityOn U} ε δ := by
+  refine (kmLearner_learns (L := 1) hε hδ (by simpa using Nat.le_ceil _)).mono ?_ le_rfl le_rfl
+  rintro f ⟨U, rfl⟩
+  simp [spectralNormClass, fourierCoeff_signVal_parityOn, apply_ite]
+
+/-- The decision trees with one leaf compute the constant functions. -/
+example (n : ℕ) (b : Bool) : (fun _ : BitString n => b) ∈ decisionTreeClass (Fin n) 1 :=
+  ⟨.leaf b, fun _ => rfl, le_rfl⟩
+
+/-- **Decision trees are learnable with membership queries**: for every number of inputs, size,
+error and confidence, from the number of samples the algorithm requires. -/
+example (n L : ℕ) {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ) :
+    (kmLearner (Fin n) ⌈512 * (L : ℝ) ^ 4 / ε ^ 4 * Real.log (2 * (n + 2) * 2 ^ n / δ)⌉₊
+      (ε / (2 * L))).Learns (PMF.uniformOfFintype _) (decisionTreeClass (Fin n) L) ε δ :=
+  kmLearner_learns_decisionTree hε hδ (by simpa using Nat.le_ceil _)
+
 /--
 info: 'Cslib.BitString.signRound' depends on axioms:
 [propext, Classical.choice, Quot.sound]
@@ -187,5 +224,61 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms lowDegreeLearner_learns_lmnDegree
+
+/--
+info: 'Cslib.BitString.expect_bucketWeight_sample'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms BitString.expect_bucketWeight_sample
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.inter_mem_bucketSearch'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms inter_mem_bucketSearch
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.card_bucketSearch_le'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_bucketSearch_le
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.uniformError_kmHypothesis_le'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms uniformError_kmHypothesis_le
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.uniform_not_accurate_le'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms uniform_not_accurate_le
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.kmLearner_queriesAtMost'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms kmLearner_queriesAtMost
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.kmLearner_learns'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms kmLearner_learns
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.kmLearner_learns_decisionTree'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms kmLearner_learns_decisionTree
 
 end ComplexityTests.FourierLearning

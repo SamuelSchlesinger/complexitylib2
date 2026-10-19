@@ -943,6 +943,7 @@ public import Complexity.Foundations.Analysis.MarkovInequality
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.Bonami
+public import Complexity.Foundations.BooleanAnalysis.BucketWeight
 public import Complexity.Foundations.BooleanAnalysis.Convolution
 public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
 public import Complexity.Foundations.BooleanAnalysis.Decomposition
@@ -1186,7 +1187,9 @@ public import Complexity.Logics.SecondOrder.Projection
 public import Complexity.Logics.SecondOrder.Reduction
 public import Complexity.MachineLearning.UniformLearning.AC0
 public import Complexity.MachineLearning.UniformLearning.Basic
+public import Complexity.MachineLearning.UniformLearning.KushilevitzMansour
 public import Complexity.MachineLearning.UniformLearning.LowDegree
+public import Complexity.MachineLearning.UniformLearning.MembershipQuery
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
