@@ -129,6 +129,7 @@ import ComplexityTests.NaturalProofs
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
+import ComplexityTests.OneWayMetacomplexity
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution

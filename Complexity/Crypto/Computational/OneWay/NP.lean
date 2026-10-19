@@ -1,0 +1,262 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Complexity.Classes.P
+public import Complexity.Computability.Complexity.Problems.SAT
+public import Complexity.Crypto.Computational.OneWay
+import Complexity.Computability.Complexity.CookLevin.Completeness
+import Complexity.Computability.Complexity.Reduction
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Crypto.Negligible.Basic
+import Complexity.Probability.PMF
+
+/-!
+# One-way functions separate P from NP
+
+If one-way functions exist then `P ≠ NP` [Goldreich, Chapter 2][Goldreich2001],
+[Katz and Lindell, Section 8.1][KatzLindell2020]. For a function `f` computable in polynomial
+time, the *preimage-prefix problem* (`Cslib.Crypto.preimagePrefix`) asks, given `n` in unary, an
+image `y` and a word `u`, whether some input `x` of length `n` that starts with `u` satisfies
+`f x = y`. It is in `NP`, with the missing bits of `x` as certificate
+(`Cslib.Crypto.preimagePrefix_mem_NP`).
+
+A decision procedure for it finds preimages bit by bit (`Cslib.Crypto.preimageSearch`): starting
+from the empty prefix, extend the prefix by `false` if a preimage of length `n` still starts with
+the extension, and by `true` otherwise. After `n` steps the prefix is itself a preimage of `y`
+whenever `y` has a preimage of length `n` (`Cslib.Crypto.apply_preimageSearch`), and the search
+runs in polynomial time when the decision procedure does. So if the problem is in `P`, a
+deterministic polynomial-time algorithm inverts `f` on every image
+(`Cslib.Crypto.exists_inverse_of_preimagePrefix_mem_P`), which a one-way function forbids
+(`Cslib.Crypto.OneWay.preimagePrefix_notMem_P`). By the Cook–Levin theorem, `SAT` is then not in
+`P` either (`Cslib.Crypto.OneWay.SAT_notMem_P`).
+
+One-wayness is the uniform notion of `Cslib.Crypto.OneWay`: the inverter is uniform strict PPT
+and receives the unary length of the sampled input. The inverter built here is deterministic.
+
+## Main definitions
+
+* `Cslib.Crypto.preimagePrefix`: the preimage-prefix problem of a function.
+* `Cslib.Crypto.preimageSearch`: the bit-by-bit search for a preimage with a decision procedure.
+
+## Main results
+
+* `Cslib.Crypto.preimagePrefix_mem_NP`: the preimage-prefix problem of a polynomial-time
+  function is in `NP`.
+* `Cslib.Crypto.exists_inverse_of_preimagePrefix_mem_P`: if it is in `P`, a deterministic
+  polynomial-time algorithm finds a preimage of every image.
+* `Cslib.Crypto.not_oneWay_of_lengthInverse`: an efficient deterministic inverter that is told
+  the input length refutes one-wayness.
+* `Cslib.Crypto.OneWay.preimagePrefix_notMem_P`, `Cslib.Crypto.OneWay.P_ne_NP`,
+  `Cslib.Crypto.OneWay.SAT_notMem_P`: one-way functions imply `P ≠ NP`.
+
+## References
+
+* [O. Goldreich, *Foundations of Cryptography, Volume 1*][Goldreich2001]
+* [J. Katz, Y. Lindell, *Introduction to Modern Cryptography*][KatzLindell2020]
+-/
+
+@[expose] public section
+
+namespace Cslib.Crypto
+
+open Complexity Probability Turing.MultiTapeTM ComputableTidilyInPolyTime
+
+/-- **The preimage-prefix problem** of `f`: the instances `(n, y, u)` such that some input `x` of
+length `n` that starts with `u` satisfies `f x = y`. -/
+def preimagePrefix (f : List Bool → List Bool) : Set (ℕ × List Bool × List Bool) :=
+  {p | ∃ x : List Bool, x.length = p.1 ∧ p.2.2 <+: x ∧ f x = p.2.1}
+
+/-- The encoding of instances of the preimage-prefix problem: the length `n` in unary, then the
+image and the prefix. -/
+abbrev encPreimagePrefix : ℕ × List Bool × List Bool ↪ List Bool :=
+  encPair encUnary (encPair encBits encBits)
+
+variable {f : List Bool → List Bool}
+
+/-! ### Membership in `NP` -/
+
+/-- The verifier of the preimage-prefix problem: the certificate supplies the bits after the
+prefix. -/
+def preimagePrefixVerifier (f : List Bool → List Bool)
+    (p : (ℕ × List Bool × List Bool) × List Bool) : Bool :=
+  decide (p.1.2.2.length ≤ p.1.1) && f (p.1.2.2 ++ p.2.take (p.1.1 - p.1.2.2.length)) == p.1.2.1
+
+/-- The unary length is at most as long as the encoded instance. -/
+theorem le_length_encPreimagePrefix (p : ℕ × List Bool × List Bool) :
+    p.1 ≤ (encPreimagePrefix p).length := by
+  simp only [length_encPair, encUnary_apply, List.length_replicate, encBits_apply]
+  omega
+
+/-- The verifier accepts some certificate of the length of the encoded instance exactly for the
+members. -/
+theorem isVerifier_preimagePrefixVerifier (f : List Bool → List Bool) :
+    IsVerifier encPreimagePrefix Polynomial.X (preimagePrefixVerifier f) (preimagePrefix f) := by
+  refine IsVerifier.of_padding (fun ⟨n, y, u⟩ w hw h => ?_) fun ⟨n, y, u⟩ ⟨x, hx, hux, hfx⟩ => ?_
+  · rw [Polynomial.eval_X] at hw
+    have hn := le_length_encPreimagePrefix (n, y, u)
+    simp only [preimagePrefixVerifier, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at h
+    refine ⟨u ++ w.take (n - u.length), ?_, List.prefix_append _ _, h.2⟩
+    simp only [List.length_append, List.length_take] at hw ⊢
+    omega
+  · obtain ⟨v, rfl⟩ := hux
+    have hn := le_length_encPreimagePrefix (n, y, u)
+    simp only [List.length_append] at hx
+    refine ⟨v, ?_, fun k => ?_⟩
+    · rw [Polynomial.eval_X]
+      omega
+    · have hv : n - u.length = v.length := by omega
+      simp only [preimagePrefixVerifier, hv, List.take_left, hfx, beq_self_eq_true,
+        Bool.and_true, decide_eq_true_eq]
+      omega
+
+/-- The verifier is polynomial-time when `f` is. -/
+theorem computableTidilyInPolyTime_preimagePrefixVerifier
+    (hf : ComputableTidilyInPolyTime f encBits encBits) :
+    ComputableTidilyInPolyTime (preimagePrefixVerifier f) (encPair encPreimagePrefix encBits)
+      encBool := by
+  unfold preimagePrefixVerifier
+  fun_prop
+
+/-- **The preimage-prefix problem is in `NP`** for every function computable in polynomial
+time. -/
+theorem preimagePrefix_mem_NP (hf : ComputableTidilyInPolyTime f encBits encBits) :
+    preimagePrefix f ∈ NP encPreimagePrefix :=
+  ⟨_, _, computableTidilyInPolyTime_preimagePrefixVerifier hf,
+    isVerifier_preimagePrefixVerifier f⟩
+
+/-! ### Search to decision -/
+
+/-- One step of the search for a preimage of length `q.1` of `q.2`: extend the prefix `u` by
+`false` when `D` says that a preimage starts with `u ++ [false]`, and by `true` otherwise. -/
+def preimageSearchStep (D : ℕ × List Bool × List Bool → Bool) (q : ℕ × List Bool)
+    (u : List Bool) : List Bool :=
+  u ++ [!D (q.1, q.2, u ++ [false])]
+
+/-- **The bit-by-bit search** for a preimage of length `q.1` of `q.2`, with the decision
+procedure `D` for the preimage-prefix problem: `q.1` steps of `preimageSearchStep`. -/
+def preimageSearch (D : ℕ × List Bool × List Bool → Bool) (q : ℕ × List Bool) : List Bool :=
+  (preimageSearchStep D q)^[q.1] []
+
+theorem length_iterate_preimageSearchStep (D : ℕ × List Bool × List Bool → Bool)
+    (q : ℕ × List Bool) (i : ℕ) : ((preimageSearchStep D q)^[i] []).length = i := by
+  induction i with
+  | zero => rfl
+  | succ i ih =>
+    rw [Function.iterate_succ_apply', preimageSearchStep, List.length_append, ih]
+    rfl
+
+/-- A correct step keeps the prefix extendable to a preimage. -/
+theorem preimageSearchStep_mem {D : ℕ × List Bool × List Bool → Bool}
+    (hD : ∀ p, p ∈ preimagePrefix f ↔ D p = true) {n : ℕ} {y u : List Bool}
+    (hu : (n, y, u) ∈ preimagePrefix f) (hlen : u.length < n) :
+    (n, y, preimageSearchStep D (n, y) u) ∈ preimagePrefix f := by
+  rw [preimageSearchStep]
+  cases hb : D (n, y, u ++ [false])
+  · obtain ⟨x, hx, ⟨v, rfl⟩, hfx⟩ := hu
+    simp only [List.length_append] at hx
+    obtain ⟨b, v, rfl⟩ : ∃ b v', v = b :: v' := List.exists_cons_of_length_pos (by omega)
+    cases b
+    · have hmem : (n, y, u ++ [false]) ∈ preimagePrefix f :=
+        ⟨u ++ false :: v, by simpa using hx, ⟨v, by simp⟩, hfx⟩
+      rw [hD, hb] at hmem
+      exact absurd hmem Bool.false_ne_true
+    · exact ⟨u ++ true :: v, by simpa using hx, ⟨v, by simp⟩, hfx⟩
+  · exact (hD _).2 hb
+
+/-- **Search to decision.** With a decision procedure for the preimage-prefix problem, the search
+finds a preimage of every image, of the same length as the sampled input. -/
+theorem apply_preimageSearch {D : ℕ × List Bool × List Bool → Bool}
+    (hD : ∀ p, p ∈ preimagePrefix f ↔ D p = true) (x : List Bool) :
+    f (preimageSearch D (x.length, f x)) = f x := by
+  have hmem : ∀ i ≤ x.length,
+      (x.length, f x, (preimageSearchStep D (x.length, f x))^[i] []) ∈ preimagePrefix f := by
+    intro i hi
+    induction i with
+    | zero => exact ⟨x, rfl, List.nil_prefix, rfl⟩
+    | succ i ih =>
+      rw [Function.iterate_succ_apply']
+      exact preimageSearchStep_mem hD (ih (by omega))
+        (by rw [length_iterate_preimageSearchStep]; omega)
+  obtain ⟨x', hx', hpre, hfx'⟩ := hmem x.length le_rfl
+  have heq := hpre.eq_of_length (by rw [length_iterate_preimageSearchStep]; exact hx'.symm)
+  dsimp only at heq hfx'
+  change f ((preimageSearchStep D (x.length, f x))^[x.length] []) = f x
+  rw [heq]
+  exact hfx'
+
+/-- **The search is polynomial-time** when the decision procedure is. -/
+theorem computableTidilyInPolyTime_preimageSearch {D : ℕ × List Bool × List Bool → Bool}
+    (hD : ComputableTidilyInPolyTime D encPreimagePrefix encBool) :
+    ComputableTidilyInPolyTime (preimageSearch D) (encPair encUnary encBits) encBits := by
+  unfold preimageSearch
+  refine iterateWithInput_of_bounded_growth (fst _ _) (const []) ?_
+    ⟨.const 1, fun q u => ?_⟩
+  · unfold preimageSearchStep
+    fun_prop
+  · simp [preimageSearchStep]
+
+/-- **Inversion from the preimage-prefix problem.** If the preimage-prefix problem of `f` is in
+`P`, a deterministic polynomial-time algorithm, told the length of the input, finds a preimage of
+every image. -/
+theorem exists_inverse_of_preimagePrefix_mem_P (h : preimagePrefix f ∈ P encPreimagePrefix) :
+    ∃ inverse : ℕ × List Bool → List Bool,
+      ComputableTidilyInPolyTime inverse (encPair encUnary encBits) encBits ∧
+        ∀ x, f (inverse (x.length, f x)) = f x := by
+  obtain ⟨D, hD, hDf⟩ := h
+  exact ⟨preimageSearch D, computableTidilyInPolyTime_preimageSearch hD,
+    apply_preimageSearch hDf⟩
+
+/-! ### One-way functions -/
+
+/-- **Efficient inversion refutes one-wayness.** A deterministic polynomial-time algorithm that,
+told the length of the input, finds a preimage of every image, inverts with probability one. -/
+theorem not_oneWay_of_lengthInverse (inverse : ℕ × List Bool → List Bool)
+    (hinverse : ComputableTidilyInPolyTime inverse (encPair encUnary encBits) encBits)
+    (h : ∀ x, f (inverse (x.length, f x)) = f x) : ¬ OneWay f := by
+  intro hf
+  have hPPT : IsPPT encBits (fun n y => pure (inverse (n, y))) := hinverse.isPPTOn.isPPT
+  have heval (n : ℕ) :
+      ProbComp.eval (inversionGame f (fun n y => pure (inverse (n, y))) n) = PMF.pure true := by
+    have hgame : ProbComp.eval (inversionGame f (fun n y => pure (inverse (n, y))) n) =
+        (BitString.uniformList n).map fun x => f (inverse (n, f x)) == f x := by
+      simp [inversionGame]
+    rw [hgame, ← PMF.bind_pure_comp, PMF.bind_congr_on_support _ _ (fun _ => PMF.pure true)
+      fun x hx => by
+        rw [Function.comp_apply, ← BitString.length_of_mem_support_uniformList hx, h,
+          beq_self_eq_true],
+      PMF.bind_const]
+  apply not_negligible_const (c := 1) one_ne_zero
+  simpa only [Game.succProbability, heval, PMF.pure_apply_self, ENNReal.toNNReal_one] using
+    hf.inversion_negligible _ hPPT
+
+/-- **One-way functions have hard preimage-prefix problems**: the preimage-prefix problem of a
+one-way function is not in `P`. -/
+theorem OneWay.preimagePrefix_notMem_P (hf : OneWay f) :
+    preimagePrefix f ∉ P encPreimagePrefix := fun h =>
+  let ⟨inverse, hinverse, hinv⟩ := exists_inverse_of_preimagePrefix_mem_P h
+  not_oneWay_of_lengthInverse inverse hinverse hinv hf
+
+/-- **One-way functions imply `P ≠ NP`**, for instances of the preimage-prefix problem. -/
+theorem OneWay.P_ne_NP (hf : OneWay f) : P encPreimagePrefix ≠ NP encPreimagePrefix := fun h =>
+  hf.preimagePrefix_notMem_P (h ▸ preimagePrefix_mem_NP hf.polyTime)
+
+/-- **One-way functions imply `SAT ∉ P`**: by the Cook–Levin theorem, the preimage-prefix problem
+reduces to `SAT`. -/
+theorem OneWay.SAT_notMem_P (hf : OneWay f) : SAT ∉ P encCNF := fun h =>
+  hf.preimagePrefix_notMem_P
+    ((CookLevin.SAT_npComplete.2 encPreimagePrefix _ (preimagePrefix_mem_NP hf.polyTime)).mem_P h)
+
+/-- If `SAT` is in `P`, no function is one-way. -/
+theorem not_oneWay_of_SAT_mem_P (h : SAT ∈ P encCNF) : ¬ OneWay f := fun hf =>
+  hf.SAT_notMem_P h
+
+end Cslib.Crypto

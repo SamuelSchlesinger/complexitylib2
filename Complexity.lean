@@ -877,6 +877,7 @@ public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.Collision
+public import Complexity.Crypto.Computational.OneWay.NP
 public import Complexity.Crypto.Computational.OneWay.Normalize
 public import Complexity.Crypto.Computational.OneWayToPRF
 public import Complexity.Crypto.Computational.OneWayToPRG
