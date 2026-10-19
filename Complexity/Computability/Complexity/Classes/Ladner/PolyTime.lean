@@ -1,0 +1,640 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Complexity.Classes.Ladner.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+public import Mathlib.Data.List.DropRight
+import Complexity.Computability.Complexity.Classes.Hierarchy
+import Complexity.Computability.Complexity.Problems.SAT.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Mathlib.Data.Nat.Size
+
+/-!
+# Ladner's language in polynomial time and in NP
+
+The exponent function `Cslib.Complexity.Ladner.H` of Ladner's language is tidily computable in
+polynomial time on unary numbers (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_H`), and
+Ladner's language is in `NP` (`Cslib.Complexity.Ladner.SATH_mem_NP`), with a verifier that reads
+the padded formula and evaluates it under the assignment the certificate describes.
+
+The table of the values `H m`, `m < n`, is built by iterating one step `n` times. The step
+(`Cslib.Complexity.Ladner.hstepB`, equal to `Cslib.Complexity.Ladner.Hstep`) searches the first
+`log₂ (log₂ n)` machine indices; for each, it runs the machine on each of the `n` words with
+indices below `n` with the universal function, for at most `n` steps, and compares the answer with
+membership in the padded language along the table. A word with index below `n` has length at most
+`log₂ n`, so membership is decided by decoding the padded formula and trying the `n` words with
+indices below `n` as certificates (`Cslib.Complexity.Ladner.bruteSAT_iff`). Every intermediate
+value is polynomial in `n`, and the polynomial-time calculus certifies the composite.
+
+The certificate rests on general tools proved first: total decoders for binary numbers, Booleans
+and formulas (`Cslib.Complexity.Ladner.cnfDecoder`), capped powers on unary numbers
+(`Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`), the universal function with its
+number of steps in unary (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_universal`), and the
+words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`).
+
+## Main definitions
+
+* `Cslib.Complexity.Ladner.natDecoder`, `Cslib.Complexity.Ladner.boolDecoder`,
+  `Cslib.Complexity.Ladner.cnfDecoder`: total decoders.
+* `Cslib.Complexity.Ladner.capPow`: powers capped at a bound.
+* `Cslib.Complexity.Ladner.padCheckAt`, `Cslib.Complexity.Ladner.padCheck`: the formula padded in a
+  word, if any.
+* `Cslib.Complexity.Ladner.bruteSAT`: satisfiability by trying the words with small indices.
+* `Cslib.Complexity.Ladner.hstepB`: the step of the exponent function as a search.
+* `Cslib.Complexity.Ladner.verifier`: the verifier of Ladner's language.
+
+## Main results
+
+* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`: capped powers in unary.
+* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_universal`: the universal function, with its
+  number of steps in unary, is polynomial-time.
+* `Cslib.Complexity.Ladner.mem_padSAT_iff`: membership in a padded language through `padCheck`.
+* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_padCheck`: `padCheck` is polynomial-time for a
+  polynomial-time exponent function.
+* `Cslib.Complexity.Ladner.hstepB_eq`: the search computes the step.
+* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_H`: `H` is polynomial-time.
+* `Cslib.Complexity.Ladner.SATH_mem_NP`: Ladner's language is in `NP`.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+-/
+
+@[expose] public section
+
+namespace Cslib.Complexity.Ladner
+
+open Turing.MultiTapeTM Turing.MultiTapeTM.Universal ComputableTidilyInPolyTime
+open Cslib.Logic.PL
+
+/-! ### Decoders -/
+
+theorem rdropWhile_append {α : Type*} (p : α → Bool) (l₁ l₂ : List α) :
+    (l₁ ++ l₂).rdropWhile p =
+      if l₂.rdropWhile p = [] then l₁.rdropWhile p else l₁ ++ l₂.rdropWhile p := by
+  simp only [List.rdropWhile, List.reverse_append, List.dropWhile_append]
+  by_cases h : l₂.reverse.dropWhile p = []
+  · simp [h]
+  · simp [h]
+
+theorem bits_eq_nil_iff {n : ℕ} : n.bits = [] ↔ n = 0 := by
+  rw [← List.length_eq_zero_iff, Nat.size_eq_bits_len, Nat.size_eq_zero]
+
+/-- Binary digits, least significant first, read as a number. -/
+def ofBits (w : List Bool) : ℕ := w.foldr Nat.bit 0
+
+/-- The binary digits of a word read as a number are the word up to its last `true`. -/
+theorem bits_ofBits (w : List Bool) : (ofBits w).bits = w.rdropWhile (!·) := by
+  induction w with
+  | nil => simp [ofBits]
+  | cons b w ih =>
+    rw [ofBits, List.foldr_cons, ← ofBits, ← List.singleton_append, rdropWhile_append, ← ih]
+    by_cases h : ofBits w = 0 ∧ b = false
+    · obtain ⟨h₀, rfl⟩ := h
+      simp [h₀]
+    · rw [Nat.bits_append_bit _ _ fun h₀ => by simpa [h₀] using h]
+      by_cases h₀ : ofBits w = 0
+      · obtain rfl : b = true := by simpa [h₀] using h
+        simp [h₀, List.rdropWhile_singleton]
+      · simp only [bits_eq_nil_iff, h₀, ↓reduceIte]
+        rfl
+
+theorem ofBits_bits (n : ℕ) : ofBits n.bits = n := by
+  induction n using Nat.binaryRec with
+  | zero => simp [ofBits]
+  | bit b n ih =>
+    by_cases h : n = 0 → b = true
+    · rw [Nat.bits_append_bit _ _ h, ofBits, List.foldr_cons, ← ofBits, ih]
+    · obtain ⟨rfl, hb⟩ := not_imp.mp h
+      simp only [Bool.not_eq_true] at hb
+      subst hb
+      simp [ofBits]
+
+/-- Drops the `false`s at the start of a word. -/
+def dropFalsesT : Transducer Bool Bool where
+  q₀ := false
+  step
+    | false, false => (false, [])
+    | _, b => (true, [b])
+  final _ := []
+  length_step_le q b := by cases q <;> cases b <;> simp
+  length_final_le _ := by simp
+
+theorem dropFalsesT_run_true (w : List Bool) : dropFalsesT.run true w = w := by
+  induction w with
+  | nil => rfl
+  | cons b w ih => exact congrArg (b :: ·) ih
+
+theorem dropFalsesT_run (w : List Bool) : dropFalsesT.run false w = w.dropWhile (!·) := by
+  induction w with
+  | nil => rfl
+  | cons b w ih =>
+    cases b
+    · exact ih
+    · exact congrArg (true :: ·) (dropFalsesT_run_true w)
+
+/-- Binary numbers are decoded from their digits up to the last `true`. -/
+def natDecoder : Decoder encNat where
+  decode := ofBits
+  decode_enc := ofBits_bits
+  computable := by
+    have hd : ComputableTidilyInPolyTime (fun w : List Bool => w.dropWhile (!·)) encBits encBits :=
+      of_linear (dropFalsesT.computableTidilyInLinearTimeAndSpace fun w =>
+        (dropFalsesT_run w).symm)
+    have h : ComputableTidilyInPolyTime (fun w : List Bool => (w.reverse.dropWhile (!·)).reverse)
+        encBits encBits := by
+      fun_prop
+    exact (h.of_enc_eq fun w => by rw [encNat_apply, bits_ofBits]; rfl).exists_degree
+
+/-- Booleans are decoded from the first symbol. -/
+def boolDecoder : Decoder encBool where
+  decode w := w.headD false
+  decode_enc _ := rfl
+  computable := (headD (encA := encBool) (encL := encBits) false).exists_degree
+
+/-- Formulas in conjunctive normal form are decoded along their encoding. -/
+def cnfDecoder : Decoder encCNF := .list (.list (.pair natDecoder boolDecoder))
+
+/-- The formula decoded from a word. -/
+def decodeCNF (w : List Bool) : CNF ℕ := cnfDecoder.decode w
+
+@[simp]
+theorem decodeCNF_encCNF (φ : CNF ℕ) : decodeCNF (encCNF φ) = φ := cnfDecoder.decode_enc φ
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_decodeCNF :
+    ComputableTidilyInPolyTime decodeCNF encBits encCNF :=
+  let ⟨_, _, h⟩ := cnfDecoder.computable
+  h.computableTidilyInPolyTime
+
+/-! ### Capped powers -/
+
+theorem min_min_mul (a b c : ℕ) : min (min a c * b) c = min (a * b) c := by
+  rcases le_total a c with h | h
+  · rw [min_eq_left h]
+  · rw [min_eq_right h]
+    rcases Nat.eq_zero_or_pos b with rfl | hb
+    · simp
+    · rw [min_eq_right (Nat.le_mul_of_pos_right c hb),
+        min_eq_right (h.trans (Nat.le_mul_of_pos_right a hb))]
+
+theorem iterate_min_mul (b c e a : ℕ) :
+    (fun x => min (x * b) c)^[e] (min a c) = min (a * b ^ e) c := by
+  induction e generalizing a with
+  | zero => simp
+  | succ e ih =>
+    rw [Function.iterate_succ_apply, min_min_mul, ih, pow_succ', mul_assoc]
+
+/-- The power `b ^ e`, capped at `c`. -/
+def capPow (b e c : ℕ) : ℕ := min (b ^ e) c
+
+/-- **Capped powers in unary.** `min (b ^ e) c` is polynomial-time on unary numbers: multiplying
+`e` times and capping at `c` never holds a number larger than the input. -/
+theorem computableTidilyInPolyTime_capPow_pair :
+    ComputableTidilyInPolyTime (fun p : ℕ × ℕ × ℕ => capPow p.1 p.2.1 p.2.2)
+      (encPair encUnary (encPair encUnary encUnary)) encUnary := by
+  have h := iterateWith (encIn := encPair encUnary (encPair encUnary encUnary))
+    (encState := encUnary) (encPar := encPair encUnary encUnary)
+    (par := fun p => (p.1, p.2.2)) (count := fun p => p.2.1) (init := fun p => min 1 p.2.2)
+    (step := fun q x => min (x * q.1) q.2) (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (bound := fun p => (encPair encUnary (encPair encUnary encUnary) p).length) .self
+    (fun p i _ => by
+      simp only [iterate_min_mul, encUnary_apply, List.length_replicate, encPair_apply,
+        List.length_append, length_frame]
+      have := min_le_right (1 * p.1 ^ i) p.2.2
+      omega)
+  simpa only [iterate_min_mul, one_mul, capPow] using h
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_capPow {α : Type} {input : α ↪ List Bool}
+    {base exp cap : α → ℕ} (hbase : ComputableTidilyInPolyTime base input encUnary)
+    (hexp : ComputableTidilyInPolyTime exp input encUnary)
+    (hcap : ComputableTidilyInPolyTime cap input encUnary) :
+    ComputableTidilyInPolyTime (fun x => capPow (base x) (exp x) (cap x)) input encUnary :=
+  computableTidilyInPolyTime_capPow_pair.comp (hbase.prod (hexp.prod hcap))
+
+/-! ### The universal function with a unary clock -/
+
+theorem runBound_mono {D N t t' : ℕ} (h : t ≤ t') : runBound D N t ≤ runBound D N t' := by
+  unfold runBound ctxBound cfgBound tapeBound
+  gcongr
+
+/-- The time and space of the universal function, polynomially in the length of its input with
+the number of steps in unary. -/
+theorem universal_bounds_unary (i : Desc × List ℕ × ℕ) :
+    (i.2.2 + 1) * (stepBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 +
+        runBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 +
+          ((encNat i.2.2).length + 1) ^ 2) + ((eIn i).length + 1) ^ 2 ≤
+      100025 * ((encPair eDesc (encPair (encList encUnary) encUnary) i).length + 1) ^ 8 ∧
+    runBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 + (eIn i).length ≤
+      205 * ((encPair eDesc (encPair (encList encUnary) encUnary) i).length + 1) ^ 3 := by
+  obtain ⟨d, x, t⟩ := i
+  set n := (encPair eDesc (encPair (encList encUnary) encUnary) (d, x, t)).length with hn
+  have hlen : n = 2 * descLen d + 1 + (2 * (encList encUnary x).length + 1 + t) := by
+    simp [hn, descLen]
+  have hL := length_encNat_le t
+  have hIn : (eIn (d, x, t)).length ≤ 5 * n + 2 := by
+    simp only [eIn, length_encPair]
+    simp only [descLen] at hlen
+    omega
+  obtain ⟨h₁, h₂⟩ := Diagonal.universal_bounds_le (D := descLen d)
+    (N := (encList encUnary x).length) (J := t + 1) (B := n) (L := (encNat t).length)
+    (by omega) (by omega) (by omega) (by omega)
+  have hstep := stepBound_mono (D := descLen d) (N := (encList encUnary x).length) le_rfl le_rfl
+    (Nat.le_add_right t 1)
+  have hrun := runBound_mono (D := descLen d) (N := (encList encUnary x).length)
+    (Nat.le_add_right t 1)
+  have ht : t + 1 ≤ n + 1 := by omega
+  have hpow : (t + 1) ^ 3 ≤ (n + 1) ^ 3 := Nat.pow_le_pow_left ht 3
+  simp only at h₁ h₂ hstep hrun ⊢
+  constructor
+  · have hA : (t + 1) * (stepBound (descLen d) (encList encUnary x).length t +
+        runBound (descLen d) (encList encUnary x).length t + ((encNat t).length + 1) ^ 2) ≤
+        100000 * (n + 1) ^ 5 * (n + 1) ^ 3 :=
+      calc _ ≤ (t + 1 + 1) * (stepBound (descLen d) (encList encUnary x).length (t + 1) +
+            runBound (descLen d) (encList encUnary x).length (t + 1) +
+              ((encNat t).length + 1) ^ 2) := Nat.mul_le_mul (by omega) (by omega)
+        _ ≤ _ := h₁
+        _ ≤ _ := Nat.mul_le_mul_left _ hpow
+    have hB : ((eIn (d, x, t)).length + 1) ^ 2 ≤ 25 * (n + 1) ^ 8 := by
+      calc _ ≤ (5 * (n + 1)) ^ 2 := Nat.pow_le_pow_left (by omega) 2
+        _ = 25 * (n + 1) ^ 2 := by ring
+        _ ≤ 25 * (n + 1) ^ 8 := Nat.mul_le_mul_left _
+            (Nat.pow_le_pow_right (by omega) (by omega))
+    have : 100000 * (n + 1) ^ 5 * (n + 1) ^ 3 = 100000 * (n + 1) ^ 8 := by ring
+    omega
+  · have hA : runBound (descLen d) (encList encUnary x).length t ≤ 200 * (n + 1) ^ 3 :=
+      calc _ ≤ _ := hrun
+        _ ≤ 200 * (n + 1) ^ 2 * (t + 1) := h₂
+        _ ≤ 200 * (n + 1) ^ 2 * (n + 1) := Nat.mul_le_mul_left _ ht
+        _ = 200 * (n + 1) ^ 3 := by ring
+    have hB : 5 * n + 2 ≤ 5 * (n + 1) ^ 3 := by
+      have : n + 1 ≤ (n + 1) ^ 3 := Nat.le_self_pow (by omega) _
+      omega
+    omega
+
+/-- **The universal function with a unary clock is polynomial-time**: written in unary, the number
+of steps counts towards the length of the input. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_universal :
+    ComputableTidilyInPolyTime universal
+      (encPair eDesc (encPair (encList encUnary) encUnary)) eOut := by
+  have hconv : ComputableTidilyInPolyTime (fun i : Desc × List ℕ × ℕ => i)
+      (encPair eDesc (encPair (encList encUnary) encUnary)) eIn := by
+    have : (fun i : Desc × List ℕ × ℕ => i) = fun i => (i.1, i.2.1, i.2.2) := rfl
+    rw [this]
+    fun_prop
+  obtain ⟨d, e, hdeg⟩ := hconv.exists_degree
+  exact (computableTidilyInO_universal.comp hdeg.inO).computableTidilyInPolyTime
+    ((PolyBounded.of_forall_le 1 d fun _ => by simp).add
+      (PolyBounded.of_forall_le 100025 8 fun i => (universal_bounds_unary i).1))
+    ((PolyBounded.of_forall_le 1 d fun _ => by simp).add
+      (PolyBounded.of_forall_le 205 3 fun i => (universal_bounds_unary i).2))
+
+/-! ### Words by index -/
+
+/-- The word with a given index is polynomial-time in the index in unary. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_word : ComputableTidilyInPolyTime word encUnary encBits := by
+  have h : word = fun j => (encNat (j + 1)).take ((encNat (j + 1)).length - 1) := by
+    funext j
+    simp [word, encNat_apply, List.dropLast_eq_take]
+  rw [h]
+  fun_prop
+
+/-! ### Reading a padded formula -/
+
+/-- The formula `φ` such that `y` is `encCNF φ` padded with `(encCNF φ).length ^ h` ones, if there
+is one. -/
+def padCheckAt (y : List Bool) (h : ℕ) : Option (CNF ℕ) :=
+  if (unpad y).2 < y.length ∧ encCNF (decodeCNF (unpad y).1) = (unpad y).1 ∧
+      capPow (unpad y).1.length h ((unpad y).2 + 1) = (unpad y).2 then
+    some (decodeCNF (unpad y).1)
+  else none
+
+theorem padCheckAt_eq_some_iff {y : List Bool} {h : ℕ} {φ : CNF ℕ} :
+    padCheckAt y h = some φ ↔ y = pad (encCNF φ) ((encCNF φ).length ^ h) := by
+  constructor
+  · intro hφ
+    rw [padCheckAt] at hφ
+    split_ifs at hφ with hc
+    obtain ⟨hlt, henc, hpow⟩ := hc
+    obtain rfl := Option.some_injective _ hφ
+    have hk : (unpad y).1.length ^ h = (unpad y).2 := by
+      rw [capPow] at hpow
+      rcases le_total ((unpad y).1.length ^ h) ((unpad y).2 + 1) with h₁ | h₁
+      · rwa [min_eq_left h₁] at hpow
+      · rw [min_eq_right h₁] at hpow
+        omega
+    rw [henc, hk, pad_unpad hlt]
+  · rintro rfl
+    rw [padCheckAt, unpad_pad]
+    simp [capPow]
+
+/-- The formula padded in `y` along the exponent function `e`, if any. -/
+def padCheck (e : ℕ → ℕ) (y : List Bool) : Option (CNF ℕ) :=
+  padCheckAt y (e (unpad y).1.length)
+
+theorem padCheck_eq_some_iff {e : ℕ → ℕ} {y : List Bool} {φ : CNF ℕ} :
+    padCheck e y = some φ ↔ y = pad (encCNF φ) ((encCNF φ).length ^ e (encCNF φ).length) := by
+  rw [padCheck, padCheckAt_eq_some_iff]
+  constructor
+  · intro h
+    have hu : (unpad y).1 = encCNF φ := by rw [h, unpad_pad]
+    rwa [hu] at h
+  · intro h
+    rw [h, unpad_pad]
+
+/-- **Membership in a padded language through `padCheck`.** -/
+theorem mem_padSAT_iff {e : ℕ → ℕ} {y : List Bool} :
+    y ∈ padSAT e ↔ ∃ φ, padCheck e y = some φ ∧ φ ∈ SAT := by
+  simp only [padCheck_eq_some_iff, padSAT, Set.mem_ofPred_eq]
+  exact ⟨fun ⟨φ, hφ, h⟩ => ⟨φ, h, hφ⟩, fun ⟨φ, h, hφ⟩ => ⟨φ, hφ, h⟩⟩
+
+theorem computableTidilyInPolyTime_idxOf_false_reverse :
+    ComputableTidilyInPolyTime (fun y : List Bool => y.reverse.idxOf false) encBits encUnary :=
+  idxOfWithInput (encA := encBool) (list := fun y : List Bool => y.reverse)
+    (value := fun _ => false) (bitsToList.comp bitsReverse) (const false)
+
+/-- Splitting a padded word is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_unpad :
+    ComputableTidilyInPolyTime unpad encBits (encPair encBits encUnary) := by
+  have hk := computableTidilyInPolyTime_idxOf_false_reverse
+  unfold unpad
+  fun_prop
+
+/-- Reading the formula padded with a given exponent is polynomial-time. -/
+theorem computableTidilyInPolyTime_padCheckAt :
+    ComputableTidilyInPolyTime (fun p : List Bool × ℕ => padCheckAt p.1 p.2)
+      (encPair encBits encUnary) (encOption encCNF) := by
+  have henc : ComputableTidilyInPolyTime (fun φ => encCNF φ) encCNF encBits := encode encCNF
+  unfold padCheckAt
+  fun_prop
+
+/-- Reading the formula padded along a computed exponent function is polynomial-time. The
+exponent function may capture the input. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_padCheck {α : Type} {input : α ↪ List Bool}
+    {e : α → ℕ → ℕ} {y : α → List Bool}
+    (he : ComputableTidilyInPolyTime (fun p : α × ℕ => e p.1 p.2) (encPair input encUnary)
+      encUnary)
+    (hy : ComputableTidilyInPolyTime y input encBits) :
+    ComputableTidilyInPolyTime (fun x => padCheck (e x) (y x)) input (encOption encCNF) := by
+  have h := computableTidilyInPolyTime_padCheckAt
+  unfold padCheck
+  fun_prop
+
+/-! ### Satisfiability of short formulas -/
+
+/-- Whether one of the words with indices below `n` is a satisfying certificate for `φ`. -/
+def bruteSAT (n : ℕ) (φ : CNF ℕ) : Bool := (List.range n).any fun j => SAT.verifier (φ, word j)
+
+/-- **Short formulas are decided by trying the words with small indices**: every certificate of
+the length of the encoded formula has a smaller index than `n`. -/
+theorem bruteSAT_iff {n : ℕ} {φ : CNF ℕ} (h : 2 ^ ((encCNF φ).length + 1) ≤ n + 1) :
+    bruteSAT n φ = true ↔ φ ∈ SAT := by
+  constructor
+  · intro hb
+    obtain ⟨j, -, hj⟩ := List.any_eq_true.mp hb
+    exact ⟨_, hj⟩
+  · intro hφ
+    obtain ⟨w, hw, hv⟩ := (SAT.isVerifier φ).mp hφ
+    rw [Polynomial.eval_X] at hw
+    have hi := index_add_two_le w
+    rw [hw] at hi
+    exact List.any_eq_true.mpr ⟨index w, List.mem_range.mpr (by omega), by rwa [word_index]⟩
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_bruteSAT {α : Type} {input : α ↪ List Bool}
+    {n : α → ℕ} {φ : α → CNF ℕ} (hn : ComputableTidilyInPolyTime n input encUnary)
+    (hφ : ComputableTidilyInPolyTime φ input encCNF) :
+    ComputableTidilyInPolyTime (fun x => bruteSAT (n x) (φ x)) input encBool := by
+  unfold bruteSAT
+  fun_prop
+
+/-! ### The step of the exponent function -/
+
+/-- Membership in the padded language along the table `T`, decided by `bruteSAT` with the
+words with indices below the length of `T`. -/
+def memB (T : List ℕ) (y : List Bool) : Bool :=
+  (padCheck (fun m => T.getD m 0) y).elim false (bruteSAT T.length)
+
+theorem memB_word_iff {T : List ℕ} {j : ℕ} (hj : j < T.length) :
+    memB T (word j) = true ↔ word j ∈ padSAT (fun m => T.getD m 0) := by
+  rw [mem_padSAT_iff, memB]
+  cases hc : padCheck (fun m => T.getD m 0) (word j) with
+  | none => simp
+  | some φ =>
+    simp only [Option.elim_some, Option.some.injEq, exists_eq_left']
+    refine bruteSAT_iff ?_
+    have hy := congrArg List.length (padCheck_eq_some_iff.mp hc)
+    have h₂ := two_pow_length_word_le j
+    rw [length_pad] at hy
+    calc 2 ^ ((encCNF φ).length + 1) ≤ 2 ^ (word j).length :=
+          Nat.pow_le_pow_right (by omega) (by omega)
+      _ ≤ T.length + 1 := by omega
+
+/-- The test of `Cslib.Complexity.Ladner.Agrees` along the table `T`, as a Boolean. -/
+def agreesB (T : List ℕ) (i j : ℕ) : Bool :=
+  decide (runIndexed i (word j) (capPow (2 * (word j).length + 2) i T.length) =
+    ([eBit (memB T (word j))], true))
+
+theorem agreesB_iff {T : List ℕ} {i j : ℕ} (hj : j < T.length) :
+    agreesB T i j = true ↔ Agrees (fun m => T.getD m 0) T.length i j := by
+  rw [agreesB, decide_eq_true_iff, Agrees, ← memB_word_iff hj]
+  constructor
+  · intro h
+    exact ⟨_, h, Iff.rfl⟩
+  · rintro ⟨b, hb, hiff⟩
+    have : memB T (word j) = b := by
+      cases b <;> cases hm : memB T (word j) <;> simp_all
+    rwa [this]
+
+/-- The step of the exponent function as a search over machine indices and words. -/
+def hstepB (T : List ℕ) : ℕ :=
+  ((List.range (Nat.log 2 (Nat.log 2 T.length))).find? fun i =>
+    (List.range T.length).all fun j => agreesB T i j).getD (Nat.log 2 (Nat.log 2 T.length))
+
+/-- The least index below `m` passing a test, or `m`, as a search over `List.range m`. -/
+theorem find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
+    ((List.range m).find? p).getD m = sInf {i | i = m ∨ p i = true} := by
+  set v := ((List.range m).find? p).getD m with hv
+  have hmem : v ∈ {i | i = m ∨ p i = true} ∧ ∀ i < v, i ∉ {i | i = m ∨ p i = true} := by
+    cases hf : (List.range m).find? p with
+    | none =>
+      rw [hv, hf, Option.getD_none]
+      rw [List.find?_eq_none] at hf
+      refine ⟨Or.inl rfl, fun i hi hmem => ?_⟩
+      rcases hmem with rfl | h
+      · exact lt_irrefl _ hi
+      · exact hf i (List.mem_range.mpr hi) h
+    | some i₀ =>
+      rw [hv, hf, Option.getD_some]
+      obtain ⟨hp, k, hk, hki, hmin⟩ := List.find?_eq_some_iff_getElem.mp hf
+      rw [List.getElem_range] at hki
+      subst hki
+      rw [List.length_range] at hk
+      refine ⟨Or.inr hp, fun i hi hmem => ?_⟩
+      rcases hmem with rfl | h
+      · omega
+      · have := hmin i hi
+        simp_all
+  exact le_antisymm (not_lt.mp fun h => hmem.2 _ h (Nat.sInf_mem ⟨v, hmem.1⟩)) (Nat.sInf_le hmem.1)
+
+/-- **The search computes the step.** -/
+theorem hstepB_eq (T : List ℕ) : hstepB T = Hstep T := by
+  rw [hstepB, find?_range_getD_eq_sInf, Hstep]
+  congr 1
+  ext i
+  simp only [Set.mem_ofPred_eq, List.all_eq_true, List.mem_range]
+  exact or_congr_right (forall₂_congr fun j hj => agreesB_iff hj)
+
+/-- The description of the machine with a given index is polynomial-time in the index. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_decodeDesc :
+    ComputableTidilyInPolyTime decodeDesc encBits eDesc :=
+  let ⟨_, _, h⟩ := exists_computableTidilyInDegree_decodeDesc
+  h.computableTidilyInPolyTime
+
+/-- The input of a machine as symbols is linear. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_map_eBit :
+    ComputableTidilyInPolyTime (fun w : List Bool => w.map eBit) encBits (encList encUnary) :=
+  Diagonal.computableTidilyInDegree_map_eBit.computableTidilyInPolyTime
+
+/-- The coding of bits as symbols is a finite computation. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_eBit :
+    ComputableTidilyInPolyTime (fun b => eBit b) encBool encUnary :=
+  of_finite _
+
+/-- The run of an indexed machine, with the number of steps in unary, is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_runIndexed {α : Type} {input : α ↪ List Bool}
+    {i : α → ℕ} {w : α → List Bool} {t : α → ℕ}
+    (hi : ComputableTidilyInPolyTime i input encUnary)
+    (hw : ComputableTidilyInPolyTime w input encBits)
+    (ht : ComputableTidilyInPolyTime t input encUnary) :
+    ComputableTidilyInPolyTime (fun x => runIndexed (i x) (w x) (t x)) input eOut := by
+  unfold runIndexed
+  fun_prop
+
+theorem computableTidilyInPolyTime_memB :
+    ComputableTidilyInPolyTime (fun p : List ℕ × List Bool => memB p.1 p.2)
+      (encPair (encList encUnary) encBits) encBool := by
+  unfold memB
+  fun_prop
+
+theorem computableTidilyInPolyTime_agreesB :
+    ComputableTidilyInPolyTime (fun p : (List ℕ × ℕ) × ℕ => agreesB p.1.1 p.1.2 p.2)
+      (encPair (encPair (encList encUnary) encUnary) encUnary) encBool := by
+  have hm := computableTidilyInPolyTime_memB
+  unfold agreesB
+  fun_prop
+
+/-- The step of the exponent function is polynomial-time in its table. -/
+theorem computableTidilyInPolyTime_hstepB :
+    ComputableTidilyInPolyTime hstepB (encList encUnary) encUnary := by
+  have ha := computableTidilyInPolyTime_agreesB
+  have hall : ComputableTidilyInPolyTime
+      (fun p : List ℕ × ℕ => (List.range p.1.length).all fun j => agreesB p.1 p.2 j)
+      (encPair (encList encUnary) encUnary) encBool := by
+    fun_prop
+  unfold hstepB
+  fun_prop
+
+/-! ### The exponent function -/
+
+theorem Htable_eq_iterate (n : ℕ) : Htable n = (fun T => T ++ [hstepB T])^[n] [] := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [Htable, Function.iterate_succ_apply', ← ih, hstepB_eq]
+
+/-- The tables of `H` are polynomial-time in their length, in unary. -/
+theorem computableTidilyInPolyTime_Htable :
+    ComputableTidilyInPolyTime Htable encUnary (encList encUnary) := by
+  have hs := computableTidilyInPolyTime_hstepB
+  have h := iterate (encIn := encUnary) (encState := encList encUnary) (count := fun n => n)
+    (init := fun _ => []) (step := fun T => T ++ [hstepB T]) (by fun_prop) (by fun_prop)
+    (by fun_prop) (bound := fun n => n * (2 * n + 1))
+    (.of_forall_le 2 2 fun n => by simp only [encUnary_apply, List.length_replicate]; nlinarith)
+    (fun n i hi => by
+      rw [← Htable_eq_iterate]
+      calc (encList encUnary (Htable i)).length ≤ (Htable i).length * (2 * n + 1) :=
+            length_encList_le encUnary _ fun a ha => by
+              rw [Htable_eq] at ha
+              obtain ⟨m, hm, rfl⟩ := List.mem_map.mp ha
+              simpa using (H_le_self m).trans (by have := List.mem_range.mp hm; omega)
+        _ ≤ n * (2 * n + 1) := by rw [length_Htable]; exact Nat.mul_le_mul_right _ hi)
+  simpa only [← Htable_eq_iterate] using h
+
+/-- **`H` is polynomial-time** on unary numbers. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_H : ComputableTidilyInPolyTime H encUnary encUnary := by
+  have h := computableTidilyInPolyTime_hstepB.comp computableTidilyInPolyTime_Htable
+  have heq : hstepB ∘ Htable = H := funext fun n => hstepB_eq _
+  rwa [heq] at h
+
+/-! ### Ladner's language is in NP -/
+
+/-- The verifier of Ladner's language: read the padded formula and evaluate it under the
+assignment the certificate describes. -/
+noncomputable def verifier (x : List Bool × List Bool) : Bool :=
+  (padCheck H x.1).elim false fun φ => SAT.verifier (φ, x.2)
+
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier (encPair encBits encBits) encBool := by
+  have hH : ComputableTidilyInPolyTime (fun p : (List Bool × List Bool) × ℕ => H p.2)
+      (encPair (encPair encBits encBits) encUnary) encUnary :=
+    computableTidilyInPolyTime_H.comp (snd _ _)
+  unfold verifier
+  fun_prop
+
+/-- Padding a certificate with `false` does not change the assignment it describes. -/
+theorem assignment_append_replicate (φ : CNF ℕ) (w : List Bool) (k : ℕ) :
+    SAT.assignment φ (w ++ List.replicate k false) = SAT.assignment φ w := by
+  funext v
+  simp only [SAT.assignment, List.getD_eq_getElem?_getD, List.getElem?_append]
+  split_ifs with h
+  · rfl
+  · rw [List.getElem?_eq_none (l := w) (by omega), List.getElem?_replicate]
+    split <;> rfl
+
+/-- `Cslib.Complexity.Ladner.verifier` verifies Ladner's language with certificates as long as the
+word. -/
+theorem isVerifier : IsVerifier encBits Polynomial.X verifier SATH := by
+  intro y
+  simp only [Polynomial.eval_X, encBits_apply, verifier]
+  constructor
+  · intro hy
+    obtain ⟨φ, hφ, hsat⟩ := mem_padSAT_iff.mp hy
+    obtain ⟨w, hw, hv⟩ := (SAT.isVerifier φ).mp hsat
+    rw [Polynomial.eval_X] at hw
+    have hlen := congrArg List.length (padCheck_eq_some_iff.mp hφ)
+    rw [length_pad] at hlen
+    refine ⟨w ++ List.replicate (y.length - w.length) false,
+      by rw [List.length_append, List.length_replicate]; omega, ?_⟩
+    rw [hφ, Option.elim_some]
+    simpa only [SAT.verifier, assignment_append_replicate] using hv
+  · rintro ⟨w, -, hv⟩
+    cases hφ : padCheck H y with
+    | none => simp [hφ] at hv
+    | some φ =>
+      rw [hφ, Option.elim_some] at hv
+      exact mem_padSAT_iff.mpr ⟨φ, hφ, _, hv⟩
+
+/-- **Ladner's language is in `NP`**, with the verifier evaluating the padded formula. -/
+theorem SATH_mem_NP : SATH ∈ NP encBits :=
+  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+
+end Cslib.Complexity.Ladner
