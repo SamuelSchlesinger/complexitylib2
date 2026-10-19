@@ -19,6 +19,7 @@ import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
+import ComplexityTests.Code
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CompareSwap
