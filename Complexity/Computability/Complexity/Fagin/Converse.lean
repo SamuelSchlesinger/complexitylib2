@@ -56,14 +56,16 @@ sentence over `L`.
 * `Cslib.Logic.Vocabulary.exists_pow_bound`: existence of a tuple width `k ≥ 1` such that `n ^ k`
   bounds both the verifier's input-plus-certificate length and its running time for all well-formed
   inputs of cardinality `n ≥ 2`.
-* `Cslib.Logic.Vocabulary.realize_npPowerSentence_iff`: on `Fin B`, `v.npPowerSentence tm` holds
+* `Cslib.Logic.Vocabulary.realize_npPowerSentence`: on `Fin B`, `v.npPowerSentence tm` holds
   iff `CookLevin.tableau tm (frame (encStructure a)) L (B - 1)` is satisfiable for some certificate
   length `L` with `|frame (encStructure a)| + L + 1 < B`.
 * `Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP`: every isomorphism-closed class `K` whose
   query language is in `NP` is existential second-order definable.
 * `Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP`,
-  `Cslib.Logic.Vocabulary.definable_iff_queryLanguage_mem_NP`: **Fagin's theorem** (`Definable K ↔
-  v.queryLanguage K ∈ NP encStructure`).
+  `Cslib.Logic.Vocabulary.definable_iff_queryLanguage_mem_NP`,
+  `Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP`: **Fagin's theorem**
+  (`Definable K ↔ v.queryLanguage K ∈ NP encStructure` for isomorphism-closed `K`, and
+  `Definable K ↔ IsoClosed K ∧ v.queryLanguage K ∈ NP encStructure` in general).
 
 ## References
 
@@ -210,7 +212,7 @@ noncomputable def npPowerSentence : ESO.Sentence v.powerLanguage :=
 well-formed input `a` with `(frame (encStructure a)).length + 1 < B`, `(v.npPowerSentence tm)`
 holds if and only if `CookLevin.tableau tm (frame (encStructure a)) L (B - 1)` is satisfiable for
 some certificate length `L` with `(frame (encStructure a)).length + L + 1 < B`. -/
-theorem realize_npPowerSentence_iff {a : EncodedStructure} (ha : v.WellFormed a) {B : ℕ}
+theorem realize_npPowerSentence {a : EncodedStructure} (ha : v.WellFormed a) {B : ℕ}
     (hB : (frame (encStructure a)).length + 1 < B) :
     (letI := v.powerStructure a B;
       (v.npPowerSentence tm).Realize (Fin B)) ↔
@@ -222,8 +224,8 @@ theorem realize_npPowerSentence_iff {a : EncodedStructure} (ha : v.WellFormed a)
   · rintro ⟨I_in, h⟩
     let _ := ESO.varLanguage.structure (arity := fun _ : Bool => 1) I_in
     obtain ⟨hlay, htab⟩ := (ESO.Sentence.realize_inf (M := Fin B)).1 h
-    obtain ⟨huLen, huBit⟩ := (v.realize_layoutESOSentence_iff ha (by omega) I_in).1 hlay
-    exact (v.realize_tableauESOSentence_iff tm a B I_in hB huLen huBit).1 htab
+    obtain ⟨huLen, huBit⟩ := (v.realize_layoutESOSentence ha (by omega) I_in).1 hlay
+    exact (v.realize_tableauESOSentence tm a B I_in hB huLen huBit).1 htab
   · intro hsat
     let I_in : ∀ b : Bool, Set (Fin ((fun _ : Bool => 1) b) → Fin B) := fun b =>
       if b then {x | (x 0 : ℕ) = (frame (encStructure a)).length}
@@ -234,8 +236,8 @@ theorem realize_npPowerSentence_iff {a : EncodedStructure} (ha : v.WellFormed a)
     have huBit : ∀ p : Fin B, (p : ℕ) < (frame (encStructure a)).length →
         (![p] ∈ I_in false ↔ (frame (encStructure a))[(p : ℕ)]? = some true) :=
       fun _ _ => Iff.rfl
-    have hlay := (v.realize_layoutESOSentence_iff ha (by omega) I_in).2 ⟨huLen, huBit⟩
-    have htab := (v.realize_tableauESOSentence_iff tm a B I_in hB huLen huBit).2 hsat
+    have hlay := (v.realize_layoutESOSentence ha (by omega) I_in).2 ⟨huLen, huBit⟩
+    have htab := (v.realize_tableauESOSentence tm a B I_in hB huLen huBit).2 hsat
     exact ⟨I_in, (ESO.Sentence.realize_inf (M := Fin B)).2 ⟨hlay, htab⟩⟩
 
 end Vocabulary
@@ -260,7 +262,7 @@ theorem Definable.of_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
   obtain ⟨k, hk, har, hpow⟩ := v.exists_pow_bound p c d
   refine Definable.of_powerLanguage v hK k hk har (v.npPowerSentence tm) fun a ha h2 => ?_
   obtain ⟨hB1, hB2⟩ := hpow a ha h2
-  rw [v.realize_npPowerSentence_iff tm ha (by omega)]
+  rw [v.realize_npPowerSentence tm ha (by omega)]
   have hsat := CookLevin.exists_tableau_satisfiable_iff_of_strictVerifier hV htm
     (a := a) (M := a.1 ^ k - 2 - (frame (encStructure a)).length) (T := a.1 ^ k - 1)
     (by omega) fun w hw => ?_
@@ -283,17 +285,20 @@ theorem definable_iff_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational
     Definable K ↔ v.queryLanguage K ∈ NP encStructure :=
   ⟨Definable.queryLanguage_mem_NP v, Definable.of_queryLanguage_mem_NP v hK⟩
 
-end ESO
+/-- **Fagin's theorem** (hypothesis-free form): a class `K` of finite relational structures over a
+language `L` with a finite vocabulary `v` is existential second-order definable if and only if `K`
+is closed under isomorphism and its query language `v.queryLanguage K` belongs to
+`NP encStructure`. -/
+theorem definable_iff_isoClosed_and_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
+    (v : Vocabulary L) {K : Set (Bundled.{0} L.Structure)} :
+    Definable K ↔ IsoClosed K ∧ v.queryLanguage K ∈ NP encStructure :=
+  ⟨fun h => ⟨h.isoClosed, h.queryLanguage_mem_NP v⟩,
+    fun ⟨hK, hNP⟩ => Definable.of_queryLanguage_mem_NP v hK hNP⟩
 
-namespace Vocabulary
+end ESO
 
 /-- **Fagin's theorem** (`Vocabulary` dot-notation alias of
 `Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP`). -/
-theorem definable_iff_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
-    (v : Vocabulary L) {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K) :
-    ESO.Definable K ↔ v.queryLanguage K ∈ NP encStructure :=
-  ESO.definable_iff_queryLanguage_mem_NP v hK
-
-end Vocabulary
+alias Vocabulary.definable_iff_queryLanguage_mem_NP := ESO.definable_iff_queryLanguage_mem_NP
 
 end Cslib.Logic
