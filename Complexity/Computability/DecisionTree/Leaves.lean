@@ -13,7 +13,8 @@ public import Complexity.Computability.DecisionTree.Basic
 # Leaves and paths of decision trees
 
 The Boolean answers along a root-to-leaf path identify the reached leaf, even when different
-leaves have the same label. The structural leaf count includes unreachable leaves.
+leaves have the same label. The structural leaf count includes unreachable leaves; a tree of depth
+`d` has at most `2 ^ d` leaves.
 
 ## Main definitions
 
@@ -23,6 +24,7 @@ leaves have the same label. The structural leaf count includes unreachable leave
 ## Main results
 
 * `Cslib.DecisionTree.eval_eq_of_path_eq`: a common path gives a common output.
+* `Cslib.DecisionTree.leafCount_le_two_pow_depth`: a tree of depth `d` has at most `2 ^ d` leaves.
 -/
 
 @[expose] public section
@@ -46,6 +48,15 @@ theorem leafCount_pos (t : DecisionTree ι β) : 0 < t.leafCount := by
   induction t with
   | leaf => exact Nat.zero_lt_one
   | node _ _ _ ih _ => exact Nat.add_pos_left ih _
+
+/-- A decision tree of depth `d` has at most `2 ^ d` structural leaves. -/
+theorem leafCount_le_two_pow_depth (t : DecisionTree ι β) : t.leafCount ≤ 2 ^ t.depth := by
+  induction t with
+  | leaf => exact le_refl 1
+  | node i t₀ t₁ ih₀ ih₁ =>
+    rw [leafCount, depth_node, Nat.pow_succ, Nat.mul_two]
+    exact Nat.add_le_add (ih₀.trans (Nat.pow_le_pow_right Nat.two_pos (Nat.le_max_left _ _)))
+      (ih₁.trans (Nat.pow_le_pow_right Nat.two_pos (Nat.le_max_right _ _)))
 
 /-- Inputs following the same path reach the same leaf label. -/
 theorem eval_eq_of_path_eq (t : DecisionTree ι β) {x y : ι → Bool}

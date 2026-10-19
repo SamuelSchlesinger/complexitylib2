@@ -56,15 +56,6 @@ open Finset BitString
 
 variable {ι β : Type*}
 
-/-- A decision tree of depth `d` has at most `2 ^ d` structural leaves. -/
-theorem leafCount_le_two_pow_depth (t : DecisionTree ι β) : t.leafCount ≤ 2 ^ t.depth := by
-  induction t with
-  | leaf => exact le_refl 1
-  | node i t₀ t₁ ih₀ ih₁ =>
-    rw [leafCount, depth_node, pow_succ, mul_two]
-    exact add_le_add (ih₀.trans (Nat.pow_le_pow_right Nat.two_pos (le_max_left _ _)))
-      (ih₁.trans (Nat.pow_le_pow_right Nat.two_pos (le_max_right _ _)))
-
 variable [Fintype ι] [DecidableEq ι]
 
 /-- The triangle inequality for one coefficient at a node. -/
