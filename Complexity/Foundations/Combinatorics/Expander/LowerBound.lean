@@ -13,7 +13,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Basic
 # A lower bound on the spectral expansion
 
 A `D`-regular multigraph on `N ≥ 2` vertices has spectral expansion
-`λ(G) ^ 2 ≥ (N - D) / (D (N - 1))` (`sq_spectralExpansion_ge`). So no graph of degree below its
+`(N - D) / (D (N - 1)) ≤ λ(G) ^ 2` (`div_le_sq_spectralExpansion`). So no graph of degree below its
 number of vertices has `λ(G) = 0` (`spectralExpansion_pos`), and `λ(G) ≥ 1 / √(2 D)` once
 `N ≥ 2 D` (`one_div_sqrt_two_mul_le_spectralExpansion`): bounded-degree expanders cannot be
 arbitrarily good. The bound is tight for `D = N`: the complete graph with a self-loop at every
@@ -34,8 +34,8 @@ the second eigenvalue in [Hoory, Linial and Wigderson, Section 5][HooryLinialWig
 
 ## Main results
 
-* `Cslib.RotationMap.sq_spectralExpansion_ge`, `Cslib.RotationMap.sqrt_le_spectralExpansion`:
-  `λ(G) ^ 2 ≥ (N - D) / (D (N - 1))`.
+* `Cslib.RotationMap.div_le_sq_spectralExpansion`, `Cslib.RotationMap.sqrt_le_spectralExpansion`:
+  `(N - D) / (D (N - 1)) ≤ λ(G) ^ 2`.
 * `Cslib.RotationMap.spectralExpansion_pos`: `0 < λ(G)` when `D < N`.
 * `Cslib.RotationMap.one_div_sqrt_two_mul_le_spectralExpansion`: `λ(G) ≥ 1 / √(2 D)` when
   `2 D ≤ N`.
@@ -88,7 +88,7 @@ variable [Fintype V] [Fintype D] [Nonempty D]
 
 /-- **Trace bound.** A `D`-regular multigraph on `N ≥ 2` vertices has
 `(N - D) / (D (N - 1)) ≤ λ(G) ^ 2`. -/
-theorem sq_spectralExpansion_ge (G : RotationMap V D) (hV : 2 ≤ Fintype.card V) :
+theorem div_le_sq_spectralExpansion (G : RotationMap V D) (hV : 2 ≤ Fintype.card V) :
     ((Fintype.card V : ℝ) - Fintype.card D) / ((Fintype.card D : ℝ) * ((Fintype.card V : ℝ) - 1))
       ≤ G.spectralExpansion ^ 2 := by
   classical
@@ -177,7 +177,7 @@ theorem sq_spectralExpansion_ge (G : RotationMap V D) (hV : 2 ≤ Fintype.card V
 theorem sqrt_le_spectralExpansion (G : RotationMap V D) (hV : 2 ≤ Fintype.card V) :
     Real.sqrt (((Fintype.card V : ℝ) - Fintype.card D) /
         ((Fintype.card D : ℝ) * ((Fintype.card V : ℝ) - 1))) ≤ G.spectralExpansion :=
-  (Real.sqrt_le_sqrt (G.sq_spectralExpansion_ge hV)).trans_eq
+  (Real.sqrt_le_sqrt (G.div_le_sq_spectralExpansion hV)).trans_eq
     (Real.sqrt_sq G.spectralExpansion_nonneg)
 
 /-- A regular multigraph whose degree is below its number of vertices has positive spectral
