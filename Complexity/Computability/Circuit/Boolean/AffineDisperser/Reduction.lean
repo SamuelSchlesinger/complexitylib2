@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.B2.Potential
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Operations
 
 /-!
 # Reductions and their accounting
@@ -39,17 +39,17 @@ The accounting is done once for all reductions:
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.B2.State.Step`: a step of gate elimination.
-* `Cslib.Circuits.Boolean.B2.State.Reduction`: reductions.
-* `Cslib.Circuits.Boolean.B2.State.Deletable`: constraints deletable by (D1) or (D3).
-* `Cslib.Circuits.Boolean.B2.State.Exclusive`: no constraint has an unpaired isolated parameter
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Step`: a step of gate elimination.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Reduction`: reductions.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Deletable`: constraints deletable by (D1) or (D3).
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Exclusive`: no constraint has an unpaired isolated parameter
   and another parameter as parents.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.B2.State.Reduction.W_le`: the potential of a reduction.
-* `Cslib.Circuits.Boolean.B2.State.Reduction.step`: reductions as steps of gate elimination.
-* `Cslib.Circuits.Boolean.B2.State.Valid.exists_reduction_deleteAll`: deleting deletable
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Reduction.W_le`: the potential of a reduction.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Reduction.step`: reductions as steps of gate elimination.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_reduction_deleteAll`: deleting deletable
   constraints.
 
 ## References
@@ -60,243 +60,13 @@ The accounting is done once for all reductions:
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.B2
+namespace Cslib.Circuits.Boolean.AffineDisperser
 
-open Finset
+open Finset SemiCircuit
 
 namespace State
 
 variable {n : ℕ} {f : BooleanFunction n}
-
-/-- An AND-type operation becomes constant when either argument takes a suitable value. -/
-theorem exists_eq_of_not_isAffineOp {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) :
-    (∃ b, op b false = op b true) ∧ (∃ b, op false b = op true b) := by
-  unfold IsAffineOp at h
-  constructor
-  · by_cases h0 : op false false = op false true
-    · exact ⟨false, h0⟩
-    · by_cases h1 : op true false = op true true
-      · exact ⟨true, h1⟩
-      · exfalso
-        apply h
-        revert h0 h1
-        generalize op false false = a; generalize op true false = b
-        generalize op false true = c; generalize op true true = d
-        revert a b c d; decide
-  · by_cases h0 : op false false = op true false
-    · exact ⟨false, h0⟩
-    · by_cases h1 : op false true = op true true
-      · exact ⟨true, h1⟩
-      · exfalso
-        apply h
-        revert h0 h1
-        generalize op false false = a; generalize op true false = b
-        generalize op false true = c; generalize op true true = d
-        revert a b c d; decide
-
-/-- An AND-type gate reading two internal values becomes constant once the value `w` is fixed
-suitably. -/
-theorem Gate.exists_const_of_not_isAffineOp {g : Gate} (hg : ¬ IsAffineOp g.op) {a w : ℕ}
-    (hargs : (g.left = .node a ∧ g.right = .node w) ∨ (g.left = .node w ∧ g.right = .node a)) :
-    ∃ b c, ∀ val : ℕ → Bool, val w = b → g.eval val = c := by
-  obtain ⟨⟨bl, hbl⟩, ⟨br, hbr⟩⟩ := exists_eq_of_not_isAffineOp hg
-  rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
-  · refine ⟨br, g.op false br, fun val hw => ?_⟩
-    rw [Gate.eval_of_args hl hr, hw]
-    cases val a
-    · rfl
-    · exact hbr.symm
-  · refine ⟨bl, g.op bl false, fun val hw => ?_⟩
-    rw [Gate.eval_of_args hl hr, hw]
-    cases val a
-    · rfl
-    · exact hbl.symm
-
-/-- A step of gate elimination from `S` to `S'`, as in Lemma 4.2 of
-[Mishra and Santhanam][MishraSanthanam2026]: `S'` is valid, `m + s` decreases,
-`Δa ∈ {0, -1, -2}` and `ΔW ≤ 14 Δa`, written without subtraction. -/
-structure Step (f : BooleanFunction n) (S S' : State n) : Prop where
-  valid : S'.Valid f
-  lt : S'.m + S'.s < S.m + S.s
-  a_le : S'.a ≤ S.a
-  le_a : S.a ≤ S'.a + 2
-  potential : S'.W + 14 * S.a ≤ S.W + 14 * S'.a
-
-/-! ### Pairs and partners -/
-
-/-- `r` is the partner of `w`: they form a pair. -/
-def IsPartner (S : State n) (w r : ℕ) : Prop :=
-  ∃ pr ∈ S.pairs, (pr.1 = w ∧ pr.2 = r) ∨ (pr.2 = w ∧ pr.1 = r)
-
-instance (S : State n) (w : ℕ) : DecidablePred (S.IsPartner w) :=
-  fun _ => inferInstanceAs (Decidable (∃ pr ∈ S.pairs, _))
-
-/-- The pairs avoiding `w`. -/
-def pairsAvoid (S : State n) (w : ℕ) : Finset (ℕ × ℕ) :=
-  S.pairs.filter fun pr => pr.1 ≠ w ∧ pr.2 ≠ w
-
-/-- The pairs with a member in `F`. -/
-def pairsMeeting (S : State n) (F : Finset ℕ) : Finset (ℕ × ℕ) :=
-  S.pairs.filter fun pr => pr.1 ∈ F ∨ pr.2 ∈ F
-
-theorem paired_congr {S S' : State n} (h : S'.pairs = S.pairs) {x : ℕ} :
-    S'.Paired x ↔ S.Paired x := by
-  unfold Paired; rw [h]
-
-theorem unpaired_congr {S S' : State n} (hp : S'.params = S.params) (h : S'.pairs = S.pairs) :
-    S'.unpaired = S.unpaired := by
-  ext x
-  rw [mem_unpaired, mem_unpaired, hp, paired_congr h]
-
-theorem Valid.mem_params_of_paired {S : State n} (hS : S.Valid f) {p : ℕ} (hp : S.Paired p) :
-    p ∈ S.params := by
-  obtain ⟨pr, hpr, h | h⟩ := hp
-  · rw [← h]; exact (hS.pair_mem pr hpr).1
-  · rw [← h]; exact (hS.pair_mem pr hpr).2.1
-
-/-- A pair containing `w` is unique. -/
-theorem Valid.pair_unique {S : State n} (hS : S.Valid f) {w : ℕ} {pr pr' : ℕ × ℕ}
-    (hpr : pr ∈ S.pairs) (hpr' : pr' ∈ S.pairs) (h : pr.1 = w ∨ pr.2 = w)
-    (h' : pr'.1 = w ∨ pr'.2 = w) : pr = pr' := by
-  by_contra hne
-  have := hS.pairs_disjoint pr hpr pr' hpr' hne
-  rcases h with rfl | rfl <;> rcases h' with h' | h' <;> tauto
-
-theorem exists_partner {S : State n} {p : ℕ} (hp : S.Paired p) : ∃ r, S.IsPartner p r := by
-  obtain ⟨pr, hpr, h | h⟩ := hp
-  · exact ⟨pr.2, pr, hpr, Or.inl ⟨h, rfl⟩⟩
-  · exact ⟨pr.1, pr, hpr, Or.inr ⟨h, rfl⟩⟩
-
-theorem IsPartner.symm {S : State n} {p r : ℕ} (h : S.IsPartner p r) : S.IsPartner r p := by
-  obtain ⟨pr, hpr, h⟩ := h
-  exact ⟨pr, hpr, by tauto⟩
-
-theorem IsPartner.paired {S : State n} {w r : ℕ} (h : S.IsPartner w r) : S.Paired w := by
-  obtain ⟨pr, hpr, ⟨h1, -⟩ | ⟨h1, -⟩⟩ := h
-  · exact ⟨pr, hpr, Or.inl h1⟩
-  · exact ⟨pr, hpr, Or.inr h1⟩
-
-theorem Valid.partner_ne {S : State n} (hS : S.Valid f) {p r : ℕ} (h : S.IsPartner p r) :
-    r ≠ p := by
-  obtain ⟨pr, hpr, ⟨h1, h2⟩ | ⟨h1, h2⟩⟩ := h
-  · rw [← h1, ← h2]; exact (hS.pair_mem pr hpr).2.2.symm
-  · rw [← h1, ← h2]; exact (hS.pair_mem pr hpr).2.2
-
-theorem Valid.partner_mem {S : State n} (hS : S.Valid f) {p r : ℕ} (h : S.IsPartner p r) :
-    r ∈ S.params :=
-  hS.mem_params_of_paired h.symm.paired
-
-/-- A partner is unique. -/
-theorem Valid.isPartner_unique {S : State n} (hS : S.Valid f) {w r r' : ℕ}
-    (h : S.IsPartner w r) (h' : S.IsPartner w r') : r = r' := by
-  obtain ⟨pr, hpr, hr⟩ := h
-  obtain ⟨pr', hpr', hr'⟩ := h'
-  have := hS.pair_unique (w := w) hpr hpr'
-    (by rcases hr with h | h; exacts [Or.inl h.1, Or.inr h.1])
-    (by rcases hr' with h | h; exacts [Or.inl h.1, Or.inr h.1])
-  subst this
-  have h12 := (hS.pair_mem pr hpr).2.2
-  rcases hr with ⟨h1, h2⟩ | ⟨h1, h2⟩ <;> rcases hr' with ⟨h1', h2'⟩ | ⟨h1', h2'⟩
-  · exact h2.symm.trans h2'
-  · exact absurd (h1.trans h1'.symm) h12
-  · exact absurd (h1'.trans h1.symm) h12
-  · exact h2.symm.trans h2'
-
-/-- The partners of `w` contribute at most one summand. -/
-theorem Valid.sum_partner_le {S : State n} (hS : S.Valid f) (w : ℕ) (N : Finset ℕ) (c : ℕ) :
-    ∑ x ∈ N, (if S.IsPartner w x then c else 0) ≤ c := by
-  classical
-  by_cases h : ∃ r ∈ N, S.IsPartner w r
-  · obtain ⟨r, hr, hpr⟩ := h
-    rw [Finset.sum_eq_single_of_mem r hr fun x _ hxr => ite_eq_right fun hx =>
-      hxr (hS.isPartner_unique hx hpr), ite_eq_left hpr]
-  · push Not at h
-    rw [Finset.sum_eq_zero fun x hx => ite_eq_right (h x hx)]
-    omega
-
-/-- A paired parameter outside `F` is in a pair meeting `F` exactly when its partner is in
-`F`. -/
-theorem Valid.paired_filter_iff {S : State n} (hS : S.Valid f) {F : Finset ℕ} {u : ℕ}
-    (huF : u ∉ F) : (∃ pr ∈ S.pairs.filter (fun pr => ¬ (pr.1 ∈ F ∨ pr.2 ∈ F)),
-      pr.1 = u ∨ pr.2 = u) ↔ S.Paired u ∧ ∀ x ∈ F, ¬ S.IsPartner u x := by
-  constructor
-  · rintro ⟨pr, hpr, hu⟩
-    obtain ⟨hpr, hF⟩ := Finset.mem_filter.1 hpr
-    refine ⟨⟨pr, hpr, hu⟩, fun x hx ⟨pr', hpr', hux⟩ => hF ?_⟩
-    have := hS.pair_unique hpr hpr' hu (by rcases hux with h | h; exacts [Or.inl h.1, Or.inr h.1])
-    subst this
-    rcases hux with ⟨-, h⟩ | ⟨-, h⟩
-    · exact Or.inr (h ▸ hx)
-    · exact Or.inl (h ▸ hx)
-  · rintro ⟨⟨pr, hpr, hu⟩, hpart⟩
-    refine ⟨pr, Finset.mem_filter.2 ⟨hpr, ?_⟩, hu⟩
-    rintro (h | h) <;> rcases hu with hu | hu
-    · exact huF (hu ▸ h)
-    · exact hpart _ h ⟨pr, hpr, Or.inr ⟨hu, rfl⟩⟩
-    · exact hpart _ h ⟨pr, hpr, Or.inl ⟨hu, rfl⟩⟩
-    · exact huF (hu ▸ h)
-
-/-- The parameters of a valid state are at least as many as its pairs. -/
-theorem Valid.q_le_m {S : State n} (hS : S.Valid f) : S.q ≤ S.m := by
-  have hsub : S.pairs.image Prod.fst ⊆ S.params := fun i hi => by
-    obtain ⟨pr, hpr, rfl⟩ := Finset.mem_image.1 hi
-    exact (hS.pair_mem pr hpr).1
-  have hinj : Set.InjOn Prod.fst (S.pairs : Set (ℕ × ℕ)) := fun pr hpr pr' hpr' h =>
-    hS.pair_unique hpr hpr' (Or.inl rfl) (Or.inl h.symm)
-  have := Finset.card_le_card hsub
-  rwa [Finset.card_image_of_injOn hinj] at this
-
-/-- At most `|F|` pairs meet a set `F` of parameters. -/
-theorem Valid.card_pairsMeeting_le {S : State n} (hS : S.Valid f) (F : Finset ℕ) :
-    (S.pairsMeeting F).card ≤ F.card := by
-  classical
-  refine Finset.card_le_card_of_injOn (fun pr => if pr.1 ∈ F then pr.1 else pr.2)
-    (fun pr hpr => ?_) (fun pr hpr pr' hpr' h => ?_)
-  · obtain ⟨-, h⟩ := Finset.mem_filter.1 hpr
-    by_cases h1 : pr.1 ∈ F
-    · simp only [ite_eq_left h1]; exact h1
-    · simp only [ite_eq_right h1]; exact h.resolve_left h1
-  · obtain ⟨hpr, -⟩ := Finset.mem_filter.1 hpr
-    obtain ⟨hpr', -⟩ := Finset.mem_filter.1 hpr'
-    simp only at h
-    refine hS.pair_unique hpr hpr' (w := if pr.1 ∈ F then pr.1 else pr.2)
-      (by split_ifs <;> simp) ?_
-    rw [h]; split_ifs <;> simp
-
-theorem Valid.card_pairsMeeting_singleton {S : State n} (hS : S.Valid f) (w : ℕ) :
-    (S.pairsMeeting {w}).card = if S.Paired w then 1 else 0 := by
-  split_ifs with hw
-  · obtain ⟨pr, hpr, hprw⟩ := hw
-    rw [Finset.card_eq_one]
-    refine ⟨pr, Finset.eq_singleton_iff_unique_mem.2 ⟨Finset.mem_filter.2 ⟨hpr, by simpa⟩,
-      fun pr' hpr' => ?_⟩⟩
-    obtain ⟨hpr', h⟩ := Finset.mem_filter.1 hpr'
-    exact hS.pair_unique hpr' hpr (by simpa using h) hprw
-  · refine Finset.card_eq_zero.2 (Finset.filter_eq_empty_iff.2 fun pr hpr h => hw ?_)
-    exact ⟨pr, hpr, by simpa [eq_comm] using h⟩
-
-/-- Adding to `F` a parameter that is not the partner of a member of `F` adds its pair, if
-any. -/
-theorem Valid.card_pairsMeeting_insert {S : State n} (hS : S.Valid f) {F : Finset ℕ} {x : ℕ}
-    (hx : x ∉ F) (hpart : ∀ y ∈ F, ¬ S.IsPartner x y) :
-    (S.pairsMeeting (insert x F)).card =
-      (S.pairsMeeting F).card + if S.Paired x then 1 else 0 := by
-  rw [← hS.card_pairsMeeting_singleton x, ← Finset.card_union_of_disjoint]
-  · congr 1
-    ext pr
-    simp only [pairsMeeting, Finset.mem_union, Finset.mem_filter, Finset.mem_insert,
-      Finset.mem_singleton]
-    tauto
-  · rw [Finset.disjoint_left]
-    intro pr h₁ h₂
-    obtain ⟨hpr, h₁⟩ := Finset.mem_filter.1 h₁
-    obtain ⟨-, h₂⟩ := Finset.mem_filter.1 h₂
-    simp only [Finset.mem_singleton] at h₂
-    rcases h₂ with h₂ | h₂ <;> rcases h₁ with h₁ | h₁
-    · exact hx (h₂ ▸ h₁)
-    · exact hpart _ h₁ ⟨pr, hpr, Or.inl ⟨h₂, rfl⟩⟩
-    · exact hpart _ h₁ ⟨pr, hpr, Or.inr ⟨h₂, rfl⟩⟩
-    · exact hx (h₂ ▸ h₁)
 
 /-! ### Exclusive states -/
 
@@ -315,6 +85,13 @@ theorem Exclusive.two_le_deg {S : State n} (h : S.Exclusive) {u x : ℕ} {N : �
   exact h u hu (by omega) N hNu x hx hxu hNx
 
 /-! ### Deletable constraints -/
+
+/-- A deletable constraint: a gate with a constant argument or two equal arguments, or an
+equation with at most two terms. -/
+def Deletable (S : State n) : ℕ ⊕ ℕ → Prop
+  | .inl J => J ∈ S.gates ∧ (S.gate J).Degenerate
+  | .inr e => e ∈ S.eqns ∧ (S.eqn e).terms.card ≤ 2
+
 
 /-- The children of a parameter fixed to a constant are deletable. -/
 theorem deletable_fixConst_child {S : State n} (hS : S.Valid f) {p : ℕ} (P : Finset (ℕ × ℕ))
@@ -778,6 +555,23 @@ theorem Valid.reduction_dropTrivialEqn {S : State n} (hS : S.Valid f) {e : ℕ} 
     · have hee : e' ≠ e := fun h => hN (by rw [h]; exact List.mem_singleton_self _)
       exact ⟨Finset.mem_erase.2 ⟨hee, hdel.1⟩, hdel.2⟩
 
+/-- In a valid state, an equation whose terms are all parameters has no terms. -/
+theorem Valid.terms_eq_empty_of_subset {S : State n} (hS : S.Valid f) {e : ℕ} (he : e ∈ S.eqns)
+    (hsub : (S.eqn e).terms ⊆ S.params) : (S.eqn e).terms = ∅ := by
+  by_contra hne
+  obtain ⟨x, hx⟩ := Finset.nonempty_iff_ne_empty.2 hne
+  obtain ⟨val, hval, heq⟩ := hS.wf.solvable 0
+  obtain ⟨val', hval', heq'⟩ := hS.wf.solvable (Function.update val x (!val x))
+  have h1 := heq e he
+  have h2 := heq' e he
+  unfold Equation.Holds at h1 h2
+  rw [← Finset.add_sum_erase _ _ hx] at h1 h2
+  rw [Finset.sum_congr rfl fun i hi => by
+    rw [hval' i (hsub (Finset.mem_of_mem_erase hi)),
+      Function.update_of_ne (Finset.ne_of_mem_erase hi)], hval' x (hsub hx),
+    Function.update_self, ← h1] at h2
+  cases val x <;> simp at h2
+
 /-- A deletable constraint of a valid state is deleted by a reduction. -/
 theorem Valid.exists_reduction_delete {S : State n} (hS : S.Valid f) {N : ℕ ⊕ ℕ}
     (hN : S.Deletable N) : ∃ S', Reduction f S S' ∅ [N] [N] := by
@@ -855,4 +649,4 @@ theorem Valid.exists_reduction_deleteAll {S : State n} (hS : S.Valid f) (l : Lis
 
 end State
 
-end Cslib.Circuits.Boolean.B2
+end Cslib.Circuits.Boolean.AffineDisperser

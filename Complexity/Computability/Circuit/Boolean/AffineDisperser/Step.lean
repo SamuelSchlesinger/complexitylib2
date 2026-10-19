@@ -7,9 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.B2.Case7
-public import Complexity.Computability.Circuit.Boolean.B2.Case8
-public import Complexity.Computability.Circuit.Boolean.B2.Bottleneck
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.MinimalAnd
 
 /-!
 # Lemma 4.2: one step of gate elimination
@@ -30,12 +28,12 @@ running time is claimed.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.B2.State.auxIn`, `Cslib.Circuits.Boolean.B2.State.childIn`: the
+* `Cslib.Circuits.Boolean.AffineDisperser.State.auxIn`, `Cslib.Circuits.Boolean.AffineDisperser.State.childIn`: the
   measures of the restructuring.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.B2.State.Valid.exists_step`: Lemma 4.2.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_step`: Lemma 4.2.
 
 ## References
 
@@ -45,9 +43,9 @@ running time is claimed.
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.B2
+namespace Cslib.Circuits.Boolean.AffineDisperser
 
-open Finset Cslib.BitString
+open Finset Cslib.BitString SemiCircuit
 
 namespace State
 
@@ -59,103 +57,6 @@ theorem Step.of_prep {S S₁ S' : State n} (h : Step f S₁ S') (hms : S₁.m + 
     (ha : S₁.a = S.a) (hW : S₁.W ≤ S.W) : Step f S S' := by
   obtain ⟨hS', hlt, ha₁, ha₂, hW'⟩ := h
   exact ⟨hS', by omega, by omega, by omega, by rw [← ha]; omega⟩
-
-/-! ### Degenerate minimal gates allow deletions -/
-
-theorem deletionAvailable_of_degenerate {S : State n} {J : ℕ} (hJ : J ∈ S.gates)
-    (h : (S.gate J).Degenerate) : S.DeletionAvailable :=
-  Or.inr (Or.inl ⟨J, hJ, (S.gate J).lit, fun _ ht => Gate.reads_of_lit_reads ht,
-    fun val _ => Gate.eval_lit h val⟩)
-
-/-- A gate one of whose inputs is constant on the solutions of the affine system allows (D1). -/
-theorem deletionAvailable_of_const_input {S : State n} {J t : ℕ} (hJ : J ∈ S.gates) {c : Bool}
-    (ht : (S.gate J).Reads t) (hc : ∀ val, S.EqnsHold val → val t = c) : S.DeletionAvailable := by
-  refine Or.inr (Or.inl ⟨J, hJ, ?_⟩)
-  rcases ht with ht | ht
-  · refine ⟨unaryLit ((S.gate J).op c) (S.gate J).right,
-      fun s hs => Or.inr (reads_of_unaryLit_reads hs), fun val hval => ?_⟩
-    rw [← eval_unaryLit]
-    unfold Gate.eval
-    rw [ht, Arg.eval_node, hc val hval]
-  · refine ⟨unaryLit (fun a => (S.gate J).op a c) (S.gate J).left,
-      fun s hs => Or.inl (reads_of_unaryLit_reads hs), fun val hval => ?_⟩
-    rw [← eval_unaryLit]
-    unfold Gate.eval
-    rw [ht, Arg.eval_node, hc val hval]
-
-/-- A gate whose inputs differ by a constant on the solutions of the affine system allows
-(D1). -/
-theorem deletionAvailable_of_dependent {S : State n} {J t t' : ℕ} (hJ : J ∈ S.gates) {c : Bool}
-    (hargs : ((S.gate J).left = .node t ∧ (S.gate J).right = .node t') ∨
-      ((S.gate J).left = .node t' ∧ (S.gate J).right = .node t))
-    (hc : ∀ val, S.EqnsHold val → val t' = (val t ^^ c)) : S.DeletionAvailable := by
-  refine Or.inr (Or.inl ⟨J, hJ, ?_⟩)
-  rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
-  · refine ⟨unaryLit (fun a => (S.gate J).op a (a ^^ c)) (S.gate J).left,
-      fun s hs => Or.inl (reads_of_unaryLit_reads hs), fun val hval => ?_⟩
-    rw [← eval_unaryLit]
-    unfold Gate.eval
-    rw [hl, hr, Arg.eval_node, Arg.eval_node, hc val hval]
-  · refine ⟨unaryLit (fun a => (S.gate J).op (a ^^ c) a) (S.gate J).right,
-      fun s hs => Or.inr (reads_of_unaryLit_reads hs), fun val hval => ?_⟩
-    rw [← eval_unaryLit]
-    unfold Gate.eval
-    rw [hl, hr, Arg.eval_node, Arg.eval_node, hc val hval]
-
-/-! ### The minimal gate of a clean state -/
-
-/-- The output of a valid state with `d < a` is not a literal of an auxiliary variable. -/
-theorem Valid.not_out_reads_aux {S : State n} {d : ℕ} (hS : S.Valid f)
-    (hf : IsAffineDisperser f d) (ha : d < S.a) {v : ℕ} (hv : v ∈ S.aux) : ¬ S.out.Reads v := by
-  intro hr
-  obtain ⟨c, T, hT⟩ := hS.wf.exists_affineIn hv
-  refine hS.out_not_affine hf ha (c ^^ S.out.neg) hT.1 fun val hval => ?_
-  unfold Lit.eval
-  unfold Lit.Reads at hr
-  rw [hr, Arg.eval_node, hT.2 val hval.1]
-  generalize ∑ j ∈ T, val j = s
-  cases c <;> cases s <;> cases S.out.neg <;> rfl
-
-/-- In a valid state with `d < a` where no affine gate can be moved and no deletion applies,
-there are gates, and the minimal one is an AND-type gate reading two distinct inputs among the
-parameters and auxiliary variables. -/
-theorem Valid.clean_minGate {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffineDisperser f d)
-    (ha : d < S.a) (hmov : ∀ J, ¬ S.Movable J) (hdel : ¬ S.DeletionAvailable) :
-    ∃ h : S.gates.Nonempty, ¬ IsAffineOp (S.gate (S.gates.min' h)).op ∧
-      ∃ t₁ t₂, (S.gate (S.gates.min' h)).left = .node t₁ ∧
-        (S.gate (S.gates.min' h)).right = .node t₂ ∧ t₁ ≠ t₂ ∧
-        t₁ ∈ S.params ∪ S.aux ∧ t₂ ∈ S.params ∪ S.aux := by
-  have hne : S.gates.Nonempty := by
-    by_contra hempty
-    rw [Finset.not_nonempty_iff_eq_empty] at hempty
-    rcases hout : S.out.arg with b | t
-    · refine hS.out_not_affine hf ha (b ^^ S.out.neg) (Finset.empty_subset _) fun val _ => ?_
-      simp [Lit.eval, hout]
-    · have hlive := hS.wf.out_live t hout
-      simp only [SemiCircuit.live, Finset.mem_union, hempty, Finset.notMem_empty, or_false]
-        at hlive
-      rcases hlive with hp | hv
-      · exact hS.not_out_reads_param hf ha hp hout
-      · exact hS.not_out_reads_aux hf ha hv hout
-  set G := S.gates.min' hne
-  have hG : G ∈ S.gates := Finset.min'_mem _ _
-  have hmin : ∀ i, (S.gate G).Reads i → i ∉ S.gates := fun i hi hig =>
-    absurd (hS.wf.reads_lt G hG i hig hi) (not_lt.2 (Finset.min'_le _ _ hig))
-  have hand : ¬ IsAffineOp (S.gate G).op := fun haff => hmov G ⟨hG, haff, hmin⟩
-  have hpa : ∀ i, (S.gate G).Reads i → i ∈ S.params ∪ S.aux := fun i hi => by
-    have := hS.wf.reads_live G hG i hi
-    simp only [SemiCircuit.live, Finset.mem_union] at this ⊢
-    rcases this with h | h
-    · exact h
-    · exact absurd h (hmin i hi)
-  refine ⟨hne, hand, ?_⟩
-  rcases hl : (S.gate G).left with b₁ | t₁
-  · exact absurd (deletionAvailable_of_degenerate hG (Or.inl ⟨b₁, hl⟩)) hdel
-  rcases hr : (S.gate G).right with b₂ | t₂
-  · exact absurd (deletionAvailable_of_degenerate hG (Or.inr (Or.inl ⟨b₂, hr⟩))) hdel
-  refine ⟨t₁, t₂, rfl, rfl, fun he => ?_, hpa t₁ (Or.inl hl), hpa t₂ (Or.inr hr)⟩
-  subst he
-  exact hdel (deletionAvailable_of_degenerate hG (Or.inr (Or.inr (hl.trans hr.symm))))
 
 /-! ### The measures of the restructuring -/
 
@@ -188,56 +89,6 @@ theorem childIn_eq {S : State n} (hne : S.gates.Nonempty) :
     S.childIn = (S.gates.filter fun K => (S.gate K).Reads (S.gates.min' hne) ∧
       ∃ t ∈ S.params, (S.gate (S.gates.min' hne)).Reads t ∧ (S.gate K).Reads t).card := by
   simp only [childIn, dite_eq_left hne]
-
-/-- An auxiliary input `Q` of the minimal gate depends on a parameter `x` other than the other
-input; when no preliminary reduction applies, `x` is unpaired of degree at least two, and `Q` has
-degree at least two. -/
-theorem Valid.prep_aux_input {S : State n} (hS : S.Valid f) (hdel : ¬ S.DeletionAvailable)
-    (h5 : ¬ S.PairInSystem) {G Q o : ℕ} (hG : G ∈ S.gates)
-    (hargs : ((S.gate G).left = .node Q ∧ (S.gate G).right = .node o) ∨
-      ((S.gate G).left = .node o ∧ (S.gate G).right = .node Q))
-    (hQ : Q ∈ S.aux) (hQo : Q ≠ o) :
-    ∃ x c T, S.AffineIn Q c T ∧ x ∈ T ∧ x ≠ o ∧ x ∈ S.unpaired ∧ 2 ≤ S.deg x ∧
-      2 ≤ S.deg Q := by
-  obtain ⟨c, T, hT⟩ := hS.wf.exists_affineIn hQ
-  have hQp : Q ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp hQ
-  have hGQ : (S.gate G).Reads Q := by
-    rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
-  by_cases hTo : ∃ x ∈ T, x ≠ o
-  · obtain ⟨x, hxT, hxo⟩ := hTo
-    have hxp := hT.1 hxT
-    obtain ⟨e, he, hxe⟩ := hT.mem_terms hS.wf hQp hxT
-    have hxu : x ∈ S.unpaired := mem_unpaired.2 ⟨hxp, fun hp => h5 ⟨x, hp, e, he, hxe⟩⟩
-    have hex : Sum.inr e ∈ S.children x := (SemiCircuit.inr_mem_children _).2 ⟨he, hxe⟩
-    have hxdeg : 2 ≤ S.deg x := by
-      by_contra hlt
-      have h1 : S.deg x = 1 := by have := Finset.card_pos.2 ⟨_, hex⟩; unfold SemiCircuit.deg at *; omega
-      exact hdel (Or.inr (Or.inr (Or.inr ⟨x, hxu, e, children_eq_singleton h1 hex⟩)))
-    obtain ⟨e', he', hQe'⟩ := hS.exists_eqn_of_aux hQ
-    have hQdeg : 2 ≤ S.deg Q := by
-      have hsub : ({Sum.inr e', Sum.inl G} : Finset (ℕ ⊕ ℕ)) ⊆ S.children Q := by
-        intro w hw
-        simp only [Finset.mem_insert, Finset.mem_singleton] at hw
-        rcases hw with rfl | rfl
-        · exact (SemiCircuit.inr_mem_children _).2 ⟨he', hQe'⟩
-        · exact (SemiCircuit.inl_mem_children _).2 ⟨hG, hGQ⟩
-      have := Finset.card_le_card hsub
-      rwa [Finset.card_pair (by simp)] at this
-    exact ⟨x, c, T, hT, hxT, hxo, hxu, hxdeg, hQdeg⟩
-  · push Not at hTo
-    exfalso
-    rcases T.eq_empty_or_nonempty with rfl | ⟨x, hx⟩
-    · exact hdel (deletionAvailable_of_const_input hG hGQ (c := c) fun val hval => by
-        rw [hT.2 val hval, Finset.sum_empty, add_zero])
-    · have hxo := hTo x hx
-      subst hxo
-      have hTo' : T = {x} := Finset.eq_singleton_iff_unique_mem.2 ⟨hx, hTo⟩
-      refine hdel (deletionAvailable_of_dependent hG (t := x) (t' := Q) (c := c) ?_ fun val hval => ?_)
-      · rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
-        · exact Or.inr ⟨hl, hr⟩
-        · exact Or.inl ⟨hl, hr⟩
-      · rw [hT.2 val hval, hTo', Finset.sum_singleton]
-        cases c <;> cases val x <;> rfl
 
 /-! ### Lemma 4.2 -/
 
@@ -448,4 +299,4 @@ theorem Valid.exists_step {d : ℕ} {S : State n} (hS : S.Valid f) (hf : IsAffin
 
 end State
 
-end Cslib.Circuits.Boolean.B2
+end Cslib.Circuits.Boolean.AffineDisperser

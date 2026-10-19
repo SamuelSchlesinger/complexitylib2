@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.B2.Reduction
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Reduction
 
 /-!
 # Preliminary reductions of gate elimination
@@ -37,13 +37,13 @@ as parents.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.B2.State.DeletionAvailable`, `State.AndOnIsolated`,
+* `Cslib.Circuits.Boolean.AffineDisperser.State.DeletionAvailable`, `State.AndOnIsolated`,
   `State.DegeneratePair`, `State.PartnersShareChild`, `State.PairInSystem`, `State.AndOnPair`:
   the configurations of the preliminary reductions.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.B2.State.Valid.step_of_deletion`, `step_of_andOnIsolated`,
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_of_deletion`, `step_of_andOnIsolated`,
   `step_of_degeneratePair`, `step_of_partnersShareChild`, `step_of_pairInSystem`,
   `step_of_andOnPair`: the preliminary reductions are steps of gate elimination.
 
@@ -55,9 +55,9 @@ as parents.
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.B2
+namespace Cslib.Circuits.Boolean.AffineDisperser
 
-open Finset Cslib.BitString
+open Finset Cslib.BitString SemiCircuit
 
 namespace State
 
@@ -256,12 +256,45 @@ theorem Valid.step_of_andOnIsolated {S : State n} (hS : S.Valid f) (h : S.AndOnI
     rw [wt_of_mem hwu, Finset.sum_eq_zero fun u _ => ite_eq_right fun h' => hwp h'.paired] at hW
     omega
 
-/-! ### Exclusive states -/
+/-! ### Moving affine gates -/
 
 /-- An affine gate reading no gates, which is moved into the affine system before the
 preliminary reductions. -/
 def Movable (S : State n) (J : ℕ) : Prop :=
   J ∈ S.gates ∧ IsAffineOp (S.gate J).op ∧ ∀ i, (S.gate J).Reads i → i ∉ S.gates
+
+/-- A name larger than every equation name. -/
+def freshEqn (S : State n) : ℕ :=
+  S.eqns.sup id + 1
+
+theorem freshEqn_notMem (S : State n) : S.freshEqn ∉ S.eqns := fun h => by
+  have := Finset.le_sup (f := id) h
+  simp only [id, freshEqn] at this
+  omega
+
+/-- Moving a movable gate into the affine system keeps `m`, `s`, `q` and `a`, does not increase
+`W` and lowers the number of gates. -/
+theorem Valid.prep_move {S : State n} (hS : S.Valid f) {J : ℕ} (hJ : S.Movable J) :
+    ∃ S₁ : State n, S₁.Valid f ∧ S₁.gates.card < S.gates.card ∧ S₁.m = S.m ∧ S₁.s = S.s ∧
+      S₁.q = S.q ∧ S₁.W ≤ S.W := by
+  have hok : S.MoveOK J S.freshEqn := ⟨hJ.1, S.freshEqn_notMem, hJ.2.1, hJ.2.2⟩
+  refine ⟨_, hS.moveAffine hok, by have := moveAffine_gates_card hok; omega, rfl,
+    moveAffine_size hok, rfl, ?_⟩
+  have hpt : ∀ u ∈ S.params, (S.moveAffine J S.freshEqn).wt u + 0 ≤ S.wt u + 0 := by
+    intro u hu
+    by_cases hu' : u ∈ S.unpaired
+    · have hu₁ : u ∈ (S.moveAffine J S.freshEqn).unpaired := by
+        rwa [unpaired_congr rfl rfl]
+      rw [wt_of_mem hu₁, wt_of_mem hu']
+      exact Nat.add_le_add_right (weight_mono (moveAffine_deg_le hS hok hu)) _
+    · rw [wt_of_notMem (by rwa [unpaired_congr rfl rfl]), wt_of_notMem hu']
+  have hW := W_add_le (S := S) (S' := S.moveAffine J S.freshEqn) le_rfl le_rfl _ _ hpt
+  have hs : (S.moveAffine J S.freshEqn).s = S.s := moveAffine_size hok
+  have hq : (S.moveAffine J S.freshEqn).q = S.q := rfl
+  simp only [Finset.sum_const_zero] at hW
+  omega
+
+/-! ### Exclusive states -/
 
 /-- **Consequence of Cases 1 and 2** of [Mishra and Santhanam][MishraSanthanam2026]: when no
 affine gate can be moved, no deletion applies and Case 2 does not apply, the unique child of an
@@ -362,28 +395,6 @@ theorem Valid.step_of_degeneratePair {S : State n} (hS : S.Valid f) (hexcl : S.E
 
 /-! ### Case 4: partners with a common child -/
 
-/-- The operation is a projection or a negated projection: `x ↦ c + x` or `y ↦ c + y`. -/
-def IsUnaryOp (op : Bool → Bool → Bool) : Prop :=
-  (op true false = !op false false ∧ op false true = op false false ∧
-      op true true = !op false false) ∨
-    (op true false = op false false ∧ op false true = !op false false ∧
-      op true true = !op false false)
-
-/-- An operation that is not a projection or a negated projection is constant on a diagonal
-`{(c + a, a)}` for a suitable `c`, and likewise on `{(a, c + a)}`. -/
-theorem exists_diag_const (op : Bool → Bool → Bool) :
-    ((∃ c, op c false = op (!c) true) ∧ (∃ c, op false c = op true (!c))) ∨ IsUnaryOp op := by
-  by_cases h0 : op false false = op true true
-  · exact Or.inl ⟨⟨false, h0⟩, ⟨false, h0⟩⟩
-  · by_cases h1 : op true false = op false true
-    · exact Or.inl ⟨⟨true, h1⟩, ⟨true, h1.symm⟩⟩
-    · right
-      unfold IsUnaryOp
-      revert h0 h1
-      generalize op false false = a₀; generalize op true false = b₀
-      generalize op false true = c₀; generalize op true true = d₀
-      revert a₀ b₀ c₀ d₀; decide
-
 /-- A gate whose operation is a projection or a negated projection computes a literal of an
 input, so (D1) applies. -/
 theorem deletionAvailable_of_unary {S : State n} {J : ℕ} (hJ : J ∈ S.gates)
@@ -396,26 +407,6 @@ theorem deletionAvailable_of_unary {S : State n} {J : ℕ} (hJ : J ∈ S.gates)
   · refine ⟨⟨(S.gate J).right, (S.gate J).op false false⟩, fun t ht => Or.inr ht, fun val _ => ?_⟩
     simp only [Gate.eval, Lit.eval]
     cases (S.gate J).left.eval val <;> cases (S.gate J).right.eval val <;> simp [h1, h2, h3]
-/-- An operation that is not a projection or a negated projection is constant on a diagonal: a
-gate with such an operation reading `p` and `r` is constant once `p = r + c` for a suitable
-`c`. -/
-theorem Gate.exists_const_of_diag {g : Gate} (hg : ¬ IsUnaryOp g.op) {p r : ℕ}
-    (hargs : (g.left = .node p ∧ g.right = .node r) ∨ (g.left = .node r ∧ g.right = .node p)) :
-    ∃ c d, ∀ val : ℕ → Bool, val p = (val r ^^ c) → g.eval val = d := by
-  rcases exists_diag_const g.op with ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩ | hun
-  · rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
-    · refine ⟨c₁, g.op c₁ false, fun val hp => ?_⟩
-      rw [Gate.eval_of_args hl hr, hp]
-      cases val r
-      · simp
-      · simpa using hc₁.symm
-    · refine ⟨c₂, g.op false c₂, fun val hp => ?_⟩
-      rw [Gate.eval_of_args hl hr, hp]
-      cases val r
-      · simp
-      · simpa using hc₂.symm
-  · exact absurd hun hg
-
 /-- The configuration of Case 4: two partners have a common child. -/
 def PartnersShareChild (S : State n) : Prop :=
   ∃ pr ∈ S.pairs, ∃ H, H ∈ S.children pr.1 ∧ H ∈ S.children pr.2
@@ -676,4 +667,4 @@ theorem Valid.step_of_andOnPair {S : State n} (hS : S.Valid f) (hexcl : S.Exclus
 
 end State
 
-end Cslib.Circuits.Boolean.B2
+end Cslib.Circuits.Boolean.AffineDisperser

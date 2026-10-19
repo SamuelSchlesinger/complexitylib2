@@ -7,9 +7,10 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.B2.SemiCircuit
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit
 public import Complexity.Foundations.Data.BitString.AffineDisperser
 public import Mathlib.Data.Finset.Sort
+public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!
 # States of gate elimination and their potential
@@ -41,15 +42,15 @@ function of the parameters (`State.Valid.out_not_affine`, part of Lemma 2.3 of t
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.B2.State`, `Cslib.Circuits.Boolean.B2.State.Valid`: states.
-* `Cslib.Circuits.Boolean.B2.State.m`, `q`, `a`, `s`, `W`: the counted quantities and the
-  potential, with `Cslib.Circuits.Boolean.B2.weight`.
+* `Cslib.Circuits.Boolean.AffineDisperser.State`, `Cslib.Circuits.Boolean.AffineDisperser.State.Valid`: states.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.m`, `q`, `a`, `s`, `W`: the counted quantities and the
+  potential, with `Cslib.Circuits.Boolean.AffineDisperser.weight`.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.B2.State.Valid.exists_affine_embedding`: Proposition 2.2.
-* `Cslib.Circuits.Boolean.B2.State.Valid.false_of_fix`,
-  `Cslib.Circuits.Boolean.B2.State.Valid.out_not_affine`: Lemma 2.3.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_affine_embedding`: Proposition 2.2.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.false_of_fix`,
+  `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.out_not_affine`: Lemma 2.3.
 
 ## References
 
@@ -59,9 +60,9 @@ function of the parameters (`State.Valid.out_not_affine`, part of Lemma 2.3 of t
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.B2
+namespace Cslib.Circuits.Boolean.AffineDisperser
 
-open Finset Cslib.BitString
+open Finset Cslib.BitString SemiCircuit
 
 /-- The weight of an unpaired parameter of degree `k`: `0` if it is unused, `6` if it is
 isolated and `7` otherwise (equation (4) of [Mishra and Santhanam][MishraSanthanam2026]). -/
@@ -346,6 +347,261 @@ theorem Valid.out_not_affine {f : BooleanFunction n} {d : ℕ} (hS : S.Valid f)
     generalize ∑ j ∈ T.erase x, val j = e
     cases c <;> cases e <;> rfl
 
+/-! ### Bookkeeping for the potential -/
+
+variable {f : BooleanFunction n}
+
+/-- The weight contributed by the name `x`: its weight if it is an unpaired parameter, and `0`
+otherwise. -/
+def wt (S : State n) (x : ℕ) : ℕ :=
+  if x ∈ S.unpaired then weight (S.deg x) else 0
+
+theorem wt_le_seven (S : State n) (x : ℕ) : S.wt x ≤ 7 := by
+  unfold wt; split_ifs
+  · exact weight_le_seven _
+  · omega
+
+theorem mem_unpaired {S : State n} {x : ℕ} : x ∈ S.unpaired ↔ x ∈ S.params ∧ ¬ S.Paired x := by
+  simp [unpaired]
+
+theorem wt_of_mem {S : State n} {x : ℕ} (hx : x ∈ S.unpaired) : S.wt x = weight (S.deg x) := by
+  simp [wt, hx]
+
+theorem wt_of_notMem {S : State n} {x : ℕ} (hx : x ∉ S.unpaired) : S.wt x = 0 := by
+  simp [wt, hx]
+
+theorem wt_of_paired {S : State n} {x : ℕ} (hx : S.Paired x) : S.wt x = 0 :=
+  wt_of_notMem fun h => (mem_unpaired.1 h).2 hx
+
+theorem wt_of_notMem_params {S : State n} {x : ℕ} (hx : x ∉ S.params) : S.wt x = 0 :=
+  wt_of_notMem fun h => hx (mem_unpaired.1 h).1
+
+theorem sum_wt (S : State n) {N : Finset ℕ} (hN : S.params ⊆ N) :
+    ∑ x ∈ N, S.wt x = ∑ x ∈ S.unpaired, weight (S.deg x) := by
+  have hU : S.unpaired ⊆ N := (Finset.filter_subset _ _).trans hN
+  unfold wt
+  rw [Finset.sum_ite_mem, Finset.inter_eq_right.2 hU]
+
+theorem W_eq_sum (S : State n) {N : Finset ℕ} (hN : S.params ⊆ N) :
+    S.W = 2 * S.s + 3 * S.q + ∑ x ∈ N, S.wt x := by
+  rw [sum_wt S hN]; rfl
+
+/-- Potentials compare name by name: if every name of a common set loses `loss x` and gains at
+most `gain x` in weight, the sums of losses and gains bound the change of potential. -/
+theorem W_add_le {S S' : State n} {N : Finset ℕ} (hN : S.params ⊆ N) (hN' : S'.params ⊆ N)
+    (loss gain : ℕ → ℕ) (h : ∀ x ∈ N, S'.wt x + loss x ≤ S.wt x + gain x) :
+    S'.W + 2 * S.s + 3 * S.q + ∑ x ∈ N, loss x ≤
+      S.W + 2 * S'.s + 3 * S'.q + ∑ x ∈ N, gain x := by
+  rw [W_eq_sum S hN, W_eq_sum S' hN']
+  have := Finset.sum_le_sum h
+  rw [Finset.sum_add_distrib, Finset.sum_add_distrib] at this
+  omega
+
+/-- The sum of an indicator. -/
+theorem sum_ite_eq_of_mem {N : Finset ℕ} {a : ℕ} (ha : a ∈ N) (c : ℕ) :
+    ∑ x ∈ N, (if x = a then c else 0) = c := by
+  rw [Finset.sum_ite_eq' N a, ite_eq_left ha]
+
+/-- Unpaired parameters of a state with the same pairs and fewer parameters were unpaired. -/
+theorem mem_unpaired_of {S S' : State n} {x : ℕ} (hx : x ∈ S'.unpaired) (hp : x ∈ S.params)
+    (hpairs : S.pairs ⊆ S'.pairs) : x ∈ S.unpaired :=
+  mem_unpaired.2 ⟨hp, fun ⟨pr, hpr, h⟩ => (mem_unpaired.1 hx).2 ⟨pr, hpairs hpr, h⟩⟩
+
+/-- A name keeps or lowers its weight when it stays an unpaired parameter of a state with at
+least the same pairs and does not gain children. -/
+theorem wt_le_of_children_subset {S S' : State n} {x : ℕ} (hparams : S'.params ⊆ S.params)
+    (hpairs : S.pairs ⊆ S'.pairs) (hc : S'.children x ⊆ S.children x) : S'.wt x ≤ S.wt x := by
+  by_cases hx : x ∈ S'.unpaired
+  · rw [wt_of_mem hx, wt_of_mem (mem_unpaired_of hx (hparams (mem_unpaired.1 hx).1) hpairs)]
+    exact weight_mono (Finset.card_le_card hc)
+  · rw [wt_of_notMem hx]; omega
+
+/-- A step of gate elimination from `S` to `S'`, as in Lemma 4.2 of
+[Mishra and Santhanam][MishraSanthanam2026]: `S'` is valid, `m + s` decreases,
+`Δa ∈ {0, -1, -2}` and `ΔW ≤ 14 Δa`, written without subtraction. -/
+structure Step (f : BooleanFunction n) (S S' : State n) : Prop where
+  valid : S'.Valid f
+  lt : S'.m + S'.s < S.m + S.s
+  a_le : S'.a ≤ S.a
+  le_a : S.a ≤ S'.a + 2
+  potential : S'.W + 14 * S.a ≤ S.W + 14 * S'.a
+
+/-! ### Pairs and partners -/
+
+/-- `r` is the partner of `w`: they form a pair. -/
+def IsPartner (S : State n) (w r : ℕ) : Prop :=
+  ∃ pr ∈ S.pairs, (pr.1 = w ∧ pr.2 = r) ∨ (pr.2 = w ∧ pr.1 = r)
+
+instance (S : State n) (w : ℕ) : DecidablePred (S.IsPartner w) :=
+  fun _ => inferInstanceAs (Decidable (∃ pr ∈ S.pairs, _))
+
+/-- The pairs avoiding `w`. -/
+def pairsAvoid (S : State n) (w : ℕ) : Finset (ℕ × ℕ) :=
+  S.pairs.filter fun pr => pr.1 ≠ w ∧ pr.2 ≠ w
+
+/-- The pairs with a member in `F`. -/
+def pairsMeeting (S : State n) (F : Finset ℕ) : Finset (ℕ × ℕ) :=
+  S.pairs.filter fun pr => pr.1 ∈ F ∨ pr.2 ∈ F
+
+theorem paired_congr {S S' : State n} (h : S'.pairs = S.pairs) {x : ℕ} :
+    S'.Paired x ↔ S.Paired x := by
+  unfold Paired; rw [h]
+
+theorem unpaired_congr {S S' : State n} (hp : S'.params = S.params) (h : S'.pairs = S.pairs) :
+    S'.unpaired = S.unpaired := by
+  ext x
+  rw [mem_unpaired, mem_unpaired, hp, paired_congr h]
+
+theorem Valid.mem_params_of_paired {S : State n} (hS : S.Valid f) {p : ℕ} (hp : S.Paired p) :
+    p ∈ S.params := by
+  obtain ⟨pr, hpr, h | h⟩ := hp
+  · rw [← h]; exact (hS.pair_mem pr hpr).1
+  · rw [← h]; exact (hS.pair_mem pr hpr).2.1
+
+/-- A pair containing `w` is unique. -/
+theorem Valid.pair_unique {S : State n} (hS : S.Valid f) {w : ℕ} {pr pr' : ℕ × ℕ}
+    (hpr : pr ∈ S.pairs) (hpr' : pr' ∈ S.pairs) (h : pr.1 = w ∨ pr.2 = w)
+    (h' : pr'.1 = w ∨ pr'.2 = w) : pr = pr' := by
+  by_contra hne
+  have := hS.pairs_disjoint pr hpr pr' hpr' hne
+  rcases h with rfl | rfl <;> rcases h' with h' | h' <;> tauto
+
+theorem exists_partner {S : State n} {p : ℕ} (hp : S.Paired p) : ∃ r, S.IsPartner p r := by
+  obtain ⟨pr, hpr, h | h⟩ := hp
+  · exact ⟨pr.2, pr, hpr, Or.inl ⟨h, rfl⟩⟩
+  · exact ⟨pr.1, pr, hpr, Or.inr ⟨h, rfl⟩⟩
+
+theorem IsPartner.symm {S : State n} {p r : ℕ} (h : S.IsPartner p r) : S.IsPartner r p := by
+  obtain ⟨pr, hpr, h⟩ := h
+  exact ⟨pr, hpr, by tauto⟩
+
+theorem IsPartner.paired {S : State n} {w r : ℕ} (h : S.IsPartner w r) : S.Paired w := by
+  obtain ⟨pr, hpr, ⟨h1, -⟩ | ⟨h1, -⟩⟩ := h
+  · exact ⟨pr, hpr, Or.inl h1⟩
+  · exact ⟨pr, hpr, Or.inr h1⟩
+
+theorem Valid.partner_ne {S : State n} (hS : S.Valid f) {p r : ℕ} (h : S.IsPartner p r) :
+    r ≠ p := by
+  obtain ⟨pr, hpr, ⟨h1, h2⟩ | ⟨h1, h2⟩⟩ := h
+  · rw [← h1, ← h2]; exact (hS.pair_mem pr hpr).2.2.symm
+  · rw [← h1, ← h2]; exact (hS.pair_mem pr hpr).2.2
+
+theorem Valid.partner_mem {S : State n} (hS : S.Valid f) {p r : ℕ} (h : S.IsPartner p r) :
+    r ∈ S.params :=
+  hS.mem_params_of_paired h.symm.paired
+
+/-- A partner is unique. -/
+theorem Valid.isPartner_unique {S : State n} (hS : S.Valid f) {w r r' : ℕ}
+    (h : S.IsPartner w r) (h' : S.IsPartner w r') : r = r' := by
+  obtain ⟨pr, hpr, hr⟩ := h
+  obtain ⟨pr', hpr', hr'⟩ := h'
+  have := hS.pair_unique (w := w) hpr hpr'
+    (by rcases hr with h | h; exacts [Or.inl h.1, Or.inr h.1])
+    (by rcases hr' with h | h; exacts [Or.inl h.1, Or.inr h.1])
+  subst this
+  have h12 := (hS.pair_mem pr hpr).2.2
+  rcases hr with ⟨h1, h2⟩ | ⟨h1, h2⟩ <;> rcases hr' with ⟨h1', h2'⟩ | ⟨h1', h2'⟩
+  · exact h2.symm.trans h2'
+  · exact absurd (h1.trans h1'.symm) h12
+  · exact absurd (h1'.trans h1.symm) h12
+  · exact h2.symm.trans h2'
+
+/-- The partners of `w` contribute at most one summand. -/
+theorem Valid.sum_partner_le {S : State n} (hS : S.Valid f) (w : ℕ) (N : Finset ℕ) (c : ℕ) :
+    ∑ x ∈ N, (if S.IsPartner w x then c else 0) ≤ c := by
+  classical
+  by_cases h : ∃ r ∈ N, S.IsPartner w r
+  · obtain ⟨r, hr, hpr⟩ := h
+    rw [Finset.sum_eq_single_of_mem r hr fun x _ hxr => ite_eq_right fun hx =>
+      hxr (hS.isPartner_unique hx hpr), ite_eq_left hpr]
+  · push Not at h
+    rw [Finset.sum_eq_zero fun x hx => ite_eq_right (h x hx)]
+    omega
+
+/-- A paired parameter outside `F` is in a pair meeting `F` exactly when its partner is in
+`F`. -/
+theorem Valid.paired_filter_iff {S : State n} (hS : S.Valid f) {F : Finset ℕ} {u : ℕ}
+    (huF : u ∉ F) : (∃ pr ∈ S.pairs.filter (fun pr => ¬ (pr.1 ∈ F ∨ pr.2 ∈ F)),
+      pr.1 = u ∨ pr.2 = u) ↔ S.Paired u ∧ ∀ x ∈ F, ¬ S.IsPartner u x := by
+  constructor
+  · rintro ⟨pr, hpr, hu⟩
+    obtain ⟨hpr, hF⟩ := Finset.mem_filter.1 hpr
+    refine ⟨⟨pr, hpr, hu⟩, fun x hx ⟨pr', hpr', hux⟩ => hF ?_⟩
+    have := hS.pair_unique hpr hpr' hu (by rcases hux with h | h; exacts [Or.inl h.1, Or.inr h.1])
+    subst this
+    rcases hux with ⟨-, h⟩ | ⟨-, h⟩
+    · exact Or.inr (h ▸ hx)
+    · exact Or.inl (h ▸ hx)
+  · rintro ⟨⟨pr, hpr, hu⟩, hpart⟩
+    refine ⟨pr, Finset.mem_filter.2 ⟨hpr, ?_⟩, hu⟩
+    rintro (h | h) <;> rcases hu with hu | hu
+    · exact huF (hu ▸ h)
+    · exact hpart _ h ⟨pr, hpr, Or.inr ⟨hu, rfl⟩⟩
+    · exact hpart _ h ⟨pr, hpr, Or.inl ⟨hu, rfl⟩⟩
+    · exact huF (hu ▸ h)
+
+/-- The parameters of a valid state are at least as many as its pairs. -/
+theorem Valid.q_le_m {S : State n} (hS : S.Valid f) : S.q ≤ S.m := by
+  have hsub : S.pairs.image Prod.fst ⊆ S.params := fun i hi => by
+    obtain ⟨pr, hpr, rfl⟩ := Finset.mem_image.1 hi
+    exact (hS.pair_mem pr hpr).1
+  have hinj : Set.InjOn Prod.fst (S.pairs : Set (ℕ × ℕ)) := fun pr hpr pr' hpr' h =>
+    hS.pair_unique hpr hpr' (Or.inl rfl) (Or.inl h.symm)
+  have := Finset.card_le_card hsub
+  rwa [Finset.card_image_of_injOn hinj] at this
+
+/-- At most `|F|` pairs meet a set `F` of parameters. -/
+theorem Valid.card_pairsMeeting_le {S : State n} (hS : S.Valid f) (F : Finset ℕ) :
+    (S.pairsMeeting F).card ≤ F.card := by
+  classical
+  refine Finset.card_le_card_of_injOn (fun pr => if pr.1 ∈ F then pr.1 else pr.2)
+    (fun pr hpr => ?_) (fun pr hpr pr' hpr' h => ?_)
+  · obtain ⟨-, h⟩ := Finset.mem_filter.1 hpr
+    by_cases h1 : pr.1 ∈ F
+    · simp only [ite_eq_left h1]; exact h1
+    · simp only [ite_eq_right h1]; exact h.resolve_left h1
+  · obtain ⟨hpr, -⟩ := Finset.mem_filter.1 hpr
+    obtain ⟨hpr', -⟩ := Finset.mem_filter.1 hpr'
+    simp only at h
+    refine hS.pair_unique hpr hpr' (w := if pr.1 ∈ F then pr.1 else pr.2)
+      (by split_ifs <;> simp) ?_
+    rw [h]; split_ifs <;> simp
+
+theorem Valid.card_pairsMeeting_singleton {S : State n} (hS : S.Valid f) (w : ℕ) :
+    (S.pairsMeeting {w}).card = if S.Paired w then 1 else 0 := by
+  split_ifs with hw
+  · obtain ⟨pr, hpr, hprw⟩ := hw
+    rw [Finset.card_eq_one]
+    refine ⟨pr, Finset.eq_singleton_iff_unique_mem.2 ⟨Finset.mem_filter.2 ⟨hpr, by simpa⟩,
+      fun pr' hpr' => ?_⟩⟩
+    obtain ⟨hpr', h⟩ := Finset.mem_filter.1 hpr'
+    exact hS.pair_unique hpr' hpr (by simpa using h) hprw
+  · refine Finset.card_eq_zero.2 (Finset.filter_eq_empty_iff.2 fun pr hpr h => hw ?_)
+    exact ⟨pr, hpr, by simpa [eq_comm] using h⟩
+
+/-- Adding to `F` a parameter that is not the partner of a member of `F` adds its pair, if
+any. -/
+theorem Valid.card_pairsMeeting_insert {S : State n} (hS : S.Valid f) {F : Finset ℕ} {x : ℕ}
+    (hx : x ∉ F) (hpart : ∀ y ∈ F, ¬ S.IsPartner x y) :
+    (S.pairsMeeting (insert x F)).card =
+      (S.pairsMeeting F).card + if S.Paired x then 1 else 0 := by
+  rw [← hS.card_pairsMeeting_singleton x, ← Finset.card_union_of_disjoint]
+  · congr 1
+    ext pr
+    simp only [pairsMeeting, Finset.mem_union, Finset.mem_filter, Finset.mem_insert,
+      Finset.mem_singleton]
+    tauto
+  · rw [Finset.disjoint_left]
+    intro pr h₁ h₂
+    obtain ⟨hpr, h₁⟩ := Finset.mem_filter.1 h₁
+    obtain ⟨-, h₂⟩ := Finset.mem_filter.1 h₂
+    simp only [Finset.mem_singleton] at h₂
+    rcases h₂ with h₂ | h₂ <;> rcases h₁ with h₁ | h₁
+    · exact hx (h₂ ▸ h₁)
+    · exact hpart _ h₁ ⟨pr, hpr, Or.inl ⟨h₂, rfl⟩⟩
+    · exact hpart _ h₁ ⟨pr, hpr, Or.inr ⟨h₂, rfl⟩⟩
+    · exact hx (h₂ ▸ h₁)
+
 end State
 
-end Cslib.Circuits.Boolean.B2
+end Cslib.Circuits.Boolean.AffineDisperser

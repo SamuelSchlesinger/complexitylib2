@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.B2.State
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.State
 
 /-!
 # Operations of gate elimination
@@ -37,8 +37,8 @@ assignments to the old ones (`State.Valid.of_map`).
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.B2.State.Valid.of_map`: transporting validity.
-* `Cslib.Circuits.Boolean.B2.State.Valid.restrict`, `Valid.deleteGate`, `Valid.deleteEqn`,
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.of_map`: transporting validity.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.restrict`, `Valid.deleteGate`, `Valid.deleteEqn`,
   `Valid.dropEqn`, `Valid.dropTrivialEqn`, `Valid.swap`, `Valid.quad`, `Valid.moveAffine`,
   `Valid.rewire`: the operations preserve validity.
 
@@ -50,26 +50,9 @@ assignments to the old ones (`State.Valid.of_map`).
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.B2
+namespace Cslib.Circuits.Boolean.AffineDisperser
 
-open Finset Cslib.BitString
-
-namespace SemiCircuit
-
-variable {C : SemiCircuit}
-
-/-- Changing the value of a name that no gate or equation reads and that is not a gate keeps
-consistency. -/
-theorem consistent_update_iff {x : ℕ} (hxg : x ∉ C.gates)
-    (hgate : ∀ J ∈ C.gates, ¬ (C.gate J).Reads x) (heqn : ∀ e ∈ C.eqns, x ∉ (C.eqn e).terms)
-    (val : ℕ → Bool) (b : Bool) : C.Consistent (Function.update val x b) ↔ C.Consistent val := by
-  have hupd : ∀ i, i ≠ x → Function.update val x b i = val i := fun i hi =>
-    Function.update_of_ne hi _ _
-  refine and_congr (forall₂_congr fun e he => Equation.holds_congr fun i hi =>
-    hupd i fun h => heqn e he (h ▸ hi)) (forall₂_congr fun J hJ => ?_)
-  rw [hupd J fun h => hxg (h ▸ hJ), Gate.eval_congr fun i hi => hupd i fun h => hgate J hJ (h ▸ hi)]
-
-end SemiCircuit
+open Finset Cslib.BitString SemiCircuit
 
 theorem isAffine_lit_eval {k : ℕ} {τ : BitString k → ℕ → Bool} (hτ : IsAffine τ) (ℓ : Lit) :
     IsAffine fun u => ℓ.eval (τ u) := by
@@ -1300,110 +1283,6 @@ theorem Valid.quad {S : State n} (hS : S.Valid f) {x y z G D : ℕ} {α β γ c 
 
 /-! ### Moving affine gates into the affine system -/
 
-/-- An operation of `B₂` is affine when its multilinear expression has no product term. -/
-def IsAffineOp (op : Bool → Bool → Bool) : Prop :=
-  (op false false ^^ op true false ^^ op false true ^^ op true true) = false
-
-instance (op : Bool → Bool → Bool) : Decidable (IsAffineOp op) :=
-  inferInstanceAs (Decidable (_ = _))
-
-/-- Add the argument `a` with coefficient `b` to the terms and right-hand side of an
-equation. -/
-def addArg (p : Finset ℕ × Bool) (b : Bool) (a : Arg) : Finset ℕ × Bool :=
-  if b then
-    match a with
-    | .node t => (toggle p.1 t, p.2)
-    | .const v => (p.1, p.2 ^^ v)
-  else p
-
-theorem sum_addArg (p : Finset ℕ × Bool) (b : Bool) (a : Arg) (val : ℕ → Bool) :
-    ∑ i ∈ (addArg p b a).1, val i + (addArg p b a).2 =
-      ∑ i ∈ p.1, val i + p.2 + (b && a.eval val) := by
-  unfold addArg
-  cases b
-  · exact (add_zero _).symm
-  · cases a with
-    | node t =>
-      simp only [ite_true, sum_toggle, Arg.eval_node, Bool.true_and]
-      generalize ∑ i ∈ p.1, val i = s; generalize val t = v; generalize p.2 = r
-      revert s v r; decide
-    | const v =>
-      simp only [ite_true, Arg.eval_const, Bool.true_and]
-      generalize ∑ i ∈ p.1, val i = s; generalize p.2 = r
-      revert s v r; decide
-
-theorem mem_addArg {p : Finset ℕ × Bool} {b : Bool} {a : Arg} {z : ℕ}
-    (h : z ∈ (addArg p b a).1) : z ∈ p.1 ∨ a = .node z := by
-  unfold addArg at h
-  cases b
-  · exact Or.inl h
-  · cases a with
-    | node t =>
-      by_cases hzt : z = t
-      · exact Or.inr (by rw [hzt])
-      · exact Or.inl ((mem_toggle.1 h).2 hzt)
-    | const v => exact Or.inl h
-
-theorem card_addArg_le (p : Finset ℕ × Bool) (b : Bool) (a : Arg) :
-    (addArg p b a).1.card ≤ p.1.card + 1 := by
-  unfold addArg
-  cases b
-  · exact Nat.le_succ _
-  · cases a with
-    | node t => exact card_toggle_le _ _
-    | const v => exact Nat.le_succ _
-
-/-- The equation `J + b₁ t₁ + b₂ t₂ = c` replacing the affine gate
-`J = b₁ t₁ + b₂ t₂ + c`. -/
-def affEqn (g : Gate) (J : ℕ) : Equation :=
-  let c₀ := g.op false false
-  let p := addArg (addArg ({J}, c₀) (g.op true false ^^ c₀) g.left) (g.op false true ^^ c₀)
-    g.right
-  ⟨p.1, p.2⟩
-
-theorem affEqn_holds {g : Gate} (hg : IsAffineOp g.op) (J : ℕ) (val : ℕ → Bool) :
-    (affEqn g J).Holds val ↔ val J = g.eval val := by
-  unfold affEqn Equation.Holds
-  dsimp only
-  have h1 := sum_addArg ({J}, g.op false false) (g.op true false ^^ g.op false false) g.left val
-  have h2 := sum_addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
-    g.left) (g.op false true ^^ g.op false false) g.right val
-  rw [Finset.sum_singleton] at h1
-  dsimp only at h1
-  rw [h1] at h2
-  unfold Gate.eval
-  unfold IsAffineOp at hg
-  generalize ∑ i ∈ (addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
-    g.left) (g.op false true ^^ g.op false false) g.right).1, val i = s at h2 ⊢
-  generalize (addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
-    g.left) (g.op false true ^^ g.op false false) g.right).2 = r at h2 ⊢
-  generalize g.left.eval val = l at h2 ⊢
-  generalize g.right.eval val = rr at h2 ⊢
-  generalize val J = j at h2 ⊢
-  cases l <;> cases rr <;>
-  · revert h2 hg
-    generalize g.op false false = a
-    generalize g.op true false = b
-    generalize g.op false true = c
-    generalize g.op true true = d
-    revert s r j a b c d; decide
-
-theorem mem_affEqn {g : Gate} {J z : ℕ} (h : z ∈ (affEqn g J).terms) : z = J ∨ g.Reads z := by
-  unfold affEqn at h
-  rcases mem_addArg h with h | h
-  · rcases mem_addArg h with h | h
-    · exact Or.inl (Finset.mem_singleton.1 h)
-    · exact Or.inr (Or.inl h)
-  · exact Or.inr (Or.inr h)
-
-theorem card_affEqn_le (g : Gate) (J : ℕ) : (affEqn g J).terms.card ≤ 3 := by
-  unfold affEqn
-  have h1 := card_addArg_le ({J}, g.op false false) (g.op true false ^^ g.op false false) g.left
-  have h2 := card_addArg_le (addArg ({J}, g.op false false)
-    (g.op true false ^^ g.op false false) g.left) (g.op false true ^^ g.op false false) g.right
-  simp only [Finset.card_singleton] at h1
-  exact h2.trans (by omega)
-
 /-- Move the affine gate `J` into the affine system as the auxiliary variable `J` with the new
 equation `e`. -/
 def moveAffine (S : State n) (J e : ℕ) : State n :=
@@ -1671,4 +1550,4 @@ theorem Valid.rewire {S : State n} (hS : S.Valid f) {J : ℕ} {g : Gate} (h : S.
 
 end State
 
-end Cslib.Circuits.Boolean.B2
+end Cslib.Circuits.Boolean.AffineDisperser

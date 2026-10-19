@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.B2.Step
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Step
 public import Complexity.Computability.Circuit.Program
 public import Cslib.Computability.Circuit.Full
 public import Mathlib.Data.Fin.VecNotation
@@ -30,12 +30,12 @@ the source lets circuits read constants for free, so the bound holds here a fort
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.B2.initialState`: the initial state of gate elimination.
+* `Cslib.Circuits.Boolean.AffineDisperser.initialState`: the initial state of gate elimination.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.B2.State.Valid.fourteen_mul_a_le`: the potential bound.
-* `Cslib.Circuits.Boolean.B2.seven_mul_le_two_mul_size_add`: Theorem 4.1.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.fourteen_mul_a_le`: the potential bound.
+* `Cslib.Circuits.Boolean.AffineDisperser.seven_mul_le_two_mul_size_add`: Theorem 4.1.
 
 ## References
 
@@ -45,9 +45,9 @@ the source lets circuits read constants for free, so the bound holds here a fort
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.B2
+namespace Cslib.Circuits.Boolean.AffineDisperser
 
-open Cslib.Circuits Cslib.BitString
+open Cslib.Circuits Cslib.BitString SemiCircuit
 
 variable {n : ℕ} {f : BooleanFunction n}
 
@@ -222,4 +222,4 @@ theorem seven_mul_le_two_mul_size_add {d : ℕ} (hf : IsAffineDisperser f d)
   have := initialState_W_le C
   omega
 
-end Cslib.Circuits.Boolean.B2
+end Cslib.Circuits.Boolean.AffineDisperser
