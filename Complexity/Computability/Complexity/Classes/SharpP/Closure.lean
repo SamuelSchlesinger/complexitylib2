@@ -8,16 +8,20 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.SharpP
+public import Mathlib.Algebra.Ring.Subring.Defs
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Algebra.Ring.Subsemiring.Basic
 
 /-!
 # Closure properties of #P and GapP
 
 `#P` (`Cslib.Complexity.SharpP`) is closed under addition and multiplication
-[Arora and Barak, Chapter 17][AroraBarak09], and so `GapP` (`Cslib.Complexity.GapP`), the
-differences of functions in `#P`, is closed under addition, subtraction and multiplication
+[Arora and Barak, Chapter 17][AroraBarak09], so it is a subsemiring of the functions to `ℕ`
+(`Cslib.Complexity.SharpP.subsemiring`). Hence `GapP` (`Cslib.Complexity.GapP`), the differences of
+functions in `#P`, is closed under addition, negation and multiplication, a subring of the
+functions to `ℤ` (`Cslib.Complexity.GapP.subring`)
 [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994].
 
 For the sum `f₁ + f₂`, the first bit of a certificate chooses which verifier to run
@@ -26,16 +30,23 @@ lengths `p₁(n)` and `p₂(n)`, each is padded to `p₁(n) + p₂(n)` bits by r
 be `false` (`Cslib.Complexity.acceptCount_andVerifier_allFalseVerifier`). For the product, the two
 verifiers read disjoint parts of the certificate (`Cslib.Complexity.acceptCount_andVerifier`).
 
+## Main definitions
+
+* `Cslib.Complexity.SharpP.subsemiring`: `#P` as a subsemiring.
+* `Cslib.Complexity.GapP.subring`: `GapP` as a subring.
+
 ## Main results
 
 * `Cslib.Complexity.SharpP.add_mem`, `Cslib.Complexity.SharpP.mul_mem`: `#P` is closed under
   addition and multiplication.
 * `Cslib.Complexity.SharpP.one_mem`, `Cslib.Complexity.SharpP.add_one_mem`,
-  `Cslib.Complexity.SharpP.sum_mem`, `Cslib.Complexity.SharpP.prod_mem`,
+  `Cslib.Complexity.SharpP.natCast_mem`, `Cslib.Complexity.SharpP.sum_mem`,
+  `Cslib.Complexity.SharpP.prod_mem`, `Cslib.Complexity.SharpP.pow_mem`,
   `Cslib.Complexity.SharpP.two_pow_mem`, `Cslib.Complexity.SharpP.two_pow_mul_mem`.
 * `Cslib.Complexity.SharpP.exists_two_pow_sub_mem`: the complementary count of a function in `#P`.
-* `Cslib.Complexity.GapP.add`, `Cslib.Complexity.GapP.sub`, `Cslib.Complexity.GapP.mul`: `GapP` is
-  closed under addition, subtraction and multiplication.
+* `Cslib.Complexity.GapP.add_mem`, `Cslib.Complexity.GapP.sub_mem'`,
+  `Cslib.Complexity.GapP.mul_mem`: `GapP` is closed under addition, subtraction and
+  multiplication.
 
 ## References
 
@@ -90,9 +101,33 @@ theorem two_pow_mem (q : Polynomial ℕ) : (fun a => 2 ^ q.eval (enc a).length) 
 theorem one_mem : (1 : α → ℕ) ∈ SharpP enc :=
   ⟨0, fun _ => true, .const true, fun a => by simp⟩
 
+/-- `#P` as a subsemiring of the functions to `ℕ`. -/
+def subsemiring (enc : α ↪ List Bool) : Subsemiring (α → ℕ) where
+  carrier := SharpP enc
+  mul_mem' := mul_mem
+  one_mem' := one_mem
+  add_mem' := add_mem
+  zero_mem' := zero_mem
+
+@[simp]
+theorem coe_subsemiring : (subsemiring enc : Set (α → ℕ)) = SharpP enc :=
+  rfl
+
+@[simp]
+theorem mem_subsemiring {f : α → ℕ} : f ∈ subsemiring enc ↔ f ∈ SharpP enc :=
+  Iff.rfl
+
 /-- `#P` is closed under adding one. -/
 theorem add_one_mem {f : α → ℕ} (h : f ∈ SharpP enc) : f + 1 ∈ SharpP enc :=
   add_mem h one_mem
+
+/-- The constant functions are in `#P`. -/
+theorem natCast_mem (n : ℕ) : (n : α → ℕ) ∈ SharpP enc :=
+  _root_.natCast_mem (subsemiring enc) n
+
+/-- `#P` is closed under powers. -/
+theorem pow_mem {f : α → ℕ} (h : f ∈ SharpP enc) (n : ℕ) : f ^ n ∈ SharpP enc :=
+  (subsemiring enc).pow_mem h n
 
 /-- `#P` is closed under multiplication by `2 ^ q(n)`, where `n` is the length of the encoded
 instance. -/
@@ -102,25 +137,13 @@ theorem two_pow_mul_mem (q : Polynomial ℕ) {f : α → ℕ} (h : f ∈ SharpP 
 
 /-- `#P` is closed under finite sums. -/
 theorem sum_mem {ι : Type*} (s : Finset ι) {f : ι → α → ℕ} (h : ∀ i ∈ s, f i ∈ SharpP enc) :
-    ∑ i ∈ s, f i ∈ SharpP enc := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simpa using (zero_mem (enc := enc))
-  | insert i s hi ih =>
-    rw [Finset.sum_insert hi]
-    exact add_mem (h i (Finset.mem_insert_self i s))
-      (ih fun j hj => h j (Finset.mem_insert_of_mem hj))
+    ∑ i ∈ s, f i ∈ SharpP enc :=
+  (subsemiring enc).sum_mem h
 
 /-- `#P` is closed under finite products. -/
 theorem prod_mem {ι : Type*} (s : Finset ι) {f : ι → α → ℕ} (h : ∀ i ∈ s, f i ∈ SharpP enc) :
-    ∏ i ∈ s, f i ∈ SharpP enc := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simpa using (one_mem (enc := enc))
-  | insert i s hi ih =>
-    rw [Finset.prod_insert hi]
-    exact mul_mem (h i (Finset.mem_insert_self i s))
-      (ih fun j hj => h j (Finset.mem_insert_of_mem hj))
+    ∏ i ∈ s, f i ∈ SharpP enc :=
+  (subsemiring enc).prod_mem h
 
 /-- **The complementary count**: a function `f` in `#P` is at most `2 ^ p(n)` for a polynomial
 `p`, where `n` is the length of the encoded instance, with `2 ^ p(n) - f` also in `#P`: the
@@ -143,8 +166,17 @@ end SharpP
 
 namespace GapP
 
+/-- The zero function is in `GapP`. -/
+theorem zero_mem : (0 : α → ℤ) ∈ GapP enc :=
+  ⟨0, SharpP.zero_mem, 0, SharpP.zero_mem, fun a => by simp⟩
+
+/-- The constant function `1` is in `GapP`. -/
+theorem one_mem : (1 : α → ℤ) ∈ GapP enc :=
+  ⟨1, SharpP.one_mem, 0, SharpP.zero_mem, fun a => by simp⟩
+
 /-- **`GapP` is closed under addition.** -/
-theorem add {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈ GapP enc) : g₁ + g₂ ∈ GapP enc := by
+theorem add_mem {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈ GapP enc) :
+    g₁ + g₂ ∈ GapP enc := by
   obtain ⟨f₁, hf₁, f₂, hf₂, hg₁⟩ := h₁
   obtain ⟨f₃, hf₃, f₄, hf₄, hg₂⟩ := h₂
   refine ⟨f₁ + f₃, SharpP.add_mem hf₁ hf₃, f₂ + f₄, SharpP.add_mem hf₂ hf₄, fun a => ?_⟩
@@ -152,13 +184,10 @@ theorem add {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈
   push_cast
   ring
 
-/-- **`GapP` is closed under subtraction.** -/
-theorem sub {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈ GapP enc) : g₁ - g₂ ∈ GapP enc := by
-  simpa only [sub_eq_add_neg] using add h₁ (neg h₂)
-
 /-- **`GapP` is closed under multiplication**:
 `(f₁ - f₂) (f₃ - f₄) = (f₁ f₃ + f₂ f₄) - (f₁ f₄ + f₂ f₃)`. -/
-theorem mul {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈ GapP enc) : g₁ * g₂ ∈ GapP enc := by
+theorem mul_mem {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈ GapP enc) :
+    g₁ * g₂ ∈ GapP enc := by
   obtain ⟨f₁, hf₁, f₂, hf₂, hg₁⟩ := h₁
   obtain ⟨f₃, hf₃, f₄, hf₄, hg₂⟩ := h₂
   refine ⟨f₁ * f₃ + f₂ * f₄, SharpP.add_mem (SharpP.mul_mem hf₁ hf₃) (SharpP.mul_mem hf₂ hf₄),
@@ -167,6 +196,29 @@ theorem mul {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈
   simp only [Pi.mul_apply, Pi.add_apply, hg₁ a, hg₂ a]
   push_cast
   ring
+
+/-- `GapP` as a subring of the functions to `ℤ`. -/
+def subring (enc : α ↪ List Bool) : Subring (α → ℤ) where
+  carrier := GapP enc
+  mul_mem' := mul_mem
+  one_mem' := one_mem
+  add_mem' := add_mem
+  zero_mem' := zero_mem
+  neg_mem' := neg_mem
+
+@[simp]
+theorem coe_subring : (subring enc : Set (α → ℤ)) = GapP enc :=
+  rfl
+
+@[simp]
+theorem mem_subring {g : α → ℤ} : g ∈ subring enc ↔ g ∈ GapP enc :=
+  Iff.rfl
+
+/-- **`GapP` is closed under subtraction.** The unprimed name `GapP.sub_mem` is the deprecated
+alias of `GapP.natCast_sub_natCast_mem`. -/
+theorem sub_mem' {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈ GapP enc) :
+    g₁ - g₂ ∈ GapP enc :=
+  (subring enc).sub_mem h₁ h₂
 
 end GapP
 

@@ -44,8 +44,6 @@ independent random choices [Arora and Barak, Chapters 7 and 17][AroraBarak09].
 
 ## Main results
 
-* `Cslib.Complexity.acceptCount_zero`, `Cslib.Complexity.acceptCount_add_acceptCount_not`,
-  `Cslib.Complexity.acceptCount_not`: counts of trivial and negated verifiers.
 * `Cslib.Complexity.acceptCount_andVerifier`, `Cslib.Complexity.acceptCount_orVerifier`,
   `Cslib.Complexity.acceptCount_selectVerifier`: counts of the combined verifiers.
 * `Cslib.Complexity.computableTidilyInPolyTime_andVerifier`,
@@ -65,41 +63,6 @@ namespace Cslib.Complexity
 open Turing.MultiTapeTM
 
 variable {α : Type}
-
-/-! ### Counting accepted strings -/
-
-section acceptCount
-
-variable (V : α × List Bool → Bool) (a : α) (n : ℕ)
-
-/-- With no bits there is one string, the empty one. -/
-theorem acceptCount_zero : acceptCount V a 0 = if V (a, []) = true then 1 else 0 := by
-  unfold acceptCount
-  rw [Finset.univ_unique, Finset.filter_singleton]
-  split_ifs with h₁ h₂ h₂ <;> simp_all
-
-/-- The verifier accepting everything accepts all `2 ^ n` strings of length `n`. -/
-@[simp]
-theorem acceptCount_true : acceptCount (fun _ => true) a n = 2 ^ n := by
-  simp [acceptCount]
-
-/-- The verifier rejecting everything accepts no string. -/
-@[simp]
-theorem acceptCount_false : acceptCount (fun _ => false) a n = 0 := by
-  simp [acceptCount]
-
-/-- A verifier and its negation together accept every string once. -/
-theorem acceptCount_add_acceptCount_not :
-    acceptCount V a n + acceptCount (fun x => !V x) a n = 2 ^ n := by
-  simpa only [acceptCount, Bool.not_eq_true'] using
-    acceptCount_add_card_filter_eq_false (V := V) (a := a) (n := n)
-
-/-- The negation of a verifier accepts the strings that it rejects. -/
-theorem acceptCount_not : acceptCount (fun x => !V x) a n = 2 ^ n - acceptCount V a n := by
-  have := acceptCount_add_acceptCount_not V a n
-  omega
-
-end acceptCount
 
 /-! ### The string of `false`s -/
 

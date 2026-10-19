@@ -3836,10 +3836,10 @@ info: 'Cslib.Complexity.SharpP.exists_le_two_pow' depends on axioms: [propext, C
 #print axioms Cslib.Complexity.SharpP.exists_le_two_pow
 
 /--
-info: 'Cslib.Complexity.GapP.neg' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.GapP.neg_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapP.neg
+#print axioms Cslib.Complexity.GapP.neg_mem
 
 /--
 info: 'Cslib.Complexity.PromiseP_eq_PromiseNP_iff' depends on axioms: [propext, Classical.choice, Quot.sound]

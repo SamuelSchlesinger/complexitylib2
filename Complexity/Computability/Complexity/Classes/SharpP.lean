@@ -39,8 +39,10 @@ definition. The characterisations by nondeterministic machines are not proved he
 
 * `Cslib.Complexity.mem_NP_iff_exists_SharpP`: `NP` consists of the supports of functions in `#P`.
 * `Cslib.Complexity.acceptCount_add`: counting accepted strings by their prefixes.
+* `Cslib.Complexity.acceptCount_zero`, `Cslib.Complexity.acceptCount_add_acceptCount_not`,
+  `Cslib.Complexity.acceptCount_not`: counts of trivial and negated verifiers.
 * `Cslib.Complexity.SharpP.exists_le_two_pow`: functions in `#P` are at most exponential.
-* `Cslib.Complexity.GapP.neg`: `GapP` is closed under negation.
+* `Cslib.Complexity.GapP.neg_mem`: `GapP` is closed under negation.
 
 ## References
 
@@ -100,6 +102,35 @@ theorem acceptCount_congr {W : α × List Bool → Bool} (h : ∀ w, V (a, w) = 
     acceptCount V a n = acceptCount W a n := by
   simp only [acceptCount, h]
 
+/-- With no bits there is one string, the empty one. -/
+theorem acceptCount_zero (V : α × List Bool → Bool) (a : α) :
+    acceptCount V a 0 = if V (a, []) = true then 1 else 0 := by
+  unfold acceptCount
+  rw [Finset.univ_unique, Finset.filter_singleton]
+  split_ifs with h₁ h₂ h₂ <;> simp_all
+
+/-- The verifier accepting everything accepts all `2 ^ n` strings of length `n`. -/
+@[simp]
+theorem acceptCount_true (a : α) (n : ℕ) : acceptCount (fun _ => true) a n = 2 ^ n := by
+  simp [acceptCount]
+
+/-- The verifier rejecting everything accepts no string. -/
+@[simp]
+theorem acceptCount_false (a : α) (n : ℕ) : acceptCount (fun _ => false) a n = 0 := by
+  simp [acceptCount]
+
+/-- A verifier and its negation together accept every string once. -/
+theorem acceptCount_add_acceptCount_not (V : α × List Bool → Bool) (a : α) (n : ℕ) :
+    acceptCount V a n + acceptCount (fun x => !V x) a n = 2 ^ n := by
+  simpa only [acceptCount, Bool.not_eq_true'] using
+    acceptCount_add_card_filter_eq_false (V := V) (a := a) (n := n)
+
+/-- The negation of a verifier accepts the strings that it rejects. -/
+theorem acceptCount_not (V : α × List Bool → Bool) (a : α) (n : ℕ) :
+    acceptCount (fun x => !V x) a n = 2 ^ n - acceptCount V a n := by
+  have := acceptCount_add_acceptCount_not V a n
+  omega
+
 end acceptCount
 
 /-- The functions counting the certificates that a polynomial-time verifier accepts, with
@@ -138,7 +169,7 @@ namespace SharpP
 
 /-- The zero function is in `#P`: no certificate is accepted. -/
 theorem zero_mem : (0 : α → ℕ) ∈ SharpP enc :=
-  ⟨0, fun _ => false, .const false, fun _ => by simp [acceptCount]⟩
+  ⟨0, fun _ => false, .const false, fun a => (acceptCount_false a _).symm⟩
 
 /-- A function in `#P` is at most exponential in the length of the encoded instance. -/
 theorem exists_le_two_pow {f : α → ℕ} (hf : f ∈ SharpP enc) :
@@ -150,14 +181,19 @@ end SharpP
 
 namespace GapP
 
-theorem sub_mem {f₁ f₂ : α → ℕ} (hf₁ : f₁ ∈ SharpP enc) (hf₂ : f₂ ∈ SharpP enc) :
-    (fun a => (f₁ a : ℤ) - f₂ a) ∈ GapP enc :=
+/-- The difference of two functions in `#P`, cast to the integers, is in `GapP`. -/
+theorem natCast_sub_natCast_mem {f₁ f₂ : α → ℕ} (hf₁ : f₁ ∈ SharpP enc)
+    (hf₂ : f₂ ∈ SharpP enc) : (fun a => (f₁ a : ℤ) - f₂ a) ∈ GapP enc :=
   ⟨f₁, hf₁, f₂, hf₂, fun _ => rfl⟩
 
+@[deprecated (since := "2026-10-19")] alias sub_mem := natCast_sub_natCast_mem
+
 /-- `GapP` is closed under negation: exchange the two functions in `#P`. -/
-theorem neg {g : α → ℤ} (hg : g ∈ GapP enc) : -g ∈ GapP enc :=
+theorem neg_mem {g : α → ℤ} (hg : g ∈ GapP enc) : -g ∈ GapP enc :=
   let ⟨f₁, hf₁, f₂, hf₂, h⟩ := hg
   ⟨f₂, hf₂, f₁, hf₁, fun a => by rw [Pi.neg_apply, h a, neg_sub]⟩
+
+@[deprecated (since := "2026-10-19")] alias neg := neg_mem
 
 end GapP
 
