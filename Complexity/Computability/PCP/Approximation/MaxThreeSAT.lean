@@ -318,8 +318,8 @@ theorem length_toThreeSAT_toCNF (g : Graph (α → α → Bool)) :
 
 /-- **MAX-2CSP reduces to MAX-3SAT, preserving the gap**: if every labelling of the constraint graph
 violates the proportion `ε` of its edges, every assignment falsifies the proportion
-`ε / (pairs.length * (2 k - 2))` of the clauses of its formula, split to width three. Labels are
-written in `k ≥ 2` bits, along `e`, and `pairs` lists every pair of labels. -/
+`ε / (pairs.length * max 1 (2 k - 2))` of the clauses of its formula, split to width three. Labels
+are written in `k` bits, along `e`, and `pairs` lists every pair of labels. -/
 theorem div_le_unsatVal_toThreeSAT_toCNF (hpairs : ∀ p, p ∈ pairs) (g : Graph (α → α → Bool)) :
     (g.toGraph id).unsatVal / (pairs.length * max 1 (2 * k - 2) : ℕ) ≤
       (toThreeSAT (toCNF e pairs g)).unsatVal := by
