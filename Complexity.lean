@@ -41,10 +41,12 @@ public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
+public import Complexity.Computability.Circuit.Boolean.Iteration
+public import Complexity.Computability.Circuit.Boolean.Iteration.Decoder
 public import Complexity.Computability.Circuit.Boolean.Iteration.Record
+public import Complexity.Computability.Circuit.Boolean.Iteration.RecordCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.Residue
 public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
-public import Complexity.Computability.Circuit.Boolean.Iteration.Word
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.KeyedSort
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko
@@ -114,6 +116,7 @@ public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Capacit
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.InnerProduct
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
+public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Computability.Circuit.Clique
 public import Complexity.Computability.Circuit.Complexity
 public import Complexity.Computability.Circuit.CompositionDepth

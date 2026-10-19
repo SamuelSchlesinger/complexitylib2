@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Computability.Circuit.Boolean.Iteration.Word
+public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Computability.Circuit.Iteration
 public import Complexity.Foundations.Data.List.OfFn
 public import Mathlib.Order.Monotone.Defs

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Computability.Circuit.Boolean.Iteration.Word
+public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Computability.Circuit.Iteration
 public import Complexity.Foundations.Combinatorics.FunctionalGraph
 import Mathlib.Tactic.Linarith
@@ -112,7 +112,8 @@ def residueWord {w : ℕ} (T K : ℕ) (period : BitVec w) : BitVec w :=
 theorem residueWord_toNat {w T K : ℕ} (period : BitVec w)
     (hK : K < 2 ^ w) (hp : 0 < period.toNat) (hpK : period.toNat ≤ K) :
     (residueWord T K period).toNat = T % period.toNat := by
-  rw [residueWord, selectBits_toNat _ _ (by omega) (by omega), word_bits, BitVec.toNat_ofNat]
+  rw [residueWord, selectBits_of_toNat_lt _ _ (by omega) (by omega), word_getLsbD,
+    BitVec.toNat_ofNat]
   exact Nat.mod_eq_of_lt ((Nat.mod_lt _ hp).trans_le (hpK.trans hK.le))
 
 /-- The time in the repeated interval `[lo, hi)` that is congruent to `T`. -/
@@ -131,21 +132,21 @@ theorem repeatWordIndex_spec {α : Type*} {f : α → α} {x : α} {w T K : ℕ}
     residueWord_toNat _ hK (by rw [hp]; omega) (by rw [hp]; omega), hp]
   exact liftResidue_reconstructs hlt heq (by omega) (by omega)
 
-/-- One word correction. -/
+/-- One word correction: an addition, a comparison and a multiplexer. -/
 theorem synthesis_liftWord {n w : ℕ} (s : Set (BooleanFunction n))
     (lower period r : BitString n → BitVec w)
     (hl : ∀ i : Fin w, (fun x => (lower x).getLsbD i.val) ∈ s)
     (hp : ∀ i : Fin w, (fun x => (period x).getLsbD i.val) ∈ s)
     (hr : ∀ i : Fin w, (fun x => (r x).getLsbD i.val) ∈ s) :
     Synthesis interpretation s (wordWires fun x => liftWord (lower x) (period x) (r x))
-      (50 * (w + 1) ^ 2) := by
-  have hsum := synthesis_add s r period hr hp
-  have hcmp := synthesis_ult s r lower hr hl
-  have hmux := synthesis_word_mux
-    (s ∪ (wordWires (fun x => r x + period x) ∪ {fun x => (r x).ult (lower x)}))
+      (21 * w + 3) := by
+  have hsum := Synthesis.word_add (s := s) r period hr hp
+  have hcmp := Synthesis.word_ult (s := s) r lower hr hl
+  have hmux := Synthesis.word_mux (s :=
+    s ∪ (wordWires (fun x => r x + period x) ∪ {fun x => (r x).ult (lower x)}))
     (fun x => r x + period x) r (fun x => (r x).ult (lower x))
     (Or.inr (Or.inr rfl)) (fun i => Or.inr (Or.inl ⟨i, rfl⟩)) (fun i => Or.inl (hr i))
-  exact ((hsum.union hcmp).trans hmux).mono Set.Subset.rfl Set.Subset.rfl (by nlinarith)
+  exact ((hsum.union hcmp).trans hmux).mono Set.Subset.rfl Set.Subset.rfl (by omega)
 
 /-- Iterated word corrections, sharing all intermediate words. -/
 theorem synthesis_liftWord_iterate {n w : ℕ} (s : Set (BooleanFunction n))
@@ -155,10 +156,10 @@ theorem synthesis_liftWord_iterate {n w : ℕ} (s : Set (BooleanFunction n))
     (hinit : ∀ i : Fin w, (fun x => (init x).getLsbD i.val) ∈ s) (K : ℕ) :
     Synthesis interpretation s
       (wordWires fun x => (liftWord (lower x) (period x))^[K] (init x))
-      (K * (50 * (w + 1) ^ 2)) := by
+      (K * (21 * w + 3)) := by
   let q := fun t => wordWires fun x => (liftWord (lower x) (period x))^[t] (init x)
   have hs := Synthesis.steps (I := interpretation) (s := s) q
-    (50 * (w + 1) ^ 2) K (by rintro _ ⟨i, rfl⟩; exact hinit i) fun t _ => ?_
+    (21 * w + 3) K (by rintro _ ⟨i, rfl⟩; exact hinit i) fun t _ => ?_
   · exact hs.mono Set.Subset.rfl (Synthesis.subset_stages q le_rfl) le_rfl
   · simpa only [q, Function.iterate_succ_apply'] using
       synthesis_liftWord (s ∪ Synthesis.stages q t) lower period
@@ -173,10 +174,10 @@ theorem synthesis_residueWord {n w : ℕ} (s : Set (BooleanFunction n))
     (hconst : ∀ b : Bool, (fun _ : BitString n => b) ∈ s) :
     Synthesis interpretation s (wordWires fun x => residueWord T K (period x))
       (w * ((K + 1) * (2 * w + 3) + 1)) := by
-  have h := synthesis_selectBits s period
+  have h := Synthesis.selectBits (s := s) period
     (fun j : Fin (K + 1) => fun _ => fun i : Fin w =>
       (BitVec.ofNat w (T % j.val)).getLsbD i.val) hp fun _ _ => hconst _
-  simpa only [wordWires, residueWord, word_bit] using h
+  simpa only [wordWires, residueWord, getLsbD_word] using h
 
 /-- The repeated-interval index circuit has no dependence on the bit length of `T`. -/
 theorem synthesis_repeatWordIndex {n w : ℕ} (s : Set (BooleanFunction n))
@@ -188,7 +189,7 @@ theorem synthesis_repeatWordIndex {n w : ℕ} (s : Set (BooleanFunction n))
       (100 * (K + 1) * (w + 1) ^ 2) := by
   let p := fun x => hi x - lo x
   let r := fun x => residueWord T K (p x)
-  have hp := synthesis_sub s hi lo hhi hlo
+  have hp := Synthesis.word_sub (s := s) hi lo hhi hlo
   have hr := synthesis_residueWord (s ∪ wordWires p) T K p
     (fun i => Or.inr ⟨i, rfl⟩) fun b => Or.inl (hconst b)
   have hout := synthesis_liftWord_iterate (s ∪ (wordWires p ∪ wordWires r)) lo p r
