@@ -34,10 +34,12 @@ message. A node with `n` rounds to go returns its value to the same stack after
 most `(N + 1) ^ (2 * n + 1)` (`Cslib.Complexity.GameTree.time_le`); the evaluation from the empty
 stack then stays put (`Cslib.Complexity.GameTree.iterate_step_eval`). Along the way the stack holds
 at most `D` frames, the depth of the root, each storing two iterates and two numbers at most `cap`
-(`Cslib.Complexity.GameTree.Good`, `Cslib.Complexity.GameTree.good_iterate_step`). So the evaluator
-runs in space polynomial in `D`, the size of the iterates and the size of `cap`, in time
-exponential in `D`. This is the polynomial-space evaluation of the optimal prover in the proof of
-`IP ⊆ PSPACE` [Arora and Barak, Chapter 8][AroraBarak09].
+(`Cslib.Complexity.GameTree.Good`, `Cslib.Complexity.GameTree.good_iterate_step`). Thus the retained
+state has size polynomial in `D`, the size of the iterates and the size of `cap`. Overall time and
+space bounds also require resource bounds for the leaf, successor and final-element callbacks;
+the step count alone does not bound their cost. The certified specialization in `IP/PSPACE`
+supplies these bounds for evaluating the optimal prover in the proof of `IP ⊆ PSPACE`
+[Arora and Barak, Chapter 8][AroraBarak09].
 
 ## Main definitions
 
