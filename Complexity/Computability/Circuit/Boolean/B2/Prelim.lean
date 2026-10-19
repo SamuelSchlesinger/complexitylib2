@@ -389,6 +389,159 @@ theorem isPartner_paired {S : State n} {w r : ℕ} (h : S.IsPartner w r) : S.Pai
   · exact ⟨⟨pr, hpr, Or.inl h1⟩, ⟨pr, hpr, Or.inr h2⟩⟩
   · exact ⟨⟨pr, hpr, Or.inr h1⟩, ⟨pr, hpr, Or.inl h2⟩⟩
 
+
+/-! ### Case 2 -/
+
+/-- An AND-type operation becomes constant when either argument takes a suitable value. -/
+theorem exists_eq_of_not_isAffineOp {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) :
+    (∃ b, op b false = op b true) ∧ (∃ b, op false b = op true b) := by
+  unfold IsAffineOp at h
+  constructor
+  · by_cases h0 : op false false = op false true
+    · exact ⟨false, h0⟩
+    · by_cases h1 : op true false = op true true
+      · exact ⟨true, h1⟩
+      · exfalso
+        apply h
+        revert h0 h1
+        generalize op false false = a; generalize op true false = b
+        generalize op false true = c; generalize op true true = d
+        revert a b c d; decide
+  · by_cases h0 : op false false = op true false
+    · exact ⟨false, h0⟩
+    · by_cases h1 : op false true = op true true
+      · exact ⟨true, h1⟩
+      · exfalso
+        apply h
+        revert h0 h1
+        generalize op false false = a; generalize op true false = b
+        generalize op false true = c; generalize op true true = d
+        revert a b c d; decide
+
+/-- Fixing one argument of a gate reading two distinct internal values to a value that makes its
+operation constant turns it into a degenerate gate computing a constant. -/
+theorem lit_subst_const {g : Gate} {z w : ℕ} (hzw : z ≠ w) {b : Bool}
+    (h : (g.left = .node z ∧ g.right = .node w ∧ g.op false b = g.op true b) ∨
+      (g.left = .node w ∧ g.right = .node z ∧ g.op b false = g.op b true)) :
+    (g.subst w (Lit.const b)).Degenerate ∧ (g.subst w (Lit.const b)).lit.target = none := by
+  obtain ⟨op, l, r⟩ := g
+  rcases h with ⟨hl, hr, hb⟩ | ⟨hl, hr, hb⟩
+  · simp only at hl hr hb
+    subst hl hr
+    have hzw' : Arg.node z ≠ Arg.node w := fun h => hzw (Arg.node.inj h)
+    refine ⟨Or.inr (Or.inl ⟨b, ?_⟩), ?_⟩
+    · simp [Gate.subst, Arg.substArg, Lit.const]
+    · simp [Gate.subst, Arg.substArg, Gate.substNeg, Lit.const, Gate.lit, hzw', hb, Lit.target]
+  · simp only at hl hr hb
+    subst hl hr
+    have hzw' : Arg.node z ≠ Arg.node w := fun h => hzw (Arg.node.inj h)
+    refine ⟨Or.inl ⟨b, ?_⟩, ?_⟩
+    · simp [Gate.subst, Arg.substArg, Lit.const]
+    · simp [Gate.subst, Arg.substArg, Gate.substNeg, Lit.const, Gate.lit, hzw', hb, Lit.target]
+
+/-- Case 2 applies: an AND-type gate reads an unpaired isolated parameter `z` and another
+parameter `w`. -/
+def Case2 (S : State n) : Prop :=
+  ∃ G ∈ S.gates, ∃ z w, ¬ IsAffineOp (S.gate G).op ∧
+    (((S.gate G).left = .node z ∧ (S.gate G).right = .node w) ∨
+      ((S.gate G).left = .node w ∧ (S.gate G).right = .node z)) ∧
+    z ∈ S.unpaired ∧ S.deg z = 1 ∧ w ∈ S.params ∧ z ≠ w
+
+/-- **Case 2** of the preliminary reductions: fix `w` so that the AND-type gate becomes
+constant and delete it; `z` becomes unused. If `w` is unpaired, `Δa = -1` and `ΔW ≤ -14`;
+otherwise the partner of `w` becomes unpaired, `Δa = 0` and `ΔW ≤ -4`. -/
+theorem Valid.step_case2 {S : State n} (hS : S.Valid f) (h : S.Case2) : ∃ S', Step f S S' := by
+  obtain ⟨G, hG, z, w, hand, hargs, hz, hz1, hw, hzw⟩ := h
+  obtain ⟨⟨bl, hbl⟩, ⟨br, hbr⟩⟩ := exists_eq_of_not_isAffineOp hand
+  -- the value of `w` making `G` constant
+  obtain ⟨b, hb⟩ : ∃ b, ((S.gate G).left = .node z ∧ (S.gate G).right = .node w ∧
+      (S.gate G).op false b = (S.gate G).op true b) ∨ ((S.gate G).left = .node w ∧
+      (S.gate G).right = .node z ∧ (S.gate G).op b false = (S.gate G).op b true) := by
+    rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
+    · exact ⟨br, Or.inl ⟨hl, hr, hbr⟩⟩
+    · exact ⟨bl, Or.inr ⟨hl, hr, hbl⟩⟩
+  have hzp := (mem_unpaired.1 hz).1
+  have hGz : (S.gate G).Reads z := by rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
+  have hGw : (S.gate G).Reads w := by rcases hargs with ⟨-, hr⟩ | ⟨hl, -⟩; exacts [Or.inr hr, Or.inl hl]
+  set S₁ := S.fixConst w b
+  have hS₁ := hS.fixConst hw b
+  obtain ⟨hdeg, htarget⟩ := lit_subst_const hzw hb
+  have hok : S₁.DeleteGateOK G (S₁.gate G).lit :=
+    ⟨hG, fun t ht => Gate.reads_of_lit_reads ht, Or.inl fun val _ => Gate.eval_lit hdeg val⟩
+  have hstep := hS₁.delStep_deleteGate hok
+  change DelStep f S₁ _ _ (S.gate G |>.subst w (Lit.const b)).lit.target at hstep
+  rw [htarget] at hstep
+  set S' := S₁.deleteGate G (S₁.gate G).lit
+  have hparams : S'.params = S.params.erase w := rfl
+  have hpairs : S'.pairs = S.pairsAvoid w := rfl
+  have hsize : S'.size + 1 = S.size := hstep.size
+  have hm : S'.m + 1 = S.m := fixConst_m hw b
+  have hq := hS.pairsAvoid_card w
+  have hchildren : ∀ u ∈ S'.params, S'.children u ⊆ (S.children u).erase (.inl G) := by
+    intro u hu
+    have := hstep.children u hu (by simp)
+    rwa [fixConst_children S b (Finset.ne_of_mem_erase hu)] at this
+  have hczG : S.children z = {.inl G} := by
+    have hmem : Sum.inl G ∈ S.children z := (SemiCircuit.inl_mem_children _).2 ⟨hG, hGz⟩
+    exact (Finset.card_eq_one.1 hz1).elim fun a ha => by
+      rw [ha] at hmem ⊢; rw [Finset.mem_singleton.1 hmem]
+  have hpt : ∀ u ∈ S.params, S'.wt u + ((if u = z then 6 else 0) +
+      (if u = w ∧ w ∈ S.unpaired then 6 else 0)) ≤ S.wt u + (if S.IsPartner w u then 7 else 0) := by
+    intro u hu
+    by_cases huw : u = w
+    · subst huw
+      rw [wt_of_notMem_params (by simp [hparams]), ite_eq_right hzw.symm]
+      by_cases hwu : u ∈ S.unpaired
+      · rw [ite_eq_left ⟨rfl, hwu⟩, wt_of_mem hwu]
+        have := six_le_weight (show 1 ≤ S.deg u from Finset.card_pos.2
+          ⟨_, (SemiCircuit.inl_mem_children _).2 ⟨hG, hGw⟩⟩)
+        omega
+      · rw [ite_eq_right fun h => hwu h.2]; omega
+    · rw [ite_eq_right (show ¬ (u = w ∧ w ∈ S.unpaired) from fun h => huw h.1)]
+      have hu' : u ∈ S'.params := Finset.mem_erase.2 ⟨huw, hu⟩
+      by_cases huz : u = z
+      · subst huz
+        have hdeg0 : S'.deg u = 0 := by
+          have := hchildren u hu'
+          rw [hczG, Finset.erase_singleton] at this
+          exact Finset.card_eq_zero.2 (Finset.subset_empty.1 this)
+        have h1 : S'.wt u = 0 := by unfold wt; split_ifs <;> simp [hdeg0]
+        rw [h1, wt_of_mem hz, hz1, weight_one, ite_eq_left rfl]
+        omega
+      · rw [ite_eq_right huz]
+        by_cases hu₁ : u ∈ S'.unpaired
+        · rcases fixConst_unpaired (S := S) (w := w) (b := b) hu₁ with hus | hpart
+          · rw [wt_of_mem hu₁, wt_of_mem hus]
+            exact (weight_mono (Finset.card_le_card ((hchildren u hu').trans
+              (Finset.erase_subset _ _)))).trans (Nat.le_add_right _ _)
+          · rw [ite_eq_left hpart]
+            have := S'.wt_le_seven u
+            omega
+        · rw [wt_of_notMem hu₁]; omega
+  have hW := W_add_le (S := S) (S' := S') le_rfl (by rw [hparams]; exact Finset.erase_subset _ _)
+    _ _ hpt
+  rw [Finset.sum_add_distrib, sum_ite_eq_of_mem hzp] at hW
+  have hgain := hS.sum_partner_le w S.params 7
+  have hs : S'.s + 1 = S.s := hsize
+  refine ⟨S', hstep.valid, by omega, ?_⟩
+  by_cases hwp : S.Paired w
+  · -- (PF): the pair of `w` is dropped
+    have hwu : w ∉ S.unpaired := fun h => (mem_unpaired.1 h).2 hwp
+    rw [Finset.sum_eq_zero fun u _ => ite_eq_right fun h => hwu h.2] at hW
+    rw [ite_eq_left hwp] at hq
+    have hq' : S'.q + 1 = S.q := by simpa [q, hpairs] using hq
+    have ha' : S'.a = S.a := by simp only [a]; omega
+    rw [ha']; omega
+  · -- (UF): `w` is unpaired
+    have hwu : w ∈ S.unpaired := mem_unpaired.2 ⟨hw, hwp⟩
+    simp only [and_iff_left hwu] at hW
+    rw [Finset.sum_ite_eq' S.params w, ite_eq_left hw] at hW
+    rw [Finset.sum_eq_zero fun u _ => ite_eq_right fun h => hwp (isPartner_paired h).1] at hW
+    rw [ite_eq_right hwp] at hq
+    have hq' : S'.q = S.q := by simpa [q, hpairs] using hq
+    have ha' : S.a ≤ S'.a + 1 := by simp only [a]; omega
+    omega
+
 end State
 
 end Cslib.Circuits.Boolean.B2
