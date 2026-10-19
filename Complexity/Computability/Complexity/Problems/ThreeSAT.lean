@@ -163,13 +163,14 @@ the formula under the certificate assignment. -/
 def verifier (x : CNF ℕ × List Bool) : Bool :=
   (x.1.all fun c => decide (c.length ≤ 3)) && SAT.verifier x
 
-/-- `ThreeSAT.verifier` verifies `ThreeSAT` with certificates as long as the encoded formula. -/
+/-- `ThreeSAT.verifier` verifies `ThreeSAT` with certificates as long as the encoded formula: it
+is `SAT.verifier` guarded by the clause-width test. -/
 theorem isVerifier : IsVerifier encCNF Polynomial.X verifier ThreeSAT := by
-  intro φ
-  simp only [ThreeSAT, Set.mem_ofPred_eq, verifier, Bool.and_eq_true, List.all_eq_true,
-    decide_eq_true_eq]
-  rw [← mem_SAT, SAT.isVerifier φ]
-  exact ⟨fun ⟨h3, w, hw, hv⟩ => ⟨w, hw, h3, hv⟩, fun ⟨w, hw, h3, hv⟩ => ⟨h3, w, hw, hv⟩⟩
+  have h : ThreeSAT = {φ | (φ.all fun c => decide (c.length ≤ 3)) = true ∧ φ ∈ SAT} := by
+    ext φ
+    simp only [ThreeSAT, Set.mem_ofPred_eq, List.all_eq_true, decide_eq_true_eq, mem_SAT]
+  rw [h]
+  exact SAT.isVerifier.guard
 
 /-- Checking the clause-width bound and evaluating the formula is polynomial-time. -/
 @[fun_prop]
