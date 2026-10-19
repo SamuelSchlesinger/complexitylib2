@@ -5,6 +5,7 @@ import argparse
 import html
 import json
 from pathlib import Path
+import re
 import tomllib
 from urllib.parse import unquote, urlsplit
 
@@ -40,6 +41,15 @@ def check_config():
     require((ROOT / "docbuild/docs/references.bib").read_bytes()
             == (ROOT / "references.bib").read_bytes(),
             "Documentation bibliography differs from references.bib")
+    check_bibliography_keys((ROOT / "references.bib").read_text())
+
+
+def check_bibliography_keys(bibliography):
+    # BibTeX keys are case-insensitive; cslib pads some keys with spaces.
+    keys = [key.lower() for key in
+            re.findall(r"^@\w+\s*\{\s*([^,\s]+)\s*,", bibliography, re.MULTILINE)]
+    duplicates = sorted({key for key in keys if keys.count(key) > 1})
+    require(not duplicates, f"Duplicate bibliography keys: {', '.join(duplicates)}")
 
 
 def check_output():

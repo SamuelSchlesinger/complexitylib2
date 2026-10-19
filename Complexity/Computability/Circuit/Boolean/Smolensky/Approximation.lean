@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
 public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.Program
+import Complexity.Computability.Circuit.Pointwise
 
 /-!
 # Smolensky's approximation of circuits
@@ -92,18 +93,12 @@ variable {g : ℕ} (hℓ : 1 ≤ ℓ) (P : Program Unbounded.extSignature n g)
 theorem fst_trace_pair (w : Wire n g) (x : BitString n) :
     (P.trace (pairInterpretation R p hℓ) inputPair w).1 x =
       P.trace (Unbounded.extInterpretation (modGate p)) x w := by
-  -- the first components form a homomorphism to the pointwise interpretation, then evaluate at `x`
-  let pointwise : Interpretation Unbounded.extSignature (BitString n → Bool) :=
-    fun op args x => Unbounded.extInterpretation (modGate p) op fun a => args a x
-  let h₁ : Homomorphism (pairInterpretation R p hℓ) pointwise := ⟨Prod.fst, fun _ _ => rfl⟩
-  let h₂ : Homomorphism pointwise (Unbounded.extInterpretation (modGate p)) :=
-    ⟨fun f => f x, fun _ _ => rfl⟩
-  cases w with
-  | input i => rfl
-  | gate k =>
-    have e₁ := congrFun (P.map_eval h₁ inputPair) k
-    have e₂ := congrFun (P.map_eval h₂ fun i x => x i) k
-    exact (congrFun e₁ x).trans e₂
+  -- the first components form a homomorphism to the pointwise lift, then evaluate at `x`
+  let h : Homomorphism (pairInterpretation R p hℓ)
+      ((Unbounded.extInterpretation (modGate p)).pointwise (BitString n)) :=
+    ⟨Prod.fst, fun _ _ => rfl⟩
+  exact (congrFun (congrFun (P.map_trace h inputPair) w) x).trans
+    (P.trace_pointwise_apply _ _ w x)
 
 /-- The pair at a gate is its operation applied to the pairs at its wires. -/
 theorem trace_pair_gate (k : Fin g) :

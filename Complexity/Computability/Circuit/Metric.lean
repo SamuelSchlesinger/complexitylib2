@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Cslib.Computability.Circuit.Complexity
+public import Complexity.Computability.Circuit.Complexity
 public import Mathlib.Analysis.Normed.Group.Seminorm
 public import Mathlib.Analysis.Normed.Group.Basic
 
@@ -29,8 +29,9 @@ functions `(Fin n → U) → U` form a group under pointwise operations. The *di
 So `diffDist I c` is a right-translation-invariant quasi-metric when `c` is positive and pays for
 addition. It need not be symmetric: over a complete basis in which negation costs a gate,
 the projection `x ↦ x 0` is computed by no gates while its negation needs one. It is symmetric
-when negation leaves complexity unchanged, as in characteristic two, where `-u = u`. A negation
-circuit of cost zero only exists in that case, since circuits without gates compute projections.
+when negation leaves complexity unchanged, as in a group of exponent two, where `-u = u`. A
+negation circuit of cost zero only exists in that case, since circuits without gates compute
+projections (`Cslib.Circuits.one_le_complexity_single`).
 
 When `c` is positive and pays for addition, and negation leaves complexity unchanged, the map
 sending `0` to `0` and every other `f` to `C(f) + c` is a norm on the group of functions
@@ -46,8 +47,6 @@ translation-invariant metric group. Boolean functions with the De Morgan basis a
 
 ## Main results
 
-* `Cslib.Circuits.complexity_single_unary_le`, `Cslib.Circuits.complexity_single_binary_le`:
-  applying an operation to outputs costs its complexity on fresh inputs.
 * `Cslib.Circuits.diffDist_eq_zero_iff`, `Cslib.Circuits.diffDist_triangle`,
   `Cslib.Circuits.diffDist_comm_le`: a quasi-metric.
 * `Cslib.Circuits.diffDist_add_right`, `Cslib.Circuits.diffDist_add_left`: translation invariance.
@@ -64,33 +63,6 @@ translation-invariant metric group. Boolean functions with the De Morgan basis a
 namespace Cslib.Circuits
 
 variable {σ : Signature} {U : Type*} {I : Interpretation σ U} [I.IsComplete] {n : ℕ}
-
-/-! ### Operations on outputs -/
-
-/-- Applying a unary operation to an output costs at most the complexity of the operation on one
-input. -/
-theorem complexity_single_unary_le (op : U → U) (f : (Fin n → U) → U) :
-    complexity I (single fun x => op (f x)) ≤
-      complexity I (single f) + complexity I (single fun y : Fin 1 → U => op (y 0)) := by
-  have h := complexity_comp_le (I := I) (single f) (single fun y : Fin 1 → U => op (y 0))
-  have heq : (single fun y : Fin 1 → U => op (y 0)) ∘ single f = single fun x => op (f x) := rfl
-  rwa [heq] at h
-
-/-- Combining two outputs by a binary operation costs at most the complexity of the operation on
-two inputs. -/
-theorem complexity_single_binary_le (op : U → U → U) (f g : (Fin n → U) → U) :
-    complexity I (single fun x => op (f x) (g x)) ≤
-      complexity I (single f) + complexity I (single g) +
-        complexity I (single fun y : Fin 2 → U => op (y 0) (y 1)) := by
-  have h := complexity_comp_le (I := I)
-    (fun x => Fin.append (single f x) (single g x)) (single fun y : Fin 2 → U => op (y 0) (y 1))
-  have heq : (single fun y : Fin 2 → U => op (y 0) (y 1)) ∘
-      (fun x => Fin.append (single f x) (single g x)) = single fun x => op (f x) (g x) := by
-    funext x j
-    exact congrArg₂ op (Fin.append_left (single f x) (single g x) 0)
-      (Fin.append_right (single f x) (single g x) 0)
-  rw [heq] at h
-  exact h.trans (Nat.add_le_add_right (complexity_append_le _ _) _)
 
 /-! ### The difference distance -/
 
