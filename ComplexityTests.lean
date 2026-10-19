@@ -61,6 +61,7 @@ import ComplexityTests.FaginNP
 import ComplexityTests.FineGrained
 import ComplexityTests.FineGrained.Sparsification
 import ComplexityTests.FiniteControl
+import ComplexityTests.FiniteFieldUnitSum
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.FirstOrderProjection
@@ -238,6 +239,7 @@ import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
 import ComplexityTests.Toda
+import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation

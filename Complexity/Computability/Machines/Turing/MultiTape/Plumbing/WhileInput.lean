@@ -58,6 +58,23 @@ public noncomputable def whileInput (tm : MultiTapeTM k Symbol State) :
       { inputTape := 0, workTapes := fun _ => (none, 0), output := none,
         state := inp.map fun _ => .run tm.q₀ }
 
+-- upstream: vendored crei:crei/tidy-universal @9cce4cc7 (unsubmitted)
+-- vendored: the two input-head lemmas below, from that revision's `Plumbing/WhileInput`
+
+/-- A move to the left stops at the blank before the input. -/
+@[simp] public lemma val_moveInputPos_neg {n : ℕ} (p : Fin (n + 2)) :
+    (moveInputPos p (-1)).val = p.val - 1 := by
+  have := val_moveInputPos_eq p (-1)
+  simp only [SignType.coe_neg, SignType.coe_one] at this
+  omega
+
+/-- A move to the right stops at the blank after the input. -/
+@[simp] public lemma val_moveInputPos_pos {n : ℕ} (p : Fin (n + 2)) :
+    (moveInputPos p 1).val = min (p.val + 1) (n + 1) := by
+  have := val_moveInputPos_eq p 1
+  simp only [SignType.coe_one] at this
+  omega
+
 namespace WhileInput
 
 variable {tm : MultiTapeTM k Symbol State}

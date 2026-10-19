@@ -32,6 +32,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   compared with #767's. Selected-tape specifications
   formerly in `Combinators/StreamFold` and `Encodings/MultiPass` now live beside the plumbing
   operations; preserve their exact space bounds when resynchronizing the copied files.
+  The step-machine layer (`StepMachine/*`, `Encodings/StepMachine*`, `Combinators/StepMachine`
+  and their helpers) and the blocks marked `@9cce4cc7` in older copies come from a later local
+  rewrite of the branch that is not yet published; `scripts/upstream_sync.py` reports them
+  against the published head until it is. The rest of the branch is still copied at `@7f7c0696`.
 * **Polynomial bounds.** The tidy calculus's size-parameterized `PolyBounded` adapts CSLib's
   `PolynomiallyBounded` and shares its closure API. Coordinate this adaptation with the tidy
   branch; preserve it when resynchronizing the vendored files.
