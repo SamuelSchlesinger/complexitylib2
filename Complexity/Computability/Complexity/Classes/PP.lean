@@ -26,8 +26,8 @@ the others with probability at most `1 / 3`, so it decides by majority: `BPP ⊆
 verifier (`BPP_subset_PP`).
 
 Gill requires a strict majority on members, as here; the variant with a non-strict majority
-defines the same class, but the proof changes the verifier and so needs facts about polynomial time
-that are not yet in cslib. The characterisation by probabilistic machines is not proved here.
+defines the same class (`Cslib.Complexity.mem_PP_iff_decidesByNonstrictMajority`). The
+characterisation by probabilistic machines is not proved here.
 
 ## Main definitions
 
