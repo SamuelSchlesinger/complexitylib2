@@ -1009,6 +1009,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Products
 public import Complexity.Foundations.Combinatorics.Expander.Random
 public import Complexity.Foundations.Combinatorics.Expander.Reindex
 public import Complexity.Foundations.Combinatorics.Expander.Reingold
+public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.Tower
 public import Complexity.Foundations.Combinatorics.Expander.TowerBase

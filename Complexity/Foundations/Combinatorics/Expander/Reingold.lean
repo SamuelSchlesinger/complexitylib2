@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.Expander.Connected
+public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 
 /-!
 # Reingold's transformation
@@ -55,10 +56,8 @@ every vertex over the component as soon as `|V| |B| ^ ℓ 4 ^ T ≤ 5 ^ T`
 
 * `Cslib.RotationMap.reingoldStep`: one step `((G ⓩ H) ^ 2).relabel e.symm` of the
   transformation.
-* `Cslib.RotationMap.ReingoldVertex`, `Cslib.RotationMap.reingold`: the graphs `G_ℓ` and their
-  vertices.
-* `Cslib.RotationMap.ReingoldVertex.root`, `Cslib.RotationMap.ReingoldVertex.mk`: the vertex of
-  `G` under a vertex of `G_ℓ`, and a vertex of `G_ℓ` over a given vertex of `G`.
+* `Cslib.RotationMap.reingold`: the graphs `G_ℓ`, on the iterated products
+  `Cslib.RotationMap.ReingoldVertex V B ℓ`.
 
 ## Main results
 
@@ -89,107 +88,6 @@ open scoped BigOperators
 
 universe u
 
-/-- The vertices of the `ℓ`-th graph of Reingold's transformation of a graph on `V` with labels
-`B`: the product `(⋯ (V × B) × ⋯) × B` with `ℓ` factors `B`, nested to the left, as each step pairs
-a vertex of the previous graph with a vertex of the zig-zag base graph. -/
-def ReingoldVertex (V B : Type u) : ℕ → Type u
-  | 0 => V
-  | ℓ + 1 => ReingoldVertex V B ℓ × B
-
-namespace ReingoldVertex
-
-variable {V W X B : Type u}
-
-/-- The vertices of the transformation are finite when those of the graph and its labels are. -/
-instance instFintype [Fintype V] [Fintype B] : ∀ ℓ, Fintype (ReingoldVertex V B ℓ)
-  | 0 => inferInstanceAs (Fintype V)
-  | ℓ + 1 =>
-    have := instFintype ℓ
-    inferInstanceAs (Fintype (ReingoldVertex V B ℓ × B))
-
-/-- Equality of vertices of the transformation is decidable when it is for the graph and its
-labels. -/
-instance instDecidableEq [DecidableEq V] [DecidableEq B] : ∀ ℓ, DecidableEq (ReingoldVertex V B ℓ)
-  | 0 => inferInstanceAs (DecidableEq V)
-  | ℓ + 1 =>
-    have := instDecidableEq ℓ
-    inferInstanceAs (DecidableEq (ReingoldVertex V B ℓ × B))
-
-/-- The `ℓ`-th graph of the transformation has `|V| |B| ^ ℓ` vertices. -/
-@[simp]
-theorem card [Fintype V] [Fintype B] (ℓ : ℕ) :
-    Fintype.card (ReingoldVertex V B ℓ) = Fintype.card V * Fintype.card B ^ ℓ := by
-  induction ℓ with
-  | zero => exact (mul_one _).symm
-  | succ ℓ ih =>
-    change Fintype.card (ReingoldVertex V B ℓ × B) = _
-    rw [Fintype.card_prod, ih, pow_succ, mul_assoc]
-
-/-- The vertex of the original graph that a vertex of the `ℓ`-th graph lies over: its first
-coordinate. -/
-def root : {ℓ : ℕ} → ReingoldVertex V B ℓ → V
-  | 0, v => v
-  | ℓ + 1, p => root (ℓ := ℓ) (Prod.fst (β := B) p)
-
-/-- The root of a vertex of the `(ℓ + 1)`-st graph is the root of its first coordinate. -/
-@[simp]
-theorem root_succ {ℓ : ℕ} (p : ReingoldVertex V B ℓ × B) :
-    root (ℓ := ℓ + 1) p = root p.1 :=
-  rfl
-
-/-- The vertex `(⋯ (v, b) ⋯, b)` of the `ℓ`-th graph, over `v`. -/
-def mk (v : V) (b : B) : (ℓ : ℕ) → ReingoldVertex V B ℓ
-  | 0 => v
-  | ℓ + 1 => (mk v b ℓ, b)
-
-/-- `mk v b ℓ` lies over `v`. -/
-@[simp]
-theorem root_mk (v : V) (b : B) (ℓ : ℕ) : (mk v b ℓ).root = v := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact ih
-
-/-- Replace the root of a vertex of the `ℓ`-th graph, keeping its other coordinates. -/
-def setRoot : {ℓ : ℕ} → ReingoldVertex V B ℓ → W → ReingoldVertex W B ℓ
-  | 0, _, w => w
-  | ℓ + 1, p, w =>
-    (setRoot (ℓ := ℓ) (Prod.fst (β := B) p) w, Prod.snd (α := ReingoldVertex V B ℓ) p)
-
-/-- Replacing the root by `w` gives a vertex over `w`. -/
-@[simp]
-theorem root_setRoot {ℓ : ℕ} (x : ReingoldVertex V B ℓ) (w : W) : (x.setRoot w).root = w := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact ih _
-
-/-- Replacing the root by itself does nothing. -/
-@[simp]
-theorem setRoot_root {ℓ : ℕ} (x : ReingoldVertex V B ℓ) : x.setRoot x.root = x := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact Prod.ext (ih _) rfl
-
-/-- Apply a map of the vertices of the original graph to the root. -/
-def map (φ : V → W) : (ℓ : ℕ) → ReingoldVertex V B ℓ → ReingoldVertex W B ℓ
-  | 0 => φ
-  | ℓ + 1 => Prod.map (map φ ℓ) id
-
-/-- Mapping the root of a vertex with replaced root. -/
-@[simp]
-theorem map_setRoot (φ : V → W) {ℓ : ℕ} (x : ReingoldVertex X B ℓ) (v : V) :
-    map φ ℓ (x.setRoot v) = x.setRoot (φ v) := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact Prod.ext (ih _) rfl
-
-/-- The root of a mapped vertex is the image of its root. -/
-@[simp]
-theorem root_map (φ : V → W) {ℓ : ℕ} (x : ReingoldVertex V B ℓ) : (map φ ℓ x).root = φ x.root := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact ih _
-
-end ReingoldVertex
 
 variable {B : Type u} {E : Type*} (H : RotationMap B E) (e : B ≃ (Fin 2 → E × E))
 

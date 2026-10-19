@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Products
 public import Complexity.Foundations.Combinatorics.Expander.Power
+public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 
 /-!
 # The zig-zag tower
@@ -78,40 +79,15 @@ universe u
 
 /-- The vertices of the `(n + 1)`-st graph of the zig-zag tower over a base graph on `B`: the
 `(n + 1)`-fold product `(⋯ (B × B) × ⋯) × B`, nested to the left, as each zig-zag product pairs
-a vertex of the previous graph with a vertex of the base graph. -/
-def ZigzagTowerVertex (B : Type u) : ℕ → Type u
-  | 0 => B
-  | n + 1 => ZigzagTowerVertex B n × B
-
-namespace ZigzagTowerVertex
-
-variable {B : Type u}
-
-/-- The vertices of the tower are finite when those of the base graph are. -/
-instance instFintype [Fintype B] : ∀ n, Fintype (ZigzagTowerVertex B n)
-  | 0 => inferInstanceAs (Fintype B)
-  | n + 1 =>
-    have := instFintype n
-    inferInstanceAs (Fintype (ZigzagTowerVertex B n × B))
-
-/-- Equality of vertices of the tower is decidable when it is for the base graph. -/
-instance instDecidableEq [DecidableEq B] : ∀ n, DecidableEq (ZigzagTowerVertex B n)
-  | 0 => inferInstanceAs (DecidableEq B)
-  | n + 1 =>
-    have := instDecidableEq n
-    inferInstanceAs (DecidableEq (ZigzagTowerVertex B n × B))
-
-end ZigzagTowerVertex
+a vertex of the previous graph with a vertex of the base graph. They are the iterated products
+`Cslib.RotationMap.ReingoldVertex B B n`, whose instances and cardinality apply. -/
+abbrev ZigzagTowerVertex (B : Type u) : ℕ → Type u :=
+  ReingoldVertex B B
 
 /-- The `(n + 1)`-st graph of the tower has `|B| ^ (n + 1)` vertices. -/
-@[simp]
 theorem card_zigzagTowerVertex (B : Type u) [Fintype B] (n : ℕ) :
     Fintype.card (ZigzagTowerVertex B n) = Fintype.card B ^ (n + 1) := by
-  induction n with
-  | zero => exact (pow_one _).symm
-  | succ n ih =>
-    change Fintype.card (ZigzagTowerVertex B n × B) = _
-    rw [Fintype.card_prod, ih, pow_succ _ (n + 1)]
+  rw [ReingoldVertex.card, pow_succ, mul_comm]
 
 /-- The graphs of the tower grow without bound: if the base graph has at least two vertices, then
 the `(n + 1)`-st graph of the tower has more than `n` vertices. -/
