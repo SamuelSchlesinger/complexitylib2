@@ -63,14 +63,17 @@ public import Complexity.Computability.Circuit.Boolean.HardnessAmplification
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
+public import Complexity.Computability.Circuit.Boolean.Iteration.Batch
 public import Complexity.Computability.Circuit.Boolean.Iteration.Decoder
 public import Complexity.Computability.Circuit.Boolean.Iteration.Encoded
+public import Complexity.Computability.Circuit.Boolean.Iteration.InputTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 public import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
 public import Complexity.Computability.Circuit.Boolean.Iteration.Record
 public import Complexity.Computability.Circuit.Boolean.Iteration.RecordCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.Residue
 public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
+public import Complexity.Computability.Circuit.Boolean.Iteration.SharedDictionary
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.KeyedSort
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko

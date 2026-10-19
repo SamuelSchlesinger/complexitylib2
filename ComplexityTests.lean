@@ -68,6 +68,7 @@ import ComplexityTests.HierarchyTheorems
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
+import ComplexityTests.Iteration.Batch
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpLipton
 import ComplexityTests.KarpReductions
