@@ -47,7 +47,6 @@ existentially (`Cslib.Complexity.TQBF.eval_baseFormula`); its free variables are
 
 ## Main results
 
-* `Cslib.Complexity.CookLevin.exists_eval_tableau_iff`: the tableau with fixed certificate bits.
 * `Cslib.Complexity.TQBF.eval_baseFormula`, `Cslib.Complexity.TQBF.mem_freeVars_baseFormula`: the
   formula of level `0`.
 * `Cslib.Complexity.TQBF.reduce_mem_TQBF_iff`: the reduction is correct.
@@ -59,33 +58,6 @@ existentially (`Cslib.Complexity.TQBF.eval_baseFormula`); its free variables are
 -/
 
 @[expose] public section
-
-namespace Cslib.Complexity.CookLevin
-
-open _root_.Turing _root_.Turing.MultiTapeTM Cslib.Logic.PL
-
-variable {k : ℕ} {State : Type} [Fintype State] [DecidableEq State] {tm : MultiTapeTM k Bool State}
-
-/-- **The tableau with fixed certificate bits.** `tableau tm u z.length T` has a satisfying
-assignment whose certificate is `z` exactly when `tm`, started on `u ++ z`, has halted after `T`
-steps with output `[true]`. -/
-theorem exists_eval_tableau_iff {u z : List Bool} {T : ℕ} :
-    (∃ σ, certWord σ z.length = z ∧ (tableau tm u z.length T).eval σ = true) ↔
-      (tm.runFrom (tm.initCfg (u ++ z)) T).state = none ∧
-        (tm.runFrom (tm.initCfg (u ++ z)) T).output = [true] := by
-  constructor
-  · rintro ⟨σ, hz, h⟩
-    have hA := agrees_of_eval_tableau h T le_rfl
-    obtain ⟨-, -, -, haccept⟩ := eval_tableau.1 h
-    obtain ⟨hstate, hout⟩ := eval_acceptClauses.1 haccept
-    rw [hz] at hA
-    exact ⟨(hA _ (Feature.state_mem_basic _)).1 hstate,
-      OutView.ofList_eq_one_iff.1 ((hA _ (Feature.out_mem_basic _)).1 hout)⟩
-  · rintro ⟨hhalt, hout⟩
-    exact ⟨runAssignment tm u z, certWord_runAssignment rfl,
-      eval_tableau_runAssignment rfl hhalt hout⟩
-
-end Cslib.Complexity.CookLevin
 
 namespace Cslib.Complexity.TQBF
 

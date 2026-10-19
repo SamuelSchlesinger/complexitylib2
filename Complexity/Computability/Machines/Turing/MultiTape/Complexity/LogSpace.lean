@@ -11,6 +11,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Cslib.Computability.Machines.Turing.MultiTape.ConfigBound
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Foundations.Data.Nat.Log
+import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 import Mathlib.Data.Nat.Size
@@ -148,17 +150,11 @@ output are not charged. -/
 def ComputableInLogSpace (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool) : Prop :=
   ∃ t c, ComputableInTimeAndSpace f encIn encOut t fun a => c * (Nat.log2 (encIn a).length + 1)
 
-/-- `2 ^ (log₂ n + 1)` is at most `2 (n + 1)`. -/
-theorem _root_.Nat.two_pow_log2_succ_le (n : ℕ) : 2 ^ (Nat.log2 n + 1) ≤ 2 * (n + 1) := by
-  rw [pow_succ, mul_comm]
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  · simp
-  · exact Nat.mul_le_mul_left 2 ((Nat.log2_self_le hn.ne').trans (Nat.le_succ n))
-
-/-- The logarithmic bounds `c * (log₂ n + 1)` are polynomially bounded. -/
+/-- The logarithmic bounds `c * (log₂ n + 1)` are polynomially bounded
+(`Cslib.polynomiallyBounded_mul_log2_add_one`). -/
 theorem polyBounded_log {δ : Type*} (size : δ → ℕ) (c : ℕ) :
     PolyBounded size fun a => c * (Nat.log2 (size a) + 1) :=
-  .of_forall_le c 1 fun a => Nat.mul_le_mul_left c (by simpa using Nat.log2_le_self (size a))
+  .of_polynomiallyBounded size (Cslib.polynomiallyBounded_mul_log2_add_one c)
 
 /-- The number of cores under a logarithmic space bound is polynomial. -/
 private theorem card_le_of_log (State : Type*) [Fintype State] (k c : ℕ) :

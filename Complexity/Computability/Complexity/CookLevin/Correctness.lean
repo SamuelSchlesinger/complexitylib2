@@ -13,7 +13,9 @@ public import Complexity.Computability.Complexity.CookLevin.Tableau
 # Correctness of the Cook–Levin tableau
 
 `tableau tm u L T` is satisfiable exactly when some certificate `w` of length `L` makes `tm`,
-started on `u ++ w`, halt within `T` steps with output `[true]`.
+started on `u ++ w`, halt within `T` steps with output `[true]`. More precisely, for a fixed
+certificate `z`, it has a satisfying assignment encoding `z` exactly when `tm`, started on
+`u ++ z`, has halted after `T` steps with output `[true]` (`exists_eval_tableau_iff`).
 
 Each family of clauses is first characterised semantically (`eval_initClauses`,
 `eval_readClauses`, `eval_stepClauses`, …). Soundness then shows, by induction on time, that a
@@ -27,7 +29,8 @@ step equation.
 
 ## Main results
 
-* `Cslib.Complexity.CookLevin.tableau_satisfiable_iff`.
+* `Cslib.Complexity.CookLevin.exists_eval_tableau_iff`: the tableau with fixed certificate bits.
+* `Cslib.Complexity.CookLevin.tableau_satisfiable_iff`: the tableau is correct.
 -/
 
 @[expose] public section
@@ -279,6 +282,25 @@ theorem eval_tableau_runAssignment {w : List Bool} (hw : w.length = L)
   · exact eval_acceptClauses.2 ⟨runAssignment_holds.2 hhalt,
       runAssignment_holds.2 (by rw [holds_out, hout]; rfl)⟩
 
+/-- **The tableau with fixed certificate bits.** `tableau tm u z.length T` has a satisfying
+assignment whose certificate is `z` exactly when `tm`, started on `u ++ z`, has halted after `T`
+steps with output `[true]`. -/
+theorem exists_eval_tableau_iff {z : List Bool} :
+    (∃ σ, certWord σ z.length = z ∧ (tableau tm u z.length T).eval σ = true) ↔
+      (tm.runFrom (tm.initCfg (u ++ z)) T).state = none ∧
+        (tm.runFrom (tm.initCfg (u ++ z)) T).output = [true] := by
+  constructor
+  · rintro ⟨σ, hz, h⟩
+    have hA := agrees_of_eval_tableau h T le_rfl
+    obtain ⟨-, -, -, haccept⟩ := eval_tableau.1 h
+    obtain ⟨hstate, hout⟩ := eval_acceptClauses.1 haccept
+    rw [hz] at hA
+    exact ⟨(hA _ (state_mem_basic _)).1 hstate,
+      OutView.ofList_eq_one_iff.1 ((hA _ (out_mem_basic _)).1 hout)⟩
+  · rintro ⟨hhalt, hout⟩
+    exact ⟨runAssignment tm u z, certWord_runAssignment rfl,
+      eval_tableau_runAssignment rfl hhalt hout⟩
+
 /-- **The Cook–Levin tableau is correct.** `tableau tm u L T` is satisfiable exactly when some
 certificate `w` of length `L` makes `tm`, started on `u ++ w`, halt within `T` steps with output
 `[true]`. -/
@@ -288,13 +310,13 @@ theorem tableau_satisfiable_iff :
         (tm.runFrom (tm.initCfg (u ++ w)) T).output = [true] := by
   constructor
   · rintro ⟨σ, h⟩
-    have hA := agrees_of_eval_tableau h T le_rfl
-    obtain ⟨-, -, -, haccept⟩ := eval_tableau.1 h
-    obtain ⟨hstate, hout⟩ := eval_acceptClauses.1 haccept
-    refine ⟨certWord σ L, length_certWord σ L, (hA _ (state_mem_basic _)).1 hstate, ?_⟩
-    exact OutView.ofList_eq_one_iff.1 ((hA _ (out_mem_basic _)).1 hout)
-  · rintro ⟨w, hw, hhalt, hout⟩
-    exact ⟨runAssignment tm u w, eval_tableau_runAssignment hw hhalt hout⟩
+    have hL := length_certWord σ L
+    refine ⟨certWord σ L, hL, exists_eval_tableau_iff.1 ⟨σ, ?_⟩⟩
+    rw [hL]
+    exact ⟨rfl, h⟩
+  · rintro ⟨w, rfl, h⟩
+    obtain ⟨σ, -, hσ⟩ := exists_eval_tableau_iff.2 h
+    exact ⟨σ, hσ⟩
 
 end Completeness
 
