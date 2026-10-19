@@ -215,6 +215,7 @@ import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
 import ComplexityTests.SipserLautemann
+import ComplexityTests.SmallCountingClasses
 import ComplexityTests.Smoke
 import ComplexityTests.SortingTrace
 import ComplexityTests.SourceComplexity

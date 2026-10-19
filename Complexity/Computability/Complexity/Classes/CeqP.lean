@@ -19,6 +19,7 @@ machine characterization is assumed.
 
 ## Main definitions
 
+* `Cslib.Complexity.coCeqP`: complements of exact-counting languages.
 * `Cslib.Complexity.CeqP`: the exact counting class `C=P`.
 
 ## Main results
@@ -29,6 +30,9 @@ machine characterization is assumed.
 * `Cslib.Complexity.PolyTimeReducible.mem_CeqP`.
 
 ## References
+
+* [L. Fortnow, *Counting Complexity*][Fortnow1997], Classifications 4.5 and 4.8–4.9,
+  Corollaries 4.10–4.11.
 
 * [S. Fenner, L. Fortnow, S. Kurtz, *Gap-definable counting classes*][FennerFortnowKurtz1994]
 -/
@@ -99,5 +103,50 @@ theorem PolyTimeReducible.mem_CeqP {β : Type} {encB : β ↪ List Bool} {B : Se
   obtain ⟨g, hg, hAB⟩ := h
   obtain ⟨f, hf, hB⟩ := hB
   exact ⟨f ∘ g, GapP.comp_mem hf hg, fun a => (hAB a).trans (hB (g a))⟩
+
+/-- The complement class coC=P. See [Fortnow, Classifications 4.8–4.9][Fortnow1997]. -/
+def coCeqP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ CeqP enc}
+
+theorem mem_coCeqP : A ∈ coCeqP enc ↔ Aᶜ ∈ CeqP enc := Iff.rfl
+
+@[simp]
+theorem compl_mem_coCeqP : Aᶜ ∈ coCeqP enc ↔ A ∈ CeqP enc := by simp [coCeqP]
+
+/-- coC=P consists of the nonzero sets of GapP functions. This is the complement of the
+zero-set characterization [Fortnow, Classifications 4.5 and 4.9][Fortnow1997]. -/
+theorem mem_coCeqP_iff_exists_GapP :
+    A ∈ coCeqP enc ↔ ∃ g ∈ GapP enc, ∀ a, a ∈ A ↔ g a ≠ 0 := by
+  constructor
+  · rintro ⟨g, hg, h⟩
+    exact ⟨g, hg, fun a => by simpa using not_congr (h a)⟩
+  · rintro ⟨g, hg, h⟩
+    exact ⟨g, hg, fun a => by simpa using not_congr (h a)⟩
+
+/-- NP is contained in coC=P [Fortnow, Corollary 4.11][Fortnow1997]. -/
+theorem NP_subset_coCeqP : NP enc ⊆ coCeqP enc := by
+  intro A hA
+  exact coNP_subset_CeqP (by simpa [mem_coNP] using hA)
+
+/-- coC=P is contained in PP [Fortnow, Corollary 4.10][Fortnow1997]. -/
+theorem coCeqP_subset_PP : coCeqP enc ⊆ PP enc := by
+  intro A hA
+  obtain ⟨g, hg, hA⟩ := mem_coCeqP_iff_exists_GapP.mp hA
+  exact mem_PP_iff_exists_GapP.mpr ⟨g * g, GapP.mul_mem hg hg, fun a => by
+    simpa [pow_two] using (hA a).trans (sq_pos_iff).symm⟩
+
+/-- Union closure is dual to intersection closure of C=P. -/
+theorem union_mem_coCeqP (hA : A ∈ coCeqP enc) (hB : B ∈ coCeqP enc) :
+    A ∪ B ∈ coCeqP enc := by
+  simpa [coCeqP] using inter_mem_CeqP hA hB
+
+/-- Intersection closure is dual to union closure of C=P. -/
+theorem inter_mem_coCeqP (hA : A ∈ coCeqP enc) (hB : B ∈ coCeqP enc) :
+    A ∩ B ∈ coCeqP enc := by
+  simpa [coCeqP, Set.compl_inter] using union_mem_CeqP hA hB
+
+/-- Polynomial-time reductions preserve coC=P. -/
+theorem PolyTimeReducible.mem_coCeqP {β : Type} {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ coCeqP encB) : A ∈ coCeqP enc :=
+  h.compl.mem_CeqP hB
 
 end Cslib.Complexity
