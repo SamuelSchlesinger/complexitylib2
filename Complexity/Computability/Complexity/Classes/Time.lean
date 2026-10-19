@@ -20,6 +20,7 @@ import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.PPT.Clock
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Probability.PMF.Map
+import Mathlib.Data.Set.Finite.List
 
 /-!
 # Time classes
@@ -155,19 +156,29 @@ theorem DTIME_mono_of_eventually_le {enc : α ↪ List Bool} {t₁ t₂ : ℕ �
   obtain ⟨c₂', hc⟩ := exists_linear_of_eventually_le h c₁ c₂
   exact ⟨c₁, c₂', s, ComputableInTimeAndSpace.mono hA (fun a => hc _) fun _ => le_rfl⟩
 
-/-- A Boolean function, tidily computable within bounds of the length of the encoded instance,
-decides a problem within the corresponding time. -/
+/-- Every function of the instances is bounded by a function of the length of the encoded
+instance: there are finitely many instances of each length. -/
+private theorem exists_le_length (enc : α ↪ List Bool) (S : α → ℕ) :
+    ∃ s : ℕ → ℕ, ∀ a, S a ≤ s (enc a).length := by
+  classical
+  have hfin (n : ℕ) : {a | (enc a).length = n}.Finite :=
+    (List.finite_length_eq Bool n).preimage_embedding enc
+  exact ⟨fun n => (hfin n).toFinset.sup S, fun a =>
+    Finset.le_sup (f := S) ((hfin _).mem_toFinset.mpr rfl)⟩
+
+/-- A Boolean function, tidily computable within a time bound of the length of the encoded
+instance, decides a problem within that time. -/
 theorem setOf_mem_DTIME_of_computableTidilyInO {enc : α ↪ List Bool} {f : α → Bool}
-    {T S : α → ℕ} {t s : ℕ → ℕ} (h : ComputableTidilyInO f enc encBool T S)
-    (hT : ∀ a, T a ≤ t (enc a).length) (hS : ∀ a, S a ≤ s (enc a).length) :
-    {a | f a = true} ∈ DTIME enc t := by
+    {T S : α → ℕ} {t : ℕ → ℕ} (h : ComputableTidilyInO f enc encBool T S)
+    (hT : ∀ a, T a ≤ t (enc a).length) : {a | f a = true} ∈ DTIME enc t := by
   obtain ⟨c, hc, -⟩ := h
+  obtain ⟨s, hs⟩ := exists_le_length enc S
   refine ⟨c, c, fun n => c * (s n + 1), decidableInTimeAndSpace_iff.mpr ⟨f, ?_, fun a => Iff.rfl⟩⟩
   refine hc.computableInTimeAndSpace.mono (fun a => ?_) fun a => ?_
   · have := Nat.mul_le_mul_left c (hT a)
     rw [Nat.mul_add, Nat.mul_one]
     omega
-  · exact Nat.mul_le_mul_left c (Nat.add_le_add_right (hS a) 1)
+  · exact Nat.mul_le_mul_left c (Nat.add_le_add_right (hs a) 1)
 
 /-! ### Nondeterministic time -/
 

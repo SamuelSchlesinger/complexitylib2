@@ -140,8 +140,7 @@ theorem setOf_diagonal_mem_EXP : {x | diagonal x = true} ∈ EXP encBits :=
   mem_EXP_iff.mpr ⟨2, DTIME_mono_of_eventually_le
     (t₁ := fun n => 2 ^ (4 * n)) (eventually_atTop.mpr ⟨4, fun n hn =>
       Nat.pow_le_pow_right (by norm_num) (by nlinarith)⟩)
-    (setOf_mem_DTIME_of_computableTidilyInO computableTidilyInO_diagonal
-      (s := fun n => 2 ^ (2 * n)) (fun _ => le_rfl) fun _ => le_rfl)⟩
+    (setOf_mem_DTIME_of_computableTidilyInO computableTidilyInO_diagonal fun _ => le_rfl)⟩
 
 /-- **Polynomial time is strictly within exponential time**, for problems on bit words: the
 diagonal problem is in `EXP` and not in `P` [Arora and Barak, Theorem 3.1][AroraBarak09]. -/

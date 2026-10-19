@@ -666,8 +666,7 @@ alias setOf_timeDiagonal_not_mem_DTIME := setOf_timeDiagonal_notMem_DTIME
 theorem setOf_timeDiagonal_mem_DTIME {J : ℕ → ℕ} (hJ : TimeConstructible J) :
     {x | timeDiagonal J x = true} ∈ DTIME encBits fun n => (n + 1) ^ 5 * (J n + 1) ^ 3 :=
   setOf_mem_DTIME_of_computableTidilyInO (computableTidilyInO_timeDiagonal hJ)
-    (t := fun n => (n + 1) ^ 5 * (J n + 1) ^ 3) (s := fun n => (n + 1) ^ 5 * (J n + 1) ^ 3)
-    (fun _ => le_rfl) fun _ => le_rfl
+    (t := fun n => (n + 1) ^ 5 * (J n + 1) ^ 3) fun _ => le_rfl
 
 /-! ### The time hierarchy theorem -/
 

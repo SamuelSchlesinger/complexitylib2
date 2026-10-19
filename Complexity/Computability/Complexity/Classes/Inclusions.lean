@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
@@ -196,5 +197,113 @@ theorem PP_eq_preimage_compl_PP (enc : α ↪ List Bool) : PP enc = compl ⁻¹'
   ext A
   refine ⟨compl_mem_PP, fun hA => ?_⟩
   simpa using compl_mem_PP hA
+
+/-! ### Space -/
+
+/-- **`NP ⊆ NPSPACE`**: a nondeterministic machine deciding a problem in polynomial time visits at
+most polynomially many work-tape cells. -/
+theorem NP_subset_NPSPACE : NP enc ⊆ NPSPACE enc := by
+  intro A hA
+  obtain ⟨t, ht, k, State, hfinite, ntm, hdec⟩ := decidableInPolyTime_of_mem_NP hA
+  exact ⟨k, State, hfinite, ntm, fun a => k * (t a + 1), (PolyBounded.const k).mul
+    (ht.add (.const 1)), fun a => ⟨(hdec a).1.runsInSpace, (hdec a).2⟩⟩
+
+/-- **`NP ⊆ PSPACE`** [Arora and Barak, Section 4.2][AroraBarak09]: `NP ⊆ NPSPACE`, and
+`NPSPACE = PSPACE` by Savitch's theorem. -/
+theorem NP_subset_PSPACE : NP enc ⊆ PSPACE enc :=
+  NP_subset_NPSPACE.trans NPSPACE_subset_PSPACE
+
+/-- A polynomial plus `2` to a polynomial times a polynomial is eventually below `2 ^ n ^ K`. -/
+private theorem exists_eventually_le_two_pow_pow {P Q R : ℕ → ℕ} (hP : PolynomiallyBounded P)
+    (hQ : PolynomiallyBounded Q) (hR : PolynomiallyBounded R) :
+    ∃ K, ∀ᶠ n in atTop, P n + 2 ^ Q n * R n ≤ 2 ^ n ^ K := by
+  obtain ⟨K, hK⟩ : PolynomiallyBounded fun n => Q n + n + 1 := by fun_prop
+  refine ⟨K, ?_⟩
+  filter_upwards [hP.eventually_lt_two_pow, hR.eventually_lt_two_pow, hK] with n h₁ h₂ h₃
+  have h₄ : 1 ≤ 2 ^ Q n := Nat.one_le_two_pow
+  calc P n + 2 ^ Q n * R n ≤ 2 ^ n * 2 ^ Q n + 2 ^ Q n * 2 ^ n :=
+        Nat.add_le_add (h₁.le.trans (Nat.le_mul_of_pos_right _ h₄))
+          (Nat.mul_le_mul_left _ h₂.le)
+    _ = 2 ^ (Q n + n + 1) := by ring
+    _ ≤ 2 ^ n ^ K := Nat.pow_le_pow_right (by norm_num) h₃
+
+/-- **`PSPACE ⊆ EXP`** [Arora and Barak, Theorem 4.2][AroraBarak09],
+[Sipser, Section 8.2][Sipser2013]: a problem in `PSPACE` is decided by a nondeterministic machine
+within polynomial space (`Cslib.Complexity.PSPACE_subset_NPSPACE`), and Savitch's decider for it
+runs within time exponential in a polynomial: its codes have polynomial width `w`, and it runs
+`2 ^ ((w + 2) * (w + 1))` rounds of polynomial cost
+(`Cslib.Reachability.computableTidilyInO_savitch`). -/
+theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
+  intro A hA
+  obtain ⟨k, State, hfinite, ntm, s, hs, hAn⟩ := PSPACE_subset_NPSPACE hA
+  obtain ⟨c, d, hcd⟩ := hs.exists_le
+  -- the inputs and the edge test of Savitch's decider are polynomial-time
+  have hwidth := MultiTapeNTM.computableTidilyInPolyTime_codeWidth (ntm := ntm) (enc := enc) c d
+  have hcodes : ComputableTidilyInPolyTime
+      (fun a => 2 * ntm.codeWidth c d (enc a) + 2) enc encUnary :=
+    ComputableTidilyInPolyTime.unary_add.comp ((ComputableTidilyInPolyTime.unary_mul.comp
+      ((ComputableTidilyInPolyTime.const 2).prod hwidth)).prod (ComputableTidilyInPolyTime.const 2))
+  have hedge : ComputableTidilyInPolyTime
+      (fun q : Unit × List Bool × List Bool => (fun _ => ntm.codeEdge) q.1 q.2.1 q.2.2)
+      (encPair (encFinite Unit) (encPair encBits encBits)) encBool :=
+    ntm.computableTidilyInPolyTime_codeEdge ((ComputableTidilyInPolyTime.fst _ _).comp (.snd _ _))
+      ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _))
+  have hin : ComputableTidilyInPolyTime
+      (fun a => ((), 2 * ntm.codeWidth c d (enc a) + 2, 2 * ntm.codeWidth c d (enc a) + 2,
+        MultiTapeNTM.viewCode (ntm.codeWidth c d (enc a)) (ntm.initView (enc a)),
+        MultiTapeNTM.acceptCode (ntm.codeWidth c d (enc a)))) enc
+      (Cslib.Reachability.encArgs (encFinite Unit)) :=
+    (ComputableTidilyInPolyTime.const ()).prod (hcodes.prod (hcodes.prod
+      ((MultiTapeNTM.computableTidilyInPolyTime_viewCode_initView hwidth (.encode enc)).prod
+        (MultiTapeNTM.computableTidilyInPolyTime_acceptCode hwidth))))
+  obtain ⟨te, se, hte, -, he⟩ := hedge
+  obtain ⟨ti, si, hti, -, hi⟩ := hin
+  have hedgeO : ComputableTidilyInO _ _ encBool te se :=
+    ⟨1, he.mono (fun _ => by omega) fun _ => by omega, fun _ => by simp⟩
+  have hinO : ComputableTidilyInO _ enc (Cslib.Reachability.encArgs (encFinite Unit)) ti
+      fun a => ti a + si a :=
+    ⟨1, hi.mono (fun _ => by omega) fun _ => by dsimp only; omega, fun a => by
+      have := hi.length_le a
+      dsimp only
+      omega⟩
+  have h := Cslib.Reachability.computableTidilyInO_savitch (edge := fun _ => ntm.codeEdge)
+    (par := fun _ => ()) hedgeO hinO
+    (fun _ => MultiTapeNTM.length_viewCode (Nat.le_add_right _ _)) fun _ => List.length_replicate ..
+  -- polynomial bounds on the width, the inputs and the edge test
+  obtain ⟨cW, dW, hW⟩ := hwidth.polyBounded_length.exists_le
+  obtain ⟨cT, dT, hT⟩ := hti.exists_le
+  obtain ⟨cE, dE, hE⟩ := hte.exists_le
+  set L := (encFinite Unit ()).length
+  have hedgeMax (w : ℕ) : Cslib.Reachability.edgeMax te () w ≤ cE * (2 * L + 3 * w + 3) ^ dE :=
+    listMax_le fun u hu => listMax_le fun v hv => by
+      refine (hE _).trans (Nat.mul_le_mul_left cE (Nat.pow_le_pow_left ?_ dE))
+      simp only [length_encPair, encBits_apply, Cslib.BitString.mem_enumList.mp hu,
+        Cslib.BitString.mem_enumList.mp hv]
+      omega
+  set B : ℕ → ℕ := fun n => 2 * (cW * (n + 1) ^ dW) + 2
+  obtain ⟨K, hK⟩ := exists_eventually_le_two_pow_pow (P := fun n => cT * (n + 1) ^ dT)
+    (Q := fun n => (B n + 2) * (B n + 1))
+    (R := fun n => ((B n + 1) * (B n + B n + 1) + L + 1) ^ 2 + cE * (2 * L + 3 * B n + 3) ^ dE)
+    (by fun_prop) (by simp only [B]; fun_prop) (by simp only [B]; fun_prop)
+  have hmem := setOf_mem_DTIME_of_computableTidilyInO h
+    (t := fun n => cT * (n + 1) ^ dT + 2 ^ ((B n + 2) * (B n + 1)) *
+      (((B n + 1) * (B n + B n + 1) + L + 1) ^ 2 + cE * (2 * L + 3 * B n + 3) ^ dE))
+    fun a => by
+      have hw : 2 * ntm.codeWidth c d (enc a) + 2 ≤ B (enc a).length := by
+        have := hW a
+        simp only [encUnary_apply, List.length_replicate] at this
+        simp only [B]
+        omega
+      gcongr
+      · exact hT a
+      · exact (hedgeMax _).trans (Nat.mul_le_mul_left cE (Nat.pow_le_pow_left (by omega) dE))
+  have hA' : A = {a | ntm.savitchDecide c d (enc a) = true} := Set.ext fun a =>
+    (hAn a).2.trans (MultiTapeNTM.savitchDecide_eq_true_iff (hAn a).1 (hcd a)).symm
+  rw [hA']
+  exact mem_EXP_iff.mpr ⟨K, DTIME_mono_of_eventually_le hK hmem⟩
+
+/-- **`NP ⊆ EXP`**, through `PSPACE`. -/
+theorem NP_subset_EXP : NP enc ⊆ EXP enc :=
+  NP_subset_PSPACE.trans PSPACE_subset_EXP
 
 end Cslib.Complexity
