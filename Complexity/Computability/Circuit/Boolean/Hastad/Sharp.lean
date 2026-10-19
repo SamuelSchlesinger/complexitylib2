@@ -63,10 +63,14 @@ The proof refines the one of `Unbounded.two_pow_le_size_of_computes_parity` in t
   `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_pow_le`,
   `Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_computes_parity`: the same for the
   number of gates.
-* `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depth_le`: the same
-  when depth counts negations.
-* `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity_of_depthWith_le`:
-  the same for formulas.
+* `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depth_le`,
+  `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le`,
+  `Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_computes_parity_of_depth_le`: the
+  same when depth counts negations.
+* `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity_of_depthWith_le`,
+  `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity_of_pow_le`,
+  `Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_formula_computes_parity`: the same
+  for formulas.
 
 ## References
 
@@ -421,6 +425,22 @@ theorem two_pow_le_size_of_computes_parity_of_depth_le {C : Circuit signature n 
   two_pow_le_size_of_computes_parity_of_depthWith_le hC hs
     ((C.depthWith_le_depth andOrCost_le_one).trans hd) hn
 
+/-- **Håstad's theorem with the sharp exponent, when depth counts negations**, in round numbers:
+at least `2 ^ s` gates for every `s ≥ 2` with `(17 s) ^ (d - 1) ≤ n`, when `d ≥ 2`. -/
+theorem two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le {C : Circuit signature n 1}
+    (hC : C.Computes interpretation (single (parity n))) (hs : 2 ≤ s) {d : ℕ} (hd₂ : 2 ≤ d)
+    (hd : C.depth ≤ d) (hn : (17 * s) ^ (d - 1) ≤ n) : 2 ^ s ≤ C.size :=
+  two_pow_le_size_of_computes_parity_of_depth_le hC hs hd (mul_pow_le_of_pow_le hs hd₂ hn)
+
+/-- **Håstad's theorem with the sharp exponent, when depth counts negations**, as a real bound: at
+least `2 ^ (n ^ (1 / (d - 1)) / 17) / 2` gates when `d ≥ 2` and `n ≥ 34 ^ (d - 1)`. -/
+theorem two_rpow_le_two_mul_size_of_computes_parity_of_depth_le {C : Circuit signature n 1}
+    (hC : C.Computes interpretation (single (parity n))) {d : ℕ} (hd₂ : 2 ≤ d)
+    (hd : C.depth ≤ d) (hn : 34 ^ (d - 1) ≤ n) :
+    (2 : ℝ) ^ ((n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹) / 17) ≤ 2 * C.size :=
+  two_rpow_le_two_mul_of_forall hd₂ hn fun _ hs hsn =>
+    two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le hC hs hd₂ hd hsn
+
 /-! ### Formulas -/
 
 /-- **Håstad's theorem with the sharp exponent, for formulas.** A formula of negations and unbounded
@@ -432,5 +452,22 @@ theorem two_pow_le_size_of_formula_computes_parity_of_depthWith_le {F : Formula 
     2 ^ s ≤ F.size :=
   F.size_toCircuit ▸ two_pow_le_size_of_computes_parity_of_depthWith_le hF.toCircuit hs
     ((F.depthWith_toCircuit_le andOrCost).trans hd) hn
+
+/-- **Håstad's theorem with the sharp exponent, for formulas**, in round numbers: at least `2 ^ s`
+operation nodes for every `s ≥ 2` with `(17 s) ^ (d - 1) ≤ n`, when `d ≥ 2`. -/
+theorem two_pow_le_size_of_formula_computes_parity_of_pow_le {F : Formula signature n}
+    (hF : F.Computes interpretation (parity n)) (hs : 2 ≤ s) {d : ℕ} (hd₂ : 2 ≤ d)
+    (hd : F.depthWith andOrCost ≤ d) (hn : (17 * s) ^ (d - 1) ≤ n) : 2 ^ s ≤ F.size :=
+  two_pow_le_size_of_formula_computes_parity_of_depthWith_le hF hs hd
+    (mul_pow_le_of_pow_le hs hd₂ hn)
+
+/-- **Håstad's theorem with the sharp exponent, for formulas**, as a real bound: at least
+`2 ^ (n ^ (1 / (d - 1)) / 17) / 2` operation nodes when `d ≥ 2` and `n ≥ 34 ^ (d - 1)`. -/
+theorem two_rpow_le_two_mul_size_of_formula_computes_parity {F : Formula signature n}
+    (hF : F.Computes interpretation (parity n)) {d : ℕ} (hd₂ : 2 ≤ d)
+    (hd : F.depthWith andOrCost ≤ d) (hn : 34 ^ (d - 1) ≤ n) :
+    (2 : ℝ) ^ ((n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹) / 17) ≤ 2 * F.size :=
+  two_rpow_le_two_mul_of_forall hd₂ hn fun _ hs hsn =>
+    two_pow_le_size_of_formula_computes_parity_of_pow_le hF hs hd₂ hd hsn
 
 end Cslib.Circuits.Boolean.Unbounded

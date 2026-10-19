@@ -69,6 +69,21 @@ example (C : Circuit Unbounded.signature 1700 1)
     (hd : C.depth ≤ 2) : 2 ^ 100 ≤ C.size :=
   Unbounded.two_pow_le_size_of_computes_parity_of_depth_le hC (by norm_num) hd (by norm_num)
 
+/-- When depth counts negations, in round numbers. -/
+example (C : Circuit Unbounded.signature ((17 * 100) ^ 3) 1)
+    (hC : C.Computes Unbounded.interpretation (single (parity _)))
+    (hd : C.depth ≤ 4) : 2 ^ 100 ≤ C.size :=
+  Unbounded.two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le hC (by norm_num) (by norm_num)
+    hd le_rfl
+
+/-- Formulas of AND/OR depth three for the parity of `(17 · 100) ^ 2` bits have at least `2 ^ 100`
+operation nodes. -/
+example (F : Formula Unbounded.signature ((17 * 100) ^ 2))
+    (hF : F.Computes Unbounded.interpretation (parity _))
+    (hd : F.depthWith Unbounded.andOrCost ≤ 3) : 2 ^ 100 ≤ F.size :=
+  Unbounded.two_pow_le_size_of_formula_computes_parity_of_pow_le hF (by norm_num) (by norm_num) hd
+    le_rfl
+
 /-- The step that ends the argument: a formula in disjunctive normal form with terms of at most
 two literals does not compute the parity of three free bits, up to negation. -/
 example (D : Logic.PL.DNF (Fin 3)) (hD : ∀ t ∈ D, t.length ≤ 2) (c : Bool) :
@@ -173,6 +188,34 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Unbounded.two_pow_le_size_of_formula_computes_parity_of_depthWith_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Unbounded.two_pow_le_size_of_computes_parity_of_depth_le_of_pow_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_computes_parity_of_depth_le'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Unbounded.two_rpow_le_two_mul_size_of_computes_parity_of_depth_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity_of_pow_le'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Unbounded.two_pow_le_size_of_formula_computes_parity_of_pow_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_formula_computes_parity'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Unbounded.two_rpow_le_two_mul_size_of_formula_computes_parity
 
 /--
 info: 'Cslib.Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne'
