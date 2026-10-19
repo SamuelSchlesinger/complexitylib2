@@ -294,6 +294,44 @@ theorem evaluate_eq (a : α) :
   simp only [Option.getD_some]
   rw [gameTree_value_eq _ (by simp), decodeHistory_nil]
 
+/-- Returning a value into the stack, with its explicit cases. -/
+def returnStep (L cap : ℕ) (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
+    List (GameTree.Frame (List Bool)) × Option ℕ :=
+  if st.isEmpty then (st, some v)
+  else
+    let f := st.headD ([], [], 0, 0)
+    if lastCode L f.2.1 then
+      if lastCode L f.1 then (st.tail, some (min cap (f.2.2.1 + max f.2.2.2 v)))
+      else ((incrementBits f.1, firstCode L, min cap (f.2.2.1 + max f.2.2.2 v), 0) :: st.tail, none)
+    else ((f.1, incrementBits f.2.1, f.2.2.1, max f.2.2.2 v) :: st.tail, none)
+
+theorem step_some_eq (L cap : ℕ) (leaf : List (List Bool × List Bool) → ℕ)
+    (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
+    GameTree.step L cap (firstCode L) incrementBits (lastCode L) leaf (st, some v) =
+      returnStep L cap st v := by
+  rcases st with _ | ⟨⟨u, w, sm, ac⟩, st⟩
+  · rfl
+  · rfl
+
+/-- Pushing a frame, or returning the leaf value at the maximal depth. -/
+def pushStep (L : ℕ) (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
+    List (GameTree.Frame (List Bool)) × Option ℕ :=
+  if st.length = L then (st, some v) else ((firstCode L, firstCode L, v, 0) :: st, none)
+
+theorem step_none_eq (L cap : ℕ) (leaf : List (List Bool × List Bool) → ℕ)
+    (st : List (GameTree.Frame (List Bool))) :
+    GameTree.step L cap (firstCode L) incrementBits (lastCode L) leaf (st, none) =
+      pushStep L st (min cap (leaf (GameTree.history st))) := rfl
+
+/-- One step of the evaluation, as a case distinction calling the leaf value once. -/
+theorem evalStep_eq (s : EvalState α) : evalStep enc M fuel s =
+    if s.2.2.isSome then (s.1, returnStep (fuel s.1) (2 ^ fuel s.1) s.2.1 (s.2.2.getD 0))
+    else (s.1, pushStep (fuel s.1) s.2.1 (min (2 ^ fuel s.1)
+      (leafValue (coinFamily M (fuel s.1) (enc s.1)) (GameTree.history s.2.1)))) := by
+  obtain ⟨a, st, _ | v⟩ := s
+  · rfl
+  · exact congrArg _ (step_some_eq _ _ _ st v)
+
 end Evaluation
 
 end Cslib.Complexity.Interaction
