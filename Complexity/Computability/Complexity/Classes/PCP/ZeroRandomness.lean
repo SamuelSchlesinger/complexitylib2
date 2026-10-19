@@ -11,11 +11,9 @@ public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PCP
 import Complexity.Computability.Complexity.Classes.PCP.NP
-import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
-import Mathlib.Data.List.GetD
 
 /-!
 # PCP without randomness
@@ -29,16 +27,16 @@ classes with zero randomness are therefore classes of deterministic verification
   (`Cslib.Complexity.PCP_zero_zero`). Since more randomness and more queries give larger classes,
   `P ⊆ PCP(r, q)` for all `r` and `q`.
 * With polynomially many queries, the verifier can read a whole `NP` certificate, so
-  `NP ⊆ PCP(0, poly)` (`Cslib.Complexity.NP_subset_PCP_zero_poly`). Conversely, a verifier using
-  no random bits uses at most logarithmically many, so `PCP(0, q) ⊆ NP` for every `q`
-  (`Cslib.Complexity.PCP_log_subset_NP`), and `NP = PCP(0, poly)`
+  `NP ⊆ PCP(0, poly)` (`Cslib.Complexity.exists_mem_PCP_zero_of_mem_NP`). Conversely, a
+  verifier using no random bits uses at most logarithmically many, so `PCP(0, q) ⊆ NP` for every
+  `q` (`Cslib.Complexity.PCP_log_subset_NP`), and `NP = PCP(0, poly)`
   (`Cslib.Complexity.mem_NP_iff_exists_PCP_zero`).
 
 ## Main results
 
 * `Cslib.Complexity.PCP_zero_zero`: `PCP(0, 0) = P`.
 * `Cslib.Complexity.P_subset_PCP`: `P ⊆ PCP(r, q)`.
-* `Cslib.Complexity.NP_subset_PCP_zero_poly`, `Cslib.Complexity.mem_NP_iff_exists_PCP_zero`:
+* `Cslib.Complexity.exists_mem_PCP_zero_of_mem_NP`, `Cslib.Complexity.mem_NP_iff_exists_PCP_zero`:
   `NP = PCP(0, poly)`.
 
 ## References
@@ -54,12 +52,6 @@ open Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool}
 
-/-- Reading every position of a proof below its length recovers the proof. -/
-theorem PCPVerifier.answers_range_length (π : List Bool) :
-    PCPVerifier.answers π (List.range π.length) = π := by
-  apply List.ext_getElem (by simp [PCPVerifier.answers])
-  intro i _ h
-  simp [PCPVerifier.answers, List.getElem?_eq_getElem h]
 
 /-- **`PCP(0, 0) = P`**: a verifier with no random bits and no queries decides by its verdict on
 the instance alone. -/
@@ -112,7 +104,7 @@ theorem P_subset_PCP (r q : ℕ → ℕ) : P enc ⊆ PCP r q enc :=
 /-- **`NP ⊆ PCP(0, poly)`**: with no random bits, the verifier queries the first `p(n)` positions
 of the proof, where `n` is the length of the encoded instance and `p(n)` the length of the
 certificates, and runs the `NP` verifier on the bits read. -/
-theorem NP_subset_PCP_zero_poly {A : Set α} (hA : A ∈ NP enc) :
+theorem exists_mem_PCP_zero_of_mem_NP {A : Set α} (hA : A ∈ NP enc) :
     ∃ k : ℕ, A ∈ PCP (fun _ => 0) (fun n => (n + 1) ^ k) enc := by
   obtain ⟨p, V, hV, hver⟩ := hA
   obtain ⟨c, k, hle⟩ := polynomiallyBounded_iff_le.mp (PolynomiallyBounded.polynomial_eval p)
@@ -153,7 +145,7 @@ theorem NP_subset_PCP_zero_poly {A : Set α} (hA : A ∈ NP enc) :
 verifier using no random bits and polynomially many queries. -/
 theorem mem_NP_iff_exists_PCP_zero {A : Set α} :
     A ∈ NP enc ↔ ∃ k : ℕ, A ∈ PCP (fun _ => 0) (fun n => (n + 1) ^ k) enc :=
-  ⟨NP_subset_PCP_zero_poly, fun ⟨_, hk⟩ =>
+  ⟨exists_mem_PCP_zero_of_mem_NP, fun ⟨_, hk⟩ =>
     (PCP_mono_randomness (fun _ => Nat.zero_le _)).trans (PCP_log_subset_NP _) hk⟩
 
 end Cslib.Complexity
