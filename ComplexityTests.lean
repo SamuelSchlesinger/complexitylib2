@@ -156,6 +156,7 @@ import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.ProbabilityToolkit2
+import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
@@ -180,6 +181,7 @@ import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
+import ComplexityTests.ResourceClasses3
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
