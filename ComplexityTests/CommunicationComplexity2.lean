@@ -179,7 +179,7 @@ example (n c : ℕ) {γ : ℝ} (hγ : 0 ≤ γ)
     (h : PublicCoin.ecomplexityFun (1 / 2 - γ) (fun x y : BitString n => x ⬝ᵥ y) ≤ c) :
     (2 * γ) ^ 2 * 2 ^ n ≤ 4 ^ c := by
   obtain ⟨μ, hμ, hc⟩ := PublicCoin.ecomplexity_le_iff.mp h
-  exact hμ.sq_mul_two_pow_le_four_pow hc hγ
+  exact hμ.sq_mul_two_pow_le_four_pow_of_dotProduct hc hγ
 
 /-! ### Axiom guards -/
 

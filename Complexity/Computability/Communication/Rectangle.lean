@@ -8,10 +8,12 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Communication.Protocol
+public import Mathlib.Algebra.Order.BigOperators.Group.Finset
+public import Mathlib.Algebra.Ring.Defs
 public import Mathlib.Data.Fin.Tuple.Basic
 public import Mathlib.Data.Fintype.Prod
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Data.Fintype.BigOperators
 
 /-!
 # Protocols partition the inputs into rectangles
@@ -28,11 +30,15 @@ constant (`Protocol.exists_rectangle_partition`); some of them may be empty
 `A × B`, the label of each leaf is a valid answer on the part of its rectangle inside `A × B`
 (`Protocol.Solves.solves_leafOutput`).
 
-A protocol *computes* `f : X → Y → Z` when its output is `f`, which is solving the relation
-`f x y = z` on all inputs (`Protocol.solves_univ_iff`). Counting leaves by their labels turns
-bounds on rectangles into lower bounds on protocols: if `f` is constantly `z` only on rectangles
-with at most `K` entries, then `|f⁻¹(z)| ≤ K · #{leaves labelled z}` for every protocol computing
-`f` (`Protocol.card_filter_le_mul`).
+Sums over all pairs of inputs split into sums over the leaf rectangles
+(`Protocol.sum_eq_sum_leaves`). A protocol *computes* `f : X → Y → Z` when its output is `f`,
+which is solving the relation `f x y = z` on all inputs (`Protocol.solves_univ_iff`). Counting
+leaves by their labels turns bounds on rectangles into lower bounds on protocols: if `f` is
+constantly `z` only on rectangles of weight at most `K`, the inputs where `f` is `z` have weight at
+most `K` times the number of leaves labelled `z`, for every protocol computing `f`
+(`Protocol.sum_filter_le_mul`). Counting every input once, `|f⁻¹(z)| ≤ K · #{leaves labelled z}`
+when `f` is constantly `z` only on rectangles with at most `K` entries
+(`Protocol.card_filter_le_mul`).
 
 ## Main definitions
 
@@ -49,6 +55,8 @@ with at most `K` entries, then `|f⁻¹(z)| ≤ K · #{leaves labelled z}` for e
   partitions the inputs into at most `2 ^ d` monochromatic rectangles.
 * `Cslib.Communication.Protocol.Solves.solves_leafOutput`: leaf rectangles inside the inputs of a
   solved relation are monochromatic.
+* `Cslib.Communication.Protocol.sum_eq_sum_leaves`: sums over the leaf rectangles.
+* `Cslib.Communication.Protocol.sum_filter_le_mul`: the weighted area bound.
 * `Cslib.Communication.Protocol.card_filter_le_mul`: the area bound.
 
 ## References
@@ -94,6 +102,82 @@ def leafBob : (p : Protocol X Y Z) → Fin p.leaves → Set Y
   | alice _ p₀ p₁ => Fin.append p₀.leafBob p₁.leafBob
   | bob send p₀ p₁ => Fin.append (fun i => {y | send y = false} ∩ p₀.leafBob i)
       (fun i => {y | send y = true} ∩ p₁.leafBob i)
+
+section Simp
+
+variable (z : Z) (send : X → Bool) (send' : Y → Bool) (p₀ p₁ : Protocol X Y Z) (x : X) (y : Y)
+
+@[simp] theorem leaf_output : (output z : Protocol X Y Z).leaf x y = (0 : Fin 1) :=
+  rfl
+
+@[simp] theorem leaf_alice : (alice send p₀ p₁).leaf x y =
+    cond (send x) (Fin.natAdd p₀.leaves (p₁.leaf x y)) (Fin.castAdd p₁.leaves (p₀.leaf x y)) :=
+  rfl
+
+@[simp] theorem leaf_bob : (bob send' p₀ p₁).leaf x y =
+    cond (send' y) (Fin.natAdd p₀.leaves (p₁.leaf x y)) (Fin.castAdd p₁.leaves (p₀.leaf x y)) :=
+  rfl
+
+@[simp] theorem leafOutput_output (i : Fin 1) : (output z : Protocol X Y Z).leafOutput i = z :=
+  rfl
+
+@[simp] theorem leafOutput_alice_castAdd (i : Fin p₀.leaves) :
+    (alice send p₀ p₁).leafOutput (Fin.castAdd p₁.leaves i) = p₀.leafOutput i :=
+  Fin.append_left _ _ i
+
+@[simp] theorem leafOutput_alice_natAdd (i : Fin p₁.leaves) :
+    (alice send p₀ p₁).leafOutput (Fin.natAdd p₀.leaves i) = p₁.leafOutput i :=
+  Fin.append_right _ _ i
+
+@[simp] theorem leafOutput_bob_castAdd (i : Fin p₀.leaves) :
+    (bob send' p₀ p₁).leafOutput (Fin.castAdd p₁.leaves i) = p₀.leafOutput i :=
+  Fin.append_left _ _ i
+
+@[simp] theorem leafOutput_bob_natAdd (i : Fin p₁.leaves) :
+    (bob send' p₀ p₁).leafOutput (Fin.natAdd p₀.leaves i) = p₁.leafOutput i :=
+  Fin.append_right _ _ i
+
+@[simp] theorem leafAlice_output (i : Fin 1) :
+    (output z : Protocol X Y Z).leafAlice i = Set.univ :=
+  rfl
+
+@[simp] theorem leafAlice_alice_castAdd (i : Fin p₀.leaves) :
+    (alice send p₀ p₁).leafAlice (Fin.castAdd p₁.leaves i) =
+      {x | send x = false} ∩ p₀.leafAlice i :=
+  Fin.append_left _ _ i
+
+@[simp] theorem leafAlice_alice_natAdd (i : Fin p₁.leaves) :
+    (alice send p₀ p₁).leafAlice (Fin.natAdd p₀.leaves i) = {x | send x = true} ∩ p₁.leafAlice i :=
+  Fin.append_right _ _ i
+
+@[simp] theorem leafAlice_bob_castAdd (i : Fin p₀.leaves) :
+    (bob send' p₀ p₁).leafAlice (Fin.castAdd p₁.leaves i) = p₀.leafAlice i :=
+  Fin.append_left _ _ i
+
+@[simp] theorem leafAlice_bob_natAdd (i : Fin p₁.leaves) :
+    (bob send' p₀ p₁).leafAlice (Fin.natAdd p₀.leaves i) = p₁.leafAlice i :=
+  Fin.append_right _ _ i
+
+@[simp] theorem leafBob_output (i : Fin 1) : (output z : Protocol X Y Z).leafBob i = Set.univ :=
+  rfl
+
+@[simp] theorem leafBob_alice_castAdd (i : Fin p₀.leaves) :
+    (alice send p₀ p₁).leafBob (Fin.castAdd p₁.leaves i) = p₀.leafBob i :=
+  Fin.append_left _ _ i
+
+@[simp] theorem leafBob_alice_natAdd (i : Fin p₁.leaves) :
+    (alice send p₀ p₁).leafBob (Fin.natAdd p₀.leaves i) = p₁.leafBob i :=
+  Fin.append_right _ _ i
+
+@[simp] theorem leafBob_bob_castAdd (i : Fin p₀.leaves) :
+    (bob send' p₀ p₁).leafBob (Fin.castAdd p₁.leaves i) = {y | send' y = false} ∩ p₀.leafBob i :=
+  Fin.append_left _ _ i
+
+@[simp] theorem leafBob_bob_natAdd (i : Fin p₁.leaves) :
+    (bob send' p₀ p₁).leafBob (Fin.natAdd p₀.leaves i) = {y | send' y = true} ∩ p₁.leafBob i :=
+  Fin.append_right _ _ i
+
+end Simp
 
 private theorem castAdd_ne_natAdd {m n : ℕ} (i : Fin m) (j : Fin n) :
     Fin.castAdd n i ≠ Fin.natAdd m j := by
@@ -166,34 +250,58 @@ theorem Solves.solves_leafOutput (hp : p.Solves R A B) (i : Fin p.leaves) :
     Communication.Solves (fun _ _ => p.leafOutput i) R (A ∩ p.leafAlice i) (B ∩ p.leafBob i) :=
   fun x hx y hy => run_eq_leafOutput hx.2 hy.2 ▸ hp x hx.1 y hy.1
 
-/-- A protocol solves the relation `f x y = z` on all inputs when it computes `f`. -/
-theorem solves_univ_iff {f : X → Y → Z} :
-    p.Solves (fun x y z => f x y = z) Set.univ Set.univ ↔ p.run = f := by
-  refine ⟨fun h => funext₂ fun x y => (h x trivial y trivial).symm, fun h x _ y _ => ?_⟩
-  rw [h]
+/-! ### Sums over leaf rectangles -/
+
+section Sums
+
+variable [Fintype X] [Fintype Y]
+
+open Classical in
+/-- **Sums over leaf rectangles.** A sum over all pairs of inputs is the sum, over the leaves of a
+protocol, of the sums over their rectangles. -/
+theorem sum_eq_sum_leaves {M : Type*} [AddCommMonoid M] (p : Protocol X Y Z) (g : X → Y → M) :
+    ∑ x, ∑ y, g x y =
+      ∑ i, ∑ x with x ∈ p.leafAlice i, ∑ y with y ∈ p.leafBob i, g x y := by
+  rw [← Fintype.sum_prod_type', ← sum_fiberwise univ (fun q : X × Y => p.leaf q.1 q.2)]
+  refine sum_congr rfl fun i _ => ?_
+  rw [← sum_product']
+  refine sum_congr ?_ fun _ _ => rfl
+  ext q
+  simp [leaf_eq_iff]
+
+/-- **The weighted area bound.** If `f` is constantly `z` only on rectangles of weight at most `K`
+under `w`, then for every protocol computing `f` the inputs where `f` is `z` have weight at most
+`K` times the number of leaves labelled `z`. The weights take values in an ordered semiring such
+as `ℕ` or `ℝ`, and may be negative. -/
+theorem sum_filter_le_mul {M : Type*} [Semiring M] [PartialOrder M] [IsOrderedAddMonoid M]
+    [DecidableEq Z] {f : X → Y → Z} (hp : p.run = f) (z : Z) (w : X → Y → M) {K : M}
+    (hK : ∀ (A : Finset X) (B : Finset Y), (∀ x ∈ A, ∀ y ∈ B, f x y = z) →
+      ∑ x ∈ A, ∑ y ∈ B, w x y ≤ K) :
+    ∑ q : X × Y with f q.1 q.2 = z, w q.1 q.2 ≤ #{i | p.leafOutput i = z} * K := by
+  classical
+  rw [sum_filter, Fintype.sum_prod_type' (fun x y => if f x y = z then w x y else 0),
+    p.sum_eq_sum_leaves, card_eq_sum_ones, Nat.cast_sum, sum_mul, sum_filter]
+  refine sum_le_sum fun i _ => ?_
+  have hrect : ∀ x ∈ ({x | x ∈ p.leafAlice i} : Finset X),
+      ∀ y ∈ ({y | y ∈ p.leafBob i} : Finset Y), f x y = p.leafOutput i := fun x hx y hy => by
+    rw [← hp, run_eq_leafOutput (mem_filter.mp hx).2 (mem_filter.mp hy).2]
+  split_ifs with hi
+  · rw [Nat.cast_one, one_mul]
+    refine le_of_eq_of_le (sum_congr rfl fun x hx => sum_congr rfl fun y hy => ?_)
+      (hK _ _ fun x hx y hy => (hrect x hx y hy).trans hi)
+    simp [(hrect x hx y hy).trans hi]
+  · refine (sum_eq_zero fun x hx => sum_eq_zero fun y hy => ?_).le
+    simp [hrect x hx y hy, hi]
 
 /-- **The area bound.** If `f` is constantly `z` only on rectangles with at most `K` entries, every
 protocol computing `f` has at least `|f⁻¹(z)| / K` leaves labelled `z`. -/
-theorem card_filter_le_mul [Fintype X] [Fintype Y] [DecidableEq Z] {f : X → Y → Z}
-    (hp : p.run = f) (z : Z) {K : ℕ}
+theorem card_filter_le_mul [DecidableEq Z] {f : X → Y → Z} (hp : p.run = f) (z : Z) {K : ℕ}
     (hK : ∀ (A : Finset X) (B : Finset Y), (∀ x ∈ A, ∀ y ∈ B, f x y = z) → #A * #B ≤ K) :
     #{q : X × Y | f q.1 q.2 = z} ≤ #{i | p.leafOutput i = z} * K := by
-  classical
-  have hmaps : Set.MapsTo (fun q : X × Y => p.leaf q.1 q.2)
-      ↑({q : X × Y | f q.1 q.2 = z} : Finset (X × Y))
-      ↑({i | p.leafOutput i = z} : Finset (Fin p.leaves)) := by
-    intro q hq
-    simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hq ⊢
-    rw [← run_eq_leafOutput_leaf, hp, hq]
-  rw [card_eq_sum_card_fiberwise hmaps, ← smul_eq_mul, ← sum_const]
-  refine sum_le_sum fun i hi => ?_
-  have hi : p.leafOutput i = z := (mem_filter.mp hi).2
-  let A : Finset X := {x | x ∈ p.leafAlice i}
-  let B : Finset Y := {y | y ∈ p.leafBob i}
-  refine (card_le_card fun q hq => ?_).trans (card_product A B ▸ hK A B fun x hx y hy => ?_)
-  · have hq := (mem_filter.mp hq).2
-    rw [leaf_eq_iff] at hq
-    simp [A, B, hq.1, hq.2]
-  · rw [← hp, run_eq_leafOutput (mem_filter.mp hx).2 (mem_filter.mp hy).2, hi]
+  have h := sum_filter_le_mul hp z (fun _ _ => 1) fun A B hAB => by
+    simpa only [sum_const, smul_eq_mul, mul_one] using hK A B hAB
+  simpa only [sum_const, smul_eq_mul, mul_one, Nat.cast_id] using h
+
+end Sums
 
 end Cslib.Communication.Protocol
