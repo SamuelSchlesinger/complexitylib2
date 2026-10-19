@@ -674,3 +674,18 @@ parameters in (0,1), and the informal polynomial reading of the query count.
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 7: linear Hamiltonian reductions and ETH (2026-10-19)
+
+Integrated `bb828997` (on top of the integrated `b6f69ede`) and replaced the ETH entry in
+`completeness.tex` to cover directed and undirected Hamiltonian cycle and path.
+
+Independent correctness and API reviews of `b6f69ede..bb828997`: APPROVE on both (diamond theorem's
+side conditions are non-vacuous and match Sipser's geometry; the sparse reduction is correct in
+both directions; size bounds re-derived; the Directed.lean refactor keeps every public statement).
+Wording finding resolved in the entry: the bound (23k+1)m+1 is for the directed path graph only;
+the cycle and undirected graphs have their own linear bounds. Non-blocking API findings were
+returned to the author.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
