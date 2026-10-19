@@ -1,5 +1,59 @@
 # Theorem-index review
 
+## Small counting classes, 19 October 2026
+
+Lean source revision: `2f492c03c060ed95662dd942ef7feca1bebda7aa`.
+Prose revision: `df6cfe340df963943fbea6039097290dbdad9d0a`.
+Base: `c8a1b9a798a11ca775ad3bfa585ee6a51c462e88` (PR #8).
+
+The batch adds SPP, FewP, fixed-modulus ModP, coUP and coCeqP. It reuses
+SharpP/GapP arithmetic, exact-count polynomial-time precomposition, complement
+and reduction APIs, and Mathlib's finite-field arithmetic. Boolean closure for
+ModP is asserted only for prime moduli. Definitions use polynomial-time
+verifiers; nondeterministic-machine characterizations remain outstanding.
+
+Independent Codex reviews:
+
+- `proof_api` approved final Lean revision `2f492c03`, reviewing the five class
+  modules, aggregate imports, tests, placement, reuse and source credit. No findings.
+- `proof_correctness` approved the same revision, checking definitions,
+  containments, closures, reductions, encoded-input ambiguity bounds, prime-only
+  modular closure, degenerate moduli and non-vacuous examples. No findings.
+- `resume_alternation` approved prose `df6cfe34` against Lean `2f492c03`, checking
+  quantifiers, models, bounds, limitations, sources and all 20 new anchors.
+  No findings. All three independent reviews were read-only static reviews.
+
+Fortnow's Counting Complexity supplies the SPP and modular classifications and
+specified containments. The FewP acceptance convention is checked against
+Borchert–Hemaspaandra–Rothe section 1, which credits Allender–Rubinstein.
+Fenner–Fortnow–Kurtz and Papadimitriou–Zachos retain credit for their respective
+counting frameworks. Module and index prose distinguish sourced results from
+elementary algebraic deductions; new bibliography entries are in a focused commit.
+
+All six project gates passed on final Lean revision `2f492c03`: build and test
+with `--wfail --iofail`, `mk_all --check`, `lint`, `lint-style` and
+`checkInitImports`. Tests include a nonconstant language, a two-witness FewP
+verifier, reductions, zero/one modulus conventions, composite zero divisors,
+prime-modulus closures and 21 headline axiom guards. No Lean changes followed.
+
+The rebuilt index has 70 numbered entries, 168 declaration links, 84 references
+and 27 pages. All 27 rendered pages were inspected; the changed pages were also
+inspected individually. All 20 new PDF URL annotations were checked against exact
+source-line anchors at the final Lean revision. The final LaTeX log has no
+warnings or underfull/overfull boxes. Existing bibliography metadata warnings
+are unchanged. These AI reviews do not imply human editorial approval,
+machine-checked equivalence of prose and Lean, or upstream maintainer acceptance.
+
+Final artifact hashes:
+
+~~~text
+7eedf39e298f8e6f204cd6ac76efacf6bb89a8a5c41bf35b4180821ed947a323  paper/main.tex
+66e11001a9aba983c5c5bedf278d3adb66aed19d484109b56e4f1e74d8ac789f  paper/sections/randomness.tex
+dd7d273f65bb7798bc812425fb1206eb6c72103be03e8ff9b2647d5777ef0f21  paper/README.md
+b8db27a77b98f180b0466f414b25b097e70e622d3be0aeced7861c7f01894259  references.bib
+51338c8c67bbe6e3634729fd88d48dd930eabd3a72ce93146ab2eca2d7056052  paper/main.pdf
+~~~
+
 ## Basic classes and DP completeness, 19 October 2026
 
 Lean source revision: `4f6bdaf35ebe60aec6d1063ae513ac342df13589`.
