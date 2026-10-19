@@ -21,6 +21,63 @@ import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 /-!
 # `IP ⊆ PSPACE`
 
+Every problem with an interactive proof is decided within polynomial space
+(`Cslib.Complexity.IP_subset_PSPACE`) [Arora and Barak, Chapter 8][AroraBarak09]
+[Sipser, Section 10.4][Sipser2013].
+
+The model is that of `Cslib.Complexity.IP`. The verifier is strict oracle PPT: one finite fair-coin
+oracle machine `M` and one clock `t = c * (n + 1) ^ d`, for instances encoded with `n` bits, realize
+it against every stateful prover. So the coins are private and there are at most `t` of them, one
+per instruction; the verifier sends at most `t` messages, each shorter than `t`, and reads at most
+the first `t` bits of every reply. Provers are arbitrary: randomized, stateful and
+computationally unbounded; they see the messages but not the coins. The thresholds are `2 / 3`
+and `1 / 3`.
+
+The proof computes the acceptance probability of the optimal prover exactly, as a count of coin
+values:
+
+* Fixing the `t` coins of the run leaves programs making word requests
+  (`Cslib.Complexity.Interaction.coinFamily`), and acceptance averages over the coins
+  (`Cslib.Complexity.Interaction.acceptProb_eq_sum`). The programs form a bounded family
+  (`Cslib.Complexity.Interaction.isBounded_coinProgram`), so the value `W` of the empty history
+  (`Cslib.Complexity.Interaction.value`) bounds every prover by `W / 2 ^ t`, and the optimal prover
+  attains it. With completeness `2 / 3` and soundness `1 / 3`, an instance is a member exactly when
+  `2 ^ t < 2 * W` (`Cslib.Complexity.mem_iff_two_pow_lt_value`).
+* `W` is the value of a game tree whose messages and replies are coded by the words of length
+  `t + 1` containing a `true`, enumerated by a binary counter
+  (`Cslib.Complexity.Interaction.image_decodeWord_iterate_firstCode`,
+  `Cslib.Complexity.Interaction.gameTree_value_eq`). Its leaf values count the accepting coin
+  values, within polynomial space
+  (`Cslib.Complexity.Interaction.computableTidilyInPolySpace_countAccepts`).
+* The explicit-stack evaluator of the game tree (`Cslib.Complexity.Interaction.evaluate`) runs for
+  `2 ^ ((t + 1) * (2 * t + 1))` steps, with at most `t` frames of `O(t)` bits each
+  (`Cslib.Complexity.Interaction.length_encEvalState_iterate_le`), so it computes `W` within
+  polynomial space (`Cslib.Complexity.Interaction.evaluate_eq`,
+  `Cslib.Complexity.Interaction.computableTidilyInPolySpace_evaluate`), in exponential time.
+
+The converse inclusion `PSPACE ⊆ IP`, and so `IP = PSPACE`, is not formalized here.
+
+## Main definitions
+
+* `Cslib.Complexity.Interaction.decodeWord`, `Cslib.Complexity.Interaction.firstCode`,
+  `Cslib.Complexity.Interaction.lastCode`: the codes of the short words.
+* `Cslib.Complexity.Interaction.leafValue`: the leaf values, the accepting programs.
+* `Cslib.Complexity.Interaction.evalStep`, `Cslib.Complexity.Interaction.evaluate`: the evaluation.
+
+## Main results
+
+* `Cslib.Complexity.Interaction.image_decodeWord_iterate_firstCode`: the codes enumerate the short
+  words.
+* `Cslib.Complexity.Interaction.gameTree_value_eq`: the value is the value of the game tree.
+* `Cslib.Complexity.Interaction.evaluate_eq`: the evaluation computes the value.
+* `Cslib.Complexity.Interaction.computableTidilyInPolySpace_evaluate`: within polynomial space.
+* `Cslib.Complexity.mem_iff_two_pow_lt_value`: the value decides the problem.
+* `Cslib.Complexity.IP_subset_PSPACE`: `IP ⊆ PSPACE`.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
 -/
 
 @[expose] public section
@@ -572,11 +629,13 @@ theorem mem_iff_two_pow_lt_value {V : α → WordOracleComp Unit Bool} {A : Set 
       natCast_div_le_natCast_div_iff hpos (by norm_num)] at h
     lia
 
-/-- **`IP ⊆ PSPACE`** [Arora and Barak, Theorem 8.19][AroraBarak09] [Sipser, Lemma
-10.30][Sipser2013]. A problem with an interactive proof, whose verifier is strict oracle PPT, is
-decided within polynomial space: by the evaluation of the optimal prover's game tree over the
-messages and replies of length at most the clock, which counts the accepting coin values at every
-history (`Cslib.Complexity.Interaction.evaluate`). -/
+/-- **`IP ⊆ PSPACE`** [Arora and Barak, Chapter 8][AroraBarak09] [Sipser, Section
+10.4][Sipser2013]: a problem with an interactive proof, whose verifier is strict oracle PPT with
+private coins, against all randomized stateful provers, is decided within polynomial space. The
+decider evaluates the game tree of the optimal prover over the messages and replies no longer than
+the clock of the verifier, counting the accepting coin values at its leaves
+(`Cslib.Complexity.Interaction.evaluate`), and compares the count with half the number of coin
+values (`Cslib.Complexity.mem_iff_two_pow_lt_value`). -/
 theorem IP_subset_PSPACE (enc : α ↪ List Bool) : IP enc ⊆ PSPACE enc := by
   rintro A ⟨V, hV, hA⟩
   rcases isEmpty_or_nonempty α with hα | hα

@@ -34,8 +34,8 @@ the messages from the history (`Cslib.Complexity.Interaction.replayStep`,
 `Cslib.Complexity.Interaction.simulate`); it computes the outcome of the program
 (`Cslib.Complexity.Interaction.outcome_coinProgram`). Along the replay the machine sends at most one
 message per instruction, of length at most the number of instructions so far, and reads replies only
-through their first `t` bits. So the programs of `t` coins form a bounded family, with fewer than
-`t` messages, each of length less than `t` (`Cslib.Complexity.Interaction.isBounded_coinProgram`).
+through their first `t` bits. So the programs of `t` coins form a bounded family, with at most `t`
+messages, each of length less than `t` (`Cslib.Complexity.Interaction.isBounded_coinProgram`).
 
 ## Main definitions
 
@@ -419,7 +419,7 @@ theorem simulate_truncate (t : ℕ) (x r : List Bool) {h h' : History}
 def coinFamily (t : ℕ) (x : List Bool) (r : Fin t → Bool) : WordQueryComp Unit Bool :=
   coinProgram M t x (List.ofFn r)
 
-/-- **The programs of `t` coins form a bounded family**: fewer than `t` messages, each of length at
+/-- **The programs of `t` coins form a bounded family**: at most `t` messages, each of length at
 most `t`, and only the first `t` bits of each reply matter. -/
 theorem isBounded_coinProgram (t : ℕ) (x : List Bool) :
     IsBounded (coinFamily M t x) t t where

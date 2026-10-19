@@ -44,6 +44,7 @@ provers. The provers built here are deterministic, and soundness holds against t
 `IP` uses the thresholds `2 / 3` and `1 / 3` of Arora and Barak. `NP ⊆ IP` with a single message:
 the prover sends a certificate and the verifier checks a prefix of the reply of the certificate
 length, with completeness `1` and soundness `0`. `BPP ⊆ IP` without messages.
+Conversely, `IP ⊆ PSPACE` (`Complexity.Computability.Complexity.Classes.IP.PSPACE`).
 
 ## Main definitions
 

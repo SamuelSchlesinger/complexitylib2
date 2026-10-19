@@ -314,9 +314,14 @@ public import Complexity.Computability.Complexity.Classes.Hierarchy.Space
 public import Complexity.Computability.Complexity.Classes.Hierarchy.SpaceUniversal
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Complexity.Classes.IP
+public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
+public import Complexity.Computability.Complexity.Classes.IP.GameTree
 public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
 public import Complexity.Computability.Complexity.Classes.IP.Guessing
+public import Complexity.Computability.Complexity.Classes.IP.OptimalProver
+public import Complexity.Computability.Complexity.Classes.IP.PSPACE
 public import Complexity.Computability.Complexity.Classes.IP.Repetition
+public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic

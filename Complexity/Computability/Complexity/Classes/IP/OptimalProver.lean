@@ -36,8 +36,8 @@ over `r` with probability at most the value divided by the number of coin values
 (`Cslib.Complexity.Interaction.sum_acceptFrom_le_value`), and the deterministic prover that answers
 every history with a best reply (`Cslib.Complexity.Interaction.optimalProver`) attains it
 (`Cslib.Complexity.Interaction.sum_acceptFrom_optimalProver`). This is the optimal prover of the
-proof of `IP ⊆ PSPACE` [Arora and Barak, Theorem 8.19][AroraBarak09]
-[Sipser, Lemma 10.30][Sipser2013].
+proof of `IP ⊆ PSPACE` [Arora and Barak, Chapter 8][AroraBarak09]
+[Sipser, Section 10.4][Sipser2013].
 
 The outcome of a program on a history (`Cslib.Complexity.Interaction.outcome`) is also its run
 against the history as a replay (`Cslib.Complexity.Interaction.outcome_eq_replay`), which is how a
