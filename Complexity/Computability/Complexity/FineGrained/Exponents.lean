@@ -26,10 +26,10 @@ exponents is upward closed, so the hypotheses are statements about the exponents
 
 ## Measuring by clauses
 
-A formula of width three with `m` clauses has at most `3 m` variables
-(`Cslib.Logic.PL.CNF.numVars_le_mul_length`), so a decider for 3SAT within time `2 ^ (δ n)` times a
-polynomial gives one within time `2 ^ (3 δ m)` times a polynomial
-(`Cslib.Complexity.DecidableInSubexpTime.length_of_numVars`). Hence the exponential time hypothesis
+A formula of width `k` with `m` clauses has at most `k m` variables
+(`Cslib.Logic.PL.CNF.numVars_le_mul_length`), so a decider for `k`-SAT within time `2 ^ (δ n)` times
+a polynomial gives one within time `2 ^ (k δ m)` times a polynomial
+(`Cslib.Complexity.DecidableInExpTime.length_of_numVars`). Hence the exponential time hypothesis
 holds as soon as 3SAT is not decidable in subexponential time in the number of clauses
 (`Cslib.Complexity.ETH_of_not_decidableInSubexpTime_length`). The converse is the content of the
 sparsification lemma of Impagliazzo, Paturi and Zane [ImpagliazzoPaturiZane2001], with the
@@ -42,6 +42,7 @@ sparsified formulas searched within time `2 ^ (ε n)` times a polynomial; it is 
   `Cslib.Complexity.satExponent_mono`: `0 ≤ s_k ≤ 1`, monotone in `k`.
 * `Cslib.Complexity.ETH_iff_satExponent_pos`: `ETH ↔ 0 < s_3`.
 * `Cslib.Complexity.SETH_iff_tendsto`: `SETH ↔ s_k → 1`.
+* `Cslib.Complexity.DecidableInExpTime.length_of_numVars`: from variables to clauses.
 * `Cslib.Complexity.ETH_of_not_decidableInSubexpTime_length`: if 3SAT is not decidable in
   subexponential time in the number of clauses, then `ETH`.
 
@@ -151,45 +152,57 @@ theorem SETH_iff_tendsto : SETH ↔ Tendsto satExponent atTop (𝓝 1) := by
 
 /-! ### Measuring by clauses -/
 
-/-- **From variables to clauses.** If 3SAT is decidable in subexponential time in the number of
-variables, it is decidable in subexponential time in the number of clauses, since a formula of
-width three with `m` clauses has at most `3 m` variables. -/
-theorem DecidableInSubexpTime.length_of_numVars
-    (h : DecidableInSubexpTime ThreeSAT encCNF CNF.numVars) :
-    DecidableInSubexpTime ThreeSAT encCNF List.length := by
-  intro δ hδ
-  obtain ⟨e, h⟩ := h (δ / 3) (by positivity)
-  obtain ⟨e', h⟩ := h.inter (computableTidilyInPolyTime_all_length_le 3) fun φ => by positivity
-  rw [← KSAT_three, ← KSAT_eq_inter 3 le_rfl (KSAT_subset_SAT 3)] at h
+/-- **From variables to clauses.** A formula of width `k` with `m` clauses has at most `k m`
+variables, so a decider for `k`-SAT within time `2 ^ (δ n)` times a polynomial, on formulas with `n`
+variables, gives one within time `2 ^ (k δ m)` times a polynomial, on formulas with `m` clauses. -/
+theorem DecidableInExpTime.length_of_numVars {k : ℕ} {δ : ℝ} (hδ : 0 ≤ δ)
+    (h : DecidableInExpTime (KSAT k) encCNF CNF.numVars δ) :
+    DecidableInExpTime (KSAT k) encCNF List.length (k * δ) := by
+  obtain ⟨e, h⟩ := h
+  obtain ⟨e', h⟩ := h.inter (computableTidilyInPolyTime_all_length_le k) fun φ => by positivity
+  rw [← KSAT_eq_inter k le_rfl (KSAT_subset_SAT k)] at h
   refine ⟨e + e', h.mono 2 (fun φ => ?_) fun φ => by positivity⟩
   have hL : (1 : ℝ) ≤ (encCNF φ).length + 1 := by
     linarith [(Nat.cast_nonneg (encCNF φ).length : (0 : ℝ) ≤ _)]
-  have h₁ : (1 : ℝ) ≤ 2 ^ (δ * φ.length) := Real.one_le_rpow (by norm_num) (by positivity)
+  have h₁ : (1 : ℝ) ≤ 2 ^ (k * δ * φ.length) := Real.one_le_rpow (by norm_num) (by positivity)
   have h₂ : (((encCNF φ).length : ℝ) + 1) ^ e ≤ ((encCNF φ).length + 1) ^ (e + e') :=
     pow_le_pow_right₀ hL (Nat.le_add_right e e')
   have h₃ : (((encCNF φ).length : ℝ) + 1) ^ e' ≤ ((encCNF φ).length + 1) ^ (e + e') :=
     pow_le_pow_right₀ hL (Nat.le_add_left e' e)
   have h₅ : (((encCNF φ).length : ℝ) + 1) ^ (e + e') ≤
-      2 ^ (δ * φ.length) * ((encCNF φ).length + 1) ^ (e + e') :=
+      2 ^ (k * δ * φ.length) * ((encCNF φ).length + 1) ^ (e + e') :=
     le_mul_of_one_le_left (by positivity) h₁
-  have h₆ : (if (φ.all fun c => decide (c.length ≤ 3)) = true then
-      2 ^ (δ / 3 * φ.numVars) * (((encCNF φ).length : ℝ) + 1) ^ e else 0) ≤
-      2 ^ (δ * φ.length) * ((encCNF φ).length + 1) ^ (e + e') := by
+  have h₆ : (if (φ.all fun c => decide (c.length ≤ k)) = true then
+      2 ^ (δ * φ.numVars) * (((encCNF φ).length : ℝ) + 1) ^ e else 0) ≤
+      2 ^ (k * δ * φ.length) * ((encCNF φ).length + 1) ^ (e + e') := by
     split_ifs with hw
     · simp only [List.all_eq_true, decide_eq_true_eq] at hw
-      have hn : (φ.numVars : ℝ) ≤ 3 * φ.length := by
+      have hn : (φ.numVars : ℝ) ≤ k * φ.length := by
         exact_mod_cast CNF.numVars_le_mul_length hw
-      have h₇ : (2 : ℝ) ^ (δ / 3 * φ.numVars) ≤ 2 ^ (δ * φ.length) :=
+      have h₇ : (2 : ℝ) ^ (δ * φ.numVars) ≤ 2 ^ (k * δ * φ.length) :=
         Real.rpow_le_rpow_of_exponent_le (by norm_num) (by nlinarith)
       exact mul_le_mul h₇ h₂ (by positivity) (by positivity)
     · positivity
   push_cast
   nlinarith
 
+/-- **From variables to clauses.** If `k`-SAT is decidable in subexponential time in the number of
+variables, it is decidable in subexponential time in the number of clauses. -/
+theorem DecidableInSubexpTime.length_of_numVars {k : ℕ}
+    (h : DecidableInSubexpTime (KSAT k) encCNF CNF.numVars) :
+    DecidableInSubexpTime (KSAT k) encCNF List.length := by
+  intro δ hδ
+  have h' := (h (δ / (k + 1)) (by positivity)).length_of_numVars (by positivity)
+  refine h'.mono ?_
+  rw [mul_div_assoc', div_le_iff₀ (by positivity)]
+  nlinarith
+
 /-- **The exponential time hypothesis from clauses**: if 3SAT is not decidable in subexponential
 time in the number of clauses, then `ETH`. -/
 theorem ETH_of_not_decidableInSubexpTime_length
-    (h : ¬DecidableInSubexpTime ThreeSAT encCNF List.length) : ETH :=
-  ETH_iff_not_decidableInSubexpTime.mpr fun h' => h h'.length_of_numVars
+    (h : ¬DecidableInSubexpTime ThreeSAT encCNF List.length) : ETH := by
+  rw [ETH_iff_not_decidableInSubexpTime]
+  rw [← KSAT_three] at h ⊢
+  exact fun h' => h h'.length_of_numVars
 
 end Cslib.Complexity
