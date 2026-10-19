@@ -44,15 +44,15 @@ example : SharpSAT [[(0, true), (0, false)]] = 2 := by decide
 /-! ### The problems are nontrivial -/
 
 example : [] ∈ ParitySAT := by simp [ParitySAT, sharpSAT_nil]
-example : [[(0, true), (0, false)]] ∉ ParitySAT := by show ¬Odd (SharpSAT _); decide
+example : [[(0, true), (0, false)]] ∉ ParitySAT := by change ¬Odd (SharpSAT _); decide
 example : [] ∈ USAT := mem_USAT_iff.2 sharpSAT_nil
 example : [[(0, true), (0, false)]] ∉ USAT := by rw [mem_USAT_iff]; decide
-example : [[(0, true), (0, false)]] ∈ ModSAT 3 := by show SharpSAT _ % 3 ≠ 0; decide
-example : [[(0, true), (0, false)]] ∉ ModSAT 2 := by show ¬SharpSAT _ % 2 ≠ 0; decide
-example : ([[(0, true), (1, true)]], 3) ∈ SharpSATAtLeast := by show 3 ≤ SharpSAT _; decide
-example : ([[(0, true), (1, true)]], 4) ∉ SharpSATAtLeast := by show ¬4 ≤ SharpSAT _; decide
-example : ([[(0, true), (1, true)]], 3) ∈ SharpSATExact := by show SharpSAT _ = 3; decide
-example : ([[(0, true), (1, true)]], 2) ∉ SharpSATExact := by show ¬SharpSAT _ = 2; decide
+example : [[(0, true), (0, false)]] ∈ ModSAT 3 := by change SharpSAT _ % 3 ≠ 0; decide
+example : [[(0, true), (0, false)]] ∉ ModSAT 2 := by change ¬SharpSAT _ % 2 ≠ 0; decide
+example : ([[(0, true), (1, true)]], 3) ∈ SharpSATAtLeast := by change 3 ≤ SharpSAT _; decide
+example : ([[(0, true), (1, true)]], 4) ∉ SharpSATAtLeast := by change ¬4 ≤ SharpSAT _; decide
+example : ([[(0, true), (1, true)]], 3) ∈ SharpSATExact := by change SharpSAT _ = 3; decide
+example : ([[(0, true), (1, true)]], 2) ∉ SharpSATExact := by change ¬SharpSAT _ = 2; decide
 example : ([[(0, true)], [(0, false)]], 0) ∈ SharpSATExact := sharpSAT_contradiction
 
 /-! ### Clients of the parsimonious reduction -/
