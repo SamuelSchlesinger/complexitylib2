@@ -220,9 +220,8 @@ theorem one_sub_two_mul_pow_three_mul_complexity_le (hε : 0 ≤ ε) (f : Boolea
 theorem complexity_le_mul_randomizedComplexity_pow_three (f : BooleanFunction n) :
     complexity f ≤ 27 * randomizedComplexity (1 / 3) f ^ 3 := by
   have := one_sub_two_mul_pow_three_mul_complexity_le (by norm_num : (0 : ℝ) ≤ 1 / 3) f
-  have h : (complexity f : ℝ) ≤ 27 * (randomizedComplexity (1 / 3) f : ℝ) ^ 3 := by
-    norm_num at this
-    linarith
+  rw [show (1 - 2 * (1 / 3 : ℝ)) ^ 3 = 1 / 27 by norm_num] at this
+  have h : (complexity f : ℝ) ≤ 27 * (randomizedComplexity (1 / 3) f : ℝ) ^ 3 := by linarith
   exact_mod_cast h
 
 end DecisionTree

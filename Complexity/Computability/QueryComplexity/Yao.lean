@@ -164,8 +164,8 @@ variable [Finite ι]
 
 /-- For `ε ≥ 0` the distributional complexity is attained: some decision tree of depth
 `D^ν_ε(f)` errs with probability at most `ε` on inputs drawn from `ν`. -/
-theorem exists_distributionalError_le_depth_eq (hε : 0 ≤ ε) (ν : StdSimplex ℝ (ι → Bool))
-    (f : (ι → Bool) → β) : ∃ t : DecisionTree ι β,
+theorem exists_distributionalError_le_depth_eq_distributionalComplexity (hε : 0 ≤ ε)
+    (ν : StdSimplex ℝ (ι → Bool)) (f : (ι → Bool) → β) : ∃ t : DecisionTree ι β,
       t.distributionalError ν f ≤ ε ∧ t.depth = distributionalComplexity ε ν f := by
   obtain ⟨t, ht, -⟩ := DecisionTree.exists_computes_depth_eq_complexity f
   obtain ⟨t', ht', hd⟩ := Nat.sInf_mem (s := {d | ∃ t : DecisionTree ι β,
@@ -233,7 +233,7 @@ theorem randomizedComplexity_le_iff_forall_distributionalComplexity_le :
   · rw [randomizedComplexity_of_neg hε]
     exact Nat.zero_le _
   obtain ⟨μ, hμ, hd⟩ := exists_computes_of_forall_exists_distributionalError_le fun ν =>
-    let ⟨t, ht, hd⟩ := exists_distributionalError_le_depth_eq hε ν f
+    let ⟨t, ht, hd⟩ := exists_distributionalError_le_depth_eq_distributionalComplexity hε ν f
     ⟨t, hd.trans_le (h ν), ht⟩
   exact (randomizedComplexity_le_depth hμ).trans hd
 

@@ -100,8 +100,8 @@ principle `R_{1/3}(MAJ₃) ≥ 1`. -/
 example : 1 ≤ distributionalComplexity (1 / 3) allEqual (majority 3) ∧
     1 ≤ randomizedComplexity (1 / 3) (majority 3) := by
   have h : 1 ≤ distributionalComplexity (1 / 3) allEqual (majority 3) := by
-    obtain ⟨t, ht, hd⟩ := exists_distributionalError_le_depth_eq (by norm_num : (0 : ℝ) ≤ 1 / 3)
-      allEqual (majority 3)
+    obtain ⟨t, ht, hd⟩ := exists_distributionalError_le_depth_eq_distributionalComplexity
+      (by norm_num : (0 : ℝ) ≤ 1 / 3) allEqual (majority 3)
     rw [← hd]
     by_contra! h0
     cases t with
