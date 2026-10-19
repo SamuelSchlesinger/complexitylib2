@@ -171,6 +171,12 @@ theorem restrict_children (S : State n) (x : ℕ) (ℓ : Lit) (P : Finset (ℕ �
 theorem restrict_size (S : State n) (x : ℕ) (ℓ : Lit) (P : Finset (ℕ × ℕ)) :
     (S.restrict x ℓ P).size = S.size := rfl
 
+@[simp] theorem restrict_gate (S : State n) (x : ℕ) (ℓ : Lit) (P : Finset (ℕ × ℕ)) (J : ℕ) :
+    (S.restrict x ℓ P).gate J = (S.gate J).subst x ℓ := rfl
+
+@[simp] theorem restrict_eqn (S : State n) (x : ℕ) (ℓ : Lit) (P : Finset (ℕ × ℕ)) (e : ℕ) :
+    (S.restrict x ℓ P).eqn e = (S.eqn e).subst x ℓ := rfl
+
 /-- Restrictions preserve validity. -/
 theorem Valid.restrict {S : State n} (hS : S.Valid f) {x : ℕ} {ℓ : Lit} {P : Finset (ℕ × ℕ)}
     (h : S.RestrictOK x ℓ P) : (S.restrict x ℓ P).Valid f := by

@@ -276,6 +276,35 @@ theorem eval_subst_update {g : Gate} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .
     (g.subst v (Lit.const b)).eval val = g.eval (Function.update val v b) := by
   rw [eval_subst_update (by simp [Lit.const]), Lit.eval_const]
 
+/-- A gate reading two distinct internal values reads exactly them. -/
+theorem args_of_reads {g : Gate} {z z' : ℕ} (hzz : z ≠ z') (hz : g.Reads z)
+    (hz' : g.Reads z') : (g.left = .node z ∧ g.right = .node z') ∨
+      (g.left = .node z' ∧ g.right = .node z) := by
+  unfold Gate.Reads at hz hz'
+  rcases hz with hz | hz <;> rcases hz' with hz' | hz'
+  · exact absurd (Arg.node.inj (hz.symm.trans hz')) hzz
+  · exact Or.inl ⟨hz, hz'⟩
+  · exact Or.inr ⟨hz', hz⟩
+  · exact absurd (Arg.node.inj (hz.symm.trans hz')) hzz
+
+/-- A gate reading two distinct internal values reads nothing else. -/
+theorem eq_or_eq_of_reads {g : Gate} {a b i : ℕ} (hab : a ≠ b) (ha : g.Reads a)
+    (hb : g.Reads b) (hi : g.Reads i) : i = a ∨ i = b := by
+  rcases args_of_reads hab ha hb with ⟨hl, hr⟩ | ⟨hl, hr⟩ <;> rcases hi with hi | hi
+  · exact Or.inl (Arg.node.inj (hi.symm.trans hl))
+  · exact Or.inr (Arg.node.inj (hi.symm.trans hr))
+  · exact Or.inr (Arg.node.inj (hi.symm.trans hl))
+  · exact Or.inl (Arg.node.inj (hi.symm.trans hr))
+
+/-- A gate reads at most two internal values. -/
+theorem card_filter_reads_le (g : Gate) (s : Finset ℕ) : (s.filter g.Reads).card ≤ 2 := by
+  by_contra h
+  obtain ⟨a, ha, b, hb, c, hc, hab, hac, hbc⟩ := Finset.two_lt_card.1 (not_le.1 h)
+  rcases eq_or_eq_of_reads hab (Finset.mem_filter.1 ha).2 (Finset.mem_filter.1 hb).2
+    (Finset.mem_filter.1 hc).2 with h | h
+  · exact hac h.symm
+  · exact hbc h.symm
+
 /-- The value of a gate reading the internal values `a` and `b`. -/
 theorem eval_of_args {g : Gate} {a b : ℕ} (ha : g.left = .node a) (hb : g.right = .node b)
     (val : ℕ → Bool) : g.eval val = g.op (val a) (val b) := by
@@ -409,6 +438,17 @@ theorem holds_congr {E : Equation} {val val' : ℕ → Bool} (h : ∀ i ∈ E.te
     E.Holds val ↔ E.Holds val' := by
   unfold Holds
   rw [Finset.sum_congr rfl h]
+
+/-- An equation with `v` rerouted to a literal not reading `v` holds exactly when the equation
+holds on the assignment giving `v` the value of the literal. -/
+theorem holds_subst_update {E : Equation} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v)
+    (val : ℕ → Bool) : (E.subst v ℓ).Holds val ↔ E.Holds (Function.update val v (ℓ.eval val)) := by
+  have hℓu : ℓ.eval (Function.update val v (ℓ.eval val)) = ℓ.eval val :=
+    Lit.eval_congr fun i hi => Function.update_of_ne (by rintro rfl; exact hℓ hi) _ _
+  rw [← holds_subst (E := E) (show Function.update val v (ℓ.eval val) v = _ by
+    rw [hℓu]; exact Function.update_self _ _ _)]
+  exact holds_congr fun i hi =>
+    (Function.update_of_ne (by rintro rfl; exact notMem_subst hℓ hi) _ _).symm
 
 end Equation
 

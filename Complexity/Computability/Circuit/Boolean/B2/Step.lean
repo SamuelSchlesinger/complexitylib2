@@ -57,8 +57,8 @@ variable {n : ℕ} {f : BooleanFunction n}
 
 theorem Step.of_prep {S S₁ S' : State n} (h : Step f S₁ S') (hms : S₁.m + S₁.s = S.m + S.s)
     (ha : S₁.a = S.a) (hW : S₁.W ≤ S.W) : Step f S S' := by
-  obtain ⟨hS', hlt, hW'⟩ := h
-  exact ⟨hS', by omega, by rw [← ha]; omega⟩
+  obtain ⟨hS', hlt, ha₁, ha₂, hW'⟩ := h
+  exact ⟨hS', by omega, by omega, by omega, by rw [← ha]; omega⟩
 
 /-! ### Degenerate minimal gates allow deletions -/
 
@@ -189,20 +189,11 @@ theorem childIn_eq {S : State n} (hne : S.gates.Nonempty) :
       ∃ t ∈ S.params, (S.gate (S.gates.min' hne)).Reads t ∧ (S.gate K).Reads t).card := by
   simp only [childIn, dite_eq_left hne]
 
-/-- A gate reading two distinct values reads nothing else. -/
-theorem Gate.eq_or_eq_of_reads {g : Gate} {a b i : ℕ} (hab : a ≠ b) (ha : g.Reads a)
-    (hb : g.Reads b) (hi : g.Reads i) : i = a ∨ i = b := by
-  rcases Gate.args_of_reads hab ha hb with ⟨hl, hr⟩ | ⟨hl, hr⟩ <;> rcases hi with hi | hi
-  · exact Or.inl (Arg.node.inj (hi.symm.trans hl))
-  · exact Or.inr (Arg.node.inj (hi.symm.trans hr))
-  · exact Or.inr (Arg.node.inj (hi.symm.trans hl))
-  · exact Or.inl (Arg.node.inj (hi.symm.trans hr))
-
 /-- An auxiliary input `Q` of the minimal gate depends on a parameter `x` other than the other
 input; when no preliminary reduction applies, `x` is unpaired of degree at least two, and `Q` has
 degree at least two. -/
 theorem Valid.prep_aux_input {S : State n} (hS : S.Valid f) (hdel : ¬ S.DeletionAvailable)
-    (h5 : ¬ S.Case5) {G Q o : ℕ} (hG : G ∈ S.gates)
+    (h5 : ¬ S.PairInSystem) {G Q o : ℕ} (hG : G ∈ S.gates)
     (hargs : ((S.gate G).left = .node Q ∧ (S.gate G).right = .node o) ∨
       ((S.gate G).left = .node o ∧ (S.gate G).right = .node Q))
     (hQ : Q ∈ S.aux) (hQo : Q ≠ o) :
@@ -273,17 +264,17 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
   -- the preliminary reductions
   by_cases hdel : S.DeletionAvailable
   · exact hS.step_of_deletion hf ha hdel
-  by_cases h2 : S.Case2
-  · exact hS.step_case2 h2
-  have hexcl := exclusive_of hS hmov hdel h2
-  by_cases h3 : S.Case3
-  · exact hS.step_case3 hexcl h3
-  by_cases h4 : S.Case4
-  · exact hS.step_case4 hdel h3 h4
-  by_cases h5 : S.Case5
-  · exact hS.step_case5 hf ha hexcl h3 h4 h5
-  by_cases h6 : S.Case6
-  · exact hS.step_case6 hexcl h2 h3 h4 h5 h6
+  by_cases h2 : S.AndOnIsolated
+  · exact hS.step_of_andOnIsolated h2
+  have hexcl := hS.exclusive hmov hdel h2
+  by_cases h3 : S.DegeneratePair
+  · exact hS.step_of_degeneratePair hexcl h3
+  by_cases h4 : S.PartnersShareChild
+  · exact hS.step_of_partnersShareChild hdel h3 h4
+  by_cases h5 : S.PairInSystem
+  · exact hS.step_of_pairInSystem hf ha hexcl h3 h4 h5
+  by_cases h6 : S.AndOnPair
+  · exact hS.step_of_andOnPair hexcl h2 h3 h4 h5 h6
   -- the minimal AND
   obtain ⟨hne, hand, t₁, t₂, hl, hr, ht12, ht₁, ht₂⟩ := hS.clean_minGate hf ha hmov hdel
   set G := S.gates.min' hne with hGdef
@@ -452,8 +443,7 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
 an affine disperser for dimension `d` has a step of gate elimination: a valid state with smaller
 `m + s` and `ΔW ≤ 14 Δa`. -/
 theorem Valid.exists_step {d : ℕ} {S : State n} (hS : S.Valid f) (hf : IsAffineDisperser f d)
-    (ha : d < S.a) : ∃ S' : State n, S'.Valid f ∧ S'.m + S'.s < S.m + S.s ∧
-      S'.W + 14 * S.a ≤ S.W + 14 * S'.a :=
+    (ha : d < S.a) : ∃ S' : State n, Step f S S' :=
   Valid.exists_step_aux hf _ _ _ S rfl rfl rfl hS ha
 
 end State

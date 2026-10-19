@@ -63,8 +63,9 @@ theorem State.Valid.fourteen_mul_a_le {d : ℕ} (hf : IsAffineDisperser f d) :
     intro hS
     by_cases ha : S.a ≤ d
     · omega
-    · obtain ⟨S', hS', hlt, hW⟩ := hS.exists_step hf (lt_of_not_ge ha)
-      have := ih _ (h ▸ hlt) S' rfl hS'
+    · obtain ⟨S', hstep⟩ := hS.exists_step hf (lt_of_not_ge ha)
+      have := ih _ (h ▸ hstep.lt) S' rfl hstep.valid
+      have := hstep.potential
       omega
 
 /-! ### The initial state of a circuit -/

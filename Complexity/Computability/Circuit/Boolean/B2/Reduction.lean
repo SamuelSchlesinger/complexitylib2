@@ -112,10 +112,15 @@ theorem Gate.exists_const_of_not_isAffineOp {g : Gate} (hg : ¬ IsAffineOp g.op)
     · rfl
     · exact hbl.symm
 
-/-- A step of gate elimination from `S` to `S'`: `S'` is valid, `m + s` decreases and
-`ΔW ≤ 14 Δa`, written without subtraction. -/
-def Step (f : BooleanFunction n) (S S' : State n) : Prop :=
-  S'.Valid f ∧ S'.m + S'.s < S.m + S.s ∧ S'.W + 14 * S.a ≤ S.W + 14 * S'.a
+/-- A step of gate elimination from `S` to `S'`, as in Lemma 4.2 of
+[Mishra and Santhanam][MishraSanthanam2026]: `S'` is valid, `m + s` decreases,
+`Δa ∈ {0, -1, -2}` and `ΔW ≤ 14 Δa`, written without subtraction. -/
+structure Step (f : BooleanFunction n) (S S' : State n) : Prop where
+  valid : S'.Valid f
+  lt : S'.m + S'.s < S.m + S.s
+  a_le : S'.a ≤ S.a
+  le_a : S.a ≤ S'.a + 2
+  potential : S'.W + 14 * S.a ≤ S.W + 14 * S'.a
 
 /-! ### Pairs and partners -/
 
@@ -483,6 +488,31 @@ theorem wt_le_weight (h : Reduction f S S' F D T) {u : ℕ} (hT : ∀ N ∈ T, N
     · exact absurd hNu (hT N hN)
   · rw [wt_of_notMem hu]; exact Nat.zero_le _
 
+/-- A parameter that no deletion of `T` reroutes to keeps at most its children outside `D`. -/
+theorem children_subset (h : Reduction f S S' F D T) {u : ℕ} (hu : u ∈ S'.params)
+    (hT : ∀ N ∈ T, N ∉ S.children u) : S'.children u ⊆ S.children u \ D.toFinset :=
+  (h.children u hu).resolve_right fun ⟨N, hN, hNu⟩ => hT N hN hNu
+
+/-- A parameter that is not the partner of a member of `F`, and that no deletion reroutes to,
+does not gain weight. -/
+theorem wt_le (h : Reduction f S S' F D T) (hS : S.Valid f) {u : ℕ}
+    (hpart : ∀ x ∈ F, ¬ S.IsPartner x u) (hT : ∀ N ∈ T, N ∉ S.children u) :
+    S'.wt u ≤ S.wt u := by
+  by_cases hu : u ∈ S.unpaired
+  · rw [wt_of_mem hu]
+    exact (h.wt_le_weight hT).trans (weight_mono (Finset.card_le_card Finset.sdiff_subset))
+  · rw [h.wt_eq_zero hS hu hpart]; exact Nat.zero_le _
+
+/-- A used parameter that is not the partner of a member of `F` gains at most one in weight. -/
+theorem wt_le_add_one (h : Reduction f S S' F D T) (hS : S.Valid f) {u : ℕ}
+    (hpart : ∀ x ∈ F, ¬ S.IsPartner x u) (hdeg : 1 ≤ S.deg u) : S'.wt u ≤ S.wt u + 1 := by
+  by_cases hu : u ∈ S.unpaired
+  · rw [wt_of_mem hu]
+    have := six_le_weight hdeg
+    have := S'.wt_le_seven u
+    omega
+  · rw [h.wt_eq_zero hS hu hpart]; exact Nat.zero_le _
+
 /-- A parameter all of whose children are deleted, and that no deletion reroutes to, becomes
 unused. -/
 theorem wt_eq_zero_of_subset (h : Reduction f S S' F D T) {u : ℕ}
@@ -549,14 +579,34 @@ theorem W_le (h : Reduction f S S' F D T) (loss gain : ℕ → ℕ)
   have hq := h.q_add
   omega
 
-/-- A reduction restricting at least one parameter or deleting at least one constraint, with
-`W' + 14 |F| ≤ W + 14 k`, is a step of gate elimination. -/
-theorem step (h : Reduction f S S' F D T) (hS : S.Valid f) (hne : 0 < F.card + D.length)
+/-- A reduction restricting at most two parameters, and at least one parameter or constraint,
+with `W' + 14 |F| ≤ W + 14 k`, is a step of gate elimination. -/
+theorem step (h : Reduction f S S' F D T) (hS : S.Valid f) (hF : F.card ≤ 2)
+    (hne : 0 < F.card + D.length)
     (hW : S'.W + 14 * F.card ≤ S.W + 14 * (S.pairsMeeting F).card) : Step f S S' := by
   have ha := h.a_add hS
   have hm := h.m_add
   have hs := h.s_add
-  refine ⟨h.valid, by omega, by omega⟩
+  have hk := hS.card_pairsMeeting_le F
+  exact ⟨h.valid, by omega, by omega, by omega, by omega⟩
+
+/-- Deleting one constraint with at most two parameters as parents is a step of gate
+elimination: only those parents may gain weight, each at most one. -/
+theorem step_of_delete {N : ℕ ⊕ ℕ} (h : Reduction f S S' ∅ [N] [N]) (hS : S.Valid f)
+    (hN : (S.params.filter fun u => N ∈ S.children u).card ≤ 2) : Step f S S' := by
+  refine h.step hS (by simp) (by simp) ?_
+  have hW := h.W_le (fun _ => 0) (fun u => if N ∈ S.children u then 1 else 0) fun u hu => by
+    by_cases hNu : N ∈ S.children u
+    · rw [ite_eq_left hNu]
+      exact Nat.add_le_add_right (h.wt_le_add_one hS (fun _ hx => absurd hx (Finset.notMem_empty _))
+        (Finset.card_pos.2 ⟨N, hNu⟩)) 0
+    · rw [ite_eq_right hNu]
+      exact Nat.add_le_add_right (h.wt_le hS (fun _ hx => absurd hx (Finset.notMem_empty _))
+        fun N' hN' => by rw [List.mem_singleton] at hN'; exact hN' ▸ hNu) 0
+  rw [Finset.sdiff_empty, ← Finset.card_filter] at hW
+  simp only [Finset.card_empty, Finset.sum_empty, Finset.sum_const_zero, List.length_singleton,
+    mul_zero, add_zero] at hW ⊢
+  omega
 
 end Reduction
 
@@ -677,6 +727,15 @@ theorem Valid.reduction_deleteGate {S : State n} (hS : S.Valid f) {J : ℕ} {ℓ
     · have hKJ : K ≠ J := fun he => hN (by rw [he]; exact List.mem_singleton_self _)
       exact ⟨Finset.mem_erase.2 ⟨hKJ, hdel.1⟩, Gate.degenerate_subst hdel.2 _ _⟩
     · exact ⟨hdel.1, Equation.card_subst_le.trans hdel.2⟩
+
+/-- Deleting a gate that is constant on the solutions of the affine system is a reduction
+rerouting nothing. -/
+theorem Valid.reduction_deleteConst {S : State n} (hS : S.Valid f) {J : ℕ} {c : Bool}
+    (hJ : J ∈ S.gates) (hc : ∀ val, S.EqnsHold val → (S.gate J).eval val = c) :
+    Reduction f S (S.deleteGate J (Lit.const c)) ∅ [.inl J] [] :=
+  hS.reduction_deleteGate ⟨hJ, fun t ht => by simp [Lit.Reads, Lit.const] at ht,
+    Or.inl fun val hval => by rw [hc val hval, Lit.eval_const]⟩
+    fun t ht => by simp [Lit.Reads, Lit.const] at ht
 
 /-- Deleting an equation `v = ℓ` is a reduction; it may reroute only to the parameter read by
 the literal. -/
