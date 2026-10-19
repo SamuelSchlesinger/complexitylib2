@@ -1,5 +1,65 @@
 # Theorem-index review
 
+## Approximate counting classes, 19 October 2026
+
+Lean source revision: `e903aba8b29ef85b94c453114f12d604768587a5`.
+Prose revision: `e525a9faba85e10464c35436b6414ee8a0dff382`.
+Base: `ef189ec5b370c81cf4eb59ac9cbbfed41fa04a17`.
+
+Samuel requested the next Zoo batch and authorized review followed by direct merge
+and push for this session, without a PR. OpenAI Codex implemented SBP and AWPP on
+the existing verifier-based #P/GapP algebra. The results include NP and BPP in SBP,
+SPP and BPP in AWPP, both classes in PP, SBP union closure, AWPP complement closure,
+and polynomial-time many-one reduction closure for both. Supporting results make
+SBP thresholds positive without changing the class and pad input-dependent unary
+AWPP exponents to length-polynomial dyadic denominators.
+
+Independent read-only Codex reviews:
+
+- `proof_api` approved source `e903aba8`, including the bibliography. Two import
+  nits were resolved: the test driver was regenerated in sorted order, and proof
+  dependencies were made private while public base-class and Reduction imports
+  were retained. The revised imports received fresh review. No remaining findings.
+- `proof_correctness` approved source `e903aba8`, checking the cited definitions,
+  strict SBP threshold gap including zero, positive normalization, cross-product
+  union construction, strict PP sign tests, AWPP complement and denominator
+  padding under arbitrary polynomial-time reductions, and concrete witnesses.
+  Final committed blobs were compared with the reviewed hashes; no findings.
+- `resume_alternation` approved prose `e525a9fa` against source `e903aba8`, checking
+  quantifiers, encoded models, bounds, source credit and unfinished endpoints.
+  All 12 new declaration names and anchors match that committed source; no findings.
+
+Literature credits are isolated in `cb98ce48`: Fenner's constant-error dyadic
+AWPP characterization, Böhler–Glaßer–Meister's SBP introduction, and Watson
+Definition 2 for the nonnegative FP threshold formulation. The containments and
+closures in this batch are identified as elementary consequences of existing
+counting algebra and BPP amplification. ROADMAP.md retains counting-machine
+characterizations, MA/SBP/AM containments, AWPP amplification, further AWPP Boolean
+closure, WPP containment and PP-lowness as unfinished work.
+
+All six project gates passed on the final source: strict build and test with
+`--wfail --iofail`, `mk_all --check`, `lint`, `lint-style` and `checkInitImports`.
+An earlier run caught only the generated test-driver ordering; it was corrected
+before the complete successful rerun. Concrete tests cover ratios 3/4 and 1/4,
+exponentially large targets, length-changing reductions, zero thresholds and
+positive no-instance counts. All 12 headline axiom guards pass.
+
+The PDF has 30 pages, 73 numbered entries and 90 references. Every page was
+rendered and visually inspected. After final pin replacement only page 1 changed
+visually; it was reinspected, along with the new entry on page 11. All 12 new PDF
+link targets agree with the committed declaration lines. The final LaTeX log has
+no warnings or underfull/overfull boxes; unrelated bibliography metadata warnings
+are unchanged. AI review is not human editorial approval, a Lean proof of prose
+equivalence, or CSLib maintainer acceptance.
+
+Final artifact hashes:
+
+```
+22f26e19775839d1d8ab0bac3d532d416dbd9f9ac1b1811b8800b2a37847c4a2  paper/main.tex
+b2a44fc545945fa9db0bed59d6d98f4fe648e71d5194d6bf0379840633c3a84d  paper/sections/randomness.tex
+5c1c29b8c5f03b8de847e8b914f94f74e0396a8c22fceaf72a43f69b27d2c773  paper/main.pdf
+```
+
 ## Wide gaps and the Boolean hierarchy, 19 October 2026
 
 Lean source revision: `814e76e29fa938afaed4e1bd5763fa490bc39ca9`.
