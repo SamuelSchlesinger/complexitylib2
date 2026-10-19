@@ -110,17 +110,21 @@ of the handover. The work below remains available for subsequent, independently 
    nonvacuous client, a theorem-index entry, and independent mathematical, API and
    statement-index reviews of the completed revision.
 
-   - [ ] **FO reductions and projections.** Build on
-     [FO.Interpretation](Complexity/Logics/FirstOrder/Interpretation.lean), its truth-preserving
-     formula pullback and composition, and
-     [FO.Reduces](Complexity/Logics/FirstOrder/Reduction.lean). Define projections using mutually
-     exclusive numeric guards, independent of the input relations, that choose a constant or at
-     most one input-relation literal for each output bit; requiring quantifier-free guards
-     separately defines quantifier-free projections
-     ([Immerman–Landau, Definition 3.6](https://people.cs.umass.edu/~immerman/pub/mult.pdf)). Arbitrary
-     quantifier-free Boolean combinations of input relations are not projections. Prove composition and a concrete
-     example, stating numeric domain restrictions and the order/`BIT` convention explicitly,
-     including which predicates have their canonical interpretation on `Fin n`. Connect these
+   - [ ] **FO reductions and projections.** The vocabulary-parametric, relativized core is
+     implemented in [ProjectionFormula](Complexity/Logics/FirstOrder/ProjectionFormula.lean) and
+     [Projection](Complexity/Logics/FirstOrder/Projection.lean): selection of one literal before
+     quantifying over input structures, mutually exclusive numeric cases, truth-preserving
+     substitution, identity/composition isomorphisms, and quantifier-free composition. The
+     [graph-complement client](Complexity/Logics/FirstOrder/Projection/Graph.lean) and tests cover
+     nonvacuity, empty universes, nullary relations and the failure of two-bit conjunction to be
+     a projection. **Still outstanding:** the classical positive-dimensional full-universe
+     specialization and canonical numeric preservation, projection reducibility on finite
+     structure classes, and the machine-certified encoding bridge described below. Reuse
+     [FO.Interpretation](Complexity/Logics/FirstOrder/Interpretation.lean) and
+     [FO.Reduces](Complexity/Logics/FirstOrder/Reduction.lean) for the semantic interfaces. State
+     the canonical order/`BIT` convention on `Fin n` explicitly; the classical qfp convention
+     excludes BIT ([Immerman–Landau, Definition 3.6](https://people.cs.umass.edu/~immerman/pub/mult.pdf)).
+     Arbitrary quantifier-free Boolean combinations of input relations are not projections. Connect these
      maps to the [finite-structure encoding](Complexity/Logics/FirstOrder/Encoding.lean) by a
      machine-certified logarithmic-space transducer. Account for tuple enumeration, relation
      access, output representation, malformed inputs and the empty structure; the semantic APIs

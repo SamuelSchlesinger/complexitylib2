@@ -57,6 +57,7 @@ import ComplexityTests.FineGrained.Sparsification
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
+import ComplexityTests.FirstOrderProjection
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure

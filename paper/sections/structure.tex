@@ -13,6 +13,29 @@ of cardinality zero and one are included.\citep{Fagin1974,Immerman1999}
 \end{result}
 
 \begin{result}
+\textbf{First-order projection infrastructure.}
+With separate numeric and input vocabularies, each projection formula selects a
+constant or one signed input-relation bit using numeric tests alone. For a fixed
+numeric structure and variable assignment, the same selected literal works for
+every interpretation of the input relations. The finite numeric cases are
+mutually exclusive and exhaustive. Projections with finite coordinate types
+compose, with the composite structure isomorphic to successive interpretation;
+quantifier-free numeric definitions and guards remain quantifier-free under
+composition. A concrete client is loop-free graph complement.
+\citep[Definitions 3.3--3.6]{ImmermanLandau1995}
+
+This is a vocabulary-parametric, relativized framework: output domains may be
+restricted by numeric formulas, and interpreted vocabularies are relational.
+It does not yet specialize to positive-dimensional full tuple universes with
+canonical order and BIT, certify a logspace transducer, or prove Circuit Value
+completeness. The classical quantifier-free convention of the cited source
+excludes BIT.
+\decl{Complexity/Logics/FirstOrder/ProjectionFormula.lean}{163}{Cslib.Logic.FO.ProjectionFormula.exists_literal}
+\decl{Complexity/Logics/FirstOrder/Projection.lean}{162}{Cslib.Logic.FO.Projection.compEquiv}
+\decl{Complexity/Logics/FirstOrder/Projection.lean}{220}{Cslib.Logic.FO.Projection.IsQF.comp}
+\end{result}
+
+\begin{result}
 \subsection{Polynomial time is strictly smaller than exponential time}
 For languages of finite bit strings,
 \[
