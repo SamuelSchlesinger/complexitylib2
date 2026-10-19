@@ -8,6 +8,7 @@ import Complexity.Computability.Complexity.Classes.NP.Witness
 import Complexity.Computability.Complexity.Problems.Clique
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Complexity.Problems.ThreeSAT
+import Complexity.Computability.Complexity.Problems.VertexCover
 import Complexity.Tactic.PolyTime
 
 /-!
@@ -15,7 +16,8 @@ import Complexity.Tactic.PolyTime
 
 A toy witness relation through the builder with a total decoder (even numbers, witnessed by their
 halves), a toy subset problem through the subset builder (lists with `k` distinct entries),
-malformed and boundary certificates, closure under reductions, and axiom guards.
+malformed and boundary certificates, the verifier of `VertexCover` as a subset verifier, unary
+blocks, closure under reductions, and axiom guards.
 -/
 
 namespace ComplexityTests.NPWitness
@@ -139,6 +141,40 @@ example : ¬∃ w : List Bool, w.length = Polynomial.X.eval (encPair (encList en
   simp only [Finset.card_singleton] at this
   omega
 
+/-! ### Full masks -/
+
+-- The full mask selects each entry at its first occurrence.
+example : selectDistinct [3, 5, 3, 7] (List.replicate 4 true) = [3, 5, 7] := rfl
+example : Graph.distinctVertices ([2, 1, 2, 1], []) = [2, 1] := rfl
+example :
+    (selectDistinct [3, 5, 3, 7] (List.replicate 4 true)).length = [3, 5, 3, 7].toFinset.card :=
+  length_selectDistinct_replicate _
+
+/-! ### Vertex covers through the subset verifier -/
+
+/-- The path `1 - 2 - 3`. -/
+def path3 : Graph := ([1, 2, 3], [(1, 2), (2, 3)])
+
+-- In: the middle vertex covers both edges.
+example : VertexCover.verifier ((path3, 1), [false, true, false]) = true := rfl
+-- Out: an end vertex leaves an edge uncovered, and a cover of the wrong size is rejected.
+example : VertexCover.verifier ((path3, 1), [true, false, false]) = false := rfl
+example : VertexCover.verifier ((path3, 1), [true, true, false]) = false := rfl
+-- A repeated declared vertex is selected only at its first occurrence.
+example : VertexCover.verifier (((([2, 2, 1, 3], [(1, 2), (2, 3)]) : Graph), 1),
+    [true, true, false, false]) = true := rfl
+example : VertexCover.verifier (((([2, 2, 1, 3], [(1, 2), (2, 3)]) : Graph), 1),
+    [false, true, false, false]) = false := rfl
+
+/-! ### Unary blocks -/
+
+-- Blocks of width `3` writing `2` and `0`; counting the set bits of a block reads its number.
+example : unaryBlocks 3 6 (fun a => [2, 0].getD a 0) = [true, true, false, false, false, false] :=
+  rfl
+example : ((List.range 3).countP fun c =>
+    (unaryBlocks 3 6 (fun a => [2, 0].getD a 0)).getD (3 * 0 + c) false) = 2 :=
+  countP_unaryBlocks (f := fun a => [2, 0].getD a 0) (by decide) (by decide)
+
 /-! ### Closure under reductions -/
 
 example : SAT ∈ NP encCNF := polyTimeReducible_SAT_ThreeSAT.mem_NP ThreeSAT.mem_NP
@@ -223,5 +259,12 @@ info: 'Cslib.Complexity.Graph.isVerifier_verifySubset' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.Graph.isVerifier_verifySubset
+
+/--
+info: 'Cslib.Complexity.VertexCover.isVerifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.VertexCover.isVerifier
 
 end ComplexityTests.NPWitness

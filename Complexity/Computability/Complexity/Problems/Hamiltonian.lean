@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Computability.Complexity.Problems.Graph
 public import Mathlib.Combinatorics.SimpleGraph.Hamiltonian
 public import Mathlib.Data.List.Cycle
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
@@ -377,14 +377,6 @@ theorem enumeratesBool_eq_true_iff {V p : List ℕ} :
   · rintro ⟨hnd, hmem⟩
     exact ⟨⟨fun v hv => ⟨v, (hmem v).2 hv, rfl⟩, fun u hu => ⟨u, (hmem u).1 hu, rfl⟩⟩, hnd⟩
 
-private theorem countP_range_lt (k m : ℕ) :
-    (List.range k).countP (fun c => decide (c < m)) = min m k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    simp only [List.range_succ, List.countP_append, ih, List.countP_singleton, decide_eq_true_eq]
-    split_ifs <;> omega
-
 /-- The list of vertices described by a certificate `w`, for a vertex list `V` of length `m`: `w`
 is read as blocks of `m` bits, one for each distinct vertex of `V`, and the block numbered `a`
 names the entry of `V` whose position is its number of set bits, or `0` if there is none. -/
@@ -401,28 +393,15 @@ theorem exists_decodeVertexList_eq {V p : List ℕ} (hp : p.Nodup) (hpV : ∀ v,
       rw [List.mem_dedup]
       exact hpV v).length_eq
   have hle : V.dedup.length ≤ V.length := (List.dedup_sublist V).length_le
-  let w := (List.range (n ^ 2)).map fun j =>
-    decide (j % V.length < V.idxOf (p.getD (j / V.length) 0))
-  refine ⟨w, by simp [w], List.ext_getElem (by simp [decodeVertexList, hlen]) fun a ha ha' => ?_⟩
+  refine ⟨unaryBlocks V.length (n ^ 2) fun a => V.idxOf (p.getD a 0), length_unaryBlocks ..,
+    List.ext_getElem (by simp [decodeVertexList, hlen]) fun a ha ha' => ?_⟩
   have hidx : V.idxOf p[a] < V.length := List.idxOf_lt_length_iff.2 ((hpV _).1 (List.getElem_mem _))
-  have hcount : ((List.range V.length).countP fun c => w.getD (V.length * a + c) false) =
-      V.idxOf p[a] := by
-    rw [← min_eq_left hidx.le, ← countP_range_lt]
-    refine List.countP_congr fun c hc => ?_
-    rw [List.mem_range] at hc
-    have hm : 0 < V.length := by omega
-    have hbound : V.length * a + c < n ^ 2 := by
-      calc V.length * a + c < V.length * (a + 1) := by rw [Nat.mul_succ]; omega
-        _ ≤ n * n := Nat.mul_le_mul hn (by omega)
-        _ = n ^ 2 := (sq n).symm
-    have hdiv : (V.length * a + c) / V.length = a := by
-      rw [Nat.mul_add_div hm, Nat.div_eq_of_lt hc, Nat.add_zero]
-    have hmod : (V.length * a + c) % V.length = c := by
-      rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hc]
-    simp only [w, List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hbound,
-      Option.map_some, Option.getD_some, hdiv, hmod, List.getElem?_eq_getElem ha']
+  have hcount := countP_unaryBlocks (N := n ^ 2) (f := fun a => V.idxOf (p.getD a 0)) (a := a)
+    (by rw [List.getD_eq_getElem _ _ ha']; exact hidx.le)
+    (calc V.length * (a + 1) ≤ n * n := Nat.mul_le_mul hn (by omega)
+      _ = n ^ 2 := (sq n).symm)
   simp only [decodeVertexList, List.getElem_map, List.getElem_range]
-  rw [hcount, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hidx, Option.getD_some,
+  rw [hcount, List.getD_eq_getElem _ _ ha', List.getD_eq_getElem _ _ hidx,
     List.getElem_idxOf hidx]
 
 /-- Verify a vertex ordering problem: decode a list of vertices from the certificate
@@ -498,16 +477,6 @@ theorem computableTidilyInPolyTime_enumeratesBool :
   unfold enumeratesBool
   fun_prop
 
-private theorem length_dedup_eq (V : List ℕ) :
-    V.dedup.length = (selectVertices V (List.replicate V.length true)).length := by
-  rw [← List.toFinset_card_of_nodup (nodup_selectVertices V _), ← List.card_toFinset]
-  congr 1
-  ext v
-  simp only [List.mem_toFinset, mem_selectVertices, iff_self_and]
-  intro hv
-  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate,
-    ite_eq_left (List.idxOf_lt_length_iff.2 hv), Option.getD_some]
-
 /-- Decoding a list of vertices from a certificate is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_decodeVertexList :
@@ -515,7 +484,7 @@ theorem computableTidilyInPolyTime_decodeVertexList :
       (encPair (encList encNat) encBits) (encList encNat) := by
   have hn : ComputableTidilyInPolyTime (fun x : List ℕ × List Bool => x.1.dedup.length)
       (encPair (encList encNat) encBits) encUnary := by
-    simp only [length_dedup_eq]
+    simp only [← List.card_toFinset, ← length_selectDistinct_replicate]
     have := bitsReplicate true
     fun_prop
   have hblock : ComputableTidilyInPolyTime
@@ -546,15 +515,9 @@ end Graph
 
 /-! ### Membership in `NP` -/
 
-private theorem length_vertices_le_encGraph (G : Graph) : G.1.length ≤ (encGraph G).length := by
-  calc G.1.length ≤ (encList encNat G.1).length := length_le_length_encList encNat G.1
-    _ ≤ (encGraph G).length := by
-        simp only [encGraph, length_encPair]
-        omega
-
 private theorem length_vertices_le_encPath (x : Graph × ℕ × ℕ) :
     x.1.1.length ≤ (encPair encGraph (encPair encNat encNat) x).length := by
-  refine (length_vertices_le_encGraph x.1).trans ?_
+  refine x.1.length_vertices_le_encGraph.trans ?_
   simp only [length_encPair]
   omega
 
@@ -650,7 +613,7 @@ of encoded length `n`. -/
 theorem isVerifier : IsVerifier encGraph (Polynomial.X ^ 2) verifier DirHamCycle :=
   Graph.isVerifier_verifyOrdering
     (P := fun (G : Graph) p => p ≠ [] ∧ (p : Cycle ℕ).Chain fun u v => (u, v) ∈ G.2)
-    length_vertices_le_encGraph fun G p => by
+    Graph.length_vertices_le_encGraph fun G p => by
       simp only [Bool.and_eq_true, decide_eq_true_eq,
         Graph.cycleChainBool_eq_true_iff (Graph.arcBool_eq_true_iff G)]
 
@@ -721,7 +684,7 @@ theorem isVerifier : IsVerifier encGraph (Polynomial.X ^ 2) verifier HamCycle :=
   rw [mem_HamCycle_iff]
   refine Graph.isVerifier_verifyOrdering
     (P := fun (G : Graph) p => 3 ≤ p.length ∧ (p : Cycle ℕ).Chain G.toSimpleGraph.Adj)
-    length_vertices_le_encGraph (fun G p => ?_) G
+    Graph.length_vertices_le_encGraph (fun G p => ?_) G
   simp only [Bool.and_eq_true, decide_eq_true_eq,
     Graph.cycleChainBool_eq_true_iff (Graph.adjBool_eq_true_iff G)]
 

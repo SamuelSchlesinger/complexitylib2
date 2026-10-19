@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Computability.Complexity.Problems.Graph
 public import Mathlib.Combinatorics.SimpleGraph.VertexCover
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -139,17 +139,6 @@ theorem toVertexCover_mem_iff (x : Graph × ℕ) :
       rw [hS.card_eq] at this
       exact (hm this).elim
 
-/-- The number of distinct declared vertices is the length of the deduplicated vertex list. -/
-private theorem card_toFinset_eq (V : List ℕ) :
-    V.toFinset.card = (Graph.selectVertices V (List.replicate V.length true)).length := by
-  rw [← List.toFinset_card_of_nodup (Graph.nodup_selectVertices V _)]
-  congr 1
-  ext v
-  simp only [List.mem_toFinset, Graph.mem_selectVertices, iff_self_and]
-  intro hv
-  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate,
-    ite_eq_left (List.idxOf_lt_length_iff.2 hv), Option.getD_some]
-
 /-- The reduction `toVertexCover` is polynomial-time: the vertex count is computed in unary, and
 the binary target is compared with it by saturating decoding. -/
 @[fun_prop]
@@ -158,10 +147,9 @@ theorem computableTidilyInPolyTime_toVertexCover :
       (encPair encGraph encNat) := by
   have hn : ComputableTidilyInPolyTime (fun x : Graph × ℕ => x.1.1.toFinset.card)
       (encPair encGraph encNat) encUnary := by
-    simp_rw [card_toFinset_eq]
-    have := bitsReplicate true
-    unfold encGraph
-    fun_prop
+    simp_rw [← Graph.length_distinctVertices]
+    exact (length_list encNat).comp
+      (Graph.computableTidilyInPolyTime_distinctVertices.comp (fst _ _))
   -- `min n m`, decoded from the binary target under the unary cap `n`.
   have hmin : ComputableTidilyInPolyTime
       (fun x : Graph × ℕ => Cslib.BitString.boundedBinaryValue x.1.1.toFinset.card
@@ -187,90 +175,54 @@ end IndependentSet
 
 namespace VertexCover
 
-/-- The verifier for `VertexCover`: select distinct declared vertices from the certificate mask,
-check that their count equals `k`, and check that every edge between declared vertices has a
-selected endpoint. A declared vertex is selected exactly when the mask bit at its first
-occurrence is set. -/
-def verifier (x : (Graph × ℕ) × List Bool) : Bool :=
-  decide ((Graph.selectVertices x.1.1.1 x.2).length = x.1.2) &&
-    x.1.1.1.all fun u => x.1.1.1.all fun v =>
-      !(x.1.1.adjBool u v && !x.2.getD (x.1.1.1.idxOf u) false &&
-        !x.2.getD (x.1.1.1.idxOf v) false)
+/-- The verifier for `VertexCover`, a subset verifier (`Cslib.Complexity.subsetVerifier`): select
+distinct declared vertices by the certificate mask, check that their count equals `k`, and check
+that every edge between declared vertices has a selected endpoint. -/
+def verifier : (Graph × ℕ) × List Bool → Bool :=
+  subsetVerifier (fun x => x.1.1) fun y =>
+    decide (y.2.length = y.1.2) && y.1.1.1.all fun u => y.1.1.1.all fun v =>
+      !(y.1.1.adjBool u v && !y.2.any (fun w => decide (w = u)) &&
+        !y.2.any (fun w => decide (w = v)))
 
 /-- `VertexCover.verifier` verifies `VertexCover` with certificates as long as the encoded
 instance. -/
 theorem isVerifier :
     IsVerifier (encPair encGraph encNat) Polynomial.X verifier VertexCover := by
-  classical
-  rintro ⟨G, k⟩
-  simp only [mem_VertexCover_iff, Polynomial.eval_X, verifier, Bool.and_eq_true,
-    decide_eq_true_eq, List.all_eq_true, Bool.not_eq_true', Bool.and_eq_false_iff,
-    Bool.not_eq_false', Graph.adjBool_eq_false_iff]
-  constructor
-  · rintro ⟨S, hSV, hS, hcard⟩
-    let w := G.1.map (fun v => decide (v ∈ S)) ++
-      List.replicate ((encPair encGraph encNat (G, k)).length - G.1.length) false
-    have hw : ∀ v ∈ G.1, w.getD (G.1.idxOf v) false = decide (v ∈ S) := by
-      intro v hv
-      have hlt : G.1.idxOf v < G.1.length := List.idxOf_lt_length_iff.2 hv
-      have hlt' : G.1.idxOf v < (G.1.map fun u => decide (u ∈ S)).length := by simpa using hlt
-      rw [List.getD_eq_getElem?_getD, List.getElem?_append_left hlt', List.getElem?_map,
-        List.getElem?_eq_getElem hlt, List.getElem_idxOf hlt]
-      rfl
-    have htoFinset : (Graph.selectVertices G.1 w).toFinset = S := by
-      ext v
-      rw [List.mem_toFinset, Graph.mem_selectVertices]
-      refine ⟨fun ⟨hv, h⟩ => ?_, fun hv => ⟨hSV v hv, ?_⟩⟩
-      · rw [hw v hv] at h
-        exact of_decide_eq_true h
-      · rw [hw v (hSV v hv)]
-        exact decide_eq_true hv
-    refine ⟨w, ?_, ?_, fun u hu v hv => ?_⟩
-    · simp only [w, List.length_append, List.length_map, List.length_replicate]
-      exact Nat.add_sub_cancel' (Graph.length_vertices_le (G, k))
-    · rw [← List.toFinset_card_of_nodup (Graph.nodup_selectVertices G.1 w), htoFinset, hcard]
-    · rw [hw u hu, hw v hv]
-      by_cases hadj : G.toSimpleGraph.Adj u v
-      · rcases hS u hu v hv hadj with h | h <;> simp [h]
-      · exact Or.inl (Or.inl hadj)
-  · rintro ⟨w, -, hlen, hw⟩
-    refine ⟨(Graph.selectVertices G.1 w).toFinset,
-      fun v hv => (Graph.mem_selectVertices.1 (List.mem_toFinset.1 hv)).1,
-      fun u hu v hv hadj => ?_, ?_⟩
-    · simp only [List.mem_toFinset, Graph.mem_selectVertices]
-      rcases hw u hu v hv with (h | h) | h
-      · exact (h hadj).elim
-      · exact Or.inl ⟨hu, h⟩
-      · exact Or.inr ⟨hv, h⟩
-    · rw [List.toFinset_card_of_nodup (Graph.nodup_selectVertices G.1 w), hlen]
+  have hset : VertexCover = {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧
+      (∀ u ∈ x.1.1, ∀ v ∈ x.1.1, x.1.toSimpleGraph.Adj u v → u ∈ S ∨ v ∈ S) ∧ S.card = x.2} :=
+    Set.ext fun _ => mem_VertexCover_iff
+  rw [hset]
+  refine isVerifier_subsetVerifier (fun x => by simpa using Graph.length_vertices_le x)
+    fun x l hl _ => ?_
+  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.not_eq_true',
+    Bool.and_eq_false_iff, Bool.not_eq_false', List.any_eq_true, exists_eq_right,
+    Graph.adjBool_eq_false_iff, List.mem_toFinset, List.toFinset_card_of_nodup hl]
+  refine and_comm.trans (and_congr_left' ⟨fun h u hu v hv huv => ?_, fun h u hu v hv => ?_⟩)
+  · rcases h u hu v hv with (h | h) | h
+    · exact (h huv).elim
+    · exact Or.inl h
+    · exact Or.inr h
+  · by_cases huv : x.1.toSimpleGraph.Adj u v
+    · exact (h u hu v hv huv).elim (fun h => Or.inl (Or.inr h)) Or.inr
+    · exact Or.inl (Or.inl huv)
 
 /-- The `VertexCover` verifier is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_verifier :
     ComputableTidilyInPolyTime verifier (encPair (encPair encGraph encNat) encBits) encBool := by
-  have hV : ComputableTidilyInPolyTime (fun x : (Graph × ℕ) × List Bool => x.1.1.1)
-      (encPair (encPair encGraph encNat) encBits) (encList encNat) := by
+  have hV : ComputableTidilyInPolyTime (fun y : (Graph × ℕ) × List ℕ => y.1.1.1)
+      (encPair (encPair encGraph encNat) (encList encNat)) (encList encNat) := by
     unfold encGraph
     fun_prop
-  have hS : ComputableTidilyInPolyTime
-      (fun x : (Graph × ℕ) × List Bool => Graph.selectVertices x.1.1.1 x.2)
-      (encPair (encPair encGraph encNat) encBits) (encList encNat) := by
-    unfold encGraph
-    fun_prop
-  have hcard : ComputableTidilyInPolyTime
-      (fun x : (Graph × ℕ) × List Bool =>
-        decide ((Graph.selectVertices x.1.1.1 x.2).length = x.1.2))
-      (encPair (encPair encGraph encNat) encBits) encBool :=
-    (unary_to_binary.comp ((length_list encNat).comp hS)).decide_eq'
-      (by unfold encGraph; fun_prop)
   have hproj : ComputableTidilyInPolyTime
-      (fun p : (((Graph × ℕ) × List Bool) × ℕ) × ℕ => ((p.1.1.1.1, p.1.2), p.2))
-      (encPair (encPair (encPair (encPair encGraph encNat) encBits) encNat) encNat)
+      (fun p : (((Graph × ℕ) × List ℕ) × ℕ) × ℕ => ((p.1.1.1.1, p.1.2), p.2))
+      (encPair (encPair (encPair (encPair encGraph encNat) (encList encNat)) encNat) encNat)
       (encPair (encPair encGraph encNat) encNat) := by fun_prop
   have hadj := Graph.computableTidilyInPolyTime_adjBool.comp hproj
-  refine hcard.bool_and' (allWithInput hV (allWithInput (hV.comp (fst _ _)) ?_))
-  unfold encGraph at hadj ⊢
-  fun_prop
+  refine computableTidilyInPolyTime_subsetVerifier (encγ := encNat) (by unfold encGraph; fun_prop)
+    (bool_and' ?_ (allWithInput hV (allWithInput (hV.comp (fst _ _)) ?_)))
+  · exact (unary_to_binary.comp ((length_list encNat).comp (snd _ _))).decide_eq' (by fun_prop)
+  · fun_prop
 
 /-- `VertexCover` belongs to `NP`. -/
 theorem mem_NP : VertexCover ∈ NP (encPair encGraph encNat) :=
