@@ -155,7 +155,7 @@ theorem eval_alls_eq_true_iff (vs : List V) (φ : QBF V) :
   induction l with
   | nil => rfl
   | cons φ l ih =>
-    show (φ.and (conj l)).eval σ = _
+    change (φ.and (conj l)).eval σ = _
     simp [ih]
 
 @[simp] theorem eval_imp (φ ψ : QBF V) : (imp φ ψ).eval σ = (!φ.eval σ || ψ.eval σ) := rfl
@@ -172,7 +172,7 @@ theorem eval_alls_eq_true_iff (vs : List V) (φ : QBF V) :
   induction c with
   | nil => rfl
   | cons l c ih =>
-    show ((lit l.1 l.2).or (ofClause c)).eval σ = _
+    change ((lit l.1 l.2).or (ofClause c)).eval σ = _
     simp [ih, Literal.eval]
 
 /-- **A formula in conjunctive normal form keeps its value.** -/
@@ -180,7 +180,7 @@ theorem eval_alls_eq_true_iff (vs : List V) (φ : QBF V) :
   induction φ with
   | nil => rfl
   | cons c φ ih =>
-    show ((ofClause c).and (ofCNF φ)).eval σ = _
+    change ((ofClause c).and (ofCNF φ)).eval σ = _
     simp [ih]
 
 /-! ### Free variables of the derived connectives -/
@@ -212,7 +212,7 @@ theorem mem_freeVars_conj {l : List (QBF V)} {x : V} :
   induction l with
   | nil => simp [conj]
   | cons φ l ih =>
-    show x ∈ (φ.and (conj l)).freeVars ↔ _
+    change x ∈ (φ.and (conj l)).freeVars ↔ _
     simp [ih]
 
 @[simp] theorem freeVars_imp (φ ψ : QBF V) : (imp φ ψ).freeVars = φ.freeVars ∪ ψ.freeVars := rfl
@@ -230,13 +230,13 @@ theorem mem_freeVars_ofCNF {x : V} {φ : CNF V} : x ∈ (ofCNF φ).freeVars ↔ 
     induction c with
     | nil => simp [ofClause]
     | cons l c ih =>
-      show x ∈ ((lit l.1 l.2).or (ofClause c)).freeVars ↔ _
+      change x ∈ ((lit l.1 l.2).or (ofClause c)).freeVars ↔ _
       rw [freeVars_or, Finset.mem_union, ih, freeVars_lit, Finset.mem_singleton]
       simp [eq_comm]
   induction φ with
   | nil => simp [ofCNF, CNF.vars]
   | cons c φ ih =>
-    show x ∈ ((ofClause c).and (ofCNF φ)).freeVars ↔ _
+    change x ∈ ((ofClause c).and (ofCNF φ)).freeVars ↔ _
     simp only [freeVars_and, Finset.mem_union, ih, hc]
     simp [CNF.vars]
 

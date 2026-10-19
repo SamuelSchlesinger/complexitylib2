@@ -165,7 +165,8 @@ theorem eval_baseFormula (tab : CNF (CookLevin.Var k State)) (w : ℕ) (σ : ℕ
   · rintro ⟨τ, hcert, htab⟩
     let σ' : ℕ → Bool := fun x =>
       if h : x ∈ baseVars tab w ∧ ∃ v, tabVar v = x then τ h.2.choose else σ x
-    have hσ' (v : CookLevin.Var k State) (hv : tabVar v ∈ baseVars tab w) : σ' (tabVar v) = τ v := by
+    have hσ' (v : CookLevin.Var k State) (hv : tabVar v ∈ baseVars tab w) :
+        σ' (tabVar v) = τ v := by
       have h : tabVar v ∈ baseVars tab w ∧ ∃ v', tabVar v' = tabVar v := ⟨hv, v, rfl⟩
       simp only [σ', h]
       exact congrArg τ (tabVar_injective h.2.choose_spec)
