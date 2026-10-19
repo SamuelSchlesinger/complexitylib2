@@ -23,10 +23,10 @@ declared vertices, possibly with repetitions, and a list of edges.
 * Problems asking for an ordering of the vertices of a list, each vertex listed once, with a
   polynomial-time property, such as Hamiltonian paths and tours, are in `NP`: the ordering is the
   witness (`Cslib.Complexity.Graph.mem_NP_of_ordering`, through
-  `Cslib.Complexity.mem_NP_of_witness`).
+  `Cslib.Complexity.mem_NP_of_witness` [Papadimitriou, Proposition 9.1][Papadimitriou94]).
 * Explicit verifiers with fixed certificate lengths write numbers in unary blocks of a certificate
-  (`Cslib.Complexity.unaryBlocks`): one block of `m` bits for each number below `m`, which is
-  read back by counting the set bits of its block (`Cslib.Complexity.countP_unaryBlocks`).
+  (`Cslib.Complexity.unaryBlocks`): each number, at most `m`, gets its own block of `m` bits, and
+  it is read back by counting the set bits of its block (`Cslib.Complexity.countP_unaryBlocks`).
 
 ## Main definitions
 
@@ -66,12 +66,12 @@ theorem length_vertices_le_encGraph (G : Graph) : G.1.length ≤ (encGraph G).le
         omega
 
 /-- The declared vertices of `G` without repetitions, in the order of their first occurrences. -/
-def distinctVertices (G : Graph) : List ℕ := selectVertices G.1 (List.replicate G.1.length true)
+def distinctVertices (G : Graph) : List ℕ := selectDistinct G.1 (List.replicate G.1.length true)
 
 theorem mem_distinctVertices {G : Graph} {v : ℕ} : v ∈ G.distinctVertices ↔ v ∈ G.1 :=
   mem_selectDistinct_replicate
 
-theorem nodup_distinctVertices (G : Graph) : G.distinctVertices.Nodup := nodup_selectVertices _ _
+theorem nodup_distinctVertices (G : Graph) : G.distinctVertices.Nodup := nodup_selectDistinct _ _
 
 /-- The distinct declared vertices are as many as the elements of the vertex list. -/
 theorem length_distinctVertices (G : Graph) : G.distinctVertices.length = G.1.toFinset.card :=

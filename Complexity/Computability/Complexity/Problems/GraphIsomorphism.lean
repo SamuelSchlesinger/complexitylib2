@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Graph
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Mathlib.Data.List.GetD

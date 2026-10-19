@@ -291,31 +291,11 @@ info: 'Cslib.Complexity.Graph.mem_NP_of_ordering' depends on axioms:
 #print axioms Cslib.Complexity.Graph.mem_NP_of_ordering
 
 /--
-info: 'Cslib.Complexity.countP_unaryBlocks' depends on axioms: [propext, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.countP_unaryBlocks
-
-/--
 info: 'Cslib.Complexity.VertexCover.isVerifier' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.VertexCover.isVerifier
-
-/--
-info: 'Cslib.Complexity.VertexCover.mem_NP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.mem_NP
-
-/--
-info: 'Cslib.Complexity.KColoring.isVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.KColoring.isVerifier
 
 /--
 info: 'Cslib.Complexity.KColoring.mem_NP' depends on axioms:
@@ -351,13 +331,6 @@ info: 'Cslib.Complexity.HamCycle.mem_NP' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.HamCycle.mem_NP
-
-/--
-info: 'Cslib.Complexity.TSP.isVerifier' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TSP.isVerifier
 
 /--
 info: 'Cslib.Complexity.TSP.mem_NP' depends on axioms:
