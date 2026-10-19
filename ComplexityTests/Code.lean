@@ -5,6 +5,8 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.Data.Code.BerlekampWelch
+import Complexity.Foundations.Data.Code.Hadamard
+import Complexity.Foundations.Data.Code.HammingBound
 import Complexity.Foundations.Data.Code.ReedMuller
 import Complexity.Foundations.Data.Code.Singleton
 import Mathlib.Data.ZMod.Basic
@@ -14,7 +16,9 @@ import Mathlib.FieldTheory.Finite.Basic
 # Tests: algebraic codes
 
 The minimum distance of the binary repetition code and of codes with at most one word; the
-Singleton bound on the repetition code and on a Reed–Solomon code, which meets it; the distance and
+Singleton and Hamming bounds on the repetition code, which meets both; the Gilbert–Varshamov
+bound; the minimum distance of a Hadamard code; the Singleton bound on a Reed–Solomon code, which
+meets it; the distance and
 dimension of a Reed–Solomon code over `ZMod 5`, the zero code of dimension zero, and unique
 decoding below half its distance; the distance of a Reed–Muller code over `ZMod 3`; a complete
 Berlekamp–Welch decoding over `ZMod 7` with two errors, the largest number it corrects at that
@@ -25,7 +29,6 @@ namespace ComplexityTests.Code
 
 open Cslib Cslib.Code Polynomial
 
-instance : Fact (Nat.Prime 3) := ⟨by decide⟩
 instance : Fact (Nat.Prime 5) := ⟨by decide⟩
 instance : Fact (Nat.Prime 7) := ⟨by decide⟩
 
@@ -39,7 +42,7 @@ private theorem minDist_repetition : minDist (repetition : Set (Fin 3 → Bool))
     (by simp [repetition]) (by simp [repetition]) (by decide)).trans_eq ?_) ?_
   · rw [show hammingDist (fun _ : Fin 3 => false) (fun _ => true) = 3 by decide]
     rfl
-  · rw [le_minDist]
+  · rw [le_minDist_iff]
     rintro x hx y hy hxy
     simp only [repetition, Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff,
       Set.mem_singleton_iff] at hx hy
@@ -53,6 +56,23 @@ example : minDist ({fun _ => true} : Set (Fin 3 → Bool)) = ⊤ := minDist_sing
 /-- The Singleton bound for the repetition code is tight: two words, `2 ^ (3 - 3 + 1)`. -/
 example : repetition.card ≤ 2 ^ (3 - 3 + 1) := by
   simpa using card_le_pow_of_le_minDist (d := 3) minDist_repetition.ge
+
+/-- The Hamming bound for the repetition code is tight: two balls of radius one, of four words
+each, fill the eight words of length three. -/
+example : repetition.card * ∑ j ∈ Finset.range 2, (3).choose j * (2 - 1) ^ j ≤ 2 ^ 3 := by
+  simpa using card_mul_sum_choose_le_of_two_mul_lt_minDist (β := fun _ : Fin 3 => Bool) (q := 2)
+    (fun _ => rfl) (r := 1) (by rw [minDist_repetition]; decide)
+
+/-- The Gilbert–Varshamov bound: some binary code of length three and minimum distance at least
+two has at least `8 / 4` words. -/
+example : ∃ C : Finset (Fin 3 → Bool), (2 : ℕ∞) ≤ minDist (C : Set (Fin 3 → Bool)) ∧
+    2 ^ 3 ≤ C.card * ∑ j ∈ Finset.range 2, (3).choose j * (2 - 1) ^ j := by
+  simpa using exists_le_minDist_and_pow_le_card_mul_sum_choose (β := fun _ : Fin 3 => Bool)
+    (q := 2) (fun _ => rfl) (d := 2) (by norm_num)
+
+/-- The Hadamard code of messages of three bits has minimum distance four. -/
+example : minDist (Set.range (BitString.hadamardCode (ι := Fin 3))) = 4 := by
+  simpa using BitString.minDist_range_hadamardCode (ι := Fin 3)
 
 /-! ### Reed–Solomon codes over `ZMod 5` -/
 
@@ -86,7 +106,7 @@ example : Module.finrank (ZMod 5) (reedSolomon points5 2) + 4 ≤ Fintype.card (
 
 /-- The Reed–Solomon code of dimension zero is the zero code, whose minimum distance is `⊤`. -/
 example : minDist (reedSolomon points5 0 : Set (Fin 5 → ZMod 5)) = ⊤ := by
-  refine minDist_eq_top.2 fun x hx y hy => ?_
+  refine minDist_eq_top_iff.2 fun x hx y hy => ?_
   obtain ⟨p, hp, rfl⟩ := mem_reedSolomon.1 hx
   obtain ⟨q, hq, rfl⟩ := mem_reedSolomon.1 hy
   rw [Nat.cast_zero, Nat.WithBot.lt_zero_iff, degree_eq_bot] at hp hq
@@ -159,6 +179,27 @@ Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Code.eq_of_hammingDist_le_of_two_mul_lt_minDist
+
+/--
+info: 'Cslib.Code.card_mul_sum_choose_le_of_two_mul_lt_minDist' depends on axioms: [propext,
+Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Code.card_mul_sum_choose_le_of_two_mul_lt_minDist
+
+/--
+info: 'Cslib.Code.exists_le_minDist_and_pow_le_card_mul_sum_choose' depends on axioms: [propext,
+Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Code.exists_le_minDist_and_pow_le_card_mul_sum_choose
+
+/--
+info: 'Cslib.BitString.minDist_range_hadamardCode' depends on axioms: [propext, Classical.choice,
+Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.minDist_range_hadamardCode
 
 /--
 info: 'Cslib.Code.le_minDist_iff_hammingNorm' depends on axioms: [propext, Classical.choice,
