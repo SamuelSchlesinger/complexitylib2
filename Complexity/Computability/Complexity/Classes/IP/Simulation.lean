@@ -13,12 +13,14 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Mathlib.Data.Nat.Size
 
@@ -227,6 +229,12 @@ theorem iterate_incrementBits (m : ℕ) : ∀ j < 2 ^ m,
     rw [Function.iterate_succ_apply', length_incrementBits,
       lsbValue_incrementBits _ (by rw [hv, hl]; lia), hv]
     exact ⟨rfl, hl⟩
+
+@[simp] theorem length_iterate_incrementBits (j : ℕ) (w : List Bool) :
+    (incrementBits^[j] w).length = w.length := by
+  induction j generalizing w with
+  | zero => rfl
+  | succ j ih => rw [Function.iterate_succ_apply, ih, length_incrementBits]
 
 /-- Every word is reached by counting up to its value. -/
 theorem iterate_incrementBits_lsbValue (u : List Bool) :
@@ -581,7 +589,7 @@ theorem countAccepts_eq_accepted (q : α × History) :
         (incrementBits^[i] (List.replicate t false)).getD j false) =
         incrementBits^[i] (List.replicate t false) := by
       refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
-      simp [List.getElem?_eq_getElem h₂]
+      simp
     rw [coinFamily, hofFn]
     exact (accepts_eq_true_iff_of_length M hl _).mp hi.2
   · intro f hf
@@ -600,7 +608,7 @@ theorem countAccepts_eq_accepted (q : α × History) :
         (incrementBits^[i] (List.replicate t false)).getD j false) =
         incrementBits^[i] (List.replicate t false) := by
       refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
-      simp [List.getElem?_eq_getElem h₂]
+      simp
     rw [hofFn, hv]
   · intro f _
     funext j
@@ -608,6 +616,55 @@ theorem countAccepts_eq_accepted (q : α × History) :
     rw [List.length_ofFn] at this
     rw [this]
     simp
+
+/-- **The count of accepting coins within polynomial space**, in the input and the history, for a
+number of coins computed in polynomial time. -/
+theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
+    (hfuel : ComputableTidilyInPolyTime fuel enc encUnary) :
+    ComputableTidilyInPolySpace (countAccepts M enc fuel) (encPair enc encHistory) encNat := by
+  open ComputableTidilyInPolyTime in
+  have hn : ComputableTidilyInPolyTime (fun q : α × History => 2 ^ fuel q.1)
+      (encPair enc encHistory) encNat :=
+    ((ComputableTidilyInDegree.two_pow_length encUnary).computableTidilyInPolyTime.comp
+      (hfuel.comp (fst _ _))).of_enc_eq fun q => by simp [encUnary_apply]
+  have hfuel' : ComputableTidilyInPolyTime (fun q : α × History => fuel q.1)
+      (encPair enc encHistory) encUnary := hfuel.comp (ComputableTidilyInPolyTime.fst _ _)
+  have hinit : ComputableTidilyInPolyTime
+      (fun q : α × History => (q, List.replicate (fuel q.1) false, 0))
+      (encPair enc encHistory) (encPair (encPair enc encHistory) (encPair encBits encNat)) :=
+    ComputableTidilyInPolyTime.id'.prod
+      (((ComputableTidilyInPolyTime.bitsReplicate false).comp hfuel').prod
+        (ComputableTidilyInPolyTime.const 0))
+  have hacc := computableTidilyInPolyTime_accepts M
+  have hinc := computableTidilyInPolyTime_incrementBits
+  have hstep : ComputableTidilyInPolyTime (countStep M enc)
+      (encPair (encPair enc encHistory) (encPair encBits encNat))
+      (encPair (encPair enc encHistory) (encPair encBits encNat)) := by
+    unfold countStep
+    fun_prop
+  have hlen := hfuel.polyBounded_length
+  simp only [encUnary_apply, List.length_replicate] at hlen
+  have hit := ComputableTidilyInPolySpace.iterate hn (.of_polyTime hinit) (.of_polyTime hstep)
+    (B := fun q => 2 * (encPair enc encHistory q).length + 3 * fuel q.1 + 5)
+    ((((PolyBounded.const 2).mul .self).add ((PolyBounded.const 3).mul
+      (hlen.comp (g := Prod.fst) (size' := fun a => (enc a).length)
+        (PolyBounded.of_forall_le 1 1 fun q => by simp; lia)))).add (.const 5))
+    (fun q j hj => ?_)
+  · exact (ComputableTidilyInPolySpace.of_polyTime
+      ((ComputableTidilyInPolyTime.snd _ _).snd')).comp hit
+  · rw [iterate_countStep]
+    have hcard : ((Finset.range j).filter fun i =>
+        accepts M (enc q.1) (incrementBits^[i] (List.replicate (fuel q.1) false)) q.2).card ≤
+          2 ^ fuel q.1 :=
+      (Finset.card_filter_le _ _).trans (by simpa using hj)
+    have hsize : (encNat ((Finset.range j).filter fun i =>
+        accepts M (enc q.1) (incrementBits^[i] (List.replicate (fuel q.1) false)) q.2).card).length
+          ≤ fuel q.1 + 1 := by
+      rw [encNat_apply, Nat.size_eq_bits_len]
+      exact Nat.size_le.mpr (hcard.trans_lt (Nat.pow_lt_pow_right (by norm_num) (by lia)))
+    simp only [length_encPair, encBits_apply, length_iterate_incrementBits,
+      List.length_replicate] at hsize ⊢
+    lia
 
 end Count
 
