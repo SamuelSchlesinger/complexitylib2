@@ -80,7 +80,7 @@ theorem Valid.exists_eqn_of_aux {S : State n} (hS : S.Valid f) {v : ℕ} (hv : v
   by_contra hne
   push Not at hne
   obtain ⟨val, -, heq⟩ := hS.wf.solvable 0
-  have hvp : v ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp hv
+  have hvp : v ∉ S.params := fun hp => hS.wf.notMem_aux_of_mem_params hp hv
   have heq' : S.EqnsHold (Function.update val v (!val v)) := fun e he =>
     (Equation.holds_congr fun i hi =>
       Function.update_of_ne (show i ≠ v from fun h => hne e he (h ▸ hi)) _ _).2 (heq e he)
@@ -98,7 +98,7 @@ theorem Valid.preparation_swap {S : State n} (hS : S.Valid f) {x Q : ℕ} {c : B
     Preparation f S (S.swap x Q c T) := by
   obtain ⟨hxp, hxu⟩ := mem_unpaired.1 hx
   have hok : S.SwapOK x Q c T := ⟨hxp, hxu, hQ, haff, hxT⟩
-  have hQp : Q ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp hQ
+  have hQp : Q ∉ S.params := fun hp => hS.wf.notMem_aux_of_mem_params hp hQ
   have hQx : Q ≠ x := fun h => hQp (h ▸ hxp)
   set S₁ := S.swap x Q c T
   have hm : S₁.m = S.m := by
@@ -278,7 +278,7 @@ theorem Valid.exists_param_of_aux_input {S : State n} (hS : S.Valid f) (hN : S.N
     ∃ x c T, S.AffineIn Q c T ∧ x ∈ T ∧ x ≠ o ∧ x ∈ S.unpaired ∧ 2 ≤ S.deg x ∧
       2 ≤ S.deg Q := by
   obtain ⟨c, T, hT⟩ := hS.wf.exists_affineIn hQ
-  have hQp : Q ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp hQ
+  have hQp : Q ∉ S.params := fun hp => hS.wf.notMem_aux_of_mem_params hp hQ
   have hGQ : (S.gate G).Reads Q := by
     rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
   by_cases hTo : ∃ x ∈ T, x ≠ o
@@ -362,7 +362,7 @@ theorem Valid.exists_preparation_auxIn_lt {S : State n} (hS : S.Valid f) (hN : S
   refine ⟨S.swap x Q c T, hS.preparation_swap hxu hxdeg hQ hQdeg hT hxT, rfl, ?_⟩
   set S₁ := S.swap x Q c T
   have hxp := (mem_unpaired.1 hxu).1
-  have hQx : Q ≠ x := fun h => Finset.disjoint_left.1 hS.wf.disjoint_params_aux (h ▸ hxp) hQ
+  have hQx : Q ≠ x := fun h => hS.wf.notMem_aux_of_mem_params (h ▸ hxp) hQ
   have hQ₁ : Q ∉ S₁.aux := fun h => by
     change Q ∈ insert x (S.aux.erase Q) at h
     rcases Finset.mem_insert.1 h with h | h
@@ -402,7 +402,7 @@ theorem Valid.exists_preparation_childIn_lt {S : State n} (hS : S.Valid f)
   set G := S.gates.min' hne
   have hG : G ∈ S.gates := Finset.min'_mem _ _
   have hGp : ∀ {i}, i ∈ S.params → i ≠ G := fun hi he =>
-    Finset.disjoint_left.1 hS.wf.disjoint_params_gates (he ▸ hi) hG
+    hS.wf.notMem_gates_of_mem_params (he ▸ hi) hG
   have hKne : K ≠ G := fun h => hS.not_reads_self hG (h ▸ hKG)
   let env : Bool → Bool → ℕ → Bool := fun u v i =>
     if i = G then (S.gate G).op u v else if i = t₁ then u else if i = t₂ then v else false
@@ -517,7 +517,7 @@ theorem exists_op (h : S.MinimalAnd G x y) : ∃ φ : Bool → Bool → Bool, ¬
   exact ⟨φ, fun h' => h.and_op (hφ.1 h'), hG⟩
 
 theorem ne_gate (hS : S.Valid f) (h : S.MinimalAnd G x y) {u : ℕ} (hu : u ∈ S.params) : u ≠ G :=
-  fun he => Finset.disjoint_left.1 hS.wf.disjoint_params_gates hu (he ▸ h.mem)
+  fun he => hS.wf.notMem_gates_of_mem_params hu (he ▸ h.mem)
 
 /-- The children of `G` are gates. -/
 theorem eq_inl_of_mem_children (hS : S.Valid f) (h : S.MinimalAnd G x y) {N : ℕ ⊕ ℕ}
@@ -526,7 +526,7 @@ theorem eq_inl_of_mem_children (hS : S.Valid f) (h : S.MinimalAnd G x y) {N : �
   · obtain ⟨hK, hKG⟩ := (SemiCircuit.inl_mem_children _).1 hN
     exact ⟨K, hK, rfl, hKG⟩
   · obtain ⟨he, hGe⟩ := (SemiCircuit.inr_mem_children _).1 hN
-    exact absurd hGe (notMem_terms_of_mem_gates hS h.mem he)
+    exact absurd hGe (hS.wf.notMem_terms_of_mem_gates h.mem he)
 
 end MinimalAnd
 
@@ -681,7 +681,7 @@ theorem Valid.step_of_sharedSecondChild {S : State n} (hS : S.Valid f) (hN : S.N
     obtain ⟨v, hva, hvx, hvy, hterms⟩ := hS.eq_insert_of_mem_terms hN.no_deletion he
       h.mem_params_x h.mem_params_y h.ne hxe hye
     have hvG : v ≠ G := fun he' =>
-      Finset.disjoint_left.1 hS.wf.disjoint_aux_gates hva (he' ▸ h.mem)
+      hS.wf.notMem_gates_of_mem_aux hva (he' ▸ h.mem)
     obtain ⟨c, hφc⟩ : ∃ c, ∀ b, φ (b ^^ c) b = φ c false := by
       rcases exists_line_const (h := fun a b => a ^^ b) hφ with ⟨c, -, hc⟩ | ⟨c, -, hc⟩ | ⟨c, hc, -⟩
       · simpa using hc true
@@ -735,7 +735,7 @@ theorem Valid.card_isolated_le {S : State n} (hS : S.Valid f) {G : ℕ} (hG : G 
     rw [heq] at h₁
     generalize hex'.choose = N at h₁ h₂
     have hG' : ∀ {w}, w ∈ S.params → w ≠ G := fun hw he =>
-      Finset.disjoint_left.1 hS.wf.disjoint_params_gates hw (he ▸ hG)
+      hS.wf.notMem_gates_of_mem_params hw (he ▸ hG)
     rcases N with K | e
     · obtain ⟨-, hKG⟩ := (SemiCircuit.inl_mem_children _).1 h₁.1
       obtain ⟨-, hKu⟩ := (SemiCircuit.inl_mem_children _).1 h₁.2
@@ -744,7 +744,7 @@ theorem Valid.card_isolated_le {S : State n} (hS : S.Valid f) {G : ℕ} (hG : G 
       · exact absurd h' (hG' (hs hus'))
       · exact h'.symm
     · obtain ⟨he, hGe⟩ := (SemiCircuit.inr_mem_children _).1 h₁.1
-      exact absurd hGe (notMem_terms_of_mem_gates hS hG he)
+      exact absurd hGe (hS.wf.notMem_terms_of_mem_gates hG he)
 
 /-- **Case 8** of [Mishra and Santhanam, Section 4.3][MishraSanthanam2026]: outside Case 7 and
 the bottleneck configuration, fix the input `x` of the minimal AND `G` so that `G` becomes
@@ -881,7 +881,7 @@ theorem Valid.step_quad {S : State n} (hS : S.Valid f) {x y z G D : ℕ} {α β 
   set S' := S.quad x y z G D α β γ c
   have hS' := hS.quad h
   have hgp : ∀ {i}, i ∈ S.gates → i ∉ S.params := fun hg hp =>
-    Finset.disjoint_left.1 hS.wf.disjoint_params_gates hp hg
+    hS.wf.notMem_gates_of_mem_params hp hg
   have hDp := hgp h.mem_D
   have hDz : D ≠ z := fun he => hDp (he ▸ h.mem_z)
   have hDx : D ≠ x := fun he => hDp (he ▸ h.mem_x)

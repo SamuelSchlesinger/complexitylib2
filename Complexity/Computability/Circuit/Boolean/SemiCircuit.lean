@@ -7,9 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Init
-public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-public import Mathlib.Algebra.Ring.BooleanRing
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Equation
 public import Mathlib.Data.Finset.Sum
 public import Mathlib.Algebra.BigOperators.Pi
 public import Mathlib.Data.Finset.Lattice.Fold
@@ -75,672 +73,7 @@ moved into the affine system as an equation (`affEqn_holds`).
 
 namespace Cslib.Circuits.Boolean
 
-open Finset
-
-namespace SemiCircuit
-
-/-! ### Arguments, literals, gates and equations -/
-
-/-- An argument of a gate: a constant or the internal value with the given name. -/
-inductive Arg where
-  /-- A constant. -/
-  | const (b : Bool)
-  /-- An internal value. -/
-  | node (i : ℕ)
-  deriving DecidableEq
-
-namespace Arg
-
-/-- The value of an argument under an assignment of the internal values. -/
-def eval (val : ℕ → Bool) : Arg → Bool
-  | const b => b
-  | node i => val i
-
-@[simp] theorem eval_const (val : ℕ → Bool) (b : Bool) : (const b).eval val = b := rfl
-
-@[simp] theorem eval_node (val : ℕ → Bool) (i : ℕ) : (node i).eval val = val i := rfl
-
-/-- The argument `node v` replaced by the argument of the literal `ℓ`. -/
-def substArg (a : Arg) (v : ℕ) (target : Arg) : Arg :=
-  if a = node v then target else a
-
-/-- Changing the assignment away from the internal values an argument reads keeps its value. -/
-theorem eval_congr {a : Arg} {val val' : ℕ → Bool} (h : ∀ i, a = node i → val i = val' i) :
-    a.eval val = a.eval val' := by
-  cases a with
-  | const b => rfl
-  | node i => exact h i rfl
-
-end Arg
-
-/-- A literal: an argument, negated when `neg` holds. Outputs and reroutings are literals. -/
-structure Lit where
-  /-- The argument. -/
-  arg : Arg
-  /-- Whether the argument is negated. -/
-  neg : Bool
-  deriving DecidableEq
-
-namespace Lit
-
-/-- The value of a literal. -/
-def eval (ℓ : Lit) (val : ℕ → Bool) : Bool :=
-  ℓ.arg.eval val ^^ ℓ.neg
-
-/-- The constant literal `b`. -/
-def const (b : Bool) : Lit := ⟨.const b, false⟩
-
-/-- The literal `t ⊕ c` of the internal value `t`. -/
-def node (t : ℕ) (c : Bool) : Lit := ⟨.node t, c⟩
-
-@[simp] theorem eval_const (b : Bool) (val : ℕ → Bool) : (const b).eval val = b := by
-  simp [const, eval]
-
-@[simp] theorem eval_node (t : ℕ) (c : Bool) (val : ℕ → Bool) :
-    (node t c).eval val = (val t ^^ c) := rfl
-
-/-- Reroute the internal value `v` in a literal to the literal `ℓ`. -/
-def subst (o : Lit) (v : ℕ) (ℓ : Lit) : Lit :=
-  if o.arg = .node v then ⟨ℓ.arg, o.neg ^^ ℓ.neg⟩ else o
-
-theorem eval_subst {o : Lit} {v : ℕ} {ℓ : Lit} {val : ℕ → Bool} (h : val v = ℓ.eval val) :
-    (o.subst v ℓ).eval val = o.eval val := by
-  unfold subst
-  split_ifs with ho
-  · simp only [eval, ho, Arg.eval_node, h]
-    cases ℓ.arg.eval val <;> cases o.neg <;> cases ℓ.neg <;> rfl
-  · rfl
-
-/-- The literal reads the internal value `t`. -/
-def Reads (o : Lit) (t : ℕ) : Prop :=
-  o.arg = .node t
-
-theorem eval_congr {o : Lit} {val val' : ℕ → Bool} (h : ∀ i, o.Reads i → val i = val' i) :
-    o.eval val = o.eval val' := by
-  unfold eval
-  rw [Arg.eval_congr h]
-
-theorem not_reads_subst {o : Lit} {v : ℕ} {ℓ : Lit} (hℓ : ¬ ℓ.Reads v) :
-    ¬ (o.subst v ℓ).Reads v := by
-  unfold subst Reads
-  split_ifs with ho
-  · exact hℓ
-  · exact ho
-
-theorem reads_of_reads_subst {o : Lit} {v : ℕ} {ℓ : Lit} {z : ℕ} (h : (o.subst v ℓ).Reads z) :
-    o.Reads z ∨ (o.Reads v ∧ ℓ.Reads z) := by
-  unfold subst Reads at *
-  split_ifs at h with ho
-  · exact Or.inr ⟨ho, h⟩
-  · exact Or.inl h
-
-theorem subst_of_not_reads {o : Lit} {v : ℕ} {ℓ : Lit} (h : ¬ o.Reads v) : o.subst v ℓ = o :=
-  ite_eq_right (show ¬ o.arg = .node v from h)
-
-end Lit
-
-/-- A gate of the acyclic part: an operation of the full binary basis `B₂` applied to two
-arguments. -/
-structure Gate where
-  /-- The operation of the gate. -/
-  op : Bool → Bool → Bool
-  /-- The first argument. -/
-  left : Arg
-  /-- The second argument. -/
-  right : Arg
-
-namespace Gate
-
-/-- The value of a gate, given the values of its arguments. -/
-def eval (g : Gate) (val : ℕ → Bool) : Bool :=
-  g.op (g.left.eval val) (g.right.eval val)
-
-/-- The gate reads the internal value `t`. -/
-def Reads (g : Gate) (t : ℕ) : Prop :=
-  g.left = .node t ∨ g.right = .node t
-
-instance (g : Gate) : DecidablePred g.Reads :=
-  fun _ => inferInstanceAs (Decidable (_ ∨ _))
-
-/-- A gate's value depends only on the internal values it reads. -/
-theorem eval_congr {g : Gate} {val val' : ℕ → Bool} (h : ∀ i, g.Reads i → val i = val' i) :
-    g.eval val = g.eval val' := by
-  unfold eval
-  rw [Arg.eval_congr (a := g.left) (fun i hi => h i (Or.inl hi)),
-    Arg.eval_congr (a := g.right) (fun i hi => h i (Or.inr hi))]
-
-/-- The negation absorbed into the operation when the argument `a` is rerouted. -/
-def substNeg (a : Arg) (v : ℕ) (ℓ : Lit) : Bool :=
-  if a = .node v then ℓ.neg else false
-
-/-- Reroute the internal value `v` to the literal `ℓ`: arguments `node v` read the argument of
-`ℓ`, and the negation of `ℓ` is absorbed into the operation. -/
-def subst (g : Gate) (v : ℕ) (ℓ : Lit) : Gate where
-  op x y := g.op (x ^^ substNeg g.left v ℓ) (y ^^ substNeg g.right v ℓ)
-  left := g.left.substArg v ℓ.arg
-  right := g.right.substArg v ℓ.arg
-
-theorem eval_substArg {a : Arg} {v : ℕ} {ℓ : Lit} {val : ℕ → Bool} (h : val v = ℓ.eval val) :
-    ((a.substArg v ℓ.arg).eval val ^^ substNeg a v ℓ) = a.eval val := by
-  unfold Arg.substArg substNeg
-  split_ifs with ha
-  · rw [ha, Arg.eval_node, h, Lit.eval]
-  · simp
-
-/-- Rerouting `v` to a literal with the value of `v` preserves the value of every gate. -/
-theorem eval_subst {g : Gate} {v : ℕ} {ℓ : Lit} {val : ℕ → Bool} (h : val v = ℓ.eval val) :
-    (g.subst v ℓ).eval val = g.eval val := by
-  simp only [eval, subst, eval_substArg h]
-
-theorem substArg_eq_node_of_ne {a : Arg} {v z : ℕ} {target : Arg} (hzv : z ≠ v)
-    (hzt : target ≠ .node z) : a.substArg v target = .node z ↔ a = .node z := by
-  unfold Arg.substArg
-  by_cases ha : a = .node v
-  · rw [ite_eq_left ha, ha]
-    exact ⟨fun h => absurd h hzt, fun h => absurd (Arg.node.inj h) (Ne.symm hzv)⟩
-  · rw [ite_eq_right ha]
-
-theorem eq_node_of_substArg_eq_node {a : Arg} {v z : ℕ} {target : Arg}
-    (h : a.substArg v target = .node z) : a = .node z ∨ (a = .node v ∧ target = .node z) := by
-  unfold Arg.substArg at h
-  by_cases ha : a = .node v
-  · rw [ite_eq_left ha] at h; exact Or.inr ⟨ha, h⟩
-  · rw [ite_eq_right ha] at h; exact Or.inl h
-
-theorem reads_subst_of_ne {g : Gate} {v : ℕ} {ℓ : Lit} {z : ℕ} (hzv : z ≠ v)
-    (hzℓ : ℓ.arg ≠ .node z) : (g.subst v ℓ).Reads z ↔ g.Reads z := by
-  unfold Reads subst
-  simp only [substArg_eq_node_of_ne hzv hzℓ]
-
-theorem reads_of_reads_subst {g : Gate} {v : ℕ} {ℓ : Lit} {z : ℕ} (h : (g.subst v ℓ).Reads z) :
-    g.Reads z ∨ (g.Reads v ∧ ℓ.arg = .node z) := by
-  unfold Reads subst at *
-  rcases h with h | h <;> rcases eq_node_of_substArg_eq_node h with h' | ⟨h', h''⟩
-  · exact Or.inl (Or.inl h')
-  · exact Or.inr ⟨Or.inl h', h''⟩
-  · exact Or.inl (Or.inr h')
-  · exact Or.inr ⟨Or.inr h', h''⟩
-
-theorem not_reads_subst {g : Gate} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v) :
-    ¬ (g.subst v ℓ).Reads v := by
-  intro h
-  simp only [Reads, subst, Arg.substArg] at h
-  rcases h with h | h <;> split_ifs at h with h' <;> first | exact hℓ h | exact h' h
-
-theorem eval_subst_of_not_reads {g : Gate} {v : ℕ} {ℓ : Lit} (h : ¬ g.Reads v) (val : ℕ → Bool) :
-    (g.subst v ℓ).eval val = g.eval val := by
-  unfold Reads at h
-  push Not at h
-  simp only [eval, subst, Arg.substArg, substNeg, ite_eq_right h.1, ite_eq_right h.2,
-    Bool.xor_false]
-
-/-- A gate with `v` rerouted to a literal not reading `v` evaluates as the gate on the assignment
-giving `v` the value of the literal. -/
-theorem eval_subst_update {g : Gate} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v) (val : ℕ → Bool) :
-    (g.subst v ℓ).eval val = g.eval (Function.update val v (ℓ.eval val)) := by
-  have hℓu : ℓ.eval (Function.update val v (ℓ.eval val)) = ℓ.eval val :=
-    Lit.eval_congr fun i hi => Function.update_of_ne (by rintro rfl; exact hℓ hi) _ _
-  rw [← eval_subst (g := g) (show Function.update val v (ℓ.eval val) v = _ by
-    rw [hℓu]; exact Function.update_self _ _ _)]
-  exact eval_congr fun i hi =>
-    (Function.update_of_ne (by rintro rfl; exact not_reads_subst hℓ hi) _ _).symm
-
-@[simp] theorem eval_subst_const (g : Gate) (v : ℕ) (b : Bool) (val : ℕ → Bool) :
-    (g.subst v (Lit.const b)).eval val = g.eval (Function.update val v b) := by
-  rw [eval_subst_update (by simp [Lit.const]), Lit.eval_const]
-
-/-- A gate reading two distinct internal values reads exactly them. -/
-theorem args_of_reads {g : Gate} {z z' : ℕ} (hzz : z ≠ z') (hz : g.Reads z)
-    (hz' : g.Reads z') : (g.left = .node z ∧ g.right = .node z') ∨
-      (g.left = .node z' ∧ g.right = .node z) := by
-  unfold Gate.Reads at hz hz'
-  rcases hz with hz | hz <;> rcases hz' with hz' | hz'
-  · exact absurd (Arg.node.inj (hz.symm.trans hz')) hzz
-  · exact Or.inl ⟨hz, hz'⟩
-  · exact Or.inr ⟨hz', hz⟩
-  · exact absurd (Arg.node.inj (hz.symm.trans hz')) hzz
-
-/-- A gate reading two distinct internal values reads nothing else. -/
-theorem eq_or_eq_of_reads {g : Gate} {a b i : ℕ} (hab : a ≠ b) (ha : g.Reads a)
-    (hb : g.Reads b) (hi : g.Reads i) : i = a ∨ i = b := by
-  rcases args_of_reads hab ha hb with ⟨hl, hr⟩ | ⟨hl, hr⟩ <;> rcases hi with hi | hi
-  · exact Or.inl (Arg.node.inj (hi.symm.trans hl))
-  · exact Or.inr (Arg.node.inj (hi.symm.trans hr))
-  · exact Or.inr (Arg.node.inj (hi.symm.trans hl))
-  · exact Or.inl (Arg.node.inj (hi.symm.trans hr))
-
-/-- A gate reads at most two internal values. -/
-theorem card_filter_reads_le (g : Gate) (s : Finset ℕ) : (s.filter g.Reads).card ≤ 2 := by
-  by_contra h
-  obtain ⟨a, ha, b, hb, c, hc, hab, hac, hbc⟩ := Finset.two_lt_card.1 (not_le.1 h)
-  rcases eq_or_eq_of_reads hab (Finset.mem_filter.1 ha).2 (Finset.mem_filter.1 hb).2
-    (Finset.mem_filter.1 hc).2 with h | h
-  · exact hac h.symm
-  · exact hbc h.symm
-
-/-- The value of a gate reading the internal values `a` and `b`. -/
-theorem eval_of_args {g : Gate} {a b : ℕ} (ha : g.left = .node a) (hb : g.right = .node b)
-    (val : ℕ → Bool) : g.eval val = g.op (val a) (val b) := by
-  rw [eval, ha, hb, Arg.eval_node, Arg.eval_node]
-
-end Gate
-
-/-- An equation of the affine system: the sum over `𝔽₂` of the values of its terms is `rhs`. -/
-structure Equation where
-  /-- The internal values occurring in the equation. -/
-  terms : Finset ℕ
-  /-- The right-hand side. -/
-  rhs : Bool
-
-/-- Add `t` to a set of terms over `𝔽₂`: remove it if present, insert it otherwise. -/
-def toggle (s : Finset ℕ) (t : ℕ) : Finset ℕ :=
-  if t ∈ s then s.erase t else insert t s
-
-theorem sum_toggle (s : Finset ℕ) (t : ℕ) (val : ℕ → Bool) :
-    ∑ i ∈ toggle s t, val i = ∑ i ∈ s, val i + val t := by
-  unfold toggle
-  split_ifs with ht
-  · rw [← Finset.add_sum_erase s val ht, add_comm (val t), add_assoc, BooleanRing.add_self,
-      add_zero]
-  · rw [Finset.sum_insert ht, add_comm]
-
-theorem mem_toggle {s : Finset ℕ} {t z : ℕ} : z ∈ toggle s t ↔ (z ∈ s ↔ z ≠ t) := by
-  unfold toggle
-  by_cases hz : z = t
-  · subst hz
-    split_ifs with ht <;> simp [ht]
-  · split_ifs with ht <;> simp [hz]
-
-theorem card_toggle_le (s : Finset ℕ) (t : ℕ) : (toggle s t).card ≤ s.card + 1 := by
-  unfold toggle
-  split_ifs with h
-  · exact (Finset.card_erase_le).trans (Nat.le_succ _)
-  · exact Finset.card_insert_le _ _
-
-namespace Equation
-
-/-- The equation holds under an assignment of the internal values. -/
-def Holds (E : Equation) (val : ℕ → Bool) : Prop :=
-  ∑ i ∈ E.terms, val i = E.rhs
-
-instance (E : Equation) (val : ℕ → Bool) : Decidable (E.Holds val) :=
-  inferInstanceAs (Decidable (_ = _))
-
-/-- Reroute the term `v` of an equation to the literal `ℓ`. -/
-def subst (E : Equation) (v : ℕ) (ℓ : Lit) : Equation :=
-  if v ∈ E.terms then
-    match ℓ.arg with
-    | .const b => ⟨E.terms.erase v, E.rhs ^^ b ^^ ℓ.neg⟩
-    | .node t => ⟨toggle (E.terms.erase v) t, E.rhs ^^ ℓ.neg⟩
-  else E
-
-/-- Rerouting `v` to a literal with the value of `v` preserves the truth of every equation. -/
-theorem holds_subst {E : Equation} {v : ℕ} {ℓ : Lit} {val : ℕ → Bool}
-    (h : val v = ℓ.eval val) : (E.subst v ℓ).Holds val ↔ E.Holds val := by
-  unfold subst
-  split_ifs with hv
-  · unfold Holds
-    rw [← Finset.add_sum_erase E.terms val hv, h]
-    obtain ⟨a, c⟩ := ℓ
-    clear h
-    cases a with
-    | const b =>
-      simp only [Lit.eval, Arg.eval_const]
-      generalize ∑ i ∈ E.terms.erase v, val i = S
-      generalize E.rhs = r
-      revert S r b c; decide
-    | node t =>
-      simp only [Lit.eval, Arg.eval_node, sum_toggle]
-      generalize ∑ i ∈ E.terms.erase v, val i = S
-      generalize E.rhs = r
-      generalize val t = x
-      revert S r x c; decide
-  · exact Iff.rfl
-
-theorem mem_subst_of_ne {E : Equation} {v : ℕ} {ℓ : Lit} {z : ℕ} (hzv : z ≠ v)
-    (hzℓ : ℓ.arg ≠ .node z) : z ∈ (E.subst v ℓ).terms ↔ z ∈ E.terms := by
-  unfold subst
-  split_ifs with hv
-  · rcases ℓ with ⟨_ | t, c⟩
-    · simp [Finset.mem_erase, hzv]
-    · have hzt : z ≠ t := fun h => hzℓ (by simp [h])
-      simp only [mem_toggle, Finset.mem_erase, ne_eq, hzv, not_false_eq_true, true_and]
-      exact ⟨fun h => h.2 hzt, fun h => ⟨fun _ => hzt, fun _ => h⟩⟩
-  · exact Iff.rfl
-
-theorem mem_of_mem_subst {E : Equation} {v : ℕ} {ℓ : Lit} {z : ℕ}
-    (h : z ∈ (E.subst v ℓ).terms) : z ∈ E.terms ∨ (v ∈ E.terms ∧ ℓ.arg = .node z) := by
-  unfold subst at h
-  split_ifs at h with hv
-  · rcases ℓ with ⟨_ | t, c⟩
-    · exact Or.inl (Finset.mem_of_mem_erase h)
-    · by_cases hzt : z = t
-      · exact Or.inr ⟨hv, by simp [hzt]⟩
-      · exact Or.inl (Finset.mem_of_mem_erase ((mem_toggle.1 h).2 hzt))
-  · exact Or.inl h
-
-theorem card_subst_le {E : Equation} {v : ℕ} {ℓ : Lit} :
-    (E.subst v ℓ).terms.card ≤ E.terms.card := by
-  unfold subst
-  split_ifs with hv
-  · rcases ℓ with ⟨_ | t, c⟩
-    · exact Finset.card_erase_le
-    · have h := Finset.card_erase_of_mem hv
-      have hpos : 0 < E.terms.card := Finset.card_pos.2 ⟨v, hv⟩
-      calc (toggle (E.terms.erase v) t).card ≤ (E.terms.erase v).card + 1 :=
-            card_toggle_le _ _
-        _ = E.terms.card := by omega
-  · exact le_rfl
-
-theorem notMem_subst {E : Equation} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v) :
-    v ∉ (E.subst v ℓ).terms := by
-  intro h
-  unfold subst at h
-  split_ifs at h with hv
-  · rcases ℓ with ⟨_ | t, c⟩
-    · exact Finset.notMem_erase v _ h
-    · have ht : v ≠ t := fun h' => hℓ (by simp [h'])
-      exact Finset.notMem_erase v _ ((mem_toggle.1 h).2 ht)
-  · exact hv h
-
-theorem subst_of_notMem {E : Equation} {v : ℕ} {ℓ : Lit} (h : v ∉ E.terms) : E.subst v ℓ = E := by
-  unfold subst
-  rw [ite_eq_right h]
-
-theorem holds_congr {E : Equation} {val val' : ℕ → Bool} (h : ∀ i ∈ E.terms, val i = val' i) :
-    E.Holds val ↔ E.Holds val' := by
-  unfold Holds
-  rw [Finset.sum_congr rfl h]
-
-/-- An equation with `v` rerouted to a literal not reading `v` holds exactly when the equation
-holds on the assignment giving `v` the value of the literal. -/
-theorem holds_subst_update {E : Equation} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v)
-    (val : ℕ → Bool) : (E.subst v ℓ).Holds val ↔ E.Holds (Function.update val v (ℓ.eval val)) := by
-  have hℓu : ℓ.eval (Function.update val v (ℓ.eval val)) = ℓ.eval val :=
-    Lit.eval_congr fun i hi => Function.update_of_ne (by rintro rfl; exact hℓ hi) _ _
-  rw [← holds_subst (E := E) (show Function.update val v (ℓ.eval val) v = _ by
-    rw [hℓu]; exact Function.update_self _ _ _)]
-  exact holds_congr fun i hi =>
-    (Function.update_of_ne (by rintro rfl; exact notMem_subst hℓ hi) _ _).symm
-
-/-- Once `p = r + c`, the equation `v + p + r = rhs` reads `v = rhs + c`. -/
-theorem holds_update_iff {E : Equation} {v p r : ℕ} (hterms : E.terms = {v, p, r})
-    (hvp : v ≠ p) (hvr : v ≠ r) (hpr : p ≠ r) (val : ℕ → Bool) (c : Bool) :
-    E.Holds (Function.update val p (val r ^^ c)) ↔ val v = (E.rhs ^^ c) := by
-  rw [Equation.Holds, hterms, Finset.sum_insert (by simp [hvp, hvr]), Finset.sum_pair hpr]
-  simp only [Function.update_self, Function.update_of_ne hvp, Function.update_of_ne hpr.symm]
-  generalize val v = a; generalize val r = b; generalize E.rhs = d
-  revert a b c d; decide
-
-end Equation
-
-/-- The literal computed by a gate with a constant argument or two equal arguments. -/
-def Gate.lit (g : Gate) : Lit :=
-  match g.left with
-  | .const b =>
-    if g.op b false = g.op b true then Lit.const (g.op b false) else ⟨g.right, g.op b false⟩
-  | .node t =>
-    match g.right with
-    | .const b =>
-      if g.op false b = g.op true b then Lit.const (g.op false b) else ⟨.node t, g.op false b⟩
-    | .node _ =>
-      if g.op false false = g.op true true then Lit.const (g.op false false)
-      else ⟨.node t, g.op false false⟩
-
-/-- The gate has a constant argument or two equal arguments. -/
-def Gate.Degenerate (g : Gate) : Prop :=
-  (∃ b, g.left = .const b) ∨ (∃ b, g.right = .const b) ∨ g.left = g.right
-
-/-- A Boolean function of one bit is a constant or a literal. -/
-theorem unary_cases (h : Bool → Bool) (x : Bool) :
-    h x = if h false = h true then h false else (x ^^ h false) := by
-  cases x <;> cases h0 : h false <;> cases h1 : h true <;> simp_all
-
-/-- The literal computing the Boolean function `h` of one bit applied to the argument `a`. -/
-def unaryLit (h : Bool → Bool) (a : Arg) : Lit :=
-  if h false = h true then Lit.const (h false) else ⟨a, h false⟩
-
-theorem eval_unaryLit (h : Bool → Bool) (a : Arg) (val : ℕ → Bool) :
-    h (a.eval val) = (unaryLit h a).eval val := by
-  rw [unary_cases h (a.eval val)]
-  unfold unaryLit
-  split_ifs <;> simp [Lit.eval, Lit.const]
-
-theorem reads_of_unaryLit_reads {h : Bool → Bool} {a : Arg} {t : ℕ}
-    (hr : (unaryLit h a).Reads t) : a = .node t := by
-  unfold unaryLit at hr
-  split_ifs at hr
-  · simp [Lit.Reads, Lit.const] at hr
-  · exact hr
-
-theorem Gate.eval_lit {g : Gate} (hg : g.Degenerate) (val : ℕ → Bool) :
-    g.eval val = g.lit.eval val := by
-  obtain ⟨op, l, r⟩ := g
-  unfold Degenerate at hg
-  unfold eval
-  cases l with
-  | const b =>
-    simp only [lit, Arg.eval_const]
-    rw [unary_cases (op b) (r.eval val)]
-    split_ifs <;> simp [Lit.eval, Lit.const]
-  | node t =>
-    cases r with
-    | const b =>
-      simp only [lit, Arg.eval_const, Arg.eval_node]
-      rw [unary_cases (fun x => op x b) (val t)]
-      split_ifs <;> simp [Lit.eval, Lit.const]
-    | node t' =>
-      simp only at hg
-      rcases hg with ⟨b, hb⟩ | ⟨b, hb⟩ | hb
-      · cases hb
-      · cases hb
-      · cases hb
-        simp only [lit, Arg.eval_node]
-        rw [unary_cases (fun x => op x x) (val t)]
-        split_ifs <;> simp [Lit.eval, Lit.const]
-
-theorem Gate.reads_of_lit_reads {g : Gate} {t : ℕ} (h : g.lit.Reads t) : g.Reads t := by
-  obtain ⟨op, l, r⟩ := g
-  unfold Reads
-  cases l with
-  | const b =>
-    simp only [lit] at h
-    split_ifs at h
-    · simp [Lit.Reads, Lit.const] at h
-    · exact Or.inr h
-  | node s =>
-    cases r with
-    | const b =>
-      simp only [lit] at h
-      split_ifs at h
-      · simp [Lit.Reads, Lit.const] at h
-      · exact Or.inl h
-    | node s' =>
-      simp only [lit] at h
-      split_ifs at h
-      · simp [Lit.Reads, Lit.const] at h
-      · exact Or.inl h
-
-theorem Gate.degenerate_subst {g : Gate} (hg : g.Degenerate) (v : ℕ) (ℓ : Lit) :
-    (g.subst v ℓ).Degenerate := by
-  unfold Gate.Degenerate at *
-  change (∃ b, g.left.substArg v ℓ.arg = .const b) ∨ (∃ b, g.right.substArg v ℓ.arg = .const b) ∨
-    g.left.substArg v ℓ.arg = g.right.substArg v ℓ.arg
-  rcases hg with ⟨b, hb⟩ | ⟨b, hb⟩ | hb
-  · exact Or.inl ⟨b, by rw [hb]; rfl⟩
-  · exact Or.inr (Or.inl ⟨b, by rw [hb]; rfl⟩)
-  · exact Or.inr (Or.inr (by rw [hb]))
-
-/-! ### Operations of the full binary basis -/
-
-/-- An operation of `B₂` is affine when its multilinear expression has no product term. -/
-def IsAffineOp (op : Bool → Bool → Bool) : Prop :=
-  (op false false ^^ op true false ^^ op false true ^^ op true true) = false
-
-instance (op : Bool → Bool → Bool) : Decidable (IsAffineOp op) :=
-  inferInstanceAs (Decidable (_ = _))
-
-/-- An AND-type operation becomes constant when either argument takes a suitable value. -/
-theorem exists_eq_of_not_isAffineOp {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) :
-    (∃ b, op b false = op b true) ∧ (∃ b, op false b = op true b) := by
-  unfold IsAffineOp at h
-  constructor
-  · by_cases h0 : op false false = op false true
-    · exact ⟨false, h0⟩
-    · by_cases h1 : op true false = op true true
-      · exact ⟨true, h1⟩
-      · exfalso
-        apply h
-        revert h0 h1
-        generalize op false false = a; generalize op true false = b
-        generalize op false true = c; generalize op true true = d
-        revert a b c d; decide
-  · by_cases h0 : op false false = op true false
-    · exact ⟨false, h0⟩
-    · by_cases h1 : op false true = op true true
-      · exact ⟨true, h1⟩
-      · exfalso
-        apply h
-        revert h0 h1
-        generalize op false false = a; generalize op true false = b
-        generalize op false true = c; generalize op true true = d
-        revert a b c d; decide
-
-/-- An AND-type gate reading two internal values becomes constant once the value `w` is fixed
-suitably. -/
-theorem Gate.exists_const_of_not_isAffineOp {g : Gate} (hg : ¬ IsAffineOp g.op) {a w : ℕ}
-    (hargs : (g.left = .node a ∧ g.right = .node w) ∨ (g.left = .node w ∧ g.right = .node a)) :
-    ∃ b c, ∀ val : ℕ → Bool, val w = b → g.eval val = c := by
-  obtain ⟨⟨bl, hbl⟩, ⟨br, hbr⟩⟩ := exists_eq_of_not_isAffineOp hg
-  rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
-  · refine ⟨br, g.op false br, fun val hw => ?_⟩
-    rw [Gate.eval_of_args hl hr, hw]
-    cases val a
-    · rfl
-    · exact hbr.symm
-  · refine ⟨bl, g.op bl false, fun val hw => ?_⟩
-    rw [Gate.eval_of_args hl hr, hw]
-    cases val a
-    · rfl
-    · exact hbl.symm
-
-/-- The operation is a projection or a negated projection: `x ↦ c + x` or `y ↦ c + y`. -/
-def IsUnaryOp (op : Bool → Bool → Bool) : Prop :=
-  (op true false = !op false false ∧ op false true = op false false ∧
-      op true true = !op false false) ∨
-    (op true false = op false false ∧ op false true = !op false false ∧
-      op true true = !op false false)
-
-/-- An operation that is not a projection or a negated projection is constant on a diagonal
-`{(c + a, a)}` for a suitable `c`, and likewise on `{(a, c + a)}`. -/
-theorem exists_diag_const (op : Bool → Bool → Bool) :
-    ((∃ c, op c false = op (!c) true) ∧ (∃ c, op false c = op true (!c))) ∨ IsUnaryOp op := by
-  by_cases h0 : op false false = op true true
-  · exact Or.inl ⟨⟨false, h0⟩, ⟨false, h0⟩⟩
-  · by_cases h1 : op true false = op false true
-    · exact Or.inl ⟨⟨true, h1⟩, ⟨true, h1.symm⟩⟩
-    · right
-      unfold IsUnaryOp
-      revert h0 h1
-      generalize op false false = a₀; generalize op true false = b₀
-      generalize op false true = c₀; generalize op true true = d₀
-      revert a₀ b₀ c₀ d₀; decide
-
-/-- An operation that is not a projection or a negated projection is constant on a diagonal: a
-gate with such an operation reading `p` and `r` is constant once `p = r + c` for a suitable
-`c`. -/
-theorem Gate.exists_const_of_diag {g : Gate} (hg : ¬ IsUnaryOp g.op) {p r : ℕ}
-    (hargs : (g.left = .node p ∧ g.right = .node r) ∨ (g.left = .node r ∧ g.right = .node p)) :
-    ∃ c d, ∀ val : ℕ → Bool, val p = (val r ^^ c) → g.eval val = d := by
-  rcases exists_diag_const g.op with ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩ | hun
-  · rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
-    · refine ⟨c₁, g.op c₁ false, fun val hp => ?_⟩
-      rw [Gate.eval_of_args hl hr, hp]
-      cases val r
-      · simp
-      · simpa using hc₁.symm
-    · refine ⟨c₂, g.op false c₂, fun val hp => ?_⟩
-      rw [Gate.eval_of_args hl hr, hp]
-      cases val r
-      · simp
-      · simpa using hc₂.symm
-  · exact absurd hun hg
-
-/-- Every AND-type operation has the form `(a + α)(b + β) + γ`. -/
-theorem exists_and_form {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) :
-    ∃ α β γ : Bool, ∀ a b, op a b = (((a ^^ α) && (b ^^ β)) ^^ γ) := by
-  have key : ∃ α β γ : Bool, op false false = ((α && β) ^^ γ) ∧
-      op true false = (((!α) && β) ^^ γ) ∧ op false true = ((α && !β) ^^ γ) ∧
-      op true true = (((!α) && !β) ^^ γ) := by
-    unfold IsAffineOp at h
-    revert h
-    generalize op false false = a₀; generalize op true false = b₀
-    generalize op false true = c₀; generalize op true true = d₀
-    revert a₀ b₀ c₀ d₀; decide
-  obtain ⟨α, β, γ, h0, h1, h2, h3⟩ := key
-  refine ⟨α, β, γ, fun a b => ?_⟩
-  cases a <;> cases b
-  · rw [h0]; cases α <;> cases β <;> rfl
-  · rw [h2]; cases α <;> cases β <;> rfl
-  · rw [h1]; cases α <;> cases β <;> rfl
-  · rw [h3]; cases α <;> cases β <;> rfl
-
-/-- An AND-type operation takes both values. -/
-theorem exists_eq_of_not_isAffineOp' {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) (δ : Bool) :
-    ∃ a b, op a b = δ := by
-  unfold IsAffineOp at h
-  by_contra hne
-  push Not at hne
-  have key : ∀ δ a b c d : Bool, a ≠ δ → b ≠ δ → c ≠ δ → d ≠ δ →
-      (a ^^ b ^^ c ^^ d) = false := by decide
-  exact h (key δ _ _ _ _ (hne _ _) (hne _ _) (hne _ _) (hne _ _))
-
-/-- An affine operation that is neither constant nor a projection or a negated projection is
-XOR-type: `a + b + c`. -/
-theorem exists_xor_form {op : Bool → Bool → Bool} (h : IsAffineOp op) (hu : ¬ IsUnaryOp op)
-    (hc : ∃ a b, op a b ≠ op false false) : ∃ c, ∀ a b, op a b = (a ^^ b ^^ c) := by
-  unfold IsAffineOp at h
-  unfold IsUnaryOp at hu
-  obtain ⟨a₁, b₁, hab⟩ := hc
-  refine ⟨op false false, fun a b => ?_⟩
-  revert h hu hab
-  cases a₁ <;> cases b₁ <;> cases a <;> cases b <;>
-  · generalize op false false = a₀; generalize op true false = b₀
-    generalize op false true = c₀; generalize op true true = d₀
-    revert a₀ b₀ c₀ d₀; decide
-
-/-- Of two operations of two bits, one AND-type, both are constant on a common line of `𝔽₂²`:
-`a = c`, `b = c` or `a = b + c` for a suitable constant `c`. -/
-theorem exists_line_const {g h : Bool → Bool → Bool} (hg : ¬ IsAffineOp g) :
-    (∃ c, (∀ b, g c b = g c false) ∧ ∀ b, h c b = h c false) ∨
-    (∃ c, (∀ a, g a c = g false c) ∧ ∀ a, h a c = h false c) ∨
-    (∃ c, (∀ b, g (b ^^ c) b = g c false) ∧ ∀ b, h (b ^^ c) b = h c false) := by
-  unfold IsAffineOp at hg
-  simp only [Bool.exists_bool, Bool.forall_bool, Bool.false_xor, Bool.true_xor, Bool.not_false,
-    Bool.not_true]
-  revert hg
-  generalize g false false = a₀; generalize g true false = b₀
-  generalize g false true = c₀; generalize g true true = d₀
-  generalize h false false = a₁; generalize h true false = b₁
-  generalize h false true = c₁; generalize h true true = d₁
-  revert a₀ b₀ c₀ d₀ a₁ b₁ c₁ d₁; decide
-
-/-- A gate reading the internal values `x` and `y` computes an operation of their values, which is
-affine exactly when the operation of the gate is. -/
-theorem Gate.exists_op_of_args {g : Gate} {x y : ℕ}
-    (h : (g.left = .node x ∧ g.right = .node y) ∨ (g.left = .node y ∧ g.right = .node x)) :
-    ∃ φ : Bool → Bool → Bool, (IsAffineOp φ ↔ IsAffineOp g.op) ∧
-      ∀ val : ℕ → Bool, g.eval val = φ (val x) (val y) := by
-  rcases h with ⟨hl, hr⟩ | ⟨hl, hr⟩
-  · exact ⟨g.op, Iff.rfl, fun val => Gate.eval_of_args hl hr val⟩
-  · refine ⟨fun a b => g.op b a, ?_, fun val => Gate.eval_of_args hl hr val⟩
-    unfold IsAffineOp
-    beta_reduce
-    generalize g.op false false = a₀; generalize g.op true false = b₀
-    generalize g.op false true = c₀; generalize g.op true true = d₀
-    revert a₀ b₀ c₀ d₀; decide
-
-end SemiCircuit
+open Finset SemiCircuit
 
 /-! ### Semi-circuits -/
 
@@ -842,6 +175,42 @@ structure WellFormed : Prop where
   /-- The solution determines the auxiliary variables (fairness). -/
   unique : ∀ val val' : ℕ → Bool, (∀ j ∈ C.params, val j = val' j) → C.EqnsHold val →
     C.EqnsHold val' → ∀ v ∈ C.aux, val v = val' v
+
+namespace WellFormed
+
+variable {C} (hC : C.WellFormed) {i : ℕ}
+include hC
+
+theorem notMem_gates_of_mem_params (hi : i ∈ C.params) : i ∉ C.gates :=
+  Finset.disjoint_left.1 hC.disjoint_params_gates hi
+
+theorem notMem_aux_of_mem_params (hi : i ∈ C.params) : i ∉ C.aux :=
+  Finset.disjoint_left.1 hC.disjoint_params_aux hi
+
+theorem notMem_params_of_mem_gates (hi : i ∈ C.gates) : i ∉ C.params :=
+  Finset.disjoint_right.1 hC.disjoint_params_gates hi
+
+theorem notMem_aux_of_mem_gates (hi : i ∈ C.gates) : i ∉ C.aux :=
+  Finset.disjoint_right.1 hC.disjoint_aux_gates hi
+
+theorem notMem_params_of_mem_aux (hi : i ∈ C.aux) : i ∉ C.params :=
+  Finset.disjoint_right.1 hC.disjoint_params_aux hi
+
+theorem notMem_gates_of_mem_aux (hi : i ∈ C.aux) : i ∉ C.gates :=
+  Finset.disjoint_left.1 hC.disjoint_aux_gates hi
+
+/-- Gates do not occur in equations. -/
+theorem notMem_terms_of_mem_gates {e : ℕ} (hi : i ∈ C.gates) (he : e ∈ C.eqns) :
+    i ∉ (C.eqn e).terms := fun hie => by
+  rcases Finset.mem_union.1 (hC.terms_subset e he hie) with h | h
+  · exact hC.notMem_params_of_mem_gates hi h
+  · exact hC.notMem_aux_of_mem_gates hi h
+
+/-- A gate does not read itself. -/
+theorem not_reads_self (hi : i ∈ C.gates) : ¬ (C.gate i).Reads i := fun h =>
+  lt_irrefl i (hC.reads_lt i hi i hi h)
+
+end WellFormed
 
 /-! ### Rerouting -/
 
@@ -969,20 +338,6 @@ theorem affineIn_param {x : ℕ} (hx : x ∈ C.params) : C.AffineIn x false {x} 
   ⟨Finset.singleton_subset_iff.2 hx, fun val _ => by
     rw [Finset.sum_singleton]; cases val x <;> rfl⟩
 
-/-- The indicator bit string of `j`. -/
-def indicator (j : ℕ) : ℕ → Bool := fun i => decide (i = j)
-
-theorem sum_indicator (T : Finset ℕ) (j : ℕ) : ∑ i ∈ T, indicator j i = decide (j ∈ T) := by
-  have h : ∀ i, indicator j i = if j = i then (1 : Bool) else 0 := fun i => by
-    unfold indicator
-    split_ifs with hij
-    · rw [decide_eq_true hij.symm]; rfl
-    · rw [decide_eq_false (Ne.symm hij)]; rfl
-  rw [Finset.sum_congr rfl fun i _ => h i, Finset.sum_ite_eq]
-  split_ifs with hj
-  · rw [decide_eq_true hj]; rfl
-  · rw [decide_eq_false hj]; rfl
-
 /-- The affine expression of an internal value in the parameters is unique. -/
 theorem AffineIn.unique (hC : C.WellFormed) {t : ℕ} {c c' : Bool} {T T' : Finset ℕ}
     (h : C.AffineIn t c T) (h' : C.AffineIn t c' T') : c = c' ∧ T = T' := by
@@ -993,9 +348,9 @@ theorem AffineIn.unique (hC : C.WellFormed) {t : ℕ} {c c' : Bool} {T T' : Fins
       ← Finset.sum_congr rfl fun j hj => hu j (h'.1 hj), ← h.2 val heq, ← h'.2 val heq]
   have hc : c = c' := by simpa using key 0
   refine ⟨hc, Finset.ext fun j => ?_⟩
-  have := key (indicator j)
-  rw [sum_indicator, sum_indicator, hc, add_right_inj] at this
-  simpa using this
+  have := key (Pi.single j true)
+  rw [Finset.sum_pi_single', Finset.sum_pi_single', hc, add_right_inj] at this
+  by_cases hj : j ∈ T <;> by_cases hj' : j ∈ T' <;> simp_all
 
 /-! ### Affine functions of finitely many bits -/
 
@@ -1006,7 +361,7 @@ theorem exists_affine_of_add_add {M : Finset ℕ} {g : (ℕ → Bool) → Bool}
     (hadd : ∀ u u' u'' : ℕ → Bool, g (u + u' + u'') = g u + g u' + g u'') :
     ∃ T ⊆ M, ∀ u, g u = g 0 + ∑ j ∈ T, u j := by
   classical
-  let e : ℕ → ℕ → Bool := indicator
+  let e : ℕ → ℕ → Bool := fun j => Pi.single j true
   have hsum : ∀ A : Finset ℕ, g (∑ j ∈ A, e j) = g 0 + ∑ j ∈ A, (g (e j) + g 0) := by
     intro A
     induction A using Finset.induction_on with
@@ -1021,11 +376,8 @@ theorem exists_affine_of_add_add {M : Finset ℕ} {g : (ℕ → Bool) → Bool}
   have hu : g u = g (∑ j ∈ M.filter (fun j => u j = true), e j) := by
     apply hcongr
     intro i hi
-    rw [Finset.sum_apply]
-    change u i = ∑ j ∈ M.filter (fun j => u j = true), indicator j i
-    have : ∀ j, indicator j i = indicator i j := fun j => by
-      simp [indicator, eq_comm]
-    simp only [this, sum_indicator, Finset.mem_filter, hi, true_and]
+    rw [Finset.sum_apply, Finset.sum_pi_single]
+    simp only [Finset.mem_filter, hi, true_and]
     cases u i <;> rfl
   rw [hu, hsum]
   congr 1
@@ -1117,104 +469,25 @@ theorem consistent_update_iff {x : ℕ} (hxg : x ∉ C.gates)
     hupd i fun h => heqn e he (h ▸ hi)) (forall₂_congr fun J hJ => ?_)
   rw [hupd J fun h => hxg (h ▸ hJ), Gate.eval_congr fun i hi => hupd i fun h => hgate J hJ (h ▸ hi)]
 
-/-! ### Moving affine gates into the affine system -/
+/-- After rerouting `x`, which is not a gate, to a literal not reading it, a consistent assignment
+gives a consistent assignment of the original semi-circuit once `x` takes the value of the
+literal. -/
+theorem consistent_of_subst {x : ℕ} {ℓ : Lit} (hxg : x ∉ C.gates) (hℓ : ℓ.arg ≠ .node x)
+    {val : ℕ → Bool} (h : (C.subst x ℓ).Consistent val) :
+    C.Consistent (Function.update val x (ℓ.eval val)) := by
+  have hupd : ℓ.eval (Function.update val x (ℓ.eval val)) = ℓ.eval val :=
+    Lit.eval_congr fun i hi => Function.update_of_ne (by rintro rfl; exact hℓ hi) _ _
+  refine (consistent_subst (v := x) (ℓ := ℓ) (by rw [Function.update_self, hupd])).1 ?_
+  exact (consistent_update_iff (C := C.subst x ℓ) hxg (fun J _ => Gate.not_reads_subst hℓ)
+    (fun e _ => Equation.notMem_subst hℓ) val _).2 h
 
-/-- Add the argument `a` with coefficient `b` to the terms and right-hand side of an
-equation. -/
-def addArg (p : Finset ℕ × Bool) (b : Bool) (a : Arg) : Finset ℕ × Bool :=
-  if b then
-    match a with
-    | .node t => (toggle p.1 t, p.2)
-    | .const v => (p.1, p.2 ^^ v)
-  else p
+/-! ### Lifting consistent assignments -/
 
-theorem sum_addArg (p : Finset ℕ × Bool) (b : Bool) (a : Arg) (val : ℕ → Bool) :
-    ∑ i ∈ (addArg p b a).1, val i + (addArg p b a).2 =
-      ∑ i ∈ p.1, val i + p.2 + (b && a.eval val) := by
-  unfold addArg
-  cases b
-  · exact (add_zero _).symm
-  · cases a with
-    | node t =>
-      simp only [ite_true, sum_toggle, Arg.eval_node, Bool.true_and]
-      generalize ∑ i ∈ p.1, val i = s; generalize val t = v; generalize p.2 = r
-      revert s v r; decide
-    | const v =>
-      simp only [ite_true, Arg.eval_const, Bool.true_and]
-      generalize ∑ i ∈ p.1, val i = s; generalize p.2 = r
-      revert s v r; decide
-
-theorem mem_addArg {p : Finset ℕ × Bool} {b : Bool} {a : Arg} {z : ℕ}
-    (h : z ∈ (addArg p b a).1) : z ∈ p.1 ∨ a = .node z := by
-  unfold addArg at h
-  cases b
-  · exact Or.inl h
-  · cases a with
-    | node t =>
-      by_cases hzt : z = t
-      · exact Or.inr (by rw [hzt])
-      · exact Or.inl ((mem_toggle.1 h).2 hzt)
-    | const v => exact Or.inl h
-
-theorem card_addArg_le (p : Finset ℕ × Bool) (b : Bool) (a : Arg) :
-    (addArg p b a).1.card ≤ p.1.card + 1 := by
-  unfold addArg
-  cases b
-  · exact Nat.le_succ _
-  · cases a with
-    | node t => exact card_toggle_le _ _
-    | const v => exact Nat.le_succ _
-
-/-- The equation `J + b₁ t₁ + b₂ t₂ = c` replacing the affine gate
-`J = b₁ t₁ + b₂ t₂ + c`. -/
-def affEqn (g : Gate) (J : ℕ) : Equation :=
-  let c₀ := g.op false false
-  let p := addArg (addArg ({J}, c₀) (g.op true false ^^ c₀) g.left) (g.op false true ^^ c₀)
-    g.right
-  ⟨p.1, p.2⟩
-
-theorem affEqn_holds {g : Gate} (hg : IsAffineOp g.op) (J : ℕ) (val : ℕ → Bool) :
-    (affEqn g J).Holds val ↔ val J = g.eval val := by
-  unfold affEqn Equation.Holds
-  dsimp only
-  have h1 := sum_addArg ({J}, g.op false false) (g.op true false ^^ g.op false false) g.left val
-  have h2 := sum_addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
-    g.left) (g.op false true ^^ g.op false false) g.right val
-  rw [Finset.sum_singleton] at h1
-  dsimp only at h1
-  rw [h1] at h2
-  unfold Gate.eval
-  unfold IsAffineOp at hg
-  generalize ∑ i ∈ (addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
-    g.left) (g.op false true ^^ g.op false false) g.right).1, val i = s at h2 ⊢
-  generalize (addArg (addArg ({J}, g.op false false) (g.op true false ^^ g.op false false)
-    g.left) (g.op false true ^^ g.op false false) g.right).2 = r at h2 ⊢
-  generalize g.left.eval val = l at h2 ⊢
-  generalize g.right.eval val = rr at h2 ⊢
-  generalize val J = j at h2 ⊢
-  cases l <;> cases rr <;>
-  · revert h2 hg
-    generalize g.op false false = a
-    generalize g.op true false = b
-    generalize g.op false true = c
-    generalize g.op true true = d
-    revert s r j a b c d; decide
-
-theorem mem_affEqn {g : Gate} {J z : ℕ} (h : z ∈ (affEqn g J).terms) : z = J ∨ g.Reads z := by
-  unfold affEqn at h
-  rcases mem_addArg h with h | h
-  · rcases mem_addArg h with h | h
-    · exact Or.inl (Finset.mem_singleton.1 h)
-    · exact Or.inr (Or.inl h)
-  · exact Or.inr (Or.inr h)
-
-theorem card_affEqn_le (g : Gate) (J : ℕ) : (affEqn g J).terms.card ≤ 3 := by
-  unfold affEqn
-  have h1 := card_addArg_le ({J}, g.op false false) (g.op true false ^^ g.op false false) g.left
-  have h2 := card_addArg_le (addArg ({J}, g.op false false)
-    (g.op true false ^^ g.op false false) g.left) (g.op false true ^^ g.op false false) g.right
-  simp only [Finset.card_singleton] at h1
-  exact h2.trans (by omega)
+/-- Every consistent assignment of `C'` agrees on the parameters of `C` with a consistent
+assignment of `C` having the same output. -/
+def LiftsTo (C' C : SemiCircuit) : Prop :=
+  ∀ val, C'.Consistent val →
+    ∃ w, C.Consistent w ∧ (∀ j ∈ C.params, w j = val j) ∧ C'.out.eval val = C.out.eval w
 
 end SemiCircuit
 

@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Reduction
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Reparameterisation
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Rewiring
 
 /-!
 # Preliminary reductions of gate elimination
@@ -113,7 +115,7 @@ theorem Valid.unit_delete {S : State n} {d : ℕ} (hS : S.Valid f) (hf : IsAffin
   obtain ⟨Q, hQ, c, T, hT, hxT⟩ := SemiCircuit.exists_affineIn_of_mem_terms hS.wf hxp he hxe
   have hsw : S.SwapOK x Q c T := ⟨hxp, hxu, hQ, hT, hxT⟩
   have hS₁ := hS.swap hsw
-  have hQp : Q ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp hQ
+  have hQp : Q ∉ S.params := fun hp => hS.wf.notMem_aux_of_mem_params hp hQ
   have hQx : Q ≠ x := fun he' => hQp (he' ▸ hxp)
   have hdrop : (S.swap x Q c T).DropEqnOK e x := by
     refine ⟨he, Finset.mem_insert_self _ _, hxe, fun e' he' hee hxe' => ?_, fun K hK hr => ?_,
@@ -322,7 +324,7 @@ theorem Valid.exclusive {S : State n} (hS : S.Valid f) (hmov : ∀ J, ¬ S.Movab
         · rw [hr] at hi; cases hi; exact hz'
         · rw [hl] at hi; cases hi; exact hz'
         · rw [hr] at hi; cases hi; exact hzp
-      exact Finset.disjoint_left.1 hS.wf.disjoint_params_gates hip hig
+      exact hS.wf.notMem_gates_of_mem_params hip hig
     · exact h2 ⟨G, hG, z, z', haff, hargs, hz, hz1, hz', Ne.symm hzz⟩
   · exact hdel (Or.inr (Or.inr (Or.inr ⟨z, hz, e, hcz⟩)))
 

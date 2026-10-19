@@ -26,6 +26,8 @@ public import Complexity.Computability.Circuit.Boolean.AffineDisperser.MinimalAn
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Normal
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Operations
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Reduction
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Reparameterisation
+public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Rewiring
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.State
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Step
 public import Complexity.Computability.Circuit.Boolean.AltFormula
@@ -100,6 +102,12 @@ public import Complexity.Computability.Circuit.Boolean.Propagation
 public import Complexity.Computability.Circuit.Boolean.Routing
 public import Complexity.Computability.Circuit.Boolean.RoutingValues
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Equation
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Gate
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit.OfCircuit
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Reparameterisation
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Rewiring
+public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Simplification
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Construction
