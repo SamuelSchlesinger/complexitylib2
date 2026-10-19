@@ -8,7 +8,7 @@ import Complexity.Computability.Complexity.Classes.Hierarchy
 import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
 
 /-! Requests of adaptive word-query programs under language oracles, locality, membership in the
-oracle classes, the unary language, candidate deciders, the diagonal oracle and the
+oracle classes, the unary length language, candidate deciders, the diagonal oracle and the
 Baker–Gill–Solovay separation. -/
 
 namespace ComplexityTests.Relativization
@@ -90,21 +90,22 @@ relative to itself. -/
 example : ∃ A : Set (List Bool), A ∈ PWithOracle A encBits ∧ A ∉ P encBits :=
   ⟨_, mem_PWithOracle_self _, diagonal_not_mem_P⟩
 
-/-! ### The unary language -/
+/-! ### The unary length language -/
 
-example : [true, true] ∈ unaryLanguage {[false, true]} :=
-  replicate_mem_unaryLanguage.mpr ⟨[false, true], rfl, rfl⟩
+example : [true, true] ∈ unaryLengthLanguage {[false, true]} :=
+  replicate_mem_unaryLengthLanguage.mpr ⟨[false, true], rfl, rfl⟩
 
 /-- The empty word asks for a word of length zero. -/
-example : [] ∈ unaryLanguage {[]} := replicate_mem_unaryLanguage (n := 0).mpr ⟨[], rfl, rfl⟩
+example : [] ∈ unaryLengthLanguage {[]} :=
+  replicate_mem_unaryLengthLanguage (n := 0).mpr ⟨[], rfl, rfl⟩
 
-example : [] ∉ unaryLanguage ∅ := fun h => by simpa using h.2
+example : [] ∉ unaryLengthLanguage ∅ := fun h => by simpa using h.2
 
-/-- Words containing `false` are never in the unary language. -/
-example (B : Set (List Bool)) : [true, false] ∉ unaryLanguage B := fun h => by
+/-- Words containing `false` are never in the unary length language. -/
+example (B : Set (List Bool)) : [true, false] ∉ unaryLengthLanguage B := fun h => by
   simpa using h.1
 
-example : [true] ∉ unaryLanguage {[], [true, true]} := fun h => by
+example : [true] ∉ unaryLengthLanguage {[], [true, true]} := fun h => by
   obtain ⟨-, w, hw, hlen⟩ := h
   rcases hw with rfl | rfl <;> simp at hlen
 
@@ -125,16 +126,16 @@ example (A : Set (List Bool)) (n : ℕ) :
         (fun _ => none) (fun _ => 0)⟩, 0, 0⟩ n) = false := by
   constructor <;> rfl
 
-/-- The unary language of every oracle is in `NP` relative to it. -/
-example : unaryLanguage {[true, false]} ∈ NPWithOracle {[true, false]} encBits :=
-  unaryLanguage_mem_NPWithOracle _
+/-- The unary length language of every oracle is in `NP` relative to it. -/
+example : unaryLengthLanguage {[true, false]} ∈ NPWithOracle {[true, false]} encBits :=
+  unaryLengthLanguage_mem_NPWithOracle _
 
 /-- `NP` relative to an oracle is closed under reductions: prepending `true` reduces to the unary
 language. -/
 example (B : Set (List Bool)) :
-    {x : List Bool | true :: x ∈ unaryLanguage B} ∈ NPWithOracle B encBits :=
+    {x : List Bool | true :: x ∈ unaryLengthLanguage B} ∈ NPWithOracle B encBits :=
   PolyTimeReducible.mem_NPWithOracle ⟨List.cons true, by fun_prop, fun _ => Iff.rfl⟩
-    (unaryLanguage_mem_NPWithOracle B)
+    (unaryLengthLanguage_mem_NPWithOracle B)
 
 /-! ### The diagonal oracle -/
 
@@ -214,11 +215,11 @@ info: 'Cslib.Complexity.computableInPolyTimeWithOracle_mem' depends on axioms:
 #print axioms Cslib.OracleComp.interpret_id_congr
 
 /--
-info: 'Cslib.Complexity.unaryLanguage_mem_NPWithOracle' depends on axioms:
+info: 'Cslib.Complexity.unaryLengthLanguage_mem_NPWithOracle' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.unaryLanguage_mem_NPWithOracle
+#print axioms Cslib.Complexity.unaryLengthLanguage_mem_NPWithOracle
 
 /--
 info: 'Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle' depends on axioms:
@@ -228,11 +229,11 @@ info: 'Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle' depends on axioms:
 #print axioms Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle
 
 /--
-info: 'Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle' depends on axioms:
+info: 'Cslib.Complexity.exists_unaryLengthLanguage_notMem_PWithOracle' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_unaryLanguage_notMem_PWithOracle
+#print axioms Cslib.Complexity.exists_unaryLengthLanguage_notMem_PWithOracle
 
 /--
 info: 'Cslib.Complexity.exists_oracle_diagonal' depends on axioms:
