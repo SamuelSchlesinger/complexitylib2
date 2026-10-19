@@ -16,8 +16,8 @@ import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 Over a field, the column space of `A + B` lies in the sum of the column spaces of `A` and `B`, so
 the rank of a sum of matrices is at most the sum of their ranks (`Matrix.rank_add_le`). Negation
-does not change the rank (`Matrix.rank_neg`), and scaling does not increase it
-(`Matrix.rank_smul_le`).
+does not change the rank (`Matrix.rank_neg`), and scaling does not increase it, over any commutative
+semiring with the strong rank condition (`Matrix.rank_smul_le`).
 
 ## Main results
 
@@ -42,6 +42,13 @@ variable {m n K : Type*} [Fintype n]
   rw [← neg_one_smul R A]
   exact rank_smul_of_mem_nonZeroDivisors A isUnit_one.neg.mem_nonZeroDivisors
 
+/-- Scaling a matrix does not increase its rank, over any commutative semiring with the strong rank
+condition, such as a nontrivial commutative ring: `c • A = A (c • 1)`. -/
+theorem rank_smul_le {R : Type*} [CommSemiring R] [StrongRankCondition R] (c : R)
+    (A : Matrix m n R) : (c • A).rank ≤ A.rank := by
+  classical
+  simpa [Matrix.mul_smul] using rank_mul_le_left A (c • (1 : Matrix n n R))
+
 variable [Field K]
 
 /-- **Subadditivity of rank**: the rank of a sum of matrices over a field is at most the sum of
@@ -54,11 +61,5 @@ theorem rank_add_le (A B : Matrix m n K) : (A + B).rank ≤ A.rank + B.rank := b
 /-- The rank of a difference of matrices over a field is at most the sum of their ranks. -/
 theorem rank_sub_le (A B : Matrix m n K) : (A - B).rank ≤ A.rank + B.rank := by
   simpa [sub_eq_add_neg] using rank_add_le A (-B)
-
-/-- Scaling a matrix over a field does not increase its rank. -/
-theorem rank_smul_le (c : K) (A : Matrix m n K) : (c • A).rank ≤ A.rank := by
-  rcases eq_or_ne c 0 with rfl | hc
-  · simp
-  · exact (rank_smul_of_mem_nonZeroDivisors A (mem_nonZeroDivisors_of_ne_zero hc)).le
 
 end Matrix
