@@ -119,7 +119,7 @@ theorem recursiveChild_rowLift_same {k r : ℕ} {I : Type}
     recursiveChild (flip (fun _ => false) (rowLift (r := r) i B)) i c =
       flip (fun _ => false) B := by
   funext a
-  simp [recursiveChild, flip]
+  simp [recursiveChild, flip_apply]
 
 /-- After flipping `rowLift i B` in the all-false input, every child outside row `i` is still
 all-false. -/
@@ -128,7 +128,7 @@ theorem recursiveChild_rowLift_other {k r : ℕ} {I : Type}
     recursiveChild (flip (fun _ => false) (rowLift (r := r) i B)) j c =
       fun _ => false := by
   funext a
-  simp [recursiveChild, flip, hji]
+  simp [recursiveChild, flip_apply, hji]
 
 /-- If every member of `F` rejects the all-false input and accepts the all-false input with `B`
 flipped, then every next-level predicate accepts the all-false input with `rowLift i B` flipped. -/

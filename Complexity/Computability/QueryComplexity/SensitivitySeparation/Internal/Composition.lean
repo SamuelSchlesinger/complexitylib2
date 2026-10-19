@@ -108,15 +108,15 @@ theorem compose_flip_product_zero (f : (I → Bool) → Bool) (g : (J → Bool) 
   · have he : (fun j => flip (fun _ => false) (C ×ˢ D) (i, j)) =
         flip (fun _ => false) D := by
       funext j
-      simp [flip, hi]
+      simp [flip_apply, hi]
     rw [he, hD']
-    simp [flip, hi]
+    simp [flip_apply, hi]
   · have he : (fun j => flip (fun _ => false) (C ×ˢ D) (i, j)) =
         fun _ => false := by
       funext j
-      simp [flip, hi]
+      simp [flip_apply, hi]
     rw [he, hg]
-    simp [flip, hi]
+    simp [flip_apply, hi]
 
 section Finite
 variable [Fintype I] [Fintype J]

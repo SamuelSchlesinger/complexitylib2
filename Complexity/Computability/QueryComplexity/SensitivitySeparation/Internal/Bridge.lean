@@ -45,8 +45,9 @@ variable {n : ℕ}
 /-- The internal flip is `BitString.flipOn`, for any decidable equality on the coordinates. -/
 theorem flip_eq_flipOn {I : Type} [DecidableEq I] (x : I → Bool) (B : Finset I) :
     flip x B = BitString.flipOn B x := by
-  funext i
-  by_cases h : i ∈ B <;> simp [flip, BitString.flipOn, h]
+  unfold flip
+  congr
+  exact Subsingleton.elim _ _
 
 /-- On `Fin n`, the internal flip is CSLib's `BitString.flipBlock`. -/
 theorem flip_eq_flipBlock (x : BitString n) (B : Finset (Fin n)) :

@@ -63,8 +63,8 @@ theorem hammingDist_flip_self (x : I → Bool) (i : I) :
     ext j
     by_cases hj : j = i
     · subst j
-      cases x i <;> simp [flip]
-    · simp [flip, hj]
+      cases x i <;> simp [flip_apply]
+    · simp [flip_apply, hj]
   rw [hammingDist, h]
   simp
 
@@ -94,8 +94,8 @@ theorem hammingDist_flip_eq_add_one (x z : I → Bool) (i : I) (hi : x i = z i) 
     ext j
     by_cases hj : j = i
     · subst j
-      cases hx : x i <;> simp_all [flip]
-    · simp [flip, hj]
+      cases hx : x i <;> simp_all [flip_apply]
+    · simp [flip_apply, hj]
   rw [hammingDist, h, Finset.card_insert_of_notMem]
   · rfl
   · simp [hi]

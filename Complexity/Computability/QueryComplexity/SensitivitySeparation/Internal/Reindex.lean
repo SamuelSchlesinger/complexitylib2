@@ -60,7 +60,7 @@ theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
     (fun i => flip x (B.map e.toEmbedding) (e i)) =
       flip (fun i => x (e i)) B := by
   funext i
-  simp [flip]
+  simp [flip_apply]
 
 /-- Singleton case of `flip_reindex`: pulling back `flip x {e i}` along `e` gives the pullback of
 `x` with `i` flipped. -/

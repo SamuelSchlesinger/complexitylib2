@@ -96,7 +96,7 @@ theorem baseBlock_disjoint {M L : ℕ} :
 theorem flip_zero_baseBlock {M L : ℕ} (j : Fin M) :
     flip (fun _ : Fin M × Fin L => false) (baseBlock j) = blockCenter j := by
   ext p
-  simp [flip, blockCenter]
+  simp [flip_apply, blockCenter]
 
 /-- Each row center `blockCenter j` is at Hamming distance `L` from the all-`false`
 input. -/

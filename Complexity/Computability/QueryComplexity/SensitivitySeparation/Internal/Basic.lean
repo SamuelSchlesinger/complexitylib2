@@ -51,22 +51,22 @@ variable {I J K : Type}
 /-- Flipping the empty block leaves the input unchanged. -/
 @[simp] theorem flip_empty (x : I → Bool) : flip x ∅ = x := by
   funext i
-  simp [flip]
+  simp [flip_apply]
 
 /-- Flipping `{i}` negates coordinate `i`. -/
 @[simp] theorem flip_singleton_self (x : I → Bool) (i : I) :
     flip x {i} i = !(x i) := by
-  simp [flip]
+  simp [flip_apply]
 
 /-- Flipping `{i}` leaves every coordinate `j ≠ i` unchanged. -/
 theorem flip_singleton_other (x : I → Bool) {i j : I} (h : j ≠ i) :
     flip x {i} j = x j := by
-  simp [flip, h]
+  simp [flip_apply, h]
 
 /-- Flipping the same block twice gives back the original input. -/
 @[simp] theorem flip_flip (x : I → Bool) (B : Finset I) : flip (flip x B) B = x := by
   funext i
-  by_cases h : i ∈ B <;> simp [flip, h]
+  by_cases h : i ∈ B <;> simp [flip_apply, h]
 
 open scoped Classical in
 /-- For `i ∉ B`, flipping `insert i B` equals flipping `B` and then `{i}`. -/
@@ -75,8 +75,8 @@ theorem flip_insert (x : I → Bool) (i : I) (B : Finset I) (hi : i ∉ B) :
   funext j
   by_cases hji : j = i
   · subst j
-    simp [flip, hi]
-  · simp [flip, hji]
+    simp [flip_apply, hi]
+  · simp [flip_apply, hji]
 
 open scoped Classical in
 /-- On the product index type `J × I`, row `j` of `flip x {(j, i)}` is row `j` of `x`
@@ -84,20 +84,20 @@ with coordinate `i` flipped. -/
 theorem flip_prod_same (x : J × I → Bool) (j : J) (i : I) :
     (fun a => flip x {(j, i)} (j, a)) = flip (fun a => x (j, a)) {i} := by
   funext a
-  simp [flip]
+  simp [flip_apply]
 
 /-- On the product index type `J × I`, every row `k ≠ j` of `flip x {(j, i)}` equals
 row `k` of `x`. -/
 theorem flip_prod_other (x : J × I → Bool) {j k : J} (i : I) (hk : k ≠ j) :
     (fun a => flip x {(j, i)} (k, a)) = fun a => x (k, a) := by
   funext a
-  simp [flip, hk]
+  simp [flip_apply, hk]
 
 open scoped Classical in
 /-- Flipping a block `B` of the all-`false` input yields the indicator of `B`. -/
 @[simp] theorem flip_false (B : Finset I) (i : I) :
     flip (fun _ => false) B i = decide (i ∈ B) := by
-  by_cases h : i ∈ B <;> simp [flip, h]
+  by_cases h : i ∈ B <;> simp [flip_apply, h]
 
 section Finite
 
@@ -107,7 +107,7 @@ variable [Fintype I]
 theorem flip_differences (x y : I → Bool) :
     flip x (Finset.univ.filter fun i => x i ≠ y i) = y := by
   funext i
-  cases hx : x i <;> cases hy : y i <;> simp [flip, hx, hy]
+  cases hx : x i <;> cases hy : y i <;> simp [flip_apply, hx, hy]
 
 /-- The sensitivity at any input is at most the number of coordinates `Fintype.card I`. -/
 theorem sensitivityAt_le_card (f : (I → Bool) → Bool) (x : I → Bool) :

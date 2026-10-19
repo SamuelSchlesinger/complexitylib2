@@ -7,7 +7,7 @@ Authors: OpenAI, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Init
+public import Complexity.Foundations.Data.BitString.Flip
 public import Mathlib.Data.Fintype.BigOperators
 public import Mathlib.Data.Fintype.Powerset
 public import Mathlib.Data.Finset.Lattice.Fold
@@ -26,7 +26,8 @@ needs arbitrary finite coordinate types; `Bridge` identifies them on `Fin n` wit
 
 ## Main definitions
 
-* `flip`: negate the coordinates of an input lying in a given finite set.
+* `flip`: negate the coordinates of an input lying in a given finite set; this is
+  `BitString.flipOn` with the arguments swapped and classical decidable equality.
 * `sensitivityAt`: the number of coordinates whose flip changes `f x`.
 * `sensitivity`: the maximum of `sensitivityAt f x` over all inputs `x`.
 * `blockSensitivityAt`: the maximum number of disjoint nonempty blocks whose flips change `f x`.
@@ -49,7 +50,13 @@ noncomputable section
 open scoped Classical in
 /-- Flip exactly the coordinates belonging to the specified block. -/
 def flip {I : Type} (x : I → Bool) (B : Finset I) : I → Bool :=
-  fun i => if i ∈ B then !(x i) else x i
+  BitString.flipOn B x
+
+open scoped Classical in
+/-- Coordinatewise, `flip x B` negates exactly the coordinates in `B`. -/
+theorem flip_apply {I : Type} (x : I → Bool) (B : Finset I) (i : I) :
+    flip x B i = if i ∈ B then !(x i) else x i :=
+  rfl
 
 /-- The ordinary number of sensitive individual input coordinates. -/
 def sensitivityAt {I : Type} [Fintype I]

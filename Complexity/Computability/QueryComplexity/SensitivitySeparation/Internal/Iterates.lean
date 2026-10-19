@@ -126,7 +126,7 @@ theorem blockSensitivityAt_iterateCompose_zero (f : (I → Bool) → Bool)
         intro B hB
         have hB' : B = {()} := Finset.mem_singleton.mp hB
         subst B
-        exact ⟨Finset.singleton_nonempty _, by simp [iterateCompose, flip]⟩)
+        exact ⟨Finset.singleton_nonempty _, by simp [iterateCompose, flip_apply]⟩)
     simpa only [Finset.card_singleton, pow_zero] using h
   | succ m ih =>
     change _ ≤ blockSensitivityAt (compose f (iterateCompose f m)) (fun _ => false)
