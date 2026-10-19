@@ -191,15 +191,6 @@ variable (χ : AddChar (ZMod d) K) (hχ : χ.IsPrimitive)
 def fourierCoeff (R : Matrix (ZMod d) (ZMod d) K) (a b : ZMod d) : K :=
   (d : K)⁻¹ * ∑ j, χ (-a * j) * R j (j - b)
 
-omit [CharZero K] in
-include hχ in
-lemma orthogonality (x : ZMod d) : ∑ a, χ (a * x) = if x = 0 then ↑d else 0 := by
-  classical
-  by_cases hx : x = 0
-  · simp [hx, ZMod.card]
-  · rw [ite_eq_right hx]
-    simpa [AddChar.mulShift_apply, mul_comm] using AddChar.sum_eq_zero_of_ne_one (hχ hx)
-
 include hχ in
 /-- Fourier inversion on each cyclic matrix diagonal. -/
 theorem fourier_reconstruction (R : Matrix (ZMod d) (ZMod d) K) :
@@ -232,7 +223,8 @@ theorem fourier_reconstruction (R : Matrix (ZMod d) (ZMod d) K) :
         rw [mul_right_comm, ← AddChar.map_add_eq_mul]
         congr 2
         ring
-      _ = _ := by simp only [orthogonality χ hχ, sub_eq_zero]
+      _ = _ := by
+        simp only [AddChar.sum_mulShift _ hχ, ZMod.card, sub_eq_zero, Nat.cast_ite, Nat.cast_zero]
   simp_rw [hc]
   simp only [ite_mul, zero_mul]
   rw [Finset.sum_ite_eq]

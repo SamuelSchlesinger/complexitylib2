@@ -318,9 +318,6 @@ theorem det_ne_zero (χ : AddChar (ZMod M) K) (hχ : χ.IsPrimitive)
     (hX : Function.Injective (Rectangular.blockEval
       (fun i => ((HahnSeries.C : E →+* F E).comp φ).mapMatrix (A i)) X)) :
     (polynomial (N := N) χ A points).det ≠ 0 := by
-  let : CharZero (F E) := CharZero.of_addMonoidHom
-    (HahnSeries.C : E →+* F E).toAddMonoidHom (map_one (HahnSeries.C : E →+* F E))
-    HahnSeries.C_injective
   let ψ : K →+* F E := (HahnSeries.C : E →+* F E).comp φ
   let τ : F E := HahnSeries.single 1 1
   let A' := fun i => ψ.mapMatrix (A i)
