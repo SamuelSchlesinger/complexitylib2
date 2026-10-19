@@ -24,12 +24,14 @@ machines (`Turing.MultiTapeTM.computableTidilyInDegree_add`,
 accumulator grows by at most one digit more than the length of the element added. Powers of two are
 computed from a unary exponent by repeated doubling. Strict comparison scans bit positions: `m < n`
 exactly when some position holds a one in `n` and a zero in `m` and all higher positions agree
-(`Nat.lt_of_testBit`); the scan is quadratic in the number of digits. Truncated subtraction is
-schoolbook subtraction: a left fold over the digit pairs of both operands keeps a borrow and
-appends one difference digit per position. A final borrow means that the difference is negative;
-otherwise the digits are read back as a natural (`binary_foldr_bit`), dropping trailing zeros. The
-verifiers and reductions of the number problems (`Cslib.Complexity.SubsetSum` and its relatives)
-are built from these.
+(`Nat.lt_of_testBit`); the scan is quadratic in the number of digits. The verifiers and reductions
+of the number problems (`Cslib.Complexity.SubsetSum` and its relatives) are built from these.
+
+Truncated subtraction is schoolbook subtraction: a left fold over the digit pairs of both operands
+keeps a borrow and appends one difference digit per position. A final borrow means that the
+difference is negative; otherwise the digits are read back as a natural (`binary_foldr_bit`),
+dropping trailing zeros. General powers to a unary exponent are computed by repeated
+multiplication.
 
 ## Main definitions
 
@@ -52,8 +54,10 @@ are built from these.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_pow`: a power to a unary exponent.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_foldr_bit`: a raw word of digits, read as
   a binary natural.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_add'`, `.binary_mul'`, `.binary_sub'`,
-  `.binary_pow'`, `.binary_lt'`, `.binary_le'`: composition rules for `fun_prop`.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_add'`, `.binary_lt'`, `.binary_le'`:
+  composition rules for `fun_prop`.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mul'`, `.binary_sub'`, `.binary_pow'`:
+  composition rules for `fun_prop`.
 -/
 
 @[expose] public section
