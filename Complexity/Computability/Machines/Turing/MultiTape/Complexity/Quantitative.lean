@@ -26,6 +26,14 @@ Framed-list and option rules infer the payload encoding from the representation 
 * `Turing.MultiTapeTM.ComputableTidilyInDegree.comp_le`: composition at requested degrees.
 * `Turing.MultiTapeTM.ComputableTidilyInDegree.prod_le`: pairing at requested degrees, retaining
   the components' output-size bounds.
+* `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsReverse`,
+  `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsDropLast`,
+  `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast`,
+  `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsGetLast?`,
+  `Turing.MultiTapeTM.ComputableTidilyInDegree.optionBoolToList`,
+  `Turing.MultiTapeTM.ComputableTidilyInDegree.bitsAppend`,
+  `Turing.MultiTapeTM.ComputableTidilyInDegree.unaryAdd`: degree rules for raw bit-list reversal,
+  prefix, last-bit extraction, concatenation, and unary addition.
 
 ## References
 
@@ -46,8 +54,12 @@ attribute [fun_prop] ComputableTidilyInDegree.const ComputableTidilyInDegree.fst
   ComputableTidilyInDegree.fst' ComputableTidilyInDegree.snd'
   ComputableTidilyInDegree.cons ComputableTidilyInDegree.snoc
   ComputableTidilyInDegree.listAppend ComputableTidilyInDegree.isSome
+  ComputableTidilyInDegree.unary_succ ComputableTidilyInDegree.unary_pred
+  ComputableTidilyInDegree.unary_sub ComputableTidilyInDegree.unary_min
   ComputableTidilyInDegree.int_succ ComputableTidilyInDegree.int_pred
   ComputableTidilyInO.foldl_bits_finite ComputableTidilyInTimeAndSpace.map_bits
+  ComputableTidilyInTimeAndSpace.reverse_bits ComputableTidilyInTimeAndSpace.dropLast_bits
+  ComputableTidilyInTimeAndSpace.getLast_bits ComputableTidilyInTimeAndSpace.getLast?_bits
 
 namespace ComputableTidilyInDegree
 
@@ -80,6 +92,64 @@ theorem optionGetD {α : Type*} (enc : α ↪ List Bool) (fallback : α) :
 theorem id' {α : Type*} {enc : α ↪ List Bool} :
     ComputableTidilyInDegree (fun x : α => x) enc enc 1 1 :=
   of_eq fun _ => rfl
+
+/-- Reverse a raw bit list in linear time and linear output size. -/
+@[fun_prop]
+theorem bitsReverse :
+    ComputableTidilyInDegree List.reverse encBits encBits 1 1 :=
+  of_bounds ⟨2, fun _ => by simp; omega⟩ ⟨0, fun _ => by simp⟩
+    ComputableTidilyInTimeAndSpace.reverse_bits
+
+/-- Drop the last bit of a raw bit list in linear time and linear output size. -/
+@[fun_prop]
+theorem bitsDropLast :
+    ComputableTidilyInDegree List.dropLast encBits encBits 1 1 :=
+  of_bounds ⟨8, fun _ => by simp; omega⟩ ⟨0, fun _ => by simp⟩
+    ComputableTidilyInTimeAndSpace.dropLast_bits
+
+/-- Extract the last bit of a raw bit list as a 0-or-1-element list in linear time and constant
+output size. -/
+@[fun_prop]
+theorem bitsGetLast :
+    ComputableTidilyInDegree (fun l : List Bool => l.getLast?.toList) encBits encBits 1 0 :=
+  ⟨⟨_, _, ⟨8, fun _ => by simp; omega⟩, ⟨0, fun _ => by simp⟩,
+    ComputableTidilyInTimeAndSpace.getLast_bits⟩,
+    ⟨1, fun l => by simp [Option.length_toList_le]⟩⟩
+
+/-- Extract the last bit of a raw bit list as an `Option Bool` in linear time and constant output
+size. -/
+@[fun_prop]
+theorem bitsGetLast? :
+    ComputableTidilyInDegree (List.getLast? (α := Bool)) encBits (encOption encBool) 1 0 :=
+  ⟨⟨_, _, ⟨8, fun _ => by simp; omega⟩, ⟨0, fun _ => by simp⟩,
+    ComputableTidilyInTimeAndSpace.getLast?_bits⟩,
+    ⟨2, fun l => by cases h : l.getLast? <;> simp [h]⟩⟩
+
+/-- Convert an `Option Bool` to a 0-or-1-element bit list in linear time and linear output size. -/
+@[fun_prop]
+theorem optionBoolToList :
+    ComputableTidilyInDegree (Option.toList (α := Bool)) (encOption encBool) encBits 1 1 :=
+  of_linear (.of_tail fun o => by cases o <;> rfl)
+
+/-- Concatenate two raw bit lists while preserving their time and output degrees independently. -/
+@[fun_prop]
+theorem bitsAppend {α : Type*} {encIn : α ↪ List Bool} {f g : α → List Bool}
+    {df ef dg eg d e : ℕ}
+    (hf : ComputableTidilyInDegree f encIn encBits df ef)
+    (hg : ComputableTidilyInDegree g encIn encBits dg eg)
+    (hd : max df dg ≤ d) (he : max ef eg ≤ e) :
+    ComputableTidilyInDegree (fun x => f x ++ g x) encIn encBits d e :=
+  (hf.append hg fun _ => rfl).mono hd he
+
+/-- Add two unary natural numbers while preserving their time and output degrees independently. -/
+@[fun_prop]
+theorem unaryAdd {α : Type*} {encIn : α ↪ List Bool} {f g : α → ℕ}
+    {df ef dg eg d e : ℕ}
+    (hf : ComputableTidilyInDegree f encIn encUnary df ef)
+    (hg : ComputableTidilyInDegree g encIn encUnary dg eg)
+    (hd : max df dg ≤ d) (he : max ef eg ≤ e) :
+    ComputableTidilyInDegree (fun x => f x + g x) encIn encUnary d e :=
+  (hf.append hg fun _ => List.replicate_add _ _ true).mono hd he
 
 /-- Compose using the intermediate output size. The computation premises determine the degrees
 before arithmetic compares them with the requested bound. -/
