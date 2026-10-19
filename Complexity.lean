@@ -414,6 +414,7 @@ public import Complexity.Computability.Complexity.Classes.SPP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
+public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.Classes.Space
@@ -437,8 +438,10 @@ public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness
+public import Complexity.Computability.Complexity.CookLevin.Counting
 public import Complexity.Computability.Complexity.CookLevin.Encoding
 public import Complexity.Computability.Complexity.CookLevin.Parameters
+public import Complexity.Computability.Complexity.CookLevin.Parsimonious
 public import Complexity.Computability.Complexity.CookLevin.PolyTime
 public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Tableau
@@ -472,6 +475,7 @@ public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
+public import Complexity.Computability.Complexity.Problems.SharpSAT
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
@@ -1156,6 +1160,7 @@ public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding
 public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
+public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
