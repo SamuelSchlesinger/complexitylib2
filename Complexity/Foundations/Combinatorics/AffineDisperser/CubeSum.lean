@@ -47,6 +47,78 @@ namespace Cslib
 variable {R : Type*} [CommRing R] [Algebra (ZMod 2) R] {κ P : Type*} [Fintype κ] [DecidableEq κ]
   [Fintype P]
 
+omit [Fintype κ] [DecidableEq κ] [Fintype P] in
+/-- An affine form in Boolean variables, split over its constant term (`none`) and its variables:
+the coefficient times the indicator of the chosen variable. -/
+theorem elim_smul_eq_mul (a : R) (b : κ → R) (c : κ → ZMod 2) (o : Option κ) :
+    o.elim a (fun v => c v • b v) =
+      o.elim a b * o.elim 1 (fun v => algebraMap (ZMod 2) R (c v)) := by
+  cases o with
+  | none => simp
+  | some v => simp [Algebra.smul_def, mul_comm]
+
+omit [Fintype P] in
+theorem prod_elim_algebraMap (ℓ : P → Option κ) [Fintype P] (c : κ → ZMod 2) :
+    ∏ p, (ℓ p).elim 1 (fun v => algebraMap (ZMod 2) R (c v)) =
+      if ∀ p v, ℓ p = some v → c v = 1 then 1 else 0 := by
+  split_ifs with h
+  · refine Finset.prod_eq_one fun p _ => ?_
+    cases hp : ℓ p with
+    | none => rfl
+    | some v => simp [h p v hp]
+  · push Not at h
+    obtain ⟨p, v, hp, hv⟩ := h
+    refine Finset.prod_eq_zero (Finset.mem_univ p) ?_
+    have : c v = 0 := by
+      generalize c v = x at hv ⊢
+      fin_cases x
+      · rfl
+      · exact absurd rfl hv
+    simp [hp, this]
+
+omit [Fintype κ] [DecidableEq κ] in
+theorem two_eq_zero : (2 : R) = 0 := by
+  rw [← map_ofNat (algebraMap (ZMod 2) R) 2, show (2 : ZMod 2) = 0 from rfl, map_zero]
+
+omit [DecidableEq κ] in
+/-- The number of Boolean points that are `1` on every variable used by `ℓ` is even unless `ℓ`
+uses every variable. -/
+theorem sum_cube_ite (ℓ : P → Option κ) [DecidableEq κ] :
+    ∑ c : κ → ZMod 2, (if ∀ p v, ℓ p = some v → c v = 1 then (1 : R) else 0) =
+      if ∀ v, ∃ p, ℓ p = some v then 1 else 0 := by
+  classical
+  let T : Finset κ := Finset.univ.filter fun v => ∃ p, ℓ p = some v
+  let t : κ → Finset (ZMod 2) := fun v => if v ∈ T then {1} else Finset.univ
+  have hmem : ∀ c : κ → ZMod 2,
+      (∀ p v, ℓ p = some v → c v = 1) ↔ c ∈ Fintype.piFinset t := fun c => by
+    rw [Fintype.mem_piFinset]
+    constructor
+    · intro h v
+      by_cases hv : v ∈ T
+      · obtain ⟨p, hp⟩ := (Finset.mem_filter.1 hv).2
+        simp [t, hv, h p v hp]
+      · simp [t, hv]
+    · intro h p v hp
+      have hv : v ∈ T := Finset.mem_filter.2 ⟨Finset.mem_univ v, p, hp⟩
+      simpa [t, hv] using h v
+  simp_rw [hmem]
+  rw [Finset.sum_boole, Finset.filter_mem_eq_inter, Finset.univ_inter, Fintype.card_piFinset]
+  have hprod : ∏ v, (t v).card = 2 ^ (Finset.univ.filter fun v => v ∉ T).card := by
+    rw [Finset.card_eq_sum_ones, ← Finset.prod_pow_eq_pow_sum, Finset.prod_filter]
+    refine Finset.prod_congr rfl fun v _ => ?_
+    by_cases hv : v ∈ T <;> simp [t, hv, ZMod.card]
+  rw [hprod]
+  split_ifs with hcov
+  · have : (Finset.univ.filter fun v => v ∉ T) = ∅ := by
+      refine Finset.filter_false_of_mem fun v _ => ?_
+      simpa [T] using hcov v
+    simp [this]
+  · push Not at hcov
+    obtain ⟨v, hv⟩ := hcov
+    have hpos : 0 < (Finset.univ.filter fun v => v ∉ T).card :=
+      Finset.card_pos.2 ⟨v, Finset.mem_filter.2 ⟨Finset.mem_univ v, by simpa [T] using hv⟩⟩
+    rw [Nat.cast_pow, Nat.cast_ofNat, two_eq_zero, zero_pow hpos.ne']
+
 /-- **Cube sum of a product of affine forms**: summing `∏ₚ (aₚ + ∑ᵥ cᵥ • bₚᵥ)` over the Boolean
 cube leaves the assignments `ℓ` of factors to variables, or to the constant term (`none`), that
 cover every variable; each contributes the product of the chosen coefficients. -/
@@ -54,19 +126,57 @@ theorem sum_cube_prod_affine [DecidableEq P] (a : P → R) (b : P → κ → R) 
     ∑ c : κ → ZMod 2, ∏ p, (a p + ∑ v, c v • b p v) =
       ∑ ℓ ∈ Finset.univ.filter (fun ℓ : P → Option κ => ∀ v, ∃ p, ℓ p = some v),
         ∏ p, (ℓ p).elim (a p) (b p) := by
-  sorry
+  have hsplit : ∀ c : κ → ZMod 2, ∀ p, a p + ∑ v, c v • b p v =
+      ∑ o : Option κ, o.elim (a p) (fun v => c v • b p v) := fun c p => by
+    rw [Fintype.sum_option]
+    rfl
+  simp_rw [hsplit, Fintype.prod_sum, elim_smul_eq_mul, Finset.prod_mul_distrib]
+  rw [Finset.sum_comm, Finset.sum_filter]
+  refine Finset.sum_congr rfl fun ℓ _ => ?_
+  rw [← Finset.mul_sum]
+  simp_rw [prod_elim_algebraMap]
+  rw [sum_cube_ite, mul_ite, mul_one, mul_zero]
 
 /-- If every assignment covering all variables uses a vanishing coefficient, the cube sum of the
 product of affine forms is zero. -/
 theorem sum_cube_prod_affine_eq_zero (a : P → R) (b : P → κ → R)
     (h : ∀ ℓ : P → Option κ, (∀ v, ∃ p, ℓ p = some v) → ∃ p v, ℓ p = some v ∧ b p v = 0) :
     ∑ c : κ → ZMod 2, ∏ p, (a p + ∑ v, c v • b p v) = 0 := by
-  sorry
+  classical
+  rw [sum_cube_prod_affine]
+  refine Finset.sum_eq_zero fun ℓ hℓ => ?_
+  obtain ⟨p, v, hp, hv⟩ := h ℓ (Finset.mem_filter.1 hℓ).2
+  exact Finset.prod_eq_zero (Finset.mem_univ p) (by simp [hp, hv])
 
 /-- With as many affine factors as Boolean variables, the cube sum of their product is the
 permanent of the matrix of linear coefficients: the constant terms do not contribute. -/
 theorem sum_cube_prod_affine_eq_permanent (a : κ → R) (b : κ → κ → R) :
     ∑ c : κ → ZMod 2, ∏ p, (a p + ∑ v, c v • b p v) = (Matrix.of b).permanent := by
-  sorry
+  classical
+  rw [sum_cube_prod_affine]
+  have himage : (Finset.univ.filter fun ℓ : κ → Option κ => ∀ v, ∃ p, ℓ p = some v) =
+      Finset.univ.image fun π : Equiv.Perm κ => fun p => some (π p) := by
+    ext ℓ
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_image]
+    constructor
+    · intro hcov
+      choose sec hsec using hcov
+      have hinj : Function.Injective sec := fun v v' h => by
+        have := (hsec v).symm.trans ((congrArg ℓ h).trans (hsec v'))
+        exact Option.some_injective _ this
+      have hbij : Function.Bijective sec := Finite.injective_iff_bijective.1 hinj
+      refine ⟨(Equiv.ofBijective sec hbij).symm, funext fun p => ?_⟩
+      obtain ⟨v, rfl⟩ := hbij.2 p
+      rw [hsec v]
+      congr 1
+      exact (Equiv.ofBijective sec hbij).symm_apply_apply v
+    · rintro ⟨π, rfl⟩ v
+      exact ⟨π.symm v, by simp⟩
+  rw [himage, Finset.sum_image fun π _ π' _ h => Equiv.ext fun p =>
+    Option.some_injective _ (congrFun h p)]
+  rw [Matrix.permanent, ← Equiv.sum_comp (Equiv.inv (Equiv.Perm κ))]
+  refine Finset.sum_congr rfl fun π _ => ?_
+  rw [← Equiv.prod_comp π]
+  simp
 
 end Cslib

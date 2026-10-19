@@ -66,7 +66,18 @@ theorem mooreMatrix_apply {k : ℕ} (u : Fin k → F) (l m : Fin k) :
 /-- In characteristic two the determinant of a matrix is its permanent. -/
 theorem det_eq_permanent {R ι : Type*} [CommRing R] [CharP R 2] [Fintype ι] [DecidableEq ι]
     (M : Matrix ι ι R) : M.det = M.permanent := by
-  sorry
+  rw [Matrix.det_apply, Matrix.permanent]
+  refine Finset.sum_congr rfl fun σ _ => ?_
+  rcases Int.units_eq_one_or (Equiv.Perm.sign σ) with h | h
+  · rw [h, one_smul]
+  · rw [h, Units.neg_smul, one_smul, CharTwo.neg_eq]
+
+/-- `x ^ (2 ^ k - 1)` is the product of the `k` additive powers `x ^ 2 ^ m`, `m < k`. -/
+theorem pow_two_pow_sub_one_eq_prod {R : Type*} [CommMonoid R] (x : R) (k : ℕ) :
+    x ^ (2 ^ k - 1) = ∏ m : Fin k, x ^ 2 ^ (m : ℕ) := by
+  rw [Finset.prod_pow_eq_pow_sum, Fin.sum_univ_eq_sum_range (fun m => 2 ^ m) k,
+    Nat.geomSum_eq le_rfl]
+  simp
 
 variable [Algebra (ZMod 2) F]
 
@@ -74,7 +85,14 @@ variable [Algebra (ZMod 2) F]
 `∑_{c ∈ 𝔽₂ᵏ} (a + ∑ cₗ uₗ) ^ (2 ^ k - 1)` is the Moore determinant of `u`. -/
 theorem sum_cube_pow_eq_det_mooreMatrix {k : ℕ} (a : F) (u : Fin k → F) :
     ∑ c : Fin k → ZMod 2, (a + ∑ l, c l • u l) ^ (2 ^ k - 1) = (mooreMatrix u).det := by
-  sorry
+  have := charP_two (F := F)
+  have hfrob : ∀ (c : Fin k → ZMod 2) (m : Fin k), (a + ∑ l, c l • u l) ^ 2 ^ (m : ℕ) =
+      a ^ 2 ^ (m : ℕ) + ∑ l, c l • (u l ^ 2 ^ (m : ℕ)) := fun c m => by
+    rw [add_pow_char_pow, sum_pow_char_pow]
+    simp_rw [smul_pow, ZMod.pow_card_pow]
+  simp_rw [pow_two_pow_sub_one_eq_prod, hfrob]
+  rw [sum_cube_prod_affine_eq_permanent, det_eq_permanent, ← Matrix.permanent_transpose]
+  rfl
 
 /-- **Monomial expansion of a Moore permanent** [BenSassonKopparty2012, Lemma 3.13]: for the
 linearized function `Q = linearizedEval a` on a field with `2 ^ n` elements,
@@ -86,6 +104,17 @@ theorem permanent_mooreMatrix_linearizedEval [Finite F] {n : ℕ} [NeZero n]
       ∑ τ : Fin k → ZMod n,
         (Matrix.of fun l m : Fin k => a (τ l - (m : ℕ)) ^ 2 ^ (m : ℕ)).permanent *
           ∏ l, w l ^ 2 ^ (τ l).val := by
-  sorry
+  classical
+  simp only [Matrix.permanent, mooreMatrix_apply]
+  simp_rw [linearizedEval_pow_two_pow hn, linearizedEval, Fintype.prod_sum]
+  simp_rw [Finset.sum_mul]
+  conv_rhs => rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun σ _ => ?_
+  rw [← Equiv.sum_comp (Equiv.arrowCongr σ.symm (Equiv.refl (ZMod n)))]
+  refine Finset.sum_congr rfl fun τ _ => ?_
+  simp only [Equiv.arrowCongr_apply, Equiv.coe_refl, Function.comp_apply, Equiv.symm_symm,
+    Finset.prod_mul_distrib, Matrix.of_apply, id]
+  congr 1
+  exact Equiv.prod_comp σ fun l => w l ^ 2 ^ (τ l).val
 
 end Cslib.FiniteField
