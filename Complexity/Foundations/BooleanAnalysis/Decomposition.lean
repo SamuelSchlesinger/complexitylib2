@@ -22,18 +22,16 @@ bit `i` set to `false` and to `true` gives the decomposition `f = Eᵢ f + χ_{i
 its average over bit `i` and its derivative in `i` (`BitString.eq_add_chi_mul_derivative`)
 [O'Donnell, Section 2.2][ODonnell2014].
 
-Two bookkeeping facts go with it: the sets of coordinates are permuted by `S ↦ T ∆ S`, so sums over
-sets may be reindexed by it (`BitString.sum_symmDiff`), and averaging over the cube the values of a
-function at bit `i` equal to `false` and to `true` is averaging the function
-(`BitString.expect_update_false_add_update_true`). The coefficient of `f` on `{i}` is the average
-of its derivative in `i` (`BitString.fourierCoeff_singleton_eq_expect_derivative`).
+Averaging over the cube the values of a function at bit `i` equal to `false` and to `true` is
+averaging the function (`BitString.expect_update_false_add_update_true`). The coefficient of `f`
+on `{i}` is the average of its derivative in `i`
+(`BitString.fourierCoeff_singleton_eq_expect_derivative`).
 
 ## Main results
 
 * `Cslib.BitString.cond_eq_add_chi_mul`, `Cslib.BitString.fourierCoeff_cond`: the decomposition
   of a branch on bit `i`, and its Fourier coefficients.
 * `Cslib.BitString.eq_add_chi_mul_derivative`: the decomposition `f = Eᵢ f + χ_{i} Dᵢ f`.
-* `Cslib.BitString.sum_symmDiff`: reindexing a sum over sets by a symmetric difference.
 * `Cslib.BitString.expect_update_false_add_update_true`: averaging over one bit.
 * `Cslib.BitString.fourierCoeff_singleton_eq_expect_derivative`: the coefficient on `{i}` is the
   average derivative in `i`.
@@ -62,11 +60,6 @@ theorem cond_eq_add_chi_mul (i : ι) (f₀ f₁ : (ι → Bool) → ℝ) (x : ι
     ring
   · rw [Bool.cond_true, signVal_true]
     ring
-
-/-- Reindexing a sum over the sets of coordinates by the involution `S ↦ T ∆ S`. -/
-theorem sum_symmDiff [Fintype ι] [DecidableEq ι] {M : Type*} [AddCommMonoid M] (T : Finset ι)
-    (F : Finset ι → M) : ∑ S, F (symmDiff T S) = ∑ S, F S :=
-  Equiv.sum_comp (Involutive.toPerm _ (symmDiff_right_involutive T)) F
 
 section DecidableEq
 

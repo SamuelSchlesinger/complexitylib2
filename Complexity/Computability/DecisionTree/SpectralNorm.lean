@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.DecisionTree.Fourier
 public import Complexity.Computability.DecisionTree.Leaves
 import Complexity.Computability.DecisionTree.Granularity
-import Complexity.Foundations.BooleanAnalysis.Decomposition
+import Complexity.Foundations.Data.Finset.SymmDiff
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
@@ -98,7 +98,7 @@ theorem sum_abs_fourierCoeff_le_leafCount (g : β → ℝ) (hg : ∀ b, |g b| �
             (∑ S, |c₀ (symmDiff {i} S)| + ∑ S, |c₁ (symmDiff {i} S)|) / 2 := by
           simp only [sum_add_distrib, ← sum_div]
       _ = ∑ S, |c₀ S| + ∑ S, |c₁ S| := by
-          rw [sum_symmDiff {i} fun S => |c₀ S|, sum_symmDiff {i} fun S => |c₁ S|]
+          rw [Fintype.sum_symmDiff {i} fun S => |c₀ S|, Fintype.sum_symmDiff {i} fun S => |c₁ S|]
           ring
       _ ≤ t₀.leafCount + t₁.leafCount := add_le_add ih₀ ih₁
 
