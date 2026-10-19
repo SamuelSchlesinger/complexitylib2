@@ -10,9 +10,12 @@ module
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.StatisticalDistance
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
+public import Mathlib.MeasureTheory.Measure.TotalVariation.Defs
+import Complexity.Probability.PairwiseIndependent
 import Complexity.Probability.PMF.Expect
 import Complexity.Probability.PMF.Map
 import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+import Mathlib.MeasureTheory.Measure.TotalVariation.Basic
 import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 
@@ -35,7 +38,8 @@ support of `p` is contained in that of `q`, and is then the finite sum
 * Pinsker's inequality `2 δ(p, q)² ≤ D(p ‖ q)` for the statistical distance `δ`. It is proved
   for arbitrary probability measures and events, following the variational proof: Gibbs'
   inequality for an exponentially tilted measure (Mathlib's `integral_llr_tilted_right`) and
-  Hoeffding's lemma for the indicator of the event.
+  Hoeffding's lemma for the indicator of the event. A Hahn decomposition gives the form with
+  Mathlib's total variation distance `tvDist`, which is twice the statistical distance.
 
 Divergences are in nats and entropies in bits, so the bridges divide by `log 2`.
 
@@ -55,6 +59,9 @@ Divergences are in nats and entropies in bits, so the bridges divide by `log 2`.
   (`Cslib.Probability.PMF.entropy_eq_entropy_map_fst_add_entropy_map_snd_iff`).
 * `Cslib.Probability.PMF.conditionalEntropy_le_entropy_map_snd`: conditioning reduces entropy.
 * `Cslib.Probability.ofReal_two_mul_sq_measureReal_sub_le_klDiv`: Pinsker for an event.
+* `Cslib.Probability.ofReal_tvDist_sq_div_two_le_klDiv`: Pinsker with Mathlib's `tvDist`.
+* `Cslib.Probability.PMF.dist_eq_tvDist_toMeasure_div_two`: statistical distance is half of
+  `tvDist`.
 * `Cslib.Probability.PMF.ofReal_two_mul_dist_sq_le_klDiv`,
   `Cslib.Probability.PMF.dist_le_sqrt_toReal_klDiv_div_two`: Pinsker's inequality.
 
@@ -62,7 +69,8 @@ Divergences are in nats and entropies in bits, so the bridges divide by `log 2`.
 
 * [T. M. Cover, J. A. Thomas, *Elements of Information Theory*][CoverThomas2006],
   Theorems 2.6.3 (Gibbs), 2.6.4 (uniform maximizes entropy), 2.6.5 (conditioning reduces
-  entropy), Section 2.3 and Theorem 2.4.1 (mutual information) and Lemma 11.6.1 (Pinsker).
+  entropy), 2.6.6 (independence bound on entropy, here for two variables), Section 2.3 and
+  Theorem 2.4.1 (mutual information) and Lemma 11.6.1 (Pinsker).
 -/
 
 @[expose] public section
@@ -137,6 +145,21 @@ theorem ofReal_two_mul_sq_measureReal_sub_le_klDiv {mα : MeasurableSpace α}
     rw [integral_const_mul, integral_indicator_const (1 : ℝ) hs, smul_eq_mul, mul_one]
   rw [hint_f] at hgibbs
   nlinarith [sq_nonneg δ]
+
+/-- **Pinsker's inequality** with Mathlib's total variation distance `tvDist`, which takes values
+in `[0, 2]` for probability measures: `tvDist μ ν ^ 2 / 2 ≤ klDiv μ ν`, the divergence in nats. It
+follows from the event form applied to a Hahn decomposition. -/
+theorem ofReal_tvDist_sq_div_two_le_klDiv {mα : MeasurableSpace α}
+    (μ ν : Measure α) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
+    ENNReal.ofReal (tvDist μ ν ^ 2 / 2) ≤ klDiv μ ν := by
+  obtain ⟨s, hs⟩ := exists_isHahnDecomposition μ ν
+  have h := ofReal_two_mul_sq_measureReal_sub_le_klDiv (μ := μ) (ν := ν) hs.measurableSet.compl
+  rw [hs.tvDist_eq, probReal_compl_eq_one_sub hs.measurableSet,
+    probReal_compl_eq_one_sub (μ := ν) hs.measurableSet]
+  rw [probReal_compl_eq_one_sub hs.measurableSet,
+    probReal_compl_eq_one_sub (μ := ν) hs.measurableSet] at h
+  convert h using 2
+  ring
 
 namespace PMF
 
@@ -345,18 +368,6 @@ private theorem support_subset_bind_map_prodMk (joint : PMF (α × β)) :
     (ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hpair) (le_map_apply joint _ pair)))
     (ne_of_gt (lt_of_lt_of_le (pos_iff_ne_zero.mpr hpair) (le_map_apply joint _ pair)))
 
-/-- The product of two PMF measures is the measure of the PMF sampling independently. -/
-theorem toMeasure_bind_map_prodMk [Countable α] [Countable β]
-    [MeasurableSpace α] [MeasurableSingletonClass α]
-    [MeasurableSpace β] [MeasurableSingletonClass β] (p : PMF α) (q : PMF β) :
-    (p.bind fun a => q.map (a, ·)).toMeasure = p.toMeasure.prod q.toMeasure := by
-  apply Measure.ext_of_singleton
-  rintro ⟨a, b⟩
-  rw [PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _), ← Set.singleton_prod_singleton,
-    Measure.prod_prod, PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _),
-    PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _)]
-  exact bind_map_prodMk_apply p q (a, b)
-
 /-- **Mutual information** `I(X; Y) = H(X) + H(Y) - H(X, Y)`, in bits, is the divergence of
 the joint law from the product of its marginals. -/
 theorem entropy_map_fst_add_entropy_map_snd_sub_entropy [Finite α] [Finite β]
@@ -368,7 +379,7 @@ theorem entropy_map_fst_add_entropy_map_snd_sub_entropy [Finite α] [Finite β]
           Real.log 2 := by
   let := Fintype.ofFinite α
   let := Fintype.ofFinite β
-  rw [← toMeasure_bind_map_prodMk, toReal_klDiv_toMeasure (support_subset_bind_map_prodMk joint)]
+  rw [← toMeasure_bind_pair, toReal_klDiv_toMeasure (support_subset_bind_map_prodMk joint)]
   have hterm (pair : α × β) : (joint pair).toReal * Real.log ((joint pair).toReal /
       (((joint.map Prod.fst).bind fun a => (joint.map Prod.snd).map (a, ·)) pair).toReal) =
         -Real.negMulLog (joint pair).toReal -
@@ -403,7 +414,7 @@ theorem conditionalEntropy_le_entropy_map_snd (joint : PMF (α × β)) :
     rw [PMF.map_comp]; rfl, conditionalEntropy_map_const] at h
 
 /-- **Subadditivity of entropy**: the joint entropy is at most the sum of the marginal
-entropies. -/
+entropies ([CoverThomas2006], Theorem 2.6.6 for two variables). -/
 theorem entropy_le_entropy_map_fst_add_entropy_map_snd (joint : PMF (α × β)) :
     entropy joint ≤ entropy (joint.map Prod.fst) + entropy (joint.map Prod.snd) := by
   have h := conditionalEntropy_le_entropy_map_snd joint
@@ -419,7 +430,7 @@ theorem entropy_eq_entropy_map_fst_add_entropy_map_snd_iff (joint : PMF (α × �
   let : MeasurableSpace β := ⊤
   have h := entropy_map_fst_add_entropy_map_snd_sub_entropy joint
   have hlog : 0 < Real.log 2 := Real.log_pos (by norm_num)
-  rw [← toMeasure_bind_map_prodMk] at h
+  rw [← toMeasure_bind_pair] at h
   have hne := klDiv_toMeasure_ne_top_iff (p := joint)
     (q := (joint.map Prod.fst).bind fun a => (joint.map Prod.snd).map (a, ·))
   constructor
@@ -460,19 +471,57 @@ theorem dist_eq_sum_filter_lt (p q : PMF α) :
   simp only [habs, Finset.sum_sub_distrib, hsum, ← Finset.mul_sum]
   ring
 
+omit [Fintype α] in
+/-- The probability of an event under a PMF measure is the sum of its masses. -/
+private theorem measureReal_toMeasure_eq_sum [MeasurableSpace α] [MeasurableSingletonClass α]
+    (r : PMF α) (event : Finset α) :
+    r.toMeasure.real (event : Set α) = ∑ a ∈ event, (r a).toReal := by
+  rw [measureReal_def, PMF.toMeasure_apply_finset,
+    ENNReal.toReal_sum (fun a _ => PMF.apply_ne_top r a)]
+
+/-- Statistical distance is half of Mathlib's total variation distance `tvDist` of the PMF
+measures. -/
+theorem dist_eq_tvDist_toMeasure_div_two [MeasurableSpace α] [MeasurableSingletonClass α]
+    (p q : PMF α) : dist p q = tvDist p.toMeasure q.toMeasure / 2 := by
+  classical
+  let below : Finset α := Finset.univ.filter fun a => (p a).toReal ≤ (q a).toReal
+  have hbelow : (↑below : Set α)ᶜ = ↑(Finset.univ.filter
+      fun a => (q a).toReal < (p a).toReal) := by
+    ext a; simp [below]
+  have hhahn : IsHahnDecomposition p.toMeasure q.toMeasure below := by
+    have hle (μ ν : PMF α) (t : Set α) (ht : ∀ a ∈ t, (μ a).toReal ≤ (ν a).toReal) :
+        μ.toMeasure t ≤ ν.toMeasure t := by
+      rw [PMF.toMeasure_apply_fintype, PMF.toMeasure_apply_fintype]
+      refine Finset.sum_le_sum fun a _ => ?_
+      by_cases ha : a ∈ t
+      · simpa [ha] using (ENNReal.toReal_le_toReal (PMF.apply_ne_top _ _)
+          (PMF.apply_ne_top _ _)).mp (ht a ha)
+      · simp [ha]
+    refine ⟨(Set.to_countable _).measurableSet, Measure.le_iff'.mpr fun t => ?_,
+      Measure.le_iff'.mpr fun t => ?_⟩
+    · rw [Measure.restrict_apply' (Set.to_countable _).measurableSet,
+        Measure.restrict_apply' (Set.to_countable _).measurableSet]
+      exact hle p q _ fun a ha => by simpa [below] using ha.2
+    · rw [Measure.restrict_apply' (Set.to_countable _).measurableSet,
+        Measure.restrict_apply' (Set.to_countable _).measurableSet, hbelow]
+      exact hle q p _ fun a ha => (Finset.mem_filter.mp (Finset.mem_coe.mp ha.2)).2.le
+  rw [hhahn.tvDist_eq, probReal_compl_eq_one_sub (μ := p.toMeasure) hhahn.measurableSet,
+    probReal_compl_eq_one_sub (μ := q.toMeasure) hhahn.measurableSet,
+    dist_eq_sum_filter_lt, Finset.sum_sub_distrib, ← measureReal_toMeasure_eq_sum p,
+    ← measureReal_toMeasure_eq_sum q, ← hbelow,
+    probReal_compl_eq_one_sub (μ := p.toMeasure) hhahn.measurableSet,
+    probReal_compl_eq_one_sub (μ := q.toMeasure) hhahn.measurableSet]
+  ring
+
 /-- **Pinsker's inequality** for finite distributions: twice the squared statistical distance
 is at most the Kullback–Leibler divergence, in nats. -/
 theorem ofReal_two_mul_dist_sq_le_klDiv [MeasurableSpace α] [MeasurableSingletonClass α]
     (p q : PMF α) : ENNReal.ofReal (2 * dist p q ^ 2) ≤ klDiv p.toMeasure q.toMeasure := by
-  let event : Set α := {a | (q a).toReal < (p a).toReal}
-  have hreal (r : PMF α) : r.toMeasure.real event =
-      ∑ a ∈ Finset.univ.filter (fun a => (q a).toReal < (p a).toReal), (r a).toReal := by
-    rw [measureReal_def, show event = ↑(Finset.univ.filter
-      (fun a => (q a).toReal < (p a).toReal)) by ext; simp [event],
-      PMF.toMeasure_apply_finset, ENNReal.toReal_sum (fun a _ => PMF.apply_ne_top r a)]
   have h := ofReal_two_mul_sq_measureReal_sub_le_klDiv (μ := p.toMeasure) (ν := q.toMeasure)
-    ((Set.to_countable event).measurableSet)
-  rwa [hreal, hreal, ← Finset.sum_sub_distrib, ← dist_eq_sum_filter_lt] at h
+    (s := ↑(Finset.univ.filter fun a => (q a).toReal < (p a).toReal))
+    ((Set.to_countable _).measurableSet)
+  rwa [measureReal_toMeasure_eq_sum, measureReal_toMeasure_eq_sum, ← Finset.sum_sub_distrib,
+    ← dist_eq_sum_filter_lt] at h
 
 /-- **Pinsker's inequality** with a finite-sum divergence. -/
 theorem two_mul_dist_sq_le_sum_mul_log_div {p q : PMF α} (h : p.support ⊆ q.support) :

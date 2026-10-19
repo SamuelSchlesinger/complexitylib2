@@ -12,7 +12,7 @@ instances, satisfiable hypotheses, a strict case and axiom guards. -/
 
 namespace ComplexityTests.ProbabilityToolkit2
 
-open Cslib Cslib.Probability Finset InformationTheory
+open Cslib Cslib.Probability Finset InformationTheory MeasureTheory
 open scoped BigOperators Cslib.Probability.PMF
 
 /-! ### Divergence of a point mass from a fair coin -/
@@ -28,11 +28,24 @@ example : (klDiv (PMF.pure true).toMeasure
   rw [PMF.toReal_klDiv_toMeasure support_pure_subset]
   simp [PMF.pure_apply]
 
--- Their statistical distance is `1 / 2`, so Pinsker's inequality reads `1 / 2 ≤ log 2`.
-example : dist (PMF.pure true) (Probability.PMF.uniformOfFintype Bool) = 1 / 2 := by
+/-- Their statistical distance is `1 / 2`, so Pinsker's inequality reads `1 / 2 ≤ log 2`. -/
+private theorem dist_pure_true_uniform :
+    dist (PMF.pure true) (Probability.PMF.uniformOfFintype Bool) = 1 / 2 := by
   rw [PMF.dist_eq]
-  simp [PMF.pure_apply]
-  norm_num
+  norm_num [PMF.pure_apply]
+
+-- Mathlib's total variation distance is twice the statistical distance.
+example : tvDist (PMF.pure true).toMeasure
+    (Probability.PMF.uniformOfFintype Bool).toMeasure = 1 := by
+  have h := PMF.dist_eq_tvDist_toMeasure_div_two (PMF.pure true)
+    (Probability.PMF.uniformOfFintype Bool)
+  rw [dist_pure_true_uniform] at h
+  linarith
+
+example : ENNReal.ofReal (tvDist (PMF.pure true).toMeasure
+    (Probability.PMF.uniformOfFintype Bool).toMeasure ^ 2 / 2) ≤
+      klDiv (PMF.pure true).toMeasure (Probability.PMF.uniformOfFintype Bool).toMeasure :=
+  ofReal_tvDist_sq_div_two_le_klDiv _ _
 
 example : 2 * dist (PMF.pure true) (Probability.PMF.uniformOfFintype Bool) ^ 2 ≤
     ∑ b, ((PMF.pure true) b).toReal *
@@ -52,7 +65,7 @@ example : 0 < ∑ b, ((PMF.pure true) b).toReal *
     Probability.PMF.uniformOfFintype_apply, Fintype.card_bool, Nat.cast_ofNat] at this
   exact ENNReal.inv_ne_zero.mpr ENNReal.ofNat_ne_top this.symm
 
--- A fair coin has one bit of entropy and zero divergence from uniform.
+-- A fair coin has one bit of entropy.
 example : PMF.entropy (Probability.PMF.uniformOfFintype Bool) = 1 := by
   simp
 
@@ -92,6 +105,16 @@ example (P : PMF (Fin 3 → Bool)) :
   PMF.mul_entropy_le_sum_entropy_map_restrict P (fun j => univ.erase j) two_le_card_erase
 
 -- The counting form is tight for the whole cube: `8 ^ 2 = 4 * 4 * 4`.
+private theorem card_image_restrict_erase (j : Fin 3) :
+    #((univ : Finset (Fin 3 → Bool)).image (univ.erase j).restrict) = 4 := by
+  rw [image_univ_of_surjective (fun y => ⟨fun i => if h : i ∈ univ.erase j then y ⟨i, h⟩
+    else false, by funext ⟨i, hi⟩; simp [hi]⟩), card_univ, Fintype.card_pi]
+  simp [card_erase_of_mem]
+
+example : ∏ j : Fin 3, #((univ : Finset (Fin 3 → Bool)).image (univ.erase j).restrict) = 64 := by
+  simp only [card_image_restrict_erase, prod_const, card_univ, Fintype.card_fin]
+  norm_num
+
 example : #(univ : Finset (Fin 3 → Bool)) ^ 2 ≤
     ∏ j, #((univ : Finset (Fin 3 → Bool)).image (univ.erase j).restrict) :=
   PMF.card_pow_le_prod_card_image_restrict (α := fun _ => Bool) (k := 2) univ
@@ -191,5 +214,68 @@ info: 'Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict' depends on ax
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict
+
+/--
+info: 'Cslib.Probability.PMF.klDiv_toMeasure_ne_top_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.klDiv_toMeasure_ne_top_iff
+
+/--
+info: 'Cslib.Probability.PMF.klDiv_toMeasure_map_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.klDiv_toMeasure_map_le
+
+/--
+info: 'Cslib.Probability.PMF.sum_mul_log_div_nonneg' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.sum_mul_log_div_nonneg
+
+/--
+info: 'Cslib.Probability.PMF.entropy_le_logb_card_of_support_subset' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.entropy_le_logb_card_of_support_subset
+
+/--
+info: 'Cslib.Probability.PMF.entropy_le_entropy_map_fst_add_entropy_map_snd' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.entropy_le_entropy_map_fst_add_entropy_map_snd
+
+/--
+info: 'Cslib.Probability.PMF.conditionalEntropy_le_entropy_map_snd' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.conditionalEntropy_le_entropy_map_snd
+
+/--
+info: 'Cslib.Probability.PMF.dist_le_sqrt_toReal_klDiv_div_two' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.dist_le_sqrt_toReal_klDiv_div_two
+
+/--
+info: 'Cslib.Probability.ofReal_tvDist_sq_div_two_le_klDiv' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.ofReal_tvDist_sq_div_two_le_klDiv
+
+/--
+info: 'Cslib.Probability.PMF.dist_eq_tvDist_toMeasure_div_two' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.dist_eq_tvDist_toMeasure_div_two
 
 end ComplexityTests.ProbabilityToolkit2

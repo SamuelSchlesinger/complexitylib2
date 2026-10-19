@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Probability.Divergence
+public import Complexity.Probability.Entropy
+import Complexity.Probability.Divergence
 
 /-!
 # Shearer's lemma and Han's inequality
@@ -17,7 +18,9 @@ for a finite set `s` of coordinates write `X_s` for the restriction to `s`, whos
 `P.map s.restrict`. For a family `S j`, `j ∈ J`, of coordinate sets covering every coordinate at
 least `k` times, **Shearer's lemma** states `k H(X) ≤ ∑ j, H(X_{S j})`. Taking the sets
 `univ.erase i` gives **Han's inequality** `(n - 1) H(X) ≤ ∑ i, H(X_{-i})`, and taking singletons
-gives the subadditivity `H(X) ≤ ∑ i, H(X_i)`.
+gives the subadditivity `H(X) ≤ ∑ i, H(X_i)`. The form of Han's inequality proved here compares
+only subsets of sizes `n - 1` and `n`; it is the last step of the monotone chain of averages in
+[CoverThomas2006], Theorem 17.6.1, not the full chain.
 
 The proof orders the coordinates and uses the chain rule
 `H(X_s) = ∑ i ∈ s, H(X_i | X_{j ∈ s, j < i})` together with the fact that conditioning on more
@@ -41,7 +44,8 @@ is the original statement of Chung, Graham, Frankl and Shearer about families of
 * [F. R. K. Chung, R. L. Graham, P. Frankl, J. B. Shearer, *Some intersection theorems for
   ordered sets and graphs*][ChungGrahamFranklShearer1986]
 * [T. M. Cover, J. A. Thomas, *Elements of Information Theory*][CoverThomas2006],
-  Theorem 17.6.1 (Han's inequality).
+  Theorems 2.5.1 (chain rule), 2.6.6 (independence bound on entropy) and 17.6.1 (Han's
+  inequality, of which only the comparison of sizes `n - 1` and `n` is formalized).
 -/
 
 @[expose] public section
@@ -82,8 +86,9 @@ private theorem entropy_map_restrict_insert [DecidableEq ι] (P : PMF (∀ i, α
   rw [conditionalEntropy, hfst, hmap, entropy_map_of_injective _ hsplit]
   ring
 
-/-- **The chain rule** over linearly ordered coordinates: the entropy of the restriction to `s`
-is the sum, over `i ∈ s`, of the entropy of `X_i` given the earlier coordinates of `s`. -/
+/-- **The chain rule** over linearly ordered coordinates ([CoverThomas2006], Theorem 2.5.1): the
+entropy of the restriction to `s` is the sum, over `i ∈ s`, of the entropy of `X_i` given the
+earlier coordinates of `s`. -/
 theorem entropy_map_restrict_eq_sum [LinearOrder ι] (P : PMF (∀ i, α i)) (s : Finset ι) :
     entropy (P.map s.restrict) =
       ∑ i ∈ s, conditionalEntropy (P.map fun x => ((s.filter (· < i)).restrict x, x i)) := by
@@ -152,7 +157,9 @@ theorem mul_entropy_le_sum_entropy_map_restrict [Finite ι] [DecidableEq ι] {J 
     _ ≤ ∑ j, entropy (P.map (S j).restrict) := sum_le_sum fun j _ => hset j
 
 /-- **Han's inequality**: for `n` coordinates, `n - 1` times the entropy of the tuple is at most
-the sum of the entropies of the tuples with one coordinate deleted. -/
+the sum of the entropies of the tuples with one coordinate deleted. This is the comparison of
+the averages over subsets of sizes `n - 1` and `n` in [CoverThomas2006], Theorem 17.6.1; the
+comparison of smaller sizes is not formalized. -/
 theorem sub_one_mul_entropy_le_sum_entropy_map_restrict_erase [Fintype ι] [DecidableEq ι]
     (P : PMF (∀ i, α i)) :
     ((Fintype.card ι : ℝ) - 1) * entropy P ≤
@@ -168,7 +175,7 @@ theorem sub_one_mul_entropy_le_sum_entropy_map_restrict_erase [Fintype ι] [Deci
   rwa [Nat.cast_sub hcard, Nat.cast_one] at h
 
 /-- **Subadditivity of entropy**: the entropy of a tuple is at most the sum of the entropies of
-its coordinates. -/
+its coordinates ([CoverThomas2006], Theorem 2.6.6). -/
 theorem entropy_le_sum_entropy_map_eval [Fintype ι] (P : PMF (∀ i, α i)) :
     entropy P ≤ ∑ i, entropy (P.map fun x => x i) := by
   classical
