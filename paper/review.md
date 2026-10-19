@@ -658,3 +658,19 @@ error parameter's length L is defined. Non-blocking API findings were returned t
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 6: uniform learning, LMN and Kushilevitz–Mansour (2026-10-19)
+
+Integrated the `fourier-learning` branch through `f2ede479`, adding "The Linial--Mansour--Nisan
+low-degree learning algorithm" and "The Kushilevitz--Mansour algorithm with membership queries"
+(`analysis.tex`), and pointing the decision-tree spectral entry to the new learning entry.
+
+Independent reviews: milestone 1 (`52857f33`) correctness APPROVE; its API review required
+building on CSLib's `PACLearning` types, resolved in `b989a609`. Correctness and API reviews of
+`52857f33..f2ede479`: APPROVE (KM error bound, threshold and union bound recomputed; query model is
+standard membership queries; restructure leaves the low-degree statements unchanged; the bridge is
+CSLib's PAC event). Wording findings resolved in the entries: O'Donnell's bucket notation, PAC
+parameters in (0,1), and the informal polynomial reading of the query count.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.

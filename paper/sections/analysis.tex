@@ -89,12 +89,62 @@ the sum of absolute Fourier coefficients is at most $L\le2^d$.
 For a Boolean readout, written as signs, each coefficient is an integer multiple
 of $2^{-\max(d-1,0)}$, and at most $L\,2^{\max(d-1,0)}$ coefficients are nonzero.
 Repeated queries and unreachable branches are allowed; structural size only
-weakens these upper bounds. This is a spectral statement, not a formalized
-learning algorithm.\citep{KushilevitzMansour1993,ODonnell2014}
+weakens these upper bounds. The Kushilevitz--Mansour entry below uses the
+spectral bound to learn decision trees.\citep{KushilevitzMansour1993,ODonnell2014}
 \decl{Complexity/Computability/DecisionTree/SpectralNorm.lean}{72}{Cslib.DecisionTree.sum_abs_fourierCoeff_le_leafCount}
 \decl{Complexity/Computability/DecisionTree/Granularity.lean}{84}{Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one}
 \decl{Complexity/Computability/DecisionTree/SpectralNorm.lean}{113}{Cslib.DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le}
 \end{result}
+
+\begin{result}
+\subsection{The Linial--Mansour--Nisan low-degree learning algorithm}
+A deterministic learner receives $m$ labelled examples $(x_j,f(x_j))$ at independent uniform
+points of $\{0,1\}^n$; its error is $\Pr_x[h(x)\ne f(x)]$. Let
+$N=\#\{S\subseteq[n]:|S|\le t\}\le(n+1)^t$. The low-degree algorithm estimates each $\hat f(S)$,
+$|S|\le t$, empirically and outputs the sign of the truncated expansion. If
+$\varepsilon,\delta>0$, every target has Fourier weight at most $\varepsilon/2$ above degree $t$,
+and $m\ge\frac{4N}{\varepsilon}\ln\frac{2N}{\delta}$, then the hypothesis has error at most
+$\varepsilon$ with probability at least $1-\delta$; for $\varepsilon,\delta\in(0,1)$ such a learner is
+a PAC learner, in CSLib's sense, over the uniform realizable family. For circuits of NOT and
+unbounded fan-in AND/OR gates of depth at most $d$ (every gate counted, negations included) with
+at most $g$ gates, the degree $t=2\max(8,2s)(16s+1)^d-1$,
+$s=\max(2,\lceil\log_2\lceil4g/\varepsilon\rceil\rceil)$, i.e.\ $t=O(\log(g/\varepsilon))^{d+1}$,
+suffices. For a circuit with negations only at the inputs and standard AND/OR depth $d'$, this
+depth is at most $d'+1$ (an informal conversion). The exponent $d+1$ is weaker than LMN's $d$ and
+than the sharper $O(\log(g/\varepsilon))^{d-1}\cdot\log(1/\varepsilon)$. Only the number of examples
+is certified; the $O(Nmt)$ arithmetic cost is not machine-certified, and the quasi-polynomial
+reading for $g=\mathrm{poly}(n)$ is not formalized.
+\citep{LinialMansourNisan1993,ODonnell2014,Hoeffding1963,Valiant1984}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/LowDegree.lean}{247}{Cslib.MachineLearning.UniformLearning.lowDegreeLearner_learns}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/Basic.lean}{173}{Cslib.MachineLearning.UniformLearning.Learns.isPACLearnerFor}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/AC0.lean}{113}{Cslib.MachineLearning.UniformLearning.lowDegreeLearner_learns_lmnDegree}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/Computability/Circuit/Boolean/LMN.lean}{226}{Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes_of_depth_le}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/Foundations/BooleanAnalysis/SignApproximation.lean}{127}{Cslib.BitString.hammingDist_signRound_sum_mul_chi_div_le}
+\end{result}
+
+\begin{result}
+\subsection{The Kushilevitz--Mansour algorithm with membership queries}
+A membership-query learner is, for each random seed, a decision tree whose variables are the
+points of $\{0,1\}^n$; its query count is the tree depth. The Kushilevitz--Mansour algorithm
+estimates the bucket weights $\sum_{U\cap J=S}\hat f(U)^2$ (O'Donnell's $\mathbf W^{S\mid\bar J}$),
+which equal $\mathbb E_{x,y,z}[f(x_J,z)\chi_S(x)f(y_J,z)\chi_S(y)]$, from $m$ shared samples and
+runs the Goldreich--Levin bucket search with threshold $\theta^2/2$, $\theta=\varepsilon/(2L)$; on
+accurate estimates every $U$ with $|\hat f(U)|\ge\theta$ is found and at most $4/\theta^2$ buckets
+survive per level. If $\varepsilon,\delta>0$ and
+$m\ge\frac{512L^4}{\varepsilon^4}\ln\frac{2(n+2)2^n}{\delta}$, it learns every $f$ with
+$\sum_S|\hat f(S)|\le L$ to error $\varepsilon$ with probability at least $1-\delta$, using
+$m(2n+3)$ non-adaptive queries (informally, polynomially many in $n,L,1/\varepsilon,\log(1/\delta)$);
+in particular this holds for decision trees with at most $L$ leaves. Samples are shared across all
+buckets and the analysis takes a union bound over all $2^n$ buckets per level. Only the query
+count is certified; the running time of the search is not machine-certified.
+\citep{KushilevitzMansour1993,GoldreichLevin1989,ODonnell2014,Angluin1988}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{489}{Cslib.MachineLearning.UniformLearning.kmLearner_learns}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{548}{Cslib.MachineLearning.UniformLearning.kmLearner_learns_decisionTree}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{313}{Cslib.MachineLearning.UniformLearning.kmLearner_queriesAtMost}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{194}{Cslib.MachineLearning.UniformLearning.card_bucketSearch_le}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/Foundations/BooleanAnalysis/BucketWeight.lean}{106}{Cslib.BitString.expect_bucketWeight_sample}
+\end{result}
+
 
 \begin{result}
 \subsection{A degree-dependent obstruction to perfect expansion}
