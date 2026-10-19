@@ -47,6 +47,10 @@ an exhaustive search over codes finds the irreducible polynomial of least code
 * `Cslib.AffineDisperser.isIrreducibleCode_iff`: trial division decides irreducibility.
 * `Cslib.AffineDisperser.polyOfCode_leastIrreducibleCode`: the search finds `leastIrreducible p`.
 * `Cslib.AffineDisperser.pow_eq_sum_powerTable`: powers of a root in the power basis.
+
+## References
+
+* [R. Lidl, H. Niederreiter, *Finite Fields*, Chapters 1 and 3][LidlNiederreiter1997]
 -/
 
 @[expose] public section
@@ -170,7 +174,8 @@ theorem polyOfBits_bits (m : ℕ) : polyOfBits m.bits = polyOfCode m := by
     rw [show (bitEquiv.symm b).val = b.toNat by cases b <;> rfl] at this
     rw [this, add_comm]
 
-theorem bits_getLast {m : ℕ} (hm : m ≠ 0) : ∃ l, m.bits = l ++ [true] := by
+/-- The binary digits of a nonzero number end with a one. -/
+theorem exists_bits_eq_append_true {m : ℕ} (hm : m ≠ 0) : ∃ l, m.bits = l ++ [true] := by
   induction m using Nat.binaryRec' with
   | zero => exact absurd rfl hm
   | bit b n hn ih =>
@@ -188,12 +193,6 @@ theorem natDegree_polyOfBits_append_true (l : List Bool) :
   rw [add_comm, natDegree_add_eq_left_of_degree_lt, natDegree_X_pow]
   rw [degree_X_pow]
   exact degree_polyOfBits_lt l
-
-theorem length_bits_of_ne_zero {m : ℕ} (hm : m ≠ 0) : m.bits.length = Nat.log 2 m + 1 := by
-  obtain ⟨l, hl⟩ := bits_getLast hm
-  have h := natDegree_polyOfBits_append_true l
-  rw [← hl, polyOfBits_bits, natDegree_polyOfCode hm] at h
-  rw [hl, List.length_append, List.length_singleton, h]
 
 
 /-! ### Reduction modulo a binary polynomial -/
@@ -321,7 +320,7 @@ theorem modBits_all_false_iff (l f : List Bool) :
   exact degree_polyOfBits_lt _
 
 /-- Every nonzero binary polynomial is monic. -/
-theorem monic_of_ne_zero {q : (ZMod 2)[X]} (hq : q ≠ 0) : q.Monic :=
+private theorem monic_of_ne_zero {q : (ZMod 2)[X]} (hq : q ≠ 0) : q.Monic :=
   (by decide : ∀ c : ZMod 2, c ≠ 0 → c = 1) _ (leadingCoeff_ne_zero.2 hq)
 
 theorem natDegree_polyOfCode_eq_log (m : ℕ) : (polyOfCode m).natDegree = Nat.log 2 m := by
@@ -337,7 +336,7 @@ theorem polyOfCode_one : polyOfCode 1 = 1 := by
 the polynomial with code `d` is one exactly when that polynomial does not divide `f`. -/
 theorem any_modBits_bits_iff {d : ℕ} (hd : d ≠ 0) (f : List Bool) :
     (modBits d.bits f).any id = true ↔ ¬ polyOfCode d ∣ polyOfBits f := by
-  obtain ⟨l, hl⟩ := bits_getLast hd
+  obtain ⟨l, hl⟩ := exists_bits_eq_append_true hd
   rw [← polyOfBits_bits, hl, ← modBits_all_false_iff]
   simp only [List.any_eq_true, id_eq]
   constructor

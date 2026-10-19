@@ -58,9 +58,8 @@ example : Protocol.ecomplexity (fun (x y : BitString 0) b => equality x y = b) S
     (fun x _ y _ => by simp [equality, Subsingleton.elim x y])
   simpa using this
 
-example (f : BitString 3 → Bool → Bool) :
-    Protocol.ecomplexity (fun x y b => f x y = b) Set.univ Set.univ ≤ 4 :=
-  ecomplexity_le_succ f
+example (f : BitString 3 → Bool → Bool) : Protocol.ecomplexityFun f ≤ 4 :=
+  Protocol.ecomplexityFun_le_succ f
 
 /-! ### Fooling sets -/
 
@@ -134,10 +133,10 @@ example (p : Protocol (Fin 5) (Fin 5) Bool) (hp : p.run = equality) : 3 ≤ p.de
 #guard_msgs in
 #print axioms IsFoolingSet.card_lt_two_pow
 
-/-- info: 'Cslib.Communication.IsFoolingSet.le_ecomplexity' depends on axioms:
+/-- info: 'Cslib.Communication.IsFoolingSet.succ_le_ecomplexity' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms IsFoolingSet.le_ecomplexity
+#print axioms IsFoolingSet.succ_le_ecomplexity
 
 /-- info: 'Cslib.Communication.Protocol.rank_communicationMatrix_le' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

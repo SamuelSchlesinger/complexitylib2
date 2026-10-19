@@ -33,6 +33,21 @@ This file proves the local facts: the two branches cover the solutions and only 
 of the original clause set, they preserve the width and reducedness, and the potential
 `∑_{C ∈ ψ} 2 ^ |C|` strictly decreases, so the procedure terminates.
 
+## Main definitions
+
+* `Cslib.Logic.PL.ClauseSet.Sparsification.reduce`: remove the clauses containing others.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.Heavy`, `.Sparse`, `.Choice`: heavy hearts, sparse
+  clause sets and valid choices.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.child`: the children of a branching node.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.potential`: the potential `∑_{C ∈ ψ} 2 ^ |C|`.
+
+## Main results
+
+* `Cslib.Logic.PL.ClauseSet.Sparsification.sat_child_of_sat`,
+  `Cslib.Logic.PL.ClauseSet.Sparsification.sat_of_sat_child`: the branches cover the solutions
+  and only lose solutions of the parent.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.potential_child_lt`: termination.
+
 ## References
 
 * [R. Impagliazzo, R. Paturi, F. Zane, *Which problems have strongly exponential

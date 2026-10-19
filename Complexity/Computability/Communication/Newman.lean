@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.Communication.Randomized
 public import Mathlib.Analysis.SpecialFunctions.Exp
-import Complexity.Computability.Communication.Functions
 import Complexity.Probability.Concentration
 import Mathlib.Analysis.SpecialFunctions.Exponential
 import Mathlib.Data.Nat.Log

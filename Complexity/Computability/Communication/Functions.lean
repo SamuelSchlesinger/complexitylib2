@@ -17,8 +17,8 @@ import Mathlib.Tactic.Linarith
 # Equality, greater-than, inner product and disjointness
 
 Every Boolean function of Alice's `n` bits and Bob's input has a protocol with `n + 1` bits: Alice
-sends her input (`Protocol.aliceSend`) and Bob announces the value (`ecomplexity_le_succ`). Four
-classical functions of two `n`-bit strings need all `n + 1` bits for `0 < n`
+sends her input and Bob announces the value (`Protocol.ecomplexityFun_le_succ`). Four classical
+functions of two `n`-bit strings need all `n + 1` bits for `0 < n`
 [Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997]:
 
 * *equality* `x = y` (`equality`, `ecomplexity_equality`);
@@ -39,13 +39,11 @@ forces more than `2 ^ n` leaves (`two_pow_lt_leaves_of_run_eq_dotProduct`).
 
 ## Main definitions
 
-* `Cslib.Communication.Protocol.aliceSend`: Alice sends a bit string.
 * `Cslib.Communication.equality`, `Cslib.Communication.greaterThan`,
   `Cslib.Communication.disjointness`: equality, greater-than and disjointness.
 
 ## Main results
 
-* `Cslib.Communication.ecomplexity_le_succ`: the trivial protocol.
 * `Cslib.Communication.ecomplexity_equality`, `Cslib.Communication.ecomplexity_greaterThan`,
   `Cslib.Communication.ecomplexity_dotProduct`, `Cslib.Communication.ecomplexity_disjointness`:
   equality, greater-than, inner product and disjointness of `n` bits need `n + 1` bits.
@@ -61,58 +59,7 @@ namespace Cslib.Communication
 
 open Finset
 
-variable {X Y Z : Type*}
-
-/-! ### Sending a bit string -/
-
-namespace Protocol
-
-/-- Alice sends the `n` bits of `msg x`, first bit first, after which the protocol continues with
-`cont` of the bits sent. -/
-def aliceSend : (n : ℕ) → (X → BitString n) → (BitString n → Protocol X Y Z) → Protocol X Y Z
-  | 0, _, cont => cont Fin.elim0
-  | n + 1, msg, cont => alice (fun x => msg x 0)
-      (aliceSend n (fun x => Fin.tail (msg x)) fun m => cont (Fin.cons false m))
-      (aliceSend n (fun x => Fin.tail (msg x)) fun m => cont (Fin.cons true m))
-
-@[simp] theorem run_aliceSend (n : ℕ) (msg : X → BitString n) (cont : BitString n → Protocol X Y Z)
-    (x : X) (y : Y) : (aliceSend n msg cont).run x y = (cont (msg x)).run x y := by
-  induction n with
-  | zero => rw [aliceSend, Subsingleton.elim (msg x) Fin.elim0]
-  | succ n ih =>
-    simp only [aliceSend, run_alice, ih]
-    conv_rhs => rw [← Fin.cons_self_tail (msg x)]
-    cases msg x 0 <;> rfl
-
-/-- Sending `n` bits adds at most `n` to the depth. -/
-theorem depth_aliceSend_le {n d : ℕ} {msg : X → BitString n} {cont : BitString n → Protocol X Y Z}
-    (h : ∀ m, (cont m).depth ≤ d) : (aliceSend n msg cont).depth ≤ n + d := by
-  induction n generalizing d with
-  | zero => simpa [aliceSend] using h _
-  | succ n ih =>
-    simp only [aliceSend, depth_alice]
-    have h₀ := ih (cont := fun m => cont (Fin.cons false m)) (msg := fun x => Fin.tail (msg x))
-      fun m => h _
-    have h₁ := ih (cont := fun m => cont (Fin.cons true m)) (msg := fun x => Fin.tail (msg x))
-      fun m => h _
-    omega
-
-end Protocol
-
-variable {n : ℕ}
-
-/-- **The trivial protocol.** Every Boolean function of Alice's `n` bits and Bob's input has a
-protocol with `n + 1` bits: Alice sends her input and Bob announces the value. -/
-theorem ecomplexity_le_succ (f : BitString n → Y → Bool) :
-    Protocol.ecomplexity (fun x y b => f x y = b) Set.univ Set.univ ≤ n + 1 := by
-  have h := Protocol.ecomplexity_le_iff (R := fun x y b => f x y = b) (A := Set.univ)
-    (B := Set.univ) (k := n + 1)
-  push_cast at h
-  refine h.mpr ⟨Protocol.aliceSend n id fun m => .bob (f m) (.output false) (.output true),
-    Protocol.solves_univ_iff.mpr (funext₂ fun x y => ?_),
-    Protocol.depth_aliceSend_le fun m => by simp⟩
-  simp only [Protocol.run_aliceSend, id, Protocol.run_bob, Protocol.run_output]
-  cases f x y <;> rfl
+variable {X Y Z : Type*} {n : ℕ}
 
 /-! ### Equality and greater-than -/
 
@@ -173,8 +120,8 @@ theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
 theorem ecomplexity_equality (hn : 0 < n) :
     Protocol.ecomplexity (fun (x y : BitString n) b => equality x y = b) Set.univ Set.univ =
       n + 1 := by
-  refine le_antisymm (ecomplexity_le_succ _) ((isFoolingSet_equality univ).le_ecomplexity
-    ⟨fun _ => false, fun _ => true, ?_⟩ ?_)
+  refine le_antisymm (Protocol.ecomplexityFun_le_succ _)
+    ((isFoolingSet_equality univ).succ_le_ecomplexity ⟨fun _ => false, fun _ => true, ?_⟩ ?_)
   · simpa [equality] using fun h => Bool.false_ne_true (congrFun h ⟨0, hn⟩)
   · rw [card_image_of_injective _ fun x y h => congrArg Prod.fst h, card_univ, BitString.card]
 
@@ -185,8 +132,8 @@ theorem ecomplexity_greaterThan (hn : 0 < n) :
     Protocol.ecomplexity (fun (x y : BitString n) b =>
         greaterThan (BitString.equivFin n x) (BitString.equivFin n y) = b) Set.univ Set.univ =
       n + 1 := by
-  refine le_antisymm (ecomplexity_le_succ _)
-    ((isFoolingSet_greaterThan (BitString.equivFin n).injective univ).le_ecomplexity
+  refine le_antisymm (Protocol.ecomplexityFun_le_succ _)
+    ((isFoolingSet_greaterThan (BitString.equivFin n).injective univ).succ_le_ecomplexity
       ⟨(BitString.equivFin n).symm ⟨1, ?_⟩, (BitString.equivFin n).symm ⟨0, ?_⟩, ?_⟩ ?_)
   · exact Nat.one_lt_two_pow hn.ne'
   · exact Nat.two_pow_pos n
@@ -222,8 +169,8 @@ theorem isFoolingSet_disjointness (s : Finset (ι → Bool)) :
 theorem ecomplexity_disjointness (hn : 0 < n) :
     Protocol.ecomplexity (fun (x y : BitString n) b => disjointness x y = b) Set.univ Set.univ =
       n + 1 := by
-  refine le_antisymm (ecomplexity_le_succ _) ((isFoolingSet_disjointness univ).le_ecomplexity
-    ⟨fun _ => true, fun _ => true, ?_⟩ ?_)
+  refine le_antisymm (Protocol.ecomplexityFun_le_succ _)
+    ((isFoolingSet_disjointness univ).succ_le_ecomplexity ⟨fun _ => true, fun _ => true, ?_⟩ ?_)
   · intro h
     simp only [disjointness, decide_eq_true_eq] at h
     exact absurd (h ⟨0, hn⟩) (by decide)
@@ -292,7 +239,8 @@ theorem two_pow_lt_leaves_of_run_eq_dotProduct [Nonempty ι]
 theorem ecomplexity_dotProduct (hn : 0 < n) :
     Protocol.ecomplexity (fun (x y : BitString n) b => x ⬝ᵥ y = b) Set.univ Set.univ = n + 1 := by
   have : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
-  refine le_antisymm (ecomplexity_le_succ _) (Protocol.le_ecomplexity_iff.mpr fun p hp => ?_)
+  refine le_antisymm (Protocol.ecomplexityFun_le_succ _)
+    (Protocol.le_ecomplexity_iff.mpr fun p hp => ?_)
   have h := (two_pow_lt_leaves_of_run_eq_dotProduct (Protocol.solves_univ_iff.mp hp)).trans_le
     p.leaves_le_two_pow_depth
   rw [Fintype.card_fin] at h

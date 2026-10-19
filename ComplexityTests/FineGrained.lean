@@ -194,11 +194,11 @@ info: 'Cslib.Complexity.exists_computableTidilyInO_toOV' depends on axioms:
 #print axioms Cslib.Complexity.exists_computableTidilyInO_toOV
 
 /--
-info: 'Cslib.Complexity.DecidableInExpTime.SAT_of_OV' depends on axioms:
+info: 'Cslib.Complexity.DecidableInTimeO.decidableInExpTime_SAT' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.DecidableInExpTime.SAT_of_OV
+#print axioms Cslib.Complexity.DecidableInTimeO.decidableInExpTime_SAT
 
 /--
 info: 'Cslib.Complexity.OVH_of_SETH' depends on axioms: [propext, Classical.choice, Quot.sound]

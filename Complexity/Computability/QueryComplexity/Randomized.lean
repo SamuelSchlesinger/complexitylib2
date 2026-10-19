@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.DecisionTree.Basic
+public import Complexity.Probability.Minimax
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Geometry.Convex.ConvexSpace.Defs
 import Mathlib.Tactic.NormNum
@@ -35,9 +36,10 @@ Boolean-valued `f` and `ε ≥ 1/2` (`QueryComplexity.randomizedComplexity_eq_ze
 
 If a randomized tree computes `f` with error `ε`, then for every distribution `ν` on the inputs
 some tree that it can draw errs with probability at most `ε` on inputs drawn from `ν`
-(`RandomizedDecisionTree.Computes.exists_distributionalError_le`). This averaging argument is the
-easy direction of Yao's principle [Yao1977]; the converse follows from the minimax theorem
-(`QueryComplexity.exists_computes_of_forall_exists_distributionalError_le`).
+(`RandomizedDecisionTree.Computes.exists_distributionalError_le`, from
+`Convexity.StdSimplex.exists_mem_support_le_sum_mul` in `Complexity.Probability.Minimax`). This
+averaging argument is the easy direction of Yao's principle [Yao1977]; the converse follows from
+the minimax theorem (`QueryComplexity.exists_computes_of_forall_exists_distributionalError_le`).
 
 ## Main definitions
 
@@ -50,8 +52,6 @@ easy direction of Yao's principle [Yao1977]; the converse follows from the minim
 
 ## Main results
 
-* `Convexity.StdSimplex.exists_mem_support_le_sum_mul`: under a finitely supported distribution,
-  some point of the support is at most the average.
 * `Cslib.RandomizedDecisionTree.Computes.exists_distributionalError_le`: the averaging argument.
 * `Cslib.DecisionTree.randomizedComplexity_le_complexity`: `R_ε(f) ≤ D(f)` for `ε ≥ 0`.
 * `Cslib.QueryComplexity.randomizedComplexity_zero`: `R_0(f) = D(f)`.
@@ -67,32 +67,6 @@ easy direction of Yao's principle [Yao1977]; the converse follows from the minim
 -/
 
 @[expose] public section
-
-namespace Convexity.StdSimplex
-
-variable {α : Type*} {μ : StdSimplex ℝ α} {g : α → ℝ} {c : ℝ}
-
-/-- An average under a finitely supported distribution is at most any bound on the support. -/
-theorem sum_mul_le_of_forall_le (h : ∀ a ∈ μ.weights.support, g a ≤ c) :
-    (μ.weights.sum fun a w => w * g a) ≤ c :=
-  calc (μ.weights.sum fun a w => w * g a) ≤ μ.weights.sum fun _ w => w * c :=
-        Finset.sum_le_sum fun a ha => mul_le_mul_of_nonneg_left (h a ha) (μ.weights_nonneg a)
-    _ = c := by rw [← Finsupp.sum_mul, μ.total, one_mul]
-
-/-- **The averaging argument**: some point of the support of a finitely supported distribution is
-at most the average. -/
-theorem exists_mem_support_le_sum_mul (μ : StdSimplex ℝ α) (g : α → ℝ) :
-    ∃ a ∈ μ.weights.support, g a ≤ μ.weights.sum fun a w => w * g a := by
-  by_contra! h
-  have hlt : (μ.weights.sum fun a w => w * (μ.weights.sum fun a w => w * g a)) <
-      μ.weights.sum fun a w => w * g a :=
-    Finset.sum_lt_sum_of_nonempty μ.support_weights_nonempty fun a ha =>
-      mul_lt_mul_of_pos_left (h a ha)
-        ((μ.weights_nonneg a).lt_of_ne' (Finsupp.mem_support_iff.mp ha))
-  rw [← Finsupp.sum_mul, μ.total, one_mul] at hlt
-  exact lt_irrefl _ hlt
-
-end Convexity.StdSimplex
 
 namespace Cslib
 

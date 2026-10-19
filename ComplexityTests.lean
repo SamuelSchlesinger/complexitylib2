@@ -1,5 +1,6 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
+import ComplexityTests.AffineDisperserCorollary
 import ComplexityTests.AffineDisperserLowerBound
 import ComplexityTests.AffineDisperserRuntime
 import ComplexityTests.Alternation
@@ -24,9 +25,11 @@ import ComplexityTests.CircuitMetric
 import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
+import ComplexityTests.Code.M3
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
+import ComplexityTests.CommunicationComplexity3
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
@@ -48,6 +51,7 @@ import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
 import ComplexityTests.FineGrained
+import ComplexityTests.FineGrained.Sparsification
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
@@ -69,11 +73,14 @@ import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
+import ComplexityTests.Hypercontractivity
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
 import ComplexityTests.Iteration.Batch
+import ComplexityTests.Iteration.Dynamics
 import ComplexityTests.IterationFoundations
+import ComplexityTests.Kannan
 import ComplexityTests.KarpLipton
 import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
@@ -114,6 +121,7 @@ import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
+import ComplexityTests.PCPApproximation
 import ComplexityTests.PCPCompleteness
 import ComplexityTests.PCPEncoded
 import ComplexityTests.PCPEncodedAmplification
@@ -156,6 +164,7 @@ import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.ProbabilityToolkit2
+import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.ProofComplexity
 import ComplexityTests.Propagation
@@ -167,6 +176,7 @@ import ComplexityTests.PseudoentropySeed
 import ComplexityTests.PseudoentropyThreeSource
 import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
+import ComplexityTests.PseudorandomObjects
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
@@ -181,6 +191,7 @@ import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
+import ComplexityTests.ResourceClasses3
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime

@@ -19,7 +19,7 @@ rectangle on which `f` is constantly `z` contains at most one pair of `S`. So a 
 `f` has at least `|S|` leaves labelled `z` (`IsFoolingSet.card_le`), and at least one leaf more
 when `f` takes another value somewhere: then `|S| < 2 ^ d` for every protocol sending `d` bits
 (`IsFoolingSet.card_lt_two_pow`). In particular a fooling set of `2 ^ n` pairs for a function that
-is not constantly `z` forces `n + 1` bits (`IsFoolingSet.le_ecomplexity`).
+is not constantly `z` forces `n + 1` bits (`IsFoolingSet.succ_le_ecomplexity`).
 
 ## Main definitions
 
@@ -30,7 +30,7 @@ is not constantly `z` forces `n + 1` bits (`IsFoolingSet.le_ecomplexity`).
 * `Cslib.Communication.IsFoolingSet.card_le`: a fooling set for value `z` is at most the number
   of leaves labelled `z`.
 * `Cslib.Communication.IsFoolingSet.card_lt_two_pow`: the fooling-set bound.
-* `Cslib.Communication.IsFoolingSet.le_ecomplexity`: the fooling-set bound on communication
+* `Cslib.Communication.IsFoolingSet.succ_le_ecomplexity`: the fooling-set bound on communication
   complexity.
 
 ## References
@@ -88,11 +88,10 @@ theorem card_lt_two_pow (hS : IsFoolingSet f z S) (hp : p.run = f) (hz : ∃ x y
 
 /-- **The fooling-set bound on communication complexity.** A fooling set of at least `2 ^ n`
 pairs for a function `f` that is not constantly `z` forces `n + 1` bits. -/
-theorem le_ecomplexity (hS : IsFoolingSet f z S) (hz : ∃ x y, f x y ≠ z) {n : ℕ}
-    (hn : 2 ^ n ≤ #S) :
-    (n + 1 : ℕ∞) ≤ Protocol.ecomplexity (fun x y z => f x y = z) Set.univ Set.univ := by
-  refine Protocol.le_ecomplexity_iff.mpr fun p hp => ?_
-  have h := hn.trans_lt (hS.card_lt_two_pow (Protocol.solves_univ_iff.mp hp) hz)
+theorem succ_le_ecomplexity (hS : IsFoolingSet f z S) (hz : ∃ x y, f x y ≠ z) {n : ℕ}
+    (hn : 2 ^ n ≤ #S) : (n + 1 : ℕ∞) ≤ Protocol.ecomplexityFun f := by
+  refine Protocol.le_ecomplexityFun_iff.mpr fun p hp => ?_
+  have h := hn.trans_lt (hS.card_lt_two_pow hp hz)
   exact_mod_cast (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp h
 
 end IsFoolingSet

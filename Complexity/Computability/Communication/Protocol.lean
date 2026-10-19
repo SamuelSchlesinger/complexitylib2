@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Cslib.Init
+public import Cslib.Foundations.Data.BitString
 public import Mathlib.Data.ENat.Lattice
 
 /-!
@@ -24,8 +25,12 @@ protocol solves `R` when its output does (`Protocol.Solves`); the communication 
 on `A × B` is the least depth of a protocol solving it, or `⊤` if there is none
 (`Protocol.ecomplexity`) [Kushilevitz and Nisan, Chapter 5][KushilevitzNisan1997]. The
 communication complexity of computing a function `f` is that of the relation `f x y = z` on all
-inputs (`Protocol.ecomplexityFun`). A protocol can be run on transformed inputs
-(`Protocol.comap`).
+inputs (`Protocol.ecomplexityFun`), and a protocol solves that relation exactly when it computes
+`f` (`Protocol.solves_univ_iff`). A protocol can be run on transformed inputs (`Protocol.comap`).
+
+Alice can send a bit string in as many bits (`Protocol.aliceSend`), so every Boolean function of
+Alice's `n` bits and Bob's input has a protocol with `n + 1` bits: Alice sends her input and Bob
+announces the value (`Protocol.ecomplexityFun_le_succ`).
 
 ## Main definitions
 
@@ -36,6 +41,7 @@ inputs (`Protocol.ecomplexityFun`). A protocol can be run on transformed inputs
 * `Cslib.Communication.Protocol.ecomplexity`: the communication complexity of a relation.
 * `Cslib.Communication.Protocol.ecomplexityFun`: the communication complexity of a function.
 * `Cslib.Communication.Protocol.comap`: running a protocol on transformed inputs.
+* `Cslib.Communication.Protocol.aliceSend`: Alice sends a bit string.
 
 ## Main results
 
@@ -46,6 +52,7 @@ inputs (`Protocol.ecomplexityFun`). A protocol can be run on transformed inputs
   complexity.
 * `Cslib.Communication.Protocol.ecomplexityFun_le_iff`,
   `Cslib.Communication.Protocol.le_ecomplexityFun_iff`: the same for functions.
+* `Cslib.Communication.Protocol.ecomplexityFun_le_succ`: the trivial protocol.
 
 ## References
 
@@ -214,20 +221,20 @@ noncomputable def ecomplexityFun (f : X → Y → Z) : ℕ∞ :=
 
 variable {f : X → Y → Z}
 
-private theorem solves_univ_iff_run_eq :
-    p.Solves (fun x y z => f x y = z) Set.univ Set.univ ↔ p.run = f :=
+/-- A protocol solves the relation `f x y = z` on all inputs when it computes `f`. -/
+theorem solves_univ_iff : p.Solves (fun x y z => f x y = z) Set.univ Set.univ ↔ p.run = f :=
   ⟨fun h => funext₂ fun x y => (h x trivial y trivial).symm, fun h x _ y _ => by rw [h]⟩
 
 theorem ecomplexityFun_le_depth (hp : p.run = f) : ecomplexityFun f ≤ p.depth :=
-  ecomplexity_le_depth (solves_univ_iff_run_eq.mpr hp)
+  ecomplexity_le_depth (solves_univ_iff.mpr hp)
 
 theorem ecomplexityFun_le_iff {k : ℕ} :
     ecomplexityFun f ≤ k ↔ ∃ p : Protocol X Y Z, p.run = f ∧ p.depth ≤ k := by
-  simp only [ecomplexityFun, ecomplexity_le_iff, solves_univ_iff_run_eq]
+  simp only [ecomplexityFun, ecomplexity_le_iff, solves_univ_iff]
 
 theorem le_ecomplexityFun_iff {k : ℕ∞} :
     k ≤ ecomplexityFun f ↔ ∀ p : Protocol X Y Z, p.run = f → k ≤ p.depth := by
-  simp only [ecomplexityFun, le_ecomplexity_iff, solves_univ_iff_run_eq]
+  simp only [ecomplexityFun, le_ecomplexity_iff, solves_univ_iff]
 
 end Fun
 
@@ -259,6 +266,49 @@ def comap (f : X' → X) (g : Y' → Y) : Protocol X Y Z → Protocol X' Y' Z
   induction p with
   | output z => rfl
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [comap, ih₀, ih₁]
+
+/-! ### Sending a bit string -/
+
+/-- Alice sends the `n` bits of `msg x`, first bit first, after which the protocol continues with
+`cont` of the bits sent. -/
+def aliceSend : (n : ℕ) → (X → BitString n) → (BitString n → Protocol X Y Z) → Protocol X Y Z
+  | 0, _, cont => cont Fin.elim0
+  | n + 1, msg, cont => alice (fun x => msg x 0)
+      (aliceSend n (fun x => Fin.tail (msg x)) fun m => cont (Fin.cons false m))
+      (aliceSend n (fun x => Fin.tail (msg x)) fun m => cont (Fin.cons true m))
+
+@[simp] theorem run_aliceSend (n : ℕ) (msg : X → BitString n) (cont : BitString n → Protocol X Y Z)
+    (x : X) (y : Y) : (aliceSend n msg cont).run x y = (cont (msg x)).run x y := by
+  induction n with
+  | zero => rw [aliceSend, Subsingleton.elim (msg x) Fin.elim0]
+  | succ n ih =>
+    simp only [aliceSend, run_alice, ih]
+    conv_rhs => rw [← Fin.cons_self_tail (msg x)]
+    cases msg x 0 <;> rfl
+
+/-- Sending `n` bits adds at most `n` to the depth. -/
+theorem depth_aliceSend_le {n d : ℕ} {msg : X → BitString n} {cont : BitString n → Protocol X Y Z}
+    (h : ∀ m, (cont m).depth ≤ d) : (aliceSend n msg cont).depth ≤ n + d := by
+  induction n generalizing d with
+  | zero => simpa [aliceSend] using h _
+  | succ n ih =>
+    simp only [aliceSend, depth_alice]
+    have h₀ := ih (cont := fun m => cont (Fin.cons false m)) (msg := fun x => Fin.tail (msg x))
+      fun m => h _
+    have h₁ := ih (cont := fun m => cont (Fin.cons true m)) (msg := fun x => Fin.tail (msg x))
+      fun m => h _
+    omega
+
+/-- **The trivial protocol.** Every Boolean function of Alice's `n` bits and Bob's input has a
+protocol with `n + 1` bits: Alice sends her input and Bob announces the value. -/
+theorem ecomplexityFun_le_succ {n : ℕ} (f : BitString n → Y → Bool) :
+    ecomplexityFun f ≤ n + 1 := by
+  have h := ecomplexityFun_le_iff (f := f) (k := n + 1)
+  push_cast at h
+  refine h.mpr ⟨aliceSend n id fun m => bob (f m) (output false) (output true),
+    funext₂ fun x y => ?_, depth_aliceSend_le fun m => by simp⟩
+  simp only [run_aliceSend, id, run_bob, run_output]
+  cases f x y <;> rfl
 
 end Protocol
 

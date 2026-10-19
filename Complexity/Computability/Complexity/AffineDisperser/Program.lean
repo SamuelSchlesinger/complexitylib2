@@ -14,7 +14,7 @@ public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
 import Mathlib.Data.List.GetD
 
 /-!
-# The explicit affine disperser as a program
+# The explicit affine disperser as a computable function
 
 The explicit disperser on `N` bits works in the field `𝔽_{2 ^ n}`, `n = p₁ ⋯ pₖ`, with the monomial
 basis `∏ᵢ αᵢ ^ Jᵢ` in roots `αᵢ` of the least-code irreducible polynomials `gᵢ` of the prime
@@ -26,10 +26,11 @@ table is computed from the remainders of the powers of `X` (`Cslib.AffineDispers
 `Cslib.AffineDisperser.isMulTable_monomialTable`), and the polynomials `gᵢ` by exhaustive search
 with trial division among the codes below `2 ^ (4 L + 1)`.
 
-The program `Cslib.AffineDisperser.explicitDisperserProgram` reads `N` from the length of its input,
-computes the parameters, the irreducible polynomials, the remainders and the multiplication table,
-and evaluates `traceSym 1 r t` in coordinates. It computes the explicit disperser
-(`Cslib.AffineDisperser.explicitDisperserProgram_eq`). Since the program does not involve the
+The function `Cslib.AffineDisperser.explicitDisperserProgram`, a plain Lean function on bit lists
+(not a `FreeM` program), reads `N` from the length of its input, computes the parameters, the
+irreducible polynomials, the remainders and the multiplication table, and evaluates
+`traceSym 1 r t` in coordinates. It computes the explicit disperser
+(`Cslib.AffineDisperser.explicitDisperserProgram_eq`). Since the computation does not involve the
 roots, every choice of roots gives the same function
 (`Cslib.AffineDisperser.traceSymBits_rootBasis_eq_explicitDisperser`): the root chosen in
 `Cslib.AffineDisperser.binaryRoot` does not matter.
@@ -40,8 +41,8 @@ roots, every choice of roots gives the same function
 * `Cslib.AffineDisperser.explicitTable`: the multiplication table of the explicit field.
 * `Cslib.AffineDisperser.rootBasis`: the monomial basis in any roots of the irreducible
   polynomials.
-* `Cslib.AffineDisperser.explicitDisperserProgram`: the explicit disperser, as a program on bit
-  lists.
+* `Cslib.AffineDisperser.explicitDisperserProgram`: the explicit disperser, as a computable
+  function on bit lists.
 
 ## Main results
 
@@ -49,7 +50,8 @@ roots, every choice of roots gives the same function
 * `Cslib.AffineDisperser.traceSymCoords_explicitTable`: the coordinate computation with the
   explicit table is the explicit disperser.
 * `Cslib.AffineDisperser.traceSymBits_rootBasis_eq_explicitDisperser`: independence of the roots.
-* `Cslib.AffineDisperser.explicitDisperserProgram_eq`: the program computes the explicit disperser.
+* `Cslib.AffineDisperser.explicitDisperserProgram_eq`: the function computes the explicit
+  disperser.
 
 ## References
 
@@ -80,9 +82,6 @@ of powers `R`. -/
 def monomialTable (ms : List ℕ) (R : List (List (List Bool))) : List (List (List Bool)) :=
   (List.range ms.prod).map fun u => (List.range ms.prod).map fun w =>
     (List.range ms.prod).map fun v => monomialBit ms R u w v
-
-theorem prod_get (ms : List ℕ) : ∏ i, ms.get i = ms.prod := by
-  rw [← List.prod_ofFn, List.ofFn_get]
 
 /-- The mixed-radix digits are the components of `finPiFinEquiv.symm`. -/
 theorem mixedDigit_eq (ms : List ℕ) (u : Fin (∏ i, ms.get i)) (i : Fin ms.length) :
@@ -138,9 +137,10 @@ theorem isMulTable_monomialTable (ms : List ℕ) (R : List (List (List Bool)))
   refine Finset.sum_congr rfl fun M _ => ?_
   rw [Basis.reindex_apply, Equiv.symm_apply_apply]
   congr 1
-  have hv : (finPiFinEquiv M : ℕ) < ms.prod := (finPiFinEquiv M).2.trans_eq (prod_get ms)
-  have hu : (u : ℕ) < ms.prod := u.2.trans_eq (prod_get ms)
-  have hw : (w : ℕ) < ms.prod := w.2.trans_eq (prod_get ms)
+  have hms := Fin.prod_univ_getElem ms
+  have hv : (finPiFinEquiv M : ℕ) < ms.prod := (finPiFinEquiv M).2.trans_eq hms
+  have hu : (u : ℕ) < ms.prod := u.2.trans_eq hms
+  have hw : (w : ℕ) < ms.prod := w.2.trans_eq hms
   rw [tableEntry_monomialTable hu hw, List.getD_eq_getElem _ _ (by simpa using hv),
     List.getElem_map, List.getElem_range, monomialBit, bitEquiv_symm_all]
   refine Finset.prod_congr rfl fun i _ => ?_
@@ -212,7 +212,7 @@ theorem isMulTable_explicitTable (N : ℕ) (α : (j : Fin (degreePrimes N).lengt
     intro h
     rw [h, polyOfCode_zero] at hcode
     exact (irreducible_leastIrreducible hp).ne_zero hcode.symm
-  obtain ⟨l, hl⟩ := bits_getLast hcode0
+  obtain ⟨l, hl⟩ := exists_bits_eq_append_true hcode0
   have hpoly : polyOfBits (l ++ [true]) = leastIrreducible p := by
     rw [← hl, polyOfBits_bits, hcode]
   have hlen : l.length = p := by
@@ -224,7 +224,7 @@ theorem isMulTable_explicitTable (N : ℕ) (α : (j : Fin (degreePrimes N).lengt
   rw [← hlen] at he ⊢
   exact pow_eq_sum_powerTable l (hpoly ▸ hα i) he
 
-/-! ### The program -/
+/-! ### The computable function -/
 
 omit [FiniteDimensional (ZMod 2) F] in
 /-- Reindexing the basis and the reading positions together does not change `traceSymBits`. -/
@@ -238,9 +238,10 @@ theorem traceSymBits_reindex {ι ι' : Type*} [Fintype ι] [Fintype ι'] {r t N 
     simp [Basis.reindex_apply]
   rw [traceSymBits, traceSymBits, h]
 
-/-- **The coordinate computation with the explicit table is the explicit disperser**, read on the
-first `N` bits of `x` (missing bits are zero), for every choice of roots. -/
-theorem traceSymCoords_explicitTable_eq (N : ℕ)
+/-- The coordinate computation with the explicit table is `traceSymBits` in the monomial basis in
+any roots `α` of the least-code irreducible polynomials, read on the first `N` bits of `x` (missing
+bits are zero). -/
+theorem traceSymCoords_explicitTable_eq_traceSymBits (N : ℕ)
     (α : (j : Fin (degreePrimes N).length) → ExplicitField N)
     (hα : ∀ j, aeval (α j) (leastIrreducible (degreePrime N j)) = 0) (x : List Bool) :
     traceSymCoords (explicitTable N) (numBlocks N) (symDegree N) x =
@@ -256,8 +257,8 @@ theorem traceSymCoords_explicitTable_eq (N : ℕ)
 theorem traceSymCoords_explicitTable (N : ℕ) (x : List Bool) :
     traceSymCoords (explicitTable N) (numBlocks N) (symDegree N) x =
       explicitDisperser N (ofList N x) := by
-  rw [traceSymCoords_explicitTable_eq N _ (aeval_binaryRoot_degreePrime N), explicitDisperser,
-    explicitBasis_eq_rootBasis]
+  rw [traceSymCoords_explicitTable_eq_traceSymBits N _ (aeval_binaryRoot_degreePrime N),
+    explicitDisperser, explicitBasis_eq_rootBasis]
 
 /-- **The choice of roots does not matter**: the monomial basis in any roots of the least-code
 irreducible polynomials gives the explicit disperser. In particular the root chosen by
@@ -268,15 +269,16 @@ theorem traceSymBits_rootBasis_eq_explicitDisperser (N : ℕ)
     traceSymBits (1 : ExplicitField N) (numBlocks N) (symDegree N) (rootBasis N α hα)
       (explicitPos N) = explicitDisperser N := by
   funext x
-  rw [← ofList_ofFn x, ← traceSymCoords_explicitTable_eq N α hα, traceSymCoords_explicitTable]
+  rw [← ofList_ofFn x, ← traceSymCoords_explicitTable_eq_traceSymBits N α hα,
+    traceSymCoords_explicitTable]
 
-/-- **The explicit disperser as a program** on bit lists: the input length `N` fixes the
-parameters, the program finds the irreducible polynomials, builds the multiplication table and
-evaluates `traceSym 1 r t` in coordinates. -/
+/-- **The explicit disperser as a computable function** on bit lists: the input length `N` fixes
+the parameters, and the function finds the irreducible polynomials, builds the multiplication table
+and evaluates `traceSym 1 r t` in coordinates. -/
 def explicitDisperserProgram (x : List Bool) : Bool :=
   traceSymCoords (explicitTable x.length) (numBlocks x.length) (symDegree x.length) x
 
-/-- **The program computes the explicit disperser.** -/
+/-- **The computable function is the explicit disperser.** -/
 theorem explicitDisperserProgram_eq (x : List Bool) :
     explicitDisperserProgram x = explicitDisperser x.length (ofList x.length x) :=
   traceSymCoords_explicitTable _ x

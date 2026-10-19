@@ -9,7 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.ClauseSet.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds
+public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds
 import Complexity.Foundations.Data.Nat.Choose.Real
 
 /-!
@@ -34,6 +34,8 @@ of their clauses.
 
 ## Main results
 
+* `Cslib.Logic.PL.ClauseSet.Sparsification.exists_sum_choose_le`: the leaf count is below
+  `2 ^ (ε N)` for a suitable parameter.
 * `Cslib.Logic.PL.ClauseSet.sparsification`: the lemma for clause sets.
 * `Cslib.Logic.PL.CNF.sparsification`: the lemma for formulas in conjunctive normal form.
 
@@ -69,6 +71,80 @@ private theorem exists_mul_pow_le_pow (C : ℝ) (d : ℕ) {r : ℝ} (hr : 1 < r)
     _ ≤ (|C| + 1) * ((|C| + 1)⁻¹ * r ^ α) := mul_le_mul_of_nonneg_left hα.le hC.le
     _ = r ^ α := by field_simp
 
+/-- **The leaves are few.** For every width `k ≥ 1` and every `ε > 0` there is a parameter `α ≥ 1`
+for which the bound `∑_{j ≤ (k - 1) N / α} (N k X ^ (2 k) choose j)` on the number of leaves
+(`ClauseSet.Sparsification.exists_leaves`) is at most `2 ^ (ε N)`, for every number `N` of
+variables. -/
+theorem ClauseSet.Sparsification.exists_sum_choose_le {k : ℕ} (hk : 1 ≤ k) {ε : ℝ} (hε : 0 < ε) :
+    ∃ α : ℕ, 1 ≤ α ∧ ∀ N : ℕ,
+      (∑ j ∈ range ((k - 1) * N / α + 1),
+        (N * (k * Sparsification.base k α ^ (2 * k))).choose j : ℝ) ≤ 2 ^ (ε * N) := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  -- the parameter `M` controls `exp (Λ / T)`
+  obtain ⟨M, hM⟩ := exists_nat_gt (2 / (ε * Real.log 2))
+  have hMpos : (0 : ℝ) < M := lt_trans (by positivity) hM
+  have hM1 : 1 ≤ M := by exact_mod_cast hMpos
+  have hMε : 1 / (M : ℝ) ≤ ε / 2 * Real.log 2 := by
+    rw [div_le_iff₀ hMpos]
+    have := (div_lt_iff₀ (by positivity : 0 < ε * Real.log 2)).mp hM
+    nlinarith
+  -- the parameter `α` controls `T ^ ρ`
+  set r : ℝ := (2 : ℝ) ^ (ε / 2) with hr
+  have hr1 : 1 < r := Real.one_lt_rpow (by norm_num) (by positivity)
+  set C₀ : ℝ := ((M * k * (2 * k) ^ (2 * k) : ℕ) : ℝ) ^ (k - 1)
+  obtain ⟨α, hα, hαbound⟩ := exists_mul_pow_le_pow C₀ (2 * k * (k - 1)) hr1
+  refine ⟨α, hα, fun N => ?_⟩
+  set X := Sparsification.base k α
+  set Λ := N * (k * X ^ (2 * k))
+  set ρ := (k - 1) * N / α
+  set T := M * (k * X ^ (2 * k))
+  have hX : 1 ≤ X := Sparsification.one_le_base hk hα
+  have hT : 1 ≤ T := Nat.one_le_iff_ne_zero.mpr
+    (Nat.mul_ne_zero (by omega) (Nat.mul_ne_zero (by omega) (pow_ne_zero _ (by omega))))
+  have hTR1 : (1 : ℝ) ≤ T := by exact_mod_cast hT
+  have hsum := sum_choose_le_exp_mul_pow Λ ρ (T : ℝ) hTR1
+  -- `exp (Λ / T) ≤ 2 ^ (ε N / 2)`
+  have hexp : Real.exp (Λ / T) ≤ (2 : ℝ) ^ (ε / 2 * N) := by
+    have hΛT : (Λ : ℝ) / T = N / M := by
+      have hKX : (0 : ℝ) < (k * X ^ (2 * k) : ℕ) := by
+        exact_mod_cast Nat.mul_pos (by omega) (pow_pos (by omega) _)
+      simp only [Λ, T, Nat.cast_mul] at hKX ⊢
+      field_simp
+    rw [hΛT, Real.rpow_def_of_pos (by norm_num)]
+    refine Real.exp_le_exp.mpr ?_
+    have hN : (0 : ℝ) ≤ N := Nat.cast_nonneg N
+    calc (N : ℝ) / M = N * (1 / M) := by ring
+      _ ≤ N * (ε / 2 * Real.log 2) := mul_le_mul_of_nonneg_left hMε hN
+      _ = Real.log 2 * (ε / 2 * N) := by ring
+  -- `T ^ ρ ≤ 2 ^ (ε N / 2)`
+  have hTK : (T : ℝ) ^ (k - 1) ≤ r ^ α := by
+    have hTeq : (T : ℝ) ^ (k - 1) = C₀ * (α : ℝ) ^ (2 * k * (k - 1)) := by
+      simp only [T, X, Sparsification.base, C₀, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat]
+      ring
+    rw [hTeq]
+    exact hαbound
+  have hTρ : (T : ℝ) ^ ρ ≤ (2 : ℝ) ^ (ε / 2 * N) := by
+    have hαρ : ρ * α ≤ (k - 1) * N := Nat.div_mul_le_self _ _
+    have hpow : ((T : ℝ) ^ ρ) ^ α ≤ ((2 : ℝ) ^ (ε / 2 * N)) ^ α := by
+      calc ((T : ℝ) ^ ρ) ^ α = (T : ℝ) ^ (ρ * α) := (pow_mul _ _ _).symm
+        _ ≤ (T : ℝ) ^ ((k - 1) * N) := pow_le_pow_right₀ hTR1 hαρ
+        _ = ((T : ℝ) ^ (k - 1)) ^ N := pow_mul _ _ _
+        _ ≤ (r ^ α) ^ N := pow_le_pow_left₀ (by positivity) hTK N
+        _ = ((2 : ℝ) ^ (ε / 2 * N)) ^ α := by
+            rw [hr, ← pow_mul, ← Real.rpow_natCast, ← Real.rpow_natCast,
+              ← Real.rpow_mul (by norm_num), ← Real.rpow_mul (by norm_num)]
+            congr 1
+            push_cast
+            ring
+    exact (pow_le_pow_iff_left₀ (by positivity) (by positivity) (by omega)).mp hpow
+  calc (∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ))
+      ≤ Real.exp (Λ / T) * (T : ℝ) ^ ρ := hsum
+    _ ≤ (2 : ℝ) ^ (ε / 2 * N) * (2 : ℝ) ^ (ε / 2 * N) :=
+        mul_le_mul hexp hTρ (by positivity) (by positivity)
+    _ = 2 ^ (ε * N) := by
+        rw [← Real.rpow_add (by norm_num)]
+        ring_nf
+
 /-- **The sparsification lemma** [Impagliazzo, Paturi and Zane][ImpagliazzoPaturiZane2001], **for
 clause sets.** For every width `k` and every `ε > 0` there is a constant `c` such that every clause
 set `φ` over `N` variables whose clauses have at most `k` literals has a family `Ψ` of at most
@@ -84,77 +160,13 @@ theorem ClauseSet.sparsification (k : ℕ) {ε : ℝ} (hε : 0 < ε) :
         φ.solutions ⊆ Ψ.biUnion ClauseSet.solutions := by
   set K := max k 1
   have hK : 1 ≤ K := le_max_right _ _
-  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
-  -- the parameter `M` controls `exp (Λ / T)`
-  obtain ⟨M, hM⟩ := exists_nat_gt (2 / (ε * Real.log 2))
-  have hMpos : (0 : ℝ) < M := lt_trans (by positivity) hM
-  have hM1 : 1 ≤ M := by exact_mod_cast hMpos
-  have hMε : 1 / (M : ℝ) ≤ ε / 2 * Real.log 2 := by
-    rw [div_le_iff₀ hMpos]
-    have := (div_lt_iff₀ (by positivity : 0 < ε * Real.log 2)).mp hM
-    nlinarith
-  -- the parameter `α` controls `T ^ ρ`
-  set r : ℝ := (2 : ℝ) ^ (ε / 2) with hr
-  have hr1 : 1 < r := Real.one_lt_rpow (by norm_num) (by positivity)
-  set C₀ : ℝ := ((M * K * (2 * K) ^ (2 * K) : ℕ) : ℝ) ^ (K - 1)
-  obtain ⟨α, hα, hαbound⟩ := exists_mul_pow_le_pow C₀ (2 * K * (K - 1)) hr1
+  obtain ⟨α, hα, hcount⟩ := Sparsification.exists_sum_choose_le hK hε
   have hθ := Sparsification.one_le_threshold hK hα
   refine ⟨2 * ∑ j ∈ range K, Sparsification.threshold K α j, fun V _ _ φ hφ => ?_⟩
   have hφK : ∀ C ∈ φ, C.card ≤ K := fun C hC => (hφ C hC).trans (le_max_left _ _)
   obtain ⟨Ψ, hcard, hleaves, hcover⟩ := Sparsification.exists_leaves hK hα φ hφK
-  refine ⟨Ψ, ?_, fun ψ hψ => ?_, fun x hx => ?_⟩
-  · -- the number of leaves
-    set X := Sparsification.base K α
-    set Λ := Fintype.card V * (K * X ^ (2 * K))
-    set ρ := (K - 1) * Fintype.card V / α
-    set T := M * (K * X ^ (2 * K))
-    have hX : 1 ≤ X := Sparsification.one_le_base hK hα
-    have hT : 1 ≤ T := Nat.one_le_iff_ne_zero.mpr
-      (Nat.mul_ne_zero (by omega) (Nat.mul_ne_zero (by omega) (pow_ne_zero _ (by omega))))
-    have hT0 : (0 : ℝ) < T := by exact_mod_cast hT
-    have hTR1 : (1 : ℝ) ≤ T := by exact_mod_cast hT
-    have hsum := sum_choose_le_exp_mul_pow Λ ρ (T : ℝ) hTR1
-    -- `exp (Λ / T) ≤ 2 ^ (ε N / 2)`
-    have hexp : Real.exp (Λ / T) ≤ (2 : ℝ) ^ (ε / 2 * Fintype.card V) := by
-      have hΛT : (Λ : ℝ) / T = Fintype.card V / M := by
-        have hKX : (0 : ℝ) < (K * X ^ (2 * K) : ℕ) := by
-          exact_mod_cast Nat.mul_pos (by omega) (pow_pos (by omega) _)
-        simp only [Λ, T, Nat.cast_mul] at hKX ⊢
-        field_simp
-      rw [hΛT, Real.rpow_def_of_pos (by norm_num)]
-      refine Real.exp_le_exp.mpr ?_
-      have hN : (0 : ℝ) ≤ Fintype.card V := Nat.cast_nonneg (Fintype.card V)
-      calc (Fintype.card V : ℝ) / M = Fintype.card V * (1 / M) := by ring
-        _ ≤ Fintype.card V * (ε / 2 * Real.log 2) := mul_le_mul_of_nonneg_left hMε hN
-        _ = Real.log 2 * (ε / 2 * Fintype.card V) := by ring
-    -- `T ^ ρ ≤ 2 ^ (ε N / 2)`
-    have hTK : (T : ℝ) ^ (K - 1) ≤ r ^ α := by
-      have hTeq : (T : ℝ) ^ (K - 1) = C₀ * (α : ℝ) ^ (2 * K * (K - 1)) := by
-        simp only [T, X, Sparsification.base, C₀, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat]
-        ring
-      rw [hTeq]
-      exact hαbound
-    have hTρ : (T : ℝ) ^ ρ ≤ (2 : ℝ) ^ (ε / 2 * Fintype.card V) := by
-      have hαρ : ρ * α ≤ (K - 1) * Fintype.card V := Nat.div_mul_le_self _ _
-      have hpow : ((T : ℝ) ^ ρ) ^ α ≤ ((2 : ℝ) ^ (ε / 2 * Fintype.card V)) ^ α := by
-        calc ((T : ℝ) ^ ρ) ^ α = (T : ℝ) ^ (ρ * α) := (pow_mul _ _ _).symm
-          _ ≤ (T : ℝ) ^ ((K - 1) * Fintype.card V) := pow_le_pow_right₀ hTR1 hαρ
-          _ = ((T : ℝ) ^ (K - 1)) ^ Fintype.card V := pow_mul _ _ _
-          _ ≤ (r ^ α) ^ Fintype.card V := pow_le_pow_left₀ (by positivity) hTK (Fintype.card V)
-          _ = ((2 : ℝ) ^ (ε / 2 * Fintype.card V)) ^ α := by
-              rw [hr, ← pow_mul, ← Real.rpow_natCast, ← Real.rpow_natCast,
-                ← Real.rpow_mul (by norm_num), ← Real.rpow_mul (by norm_num)]
-              congr 1
-              push_cast
-              ring
-      exact (pow_le_pow_iff_left₀ (by positivity) (by positivity) (by omega)).mp hpow
-    calc (Ψ.card : ℝ) ≤ ∑ j ∈ range (ρ + 1), (Λ.choose j : ℝ) := by exact_mod_cast hcard
-      _ ≤ Real.exp (Λ / T) * (T : ℝ) ^ ρ := hsum
-      _ ≤ (2 : ℝ) ^ (ε / 2 * Fintype.card V) * (2 : ℝ) ^ (ε / 2 * Fintype.card V) :=
-          mul_le_mul hexp hTρ (by positivity) (by positivity)
-      _ = 2 ^ (ε * Fintype.card V) := by
-          rw [← Real.rpow_add (by norm_num)]
-          ring_nf
+  refine ⟨Ψ, (Nat.cast_le.mpr hcard).trans (by exact_mod_cast hcount (Fintype.card V)),
+    fun ψ hψ => ?_, fun x hx => ?_⟩
   · obtain ⟨hsparse, hrefine, hsat⟩ := hleaves ψ hψ
     have hψK : ∀ C ∈ ψ, C.card ≤ K := fun C hC => by
       obtain ⟨D, hD, hCD⟩ := hrefine C hC
