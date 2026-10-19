@@ -51,6 +51,10 @@ def certWord (σ : Var k State → Bool) (L : ℕ) : List Bool := (List.range L)
 @[simp] theorem length_certWord (σ : Var k State → Bool) (L : ℕ) : (certWord σ L).length = L := by
   simp [certWord]
 
+theorem certWord_eq_ofFn (σ : Var k State → Bool) (L : ℕ) :
+    certWord σ L = List.ofFn fun j : Fin L => σ (.cert j) :=
+  List.ext_getElem (by simp) fun j _ _ => by simp [certWord]
+
 /-! ### Semantics of the clause families -/
 
 /-- The initial clauses fix the initial configuration. -/

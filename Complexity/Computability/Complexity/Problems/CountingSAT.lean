@@ -27,7 +27,7 @@ ones of this library, following [Fortnow, Section 4][Fortnow1997].
 
 * `ParitySAT`, an odd number of satisfying assignments, is `⊕P`-complete
   [Papadimitriou and Zachos][PapadimitriouZachos1983];
-* `USAT`, exactly one satisfying assignment (`mem_USAT_iff`), is `US`-complete
+* `USAT`, exactly one satisfying assignment (`SharpSAT.mem_USAT_iff`), is `US`-complete
   [Blass and Gurevich][BlassGurevich1982];
 * `ModSAT k`, a number of satisfying assignments not divisible by `k`, is `ModP k`-complete, and
   its complement is `coModP k`-complete, for every modulus `k`;
@@ -56,6 +56,8 @@ with the count `2 ^ p(n)`. In both cases the number `m` is computed in polynomia
 * `Cslib.Complexity.ParitySAT_parityPComplete`: `⊕SAT` is `⊕P`-complete.
 * `Cslib.Complexity.USAT_usComplete`: `USAT` is `US`-complete.
 * `Cslib.Complexity.ModSAT_modPComplete`, `Cslib.Complexity.compl_ModSAT_coModPComplete`.
+* `Cslib.Complexity.ModSAT_two`, `Cslib.Complexity.ModSAT_zero`: `ModSAT 2` is `ParitySAT` and
+  `ModSAT 0` is `SAT`.
 * `Cslib.Complexity.SharpSATAtLeast_ppComplete`: counting threshold is `PP`-complete.
 * `Cslib.Complexity.SharpSATExact_ceqPComplete`,
   `Cslib.Complexity.compl_SharpSATExact_coCeqPComplete`.
@@ -92,9 +94,17 @@ def SharpSATAtLeast : Set (CNF ℕ × ℕ) := {x | x.2 ≤ SharpSAT x.1}
 encoded with `m` in binary (`encPair encCNF encNat`). -/
 def SharpSATExact : Set (CNF ℕ × ℕ) := {x | SharpSAT x.1 = x.2}
 
-/-- A formula is uniquely satisfiable exactly when it has one satisfying assignment. -/
-theorem mem_USAT_iff {φ : CNF ℕ} : φ ∈ USAT ↔ SharpSAT φ = 1 :=
-  CNF.modelCount_eq_one_iff.symm
+@[deprecated (since := "2026-10-19")] alias mem_USAT_iff := SharpSAT.mem_USAT_iff
+
+/-- Modulo two, a nonzero residue is oddness. -/
+theorem ModSAT_two : ModSAT 2 = ParitySAT := by
+  ext φ
+  simp [ModSAT, ParitySAT, Nat.odd_iff]
+
+/-- Modulo zero, a nonzero residue is a positive count: `ModSAT 0` is satisfiability. -/
+theorem ModSAT_zero : ModSAT 0 = SAT := by
+  ext φ
+  simp [ModSAT, SharpSAT.mem_SAT_iff, Nat.pos_iff_ne_zero]
 
 /-! ### Completeness through the parsimonious reduction -/
 
@@ -119,7 +129,7 @@ theorem ParitySAT_parityPComplete : PolyTimeComplete ParityP encCNF ParitySAT :=
 defined by a function in `#P` equal to one. -/
 theorem USAT_usComplete : PolyTimeComplete US encCNF USAT := by
   have h := polyTimeComplete_sharpSAT (C := US) (· = 1) fun _ _ => Iff.rfl
-  rwa [show {φ | SharpSAT φ = 1} = USAT from Set.ext fun _ => mem_USAT_iff.symm] at h
+  rwa [show {φ | SharpSAT φ = 1} = USAT from Set.ext fun _ => SharpSAT.mem_USAT_iff.symm] at h
 
 /-- **`Mod_k SAT` is `ModP k`-complete**, for every modulus `k`. -/
 theorem ModSAT_modPComplete (k : ℕ) : PolyTimeComplete (ModP k) encCNF (ModSAT k) :=

@@ -18,7 +18,7 @@ a certificate length `L` and a number of steps `T`, `tableau tm u L T` is a form
 conjunctive normal form that is satisfiable exactly when some certificate `w` of length `L`
 makes `tm`, started on `u ++ w`, halt within `T` steps with output `[true]`
 (`Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, in `CookLevin/Correctness.lean`). It has
-exactly one satisfying assignment for each such certificate
+exactly one satisfying assignment (of its variables) for each such certificate
 (`Cslib.Complexity.CookLevin.modelCount_tableau`, in `CookLevin/Parsimonious.lean`).
 
 The formula describes the first `T + 1` configurations of the run directly, in the model of
