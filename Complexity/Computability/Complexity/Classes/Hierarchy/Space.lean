@@ -237,4 +237,235 @@ theorem spaceConstructible_succ_pow {k : ℕ} (hk : 2 ≤ k) :
 theorem spaceConstructible_two_pow : SpaceConstructible (2 ^ ·) :=
   timeConstructible_two_pow.spaceConstructible
 
+/-! ### The diagonal within a space budget -/
+
+/-- **The diagonal within space `G`.** On a word `x` of length `n` whose framed description is
+short (`Cslib.Complexity.Diagonal.shortDesc`), run the described machine on `x`, under the coding
+`Turing.MultiTapeTM.Universal.eBit` of bits, for `2 ^ G n` steps within the budget of `G n` bits
+for the encoded configurations of the simulation (`Turing.MultiTapeTM.Universal.universalSpace`),
+and return `false` exactly when it has halted with output `[true]`; answer `false` on other
+words. -/
+def spaceDiagonal (G : ℕ → ℕ) (x : List Bool) : Bool :=
+  if Diagonal.shortDesc x then
+    Diagonal.verdict (universalSpace (decodeDesc (unframe x), x.map eBit, 2 ^ G x.length,
+      G x.length))
+  else false
+
+private theorem exists_computableTidilyInO_of_space {β : Type} {encOut : β ↪ List Bool}
+    {f : List Bool → β} {T S S' : List Bool → ℕ} (h : ComputableTidilyInO f encBits encOut T S)
+    (k : ℕ) (hS : ∀ x, S x ≤ k * (S' x + 1)) :
+    ∃ T', ComputableTidilyInO f encBits encOut T' S' :=
+  ⟨T, h.mono (k + 1) (fun x => (Nat.le_succ _).trans (Nat.le_mul_of_pos_left _ (by omega)))
+    fun x => (hS x).trans (Nat.mul_le_mul_right _ (Nat.le_succ _))⟩
+
+open Diagonal in
+/-- **The diagonal within space `G` is computable within space `O(n + G n)`**, for a
+space-constructible `G`, charging the shortness test, decoding, the symbols of the input, the
+budget `G n` in unary, the clock `2 ^ G n` in binary, the budgeted universal run and the test. The
+description is short, so decoding it takes space `O(n)`, and the budgeted universal run takes
+space linear in the description, the budget and the lengths of the clock and of `n` in binary
+(`Turing.MultiTapeTM.Universal.budgetSpace_le`). -/
+theorem computableTidilyInO_spaceDiagonal {G : ℕ → ℕ} (hG : SpaceConstructible G) :
+    ∃ T, ComputableTidilyInO (spaceDiagonal G) encBits encBool T
+      fun x => x.length + G x.length := by
+  obtain ⟨dd, ed, hdec⟩ := exists_computableTidilyInDegree_decodeDesc
+  have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
+    ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
+  have hdesc := hdec.inO.comp hu
+  have hsym := computableTidilyInDegree_map_eBit.inO_one
+  obtain ⟨TG, hGb⟩ := hG.computableTidilyInO
+  have hGu := ComputableTidilyInO.natToUnary.comp hGb
+  have hclock := ((ComputableTidilyInDegree.two_pow_length encUnary).inO_one.comp_linear
+    hGu).of_enc_eq (encOut := encNat) (g := fun x : List Bool => 2 ^ G x.length) fun x => by
+      simp only [Function.comp_apply, encUnary_apply, List.length_replicate]
+  have hU := computableTidilyInO_universalSpace.comp (hdesc.prod (hsym.prod (hclock.prod hGu)))
+  have h := computableTidilyInO_shortDesc.ite (computableTidilyInO_verdict.comp hU)
+    (ComputableTidilyInO.const (encMid := encBool) false)
+  obtain ⟨cD, hcD⟩ := hdesc.length_le
+  obtain ⟨cA, hcA⟩ := PolynomiallyBounded.exists_le_mul_two_pow (p := fun u => (u + 1) ^ dd)
+    (by fun_prop)
+  refine exists_computableTidilyInO_of_space h (300 * (cD + 1) * (cA + 1) + 300)
+    fun x => ?_
+  dsimp only [Function.comp_apply, encBits_apply]
+  have hK : ∀ m, 2 * m ≤ (300 * (cD + 1) * (cA + 1) + 300) * m := fun m =>
+    Nat.mul_le_mul_right _ (by omega)
+  split_ifs with hs
+  · have hA : ((unframe x).length + 1) ^ dd ≤ cA * x.length :=
+      (hcA _).trans (Nat.mul_le_mul_left _ (of_decide_eq_true hs))
+    have hD := hcD x
+    have hB := budgetSpace_le (decodeDesc (unframe x)) (x.map eBit) (G x.length) (2 ^ G x.length)
+    have hO := length_eOut_universalSpace_le (decodeDesc (unframe x)) (x.map eBit) (G x.length)
+      (2 ^ G x.length)
+    have hclk : (encNat (2 ^ G x.length)).length = G x.length + 1 := by
+      rw [encNat_two_pow, List.length_append, List.length_replicate, List.length_singleton]
+    have hlen : (encNat ((x.map eBit).length + 1)).length ≤ x.length + 1 := by
+      rw [List.length_map]; exact Universal.length_encNat_le _
+    have hmax : (x.map eBit).foldr max 0 ≤ 1 := listMax_le fun b _ => by cases b <;> decide
+    simp only [descLen, Function.comp_apply, encBits_apply] at hB hD
+    have e₁ : cD * (x.length + ((unframe x).length + 1) ^ dd + 1) ≤
+        cD * (x.length + cA * x.length + 1) := Nat.mul_le_mul_left _ (by omega)
+    have e₂ : cD * (x.length + cA * x.length + 1) + cA * x.length ≤
+        (cD + 1) * (cA + 1) * (x.length + G x.length + 1) := by
+      have : (cD + 1) * (cA + 1) * (x.length + G x.length + 1) =
+          cD * (x.length + cA * x.length + 1) + cA * x.length + (cD * cA * G x.length + cD * cA +
+            cD * G x.length + cA * G x.length + cA + x.length + G x.length + 1) := by ring
+      omega
+    have e₃ : (300 * (cD + 1) * (cA + 1) + 300) * (x.length + G x.length + 1) =
+        300 * ((cD + 1) * (cA + 1) * (x.length + G x.length + 1)) +
+          300 * (x.length + G x.length + 1) := by ring
+    omega
+  · have := hK (x.length + G x.length + 1)
+    omega
+
+/-- **The diagonal within space `G` decides a problem in `DSPACE G`**, for a space-constructible
+`G` with `n ≤ G n`. -/
+theorem setOf_spaceDiagonal_mem_DSPACE {G : ℕ → ℕ} (hG : SpaceConstructible G)
+    (hn : ∀ n, n ≤ G n) : {x | spaceDiagonal G x = true} ∈ DSPACE encBits G := by
+  obtain ⟨T, c, hc, -⟩ := computableTidilyInO_spaceDiagonal hG
+  refine mem_DSPACE_iff.mpr ⟨2 * c, 2 * c, _, decidableInTimeAndSpace_iff.mpr
+    ⟨spaceDiagonal G, hc.computableInTimeAndSpace.mono (fun _ => le_rfl) fun x => ?_,
+      fun x => Iff.rfl⟩⟩
+  have := hn x.length
+  simp only [encBits_apply]
+  nlinarith
+
+/-- Eventually, `n + 1` has at most `n / 4` binary digits. -/
+private theorem eventually_four_mul_length_encNat_le :
+    ∀ᶠ n in atTop, 4 * (encNat (n + 1)).length ≤ n := by
+  obtain ⟨C, hC⟩ := exists_pow_length_encNat_le 2
+  filter_upwards [eventually_ge_atTop (100 * (C + 1))] with n hn
+  have h₁ := hC (n + 1)
+  by_contra hlt
+  have h₂ : (n + 1) ^ 2 ≤ 16 * ((encNat (n + 1)).length + 1) ^ 2 := by
+    rw [show 16 * ((encNat (n + 1)).length + 1) ^ 2 = (4 * ((encNat (n + 1)).length + 1)) ^ 2 by
+      ring]
+    exact Nat.pow_le_pow_left (by omega) 2
+  have h₃ : 100 * (C + 1) * (n + 1) ≤ (n + 1) ^ 2 := by
+    rw [sq]; exact Nat.mul_le_mul_right _ (by omega)
+  nlinarith
+
+open Diagonal in
+/-- **The diagonal argument for space.** If every `c * f n + c` is eventually below `G n` and
+`n ≤ G n`, the problem of the diagonal within space `G` is not in `DSPACE f`. A decider within
+space `O(f)` halts within its number of configurations, `2 ^ O(f n)` times a polynomial, which is
+eventually below the clock `2 ^ G n`, and the configurations of its simulation take
+`O(f n + log n)` bits, eventually within the budget `G n`; so on its own description, padded to a
+short one beyond these points, the diagonal answers the negation of its answer. -/
+theorem setOf_spaceDiagonal_notMem_DSPACE {f G : ℕ → ℕ} (hn : ∀ n, n ≤ G n)
+    (hfG : ∀ c, ∀ᶠ n in atTop, c * f n + c ≤ G n) :
+    {x | spaceDiagonal G x = true} ∉ DSPACE encBits f := by
+  rintro ⟨c₁, c₂, t, hA⟩
+  obtain ⟨g, ⟨k, State, hfinite, tm, htm⟩, hg⟩ := decidableInTimeAndSpace_iff.mp hA
+  have := Fintype.ofFinite State
+  let eS : State ↪ ℕ := (Fintype.equivFin State).toEmbedding.trans Fin.valEmbedding
+  set D := descLen (desc eS eBit tm) with hD
+  set P := 6 * (2 * D + 5) * (c₁ + c₂) + 3 * D + 4 with hP
+  set e := storageBoundExp Bool k
+  set base := storageBoundBase Bool State k
+  have hpoly : ∀ᶠ n in atTop, ((n + 2) * base) ^ 2 < 2 ^ n :=
+    PolynomiallyBounded.eventually_lt_two_pow (f := fun n => ((n + 2) * base) ^ 2) (by fun_prop)
+  obtain ⟨N, hN⟩ := eventually_atTop.mp ((((hfG (2 * e * (c₁ + c₂))).and (hfG (2 * P))).and
+    hpoly).and eventually_four_mul_length_encNat_le)
+  -- the description, padded beyond `N` and to a length where it is short
+  suffices ∀ pad : List Bool, N + 2 ^ (eDesc (desc eS eBit tm)).length ≤ pad.length → False from
+    this (List.replicate _ false) (List.length_replicate ..).ge
+  intro pad hpad
+  have hpow := Nat.one_le_two_pow (n := (eDesc (desc eS eBit tm)).length)
+  have hlen : (frame (eDesc (desc eS eBit tm)) ++ pad).length =
+      2 * (eDesc (desc eS eBit tm)).length + 1 + pad.length := by
+    rw [List.length_append, length_frame]
+  have hshort : shortDesc (frame (eDesc (desc eS eBit tm)) ++ pad) = true := by
+    rw [shortDesc, unframe_frame_append, hlen]
+    exact decide_eq_true (by omega)
+  generalize hx : frame (eDesc (desc eS eBit tm)) ++ pad = x at hlen hshort
+  obtain ⟨⟨⟨h₁, h₂⟩, h₃⟩, h₄⟩ := hN x.length (by omega)
+  have hrun := htm x
+  simp only [encBits_apply] at hrun
+  set s := c₁ * f x.length + c₂ with hs
+  have hsf : s ≤ (c₁ + c₂) * (f x.length + 1) := by rw [hs]; nlinarith
+  -- the decider halts within the clock
+  have hclock : (x.length + 2) * storageBound Bool State k s ≤ 2 ^ G x.length := by
+    have he : 2 * (e * s) ≤ G x.length := by
+      have := Nat.mul_le_mul_left (2 * e) hsf
+      have e₁ : 2 * e * ((c₁ + c₂) * (f x.length + 1)) =
+          2 * e * (c₁ + c₂) * f x.length + 2 * e * (c₁ + c₂) := by ring
+      have e₂ : 2 * (e * s) = 2 * e * s := by ring
+      omega
+    have hsq : ((x.length + 2) * base * 2 ^ (e * s)) ^ 2 ≤ (2 ^ G x.length) ^ 2 := by
+      calc ((x.length + 2) * base * 2 ^ (e * s)) ^ 2
+          = ((x.length + 2) * base) ^ 2 * 2 ^ (2 * (e * s)) := by ring
+        _ ≤ 2 ^ x.length * 2 ^ G x.length :=
+          Nat.mul_le_mul h₃.le (Nat.pow_le_pow_right (by norm_num) he)
+        _ ≤ 2 ^ G x.length * 2 ^ G x.length :=
+          Nat.mul_le_mul_right _ (Nat.pow_le_pow_right (by norm_num) (hn _))
+        _ = (2 ^ G x.length) ^ 2 := (sq _).symm
+    refine le_trans ?_ ((Nat.pow_le_pow_iff_left two_ne_zero).mp hsq)
+    rw [Nat.mul_assoc]
+    exact Nat.mul_le_mul_left _ (storageBound_le_base_mul_pow s)
+  obtain ⟨hhalt, hout⟩ := hrun.of_card.runFrom_of_le hclock
+  -- the configurations of the simulation fit within the budget
+  have hbudget : cfgSpace (desc eS eBit tm) (x.map eBit) (2 ^ G x.length) ≤ G x.length := by
+    have hsp : simSpace (desc eS eBit tm) (x.map eBit) (2 ^ G x.length) ≤ s := by
+      rw [simSpace_desc]
+      exact space_le_of_runsInSpace hrun.2.2 _
+    have hk : (desc eS eBit tm).tapes ≤ D := by
+      simp only [hD, descLen, eDesc_apply, length_encPair, encUnary_apply, List.length_replicate]
+      omega
+    have hP' : 6 * (2 * D + 5) * s + 3 * D + 4 ≤ P * (f x.length + 1) := by
+      have := Nat.mul_le_mul_left (6 * (2 * D + 5)) hsf
+      have e₁ : P * (f x.length + 1) = 6 * (2 * D + 5) * ((c₁ + c₂) * (f x.length + 1)) +
+          (3 * D + 4) * (f x.length + 1) := by rw [hP]; ring
+      have : 3 * D + 4 ≤ (3 * D + 4) * (f x.length + 1) := Nat.le_mul_of_pos_right _ (by omega)
+      omega
+    have e₂ : 2 * P * f x.length + 2 * P = 2 * (P * (f x.length + 1)) := by ring
+    simp only [cfgSpace, List.length_map, ← hD]
+    have e₃ : 3 * (2 * D + 5) * 2 * simSpace (desc eS eBit tm) (x.map eBit) (2 ^ G x.length) ≤
+        6 * (2 * D + 5) * s := by
+      rw [show 3 * (2 * D + 5) * 2 = 6 * (2 * D + 5) by ring]
+      exact Nat.mul_le_mul_left _ hsp
+    have := hn x.length
+    omega
+  -- so the diagonal negates the answer of the decider
+  have hd : spaceDiagonal G x = !g x := by
+    simp only [spaceDiagonal, hshort, ↓reduceIte]
+    rw [← hx, decodeDesc_unframe_frame_append, hx,
+      universalSpace_desc eS eBit tm x _ _ hbudget]
+    simp only [Cfg.Halted] at hhalt
+    rw [hhalt, hout]
+    cases g x <;> rfl
+  have hgx := hg x
+  simp only [Set.mem_ofPred_eq, hd] at hgx
+  revert hgx
+  cases g x <;> decide
+
+/-! ### The space hierarchy theorem -/
+
+/-- **The space hierarchy theorem.** If `g` is space-constructible, `n ≤ g n`, and every
+`c * f n + c` is eventually below `g n`, then `DSPACE f` is strictly contained in `DSPACE g`
+[Sipser, Theorem 9.3][Sipser2013], [Arora and Barak, Theorem 4.8][AroraBarak09]. The universal
+machine simulates within a budget with a constant overhead for each simulated machine, so the gap
+is the textbook `f = o(g)`; the condition `n ≤ g n`, where the textbook asks `log n ≤ g n`, is the
+space the diagonal takes to hold its input and its description. -/
+theorem DSPACE_ssubset_DSPACE {f g : ℕ → ℕ} (hg : SpaceConstructible g) (hn : ∀ n, n ≤ g n)
+    (hfg : ∀ c, ∀ᶠ n in atTop, c * f n + c ≤ g n) : DSPACE encBits f ⊂ DSPACE encBits g := by
+  have hsub : DSPACE encBits f ⊆ DSPACE encBits g := DSPACE_mono_of_eventually_le <| by
+    filter_upwards [hfg 1] with n h
+    omega
+  exact (Set.ssubset_iff_of_subset hsub).mpr ⟨_, setOf_spaceDiagonal_mem_DSPACE hg hn,
+    setOf_spaceDiagonal_notMem_DSPACE hn hfg⟩
+
+/-- **Logarithmic space is strictly within polynomial space**: `L ⊆ DSPACE n`, and the diagonal
+within space `(n + 1) ^ 2` is in `PSPACE` but not in `DSPACE n` [Sipser, Corollary 9.6][Sipser2013].
+-/
+theorem L_ssubset_PSPACE : L encBits ⊂ PSPACE encBits := by
+  have hL : L encBits ⊆ DSPACE encBits fun n => n := fun A hA =>
+    DSPACE_mono (fun n => (Nat.log2_le_self n)) (mem_L_iff_mem_DSPACE.mp hA)
+  refine (Set.ssubset_iff_of_subset L_subset_PSPACE).mpr ⟨_, DSPACE_subset_PSPACE (by fun_prop)
+    (setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow le_rfl)
+      fun n => (Nat.le_succ n).trans (Nat.le_self_pow two_ne_zero _)), fun h =>
+    setOf_spaceDiagonal_notMem_DSPACE (f := fun n => n)
+      (fun n => (Nat.le_succ n).trans (Nat.le_self_pow two_ne_zero _)) (fun c => ?_) (hL h)⟩
+  filter_upwards [eventually_ge_atTop c] with n hc
+  nlinarith
+
 end Cslib.Complexity
