@@ -9,6 +9,7 @@ import ComplexityTests.ApproximateCounting
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
+import ComplexityTests.ArthurMerlin
 import ComplexityTests.Axioms
 import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
