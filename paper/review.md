@@ -1,5 +1,57 @@
 # Theorem-index review
 
+## Basic classes and DP completeness, 19 October 2026
+
+Lean source revision: `4f6bdaf35ebe60aec6d1063ae513ac342df13589`.
+Prose revision: `683cfcf5c4ff8ff3b4be7a41ecd78b363e83495e`.
+Base: `bd00a271e316dc6403b3ab075677855e64aca867`.
+
+The batch adds exact-count polynomial-time precomposition for #P and GapP;
+union/intersection closure for P, NP, coNP and parity-P; parity symmetric
+difference; verifier-based UP; C=P as GapP zero sets; and generic product DP
+completeness with SAT–UNSAT as a corollary. The index adds three numbered entries
+and expands the counting-algebra entry. It now has 68 entries, 148 declaration
+links, 80 references and 26 pages. The 17 new declaration links use the final
+Lean revision above; existing source pins are preserved.
+
+Independent Codex reviews:
+
+- `proof_api` approved all new modules, modified APIs, placement, imports, source
+  credit and tests at `8c12d2a9`, then verified the documentation-only correction
+  and approved final Lean revision `4f6bdaf3`. No outstanding findings.
+- `proof_correctness` checked counts, global uniqueness, integer zero sets,
+  arbitrary-encoding reductions, generic product completeness and concrete
+  clients. The single wording finding was resolved: DP's definition intersects
+  languages; the text does not assert a separation from NP intersect coNP.
+  Final source approval is `4f6bdaf3`.
+- `resume_alternation` approved the changed exposition at `683cfcf5` against
+  `4f6bdaf3`, including hypotheses, model boundaries, 68-entry count and all
+  17 new anchors. No findings.
+
+All six project gates passed on `8c12d2a9`: build and test with `--wfail --iofail`,
+`mk_all --check`, `lint`, `lint-style` and `checkInitImports`. The sole subsequent
+Lean-file change is the independently reviewed DP docstring correction; no
+statement, proof or import changed. New tests include concrete empty/nonempty
+languages, variable-length precomposition, exact false-padding counts, a
+SAT–UNSAT yes-instance and no-instance, and 16 headline axiom guards.
+
+The final PDF rebuilt successfully. Its final LaTeX log has no warnings or
+underfull/overfull boxes. All 26 rendered pages were inspected; all 17 new URL
+annotations were matched to their exact source-line anchors. Existing bibliography
+metadata warnings (the authorless threshold-circuit draft and Fagin's empty
+publisher field) are unchanged. These are AI reviews, not human editorial approval
+or machine-checked equivalence of prose and Lean.
+
+Final artifact hashes:
+
+~~~text
+61be9194dc2bcda4c3f697c978587a38fa7e7757691847851126e81531cdbc7f  paper/main.tex
+6ca6b29f2ffb7d84ca507092b43eca6d2a44919ce1f3a6c6f5c6080470a6ae5f  paper/sections/completeness.tex
+8ffff2a87360321cc8d1592e056a0ddaaa6b7b63eb079364120a5b25e88023e7  paper/sections/randomness.tex
+7a6de32908b8bca83037998b38ce598207210a69f511e6599f847d161807081c  paper/README.md
+244763cde8c1ebeffd5e98ed4d9b2422170cc1a320ecef13a82f13ac8697b252  paper/main.pdf
+~~~
+
 ## Integration on main, 19 October 2026
 
 Merged parents: 46deb511074655f6701ed712bb568b59f5e57d9d (main, including PR #7)
