@@ -70,6 +70,7 @@ import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
+import ComplexityTests.Hypercontractivity
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
