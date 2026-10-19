@@ -5,6 +5,8 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.AWPP
+import Complexity.Computability.Complexity.Classes.AWPP.Closure
+import Complexity.Computability.Complexity.Classes.AWPP.WPP
 import Complexity.Computability.Complexity.Classes.SBP
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -98,6 +100,57 @@ example : {w : List Bool | w.headD false = true} ∪ {w | w.tail.headD false = t
 example : {w : List Bool | w.headD false = true} ∪ Set.univ ∈ SBP encBits :=
   union_mem_SBP head_mem_SBP univ_mem_SBP_zero
 
+/-- A negative, non-dyadic target tests the WPP normalization away from powers of two. -/
+private theorem head_mem_WPP_negative : {w : List Bool | w.headD false = true} ∈
+    WPP encBits := by
+  let f (w : List Bool) : ℤ := -(3 * 2 ^ w.length)
+  have hf : ComputableTidilyInPolyTime f encBits encIntBin := by dsimp [f]; fun_prop
+  have hg : ComputableTidilyInPolyTime
+      (fun w : List Bool => if w.headD false then f w else 0) encBits encIntBin := by fun_prop
+  have hn (w : List Bool) : f w ≠ 0 := by simp [f]
+  refine ⟨_, GapP.of_polyTime hg, f, hf, hn, fun w => ?_, fun w => ?_⟩
+  · cases w.headD false <;> simp
+  · simp only [Set.mem_ofPred_eq]
+    cases w.headD false <;> simp [(hn w).symm]
+
+example : {w : List Bool | w.headD false = true} ∈ AWPP encBits :=
+  WPP_subset_AWPP head_mem_WPP_negative
+
+example : {w : List Bool | w.headD false = true} ∈ AWPP encBits :=
+  LWPP_subset_AWPP (SPP_subset_LWPP (UP_subset_SPP (P_subset_UP head_mem_P)))
+
+example : ∃ g ∈ GapP encBits, ∃ p : Polynomial ℕ, ∀ w : List Bool,
+    (0 ≤ g w ∧ g w ≤ (2 : ℤ) ^ p.eval w.length) ∧
+    (w.headD false = true → 7 * (2 : ℤ) ^ p.eval w.length ≤ 8 * g w) ∧
+    (w.headD false ≠ true → 8 * g w ≤ (2 : ℤ) ^ p.eval w.length) :=
+  exists_AWPP_gap_eighth head_mem_AWPP
+
+example : {w : List Bool | w.headD false = true} ∩ {w | w.tail.headD false = true} ∈
+    AWPP encBits := inter_mem_AWPP head_mem_AWPP (tail_reduces_head.mem_AWPP head_mem_AWPP_exp)
+
+example : {w : List Bool | w.headD false = true} ∪ {w | w.headD false = true}ᶜ ∈
+    AWPP encBits := union_mem_AWPP head_mem_AWPP (compl_mem_AWPP head_mem_AWPP)
+
+example : {w : List Bool | w.headD false = true} \ {w | w.tail.headD false = true} ∈
+    AWPP encBits := diff_mem_AWPP head_mem_AWPP (tail_reduces_head.mem_AWPP head_mem_AWPP)
+
+open scoped symmDiff in
+example : {w : List Bool | w.headD false = true} ∆ {w | w.tail.headD false = true} ∈
+    AWPP encBits := symmDiff_mem_AWPP head_mem_AWPP (tail_reduces_head.mem_AWPP head_mem_AWPP)
+
+/-- The repetition count is a theorem parameter, independent of the input. -/
+example (m : ℕ) (hm : 0 < m) : ∃ f ∈ SharpP encBits, ∃ k : List Bool → ℕ,
+    ComputableTidilyInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
+      (w.headD false = true → k w ≤ f w) ∧ (w.headD false ≠ true → 2 ^ m * f w < k w) :=
+  exists_SBP_gap_pow head_mem_SBP hm
+
+example : {w : List Bool | w.headD false = true} ∩ {w | w.tail.headD false = true} ∈
+    SBP encBits := inter_mem_SBP_of_mem_BPP head_mem_SBP
+      (P_subset_BPP ⟨fun w => w.tail.headD false, by fun_prop, fun _ => Iff.rfl⟩)
+
+example : (Set.univ : Set (List Bool)) ∩ {w | w.headD false = true} ∈ SBP encBits :=
+  inter_mem_SBP_of_mem_BPP univ_mem_SBP_zero (P_subset_BPP head_mem_P)
+
 end ComplexityTests.ApproximateCounting
 
 /--
@@ -183,3 +236,66 @@ info: 'Cslib.Complexity.union_mem_SBP' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.union_mem_SBP
+
+/--
+info: 'Cslib.Complexity.WPP_subset_AWPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.WPP_subset_AWPP
+
+/--
+info: 'Cslib.Complexity.LWPP_subset_AWPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.LWPP_subset_AWPP
+
+/--
+info: 'Cslib.Complexity.exists_AWPP_gap_eighth' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.exists_AWPP_gap_eighth
+
+/--
+info: 'Cslib.Complexity.inter_mem_AWPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.inter_mem_AWPP
+
+/--
+info: 'Cslib.Complexity.union_mem_AWPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.union_mem_AWPP
+
+/--
+info: 'Cslib.Complexity.diff_mem_AWPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.diff_mem_AWPP
+
+/--
+info: 'Cslib.Complexity.symmDiff_mem_AWPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.symmDiff_mem_AWPP
+
+/--
+info: 'Cslib.Complexity.exists_SBP_gap_pow' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.exists_SBP_gap_pow
+
+/--
+info: 'Cslib.Complexity.inter_mem_SBP_of_mem_BPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.inter_mem_SBP_of_mem_BPP

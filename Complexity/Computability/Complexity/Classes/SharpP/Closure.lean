@@ -169,6 +169,12 @@ end SharpP
 
 namespace GapP
 
+/-- A power of two with a length-polynomial exponent is in `GapP`. -/
+theorem two_pow_mem (p : Polynomial ℕ) :
+    (fun a => (2 : ℤ) ^ p.eval (enc a).length) ∈ GapP enc := by
+  simpa only [Nat.cast_pow, Nat.cast_ofNat] using
+    SharpP.natCast_mem_GapP (SharpP.two_pow_mem (enc := enc) p)
+
 /-- The zero function is in `GapP`. -/
 theorem zero_mem : (0 : α → ℤ) ∈ GapP enc :=
   ⟨0, SharpP.zero_mem, 0, SharpP.zero_mem, fun a => by simp⟩
