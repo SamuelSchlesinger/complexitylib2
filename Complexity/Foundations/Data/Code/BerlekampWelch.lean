@@ -26,13 +26,13 @@ then for every solution `Q - p * E` has degree less than `e + k` and vanishes at
 `n - e ≥ e + k` points without errors, so `Q = p * E` and `p` is the quotient `Q /ₘ E`
 (`Cslib.Code.BerlekampWelch.IsSolution.divByMonic_eq`). The decoder `Cslib.Code.berlekampWelch`
 therefore recovers `p` from any solution (`Cslib.Code.berlekampWelch_eq_some`): Reed–Solomon codes
-of dimension `k` are uniquely decoded up to `(n - k) / 2` errors, half their minimum distance
-`n - k + 1`.
+of dimension `k` are uniquely decoded up to `(n - k) / 2` errors, the largest number below half
+their minimum distance `n - k + 1`.
 
 The key equations are a system of `n` linear equations in the `2 e + k` unknown coefficients of
-`E` and `Q`, which Gaussian elimination solves in polynomial time. This module proves the
+`E` and `Q`; in the literature they are solved by Gaussian elimination. This module proves the
 correctness of the decoder only: `Cslib.Code.berlekampWelch` chooses a solution noncomputably,
-and no claim about running time is made.
+and no running time is formalized.
 
 ## Main definitions
 
