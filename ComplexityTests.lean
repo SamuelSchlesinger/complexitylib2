@@ -59,6 +59,7 @@ import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
 import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
+import ComplexityTests.LogSpace
 import ComplexityTests.Logarithms
 import ComplexityTests.MachineClock
 import ComplexityTests.MachineExtendTapes
