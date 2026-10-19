@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
+public import Complexity.Computability.Complexity.Classes.Time
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
@@ -40,7 +40,7 @@ bounds on `2 ^ ℓ` and on `T n` as functions of the instance:
   `T n` is polynomially bounded
   (`Turing.MultiTapeTM.ComputableTidilyInO.computableTidilyInPolyTime_take`);
 * the greedy design of `Cslib.Crypto.PRG.NisanWigderson.greedyMasks` is a loop over the `2 ^ ℓ`
-  masks of length `ℓ`, whose kept masks grow by one mask per step
+  masks of length `ℓ` that keeps at most one more mask per step
   (`Cslib.Crypto.PRG.NisanWigderson.computableTidilyInPolyTime_greedyMasks`);
 * the generator on lists `Cslib.Crypto.PRG.NisanWigderson.listGenerator` reads each block with
   `Cslib.Crypto.PRG.NisanWigderson.restrictMask` and evaluates the hard function
@@ -62,6 +62,8 @@ generator for each of the `2 ^ ℓ` seeds and takes the strict majority of the a
   tidy deciders within the same time bound, up to constant factors.
 * `Turing.MultiTapeTM.ComputableTidilyInO.computableTidilyInPolyTime_take`: evaluation of a
   function computable in time `T n` on words of polynomially bounded `T n`.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList_of_polyBounded`: enumeration of the
+  words of a computed length `ℓ` when `2 ^ ℓ` is polynomially bounded.
 * `Cslib.Crypto.PRG.NisanWigderson.computableTidilyInPolyTime_greedyMasks`,
   `Cslib.Crypto.PRG.NisanWigderson.computableTidilyInPolyTime_listGenerator`: the greedy design
   and the generator in polynomial time, when `2 ^ ℓ` and `T n` are polynomially bounded.

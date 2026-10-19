@@ -15,7 +15,7 @@ public import Complexity.Computability.Circuit.Boolean.XorLemma
 A Boolean function `f` on `n` bits is *average-case hard* for size `s` (`IsAverageCaseHard f s`)
 when every Boolean function of De Morgan circuit complexity at most `s` agrees with `f` on at most
 a `1 / 2 + 1 / s` fraction of the inputs. This is the hardness `H_avg(f) ≥ s` of
-[Arora and Barak, Definition 19.1][AroraBarak09], except that the agreement bound is non-strict,
+[Arora and Barak, Chapter 19][AroraBarak09], except that the agreement bound is non-strict,
 as in the conclusion of Yao's XOR lemma (`Cslib.Circuits.Boolean.card_eq_xorPower_div_le`). The
 non-strict form is the weaker hypothesis; arguments that need a strict bound, such as the analysis
 of the Nisan–Wigderson generator, obtain it from a little slack in the size

@@ -8,25 +8,29 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.BPP
+public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.P
-public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification
 public import Complexity.Computability.Languages.Slice
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
 import Complexity.Computability.Circuit.Boolean.Substitution
 import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
+import Complexity.Computability.Complexity.Classes.Inclusions
 import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 import Complexity.Tactic.PolyTime
 
 /-!
 # Derandomizing BPP from average-case hardness
 
-**Hardness versus randomness** [NisanWigderson1994]: if some problem decidable in time
-`2 ^ O(n)` is average-case hard for circuits of size `2 ^ (n / c)`, then `BPP = P`
-[Arora and Barak, Theorem 20.7 and Remark 20.8][AroraBarak09]. Here the hardness is
+**Hardness versus randomness** [NisanWigderson1994]: if some problem in `E`, decidable in time
+`2 ^ O(n)`, is average-case hard for circuits of size `2 ^ (n / c)`, then `BPP = P`
+[Arora and Barak, Chapter 20][AroraBarak09]. Here the hardness is
 `Cslib.Circuits.Boolean.IsAverageCaseHard` for nonuniform De Morgan circuits, with the non-strict
 bound produced by Yao's XOR lemma, and the conclusion is uniform: every problem in `BPP enc` is in
-`P enc`, for every encoding `enc` of instances (`BPP_subset_P_of_isAverageCaseHard`).
+`P enc`, for every encoding `enc` of instances (`BPP_subset_P_of_isAverageCaseHard`), so
+`P enc = BPP enc` (`P_eq_BPP_of_isAverageCaseHard`). A hardness `2 ^ (ε n)` for a real `ε > 0`
+gives the hypothesis for every natural `c ≥ 1 / ε`, by
+`Cslib.Circuits.Boolean.IsAverageCaseHard.mono`.
 
 The deterministic algorithm is `Cslib.Complexity.nwDecider`. On an instance of length `N` it sets
 `t = t₀ + e (⌊log₂ N⌋ + 1)` for constants `t₀` and `e`, and runs the verifier on the output of the
@@ -47,8 +51,13 @@ is at least `2 / 3` on members and at most `1 / 3` on other instances.
 
 ## Main results
 
-* `Cslib.Complexity.BPP_subset_P_of_isAverageCaseHard`: if a problem in `DTIME (2 ^ (k n))` has
-  slices average-case hard for size `2 ^ (n / c)` for all large `n`, then `BPP enc ⊆ P enc`.
+* `Cslib.Complexity.BPP_subset_P_of_isAverageCaseHard`: if a problem in `E` has slices
+  average-case hard for size `2 ^ (n / c)` for all large `n`, then `BPP enc ⊆ P enc`.
+* `Cslib.Complexity.P_eq_BPP_of_isAverageCaseHard`: under the same hypothesis, `P enc = BPP enc`.
+
+The worst-case to average-case amplification, giving the same conclusion from a problem in `E`
+outside `SIZE (2 ^ (ε n))` [ImpagliazzoWigderson1997], and the endpoint of Babai, Fortnow, Nisan
+and Wigderson from `EXP ⊄ P/poly` [BabaiFortnowNisanWigderson1993] are not formalized here.
 
 ## References
 
@@ -95,8 +104,8 @@ private theorem complexity_le_of_append (L : Language Bool) (u : List Bool) {P :
 
 /-! ### Counting votes -/
 
-/-- The strict majority over all seeds of `ℓ` bits holds when more than half of the seeds vote
-`true`, and fails when fewer than half do. -/
+/-- The strict majority of the votes over all seeds of `ℓ` bits compares the number of seeds voting
+`true` with half of `2 ^ ℓ`. -/
 private theorem listStrictMajority_map_enumList (ℓ : ℕ) (vote : List Bool → Bool) :
     BitString.listStrictMajority ((BitString.enumList ℓ).map vote) =
       decide (2 ^ ℓ / 2 < #{z : Fin ℓ → Bool | vote (List.ofFn z) = true}) := by
@@ -108,20 +117,21 @@ private theorem listStrictMajority_map_enumList (ℓ : ℕ) (vote : List Bool �
 /-! ### The main theorem -/
 
 /-- **Hardness versus randomness: average-case hardness in `E` derandomizes `BPP`**
-[NisanWigderson1994], [Arora and Barak, Theorem 20.7][AroraBarak09]. Let `L` be a problem on words
-decidable in time `O(2 ^ (k n))`, that is, in `E`, and let `c > 0`. If for all large `n` the slice
-of `L` at `n` is average-case hard for size `2 ^ (n / c)`, that is, every Boolean function of De
-Morgan circuit complexity at most `2 ^ (n / c)` agrees with it on at most a
+[NisanWigderson1994], [Arora and Barak, Chapter 20][AroraBarak09]. Let `L` be a problem on words
+in `E`, decidable in time `O(2 ^ (k n))` for some `k`, and let `c > 0`. If for all large `n` the
+slice of `L` at `n` is average-case hard for size `2 ^ (n / c)`, that is, every Boolean function of
+De Morgan circuit complexity at most `2 ^ (n / c)` agrees with it on at most a
 `1 / 2 + 2 ^ (-(n / c))` fraction of the words of length `n`, then every problem in `BPP enc` is
 in `P enc`, for every encoding `enc` of instances.
 
 The hardness is nonuniform and non-strict (`Cslib.Circuits.Boolean.IsAverageCaseHard`); the
 conclusion is uniform, with the deterministic decider `Cslib.Complexity.nwDecider`. -/
-theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {k c : ℕ}
-    (hL : (L : Set (List Bool)) ∈ DTIME encBits fun n => 2 ^ (k * n)) (hc : 0 < c)
+theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {c : ℕ}
+    (hL : (L : Set (List Bool)) ∈ E encBits) (hc : 0 < c)
     (hard : ∀ᶠ n in atTop, IsAverageCaseHard (L.slice n) (2 ^ (n / c)))
     {α : Type} (enc : α ↪ List Bool) : BPP enc ⊆ P enc := by
   rintro A ⟨p, V, hV, hdec⟩
+  obtain ⟨k, hL⟩ := mem_E_iff.1 hL
   obtain ⟨g, hgL, hg⟩ := exists_computableTidilyInO_of_mem_DTIME hL
   have hslice (n : ℕ) : (fun y : Fin n → Bool => g (List.ofFn y)) = L.slice n := by
     funext y
@@ -132,8 +142,7 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {k c : ℕ}
   set Tc : ℕ → ℕ := fun N =>
     complexity interpretation (single (L'.slice (2 * N + 1 + p.eval N))) with hTc
   have hTcpoly : PolynomiallyBounded Tc :=
-    (show PolynomiallyBounded fun n => complexity interpretation (single (L'.slice n)) from hL').comp
-      (by fun_prop)
+    (mem_PPoly.1 hL').comp (g := fun N => 2 * N + 1 + p.eval N) (by fun_prop)
   set B : ℕ → ℕ := fun N => p.eval N + Tc N + 5 with hB
   have hBpoly : PolynomiallyBounded B := by
     simp only [hB]
@@ -249,7 +258,7 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {k c : ℕ}
       congr 3
       refine filter_congr fun z _ => ?_
       rw [← hslice]
-      show V (x, listGenerator g (c * (4 * τ)) ((greedyMasks ((b + 1) * τ) (c * (4 * τ))
+      change V (x, listGenerator g (c * (4 * τ)) ((greedyMasks ((b + 1) * τ) (c * (4 * τ))
         (τ - 1)).take m) (List.ofFn z)) = true ↔ _
       rw [listGenerator_take_greedyMasks hlen]
     rw [hmaj, decide_eq_true_iff]
@@ -290,5 +299,15 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {k c : ℕ}
       have hZ'' : 2 * Z < 2 ^ ((b + 1) * τ) := by exact_mod_cast hZ'
       have := (Nat.div_lt_iff_lt_mul two_pos).1 hlt
       omega
+
+/-- **Hardness versus randomness: `P = BPP` from average-case hardness in `E`**
+[NisanWigderson1994], [Arora and Barak, Chapter 20][AroraBarak09]. If some problem in `E` has
+slices that are average-case hard for size `2 ^ (n / c)` for all large `n`, for some `c > 0`, then
+`P enc = BPP enc` for every encoding `enc` of instances. -/
+theorem P_eq_BPP_of_isAverageCaseHard {L : Language Bool} {c : ℕ}
+    (hL : (L : Set (List Bool)) ∈ E encBits) (hc : 0 < c)
+    (hard : ∀ᶠ n in atTop, IsAverageCaseHard (L.slice n) (2 ^ (n / c)))
+    {α : Type} (enc : α ↪ List Bool) : P enc = BPP enc :=
+  P_subset_BPP.antisymm (BPP_subset_P_of_isAverageCaseHard hL hc hard enc)
 
 end Cslib.Complexity

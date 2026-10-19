@@ -26,7 +26,7 @@ Derandomizing a polynomial-time algorithm with the Nisan–Wigderson generator
 **Designs with seeds of linear length.** The algorithm runs over all `2 ^ ℓ` seeds, so the seed
 length `ℓ` must be logarithmic in the running time, hence linear in the input length `n` of the
 hard function. The polynomial designs of `Cslib.Crypto.PRG.NisanWigderson.Design.polynomial` have
-`ℓ = n ^ 2`. Here designs are built greedily [Arora and Barak, Lemma 20.14][AroraBarak09], as
+`ℓ = n ^ 2`. Here designs are built greedily [Arora and Barak, Chapter 20][AroraBarak09], as
 masks: lists of `ℓ` bits, the block of a mask being the set of positions where it is `true`.
 `greedyMasks ℓ n a` runs through all masks of length `ℓ` in the order of
 `Cslib.BitString.enumList` and keeps a mask when it has `n` ones and shares at most `a` of them
@@ -35,7 +35,10 @@ of them with some kept mask. Counting the `n`-sets that share `a + 1` elements w
 shows that the greedy design has at least `C(ℓ, a + 1) / C(n, a + 1) ^ 2` blocks
 (`choose_le_length_greedyMasks_mul`), so with `ℓ = (b + 1) t` and `a + 1 = t` it has at least
 `b ^ t / 4 ^ n` blocks (`le_length_greedyMasks`). The construction is a simple loop over lists,
-whose running time is polynomial in `2 ^ ℓ`.
+whose running time is polynomial in `2 ^ ℓ`, and so is the generator on lists `listGenerator`,
+which reads the bits of the seed at the ones of each mask (`restrictMask`) and applies the hard
+function; its polynomial-time certificates are in
+`Complexity/Computability/Complexity/Classes/BPP/Derandomization/Generator.lean`.
 
 **Fooling in counting form.** For an average-case hard function `f`
 (`Cslib.Circuits.Boolean.IsAverageCaseHard`), the fraction of seeds on which a small test accepts
@@ -52,6 +55,8 @@ the number `m` of output bits and the hardness `s`.
 * `Cslib.Crypto.PRG.NisanWigderson.Design.ofMasks`: the design whose blocks are given by masks.
 * `Cslib.Crypto.PRG.NisanWigderson.greedyMasks`: the greedy design, as a list of masks.
 * `Cslib.Crypto.PRG.NisanWigderson.Design.greedy`: its first `m` blocks, as a design.
+* `Cslib.Crypto.PRG.NisanWigderson.listGenerator`: the generator on lists, for a function on words
+  and a list of masks.
 
 ## Main results
 
@@ -61,6 +66,8 @@ the number `m` of output bits and the hardness `s`.
   maximal.
 * `Cslib.Crypto.PRG.NisanWigderson.choose_le_length_greedyMasks_mul`,
   `Cslib.Crypto.PRG.NisanWigderson.le_length_greedyMasks`: the greedy design is large.
+* `Cslib.Crypto.PRG.NisanWigderson.listGenerator_take_greedyMasks`: with the greedy masks, the
+  generator on lists is the Nisan–Wigderson generator of `Design.greedy`.
 * `Cslib.Crypto.PRG.NisanWigderson.abs_card_div_sub_card_div_lt`: for an average-case hard
   function, the generator fools small circuits, as a statement about counts.
 
@@ -129,6 +136,7 @@ theorem overlapCount_eq_card_inter {v w : List Bool} (hv : v.length = ℓ) (hw :
 theorem overlapCount_self (w : List Bool) : overlapCount w w = w.count true := by
   simp [overlapCount, List.zipWith_self]
 
+/-- Sharing ones is symmetric. -/
 theorem overlapCount_comm (v w : List Bool) : overlapCount v w = overlapCount w v := by
   rw [overlapCount, overlapCount, List.zipWith_comm]
   simp only [Bool.and_comm]
@@ -195,13 +203,11 @@ ones and shares at most `a` of them with every mask kept so far. -/
 def greedyStep (n a : ℕ) (kept : List (List Bool)) (w : List Bool) : List (List Bool) :=
   if w.count true = n ∧ ∀ v ∈ kept, overlapCount w v ≤ a then kept ++ [w] else kept
 
-/-- The greedy design [Arora and Barak, Lemma 20.14][AroraBarak09], as masks: the masks of length
+/-- The greedy design [Arora and Barak, Chapter 20][AroraBarak09], as masks: the masks of length
 `ℓ`, in the order of `Cslib.BitString.enumList`, each kept when it has `n` ones and shares at most
 `a` of them with every mask kept before it. -/
 def greedyMasks (ℓ n a : ℕ) : List (List Bool) :=
   (BitString.enumList ℓ).foldl (greedyStep n a) []
-
-section Greedy
 
 private theorem prefix_foldl_greedyStep (cands kept : List (List Bool)) :
     kept <+: cands.foldl (greedyStep n a) kept := by
@@ -264,8 +270,6 @@ private theorem maximal_foldl_greedyStep {cands kept : List (List Bool)} {w : Li
         obtain ⟨v, hv, hlt⟩ := h hn
         exact .inr ⟨v, hpre.subset hv, hlt⟩
     · exact ih hw
-
-end Greedy
 
 variable {w : List Bool}
 
@@ -438,8 +442,6 @@ theorem listGenerator_take_greedyMasks (h : m ≤ (greedyMasks ℓ n a).length)
 
 /-! ### Fooling small circuits, in counting form -/
 
-section Counting
-
 private theorem toReal_uniformOfFintype_map_apply_true {β : Type*} [Fintype β] [Nonempty β]
     (p : β → Bool) :
     (((uniformOfFintype β).map p) true).toReal = (#{b | p b = true} : ℝ) / Fintype.card β := by
@@ -464,8 +466,6 @@ private theorem toReal_idealExperiment_pure {Output : Type*} [Fintype Output] [N
   rw [Generator.idealExperiment, show (fun y => PMF.pure (test y)) = PMF.pure ∘ test from rfl,
     PMF.bind_pure_comp]
   exact toReal_uniformOfFintype_map_apply_true _
-
-end Counting
 
 /-- The fraction of inputs where a negated test is `true`. -/
 private theorem card_not_div {X : Type*} [Fintype X] [Nonempty X] (p : X → Bool) :

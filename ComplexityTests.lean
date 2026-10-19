@@ -27,6 +27,7 @@ import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
+import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
