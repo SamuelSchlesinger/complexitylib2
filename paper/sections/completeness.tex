@@ -14,6 +14,22 @@ three distinct literals per clause.\citep[Section 2.3]{AroraBarak09}
 \end{result}
 
 \begin{result}
+\subsection{DP and SAT--UNSAT completeness}
+The difference class $\cc{DP}$ consists of languages $B\cap C$ with
+$B\in\cc{NP}$ and $C\in\cc{coNP}$, equivalently differences of two NP
+languages. For any NP-complete $B$ and coNP-complete $C$, the product language
+$B\times C$ is DP-complete under polynomial-time many-one reductions, using
+the product encoding. In particular, pairs of CNF formulas $(\varphi,\psi)$
+with $\varphi$ satisfiable and $\psi$ unsatisfiable form a DP-complete problem.
+The theorem quantifies over all injectively encoded source types; the two
+component reductions and their pairing have certified polynomial time.
+The definition permits distinct NP and coNP components; it does not require
+the resulting language to belong to both classes.\citep{Papadimitriou94}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/DP.lean}{87}{Cslib.Complexity.NPComplete.prod_coNPComplete}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Problems/SATUNSAT.lean}{40}{Cslib.Complexity.SATUNSAT_dpComplete}
+\end{result}
+
+\begin{result}
 \subsection{Graph and number problems are NP-complete}
 Three-colorability, undirected Hamiltonian cycle, binary subset sum, and the
 budget decision version of traveling salesman are NP-complete under certified

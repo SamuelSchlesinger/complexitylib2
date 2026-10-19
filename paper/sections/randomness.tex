@@ -65,7 +65,10 @@ hypothesis proved sufficient here.\citep{NisanWigderson1994}
 For each fixed encoding, $\#\cc{P}$ is closed under pointwise addition and
 multiplication, and $\cc{GapP}$ under addition, subtraction and multiplication;
 the constant natural-valued and integer-valued functions belong to the
-respective classes. Moreover,
+respective classes. Both classes are also closed under precomposition by a
+polynomial-time function between encoded instance types. The resulting count
+is exactly the original count on the mapped instance; no padding factor is
+introduced. Moreover,
 \[
 A\in\cc{PP}\quad\Longleftrightarrow\quad
 \exists g\in\cc{GapP}\ \forall x,\quad x\in A\ \Longleftrightarrow\ g(x)>0.
@@ -78,4 +81,54 @@ nondeterministic-machine characterizations remain unfinished.
 \decl{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{105}{Cslib.Complexity.SharpP.subsemiring}
 \decl{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{201}{Cslib.Complexity.GapP.subring}
 \decl{Complexity/Computability/Complexity/Classes/PP/Characterization.lean}{182}{Cslib.Complexity.mem_PP_iff_exists_GapP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{230}{Cslib.Complexity.SharpP.comp_mem}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{251}{Cslib.Complexity.GapP.comp_mem}
+\end{result}
+
+\begin{result}
+\subsection{Boolean closure and unambiguous polynomial time}
+For every fixed injective encoding, $\cc{P}$, $\cc{NP}$ and $\cc{coNP}$ are
+closed under union and intersection. The odd-acceptance class $\oplus\cc{P}$
+is closed under union, intersection and symmetric difference.
+The verifier class $\cc{UP}$ satisfies
+\[
+\cc{P}\subseteq\cc{UP}\subseteq\cc{NP}\cap\oplus\cc{P}.
+\]
+Its verifier has at most one accepting certificate of the specified polynomial
+length on every input, and exactly one on members. Equivalently, a
+$\#\cc{P}$ function bounded by one is one precisely on the language.
+UP is closed under polynomial-time many-one reductions. This establishes the
+verifier formulation; an equivalence with unambiguous nondeterministic machines
+is not asserted.\citep{AroraBarak09,Papadimitriou94}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/P/Closure.lean}{34}{Cslib.Complexity.inter_mem_P}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/NP/Closure.lean}{39}{Cslib.Complexity.union_mem_NP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/NP/Closure.lean}{46}{Cslib.Complexity.inter_mem_coNP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/ParityP/Closure.lean}{49}{Cslib.Complexity.symmDiff_mem_ParityP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/UP.lean}{64}{Cslib.Complexity.P_subset_UP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/UP.lean}{74}{Cslib.Complexity.UP_subset_NP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/UP.lean}{82}{Cslib.Complexity.UP_subset_ParityP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/UP.lean}{90}{Cslib.Complexity.PolyTimeReducible.mem_UP}
+\end{result}
+
+\begin{result}
+\subsection{Exact counting and PP}
+For the same verifier-based counting functions, the class $\cc{C}_{=}\cc{P}$
+is characterized by
+\[
+A\in\cc{C}_{=}\cc{P}\quad\Longleftrightarrow\quad
+\exists g\in\cc{GapP}\ \forall x,\quad x\in A\ \Longleftrightarrow\ g(x)=0.
+\]
+Equivalently, membership is equality of two $\#\cc{P}$ functions. This class
+is closed under union, intersection and polynomial-time many-one reductions,
+and satisfies
+\[
+\cc{coNP}\subseteq\cc{C}_{=}\cc{P}\subseteq\cc{PP}.
+\]
+No closure under complement or nondeterministic-machine characterization is
+asserted here.\citep{FennerFortnowKurtz1994}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/CeqP.lean}{47}{Cslib.Complexity.mem_CeqP_iff_exists_SharpP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/CeqP.lean}{70}{Cslib.Complexity.inter_mem_CeqP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/CeqP.lean}{56}{Cslib.Complexity.coNP_subset_CeqP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/CeqP.lean}{84}{Cslib.Complexity.CeqP_subset_PP}
+\declat{4f6bdaf35ebe60aec6d1063ae513ac342df13589}{Complexity/Computability/Complexity/Classes/CeqP.lean}{97}{Cslib.Complexity.PolyTimeReducible.mem_CeqP}
 \end{result}

@@ -34,6 +34,15 @@ canonical definitions in their mathematical modules; the index should link to th
 maintain a second set of definitions. Existing module docstrings, source markers and the detailed
 milestones below remain the authority for their respective facts.
 
+### Next steps after basic class closure
+
+The verifier-based `UP` and `CeqP` developments, basic Boolean closures, exact-count
+polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are implemented.
+The next counting milestones remain the nondeterministic-machine characterizations of
+`#P` and `GapP`, and an unambiguous-machine characterization of `UP`; none is implied by
+the new verifier definitions. Develop further modular counting classes and counting
+reductions on these APIs, preserving exact multiplicities when required.
+
 ### Extend the mathematical canon
 
 This map adds long-term directions to the concrete developments below. It follows the breadth of
