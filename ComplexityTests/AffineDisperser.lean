@@ -29,7 +29,7 @@ same for all large `N`. Axiom checks record the headline dependencies.
 
 namespace ComplexityTests.AffineDisperser
 
-open Cslib Cslib.AffineDisperser Module
+open Cslib Cslib.AffineDisperser Cslib.AffineDisperser.Explicit Module
 
 /-! ### Small identities -/
 
@@ -208,6 +208,13 @@ info: 'Cslib.AffineDisperser.eventually_explicitThreshold_le' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms eventually_explicitThreshold_le
+
+/--
+info: 'Cslib.AffineDisperser.eventually_explicitThreshold_lt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms eventually_explicitThreshold_lt
 
 /--
 info: 'Cslib.AffineDisperser.isBigO_explicitThreshold' depends on axioms:
