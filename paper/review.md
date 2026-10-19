@@ -79,3 +79,50 @@ e17d0f2eb2b26f30258c32b6582fa0ba91bfd9cb1fdbbd74b2bf60e2af0505b5  paper/sections
 ccd3ee5a924c3bcaa884751b2b618d5911d6aca4972df5840f85c7523204ca0b  paper/sections/structure.tex
 cbb8084fa13318bb9b3408d76e042bd49d3c37d326447d71a036b810250b08b1  paper/sections/synthesis.tex
 ```
+
+
+## First-order projection core (19 October 2026)
+
+Lean revision: `811ad02abdab6bc2b9f945d58d2a1ff2ed1c282b`.
+The new supporting entry in the logic section records the generalized, relativized
+projection core. The 50 numbered entries and their selection are unchanged.
+All declaration links are now pinned to this Lean revision.
+
+Independent Codex reviews of the exact committed Lean revision:
+
+- `proof_api`: API, placement, reuse, documentation and regression tests; approved.
+- `proof_correctness`: numeric/input separation, quantifier order, disjoint cases,
+  substitution, composition isomorphisms, QF assumptions and nonvacuity; approved.
+- `resume_alternation`: changed statement-index prose, quantifiers, models, premises,
+  scope limitations, three exact declaration anchors and mathematical credit; approved.
+
+Resolved findings: cite Immerman and Landau directly for their projection and BIT
+conventions; restrict the graph client's numeric-preservation wording to relational
+languages; clarify the warning about arbitrary quantifier-free formulas. The strict
+axiom reports use explicit expected-message guards. Fixes received fresh review.
+No outstanding review finding remains. These are AI reviews, not human editorial
+approval or machine-checked equivalence of prose and Lean.
+
+Validation:
+
+- All six project gates passed. Strict tests also passed after the final formatting
+  of the nine axiom guards. The guards report only the permitted standard axioms.
+- The upstream synchronization check reported CURRENT for the CSLib pin and every
+  copied dependency revision.
+- The PDF build passed with no warnings or overfull/underfull boxes. Rendered and
+  visually inspected all 19 final pages, including the new entry and references.
+- Verified all 81 fully qualified declaration names against the compiled library,
+  every declaration-line anchor at the pinned commit, and all 81 URLs in the PDF.
+  Sources for the 78 preexisting links are byte-identical to their prior pinned
+  revision. The three new links point to the exact new declarations.
+- Verified 50 numbered entries, 12 subject sections, 62 references, and `git diff --check`.
+
+Reviewed source and rendered-output SHA-256:
+
+```text
+1226466dcca87b814b9f3a2e598ce927fd0649bf377a20f6f0e73b85dda20abc  paper/main.tex
+8e1fd8ee11cdb4846d53af4e667b2e9a5142cc5c14c5ae2495bc52284415b67a  paper/README.md
+b3aadb3e3a3e6199be6ac1452ffcc24b770062eff2db499cf6aa481d7271739b  paper/sections/structure.tex
+fb18b863ba3cee9dc5a0e6686d24d7f3028073cfc0ac3534980987a617e4cb77  references.bib
+cea453e9e2b3b390fa62131e49e6ac2498a8598a019b49806cf497d137bb3cd6  paper/main.pdf
+```

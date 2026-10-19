@@ -9,7 +9,7 @@ they support, and basic membership facts may appear as short contextual notes. S
 
 `sections/statements.tex` lists the subject files in reading order. Edit the relevant
 subject file in `sections/` to revise or extend the index. All declaration links point
-to library revision `cec38657ddf1b93dd1be123e86d0ecdd9728c610`; review evidence is
+to library revision `811ad02abdab6bc2b9f945d58d2a1ff2ed1c282b`; review evidence is
 recorded in `review.md`.
 Earlier proof translations remain available in Git history at `d2c5e581`.
 Outstanding development priorities belong in `../ROADMAP.md`, not as speculative
