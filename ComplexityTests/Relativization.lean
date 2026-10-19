@@ -91,7 +91,7 @@ example (A : Set (List Bool)) : {w : List Bool | w.reverse ∈ A} ∈ PWithOracl
 /-- The oracle adds power: the time-hierarchy diagonal language is not in `P`, but it is in `P`
 relative to itself. -/
 example : ∃ A : Set (List Bool), A ∈ PWithOracle A encBits ∧ A ∉ P encBits :=
-  ⟨_, mem_PWithOracle_self _, diagonal_not_mem_P⟩
+  ⟨_, mem_PWithOracle_self _, diagonal_notMem_P⟩
 
 /-! ### The unary length language -/
 

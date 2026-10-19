@@ -104,7 +104,7 @@ example {α : Type} (enc : α ↪ List Bool) : P enc ⊆ EXP enc := P_subset_EXP
 
 /-- The diagonal problem is a witness: in `EXP`, not in `P`. -/
 example : {x | diagonal x = true} ∈ EXP encBits ∧ {x | diagonal x = true} ∉ P encBits :=
-  ⟨setOf_diagonal_mem_EXP, diagonal_not_mem_P⟩
+  ⟨setOf_diagonal_mem_EXP, diagonal_notMem_P⟩
 
 /-- `P` is the union of the classes `DTIME (n ^ k)`. -/
 example {α : Type} (enc : α ↪ List Bool) (A : Set α) :
@@ -134,11 +134,11 @@ info: 'Cslib.Complexity.setOf_timeDiagonal_mem_DTIME' depends on axioms:
 #print axioms Cslib.Complexity.setOf_timeDiagonal_mem_DTIME
 
 /--
-info: 'Cslib.Complexity.setOf_timeDiagonal_not_mem_DTIME' depends on axioms:
+info: 'Cslib.Complexity.setOf_timeDiagonal_notMem_DTIME' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.setOf_timeDiagonal_not_mem_DTIME
+#print axioms Cslib.Complexity.setOf_timeDiagonal_notMem_DTIME
 
 /--
 info: 'Cslib.Complexity.computableTidilyInO_timeDiagonal' depends on axioms:
