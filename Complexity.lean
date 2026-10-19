@@ -259,6 +259,11 @@ public import Complexity.Computability.Complexity.Classes.Hierarchy
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
+public import Complexity.Computability.Complexity.Classes.Oracle
+public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
+public import Complexity.Computability.Complexity.Classes.Oracle.Closure
+public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
+public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
@@ -272,6 +277,12 @@ public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
+public import Complexity.Computability.Complexity.Classes.Space.TQBF
+public import Complexity.Computability.Complexity.Classes.Space.TQBF.Evaluation
+public import Complexity.Computability.Complexity.Classes.Space.TQBF.Formula
+public import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
+public import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
+public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
 public import Complexity.Computability.Complexity.CookLevin.Correctness
@@ -297,6 +308,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
+public import Complexity.Computability.Complexity.Problems.TQBF
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.DecisionTree.Basic
