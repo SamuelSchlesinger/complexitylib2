@@ -50,9 +50,12 @@ The binary-output FP-to-#P/GapP bridge is available. Remaining extensions includ
 US/Unique-SAT completeness, stronger Boolean-hierarchy closure and collapse results,
 LWPP reduction closure and multiple-target robustness, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
-containments, many-one reduction closure, SBP union closure and AWPP complement closure.
-Remaining approximate-counting milestones include MA ⊆ SBP ⊆ AM, AWPP amplification,
-AWPP union/intersection closure, WPP ⊆ AWPP and AWPP PP-lowness.
+containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
+WPP ⊆ AWPP is proved, including signed binary-output targets. Fixed three-round AWPP
+amplification gives error at most one eighth; every fixed positive SBP gap exponent is
+available, and intersecting an SBP language with a BPP language stays in SBP.
+Remaining approximate-counting milestones include MA ⊆ SBP ⊆ AM, uniform AWPP
+amplification to input-dependent error, and AWPP PP-lowness.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon

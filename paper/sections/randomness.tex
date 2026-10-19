@@ -290,8 +290,8 @@ introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
 characterization of AWPP.\citep{BoehlerGlasserMeister2006}
 \citep[Definition 2]{Watson2012}\citep{Fenner2003}
 Counting-machine characterizations, $\cc{MA}\subseteq\cc{SBP}\subseteq\cc{AM}$,
-AWPP error amplification, further Boolean closure and PP-lowness are not
-established by this batch.
+Uniform AWPP amplification to input-dependent error and PP-lowness remain
+outstanding. The following entry adds fixed amplification and Boolean closure.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{90}{Cslib.Complexity.BPP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{116}{Cslib.Complexity.SBP_subset_PP}
@@ -304,4 +304,55 @@ established by this batch.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{82}{Cslib.Complexity.compl_mem_AWPP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{117}{Cslib.Complexity.mem_AWPP_of_polyTime_exponent}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{145}{Cslib.Complexity.PolyTimeReducible.mem_AWPP}
+\end{result}
+
+
+\begin{result}
+\subsection{Wide gaps, amplification and Boolean closure}
+For every fixed injective encoding,
+\[
+\cc{LWPP}\subseteq\cc{WPP}\subseteq\cc{AWPP}.
+\]
+The WPP target may be signed, input-dependent and exponentially large: it is a
+nonzero, binary-output polynomial-time integer function, with the GapP witness
+equal to that target on members and zero on nonmembers.
+The classical containment is credited to Fenner--Fortnow--Kurtz--Li;
+this formalization squares the target and uses binary length to obtain a dyadic
+normalization.\citep[Section 6.1]{FennerEtAl2003}
+
+Every AWPP language has a GapP witness $g$ and $p\in\mathbb{N}[X]$ such that,
+writing $D(x)=2^{p(|x|)}$, one has $0\leq g(x)\leq D(x)$ and
+\[
+x\in A\Rightarrow 7D(x)\leq8g(x),\qquad
+x\notin A\Rightarrow 8g(x)\leq D(x).
+\]
+Three fixed rounds of the majority-of-three polynomial give this error bound;
+the denominator exponent is multiplied by $27$. This is a fixed-size instance
+of Fenner's amplification method.\citep{Fenner2003}
+AWPP is closed under intersection, union, difference and symmetric difference
+of two languages over the same encoding, as well as complement.
+
+For SBP, every fixed integer $m>0$ admits a \#P witness $f$ and a positive
+binary-output polynomial-time natural threshold $k$ with
+\[
+x\in A\Rightarrow k(x)\leq f(x),\qquad
+x\notin A\Rightarrow 2^m f(x)<k(x).
+\]
+This uses fixed powers as in Watson's gap strengthening; $m$ is fixed
+independently of the input.\citep[Section 1.1]{Watson2012}
+Also $A\in\cc{SBP}$ and $B\in\cc{BPP}$ imply $A\cap B\in\cc{SBP}$,
+using the existing input-dependent BPP error reduction and a dyadic bound on
+\#P counts. This does not establish intersection closure for two SBP languages.
+All statements use verifier-based \#P and GapP; their nondeterministic-machine
+characterizations and uniform input-dependent AWPP amplification remain open
+formalization work.
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/WPP.lean}{42}{Cslib.Complexity.WPP_subset_AWPP}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/WPP.lean}{105}{Cslib.Complexity.LWPP_subset_AWPP}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{89}{Cslib.Complexity.exists_AWPP_gap_eighth}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{167}{Cslib.Complexity.inter_mem_AWPP}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{191}{Cslib.Complexity.union_mem_AWPP}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{196}{Cslib.Complexity.diff_mem_AWPP}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{200}{Cslib.Complexity.symmDiff_mem_AWPP}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{171}{Cslib.Complexity.exists_SBP_gap_pow}
+\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{188}{Cslib.Complexity.inter_mem_SBP_of_mem_BPP}
 \end{result}
