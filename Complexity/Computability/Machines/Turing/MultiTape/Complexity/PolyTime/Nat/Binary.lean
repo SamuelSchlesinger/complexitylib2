@@ -169,20 +169,12 @@ lemma bits_getD (n i : ℕ) : n.bits.getD i false = n.testBit i := by
   rw [Nat.testBit_eq_inth, ← List.getD_default_eq_getI]
   rfl
 
-lemma foldr_bit_eq (l : List Bool) (n : ℕ) :
-    l.foldr Nat.bit n = l.foldr Nat.bit 0 + 2 ^ l.length * n := by
-  induction l with
-  | nil => simp
-  | cons b l ih =>
-    simp only [List.foldr_cons, Nat.bit_val, ih, List.length_cons, Nat.pow_succ]
-    ring
-
 lemma foldr_bit_lt (l : List Bool) : l.foldr Nat.bit 0 < 2 ^ l.length := by
   induction l with
   | nil => simp
   | cons b l ih =>
     simp only [List.foldr_cons, Nat.bit_val, List.length_cons, Nat.pow_succ]
-    cases b <;> simp <;> lia
+    cases b <;> simp only [Bool.toNat_true, Bool.toNat_false] <;> lia
 
 lemma foldr_bit_testBit {n K : ℕ} (h : n.size ≤ K) :
     ((List.range K).map n.testBit).foldr Nat.bit 0 = n := by
@@ -214,7 +206,10 @@ lemma foldl_subStep (ps : List (Bool × Bool)) (c : Bool) (out : List Bool) :
     · simpa using hlen
     · simp only [List.foldl_cons, subStep] at hval ⊢
       simp only [List.map_cons, List.foldr_cons, Nat.bit_val, List.length_cons, Nat.pow_succ]
-      cases c <;> cases x <;> cases y <;> simp [borrow] at hval ⊢ <;> lia
+      cases c <;> cases x <;> cases y <;>
+        simp only [borrow, Bool.not_true, Bool.not_false, Bool.and_true, Bool.and_false,
+          Bool.or_true, Bool.or_false, Bool.true_xor, Bool.false_xor, Bool.toNat_true,
+          Bool.toNat_false] at hval ⊢ <;> lia
 
 /-- Truncated subtraction through the borrow of schoolbook subtraction: when the final borrow is
 set the difference is negative, and otherwise the digits read off the difference. -/
@@ -231,8 +226,9 @@ lemma sub_eq (p : ℕ × ℕ) : p.1 - p.2 =
   have hlt := foldr_bit_lt ds
   rw [hfst, hsnd, ← hlen] at hval
   rw [hds, List.nil_append]
-  cases h : ((digitPairs p).foldl subStep (false, [])).1 <;> simp only [h] at hval ⊢ <;>
-    simp at hval ⊢ <;> lia
+  cases h : ((digitPairs p).foldl subStep (false, [])).1 <;>
+    simp only [h, Bool.toNat_true, Bool.toNat_false, Bool.false_eq_true, ↓reduceIte] at hval ⊢ <;>
+    lia
 
 end Turing.MultiTapeTM.BinarySub
 
@@ -419,10 +415,9 @@ theorem binary_foldr_bit :
 @[fun_prop]
 theorem binary_sub : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 - p.2)
     (encPair encNat encNat) encNat := by
-  open BinarySub in
-  have hpairs : ComputableTidilyInPolyTime digitPairs (encPair encNat encNat)
+  have hpairs : ComputableTidilyInPolyTime BinarySub.digitPairs (encPair encNat encNat)
       (encList (encPair encBool encBool)) := by
-    unfold digitPairs
+    unfold BinarySub.digitPairs
     fun_prop
   have hstep : ComputableTidilyInPolyTime
       (fun p : (Bool × List Bool) × (Bool × Bool) => BinarySub.subStep p.1 p.2)
