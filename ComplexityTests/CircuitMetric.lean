@@ -18,28 +18,6 @@ namespace ComplexityTests.CircuitMetric
 
 open Cslib Cslib.Circuits
 
-/-! ### Zero and one gate -/
-
-/-- Projections need no gates. -/
-private theorem complexity_single_proj {σ : Signature} {U : Type*} {I : Interpretation σ U}
-    [I.IsComplete] {n : ℕ} (i : Fin n) : complexity I (single fun x : Fin n → U => x i) = 0 :=
-  Nat.le_zero.mp (complexity_le_of_computes (Circuit.wiring σ fun _ => i) fun _ => rfl)
-
-/-- A function that is not a projection needs a gate: circuits without gates compute
-projections. -/
-private theorem one_le_complexity_single {σ : Signature} {U : Type*} {I : Interpretation σ U}
-    [I.IsComplete] {n : ℕ} {f : (Fin n → U) → U} (hf : ∀ i, f ≠ fun x => x i) :
-    1 ≤ complexity I (single f) := by
-  by_contra h
-  obtain ⟨c, hc, hsize⟩ := exists_computes_size_eq_complexity (I := I) (f := single f)
-  cases hw : c.outputs 0 with
-  | input i =>
-    refine hf i (funext fun x => ?_)
-    have := congrFun (hc x) 0
-    simp only [Circuit.eval, Function.comp_apply, hw, Program.trace_input, single_apply] at this
-    exact this.symm
-  | gate j => exact absurd j.isLt (by omega)
-
 /-! ### One bit -/
 
 namespace OneBit
