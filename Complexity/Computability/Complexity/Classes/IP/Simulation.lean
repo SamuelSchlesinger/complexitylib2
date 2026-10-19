@@ -208,7 +208,8 @@ theorem lsbValue_injective : ∀ {w w' : List Bool}, w.length = w'.length →
   | b :: w, b' :: w', hl, hv => by
     simp only [lsbValue] at hv
     have hb : b = b' := by
-      cases b <;> cases b' <;> first | rfl | (simp only [Bool.toNat_false, Bool.toNat_true, zero_add] at hv; lia)
+      cases b <;> cases b' <;>
+        first | rfl | (simp only [Bool.toNat_false, Bool.toNat_true, zero_add] at hv; lia)
     subst hb
     exact congrArg _ (lsbValue_injective (by simpa using hl) (by lia))
 

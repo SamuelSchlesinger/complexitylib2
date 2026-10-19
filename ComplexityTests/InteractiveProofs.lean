@@ -199,7 +199,8 @@ example : Interaction.value acceptAll 0 0 [] = 2 := by
   simp [Interaction.value, Interaction.accepted, h]
 
 example (P : Prover Unit) :
-    ∑ r, Interaction.acceptFrom P P.init (some (acceptAll r)) ≤ Interaction.value acceptAll 0 0 [] :=
+    ∑ r, Interaction.acceptFrom P P.init (some (acceptAll r)) ≤
+      Interaction.value acceptAll 0 0 [] :=
   Interaction.sum_acceptFrom_le_value isBounded_acceptAll P
 
 /-! ### Axiom audit of the headline results -/

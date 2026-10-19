@@ -335,7 +335,9 @@ theorem sum_acceptFrom_after_le (hF : IsBounded F D L) (P : Prover Unit) (n : �
           refine ENNReal.tsum_le_tsum fun ys => ?_
           rw [← Finset.mul_sum]
           refine mul_le_mul_right ?_ _
-          refine (ih (h ++ [(m, ys.1)]) (by simp only [List.length_append, List.length_cons, List.length_nil, zero_add]; lia) ys.2).trans ?_
+          refine (ih (h ++ [(m, ys.1)]) (by
+            simp only [List.length_append, List.length_cons, List.length_nil, zero_add]
+            lia) ys.2).trans ?_
           rw [value_take hF]
           exact Nat.cast_le.mpr (Finset.le_sup (f := fun y => value F L n (h ++ [(m, y)]))
             (mem_shortWords.mpr (List.length_take_le _ _)))
@@ -424,7 +426,9 @@ theorem sum_acceptFrom_optimalProver_after (hF : IsBounded F D L) (n : ℕ) (h :
       simp only [optimalProver, hD]
     simp only [StateT.run, hrespond, PMF.pure_apply, ite_mul, one_mul, zero_mul]
     rw [Finset.sum_congr rfl fun r _ => tsum_ite_eq _ _, ← value_bestReply]
-    exact_mod_cast ih _ (by simp only [List.length_append, List.length_cons, List.length_nil, zero_add]; lia)
+    exact_mod_cast ih _ (by
+      simp only [List.length_append, List.length_cons, List.length_nil, zero_add]
+      lia)
 
 /-- **The optimal prover attains the value**: for a bounded family, it makes the programs accept
 with probabilities summing to the value of the empty history. -/
