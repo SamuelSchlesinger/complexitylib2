@@ -7,8 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Problems.IndependentSet
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+public import Complexity.Computability.Complexity.Problems.Graph
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -32,8 +31,7 @@ vertices.
 
 ## Main definitions
 
-* `Cslib.Complexity.Graph.distinctVertices`, `Cslib.Complexity.Graph.induced`,
-  `Cslib.Complexity.Graph.adjIndex`.
+* `Cslib.Complexity.Graph.induced`, `Cslib.Complexity.Graph.adjIndex`.
 * `Cslib.Complexity.GraphIsomorphism`, `Cslib.Complexity.GraphNonIsomorphism`.
 * `Cslib.Complexity.GraphIsomorphism.verifier`.
 
@@ -56,26 +54,6 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 namespace Graph
 
-/-- The declared vertices of `G` without repetitions, in the order of their first occurrences. -/
-def distinctVertices (G : Graph) : List ℕ := selectVertices G.1 (List.replicate G.1.length true)
-
-theorem mem_distinctVertices {G : Graph} {v : ℕ} : v ∈ G.distinctVertices ↔ v ∈ G.1 := by
-  rw [distinctVertices, mem_selectVertices, and_iff_left_iff_imp]
-  intro hv
-  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate_of_lt (List.idxOf_lt_length_iff.2 hv)]
-  rfl
-
-theorem nodup_distinctVertices (G : Graph) : G.distinctVertices.Nodup := nodup_selectVertices _ _
-
-/-- A graph has no more distinct vertices than the length of its encoding. -/
-theorem length_distinctVertices_le (G : Graph) :
-    G.distinctVertices.length ≤ (encGraph G).length := by
-  calc G.distinctVertices.length ≤ G.1.length := by
-        simp only [distinctVertices, selectVertices, List.length_map]
-        exact (List.length_filter_le _ _).trans_eq (List.length_zipIdx ..)
-    _ ≤ (encList encNat G.1).length := length_le_length_encList encNat G.1
-    _ ≤ (encGraph G).length := by simp only [encGraph, length_encPair]; omega
-
 /-- The simple graph induced by `G` on its declared vertices. -/
 def induced (G : Graph) : SimpleGraph {v // v ∈ G.1} :=
   G.toSimpleGraph.induce {v | v ∈ G.1}
@@ -97,13 +75,6 @@ theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length
     G.induced.Adj (G.vertexEquiv i) (G.vertexEquiv j) ↔ G.adjIndex i j = true := by
   rw [induced, SimpleGraph.induce_adj, adjIndex, adjBool_eq_true_iff, vertexEquiv_apply,
     vertexEquiv_apply]
-
-/-- Listing the distinct vertices is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_distinctVertices :
-    ComputableTidilyInPolyTime distinctVertices encGraph (encList encNat) := by
-  unfold distinctVertices encGraph
-  fun_prop
 
 /-- Adjacency of computed positions in a computed graph is polynomial-time. -/
 @[fun_prop]
