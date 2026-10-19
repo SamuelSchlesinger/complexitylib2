@@ -23,7 +23,7 @@ inputs drawn from `ν` (`Protocol.distributionalComplexity`)
 deterministic protocols against the hardest distribution: the public-coin complexity of `R` on
 `A × B` with error `ε` is the largest distributional complexity with error `ε` under a
 distribution on `A × B` (`PublicCoin.ecomplexity_eq_iSup_distributionalComplexity`), when the
-inputs are finite. One direction is the averaging argument
+inputs are finite and there is some output. One direction is the averaging argument
 (`PublicCoin.distributionalComplexity_le_ecomplexity`): a public-coin protocol erring with
 probability at most `ε` on every input draws, for every `ν`, some deterministic protocol erring with
 probability at most `ε` on inputs drawn from `ν`. The other follows from von Neumann's minimax
