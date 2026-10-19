@@ -24,14 +24,17 @@ two unpaired parameters `x` and `y` of degree at least two, no child of `G` read
 * Cases 9 and 10: the bottleneck configuration, where `G` has a unique child `D` whose other input
   is an unpaired isolated parameter `z` (`State.Valid.step_bottleneck`).
 
+The cases are proved in `Case7.lean`, `Case8.lean` and `Bottleneck.lean`.
+
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.B2.State.MinAnd`: the configuration of Section 4.3.
-* `Cslib.Circuits.Boolean.B2.State.Bottleneck`: the bottleneck configuration.
+* `Cslib.Circuits.Boolean.B2.State.Case7`, `Cslib.Circuits.Boolean.B2.State.Bottleneck`: the
+  configurations of Case 7 and of Cases 9 and 10.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.B2.State.Valid.step_case7`, `step_case8`, `step_bottleneck`.
+* `Cslib.Circuits.Boolean.B2.State.exists_and_form`: the normal form of AND-type operations.
 
 ## References
 
@@ -94,24 +97,6 @@ unpaired isolated parameter `z`. -/
 def Bottleneck (S : State n) (G x : ℕ) : Prop :=
   S.deg x = 2 ∧ ∃ D z, (∀ K ∈ S.gates, (S.gate K).Reads G ↔ K = D) ∧ D ∈ S.gates ∧
     z ∈ S.unpaired ∧ S.deg z = 1 ∧ (S.gate D).Reads z
-
-/-- **Case 7** of [Mishra and Santhanam][MishraSanthanam2026]. -/
-theorem Valid.step_case7 {S : State n} (hS : S.Valid f) (hdel : ¬ S.DeletionAvailable)
-    {G x y : ℕ} (h : S.MinAnd G x y) (h7 : S.Case7 G x y) : ∃ S', Step f S S' := by
-  sorry
-
-/-- **Case 8** of [Mishra and Santhanam][MishraSanthanam2026]. -/
-theorem Valid.step_case8 {S : State n} (hS : S.Valid f) (hexcl : S.Exclusive)
-    (hdel : ¬ S.DeletionAvailable) {G x y : ℕ} (h : S.MinAnd G x y) (h7 : ¬ S.Case7 G x y)
-    (hbot : ¬ S.Bottleneck G x) : ∃ S', Step f S S' := by
-  sorry
-
-/-- **Cases 9 and 10** of [Mishra and Santhanam][MishraSanthanam2026]. -/
-theorem Valid.step_bottleneck {S : State n} {d : ℕ} (hS : S.Valid f)
-    (hf : IsAffineDisperser f d) (ha : d < S.a) (hexcl : S.Exclusive)
-    (hdel : ¬ S.DeletionAvailable) {G x y : ℕ} (h : S.MinAnd G x y) (h7 : ¬ S.Case7 G x y)
-    (hbot : S.Bottleneck G x) : ∃ S', Step f S S' := by
-  sorry
 
 end State
 

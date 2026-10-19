@@ -7,7 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.B2.Eliminate
+public import Complexity.Computability.Circuit.Boolean.B2.Case7
+public import Complexity.Computability.Circuit.Boolean.B2.Case8
+public import Complexity.Computability.Circuit.Boolean.B2.Bottleneck
 
 /-!
 # Lemma 4.2: one step of gate elimination
@@ -173,6 +175,79 @@ def childIn (S : State n) : ℕ :=
       ∃ t ∈ S.params, (S.gate (S.gates.min' h)).Reads t ∧ (S.gate K).Reads t).card
   else 0
 
+theorem auxIn_eq {S : State n} (hne : S.gates.Nonempty) :
+    S.auxIn = S.auxArgs (S.gate (S.gates.min' hne)) := by
+  simp only [auxIn, dite_eq_left hne]
+
+theorem auxArgs_nodes (S : State n) {g : Gate} {t₁ t₂ : ℕ} (hl : g.left = .node t₁)
+    (hr : g.right = .node t₂) :
+    S.auxArgs g = (if t₁ ∈ S.aux then 1 else 0) + (if t₂ ∈ S.aux then 1 else 0) := by
+  simp only [auxArgs, hl, hr]
+
+theorem childIn_eq {S : State n} (hne : S.gates.Nonempty) :
+    S.childIn = (S.gates.filter fun K => (S.gate K).Reads (S.gates.min' hne) ∧
+      ∃ t ∈ S.params, (S.gate (S.gates.min' hne)).Reads t ∧ (S.gate K).Reads t).card := by
+  simp only [childIn, dite_eq_left hne]
+
+/-- A gate reading two distinct values reads nothing else. -/
+theorem Gate.eq_or_eq_of_reads {g : Gate} {a b i : ℕ} (hab : a ≠ b) (ha : g.Reads a)
+    (hb : g.Reads b) (hi : g.Reads i) : i = a ∨ i = b := by
+  rcases Gate.args_of_reads hab ha hb with ⟨hl, hr⟩ | ⟨hl, hr⟩ <;> rcases hi with hi | hi
+  · exact Or.inl (Arg.node.inj (hi.symm.trans hl))
+  · exact Or.inr (Arg.node.inj (hi.symm.trans hr))
+  · exact Or.inr (Arg.node.inj (hi.symm.trans hl))
+  · exact Or.inl (Arg.node.inj (hi.symm.trans hr))
+
+/-- An auxiliary input `Q` of the minimal gate depends on a parameter `x` other than the other
+input; when no preliminary reduction applies, `x` is unpaired of degree at least two, and `Q` has
+degree at least two. -/
+theorem Valid.prep_aux_input {S : State n} (hS : S.Valid f) (hdel : ¬ S.DeletionAvailable)
+    (h5 : ¬ S.Case5) {G Q o : ℕ} (hG : G ∈ S.gates)
+    (hargs : ((S.gate G).left = .node Q ∧ (S.gate G).right = .node o) ∨
+      ((S.gate G).left = .node o ∧ (S.gate G).right = .node Q))
+    (hQ : Q ∈ S.aux) (hQo : Q ≠ o) :
+    ∃ x c T, S.AffineIn Q c T ∧ x ∈ T ∧ x ≠ o ∧ x ∈ S.unpaired ∧ 2 ≤ S.deg x ∧
+      2 ≤ S.deg Q := by
+  obtain ⟨c, T, hT⟩ := hS.wf.exists_affineIn hQ
+  have hQp : Q ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp hQ
+  have hGQ : (S.gate G).Reads Q := by
+    rcases hargs with ⟨hl, -⟩ | ⟨-, hr⟩; exacts [Or.inl hl, Or.inr hr]
+  by_cases hTo : ∃ x ∈ T, x ≠ o
+  · obtain ⟨x, hxT, hxo⟩ := hTo
+    have hxp := hT.1 hxT
+    obtain ⟨e, he, hxe⟩ := hT.mem_terms hS.wf hQp hxT
+    have hxu : x ∈ S.unpaired := mem_unpaired.2 ⟨hxp, fun hp => h5 ⟨x, hp, e, he, hxe⟩⟩
+    have hex : Sum.inr e ∈ S.children x := (SemiCircuit.inr_mem_children _).2 ⟨he, hxe⟩
+    have hxdeg : 2 ≤ S.deg x := by
+      by_contra hlt
+      have h1 : S.deg x = 1 := by have := Finset.card_pos.2 ⟨_, hex⟩; unfold SemiCircuit.deg at *; omega
+      exact hdel (Or.inr (Or.inr (Or.inr ⟨x, hxu, e, children_eq_singleton h1 hex⟩)))
+    obtain ⟨e', he', hQe'⟩ := hS.exists_eqn_of_aux hQ
+    have hQdeg : 2 ≤ S.deg Q := by
+      have hsub : ({Sum.inr e', Sum.inl G} : Finset (ℕ ⊕ ℕ)) ⊆ S.children Q := by
+        intro w hw
+        simp only [Finset.mem_insert, Finset.mem_singleton] at hw
+        rcases hw with rfl | rfl
+        · exact (SemiCircuit.inr_mem_children _).2 ⟨he', hQe'⟩
+        · exact (SemiCircuit.inl_mem_children _).2 ⟨hG, hGQ⟩
+      have := Finset.card_le_card hsub
+      rwa [Finset.card_pair (by simp)] at this
+    exact ⟨x, c, T, hT, hxT, hxo, hxu, hxdeg, hQdeg⟩
+  · push Not at hTo
+    exfalso
+    rcases T.eq_empty_or_nonempty with rfl | ⟨x, hx⟩
+    · exact hdel (deletionAvailable_of_const_input hG hGQ (c := c) fun val hval => by
+        rw [hT.2 val hval, Finset.sum_empty, add_zero])
+    · have hxo := hTo x hx
+      subst hxo
+      have hTo' : T = {x} := Finset.eq_singleton_iff_unique_mem.2 ⟨hx, hTo⟩
+      refine hdel (deletionAvailable_of_dependent hG (t := x) (t' := Q) (c := c) ?_ fun val hval => ?_)
+      · rcases hargs with ⟨hl, hr⟩ | ⟨hl, hr⟩
+        · exact Or.inr ⟨hl, hr⟩
+        · exact Or.inl ⟨hl, hr⟩
+      · rw [hT.2 val hval, hTo', Finset.sum_singleton]
+        cases c <;> cases val x <;> rfl
+
 /-! ### Lemma 4.2 -/
 
 /-- Lemma 4.2, by induction on the number of gates, the number of auxiliary inputs of the minimal
@@ -210,7 +285,168 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
   by_cases h6 : S.Case6
   · exact hS.step_case6 hexcl h2 h3 h4 h5 h6
   -- the minimal AND
-  sorry
+  obtain ⟨hne, hand, t₁, t₂, hl, hr, ht12, ht₁, ht₂⟩ := hS.clean_minGate hf ha hmov hdel
+  set G := S.gates.min' hne with hGdef
+  have hG : G ∈ S.gates := Finset.min'_mem _ _
+  -- an auxiliary input is exchanged with a parameter
+  by_cases haux : t₁ ∈ S.aux ∨ t₂ ∈ S.aux
+  · obtain ⟨Q, o, hargs, hQ, hQo⟩ : ∃ Q o, (((S.gate G).left = .node Q ∧
+        (S.gate G).right = .node o) ∨ ((S.gate G).left = .node o ∧
+        (S.gate G).right = .node Q)) ∧ Q ∈ S.aux ∧ Q ≠ o := by
+      rcases haux with h | h
+      · exact ⟨t₁, t₂, Or.inl ⟨hl, hr⟩, h, ht12⟩
+      · exact ⟨t₂, t₁, Or.inr ⟨hl, hr⟩, h, ht12.symm⟩
+    obtain ⟨x, c, T, hT, hxT, hxo, hxu, hxdeg, hQdeg⟩ :=
+      hS.prep_aux_input hdel h5 hG hargs hQ hQo
+    obtain ⟨hS₁, hm, hs, hq, hW⟩ := hS.prep_swap hxu hxdeg hQ hQdeg hT hxT
+    set S₁ := S.swap x Q c T
+    have ha₁ : S₁.a = S.a := by simp only [a, hm, hq]
+    have hxp := (mem_unpaired.1 hxu).1
+    have hQx : Q ≠ x := fun h => Finset.disjoint_left.1 hS.wf.disjoint_params_aux (h ▸ hxp) hQ
+    have hQ₁ : Q ∉ S₁.aux := fun h => by
+      change Q ∈ insert x (S.aux.erase Q) at h
+      rcases Finset.mem_insert.1 h with h | h
+      · exact hQx h
+      · exact Finset.notMem_erase _ _ h
+    have ho₁ : o ∈ S₁.aux ↔ o ∈ S.aux := by
+      change o ∈ insert x (S.aux.erase Q) ↔ _
+      rw [Finset.mem_insert, Finset.mem_erase]
+      constructor
+      · rintro (h | ⟨-, h⟩)
+        · exact absurd h.symm hxo
+        · exact h
+      · exact fun h => Or.inr ⟨hQo.symm, h⟩
+    have hlt : S₁.auxIn < S.auxIn := by
+      rw [auxIn_eq (S := S₁) hne, auxIn_eq hne]
+      change S₁.auxArgs (S.gate G) < S.auxArgs (S.gate G)
+      rcases hargs with ⟨hlQ, hro⟩ | ⟨hlo, hrQ⟩
+      · rw [auxArgs_nodes S₁ hlQ hro, auxArgs_nodes S hlQ hro, ite_eq_right hQ₁, ite_eq_left hQ]
+        by_cases hoa : o ∈ S.aux
+        · rw [ite_eq_left (ho₁.2 hoa), ite_eq_left hoa]; omega
+        · rw [ite_eq_right (fun h => hoa (ho₁.1 h)), ite_eq_right hoa]; omega
+      · rw [auxArgs_nodes S₁ hlo hrQ, auxArgs_nodes S hlo hrQ, ite_eq_right hQ₁, ite_eq_left hQ]
+        by_cases hoa : o ∈ S.aux
+        · rw [ite_eq_left (ho₁.2 hoa), ite_eq_left hoa]; omega
+        · rw [ite_eq_right (fun h => hoa (ho₁.1 h)), ite_eq_right hoa]; omega
+    obtain ⟨S', hstep⟩ := ih₂ _ (hk₂ ▸ hlt) _ S₁ hk₁ rfl rfl hS₁ (ha₁ ▸ ha)
+    exact ⟨S', hstep.of_prep (by omega) ha₁ hW⟩
+  push Not at haux
+  have hx : t₁ ∈ S.params := (Finset.mem_union.1 ht₁).resolve_right haux.1
+  have hy : t₂ ∈ S.params := (Finset.mem_union.1 ht₂).resolve_right haux.2
+  have hxu : t₁ ∈ S.unpaired :=
+    mem_unpaired.2 ⟨hx, fun hp => h6 ⟨G, hG, t₁, t₂, hand, Or.inl ⟨hl, hr⟩, hp, hy, ht12⟩⟩
+  have hyu : t₂ ∈ S.unpaired :=
+    mem_unpaired.2 ⟨hy, fun hp => h6 ⟨G, hG, t₂, t₁, hand, Or.inr ⟨hl, hr⟩, hp, hx, ht12.symm⟩⟩
+  have hGx : Sum.inl G ∈ S.children t₁ := (SemiCircuit.inl_mem_children _).2 ⟨hG, Or.inl hl⟩
+  have hGy : Sum.inl G ∈ S.children t₂ := (SemiCircuit.inl_mem_children _).2 ⟨hG, Or.inr hr⟩
+  have hxdeg : 2 ≤ S.deg t₁ := by
+    have h1 : 1 ≤ S.deg t₁ := Finset.card_pos.2 ⟨_, hGx⟩
+    by_contra hlt
+    exact h2 ⟨G, hG, t₁, t₂, hand, Or.inl ⟨hl, hr⟩, hxu, by omega, hy, ht12⟩
+  have hydeg : 2 ≤ S.deg t₂ := by
+    have h1 : 1 ≤ S.deg t₂ := Finset.card_pos.2 ⟨_, hGy⟩
+    by_contra hlt
+    exact h2 ⟨G, hG, t₂, t₁, hand, Or.inr ⟨hl, hr⟩, hyu, by omega, hx, ht12.symm⟩
+  have hGp : ∀ {i}, i ∈ S.params → i ≠ G := fun hi he =>
+    Finset.disjoint_left.1 hS.wf.disjoint_params_gates (he ▸ hi) hG
+  -- a child of the minimal AND reading one of its inputs is rerouted
+  by_cases hch : ∃ K ∈ S.gates, (S.gate K).Reads G ∧ ((S.gate K).Reads t₁ ∨ (S.gate K).Reads t₂)
+  · obtain ⟨K, hK, hKG, hKt⟩ := hch
+    have hKne : K ≠ G := fun h => hS.not_reads_self hG (h ▸ hKG)
+    let env : Bool → Bool → ℕ → Bool := fun u v i =>
+      if i = G then (S.gate G).op u v else if i = t₁ then u else if i = t₂ then v else false
+    let g' : Gate := ⟨fun u v => (S.gate K).eval (env u v), .node t₁, .node t₂⟩
+    have hg'reads : ∀ i, g'.Reads i → i = t₁ ∨ i = t₂ := by
+      rintro i (h | h)
+      · exact Or.inl (Arg.node.inj h).symm
+      · exact Or.inr (Arg.node.inj h).symm
+    have hok : S.RewireOK K g' := by
+      refine ⟨hK, fun i hi => (hg'reads i hi).elim (fun h => h ▸ hx) (fun h => h ▸ hy),
+        fun val hothers => ?_⟩
+      change (S.gate K).eval (env (val t₁) (val t₂)) = (S.gate K).eval val
+      obtain ⟨t, ht, hKt'⟩ : ∃ t, (t = t₁ ∨ t = t₂) ∧ (S.gate K).Reads t := by
+        rcases hKt with h | h
+        · exact ⟨t₁, Or.inl rfl, h⟩
+        · exact ⟨t₂, Or.inr rfl, h⟩
+      have htG : t ≠ G := by rcases ht with rfl | rfl; exacts [hGp hx, hGp hy]
+      refine Gate.eval_congr fun i hi => ?_
+      rcases Gate.eq_or_eq_of_reads htG.symm hKG hKt' hi with rfl | rfl
+      · simp only [env, ite_true]
+        rw [hothers G hG hKne.symm]
+        unfold Gate.eval
+        rw [hl, hr, Arg.eval_node, Arg.eval_node]
+      · rcases ht with rfl | rfl
+        · simp only [env, ite_eq_right htG, ite_true]
+        · simp only [env, ite_eq_right htG, ite_eq_right ht12.symm, ite_true]
+    obtain ⟨hS₁, hm, hs, hq, hW⟩ := hS.prep_rewire hok fun t ht htu => by
+      rcases hg'reads t ht with rfl | rfl; exacts [hxdeg, hydeg]
+    set S₁ := S.rewire K g'
+    have ha₁ : S₁.a = S.a := by simp only [a, hm, hq]
+    have hgate : ∀ K', K' ≠ K → S₁.gate K' = S.gate K' := fun K' h => Function.update_of_ne h _ _
+    have hauxeq : S₁.auxIn = S.auxIn := by
+      rw [auxIn_eq (S := S₁) hne, auxIn_eq hne]
+      change S₁.auxArgs (S₁.gate G) = S.auxArgs (S.gate G)
+      rw [hgate G hKne.symm]
+      rfl
+    have hlt : S₁.childIn < S.childIn := by
+      rw [childIn_eq (S := S₁) hne, childIn_eq hne]
+      change (S.gates.filter fun K' => (S₁.gate K').Reads G ∧
+        ∃ t ∈ S.params, (S₁.gate G).Reads t ∧ (S₁.gate K').Reads t).card <
+          (S.gates.filter fun K' => (S.gate K').Reads G ∧
+            ∃ t ∈ S.params, (S.gate G).Reads t ∧ (S.gate K').Reads t).card
+      refine Finset.card_lt_card ⟨fun K' hK' => ?_, fun hsub => ?_⟩
+      · obtain ⟨hK'g, hK'G, t, htp, hGt, hK't⟩ := Finset.mem_filter.1 hK'
+        have hK'K : K' ≠ K := by
+          rintro rfl
+          rw [show S₁.gate K' = g' from Function.update_self _ _ _] at hK'G
+          rcases hg'reads G hK'G with h | h
+          · exact hGp hx h.symm
+          · exact hGp hy h.symm
+        rw [hgate K' hK'K] at hK'G hK't
+        rw [hgate G hKne.symm] at hGt
+        exact Finset.mem_filter.2 ⟨hK'g, hK'G, t, htp, hGt, hK't⟩
+      · have hKmem : K ∈ S.gates.filter fun K' => (S.gate K').Reads G ∧
+            ∃ t ∈ S.params, (S.gate G).Reads t ∧ (S.gate K').Reads t := by
+          refine Finset.mem_filter.2 ⟨hK, hKG, ?_⟩
+          rcases hKt with h | h
+          · exact ⟨t₁, hx, Or.inl hl, h⟩
+          · exact ⟨t₂, hy, Or.inr hr, h⟩
+        obtain ⟨-, hKG', -⟩ := Finset.mem_filter.1 (hsub hKmem)
+        rw [show S₁.gate K = g' from Function.update_self _ _ _] at hKG'
+        rcases hg'reads G hKG' with h | h
+        · exact hGp hx h.symm
+        · exact hGp hy h.symm
+    obtain ⟨S', hstep⟩ := ih₃ _ (hk₃ ▸ hlt) S₁ hk₁ (hauxeq.trans hk₂) rfl hS₁ (ha₁ ▸ ha)
+    exact ⟨S', hstep.of_prep (by omega) ha₁ hW⟩
+  push Not at hch
+  -- Cases 7 to 10
+  have hGout : ¬ S.out.Reads G := by
+    intro hout
+    obtain ⟨α, β, γ, hform⟩ := exists_and_form hand
+    refine hS.false_of_fix hf ha hy β ∅ (Finset.empty_subset _) (Finset.notMem_empty _)
+      (γ ^^ S.out.neg) fun val hval hfix => ?_
+    rw [Finset.sum_empty, add_zero] at hfix
+    unfold Lit.eval
+    unfold Lit.Reads at hout
+    rw [hout, Arg.eval_node, hval.2 G hG]
+    unfold Gate.eval
+    rw [hl, hr, Arg.eval_node, Arg.eval_node, hform, hfix]
+    cases val t₁ <;> cases α <;> cases β <;> cases γ <;> cases S.out.neg <;> rfl
+  have hhas : ∃ K ∈ S.gates, (S.gate K).Reads G := by
+    by_contra hno
+    push Not at hno
+    exact hdel (Or.inr (Or.inr (Or.inl ⟨G, hG, hno, hGout⟩)))
+  have hdispatch : ∀ x y, S.MinAnd G x y → ∃ S', Step f S S' := fun x y hmin => by
+    by_cases h7 : S.Case7 G x y
+    · exact hS.step_case7 hdel hmin h7
+    · by_cases hbot : S.Bottleneck G x
+      · exact hS.step_bottleneck hf ha hexcl hdel hmin h7 hbot
+      · exact hS.step_case8 hexcl hdel hmin h7 hbot
+  by_cases hle : S.deg t₂ ≤ S.deg t₁
+  · exact hdispatch _ _ ⟨hG, hand, Or.inl ⟨hl, hr⟩, hxu, hyu, ht12, hydeg, hle,
+      fun K hK hKG => ⟨(hch K hK hKG).1, (hch K hK hKG).2⟩, hGout, hhas⟩
+  · exact hdispatch _ _ ⟨hG, hand, Or.inr ⟨hl, hr⟩, hyu, hxu, ht12.symm, hxdeg, by omega,
+      fun K hK hKG => ⟨(hch K hK hKG).2, (hch K hK hKG).1⟩, hGout, hhas⟩
 
 /-- **Lemma 4.2** of [Mishra and Santhanam][MishraSanthanam2026]: if `d < a`, a valid state for
 an affine disperser for dimension `d` has a step of gate elimination: a valid state with smaller
