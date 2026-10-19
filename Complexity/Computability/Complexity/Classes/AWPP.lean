@@ -81,8 +81,7 @@ theorem SPP_subset_AWPP : SPP enc ⊆ AWPP enc := by
 /-- Subtracting the gap from its dyadic denominator exchanges yes and no instances. -/
 theorem compl_mem_AWPP (hA : A ∈ AWPP enc) : Aᶜ ∈ AWPP enc := by
   obtain ⟨g, hg, p, hA⟩ := hA
-  have hd : (fun a => (2 : ℤ) ^ p.eval (enc a).length) ∈ GapP enc := by
-    simpa using SharpP.natCast_mem_GapP (SharpP.two_pow_mem (enc := enc) p)
+  have hd := GapP.two_pow_mem (enc := enc) p
   refine ⟨_, GapP.sub_mem' hd hg, p, fun a => ?_⟩
   obtain ⟨⟨h0, h1⟩, hy, hn⟩ := hA a
   change (0 ≤ (2 : ℤ) ^ p.eval (enc a).length - g a ∧ _) ∧ _
@@ -98,8 +97,7 @@ theorem compl_mem_AWPP (hA : A ∈ AWPP enc) : Aᶜ ∈ AWPP enc := by
 /-- The sign of twice the gap minus the denominator recognizes the language in PP. -/
 theorem AWPP_subset_PP : AWPP enc ⊆ PP enc := by
   rintro A ⟨g, hg, p, hA⟩
-  have hd : (fun a => (2 : ℤ) ^ p.eval (enc a).length) ∈ GapP enc := by
-    simpa using SharpP.natCast_mem_GapP (SharpP.two_pow_mem (enc := enc) p)
+  have hd := GapP.two_pow_mem (enc := enc) p
   refine mem_PP_iff_exists_GapP.mpr
     ⟨_, GapP.sub_mem' (GapP.add_mem hg hg) hd, fun a => ?_⟩
   have hp : 0 < (2 : ℤ) ^ p.eval (enc a).length := by positivity

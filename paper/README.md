@@ -1,6 +1,6 @@
 # Index of proved statements
 
-`main.tex` and `main.pdf` present a curated, human-readable index of 73 entries covering significant
+`main.tex` and `main.pdf` present a curated, human-readable index of 74 entries covering significant
 results, grouped by subject. Each entry states the result, its assumptions
 and model, important limitations, and links to exact Lean declarations. It is not
 an exhaustive API reference. Standalone entries emphasize substantial endpoints;
@@ -13,7 +13,8 @@ subject file in `sections/` to revise or extend the index. Declaration links poi
 for the first-order projection entry, and `4f6bdaf35ebe60aec6d1063ae513ac342df13589`
 for the basic class developments, and `2f492c03c060ed95662dd942ef7feca1bebda7aa`
 for the small counting classes, and `814e76e29fa938afaed4e1bd5763fa490bc39ca9` for wide gaps and the Boolean
-hierarchy, and `e903aba8b29ef85b94c453114f12d604768587a5` for approximate counting; review evidence is
+hierarchy, and `e903aba8b29ef85b94c453114f12d604768587a5` for approximate counting,
+and `c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108` for counting closure; review evidence is
 recorded in `review.md`.
 Earlier proof translations remain available in Git history at `d2c5e581`.
 Outstanding development priorities belong in `../ROADMAP.md`, not as speculative

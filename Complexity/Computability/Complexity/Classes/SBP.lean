@@ -36,6 +36,8 @@ the stronger MA and AM containments are not proved here.
 
 * `NP_subset_SBP`, `BPP_subset_SBP`, `SBP_subset_PP`.
 * `union_mem_SBP`, `PolyTimeReducible.mem_SBP`: union and many-one reduction closure.
+* `exists_SBP_gap_pow`: arbitrary fixed multiplicative gap strengthening.
+* `inter_mem_SBP_of_mem_BPP`: intersection with a BPP language.
 
 ## References
 
@@ -162,5 +164,72 @@ theorem union_mem_SBP (hA : A ∈ SBP enc) (hB : B ∈ SBP enc) : A ∪ B ∈ SB
     have hs1 := Nat.pow_lt_pow_left h1' (by decide : 2 ≠ 0)
     have hs2 := Nat.pow_lt_pow_left h2' (by decide : 2 ≠ 0)
     nlinarith only [hs1, hs2]
+
+/-- Every fixed positive repetition count strengthens the SBP multiplicative gap.
+The integer `m` is fixed independently of the input; this does not assert uniform
+closure under input-dependent powers. See [Watson, Section 1.1][Watson2012]. -/
+theorem exists_SBP_gap_pow (hA : A ∈ SBP enc) {m : ℕ} (hm : 0 < m) :
+    ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
+      (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧
+        (a ∉ A → 2 ^ m * f a < k a) := by
+  obtain ⟨f, hf, k, hk, hkpos, h⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
+  refine ⟨f ^ m, SharpP.pow_mem hf m, fun a => k a ^ m,
+    hk.binary_pow' (.const m), fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩
+  · intro ha
+    exact Nat.pow_le_pow_left ((h a).1 ha) m
+  · intro ha
+    simpa only [Pi.pow_apply, mul_pow] using
+      Nat.pow_lt_pow_left ((h a).2 ha) (Nat.ne_of_gt hm)
+
+/-- Intersecting an SBP language with a BPP language preserves SBP.
+Square the SBP gap, amplify BPP beyond the exponential bound on that count,
+and multiply counts. This is an elementary consequence of counting closure and
+[Arora–Barak's BPP amplification][AroraBarak09]. -/
+theorem inter_mem_SBP_of_mem_BPP (hA : A ∈ SBP enc) (hB : B ∈ BPP enc) :
+    A ∩ B ∈ SBP enc := by
+  obtain ⟨f, hf, k, hk, hkpos, hA⟩ := exists_SBP_gap_pow hA (by decide : 0 < 2)
+  obtain ⟨p, hp⟩ := SharpP.exists_le_two_pow hf
+  obtain ⟨q, V, hV, hB⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hB (p + 2)
+  let c a := acceptCount V a (q.eval (enc a).length)
+  have hc : c ∈ SharpP enc := ⟨q, V, hV, fun _ => rfl⟩
+  have hd : ComputableTidilyInPolyTime (fun a => 2 ^ q.eval (enc a).length) enc encNat :=
+    ComputableTidilyInPolyTime.binary_two_pow.comp
+      ((ComputableTidilyInPolyTime.unary_eval q).comp (.encoding_length enc))
+  refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 4) (SharpP.mul_mem hf hc),
+    fun a => 3 * (k a * 2 ^ q.eval (enc a).length),
+    (ComputableTidilyInPolyTime.const 3).binary_mul' (hk.binary_mul' hd), fun a => ?_⟩
+  have hs := acceptCount_add_card_filter_eq_false (V := V) (a := a)
+    (n := q.eval (enc a).length)
+  have hc_le : c a ≤ 2 ^ q.eval (enc a).length := acceptCount_le_two_pow
+  have hD : 0 < 2 ^ q.eval (enc a).length := by positivity
+  have hp1 : 1 ≤ 2 ^ p.eval (enc a).length := Nat.one_le_pow _ _ (by decide)
+  have h := hB a
+  simp only [Polynomial.eval_add, Polynomial.eval_ofNat, pow_add] at h
+  change (a ∈ A ∩ B → 3 * (k a * 2 ^ q.eval (enc a).length) ≤ 4 * (f a * c a)) ∧
+    (a ∉ A ∩ B → 2 * (4 * (f a * c a)) < 3 * (k a * 2 ^ q.eval (enc a).length))
+  constructor
+  · rintro ⟨ha, hb⟩
+    have hkf := (hA a).1 ha
+    have hbad := h.1 hb
+    have herr : 4 * (Finset.univ.filter fun r : Fin (q.eval (enc a).length) → Bool =>
+        V (a, List.ofFn r) = false).card ≤ 2 ^ q.eval (enc a).length := by
+      nlinarith [Nat.mul_le_mul_right
+        (4 * (Finset.univ.filter fun r : Fin (q.eval (enc a).length) → Bool =>
+          V (a, List.ofFn r) = false).card) hp1]
+    have hgood : 3 * 2 ^ q.eval (enc a).length ≤ 4 * c a := by dsimp [c]; lia
+    nlinarith [Nat.mul_le_mul_left (k a) hgood, Nat.mul_le_mul_right (4 * c a) hkf]
+  · intro hab
+    by_cases ha : a ∈ A
+    · have hb : a ∉ B := fun hb => hab ⟨ha, hb⟩
+      have hbad := h.2 hb
+      change (2 ^ p.eval (enc a).length * 2 ^ 2) * c a ≤ _ at hbad
+      have hsmall : 4 * (f a * c a) ≤ 2 ^ q.eval (enc a).length := by
+        nlinarith [Nat.mul_le_mul_right (4 * c a) (hp a)]
+      have := Nat.mul_le_mul_right (2 ^ q.eval (enc a).length) (hkpos a)
+      nlinarith
+    · have hsmall := (hA a).2 ha
+      norm_num only [pow_succ, pow_zero] at hsmall
+      have hmul := Nat.mul_lt_mul_of_pos_right hsmall hD
+      nlinarith [Nat.mul_le_mul_left (4 * f a) hc_le]
 
 end Cslib.Complexity
