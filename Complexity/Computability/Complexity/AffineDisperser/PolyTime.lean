@@ -45,6 +45,11 @@ whole computation, including every field operation
 (`Cslib.AffineDisperser.computableTidilyInPolyTime_explicitDisperser`). The exponent of the
 polynomial is not computed.
 
+## Main definitions
+
+* `Cslib.AffineDisperser.selectStep`: one step of the greedy choice of primes, as a fold.
+* `Cslib.AffineDisperser.encTable`: the encoding of multiplication tables.
+
 ## Main results
 
 * `Cslib.AffineDisperser.computableTidilyInPolyTime_leastIrreducibleCode`: the search for the
@@ -576,7 +581,7 @@ theorem computableTidilyInPolyTime_explicitDisperser :
   exact computableTidilyInPolyTime_explicitDisperserProgram
 
 /-- **The explicit affine disperser is in `P`**: the bit lists `x` with
-`explicitDisperser x.length x = true` form a problem in `P`. -/
+`explicitDisperser x.length (BitString.ofList x.length x) = true` form a problem in `P`. -/
 theorem setOf_explicitDisperser_mem_P :
     {x : List Bool | explicitDisperser x.length (BitString.ofList x.length x) = true} ∈
       Cslib.Complexity.P encBits :=
