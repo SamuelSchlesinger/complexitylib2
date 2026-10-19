@@ -14,6 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Mathlib.Algebra.Polynomial.Eval.Defs
 public import Mathlib.Data.Fintype.Pi
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+
 /-!
 # The class BPP
 
@@ -32,6 +34,13 @@ here.
 
 * `Cslib.Complexity.DecidesWithBoundedError`: the bounded-error condition.
 * `Cslib.Complexity.BPP`.
+
+## Main results
+
+* `Cslib.Complexity.DecidesWithBoundedError.compl`: negating the verifier decides the complement
+  with bounded error.
+* `Cslib.Complexity.compl_mem_BPP`, `Cslib.Complexity.BPP_eq_preimage_compl_BPP`: `BPP` is closed
+  under complement.
 
 ## References
 
@@ -70,5 +79,26 @@ theorem mem_BPP {enc : α ↪ List Bool} {A : Set α} :
       ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithBoundedError enc p V A :=
   Iff.rfl
+
+namespace DecidesWithBoundedError
+
+/-- Negating the verifier decides the complement with bounded error. -/
+theorem compl {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool} {A : Set α}
+    (h : DecidesWithBoundedError enc p V A) :
+    DecidesWithBoundedError enc p (fun x => !V x) Aᶜ := fun a => by
+  simpa using (h a).symm
+
+end DecidesWithBoundedError
+
+/-- `BPP` is closed under complement. -/
+theorem compl_mem_BPP {enc : α ↪ List Bool} {A : Set α} (hA : A ∈ BPP enc) : Aᶜ ∈ BPP enc :=
+  let ⟨p, V, hV, h⟩ := hA
+  ⟨p, fun x => !V x, ComputableTidilyInPolyTime.bool_not.comp hV, h.compl⟩
+
+/-- `BPP` equals its preimage under complement. -/
+theorem BPP_eq_preimage_compl_BPP (enc : α ↪ List Bool) : BPP enc = compl ⁻¹' BPP enc := by
+  ext A
+  refine ⟨compl_mem_BPP, fun hA => ?_⟩
+  simpa using compl_mem_BPP hA
 
 end Cslib.Complexity
