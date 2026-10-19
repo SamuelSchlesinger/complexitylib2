@@ -34,8 +34,9 @@ itself or the space the described machine would use beyond the budget.
 
 Within the budget it agrees with the universal function
 (`Turing.MultiTapeTM.Universal.universalSpace_eq_of_le`), and on the description of a machine it
-returns the first two symbols of the output of the machine whenever the cells visited by the
-machine fit, encoded, within the budget (`Turing.MultiTapeTM.Universal.universalSpace_desc`).
+returns the first two symbols of the output of the machine whenever the bound
+`Turing.MultiTapeTM.Universal.cfgSpace` on the configurations of the simulation, linear in the
+cells the machine visits, is within the budget (`Turing.MultiTapeTM.Universal.universalSpace_desc`).
 
 ## Main definitions
 
