@@ -520,4 +520,110 @@ theorem computableTidilyInO_toOV : ∃ e, ComputableTidilyInO toOV encCNF encOV
     have := Nat.mul_le_mul_left (2 ^ (φ.numVars - φ.numVars / 2)) h₃
     nlinarith
 
+
+/-! ### Williams' theorem -/
+
+/-- **Williams' theorem** [Williams2005]: a decider for `OV` within time `N ^ (2 - ε)` times a
+polynomial in the dimension, on instances of `N` vectors, gives a decider for `SAT` within time
+`2 ^ ((1 - ε / 2) n)` times a polynomial in the length of the encoded formula, on formulas with `n`
+variables, for `0 < ε ≤ 1`; for `ε > 1` it gives the exponent `1 / 2` of the reduction. -/
+theorem DecidableInExpTime.SAT_of_OV {ε : ℝ} (hε : 0 < ε) {e : ℕ}
+    (h : DecidableInTimeO OV encOV
+      fun p => ((p.1.length + p.2.length : ℕ) : ℝ) ^ (2 - ε) * (OV.dim p + 1) ^ e) :
+    DecidableInExpTime SAT encCNF CNF.numVars (1 - min ε 1 / 2) := by
+  obtain ⟨g, t, c, hg, hgOV, ht⟩ := h.exists_computableTidilyInO
+  obtain ⟨E, hred⟩ := computableTidilyInO_toOV
+  refine .of_computableTidilyInO (hg.comp hred) (fun φ => by
+    rw [← toOV_mem_OV_iff]
+    exact hgOV _) (3 + 9 * c) (E + e) fun φ => ?_
+  set ε₀ := min ε 1
+  have hε₀ : 0 < ε₀ := lt_min hε one_pos
+  have hε₁ : ε₀ ≤ 1 := min_le_right ε 1
+  have hL : (1 : ℝ) ≤ ((encCNF φ).length : ℝ) + 1 := by
+    linarith [(Nat.cast_nonneg (encCNF φ).length : (0 : ℝ) ≤ _)]
+  set X : ℝ := 2 ^ ((1 - ε₀ / 2) * φ.numVars)
+  have hn : (0 : ℝ) ≤ φ.numVars := Nat.cast_nonneg _
+  have hX : (1 : ℝ) ≤ X := Real.one_le_rpow (by norm_num) (by nlinarith)
+  -- the second half has at most `(n + 1) / 2` variables
+  have hh₂ : ((φ.numVars - φ.numVars / 2 : ℕ) : ℝ) ≤ (φ.numVars + 1) / 2 := by
+    have : 2 * (φ.numVars - φ.numVars / 2) ≤ φ.numVars + 1 := by omega
+    have : (2 * (φ.numVars - φ.numVars / 2 : ℕ) : ℝ) ≤ φ.numVars + 1 := by exact_mod_cast this
+    linarith
+  have hpow (a : ℝ) (ha : 0 ≤ a) (hb : a * ((φ.numVars + 1) / 2) ≤ (1 - ε₀ / 2) * φ.numVars + 1) :
+      (2 : ℝ) ^ (a * (φ.numVars - φ.numVars / 2 : ℕ)) ≤ 2 * X := by
+    calc (2 : ℝ) ^ (a * (φ.numVars - φ.numVars / 2 : ℕ)) ≤ 2 ^ ((1 - ε₀ / 2) * φ.numVars + 1) :=
+          Real.rpow_le_rpow_of_exponent_le (by norm_num)
+            ((mul_le_mul_of_nonneg_left hh₂ ha).trans hb)
+      _ = 2 * X := by rw [Real.rpow_add (by norm_num), Real.rpow_one, mul_comm]
+  -- the reduction
+  have hT₁ : ((2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ E : ℕ) : ℝ) ≤
+      2 * X * (((encCNF φ).length : ℝ) + 1) ^ E := by
+    push_cast
+    have := hpow 1 zero_le_one (by nlinarith)
+    rw [one_mul, Real.rpow_natCast] at this
+    exact mul_le_mul_of_nonneg_right this (by positivity)
+  -- the decider on the reduced instance
+  have hN : ((toOV φ).1.length + (toOV φ).2.length : ℕ) ≤ 2 * 2 ^ (φ.numVars - φ.numVars / 2) := by
+    rw [length_toOV_fst, length_toOV_snd]
+    have : 2 ^ (φ.numVars / 2) ≤ 2 ^ (φ.numVars - φ.numVars / 2) :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+  have hN₁ : (1 : ℝ) ≤ ((toOV φ).1.length + (toOV φ).2.length : ℕ) := by
+    rw [length_toOV_fst]
+    exact_mod_cast Nat.one_le_two_pow.trans (Nat.le_add_right _ _)
+  have hpowN : (((toOV φ).1.length + (toOV φ).2.length : ℕ) : ℝ) ^ (2 - ε) ≤ 8 * X := by
+    calc (((toOV φ).1.length + (toOV φ).2.length : ℕ) : ℝ) ^ (2 - ε)
+        ≤ (((toOV φ).1.length + (toOV φ).2.length : ℕ) : ℝ) ^ (2 - ε₀) :=
+          Real.rpow_le_rpow_of_exponent_le hN₁ (by linarith [min_le_left ε 1])
+      _ ≤ ((2 * 2 ^ (φ.numVars - φ.numVars / 2) : ℕ) : ℝ) ^ (2 - ε₀) :=
+          Real.rpow_le_rpow (by positivity) (by exact_mod_cast hN) (by linarith)
+      _ = 2 ^ (2 - ε₀) * 2 ^ ((2 - ε₀) * (φ.numVars - φ.numVars / 2 : ℕ)) := by
+          push_cast
+          rw [Real.mul_rpow (by norm_num) (by positivity), ← Real.rpow_natCast,
+            ← Real.rpow_mul (by norm_num), mul_comm ((φ.numVars - φ.numVars / 2 : ℕ) : ℝ)]
+      _ ≤ 4 * (2 * X) := by
+          refine mul_le_mul ?_ (hpow _ (by linarith) ?_) (by positivity) (by norm_num)
+          · calc (2 : ℝ) ^ (2 - ε₀) ≤ 2 ^ (2 : ℝ) :=
+                  Real.rpow_le_rpow_of_exponent_le (by norm_num) (by linarith)
+              _ = 4 := by norm_num
+          · nlinarith
+      _ = 8 * X := by ring
+  have hdim : ((OV.dim (toOV φ) : ℝ) + 1) ^ e ≤ (((encCNF φ).length : ℝ) + 1) ^ e := by
+    refine pow_le_pow_left₀ (by positivity) ?_ e
+    have := (OV.dim_toOV_le φ).trans
+      (length_le_length_encList (encList (encPair encNat encBool)) φ)
+    have : (OV.dim (toOV φ) : ℝ) ≤ (encCNF φ).length := by exact_mod_cast this
+    linarith
+  have hT₂ : (t (toOV φ) : ℝ) ≤ c * (8 * X * (((encCNF φ).length : ℝ) + 1) ^ e) + c := by
+    refine (ht (toOV φ)).trans ?_
+    have hc : (0 : ℝ) ≤ c := Nat.cast_nonneg c
+    have := mul_le_mul hpowN hdim (by positivity) (by positivity)
+    nlinarith
+  -- together
+  have hE : (((encCNF φ).length : ℝ) + 1) ^ E ≤ (((encCNF φ).length : ℝ) + 1) ^ (E + e) :=
+    pow_le_pow_right₀ hL (Nat.le_add_right E e)
+  have he : (((encCNF φ).length : ℝ) + 1) ^ e ≤ (((encCNF φ).length : ℝ) + 1) ^ (E + e) :=
+    pow_le_pow_right₀ hL (Nat.le_add_left e E)
+  have hc : (0 : ℝ) ≤ c := Nat.cast_nonneg c
+  have hY : (1 : ℝ) ≤ X * (((encCNF φ).length : ℝ) + 1) ^ (E + e) :=
+    one_le_mul_of_one_le_of_one_le hX (one_le_pow₀ hL)
+  have h₁ := mul_le_mul_of_nonneg_left hE (by positivity : (0 : ℝ) ≤ 2 * X)
+  have h₂ := mul_le_mul_of_nonneg_left he (by positivity : (0 : ℝ) ≤ c * (8 * X))
+  have h₃ := mul_le_mul_of_nonneg_left hY hc
+  rw [Nat.cast_add, show ((3 + 9 * c : ℕ) : ℝ) = 3 + 9 * (c : ℝ) by push_cast; ring]
+  nlinarith
+
+/-- **The strong exponential time hypothesis implies the orthogonal vectors hypothesis**
+[Williams2005]. -/
+theorem OVH_of_SETH (h : SETH) : OVH := by
+  intro ε hε e hOV
+  have hSAT := DecidableInExpTime.SAT_of_OV hε hOV
+  have hδ : 0 < min ε 1 / 2 := half_pos (lt_min hε one_pos)
+  obtain ⟨k, hk⟩ := h _ hδ
+  refine hk ?_
+  rw [KSAT_eq_inter k (KSAT_subset_SAT k) le_rfl]
+  refine hSAT.inter (computableTidilyInPolyTime_all_length_le k) ?_
+  have : min ε 1 / 2 ≤ 1 / 2 := div_le_div_of_nonneg_right (min_le_right ε 1) zero_le_two
+  linarith
+
 end Cslib.Complexity

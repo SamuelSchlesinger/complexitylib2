@@ -220,7 +220,7 @@ the length of the encoded instance, for every `δ > 0`. The decider may depend o
 weaker than a single decider within time `2 ^ o(μ a)`; it is the negation of the quantifier pattern
 of the exponential time hypothesis. -/
 def DecidableInSubexpTime (A : Set α) (enc : α ↪ List Bool) (μ : α → ℕ) : Prop :=
-  ∀ δ > 0, DecidableInExpTime A enc μ δ
+  ∀ δ : ℝ, 0 < δ → DecidableInExpTime A enc μ δ
 
 /-- Larger exponents allow more problems. -/
 theorem DecidableInExpTime.mono {μ : α → ℕ} {δ δ' : ℝ} (h : DecidableInExpTime A enc μ δ)
@@ -288,12 +288,13 @@ noncomputable def satExponent (k : ℕ) : ℝ :=
 /-- **The exponential time hypothesis** [ImpagliazzoPaturi2001]: for some `δ > 0`, 3SAT is not
 decidable within time `2 ^ (δ n)` times any polynomial in the length of the encoded formula, on
 formulas with `n` variables. -/
-def ETH : Prop := ∃ δ > 0, ¬DecidableInExpTime ThreeSAT encCNF CNF.numVars δ
+def ETH : Prop := ∃ δ : ℝ, 0 < δ ∧ ¬DecidableInExpTime ThreeSAT encCNF CNF.numVars δ
 
 /-- **The strong exponential time hypothesis** [ImpagliazzoPaturi2001]: for every `ε > 0` there is
 a width `k` such that `k`-SAT is not decidable within time `2 ^ ((1 - ε) n)` times any polynomial in
 the length of the encoded formula, on formulas with `n` variables. -/
-def SETH : Prop := ∀ ε > 0, ∃ k, ¬DecidableInExpTime (KSAT k) encCNF CNF.numVars (1 - ε)
+def SETH : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ k : ℕ, ¬DecidableInExpTime (KSAT k) encCNF CNF.numVars (1 - ε)
 
 /-- The exponential time hypothesis says that 3SAT is not decidable in subexponential time in the
 number of variables. -/
@@ -324,7 +325,7 @@ def OV.dim (p : List (List Bool) × List (List Bool)) : ℕ :=
 /-- **The orthogonal vectors hypothesis**: for every `ε > 0`, the orthogonal vectors problem is not
 decidable within time `N ^ (2 - ε)` times any polynomial in the dimension `d`, on instances of `N`
 vectors. -/
-def OVH : Prop := ∀ ε > 0, ∀ e : ℕ, ¬DecidableInTimeO OV encOV
+def OVH : Prop := ∀ ε : ℝ, 0 < ε → ∀ e : ℕ, ¬DecidableInTimeO OV encOV
   fun p => ((p.1.length + p.2.length : ℕ) : ℝ) ^ (2 - ε) * (OV.dim p + 1) ^ e
 
 end Cslib.Complexity
