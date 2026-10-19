@@ -588,7 +588,11 @@ public import Complexity.Computability.Probabilistic.Repeat
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.Selection
 public import Complexity.Computability.Probabilistic.UniformNat
+public import Complexity.Computability.QueryComplexity.Degree
+public import Complexity.Computability.QueryComplexity.Huang
+public import Complexity.Computability.QueryComplexity.Relations
 public import Complexity.Computability.QueryComplexity.Restriction
+public import Complexity.Computability.QueryComplexity.Sensitivity.Hypercube
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring

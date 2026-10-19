@@ -146,6 +146,7 @@ import ComplexityTests.PseudoentropyTraining
 import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
+import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.Relativization
