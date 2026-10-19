@@ -24,9 +24,10 @@ the empty block never changes the value of a function.
 ## Main results
 
 * `Internal.flip_eq_flipOn`: the internal flip is `BitString.flipOn`.
-* `Internal.sensitivity_eq_sensitivity`: the internal sensitivity is `BitString.sensitivity`.
-* `Internal.blockSensitivityAt_eq_blockSensitivityAt`,
-  `Internal.blockSensitivity_eq_blockSensitivity`: the internal block sensitivity is
+* `Internal.sensitivity_eq_bitString_sensitivity`: the internal sensitivity is
+  `BitString.sensitivity`.
+* `Internal.blockSensitivityAt_eq_queryComplexity_blockSensitivityAt`,
+  `Internal.blockSensitivity_eq_queryComplexity_blockSensitivity`: the internal block sensitivity is
   `QueryComplexity.blockSensitivity`, pointwise and globally.
 
 ## References
@@ -55,7 +56,7 @@ theorem flip_eq_flipBlock (x : BitString n) (B : Finset (Fin n)) :
   flip_eq_flipOn x B
 
 /-- On `Fin n`, the internal pointwise sensitivity is `BitString.sensitivityAt`. -/
-theorem sensitivityAt_eq_sensitivityAt (f : BooleanFunction n) (x : BitString n) :
+theorem sensitivityAt_eq_bitString_sensitivityAt (f : BooleanFunction n) (x : BitString n) :
     sensitivityAt f x = BitString.sensitivityAt f x := by
   unfold sensitivityAt BitString.sensitivityAt BitString.sensitiveCoords
   congr 1
@@ -64,16 +65,17 @@ theorem sensitivityAt_eq_sensitivityAt (f : BooleanFunction n) (x : BitString n)
     BitString.flipBlock_singleton]
 
 /-- On `Fin n`, the internal sensitivity is `BitString.sensitivity`. -/
-theorem sensitivity_eq_sensitivity (f : BooleanFunction n) :
+theorem sensitivity_eq_bitString_sensitivity (f : BooleanFunction n) :
     sensitivity f = BitString.sensitivity f := by
   refine le_antisymm (Finset.sup_le fun x _ => ?_) (Finset.sup_le fun x _ => ?_)
-  · exact (sensitivityAt_eq_sensitivityAt f x).trans_le
+  · exact (sensitivityAt_eq_bitString_sensitivityAt f x).trans_le
       (BitString.sensitivityAt_le_sensitivity f x)
-  · exact (sensitivityAt_eq_sensitivityAt f x).symm.trans_le (Finset.le_sup (by simp))
+  · exact (sensitivityAt_eq_bitString_sensitivityAt f x).symm.trans_le (Finset.le_sup (by simp))
 
 /-- On `Fin n`, the internal pointwise block sensitivity is
 `QueryComplexity.blockSensitivityAt`. -/
-theorem blockSensitivityAt_eq_blockSensitivityAt (f : BooleanFunction n) (x : BitString n) :
+theorem blockSensitivityAt_eq_queryComplexity_blockSensitivityAt (f : BooleanFunction n)
+    (x : BitString n) :
     blockSensitivityAt f x = QueryComplexity.blockSensitivityAt f x := by
   classical
   refine le_antisymm (Finset.sup_le fun F _ => ?_) (Finset.sup_le fun F hF => ?_)
@@ -94,12 +96,12 @@ theorem blockSensitivityAt_eq_blockSensitivityAt (f : BooleanFunction n) (x : Bi
     exact Finset.le_sup_of_le (mem_univ F) (le_of_eq (ite_eq_left h).symm)
 
 /-- On `Fin n`, the internal block sensitivity is `QueryComplexity.blockSensitivity`. -/
-theorem blockSensitivity_eq_blockSensitivity (f : BooleanFunction n) :
+theorem blockSensitivity_eq_queryComplexity_blockSensitivity (f : BooleanFunction n) :
     blockSensitivity f = QueryComplexity.blockSensitivity f := by
   refine le_antisymm (Finset.sup_le fun x _ => ?_) (Finset.sup_le fun x _ => ?_)
-  · exact (blockSensitivityAt_eq_blockSensitivityAt f x).trans_le
+  · exact (blockSensitivityAt_eq_queryComplexity_blockSensitivityAt f x).trans_le
       (blockSensitivityAt_le_blockSensitivity f x)
-  · exact (blockSensitivityAt_eq_blockSensitivityAt f x).symm.trans_le
+  · exact (blockSensitivityAt_eq_queryComplexity_blockSensitivityAt f x).symm.trans_le
       (Finset.le_sup (by simp))
 
 end Cslib.QueryComplexity.SensitivitySeparation.Internal

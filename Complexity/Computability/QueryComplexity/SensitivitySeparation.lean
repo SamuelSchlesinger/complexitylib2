@@ -79,8 +79,8 @@ theorem exists_two_pow_div_le_blockSensitivityAt_div_sensitivity_sq (d : ℕ) (h
         (blockSensitivityAt f (fun _ => false) : ℝ) / (sensitivity f : ℝ) ^ 2 := by
   obtain ⟨n, f, hn, hf, hnc, h⟩ := SensitivitySeparation.Internal.quantitative_separation d hd
   refine ⟨n, f, hn, hf, hnc, ?_⟩
-  rwa [← SensitivitySeparation.Internal.sensitivity_eq_sensitivity,
-    ← SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
+  rwa [← SensitivitySeparation.Internal.sensitivity_eq_bitString_sensitivity,
+    ← SensitivitySeparation.Internal.blockSensitivityAt_eq_queryComplexity_blockSensitivityAt]
 
 /-- For every `C` there is a nonconstant Boolean function `f` with `f 0 = false` and
 `C * s(f) ^ 2 < bs(f, 0)`. -/
@@ -91,8 +91,8 @@ theorem exists_mul_sensitivity_sq_lt_blockSensitivityAt (C : ℝ) :
   obtain ⟨n, f, hn, hf, hnc, h⟩ :=
     SensitivitySeparation.Internal.unbounded_quadratic_separation C
   refine ⟨n, f, hn, hf, hnc, ?_⟩
-  rwa [← SensitivitySeparation.Internal.sensitivity_eq_sensitivity,
-    ← SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
+  rwa [← SensitivitySeparation.Internal.sensitivity_eq_bitString_sensitivity,
+    ← SensitivitySeparation.Internal.blockSensitivityAt_eq_queryComplexity_blockSensitivityAt]
 
 /-- **Block sensitivity is not quadratically bounded by sensitivity**: for every `C` there is a
 nonconstant Boolean function `f` with `C * s(f) ^ 2 < bs(f)`. -/
@@ -114,9 +114,10 @@ theorem exists_sensitivity_rpow_le_blockSensitivityAt :
   refine ⟨α, hα, n, F, fun m => ?_, ?_⟩
   · obtain ⟨hn, hf, hnc, hpow⟩ := hall m
     refine ⟨hn, hf, hnc, ?_⟩
-    rwa [← SensitivitySeparation.Internal.sensitivity_eq_sensitivity,
-      ← SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
-  · simpa only [SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
+    rwa [← SensitivitySeparation.Internal.sensitivity_eq_bitString_sensitivity,
+      ← SensitivitySeparation.Internal.blockSensitivityAt_eq_queryComplexity_blockSensitivityAt]
+  · simpa only
+      [SensitivitySeparation.Internal.blockSensitivityAt_eq_queryComplexity_blockSensitivityAt]
       using hlim
 
 /-- Certificate complexity is not quadratically bounded by sensitivity: for every `C` there is a

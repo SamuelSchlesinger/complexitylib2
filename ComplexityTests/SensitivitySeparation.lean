@@ -27,7 +27,7 @@ example (C : ℝ) : ¬ ∀ (n : ℕ) (f : BooleanFunction n),
 -- The internal measures agree with CSLib's on `Fin n`.
 example {n : ℕ} (f : BooleanFunction n) :
     SensitivitySeparation.Internal.blockSensitivity f = blockSensitivity f :=
-  SensitivitySeparation.Internal.blockSensitivity_eq_blockSensitivity f
+  SensitivitySeparation.Internal.blockSensitivity_eq_queryComplexity_blockSensitivity f
 
 /--
 info: 'Cslib.QueryComplexity.exists_two_pow_div_le_blockSensitivityAt_div_sensitivity_sq' depends on
