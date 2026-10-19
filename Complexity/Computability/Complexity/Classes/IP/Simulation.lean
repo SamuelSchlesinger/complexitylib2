@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
+public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
@@ -349,6 +350,113 @@ theorem accepts_eq_true_iff (x r : List Bool) (h : History) :
     rcases e with _ | m <;> simp [Except.map, replayOutcome]
   · rw [hrun.1 _ hsim]
     cases rest <;> simp [Except.map, replayOutcome]
+
+/-! ### The live replay in polynomial time -/
+
+section PolyTime
+
+open ComputableTidilyInPolyTime
+
+/-- The instruction of `M` in the configuration `cfg` with the coin `b`, unless it has halted. -/
+def instruction (cfg : MultiTapeMachine.FiniteConfig k Bool Control Unit) (b : Bool) :
+    Option (MultiTapeMachine.Action k Bool Control Unit) :=
+  cfg.tapes.state.map fun c =>
+    M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b
+
+/-- Answer a request on the channel `op` from the history, moving to the control state `next`, or
+stop when the history is exhausted or sends another message. -/
+def answerFromHistory (t : ℕ) (op : Unit) (next : Control) (s : AliveState k Control) :
+    AliveState k Control :=
+  if s.2.1.isEmpty then (s.1, s.2.1, false)
+  else if (s.2.1.headD ([], [])).1 = (s.1.channels op).1 then
+    (s.1.receive op next ((s.2.1.headD ([], [])).2.take t), s.2.1.tail, true)
+  else (s.1, s.2.1, false)
+
+/-- The live replay step by its liveness and instruction. -/
+def taggedStep (t : ℕ) :
+    Bool × Option (MultiTapeMachine.Action k Bool Control Unit) → AliveState k Control →
+      AliveState k Control
+  | (false, _), s => s
+  | (true, none), s => s
+  | (true, some (.step action symbol move)), s => (s.1.step action symbol move, s.2.1, true)
+  | (true, some (.query op next)), s => answerFromHistory t op next s
+
+/-- The live replay step as a case distinction on a finite tag. -/
+theorem aliveStep_eq (t : ℕ) (s : AliveState k Control) (b : Bool) :
+    aliveStep M t s b = taggedStep t (s.2.2, instruction M s.1 b) s := by
+  obtain ⟨cfg, rest, _ | _⟩ := s
+  · rfl
+  · simp only [aliveStep, ite_true, replayStep, instruction]
+    cases cfg.tapes.state with
+    | none => rfl
+    | some c =>
+      simp only [Option.map_some]
+      cases M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b with
+      | step => rfl
+      | query op next =>
+        simp only [taggedStep, answerFromHistory]
+        cases rest with
+        | nil => rfl
+        | cons e rest =>
+          obtain ⟨m, y⟩ := e
+          simp only [List.isEmpty_cons, Bool.false_eq_true, ite_false, List.headD_cons,
+            List.tail_cons]
+          split_ifs with hm <;> simp [hm]
+
+variable [Finite Control]
+
+/-- Live replay states, encoded by their fields. -/
+noncomputable abbrev encAliveState : AliveState k Control ↪ List Bool :=
+  encPair encFiniteConfig (encPair encHistory encBool)
+
+/-- The instruction is polynomial-time: it reads finitely many observations. -/
+theorem computableTidilyInPolyTime_instruction :
+    ComputableTidilyInPolyTime (fun p : MultiTapeMachine.FiniteConfig k Bool Control Unit × Bool =>
+      instruction M p.1 p.2) (encPair encFiniteConfig encBool)
+      (encFinite (Option (MultiTapeMachine.Action k Bool Control Unit))) := by
+  have hobs : ComputableTidilyInPolyTime
+      (fun p : MultiTapeMachine.FiniteConfig k Bool Control Unit × Bool =>
+        (p.1.tapes.state, p.1.tapes.inputSymbol, p.1.tapes.workTapeSymbols, p.1.answerSymbols, p.2))
+      (encPair encFiniteConfig encBool)
+      (encPair (encFinite (Option Control)) (encPair (encFinite (Option Bool))
+        (encPair (encFinite (Fin k → Option Bool)) (encPair (encFinite (Unit → Option Bool))
+          encBool)))) := by
+    fun_prop
+  exact ((of_finite fun obs : Option Control × Option Bool × (Fin k → Option Bool) ×
+      (Unit → Option Bool) × Bool => obs.1.map fun c =>
+        M.tr c obs.2.1 obs.2.2.1 obs.2.2.2.1 obs.2.2.2.2).comp hobs).of_enc_eq fun _ => rfl
+
+/-- Answering from the history is polynomial-time. -/
+theorem computableTidilyInPolyTime_answerFromHistory (op : Unit) (next : Control) :
+    ComputableTidilyInPolyTime (fun p : (ℕ × AliveState k Control) × Bool =>
+      answerFromHistory p.1.1 op next p.1.2) (encPair (encPair encUnary encAliveState) encBool)
+      encAliveState := by
+  unfold answerFromHistory
+  fun_prop
+
+/-- **A step of the live replay is polynomial-time.** -/
+theorem computableTidilyInPolyTime_aliveStep :
+    ComputableTidilyInPolyTime (fun p : (ℕ × AliveState k Control) × Bool =>
+      aliveStep M p.1.1 p.1.2 p.2) (encPair (encPair encUnary encAliveState) encBool)
+      encAliveState := by
+  simp only [aliveStep_eq]
+  refine finite_cases (tag := fun p : (ℕ × AliveState k Control) × Bool =>
+      (p.1.2.2.2, instruction M p.1.2.1 p.2))
+    (branch := fun tag p => taggedStep p.1.1 tag p.1.2)
+    (tagEncoding := encPair encBool (encFinite (Option (MultiTapeMachine.Action k Bool Control
+      Unit)))) ?_ ?_
+  · have h := computableTidilyInPolyTime_instruction M
+    fun_prop
+  · rintro ⟨_ | _, _ | (⟨action, symbol, move⟩ | ⟨op, next⟩)⟩
+    · exact (fst _ _).snd'
+    · exact (fst _ _).snd'
+    · exact (fst _ _).snd'
+    · exact (fst _ _).snd'
+    · simp only [taggedStep]
+      fun_prop
+    · exact computableTidilyInPolyTime_answerFromHistory op next
+
+end PolyTime
 
 end Interaction
 
