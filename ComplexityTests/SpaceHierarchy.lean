@@ -21,7 +21,7 @@ open Cslib Cslib.Complexity Turing Turing.MultiTapeTM Turing.MultiTapeTM.Univers
 
 /-- Within the budget `0` no step is taken, since every configuration is encoded by at least one
 bit: the simulation stays at the initial configuration, which has not halted. -/
-example (d : Desc) (x : List ℕ) (t : ℕ) : universalSpace (d, x, t, 0) = ([], false) := by
+example (d : Desc) (x : List ℕ) (t : ℕ) : budgetedUniversal (d, x, t, 0) = ([], false) := by
   have h (i : ℕ) : (budgetStep d x 0)^[i] (init d, []) = (init d, []) := by
     induction i with
     | zero => rfl
@@ -31,7 +31,7 @@ example (d : Desc) (x : List ℕ) (t : ℕ) : universalSpace (d, x, t, 0) = ([],
       · rw [eCfg_apply, length_encPair] at hb
         omega
       · rfl
-  simp only [universalSpace, h]
+  simp only [budgetedUniversal, h]
   rfl
 
 /-- Halt at once with output `[b]`. -/
@@ -57,9 +57,9 @@ private def unitNum : Unit ↪ ℕ := ⟨fun _ => 0, fun _ _ _ => rfl⟩
 /-- Within the budget of its simulated configurations, the budgeted universal function returns the
 answer of the answering machine and that it has halted. -/
 example (b : Bool) (x : List Bool) :
-    universalSpace (desc unitNum eBit (answer b), x.map eBit, 1,
+    budgetedUniversal (desc unitNum eBit (answer b), x.map eBit, 1,
       cfgSpace (desc unitNum eBit (answer b)) (x.map eBit) 1) = ([eBit b], true) := by
-  rw [universalSpace_desc unitNum eBit (answer b) x 1 _ le_rfl]
+  rw [budgetedUniversal_desc unitNum eBit (answer b) x 1 _ le_rfl]
   obtain ⟨h₁, h₂⟩ := runFrom_answer b x le_rfl
   simp only [Cfg.Halted] at h₁
   rw [h₁, h₂]
@@ -113,7 +113,9 @@ example : SpaceConstructible fun n => n := spaceConstructible_id
 
 example : SpaceConstructible fun n => n + 1 := spaceConstructible_succ
 
-example : SpaceConstructible fun n => (n + 1) ^ 3 := spaceConstructible_succ_pow (by norm_num)
+example : SpaceConstructible fun n => (n + 1) ^ 3 := spaceConstructible_succ_pow 3
+
+example : SpaceConstructible fun _ => 5 := spaceConstructible_const 5
 
 example : SpaceConstructible (2 ^ ·) := spaceConstructible_two_pow
 
@@ -124,14 +126,14 @@ example : SpaceConstructible (2 ^ ·) := spaceConstructible_two_pow
 example : {x | spaceDiagonal (fun n => (n + 1) ^ 2) x = true} ∈
     DSPACE encBits (fun n => (n + 1) ^ 2) \ DSPACE encBits fun n => n := by
   have hn (n : ℕ) : n ≤ (n + 1) ^ 2 := (Nat.le_succ n).trans (Nat.le_self_pow (by norm_num) _)
-  refine ⟨setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow (by norm_num)) hn,
+  refine ⟨setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow 2) hn,
     setOf_spaceDiagonal_notMem_DSPACE hn fun c => ?_⟩
   filter_upwards [eventually_ge_atTop c] with n hc
   nlinarith
 
 /-- Linear space is strictly within space `(n + 1) ^ 2`. -/
 example : DSPACE encBits (fun n => n) ⊂ DSPACE encBits fun n => (n + 1) ^ 2 :=
-  DSPACE_ssubset_DSPACE (spaceConstructible_succ_pow (by norm_num))
+  DSPACE_ssubset_DSPACE (spaceConstructible_succ_pow 2)
     (fun n => (Nat.le_succ n).trans (Nat.le_self_pow (by norm_num) _)) fun c => by
       filter_upwards [eventually_ge_atTop c] with n hc
       nlinarith
@@ -139,7 +141,7 @@ example : DSPACE encBits (fun n => n) ⊂ DSPACE encBits fun n => (n + 1) ^ 2 :=
 /-- The hierarchy does not depend on additive constants: space `n + 1` is strictly within space
 `(n + 1) ^ 2`. -/
 example : DSPACE encBits (fun n => n + 1) ⊂ DSPACE encBits fun n => (n + 1) ^ 2 :=
-  DSPACE_ssubset_DSPACE (spaceConstructible_succ_pow (by norm_num))
+  DSPACE_ssubset_DSPACE (spaceConstructible_succ_pow 2)
     (fun n => (Nat.le_succ n).trans (Nat.le_self_pow (by norm_num) _)) fun c => by
       filter_upwards [eventually_ge_atTop c] with n hc
       nlinarith
@@ -160,18 +162,18 @@ example (A : Set (List Bool)) : A ∈ PSPACE encBits ↔ ∃ k, A ∈ DSPACE enc
 /-! ### Axioms -/
 
 /--
-info: 'Turing.MultiTapeTM.Universal.universalSpace_desc' depends on axioms:
+info: 'Turing.MultiTapeTM.Universal.budgetedUniversal_desc' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.universalSpace_desc
+#print axioms Turing.MultiTapeTM.Universal.budgetedUniversal_desc
 
 /--
-info: 'Turing.MultiTapeTM.Universal.computableTidilyInO_universalSpace' depends on axioms:
+info: 'Turing.MultiTapeTM.Universal.computableTidilyInO_budgetedUniversal' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.computableTidilyInO_universalSpace
+#print axioms Turing.MultiTapeTM.Universal.computableTidilyInO_budgetedUniversal
 
 /--
 info: 'Turing.MultiTapeTM.Universal.budgetSpace_le' depends on axioms:

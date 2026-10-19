@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -14,7 +14,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 /-!
 # The universal machine within a space budget
 
-`Turing.MultiTapeTM.Universal.universalSpace (d, x, t, b)` runs the machine described by `d` on
+`Turing.MultiTapeTM.Universal.budgetedUniversal (d, x, t, b)` runs the machine described by `d` on
 `x` for `t` steps, as the universal function does, but within the *budget* `b`: a step whose
 configuration of the simulation is encoded by more than `b` bits is not taken, and the simulation
 stays at the last configuration within the budget (`Turing.MultiTapeTM.Universal.budgetStep`). It
@@ -29,29 +29,30 @@ head by counting down the symbols of `x`, with the budget and the first two symb
 added to its state, and a budget test at the end of each pass. So it is tidily computable within
 space linear in `Turing.MultiTapeTM.Universal.budgetSpace`: the description, the budget, the
 number of steps and the length of `x` in binary, and the largest symbol of `x`
-(`Turing.MultiTapeTM.Universal.computableTidilyInO_universalSpace`), never the length of `x`
+(`Turing.MultiTapeTM.Universal.computableTidilyInO_budgetedUniversal`), never the length of `x`
 itself or the space the described machine would use beyond the budget.
 
 Within the budget it agrees with the universal function
-(`Turing.MultiTapeTM.Universal.universalSpace_eq_of_le`), and on the description of a machine it
-returns the first two symbols of the output of the machine whenever the bound
+(`Turing.MultiTapeTM.Universal.budgetedUniversal_eq_of_le`), and on the description of a machine
+it returns the first two symbols of the output of the machine whenever the bound
 `Turing.MultiTapeTM.Universal.cfgSpace` on the configurations of the simulation, linear in the
-cells the machine visits, is within the budget (`Turing.MultiTapeTM.Universal.universalSpace_desc`).
+cells the machine visits, is within the budget
+(`Turing.MultiTapeTM.Universal.budgetedUniversal_desc`).
 
 ## Main definitions
 
 * `Turing.MultiTapeTM.Universal.budgetStep`: a step of the simulation within a budget.
-* `Turing.MultiTapeTM.Universal.universalSpace`: the universal function within a space budget.
+* `Turing.MultiTapeTM.Universal.budgetedUniversal`: the universal function within a space budget.
 * `Turing.MultiTapeTM.Universal.budgetSpace`: the bound on the states of its fold.
 
 ## Main results
 
 * `Turing.MultiTapeTM.Universal.budgetStep_iterate`: the run within the budget is the run of the
   simulation up to some step.
-* `Turing.MultiTapeTM.Universal.universalSpace_eq_of_le`,
-  `Turing.MultiTapeTM.Universal.universalSpace_desc`: within the budget, the universal function.
-* `Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universalSpace`,
-  `Turing.MultiTapeTM.Universal.computableTidilyInO_universalSpace`: it is tidily computable in
+* `Turing.MultiTapeTM.Universal.budgetedUniversal_eq_of_le`,
+  `Turing.MultiTapeTM.Universal.budgetedUniversal_desc`: within the budget, the universal function.
+* `Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_budgetedUniversal`,
+  `Turing.MultiTapeTM.Universal.computableTidilyInO_budgetedUniversal`: it is tidily computable in
   space linear in `budgetSpace`.
 * `Turing.MultiTapeTM.Universal.budgetSpace_le`: `budgetSpace` is linear in the description, the
   budget and the lengths of the number of steps and of the length of the input in binary, plus
@@ -61,9 +62,12 @@ cells the machine visits, is within the budget (`Turing.MultiTapeTM.Universal.un
 
 The fold reuses the parts of the in-place fold (`Turing.MultiTapeTM.Universal.foldNext`,
 `Turing.MultiTapeTM.Universal.stepAt`, `Turing.MultiTapeTM.Universal.foldEnd`) on the state of the
-in-place fold. The events of the input, the extraction of the parts the initial state reads and the
-bounds on the countdown restate private lemmas of `Turing.MultiTapeTM.Universal.InPlace` for the
-encoding `Turing.MultiTapeTM.Universal.eInS`, whose input ends in a budget.
+in-place fold, and its proof of computability adapts that of
+`Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace`, by Christian
+Reitwiessner. The events of the input, the extraction of the parts the initial state reads, the
+bounds on the countdown and the simplified time bound restate private lemmas and the extracting
+transducer of `Turing.MultiTapeTM.Universal.InPlace` for the encoding
+`Turing.MultiTapeTM.Universal.eInS`, whose input ends in a budget.
 
 ## References
 
@@ -87,11 +91,11 @@ more than `b` bits, in which case the configuration and the output stay. -/
 /-- **The universal function within a space budget.** The machine described by `i.1` runs on the
 input `i.2.1` for `i.2.2.1` steps within the budget `i.2.2.2` (`budgetStep`); the result is the
 first two symbols of its output and whether it has halted. -/
-@[expose] public def universalSpace (i : Desc × List ℕ × ℕ × ℕ) : List ℕ × Bool :=
+@[expose] public def budgetedUniversal (i : Desc × List ℕ × ℕ × ℕ) : List ℕ × Bool :=
   (((budgetStep i.1 i.2.1 i.2.2.2)^[i.2.2.1] (init i.1, [])).2,
     ((budgetStep i.1 i.2.1 i.2.2.2)^[i.2.2.1] (init i.1, [])).1.state.isNone)
 
-/-- The encoding of inputs of `universalSpace`: the number of steps in binary, the budget in
+/-- The encoding of inputs of `budgetedUniversal`: the number of steps in binary, the budget in
 unary. -/
 public abbrev eInS : Desc × List ℕ × ℕ × ℕ ↪ List Bool :=
   encPair eDesc (encPair (encList encUnary) (encPair encNat encUnary))
@@ -156,25 +160,25 @@ public theorem budgetStep_iterate_of_le {t : ℕ}
     · exact absurd (by rw [← run_succ']; exact hb t (by omega)) h
 
 /-- **Within the budget, the universal function**: if every configuration of the simulation within
-`t` steps is encoded within `b` bits, `universalSpace` returns the first two symbols of the output
-of the universal function and whether the machine has halted. -/
-public theorem universalSpace_eq_of_le {t : ℕ}
+`t` steps is encoded within `b` bits, `budgetedUniversal` returns the first two symbols of the
+output of the universal function and whether the machine has halted. -/
+public theorem budgetedUniversal_eq_of_le {t : ℕ}
     (hb : ∀ j < t, (eCfg (run d x (j + 1))).length ≤ b) :
-    universalSpace (d, x, t, b) = ((universal (d, x, t)).1.take 2, (universal (d, x, t)).2) := by
-  simp only [universalSpace, budgetStep_iterate_of_le d x b hb, universal]
+    budgetedUniversal (d, x, t, b) = ((universal (d, x, t)).1.take 2, (universal (d, x, t)).2) := by
+  simp only [budgetedUniversal, budgetStep_iterate_of_le d x b hb, universal]
   rfl
 
 /-- **On the description of a machine**, within a budget that holds the configurations of the
 simulation (`Turing.MultiTapeTM.Universal.cfgSpace`, linear in the space of the machine), the
 budgeted universal function returns the first two symbols of the numbered output of the machine
 and whether it has halted. -/
-public theorem universalSpace_desc {k : ℕ} {Symbol S : Type} [Fintype S] [Fintype Symbol]
+public theorem budgetedUniversal_desc {k : ℕ} {Symbol S : Type} [Fintype S] [Fintype Symbol]
     (eS : S ↪ ℕ) (eY : Symbol ↪ ℕ) (tm : MultiTapeTM k Symbol S) (x : List Symbol) (t b : ℕ)
     (hb : cfgSpace (desc eS eY tm) (x.map eY) t ≤ b) :
-    universalSpace (desc eS eY tm, x.map eY, t, b) =
+    budgetedUniversal (desc eS eY tm, x.map eY, t, b) =
       (((tm.runFrom (tm.initCfg x) t).output.map eY).take 2,
         (tm.runFrom (tm.initCfg x) t).state.isNone) := by
-  rw [universalSpace_eq_of_le _ _ _ fun j hj => ?_, universal_desc]
+  rw [budgetedUniversal_eq_of_le _ _ _ fun j hj => ?_, universal_desc]
   refine (length_eCfg_le_space _ _ (j + 1)).trans (le_trans ?_ hb)
   have := simSpace_mono (desc eS eY tm) (x.map eY) (show j + 1 ≤ t by omega)
   unfold cfgSpace
@@ -275,7 +279,7 @@ lemma inTr_run_symbol (n : ℕ) (v : List Bool) :
     rw [ih]
     simp [tok, List.replicate_succ]
 
-/-- The events of the encoded input of `universalSpace` are the events of the symbols of `x`. -/
+/-- The events of the encoded input of `budgetedUniversal` are the events of the symbols of `x`. -/
 public theorem events_eInS (t : ℕ) : inTr.events (eInS (d, x, t, b)) = events x := by
   have hx : ∀ v, inTr.run .marker (doubled (encList encUnary x) ++ v) =
       ((inTr.run .marker v).1, events x ++ (inTr.run .marker v).2) := by
@@ -293,7 +297,6 @@ public theorem events_eInS (t : ℕ) : inTr.events (eInS (d, x, t, b)) = events 
 
 /-- Copies the framed description, drops the framed input and copies the rest: a copy of the
 private transducer `extractT` of `Turing.MultiTapeTM.Universal.InPlace`. -/
-@[simps q₀ step final]
 def extractS : Transducer Bool ExState where
   q₀ := .descMarker
   step
@@ -315,16 +318,16 @@ lemma extractS_run (t : ℕ) :
       extractS.run .descMarker (frame w ++ v) = frame w ++ extractS.run .marker v := by
     induction w with
     | nil => rfl
-    | cons b w ih => cases b <;> simp [ih]
+    | cons b w ih => exact congrArg (fun l => true :: b :: l) ih
   have h₂ (w v : List Bool) : extractS.run .marker (frame w ++ v) = extractS.run .steps v := by
     induction w with
     | nil => rfl
-    | cons b w ih => cases b <;> simp [ih]
+    | cons b w ih => exact ih
   have h₃ (w : List Bool) : extractS.run .steps w = w := by
     induction w with
     | nil => rfl
-    | cons b w ih => simp [ih]
-  simp only [eInS, encPair_apply, extractS_q₀, h₁, h₂, h₃]
+    | cons b w ih => exact congrArg (b :: ·) ih
+  simp only [eInS, encPair_apply, show extractS.q₀ = .descMarker from rfl, h₁, h₂, h₃]
 
 /-! ### The size of the states -/
 
@@ -640,6 +643,7 @@ lemma length_eSSt_le' (t i j : ℕ) :
   rw [events_eInS]
   exact length_eSSt_le d x b t i j
 
+-- restated from `Turing.MultiTapeTM.Universal.InPlace`, where it is private
 /-- The time of the universal machine within a budget, simplified. -/
 lemma final_time' (c N t L P E : ℕ) (hP : P ≤ L) (hE : E ≤ L) :
     c * (N + (P + 1) ^ 2 + (E + 1) ^ 3 + (t - 1 + 1) * (N + (N + 1) * (9 * (L + 1) ^ 3 + L + 1)))
@@ -672,14 +676,14 @@ lemma final_time' (c N t L P E : ℕ) (hP : P ≤ L) (hE : E ≤ L) :
 computable within space linear in the bound `budgetSpace` on the states of its fold, by the
 multi-pass fold of the in-place universal machine with the budget test at the end of each pass.
 Each of the `t` passes reads the whole input. -/
-public theorem computableTidilyInTimeAndSpace_universalSpace : ∃ c,
-    ComputableTidilyInTimeAndSpace universalSpace eInS eOut
+public theorem computableTidilyInTimeAndSpace_budgetedUniversal : ∃ c,
+    ComputableTidilyInTimeAndSpace budgetedUniversal eInS eOut
       (fun i => c * ((i.2.2.1 + 1) * ((eInS i).length + 1) ^ 2 * (budgetSpace i + 1) ^ 3))
       (fun i => c * (budgetSpace i + 1)) := by
   refine Exists.elim (ComputableTidilyInTimeAndSpace.multiPassFold_translate inTr
     (encQ := encFinite InState) foldInitS_inO foldNextS_inO
     (const (encIn := eSSt) (encMid := encBits) ([] : List Bool)) foldEndS_inO foldContS_inO
-    foldFinishS_inO (passes := fun i => i.2.2.1 - 1) (g := universalSpace) (encOut := eOut) ?_ ?_
+    foldFinishS_inO (passes := fun i => i.2.2.1 - 1) (g := budgetedUniversal) (encOut := eOut) ?_ ?_
     (tMax := fun i => 9 * (budgetSpace i + 1) ^ 3)
     (sMax := fun i => 9 * (budgetSpace i + 1))
     (lMax := fun i => budgetSpace i) ?_ ?_ ?_ ?_ ?_ ?_) fun c h => ?_
@@ -692,7 +696,7 @@ public theorem computableTidilyInTimeAndSpace_universalSpace : ∃ c,
     rintro ⟨d, x, t, b⟩
     rw [events_eInS, passState_foldS, show min (t - 1 + 1) t = t by omega]
     simp only [encBits_apply, List.map_const', List.flatten_replicate_nil, List.nil_append,
-      foldFinishS, universalSpace]
+      foldFinishS, budgetedUniversal]
   case refine_3 =>
     rintro ⟨d, x, t, b⟩ i - j -
     have := length_eSSt_le' d x b t i j
@@ -779,30 +783,30 @@ public theorem budgetSpace_le (t : ℕ) :
   omega
 
 /-- The encoded result of the universal function within a budget is within `budgetSpace`. -/
-public lemma length_eOut_universalSpace_le (t : ℕ) :
-    (eOut (universalSpace (d, x, t, b))).length ≤ budgetSpace (d, x, t, b) := by
+public lemma length_eOut_budgetedUniversal_le (t : ℕ) :
+    (eOut (budgetedUniversal (d, x, t, b))).length ≤ budgetSpace (d, x, t, b) := by
   have hout := length_budgetStep_iterate_le d x b t
   have ho := length_encList_le encUnary ((budgetStep d x b)^[t] (init d, [])).2
     (b := descLen d) fun o ho => by
       rw [encUnary_apply, List.length_replicate]
       exact le_of_mem_budgetStep_iterate d x b t ho
   have := Nat.mul_le_mul_right (2 * descLen d + 1) hout
-  simp only [universalSpace, length_encPair, encBool_apply, List.length_singleton, budgetSpace]
+  simp only [budgetedUniversal, length_encPair, encBool_apply, List.length_singleton, budgetSpace]
   omega
 
 /-- **The universal machine within a space budget**, up to constants: within time
 `O((t + 1) * (n + 1) ^ 2 * (budgetSpace + 1) ^ 3)` on an encoded input of length `n` and space
 `O(budgetSpace)` (`Turing.MultiTapeTM.Universal.budgetSpace_le`). -/
-public theorem computableTidilyInO_universalSpace :
-    ComputableTidilyInO universalSpace eInS eOut
+public theorem computableTidilyInO_budgetedUniversal :
+    ComputableTidilyInO budgetedUniversal eInS eOut
       (fun i => (i.2.2.1 + 1) * ((eInS i).length + 1) ^ 2 * (budgetSpace i + 1) ^ 3)
       budgetSpace := by
-  obtain ⟨c, h⟩ := computableTidilyInTimeAndSpace_universalSpace
+  obtain ⟨c, h⟩ := computableTidilyInTimeAndSpace_budgetedUniversal
   refine .of_bounds h (c + 1) (fun i => ?_) (fun i => ?_) fun i => ?_
   · exact Nat.mul_le_mul (Nat.le_succ c) (Nat.le_succ _)
   · exact Nat.mul_le_mul (Nat.le_succ c) le_rfl
   · obtain ⟨d, x, t, b⟩ := i
-    have := length_eOut_universalSpace_le d x b t
+    have := length_eOut_budgetedUniversal_le d x b t
     nlinarith
 
 end Turing.MultiTapeTM.Universal
