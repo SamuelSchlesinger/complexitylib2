@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Mathlib.Data.List.GetD
 import Mathlib.Data.Nat.Bitwise
 
@@ -29,8 +31,9 @@ of the number problems (`Cslib.Complexity.SubsetSum` and its relatives) are buil
 
 Truncated subtraction is schoolbook subtraction: a left fold over the digit pairs of both operands
 keeps a borrow and appends one difference digit per position. A final borrow means that the
-difference is negative; otherwise the digits are read back as a natural (`binary_foldr_bit`),
-dropping trailing zeros. General powers to a unary exponent are computed by repeated
+difference is negative; otherwise the digits are read back as a natural
+(`Turing.MultiTapeTM.ofBits`, certified by `Turing.MultiTapeTM.Decoder.nat`), dropping trailing
+zeros. General powers to a unary exponent are computed by repeated
 multiplication.
 
 ## Main definitions
@@ -52,8 +55,6 @@ multiplication.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_lt`, `.binary_le`: comparisons.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_sub`: truncated subtraction.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_pow`: a power to a unary exponent.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_foldr_bit`: a raw word of digits, read as
-  a binary natural.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_add'`, `.binary_lt'`, `.binary_le'`:
   composition rules for `fun_prop`.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mul'`, `.binary_sub'`, `.binary_pow'`:
@@ -391,30 +392,6 @@ theorem binary_pow' {α : Type} {input : α ↪ List Bool} {base exponent : α �
     ComputableTidilyInPolyTime (fun a => base a ^ exponent a) input encNat :=
   binary_pow.comp (hbase.prod hexponent)
 
-/-- Read a raw bit string, least significant first, as a binary natural. Trailing zeros are
-dropped, so any word of digits is accepted. -/
-@[fun_prop]
-theorem binary_foldr_bit :
-    ComputableTidilyInPolyTime (fun l : List Bool => l.foldr Nat.bit 0) encBits encNat := by
-  have hstep : ComputableTidilyInPolyTime (fun p : ℕ × Bool => Nat.bit p.2 p.1)
-      (encPair encNat encBool) encNat := by
-    have heq : (fun p : ℕ × Bool => Nat.bit p.2 p.1) =
-        fun p => if p.2 then p.1 + p.1 + 1 else p.1 + p.1 := by
-      funext ⟨n, b⟩
-      cases b <;> simp only [Nat.bit_val, Bool.toNat_true, Bool.toNat_false, Bool.false_eq_true,
-        ↓reduceIte] <;> lia
-    rw [heq]
-    fun_prop
-  have h := foldl_of_bounded_growth (encA := encBool) (encL := encBits) (encB := encNat)
-    (list := List.reverse) (init := fun _ => 0) (step := fun n b => Nat.bit b n)
-    bitsReverse (const 0) hstep (growth := 1) (fun n b => by
-      simp only [encNat_apply, Nat.size_eq_bits_len]
-      by_cases hb : Nat.bit b n = 0
-      · rw [hb]
-        simp
-      · exact (Nat.size_bit hb).le)
-  simpa only [List.foldl_reverse] using h
-
 /-- Truncated subtraction of binary naturals, by schoolbook subtraction with a borrow. -/
 @[fun_prop]
 theorem binary_sub : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 - p.2)
@@ -433,8 +410,11 @@ theorem binary_sub : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 - p.2
     (encL := encList (encPair encBool encBool)) (encB := encPair encBool encBits)
     (init := fun _ => (false, [])) hpairs (const _) hstep (growth := 1)
     (fun s d => by simp [BinarySub.subStep])
+  have hread : ComputableTidilyInPolyTime ofBits encBits encNat := by
+    obtain ⟨d, e, h⟩ := Decoder.nat.computable
+    exact h.computableTidilyInPolyTime
   have h := ((fst encBool encBits).comp hfold).ite' (const 0)
-    (binary_foldr_bit.comp ((snd encBool encBits).comp hfold))
+    (hread.comp ((snd encBool encBits).comp hfold))
   convert h using 1
   funext p
   exact BinarySub.sub_eq p

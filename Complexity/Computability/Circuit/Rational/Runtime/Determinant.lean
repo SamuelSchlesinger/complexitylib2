@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Determinant
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary
 public import Mathlib.Data.Nat.Size
 import Mathlib.Data.List.GetD
 
@@ -181,6 +182,12 @@ def detRows (A : List (List ℤ)) : ℤ :=
 the binary digits of the absolute value. -/
 def intBits (z : ℤ) : ℕ :=
   Nat.size z.natAbs + 1
+
+/-- `intBits z` is the length of the binary sign-magnitude code of `z`. -/
+theorem intBits_eq_length_encIntBin (z : ℤ) :
+    intBits z = (Turing.MultiTapeTM.encIntBin z).length := by
+  rw [Turing.MultiTapeTM.length_encIntBin]
+  rfl
 
 /-! ### Basic lemmas -/
 
