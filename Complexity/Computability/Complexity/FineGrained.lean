@@ -39,8 +39,8 @@ at most `L`, and can be much smaller.
 * `Cslib.Complexity.SETH`, **the strong exponential time hypothesis**: for every `ε > 0` some
   `k`-SAT is not decidable within time `2 ^ ((1 - ε) n)` times any polynomial in `L`.
 * `Cslib.Complexity.OV`, the orthogonal vectors problem, and `Cslib.Complexity.OVH`, **the
-  orthogonal vectors hypothesis**: for every `ε > 0`, `OV` is not decidable within time
-  `N ^ (2 - ε)` times any polynomial in the dimension `d`, on `N` vectors.
+  orthogonal vectors hypothesis** in its moderate-dimension form: for every `ε > 0`, `OV` is not
+  decidable within time `N ^ (2 - ε)` times any polynomial in the dimension `d`, on `N` vectors.
 
 The negation of `ETH` is `Cslib.Complexity.DecidableInSubexpTime`: decidability within time
 `2 ^ (δ n)` times a polynomial for every `δ > 0`, by a decider that may depend on `δ`
@@ -100,7 +100,7 @@ namespace Cslib.Complexity
 
 open Cslib.Logic.PL Turing Turing.MultiTapeTM
 
-variable {α : Type} {enc : α ↪ List Bool} {A B : Set α} {T T' : α → ℝ}
+variable {α : Type*} {enc : α ↪ List Bool} {A B : Set α} {T T' : α → ℝ}
 
 /-! ### Time bounds in parameters of the instance -/
 
@@ -143,6 +143,12 @@ theorem mem_DTIME_iff_decidableInTimeO {t : ℕ → ℕ} :
         have := Nat.mul_le_mul_left k (ht a)
         simp only
         omega⟩
+
+section Machines
+
+/-! The machine combinators of the library are stated for `Type`. -/
+
+variable {α : Type} {enc : α ↪ List Bool} {A B : Set α} {T : α → ℝ}
 
 /-- A decider within time `O(T)` is a tidy decider within time and space `O(t)`, for a bound `t`
 within `O(T)`. -/
@@ -207,6 +213,8 @@ theorem DecidableInTimeO.inter {p : α → Bool} (hp : ComputableTidilyInPolyTim
     · exact add_nonneg (hT a) (by positivity)
     · positivity
 
+end Machines
+
 /-! ### Exponential and subexponential time -/
 
 /-- `A` is decidable within time `2 ^ (δ μ a)` times a polynomial in the length of the encoded
@@ -233,6 +241,10 @@ theorem DecidableInExpTime.mono {μ : α → ℕ} {δ δ' : ℝ} (h : DecidableI
   have h₂ := mul_le_mul_of_nonneg_right h₁ (by positivity : (0 : ℝ) ≤ ((enc a).length + 1) ^ e)
   push_cast
   linarith
+
+section Machines
+
+variable {α : Type} {enc : α ↪ List Bool} {A B : Set α}
 
 /-- A tidy decider within time `O(t)`, for `t` within a constant times `2 ^ (δ μ a)` times a
 polynomial, decides within time `2 ^ (δ μ a)` times a polynomial. -/
@@ -268,6 +280,8 @@ theorem DecidableInExpTime.inter {μ : α → ℕ} {δ : ℝ} {p : α → Bool}
     · positivity
   push_cast
   nlinarith
+
+end Machines
 
 /-! ### `k`-SAT and the exponential time hypotheses -/
 
@@ -332,11 +346,12 @@ def encOV : List (List Bool) × List (List Bool) ↪ List Bool :=
 /-- The dimension of an instance of the orthogonal vectors problem: the length of its longest
 vector. -/
 def OV.dim (p : List (List Bool) × List (List Bool)) : ℕ :=
-  ((p.1 ++ p.2).map List.length).foldr max 0
+  listMax List.length (p.1 ++ p.2)
 
-/-- **The orthogonal vectors hypothesis**: for every `ε > 0`, the orthogonal vectors problem is not
-decidable within time `N ^ (2 - ε)` times any polynomial in the dimension `d`, on instances of `N`
-vectors. -/
+/-- **The orthogonal vectors hypothesis**, in its moderate-dimension form: for every `ε > 0`, the
+orthogonal vectors problem is not decidable within time `N ^ (2 - ε)` times any polynomial in the
+dimension `d`, on instances of `N` vectors. The low-dimension form, for dimension `c log N` with a
+constant `c` depending on `ε`, is stronger and is not stated here. -/
 def OVH : Prop := ∀ ε : ℝ, 0 < ε → ∀ e : ℕ, ¬DecidableInTimeO OV encOV
   fun p => ((p.1.length + p.2.length : ℕ) : ℝ) ^ (2 - ε) * (OV.dim p + 1) ^ e
 

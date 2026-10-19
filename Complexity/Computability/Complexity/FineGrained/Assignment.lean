@@ -39,6 +39,10 @@ formula under a numbered assignment is polynomial-time
 * `Cslib.Complexity.ThreeSAT.length_distinctVars`: a formula has `numVars` distinct variables.
 * `Cslib.Complexity.computableTidilyInPolyTime_eval_bitsAssignment`: evaluation under a numbered
   assignment is polynomial-time.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 2.3][AroraBarak09]
 -/
 
 @[expose] public section

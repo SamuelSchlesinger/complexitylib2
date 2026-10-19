@@ -38,8 +38,8 @@ at a time (`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stre
 accumulating them in a list would cost time quadratic in the number of vectors. Then a decider
 for `OV` within time `N ^ (2 - ε)` times a polynomial in the dimension, on `N` vectors, decides
 `SAT` within time `2 ^ ((1 - ε / 2) n)` times a polynomial, for `0 < ε ≤ 1`
-(`Cslib.Complexity.DecidableInExpTime.SAT_of_OV`), and the strong exponential time hypothesis
-implies the orthogonal vectors hypothesis (`Cslib.Complexity.OVH_of_SETH`).
+(`Cslib.Complexity.DecidableInTimeO.decidableInExpTime_SAT`), and the strong exponential time
+hypothesis implies the orthogonal vectors hypothesis (`Cslib.Complexity.OVH_of_SETH`).
 
 The orthogonal vectors hypothesis is stated with a polynomial factor in the dimension. Its form for
 dimension `c log N`, which follows from the strong exponential time hypothesis with the
@@ -56,7 +56,8 @@ sparsification lemma, is not proved here.
 * `Cslib.Complexity.toOV_mem_OV_iff`: `toOV φ ∈ OV ↔ φ ∈ SAT`.
 * `Cslib.Complexity.exists_computableTidilyInO_toOV`: the reduction runs within time
   `2 ^ ⌈n / 2⌉` times a polynomial.
-* `Cslib.Complexity.DecidableInExpTime.SAT_of_OV`: a fast `OV` decider gives a fast `SAT` decider.
+* `Cslib.Complexity.DecidableInTimeO.decidableInExpTime_SAT`: a fast `OV` decider gives a fast
+  `SAT` decider.
 * `Cslib.Complexity.OVH_of_SETH`: `SETH → OVH`.
 
 ## References
@@ -126,7 +127,7 @@ theorem satisfiesOn_eq_true_iff {vs : List ℕ} {i : ℕ} {c : Clause ℕ} :
   simp [satisfiesOn]
 
 theorem length_firstVars (φ : CNF ℕ) : (firstVars φ).length = φ.numVars / 2 := by
-  simp [firstVars, ThreeSAT.length_distinctVars]
+  simp only [firstVars, List.length_take, ThreeSAT.length_distinctVars]
   omega
 
 theorem length_secondVars (φ : CNF ℕ) :
@@ -199,13 +200,8 @@ theorem length_toOV_snd (φ : CNF ℕ) : (toOV φ).2.length = 2 ^ (φ.numVars - 
 
 /-- The dimension is at most a bound on the lengths of all vectors. -/
 theorem OV.dim_le {p : List (List Bool) × List (List Bool)} {b : ℕ}
-    (h : ∀ v ∈ p.1 ++ p.2, v.length ≤ b) : OV.dim p ≤ b := by
-  rw [OV.dim]
-  generalize p.1 ++ p.2 = l at h
-  induction l with
-  | nil => exact Nat.zero_le _
-  | cons v l ih =>
-    exact max_le (h v List.mem_cons_self) (ih fun w hw => h w (List.mem_cons_of_mem v hw))
+    (h : ∀ v ∈ p.1 ++ p.2, v.length ≤ b) : OV.dim p ≤ b :=
+  listMax_le h
 
 /-- The vectors of `toOV φ` have one coordinate for each clause. -/
 theorem OV.dim_toOV_le (φ : CNF ℕ) : OV.dim (toOV φ) ≤ φ.length :=
@@ -531,7 +527,7 @@ theorem exists_computableTidilyInO_toOV : ∃ e, ComputableTidilyInO toOV encCNF
 polynomial in the dimension, on instances of `N` vectors, gives a decider for `SAT` within time
 `2 ^ ((1 - ε / 2) n)` times a polynomial in the length of the encoded formula, on formulas with `n`
 variables, for `0 < ε ≤ 1`; for `ε > 1` it gives the exponent `1 / 2` of the reduction. -/
-theorem DecidableInExpTime.SAT_of_OV {ε : ℝ} (hε : 0 < ε) {e : ℕ}
+theorem DecidableInTimeO.decidableInExpTime_SAT {ε : ℝ} (hε : 0 < ε) {e : ℕ}
     (h : DecidableInTimeO OV encOV
       fun p => ((p.1.length + p.2.length : ℕ) : ℝ) ^ (2 - ε) * (OV.dim p + 1) ^ e) :
     DecidableInExpTime SAT encCNF CNF.numVars (1 - min ε 1 / 2) := by
@@ -617,11 +613,14 @@ theorem DecidableInExpTime.SAT_of_OV {ε : ℝ} (hε : 0 < ε) {e : ℕ}
   rw [Nat.cast_add, show ((3 + 9 * c : ℕ) : ℝ) = 3 + 9 * (c : ℝ) by push_cast; ring]
   nlinarith
 
+@[deprecated (since := "2026-10-19")]
+alias DecidableInExpTime.SAT_of_OV := DecidableInTimeO.decidableInExpTime_SAT
+
 /-- **The strong exponential time hypothesis implies the orthogonal vectors hypothesis**
 [Williams2005]. -/
 theorem OVH_of_SETH (h : SETH) : OVH := by
   intro ε hε e hOV
-  have hSAT := DecidableInExpTime.SAT_of_OV hε hOV
+  have hSAT := hOV.decidableInExpTime_SAT hε
   have hδ : 0 < min ε 1 / 2 := half_pos (lt_min hε one_pos)
   obtain ⟨k, hk⟩ := h _ hδ
   refine hk ?_

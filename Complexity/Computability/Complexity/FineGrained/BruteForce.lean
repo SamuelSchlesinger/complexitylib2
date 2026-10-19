@@ -37,6 +37,11 @@ polynomial in the length of the encoded formula
 * `Cslib.Complexity.BruteForce.exists_computableTidilyInO_search`: its running time.
 * `Cslib.Complexity.SAT_decidableInExpTime_one`, `Cslib.Complexity.KSAT_decidableInExpTime_one`:
   `SAT` and `k`-SAT are decidable within time `2 ^ n` times a polynomial.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 2.3][AroraBarak09]
+* [R. Impagliazzo, R. Paturi, *On the complexity of k-SAT*][ImpagliazzoPaturi2001]
 -/
 
 @[expose] public section
