@@ -74,6 +74,10 @@ import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NPCompleteGraphs
+import ComplexityTests.NPCompleteGraphs.Hamiltonian
+import ComplexityTests.NPCompleteGraphs.TSP
+import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
