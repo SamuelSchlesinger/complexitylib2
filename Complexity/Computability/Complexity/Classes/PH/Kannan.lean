@@ -104,13 +104,9 @@ theorem mem_NP_image {β : Type} {encB : β ↪ List Bool} (D : Decoder encB) {B
   · rintro ⟨c, hc, hw, hVc⟩
     exact ⟨D.decode w, (hBV _).2 ⟨c, by rw [hw]; exact hc, hVc⟩, hw⟩
 
-/-- The decoder of formulas. -/
-def decoderCNF : Decoder encCNF :=
-  Decoder.list (Decoder.list (Decoder.pair Decoder.nat Decoder.bool))
-
 /-- The encodings of the satisfiable formulas form a problem in `NP` on words. -/
 theorem image_SAT_mem_NP : encCNF '' SAT ∈ NP encBits :=
-  mem_NP_image decoderCNF SAT.mem_NP
+  mem_NP_image (.list (.list (.pair .nat .bool))) SAT.mem_NP
 
 namespace Kannan
 
