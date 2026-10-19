@@ -258,7 +258,28 @@ theorem eval_subst_of_not_reads {g : Gate} {v : ℕ} {ℓ : Lit} (h : ¬ g.Reads
     (g.subst v ℓ).eval val = g.eval val := by
   unfold Reads at h
   push Not at h
-  simp only [eval, subst, Arg.substArg, substNeg, ite_eq_right h.1, ite_eq_right h.2, Bool.xor_false]
+  simp only [eval, subst, Arg.substArg, substNeg, ite_eq_right h.1, ite_eq_right h.2,
+    Bool.xor_false]
+
+/-- A gate with `v` rerouted to a literal not reading `v` evaluates as the gate on the assignment
+giving `v` the value of the literal. -/
+theorem eval_subst_update {g : Gate} {v : ℕ} {ℓ : Lit} (hℓ : ℓ.arg ≠ .node v) (val : ℕ → Bool) :
+    (g.subst v ℓ).eval val = g.eval (Function.update val v (ℓ.eval val)) := by
+  have hℓu : ℓ.eval (Function.update val v (ℓ.eval val)) = ℓ.eval val :=
+    Lit.eval_congr fun i hi => Function.update_of_ne (by rintro rfl; exact hℓ hi) _ _
+  rw [← eval_subst (g := g) (show Function.update val v (ℓ.eval val) v = _ by
+    rw [hℓu]; exact Function.update_self _ _ _)]
+  exact eval_congr fun i hi =>
+    (Function.update_of_ne (by rintro rfl; exact not_reads_subst hℓ hi) _ _).symm
+
+@[simp] theorem eval_subst_const (g : Gate) (v : ℕ) (b : Bool) (val : ℕ → Bool) :
+    (g.subst v (Lit.const b)).eval val = g.eval (Function.update val v b) := by
+  rw [eval_subst_update (by simp [Lit.const]), Lit.eval_const]
+
+/-- The value of a gate reading the internal values `a` and `b`. -/
+theorem eval_of_args {g : Gate} {a b : ℕ} (ha : g.left = .node a) (hb : g.right = .node b)
+    (val : ℕ → Bool) : g.eval val = g.op (val a) (val b) := by
+  rw [eval, ha, hb, Arg.eval_node, Arg.eval_node]
 
 end Gate
 
