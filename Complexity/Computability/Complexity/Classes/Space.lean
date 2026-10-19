@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.P
+public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
 
 /-!
@@ -25,11 +26,18 @@ decidability and define `PSPACE` as the union of the classes of space `O(n ^ k)`
 are functions of the input length, and that comparison is not formalized here.
 
 `Cslib.Complexity.NPSPACE enc` consists of the problems decided by one nondeterministic machine
-with a binary alphabet and finitely many states, every computation path of which on `enc a` visits
-at most `s a` work-tape cells, for an `s` polynomially bounded in the length of `enc a` (upstream
-`Turing.MultiTapeNTM.RunsInSpace`, over every prefix of every path), with `a ∈ A` exactly when
+with a binary alphabet and finitely many states within space `s`
+(`Turing.MultiTapeNTM.DecidesInSpace`), for an `s` polynomially bounded in the length of `enc a`:
+every computation path on `enc a` visits at most `s a` work-tape cells (upstream
+`Turing.MultiTapeNTM.RunsInSpace`, over every prefix of every path), and `a ∈ A` exactly when
 some computation path halts with output exactly `[true]` (`Turing.MultiTapeNTM.Accepts`). No
 time bound is imposed: branches may run forever or end stuck, and neither accepts.
+
+A problem is `PSPACE`-hard when every problem in `PSPACE`, with any encoding of its instances,
+reduces to it in polynomial time (`Cslib.Complexity.PolyTimeReducible`), and `PSPACE`-complete
+when it is moreover in `PSPACE` [Arora and Barak, Section 4.2][AroraBarak09]
+[Sipser, Section 8.3][Sipser2013]. The true quantified Boolean formulas are `PSPACE`-complete;
+see `Complexity.Computability.Complexity.Classes.Space.TQBF`.
 
 Space counts visited work-tape cells, as upstream does: the input tape is read-only and the output
 tape write-only [Sipser, Section 8.0][Sipser2013].
@@ -38,6 +46,8 @@ tape write-only [Sipser, Section 8.0][Sipser2013].
 
 * `Cslib.Complexity.PSPACE`: deterministic polynomial space.
 * `Cslib.Complexity.NPSPACE`: nondeterministic polynomial space.
+* `Cslib.Complexity.PSPACEHard`, `Cslib.Complexity.PSPACEComplete`: hardness and completeness
+  under polynomial-time reductions.
 
 ## Main results
 
@@ -45,6 +55,7 @@ tape write-only [Sipser, Section 8.0][Sipser2013].
 * `Cslib.Complexity.P_subset_PSPACE`: polynomial time is within polynomial space.
 * `Cslib.Complexity.PSPACE_subset_NPSPACE`: a deterministic machine is a nondeterministic machine
   with one computation path.
+* `Cslib.Complexity.PSPACEHard.trans`: hardness transfers along polynomial-time reductions.
 
 ## References
 
@@ -82,13 +93,12 @@ theorem mem_PSPACE_iff : A ∈ PSPACE enc ↔
     exact ⟨indicator A, ⟨t, s, hs, hA⟩, fun a => by by_cases ha : a ∈ A <;> simp [indicator, ha]⟩
 
 /-- The problems decided by one nondeterministic machine within polynomial space, with respect to
-the encoding `enc`: every computation path on `enc a` visits at most `s a` work-tape cells, for a
-polynomially bounded `s`, and `a ∈ A` exactly when some computation path halts with output
-`[true]`. -/
+the encoding `enc` (`Turing.MultiTapeNTM.DecidesInSpace`): every computation path on `enc a`
+visits at most `s a` work-tape cells, for a polynomially bounded `s`, and `a ∈ A` exactly when
+some computation path halts with output `[true]`. -/
 def NPSPACE (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State)
-    (s : α → ℕ), PolyBounded (fun a => (enc a).length) s ∧
-      ∀ a, ntm.RunsInSpace (enc a) (s a) ∧ (a ∈ A ↔ ntm.Accepts (enc a))}
+    (s : α → ℕ), PolyBounded (fun a => (enc a).length) s ∧ ntm.DecidesInSpace enc A s}
 
 /-- **Polynomial time is within polynomial space.** -/
 theorem P_subset_PSPACE : P enc ⊆ PSPACE enc := by
@@ -96,23 +106,27 @@ theorem P_subset_PSPACE : P enc ⊆ PSPACE enc := by
   exact ⟨f, ⟨t, s, hs, hf.computableInTimeAndSpace⟩, hA⟩
 
 /-- **A deterministic polynomial-space machine is a nondeterministic one**, with one computation
-path: its prefixes and its halted extensions visit no more cells than the run, and it accepts
-exactly when it halts with output `[true]`. -/
+path (`Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_decidesInSpace`). -/
 theorem PSPACE_subset_NPSPACE : PSPACE enc ⊆ NPSPACE enc := by
-  rintro A ⟨f, ⟨t, s, hs, k, State, hfinite, tm, htm⟩, hA⟩
-  refine ⟨k, State, hfinite, tm.toMultiTapeNTM, s, hs, fun a => ?_⟩
-  obtain ⟨⟨u, hhalt, hout⟩, -, hspace⟩ := htm a
-  refine ⟨hspace, ?_⟩
-  rw [hA a, MultiTapeNTM.accepts_iff_exists_time_eq (runsInTime_of_halted hhalt)]
-  constructor
-  · intro hf
-    refine ⟨MultiTapeNTM.ComputationPath.ofDeterministic tm (enc a) u, rfl, ?_⟩
-    rw [MultiTapeTM.computationPath_last_eq_runFrom]
-    change (tm.runFrom _ u).output = _
-    rw [hout, hf]
-    rfl
-  · rintro ⟨q, hq, hout'⟩
-    rw [MultiTapeTM.computationPath_last_eq_runFrom, hq, hout] at hout'
-    exact List.head_eq_of_cons_eq hout'
+  rintro A ⟨f, ⟨t, s, hs, hf⟩, hA⟩
+  obtain ⟨k, State, hfinite, ntm, h⟩ := hf.exists_decidesInSpace hA
+  exact ⟨k, State, hfinite, ntm, s, hs, h⟩
+
+/-! ### Hardness and completeness -/
+
+/-- Every problem in `PSPACE`, with any encoding of its instances, reduces to `B` in polynomial
+time. -/
+def PSPACEHard {β : Type*} (encB : β ↪ List Bool) (B : Set β) : Prop :=
+  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ PSPACE enc → PolyTimeReducible enc encB A B
+
+/-- `B` is in `PSPACE` and every problem in `PSPACE` reduces to it. -/
+def PSPACEComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop :=
+  B ∈ PSPACE encB ∧ PSPACEHard encB B
+
+/-- `PSPACE`-hardness transfers along a polynomial-time reduction. -/
+theorem PSPACEHard.trans {β γ : Type*} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
+    {B : Set β} {C : Set γ} (hB : PSPACEHard encB B) (hBC : PolyTimeReducible encB encC B C) :
+    PSPACEHard encC C :=
+  fun enc A hA => (hB enc A hA).trans hBC
 
 end Cslib.Complexity

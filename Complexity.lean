@@ -512,6 +512,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Corre
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.InPlace
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machine
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space
 public import Complexity.Computability.PCP.Amplification
 public import Complexity.Computability.PCP.Amplification.Arithmetic

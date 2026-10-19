@@ -20,6 +20,7 @@ import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
+import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CyclicFeedback
