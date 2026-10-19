@@ -427,6 +427,362 @@ theorem step_redirect (hφ : φ.Injective)
       rw [applyTapes_append_idle (by simp [← hpre]), hadj]
       exact congrArg₂ (· :: ·) (move_vmove_vtape hxs hc _) rfl
 
+/-- **Redirected runs**: from a configuration standing for `c`, the run of `D` stands for the run
+of `d` from `c`, with the same output. -/
+theorem iterate_stepOut_redirect (hφ : φ.Injective)
+    (hD : ∀ q k, k.state = φ q → D.table.find? (·.1 = k) =
+      (redirect φ r pre suf adj d.table).find? (·.1 = k))
+    (hrp : inputSymbol X rp = r) (hxs : ∀ a ∈ xs, a ≠ marker) (hpre : preT.map Tape.read = pre)
+    (hsuf : sufT.map Tape.read = List.replicate suf none) {n : ℕ}
+    (hadj : ∀ ts : List Tape, ts.length = n → ∀ was,
+      applyTapes (ts ++ sufT) (adj was) = applyTapes ts was ++ sufT)
+    (t : ℕ) {c : SCfg} (hc : c.inputPos ≤ xs.length + 1) (hn : c.workTapes.length = n)
+    (out : List ℕ) :
+    (stepOut D X)^[t] (redirectCfg φ rp base l xs preT sufT c, out) =
+      (redirectCfg φ rp base l xs preT sufT ((stepOut d xs)^[t] (c, out)).1,
+        ((stepOut d xs)^[t] (c, out)).2) := by
+  induction t generalizing c out with
+  | zero => rfl
+  | succ t ih =>
+    have hs := step_redirect (base := base) (l := l) hφ hD hrp hxs hpre hsuf hc (hadj _ hn)
+    rw [Function.iterate_succ_apply, Function.iterate_succ_apply,
+      show stepOut D X (redirectCfg φ rp base l xs preT sufT c, out) =
+        (redirectCfg φ rp base l xs preT sufT (stepOut d xs (c, out)).1,
+          (stepOut d xs (c, out)).2) by simp only [stepOut, hs]]
+    exact ih (inputPos_step_le hc) (length_step_workTapes.trans hn) _
+
 end Step
+
+/-! ### Rewinding the virtual input tape -/
+
+@[simp]
+theorem eBit_false : eBit false = 0 :=
+  rfl
+
+@[simp]
+theorem eBit_true : eBit true = 1 :=
+  rfl
+
+/-- The symbols that the input head reads on an input of bits: blanks and the bits. -/
+def bitSyms : List (Option ℕ) := [none, some 0, some 1]
+
+theorem inputSymbol_map_eBit_mem (x : List Bool) (p : ℕ) :
+    inputSymbol (x.map eBit) p ∈ bitSyms := by
+  unfold inputSymbol
+  split_ifs
+  · simp [bitSyms]
+  · rcases h : (x.drop (p - 1)).head? with _ | b
+    · simp [bitSyms, ← List.map_drop, h]
+    · cases b <;> simp [bitSyms, ← List.map_drop, h]
+
+/-- Transitions rewinding the virtual input tape, the first work tape, in the state `q`, with the
+input head reading `r` and the other work tapes reading `rest`: over blanks and bits to the marker,
+and then onto the first cell after it, in the state `next`. -/
+def rewindEntries (q : ℕ) (r : Option ℕ) (rest : List (Option ℕ)) (next : ℕ) :
+    List (Key × Act) :=
+  bitSyms.map (fun s => (⟨q, r, s :: rest⟩, ⟨.zero, [(none, .neg)], none, some q⟩)) ++
+    [(⟨q, r, some marker :: rest⟩, ⟨.zero, [(none, .pos)], none, some next⟩)]
+
+/-- **Rewinding** a virtual input tape of bits from the `v`-th cell takes `v + 1` steps. -/
+theorem iterate_stepOut_rewind {D : Desc} {X : List ℕ} {q next rp : ℕ} {rest : List Tape}
+    {base : ℤ} {l : List (Option ℕ)} {w : List ℕ}
+    (hD : ∀ e ∈ rewindEntries q (inputSymbol X rp) (rest.map Tape.read) next,
+      D.table.find? (·.1 = e.1) = some e)
+    (hw : ∀ a ∈ w, a = 0 ∨ a = 1) (out : List ℕ) {v : ℕ} (hv : v ≤ w.length + 1) :
+    (stepOut D X)^[v + 1] (⟨some q, rp, vtape base l w v :: rest⟩, out) =
+      (⟨some next, rp, vtape base l w 1 :: rest⟩, out) := by
+  induction v with
+  | zero =>
+    have he := hD (⟨q, inputSymbol X rp, some marker :: rest.map Tape.read⟩,
+      ⟨.zero, [(none, .pos)], none, some next⟩) (by simp [rewindEntries])
+    rw [Function.iterate_one, stepOut,
+      step_of_find? (c := ⟨some q, rp, vtape base l w 0 :: rest⟩) (q := q) rfl he]
+    simp only [Act.apply, moveInput, applyTapes, applyTapes_nil, Option.toList_none,
+      List.append_nil]
+    rw [show (vtape base l w 0).apply (none, .pos) = vtape base l w (0 + 1) from
+      vtape_move_pos (Nat.zero_le _)]
+  | succ v ih =>
+    have hs : (vtape base l w (v + 1)).read ∈ bitSyms := by
+      simp only [read_vtape_succ, inputSymbol, Nat.add_one_ne_zero, ↓reduceIte,
+        Nat.add_sub_cancel]
+      rcases h : (w.drop v).head? with _ | a
+      · simp [bitSyms]
+      · rcases hw a (List.mem_of_mem_drop (List.mem_of_mem_head? h)) with rfl | rfl <;>
+          simp [bitSyms]
+    have he := hD (⟨q, inputSymbol X rp, (vtape base l w (v + 1)).read :: rest.map Tape.read⟩,
+      ⟨.zero, [(none, .neg)], none, some q⟩) (by simp [rewindEntries, List.mem_map]; exact hs)
+    rw [Function.iterate_succ_apply,
+      show stepOut D X (⟨some q, rp, vtape base l w (v + 1) :: rest⟩, out) =
+        (⟨some q, rp, vtape base l w v :: rest⟩, out) by
+        rw [stepOut, step_of_find? (c := ⟨some q, rp, vtape base l w (v + 1) :: rest⟩) (q := q)
+          rfl he]
+        simp only [Act.apply, moveInput, applyTapes, applyTapes_nil, Option.toList_none,
+          List.append_nil]
+        rw [show (vtape base l w (v + 1)).apply (none, .neg) = vtape base l w v from
+          vtape_move_neg (by omega)]]
+    exact ih (by omega)
+
+/-! ### Building in an input prefix -/
+
+/-- The transitions writing the marker and the prefix `p` on the virtual input tape, before `k`
+blank work tapes, whatever the input head reads: the marker in the state `0`, and the `i`-th symbol
+from the end of `p` in the state `2 * i + 6`. The state after the last symbol is `4`. -/
+def writeEntries (p : List Bool) (k : ℕ) : List (Key × Act) :=
+  bitSyms.map (fun r => (⟨0, r, none :: List.replicate k none⟩,
+    ⟨.zero, [(some (some marker), .pos)], none, some (2 * p.length + 4)⟩)) ++
+  p.reverse.zipIdx.flatMap fun bi => bitSyms.map fun r =>
+    (⟨2 * bi.2 + 6, r, none :: List.replicate k none⟩,
+      ⟨.zero, [(some (some (eBit bi.1)), .pos)], none, some (2 * bi.2 + 4)⟩)
+
+/-- The transitions copying the input of bits to the virtual input tape in the state `4`, before
+`k` blank work tapes, and moving to the state `2` at its end. -/
+def copyEntries (k : ℕ) : List (Key × Act) :=
+  [(⟨4, some 0, none :: List.replicate k none⟩, ⟨.pos, [(some (some 0), .pos)], none, some 4⟩),
+    (⟨4, some 1, none :: List.replicate k none⟩, ⟨.pos, [(some (some 1), .pos)], none, some 4⟩),
+    (⟨4, none, none :: List.replicate k none⟩, ⟨.zero, [], none, some 2⟩)]
+
+/-- **The description `d` with the input prefix `p` built in.** It writes the marker and `p` on a
+new first work tape, the virtual input tape (`Turing.MultiTapeTM.Universal.writeEntries`), copies
+the input after them (`Turing.MultiTapeTM.Universal.copyEntries`), rewinds that tape
+(`Turing.MultiTapeTM.Universal.rewindEntries`) and runs the transitions of `d` reading the input
+from it (`Turing.MultiTapeTM.Universal.redirect`). These steps use even states, and the states of
+`d` become odd. -/
+def hardwire (d : Desc) (p : List Bool) : Desc :=
+  ⟨d.tapes + 1, 0, writeEntries p d.tapes ++ copyEntries d.tapes ++
+    rewindEntries 2 none (List.replicate d.tapes none) (2 * d.q₀ + 1) ++
+    redirect (fun q => 2 * q + 1) none [] 0 id d.table⟩
+
+namespace Hardwire
+
+/-- The action of the preparing transitions of `hardwire d p`, as a function of their keys. -/
+def act (p : List Bool) (q₀ : ℕ) (key : Key) : Act :=
+  if key.state = 0 then ⟨.zero, [(some (some marker), .pos)], none, some (2 * p.length + 4)⟩
+  else if key.state = 2 then
+    if key.work.head? = some (some marker) then ⟨.zero, [(none, .pos)], none, some q₀⟩
+    else ⟨.zero, [(none, .neg)], none, some 2⟩
+  else if key.state = 4 then
+    match key.input with
+    | some b => ⟨.pos, [(some (some b), .pos)], none, some 4⟩
+    | none => ⟨.zero, [], none, some 2⟩
+  else ⟨.zero, [(some (some (eBit (p.reverse.getD ((key.state - 6) / 2) false))), .pos)], none,
+    some (key.state - 2)⟩
+
+/-- The preparing transitions of `hardwire d p`. -/
+def prep (d : Desc) (p : List Bool) : List (Key × Act) :=
+  writeEntries p d.tapes ++ copyEntries d.tapes ++
+    rewindEntries 2 none (List.replicate d.tapes none) (2 * d.q₀ + 1)
+
+theorem table_hardwire (d : Desc) (p : List Bool) :
+    (hardwire d p).table = prep d p ++ redirect (fun q => 2 * q + 1) none [] 0 id d.table :=
+  rfl
+
+/-- The preparing transitions have even states, and their actions are functions of their keys. -/
+theorem prep_spec {d : Desc} {p : List Bool} {e : Key × Act} (he : e ∈ prep d p) :
+    e.1.state % 2 = 0 ∧ e.2 = act p (2 * d.q₀ + 1) e.1 := by
+  simp only [prep, writeEntries, copyEntries, rewindEntries, bitSyms, List.mem_append,
+    List.mem_map, List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with ((⟨r, -, rfl⟩ | ⟨⟨b, i⟩, hbi, r, -, rfl⟩) | (rfl | rfl | rfl)) |
+    (⟨s, hs, rfl⟩ | rfl)
+  · simp [act]
+  · rw [List.mem_zipIdx_iff_getElem?] at hbi
+    dsimp only at hbi ⊢
+    refine ⟨by omega, ?_⟩
+    have h0 : 2 * i + 6 ≠ 0 := by omega
+    have h2 : 2 * i + 6 ≠ 2 := by omega
+    have h4 : 2 * i + 6 ≠ 4 := by omega
+    simp only [act, h0, h2, h4, ↓reduceIte, show (2 * i + 6 - 6) / 2 = i by omega,
+      List.getD_eq_getElem?_getD, hbi, Option.getD_some, show 2 * i + 6 - 2 = 2 * i + 4 by omega]
+  · simp [act]
+  · simp [act]
+  · simp [act]
+  · rcases hs with rfl | rfl | rfl <;> simp [act, marker]
+  · simp [act]
+
+theorem state_redirect {d : Desc} {e : Key × Act}
+    (he : e ∈ redirect (fun q => 2 * q + 1) none [] 0 id d.table) : e.1.state % 2 = 1 := by
+  simp only [redirect, List.mem_flatMap, List.mem_map] at he
+  obtain ⟨e', -, s, -, rfl⟩ := he
+  simp [redirectEntry]
+
+/-- Each preparing transition is the one found for its key. -/
+theorem find?_prep {d : Desc} {p : List Bool} {e : Key × Act} (he : e ∈ prep d p) :
+    (hardwire d p).table.find? (·.1 = e.1) = some e := by
+  refine find?_eq_some_of_mem (List.mem_append_left _ he) fun e' he' hk => ?_
+  rw [table_hardwire, List.mem_append] at he'
+  rcases he' with he' | he'
+  · rw [(prep_spec he').2, (prep_spec he).2, hk]
+  · have := state_redirect he'
+    have := (prep_spec he).1
+    rw [hk] at *
+    omega
+
+/-- For odd states, the transitions found are the redirected transitions of `d`. -/
+theorem find?_redirect_hardwire (d : Desc) (p : List Bool) (q : ℕ) (k : Key)
+    (hk : k.state = 2 * q + 1) : (hardwire d p).table.find? (·.1 = k) =
+      (redirect (fun q => 2 * q + 1) none [] 0 id d.table).find? (·.1 = k) := by
+  rw [table_hardwire, List.find?_append, List.find?_eq_none.mpr fun e he h => by
+    have := (prep_spec he).1
+    rw [of_decide_eq_true h, hk] at this
+    omega, Option.none_or]
+
+
+section Run
+
+variable (d : Desc) (p x : List Bool)
+
+@[simp]
+theorem read_blank : Tape.blank.read = none :=
+  rfl
+
+theorem map_read_replicate_blank (k : ℕ) :
+    (List.replicate k Tape.blank).map Tape.read = List.replicate k none := by
+  simp only [List.map_replicate]
+  rfl
+
+/-- A step through a preparing transition. -/
+theorem stepOut_of_mem_prep {c : SCfg} {q : ℕ} (hq : c.state = some q) {e : Key × Act}
+    (he : e ∈ prep d p) (hkey : c.key (x.map eBit) q = e.1) (out : List ℕ) :
+    stepOut (hardwire d p) (x.map eBit) (c, out) =
+      (e.2.apply (x.map eBit) c, out ++ e.2.output.toList) := by
+  have hf := find?_prep he
+  rw [← hkey] at hf
+  rw [stepOut, step_of_find? hq hf]
+
+/-- Writing the marker and the first `j` symbols of the prefix takes `j + 1` steps. -/
+theorem iterate_write {j : ℕ} (hj : j ≤ p.length) :
+    (stepOut (hardwire d p) (x.map eBit))^[j + 1] (init (hardwire d p), []) =
+      (⟨some (2 * (p.length - j) + 4), 1,
+        wtape (some marker :: (p.take j).map (some ∘ eBit)) ::
+          List.replicate d.tapes Tape.blank⟩, []) := by
+  induction j with
+  | zero =>
+    have he : ((⟨0, inputSymbol (x.map eBit) 1, none :: List.replicate d.tapes none⟩,
+        ⟨.zero, [(some (some marker), .pos)], none, some (2 * p.length + 4)⟩) : Key × Act) ∈
+          prep d p := by
+      simp only [prep, writeEntries, List.mem_append, List.mem_map]
+      exact Or.inl (Or.inl (Or.inl ⟨_, inputSymbol_map_eBit_mem x 1, rfl⟩))
+    rw [Function.iterate_one, stepOut_of_mem_prep d p x rfl he (by
+      simp [SCfg.key, init, hardwire, List.replicate_succ, Tape.read]) []]
+    simp only [init, hardwire, List.replicate_succ, Act.apply, moveInput, applyTapes,
+      applyTapes_nil, Option.toList_none, List.append_nil, Nat.sub_zero, List.take_zero,
+      List.map_nil]
+    rw [show Tape.blank = wtape [] from rfl]
+    exact congrArg₂ _ (congrArg₂ _ rfl (congrArg₂ _ (wtape_write_move [] _) rfl)) rfl
+  | succ j ih =>
+    have hjl : j < p.length := by omega
+    obtain ⟨i, hi⟩ : ∃ i, i = p.length - 1 - j := ⟨_, rfl⟩
+    have hb : p.reverse[i]? = some p[j] := by
+      rw [hi, List.getElem?_reverse (by omega), List.getElem?_eq_getElem (by omega)]
+      congr 2
+      omega
+    have he : ((⟨2 * i + 6, inputSymbol (x.map eBit) 1, none :: List.replicate d.tapes none⟩,
+        ⟨.zero, [(some (some (eBit p[j])), .pos)], none, some (2 * i + 4)⟩) : Key × Act) ∈
+          prep d p := by
+      simp only [prep, writeEntries, List.mem_append, List.mem_map, List.mem_flatMap]
+      exact Or.inl (Or.inl (Or.inr ⟨(p[j], i), List.mem_zipIdx_iff_getElem?.mpr hb, _,
+        inputSymbol_map_eBit_mem x 1, rfl⟩))
+    rw [Function.iterate_succ_apply', ih hjl.le, stepOut_of_mem_prep d p x rfl he (by
+      simp only [SCfg.key, List.map_cons, read_wtape, map_read_replicate_blank, Key.mk.injEq,
+        and_true]
+      omega) []]
+    simp only [Act.apply, moveInput, applyTapes, applyTapes_nil, Option.toList_none,
+      List.append_nil, SCfg.mk.injEq, Prod.mk.injEq, and_true, true_and]
+    refine ⟨?_, ?_⟩
+    · rw [hi]
+      congr 2
+      omega
+    rw [show (wtape (some marker :: (p.take j).map (some ∘ eBit))).apply
+        (some (some (eBit p[j])), .pos) = _ from wtape_write_move _ _, List.take_add_one,
+      List.getElem?_eq_getElem hjl, Option.toList_some, List.map_append, List.cons_append]
+    rfl
+
+/-- Copying the first `j` symbols of the input takes `j` further steps. -/
+theorem iterate_copy {j : ℕ} (hj : j ≤ x.length) :
+    (stepOut (hardwire d p) (x.map eBit))^[p.length + 1 + j] (init (hardwire d p), []) =
+      (⟨some 4, j + 1, wtape (some marker :: (p ++ x.take j).map (some ∘ eBit)) ::
+          List.replicate d.tapes Tape.blank⟩, []) := by
+  induction j with
+  | zero =>
+    rw [add_zero, iterate_write d p x le_rfl]
+    simp
+  | succ j ih =>
+    have hjl : j < x.length := by omega
+    have hs : inputSymbol (x.map eBit) (j + 1) = some (eBit x[j]) := by
+      simp [inputSymbol, List.head?_drop, List.getElem?_eq_getElem hjl]
+    have he : ((⟨4, some (eBit x[j]), none :: List.replicate d.tapes none⟩,
+        ⟨.pos, [(some (some (eBit x[j])), .pos)], none, some 4⟩) : Key × Act) ∈ prep d p := by
+      simp only [prep, copyEntries, List.mem_append, List.mem_cons]
+      cases x[j] <;> simp
+    rw [← add_assoc, Function.iterate_succ_apply', ih hjl.le, stepOut_of_mem_prep d p x rfl he (by
+      simp [SCfg.key, hs]) []]
+    simp only [Act.apply, applyTapes, applyTapes_nil, Option.toList_none, List.append_nil,
+      SCfg.mk.injEq, Prod.mk.injEq, and_true, true_and]
+    refine ⟨by simp [moveInput, hs], ?_⟩
+    rw [show (wtape (some marker :: (p ++ x.take j).map (some ∘ eBit))).apply
+        (some (some (eBit x[j])), .pos) = _ from wtape_write_move _ _, List.take_add_one,
+      List.getElem?_eq_getElem hjl, Option.toList_some, ← List.append_assoc]
+    simp only [List.map_append, List.map_take, List.append_assoc, List.map_cons, List.map_nil,
+      List.cons_append]
+    rfl
+
+/-- **The preparation**: after `2 * (p.length + x.length) + 4` steps, `hardwire d p` is in the
+configuration standing for the initial configuration of `d` on `p ++ x`, redirected. -/
+theorem iterate_prepare :
+    (stepOut (hardwire d p) (x.map eBit))^[2 * (p.length + x.length) + 4]
+        (init (hardwire d p), []) =
+      (redirectCfg (fun q => 2 * q + 1) (x.length + 1) 0 [] ((p ++ x).map eBit) [] []
+        (init d), []) := by
+  have hw : (some marker :: (p ++ x.take x.length).map (some ∘ eBit)) =
+      vcells ((p ++ x).map eBit) := by
+    simp [vcells, List.map_map]
+  have he : ((⟨4, none, none :: List.replicate d.tapes none⟩, ⟨.zero, [], none, some 2⟩) :
+      Key × Act) ∈ prep d p := by
+    simp [prep, copyEntries]
+  have hs : inputSymbol (x.map eBit) (x.length + 1) = none := by
+    simp [inputSymbol]
+  have hend := stepOut_of_mem_prep d p x (c := ⟨some 4, x.length + 1,
+    wtape (vcells ((p ++ x).map eBit)) :: List.replicate d.tapes Tape.blank⟩) rfl he
+      (by simp [SCfg.key, hs]) []
+  simp only [Act.apply, moveInput, applyTapes_nil, Option.toList_none, List.append_nil] at hend
+  have hrw := iterate_stepOut_rewind (D := hardwire d p) (X := x.map eBit) (q := 2)
+    (next := 2 * d.q₀ + 1) (rp := x.length + 1) (rest := List.replicate d.tapes Tape.blank)
+    (base := 0) (l := []) (w := (p ++ x).map eBit) (fun e he => find?_prep (by
+      rw [hs, map_read_replicate_blank] at he
+      exact List.mem_append_right _ he)) (fun a ha => by
+        obtain ⟨b, -, rfl⟩ := List.mem_map.mp ha
+        cases b <;> simp) [] (v := ((p ++ x).map eBit).length + 1)
+    le_rfl
+  rw [show 2 * (p.length + x.length) + 4 =
+      (((p ++ x).map eBit).length + 1 + 1) + 1 + (p.length + 1 + x.length) by simp; omega,
+    Function.iterate_add_apply, iterate_copy d p x le_rfl, hw, Function.iterate_succ_apply,
+    hend, wtape_vcells, hrw]
+  simp [redirectCfg, init, Tape.blank]
+
+end Run
+
+end Hardwire
+
+open Hardwire in
+/-- **The behaviour of `hardwire d p`**: on every input of bits `x`, it halts with output `o`
+exactly when `d` halts on `p ++ x` with output `o`. -/
+theorem Desc.computes_hardwire (d : Desc) (p x : List Bool) (o : List ℕ) :
+    (hardwire d p).Computes (x.map eBit) o ↔ d.Computes ((p ++ x).map eBit) o := by
+  have hxs : ∀ a ∈ (p ++ x).map eBit, a ≠ marker := by
+    intro a ha
+    obtain ⟨b, -, rfl⟩ := List.mem_map.mp ha
+    cases b <;> simp [marker]
+  refine Desc.computes_iff_of_iterate
+    (redirectCfg (fun q => 2 * q + 1) (x.length + 1) 0 [] ((p ++ x).map eBit) [] [])
+    (fun c => by simp [redirectCfg]) (2 * (p.length + x.length) + 4) (fun t => ?_) o
+  rw [add_comm, Function.iterate_add_apply, iterate_prepare]
+  exact iterate_stepOut_redirect (n := d.tapes) (fun _ _ h => by omega)
+    (find?_redirect_hardwire d p) (by simp [inputSymbol]) hxs rfl rfl
+    (fun ts _ was => by simp) t (by simp [init]) (by simp [init]) []
+
+/-- **Halting of `hardwire d p`**: on every input of bits `x`, it halts exactly when `d` halts on
+`p ++ x`. -/
+theorem Desc.halts_hardwire (d : Desc) (p x : List Bool) :
+    (hardwire d p).Halts (x.map eBit) ↔ d.Halts ((p ++ x).map eBit) := by
+  simp only [Desc.halts_iff_exists_computes, Desc.computes_hardwire]
 
 end Turing.MultiTapeTM.Universal
