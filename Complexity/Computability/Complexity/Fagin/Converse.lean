@@ -17,7 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 # NP classes are existential second-order definable (Fagin's theorem)
 
 The converse direction of Fagin's theorem [Fagin, Theorem 6][Fagin1974],
-[Immerman, Theorem 7.7][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]: for an
+[Immerman, Theorem 7.8][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]: for an
 isomorphism-closed class `K` of finite relational structures over a language `L` with a finite
 vocabulary `v : Vocabulary L`, if `v.queryLanguage K ∈ NP encStructure`, then `K` is existential
 second-order definable (`Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP`). Combined with
@@ -44,7 +44,8 @@ sentence over `L`.
 
 ## Main definitions
 
-* `Cslib.Logic.Vocabulary.maxArity`: strict upper bound on the arities of `v` (`≥ 1`).
+* `Cslib.Logic.Vocabulary.maxArity`: one more than the largest relation arity of `v`, a positive
+  strict upper bound on all relation arities.
 * `Cslib.Logic.Vocabulary.npPowerSentence`: the existential second-order sentence over
   `v.powerLanguage` combining input-tape layout synthesis and the accepting tableau of `tm`.
 
@@ -87,7 +88,8 @@ variable {L : Language.{u, v}} (v : Vocabulary L)
 
 /-! ### Polynomial bounds on encoded structure length and tableau size -/
 
-/-- A positive upper bound on all relation arities of `v`. -/
+/-- One more than the largest relation arity of `v`: a positive strict upper bound on all relation
+arities of `v`. -/
 def maxArity : ℕ :=
   Finset.univ.sup v.arity + 1
 
@@ -244,7 +246,7 @@ namespace ESO
 direction of Fagin's theorem): for an isomorphism-closed class `K` of finite relational structures
 over a language `L` with a finite vocabulary `v`, if `v.queryLanguage K ∈ NP encStructure`, then
 `K` is existential second-order definable [Fagin, Theorem 6][Fagin1974],
-[Immerman, Theorem 7.7][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]. -/
+[Immerman, Theorem 7.8][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]. -/
 theorem Definable.of_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
     (v : Vocabulary L) {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K)
     (hNP : v.queryLanguage K ∈ NP encStructure) :
@@ -275,7 +277,7 @@ theorem Definable.of_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
 /-- **Fagin's theorem**: an isomorphism-closed class `K` of finite relational structures over a
 language `L` with a finite vocabulary `v` is existential second-order definable if and only if its
 query language `v.queryLanguage K` belongs to `NP encStructure` [Fagin, Theorem 6][Fagin1974],
-[Immerman, Theorem 7.7][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]. -/
+[Immerman, Theorem 7.8][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]. -/
 theorem definable_iff_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
     (v : Vocabulary L) {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K) :
     Definable K ↔ v.queryLanguage K ∈ NP encStructure :=

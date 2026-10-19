@@ -19,10 +19,10 @@ unary relations `uLenRel` and `uBitRel` describing an input prefix `u : List Boo
 constructs an existential second-order sentence `FO.tableauESOSentence lt uLenRel uBitRel tm` over
 `L₀`.
 
-On `Fin B` (with `0 < B`), `FO.tableauESOSentence lt uLenRel uBitRel tm` is realized if and only if
-there exists a certificate word `w : List Bool` with `u.length + w.length + 1 < B` such that `tm`,
-started on `u ++ w`, halts within `B - 1` steps with output `[true]` — equivalently, by
-`Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, if and only if
+On `Fin B` with `u.length + 1 < B`, `FO.tableauESOSentence lt uLenRel uBitRel tm` is realized if
+and only if there exists a certificate word `w : List Bool` with `u.length + w.length + 1 < B` such
+that `tm`, started on `u ++ w`, halts within `B - 1` steps with output `[true]` — equivalently,
+by `Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, if and only if
 `CookLevin.tableau tm u L (B - 1)` is satisfiable for some `L` with `u.length + L + 1 < B`.
 
 ## Main definitions

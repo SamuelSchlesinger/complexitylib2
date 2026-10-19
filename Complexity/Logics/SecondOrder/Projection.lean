@@ -21,7 +21,7 @@ holding in `M` iff some interpretation of `ar₀` on `M` makes `Φ` hold (`Sente
 
 In descriptive complexity on unordered structures, a standard application of `Sentence.project` is
 guessing an arbitrary strict linear order on a finite domain [Fagin, Proof of Theorem 6][Fagin1974],
-[Immerman, Proof of Theorem 7.7][Immerman1999]. The language `orderLanguage` has a single binary
+[Immerman, Proof of Theorem 7.8][Immerman1999]. The language `orderLanguage` has a single binary
 relation symbol `ltSym`, constrained by `isStrictLinearOrderSentence` to be irreflexive, transitive,
 and trichotomous. On a finite structure `M`, the expansions satisfying `isStrictLinearOrderSentence`
 are precisely the linear orders `orderRelOfEquiv e` induced by bijections `e : M ≃ Fin (Nat.card M)`
