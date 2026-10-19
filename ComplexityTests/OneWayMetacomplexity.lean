@@ -4,11 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Crypto.Computational.OneWay.MCSP
 import Complexity.Crypto.Computational.OneWay.NP
 
 /-! One-way functions against structural hypotheses: the preimage-prefix problem, the
-search-to-decision inverter and `OWF ⇒ P ≠ NP`. The hypotheses of the inverter lemmas are
-discharged for concrete functions; one-wayness itself is a conjecture and is not instantiated. -/
+search-to-decision inverter and `OWF ⇒ P ≠ NP`; the truth-table distinguisher and Kabanets–Cai.
+The hypotheses of the inverter and distinguisher lemmas are discharged for concrete functions and
+deciders; one-wayness and `MCSP ∈ BPP` are open and are not instantiated. -/
 
 namespace ComplexityTests.OneWayMetacomplexity
 
@@ -36,6 +38,30 @@ example : preimageSearch (fun p => decide (p.2.2 <+: p.2.1 ∧ p.2.1.length = p.
 -- The inverter lemma applies: the identity is not one-way, by its own inverse.
 example : ¬ OneWay id :=
   not_oneWay_of_lengthInverse Prod.snd (ComputableTidilyInPolyTime.snd _ _) fun _ => rfl
+
+-- Against a deterministic oracle, `queryTable` collects the first reply bits, `false` for an
+-- empty reply.
+example : OracleComp.interpret (ProbOracleComp.handler ProbComp.unifFin
+    fun request => pure (List.reverse request.2)) (queryTable [[true, false], [], [false, true]]) =
+      pure [false, false, true] :=
+  interpret_queryTable _ _ _
+
+-- The circuit bound applies to a concrete polynomial-time keyed family.
+example : ∃ c : ℕ, ∀ (key : List Bool) (m : ℕ), m ≤ key.length →
+    Circuits.complexity Circuits.Boolean.interpretation
+      (Circuits.single (restriction (fun query => key ++ query) key.length m)) ≤
+        c * (3 * key.length + 2) ^ c + 2 :=
+  exists_complexity_restriction_le (family := fun key query => key ++ query) (by fun_prop)
+
+-- A random function restricts to a uniformly random Boolean function.
+example : (Probability.PMF.uniformOfFintype (BitString 3 → BitString 3)).map
+    (restrictTable 3 2 (by norm_num)) = Probability.PMF.uniformOfFintype (BooleanFunction 2) :=
+  uniformOfFintype_map_restrictTable _ (by norm_num)
+
+-- The distinguisher certificate applies to a concrete polynomial-time decider.
+example : Probability.IsOraclePPT Turing.MultiTapeTM.encBool
+    (mcspDistinguisher 0 (fun x => x.2.isEmpty) 3) :=
+  isOraclePPT_mcspDistinguisher 3 (by fun_prop)
 
 /--
 info: 'Cslib.Crypto.preimagePrefix_mem_NP' depends on axioms:
@@ -69,5 +95,40 @@ info: 'Cslib.Crypto.OneWay.SAT_notMem_P' depends on axioms: [propext, Classical.
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.OneWay.SAT_notMem_P
+
+/--
+info: 'Cslib.Crypto.exists_complexity_restriction_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.exists_complexity_restriction_le
+
+/--
+info: 'Cslib.Crypto.isOraclePPT_mcspDistinguisher' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.isOraclePPT_mcspDistinguisher
+
+/--
+info: 'Cslib.Crypto.not_pseudorandomFunction_of_MCSP_mem_BPP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.not_pseudorandomFunction_of_MCSP_mem_BPP
+
+/--
+info: 'Cslib.Crypto.not_oneWay_of_MCSP_mem_BPP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.not_oneWay_of_MCSP_mem_BPP
+
+/--
+info: 'Cslib.Crypto.not_oneWay_of_MCSP_mem_P' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.not_oneWay_of_MCSP_mem_P
 
 end ComplexityTests.OneWayMetacomplexity
