@@ -34,15 +34,15 @@ and useful against circuits with `s` gates therefore distinguishes every keyed f
 with `s` gates from uniformly random functions, by a circuit with `t` gates and with advantage its
 density (`not_secure_truthTableGenerator`). Asymptotically, no `P/poly`-natural property is
 useful against `P/poly` if some keyed family with members of polynomial circuit size is
-pseudorandom against circuits of size `2 ^ (c n)` with error `2 ^ (-c n)`, for every `c`
-(`not_isUseful_PPoly_of_isNatural`).
+*exponentially secure*, pseudorandom against circuits of size `2 ^ (c n)` with error `2 ^ (-c n)`
+for every `c` (`IsExponentiallySecure`, `not_isUseful_PPoly_of_isNatural`).
 
 Razborov and Rudich obtain such a family from a pseudorandom generator secure against circuits of
 size `2 ^ (k ^ ε)` on seeds of length `k`, by the construction of Goldreich, Goldwasser and Micali
-[GGM1986] with keys of length polynomial in `n`. Here the exponentially secure family is the
-hypothesis: the circuit-size analysis of that construction is not formalized, and
-`Cslib.Crypto.GGM.pseudorandomFunction_of_indistinguishable` concerns uniform polynomial-time
-adversaries only.
+[GGM1986] with keys of length polynomial in `n`. That derivation, with its circuit-size analysis,
+is `Cslib.Crypto.GGM.isExponentiallySecure_booleanFamily` in
+`Complexity.Crypto.Computational.GGM.Circuit`, which also states the barrier from such a generator
+(`Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator`).
 
 Security is cslib's concrete security of generators (`Cslib.Crypto.PRG.Generator.Secure`), for the
 generator mapping a key to the truth table of its function (`truthTableGenerator`), against the
@@ -54,9 +54,9 @@ gate.
 The functions on `n` inputs that need more than `2 ^ n / (5 n)` gates form a property that is
 large, by counting circuits, and useful against `P/poly` (`isLarge_setOf_lt_complexity`,
 `isUseful_PPoly_setOf_lt_complexity`). Under the same hypothesis it is therefore not
-`P/poly`-constructive: its truth tables, the no-instances of `GapMCSP` at threshold
-`2 ^ n / (5 n)`, do not form a language in `P/poly`
-(`truthTableLanguage_setOf_lt_complexity_notMem_PPoly`) [KabanetsCai2000].
+`P/poly`-natural (`not_isNatural_PPoly_setOf_lt_complexity`), and not `P/poly`-constructive: its
+truth tables, the no-instances of `GapMCSP` at threshold `2 ^ n / (5 n)`, do not form a language
+in `P/poly` (`truthTableLanguage_setOf_lt_complexity_notMem_PPoly`) [KabanetsCai2000].
 
 ## Main definitions
 
@@ -67,6 +67,8 @@ large, by counting circuits, and useful against `P/poly` (`isLarge_setOf_lt_comp
 * `Cslib.Circuits.Boolean.IsCircuitTest`: the tests computed by circuits with at most `t` gates.
 * `Cslib.Circuits.Boolean.truthTableGenerator`: a keyed family of Boolean functions, as a
   generator of truth tables.
+* `Cslib.Circuits.Boolean.IsExponentiallySecure`: keyed families pseudorandom against circuits of
+  size `2 ^ (c n)` with error `2 ^ (-c n)`, for every `c`.
 
 ## Main results
 
@@ -83,8 +85,10 @@ large, by counting circuits, and useful against `P/poly` (`isLarge_setOf_lt_comp
 * `Cslib.Circuits.Boolean.isLarge_setOf_lt_complexity`,
   `Cslib.Circuits.Boolean.isUseful_PPoly_setOf_lt_complexity`: the functions needing more than
   `2 ^ n / (5 n)` gates form a large property useful against `P/poly`.
-* `Cslib.Circuits.Boolean.truthTableLanguage_setOf_lt_complexity_notMem_PPoly`: under the same
-  assumption, the truth tables of these hard functions do not form a language in `P/poly`.
+* `Cslib.Circuits.Boolean.not_isNatural_PPoly_setOf_lt_complexity`,
+  `Cslib.Circuits.Boolean.truthTableLanguage_setOf_lt_complexity_notMem_PPoly`: under the same
+  assumption, this property is not `P/poly`-natural, and the truth tables of these hard functions
+  do not form a language in `P/poly`.
 
 ## References
 
@@ -259,6 +263,8 @@ def IsCircuitTest {m : ℕ} (t : ℕ) (adversary : Crypto.PRG.Adversary (BitStri
   ∃ test : BooleanFunction m, complexity interpretation (single test) ≤ t ∧
     adversary = fun x => PMF.pure (test x)
 
+section Generator
+
 variable {Key : Type*}
 
 /-- The generator mapping a key to the truth table of the function `F key`. Its security against
@@ -310,23 +316,35 @@ theorem not_secure_truthTableGenerator {F : Key → BooleanFunction n} {C : Set 
     (huseful _ hkey).not_ge (hF key)] at h
   exact h.not_gt hε
 
+end Generator
+
+section Family
+
 variable {Key : ℕ → Type*} [∀ n, Fintype (Key n)] [∀ n, Nonempty (Key n)]
+
+/-- A keyed family `F` of Boolean functions is *exponentially secure* against circuits when, for
+every `c`, eventually no test computed with at most `2 ^ (c n)` gates distinguishes the truth
+table of `F n key`, for a uniformly random key, from a uniformly random truth table with advantage
+more than `2 ^ (-c n)`. This is the hypothesis of the natural proofs barrier
+[RazborovRudich1997, Section 4]. The tests read the whole truth table, that is they query the
+function at every input. -/
+def IsExponentiallySecure (F : ∀ n, Key n → BooleanFunction n) : Prop :=
+  ∀ c, ∀ᶠ n in atTop,
+    (truthTableGenerator (F n)).Secure (IsCircuitTest (2 ^ (c * n))) (2 ^ (c * n))⁻¹
 
 /-- **The natural proofs barrier** for `P/poly` [RazborovRudich1997, Section 4]. Suppose that for
 each `n` a keyed family `F n` of Boolean functions on `n` inputs has members with at most `s n`
-gates, for a polynomially bounded `s`, and is *exponentially secure*: for every `c`, eventually no
+gates, for a polynomially bounded `s`, and is exponentially secure: for every `c`, eventually no
 circuit with at most `2 ^ (c n)` gates distinguishes the truth table of a member with a uniformly
 random key from a uniformly random truth table with advantage more than `2 ^ (-c n)`. Then no
 `P/poly`-natural property is useful against `P/poly`.
 
 Razborov and Rudich derive such a family from a pseudorandom generator secure against circuits of
 size `2 ^ (k ^ ε)` by the construction of Goldreich, Goldwasser and Micali with keys of length
-polynomial in `n`; that derivation is not formalized here. -/
+polynomial in `n`: `Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator`. -/
 theorem not_isUseful_PPoly_of_isNatural {F : ∀ n, Key n → BooleanFunction n} {s : ℕ → ℕ}
     (hs : PolynomiallyBounded s) (hF : ∀ n key, complexity interpretation (single (F n key)) ≤ s n)
-    (hsecure : ∀ c, ∀ᶠ n in atTop,
-      (truthTableGenerator (F n)).Secure (IsCircuitTest (2 ^ (c * n))) (2 ^ (c * n))⁻¹)
-    (hC : IsNatural PPoly C) : ¬ IsUseful PPoly C := by
+    (hsecure : IsExponentiallySecure F) (hC : IsNatural PPoly C) : ¬ IsUseful PPoly C := by
   intro huseful
   obtain ⟨D, hDC, ⟨a, ha⟩, hD⟩ := hC
   obtain ⟨b, hb⟩ := exists_complexity_truthTableTest_le hD
@@ -407,11 +425,23 @@ it is not `P/poly`-constructive. -/
 theorem truthTableLanguage_setOf_lt_complexity_notMem_PPoly {F : ∀ n, Key n → BooleanFunction n}
     {s : ℕ → ℕ} (hs : PolynomiallyBounded s)
     (hF : ∀ n key, complexity interpretation (single (F n key)) ≤ s n)
-    (hsecure : ∀ c, ∀ᶠ n in atTop,
-      (truthTableGenerator (F n)).Secure (IsCircuitTest (2 ^ (c * n))) (2 ^ (c * n))⁻¹) :
+    (hsecure : IsExponentiallySecure F) :
     truthTableLanguage (fun n => {f : BooleanFunction n |
       2 ^ n / (5 * n) < complexity interpretation (single f)}) ∉ PPoly := fun hmem =>
   not_isUseful_PPoly_of_isNatural hs hF hsecure
     ⟨_, fun _ => le_rfl, isLarge_setOf_lt_complexity, hmem⟩ isUseful_PPoly_setOf_lt_complexity
+
+/-- Under the hypothesis of `not_isUseful_PPoly_of_isNatural`, the property of needing more than
+`2 ^ n / (5 n)` gates is not `P/poly`-natural: it is useful against `P/poly`
+[RazborovRudich1997]. -/
+theorem not_isNatural_PPoly_setOf_lt_complexity {F : ∀ n, Key n → BooleanFunction n}
+    {s : ℕ → ℕ} (hs : PolynomiallyBounded s)
+    (hF : ∀ n key, complexity interpretation (single (F n key)) ≤ s n)
+    (hsecure : IsExponentiallySecure F) :
+    ¬ IsNatural PPoly fun n => {f : BooleanFunction n |
+      2 ^ n / (5 * n) < complexity interpretation (single f)} := fun hC =>
+  not_isUseful_PPoly_of_isNatural hs hF hsecure hC isUseful_PPoly_setOf_lt_complexity
+
+end Family
 
 end Cslib.Circuits.Boolean

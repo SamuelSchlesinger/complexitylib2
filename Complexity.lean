@@ -610,6 +610,7 @@ public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
 public import Complexity.Computability.RAM.Squaring
 public import Complexity.Crypto.Computational.Basic
+public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
 public import Complexity.Crypto.Computational.GGM.Hybrid
