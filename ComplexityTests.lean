@@ -46,6 +46,7 @@ import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy
 import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
+import ComplexityTests.ExpanderHitting
 import ComplexityTests.ExplicitExpanders
 import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
