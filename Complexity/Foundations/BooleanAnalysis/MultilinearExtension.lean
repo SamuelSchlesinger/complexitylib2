@@ -55,17 +55,22 @@ noncomputable def multilinearExtension [Fintype ι] [DecidableEq ι] (g : (ι �
     MvPolynomial ι R :=
   ∑ a, C (g a) * indicatorPoly a
 
+/-- The value of an indicator polynomial at any point. -/
+theorem eval_indicatorPoly_apply [Fintype ι] (a : ι → Bool) (z : ι → R) :
+    eval z (indicatorPoly a : MvPolynomial ι R) = ∏ i, if a i then z i else 1 - z i := by
+  simp [indicatorPoly, map_prod, apply_ite]
+
 /-- On the cube, the indicator polynomial of `a` is `1` at `a` and `0` elsewhere. -/
 theorem eval_indicatorPoly [Fintype ι] (a x : ι → Bool) :
     eval (fun i => bitVal R (x i)) (indicatorPoly a : MvPolynomial ι R) =
       if a = x then 1 else 0 := by
-  simp only [indicatorPoly, map_prod]
+  rw [eval_indicatorPoly_apply]
   split_ifs with h
   · subst h
-    exact Finset.prod_eq_one fun i _ => by cases h : a i <;> simp [h]
+    exact Finset.prod_eq_one fun i _ => by cases a i <;> simp
   · obtain ⟨i, hi⟩ := Function.ne_iff.mp h
-    refine Finset.prod_eq_zero (Finset.mem_univ i) ?_
-    cases ha : a i <;> cases hx : x i <;> simp_all
+    exact Finset.prod_eq_zero (Finset.mem_univ i)
+      (by cases ha : a i <;> cases hx : x i <;> simp_all)
 
 /-- The multilinear extension agrees with the function on the cube. -/
 theorem eval_multilinearExtension [Fintype ι] [DecidableEq ι] (g : (ι → Bool) → R)
@@ -78,9 +83,8 @@ theorem totalDegree_indicatorPoly_le [Fintype ι] (a : ι → Bool) :
     (indicatorPoly a : MvPolynomial ι R).totalDegree ≤ Fintype.card ι := by
   have hX (i : ι) : (X i : MvPolynomial ι R).totalDegree ≤ 1 :=
     (totalDegree_monomial_le _ _).trans (by simp)
-  refine (totalDegree_finsetProd _ _).trans ?_
-  rw [Finset.card_univ.symm, Finset.card_eq_sum_ones]
-  refine Finset.sum_le_sum fun i _ => ?_
+  refine (totalDegree_finsetProd _ _).trans <|
+    (Finset.sum_le_card_nsmul _ _ 1 fun i _ => ?_).trans (by simp)
   split_ifs
   · exact hX i
   · exact (totalDegree_sub _ _).trans (max_le (by simp) (hX i))

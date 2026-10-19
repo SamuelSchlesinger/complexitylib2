@@ -141,34 +141,33 @@ theorem exists_iterate_stepCfg_some {q : σ} {A : ℕ} (hA : m.addr q = some A)
         (by simp [hmove]) rfl (by simp only [hmove]; omega)
       exact ⟨k + 1, by rw [Function.iterate_succ_apply, hstep]; exact hk⟩
 
-/-- **One step of the read machine** is simulated by steps of the step machine. -/
+/-- **One step of the read machine** is simulated by steps of the step machine; a halted read
+machine stays put, in zero steps. -/
 theorem exists_iterate_stepCfg {c : Cfg σ} {d : StepMachine.Cfg (σ × ℕ) Bool x}
-    (h : Represents c d) (hhalt : m.halt c.state = false) :
-    ∃ k, Represents (m.next x c) ((m.toStepMachine).stepCfg^[k] d) := by
-  obtain ⟨c, out⟩ := c
-  obtain ⟨hq, hp, ho⟩ := h
-  have hs : d.state = (c, d.pos.val) := Prod.ext hq hp
-  simp only at hhalt ho
-  rcases hA : m.addr c with _ | A
-  · have hb : (m.toStepMachine).step d.state (MultiTapeTM.inputSymbolAt x d.pos) =
-        m.stepAt d.state.1 d.state.2 false := by
-      simp [toStepMachine, hs, hA]
-    refine ⟨1, ?_⟩
-    rw [Function.iterate_one, stepCfg_read (by simp [hs, hhalt]) hb]
-    simp [Represents, next, hhalt, readBit, hA, hs, ho]
-  · exact exists_iterate_stepCfg_some hA hhalt out _ d hs ho le_rfl
+    (h : Represents c d) : ∃ k, Represents (m.next x c) ((m.toStepMachine).stepCfg^[k] d) := by
+  cases hhalt : m.halt c.state
+  · obtain ⟨c, out⟩ := c
+    obtain ⟨hq, hp, ho⟩ := h
+    have hs : d.state = (c, d.pos.val) := Prod.ext hq hp
+    simp only at hhalt ho
+    rcases hA : m.addr c with _ | A
+    · have hb : (m.toStepMachine).step d.state (MultiTapeTM.inputSymbolAt x d.pos) =
+          m.stepAt d.state.1 d.state.2 false := by
+        simp [toStepMachine, hs, hA]
+      refine ⟨1, ?_⟩
+      rw [Function.iterate_one, stepCfg_read (by simp [hs, hhalt]) hb]
+      simp [Represents, next, hhalt, readBit, hA, hs, ho]
+    · exact exists_iterate_stepCfg_some hA hhalt out _ d hs ho le_rfl
+  · exact ⟨0, by simpa [next, hhalt] using h⟩
 
-/-- The steps of the read machine before it halts are simulated by the step machine. -/
-theorem exists_run_represents (x : List Bool) :
-    ∀ n, (∀ i < n, m.halt (m.run x i).state = false) →
-      ∃ t, Represents (m.run x n) ((m.toStepMachine).run x t) := by
-  intro n
+/-- The steps of the read machine are simulated by the step machine. -/
+theorem exists_run_represents (x : List Bool) (n : ℕ) :
+    ∃ t, Represents (m.run x n) ((m.toStepMachine).run x t) := by
   induction n with
-  | zero => exact fun _ => ⟨0, rfl, rfl, rfl⟩
+  | zero => exact ⟨0, rfl, rfl, rfl⟩
   | succ n ih =>
-    intro h
-    obtain ⟨t, ht⟩ := ih fun i hi => h i (by omega)
-    obtain ⟨k, hk⟩ := exists_iterate_stepCfg ht (h n (by omega))
+    obtain ⟨t, ht⟩ := ih
+    obtain ⟨k, hk⟩ := exists_iterate_stepCfg ht
     refine ⟨k + t, ?_⟩
     rw [run_add, runFrom_one, StepMachine.run, Function.iterate_add_apply]
     exact hk
@@ -176,19 +175,13 @@ theorem exists_run_represents (x : List Bool) :
 /-- **The step machine computes the output of the read machine**, if it halts. -/
 theorem computes_toStepMachine {x : List Bool} {n : ℕ} (h : m.halt (m.run x n).state = true) :
     (m.toStepMachine).Computes x (m.run x n).out := by
-  classical
-  have hex : ∃ n, m.halt (m.run x n).state = true := ⟨n, h⟩
-  have hmin : ∀ i < Nat.find hex, m.halt (m.run x i).state = false := fun i hi => by
-    simpa using Nat.find_min hex hi
-  have heq : m.run x n = m.run x (Nat.find hex) :=
-    run_eq_of_halt _ _ (Nat.find_spec hex) (Nat.find_min' hex h)
-  obtain ⟨t, hq, -, ho⟩ := exists_run_represents x _ hmin
+  obtain ⟨t, hq, -, ho⟩ := exists_run_represents (m := m) x n
   have hhalt : (m.toStepMachine).halt ((m.toStepMachine).run x t).state := by
     change m.halt ((m.toStepMachine).run x t).state.1 = true
     rw [hq]
-    exact Nat.find_spec hex
+    exact h
   obtain ⟨t', -, ht', hrun⟩ := StepMachine.exists_haltsAt_le _ hhalt
-  exact ⟨t', ht', by rw [hrun, ho, heq]⟩
+  exact ⟨t', ht', by rw [hrun, ho]⟩
 
 /-- The configurations of the step machine on `x` that follow the read machine: the head at the
 position in the state, and the state and the output of a configuration of the read machine. -/

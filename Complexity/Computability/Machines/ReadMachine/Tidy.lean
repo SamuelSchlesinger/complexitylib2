@@ -39,11 +39,6 @@ section Budget
 variable {γ β δ : Type} {encIn : γ ↪ List Bool} {encB : β ↪ List Bool} {encD : δ ↪ List Bool}
   {Bt Bs : γ → ℕ}
 
-/-- The values of a function computed within a space budget are within it. -/
-theorem length_bigOLe {f : γ → β} (hf : ComputableTidilyInO f encIn encB Bt Bs) :
-    (fun x => (encB (f x)).length) ≼ Bs :=
-  hf.length_le
-
 /-- Composition within the budgets. -/
 theorem budget_comp {f : γ → β} {g : β → δ} {Tg Sg : β → ℕ}
     (hg : ComputableTidilyInO g encB encD Tg Sg) (hf : ComputableTidilyInO f encIn encB Bt Bs)
@@ -56,7 +51,7 @@ theorem budget_comp_linear {f : γ → β} {g : β → δ}
     (hg : ComputableTidilyInO g encB encD (fun b => (encB b).length) fun b => (encB b).length)
     (hf : ComputableTidilyInO f encIn encB Bt Bs) (hst : Bs ≼ Bt) :
     ComputableTidilyInO (fun x => g (f x)) encIn encD Bt Bs :=
-  budget_comp hg hf ((length_bigOLe hf).trans hst) (length_bigOLe hf)
+  budget_comp hg hf (BigOLe.trans hf.length_le hst) hf.length_le
 
 /-- Pairs within the budgets. -/
 theorem budget_prod {f : γ → β} {g : γ → δ} (hf : ComputableTidilyInO f encIn encB Bt Bs)
@@ -130,20 +125,6 @@ theorem budget_proj :
     (snd (encPair encS encNat) (encOption encBool)).weaken
       (.of_le inLen_le_timeB) (.of_le inLen_le_spaceB)⟩
 
-/-- A square of something within the space budget is within the time budget. -/
-theorem sq_bigOLe {u : (σ × ℕ) × Option Bool → ℕ} (h : u ≼ spaceB encS S) :
-    (fun p => (u p + 1) ^ 2) ≼ timeB encS T S := by
-  obtain ⟨c, hc⟩ := h
-  refine ⟨(c + 1) ^ 2, fun p => ?_⟩
-  have h₁ : u p + 1 ≤ (c + 1) * (T p.1.1 + S p.1.1 + inLen encS p + 1) := by
-    have := hc p; simp only [spaceB] at this; nlinarith
-  have h₂ : (T p.1.1 + S p.1.1 + inLen encS p + 1) ^ 2 ≤ timeB encS T S p :=
-    Nat.le_mul_of_pos_left _ (by omega)
-  calc (u p + 1) ^ 2 ≤ ((c + 1) * (T p.1.1 + S p.1.1 + inLen encS p + 1)) ^ 2 :=
-        Nat.pow_le_pow_left h₁ 2
-    _ = (c + 1) ^ 2 * (T p.1.1 + S p.1.1 + inLen encS p + 1) ^ 2 := by ring
-    _ ≤ (c + 1) ^ 2 * (timeB encS T S p + 1) := by nlinarith
-
 /-- The time of a comparison with the head position is within the time budget. -/
 theorem lt_bigOLe {u : (σ × ℕ) × Option Bool → ℕ} (h : u ≼ spaceB encS S) :
     (fun p => (p.1.2 + 1) * (u p + 1) ^ 2) ≼ timeB encS T S := by
@@ -158,6 +139,11 @@ theorem lt_bigOLe {u : (σ × ℕ) × Option Bool → ℕ} (h : u ≼ spaceB enc
         Nat.mul_le_mul_left _ h₂
     _ = (c + 1) ^ 2 * ((p.1.2 + 1) * (T p.1.1 + S p.1.1 + inLen encS p + 1) ^ 2) := by ring
     _ ≤ _ := by nlinarith
+
+/-- A square of something within the space budget is within the time budget. -/
+theorem sq_bigOLe {u : (σ × ℕ) × Option Bool → ℕ} (h : u ≼ spaceB encS S) :
+    (fun p => (u p + 1) ^ 2) ≼ timeB encS T S :=
+  (BigOLe.of_le fun _ => Nat.le_mul_of_pos_left _ (by omega)).trans (lt_bigOLe h)
 
 /-- The step of the simulating machine, written with its components. -/
 def stepBy (m : ReadMachine σ) (p : (σ × ℕ) × Option Bool) : (σ × ℕ) × SignType × List Bool :=
@@ -240,14 +226,14 @@ theorem tidy_toStepMachine (hhalt : ComputableTidilyInO m.halt encS encBool T S)
         fun o => by cases o <;> simp)) hA hst
     have hgetD := budget_comp_linear (ComputableTidilyInDegree.getD (enc₁ := encNat) 0).inO_one
       hA hst
-    have hA₁ := budget_comp natSucc hgetD (sq_bigOLe (length_bigOLe hgetD))
-      (.add (length_bigOLe hgetD) (.const 1 _))
+    have hA₁ := budget_comp natSucc hgetD (sq_bigOLe hgetD.length_le)
+      (.add hgetD.length_le (.const 1 _))
     have hpair := budget_prod hpos hA₁
     have he := budget_comp (ComputableTidilyInO.eq encNat) hpair
       ((BigOLe.of_le fun p => by simp only [length_encPair]; nlinarith).trans
-        (sq_bigOLe (length_bigOLe hpair))) (length_bigOLe hpair)
-    have hl := budget_comp natLt hpair (lt_bigOLe (length_bigOLe hpair))
-      (.add (length_bigOLe hpair) (.const 1 _))
+        (sq_bigOLe hpair.length_le)) hpair.length_le
+    have hl := budget_comp natLt hpair (lt_bigOLe hpair.length_le)
+      (.add hpair.length_le (.const 1 _))
     -- the bit read and the step of the read machine
     have hb := budget_finite (encD := encBool)
       (fun q : Bool × Bool × Option Bool => if q.1 then false else if q.2.1
@@ -261,13 +247,13 @@ theorem tidy_toStepMachine (hhalt : ComputableTidilyInO m.halt encS encBool T S)
     have hres₁ := budget_prod (encB := encPair encS encNat) (budget_prod (fst' hr) hpos)
       (budget_prod (encB := encMove) (budget_const (0 : SignType) hin hst) (snd' hr))
     have hres₂ := budget_prod (encB := encPair encS encNat) (budget_prod hq
-      (budget_comp natSucc hpos (sq_bigOLe (length_bigOLe hpos))
-        (.add (length_bigOLe hpos) (.const 1 _))))
+      (budget_comp natSucc hpos (sq_bigOLe hpos.length_le)
+        (.add hpos.length_le (.const 1 _))))
       (budget_prod (encB := encMove) (budget_const (1 : SignType) hin hst)
         (budget_const (encB := encBits) ([] : List Bool) hin hst))
     have hres₃ := budget_prod (encB := encPair encS encNat) (budget_prod hq
-      (budget_comp natPred hpos (sq_bigOLe (length_bigOLe hpos))
-        (.add (length_bigOLe hpos) (.const 1 _))))
+      (budget_comp natPred hpos (sq_bigOLe hpos.length_le)
+        (.add hpos.length_le (.const 1 _))))
       (budget_prod (encB := encMove) (budget_const (-1 : SignType) hin hst)
         (budget_const (encB := encBits) ([] : List Bool) hin hst))
     have hall := budget_ite hc hres₁ (budget_ite hl hres₂ hres₃)

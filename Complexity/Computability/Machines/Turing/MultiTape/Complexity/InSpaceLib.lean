@@ -250,15 +250,6 @@ theorem natMul :
 
 /-! ### Lists of naturals -/
 
-theorem length_encList_tail (l : List ℕ) :
-    (encList encNat l.tail).length ≤ (encList encNat l).length := by
-  cases l <;> simp [length_encList]
-
-theorem iterate_tail (l : List ℕ) (k : ℕ) : List.tail^[k] l = l.drop k := by
-  induction k generalizing l with
-  | zero => rfl
-  | succ k ih => rw [Function.iterate_succ_apply, ih, List.drop_tail, Nat.add_comm]
-
 /-- **The element at an index**, `l.getD i 0` from `(l, i)`. -/
 theorem getD :
     ComputableTidilyInSpace (fun p : List ℕ × ℕ => p.1.getD p.2 0)
@@ -268,9 +259,7 @@ theorem getD :
       fun l => (encList encNat l).length := of_inO (.of_linear (ListEncoding.tail encNat))
   have hlen (p : List ℕ × ℕ) (k : ℕ) :
       (encList encNat (List.tail^[k] p.1)).length ≤ (encList encNat p.1).length := by
-    induction k with
-    | zero => rfl
-    | succ k ih => rw [Function.iterate_succ_apply']; exact (length_encList_tail _).trans ih
+    rw [List.tail_iterate, ← p.1.take_append_drop k, encList_append, List.length_append]; simp
   have h := iterate (n := fun p : List ℕ × ℕ => p.2) (snd _ _) (fst _ _) htail
     (Q := fun p => (encList encNat p.1).length) (B := fun p => (encList encNat p.1).length)
     (fun p k _ => hlen p k) (fun p k _ => hlen p k)
@@ -278,7 +267,7 @@ theorem getD :
       fun l => (encList encNat l).length := of_inO (.of_linear (ListEncoding.headD 0))
   refine (budget_comp_linear hhead h).mono_le (fun p => ?_) |>.of_enc_eq fun p => ?_
   · simp only [length_encPair]; omega
-  · rw [iterate_tail]
+  · rw [List.tail_iterate]
     simp [List.getD_eq_getElem?_getD, List.headD_eq_head?_getD, List.head?_drop]
 
 /-- A step of rebuilding a list with the element at `i` replaced by `v`. -/
@@ -372,15 +361,8 @@ theorem set :
         (p.1.take k).set p.2.1 p.2.2 := (set_eq_mapIdx _ _ _).symm
     have h₁ := length_encList_set_le (p.1.take k) p.2.1 p.2.2
     have h₂ := length_encList_take_le encNat p.1 k
-    have h₃ : (encNat k).length ≤ (encList encNat p.1).length := by
-      have : (encNat k).length ≤ k := by
-        rw [length_encNat_eq_size]; exact Nat.size_le.mpr (Nat.lt_two_pow_self)
-      have : p.1.length ≤ (encList encNat p.1).length := by
-        rw [length_encList]
-        induction p.1 with
-        | nil => simp
-        | cons a l ih => simp only [List.length_cons, List.map_cons, List.sum_cons]; omega
-      omega
+    have h₃ : (encNat k).length ≤ (encList encNat p.1).length :=
+      (length_encNat_le_self k).trans (hk.trans (length_le_length_encList _ _))
     simp only [length_encPair, hset] at h₁ ⊢
     omega
   have hmem (p : List ℕ × ℕ × ℕ) (i : ℕ) (hi : i < p.1.length) :
@@ -457,13 +439,8 @@ theorem replicate [Inhabited ε] :
 theorem length :
     ComputableTidilyInSpace (fun l : List ε => l.length) (encList enc) encNat
       fun l => 8 * ((encList enc l).length + 1) := by
-  have hl (l : List ε) : l.length ≤ (encList enc l).length := by
-    rw [length_encList]
-    induction l with
-    | nil => simp
-    | cons a l ih => simp only [List.length_cons, List.map_cons, List.sum_cons]; omega
-  have hbits (n : ℕ) : (encNat n).length ≤ n := by
-    rw [length_encNat_eq_size]; exact Nat.size_le.mpr Nat.lt_two_pow_self
+  have hl := length_le_length_encList enc
+  have hbits := length_encNat_le_self
   have hstep : ComputableTidilyInSpace (fun q : ℕ × ε => q.1 + 1) (encPair encNat enc) encNat
       fun q => (encPair encNat enc q).length + 1 :=
     budget_comp natSucc ((fst _ _).weaken (.of_le fun _ => by omega))

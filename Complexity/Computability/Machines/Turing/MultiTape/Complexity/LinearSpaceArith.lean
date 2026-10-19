@@ -57,10 +57,7 @@ theorem length_encNat_mul_le (a b : ℕ) :
 
 namespace ComputableTidilyInO
 
-theorem iterate_succ_eq (k n : ℕ) : (· + 1)^[k] n = n + k := by
-  induction k generalizing n with
-  | zero => rfl
-  | succ k ih => rw [Function.iterate_succ_apply, ih]; omega
+theorem iterate_succ_eq (k n : ℕ) : (· + 1)^[k] n = n + k := by simp
 
 /-- **Addition in binary**, within linear work space. -/
 public theorem natAdd :

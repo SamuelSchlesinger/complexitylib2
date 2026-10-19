@@ -60,11 +60,7 @@ theorem testBit_inSpace :
       fun l => (encBits l).length := of_inO (.of_linear (ListEncoding.headD false))
   refine (budget_comp_linear hhead h).mono_le (fun q => ?_) |>.of_enc_eq fun q => ?_
   · simp only [length_encPair]; omega
-  · have hdrop (l : List Bool) (i : ℕ) : List.tail^[i] l = l.drop i := by
-      induction i generalizing l with
-      | zero => rfl
-      | succ i ih => rw [Function.iterate_succ_apply, ih, List.drop_tail, Nat.add_comm]
-    rw [hdrop, Nat.testBit_eq_inth]
+  · rw [List.tail_iterate, Nat.testBit_eq_inth]
     congr 1
     rw [List.headD_eq_head?_getD, List.head?_drop, List.getI_eq_getElem?_getD]
     rfl

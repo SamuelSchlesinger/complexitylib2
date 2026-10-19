@@ -249,11 +249,6 @@ theorem sum_cube {M : Type*} [AddCommMonoid M] (G : (Fin ℓ ⊕ Fin ℓ → Boo
     ← Fin.sum_univ_eq_sum_range (fun k => G (Sum.elim (lowBits ℓ k) (highBits ℓ k)))]
   exact Finset.sum_congr rfl fun k _ => by rw [cubeEquiv_symm_apply]
 
-/-- The value of the indicator polynomial of a point at any `z`. -/
-theorem eval_indicatorPoly' {ι : Type*} [Fintype ι] (a : ι → Bool) (z : ι → ZMod p) :
-    eval z (indicatorPoly a : MvPolynomial ι (ZMod p)) = ∏ i, if a i then z i else 1 - z i := by
-  simp [indicatorPoly, map_prod, apply_ite]
-
 /-- **The multilinear extension of an output bit as a sum over the table indices.** -/
 theorem eval_gatePoly_eq_sum (f : Gate ℓ) (i : Fin ℓ)
     (X Y : Fin ℓ → ZMod p) :
@@ -262,7 +257,7 @@ theorem eval_gatePoly_eq_sum (f : Gate ℓ) (i : Fin ℓ)
         ((∏ j : Fin ℓ, if lowBits ℓ k j then X j else 1 - X j) *
           ∏ j : Fin ℓ, if highBits ℓ k j then Y j else 1 - Y j) := by
   rw [gatePoly, multilinearExtension, map_sum]
-  simp only [map_mul, eval_C, eval_indicatorPoly', Fintype.prod_sum_type, Sum.elim_inl,
+  simp only [map_mul, eval_C, eval_indicatorPoly_apply, Fintype.prod_sum_type, Sum.elim_inl,
     Sum.elim_inr]
   rw [sum_cube (fun a => bitVal (ZMod p) (f (a ∘ Sum.inl) (a ∘ Sum.inr) i) *
     ((∏ j, if a (Sum.inl j) then X j else 1 - X j) * ∏ j, if a (Sum.inr j) then Y j else 1 - Y j))]

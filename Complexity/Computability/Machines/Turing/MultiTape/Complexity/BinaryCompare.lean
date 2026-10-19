@@ -28,10 +28,7 @@ namespace Turing.MultiTapeTM
 
 namespace ComputableTidilyInO
 
-theorem iterate_sub_one (k n : ℕ) : (· - 1)^[k] n = n - k := by
-  induction k generalizing n with
-  | zero => rfl
-  | succ k ih => rw [Function.iterate_succ_apply, ih]; omega
+theorem iterate_sub_one (k n : ℕ) : (· - 1)^[k] n = n - k := Nat.pred_iterate n k
 
 /-- **Truncated subtraction in binary**, `b - a` from `(a, b)`. -/
 public theorem natSub :

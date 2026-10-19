@@ -325,12 +325,6 @@ theorem subtractSums_inSpace {p c : α → ℕ} {t : α → Fin 3} {acc : α →
     refine .const_mul 8192 (((length_le harg).add hB).add (.const 1 _)))
   exact (set_inSpace hR ht hsub).of_enc_eq fun x => by rw [subtractSums_eq]
 
-theorem length_le_length_encList (l : List ℕ) : l.length ≤ (encList encNat l).length := by
-  rw [length_encList]
-  induction l with
-  | nil => simp
-  | cons a l ih => simp only [List.length_cons, List.map_cons, List.sum_cons]; omega
-
 /-- **The bits of a register**, `l.map (· == 1)`, encoded as themselves. -/
 theorem mapEqOne_inSpace :
     ComputableTidilyInSpace (fun l : List ℕ => l.map (· == 1)) (encList encNat) encBits
@@ -357,7 +351,7 @@ theorem mapEqOne_inSpace :
       | cons v m ih => simp [ih]
     rw [hf, encBits_apply, List.nil_append, List.length_map]
     have := List.length_take_le' i l
-    have := length_le_length_encList l
+    have := length_le_length_encList encNat l
     omega
   have h := foldl (encL := encList encNat) (list := fun l : List ℕ => l)
     (init := fun _ => ([] : List Bool)) (step := fun acc v => acc ++ [v == 1])
