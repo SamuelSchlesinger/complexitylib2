@@ -27,7 +27,7 @@ lemma). So a polynomial-time reduction from 3SAT whose output measure is linear 
 clauses shows that the target problem is not decidable in subexponential time in that measure
 (`Cslib.Complexity.ETH.not_decidableInSubexpTime_of_reduction`)
 [ImpagliazzoPaturiZane2001] [CyganEtAl2015, Chapter 14]. Lower bounds for larger measures are
-stronger: a measure that is at most linear in another one gives the weaker lower bound for free
+stronger: a lower bound for a measure gives one for every measure at most linear in it
 (`Cslib.Complexity.DecidableInSubexpTime.mono_measure`).
 
 ## Main results
