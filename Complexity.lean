@@ -279,6 +279,7 @@ public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Circuit.Synthesis
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Circuit.Wiring
+public import Complexity.Computability.Communication.Corruption
 public import Complexity.Computability.Communication.Discrepancy
 public import Complexity.Computability.Communication.Distributional
 public import Complexity.Computability.Communication.FoolingSet

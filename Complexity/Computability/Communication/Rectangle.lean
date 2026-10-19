@@ -31,7 +31,9 @@ constant (`Protocol.exists_rectangle_partition`); some of them may be empty
 (`Protocol.Solves.solves_leafOutput`).
 
 Sums over all pairs of inputs split into sums over the leaf rectangles
-(`Protocol.sum_eq_sum_leaves`). A protocol *computes* `f : X → Y → Z` when its output is `f`,
+(`Protocol.sum_eq_sum_leaves`); so if each leaf rectangle labelled `z` has weight at most `K`, the
+inputs on which the protocol answers `z` have weight at most `K` times the number of such leaves
+(`Protocol.sum_filter_run_le_mul`). A protocol *computes* `f : X → Y → Z` when its output is `f`,
 which is solving the relation `f x y = z` on all inputs (`Protocol.solves_univ_iff`). Counting
 leaves by their labels turns bounds on rectangles into lower bounds on protocols: if `f` is
 constantly `z` only on rectangles of weight at most `K`, the inputs where `f` is `z` have weight at
@@ -56,6 +58,7 @@ when `f` is constantly `z` only on rectangles with at most `K` entries
 * `Cslib.Communication.Protocol.Solves.solves_leafOutput`: leaf rectangles inside the inputs of a
   solved relation are monochromatic.
 * `Cslib.Communication.Protocol.sum_eq_sum_leaves`: sums over the leaf rectangles.
+* `Cslib.Communication.Protocol.sum_filter_run_le_mul`: weights of the leaves with a given label.
 * `Cslib.Communication.Protocol.sum_filter_le_mul`: the weighted area bound.
 * `Cslib.Communication.Protocol.card_filter_le_mul`: the area bound.
 
@@ -271,6 +274,29 @@ theorem sum_eq_sum_leaves {M : Type*} [AddCommMonoid M] (p : Protocol X Y Z) (g 
   ext q
   simp [leaf_eq_iff]
 
+open Classical in
+/-- **Weights of the leaves with a given label.** If every leaf rectangle labelled `z` has weight
+at most `K` under `w`, the inputs on which the protocol answers `z` have weight at most `K` times
+the number of leaves labelled `z`. The weights take values in an ordered semiring such as `ℕ` or
+`ℝ`, and may be negative. -/
+theorem sum_filter_run_le_mul {M : Type*} [Semiring M] [PartialOrder M] [IsOrderedAddMonoid M]
+    [DecidableEq Z] (p : Protocol X Y Z) (z : Z) (w : X → Y → M) {K : M}
+    (hK : ∀ i, p.leafOutput i = z →
+      ∑ x with x ∈ p.leafAlice i, ∑ y with y ∈ p.leafBob i, w x y ≤ K) :
+    ∑ q : X × Y with p.run q.1 q.2 = z, w q.1 q.2 ≤ #{i | p.leafOutput i = z} * K := by
+  rw [sum_filter, Fintype.sum_prod_type' (fun x y => if p.run x y = z then w x y else 0),
+    p.sum_eq_sum_leaves, card_eq_sum_ones, Nat.cast_sum, sum_mul, sum_filter]
+  refine sum_le_sum fun i _ => ?_
+  have hrect : ∀ x ∈ ({x | x ∈ p.leafAlice i} : Finset X),
+      ∀ y ∈ ({y | y ∈ p.leafBob i} : Finset Y), p.run x y = p.leafOutput i := fun x hx y hy =>
+    run_eq_leafOutput (mem_filter.mp hx).2 (mem_filter.mp hy).2
+  split_ifs with hi
+  · rw [Nat.cast_one, one_mul]
+    refine le_of_eq_of_le (sum_congr rfl fun x hx => sum_congr rfl fun y hy => ?_) (hK i hi)
+    simp [hrect x hx y hy, hi]
+  · refine (sum_eq_zero fun x hx => sum_eq_zero fun y hy => ?_).le
+    simp [hrect x hx y hy, hi]
+
 /-- **The weighted area bound.** If `f` is constantly `z` only on rectangles of weight at most `K`
 under `w`, then for every protocol computing `f` the inputs where `f` is `z` have weight at most
 `K` times the number of leaves labelled `z`. The weights take values in an ordered semiring such
@@ -280,20 +306,10 @@ theorem sum_filter_le_mul {M : Type*} [Semiring M] [PartialOrder M] [IsOrderedAd
     (hK : ∀ (A : Finset X) (B : Finset Y), (∀ x ∈ A, ∀ y ∈ B, f x y = z) →
       ∑ x ∈ A, ∑ y ∈ B, w x y ≤ K) :
     ∑ q : X × Y with f q.1 q.2 = z, w q.1 q.2 ≤ #{i | p.leafOutput i = z} * K := by
+  subst hp
   classical
-  rw [sum_filter, Fintype.sum_prod_type' (fun x y => if f x y = z then w x y else 0),
-    p.sum_eq_sum_leaves, card_eq_sum_ones, Nat.cast_sum, sum_mul, sum_filter]
-  refine sum_le_sum fun i _ => ?_
-  have hrect : ∀ x ∈ ({x | x ∈ p.leafAlice i} : Finset X),
-      ∀ y ∈ ({y | y ∈ p.leafBob i} : Finset Y), f x y = p.leafOutput i := fun x hx y hy => by
-    rw [← hp, run_eq_leafOutput (mem_filter.mp hx).2 (mem_filter.mp hy).2]
-  split_ifs with hi
-  · rw [Nat.cast_one, one_mul]
-    refine le_of_eq_of_le (sum_congr rfl fun x hx => sum_congr rfl fun y hy => ?_)
-      (hK _ _ fun x hx y hy => (hrect x hx y hy).trans hi)
-    simp [(hrect x hx y hy).trans hi]
-  · refine (sum_eq_zero fun x hx => sum_eq_zero fun y hy => ?_).le
-    simp [hrect x hx y hy, hi]
+  exact p.sum_filter_run_le_mul z w fun i hi => hK _ _ fun x hx y hy => by
+    rw [run_eq_leafOutput (mem_filter.mp hx).2 (mem_filter.mp hy).2, hi]
 
 /-- **The area bound.** If `f` is constantly `z` only on rectangles with at most `K` entries, every
 protocol computing `f` has at least `|f⁻¹(z)| / K` leaves labelled `z`. -/

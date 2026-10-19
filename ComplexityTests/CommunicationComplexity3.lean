@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Communication.Corruption
 import Complexity.Computability.Communication.Distributional
 import Complexity.Computability.Communication.Functions
 import Complexity.Probability.Minimax
@@ -11,7 +12,8 @@ import Complexity.Probability.PMF
 
 /-!
 Regression clients for distributional complexity and Yao's minimax principle, for the averaging
-and minimax lemmas on finite distributions behind them, and for the consolidated protocol API.
+and minimax lemmas on finite distributions behind them, for the corruption bound, and for the
+consolidated protocol API.
 -/
 
 open Cslib Cslib.Communication Finset
@@ -100,6 +102,61 @@ example : PublicCoin.ecomplexityFun (1 / 3) (equality : BitString 2 → BitStrin
       Protocol.distributionalComplexity (1 / 3) (fun x y b => equality x y = b) ν :=
   PublicCoin.ecomplexityFun_eq_iSup_distributionalComplexity _
 
+/-! ### The corruption bound -/
+
+/-- Equality on `Fin N` under the uniform distribution is `(1, 1 / N ^ 2)`-corrupted on `true`:
+a rectangle `A × B` contains `|A ∩ B|` pairs on the diagonal and `|A| |B| - |A ∩ B|` off it, and
+`2 |A ∩ B| ≤ |A| |B| + 1`. -/
+private theorem corrupted_equality (N : ℕ) [NeZero N] :
+    Corrupted (Probability.PMF.uniformOfFintype (Fin N × Fin N))
+      (equality : Fin N → Fin N → Bool) true 1 (1 / N ^ 2) := by
+  intro A B
+  set c : ℝ := 1 / N ^ 2
+  have hc (q : Fin N × Fin N) :
+      (Probability.PMF.uniformOfFintype (Fin N × Fin N) q).toReal = c := by
+    simp [Probability.PMF.uniformOfFintype_apply, c, Fintype.card_prod, sq]
+  have hdiag : ∑ x ∈ A, ∑ y ∈ B, (if equality x y = true then c else 0) = c * #(A ∩ B) := by
+    simp only [equality, decide_eq_true_eq, sum_ite_eq, ← sum_filter, sum_const, nsmul_eq_mul]
+    rw [mul_comm, filter_mem_eq_inter]
+  have hoff : ∑ x ∈ A, ∑ y ∈ B, (if equality x y = true then 0 else c) =
+      c * (#A * #B) - c * #(A ∩ B) := by
+    rw [← hdiag]
+    have h (x y : Fin N) : (if equality x y = true then 0 else c) =
+        c - if equality x y = true then c else 0 := by
+      split_ifs <;> simp
+    simp only [h, sum_sub_distrib, sum_const, nsmul_eq_mul]
+    ring
+  simp only [hc]
+  rw [hdiag, hoff, one_mul]
+  have hk₁ : (#(A ∩ B) : ℝ) ≤ #A := by exact_mod_cast card_le_card inter_subset_left
+  have hk₂ : (#(A ∩ B) : ℝ) ≤ #B := by exact_mod_cast card_le_card inter_subset_right
+  have hc0 : 0 ≤ c := by positivity
+  have hk : 2 * (#(A ∩ B) : ℝ) ≤ #A * #B + 1 := by
+    nlinarith [sq_nonneg ((#(A ∩ B) : ℝ) - 1), mul_le_mul hk₁ hk₂ (Nat.cast_nonneg _)
+      (Nat.cast_nonneg _)]
+  nlinarith
+
+-- With zero error, the corruption bound gives back `N ≤ 2 ^ c` for equality on `Fin N`, with
+-- public coins.
+example (N c : ℕ) [NeZero N]
+    (hc : PublicCoin.ecomplexityFun 0 (equality : Fin N → Fin N → Bool) ≤ c) :
+    (N : ℝ) ≤ 2 ^ c := by
+  have h := (corrupted_equality N).mul_sub_le_of_ecomplexityFun_le zero_le_one hc
+  have hz : ((Probability.PMF.uniformOfFintype (Fin N × Fin N)).toOuterMeasure
+      {q | equality q.1 q.2 = true}).toReal = 1 / N := by
+    rw [Probability.PMF.toOuterMeasure_apply_toReal, Fintype.sum_prod_type]
+    simp only [equality, decide_eq_true_eq, Set.mem_ofPred_eq,
+      Probability.PMF.uniformOfFintype_apply, Fintype.card_prod, Fintype.card_fin, Nat.cast_mul,
+      ENNReal.toReal_inv, ENNReal.toReal_mul, ENNReal.toReal_natCast, mul_inv_rev, sum_ite_eq,
+      mem_univ, ↓reduceIte, sum_const, card_univ, nsmul_eq_mul, one_div]
+    field_simp
+  rw [hz] at h
+  have hN : (0 : ℝ) < N := by
+    have := NeZero.pos N
+    positivity
+  field_simp at h
+  nlinarith
+
 /-! ### The consolidated protocol API -/
 
 -- Leaves, their labels and their rectangles by simp.
@@ -179,6 +236,21 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms PublicCoin.ecomplexityFun_eq_iSup_distributionalComplexity
+
+/-- info: 'Cslib.Communication.Corrupted.mul_sub_distributionalError_le' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Corrupted.mul_sub_distributionalError_le
+
+/-- info: 'Cslib.Communication.Corrupted.mul_sub_le_of_ecomplexityFun_le' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Corrupted.mul_sub_le_of_ecomplexityFun_le
+
+/-- info: 'Cslib.Communication.Protocol.sum_filter_run_le_mul' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Protocol.sum_filter_run_le_mul
 
 /-- info: 'Cslib.Communication.Protocol.ecomplexityFun_le_succ' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
