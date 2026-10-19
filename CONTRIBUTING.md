@@ -65,6 +65,24 @@ also update the doc-gen4 tag in `docbuild/lakefile.toml` and run
 `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update doc-gen4`.
 Commit the refreshed documentation lockfile and run the documentation checks and build.
 
+## Maintaining the proof companion
+
+The LaTeX manuscript at `paper/main.tex` explains the arguments in the formalization in
+human-readable mathematical language. It should let a reader follow the actual proof through
+its definitions and intermediate results, with links to Lean declarations and appropriate source
+credit. Its coverage may grow incrementally; do not imply that a proposed section is translated.
+
+Every AI-authored PR must check and synchronize this exposition. Update it for changed proofs,
+including refactors that preserve statements, and write the corresponding section for new or
+previously undocumented mathematical work. Update links when declarations move. If a change has
+no mathematical or expository impact, say why in the PR. An independent AI reviewer must compare
+changed prose with the final formal definitions, statements and proof bodies, checking assumptions,
+quantifiers, proof steps and resource bounds. Record the exact revisions and any findings, rebuild
+and visually inspect the PDF, and identify remaining untranslated prerequisites honestly.
+
+This is a review of the translation, not a formal equivalence check or human editorial approval.
+Keep the author's control over selection, organization and wording.
+
 ## Upstreaming
 
 ```bash
