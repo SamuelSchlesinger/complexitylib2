@@ -16,6 +16,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
@@ -60,6 +61,8 @@ deterministic search replaces the passage through `NPSPACE` and Savitch's theore
 namespace Cslib.Complexity
 
 open _root_.Turing _root_.Turing.MultiTapeTM
+open Cslib.BitString (increment lsbValue lsbValue_lt iterate_increment iterate_increment_lsbValue
+  length_increment)
 
 variable {α β : Type} {enc : α ↪ List Bool}
 
@@ -88,105 +91,15 @@ theorem mem_PSPACE_of_computableTidilyInO {L : Set α} {f : α → Bool} {T S : 
 
 /-! ### Certificate search -/
 
-/-- Binary increment, least significant bit first, discarding the final carry. -/
-private def incr : List Bool → List Bool
-  | [] => []
-  | false :: w => true :: w
-  | true :: w => false :: incr w
-
-/-- The value of a word in binary, least significant bit first. -/
-private def val : List Bool → ℕ
-  | [] => 0
-  | b :: w => b.toNat + 2 * val w
-
-private theorem length_incr : ∀ w, (incr w).length = w.length
-  | [] => rfl
-  | false :: _ => rfl
-  | true :: w => by simp [incr, length_incr w]
-
-private theorem val_lt : ∀ w, val w < 2 ^ w.length
-  | [] => by simp [val]
-  | b :: w => by
-    have := val_lt w
-    cases b <;> simp [val, pow_succ] <;> omega
-
-private theorem val_incr : ∀ w, val w + 1 < 2 ^ w.length → val (incr w) = val w + 1
-  | [] => by simp [val]
-  | false :: w => fun _ => by simp [incr, val]; omega
-  | true :: w => fun h => by
-    simp only [val, List.length_cons, pow_succ, Bool.toNat_true, incr, Bool.toNat_false] at h ⊢
-    rw [val_incr w (by omega)]
-    omega
-
-private theorem val_injective : ∀ {w w' : List Bool}, w.length = w'.length → val w = val w' →
-    w = w'
-  | [], [], _, _ => rfl
-  | b :: w, b' :: w', hl, hv => by
-    simp only [val] at hv
-    have hb : b = b' := by
-      cases b <;> cases b' <;> first | rfl | (simp at hv; omega)
-    subst hb
-    exact congrArg _ (val_injective (by simpa using hl) (by omega))
-
-private theorem val_replicate_false : ∀ m, val (List.replicate m false) = 0
-  | 0 => rfl
-  | m + 1 => by simp [List.replicate_succ, val, val_replicate_false m]
-
-private theorem iterate_incr (m : ℕ) : ∀ j < 2 ^ m,
-    val (incr^[j] (List.replicate m false)) = j ∧ (incr^[j] (List.replicate m false)).length = m
-  | 0, _ => ⟨val_replicate_false m, List.length_replicate⟩
-  | j + 1, hj => by
-    obtain ⟨hv, hl⟩ := iterate_incr m j (by omega)
-    rw [Function.iterate_succ_apply', length_incr, val_incr _ (by rw [hv, hl]; omega), hv]
-    exact ⟨rfl, hl⟩
-
-private theorem iterate_incr_val (u : List Bool) :
-    incr^[val u] (List.replicate u.length false) = u :=
-  let h := iterate_incr u.length (val u) (val_lt u)
-  val_injective h.2 h.1
-
-/-- Increment by a two-state transducer, the state being the carry. -/
-private def incrT : Transducer Bool Bool where
-  q₀ := true
-  step c b := (c && b, [b ^^ c])
-  final _ := []
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-private theorem incrT_run_false (w : List Bool) : incrT.run false w = w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    rw [Transducer.run_cons]
-    change [b ^^ false] ++ incrT.run (false && b) w = b :: w
-    rw [Bool.false_and, ih, Bool.xor_false]
-    rfl
-
-private theorem incrT_run (w : List Bool) : incrT.run true w = incr w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    rw [Transducer.run_cons]
-    change [b ^^ true] ++ incrT.run (true && b) w = incr (b :: w)
-    cases b
-    · rw [Bool.true_and, incrT_run_false]
-      rfl
-    · rw [Bool.true_and, ih]
-      rfl
-
-private theorem incr_pt : ComputableTidilyInPolyTime incr encBits encBits :=
-  .of_linear (incrT.computableTidilyInLinearTimeAndSpace fun w => by
-    rw [show incrT.q₀ = true from rfl, incrT_run]; rfl)
-
 /-- A round of the search: test a certificate, record the verdict, move to the next. -/
 private def searchStep (V : α × List Bool → Bool) (x : α × List Bool × Bool) :
     α × List Bool × Bool :=
-  (x.1, incr x.2.1, x.2.2 || V (x.1, x.2.1))
+  (x.1, increment x.2.1, x.2.2 || V (x.1, x.2.1))
 
 private theorem iterate_searchStep (V : α × List Bool → Bool) (a : α) (m : ℕ) : ∀ i,
     (searchStep V)^[i] (a, List.replicate m false, false) =
-      (a, incr^[i] (List.replicate m false),
-        decide (∃ j < i, V (a, incr^[j] (List.replicate m false)) = true))
+      (a, increment^[i] (List.replicate m false),
+        decide (∃ j < i, V (a, increment^[j] (List.replicate m false)) = true))
   | 0 => by simp
   | i + 1 => by
     rw [Function.iterate_succ_apply', iterate_searchStep V a m i]
@@ -207,9 +120,9 @@ private theorem search_spec (V : α × List Bool → Bool) (a : α) (m : ℕ) :
   rw [iterate_searchStep, decide_eq_true_iff]
   constructor
   · rintro ⟨j, hj, h⟩
-    exact ⟨_, (iterate_incr m j hj).2, h⟩
+    exact ⟨_, (iterate_increment m j hj).2, h⟩
   · rintro ⟨u, rfl, h⟩
-    exact ⟨val u, val_lt u, by rw [iterate_incr_val]; exact h⟩
+    exact ⟨lsbValue u, lsbValue_lt u, by rw [iterate_increment_lsbValue]; exact h⟩
 
 
 /-- **Certificate search in polynomial space.** A problem with a verifier decidable within
@@ -234,8 +147,8 @@ theorem mem_PSPACE_of_isVerifier {p : Polynomial ℕ} {V : α × List Bool → B
         (encPair enc encBits) := by fun_prop
     have hfst : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => x.1) encS enc := by
       fun_prop
-    have hinc : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => incr x.2.1) encS
-        encBits := incr_pt.comp (by fun_prop)
+    have hinc : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => increment x.2.1) encS
+        encBits := ComputableTidilyInPolyTime.increment.comp (by fun_prop)
     have hacc : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => x.2.2) encS
         encBool := by fun_prop
     have hor : ComputableTidilyInPolyTime (fun q : Bool × Bool => q.1 || q.2)
@@ -284,13 +197,13 @@ theorem mem_PSPACE_of_isVerifier {p : Polynomial ℕ} {V : α × List Bool → B
   set B : α → ℕ := fun a => 2 * (enc a).length + 2 * m a + 3 with hB
   have hiter (a : α) (i : ℕ) :
       (searchStep V)^[i] (a, List.replicate (m a) false, false) =
-        (a, incr^[i] (List.replicate (m a) false),
-          decide (∃ j < i, V (a, incr^[j] (List.replicate (m a) false)) = true)) :=
+        (a, increment^[i] (List.replicate (m a) false),
+          decide (∃ j < i, V (a, increment^[j] (List.replicate (m a) false)) = true)) :=
     iterate_searchStep V a (m a) i
-  have hlen (a : α) (i : ℕ) : (incr^[i] (List.replicate (m a) false)).length = m a := by
+  have hlen (a : α) (i : ℕ) : (increment^[i] (List.replicate (m a) false)).length = m a := by
     induction i with
     | zero => exact List.length_replicate
-    | succ i ih => rw [Function.iterate_succ_apply', length_incr, ih]
+    | succ i ih => rw [Function.iterate_succ_apply', length_increment, ih]
   have hstate (a : α) (i : ℕ) :
       (encS ((searchStep V)^[i] (a, List.replicate (m a) false, false))).length = B a := by
     rw [hiter]

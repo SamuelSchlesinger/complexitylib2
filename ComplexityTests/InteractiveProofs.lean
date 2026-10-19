@@ -5,8 +5,10 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
+import Complexity.Computability.Complexity.Classes.IP.PSPACE
 
-/-! Interactive proofs: concrete graphs, honest and cheating provers, class inclusions, axioms. -/
+/-! Interactive proofs: concrete graphs, honest and cheating provers, class inclusions, the
+polynomial-space evaluation of the optimal prover, axioms. -/
 
 namespace ComplexityTests.InteractiveProofs
 
@@ -138,6 +140,80 @@ example (round : WordOracleComp Unit Bool) (P : Prover Unit) :
     acceptProb (sequentialRepeat 0 round) P = 1 := by
   simp [sequentialRepeat, acceptProb]
 
+/-! ### `IP ⊆ PSPACE` -/
+
+-- Graph non-isomorphism is in polynomial space, through its interactive proof.
+example : GraphNonIsomorphism ∈ PSPACE (encPair encGraph encGraph) :=
+  IP_subset_PSPACE _ GraphNonIsomorphism.mem_IP
+
+-- `NP ⊆ PSPACE` and `BPP ⊆ PSPACE` follow through `IP`.
+example {α : Type} (enc : α ↪ List Bool) : NP enc ⊆ PSPACE enc :=
+  (NP_subset_IP enc).trans (IP_subset_PSPACE enc)
+
+example {α : Type} (enc : α ↪ List Bool) : BPP enc ⊆ PSPACE enc :=
+  (BPP_subset_IP enc).trans (IP_subset_PSPACE enc)
+
+-- The binary counter counts, least significant bit first, and wraps around.
+example : BitString.increment [true, true, false] = [false, false, true] := rfl
+example : BitString.increment^[5] [false, false, false] = [true, false, true] := rfl
+example : BitString.increment [true, true] = [false, false] := rfl
+example : BitString.lsbValue [true, false, true] = 5 := rfl
+
+-- Polynomial space is closed under composition and contains polynomial time, through `fun_prop`.
+example : ComputableTidilyInPolySpace (fun w => BitString.increment (BitString.increment w))
+    encBits encBits := by
+  fun_prop
+
+-- A Boolean function computable within polynomial space decides a problem in `PSPACE`.
+example : {w : List Bool | w.headD false = true} ∈ PSPACE encBits :=
+  mem_PSPACE_of_computableTidilyInPolySpace (f := fun w => w.headD false)
+    (.of_polyTime (ComputableTidilyInPolyTime.headD false)) fun _ => Iff.rfl
+
+-- The seven codes of length `3` decode to the seven words of length at most `2`, each once.
+example : (List.range (Interaction.codeCount 2)).map (fun i =>
+    Interaction.decodeWord (BitString.increment^[i] (Interaction.firstCode 2))) =
+      [[false, false], [false], [true, false], [], [false, true], [true], [true, true]] := by
+  decide
+
+example : Interaction.encodeWord 3 [true] = [false, false, true, true] := rfl
+
+-- A game tree with two messages and two replies, of depth one: the root has leaf value `1`, and
+-- the child reached by the message `i` and the reply `j` has leaf value `2 * i + j`, so the value
+-- is `1 + max 0 1 + max 2 3 = 5`. The evaluator returns it after `GameTree.time 2 1 = 9` steps.
+private def treeLeaf : List (ℕ × ℕ) → ℕ
+  | [] => 1
+  | (i, j) :: _ => 2 * i + j
+
+example : GameTree.value 2 100 0 Nat.succ treeLeaf 1 [] = 5 := by decide
+
+example : (GameTree.step 1 100 0 Nat.succ (fun i => decide (i = 1)) treeLeaf)^[GameTree.time 2 1]
+    ([], none) = ([], some 5) := by decide
+
+example : (GameTree.step 1 100 0 Nat.succ (fun i => decide (i = 1)) treeLeaf)^[GameTree.time 2 1]
+    ([], none) = ([], some (GameTree.value 2 100 0 Nat.succ treeLeaf 1 [])) :=
+  GameTree.iterate_step_eval (by norm_num) (fun i hi => by interval_cases i <;> rfl) le_rfl
+
+-- A cap below the value caps the sums.
+example : GameTree.value 2 4 0 Nat.succ treeLeaf 1 [] = 4 := by decide
+
+-- A verifier with two coin values that accepts without sending a message is a bounded family with
+-- no rounds; its value is the number of coin values, and no prover can do better.
+private def acceptAll : Fin 2 → WordQueryComp Unit Bool := fun _ => pure true
+
+private theorem isBounded_acceptAll : Interaction.IsBounded acceptAll 0 0 where
+  rounds r h m hm := by cases h <;> simp [Interaction.outcome, acceptAll] at hm
+  message r h m hm := by cases h <;> simp [Interaction.outcome, acceptAll] at hm
+  reply r h m y e := by cases h <;> rfl
+
+example : Interaction.value acceptAll 0 0 [] = 2 := by
+  have h (r : Fin 2) : Interaction.outcome (acceptAll r) [] = .done true := rfl
+  simp [Interaction.value, Interaction.accepted, h]
+
+example (P : Prover Unit) :
+    ∑ r, Interaction.acceptFrom P P.init (some (acceptAll r)) ≤
+      Interaction.value acceptAll 0 0 [] :=
+  Interaction.sum_acceptFrom_le_value isBounded_acceptAll P
+
 /-! ### Axiom audit of the headline results -/
 
 /-- info: 'Cslib.Complexity.NP_subset_IP' depends on axioms:
@@ -211,5 +287,57 @@ example (round : WordOracleComp Unit Bool) (P : Prover Unit) :
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms GraphNonIsomorphism.mem_IP
+
+/-- info: 'Cslib.Complexity.IP_subset_PSPACE' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms IP_subset_PSPACE
+
+/-- info: 'Cslib.Complexity.mem_iff_two_pow_lt_value' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms mem_iff_two_pow_lt_value
+
+/-- info: 'Cslib.Complexity.Interaction.sum_acceptFrom_le_value' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Interaction.sum_acceptFrom_le_value
+
+/-- info: 'Cslib.Complexity.Interaction.sum_acceptFrom_optimalProver' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Interaction.sum_acceptFrom_optimalProver
+
+/-- info: 'Cslib.Complexity.Interaction.acceptProb_eq_sum' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Interaction.acceptProb_eq_sum
+
+/-- info: 'Cslib.Complexity.Interaction.isBounded_coinFamily' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Interaction.isBounded_coinFamily
+
+/-- info: 'Cslib.Complexity.Interaction.evaluate_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Interaction.evaluate_eq
+
+/-- info: 'Cslib.Complexity.Interaction.computableTidilyInPolySpace_evaluate' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Interaction.computableTidilyInPolySpace_evaluate
+
+/-- info: 'Cslib.Complexity.Interaction.computableTidilyInPolySpace_countAccepts' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Interaction.computableTidilyInPolySpace_countAccepts
+
+/-- info: 'Cslib.Complexity.GameTree.iterate_step_node' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms GameTree.iterate_step_node
 
 end ComplexityTests.InteractiveProofs
