@@ -8,7 +8,7 @@ import Complexity.Computability.Complexity.Problems.IntegerProgramming
 import Complexity.Computability.Complexity.Problems.Knapsack
 import Complexity.Computability.Complexity.Problems.Partition
 import Complexity.Computability.Complexity.Problems.SubsetSum
-import Complexity.Computability.Complexity.Problems.SubsetSum.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 
 /-!
 # NP-complete number problems: tests

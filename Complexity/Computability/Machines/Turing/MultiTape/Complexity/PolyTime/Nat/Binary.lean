@@ -17,14 +17,15 @@ import Mathlib.Data.Nat.Bitwise
 # Polynomial-time arithmetic on binary naturals
 
 Polynomial-time certificates for arithmetic on the binary encoding `Turing.MultiTapeTM.encNat`
-(digits least significant first), as needed by the verifiers and reductions of the number problems
-(`Cslib.Complexity.SubsetSum` and its relatives). Addition and multiplication are Christian
-Reitwiessner's degree-bounded machines (`Turing.MultiTapeTM.computableTidilyInDegree_add`,
+(digits least significant first), the binary counterparts of the unary certificates in
+`PolyTime/Nat.lean`. Addition and multiplication are Christian Reitwiessner's degree-bounded
+machines (`Turing.MultiTapeTM.computableTidilyInDegree_add`,
 `Turing.MultiTapeTM.computableTidilyInDegree_mul`). A list is summed by a left fold whose
 accumulator grows by at most one digit more than the length of the element added. Powers of two are
 computed from a unary exponent by repeated doubling. Strict comparison scans bit positions: `m < n`
 exactly when some position holds a one in `n` and a zero in `m` and all higher positions agree
-(`Nat.lt_of_testBit`); the scan is quadratic in the number of digits.
+(`Nat.lt_of_testBit`); the scan is quadratic in the number of digits. The verifiers and reductions
+of the number problems (`Cslib.Complexity.SubsetSum` and its relatives) are built from these.
 
 ## Main results
 

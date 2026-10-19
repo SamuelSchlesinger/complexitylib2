@@ -260,7 +260,6 @@ public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SubsetSum
-public import Complexity.Computability.Complexity.Problems.SubsetSum.Binary
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
@@ -324,6 +323,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log

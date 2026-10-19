@@ -13,7 +13,7 @@ import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Computability.Complexity.Problems.SubsetSum.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Logics.Propositional.CNF.PolyTime
 
 /-!

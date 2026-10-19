@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import Complexity.Computability.Complexity.Problems.SubsetSum.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 
 /-!
 # Zero-one integer programming
