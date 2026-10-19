@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 import Complexity.Computability.Probabilistic.Oracle.Substitution
+import Complexity.Languages.Probabilistic.Simulation
 
 /-!
 # Monotonicity of the oracle classes under reductions
@@ -26,7 +27,6 @@ give the same classes.
 
 ## Main results
 
-* `Cslib.OracleComp.run_interpret_lift`: interpreting against lifted handlers keeps the state.
 * `Cslib.Complexity.ComputableInPolyTimeWithOracle.of_polyTimeReducible`: oracle monotonicity.
 * `Cslib.Complexity.PolyTimeReducible.PWithOracle_subset`,
   `Cslib.Complexity.PolyTimeReducible.NPWithOracle_subset`: `P^A ⊆ P^B` and `NP^A ⊆ NP^B`.
@@ -43,21 +43,6 @@ namespace Cslib.Complexity
 open Probability _root_.Turing.MultiTapeTM
 
 variable {α β : Type} {input : α ↪ List Bool} {output : β ↪ List Bool}
-
-/-- Interpreting against handlers lifted from a monad threads the state unchanged. -/
-theorem _root_.Cslib.OracleComp.run_interpret_lift {Query σ γ : Type}
-    {spec : OracleSpec.{0, 0} Query} {m : Type → Type} [Monad m] [LawfulMonad m]
-    (h : (q : Query) → m (spec q)) (p : OracleComp spec γ) (s : σ) :
-    (OracleComp.interpret (m := StateT σ m) (fun q => StateT.lift (h q)) p).run s =
-      (fun b => (b, s)) <$> OracleComp.interpret h p := by
-  induction p using PFunctor.FreeM.induction with
-  | pure b => simp
-  | lift_bind q cont ih =>
-    rw [show (PFunctor.FreeM.lift q).bind cont = OracleComp.query q >>= cont from rfl,
-      OracleComp.interpret_bind, OracleComp.interpret_bind, OracleComp.interpret_query,
-      OracleComp.interpret_query, StateT.run_bind, StateT.run_lift, bind_assoc, map_bind]
-    simp only [pure_bind, ih]
-
 
 open Classical in
 /-- **Oracle monotonicity.** If `A` reduces to `B` in polynomial time, then polynomial time

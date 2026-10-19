@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolovay
 public import Complexity.Computability.Complexity.Classes.Oracle.Space
 public import Complexity.Computability.Complexity.Classes.Oracle.TQBF
 
@@ -27,8 +28,8 @@ Boolean formulas form such an oracle (`Cslib.Complexity.image_TQBF_pspaceComplet
 `P^TQBF = NP^TQBF` (`Cslib.Complexity.PWithOracle_image_TQBF_eq_NPWithOracle`).
 
 With `Cslib.Complexity.exists_PWithOracle_ssubset_NPWithOracle`, this is the theorem of Baker,
-Gill and Solovay: there are oracles relative to which `P = NP` and relative to which `P ≠ NP`, so
-no proof that relativizes settles the question.
+Gill and Solovay (`Cslib.Complexity.baker_gill_solovay`): there are oracles relative to which
+`P = NP` and relative to which `P ≠ NP`, so no proof that relativizes settles the question.
 
 ## Main results
 
@@ -39,6 +40,8 @@ no proof that relativizes settles the question.
   `P = NP = PSPACE`.
 * `Cslib.Complexity.PWithOracle_image_TQBF_eq_NPWithOracle`,
   `Cslib.Complexity.exists_PWithOracle_eq_NPWithOracle`: relative to `TQBF`, `P = NP`.
+* `Cslib.Complexity.baker_gill_solovay`: relative to some oracle `P = NP`, relative to another
+  `P ≠ NP`.
 
 ## References
 
@@ -88,5 +91,13 @@ theorem PWithOracle_image_TQBF_eq_NPWithOracle (enc : α ↪ List Bool) :
 theorem exists_PWithOracle_eq_NPWithOracle :
     ∃ A : Set (List Bool), PWithOracle A encBits = NPWithOracle A encBits :=
   ⟨_, PWithOracle_image_TQBF_eq_NPWithOracle encBits⟩
+
+/-- **The theorem of Baker, Gill and Solovay** [BakerGillSolovay1975], [Arora and Barak, Theorem
+3.7][AroraBarak09]: there is an oracle language relative to which `P = NP`, and one relative to
+which `P ≠ NP`. -/
+theorem baker_gill_solovay :
+    (∃ A : Set (List Bool), PWithOracle A encBits = NPWithOracle A encBits) ∧
+      ∃ B : Set (List Bool), PWithOracle B encBits ≠ NPWithOracle B encBits :=
+  ⟨exists_PWithOracle_eq_NPWithOracle, exists_PWithOracle_ne_NPWithOracle⟩
 
 end Cslib.Complexity
