@@ -1,6 +1,6 @@
 # Index of proved statements
 
-`main.tex` and `main.pdf` present a curated, human-readable index of 79 entries covering significant
+`main.tex` and `main.pdf` present a curated, human-readable index of 81 entries covering significant
 results, grouped by subject. Each entry states the result, its assumptions
 and model, important limitations, and links to exact Lean declarations. It is not
 an exhaustive API reference. Standalone entries emphasize substantial endpoints;

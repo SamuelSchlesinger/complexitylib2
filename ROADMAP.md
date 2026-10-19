@@ -46,8 +46,8 @@ with stronger fewness containments, counting reductions and oracle results, pres
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions and elementary containments/closures.
-The binary-output FP-to-#P/GapP bridge is available. Remaining extensions include
-US/Unique-SAT completeness, stronger Boolean-hierarchy closure and collapse results,
+The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
+MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
 LWPP reduction closure and multiple-target robustness, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
@@ -354,6 +354,9 @@ space bounds. Further class-level work needs resource certificates for the actua
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
   linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
+* Reingold's theorem: the combinatorial core is [proved](Complexity/Algorithms/Reachability/Reingold.lean)
+  (reachability iff an O(log n) walk in the transformed graph); log-space evaluation of the
+  rotation map and USTCON ∈ L remain;
 * `NL = coNL`, building on logspace composition, `NL ⊆ P` and Savitch; `PH ⊆ PSPACE` is
   already proved by evaluating quantified predicates in
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);

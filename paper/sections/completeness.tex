@@ -14,6 +14,40 @@ three distinct literals per clause.\citep[Section 2.3]{AroraBarak09}
 \end{result}
 
 \begin{result}
+\subsection{Parsimonious Cook--Levin and complete counting problems}
+The Cook--Levin tableau is parsimonious: for a deterministic multi-tape machine $M$, input
+prefix $u$, certificate length $L$ and step bound $T$, the tableau has exactly as many
+satisfying assignments (of the variables occurring in it) as there are words
+$w\in\{0,1\}^L$ such that $M$ on $uw$ has halted with output $1$ after $T$ steps. Hence the
+existing Cook--Levin reduction of a verifier $V$ maps an instance $a$ to a CNF formula with
+exactly $|\{w\in\{0,1\}^{p(|a|)} : V(a,w)=1\}|$ satisfying assignments, and $\#\mathrm{SAT}$
+is $\#\cc{P}$-complete under parsimonious polynomial-time reductions $f(a)=\#\mathrm{SAT}(r(a))$,
+for the verifier-based $\#\cc{P}$ (certificates of exact polynomial length) and every
+injective instance encoding. The count ranges over assignments of the occurring variables.
+Consequently, under polynomial-time many-one reductions: formulas with an odd number of
+satisfying assignments form a $\oplus\cc{P}$-complete problem; unique satisfiability is
+$\cc{US}$-complete; a count not divisible by $k$ is $\cc{Mod}_k\cc{P}$-complete and its
+complement $\cc{coMod}_k\cc{P}$-complete, for every modulus $k$ (including the degenerate
+moduli $0$ and $1$ of the total definition); pairs $(\varphi,m)$, $m$ in binary, with
+$\#\varphi\ge m$ form a $\cc{PP}$-complete problem, and those with $\#\varphi=m$ a
+$\cc{C_{=}P}$-complete problem whose complement is $\cc{coC_{=}P}$-complete. All classes are the
+library's verifier-based definitions; MAJSAT itself is not treated.
+\citep{Valiant1979}\citep[Chapter 18]{Papadimitriou94}\citep{PapadimitriouZachos1983}\citep{BlassGurevich1982}\citep{Gill1977}\citep{Fortnow1997}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Parsimonious.lean}{340}{Cslib.Complexity.CookLevin.modelCount_tableau}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Parsimonious.lean}{364}{Cslib.Complexity.CookLevin.modelCount_reduce}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/SharpSAT.lean}{170}{Cslib.Complexity.SharpSAT.mem_SharpP}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Counting.lean}{58}{Cslib.Complexity.CookLevin.SharpSAT_sharpPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{115}{Cslib.Complexity.ParitySAT_parityPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{120}{Cslib.Complexity.USAT_usComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{125}{Cslib.Complexity.ModSAT_modPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{129}{Cslib.Complexity.compl_ModSAT_coModPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{154}{Cslib.Complexity.SharpSATAtLeast_ppComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{172}{Cslib.Complexity.SharpSATExact_ceqPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{188}{Cslib.Complexity.compl_SharpSATExact_coCeqPComplete}
+\end{result}
+
+
+\begin{result}
 \subsection{DP and SAT--UNSAT completeness}
 The difference class $\cc{DP}$ consists of languages $B\cap C$ with
 $B\in\cc{NP}$ and $C\in\cc{coNP}$, equivalently differences of two NP

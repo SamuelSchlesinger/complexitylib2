@@ -33,6 +33,31 @@ theorem.\citep[Section 8.5]{Sipser2013}
 \end{result}
 
 \begin{result}
+\subsection{Undirected connectivity by short walks in Reingold's graph}
+For every simple graph $G$ on $\{0,\dots,n-1\}$ and all vertices $s,t$, $t$ is reachable from $s$
+if and only if some walk of length $T(n)=4(2\lceil\log_2 n\rceil+65\,\ell(n))$ in the
+$257^8$-regular graph $G_{\ell(n)}$, starting at a fixed vertex over the slot $(s,s)$, ends over a
+slot of $t$, where $\ell(n)=16\lceil\log_2 n\rceil+524$. Here $G_0$ is the slot graph of $G$ (each
+vertex replaced by a cycle of $n$ slots, slot $(v,w)$ joined to $(w,v)$ when $v\sim w$), padded
+with self-loops to $257^8$ labels, and $G_{i+1}=((G_i\,\text{ⓩ}\,H)^2)$ with labels renamed, for
+the arithmetic zig-zag base $H$ over $\mathbb{Z}/257$ with $\lambda(H)\le 1/5$. The generic
+statement assumes $\lambda(H)\le1/5$, at least half self-loops at each vertex,
+$2|V|^2|B|^2 5^\ell\le 5\cdot 6^\ell$ and $|V||B|^\ell 4^T\le 5^T$. Each step turns a spectral gap
+$\gamma$ into at least $\min(6\gamma/5,1/5)$ (Reingold takes the eighth power of $G\,\text{ⓩ}\,H$
+and obtains $\lambda\mapsto\max(\lambda^2,1/2)$; the constant differs, the $O(\log n)$ depth does
+not), a connected component with half self-loops has gap at least $1/(2N^2|B|^2)$, and walks of
+length $t$ connect every pair once $\lambda^t(N-1)<1$. This is the combinatorial part of the proof
+of $\mathrm{USTCON}\in\cc{L}$; log-space evaluation of the rotation map and the class-level theorem
+are not yet formalized.\citep[Definition 3.1, Lemmas 3.2--3.3, Theorem 4.1]{Reingold2008}\citep[Section 21.4]{AroraBarak09}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Algorithms/Reachability/Reingold.lean}{223}{Cslib.Reachability.reachable_iff_exists_reingoldGraph}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Reingold.lean}{428}{Cslib.RotationMap.reachable_iff_exists_root_neighbor_pow_reingold}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Reingold.lean}{318}{Cslib.RotationMap.min_pow_le_one_sub_spectralExpansion_reingold}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Connected.lean}{135}{Cslib.RotationMap.spectralExpansion_le_of_preconnected}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Connected.lean}{182}{Cslib.RotationMap.exists_neighbor_pow_eq}
+\end{result}
+
+
+\begin{result}
 \subsection{Savitch's theorem for polynomial space}
 \[
 \cc{NPSPACE}=\cc{PSPACE}.

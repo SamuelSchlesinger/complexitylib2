@@ -597,3 +597,24 @@ Independent reviews of the exact commit against `0c1dab07`:
 Validation: all six gates passed on the integration revision; the PDF builds with no undefined
 references. These are AI reviews, not human editorial approval or machine-checked equivalence of
 prose and Lean.
+
+## Coverage batch 3: counting completeness and Reingold's combinatorial core (2026-10-19)
+
+Integrated `74a300c2` (`counting-completeness`) and `cb631cc9` (`reingold` milestone 1), adding
+"Parsimonious Cook--Levin and complete counting problems" (`completeness.tex`) and "Undirected
+connectivity by short walks in Reingold's graph" (`space.tex`).
+
+Independent reviews of the exact commits against `0c1dab07`:
+
+- Correctness review: APPROVE for counting completeness (exact model counts against `acceptCount`,
+  unchanged satisfiability statements, class definitions used as-is, standard Karp completeness).
+  For Reingold the Lean is approved (the iff is not trivialized; the base expander is instantiated);
+  the paper draft's description of Reingold's eighth power and of the start vertex was corrected
+  here.
+- API review: APPROVE for both; non-blocking duplication, placement and naming findings were
+  returned to the authors as follow-up commits. Recorded API change: `CookLevin.eval_tableau`
+  gains the `uniqueClauses` conjunct.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no undefined
+references. These are AI reviews, not human editorial approval or machine-checked equivalence of
+prose and Lean.
