@@ -960,6 +960,7 @@ public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Tensorization
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.TwoPoint
 public import Complexity.Foundations.BooleanAnalysis.Influence
+public import Complexity.Foundations.BooleanAnalysis.KahnKalaiLinial
 public import Complexity.Foundations.BooleanAnalysis.LightPatterns
 public import Complexity.Foundations.BooleanAnalysis.Linearity
 public import Complexity.Foundations.BooleanAnalysis.LowDegree
