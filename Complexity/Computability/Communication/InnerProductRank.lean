@@ -9,8 +9,7 @@ module
 
 public import Complexity.Computability.Communication.Functions
 public import Complexity.Computability.Communication.Rank
-import Complexity.Foundations.LinearAlgebra.Matrix.Rank
-import Mathlib.Tactic.Ring
+public import Mathlib.LinearAlgebra.Matrix.HadamardMatrix
 
 /-!
 # The rank of the inner-product matrix
@@ -18,19 +17,23 @@ import Mathlib.Tactic.Ring
 The sign matrix `H` of the inner product modulo two of bit strings indexed by `ι`, with entry
 `(-1) ^ (x ⬝ᵥ y)` at `x` and `y`, is a Hadamard matrix: `H H = 2 ^ |ι| I`
 (`signMatrix_dotProduct_mul_self`), by character orthogonality
-`∑_y (-1) ^ (w ⬝ᵥ y) = 2 ^ |ι| [w = 0]` (`BitString.sum_ite_dotProduct`). So over a field in which
-`2` is invertible it has full rank `2 ^ |ι|` (`rank_signMatrix_dotProduct`), and the `0/1`
-communication matrix of the inner product, whose rank differs from that of `H` by at most one and
-which has a zero row, has rank exactly `2 ^ |ι| - 1` (`rank_communicationMatrix_dotProduct`)
+`∑_y (-1) ^ (w ⬝ᵥ y) = 2 ^ |ι| [w = 0]` (`BitString.sum_ite_dotProduct`); as `H` is symmetric
+with entries `±1`, it is a Hadamard matrix in the sense of Mathlib's `Matrix.IsHadamard`
+(`isHadamard_signMatrix_dotProduct`). So over a field in which `2` is invertible it has full rank
+`2 ^ |ι|` (`rank_signMatrix_dotProduct`), and the `0/1` communication matrix of the inner product,
+whose rank differs from that of `H` by at most one and which has a zero row, has rank exactly
+`2 ^ |ι| - 1` (`rank_communicationMatrix_dotProduct`)
 [Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997].
 
 By the rank bound, a protocol computing the inner product has at least `2 ^ |ι| - 1` leaves
-labelled `true` (`two_pow_sub_one_le_card_true_leaves_of_run_eq_dotProduct`). The area bound,
-from which `two_pow_lt_leaves_of_run_eq_dotProduct` follows, gives only about half as many.
+labelled `true` (`two_pow_sub_one_le_card_true_leaves_of_run_eq_dotProduct`). The area bound
+`|A| |B| ≤ 2 ^ |ι|` for rectangles on which the inner product is constant, from which
+`two_pow_lt_leaves_of_run_eq_dotProduct` follows, gives only about half as many.
 
 ## Main results
 
-* `Cslib.Communication.signMatrix_dotProduct_mul_self`: the sign matrix of the inner product is a
+* `Cslib.Communication.signMatrix_dotProduct_mul_self`,
+  `Cslib.Communication.isHadamard_signMatrix_dotProduct`: the sign matrix of the inner product is a
   Hadamard matrix.
 * `Cslib.Communication.rank_signMatrix_dotProduct`: it has full rank.
 * `Cslib.Communication.rank_communicationMatrix_dotProduct`: the communication matrix of the inner
@@ -51,8 +54,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 namespace Cslib.Communication
 
-/-- **The sign matrix of the inner product is a Hadamard matrix**: its square is `2 ^ |ι|` times
-the identity. -/
+/-- The square of the sign matrix of the inner product is `2 ^ |ι|` times the identity. -/
 theorem signMatrix_dotProduct_mul_self (R : Type*) [Ring R] :
     signMatrix R (fun x y : ι → Bool => x ⬝ᵥ y) * signMatrix R (fun x y : ι → Bool => x ⬝ᵥ y) =
       (2 ^ Fintype.card ι : R) • 1 := by
@@ -71,6 +73,23 @@ theorem signMatrix_dotProduct_mul_self (R : Type*) [Ring R] :
   · have : x + x' ≠ 0 := fun h => hxx (by simpa using congrArg (· + x') h)
     simp [hxx, this]
 
+/-- **The sign matrix of the inner product is a Hadamard matrix** in the sense of
+`Matrix.IsHadamard`: its entries `±1` are unitary, and it is symmetric with square `2 ^ |ι|` times
+the identity. -/
+theorem isHadamard_signMatrix_dotProduct (R : Type*) [Ring R] [StarRing R] :
+    (signMatrix R fun x y : ι → Bool => x ⬝ᵥ y).IsHadamard := by
+  have hstar : (signMatrix R fun x y : ι → Bool => x ⬝ᵥ y).conjTranspose =
+      signMatrix R fun x y => x ⬝ᵥ y := by
+    ext x y
+    rw [Matrix.conjTranspose_apply, signMatrix_apply, signMatrix_apply, dotProduct_comm]
+    split_ifs <;> simp
+  have hcard : ((Fintype.card (ι → Bool) : ℕ) : R) = 2 ^ Fintype.card ι := by
+    simp
+  refine ⟨fun x y => ?_, ?_, ?_⟩
+  · rw [signMatrix_apply]
+    split_ifs <;> simp [Unitary.mem_iff]
+  all_goals rw [hstar, signMatrix_dotProduct_mul_self, hcard]
+
 variable {R : Type*} [Field R] [NeZero (2 : R)]
 
 /-- Over a field in which `2` is invertible, the sign matrix of the inner product on bit strings
@@ -85,10 +104,10 @@ theorem rank_signMatrix_dotProduct :
       inv_mul_cancel₀ (pow_ne_zero _ two_ne_zero), one_smul]
   rw [Matrix.rank_of_isUnit H hunit, Fintype.card_fun, Fintype.card_bool]
 
-/-- **The rank of the inner-product matrix** [Kushilevitz and Nisan, Chapter 1]
-[KushilevitzNisan1997]: over a field in which `2` is invertible, such as `ℚ` or `ℝ`, the
-communication matrix of the inner product modulo two on bit strings indexed by `ι` has rank
-`2 ^ |ι| - 1`. -/
+/-- **The rank of the inner-product matrix**
+[Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997]: over a field in which `2` is
+invertible, such as `ℚ` or `ℝ`, the communication matrix of the inner product modulo two on bit
+strings indexed by `ι` has rank `2 ^ |ι| - 1`. -/
 theorem rank_communicationMatrix_dotProduct :
     (communicationMatrix R fun x y : ι → Bool => x ⬝ᵥ y).rank = 2 ^ Fintype.card ι - 1 := by
   set M := communicationMatrix R fun x y : ι → Bool => x ⬝ᵥ y
