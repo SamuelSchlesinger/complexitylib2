@@ -10,6 +10,7 @@ public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
 public import Complexity.Computability.Circuit.Approximation
+public import Complexity.Computability.Circuit.Approximation.Hamming
 public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.Arithmetic.Formula
 public import Complexity.Computability.Circuit.Arithmetic.Hessian
@@ -674,6 +675,7 @@ public import Complexity.Foundations.BooleanAnalysis.FourierRestriction
 public import Complexity.Foundations.BooleanAnalysis.Hadamard
 public import Complexity.Foundations.BooleanAnalysis.HadamardRectangles
 public import Complexity.Foundations.BooleanAnalysis.HadamardTester
+public import Complexity.Foundations.BooleanAnalysis.HammingFourier
 public import Complexity.Foundations.BooleanAnalysis.HarmonicMean
 public import Complexity.Foundations.BooleanAnalysis.Influence
 public import Complexity.Foundations.BooleanAnalysis.LightPatterns
