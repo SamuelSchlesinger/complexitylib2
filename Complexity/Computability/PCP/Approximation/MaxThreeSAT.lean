@@ -462,9 +462,10 @@ theorem polyTimeReducible_GapTwoCSP_GapThreeSAT {α : Type} [Fintype α] {k : �
 
 /-- **MAX-3SAT is NP-hard to approximate** [AroraLundMotwaniSudanSzegedy1998], [Arora and Barak,
 Chapter 11][AroraBarak09]: distinguishing satisfiable formulas with at most three literals per
-clause from those in which every assignment satisfies at most the proportion `1 - 1 / (3 * 2 ^ 77)`
-of the clauses is NP-hard. The constant comes from Dinur's gap `2 ^ (-61)` over `128 = 2 ^ 7` symbols
-(`GapTwoCSP_npHard`), divided by `128 ^ 2 * 12 = 3 * 2 ^ 16` clauses per edge. -/
+clause from those in which every assignment satisfies at most the proportion
+`1 - 1 / (3 * 2 ^ 77)` of the clauses is NP-hard. The constant comes from Dinur's gap `2 ^ (-61)`
+over `128 = 2 ^ 7` symbols (`GapTwoCSP_npHard`), divided by `128 ^ 2 * 12 = 3 * 2 ^ 16` clauses per
+edge. -/
 theorem GapThreeSAT_npHard : PromiseProblem.NPHard encCNF (GapThreeSAT (1 - 1 / (3 * 2 ^ 77))) := by
   have hcard : Fintype.card (Bool × (Fin 6 → Bool)) = 128 := by
     simp [Fintype.card_prod, Fintype.card_bool]
