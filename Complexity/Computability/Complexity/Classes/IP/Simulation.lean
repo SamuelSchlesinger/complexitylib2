@@ -456,6 +456,76 @@ theorem computableTidilyInPolyTime_aliveStep :
       fun_prop
     · exact computableTidilyInPolyTime_answerFromHistory op next
 
+omit [Finite Control] in
+/-- A step of the live replay grows the storage by a bounded amount and consumes the history. -/
+theorem aliveStep_spaceBound {n i t : ℕ} {h : History} {s : AliveState k Control}
+    (hs : MultiTapeMachine.FiniteConfig.SpaceBound n i t s.1 ∧ s.2.1 <:+ h) (b : Bool) :
+    MultiTapeMachine.FiniteConfig.SpaceBound n (i + 1) t (aliveStep M t s b).1 ∧
+      (aliveStep M t s b).2.1 <:+ h := by
+  obtain ⟨cfg, rest, _ | _⟩ := s
+  · exact ⟨hs.1.mono le_rfl (by lia) le_rfl, hs.2⟩
+  · obtain ⟨hspace, hsuffix⟩ := hs
+    simp only [aliveStep, ite_true, replayStep]
+    cases cfg.tapes.state with
+    | none => exact ⟨hspace.mono le_rfl (by lia) le_rfl, hsuffix⟩
+    | some c =>
+      simp only
+      cases M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b with
+      | step action symbol move => exact ⟨hspace.step action symbol move, hsuffix⟩
+      | query op next =>
+        simp only
+        cases rest with
+        | nil => exact ⟨hspace.mono le_rfl (by lia) le_rfl, hsuffix⟩
+        | cons e rest =>
+          obtain ⟨m, y⟩ := e
+          simp only
+          split_ifs
+          · exact ⟨hspace.receive op next _ (List.length_take_le _ _),
+              (List.suffix_cons _ _).trans hsuffix⟩
+          · exact ⟨hspace.mono le_rfl (by lia) le_rfl, hsuffix⟩
+
+/-- **The live replay is polynomial-time** in the input, the coins and the history. -/
+theorem computableTidilyInPolyTime_aliveRun :
+    ComputableTidilyInPolyTime (fun p : List Bool × List Bool × History =>
+      aliveRun M p.1 p.2.1 p.2.2) (encPair encBits (encPair encBits encHistory))
+      encAliveState := by
+  obtain ⟨cf, hcf⟩ := length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Unit)
+  unfold aliveRun
+  refine (foldlWith_spec (par := fun p : List Bool × List Bool × History => p.2.1.length)
+    (list := fun p => p.2.1)
+    (init := fun p => (MultiTapeMachine.FiniteConfig.init M.initial p.1, p.2.2, true))
+    (step := aliveStep M) (encP := encUnary) (encA := encBool) (encL := encBits)
+    (by fun_prop) (by fun_prop) (by fun_prop) (computableTidilyInPolyTime_aliveStep M)
+    (fun p consumed s => MultiTapeMachine.FiniteConfig.SpaceBound p.1.length consumed.length
+      p.2.1.length s.1 ∧ s.2.1 <:+ p.2.2)
+    (fun p => ⟨MultiTapeMachine.FiniteConfig.spaceBound_init _ _ _, List.suffix_refl _⟩)
+    (fun p consumed s b _ hs => by simpa using aliveStep_spaceBound M hs b)
+    (size := fun p => 2 * cf * (3 * (encPair encBits (encPair encBits encHistory) p).length + 1) +
+      2 * (encPair encBits (encPair encBits encHistory) p).length + 3)
+    (PolyBounded.of_forall_le (2 * cf * 3 + 2 * cf + 2 + 3) 1 fun p => by
+      simp only [pow_one]
+      nlinarith)
+    (fun p consumed s hprefix hs => ?_)).1
+  have hcfg := hcf _ _ _ _ hs.1
+  have hhist := length_encList_le_of_suffix (enc := encPair encBits encBits) hs.2
+  have hcons : consumed.length ≤ p.2.1.length := hprefix.length_le
+  simp only [encAliveState, length_encPair, encBool_apply, List.length_singleton, encBits_apply]
+    at hcfg hhist ⊢
+  have hcfg' := hcfg.trans (Nat.mul_le_mul_left cf (show p.1.length + consumed.length +
+    p.2.1.length + 1 ≤ 3 * (2 * p.1.length + 1 + (2 * p.2.1.length + 1 +
+      (encList (encPair encBits encBits) p.2.2).length)) + 1 by lia))
+  nlinarith
+
+/-- **Acceptance is polynomial-time** in the input, the coins and the history. -/
+theorem computableTidilyInPolyTime_accepts :
+    ComputableTidilyInPolyTime (fun p : List Bool × List Bool × History =>
+      accepts M p.1 p.2.1 p.2.2) (encPair encBits (encPair encBits encHistory)) encBool := by
+  have h := computableTidilyInPolyTime_aliveRun M
+  have hpost : ComputableTidilyInPolyTime (fun s : AliveState k Control =>
+      s.2.2 && s.2.1.isEmpty && decide (s.1.tapes.output = [true])) encAliveState encBool := by
+    fun_prop
+  exact hpost.comp h
+
 end PolyTime
 
 end Interaction
