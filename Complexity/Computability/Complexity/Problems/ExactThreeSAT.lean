@@ -13,20 +13,26 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
-# Exact 3SAT
+# 3SAT with clauses of exactly three literals
 
 `ExactThreeSAT` is the set of satisfiable formulas in conjunctive normal form all of whose clauses
-have exactly three literals, as in the definition of 3-satisfiability by Garey and Johnson
-[Garey and Johnson, Problem LO2][GareyJohnson1979]; here the literals of a clause need not be
-distinct. It is `NP`-complete: `ThreeSAT` (clauses of at most three literals) reduces to it by
+are lists of exactly three literals. The literals of a clause need not be distinct, so a clause
+`x ∨ x ∨ y` is allowed. This is weaker than 3-satisfiability as defined by Garey and Johnson
+[Garey and Johnson, Problem LO2][GareyJohnson1979], whose clauses are sets of three distinct
+literals; `NP`-completeness of that version, where short clauses are padded with fresh variables,
+is not proved here.
+
+`ExactThreeSAT` is `NP`-complete: `ThreeSAT` (clauses of at most three literals) reduces to it by
 repeating a literal of every clause with one or two literals
-(`Cslib.Complexity.ExactThreeSAT.padClause`). Repetition does not change the value of a clause, and
-the empty clause stays empty, so a formula with an empty clause stays unsatisfiable.
+(`Cslib.Complexity.ExactThreeSAT.padClause`, `Cslib.Complexity.toExactThreeSAT`). Repetition does
+not change the value of a clause, and the empty clause stays empty, so a formula with an empty
+clause stays unsatisfiable.
 
 ## Main definitions
 
 * `Cslib.Complexity.ExactThreeSAT`.
 * `Cslib.Complexity.ExactThreeSAT.padClause`: repeat literals to reach three.
+* `Cslib.Complexity.toExactThreeSAT`: the reduction from `ThreeSAT`, padding every clause.
 
 ## Main results
 
@@ -47,7 +53,8 @@ namespace Cslib.Complexity
 
 open Cslib.Logic.PL Turing.MultiTapeTM
 
-/-- The satisfiable formulas all of whose clauses have exactly three literals. -/
+/-- The satisfiable formulas all of whose clauses have exactly three literals, not necessarily
+distinct. -/
 def ExactThreeSAT : Set (CNF ℕ) := {φ | (∀ c ∈ φ, c.length = 3) ∧ φ.Satisfiable}
 
 namespace ExactThreeSAT
@@ -55,23 +62,26 @@ namespace ExactThreeSAT
 /-- Pad a clause of one or two literals to three literals by repeating literals; other clauses are
 unchanged. -/
 def padClause (c : Clause ℕ) : Clause ℕ :=
-  if c.length == 1 then c ++ c ++ c
-  else if c.length == 2 then c ++ [c.headD (0, true)] else c
+  if c.length = 1 then c ++ c ++ c
+  else if c.length = 2 then c ++ [c.headD (0, true)] else c
 
+/-- Padding a clause neither adds nor removes literals. -/
 theorem mem_padClause (c : Clause ℕ) (l : Literal ℕ) : l ∈ padClause c ↔ l ∈ c := by
   rcases c with _ | ⟨a, _ | ⟨b, _ | ⟨d, t⟩⟩⟩
   · simp [padClause]
   · simp [padClause]
-  · simp only [padClause, List.length_cons, List.length_nil, Nat.reduceAdd, beq_iff_eq,
+  · simp only [padClause, List.length_cons, List.length_nil, Nat.reduceAdd,
       OfNat.ofNat_ne_one, ↓reduceIte, List.headD_cons, List.cons_append, List.nil_append,
       List.mem_cons, List.not_mem_nil, or_false]
     tauto
   · simp [padClause]
 
+/-- Padding a clause does not shorten it. -/
 theorem length_le_length_padClause (c : Clause ℕ) : c.length ≤ (padClause c).length := by
   unfold padClause
   split_ifs <;> simp
 
+/-- Padding a nonempty clause of at most three literals gives exactly three. -/
 theorem length_padClause {c : Clause ℕ} (h0 : c ≠ []) (h3 : c.length ≤ 3) :
     (padClause c).length = 3 := by
   rcases c with _ | ⟨a, _ | ⟨b, _ | ⟨d, _ | ⟨e, t⟩⟩⟩⟩
@@ -123,13 +133,26 @@ theorem mem_NP : ExactThreeSAT ∈ NP encCNF :=
 
 end ExactThreeSAT
 
-open ExactThreeSAT in
+open ExactThreeSAT
+
+/-- The reduction from `ThreeSAT` to `ExactThreeSAT`: pad every clause. -/
+def toExactThreeSAT (φ : CNF ℕ) : CNF ℕ := φ.map padClause
+
+/-- Padding every clause is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_toExactThreeSAT :
+    ComputableTidilyInPolyTime toExactThreeSAT encCNF encCNF :=
+  ComputableTidilyInPolyTime.map computableTidilyInPolyTime_padClause
+
 /-- A formula is in `ThreeSAT` exactly when padding its clauses puts it in `ExactThreeSAT`. -/
-theorem mem_ThreeSAT_iff_map_padClause_mem_ExactThreeSAT (φ : CNF ℕ) :
-    φ ∈ ThreeSAT ↔ φ.map padClause ∈ ExactThreeSAT := by
-  have heval (σ : ℕ → Bool) : CNF.eval σ (φ.map padClause) = CNF.eval σ φ := by
-    simp only [CNF.eval, List.all_map, Function.comp_def, eval_padClause]
+theorem mem_ExactThreeSAT_toExactThreeSAT_iff (φ : CNF ℕ) :
+    toExactThreeSAT φ ∈ ExactThreeSAT ↔ φ ∈ ThreeSAT := by
+  have heval (σ : ℕ → Bool) : CNF.eval σ (toExactThreeSAT φ) = CNF.eval σ φ := by
+    simp only [toExactThreeSAT, CNF.eval, List.all_map, Function.comp_def, eval_padClause]
   constructor
+  · rintro ⟨hlen, σ, hσ⟩
+    refine ⟨fun c hc => ?_, σ, by rw [← heval]; exact hσ⟩
+    exact (length_le_length_padClause c).trans (hlen _ (List.mem_map_of_mem hc)).le
   · rintro ⟨hlen, σ, hσ⟩
     refine ⟨fun c' hc' => ?_, σ, by rw [heval]; exact hσ⟩
     obtain ⟨c, hc, rfl⟩ := List.mem_map.1 hc'
@@ -137,22 +160,18 @@ theorem mem_ThreeSAT_iff_map_padClause_mem_ExactThreeSAT (φ : CNF ℕ) :
     have := (CNF.eval_eq_true_iff σ _).1 hσ c hc
     rw [h0, Clause.eval_nil] at this
     exact Bool.false_ne_true this
-  · rintro ⟨hlen, σ, hσ⟩
-    refine ⟨fun c hc => ?_, σ, by rw [← heval]; exact hσ⟩
-    exact (length_le_length_padClause c).trans (hlen _ (List.mem_map_of_mem hc)).le
 
-open ExactThreeSAT in
-/-- `ThreeSAT` reduces to `ExactThreeSAT` in polynomial time, by padding every clause. -/
+/-- `ThreeSAT` reduces to `ExactThreeSAT` in polynomial time via `toExactThreeSAT`. -/
 theorem polyTimeReducible_ThreeSAT_ExactThreeSAT :
     PolyTimeReducible encCNF encCNF ThreeSAT ExactThreeSAT :=
-  ⟨fun φ => φ.map padClause, ComputableTidilyInPolyTime.map computableTidilyInPolyTime_padClause,
-    mem_ThreeSAT_iff_map_padClause_mem_ExactThreeSAT⟩
+  ⟨toExactThreeSAT, computableTidilyInPolyTime_toExactThreeSAT,
+    fun φ => (mem_ExactThreeSAT_toExactThreeSAT_iff φ).symm⟩
 
 /-- `ExactThreeSAT` is `NP`-hard. -/
 theorem ExactThreeSAT_npHard : NPHard encCNF ExactThreeSAT :=
   ThreeSAT_npHard.trans polyTimeReducible_ThreeSAT_ExactThreeSAT
 
-/-- **Exact 3SAT is NP-complete.** -/
+/-- **3SAT with clauses of exactly three, not necessarily distinct, literals is NP-complete.** -/
 theorem ExactThreeSAT_npComplete : NPComplete encCNF ExactThreeSAT :=
   ⟨ExactThreeSAT.mem_NP, ExactThreeSAT_npHard⟩
 
