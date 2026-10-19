@@ -56,6 +56,7 @@ is read from the block at position `x.length` and evaluated on `x`
 * `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT`: if `SAT` has circuits of polynomial size,
   then `Π₂ ⊆ Σ₂`.
 * `Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT`: under the same hypothesis, `Π₂ = Σ₂`.
+* `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_NP_subset_PPoly`: the same from `NP ⊆ P/poly`.
 
 ## References
 
@@ -313,5 +314,12 @@ theorem PiP_two_eq_SigmaP_two_of_SAT (hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈ SAT
   refine (PiP_two_subset_SigmaP_two_of_SAT hSAT enc).antisymm fun A hA => ?_
   simpa using compl_mem_PiP_of_mem_SigmaP
     (PiP_two_subset_SigmaP_two_of_SAT hSAT enc (compl_mem_PiP_of_mem_SigmaP hA))
+
+/-- **Karp–Lipton, `NP ⊆ P/poly` gives `Π₂ ⊆ Σ₂`.** If every problem in `NP`, with any encoding
+of its instances, is the preimage of a language in `P/poly`, then `Π₂ ⊆ Σ₂`. -/
+theorem PiP_two_subset_SigmaP_two_of_NP_subset_PPoly
+    (h : ∀ {β : Type} (encB : β ↪ List Bool), ∀ B ∈ NP encB, ∃ L ∈ PPoly, ∀ b, b ∈ B ↔ encB b ∈ L)
+    (enc : α ↪ List Bool) : PiP 2 enc ⊆ SigmaP 2 enc :=
+  PiP_two_subset_SigmaP_two_of_SAT (h encCNF SAT SAT.mem_NP) enc
 
 end Cslib.Complexity
