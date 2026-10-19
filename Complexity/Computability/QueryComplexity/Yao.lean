@@ -151,18 +151,6 @@ noncomputable def distributionalComplexity (ε : ℝ) (ν : StdSimplex ℝ (ι �
     (f : (ι → Bool) → β) : ℕ :=
   sInf {d | ∃ t : DecisionTree ι β, t.distributionalError ν f ≤ ε ∧ t.depth ≤ d}
 
-theorem _root_.Cslib.DecisionTree.distributionalError_nonneg :
-    0 ≤ t.distributionalError ν f := by
-  classical
-  refine Finset.sum_nonneg fun x _ => mul_nonneg (ν.weights_nonneg x) ?_
-  split_ifs <;> norm_num
-
-/-- A decision tree computing `f` has error `0` on every distribution. -/
-theorem _root_.Cslib.DecisionTree.Computes.distributionalError_eq_zero (ht : t.Computes f) :
-    t.distributionalError ν f = 0 := by
-  classical
-  exact Finset.sum_eq_zero fun x _ => by simp [ht x]
-
 theorem distributionalComplexity_le_depth (h : t.distributionalError ν f ≤ ε) :
     distributionalComplexity ε ν f ≤ t.depth :=
   Nat.sInf_le ⟨t, h, le_rfl⟩

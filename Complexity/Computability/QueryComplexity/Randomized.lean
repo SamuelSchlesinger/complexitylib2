@@ -23,21 +23,20 @@ queries it makes in the worst case over the inputs and the coins (`RandomizedDec
 It computes `f` with error `ε` when on every input the tree it draws outputs a wrong value with
 probability at most `ε` (`RandomizedDecisionTree.errorProb`, `RandomizedDecisionTree.Computes`).
 The randomized decision tree complexity `R_ε(f)` is the least depth of a randomized decision tree
-computing `f` with error `ε` (`QueryComplexity.randomizedComplexity`)
-[Buhrman and de Wolf, Section 2.4][BuhrmanDeWolf2002]; the bounded-error complexity `R(f)` of the
-literature is `R_{1/3}(f)`.
+computing `f` with error `ε` (`QueryComplexity.randomizedComplexity`) [BuhrmanDeWolf2002]; the
+bounded-error complexity `R(f)` of the literature is `R_{1/3}(f)`.
 
 Deterministic trees are randomized trees that draw one tree, so `R_ε(f) ≤ D(f)` for `ε ≥ 0`
 (`DecisionTree.randomizedComplexity_le_complexity`); with error `0` every tree that can be drawn
-computes `f`, so `R_0(f) = D(f)` (`QueryComplexity.randomizedComplexity_zero`); and from `ε = 1/2`
-on a fair coin is a correct guess with probability `1/2`, so `R_ε(f) = 0`
-(`QueryComplexity.randomizedComplexity_eq_zero_of_le`).
+computes `f`, so `R_0(f) = D(f)` (`QueryComplexity.randomizedComplexity_zero`); and a fair coin
+guesses a Boolean value correctly with probability `1/2`, so `R_ε(f) = 0` for Boolean-valued `f`
+and `ε ≥ 1/2` (`QueryComplexity.randomizedComplexity_eq_zero_of_le`).
 
 If a randomized tree computes `f` with error `ε`, then for every distribution `ν` on the inputs
 some tree that it can draw errs with probability at most `ε` on inputs drawn from `ν`
 (`RandomizedDecisionTree.Computes.exists_distributionalError_le`). This averaging argument is the
-easy direction of Yao's principle [Yao1977]; the converse, by the minimax theorem, is in
-`Complexity.Computability.QueryComplexity.Yao`.
+easy direction of Yao's principle [Yao1977]; the converse follows from the minimax theorem
+(`QueryComplexity.exists_computes_of_forall_exists_distributionalError_le`).
 
 ## Main definitions
 
@@ -50,11 +49,14 @@ easy direction of Yao's principle [Yao1977]; the converse, by the minimax theore
 
 ## Main results
 
+* `Convexity.StdSimplex.exists_mem_support_le_sum_mul`: under a finitely supported distribution,
+  some point of the support is at most the average.
 * `Cslib.RandomizedDecisionTree.Computes.exists_distributionalError_le`: the averaging argument.
 * `Cslib.DecisionTree.randomizedComplexity_le_complexity`: `R_ε(f) ≤ D(f)` for `ε ≥ 0`.
 * `Cslib.QueryComplexity.randomizedComplexity_zero`: `R_0(f) = D(f)`.
 * `Cslib.QueryComplexity.randomizedComplexity_antitone`: `R_ε(f)` decreases as `ε` grows.
-* `Cslib.QueryComplexity.randomizedComplexity_eq_zero_of_le`: `R_ε(f) = 0` for `ε ≥ 1/2`.
+* `Cslib.QueryComplexity.randomizedComplexity_eq_zero_of_le`: `R_ε(f) = 0` for Boolean-valued `f`
+  and `ε ≥ 1/2`.
 
 ## References
 
@@ -118,6 +120,19 @@ theorem distributionalError_eq_sum [DecidableEq β] (t : DecisionTree ι β)
     t.distributionalError ν f = ν.weights.sum fun x w => w * if t.eval x = f x then 0 else 1 := by
   unfold distributionalError
   congr!
+
+variable {t : DecisionTree ι β} {ν : StdSimplex ℝ (ι → Bool)} {f : (ι → Bool) → β}
+
+theorem distributionalError_nonneg : 0 ≤ t.distributionalError ν f := by
+  classical
+  refine Finset.sum_nonneg fun x _ => mul_nonneg (ν.weights_nonneg x) ?_
+  split_ifs <;> norm_num
+
+/-- A decision tree computing `f` has error `0` on every distribution. -/
+theorem Computes.distributionalError_eq_zero (ht : t.Computes f) :
+    t.distributionalError ν f = 0 := by
+  classical
+  exact Finset.sum_eq_zero fun x _ => by simp [ht x]
 
 end DecisionTree
 

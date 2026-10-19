@@ -9,7 +9,8 @@ module
 
 public import Complexity.Computability.QueryComplexity.ApproximateDegree
 public import Complexity.Computability.QueryComplexity.Randomized
-public import Complexity.Computability.QueryComplexity.Relations
+public import Cslib.Computability.QueryComplexity.Measures
+import Complexity.Computability.QueryComplexity.Relations
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -213,8 +214,9 @@ theorem one_sub_two_mul_pow_three_mul_complexity_le (hε : 0 ≤ ε) (f : Boolea
         pow_le_pow_left₀ (by positivity)
           (one_sub_two_mul_mul_blockSensitivity_le_randomizedComplexity hε f) 3
 
-/-- **Nisan's theorem**: `D(f) ≤ 27 R(f)³` for the bounded-error randomized complexity
-`R = R_{1/3}`; deterministic and randomized decision tree complexity are polynomially related. -/
+/-- **Deterministic and randomized decision tree complexity are polynomially related**
+[Nisan1991]: `D(f) ≤ 27 R(f)³` for the bounded-error randomized complexity `R = R_{1/3}`, from
+`bs(f) ≤ 3 R(f)` and `D(f) ≤ bs(f)³`. -/
 theorem complexity_le_mul_randomizedComplexity_pow_three (f : BooleanFunction n) :
     complexity f ≤ 27 * randomizedComplexity (1 / 3) f ^ 3 := by
   have := one_sub_two_mul_pow_three_mul_complexity_le (by norm_num : (0 : ℝ) ≤ 1 / 3) f
