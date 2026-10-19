@@ -11,6 +11,8 @@ import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CircuitEvaluation
+import ComplexityTests.CircuitHamming.Gates
+import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
 import ComplexityTests.CompareSwap
