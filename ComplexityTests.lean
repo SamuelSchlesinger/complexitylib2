@@ -73,6 +73,7 @@ import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
@@ -134,12 +135,14 @@ import ComplexityTests.PseudorandomFunction
 import ComplexityTests.Quantitative
 import ComplexityTests.QueryComplexity
 import ComplexityTests.RandomOracle
+import ComplexityTests.RationalHitting
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.SipserLautemann
 import ComplexityTests.Smoke
 import ComplexityTests.SortingTrace
 import ComplexityTests.SourceComplexity
