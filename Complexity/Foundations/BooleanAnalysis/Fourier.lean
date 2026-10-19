@@ -11,6 +11,7 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Powerset
+public import Mathlib.Data.Matrix.Mul
 public import Mathlib.Algebra.Module.Equiv.Defs
 public import Mathlib.InformationTheory.Hamming
 public import Mathlib.Algebra.Group.AddChar
@@ -204,6 +205,10 @@ end CommRing
 theorem chi_eq_prod_signVal (S : Finset ι) (x : ι → Bool) :
     chi ℝ S x = ∏ i ∈ S, signVal (x i) :=
   prod_congr rfl fun i _ => (signVal_eq_neg_one_pow (x i)).symm
+
+/-- The real character of a single coordinate is the sign of that bit. -/
+theorem chi_singleton (i : ι) (x : ι → Bool) : chi ℝ {i} x = signVal (x i) := by
+  rw [chi_eq_prod_signVal, prod_singleton]
 
 /-- The real character of `S` is the real sign of the parity of the bits in `S`. -/
 theorem chi_eq_signVal_parityOn (S : Finset ι) (x : ι → Bool) :
@@ -413,6 +418,31 @@ theorem fourierCoeff_signVal (f : (ι → Bool) → Bool) (S : Finset ι) :
       1 - 2 * hammingDist f (parityOn S) / 2 ^ Fintype.card ι := by
   simp only [fourierCoeff, chi_eq_signVal_parityOn]
   exact expect_signVal_mul_signVal f (parityOn S)
+
+/-! ### Character sums for the inner product -/
+
+/-- **Character orthogonality for the inner product**, over any ring: the signs `(-1) ^ (w ⬝ᵥ y)`
+cancel over all bit strings `y` unless `w = 0`, since flipping a bit `i` with `w i = true`
+negates them. Over `ℝ` this is `sum_chi` for the set of positions where `w` is `true`. -/
+theorem sum_ite_dotProduct [Ring R] (w : ι → Bool) :
+    ∑ y : ι → Bool, (if w ⬝ᵥ y then (-1 : R) else 1) =
+      if w = 0 then 2 ^ Fintype.card ι else 0 := by
+  split_ifs with hw
+  · subst hw
+    simp
+  · obtain ⟨i, hi⟩ := Function.ne_iff.1 hw
+    have hwi : w i = true := by simpa [Bool.zero_eq_false] using hi
+    refine sum_involution (fun y _ => y + Pi.single i true) (fun y _ => ?_) (fun y _ _ => ?_)
+      (fun y _ => mem_univ _) (fun y _ => ?_)
+    · rw [dotProduct_add, dotProduct_single, hwi]
+      cases w ⬝ᵥ y
+      · rw [show (false + true * true : Bool) = true from rfl]
+        simp
+      · rw [show (true + true * true : Bool) = false from rfl]
+        simp
+    · intro h
+      simpa using congrFun (add_eq_left.mp h) i
+    · rw [add_assoc, ← Pi.single_add, BooleanRing.add_self, Pi.single_zero, add_zero]
 
 end Fintype
 

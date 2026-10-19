@@ -196,9 +196,9 @@ theorem true_mem_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
 of length at most `L` exactly once. -/
 theorem image_decodeWord_iterate_firstCode :
     (range (codeCount L)).image (fun i => decodeWord (increment^[i] (firstCode L))) =
-      shortWords L := by
+      BitString.shortWords L := by
   ext w
-  simp only [mem_image, mem_range, mem_shortWords]
+  simp only [mem_image, mem_range, BitString.mem_shortWords]
   constructor
   · rintro ⟨i, hi, rfl⟩
     exact length_decodeWord_le (lsbValue_iterate_firstCode hi).2
@@ -259,7 +259,7 @@ theorem gameTree_value_eq {cap : ℕ} (hcap : Fintype.card R ≤ cap) (n : ℕ)
     simp only [ih, decodeHistory_cons]
     have hsup (m : List Bool) : ((range (codeCount L)).sup fun j =>
         value F L n (decodeHistory hs ++ [(m, decodeWord (increment^[j] (firstCode L)))])) =
-        (shortWords L).sup fun y => value F L n (decodeHistory hs ++ [(m, y)]) := by
+        (BitString.shortWords L).sup fun y => value F L n (decodeHistory hs ++ [(m, y)]) := by
       rw [← image_decodeWord_iterate_firstCode, Finset.sup_image]
       rfl
     simp only [hsup]

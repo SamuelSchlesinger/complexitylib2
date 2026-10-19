@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Foundations.Data.BitString.Flip
+public import Mathlib.Data.Finset.Density
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.BigOperators.Ring.Finset
@@ -34,10 +35,14 @@ each squared coefficient by the size of its set
 the nonempty sets (`BitString.expect_sub_expect_sq_eq_sum_fourierCoeff_sq`), it is at most the
 total influence (the **Poincaré inequality**, `BitString.expect_sub_expect_sq_le_totalInfluence`).
 
-For a Boolean function read as signs, the influence of `i` is the probability that flipping bit
-`i` changes the value (`BitString.influence_signVal`), and the total influence is the expected
-number of bits whose flip changes the value, the *average sensitivity*
-(`BitString.totalInfluence_signVal`) [O'Donnell, Sections 2.2 and 2.3][ODonnell2014].
+For a Boolean function read as signs, the derivative in `i` takes the values `0` and `±1`
+(`BitString.sq_derivative_signVal`) and is nonzero exactly where flipping bit `i` changes the value
+(`BitString.derivative_signVal_ne_zero_iff`). So the influence of `i` is the probability that
+flipping bit `i` changes the value (`BitString.influence_signVal`,
+`BitString.influence_signVal_eq_dens`), it is nonzero exactly when some flip of bit `i` changes the
+value (`BitString.influence_signVal_ne_zero_iff`), and the total influence is the expected number
+of bits whose flip changes the value, the *average sensitivity* (`BitString.totalInfluence_signVal`)
+[O'Donnell, Sections 2.2 and 2.3][ODonnell2014].
 
 ## Main definitions
 
@@ -51,8 +56,10 @@ number of bits whose flip changes the value, the *average sensitivity*
   a character, and the Fourier coefficients of a derivative.
 * `Cslib.BitString.influence_eq_sum_fourierCoeff_sq`: the influence of `i` is the Fourier weight
   on the sets containing `i`.
-* `Cslib.BitString.influence_signVal`: the influence on a Boolean function is the probability
-  that a flip changes its value.
+* `Cslib.BitString.influence_signVal`, `Cslib.BitString.influence_signVal_eq_dens`: the influence
+  on a Boolean function is the probability that a flip changes its value.
+* `Cslib.BitString.influence_signVal_ne_zero_iff`: a coordinate has nonzero influence on a Boolean
+  function exactly when flipping it changes the value on some input.
 * `Cslib.BitString.totalInfluence_eq_sum_card_mul_fourierCoeff_sq`: the spectral formula for the
   total influence.
 * `Cslib.BitString.totalInfluence_signVal`: the total influence of a Boolean function is the
@@ -105,6 +112,20 @@ private theorem update_false_true_eq (f : (ι → Bool) → Bool) (i : ι) (x : 
   cases h : x i
   · rw [show update x i false = x from update_eq_self_iff.2 h.symm, Bool.not_false, eq_comm]
   · rw [show update x i true = x from update_eq_self_iff.2 h.symm, Bool.not_true]
+
+/-- The derivative of a Boolean function read as signs takes the values `0` and `±1`, so its
+square is its absolute value. -/
+theorem sq_derivative_signVal (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) :
+    derivative i (fun x => signVal (f x)) x ^ 2 = |derivative i (fun x => signVal (f x)) x| := by
+  simp only [derivative]
+  cases f (update x i false) <;> cases f (update x i true) <;> norm_num
+
+/-- The derivative in `i` of a Boolean function read as signs is nonzero exactly where flipping
+bit `i` changes the value. -/
+theorem derivative_signVal_ne_zero_iff (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) :
+    derivative i (fun x => signVal (f x)) x ≠ 0 ↔ f (update x i !x i) ≠ f x := by
+  rw [ne_eq, ne_eq, ← update_false_true_eq, derivative]
+  cases f (update x i false) <;> cases f (update x i true) <;> norm_num
 
 variable [Fintype ι]
 
@@ -176,6 +197,23 @@ theorem influence_signVal (i : ι) (f : (ι → Bool) → Bool) :
   refine expect_congr rfl fun x _ => ?_
   rw [derivative, ← if_congr (update_false_true_eq f i x) rfl rfl]
   cases f (update x i false) <;> cases f (update x i true) <;> norm_num
+
+/-- The influence of `i` on a Boolean function read as signs is the density of the points where
+its derivative in `i` is nonzero. -/
+theorem influence_signVal_eq_dens (f : (ι → Bool) → Bool) (i : ι) :
+    influence i (fun x => signVal (f x)) =
+      (dens {x | derivative i (fun x => signVal (f x)) x ≠ 0} : ℝ) := by
+  rw [influence_signVal, ← Fintype.expect_boole]
+  refine expect_congr rfl fun x _ => ?_
+  simp only [derivative_signVal_ne_zero_iff, ne_eq, ite_not]
+
+/-- **Relevant coordinates**: a coordinate has nonzero influence on a Boolean function read as
+signs exactly when flipping it changes the value of the function on some input. -/
+theorem influence_signVal_ne_zero_iff (f : (ι → Bool) → Bool) (i : ι) :
+    influence i (fun x => signVal (f x)) ≠ 0 ↔ ∃ x, f (update x i !x i) ≠ f x := by
+  rw [influence_signVal_eq_dens, ne_eq, NNRat.cast_eq_zero, ← ne_eq, dens_ne_zero,
+    filter_nonempty_iff]
+  simp only [mem_univ, true_and, derivative_signVal_ne_zero_iff]
 
 /-- The total influence of `f`: the sum of the influences of the coordinates. -/
 noncomputable def totalInfluence (f : (ι → Bool) → ℝ) : ℝ :=

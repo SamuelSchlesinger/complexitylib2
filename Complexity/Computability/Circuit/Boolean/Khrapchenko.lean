@@ -33,14 +33,17 @@ measure subadditive; a negation exchanges the sides.
 If every input of `A` has at least `s₁` neighbors in `B` and every input of `B` has at least `s₀`
 neighbors in `A`, a formula separating them has leaf size at least `s₀ s₁`
 (`Formula.mul_le_leafSize`). So "at least `k` of `n` bits" needs leaf size `k (n + 1 - k)`
-(`mul_le_leafSize_of_computes_threshold`), and the parity of `n` bits, which changes with every
-bit, needs leaf size `n ^ 2` (`sq_le_leafSize_of_computes_parity`) [Khrapchenko1971]. Splitting the
-bits in halves, `x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives formulas of leaf size exactly `n ^ 2` when `n`
-is a power of two (`isLeast_leafSize_parity_two_pow`).
+(`mul_le_leafSize_of_computes_threshold`) and majority needs leaf size `⌊(n + 1) ^ 2 / 4⌋`
+(`sq_div_four_le_leafSize_of_computes_majority`) [Khrapchenko1971b], and the parity of `n` bits,
+which changes with every bit, needs leaf size `n ^ 2` (`sq_le_leafSize_of_computes_parity`)
+[Khrapchenko1971].
+Splitting the bits in halves, `x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives formulas of leaf size exactly
+`n ^ 2` when `n` is a power of two (`isLeast_leafSize_parity_two_pow`).
 
 Since a formula of depth `d` has at most `2 ^ d` leaves, formulas for parity have depth at least
-`2 log₂ n` (`two_mul_log_le_depth_of_computes_parity`). Here the depth counts negations; the
-textbook bound, where negations are free, is not proved here.
+`2 log₂ n` (`two_mul_log_le_depth_of_computes_parity`). Here the depth counts negations; for the
+textbook bound, where negations are free, see `Circuit/Boolean/KhrapchenkoDepth.lean`: the
+formula depth of the parity of `2 ^ k` bits is exactly `2 k` (`formulaDepth_parity_two_pow`).
 
 ## Main definitions
 
@@ -52,6 +55,8 @@ textbook bound, where negations are free, is not proved here.
 * `Cslib.Circuits.Formula.mul_le_leafSize`: the bound in terms of neighbor counts.
 * `Cslib.Circuits.Boolean.mul_le_leafSize_of_computes_threshold`: formulas for the threshold
   function `Th^n_k` have leaf size at least `k (n + 1 - k)`.
+* `Cslib.Circuits.Boolean.sq_div_four_le_leafSize_of_computes_majority`: formulas for the majority
+  of `n` bits have leaf size at least `⌊(n + 1) ^ 2 / 4⌋`.
 * `Cslib.Circuits.Boolean.sq_le_leafSize_of_computes_parity`: formulas for parity have leaf size
   at least `n ^ 2`.
 * `Cslib.Circuits.Boolean.isLeast_leafSize_parity_two_pow`: the least leaf size of a formula for
@@ -282,6 +287,20 @@ theorem mul_le_leafSize_of_computes_threshold {k : ℕ} {F : Formula signature n
   have := le_card_neighbors_weight_succ hb
   rwa [Nat.sub_add_cancel hk] at this
 
+/-- One half of `⌊m ^ 2 / 4⌋ = ⌊m / 2⌋ ⌈m / 2⌉`. -/
+private theorem sq_div_four_le (m : ℕ) : m ^ 2 / 4 ≤ m / 2 * (m - m / 2) := by
+  rcases Nat.even_or_odd' m with ⟨t, rfl | rfl⟩
+  · rw [show 2 * t / 2 = t by omega, show 2 * t - t = t by omega]
+    exact Nat.div_le_of_le_mul (le_of_eq (by ring))
+  · rw [show (2 * t + 1) / 2 = t by omega, show 2 * t + 1 - t = t + 1 by omega]
+    exact Nat.lt_succ_iff.1 ((Nat.div_lt_iff_lt_mul (by norm_num)).2 (by nlinarith))
+
+/-- **Khrapchenko's bound for majority.** A De Morgan formula computing the majority of `n` bits
+has leaf size at least `⌊(n + 1) ^ 2 / 4⌋ = ⌊(n + 1) / 2⌋ ⌈(n + 1) / 2⌉`. -/
+theorem sq_div_four_le_leafSize_of_computes_majority {F : Formula signature n}
+    (hF : F.Computes interpretation (majority n)) : (n + 1) ^ 2 / 4 ≤ F.leafSize :=
+  (sq_div_four_le (n + 1)).trans (mul_le_leafSize_of_computes_threshold hF)
+
 /-! ### Parity -/
 
 /-- Every input has `n` neighbors of the other parity. -/
@@ -334,6 +353,33 @@ theorem two_mul_log_le_depth_of_computes_parity {F : Formula signature n}
 
 /-! ### Formulas for parity -/
 
+/-- The parity of the `a + b` consecutive bits from `o` on is the exclusive or of the parities of
+the first `a` and the last `b` of them. -/
+theorem parityOn_consecutive_add (o a b : ℕ) (x : BitString n) :
+    parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + (a + b)} : Finset (Fin n)) x =
+      (parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + a} : Finset (Fin n)) x ^^
+        parityOn ({i | o + a ≤ (i : ℕ) ∧ (i : ℕ) < o + a + b} : Finset (Fin n)) x) := by
+  have hsplit : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + (a + b)} : Finset (Fin n)) =
+      ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + a} : Finset (Fin n)) ∪
+        ({i | o + a ≤ (i : ℕ) ∧ (i : ℕ) < o + a + b} : Finset (Fin n)) := by
+    ext i
+    simp only [mem_filter, mem_univ, true_and, mem_union]
+    omega
+  rw [hsplit, parityOn_union]
+  rw [disjoint_left]
+  intro i hi hi'
+  simp only [mem_filter, mem_univ, true_and] at hi hi'
+  omega
+
+/-- The parity of the single bit `o` is that bit. -/
+theorem parityOn_consecutive_one (o : ℕ) (h : o < n) (x : BitString n) :
+    parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 1} : Finset (Fin n)) x = x ⟨o, h⟩ := by
+  have : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 1} : Finset (Fin n)) = insert ⟨o, h⟩ ∅ := by
+    ext i
+    simp only [mem_filter, mem_univ, true_and, insert_empty, mem_singleton, Fin.ext_iff]
+    omega
+  rw [this, parityOn_insert (notMem_empty _), parityOn_empty, Bool.xor_false]
+
 /-- A De Morgan formula for the parity of the `2 ^ k` bits from `o` on, of leaf size `4 ^ k`. -/
 def parityFormula : (k o : ℕ) → o + 2 ^ k ≤ n → Formula signature n
   | 0, o, h => .input ⟨o, by rw [pow_zero] at h; omega⟩
@@ -341,32 +387,22 @@ def parityFormula : (k o : ℕ) → o + 2 ^ k ≤ n → Formula signature n
     (parityFormula k o (by rw [pow_succ] at h; omega)).xor
       (parityFormula k (o + 2 ^ k) (by rw [pow_succ] at h; omega))
 
+/-- The formula `parityFormula k o` computes the parity of the `2 ^ k` bits from `o` on. -/
 theorem eval_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) (x : BitString n) :
     (parityFormula k o h).eval interpretation x =
       parityOn ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k} : Finset (Fin n)) x := by
   induction k generalizing o with
   | zero =>
-    have : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ 0} : Finset (Fin n)) =
-        insert (⟨o, by rw [pow_zero] at h; omega⟩ : Fin n) ∅ := by
-      ext i
-      simp only [mem_filter, mem_univ, true_and, pow_zero, insert_empty, mem_singleton,
-        Fin.ext_iff]
-      omega
-    rw [this, parityOn_insert (notMem_empty _), parityOn_empty, Bool.xor_false]
+    rw [pow_zero, parityOn_consecutive_one o (by rw [pow_zero] at h; omega)]
     rfl
   | succ k ih =>
-    have hsplit : ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ (k + 1)} : Finset (Fin n)) =
-        ({i | o ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k} : Finset (Fin n)) ∪
-          ({i | o + 2 ^ k ≤ (i : ℕ) ∧ (i : ℕ) < o + 2 ^ k + 2 ^ k} : Finset (Fin n)) := by
-      ext i
-      simp only [mem_filter, mem_univ, true_and, mem_union, pow_succ]
-      omega
-    rw [parityFormula, Formula.eval_xor, ih, ih, hsplit, parityOn_union]
-    rw [disjoint_left]
-    intro i hi hi'
-    simp only [mem_filter, mem_univ, true_and] at hi hi'
+    rw [parityFormula, Formula.eval_xor, ih, ih, ← parityOn_consecutive_add]
+    congr 1
+    ext i
+    simp only [mem_filter, mem_univ, true_and, pow_succ]
     omega
 
+/-- The formula `parityFormula k o` has leaf size `4 ^ k`. -/
 theorem leafSize_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) :
     (parityFormula k o h).leafSize = 4 ^ k := by
   induction k generalizing o with

@@ -1,84 +1,148 @@
 # Theorem-index review
 
-## Selection and missing results, 19 October 2026
+## Integration on main, 19 October 2026
 
-Scope: documentation-only delta from `dac6e41b7f8928a1124b81a6967328426eca03ad`.
-The index now has 50 numbered entries in 12 subjects, 78 declaration links,
-and 61 references in 19 pages. All links still target the unchanged Lean source
-at `cec38657ddf1b93dd1be123e86d0ecdd9728c610`. The full prior 48-entry review
-is preserved in Git at the base revision; unchanged entries retain that review.
+Merged parents: 46deb511074655f6701ed712bb568b59f5e57d9d (main, including PR #7)
+and 5c4046da (assorted results and the expanded index). Historical review snapshots
+below retain the counts and source pins of their respective revisions.
 
-The additions cover Shannon--Lupanov/MCSP bounds, quadratic-form correlation,
-weighted-threshold activity and capacity, polynomial PRG stretch with quantitative
-resources, general input-time iteration, and shared-table batched iteration.
-An unnumbered containment map connects the existing class results.
-Circuit Value membership is now a contextual note. The two sparse-counter
-coordinate-transfer statements and the cycle-label construction are grouped with
-their main results; their mathematical statements and links are preserved.
+The integrated index has 65 numbered entries in 14 subjects, 131 declaration
+links, 79 references and 25 pages. It preserves the FO projection entry from
+PR #7 and every assorted-results entry. The 128 existing links retain source pin
+8d38f775; the three FO links retain source pin 811ad02a through an explicit
+revision-parameterized link macro. No mathematical prose was changed by integration.
 
-Three independent Codex reviewers compared the changed entries against the actual
-Lean statements and underlying definitions:
+Independent integration reviews, in addition to the parent reviews recorded below:
 
-- `proof_api`: the three added circuit entries, including precise MCSP thresholds,
-  correlation quantifiers/coefficient, positive-arity cost, effective threshold
-  coefficients, activity and readout restrictions, both-fiber rectangle hypotheses,
-  citation correspondence, and all seven new declaration anchors.
-- `proof_correctness`: PRG stretch and its exact time/workspace certificate, all
-  arrows and common encoding in the containment map, and the Circuit Value note.
-  Checked the new declaration links and the primary length-extension source.
-- `resume_alternation`: general input-time and batched iteration, preservation of
-  all sparse-counter claims after regrouping, all ten iteration declaration links,
-  the 50-entry count, and the README's selection policy.
+- proof_api approved the exact union of parent modules, aggregate imports and
+  all 258 bibliography entries.
+- proof_correctness checked all 1,420 Lean files against both parents: every file
+  preserves its parent content, except the sunflower docstring correction.
+  Definitions, theorem statements and proofs are unchanged. The library driver
+  has the exact union of 1,176 imports and the test driver 241 imports.
+- resume_alternation approved the merged index wording and link macros, including
+  the unchanged FO and Kolmogorov entries and all 12 structure-section anchors.
+- The remaining sunflower wording nit from the earlier branch review is resolved:
+  at each coordinate some pair agrees; the pair may depend on the coordinate.
+  Both source reviewers approved that correction. There are no outstanding findings.
 
-Resolved findings:
+The integrated revision passed all six project validation gates. Its PDF rebuilt
+without warnings or overfull/underfull boxes; all 25 rendered pages were inspected.
+All 131 declaration names compiled with #check; source-line anchors were checked
+against the exact pinned revisions, and all 131 URL targets were verified in
+the PDF annotations. Both parent developments and their test coverage are preserved.
 
-1. Replaced an absent Goldreich bibliography key with the existing `Barak2016PRG`
-   source credited by the linked PRG-stretch module.
-2. Corrected the correlation theorem link to its declaration's first line, 279.
-3. Added direct links for the P-to-NP and NP-to-PH arrows in the containment map.
+These are AI reviews, not human editorial approval or machine-checked prose equivalence.
+The final staged content is bound by the SHA-256 hashes below; the merge commit
+records the parent revisions, review scope and validation.
 
-All three reviewers approved their final mathematical scope. Subsequent layout
-changes split long groups at supporting statements, moved each pair of activity
-links beside its claim, and made declaration links ragged-right. References flow
-after the last result to avoid a nearly empty page. No mathematical finding remains.
-Review is correspondence checking, not a new proof audit or a machine-checked
-prose equivalence. No human editorial approval is implied.
+~~~text
+5762a8e575c95bdf812bbc8ecc867e1959fa3697f41accc3a090388d3c9850b2  Complexity.lean
+d80878c176965a01fb2c558bab54823f1d7a3f623b79aa4b03c67efb3520e48b  ComplexityTests.lean
+57e13cff537bf692a027af78c04a449c75ac56a8faef80fd384694e4a7f2d6ac  references.bib
+a61517a26173eb3bff639f3db3bb87a3867fb6c0477b470aec37d97a38ab2008  Complexity/Foundations/Combinatorics/Sunflower/LowerBound.lean
+4e9e75ab5f94abaf7a835d36888d9d3bb2fcf5d7e9bd81fc0b462fb821333268  paper/main.tex
+7dd4ac3dc18830f40443f4c2611f545dd610b6850182a4c9d6c38011fd5f397a  paper/README.md
+16468eac86cec71de4bcc33dabc453d0fbfa715872d6068aacd4c237cb697e07  paper/sections/structure.tex
+641633b3cc80ea3fa27fd0be67d6d647f9003fa815192fa0e4f04c16efebea42  paper/main.pdf
+~~~
 
-Validation:
+## Assorted results, 19 October 2026
 
-- `latexmk -pdf -interaction=nonstopmode -halt-on-error -cd paper/main.tex` passed;
-  the final log contains no warnings or overfull/underfull boxes.
-- Rendered and visually inspected every final page. Verified final pages 1--14
-  pixel-identical to their inspected render after the last bibliography-layout
-  change, and inspected final pages 15--19 separately.
-- Checked all 78 fully qualified names against the compiled declaration index,
-  their exact declaration-line anchors against `git show` at the pinned revision,
-  and the corresponding URLs in actual PDF annotations. Every linked Lean file
-  still matches that pinned source exactly.
-- Verified 50 numbered entries, 12 subject sections, 61 references, and
-  `git diff --check`. No Lean source, dependency, or bibliography entries changed.
-- No Lean builds were repeated for this documentation-only delta. The original
-  library baseline passed the six project gates; current CI is recorded in the PR.
+Scope: documentation-only changes on top of 8d38f7753b6c651c3363a157c806d05794d6ea11
+(the reviewed remote feat/assorted-results head). All declaration links now target
+that exact Lean revision. The index has 65 numbered entries in 14 subjects,
+128 declaration links and 78 references across 24 pages. The earlier 50-entry
+review is preserved in paper/review.md at that base revision.
+
+The 15 new entries cover plain Kolmogorov uncomputability, counting algebra and
+PP, zero-randomness PCP, PRG-to-OWF implications, parity formula depth, deterministic
+communication bounds, relevant coordinates, decision-tree Fourier bounds, spectral
+expansion, four query-complexity topics including the superquadratic sensitivity
+separation, and two finite combinatorial inequalities. Existing entries now include
+exact-three-literal SAT, Yablonskii's parity formula bound and the all-encoding
+P=NP implication for BPP. Supporting helpers and routine closure corollaries do not
+each receive an entry. No unproved machine characterization or Circuit Value
+completeness endpoint is asserted. Samuel retains editorial control.
+
+### Independent AI correspondence reviews
+
+The following Codex reviewers compared the changed prose with the final Lean
+definitions and statements at 8d38f775, then approved the final section hashes
+recorded below:
+
+- proof_api: query.tex, combinatorics.tex, and the additions in analysis.tex.
+  Checked sensitivity measures and quantifiers, monotone and threshold conventions,
+  symmetric evasiveness, approximate-degree constants, Fourier normalization and
+  zero-depth cases, finite-product and sunflower hypotheses, and rotation-map
+  spectral norms. All 29 declaration anchors in these files were checked.
+- proof_correctness: additions in structure.tex, randomness.tex,
+  completeness.tex, and crypto.tex. Checked unbounded computable lower-bound
+  quantifiers for plain complexity, all-encoding collapse, verifier-based counting
+  classes, repeated literals in ExactThreeSAT, PCP model, and any-length preimages
+  in one-wayness. All 38 declaration anchors in these files were checked.
+- resume_alternation: changes in circuits.tex and communication.tex.
+  Checked leaf/depth costs, constants and arity hypotheses, transcript-determined
+  outputs, field characteristic, source credit and selection. All 30 declaration
+  anchors in these files were checked.
+
+Resolved findings: explicitly defined the threshold convention as accepting when
+at least j bits are true; refreshed all declaration anchors to the pinned revision;
+removed branch-relative wording from the SAT entry. All final changed entries
+were approved. This is AI correspondence review, not a machine-checked equivalence
+between prose and Lean, and does not imply human editorial approval.
+
+### Validation
+
+- The reviewed Lean revision passed all six project gates: strict build,
+  mk_all --check, strict tests (including the global axiom audit), lint,
+  lint-style and checkInitImports.
+- This update changes only paper/; no Lean, dependency or bibliography files changed.
+- latexmk -pdf -interaction=nonstopmode -halt-on-error -cd paper/main.tex
+  passed with no warnings or overfull/underfull boxes.
+- Rendered and visually inspected all 24 pages. After the final wording edit,
+  page 2 was re-inspected and all other pages were verified pixel-identical.
+- Verified all 128 fully qualified names by Lean #check, all source-line anchors
+  against git show at the pinned revision, and every target URL in the final
+  PDF annotations. All cited bibliography keys exist.
+- Verified the entry/subject/reference counts and git diff --check.
+
+### Related branch review
+
+Independent API/correctness reviews covered the new sensitivity-separation port,
+class/problem changes, Boolean/query/formula/communication developments; the main
+review additionally checked the cryptographic, Kolmogorov and combinatorial modules.
+No concrete mathematical/API blocker was found. The large port received selected
+internal-proof inspection and source comparison, not an independent rederivation
+of every copied combinatorial argument.
+
+One low-severity source-docstring issue remains outside this documentation-only
+change: Complexity/Foundations/Combinatorics/Sunflower/LowerBound.lean:114
+says two petals agree at every coordinate. The pigeonhole step instead chooses
+a possibly different agreeing pair at each coordinate. The Lean proof uses the
+correct quantifier order. The index states the result without that ambiguity.
 
 ## Reviewed SHA-256 hashes
 
-```text
-03f3ee1840d3aff3534f232be510aef60d392869ace2a32464423f6183e77192  paper/main.tex
-f50826dd029dee289f6f60872e87e9e53dca142c307587633461c6c6451f52ef  paper/README.md
-5fefaa60bf1ed9cd83205d12a91752ccbefefc87cf0ce1b24f670b8624d75849  paper/sections/analysis.tex
-1f0364a48e180b4ab4119c8e1f3ac79ed5a6e83e9edfb710254b776d0e02aaac  paper/sections/circuits.tex
+~~~text
+00d2a008377abc936f303a83391b2080804bbc71613658913577bdfe4d83933c  paper/main.tex
+f00d2ad4e89ce0ba2d50cb66f2e32ae3ed43c3d477458ab6e32e7b4cd90f2eb1  paper/README.md
+6a05f77e2a8f1f73bc1f2305c54897a9284bcdc44facfd487f1686fc583479e2  paper/sections/analysis.tex
+837e513e2bf2bb09b9e2e4121edf893072903ab4974f4e4e70d6dfd926e799ac  paper/sections/circuits.tex
 32edc7e3310bffccb3cb6e8485b3f2a72de89a67dbeacbcd2a25511b6e184ba2  paper/sections/coding.tex
-56a77e130a465246f04c79f455c25ff54922ea05202090e2b7a7f4e19f173cbd  paper/sections/communication.tex
-9e97be44f5295ae00274c1ceb48ba80e320aa66a8f8d213f296cb0646230eec3  paper/sections/completeness.tex
-6de8f7822423efdb334ecd9e2c05eed325685025a825fb713a845670b17f07b4  paper/sections/crypto.tex
+cbcd26c55ddc7c74394ba75cf3fbd8b88f32b158838820082486ab41c8423d2c  paper/sections/combinatorics.tex
+d0452458f1ed181c52822b3e1f92db68bd3d685bb75f17ffa2491897641fc406  paper/sections/communication.tex
+b482320f18f507629992bdfff4c03a1ce518ba93e566d98a5c8b288c68458ccc  paper/sections/completeness.tex
+b93a982fd1dddbb7ba8c2ee01f1f83468c41525f6a46d390a5b9d3822512c175  paper/sections/crypto.tex
 bd7eb9e9d9744b5f5cec6f18135b0a0f92dd6a30878be7ed3c462c03cdc9df2f  paper/sections/iteration.tex
 541179288b86a3e5f99131f7c6bebffcb8a82af4838e91ca81fcbf25432f1216  paper/sections/proofs.tex
-7c9fbae2cfcdc99d364f0b74cc89f481367d4c58e79344d0818d4d031d0fcf11  paper/sections/randomness.tex
-e17d0f2eb2b26f30258c32b6582fa0ba91bfd9cb1fdbbd74b2bf60e2af0505b5  paper/sections/space.tex
-1f91c79f59dffd890e5c49712eb254ad39646781f18ad3377ce15d6c17546391  paper/sections/statements.tex
-ccd3ee5a924c3bcaa884751b2b618d5911d6aca4972df5840f85c7523204ca0b  paper/sections/structure.tex
+13ed92486e4347bb53115f8e0b0d38953860b8bad7644f4d17e19d3da1b90cc0  paper/sections/query.tex
+399a336e826579f674f5c0780d576aef74fd749eef559d217d3397351f6e0093  paper/sections/randomness.tex
+c4bd382d2f113b65e127e48d362c431e60149f4b1fba3a883250dde5bae539e4  paper/sections/space.tex
+8df69e5af6433f4926c72f43872e7734c34306f9b5c23de2080966533436dd70  paper/sections/statements.tex
+af07d8884873f80bb4f86c31b3c05835be9331477335b1f4476030c1c459fbdc  paper/sections/structure.tex
 cbb8084fa13318bb9b3408d76e042bd49d3c37d326447d71a036b810250b08b1  paper/sections/synthesis.tex
-```
+~~~
 
 
 ## First-order projection core (19 October 2026)

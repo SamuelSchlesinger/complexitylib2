@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
+import Mathlib.Data.List.GetD
 
 /-!
 # The classes PCP(r, q)
@@ -79,6 +80,12 @@ namespace PCPVerifier
 /-- The bits of the proof `π` at the positions `is`; a position past the end of `π` reads as
 `false`. -/
 def answers (π : List Bool) (is : List ℕ) : List Bool := is.map fun i => π.getD i false
+
+/-- Reading every position of a proof below its length recovers the proof. -/
+theorem answers_range_length (π : List Bool) : answers π (List.range π.length) = π := by
+  apply List.ext_getElem (by simp [answers])
+  intro i _ h
+  simp [answers, List.getElem?_eq_getElem h]
 
 /-- The verdict of `V` on the instance `a` with the proof `π` and the random string `ρ`. -/
 def Accepts (V : PCPVerifier α) (a : α) (π ρ : List Bool) : Bool :=

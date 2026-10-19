@@ -64,9 +64,12 @@ hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`).
 
 ## Main results
 
-* `Cslib.Complexity.P_subset_NP`: `P` is contained in `NP`.
-* `Cslib.Complexity.NPComplete.P_eq_NP_of_mem_P`: an `NP`-complete problem in `P` gives `P = NP`
-  for every encoding.
+* `Cslib.Complexity.P_subset_NP`, `Cslib.Complexity.P_subset_coNP`: `P` is contained in `NP` and
+  in `coNP`.
+* `Cslib.Complexity.NPComplete.P_eq_NP_of_mem_P`, `Cslib.Complexity.NPComplete.mem_P_iff`: an
+  `NP`-complete problem is in `P` exactly when `P = NP` for every encoding.
+* `Cslib.Complexity.NPComplete.mem_P_iff_mem_P`: two `NP`-complete problems are both in `P` or
+  both outside it.
 * `Cslib.Complexity.Ladner.P_eq_NP_of_SAT_mem_P`: if `SAT ∈ P`, then `P = NP` for every encoding.
 * `Cslib.Complexity.Ladner.exists_H_le_of_mem_P`: if `SATH ∈ P`, `H` is bounded.
 * `Cslib.Complexity.Ladner.reducible_of_H_le`: if `H` is bounded, `SAT` reduces to `SATH`.
@@ -101,12 +104,28 @@ theorem P_subset_NP {α : Type} {enc : α ↪ List Bool} : P enc ⊆ NP enc :=
   fun _ ⟨f, hf, hA⟩ => ⟨0, fun x => f x.1, hf.comp (ComputableTidilyInPolyTime.fst enc encBits),
     fun a => (hA a).trans ⟨fun h => ⟨[], by simp, h⟩, fun ⟨_, _, h⟩ => h⟩⟩
 
+/-- **`P ⊆ coNP`**: `P` is closed under complement. -/
+theorem P_subset_coNP {α : Type} {enc : α ↪ List Bool} : P enc ⊆ coNP enc :=
+  fun _ hA => P_subset_NP (compl_mem_P hA)
+
 /-- **An `NP`-complete problem in `P` gives `P = NP`**, for every encoding of instances: every
 problem in `NP` reduces to it, and `P` is closed under polynomial-time reductions. -/
 theorem NPComplete.P_eq_NP_of_mem_P {β : Type} {encB : β ↪ List Bool} {B : Set β}
     (hB : NPComplete encB B) (h : B ∈ P encB) {α : Type} (enc : α ↪ List Bool) :
     P enc = NP enc :=
   P_subset_NP.antisymm fun A hA => (hB.2 enc A hA).mem_P h
+
+/-- **An `NP`-complete problem is in `P` exactly when `P = NP`**, for every encoding of
+instances. -/
+theorem NPComplete.mem_P_iff {β : Type} {encB : β ↪ List Bool} {B : Set β}
+    (hB : NPComplete encB B) : B ∈ P encB ↔ ∀ {α : Type} (enc : α ↪ List Bool), P enc = NP enc :=
+  ⟨fun h _ enc => hB.P_eq_NP_of_mem_P h enc, fun h => h encB ▸ hB.1⟩
+
+/-- Two `NP`-complete problems are both in `P` or both outside it. -/
+theorem NPComplete.mem_P_iff_mem_P {β γ : Type} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
+    {B : Set β} {C : Set γ} (hB : NPComplete encB B) (hC : NPComplete encC C) :
+    B ∈ P encB ↔ C ∈ P encC :=
+  hB.mem_P_iff.trans hC.mem_P_iff.symm
 
 namespace Ladner
 

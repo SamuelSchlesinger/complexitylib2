@@ -40,6 +40,8 @@ function is *symmetric* when it depends only on the weight of its input
 
 * `Cslib.BitString.weight_eq_hammingNorm`, `Cslib.BitString.hammingDist_eq_weight_add`: the
   weight is the Hamming norm.
+* `Cslib.BitString.monotone_weight`, `Cslib.monotone_threshold`: the weight and threshold
+  functions are monotone.
 * `Cslib.BitString.card_weightLayer`: there are `n.choose k` strings of `n` bits of weight `k`.
 * `Cslib.BitString.card_filter_weight_le`: the exact binomial-sum size of a Hamming ball.
 * `Cslib.BitString.card_image_le_sum_choose`: bound a finite family of words by a Hamming ball.
@@ -95,6 +97,18 @@ theorem weight_not_add (x : ι → Bool) :
 theorem weight_not (x : ι → Bool) : weight (fun i => !x i) = Fintype.card ι - weight x := by
   have := weight_not_add x
   omega
+
+/-- The false coordinates of `x` number the coordinates minus the weight. -/
+theorem card_filter_eq_false_eq_card_sub_weight (x : ι → Bool) :
+    #{i | x i = false} = Fintype.card ι - weight x := by
+  rw [← weight_not, weight]
+  simp
+
+/-- The weight is monotone in the pointwise order: setting bits cannot lower it. -/
+theorem monotone_weight : Monotone (weight : (ι → Bool) → ℕ) := fun x y hxy =>
+  card_le_card fun i hi => by
+    have hxi : x i = true := (mem_filter.1 hi).2
+    exact mem_filter.2 ⟨mem_univ i, le_antisymm (Bool.le_true _) (hxi ▸ hxy i)⟩
 
 @[simp] theorem weight_sum_elim {κ : Type*} [Fintype κ] (x : ι → Bool) (y : κ → Bool) :
     weight (Sum.elim x y) = weight x + weight y := by
@@ -243,6 +257,12 @@ theorem threshold_apply (j : ℕ) (x : BitString n) : threshold n j x = decide (
 theorem threshold_eq_true_iff {j : ℕ} {x : BitString n} :
     threshold n j x = true ↔ j ≤ weight x := by
   simp [threshold]
+
+/-- Threshold functions are monotone. -/
+theorem monotone_threshold (j : ℕ) : Monotone (threshold n j) := fun _ _ hxy => by
+  rw [threshold_apply, threshold_apply]
+  exact Bool.le_iff_imp.2 fun h =>
+    decide_eq_true ((of_decide_eq_true h).trans (monotone_weight hxy))
 
 /-- With cutoff `0`, the threshold function is the constant `true`. -/
 @[simp] theorem threshold_zero_right (x : BitString n) : threshold n 0 x = true :=

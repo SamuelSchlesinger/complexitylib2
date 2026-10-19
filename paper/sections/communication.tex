@@ -35,3 +35,22 @@ its zero-argument convention. The shared finite sample of protocols is chosen
 existentially, without a certified procedure to construct it.\citep{Newman1991}
 \decl{Complexity/Computability/Communication/Newman.lean}{168}{Cslib.Communication.PrivateCoin.ecomplexity_le_add_clog}
 \end{result}
+
+\begin{result}
+\subsection{Finite-set equality and inner-product rank}
+Equality and inequality on a finite set $X$ with $|X|\ge2$ each have
+deterministic communication complexity exactly $\lceil\log_2|X|\rceil+1$.
+The protocol model labels leaves by the answer, so the transcript determines
+the output; the bound includes the bit announcing the comparison result.
+
+For inner product modulo two on two $n$-bit inputs, the sign matrix has rank
+$2^n$ and the $0/1$ communication matrix has rank $2^n-1$ over any field of
+characteristic different from two. A deterministic protocol computing it has
+at least $2^n-1$ leaves labelled true. These are exact-protocol and algebraic
+bounds, not randomized communication lower bounds.\citep{KushilevitzNisan1997}
+\decl{Complexity/Computability/Communication/Equality.lean}{142}{Cslib.Communication.ecomplexityFun_equality}
+\decl{Complexity/Computability/Communication/Equality.lean}{158}{Cslib.Communication.ecomplexityFun_not_equality}
+\decl{Complexity/Computability/Communication/InnerProductRank.lean}{97}{Cslib.Communication.rank_signMatrix_dotProduct}
+\decl{Complexity/Computability/Communication/InnerProductRank.lean}{111}{Cslib.Communication.rank_communicationMatrix_dotProduct}
+\decl{Complexity/Computability/Communication/InnerProductRank.lean}{139}{Cslib.Communication.two_pow_sub_one_le_card_true_leaves_of_run_eq_dotProduct}
+\end{result}

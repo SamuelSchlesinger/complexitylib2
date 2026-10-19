@@ -1,0 +1,31 @@
+\section{Finite combinatorial inequalities}
+
+\begin{result}
+\subsection{Discrete Loomis--Whitney}
+For a finite set $A$ in a product of $n\ge2$ finite coordinate spaces, let
+$\pi_i(A)$ be its projection obtained by deleting coordinate $i$. Then
+\[
+|A|^{n-1}\le\prod_{i=1}^n|\pi_i(A)|.
+\]
+The coordinate spaces may differ and $A$ may be empty. This is the discrete
+cardinality inequality, obtained from the counting form of Shearer's lemma;
+no continuous-volume theorem is asserted here.
+\citep{LoomisWhitney1949,ChungGrahamFranklShearer1986}
+\decl{Complexity/Probability/LoomisWhitney.lean}{46}{Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase}
+\end{result}
+
+\begin{result}
+\subsection{A lower bound for sunflower thresholds}
+For every $p\ge2$ and $w\ge0$, there is a family of exactly $(p-1)^w$
+distinct sets, each of size $w$, containing no sunflower with $p$ petals.
+The construction uses the graphs of all functions from a $w$-element set to
+a $(p-1)$-element set. A sunflower means distinct sets with all pairwise
+intersections equal to a common core.
+This lower bound need not be optimal: the six edges of two disjoint triangles
+are a family of two-element sets with no three-petal sunflower.
+\citep{ErdosRado1960}
+\decl{Complexity/Foundations/Combinatorics/Sunflower/LowerBound.lean}{146}{Cslib.exists_card_eq_pow_not_containsSunflower}
+\decl{Complexity/Foundations/Combinatorics/Sunflower/LowerBound.lean}{180}{Cslib.Sunflower.card_twoTriangles}
+\decl{Complexity/Foundations/Combinatorics/Sunflower/LowerBound.lean}{183}{Cslib.Sunflower.card_of_mem_twoTriangles}
+\decl{Complexity/Foundations/Combinatorics/Sunflower/LowerBound.lean}{194}{Cslib.Sunflower.not_containsSunflower_twoTriangles}
+\end{result}

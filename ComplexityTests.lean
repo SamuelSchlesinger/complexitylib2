@@ -13,6 +13,7 @@ import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
+import ComplexityTests.BooleanAnalysisDecisionTree
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
@@ -23,14 +24,17 @@ import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
+import ComplexityTests.ClassClosure
 import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
 import ComplexityTests.Code.M3
 import ComplexityTests.CoinTape
+import ComplexityTests.CombinatorialBounds
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
 import ComplexityTests.CommunicationComplexity3
+import ComplexityTests.CommunicationComplexity4
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
@@ -58,6 +62,7 @@ import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.FirstOrderProjection
+import ComplexityTests.FormulaDepth
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
@@ -90,6 +95,7 @@ import ComplexityTests.KarpLipton
 import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
+import ComplexityTests.KolmogorovCrypto
 import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
 import ComplexityTests.ListEnumeration
@@ -188,6 +194,7 @@ import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.QueryComplexity.Randomized
+import ComplexityTests.QueryComplexity.Sensitivity
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
@@ -204,6 +211,7 @@ import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
+import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
 import ComplexityTests.SipserLautemann
 import ComplexityTests.Smoke

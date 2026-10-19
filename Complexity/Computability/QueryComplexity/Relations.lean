@@ -13,16 +13,20 @@ public import Complexity.Computability.DecisionTree.Certificate
 # Relations between block sensitivity, certificate and decision tree complexity
 
 Block sensitivity bounds certificate and decision tree complexity polynomially, so that the three
-are polynomially related [BuhrmanDeWolf2002].
+are polynomially related [BuhrmanDeWolf2002]. For a value `b`, the one-sided measures `s_b(f)`,
+`bs_b(f)` and `C_b(f)` are the largest sensitivity, block sensitivity and certificate complexity
+of `f` at an input of value `b`.
 
 * `C(f) ≤ s(f) bs(f)`, due to Nisan [Nisan1991]
   (`QueryComplexity.certificateComplexity_le_sensitivity_mul_blockSensitivity`). Take a largest
-  family of pairwise disjoint minimal sensitive blocks at `x`. Every block of it has at most `s(f)`
-  coordinates (`IsMinimalSensitiveBlock.card_le_sensitivity`), and their union is a certificate for
-  `x`: an input agreeing with `x` on it but with a different value differs from `x` on a sensitive
-  block disjoint from the family, which contains a minimal one and would enlarge the family.
-* `D(f) ≤ bs₀(f) C₁(f) ≤ C(f) bs(f)`, where `bs_b(f)` and `C_b(f)` are the largest block
-  sensitivity and certificate complexity at an input of value `b`
+  family of pairwise disjoint minimal sensitive blocks at `x`. Every coordinate of a block `B` of
+  it is sensitive at `x` with `B` flipped, an input of value `¬f(x)`, so `|B| ≤ s_{¬f(x)}(f)`
+  (`QueryComplexity.IsMinimalSensitiveBlock.card_le_sensitivityFor`). The union of the family is a
+  certificate for `x`: an input agreeing with `x` on it but with a different value differs from
+  `x` on a sensitive block disjoint from the family, which contains a minimal one and would
+  enlarge the family. This gives the one-sided form `C_b(f) ≤ s_{¬b}(f) bs_b(f)`
+  (`QueryComplexity.certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor`).
+* `D(f) ≤ bs₀(f) C₁(f) ≤ C(f) bs(f)`
   (`DecisionTree.complexity_le_blockSensitivityFor_mul_certificateComplexityFor`). This is a
   one-sided form of the bound `D(f) ≤ C₁(f) bs(f)` of Beals, Buhrman, Cleve, Mosca and de Wolf
   [BealsBuhrmanCleveMoscaDeWolf2001] ([BuhrmanDeWolf2002], Theorem 11). Query a smallest
@@ -31,16 +35,23 @@ are polynomially related [BuhrmanDeWolf2002].
   certificate on which it differs from the input of value `1`, so its block sensitivity has
   dropped.
 
-With `C(f) ≤ s(f) bs(f) ≤ bs(f)²` this gives `D(f) ≤ bs(f)³`
-(`DecisionTree.complexity_le_blockSensitivity_pow_three`; [BuhrmanDeWolf2002], Corollary 1).
+With `C(f) ≤ s(f) bs(f) ≤ bs(f)²` this gives `D(f) ≤ s(f) bs(f)² ≤ bs(f)³`
+(`DecisionTree.complexity_le_sensitivity_mul_blockSensitivity_sq`,
+`DecisionTree.complexity_le_blockSensitivity_pow_three`; [BuhrmanDeWolf2002], Corollary 1).
 
 ## Main definitions
 
+* `Cslib.BitString.sensitivityFor`: the sensitivity `s_b(f)` of the inputs where `f` has value
+  `b`.
 * `Cslib.QueryComplexity.blockSensitivityFor`: the block sensitivity `bs_b(f)` of the inputs
   where `f` has value `b`.
 
 ## Main results
 
+* `Cslib.QueryComplexity.certificateComplexityAt_le_sensitivityFor_mul_blockSensitivityAt`:
+  `C(f, x) ≤ s_{¬f(x)}(f) bs(f, x)`.
+* `Cslib.QueryComplexity.certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor`:
+  `C_b(f) ≤ s_{¬b}(f) bs_b(f)`.
 * `Cslib.QueryComplexity.certificateComplexityAt_le_sensitivity_mul_blockSensitivityAt`:
   `C(f, x) ≤ s(f) bs(f, x)`.
 * `Cslib.QueryComplexity.certificateComplexity_le_sensitivity_mul_blockSensitivity`:
@@ -50,6 +61,7 @@ With `C(f) ≤ s(f) bs(f) ≤ bs(f)²` this gives `D(f) ≤ bs(f)³`
   `D(f) ≤ bs₀(f) C₁(f)`.
 * `Cslib.DecisionTree.complexity_le_certificateComplexity_mul_blockSensitivity`:
   `D(f) ≤ C(f) bs(f)`.
+* `Cslib.DecisionTree.complexity_le_sensitivity_mul_blockSensitivity_sq`: `D(f) ≤ s(f) bs(f)²`.
 * `Cslib.DecisionTree.complexity_le_blockSensitivity_pow_three`: `D(f) ≤ bs(f)³`.
 
 ## References
@@ -77,6 +89,22 @@ theorem BitString.flipBlock_filter_ne (x y : BitString n) : flipBlock {i | y i �
   · rw [flipBlock_apply_of_mem (by simpa using h)]
     cases hx : x i <;> cases hy : y i <;> simp_all
 
+/-! ### One-sided sensitivity -/
+
+/-- `s_b(f)`: the largest sensitivity of `f` at an input where it has value `b`. -/
+def BitString.sensitivityFor (f : BooleanFunction n) (b : Bool) : ℕ :=
+  (univ.filter fun x => f x = b).sup (sensitivityAt f)
+
+/-- The sensitivity at an input of value `b` is at most `s_b(f)`. -/
+theorem BitString.sensitivityAt_le_sensitivityFor {f : BooleanFunction n} {x : BitString n}
+    {b : Bool} (h : f x = b) : sensitivityAt f x ≤ sensitivityFor f b :=
+  le_sup (f := sensitivityAt f) (mem_filter.2 ⟨mem_univ x, h⟩)
+
+/-- `s_b(f) ≤ s(f)`. -/
+theorem BitString.sensitivityFor_le_sensitivity (f : BooleanFunction n) (b : Bool) :
+    sensitivityFor f b ≤ sensitivity f :=
+  sup_mono (filter_subset _ _)
+
 namespace QueryComplexity
 
 variable {f : BooleanFunction n} {x : BitString n}
@@ -96,6 +124,16 @@ theorem IsSensitiveBlock.exists_isMinimalSensitiveBlock_subset {B : Block n}
 /-- A sensitive block is nonempty. -/
 theorem IsSensitiveBlock.nonempty {B : Block n} (hB : IsSensitiveBlock f x B) : B.Nonempty :=
   nonempty_iff_ne_empty.2 fun h => hB (by rw [h, flipBlock_empty])
+
+/-- A minimal sensitive block at `x` has at most `s_{¬f(x)}(f)` coordinates: they are all
+sensitive at `x` with the block flipped, where `f` has the other value. -/
+theorem IsMinimalSensitiveBlock.card_le_sensitivityFor {B : Block n}
+    (hB : IsMinimalSensitiveBlock f x B) : #B ≤ sensitivityFor f (!f x) := by
+  refine (card_le_sensitivityAt fun i hi => hB.isSensitiveCoord_flipBlock hi).trans
+    (sensitivityAt_le_sensitivityFor ?_)
+  have := hB.1
+  unfold IsSensitiveBlock at this
+  cases h1 : f (flipBlock B x) <;> cases h2 : f x <;> simp_all
 
 /-- The union of a largest family of pairwise disjoint minimal sensitive blocks is a
 certificate. -/
@@ -131,9 +169,10 @@ private theorem isCertificate_biUnion_of_maximal {F : Finset (Block n)}
   rw [card_insert_of_notMem hCF] at this
   omega
 
-/-- **Nisan's bound at an input**: `C(f, x) ≤ s(f) bs(f, x)`. -/
-theorem certificateComplexityAt_le_sensitivity_mul_blockSensitivityAt (f : BooleanFunction n)
-    (x : BitString n) : certificateComplexityAt f x ≤ sensitivity f * blockSensitivityAt f x := by
+/-- **One-sided Nisan bound at an input**: `C(f, x) ≤ s_{¬f(x)}(f) bs(f, x)`. -/
+theorem certificateComplexityAt_le_sensitivityFor_mul_blockSensitivityAt (f : BooleanFunction n)
+    (x : BitString n) :
+    certificateComplexityAt f x ≤ sensitivityFor f (!f x) * blockSensitivityAt f x := by
   classical
   -- a largest family of pairwise disjoint minimal sensitive blocks
   obtain ⟨F, hF, hmax⟩ := exists_max_image
@@ -145,11 +184,17 @@ theorem certificateComplexityAt_le_sensitivity_mul_blockSensitivityAt (f : Boole
     hmax G (mem_filter.2 ⟨mem_sensitiveFamilies.2 hG, hGmin⟩)
   calc certificateComplexityAt f x ≤ #(F.biUnion id) := certificateComplexityAt_le hcert
     _ ≤ ∑ B ∈ F, #B := card_biUnion_le
-    _ ≤ #F * sensitivity f :=
-      sum_le_card_nsmul _ _ _ fun B hB => (hFmin B hB).card_le_sensitivity
-    _ ≤ sensitivity f * blockSensitivityAt f x := by
+    _ ≤ #F * sensitivityFor f (!f x) :=
+      sum_le_card_nsmul _ _ _ fun B hB => (hFmin B hB).card_le_sensitivityFor
+    _ ≤ sensitivityFor f (!f x) * blockSensitivityAt f x := by
       rw [mul_comm]
       exact Nat.mul_le_mul_left _ (card_le_blockSensitivityAt hFs)
+
+/-- **Nisan's bound at an input**: `C(f, x) ≤ s(f) bs(f, x)`. -/
+theorem certificateComplexityAt_le_sensitivity_mul_blockSensitivityAt (f : BooleanFunction n)
+    (x : BitString n) : certificateComplexityAt f x ≤ sensitivity f * blockSensitivityAt f x :=
+  (certificateComplexityAt_le_sensitivityFor_mul_blockSensitivityAt f x).trans
+    (Nat.mul_le_mul_right _ (sensitivityFor_le_sensitivity f _))
 
 /-- **Nisan's bound**: `C(f) ≤ s(f) bs(f)`. -/
 theorem certificateComplexity_le_sensitivity_mul_blockSensitivity (f : BooleanFunction n) :
@@ -177,6 +222,16 @@ theorem blockSensitivityAt_le_blockSensitivityFor {b : Bool} (h : f x = b) :
 theorem blockSensitivityFor_le_blockSensitivity (f : BooleanFunction n) (b : Bool) :
     blockSensitivityFor f b ≤ blockSensitivity f :=
   sup_mono (filter_subset _ _)
+
+/-- **One-sided Nisan bound**: `C_b(f) ≤ s_{¬b}(f) bs_b(f)`. -/
+theorem certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor
+    (f : BooleanFunction n) (b : Bool) :
+    certificateComplexityFor f b ≤ sensitivityFor f (!b) * blockSensitivityFor f b :=
+  Finset.sup_le fun x hx => by
+    have hx : f x = b := (mem_filter.1 hx).2
+    have := certificateComplexityAt_le_sensitivityFor_mul_blockSensitivityAt f x
+    rw [hx] at this
+    exact this.trans (Nat.mul_le_mul_left _ (blockSensitivityAt_le_blockSensitivityFor hx))
 
 /-! ### Restricting by the answers to a certificate -/
 
@@ -314,6 +369,13 @@ theorem complexity_le_certificateComplexity_mul_blockSensitivity (f : BooleanFun
     rw [mul_comm]
     exact Nat.mul_le_mul (certificateComplexityFor_le_certificateComplexity f true)
       (blockSensitivityFor_le_blockSensitivity f false))
+
+/-- `D(f) ≤ s(f) bs(f)²`, from `D(f) ≤ C(f) bs(f)` and Nisan's `C(f) ≤ s(f) bs(f)`. -/
+theorem complexity_le_sensitivity_mul_blockSensitivity_sq (f : BooleanFunction n) :
+    complexity f ≤ sensitivity f * blockSensitivity f ^ 2 :=
+  (complexity_le_certificateComplexity_mul_blockSensitivity f).trans
+    ((Nat.mul_le_mul_right _ (certificateComplexity_le_sensitivity_mul_blockSensitivity f)).trans_eq
+      (by rw [sq, Nat.mul_assoc]))
 
 /-- **Decision tree complexity is at most the cube of block sensitivity**: `D(f) ≤ bs(f)³`
 [BealsBuhrmanCleveMoscaDeWolf2001]. -/

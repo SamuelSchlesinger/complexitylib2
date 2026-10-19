@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.DecisionTree.Basic
 public import Complexity.Foundations.BooleanAnalysis.Fourier
-import Mathlib.Tactic.Ring
+import Complexity.Foundations.BooleanAnalysis.Decomposition
 
 /-!
 # Decision trees have low Fourier degree
@@ -17,11 +17,14 @@ import Mathlib.Tactic.Ring
 A function computed by a decision tree of depth `d` has no Fourier weight above degree `d`
 (`DecisionTree.fourierCoeff_eq_zero_of_depth_lt`) [O'Donnell, Chapter 3][ODonnell2014]: the
 function of a node querying `i` is `(f₀ + f₁) / 2 + χ_{i} (f₀ - f₁) / 2` in terms of the functions
-`f₀` and `f₁` of its subtrees, and multiplying by `χ_{i}` moves a coefficient by at most one in
-degree.
+`f₀` and `f₁` of its subtrees, so its coefficient on `S` is given by the coefficients of `f₀` and
+`f₁` on `S` and on `{i} ∆ S` (`DecisionTree.fourierCoeff_eval_node`), and toggling `i` changes
+the size of a set by at most one.
 
 ## Main results
 
+* `Cslib.DecisionTree.fourierCoeff_eval_node`: the Fourier coefficients at a node in terms of those
+  of the subtrees.
 * `Cslib.DecisionTree.fourierCoeff_eq_zero_of_depth_lt`: decision trees of depth `d` have Fourier
   degree at most `d`.
 
@@ -47,6 +50,21 @@ private theorem card_le_card_symmDiff_singleton_add_one (i : ι) (S : Finset ι)
   · simp [hji]
   · simp [mem_symmDiff, hji, hj]
 
+/-- **The Fourier coefficients at a node**: the coefficient on `S` of a function of the output
+of a node querying `i` is the average of the coefficients of the functions of its subtrees on `S`,
+plus half the difference of their coefficients on `{i} ∆ S`. -/
+theorem fourierCoeff_eval_node (g : β → ℝ) (i : ι) (t₀ t₁ : DecisionTree ι β) (S : Finset ι) :
+    fourierCoeff (fun x => g ((node i t₀ t₁).eval x)) S =
+      (fourierCoeff (fun x => g (t₀.eval x)) S + fourierCoeff (fun x => g (t₁.eval x)) S) / 2 +
+        (fourierCoeff (fun x => g (t₀.eval x)) (symmDiff {i} S) -
+          fourierCoeff (fun x => g (t₁.eval x)) (symmDiff {i} S)) / 2 := by
+  have h : (fun x => g ((node i t₀ t₁).eval x)) =
+      fun x => cond (x i) (g (t₁.eval x)) (g (t₀.eval x)) := by
+    funext x
+    cases hx : x i <;> simp only [eval_node, hx, Bool.cond_false, Bool.cond_true]
+  rw [h]
+  exact fourierCoeff_cond i _ _ S
+
 /-- **Decision trees have low Fourier degree**: a function of the output of a decision tree of
 depth `d` has no Fourier weight on sets of more than `d` coordinates. -/
 theorem fourierCoeff_eq_zero_of_depth_lt (g : β → ℝ) (t : DecisionTree ι β)
@@ -59,18 +77,8 @@ theorem fourierCoeff_eq_zero_of_depth_lt (g : β → ℝ) (t : DecisionTree ι �
     simp [fourierCoeff_const, hne]
   | node i t₀ t₁ ih₀ ih₁ =>
     simp only [depth_node] at hS
-    -- the function of the node in terms of the functions of the subtrees
-    have h : (fun x => g ((node i t₀ t₁).eval x)) = fun x =>
-        (1 / 2 : ℝ) * (g (t₀.eval x) + g (t₁.eval x)) +
-          chi ℝ {i} x * ((1 / 2 : ℝ) * (g (t₀.eval x) - g (t₁.eval x))) := by
-      funext x
-      cases hx : x i <;>
-        simp only [eval_node, chi, prod_singleton, hx, Bool.toNat_false, Bool.toNat_true, pow_zero,
-          pow_one, Bool.cond_false, Bool.cond_true] <;> ring
     have hi := card_le_card_symmDiff_singleton_add_one i S
-    rw [h, fourierCoeff_add, fourierCoeff_const_mul, fourierCoeff_add, fourierCoeff_chi_mul,
-      fourierCoeff_const_mul, fourierCoeff_sub, ih₀ (by omega), ih₁ (by omega), ih₀ (by omega),
-      ih₁ (by omega)]
-    simp
+    rw [fourierCoeff_eval_node, ih₀ (by omega), ih₁ (by omega), ih₀ (by omega), ih₁ (by omega)]
+    norm_num
 
 end Cslib.DecisionTree

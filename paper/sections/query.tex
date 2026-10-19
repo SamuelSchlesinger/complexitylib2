@@ -1,0 +1,81 @@
+\section{Sensitivity and query complexity}
+
+For total Boolean functions on $n$ bits, write $s$ for maximum sensitivity,
+$bs$ for maximum block sensitivity, $C$ for certificate complexity, and $D$
+for deterministic decision-tree depth. A subscript $b$ restricts a maximum
+to inputs with output $b$; it is zero if there are no such inputs.
+
+\begin{result}
+\subsection{Polynomial relations between query measures}
+For every total Boolean function $f$,
+\[
+C(f)\le s(f)\,bs(f)\le bs(f)^2,\qquad
+D(f)\le C(f)\,bs(f)\le bs(f)^3.
+\]
+The formal development also gives $C(f)\le2s(f)^5$ and $D(f)\le4s(f)^9$,
+using the existing sensitivity theorem and degree bounds.
+These are upper bounds for exact deterministic queries, with no promise
+on the input.\citep{Nisan1991,BuhrmanDeWolf2002,Huang2019,NisanSzegedy1994}
+\decl{Complexity/Computability/QueryComplexity/Relations.lean}{200}{Cslib.QueryComplexity.certificateComplexity_le_sensitivity_mul_blockSensitivity}
+\decl{Complexity/Computability/QueryComplexity/Relations.lean}{206}{Cslib.QueryComplexity.certificateComplexity_le_blockSensitivity_sq}
+\decl{Complexity/Computability/QueryComplexity/Relations.lean}{366}{Cslib.DecisionTree.complexity_le_certificateComplexity_mul_blockSensitivity}
+\decl{Complexity/Computability/QueryComplexity/Relations.lean}{382}{Cslib.DecisionTree.complexity_le_blockSensitivity_pow_three}
+\decl{Complexity/Computability/QueryComplexity/SensitivityBounds.lean}{50}{Cslib.QueryComplexity.certificateComplexity_le_two_mul_sensitivity_pow_five}
+\decl{Complexity/Computability/QueryComplexity/SensitivityBounds.lean}{64}{Cslib.DecisionTree.complexity_le_four_mul_sensitivity_pow_nine}
+\end{result}
+
+\begin{result}
+\subsection{Monotone measures and symmetric evasiveness}
+For monotone $f$, $C(f)=bs(f)=s(f)$ and $D(f)\le s_0(f)s_1(f)\le s(f)^2$.
+Separately, every nonconstant symmetric Boolean function on $n$ bits is
+evasive: $D(f)=n$. Symmetry means dependence only on Hamming weight.
+Thus, for $\mathrm{Th}^n_j$, which accepts iff at least $j$ bits are true,
+with $1\le j\le n$,
+\[
+D(\mathrm{Th}^n_j)=n,\qquad
+C(\mathrm{Th}^n_j)=bs(\mathrm{Th}^n_j)=s(\mathrm{Th}^n_j)
+ =\max(j,n+1-j).
+\]
+The equality of the three local-change and certificate measures requires
+monotonicity; it is not asserted for arbitrary functions.
+\citep{Nisan1991,BuhrmanDeWolf2002}
+\decl{Complexity/Computability/QueryComplexity/Monotone.lean}{128}{Cslib.QueryComplexity.certificateComplexity_eq_sensitivity_of_monotone}
+\decl{Complexity/Computability/QueryComplexity/Monotone.lean}{136}{Cslib.QueryComplexity.blockSensitivity_eq_sensitivity_of_monotone}
+\decl{Complexity/Computability/QueryComplexity/Monotone.lean}{150}{Cslib.DecisionTree.complexity_le_sensitivityFor_mul_sensitivityFor_of_monotone}
+\decl{Complexity/Computability/DecisionTree/Symmetric.lean}{160}{Cslib.DecisionTree.complexity_eq_card_of_isSymmetric}
+\decl{Complexity/Computability/QueryComplexity/Threshold.lean}{140}{Cslib.BitString.sensitivity_threshold}
+\end{result}
+
+\begin{result}
+\subsection{Approximate degree of disjunction}
+Let $\widetilde{\deg}_{1/3}(f)$ be the least degree of a real polynomial
+approximating the $0/1$ value of $f$ to error at most $1/3$ at every Boolean input.
+For disjunction on $n$ bits,
+\[
+n\le6\,\widetilde{\deg}_{1/3}(\mathrm{OR}_n)^2,\qquad
+\widetilde{\deg}_{1/3}(\mathrm{OR}_n)\le\lfloor\sqrt{2n}\rfloor+1.
+\]
+These explicit finite bounds establish the square-root order of growth.
+The upper bound uses a Chebyshev polynomial; no optimal leading constant is claimed.
+\citep{NisanSzegedy1994,BuhrmanDeWolf2002}
+\decl{Complexity/Computability/QueryComplexity/ApproximateDegree/Or.lean}{85}{Cslib.QueryComplexity.card_le_six_mul_approxDegree_threshold_one_right_sq}
+\decl{Complexity/Computability/QueryComplexity/ApproximateDegree/Or.lean}{168}{Cslib.QueryComplexity.approxDegree_threshold_one_right_le_sqrt}
+\end{result}
+
+\begin{result}
+\subsection{Superquadratic separation of sensitivity and block sensitivity}
+There is a fixed real exponent $\alpha>2$ and a family of nonconstant Boolean
+functions $F_m$ on positive, varying arities such that $F_m(0)=0$ and
+\[
+s(F_m)^\alpha\le bs(F_m,0),\qquad bs(F_m,0)\longrightarrow\infty.
+\]
+Here $0$ is the all-false input, and $bs(f,0)$ is block sensitivity at that
+specific input. In particular, for every real $c$ there exists a nonconstant
+$f$ with $c\,s(f)^2<bs(f)$, so no universal quadratic upper bound holds.
+The exponent is existential, not an assertion for every $\alpha>2$.
+The linked construction ports OpenAI's formalization through the earlier
+complexitylib development and connects it to the library's public measures.
+\citep{OpenAI2026Sensitivity,Schlesinger2026Sensitivity}
+\decl{Complexity/Computability/QueryComplexity/SensitivitySeparation.lean}{108}{Cslib.QueryComplexity.exists_sensitivity_rpow_le_blockSensitivityAt}
+\decl{Complexity/Computability/QueryComplexity/SensitivitySeparation.lean}{99}{Cslib.QueryComplexity.exists_mul_sensitivity_sq_lt_blockSensitivity}
+\end{result}

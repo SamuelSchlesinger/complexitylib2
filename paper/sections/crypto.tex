@@ -70,3 +70,23 @@ not assertions that one-way functions exist.\citep{GGM1986,Holenstein2006}
 \decl{Complexity/Crypto/Computational/GGM/Security.lean}{97}{Cslib.Crypto.PseudorandomGenerator.exists_pseudorandomFunction}
 \decl{Complexity/Crypto/Computational/OneWayToPRF.lean}{46}{Cslib.Crypto.OneWay.exists_pseudorandomFunction}
 \end{result}
+
+\begin{result}
+\subsection{Generators imply one-way functions}
+A secure PRG $G$ whose output length $\ell(n)$ satisfies $\ell(n)\ge2n$
+for every seed length $n$ is itself one-way, including against inverters that
+return preimages of different lengths. More generally, $G$ is one-way if
+$\ell$ is injective and $n\mapsto2^{-(\ell(n)-n)}$ is negligible.
+An arbitrary PRG with positive stretch yields a one-way function after
+truncation and stretch amplification; the claim in this case is existence of
+a possibly different function. Together with HILL, this gives
+\[
+\text{a one-way function exists}\quad\Longleftrightarrow\quad
+\text{a pseudorandom generator exists}.
+\]
+All security notions are the uniform strict-PPT notions specified above.
+Neither side's unconditional existence is asserted.\citep{KatzLindell2020,HILL1999}
+\decl{Complexity/Crypto/Computational/PRGToOneWay.lean}{164}{Cslib.Crypto.PseudorandomGenerator.oneWay}
+\decl{Complexity/Crypto/Computational/PRGToOneWay.lean}{187}{Cslib.Crypto.PseudorandomGenerator.oneWay_of_injective}
+\decl{Complexity/Crypto/Computational/PRGToOneWay.lean}{214}{Cslib.Crypto.exists_oneWay_iff_exists_pseudorandomGenerator}
+\end{result}

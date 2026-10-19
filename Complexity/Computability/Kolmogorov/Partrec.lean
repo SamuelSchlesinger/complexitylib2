@@ -75,8 +75,9 @@ namespace Cslib.Kolmogorov
 
 open Encodable Denumerable Nat.Partrec
 
-/-- Folding `Nat.bit` over a binary string is primitive recursive. -/
-private theorem primrec_foldr_bit : Primrec fun l : List Bool => l.foldr Nat.bit 0 := by
+/-- Folding `Nat.bit` over a binary string, which inverts `Nat.bits` (`Nat.foldr_bit_bits`), is
+primitive recursive. -/
+theorem _root_.Primrec.list_foldr_nat_bit : Primrec fun l : List Bool => l.foldr Nat.bit 0 := by
   have hbit : Primrec₂ fun (_ : List Bool) (bn : Bool × ℕ) => Nat.bit bn.1 bn.2 :=
     Primrec₂.mk <| (Primrec.cond (Primrec.fst.comp Primrec.snd)
       (Primrec.nat_double_succ.comp (Primrec.snd.comp Primrec.snd))
@@ -89,7 +90,7 @@ theorem primrec_decodeSelfDelimiting : Primrec decodeSelfDelimiting := by
     Primrec.list_idxOf.comp (Primrec.const false) Primrec.id
   have hr : Primrec fun q : List Bool => q.drop (q.idxOf false + 1) :=
     Primrec.list_drop.comp (Primrec.succ.comp hk) Primrec.id
-  have hn := primrec_foldr_bit.comp (Primrec.list_take.comp hk hr)
+  have hn := Primrec.list_foldr_nat_bit.comp (Primrec.list_take.comp hk hr)
   have hs := Primrec.list_drop.comp hk hr
   exact (Primrec.pair (Primrec.list_take.comp hn hs) (Primrec.list_drop.comp hn hs)).of_eq
     fun _ => rfl
@@ -168,7 +169,7 @@ theorem isPartrec_universal : universal.IsPartrec := by
   refine ⟨fun q => (ofNat Code ((decodeSelfDelimiting q).1.foldr Nat.bit 0)).eval
     (encode (decodeSelfDelimiting q).2), ?_, fun _ _ => ofCode_produces_iff⟩
   exact Code.eval_part.comp
-    ((Computable.ofNat Code).comp (primrec_foldr_bit.comp (Primrec.fst.comp hd)).to_comp)
+    ((Computable.ofNat Code).comp (Primrec.list_foldr_nat_bit.comp (Primrec.fst.comp hd)).to_comp)
     (Computable.encode.comp (Primrec.snd.comp hd).to_comp)
 
 /-- The universal method simulates the description method of every code `c`, with the header of
