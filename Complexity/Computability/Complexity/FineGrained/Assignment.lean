@@ -113,7 +113,8 @@ open ComputableTidilyInPolyTime in
 polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_eval_bitsAssignment :
-    ComputableTidilyInPolyTime (fun p : (CNF ℕ × List ℕ) × ℕ => p.1.1.eval (bitsAssignment p.1.2 p.2))
+    ComputableTidilyInPolyTime
+      (fun p : (CNF ℕ × List ℕ) × ℕ => p.1.1.eval (bitsAssignment p.1.2 p.2))
       (encPair (encPair encCNF (encList encNat)) encNat) encBool := by
   have e : (fun p : (CNF ℕ × List ℕ) × ℕ => p.1.1.eval (bitsAssignment p.1.2 p.2)) =
       fun p => p.1.1.eval fun v => p.2.bits.getD (p.1.2.idxOf v) false := by

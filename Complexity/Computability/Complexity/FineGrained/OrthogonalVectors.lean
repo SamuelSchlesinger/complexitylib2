@@ -31,17 +31,19 @@ satisfy the formula. So the formula is satisfiable exactly when the instance `to
 `2 ^ ⌊n / 2⌋` and `2 ^ ⌈n / 2⌉` vectors of dimension `m`, is in `OV`
 (`Cslib.Complexity.toOV_mem_OV_iff`).
 
-The reduction writes its `2 ^ ⌈n / 2⌉ m`-bit output in time `2 ^ ⌈n / 2⌉` times a polynomial in
-the length of the encoded formula (`Cslib.Complexity.computableTidilyInO_toOV`): the vectors are
-streamed to the output one at a time (`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum`)
-rather than accumulated, which would cost time quadratic in the number of vectors. Then a decider
+The reduction writes its output of about `2 ^ ⌈n / 2⌉ m` bits within time `2 ^ ⌈n / 2⌉` times a
+polynomial in the length of the encoded formula
+(`Cslib.Complexity.exists_computableTidilyInO_toOV`). The vectors are streamed to the output one
+at a time (`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum`);
+accumulating them in a list would cost time quadratic in the number of vectors. Then a decider
 for `OV` within time `N ^ (2 - ε)` times a polynomial in the dimension, on `N` vectors, decides
 `SAT` within time `2 ^ ((1 - ε / 2) n)` times a polynomial, for `0 < ε ≤ 1`
 (`Cslib.Complexity.DecidableInExpTime.SAT_of_OV`), and the strong exponential time hypothesis
 implies the orthogonal vectors hypothesis (`Cslib.Complexity.OVH_of_SETH`).
 
-The hypothesis is stated with a polynomial factor in the dimension. The form for dimension
-`c log N`, which Williams also derives with the sparsification lemma, is not proved here.
+The orthogonal vectors hypothesis is stated with a polynomial factor in the dimension. Its form for
+dimension `c log N`, which follows from the strong exponential time hypothesis with the
+sparsification lemma, is not proved here.
 
 ## Main definitions
 
@@ -52,8 +54,8 @@ The hypothesis is stated with a polynomial factor in the dimension. The form for
 ## Main results
 
 * `Cslib.Complexity.toOV_mem_OV_iff`: `toOV φ ∈ OV ↔ φ ∈ SAT`.
-* `Cslib.Complexity.computableTidilyInO_toOV`: the reduction runs within time `2 ^ ⌈n / 2⌉` times a
-  polynomial.
+* `Cslib.Complexity.exists_computableTidilyInO_toOV`: the reduction runs within time
+  `2 ^ ⌈n / 2⌉` times a polynomial.
 * `Cslib.Complexity.DecidableInExpTime.SAT_of_OV`: a fast `OV` decider gives a fast `SAT` decider.
 * `Cslib.Complexity.OVH_of_SETH`: `SETH → OVH`.
 
@@ -131,7 +133,8 @@ theorem length_secondVars (φ : CNF ℕ) :
     (secondVars φ).length = φ.numVars - φ.numVars / 2 := by
   simp [secondVars, ThreeSAT.length_distinctVars]
 
-theorem length_halfVectors (φ : CNF ℕ) (vs : List ℕ) : (halfVectors φ vs).length = 2 ^ vs.length := by
+theorem length_halfVectors (φ : CNF ℕ) (vs : List ℕ) :
+    (halfVectors φ vs).length = 2 ^ vs.length := by
   simp [halfVectors]
 
 theorem length_of_mem_halfVectors {φ : CNF ℕ} {vs : List ℕ} {v : List Bool}
@@ -354,7 +357,8 @@ theorem exists_computableTidilyInO_stream {half : CNF ℕ → List ℕ}
       x.2 * ((cN + cE + 3) * (B x + 1) ^ D) := by simp
   have hB1 (x : StreamState × ℕ) : B x + 1 ≤ (B x + 1) ^ D := Nat.le_self_pow (by omega) _
   have hstream : ComputableTidilyInO (fun x : StreamState × ℕ =>
-      ((List.range x.2).map fun i => wrap (clauseVector x.1.1.1 x.1.1.2 (x.1.2 + i))).flatten ++ fin)
+      ((List.range x.2).map fun i => wrap (clauseVector x.1.1.1 x.1.1.2 (x.1.2 + i))).flatten ++
+        fin)
       (encPair encStreamState encUnary) encBits (fun x => (x.2 + 1) * (B x + 1) ^ D)
       fun x => (x.2 + 1) * (B x + 1) ^ D := by
     refine (ComputableTidilyInO.of_bounds h (c * (cF + cN + cE + cN' + cE' + 6)) (fun x => ?_)
@@ -486,7 +490,7 @@ end OV
 open ComputableTidilyInPolyTime in
 /-- **The split-and-list reduction is fast**: it writes its output within time `2 ^ ⌈n / 2⌉` times
 a polynomial in the length of the encoded formula, on formulas with `n` variables. -/
-theorem computableTidilyInO_toOV : ∃ e, ComputableTidilyInO toOV encCNF encOV
+theorem exists_computableTidilyInO_toOV : ∃ e, ComputableTidilyInO toOV encCNF encOV
     (fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e)
     fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e := by
   obtain ⟨e₁, h₁⟩ := OV.exists_computableTidilyInO_stream OV.computableTidilyInPolyTime_firstVars
@@ -532,7 +536,7 @@ theorem DecidableInExpTime.SAT_of_OV {ε : ℝ} (hε : 0 < ε) {e : ℕ}
       fun p => ((p.1.length + p.2.length : ℕ) : ℝ) ^ (2 - ε) * (OV.dim p + 1) ^ e) :
     DecidableInExpTime SAT encCNF CNF.numVars (1 - min ε 1 / 2) := by
   obtain ⟨g, t, c, hg, hgOV, ht⟩ := h.exists_computableTidilyInO
-  obtain ⟨E, hred⟩ := computableTidilyInO_toOV
+  obtain ⟨E, hred⟩ := exists_computableTidilyInO_toOV
   refine .of_computableTidilyInO (hg.comp hred) (fun φ => by
     rw [← toOV_mem_OV_iff]
     exact hgOV _) (3 + 9 * c) (E + e) fun φ => ?_

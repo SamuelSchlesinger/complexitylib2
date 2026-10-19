@@ -204,7 +204,7 @@ theorem DecidableInTimeO.inter {p : α → Bool} (hp : ComputableTidilyInPolyTim
     · push_cast
       nlinarith
   · split_ifs
-    · positivity [hT a]
+    · exact add_nonneg (hT a) (by positivity)
     · positivity
 
 /-! ### Exponential and subexponential time -/
@@ -308,10 +308,22 @@ theorem ETH_iff_not_decidableInSubexpTime :
 shorter vector count as `false`. -/
 def OV.Orthogonal (a b : List Bool) : Prop := ∀ i, a.getD i false = false ∨ b.getD i false = false
 
+/-- Orthogonality only depends on the coordinates of the first vector. -/
+theorem OV.orthogonal_iff_forall_lt {a b : List Bool} :
+    OV.Orthogonal a b ↔ ∀ i < a.length, a.getD i false = false ∨ b.getD i false = false :=
+  ⟨fun h i _ => h i, fun h i => if hi : i < a.length then h i hi else
+    Or.inl (by rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none (not_lt.mp hi)]; rfl)⟩
+
+instance (a b : List Bool) : Decidable (OV.Orthogonal a b) :=
+  decidable_of_iff _ OV.orthogonal_iff_forall_lt.symm
+
 /-- **The orthogonal vectors problem**: the pairs `(A, B)` of lists of bit vectors with an
 orthogonal pair of vectors `a ∈ A` and `b ∈ B`. -/
 def OV : Set (List (List Bool) × List (List Bool)) :=
   {p | ∃ a ∈ p.1, ∃ b ∈ p.2, OV.Orthogonal a b}
+
+instance : DecidablePred (· ∈ OV) := fun p =>
+  decidable_of_iff (∃ a ∈ p.1, ∃ b ∈ p.2, OV.Orthogonal a b) Iff.rfl
 
 /-- Instances of the orthogonal vectors problem, encoded as pairs of lists of bit vectors. -/
 def encOV : List (List Bool) × List (List Bool) ↪ List Bool :=

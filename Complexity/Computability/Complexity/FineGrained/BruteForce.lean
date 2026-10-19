@@ -22,8 +22,9 @@ Exhaustive search decides `SAT` by trying the `2 ^ n` numbered assignments of th
 variables of a formula (`Cslib.Logic.PL.CNF.satisfiable_iff_exists_bitsAssignment`). It iterates a
 polynomial-time step `2 ^ n` times with a binary counter
 (`Turing.MultiTapeTM.ComputableTidilyInO.iterate`), so it runs within time `2 ^ n` times a
-polynomial in the length of the encoded formula (`Cslib.Complexity.BruteForce.computableTidilyInO`).
-Hence `SAT`, and every `k`-SAT, is decidable within time `2 ^ n` times a polynomial
+polynomial in the length of the encoded formula
+(`Cslib.Complexity.BruteForce.exists_computableTidilyInO_search`). Hence `SAT`, and every
+`k`-SAT, is decidable within time `2 ^ n` times a polynomial
 (`Cslib.Complexity.SAT_decidableInExpTime_one`, `Cslib.Complexity.KSAT_decidableInExpTime_one`).
 
 ## Main definitions
@@ -33,7 +34,7 @@ Hence `SAT`, and every `k`-SAT, is decidable within time `2 ^ n` times a polynom
 ## Main results
 
 * `Cslib.Complexity.BruteForce.search_eq_true_iff`: exhaustive search decides `SAT`.
-* `Cslib.Complexity.BruteForce.computableTidilyInO`: its running time.
+* `Cslib.Complexity.BruteForce.exists_computableTidilyInO_search`: its running time.
 * `Cslib.Complexity.SAT_decidableInExpTime_one`, `Cslib.Complexity.KSAT_decidableInExpTime_one`:
   `SAT` and `k`-SAT are decidable within time `2 ^ n` times a polynomial.
 -/
@@ -78,7 +79,8 @@ assignment to try, and whether a satisfying assignment was found. -/
 abbrev State : Type := (CNF ℕ × List ℕ) × (ℕ × Bool)
 
 /-- States encoded as framed tuples. -/
-abbrev encState : State ↪ List Bool := encPair (encPair encCNF (encList encNat)) (encPair encNat encBool)
+abbrev encState : State ↪ List Bool :=
+  encPair (encPair encCNF (encList encNat)) (encPair encNat encBool)
 
 /-- Try the next numbered assignment. -/
 def step (s : State) : State :=
@@ -109,6 +111,7 @@ theorem search_eq_true_iff (φ : CNF ℕ) : search φ = true ↔ φ ∈ SAT := b
 /-! ### Running time -/
 
 open ComputableTidilyInPolyTime in
+/-- A step of exhaustive search is polynomial-time. -/
 theorem computableTidilyInPolyTime_step : ComputableTidilyInPolyTime step encState encState := by
   have h : ComputableTidilyInPolyTime (fun s : State => s.1.1.eval (bitsAssignment s.1.2 s.2.1))
       encState encBool :=
@@ -119,18 +122,20 @@ theorem computableTidilyInPolyTime_step : ComputableTidilyInPolyTime step encSta
   fun_prop
 
 open ComputableTidilyInPolyTime in
+/-- The initial state is computed in polynomial time. -/
 theorem computableTidilyInPolyTime_init : ComputableTidilyInPolyTime init encCNF encState := by
   unfold init
   fun_prop
 
 open ComputableTidilyInPolyTime in
+/-- The number `2 ^ n` of rounds is computed in binary in polynomial time. -/
 theorem computableTidilyInPolyTime_count :
     ComputableTidilyInPolyTime (fun φ => 2 ^ (ThreeSAT.distinctVars φ).length) encCNF encNat := by
   fun_prop
 
 /-- **The running time of exhaustive search**: within time `2 ^ n` times a polynomial in the
 length of the encoded formula, on formulas with `n` variables. -/
-theorem computableTidilyInO : ∃ e, ComputableTidilyInO search encCNF encBool
+theorem exists_computableTidilyInO_search : ∃ e, ComputableTidilyInO search encCNF encBool
     (fun φ => 2 ^ φ.numVars * ((encCNF φ).length + 1) ^ e)
     fun φ => 2 ^ φ.numVars * ((encCNF φ).length + 1) ^ e := by
   obtain ⟨d, _, hstep⟩ := computableTidilyInPolyTime_step.exists_degree
@@ -159,7 +164,8 @@ theorem computableTidilyInO : ∃ e, ComputableTidilyInO search encCNF encBool
     have h₄ := hn φ
     rw [iterate_step_init]
     simp only [List.length_append, List.length_replicate, List.length_singleton] at hK
-    simp only [encState, length_encPair, encBool_apply, List.length_singleton, B, size] at hV h₁ h₃ h₄ ⊢
+    simp only [encState, length_encPair, encBool_apply, List.length_singleton, B, size]
+      at hV h₁ h₃ h₄ ⊢
     nlinarith
   have hiter := ComputableTidilyInO.iterate hcount.inO hinit.inO hstep.inO
     (R := fun φ => (B φ + 1) ^ d) (Q := fun φ => (B φ + 1) ^ d) (B := B)
@@ -210,7 +216,7 @@ end BruteForce
 /-- **`SAT` by exhaustive search**: `SAT` is decidable within time `2 ^ n` times a polynomial in the
 length of the encoded formula, on formulas with `n` variables. -/
 theorem SAT_decidableInExpTime_one : DecidableInExpTime SAT encCNF CNF.numVars 1 := by
-  obtain ⟨e, h⟩ := BruteForce.computableTidilyInO
+  obtain ⟨e, h⟩ := BruteForce.exists_computableTidilyInO_search
   refine .of_computableTidilyInO h (fun φ => (BruteForce.search_eq_true_iff φ).symm) 1 e
     fun φ => ?_
   rw [one_mul, Real.rpow_natCast]
