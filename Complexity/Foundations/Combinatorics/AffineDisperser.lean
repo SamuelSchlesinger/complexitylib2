@@ -220,7 +220,11 @@ noncomputable def traceSym (μ : F) (r t : ℕ) (x : Fin r → F) : ZMod 2 :=
 /-- **Affine dispersers from subspace polynomials** [BenSassonKopparty2012, Theorem 7.3], for
 fields whose proper subfields have at most `2 ^ s` elements: if `μ ≠ 0` and `0 < t`, then
 `traceSym μ r t` is nonconstant on every `𝔽₂`-affine subspace `A` of `Fʳ` of dimension greater
-than `r * max (r + 1) s + r * (r + 1) + n * t + n * r / t`, where `F` has `2 ^ n` elements. -/
+than `r * max (r + 1) s + r * (r + 1) + n * t + n * r / t`, where `F` has `2 ^ n` elements.
+
+No relation between `n`, `r` and `t` is assumed: the summand `r * (r + 1)` replaces the
+hypothesis `n * t ≥ r * (r + 1)` of the paper. For prime `n` one may take `s = 1`, and the bound
+is then `2 r (r + 1) + n t + ⌊n r / t⌋`, at most `r (r + 1)` above the paper's. -/
 theorem exists_traceSym_ne {n s r t : ℕ} (hn : finrank (ZMod 2) F = n)
     (hs : ∀ K : Subfield F, K ≠ ⊤ → Nat.card K ≤ 2 ^ s) {μ : F} (hμ : μ ≠ 0) (ht : 0 < t)
     (A : AffineSubspace (ZMod 2) (Fin r → F))
