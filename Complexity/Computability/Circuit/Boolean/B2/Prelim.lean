@@ -639,6 +639,148 @@ theorem deletable_fixConst {S : State n} (hS : S.Valid f) {p : ℕ} (b : Bool) {
     rw [this, Finset.card_erase_of_mem hpe]
     omega
 
+
+/-! ### Case 3 -/
+
+/-- A paired parameter has a partner. -/
+theorem exists_partner {S : State n} {p : ℕ} (hp : S.Paired p) : ∃ r, S.IsPartner p r := by
+  obtain ⟨pr, hpr, h⟩ := hp
+  rcases h with h | h
+  · exact ⟨pr.2, pr, hpr, Or.inl ⟨h, rfl⟩⟩
+  · exact ⟨pr.1, pr, hpr, Or.inr ⟨h, rfl⟩⟩
+
+theorem Valid.partner_ne {S : State n} (hS : S.Valid f) {p r : ℕ} (h : S.IsPartner p r) :
+    r ≠ p := by
+  obtain ⟨pr, hpr, h⟩ := h
+  have := (hS.pair_mem pr hpr).2.2
+  rcases h with ⟨h1, h2⟩ | ⟨h1, h2⟩
+  · rw [← h1, ← h2]; exact this.symm
+  · rw [← h1, ← h2]; exact this
+
+theorem Valid.partner_mem {S : State n} (hS : S.Valid f) {p r : ℕ} (h : S.IsPartner p r) :
+    r ∈ S.params := by
+  obtain ⟨pr, hpr, h⟩ := h
+  rcases h with ⟨-, h2⟩ | ⟨-, h2⟩
+  · rw [← h2]; exact (hS.pair_mem pr hpr).2.1
+  · rw [← h2]; exact (hS.pair_mem pr hpr).1
+
+theorem isPartner_symm {S : State n} {p r : ℕ} (h : S.IsPartner p r) : S.IsPartner r p := by
+  obtain ⟨pr, hpr, h⟩ := h
+  exact ⟨pr, hpr, by tauto⟩
+
+/-- After fixing a parameter `w`, every unpaired parameter other than the partner of `w` was
+unpaired. -/
+theorem fixConst_unpaired_of_ne {S : State n} (hS : S.Valid f) {w r u : ℕ} {b : Bool}
+    (hr : S.IsPartner w r ∨ ¬ S.Paired w) (hu : u ∈ (S.fixConst w b).unpaired) (hur : u ≠ r) :
+    u ∈ S.unpaired := by
+  rcases fixConst_unpaired hu with h | h
+  · exact h
+  · rcases hr with hr | hr
+    · exact absurd (hS.isPartner_unique h hr) hur
+    · exact absurd (isPartner_paired h).1 hr
+
+/-- Case 3 applies: a paired parameter has degree `0` or at least `2`. -/
+def Case3 (S : State n) : Prop :=
+  ∃ p ∈ S.params, S.Paired p ∧ (S.deg p = 0 ∨ 2 ≤ S.deg p)
+
+/-- **Case 3** of the preliminary reductions. If a paired parameter `p` is unused, fixing its
+partner removes the pair: `Δa = 0`, `ΔW ≤ -3`. If `p` has two children, fixing `p` makes both
+deletable; the partner becomes unpaired and no other weight grows: `Δa = 0`, `ΔW ≤ 0`. -/
+theorem Valid.step_case3 {S : State n} (hS : S.Valid f) (hexcl : S.Exclusive) (h : S.Case3) :
+    ∃ S', Step f S S' := by
+  obtain ⟨p, hp, hpp, hdeg⟩ := h
+  obtain ⟨r, hpr⟩ := exists_partner hpp
+  have hrp := hS.partner_ne hpr
+  have hr := hS.partner_mem hpr
+  have hq := hS.pairsAvoid_card
+  rcases hdeg with hdeg | hdeg
+  · -- fix the partner `r`; `p` becomes unpaired and unused
+    set S' := S.fixConst r false
+    have hS' := hS.fixConst hr false
+    have hm : S'.m + 1 = S.m := fixConst_m hr false
+    have hqr := hq r
+    rw [ite_eq_left (isPartner_paired hpr).2] at hqr
+    have hq' : S'.q + 1 = S.q := hqr
+    have hs : S'.s = S.s := rfl
+    have hnot : r ∉ S'.params := Finset.notMem_erase r S.params
+    have hpt : ∀ u ∈ S.params, S'.wt u + 0 ≤ S.wt u + 0 := by
+      intro u hu
+      by_cases hur : u = r
+      · rw [hur, wt_of_notMem_params hnot]; omega
+      · by_cases hu' : u ∈ S'.unpaired
+        · rw [wt_of_mem hu']
+          by_cases hup : u = p
+          · subst hup
+            have : S'.deg u = 0 := by
+              change (S.fixConst r false).deg u = 0
+              unfold SemiCircuit.deg
+              rw [fixConst_children S false hur]
+              exact hdeg
+            rw [this]; simp
+          · have hus := fixConst_unpaired_of_ne hS (Or.inl (isPartner_symm hpr)) hu' hup
+            rw [wt_of_mem hus]
+            change weight (SemiCircuit.deg _ u) + 0 ≤ _
+            unfold SemiCircuit.deg
+            rw [fixConst_children S false hur]
+        · rw [wt_of_notMem hu']; omega
+    have hW := W_add_le (S := S) (S' := S') le_rfl (Finset.erase_subset _ _) _ _ hpt
+    simp only [Finset.sum_const_zero] at hW
+    have ha' : S'.a = S.a := by simp only [a]; omega
+    exact ⟨S', hS', by omega, by rw [ha']; omega⟩
+  · -- fix `p`; two of its children become deletable
+    obtain ⟨N₁, hN₁, N₂, hN₂, hne⟩ := Finset.one_lt_card.1 (show 1 < (S.children p).card from hdeg)
+    set S₁ := S.fixConst p false
+    have hS₁ := hS.fixConst hp false
+    obtain ⟨S', tl, hchain, hmap⟩ := hS₁.exists_chain [N₁, N₂] (by simp [hne])
+      (by simp only [List.mem_cons, List.not_mem_nil, or_false]
+          rintro N (rfl | rfl)
+          exacts [deletable_fixConst hS false hN₁, deletable_fixConst hS false hN₂])
+    have hS' := hchain.valid hS₁
+    have hparams : S'.params = S.params.erase p := hchain.params
+    have hpairs : S'.pairs = S.pairsAvoid p := hchain.pairs
+    have hsize : S'.size + 2 = S.size := by
+      have := hchain.size
+      have hlen : tl.length = 2 := by rw [← List.length_map Prod.fst, hmap]; rfl
+      rw [hlen] at this
+      exact this
+    have hm : S'.m + 1 = S.m := by
+      simp only [m, hparams]; exact Finset.card_erase_add_one hp
+    have hqp := hq p
+    rw [ite_eq_left hpp] at hqp
+    have hq' : S'.q + 1 = S.q := by unfold q; rw [hpairs]; exact hqp
+    have hnodes : ∀ q ∈ tl, q.1 ∈ S.children p := by
+      intro q hq
+      have : q.1 ∈ tl.map Prod.fst := List.mem_map_of_mem hq
+      rw [hmap] at this
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at this
+      rcases this with h | h <;> rw [h]
+      exacts [hN₁, hN₂]
+    have hpt : ∀ u ∈ S.params, S'.wt u + 0 ≤ S.wt u + (if S.IsPartner p u then 7 else 0) := by
+      intro u hu
+      by_cases hup : u = p
+      · subst hup; rw [wt_of_notMem_params (by simp [hparams])]; omega
+      · by_cases hu' : u ∈ S'.unpaired
+        · by_cases hur : S.IsPartner p u
+          · rw [ite_eq_left hur]; have := S'.wt_le_seven u; omega
+          · rw [ite_eq_right hur]
+            have hu₁ : u ∈ S₁.unpaired := by
+              rw [unpaired_congr hchain.params hchain.pairs] at hu'; exact hu'
+            have hus : u ∈ S.unpaired := by
+              rcases fixConst_unpaired hu₁ with h | h
+              · exact h
+              · exact absurd h hur
+            rw [wt_of_mem hu', wt_of_mem hus, add_zero, add_zero]
+            refine weight_le_of_chain hexcl hchain hus (Finset.mem_erase.2 ⟨hup, hu⟩)
+              (fixConst_children S false hup) fun q hq _ _ => ⟨p, hp, Ne.symm hup, hnodes q hq⟩
+        · rw [wt_of_notMem hu']; omega
+    have hW := W_add_le (S := S) (S' := S') le_rfl (by rw [hparams]; exact Finset.erase_subset _ _)
+      _ _ hpt
+    simp only [Finset.sum_const_zero] at hW
+    have hgain := hS.sum_partner_le p S.params 7
+    have hs : S'.s + 2 = S.s := hsize
+    have ha' : S'.a = S.a := by simp only [a]; omega
+    exact ⟨S', hS', by omega, by rw [ha']; omega⟩
+
 end State
 
 end Cslib.Circuits.Boolean.B2
