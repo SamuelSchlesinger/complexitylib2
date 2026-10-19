@@ -45,6 +45,7 @@ closed, so `var v ∉ TQBF`, while `ex v (var v) ∈ TQBF` and `all v (var v) �
 ## Main results
 
 * `Cslib.Logic.PL.QBF.tokens_append_inj`: tokens in prefix order determine the formula.
+* `Cslib.Logic.PL.QBF.length_tokens`: one token for each node.
 * `Cslib.Complexity.mem_TQBF`, `Cslib.Complexity.top_mem_TQBF`, `Cslib.Complexity.bot_notMem_TQBF`,
   `Cslib.Complexity.var_notMem_TQBF`: membership and the boundary cases.
 
@@ -141,6 +142,18 @@ theorem tokens_injective : Function.Injective tokens := fun φ ψ h =>
 /-- Every formula has a token. -/
 theorem tokens_ne_nil (φ : QBF ℕ) : φ.tokens ≠ [] := by
   cases φ <;> simp [tokens]
+
+/-- A formula has one token for each of its nodes. -/
+theorem length_tokens (φ : QBF ℕ) : φ.tokens.length = φ.size := by
+  induction φ with
+  | var v => rfl
+  | top => rfl
+  | bot => rfl
+  | not φ ih => simp only [tokens, size, List.length_cons, ih]
+  | and φ ψ ihφ ihψ => simp only [tokens, size, List.length_cons, List.length_append, ihφ, ihψ]
+  | or φ ψ ihφ ihψ => simp only [tokens, size, List.length_cons, List.length_append, ihφ, ihψ]
+  | ex v φ ih => simp only [tokens, size, List.length_cons, ih]
+  | all v φ ih => simp only [tokens, size, List.length_cons, ih]
 
 end Cslib.Logic.PL.QBF
 

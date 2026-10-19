@@ -1107,6 +1107,7 @@ public import Complexity.Foundations.Data.Nat.Log
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
+public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape
@@ -1134,6 +1135,7 @@ public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Languages.Probabilistic.Oracle
+public import Complexity.Languages.Probabilistic.Oracle.Interaction
 public import Complexity.Languages.Probabilistic.Oracle.Simulation
 public import Complexity.Languages.Probabilistic.Oracle.Support
 public import Complexity.Languages.Probabilistic.Oracle.Transcript

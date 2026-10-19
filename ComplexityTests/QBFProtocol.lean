@@ -20,6 +20,7 @@ completeness on a true formula and a concrete soundness bound below `1` on a fal
 namespace ComplexityTests.QBFProtocol
 
 open Cslib Cslib.Complexity Cslib.Logic.PL Cslib.Complexity.QBFProtocol
+open Cslib.ProbOracleComp (acceptProbWith)
 open scoped ENNReal
 
 /-- `∀ x, ∃ y, x ↔ y`, with `x = 0` and `y = 1`. -/
@@ -75,14 +76,14 @@ example : forallVar ∉ TQBF := fun h => absurd h.2 (by decide)
 
 /-- The honest prover is accepted on a true formula with probability `1`. -/
 example (sampler : ProbComp (ZMod 7)) :
-    acceptProb honest (verify sampler (forallExistsIff.arithmetize forallExistsIff.vars) 0 1) () =
-      1 :=
+    acceptProbWith honest
+      (verify sampler (forallExistsIff.arithmetize forallExistsIff.vars) 0 1) () = 1 :=
   acceptProb_honest_of_mem_TQBF sampler ⟨by decide, rfl⟩
 
 /-- On a false formula of size `2`, over `ZMod 101`, no prover is accepted with probability more
 than `24 / 101`. -/
 example {S : Type} (respond : Query ℕ (ZMod 101) → StateT S PMF (List (ZMod 101))) (s : S) :
-    acceptProb respond
+    acceptProbWith respond
       (verify (ProbComp.uniform (ZMod 101)) (forallVar.arithmetize forallVar.vars) 0 1) s ≤
         24 / 101 := by
   refine (acceptProb_le_of_notMem_TQBF (by decide) (fun h => absurd h.2 (by decide)) respond
@@ -96,7 +97,7 @@ example : (24 : ℝ≥0∞) / 101 < 1 := by
 
 /-- The general soundness bound applies to the prover that always replies with the empty list. -/
 example (e : ArithQBF ℕ) (r : ℕ → ZMod 101) (c : ZMod 101) (hc : e.eval r ≠ c) :
-    acceptProb (fun _ (s : Unit) => PMF.pure ([], s))
+    acceptProbWith (fun _ (s : Unit) => PMF.pure ([], s))
       (verify (ProbComp.uniform (ZMod 101)) e r c) () ≤ e.roundDegree / 101 :=
   (acceptProb_verify_uniform_le _ e hc ()).trans_eq (by rw [ZMod.card, Nat.cast_ofNat])
 
@@ -143,5 +144,39 @@ Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.QBFProtocol.acceptProb_le_of_notMem_TQBF
+
+/--
+info: 'Cslib.Logic.PL.QBF.eval_arithmetize_zero' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.QBF.eval_arithmetize_zero
+
+/--
+info: 'Cslib.Logic.PL.QBF.degBound_arithmetize_le' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.QBF.degBound_arithmetize_le
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.acceptProb_verify_uniform_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.acceptProb_verify_uniform_le
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.acceptProb_honest_arithmetize' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.acceptProb_honest_arithmetize
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.acceptProb_arithmetize_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.acceptProb_arithmetize_le
 
 end ComplexityTests.QBFProtocol

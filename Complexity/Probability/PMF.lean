@@ -34,6 +34,9 @@ of the whole experiment (`exists_bind_apply_le`).
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
   adapted from the cslib `crypto` branch at `5ff69ca`.
 * `Cslib.Probability.PMF.bind_apply_mono_on_support`: compare two continuations at one outcome.
+* `Cslib.Probability.PMF.tsum_mul_le_of_forall_le`,
+  `Cslib.Probability.PMF.tsum_mul_le_card_mul_add`: averages of bounded values, and of values
+  bounded by `1` on a finite set of points of small probability.
 * `Cslib.Probability.PMF.toOuterMeasure_bind_failure_le`,
   `toOuterMeasure_bind_failure_toReal_le`: compose failure bounds without independence,
   adapted from the cslib `crypto` branch at `5ff69ca`.
@@ -309,5 +312,28 @@ theorem exists_bind_apply_le [Finite α] (μ : PMF α) (f : α → PMF β) (b : 
   refine ⟨a, ha, ?_⟩
   exact (bind_apply_mono_on_support μ b hmax).trans_eq
     (bind_apply_of_forall μ fun _ => rfl)
+
+/-- An average of values at most `B` is at most `B`. -/
+theorem tsum_mul_le_of_forall_le (μ : PMF α) {f : α → ℝ≥0∞} {B : ℝ≥0∞} (h : ∀ a, f a ≤ B) :
+    ∑' a, μ a * f a ≤ B :=
+  calc ∑' a, μ a * f a ≤ ∑' a, μ a * B := ENNReal.tsum_le_tsum fun a => mul_le_mul_right (h a) _
+    _ = B := by rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
+
+/-- Values at most `1` on a finite set `T` and at most `B` elsewhere average to at most
+`|T| * ε + B` under a distribution giving every point probability at most `ε`. -/
+theorem tsum_mul_le_card_mul_add [DecidableEq α] (μ : PMF α) {ε : ℝ≥0∞} (hμ : ∀ a, μ a ≤ ε)
+    (T : Finset α) {f : α → ℝ≥0∞} {B : ℝ≥0∞} (h : ∀ a, f a ≤ (if a ∈ T then 1 else 0) + B) :
+    ∑' a, μ a * f a ≤ T.card * ε + B := by
+  calc ∑' a, μ a * f a ≤ ∑' a, (μ a * (if a ∈ T then 1 else 0) + μ a * B) :=
+        ENNReal.tsum_le_tsum fun a => (mul_le_mul_right (h a) _).trans_eq (mul_add _ _ _)
+    _ = ∑ a ∈ T, μ a + B := by
+        rw [ENNReal.tsum_add, ENNReal.tsum_mul_right, μ.tsum_coe, one_mul,
+          tsum_eq_sum (s := T) fun a ha => by simp only [ha, ↓reduceIte, mul_zero]]
+        congr 1
+        exact Finset.sum_congr rfl fun a ha => by simp only [ha, ↓reduceIte, mul_one]
+    _ ≤ T.card * ε + B := by
+        gcongr
+        calc ∑ a ∈ T, μ a ≤ ∑ _a ∈ T, ε := Finset.sum_le_sum fun a _ => hμ a
+          _ = T.card * ε := by rw [Finset.sum_const, nsmul_eq_mul]
 
 end Cslib.Probability.PMF
