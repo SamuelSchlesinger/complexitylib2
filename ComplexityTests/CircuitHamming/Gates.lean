@@ -27,7 +27,27 @@ private abbrev y₁ : BooleanFunction 2 := fun x => x 1
 /-- Their exclusive or. -/
 private abbrev yxor : BooleanFunction 2 := fun x => x 0 ^^ x 1
 
-/-! ### Projections -/
+/-! ### Parities and projections -/
+
+/-- The parities on `{0, 1}` and `{1, 2}` of three inputs differ on four of the eight inputs, by
+the general theorem and by evaluation. -/
+example : hammingDist (parityOn ({0, 1} : Finset (Fin 3))) (parityOn {1, 2}) = 4 := by
+  have h : 2 * hammingDist (parityOn ({0, 1} : Finset (Fin 3))) (parityOn {1, 2}) =
+      2 ^ Fintype.card (Fin 3) :=
+    two_mul_hammingDist_parityOn (by decide)
+  rw [Fintype.card_fin] at h
+  omega
+
+example : hammingDist (parityOn ({0, 1} : Finset (Fin 3))) (parityOn {1, 2}) = 4 := by decide
+
+/-- The parity on the empty set is the constant `false`, at distance four from the parity of all
+three inputs. -/
+example : hammingDist (parityOn (∅ : Finset (Fin 3))) (parityOn Finset.univ) = 4 := by
+  have h : 2 * hammingDist (parityOn (∅ : Finset (Fin 3))) (parityOn Finset.univ) =
+      2 ^ Fintype.card (Fin 3) :=
+    two_mul_hammingDist_parityOn (by decide)
+  rw [Fintype.card_fin] at h
+  omega
 
 /-- Two projections on two inputs differ on two of the four inputs, by the general theorem and by
 evaluation. -/
@@ -150,7 +170,7 @@ example : median (median (fun x : BitString 3 => x 0) (majority 3) (fun x => x 1
 example : median (median y₀ y₁ yxor) (fun _ => true) y₀ =
     median (median y₀ (fun _ => true) y₀) (median y₁ (fun _ => true) y₀)
       (median yxor (fun _ => true) y₀) :=
-  median_median _ _ _ _ _
+  median_median_distrib _ _ _ _ _
 
 /-! ### Sharing -/
 
@@ -194,7 +214,10 @@ example {n : ℕ} (f : BooleanFunction n) (i : Fin 0 → Fin n) :
     complexity interpretation (fun x o => f x + x (i o)) ≤ complexity interpretation (single f) :=
   complexity_add_projs_le f i
 
-/-- A projection is at computational distance zero from itself. -/
+/-- A projection is at computational distance zero from itself, within the bound for equal
+indices. -/
+example : circuitDist (fun x : BitString 1 => x 0) (fun x => x 0) = 0 := circuitDist_self _
+
 example : circuitDist (fun x : BitString 1 => x 0) (fun x => x 0) ≤ 8 := circuitDist_proj_le 0 0
 
 /-- With zero inputs the cube of truth tables has two points, at distance one. -/
@@ -233,11 +256,11 @@ info: 'Cslib.BitString.median_assoc' depends on axioms:
 #print axioms median_assoc
 
 /--
-info: 'Cslib.BitString.median_median' depends on axioms:
+info: 'Cslib.BitString.median_median_distrib' depends on axioms:
 [Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms median_median
+#print axioms median_median_distrib
 
 /--
 info: 'Cslib.BitString.hammingDist_add_hammingDist_median' depends on axioms:
@@ -252,6 +275,13 @@ info: 'Cslib.BitString.hammingDist_median_le' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms hammingDist_median_le
+
+/--
+info: 'Cslib.BitString.two_mul_hammingDist_parityOn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_mul_hammingDist_parityOn
 
 /--
 info: 'Cslib.BitString.two_mul_hammingDist_proj' depends on axioms:
