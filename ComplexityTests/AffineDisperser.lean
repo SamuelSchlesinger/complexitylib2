@@ -14,13 +14,14 @@ These clients instantiate the cube-sum identities, the Moore finite-difference f
 covering lemma at small sizes, and apply the independent-sources theorem and the disperser theorem
 to concrete Galois fields. The disperser instance takes `F = GF(2 ^ 400)`, whose proper subfields
 have at most `2 ^ 200` elements, `r = 100` blocks and `t = 10`; the dimension bound is then
-`38100 < 40000 = dim F ^ 100`, so the whole space is a non-vacuous instance. Axiom checks record
+`38100`, below `40000`, the `𝔽₂`-dimension of `F ^ 100`, so the whole space is a non-vacuous
+instance. Axiom checks record
 the headline dependencies.
 -/
 
 namespace ComplexityTests.AffineDisperser
 
-open Cslib Cslib.FiniteField Cslib.AffineDisperser Module
+open Cslib Cslib.AffineDisperser Module
 
 /-! ### Small identities -/
 
@@ -39,13 +40,24 @@ example (a u : GaloisField 2 3) :
 -- In characteristic two the determinant is the permanent.
 example (M : Matrix (Fin 3) (Fin 3) (ZMod 2)) : M.det = M.permanent := det_eq_permanent M
 
--- Covering assignments between equal block sets: `J = I` is forced.
-example (I : Finset (Fin 3)) (ℓ : (Σ j : I, Fin (3 - j)) → Option (Σ i : I, Fin (3 - i)))
+theorem strictAnti_three_sub : StrictAnti fun i : Fin 3 => 3 - (i : ℕ) := fun i j hij =>
+  show 3 - (j : ℕ) < 3 - (i : ℕ) by have := j.2; have : (i : ℕ) < j := hij; omega
+
+-- The hypotheses of the covering lemma are satisfiable: the identity covers a block set.
+example : ∃ ℓ : (Σ j : ({0, 2} : Finset (Fin 3)), Fin (3 - j)) →
+      Option (Σ i : ({0, 2} : Finset (Fin 3)), Fin (3 - i)),
+    (∀ v, ∃ p, ℓ p = some v) ∧ ∀ p v, ℓ p = some v → (v.1 : Fin 3) ≤ p.1 :=
+  ⟨some, fun v => ⟨v, rfl⟩, fun _p _v h => Option.some_injective _ h ▸ le_rfl⟩
+
+-- Counting slots does not exclude `J = {0, 2}` covering `I = {1, 2}` (four slots against three),
+-- but the weights do: block `0` cannot serve higher blocks.
+example (ℓ : (Σ j : ({0, 2} : Finset (Fin 3)), Fin (3 - j)) →
+      Option (Σ i : ({1, 2} : Finset (Fin 3)), Fin (3 - i)))
     (hcov : ∀ v, ∃ p, ℓ p = some v) (hmono : ∀ p v, ℓ p = some v → (v.1 : Fin 3) ≤ p.1) :
-    I = I :=
-  eq_of_covering (fun i => 3 - i)
-    (fun i j hij => show 3 - (j : ℕ) < 3 - (i : ℕ) by have := j.2; have : (i : ℕ) < j := hij; omega)
-    (fun i => show 0 < 3 - (i : ℕ) by have := i.2; omega) I I rfl ℓ hcov hmono
+    False :=
+  absurd (eq_of_covering (fun i => 3 - i) strictAnti_three_sub
+    (fun i => show 0 < 3 - (i : ℕ) by have := i.2; omega) {1, 2} {0, 2} rfl ℓ hcov hmono)
+    (by decide)
 
 -- Pivot spaces of the whole space `(ZMod 2) ^ 2` add up to its dimension.
 example : ∑ i, finrank (ZMod 2) (pivotSpace (⊤ : Submodule (ZMod 2) (Fin 2 → ZMod 2)) i) = 2 := by
@@ -111,21 +123,21 @@ info: 'Cslib.AffineDisperser.eq_of_covering' depends on axioms:
 #print axioms eq_of_covering
 
 /--
-info: 'Cslib.FiniteField.exists_coeffPattern' depends on axioms:
+info: 'Cslib.AffineDisperser.exists_coeffPattern' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms exists_coeffPattern
 
 /--
-info: 'Cslib.FiniteField.exists_isLinearized_range_eq' depends on axioms:
+info: 'Cslib.AffineDisperser.exists_isLinearized_range_eq' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms exists_isLinearized_range_eq
 
 /--
-info: 'Cslib.FiniteField.sum_cube_pow_eq_det_mooreMatrix' depends on axioms:
+info: 'Cslib.AffineDisperser.sum_cube_pow_eq_det_mooreMatrix' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

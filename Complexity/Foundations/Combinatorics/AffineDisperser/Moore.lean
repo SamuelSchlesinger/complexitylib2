@@ -34,14 +34,14 @@ with coefficient the permanent of `(a (τ l - m) ^ 2 ^ m)_{l, m}`
 
 ## Main definitions
 
-* `Cslib.FiniteField.mooreMatrix`: the matrix `(u l ^ 2 ^ m)`.
+* `Cslib.AffineDisperser.mooreMatrix`: the matrix `(u l ^ 2 ^ m)`.
 
 ## Main results
 
-* `Cslib.FiniteField.det_eq_permanent`: determinant and permanent agree in characteristic two.
-* `Cslib.FiniteField.sum_cube_pow_eq_det_mooreMatrix`: the Moore determinant as a finite
+* `Cslib.AffineDisperser.det_eq_permanent`: determinant and permanent agree in characteristic two.
+* `Cslib.AffineDisperser.sum_cube_pow_eq_det_mooreMatrix`: the Moore determinant as a finite
   difference.
-* `Cslib.FiniteField.permanent_mooreMatrix_linearizedEval`: the monomial expansion of the Moore
+* `Cslib.AffineDisperser.permanent_mooreMatrix_linearizedEval`: the monomial expansion of the Moore
   permanent of a composition with a linearized function.
 
 ## References
@@ -51,7 +51,7 @@ with coefficient the permanent of `(a (τ l - m) ^ 2 ^ m)_{l, m}`
 
 @[expose] public section
 
-namespace Cslib.FiniteField
+namespace Cslib.AffineDisperser
 
 open Module
 
@@ -88,7 +88,7 @@ variable [Algebra (ZMod 2) F]
 `∑_{c ∈ 𝔽₂ᵏ} (a + ∑ cₗ uₗ) ^ (2 ^ k - 1)` is the Moore determinant of `u`. -/
 theorem sum_cube_pow_eq_det_mooreMatrix {k : ℕ} (a : F) (u : Fin k → F) :
     ∑ c : Fin k → ZMod 2, (a + ∑ l, c l • u l) ^ (2 ^ k - 1) = (mooreMatrix u).det := by
-  have := charP_two (F := F)
+  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   have hfrob : ∀ (c : Fin k → ZMod 2) (m : Fin k), (a + ∑ l, c l • u l) ^ 2 ^ (m : ℕ) =
       a ^ 2 ^ (m : ℕ) + ∑ l, c l • (u l ^ 2 ^ (m : ℕ)) := fun c m => by
     rw [add_pow_char_pow, sum_pow_char_pow]
@@ -97,7 +97,8 @@ theorem sum_cube_pow_eq_det_mooreMatrix {k : ℕ} (a : F) (u : Fin k → F) :
   rw [sum_cube_prod_affine_eq_permanent, det_eq_permanent, ← Matrix.permanent_transpose]
   rfl
 
-/-- **Monomial expansion of a Moore permanent** [BenSassonKopparty2012, Lemma 3.13]: for the
+/-- **Monomial expansion of a Moore permanent**, an analogue of [BenSassonKopparty2012,
+Lemma 3.13]: for the
 linearized function `Q = linearizedEval a` on a field with `2 ^ n` elements,
 `per (Q (w l) ^ 2 ^ m) = ∑_τ per (a (τ l - m) ^ 2 ^ m) * ∏ₗ w l ^ 2 ^ τ l`, the sum ranging over
 all `τ : Fin k → ZMod n`. -/
@@ -120,4 +121,4 @@ theorem permanent_mooreMatrix_linearizedEval [Finite F] {n : ℕ} [NeZero n]
   congr 1
   exact Equiv.prod_comp σ fun l => w l ^ 2 ^ (τ l).val
 
-end Cslib.FiniteField
+end Cslib.AffineDisperser

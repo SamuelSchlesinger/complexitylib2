@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
 public import Complexity.Foundations.Combinatorics.AffineDisperser.PivotSpace
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
+public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
 import Mathlib.Algebra.CharP.Lemmas
 import Mathlib.Data.Finset.Powerset
 import Mathlib.FieldTheory.Finite.Basic
@@ -37,7 +38,7 @@ degrees `n` with no small proper divisors keep `s` small while allowing explicit
 
 The proof: let `Yᵢ` be the pivot spaces of the direction of `A` and lift a basis of each to vectors
 of `A`'s direction vanishing below their block. Averaging gives `t` blocks `I₀` with `dᵢ > M` and
-`∑_{I₀} (dᵢ - kᵢ) ≥ n`, `kᵢ = r + 1 - i`. Summing `f` over the cube spanned by `kᵢ` lifted
+`∑_{I₀} (dᵢ - kᵢ) > n`, `kᵢ = r + 1 - i`. Summing `f` over the cube spanned by `kᵢ` lifted
 directions in each block `i ∈ I₀` expands every term `∏_{j ∈ J} xⱼ ^ (2 ^ kⱼ - 1)` into covering
 assignments of factors to directions (`Cslib.sum_cube_prod_affine`). Because `kᵢ` decreases
 strictly, a weighting argument [BenSassonKopparty2012, Claim 7.4] shows that only `J = I₀`
@@ -47,7 +48,8 @@ that its trace is nonzero, while a constant function would have zero cube sum.
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.traceSym`: Ben-Sasson and Kopparty's symmetric-power function.
+* `Cslib.AffineDisperser.traceSym`: Ben-Sasson and Kopparty's symmetric-power function;
+  `Cslib.AffineDisperser.traceSym_eq_esymm` writes it with `Multiset.esymm`.
 
 ## Main results
 
@@ -67,7 +69,7 @@ that its trace is nonzero, while a constant function would have zero cube sum.
 
 namespace Cslib.AffineDisperser
 
-open Module Cslib.FiniteField
+open Module
 
 /-- **Covering assignments respect blocks** [BenSassonKopparty2012, Claim 7.4]. Blocks `i < r`
 carry `k i` slots, with `k` strictly decreasing and positive. Let `I, J` be sets of `t` blocks and
@@ -197,7 +199,7 @@ variable [Algebra (ZMod 2) F]
 /-- In a field with `2 ^ n` elements every proper subfield has at most `2 ^ (n / 2)` elements. -/
 theorem card_subfield_le {n : ℕ} (hn : finrank (ZMod 2) F = n) (K : Subfield F) (hK : K ≠ ⊤) :
     Nat.card K ≤ 2 ^ (n / 2) := by
-  have := charP_two (F := F)
+  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   have : CharP K 2 := K.subtype.charP Subtype.val_injective 2
   have : Fintype K := Fintype.ofFinite K
@@ -217,6 +219,14 @@ noncomputable def traceSym (μ : F) (r t : ℕ) (x : Fin r → F) : ZMod 2 :=
   Algebra.trace (ZMod 2) F
     (μ * ∑ I ∈ Finset.univ.powersetCard t, ∏ i ∈ I, x i ^ (2 ^ (r + 1 - i) - 1))
 
+omit [Finite F] in
+/-- `traceSym` is the trace of `μ` times the `t`-th elementary symmetric function
+(`Multiset.esymm`) of the powers `xᵢ ^ (2 ^ (r + 1 - i) - 1)`. -/
+theorem traceSym_eq_esymm (μ : F) (r t : ℕ) (x : Fin r → F) :
+    traceSym μ r t x = Algebra.trace (ZMod 2) F
+      (μ * (Finset.univ.val.map fun i : Fin r => x i ^ (2 ^ (r + 1 - i) - 1)).esymm t) := by
+  rw [traceSym, Finset.esymm_map_val]
+
 /-- **Affine dispersers from subspace polynomials** [BenSassonKopparty2012, Theorem 7.3], for
 fields whose proper subfields have at most `2 ^ s` elements: if `μ ≠ 0` and `0 < t`, then
 `traceSym μ r t` is nonconstant on every `𝔽₂`-affine subspace `A` of `Fʳ` of dimension greater
@@ -232,7 +242,7 @@ theorem exists_traceSym_ne {n s r t : ℕ} (hn : finrank (ZMod 2) F = n)
       finrank (ZMod 2) A.direction) :
     ∃ x ∈ A, ∃ y ∈ A, traceSym μ r t x ≠ traceSym μ r t y := by
   classical
-  have := charP_two (F := F)
+  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   set M := max (r + 1) s with hM
   have h2 : n * r < t * (n * r / t + 1) := Nat.lt_mul_div_succ (n * r) ht

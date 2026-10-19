@@ -31,7 +31,7 @@ The proof follows [BenSassonKopparty2012]. Parametrize `Yᵢ` by its image-subsp
 `Qᵢ`; then `w ↦ Tr (μ ∏ᵢ Δ(Qᵢ ∘ wᵢ))` is a reduced polynomial function whose coefficient at
 `∏ᵢ ∏ₗ wᵢₗ ^ 2 ^ τᵢₗ` is `∑_ρ μ ^ 2 ^ ρ ∏ᵢ per(Mᵢ[τᵢ - ρ]) ^ 2 ^ ρ`, where
 `Mᵢ[τ] = (aᵢ (τ l - m) ^ 2 ^ m)`. Using the zero pattern of the coefficients `aᵢ`
-(`Cslib.FiniteField.CoeffPattern`) we choose `τ` so that every `Mᵢ[τᵢ]` is triangular with
+(`Cslib.AffineDisperser.CoeffPattern`) we choose `τ` so that every `Mᵢ[τᵢ]` is triangular with
 nonzero diagonal while for every rotation `ρ ≠ 0` some `Mᵢ[τᵢ - ρ]` has a zero row
 [BenSassonKopparty2012, Claims 6.2 and 6.3]. That coefficient is then `μ ∏ᵢ per(Mᵢ[τᵢ]) ≠ 0`,
 and a reduced polynomial with a nonzero coefficient is a nonzero function.
@@ -53,7 +53,7 @@ universe u
 
 namespace Cslib.AffineDisperser
 
-open Module Cslib.FiniteField
+open Module
 
 variable {F : Type*} [Field F]
 
@@ -357,7 +357,13 @@ variable [Finite F] [Algebra (ZMod 2) F]
 field with `2 ^ n` elements whose proper subfields have at most `2 ^ s` elements, let `Yᵢ` be
 subspaces of dimensions `dᵢ > s`, and `2 ≤ kᵢ < dᵢ` with `n < d_{i₀} + ∑ᵢ (dᵢ - kᵢ)` for some
 `i₀`. Then for every `μ ≠ 0` there are families `uᵢ : Fin kᵢ → Yᵢ` whose Moore determinants
-satisfy `Tr (μ ∏ᵢ Δ(uᵢ)) ≠ 0`. -/
+satisfy `Tr (μ ∏ᵢ Δ(uᵢ)) ≠ 0`.
+
+By `sum_cube_pow_eq_det_mooreMatrix`, `Δ(uᵢ)` is the `kᵢ`-th finite difference of
+`x ↦ x ^ (2 ^ kᵢ - 1)` in the directions `uᵢ`. So the conclusion says that
+`(xᵢ) ↦ Tr (μ ∏ᵢ xᵢ ^ (2 ^ kᵢ - 1))` has a nonzero mixed finite difference along the `Yᵢ`, the
+form in which the paper's theorem is used. The threshold `n < maxᵢ dᵢ + ∑ᵢ (dᵢ - kᵢ)` is one
+better than the paper's `∑ᵢ (dᵢ - kᵢ) > n - maxᵢ dᵢ + 1`. -/
 theorem exists_trace_mul_prod_det_mooreMatrix_ne_zero {ι : Type*} [Fintype ι] {n s : ℕ}
     (hn : finrank (ZMod 2) F = n) (hs : ∀ K : Subfield F, K ≠ ⊤ → Nat.card K ≤ 2 ^ s)
     (Y : ι → Submodule (ZMod 2) F) (k : ι → ℕ) (hk : ∀ i, 2 ≤ k i)
@@ -367,7 +373,7 @@ theorem exists_trace_mul_prod_det_mooreMatrix_ne_zero {ι : Type*} [Fintype ι] 
     ∃ u : (i : ι) → Fin (k i) → F, (∀ i l, u i l ∈ Y i) ∧
       Algebra.trace (ZMod 2) F (μ * ∏ i, (mooreMatrix (u i)).det) ≠ 0 := by
   classical
-  have := charP_two (F := F)
+  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   have hn0 : 0 < n := hn ▸ Module.finrank_pos
   have : NeZero n := ⟨hn0.ne'⟩
@@ -376,7 +382,7 @@ theorem exists_trace_mul_prod_det_mooreMatrix_ne_zero {ι : Type*} [Fintype ι] 
   -- the coefficient vectors of image-subspace polynomials of the `Y i`
   have hpat : ∀ i, ∃ a : ZMod n → F, (∀ x, linearizedEval a x ∈ Y i) ∧
       CoeffPattern n (finrank (ZMod 2) (Y i)) a :=
-    fun i => exists_coeffPattern hn hs (Y i) (by have := hkY i; omega) (hsY i)
+    fun i => exists_coeffPattern hn hs (Y i) (hsY i)
   choose a ha hpa using hpat
   -- the monomial that will have a nonzero coefficient
   obtain ⟨i₁, -, hi₁⟩ := Finset.exists_max_image Finset.univ (fun i => finrank (ZMod 2) (Y i))

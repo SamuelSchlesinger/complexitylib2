@@ -52,7 +52,7 @@ variable {R : Type*} [CommRing R] [Algebra (ZMod 2) R] {κ P : Type*} [Fintype �
 omit [Fintype κ] [DecidableEq κ] [Fintype P] in
 /-- An affine form in Boolean variables, split over its constant term (`none`) and its variables:
 the coefficient times the indicator of the chosen variable. -/
-theorem elim_smul_eq_mul (a : R) (b : κ → R) (c : κ → ZMod 2) (o : Option κ) :
+private theorem elim_smul_eq_mul (a : R) (b : κ → R) (c : κ → ZMod 2) (o : Option κ) :
     o.elim a (fun v => c v • b v) =
       o.elim a b * o.elim 1 (fun v => algebraMap (ZMod 2) R (c v)) := by
   cases o with
@@ -60,7 +60,7 @@ theorem elim_smul_eq_mul (a : R) (b : κ → R) (c : κ → ZMod 2) (o : Option 
   | some v => simp [Algebra.smul_def, mul_comm]
 
 omit [Fintype P] in
-theorem prod_elim_algebraMap (ℓ : P → Option κ) [Fintype P] (c : κ → ZMod 2) :
+private theorem prod_elim_algebraMap (ℓ : P → Option κ) [Fintype P] (c : κ → ZMod 2) :
     ∏ p, (ℓ p).elim 1 (fun v => algebraMap (ZMod 2) R (c v)) =
       if ∀ p v, ℓ p = some v → c v = 1 then 1 else 0 := by
   split_ifs with h
@@ -78,14 +78,10 @@ theorem prod_elim_algebraMap (ℓ : P → Option κ) [Fintype P] (c : κ → ZMo
       · exact absurd rfl hv
     simp [hp, this]
 
-omit [Fintype κ] [DecidableEq κ] in
-theorem two_eq_zero : (2 : R) = 0 := by
-  rw [← map_ofNat (algebraMap (ZMod 2) R) 2, show (2 : ZMod 2) = 0 from rfl, map_zero]
-
 omit [DecidableEq κ] in
 /-- The number of Boolean points that are `1` on every variable used by `ℓ` is even unless `ℓ`
 uses every variable. -/
-theorem sum_cube_ite (ℓ : P → Option κ) [DecidableEq κ] :
+private theorem sum_cube_ite (ℓ : P → Option κ) [DecidableEq κ] :
     ∑ c : κ → ZMod 2, (if ∀ p v, ℓ p = some v → c v = 1 then (1 : R) else 0) =
       if ∀ v, ∃ p, ℓ p = some v then 1 else 0 := by
   classical
@@ -119,7 +115,9 @@ theorem sum_cube_ite (ℓ : P → Option κ) [DecidableEq κ] :
     obtain ⟨v, hv⟩ := hcov
     have hpos : 0 < (Finset.univ.filter fun v => v ∉ T).card :=
       Finset.card_pos.2 ⟨v, Finset.mem_filter.2 ⟨Finset.mem_univ v, by simpa [T] using hv⟩⟩
-    rw [Nat.cast_pow, Nat.cast_ofNat, two_eq_zero, zero_pow hpos.ne']
+    have h2 : (2 : R) = 0 := by
+      rw [← map_ofNat (algebraMap (ZMod 2) R) 2, show (2 : ZMod 2) = 0 from rfl, map_zero]
+    rw [Nat.cast_pow, Nat.cast_ofNat, h2, zero_pow hpos.ne']
 
 /-- **Cube sum of a product of affine forms**: summing `∏ₚ (aₚ + ∑ᵥ cᵥ • bₚᵥ)` over the Boolean
 cube leaves the assignments `ℓ` of factors to variables, or to the constant term (`none`), that
