@@ -107,6 +107,30 @@ def requiredRef (repo : Repository) (ref : String) : IO String := do
   let some head ← repo.fetch ref | throw <| IO.userError s!"Missing ref {ref}"
   return head
 
+/-- The ranges whose base is an ancestor of its head. -/
+def observedAncestry (repo : Repository) (ranges : List Snapshot) : IO (List Snapshot) :=
+  ranges.filterM fun range => repo.ancestor range.base.value range.head.value
+
+/-- Ancestry and path observations for landing one submission on `main`, after confirming that
+its head is still on its work branch, which also fetches the head's objects. -/
+def evidence (repo : Repository) (epic : EpicId) (s : Submission) (main : Oid) :
+    IO (List Snapshot × List Diff) := do
+  let snapshot := s.snapshot
+  let tip ← requiredRef repo ("refs/heads/" ++ s.work.branch)
+  unless (← repo.ancestor snapshot.head.value tip) do
+    throw <| IO.userError s!"Submitted commit of {epic.value} is no longer on its work branch"
+  let moved : Snapshot := { base := snapshot.base, head := main }
+  let ancestry ← observedAncestry repo [snapshot, moved]
+  let diffs : List Diff := [
+    { range := snapshot, paths := ← repo.changedPaths snapshot.base.value snapshot.head.value },
+    { range := moved, paths := ← repo.changedPaths snapshot.base.value main.value }]
+  return (ancestry, diffs)
+
+private def submitted (state : State) (id : EpicId) : Option Submission :=
+  match (state.epics.find? (·.id == id)).map (·.phase) with
+  | some (Phase.submitted s) => some s
+  | _ => none
+
 def context (repo : Repository) (self : Identity) (state : State) (cmd : Command) :
     IO Context := do
   let time ← now
@@ -119,24 +143,36 @@ def context (repo : Repository) (self : Identity) (state : State) (cmd : Command
     let task ← getEpic state epic
     let .working work := task.phase | throw <| IO.userError "Epic is not being implemented"
     repo.clean snapshot.head.value
+    let main : Oid := ⟨← requiredRef repo mainRef⟩
     ctx := { ctx with
       cleanHead := some snapshot.head
-      main := some ⟨(← requiredRef repo mainRef)⟩
-      branchHead := some ⟨(← requiredRef repo ("refs/heads/" ++ work.branch))⟩ }
-    if ← repo.ancestor snapshot.base.value snapshot.head.value then
-      ctx := { ctx with ancestry := [snapshot] }
+      main := some main
+      branchHead := some ⟨(← requiredRef repo ("refs/heads/" ++ work.branch))⟩
+      ancestry := ← observedAncestry repo [snapshot, { base := snapshot.base, head := main }] }
   | .review _ _ snapshot _ _ =>
     repo.clean snapshot.head.value
     ctx := { ctx with cleanHead := some snapshot.head }
-  | .reserve _ _ =>
-    ctx := { ctx with main := some ⟨(← requiredRef repo mainRef)⟩ }
-  | .land _ snapshot _ =>
-    repo.clean snapshot.head.value
+  | .reserve epics _ =>
+    let main : Oid := ⟨← requiredRef repo mainRef⟩
+    ctx := { ctx with main := some main }
+    for id in epics do
+      if let some s := submitted state id then
+        let (ancestry, diffs) ← evidence repo id s main
+        ctx := { ctx with ancestry := ctx.ancestry ++ ancestry, diffs := ctx.diffs ++ diffs }
+  | .land candidates landed _ =>
+    repo.clean landed.value
+    let main : Oid := ⟨← requiredRef repo mainRef⟩
     ctx := { ctx with
-      main := some ⟨(← requiredRef repo mainRef)⟩
-      cleanHead := some snapshot.head }
-    if ← repo.ancestor snapshot.base.value snapshot.head.value then
-      ctx := { ctx with ancestry := [snapshot] }
+      main := some main
+      cleanHead := some landed
+      ancestry := ← observedAncestry repo [{ base := main, head := landed }] }
+    for candidate in candidates do
+      if let some s := submitted state candidate.epic then
+        let (ancestry, diffs) ← evidence repo candidate.epic s main
+        let included ← observedAncestry repo [{ base := candidate.snapshot.head, head := landed }]
+        ctx := { ctx with
+          ancestry := ctx.ancestry ++ ancestry ++ included
+          diffs := ctx.diffs ++ diffs }
   | _ => pure ()
   return ctx
 
@@ -148,7 +184,7 @@ def dispatch (repo : Repository) (self : Identity) (cmd : Command) : IO Outcome 
     result.set (some outcome)
     let landing := match outcome.publication with
       | .boardOnly => none
-      | .atomicLanding s => some { base := s.base.value, head := s.head.value : Landing }
+      | .atomicLanding main landed => some { base := main.value, head := landed.value : Landing }
     return (outcome.state, landing))
   let some outcome ← result.get | throw <| IO.userError "Transaction produced no result"
   return outcome
@@ -254,19 +290,22 @@ def join (repo : Repository) (name : AgentId) (role : Role) (here takeover : Boo
     IO.FS.removeFile pendingPath
     return worker.root
 
+/-- Submit the worktree's head; the reviewed base is the latest `main` commit it contains. -/
 def ready (repo : Repository) (epic : EpicId) (summary : String) : IO Outcome := do
   let head ← repo.head
-  let base ← requiredRef repo mainRef
+  let main ← requiredRef repo mainRef
+  let base := line (← repo.run #["merge-base", main, head])
   let paths ← repo.changedPaths base head
   run repo (.submit epic { base := ⟨base⟩, head := ⟨head⟩ } paths summary)
 
 /-- Run validation with inherited output, renewing the lease while the child runs. -/
-def validate (repo : Repository) (cmd : String) (args : Array String) : IO Unit := do
+def validate (repo : Repository) (cmd : String) (args : Array String)
+    (accept : UInt32 → Bool := (· == 0)) : IO Unit := do
   let child ← IO.Process.spawn { cmd, args, cwd := repo.root }
   let mut lastHeartbeat ← now
   repeat
     if let some code ← child.tryWait then
-      unless code == 0 do
+      unless accept code do
         throw <| IO.userError s!"{cmd} failed; no code was published. Use cancel if abandoning integration."
       return
     IO.sleep 1000
@@ -279,16 +318,82 @@ def validate (repo : Repository) (cmd : String) (args : Array String) : IO Unit 
         discard child.wait
         throw error
 
-def land (repo : Repository) (epic : EpicId) : IO Outcome := do
-  repo.clean (← repo.head)
-  let (self, token) ← claim repo "integration"
-  let reserved ← dispatch repo self (.reserve epic token)
-  finishClaim repo "integration" token
-  let target ← submission reserved.state epic
-  checkout repo (.review target.work.branch target.snapshot)
+/-- The six project gates and the coordination tests; the result is the validation evidence
+recorded in each completed epic. -/
+def projectChecks (repo : Repository) : IO String := do
   validate repo "bash" #["scripts/check.sh"]
   validate repo "lake" #["-d", "scripts/coordination", "test"]
+  return "scripts/check.sh: six gates passed; coordination tests: passed"
+
+/-- Regenerate the root imports on the working tree. `lake exe mk_all` exits with the number of
+files it rewrote, so its `--check` mode verifies the result. Fixtures without a lakefile have no
+roots to regenerate. -/
+def regenerateRoots (repo : Repository) : IO Unit := do
+  if ← (repo.root / "lakefile.toml").pathExists then
+    validate repo "lake" #["exe", "mk_all"] (· ≤ 125)
+    validate repo "lake" #["exe", "mk_all", "--check"]
+
+def mergeMessage (candidate : Candidate) : String :=
+  s!"merge: land {candidate.epic.value}\n\nReviewed base {candidate.snapshot.base.value}, head {
+    candidate.snapshot.head.value}\n"
+
+/-- Merge a reviewed head onto the detached HEAD. Conflicts are tolerated only in the generated
+roots, which are reset to the `main` side and regenerated on the merged tree before the merge
+commit is created. -/
+private def merge (repo : Repository) (candidate : Candidate) (regenerate : Repository → IO Unit) :
+    IO Unit := do
+  let name := candidate.epic.value
+  let attempt ← repo.execute #["merge", "--no-ff", "--no-commit", candidate.snapshot.head.value] none
+  let unmerged ← if attempt.exitCode == 0 then pure [] else
+    (fun paths => (paths.splitOn "\x00").dropLast) <$>
+      repo.run #["diff", "--name-only", "--diff-filter=U", "-z"]
+  let conflicts := unmerged.filter (!generatedRoots.contains ·)
+  unless attempt.exitCode == 0 || (attempt.exitCode == 1 && !unmerged.isEmpty && conflicts.isEmpty) do
+    discard <| repo.execute #["merge", "--abort"] none
+    let detail := if conflicts.isEmpty then "" else s!" with conflicts in {", ".intercalate conflicts}"
+    throw <| IO.userError s!"Merging the reviewed head of {name} onto main failed{detail}: {
+      attempt.stdout}{attempt.stderr}Reopen, merge main and obtain new reviews."
+  try
+    for root in unmerged do
+      IO.FS.writeFile (repo.root / root) (← repo.run #["show", ":2:" ++ root])
+    regenerate repo
+    let roots ← generatedRoots.filterM fun (root : String) => (repo.root / root).pathExists
+    unless roots.isEmpty do discard <| repo.run (#["add", "--"] ++ roots.toArray)
+    discard <| repo.run #["commit", "--quiet", "-m", mergeMessage candidate]
+  catch error =>
+    discard <| repo.execute #["merge", "--abort"] none
+    throw error
+
+/-- Build the commit to publish as `main` in this worktree: each reviewed head in order is
+fast-forwarded when its base is the current tip and merged otherwise. -/
+def integrate (repo : Repository) (main : Oid) (candidates : List Candidate)
+    (regenerate : Repository → IO Unit) : IO Oid := do
+  discard <| repo.run #["switch", "--detach", main.value]
+  for candidate in candidates do
+    if candidate.snapshot.base.value == (← repo.head) then
+      discard <| repo.run #["switch", "--detach", candidate.snapshot.head.value]
+    else
+      merge repo candidate regenerate
+  let landed ← repo.head
+  repo.clean landed
+  return ⟨landed⟩
+
+/-- Reserve, integrate, validate and publish the listed epics; one epic is a batch of one.
+`checks` returns the validation evidence recorded in each completed epic. -/
+def land (repo : Repository) (epics : List EpicId)
+    (checks : Repository → IO String := projectChecks)
+    (regenerate : Repository → IO Unit := regenerateRoots) : IO Outcome := do
+  repo.clean (← repo.head)
+  let (self, token) ← claim repo "integration"
+  let reserved ← dispatch repo self (.reserve epics token)
+  finishClaim repo "integration" token
+  let some integration := reserved.state.integration
+    | throw <| IO.userError "Integration reservation is absent"
+  let some main := integration.main
+    | throw <| IO.userError "Integration reservation does not record its main; cancel and land again"
+  let landed ← integrate repo main integration.candidates regenerate
+  let validation ← checks repo
   discard <| run repo .heartbeat
-  run repo (.land epic target.snapshot "scripts/check.sh: six gates passed; coordination tests: passed")
+  run repo (.land integration.candidates landed validation)
 
 end Coordination.Runtime

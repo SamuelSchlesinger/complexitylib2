@@ -252,33 +252,200 @@ private def testAlternatingAuthorsPreservePushedWork : IO Unit := withFixture fu
   let absent ← fresh.execute #["show-ref", "--verify", "--quiet", "refs/heads/work/feature/alice"] none
   check (absent.exitCode != 0) "Failed remote-only handoff created a stale local branch"
 
-private def approvedRuntime (fixture : Fixture) : IO (Git.Repository × EpicId × Snapshot) := do
+private structure Crew where
+  primary : Git.Repository
+  lead : Git.Repository
+  api : Git.Repository
+  correctness : Git.Repository
+
+private def crew (fixture : Fixture) : IO Crew := do
   let primary ← fixture.open
   initState primary
   let lead ← joined primary "lead" .coordinator
-  let alice ← joined primary "alice"
   let api ← joined primary "api-reviewer"
   let correctness ← joined primary "correctness-reviewer"
+  pure { primary, lead, api, correctness }
+
+/-- Plan `id` on `scope`, then implement it as `worker` with `commit` and push the branch. -/
+private def implement (crew : Crew) (id : EpicId) (scope worker : String)
+    (commit : Git.Repository → IO String) : IO Git.Repository := do
+  let repo ← joined crew.primary worker
+  discard <| Runtime.run crew.lead (.plan id s!"validation of {id.value}" [scope] [])
+  discard <| Runtime.run crew.lead (.assign id ⟨worker⟩ .work false)
+  discard <| Runtime.start repo id .work
+  discard <| commit repo
+  pushWork repo s!"work/{id.value}/{worker}"
+  pure repo
+
+/-- Submit the worker's head and approve it with both independent reviews. -/
+private def approve (crew : Crew) (id : EpicId) (worker : Git.Repository) : IO Snapshot := do
+  let submitted ← Runtime.ready worker id "Focused runtime checks"
+  let snapshot := (← Runtime.submission submitted.state id).snapshot
+  discard <| Runtime.run crew.lead (.assign id ⟨"api-reviewer"⟩ .api false)
+  discard <| Runtime.start crew.api id .api
+  discard <| Runtime.run crew.api (.review id .api snapshot .approve "Independent API review")
+  discard <| Runtime.run crew.lead (.assign id ⟨"correctness-reviewer"⟩ .correctness false)
+  discard <| Runtime.start crew.correctness id .correctness
+  discard <| Runtime.run crew.correctness
+    (.review id .correctness snapshot .approve "Independent correctness review")
+  pure snapshot
+
+private def approvedRuntime (fixture : Fixture) : IO (Git.Repository × EpicId × Snapshot) := do
+  let crew ← crew fixture
   let id : EpicId := ⟨"feature"⟩
-  discard <| Runtime.run lead (.plan id "validation retry" ["allowed"] [])
-  discard <| Runtime.run lead (.assign id ⟨"alice"⟩ .work false)
-  discard <| Runtime.start alice id .work
-  let head ← commitAt alice "validated runtime candidate\n"
-  pushWork alice "work/feature/alice"
-  discard <| Runtime.ready alice id "Focused runtime checks"
-  let snapshot : Snapshot := {base := ⟨fixture.base⟩, head := ⟨head⟩}
-  discard <| Runtime.run lead (.assign id ⟨"api-reviewer"⟩ .api false)
-  discard <| Runtime.start api id .api
-  discard <| Runtime.run api (.review id .api snapshot .approve "Independent API review")
-  discard <| Runtime.run lead (.assign id ⟨"correctness-reviewer"⟩ .correctness false)
-  discard <| Runtime.start correctness id .correctness
-  discard <| Runtime.run correctness (.review id .correctness snapshot .approve "Independent correctness review")
-  pure (lead, id, snapshot)
+  let alice ← implement crew id "allowed" "alice" (commitAt · "validated runtime candidate\n")
+  let snapshot ← approve crew id alice
+  check (snapshot == {base := ⟨fixture.base⟩, head := ⟨← alice.head⟩}) "Unexpected reviewed snapshot"
+  pure (crew.lead, id, snapshot)
+
+/-- Stand-in for `lake exe mk_all`: the root lists every file under `allowed` and `other`. -/
+private def regenerate (repo : Git.Repository) : IO Unit := do
+  let mut imports := ""
+  for directory in ["allowed", "other"] do
+    if ← (repo.root / directory).isDir then
+      let entries := (← (repo.root / directory).readDir).qsort (·.fileName < ·.fileName)
+      for entry in entries do
+        imports := imports ++ s!"import {directory}/{entry.fileName}\n"
+  IO.FS.writeFile (repo.root / "Complexity.lean") imports
+
+/-- Add `path` and regenerate the root, as a worker running `mk_all` would. -/
+private def addFile (repo : Git.Repository) (path : String) : IO String := do
+  let target := repo.root / path
+  if let some parent := target.parent then IO.FS.createDirAll parent
+  IO.FS.writeFile target s!"{path}\n"
+  regenerate repo
+  discard <| repo.run #["add", "--", path, "Complexity.lean"]
+  discard <| repo.run #["commit", "--quiet", "-m", s!"add {path}"]
+  repo.head
+
+/-- Advance origin's `main` from the primary checkout. -/
+private def moveMain (crew : Crew) (path : String) : IO String := do
+  let moved ← addFile crew.primary path
+  discard <| crew.primary.run #["push", "--quiet", "origin", "HEAD:" ++ Git.mainRef]
+  pure moved
+
+private def stubChecks (_ : Git.Repository) : IO String := pure "Focused runtime validation passed"
+
+private def landedCommit (state : State) (id : EpicId) : IO (Option Oid) := do
+  match (← Runtime.getEpic state id).phase with
+  | Phase.merged completed => pure completed.landed
+  | _ => throw <| IO.userError s!"{id.value} was not merged"
+
+private def testLandingFastForwardsCurrentBase : IO Unit := withFixture fun fixture => do
+  let (lead, id, snapshot) ← approvedRuntime fixture
+  let outcome ← Runtime.land lead [id] stubChecks regenerate
+  check ((← fixture.ref Git.mainRef) == snapshot.head.value)
+    "Landing on the reviewed base did not fast-forward to the reviewed head"
+  check ((← lead.head) == snapshot.head.value) "Coordinator worktree is not at the reviewed head"
+  check ((← landedCommit outcome.state id) == some snapshot.head)
+    "Fast-forward did not record the reviewed head as landed"
+
+private def testLandingMergesDisjointMainMove : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let id : EpicId := ⟨"feature"⟩
+  let alice ← implement crew id "allowed" "alice" (addFile · "allowed/c.txt")
+  let snapshot ← approve crew id alice
+  check (snapshot.base.value == fixture.base) "Reviewed base is not the main the branch forked from"
+  let moved ← moveMain crew "allowed/b.txt"
+  let outcome ← Runtime.land crew.lead [id] stubChecks regenerate
+  let landed ← fixture.ref Git.mainRef
+  check ((← git fixture.origin #["rev-list", "--parents", "-n", "1", landed]) ==
+    s!"{landed} {moved} {snapshot.head.value}") "Main is not a merge of the moved main and the reviewed head"
+  check ((← git fixture.origin #["show", landed ++ ":Complexity.lean"]) ==
+    "import allowed/a.txt\nimport allowed/b.txt\nimport allowed/c.txt")
+    "Roots were not regenerated on the merged tree"
+  let files := (← git fixture.origin #["ls-tree", "-r", "--name-only", landed]).splitOn "\n"
+  check (files.contains "allowed/b.txt" && files.contains "allowed/c.txt") "Merged tree lost a change"
+  let message ← git fixture.origin #["log", "-1", "--format=%B", landed]
+  check (message.startsWith "merge: land feature" && (message.splitOn snapshot.head.value).length == 2 &&
+    (message.splitOn fixture.base).length == 2) "Merge message does not name the epic and its reviewed snapshot"
+  check ((← crew.lead.head) == landed) "Coordinator worktree is not at the landed commit"
+  check outcome.state.integration.isNone "Landing retained the reservation"
+  check ((← landedCommit outcome.state id) == some ⟨landed⟩) "Completion did not record the merge commit"
+  match (← Runtime.getEpic outcome.state id).phase with
+  | Phase.merged completed => check (completed.snapshot == snapshot) "Completion changed the reviewed snapshot"
+  | _ => throw <| IO.userError "Merge landing did not complete the epic"
+
+private def testLandingRefusesOverlappingMainMove : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let id : EpicId := ⟨"feature"⟩
+  let alice ← implement crew id "allowed" "alice" (commitAt · "reviewed change\n")
+  discard <| approve crew id alice
+  let moved ← moveMain crew "allowed/a.txt"
+  let before ← fixture.ref Git.boardRef
+  expectError (Runtime.land crew.lead [id] stubChecks regenerate) "Main moved on reviewed files"
+  check ((← fixture.ref Git.mainRef) == moved) "Refused landing changed main"
+  check ((← fixture.ref Git.boardRef) == before) "Refused reservation changed the board"
+  check (← Runtime.readState crew.lead).integration.isNone "Refused reservation was recorded"
+
+private def testLandingRefusesTextualConflict : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let id : EpicId := ⟨"feature"⟩
+  -- Disjoint paths can still conflict: main adds a file where the epic created a directory.
+  let alice ← implement crew id "allowed" "alice" (addFile · "allowed/x/y.txt")
+  discard <| approve crew id alice
+  let moved ← moveMain crew "allowed/x"
+  expectError (Runtime.land crew.lead [id] stubChecks regenerate) "conflicts"
+  check ((← fixture.ref Git.mainRef) == moved) "Refused landing changed main"
+  check ((← crew.lead.run #["--no-optional-locks", "status", "--porcelain"]).isEmpty)
+    "Refused merge left the coordinator worktree dirty"
+  let inProgress ← crew.lead.execute #["rev-parse", "-q", "--verify", "MERGE_HEAD"] none
+  check (inProgress.exitCode != 0) "Refused merge was left in progress"
+  -- As after a failed validation, the reservation remains until it is cancelled.
+  check (← Runtime.readState crew.lead).integration.isSome "Refused merge released the reservation"
+  discard <| Runtime.run crew.lead .cancel
+
+private def testLandingBatchesDisjointEpics : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let first : EpicId := ⟨"feature"⟩
+  let second : EpicId := ⟨"second"⟩
+  let alice ← implement crew first "allowed" "alice" (addFile · "allowed/c.txt")
+  let bob ← implement crew second "other" "bob" (addFile · "other/d.txt")
+  let firstSnapshot ← approve crew first alice
+  let secondSnapshot ← approve crew second bob
+  let moved ← moveMain crew "allowed/b.txt"
+  let outcome ← Runtime.land crew.lead [first, second] stubChecks regenerate
+  let landed ← fixture.ref Git.mainRef
+  let parents ← git fixture.origin #["rev-list", "--parents", "-n", "1", landed]
+  let some firstMerge := (parents.splitOn " ")[1]? | throw <| IO.userError "Missing first parent"
+  check (parents == s!"{landed} {firstMerge} {secondSnapshot.head.value}")
+    "Final main is not a merge of the second reviewed head"
+  check ((← git fixture.origin #["rev-list", "--parents", "-n", "1", firstMerge]) ==
+    s!"{firstMerge} {moved} {firstSnapshot.head.value}") "First merge does not chain on the moved main"
+  check ((← git fixture.origin #["show", landed ++ ":Complexity.lean"]) ==
+    "import allowed/a.txt\nimport allowed/b.txt\nimport allowed/c.txt\nimport other/d.txt")
+    "Roots were not regenerated on the final tree"
+  check ((← git fixture.origin #["show", firstMerge ++ ":Complexity.lean"]) ==
+    "import allowed/a.txt\nimport allowed/b.txt\nimport allowed/c.txt")
+    "Intermediate merge has inconsistent roots"
+  for id in [first, second] do
+    check ((← landedCommit outcome.state id) == some ⟨landed⟩) s!"{id.value} did not record the landed main"
+
+private def testLandingRefusesOverlappingBatch : IO Unit := withFixture fun fixture => do
+  let crew ← crew fixture
+  let first : EpicId := ⟨"feature"⟩
+  let second : EpicId := ⟨"second"⟩
+  let alice ← implement crew first "allowed" "alice" (addFile · "allowed/c.txt")
+  let bob ← implement crew second "other" "bob" (addFile · "allowed/c.txt")
+  let firstSnapshot ← approve crew first alice
+  -- Assignment fences overlapping scopes, so the last line of defence is exercised by widening
+  -- the second scope on the board directly.
+  discard <| crew.lead.update ({} : State) "fixture widens a scope" fun state =>
+    pure ({state with epics := state.epics.map fun e =>
+      if e.id == second then {e with paths := ["other", "allowed"]} else e}, none)
+  discard <| approve crew second bob
+  let before ← fixture.ref Git.boardRef
+  expectError (Runtime.land crew.lead [first, second] stubChecks regenerate) "both change allowed/c.txt"
+  check ((← fixture.ref Git.mainRef) == fixture.base) "Refused batch changed main"
+  check ((← fixture.ref Git.boardRef) == before) "Refused batch changed the board"
+  discard <| Runtime.land crew.lead [first] stubChecks regenerate
+  check ((← fixture.ref Git.mainRef) == firstSnapshot.head.value) "First epic could not land alone"
+  expectError (Runtime.land crew.lead [second] stubChecks regenerate) "Main moved on reviewed files"
 
 private def testReservationSurvivesValidationFailure : IO Unit := withFixture fun fixture => do
   let (lead, id, snapshot) ← approvedRuntime fixture
   let (self, original) ← Runtime.claim lead "integration"
-  let reserved ← Runtime.dispatch lead self (.reserve id original)
+  let reserved ← Runtime.dispatch lead self (.reserve [id] original)
   Runtime.finishClaim lead "integration" original
   let submitted ← Runtime.submission reserved.state id
   Runtime.checkout lead (.review submitted.work.branch snapshot)
@@ -287,13 +454,13 @@ private def testReservationSurvivesValidationFailure : IO Unit := withFixture fu
   let before ← fixture.ref Git.boardRef
   let (self, retry) ← Runtime.claim lead "integration"
   check (retry != original) "Retry did not exercise a new pending token"
-  let recovered ← Runtime.dispatch lead self (.reserve id retry)
+  let recovered ← Runtime.dispatch lead self (.reserve [id] retry)
   Runtime.finishClaim lead "integration" retry
   check (recovered.state.integration.any (fun integration => integration.lease.token == original))
     "Same-owner reservation retry replaced or lost original lease"
   check ((← fixture.ref Git.boardRef) == before) "Reservation continuation changed accepted lease"
   Runtime.validate lead "true" #[]
-  discard <| Runtime.run lead (.land id snapshot "Focused runtime validation passed")
+  discard <| Runtime.run lead (.land [{ epic := id, snapshot }] snapshot.head "Focused runtime validation passed")
   check ((← fixture.ref Git.mainRef) == snapshot.head.value) "Recovered integration did not publish"
   match (← Runtime.getEpic (← Runtime.readState lead) id).phase with
   | .merged _ => pure ()
@@ -318,12 +485,12 @@ private def testCoordinatorHandoff : IO Unit := withFixture fun fixture => do
   discard <| Runtime.run lead .heartbeat
   expectError (Runtime.releaseCoordinator lead) "generation"
   let (self, token) ← Runtime.claim successor "integration"
-  discard <| Runtime.dispatch successor self (.reserve id token)
+  discard <| Runtime.dispatch successor self (.reserve [id] token)
   Runtime.finishClaim successor "integration" token
   expectError (Runtime.releaseCoordinator successor) "Finish or cancel"
   let submitted ← Runtime.submission (← Runtime.readState successor) id
   Runtime.checkout successor (.review submitted.work.branch snapshot)
-  discard <| Runtime.run successor (.land id snapshot "Previously reviewed fixture")
+  discard <| Runtime.run successor (.land [{ epic := id, snapshot }] snapshot.head "Previously reviewed fixture")
   check ((← fixture.ref Git.mainRef) == snapshot.head.value) "Successor could not land reviewed work"
 
 /-- Runtime coverage is intentionally separate from pure transition and transport tests. -/
@@ -337,6 +504,12 @@ def runtimeTests : List (String × IO Unit) := [
   ("runtime worktree lock rejects overlapping mutations and preserves claims", testLocalLockSerializesIdentityMutation),
   ("runtime planned handoff rejects dirt and resumes reviewed work in a fresh worktree", testCoordinatorHandoff),
   ("runtime A-B-A checkout refuses to omit B's pushed contribution", testAlternatingAuthorsPreservePushedWork),
-  ("runtime validation failure permits reservation retry with new pending token", testReservationSurvivesValidationFailure)]
+  ("runtime validation failure permits reservation retry with new pending token", testReservationSurvivesValidationFailure),
+  ("runtime landing on the reviewed base fast-forwards unchanged", testLandingFastForwardsCurrentBase),
+  ("runtime landing after a disjoint main move merges and regenerates roots", testLandingMergesDisjointMainMove),
+  ("runtime landing refuses a main move on a reviewed file", testLandingRefusesOverlappingMainMove),
+  ("runtime landing refuses a textual conflict and leaves a clean worktree", testLandingRefusesTextualConflict),
+  ("runtime landing batches two disjoint epics in one call", testLandingBatchesDisjointEpics),
+  ("runtime landing refuses a batch whose epics overlap", testLandingRefusesOverlappingBatch)]
 
 end Coordination.Tests

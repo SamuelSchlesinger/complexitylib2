@@ -75,6 +75,12 @@ structure Snapshot where
   head : Oid
   deriving BEq, Repr, ToJson, FromJson
 
+/-- A reviewed snapshot reserved for landing. -/
+structure Candidate where
+  epic : EpicId
+  snapshot : Snapshot
+  deriving BEq, Repr, ToJson, FromJson
+
 structure Agent where
   actor : Actor
   role : Role
@@ -120,6 +126,9 @@ structure Submission where
 
 structure Completion where
   snapshot : Snapshot
+  /-- The commit published as `main`: the reviewed head when it was fast-forwarded, otherwise the
+  merge commit landing it. Absent in records written before merge landings existed. -/
+  landed : Option Oid := none
   summary : String
   api : Review
   correctness : Review
@@ -146,11 +155,27 @@ structure Epic where
   phase : Phase := .unassigned
   deriving BEq, Repr, ToJson, FromJson
 
+/-- Reviewed snapshots reserved for one landing onto the `main` observed at reservation. -/
 structure Integration where
-  epic : EpicId
   lease : Lease
-  snapshot : Snapshot
-  deriving BEq, Repr, ToJson, FromJson
+  /-- The landing must still extend exactly this commit. Absent in records written before merge
+  landings existed. -/
+  main : Option Oid := none
+  candidates : List Candidate
+  deriving BEq, Repr, ToJson
+
+/-- Records written before batch landings reserved a single `epic` and `snapshot`. -/
+instance : FromJson Integration where
+  fromJson? json := do
+    let lease ← json.getObjValAs? Lease "lease"
+    let main ← json.getObjValAs? (Option Oid) "main"
+    let candidates ← match json.getObjVal? "candidates" with
+      | .ok value => fromJson? value
+      | .error _ => do
+        let epic ← json.getObjValAs? EpicId "epic"
+        let snapshot ← json.getObjValAs? Snapshot "snapshot"
+        pure [{ epic, snapshot }]
+    pure { lease, main, candidates }
 
 structure State where
   version : Nat := 1
@@ -160,7 +185,14 @@ structure State where
   integration : Option Integration := none
   deriving BEq, Repr, ToJson, FromJson
 
-/-- Exact Git observations are supplied by the IO shell, never inferred from branch names. -/
+/-- Paths observed to differ between the base and the head of a range. -/
+structure Diff where
+  range : Snapshot
+  paths : List String
+  deriving BEq, Repr, ToJson, FromJson
+
+/-- Exact Git observations are supplied by the IO shell, never inferred from branch names.
+`ancestry` lists ranges whose base was observed to be an ancestor of its head. -/
 structure Context where
   actor : Actor
   now : Nat
@@ -169,6 +201,7 @@ structure Context where
   branchHead : Option Oid := none
   cleanHead : Option Oid := none
   ancestry : List Snapshot := []
+  diffs : List Diff := []
   deriving BEq, Repr, ToJson, FromJson
 
 inductive Command where
@@ -186,15 +219,15 @@ inductive Command where
   | submit (epic : EpicId) (snapshot : Snapshot) (changedPaths : List String) (summary : String)
   | review (epic : EpicId) (kind : ReviewKind) (snapshot : Snapshot)
       (verdict : Verdict) (note : String)
-  | reserve (epic : EpicId) (token : Token)
-  | land (epic : EpicId) (snapshot : Snapshot) (validation : String)
+  | reserve (epics : List EpicId) (token : Token)
+  | land (candidates : List Candidate) (landed : Oid) (validation : String)
   | cancel
   deriving BEq, Repr, ToJson, FromJson
 
-/-- A landing must publish both refs atomically and guard the exact old main OID. -/
+/-- A landing must publish both refs atomically and guard the exact old `main` OID. -/
 inductive Publication where
   | boardOnly
-  | atomicLanding (snapshot : Snapshot)
+  | atomicLanding (main landed : Oid)
   deriving BEq, Repr, ToJson, FromJson
 
 inductive Checkout where
@@ -232,6 +265,18 @@ def scopeContains (scope path : String) : Bool :=
 
 def scopesOverlap (left right : String) : Bool :=
   scopeContains left right || scopeContains right left
+
+/-- Root import files that `lake exe mk_all` regenerates; every landing may rewrite them. -/
+def generatedRoots : List String := ["Complexity.lean", "ComplexityTests.lean"]
+
+/-- Paths changed on both sides, apart from the regenerated roots. A landing by merge requires
+this to be empty so that no reviewed content changes. -/
+def overlappingPaths (left right : List String) : List String :=
+  (left.filter fun path => right.contains path && !generatedRoots.contains path).eraseDups
+
+/-- `older` is `newer` or was observed to be one of its ancestors. -/
+def ancestorOf (ctx : Context) (older newer : Oid) : Bool :=
+  older == newer || ctx.ancestry.contains { base := older, head := newer }
 
 def Reviews.get (reviews : Reviews) : ReviewKind → ReviewSlot
   | .api => reviews.api
@@ -329,8 +374,9 @@ private def replaceable (ctx : Context) (lease : Option Lease) (replace : Bool) 
 private def acquire (ctx : Context) (lease : Option Lease) : Bool :=
   lease.all (fun l => holds ctx l || decide (l.expires + grace < ctx.now))
 
-private def dependenciesDone (state : State) (epic : Epic) : Bool :=
-  epic.dependencies.all fun id => state.epics.any fun e =>
+/-- Dependencies must have landed or precede the epic in the batch being landed. -/
+private def dependenciesDone (state : State) (epic : Epic) (earlier : List EpicId := []) : Bool :=
+  epic.dependencies.all fun id => earlier.contains id || state.epics.any fun e =>
     e.id == id && match e.phase with | .merged _ => true | _ => false
 
 private def occupiesScope (epic : Epic) : Bool :=
@@ -353,7 +399,8 @@ private def submissionOf (epic : Epic) : Except String Submission :=
   | _ => throw "Epic has no submitted snapshot"
 
 private def clearIntegration (state : State) (epic : EpicId) : State :=
-  if state.integration.any (fun i => i.epic == epic) then { state with integration := none }
+  if state.integration.any (fun i => i.candidates.any (·.epic == epic)) then
+    { state with integration := none }
   else state
 
 private def renewLease (ctx : Context) (expires : Nat) (lease : Lease) : Lease :=
@@ -376,7 +423,11 @@ private def renewEpic (ctx : Context) (expires : Nat) (epic : Epic) : Epic :=
     { epic with phase := .submitted { s with work, reviews } }
   | _ => epic
 
-private def approved (ctx : Context) (state : State) (epic : Epic) :
+/-- The reviewed base is the observed `main` or one of its ancestors. -/
+private def onMain (ctx : Context) (base : Oid) : Bool :=
+  ctx.main.any (ancestorOf ctx base)
+
+private def approved (ctx : Context) (state : State) (epic : Epic) (earlier : List EpicId := []) :
     Except String (Submission × Review × Review) := do
   let s ← submissionOf epic
   let .finished api := s.reviews.api | throw "Missing current API approval"
@@ -388,9 +439,47 @@ private def approved (ctx : Context) (state : State) (epic : Epic) :
   check (api.reviewer.agent != correctness.reviewer.agent &&
     !epic.authors.contains api.reviewer.agent && !epic.authors.contains correctness.reviewer.agent)
     "Reviews must be independent of every author and each other"
-  check (dependenciesDone state epic) "A dependency has not landed"
-  check (ctx.main == some s.snapshot.base) "Main moved; reopen, merge main and obtain new reviews"
+  check (dependenciesDone state epic earlier) "A dependency has not landed"
+  check (onMain ctx s.snapshot.base)
+    "Reviewed base is not on main; reopen, merge main and obtain new reviews"
   pure (s, api, correctness)
+
+/-- Every epic of a landing in its order, each approved exactly as submitted. -/
+private def approvedBatch (ctx : Context) (state : State) (epics : List EpicId) :
+    Except String (List (Epic × Submission × Review × Review)) := do
+  check (!epics.isEmpty) "Name at least one epic to land"
+  check (epics.eraseDups.length == epics.length) "An epic is listed twice"
+  let mut batch := []
+  for id in epics do
+    let epic ← findEpic state id
+    let (s, api, correctness) ← approved ctx state epic (batch.map (·.1.id))
+    batch := batch ++ [(epic, s, api, correctness)]
+  pure batch
+
+private def observedDiff (ctx : Context) (range : Snapshot) (what : String) :
+    Except String (List String) :=
+  match ctx.diffs.find? (·.range == range) with
+  | some diff => pure diff.paths
+  | none => throw s!"{what} were not observed"
+
+/-- Reviewed snapshots land together only when, apart from the regenerated roots, none changes a
+path that `main` changed since its base or that an earlier snapshot of the landing changes. -/
+private def disjoint (ctx : Context) (main : Oid) (candidates : List Candidate) :
+    Except String Unit := do
+  let mut earlier : List (EpicId × List String) := []
+  for candidate in candidates do
+    let name := candidate.epic.value
+    let own ← observedDiff ctx candidate.snapshot s!"Paths changed by {name}"
+    let moved ← if main == candidate.snapshot.base then pure [] else
+      observedDiff ctx { base := candidate.snapshot.base, head := main } "Paths changed on main"
+    let overlap := overlappingPaths moved own
+    check overlap.isEmpty s!"Main moved on reviewed files of {name} ({", ".intercalate overlap}); \
+      reopen, merge main and obtain new reviews"
+    for (other, paths) in earlier do
+      let overlap := overlappingPaths paths own
+      check overlap.isEmpty s!"{other.value} and {name} both change {", ".intercalate overlap}; \
+        land one, then reopen the other, merge main and obtain new reviews"
+    earlier := earlier ++ [(candidate.epic, own)]
 
 private def result (state : State) (message : String) : Outcome := { state, message }
 
@@ -564,9 +653,9 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
     let _ ← requireHeld ctx work.lease
     check (ctx.cleanHead == some snapshot.head && ctx.branchHead == some snapshot.head)
       "Clean worktree and pushed assigned branch must match the submitted head"
-    check (ctx.main == some snapshot.base && snapshot.base != snapshot.head &&
-      ctx.ancestry.contains snapshot) "Merge the observed current main before submission"
-    check (changedPaths.all fun path => ["Complexity.lean", "ComplexityTests.lean"].contains path ||
+    check (onMain ctx snapshot.base && snapshot.base != snapshot.head &&
+      ctx.ancestry.contains snapshot) "Submission must extend a commit of the observed current main"
+    check (changedPaths.all fun path => generatedRoots.contains path ||
       epic.paths.any (fun scope => scopeContains scope path)) "Change exceeds assigned paths"
     check (!summary.isEmpty) "Submission summary is required"
     let s : Submission := { work, snapshot, summary }
@@ -583,40 +672,55 @@ def apply (ctx : Context) (state : State) (command : Command) : Except String Ou
     let review : Review := { reviewer := ctx.actor, snapshot, verdict, note, time := ctx.now }
     let s := { s with reviews := s.reviews.set rk (.finished review) }
     return result (putEpic state { epic with phase := .submitted s }) "Review evidence recorded"
-  | .reserve id token =>
+  | .reserve epics token =>
     let agent ← coordinator ctx state
     checkToken ctx token
-    let epic ← findEpic state id
-    let (s, _, _) ← approved ctx state epic
+    let some main := ctx.main | throw "Main was not observed"
+    let batch ← approvedBatch ctx state epics
+    let candidates := batch.map fun (epic, s, _, _) => { epic := epic.id, snapshot := s.snapshot }
+    disjoint ctx main candidates
     if let some previous := state.integration then
-      if previous.epic == id && previous.snapshot == s.snapshot && holds ctx previous.lease then
-        return result state "Integration already reserved by this held generation"
+      if previous.candidates == candidates && holds ctx previous.lease then
+        -- A retry after a failed validation integrates against the main observed now.
+        let state := { state with integration := some { previous with main := some main } }
+        return result state (if previous.main == some main then
+          "Integration already reserved by this held generation"
+          else "Integration reservation renewed against the current main")
       check (previous.lease.expires + grace < ctx.now) "Integration is reserved; finish or cancel it"
-    let integration : Integration := {
-      epic := id
-      lease := makeLease ctx agent token
-      snapshot := s.snapshot }
+    let integration : Integration := { lease := makeLease ctx agent token, main := some main, candidates }
     return result { state with integration := some integration } "Integration reserved"
-  | .land id snapshot validation =>
+  | .land candidates landed validation =>
     let _ ← coordinator ctx state
     let some integration := state.integration | throw "Integration reservation is absent"
     check (holds ctx integration.lease) "Integration generation was lost"
-    check (integration.epic == id && integration.snapshot == snapshot) "Integration reservation changed"
-    let epic ← findEpic state id
-    let (s, api, correctness) ← approved ctx state epic
-    check (s.snapshot == snapshot && ctx.cleanHead == some snapshot.head &&
-      ctx.ancestry.contains snapshot) "Validated clean head or fast-forward evidence differs"
+    check (integration.candidates == candidates) "Integration reservation changed"
+    let some reserved := integration.main
+      | throw "Integration reservation does not record its main; cancel and land again"
+    let some main := ctx.main | throw "Main was not observed"
+    check (reserved == main) "Main moved since the integration reservation; cancel and land again"
+    let batch ← approvedBatch ctx state (candidates.map (·.epic))
+    check (ctx.cleanHead == some landed) "Validated clean head differs from the landing"
+    check (landed != main && ancestorOf ctx main landed) "Landing must extend the reserved main"
+    for (candidate, epic, s, _, _) in candidates.zip batch do
+      check (s.snapshot == candidate.snapshot) "Reviewed snapshot changed after reservation"
+      check (ctx.ancestry.contains candidate.snapshot && ancestorOf ctx candidate.snapshot.head landed)
+        s!"Landing omits the reviewed head of {epic.id.value}"
+    disjoint ctx main candidates
     check (!validation.isEmpty) "Validation evidence is required"
-    let completion : Completion := {
-      snapshot, api, correctness, validation
-      summary := s.summary
-      landedBy := ctx.actor
-      landedAt := ctx.now }
-    let state := putEpic state { epic with phase := .merged completion }
+    let mut state := state
+    for (epic, s, api, correctness) in batch do
+      let completion : Completion := {
+        snapshot := s.snapshot
+        landed := some landed
+        api, correctness, validation
+        summary := s.summary
+        landedBy := ctx.actor
+        landedAt := ctx.now }
+      state := putEpic state { epic with phase := .merged completion }
     return {
       state := { state with integration := none }
       message := "Publish completion and main atomically"
-      publication := .atomicLanding snapshot }
+      publication := .atomicLanding main landed }
   | .cancel =>
     let _ ← coordinator ctx state
     if let some integration := state.integration then
