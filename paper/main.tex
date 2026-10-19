@@ -18,7 +18,7 @@
 \setlist{nosep,leftmargin=*}
 \newcommand{\cc}[1]{\mathsf{#1}}
 \newcommand{\lean}[1]{\nolinkurl{#1}}
-\newcommand{\decl}[3]{\par{\footnotesize\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/cec38657ddf1b93dd1be123e86d0ecdd9728c610/#1\#L#2}{\nolinkurl{#3}}}\par}
+\newcommand{\decl}[3]{\par{\footnotesize\raggedright\href{https://github.com/SamuelSchlesinger/complexitylib2/blob/cec38657ddf1b93dd1be123e86d0ecdd9728c610/#1\#L#2}{\nolinkurl{#3}}\par}}
 \hypersetup{pdftitle={Complexitylib: An index of proved statements},
   pdfsubject={Selected formalized results, assumptions, and Lean declaration links}}
 \begin{document}
@@ -27,7 +27,7 @@
 \vspace{.5em}
 19 October 2026
 \end{center}
-This tour collects 48 entries spanning the library's significant results, from
+This tour collects 50 entries spanning the library's significant results, from
 machine complexity and descriptive logic to cryptography, circuit lower bounds,
 proof complexity, communication, coding and circuit synthesis. Some entries group
 closely related theorems. It is a statement index, not an exhaustive API reference
@@ -52,7 +52,7 @@ comparison is a separate review, not a machine-checked equivalence proof.
 \tableofcontents
 \clearpage
 \input{sections/statements}
-\clearpage
+\Needspace{12\baselineskip}
 \begingroup
 \raggedright
 \bibliographystyle{plainnat}

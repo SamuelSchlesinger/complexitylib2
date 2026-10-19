@@ -6,6 +6,22 @@ with wiring and fanout free. Formula leaf count and formula depth are separate
 measures; unbounded fan-in bases are identified in their entries.
 
 \begin{result}
+\subsection{Shannon--Lupanov bounds and the MCSP window}
+Count all NOT, AND, OR and constant gates. For every $\varepsilon>0$, all
+sufficiently large $n$, and every $n$-input truth table, MCSP answers yes at
+any integer threshold $s\ge(1+\varepsilon)2^n/n$. For every sufficiently large
+$n$, some truth table needs more than $\lfloor2^n/n\rfloor$ gates.
+A finite counting bound makes the scarcity of small circuits explicit: for
+$n\ge16$, at most $2^{\lfloor2^n/4\rfloor}$ of the $2^{2^n}$ truth tables
+have a circuit of size at most $\lfloor2^n/(5n)\rfloor$.
+These are synthesis and counting statements; they do not establish the
+computational hardness of deciding MCSP.\citep{Shannon1949,Lupanov1958}
+\decl{Complexity/Computability/MCSP/Shannon.lean}{248}{Cslib.MCSP.eventually_mem}
+\decl{Complexity/Computability/MCSP/Shannon.lean}{256}{Cslib.MCSP.eventually_exists_not_mem}
+\decl{Complexity/Computability/MCSP/Shannon.lean}{226}{Cslib.MCSP.ncard_setOf_mem_le}
+\end{result}
+
+\begin{result}
 \subsection{Barrington's theorem}
 Nonuniform NC$^1$ is exactly the class of languages recognized by polynomial-length
 permutation branching programs of width five. An equivalent formulation uses
@@ -96,4 +112,56 @@ means eventually excluding the slices of every P/poly language. The security
 assumption is stronger than ordinary polynomial-time PRG security.
 \citep{RazborovRudich1997,GGM1986}
 \decl{Complexity/Computability/Circuit/Boolean/NaturalProof/Generator.lean}{51}{Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator}
+\end{result}
+
+\begin{result}
+\subsection{Exponentially small correlation with quadratic forms}
+There is a nonconstructively chosen family of bilinear Boolean functions $h_n$
+with the following property. Put
+\[
+c_* = 1+\frac{\pi}{6\arccos((1+2\sqrt2)/4)}\approx2.78125.
+\]
+For every real $c<c_*$, there is $\gamma>0$ such that for all sufficiently
+large $n$, every Boolean circuit of fan-in at most two, over any Boolean basis,
+with at most $cn$ positive-arity gates has
+\[
+\left|2\Pr_{x\in\{0,1\}^n}[C(x)=h_n(x)]-1\right|\le2^{-\gamma n}.
+\]
+The input is uniform, constants are not charged, and the cutoff and rate are
+independent of the circuit. The forms are obtained by choosing submatrix-robust
+matrices; no efficient construction or uniform complexity-class membership is
+proved. The exact coefficient above is the library's frontier-method result;
+related correlation-bound sources are credited separately.\citep{ChenKabanets2015,GKST2016,Jukna2011}
+\decl{Complexity/Computability/Circuit/Frontier/Correlation.lean}{279}{Cslib.Circuits.Frontier.exists_eventually_abs_correlation_hardForm_le_of_lt}
+\end{result}
+
+\begin{result}
+\subsection{Weighted-threshold activity and capacity bounds}
+Consider real-weight threshold gates, and count as input-reading a gate with a
+nonzero effective coefficient on an original input; repeated wires are aggregated
+before testing this condition. If a circuit computes inner product modulo two
+on two $m$-bit blocks, with its output taken from a gate, let $q$ be its number of
+input-reading gates and $e$ the maximum number of those gates outputting true on
+one input. Then
+\[
+2^m\le\left(\sum_{j=0}^{e}\binom qj\right)^2.
+\]
+The same inequality holds with $q$ counting all gates and $e$ their maximum
+simultaneous activity.\citep{ThresholdCircuitRepresentations2026}
+\decl{Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean}{75}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_circuit_hadamardCode}
+\decl{Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean}{99}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode}
+\end{result}
+
+\begin{result}
+A separate capacity bound applies to any fixed Boolean readout of a threshold
+program's gate values computing $f$ on $n$ bits. Suppose that, across every
+partition of the input coordinates, every rectangle contained in either fiber
+of $f$ has a side with fewer than $K$ assignments. If $q$ gates read original
+inputs in the effective sense above, then
+\[
+2^n<4K^2\,4^q.
+\]
+This statement requires the rectangle hypothesis on both fibers; it is not an
+unconditional lower bound for every Boolean function.\citep{Schlesinger2026Algebraic}
+\decl{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{150}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_four_pow_inputGates}
 \end{result}

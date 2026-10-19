@@ -31,6 +31,32 @@ optimized construction exponents.\citep{HILL1999,Holenstein2006}
 \end{result}
 
 \begin{result}
+\subsection{Polynomial stretch with quantitative resource bounds}
+Let $G$ be a one-bit-stretch PRG and let $k:\mathbb N\to\mathbb N$ be positive
+and polynomial-time computable with unary input and output. Repeatedly expanding
+the retained $n$-bit seed yields a PRG with output length $n+k(n)$, secure against
+the same uniform strict PPT distinguishers. In particular, one-bit stretch
+suffices for any strictly larger, unary-polynomial-time computable target length.
+\citep{Barak2016PRG}
+
+The construction also has a separate machine-level resource certificate.
+Suppose $G$ has time/workspace bounds $t_G,s_G$, the count computation has bounds
+$t_k,s_k$, and every round's seed $u_i$ satisfies $s_G(u_i)\le Q(u)$ for initial
+seed $u$. Writing $n=|u|$ and $k=k(n)$, the certified bounds are
+\[
+\begin{aligned}
+\text{time}&=O\!\left(t_k(n)+n+k+\sum_{i<k}(t_G(u_i)+n+1)+1\right),\\
+\text{workspace}&=O\!\left(s_k(n)+Q(u)+n+k+1\right).
+\end{aligned}
+\]
+The exact one-bit output-length invariant is required. The workspace bound
+includes the final reversal buffer; a small streaming state alone does not give
+an output-length-independent bound for the full construction.
+\decl{Complexity/Crypto/Computational/Stretch.lean}{974}{Cslib.Crypto.PRGStretch.pseudorandomGenerator}
+\decl{Complexity/Crypto/Computational/Stretch.lean}{429}{Cslib.Crypto.PRGStretch.computableTidilyInTimeAndSpace_stretch}
+\end{result}
+
+\begin{result}
 \subsection{GGM and adaptive pseudorandom functions}
 Every uniform pseudorandom generator gives an efficiently evaluable
 pseudorandom function family by polynomial stretching and the GGM tree

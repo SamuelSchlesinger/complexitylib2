@@ -1,82 +1,80 @@
 # Theorem-index review
 
-## Comprehensive tour, 19 October 2026
+## Selection and missing results, 19 October 2026
 
-Scope: all 48 entries in the 12 subject files included by `sections/statements.tex`,
-the conventions in `main.tex`, and the editing guide in `README.md`. All 62 Lean
-declaration links target the single library revision
-`cec38657ddf1b93dd1be123e86d0ecdd9728c610`. No Lean source or dependencies changed.
-Earlier 13-entry and 16-entry index reviews remain in Git history at that revision.
+Scope: documentation-only delta from `dac6e41b7f8928a1124b81a6967328426eca03ad`.
+The index now has 50 numbered entries in 12 subjects, 78 declaration links,
+and 61 references in 19 pages. All links still target the unchanged Lean source
+at `cec38657ddf1b93dd1be123e86d0ecdd9728c610`. The full prior 48-entry review
+is preserved in Git at the base revision; unchanged entries retain that review.
 
-Three independent Codex reviewers compared the entries with the actual theorem
-statements and underlying definitions, rather than relying only on module summaries:
+The additions cover Shannon--Lupanov/MCSP bounds, quadratic-form correlation,
+weighted-threshold activity and capacity, polynomial PRG stretch with quantitative
+resources, general input-time iteration, and shared-table batched iteration.
+An unnumbered containment map connects the existing class results.
+Circuit Value membership is now a contextual note. The two sparse-counter
+coordinate-transfer statements and the cycle-label construction are grouped with
+their main results; their mathematical statements and links are preserved.
 
-- `proof_correctness`: completeness, structural complexity, space/interaction,
-  randomness/counting and cryptography (23 entries). Checked encodings, machine
-  and oracle models, quantifiers, numerical bounds, security assumptions, citations
-  and all 30 declaration anchors in these subjects.
-- `proof_api`: circuit depth/lower bounds/barriers, proof complexity, communication
-  and arithmetic/simultaneous computation (14 entries). Checked circuit and formula
-  costs, natural-proofs security quantifiers, expanded monotone-clique error budgets,
-  rounding conventions, mass-production cutoffs, citations and 19 declaration anchors.
-- `resume_alternation`: Boolean analysis/expanders, coding and iteration (11 entries),
-  plus overall organization and the editing guide. Checked normalized norms, field
-  generality, decoder correctness versus runtime, fixed/input-time quantifiers,
-  all 13 declaration anchors, and the 48-entry/12-subject count.
+Three independent Codex reviewers compared the changed entries against the actual
+Lean statements and underlying definitions:
+
+- `proof_api`: the three added circuit entries, including precise MCSP thresholds,
+  correlation quantifiers/coefficient, positive-arity cost, effective threshold
+  coefficients, activity and readout restrictions, both-fiber rectangle hypotheses,
+  citation correspondence, and all seven new declaration anchors.
+- `proof_correctness`: PRG stretch and its exact time/workspace certificate, all
+  arrows and common encoding in the containment map, and the Circuit Value note.
+  Checked the new declaration links and the primary length-extension source.
+- `resume_alternation`: general input-time and batched iteration, preservation of
+  all sparse-counter claims after regrouping, all ten iteration declaration links,
+  the 50-entry count, and the README's selection policy.
 
 Resolved findings:
 
-1. Made the OWF experiment explicit: uniform n-bit input, unary parameter, and
-   success for any preimage, without a length-preservation premise.
-2. Specified PRF key/query/output lengths, malformed-query behavior and empty
-   auxiliary input in the security experiments.
-3. Specified Fagin's unary universe cardinality and framed relation truth tables,
-   including rejection of malformed tables.
-4. Clarified that formula leaf counts exclude constants, and separated Spira's
-   zero-input-leaf case from the positive-argument logarithm.
-5. Corrected an iteration cross-reference after reorganizing the subject sections.
+1. Replaced an absent Goldreich bibliography key with the existing `Barak2016PRG`
+   source credited by the linked PRG-stretch module.
+2. Corrected the correlation theorem link to its declaration's first line, 279.
+3. Added direct links for the P-to-NP and NP-to-PH arrows in the containment map.
 
-All three reviewers approved the corrected snapshot and subsequently verified
-that the final pagination changes only added layout wrappers and whitespace.
-No findings remain. The authoring agent performed the PDF visual review; the
-independent reviewers did not run Lean builds or inspect rendered pages.
+All three reviewers approved their final mathematical scope. Subsequent layout
+changes split long groups at supporting statements, moved each pair of activity
+links beside its claim, and made declaration links ragged-right. References flow
+after the last result to avoid a nearly empty page. No mathematical finding remains.
+Review is correspondence checking, not a new proof audit or a machine-checked
+prose equivalence. No human editorial approval is implied.
 
 Validation:
 
-- `latexmk -pdf -interaction=nonstopmode -halt-on-error -cd paper/main.tex` passed.
-  The final log has no warnings or overfull/underfull boxes.
-- Rendered and visually inspected all 16 pages, including all four reference pages.
-  The initial render exposed stranded links and a split contents list; keeping each
-  statement with its links and compacting the contents resolved those defects.
-- Checked all 62 fully qualified names against the compiled declaration index and
-  all line anchors against `git show` at the pinned revision. Linked source files
-  match that revision exactly. Checked that all 62 expected URLs occur as actual
-  PDF link annotations.
-- Verified 48 numbered entries, 12 subject sections, 53 bibliography entries,
-  and `git diff --check`. Citations resolve without missing-key warnings.
-- No Lean builds were repeated locally: this change only edits the theorem index
-  and its review/usage documentation; the underlying library revision already
-  passed the six project gates. Repository CI is recorded in the pull request.
-
-This is a review of correspondence between prose and formal statements, not a new
-audit of every Lean proof or a machine-checked equivalence proof. No human editorial
-approval is claimed. Samuel retains control over selection and wording.
+- `latexmk -pdf -interaction=nonstopmode -halt-on-error -cd paper/main.tex` passed;
+  the final log contains no warnings or overfull/underfull boxes.
+- Rendered and visually inspected every final page. Verified final pages 1--14
+  pixel-identical to their inspected render after the last bibliography-layout
+  change, and inspected final pages 15--19 separately.
+- Checked all 78 fully qualified names against the compiled declaration index,
+  their exact declaration-line anchors against `git show` at the pinned revision,
+  and the corresponding URLs in actual PDF annotations. Every linked Lean file
+  still matches that pinned source exactly.
+- Verified 50 numbered entries, 12 subject sections, 61 references, and
+  `git diff --check`. No Lean source, dependency, or bibliography entries changed.
+- No Lean builds were repeated for this documentation-only delta. The original
+  library baseline passed the six project gates; current CI is recorded in the PR.
 
 ## Reviewed SHA-256 hashes
 
 ```text
-f34ae14c312693049be6c5c185553100fef92d925543cf9ef1c98d82b1a359bf  paper/main.tex
-c784211d766ae6abd5e9ecc90645c74a884460432cea8449e465e91cb4084aa2  paper/README.md
+03f3ee1840d3aff3534f232be510aef60d392869ace2a32464423f6183e77192  paper/main.tex
+f50826dd029dee289f6f60872e87e9e53dca142c307587633461c6c6451f52ef  paper/README.md
 5fefaa60bf1ed9cd83205d12a91752ccbefefc87cf0ce1b24f670b8624d75849  paper/sections/analysis.tex
-4a1e3d82c0bde217258f2e9e5b5de195203e76bf923e0db5643ee58b028f6520  paper/sections/circuits.tex
+1f0364a48e180b4ab4119c8e1f3ac79ed5a6e83e9edfb710254b776d0e02aaac  paper/sections/circuits.tex
 32edc7e3310bffccb3cb6e8485b3f2a72de89a67dbeacbcd2a25511b6e184ba2  paper/sections/coding.tex
 56a77e130a465246f04c79f455c25ff54922ea05202090e2b7a7f4e19f173cbd  paper/sections/communication.tex
-ff032d954d5bd16445aac5b6c8022cb182085581e933fd3e7e6cfc481d513c61  paper/sections/completeness.tex
-3489e8817ec266ece37958eabf35a0a25a5fb374cf384f011c3900516e83ec02  paper/sections/crypto.tex
-1ce5bcf5171c38c8874ee83f4246c35d82ac1ca7cd3c48d66a4b3f3cd660bf04  paper/sections/iteration.tex
+9e97be44f5295ae00274c1ceb48ba80e320aa66a8f8d213f296cb0646230eec3  paper/sections/completeness.tex
+6de8f7822423efdb334ecd9e2c05eed325685025a825fb713a845670b17f07b4  paper/sections/crypto.tex
+bd7eb9e9d9744b5f5cec6f18135b0a0f92dd6a30878be7ed3c462c03cdc9df2f  paper/sections/iteration.tex
 541179288b86a3e5f99131f7c6bebffcb8a82af4838e91ca81fcbf25432f1216  paper/sections/proofs.tex
 7c9fbae2cfcdc99d364f0b74cc89f481367d4c58e79344d0818d4d031d0fcf11  paper/sections/randomness.tex
-4cb75c959697c9d2317c5413160e3440a822b92791c849701db73e21687c3389  paper/sections/space.tex
+e17d0f2eb2b26f30258c32b6582fa0ba91bfd9cb1fdbbd74b2bf60e2af0505b5  paper/sections/space.tex
 1f91c79f59dffd890e5c49712eb254ad39646781f18ad3377ce15d6c17546391  paper/sections/statements.tex
 ccd3ee5a924c3bcaa884751b2b618d5911d6aca4972df5840f85c7523204ca0b  paper/sections/structure.tex
 cbb8084fa13318bb9b3408d76e042bd49d3c37d326447d71a036b810250b08b1  paper/sections/synthesis.tex
