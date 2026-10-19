@@ -1,6 +1,8 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserLowerBound
+import ComplexityTests.AffineDisperserRuntime
+import ComplexityTests.Alternation
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
@@ -74,6 +76,7 @@ import ComplexityTests.Iteration
 import ComplexityTests.Iteration.Batch
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpLipton
+import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.Ladner
@@ -154,6 +157,7 @@ import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
 import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.ProbabilityToolkit2
+import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
@@ -178,6 +182,7 @@ import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
+import ComplexityTests.ResourceClasses3
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
@@ -191,6 +196,7 @@ import ComplexityTests.SourceComplexity
 import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
+import ComplexityTests.SpaceHierarchy
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF

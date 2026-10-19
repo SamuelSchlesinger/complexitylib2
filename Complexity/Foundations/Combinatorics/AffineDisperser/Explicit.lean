@@ -20,10 +20,10 @@ import Mathlib.Data.List.Nodup
 For every input length `N` we fix the parameters of Ben-Sasson and Kopparty's construction
 explicitly. With `ℓ = ⌊log₂ N⌋`:
 
-* `L = ⌊ℓ / 3⌋` (`Cslib.AffineDisperser.primeBound`);
+* `L = ⌊ℓ / 3⌋` (`Cslib.AffineDisperser.Explicit.primeBound`);
 * the field degree `n` is the product of the primes chosen greedily, in increasing order, from
   the primes in `(L, 4 L]` with product at most `N / (ℓ + 1) ^ 2`
-  (`Cslib.AffineDisperser.degreePrimes`, `Cslib.AffineDisperser.fieldDegree`);
+  (`Cslib.AffineDisperser.Explicit.degreePrimes`, `Cslib.AffineDisperser.Explicit.fieldDegree`);
 * `F = 𝔽_{2 ^ n}` with the monomial basis in roots of the irreducible polynomials of least code of
   the prime degrees (`Cslib.AffineDisperser.compositeBasis`); each of these polynomials is found
   by an exhaustive search over fewer than `2 ^ (4 L + 1) ≤ 2 N ^ (4 / 3)` codes;
@@ -36,13 +36,17 @@ The function `Cslib.AffineDisperser.explicitDisperser N : BitString N → Bool` 
 `F` have at most `2 ^ s` elements, `s = ⌊n / (L + 1)⌋`, and the function is nonconstant on every
 affine subspace of `BitString N` of dimension greater than
 `d(N) = N - r n + r * max (r + 1) s + r * (r + 1) + n t + ⌊n r / t⌋`
-(`Cslib.AffineDisperser.exists_explicitDisperser_ne`).
+(`Cslib.AffineDisperser.exists_explicitDisperser_ne`). It does not depend on the roots chosen for
+the basis (`Cslib.AffineDisperser.traceSymBits_rootBasis_eq_explicitDisperser`), and it is
+computable in polynomial time
+(`Cslib.AffineDisperser.computableTidilyInPolyTime_explicitDisperser`).
 
 Ben-Sasson and Kopparty take `n` prime and reach dimension `6 N ^ (4 / 5)`
 [BenSassonKopparty2012]; the field then needs an irreducible polynomial of large prime degree,
 which exhaustive search cannot find in polynomial time. The composite degree keeps every search
 small at the price of the subfield term `r s ≤ N / (L + 1)`, so our threshold is `O(N / log N)`
-(`Cslib.AffineDisperser.eventually_explicitThreshold_le`).
+(`Cslib.AffineDisperser.eventually_explicitThreshold_le`). This is far from the best explicit
+dispersers known: Li's dispersers work for dimension `O(log N)` [Li2023].
 
 ## Main definitions
 
@@ -57,6 +61,7 @@ small at the price of the subfield term `r s ≤ N / (L + 1)`, so our threshold 
 ## References
 
 * [E. Ben-Sasson, S. Kopparty, *Affine dispersers from subspace polynomials*][BenSassonKopparty2012]
+* [X. Li, *Two source extractors for asymptotically optimal entropy, and (many) more*][Li2023]
 -/
 
 @[expose] public section
@@ -64,6 +69,8 @@ small at the price of the subfield term `r s ≤ N / (L + 1)`, so our threshold 
 namespace Cslib.AffineDisperser
 
 open Module
+
+namespace Explicit
 
 /-- The prime bound `L = ⌊⌊log₂ N⌋ / 3⌋`: the field degree is a product of primes in
 `(L, 4 L]`. -/
@@ -96,13 +103,6 @@ def symDegree (N : ℕ) : ℕ :=
 def subfieldExp (N : ℕ) : ℕ :=
   fieldDegree N / (primeBound N + 1)
 
-/-- **The dimension threshold** `d(N) = N - r n + r * max (r + 1) s + r * (r + 1) + n t + ⌊n r / t⌋`
-of the explicit disperser on `N` bits. -/
-def explicitThreshold (N : ℕ) : ℕ :=
-  N - numBlocks N * fieldDegree N +
-    (numBlocks N * max (numBlocks N + 1) (subfieldExp N) + numBlocks N * (numBlocks N + 1) +
-      fieldDegree N * symDegree N + fieldDegree N * numBlocks N / symDegree N)
-
 theorem prime_of_mem_degreePrimes {N p : ℕ} (hp : p ∈ degreePrimes N) :
     primeBound N < p ∧ p ≤ 4 * primeBound N ∧ p.Prime :=
   mem_primesIoc.1 ((selectBelow_sublist _ _).subset hp)
@@ -123,6 +123,27 @@ theorem fieldDegree_eq_prod (N : ℕ) : fieldDegree N = (degreePrimes N).prod :=
 theorem fieldDegree_ne_zero (N : ℕ) : fieldDegree N ≠ 0 :=
   Finset.prod_ne_zero_iff.2 fun j _ => (degreePrime_prime N j).ne_zero
 
+theorem numBlocks_mul_le (N : ℕ) : numBlocks N * fieldDegree N ≤ N :=
+  Nat.div_mul_le_self N _
+
+/-- Every prime factor of the field degree exceeds `L`. -/
+theorem lt_of_prime_dvd_fieldDegree {N q : ℕ} (hq : q.Prime) (hqn : q ∣ fieldDegree N) :
+    primeBound N < q := by
+  obtain ⟨j, -, hj⟩ := (Nat.prime_iff.1 hq).exists_mem_finset_dvd hqn
+  rw [(Nat.prime_dvd_prime_iff_eq hq (degreePrime_prime N j)).1 hj]
+  exact (prime_of_mem_degreePrimes (List.get_mem _ j)).1
+
+end Explicit
+
+open Explicit
+
+/-- **The dimension threshold** `d(N) = N - r n + r * max (r + 1) s + r * (r + 1) + n t + ⌊n r / t⌋`
+of the explicit disperser on `N` bits. -/
+def explicitThreshold (N : ℕ) : ℕ :=
+  N - numBlocks N * fieldDegree N +
+    (numBlocks N * max (numBlocks N + 1) (subfieldExp N) + numBlocks N * (numBlocks N + 1) +
+      fieldDegree N * symDegree N + fieldDegree N * numBlocks N / symDegree N)
+
 /-- The field `𝔽_{2 ^ n}` of the explicit disperser on `N` bits. -/
 abbrev ExplicitField (N : ℕ) : Type :=
   GaloisField 2 (fieldDegree N)
@@ -135,9 +156,6 @@ abbrev ExplicitMonomial (N : ℕ) : Type :=
 the prime degrees. -/
 noncomputable def explicitBasis (N : ℕ) : Basis (ExplicitMonomial N) (ZMod 2) (ExplicitField N) :=
   compositeBasis (degreePrime N) (degreePrime_prime N) (degreePrime_injective N)
-
-theorem numBlocks_mul_le (N : ℕ) : numBlocks N * fieldDegree N ≤ N :=
-  Nat.div_mul_le_self N _
 
 /-- The input position of coordinate `J` of block `i`: blocks follow each other, and coordinates
 within a block are numbered in the mixed-radix order of `finPiFinEquiv`. -/
@@ -157,16 +175,9 @@ from the first `r n` input bits in the monomial basis `explicitBasis N`, with
 noncomputable def explicitDisperser (N : ℕ) : BitString N → Bool :=
   traceSymBits (1 : ExplicitField N) (numBlocks N) (symDegree N) (explicitBasis N) (explicitPos N)
 
-/-- Every prime factor of the field degree exceeds `L`. -/
-theorem lt_of_prime_dvd_fieldDegree {N q : ℕ} (hq : q.Prime) (hqn : q ∣ fieldDegree N) :
-    primeBound N < q := by
-  obtain ⟨j, -, hj⟩ := (Nat.prime_iff.1 hq).exists_mem_finset_dvd hqn
-  rw [(Nat.prime_dvd_prime_iff_eq hq (degreePrime_prime N j)).1 hj]
-  exact (prime_of_mem_degreePrimes (List.get_mem _ j)).1
-
-/-- **An explicit affine disperser** [BenSassonKopparty2012, Theorem 7.3]: `explicitDisperser N`
-is nonconstant on every affine subspace of `BitString N` of dimension greater than
-`explicitThreshold N`. -/
+/-- **An explicit affine disperser**, after [BenSassonKopparty2012, Theorem 7.3]:
+`explicitDisperser N` is nonconstant on every affine subspace of `BitString N` of dimension greater
+than `explicitThreshold N`. -/
 theorem exists_explicitDisperser_ne {N : ℕ} (A : AffineSubspace Bool (BitString N))
     (hA : explicitThreshold N < finrank Bool A.direction) :
     ∃ x ∈ A, ∃ y ∈ A, explicitDisperser N x ≠ explicitDisperser N y :=
