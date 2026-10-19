@@ -268,6 +268,88 @@ theorem computableTidilyInPolyTime_incrementBits :
   .of_linear (incrementT.computableTidilyInLinearTimeAndSpace fun w => by
     rw [show incrementT.q₀ = true from rfl, incrementT_run]; rfl)
 
+/-! ### A live replay -/
+
+/-- Histories, encoded as lists of pairs of words. -/
+abbrev encHistory : History ↪ List Bool := encList (encPair encBits encBits)
+
+/-- A suffix of a list has a shorter encoding. -/
+theorem length_encList_le_of_suffix {α : Type} {enc : α ↪ List Bool} {l l' : List α}
+    (h : l <:+ l') : (encList enc l).length ≤ (encList enc l').length := by
+  obtain ⟨p, rfl⟩ := h
+  induction p with
+  | nil => rfl
+  | cons a p ih =>
+    simp only [List.cons_append, encList_cons, List.length_append]
+    lia
+
+variable {k : ℕ} {Control : Type} (M : MultiTapePTM k Bool Control Unit)
+
+variable (k Control) in
+/-- The state of a replay that only records whether it is still live: the configuration, the rest
+of the history and liveness. -/
+abbrev AliveState := MultiTapeMachine.FiniteConfig k Bool Control Unit × History × Bool
+
+/-- One instruction of a live replay: `replayStep`, where a failure only stops the replay. -/
+def aliveStep (t : ℕ) (s : AliveState k Control) (b : Bool) : AliveState k Control :=
+  if s.2.2 then
+    match replayStep M t (s.1, s.2.1) b with
+    | .ok p => (p.1, p.2, true)
+    | .error _ => (s.1, s.2.1, false)
+  else s
+
+/-- The live replay of `M` on the input `x` with the coins `r` against the history `h`, its replies
+truncated to the number of coins. -/
+def aliveRun (x r : List Bool) (h : History) : AliveState k Control :=
+  r.foldl (aliveStep M r.length) (MultiTapeMachine.FiniteConfig.init M.initial x, h, true)
+
+/-- Whether the program of the coins `r` accepts after the history `h`: the replay is live, has
+consumed the whole history and has output `[true]`. -/
+def accepts (x r : List Bool) (h : History) : Bool :=
+  (aliveRun M x r h).2.2 && (aliveRun M x r h).2.1.isEmpty &&
+    decide ((aliveRun M x r h).1.tapes.output = [true])
+
+/-- The live replay follows the replay while it succeeds, and dies when it fails. -/
+private theorem foldl_aliveStep (t : ℕ) (l : List Bool)
+    (acc : Except (Option (List Bool)) (MultiTapeMachine.FiniteConfig k Bool Control Unit × History))
+    (s : AliveState k Control)
+    (hs : (∀ p, acc = .ok p → s = (p.1, p.2, true)) ∧ (∀ e, acc = .error e → s.2.2 = false)) :
+    (∀ p, l.foldl (fun acc b => acc.bind fun p => replayStep M t p b) acc = .ok p →
+        l.foldl (aliveStep M t) s = (p.1, p.2, true)) ∧
+      (∀ e, l.foldl (fun acc b => acc.bind fun p => replayStep M t p b) acc = .error e →
+        (l.foldl (aliveStep M t) s).2.2 = false) := by
+  induction l generalizing acc s with
+  | nil => exact hs
+  | cons b l ih =>
+    refine ih _ _ ⟨fun p hp => ?_, fun e he => ?_⟩
+    · rcases acc with e | q
+      · cases hp
+      · rw [hs.1 q rfl]
+        change replayStep M t q b = .ok p at hp
+        simp only [aliveStep, ite_true, hp]
+    · rcases acc with e' | q
+      · have := hs.2 e' rfl
+        simp [aliveStep, this]
+      · rw [hs.1 q rfl]
+        change replayStep M t q b = .error e at he
+        simp only [aliveStep, ite_true, he]
+
+/-- **The live replay decides acceptance**: `accepts` holds exactly when the program of the coins
+accepts after the history. -/
+theorem accepts_eq_true_iff (x r : List Bool) (h : History) :
+    accepts M x r h = true ↔ outcome (coinProgram M r.length x r) h = .done true := by
+  have hrun := foldl_aliveStep M r.length r (.ok (MultiTapeMachine.FiniteConfig.init M.initial x, h))
+    (MultiTapeMachine.FiniteConfig.init M.initial x, h, true)
+    ⟨fun p hp => by simp only [Except.ok.injEq] at hp; subst hp; rfl, fun e he => by cases he⟩
+  rw [outcome_coinProgram]
+  unfold accepts aliveRun
+  rcases hsim : simulate M r.length x r h with e | ⟨cfg, rest⟩
+  · have hdead := hrun.2 e hsim
+    simp only [hdead, Bool.false_and, Bool.false_eq_true, false_iff]
+    rcases e with _ | m <;> simp [Except.map, replayOutcome]
+  · rw [hrun.1 _ hsim]
+    cases rest <;> simp [Except.map, replayOutcome]
+
 end Interaction
 
 end Cslib.Complexity
