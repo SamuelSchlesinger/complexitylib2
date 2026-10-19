@@ -84,6 +84,7 @@ import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NPCompleteGraphs.TSP
 import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
+import ComplexityTests.NPWitness
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
