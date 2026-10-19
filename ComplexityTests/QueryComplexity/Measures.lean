@@ -127,7 +127,7 @@ example {ι : Type*} [Fintype ι] [DecidableEq ι] :
   have := Nat.two_pow_pos (Fintype.card ι)
   omega
 
-/-- Three of the four points of the square: one of them has both neighbours in the set. -/
+/-- Three of the four points of the square: one of them has both neighbors in the set. -/
 example : ∃ x ∈ ({![false, false], ![true, false], ![false, true]} : Finset (Fin 2 → Bool)),
     2 ≤ #{i | Function.update x i (!x i) ∈
       ({![false, false], ![true, false], ![false, true]} : Finset (Fin 2 → Bool))} := by

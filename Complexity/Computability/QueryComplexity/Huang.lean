@@ -16,9 +16,9 @@ public import Cslib.Computability.QueryComplexity.Measures
 
 Every Boolean function satisfies `deg(f) ≤ s(f)²` [Huang2019]. Gotsman and Linial reduced this to
 the induced subgraph theorem [GotsmanLinial1992]: if `f`, read as signs, has a nonzero Fourier
-coefficient on `S`, then `g = f ⊕ parity_S` is unbalanced, so one of its fibres `V` contains more
+coefficient on `S`, then `g = f ⊕ parity_S` is unbalanced, so one of its fibers `V` contains more
 than half of the cube. By Huang's induced subgraph theorem
-(`BitString.exists_mem_sqrt_card_le_card_update_mem`) some `x ∈ V` has at least `√|S|` neighbours
+(`BitString.exists_mem_sqrt_card_le_card_update_mem`) some `x ∈ V` has at least `√|S|` neighbors
 in `V` in the directions of `S`. Flipping a bit of `S` flips `parity_S`, so along these directions
 `g` is constant and `f` changes: `f` has at least `√|S|` sensitive coordinates at `x`
 (`BitString.sqrt_card_le_sensitivity_of_fourierCoeff_ne_zero`). A coefficient on a set of `deg(f)`
@@ -68,7 +68,7 @@ theorem sqrt_card_le_sensitivity_of_fourierCoeff_ne_zero {f : BooleanFunction n}
   have hcard := card_filter_add_card_filter_not (s := univ) fun x : BitString n =>
     g x = true
   rw [card_univ, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin] at hcard
-  -- one of the fibres of `g` has more than half of the points
+  -- one of the fibers of `g` has more than half of the points
   obtain ⟨c, hc⟩ : ∃ c : Bool, 2 ^ n < 2 * #{x | g x = c} := by
     rcases lt_or_gt_of_ne hne with hlt | hlt
     · refine ⟨false, ?_⟩
@@ -78,7 +78,7 @@ theorem sqrt_card_le_sensitivity_of_fourierCoeff_ne_zero {f : BooleanFunction n}
   obtain ⟨x, hx, hS⟩ := exists_mem_sqrt_card_le_card_update_mem
     (by rwa [Fintype.card_fin]) S
   refine hS.trans ?_
-  -- along the directions of `S` inside the fibre, `g` is constant and `f` flips
+  -- along the directions of `S` inside the fiber, `g` is constant and `f` flips
   refine Nat.cast_le.2 (card_le_sensitivity_of_forall_isSensitiveCoord (x := x) fun i hi => ?_)
   obtain ⟨hiS, hiV⟩ := mem_filter.1 hi
   have hgx : g x = c := (mem_filter.1 hx).2

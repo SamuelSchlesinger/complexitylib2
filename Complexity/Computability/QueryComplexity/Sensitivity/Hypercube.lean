@@ -17,8 +17,8 @@ import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 # Huang's induced subgraph theorem
 
 Every set `V` of more than half of the points of the cube `ι → Bool` contains a point with at least
-`√|ι|` neighbours in `V` [Huang2019]. More generally, for any set `S` of coordinates, some point of
-`V` has at least `√|S|` neighbours in `V` in the directions of `S`
+`√|ι|` neighbors in `V` [Huang2019]. More generally, for any set `S` of coordinates, some point of
+`V` has at least `√|S|` neighbors in `V` in the directions of `S`
 (`BitString.exists_mem_sqrt_card_le_card_update_mem`).
 
 The proof is Huang's, with the eigenvalue count done by comparing dimensions, so no interlacing is
@@ -30,7 +30,7 @@ because the two paths around every square of the cube carry opposite signs. So i
 least half the number of points. A function in that eigenspace vanishing outside `V` exists by
 counting dimensions; at a point where it is largest in absolute value, the eigenvalue equation
 compares `√|S|` times the largest value with a sum of at most as many values as there are
-neighbours in `V`.
+neighbors in `V`.
 
 ## Main definitions
 
@@ -75,7 +75,7 @@ section LinearOrder
 variable [LinearOrder ι]
 
 /-- The signed adjacency operator of the cube along the coordinates of `S`: the value at `x` sums
-the values at the neighbours of `x` in the directions `i ∈ S`, the edge in direction `i` signed by
+the values at the neighbors of `x` in the directions `i ∈ S`, the edge in direction `i` signed by
 the character of the coordinates of `S` below `i`. -/
 noncomputable def signedAdjacency (S : Finset ι) : Module.End ℝ ((ι → Bool) → ℝ) where
   toFun v x := ∑ i ∈ S, chi ℝ {j ∈ S | j < i} x * v (update x i (!x i))
@@ -243,7 +243,7 @@ private theorem exists_mem_sqrt_card_le_card_update_mem_of_linearOrder {V : Fins
 end LinearOrder
 
 /-- **Huang's induced subgraph theorem**: if `V` contains more than half of the points of the cube,
-then for every set `S` of coordinates some point of `V` has at least `√|S|` neighbours in `V` in
+then for every set `S` of coordinates some point of `V` has at least `√|S|` neighbors in `V` in
 the directions of `S`. For `S = univ`, the subgraph of the cube induced by `V` has maximum degree
 at least `√|ι|` [Huang2019]. -/
 theorem exists_mem_sqrt_card_le_card_update_mem [Fintype ι] [DecidableEq ι]
