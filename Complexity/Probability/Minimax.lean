@@ -8,9 +8,12 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.PMF
-public import Mathlib.Analysis.Convex.StdSimplex
 public import Mathlib.Basic.Real.Basic
-import Complexity.Computability.QueryComplexity.Yao
+public import Mathlib.Geometry.Convex.ConvexSpace.Defs
+import Mathlib.Analysis.Convex.Basic
+import Mathlib.Geometry.Convex.ConvexSpace.CompactSpaceStdSimplex
+import Mathlib.Topology.Algebra.Module.Basic
+import Mathlib.Topology.Sion
 
 /-!
 # Averaging and the minimax principle for finite distributions
@@ -18,23 +21,26 @@ import Complexity.Computability.QueryComplexity.Yao
 Think of a two-player game in which one player picks a strategy `a` and the other an input `b`,
 with loss `loss a b`; for an algorithm, `loss a b` may be whether `a` errs on `b`. Drawing the
 strategy from a distribution `μ` and the input from a distribution `ν` relates the two classical
-guarantees of randomized algorithms [Yao1977].
+guarantees of randomized algorithms [Yao1977]. Distributions appear in two forms: finitely
+supported ones as points of the standard simplex (`Convexity.StdSimplex`), and probability mass
+functions (`PMF`), whose supports may be infinite. On a finite type the two correspond
+(`Probability.PMF.ofStdSimplex`, `Probability.PMF.toStdSimplex`).
 
 * *The averaging argument*: some outcome of a distribution is at most the mean
-  (`exists_mem_support_le_tsum_mul`). So if a strategy drawn from `μ` has expected loss at most
-  `ε` on every input, then for every `ν` some single strategy has expected loss at most `ε` on
-  inputs drawn from `ν` (`exists_mem_support_tsum_mul_le`; for the probability of failing,
-  `exists_mem_support_toOuterMeasure_le`). This is the easy direction of Yao's principle; the
-  sample spaces may be infinite.
+  (`Convexity.StdSimplex.exists_mem_support_le_sum_mul`,
+  `Probability.PMF.exists_mem_support_le_tsum_mul`). So if a strategy drawn from `μ` has expected
+  loss at most `ε` on every input, then for every `ν` some single strategy has expected loss at
+  most `ε` on inputs drawn from `ν` (`Probability.PMF.exists_mem_support_tsum_mul_le`; for the
+  probability of failing, `Probability.PMF.exists_mem_support_toOuterMeasure_le`). This is the easy
+  direction of Yao's principle.
 * *The minimax theorem* [vonNeumann1928]: for finitely many strategies and inputs, the converse
   holds. If against every distribution `ν` on the inputs some strategy has expected loss at most
   `ε`, then some distribution `μ` on the strategies has expected loss at most `ε` on every input
-  (`exists_forall_sum_mul_le`). This is the minimax theorem on the standard simplex
-  (`Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`, from Sion's theorem
-  [Sion1958]), read through the correspondence between distributions on a finite type and points
-  of the standard simplex (`ofStdSimplex`, `toStdSimplex`). For the probability of failing, only
-  the inputs need to be finite: strategies failing on the same inputs are interchangeable, so `μ`
-  can be taken with finite support (`exists_forall_toOuterMeasure_le`). This is the hard
+  (`Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`, from Sion's minimax
+  theorem `Sion.exists_isSaddlePointOn` [Sion1958]; `Probability.PMF.exists_forall_sum_mul_le` for
+  distributions as probability mass functions). For the probability of failing, only the inputs
+  need to be finite: strategies failing on the same inputs are interchangeable, so `μ` can be taken
+  with finite support (`Probability.PMF.exists_forall_toOuterMeasure_le`). This is the hard
   direction of Yao's principle.
 
 ## Main definitions
@@ -44,10 +50,12 @@ guarantees of randomized algorithms [Yao1977].
 
 ## Main results
 
-* `Cslib.Probability.PMF.exists_mem_support_le_tsum_mul`: some outcome is at most the mean.
+* `Convexity.StdSimplex.exists_mem_support_le_sum_mul`,
+  `Cslib.Probability.PMF.exists_mem_support_le_tsum_mul`: some outcome is at most the mean.
 * `Cslib.Probability.PMF.exists_mem_support_tsum_mul_le`,
   `Cslib.Probability.PMF.exists_mem_support_toOuterMeasure_le`: the averaging argument.
-* `Cslib.Probability.PMF.exists_forall_sum_mul_le`: the minimax theorem for finite games.
+* `Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`,
+  `Cslib.Probability.PMF.exists_forall_sum_mul_le`: the minimax theorem for finite games.
 * `Cslib.Probability.PMF.exists_forall_toOuterMeasure_le`: the minimax theorem for failure
   probabilities on finitely many inputs.
 
@@ -60,10 +68,114 @@ guarantees of randomized algorithms [Yao1977].
 
 @[expose] public section
 
+namespace Convexity.StdSimplex
+
+/-! ### Finitely supported distributions -/
+
+section Averaging
+
+variable {α : Type*} {μ : StdSimplex ℝ α} {g : α → ℝ} {c : ℝ}
+
+/-- An average under a finitely supported distribution is at most any bound on the support. -/
+theorem sum_mul_le_of_forall_le (h : ∀ a ∈ μ.weights.support, g a ≤ c) :
+    (μ.weights.sum fun a w => w * g a) ≤ c :=
+  calc (μ.weights.sum fun a w => w * g a) ≤ μ.weights.sum fun _ w => w * c :=
+        Finset.sum_le_sum fun a ha => mul_le_mul_of_nonneg_left (h a ha) (μ.weights_nonneg a)
+    _ = c := by rw [← Finsupp.sum_mul, μ.total, one_mul]
+
+/-- **The averaging argument**: some point of the support of a finitely supported distribution is
+at most the average. -/
+theorem exists_mem_support_le_sum_mul (μ : StdSimplex ℝ α) (g : α → ℝ) :
+    ∃ a ∈ μ.weights.support, g a ≤ μ.weights.sum fun a w => w * g a := by
+  by_contra! h
+  have hlt : (μ.weights.sum fun a w => w * (μ.weights.sum fun a w => w * g a)) <
+      μ.weights.sum fun a w => w * g a :=
+    Finset.sum_lt_sum_of_nonempty μ.support_weights_nonempty fun a ha =>
+      mul_lt_mul_of_pos_left (h a ha)
+        ((μ.weights_nonneg a).lt_of_ne' (Finsupp.mem_support_iff.mp ha))
+  rw [← Finsupp.sum_mul, μ.total, one_mul] at hlt
+  exact lt_irrefl _ hlt
+
+end Averaging
+
+/-! ### The minimax theorem for finite games -/
+
+/-- `x ↦ ∑ i, x i * a i` is linear. -/
+private theorem isLinearMap_sum_mul {I : Type*} [Fintype I] (a : I → ℝ) :
+    IsLinearMap ℝ fun x : I → ℝ => ∑ i, x i * a i :=
+  ⟨fun x y => by simp [add_mul, Finset.sum_add_distrib],
+    fun c x => by simp [Finset.mul_sum, mul_assoc]⟩
+
+/-- The weight vectors of the distributions on a finite type form a convex set. -/
+private theorem convex_range_weights (I : Type*) [Finite I] :
+    Convex ℝ (Set.range fun p : StdSimplex ℝ I => (p.weights : I → ℝ)) := by
+  have := Fintype.ofFinite I
+  rw [range_toFun_comp_weights]
+  refine Convex.inter (convex_iInter fun i => ?_) ?_
+  · exact convex_halfSpace_ge ⟨fun x y => rfl, fun c x => rfl⟩ 0
+  · simpa using convex_hyperplane (isLinearMap_sum_mul fun _ => (1 : ℝ)) 1
+
+/-- The weight vectors of the distributions on a finite type form a compact set. -/
+private theorem isCompact_range_weights (I : Type*) [Finite I] :
+    IsCompact (Set.range fun p : StdSimplex ℝ I => (p.weights : I → ℝ)) :=
+  isCompact_range (isEmbedding_toFun_comp_weights ℝ I).continuous
+
+/-- **The minimax theorem for finite two-player zero-sum games** [Sion1958], in the form used by
+Yao's principle. A row player picks `i : I`, a column player picks `j : J`, and the row player pays
+`M i j`. If against every mixed strategy `q` of the column player some row `i` has expected payment
+at most `c`, then some mixed strategy `p` of the row player has expected payment at most `c` against
+every column `j`. -/
+theorem exists_forall_sum_le_of_forall_exists_sum_le {I J : Type*} [Fintype I] [Fintype J]
+    [Nonempty I] (M : I → J → ℝ) {c : ℝ}
+    (h : ∀ q : StdSimplex ℝ J, ∃ i, ∑ j, q.weights j * M i j ≤ c) :
+    ∃ p : StdSimplex ℝ I, ∀ j, ∑ i, p.weights i * M i j ≤ c := by
+  classical
+  rcases isEmpty_or_nonempty J with hJ | hJ
+  · exact ⟨.single (Classical.arbitrary I), fun j => isEmptyElim j⟩
+  -- the expected payment, a bilinear function on pairs of weight vectors
+  set φ : (I → ℝ) → (J → ℝ) → ℝ := fun x y => ∑ i, ∑ j, x i * y j * M i j
+  have hφx (y : J → ℝ) : (fun x => φ x y) = fun x => ∑ i, x i * ∑ j, y j * M i j := by
+    funext x
+    simp only [φ, Finset.mul_sum, mul_assoc]
+  have hφy (x : I → ℝ) : (fun y => φ x y) = fun y => ∑ j, y j * ∑ i, x i * M i j := by
+    funext y
+    simp only [φ, Finset.mul_sum]
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun i _ => by ring
+  have hcont : Continuous fun p : (I → ℝ) × (J → ℝ) => φ p.1 p.2 := by
+    simp only [φ]
+    fun_prop
+  -- a saddle point of `φ` on the two simplices
+  obtain ⟨a, ⟨p, rfl⟩, b, ⟨q, rfl⟩, hab⟩ := Sion.exists_isSaddlePointOn (f := φ)
+    (Set.range_nonempty _) (convex_range_weights I) (isCompact_range_weights I)
+    (fun y _ =>
+      (hcont.comp (Continuous.prodMk_left y)).lowerSemicontinuous.lowerSemicontinuousOn _)
+    (fun y _ r => by
+      rw [hφx]
+      exact (convex_range_weights I).inter (convex_halfSpace_le (isLinearMap_sum_mul _) r))
+    (convex_range_weights J) (Set.range_nonempty _) (isCompact_range_weights J)
+    (fun x _ =>
+      (hcont.comp (Continuous.prodMk_right x)).upperSemicontinuous.upperSemicontinuousOn _)
+    (fun x _ r => by
+      rw [hφy]
+      exact (convex_range_weights J).inter (convex_halfSpace_ge (isLinearMap_sum_mul _) r))
+  -- against the column strategy `q` some row `i` pays at most `c`, and `p` does no worse
+  obtain ⟨i, hi⟩ := h q
+  refine ⟨p, fun j => ?_⟩
+  have h₁ := hab _ ⟨.single i, rfl⟩ _ ⟨.single j, rfl⟩
+  simp only [φ, weights_single, Finsupp.single_apply] at h₁
+  simp only [mul_ite, ite_mul, mul_one, one_mul, mul_zero, zero_mul, Finset.sum_ite_eq,
+    Finset.mem_univ, ite_true, Finset.sum_ite_irrel, Finset.sum_const_zero] at h₁
+  exact h₁.trans hi
+
+end Convexity.StdSimplex
+
 namespace Cslib.Probability.PMF
 
 open scoped ENNReal
 open Convexity Finset
+
+/-! ### Probability mass functions -/
 
 variable {α β : Type*}
 
@@ -136,7 +248,7 @@ theorem exists_mem_support_toOuterMeasure_le (μ : PMF α) (ν : PMF β) (E : α
   rw [toOuterMeasure_eq_tsum_mul_ite]
   simpa only [Set.mem_ofPred_eq] using hle
 
-/-! ### The minimax theorem for finite games -/
+/-! ### The minimax theorem for probability mass functions -/
 
 section Minimax
 

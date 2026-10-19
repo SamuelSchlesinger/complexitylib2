@@ -8,11 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.Randomized
-import Mathlib.Analysis.Convex.Basic
+public import Complexity.Probability.Minimax
 import Mathlib.Data.Fintype.Powerset
-import Mathlib.Geometry.Convex.ConvexSpace.CompactSpaceStdSimplex
-import Mathlib.Topology.Algebra.Module.Basic
-import Mathlib.Topology.Sion
 
 /-!
 # Yao's minimax principle for decision trees
@@ -31,8 +28,9 @@ lower bounds: a distribution on which every shallow tree errs often bounds `R_ε
 (`QueryComplexity.distributionalComplexity_le_randomizedComplexity`).
 
 The other inequality is the minimax theorem for a finite two-player zero-sum game
-(`Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`), which we derive from Sion's
-minimax theorem in Mathlib [Sion1958]. The algorithm player picks the set of inputs on which a tree
+(`Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`, in
+`Complexity.Probability.Minimax`), which follows from Sion's minimax theorem in Mathlib
+[Sion1958]. The algorithm player picks the set of inputs on which a tree
 of depth at most `d` errs, of which there are finitely many, the input player picks an input, and
 the payoff is `1` when the tree errs. If every distribution on the inputs has a tree of depth at
 most `d` erring with probability at most `ε`, the minimax theorem gives a distribution over such
@@ -45,8 +43,6 @@ trees erring with probability at most `ε` on every input
 
 ## Main results
 
-* `Convexity.StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le`: the minimax theorem for
-  finite two-player zero-sum games.
 * `Cslib.QueryComplexity.distributionalComplexity_le_randomizedComplexity`: `D^ν_ε(f) ≤ R_ε(f)`.
 * `Cslib.QueryComplexity.exists_computes_of_forall_exists_distributionalError_le`: the converse
   for a fixed depth.
@@ -62,78 +58,6 @@ trees erring with probability at most `ε` on every input
 -/
 
 @[expose] public section
-
-namespace Convexity.StdSimplex
-
-/-- `x ↦ ∑ i, x i * a i` is linear. -/
-private theorem isLinearMap_sum_mul {I : Type*} [Fintype I] (a : I → ℝ) :
-    IsLinearMap ℝ fun x : I → ℝ => ∑ i, x i * a i :=
-  ⟨fun x y => by simp [add_mul, Finset.sum_add_distrib],
-    fun c x => by simp [Finset.mul_sum, mul_assoc]⟩
-
-/-- The weight vectors of the distributions on a finite type form a convex set. -/
-private theorem convex_range_weights (I : Type*) [Finite I] :
-    Convex ℝ (Set.range fun p : StdSimplex ℝ I => (p.weights : I → ℝ)) := by
-  have := Fintype.ofFinite I
-  rw [range_toFun_comp_weights]
-  refine Convex.inter (convex_iInter fun i => ?_) ?_
-  · exact convex_halfSpace_ge ⟨fun x y => rfl, fun c x => rfl⟩ 0
-  · simpa using convex_hyperplane (isLinearMap_sum_mul fun _ => (1 : ℝ)) 1
-
-/-- The weight vectors of the distributions on a finite type form a compact set. -/
-private theorem isCompact_range_weights (I : Type*) [Finite I] :
-    IsCompact (Set.range fun p : StdSimplex ℝ I => (p.weights : I → ℝ)) :=
-  isCompact_range (isEmbedding_toFun_comp_weights ℝ I).continuous
-
-/-- **The minimax theorem for finite two-player zero-sum games** [Sion1958], in the form used by
-Yao's principle. A row player picks `i : I`, a column player picks `j : J`, and the row player pays
-`M i j`. If against every mixed strategy `q` of the column player some row `i` has expected payment
-at most `c`, then some mixed strategy `p` of the row player has expected payment at most `c` against
-every column `j`. -/
-theorem exists_forall_sum_le_of_forall_exists_sum_le {I J : Type*} [Fintype I] [Fintype J]
-    [Nonempty I] (M : I → J → ℝ) {c : ℝ}
-    (h : ∀ q : StdSimplex ℝ J, ∃ i, ∑ j, q.weights j * M i j ≤ c) :
-    ∃ p : StdSimplex ℝ I, ∀ j, ∑ i, p.weights i * M i j ≤ c := by
-  classical
-  rcases isEmpty_or_nonempty J with hJ | hJ
-  · exact ⟨.single (Classical.arbitrary I), fun j => isEmptyElim j⟩
-  -- the expected payment, a bilinear function on pairs of weight vectors
-  set φ : (I → ℝ) → (J → ℝ) → ℝ := fun x y => ∑ i, ∑ j, x i * y j * M i j
-  have hφx (y : J → ℝ) : (fun x => φ x y) = fun x => ∑ i, x i * ∑ j, y j * M i j := by
-    funext x
-    simp only [φ, Finset.mul_sum, mul_assoc]
-  have hφy (x : I → ℝ) : (fun y => φ x y) = fun y => ∑ j, y j * ∑ i, x i * M i j := by
-    funext y
-    simp only [φ, Finset.mul_sum]
-    rw [Finset.sum_comm]
-    exact Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun i _ => by ring
-  have hcont : Continuous fun p : (I → ℝ) × (J → ℝ) => φ p.1 p.2 := by
-    simp only [φ]
-    fun_prop
-  -- a saddle point of `φ` on the two simplices
-  obtain ⟨a, ⟨p, rfl⟩, b, ⟨q, rfl⟩, hab⟩ := Sion.exists_isSaddlePointOn (f := φ)
-    (Set.range_nonempty _) (convex_range_weights I) (isCompact_range_weights I)
-    (fun y _ =>
-      (hcont.comp (Continuous.prodMk_left y)).lowerSemicontinuous.lowerSemicontinuousOn _)
-    (fun y _ r => by
-      rw [hφx]
-      exact (convex_range_weights I).inter (convex_halfSpace_le (isLinearMap_sum_mul _) r))
-    (convex_range_weights J) (Set.range_nonempty _) (isCompact_range_weights J)
-    (fun x _ =>
-      (hcont.comp (Continuous.prodMk_right x)).upperSemicontinuous.upperSemicontinuousOn _)
-    (fun x _ r => by
-      rw [hφy]
-      exact (convex_range_weights J).inter (convex_halfSpace_ge (isLinearMap_sum_mul _) r))
-  -- against the column strategy `q` some row `i` pays at most `c`, and `p` does no worse
-  obtain ⟨i, hi⟩ := h q
-  refine ⟨p, fun j => ?_⟩
-  have h₁ := hab _ ⟨.single i, rfl⟩ _ ⟨.single j, rfl⟩
-  simp only [φ, weights_single, Finsupp.single_apply] at h₁
-  simp only [mul_ite, ite_mul, mul_one, one_mul, mul_zero, zero_mul, Finset.sum_ite_eq,
-    Finset.mem_univ, ite_true, Finset.sum_ite_irrel, Finset.sum_const_zero] at h₁
-  exact h₁.trans hi
-
-end Convexity.StdSimplex
 
 namespace Cslib
 
