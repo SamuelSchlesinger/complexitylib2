@@ -30,7 +30,7 @@ damps the coefficient on `S` by `ρ ^ |S|`, so `D_ρ(f, g) = 1 / 4 ∑_S ρ ^ (2
 (`BitString.noiseDist_mono`), so on `|ρ| ≤ 1` noise contracts the relative Hamming distance
 (`BitString.noiseDist_le_hammingDist_div`). High-degree disagreements are damped most: two
 distinct parities on sets of size `k` are at relative Hamming distance `1 / 2`, but at noise
-distance `ρ ^ (2 k) / 2`.
+distance `ρ ^ (2 k) / 2` (`BitString.noiseDist_parityOn`).
 
 The damped coefficients `ρ ^ |S| F̂(S) / 2` are a point of the Euclidean space indexed by the sets
 of coordinates (`BitString.noiseEmbedding`), and `√D_ρ` is the Euclidean distance between the
@@ -56,6 +56,7 @@ but the algebraic statements hold for every real `ρ`.
   formula for the noise distance.
 * `Cslib.BitString.noiseDist_one`, `Cslib.BitString.noiseDist_mono`,
   `Cslib.BitString.noiseDist_le_hammingDist_div`: noise contracts the relative Hamming distance.
+* `Cslib.BitString.noiseDist_parityOn`: the noise distance between two distinct parities.
 * `Cslib.BitString.dist_noiseEmbedding`, `Cslib.BitString.sqrt_noiseDist_triangle`,
   `Cslib.BitString.noiseDist_eq_zero_iff`: `√D_ρ` is a Euclidean metric.
 
@@ -166,6 +167,19 @@ theorem noiseDist_le_hammingDist_div {ρ : ℝ} (h : |ρ| ≤ 1) (f g : (ι → 
     noiseDist ρ f g ≤ hammingDist f g / 2 ^ Fintype.card ι := by
   rw [← noiseDist_one]
   exact noiseDist_mono (h.trans_eq abs_one.symm) f g
+
+/-- **Two distinct parities** on sets `S` and `T` are at noise distance
+`(ρ ^ (2 |S|) + ρ ^ (2 |T|)) / 4`: all their Fourier weight sits on `S` and `T`. -/
+theorem noiseDist_parityOn (ρ : ℝ) {S T : Finset ι} (h : S ≠ T) :
+    noiseDist ρ (parityOn S) (parityOn T) = (ρ ^ (2 * #S) + ρ ^ (2 * #T)) / 4 := by
+  have hterm (U : Finset ι) : ρ ^ (2 * #U) *
+      ((if U = S then (1 : ℝ) else 0) - if U = T then 1 else 0) ^ 2 =
+      (if U = S then ρ ^ (2 * #S) else 0) + if U = T then ρ ^ (2 * #T) else 0 := by
+    by_cases hS : U = S <;> by_cases hT : U = T <;> simp_all
+  rw [noiseDist_eq_sum]
+  simp only [fourierCoeff_signVal_parityOn, hterm, sum_add_distrib, sum_ite_eq', mem_univ,
+    ite_true]
+  ring
 
 /-! ### The Euclidean embedding -/
 

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Circuit.Continuity
+import Complexity.Computability.Circuit.Boolean.Continuity
 import Complexity.Computability.Circuit.Complexity
 
 /-! The modulus of continuity of De Morgan circuit complexity: a single changed input moves the
@@ -21,6 +21,11 @@ open Cslib Cslib.Circuits Cslib.Circuits.Boolean
 theorem hammingDist_proj_false :
     hammingDist (single fun x : BitString 1 => x 0) (single fun _ => false) = 1 := by
   decide
+
+/-- The same distance through the single values. -/
+example : hammingDist (single fun x : BitString 1 => x 0) (single fun _ => false) =
+    hammingDist (fun x : BitString 1 => x 0) fun _ => false := by
+  rw [hammingDist_single]
 
 /-- **A single changed input moves the complexity**: the projection costs nothing and the
 constant `false`, which is not a projection, costs a gate, so `ω_{1,1}(1) ≥ 1`. -/
@@ -52,12 +57,12 @@ example : ∃ f g : BitString 2 → Fin 1 → Bool, hammingDist f g ≤ 1 ∧
 /-- The single-output upper bound at `ε = 1`. -/
 example : ∃ p₀ : ℕ, ∀ p ≥ p₀,
     (complexityModulus interpretation (2 * p) 1 (2 ^ p) : ℝ) ≤ (1 + 1) * 2 ^ p :=
-  complexityModulus_one_le 1 one_pos
+  complexityModulus_two_pow_single_output_le 1 one_pos
 
 /-- The multi-output upper bound at `ε = 1`. -/
 example : ∃ p₀ : ℕ, ∀ p ≥ p₀, ∀ m ≤ 2 * p,
     (complexityModulus interpretation (2 * p) m (2 ^ p) : ℝ) ≤ (3 + 1) * 2 ^ p :=
-  complexityModulus_le 1 one_pos
+  complexityModulus_two_pow_le 1 one_pos
 
 /-- **The lower bound at `p = 4`**: some change on `16` of the `256` inputs on eight bits moves
 the complexity, so `ω_{8,1}(16) ≥ 1`. -/
@@ -89,18 +94,18 @@ info: 'Cslib.Circuits.exists_dist_complexity_eq_complexityModulus' depends on ax
 #print axioms exists_dist_complexity_eq_complexityModulus
 
 /--
-info: 'Cslib.Circuits.Boolean.complexityModulus_one_le' depends on axioms:
+info: 'Cslib.Circuits.Boolean.complexityModulus_two_pow_single_output_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms complexityModulus_one_le
+#print axioms complexityModulus_two_pow_single_output_le
 
 /--
-info: 'Cslib.Circuits.Boolean.complexityModulus_le' depends on axioms:
+info: 'Cslib.Circuits.Boolean.complexityModulus_two_pow_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms complexityModulus_le
+#print axioms complexityModulus_two_pow_le
 
 /--
 info: 'Cslib.Circuits.Boolean.two_pow_le_sixteen_mul_complexityModulus' depends on axioms:
@@ -108,5 +113,12 @@ info: 'Cslib.Circuits.Boolean.two_pow_le_sixteen_mul_complexityModulus' depends 
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms two_pow_le_sixteen_mul_complexityModulus
+
+/--
+info: 'exists_hammingDist_le_and_hammingDist_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_hammingDist_le_and_hammingDist_le
 
 end ComplexityTests.CircuitHamming.Continuity

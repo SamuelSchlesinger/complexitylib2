@@ -33,6 +33,7 @@ public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.Broadcast
 public import Complexity.Computability.Circuit.Boolean.CompareSwap
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
+public import Complexity.Computability.Circuit.Boolean.Continuity
 public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.DuplicateFlags

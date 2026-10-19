@@ -17,20 +17,6 @@ open Cslib Cslib.BitString Finset
 
 /-! ### Parities -/
 
-/-- **Two distinct parities** on sets `S` and `T` are at noise distance
-`(ρ ^ (2 |S|) + ρ ^ (2 |T|)) / 4`: all their weight sits on `S` and `T`. -/
-theorem noiseDist_parityOn {ι : Type*} [Fintype ι] [DecidableEq ι] (ρ : ℝ) {S T : Finset ι}
-    (h : S ≠ T) :
-    noiseDist ρ (parityOn S) (parityOn T) = (ρ ^ (2 * #S) + ρ ^ (2 * #T)) / 4 := by
-  have hterm (U : Finset ι) : ρ ^ (2 * #U) *
-      ((if U = S then (1 : ℝ) else 0) - if U = T then 1 else 0) ^ 2 =
-      (if U = S then ρ ^ (2 * #S) else 0) + if U = T then ρ ^ (2 * #T) else 0 := by
-    by_cases hS : U = S <;> by_cases hT : U = T <;> simp_all
-  rw [noiseDist_eq_sum]
-  simp only [fourierCoeff_signVal_parityOn, hterm, sum_add_distrib, sum_ite_eq', mem_univ,
-    ite_true]
-  ring
-
 /-- Without noise, two distinct parities are at relative Hamming distance one half. -/
 example : noiseDist 1 (parityOn ({0} : Finset (Fin 3))) (parityOn {1, 2}) = 1 / 2 := by
   rw [noiseDist_parityOn 1 (by decide)]
@@ -142,5 +128,12 @@ info: 'Cslib.BitString.noiseDist_eq_zero_iff' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms noiseDist_eq_zero_iff
+
+/--
+info: 'Cslib.BitString.noiseDist_parityOn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms noiseDist_parityOn
 
 end ComplexityTests.CircuitHamming.Parseval

@@ -46,6 +46,8 @@ technique, and the known limitations of the method of approximations apply to it
 * `Cslib.Circuits.Approximation.Scheme.hammingDist_le_cost`,
   `Cslib.Circuits.Approximation.Scheme.hammingDist_le_sum_errorCost`: the decoded output is within
   the total local error of the target.
+* `Cslib.Circuits.Approximation.Scheme.le_mul_size`: every circuit computing the target has
+  `ε ≤ δ s` for its number `s` of gates.
 * `Cslib.Circuits.Approximation.Scheme.le_mul_complexity`,
   `Cslib.Circuits.Approximation.Scheme.le_mul_complexity_of_le_hammingDist`: the lower-bound
   principle `ε ≤ δ C(f)`.
