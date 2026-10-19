@@ -1,5 +1,68 @@
 # Theorem-index review
 
+## Counting containment and closure, 19 October 2026
+
+Lean source revision: `c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108`.
+Prose revision: `5ad66c8052d9b7ebbd57e4b3e94d9bcb61c49216`.
+Bibliography revision: `7ff74d38`.
+Base: `7f62fb4da0b0cff19bb7478f1b4090bb35ee04cf`.
+
+Samuel requested all four follow-ons and authorized review followed by direct merge
+and push for this session, without a PR. OpenAI Codex implemented WPP containment
+in AWPP (and its LWPP corollary), fixed AWPP amplification to error at most one
+eighth and Boolean closure, arbitrary fixed positive SBP gap powers, and SBP
+intersection with a BPP language. The development reuses verifier counting algebra,
+polynomial-time arithmetic, dyadic padding and BPP amplification. It does not claim
+counting-machine equivalence or uniform input-dependent AWPP amplification.
+
+Independent read-only Codex reviews:
+
+- `proof_api` approved source `c7feb301`, including bibliography parent `7ff74d38`.
+  The reviewer suggested sharing repeated dyadic-witness construction through
+  `GapP.two_pow_mem`; the helper and all three client replacements were added,
+  MCP-checked and freshly reviewed. Existing AWPP theorem statements are unchanged,
+  so their index text and earlier declaration pins need no rewrite. A source-credit
+  wording question was resolved by checking Fenner's cubic amplification method.
+  All eight committed blobs match the final reviewed hashes; no remaining findings.
+- `proof_correctness` approved source `c7feb301`, including the bibliography,
+  after checking signed non-dyadic WPP targets, the quadratic normalization,
+  the three majority rounds and exponent factor 27, the strict SBP powers,
+  and both rejecting cases for intersection with BPP. The helper delta received
+  fresh review. All eight committed blobs match reviewed hashes; no findings.
+- `resume_alternation` reviewed the new index entry, revised limitation paragraph,
+  overview, README and roadmap against the final definitions and statements.
+  Quantifiers, encoded models, bounds, limitations and source credit match Lean;
+  all nine declaration anchors are checked. Approved prose `5ad66c80` against
+  Lean `c7feb301`; committed prose matches the reviewed text after replacing
+  provisional source pins. No findings.
+
+Sources: Fenner--Fortnow--Kurtz--Li, *An Oracle Builder's Toolkit*, Section 6.1
+for WPP containment; Fenner's AWPP amplification method; Watson Section 1.1 for
+SBP gap strengthening. The prose separates classical results from the particular
+normalization and fixed-round constructions implemented here.
+
+All six gates passed after the final helper refactor: strict build and test with
+`--wfail --iofail`, `mk_all --check`, `lint`, `lint-style`, and `checkInitImports`.
+Tests include negative exponentially growing non-dyadic targets, variable dyadic
+exponents, nonconstant Boolean clients, arbitrary fixed positive gap powers, and
+an original zero-threshold SBP witness. Nine new headline axiom guards pass.
+
+The rebuilt PDF has 31 pages, 74 numbered entries and 91 references. Every page
+was rendered and visually inspected. After replacing the final revision pins,
+only page 1 changed visually; it was reinspected, along with the new entry on
+page 12. All nine new PDF URI targets match the committed declaration lines.
+The final LaTeX log has no warnings or underfull/overfull boxes. Existing unrelated
+bibliography metadata warnings remain. AI review is not human editorial approval,
+a Lean proof of prose equivalence, or CSLib maintainer acceptance.
+
+Final artifact hashes:
+
+```
+dd5b496a1b6ba403f867b55e6fc46e8638e61dbe945cbd769045de968ce5184c  paper/main.tex
+a47302946108d4fe815784042949172548d2640fd0d8ae35be181e8f64c1ebce  paper/sections/randomness.tex
+490582479d3848c4df8fd45a17312da04f69fa520af98291fef2c7fbb5464940  paper/main.pdf
+```
+
 ## Approximate counting classes, 19 October 2026
 
 Lean source revision: `e903aba8b29ef85b94c453114f12d604768587a5`.
