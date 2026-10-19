@@ -142,7 +142,6 @@ theorem decodeStackTape_encList (cells : List (Option Bool)) :
   rw [decodeStackTape, cellsTransducer_run_encList, foldl_stackStep]
 
 /-- Decoding inverts the encoding of stack tapes. -/
-@[simp]
 theorem decodeStackTape_encStackTape (tape : StackTape Bool) :
     decodeStackTape (encStackTape encBool tape) = tape := by
   rw [encStackTape_apply, decodeStackTape_encList, StackTape.foldr_cons_toList]
@@ -174,7 +173,6 @@ def decodeBiTape (word : List Bool) : BiTape Bool :=
     decodeStackTape (dropFrame (dropFrame word))⟩
 
 /-- Decoding inverts the encoding of two-sided tapes. -/
-@[simp]
 theorem decodeBiTape_encBiTape (tape : BiTape Bool) :
     decodeBiTape (encBiTape encBool tape) = tape := by
   simp only [decodeBiTape, encBiTape_apply, encPair_apply, unframe_frame_append,
@@ -197,7 +195,6 @@ noncomputable def decodeTapes (k : ℕ) (word : List Bool) : Fin k → BiTape Bo
   fun tape => decodeBiTape (unframe (dropFrame^[(Fintype.equivFin (Fin k) tape).val] word))
 
 /-- Decoding inverts the encoding of families of tapes. -/
-@[simp]
 theorem decodeTapes_encPi {k : ℕ} (tapes : Fin k → BiTape Bool) :
     decodeTapes k (encPi (encBiTape encBool) tapes) = tapes := by
   funext tape
@@ -246,7 +243,6 @@ noncomputable def decodeFiniteCfg (word : List Bool) : FiniteCfg k Bool State wh
   output := dropFrame (dropFrame (dropFrame (dropFrame word)))
 
 /-- **Decoding inverts the encoding of finite configurations.** -/
-@[simp]
 theorem decodeFiniteCfg_encFiniteCfg (finite : FiniteCfg k Bool State) :
     decodeFiniteCfg (encFiniteCfg finite) = finite := by
   rcases finite with ⟨input, state, inputPos, workTapes, output⟩
