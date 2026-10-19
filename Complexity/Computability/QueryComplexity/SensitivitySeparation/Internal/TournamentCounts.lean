@@ -11,7 +11,7 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Tactic.Linarith
-import Mathlib.Tactic
+import Mathlib.Tactic.Tauto
 
 /-!
 # Superquadratic sensitivity separation: tournament counts

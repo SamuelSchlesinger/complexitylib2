@@ -11,7 +11,6 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 public import Mathlib.Algebra.Group.Fin.Basic
 public import Mathlib.Algebra.Group.Units.Equiv
 public import Mathlib.Order.Interval.Finset.Fin
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: tournament cyclic

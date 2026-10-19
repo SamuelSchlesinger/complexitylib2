@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.ProfileArithmetic
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.ScalarBounds
-import Mathlib.Tactic
+import Mathlib.Tactic.Positivity
 
 /-!
 # Superquadratic sensitivity separation: quantitative profiles

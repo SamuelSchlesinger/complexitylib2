@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveFailures
-import Mathlib.Tactic
+public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveFlips
 
 /-!
 # Superquadratic sensitivity separation: recursive repair

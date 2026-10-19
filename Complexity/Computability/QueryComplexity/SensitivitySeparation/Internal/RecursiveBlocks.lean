@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveDefinitions
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: recursive blocks

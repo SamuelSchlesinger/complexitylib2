@@ -10,10 +10,6 @@ module
 public import Complexity.Init
 public import Mathlib.Combinatorics.Digraph.Basic
 public import Mathlib.Data.Finset.Card
-public import Mathlib.Data.Finset.Prod
-public import Mathlib.Data.Finset.Powerset
-public import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: tournament

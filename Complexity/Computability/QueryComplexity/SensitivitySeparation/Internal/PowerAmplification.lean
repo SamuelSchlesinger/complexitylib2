@@ -9,7 +9,10 @@ module
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Iterates
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Mathlib.Tactic
+import Mathlib.Tactic.GCongr
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
 
 /-!
 # Superquadratic sensitivity separation: power amplification

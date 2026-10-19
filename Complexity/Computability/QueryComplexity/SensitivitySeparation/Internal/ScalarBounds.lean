@@ -8,10 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Algebra.Order.Floor.Ring
-import Mathlib.Tactic
+public import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
 
 /-!
 # Superquadratic sensitivity separation: scalar bounds

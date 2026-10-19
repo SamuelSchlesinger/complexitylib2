@@ -7,8 +7,7 @@ Authors: OpenAI, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveRepair
-import Mathlib.Tactic
+public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveFailures
 
 /-!
 # Superquadratic sensitivity separation: recursive candidates

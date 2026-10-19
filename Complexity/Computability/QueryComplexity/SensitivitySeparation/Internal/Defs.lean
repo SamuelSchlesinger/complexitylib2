@@ -8,10 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.Flip
-public import Mathlib.Data.Fintype.BigOperators
 public import Mathlib.Data.Fintype.Powerset
 public import Mathlib.Data.Finset.Lattice.Fold
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: model

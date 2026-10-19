@@ -8,8 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Tower
-public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveChildren
-import Mathlib.Tactic
+public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Recursive
 
 /-!
 # Superquadratic sensitivity separation: tower profiles

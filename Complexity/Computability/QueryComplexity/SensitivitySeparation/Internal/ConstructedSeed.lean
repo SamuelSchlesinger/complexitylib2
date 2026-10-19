@@ -11,7 +11,7 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Labeling
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.ParameterBounds
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Iterates
-import Mathlib.Tactic
+import Mathlib.Tactic.Positivity
 
 /-!
 # Superquadratic sensitivity separation: constructed seed

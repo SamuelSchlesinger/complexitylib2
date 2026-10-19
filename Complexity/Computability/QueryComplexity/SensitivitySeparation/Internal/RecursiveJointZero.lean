@@ -8,7 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveCandidates
-import Mathlib.Tactic
+public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveRepair
+public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveSets
 
 /-!
 # Superquadratic sensitivity separation: recursive joint zero

@@ -9,7 +9,6 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: fixed coordinates

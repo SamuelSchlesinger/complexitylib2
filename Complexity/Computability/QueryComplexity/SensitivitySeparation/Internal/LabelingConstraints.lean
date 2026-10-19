@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.TournamentCounts
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: labeling constraints

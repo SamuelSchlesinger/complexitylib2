@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.SeedAmplification
-import Mathlib.Tactic
+import Mathlib.Tactic.Positivity
 
 /-!
 # Superquadratic sensitivity separation: separation

@@ -12,7 +12,8 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.QuantitativeProfiles
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Or
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Reindex
-import Mathlib.Tactic
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Ring
 
 /-!
 # Superquadratic sensitivity separation: construction

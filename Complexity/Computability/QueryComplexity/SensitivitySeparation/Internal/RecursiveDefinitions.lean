@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveProfiles
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Tournament
-import Mathlib.Tactic
+public import Mathlib.Data.Fintype.Prod
 
 /-!
 # Superquadratic sensitivity separation: recursive definitions

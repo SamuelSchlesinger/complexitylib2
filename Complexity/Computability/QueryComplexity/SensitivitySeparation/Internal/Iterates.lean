@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Composition
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Reindex
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: iterates
@@ -174,7 +173,7 @@ theorem iterateFin_nonconstant (f : (I → Bool) → Bool)
     (h : 0 < blockSensitivityAt f (fun _ => false)) (m : ℕ) :
     ∃ x y, iterateFin f m x ≠ iterateFin f m y := by
   exact nonconstant_of_blockSensitivityAt_pos _ _
-    ((pow_pos h m).trans_le (blockSensitivityAt_iterateFin_zero f hf m))
+    ((Nat.pow_pos h).trans_le (blockSensitivityAt_iterateFin_zero f hf m))
 
 end Internal
 

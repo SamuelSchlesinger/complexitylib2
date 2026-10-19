@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.LabelingEvents
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.LabelingEstimate
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.TournamentCyclic
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: labeling

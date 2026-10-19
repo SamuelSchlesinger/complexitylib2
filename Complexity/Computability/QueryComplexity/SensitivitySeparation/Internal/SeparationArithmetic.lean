@@ -8,9 +8,16 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Basic
-public import Mathlib.Order.Filter.AtTopBot.Basic
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Tactic
+public import Mathlib.Order.Filter.AtTopBot.Defs
+import Mathlib.Analysis.SpecificLimits.Normed
+import Mathlib.Tactic.Convert
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.GCongr
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Ring
 
 /-!
 # Superquadratic sensitivity separation: separation arithmetic

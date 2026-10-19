@@ -10,8 +10,6 @@ module
 public import Complexity.Init
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Algebra.Order.Floor.Ring
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: labeling bounds

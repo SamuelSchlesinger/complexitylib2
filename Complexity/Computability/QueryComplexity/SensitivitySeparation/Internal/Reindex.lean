@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Basic
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: reindex

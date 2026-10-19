@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.LabelingConstraints
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.FixedCoordinates
 public import Mathlib.Data.Fintype.EquivFin
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: labeling events

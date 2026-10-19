@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveDefinitions
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Basic
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: recursive flips

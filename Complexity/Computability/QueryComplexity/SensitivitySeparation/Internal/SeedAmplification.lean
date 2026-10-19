@@ -10,7 +10,8 @@ module
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.ConstructedSeed
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.PowerAmplification
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.SeparationArithmetic
-import Mathlib.Tactic
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
 
 /-!
 # Superquadratic sensitivity separation: seed amplification

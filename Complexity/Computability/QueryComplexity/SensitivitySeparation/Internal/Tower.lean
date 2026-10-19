@@ -7,8 +7,9 @@ Authors: OpenAI, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Recursive
-import Mathlib.Tactic
+public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveBlocks
+import Mathlib.Tactic.Bound.Init
+import Mathlib.Tactic.Ring
 
 /-!
 # Superquadratic sensitivity separation: tower

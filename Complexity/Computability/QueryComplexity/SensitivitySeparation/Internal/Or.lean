@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Composition
-import Mathlib.Tactic
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!
 # Superquadratic sensitivity separation: or

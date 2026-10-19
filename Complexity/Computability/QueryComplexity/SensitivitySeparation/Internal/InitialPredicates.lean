@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.HammingBase
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveProfiles
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Basic
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: initial predicates

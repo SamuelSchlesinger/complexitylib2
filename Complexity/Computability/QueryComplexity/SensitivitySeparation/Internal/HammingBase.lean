@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Defs
 public import Mathlib.InformationTheory.Hamming
-import Mathlib.Tactic
 
 /-!
 # Superquadratic sensitivity separation: hamming base
