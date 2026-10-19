@@ -329,6 +329,15 @@ structure DeleteGateOK (S : State n) (J : ℕ) (ℓ : Lit) : Prop where
 @[simp] theorem deleteGate_phi (S : State n) (J : ℕ) (ℓ : Lit) :
     (S.deleteGate J ℓ).phi = S.phi := rfl
 
+@[simp] theorem deleteGate_gate (S : State n) (J : ℕ) (ℓ : Lit) (K : ℕ) :
+    (S.deleteGate J ℓ).gate K = (S.gate K).subst J ℓ := rfl
+
+@[simp] theorem deleteGate_eqn (S : State n) (J : ℕ) (ℓ : Lit) (e : ℕ) :
+    (S.deleteGate J ℓ).eqn e = (S.eqn e).subst J ℓ := rfl
+
+@[simp] theorem deleteGate_gates (S : State n) (J : ℕ) (ℓ : Lit) :
+    (S.deleteGate J ℓ).gates = S.gates.erase J := rfl
+
 theorem deleteGate_size {S : State n} {J : ℕ} {ℓ : Lit}
     (h : S.DeleteGateOK J ℓ) : (S.deleteGate J ℓ).size + 1 = S.size := by
   have := Finset.card_erase_add_one h.mem

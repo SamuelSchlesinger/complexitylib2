@@ -113,21 +113,10 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
     exact ⟨S', hstep.of_prep (by omega) ha₁ hW⟩
   push Not at hmov
   -- the preliminary reductions
-  by_cases hdel : S.DeletionAvailable
-  · exact hS.step_of_deletion hf ha hdel
-  by_cases h2 : S.AndOnIsolated
-  · exact hS.step_of_andOnIsolated h2
-  have hexcl := hS.exclusive hmov hdel h2
-  by_cases h3 : S.DegeneratePair
-  · exact hS.step_of_degeneratePair hexcl h3
-  by_cases h4 : S.PartnersShareChild
-  · exact hS.step_of_partnersShareChild hdel h3 h4
-  by_cases h5 : S.PairInSystem
-  · exact hS.step_of_pairInSystem hf ha hexcl h3 h4 h5
-  by_cases h6 : S.AndOnPair
-  · exact hS.step_of_andOnPair hexcl h2 h3 h4 h5 h6
+  rcases hS.step_or_normal hf ha hmov with hstep | hN
+  · exact hstep
   -- the minimal AND
-  obtain ⟨hne, hand, t₁, t₂, hl, hr, ht12, ht₁, ht₂⟩ := hS.clean_minGate hf ha hmov hdel
+  obtain ⟨hne, hand, t₁, t₂, hl, hr, ht12, ht₁, ht₂⟩ := hS.clean_minGate hf ha hN.not_movable hN.no_deletion
   set G := S.gates.min' hne with hGdef
   have hG : G ∈ S.gates := Finset.min'_mem _ _
   -- an auxiliary input is exchanged with a parameter
@@ -139,7 +128,7 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
       · exact ⟨t₁, t₂, Or.inl ⟨hl, hr⟩, h, ht12⟩
       · exact ⟨t₂, t₁, Or.inr ⟨hl, hr⟩, h, ht12.symm⟩
     obtain ⟨x, c, T, hT, hxT, hxo, hxu, hxdeg, hQdeg⟩ :=
-      hS.prep_aux_input hdel h5 hG hargs hQ hQo
+      hS.prep_aux_input hN hG hargs hQ hQo
     obtain ⟨hS₁, hm, hs, hq, hW⟩ := hS.prep_swap hxu hxdeg hQ hQdeg hT hxT
     set S₁ := S.swap x Q c T
     have ha₁ : S₁.a = S.a := by simp only [a, hm, hq]
@@ -175,20 +164,8 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
   push Not at haux
   have hx : t₁ ∈ S.params := (Finset.mem_union.1 ht₁).resolve_right haux.1
   have hy : t₂ ∈ S.params := (Finset.mem_union.1 ht₂).resolve_right haux.2
-  have hxu : t₁ ∈ S.unpaired :=
-    mem_unpaired.2 ⟨hx, fun hp => h6 ⟨G, hG, t₁, t₂, hand, Or.inl ⟨hl, hr⟩, hp, hy, ht12⟩⟩
-  have hyu : t₂ ∈ S.unpaired :=
-    mem_unpaired.2 ⟨hy, fun hp => h6 ⟨G, hG, t₂, t₁, hand, Or.inr ⟨hl, hr⟩, hp, hx, ht12.symm⟩⟩
-  have hGx : Sum.inl G ∈ S.children t₁ := (SemiCircuit.inl_mem_children _).2 ⟨hG, Or.inl hl⟩
-  have hGy : Sum.inl G ∈ S.children t₂ := (SemiCircuit.inl_mem_children _).2 ⟨hG, Or.inr hr⟩
-  have hxdeg : 2 ≤ S.deg t₁ := by
-    have h1 : 1 ≤ S.deg t₁ := Finset.card_pos.2 ⟨_, hGx⟩
-    by_contra hlt
-    exact h2 ⟨G, hG, t₁, t₂, hand, Or.inl ⟨hl, hr⟩, hxu, by omega, hy, ht12⟩
-  have hydeg : 2 ≤ S.deg t₂ := by
-    have h1 : 1 ≤ S.deg t₂ := Finset.card_pos.2 ⟨_, hGy⟩
-    by_contra hlt
-    exact h2 ⟨G, hG, t₂, t₁, hand, Or.inr ⟨hl, hr⟩, hyu, by omega, hx, ht12.symm⟩
+  obtain ⟨hxu, hxdeg⟩ := hN.and_param G hG hand t₁ t₂ (Or.inl ⟨hl, hr⟩) hx hy ht12
+  obtain ⟨hyu, hydeg⟩ := hN.and_param G hG hand t₂ t₁ (Or.inr ⟨hl, hr⟩) hy hx ht12.symm
   have hGp : ∀ {i}, i ∈ S.params → i ≠ G := fun hi he =>
     Finset.disjoint_left.1 hS.wf.disjoint_params_gates (he ▸ hi) hG
   -- a child of the minimal AND reading one of its inputs is rerouted
@@ -277,22 +254,16 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
   have hhas : ∃ K ∈ S.gates, (S.gate K).Reads G := by
     by_contra hno
     push Not at hno
-    exact hdel (Or.inr (Or.inr (Or.inl ⟨G, hG, hno, hGout⟩)))
-  have hdispatch : ∀ x y, S.MinAnd G x y → ∃ S', Step f S S' := fun x y hmin => by
-    by_cases h7 : S.Case7 G x y
-    · exact hS.step_case7 hdel hmin h7
-    · by_cases hbot : S.Bottleneck G x
-      · exact hS.step_bottleneck hf ha hexcl hdel hmin h7 hbot
-      · exact hS.step_case8 hexcl hdel hmin h7 hbot
+    exact hN.no_deletion (Or.inr (Or.inr (Or.inl ⟨G, hG, hno, hGout⟩)))
   by_cases hle : S.deg t₂ ≤ S.deg t₁
-  · exact hdispatch _ _ ⟨hG, hand, Or.inl ⟨hl, hr⟩, hxu, hyu, ht12, hydeg, hle,
+  · exact hS.step_of_minimalAnd hf ha hN ⟨hG, hand, Or.inl ⟨hl, hr⟩, hxu, hyu, ht12, hydeg, hle,
       fun K hK hKG => ⟨(hch K hK hKG).1, (hch K hK hKG).2⟩, hGout, hhas⟩
-  · exact hdispatch _ _ ⟨hG, hand, Or.inr ⟨hl, hr⟩, hyu, hxu, ht12.symm, hxdeg, by omega,
-      fun K hK hKG => ⟨(hch K hK hKG).2, (hch K hK hKG).1⟩, hGout, hhas⟩
+  · exact hS.step_of_minimalAnd hf ha hN ⟨hG, hand, Or.inr ⟨hl, hr⟩, hyu, hxu, ht12.symm, hxdeg,
+      by omega, fun K hK hKG => ⟨(hch K hK hKG).2, (hch K hK hKG).1⟩, hGout, hhas⟩
 
 /-- **Lemma 4.2** of [Mishra and Santhanam][MishraSanthanam2026]: if `d < a`, a valid state for
 an affine disperser for dimension `d` has a step of gate elimination: a valid state with smaller
-`m + s` and `ΔW ≤ 14 Δa`. -/
+`m + s`, `Δa ∈ {0, -1, -2}` and `ΔW ≤ 14 Δa`. -/
 theorem Valid.exists_step {d : ℕ} {S : State n} (hS : S.Valid f) (hf : IsAffineDisperser f d)
     (ha : d < S.a) : ∃ S' : State n, Step f S S' :=
   Valid.exists_step_aux hf _ _ _ S rfl rfl rfl hS ha

@@ -298,18 +298,15 @@ theorem wt_eq_zero_of_subset (h : Reduction f S S' F D T) {u : ℕ}
   rwa [Finset.sdiff_eq_empty_iff_subset.2 hsub, Finset.card_empty, weight_zero,
     Nat.le_zero] at this
 
-/-- In an exclusive state, an unpaired parameter does not gain weight when every deletion that
-may reroute to it deletes a constraint with another parameter as a parent. -/
-theorem wt_le_wt (h : Reduction f S S' F D T) (hexcl : S.Exclusive) {u : ℕ}
-    (hu : u ∈ S.unpaired)
-    (hT : ∀ N ∈ T, N ∈ S.children u → ∃ x ∈ S.params, x ≠ u ∧ N ∈ S.children x) :
-    S'.wt u ≤ S.wt u := by
+/-- An unpaired parameter does not gain weight when it has degree at least two if some deletion
+may reroute to it. -/
+theorem wt_le_wt (h : Reduction f S S' F D T) {u : ℕ} (hu : u ∈ S.unpaired)
+    (hT : ∀ N ∈ T, N ∈ S.children u → 2 ≤ S.deg u) : S'.wt u ≤ S.wt u := by
   by_cases hu' : u ∈ S'.unpaired
   · rw [wt_of_mem hu]
     by_cases hN : ∃ N ∈ T, N ∈ S.children u
     · obtain ⟨N, hN, hNu⟩ := hN
-      obtain ⟨x, hx, hxu, hNx⟩ := hT N hN hNu
-      rw [weight_of_two_le (hexcl.two_le_deg hu hNu hx hxu hNx)]
+      rw [weight_of_two_le (hT N hN hNu)]
       exact S'.wt_le_seven u
     · push Not at hN
       exact (h.wt_le_weight hN).trans
@@ -324,7 +321,9 @@ theorem wt_le_of_exclusive (h : Reduction f S S' F D T) (hS : S.Valid f) (hexcl 
     (hT : ∀ N ∈ T, N ∈ S.children u → ∃ x ∈ S.params, x ≠ u ∧ N ∈ S.children x) :
     S'.wt u ≤ S.wt u := by
   by_cases hu : u ∈ S.unpaired
-  · exact h.wt_le_wt hexcl hu hT
+  · exact h.wt_le_wt hu fun N hN hNu => by
+      obtain ⟨x, hx, hxu, hNx⟩ := hT N hN hNu
+      exact hexcl.two_le_deg hu hNu hx hxu hNx
   · rw [h.wt_eq_zero hS hu hpart]; exact Nat.zero_le _
 
 /-- **The potential of a reduction.** If every parameter outside `F` gains at most `gain` and

@@ -675,6 +675,61 @@ theorem exists_and_form {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) :
   · rw [h1]; cases α <;> cases β <;> rfl
   · rw [h3]; cases α <;> cases β <;> rfl
 
+/-- An AND-type operation takes both values. -/
+theorem exists_eq_of_not_isAffineOp' {op : Bool → Bool → Bool} (h : ¬ IsAffineOp op) (δ : Bool) :
+    ∃ a b, op a b = δ := by
+  unfold IsAffineOp at h
+  by_contra hne
+  push Not at hne
+  have key : ∀ δ a b c d : Bool, a ≠ δ → b ≠ δ → c ≠ δ → d ≠ δ →
+      (a ^^ b ^^ c ^^ d) = false := by decide
+  exact h (key δ _ _ _ _ (hne _ _) (hne _ _) (hne _ _) (hne _ _))
+
+/-- An affine operation that is neither constant nor a projection or a negated projection is
+XOR-type: `a + b + c`. -/
+theorem exists_xor_form {op : Bool → Bool → Bool} (h : IsAffineOp op) (hu : ¬ IsUnaryOp op)
+    (hc : ∃ a b, op a b ≠ op false false) : ∃ c, ∀ a b, op a b = (a ^^ b ^^ c) := by
+  unfold IsAffineOp at h
+  unfold IsUnaryOp at hu
+  obtain ⟨a₁, b₁, hab⟩ := hc
+  refine ⟨op false false, fun a b => ?_⟩
+  revert h hu hab
+  cases a₁ <;> cases b₁ <;> cases a <;> cases b <;>
+  · generalize op false false = a₀; generalize op true false = b₀
+    generalize op false true = c₀; generalize op true true = d₀
+    revert a₀ b₀ c₀ d₀; decide
+
+/-- Of two operations of two bits, one AND-type, both are constant on a common line of `𝔽₂²`:
+`a = c`, `b = c` or `a = b + c` for a suitable constant `c`. -/
+theorem exists_line_const {g h : Bool → Bool → Bool} (hg : ¬ IsAffineOp g) :
+    (∃ c, (∀ b, g c b = g c false) ∧ ∀ b, h c b = h c false) ∨
+    (∃ c, (∀ a, g a c = g false c) ∧ ∀ a, h a c = h false c) ∨
+    (∃ c, (∀ b, g (b ^^ c) b = g c false) ∧ ∀ b, h (b ^^ c) b = h c false) := by
+  unfold IsAffineOp at hg
+  simp only [Bool.exists_bool, Bool.forall_bool, Bool.false_xor, Bool.true_xor, Bool.not_false,
+    Bool.not_true]
+  revert hg
+  generalize g false false = a₀; generalize g true false = b₀
+  generalize g false true = c₀; generalize g true true = d₀
+  generalize h false false = a₁; generalize h true false = b₁
+  generalize h false true = c₁; generalize h true true = d₁
+  revert a₀ b₀ c₀ d₀ a₁ b₁ c₁ d₁; decide
+
+/-- A gate reading the internal values `x` and `y` computes an operation of their values, which is
+affine exactly when the operation of the gate is. -/
+theorem Gate.exists_op_of_args {g : Gate} {x y : ℕ}
+    (h : (g.left = .node x ∧ g.right = .node y) ∨ (g.left = .node y ∧ g.right = .node x)) :
+    ∃ φ : Bool → Bool → Bool, (IsAffineOp φ ↔ IsAffineOp g.op) ∧
+      ∀ val : ℕ → Bool, g.eval val = φ (val x) (val y) := by
+  rcases h with ⟨hl, hr⟩ | ⟨hl, hr⟩
+  · exact ⟨g.op, Iff.rfl, fun val => Gate.eval_of_args hl hr val⟩
+  · refine ⟨fun a b => g.op b a, ?_, fun val => Gate.eval_of_args hl hr val⟩
+    unfold IsAffineOp
+    beta_reduce
+    generalize g.op false false = a₀; generalize g.op true false = b₀
+    generalize g.op false true = c₀; generalize g.op true true = d₀
+    revert a₀ b₀ c₀ d₀; decide
+
 end SemiCircuit
 
 /-! ### Semi-circuits -/
