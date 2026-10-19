@@ -7,7 +7,6 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Probability.Product
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.Probability.Moments.Basic
@@ -33,8 +32,9 @@ The proofs follow the moment generating function method: Mathlib's Chernoff boun
 `ProbabilityTheory.measure_ge_le_exp_mul_mgf`, multiplicativity of the moment generating function
 under independence, and the convexity estimate `exp (t s) ≤ 1 + s (exp t - 1)` for `s ∈ [0, 1]`
 (`Cslib.Probability.PMF.mgf_pi_sum_le`). All client-facing statements are about ordinary PMF event
-probabilities. Specialized to fair coins, the bounds count the bit strings whose Hamming weight
-`Cslib.BitString.weight` deviates from half the length.
+probabilities. For fair coins, counting bit strings whose weight deviates from half the length,
+the additive Hoeffding bound `Cslib.BitString.card_filter_le_card_filter_sub_half_le` is already
+stronger than the multiplicative forms, so no separate counting form is given here.
 
 ## Main results
 
@@ -42,13 +42,11 @@ probabilities. Specialized to fair coins, the bounds count the bit strings whose
   `exp (mean * (exp t - 1))`.
 * `Cslib.Probability.PMF.pi_sum_ge_le_exp`, `Cslib.Probability.PMF.pi_sum_le_le_exp`: the
   Chernoff bound for every parameter `t`.
-* `Cslib.Probability.PMF.pi_sum_ge_one_add_mul_le_exp`: the sharp multiplicative upper tail.
+* `Cslib.Probability.PMF.pi_sum_ge_one_add_mul_le_exp_log`: the sharp multiplicative upper tail.
 * `Cslib.Probability.PMF.pi_sum_ge_one_add_mul`,
   `Cslib.Probability.PMF.pi_sum_ge_one_add_mul_of_le_one`: the simplified upper tails.
 * `Cslib.Probability.PMF.pi_sum_le_one_sub_mul`: the lower tail.
-* `Cslib.Probability.PMF.pi_abs_sum_sub_mean_ge_mul`: the two-sided bound for `δ ≤ 1`.
-* `Cslib.BitString.card_filter_one_add_mul_le_weight`,
-  `Cslib.BitString.card_filter_weight_le_one_sub_mul`: counting forms on bit strings.
+* `Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge_mul`: the two-sided bound for `δ ≤ 1`.
 
 ## References
 
@@ -159,7 +157,7 @@ theorem pi_sum_le_le_exp (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
 [MitzenmacherUpfal2017]: if independent scores in `[0, 1]` have mean at most `μ`, their sum is at
 least `(1 + δ) μ` with probability at most `exp (μ (δ - (1 + δ) log (1 + δ)))`, that is,
 `(exp δ / (1 + δ) ^ (1 + δ)) ^ μ`, for every `δ ≥ 0`. -/
-theorem pi_sum_ge_one_add_mul_le_exp (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
+theorem pi_sum_ge_one_add_mul_le_exp_log (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
     (hscore : ∀ i a, a ∈ (p i).support → score i a ∈ Set.Icc 0 1) {μ δ : ℝ}
     (hμ : ∑ i, ∑ a, (p i a).toReal * score i a ≤ μ) (hδ : 0 ≤ δ) :
     ((pi p).toOuterMeasure {outcome | (1 + δ) * μ ≤ ∑ i, score i (outcome i)}).toReal ≤
@@ -179,7 +177,7 @@ theorem pi_sum_ge_one_add_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → �
     (hμ : ∑ i, ∑ a, (p i a).toReal * score i a ≤ μ) (hδ : 0 ≤ δ) :
     ((pi p).toOuterMeasure {outcome | (1 + δ) * μ ≤ ∑ i, score i (outcome i)}).toReal ≤
       Real.exp (-(δ ^ 2 * μ / (2 + δ))) := by
-  refine (pi_sum_ge_one_add_mul_le_exp p score hscore hμ hδ).trans (Real.exp_le_exp.mpr ?_)
+  refine (pi_sum_ge_one_add_mul_le_exp_log p score hscore hμ hδ).trans (Real.exp_le_exp.mpr ?_)
   have hμ0 : 0 ≤ μ := (mean_nonneg p score hscore).trans hμ
   have hlog : 2 * δ / (δ + 2) ≤ Real.log (1 + δ) := Real.le_log_one_add_of_nonneg hδ
   have h2 : (0 : ℝ) < 2 + δ := by linarith
@@ -236,7 +234,7 @@ theorem pi_sum_le_one_sub_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → �
 /-- **The two-sided multiplicative Chernoff bound** [Mitzenmacher and Upfal, Section 4.2]
 [MitzenmacherUpfal2017]: a sum of independent scores in `[0, 1]` deviates from its mean by at
 least `δ` times the mean with probability at most `2 exp (-δ² mean / 3)`, for `0 ≤ δ ≤ 1`. -/
-theorem pi_abs_sum_sub_mean_ge_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
+theorem pi_sum_abs_sub_mean_ge_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
     (hscore : ∀ i a, a ∈ (p i).support → score i a ∈ Set.Icc 0 1) {δ : ℝ}
     (hδ : 0 ≤ δ) (hδ₁ : δ ≤ 1) :
     ((pi p).toOuterMeasure {outcome | δ * ∑ i, ∑ a, (p i a).toReal * score i a ≤
@@ -268,67 +266,3 @@ theorem pi_abs_sum_sub_mean_ge_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i 
   linarith
 
 end Cslib.Probability.PMF
-
-namespace Cslib.BitString
-
-open Finset Probability
-
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-/-- Counting a uniformly random bit string's weight: the fair-coin specialization of the product
-bounds, with score `1` for `true`. -/
-private theorem card_filter_eq_two_pow_mul (event : ℝ → Prop) [DecidablePred event] :
-    (#{x : ι → Bool | event (weight x)} : ℝ) = 2 ^ Fintype.card ι *
-      ((PMF.pi fun _ : ι => PMF.uniformOfFintype Bool).toOuterMeasure
-        {x | event (∑ i, if x i then (1 : ℝ) else 0)}).toReal := by
-  classical
-  rw [PMF.pi_uniformOfFintype, PMF.toOuterMeasure_apply_toReal]
-  simp only [PMF.uniformOfFintype_apply, Fintype.card_pi, Fintype.card_bool, Finset.prod_const,
-    Finset.card_univ, ENNReal.toReal_inv, Set.mem_ofPred_eq]
-  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
-  have hw (x : ι → Bool) : (∑ i, if x i then (1 : ℝ) else 0) = weight x := by
-    rw [weight_eq_sum_toNat]
-    push_cast
-    exact Finset.sum_congr rfl fun i _ => by cases x i <;> simp
-  simp only [hw]
-  field_simp
-  simp
-
-omit [DecidableEq ι] in
-/-- The fair-coin scores have mean `card ι / 2`. -/
-private theorem mean_fair :
-    ∑ _i : ι, ∑ b : Bool, ((PMF.uniformOfFintype Bool) b).toReal *
-      (if b then (1 : ℝ) else 0) = Fintype.card ι / 2 := by
-  simp [PMF.uniformOfFintype_apply]
-  ring
-
-/-- **The Chernoff bound on bit strings, upper tail**: at most a `exp (-δ² n / (2 (2 + δ)))`
-fraction of the `2 ^ n` strings of `n` bits have weight at least `(1 + δ) n / 2`. -/
-theorem card_filter_one_add_mul_le_weight {δ : ℝ} (hδ : 0 ≤ δ) :
-    (#{x : ι → Bool | (1 + δ) * (Fintype.card ι / 2) ≤ weight x} : ℝ) ≤
-      2 ^ Fintype.card ι * Real.exp (-(δ ^ 2 * Fintype.card ι / (2 * (2 + δ)))) := by
-  classical
-  rw [card_filter_eq_two_pow_mul (fun w => (1 + δ) * (Fintype.card ι / 2) ≤ w)]
-  gcongr
-  have h := PMF.pi_sum_ge_one_add_mul (fun _ : ι => PMF.uniformOfFintype Bool)
-    (fun _ b => if b then (1 : ℝ) else 0) (fun _ b _ => by cases b <;> simp) mean_fair.le hδ
-  refine h.trans (le_of_eq ?_)
-  congr 1
-  field_simp
-
-/-- **The Chernoff bound on bit strings, lower tail**: at most a `exp (-δ² n / 4)` fraction of
-the `2 ^ n` strings of `n` bits have weight at most `(1 - δ) n / 2`. -/
-theorem card_filter_weight_le_one_sub_mul {δ : ℝ} (hδ : 0 ≤ δ) :
-    (#{x : ι → Bool | (weight x : ℝ) ≤ (1 - δ) * (Fintype.card ι / 2)} : ℝ) ≤
-      2 ^ Fintype.card ι * Real.exp (-(δ ^ 2 * Fintype.card ι / 4)) := by
-  classical
-  rw [card_filter_eq_two_pow_mul (fun w => w ≤ (1 - δ) * (Fintype.card ι / 2))]
-  gcongr
-  have h := PMF.pi_sum_le_one_sub_mul (fun _ : ι => PMF.uniformOfFintype Bool)
-    (fun _ b => if b then (1 : ℝ) else 0) (fun _ b _ => by cases b <;> simp) mean_fair.ge hδ
-  refine h.trans (le_of_eq ?_)
-  congr 1
-  field_simp
-  ring
-
-end Cslib.BitString

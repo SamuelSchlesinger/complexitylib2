@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Probability.Chernoff
 import Complexity.Probability.KWiseIndependent.Polynomial
 import Complexity.Probability.LocalLemma
+import Complexity.Probability.PairwiseIndependentHash.Affine
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Analysis.Complex.ExponentialBounds
 
@@ -20,15 +21,6 @@ open scoped BigOperators
 
 /-! ### Chernoff bounds -/
 
--- Exactly one string of four bits has weight at least `(1 + 1) * 4 / 2 = 4`.
-example : #{x : Fin 4 → Bool | 4 ≤ BitString.weight x} = 1 := by decide
-
--- The counting form applies with `δ = 1`: the bound `16 exp (-2 / 3) ≈ 8.2` dominates that count.
-example : (#{x : Fin 4 → Bool | (1 + 1) * ((Fintype.card (Fin 4) : ℝ) / 2) ≤
-    BitString.weight x} : ℝ) ≤
-      2 ^ Fintype.card (Fin 4) * Real.exp (-(1 ^ 2 * Fintype.card (Fin 4) / (2 * (2 + 1)))) :=
-  BitString.card_filter_one_add_mul_le_weight zero_le_one
-
 /-- The fair-coin score `1` for `true`. -/
 private def coin (_ : Fin 10) (b : Bool) : ℝ := if b then 1 else 0
 
@@ -39,6 +31,21 @@ private theorem mean_coin :
     ∑ i : Fin 10, ∑ b, ((PMF.uniformOfFintype Bool) b).toReal * coin i b = 5 := by
   simp [coin, PMF.uniformOfFintype_apply]
   norm_num
+
+-- The upper tails for ten fair coins: the sharp and the simplified bounds apply.
+example (δ : ℝ) (hδ : 0 ≤ δ) :
+    ((PMF.pi fun _ : Fin 10 => PMF.uniformOfFintype Bool).toOuterMeasure
+      {outcome | (1 + δ) * 5 ≤ ∑ i, coin i (outcome i)}).toReal ≤
+        Real.exp (5 * (δ - (1 + δ) * Real.log (1 + δ))) :=
+  PMF.pi_sum_ge_one_add_mul_le_exp_log (fun _ => PMF.uniformOfFintype Bool) coin
+    (fun i b _ => coin_mem i b) mean_coin.le hδ
+
+example (δ : ℝ) (hδ : 0 ≤ δ) (hδ₁ : δ ≤ 1) :
+    ((PMF.pi fun _ : Fin 10 => PMF.uniformOfFintype Bool).toOuterMeasure
+      {outcome | (1 + δ) * 5 ≤ ∑ i, coin i (outcome i)}).toReal ≤
+        Real.exp (-(δ ^ 2 * 5 / 3)) :=
+  PMF.pi_sum_ge_one_add_mul_of_le_one (fun _ => PMF.uniformOfFintype Bool) coin
+    (fun i b _ => coin_mem i b) mean_coin.le hδ hδ₁
 
 -- The lower tail for ten fair coins: the hypotheses on the scores are satisfiable.
 example (δ : ℝ) (hδ : 0 ≤ δ) :
@@ -55,6 +62,12 @@ instance : Fact (Nat.Prime 5) := ⟨Nat.prime_five⟩
 -- The polynomials of degree less than three over `𝔽₅` form a 3-wise independent family.
 example : IsKWiseIndependentHash 3 (polynomialHash : (Fin 3 → ZMod 5) → ZMod 5 → ZMod 5) :=
   isKWiseIndependentHash_polynomialHash 3
+
+-- Pairwise independent families, such as the affine maps of bit vectors, are 2-wise independent.
+example : IsKWiseIndependentHash 2
+    (affineHash : Matrix (Fin 2) (Fin 3) (ZMod 2) × (Fin 2 → ZMod 2) → (Fin 3 → ZMod 2) →
+      Fin 2 → ZMod 2) :=
+  isKWiseIndependentHash_two_iff.2 ⟨isPairwiseIndependentHash_affineHash, ⟨0⟩⟩
 
 -- Affine polynomials are pairwise independent ...
 example : IsPairwiseIndependentHash (polynomialHash : (Fin 2 → ZMod 5) → ZMod 5 → ZMod 5) :=
@@ -102,7 +115,7 @@ example : (1 - 1 / 2 : ℝ) * (1 - 1 / 2) ≤
       (⋂ i, {ω | ω i = true}ᶜ)).toReal := by
   have h := PMF.prod_one_sub_le_pi_iInter_compl (fun _ : Fin 2 => PMF.uniformOfFintype Bool)
     (fun i => {ω | ω i = true}) (fun i => {i})
-    (fun i ω ω' h hω => by simpa [h i (mem_singleton_self i)] using hω)
+    (fun i ω ω' h => by simp only [Set.mem_ofPred_eq, h i (by simp)])
     (fun _ => ∅) (fun i j hji hij => absurd (disjoint_singleton.2 hji.symm) hij)
     (fun _ => 1 / 2) (fun _ => by norm_num) fun i => by
       rw [toReal_pi_eq_true, prod_empty, mul_one]
@@ -124,18 +137,18 @@ example : 0 < ((PMF.pi fun _ : Fin 4 => PMF.uniformOfFintype Bool).toOuterMeasur
       {ω | ω (first i) = true ∧ ω (second i) = true}).toReal = 1 / 4 := by
     have hne : first i ≠ second i := by fin_cases i <;> decide
     have h := PMF.toOuterMeasure_pi_inter_eq_mul p (S := {first i}) (T := {second i})
-      (disjoint_singleton.2 hne) (E := {ω | ω (first i) = true})
+      (Set.disjoint_singleton.2 hne) (E := {ω | ω (first i) = true})
       (F := {ω | ω (second i) = true})
-      (fun ω ω' h hω => by simpa [h _ (mem_singleton_self _)] using hω)
-      (fun ω ω' h hω => by simpa [h _ (mem_singleton_self _)] using hω)
+      (fun ω ω' h => by simp only [Set.mem_ofPred_eq, h _ rfl])
+      (fun ω ω' h => by simp only [Set.mem_ofPred_eq, h _ rfl])
     rw [show {ω : Fin 4 → Bool | ω (first i) = true ∧ ω (second i) = true} =
       {ω | ω (first i) = true} ∩ {ω | ω (second i) = true} from rfl, h, ENNReal.toReal_mul,
       toReal_pi_eq_true, toReal_pi_eq_true]
     norm_num
-  refine PMF.pi_iInter_compl_pos p _ vbl (fun i ω ω' h hω => ?_) (d := 0) (fun i => ?_)
+  refine PMF.pi_iInter_compl_pos p _ vbl (fun i ω ω' h => ?_) (d := 0) (fun i => ?_)
     (q := 1 / 4) (fun i => (hpair i).le) ?_
-  · simpa [h _ (by simp [vbl] : first i ∈ vbl i), h _ (by simp [vbl] : second i ∈ vbl i)]
-      using hω
+  · simp only [Set.mem_ofPred_eq, h _ (by simp [vbl] : first i ∈ (vbl i : Set (Fin 4))),
+      h _ (by simp [vbl] : second i ∈ (vbl i : Set (Fin 4)))]
   · fin_cases i <;> decide
   · have := Real.exp_one_lt_d9
     norm_num at this ⊢
@@ -158,18 +171,46 @@ info: 'Cslib.Probability.PMF.pi_sum_le_one_sub_mul' depends on axioms:
 #print axioms Cslib.Probability.PMF.pi_sum_le_one_sub_mul
 
 /--
-info: 'Cslib.Probability.PMF.pi_abs_sum_sub_mean_ge_mul' depends on axioms:
+info: 'Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge_mul' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.pi_abs_sum_sub_mean_ge_mul
+#print axioms Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge_mul
 
 /--
-info: 'Cslib.BitString.card_filter_one_add_mul_le_weight' depends on axioms:
+info: 'Cslib.Probability.PMF.pi_sum_ge_one_add_mul_le_exp_log' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.card_filter_one_add_mul_le_weight
+#print axioms Cslib.Probability.PMF.pi_sum_ge_one_add_mul_le_exp_log
+
+/--
+info: 'Cslib.Probability.PMF.pi_sum_ge_one_add_mul_of_le_one' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.pi_sum_ge_one_add_mul_of_le_one
+
+/--
+info: 'Cslib.Probability.isKWiseIndependentHash_two_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.isKWiseIndependentHash_two_iff
+
+/--
+info: 'Cslib.Probability.IsKWiseIndependentHash.expect_sum_pow_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.IsKWiseIndependentHash.expect_sum_pow_le
+
+/--
+info: 'Cslib.Probability.pow_le_measureReal_iInter_compl' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.pow_le_measureReal_iInter_compl
 
 /--
 info: 'Cslib.Probability.isKWiseIndependentHash_polynomialHash' depends on axioms:

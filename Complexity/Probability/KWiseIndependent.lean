@@ -23,8 +23,9 @@ is *`k`-wise independent* (`Cslib.Probability.IsKWiseIndependentHash`) if for ev
 most `k` points the restriction of `h i` to `T` is uniformly distributed on `T → Y`: the values at
 any `k` distinct points are independent and uniform [Vadhan, Section 3.5.5][Vadhan2012]; Wegman and
 Carter call such families *strongly universal_k* [WegmanCarter1981]. For `k ≥ 2` they are pairwise
-independent in the sense of `Cslib.Probability.IsPairwiseIndependentHash`
-(`Cslib.Probability.IsKWiseIndependentHash.isPairwiseIndependentHash`). As in the pairwise case,
+independent in the sense of `Cslib.Probability.IsPairwiseIndependentHash`, and `2`-wise
+independence is exactly pairwise independence with a seed
+(`Cslib.Probability.isKWiseIndependentHash_two_iff`). As in the pairwise case,
 probabilities over the seed are densities `Finset.dens` and averages are uniform expectations
 `𝔼 i`.
 
@@ -48,8 +49,9 @@ tuples gives a better constant.
 * `Cslib.Probability.IsKWiseIndependentHash.expect_restrict`,
   `Cslib.Probability.IsKWiseIndependentHash.expect_prod`: functions of at most `k` values average
   as for a truly random function.
-* `Cslib.Probability.IsKWiseIndependentHash.isPairwiseIndependentHash`: for `k ≥ 2` the family is
-  pairwise independent.
+* `Cslib.Probability.IsKWiseIndependentHash.isPairwiseIndependentHash`,
+  `Cslib.Probability.isKWiseIndependentHash_two_iff`: for `k ≥ 2` the family is pairwise
+  independent, and `2`-wise independence is pairwise independence with a seed.
 * `Cslib.Probability.isKWiseIndependentHash_of_surjective`: an additive family whose restrictions
   to sets of at most `k` points are onto is `k`-wise independent.
 * `Cslib.Probability.IsKWiseIndependentHash.expect_sum_pow_le`: the `2 m`-th moment bound.
@@ -77,7 +79,12 @@ variable {ι X Y : Type*} [Fintype ι] [Fintype Y] [DecidableEq Y]
 /-- A family of functions `h i : X → Y`, indexed by a seed `i : ι` drawn uniformly at random, is
 *`k`-wise independent* if for every set `T` of at most `k` points the restriction of `h i` to `T`
 is uniformly distributed on `T → Y`: a `1 / |Y| ^ #T` fraction of the seeds restricts to each
-`y : T → Y`. Taking `T = ∅` forces a seed to exist. -/
+`y : T → Y`. Taking `T = ∅` forces a seed to exist.
+
+The usual definition asks this only for sets of exactly `k` points. When `X` has at least `k`
+elements the two agree, since a set of fewer points extends to one of `k` points and the
+restriction to the smaller set is a marginal; when `X` has fewer than `k` elements the usual
+definition is vacuous, while this one still asks for uniformity on all of `X`. -/
 structure IsKWiseIndependentHash (k : ℕ) (h : ι → X → Y) : Prop where
   /-- The values at any set of at most `k` points are independent and uniform. -/
   dens_filter_restrict_eq {T : Finset X} (hT : #T ≤ k) (y : T → Y) :
@@ -168,6 +175,40 @@ theorem isPairwiseIndependentHash (hh : IsKWiseIndependentHash k h)
     · intro hy
       exact ⟨by simpa using congrFun hy ⟨x₁, by simp⟩,
         by simpa [hx.symm] using congrFun hy ⟨x₂, by simp⟩⟩
+
+/-- **Pairwise independence is `2`-wise independence**: a family is `2`-wise independent exactly
+when it is pairwise independent and has a seed. So the pairwise independent families, such as
+`Cslib.Probability.isPairwiseIndependentHash_affineHash`, carry the `k`-wise API for `k = 2`. -/
+theorem _root_.Cslib.Probability.isKWiseIndependentHash_two_iff :
+    IsKWiseIndependentHash 2 h ↔ IsPairwiseIndependentHash h ∧ Nonempty ι := by
+  refine ⟨fun hh => ⟨hh.isPairwiseIndependentHash le_rfl, hh.nonempty⟩, fun ⟨hh, hι⟩ => ⟨?_⟩⟩
+  intro T hT y
+  classical
+  interval_cases hc : #T
+  · obtain rfl := card_eq_zero.1 hc
+    have : ({i | (∅ : Finset X).restrict (h i) = y} : Finset ι) = univ :=
+      filter_true_of_mem fun i _ => funext fun x => (notMem_empty _ x.2).elim
+    rw [this, dens_univ]
+    simp
+  · obtain ⟨x, rfl⟩ := card_eq_one.1 hc
+    rw [pow_one, ← hh.dens_filter_apply_eq x (y ⟨x, mem_singleton_self x⟩)]
+    congr 1
+    ext i
+    simp only [mem_filter, mem_univ, true_and, funext_iff, Subtype.forall, mem_singleton,
+      restrict]
+    exact ⟨fun hi => hi x rfl, by rintro hi a rfl; exact hi⟩
+  · obtain ⟨x₁, x₂, hx, rfl⟩ := card_eq_two.1 hc
+    rw [← hh.dens_filter_apply_eq_and_apply_eq hx (y ⟨x₁, by simp⟩) (y ⟨x₂, by simp⟩)]
+    congr 1
+    ext i
+    simp only [mem_filter, mem_univ, true_and, funext_iff, Subtype.forall, mem_insert,
+      mem_singleton, restrict]
+    constructor
+    · intro hi
+      exact ⟨hi x₁ (Or.inl rfl), hi x₂ (Or.inr rfl)⟩
+    · rintro ⟨h₁, h₂⟩ z (rfl | rfl)
+      · exact h₁
+      · exact h₂
 
 /-- Tuples of `n` elements of `S` with at most `m ≤ n` distinct entries factor through `Fin m`, so
 there are at most `m ^ n * #S ^ m` of them. -/

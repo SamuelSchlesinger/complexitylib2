@@ -9,7 +9,9 @@ module
 
 public import Complexity.Probability.Product
 public import Mathlib.Analysis.SpecialFunctions.Exp
+public import Mathlib.Logic.Function.DependsOn
 public import Mathlib.MeasureTheory.Measure.Real
+import Complexity.Foundations.Probability.SecondMoment
 import Mathlib.Algebra.Order.BigOperators.GroupWithZero.Finset
 import Mathlib.Analysis.Complex.Exponential
 
@@ -36,9 +38,11 @@ the inequality is the lopsided condition of Erdős and Spencer [ErdosSpencer1991
 The proof shows, by strong induction on `s`, that `μ (A i ∩ ⋂ j ∈ s, (A j)ᶜ)` is at most
 `x i * μ (⋂ j ∈ s, (A j)ᶜ)` for `i ∉ s`; no conditional probabilities or divisions appear.
 
-In a finite product space `Cslib.Probability.PMF.pi p`, events determined by disjoint sets of
-coordinates are independent (`Cslib.Probability.PMF.toOuterMeasure_pi_inter_eq_mul`). So if each
-event `A i` is determined by the coordinates in a set `vbl i`, the events sharing no coordinate
+In a finite product space `Cslib.Probability.PMF.pi p`, events depending on disjoint sets of
+coordinates (Mathlib's `DependsOn`) are independent
+(`Cslib.Probability.PMF.toOuterMeasure_pi_inter_eq_mul`, the PMF form of
+`ProbabilityTheory.indepSet_pi_of_dependsOn`). So if each event `A i` depends only on the
+coordinates in a set `vbl i`, the events sharing no coordinate
 with `A i` satisfy the hypothesis, giving the variable version of the local lemma used for
 satisfiability and coloring problems (`Cslib.Probability.PMF.prod_one_sub_le_pi_iInter_compl`,
 `Cslib.Probability.PMF.pi_iInter_compl_pos`) [MoserTardos2010].
@@ -53,7 +57,7 @@ satisfiability and coloring problems (`Cslib.Probability.PMF.prod_one_sub_le_pi_
   product are independent.
 * `Cslib.Probability.PMF.prod_one_sub_le_pi_iInter_compl`,
   `Cslib.Probability.PMF.pi_iInter_compl_pos`: the asymmetric and symmetric local lemmas for events
-  determined by sets of independent coordinates.
+  depending on sets of independent coordinates.
 
 ## References
 
@@ -253,37 +257,26 @@ section Product
 variable {V : Type*} [Fintype V] {α : V → Type*} [∀ v, Finite (α v)]
 
 /-- **Events on disjoint coordinates are independent**: in an independent product, an event
-determined by the coordinates in `S` and an event determined by the coordinates in a disjoint set
-`T` are independent. -/
-theorem toOuterMeasure_pi_inter_eq_mul (p : ∀ v, PMF (α v)) {S T : Finset V}
-    (hST : Disjoint S T) {E F : Set (∀ v, α v)}
-    (hE : ∀ ω ω', (∀ v ∈ S, ω v = ω' v) → ω ∈ E → ω' ∈ E)
-    (hF : ∀ ω ω', (∀ v ∈ T, ω v = ω' v) → ω ∈ F → ω' ∈ F) :
+depending only on the coordinates in `S` and an event depending only on the coordinates in a
+disjoint set `T` are independent. This is the finite-PMF form of
+`ProbabilityTheory.indepSet_pi_of_dependsOn`. -/
+theorem toOuterMeasure_pi_inter_eq_mul (p : ∀ v, PMF (α v)) {S T : Set V}
+    (hST : Disjoint S T) {E F : Set (∀ v, α v)} (hE : DependsOn (· ∈ E) S)
+    (hF : DependsOn (· ∈ F) T) :
     (pi p).toOuterMeasure (E ∩ F) = (pi p).toOuterMeasure E * (pi p).toOuterMeasure F := by
   let (v : V) : MeasurableSpace (α v) := ⊤
-  have hind := (iIndepFun_pi p).indepFun_finset S T hST fun v => measurable_pi_apply v
-  let f (ω : ∀ v, α v) (v : S) : α v := ω v
-  let g (ω : ∀ v, α v) (v : T) : α v := ω v
-  have hE' : E = f ⁻¹' (f '' E) := by
-    ext ω
-    refine ⟨fun h => ⟨ω, h, rfl⟩, fun ⟨ω', h', heq⟩ => hE ω' ω (fun v hv => ?_) h'⟩
-    exact congrFun heq ⟨v, hv⟩
-  have hF' : F = g ⁻¹' (g '' F) := by
-    ext ω
-    refine ⟨fun h => ⟨ω, h, rfl⟩, fun ⟨ω', h', heq⟩ => hF ω' ω (fun v hv => ?_) h'⟩
-    exact congrFun heq ⟨v, hv⟩
-  have h := hind.measure_inter_preimage_eq_mul _ _ (Set.to_countable (f '' E)).measurableSet
-    (Set.to_countable (g '' F)).measurableSet
-  rw [← hE', ← hF'] at h
-  simpa only [PMF.toMeasure_apply_eq_toOuterMeasure_apply _
-    ((Set.to_countable _).measurableSet)] using h
+  have hmeas (B : Set (∀ v, α v)) : MeasurableSet B := (Set.to_countable B).measurableSet
+  have hind := indepSet_pi_of_dependsOn (μ := fun v => (p v).toMeasure) (hmeas E) (hmeas F)
+    hE hF hST
+  rw [← toMeasure_pi] at hind
+  simpa only [PMF.toMeasure_apply_eq_toOuterMeasure_apply _ (hmeas _)] using
+    (indepSet_iff_measure_inter_eq_mul (hmeas E) (hmeas F) _).1 hind
 
-/-- Under an independent product, an event `A i` determined by the coordinates in `vbl i` is
+/-- Under an independent product, an event `A i` depending only on the coordinates in `vbl i` is
 independent of the event that no `A j` occurs, for indices `j ∉ Γ i ∪ {i}` sharing no coordinate
 with `A i`. -/
 private theorem pi_inter_iInter_compl_eq {ι : Type*} (p : ∀ v, PMF (α v))
-    (A : ι → Set (∀ v, α v)) (vbl : ι → Finset V)
-    (hA : ∀ i ω ω', (∀ v ∈ vbl i, ω v = ω' v) → ω ∈ A i → ω' ∈ A i)
+    (A : ι → Set (∀ v, α v)) (vbl : ι → Finset V) (hA : ∀ i, DependsOn (· ∈ A i) (vbl i : Set V))
     (Γ : ι → Finset ι) (hΓ : ∀ i j, j ≠ i → ¬Disjoint (vbl i) (vbl j) → j ∈ Γ i)
     {i : ι} {s : Finset ι} (hi : i ∉ s) (hs : Disjoint s (Γ i)) :
     ((pi p).toOuterMeasure (A i ∩ ⋂ j ∈ s, (A j)ᶜ)).toReal =
@@ -294,19 +287,20 @@ private theorem pi_inter_iInter_compl_eq {ι : Type*} (p : ∀ v, PMF (α v))
     refine (disjoint_biUnion_right _ _ _).2 fun j hj => ?_
     by_contra h
     exact disjoint_left.1 hs hj (hΓ i j (fun hji => hi (hji ▸ hj)) h)
-  rw [toOuterMeasure_pi_inter_eq_mul p hdisj (hA i) fun ω ω' hωω' hω => ?_, ENNReal.toReal_mul]
-  simp only [Set.mem_iInter] at hω ⊢
-  intro j hj hj'
-  exact hω j hj (hA j ω' ω (fun v hv => (hωω' v (mem_biUnion.2 ⟨j, hj, hv⟩)).symm) hj')
+  have hrest : DependsOn (· ∈ ⋂ j ∈ s, (A j)ᶜ) (s.biUnion vbl : Set V) := fun ω ω' h => by
+    have hmem (j : ι) (hj : j ∈ s) : (ω ∈ A j) = (ω' ∈ A j) :=
+      (hA j).mono (fun v hv => mem_coe.2 (mem_biUnion.2 ⟨j, hj, hv⟩)) h
+    simp only [Set.mem_iInter, Set.mem_compl_iff]
+    exact propext (forall₂_congr fun j hj => by rw [hmem j hj])
+  rw [toOuterMeasure_pi_inter_eq_mul p (disjoint_coe.2 hdisj) (hA i) hrest, ENNReal.toReal_mul]
 
 /-- **The Lovász Local Lemma for independent coordinates**, asymmetric form: let each event `A i`
-of an independent product be determined by the coordinates in `vbl i`, and let `Γ i` contain every
+of an independent product depend only on the coordinates in `vbl i`, and let `Γ i` contain every
 other index whose event shares a coordinate with `A i`. If `x i ∈ [0, 1]` and
 `Pr[A i] ≤ x i ∏ j ∈ Γ i, (1 - x j)` for every `i`, then no event occurs with probability at least
 `∏ i, (1 - x i)`. -/
 theorem prod_one_sub_le_pi_iInter_compl {ι : Type*} [Fintype ι] (p : ∀ v, PMF (α v))
-    (A : ι → Set (∀ v, α v)) (vbl : ι → Finset V)
-    (hA : ∀ i ω ω', (∀ v ∈ vbl i, ω v = ω' v) → ω ∈ A i → ω' ∈ A i)
+    (A : ι → Set (∀ v, α v)) (vbl : ι → Finset V) (hA : ∀ i, DependsOn (· ∈ A i) (vbl i : Set V))
     (Γ : ι → Finset ι) (hΓ : ∀ i j, j ≠ i → ¬Disjoint (vbl i) (vbl j) → j ∈ Γ i)
     (x : ι → ℝ) (hx : ∀ i, x i ∈ Set.Icc 0 1)
     (hAx : ∀ i, ((pi p).toOuterMeasure (A i)).toReal ≤ x i * ∏ j ∈ Γ i, (1 - x j)) :
@@ -325,12 +319,12 @@ theorem prod_one_sub_le_pi_iInter_compl {ι : Type*} [Fintype ι] (p : ∀ v, PM
   simpa only [hreal] using h
 
 /-- **The symmetric Lovász Local Lemma for independent coordinates**: let each event `A i` of an
-independent product be determined by the coordinates in `vbl i`, let each event share coordinates
+independent product depend only on the coordinates in `vbl i`, let each event share coordinates
 with at most `d` other events, and let each event have probability at most `q`. If
 `e q (d + 1) ≤ 1`, then with positive probability no event occurs. -/
 theorem pi_iInter_compl_pos {ι : Type*} [Fintype ι] [DecidableEq ι] [DecidableEq V]
     (p : ∀ v, PMF (α v)) (A : ι → Set (∀ v, α v)) (vbl : ι → Finset V)
-    (hA : ∀ i ω ω', (∀ v ∈ vbl i, ω v = ω' v) → ω ∈ A i → ω' ∈ A i) {d : ℕ}
+    (hA : ∀ i, DependsOn (· ∈ A i) (vbl i : Set V)) {d : ℕ}
     (hd : ∀ i, #{j | j ≠ i ∧ ¬Disjoint (vbl i) (vbl j)} ≤ d) {q : ℝ}
     (hq : ∀ i, ((pi p).toOuterMeasure (A i)).toReal ≤ q)
     (hlll : Real.exp 1 * q * (d + 1) ≤ 1) :
