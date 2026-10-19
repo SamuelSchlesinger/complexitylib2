@@ -220,6 +220,10 @@ public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
 public import Complexity.Computability.Complexity.Classes.BPP
+public import Complexity.Computability.Complexity.Classes.IP
+public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
+public import Complexity.Computability.Complexity.Classes.IP.Guessing
+public import Complexity.Computability.Complexity.Classes.IP.Repetition
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
@@ -249,6 +253,7 @@ public import Complexity.Computability.Complexity.Fagin.StrictVerifier
 public import Complexity.Computability.Complexity.Fagin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.Problems.Clique
+public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
