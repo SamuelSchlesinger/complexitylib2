@@ -1,0 +1,102 @@
+\section{Signed powers of sparsely modified counters}
+\label{sec:sparse-counter}
+
+This section translates the sparse-displacement argument ported from
+\citet{Schlesinger2026IteratedFunctions}, source revision \texttt{c4cfa198}. The source credits \citet{MorenoRivera2016}
+for the related block characterization of almost-commuting permutations; here
+the proof uses elementary defect containment and accounts for its Boolean-circuit cost.
+Write $W_n=\mathbb Z/2^n\mathbb Z$, represented by Lean's $n$-bit words, and
+$c(x)=x+1$. All word addition and subtraction below are modulo $2^n$.
+For maps $f,g$ on a finite set, put $D(f,g)=\{x:f(x)\ne g(x)\}$.
+
+\begin{theorem}
+Suppose $h:W_n\to W_n$ is injective and commutes with $f:W_n\to W_n$.
+If $r=|D(f,c)|$, there exists a De Morgan circuit computing $h$, on the
+least-significant-bit-first representation of words, with at most
+$100(n+1)(r+1)$ gates. In particular, when $f$ is a permutation the same
+bound holds for $f^T$ for every fixed integer $T$, including negative $T$.
+\end{theorem}
+
+This is a nonuniform existence theorem: the circuit may depend on the entire
+map and on $T$. No algorithm for efficiently discovering its constants or
+correction locations is proved. The theorem permits $n=0$, when $W_n$ has
+one element. The formal endpoints are
+\lean{sparse_counter_centralizer} and \lean{sparse_counter_power} in
+\sparseSource{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{the circuit module}.
+
+\subsection{Localizing the failures of commutation}
+
+The first step works for arbitrary maps on any type. If $hf=fh$, and both
+$f(x)=g(x)$ and $f(h(x))=g(h(x))$, then
+\[
+ h(g(x))=h(f(x))=f(h(x))=g(h(x)).
+\]
+Consequently the set of commutation failures for $h$ and $g$ is contained in
+$D(f,g)\cup h^{-1}(D(f,g))$.
+On a finite type, injectivity of $h$ gives
+$|h^{-1}(D(f,g))|\le |D(f,g)|$: the image of this preimage injects into
+$D(f,g)$. The union bound now gives at most $2|D(f,g)|$ failures.
+These are \lean{commutation_defect_subset} and
+\lean{commutation_defect_card} in
+\sparseSource{Complexity/Foundations/Combinatorics/FunctionalGraph/Commutation.lean}{the finite-map module}.
+
+Apply this with $g=c$. Define the displacement $d(x)=h(x)-x$.
+Cancellation in the additive group gives
+\[
+ d(x+1)\ne d(x)\quad\Longleftrightarrow\quad h(x+1)\ne h(x)+1.
+\]
+Thus the set $S$ of unsigned indices $0\le i<2^n$ where
+$d(i+1)\ne d(i)$ has at most $2r$ members. The last index tests the
+wraparound edge and belongs to $S$ exactly when its displacement changes.
+Lean proves the equivalence as \lean{displacement_change_iff}, then injects
+these indices into the commutation-failure set in \lean{displacementCuts_card}.
+
+\subsection{Reconstruction and its gate count}
+
+Let $\Delta_i=d(i+1)-d(i)$. For the unsigned representative of $x$, telescoping
+along the ordinary interval from $0$ to $x$ gives
+\[
+ d(x)=d(0)+\sum_{\substack{i\in S\\i<x}}\Delta_i.
+\]
+Lean first inserts zero summands at all indices outside $S$, restricts the sum
+to $0\le i<x$, and applies the finite telescoping identity. The wraparound
+correction never contributes, since its index $2^n-1$ is not less than any
+unsigned word. This is \lean{thresholdSum_displacement}.
+
+The circuit proof follows that sum by induction over the finite set $S$.
+For each correction, compare the input with the hardwired threshold, select
+$\Delta_i$ or zero, and add the result to the previous partial sum. The existing
+word-circuit lemmas charge respectively $5n+2$, $4n$, and $12n+1$ gates:
+$21n+3$ per correction. Two shared constant gates supply every bit of the
+hardwired words. One last addition recovers $h(x)=x+d(x)$, so the complete
+bound in \lean{displacement_circuit} is
+\[
+ 2+|S|(21n+3)+(12n+1).
+\]
+Substituting $|S|\le 2r$ and relaxing the arithmetic gives
+$100(n+1)(r+1)$. Wiring and fanout are free; constants, comparisons,
+selectors and additions are all charged. The internal ripple-carry and
+multiplexer proofs are named prerequisites, provided by
+\source{Complexity/Computability/Circuit/Boolean/Word.lean}{\lean{Synthesis.word_ult}, \lean{word_mux} and \lean{word_add}}.
+
+\subsection{Signed powers and charged changes of coordinates}
+
+For a permutation $f$, every integer power $f^T$ is injective and commutes
+with $f$. Substituting $h=f^T$ proves \lean{sparse_counter_power}; no dependence
+on the magnitude or sign of $T$ enters the gate bound.
+
+The final theorem allows counter coordinates to be supplied explicitly.
+Let $f,g,e$ be permutations, with $e(g(x))=e(x)+1$, and suppose circuits
+$E$ and $F$ compute $e$ and $e^{-1}$ on word bits. Conjugation sends $g$ to
+$c$ and preserves the number of disagreements: $e$ bijects $D(f,g)$ with
+$D(efe^{-1},ege^{-1})$. Apply the preceding theorem to $efe^{-1}$, then
+compose the resulting circuit between $E$ and $F$. The homomorphism law for
+integer powers gives $(efe^{-1})^T=ef^Te^{-1}$, so the composite computes
+$f^T$. Circuit composition adds sizes, yielding
+\[
+ |E|+|F|+100(n+1)(|D(f,g)|+1).
+\]
+This is \lean{sparse_coordinate_power}. It assumes both conversion circuits;
+it does not construct cheap coordinates for an arbitrary permutation.
+Sparse interval-chart construction, an exponent supplied as input, and the
+specialized navigation bounds remain subsequent developments.
