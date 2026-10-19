@@ -54,7 +54,6 @@ theorem length_encIntBin (z : ℤ) : (encIntBin z).length = z.natAbs.size + 1 :=
 theorem encIntBin_natCast (n : ℕ) : encIntBin n = false :: n.bits := by
   simp
 
-@[simp]
 theorem encIntBin_zero : encIntBin 0 = [false] := rfl
 
 theorem encIntBin_negSucc (n : ℕ) : encIntBin (Int.negSucc n) = true :: (n + 1).bits := by
