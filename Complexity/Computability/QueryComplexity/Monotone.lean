@@ -32,7 +32,6 @@ for monotone `f`.
 * `Cslib.DecisionTree.complexity_le_sensitivityFor_mul_sensitivityFor_of_monotone`,
   `Cslib.DecisionTree.complexity_le_sensitivity_sq_of_monotone`: `D(f) ≤ s₀(f) s₁(f) ≤ s(f)²` for
   monotone `f`.
-* `Cslib.monotone_threshold`: threshold functions are monotone.
 
 ## References
 
@@ -162,13 +161,5 @@ theorem complexity_le_sensitivity_sq_of_monotone (hf : Monotone f) :
     exact Nat.mul_le_mul (sensitivityFor_le_sensitivity f _) (sensitivityFor_le_sensitivity f _))
 
 end DecisionTree
-
-/-- Threshold functions are monotone. -/
-theorem monotone_threshold (j : ℕ) : Monotone (threshold n j) := fun x y hxy => by
-  have : weight x ≤ weight y := card_le_card fun i hi => by
-    have hxi : x i = true := (mem_filter.1 hi).2
-    exact mem_filter.2 ⟨mem_univ i, le_antisymm (Bool.le_true _) (hxi ▸ hxy i)⟩
-  rw [threshold_apply, threshold_apply]
-  exact Bool.le_iff_imp.2 fun h => decide_eq_true ((of_decide_eq_true h).trans this)
 
 end Cslib

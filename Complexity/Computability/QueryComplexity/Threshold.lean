@@ -53,12 +53,6 @@ variable {n j : ℕ}
 
 namespace BitString
 
-/-- The false coordinates of `x` number the coordinates minus the weight. -/
-theorem card_filter_eq_false {ι : Type*} [Fintype ι] (x : ι → Bool) :
-    #{i | x i = false} = Fintype.card ι - weight x := by
-  rw [← weight_not, weight]
-  simp
-
 /-- A coordinate is sensitive for `Th^n_j` exactly when it is a true bit of an input of weight
 `j`, or a false bit of an input of weight `j - 1`. -/
 theorem isSensitiveCoord_threshold_iff (x : BitString n) (i : Fin n) :
@@ -92,7 +86,7 @@ theorem sensitivityAt_threshold_of_weight_add_one_eq {x : BitString n} (hx : wei
     ext i
     have h : weight x ≠ j := by omega
     simp [isSensitiveCoord_threshold_iff, h, hx]
-  rw [sensitivityAt, this, card_filter_eq_false, Fintype.card_fin]
+  rw [sensitivityAt, this, card_filter_eq_false_eq_card_sub_weight, Fintype.card_fin]
   omega
 
 end BitString
@@ -117,13 +111,14 @@ theorem certificateComplexityAt_threshold_le (x : BitString n) :
     simp only [threshold_apply, decide_eq_decide]
     omega
   · obtain ⟨S, hS, hcard⟩ := exists_subset_card_eq (s := univ.filter fun i => x i = false)
-      (n := n + 1 - j) (by rw [card_filter_eq_false, Fintype.card_fin]; have := hwy x; omega)
+      (n := n + 1 - j) (by
+        rw [card_filter_eq_false_eq_card_sub_weight, Fintype.card_fin]; have := hwy x; omega)
     refine (certificateComplexityAt_le (S := S) fun y hy => ?_).trans
       (hcard.le.trans (le_max_right _ _))
     have hle : #S ≤ #{i | y i = false} := card_le_card fun i hi => by
       have := (mem_filter.1 (hS hi)).2
       simp [hy i hi, this]
-    rw [card_filter_eq_false, Fintype.card_fin] at hle
+    rw [card_filter_eq_false_eq_card_sub_weight, Fintype.card_fin] at hle
     have := hwy y
     simp only [threshold_apply, decide_eq_decide]
     omega
