@@ -51,13 +51,16 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.InteractiveProofs
 import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
+import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
 import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
+import ComplexityTests.LogSpace
 import ComplexityTests.Logarithms
 import ComplexityTests.MachineClock
 import ComplexityTests.MachineExtendTapes
@@ -73,6 +76,10 @@ import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NPCompleteGraphs
+import ComplexityTests.NPCompleteGraphs.Hamiltonian
+import ComplexityTests.NPCompleteGraphs.TSP
+import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
@@ -140,6 +147,7 @@ import ComplexityTests.RationalHitting.Determinant
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
+import ComplexityTests.Relativization
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
@@ -153,6 +161,7 @@ import ComplexityTests.SourceComplexity
 import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
+import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
 import ComplexityTests.ThreeCNFPolyTime
