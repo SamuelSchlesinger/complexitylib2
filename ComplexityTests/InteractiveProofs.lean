@@ -154,13 +154,24 @@ example {α : Type} (enc : α ↪ List Bool) : BPP enc ⊆ PSPACE enc :=
   (BPP_subset_IP enc).trans (IP_subset_PSPACE enc)
 
 -- The binary counter counts, least significant bit first, and wraps around.
-example : Interaction.incrementBits [true, true, false] = [false, false, true] := rfl
-example : Interaction.incrementBits^[5] [false, false, false] = [true, false, true] := rfl
-example : Interaction.incrementBits [true, true] = [false, false] := rfl
+example : BitString.increment [true, true, false] = [false, false, true] := rfl
+example : BitString.increment^[5] [false, false, false] = [true, false, true] := rfl
+example : BitString.increment [true, true] = [false, false] := rfl
+example : BitString.lsbValue [true, false, true] = 5 := rfl
+
+-- Polynomial space is closed under composition and contains polynomial time, through `fun_prop`.
+example : ComputableTidilyInPolySpace (fun w => BitString.increment (BitString.increment w))
+    encBits encBits := by
+  fun_prop
+
+-- A Boolean function computable within polynomial space decides a problem in `PSPACE`.
+example : {w : List Bool | w.headD false = true} ∈ PSPACE encBits :=
+  mem_PSPACE_of_computableTidilyInPolySpace (f := fun w => w.headD false)
+    (.of_polyTime (ComputableTidilyInPolyTime.headD false)) fun _ => Iff.rfl
 
 -- The seven codes of length `3` decode to the seven words of length at most `2`, each once.
 example : (List.range (Interaction.codeCount 2)).map (fun i =>
-    Interaction.decodeWord (Interaction.incrementBits^[i] (Interaction.firstCode 2))) =
+    Interaction.decodeWord (BitString.increment^[i] (Interaction.firstCode 2))) =
       [[false, false], [false], [true, false], [], [false, true], [true], [true, true]] := by
   decide
 
@@ -302,10 +313,10 @@ example (P : Prover Unit) :
 #guard_msgs in
 #print axioms Interaction.acceptProb_eq_sum
 
-/-- info: 'Cslib.Complexity.Interaction.isBounded_coinProgram' depends on axioms:
+/-- info: 'Cslib.Complexity.Interaction.isBounded_coinFamily' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Interaction.isBounded_coinProgram
+#print axioms Interaction.isBounded_coinFamily
 
 /-- info: 'Cslib.Complexity.Interaction.evaluate_eq' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

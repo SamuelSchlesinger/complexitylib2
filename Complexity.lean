@@ -465,6 +465,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Configurations
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Reachability
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
@@ -867,6 +868,7 @@ public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Broadcast
+public import Complexity.Foundations.Data.BitString.Counter
 public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Hamming

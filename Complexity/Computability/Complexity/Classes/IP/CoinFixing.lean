@@ -35,7 +35,7 @@ the messages from the history (`Cslib.Complexity.Interaction.replayStep`,
 (`Cslib.Complexity.Interaction.outcome_coinProgram`). Along the replay the machine sends at most one
 message per instruction, of length at most the number of instructions so far, and reads replies only
 through their first `t` bits. So the programs of `t` coins form a bounded family, with at most `t`
-messages, each of length less than `t` (`Cslib.Complexity.Interaction.isBounded_coinProgram`).
+messages, each of length less than `t` (`Cslib.Complexity.Interaction.isBounded_coinFamily`).
 
 ## Main definitions
 
@@ -50,7 +50,7 @@ messages, each of length less than `t` (`Cslib.Complexity.Interaction.isBounded_
   fixed coins.
 * `Cslib.Complexity.Interaction.acceptProb_eq_sum`: acceptance averages over the coins.
 * `Cslib.Complexity.Interaction.outcome_coinProgram`: outcomes are replays.
-* `Cslib.Complexity.Interaction.isBounded_coinProgram`: the programs form a bounded family.
+* `Cslib.Complexity.Interaction.isBounded_coinFamily`: the programs form a bounded family.
 
 ## References
 
@@ -426,7 +426,7 @@ def coinFamily (t : ℕ) (x : List Bool) (r : Fin t → Bool) : WordQueryComp Un
 
 /-- **The programs of `t` coins form a bounded family**: at most `t` messages, each of length at
 most `t`, and only the first `t` bits of each reply matter. -/
-theorem isBounded_coinProgram (t : ℕ) (x : List Bool) :
+theorem isBounded_coinFamily (t : ℕ) (x : List Bool) :
     IsBounded (coinFamily M t x) t t where
   rounds r h m hm := by
     have hinv := replayInv_simulate M t x h (List.ofFn r)

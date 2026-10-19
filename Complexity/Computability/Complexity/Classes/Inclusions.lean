@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -65,6 +66,7 @@ inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subs
 * `Cslib.Complexity.NP_subset_NPSPACE`, `Cslib.Complexity.NP_subset_PSPACE`.
 * `Cslib.Complexity.PSPACE_subset_EXP`, `Cslib.Complexity.NP_subset_EXP`.
 * `Cslib.Complexity.mem_PSPACE_iff_computableTidilyInO`: `PSPACE` in the quantitative calculus.
+* `Cslib.Complexity.mem_PSPACE_iff_computableTidilyInPolySpace`: `PSPACE` within polynomial space.
 * `Cslib.Complexity.compl_mem_PSPACE`, `Cslib.Complexity.PolyTimeReducible.mem_PSPACE`,
   `Cslib.Complexity.setOf_exists_mem_PSPACE`: closure properties of `PSPACE`.
 * `Cslib.Complexity.SigmaP_subset_PSPACE`, `Cslib.Complexity.PH_subset_PSPACE`.
@@ -325,15 +327,6 @@ theorem NP_subset_EXP : NP enc ⊆ EXP enc :=
 
 /-! ### Closure properties of `PSPACE` -/
 
-/-- A polynomial-time function is tidily computable within polynomial bounds. -/
-private theorem exists_computableTidilyInO_of_polyTime {β γ : Type} {encIn : β ↪ List Bool}
-    {encOut : γ ↪ List Bool} {f : β → γ} (h : ComputableTidilyInPolyTime f encIn encOut) :
-    ∃ T S, PolyBounded (fun b => (encIn b).length) T ∧ PolyBounded (fun b => (encIn b).length) S ∧
-      ComputableTidilyInO f encIn encOut T S :=
-  let ⟨t, s, ht, hs, hf⟩ := h
-  ⟨t, fun b => t b + s b, ht, ht.add hs, ⟨1, hf.mono (fun _ => by omega)
-    fun _ => by dsimp only; omega, fun b => by have := hf.length_le b; dsimp only; omega⟩⟩
-
 /-- **`PSPACE` in the quantitative calculus**: a problem is in `PSPACE` exactly when a Boolean
 function deciding it is tidily computable within some time and within space polynomial in the
 length of the encoded instance. -/
@@ -352,6 +345,24 @@ theorem mem_PSPACE_iff_computableTidilyInO : A ∈ PSPACE enc ↔ ∃ (f : α �
     exact ⟨f, ⟨_, _, (PolyBounded.const c).mul (hS.add (.const 1)), hc.computableInTimeAndSpace⟩,
       hA⟩
 
+/-- **`PSPACE` within polynomial space**: a problem is in `PSPACE` exactly when a Boolean function
+deciding it is tidily computable within space polynomial in the length of the encoded instance
+(`Turing.MultiTapeTM.ComputableTidilyInPolySpace`). -/
+theorem mem_PSPACE_iff_computableTidilyInPolySpace : A ∈ PSPACE enc ↔
+    ∃ f : α → Bool, ComputableTidilyInPolySpace f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true := by
+  rw [mem_PSPACE_iff_computableTidilyInO]
+  constructor
+  · rintro ⟨f, T, S, hf, hS, hA⟩
+    exact ⟨f, ⟨T, S, hS, hf⟩, hA⟩
+  · rintro ⟨f, ⟨T, S, hS, hf⟩, hA⟩
+    exact ⟨f, T, S, hf, hS, hA⟩
+
+/-- A Boolean function computable within polynomial space decides a problem in `PSPACE`. -/
+theorem mem_PSPACE_of_computableTidilyInPolySpace {f : α → Bool}
+    (hf : ComputableTidilyInPolySpace f enc encBool) (hA : ∀ a, a ∈ A ↔ f a = true) :
+    A ∈ PSPACE enc :=
+  mem_PSPACE_iff_computableTidilyInPolySpace.mpr ⟨f, hf, hA⟩
+
 /-- **`PSPACE` is closed under complement**: negate the answer. -/
 theorem compl_mem_PSPACE (hA : A ∈ PSPACE enc) : Aᶜ ∈ PSPACE enc := by
   obtain ⟨f, T, S, hf, hS, hA⟩ := mem_PSPACE_iff_computableTidilyInO.mp hA
@@ -365,7 +376,7 @@ theorem PolyTimeReducible.mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : 
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ PSPACE encB) : A ∈ PSPACE enc := by
   obtain ⟨g, hg, hAB⟩ := h
   obtain ⟨f, T, S, hf, hS, hB⟩ := mem_PSPACE_iff_computableTidilyInO.mp hB
-  obtain ⟨Tg, Sg, -, hSg, hgO⟩ := exists_computableTidilyInO_of_polyTime hg
+  obtain ⟨Tg, Sg, hSg, hgO⟩ := ComputableTidilyInPolySpace.of_polyTime hg
   exact mem_PSPACE_iff_computableTidilyInO.mpr ⟨f ∘ g, _, _, hf.comp hgO,
     hSg.add (hS.comp hg.polyBounded_length), fun a => (hAB a).trans (hB (g a))⟩
 
@@ -439,9 +450,9 @@ theorem setOf_exists_mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set (
           (ComputableTidilyInPolyTime.bitsAnyWithInput (test := fun _ b => !b)
             ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _))
             (ComputableTidilyInPolyTime.bool_not.comp (.snd _ _)))))
-  obtain ⟨Tg, Sg, -, hSg, hgO⟩ := exists_computableTidilyInO_of_polyTime hg
-  obtain ⟨Tc, Sc, -, hSc, hcO⟩ := exists_computableTidilyInO_of_polyTime hc
-  obtain ⟨Te, Se, -, hSe, heO⟩ := exists_computableTidilyInO_of_polyTime he
+  obtain ⟨Tg, Sg, hSg, hgO⟩ := ComputableTidilyInPolySpace.of_polyTime hg
+  obtain ⟨Tc, Sc, hSc, hcO⟩ := ComputableTidilyInPolySpace.of_polyTime hc
+  obtain ⟨Te, Se, hSe, heO⟩ := ComputableTidilyInPolySpace.of_polyTime he
   have hedge := hcO.ite (hf.comp hgO) heO
   -- the arguments of Savitch's algorithm
   have hin : ComputableTidilyInPolyTime
@@ -452,7 +463,7 @@ theorem setOf_exists_mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set (
     exact ComputableTidilyInPolyTime.id'.prod (hw.prod ((ComputableTidilyInPolyTime.const 1).prod
       (((ComputableTidilyInPolyTime.bitsReplicate false).comp hw).prod
         ((ComputableTidilyInPolyTime.bitsReplicate true).comp hw))))
-  obtain ⟨Ti, Si, -, hSi, hinO⟩ := exists_computableTidilyInO_of_polyTime hin
+  obtain ⟨Ti, Si, hSi, hinO⟩ := ComputableTidilyInPolySpace.of_polyTime hin
   have h := Cslib.Reachability.computableTidilyInO_savitch (edge := existsEdge f) (par := id)
     hedge hinO (fun _ => List.length_replicate ..) fun _ => List.length_replicate ..
   -- the space is polynomial

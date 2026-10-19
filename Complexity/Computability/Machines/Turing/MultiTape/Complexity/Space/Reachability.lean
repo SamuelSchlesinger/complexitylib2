@@ -10,6 +10,7 @@ module
 public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -59,7 +60,7 @@ polynomial time, the space is polynomial (`Cslib.Reachability.exists_polyBounded
 namespace Cslib.Reachability
 
 open Turing.MultiTapeTM
-open Cslib.BitString (enumList mem_enumList)
+open Cslib.BitString (enumList mem_enumList increment length_increment)
 
 variable {π : Type} {encP : π ↪ List Bool}
 
@@ -126,14 +127,9 @@ section Certificates
 
 open ComputableTidilyInDegree
 
-/-- The binary successor, wrapping around on the word of all ones. -/
-private def incr : List Bool → List Bool
-  | [] => []
-  | false :: u => true :: u
-  | true :: u => false :: incr u
-
 /-- The counter overflows on the word of all ones, and otherwise increments. -/
-private theorem next_eq (u : List Bool) : next u = if u.all id then none else some (incr u) := by
+private theorem next_eq (u : List Bool) :
+    next u = if u.all id then none else some (increment u) := by
   induction u with
   | nil => rfl
   | cons b u ih =>
@@ -141,22 +137,6 @@ private theorem next_eq (u : List Bool) : next u = if u.all id then none else so
     · rfl
     · simp only [next, ih, List.all_cons, id, Bool.true_and]
       split_ifs <;> rfl
-
-/-- The transducer of `incr`, with the carry as its state. -/
-@[simps q₀ step final]
-private def incrT : Transducer Bool Bool where
-  q₀ := true
-  step c b := (c && b, [c ^^ b])
-  final _ := []
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-/-- The transducer of `incr` increments with a carry. -/
-private theorem incrT_run (c : Bool) (u : List Bool) :
-    incrT.run c u = if c then incr u else u := by
-  induction u generalizing c with
-  | nil => cases c <;> rfl
-  | cons b u ih => cases c <;> cases b <;> simp [incrT_step, incr, ih]
 
 /-- The transducer testing whether all bits are ones. -/
 @[simps q₀ step final]
@@ -188,9 +168,7 @@ private theorem zeroT_run (u : List Bool) : zeroT.run () u = List.replicate u.le
   | nil => rfl
   | cons b u ih => simp [zeroT_step, ih, List.replicate_succ]
 
-/-- The increment, in linear time. -/
-@[local fun_prop] private lemma incr_deg : ComputableTidilyInDegree incr encBits encBits 1 1 :=
-  of_linear (incrT.computableTidilyInLinearTimeAndSpace fun u => by simp [incrT_run])
+attribute [local fun_prop] ComputableTidilyInDegree.increment
 
 /-- The test for the word of all ones, in linear time. -/
 @[local fun_prop] private lemma all_deg :
@@ -329,8 +307,8 @@ private def restStep (w : ℕ) (s : State) : State :=
     ⟨{ s.top with phase := true } :: s.stack.tail, .call s.top.level s.top.mid s.top.dst⟩
   else if s.reg.toPair.2 || s.top.mid.all id then ⟨s.stack.tail, s.reg⟩
   else
-    ⟨{ s.top with mid := incr s.top.mid, phase := false } :: s.stack.tail,
-      .call s.top.level s.top.src (incr s.top.mid)⟩
+    ⟨{ s.top with mid := increment s.top.mid, phase := false } :: s.stack.tail,
+      .call s.top.level s.top.src (increment s.top.mid)⟩
 
 /-- The step, as a case distinction on whether the register holds a call at level `0`. -/
 private theorem step_eq (edge : List Bool → List Bool → Bool) (w : ℕ) (s : State) :
@@ -499,18 +477,12 @@ private def Invariant (w d : ℕ) (s : State) : Prop :=
   StackOk w d s.stack ∧
     ∀ i u v, s.reg = .call i u v → i + s.stack.length ≤ d ∧ u.length = w ∧ v.length = w
 
-/-- The increment keeps the width. -/
-private theorem length_incr (u : List Bool) : (incr u).length = u.length := by
-  induction u with
-  | nil => rfl
-  | cons b u ih => cases b <;> simp [incr, ih]
-
 /-- The counter keeps the width. -/
 private theorem length_of_next {u m : List Bool} (h : next u = some m) : m.length = u.length := by
   rw [next_eq] at h
   split_ifs at h
   cases h
-  exact length_incr u
+  exact length_increment u
 
 /-- The step keeps the invariant of a run. -/
 private theorem invariant_step (edge : List Bool → List Bool → Bool) {w d : ℕ} {s : State}

@@ -27,7 +27,7 @@ The value of a history (`Cslib.Complexity.Interaction.value`) counts the program
 it, plus, for every next message, the best value over the replies. The best reply cannot depend
 on the coins: it is chosen once for all the programs sending that message. Sums and maxima range
 over the words of length at most `L` (`Cslib.Complexity.Interaction.shortWords`), which suffices for
-a bounded family (`Cslib.Complexity.Interaction.IsBounded`): every program makes fewer than `D`
+a bounded family (`Cslib.Complexity.Interaction.IsBounded`): every program makes at most `D`
 requests, every message has length at most `L`, and only the first `L` bits of a reply matter.
 
 For a bounded family, the value of the empty history is the largest number of accepting programs
@@ -196,7 +196,7 @@ noncomputable def value : ℕ → History → ℕ
   | n + 1, h => accepted F h + ∑ m ∈ shortWords L, (shortWords L).sup fun y =>
       value n (h ++ [(m, y)])
 
-/-- A family of programs makes fewer than `D` requests, sends messages of length at most `L`, and
+/-- A family of programs makes at most `D` requests, sends messages of length at most `L`, and
 reads only the first `L` bits of each reply. -/
 structure IsBounded (D L : ℕ) : Prop where
   /-- Every program has finished after `D` messages. -/

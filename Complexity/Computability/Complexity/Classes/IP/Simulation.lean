@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
@@ -19,8 +19,6 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fo
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
-import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Mathlib.Data.Nat.Size
 
@@ -37,24 +35,19 @@ history, and in exponential time.
   (`Cslib.Complexity.Interaction.computableTidilyInPolyTime_accepts`): it folds one instruction per
   coin over the configuration of the machine, whose storage grows by a bounded amount per
   instruction.
-* The coin values are enumerated by a binary counter, and the accepting ones are counted with a
-  binary accumulator (`Cslib.Complexity.Interaction.countAccepts`,
-  `Cslib.Complexity.Interaction.countAccepts_eq_accepted`), in polynomial space
-  (`Cslib.Complexity.Interaction.computableTidilyInPolySpace_countAccepts`).
-
-`Cslib.Complexity.ComputableTidilyInPolySpace` packages tidy computability within polynomial space
-and some time, with its closure under composition, pairing, case distinction and iteration
-(`Cslib.Complexity.ComputableTidilyInPolySpace.iterate`).
+* The coin values are enumerated by the binary counter `Cslib.BitString.increment`, and the
+  accepting ones are counted with a binary accumulator (`Cslib.Complexity.Interaction.countAccepts`,
+  `Cslib.Complexity.Interaction.countAccepts_eq_accepted`), within polynomial space
+  (`Turing.MultiTapeTM.ComputableTidilyInPolySpace`,
+  `Cslib.Complexity.Interaction.computableTidilyInPolySpace_countAccepts`).
 
 ## Main definitions
 
-* `Cslib.Complexity.ComputableTidilyInPolySpace`: computability within polynomial space.
 * `Cslib.Complexity.Interaction.accepts`: whether the program of given coins accepts.
 * `Cslib.Complexity.Interaction.countAccepts`: the number of accepting coin values.
 
 ## Main results
 
-* `Cslib.Complexity.ComputableTidilyInPolySpace.iterate`: iteration within polynomial space.
 * `Cslib.Complexity.Interaction.computableTidilyInPolyTime_accepts`: acceptance in polynomial time.
 * `Cslib.Complexity.Interaction.countAccepts_eq_accepted`: the count of accepting coin values.
 * `Cslib.Complexity.Interaction.computableTidilyInPolySpace_countAccepts`: the count in polynomial
@@ -71,220 +64,9 @@ namespace Cslib.Complexity
 
 open _root_.Turing _root_.Turing.MultiTapeTM
 
-/-! ### Polynomial space -/
-
-/-- `f` is tidily computable within some time and within space polynomially bounded in the length
-of the encoded input. -/
-def ComputableTidilyInPolySpace {α β : Type} (f : α → β) (encIn : α ↪ List Bool)
-    (encOut : β ↪ List Bool) : Prop :=
-  ∃ T S, PolyBounded (fun a => (encIn a).length) S ∧ ComputableTidilyInO f encIn encOut T S
-
-namespace ComputableTidilyInPolySpace
-
-variable {α β γ δ : Type} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
-  {encOut : γ ↪ List Bool} {encD : δ ↪ List Bool}
-
-/-- Polynomial time is within polynomial space. -/
-theorem of_polyTime {f : α → β} (h : ComputableTidilyInPolyTime f encIn encMid) :
-    ComputableTidilyInPolySpace f encIn encMid := by
-  obtain ⟨d, _, h⟩ := h.exists_degree
-  exact ⟨_, _, PolyBounded.of_forall_le (u := fun a => ((encIn a).length + 1) ^ d) 1 d
-    fun a => by simp, h.inO⟩
-
-/-- The encoded values have polynomial length. -/
-theorem polyBounded_length {f : α → β} (h : ComputableTidilyInPolySpace f encIn encMid) :
-    PolyBounded (fun a => (encIn a).length) fun a => (encMid (f a)).length := by
-  obtain ⟨T, S, hS, h⟩ := h
-  obtain ⟨c, hc⟩ := h.length_le
-  exact ((PolyBounded.const c).mul (hS.add (.const 1))).mono hc
-
-/-- Composition. -/
-theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInPolySpace f encMid encOut)
-    (hg : ComputableTidilyInPolySpace g encIn encMid) :
-    ComputableTidilyInPolySpace (fun a => f (g a)) encIn encOut := by
-  have hlen := hg.polyBounded_length
-  obtain ⟨Tf, Sf, hSf, hf'⟩ := hf
-  obtain ⟨Tg, Sg, hSg, hg'⟩ := hg
-  exact ⟨_, _, hSg.add (hSf.comp hlen), hf'.comp hg'⟩
-
-/-- Pairing. -/
-theorem prod {f : α → β} {g : α → δ} (hf : ComputableTidilyInPolySpace f encIn encMid)
-    (hg : ComputableTidilyInPolySpace g encIn encD) :
-    ComputableTidilyInPolySpace (fun a => (f a, g a)) encIn (encPair encMid encD) := by
-  obtain ⟨Tf, Sf, hSf, hf⟩ := hf
-  obtain ⟨Tg, Sg, hSg, hg⟩ := hg
-  exact ⟨_, _, hSf.add hSg, hf.prod hg⟩
-
-/-- Case distinction. -/
-theorem ite {c : α → Bool} {f g : α → β} (hc : ComputableTidilyInPolySpace c encIn encBool)
-    (hf : ComputableTidilyInPolySpace f encIn encMid)
-    (hg : ComputableTidilyInPolySpace g encIn encMid) :
-    ComputableTidilyInPolySpace (fun a => if c a then f a else g a) encIn encMid := by
-  obtain ⟨Tc, Sc, hSc, hc⟩ := hc
-  obtain ⟨Tf, Sf, hSf, hf⟩ := hf
-  obtain ⟨Tg, Sg, hSg, hg⟩ := hg
-  refine ⟨_, _, (hSc.add (hSf.add hSg)).mono fun a => ?_, hc.ite hf hg⟩
-  split_ifs <;> lia
-
-/-- Agreement with a computable function. -/
-theorem congr {f g : α → β} (h : ComputableTidilyInPolySpace f encIn encMid)
-    (hfg : ∀ a, f a = g a) : ComputableTidilyInPolySpace g encIn encMid := by
-  rwa [show g = f from funext fun a => (hfg a).symm]
-
-/-- **Iteration within polynomial space**: iterating a step computable within polynomial space a
-number of times computed in polynomial time in binary, from a start computable within polynomial
-space, is within polynomial space when all the states along the way have polynomial length. -/
-theorem iterate [Inhabited β] {n : α → ℕ} {init : α → β} {step : β → β}
-    (hn : ComputableTidilyInPolyTime n encIn encNat)
-    (hinit : ComputableTidilyInPolySpace init encIn encMid)
-    (hstep : ComputableTidilyInPolySpace step encMid encMid) {B : α → ℕ}
-    (hB : PolyBounded (fun a => (encIn a).length) B)
-    (hstate : ∀ a, ∀ k ≤ n a, (encMid (step^[k] (init a))).length ≤ B a) :
-    ComputableTidilyInPolySpace (fun a => step^[n a] (init a)) encIn encMid := by
-  obtain ⟨dn, _, hn'⟩ := hn.exists_degree
-  obtain ⟨Ti, Si, hSi, hinit⟩ := hinit
-  obtain ⟨Ts, Ss, hSs, hstep⟩ := hstep
-  obtain ⟨cs, ds, hSs⟩ := hSs.exists_le
-  have hit := ComputableTidilyInO.iterate hn'.inO hinit hstep
-    (R := fun a => (Finset.range (n a + 1)).sup fun k => Ts (step^[k] (init a)))
-    (Q := fun a => cs * (B a + 1) ^ ds) (B := B)
-    (fun a k hk => Finset.le_sup (f := fun k => Ts (step^[k] (init a)))
-      (Finset.mem_range.mpr (Nat.lt_succ_of_le hk)))
-    (fun a k hk => (hSs _).trans (Nat.mul_le_mul_left cs
-      (Nat.pow_le_pow_left (Nat.add_le_add_right (hstate a k hk) 1) ds)))
-    hstate
-  refine ⟨_, _, ?_, hit⟩
-  have hQ : PolyBounded (fun a => (encIn a).length) fun a => cs * (B a + 1) ^ ds :=
-    PolyBounded.comp (size' := id) (v := fun m => cs * (m + 1) ^ ds)
-      (PolyBounded.of_forall_le cs ds fun _ => le_rfl) hB
-  exact ((((PolyBounded.of_forall_le (u := fun a => ((encIn a).length + 1) ^ dn) 1 dn
-    fun a => by simp).add hSi).add hQ).add hB).add hn.polyBounded_length
-
-end ComputableTidilyInPolySpace
-
 namespace Interaction
 
-/-! ### A binary counter -/
-
-/-- Binary increment, least significant bit first, discarding the final carry. -/
-def incrementBits : List Bool → List Bool
-  | [] => []
-  | false :: w => true :: w
-  | true :: w => false :: incrementBits w
-
-/-- The value of a word in binary, least significant bit first. -/
-def lsbValue : List Bool → ℕ
-  | [] => 0
-  | b :: w => b.toNat + 2 * lsbValue w
-
-@[simp] theorem length_incrementBits : ∀ w, (incrementBits w).length = w.length
-  | [] => rfl
-  | false :: _ => rfl
-  | true :: w => by simp [incrementBits, length_incrementBits w]
-
-/-- A word of length `m` has value below `2 ^ m`. -/
-theorem lsbValue_lt : ∀ w, lsbValue w < 2 ^ w.length
-  | [] => by simp [lsbValue]
-  | b :: w => by
-    have := lsbValue_lt w
-    cases b <;>
-      simp only [lsbValue, Bool.toNat_false, Bool.toNat_true, zero_add, List.length_cons,
-        pow_succ, gt_iff_lt] <;> lia
-
-/-- Below the largest value, increment adds one. -/
-theorem lsbValue_incrementBits : ∀ w, lsbValue w + 1 < 2 ^ w.length →
-    lsbValue (incrementBits w) = lsbValue w + 1
-  | [] => by simp [lsbValue]
-  | false :: w => fun _ => by
-    simp only [incrementBits, lsbValue, Bool.toNat_true, Bool.toNat_false, zero_add]
-    lia
-  | true :: w => fun h => by
-    simp only [lsbValue, List.length_cons, pow_succ, Bool.toNat_true, incrementBits,
-      Bool.toNat_false] at h ⊢
-    rw [lsbValue_incrementBits w (by lia)]
-    lia
-
-/-- Words of the same length are determined by their values. -/
-theorem lsbValue_injective : ∀ {w w' : List Bool}, w.length = w'.length →
-    lsbValue w = lsbValue w' → w = w'
-  | [], [], _, _ => rfl
-  | b :: w, b' :: w', hl, hv => by
-    simp only [lsbValue] at hv
-    have hb : b = b' := by
-      cases b <;> cases b' <;>
-        first | rfl | (simp only [Bool.toNat_false, Bool.toNat_true, zero_add] at hv; lia)
-    subst hb
-    exact congrArg _ (lsbValue_injective (by simpa using hl) (by lia))
-
-@[simp] theorem lsbValue_replicate_false : ∀ m, lsbValue (List.replicate m false) = 0
-  | 0 => rfl
-  | m + 1 => by simp [List.replicate_succ, lsbValue, lsbValue_replicate_false m]
-
-/-- The word of ones has the largest value. -/
-theorem lsbValue_replicate_true : ∀ m, lsbValue (List.replicate m true) + 1 = 2 ^ m
-  | 0 => rfl
-  | m + 1 => by
-    have := lsbValue_replicate_true m
-    simp only [List.replicate_succ, lsbValue, Bool.toNat_true, pow_succ]
-    lia
-
-/-- The counter counts: the `j`-th iterate from zero has value `j`, below `2 ^ m`. -/
-theorem iterate_incrementBits (m : ℕ) : ∀ j < 2 ^ m,
-    lsbValue (incrementBits^[j] (List.replicate m false)) = j ∧
-      (incrementBits^[j] (List.replicate m false)).length = m
-  | 0, _ => ⟨lsbValue_replicate_false m, List.length_replicate⟩
-  | j + 1, hj => by
-    obtain ⟨hv, hl⟩ := iterate_incrementBits m j (by lia)
-    rw [Function.iterate_succ_apply', length_incrementBits,
-      lsbValue_incrementBits _ (by rw [hv, hl]; lia), hv]
-    exact ⟨rfl, hl⟩
-
-@[simp] theorem length_iterate_incrementBits (j : ℕ) (w : List Bool) :
-    (incrementBits^[j] w).length = w.length := by
-  induction j generalizing w with
-  | zero => rfl
-  | succ j ih => rw [Function.iterate_succ_apply, ih, length_incrementBits]
-
-/-- Every word is reached by counting up to its value. -/
-theorem iterate_incrementBits_lsbValue (u : List Bool) :
-    incrementBits^[lsbValue u] (List.replicate u.length false) = u :=
-  let h := iterate_incrementBits u.length (lsbValue u) (lsbValue_lt u)
-  lsbValue_injective h.2 h.1
-
-/-- Increment by a two-state transducer, the state being the carry. -/
-private def incrementT : Transducer Bool Bool where
-  q₀ := true
-  step c b := (c && b, [b ^^ c])
-  final _ := []
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-private theorem incrementT_run_false (w : List Bool) : incrementT.run false w = w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    rw [Transducer.run_cons]
-    change [b ^^ false] ++ incrementT.run (false && b) w = b :: w
-    rw [Bool.false_and, ih, Bool.xor_false]
-    rfl
-
-private theorem incrementT_run (w : List Bool) : incrementT.run true w = incrementBits w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    rw [Transducer.run_cons]
-    change [b ^^ true] ++ incrementT.run (true && b) w = incrementBits (b :: w)
-    cases b
-    · rw [Bool.true_and, incrementT_run_false]
-      rfl
-    · rw [Bool.true_and, ih]
-      rfl
-
-/-- Binary increment is polynomial-time. -/
-theorem computableTidilyInPolyTime_incrementBits :
-    ComputableTidilyInPolyTime incrementBits encBits encBits :=
-  .of_linear (incrementT.computableTidilyInLinearTimeAndSpace fun w => by
-    rw [show incrementT.q₀ = true from rfl, incrementT_run]; rfl)
+open Cslib.BitString (increment lsbValue)
 
 /-! ### A live replay -/
 
@@ -562,7 +344,7 @@ variable {α : Type} (enc : α ↪ List Bool) (fuel : α → ℕ)
 
 /-- One round of the count: test the coins, add the verdict, and move on to the next coins. -/
 def countStep (s : (α × History) × List Bool × ℕ) : (α × History) × List Bool × ℕ :=
-  (s.1, incrementBits s.2.1, s.2.2 + if accepts M (enc s.1.1) s.2.1 s.1.2 then 1 else 0)
+  (s.1, increment s.2.1, s.2.2 + if accepts M (enc s.1.1) s.2.1 s.1.2 then 1 else 0)
 
 /-- The number of accepting values of `fuel a` coins after the history `h`, counted by trying the
 coins one after another with a binary counter. -/
@@ -573,9 +355,9 @@ open Classical in
 /-- After `j` rounds the count has tried the first `j` values of the counter. -/
 theorem iterate_countStep (q : α × History) (m j : ℕ) :
     (countStep M enc)^[j] (q, List.replicate m false, 0) =
-      (q, incrementBits^[j] (List.replicate m false),
+      (q, increment^[j] (List.replicate m false),
         ((Finset.range j).filter fun i =>
-          accepts M (enc q.1) (incrementBits^[i] (List.replicate m false)) q.2).card) := by
+          accepts M (enc q.1) (increment^[i] (List.replicate m false)) q.2).card) := by
   induction j with
   | zero => simp
   | succ j ih =>
@@ -594,39 +376,40 @@ theorem countAccepts_eq_accepted (q : α × History) :
   rw [countAccepts, iterate_countStep, accepted]
   simp only
   set t := fuel q.1
-  refine Finset.card_bij' (fun i _ j => (incrementBits^[i] (List.replicate t false)).getD j false)
+  refine Finset.card_bij'
+    (fun i _ j => (increment^[i] (List.replicate t false)).getD j false)
     (fun f _ => lsbValue (List.ofFn f)) ?_ ?_ ?_ ?_
   · intro i hi
     simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_univ, true_and] at hi ⊢
-    obtain ⟨_, hl⟩ := iterate_incrementBits t i hi.1
+    obtain ⟨_, hl⟩ := BitString.iterate_increment t i hi.1
     have hofFn : List.ofFn (fun j : Fin t =>
-        (incrementBits^[i] (List.replicate t false)).getD j false) =
-        incrementBits^[i] (List.replicate t false) := by
+        (increment^[i] (List.replicate t false)).getD j false) =
+        increment^[i] (List.replicate t false) := by
       refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
       simp
     rw [coinFamily, hofFn]
     exact (accepts_eq_true_iff_of_length M hl _).mp hi.2
   · intro f hf
     simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_univ, true_and] at hf ⊢
-    have hlt := lsbValue_lt (List.ofFn f)
+    have hlt := BitString.lsbValue_lt (List.ofFn f)
     rw [List.length_ofFn] at hlt
     refine ⟨hlt, ?_⟩
-    have := iterate_incrementBits_lsbValue (List.ofFn f)
+    have := BitString.iterate_increment_lsbValue (List.ofFn f)
     rw [List.length_ofFn] at this
     rw [this]
     exact (accepts_eq_true_iff_of_length M (List.length_ofFn (f := f)) _).mpr hf
   · intro i hi
     simp only [Finset.mem_filter, Finset.mem_range] at hi
-    obtain ⟨hv, hl⟩ := iterate_incrementBits t i hi.1
+    obtain ⟨hv, hl⟩ := BitString.iterate_increment t i hi.1
     have hofFn : List.ofFn (fun j : Fin t =>
-        (incrementBits^[i] (List.replicate t false)).getD j false) =
-        incrementBits^[i] (List.replicate t false) := by
+        (increment^[i] (List.replicate t false)).getD j false) =
+        increment^[i] (List.replicate t false) := by
       refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
       simp
     rw [hofFn, hv]
   · intro f _
     funext j
-    have := iterate_incrementBits_lsbValue (List.ofFn f)
+    have := BitString.iterate_increment_lsbValue (List.ofFn f)
     rw [List.length_ofFn] at this
     rw [this]
     simp
@@ -636,13 +419,11 @@ number of coins computed in polynomial time. -/
 theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
     (hfuel : ComputableTidilyInPolyTime fuel enc encUnary) :
     ComputableTidilyInPolySpace (countAccepts M enc fuel) (encPair enc encHistory) encNat := by
-  open ComputableTidilyInPolyTime in
-  have hn : ComputableTidilyInPolyTime (fun q : α × History => 2 ^ fuel q.1)
-      (encPair enc encHistory) encNat :=
-    ((ComputableTidilyInDegree.two_pow_length encUnary).computableTidilyInPolyTime.comp
-      (hfuel.comp (fst _ _))).of_enc_eq fun q => by simp [encUnary_apply]
   have hfuel' : ComputableTidilyInPolyTime (fun q : α × History => fuel q.1)
       (encPair enc encHistory) encUnary := hfuel.comp (ComputableTidilyInPolyTime.fst _ _)
+  have hn : ComputableTidilyInPolyTime (fun q : α × History => 2 ^ fuel q.1)
+      (encPair enc encHistory) encNat :=
+    ComputableTidilyInPolyTime.binary_two_pow.comp hfuel'
   have hinit : ComputableTidilyInPolyTime
       (fun q : α × History => (q, List.replicate (fuel q.1) false, 0))
       (encPair enc encHistory) (encPair (encPair enc encHistory) (encPair encBits encNat)) :=
@@ -650,7 +431,7 @@ theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
       (((ComputableTidilyInPolyTime.bitsReplicate false).comp hfuel').prod
         (ComputableTidilyInPolyTime.const 0))
   have hacc := computableTidilyInPolyTime_accepts M
-  have hinc := computableTidilyInPolyTime_incrementBits
+  have hinc := ComputableTidilyInPolyTime.increment
   have hstep : ComputableTidilyInPolyTime (countStep M enc)
       (encPair (encPair enc encHistory) (encPair encBits encNat))
       (encPair (encPair enc encHistory) (encPair encBits encNat)) := by
@@ -670,15 +451,15 @@ theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
       ((ComputableTidilyInPolyTime.snd _ _).snd')).comp hit
   · rw [iterate_countStep]
     have hcard : ((Finset.range j).filter fun i =>
-        accepts M (enc q.1) (incrementBits^[i] (List.replicate (fuel q.1) false)) q.2).card ≤
+        accepts M (enc q.1) (increment^[i] (List.replicate (fuel q.1) false)) q.2).card ≤
           2 ^ fuel q.1 :=
       (Finset.card_filter_le _ _).trans (by simpa using hj)
     have hsize : (encNat ((Finset.range j).filter fun i =>
-        accepts M (enc q.1) (incrementBits^[i] (List.replicate (fuel q.1) false)) q.2).card).length
+        accepts M (enc q.1) (increment^[i] (List.replicate (fuel q.1) false)) q.2).card).length
           ≤ fuel q.1 + 1 := by
       rw [encNat_apply, Nat.size_eq_bits_len]
       exact Nat.size_le.mpr (hcard.trans_lt (Nat.pow_lt_pow_right (by norm_num) (by lia)))
-    simp only [length_encPair, encBits_apply, length_iterate_incrementBits,
+    simp only [length_encPair, encBits_apply, BitString.length_iterate_increment,
       List.length_replicate] at hsize ⊢
     lia
 
