@@ -19,9 +19,6 @@ namespace ComplexityTests.Iteration.SparseDisplacement
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean Cslib.Circuits.Boolean.Iteration
 open Cslib.FunctionalGraph
 
-local instance (n : ℕ) : Fintype (BitVec n) :=
-  Fintype.ofEquiv (Fin (2 ^ n)) BitVec.equivFin.toEquiv.symm
-
 -- At width zero there is one state, and its displacement never changes.
 example : displacementCuts (id : BitVec 0 → BitVec 0) = ∅ := by decide
 

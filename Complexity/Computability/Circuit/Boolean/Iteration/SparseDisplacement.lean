@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Commutation
 public import Mathlib.Data.BitVec
+public import Mathlib.Data.FinEnum
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Algebra.Group.End
 import Mathlib.Tactic.Abel
@@ -54,10 +55,6 @@ namespace Cslib.Circuits.Boolean.Iteration
 open Cslib.FunctionalGraph
 
 variable {n w : ℕ}
-
-/-- Enumerate words through their unsigned values. -/
-local instance sparseBitVecFintype (w : ℕ) : Fintype (BitVec w) :=
-  Fintype.ofEquiv (Fin (2 ^ w)) BitVec.equivFin.toEquiv.symm
 
 /-- Add the corrections whose thresholds precede the input word. -/
 def thresholdSum (S : Finset ℕ) (coeff : ℕ → BitVec w) (base x : BitVec w) : BitVec w :=
