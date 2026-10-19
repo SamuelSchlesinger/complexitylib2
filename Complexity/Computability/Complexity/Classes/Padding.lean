@@ -19,11 +19,11 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 /-!
 # Padding
 
-If `P = NP`, then `EXP = NEXP` and `E = NE`: collapses of polynomial classes translate upwards
-[Book][Book1974], [Arora and Barak, Section 2.6][AroraBarak09], [Papadimitriou, Section
-20.1][Papadimitriou94]. The proof pads instances until a slow nondeterministic machine is fast in
-the length of the padded instance, decides the padded problem deterministically, and pays for
-writing the padding.
+If `P = NP`, then `EXP = NEXP` and `E = NE` [Arora and Barak, Section 2.6][AroraBarak09]:
+collapses of polynomial classes translate upwards, by the padding argument of Book
+[Book][Book1974]. The proof pads instances until a slow nondeterministic machine is fast in the
+length of the padded instance, decides the padded problem deterministically, and pays for writing
+the padding.
 
 ## Timed reductions
 
@@ -79,9 +79,8 @@ problems on any type, under any encoding.
 
 ## References
 
-* [R. V. Book, *Comparing complexity classes*][Book1974]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
-* [C. H. Papadimitriou, *Computational Complexity*][Papadimitriou94]
+* [R. V. Book, *Comparing complexity classes*][Book1974]
 -/
 
 @[expose] public section
@@ -373,7 +372,7 @@ theorem NTIME_two_pow_subset_iUnion_DTIME_of_NP_subset_P (hNP : NP encBits ⊆ P
 
 /-! ### Exponential time -/
 
-/-- **If `NP ⊆ P`, then `NE ⊆ E`** [Book][Book1974]. -/
+/-- **If `NP ⊆ P`, then `NE ⊆ E`**, by padding [Book][Book1974]. -/
 theorem NE_subset_E_of_NP_subset_P (hNP : NP encBits ⊆ P encBits) : NE enc ⊆ E enc := by
   intro A hA
   obtain ⟨k, hk⟩ := mem_NE_iff.mp hA
@@ -399,7 +398,7 @@ theorem NEXP_subset_EXP_of_NP_subset_P (hNP : NP encBits ⊆ P encBits) : NEXP e
   rw [pow_succ' n (k + 1)]
   exact Nat.mul_le_mul_right _ hn
 
-/-- **If `P = NP`, then `E = NE`** [Book][Book1974]. -/
+/-- **If `P = NP`, then `E = NE`**, by padding [Book][Book1974]. -/
 theorem E_eq_NE_of_P_eq_NP (h : P encBits = NP encBits) : E enc = NE enc :=
   E_subset_NE.antisymm (NE_subset_E_of_NP_subset_P h.ge)
 
