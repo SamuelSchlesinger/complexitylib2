@@ -19,7 +19,7 @@ import Mathlib.Data.Nat.Log
 
 Public coins can replace private coins, and Newman's theorem bounds the converse: private coins
 cost only a few more bits than public coins on finite inputs [Newman1991],
-[Kushilevitz and Nisan, Theorem 3.14][KushilevitzNisan1997]. Let a public-coin protocol `μ` solve
+[Kushilevitz and Nisan, Chapter 3][KushilevitzNisan1997]. Let a public-coin protocol `μ` solve
 `R` on `A × B` with error `ε`, sending at most `c` bits. Draw `2 ^ k` protocols from `μ`
 independently. On each pair of inputs the fraction of them that err is, by Hoeffding's inequality
 (`Cslib.Probability.PMF.pi_sum_ge_mean_add`), at least `ε + δ` with probability at most

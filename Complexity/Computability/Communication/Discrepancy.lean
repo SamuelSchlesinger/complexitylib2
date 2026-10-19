@@ -30,7 +30,7 @@ bound `Protocol.card_filter_le_mul`.
 
 *The discrepancy bound.* The *discrepancy* of `f : X → Y → Bool` under a distribution `ν` on
 `X × Y` is the largest imbalance `|ν(S ∩ f⁻¹ false) - ν(S ∩ f⁻¹ true)|` over rectangles
-`S = A × B` (`discrepancy`) [Kushilevitz and Nisan, Section 3.5][KushilevitzNisan1997]. The output
+`S = A × B` (`discrepancy`) [Kushilevitz and Nisan, Chapter 3][KushilevitzNisan1997]. The output
 of a protocol is constant on each leaf rectangle, so its correlation with `f` under `ν`, which is
 `1 - 2 ε` for a protocol erring with probability `ε` on inputs drawn from `ν`, is at most the
 number of leaves times the discrepancy (`Protocol.abs_sum_mul_signVal_le`). Hence a protocol
@@ -40,11 +40,11 @@ protocols with error `1 / 2 - γ` on every input (`PublicCoin.two_mul_le_two_pow
 
 *The inner product.* Lindsey's lemma (`Matrix.sq_sum_bilinear_mul_two_pow_rank_le`) bounds the
 signed sum of the inner product modulo two over a rectangle `A × B` of `n`-bit strings by
-`√(|A| |B| 2 ^ n)` (`sq_sum_signVal_dotProduct_le`), so under the uniform distribution the inner
-product has discrepancy at most `2 ^ (-n / 2)` (`discrepancy_dotProduct_sq_mul_two_pow_le`). So
-public-coin protocols for the inner product with error `1 / 2 - γ` send `c` bits with
-`(2 γ)² 2 ^ n ≤ 4 ^ c`, and with error `1 / 3` at least `(n - 3) / 2` bits: `R(IP) = Ω(n)`
-(`PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three`)
+`√(|A| |B| 2 ^ n)` (`BitString.sq_sum_signVal_dotProduct_le`), so under the uniform distribution
+the inner product has discrepancy at most `2 ^ (-n / 2)`
+(`discrepancy_dotProduct_sq_mul_two_pow_le`). So public-coin protocols for the inner product with
+error `1 / 2 - γ` send `c` bits with `(2 γ)² 2 ^ n ≤ 4 ^ c`, and with error `1 / 3` at least
+`(n - 3) / 2` bits: `R(IP) = Ω(n)` (`PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three`)
 [Chor and Goldreich][ChorGoldreich1988].
 
 ## Main definitions
@@ -57,6 +57,8 @@ public-coin protocols for the inner product with error `1 / 2 - γ` send `c` bit
 * `Cslib.Communication.Protocol.sum_filter_le_mul`: the weighted area bound.
 * `Cslib.Communication.Protocol.two_mul_le_two_pow_mul_discrepancy`,
   `Cslib.Communication.PublicCoin.two_mul_le_two_pow_mul_discrepancy`: the discrepancy bound.
+* `Cslib.BitString.sq_sum_signVal_dotProduct_le`: Lindsey's lemma for signed sums of the inner
+  product over rectangles.
 * `Cslib.Communication.discrepancy_dotProduct_sq_mul_two_pow_le`: the discrepancy of the inner
   product.
 * `Cslib.Communication.PublicCoin.le_two_mul_ecomplexityFun_dotProduct_add_three`,
@@ -127,7 +129,8 @@ end Protocol
 
 /-- The *discrepancy* of `f : X → Y → Bool` under a distribution `ν` on `X × Y`: the largest
 imbalance `|ν(S ∩ f⁻¹ false) - ν(S ∩ f⁻¹ true)|` of `f` on a rectangle `S = A × B`, written as the
-signed sum `|∑_{x ∈ A, y ∈ B} ν(x, y) (-1)^{f x y}|`. -/
+signed sum `|∑_{x ∈ A, y ∈ B} ν(x, y) (-1)^{f x y}|`. The results about it assume that `X` and `Y`
+are finite. -/
 noncomputable def discrepancy (ν : PMF (X × Y)) (f : X → Y → Bool) : ℝ :=
   ⨆ S : Finset X × Finset Y, |∑ x ∈ S.1, ∑ y ∈ S.2, (ν (x, y)).toReal * signVal (f x y)|
 
@@ -155,9 +158,9 @@ theorem exists_abs_sum_eq_discrepancy (ν : PMF (X × Y)) (f : X → Y → Bool)
 theorem discrepancy_nonneg : 0 ≤ discrepancy ν f :=
   (abs_nonneg _).trans (abs_sum_le_discrepancy ν f ∅ ∅)
 
-/-! ### The discrepancy bound -/
-
 end Finite
+
+/-! ### The discrepancy bound -/
 
 private theorem abs_signVal (b : Bool) : |signVal b| = 1 := by
   cases b <;> simp
@@ -256,7 +259,8 @@ end PublicCoin
 /-- **Lindsey's lemma for the inner product**: the signed sum of the inner product modulo two over
 a rectangle `A × B` of bit strings indexed by `ι` is at most `√(|A| |B| 2 ^ |ι|)` in absolute
 value. -/
-theorem sq_sum_signVal_dotProduct_le {ι : Type*} [Fintype ι] (A B : Finset (ι → Bool)) :
+theorem _root_.Cslib.BitString.sq_sum_signVal_dotProduct_le {ι : Type*} [Fintype ι]
+    (A B : Finset (ι → Bool)) :
     (∑ x ∈ A, ∑ y ∈ B, signVal (x ⬝ᵥ y)) ^ 2 ≤ #A * #B * 2 ^ Fintype.card ι := by
   classical
   let e : Bool ≃+* ZMod 2 := (ZMod.ringEquivOfPrime Bool Nat.prime_two (by decide)).symm
@@ -288,7 +292,7 @@ theorem discrepancy_dotProduct_sq_mul_two_pow_le (n : ℕ) :
     simp [Fintype.card_prod]
   simp only [PMF.uniformOfFintype_apply, hcard, ← mul_sum]
   set S := ∑ x ∈ A, ∑ y ∈ B, signVal (x ⬝ᵥ y)
-  have hS := sq_sum_signVal_dotProduct_le A B
+  have hS := BitString.sq_sum_signVal_dotProduct_le A B
   rw [Fintype.card_fin] at hS
   have hA : (#A : ℝ) ≤ 2 ^ n := by
     exact_mod_cast (card_le_univ A).trans_eq (by simp)
