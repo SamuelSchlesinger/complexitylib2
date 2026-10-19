@@ -35,6 +35,7 @@ written as iterated finite averages. The tail bounds are finite-PMF event probab
 
 ## Main results
 
+* `Cslib.Probability.hasBoundedDifferences_sum`: sums of bounded coordinate scores.
 * `Cslib.Probability.HasBoundedDifferences.sum_pi_mul_exp_le`: the moment generating function
   bound.
 * `Cslib.Probability.HasBoundedDifferences.hasSubgaussianMGF_pi`: the sub-Gaussian form.
@@ -71,9 +72,12 @@ variable {f : (∀ i, α i) → ℝ} {c : ι → ℝ}
 theorem neg (hf : HasBoundedDifferences f c) : HasBoundedDifferences (fun x => -f x) c :=
   fun x i a => by simpa only [neg_sub_neg, abs_sub_comm] using hf x i a
 
+end HasBoundedDifferences
+
 /-- A sum of coordinate scores whose `i`-th score varies by at most `c i` has bounded
 differences `c`. -/
-theorem sum [Fintype ι] {score : ∀ i, α i → ℝ} (hscore : ∀ i a b, |score i a - score i b| ≤ c i) :
+theorem hasBoundedDifferences_sum [Fintype ι] {score : ∀ i, α i → ℝ} {c : ι → ℝ}
+    (hscore : ∀ i a b, |score i a - score i b| ≤ c i) :
     HasBoundedDifferences (fun x => ∑ i, score i (x i)) c := by
   intro x i a
   have hrest : ∑ j ∈ Finset.univ.erase i, score j (Function.update x i a j) =
@@ -84,8 +88,6 @@ theorem sum [Fintype ι] {score : ∀ i, α i → ℝ} (hscore : ∀ i a b, |sco
     ← Finset.add_sum_erase _ _ (Finset.mem_univ i), Function.update_self, hrest,
     add_sub_add_right_eq_sub]
   exact hscore i a (x i)
-
-end HasBoundedDifferences
 
 /-! ### Hoeffding's lemma and partial averages -/
 
@@ -112,9 +114,10 @@ private theorem piecewise_update_left {s : Finset ι} {i : ι} (hi : i ∉ s) (y
 
 variable [Fintype ι] [∀ i, Fintype (α i)]
 
+omit [∀ i, Fintype (α i)] in
 /-- Fixing a coordinate of an independent product to `v` is the same as overwriting it with `v`
 after sampling. -/
-private theorem pi_update_pure (p : ∀ i, PMF (α i)) (i : ι) (v : α i) :
+private theorem pi_update_pure [∀ i, Finite (α i)] (p : ∀ i, PMF (α i)) (i : ι) (v : α i) :
     pi (Function.update p i (PMF.pure v)) = (pi p).map fun y => Function.update y i v := by
   let overwrite : ∀ j, α j → α j := Function.update (fun j => id) i fun _ => v
   have hlaw : (fun j => (p j).map (overwrite j)) = Function.update p i (PMF.pure v) := by

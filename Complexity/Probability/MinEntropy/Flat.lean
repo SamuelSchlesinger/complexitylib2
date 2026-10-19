@@ -199,11 +199,12 @@ private theorem exists_weights [Fintype α] [DecidableEq α] (K n : ℕ) (f : α
 
 /-- **Flat decomposition.** A distribution on a finite type whose outcomes all have probability
 at most `1 / K` is a mixture of uniform distributions on sets of exactly `K` outcomes. -/
-theorem exists_eq_bind_uniformOfFinset [Fintype α] (p : PMF α) {K : ℕ} (hK : K ≠ 0)
+theorem exists_eq_bind_uniformOfFinset [Finite α] (p : PMF α) {K : ℕ} (hK : K ≠ 0)
     (hp : ∀ a, (p a).toReal ≤ (K : ℝ)⁻¹) :
     ∃ mix : PMF {S : Finset α // S.card = K},
       p = mix.bind fun S => uniformOfFinset S.1 (card_ne_zero.mp (S.2.trans_ne hK)) := by
   classical
+  let := Fintype.ofFinite α
   have hKpos : (0 : ℝ) < K := by exact_mod_cast Nat.pos_of_ne_zero hK
   obtain ⟨w, hw, hone, hmass⟩ := exists_weights K _ (fun a => K * (p a).toReal) rfl
     (fun a => ⟨by positivity, by
@@ -228,7 +229,7 @@ theorem exists_eq_bind_uniformOfFinset [Fintype α] (p : PMF α) {K : ℕ} (hK :
 
 /-- **Every `k`-source is a mixture of flat `k`-sources.** A distribution with min-entropy at
 least a natural number `k` is a mixture of uniform distributions on sets of `2^k` outcomes. -/
-theorem exists_eq_bind_uniformOfFinset_of_le_minEntropy [Fintype α] (p : PMF α) {k : ℕ}
+theorem exists_eq_bind_uniformOfFinset_of_le_minEntropy [Finite α] (p : PMF α) {k : ℕ}
     (hk : (k : ℝ) ≤ minEntropy p) :
     ∃ mix : PMF {S : Finset α // S.card = 2 ^ k},
       p = mix.bind fun S =>
@@ -240,7 +241,7 @@ theorem exists_eq_bind_uniformOfFinset_of_le_minEntropy [Fintype α] (p : PMF α
 /-- **`k`-sources are mixtures of flat `k`-sources.** For a natural number `k`, a distribution has
 min-entropy at least `k` exactly when it is a mixture of uniform distributions on sets of `2^k`
 outcomes. -/
-theorem le_minEntropy_iff_exists_eq_bind_uniformOfFinset [Fintype α] (p : PMF α) (k : ℕ) :
+theorem le_minEntropy_iff_exists_eq_bind_uniformOfFinset [Finite α] (p : PMF α) (k : ℕ) :
     (k : ℝ) ≤ minEntropy p ↔ ∃ mix : PMF {S : Finset α // S.card = 2 ^ k},
       p = mix.bind fun S =>
         uniformOfFinset S.1 (card_ne_zero.mp (S.2.trans_ne (pow_ne_zero k two_ne_zero))) := by
