@@ -27,8 +27,10 @@ in `#P` is odd (`Cslib.Complexity.mem_ParityP_iff_exists_SharpP`).
 `⊕P` is closed under complement (`Cslib.Complexity.compl_mem_ParityP`): the verifier
 `Cslib.Complexity.succVerifier V` accepts the string of `false`s and the strings `true :: w` with
 `V (a, w) = true`, so it accepts exactly one string more than `V`, one bit longer
-(`Cslib.Complexity.acceptCount_succVerifier`). Splitting strings into a prefix and the rest
-(`Cslib.Complexity.acceptCount_add`) is the other counting step used for parity classes.
+(`Cslib.Complexity.acceptCount_succVerifier`). Splitting words into a prefix and the rest
+(`Cslib.Complexity.card_filter_ofFn_add`, `Cslib.Complexity.acceptCount_add`) or into their
+first bit and the rest (`Cslib.Complexity.card_filter_ofFn_succ`) are the other counting steps
+used for parity classes.
 
 ## Main definitions
 
@@ -38,7 +40,8 @@ in `#P` is odd (`Cslib.Complexity.mem_ParityP_iff_exists_SharpP`).
 
 ## Main results
 
-* `Cslib.Complexity.acceptCount_add`: counting strings by their prefixes.
+* `Cslib.Complexity.card_filter_ofFn_add`, `Cslib.Complexity.card_filter_ofFn_succ`,
+  `Cslib.Complexity.acceptCount_add`: counting words by their prefixes.
 * `Cslib.Complexity.acceptCount_succVerifier`, `Cslib.Complexity.acceptCount_succTest`: one more
   accepted string.
 * `Cslib.Complexity.mem_ParityP`, `Cslib.Complexity.mem_ParityP_iff_exists_SharpP`: `⊕P` through
