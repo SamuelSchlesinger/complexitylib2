@@ -159,7 +159,7 @@ example {n : ℕ} (ε : ℝ) (f : BooleanFunction n) :
 
 /-- **Matching pennies**: the row player pays `1` when the two choices match. Against every mixed
 strategy some row pays at most `1/2`, so some mixed strategy pays at most `1/2` against both
-columns, and it must be the fair coin. -/
+columns. -/
 example : ∃ p : StdSimplex ℝ (Fin 2), ∀ j, ∑ i, p.weights i * (if i = j then 1 else 0) ≤ 1 / 2 :=
   StdSimplex.exists_forall_sum_le_of_forall_exists_sum_le _ fun q => by
     have h := q.total_fin_two
