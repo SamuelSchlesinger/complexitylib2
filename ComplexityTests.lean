@@ -17,6 +17,7 @@ import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
+import ComplexityTests.CommunicationComplexity2
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision

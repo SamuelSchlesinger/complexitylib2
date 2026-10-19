@@ -249,10 +249,13 @@ public import Complexity.Computability.Circuit.Support
 public import Complexity.Computability.Circuit.Synthesis
 public import Complexity.Computability.Circuit.Unfolding
 public import Complexity.Computability.Circuit.Wiring
+public import Complexity.Computability.Communication.Discrepancy
 public import Complexity.Computability.Communication.FoolingSet
 public import Complexity.Computability.Communication.Functions
 public import Complexity.Computability.Communication.KarchmerWigderson
+public import Complexity.Computability.Communication.Newman
 public import Complexity.Computability.Communication.Protocol
+public import Complexity.Computability.Communication.Randomized
 public import Complexity.Computability.Communication.Rank
 public import Complexity.Computability.Communication.Rectangle
 public import Complexity.Computability.Communication.RoundProtocol
