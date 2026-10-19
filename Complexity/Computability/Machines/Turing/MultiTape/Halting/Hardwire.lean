@@ -397,8 +397,8 @@ variable {D d : Desc} {X xs : List ℕ} {rp : ℕ} {base : ℤ} {l : List (Optio
 renamed states, a step from a configuration standing for `c` stands for the step of `d` from `c`,
 and emits the same symbol. -/
 theorem step_redirect (hφ : φ.Injective)
-    (hD : ∀ q k, k.state = φ q → D.table.find? (·.1 = k) =
-      (redirect φ r pre suf adj d.table).find? (·.1 = k))
+    (hD : ∀ q ws, D.table.find? (·.1 = ⟨φ q, r, ws⟩) =
+      (redirect φ r pre suf adj d.table).find? (·.1 = ⟨φ q, r, ws⟩))
     (hrp : inputSymbol X rp = r) (hxs : ∀ a ∈ xs, a ≠ marker) (hpre : preT.map Tape.read = pre)
     (hsuf : sufT.map Tape.read = List.replicate suf none) {c : SCfg}
     (hc : c.inputPos ≤ xs.length + 1)
@@ -411,7 +411,7 @@ theorem step_redirect (hφ : φ.Injective)
         ⟨φ q, r, (vtape base l xs p).read :: (pre ++ (ws.map Tape.read ++
           List.replicate suf none))⟩ := by
       simp [redirectCfg, SCfg.key, hrp, ← hpre, ← hsuf]
-    have hfind := (hD q _ rfl).trans
+    have hfind := (hD q _).trans
       (find?_redirect hφ q (vtape base l xs p).read (ws.map Tape.read) d.table)
     rw [← hkey, vsym_read_vtape hxs,
       show (⟨q, inputSymbol xs p, ws.map Tape.read⟩ : Key) = SCfg.key ⟨some q, p, ws⟩ xs q
@@ -430,8 +430,8 @@ theorem step_redirect (hφ : φ.Injective)
 /-- **Redirected runs**: from a configuration standing for `c`, the run of `D` stands for the run
 of `d` from `c`, with the same output. -/
 theorem iterate_stepOut_redirect (hφ : φ.Injective)
-    (hD : ∀ q k, k.state = φ q → D.table.find? (·.1 = k) =
-      (redirect φ r pre suf adj d.table).find? (·.1 = k))
+    (hD : ∀ q ws, D.table.find? (·.1 = ⟨φ q, r, ws⟩) =
+      (redirect φ r pre suf adj d.table).find? (·.1 = ⟨φ q, r, ws⟩))
     (hrp : inputSymbol X rp = r) (hxs : ∀ a ∈ xs, a ≠ marker) (hpre : preT.map Tape.read = pre)
     (hsuf : sufT.map Tape.read = List.replicate suf none) {n : ℕ}
     (hadj : ∀ ts : List Tape, ts.length = n → ∀ was,
@@ -618,13 +618,14 @@ theorem find?_prep {d : Desc} {p : List Bool} {e : Key × Act} (he : e ∈ prep 
     omega
 
 /-- For odd states, the transitions found are the redirected transitions of `d`. -/
-theorem find?_redirect_hardwire (d : Desc) (p : List Bool) (q : ℕ) (k : Key)
-    (hk : k.state = 2 * q + 1) : (hardwire d p).table.find? (·.1 = k) =
-      (redirect (fun q => 2 * q + 1) none [] 0 id d.table).find? (·.1 = k) := by
+theorem find?_redirect_hardwire (d : Desc) (p : List Bool) (q : ℕ) (ws : List (Option ℕ)) :
+    (hardwire d p).table.find? (·.1 = ⟨2 * q + 1, none, ws⟩) =
+      (redirect (fun q => 2 * q + 1) none [] 0 id d.table).find?
+        (·.1 = ⟨2 * q + 1, none, ws⟩) := by
   rw [table_hardwire, List.find?_append, List.find?_eq_none.mpr fun e he h => by
     have := (prep_spec he).1
-    rw [of_decide_eq_true h, hk] at this
-    omega, Option.none_or]
+    rw [of_decide_eq_true h] at this
+    simp at this, Option.none_or]
 
 
 section Run
