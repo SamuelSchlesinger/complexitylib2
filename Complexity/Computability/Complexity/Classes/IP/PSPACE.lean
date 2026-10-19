@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.IP.GameTree
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.Space
+import Complexity.Computability.Complexity.Classes.Oracle.Space
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -569,5 +570,40 @@ theorem mem_iff_two_pow_lt_value {V : α → WordOracleComp Unit Bool} {A : Set 
     rw [show (1 / 3 : ENNReal) = ((1 : ℕ) : ENNReal) / ((3 : ℕ) : ENNReal) by norm_num,
       natCast_div_le_natCast_div_iff hpos (by norm_num)] at h
     lia
+
+/-- **`IP ⊆ PSPACE`** [Arora and Barak, Theorem 8.19][AroraBarak09] [Sipser, Lemma
+10.30][Sipser2013]. A problem with an interactive proof, whose verifier is strict oracle PPT, is
+decided within polynomial space: by the evaluation of the optimal prover's game tree over the
+messages and replies of length at most the clock, which counts the accepting coin values at every
+history (`Cslib.Complexity.Interaction.evaluate`). -/
+theorem IP_subset_PSPACE (enc : α ↪ List Bool) : IP enc ⊆ PSPACE enc := by
+  rintro A ⟨V, hV, hA⟩
+  rcases isEmpty_or_nonempty α with hα | hα
+  · exact P_subset_PSPACE ⟨fun _ => false, ComputableTidilyInPolyTime.const false,
+      fun a => isEmptyElim a⟩
+  let _ : Inhabited α := Classical.inhabited_of_nonempty hα
+  obtain ⟨_, k, Control, _, M, c, d, hreal⟩ := hV
+  set fuel : α → ℕ := fun a => c * ((enc a).length + 1) ^ d
+  have hfuel : ComputableTidilyInPolyTime fuel enc encUnary := by
+    have hlen : ComputableTidilyInPolyTime (fun a => (enc a).length) enc encUnary := by fun_prop
+    exact ((ComputableTidilyInPolyTime.unary_eval (Polynomial.C c * (Polynomial.X + 1) ^ d)).comp
+      hlen).of_enc_eq fun a => by simp [fuel]
+  have hdec : ComputableTidilyInPolySpace
+      (fun a => decide (2 ^ fuel a < 2 * evaluate enc M fuel a)) enc encBool := by
+    have hcap : ComputableTidilyInPolyTime (fun a => 2 ^ fuel a) enc encNat :=
+      ((ComputableTidilyInDegree.two_pow_length encUnary).computableTidilyInPolyTime.comp
+        hfuel).of_enc_eq fun a => by simp [encUnary_apply]
+    have hpost : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1 < 2 * p.2))
+        (encPair encNat encNat) encBool :=
+      ComputableTidilyInPolyTime.binary_lt' (ComputableTidilyInPolyTime.fst _ _)
+        (ComputableTidilyInPolyTime.binary_mul' (ComputableTidilyInPolyTime.const 2)
+          (ComputableTidilyInPolyTime.snd _ _))
+    exact (ComputableTidilyInPolySpace.of_polyTime hpost).comp
+      ((ComputableTidilyInPolySpace.of_polyTime hcap).prod
+        (computableTidilyInPolySpace_evaluate M hfuel))
+  obtain ⟨T, S, hS, h⟩ := hdec
+  refine mem_PSPACE_of_computableTidilyInO h hS fun a => ?_
+  rw [mem_iff_two_pow_lt_value (fun a S oracle s => hreal a S oracle s) hA a, evaluate_eq,
+    decide_eq_true_iff]
 
 end Cslib.Complexity
