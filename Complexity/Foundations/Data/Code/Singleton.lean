@@ -61,7 +61,7 @@ theorem injOn_restrict_of_card_lt_add {C : Set (∀ i, β i)} {d : ℕ} (hd : (d
     mem_sdiff.2 ⟨mem_univ i, fun hiS => (mem_filter.1 hi).2 (congrFun hxy ⟨i, hiS⟩)⟩
   have hdist : hammingDist x y ≤ Fintype.card ι - #S :=
     (card_le_card hsub).trans_eq (card_univ_sdiff S)
-  have := Nat.cast_le.1 (le_minDist.1 hd x hx y hy hne)
+  have := Nat.cast_le.1 (le_minDist_iff.1 hd x hx y hy hne)
   have := card_le_univ S
   omega
 
