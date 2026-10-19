@@ -387,6 +387,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Counting
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
+public import Complexity.Computability.Complexity.Classes.Oracle.PP
 public import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
 public import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 public import Complexity.Computability.Complexity.Classes.Oracle.Space

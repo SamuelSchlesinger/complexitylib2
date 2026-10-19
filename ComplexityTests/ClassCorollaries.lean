@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.Classes.BPP.KarpLipton
 import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
+import Complexity.Computability.Complexity.Classes.Oracle.PP
 import Complexity.Computability.Complexity.Classes.SPP.FewP
 import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 
@@ -53,6 +54,21 @@ example (h : PromiseUSAT ∈ PromiseP encCNF) : NP encBits = RP encBits :=
 
 example (h : USAT ∈ P encCNF) : NP encCNF = RP encCNF :=
   NP_eq_RP_of_USAT_mem_P h encCNF
+
+/-! ### `P^PP` and Toda's theorem -/
+
+example : (Set.univ : Set (List Bool)) ∈ PWithPPOracle encBits :=
+  P_subset_PWithPPOracle univ_mem_P
+
+/-- Binary search for the constant `1 ∈ #P` reads its bit `0`. -/
+example : (Set.univ : Set (List Bool)) ∈ PWithPPOracle encBits :=
+  mem_PWithPPOracle_of_testBit SharpP.one_mem (p := 0) fun _ => by simp
+
+/-- Binary search terminates on the value. -/
+example : (BinarySearch.step 5)^[3] (0, 3) = (5, 0) := by decide
+
+example {α : Type} (enc : α ↪ List Bool) : PH enc ⊆ PWithPPOracle enc :=
+  PH_subset_PWithPPOracle
 
 /-! ### `FewP ⊆ SPP` -/
 
@@ -116,5 +132,25 @@ info: 'Cslib.Complexity.FewP_subset_SPP' depends on axioms: [propext, Classical.
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.FewP_subset_SPP
+
+/--
+info: 'Cslib.Complexity.setOf_le_mem_PP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.setOf_le_mem_PP
+
+/--
+info: 'Cslib.Complexity.mem_PWithPPOracle_of_testBit' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PWithPPOracle_of_testBit
+
+/--
+info: 'Cslib.Complexity.PH_subset_PWithPPOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PH_subset_PWithPPOracle
 
 end ComplexityTests.ClassCorollaries
