@@ -109,7 +109,8 @@ theorem add_one_mul_add_two_le_two_mul_mul_card_monomials {w : ℕ} (hw : 1 ≤ 
   -- the monomials of weighted degree `j`
   let fiber : ℕ → Finset (ℕ × ℕ) := fun j => {ab ∈ monomials w D | ab.1 + w * ab.2 = j}
   have hcard : #(monomials w D) = ∑ j ∈ range (D + 1), #(fiber j) :=
-    card_eq_sum_card_fiberwise fun ab hab => mem_range.2 (Nat.lt_succ_of_le (mem_monomials.1 hab).2.2)
+    card_eq_sum_card_fiberwise fun ab hab =>
+      mem_range.2 (Nat.lt_succ_of_le (mem_monomials.1 hab).2.2)
   have hfiber (j : ℕ) (hj : j ∈ range (D + 1)) : j / w + 1 ≤ #(fiber j) := by
     have hjD := Nat.lt_succ_iff.1 (mem_range.1 hj)
     calc j / w + 1 = #((range (j / w + 1)).image fun b => (j - w * b, b)) := by

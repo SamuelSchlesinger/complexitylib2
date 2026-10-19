@@ -178,7 +178,8 @@ the multiplier: nonzero symbols at distinct positions of a Justesen codeword hav
 encodings. -/
 theorem wozencraft_inj (φ : F ≃+ BitString b) {u u' a a' : F} (ha : a ≠ 0)
     (h : wozencraft φ u a = wozencraft φ u' a') : u = u' ∧ a = a' := by
-  have hfirst : a = a' := φ.injective (funext fun t => by simpa [wozencraft] using congrFun h (0, t))
+  have hfirst : a = a' :=
+    φ.injective (funext fun t => by simpa [wozencraft] using congrFun h (0, t))
   subst hfirst
   have hsecond : u * a = u' * a :=
     φ.injective (funext fun t => by simpa [wozencraft] using congrFun h (1, t))
@@ -243,6 +244,7 @@ theorem le_minDist_justesenCode (φ : F ≃+ BitString b) (K r : ℕ) :
         refine sum_congr rfl fun u _ => ?_
         rw [hammingDist_eq_hammingNorm, neg_add_eq_sub, ← wozencraft_sub]
 
+omit [DecidableEq F] in
 /-- **The number of Justesen codewords.** For a field with `q` elements written as `b` bits and
 `K ≤ q - 1`, the Justesen code of outer dimension `K` has `q ^ K = 2 ^ (b * K)` codewords. -/
 theorem card_justesenCode (φ : F ≃+ BitString b) {K : ℕ} (hK : K ≤ Fintype.card F - 1) :
