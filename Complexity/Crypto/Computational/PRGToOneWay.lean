@@ -12,6 +12,7 @@ public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Negligible.Basic
 import Complexity.Crypto.Computational.OneWayToPRG
 import Complexity.Crypto.Computational.Stretch
+import Complexity.Foundations.Data.BitString.ShortWords
 import Complexity.Tactic.PolyTime
 import Complexity.Tactic.PPT
 
@@ -24,7 +25,7 @@ as often as the inverter wins the inversion game. On a uniform word of length `�
 accept words in the image of `G` restricted to the seeds whose image has length `ℓ n`, so it
 accepts with probability at most the number of those seeds divided by `2 ^ ℓ n`
 (`PRGToOneWay.succProbability_uniformList_test_le`). When this fraction is negligible the
-generator is therefore one-way (`PRGToOneWay.oneWay_of_card_le`).
+generator is therefore one-way (`PseudorandomGenerator.oneWay_of_card_le`).
 
 When `ℓ n ≥ 2 n`, every such seed has length at most `ℓ n - n`, which gives the fraction
 `2 ^ (1 - n)`, so every length-doubling generator is one-way (`PseudorandomGenerator.oneWay`).
@@ -41,7 +42,7 @@ pseudorandom generators exist [HILL1999] (`exists_oneWay_iff_exists_pseudorandom
 
 ## Main results
 
-* `Cslib.Crypto.PRGToOneWay.oneWay_of_card_le`: a generator whose possible preimages of
+* `Cslib.Crypto.PseudorandomGenerator.oneWay_of_card_le`: a generator whose possible preimages of
   length-`ℓ n` words form a negligible fraction of `2 ^ ℓ n` is one-way.
 * `Cslib.Crypto.PseudorandomGenerator.oneWay`: a pseudorandom generator with `2 n ≤ ℓ n` is
   one-way.
@@ -135,10 +136,14 @@ theorem succProbability_uniformList_test_le {generator : List Bool → List Bool
     exact_mod_cast hT
   exact (ENNReal.toNNReal_mono ENNReal.coe_ne_top hfin).trans_eq (ENNReal.toNNReal_coe _)
 
+end PRGToOneWay
+
+open PRGToOneWay
+
 /-- A pseudorandom generator is one-way when, for a negligible `ε`, the words whose image has
 length `ℓ n` lie in a set of at most `ε n 2 ^ ℓ n` words: an inverter succeeding on generated
 words would give a test accepting generated words much more often than uniform ones. -/
-theorem oneWay_of_card_le {generator : List Bool → List Bool} {ℓ : ℕ → ℕ}
+theorem PseudorandomGenerator.oneWay_of_card_le {generator : List Bool → List Bool} {ℓ : ℕ → ℕ}
     (hgenerator : PseudorandomGenerator generator ℓ) {ε : ℕ → ℝ≥0} (hε : Negligible ε)
     (P : ℕ → Finset (List Bool)) (hP : ∀ n (x : List Bool), ℓ x.length = ℓ n → x ∈ P n)
     (hcard : ∀ n, (#(P n) : ℝ≥0) ≤ ε n * 2 ^ ℓ n) : OneWay generator := by
@@ -152,24 +157,6 @@ theorem oneWay_of_card_le {generator : List Bool → List Bool} {ℓ : ℕ → �
     exact succProbability_uniformList_test_le hgenerator.length_eq adversary n (P n) (hP n)
       (ε n) (hcard n)
 
-/-- The words of length at most `k`. -/
-private noncomputable def shortWords (k : ℕ) : Finset (List Bool) :=
-  (range (k + 1)).biUnion fun m => univ.image (List.ofFn : (Fin m → Bool) → _)
-
-private theorem mem_shortWords {k : ℕ} {x : List Bool} (hx : x.length ≤ k) :
-    x ∈ shortWords k :=
-  mem_biUnion.2 ⟨x.length, mem_range.2 (by omega),
-    mem_image.2 ⟨x.get, mem_univ _, List.ofFn_get x⟩⟩
-
-private theorem card_shortWords_lt (k : ℕ) : #(shortWords k) < 2 ^ (k + 1) := by
-  refine card_biUnion_le.trans_lt (lt_of_le_of_lt ?_
-    (Nat.geomSum_lt le_rfl fun i hi => mem_range.1 hi))
-  exact sum_le_sum fun m _ => card_image_le.trans (by simp)
-
-end PRGToOneWay
-
-open PRGToOneWay
-
 /-- **Length-doubling pseudorandom generators are one-way.** If `2 n ≤ ℓ n` for all `n`, a
 pseudorandom generator with output length `ℓ` is a one-way function: the seeds whose image has
 length `ℓ n` have length at most `ℓ n - n`, so a uniform word of length `ℓ n` is in the image with
@@ -179,8 +166,9 @@ theorem PseudorandomGenerator.oneWay {generator : List Bool → List Bool} {ℓ 
     OneWay generator := by
   have hε : Negligible fun n => (1 / 2 : ℝ≥0) ^ n + (1 / 2) ^ n :=
     (negligible_geometric (by norm_num)).add (negligible_geometric (by norm_num))
-  refine oneWay_of_card_le hgenerator hε
-    (fun n => shortWords (ℓ n - n)) (fun n x hx => mem_shortWords ?_) fun n => ?_
+  refine hgenerator.oneWay_of_card_le hε
+    (fun n => BitString.shortWords (ℓ n - n)) (fun n x hx => BitString.mem_shortWords.2 ?_)
+    fun n => ?_
   · have := hℓ x.length
     have := hℓ n
     omega
@@ -190,16 +178,17 @@ theorem PseudorandomGenerator.oneWay {generator : List Bool → List Bool} {ℓ 
       field_simp
       ring
     rw [h]
-    exact_mod_cast (card_shortWords_lt _).le
+    exact_mod_cast (BitString.card_shortWords_lt _).le
 
 /-- A pseudorandom generator whose output length `ℓ` is injective and whose gap `2 ^ (n - ℓ n)` is
 negligible is one-way: the seeds whose image has length `ℓ n` are then exactly those of length
-`n`. This covers stretches such as `ℓ n = n + Nat.log 2 n ^ 2`, eventually below `2 n`. -/
+`n`. This covers stretches such as `ℓ n = n + (Nat.log 2 n + 1) ^ 2`, which is strictly
+increasing and eventually below `2 n`. -/
 theorem PseudorandomGenerator.oneWay_of_injective {generator : List Bool → List Bool}
     {ℓ : ℕ → ℕ} (hgenerator : PseudorandomGenerator generator ℓ) (hinj : Function.Injective ℓ)
     (hgap : Negligible fun n => (1 / 2 : ℝ≥0) ^ (ℓ n - n)) : OneWay generator := by
   classical
-  refine oneWay_of_card_le hgenerator hgap
+  refine hgenerator.oneWay_of_card_le hgap
     (fun n => univ.image (List.ofFn : (Fin n → Bool) → _)) (fun n x hx => ?_) fun n => ?_
   · obtain rfl : x.length = n := hinj hx
     exact mem_image.2 ⟨x.get, mem_univ _, List.ofFn_get x⟩
