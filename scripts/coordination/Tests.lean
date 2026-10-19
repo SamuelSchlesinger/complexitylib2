@@ -8,6 +8,7 @@ Authors: Samuel Schlesinger
 
 import Tests.Support
 import Tests.Runtime
+import Tests.Fetch
 import Coordination.Protocol
 
 /-!
@@ -411,6 +412,87 @@ private def testScopeComponentsAndSubmissionEvidence : IO Unit := do
   for invalid in ["../escape", "/absolute", ".git/config", ".lake/build", ".worktrees/a", ".", "a//b"] do
     reject lead state (.plan ⟨"invalid"⟩ "bad path" [invalid] []) s!"invalid scope {invalid}"
 
+private def testPlanRevision : IO Unit := do
+  let lead := leadContext
+  let alice := context "alice" [workToken]
+  let state ← protocolState 1
+  let state ← transition alice state (.note feature .work "Useful theorem proved" false)
+  let before ← epic state
+  let revised ← transition lead state
+    (.revise feature "First complete theorem milestone" ["tests", "tests"])
+  check ((← epic revised) == {before with
+      goal := "First complete theorem milestone", paths := ["allowed", "tests"]})
+    "Revision changed work, authors, dependencies, reports or branch"
+  check (revised.agents == state.agents && revised.coordinator == state.coordinator &&
+      revised.integration == state.integration) "Revision changed unrelated authority"
+  discard <| transition alice revised (.note feature .work "Continuing with the same claim" false)
+  discard <| transition alice revised
+    (.submit feature exampleSnapshot ["allowed/a.txt", "tests/feature.lean"] "Expanded scope")
+  reject alice state (.revise feature "Worker changed own scope" ["outside"])
+    "worker cannot revise scope"
+  reject {lead with heldTokens := []} state (.revise feature "Missing generation" [])
+    "coordinator generation required"
+  reject {lead with now := 1301} state (.revise feature "Expired coordinator" [])
+    "expired coordinator cannot revise"
+  reject lead state (.revise feature "" []) "empty revised goal"
+  for invalid in ["../escape", "/absolute", ".git/config", ".lake/build", ".worktrees/a", ".", "a//b"] do
+    reject lead state (.revise feature "Invalid expansion" [invalid]) s!"invalid expansion {invalid}"
+  let other : EpicId := ⟨"other"⟩
+  let state ← transition lead state (.plan other "Other work" ["shared/subtree"] [])
+  let state ← transition lead state (.assign other ⟨"replacement"⟩ .work false)
+  for path in ["shared", "shared/subtree", "shared/subtree/child"] do
+    reject lead state (.revise feature "Overlapping expansion" [path]) s!"overlap {path}"
+  discard <| transition lead state (.revise feature "Sibling scope" ["shared/subtrees"])
+  let pending : EpicId := ⟨"pending"⟩
+  let state ← transition lead state (.plan pending "Future work" ["future"] [feature])
+  let state ← transition lead state (.revise pending "Future milestone" ["shared"])
+  let some planned := state.epics.find? (·.id == pending)
+    | throw <| IO.userError "Missing pending epic"
+  check (planned.dependencies == [feature] && planned.paths == ["future", "shared"])
+    "Unassigned revision lost paths or dependencies"
+  reject lead state (.assign pending ⟨"replacement"⟩ .work false)
+    "Revising a future plan bypassed assignment overlap checks"
+  let submitted ← protocolState 2
+  reject lead submitted (.revise feature "Changed after review began" []) "submitted plan is frozen"
+  let reserved ← protocolState 4
+  reject lead reserved (.revise feature "Changed during integration" []) "reserved plan is frozen"
+  let reopened ← transition lead reserved (.reopen feature "Review a changed contract")
+  discard <| transition lead reopened (.revise feature "Reopened endpoint" [])
+  let merged ← transition lead reserved (.land feature exampleSnapshot "Checks passed")
+  reject lead merged (.revise feature "Rewrite completed history" []) "merged plan is immutable"
+
+private def testCoordinatorGuidance : IO Unit := do
+  let lead := leadContext
+  for stage in [1, 2, 4] do
+    let state ← protocolState stage
+    let before ← epic state
+    let message := "Reuse the shared lemma; report any missing scope"
+    let instructed ← transition lead state (.instruct feature message)
+    check ((← epic instructed) == {before with report := message})
+      "Guidance changed the goal, paths, implementation, or reviews"
+    check (instructed.agents == state.agents && instructed.coordinator == state.coordinator &&
+        instructed.integration == state.integration) "Guidance changed authority or integration"
+    check ((← transition lead instructed (.instruct feature message)) == instructed)
+      "Retrying identical guidance changed state"
+    reject (context "alice" [workToken]) state (.instruct feature "Impersonate coordinator")
+      "worker cannot issue coordinator guidance"
+    reject {lead with heldTokens := []} state (.instruct feature "No held generation")
+      "guidance requires coordinator generation"
+    reject {lead with now := 1301} state (.instruct feature "Expired coordinator")
+      "expired coordinator cannot issue guidance"
+    reject lead state (.instruct feature "") "empty guidance"
+  let state ← protocolState 1
+  let state ← transition lead state (.instruct feature "Coordinator direction")
+  let state ← transition (context "alice" [workToken]) state
+    (.note feature .work "Independent progress report" false)
+  check ((← epic state).report == "Coordinator direction") "Worker report erased guidance"
+  match (← epic state).phase with
+  | .working work => check (work.report == "Independent progress report") "Worker report was lost"
+  | _ => throw <| IO.userError "Guidance changed work phase"
+  let reserved ← protocolState 4
+  let merged ← transition lead reserved (.land feature exampleSnapshot "Checks passed")
+  reject lead merged (.instruct feature "Rewrite completed history") "completed record is immutable"
+
 private def testIntegrationAndSessionGenerations : IO Unit := do
   let state ← protocolState 4
   let lead := leadContext
@@ -428,6 +510,31 @@ private def testIntegrationAndSessionGenerations : IO Unit := do
     actor := {agent := ⟨"alice"⟩, session := ⟨"replacement-session"⟩}, now := 1361}
   let state ← transition takeover state (.join .worker 300 ⟨"unused"⟩ true)
   reject {context "alice" [workToken] with now := 1361} state .heartbeat "replaced session"
+
+private def testCoordinatorRelease : IO Unit := do
+  let lead := leadContext
+  let state ← protocolState 3
+  reject (context "alice" [workToken]) state .releaseCoordinator "worker cannot release coordinator"
+  reject (context "lead") state .releaseCoordinator "release requires held generation"
+  reject {lead with now := 1301} state .releaseCoordinator "expired coordinator cannot release"
+  let reserved ← transition lead state (.reserve feature integrationToken)
+  reject lead reserved .releaseCoordinator "active integration must finish or cancel"
+  let released ← transition lead state .releaseCoordinator
+  check released.coordinator.isNone "Release retained coordinator authority"
+  check (released.epics == state.epics && released.agents == state.agents &&
+      released.integration == state.integration) "Release changed work or review state"
+  let token : Token := ⟨"successor-generation"⟩
+  let successor := context "successor" [token]
+  let joined ← transition successor released (.join .coordinator 300 token false)
+  check (joined.coordinator.any fun lease => lease.holder == successor.actor)
+    "Fresh coordinator could not join immediately"
+  reject lead joined (.instruct feature "stale authority") "old coordinator cannot instruct"
+  reject lead joined .releaseCoordinator "old coordinator cannot release successor"
+  let renewed ← transition lead joined .heartbeat
+  check (renewed.coordinator == joined.coordinator) "Old heartbeat renewed successor authority"
+  reject lead renewed (.reserve feature integrationToken) "old coordinator cannot reserve"
+  let successor := {successor with heldTokens := [token, integrationToken]}
+  discard <| transition successor renewed (.reserve feature integrationToken)
 
 private def testDependenciesAndConflictingStarts : IO Unit := do
   let state ← protocolState 0
@@ -467,6 +574,13 @@ private def testProtocolThroughGit : IO Unit := withFixture fun fixture => do
   discard <| drive lead (.plan feature "End-to-end feature" ["allowed"] [])
   discard <| drive lead (.assign feature alice.actor.agent .work false)
   discard <| drive alice (.start feature .work workToken)
+  discard <| drive lead (.instruct feature "Preserve the existing proof API")
+  discard <| drive lead (.revise feature "Complete first milestone" ["tests"])
+  let some (_, guidedJson) ← repository.readBoard | throw <| IO.userError "Missing revised board"
+  let guidedState : State ← IO.ofExcept <| fromJson? guidedJson
+  check ((← epic guidedState).report == "Preserve the existing proof API") "Guidance was not published"
+  check ((← epic guidedState).goal == "Complete first milestone") "Revision was not published"
+  discard <| drive alice (.note feature .work "Same claim still active" false)
   discard <| git fixture.repository #["push", "--quiet", "origin", "HEAD:refs/heads/work/feature/alice"]
   check ((← repository.fetch "refs/heads/work/feature/alice") == some head) "Pushed head mismatch"
   repository.clean head
@@ -500,7 +614,10 @@ private def protocolTests : List (String × IO Unit) := [
   ("review restart revokes approval and changes can be resolved", testReviewRestartAndChangesRecovery),
   ("self, former-author and same-agent reviews refused", testAuthorAndReviewerIndependence),
   ("scope components, unusual paths and exact submission evidence", testScopeComponentsAndSubmissionEvidence),
+  ("plan revisions preserve claims and fence scope and review changes", testPlanRevision),
+  ("coordinator guidance preserves work, reviews and integration", testCoordinatorGuidance),
   ("integration, expiry and session replacement fence old authority", testIntegrationAndSessionGenerations),
+  ("planned coordinator release preserves reviews and fences old authority", testCoordinatorRelease),
   ("dependencies, conflicting starts and idempotent claim retry", testDependenciesAndConflictingStarts),
   ("actual protocol state flows through local Git to atomic publish", testProtocolThroughGit)]
 
@@ -524,7 +641,7 @@ open Coordination.Tests in
 
 private def runTests : IO UInt32 := do
   let mut failed := 0
-  let tests := protocolTests ++ gitTests ++ runtimeTests
+  let tests := protocolTests ++ gitTests ++ runtimeTests ++ fetchTests
   for (name, action) in tests do
     try
       action

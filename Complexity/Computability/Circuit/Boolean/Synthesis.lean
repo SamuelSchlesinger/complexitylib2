@@ -9,6 +9,10 @@ module
 -- `Cslib/Computability/Circuit/Boolean/Complexity.lean`)
 
 public import Cslib.Computability.Circuit.Boolean.Complexity
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Algebra.Ring.BooleanRing
+import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.Fintype.BigOperators
 
 /-!
 # More synthesis rules over the De Morgan basis
@@ -17,7 +21,8 @@ Rules for synthesis bounds stated through the truth values of their targets, whi
 semantic arguments (simulations, reductions) produce Boolean functions: change a target to one
 with the same truth values (`Synthesis.congr_iff`), a constant, bounded disjunctions and
 conjunctions with uniform costs, disjunctions of conjunctions of literals, that is of available
-functions and their negations (`Synthesis.any_all_literal`), and exclusive ors. Also bounds on
+functions and their negations (`Synthesis.any_all_literal`), exclusive ors and their finite
+sums, and arbitrary functions of a few selected inputs (`Synthesis.selected`). Also bounds on
 the circuit complexity of negations, conjunctions, disjunctions and exclusive ors.
 
 ## Main results
@@ -27,6 +32,9 @@ the circuit complexity of negations, conjunctions, disjunctions and exclusive or
 * `Cslib.Circuits.Synthesis.literal`, `Cslib.Circuits.Synthesis.all_literal`,
   `Cslib.Circuits.Synthesis.any_all_literal`.
 * `Cslib.Circuits.Synthesis.xor`: an exclusive or costs four gates.
+* `Cslib.Circuits.Synthesis.sum`: a finite exclusive or costs four gates per term.
+* `Cslib.Circuits.Synthesis.selected`: any function of `k` selected inputs costs
+  `2 ^ k * (2 * k + 2) + 1` gates.
 * `Cslib.Circuits.Boolean.complexity_not_le`, `Cslib.Circuits.Boolean.complexity_and_le`,
   `Cslib.Circuits.Boolean.complexity_or_le`, `Cslib.Circuits.Boolean.complexity_xor_le`.
 -/
@@ -139,6 +147,36 @@ theorem xor (hf : Synthesis interpretation s {f} a) (hg : Synthesis interpretati
     cases f x <;> cases g x <;> rfl
   rw [heq] at h
   exact hf.combine hg h
+
+/-- A finite sum in the Boolean ring, an exclusive or of its terms, costs four gates per term
+and a constant. -/
+theorem sum {ι : Type*} (indices : Finset ι) (F : ι → BooleanFunction n) (cost : ι → ℕ)
+    (h : ∀ i ∈ indices, Synthesis interpretation s {F i} (cost i)) :
+    Synthesis interpretation s {fun x => ∑ i ∈ indices, F i x}
+      ((∑ i ∈ indices, (cost i + 4)) + 1) := by
+  have hop (f g : BooleanFunction n) :
+      Synthesis interpretation {f, g} {fun x => f x + g x} 4 :=
+    (Synthesis.of_mem (by simp)).xor (Synthesis.of_mem (by simp))
+  have h' := Synthesis.finset_fold (· + ·) 4 hop indices (Synthesis.const false) h
+  simp only [Finset.sum_eq_fold]
+  exact h'
+
+/-- A function of `k` selected inputs costs at most `2 ^ k * (2 * k + 2) + 1` gates: its
+disjunctive normal form tests every accepted assignment of the selected inputs. Selectors may
+repeat inputs. -/
+theorem selected {k : ℕ} (wires : Fin k → Fin n) (φ : BooleanFunction k) :
+    Synthesis interpretation (inputs n) {fun x => φ (x ∘ wires)} (2 ^ k * (2 * k + 2) + 1) := by
+  classical
+  let accepted := Finset.univ.filter fun q : BitString k => φ q = true
+  have h := Synthesis.exists_mem accepted
+    (fun q x => decide ((fun i => x (wires i)) = q)) (fun _ => 2 * k + 1)
+    fun q _ => synthesis_minterm wires q
+  refine (congr_iff h fun x => ?_).mono Set.Subset.rfl Set.Subset.rfl ?_
+  · simp [accepted, Function.comp_def]
+  · rw [Finset.sum_const, smul_eq_mul, show 2 * k + 1 + 1 = 2 * k + 2 by omega]
+    have hcard : accepted.card ≤ 2 ^ k := by
+      simpa [BitString, Fintype.card_fun] using Finset.card_le_univ accepted
+    exact Nat.add_le_add_right (Nat.mul_le_mul_right _ hcard) 1
 
 end Synthesis
 

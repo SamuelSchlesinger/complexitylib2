@@ -22,9 +22,9 @@ words, so `UNSAT` is exactly the complement of `SAT`; there are no ill-formed en
 to either side.
 
 The Cook–Levin theorem says that `SAT` is `NP`-complete [Arora and Barak, Theorem
-2.10][AroraBarak09]. Its correctness parts are proved here (`SAT.isVerifier`) and in `CookLevin/`
-(`reduce_mem_SAT_iff`). The verifier's polynomial-time bound and `SAT ∈ NP` are proved in
-`Problems/SAT/PolyTime.lean`; the reduction's polynomial-time bound remains open.
+2.10][AroraBarak09]. The verifier's correctness is proved here (`SAT.isVerifier`), its
+polynomial-time bound and `SAT ∈ NP` are proved in `Problems/SAT/PolyTime.lean`, and the tableau
+reduction and `NP`-completeness are proved in `CookLevin/`.
 
 ## Main definitions
 

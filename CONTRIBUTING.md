@@ -65,7 +65,7 @@ cd .worktrees/worker-alice
 scripts/coordinate status
 scripts/coordinate heartbeat
 scripts/coordinate start assigned-epic
-# Implement, validate, commit, then push the branch printed by status.
+# Implement, self-review, validate, commit, then push the branch printed by status.
 git push -u origin HEAD
 scripts/coordinate ready assigned-epic 'Result, checks, source credit, and remaining limitations'
 ```
@@ -74,22 +74,56 @@ The coordinator initializes the board with `scripts/coordinate init` once and jo
 `join NAME --coordinator`. It records each epic's endpoint, acceptance criteria, source paths,
 and dependencies, then assigns it to a registered worker. Include any test files in the scope.
 Overlapping assigned scopes are rejected; generated root imports are the shared exception.
+After submission, the coordinator arranges the independent API and correctness reviews in the
+root coordinating thread, using independent local review subagents when useful. Workers hand off
+their self-reviewed work without arranging an external worker cross-review roundtrip. Reviewers
+register and use the same worktree and exact-commit board workflow below.
 
 ```bash
 scripts/coordinate plan scan-api 'Endpoint and acceptance criteria' Complexity/Path ComplexityTests/Client.lean
 scripts/coordinate assign scan-api worker-alice
-# After submission, assign two independent agents, neither of whom contributed to the epic.
-scripts/coordinate assign scan-api worker-bob api
-scripts/coordinate assign scan-api worker-carol correctness
+# After submission, assign two independent reviewers who did not contribute to the epic.
+scripts/coordinate assign scan-api review-api api
+scripts/coordinate assign scan-api review-correctness correctness
 ```
+
+Workers own their development's design and may delegate within its assigned scope, using separate
+worktrees and disjoint file ownership. Record every contributor; an implementation subagent cannot
+provide an independent final review of that work. The coordinator can send guidance without
+replacing worker reports or revoking claims, and can revise an unsubmitted goal or add paths:
+
+```bash
+scripts/coordinate instruct scan-api 'Use the existing encoded loop contract; report missing lemmas'
+scripts/coordinate revise scan-api 'Revised endpoint and acceptance criteria' Complexity/AdditionalPath
+```
+
+`revise` retains all existing paths and dependencies. Assigned epics cannot expand into another
+assigned scope; future unassigned plans may overlap until assignment. It preserves the worker's
+branch and claim; a submitted plan must be reopened
+before revision. `instruct` is advisory and does not change the acceptance criteria or approvals.
+Both commands leave completed records unchanged. Read coordinator guidance in `status --json`
+even when using an older checkout whose dashboard does not display it. At clean implementation
+checkpoints, coordinate updates from current `main` to pick up shared APIs and tooling changes.
+
+Land large developments in independently useful milestones. Before submission, the coordinator
+records the remaining development as a continuation epic, then revises the current epic to the
+milestone actually delivered. A milestone's completion does not claim the whole development is
+finished. Its continuation may depend on the milestone via `plan ... --after EPIC`.
 
 Reviewers run `start EPIC api` or `start EPIC correctness`, which checks out the submitted commit
 in their own clean worktree. They record their review with
 `review EPIC KIND BASE HEAD approve|changes 'Scope, evidence, findings, and limitations'`.
-`note EPIC KIND 'Progress or blocker' --blocked` is available to both authors and reviewers.
-Starting a review again withdraws its previous verdict. The coordinator uses `reopen EPIC REASON`
-before revision; this invalidates reviews and any pending integration. The author restarts, merges
-current `main`, validates, pushes normally, and submits again. Never force-push these branches.
+`note EPIC KIND 'Progress or blocker' --blocked` is available during an active implementation or
+review claim.
+Starting a review again withdraws its previous verdict. Reviewers remain read-only; implementation
+and integration edits happen separately. The coordinator uses `reopen EPIC REASON` before revision;
+this invalidates reviews and any pending integration. For mechanical main merges, conflict
+resolution or central documentation fixes within scope, it can then `assign EPIC COORDINATOR_NAME`
+and `start EPIC` in its own worktree. Reassignment resumes from the previous branch and preserves its
+contributors; starting records the coordinator as another contributor. The coordinator can instead
+return substantive fixes to the author. The assigned implementer merges current `main`, validates,
+commits, pushes normally and submits again. Obtain fresh independent reviews of the exact final
+base and head after these edits. Never force-push these branches.
 
 `land EPIC` is coordinator-only. It checks out the reviewed commit, runs all six project checks
 and the coordination tests, and atomically publishes both `main` and the completed board record.
@@ -122,6 +156,44 @@ The implementation separates typed protocol transitions in
 [`Protocol.lean`](scripts/coordination/Coordination/Protocol.lean) from Git transport and worktree IO.
 Run `lake -d scripts/coordination test --wfail` after changing it. Tests use temporary local remotes;
 they do not mutate the project's remote or exercise the mathematical library's proofs.
+
+### Coordinator succession
+
+The instruction **"become the coordinator"** means taking over the existing project and workers,
+not initializing a new board. Start from an up-to-date checkout of remote `main`, read `AGENTS.md`
+and `scripts/coordinate status --json`, then use a fresh unique name:
+
+```bash
+scripts/coordinate join coordinator-NAME --coordinator
+# Change into the worktree printed by join before issuing further commands or editing.
+scripts/coordinate status --json
+```
+
+If a coordinator still holds an unexpired lease, do not impersonate it or overwrite the journal.
+The outgoing coordinator should finish or cancel any integration reservation, commit and push
+its work, record pending decisions in the affected epics with `instruct`, and run from its clean
+worktree:
+
+```bash
+scripts/coordinate release-coordinator
+```
+
+This immediately releases coordinator authority, preserving worker claims, branches, submissions
+and reviews. It refuses an active integration reservation. Old credentials and heartbeats cannot
+recover coordinator authority; the outgoing agent must stop coordinating. If the release response
+is lost, inspect the board before retrying: a successor may already have joined. The registration
+of the outgoing agent remains in history; the board's `coordinator` lease is authoritative.
+If the outgoing coordinator is unavailable, use `join coordinator-NAME --coordinator --takeover`
+only after its lease expires plus the one-minute grace period.
+
+The incoming coordinator checks remote `main`, each submitted base/head and review verdict,
+worker reports, dependencies and overlapping scopes before acting. Preserve active work rather
+than reassigning it merely because the coordinating chat changed. Reacquire abandoned integration
+claims through the normal protocol and never copy local identity files. Review notes are durable
+in the journal; supporting files may be local to the previous machine. Obtain missing evidence or
+fresh reviews where needed. Thread-local subagents do not transfer: create replacement reviewers
+when necessary, without treating old active review claims as completed reviews. Continue recording
+priorities and unresolved decisions in the existing epic guidance, not a parallel task list.
 
 ## Documentation
 

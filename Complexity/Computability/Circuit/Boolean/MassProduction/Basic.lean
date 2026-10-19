@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Replication
 public import Complexity.Computability.Circuit.Boolean.NonconstantCost
-import Cslib.Computability.Circuit.Boolean.Complexity
+public import Cslib.Computability.Circuit.Boolean.Complexity
 
 /-!
 # Boolean circuit mass production
@@ -35,6 +35,7 @@ versions; the exponential-range theorem requires further constructions.
 
 * `Cslib.Circuits.Boolean.MassProduction.massComplexity_le_iff`: a finite budget has a circuit.
 * `Cslib.Circuits.Boolean.MassProduction.massComplexity_mono`: monotonicity in the copy count.
+* `Cslib.Circuits.Boolean.MassProduction.massComplexity_le_complexity`: comparison with size.
 * `Cslib.Circuits.Boolean.MassProduction.massComplexity_le_replicate`: the naive upper bound.
 
 ## References
@@ -69,6 +70,13 @@ theorem exists_computes_cost_eq_massComplexity :
     ∃ c : Circuit signature (k * n) k, c.Computes interpretation (directProduct f k) ∧
       (c.program.cost nonconstantCost : ℕ∞) = massComplexity f k :=
   exists_computesFrom_cost_eq_ecomplexityFrom (ecomplexityFrom_ne_top_iff.mp massComplexity_ne_top)
+
+/-- Charging only nonconstant gates costs at most the minimum size, which counts every gate. -/
+theorem massComplexity_le_complexity :
+    massComplexity f k ≤ complexity interpretation (directProduct f k) := by
+  obtain ⟨c, hc, hsize⟩ :=
+    exists_computes_size_eq_complexity (I := interpretation) (f := directProduct f k)
+  exact massComplexity_le_iff.mpr ⟨c, hc, (Program.cost_nonconstantCost_le _).trans hsize.le⟩
 
 @[simp] theorem massComplexity_zero : massComplexity f 0 = 0 :=
   ecomplexityFrom_directProduct_zero

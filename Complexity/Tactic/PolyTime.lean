@@ -49,6 +49,9 @@ attribute [aesop safe apply (rule_sets := [PolyTime])]
 -- searching for a joint callback certificate, including when the callback captures local values.
 attribute [program_certificate hlist]
   ComputableTidilyInPolyTime.anyWithInput ComputableTidilyInPolyTime.allWithInput
+  ComputableTidilyInPolyTime.mapToBitsWithInput
+  ComputableTidilyInPolyTime.bitsFoldlWithInput
+attribute [program_certificate] ComputableTidilyInPolyTime.bitsStrictMajorityWithInput
 
 -- Expose inner table and loop obligations to Aesop when composition alone cannot finish them.
 attribute [program_certificate hvalues] ComputableTidilyInPolyTime.pi_update'
