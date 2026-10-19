@@ -53,6 +53,7 @@ import ComplexityTests.GeneratorXor
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
+import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
@@ -155,6 +156,7 @@ import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.RandomOracle
 import ComplexityTests.RationalHitting
 import ComplexityTests.Relativization
+import ComplexityTests.ResourceClasses
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
