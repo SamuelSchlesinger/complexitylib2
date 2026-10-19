@@ -256,7 +256,9 @@ public import Complexity.Computability.Communication.TopDown.Majority
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
 public import Complexity.Computability.Complexity.Classes.BPP
+public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.Hierarchy
+public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
 public import Complexity.Computability.Complexity.Classes.IP.Guessing
@@ -573,8 +575,10 @@ public import Complexity.Computability.Probabilistic.Memoize
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Computability.Probabilistic.Oracle.Composition
 public import Complexity.Computability.Probabilistic.Oracle.Iteration
+public import Complexity.Computability.Probabilistic.Oracle.Memoize
 public import Complexity.Computability.Probabilistic.Oracle.Normalization
 public import Complexity.Computability.Probabilistic.Oracle.Parameter
+public import Complexity.Computability.Probabilistic.Oracle.Substitution
 public import Complexity.Computability.Probabilistic.Oracle.Tidy
 public import Complexity.Computability.Probabilistic.OracleSimulation
 public import Complexity.Computability.Probabilistic.PPT
@@ -584,6 +588,7 @@ public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Computability.Probabilistic.Presample
 public import Complexity.Computability.Probabilistic.QueryBounds
+public import Complexity.Computability.Probabilistic.Realization.OpenOracleSimulation
 public import Complexity.Computability.Probabilistic.Realization.OracleSimulation
 public import Complexity.Computability.Probabilistic.Repeat
 public import Complexity.Computability.Probabilistic.Sampling

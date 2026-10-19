@@ -53,6 +53,7 @@ import ComplexityTests.Halting
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.HierarchyTheorems
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
@@ -88,6 +89,7 @@ import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleComposition
+import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
