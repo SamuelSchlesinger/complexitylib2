@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Logarithmic space
@@ -25,8 +26,9 @@ logarithmic space (`Turing.MultiTapeTM.ComputableInLogSpace`): one deterministic
 binary alphabet and finitely many states halts on every encoded instance with output `[true]` or
 `[false]` within logarithmic space. Any number of work tapes is allowed; definitions with one
 work tape give the same class, since work tapes can be interleaved on one at a constant factor in
-space (not formalized here). No time bound is imposed beyond halting; a polynomial one follows. Equivalently (`Cslib.Complexity.mem_L_iff`), the problem is decidable within some time
-and space `c₁ * Nat.log2 n + c₂` in the sense of upstream
+space (not formalized here). No time bound is imposed beyond halting; a polynomial one follows
+(`Cslib.Complexity.L_subset_P`). Equivalently (`Cslib.Complexity.mem_L_iff`), the problem is
+decidable within some time and space `c₁ * Nat.log2 n + c₂` in the sense of upstream
 `Turing.MultiTapeTM.DecidableInTimeAndSpace`, the shape of the class `L = DSPACE(log₂)` of cslib
 pull request #767 (open), whose classes are indexed by languages rather than encoded instances.
 
@@ -90,22 +92,17 @@ def NL (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State) (c : ℕ),
     ntm.DecidesInSpace enc A fun a => c * (Nat.log2 (enc a).length + 1)}
 
-/-- A Boolean function decides a problem exactly when it is the problem's indicator. -/
-private theorem eq_indicator {f : α → Bool} (hf : ∀ a, a ∈ A ↔ f a = true) : f = indicator A := by
-  funext a
-  rcases h : f a <;> simp [indicator, hf a, h]
-
 /-- **Membership in `L`** is upstream decidability within some time and space
 `c₁ * Nat.log2 n + c₂`, the shape of `DSPACE(log₂)` in cslib pull request #767. -/
 theorem mem_L_iff : A ∈ L enc ↔ ∃ c₁ c₂ t,
     DecidableInTimeAndSpace A enc t fun a => c₁ * Nat.log2 (enc a).length + c₂ := by
   constructor
   · rintro ⟨f, ⟨t, c, hf⟩, hA⟩
-    obtain rfl := eq_indicator hA
-    exact ⟨c, c, t, hf.mono (fun _ => le_rfl) fun _ => by rw [Nat.mul_add, Nat.mul_one]⟩
-  · rintro ⟨c₁, c₂, t, hA⟩
-    refine ⟨indicator A, ⟨t, c₁ + c₂, hA.mono (fun _ => le_rfl) fun a => ?_⟩,
-      fun a => by by_cases ha : a ∈ A <;> simp [indicator, ha]⟩
+    exact ⟨c, c, t, decidableInTimeAndSpace_iff.mpr
+      ⟨f, hf.mono (fun _ => le_rfl) fun _ => by rw [Nat.mul_add, Nat.mul_one], hA⟩⟩
+  · rintro ⟨c₁, c₂, t, h⟩
+    obtain ⟨f, hf, hA⟩ := decidableInTimeAndSpace_iff.mp h
+    refine ⟨f, ⟨t, c₁ + c₂, hf.mono (fun _ => le_rfl) fun a => ?_⟩, hA⟩
     nlinarith [Nat.zero_le (Nat.log2 (enc a).length)]
 
 /-- **Deterministic logarithmic space is within nondeterministic logarithmic space**: a
