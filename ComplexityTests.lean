@@ -205,6 +205,7 @@ import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.QueryComplexity.Sensitivity
 import ComplexityTests.RandomOracle
+import ComplexityTests.RandomizedDisjointness
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
 import ComplexityTests.RationalHitting.IntBinary
