@@ -5,7 +5,9 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.Combinatorics.AffineDisperser
+import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
 import Mathlib.FieldTheory.Finite.GaloisField
+import Mathlib.Tactic.NormNum.Prime
 
 /-!
 # Affine dispersers from subspace polynomials: clients
@@ -15,8 +17,14 @@ covering lemma at small sizes, and apply the independent-sources theorem and the
 to concrete Galois fields. The disperser instance takes `F = GF(2 ^ 400)`, whose proper subfields
 have at most `2 ^ 200` elements, `r = 100` blocks and `t = 10`; the dimension bound is then
 `38100`, below `40000`, the `𝔽₂`-dimension of `F ^ 100`, so the whole space is a non-vacuous
-instance. Axiom checks record
-the headline dependencies.
+instance.
+
+The explicit disperser is exercised through its ingredients (codes of binary polynomials, the least
+irreducible polynomial of degree `1`, the monomial basis of `GF(2 ^ 6)`, the subfield bound in
+`GF(2 ^ 35)`, the greedy choice of primes) and at `N = 2 ^ 60`, where it computes the parameters:
+`L = 20`, the field degree `23 · 29 · 31 · 37 · 41 · 43 · 47 · 53 · 59` and a threshold below
+`N / 10`, so the explicit function is nonconstant on the whole cube. The threshold bound gives the
+same for all large `N`. Axiom checks record the headline dependencies.
 -/
 
 namespace ComplexityTests.AffineDisperser
@@ -99,7 +107,158 @@ theorem exists_traceSym_ne_top :
   rw [AffineSubspace.direction_top, finrank_top, Module.finrank_pi_fintype]
   simp [hn]
 
+/-! ### Explicit binary fields -/
+
+theorem polyOfCode_one : polyOfCode 1 = 1 := by
+  simpa [polyOfCode_zero, ZMod.val_one] using polyOfCode_two_mul_add 0 1
+
+theorem polyOfCode_two : polyOfCode 2 = Polynomial.X := by
+  simpa [polyOfCode_one] using polyOfCode_two_mul_add 1 0
+
+-- The code `3 = 11₂` gives `1 + X`.
+example : polyOfCode 3 = 1 + Polynomial.X := by
+  simpa [polyOfCode_one, ZMod.val_one] using polyOfCode_two_mul_add 1 1
+
+-- The least irreducible polynomial of degree `1` is `X`, with code `2`.
+example : leastIrreducible 1 = Polynomial.X := by
+  obtain ⟨m, h1, h2, heq, hmin⟩ := exists_code_leastIrreducible one_ne_zero
+  have hm : m = 2 := by
+    by_contra hm
+    exact hmin 2 (by omega) ⟨polyOfCode_two ▸ Polynomial.irreducible_X,
+      polyOfCode_two ▸ Polynomial.natDegree_X⟩
+  rw [heq, hm, polyOfCode_two]
+
+-- The monomial basis of `GF(2 ^ (2 · 3))` in roots of the least irreducible polynomials of degrees
+-- `2` and `3`.
+noncomputable example :
+    Basis ((i : Fin 2) → Fin (![2, 3] i)) (ZMod 2) (GaloisField 2 (∏ i, ![2, 3] i)) :=
+  compositeBasis ![2, 3] (fun i => by fin_cases i <;> norm_num) (by decide)
+
+-- Every prime factor of `35` exceeds `4`, so proper subfields of `GF(2 ^ 35)` have at most
+-- `2 ^ (35 / 5) = 2 ^ 7` elements.
+example (K : Subfield (GaloisField 2 35)) (hK : K ≠ ⊤) : Nat.card K ≤ 2 ^ 7 :=
+  card_subfield_le_of_lt_prime (L := 4) (finrank_galoisField 35 (by norm_num)) (fun q hq hq35 => by
+    have : q ∣ 5 * 7 := hq35
+    rcases (Nat.Prime.dvd_mul hq).1 this with h | h
+    · rw [(Nat.prime_dvd_prime_iff_eq hq (by norm_num)).1 h]; norm_num
+    · rw [(Nat.prime_dvd_prime_iff_eq hq (by norm_num)).1 h]; norm_num) K hK
+
+/-! ### Choosing the primes -/
+
+example : primesIoc 20 80 = [23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79] := by
+  decide
+
+-- The greedy choice with budget `100` takes `5` (budget `20`), then `7` (budget `2`).
+example : selectBelow 100 [5, 7, 11, 13] = [5, 7] := by
+  decide
+
+/-! ### The explicit disperser on `2 ^ 60` bits -/
+
+theorem log_two_pow_sixty : Nat.log 2 (2 ^ 60) = 60 :=
+  Nat.log_pow (by norm_num) 60
+
+theorem degreePrimes_two_pow_sixty :
+    degreePrimes (2 ^ 60) = [23, 29, 31, 37, 41, 43, 47, 53, 59] := by
+  rw [degreePrimes, primeBound, log_two_pow_sixty]
+  decide
+
+theorem fieldDegree_two_pow_sixty :
+    fieldDegree (2 ^ 60) = 23 * 29 * 31 * 37 * 41 * 43 * 47 * 53 * 59 := by
+  rw [fieldDegree_eq_prod, degreePrimes_two_pow_sixty]
+  rfl
+
+/-- At `N = 2 ^ 60` the threshold is below `N / 10`. -/
+theorem explicitThreshold_two_pow_sixty_lt : explicitThreshold (2 ^ 60) < 2 ^ 60 / 10 := by
+  simp only [explicitThreshold, numBlocks, subfieldExp, symDegree, primeBound, log_two_pow_sixty,
+    fieldDegree_two_pow_sixty]
+  norm_num
+
+theorem finrank_direction_top (N : ℕ) :
+    finrank Bool (⊤ : AffineSubspace Bool (BitString N)).direction = N := by
+  rw [AffineSubspace.direction_top, finrank_top]
+  exact Module.finrank_fin_fun Bool
+
+/-- The explicit function on `2 ^ 60` bits is not constant. -/
+theorem exists_explicitDisperser_two_pow_sixty_ne :
+    ∃ x y : BitString (2 ^ 60), explicitDisperser (2 ^ 60) x ≠ explicitDisperser (2 ^ 60) y := by
+  obtain ⟨x, -, y, -, h⟩ := exists_explicitDisperser_ne (N := 2 ^ 60) ⊤ (by
+    rw [finrank_direction_top]
+    exact explicitThreshold_two_pow_sixty_lt.trans_le (Nat.div_le_self _ _))
+  exact ⟨x, y, h⟩
+
+/-- For all large `N` the explicit function on `N` bits is not constant. -/
+theorem eventually_exists_explicitDisperser_ne :
+    ∀ᶠ N in Filter.atTop, ∃ x y : BitString N, explicitDisperser N x ≠ explicitDisperser N y := by
+  filter_upwards [eventually_explicitThreshold_lt] with N hN
+  obtain ⟨x, -, y, -, h⟩ := exists_explicitDisperser_ne ⊤ (by rwa [finrank_direction_top])
+  exact ⟨x, y, h⟩
+
 /-! ### Axioms -/
+
+/--
+info: 'Cslib.AffineDisperser.exists_explicitDisperser_ne' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_explicitDisperser_ne
+
+/--
+info: 'Cslib.AffineDisperser.eventually_explicitThreshold_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms eventually_explicitThreshold_le
+
+/--
+info: 'Cslib.AffineDisperser.isBigO_explicitThreshold' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms isBigO_explicitThreshold
+
+/--
+info: 'Cslib.AffineDisperser.exists_traceSymBits_ne' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_traceSymBits_ne
+
+/--
+info: 'Cslib.AffineDisperser.top_le_span_prod_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms top_le_span_prod_pow
+
+/--
+info: 'Cslib.AffineDisperser.card_subfield_le_of_lt_prime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_subfield_le_of_lt_prime
+
+/--
+info: 'Cslib.AffineDisperser.four_pow_le_mul_prod_primesIoc' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms four_pow_le_mul_prod_primesIoc
+
+/--
+info: 'Cslib.AffineDisperser.exists_code_leastIrreducible' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_code_leastIrreducible
+
+/--
+info: 'ComplexityTests.AffineDisperser.exists_explicitDisperser_two_pow_sixty_ne' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_explicitDisperser_two_pow_sixty_ne
+
+/-! ### Axioms of the subspace-polynomial theorem -/
 
 /--
 info: 'Cslib.AffineDisperser.exists_traceSym_ne' depends on axioms:
