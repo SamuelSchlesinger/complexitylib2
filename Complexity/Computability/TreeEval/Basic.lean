@@ -39,13 +39,16 @@ We follow Goldreich's parametrization by the value length `ℓ`, rather than by 
 
 namespace Cslib.TreeEval
 
+/-- A gate on `ℓ`-bit values: a function of the values of the two children. -/
+abbrev Gate (ℓ : ℕ) : Type := (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool
+
 /-- A Tree Evaluation instance: a full binary tree of height `h` whose leaves carry `ℓ`-bit
 values and whose internal nodes carry gates on pairs of `ℓ`-bit values. -/
 inductive Tree (ℓ : ℕ) : ℕ → Type
   /-- A leaf carrying a value. -/
   | leaf (v : Fin ℓ → Bool) : Tree ℓ 0
   /-- An internal node carrying a gate, with its left and right subtrees. -/
-  | node {h : ℕ} (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (l r : Tree ℓ h) :
+  | node {h : ℕ} (f : Gate ℓ) (l r : Tree ℓ h) :
       Tree ℓ (h + 1)
   deriving DecidableEq
 
@@ -60,7 +63,7 @@ def eval : {h : ℕ} → Tree ℓ h → Fin ℓ → Bool
 
 @[simp] theorem eval_leaf (v : Fin ℓ → Bool) : (leaf v).eval = v := rfl
 
-@[simp] theorem eval_node (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+@[simp] theorem eval_node (f : Gate ℓ)
     (l r : Tree ℓ h) : (node f l r).eval = f l.eval r.eval := rfl
 
 /-- What a path from the root leads to: a leaf with its value, a gate, or nothing. -/
@@ -68,7 +71,7 @@ inductive Node (ℓ : ℕ) where
   /-- A leaf with its value. -/
   | leaf (v : Fin ℓ → Bool)
   /-- An internal node with its gate. -/
-  | gate (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+  | gate (f : Gate ℓ)
   /-- A path leaving the tree. -/
   | none
 
@@ -82,39 +85,25 @@ def nodeAt : {h : ℕ} → Tree ℓ h → List Bool → Node ℓ
 
 @[simp] theorem nodeAt_leaf_nil (v : Fin ℓ → Bool) : (leaf v).nodeAt [] = .leaf v := rfl
 
-@[simp] theorem nodeAt_node_nil (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+@[simp] theorem nodeAt_node_nil (f : Gate ℓ)
     (l r : Tree ℓ h) : (node f l r).nodeAt [] = .gate f := rfl
 
-@[simp] theorem nodeAt_node_false (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+@[simp] theorem nodeAt_node_false (f : Gate ℓ)
     (l r : Tree ℓ h) (P : List Bool) : (node f l r).nodeAt (false :: P) = l.nodeAt P := rfl
 
-@[simp] theorem nodeAt_node_true (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool)
+@[simp] theorem nodeAt_node_true (f : Gate ℓ)
     (l r : Tree ℓ h) (P : List Bool) : (node f l r).nodeAt (true :: P) = r.nodeAt P := rfl
 
 /-- Leaves are at depth `h`. -/
 theorem length_of_nodeAt_leaf {U : Tree ℓ h} {P : List Bool} {v : Fin ℓ → Bool}
     (hP : U.nodeAt P = .leaf v) : P.length = h := by
-  induction U generalizing P with
-  | leaf w => cases P <;> simp_all [nodeAt]
-  | node f l r ihl ihr =>
-    rcases P with _ | ⟨b, P⟩
-    · simp at hP
-    · cases b
-      · simpa using ihl hP
-      · simpa using ihr hP
+  induction U generalizing P <;> rcases P with _ | ⟨_ | _, P⟩ <;> simp_all [nodeAt]
 
 /-- Gates are at depth less than `h`. -/
 theorem length_lt_of_nodeAt_gate {U : Tree ℓ h} {P : List Bool}
-    {f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool} (hP : U.nodeAt P = .gate f) :
+    {f : Gate ℓ} (hP : U.nodeAt P = .gate f) :
     P.length < h := by
-  induction U generalizing P with
-  | leaf w => cases P <;> simp_all [nodeAt]
-  | node f l r ihl ihr =>
-    rcases P with _ | ⟨b, P⟩
-    · simp
-    · cases b
-      · simpa using ihl hP
-      · simpa using ihr hP
+  induction U generalizing P <;> rcases P with _ | ⟨_ | _, P⟩ <;> simp_all [nodeAt]
 
 end Tree
 

@@ -9984,13 +9984,6 @@ info: 'Cslib.TreeEval.embed_eval_eq_proc' depends on axioms: [propext, Classical
 #print axioms Cslib.TreeEval.embed_eval_eq_proc
 
 /--
-info: 'Cslib.TreeEval.Iter.iterate_step_init_zmod' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.TreeEval.Iter.iterate_step_init_zmod
-
-/--
 info: 'Cslib.TreeEval.Reader.exists_run_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

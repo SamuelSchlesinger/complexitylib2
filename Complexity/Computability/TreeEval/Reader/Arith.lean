@@ -68,7 +68,6 @@ section Cast
 
 theorem mulMod_lt (hp : 0 < p) (a b : ℕ) : mulMod p a b < p := Nat.mod_lt _ hp
 theorem addMod_lt (hp : 0 < p) (a b : ℕ) : addMod p a b < p := Nat.mod_lt _ hp
-theorem negMod_lt (hp : 0 < p) (a : ℕ) : negMod p a < p := Nat.mod_lt _ hp
 
 variable [Fact p.Prime]
 
@@ -84,14 +83,6 @@ theorem pow_sub_two_eq_inv {a : ZMod p} (ha : a ≠ 0) : a ^ (p - 2) = a⁻¹ :=
   refine eq_inv_of_mul_eq_one_left ?_
   rw [← pow_succ, show p - 2 + 1 = p - 1 by omega, ZMod.pow_card_sub_one_eq_one ha]
 
-theorem cast_unitInv {j : ℕ} (hj : j < p - 1) :
-    ((unitInv p j : ℕ) : ZMod p) = ((j + 1 : ℕ) : ZMod p)⁻¹ := by
-  have hp := (Fact.out : p.Prime).two_le
-  have h : ((j + 1 : ℕ) : ZMod p) ≠ 0 := by
-    rw [Ne, ZMod.natCast_eq_zero_iff]
-    exact Nat.not_dvd_of_pos_of_lt (by omega) (by omega)
-  rw [unitInv, cast_powMod, ← pow_sub_two_eq_inv h, Nat.cast_succ]
-
 /-- The unit of round `j` casts to the unit `Iter.zmodUnit p j`, for `j < p - 1`. -/
 theorem cast_unitVal {j : ℕ} (hj : j < p - 1) :
     ((unitVal j : ℕ) : ZMod p) = (Iter.zmodUnit p j : ZMod p) := by
@@ -100,7 +91,8 @@ theorem cast_unitVal {j : ℕ} (hj : j < p - 1) :
 /-- The inverse of the unit of round `j` casts to the inverse of `Iter.zmodUnit p j`. -/
 theorem cast_unitInv_eq {j : ℕ} (hj : j < p - 1) :
     ((unitInv p j : ℕ) : ZMod p) = (((Iter.zmodUnit p j)⁻¹ : (ZMod p)ˣ) : ZMod p) := by
-  rw [cast_unitInv hj, Units.val_inv_eq_inv_val, Iter.zmodUnit_val hj]
+  rw [Units.val_inv_eq_inv_val, ← pow_sub_two_eq_inv (Iter.zmodUnit p j).ne_zero,
+    Iter.zmodUnit_val hj, unitInv, cast_powMod, Nat.cast_succ]
 
 /-! ### Registers -/
 
@@ -127,6 +119,23 @@ theorem Regs.get_set (R : Regs) (r r' : Fin 3) (l : List ℕ) :
 
 variable {ℓ : ℕ}
 
+omit [Fact p.Prime] in
+theorem Regs.WF.set {R : Regs} (hR : R.WF p ℓ) {t : Fin 3} {l : List ℕ} (hl : l.length = ℓ)
+    (hv : ∀ v ∈ l, v < p) : (R.set t l).WF p ℓ := by
+  intro r
+  rw [Regs.get_set]
+  split_ifs
+  exacts [⟨hl, hv⟩, hR r]
+
+omit [Fact p.Prime] in
+theorem modifyAt_addMod_wf (hp : 0 < p) {acc : List ℕ} (hacc : ∀ v ∈ acc, v < p) (i a : ℕ) :
+    (modifyAt acc i (addMod p a)).length = acc.length ∧
+      ∀ v ∈ modifyAt acc i (addMod p a), v < p := by
+  refine ⟨by simp [modifyAt], fun v hv => ?_⟩
+  rcases List.mem_or_eq_of_mem_set hv with hv | rfl
+  · exact hacc v hv
+  · exact addMod_lt hp _ _
+
 theorem toState_scale (R : Regs) (r : Fin 3) (a : ℕ) :
     (R.scale p r a).toState p ℓ = scale r (a : ZMod p) (R.toState p ℓ) := by
   funext r' i
@@ -139,15 +148,10 @@ theorem toState_scale (R : Regs) (r : Fin 3) (a : ℕ) :
 
 omit [Fact p.Prime] in
 theorem Regs.WF.scale (hp : 0 < p) {R : Regs} (hR : R.WF p ℓ) (r : Fin 3) (a : ℕ) :
-    (R.scale p r a).WF p ℓ := by
-  intro r'
-  simp only [Regs.scale, Regs.get_set]
-  split_ifs with h
-  · subst h
-    exact ⟨by simp [(hR r').1], fun v hv => by
-      obtain ⟨w, -, rfl⟩ := List.mem_map.mp hv
-      exact mulMod_lt hp _ _⟩
-  · exact hR r'
+    (R.scale p r a).WF p ℓ :=
+  hR.set (by simp [(hR r).1]) fun v hv => by
+    obtain ⟨w, -, rfl⟩ := List.mem_map.mp hv
+    exact mulMod_lt hp _ _
 
 theorem toState_set_modifyAt (R : Regs) (t : Fin 3) (i : Fin ℓ) (hlen : (R.get t).length = ℓ)
     (g : ℕ → ℕ) :
@@ -166,28 +170,16 @@ theorem toState_set_modifyAt (R : Regs) (t : Fin 3) (i : Fin ℓ) (hlen : (R.get
 
 omit [Fact p.Prime] in
 theorem Regs.WF.set_modifyAt (hp : 0 < p) {R : Regs} (hR : R.WF p ℓ) (t : Fin 3) (i : ℕ) (a : ℕ) :
-    (R.set t (modifyAt (R.get t) i (addMod p a))).WF p ℓ := by
-  intro r
-  simp only [Regs.get_set]
-  split_ifs with h
-  · subst h
-    refine ⟨by simp [modifyAt, (hR r).1], fun v hv => ?_⟩
-    rcases List.mem_or_eq_of_mem_set hv with hv | rfl
-    · exact (hR r).2 v hv
-    · exact addMod_lt hp _ _
-  · exact hR r
+    (R.set t (modifyAt (R.get t) i (addMod p a))).WF p ℓ :=
+  have h := modifyAt_addMod_wf hp (hR t).2 i a
+  hR.set (h.1.trans (hR t).1) h.2
 
 omit [Fact p.Prime] in
 theorem Regs.WF.subtractSums (hp : 0 < p) {R : Regs} (hR : R.WF p ℓ) (c : ℕ) (t : Fin 3)
-    (acc : List ℕ) : (subtractSums p c t acc R).WF p ℓ := by
-  intro r
-  simp only [TreeEval.Reader.subtractSums, Regs.get_set]
-  split_ifs with h
-  · subst h
-    refine ⟨by simp [(hR r).1], fun v hv => ?_⟩
+    (acc : List ℕ) : (subtractSums p c t acc R).WF p ℓ :=
+  hR.set (by simp [(hR t).1]) fun v hv => by
     obtain ⟨i, -, rfl⟩ := List.mem_map.mp hv
     exact addMod_lt hp _ _
-  · exact hR r
 
 theorem toState_subtractSums (R : Regs) (c : ℕ) (t : Fin 3) (acc : List ℕ)
     (hlen : (R.get t).length = ℓ) :
@@ -263,7 +255,7 @@ theorem eval_indicatorPoly' {ι : Type*} [Fintype ι] (a : ι → Bool) (z : ι 
   simp [indicatorPoly, map_prod, apply_ite]
 
 /-- **The multilinear extension of an output bit as a sum over the table indices.** -/
-theorem eval_gatePoly_eq_sum (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (i : Fin ℓ)
+theorem eval_gatePoly_eq_sum (f : Gate ℓ) (i : Fin ℓ)
     (X Y : Fin ℓ → ZMod p) :
     eval (Sum.elim X Y) (gatePoly f i) = ∑ k ∈ Finset.range (4 ^ ℓ),
       bitVal (ZMod p) (f (lowBits ℓ k) (highBits ℓ k) i) *

@@ -66,7 +66,7 @@ abbrev State (K : Type*) (ℓ : ℕ) := Fin 3 → Fin ℓ → K
 def embed (v : Fin ℓ → Bool) : Fin ℓ → K := fun i => bitVal K (v i)
 
 /-- The multilinear extension of output bit `i` of a gate, in the bits of both inputs. -/
-noncomputable def gatePoly (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (i : Fin ℓ) :
+noncomputable def gatePoly (f : Gate ℓ) (i : Fin ℓ) :
     MvPolynomial (Fin ℓ ⊕ Fin ℓ) K :=
   multilinearExtension fun z => bitVal K (f (z ∘ Sum.inl) (z ∘ Sum.inr) i)
 
@@ -76,14 +76,14 @@ def scale (r : Fin 3) (a : K) (S : State K ℓ) : State K ℓ :=
 
 /-- The update of a round at a gate `f`: subtract `c` times the gate's extension at registers
 `t + 1` and `t + 2` from register `t`. -/
-noncomputable def gateUpdate (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (c : K)
+noncomputable def gateUpdate (f : Gate ℓ) (c : K)
     (t : Fin 3) (S : State K ℓ) : State K ℓ :=
   Function.update S t fun i => S t i - c * eval (Sum.elim (S (t + 1)) (S (t + 2))) (gatePoly f i)
 
 /-- One round of the procedure at a gate `f`, for the unit `u`, given procedures `pl` and `pr`
 for the two subtrees. The target is `t`, and the registers `t + 1` and `t + 2` hold the masks. -/
 noncomputable def gateRound (pl pr : K → Fin 3 → State K ℓ → State K ℓ)
-    (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (c : K) (t : Fin 3) (u : Kˣ)
+    (f : Gate ℓ) (c : K) (t : Fin 3) (u : Kˣ)
     (S : State K ℓ) : State K ℓ :=
   let S := pl 1 (t + 1) (scale (t + 1) (u : K) S)
   let S := pr 1 (t + 2) (scale (t + 2) (u : K) S)
@@ -107,7 +107,7 @@ register, by `c` times the gate's extension at the masked children's values. -/
 theorem gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
     (hl : ∀ c t S, pl c t S = Function.update S t (S t + c • vl))
     (hr : ∀ c t S, pr c t S = Function.update S t (S t + c • vr))
-    (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (c : K) (t : Fin 3) (u : Kˣ)
+    (f : Gate ℓ) (c : K) (t : Fin 3) (u : Kˣ)
     (S : State K ℓ) :
     gateRound pl pr f c t u S = Function.update S t fun i =>
       S t i - c * eval (Sum.elim ((u : K) • S (t + 1) + vl) ((u : K) • S (t + 2) + vr))
@@ -133,7 +133,7 @@ the gate's extension at the masked children's values. -/
 theorem foldl_gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
     (hl : ∀ c t S, pl c t S = Function.update S t (S t + c • vl))
     (hr : ∀ c t S, pr c t S = Function.update S t (S t + c • vr))
-    (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (c : K) (t : Fin 3) (us : List Kˣ)
+    (f : Gate ℓ) (c : K) (t : Fin 3) (us : List Kˣ)
     (S : State K ℓ) :
     us.foldl (fun S u => gateRound pl pr f c t u S) S = Function.update S t fun i =>
       S t i - c * (us.map fun u : Kˣ =>
@@ -164,30 +164,18 @@ theorem proc_eq {us : List Kˣ} (hnd : us.Nodup) (hmem : ∀ u, u ∈ us)
     rw [proc, foldl_gateRound_eq ihl ihr]
     congr 1
     funext i
-    have huniv : us.toFinset = Finset.univ :=
-      Finset.eq_univ_iff_forall.mpr fun u => List.mem_toFinset.mpr (hmem u)
     have hdeg : (gatePoly (K := K) f i).totalDegree < Fintype.card K - 1 :=
       (totalDegree_multilinearExtension_le _).trans_lt <| by simpa [two_mul] using hK
-    rw [← List.sum_toFinset _ hnd, huniv]
+    rw [← List.sum_toFinset _ hnd, show us.toFinset = Finset.univ by ext; simp [hmem]]
     have hsum := FiniteField.sum_units_eval_mul_add hdeg
-      (Sum.elim (S (t + 1)) (S (t + 2))) (Sum.elim (embed l.eval) (embed r.eval))
-    have hpt (u : Kˣ) :
-        (Sum.elim ((u : K) • S (t + 1) + embed l.eval) ((u : K) • S (t + 2) + embed r.eval)) =
-          fun j => (u : K) * Sum.elim (S (t + 1)) (S (t + 2)) j +
-            Sum.elim (embed l.eval) (embed r.eval) j := by
+      (Sum.elim (S (t + 1)) (S (t + 2))) (fun j => bitVal K (Sum.elim l.eval r.eval j))
+    have hpt (u : Kˣ) : Sum.elim ((u : K) • S (t + 1) + embed l.eval)
+        ((u : K) • S (t + 2) + embed r.eval) = fun j => (u : K) *
+          Sum.elim (S (t + 1)) (S (t + 2)) j + bitVal K (Sum.elim l.eval r.eval j) := by
       funext j; cases j <;> rfl
-    have hbits : Sum.elim (embed (K := K) l.eval) (embed r.eval) =
-        fun j => bitVal K (Sum.elim l.eval r.eval j) := by
-      funext j; cases j <;> rfl
-    have hunmask : ∑ u : Kˣ, eval (Sum.elim ((u : K) • S (t + 1) + embed l.eval)
-        ((u : K) • S (t + 2) + embed r.eval)) (gatePoly f i) =
-          -eval (Sum.elim (embed l.eval) (embed r.eval)) (gatePoly f i) := by
-      simp only [hpt]
-      exact hsum
-    rw [hunmask, hbits, gatePoly, eval_multilinearExtension]
-    simp only [Sum.elim_comp_inl, Sum.elim_comp_inr, Tree.eval_node, Pi.add_apply, Pi.smul_apply,
-      smul_eq_mul, embed]
-    ring
+    simp only [hpt]
+    rw [hsum, gatePoly, eval_multilinearExtension]
+    simp [embed]
 
 /-- Started from zero registers, the procedure leaves the value of the tree in the target
 register. -/

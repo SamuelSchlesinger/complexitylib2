@@ -39,29 +39,16 @@ open Iter Turing MultiTapeTM
 /-- **The space bound** `(ℓ + H + 1) · (|ℓ| + 1)`. -/
 def spaceBound (ℓ H : ℕ) : ℕ := (ℓ + H + 1) * ((encNat ℓ).length + 1)
 
-theorem length_encNat_le_of_le {a b : ℕ} (h : a ≤ b) : (encNat a).length ≤ (encNat b).length :=
-  ComputableTidilyInO.length_encNat_mono h
-
 /-- A residue below the prime has at most three bits more than `ℓ`. -/
 theorem length_lt_primeFor {ℓ v : ℕ} (hv : v ≤ primeFor ℓ) : (encNat v).length ≤
     (encNat ℓ).length + 3 :=
   by
-  refine (length_encNat_le_of_le (hv.trans (primeFor_le ℓ))).trans ?_
+  refine (ComputableTidilyInO.length_encNat_mono (hv.trans (primeFor_le ℓ))).trans ?_
   rw [length_encNat_eq_size, length_encNat_eq_size]
   refine Nat.size_le.mpr ?_
   have := Nat.lt_size_self ℓ
   rw [pow_add]
   omega
-
-theorem length_encList_le_of_forall {l : List ℕ} {P : ℕ} (h : ∀ v ∈ l, (encNat v).length ≤ P) :
-    (encList encNat l).length ≤ l.length * (2 * P + 1) := by
-  induction l with
-  | nil => simp
-  | cons v l ih =>
-    have h₁ := h v (List.mem_cons_self ..)
-    have h₂ := ih fun w hw => h w (List.mem_cons_of_mem _ hw)
-    simp only [length_encList, List.map_cons, List.sum_cons, List.length_cons] at h₂ ⊢
-    nlinarith
 
 theorem length_encFrame_le {fr : Frame} {P : ℕ} (h : (encNat fr.round).length ≤ P) :
     (encFrame fr).length ≤ 2 * P + 25 := by
@@ -74,14 +61,9 @@ theorem length_encFrame_le {fr : Frame} {P : ℕ} (h : (encNat fr.round).length 
 
 theorem length_encList_frames_le {st : List Frame} {P : ℕ}
     (h : ∀ fr ∈ st, (encNat fr.round).length ≤ P) :
-    (encList encFrame st).length ≤ st.length * (4 * P + 51) := by
-  induction st with
-  | nil => simp
-  | cons fr st ih =>
-    have h₁ := length_encFrame_le (h fr (List.mem_cons_self ..))
-    have h₂ := ih fun w hw => h w (List.mem_cons_of_mem _ hw)
-    simp only [length_encList, List.map_cons, List.sum_cons, List.length_cons] at h₂ ⊢
-    nlinarith
+    (encList encFrame st).length ≤ st.length * (4 * P + 51) :=
+  (length_encList_le encFrame st fun fr hfr => length_encFrame_le (h fr hfr)).trans_eq
+    (by ring)
 
 theorem length_encMode_lt (m : Mode) : (encMode m).length < 7 := by
   have := length_encFinite_lt m
@@ -112,17 +94,14 @@ theorem bounds_regs_wf {ℓ p : ℕ} {R : Regs} (hR : R.WF p ℓ) (hp : p ≤ pr
       (encList encNat (R.get r)).length ≤ ℓ * (2 * ((encNat ℓ).length + 3) + 1) := by
   obtain ⟨hlen, hlt⟩ := hR r
   refine ⟨hlen.le, ?_⟩
-  have := length_encList_le_of_forall (l := R.get r) (P := (encNat ℓ).length + 3)
+  have := length_encList_le encNat (R.get r) (b := (encNat ℓ).length + 3)
     fun v hv => length_lt_primeFor ((hlt v hv).le.trans hp)
   rwa [hlen] at this
 
-theorem length_encNat_le_self' (n : ℕ) : (encNat n).length ≤ n := by
-  rw [length_encNat_eq_size]; exact Nat.size_le.mpr Nat.lt_two_pow_self
-
 theorem bounds_of_inv {ℓ H : ℕ} {s : State} (hs : Inv ℓ H s) : Bounds ℓ H s := by
   obtain ⟨e, h, p, R, st, m, c⟩ := s
-  have hL := length_encNat_le_self' ℓ
-  have hH := length_encNat_le_self' H
+  have hL := length_encNat_le_self ℓ
+  have hH := length_encNat_le_self H
   have hempty (r : Fin 3) : (Regs.get (([], [], []) : Regs) r).length ≤ ℓ ∧
       (encList encNat (Regs.get (([], [], []) : Regs) r)).length ≤
         ℓ * (2 * ((encNat ℓ).length + 3) + 1) := by
@@ -132,7 +111,7 @@ theorem bounds_of_inv {ℓ H : ℕ} {s : State} (hs : Inv ℓ H s) : Bounds ℓ 
     obtain ⟨heq, hn⟩ := hs
     simp only [State.mk.injEq] at heq
     obtain ⟨rfl, rfl, rfl, rfl, rfl, rfl, -⟩ := heq
-    have := length_encNat_le_of_le hn
+    have := ComputableTidilyInO.length_encNat_mono hn
     exact ⟨Nat.zero_le _, Nat.zero_le _, by simp, hempty, by simp, by simp,
       by simp only [Ctl.toTuple]; omega, by simp [Ctl.toTuple], by simp [Ctl.toTuple]⟩
   | hdrHeight n =>
@@ -140,7 +119,7 @@ theorem bounds_of_inv {ℓ H : ℕ} {s : State} (hs : Inv ℓ H s) : Bounds ℓ 
     simp only [State.mk.injEq] at heq
     obtain ⟨he, rfl, rfl, rfl, rfl, rfl, -⟩ := heq
     subst e
-    have := length_encNat_le_of_le hn
+    have := ComputableTidilyInO.length_encNat_mono hn
     exact ⟨le_rfl, Nat.zero_le _, by simp, hempty, by simp, by simp,
       by simp only [Ctl.toTuple]; omega, by simp [Ctl.toTuple], by simp [Ctl.toTuple]⟩
   | prime q d =>
@@ -161,15 +140,15 @@ theorem bounds_of_inv {ℓ H : ℕ} {s : State} (hs : Inv ℓ H s) : Bounds ℓ 
   | leaf i =>
     dsimp only [Inv, RunInv] at hs
     obtain ⟨rfl, rfl, hp2, hpp, hR, hst, hrd, hi⟩ := hs
-    have := length_encNat_le_of_le hi
+    have := ComputableTidilyInO.length_encNat_mono hi
     exact ⟨le_rfl, le_rfl, length_lt_primeFor hpp, bounds_regs_wf hR hpp, hst,
       fun fr hfr => length_lt_primeFor ((hrd fr hfr).le.trans hpp),
       by simp only [Ctl.toTuple]; omega, by simp [Ctl.toTuple], by simp [Ctl.toTuple]⟩
   | scan k acc =>
     dsimp only [Inv, RunInv] at hs
     obtain ⟨rfl, rfl, hp2, hpp, hR, hst, hrd, hk, hacc, hacc'⟩ := hs
-    have h₁ := (length_encNat_le_of_le hk).trans (length_tableLength_le e)
-    have h₂ := length_encList_le_of_forall (l := acc) (P := (encNat e).length + 3)
+    have h₁ := (ComputableTidilyInO.length_encNat_mono hk).trans (length_tableLength_le e)
+    have h₂ := length_encList_le encNat acc (b := (encNat e).length + 3)
       fun v hv => length_lt_primeFor ((hacc' v hv).le.trans hpp)
     rw [hacc] at h₂
     exact ⟨le_rfl, le_rfl, length_lt_primeFor hpp, bounds_regs_wf hR hpp, hst,
@@ -189,9 +168,9 @@ theorem stateBudget_le {ℓ H : ℕ} {s : State} (hb : Bounds ℓ H s) :
   obtain ⟨he, hh, hp, hR, hst, hrd, hn₁, hn₂, hacc⟩ := hb
   simp only at he hh hp hR hst hrd hn₁ hn₂ hacc
   set L := (encNat ℓ).length with hL
-  have hHl := length_encNat_le_self' H
-  have hel := length_encNat_le_of_le he
-  have hhl := (length_encNat_le_of_le hh).trans hHl
+  have hHl := length_encNat_le_self H
+  have hel := ComputableTidilyInO.length_encNat_mono he
+  have hhl := (ComputableTidilyInO.length_encNat_mono hh).trans hHl
   obtain ⟨hR0, hR0'⟩ := hR 0
   obtain ⟨hR1, hR1'⟩ := hR 1
   obtain ⟨hR2, hR2'⟩ := hR 2

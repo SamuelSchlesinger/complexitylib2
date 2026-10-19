@@ -12,7 +12,7 @@ import Complexity.Computability.TreeEval.Space
 
 A small instance evaluated directly, and the Cook–Mertz procedure over `ZMod 7` on two-bit values:
 the field-size hypothesis `2ℓ < |K| - 1` holds, as `4 < 6`, so the correctness theorem is not
-vacuous. The iterative machine and the read machine compute the same value.
+vacuous. The read machine computes the same value.
 -/
 
 namespace ComplexityTests.TreeEval
@@ -45,13 +45,6 @@ example : proc (Finset.univ : Finset (ZMod 7)ˣ).toList sample 1 2 0 2 =
 example {h : ℕ} (T : Tree 2 h) (t : Fin 3) :
     embed T.eval = proc (Finset.univ : Finset (ZMod 7)ˣ).toList T 1 t 0 t :=
   embed_eval_eq_proc (by simp) T t
-
-/-- The iterative machine over `ZMod 7` halts with the value of any two-bit instance in register
-`2`, as `2 * 2 < 7 - 1`. -/
-example {h : ℕ} (T : Tree 2 h) :
-    ((Iter.step T 6 (Iter.zmodUnit 7))^[Iter.steps 6 h] Iter.init).regs 2 = embed T.eval := by
-  rw [Iter.iterate_step_init_zmod (p := 7) (by decide)]
-  simp
 
 /-- The encoding of the sample instance starts with the header `11 0 11 0`. -/
 example : sample.encode.take 6 = [true, true, false, true, true, false] := by decide

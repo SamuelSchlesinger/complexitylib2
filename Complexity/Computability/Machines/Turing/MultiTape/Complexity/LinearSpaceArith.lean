@@ -31,6 +31,10 @@ namespace Turing.MultiTapeTM
 theorem length_encNat_eq_size (n : ℕ) : (encNat n).length = n.size := by
   rw [encNat_apply, Nat.size_eq_bits_len]
 
+/-- A number is at least as large as its length. -/
+theorem length_encNat_le_self (n : ℕ) : (encNat n).length ≤ n := by
+  rw [length_encNat_eq_size]; exact Nat.size_le.mpr Nat.lt_two_pow_self
+
 /-- A sum is at most one bit longer than the longer summand. -/
 theorem length_encNat_add_le_add (a b : ℕ) :
     (encNat (a + b)).length ≤ (encNat a).length + (encNat b).length + 1 := by

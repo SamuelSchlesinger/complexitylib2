@@ -66,14 +66,6 @@ def Inv (ℓ H : ℕ) (s : State) : Prop :=
 
 theorem inv_init (ℓ H : ℕ) : Inv ℓ H init := ⟨rfl, Nat.zero_le _⟩
 
-theorem modifyAt_addMod_wf {p : ℕ} (hp : 0 < p) {acc : List ℕ} (hacc : ∀ v ∈ acc, v < p)
-    (i a : ℕ) : (modifyAt acc i (addMod p a)).length = acc.length ∧
-      ∀ v ∈ modifyAt acc i (addMod p a), v < p := by
-  refine ⟨by simp [modifyAt], fun v hv => ?_⟩
-  rcases List.mem_or_eq_of_mem_set hv with hv | rfl
-  · exact hacc v hv
-  · exact addMod_lt hp _ _
-
 variable {ℓ H : ℕ} (T : Tree ℓ H)
 
 /-- **A step keeps the invariant.** -/
@@ -136,38 +128,28 @@ theorem inv_step {s : State} (hs : Inv ℓ H s) (hh : machine.halt s = false) :
       · simp only [machine, step, runStep, hlen, ↓reduceIte]
         exact ⟨rfl, rfl, hp2, hpp, hR, by omega, hrd, Nat.zero_le _⟩
       · simp only [machine, step, runStep, hlen, ↓reduceIte]
-        refine ⟨rfl, rfl, hp2, hpp, hR.scale hp _ _, by simp; omega, fun fr hfr => ?_, trivial⟩
-        rcases List.mem_cons.mp hfr with rfl | hfr
-        · simp; omega
-        · exact hrd fr hfr
+        exact ⟨rfl, rfl, hp2, hpp, hR.scale hp _ _, by simp; omega,
+          List.forall_mem_cons.2 ⟨by simp; omega, hrd⟩, trivial⟩
     · rcases st with _ | ⟨⟨j, ph, ng, tg⟩, st⟩
       · simp only [machine, step, runStep]
         exact ⟨rfl, rfl, hp2, hpp, hR, by simp, by simp, trivial⟩
-      · have hj : j < p := hrd _ (List.mem_cons_self ..)
-        have hrd' : ∀ fr ∈ st, fr.round < p := fun fr hfr => hrd fr (List.mem_cons_of_mem _ hfr)
+      · obtain ⟨hj, hrd'⟩ := List.forall_mem_cons.1 hrd
         simp only [List.length_cons] at hst
         fin_cases ph
         · simp only [machine, step, runStep]
-          refine ⟨rfl, rfl, hp2, hpp, hR.scale hp _ _, by simp; omega, fun fr hfr => ?_, trivial⟩
-          rcases List.mem_cons.mp hfr with rfl | hfr
-          · exact hj
-          · exact hrd' fr hfr
+          exact ⟨rfl, rfl, hp2, hpp, hR.scale hp _ _, by simp; omega,
+            List.forall_mem_cons.2 ⟨hj, hrd'⟩, trivial⟩
         · simp only [machine, step, runStep]
           refine ⟨rfl, rfl, hp2, hpp, hR, by simp; omega, hrd, by simp [tableLength], by simp,
             fun v hv => ?_⟩
           rw [(List.mem_replicate.mp hv).2]; exact hp
         · simp only [machine, step, runStep]
-          refine ⟨rfl, rfl, hp2, hpp, hR.scale hp _ _, by simp; omega, fun fr hfr => ?_, trivial⟩
-          rcases List.mem_cons.mp hfr with rfl | hfr
-          · exact hj
-          · exact hrd' fr hfr
+          exact ⟨rfl, rfl, hp2, hpp, hR.scale hp _ _, by simp; omega,
+            List.forall_mem_cons.2 ⟨hj, hrd'⟩, trivial⟩
         · by_cases hnext : j + 1 < p - 1
           · simp only [machine, step, runStep, hnext, ↓reduceIte]
-            refine ⟨rfl, rfl, hp2, hpp, (hR.scale hp _ _).scale hp _ _, by simp; omega,
-              fun fr hfr => ?_, trivial⟩
-            rcases List.mem_cons.mp hfr with rfl | hfr
-            · simp; omega
-            · exact hrd' fr hfr
+            exact ⟨rfl, rfl, hp2, hpp, (hR.scale hp _ _).scale hp _ _, by simp; omega,
+              List.forall_mem_cons.2 ⟨by simp; omega, hrd'⟩, trivial⟩
           · simp only [machine, step, runStep, hnext, ↓reduceIte]
             exact ⟨rfl, rfl, hp2, hpp, hR.scale hp _ _, by dsimp only; omega, hrd', trivial⟩
   | leaf i =>
@@ -198,11 +180,9 @@ theorem inv_step {s : State} (hs : Inv ℓ H s) (hh : machine.halt s = false) :
             (weight p e (k / e) (R.get (fr.target + 1)) (R.get (fr.target + 2)))
           exact ⟨rfl, rfl, hp2, hpp, hR, hst, hrd, by omega, by rw [h₁, hacc], h₂⟩
       · simp only [machine, step, hlt, ↓reduceIte]
-        refine ⟨rfl, rfl, hp2, hpp, hR.subtractSums hp _ _ _, by simpa using hst,
-          fun fr' hfr => ?_, trivial⟩
-        rcases List.mem_cons.mp hfr with rfl | hfr
-        · exact hrd fr (List.mem_cons_self ..)
-        · exact hrd fr' (List.mem_cons_of_mem _ hfr)
+        obtain ⟨hj, hrd'⟩ := List.forall_mem_cons.1 hrd
+        exact ⟨rfl, rfl, hp2, hpp, hR.subtractSums hp _ _ _, by simpa using hst,
+          List.forall_mem_cons.2 ⟨hj, hrd'⟩, trivial⟩
   | done => simp [machine] at hh
 
 /-- **Every state reached on the encoding satisfies the invariant.** -/

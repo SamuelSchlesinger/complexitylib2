@@ -29,8 +29,9 @@ offset `pathOffset`, which a machine can recompute from the path alone.
 
 ## Main results
 
-* `Cslib.TreeEval.Tree.getElem_body_gate`, `Cslib.TreeEval.Tree.getElem_body_leaf`: the table of
-  the gate, or the value of the leaf, at a path, read off the body at its offset.
+* `Cslib.TreeEval.Tree.getElem_body_pathOffset`: the bits of the node at a path, read off the body
+  at its offset; `Cslib.TreeEval.Tree.getElem_body_gate` and `Cslib.TreeEval.Tree.getElem_body_leaf`
+  for gates and leaves.
 -/
 
 @[expose] public section
@@ -50,14 +51,14 @@ def tableLength (ℓ : ℕ) : ℕ := 4 ^ ℓ * ℓ
 
 /-- The bit at position `q` of the table of `f`: output bit `q % ℓ` on the inputs indexed by
 `q / ℓ`. -/
-def tableBit (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (q : ℕ) : Bool :=
+def tableBit (f : Gate ℓ) (q : ℕ) : Bool :=
   if h : q % ℓ < ℓ then f (lowBits ℓ (q / ℓ)) (highBits ℓ (q / ℓ)) ⟨q % ℓ, h⟩ else false
 
 /-- The table of a gate. -/
-def table (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) : List Bool :=
+def table (f : Gate ℓ) : List Bool :=
   List.ofFn fun q : Fin (tableLength ℓ) => tableBit f q
 
-@[simp] theorem length_table (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) :
+@[simp] theorem length_table (f : Gate ℓ) :
     (table f).length = tableLength ℓ := List.length_ofFn
 
 /-- The length of the body of a subtree of height `d`. -/
@@ -70,19 +71,6 @@ def pathOffset (ℓ : ℕ) : ℕ → List Bool → ℕ
   | _, [] => 0
   | 0, _ :: _ => 0
   | d + 1, b :: P => tableLength ℓ + (if b then bodyLength ℓ d else 0) + pathOffset ℓ d P
-
-private theorem getElem?_append_add {α : Type*} (l₁ l₂ : List α) (n : ℕ) :
-    (l₁ ++ l₂)[l₁.length + n]? = l₂[n]? := by
-  rw [List.getElem?_append_right (by omega)]
-  simp
-
-private theorem getElem?_append_of_some {α : Type*} {l₁ : List α} (l₂ : List α) {n : ℕ} {a : α}
-    (h : l₁[n]? = some a) : (l₁ ++ l₂)[n]? = some a := by
-  have hlt : n < l₁.length := by
-    by_contra hge
-    rw [List.getElem?_eq_none (by omega)] at h
-    exact absurd h (by simp)
-  rw [List.getElem?_append_left hlt, h]
 
 namespace Tree
 
@@ -105,58 +93,60 @@ def header (ℓ h : ℕ) : List Bool :=
 @[simp] theorem length_header (ℓ h : ℕ) : (header ℓ h).length = ℓ + h + 2 := by
   simp [header]; omega
 
+theorem replicate_true_append_inj {n n' : ℕ} {b b' : List Bool}
+    (h : List.replicate n true ++ false :: b = List.replicate n' true ++ false :: b') :
+    n = n' ∧ b = b' := by
+  induction n generalizing n' <;> cases n' <;> simp_all [List.replicate_succ]
+
+/-- The header determines the value length and the height. -/
+theorem header_append_inj {ℓ' h' : ℕ} {b b' : List Bool}
+    (e : header ℓ h ++ b = header ℓ' h' ++ b') : ℓ = ℓ' ∧ h = h' ∧ b = b' := by
+  simp only [header, List.append_assoc, List.cons_append, List.nil_append] at e
+  obtain ⟨h₁, e⟩ := replicate_true_append_inj e
+  exact ⟨h₁, replicate_true_append_inj e⟩
+
 /-- The encoding of an instance: its header, then its body. -/
 def encode (T : Tree ℓ h) : List Bool := header ℓ h ++ T.body
 
-/-- **The table of the gate at a path**, read off the body at the offset of the path. -/
-theorem getElem_body_gate {d : ℕ} (U : Tree ℓ d) {P : List Bool}
-    {f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool} (hP : U.nodeAt P = .gate f) {q : ℕ}
-    (hq : q < tableLength ℓ) :
-    U.body[pathOffset ℓ d P + q]? = some (tableBit f q) := by
+/-- The bits of a node in the body: the value of a leaf, the table of a gate. -/
+def Node.bits : Node ℓ → List Bool
+  | .leaf v => List.ofFn v
+  | .gate f => table f
+  | .none => []
+
+/-- **The bits of the node at a path**, read off the body at the offset of the path. -/
+theorem getElem_body_pathOffset {d : ℕ} (U : Tree ℓ d) {P : List Bool} {q : ℕ}
+    (hq : q < (U.nodeAt P).bits.length) :
+    U.body[pathOffset ℓ d P + q]? = (U.nodeAt P).bits[q]? := by
   induction U generalizing P with
-  | leaf v =>
-    cases P <;> simp [nodeAt] at hP
+  | leaf v => rcases P with _ | _ <;> simp_all [nodeAt, Node.bits, body, pathOffset]
   | @node d g l r ihl ihr =>
-    rcases P with _ | ⟨b, P⟩
-    · simp only [nodeAt_node_nil, Node.gate.injEq] at hP
-      subst hP
-      rw [pathOffset, zero_add, body, List.append_assoc, List.getElem?_append_left (by simpa)]
-      simp [table, hq]
-    · cases b
-      · rw [nodeAt_node_false] at hP
-        have e : pathOffset ℓ (d + 1) (false :: P) + q =
-            (table g).length + (pathOffset ℓ d P + q) := by simp [pathOffset]; omega
-        rw [e, body, List.append_assoc, getElem?_append_add]
-        exact getElem?_append_of_some _ (ihl hP)
-      · rw [nodeAt_node_true] at hP
-        have e : pathOffset ℓ (d + 1) (true :: P) + q =
-            (table g ++ l.body).length + (pathOffset ℓ d P + q) := by simp [pathOffset]; omega
-        rw [e, body, getElem?_append_add, ihr hP]
+    rcases P with _ | ⟨_ | _, P⟩
+    · simp_all [Node.bits, body, pathOffset, List.getElem?_append_left]
+    · have := ihl (P := P) (by simpa using hq)
+      have hlt := (List.getElem?_eq_some_iff.mp
+        (this.trans (List.getElem?_eq_getElem (by simpa using hq)))).1
+      simp only [body, pathOffset, nodeAt_node_false] at this hlt ⊢
+      rw [List.append_assoc, List.getElem?_append_right (by simp; omega),
+        List.getElem?_append_left (by simp at hlt ⊢; omega)]
+      simpa [Nat.add_assoc] using this
+    · simp only [body, pathOffset, nodeAt_node_true] at hq ⊢
+      rw [List.getElem?_append_right (by simp; omega), ← ihr hq]
+      congr 1; simp; omega
+
+/-- **The table of the gate at a path**, read off the body at the offset of the path. -/
+theorem getElem_body_gate {d : ℕ} (U : Tree ℓ d) {P : List Bool} {f : Gate ℓ}
+    (hP : U.nodeAt P = .gate f) {q : ℕ} (hq : q < tableLength ℓ) :
+    U.body[pathOffset ℓ d P + q]? = some (tableBit f q) := by
+  rw [getElem_body_pathOffset U (by simpa [hP, Node.bits] using hq)]
+  simp [hP, Node.bits, table, hq]
 
 /-- **The value of the leaf at a path**, read off the body at the offset of the path. -/
 theorem getElem_body_leaf {d : ℕ} (U : Tree ℓ d) {P : List Bool} {v : Fin ℓ → Bool}
     (hP : U.nodeAt P = .leaf v) (i : Fin ℓ) :
     U.body[pathOffset ℓ d P + i]? = some (v i) := by
-  induction U generalizing P with
-  | leaf w =>
-    rcases P with _ | ⟨b, P⟩
-    · simp only [nodeAt_leaf_nil, Node.leaf.injEq] at hP
-      subst hP
-      simp [pathOffset, body]
-    · simp [nodeAt] at hP
-  | @node d g l r ihl ihr =>
-    rcases P with _ | ⟨b, P⟩
-    · simp at hP
-    · cases b
-      · rw [nodeAt_node_false] at hP
-        have e : pathOffset ℓ (d + 1) (false :: P) + i =
-            (table g).length + (pathOffset ℓ d P + i) := by simp [pathOffset]; omega
-        rw [e, body, List.append_assoc, getElem?_append_add]
-        exact getElem?_append_of_some _ (ihl hP)
-      · rw [nodeAt_node_true] at hP
-        have e : pathOffset ℓ (d + 1) (true :: P) + i =
-            (table g ++ l.body).length + (pathOffset ℓ d P + i) := by simp [pathOffset]; omega
-        rw [e, body, getElem?_append_add, ihr hP]
+  rw [getElem_body_pathOffset U (by simp [hP, Node.bits])]
+  simp [hP, Node.bits]
 
 end Tree
 

@@ -39,7 +39,7 @@ structure Instance where
 
 open Reader in
 /-- The table of a gate determines the gate. -/
-theorem table_injective {ℓ : ℕ} {f g : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool}
+theorem table_injective {ℓ : ℕ} {f g : Gate ℓ}
     (h : table f = table g) : f = g := by
   funext a b i
   let k := cubeEquiv ℓ (Sum.elim a b)
@@ -74,29 +74,8 @@ end Tree
 theorem encode_injective {I J : Instance} (h : I.tree.encode = J.tree.encode) : I = J := by
   obtain ⟨ℓ, H, T⟩ := I
   obtain ⟨ℓ', H', T'⟩ := J
-  simp only at h
-  have hℓ : ℓ = ℓ' := by
-    by_contra hne
-    rcases Nat.lt_or_gt_of_ne hne with hlt | hlt
-    · have h₁ := Reader.getElem?_encode_ell (T := T)
-      have h₂ := Reader.getElem?_encode_lt_ell (T := T') hlt
-      rw [h] at h₁; rw [h₁] at h₂; exact absurd h₂ (by simp)
-    · have h₁ := Reader.getElem?_encode_ell (T := T')
-      have h₂ := Reader.getElem?_encode_lt_ell (T := T) hlt
-      rw [← h] at h₁; rw [h₁] at h₂; exact absurd h₂ (by simp)
-  subst hℓ
-  have hH : H = H' := by
-    by_contra hne
-    rcases Nat.lt_or_gt_of_ne hne with hlt | hlt
-    · have h₁ := Reader.getElem?_encode_height_end (T := T)
-      have h₂ := Reader.getElem?_encode_height (T := T') hlt
-      rw [h] at h₁; rw [h₁] at h₂; exact absurd h₂ (by simp)
-    · have h₁ := Reader.getElem?_encode_height_end (T := T')
-      have h₂ := Reader.getElem?_encode_height (T := T) hlt
-      rw [← h] at h₁; rw [h₁] at h₂; exact absurd h₂ (by simp)
-  subst hH
-  rw [Tree.encode, Tree.encode] at h
-  rw [Tree.body_injective (List.append_cancel_left h)]
+  obtain ⟨rfl, rfl, hb⟩ := Tree.header_append_inj h
+  cases Tree.body_injective hb; rfl
 
 /-- **The encoding of instances.** -/
 def encInstance : Instance ↪ List Bool := ⟨fun I => I.tree.encode, fun _ _ => encode_injective⟩

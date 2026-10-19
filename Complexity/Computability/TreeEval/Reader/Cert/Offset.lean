@@ -145,8 +145,6 @@ theorem pathOffset_le_bodyLength (ℓ : ℕ) (P : List Bool) :
 
 /-! ### Certificates -/
 
-theorem length_encNat_le_self (n : ℕ) : (encNat n).length ≤ n := by
-  rw [length_encNat_eq_size]; exact Nat.size_le.mpr Nat.lt_two_pow_self
 
 theorem length_encNat_pow_four (k : ℕ) : (encNat (4 ^ k)).length ≤ 2 * k + 1 := by
   have h : 4 ^ k = 2 ^ (2 * k) := by rw [pow_mul]; norm_num

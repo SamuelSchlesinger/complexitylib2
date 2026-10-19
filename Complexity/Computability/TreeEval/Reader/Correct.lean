@@ -13,9 +13,9 @@ public import Complexity.Computability.TreeEval.Reader.Arith
 # Correctness of the Tree Evaluation read machine
 
 Run on the encoding of an instance, `Cslib.TreeEval.Reader.machine` halts with the value of the
-tree as its output. The proof follows that of `Cslib.TreeEval.Iter.iterate_step_call`: a call on a
-subtree performs the procedure on it and returns, by induction on the subtree, with the reading of
-a leaf and the pass over the table of a gate as loops of their own.
+tree as its output: a call on a subtree performs the procedure `Cslib.TreeEval.proc` on it and
+returns, by induction on the subtree, with the rounds of a gate, the reading of a leaf and the pass
+over the table of a gate as loops of their own.
 
 ## Main results
 
@@ -141,20 +141,14 @@ theorem next_scan {p : ℕ} (R : Regs) (fr : Frame) (st : List Frame) {k : ℕ}
         (if T.body.getD (pathOffset ℓ H (path st) + k) false then
           modifyAt acc (k % ℓ) (addMod p (weight p ℓ (k / ℓ) (R.get (fr.target + 1))
             (R.get (fr.target + 2)))) else acc)) out := by
-  by_cases hb : T.body.getD (pathOffset ℓ H (path st) + k) false
-  · have hb' : T.body[pathOffset ℓ H (path st) + k]?.getD false = true := by
-      simpa [List.getD_eq_getElem?_getD] using hb
-    simp [ReadMachine.next, machine, step, addr, ReadMachine.readBit, offset, hk, Nat.add_assoc,
-      List.getD_eq_getElem?_getD, hb']
-  · have hb' : T.body[pathOffset ℓ H (path st) + k]?.getD false = false := by
-      simpa [List.getD_eq_getElem?_getD] using hb
-    simp [ReadMachine.next, machine, step, addr, ReadMachine.readBit, offset, hk, Nat.add_assoc,
-      List.getD_eq_getElem?_getD, hb']
+  cases hb : T.body.getD (pathOffset ℓ H (path st) + k) false <;>
+    simp_all [ReadMachine.next, machine, step, addr, ReadMachine.readBit, offset, Nat.add_assoc,
+      List.getD_eq_getElem?_getD]
 
 /-- **The pass over a table**: after `k` bits, the sums for every output bit `i` cover the
 positions `q < k` of the table for `i` that are set, weighted by the masked registers. -/
 theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
-    {f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool} (hf : T.nodeAt (path st) = .gate f)
+    {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     (R : Regs) (out : List Bool) :
     ∀ k ≤ tableLength ℓ, ∃ acc, machine.runFrom T.encode
       (cfg (ℓ := ℓ) (H := H) p R (fr :: st) .ret (.scan 0 (List.replicate ℓ 0)) out) k =
@@ -183,11 +177,7 @@ theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame
       (by omega), hbit], ?_, ?_, fun i => ?_⟩
     · split_ifs <;> simp [modifyAt, hlen]
     · split_ifs
-      · intro a ha
-        rcases List.mem_or_eq_of_mem_set ha with ha | rfl
-        · exact hlt a ha
-        · exact addMod_lt hp _ _
-      · exact hlt
+      exacts [(modifyAt_addMod_wf hp hlt _ _).2, hlt]
     · rw [Finset.sum_range_succ, ← hsum i]
       by_cases hb : tableBit f k
       · by_cases hi : k % ℓ = i
@@ -196,21 +186,22 @@ theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame
         · simp [hb, hi, modifyAt, List.getD_eq_getElem?_getD]
       · simp [hb, BitString.bitVal]
 
+theorem mul_add_div_self (k : ℕ) (i : Fin ℓ) : (k * ℓ + i) / ℓ = k := by
+  rw [Nat.add_comm, Nat.add_mul_div_right _ _ (Nat.zero_lt_of_lt i.isLt), Nat.div_eq_of_lt i.isLt,
+    zero_add]
+
 /-- The bit of a table at position `k * ℓ + i`. -/
-theorem tableBit_mul_add (f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool) (k : ℕ) (i : Fin ℓ) :
+theorem tableBit_mul_add (f : Gate ℓ) (k : ℕ) (i : Fin ℓ) :
     tableBit f (k * ℓ + i) = f (lowBits ℓ k) (highBits ℓ k) i := by
-  have hℓ : 0 < ℓ := Nat.lt_of_le_of_lt (Nat.zero_le _) i.isLt
-  have hdiv : (k * ℓ + i) / ℓ = k := by
-    rw [Nat.add_comm, Nat.add_mul_div_right _ _ hℓ, Nat.div_eq_of_lt i.isLt, zero_add]
   have hmod : (k * ℓ + i) % ℓ = i := by
     rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt i.isLt]
-  simp only [tableBit, hdiv, hmod, i.isLt, dite_true]
+  simp only [tableBit, mul_add_div_self, hmod, i.isLt, dite_true]
 
 /-- **The update of a round**: from phase `1`, the pass over the table of the gate subtracts `±`
 the multilinear extensions of its output bits at the masked registers, in `4^ℓ * ℓ + 2` steps,
 and calls the left child for subtraction. -/
 theorem runFrom_update {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
-    {f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool} (hf : T.nodeAt (path st) = .gate f)
+    {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     (hph : fr.phase = 1) (R : Regs) (hR : R.WF p ℓ) (out : List Bool) :
     ∃ R', machine.runFrom T.encode
       (cfg (ℓ := ℓ) (H := H) p R (fr :: st) .ret .run out) (tableLength ℓ + 2) =
@@ -237,11 +228,7 @@ theorem runFrom_update {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
     congr 2
     rw [hsum i, tableLength, sum_range_mul_ite_mod _ i.isLt, eval_gatePoly_eq_sum]
     refine Finset.sum_congr rfl fun k _ => ?_
-    rw [tableBit_mul_add, cast_weight]
-    have hdiv : (k * ℓ + i) / ℓ = k := by
-      have hℓ : 0 < ℓ := Nat.lt_of_le_of_lt (Nat.zero_le _) i.isLt
-      rw [Nat.add_comm, Nat.add_mul_div_right _ _ hℓ, Nat.div_eq_of_lt i.isLt, zero_add]
-    rw [hdiv]
+    rw [tableBit_mul_add, cast_weight, mul_add_div_self]
     rfl
 
 theorem next_push {p : ℕ} (R : Regs) {st : List Frame} (hst : st.length ≠ H) (neg : Bool)
@@ -285,7 +272,7 @@ def CallSpec (T : Tree ℓ H) (p : ℕ) [Fact p.Prime] (P : List Bool)
 /-- **One round** of the machine at a gate performs `gateRound` and starts the next round or
 returns. -/
 theorem exists_runFrom_round {p : ℕ} [Fact p.Prime] {st : List Frame}
-    {f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool} (hf : T.nodeAt (path st) = .gate f)
+    {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     {pl pr : ZMod p → Fin 3 → TreeEval.State (ZMod p) ℓ → TreeEval.State (ZMod p) ℓ}
     (hl : CallSpec T p (path st ++ [false]) pl) (hr : CallSpec T p (path st ++ [true]) pr)
     {j : ℕ} (hj : j < p - 1) (neg : Bool) (t : Fin 3) (R : Regs) (hR : R.WF p ℓ)
@@ -324,7 +311,7 @@ theorem exists_runFrom_round {p : ℕ} [Fact p.Prime] {st : List Frame}
 /-- The rounds `j, …, j + k` of a gate, the last ones before `p - 1`, perform the corresponding
 `gateRound`s and return. -/
 theorem exists_runFrom_rounds {p : ℕ} [Fact p.Prime] {st : List Frame}
-    {f : (Fin ℓ → Bool) → (Fin ℓ → Bool) → Fin ℓ → Bool} (hf : T.nodeAt (path st) = .gate f)
+    {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     {pl pr : ZMod p → Fin 3 → TreeEval.State (ZMod p) ℓ → TreeEval.State (ZMod p) ℓ}
     (hl : CallSpec T p (path st ++ [false]) pl) (hr : CallSpec T p (path st ++ [true]) pr)
     (neg : Bool) (t : Fin 3) (out : List Bool) (k : ℕ) :
