@@ -70,6 +70,18 @@ example : (BinarySearch.step 5)^[3] (0, 3) = (5, 0) := by decide
 example {α : Type} (enc : α ↪ List Bool) : PH enc ⊆ PWithPPOracle enc :=
   PH_subset_PWithPPOracle
 
+example {α : Type} (enc : α ↪ List Bool) : PWithSharpPOracle enc ⊆ PWithPPOracle enc :=
+  PWithSharpPOracle_subset_PWithPPOracle
+
+open Classical in
+/-- Binary search against the oracle of `k ≤ 5`, on codes `(u, k)`, finds `5` in three rounds. -/
+example (u : List Bool) :
+    OracleComp.interpret (m := Id) (languageOracle {w | ∃ k ≤ 5, w = encPair encBits encNat (u, k)})
+      (search u 3) = 5 :=
+  interpret_id_search (fun k => ⟨fun ⟨j, hj, h⟩ =>
+    (Prod.mk.inj ((encPair encBits encNat).injective h)).2 ▸ hj, fun hk => ⟨k, hk, rfl⟩⟩)
+    (by norm_num)
+
 /-! ### `FewP ⊆ SPP` -/
 
 /-- A problem in `P`, hence in `UP` and `FewP`, is in `SPP`. -/
@@ -145,6 +157,13 @@ info: 'Cslib.Complexity.mem_PWithPPOracle_of_testBit' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.mem_PWithPPOracle_of_testBit
+
+/--
+info: 'Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle
 
 /--
 info: 'Cslib.Complexity.PH_subset_PWithPPOracle' depends on axioms:
