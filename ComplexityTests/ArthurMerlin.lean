@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
+import Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound
 import Complexity.Computability.Complexity.Classes.Inclusions
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -75,6 +76,9 @@ example (e : Polynomial ℕ) : ∃ (p q : Polynomial ℕ) (V : _ × List Bool �
       IsArthurMerlinVerifierWithErrorExponent encCNF e p q V SAT :=
   mem_AM_iff_forall_errorExponent.mp (NP_subset_AM SAT.mem_NP) e
 
+example : {w : List Bool | w.headD false = true} ∈ AM encBits :=
+  SBP_subset_AM (MA_subset_SBP head_mem_MA)
+
 /-! ### Axiom guards -/
 
 /-- info: 'Cslib.Complexity.NP_subset_MA' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -134,5 +138,33 @@ info: 'Cslib.Complexity.MA_subset_SigmaP_two_inter_PiP_two' depends on axioms: [
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.MA_subset_SigmaP_two_inter_PiP_two
+
+/-- info: 'Cslib.Complexity.NP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.NP_subset_AM
+
+/-- info: 'Cslib.Complexity.BPP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.BPP_subset_AM
+
+/--
+info: 'Cslib.Complexity.MA_subset_PiP_two' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.MA_subset_PiP_two
+
+/-- info: 'Cslib.Complexity.AM_subset_PH' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.AM_subset_PH
+
+/--
+info: 'Cslib.Complexity.mem_AM_of_card_certifiedSet' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.mem_AM_of_card_certifiedSet
+
+/-- info: 'Cslib.Complexity.SBP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.SBP_subset_AM
 
 end ComplexityTests.ArthurMerlin
