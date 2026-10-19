@@ -15,6 +15,17 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 `frame w` doubles every bit `b` of `w` into `true, b` and ends with `false`
 (`Turing.MultiTapeTM.frame`). Its bits are therefore constants or bits of `w`
 (`Turing.MultiTapeTM.getElem_frame`), which is what makes framed inputs easy to feed to circuits.
+
+## Main results
+
+* `Turing.MultiTapeTM.getElem_frame`: the bit at each position of `frame w`.
+* `Turing.MultiTapeTM.getElem?_frame_two_mul`, `Turing.MultiTapeTM.getElem?_frame_two_mul_add_one`,
+  `Turing.MultiTapeTM.getElem?_frame_two_mul_length`: the marker, data, and terminator bits of
+  `frame w` by position.
+* `Turing.MultiTapeTM.forall_getElem?_frame_iff`: a predicate agrees with `frame w` placed at offset
+  `base` iff it agrees with the markers, the bits of `w`, and the terminator.
+* `Turing.MultiTapeTM.forall_getElem?_append_iff`: a predicate agrees with the bits of `u ++ w` iff
+  it agrees with `u` and with `w` shifted by `u.length`.
 -/
 
 @[expose] public section
@@ -42,5 +53,109 @@ theorem getElem_frame (w : List Bool) (j : ℕ) (hj : j < (frame w).length) :
       · simp only [h, show j + 2 < 2 * (w.length + 1) by omega, dite_true, Nat.add_mod_right,
           show (j + 2) / 2 = j / 2 + 1 by omega, List.getElem_cons_succ]
       · simp only [h, show ¬j + 2 < 2 * (w.length + 1) by omega, dite_false]
+
+/-! ### Indexed bit access -/
+
+/-- The terminator of `frame w` sits at position `2 * w.length`. -/
+theorem getElem?_frame_two_mul_length (w : List Bool) :
+    (frame w)[2 * w.length]? = some false := by
+  induction w with
+  | nil => rfl
+  | cons b w ih =>
+    have hidx : 2 * (b :: w).length = 2 * w.length + 2 := by
+      rw [List.length_cons]; omega
+    rw [hidx, frame_cons]
+    exact ih
+
+/-- Each bit of `w` is preceded in `frame w` by a `true` marker at an even position. -/
+theorem getElem?_frame_two_mul {w : List Bool} {j : ℕ} (hj : j < w.length) :
+    (frame w)[2 * j]? = some true := by
+  induction w generalizing j with
+  | nil => simp at hj
+  | cons b w ih =>
+    cases j with
+    | zero => rfl
+    | succ j =>
+      have hj' : j < w.length := by simpa using hj
+      have hidx : 2 * (j + 1) = 2 * j + 2 := by omega
+      rw [hidx, frame_cons]
+      exact ih hj'
+
+/-- The bit `w[j]` sits at the odd position `2 * j + 1` of `frame w`. -/
+theorem getElem?_frame_two_mul_add_one {w : List Bool} {j : ℕ} (hj : j < w.length) :
+    (frame w)[2 * j + 1]? = w[j]? := by
+  induction w generalizing j with
+  | nil => simp at hj
+  | cons b w ih =>
+    cases j with
+    | zero => rfl
+    | succ j =>
+      have hj' : j < w.length := by simpa using hj
+      have hidx : 2 * (j + 1) + 1 = (2 * j + 1) + 2 := by omega
+      rw [hidx, frame_cons]
+      exact ih hj'
+
+/-- A predicate `P : ℕ → Prop` agrees with `frame w` shifted by `base` on
+`[base, base + (frame w).length)` iff it is `false` at `base + 2 * w.length` and, for each
+`j < w.length`, is `true` at `base + 2 * j` and agrees with `w[j]` at `base + 2 * j + 1`. -/
+theorem forall_getElem?_frame_iff (w : List Bool) (base : ℕ) (P : ℕ → Prop) :
+    (∀ p, base ≤ p → p < base + (frame w).length →
+        (P p ↔ (frame w)[p - base]? = some true)) ↔
+      (¬ P (base + 2 * w.length) ∧
+        ∀ j < w.length, P (base + 2 * j) ∧ (P (base + 2 * j + 1) ↔ w[j]? = some true)) := by
+  rw [length_frame]
+  constructor
+  · intro h
+    refine ⟨?_, fun j hj => ⟨?_, ?_⟩⟩
+    · have h0 := h (base + 2 * w.length) (by omega) (by omega)
+      rw [Nat.add_sub_cancel_left, getElem?_frame_two_mul_length] at h0
+      simpa using h0
+    · have h1 := h (base + 2 * j) (by omega) (by omega)
+      rw [Nat.add_sub_cancel_left, getElem?_frame_two_mul hj] at h1
+      simpa using h1
+    · have h2 := h (base + 2 * j + 1) (by omega) (by omega)
+      have hsub : base + 2 * j + 1 - base = 2 * j + 1 := by omega
+      rw [hsub, getElem?_frame_two_mul_add_one hj] at h2
+      exact h2
+  · rintro ⟨hend, hstep⟩ p hlo hhi
+    by_cases hlast : p = base + 2 * w.length
+    · subst hlast
+      rw [Nat.add_sub_cancel_left, getElem?_frame_two_mul_length]
+      simp [hend]
+    · have hd : p - base < 2 * w.length := by omega
+      let j := (p - base) / 2
+      have hj : j < w.length := by omega
+      rcases Nat.mod_two_eq_zero_or_one (p - base) with hmod | hmod
+      · have hp : p = base + 2 * j := by omega
+        have hsub : p - base = 2 * j := by omega
+        rw [hsub, getElem?_frame_two_mul hj, hp]
+        simp [(hstep j hj).1]
+      · have hp : p = base + 2 * j + 1 := by omega
+        have hsub : p - base = 2 * j + 1 := by omega
+        rw [hsub, getElem?_frame_two_mul_add_one hj, hp]
+        exact (hstep j hj).2
+
+/-- A predicate `P : ℕ → Prop` agrees with the bits of `u ++ w` iff it agrees with `u` below
+`u.length` and with `w` shifted by `u.length` on `[u.length, u.length + w.length)`. -/
+theorem forall_getElem?_append_iff (u w : List Bool) (P : ℕ → Prop) :
+    (∀ p < (u ++ w).length, (P p ↔ (u ++ w)[p]? = some true)) ↔
+      (∀ p < u.length, (P p ↔ u[p]? = some true)) ∧
+        (∀ p, u.length ≤ p → p < u.length + w.length →
+          (P p ↔ w[p - u.length]? = some true)) := by
+  rw [List.length_append]
+  constructor
+  · intro h
+    refine ⟨fun p hp => ?_, fun p hlo hhi => ?_⟩
+    · have hp' := h p (by omega)
+      rwa [List.getElem?_append_left hp] at hp'
+    · have hp' := h p hhi
+      rwa [List.getElem?_append_right hlo] at hp'
+  · rintro ⟨hu, hw⟩ p hp
+    by_cases hlt : p < u.length
+    · rw [List.getElem?_append_left hlt]
+      exact hu p hlt
+    · have hle : u.length ≤ p := by omega
+      rw [List.getElem?_append_right hle]
+      exact hw p hle hp
 
 end Turing.MultiTapeTM
