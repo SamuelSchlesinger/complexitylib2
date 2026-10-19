@@ -1156,6 +1156,7 @@ public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding
 public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
+public import Complexity.Logics.Propositional.CNF.Parity
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
