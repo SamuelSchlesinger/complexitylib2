@@ -33,11 +33,10 @@ conventions are the following.
   distances from each city of `p` to the next one, the last city returning to the first.
 * Distances and the budget are binary (`encTSP`).
 
-`TSP` is in `NP`, with the tour as witness (`Graph.mem_NP_of_ordering`). As for the Hamiltonian
-problems, there is also an explicit verifier, whose certificate names an ordering of the cities,
+`TSP` is in `NP`. As for the Hamiltonian problems, a certificate names an ordering of the cities,
 decoded by `Graph.decodeVertexList` from the list `0, …, D.length - 1` of cities; it has length
-`m ^ 2` for instances of encoded length `m`. Both check that the ordering lists every city exactly
-once, and compare the length of its tour with the budget using the binary arithmetic of
+`m ^ 2` for instances of encoded length `m`. The verifier checks that the ordering lists every city
+exactly once, and compares the length of its tour with the budget using the binary arithmetic of
 `PolyTime/Nat/Binary.lean`, so distances and budgets of any size are handled without unary
 expansion.
 
@@ -185,24 +184,33 @@ closed tour visiting the cities in this order has length at most the budget. -/
 def verifier : (List (List ℕ) × ℕ) × List Bool → Bool :=
   Graph.verifyOrdering (fun x => List.range x.1.length) fun x p => decide (tourLength x.1 p ≤ x.2)
 
-/-- `TSP` through lists of cities: a tour lists every city exactly once. -/
-private theorem TSP_eq_ordering : TSP = {x | ∃ p : List ℕ, p.Nodup ∧
-    (∀ v, v ∈ p ↔ v ∈ List.range x.1.length) ∧ tourLength x.1 p ≤ x.2} := by
-  refine Set.ext fun x => exists_congr fun p => ?_
-  rw [← and_assoc]
-  refine and_congr_left fun _ => ⟨fun h => ⟨h.nodup_iff.2 List.nodup_range, fun _ => h.mem_iff⟩,
-    fun h => (List.perm_ext_iff_of_nodup h.1 List.nodup_range).2 h.2⟩
+/-- `TSP.verifier` verifies `TSP` with certificates of length `n ^ 2` for instances of encoded
+length `n`. -/
+theorem isVerifier : IsVerifier encTSP (Polynomial.X ^ 2) verifier TSP := by
+  rintro ⟨D, b⟩
+  have hmem : (D, b) ∈ TSP ↔ ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ List.range D.length) ∧
+      tourLength D p ≤ b := by
+    refine exists_congr fun p => ?_
+    rw [← and_assoc]
+    refine and_congr_left fun _ => ⟨fun h => ⟨h.nodup_iff.2 List.nodup_range, fun _ => h.mem_iff⟩,
+      fun h => (List.perm_ext_iff_of_nodup h.1 List.nodup_range).2 h.2⟩
+  rw [hmem]
+  refine Graph.isVerifier_verifyOrdering (V := fun x : List (List ℕ) × ℕ => List.range x.1.length)
+    (P := fun x p => tourLength x.1 p ≤ x.2) (fun x => ?_) (fun _ _ => decide_eq_true_iff) (D, b)
+  rw [List.length_range]
+  refine (length_le_length_encList (encList encNat) x.1).trans ?_
+  simp only [encTSP, length_encPair]
+  omega
 
-private theorem computableTidilyInPolyTime_cities :
-    ComputableTidilyInPolyTime (fun x : List (List ℕ) × ℕ => List.range x.1.length) encTSP
+/-- The `TSP` verifier is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifier :
+    ComputableTidilyInPolyTime verifier (encPair encTSP encBits) encBool := by
+  have hV : ComputableTidilyInPolyTime (fun x : List (List ℕ) × ℕ => List.range x.1.length) encTSP
       (encList encNat) := by
-  unfold encTSP
-  simpa only [Function.comp_def, List.map_id'] using (map unary_to_binary).comp
-    (range.comp ((length_list (encList encNat)).comp (fst (encList (encList encNat)) encNat)))
-
-private theorem computableTidilyInPolyTime_budgetCheck :
-    ComputableTidilyInPolyTime (fun q : (List (List ℕ) × ℕ) × List ℕ =>
-      decide (tourLength q.1.1 q.2 ≤ q.1.2)) (encPair encTSP (encList encNat)) encBool := by
+    unfold encTSP
+    simpa only [Function.comp_def, List.map_id'] using (map unary_to_binary).comp
+      (range.comp ((length_list (encList encNat)).comp (fst (encList (encList encNat)) encNat)))
   have hD : ComputableTidilyInPolyTime (fun q : (List (List ℕ) × ℕ) × List ℕ => q.1.1)
       (encPair encTSP (encList encNat)) (encList (encList encNat)) := by
     unfold encTSP
@@ -212,32 +220,10 @@ private theorem computableTidilyInPolyTime_budgetCheck :
     unfold encTSP
     exact (snd _ _).comp (fst _ _)
   have hlen := computableTidilyInPolyTime_tourLength.comp (hD.prod (snd _ (encList encNat)))
-  exact binary_le' hlen hb
+  exact Graph.computableTidilyInPolyTime_verifyOrdering hV (binary_le' hlen hb)
 
-/-- `TSP.verifier` verifies `TSP` with certificates of length `n ^ 2` for instances of encoded
-length `n`. -/
-theorem isVerifier : IsVerifier encTSP (Polynomial.X ^ 2) verifier TSP := by
-  rw [TSP_eq_ordering]
-  refine Graph.isVerifier_verifyOrdering
-    (P := fun (x : List (List ℕ) × ℕ) p => tourLength x.1 p ≤ x.2) (fun x => ?_)
-    fun _ _ => decide_eq_true_iff
-  rw [List.length_range]
-  refine (length_le_length_encList (encList encNat) x.1).trans ?_
-  simp only [encTSP, length_encPair]
-  omega
-
-/-- The `TSP` verifier is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_verifier :
-    ComputableTidilyInPolyTime verifier (encPair encTSP encBits) encBool :=
-  Graph.computableTidilyInPolyTime_verifyOrdering computableTidilyInPolyTime_cities
-    computableTidilyInPolyTime_budgetCheck
-
-/-- `TSP` belongs to `NP`, with the tour as witness (`Graph.mem_NP_of_ordering`). -/
-theorem mem_NP : TSP ∈ NP encTSP := by
-  rw [TSP_eq_ordering]
-  exact Graph.mem_NP_of_ordering computableTidilyInPolyTime_cities
-    computableTidilyInPolyTime_budgetCheck fun _ _ => decide_eq_true_iff
+/-- `TSP` belongs to `NP`. -/
+theorem mem_NP : TSP ∈ NP encTSP := ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end TSP
 

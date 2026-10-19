@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.Complexity.Problems.Graph
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Mathlib.Data.List.GetD
 
 /-!
 # Graph isomorphism
@@ -25,12 +24,10 @@ Positions in the list `Graph.distinctVertices` of declared vertices without repe
 the vertices, and `Graph.adjIndex` reads adjacency through positions. Two graphs are isomorphic
 exactly when a bijection of positions preserves `adjIndex` (`mem_GraphIsomorphism_iff`).
 
-`GraphIsomorphism ∈ NP`, with the images of the distinct vertices of the first graph, a list of
-the vertices of the second, as witness (`Graph.mem_NP_of_ordering`). There is also an explicit
-verifier with certificates of length `n ^ 2` for instances of encoded length `n`: a certificate
-lists, for each position `i` of the first graph, a block of bits whose first set bit selects a
-position of the second graph, and the verifier checks that the selected positions form an
-injective map preserving adjacency between graphs with equally many vertices.
+`GraphIsomorphism ∈ NP`: a certificate lists, for each position `i` of the first graph, a block of
+bits whose first set bit selects a position of the second graph, and the verifier checks that the
+selected positions form an injective map preserving adjacency between graphs with equally many
+vertices.
 
 ## Main definitions
 
@@ -244,97 +241,9 @@ theorem isVerifier :
       (Fintype.bijective_iff_injective_and_card g).2 ⟨hg, by simp [hcard, n]⟩
     exact ⟨Equiv.ofBijective g hbij, fun i i' => ((hpair i i.isLt i' i'.isLt).2).symm⟩
 
-/-- Isomorphisms as lists: two graphs are isomorphic exactly when they have equally many
-distinct vertices and some list of the vertices of the second graph, each listed once, preserves
-adjacency when entry `i` is taken as the image of the vertex at position `i` of the first. -/
-private theorem GraphIsomorphism_eq_ordering : GraphIsomorphism = {x : Graph × Graph |
-    ∃ f : List ℕ, f.Nodup ∧ (∀ v, v ∈ f ↔ v ∈ x.2.1) ∧
-      x.2.distinctVertices.length = x.1.distinctVertices.length ∧
-      ∀ i < x.1.distinctVertices.length, ∀ i' < x.1.distinctVertices.length,
-        x.2.adjBool (f.getD i 0) (f.getD i' 0) = x.1.adjIndex i i'} := by
-  ext ⟨G, H⟩
-  rw [mem_GraphIsomorphism_iff]
-  dsimp only
-  constructor
-  · rintro ⟨σ, hσ⟩
-    have hcard : H.distinctVertices.length = G.distinctVertices.length := by
-      simpa using (Fintype.card_congr σ).symm
-    refine ⟨List.ofFn fun i => H.distinctVertices[(σ i : ℕ)], ?_, fun v => ?_, hcard,
-      fun i hi i' hi' => ?_⟩
-    · exact List.nodup_ofFn.2 fun i j h =>
-        σ.injective (Fin.ext (H.nodup_distinctVertices.getElem_inj_iff.1 h))
-    · rw [List.mem_ofFn, ← Graph.mem_distinctVertices]
-      constructor
-      · rintro ⟨i, rfl⟩
-        exact List.getElem_mem _
-      · intro hv
-        obtain ⟨k, hk, rfl⟩ := List.getElem_of_mem hv
-        exact ⟨σ.symm ⟨k, hk⟩, by simp⟩
-    · rw [List.getD_eq_getElem _ _ (by simpa using hi),
-        List.getD_eq_getElem _ _ (by simpa using hi'), List.getElem_ofFn, List.getElem_ofFn,
-        ← hσ ⟨i, hi⟩ ⟨i', hi'⟩, Graph.adjIndex, List.getD_eq_getElem _ _ (σ _).isLt,
-        List.getD_eq_getElem _ _ (σ _).isLt]
-  · rintro ⟨f, hnd, hmem, hcard, hadj⟩
-    have hperm : f.Perm H.distinctVertices :=
-      (List.perm_ext_iff_of_nodup hnd H.nodup_distinctVertices).2 fun v =>
-        (hmem v).trans Graph.mem_distinctVertices.symm
-    have hlen : f.length = G.distinctVertices.length := hperm.length_eq.trans hcard
-    have hidx (i : Fin G.distinctVertices.length) :
-        H.distinctVertices.idxOf (f[(i : ℕ)]'(by omega)) < H.distinctVertices.length :=
-      List.idxOf_lt_length_iff.2 (hperm.subset (List.getElem_mem _))
-    let g : Fin G.distinctVertices.length → Fin H.distinctVertices.length := fun i => ⟨_, hidx i⟩
-    have hg : Function.Injective g := fun i j h => Fin.ext (hnd.getElem_inj_iff.1
-      ((List.idxOf_inj (hperm.subset (List.getElem_mem _))).1 (congrArg Fin.val h)))
-    have hbij : Function.Bijective g :=
-      (Fintype.bijective_iff_injective_and_card g).2 ⟨hg, by simp [hcard]⟩
-    refine ⟨Equiv.ofBijective g hbij, fun i j => ?_⟩
-    rw [← hadj i i.isLt j j.isLt, List.getD_eq_getElem _ _ (by omega),
-      List.getD_eq_getElem _ _ (by omega)]
-    simp only [Equiv.ofBijective_apply, g, Graph.adjIndex]
-    rw [List.getD_eq_getElem _ _ (hidx i), List.getD_eq_getElem _ _ (hidx j), List.getElem_idxOf,
-      List.getElem_idxOf]
-
-/-- **`GraphIsomorphism ∈ NP`**, with the images of the distinct vertices of the first graph as
-witness (`Cslib.Complexity.Graph.mem_NP_of_ordering`). -/
-theorem mem_NP : GraphIsomorphism ∈ NP (encPair encGraph encGraph) := by
-  rw [GraphIsomorphism_eq_ordering]
-  refine Graph.mem_NP_of_ordering
-    (check := fun (x : Graph × Graph) f =>
-      decide (x.2.distinctVertices.length = x.1.distinctVertices.length) &&
-        (List.range x.1.distinctVertices.length).all fun i =>
-          (List.range x.1.distinctVertices.length).all fun i' =>
-            x.2.adjBool (f.getD i 0) (f.getD i' 0) == x.1.adjIndex i i')
-    (by unfold encGraph; fun_prop) ?_ fun x f => ?_
-  · have hG : ComputableTidilyInPolyTime (fun q : (Graph × Graph) × List ℕ => q.1.1)
-        (encPair (encPair encGraph encGraph) (encList encNat)) encGraph := by fun_prop
-    have hH : ComputableTidilyInPolyTime (fun q : (Graph × Graph) × List ℕ => q.1.2)
-        (encPair (encPair encGraph encGraph) (encList encNat)) encGraph := by fun_prop
-    have hn : ComputableTidilyInPolyTime
-        (fun q : (Graph × Graph) × List ℕ => q.1.1.distinctVertices.length)
-        (encPair (encPair encGraph encGraph) (encList encNat)) encUnary :=
-      (length_list encNat).comp (Graph.computableTidilyInPolyTime_distinctVertices.comp hG)
-    have hn' : ComputableTidilyInPolyTime
-        (fun q : (Graph × Graph) × List ℕ => q.1.2.distinctVertices.length)
-        (encPair (encPair encGraph encGraph) (encList encNat)) encUnary :=
-      (length_list encNat).comp (Graph.computableTidilyInPolyTime_distinctVertices.comp hH)
-    refine bool_and' (hn'.decide_eq' hn) (allWithInput (range.comp hn)
-      (allWithInput (range.comp (hn.comp (fst _ _))) ?_))
-    have hq : ComputableTidilyInPolyTime
-        (fun p : (((Graph × Graph) × List ℕ) × ℕ) × ℕ => p.1.1)
-        (encPair (encPair (encPair (encPair encGraph encGraph) (encList encNat)) encUnary)
-          encUnary) (encPair (encPair encGraph encGraph) (encList encNat)) := by fun_prop
-    have hget : ∀ {i : (((Graph × Graph) × List ℕ) × ℕ) × ℕ → ℕ},
-        ComputableTidilyInPolyTime i (encPair (encPair (encPair (encPair encGraph encGraph)
-          (encList encNat)) encUnary) encUnary) encUnary →
-        ComputableTidilyInPolyTime (fun p => p.1.1.2.getD (i p) 0)
-          (encPair (encPair (encPair (encPair encGraph encGraph) (encList encNat)) encUnary)
-            encUnary) encNat :=
-      fun hi => (listGetD 0).comp (((snd _ _).comp hq).prod hi)
-    exact bool_beq.comp ((Graph.computableTidilyInPolyTime_adjBool.comp (((hH.comp hq).prod
-      (hget ((snd _ _).comp (fst _ _)))).prod (hget (snd _ _)))).prod
-      (Graph.computableTidilyInPolyTime_adjIndex (hG.comp hq) ((snd _ _).comp (fst _ _))
-        (snd _ _)))
-  · simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, List.mem_range, beq_iff_eq]
+/-- **`GraphIsomorphism ∈ NP`.** -/
+theorem mem_NP : GraphIsomorphism ∈ NP (encPair encGraph encGraph) :=
+  ⟨Polynomial.X ^ 2, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end GraphIsomorphism
 

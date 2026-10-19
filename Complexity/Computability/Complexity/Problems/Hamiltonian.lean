@@ -37,15 +37,14 @@ used.
   makes the one-vertex graph Hamiltonian. `mem_HamPath_iff` and `mem_HamCycle_iff` restate them
   with lists of vertices.
 
-All four problems are in `NP`, with the path or cycle, a list of vertices, as witness
-(`Graph.mem_NP_of_ordering`). They also have explicit verifiers with certificates of length
-`n ^ 2` for instances of encoded length `n`. Such a certificate names an ordering of the distinct
-declared vertices: for a vertex list of length `m`, it is read as one block of `m` bits for each
-distinct declared vertex, and each block names the entry of the vertex list whose position is its
-number of set bits (`Graph.decodeVertexList`). The verifiers check that the decoded list contains
-every declared vertex exactly once and nothing else (`Graph.verifyOrdering`), and then the
-endpoint, length and edge conditions. Path instances `(G, s, t)` are encoded by
-`encPair encGraph (encPair encNat encNat)`, cycle instances by `encGraph`.
+All four problems are in `NP`. A certificate names an ordering of the distinct declared vertices:
+for a vertex list of length `m`, it is read as one block of `m` bits for each distinct declared
+vertex, and each block names the entry of the vertex list whose position is its number of set bits
+(`Graph.decodeVertexList`). The verifiers check that the decoded list contains every declared
+vertex exactly once and nothing else (`Graph.verifyOrdering`), and then the endpoint, length and
+edge conditions. Every ordering has a certificate of length `n ^ 2` for instances of encoded
+length `n`. Path instances `(G, s, t)` are encoded by `encPair encGraph (encPair encNat encNat)`,
+cycle instances by `encGraph`.
 
 ## Main definitions
 
@@ -53,7 +52,8 @@ endpoint, length and edge conditions. Path instances `(G, s, t)` are encoded by
 * `Cslib.Complexity.Graph.IsDirHamCycle`, `Cslib.Complexity.DirHamCycle`.
 * `Cslib.Complexity.HamPath`, `Cslib.Complexity.HamCycle`.
 * `Cslib.Complexity.Graph.arcBool`, `Cslib.Complexity.Graph.chainBool`,
-  `Cslib.Complexity.Graph.cycleChainBool`: executable tests on lists of vertices.
+  `Cslib.Complexity.Graph.cycleChainBool`, `Cslib.Complexity.Graph.enumeratesBool`: executable
+  tests on lists of vertices.
 * `Cslib.Complexity.Graph.decodeVertexList`, `Cslib.Complexity.Graph.verifyOrdering`: verifying
   orderings of the declared vertices.
 * `Cslib.Complexity.DirHamPath.verifier`, `Cslib.Complexity.DirHamCycle.verifier`,
@@ -343,6 +343,40 @@ theorem cycleChainBool_eq_true_iff {r : ℕ → ℕ → Bool} {R : ℕ → ℕ �
       rw [← (key i hi).1, ← (key i hi).2]
       exact h i (by omega)
 
+/-- Executable test that `p` lists every vertex of `V` exactly once and nothing else. -/
+def enumeratesBool (V p : List ℕ) : Bool :=
+  (V.all fun v => p.any fun u => decide (u = v)) &&
+    (p.all fun u => V.any fun v => decide (v = u)) &&
+    p.zipIdx.all fun e => decide (p.idxOf e.1 = e.2)
+
+/-- `enumeratesBool V p` holds exactly when `p` lists the members of `V` without repetition. -/
+theorem enumeratesBool_eq_true_iff {V p : List ℕ} :
+    enumeratesBool V p = true ↔ p.Nodup ∧ ∀ v, v ∈ p ↔ v ∈ V := by
+  have hnodup : (∀ e ∈ p.zipIdx, p.idxOf e.1 = e.2) ↔ p.Nodup := by
+    constructor
+    · intro h
+      rw [List.nodup_iff_injective_get]
+      rintro ⟨i, hi⟩ ⟨j, hj⟩ hij
+      simp only [List.get_eq_getElem] at hij
+      have hi' : p.idxOf p[i] = i := h (p[i], i) (List.mem_zipIdx_iff_getElem?.2 (by simp))
+      have hj' : p.idxOf p[j] = j := h (p[j], j) (List.mem_zipIdx_iff_getElem?.2 (by simp))
+      rw [hij] at hi'
+      exact Fin.ext (hi'.symm.trans hj')
+    · intro hnd e he
+      obtain ⟨hlt, heq⟩ := List.getElem?_eq_some_iff.1 (List.mem_zipIdx_iff_getElem?.1 he)
+      rw [← heq, hnd.idxOf_getElem]
+  simp only [enumeratesBool, Bool.and_eq_true, List.all_eq_true, List.any_eq_true,
+    decide_eq_true_eq, hnodup]
+  constructor
+  · rintro ⟨⟨hV, hp⟩, hnd⟩
+    refine ⟨hnd, fun v => ⟨fun hv => ?_, fun hv => ?_⟩⟩
+    · obtain ⟨u, hu, rfl⟩ := hp v hv
+      exact hu
+    · obtain ⟨u, hu, rfl⟩ := hV v hv
+      exact hu
+  · rintro ⟨hnd, hmem⟩
+    exact ⟨⟨fun v hv => ⟨v, (hmem v).2 hv, rfl⟩, fun u hu => ⟨u, (hmem u).1 hu, rfl⟩⟩, hnd⟩
+
 /-- The list of vertices described by a certificate `w`, for a vertex list `V` of length `m`: `w`
 is read as blocks of `m` bits, one for each distinct vertex of `V`, and the block numbered `a`
 names the entry of `V` whose position is its number of set bits, or `0` if there is none. -/
@@ -434,6 +468,14 @@ theorem computableTidilyInPolyTime_cycleChainBool {γ : Type} {encIn : γ ↪ Li
     ite_decide (hsucc.decide_eq' ((length_list encNat).comp (hp.comp (fst _ _)))) (const 0) hsucc
   unfold cycleChainBool
   exact allWithInput (by fun_prop) (hr.comp (((fst _ _).prod (hget (snd _ _))).prod (hget hnext)))
+
+/-- Testing whether a list lists every vertex of another exactly once is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_enumeratesBool :
+    ComputableTidilyInPolyTime (fun x : List ℕ × List ℕ => enumeratesBool x.1 x.2)
+      (encPair (encList encNat) (encList encNat)) encBool := by
+  unfold enumeratesBool
+  fun_prop
 
 /-- Decoding a list of vertices from a certificate is polynomial-time. -/
 @[fun_prop]
@@ -551,17 +593,9 @@ theorem computableTidilyInPolyTime_verifier :
   Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
     (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_arcBool)
 
-/-- `DirHamPath` belongs to `NP`, with the path as witness (`Graph.mem_NP_of_ordering`). -/
+/-- `DirHamPath` belongs to `NP`. -/
 theorem mem_NP : DirHamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
-  Graph.mem_NP_of_ordering
-    (check := fun (x : Graph × ℕ × ℕ) p => decide (p.head? = some x.2.1) &&
-      decide (p.getLast? = some x.2.2) && Graph.chainBool x.1.arcBool p)
-    (P := fun (x : Graph × ℕ × ℕ) p => p.head? = some x.2.1 ∧ p.getLast? = some x.2.2 ∧
-      p.IsChain fun u v => (u, v) ∈ x.1.2)
-    (by unfold encGraph; fun_prop)
-    (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_arcBool) fun x p => by
-      simp only [Bool.and_eq_true, decide_eq_true_eq,
-        Graph.chainBool_eq_true_iff (Graph.arcBool_eq_true_iff x.1), and_assoc]
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end DirHamPath
 
@@ -591,16 +625,9 @@ theorem computableTidilyInPolyTime_verifier :
     (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
       Graph.computableTidilyInPolyTime_arcBool))
 
-/-- `DirHamCycle` belongs to `NP`, with the cycle as witness (`Graph.mem_NP_of_ordering`). -/
+/-- `DirHamCycle` belongs to `NP`. -/
 theorem mem_NP : DirHamCycle ∈ NP encGraph :=
-  Graph.mem_NP_of_ordering
-    (check := fun (G : Graph) p => decide (p ≠ []) && Graph.cycleChainBool G.arcBool p)
-    (P := fun (G : Graph) p => p ≠ [] ∧ (p : Cycle ℕ).Chain fun u v => (u, v) ∈ G.2)
-    (by unfold encGraph; fun_prop)
-    (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
-      Graph.computableTidilyInPolyTime_arcBool)) fun G p => by
-      simp only [Bool.and_eq_true, decide_eq_true_eq,
-        Graph.cycleChainBool_eq_true_iff (Graph.arcBool_eq_true_iff G)]
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end DirHamCycle
 
@@ -635,19 +662,9 @@ theorem computableTidilyInPolyTime_verifier :
   Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
     (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_adjBool)
 
-/-- `HamPath` belongs to `NP`, with the path as witness (`Graph.mem_NP_of_ordering`). -/
-theorem mem_NP : HamPath ∈ NP (encPair encGraph (encPair encNat encNat)) := by
-  have hset : HamPath = {x : Graph × ℕ × ℕ | ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ x.1.1) ∧
-      p.head? = some x.2.1 ∧ p.getLast? = some x.2.2 ∧ p.IsChain x.1.toSimpleGraph.Adj} :=
-    Set.ext fun _ => mem_HamPath_iff
-  rw [hset]
-  exact Graph.mem_NP_of_ordering
-    (check := fun (x : Graph × ℕ × ℕ) p => decide (p.head? = some x.2.1) &&
-      decide (p.getLast? = some x.2.2) && Graph.chainBool x.1.adjBool p)
-    (by unfold encGraph; fun_prop)
-    (computableTidilyInPolyTime_pathCheck Graph.computableTidilyInPolyTime_adjBool) fun x p => by
-      simp only [Bool.and_eq_true, decide_eq_true_eq,
-        Graph.chainBool_eq_true_iff (Graph.adjBool_eq_true_iff x.1), and_assoc]
+/-- `HamPath` belongs to `NP`. -/
+theorem mem_NP : HamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end HamPath
 
@@ -679,19 +696,9 @@ theorem computableTidilyInPolyTime_verifier :
     (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
       Graph.computableTidilyInPolyTime_adjBool))
 
-/-- `HamCycle` belongs to `NP`, with the cycle as witness (`Graph.mem_NP_of_ordering`). -/
-theorem mem_NP : HamCycle ∈ NP encGraph := by
-  have hset : HamCycle = {G : Graph | ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ G.1) ∧
-      3 ≤ p.length ∧ (p : Cycle ℕ).Chain G.toSimpleGraph.Adj} :=
-    Set.ext fun _ => mem_HamCycle_iff
-  rw [hset]
-  exact Graph.mem_NP_of_ordering
-    (check := fun (G : Graph) p => decide (3 ≤ p.length) && Graph.cycleChainBool G.adjBool p)
-    (by unfold encGraph; fun_prop)
-    (bool_and' (by fun_prop) (computableTidilyInPolyTime_cycleCheck
-      Graph.computableTidilyInPolyTime_adjBool)) fun G p => by
-      simp only [Bool.and_eq_true, decide_eq_true_eq,
-        Graph.cycleChainBool_eq_true_iff (Graph.adjBool_eq_true_iff G)]
+/-- `HamCycle` belongs to `NP`. -/
+theorem mem_NP : HamCycle ∈ NP encGraph :=
+  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end HamCycle
 
