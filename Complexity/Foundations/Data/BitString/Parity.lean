@@ -12,12 +12,14 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Algebra.Group.Hom.Defs
 public import Mathlib.Data.Finset.Card
 public import Mathlib.Data.Finset.Density
+public import Mathlib.Data.Finset.SymmDiff
 public import Mathlib.Data.Finset.Union
 public import Mathlib.Data.Fintype.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Logic.Function.Const
 public import Mathlib.Logic.Function.DependsOn
 import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Algebra.Ring.BooleanRing
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.GroupTheory.Index
 
@@ -29,13 +31,13 @@ import Mathlib.GroupTheory.Index
 [O'Donnell, Chapter 1][ODonnell2014], with values in `Bool` rather than `±1`.
 
 In the Boolean ring `Bool`, where `a + b = (a ^^ b)`, the parity on `s` is the sum of the bits in
-`s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`) and is additive for
-the coordinatewise sum of bit strings (`parityOn_add`, bundled as `parityOnAddMonoidHom`). Bit
+`s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`), the parity on a
+symmetric difference is the exclusive or of the parities (`parityOn_symmDiff`), and it is additive
+for the coordinatewise sum of bit strings (`parityOn_add`, bundled as `parityOnAddMonoidHom`). Bit
 strings are added with `+`, under which each is its own negative (`BitString.add_self`), and
-single bits with `^^`. Flipping one of the bits negates the parity
-(`parityOn_update_not`), so the parity of a nonempty set of bits is not constant and depends on
-each of them; being additive, it then takes each value on exactly half of the inputs
-(`card_filter_parityOn_eq`).
+single bits with `^^`. Flipping one of the bits negates the parity (`parityOn_update_not`), so
+the parity of a nonempty set of bits is not constant and depends on each of them; being additive,
+it then takes each value on exactly half of the inputs (`card_filter_parityOn_eq`).
 
 ## Main definitions
 
@@ -47,6 +49,7 @@ each of them; being additive, it then takes each value on exactly half of the in
 
 * `Cslib.parityOn_eq_sum`: the parity is the sum of the bits in the Boolean ring.
 * `Cslib.parityOn_union`, `Cslib.parityOn_biUnion`: the parity of a disjoint union.
+* `Cslib.parityOn_symmDiff`: the parity of a symmetric difference.
 * `Cslib.parityOn_add`: parities are linear.
 * `Cslib.parity_update_not`: flipping any bit flips the parity.
 * `Cslib.card_filter_parityOn_eq`, `Cslib.dens_filter_parityOn_eq`: the parity on a nonempty set
@@ -141,6 +144,16 @@ theorem parityOn_union (h : Disjoint s t) (x : ι → Bool) :
     parityOn (s ∪ t) x = (parityOn s x ^^ parityOn t x) := by
   simp only [parityOn_eq_sum]
   exact sum_union h
+
+/-- The parity on a symmetric difference is the exclusive or of the parities: the bits in both
+sets are counted twice. -/
+theorem parityOn_symmDiff (s t : Finset ι) (x : ι → Bool) :
+    parityOn (symmDiff s t) x = (parityOn s x ^^ parityOn t x) := by
+  have hsdiff := sum_sdiff (f := x) (inter_subset_union : s ∩ t ⊆ s ∪ t)
+  have hunion := sum_union_inter (s₁ := s) (s₂ := t) (f := x)
+  rw [symmDiff_eq_sup_sdiff_inf, parityOn_eq_sum, parityOn_eq_sum, parityOn_eq_sum,
+    ← Bool.add_eq_xor, ← hunion, ← hsdiff, add_assoc, BooleanRing.add_self, add_zero]
+  rfl
 
 /-- The parity of a union of pairwise disjoint blocks is the parity of the parities of the
 blocks. -/
