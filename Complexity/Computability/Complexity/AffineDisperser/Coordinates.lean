@@ -80,11 +80,6 @@ theorem bitEquiv_symm_foldl_xor (l : List Bool) :
   congr 1
   simp [List.sum_eq_foldl, Bool.add_eq_xor, Bool.zero_eq_false]
 
-theorem bitEquiv_foldl_xor (l : List (ZMod 2)) :
-    (l.map bitEquiv).foldl xor false = bitEquiv l.sum := by
-  rw [map_list_sum]
-  simp [List.sum_eq_foldl, Bool.add_eq_xor, Bool.zero_eq_false]
-
 /-- The coordinates of a sum: `listXor` adds coordinate words. -/
 theorem fieldOfBits_listXor (B : Basis (Fin n) (ZMod 2) F) (words : List (List Bool)) :
     fieldOfBits B (listXor n words) = (words.map (fieldOfBits B)).sum := by

@@ -36,7 +36,10 @@ The function `Cslib.AffineDisperser.explicitDisperser N : BitString N → Bool` 
 `F` have at most `2 ^ s` elements, `s = ⌊n / (L + 1)⌋`, and the function is nonconstant on every
 affine subspace of `BitString N` of dimension greater than
 `d(N) = N - r n + r * max (r + 1) s + r * (r + 1) + n t + ⌊n r / t⌋`
-(`Cslib.AffineDisperser.exists_explicitDisperser_ne`).
+(`Cslib.AffineDisperser.exists_explicitDisperser_ne`). It does not depend on the roots chosen for
+the basis (`Cslib.AffineDisperser.traceSymBits_rootBasis_eq_explicitDisperser`), and it is
+computable in polynomial time
+(`Cslib.AffineDisperser.computableTidilyInPolyTime_explicitDisperser`).
 
 Ben-Sasson and Kopparty take `n` prime and reach dimension `6 N ^ (4 / 5)`
 [BenSassonKopparty2012]; the field then needs an irreducible polynomial of large prime degree,

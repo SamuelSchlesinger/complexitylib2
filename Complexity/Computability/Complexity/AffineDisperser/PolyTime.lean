@@ -23,6 +23,43 @@ import Mathlib.Data.List.GetD
 
 /-!
 # The explicit affine disperser in polynomial time
+
+The program `Cslib.AffineDisperser.explicitDisperserProgram` computes the explicit affine
+disperser (`Cslib.AffineDisperser.explicitDisperserProgram_eq`); this file certifies it in the
+polynomial-time calculus of tidy multi-tape machines, with input bits in `encBits` and natural
+numbers in unary. All runtime sizes are polynomial in the input length `N`:
+
+* the parameters (`⌊log₂ N⌋`, the primes in `(L, 4 L]` by trial division, the greedy choice and
+  the field degree `n ≤ N + 1`) are unary arithmetic on numbers at most `N + 1`;
+* each irreducible polynomial is found by exhaustive search over the codes below
+  `2 ^ (4 L + 1) ≤ 2 (N + 1) ^ 2` (`Cslib.AffineDisperser.codeBound_le`), each tested by trial
+  division with remainders computed by repeated multiplication by `X`;
+* the multiplication table has `n ^ 3` entries, each a product over the prime factors of `n`;
+* a field multiplication sums at most `n ^ 2` table entries, uniformly in the table
+  (`Cslib.AffineDisperser.computableTidilyInPolyTime_fieldMul`); the `r` powers take at most
+  `2 r` multiplications each, the elementary symmetric polynomial `r t` more, and the trace reads
+  the diagonals of the table.
+
+Every loop is certified with a bound on its intermediate states, so the certificate charges the
+whole computation, including every field operation
+(`Cslib.AffineDisperser.computableTidilyInPolyTime_explicitDisperser`). The exponent of the
+polynomial is not computed.
+
+## Main results
+
+* `Cslib.AffineDisperser.computableTidilyInPolyTime_leastIrreducibleCode`: the search for the
+  irreducible polynomials.
+* `Cslib.AffineDisperser.computableTidilyInPolyTime_explicitTable`: the multiplication table.
+* `Cslib.AffineDisperser.computableTidilyInPolyTime_traceSymCoords`: `traceSym 1 r t` in
+  coordinates, uniformly in the multiplication table.
+* `Cslib.AffineDisperser.computableTidilyInPolyTime_explicitDisperser`: the explicit disperser is
+  computable in polynomial time.
+* `Cslib.AffineDisperser.setOf_explicitDisperser_mem_P`: it decides a problem in `P`.
+
+## References
+
+* [E. Ben-Sasson, S. Kopparty, *Affine dispersers from subspace polynomials*][BenSassonKopparty2012]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
 @[expose] public section
