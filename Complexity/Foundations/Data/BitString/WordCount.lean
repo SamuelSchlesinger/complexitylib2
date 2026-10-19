@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.List
+public import Complexity.Foundations.Data.BitString.List.Binary
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Order.PiLex
@@ -39,6 +40,7 @@ represent sets of words.
 
 ## Main results
 
+* `Cslib.BitString.card_filter_binaryValue_lt`: exact counts below a binary threshold.
 * `Cslib.BitString.card_filter_ofFn_add`, `Cslib.BitString.card_filter_ofFn_succ`: counting
   words by a prefix or by their first bit.
 * `Cslib.BitString.card_filter_listRows_all`: counting words by a condition on each row.
@@ -197,5 +199,19 @@ theorem wordLt_ofFn_iff {n : ℕ} (x y : Fin n → Bool) :
     · rw [hget y i i.2]
       revert hlt
       cases x i <;> cases y i <;> decide
+
+/-- Among all `n`-bit words, precisely `k` represent values below `k ≤ 2^n`. -/
+theorem card_filter_binaryValue_lt {n k : ℕ} (hk : k ≤ 2 ^ n) :
+    (Finset.univ.filter fun w : Fin n → Bool => binaryValue (List.ofFn w) < k).card = k := by
+  classical
+  rw [← Finset.card_range k]
+  apply Finset.card_bij (fun w _ => binaryValue (List.ofFn w))
+  · intro w hw
+    simpa using hw
+  · intro u hu v hv h
+    exact List.ofFn_injective (binaryValue_injective_of_length_eq (by simp) h)
+  · intro j hj
+    obtain ⟨w, hw⟩ := exists_binaryValue_eq ((Finset.mem_range.mp hj).trans_le hk)
+    exact ⟨w, by simpa [hw] using hj, hw⟩
 
 end Cslib.BitString

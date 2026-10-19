@@ -25,6 +25,7 @@ bounded on arbitrary input words; it agrees with capping the full mathematical b
 
 ## Main results
 
+* `binaryValue_injective_of_length_eq`: fixed-width words have distinct binary values.
 * `boundedBinaryValue_eq`: incremental saturation equals a single final cap.
 * `boundedBinaryValue_le`: every output is at most the cap.
 * `binaryValue_lt_two_pow`, `exists_binaryValue_eq`: the words of `t` bits represent exactly the
@@ -127,5 +128,23 @@ theorem exists_binaryValue_eq {t k : ℕ} (hk : k < 2 ^ t) :
   rw [show (List.ofFn fun i : Fin t => w[i.val]'(by omega)) = w from
     List.ext_getElem (by simp [hwlen]) fun i _ _ => by simp]
   rw [hw, binaryValue_replicate_false_append, binaryValue_reverse_bits]
+
+/-- Fixed-width binary words represent their values injectively. -/
+theorem binaryValue_injective_of_length_eq {u v : List Bool} (hlen : u.length = v.length)
+    (h : binaryValue u = binaryValue v) : u = v := by
+  induction u using List.reverseRecOn generalizing v with
+  | nil => exact (List.length_eq_zero_iff.1 hlen.symm).symm
+  | append_singleton u b ih =>
+    obtain ⟨v, c, rfl⟩ : ∃ w b, v = w ++ [b] := by
+      rcases List.eq_nil_or_concat v with h' | ⟨w, b, h'⟩
+      · simp [h'] at hlen
+      · exact ⟨w, b, by simpa using h'⟩
+    simp only [List.length_append, List.length_singleton, Nat.add_right_cancel_iff] at hlen
+    rw [binaryValue_snoc, binaryValue_snoc] at h
+    have hb : b = c := by
+      cases b <;> cases c <;> simp only [Bool.toNat_false, Bool.toNat_true] at h <;>
+        first | rfl | lia
+    subst hb
+    rw [ih hlen (by lia)]
 
 end Cslib.BitString

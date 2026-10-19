@@ -289,22 +289,8 @@ theorem computableTidilyInPolyTime_relabel {γ : Type} {input : γ ↪ List Bool
 /-! ### Relabeling by random keys -/
 
 private theorem binaryValue_injective {word word' : List Bool} (hlen : word.length = word'.length)
-    (h : BitString.binaryValue word = BitString.binaryValue word') : word = word' := by
-  induction word using List.reverseRecOn generalizing word' with
-  | nil => exact (List.length_eq_zero_iff.1 hlen.symm).symm
-  | append_singleton word bit ih =>
-    obtain ⟨word', bit', rfl⟩ : ∃ w b, word' = w ++ [b] := by
-      rcases List.eq_nil_or_concat word' with h' | ⟨w, b, h'⟩
-      · simp [h'] at hlen
-      · exact ⟨w, b, by simpa using h'⟩
-    simp only [List.length_append, List.length_singleton, Nat.add_right_cancel_iff] at hlen
-    rw [BitString.binaryValue_snoc, BitString.binaryValue_snoc] at h
-    have hbit : bit = bit' := by
-      cases bit <;> cases bit' <;> simp only [Bool.toNat_false, Bool.toNat_true] at h <;>
-        first | rfl | omega
-    subst hbit
-    have hv : BitString.binaryValue word = BitString.binaryValue word' := by omega
-    rw [ih hlen hv]
+    (h : BitString.binaryValue word = BitString.binaryValue word') : word = word' :=
+  BitString.binaryValue_injective_of_length_eq hlen h
 
 /-- The value of a key of `w` bits, read most significant bit first. -/
 def keyValue {w : ℕ} (row : BitString w) : ℕ :=
