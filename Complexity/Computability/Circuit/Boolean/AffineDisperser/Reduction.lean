@@ -466,11 +466,6 @@ theorem fixConst_size (S : State n) (w : ℕ) (b : Bool) : (S.fixConst w b).size
 @[simp] theorem fixConst_gate (S : State n) (w : ℕ) (b : Bool) (J : ℕ) :
     (S.fixConst w b).gate J = (S.gate J).subst w (Lit.const b) := rfl
 
-theorem fixConst_m {S : State n} {w : ℕ} (hw : w ∈ S.params) (b : Bool) :
-    (S.fixConst w b).m + 1 = S.m := by
-  simp only [m, fixConst_params]
-  exact Finset.card_erase_add_one hw
-
 theorem fixConst_children (S : State n) {w : ℕ} (b : Bool) {z : ℕ} (hz : z ≠ w) :
     (S.fixConst w b).children z = S.children z :=
   SemiCircuit.children_subst hz (by simp [Lit.const])

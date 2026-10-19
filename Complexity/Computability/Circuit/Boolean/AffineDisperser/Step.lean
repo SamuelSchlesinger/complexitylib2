@@ -12,24 +12,23 @@ public import Complexity.Computability.Circuit.Boolean.AffineDisperser.MinimalAn
 /-!
 # Lemma 4.2: one step of gate elimination
 
-**Lemma 4.2** of [Mishra and Santhanam][MishraSanthanam2026]: if `a > d`, a valid state for an
-affine disperser for dimension `d` has a step of gate elimination (`State.Valid.exists_step`):
-a valid state with smaller `m + s` and `ΔW ≤ 14 Δa`.
+**Lemma 4.2** of [Mishra and Santhanam][MishraSanthanam2026]: if `d < a`, a valid state for an
+affine disperser for dimension `d` has a step of gate elimination (`State.Valid.exists_step`): a
+valid state with smaller `m + s`, `Δa ∈ {0, -1, -2}` and `ΔW ≤ 14 Δa`.
 
 The proof follows Section 4 of the source. Movable affine gates are moved into the affine system
-first; then the first applicable preliminary reduction (Cases 1 to 6) is a step. Otherwise the
-minimal gate is an AND-type gate on two distinct inputs among the parameters and auxiliary
-variables (`State.Valid.clean_minGate`); an auxiliary input is exchanged with a parameter, and a
-child of the minimal AND reading one of its inputs is rerouted, and the analysis restarts; once
-neither applies, Cases 7 to 10 eliminate the minimal AND. The preparatory operations keep `m`,
-`s` and `a` and do not increase `W`, and terminate since each lowers, lexicographically, the
-number of gates (`State.auxIn`, `State.childIn`). The existence proof is not an algorithm and no
-running time is claimed.
-
-## Main definitions
-
-* `Cslib.Circuits.Boolean.AffineDisperser.State.auxIn`, `Cslib.Circuits.Boolean.AffineDisperser.State.childIn`: the
-  measures of the restructuring.
+first (`State.Valid.preparation_moveAffine`); then one of the preliminary reductions is a step, or
+the state is normal (`State.Valid.step_or_normal`). In a normal state the minimal gate is an
+AND-type gate on two distinct inputs among the parameters and auxiliary variables
+(`State.Valid.clean_minGate`). An auxiliary input is exchanged with a parameter
+(`State.Valid.exists_preparation_auxIn_lt`), a child of the minimal AND reading one of its inputs
+is rerouted (`State.Valid.exists_preparation_childIn_lt`), and the analysis restarts; once neither
+applies, eliminating the minimal AND is a step (`State.Valid.step_of_minimalAnd`). The preparatory
+operations keep `m`, `s` and `a` and do not increase `W`, and they terminate since each lowers,
+in lexicographic order, the number of gates, the number of auxiliary inputs of the minimal gate
+(`State.auxIn`) and the number of its children reading one of its parameter inputs
+(`State.childIn`). The proof establishes the existence of a step; unlike the source, it is not an
+algorithm, and no running time is claimed.
 
 ## Main results
 
@@ -51,47 +50,6 @@ namespace State
 
 variable {n : ℕ} {f : BooleanFunction n}
 
-/-! ### Composing preparatory operations with steps -/
-
-theorem Step.of_prep {S S₁ S' : State n} (h : Step f S₁ S') (hms : S₁.m + S₁.s = S.m + S.s)
-    (ha : S₁.a = S.a) (hW : S₁.W ≤ S.W) : Step f S S' := by
-  obtain ⟨hS', hlt, ha₁, ha₂, hW'⟩ := h
-  exact ⟨hS', by omega, by omega, by omega, by rw [← ha]; omega⟩
-
-/-! ### The measures of the restructuring -/
-
-/-- The number of auxiliary inputs of a gate. -/
-def auxArgs (S : State n) (g : Gate) : ℕ :=
-  (match g.left with | .node t => if t ∈ S.aux then 1 else 0 | .const _ => 0) +
-    (match g.right with | .node t => if t ∈ S.aux then 1 else 0 | .const _ => 0)
-
-/-- The number of auxiliary inputs of the minimal gate. -/
-def auxIn (S : State n) : ℕ :=
-  if h : S.gates.Nonempty then S.auxArgs (S.gate (S.gates.min' h)) else 0
-
-/-- The number of children of the minimal gate reading one of its parameter inputs. -/
-def childIn (S : State n) : ℕ :=
-  if h : S.gates.Nonempty then
-    (S.gates.filter fun K => (S.gate K).Reads (S.gates.min' h) ∧
-      ∃ t ∈ S.params, (S.gate (S.gates.min' h)).Reads t ∧ (S.gate K).Reads t).card
-  else 0
-
-theorem auxIn_eq {S : State n} (hne : S.gates.Nonempty) :
-    S.auxIn = S.auxArgs (S.gate (S.gates.min' hne)) := by
-  simp only [auxIn, dite_eq_left hne]
-
-theorem auxArgs_nodes (S : State n) {g : Gate} {t₁ t₂ : ℕ} (hl : g.left = .node t₁)
-    (hr : g.right = .node t₂) :
-    S.auxArgs g = (if t₁ ∈ S.aux then 1 else 0) + (if t₂ ∈ S.aux then 1 else 0) := by
-  simp only [auxArgs, hl, hr]
-
-theorem childIn_eq {S : State n} (hne : S.gates.Nonempty) :
-    S.childIn = (S.gates.filter fun K => (S.gate K).Reads (S.gates.min' hne) ∧
-      ∃ t ∈ S.params, (S.gate (S.gates.min' hne)).Reads t ∧ (S.gate K).Reads t).card := by
-  simp only [childIn, dite_eq_left hne]
-
-/-! ### Lemma 4.2 -/
-
 /-- Lemma 4.2, by induction on the number of gates, the number of auxiliary inputs of the minimal
 gate and the number of its children reading one of its parameter inputs. -/
 theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
@@ -104,162 +62,49 @@ theorem Valid.exists_step_aux {d : ℕ} (hf : IsAffineDisperser f d) :
   intro k₃
   induction k₃ using Nat.strong_induction_on with | _ k₃ ih₃ => ?_
   intro S hk₁ hk₂ hk₃ hS ha
-  -- move affine gates first
+  -- move affine gates into the affine system
   by_cases hmov : ∃ J, S.Movable J
   · obtain ⟨J, hJ⟩ := hmov
-    obtain ⟨S₁, hS₁, hcard, hm, hs, hq, hW⟩ := hS.prep_move hJ
-    have ha₁ : S₁.a = S.a := by simp only [a, hm, hq]
-    obtain ⟨S', hstep⟩ := ih₁ _ (hk₁ ▸ hcard) _ _ S₁ rfl rfl rfl hS₁ (ha₁ ▸ ha)
-    exact ⟨S', hstep.of_prep (by omega) ha₁ hW⟩
+    have hp := hS.preparation_moveAffine hJ
+    have hcard := moveAffine_gates_card (S := S) ⟨hJ.1, S.freshEqn_notMem, hJ.2.1, hJ.2.2⟩
+    obtain ⟨S', hstep⟩ := ih₁ _ (by omega) _ _ _ rfl rfl rfl hp.valid (hp.a_eq ▸ ha)
+    exact ⟨S', hstep.of_preparation hp⟩
   push Not at hmov
   -- the preliminary reductions
   rcases hS.step_or_normal hf ha hmov with hstep | hN
   · exact hstep
   -- the minimal AND
-  obtain ⟨hne, hand, t₁, t₂, hl, hr, ht12, ht₁, ht₂⟩ := hS.clean_minGate hf ha hN.not_movable hN.no_deletion
-  set G := S.gates.min' hne with hGdef
-  have hG : G ∈ S.gates := Finset.min'_mem _ _
+  obtain ⟨hne, hand, t₁, t₂, hl, hr, ht12, ht₁, ht₂⟩ :=
+    hS.clean_minGate hf ha hN.not_movable hN.no_deletion
+  have hG : S.gates.min' hne ∈ S.gates := Finset.min'_mem _ _
   -- an auxiliary input is exchanged with a parameter
   by_cases haux : t₁ ∈ S.aux ∨ t₂ ∈ S.aux
-  · obtain ⟨Q, o, hargs, hQ, hQo⟩ : ∃ Q o, (((S.gate G).left = .node Q ∧
-        (S.gate G).right = .node o) ∨ ((S.gate G).left = .node o ∧
-        (S.gate G).right = .node Q)) ∧ Q ∈ S.aux ∧ Q ≠ o := by
+  · obtain ⟨S₁, hp, hgates, hlt⟩ : ∃ S₁ : State n, Preparation f S S₁ ∧ S₁.gates = S.gates ∧
+        S₁.auxIn < S.auxIn := by
       rcases haux with h | h
-      · exact ⟨t₁, t₂, Or.inl ⟨hl, hr⟩, h, ht12⟩
-      · exact ⟨t₂, t₁, Or.inr ⟨hl, hr⟩, h, ht12.symm⟩
-    obtain ⟨x, c, T, hT, hxT, hxo, hxu, hxdeg, hQdeg⟩ :=
-      hS.prep_aux_input hN hG hargs hQ hQo
-    obtain ⟨hS₁, hm, hs, hq, hW⟩ := hS.prep_swap hxu hxdeg hQ hQdeg hT hxT
-    set S₁ := S.swap x Q c T
-    have ha₁ : S₁.a = S.a := by simp only [a, hm, hq]
-    have hxp := (mem_unpaired.1 hxu).1
-    have hQx : Q ≠ x := fun h => Finset.disjoint_left.1 hS.wf.disjoint_params_aux (h ▸ hxp) hQ
-    have hQ₁ : Q ∉ S₁.aux := fun h => by
-      change Q ∈ insert x (S.aux.erase Q) at h
-      rcases Finset.mem_insert.1 h with h | h
-      · exact hQx h
-      · exact Finset.notMem_erase _ _ h
-    have ho₁ : o ∈ S₁.aux ↔ o ∈ S.aux := by
-      change o ∈ insert x (S.aux.erase Q) ↔ _
-      rw [Finset.mem_insert, Finset.mem_erase]
-      constructor
-      · rintro (h | ⟨-, h⟩)
-        · exact absurd h.symm hxo
-        · exact h
-      · exact fun h => Or.inr ⟨hQo.symm, h⟩
-    have hlt : S₁.auxIn < S.auxIn := by
-      rw [auxIn_eq (S := S₁) hne, auxIn_eq hne]
-      change S₁.auxArgs (S.gate G) < S.auxArgs (S.gate G)
-      rcases hargs with ⟨hlQ, hro⟩ | ⟨hlo, hrQ⟩
-      · rw [auxArgs_nodes S₁ hlQ hro, auxArgs_nodes S hlQ hro, ite_eq_right hQ₁, ite_eq_left hQ]
-        by_cases hoa : o ∈ S.aux
-        · rw [ite_eq_left (ho₁.2 hoa), ite_eq_left hoa]; omega
-        · rw [ite_eq_right (fun h => hoa (ho₁.1 h)), ite_eq_right hoa]; omega
-      · rw [auxArgs_nodes S₁ hlo hrQ, auxArgs_nodes S hlo hrQ, ite_eq_right hQ₁, ite_eq_left hQ]
-        by_cases hoa : o ∈ S.aux
-        · rw [ite_eq_left (ho₁.2 hoa), ite_eq_left hoa]; omega
-        · rw [ite_eq_right (fun h => hoa (ho₁.1 h)), ite_eq_right hoa]; omega
-    obtain ⟨S', hstep⟩ := ih₂ _ (hk₂ ▸ hlt) _ S₁ hk₁ rfl rfl hS₁ (ha₁ ▸ ha)
-    exact ⟨S', hstep.of_prep (by omega) ha₁ hW⟩
+      · exact hS.exists_preparation_auxIn_lt hN hne (Or.inl ⟨hl, hr⟩) h ht12
+      · exact hS.exists_preparation_auxIn_lt hN hne (Or.inr ⟨hl, hr⟩) h ht12.symm
+    obtain ⟨S', hstep⟩ := ih₂ _ (hk₂ ▸ hlt) _ S₁ (hgates ▸ hk₁) rfl rfl hp.valid (hp.a_eq ▸ ha)
+    exact ⟨S', hstep.of_preparation hp⟩
   push Not at haux
   have hx : t₁ ∈ S.params := (Finset.mem_union.1 ht₁).resolve_right haux.1
   have hy : t₂ ∈ S.params := (Finset.mem_union.1 ht₂).resolve_right haux.2
-  obtain ⟨hxu, hxdeg⟩ := hN.and_param G hG hand t₁ t₂ (Or.inl ⟨hl, hr⟩) hx hy ht12
-  obtain ⟨hyu, hydeg⟩ := hN.and_param G hG hand t₂ t₁ (Or.inr ⟨hl, hr⟩) hy hx ht12.symm
-  have hGp : ∀ {i}, i ∈ S.params → i ≠ G := fun hi he =>
-    Finset.disjoint_left.1 hS.wf.disjoint_params_gates (he ▸ hi) hG
+  obtain ⟨-, hxdeg⟩ := hN.and_param _ hG hand t₁ t₂ (Or.inl ⟨hl, hr⟩) hx hy ht12
+  obtain ⟨-, hydeg⟩ := hN.and_param _ hG hand t₂ t₁ (Or.inr ⟨hl, hr⟩) hy hx ht12.symm
   -- a child of the minimal AND reading one of its inputs is rerouted
-  by_cases hch : ∃ K ∈ S.gates, (S.gate K).Reads G ∧ ((S.gate K).Reads t₁ ∨ (S.gate K).Reads t₂)
+  by_cases hch : ∃ K ∈ S.gates, (S.gate K).Reads (S.gates.min' hne) ∧
+      ((S.gate K).Reads t₁ ∨ (S.gate K).Reads t₂)
   · obtain ⟨K, hK, hKG, hKt⟩ := hch
-    have hKne : K ≠ G := fun h => hS.not_reads_self hG (h ▸ hKG)
-    let env : Bool → Bool → ℕ → Bool := fun u v i =>
-      if i = G then (S.gate G).op u v else if i = t₁ then u else if i = t₂ then v else false
-    let g' : Gate := ⟨fun u v => (S.gate K).eval (env u v), .node t₁, .node t₂⟩
-    have hg'reads : ∀ i, g'.Reads i → i = t₁ ∨ i = t₂ := by
-      rintro i (h | h)
-      · exact Or.inl (Arg.node.inj h).symm
-      · exact Or.inr (Arg.node.inj h).symm
-    have hok : S.RewireOK K g' := by
-      refine ⟨hK, fun i hi => (hg'reads i hi).elim (fun h => h ▸ hx) (fun h => h ▸ hy),
-        fun val hothers => ?_⟩
-      change (S.gate K).eval (env (val t₁) (val t₂)) = (S.gate K).eval val
-      obtain ⟨t, ht, hKt'⟩ : ∃ t, (t = t₁ ∨ t = t₂) ∧ (S.gate K).Reads t := by
-        rcases hKt with h | h
-        · exact ⟨t₁, Or.inl rfl, h⟩
-        · exact ⟨t₂, Or.inr rfl, h⟩
-      have htG : t ≠ G := by rcases ht with rfl | rfl; exacts [hGp hx, hGp hy]
-      refine Gate.eval_congr fun i hi => ?_
-      rcases Gate.eq_or_eq_of_reads htG.symm hKG hKt' hi with rfl | rfl
-      · simp only [env, ite_true]
-        rw [hothers G hG hKne.symm]
-        unfold Gate.eval
-        rw [hl, hr, Arg.eval_node, Arg.eval_node]
-      · rcases ht with rfl | rfl
-        · simp only [env, ite_eq_right htG, ite_true]
-        · simp only [env, ite_eq_right htG, ite_eq_right ht12.symm, ite_true]
-    obtain ⟨hS₁, hm, hs, hq, hW⟩ := hS.prep_rewire hok fun t ht htu => by
-      rcases hg'reads t ht with rfl | rfl; exacts [hxdeg, hydeg]
-    set S₁ := S.rewire K g'
-    have ha₁ : S₁.a = S.a := by simp only [a, hm, hq]
-    have hgate : ∀ K', K' ≠ K → S₁.gate K' = S.gate K' := fun K' h => Function.update_of_ne h _ _
-    have hauxeq : S₁.auxIn = S.auxIn := by
-      rw [auxIn_eq (S := S₁) hne, auxIn_eq hne]
-      change S₁.auxArgs (S₁.gate G) = S.auxArgs (S.gate G)
-      rw [hgate G hKne.symm]
-      rfl
-    have hlt : S₁.childIn < S.childIn := by
-      rw [childIn_eq (S := S₁) hne, childIn_eq hne]
-      change (S.gates.filter fun K' => (S₁.gate K').Reads G ∧
-        ∃ t ∈ S.params, (S₁.gate G).Reads t ∧ (S₁.gate K').Reads t).card <
-          (S.gates.filter fun K' => (S.gate K').Reads G ∧
-            ∃ t ∈ S.params, (S.gate G).Reads t ∧ (S.gate K').Reads t).card
-      refine Finset.card_lt_card ⟨fun K' hK' => ?_, fun hsub => ?_⟩
-      · obtain ⟨hK'g, hK'G, t, htp, hGt, hK't⟩ := Finset.mem_filter.1 hK'
-        have hK'K : K' ≠ K := by
-          rintro rfl
-          rw [show S₁.gate K' = g' from Function.update_self _ _ _] at hK'G
-          rcases hg'reads G hK'G with h | h
-          · exact hGp hx h.symm
-          · exact hGp hy h.symm
-        rw [hgate K' hK'K] at hK'G hK't
-        rw [hgate G hKne.symm] at hGt
-        exact Finset.mem_filter.2 ⟨hK'g, hK'G, t, htp, hGt, hK't⟩
-      · have hKmem : K ∈ S.gates.filter fun K' => (S.gate K').Reads G ∧
-            ∃ t ∈ S.params, (S.gate G).Reads t ∧ (S.gate K').Reads t := by
-          refine Finset.mem_filter.2 ⟨hK, hKG, ?_⟩
-          rcases hKt with h | h
-          · exact ⟨t₁, hx, Or.inl hl, h⟩
-          · exact ⟨t₂, hy, Or.inr hr, h⟩
-        obtain ⟨-, hKG', -⟩ := Finset.mem_filter.1 (hsub hKmem)
-        rw [show S₁.gate K = g' from Function.update_self _ _ _] at hKG'
-        rcases hg'reads G hKG' with h | h
-        · exact hGp hx h.symm
-        · exact hGp hy h.symm
-    obtain ⟨S', hstep⟩ := ih₃ _ (hk₃ ▸ hlt) S₁ hk₁ (hauxeq.trans hk₂) rfl hS₁ (ha₁ ▸ ha)
-    exact ⟨S', hstep.of_prep (by omega) ha₁ hW⟩
+    obtain ⟨S₁, hp, hgates, hauxeq, hlt⟩ :=
+      hS.exists_preparation_childIn_lt hne hl hr ht12 hx hy hxdeg hydeg hK hKG hKt
+    obtain ⟨S', hstep⟩ := ih₃ _ (hk₃ ▸ hlt) S₁ (hgates ▸ hk₁) (hauxeq.trans hk₂) rfl hp.valid
+      (hp.a_eq ▸ ha)
+    exact ⟨S', hstep.of_preparation hp⟩
   push Not at hch
-  -- Cases 7 to 10
-  have hGout : ¬ S.out.Reads G := by
-    intro hout
-    obtain ⟨α, β, γ, hform⟩ := exists_and_form hand
-    refine hS.false_of_fix hf ha hy β ∅ (Finset.empty_subset _) (Finset.notMem_empty _)
-      (γ ^^ S.out.neg) fun val hval hfix => ?_
-    rw [Finset.sum_empty, add_zero] at hfix
-    unfold Lit.eval
-    unfold Lit.Reads at hout
-    rw [hout, Arg.eval_node, hval.2 G hG]
-    unfold Gate.eval
-    rw [hl, hr, Arg.eval_node, Arg.eval_node, hform, hfix]
-    cases val t₁ <;> cases α <;> cases β <;> cases γ <;> cases S.out.neg <;> rfl
-  have hhas : ∃ K ∈ S.gates, (S.gate K).Reads G := by
-    by_contra hno
-    push Not at hno
-    exact hN.no_deletion (Or.inr (Or.inr (Or.inl ⟨G, hG, hno, hGout⟩)))
-  by_cases hle : S.deg t₂ ≤ S.deg t₁
-  · exact hS.step_of_minimalAnd hf ha hN ⟨hG, hand, Or.inl ⟨hl, hr⟩, hxu, hyu, ht12, hydeg, hle,
-      fun K hK hKG => ⟨(hch K hK hKG).1, (hch K hK hKG).2⟩, hGout, hhas⟩
-  · exact hS.step_of_minimalAnd hf ha hN ⟨hG, hand, Or.inr ⟨hl, hr⟩, hyu, hxu, ht12.symm, hxdeg,
-      by omega, fun K hK hKG => ⟨(hch K hK hKG).2, (hch K hK hKG).1⟩, hGout, hhas⟩
+  -- eliminating the minimal AND
+  obtain ⟨x, y, hmin⟩ := hS.exists_minimalAnd hf ha hN hG hand hl hr ht12 hx hy
+    fun K hK hKG => ⟨(hch K hK hKG).1, (hch K hK hKG).2⟩
+  exact hS.step_of_minimalAnd hf ha hN hmin
 
 /-- **Lemma 4.2** of [Mishra and Santhanam][MishraSanthanam2026]: if `d < a`, a valid state for
 an affine disperser for dimension `d` has a step of gate elimination: a valid state with smaller

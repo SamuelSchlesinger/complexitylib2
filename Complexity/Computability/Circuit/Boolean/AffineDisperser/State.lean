@@ -407,15 +407,6 @@ theorem mem_unpaired_of {S S' : State n} {x : ℕ} (hx : x ∈ S'.unpaired) (hp 
     (hpairs : S.pairs ⊆ S'.pairs) : x ∈ S.unpaired :=
   mem_unpaired.2 ⟨hp, fun ⟨pr, hpr, h⟩ => (mem_unpaired.1 hx).2 ⟨pr, hpairs hpr, h⟩⟩
 
-/-- A name keeps or lowers its weight when it stays an unpaired parameter of a state with at
-least the same pairs and does not gain children. -/
-theorem wt_le_of_children_subset {S S' : State n} {x : ℕ} (hparams : S'.params ⊆ S.params)
-    (hpairs : S.pairs ⊆ S'.pairs) (hc : S'.children x ⊆ S.children x) : S'.wt x ≤ S.wt x := by
-  by_cases hx : x ∈ S'.unpaired
-  · rw [wt_of_mem hx, wt_of_mem (mem_unpaired_of hx (hparams (mem_unpaired.1 hx).1) hpairs)]
-    exact weight_mono (Finset.card_le_card hc)
-  · rw [wt_of_notMem hx]; omega
-
 /-- A step of gate elimination from `S` to `S'`, as in Lemma 4.2 of
 [Mishra and Santhanam][MishraSanthanam2026]: `S'` is valid, `m + s` decreases,
 `Δa ∈ {0, -1, -2}` and `ΔW ≤ 14 Δa`, written without subtraction. -/
@@ -425,6 +416,28 @@ structure Step (f : BooleanFunction n) (S S' : State n) : Prop where
   a_le : S'.a ≤ S.a
   le_a : S.a ≤ S'.a + 2
   potential : S'.W + 14 * S.a ≤ S.W + 14 * S'.a
+
+/-- A preparatory operation of gate elimination from `S` to `S'`: `S'` is valid, with the same
+`m`, `s` and `q` as `S` and no larger potential. -/
+structure Preparation (f : BooleanFunction n) (S S' : State n) : Prop where
+  valid : S'.Valid f
+  m_eq : S'.m = S.m
+  s_eq : S'.s = S.s
+  q_eq : S'.q = S.q
+  W_le : S'.W ≤ S.W
+
+theorem Preparation.a_eq {S S' : State n} (h : Preparation f S S') : S'.a = S.a := by
+  simp only [a, h.m_eq, h.q_eq]
+
+/-- A preparatory operation followed by a step is a step. -/
+theorem Step.of_preparation {S S₁ S' : State n} (hp : Preparation f S S₁) (h : Step f S₁ S') :
+    Step f S S' := by
+  obtain ⟨hS', hlt, ha₁, ha₂, hW'⟩ := h
+  have := hp.a_eq
+  have := hp.m_eq
+  have := hp.s_eq
+  have := hp.W_le
+  exact ⟨hS', by omega, by omega, by omega, by omega⟩
 
 /-! ### Pairs and partners -/
 

@@ -272,14 +272,11 @@ theorem freshEqn_notMem (S : State n) : S.freshEqn ∉ S.eqns := fun h => by
   simp only [id, freshEqn] at this
   omega
 
-/-- Moving a movable gate into the affine system keeps `m`, `s`, `q` and `a`, does not increase
-`W` and lowers the number of gates. -/
-theorem Valid.prep_move {S : State n} (hS : S.Valid f) {J : ℕ} (hJ : S.Movable J) :
-    ∃ S₁ : State n, S₁.Valid f ∧ S₁.gates.card < S.gates.card ∧ S₁.m = S.m ∧ S₁.s = S.s ∧
-      S₁.q = S.q ∧ S₁.W ≤ S.W := by
+/-- Moving a movable gate into the affine system is a preparatory operation. -/
+theorem Valid.preparation_moveAffine {S : State n} (hS : S.Valid f) {J : ℕ} (hJ : S.Movable J) :
+    Preparation f S (S.moveAffine J S.freshEqn) := by
   have hok : S.MoveOK J S.freshEqn := ⟨hJ.1, S.freshEqn_notMem, hJ.2.1, hJ.2.2⟩
-  refine ⟨_, hS.moveAffine hok, by have := moveAffine_gates_card hok; omega, rfl,
-    moveAffine_size hok, rfl, ?_⟩
+  refine ⟨hS.moveAffine hok, rfl, moveAffine_size hok, rfl, ?_⟩
   have hpt : ∀ u ∈ S.params, (S.moveAffine J S.freshEqn).wt u + 0 ≤ S.wt u + 0 := by
     intro u hu
     by_cases hu' : u ∈ S.unpaired

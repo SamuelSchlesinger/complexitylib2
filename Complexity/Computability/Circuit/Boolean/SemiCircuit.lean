@@ -805,13 +805,6 @@ theorem deg_eq (t : ℕ) : C.deg t = (C.gateChildren t).card + (C.eqnChildren t)
     Sum.inr e ∈ C.children t ↔ e ∈ C.eqns ∧ t ∈ (C.eqn e).terms := by
   simp [children, eqnChildren]
 
-/-- The constraints of the semi-circuit: its gates (on the left) and equations (on the right). -/
-def constraints : Finset (ℕ ⊕ ℕ) :=
-  C.gates.disjSum C.eqns
-
-theorem children_subset_constraints (t : ℕ) : C.children t ⊆ C.constraints :=
-  Finset.disjSum_mono (Finset.filter_subset _ _) (Finset.filter_subset _ _)
-
 /-- A semi-circuit is well formed when its roles are disjoint, gates read constants or internal
 values (gates only with smaller names), equations have at most three terms among the parameters and auxiliary
 variables, the output reads a constant or an internal value, and the affine system is fair: every
@@ -883,8 +876,6 @@ theorem children_subst_subset (v : ℕ) (ℓ : Lit) (z : ℕ) :
     rcases Equation.mem_of_mem_subst hx.2 with h | ⟨h, _⟩
     · exact Or.inl ⟨hx.1, h⟩
     · exact Or.inr ⟨hx.1, h⟩
-
-theorem constraints_subst (v : ℕ) (ℓ : Lit) : (C.subst v ℓ).constraints = C.constraints := rfl
 
 theorem size_subst (v : ℕ) (ℓ : Lit) : (C.subst v ℓ).size = C.size := rfl
 

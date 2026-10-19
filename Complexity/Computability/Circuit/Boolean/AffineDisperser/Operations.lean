@@ -378,13 +378,6 @@ theorem deleteGate_children_of_ne {S : State n} (hS : S.Valid f) {J : ℕ} {ℓ 
   have := deleteGate_children_subset (S := S) (J := J) (ℓ := ℓ) z
   rwa [SemiCircuit.children_subst hzJ hzℓ] at this
 
-/-- After deleting a gate, the children of the target of `ℓ` are among its former children and
-those of the gate. -/
-theorem deleteGate_children_target {S : State n} {J : ℕ} {ℓ : Lit} (z : ℕ) :
-    (S.deleteGate J ℓ).children z ⊆ (S.children z ∪ S.children J).erase (.inl J) :=
-  (deleteGate_children_subset z).trans
-    (Finset.erase_subset_erase _ (SemiCircuit.children_subst_subset J ℓ z))
-
 /-- Deleting a gate preserves validity. -/
 theorem Valid.deleteGate {S : State n} (hS : S.Valid f) {J : ℕ} {ℓ : Lit}
     (h : S.DeleteGateOK J ℓ) : (S.deleteGate J ℓ).Valid f := by
@@ -523,11 +516,6 @@ theorem deleteEqn_children_of_ne {S : State n} (hS : S.Valid f) {e v : ℕ} {ℓ
   have hzv : z ≠ v := fun he => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hz (he ▸ h.aux)
   have := deleteEqn_children_subset (S := S) (e := e) (v := v) (ℓ := ℓ) z
   rwa [SemiCircuit.children_subst hzv hzℓ] at this
-
-theorem deleteEqn_children_target {S : State n} {e v : ℕ} {ℓ : Lit} (z : ℕ) :
-    (S.deleteEqn e v ℓ).children z ⊆ (S.children z ∪ S.children v).erase (.inr e) :=
-  (deleteEqn_children_subset z).trans
-    (Finset.erase_subset_erase _ (SemiCircuit.children_subst_subset v ℓ z))
 
 /-- Deleting an equation `v = ℓ` with its auxiliary variable preserves validity. -/
 theorem Valid.deleteEqn {S : State n} (hS : S.Valid f) {e v : ℕ} {ℓ : Lit}
