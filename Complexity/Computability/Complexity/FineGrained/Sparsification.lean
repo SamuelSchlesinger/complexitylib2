@@ -192,6 +192,9 @@ theorem mem_vars_of_mem_root {k : ℕ} {φ : CNF ℕ} :
 
 /-! ### The states of the tree -/
 
+/-- The bound `2 ∑_{j < K} θ j` on the occurrences of a variable in a sparse formula. -/
+def occBound (K α : ℕ) : ℕ := 2 * ∑ j ∈ Finset.range K, threshold K α j
+
 section Tree
 
 variable {k : ℕ} (hkK : k ≤ K) {φ : CNF ℕ} {w : List Bool}
@@ -221,11 +224,10 @@ theorem length_walk_le (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) :
   exact length_root_le k φ
 
 /-- **The leaves are small.** The sparse states of the tree have at most `c n + 1` clauses, for
-`c = 2 ∑_{j < K} θ j`. -/
+`c = occBound K α`. -/
 theorem length_walk_le_of_isSparse (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w)
     (hs : isSparse (threshold K α) K ((rule hK hα).walk (rootState hkK φ) w).1 = true) :
-    ((rule hK hα).walk (rootState hkK φ) w).1.length ≤
-      2 * (∑ j ∈ Finset.range K, threshold K α j) * φ.numVars + 1 := by
+    ((rule hK hα).walk (rootState hkK φ) w).1.length ≤ occBound K α * φ.numVars + 1 := by
   set ψ := (rule hK hα).walk (rootState hkK φ) w
   have hsparse := (isSparse_eq_true_iff (one_le_threshold hK hα) ψ.2).mp hs
   rw [← Normalized.card_toClauseSet ψ.2]
@@ -462,9 +464,6 @@ theorem length_encState_le {stk : List {ψ : CNF ℕ // Normalized K ψ}} {acc :
 end Sizes
 
 /-! ### The time of the search -/
-
-/-- The bound `2 ∑_{j < K} θ j` on the occurrences of a variable in a sparse formula. -/
-def occBound (K α : ℕ) : ℕ := 2 * ∑ j ∈ Finset.range K, threshold K α j
 
 /-- The time bound of the decider on the leaves of the tree. -/
 noncomputable def leafTime (K α : ℕ) (δ : ℝ) (c e : ℕ) (φ : CNF ℕ) : ℕ :=

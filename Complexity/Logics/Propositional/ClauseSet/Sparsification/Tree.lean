@@ -341,7 +341,7 @@ theorem walkSeq_eq_walk {s : σ} {w : List Bool} (hw : R.IsLeafWord s w)
     | zero => rfl
     | succ n => simp only [walkSeq, walk]; exact ite_eq_left hw
   | cons b w ih =>
-    obtain ⟨n, rfl⟩ : ∃ n', n = n' + 1 := ⟨n - 1, by simp at hn; omega⟩
+    obtain ⟨n, rfl⟩ : ∃ n', n = n' + 1 := ⟨n - 1, by simp only [List.length_cons] at hn; omega⟩
     simp only [walkSeq, walk]
     rw [ite_eq_right hw.1]
     have hf0 : f 0 = b := by simpa using hf 0 (by simp)

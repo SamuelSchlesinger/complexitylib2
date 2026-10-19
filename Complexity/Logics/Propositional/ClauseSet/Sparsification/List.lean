@@ -161,7 +161,7 @@ theorem subclause_eq_true_iff {D C : Clause V} :
 
 theorem reduce_sublist (ψ : CNF V) : reduce ψ <+ ψ := List.filter_sublist
 
-theorem not_and_not_subclause_iff {D C : Clause V} :
+private theorem not_and_not_subclause_iff {D C : Clause V} :
     (!(subclause D C && !subclause C D)) = true ↔ ¬ D.toFinset ⊂ C.toFinset := by
   rw [Finset.ssubset_def, ← subclause_eq_true_iff, ← subclause_eq_true_iff]
   cases subclause D C <;> cases subclause C D <;> simp
