@@ -32,10 +32,11 @@ example : shifts 1 = 108 := rfl
 example : seedLen 1 = 108 := rfl
 example : witnessLen 1 = 11664 := rfl
 
--- Zero-length seed and malformed/short certificate strings evaluate cleanly via `.getD _ false`.
-example : trialSeed 0 0 (shifts 0) [] 0 0 = [] := rfl
-example : trialSeed 2 (seedLen 2) (shifts 2) [] 0 0 = [false, false] := rfl
-example : trialSeed 2 (seedLen 2) (shifts 2) [true] 0 0 = [true, false] := rfl
+-- Zero-length seed and malformed/short certificate strings evaluate cleanly: missing bits read
+-- as `false` and extra bits are ignored.
+example : trialSeed 0 [] 0 0 = [] := rfl
+example : trialSeed 2 [] 0 0 = [false, false] := rfl
+example : trialSeed 2 [true] 0 0 = [true, false] := rfl
 
 -- Strict majority tie convention: exactly `halfRuns m` accepting runs is a rejection;
 -- `halfRuns m + 1` accepting runs is an acceptance.
@@ -126,12 +127,14 @@ example : ComputableTidilyInPolyTime
 -- when `w = []`, every trial reads all-`false` shifted seeds, so `noisyHeadVerifier` returns
 -- `a.headD false` on every trial.
 example : verifier encBits (Polynomial.C 2) noisyHeadVerifier ([], []) = false := by
-  have hts (i j : ℕ) : trialSeed 2 (seedLen 2) (shifts 2) [] i j = [false, false] := rfl
+  have hts (i j : ℕ) : trialSeed 2 [] i j = [false, false] := by
+    simp [trialSeed, Cslib.BitString.listRow]
   have hnh : noisyHeadVerifier ([], [false, false]) = false := rfl
   simp [verifier, shiftAccepts, hts, hnh]
 
 example : verifier encBits (Polynomial.C 2) noisyHeadVerifier ([true], []) = true := by
-  have hts (i j : ℕ) : trialSeed 2 (seedLen 2) (shifts 2) [] i j = [false, false] := rfl
+  have hts (i j : ℕ) : trialSeed 2 [] i j = [false, false] := by
+    simp [trialSeed, Cslib.BitString.listRow]
   have hnh : noisyHeadVerifier ([true], [false, false]) = true := rfl
   simp only [verifier, shiftAccepts, Polynomial.eval_C, hts, hnh]
   simp only [shifts, runs, halfRuns, List.countP_true, List.length_range, List.any_eq_true,

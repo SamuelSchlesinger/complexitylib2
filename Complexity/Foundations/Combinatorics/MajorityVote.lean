@@ -34,6 +34,8 @@ at most `r` good entries has weight at least `2 ^ r`.
   two thirds of `Ω`, some `12 (n + 1)` elements of `Ω` contain a majority passing each test.
 * `Cslib.exists_forall_exists_apply_mem`: for a family of at most `2 ^ n` tests, each passed by
   half of `Ω`, some `n + 1` elements of `Ω` contain one passing each test.
+* `Cslib.two_pow_mul_eight_pow_lt`: the numeric bound `2 ^ n * 8 ^ (6 n + 6) < 9 ^ (6 n + 6)`
+  behind the choice of `12 (n + 1)` repetitions.
 
 ## References
 
