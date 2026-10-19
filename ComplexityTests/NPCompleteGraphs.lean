@@ -5,14 +5,15 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Problems.Coloring
+import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 import Complexity.Computability.Complexity.Problems.VertexCover
 import Complexity.Tactic.PolyTime
 
 /-!
 # NP-complete graph problem tests
 
-Concrete, boundary, `fun_prop`, and axiom checks for `VertexCover`, `KColoring` and
-`ThreeColoring`.
+Concrete, boundary, `fun_prop`, and axiom checks for `VertexCover`, `KColoring`,
+`ThreeColoring`, and the directed Hamiltonian path and cycle reductions.
 -/
 
 namespace ComplexityTests.NPCompleteGraphs
@@ -35,6 +36,12 @@ example : PolyTimeReducible encCNF encGraph ThreeSAT ThreeColoring :=
 example : PolyTimeReducible encCNF (encPair encGraph encNat) SAT VertexCover :=
   polyTimeReducible_SAT_IndependentSet.trans polyTimeReducible_IndependentSet_VertexCover
 
+example : NPHard (encPair encGraph (encPair encNat encNat)) DirHamPath := DirHamPath_npHard
+example : NPHard encGraph DirHamCycle := DirHamCycle_npHard
+
+example : PolyTimeReducible encCNF (encPair encGraph (encPair encNat encNat)) ThreeSAT DirHamPath :=
+  polyTimeReducible_ThreeSAT_DirHamPath
+
 /-! ### Compositional `fun_prop` synthesis -/
 
 example : ComputableTidilyInPolyTime IndependentSet.toVertexCover (encPair encGraph encNat)
@@ -49,6 +56,12 @@ example : ComputableTidilyInPolyTime (KColoring.verifier 3) (encPair encGraph en
   fun_prop
 
 example : ComputableTidilyInPolyTime SAT.toThreeColoring encCNF encGraph := by fun_prop
+
+example : ComputableTidilyInPolyTime SAT.toDirHamPath encCNF
+    (encPair encGraph (encPair encNat encNat)) := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime SAT.toDirHamCycle encCNF encGraph := by fun_prop
 
 example : ComputableTidilyInPolyTime (fun φ => IndependentSet.toVertexCover (SAT.toIndependentSet φ))
     encCNF (encPair encGraph encNat) := by
@@ -207,6 +220,66 @@ example : SAT.toThreeColoring [[(0, true)], [(0, false)]] ∉ ThreeColoring := b
 example : SAT.toThreeColoring [[(0, false), (1, false), (2, false), (3, true)]] ∈ ThreeColoring :=
   (SAT.toThreeColoring_mem_iff _).2 ⟨fun _ => true, rfl⟩
 
+/-! ### Directed Hamiltonian paths and cycles -/
+
+-- A directed path through all vertices, and the boundary conventions for cycles: a single
+-- vertex needs a self-loop.
+example : (([0, 1, 2], [(0, 1), (1, 2)]), 0, 2) ∈ DirHamPath :=
+  ⟨[0, 1, 2], by decide, fun _ => Iff.rfl, rfl, rfl, by decide⟩
+
+example : ([0], [(0, 0)]) ∈ DirHamCycle :=
+  ⟨[0], by decide, fun _ => Iff.rfl, by decide, (Cycle.chain_singleton _ _).2 (by decide)⟩
+
+example : ([0], []) ∉ DirHamCycle := by
+  rintro ⟨p, hnd, hcov, hne, hch⟩
+  obtain ⟨a, rest, rfl⟩ := List.exists_cons_of_ne_nil hne
+  have ha : a = 0 := by simpa using (hcov a).1 List.mem_cons_self
+  obtain rfl : rest = [] := List.eq_nil_iff_forall_not_mem.2 fun b hb => by
+    have hb0 : b = 0 := by simpa using (hcov b).1 (List.mem_cons_of_mem _ hb)
+    exact (List.nodup_cons.1 hnd).1 (by rw [ha, ← hb0]; exact hb)
+  simp at hch
+
+-- Closing a path into a cycle needs an arc back to a start vertex that no arc enters.
+example : ([0, 1, 2], [(2, 0), (0, 1), (1, 2)]) ∈ DirHamCycle :=
+  (Graph.mem_DirHamCycle_cons_iff (G := ([0, 1, 2], [(0, 1), (1, 2)])) (by decide)
+    (fun u => by simp)).2 ⟨[0, 1, 2], by decide, fun _ => Iff.rfl, rfl, rfl, by decide⟩
+
+-- The diamond graph of the empty formula is the single top node, and that of a unit clause has
+-- one diamond with a row of six nodes and one clause node.
+example : SAT.toDirHamPath [] = (([0], []), 0, 0) := by decide
+example : SAT.toDirHamPath [] ∈ DirHamPath := (SAT.toDirHamPath_mem_iff _).2 ⟨fun _ => true, rfl⟩
+
+example : SAT.toDirHamPath [[(0, true)]] =
+    (([0, 1, 2, 3, 17, 82, 257, 626, 6],
+      [(0, 2), (0, 626), (2, 1), (626, 1), (2, 3), (3, 2), (3, 17), (17, 3), (17, 82), (82, 17),
+        (82, 257), (257, 82), (257, 626), (626, 257), (17, 6), (6, 82)]), 0, 1) := by
+  decide
+
+-- The rightward traversal with the detour through the clause node.
+example : (SAT.toDirHamPath [[(0, true)]]).1.IsDirHamPath 0 1
+    [0, 2, 3, 17, 6, 82, 257, 626, 1] :=
+  ⟨by decide, fun _ => (show [0, 2, 3, 17, 6, 82, 257, 626, 1].Perm
+    [0, 1, 2, 3, 17, 82, 257, 626, 6] by decide).mem_iff, rfl, rfl, by decide⟩
+
+-- The empty clause has no detour into its node, and complementary unit clauses are unsatisfiable.
+example : SAT.toDirHamPath [[]] ∉ DirHamPath := by
+  rw [SAT.toDirHamPath_mem_iff]
+  rintro ⟨σ, hσ⟩
+  simp at hσ
+
+example : SAT.toDirHamCycle [[(0, true)]] ∈ DirHamCycle :=
+  (SAT.toDirHamCycle_mem_iff _).2 ⟨fun _ => true, rfl⟩
+
+example : SAT.toDirHamCycle [[(0, true)], [(0, false)]] ∉ DirHamCycle := by
+  rw [SAT.toDirHamCycle_mem_iff]
+  rintro ⟨σ, hσ⟩
+  cases h : σ 0 <;> simp [h] at hσ
+
+-- Clauses wider than three literals and repeated variables are handled.
+example : SAT.toDirHamPath [[(0, false), (1, false), (0, true), (2, false)], [(1, true)]] ∈
+    DirHamPath :=
+  (SAT.toDirHamPath_mem_iff _).2 ⟨fun _ => true, rfl⟩
+
 /-! ### Axiom checks for headline theorems -/
 
 /--
@@ -282,5 +355,53 @@ info: 'Cslib.Complexity.ThreeColoring_npComplete' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.ThreeColoring_npComplete
+
+/--
+info: 'Cslib.Complexity.SAT.toDirHamPath_mem_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.toDirHamPath_mem_iff
+
+/--
+info: 'Cslib.Complexity.SAT.computableTidilyInPolyTime_toDirHamPath' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.computableTidilyInPolyTime_toDirHamPath
+
+/--
+info: 'Cslib.Complexity.Graph.mem_DirHamCycle_cons_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Graph.mem_DirHamCycle_cons_iff
+
+/--
+info: 'Cslib.Complexity.SAT.toDirHamCycle_mem_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.toDirHamCycle_mem_iff
+
+/--
+info: 'Cslib.Complexity.polyTimeReducible_ThreeSAT_DirHamPath' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.polyTimeReducible_ThreeSAT_DirHamPath
+
+/--
+info: 'Cslib.Complexity.DirHamPath_npHard' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.DirHamPath_npHard
+
+/--
+info: 'Cslib.Complexity.DirHamCycle_npHard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.DirHamCycle_npHard
 
 end ComplexityTests.NPCompleteGraphs
