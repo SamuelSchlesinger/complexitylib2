@@ -30,7 +30,7 @@ and outputs the sign of the truncated expansion `∑_{#S ≤ t} c̃(S) χ_S`
 (`UniformLearning.lowDegreeHypothesis`, `UniformLearning.lowDegreeLearner`).
 
 Each `c̃(S)` is an average of `m` independent values in `[-1, 1]` with mean `f̂(S)`, so by
-Hoeffding's inequality (`UniformLearning.uniform_abs_sum_div_sub_expect_ge_le`) it is off by at
+Hoeffding's inequality (`Probability.PMF.uniform_abs_sum_div_sub_expect_ge_le`) it is off by at
 least `γ` with probability at most `2 exp (-m γ² / 2)`
 (`UniformLearning.uniform_abs_empiricalCoeff_sub_ge_le`). Let `N` be the number of sets of at most
 `t` coordinates, at most `(n + 1) ^ t` for `n` coordinates (`BitString.card_filter_card_le_le_pow`).
@@ -58,8 +58,6 @@ only the number of examples.
 
 ## Main results
 
-* `Cslib.MachineLearning.UniformLearning.uniform_abs_sum_div_sub_expect_ge_le`: Hoeffding's
-  inequality for an empirical average.
 * `Cslib.MachineLearning.UniformLearning.uniform_abs_empiricalCoeff_sub_ge_le`: estimating one
   Fourier coefficient.
 * `Cslib.MachineLearning.UniformLearning.uniform_error_lowDegreeHypothesis_gt_le`: the failure
@@ -86,50 +84,7 @@ open scoped BigOperators ENNReal
 
 variable {ι : Type*} {m : ℕ}
 
-/-! ### Hoeffding's inequality for an empirical average -/
-
-/-- **Hoeffding's inequality for an empirical average**: the average of a `[-1, 1]`-valued function
-at `m > 0` independent uniform points is off from its mean by at least `γ` with probability at most
-`2 exp (-m γ² / 2)`. -/
-theorem uniform_abs_sum_div_sub_expect_ge_le {α : Type*} [Fintype α] [Nonempty α] (s : α → ℝ)
-    (hs : ∀ a, s a ∈ Set.Icc (-1 : ℝ) 1) (hm : 0 < m) {γ : ℝ} (hγ : 0 ≤ γ) :
-    (PMF.uniformOfFintype (Fin m → α)).toOuterMeasure
-      {ω | γ ≤ |(∑ j, s (ω j)) / m - 𝔼 a, s a|} ≤
-        ENNReal.ofReal (2 * Real.exp (-(m * γ ^ 2) / 2)) := by
-  rw [ENNReal.le_ofReal_iff_toReal_le (PMF.toOuterMeasure_ne_top _ _) (by positivity)]
-  have h := PMF.pi_sum_abs_sub_mean_ge (fun _ : Fin m => PMF.uniformOfFintype α)
-    (fun _ a => 1 + s a) (bound := 2) (ε := m * γ) (by norm_num)
-    (fun _ a _ => ⟨by linarith [(hs a).1], by linarith [(hs a).2]⟩) (by positivity)
-  rw [PMF.pi_uniformOfFintype] at h
-  have hmean : ∑ a, ((PMF.uniformOfFintype α) a).toReal * (1 + s a) = 1 + 𝔼 a, s a := by
-    have hc : (Fintype.card α : ℝ) ≠ 0 := Nat.cast_ne_zero.2 Fintype.card_ne_zero
-    simp only [PMF.uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast, ← mul_sum,
-      sum_add_distrib, sum_const, card_univ, nsmul_eq_mul, mul_one, expect_eq_sum_div_card]
-    field_simp
-  simp only [hmean, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul] at h
-  have hmR : (0 : ℝ) < m := Nat.cast_pos.2 hm
-  have hevent : {ω : Fin m → α | γ ≤ |(∑ j, s (ω j)) / m - 𝔼 a, s a|} =
-      {ω | m * γ ≤ |∑ j, (1 + s (ω j)) - m * (1 + 𝔼 a, s a)|} := by
-    ext ω
-    have hsum : ∑ j, (1 + s (ω j)) - m * (1 + 𝔼 a, s a) =
-        m * ((∑ j, s (ω j)) / m - 𝔼 a, s a) := by
-      simp only [sum_add_distrib, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul, mul_one]
-      field_simp
-      ring
-    simp only [Set.mem_ofPred_eq, hsum, abs_mul, abs_of_pos hmR]
-    exact (mul_le_mul_iff_right₀ hmR).symm
-  rw [hevent]
-  refine h.trans_eq ?_
-  congr 2
-  field_simp
-
 /-! ### The algorithm -/
-
-/-- A sign times a character has values in `[-1, 1]`. -/
-theorem signVal_mul_chi_mem_Icc (b : Bool) (S : Finset ι) (x : ι → Bool) :
-    signVal b * chi ℝ S x ∈ Set.Icc (-1 : ℝ) 1 := by
-  rw [chi_eq_signVal_parityOn, ← signVal_xor]
-  cases (b ^^ parityOn S x) <;> norm_num
 
 variable [Fintype ι] [DecidableEq ι]
 
@@ -159,8 +114,8 @@ theorem uniform_abs_empiricalCoeff_sub_ge_le (f : (ι → Bool) → Bool) (S : F
     (PMF.uniformOfFintype (Fin m → ι → Bool)).toOuterMeasure
       {x | γ ≤ |empiricalCoeff (examples f x) S - fourierCoeff (fun x => signVal (f x)) S|} ≤
         ENNReal.ofReal (2 * Real.exp (-(m * γ ^ 2) / 2)) :=
-  uniform_abs_sum_div_sub_expect_ge_le (fun x => signVal (f x) * chi ℝ S x)
-    (fun x => signVal_mul_chi_mem_Icc _ S x) hm hγ
+  PMF.uniform_abs_sum_div_sub_expect_ge_le (fun x => signVal (f x) * chi ℝ S x)
+    (fun x => by rw [abs_mul, abs_signVal, abs_chi, one_mul]) hm hγ
 
 /-! ### The low-degree algorithm -/
 

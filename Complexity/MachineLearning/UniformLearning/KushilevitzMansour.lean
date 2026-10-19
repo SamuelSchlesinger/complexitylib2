@@ -11,6 +11,7 @@ public import Complexity.Computability.DecisionTree.SpectralNorm
 public import Complexity.MachineLearning.UniformLearning.LowDegree
 public import Complexity.MachineLearning.UniformLearning.MembershipQuery
 public import Complexity.Foundations.BooleanAnalysis.BucketWeight
+import Complexity.Probability.Concentration
 import Complexity.Probability.PMF
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Tactic.FieldSimp
@@ -373,12 +374,11 @@ theorem uniformError_kmHypothesis_le (f : (ι → Bool) → Bool) {L θ : ℝ} (
   linarith
 
 omit [Fintype ι] [DecidableEq ι] in
-/-- A product of two signs and two characters has values in `[-1, 1]`. -/
-private theorem mem_Icc_of_signVal (a b : Bool) (S : Finset ι) (x y : ι → Bool) :
-    signVal a * chi ℝ S x * (signVal b * chi ℝ S y) ∈ Set.Icc (-1 : ℝ) 1 := by
-  simp only [chi_eq_signVal_parityOn, ← signVal_xor]
-  generalize (a ^^ parityOn S x ^^ (b ^^ parityOn S y)) = c
-  cases c <;> norm_num
+/-- A product of two signs and two characters has absolute value at most one. -/
+private theorem abs_signVal_mul_chi_mul_le_one (a b : Bool) (S : Finset ι) (x y : ι → Bool) :
+    |signVal a * chi ℝ S x * (signVal b * chi ℝ S y)| ≤ 1 := by
+  rw [abs_mul, abs_mul, abs_mul, abs_signVal, abs_signVal, abs_chi, abs_chi]
+  norm_num
 
 /-- **The samples are accurate with high probability**: from `m` samples, some bucket estimate at
 some level of the search, or some sample coefficient, is off by at least `θ² / 4` with probability
@@ -408,18 +408,18 @@ theorem uniform_not_accurate_le (f : (ι → Bool) → Bool) (θ : ℝ) (m : ℕ
   -- one bucket estimate
   have hbucket (J S : Finset ι) :
       μ {ω | θ ^ 2 / 4 ≤ |bucketEstimate f ω J S - bucketWeight F J S|} ≤ ENNReal.ofReal c := by
-    have h := uniform_abs_sum_div_sub_expect_ge_le
+    have h := PMF.uniform_abs_sum_div_sub_expect_ge_le
       (fun p : (ι → Bool) × (ι → Bool) × (ι → Bool) =>
         F (J.piecewise p.1 p.2.2) * chi ℝ S p.1 * (F (J.piecewise p.2.1 p.2.2) * chi ℝ S p.2.1))
-      (fun p => mem_Icc_of_signVal _ _ S _ _) hm hγ
+      (fun p => abs_signVal_mul_chi_mul_le_one _ _ S _ _) hm hγ
     rw [expect_bucketWeight_sample, hexp] at h
     exact h
   -- one sample coefficient
   have hcoeff (S : Finset ι) :
       μ {ω | θ ^ 2 / 4 ≤ |sampleCoeff f ω S - fourierCoeff F S|} ≤ ENNReal.ofReal c := by
-    have h := uniform_abs_sum_div_sub_expect_ge_le
+    have h := PMF.uniform_abs_sum_div_sub_expect_ge_le
       (fun p : (ι → Bool) × (ι → Bool) × (ι → Bool) => F p.1 * chi ℝ S p.1)
-      (fun p => signVal_mul_chi_mem_Icc _ S _) hm hγ
+      (fun p => by rw [abs_mul, abs_signVal, abs_chi, one_mul]) hm hγ
     have hmean : 𝔼 p : (ι → Bool) × (ι → Bool) × (ι → Bool), F p.1 * chi ℝ S p.1 =
         fourierCoeff F S := by
       rw [← univ_product_univ, expect_product]

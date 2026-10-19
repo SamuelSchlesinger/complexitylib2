@@ -27,9 +27,7 @@ expectation of `F (x, z) χ_S(x) F (y, z) χ_S(y)` for independent uniform `x`, 
 (`BitString.expect_bucketWeight_sample`) [O'Donnell, Proposition 3.40][ODonnell2014]. With query
 access to a Boolean function this lets one estimate any bucket weight by sampling: the basis of
 the Goldreich–Levin and Kushilevitz–Mansour algorithms [GoldreichLevin1989]
-[KushilevitzMansour1993]. Since a coefficient of a Boolean function, read as signs, has absolute
-value at most one, its spectral norm `∑_S |f̂(S)|` is at least its total weight, which is one
-(`BitString.one_le_sum_abs_fourierCoeff_signVal`).
+[KushilevitzMansour1993].
 
 ## Main definitions
 
@@ -40,8 +38,6 @@ value at most one, its spectral norm `∑_S |f̂(S)|` is at least its total weig
 * `Cslib.BitString.sum_bucketWeight_le`: the buckets of `J` partition the Fourier weight.
 * `Cslib.BitString.sq_fourierCoeff_le_bucketWeight`: a bucket holds the weight of its sets.
 * `Cslib.BitString.expect_bucketWeight_sample`: the bucket weight as an expectation of samples.
-* `Cslib.BitString.one_le_sum_abs_fourierCoeff_signVal`: a Boolean function has spectral norm at
-  least one.
 
 ## References
 
@@ -111,20 +107,5 @@ theorem expect_bucketWeight_sample (F : (ι → Bool) → ℝ) (J S : Finset ι)
   simp only [← univ_product_univ, expect_product, fourierCoeff, sq, expect_mul_expect]
   conv_lhs => enter [2, x]; rw [expect_comm]
   conv_lhs => rw [expect_comm]
-
-/-- A Boolean function, read as signs, has spectral norm at least one. -/
-theorem one_le_sum_abs_fourierCoeff_signVal (f : (ι → Bool) → Bool) :
-    1 ≤ ∑ S, |fourierCoeff (fun x => signVal (f x)) S| := by
-  rw [← sum_fourierCoeff_sq_signVal f]
-  refine sum_le_sum fun S _ => ?_
-  have h1 : fourierCoeff (fun x => signVal (f x)) S ^ 2 ≤ 1 := by
-    rw [← sum_fourierCoeff_sq_signVal f]
-    exact single_le_sum (f := fun S => fourierCoeff (fun x => signVal (f x)) S ^ 2)
-      (fun _ _ => sq_nonneg _) (mem_univ S)
-  have h2 : |fourierCoeff (fun x => signVal (f x)) S| ≤ 1 := by
-    rw [← sq_le_one_iff_abs_le_one]
-    exact h1
-  rw [← sq_abs, sq]
-  exact mul_le_of_le_one_left (abs_nonneg _) h2
 
 end Cslib.BitString

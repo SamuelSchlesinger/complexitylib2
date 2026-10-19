@@ -66,7 +66,9 @@ coefficient on the circle, so the name is meant to be used qualified.
   uniqueness of the Fourier coefficients.
 * `Cslib.BitString.expect_mul_eq_sum_fourierCoeff_mul`: Plancherel's identity.
 * `Cslib.BitString.sum_fourierCoeff_sq_signVal`: Parseval's identity for functions with values
-  `±1`.
+  `±1`; so their coefficients have absolute value at most one
+  (`Cslib.BitString.abs_fourierCoeff_signVal_le_one`) and their spectral norm is at least one
+  (`Cslib.BitString.one_le_sum_abs_fourierCoeff_signVal`).
 * `Cslib.BitString.expect_signVal_mul_signVal`, `Cslib.BitString.fourierCoeff_signVal`: the
   correlation of two Boolean functions is one minus twice their relative Hamming distance.
 
@@ -97,6 +99,10 @@ def signVal (b : Bool) : ℝ :=
 
 /-- A sign squares to one. -/
 theorem signVal_mul_self (b : Bool) : signVal b * signVal b = 1 := by
+  cases b <;> simp
+
+/-- A sign has absolute value one. -/
+theorem abs_signVal (b : Bool) : |signVal b| = 1 := by
   cases b <;> simp
 
 /-- The product of two signs records whether the bits agree. -/
@@ -214,6 +220,10 @@ theorem chi_singleton (i : ι) (x : ι → Bool) : chi ℝ {i} x = signVal (x i)
 theorem chi_eq_signVal_parityOn (S : Finset ι) (x : ι → Bool) :
     chi ℝ S x = signVal (parityOn S x) := by
   rw [chi_eq_neg_one_pow_parityOn, signVal_eq_neg_one_pow]
+
+/-- A real character has absolute value one. -/
+theorem abs_chi (T : Finset ι) (x : ι → Bool) : |chi ℝ T x| = 1 := by
+  rw [chi_eq_signVal_parityOn, abs_signVal]
 
 /-- The character of `S` is the trivial additive character exactly when `S` is empty. -/
 @[simp] theorem chiChar_eq_zero_iff {S : Finset ι} : chiChar ℝ S = 0 ↔ S = ∅ := by
@@ -393,6 +403,21 @@ theorem sum_fourierCoeff_sq_signVal (f : (ι → Bool) → Bool) :
   rw [← expect_sq_eq_sum_fourierCoeff_sq]
   simp only [sq, signVal_mul_self]
   exact expect_const univ_nonempty 1
+
+/-- A Fourier coefficient of a Boolean function, read as signs, has absolute value at most one. -/
+theorem abs_fourierCoeff_signVal_le_one (f : (ι → Bool) → Bool) (S : Finset ι) :
+    |fourierCoeff (fun x => signVal (f x)) S| ≤ 1 := by
+  rw [← sq_le_one_iff_abs_le_one, ← sum_fourierCoeff_sq_signVal f]
+  exact single_le_sum (f := fun S => fourierCoeff (fun x => signVal (f x)) S ^ 2)
+    (fun _ _ => sq_nonneg _) (mem_univ S)
+
+/-- A Boolean function, read as signs, has spectral norm `∑_S |f̂(S)|` at least one. -/
+theorem one_le_sum_abs_fourierCoeff_signVal (f : (ι → Bool) → Bool) :
+    1 ≤ ∑ S, |fourierCoeff (fun x => signVal (f x)) S| := by
+  rw [← sum_fourierCoeff_sq_signVal f]
+  refine sum_le_sum fun S _ => ?_
+  rw [← sq_abs, sq]
+  exact mul_le_of_le_one_left (abs_nonneg _) (abs_fourierCoeff_signVal_le_one f S)
 
 /-! ### Distance and correlation -/
 
