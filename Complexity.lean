@@ -715,11 +715,17 @@ public import Complexity.Foundations.BooleanAnalysis.MirrorSets
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.Combinatorics.AffineDisperser
+public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Combinatorics.AffineDisperser.CubeSum
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
 public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Moore
 public import Complexity.Foundations.Combinatorics.AffineDisperser.PivotSpace
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Primes
 public import Complexity.Foundations.Combinatorics.AffineDisperser.SubspacePolynomial
+public import Complexity.Foundations.Combinatorics.AffineDisperser.TensorBasis
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
