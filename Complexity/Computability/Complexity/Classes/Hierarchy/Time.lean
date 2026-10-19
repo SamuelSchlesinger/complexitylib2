@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Classes.Hierarchy
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
@@ -28,9 +29,10 @@ for `k ≥ 2`.
 
 ## The time hierarchy theorem
 
-`Cslib.Complexity.clockedDiagonal J` is the diagonal function `Cslib.Complexity.diagonal` with the
-clock `J n` in place of `2 ^ n`: it runs the machine described at the start of its input `x` on `x`
-for `J x.length` steps with the universal function, and negates the verdict.
+The clocked diagonal `Cslib.Complexity.clockedDiagonal J` of
+`Complexity.Computability.Complexity.Classes.Hierarchy` runs the machine described at the start of
+its input `x` on `x` for `J x.length` steps with the universal function, and negates the verdict;
+the diagonal function `Cslib.Complexity.diagonal` has the clock `2 ^ n`.
 `Cslib.Complexity.timeDiagonal J` applies it only when the framed description is short,
 `2 ^ |unframe x| ≤ |x|` (`Cslib.Complexity.Diagonal.shortDesc`), and answers `false` otherwise.
 Decoding a description of `L` bits takes time polynomial in `L`, of a degree fixed by the decoder,
@@ -41,7 +43,7 @@ The native universal machine simulates `J` steps of a description of length `B` 
 `timeDiagonal J` is in `DTIME ((n + 1) ^ 5 * (J n + 1) ^ 3)` for a time-constructible clock `J`
 (`Cslib.Complexity.setOf_timeDiagonal_mem_DTIME`). It is not in `DTIME f` when every `c * f n + c`
 is eventually below `J n`, by the diagonal argument
-(`Cslib.Complexity.setOf_timeDiagonal_not_mem_DTIME`). Hence `DTIME f ⊂ DTIME g`
+(`Cslib.Complexity.setOf_timeDiagonal_notMem_DTIME`). Hence `DTIME f ⊂ DTIME g`
 [Arora and Barak, Theorem 3.1][AroraBarak09], [Sipser, Theorem 9.10][Sipser2013]:
 
 * when such a time-constructible clock `J` has `(n + 1) ^ 5 * (J n + 1) ^ 3 ≤ g n` eventually
@@ -58,12 +60,12 @@ logarithmic overhead and is not claimed here.
 
 * `Cslib.Complexity.DTIME`: deterministic time classes.
 * `Cslib.Complexity.TimeConstructible`: time-constructible bounds.
-* `Cslib.Complexity.clockedDiagonal`, `Cslib.Complexity.timeDiagonal`: the diagonal with a clock.
+* `Cslib.Complexity.timeDiagonal`: the clocked diagonal on short descriptions.
 
 ## Main results
 
 * `Cslib.Complexity.setOf_timeDiagonal_mem_DTIME`,
-  `Cslib.Complexity.setOf_timeDiagonal_not_mem_DTIME`: the clocked diagonal is decidable within
+  `Cslib.Complexity.setOf_timeDiagonal_notMem_DTIME`: the clocked diagonal is decidable within
   the time of the universal machine, and not within time `O(f)` for clocks beyond every `O(f)`.
 * `Cslib.Complexity.DTIME_ssubset_DTIME_of_clock`: the time hierarchy theorem, for a clock.
 * `Cslib.Complexity.DTIME_ssubset_DTIME`: the time hierarchy theorem, for a time-constructible
@@ -117,40 +119,12 @@ theorem exists_pow_length_encNat_le (d : ℕ) :
 
 namespace ComputableTidilyInO
 
-/-- The length of a bit word in unary, within quadratic time and linear space. -/
+/-- The length of a bit word in unary, within linear time and space, by the streaming machine of
+`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits`. -/
 theorem lengthUnary : ComputableTidilyInO (fun l : List Bool => l.length) encBits encUnary
-    (fun l => (l.length + 1) ^ 2) fun l => l.length + 1 := by
-  have hstep := (ComputableTidilyInDegree.unary_succ.inO_one).comp (fst encUnary encBool)
-  have hlen (x : List Bool) (i : ℕ) :
-      (List.take i x).foldl (fun n _ => n + 1) 0 = min i x.length := by
-    simp [List.foldl_const]
-  have h := foldl (encA := encBool) (encL := encBits) (encB := encUnary) (list := id)
-    (init := fun _ => 0) (step := fun n _ => n + 1) (of_linear (.of_eq fun _ => rfl)) (const 0)
-    hstep (R := fun x => 3 * (x.length + 1)) (Q := fun x => 3 * (x.length + 1))
-    (B := fun x => x.length)
-    (fun x i hi => by
-      simp only [id] at hi ⊢
-      rw [hlen]
-      simp only [length_encPair, encUnary_apply, List.length_replicate,
-        encBool_apply, List.length_singleton]
-      omega)
-    (fun x i hi => by
-      simp only [id] at hi ⊢
-      rw [hlen]
-      simp only [length_encPair, encUnary_apply, List.length_replicate,
-        encBool_apply, List.length_singleton]
-      omega)
-    (fun x i hi => by
-      simp only [id] at hi ⊢
-      rw [hlen]
-      simp only [encUnary_apply, List.length_replicate]
-      omega)
-  refine (h.mono 16 (fun x => ?_) fun x => ?_).of_enc_eq fun x => ?_
-  · simp only [id, encBits_apply]
-    nlinarith
-  · simp only [id, encBits_apply]
-    omega
-  · simp [List.foldl_const]
+    (fun l => l.length) fun l => l.length :=
+  .of_bounds ComputableTidilyInTimeAndSpace.length_bits 8 (fun l => by omega)
+    (fun _ => Nat.zero_le _) fun l => by simp only [encUnary_apply, List.length_replicate]; omega
 
 /-- The length of a bit word in binary, by a binary counter, within quadratic time and linear
 space. -/
@@ -312,7 +286,10 @@ theorem setOf_mem_DTIME_of_computableTidilyInO {f : List Bool → Bool} {T S : L
 /-! ### Time-constructible bounds -/
 
 /-- A bound `t` is time-constructible when some machine with a binary alphabet and finitely many
-states computes `t n` in binary from any word of length `n` within time `O(t n)`. -/
+states computes `t n` in binary from any word of length `n` within time `O(t n)`. Arora and Barak
+also ask for `n ≤ t n` [Arora and Barak, Section 1.2][AroraBarak09]; this definition omits that
+condition, and the results that need it, such as `Cslib.Complexity.DTIME_ssubset_DTIME`, assume it
+separately. -/
 def TimeConstructible (t : ℕ → ℕ) : Prop :=
   ∃ c : ℕ, ∃ s : ℕ → ℕ, ComputableInTimeAndSpaceOfLength (fun x : List Bool => t x.length) encBits
     encNat (fun n => c * t n + c) s
@@ -464,29 +441,6 @@ theorem timeConstructible_succ_pow {k : ℕ} (hk : 2 ≤ k) :
     simpa only [pow_succ', mul_comm] using h
 
 /-! ### The clocked diagonal -/
-
-/-- **The diagonal with clock `J`.** Run the machine described at the start of `x` on `x`, under the
-coding `Turing.MultiTapeTM.Universal.eBit` of bits by `0` and `1`, for `J x.length` steps, and
-return `false` exactly when it has halted with output `[true]`. -/
-def clockedDiagonal (J : ℕ → ℕ) (x : List Bool) : Bool :=
-  Diagonal.verdict (universal (decodeDesc (unframe x), x.map eBit, J x.length))
-
-/-- The diagonal of `Cslib.Complexity.diagonal` has the clock `2 ^ n`. -/
-theorem clockedDiagonal_two_pow : clockedDiagonal (2 ^ ·) = diagonal := rfl
-
-/-- On its padded description, the clocked diagonal negates the answer of a machine that halts
-within the clock. -/
-theorem clockedDiagonal_desc {k : ℕ} {State : Type} [Fintype State] (eS : State ↪ ℕ)
-    (tm : MultiTapeTM k Bool State) (pad : List Bool) (J : ℕ → ℕ) {b : Bool}
-    (hhalt : (tm.runFrom (tm.initCfg (frame (eDesc (desc eS eBit tm)) ++ pad))
-      (J (frame (eDesc (desc eS eBit tm)) ++ pad).length)).Halted)
-    (hout : (tm.runFrom (tm.initCfg (frame (eDesc (desc eS eBit tm)) ++ pad))
-      (J (frame (eDesc (desc eS eBit tm)) ++ pad).length)).output = [b]) :
-    clockedDiagonal J (frame (eDesc (desc eS eBit tm)) ++ pad) = !b := by
-  rw [clockedDiagonal, decodeDesc_unframe_frame_append, universal_desc, hout]
-  simp only [List.map_cons, List.map_nil, Cfg.Halted] at hhalt ⊢
-  rw [hhalt]
-  cases b <;> simp [Diagonal.verdict, eBit]
 
 namespace Diagonal
 
@@ -721,7 +675,7 @@ theorem computableTidilyInO_timeDiagonal {J : ℕ → ℕ} (hJ : TimeConstructib
 time `O(f)` when every `c * f n + c` is eventually below the clock: on its own description, padded
 to a short one beyond the point where the clock dominates, a machine deciding it would answer the
 negation of its answer. -/
-theorem setOf_timeDiagonal_not_mem_DTIME {f J : ℕ → ℕ}
+theorem setOf_timeDiagonal_notMem_DTIME {f J : ℕ → ℕ}
     (hJ : ∀ c, ∀ᶠ n in atTop, c * f n + c ≤ J n) :
     {x | timeDiagonal J x = true} ∉ DTIME encBits f := by
   rintro ⟨c₁, c₂, s, hA⟩
@@ -755,6 +709,9 @@ theorem setOf_timeDiagonal_not_mem_DTIME {f J : ℕ → ℕ}
   revert hgx
   cases g (frame (eDesc (desc eS eBit tm)) ++ pad) <;> decide
 
+@[deprecated (since := "2026-10-19")]
+alias setOf_timeDiagonal_not_mem_DTIME := setOf_timeDiagonal_notMem_DTIME
+
 /-- The problem of the clocked diagonal is decidable within time
 `O((n + 1) ^ 5 * (J n + 1) ^ 3)`. -/
 theorem setOf_timeDiagonal_mem_DTIME {J : ℕ → ℕ} (hJ : TimeConstructible J) :
@@ -780,7 +737,7 @@ theorem DTIME_ssubset_DTIME_of_clock {f g J : ℕ → ℕ} (hJ : TimeConstructib
     omega
   exact (Set.ssubset_iff_of_subset hsub).mpr ⟨_,
     DTIME_mono_of_eventually_le hg (setOf_timeDiagonal_mem_DTIME hJ),
-    setOf_timeDiagonal_not_mem_DTIME hfJ⟩
+    setOf_timeDiagonal_notMem_DTIME hfJ⟩
 
 /-- **The time hierarchy theorem.** If `f` is time-constructible and `n ≤ f n`, then `DTIME f` is
 strictly contained in every `DTIME g` with `(n + 1) ^ 8 * (f n + 1) ^ 3 ≤ g n` eventually

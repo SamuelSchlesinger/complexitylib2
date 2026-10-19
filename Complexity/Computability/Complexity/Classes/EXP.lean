@@ -94,6 +94,6 @@ theorem setOf_diagonal_mem_EXP : {x | diagonal x = true} ∈ EXP encBits :=
 diagonal problem is in `EXP` and not in `P` [Arora and Barak, Theorem 3.1][AroraBarak09]. -/
 theorem P_ssubset_EXP : P encBits ⊂ EXP encBits :=
   (Set.ssubset_iff_of_subset P_subset_EXP).mpr
-    ⟨_, setOf_diagonal_mem_EXP, diagonal_not_mem_P⟩
+    ⟨_, setOf_diagonal_mem_EXP, diagonal_notMem_P⟩
 
 end Cslib.Complexity
