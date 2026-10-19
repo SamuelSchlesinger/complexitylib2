@@ -10,16 +10,18 @@ module
 public import Complexity.Computability.Kolmogorov.Partrec
 public import Mathlib.Order.Filter.Cofinite
 import Complexity.Computability.Kolmogorov.Incompressibility
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!
 # Growth and uncomputability of plain Kolmogorov complexity
 
 For every description method only finitely many objects have complexity below any given bound
 (`eventually_natCast_le_ecomplexity`), so the plain complexity `K(x)` of natural numbers under the
-universal description method tends to infinity (`tendsto_complexity_universal`). It does so
-slower than every computable unbounded function: no computable unbounded function is a lower
-bound for `K` (`exists_complexity_universal_lt_of_computable`). In particular `K` is not
-computable (`not_computable_complexity_universal`). The proof is Berry's paradox: if `f ≤ K` were
+universal description method tends to infinity (`tendsto_complexity_universal`). No computable
+unbounded function is a lower bound for `K`: such a function exceeds `K` at some argument
+(`exists_complexity_universal_lt_of_computable`), and hence at infinitely many
+(`frequently_complexity_universal_lt_of_computable`). In particular `K` is not computable
+(`not_computable_complexity_universal`). The proof is Berry's paradox: if `f ≤ K` were
 computable and unbounded, the program "the least `x` with `f x ≥ 2 |q|`", run on an input `q`,
 would describe a number of complexity at least `2 |q|` by `|q| + O(1)` bits
 [Li and Vitányi, Chapter 2][LiVitanyi2019].
@@ -33,6 +35,8 @@ constant (`exists_complexity_universal_comp_le`).
 The statements use the `ℕ`-valued complexity, which is the genuine plain complexity for the
 universal method (`natCast_complexity_universal`). The `ℕ∞`-valued complexity does not tend to
 `⊤` along the cofinite filter (`not_tendsto_ecomplexity_universal`), because it is never `⊤`.
+Following the rest of the library, `K` denotes the plain complexity, which Li and Vitányi write
+`C`, reserving `K` for the prefix complexity.
 
 ## Main results
 
@@ -47,6 +51,8 @@ universal method (`natCast_complexity_universal`). The `ℕ∞`-valued complexit
   `K(f x) ≤ K(x) + O(1)` for computable `f`.
 * `Cslib.Kolmogorov.DescriptionMethod.exists_complexity_universal_lt_of_computable`: no computable
   unbounded function is a lower bound for `K`.
+* `Cslib.Kolmogorov.DescriptionMethod.frequently_complexity_universal_lt_of_computable`: a
+  computable unbounded function exceeds `K` infinitely often.
 * `Cslib.Kolmogorov.DescriptionMethod.not_computable_complexity_universal`: `K` is not computable.
 
 ## References
@@ -112,7 +118,7 @@ theorem exists_complexity_universal_le_length_add {g : List Bool → ℕ} (hg : 
 `Nat.size x`. -/
 theorem exists_complexity_universal_le_size_add :
     ∃ c : ℕ, ∀ x : ℕ, universal.complexity x ≤ x.size + c := by
-  obtain ⟨c, hc⟩ := exists_complexity_universal_le_length_add primrec_foldr_bit.to_comp
+  obtain ⟨c, hc⟩ := exists_complexity_universal_le_length_add Primrec.list_foldr_nat_bit.to_comp
   refine ⟨c, fun x => ?_⟩
   simpa only [Nat.foldr_bit_bits, ← Nat.size_eq_bits_len] using hc x.bits
 
@@ -171,6 +177,32 @@ theorem exists_complexity_universal_lt_of_computable {f : ℕ → ℕ} (hf : Com
   have := hle (g q)
   have := hc q
   omega
+
+/-- A computable unbounded function exceeds the plain complexity at infinitely many arguments:
+beyond any `N`, apply `exists_complexity_universal_lt_of_computable` to the function that vanishes
+below `N` and agrees with `f` from `N` on. -/
+theorem frequently_complexity_universal_lt_of_computable {f : ℕ → ℕ} (hf : Computable f)
+    (hunb : ∀ k, ∃ x, k ≤ f x) : ∃ᶠ x in atTop, universal.complexity x < f x := by
+  refine frequently_atTop.2 fun N => ?_
+  let g (x : ℕ) : ℕ := if x < N then 0 else f x
+  have hc : Computable fun x : ℕ => decide (x < N) :=
+    Primrec.nat_lt.decide.to_comp.comp Computable.id (Computable.const N)
+  have hg : Computable g :=
+    (Computable.cond hc (Computable.const 0) hf).of_eq fun x => by
+      by_cases h : x < N <;> simp [g, h]
+  have hgunb (k : ℕ) : ∃ x, k ≤ g x := by
+    obtain ⟨x, hx⟩ := hunb (k + 1 + ∑ y ∈ Finset.range N, f y)
+    refine ⟨x, ?_⟩
+    by_cases h : x < N
+    · have := Finset.single_le_sum (fun y _ => Nat.zero_le (f y)) (Finset.mem_range.2 h)
+      omega
+    · simp only [g, h, ↓reduceIte]
+      omega
+  obtain ⟨x, hx⟩ := exists_complexity_universal_lt_of_computable hg hgunb
+  by_cases h : x < N
+  · simp [g, h] at hx
+  · simp only [g, h, ↓reduceIte] at hx
+    exact ⟨x, by omega, hx⟩
 
 /-- **The plain Kolmogorov complexity is not computable.** -/
 theorem not_computable_complexity_universal : ¬ Computable universal.complexity := fun h =>
