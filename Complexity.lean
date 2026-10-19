@@ -41,6 +41,10 @@ public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hastad
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
+public import Complexity.Computability.Circuit.Boolean.Iteration.Record
+public import Complexity.Computability.Circuit.Boolean.Iteration.Residue
+public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
+public import Complexity.Computability.Circuit.Boolean.Iteration.Word
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.KeyedSort
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko
