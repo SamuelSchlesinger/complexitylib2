@@ -568,10 +568,10 @@ theorem setOf_spaceDiagonal_notMem_DSPACE {f G : ℕ → ℕ} (hn : ∀ n, n ≤
 
 /-- **The space hierarchy theorem.** If `g` is space-constructible, `n ≤ g n`, and every
 `c * f n + c` is eventually below `g n`, then `DSPACE f` is strictly contained in `DSPACE g`
-[Sipser, Theorem 9.3][Sipser2013], [Arora and Barak, Theorem 4.8][AroraBarak09]. The universal
-machine simulates within a budget with a constant overhead for each simulated machine, so the gap
-is the textbook `f = o(g)`; the condition `n ≤ g n`, where the textbook asks `log n ≤ g n`, is the
-space the diagonal takes to hold its input and its description. -/
+[Sipser, Theorem 9.3 and Corollary 9.4][Sipser2013], [Arora and Barak, Theorem 4.8][AroraBarak09].
+The universal machine simulates within a budget with a constant overhead for each simulated
+machine, so the gap is the textbook `f = o(g)`; the condition `n ≤ g n`, where the textbook asks
+`log n ≤ g n`, is the space the diagonal takes to hold its input and decode its description. -/
 theorem DSPACE_ssubset_DSPACE {f g : ℕ → ℕ} (hg : SpaceConstructible g) (hn : ∀ n, n ≤ g n)
     (hfg : ∀ c, ∀ᶠ n in atTop, c * f n + c ≤ g n) : DSPACE encBits f ⊂ DSPACE encBits g := by
   have hsub : DSPACE encBits f ⊆ DSPACE encBits g := DSPACE_mono_of_eventually_le <| by
@@ -581,8 +581,8 @@ theorem DSPACE_ssubset_DSPACE {f g : ℕ → ℕ} (hg : SpaceConstructible g) (h
     setOf_spaceDiagonal_notMem_DSPACE hn hfg⟩
 
 /-- **Logarithmic space is strictly within polynomial space**: `L ⊆ DSPACE n`, and the diagonal
-within space `(n + 1) ^ 2` is in `PSPACE` but not in `DSPACE n` [Sipser, Corollary 9.6][Sipser2013].
--/
+within space `(n + 1) ^ 2` is in `PSPACE` but not in `DSPACE n`. This is the deterministic part of
+[Sipser, Corollary 9.6][Sipser2013], which separates `NL` from `PSPACE`. -/
 theorem L_ssubset_PSPACE : L encBits ⊂ PSPACE encBits := by
   have hL : L encBits ⊆ DSPACE encBits fun n => n := fun A hA =>
     DSPACE_mono (fun n => (Nat.log2_le_self n)) (mem_L_iff_mem_DSPACE.mp hA)
@@ -595,7 +595,7 @@ theorem L_ssubset_PSPACE : L encBits ⊂ PSPACE encBits := by
   nlinarith
 
 /-- **Polynomial space has a strict hierarchy**: `DSPACE (n ^ k) ⊂ DSPACE (n ^ (k + 1))`
-[Sipser, Corollary 9.4][Sipser2013]. The diagonal within space `(n + 1) ^ (k + 1)` separates
+[Sipser, Corollary 9.5][Sipser2013]. The diagonal within space `(n + 1) ^ (k + 1)` separates
 them. -/
 theorem DSPACE_pow_ssubset_DSPACE_pow_succ (k : ℕ) :
     DSPACE encBits (· ^ k) ⊂ DSPACE encBits (· ^ (k + 1)) := by
