@@ -1,5 +1,74 @@
 # Theorem-index review
 
+## Cook-Mertz Tree Evaluation, 19 October 2026
+
+Integrated Lean revision: `aa72232abd8858a2c4103eb6aebc039e3b02f52d`.
+Prose revision: `7531e6c1f87fd6e601a86a1574add35c1227eeb7`.
+PR #1 head: `724d7be362770de480fcd609ca964760a4562694`.
+Main base: `244c8208535f7263876b4f001674929b49ec8092`.
+
+Samuel authorized fixing the review findings and merging Crei's PR. The integration
+preserves Christian Reitwiessner's original commits, authorship and disclosed Claude
+assistance. OpenAI Codex resolved conflicts, corrected documentation, relocated named
+axiom guards, prepared the index entry and performed local validation. The mathematical
+sources are Cook-Mertz (TR23-174/STOC 2024), Goldreich's exposition (TR24-109 revision 2),
+and Cook et al.'s original Tree Evaluation problem (2012).
+
+Independent read-only Codex reviews, including fresh review of corrections:
+
+- `proof_api` approved integrated source `aa72232a`. All 49 captured scope files match
+  the final reviewed hashes, and the merge parents match the intended revisions.
+  The aggregate imports preserve both parents; the global axiom audit is byte-identical
+  to main, and all eleven PR guards are preserved in the two topic tests. Corrected
+  stale declaration names, the binary-sum bound description, and padded-log prose.
+- `proof_correctness` approved algorithm correctness at `aa72232a`: finite-field sums,
+  multilinear extension, recursive procedure, concrete reader, encoding, phase
+  invariants and nonvacuity tests. All 23 captured Lean files match reviewed hashes.
+  Corrected the subtraction signs in round descriptions, initialization/modulus
+  wording and perfect-tree description. No mathematical statements or proofs changed.
+- `resume_alternation` approved resource correctness at `aa72232a`: the space calculus,
+  read-to-step simulation, compilation, state certificates, invariant, size bound and
+  headline theorem. It checks a fixed machine across sizes, charged input addressing,
+  work-space reuse and streaming output; the newer main interfaces retain the relevant
+  contracts. Review did not separately re-audit every inherited arithmetic/plumbing
+  helper. No resource-correctness blocker was found.
+- `resume_alternation` approved exposition `7531e6c1` against `aa72232a`, and
+  `proof_correctness` separately approved its algorithm/encoding portion. Review
+  corrected 'full binary tree' to perfect tree/all leaves at depth H and made the
+  exhaustive nonzero-field enumeration hypothesis explicit. Final pin replacement
+  reproduces the previously approved prose hashes; all three anchors match source.
+
+All reported findings are resolved. The unpublished vendored step-machine provenance
+at `9cce4cc7` remains explicitly recorded in UPSTREAM.md. The code itself was reviewed
+and validated; equality to that unavailable original source was not independently
+verified. This is a provenance limitation, not an assertion of upstream acceptance.
+
+Validation: all six gates passed in a fresh uninterrupted run after the final source
+edits: `lake build --wfail --iofail`, `mk_all --check`, `lake test --wfail --iofail`,
+`lint`, `lint-style`, and `checkInitImports`. An earlier run caught overlong corrected
+comments and a missing build artifact while dependencies were being rebuilt; those
+results were superseded by the clean complete run. MCP diagnostics were requested
+but stayed partial during dependency preparation; the complete build/test run supplies
+the compilation evidence. The concrete sample exercises a height-two XOR/AND tree
+over ZMod 7, and all eleven named axiom guards plus the global audit pass.
+
+The PDF has 32 pages, 75 numbered entries and 93 references. Every page was rendered
+and inspected. After final source pin replacement, only page 1 changed visually; it
+was reinspected, along with the new entry on page 7. All three new PDF URI targets
+match the exact committed declaration lines. The final LaTeX log has no warnings or
+underfull/overfull boxes; existing unrelated bibliography metadata warnings remain.
+The index retains the valid-input restriction and outstanding input-length-only
+corollary, refined parameter bound and malformed-input handling in ROADMAP.md.
+AI review is not human editorial approval or a Lean proof of prose equivalence.
+
+Final artifact hashes:
+
+```
+34088cd61ef8aa4b081e6c9d023530c6fe2cd2dc93ae3a60a77a3adcbce8e6c0  paper/main.tex
+063f7351eacf00a30a162402ae67603549fff28d2fd659c21573985d9f4ffe2a  paper/sections/space.tex
+b338bce9594c093dbccafa79458f3f37d836af0477a3336ef8a7d619973fa4d1  paper/main.pdf
+```
+
 ## Counting containment and closure, 19 October 2026
 
 Lean source revision: `c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108`.
