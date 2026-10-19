@@ -697,6 +697,32 @@ private def testBatchLanding : IO Unit := do
   reject lead dependent (.reserve [second, feature] integrationToken) "dependency later in batch"
   discard <| transition lead dependent (.reserve [feature, second] integrationToken)
 
+/-- The reservation record of checkouts that predate batch landings. -/
+private structure LegacyIntegration where
+  epic : EpicId
+  lease : Lease
+  snapshot : Snapshot
+  deriving BEq, ToJson, FromJson
+
+private def decodes {α : Type} [BEq α] [FromJson α] (json : Json) (expected : α) : Bool :=
+  match (fromJson? json : Except String α) with
+  | .ok value => value == expected
+  | .error _ => false
+
+private def testIntegrationRecordCompatibility : IO Unit := do
+  let lease : Lease := {holder := leadContext.actor, token := integrationToken, expires := 1300}
+  let batch : Integration := {lease, main := some advanced, candidates := [candidate, secondCandidate]}
+  check (decodes (toJson batch) batch) "Batch reservation did not round-trip"
+  check (decodes (toJson batch) {epic := feature, lease, snapshot := exampleSnapshot : LegacyIntegration})
+    "Older readers cannot decode the first candidate of a new reservation"
+  let single : Integration := {lease, main := none, candidates := [candidate]}
+  let written := toJson {epic := feature, lease, snapshot := exampleSnapshot : LegacyIntegration}
+  check (decodes written single) "Legacy reservation was not decoded"
+  check (decodes (toJson single) single) "Single reservation did not round-trip"
+  let mixed := (toJson batch).setObjVal! "epic" (toJson second)
+  check (decodes mixed batch) "Candidates were not preferred over legacy fields"
+  check (decodes (toJson ({} : State)) ({} : State)) "Empty board did not round-trip"
+
 /-- The real journal stores the same State ADT used by the pure protocol, including landing. -/
 private def testProtocolThroughGit : IO Unit := withFixture fun fixture => do
   let repository ← fixture.open
@@ -765,6 +791,7 @@ private def protocolTests : List (String × IO Unit) := [
   ("planned coordinator release preserves reviews and fences old authority", testCoordinatorRelease),
   ("dependencies, conflicting starts and idempotent claim retry", testDependenciesAndConflictingStarts),
   ("ready accepts a base that is an ancestor of the observed main", testReadyAcceptsAncestorBase),
+  ("reservation records stay readable by older checkouts and round-trip", testIntegrationRecordCompatibility),
   ("overlapping paths ignore the generated roots", testOverlappingPaths),
   ("landing after main moved merges disjoint changes and refuses overlap", testLandAfterMainMoved),
   ("batch landing requires pairwise disjoint epics and in-order dependencies", testBatchLanding),

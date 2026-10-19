@@ -162,9 +162,20 @@ structure Integration where
   landings existed. -/
   main : Option Oid := none
   candidates : List Candidate
-  deriving BEq, Repr, ToJson
+  deriving BEq, Repr
 
-/-- Records written before batch landings reserved a single `epic` and `snapshot`. -/
+/-- Records written before batch landings reserved a single `epic` and `snapshot`. Those fields
+are still written, for the first candidate, so that older checkouts keep reading the board; when
+one of them rewrites the board it drops `main` and `candidates`, and landing then refuses until
+the reservation is renewed. -/
+instance : ToJson Integration where
+  toJson integration :=
+    let legacy := match integration.candidates.head? with
+      | some first => [("epic", toJson first.epic), ("snapshot", toJson first.snapshot)]
+      | none => []
+    Json.mkObj <| legacy ++ [("lease", toJson integration.lease), ("main", toJson integration.main),
+      ("candidates", toJson integration.candidates)]
+
 instance : FromJson Integration where
   fromJson? json := do
     let lease ← json.getObjValAs? Lease "lease"

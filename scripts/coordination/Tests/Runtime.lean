@@ -466,6 +466,39 @@ private def testReservationSurvivesValidationFailure : IO Unit := withFixture fu
   | .merged _ => pure ()
   | _ => throw <| IO.userError "Recovered integration did not complete journal"
 
+/-- The board as decoded by checkouts that predate batch landings. -/
+private structure LegacyIntegration where
+  epic : EpicId
+  lease : Lease
+  snapshot : Snapshot
+  deriving FromJson
+
+private structure LegacyState where
+  version : Nat
+  agents : List Agent
+  epics : List Epic
+  coordinator : Option Lease
+  integration : Option LegacyIntegration
+  deriving FromJson
+
+private def testReservationReadableByOlderCheckouts : IO Unit := withFixture fun fixture => do
+  let (lead, id, snapshot) ← approvedRuntime fixture
+  let (self, token) ← Runtime.claim lead "integration"
+  let reserved ← Runtime.dispatch lead self (.reserve [id] token)
+  Runtime.finishClaim lead "integration" token
+  let some (_, json) ← lead.readBoard | throw <| IO.userError "Missing board"
+  let legacy : LegacyState ← IO.ofExcept (fromJson? json)
+  let some integration := legacy.integration
+    | throw <| IO.userError "Older readers cannot see the new reservation"
+  check (integration.epic == id && integration.snapshot == snapshot &&
+    reserved.state.integration.any (·.lease == integration.lease))
+    "Older readers decode a different reservation"
+  check (legacy.epics == reserved.state.epics && legacy.coordinator == reserved.state.coordinator)
+    "Older readers decode different epics or coordinator"
+  let current : State ← IO.ofExcept (fromJson? json)
+  check (current == reserved.state) "New reader decoded a different board"
+  discard <| Runtime.run lead .cancel
+
 private def testCoordinatorHandoff : IO Unit := withFixture fun fixture => do
   let (lead, id, snapshot) ← approvedRuntime fixture
   let before ← Runtime.readState lead
@@ -505,6 +538,7 @@ def runtimeTests : List (String × IO Unit) := [
   ("runtime planned handoff rejects dirt and resumes reviewed work in a fresh worktree", testCoordinatorHandoff),
   ("runtime A-B-A checkout refuses to omit B's pushed contribution", testAlternatingAuthorsPreservePushedWork),
   ("runtime validation failure permits reservation retry with new pending token", testReservationSurvivesValidationFailure),
+  ("runtime new reservation stays readable by checkouts predating batch landings", testReservationReadableByOlderCheckouts),
   ("runtime landing on the reviewed base fast-forwards unchanged", testLandingFastForwardsCurrentBase),
   ("runtime landing after a disjoint main move merges and regenerates roots", testLandingMergesDisjointMainMove),
   ("runtime landing refuses a main move on a reviewed file", testLandingRefusesOverlappingMainMove),
