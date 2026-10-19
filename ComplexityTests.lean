@@ -22,6 +22,7 @@ import ComplexityTests.CircuitMetric
 import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
+import ComplexityTests.Code.M3
 import ComplexityTests.CoinTape
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
