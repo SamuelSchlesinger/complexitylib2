@@ -74,6 +74,7 @@ import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
 import ComplexityTests.OneWayNormalization
+import ComplexityTests.OracleComposition
 import ComplexityTests.OraclePPT
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
