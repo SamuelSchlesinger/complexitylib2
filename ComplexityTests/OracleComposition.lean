@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Probabilistic.Oracle.Composition
+import Complexity.Computability.Probabilistic.QueryBounds
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
@@ -98,6 +99,20 @@ example : ¬ IsOraclePPTOn encUnary encBits (fun n => List.take (2 ^ n) <$>
       simp [StateT.run])
   simp only [encBits, Function.Embedding.coe_refl, id_eq, List.length_replicate, encUnary_apply]
     at hlength
+  lia
+
+-- A one-bit output does not hide an exponentially long request: writing the request is charged.
+example : ¬ IsOraclePPTOn encUnary encBits (fun n => List.take 1 <$>
+    ProbOracleComp.query (spec := fun _ : Unit × List Bool => List Bool)
+      ((), List.replicate (2 ^ n) true)) := by
+  intro h
+  obtain ⟨c, d, hbound⟩ := h.query_bounds
+  obtain ⟨n, hn⟩ := not_two_pow_le c d
+  have hcall := (hbound n Unit (fun _ s => PMF.pure ([], s)) () () []
+    [⟨((), List.replicate (2 ^ n) true), []⟩] (by
+      rw [OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query]
+      simp [OracleComp.withTranscript, StateT.run])).2 _ List.mem_cons_self
+  simp only [List.length_replicate, encUnary_apply] at hcall
   lia
 
 -- A polynomial reply prefix is strict oracle PPT.
