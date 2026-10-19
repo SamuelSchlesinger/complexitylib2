@@ -346,16 +346,16 @@ theorem stepOut_runCfg {X : List ℕ} {c : SCfg} {q : ℕ} (hq : c.state = some 
     List.append_nil]
 
 /-- The run of the description of `tm` on the input `x`, with its output. -/
-noncomputable def run (x : List ℕ) (t : ℕ) : SCfg × List ℕ :=
+noncomputable def descRun (x : List ℕ) (t : ℕ) : SCfg × List ℕ :=
   (stepOut (desc eS eBit tm) x)^[t] (init (desc eS eBit tm), [])
 
 /-- While the description of `tm` runs, `dispatch eS tm d` runs it after writing the marker. -/
 theorem iterate_runCfg {x : List ℕ} (hx : inputSymbol x 1 ∈ bitSyms) {u : ℕ}
-    (hrun : ∀ t < u, ∃ q e, (run eS tm x t).1.state = some q ∧
-      (desc eS eBit tm).table.find? (·.1 = (run eS tm x t).1.key x q) = some e ∧
-      e.2.workTapes.length ≤ (run eS tm x t).1.workTapes.length) :
+    (hrun : ∀ t < u, ∃ q e, (descRun eS tm x t).1.state = some q ∧
+      (desc eS eBit tm).table.find? (·.1 = (descRun eS tm x t).1.key x q) = some e ∧
+      e.2.workTapes.length ≤ (descRun eS tm x t).1.workTapes.length) :
     ∀ t ≤ u, (stepOut (dispatch eS tm d) x)^[t + 1] (init (dispatch eS tm d), []) =
-      (runCfg d (run eS tm x t).1 (run eS tm x t).2, []) := by
+      (runCfg d (descRun eS tm x t).1 (descRun eS tm x t).2, []) := by
   intro t ht
   induction t with
   | zero =>
@@ -370,14 +370,14 @@ theorem iterate_runCfg {x : List ℕ} (hx : inputSymbol x 1 ∈ bitSyms) {u : �
         List.map_cons, List.map_append, List.map_replicate]
       rfl] at hf
     rw [Function.iterate_one, stepOut, step_of_find? rfl hf]
-    simp only [init, dispatch, run, Function.iterate_zero, id, runCfg, desc, Option.elim_some,
+    simp only [init, dispatch, descRun, Function.iterate_zero, id, runCfg, desc, Option.elim_some,
       Act.apply, moveInput, List.replicate_succ, applyTapes, applyTapes_nil, Option.toList_none,
       List.append_nil, List.replicate_add]
     rfl
   | succ t ih =>
     obtain ⟨q, e, hq, he, hlen⟩ := hrun t (by omega)
     rw [Function.iterate_succ_apply', ih (by omega), stepOut_runCfg eS tm d hq he hlen]
-    simp only [run, Function.iterate_succ_apply']
+    simp only [descRun, Function.iterate_succ_apply']
     rfl
 
 /-- **The run of `tm` on `w`, from a tidy computation**: the description of `tm` runs, with a
@@ -385,12 +385,12 @@ transition for every key it meets, until it halts with the input head on the fir
 work tapes and the output `b :: v`. -/
 theorem exists_run_of_computesTidily {w : List Bool} {o : List Bool} {t₀ s₀ : ℕ}
     (htm : tm.ComputesTidilyInTimeAndSpace w o t₀ s₀) :
-    ∃ u, (∀ t < u, ∃ q e, (run eS tm (w.map eBit) t).1.state = some q ∧
-        (desc eS eBit tm).table.find? (·.1 = (run eS tm (w.map eBit) t).1.key (w.map eBit) q) =
-          some e ∧ e.2.workTapes.length ≤ (run eS tm (w.map eBit) t).1.workTapes.length) ∧
-      (run eS tm (w.map eBit) u).1.state = none ∧ (run eS tm (w.map eBit) u).1.inputPos = 1 ∧
-      (run eS tm (w.map eBit) u).1.workTapes.map Tape.read = List.replicate k none ∧
-      (run eS tm (w.map eBit) u).2 = o.map eBit := by
+    ∃ u, (∀ t < u, ∃ q e, (descRun eS tm (w.map eBit) t).1.state = some q ∧
+        (desc eS eBit tm).table.find? (·.1 = (descRun eS tm (w.map eBit) t).1.key (w.map eBit) q) =
+          some e ∧ e.2.workTapes.length ≤ (descRun eS tm (w.map eBit) t).1.workTapes.length) ∧
+      (descRun eS tm (w.map eBit) u).1.state = none ∧ (descRun eS tm (w.map eBit) u).1.inputPos = 1 ∧
+      (descRun eS tm (w.map eBit) u).1.workTapes.map Tape.read = List.replicate k none ∧
+      (descRun eS tm (w.map eBit) u).2 = o.map eBit := by
   classical
   obtain ⟨p, hhead, hlast, -, -⟩ := computesTidily_iff.mp htm
   have hNp : tm.runFrom (tm.initCfg w) p.time = p.last := by
@@ -404,21 +404,21 @@ theorem exists_run_of_computesTidily {w : List Bool} {o : List Bool} {t₀ s₀ 
   refine ⟨Nat.find hex, fun t ht => ?_, ?_⟩
   · obtain ⟨q, hq⟩ := Option.ne_none_iff_exists'.mp (Nat.find_min hex ht)
     obtain ⟨h₁, h₂⟩ := toCfg_iterate eS eBit tm w t
-    have hst : (run eS tm (w.map eBit) t).1.state = some (eS q) := by
+    have hst : (descRun eS tm (w.map eBit) t).1.state = some (eS q) := by
       have := congrArg Cfg.state h₁
       simp only [Cfg.map_state, hq, Option.map_some, SCfg.toCfg] at this
       exact this.symm
-    have hkey : (run eS tm (w.map eBit) t).1.key (w.map eBit) (eS q) =
+    have hkey : (descRun eS tm (w.map eBit) t).1.key (w.map eBit) (eS q) =
         key (eS q) ((tm.runFrom (tm.initCfg w) t).inputSymbol.map eBit)
           (Option.map eBit ∘ (tm.runFrom (tm.initCfg w) t).workTapeSymbols) := by
-      simp only [run]
+      simp only [descRun]
       rw [SCfg.key_eq_key_toCfg h₂ _, ← h₁, Cfg.inputSymbol_map]
       rfl
     refine ⟨eS q, _, hst, by rw [hkey, find?_desc], ?_⟩
-    simp [Act.ofAction, h₂.length_workTapes, run]
+    simp [Act.ofAction, h₂.length_workTapes, descRun]
   · obtain ⟨h₁, h₂⟩ := toCfg_iterate eS eBit tm w (Nat.find hex)
     rw [hNu] at h₁
-    simp only [run]
+    simp only [descRun]
     generalize (stepOut (desc eS eBit tm) (w.map eBit))^[Nat.find hex]
       (init (desc eS eBit tm), []) = c at h₁ h₂ ⊢
     obtain ⟨hk, hle⟩ := h₂
@@ -445,6 +445,69 @@ theorem exists_run_of_computesTidily {w : List Bool} {o : List Bool} {t₀ s₀ 
       exact this.symm
 
 end Dispatch
+
+open Dispatch in
+/-- **Dispatching on a computed bit**: if `tm` computes `b :: v` from `w` tidily, then
+`dispatch eS tm d` halts on `w` with output `o` exactly when `d b` halts on `v` with output `o`. -/
+theorem Desc.computes_dispatch {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ)
+    (tm : MultiTapeTM k Bool S) (d : Bool → Desc) {w : List Bool} {b : Bool} {v : List Bool}
+    {t₀ s₀ : ℕ} (htm : tm.ComputesTidilyInTimeAndSpace w (b :: v) t₀ s₀) (o : List ℕ) :
+    (dispatch eS tm d).Computes (w.map eBit) o ↔ (d b).Computes (v.map eBit) o := by
+  obtain ⟨u, hrun, hst, hpos, hread, hout⟩ := exists_run_of_computesTidily eS tm htm
+  have h1 := iterate_runCfg eS tm d (inputSymbol_map_eBit_mem w 1) hrun u le_rfl
+  generalize Dispatch.descRun eS tm (w.map eBit) u = c at hst hpos hread hout h1
+  obtain ⟨c, out⟩ := c
+  simp only at hst hpos hread hout h1
+  subst hout
+  have hrest : (c.workTapes ++ List.replicate (width d) Tape.blank).map Tape.read = rest d k := by
+    simp [rest, hread]
+  have hcfg : runCfg d c ((b :: v).map eBit) = ⟨some 4, 1, vtape 0 [] ((b :: v).map eBit)
+      (((b :: v).map eBit).length + 1) :: (c.workTapes ++ List.replicate (width d) Tape.blank)⟩ := by
+    simp only [runCfg, hst, Option.elim_none, hpos, wtape_vcells]
+  have hrw := iterate_stepOut_rewind (D := dispatch eS tm d) (X := w.map eBit) (q := 4)
+    (next := 8) (rp := 1) (rest := c.workTapes ++ List.replicate (width d) Tape.blank)
+    (base := 0) (l := []) (w := (b :: v).map eBit) (fun e he => find?_prep eS tm d
+      (List.mem_append_right _ (List.mem_append_left _ (List.mem_flatMap.mpr
+        ⟨_, inputSymbol_map_eBit_mem w 1, by rwa [hrest] at he⟩)))) (fun a ha => by
+      obtain ⟨b', -, rfl⟩ := List.mem_map.mp ha
+      cases b' <;> simp) [] (v := ((b :: v).map eBit).length + 1) le_rfl
+  have hkb : (d b).tapes ≤ width d := by cases b <;> simp [width]
+  have hbr : stepOut (dispatch eS tm d) (w.map eBit)
+      (⟨some 8, 1, vtape 0 [] ((b :: v).map eBit) 1 ::
+        (c.workTapes ++ List.replicate (width d) Tape.blank)⟩, []) =
+      (redirectCfg (dstate b) 0 1 [some marker] (v.map eBit) c.workTapes
+        (List.replicate (width d - (d b).tapes) Tape.blank) (init (d b)), []) := by
+    have he : ((⟨8, inputSymbol (w.map eBit) 1, some (eBit b) :: rest d k⟩,
+        ⟨.neg, [(some (some marker), .pos)], none, some (dstate b (d b).q₀)⟩) : Key × Act) ∈
+          markerEntries eS tm d ++ branchEntries d k :=
+      List.mem_append_right _ (List.mem_append_right _ (List.mem_flatMap.mpr
+        ⟨_, inputSymbol_map_eBit_mem w 1, List.mem_map.mpr ⟨b, by cases b <;> simp, rfl⟩⟩))
+    have hf := find?_prep eS tm d he
+    rw [show ((⟨8, inputSymbol (w.map eBit) 1, some (eBit b) :: rest d k⟩ : Key)) =
+        SCfg.key ⟨some 8, 1, vtape 0 [] ((b :: v).map eBit) 1 ::
+          (c.workTapes ++ List.replicate (width d) Tape.blank)⟩ (w.map eBit) 8 by
+      simp only [SCfg.key, List.map_cons, hrest]
+      rfl] at hf
+    rw [stepOut, step_of_find? rfl hf]
+    simp only [Act.apply, moveInput, applyTapes, applyTapes_nil, Option.toList_none,
+      List.append_nil, redirectCfg, init, Option.map_some]
+    refine congrArg₂ _ (congrArg₂ _ rfl (congrArg₂ _ rfl (congrArg₂ _ ?_ ?_))) rfl
+    · rfl
+    · show List.replicate (width d) Tape.blank = List.replicate (d b).tapes Tape.blank ++
+        List.replicate (width d - (d b).tapes) Tape.blank
+      rw [← List.replicate_add, Nat.add_sub_cancel' hkb]
+  refine Desc.computes_iff_of_iterate (redirectCfg (dstate b) 0 1 [some marker] (v.map eBit)
+    c.workTapes (List.replicate (width d - (d b).tapes) Tape.blank)) (fun c => by
+      simp [redirectCfg]) (1 + ((((b :: v).map eBit).length + 1 + 1) + (u + 1))) (fun t => ?_) o
+  rw [add_comm, Function.iterate_add_apply, Function.iterate_add_apply,
+    Function.iterate_add_apply, h1, hcfg, hrw, Function.iterate_one, hbr]
+  refine iterate_stepOut_redirect (n := (d b).tapes) (fun q q' h => by
+      cases b <;> simp only [dstate] at h <;> omega)
+    (fun q ws => find?_redirectEntries eS tm d b q ws) rfl (fun a ha => by
+      obtain ⟨b', -, rfl⟩ := List.mem_map.mp ha
+      cases b' <;> simp [marker]) hread (by simp)
+    (fun ts hts was => by rw [← hts, applyTapes_append_take]) t (by simp [init])
+    (by simp [init]) []
 
 end Universal
 
