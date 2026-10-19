@@ -149,8 +149,12 @@ Jukna coverage below is an additional target beyond the V1 port:
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
   square-root fixed-power bounds, input-time and batched iteration, navigation and hitting times,
   sparse-counter and affine-controller bounds, and hard-power counting. It already uses CSLib
-  circuits and some mass-production infrastructure. Nonuniform circuit existence does not
-  certify the preprocessing algorithm's runtime.
+  circuits and some mass-production infrastructure. The
+  [functional-graph foundations](Complexity/Foundations/Combinatorics/FunctionalGraph.lean)
+  (transient and cycle structure, checkpoint packing, exact distinct-power counts) and
+  [native circuit iteration](Complexity/Computability/Circuit/Iteration.lean) with retained
+  orbits are in place; the fixed-power theorem and its consequences remain. Nonuniform circuit
+  existence does not certify the preprocessing algorithm's runtime.
 * **Fagin's theorem.** Complete the connection between ESO-definable queries on finite relational
   structures and NP. The [encoded structures](Complexity/Logics/FirstOrder/Encoding.lean) and
   [polynomial-time certificate checker](Complexity/Computability/Complexity/Fagin/Verifier.lean)
