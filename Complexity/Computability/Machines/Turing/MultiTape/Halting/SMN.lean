@@ -18,10 +18,10 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 The description `Turing.MultiTapeTM.Universal.hardwire d p`, which behaves on every input `x` as
 `d` behaves on `p ++ x` (`Turing.MultiTapeTM.Universal.Desc.computes_hardwire`), is computed from
 `d` and `p` in polynomial time (`Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_hardwire`):
-this is the s-m-n theorem [Sipser, Theorem 6.3][Sipser2013] for native descriptions. Its
-transitions are lists built from those of `d` and from the symbols of `p` by the list operations
-of the polynomial-time calculus, which `fun_prop` assembles from the fields of keys, actions and
-descriptions.
+this is the s-m-n theorem for native descriptions, the counterpart of
+[Sipser, Lemma 6.1][Sipser2013]. The transitions of `hardwire d p` are lists built from those of
+`d` and from the symbols of `p` by the list operations of the polynomial-time calculus, which
+`fun_prop` assembles from the fields of keys, actions and descriptions.
 
 ## Main results
 

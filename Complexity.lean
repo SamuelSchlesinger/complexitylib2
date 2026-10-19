@@ -404,8 +404,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.FiniteConfigura
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Computable
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Hardwire
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Partialize
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ChoiceTable
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Clock

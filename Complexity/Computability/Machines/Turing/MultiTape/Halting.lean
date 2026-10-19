@@ -42,18 +42,19 @@ self-application forms). The undecidability of the four sets of words follows
 mapping reduction `w ↦ (w, w)`.
 
 `Turing.MultiTapeTM.not_isDecidable_of_separates_self_desc` is Rice's theorem for the behaviour of
-machines on their own descriptions. The classical theorem [Rice][Rice1953], about the function a
-description computes on all inputs, needs in addition an s-m-n theorem for native descriptions: a
-computable function taking a description and an input to a description of the machine with that
-input built in. Descriptions of machines (`Turing.MultiTapeTM.Universal.desc`) list transitions
-through `Finset.toList` and are not computed from their parts, so that theorem is not developed
-here.
+machines on their own descriptions. The classical theorem [Rice][Rice1953], about the behaviour on
+all inputs, is `Turing.MultiTapeTM.rice` in
+`Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice`; it needs in addition an s-m-n
+theorem for descriptions (`Turing.MultiTapeTM.Universal.hardwire`).
 
-Mathlib proves the undecidability of halting for its own model of computation, partial recursive
-codes (`ComputablePred.halting_problem`). Transferring it would need simulations between the two
-models, which neither library provides, so the native results are proved directly, on the
-universal simulation of Christian Reitwiessner (`Turing.MultiTapeTM.Universal.simulate_desc`) and
-the decoder of descriptions (`Turing.MultiTapeTM.Universal.decodeDesc_eDesc`).
+Mathlib proves the same theorems for its own model of computation, partial recursive codes:
+`ComputablePred.halting_problem` says that, for each `n`, no computable predicate decides whether
+the code `c` halts on `n`, as `Turing.MultiTapeTM.not_isDecidable_haltingProblem` says of the
+machines described by words, and `ComputablePred.rice` is Rice's theorem for codes. Transferring
+them would need simulations in both directions between codes and the machines of this library,
+which are not developed here, so the native results are proved directly, on the universal
+simulation of Christian Reitwiessner (`Turing.MultiTapeTM.Universal.simulate_desc`) and the decoder
+of descriptions (`Turing.MultiTapeTM.Universal.decodeDesc_eDesc`).
 
 ## Main definitions
 

@@ -15,10 +15,10 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compo
 
 A description `d` and a word `p` give a description `Turing.MultiTapeTM.Universal.hardwire d p`
 of a machine that behaves on every input of bits `x` as the machine described by `d` behaves on
-`p ++ x` (`Turing.MultiTapeTM.Universal.Desc.computes_hardwire`). This is the s-m-n theorem
-[Sipser, Theorem 6.3][Sipser2013] at the level of descriptions; that the new description is
-computed from `d` and `p` in polynomial time is proved in
-`Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN`.
+`p ++ x` (`Turing.MultiTapeTM.Universal.Desc.computes_hardwire`). This is the s-m-n theorem for
+descriptions, the counterpart of the machines printing a fixed word in
+[Sipser, Lemma 6.1][Sipser2013]; that the new description is computed from `d` and `p` in
+polynomial time is proved in `Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN`.
 
 The machine first writes a marker, then `p`, then a copy of its input on a new work tape, the
 *virtual input tape*, and rewinds that tape to the marker. It then runs the transitions of `d`
@@ -274,7 +274,8 @@ theorem applyTapes_nil (ts : List Tape) : applyTapes ts [] = ts := by
 /-- Actions that neither write nor move leave tapes as they are. -/
 theorem applyTapes_append_idle {preT : List Tape} {pre : List (Option ℕ)}
     (h : pre.length = preT.length) (ts : List Tape) (as : List TapeAct) :
-    applyTapes (preT ++ ts) ((pre.map fun _ => (none, .zero)) ++ as) = preT ++ applyTapes ts as := by
+    applyTapes (preT ++ ts) ((pre.map fun _ => (none, .zero)) ++ as) =
+      preT ++ applyTapes ts as := by
   induction preT generalizing pre with
   | nil => rw [List.length_eq_zero_iff.mp h]; rfl
   | cons t preT ih =>
@@ -402,7 +403,8 @@ theorem step_redirect (hφ : φ.Injective)
     (hrp : inputSymbol X rp = r) (hxs : ∀ a ∈ xs, a ≠ marker) (hpre : preT.map Tape.read = pre)
     (hsuf : sufT.map Tape.read = List.replicate suf none) {c : SCfg}
     (hc : c.inputPos ≤ xs.length + 1)
-    (hadj : ∀ was, applyTapes (c.workTapes ++ sufT) (adj was) = applyTapes c.workTapes was ++ sufT) :
+    (hadj : ∀ was,
+      applyTapes (c.workTapes ++ sufT) (adj was) = applyTapes c.workTapes was ++ sufT) :
     step D X (redirectCfg φ rp base l xs preT sufT c) =
       (redirectCfg φ rp base l xs preT sufT (step d xs c).1, (step d xs c).2) := by
   obtain ⟨_ | q, p, ws⟩ := c

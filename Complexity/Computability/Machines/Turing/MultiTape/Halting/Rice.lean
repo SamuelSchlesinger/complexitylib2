@@ -12,6 +12,48 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 
 /-!
 # Rice's theorem
+
+Every nontrivial property of the behaviour of machines is undecidable on their descriptions
+(`Turing.MultiTapeTM.rice`) [Rice][Rice1953] [Sipser, Problem 5.28][Sipser2013]. The behaviour of
+the machine described by a word `w` (`Turing.MultiTapeTM.behaviour`) relates each input of bits on
+which it halts to the output it halts with; a property of behaviours is nontrivial when the
+machine described by some word has it and the machine described by another does not. Equivalently,
+a set of words that depends only on the behaviour of the machines they describe, and is neither
+empty nor everything, is undecidable (`Turing.MultiTapeTM.not_isDecidable_of_behaviour`).
+
+The proof goes through a recursion theorem (`Turing.MultiTapeTM.exists_behaviour_eq`)
+[Sipser, Theorem 6.3][Sipser2013]: for every computable verdict `f` on words and descriptions
+`d false` and `d true`, some word `e` describes a machine behaving as `d (f e)`. Applied to a
+decider of the property, with `d true` outside the property and `d false` inside it, it gives a word
+describing a machine inside the property exactly when it is outside.
+
+The recursion theorem is Kleene's construction, from two constructions on descriptions. The s-m-n
+theorem builds an input prefix into a description (`Turing.MultiTapeTM.Universal.hardwire`), in
+polynomial time. Dispatching (`Turing.MultiTapeTM.Universal.dispatch`) runs a machine computing a
+total function, keeping its output on a work tape, and then runs `d b` on that output without its
+first bit `b` (`Turing.MultiTapeTM.Universal.Desc.computes_dispatch`). Let `t` describe the
+machine that reads a word `y` before its input `x` and dispatches on `f (s y) :: x`, where `s y`
+describes the machine described by `y` with `y` built in. Then `e = s t` describes a machine that
+runs the machine described by `t` on `y = t` and `x`, so behaves as `d (f (s t))`. No universal
+machine is needed: `d false` and `d true` are fixed, and their transitions are part of the
+description of the dispatching machine, reading their input from the work tape as in
+`Turing.MultiTapeTM.Universal.redirect`.
+
+## Main definitions
+
+* `Turing.MultiTapeTM.behaviour`: the behaviour of the machine described by a word.
+* `Turing.MultiTapeTM.Universal.dispatch`: dispatching on the first bit computed by a machine.
+
+## Main results
+
+* `Turing.MultiTapeTM.Universal.Desc.computes_dispatch`: the behaviour of a dispatching machine.
+* `Turing.MultiTapeTM.exists_behaviour_eq`: the recursion theorem.
+* `Turing.MultiTapeTM.rice`, `Turing.MultiTapeTM.not_isDecidable_of_behaviour`: Rice's theorem.
+
+## References
+
+* [H. G. Rice, *Classes of Recursively Enumerable Sets and Their Decision Problems*][Rice1953]
+* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
 -/
 
 @[expose] public section
@@ -22,11 +64,11 @@ namespace Universal
 
 /-! ### Finding transitions -/
 
-theorem find?_append_of_forall_not {α : Type*} {l₁ l₂ : List α} {p : α → Bool}
+private theorem find?_append_of_forall_not {α : Type*} {l₁ l₂ : List α} {p : α → Bool}
     (h : ∀ e ∈ l₁, p e = false) : (l₁ ++ l₂).find? p = l₂.find? p := by
   rw [List.find?_append, List.find?_eq_none.mpr fun e he => by simp [h e he], Option.none_or]
 
-theorem find?_append_of_forall_not' {α : Type*} {l₁ l₂ : List α} {p : α → Bool}
+private theorem find?_append_of_forall_not' {α : Type*} {l₁ l₂ : List α} {p : α → Bool}
     (h : ∀ e ∈ l₂, p e = false) : (l₁ ++ l₂).find? p = l₁.find? p := by
   have h₂ : l₂.find? p = none := List.find?_eq_none.mpr fun e he => by simp [h e he]
   rw [List.find?_append, h₂, Option.or_none]
@@ -36,7 +78,7 @@ section Desc
 variable {k : ℕ} {S Y : Type} [Fintype S] [Fintype Y] (eS : S ↪ ℕ) (eY : Y ↪ ℕ)
 
 omit [Fintype S] [Fintype Y] in
-theorem key_map_injective : Function.Injective fun e : S × Option Y × (Fin k → Option Y) =>
+private theorem key_map_injective : Function.Injective fun e : S × Option Y × (Fin k → Option Y) =>
     key (eS e.1) (e.2.1.map eY) (Option.map eY ∘ e.2.2) := by
   rintro ⟨q, i, w⟩ ⟨q', i', w'⟩ h
   simp only [key, Key.mk.injEq] at h
@@ -60,7 +102,7 @@ theorem find?_desc (tm : MultiTapeTM k Y S) (q : S) (inp : Option Y) (work : Fin
 
 end Desc
 
-theorem Tape.read_eq_cellAt_head (t : Tape) : t.read = t.cellAt t.head := by
+private theorem Tape.read_eq_cellAt_head (t : Tape) : t.read = t.cellAt t.head := by
   simp only [Tape.read, Tape.cellAt, le_refl, ↓reduceIte, sub_self, Int.toNat_zero]
   cases t.right <;> rfl
 
@@ -388,7 +430,8 @@ theorem exists_run_of_computesTidily {w : List Bool} {o : List Bool} {t₀ s₀ 
     ∃ u, (∀ t < u, ∃ q e, (descRun eS tm (w.map eBit) t).1.state = some q ∧
         (desc eS eBit tm).table.find? (·.1 = (descRun eS tm (w.map eBit) t).1.key (w.map eBit) q) =
           some e ∧ e.2.workTapes.length ≤ (descRun eS tm (w.map eBit) t).1.workTapes.length) ∧
-      (descRun eS tm (w.map eBit) u).1.state = none ∧ (descRun eS tm (w.map eBit) u).1.inputPos = 1 ∧
+      (descRun eS tm (w.map eBit) u).1.state = none ∧
+      (descRun eS tm (w.map eBit) u).1.inputPos = 1 ∧
       (descRun eS tm (w.map eBit) u).1.workTapes.map Tape.read = List.replicate k none ∧
       (descRun eS tm (w.map eBit) u).2 = o.map eBit := by
   classical
@@ -461,8 +504,9 @@ theorem Desc.computes_dispatch {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ)
   subst hout
   have hrest : (c.workTapes ++ List.replicate (width d) Tape.blank).map Tape.read = rest d k := by
     simp [rest, hread]
-  have hcfg : runCfg d c ((b :: v).map eBit) = ⟨some 4, 1, vtape 0 [] ((b :: v).map eBit)
-      (((b :: v).map eBit).length + 1) :: (c.workTapes ++ List.replicate (width d) Tape.blank)⟩ := by
+  have hcfg : runCfg d c ((b :: v).map eBit) = ⟨some 4, 1,
+      vtape 0 [] ((b :: v).map eBit) (((b :: v).map eBit).length + 1) ::
+        (c.workTapes ++ List.replicate (width d) Tape.blank)⟩ := by
     simp only [runCfg, hst, Option.elim_none, hpos, wtape_vcells]
   have hrw := iterate_stepOut_rewind (D := dispatch eS tm d) (X := w.map eBit) (q := 4)
     (next := 8) (rp := 1) (rest := c.workTapes ++ List.replicate (width d) Tape.blank)
@@ -493,7 +537,7 @@ theorem Desc.computes_dispatch {k : ℕ} {S : Type} [Fintype S] (eS : S ↪ ℕ)
       List.append_nil, redirectCfg, init, Option.map_some]
     refine congrArg₂ _ (congrArg₂ _ rfl (congrArg₂ _ rfl (congrArg₂ _ ?_ ?_))) rfl
     · rfl
-    · show List.replicate (width d) Tape.blank = List.replicate (d b).tapes Tape.blank ++
+    · change List.replicate (width d) Tape.blank = List.replicate (d b).tapes Tape.blank ++
         List.replicate (width d - (d b).tapes) Tape.blank
       rw [← List.replicate_add, Nat.add_sub_cancel' hkb]
   refine Desc.computes_iff_of_iterate (redirectCfg (dstate b) 0 1 [some marker] (v.map eBit)
@@ -547,8 +591,8 @@ theorem exists_behaviour_eq {f : List Bool → Bool} (hf : IsComputable f encBit
       (ComputableTidilyInPolyTime.snd _ _)).isComputable
   have hg : IsComputable (fun p : List Bool × List Bool => f (s p.1) :: p.2)
       (encPair encBits encBits) encBits :=
-    hcons.comp ((hf.comp (hs.comp (ComputableTidilyInPolyTime.fst encBits encBits).isComputable)).prod
-      (ComputableTidilyInPolyTime.snd encBits encBits).isComputable)
+    hcons.comp ((hf.comp (hs.comp (ComputableTidilyInPolyTime.fst encBits encBits).isComputable)
+      ).prod (ComputableTidilyInPolyTime.snd encBits encBits).isComputable)
   obtain ⟨_, _, k, State, hfin, tm, htm⟩ := hg.exists_computableTidilyInTimeAndSpace
   have := Fintype.ofFinite State
   set eS : State ↪ ℕ := (Fintype.equivFin State).toEmbedding.trans Fin.valEmbedding

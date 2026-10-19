@@ -6,11 +6,13 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.Reduction
 import Complexity.Computability.Machines.Turing.MultiTape.Halting
+import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 
 /-! Concrete machines that halt and loop, their descriptions inside and outside the halting and
 acceptance problems, the machines diverging on a verdict, the diagonal machine against candidate
 deciders, a nontrivial property of self-applied behaviour for Rice's theorem, decidable sets and
-reductions, and axiom guards. -/
+reductions, input prefixes built into descriptions, the recursion theorem, Rice's theorem for a
+nontrivial property of behaviour, and axiom guards. -/
 
 namespace ComplexityTests.Halting
 
@@ -177,6 +179,83 @@ described machine halts with output `[true]`. -/
 example : ¬IsDecidable acceptanceProblem (encPair encBits encBits) :=
   not_isDecidable_acceptanceProblem
 
+/-! ### Input prefixes built into descriptions -/
+
+/-- Halt at once if the input starts with `true`, and stay in place forever otherwise. -/
+def firstBit : MultiTapeTM 0 Bool Unit :=
+  MultiTapeTM.ofTr () fun _ i _ =>
+    { inputTape := 0, workTapes := Fin.elim0, output := none,
+      state := if i = some true then none else some () }
+
+theorem halts_firstBit (x : List Bool) : firstBit.Halts (true :: x) :=
+  ⟨1, by
+    rw [runFrom_one, MultiTapeTM.step_of_state (q := ()) rfl]
+    simp [firstBit, Action.apply, Cfg.Halted, MultiTapeNTM.initCfg, Cfg.inputSymbol]⟩
+
+theorem not_halts_firstBit (x : List Bool) : ¬firstBit.Halts (false :: x) := by
+  rintro ⟨t, ht⟩
+  refine MultiTapeTM.not_halts_of_repeat_nonhalt (tm := firstBit) (firstBit.initCfg _) (by simp) 0
+    ?_ t ht
+  rw [zero_add, runFrom_one, MultiTapeTM.step_of_state (q := ()) rfl]
+  exact Cfg.ext_zero_tapes
+    (by simp [firstBit, Action.apply, MultiTapeNTM.initCfg, Cfg.inputSymbol])
+    (by simp [firstBit, Action.apply]) (by simp [firstBit, Action.apply])
+
+/-- With the prefix `[true]` built in, `firstBit` halts on every input... -/
+example (x : List Bool) : (hardwire (desc unitNum eBit firstBit) [true]).Halts (x.map eBit) :=
+  (Desc.halts_hardwire _ _ x).mpr ((Desc.halts_desc unitNum eBit firstBit (true :: x)).mpr
+    (halts_firstBit x))
+
+/-- ... and with the prefix `[false]`, on none. -/
+example (x : List Bool) : ¬(hardwire (desc unitNum eBit firstBit) [false]).Halts (x.map eBit) := by
+  intro h
+  rw [Desc.halts_hardwire, List.singleton_append, Desc.halts_desc] at h
+  exact not_halts_firstBit x h
+
+/-- Building in a prefix keeps the output. -/
+example (b : Bool) (p x : List Bool) :
+    (hardwire (desc unitNum eBit (answer b)) p).Computes (x.map eBit) [eBit b] :=
+  (Desc.computes_hardwire _ p x _).mpr
+    ((Desc.computes_desc unitNum eBit (answer b) (p ++ x) [b]).mpr (answer_computes b _))
+
+/-- Building in a prefix is computable in polynomial time. -/
+example : ComputableTidilyInPolyTime (fun dp : Desc × List Bool => hardwire dp.1 dp.2)
+    (encPair eDesc encBits) eDesc :=
+  computableTidilyInPolyTime_hardwire
+
+/-! ### The recursion theorem and Rice's theorem -/
+
+theorem behaviour_answer (b : Bool) (x : List Bool) :
+    behaviour (eDesc (desc unitNum eBit (answer b))) x [eBit b] := by
+  rw [behaviour, decodeDesc_eDesc, ← List.map_singleton, Desc.computes_desc]
+  exact answer_computes b x
+
+theorem not_behaviour_spin (x : List Bool) (o : List ℕ) :
+    ¬behaviour (eDesc (desc unitNum eBit spin)) x o := fun h => by
+  rw [behaviour, decodeDesc_eDesc] at h
+  exact not_halts_spin x ((Desc.halts_desc unitNum eBit spin x).mp
+    (Desc.halts_iff_exists_computes.mpr ⟨o, h⟩))
+
+/-- A machine behaving as the description chosen by a constant verdict. -/
+example : ∃ e : List Bool, ∀ (x : List Bool) (o : List ℕ),
+    (decodeDesc e).Computes (x.map eBit) o ↔
+      (desc unitNum eBit (answer true)).Computes (x.map eBit) o :=
+  exists_behaviour_eq (f := fun _ => true) (ComputableTidilyInDegree.const true).isComputable
+    fun _ => desc unitNum eBit (answer true)
+
+/-- **Rice's theorem** for the nontrivial property of halting on the empty input: the description
+of `answer false` has it and that of `spin` does not, so it is undecidable. -/
+example : ¬IsDecidable {w | behaviour w ∈ {B : List Bool → List ℕ → Prop | ∃ o, B [] o}}
+    encBits :=
+  rice (w₀ := eDesc (desc unitNum eBit spin)) (w₁ := eDesc (desc unitNum eBit (answer false)))
+    (fun ⟨o, h⟩ => not_behaviour_spin [] o h) ⟨_, behaviour_answer false []⟩
+
+/-- The descriptions of machines accepting every input are undecidable. -/
+example : ¬IsDecidable {w | ∀ x, behaviour w x [eBit true]} encBits :=
+  not_isDecidable_of_behaviour (fun _ _ h hw x => h ▸ hw x)
+    (w₀ := eDesc (desc unitNum eBit spin)) (w₁ := eDesc (desc unitNum eBit (answer true)))
+    (fun h => not_behaviour_spin [] _ (h [])) (behaviour_answer true)
+
 /-! ### Axioms -/
 
 /--
@@ -275,5 +354,54 @@ info: 'Turing.MultiTapeTM.IsDecidable.of_mappingReducible' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.IsDecidable.of_mappingReducible
+
+/--
+info: 'Turing.MultiTapeTM.Universal.Desc.computes_hardwire' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.Desc.computes_hardwire
+
+/--
+info: 'Turing.MultiTapeTM.Universal.Desc.halts_hardwire' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.Desc.halts_hardwire
+
+/--
+info: 'Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_hardwire' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_hardwire
+
+/--
+info: 'Turing.MultiTapeTM.Universal.Desc.computes_dispatch' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.Universal.Desc.computes_dispatch
+
+/--
+info: 'Turing.MultiTapeTM.exists_behaviour_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.exists_behaviour_eq
+
+/--
+info: 'Turing.MultiTapeTM.rice' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.rice
+
+/--
+info: 'Turing.MultiTapeTM.not_isDecidable_of_behaviour' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.not_isDecidable_of_behaviour
 
 end ComplexityTests.Halting
