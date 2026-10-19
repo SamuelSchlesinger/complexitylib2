@@ -624,6 +624,372 @@ theorem Valid.deleteEqn {S : State n} (hS : S.Valid f) {e v : ℕ} {ℓ : Lit}
     congr 1
     exact hS.phi_congr _ _ fun j hj => hext val j fun he => hvp (he ▸ hj)
 
+
+/-! ### Dropping an equation (D4) -/
+
+/-- Delete the equation `e` together with an auxiliary variable `v` occurring nowhere else. -/
+def dropEqn (S : State n) (e v : ℕ) : State n :=
+  { S with aux := S.aux.erase v, eqns := S.eqns.erase e }
+
+/-- The hypotheses of dropping an equation: the auxiliary variable `v` occurs in the equation
+`e` and nowhere else. -/
+structure DropEqnOK (S : State n) (e v : ℕ) : Prop where
+  mem : e ∈ S.eqns
+  aux : v ∈ S.aux
+  mem_terms : v ∈ (S.eqn e).terms
+  only : ∀ e' ∈ S.eqns, e' ≠ e → v ∉ (S.eqn e').terms
+  gates : ∀ K ∈ S.gates, ¬ (S.gate K).Reads v
+  out : ¬ S.out.Reads v
+
+@[simp] theorem dropEqn_params (S : State n) (e v : ℕ) : (S.dropEqn e v).params = S.params := rfl
+
+@[simp] theorem dropEqn_pairs (S : State n) (e v : ℕ) : (S.dropEqn e v).pairs = S.pairs := rfl
+
+theorem dropEqn_size {S : State n} {e v : ℕ} (h : S.DropEqnOK e v) :
+    (S.dropEqn e v).size + 1 = S.size := by
+  have := Finset.card_erase_add_one h.mem
+  simp only [SemiCircuit.size] at *
+  change S.gates.card + (S.eqns.erase e).card + 1 = _
+  omega
+
+theorem dropEqn_children (S : State n) (e v z : ℕ) :
+    (S.dropEqn e v).children z = (S.children z).erase (.inr e) := by
+  ext (K | e')
+  · simp only [SemiCircuit.inl_mem_children, Finset.mem_erase, ne_eq, reduceCtorEq,
+      not_false_eq_true, true_and]
+    rfl
+  · simp only [SemiCircuit.inr_mem_children, Finset.mem_erase, ne_eq, Sum.inr.injEq]
+    change (e' ∈ S.eqns.erase e ∧ _) ↔ _
+    rw [Finset.mem_erase]
+    tauto
+
+/-- Dropping an equation with an auxiliary variable occurring only there preserves validity. -/
+theorem Valid.dropEqn {S : State n} (hS : S.Valid f) {e v : ℕ} (h : S.DropEqnOK e v) :
+    (S.dropEqn e v).Valid f := by
+  have hvp : v ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp h.aux
+  have hvg : v ∉ S.gates := fun hg => Finset.disjoint_left.1 hS.wf.disjoint_aux_gates h.aux hg
+  let ext : (ℕ → Bool) → ℕ → Bool := fun val =>
+    Function.update val v ((S.eqn e).rhs + ∑ i ∈ (S.eqn e).terms.erase v, val i)
+  have hext : ∀ val i, i ≠ v → ext val i = val i := fun val i hi => Function.update_of_ne hi _ _
+  have hold : ∀ val, (S.dropEqn e v).EqnsHold val → S.EqnsHold (ext val) := by
+    intro val hval e' he'
+    by_cases hee : e' = e
+    · subst hee
+      unfold Equation.Holds
+      rw [← Finset.add_sum_erase _ _ h.mem_terms,
+        Finset.sum_congr rfl fun i hi => hext val i (Finset.ne_of_mem_erase hi)]
+      change Function.update val v _ v + _ = _
+      rw [Function.update_self, add_assoc, BooleanRing.add_self, add_zero]
+    · exact (Equation.holds_congr fun i hi => hext val i fun he => h.only e' he' hee (he ▸ hi)).2
+        (hval e' (Finset.mem_erase.2 ⟨hee, he'⟩))
+  refine hS.of_phi rfl rfl rfl ?_ ?_
+  · refine
+      { disjoint_params_aux := Finset.disjoint_of_subset_right (Finset.erase_subset _ _)
+          hS.wf.disjoint_params_aux
+        disjoint_params_gates := hS.wf.disjoint_params_gates
+        disjoint_aux_gates := Finset.disjoint_of_subset_left (Finset.erase_subset _ _)
+          hS.wf.disjoint_aux_gates
+        reads_lt := hS.wf.reads_lt
+        reads_live := fun K hK i hr => ?_
+        terms_subset := fun e' he' z hz => ?_
+        card_terms_le := fun e' he' => hS.wf.card_terms_le e' (Finset.mem_of_mem_erase he')
+        out_live := fun i hi => ?_
+        solvable := fun u => by
+          obtain ⟨val, hu, heq⟩ := hS.wf.solvable u
+          exact ⟨val, hu, fun e' he' => heq e' (Finset.mem_of_mem_erase he')⟩
+        unique := fun val val' hagree heq heq' a ha => ?_ }
+    · have := hS.wf.reads_live K hK i hr
+      have hiv : i ≠ v := fun he => h.gates K hK (he ▸ hr)
+      simp only [SemiCircuit.live, Finset.mem_union] at this ⊢
+      change (i ∈ S.params ∨ i ∈ S.aux.erase v) ∨ i ∈ S.gates
+      rw [Finset.mem_erase]
+      tauto
+    · have := hS.wf.terms_subset e' (Finset.mem_of_mem_erase he') hz
+      have hzv : z ≠ v := fun he =>
+        h.only e' (Finset.mem_of_mem_erase he') (Finset.ne_of_mem_erase he') (he ▸ hz)
+      change z ∈ S.params ∪ S.aux.erase v
+      simp only [Finset.mem_union, Finset.mem_erase] at this ⊢
+      tauto
+    · have := hS.wf.out_live i hi
+      have hiv : i ≠ v := fun he => h.out (he ▸ hi)
+      simp only [SemiCircuit.live, Finset.mem_union] at this ⊢
+      change (i ∈ S.params ∨ i ∈ S.aux.erase v) ∨ i ∈ S.gates
+      rw [Finset.mem_erase]
+      tauto
+    · have := hS.wf.unique (ext val) (ext val') (fun j hj => by
+          rw [hext val j fun he => hvp (he ▸ hj), hext val' j fun he => hvp (he ▸ hj)]
+          exact hagree j hj) (hold val heq) (hold val' heq') a (Finset.mem_of_mem_erase ha)
+      rwa [hext val a (Finset.ne_of_mem_erase ha), hext val' a (Finset.ne_of_mem_erase ha)] at this
+  · intro val hval
+    have hcons : S.Consistent (ext val) := by
+      refine ⟨hold val hval.1, fun K hK => ?_⟩
+      rw [hext val K fun he => hvg (he ▸ hK), hval.2 K hK]
+      exact Gate.eval_congr fun i hi => (hext val i fun he => h.gates K hK (he ▸ hi)).symm
+    have hout : S.out.eval val = S.out.eval (ext val) :=
+      Lit.eval_congr fun i hi => (hext val i fun he => h.out (he ▸ hi)).symm
+    change S.out.eval val = f (S.phi val)
+    rw [hout, hS.computes _ hcons]
+    congr 1
+    exact hS.phi_congr _ _ fun j hj => hext val j fun he => hvp (he ▸ hj)
+
+/-- Delete an equation without terms. -/
+def dropTrivialEqn (S : State n) (e : ℕ) : State n :=
+  { S with eqns := S.eqns.erase e }
+
+@[simp] theorem dropTrivialEqn_params (S : State n) (e : ℕ) :
+    (S.dropTrivialEqn e).params = S.params := rfl
+
+@[simp] theorem dropTrivialEqn_pairs (S : State n) (e : ℕ) :
+    (S.dropTrivialEqn e).pairs = S.pairs := rfl
+
+theorem dropTrivialEqn_size {S : State n} {e : ℕ} (he : e ∈ S.eqns) :
+    (S.dropTrivialEqn e).size + 1 = S.size := by
+  have := Finset.card_erase_add_one he
+  simp only [SemiCircuit.size] at *
+  change S.gates.card + (S.eqns.erase e).card + 1 = _
+  omega
+
+theorem dropTrivialEqn_children (S : State n) (e z : ℕ) :
+    (S.dropTrivialEqn e).children z = (S.children z).erase (.inr e) := by
+  ext (K | e')
+  · simp only [SemiCircuit.inl_mem_children, Finset.mem_erase, ne_eq, reduceCtorEq,
+      not_false_eq_true, true_and]
+    rfl
+  · simp only [SemiCircuit.inr_mem_children, Finset.mem_erase, ne_eq, Sum.inr.injEq]
+    change (e' ∈ S.eqns.erase e ∧ _) ↔ _
+    rw [Finset.mem_erase]
+    tauto
+
+/-- An equation without terms of a valid state holds trivially, and deleting it preserves
+validity. -/
+theorem Valid.dropTrivialEqn {S : State n} (hS : S.Valid f) {e : ℕ} (he : e ∈ S.eqns)
+    (hterms : (S.eqn e).terms = ∅) : (S.dropTrivialEqn e).Valid f := by
+  have htriv : ∀ val, (S.eqn e).Holds val := by
+    obtain ⟨val₀, -, heq⟩ := hS.wf.solvable 0
+    intro val
+    have h0 := heq e he
+    unfold Equation.Holds at h0 ⊢
+    rw [hterms, Finset.sum_empty] at h0 ⊢
+    exact h0
+  have heqns : ∀ val, (S.dropTrivialEqn e).EqnsHold val ↔ S.EqnsHold val := fun val =>
+    ⟨fun h e' he' => by
+      by_cases hee : e' = e
+      · subst hee; exact htriv val
+      · exact h e' (Finset.mem_erase.2 ⟨hee, he'⟩),
+     fun h e' he' => h e' (Finset.mem_of_mem_erase he')⟩
+  refine hS.of_phi rfl rfl rfl ?_ ?_
+  · exact
+      { disjoint_params_aux := hS.wf.disjoint_params_aux
+        disjoint_params_gates := hS.wf.disjoint_params_gates
+        disjoint_aux_gates := hS.wf.disjoint_aux_gates
+        reads_lt := hS.wf.reads_lt
+        reads_live := hS.wf.reads_live
+        terms_subset := fun e' he' => hS.wf.terms_subset e' (Finset.mem_of_mem_erase he')
+        card_terms_le := fun e' he' => hS.wf.card_terms_le e' (Finset.mem_of_mem_erase he')
+        out_live := hS.wf.out_live
+        solvable := fun u => by
+          obtain ⟨val, hu, heq⟩ := hS.wf.solvable u
+          exact ⟨val, hu, (heqns val).2 heq⟩
+        unique := fun val val' hagree heq heq' =>
+          hS.wf.unique val val' hagree ((heqns val).1 heq) ((heqns val').1 heq') }
+  · exact fun val hval => hS.computes val ⟨(heqns val).1 hval.1, hval.2⟩
+
+/-! ### Affine reparameterisation (AR) -/
+
+/-- Exchange the parameter `x` with the auxiliary variable `Q = c + ∑ j ∈ T, u j` depending on
+it: `Q` becomes a parameter, `x` an auxiliary variable, and the parameter map substitutes
+`x = Q + c + ∑ j ∈ T \ {x}, u j`. No equation or gate changes. -/
+def swap (S : State n) (x Q : ℕ) (c : Bool) (T : Finset ℕ) : State n :=
+  { S with
+    params := insert Q (S.params.erase x)
+    aux := insert x (S.aux.erase Q)
+    phi := fun val => S.phi (Function.update val x (val Q + c + ∑ j ∈ T.erase x, val j)) }
+
+/-- The hypotheses of the affine reparameterisation. -/
+structure SwapOK (S : State n) (x Q : ℕ) (c : Bool) (T : Finset ℕ) : Prop where
+  mem : x ∈ S.params
+  unpaired : ¬ S.Paired x
+  aux : Q ∈ S.aux
+  affine : S.AffineIn Q c T
+  mem_T : x ∈ T
+
+@[simp] theorem swap_params (S : State n) (x Q : ℕ) (c : Bool) (T : Finset ℕ) :
+    (S.swap x Q c T).params = insert Q (S.params.erase x) := rfl
+
+@[simp] theorem swap_pairs (S : State n) (x Q : ℕ) (c : Bool) (T : Finset ℕ) :
+    (S.swap x Q c T).pairs = S.pairs := rfl
+
+theorem swap_size (S : State n) (x Q : ℕ) (c : Bool) (T : Finset ℕ) :
+    (S.swap x Q c T).size = S.size := rfl
+
+theorem swap_children (S : State n) (x Q : ℕ) (c : Bool) (T : Finset ℕ) (z : ℕ) :
+    (S.swap x Q c T).children z = S.children z := rfl
+
+/-- The affine reparameterisation preserves validity. -/
+theorem Valid.swap {S : State n} (hS : S.Valid f) {x Q : ℕ} {c : Bool} {T : Finset ℕ}
+    (h : S.SwapOK x Q c T) : (S.swap x Q c T).Valid f := by
+  have hQp : Q ∉ S.params := fun hp => Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp h.aux
+  have hxa : x ∉ S.aux := fun ha => Finset.disjoint_left.1 hS.wf.disjoint_params_aux h.mem ha
+  have hQx : Q ≠ x := fun he => hQp (he ▸ h.mem)
+  have hTx : ∀ j ∈ T.erase x, j ∈ S.params.erase x := fun j hj =>
+    Finset.mem_erase.2 ⟨Finset.ne_of_mem_erase hj, h.affine.1 (Finset.mem_of_mem_erase hj)⟩
+  -- the solved value of `x`
+  have hsolve : ∀ val, S.EqnsHold val → val x = val Q + c + ∑ j ∈ T.erase x, val j := by
+    intro val hval
+    rw [h.affine.2 val hval, ← Finset.add_sum_erase T _ h.mem_T]
+    generalize val x = a; generalize ∑ j ∈ T.erase x, val j = b
+    cases a <;> cases b <;> cases c <;> rfl
+  let σ : (ℕ → Bool) → ℕ → Bool := fun val =>
+    Function.update val x (val Q + c + ∑ j ∈ T.erase x, val j)
+  have hσ : ∀ val i, i ≠ x → σ val i = val i := fun val i hi => Function.update_of_ne hi _ _
+  have hσx : ∀ val, σ val x = val Q + c + ∑ j ∈ T.erase x, val j := fun val =>
+    Function.update_self _ _ _
+  have hσid : ∀ val, S.EqnsHold val → σ val = val := fun val hval => by
+    funext i
+    by_cases hi : i = x
+    · subst hi; rw [hσx, hsolve val hval]
+    · exact hσ val i hi
+  have hlive : (S.swap x Q c T).live = S.live := by
+    ext i
+    simp only [SemiCircuit.live, Finset.mem_union]
+    change ((i ∈ insert Q (S.params.erase x)) ∨ i ∈ insert x (S.aux.erase Q)) ∨ i ∈ S.gates ↔ _
+    simp only [Finset.mem_insert, Finset.mem_erase]
+    constructor
+    · rintro (((h1 | ⟨-, hp⟩) | (h2 | ⟨-, ha⟩)) | hg)
+      · exact Or.inl (Or.inr (h1 ▸ h.aux))
+      · exact Or.inl (Or.inl hp)
+      · exact Or.inl (Or.inl (h2 ▸ h.mem))
+      · exact Or.inl (Or.inr ha)
+      · exact Or.inr hg
+    · rintro ((hp | ha) | hg)
+      · by_cases hix : i = x
+        · exact Or.inl (Or.inr (Or.inl hix))
+        · exact Or.inl (Or.inl (Or.inr ⟨hix, hp⟩))
+      · by_cases hiQ : i = Q
+        · exact Or.inl (Or.inl (Or.inl hiQ))
+        · exact Or.inl (Or.inr (Or.inr ⟨hiQ, ha⟩))
+      · exact Or.inr hg
+  have hpa : ∀ i, i ∈ (S.swap x Q c T).params ∪ (S.swap x Q c T).aux ↔ i ∈ S.params ∪ S.aux := by
+    intro i
+    change i ∈ insert Q (S.params.erase x) ∪ insert x (S.aux.erase Q) ↔ _
+    simp only [Finset.mem_union, Finset.mem_insert, Finset.mem_erase]
+    constructor
+    · rintro ((h1 | ⟨-, hp⟩) | (h2 | ⟨-, ha⟩))
+      · exact Or.inr (h1 ▸ h.aux)
+      · exact Or.inl hp
+      · exact Or.inl (h2 ▸ h.mem)
+      · exact Or.inr ha
+    · rintro (hp | ha)
+      · by_cases hix : i = x
+        · exact Or.inr (Or.inl hix)
+        · exact Or.inl (Or.inr ⟨hix, hp⟩)
+      · by_cases hiQ : i = Q
+        · exact Or.inl (Or.inl hiQ)
+        · exact Or.inr (Or.inr ⟨hiQ, ha⟩)
+  have hwf : (S.swap x Q c T).WellFormed := by
+    refine
+      { disjoint_params_aux := ?_
+        disjoint_params_gates := ?_
+        disjoint_aux_gates := ?_
+        reads_lt := hS.wf.reads_lt
+        reads_live := fun K hK i hr => hlive ▸ hS.wf.reads_live K hK i hr
+        terms_subset := fun e he z hz => (hpa z).2 (hS.wf.terms_subset e he hz)
+        card_terms_le := hS.wf.card_terms_le
+        out_live := fun i hi => hlive ▸ hS.wf.out_live i hi
+        solvable := fun u => ?_
+        unique := fun val val' hagree heq heq' a ha => ?_ }
+    · rw [Finset.disjoint_left]
+      intro i hi hi'
+      change i ∈ insert Q (S.params.erase x) at hi
+      change i ∈ insert x (S.aux.erase Q) at hi'
+      simp only [Finset.mem_insert, Finset.mem_erase] at hi hi'
+      rcases hi with rfl | ⟨hix, hp⟩ <;> rcases hi' with rfl | ⟨hiQ, ha⟩
+      · exact hQx rfl
+      · exact hiQ rfl
+      · exact hix rfl
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_params_aux hp ha
+    · rw [Finset.disjoint_left]
+      intro i hi hg
+      change i ∈ insert Q (S.params.erase x) at hi
+      simp only [Finset.mem_insert, Finset.mem_erase] at hi
+      rcases hi with rfl | ⟨-, hp⟩
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_aux_gates h.aux hg
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_params_gates hp hg
+    · rw [Finset.disjoint_left]
+      intro i hi hg
+      change i ∈ insert x (S.aux.erase Q) at hi
+      simp only [Finset.mem_insert, Finset.mem_erase] at hi
+      rcases hi with rfl | ⟨-, ha⟩
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_params_gates h.mem hg
+      · exact Finset.disjoint_left.1 hS.wf.disjoint_aux_gates ha hg
+    · obtain ⟨val, hu, heq⟩ := hS.wf.solvable (σ u)
+      refine ⟨val, fun j hj => ?_, heq⟩
+      change j ∈ insert Q (S.params.erase x) at hj
+      rcases Finset.mem_insert.1 hj with rfl | hj
+      · have h1 := h.affine.2 val heq
+        rw [← Finset.add_sum_erase T _ h.mem_T, hu x h.mem, hσx,
+          Finset.sum_congr rfl fun i hi => (hu i (h.affine.1 (Finset.mem_of_mem_erase hi))).trans
+            (hσ u i (Finset.ne_of_mem_erase hi))] at h1
+        rw [h1]
+        generalize u j = a; generalize ∑ i ∈ T.erase x, u i = b
+        cases a <;> cases b <;> cases c <;> rfl
+      · rw [hu j (Finset.mem_of_mem_erase hj), hσ u j (Finset.ne_of_mem_erase hj)]
+    · have hparams : ∀ j ∈ S.params, val j = val' j := by
+        intro j hj
+        by_cases hjx : j = x
+        · subst hjx
+          rw [hsolve val heq, hsolve val' heq', hagree Q (Finset.mem_insert_self _ _),
+            Finset.sum_congr rfl fun i hi => hagree i (Finset.mem_insert_of_mem (hTx i hi))]
+        · exact hagree j (Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hjx, hj⟩))
+      change a ∈ insert x (S.aux.erase Q) at ha
+      rcases Finset.mem_insert.1 ha with rfl | ha
+      · exact hparams a h.mem
+      · exact hS.wf.unique val val' hparams heq heq' a (Finset.mem_of_mem_erase ha)
+  refine hS.of_map σ hwf ?_ hS.pairs_disjoint (fun _ => rfl) ?_ ?_ ?_ ?_ ?_
+  · intro pr hpr
+    obtain ⟨h1, h2, h12⟩ := hS.pair_mem pr hpr
+    have hx1 : pr.1 ≠ x := fun he => h.unpaired ⟨pr, hpr, Or.inl he⟩
+    have hx2 : pr.2 ≠ x := fun he => h.unpaired ⟨pr, hpr, Or.inr he⟩
+    exact ⟨Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hx1, h1⟩),
+      Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hx2, h2⟩), h12⟩
+  · intro val val' hv j hj
+    by_cases hjx : j = x
+    · subst hjx
+      rw [hσx, hσx, hv Q (Finset.mem_insert_self _ _),
+        Finset.sum_congr rfl fun i hi => hv i (Finset.mem_insert_of_mem (hTx i hi))]
+    · rw [hσ val j hjx, hσ val' j hjx]
+      exact hv j (Finset.mem_insert_of_mem (Finset.mem_erase.2 ⟨hjx, hj⟩))
+  · intro val val' hv j hj
+    rcases Finset.mem_insert.1 hj with rfl | hj
+    · have h1 := hv x h.mem
+      rw [hσx, hσx, Finset.sum_congr rfl fun i hi => (hσ val i (Finset.ne_of_mem_erase hi)).symm.trans
+        ((hv i (Finset.mem_of_mem_erase (hTx i hi))).trans
+          (hσ val' i (Finset.ne_of_mem_erase hi)))] at h1
+      simpa using h1
+    · have := hv j (Finset.mem_of_mem_erase hj)
+      rwa [hσ val j (Finset.ne_of_mem_erase hj), hσ val' j (Finset.ne_of_mem_erase hj)] at this
+  · intro k τ hτ htame
+    refine ⟨fun u => σ (τ u), ?_, fun pr hpr => ?_, fun _ _ _ => rfl⟩
+    · refine isAffine_update hτ x fun u v w => ?_
+      simp only [congrFun (hτ u v w), Pi.add_apply, Finset.sum_add_distrib]
+      generalize τ u Q = a₁; generalize τ v Q = a₂; generalize τ w Q = a₃
+      generalize ∑ i ∈ T.erase x, τ u i = b₁; generalize ∑ i ∈ T.erase x, τ v i = b₂
+      generalize ∑ i ∈ T.erase x, τ w i = b₃
+      cases a₁ <;> cases a₂ <;> cases a₃ <;> cases b₁ <;> cases b₂ <;> cases b₃ <;> cases c <;> rfl
+    · have hx1 : pr.1 ≠ x := fun he => h.unpaired ⟨pr, hpr, Or.inl he⟩
+      have hx2 : pr.2 ≠ x := fun he => h.unpaired ⟨pr, hpr, Or.inr he⟩
+      rcases htame pr hpr with ht | ht | ht
+      · exact Or.inl fun u v => by dsimp only; rw [hσ _ _ hx1, hσ _ _ hx1]; exact ht u v
+      · exact Or.inr (Or.inl fun u v => by dsimp only; rw [hσ _ _ hx2, hσ _ _ hx2]; exact ht u v)
+      · exact Or.inr (Or.inr fun u v => by
+          dsimp only; rw [hσ _ _ hx1, hσ _ _ hx1, hσ _ _ hx2, hσ _ _ hx2]; exact ht u v)
+  · intro val hval
+    rw [hσid val hval.1]
+    exact hval
+  · intro val hval
+    rw [hσid val hval.1]
+    rfl
+
 end State
 
 end Cslib.Circuits.Boolean.B2
