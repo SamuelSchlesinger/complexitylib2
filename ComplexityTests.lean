@@ -5,6 +5,7 @@ import ComplexityTests.AffineDisperserLowerBound
 import ComplexityTests.AffineDisperserRuntime
 import ComplexityTests.AlgebraicComplexity
 import ComplexityTests.Alternation
+import ComplexityTests.ApproximateCounting
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring

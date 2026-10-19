@@ -332,6 +332,7 @@ public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomi
 public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
 public import Complexity.Computability.Complexity.AffineDisperser.Program
+public import Complexity.Computability.Complexity.Classes.AWPP
 public import Complexity.Computability.Complexity.Classes.Alternation
 public import Complexity.Computability.Complexity.Classes.Alternation.Game
 public import Complexity.Computability.Complexity.Classes.Alternation.GuessVerify
@@ -406,6 +407,7 @@ public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Classes.Promise.Circuit
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.RP.Closure
+public import Complexity.Computability.Complexity.Classes.SBP
 public import Complexity.Computability.Complexity.Classes.SPP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
