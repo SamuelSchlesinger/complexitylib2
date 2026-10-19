@@ -260,3 +260,48 @@ characterizations, oracle lowness, or robustness under multiple target values.
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{139}{Cslib.Complexity.union_mem_LWPP}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{112}{Cslib.Complexity.PolyTimeReducible.mem_WPP}
 \end{result}
+
+
+\begin{result}
+\subsection{Small bounded-error and almost-wide counting}
+For every fixed injective encoding,
+\[
+\cc{NP}\cup\cc{BPP}\subseteq\cc{SBP}\subseteq\cc{PP},
+\qquad
+\cc{SPP}\cup\cc{BPP}\subseteq\cc{AWPP}\subseteq\cc{PP}.
+\]
+SBP has a verifier-based \#P function $f$ and a polynomial-time function
+$k$ with binary natural output such that $f(x)\geq k(x)$ on members and
+$2f(x)<k(x)$ on nonmembers. The nonnegative threshold may be zero on
+members; requiring it to be positive on every input gives the same class.
+AWPP has a verifier-based GapP function $g$ and $p\in\mathbb{N}[X]$ with
+$0\leq g(x)\leq 2^{p(|x|)}$ on every input, and
+\[
+x\in A\Rightarrow 3g(x)\geq 2\cdot 2^{p(|x|)},\qquad
+x\notin A\Rightarrow 3g(x)\leq 2^{p(|x|)}.
+\]
+Both classes are closed under polynomial-time many-one reductions between
+injectively encoded types. AWPP is closed under complement; SBP is closed
+under union. The AWPP reduction proof permits an input-dependent, unary
+polynomial-time exponent and pads it to a polynomial in encoded input length.
+These are elementary consequences of the existing counting algebra and BPP
+amplification. The definitions follow Watson's formulation of the class
+introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
+characterization of AWPP.\citep{BoehlerGlasserMeister2006}
+\citep[Definition 2]{Watson2012}\citep{Fenner2003}
+Counting-machine characterizations, $\cc{MA}\subseteq\cc{SBP}\subseteq\cc{AM}$,
+AWPP error amplification, further Boolean closure and PP-lowness are not
+established by this batch.
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{90}{Cslib.Complexity.BPP_subset_SBP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{116}{Cslib.Complexity.SBP_subset_PP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{62}{Cslib.Complexity.mem_SBP_iff_exists_pos_threshold}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{139}{Cslib.Complexity.union_mem_SBP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{131}{Cslib.Complexity.PolyTimeReducible.mem_SBP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{58}{Cslib.Complexity.BPP_subset_AWPP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{76}{Cslib.Complexity.SPP_subset_AWPP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{99}{Cslib.Complexity.AWPP_subset_PP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{82}{Cslib.Complexity.compl_mem_AWPP}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{117}{Cslib.Complexity.mem_AWPP_of_polyTime_exponent}
+\declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/AWPP.lean}{145}{Cslib.Complexity.PolyTimeReducible.mem_AWPP}
+\end{result}

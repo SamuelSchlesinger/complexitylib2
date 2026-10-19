@@ -49,6 +49,10 @@ hierarchy, WPP and LWPP now have definitions and elementary containments/closure
 The binary-output FP-to-#P/GapP bridge is available. Remaining extensions include
 US/Unique-SAT completeness, stronger Boolean-hierarchy closure and collapse results,
 LWPP reduction closure and multiple-target robustness, and WPP/LWPP oracle lowness.
+SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
+containments, many-one reduction closure, SBP union closure and AWPP complement closure.
+Remaining approximate-counting milestones include MA ⊆ SBP ⊆ AM, AWPP amplification,
+AWPP union/intersection closure, WPP ⊆ AWPP and AWPP PP-lowness.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
