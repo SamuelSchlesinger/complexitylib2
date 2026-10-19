@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.BipartiteMatching
 public import Complexity.Computability.Circuit.Monotone.KarchmerWigderson
 public import Complexity.Computability.Communication.Disjointness
+public import Complexity.Computability.Communication.Operations
 public import Mathlib.Data.Fintype.Pi
 import Complexity.Probability.PMF
 import Mathlib.Tactic.Linarith

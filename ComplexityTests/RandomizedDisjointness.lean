@@ -17,7 +17,7 @@ hypothesis `Fintype.card U = 2 m + 1` holds for `Fin 3` and `m = 1`, and `48 r �
 
 namespace ComplexityTests.RandomizedDisjointness
 
-open Cslib Cslib.Communication Finset
+open Cslib Cslib.Communication Cslib.Communication.Disjointness Finset
 
 /-! ### Sequencing protocols and majority votes -/
 
@@ -32,14 +32,14 @@ private def bobBit : Protocol Bool Bool Bool :=
 example : (sendBit.bind fun b => if b then .bob id (.output false) (.output true)
     else .output false).run true true = true := rfl
 
-example : (Protocol.runAll ![sendBit, bobBit, sendBit] PublicCoin.majority).run
+example : (Protocol.runAll ![sendBit, bobBit, sendBit] (BitString.strictMajorityOn univ)).run
     true false = true := rfl
 
-example : (Protocol.runAll ![sendBit, bobBit, sendBit] PublicCoin.majority).depth
+example : (Protocol.runAll ![sendBit, bobBit, sendBit] (BitString.strictMajorityOn univ)).depth
     ≤ 3 * 1 :=
   Protocol.depth_runAll_le fun i => by fin_cases i <;> rfl
 
-example : PublicCoin.majority ![true, false, true, false] = false := rfl
+example : BitString.strictMajorityOn univ ![true, false, true, false] = false := rfl
 
 -- Two runs at error `1 / 3` give error `8 / 9`, four runs `(8 / 9) ^ 2`.
 example (f : Bool → Bool → Bool) :
@@ -48,22 +48,42 @@ example (f : Bool → Bool → Bool) :
 
 /-! ### The hard distribution on three points -/
 
-example : Corrupted (disjointnessDist 1 (Fintype.card_fin 3))
+example : Corrupted (hardDist 1 (Fintype.card_fin 3))
     (fun x y => decide (Disjoint x y)) true (1 / 18) ((27 / 32) ^ 0 / 2) :=
-  corrupted_disjointnessDist _ (by norm_num)
+  corrupted_hardDist _ (by norm_num)
 
-example : ((disjointnessDist 1 (Fintype.card_fin 3)).toOuterMeasure
+example : ((hardDist 1 (Fintype.card_fin 3)).toOuterMeasure
     {q | decide (Disjoint q.1 q.2) = true}).toReal = 1 / 2 :=
-  disjointnessDist_toOuterMeasure_disjoint _
+  hardDist_toOuterMeasure_disjoint _
 
 -- The partitions of three points into a point and two singletons.
-example : #(disjointnessParts (Fin 3) 1) = 6 := by
-  rw [card_disjointnessParts (Fintype.card_fin 3), card_powersetCard, card_univ,
+example : #(parts (Fin 3) 1) = 6 := by
+  rw [card_parts (Fintype.card_fin 3), card_powersetCard, card_univ,
     Fintype.card_fin]
   rfl
 
-example : ∑ q : Finset (Fin 3) × Finset (Fin 3), disjointnessWeight 1 q = 1 :=
-  sum_disjointnessWeight (Fintype.card_fin 3)
+example : ∑ q : Finset (Fin 3) × Finset (Fin 3), weight 1 q = 1 :=
+  sum_weight (Fintype.card_fin 3)
+
+-- A nontrivial instance of the corruption lemma: on `95` points (`m = 47`) the error term is
+-- `(27 / 32) / 2` with `r = 1`.
+example : Corrupted (hardDist 47 (Fintype.card_fin 95))
+    (fun x y => decide (Disjoint x y)) true (1 / 18) ((27 / 32) ^ 1 / 2) :=
+  corrupted_hardDist _ (by norm_num)
+
+/-! ### Independent draws -/
+
+-- Three independent fair coins all come up `true` with probability `1 / 8`.
+example : Probability.PMF.iid (Probability.PMF.uniformOfFintype Bool) 3 (fun _ => true) = 8⁻¹ := by
+  rw [Probability.PMF.iid_apply]
+  simp only [Probability.PMF.uniformOfFintype_apply, Fintype.card_bool, Finset.prod_const,
+    Finset.card_univ, Fintype.card_fin]
+  rw [← ENNReal.inv_pow]
+  norm_num
+
+example (μ : PMF ℕ) (v : Fin 2 → ℕ) (hv : v ∈ (Probability.PMF.iid μ 2).support) :
+    v 1 ∈ μ.support :=
+  (Probability.PMF.mem_support_iid_iff μ v).mp hv 1
 
 /-! ### Lower bounds -/
 
@@ -98,25 +118,25 @@ example : PublicCoin.ecomplexityFun (1 / 3)
 /-! ### Axioms -/
 
 /--
-info: 'Cslib.Communication.corrupted_disjointnessDist' depends on axioms:
+info: 'Cslib.Communication.Disjointness.corrupted_hardDist' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Communication.corrupted_disjointnessDist
+#print axioms Cslib.Communication.Disjointness.corrupted_hardDist
 
 /--
-info: 'Cslib.Communication.four_mul_sum_card_filter_le' depends on axioms:
+info: 'Finset.four_mul_sum_card_filter_notMem_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Communication.four_mul_sum_card_filter_le
+#print axioms Finset.four_mul_sum_card_filter_notMem_le
 
 /--
-info: 'Cslib.Communication.PublicCoin.div_le_ecomplexityFun_disjoint' depends on axioms:
+info: 'Cslib.Communication.PublicCoin.div_le_mul_ecomplexityFun_disjoint_add' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Communication.PublicCoin.div_le_ecomplexityFun_disjoint
+#print axioms Cslib.Communication.PublicCoin.div_le_mul_ecomplexityFun_disjoint_add
 
 /--
 info: 'Cslib.Communication.PublicCoin.le_mul_ecomplexityFun_disjointness_add_of_le' depends on
@@ -147,10 +167,10 @@ info: 'Cslib.Communication.PublicCoin.ecomplexity_le_two_mul_mul' depends on axi
 #print axioms Cslib.Communication.PublicCoin.ecomplexity_le_two_mul_mul
 
 /--
-info: 'Cslib.Probability.PMF.toOuterMeasure_iid_le_card_filter_toReal_le' depends on axioms:
+info: 'Cslib.Probability.PMF.iid_card_ge_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.toOuterMeasure_iid_le_card_filter_toReal_le
+#print axioms Cslib.Probability.PMF.iid_card_ge_le
 
 end ComplexityTests.RandomizedDisjointness
