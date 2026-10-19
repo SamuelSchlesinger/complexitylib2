@@ -51,6 +51,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.HardCore
 import ComplexityTests.HashedParity
 import ComplexityTests.HessianSourceComplexity
+import ComplexityTests.InteractiveProofs
 import ComplexityTests.Iteration
 import ComplexityTests.IterationFoundations
 import ComplexityTests.KarpReductions

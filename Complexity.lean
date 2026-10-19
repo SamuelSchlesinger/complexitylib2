@@ -257,6 +257,10 @@ public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Rectangle
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.Hierarchy
+public import Complexity.Computability.Complexity.Classes.IP
+public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
+public import Complexity.Computability.Complexity.Classes.IP.Guessing
+public import Complexity.Computability.Complexity.Classes.IP.Repetition
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
 public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
@@ -306,6 +310,7 @@ public import Complexity.Computability.Complexity.Fagin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.Coloring
+public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
