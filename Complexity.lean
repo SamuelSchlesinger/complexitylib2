@@ -306,6 +306,7 @@ public import Complexity.Computability.Complexity.Classes.Alternation.Game
 public import Complexity.Computability.Complexity.Classes.Alternation.NP
 public import Complexity.Computability.Complexity.Classes.Alternation.TQBF
 public import Complexity.Computability.Complexity.Classes.BPP
+public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
 public import Complexity.Computability.Complexity.Classes.EXP
