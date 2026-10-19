@@ -1,0 +1,26 @@
+\section{Proof complexity}
+
+\begin{result}
+\subsection{Cook--Reckhow characterization}
+NP equals coNP for every encoded instance type if and only if UNSAT has a
+polynomially bounded Cook--Reckhow proof system: a polynomial-time function from
+bit strings onto unsatisfiable CNF formulas, with a preimage of polynomial length
+for every such formula. Polynomial boundedness asserts that short proofs exist;
+it does not give a polynomial-time procedure for finding them.
+\citep{CookReckhow1979}
+\decl{Complexity/Logics/Propositional/ProofSystem.lean}{320}{Cslib.Complexity.ProofSystem.NP_eq_coNP_iff_exists_polynomiallyBounded}
+\end{result}
+
+\begin{result}
+\subsection{Resolution size--width tradeoff}
+If a CNF formula has initial clause width at most $k$, at most $N$ variables,
+and a resolution refutation with at most $s$ lines, it has a refutation of some
+integer width $w$ satisfying
+\[
+w\le k+2\sqrt{2N\ln s}+2.
+\]
+Thus a large minimum refutation width forces a large refutation size. The
+statement concerns proof certificates, not the runtime of a resolution or DPLL
+solver.\citep{BenSassonWigderson2001}
+\decl{Complexity/Logics/Propositional/Resolution/SizeWidth.lean}{331}{Cslib.Logic.PL.CNF.exists_refutableInWidth_le_of_refutableInSize}
+\end{result}

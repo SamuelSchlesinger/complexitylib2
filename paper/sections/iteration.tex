@@ -1,0 +1,124 @@
+\section{Circuits for iterated functions}
+
+\begin{result}
+\subsection{Fixed powers of arbitrary finite-state maps}
+Given a native De Morgan circuit of size $s$ computing a map $f$ on $n$-bit
+states, every fixed natural exponent $T$ and integer $1\le L\le2^n$ admit a
+circuit for $f^T$ of size at most
+\[
+40000\left(Ls+(n+1)^3\left(L+\left\lfloor\frac{2^n}{L}\right\rfloor+1\right)\right).
+\]
+The map need not be invertible. The bound is independent of $T$, but $T$ is fixed
+when the circuit is chosen; it is not an input to this circuit. Checkpoints are
+chosen nonconstructively, without a certified preprocessing runtime.
+\citep{Schlesinger2026IteratedFunctions}
+\decl{Complexity/Computability/Circuit/Boolean/Iteration.lean}{227}{Cslib.Circuits.Boolean.Iteration.fixed_power}
+\end{result}
+
+\begin{result}
+\subsection*{Sparse-counter conventions}
+Write $W_n=\mathbb Z/2^n\mathbb Z$ for the $n$-bit words, represented
+least-significant bit first, and let $c(x)=x+1$. For maps on $W_n$, put
+\[
+D(f,g)=\{x\in W_n:f(x)\ne g(x)\}.
+\]
+Circuit size below counts native De Morgan gates, including constants,
+comparisons, selection and addition. These are nonuniform existence results:
+they provide no efficient algorithm for constructing the correction table.
+The port follows Schlesinger's iterated-functions development; the source credits Moreno and Rivera for the related block characterization
+of almost-commuting permutations.
+\citep{Schlesinger2026IteratedFunctions,MorenoRivera2016}
+\end{result}
+
+\begin{result}
+\subsection{Maps commuting with an edited counter}
+For any maps $f,h:W_n\to W_n$, if $h$ is injective and $h\circ f=f\circ h$, then
+there is a circuit computing all $n$ output bits of $h$ with size at most
+\[
+100(n+1)(|D(f,c)|+1).
+\]
+There is no assumption that $f$ is a permutation or that a small circuit for $f$
+is supplied. The assertion includes $n=0$.
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{197}{Cslib.Circuits.Boolean.Iteration.sparse_counter_centralizer}
+\end{result}
+
+\begin{result}
+\subsection{Every fixed signed power}
+For every permutation $f$ of $W_n$ and every integer $T$, a circuit computes $f^T$
+with size at most
+\[
+100(n+1)(|D(f,c)|+1).
+\]
+The size bound is independent of the magnitude and sign of $T$. The quantifiers
+are ``for every $T$, there exists a circuit'': $T$ is fixed, not an additional
+input to a single circuit.
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{208}{Cslib.Circuits.Boolean.Iteration.sparse_counter_power}
+\end{result}
+
+\begin{result}
+\subsection{Transfer through supplied coordinates}
+Let $f,g,e$ be permutations of $W_n$ such that $e(g(x))=e(x)+1$ for every $x$.
+Suppose circuits $E$ and $E^{-1}$ compute $e$ and its inverse, respectively.
+For every $T\in\mathbb Z$, there is a circuit for $f^T$ with size at most
+\[
+|E|+|E^{-1}|+100(n+1)(|D(f,g)|+1).
+\]
+Both coordinate conversions are charged. The theorem does not assert that an
+arbitrary cycle has cheap coordinates or complete the general iterated-function
+circuit-bound program.
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean}{217}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_power}
+\end{result}
+
+\begin{result}
+\subsection*{An input iteration count}
+Keep the notation $W_n$, $c$ and $D$ introduced above. Here a circuit
+reads an $n$-bit initial state $x$ and an $m$-bit nonnegative integer $T$, both
+least-significant bit first. The permutation is fixed when choosing the circuit.
+The chart and circuit are chosen nonuniformly; no efficient preprocessing or
+circuit-generation algorithm is asserted.\citep{Schlesinger2026IteratedFunctions}
+\end{result}
+
+\begin{result}
+\subsection{Variable-time iteration}
+For every permutation $f$ of $W_n$ and every $m\in\mathbb N$, there is a native
+De Morgan circuit with $n+m$ inputs and $n$ outputs computing
+\[
+(x,T)\longmapsto f^T(x),\qquad 0\leq T<2^m,
+\]
+of size at most
+\[
+1000(n+3)(|D(f,c)|+m+1).
+\]
+The dependence on the edit count and time width is additive inside the
+parentheses. One circuit handles all initial states and all $m$-bit times.
+The bound includes constants, comparisons and selection gates, and permits
+$n=0$ or $m=0$.
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{115}{Cslib.Circuits.Boolean.Iteration.sparse_counter_variable_time}
+\end{result}
+
+\begin{result}
+\subsection{Canonical coordinates at linear table cost}
+For every permutation $f$ of $W_n$, there is a circuit with $n$ inputs and
+$n+2(n+2)$ outputs computing the canonical cycle representative, cycle length
+and phase of the input. Its size is at most
+\[
+500(n+3)(|D(f,c)|+1).
+\]
+The representative is the numerically least word on the cycle. The phase is
+the forward distance from that representative, modulo the cycle length.
+The period and phase each occupy $n+2$ bits, so even a period of $2^n$ fits.
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{126}{Cslib.Circuits.Boolean.Iteration.sparse_counter_labels}
+\end{result}
+
+\begin{result}
+\subsection{Variable time through supplied coordinates}
+Let $f,g,e$ be permutations of $W_n$ satisfying $e(g(x))=e(x)+1$, with supplied
+circuits $E$ and $E^{-1}$ for $e$ and its inverse. For every time width $m$, a
+circuit computing $(x,T)\mapsto f^T(x)$ has size at most
+\[
+|E|+|E^{-1}|+1000(n+3)(|D(f,g)|+m+1).
+\]
+The $m$ time bits pass through unchanged to the iteration stage. Both state
+coordinate conversions are charged once, independently of $m$.
+\decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{147}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_variable_time}
+\end{result}

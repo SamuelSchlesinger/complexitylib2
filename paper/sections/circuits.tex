@@ -1,0 +1,99 @@
+\section{Circuit depth, lower bounds and barriers}
+
+Circuit classes in this section are nonuniform. Unless a different cost is
+specified, native De Morgan circuits charge constants, NOT, AND and OR gates,
+with wiring and fanout free. Formula leaf count and formula depth are separate
+measures; unbounded fan-in bases are identified in their entries.
+
+\begin{result}
+\subsection{Barrington's theorem}
+Nonuniform NC$^1$ is exactly the class of languages recognized by polynomial-length
+permutation branching programs of width five. An equivalent formulation uses
+programs over the alternating group $A_5$. This is a class equality with the
+library's nonuniform circuit families; it does not assert a uniform-family
+characterization.\citep{Barrington1989,BarringtonTherien1988}
+\decl{Complexity/Computability/Circuit/Boolean/BarringtonClass.lean}{205}{Cslib.Circuits.Boolean.NC_one_eq_polyLength_perm_five}
+\decl{Complexity/Computability/Circuit/Boolean/BarringtonClass.lean}{217}{Cslib.Circuits.Boolean.NC_one_eq_polyLength_alternatingGroup}
+\end{result}
+
+\begin{result}
+\subsection{Spira's formula balancing theorem}
+Every De Morgan formula with $L\ge1$ input leaves has an equivalent formula with
+at most $4\lceil\log_2 L\rceil$ AND/OR gates on each input-to-output path.
+Constants contribute zero leaves; when $L=0$, the formal bound is zero. Negations have
+zero cost in this depth measure. The theorem certifies the depth of the balanced
+formula, not a machine runtime for constructing it.\citep{Spira1971}
+\decl{Complexity/Computability/Circuit/Boolean/Spira.lean}{211}{Cslib.Circuits.Boolean.exists_formula_depthWith_le_four_mul_clog}
+\end{result}
+
+\begin{result}
+\subsection{Khrapchenko's bound and exact parity formula size}
+Let a De Morgan formula be true on $A$ and false on $B$, and let $E(A,B)$ be the
+pairs in $A\times B$ at Hamming distance one. Its input-leaf count $L$ (constants contribute zero) satisfies
+\[
+|E(A,B)|^2\le |A|\,|B|\,L.
+\]
+In particular, parity on $n$ bits requires at least $n^2$ leaves; for $n=2^k$
+this is attained. These are formula leaf bounds, not bounds on circuits with
+shared subcomputations.\citep{Khrapchenko1971b,Khrapchenko1971}
+\decl{Complexity/Computability/Circuit/Boolean/Khrapchenko.lean}{139}{Cslib.Circuits.Formula.sq_card_hammingEdges_le}
+\decl{Complexity/Computability/Circuit/Boolean/Khrapchenko.lean}{392}{Cslib.Circuits.Boolean.isLeast_leafSize_parity_two_pow}
+\end{result}
+
+\begin{result}
+\subsection{Parity lower bounds by random restrictions}
+A depth-$d$ circuit of unbounded fan-in AND/OR gates and negations computing
+parity on $n$ bits has at least $2^s$ gates whenever
+\[
+s\ge2,\qquad s(16s+1)^d\le n.
+\]
+Thus the finite theorem gives an exponential lower bound at every fixed depth.
+Depth counts negations and size counts every gate. The exponent obtained is of
+order $n^{1/(d+1)}$, weaker than the sharp classical H\aa stad exponent
+$n^{1/(d-1)}$.\citep{FurstSaxeSipser1984,Ajtai1983,Hastad1986}
+\decl{Complexity/Computability/Circuit/Boolean/Hastad.lean}{367}{Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity}
+\end{result}
+
+\begin{result}
+\subsection{Razborov--Smolensky lower bounds}
+For every odd prime $p$, parity is not in nonuniform AC$^0[p]$: adding unbounded
+fan-in MOD$_p$ gates to constant-depth polynomial-size AND/OR/NOT circuits does
+not suffice. Quantitatively, a depth-$d$ circuit computing parity has size at
+least $2^{\ell+1}/5$ whenever $\ell\ge1$ and
+\[
+100\bigl(((p-1)\ell)^d+1\bigr)^2\le n+1.
+\]
+The prime and depth are fixed in the class separation.\citep{Razborov1987,Smolensky1987}
+\decl{Complexity/Computability/Circuit/Boolean/Smolensky.lean}{60}{Cslib.Circuits.Boolean.Smolensky.two_mul_two_pow_le_size_of_computes_parity}
+\decl{Complexity/Computability/Circuit/Boolean/Smolensky.lean}{89}{Cslib.Circuits.Boolean.Smolensky.parity_notMem_AC0Mod}
+\end{result}
+
+\begin{result}
+\subsection{Razborov's monotone clique bound}
+Let $p,w\ge2$, $w+1\le k\le n$, $p\le n$, and $2w^2\le k-1$, and put
+\[
+B=(p-1)^w w!,\quad
+A=B^2\binom{n-w-1}{k-w-1},\quad
+N=(2B+B^2)(w^2)^p(k-1)^{n-p}.
+\]
+Every monotone AND/OR circuit for $k$-clique on $n$ vertices has more than $s$
+gates if $As<\binom nk$ and $2Ns<(k-1)^n$. This states the formalized finite
+approximation-method bound with its parameters; no unrestricted Boolean-circuit
+lower bound follows from it.\citep{Razborov1985}
+\decl{Complexity/Computability/Circuit/Monotone/Clique/LowerBound.lean}{139}{Cslib.Circuits.Monotone.lt_size_of_computes_clique}
+\end{result}
+
+\begin{result}
+\subsection{The natural-proofs barrier}
+Assume a family of length-doubling generators of polynomial circuit size and a
+fixed integer $d\ge1$ such that, for all sufficiently large seed lengths $k$ and
+every $m$ with $m^d\le k$, no circuit of size at most $2^m$ distinguishes its
+output from uniform with advantage greater than $2^{-m}$. Then no
+P/poly-natural property is useful against P/poly.
+Here natural means containing a property of density at least $2^{-O(n)}$ whose
+truth-table language has circuits polynomial in the table length $2^n$; useful
+means eventually excluding the slices of every P/poly language. The security
+assumption is stronger than ordinary polynomial-time PRG security.
+\citep{RazborovRudich1997,GGM1986}
+\decl{Complexity/Computability/Circuit/Boolean/NaturalProof/Generator.lean}{51}{Cslib.Circuits.Boolean.not_isUseful_PPoly_of_isNatural_of_generator}
+\end{result}
