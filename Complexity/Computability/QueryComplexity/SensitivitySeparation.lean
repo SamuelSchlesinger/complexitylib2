@@ -19,17 +19,16 @@ Every Boolean function satisfies `s(f) ≤ bs(f)` [Nisan1991], and Huang's theor
 bounds block sensitivity polynomially in sensitivity
 (`QueryComplexity.blockSensitivity_le_two_mul_sensitivity_pow_four`). Rubinstein's function shows
 that `bs(f)` can be quadratic in `s(f)` [Rubinstein1995]. OpenAI's construction
-[OpenAI2026Sensitivity] goes beyond the square:
-there are nonconstant Boolean functions whose block sensitivity exceeds every constant multiple of
-their squared sensitivity, and a family whose block sensitivity is at least a fixed power
-`α > 2` of its sensitivity.
+[OpenAI2026Sensitivity] goes beyond the square: for every constant `C` there is a nonconstant
+Boolean function `f` with `bs(f) > C · s(f)²`, and there is a family whose block sensitivity is at
+least a fixed power `α > 2` of its sensitivity.
 
 Sensitivity here is CSLib's `BitString.sensitivity`, the maximum number of sensitive coordinates
 at a single input (not average sensitivity), and block sensitivity is CSLib's
-`QueryComplexity.blockSensitivity`. In all statements the block sensitivity is attained at the
-all-false input, where the function takes the value `false`. The construction is carried out in
-the `Internal` modules with measures over arbitrary finite coordinate types; `Internal.Bridge`
-identifies those with CSLib's measures on `Fin n`.
+`QueryComplexity.blockSensitivity`. The `blockSensitivityAt` statements bound the block
+sensitivity at the all-false input, where the function takes the value `false`. The construction
+is carried out in the `Internal` modules with measures over arbitrary finite coordinate types;
+`Internal.Bridge` identifies those with CSLib's measures on `Fin n`.
 
 Since `bs(f) ≤ C(f) ≤ D(f)`, the same functions separate certificate complexity and deterministic
 decision-tree complexity from squared sensitivity. These consequences are short deductions from
@@ -39,7 +38,9 @@ the separation.
 
 * `QueryComplexity.exists_two_pow_div_le_blockSensitivityAt_div_sensitivity_sq`: for every
   `d ≥ 1` there is a nonconstant `f` with `bs(f, 0) / s(f) ^ 2 ≥ 2 ^ d / (4 (d + 2) ^ 2)`.
-* `QueryComplexity.exists_mul_sensitivity_sq_lt_blockSensitivity`: for every `C > 0` there is a
+* `QueryComplexity.exists_mul_sensitivity_sq_lt_blockSensitivityAt`: for every `C` there is a
+  nonconstant `f` with `f 0 = false` and `C * s(f) ^ 2 < bs(f, 0)`.
+* `QueryComplexity.exists_mul_sensitivity_sq_lt_blockSensitivity`: for every `C` there is a
   nonconstant `f` with `C * s(f) ^ 2 < bs(f)`.
 * `QueryComplexity.exists_sensitivity_rpow_le_blockSensitivityAt`: a family with
   `s(f) ^ α ≤ bs(f)` for a fixed `α > 2` and unbounded block sensitivity.
@@ -81,24 +82,24 @@ theorem exists_two_pow_div_le_blockSensitivityAt_div_sensitivity_sq (d : ℕ) (h
   rwa [← SensitivitySeparation.Internal.sensitivity_eq_sensitivity,
     ← SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
 
-/-- For every `C > 0` there is a nonconstant Boolean function `f` with `f 0 = false` and
+/-- For every `C` there is a nonconstant Boolean function `f` with `f 0 = false` and
 `C * s(f) ^ 2 < bs(f, 0)`. -/
-theorem exists_mul_sensitivity_sq_lt_blockSensitivityAt (C : ℝ) (hC : 0 < C) :
+theorem exists_mul_sensitivity_sq_lt_blockSensitivityAt (C : ℝ) :
     ∃ (n : ℕ) (f : BooleanFunction n), 0 < n ∧ f (fun _ => false) = false ∧
       (∃ x y, f x ≠ f y) ∧
       C * (sensitivity f : ℝ) ^ 2 < (blockSensitivityAt f (fun _ => false) : ℝ) := by
   obtain ⟨n, f, hn, hf, hnc, h⟩ :=
-    SensitivitySeparation.Internal.unbounded_quadratic_separation C hC
+    SensitivitySeparation.Internal.unbounded_quadratic_separation C
   refine ⟨n, f, hn, hf, hnc, ?_⟩
   rwa [← SensitivitySeparation.Internal.sensitivity_eq_sensitivity,
     ← SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
 
-/-- **Block sensitivity is not quadratically bounded by sensitivity**: for every `C > 0` there is
-a nonconstant Boolean function `f` with `C * s(f) ^ 2 < bs(f)`. -/
-theorem exists_mul_sensitivity_sq_lt_blockSensitivity (C : ℝ) (hC : 0 < C) :
+/-- **Block sensitivity is not quadratically bounded by sensitivity**: for every `C` there is a
+nonconstant Boolean function `f` with `C * s(f) ^ 2 < bs(f)`. -/
+theorem exists_mul_sensitivity_sq_lt_blockSensitivity (C : ℝ) :
     ∃ (n : ℕ) (f : BooleanFunction n), 0 < n ∧ (∃ x y, f x ≠ f y) ∧
       C * (sensitivity f : ℝ) ^ 2 < (blockSensitivity f : ℝ) := by
-  obtain ⟨n, f, hn, -, hnc, h⟩ := exists_mul_sensitivity_sq_lt_blockSensitivityAt C hC
+  obtain ⟨n, f, hn, -, hnc, h⟩ := exists_mul_sensitivity_sq_lt_blockSensitivityAt C
   exact ⟨n, f, hn, hnc, h.trans_le (mod_cast blockSensitivityAt_le_blockSensitivity f _)⟩
 
 /-- **Fixed-power separation**: for some `α > 2` there is a family of nonconstant Boolean
@@ -109,21 +110,21 @@ theorem exists_sensitivity_rpow_le_blockSensitivityAt :
       (∀ m, 0 < n m ∧ F m (fun _ => false) = false ∧ (∃ x y, F m x ≠ F m y) ∧
         (sensitivity (F m) : ℝ) ^ α ≤ (blockSensitivityAt (F m) (fun _ => false) : ℝ)) ∧
       Tendsto (fun m => (blockSensitivityAt (F m) (fun _ => false) : ℝ)) atTop atTop := by
-  obtain ⟨α, hα, n, F, hall, hlim⟩ := SensitivitySeparation.Internal.constructed_power_family
+  obtain ⟨α, hα, n, F, hall, hlim⟩ := SensitivitySeparation.Internal.fixed_power_separation
   refine ⟨α, hα, n, F, fun m => ?_, ?_⟩
-  · obtain ⟨hn, hf, hnc, hpow, -⟩ := hall m
+  · obtain ⟨hn, hf, hnc, hpow⟩ := hall m
     refine ⟨hn, hf, hnc, ?_⟩
     rwa [← SensitivitySeparation.Internal.sensitivity_eq_sensitivity,
       ← SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
   · simpa only [SensitivitySeparation.Internal.blockSensitivityAt_eq_blockSensitivityAt]
       using hlim
 
-/-- Certificate complexity is not quadratically bounded by sensitivity: for every `C > 0` there
-is a nonconstant Boolean function `f` with `C * s(f) ^ 2 < C(f)`. -/
-theorem exists_mul_sensitivity_sq_lt_certificateComplexity (C : ℝ) (hC : 0 < C) :
+/-- Certificate complexity is not quadratically bounded by sensitivity: for every `C` there is a
+nonconstant Boolean function `f` with `C * s(f) ^ 2 < C(f)`. -/
+theorem exists_mul_sensitivity_sq_lt_certificateComplexity (C : ℝ) :
     ∃ (n : ℕ) (f : BooleanFunction n), 0 < n ∧ (∃ x y, f x ≠ f y) ∧
       C * (sensitivity f : ℝ) ^ 2 < (certificateComplexity f : ℝ) := by
-  obtain ⟨n, f, hn, hnc, h⟩ := exists_mul_sensitivity_sq_lt_blockSensitivity C hC
+  obtain ⟨n, f, hn, hnc, h⟩ := exists_mul_sensitivity_sq_lt_blockSensitivity C
   exact ⟨n, f, hn, hnc, h.trans_le (mod_cast blockSensitivity_le_certificateComplexity f)⟩
 
 end QueryComplexity
@@ -133,11 +134,11 @@ namespace DecisionTree
 open QueryComplexity
 
 /-- Deterministic decision-tree complexity is not quadratically bounded by sensitivity: for every
-`C > 0` there is a nonconstant Boolean function `f` with `C * s(f) ^ 2 < D(f)`. -/
-theorem exists_mul_sensitivity_sq_lt_complexity (C : ℝ) (hC : 0 < C) :
+`C` there is a nonconstant Boolean function `f` with `C * s(f) ^ 2 < D(f)`. -/
+theorem exists_mul_sensitivity_sq_lt_complexity (C : ℝ) :
     ∃ (n : ℕ) (f : BooleanFunction n), 0 < n ∧ (∃ x y, f x ≠ f y) ∧
       C * (sensitivity f : ℝ) ^ 2 < (complexity f : ℝ) := by
-  obtain ⟨n, f, hn, hnc, h⟩ := exists_mul_sensitivity_sq_lt_certificateComplexity C hC
+  obtain ⟨n, f, hn, hnc, h⟩ := exists_mul_sensitivity_sq_lt_certificateComplexity C
   exact ⟨n, f, hn, hnc, h.trans_le (mod_cast certificateComplexity_le_complexity f)⟩
 
 /-- Fixed-power separation of decision-tree complexity from sensitivity: for some `α > 2` there

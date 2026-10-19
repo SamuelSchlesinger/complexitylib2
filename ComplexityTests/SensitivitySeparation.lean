@@ -16,12 +16,12 @@ open Cslib Cslib.BitString Cslib.QueryComplexity
 -- The headline separation, at a concrete constant.
 example : ∃ (n : ℕ) (f : BooleanFunction n), 0 < n ∧ (∃ x y, f x ≠ f y) ∧
     1000 * (sensitivity f : ℝ) ^ 2 < (blockSensitivity f : ℝ) :=
-  exists_mul_sensitivity_sq_lt_blockSensitivity 1000 (by norm_num)
+  exists_mul_sensitivity_sq_lt_blockSensitivity 1000
 
--- No polynomial bound of degree two holds for decision-tree complexity either.
-example (C : ℝ) (hC : 0 < C) : ¬ ∀ (n : ℕ) (f : BooleanFunction n),
+-- No bound of the form `C · s(f)²` holds for decision-tree complexity either.
+example (C : ℝ) : ¬ ∀ (n : ℕ) (f : BooleanFunction n),
     (DecisionTree.complexity f : ℝ) ≤ C * (sensitivity f : ℝ) ^ 2 := fun h => by
-  obtain ⟨n, f, -, -, hf⟩ := DecisionTree.exists_mul_sensitivity_sq_lt_complexity C hC
+  obtain ⟨n, f, -, -, hf⟩ := DecisionTree.exists_mul_sensitivity_sq_lt_complexity C
   exact (h n f).not_gt hf
 
 -- The internal measures agree with CSLib's on `Fin n`.
