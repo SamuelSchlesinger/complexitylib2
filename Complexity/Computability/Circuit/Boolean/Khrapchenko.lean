@@ -33,14 +33,16 @@ measure subadditive; a negation exchanges the sides.
 If every input of `A` has at least `s₁` neighbors in `B` and every input of `B` has at least `s₀`
 neighbors in `A`, a formula separating them has leaf size at least `s₀ s₁`
 (`Formula.mul_le_leafSize`). So "at least `k` of `n` bits" needs leaf size `k (n + 1 - k)`
-(`mul_le_leafSize_of_computes_threshold`), and the parity of `n` bits, which changes with every
-bit, needs leaf size `n ^ 2` (`sq_le_leafSize_of_computes_parity`) [Khrapchenko1971]. Splitting the
-bits in halves, `x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives formulas of leaf size exactly `n ^ 2` when `n`
-is a power of two (`isLeast_leafSize_parity_two_pow`).
+(`mul_le_leafSize_of_computes_threshold`), majority needs leaf size `⌊(n + 1) ^ 2 / 4⌋`
+(`sq_div_four_le_leafSize_of_computes_majority`), and the parity of `n` bits, which changes with
+every bit, needs leaf size `n ^ 2` (`sq_le_leafSize_of_computes_parity`) [Khrapchenko1971].
+Splitting the bits in halves, `x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives formulas of leaf size exactly
+`n ^ 2` when `n` is a power of two (`isLeast_leafSize_parity_two_pow`).
 
 Since a formula of depth `d` has at most `2 ^ d` leaves, formulas for parity have depth at least
-`2 log₂ n` (`two_mul_log_le_depth_of_computes_parity`). Here the depth counts negations; the
-textbook bound, where negations are free, is not proved here.
+`2 log₂ n` (`two_mul_log_le_depth_of_computes_parity`). Here the depth counts negations; for the
+textbook bound, where negations are free, see `Circuit/Boolean/KhrapchenkoDepth.lean`: the
+formula depth of the parity of `2 ^ k` bits is exactly `2 k` (`formulaDepth_parity_two_pow`).
 
 ## Main definitions
 
@@ -52,6 +54,8 @@ textbook bound, where negations are free, is not proved here.
 * `Cslib.Circuits.Formula.mul_le_leafSize`: the bound in terms of neighbor counts.
 * `Cslib.Circuits.Boolean.mul_le_leafSize_of_computes_threshold`: formulas for the threshold
   function `Th^n_k` have leaf size at least `k (n + 1 - k)`.
+* `Cslib.Circuits.Boolean.sq_div_four_le_leafSize_of_computes_majority`: formulas for the majority
+  of `n` bits have leaf size at least `⌊(n + 1) ^ 2 / 4⌋`.
 * `Cslib.Circuits.Boolean.sq_le_leafSize_of_computes_parity`: formulas for parity have leaf size
   at least `n ^ 2`.
 * `Cslib.Circuits.Boolean.isLeast_leafSize_parity_two_pow`: the least leaf size of a formula for
@@ -281,6 +285,20 @@ theorem mul_le_leafSize_of_computes_threshold {k : ℕ} {F : Formula signature n
     fun b hb => ?_
   have := le_card_neighbors_weight_succ hb
   rwa [Nat.sub_add_cancel hk] at this
+
+/-- One half of `⌊m ^ 2 / 4⌋ = ⌊m / 2⌋ ⌈m / 2⌉`. -/
+private theorem sq_div_four_le (m : ℕ) : m ^ 2 / 4 ≤ m / 2 * (m - m / 2) := by
+  rcases Nat.even_or_odd' m with ⟨t, rfl | rfl⟩
+  · rw [show 2 * t / 2 = t by omega, show 2 * t - t = t by omega]
+    exact Nat.div_le_of_le_mul (le_of_eq (by ring))
+  · rw [show (2 * t + 1) / 2 = t by omega, show 2 * t + 1 - t = t + 1 by omega]
+    exact Nat.lt_succ_iff.1 ((Nat.div_lt_iff_lt_mul (by norm_num)).2 (by nlinarith))
+
+/-- **Khrapchenko's bound for majority.** A De Morgan formula computing the majority of `n` bits
+has leaf size at least `⌊(n + 1) ^ 2 / 4⌋ = ⌊(n + 1) / 2⌋ ⌈(n + 1) / 2⌉`. -/
+theorem sq_div_four_le_leafSize_of_computes_majority {F : Formula signature n}
+    (hF : F.Computes interpretation (majority n)) : (n + 1) ^ 2 / 4 ≤ F.leafSize :=
+  (sq_div_four_le (n + 1)).trans (mul_le_leafSize_of_computes_threshold hF)
 
 /-! ### Parity -/
 
