@@ -1,5 +1,6 @@
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
+import ComplexityTests.AffineDisperserLowerBound
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
