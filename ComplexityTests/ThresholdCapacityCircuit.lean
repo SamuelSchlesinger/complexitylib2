@@ -174,3 +174,103 @@ example : ¬ ∃ readout : (Fin 0 → Bool) → Bool, ∀ x : Fin 1 → Bool,
   have hf := h (fun _ => false)
   have ht := h (fun _ => true)
   exact Bool.false_ne_true (hf.symm.trans ht)
+
+-- Piece bounds and direction-run capacity bounds on native programs and circuits.
+example {β : Type*} {Φ : ℝ → β} (h : PiecesAtMost Φ 4) : ChangesAtMost Φ 3 :=
+  h.changesAtMost
+
+example (x : Fin 1 → Bool) (gate : Fin 3) :
+    evalFrom withUnused ∅ (fun _ => false)
+      (fun g => ∑ i, inputWeight withUnused g i * (x i).toNat) gate =
+      withUnused.eval interpretation x gate :=
+  evalFrom_eq_eval withUnused gate (by simp) (fun _ _ _ => rfl)
+
+open scoped Classical in
+example (slope : Fin 3 → ℝ) :
+    PiecesAtMost (fun t => evalFrom withUnused ∅ (fun _ => false) (fun g => slope g * t))
+      (2 ^ (Finset.univ.filter fun g : Fin 3 => g ∉ (∅ : Finset (Fin 3)) ∧ slope g ≠ 0).card) :=
+  piecesAtMost_evalFrom withUnused ∅ (fun _ => false) slope
+
+private theorem withUnused_along_one (gate : Fin 3) :
+    ∃ c : ℝ, inputWeight withUnused gate = c • (fun _ : Fin 1 => (1 : ℝ)) :=
+  ⟨inputWeight withUnused gate 0, by funext i; fin_cases i; simp⟩
+
+private def withUnusedSingleRun : DirectionRuns withUnused 1 :=
+  singleRun withUnused (fun _ => 1) withUnused_along_one
+
+example : ∑ i ∈ Finset.range 3, (gateRuns withUnused).size i = 1 := by
+  rw [(gateRuns withUnused).sum_size, withUnused_inputGates]
+  rfl
+
+example : 1 < 2 * 1 + 2 + 2 * (inputGates negateCircuit.program).card :=
+  circuit_lt_two_mul_add_two_mul_inputGates negateCircuit ⟨(1 : Fin 3), rfl⟩ le_rfl
+    negateCircuit_eval (oneBit_rectangleFree _)
+
+example : 2 ^ 1 < 16 * 2 ^ 2 * 2 ^ (inputGates negateCircuit.program).card :=
+  circuit_two_pow_lt_of_direction negateCircuit ⟨(1 : Fin 3), rfl⟩ (fun _ => 1)
+    withUnused_along_one negateCircuit_eval (oneBit_rectangleFree _)
+
+example : 1 < 2 * 1 + 4 + (inputGates negateCircuit.program).card :=
+  circuit_lt_of_direction negateCircuit ⟨(1 : Fin 3), rfl⟩ (fun _ => 1)
+    withUnused_along_one le_rfl negateCircuit_eval (oneBit_rectangleFree _)
+
+example : 2 ^ 1 < 4 * 2 ^ 2 * 4 ^ 1 * 2 ^ (inputGates negateCircuit.program).card :=
+  circuit_two_pow_lt_of_runs negateCircuit ⟨(1 : Fin 3), rfl⟩ withUnusedSingleRun
+    negateCircuit_eval (oneBit_rectangleFree _)
+
+example : 1 < 2 * 1 + 2 + 2 * 1 + (inputGates negateCircuit.program).card :=
+  circuit_lt_of_runs negateCircuit ⟨(1 : Fin 3), rfl⟩ withUnusedSingleRun le_rfl
+    negateCircuit_eval (oneBit_rectangleFree _)
+
+example : 2 ^ 1 < 4 * 2 ^ 2 * max 1 (4 * 0) :=
+  two_pow_lt_of_multilevel (f := fun _ : Fin 1 → Bool => false) (K := 2)
+    (fun _ => 0) (fun _ => false) (ChangesAtMost.const false) (fun _ => rfl)
+    (oneBit_rectangleFree _)
+
+/--
+info: 'Cslib.PiecesAtMost.changesAtMost' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PiecesAtMost.changesAtMost
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_evalFrom' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_evalFrom
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_runs' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_runs
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.lt_of_runs' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.lt_of_runs
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_multilevel' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_multilevel
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_sub_lt_of_multilevel' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_sub_lt_of_multilevel
