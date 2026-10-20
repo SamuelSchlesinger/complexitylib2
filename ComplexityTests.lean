@@ -168,6 +168,7 @@ import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedFirstOrder
+import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTuples
 import ComplexityTests.PCPAmplification
