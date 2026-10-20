@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Erik Demaine, Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 lean-trominoes contributors, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine, Samuel Schlesinger
 -/
@@ -26,7 +26,7 @@ instructions (`Cslib.WordRAM.Exec.runs`). A complete program ends with a `halt`
 (`Cslib.WordRAM.Code.program`), so a structured proof that a program answers a question
 (`Cslib.WordRAM.Code.Answers`) gives a flat program that answers it with one more instruction
 (`Cslib.WordRAM.Code.Answers.program`), and a uniform decision procedure
-(`Cslib.WordRAM.DecidesInTime.of_code`).
+(`Cslib.WordRAM.Code.decidesInTime_program`, `Cslib.WordRAM.DecidableInTime.of_code`).
 
 ## Main definitions
 
@@ -40,7 +40,10 @@ instructions (`Cslib.WordRAM.Exec.runs`). A complete program ends with a `halt`
 * `Cslib.WordRAM.Exec.runs`: structured executions are runs of the assembled program with the
   same instruction count.
 * `Cslib.WordRAM.Exec.executes`: a structured execution followed by `halt` is a halting run.
-* `Cslib.WordRAM.DecidesInTime.of_code`: structured decision procedures are uniform deciders.
+* `Cslib.WordRAM.Code.decidesInTime_program`, `Cslib.WordRAM.DecidableInTime.of_code`: structured
+  decision procedures are uniform deciders.
+* `Cslib.WordRAM.Code.not_readsWidth_program`: a compiled program reads the word size only if the
+  structured program does.
 
 ## References
 
@@ -194,14 +197,62 @@ theorem Code.Answers.program {c : Code r} {out : Fin r} {w : ℕ} {input : List 
   ⟨y.regs out, n + 1, he.executes out, Nat.add_le_add_right hn 1, hv⟩
 
 /-- **Structured decision procedures are uniform deciders.** If a structured program answers
-whether `P a` in register `out` within `time a` instructions at every word size `w ≥ bits a`
-that accommodates the input words, then `P` is decided uniformly within `time a + 1`
-instructions. -/
-theorem DecidesInTime.of_code {α : Type*} {encode : α → List ℕ} {P : α → Prop}
+whether `a ∈ A` in register `out` within `time a` instructions at every word size `w ≥ bits a`
+that accommodates the input words, then the compiled program decides `A` uniformly within
+`time a + 1` instructions. -/
+theorem Code.decidesInTime_program {α : Type*} {encode : α → List ℕ} {A : Set α}
     {time bits : α → ℕ} (c : Code r) (out : Fin r)
-    (h : ∀ a w, bits a ≤ w → InputFits w (encode a) → c.Answers out w (encode a) (P a) (time a)) :
-    DecidesInTime encode P (fun a => time a + 1) bits :=
-  ⟨r, c.program out, fun a w hw hi => (h a w hw hi).program⟩
+    (h : ∀ a w, bits a ≤ w → InputFits w (encode a) →
+      c.Answers out w (encode a) (a ∈ A) (time a)) :
+    (c.program out).DecidesInTime encode A (fun a => time a + 1) bits :=
+  fun a w hw hi => (h a w hw hi).program
+
+/-- **Structured decision procedures are uniform deciders.** -/
+theorem DecidableInTime.of_code {α : Type*} {encode : α → List ℕ} {A : Set α}
+    {time bits : α → ℕ} (c : Code r) (out : Fin r)
+    (h : ∀ a w, bits a ≤ w → InputFits w (encode a) →
+      c.Answers out w (encode a) (a ∈ A) (time a)) :
+    DecidableInTime A encode (fun a => time a + 1) bits :=
+  ⟨r, c.program out, c.decidesInTime_program out h⟩
+
+/-! ## Reading the word size -/
+
+/-- An assembled program reads the word size only if the structured program does. -/
+theorem Code.readsWidth_of_assemble {c : Code r} {pc : ℕ} (h : (c.assemble pc).ReadsWidth) :
+    c.ReadsWidth := by
+  obtain ⟨i, hi, hr⟩ := h
+  induction c generalizing pc with
+  | op o =>
+    simp only [Code.assemble, List.mem_singleton] at hi
+    subst hi
+    exact hr
+  | seq c₁ c₂ ih₁ ih₂ =>
+    simp only [Code.assemble, List.mem_append] at hi
+    exact hi.elim (fun hi => .inl (ih₁ hi)) (fun hi => .inr (ih₂ hi))
+  | branch c pos neg ihp ihn =>
+    simp only [Code.assemble, List.mem_append, List.mem_cons] at hi
+    rcases hi with (rfl | hi) | rfl | hi
+    · exact (hr : False).elim
+    · exact .inr (ihn hi)
+    · exact (hr : False).elim
+    · exact .inl (ihp hi)
+  | loop c body ih =>
+    simp only [Code.assemble, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hi
+    rcases hi with (rfl | rfl | hi) | rfl
+    · exact (hr : False).elim
+    · exact (hr : False).elim
+    · exact ih hi
+    · exact (hr : False).elim
+
+/-- A compiled program reads the word size only if the structured program does. -/
+theorem Code.not_readsWidth_program {c : Code r} (hc : ¬c.ReadsWidth) (out : Fin r) :
+    ¬(c.program out).ReadsWidth := by
+  rintro ⟨i, hi, hr⟩
+  rcases List.mem_append.1 hi with hi | hi
+  · exact hc (Code.readsWidth_of_assemble ⟨i, hi, hr⟩)
+  · rw [List.mem_singleton] at hi
+    subst hi
+    exact (hr : False).elim
 
 end Cslib.WordRAM
 

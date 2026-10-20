@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Erik Demaine, Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 lean-trominoes contributors, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine, Samuel Schlesinger
 -/
@@ -105,11 +105,11 @@ end Block
 def clear (m : ℕ → ℕ) (base k : ℕ) : ℕ → ℕ :=
   fun a => if base ≤ a ∧ a < base + k then 0 else m a
 
-theorem clear_of_owns {m : ℕ → ℕ} {base k a : ℕ} (h : base ≤ a ∧ a < base + k) :
+theorem clear_of_owns {m : ℕ → ℕ} {base k a : ℕ} (h : (Block.mk base k).Owns a) :
     clear m base k a = 0 := by
-  simp [clear, h]
+  simp [clear, show base ≤ a ∧ a < base + k from h]
 
-theorem clear_of_not_owns {m : ℕ → ℕ} {base k a : ℕ} (h : ¬(base ≤ a ∧ a < base + k)) :
+theorem clear_of_not_owns {m : ℕ → ℕ} {base k a : ℕ} (h : ¬(Block.mk base k).Owns a) :
     clear m base k a = m a := by
   simp only [clear, ite_eq_right_iff]
   exact fun h' => absurd h' h

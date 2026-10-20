@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Erik Demaine, Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 lean-trominoes contributors, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine, Samuel Schlesinger
 -/
@@ -18,12 +18,13 @@ whose every instruction costs one unit of time. Algorithms are analysed for word
 order `log n`, enough for a word to address the input [Cormen et al., Section 2.2][CLRS2009]
 [Fredman and Willard][FredmanWillard1993] [Hagerup][Hagerup1998]. This is the model in which
 algorithm papers state running times. It differs from the random-access machines of Cook and
-Reckhow (`Cslib.RAM`), whose registers hold unbounded numbers and whose instructions are charged
-the lengths of their operands: here the numbers are bounded, so unit cost is sound.
+Reckhow [Cook and Reckhow][CookReckhow1973] (`Cslib.RAM`), whose registers hold unbounded numbers
+and whose instructions are charged the lengths of their operands: here the numbers are bounded,
+so unit cost is sound.
 
 This file defines the machine and its runs. Time-bounded decision, with the word size tied to the
-input size, is `Cslib.WordRAM.DecidesInTime`; structured programs (`Cslib.WordRAM.Code`) compile to
-the flat programs of this file with the same instruction counts.
+input size, is `Cslib.WordRAM.DecidableInTime`; structured programs (`Cslib.WordRAM.Code`) compile
+to the flat programs of this file with the same instruction counts.
 
 ## The model
 
@@ -35,12 +36,13 @@ the flat programs of this file with the same instruction counts.
   held in a register, and read the word size `w`. The control instructions jump, branch on an
   equality or unsigned comparison of two registers, and halt with the contents of a register as
   output.
-* An instruction that would write a number of more than `w` bits into a register *faults*, and
-  so does running off the end of the program. A fault is not a result: only runs that halt
-  count. Registers and memory then hold words throughout a run, so every address is a word and
-  the memory has `2 ^ w` usable cells.
 * A run starts at instruction `0` with all registers `0`, the input length at address `0` and the
   input words at addresses `1, …, n` (`Cslib.WordRAM.State.init`); all other cells hold `0`.
+* On a run from an input whose length and words fit a word (`Cslib.WordRAM.InputFits`), an
+  instruction that would write a number of more than `w` bits into a register *faults*, and so
+  does running off the end of the program. A fault is not a result: only runs that halt count.
+  Registers and memory hold words throughout such a run (`Cslib.WordRAM.Runs.bounded_init`), so
+  every address is a word and the memory has `2 ^ w` usable cells.
 
 ## Design notes
 
@@ -51,24 +53,31 @@ The definitions are adapted from the Lean formalization accompanying
   assumption that every value an algorithm computes fits a word
   [Cormen et al., Section 2.2][CLRS2009]: a run that succeeds never relies on wrapping. Hence a
   successful run of a program that does not read the word size never depends on it: such a run
-  succeeds identically at every larger word size (`Cslib.WordRAM.Executes.mono`).
-* Words are unsigned, as in most word-RAM definitions [Hagerup][Hagerup1998]; the source
-  formalization uses two's-complement integers. Subtraction is truncated, and division and
-  remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`; each of these
-  conventions costs a constant number of instructions to reproduce with any other, so time
-  bounds are unaffected.
+  succeeds identically at every larger word size (`Cslib.WordRAM.Executes.mono_width`).
+  Algorithms that use arithmetic modulo `2 ^ w` [Hagerup][Hagerup1998] must reduce explicitly,
+  for instance with the word size and half-word arithmetic; this is not formalized here.
+* Words are unsigned, as in most word-RAM definitions [Hagerup][Hagerup1998]. Subtraction is
+  truncated, and division and remainder by zero follow Lean's conventions `x / 0 = 0` and
+  `x % 0 = x`; each of these conventions costs a constant number of instructions to reproduce
+  with any other, so time bounds are unaffected.
 * The instructions are the arithmetic, bitwise and shift operations of the standard word RAM
   [Hagerup][Hagerup1998], with an instruction reading the word size, which word-RAM algorithms
-  may use [Fredman and Willard][FredmanWillard1993]. The source formalization has no bitwise
-  operations.
+  may use [Fredman and Willard][FredmanWillard1993].
 * Only constants and binary operations check that the number they write fits a word. Copies,
   loads and stores move words already held by the machine, and every address held in a register
-  is a word (`Cslib.WordRAM.Data.Bounded.runs`), so checks on them, which the source
-  formalization makes, could never fail on a run from an input; they are omitted, which spares
-  every program proof their side conditions.
+  is a word, so on a run from an input that fits such checks could never fail
+  (`Cslib.WordRAM.Runs.bounded_init`); omitting them spares every program proof their side
+  conditions.
+* Memory starts zeroed beyond the input, so a program may use any cell before writing it.
 * The program counter is not required to fit a word: a program has constant length.
 * Data instructions have one semantics, `Cslib.WordRAM.Op.eval`, shared by flat and structured
   programs; runs are counted with cslib's `Relation.RelatesInSteps`.
+
+Compared with the source formalization, words are unsigned rather than two's-complement integers;
+the bitwise operations, shifts and the word-size instruction are added; copies, loads,
+addresses and the halting output are not checked against the word size; the program counter is
+unbounded; and the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
+of binary digits of the size rather than by `log₂ (size + 2) + 2`, which defines the same classes.
 
 ## Main definitions
 
@@ -86,16 +95,17 @@ The definitions are adapted from the Lean formalization accompanying
 
 ## Main results
 
-* `Cslib.WordRAM.executes_iff_run`: the interpreter computes exactly the halting runs.
+* `Cslib.WordRAM.executes_iff_exists_run_eq`: the interpreter computes exactly the halting runs.
 * `Cslib.WordRAM.Executes.unique`: output and instruction count are determined by the program,
   the word size and the state.
-* `Cslib.WordRAM.Data.Bounded.runs`: from an input that fits, every reachable register and memory
+* `Cslib.WordRAM.Runs.bounded_init`: from an input that fits, every reachable register and memory
   cell holds a `w`-bit word.
-* `Cslib.WordRAM.Executes.mono`: a program that does not read the word size halts in the same way
-  at every larger word size.
+* `Cslib.WordRAM.Executes.mono_width`: a program that does not read the word size halts in the
+  same way at every larger word size.
 
 ## References
 
+* [S. A. Cook and R. A. Reckhow, *Time bounded random access machines*][CookReckhow1973]
 * [T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to
   Algorithms*][CLRS2009]
 * [M. L. Fredman and D. E. Willard, *Surpassing the information theoretic bound with fusion
@@ -294,8 +304,9 @@ theorem Cond.holds_lt {i j : Fin r} {x : Data r} : (Cond.lt i j).Holds x ↔ x.r
 
 /-- The effect of a data instruction at word size `w`, or `none` if it faults. Only constants
 and binary operations can produce a number that does not fit a word, and they fault when they do.
-Copying, loading and storing need no check: throughout a run, registers and memory hold words
-(`Cslib.WordRAM.Data.Bounded.runs`), so every address held in a register is a word too. -/
+Copying, loading and storing need no check: throughout a run from an input that fits, registers
+and memory hold words (`Cslib.WordRAM.Runs.bounded_init`), so every address held in a register is
+a word too. -/
 def Op.eval (w : ℕ) : Op r → Data r → Option (Data r)
   | .const d v, x => x.put w d v
   | .copy d s, x => some (x.set d (x.regs s))
@@ -450,7 +461,7 @@ theorem run_mono {fuel fuel' : ℕ} {vn : ℕ × ℕ} (h : run w p fuel s = some
     · simp at h
 
 /-- The interpreter computes exactly the halting runs. -/
-theorem executes_iff_run : Executes w p s v n ↔ ∃ fuel, run w p fuel s = some (v, n) :=
+theorem executes_iff_exists_run_eq : Executes w p s v n ↔ ∃ fuel, run w p fuel s = some (v, n) :=
   ⟨fun h => ⟨n, h.run_eq⟩, fun ⟨_, h⟩ => .of_run h⟩
 
 /-- A halting run is determined by the program, the word size and the state: its output and its
@@ -548,8 +559,8 @@ theorem Data.Bounded.op {w : ℕ} {x y : Data r} (hx : x.Bounded w) {o : Op r}
   | width d => cases h; exact hx.set (fits_self w)
 
 /-- A step preserves word bounds. -/
-theorem Data.Bounded.step {w : ℕ} {p : Program r} {s t : State r} (hs : s.data.Bounded w)
-    (h : Next w p s t) : t.data.Bounded w := by
+theorem Next.bounded {w : ℕ} {p : Program r} {s t : State r} (h : Next w p s t)
+    (hs : s.data.Bounded w) : t.data.Bounded w := by
   unfold Next WordRAM.step at h
   split at h
   · cases h
@@ -559,12 +570,17 @@ theorem Data.Bounded.step {w : ℕ} {p : Program r} {s t : State r} (hs : s.data
     · cases h
   all_goals first | (cases h; exact hs) | cases h
 
+/-- A run preserves word bounds. -/
+theorem Runs.bounded {w : ℕ} {p : Program r} {s t : State r} {n : ℕ} (h : Runs w p s t n)
+    (hs : s.data.Bounded w) : t.data.Bounded w := by
+  induction h with
+  | refl => exact hs
+  | tail _ _ _ _ hstep ih => exact hstep.bounded ih
+
 /-- Every state reachable from an input that fits holds only `w`-bit words. -/
-theorem Data.Bounded.runs {w : ℕ} {p : Program r} {input : List ℕ} {t : State r} {n : ℕ}
-    (h : InputFits w input) (ht : Runs w p (State.init input) t n) : t.data.Bounded w := by
-  induction ht with
-  | refl => exact Bounded.init h
-  | tail _ _ _ _ hstep ih => exact ih.step hstep
+theorem Runs.bounded_init {w : ℕ} {p : Program r} {input : List ℕ} {t : State r} {n : ℕ}
+    (h : Runs w p (State.init input) t n) (hi : InputFits w input) : t.data.Bounded w :=
+  h.bounded (Data.Bounded.init hi)
 
 /-! ## Larger word sizes
 
@@ -576,10 +592,28 @@ def Op.ReadsWidth : Op r → Prop
   | .width _ => True
   | _ => False
 
-/-- A program reads the word size if it contains an `Op.width` instruction. -/
-def Program.ReadsWidth (p : Program r) : Prop := ∃ d, Instr.op (.width d) ∈ p
+instance : DecidablePred (Op.ReadsWidth (r := r)) := fun o =>
+  match o with
+  | .width _ => isTrue trivial
+  | .const .. | .copy .. | .bin .. | .load .. | .store .. => isFalse id
 
-theorem Op.eval_mono {w w' : ℕ} {o : Op r} {x y : Data r} (ho : ¬o.ReadsWidth)
+/-- The instruction reads the word size. -/
+def Instr.ReadsWidth : Instr r → Prop
+  | .op o => o.ReadsWidth
+  | _ => False
+
+instance : DecidablePred (Instr.ReadsWidth (r := r)) := fun i =>
+  match i with
+  | .op o => inferInstanceAs (Decidable o.ReadsWidth)
+  | .jump .. | .branch .. | .halt .. => isFalse id
+
+/-- A program reads the word size if one of its instructions does. -/
+def Program.ReadsWidth (p : Program r) : Prop := ∃ i ∈ p, i.ReadsWidth
+
+instance (p : Program r) : Decidable p.ReadsWidth :=
+  inferInstanceAs (Decidable (∃ i ∈ p, i.ReadsWidth))
+
+theorem Op.eval_mono_width {w w' : ℕ} {o : Op r} {x y : Data r} (ho : ¬o.ReadsWidth)
     (h : o.eval w x = some y) (hw : w ≤ w') : o.eval w' x = some y := by
   cases o with
   | const | bin =>
@@ -588,7 +622,7 @@ theorem Op.eval_mono {w w' : ℕ} {o : Op r} {x y : Data r} (ho : ¬o.ReadsWidth
   | copy | load | store => exact h
   | width => exact absurd trivial ho
 
-theorem Next.mono {w w' : ℕ} {p : Program r} {s t : State r} (hp : ¬p.ReadsWidth)
+theorem Next.mono_width {w w' : ℕ} {p : Program r} {s t : State r} (hp : ¬p.ReadsWidth)
     (h : Next w p s t) (hw : w ≤ w') : Next w' p s t := by
   unfold Next at h ⊢
   cases hpc : p[s.pc]? with
@@ -596,17 +630,15 @@ theorem Next.mono {w w' : ℕ} {p : Program r} {s t : State r} (hp : ¬p.ReadsWi
   | some i =>
     cases i with
     | op o =>
-      have ho : ¬o.ReadsWidth := fun ho => by
-        cases o <;> simp only [Op.ReadsWidth] at ho
-        exact hp ⟨_, List.mem_of_getElem? hpc⟩
+      have ho : ¬o.ReadsWidth := fun ho => hp ⟨_, List.mem_of_getElem? hpc, ho⟩
       cases hx : o.eval w s.data with
       | none => simp [WordRAM.step, hpc, hx] at h
-      | some x => rw [step_op hpc hx, ← step_op hpc (Op.eval_mono ho hx hw)] at h; exact h
+      | some x => rw [step_op hpc hx, ← step_op hpc (Op.eval_mono_width ho hx hw)] at h; exact h
     | jump t => rw [step_jump hpc] at h ⊢; exact h
     | branch c t => rw [step_branch hpc] at h ⊢; exact h
     | halt i => simp [step_halt hpc] at h
 
-theorem step_halt_mono {w w' : ℕ} {p : Program r} {s : State r} {v : ℕ}
+theorem step_halt_mono_width {w w' : ℕ} {p : Program r} {s : State r} {v : ℕ}
     (h : step w p s = .halt v) : step w' p s = .halt v := by
   cases hpc : p[s.pc]? with
   | none => simp [WordRAM.step, hpc] at h
@@ -619,18 +651,18 @@ theorem step_halt_mono {w w' : ℕ} {p : Program r} {s : State r} {v : ℕ}
     | branch c t => simp [step_branch hpc] at h
     | halt i => rw [step_halt hpc] at h ⊢; exact h
 
-theorem Runs.mono {w w' : ℕ} {p : Program r} {s t : State r} {n : ℕ} (hp : ¬p.ReadsWidth)
+theorem Runs.mono_width {w w' : ℕ} {p : Program r} {s t : State r} {n : ℕ} (hp : ¬p.ReadsWidth)
     (h : Runs w p s t n) (hw : w ≤ w') : Runs w' p s t n := by
   induction h with
   | refl => exact .refl _
-  | tail _ _ _ _ hstep ih => exact .tail _ _ _ _ ih (hstep.mono hp hw)
+  | tail _ _ _ _ hstep ih => exact .tail _ _ _ _ ih (hstep.mono_width hp hw)
 
 /-- **Word-size monotonicity.** A program that does not read the word size halts in the same way
 at every larger word size. -/
-theorem Executes.mono {w w' : ℕ} {p : Program r} {s : State r} {v n : ℕ} (hp : ¬p.ReadsWidth)
+theorem Executes.mono_width {w w' : ℕ} {p : Program r} {s : State r} {v n : ℕ} (hp : ¬p.ReadsWidth)
     (h : Executes w p s v n) (hw : w ≤ w') : Executes w' p s v n :=
   let ⟨t, m, hr, ht, hn⟩ := h
-  ⟨t, m, hr.mono hp hw, step_halt_mono ht, hn⟩
+  ⟨t, m, hr.mono_width hp hw, step_halt_mono_width ht, hn⟩
 
 end Cslib.WordRAM
 

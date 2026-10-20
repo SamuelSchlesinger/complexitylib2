@@ -516,7 +516,7 @@ space bounds. Further class-level work needs resource certificates for the actua
   a [linear-time element-distinctness client](Complexity/Algorithms/WordRAM/ElementDistinctness.lean).
   Open: simulations between the word RAM, the logarithmic-cost
   [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) and Turing machines (v1 proves
-  `RAM.P = P` for the logarithmic-cost RAM), the converse of `DecidesInTime.at` for programs that
+  `RAM.P = P` for the logarithmic-cost RAM), the converse of `DecidableInTime.decidableInTimeAt` for programs that
   read the word size, transfer of cell-probe lower bounds, and that formalization's Horn-SAT, 2SAT,
   matching and domino-tiling clients;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;

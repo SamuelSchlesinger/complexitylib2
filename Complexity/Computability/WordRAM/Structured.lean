@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Erik Demaine, Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 lean-trominoes contributors, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine, Samuel Schlesinger
 -/
@@ -57,8 +57,8 @@ injectively chosen registers of a larger register file and leaves the others unt
 * `Cslib.WordRAM.ExecWithin.loop_invariant`: the loop rule with an invariant and a measure.
 * `Cslib.WordRAM.Exec.regs_eq`: registers that a program never writes keep their contents.
 * `Cslib.WordRAM.Exec.rename`: renamed programs run on the chosen registers.
-* `Cslib.WordRAM.Exec.mono`, `Cslib.WordRAM.Exec.bounded`: a program that does not read the word
-  size runs in the same way at every larger word size, and executions keep data word-sized.
+* `Cslib.WordRAM.Exec.mono_width`, `Cslib.WordRAM.Exec.bounded`: a program that does not read the
+  word size runs in the same way at every larger word size, and executions keep data word-sized.
 
 ## References
 
@@ -103,6 +103,18 @@ def ReadsWidth : Code r → Prop
   | .seq c₁ c₂ => c₁.ReadsWidth ∨ c₂.ReadsWidth
   | .branch _ pos neg => pos.ReadsWidth ∨ neg.ReadsWidth
   | .loop _ body => body.ReadsWidth
+
+instance decidableReadsWidth : (c : Code r) → Decidable c.ReadsWidth
+  | .op o => inferInstanceAs (Decidable o.ReadsWidth)
+  | .seq c₁ c₂ =>
+    have := c₁.decidableReadsWidth
+    have := c₂.decidableReadsWidth
+    inferInstanceAs (Decidable (_ ∨ _))
+  | .branch _ pos neg =>
+    have := pos.decidableReadsWidth
+    have := neg.decidableReadsWidth
+    inferInstanceAs (Decidable (_ ∨ _))
+  | .loop _ body => body.decidableReadsWidth
 
 end Code
 
@@ -410,6 +422,18 @@ def Code.Preserves (i : Fin r) : Code r → Prop
   | .branch _ pos neg => pos.Preserves i ∧ neg.Preserves i
   | .loop _ body => body.Preserves i
 
+instance Code.decidablePreserves (i : Fin r) : (c : Code r) → Decidable (c.Preserves i)
+  | .op o => inferInstanceAs (Decidable (o.dest ≠ some i))
+  | .seq c₁ c₂ =>
+    have := c₁.decidablePreserves i
+    have := c₂.decidablePreserves i
+    inferInstanceAs (Decidable (_ ∧ _))
+  | .branch _ pos neg =>
+    have := pos.decidablePreserves i
+    have := neg.decidablePreserves i
+    inferInstanceAs (Decidable (_ ∧ _))
+  | .loop _ body => body.decidablePreserves i
+
 theorem Op.regs_eq {w : ℕ} {o : Op r} {x y : Data r} {i : Fin r} (hi : o.dest ≠ some i)
     (h : o.eval w x = some y) : y.regs i = x.regs i := by
   have hne {d : Fin r} (hd : o.dest = some d) : i ≠ d := fun hid => hi (hid ▸ hd)
@@ -511,20 +535,8 @@ theorem Data.extend_comap (hf : f.Injective) (x : Data r') : (x.comap f).extend 
   · rfl
 
 theorem Data.extend_set (hf : f.Injective) (y : Data r) (x : Data r') (i : Fin r) (v : ℕ) :
-    (y.set i v).extend f x = (y.extend f x).set (f i) v := by
-  ext j
-  · change Function.extend f (Function.update y.regs i v) x.regs j =
-      Function.update (Function.extend f y.regs x.regs) (f i) v j
-    by_cases hj : ∃ k, f k = j
-    · obtain ⟨k, rfl⟩ := hj
-      rw [hf.extend_apply]
-      by_cases hk : k = i
-      · subst hk
-        simp
-      · rw [Function.update_of_ne hk, Function.update_of_ne (hf.ne hk), hf.extend_apply]
-    · rw [Function.extend_apply' _ _ _ hj, Function.update_of_ne (fun h => hj ⟨i, h.symm⟩),
-        Function.extend_apply' _ _ _ hj]
-  · rfl
+    (y.set i v).extend f x = (y.extend f x).set (f i) v :=
+  Data.ext (hf.extend_update _ _ _ _) rfl
 
 theorem Data.extend_write (y : Data r) (x : Data r') (a v : ℕ) :
     (y.write a v).extend f x = (y.extend f x).write a v := rfl
@@ -587,10 +599,10 @@ end Rename
 
 /-- **Word-size monotonicity.** A program that does not read the word size runs in the same way
 at every larger word size. -/
-theorem Exec.mono {w w' : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (hc : ¬c.ReadsWidth)
+theorem Exec.mono_width {w w' : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (hc : ¬c.ReadsWidth)
     (h : Exec w c x y n) (hw : w ≤ w') : Exec w' c x y n := by
   induction h with
-  | op ho => exact .op (Op.eval_mono hc ho hw)
+  | op ho => exact .op (Op.eval_mono_width hc ho hw)
   | seq _ _ ih₁ ih₂ => exact .seq (ih₁ fun h => hc (.inl h)) (ih₂ fun h => hc (.inr h))
   | branch_pos hp _ ih => exact .branch_pos hp (ih fun h => hc (.inl h))
   | branch_neg hn _ ih => exact .branch_neg hn (ih fun h => hc (.inr h))
@@ -600,7 +612,7 @@ theorem Exec.mono {w w' : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (hc : ¬c.R
 theorem ExecWithin.mono_width {w w' T : ℕ} {c : Code r} {x y : Data r} (hc : ¬c.ReadsWidth)
     (h : ExecWithin w c x y T) (hw : w ≤ w') : ExecWithin w' c x y T :=
   let ⟨n, hn, he⟩ := h
-  ⟨n, hn, he.mono hc hw⟩
+  ⟨n, hn, he.mono_width hc hw⟩
 
 /-- Executions keep data word-sized. -/
 theorem Exec.bounded {w : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (h : Exec w c x y n)

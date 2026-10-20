@@ -87,33 +87,108 @@ example (x : Data 3) : ∃ y, ExecWithin 8 straight x y 6 ∧ y.mem 5 = 7 := by
   case run => ram_eval [straight]
   case mem => simp
 
+/-- `ram_eval` at a symbolic word size, from facts stated with `Fits`. -/
+example (w : ℕ) (x : Data 3) (h5 : Fits w 5) (h7 : Fits w 7) (h12 : Fits w 12) :
+    ∃ y, ExecWithin w straight x y 6 ∧ y.mem 5 = 7 := by
+  refine ⟨?y, ?run, ?mem⟩
+  case run => ram_eval [straight, h5, h7, h12]
+  case mem => simp
+
+/-- Counting to three in a loop. -/
+def count : Code 3 := ram[ a ← #0; b ← #3; c ← #1; while a < b do [ a ← a + c ] ]
+
+/-- `ram_eval` with three loop iterations: three constants, three iterations of an addition, a
+branch and a jump, and a branch and a jump to leave the loop. -/
+example (x : Data 3) : ∃ y, Exec 8 count x y 14 ∧ y.regs a = 3 := by
+  refine ⟨?y, ?run, ?val⟩
+  case run => ram_eval 3 [count]
+  case val => simp
+
 /-- A loop compiles to a branch, a jump out, the body and a jump back. -/
 example : (ram[ while a < b do [ a ← a + c ] ] : Code 3).assemble 0 =
     [.branch (.lt a b) 2, .jump 4, .op (.bin .add a a c), .jump 0] := rfl
 
+/-- Reading the word size. -/
+example : ((ram[ a ← width% ] : Code 3).eval 7 0 (.init [])).map (·.1.regs a) = some 7 := by
+  decide
+
+/-- Registers a program never writes keep their contents; `Code.Preserves` is decidable. -/
+example {w n : ℕ} {x y : Data 3} (h : Exec w straight x y n) : y.regs a = x.regs a :=
+  h.regs_eq (by decide)
+
+/-- The notation reserves no identifiers. -/
+example (ram width : ℕ) : ram + width = width + ram := Nat.add_comm _ _
+
 end Notation
+
+/-! ## Running a program on other registers -/
+
+section Rename
+
+/-- Register names for a two-register program. -/
+abbrev p : Fin 2 := 0
+/-- Register names for a two-register program. -/
+abbrev q : Fin 2 := 1
+
+/-- A two-register program. -/
+def double : Code 2 := ram[ p ← #3; q ← p + p ]
+
+/-- `double` runs on registers `2` and `0` of a three-register machine and leaves register `1`
+alone, with the same instruction count. -/
+example (x : Data 3) : ∃ y, Exec 8 (double.rename ![2, 0]) x y 2 ∧
+    y.regs 2 = 3 ∧ y.regs 0 = 6 ∧ y.regs 1 = x.regs 1 := by
+  have hf : Function.Injective (![2, 0] : Fin 2 → Fin 3) := by decide
+  have e : Exec 8 double (x.comap ![2, 0]) (((x.comap ![2, 0]).set p 3).set q 6) 2 := by
+    ram_eval [double]
+  refine ⟨_, e.rename hf, ?_, ?_, ?_⟩
+  · exact hf.extend_apply _ _ (0 : Fin 2)
+  · exact hf.extend_apply _ _ (1 : Fin 2)
+  · exact Function.extend_apply' _ _ _ (by decide)
+
+end Rename
 
 /-! ## Element distinctness -/
 
 section ElementDistinctness
 
-open Cslib.Algorithms.WordRAM.ElementDistinctness
+open Cslib.Algorithms.WordRAM.ElementDistinctness Cslib.Algorithms.WordRAM.ElementDistinctness.Reg
 
-/-- Distinct entries: the compiled program answers `1`, within the bound `16 (n + 1)`. -/
-example : (run 8 (program.program ans) 200 (.init [2, 0, 1])).map (·.1) = some 1 := by decide
+/-- Distinct entries: the compiled decider answers `1`. -/
+example : (run 8 (decider.program ans) 200 (.init [2, 0, 1])).map (·.1) = some 1 := by decide
 
-/-- A duplicate: the compiled program answers `0`. -/
-example : (run 8 (program.program ans) 200 (.init [1, 0, 1])).map (·.1) = some 0 := by decide
-
-example : ∀ vn ∈ run 8 (program.program ans) 200 (.init [2, 0, 1]), vn.2 ≤ 16 * (3 + 1) := by
-  decide
+/-- A duplicate: the compiled decider answers `0`. -/
+example : (run 8 (decider.program ans) 200 (.init [1, 0, 1])).map (·.1) = some 0 := by decide
 
 /-- The empty list has no duplicates. -/
-example : (run 8 (program.program ans) 200 (.init [])).map (·.1) = some 1 := by decide
+example : (run 8 (decider.program ans) 200 (.init [])).map (·.1) = some 1 := by decide
+
+/-- At the threshold word size `2 (⌊log₂ 3⌋ + 1) = 4`, the decider answers within its bound
+`16 (n + 1)`; at word size `2` it faults. -/
+example : logWidth 2 3 = 4 ∧ run 4 (decider.program ans) 200 (.init [2, 0, 1]) = some (1, 58) ∧
+    58 ≤ 16 * (3 + 1) ∧ run 2 (decider.program ans) 200 (.init [2, 0, 1]) = none := by
+  decide
+
+/-- Neither the decider nor its compiled program reads the word size. -/
+example : ¬decider.ReadsWidth ∧ ¬(decider.program ans).ReadsWidth := by decide
+
+/-- The decider also decides at any word size above its threshold, which it may read, and element
+distinctness for small entries is in polynomial time. -/
+example : (decider.program ans).DecidesInTimeAt (fun l : Input => l.1) {l | l.1.Nodup}
+      (fun l => 16 * (l.1.length + 1)) (fun l => logWidth 2 l.1.length + 7) ∧
+    PolynomialTime {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
+  ⟨decidesInTime_nodup.decidesInTimeAt fun _ => Nat.le_add_right _ _,
+    linearTime_nodup.polynomialTime⟩
 
 end ElementDistinctness
 
 /-! ## Axioms -/
+
+/--
+info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup
 
 /--
 info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup' depends on axioms:
@@ -130,32 +205,32 @@ info: 'Cslib.WordRAM.Exec.runs' depends on axioms:
 #print axioms Cslib.WordRAM.Exec.runs
 
 /--
-info: 'Cslib.WordRAM.DecidesInTime.of_code' depends on axioms:
+info: 'Cslib.WordRAM.DecidableInTime.of_code' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.DecidesInTime.of_code
+#print axioms Cslib.WordRAM.DecidableInTime.of_code
 
 /--
-info: 'Cslib.WordRAM.DecidesInTime.at' depends on axioms:
+info: 'Cslib.WordRAM.DecidableInTime.decidableInTimeAt' depends on axioms:
 [propext]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.DecidesInTime.at
+#print axioms Cslib.WordRAM.DecidableInTime.decidableInTimeAt
 
 /--
-info: 'Cslib.WordRAM.Executes.mono' depends on axioms:
+info: 'Cslib.WordRAM.Executes.mono_width' depends on axioms:
 [propext]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.Executes.mono
+#print axioms Cslib.WordRAM.Executes.mono_width
 
 /--
-info: 'Cslib.WordRAM.executes_iff_run' depends on axioms:
+info: 'Cslib.WordRAM.executes_iff_exists_run_eq' depends on axioms:
 [propext, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.executes_iff_run
+#print axioms Cslib.WordRAM.executes_iff_exists_run_eq
 
 /--
 info: 'Cslib.WordRAM.ExecWithin.loop_invariant' depends on axioms:
@@ -177,5 +252,6 @@ info: 'Cslib.WordRAM.alloc_exec' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.WordRAM.alloc_exec
+
 
 end ComplexityTests.WordRAM
