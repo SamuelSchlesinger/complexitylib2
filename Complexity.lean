@@ -469,6 +469,7 @@ public import Complexity.Computability.Complexity.Classes.SBP
 public import Complexity.Computability.Complexity.Classes.SPP
 public import Complexity.Computability.Complexity.Classes.SPP.FewP
 public import Complexity.Computability.Complexity.Classes.SharpP
+public import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
