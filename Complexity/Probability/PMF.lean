@@ -310,4 +310,14 @@ theorem exists_bind_apply_le [Finite α] (μ : PMF α) (f : α → PMF β) (b : 
   exact (bind_apply_mono_on_support μ b hmax).trans_eq
     (bind_apply_of_forall μ fun _ => rfl)
 
+/-- The probability of an event under the uniform distribution on a finite type is the fraction
+of its members. -/
+theorem toOuterMeasure_uniformOfFintype_toReal [Fintype α] [Nonempty α] (event : Set α)
+    [DecidablePred (· ∈ event)] :
+    ((uniformOfFintype α).toOuterMeasure event).toReal =
+      (Finset.univ.filter (· ∈ event)).card / Fintype.card α := by
+  rw [toOuterMeasure_apply_toReal]
+  simp only [uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast]
+  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv]
+
 end Cslib.Probability.PMF

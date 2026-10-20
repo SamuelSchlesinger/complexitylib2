@@ -62,8 +62,8 @@ example : #(parts (Fin 3) 1) = 6 := by
     Fintype.card_fin]
   rfl
 
-example : ∑ q : Finset (Fin 3) × Finset (Fin 3), weight 1 q = 1 :=
-  sum_weight (Fintype.card_fin 3)
+example : ∑ q : Finset (Fin 3) × Finset (Fin 3), hardWeight 1 q = 1 :=
+  sum_hardWeight (Fintype.card_fin 3)
 
 -- A nontrivial instance of the corruption lemma: on `95` points (`m = 47`) the error term is
 -- `(27 / 32) / 2` with `r = 1`.
