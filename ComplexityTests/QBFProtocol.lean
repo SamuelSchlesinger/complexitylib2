@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
+import Complexity.Computability.Complexity.Classes.IP.Shamir
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Tactic.NormNum.Prime
 
@@ -14,7 +14,9 @@ import Mathlib.Tactic.NormNum.Prime
 The arithmetization of concrete closed formulas over `ZMod 7`, prenex and not, with their values
 at the origin and their round degrees; the variables and the size of a formula; perfect
 completeness on a true formula and a concrete soundness bound below `1` on a false one over
-`ZMod 101`, against every prover; and the axioms of the headline theorems.
+`ZMod 101`, against every prover; the decision of closedness and the parameters of the machine
+verifier on concrete formulas; `TQBF ∈ IP`, `IP = PSPACE` and its corollaries; and the axioms of
+the headline theorems.
 -/
 
 namespace ComplexityTests.QBFProtocol
@@ -101,6 +103,37 @@ example (e : ArithQBF ℕ) (r : ℕ → ZMod 101) (c : ZMod 101) (hc : e.eval r 
       (verify (ProbComp.uniform (ZMod 101)) e r c) () ≤ e.roundDegree / 101 :=
   (acceptProb_verify_uniform_le _ e hc ()).trans_eq (by rw [ZMod.card, Nat.cast_ofNat])
 
+/-! ### The machine verifier -/
+
+example : QBF.isClosed (QBF.ex 0 (.var 0)).tokens = true := by decide
+
+example : QBF.isClosed (QBF.all 1 (.var 0)).tokens = false := by decide
+
+example : QBF.isClosed forallExistsIff.tokens = true := by decide
+
+/-- The parameters on `∃ x, x`: two tokens, so `D = 4`, and a prime modulus above `144`. -/
+example : linVars (QBF.ex 0 (.var 0)) = [0, 0] := rfl
+
+example : degreeBound (QBF.ex 0 (.var 0)) = 4 := rfl
+
+example : primeBound (QBF.ex 0 (.var 0)) = 144 := rfl
+
+example : (modulus (QBF.ex 0 (.var 0))).Prime ∧ 144 < modulus (QBF.ex 0 (.var 0)) :=
+  prime_modulus _
+
+/-- A formula with a free variable is rejected without interaction. -/
+example : verifier (QBF.var 0) = pure false := by
+  rw [verifier, decide_eq_false (by decide)]
+  rfl
+
+example : TQBF ∈ IP encQBF := TQBF_mem_IP
+
+example {α : Type} (enc : α ↪ List Bool) : IP enc = PSPACE enc := IP_eq_PSPACE enc
+
+example {α : Type} (enc : α ↪ List Bool) : coNP enc ⊆ IP enc := coNP_subset_IP enc
+
+example {α : Type} (enc : α ↪ List Bool) : PH enc ⊆ IP enc := PH_subset_IP enc
+
 /-! ### Axioms -/
 
 /--
@@ -178,5 +211,105 @@ info: 'Cslib.Complexity.QBFProtocol.acceptProb_arithmetize_le' depends on axioms
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.QBFProtocol.acceptProb_arithmetize_le
+
+/--
+info: 'Cslib.Complexity.TQBF_mem_IP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.TQBF_mem_IP
+
+/--
+info: 'Cslib.Complexity.PSPACE_subset_IP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PSPACE_subset_IP
+
+/--
+info: 'Cslib.Complexity.IP_eq_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.IP_eq_PSPACE
+
+/--
+info: 'Cslib.Complexity.coNP_subset_IP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.coNP_subset_IP
+
+/--
+info: 'Cslib.Complexity.PH_subset_IP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PH_subset_IP
+
+/--
+info: 'Cslib.Complexity.mem_IP_of_polyTimeReducible' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_IP_of_polyTimeReducible
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.isOraclePPTOn_verifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.isOraclePPTOn_verifier
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.isInteractiveProof_verifier' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.isInteractiveProof_verifier
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.acceptProb_verifier_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.acceptProb_verifier_le
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.acceptProb_verifier_honestProver' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.acceptProb_verifier_honestProver
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.runWith_verdict' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.runWith_verdict
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.acceptProb_verifyAt_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.acceptProb_verifyAt_le
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt
+
+/--
+info: 'Cslib.Complexity.TQBF.computableTidilyInPolyTime_decide_closed' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.TQBF.computableTidilyInPolyTime_decide_closed
+
+/--
+info: 'Cslib.Complexity.QBFProtocol.eval_sampleMod_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.QBFProtocol.eval_sampleMod_le
 
 end ComplexityTests.QBFProtocol

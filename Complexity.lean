@@ -362,7 +362,9 @@ public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
 public import Complexity.Computability.Complexity.Classes.IP.Guessing
 public import Complexity.Computability.Complexity.Classes.IP.OptimalProver
 public import Complexity.Computability.Complexity.Classes.IP.PSPACE
+public import Complexity.Computability.Complexity.Classes.IP.Reduction
 public import Complexity.Computability.Complexity.Classes.IP.Repetition
+public import Complexity.Computability.Complexity.Classes.IP.Shamir
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.IP.TQBF
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
