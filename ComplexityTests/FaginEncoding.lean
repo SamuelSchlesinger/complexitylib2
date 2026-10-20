@@ -132,7 +132,7 @@ query language of two-colorability. -/
 example (e : Fin 2 ≃ Fin 2) :
     (letI := (⊤ : SimpleGraph (Fin 2)).structure; graphVocabulary.encode (Fin 2) e) ∈
       graphVocabulary.queryLanguage
-        {M | ∃ f : M → Fin 2, ∀ x y, RelMap adj ![x, y] → f x ≠ f y} := by
+        {M | Cslib.Logic.FO.graph.Colorable 2 M} := by
   let _ := (⊤ : SimpleGraph (Fin 2)).structure
   rw [Vocabulary.mem_queryLanguage_encode (Cslib.Logic.ESO.Definable.colorable 2).isoClosed]
   exact ⟨id, fun x y h => h.ne⟩
