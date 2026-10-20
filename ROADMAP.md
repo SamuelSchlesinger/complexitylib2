@@ -56,7 +56,10 @@ WPP ⊆ AWPP is proved, including signed binary-output targets. Fixed three-roun
 amplification gives error at most one eighth; every fixed positive SBP gap exponent is
 available, and intersecting an SBP language with a BPP language stays in SBP.
 MA ⊆ SBP is proved with the Arthur–Merlin classes. Remaining approximate-counting milestones include SBP ⊆ AM, uniform AWPP
-amplification to input-dependent error, and AWPP PP-lowness.
+amplification to input-dependent error ([#31](https://github.com/SamuelSchlesinger/complexitylib2/issues/31)), and AWPP PP-lowness.
+The [uniform counting aggregation](Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean)
+prerequisite supplies input-dependent unary powers and word sums for GapP; the full AWPP
+error-reduction theorem remains outstanding.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
