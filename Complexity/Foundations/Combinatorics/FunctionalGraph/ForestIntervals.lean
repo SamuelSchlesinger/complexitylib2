@@ -1,0 +1,252 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.CheckpointForest
+public import Mathlib.Data.Finset.Sort
+public import Mathlib.Data.List.Lex
+public import Mathlib.SetTheory.Cardinal.Finite
+
+/-!
+# Interval labels for finite functional forests
+
+Cut the outgoing edge of each periodic state. For any state `x`, `forestPath f x` is the reversed
+orbit segment from its first periodic point (`f^[transientDepth f x] x`) down to `x`. A state `y`
+is reached from `x` before cycle entry (`∃ t ≤ transientDepth f x, f^[t] x = y`) if and only if
+`forestPath f y` is a prefix of `forestPath f x` (`forestPath_prefix`).
+
+Under the lexicographic order on root-to-vertex paths, the extensions of any prefix form an
+order-convex interval (`list_prefix_interval`). Ranking the `|α|` root paths (`forestRank`) and
+taking the maximum descendant rank (`forestUpper`) therefore assigns two labels in
+`Fin (Nat.card α)` to every state such that ancestry before cycle entry is equivalent to interval
+containment (`forest_interval_spec`, `exists_forest_intervals`).
+
+## Main definitions
+
+* `Cslib.FunctionalGraph.forestTrace`: the first `k` states of the orbit of `x`.
+* `Cslib.FunctionalGraph.forestPath`: the root-to-vertex path from `f^[transientDepth f x] x` to
+  `x`.
+* `Cslib.FunctionalGraph.forestRank`: the lexicographic rank of `forestPath f x` in
+  `Fin (Fintype.card α)`.
+* `Cslib.FunctionalGraph.forestDescendantRanks`: the set of ranks of states whose root path has
+  `forestPath f x` as a prefix.
+* `Cslib.FunctionalGraph.forestUpper`: the inclusive upper endpoint of the subtree interval of `x`.
+
+## Main results
+
+* `Cslib.FunctionalGraph.forestPath_prefix`: `forestPath f y <+: forestPath f x` iff `y` is reached
+  from `x` within `transientDepth f x` steps.
+* `Cslib.FunctionalGraph.list_prefix_interval`: lists sharing a prefix form a lexicographic
+  interval.
+* `Cslib.FunctionalGraph.forest_interval_spec`: `forestRank` and `forestUpper` characterize
+  ancestry before cycle entry.
+* `Cslib.FunctionalGraph.exists_forest_intervals`: interval labels in `Fin (Nat.card α)` exist over
+  any finite type `[Finite α]`.
+
+## References
+
+* Adapted from `lean/Proofs/ForestIntervals.lean` in
+  [S. Schlesinger,
+  *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
+-/
+
+@[expose] public section
+
+namespace Cslib.FunctionalGraph
+
+universe u
+variable {α : Type u}
+
+/-- The first `k` states of an orbit. -/
+def forestTrace (f : α → α) (x : α) : ℕ → List α
+  | 0 => []
+  | k + 1 => x :: forestTrace f (f x) k
+
+@[simp] theorem length_forestTrace (f : α → α) (x : α) (k : ℕ) :
+    (forestTrace f x k).length = k := by
+  induction k generalizing x with
+  | zero => rfl
+  | succ k ih => simp [forestTrace, ih]
+
+theorem mem_forestTrace (f : α → α) (x y : α) (k : ℕ) :
+    y ∈ forestTrace f x k ↔ ∃ i < k, f^[i] x = y := by
+  induction k generalizing x with
+  | zero => simp [forestTrace]
+  | succ k ih =>
+    simp only [forestTrace, List.mem_cons, ih]
+    constructor
+    · rintro (rfl | ⟨i, hi, he⟩)
+      · exact ⟨0, by lia, rfl⟩
+      · exact ⟨i + 1, by lia, (Function.iterate_succ_apply f i x).trans he⟩
+    · rintro ⟨i, hi, he⟩
+      cases i with
+      | zero => exact Or.inl he.symm
+      | succ i => exact Or.inr ⟨i, by lia, (Function.iterate_succ_apply f i x).symm.trans he⟩
+
+variable [Finite α] (f : α → α)
+
+/-- The path from cycle entry to `x`, with the forest edges read backwards. -/
+noncomputable def forestPath (x : α) : List α :=
+  (forestTrace f x (transientDepth f x + 1)).reverse
+
+@[simp] theorem length_forestPath (x : α) :
+    (forestPath f x).length = transientDepth f x + 1 := by
+  simp [forestPath]
+
+theorem forestPath_last (x : α) : (forestPath f x).getLast? = some x := by
+  simp [forestPath, forestTrace]
+
+theorem forestPath_injective : Function.Injective (forestPath f) := by
+  intro x y he
+  have hh := congrArg List.getLast? he
+  simpa only [forestPath_last, Option.some.injEq] using hh
+
+theorem mem_forestPath (x y : α) :
+    y ∈ forestPath f x ↔ ∃ i ≤ transientDepth f x, f^[i] x = y := by
+  simp only [forestPath, List.mem_reverse, mem_forestTrace, Nat.lt_succ_iff]
+
+theorem self_mem_forestPath (x : α) : x ∈ forestPath f x :=
+  (mem_forestPath f x x).mpr ⟨0, Nat.zero_le _, rfl⟩
+
+theorem forestPath_step (x : α) (hx : 0 < transientDepth f x) :
+    forestPath f x = forestPath f (f x) ++ [x] := by
+  have hd : transientDepth f (f x) + 1 = transientDepth f x := by
+    have hh := transientDepth_iterate f x 1
+    simp only [Function.iterate_one] at hh
+    lia
+  rw [forestPath, forestTrace, List.reverse_cons]
+  change (forestTrace f (f x) (transientDepth f x)).reverse ++ [x] =
+    (forestTrace f (f x) (transientDepth f (f x) + 1)).reverse ++ [x]
+  rw [hd]
+
+theorem forestPath_iterate_prefix (x : α) {t : ℕ} (ht : t ≤ transientDepth f x) :
+    forestPath f (f^[t] x) <+: forestPath f x := by
+  induction t generalizing x with
+  | zero => exact ⟨[], List.append_nil _⟩
+  | succ t ih =>
+    have hd := transientDepth_iterate f x 1
+    simp only [Function.iterate_one] at hd
+    rw [Function.iterate_succ_apply, forestPath_step f x (by lia)]
+    exact (ih (f x) (by lia)).trans ⟨[x], rfl⟩
+
+/-- Prefixes of root paths are exactly the ancestors before cycle entry. -/
+theorem forestPath_prefix (x y : α) :
+    forestPath f y <+: forestPath f x ↔
+      ∃ t ≤ transientDepth f x, f^[t] x = y := by
+  constructor
+  · rintro ⟨tail, he⟩
+    apply (mem_forestPath f x y).mp
+    rw [← he]
+    exact List.mem_append_left _ (self_mem_forestPath f y)
+  · rintro ⟨t, ht, rfl⟩
+    exact forestPath_iterate_prefix f x ht
+
+omit [Finite α] in
+/-- Lists with a common prefix form a lexicographic interval. -/
+theorem list_prefix_interval [LinearOrder α] {p a b c : List α}
+    (ha : p <+: a) (hb : p <+: b) (hac : a ≤ c) (hcb : c ≤ b) : p <+: c := by
+  induction p generalizing a b c with
+  | nil => exact List.nil_prefix
+  | cons h p ih =>
+    obtain ⟨as, rfl⟩ := ha
+    obtain ⟨bs, rfl⟩ := hb
+    cases c with
+    | nil =>
+      have hlt : ([] : List α) < h :: (p ++ as) := List.Lex.nil
+      exact (not_lt_of_ge hac hlt).elim
+    | cons k cs =>
+      have head_le {a b : α} {as bs : List α} (hh : a :: as ≤ b :: bs) : a ≤ b := by
+        rcases lt_or_eq_of_le hh with hh | hh
+        · exact List.head_le_of_lt hh
+        · exact (List.cons.inj hh).1.le
+      have hk : h = k := le_antisymm (head_le hac) (head_le hcb)
+      subst k
+      have tail_le {as bs : List α} (hh : h :: as ≤ h :: bs) : as ≤ bs := by
+        rcases lt_or_eq_of_le hh with hh | hh
+        · exact le_of_lt (show as < bs from List.lex_cons_iff.mp hh)
+        · exact (List.cons.inj hh).2.le
+      obtain ⟨ds, he⟩ := ih ⟨as, rfl⟩ ⟨bs, rfl⟩ (tail_le hac) (tail_le hcb)
+      exact ⟨ds, congrArg (List.cons h) he⟩
+
+omit [Finite α] in
+theorem list_prefix_le [LinearOrder α] {a b : List α} (h : a <+: b) : a ≤ b := by
+  obtain ⟨tail, rfl⟩ := h
+  induction a with
+  | nil =>
+    cases tail with
+    | nil => exact le_rfl
+    | cons _ _ => exact le_of_lt (show ([] : List α) < _ from List.Lex.nil)
+  | cons a as ih => exact List.cons_le_cons a ih
+
+section Labels
+
+variable [Fintype α] [LinearOrder α]
+
+/-- The rank of the root path in the lexicographic order of all root paths. -/
+noncomputable def forestRank (x : α) : Fin (Fintype.card α) :=
+  ((Finset.univ.image (forestPath f)).orderIsoOfFin (by
+    rw [Finset.card_image_of_injective _ (forestPath_injective f), Finset.card_univ])).symm
+      ⟨forestPath f x, Finset.mem_image.mpr ⟨x, Finset.mem_univ _, rfl⟩⟩
+
+theorem forestRank_le (x y : α) :
+    forestRank f x ≤ forestRank f y ↔ forestPath f x ≤ forestPath f y :=
+  OrderIso.le_iff_le _
+
+/-- All descendant ranks, including the vertex's own rank. -/
+noncomputable def forestDescendantRanks (x : α) : Finset (Fin (Fintype.card α)) := by
+  classical
+  exact (Finset.univ.filter fun y => forestPath f x <+: forestPath f y).image (forestRank f)
+
+theorem mem_forestDescendantRanks (x : α) (r : Fin (Fintype.card α)) :
+    r ∈ forestDescendantRanks f x ↔
+      ∃ y, forestPath f x <+: forestPath f y ∧ forestRank f y = r := by
+  classical
+  simp only [forestDescendantRanks, Finset.mem_image, Finset.mem_filter,
+    Finset.mem_univ, true_and]
+
+theorem forestDescendantRanks_nonempty (x : α) : (forestDescendantRanks f x).Nonempty :=
+  ⟨forestRank f x, (mem_forestDescendantRanks f x _).mpr
+    ⟨x, ⟨[], List.append_nil _⟩, rfl⟩⟩
+
+/-- The inclusive upper endpoint of a subtree's rank interval. -/
+noncomputable def forestUpper (x : α) : Fin (Fintype.card α) :=
+  (forestDescendantRanks f x).max' (forestDescendantRanks_nonempty f x)
+
+/-- Two bounded labels suffice to test ancestry in the cut functional forest. -/
+theorem forest_interval_spec (x y : α) :
+    forestRank f y ≤ forestRank f x ∧ forestRank f x ≤ forestUpper f y ↔
+      ∃ t ≤ transientDepth f x, f^[t] x = y := by
+  rw [← forestPath_prefix]
+  constructor
+  · rintro ⟨hlo, hhi⟩
+    obtain ⟨z, hz, he⟩ := (mem_forestDescendantRanks f y _).mp
+      ((forestDescendantRanks f y).max'_mem (forestDescendantRanks_nonempty f y))
+    change forestRank f z = forestUpper f y at he
+    rw [← he] at hhi
+    exact list_prefix_interval ⟨[], List.append_nil _⟩ hz
+      ((forestRank_le f y x).mp hlo) ((forestRank_le f x z).mp hhi)
+  · intro hp
+    refine ⟨(forestRank_le f y x).mpr (list_prefix_le hp), ?_⟩
+    exact (forestDescendantRanks f y).le_max' _
+      ((mem_forestDescendantRanks f y _).mpr ⟨x, hp, rfl⟩)
+
+end Labels
+
+/-- Interval labels exist over every finite universe, without an input order. -/
+theorem exists_forest_intervals : ∃ low high : α → Fin (Nat.card α),
+    ∀ x y, (low y ≤ low x ∧ low x ≤ high y) ↔
+      ∃ t ≤ transientDepth f x, f^[t] x = y := by
+  classical
+  let := Fintype.ofFinite α
+  let : LinearOrder α := LinearOrder.lift' (Fintype.equivFin α) (Fintype.equivFin α).injective
+  have he : Fintype.card α = Nat.card α := Nat.card_eq_fintype_card.symm
+  refine ⟨fun x => Fin.cast he (forestRank f x), fun x => Fin.cast he (forestUpper f x), ?_⟩
+  intro x y
+  exact forest_interval_spec f x y
+
+end Cslib.FunctionalGraph
