@@ -20,7 +20,7 @@ unrestricted in number, and enlarging an adequate clock does not multiply halted
 
 The tape count, finite control, machine and polynomial clock are fixed before the input.
 Every branch halts without getting stuck on the encoding image; `encBits` covers all binary
-inputs. No decoder or behavior on binary strings outside that image is assumed.
+inputs. No decoder or halting/correctness contract outside that image is assumed.
 
 ## Main results
 
