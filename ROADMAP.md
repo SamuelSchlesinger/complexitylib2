@@ -42,8 +42,12 @@ The forward machine-to-verifier direction is proved for `#P` and `GapP`: accepti
 rejecting terminal counts of fixed finite-control list-choice machines under polynomial clocks
 have actual certified binary verifiers. The actual reverse guess-and-verify construction and
 [#P machine characterization](Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean)
-are now proved. Signed reverse `GapP`, machine characterizations of `UP`, and polynomially
-bounded ambiguity remain open; none follows from the verifier definitions alone. SPP, FewP, fixed-modulus ModP, coUP and coC=P
+are now proved. The [signed GapP construction and characterization](Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean)
+are also proved, using balanced verdict routing and an actual selector between independent witness
+families. The [UP](Complexity/Computability/Complexity/Classes/UP/Machine.lean) and
+[FewP](Complexity/Computability/Complexity/Classes/FewP/Machine.lean) native characterizations
+are also proved: the exact #P bridge preserves the bound of one or a polynomial on accepting
+occurrence traces, independently of the all-branches clock. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
 PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
 Extend these with counting reductions and further oracle results, preserving exact
@@ -400,14 +404,24 @@ of the handover. The work below remains available for subsequent, independently 
      combines this construction with the forward checker and preserves accepting and rejecting
      counts separately. All constructed transition tables are globally nonblocking; the halting
      contract is on encoded instances, hence all binary inputs when the encoding is `encBits`.
-     **Still open in [#106](https://github.com/SamuelSchlesinger/complexitylib2/issues/106):** realize
-     every difference of two #P counts by one machine's signed accepting-minus-rejecting count.
-     Implement and charge balanced accept/reject cancellation on unsuccessful verifier branches,
-     unequal witness lengths and final verdict routing, including zero and odd gaps.
-     Reuse the [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
-     but preserve exact path multiplicities through choices, halting and padding. Do not collapse
-     distinct nondeterministic branches with the same successor; existential witness equivalence
-     is insufficient.
+     The [signed construction and GapP characterization](Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean)
+     now realize every difference of two #P counts by one native machine (#120, completing the
+     endpoint of #106). The [one-step verdict router](Complexity/Computability/Machines/Turing/MultiTape/Counting/Verdict.lean)
+     gives a successful witness one chosen-sign leaf and an unsuccessful witness one accepting
+     plus one rejecting leaf. A [two-occurrence selector](Complexity/Computability/Machines/Turing/MultiTape/Counting/Alternative.lean)
+     adds independently prepared families, with disjoint reserved work tapes and their original,
+     possibly unequal witness lengths. Routing a verifier of clock `T` costs `T + (T + 4 + 1)`;
+     combining routed clocks `S₊, S₋` costs `S₊ + S₋ + 1`. Extra clock time uses first-halt stability,
+     not extra choices. Zero, odd and negative gaps are included, with no oracle channels or
+     input-dependent machine advice.
+     The [UP](Complexity/Computability/Complexity/Classes/UP/Machine.lean) and
+     [FewP](Complexity/Computability/Complexity/Classes/FewP/Machine.lean) native iff endpoints
+     now transport their accepting-count bounds through the actual parsimonious #P bridge (#131).
+     Fixed finite parameters and a polynomial all-branches clock precede every encoded input;
+     the ambiguity bound is one for UP and a separate polynomial in encoded input length for
+     FewP. Rejecting and total branch counts are not bounded by the ambiguity polynomial.
+     Duplicate accepting occurrences remain distinct, while first-halt clock padding preserves
+     their multiplicities. Native oracle-machine characterizations remain separate work.
 
 2. **Complete theorem ports using the existing certificate APIs.** Extend automation when a
    concrete port is blocked or several clients repeat the same proof burden. Constructor, projection,

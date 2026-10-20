@@ -16,8 +16,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 # Unambiguous polynomial time
 
 `UP` is defined using polynomial-time verifiers with at most one accepting certificate of the
-specified polynomial length on every input. This file uses the verifier formulation; it does not
-assert an unambiguous nondeterministic-machine characterization. The `coUP` extension uses
+specified polynomial length on every input. `Classes.UP.Machine` proves the equivalent native
+finite-machine characterization, preserving accepting-path ambiguity. The `coUP` extension uses
 the standard complement-class convention; its containments and reduction closure below are
 elementary consequences of the corresponding UP results and complement closure of P and parity-P.
 
