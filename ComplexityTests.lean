@@ -28,6 +28,7 @@ import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
+import ComplexityTests.CircuitValueCompleteness
 import ComplexityTests.ClassClosure
 import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation

@@ -169,6 +169,9 @@ public import Complexity.Computability.Circuit.Boolean.Spira
 public import Complexity.Computability.Circuit.Boolean.Substitution
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Boolean.TC0
+public import Complexity.Computability.Circuit.Boolean.Tableau.Basic
+public import Complexity.Computability.Circuit.Boolean.Tableau.Correct
+public import Complexity.Computability.Circuit.Boolean.Tableau.Space
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 public import Complexity.Computability.Circuit.Boolean.TopDown
@@ -477,6 +480,7 @@ public import Complexity.Computability.Complexity.FineGrained.Reduction
 public import Complexity.Computability.Complexity.FineGrained.Sparsification
 public import Complexity.Computability.Complexity.Problems.CircuitSAT
 public import Complexity.Computability.Complexity.Problems.CircuitValue
+public import Complexity.Computability.Complexity.Problems.CircuitValue.Completeness
 public import Complexity.Computability.Complexity.Problems.Clique
 public import Complexity.Computability.Complexity.Problems.Coloring
 public import Complexity.Computability.Complexity.Problems.CountingSAT

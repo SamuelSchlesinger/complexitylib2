@@ -57,6 +57,8 @@ storing intermediate values (`Turing.MultiTapeTM.ComputableInLogSpace.comp`).
 * `Cslib.Complexity.L`: deterministic logarithmic space.
 * `Cslib.Complexity.NL`: nondeterministic logarithmic space.
 * `Cslib.Complexity.LogSpaceReducible`: logspace many-one reductions.
+* `Cslib.Complexity.LogSpaceHard`, `Cslib.Complexity.LogSpaceComplete`: hardness and completeness
+  under logspace many-one reductions.
 
 ## Main results
 
@@ -72,6 +74,8 @@ storing intermediate values (`Turing.MultiTapeTM.ComputableInLogSpace.comp`).
 * `Cslib.Complexity.LogSpaceReducible.compl`: reductions between complements.
 * `Cslib.Complexity.LogSpaceReducible.polyTimeReducible`: logspace reductions are polynomial-time
   reductions.
+* `Cslib.Complexity.LogSpaceComplete.polyTimeComplete`: completeness under logspace reductions
+  implies completeness under polynomial-time reductions.
 
 ## References
 
@@ -183,5 +187,28 @@ theorem LogSpaceReducible.polyTimeReducible (h : LogSpaceReducible enc encB A B)
     PolyTimeReducible enc encB A B :=
   let ⟨f, hf, hfAB⟩ := h
   ⟨f, hf.computableTidilyInPolyTime, hfAB⟩
+
+/-- `B` is hard for the class `C` under logspace many-one reductions: every problem in `C`, with
+any encoding of its instances, reduces to `B` in logarithmic space. -/
+def LogSpaceHard (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (encB : β ↪ List Bool)
+    (B : Set β) : Prop :=
+  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ C enc → LogSpaceReducible enc encB A B
+
+/-- `B` is complete for the class `C` under logspace many-one reductions: it is in `C` and every
+problem in `C` reduces to it in logarithmic space. -/
+def LogSpaceComplete (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (encB : β ↪ List Bool)
+    (B : Set β) : Prop :=
+  B ∈ C encB ∧ LogSpaceHard C encB B
+
+/-- Hardness under logspace reductions implies hardness under polynomial-time reductions. -/
+theorem LogSpaceHard.polyTimeHard {C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+    (h : LogSpaceHard C encB B) : PolyTimeHard C encB B :=
+  fun enc A hA => (h enc A hA).polyTimeReducible
+
+/-- Completeness under logspace reductions implies completeness under polynomial-time
+reductions. -/
+theorem LogSpaceComplete.polyTimeComplete {C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+    (h : LogSpaceComplete C encB B) : PolyTimeComplete C encB B :=
+  ⟨h.1, LogSpaceHard.polyTimeHard h.2⟩
 
 end Cslib.Complexity
