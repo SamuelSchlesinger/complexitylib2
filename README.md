@@ -27,7 +27,8 @@ The checked examples show `fun_prop`, `polytime`, and `ppt` with explicit encodi
 client-supplied invariants. The deterministic backend builds on Christian Reitwiessner's tidy
 machine calculus.
 
-The [theorem index](paper/main.pdf) gives selected proved statements with their assumptions,
+The [theorem index](https://github.com/SamuelSchlesinger/complexitylib2/releases/download/theorem-index/main.pdf)
+gives selected proved statements with their assumptions,
 formalization scope and links to Lean declarations. Its [LaTeX source and editing guide](paper/README.md)
 are maintained alongside the library; it is a curated catalogue, not an exhaustive API reference.
 

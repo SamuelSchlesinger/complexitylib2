@@ -12,28 +12,34 @@ public import Mathlib.Data.Finset.Card
 public import Mathlib.Order.Monotone.Basic
 import Mathlib.Combinatorics.Enumerative.DoubleCounting
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Data.List.Sort
 
 /-!
-# Change counts and sorted groups
+# Change counts, piece counts, and sorted groups
 
 A function has at most `T` changes when every nondecreasing sequence has at most `T`
-adjacent positions with unequal outputs. Sorting a finite set by a key and splitting it into
-consecutive groups yields a large group on which most functions in a finite family are constant.
-The key may have ties, and the size bound uses natural-number division.
+adjacent positions with unequal outputs, and at most `M` pieces when it is constant on the
+level sets of a monotone rank function with values below `M`. Sorting a finite set by a key and
+splitting it into consecutive groups yields a large group on which most functions in a finite
+family are constant. The key may have ties, and the size bound uses natural-number division.
 
 ## Main definitions
 
 * `Cslib.ChangesAtMost`: a uniform bound on changes along nondecreasing sequences.
+* `Cslib.PiecesAtMost`: a function constant on the level sets of a monotone rank function with
+  values below `M`.
 
 ## Main results
 
+* `Cslib.PiecesAtMost.changesAtMost`: a function with at most `M` pieces changes at most `M - 1`
+  times.
 * `Cslib.ChangesAtMost.exists_sorted_group`: a group of at least `|P| / G` points,
   with at most `T |Q| / G` exceptional functions.
 
 ## References
 
-* [S. Schlesinger, *Algebraic circuit formalization*, Threshold/Internal/Changes]
+* [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*, Threshold/Internal/Changes]
   [Schlesinger2026Algebraic]
 -/
 
@@ -65,6 +71,50 @@ theorem ChangesAtMost.const [Preorder α] (b : β) :
   intro z hz S hS
   have : S = ∅ := Finset.eq_empty_iff_forall_notMem.mpr fun i hi => hS i hi rfl
   simp [this]
+
+/-- `Φ` has at most `M` pieces when it is constant on the level sets of a monotone rank
+function `π : α → ℕ` with values below `M`. -/
+def PiecesAtMost [Preorder α] (Φ : α → β) (M : ℕ) : Prop :=
+  ∃ π : α → ℕ, Monotone π ∧ (∀ t, π t < M) ∧ ∀ t t', π t = π t' → Φ t = Φ t'
+
+/-- Increasing a piece bound preserves it. -/
+theorem PiecesAtMost.mono [Preorder α] {Φ : α → β} {M M' : ℕ}
+    (h : PiecesAtMost Φ M) (hM : M ≤ M') : PiecesAtMost Φ M' := by
+  obtain ⟨π, mono, lt, fac⟩ := h
+  exact ⟨π, mono, fun t => (lt t).trans_le hM, fac⟩
+
+/-- Post-composition preserves a piece bound. -/
+theorem PiecesAtMost.comp [Preorder α] {Φ : α → β} {M : ℕ}
+    (h : PiecesAtMost Φ M) (g : β → γ) : PiecesAtMost (fun t => g (Φ t)) M := by
+  obtain ⟨π, mono, lt, fac⟩ := h
+  exact ⟨π, mono, lt, fun t t' e => by simp only [fac t t' e]⟩
+
+/-- A function with at most `M` pieces changes at most `M - 1` times. -/
+theorem PiecesAtMost.changesAtMost [Preorder α] {Φ : α → β} {M : ℕ}
+    (h : PiecesAtMost Φ M) : ChangesAtMost Φ (M - 1) := by
+  obtain ⟨π, mono, lt, fac⟩ := h
+  intro z hz S hS
+  have key : ∀ i ∈ S, π (z i) < π (z (i + 1)) := by
+    intro i hi
+    rcases (mono (hz (Nat.le_succ i))).lt_or_eq with h | h
+    · exact h
+    · exact absurd (fac _ _ h) (hS i hi)
+  have inj : Set.InjOn (fun i => π (z (i + 1))) S := by
+    intro i hi i' hi' heq
+    simp only at heq
+    by_contra hne
+    rcases Nat.lt_or_gt_of_ne hne with h | h
+    · have h1 : π (z (i + 1)) ≤ π (z i') := mono (hz h)
+      have h2 := key i' hi'
+      omega
+    · have h1 : π (z (i' + 1)) ≤ π (z i) := mono (hz h)
+      have h2 := key i hi
+      omega
+  have maps : Set.MapsTo (fun i => π (z (i + 1))) S (Finset.Ioo 0 M) := by
+    intro i hi
+    simp only [Finset.coe_Ioo, Set.mem_Ioo]
+    exact ⟨(Nat.zero_le _).trans_lt (key i hi), lt _⟩
+  simpa using Finset.card_le_card_of_injOn _ maps inj
 
 variable [LinearOrder α]
 

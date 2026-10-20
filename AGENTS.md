@@ -235,8 +235,13 @@ The index is curated, so internal helper lemmas do not each need an entry.
 Obtain an independent AI review of changed entries against the final Lean definitions and
 statements, checking quantifiers, models and resource bounds. Record the reviewed revisions,
 scope, findings and resolutions in the PR. This supplements the API and correctness reviews;
-it is not a Lean proof that the prose is equivalent. Build the PDF, inspect the rendered pages,
-and verify declaration links. Do not imply human editorial approval from an AI review.
+it is not a Lean proof that the prose is equivalent. The **Theorem index PDF** workflow builds
+changed paper sources and uploads a PDF with checked-out and PR-head revision provenance.
+Inspect that CI artifact's rendered pages and verify declaration links before integration;
+record the artifact/run and reviewed revisions. Local generation with
+`python3 scripts/build_paper.py` is optional. Generated PDFs and auxiliary files are not versioned;
+do not commit them. Main builds publish the latest PDF as the `theorem-index` release asset.
+Do not imply human editorial approval from an AI review.
 
 ## Design commitments (do not re-litigate casually)
 

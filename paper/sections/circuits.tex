@@ -202,11 +202,50 @@ partition of the input coordinates, every rectangle contained in either fiber
 of $f$ has a side with fewer than $K$ assignments. If $q$ gates read original
 inputs in the effective sense above, then
 \[
-2^n<4K^2\,4^q.
+2^n<4K^2\,4^q,
 \]
-This statement requires the rectangle hypothesis on both fibers; it is not an
-unconditional lower bound for every Boolean function.\citep{Schlesinger2026Algebraic}
-\decl{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{150}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_four_pow_inputGates}
+and hence $n<2k+2+2q$ whenever $K\le 2^k$. More generally, when the program's
+gates split into $B$ consecutive runs in topological order such that every
+gate in run $i$ has an effective input weight vector proportional to a single
+direction $d_i\in\mathbb R^n$ (with $r_i$ input-reading gates in run $i$), for
+each fixed valuation of the gates in preceding runs the gate values in run $i$
+have at most $2^{r_i}$ interval pieces and at most $2^{r_i}-1$ changes as the
+scalar projection along $d_i$ varies, giving
+\[
+2^n < 4K^2\prod_{i=0}^{B-1} c(2^{r_i}-1) \le 4K^2\,4^B\,2^q,
+\qquad c(T)=\begin{cases}1,&T=0,\\ 4T,&T\ge 1,\end{cases}
+\]
+and $n<2k+2+2B+q$ when $K\le 2^k$. In particular, if all input weight vectors
+are multiples of one direction $w\in\mathbb R^n$ ($B=1$), then
+$2^n<16K^2\,2^q$ and $n<2k+4+q$. Single-output circuit corollaries hold
+whenever the designated output wire selects a gate rather than an original
+input. Finally, for a single-direction multilevel threshold representation
+$f(x)=F(\langle w,x\rangle)$ where $F:\mathbb R\to\{0,1\}$ changes at most $T$
+times along nondecreasing sequences, $2^n<4K^2\max(1,4T)$, and thus
+$T>2^{n-(2k+4)}$ whenever $K\le 2^k$ and $2k+4\le n$.
+These statements require the rectangle hypothesis on both fibers; they are not
+unconditional lower bounds for every Boolean function, and real comparisons are
+semantic rather than algorithmically certified.\citep{Schlesinger2026Algebraic}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Foundations/Order/Changes.lean}{77}{Cslib.PiecesAtMost}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Foundations/Order/Changes.lean}{93}{Cslib.PiecesAtMost.changesAtMost}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{178}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_four_pow_inputGates}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{188}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_four_pow_inputGates}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{436}{Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_evalFrom}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{456}{Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_evalFrom}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{467}{Cslib.Circuits.Boolean.WeightedThreshold.DirectionRuns}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{654}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionRuns}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{666}{Cslib.Circuits.Boolean.WeightedThreshold.lt_two_mul_add_two_mul_inputGates}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{675}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_two_mul_add_two_mul_inputGates}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{685}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{699}{Cslib.Circuits.Boolean.WeightedThreshold.lt_of_direction}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{712}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_direction}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{727}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_direction}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{742}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_runs}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{755}{Cslib.Circuits.Boolean.WeightedThreshold.lt_of_runs}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{768}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_runs}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{782}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_runs}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{808}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_multilevel}
+\declat{52fa5f9947fd94d71b30bd09e1e02bc1171eff23}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean}{819}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_sub_lt_of_multilevel}
 \end{result}
 
 \begin{result}

@@ -56,7 +56,6 @@ private theorem prod_eq_zero_of_not_forall {g f : α × ℕ → ℤ}
 theorem forall_lt_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     {a | ∀ i < r a, (a, i) ∈ A} ∈ WPP enc := by
-  classical
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
   let G a := ∏ i ∈ range (r a), g (a, i)
   let F a := ∏ i ∈ range (r a), f (a, i)
@@ -93,20 +92,14 @@ normalizes the nonzero targets `∏ i < k, f (2 * n + 1 + i)` for every `k ≤ p
 theorem forall_lt_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     {a | ∀ i < r a, (a, i) ∈ A} ∈ LWPP enc := by
-  classical
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
   obtain ⟨c, d, hb⟩ := hr.polyBounded.exists_le
   let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
   let T (x : ℕ × ℕ) := ∏ i ∈ range x.2, f (2 * x.1 + 1 + i)
   have hT : ComputableTidilyInPolyTime T (encPair encUnary encUnary) encIntBin := by
     apply ComputableTidilyInPolyTime.intBin_prod_range
-      (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2))
-      (r := fun x : ℕ × ℕ => x.2)
-    · fun_prop
-    · fun_prop
-  have hp : ComputableTidilyInPolyTime (fun n => p.eval n + 1) encUnary encUnary :=
-    ComputableTidilyInPolyTime.unary_add.comp
-      ((ComputableTidilyInPolyTime.unary_eval p).prod (.const 1))
+      (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2)) <;> fun_prop
+  have hp : ComputableTidilyInPolyTime (fun n => p.eval n + 1) encUnary encUnary := by fun_prop
   apply mem_LWPP_of_indexed_targets (GapP.prod_range_mem hg hr) hT hp
   · intro n k _
     exact prod_ne_zero_iff.mpr fun i _ => hn _
