@@ -132,6 +132,7 @@ import ComplexityTests.MassProduction.Scheduler
 import ComplexityTests.MassProduction.Sharp
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
+import ComplexityTests.MonotoneCircuitValue
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NPCompleteGraphs
 import ComplexityTests.NPCompleteGraphs.Hamiltonian

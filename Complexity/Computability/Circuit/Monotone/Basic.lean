@@ -145,4 +145,10 @@ instance : toDeMorgan.Preserves interpretation Boolean.interpretation :=
     Boolean.binaryCost (toDeMorgan op) = binaryCost op := by
   cases op <;> rfl
 
+/-- The monotone operations embed injectively into the De Morgan basis. -/
+theorem toDeMorgan_injective : Function.Injective toDeMorgan := by
+  intro a b h
+  rcases a with (_ | _) | _ | _ <;> rcases b with (_ | _) | _ | _ <;> first | rfl | cases h
+
+
 end Cslib.Circuits.Monotone
