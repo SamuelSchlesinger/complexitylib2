@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 import Complexity.Computability.TreeEval.Reader.Correct
@@ -64,6 +64,32 @@ open Turing MultiTapeTM Reader in
 example : ∃ t, ComputableTidilyInBigO (fun I : Instance => List.ofFn I.tree.eval) encInstance
     encBits t fun I => spaceBound I.ell I.height + (encNat ((encInstance I).length + 1)).length :=
   computableTidilyInSpace_eval
+
+/-- The sample instance packaged as a nontrivial instance (`1 ≤ ℓ` and `1 ≤ H`). -/
+def sampleNontrivial : NontrivialInstance := ⟨⟨2, 2, sample⟩, by decide, by decide⟩
+
+open Turing MultiTapeTM in
+example : sampleNontrivial.1.ell < (encNat (encInstance sampleNontrivial.1).length).length :=
+  ell_lt_length_encNat_length_encInstance sampleNontrivial.2.2
+
+open Turing MultiTapeTM in
+example : sampleNontrivial.1.height < (encNat (encInstance sampleNontrivial.1).length).length :=
+  height_lt_length_encNat_length_encInstance sampleNontrivial.2.1
+
+open Turing MultiTapeTM Reader in
+example : spaceBound sampleNontrivial.1.ell sampleNontrivial.1.height +
+      (encNat ((encInstance sampleNontrivial.1).length + 1)).length ≤
+    6 * ((encNat (encInstance sampleNontrivial.1).length).length *
+      (encNat (encNat (encInstance sampleNontrivial.1).length).length).length) :=
+  spaceBound_add_length_le_log_mul_log_log sampleNontrivial.2.1 sampleNontrivial.2.2
+
+open Turing MultiTapeTM in
+/-- **Tree Evaluation in space `O(log n · log log n)`** on nontrivial instances. -/
+example : ∃ t, ComputableTidilyInBigO
+    (fun I : NontrivialInstance => List.ofFn I.1.tree.eval) encNontrivialInstance encBits t
+    fun I => (encNat (encNontrivialInstance I).length).length *
+      (encNat (encNat (encNontrivialInstance I).length).length).length :=
+  computableTidilyInSpace_eval_log_mul_log_log
 
 end ComplexityTests.TreeEval
 
@@ -134,3 +160,31 @@ info: 'Cslib.TreeEval.computableTidilyInSpace_eval' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.TreeEval.computableTidilyInSpace_eval
+
+/--
+info: 'Cslib.TreeEval.ell_lt_length_encNat_length_encInstance' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.ell_lt_length_encNat_length_encInstance
+
+/--
+info: 'Cslib.TreeEval.height_lt_length_encNat_length_encInstance' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.height_lt_length_encNat_length_encInstance
+
+/--
+info: 'Cslib.TreeEval.spaceBound_add_length_le_log_mul_log_log' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.spaceBound_add_length_le_log_mul_log_log
+
+/--
+info: 'Cslib.TreeEval.computableTidilyInSpace_eval_log_mul_log_log' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.TreeEval.computableTidilyInSpace_eval_log_mul_log_log

@@ -57,6 +57,7 @@ import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
+import ComplexityTests.ElementDistinctnessRAM
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy
@@ -161,7 +162,9 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedFirstOrder
+import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTuples
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
@@ -230,6 +233,7 @@ import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.QueryComplexity.Sensitivity
+import ComplexityTests.RAMInput
 import ComplexityTests.RandomOracle
 import ComplexityTests.RandomizedDisjointness
 import ComplexityTests.RationalHitting
@@ -239,6 +243,7 @@ import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
+import ComplexityTests.RelativizedCounting
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
 import ComplexityTests.ResourceClasses3
@@ -278,9 +283,13 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
+import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
+import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WordRAM
+import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

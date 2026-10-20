@@ -46,15 +46,26 @@ PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit o
 Extend these with counting reductions and further oracle results, preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
-hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
+hierarchy (`BH` and `coBH`, base-class Boolean operations on `BH`, and the finite-hierarchy
+level-collapse equivalences `BH_{k+1} = BH_k ↔ BH_k = coBH_k ⇒ BH = BH_k`), WPP and LWPP now have
+definitions, elementary containments/closures, LWPP many-one
 reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
 multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
 (Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
 accepting/rejecting binary target lists. Original targets may be zero; neither index must be
 computable ([WPP.TwoSided](Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean)).
-The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
-MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
-and WPP/LWPP oracle lowness.
+Uniform bounded conjunction and disjunction also preserve both classes for a single jointly
+uniform language on instances and unary indices, with any polynomial-time unary input-dependent
+bound. The LWPP proof normalizes all possible prefix targets at each length
+([WPP.Bounded](Complexity/Computability/Complexity/Classes/WPP/Bounded.lean)); it does not
+establish adaptive oracle closure. Polynomial-time truth-table reductions now preserve both
+WPP and LWPP, using an arbitrary polynomial-time Boolean combiner on a uniform batch of
+queries ([WPP.TruthTable](Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean)).
+Query lengths and unary query counts may vary at fixed input length; LWPP normalizes both.
+Adaptive WPP closure, UP-oracle containment, and oracle lowness are not claimed by this result.
+The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (both threshold #SAT and MAJSAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
+permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
+collapse, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
@@ -70,8 +81,10 @@ with a #P count and positive binary-output polynomial-time threshold. Intersecti
 language with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
 The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
 already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
-provide a counting-algebra foundation for future oracle simulations; AWPP PP-lowness
-remains an approximate-counting milestone.
+provide a counting-algebra foundation for future oracle simulations.
+[Relativized counting and majority verifiers](Complexity/Computability/Complexity/Classes/PP/Oracle.lean)
+now provide the positive-GapP characterization and elimination of P-decidable oracles;
+AWPP PP-lowness remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
@@ -189,8 +202,21 @@ of the handover. The work below remains available for subsequent, independently 
      [Ordered/TupleInterpretation](Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean)
      defines quantifier-free strict/weak order and the canonical full-domain constants, with
      proved unique selection and ranks `0`, `1`, `n^k - 1` for positive dimension.
-     **Next milestones:** successor and arbitrary-base BIT lifting; numeric-preserving
-     composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
+     **Full-domain successor prerequisite completed (#54):**
+     [Ordered/TupleSuccessor](Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean)
+     proves that the carry formula holds exactly at consecutive arbitrary-base lexicographic
+     ranks, with explicit zero-dimension and maximum/no-wrap boundaries. Its generic compiler
+     preserves quantifier-freeness when the supplied source successor is quantifier-free.
+     The canonical `≤`/BIT instance uses a universal adjacency formula; no unconditional
+     quantifier-free successor claim is made for this basis.
+     **Canonical addition prerequisite completed (#64):**
+     [Ordered/Addition](Complexity/Logics/FirstOrder/Ordered/Addition.lean) defines one native
+     formula over `≤` and BIT whose semantics on every `Fin n`, `n ≥ 2`, is exact natural-number
+     addition `x + y = z`. Out-of-range sums have no satisfying result; this is not modular
+     addition. It formalizes the PLUS part of Immerman's Theorem 1.17(1), using the carry
+     characterization of Proposition 1.9. TIMES and the Bit Sum Lemma remain open, as do
+     arbitrary-base tuple BIT lifting and numeric-preserving composition.
+     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
@@ -474,16 +500,20 @@ Polynomial efficiency is sufficient for many reductions, but does not establish 
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
 * Tree Evaluation: the [Cook–Mertz machine](Complexity/Computability/TreeEval/Space.lean)
-  has a proved parameterized space bound on valid encoded instances; a separate
-  `O(log n · log log n)` corollary, malformed-input handling and the refined
-  `O(ℓ + H log(ℓ + 2))` parameter bound remain outstanding;
+  has a proved parameterized space bound on valid encoded instances and an
+  `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and
+  `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
+  remain outstanding;
 * the space hierarchy, which needs a space-budgeted universal simulation; the
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
   linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
-* Reingold's theorem: [USTCON ∈ L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
-  is proved for the adjacency-matrix encoding; an edge-list variant by a logspace reduction, a
-  definition of SL with SL = L, and sharing the unary-header injectivity lemma with TreeEval remain;
+* Reingold's theorem: [USTCON ∈ L and SL = L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
+  are proved for the adjacency-matrix encoding (with `SL` defined by logspace many-one reducibility
+  to `USTCON`, completeness of `USTCON` for `SL` and `L`, and the unary-header injectivity lemma
+  shared with `TreeEval` in [List/Basic.lean](Complexity/Foundations/Data/List/Basic.lean)); a
+  symmetric-Turing-machine model of `SL` and an edge-list variant of `USTCON` by a logspace
+  reduction remain;
 * `NL = coNL`, building on logspace composition, `NL ⊆ P` and Savitch; `PH ⊆ PSPACE` is
   already proved by evaluating quantified predicates in
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);
@@ -492,6 +522,37 @@ space bounds. Further class-level work needs resource certificates for the actua
 * the ordered logarithmic-space FO encoding bridge and first-order Circuit Value completeness in the
   [first continuing priority](#continuing-priorities), together with uniform circuit-family and
   counting-machine characterizations;
+* RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
+  Lean formalization accompanying the tromino undecidability paper, has [linear and polynomial
+  instruction bounds](Complexity/Computability/WordRAM/Time.lean) uniform over all fitting widths
+  above a logarithmic lower threshold,
+  [structured programs](Complexity/Computability/WordRAM/Structured.lean) compiling with exact
+  instruction counts, [allocation and arrays](Complexity/Computability/WordRAM/Allocation.lean) and
+  a [linear-time element-distinctness client](Complexity/Algorithms/WordRAM/ElementDistinctness.lean)
+  whose promised inputs provably fit at that threshold. The generic classes alone do not supply
+  this input-fit guarantee. The [additive-memory compiler](Complexity/Computability/WordRAM/RAM.lean)
+  now forward-simulates successful fitting runs in the existing
+  [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) with logarithmic cost
+  `8 * (bitLength (r + 5) + 1) * (t + 1) * (w + 1)`, including its two register initializers
+  and final output copy/jump, from an explicitly supplied padded input. A separate
+  [input preparer](Complexity/Computability/RAM/Input.lean) now charges the backward relocation and
+  prefix clearing from five zero scratch cells followed by a length header and the input words.
+  It reaches the exact padded register state before arbitrary appended code in logarithmic cost
+  `(24 + R) * (bitLength (R + 5) + 2) * (input.length + 1) * b` for `R ≥ 5`, given bit-length
+  bound `b` on the header and words; external input installation remains uncharged. The
+  [composed bridge](Complexity/Computability/WordRAM/RAMInput.lean) now includes that preparation
+  in `C_r * (t + input.length + 1) * (w + 1)`, for an explicit constant depending only on the
+  source register count. The same fixed compiler gives a
+  [bounded-universe element-distinctness decider](Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean)
+  of logarithmic RAM cost `2735 * (n + 1) * (Nat.log 2 (n + 1) + 1)`, including preparation;
+  the separately supplied padded-input bound is `2448 * (n + 1) * (Nat.log 2 (n + 1) + 1)`.
+  These statements retain the explicit preloaded length-bearing convention and entry promise.
+  Wider-fragment and Turing-machine simulations remain open. The unrestricted converse
+  from prescribed-width to uniform decision is false: width can supply instance-dependent advice.
+  A useful conversion must specify an input-fit guarantee, a size-based width-selection procedure
+  with computability and resource bounds, encoding conventions, and simulation overhead. Transfer
+  of cell-probe lower bounds and the source's Horn-SAT, 2SAT, matching and domino-tiling clients
+  also remain open;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.

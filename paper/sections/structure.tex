@@ -107,7 +107,32 @@ The earlier canonical-expansion interface is credited separately.
 \end{result}
 
 \begin{result}
-\subsection{Lexicographic tuple order and canonical constants}
+\subsection{Exact canonical addition from order and BIT}
+There is one native first-order formula $\operatorname{PLUS}(x,y,z)$ over
+$\le$ and BIT, independent of the universe size, such that for every canonical
+structure on $[n]=\{0,\ldots,n-1\}$ with $n\ge2$ and every assignment,
+\[
+\operatorname{PLUS}(x,y,z)\quad\Longleftrightarrow\quad
+\operatorname{val}(x)+\operatorname{val}(y)=\operatorname{val}(z).
+\]
+The equality is ordinary natural-number addition. No hypothesis that the sum
+fits is required: whenever $\operatorname{val}(x)+\operatorname{val}(y)\ge n$,
+the formula rejects every candidate $z\in[n]$. Input vocabularies may include
+functions, constants and relations; their interpretations do not affect this
+numeric formula. BIT is indexed from the least significant bit.
+
+This formalizes the PLUS part of Immerman's arithmetic-definability theorem,
+using his generate/propagate carry characterization with the bit orientation
+reversed.\citep[Proposition 1.9 and Theorem 1.17(1)]{Immerman1999}
+The formal proof reuses the library's propagation characterization and Lean's
+bit-vector carry and addition theorems. TIMES, the Bit Sum Lemma, unrestricted
+arbitrary-base tuple BIT lifting and numeric-preserving composition remain open.
+\declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{142}{Cslib.Logic.FO.Ordered.realize_addition}
+\declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{162}{Cslib.Logic.FO.Ordered.not_realize_addition_of_le}
+\end{result}
+
+\begin{result}
+\subsection{Lexicographic tuple order, successor and canonical constants}
 For every base $n\ge2$ and dimension $k\ge0$, the full tuple universe
 $[n]^k$ is in bijection with $[n^k]$ through the rank
 \[
@@ -131,16 +156,30 @@ full tuple interpretation, so the constant-aware formula/sentence pullback appli
 At dimension zero, the rank bijection still exists and its universe is a singleton;
 no two distinct constants are asserted there.
 
-This completes the full-domain order and constant prerequisite of
-Immerman's Remark 1.32 and Exercise 1.33(1). Successor and canonical BIT lifting,
-numeric-preserving composition and the ordered complexity/capture endpoints remain
-open. No automatic BIT definition for a restricted tuple domain is claimed.
+A native successor formula holds exactly when
+$\operatorname{rank}(y)=\operatorname{rank}(x)+1$.
+Its carry characterization increments one coordinate, keeps earlier coordinates equal,
+and changes every later digit from $n-1$ to $0$. It rejects all pairs in dimension
+zero and rejects every successor of the maximum tuple, including wraparound to zero.
+The generic carry compiler is quantifier-free whenever its supplied source successor
+formula is quantifier-free, as in Exercise 1.33(2) with source SUC available.
+In the library's $\le$/BIT basis, the canonical source successor instead uses one
+universal element quantifier to express adjacency; the compiled tuple formula has
+one such quantifier in each carry alternative. No unconditional quantifier-free
+claim is made for this basis.
+
+This completes the full-domain order, constant and successor prerequisites of
+Immerman's Remark 1.32 and Exercise 1.33(1--2), with the stated source-basis convention.
+Canonical BIT lifting, numeric-preserving composition and the ordered complexity/capture
+endpoints remain open. No automatic BIT definition for a restricted tuple domain is claimed.
 \citep[Remark 1.32 and Exercise 1.33]{Immerman1999}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{52}{Cslib.Logic.FO.Ordered.lexEquiv}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{93}{Cslib.Logic.FO.Ordered.lexRank_lt_iff_lex}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{90}{Cslib.Logic.FO.Ordered.realize_tupleLe}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{76}{Cslib.Logic.FO.Ordered.isQF_tupleLe}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{142}{Cslib.Logic.FO.Ordered.lexRank_tupleConstants_value}
+\declat{72b80bbaccd792d6ee9e7858d0f23a40ed3f3f57}{Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean}{263}{Cslib.Logic.FO.Ordered.realize_tupleSucc}
+\declat{72b80bbaccd792d6ee9e7858d0f23a40ed3f3f57}{Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean}{185}{Cslib.Logic.FO.Ordered.isQF_tupleSuccOf}
 \end{result}
 
 \begin{result}

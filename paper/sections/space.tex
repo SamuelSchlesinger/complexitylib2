@@ -59,8 +59,8 @@ of $\mathrm{USTCON}\in\cc{L}$; the class-level theorem is the next entry.\citep[
 \end{result}
 
 \begin{result}
-\subsection{Undirected connectivity is in logarithmic space}
-\[\mathrm{USTCON}\in\cc{L}.\]
+\subsection{Undirected connectivity is in logarithmic space, and $\cc{SL}=\cc{L}$}
+\[\mathrm{USTCON}\in\cc{L},\qquad \cc{SL}=\cc{L}.\]
 Instances are simple graphs on $\{0,\dots,n-1\}$ given by a symmetric adjacency matrix with zero
 diagonal and two vertices $s,t$, encoded by the unary header $1^n01^s01^t0$ followed by the matrix
 row by row; the instance is accepted when $t$ is reachable from $s$. $\cc{L}$ is the library's class:
@@ -72,11 +72,19 @@ recognizing encodings is not part of the statement. The decider walks in Reingol
 $257^8$-regular) along the base-$257^8$ digits of every counter below $257^{8T}$, evaluating the
 rotation map in place with one program counter and one label per level and reading the matrix only
 at a step of the slot graph. The transformation is a variant of Reingold's Definition 3.1 with the
-square of the zig-zag product instead of the eighth power; the constants are far from optimal. The
-encoding is the adjacency matrix, not the edge-list encoding of the library's other graph problems;
-$\cc{SL}$ is not defined, so $\cc{SL}=\cc{L}$ is not stated.\citep[Theorem 4.1 and the proof of
-Lemma 3.4]{Reingold2008}\citep[Section 21.4]{AroraBarak09}
-\declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean}{47}{Cslib.Complexity.USTCON_mem_L}
+square of the zig-zag product instead of the eighth power; the constants are far from optimal.
+Symmetric logarithmic space $\cc{SL}$ is defined by its logspace many-one reduction
+characterization as the class of problems logspace many-one reducible to $\mathrm{USTCON}$;
+combining $\mathrm{USTCON}\in\cc{L}$ with the logspace reduction of any problem in $\cc{L}$ to
+$\mathrm{USTCON}$ via a canonical two-vertex witness yields logspace completeness of
+$\mathrm{USTCON}$ for $\cc{SL}$ and $\cc{L}$ and Reingold's corollary $\cc{SL}=\cc{L}$. The
+symmetric Turing machine model and its equivalence with logspace reducibility to $\mathrm{USTCON}$
+are not separately formalized, and the encoding is the adjacency matrix rather than the edge-list
+encoding of the library's other graph problems.\citep{LewisPapadimitriou1982}\citep[Section 1, the proof of Lemma 3.4, and Theorems 4.1--4.2]{Reingold2008}\citep[Section 21.4]{AroraBarak09}
+\declat{c9072f50148d8bcea4593b418c3e5e43f1b4cf41}{Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean}{73}{Cslib.Complexity.USTCON_mem_L}
+\declat{c9072f50148d8bcea4593b418c3e5e43f1b4cf41}{Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean}{103}{Cslib.Complexity.USTCON_logSpaceComplete_SL}
+\declat{c9072f50148d8bcea4593b418c3e5e43f1b4cf41}{Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean}{115}{Cslib.Complexity.USTCON_logSpaceComplete_L}
+\declat{c9072f50148d8bcea4593b418c3e5e43f1b4cf41}{Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean}{132}{Cslib.Complexity.SL_eq_L}
 \declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Computability/USTCON/Space.lean}{95}{Cslib.USTCON.computableInLogSpace_decide}
 \declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Foundations/Combinatorics/Expander/ReingoldEval.lean}{372}{Cslib.RotationMap.exists_iterate_reingoldEvalStep}
 \declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Algorithms/Reachability/Reingold.lean}{213}{Cslib.Reachability.Reingold.reachable_iff_exists_walk_of_le_two_pow}
@@ -244,7 +252,11 @@ O\bigl((\ell+H+1)(b(\ell)+1)+b(n+1)\bigr),
 that is, $O((\ell+H+1)\log(\ell+2)+\log(n+2))$.
 The theorem allows zero value length and zero height. Input addressing costs
 are included, the output is streamed, and a running-time bound exists without
-an asserted asymptotic rate.
+an asserted asymptotic rate. When $1\le\ell$ and $1\le H$, the body has length at
+least $\max(2^\ell,2^H)$, so $\ell<b(n)$, $H<b(n)$, and $b(\ell)\le b(b(n))$; on
+nontrivial instances ($1\le\ell$ and $1\le H$), the same machine therefore runs in
+work space $O(b(n)\,b(b(n)))$, that is, $O(\log n\log\log n)$ in the encoded
+instance length $n$.
 
 Running once over every nonzero field element, the algebraic procedure preserves
 the other two registers while adding the
@@ -255,9 +267,15 @@ Cook--Mertz construction with Goldreich's value-length parametrization and
 exposition; the Lean development is by Christian Reitwiessner with disclosed
 AI assistance.\citep{CookMertz2024,Goldreich2024TreeEval}
 Correctness and resource bounds apply to valid encoded instances; malformed-input
-rejection is not proved. A separate $O(\log n\log\log n)$ corollary and the refined
-$O(\ell+H\log(\ell+2))$ parameter bound are not asserted here.
-\declat{aa72232abd8858a2c4103eb6aebc039e3b02f52d}{Complexity/Computability/TreeEval/Space.lean}{39}{Cslib.TreeEval.computableTidilyInSpace_eval}
-\declat{aa72232abd8858a2c4103eb6aebc039e3b02f52d}{Complexity/Computability/TreeEval/Instance.lean}{74}{Cslib.TreeEval.encode_injective}
+rejection is not proved. The $O(\log n\log\log n)$ input-size bound restricts to
+nontrivial instances ($1\le\ell$ and $1\le H$, since for $H=0$ or $\ell=0$ the
+unary header or single leaf has length linear in $\ell+H$), and the refined
+$O(\ell+H\log(\ell+2))$ parameter bound is not asserted.
+\declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Space.lean}{66}{Cslib.TreeEval.computableTidilyInSpace_eval}
+\declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Space.lean}{104}{Cslib.TreeEval.spaceBound_add_length_le_log_mul_log_log}
+\declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Space.lean}{138}{Cslib.TreeEval.computableTidilyInSpace_eval_log_mul_log_log}
+\declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Instance.lean}{84}{Cslib.TreeEval.encode_injective}
+\declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Instance.lean}{105}{Cslib.TreeEval.ell_lt_length_encNat_length_encInstance}
+\declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Instance.lean}{118}{Cslib.TreeEval.height_lt_length_encNat_length_encInstance}
 \declat{aa72232abd8858a2c4103eb6aebc039e3b02f52d}{Complexity/Computability/TreeEval/CookMertz.lean}{157}{Cslib.TreeEval.proc_eq}
 \end{result}

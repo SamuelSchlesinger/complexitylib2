@@ -7,6 +7,8 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
 public import Complexity.Algorithms.Reachability.BreadthFirst
 public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
+public import Complexity.Algorithms.WordRAM.ElementDistinctness
+public import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
@@ -463,6 +465,7 @@ public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.PP.Bit
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
+public import Complexity.Computability.Complexity.Classes.PP.Oracle
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Complexity.Classes.ParityP
 public import Complexity.Computability.Complexity.Classes.ParityP.Closure
@@ -479,6 +482,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
+public import Complexity.Computability.Complexity.Classes.SharpP.Oracle
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Power
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
@@ -505,7 +509,9 @@ public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 public import Complexity.Computability.Complexity.Classes.WPP
+public import Complexity.Computability.Complexity.Classes.WPP.Bounded
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
+public import Complexity.Computability.Complexity.Classes.WPP.TruthTable
 public import Complexity.Computability.Complexity.Classes.WPP.TwoSided
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
@@ -574,6 +580,7 @@ public import Complexity.Computability.Complexity.Problems.USAT
 public import Complexity.Computability.Complexity.Problems.USTCON
 public import Complexity.Computability.Complexity.Problems.VertexCover
 public import Complexity.Computability.Complexity.Reduction
+public import Complexity.Computability.Complexity.Reduction.TruthTable
 public import Complexity.Computability.DecisionTree.Basic
 public import Complexity.Computability.DecisionTree.CanonicalTree
 public import Complexity.Computability.DecisionTree.Certificate
@@ -937,6 +944,7 @@ public import Complexity.Computability.QueryComplexity.Threshold
 public import Complexity.Computability.QueryComplexity.Yao
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
+public import Complexity.Computability.RAM.Input
 public import Complexity.Computability.RAM.Squaring
 public import Complexity.Computability.TreeEval.Basic
 public import Complexity.Computability.TreeEval.CookMertz
@@ -963,6 +971,14 @@ public import Complexity.Computability.USTCON.Reader.Defs
 public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Computability.USTCON.Space
+public import Complexity.Computability.WordRAM.Allocation
+public import Complexity.Computability.WordRAM.Compile
+public import Complexity.Computability.WordRAM.Defs
+public import Complexity.Computability.WordRAM.Notation
+public import Complexity.Computability.WordRAM.RAM
+public import Complexity.Computability.WordRAM.RAMInput
+public import Complexity.Computability.WordRAM.Structured
+public import Complexity.Computability.WordRAM.Time
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
@@ -1289,11 +1305,13 @@ public import Complexity.Logics.FirstOrder.Interpretation.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation.Rank
 public import Complexity.Logics.FirstOrder.Interpretation.Tagged
 public import Complexity.Logics.FirstOrder.Interpretation.Unit
+public import Complexity.Logics.FirstOrder.Ordered.Addition
 public import Complexity.Logics.FirstOrder.Ordered.Basic
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
+public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
 public import Complexity.Logics.FirstOrder.Problems.ColoringReduction
