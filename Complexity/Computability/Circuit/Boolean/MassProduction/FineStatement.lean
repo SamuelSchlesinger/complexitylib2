@@ -12,41 +12,47 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Order.Filter.AtTopBot.Basic
 
 /-!
-# Statements of sharp mass production
+# Statements of fine mass production
 
-For a rational copy exponent `γ = num / den < 1`, sharp mass production bounds the cost of every
+For a rational copy exponent `γ = num / den < 1`, fine mass production bounds the cost of every
 allowed batch by `(1 + 1 / P) / (1 - γ) · 2 ^ n / n` for every positive precision `P`, eventually
 in `n`.
-The core form `SharpMassProducesThrough` allows `2 ^ (⌊γ n⌋ + 1)` copies, including zero copies;
-`SharpMassProducesAt` is the source's statement over the floor budget `rationalCopyBudget` and
-positive copy counts. The real-rate statement `RealSharpMassProduction` quantifies over real
+The core form `FineMassProducesThrough` allows `2 ^ (⌊γ n⌋ + 1)` copies, including zero copies;
+`FineMassProducesAt` is the source's statement over the floor budget `rationalCopyBudget` and
+positive copy counts. The real-rate statement `RealFineMassProduction` quantifies over real
 `0 ≤ γ < 1` and additive errors `ε > 0`, with copy counts at most `2 ^ (γ n)`.
 
-The core form implies the other two (`SharpMassProducesThrough.sharpMassProducesAt`,
-`realSharpMassProduction_of_sharp`) and, at precision one, the exponential-range theorem with
+*Fine* refers to the explicit leading coefficient `1 / (1 - γ)`, as opposed to the constant
+`4 den` of `MassProducesAt`; it does not claim optimality. One copy of most functions already
+needs `(1 - o(1)) 2 ^ n / n` gates [Shannon1949], so the coefficient is optimal at `γ = 0`, but
+no matching lower bound is claimed for `γ > 0`.
+
+The core form implies the other two (`FineMassProducesThrough.fineMassProducesAt`,
+`realFineMassProduction_of_fine`) and, at precision one, the exponential-range theorem with
 a constant coefficient at every positive input length
-(`exponentialMassProduction_of_sharp`).
+(`exponentialMassProduction_of_fine`).
 
 All statements bound `massComplexity`, which charges NOT, AND and OR once and constants never.
 They are bounds on circuit cost, not on the running time of any circuit constructor.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.MassProduction.SharpMassProducesThrough`: the core sharp bound.
-* `Cslib.Circuits.Boolean.MassProduction.SharpMassProducesAt`: the source's rational statement.
-* `Cslib.Circuits.Boolean.MassProduction.RealSharpMassProduction`: the real-rate statement.
+* `Cslib.Circuits.Boolean.MassProduction.FineMassProducesThrough`: the core fine bound.
+* `Cslib.Circuits.Boolean.MassProduction.FineMassProducesAt`: the source's rational statement.
+* `Cslib.Circuits.Boolean.MassProduction.RealFineMassProduction`: the real-rate statement.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.MassProduction.SharpMassProducesThrough.massProducesAt`: the
+* `Cslib.Circuits.Boolean.MassProduction.FineMassProducesThrough.massProducesAt`: the
   coefficient `4 den` at one rational exponent.
-* `Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction_of_sharp`,
-  `Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction_of_sharp`: the corollaries.
+* `Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction_of_fine`,
+  `Cslib.Circuits.Boolean.MassProduction.realFineMassProduction_of_fine`: the corollaries.
 
 ## References
 
 * Adapted from `MassProduction/Nonuniform/{SharpTheorem,RealParameters,RealTheorem}.lean` in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
+* [C. E. Shannon, *The Synthesis of Two-Terminal Switching Circuits*][Shannon1949]
 -/
 
 @[expose] public section
@@ -55,17 +61,17 @@ namespace Cslib.Circuits.Boolean.MassProduction
 
 open Filter
 
-/-- The core sharp bound at rational exponent `num / den`: for every precision `P`, eventually
+/-- The core fine bound at rational exponent `num / den`: for every precision `P`, eventually
 every function on `n` inputs has `k ≤ 2 ^ (⌊num n / den⌋ + 1)` copies with
 `P (den - num) n · cost ≤ (P + 1) den 2 ^ n`. For `P > 0` this is the coefficient
 `(1 + 1 / P) den / (den - num)`; `P = 0` holds trivially. -/
-def SharpMassProducesThrough (num den : ℕ) : Prop :=
+def FineMassProducesThrough (num den : ℕ) : Prop :=
   ∀ P : ℕ, ∀ᶠ n in atTop, ∀ (f : (Fin n → Bool) → Bool) (k : ℕ), k ≤ 2 ^ (num * n / den + 1) →
     ((P * (den - num) * n : ℕ) : ℕ∞) * massComplexity f k ≤ ((P + 1) * den * 2 ^ n : ℕ)
 
-/-- The source's sharp statement at rational exponent `num / den`, over the floor budget and
+/-- The source's statement at rational exponent `num / den`, over the floor budget and
 positive copy counts. -/
-def SharpMassProducesAt (num den : ℕ) : Prop :=
+def FineMassProducesAt (num den : ℕ) : Prop :=
   ∀ P : ℕ, 0 < P → ∃ cutoff : ℕ, ∀ n, cutoff ≤ n →
     ∀ (f : (Fin n → Bool) → Bool) (k : ℕ), 0 < k → k ≤ rationalCopyBudget num den n →
       ((P * (den - num) * n : ℕ) : ℕ∞) * massComplexity f k ≤ ((P + 1) * den * 2 ^ n : ℕ)
@@ -73,7 +79,7 @@ def SharpMassProducesAt (num den : ℕ) : Prop :=
 /-- The source's real-rate statement: for every real `0 ≤ γ < 1` and every `ε > 0`, eventually
 every positive copy count at most `2 ^ (γ n)` has a finite cost bound below
 `(1 / (1 - γ) + ε) 2 ^ n / n`. -/
-def RealSharpMassProduction : Prop :=
+def RealFineMassProduction : Prop :=
   ∀ γ : ℝ, 0 ≤ γ → γ < 1 → ∀ ε : ℝ, 0 < ε → ∃ cutoff : ℕ, ∀ n, cutoff ≤ n →
     ∀ (f : (Fin n → Bool) → Bool) (k : ℕ), 0 < k → (k : ℝ) ≤ (2 : ℝ) ^ (γ * n) →
       ∃ bound : ℕ, massComplexity f k ≤ bound ∧
@@ -86,16 +92,16 @@ theorem rationalCopyBudget_le_two_pow (n : ℕ) :
     rationalCopyBudget num den n ≤ 2 ^ (num * n / den + 1) :=
   Nat.pow_le_pow_right (by norm_num) (Nat.le_succ _)
 
-theorem SharpMassProducesThrough.sharpMassProducesAt (h : SharpMassProducesThrough num den) :
-    SharpMassProducesAt num den := by
+theorem FineMassProducesThrough.fineMassProducesAt (h : FineMassProducesThrough num den) :
+    FineMassProducesAt num den := by
   intro P _
   obtain ⟨cutoff, hc⟩ := eventually_atTop.mp (h P)
   exact ⟨cutoff, fun n hn f k _ hk => hc n hn f k (hk.trans (rationalCopyBudget_le_two_pow n))⟩
 
 /-- At precision one the core bound gives the constant `4 den`: eventually every allowed batch
 costs at most `4 den (2 ^ n / n)`. -/
-theorem SharpMassProducesThrough.massProducesAt (hnd : num < den)
-    (h : SharpMassProducesThrough num den) : MassProducesAt num den := by
+theorem FineMassProducesThrough.massProducesAt (hnd : num < den)
+    (h : FineMassProducesThrough num den) : MassProducesAt num den := by
   obtain ⟨cutoff, hc⟩ := eventually_atTop.mp (h 1)
   refine ⟨4 * den, max cutoff 1, fun n hn hcut f k _ hk => ?_⟩
   have hbound := hc n (le_of_max_le_left hcut) f k
@@ -124,10 +130,10 @@ theorem SharpMassProducesThrough.massProducesAt (hnd : num < den)
       _ = n * (4 * den * (2 ^ n / n)) := by ring
   exact ENat.natCast_le_natCast.mpr (Nat.le_of_mul_le_mul_left hc' (by omega))
 
-/-- **Exponential-range mass production** from the core sharp bound: every fixed rational
+/-- **Exponential-range mass production** from the core fine bound: every fixed rational
 exponent below one has a constant coefficient at every positive input length. -/
-theorem exponentialMassProduction_of_sharp
-    (h : ∀ num den : ℕ, num < den → SharpMassProducesThrough num den) :
+theorem exponentialMassProduction_of_fine
+    (h : ∀ num den : ℕ, num < den → FineMassProducesThrough num den) :
     ExponentialMassProduction :=
   fun num den _ hnd => ((h num den hnd).massProducesAt hnd).allLengths
 
@@ -198,10 +204,10 @@ theorem le_two_pow_of_real {γ : ℝ} {n k : ℕ} (hden : 0 < den) (hγ : γ ≤
   rw [Real.rpow_natCast] at this
   exact_mod_cast this
 
-/-- **Real-rate sharp mass production** from the core sharp bound at every rational exponent. -/
-theorem realSharpMassProduction_of_sharp
-    (h : ∀ num den : ℕ, num < den → SharpMassProducesThrough num den) :
-    RealSharpMassProduction := by
+/-- **Real-rate fine mass production** from the core fine bound at every rational exponent. -/
+theorem realFineMassProduction_of_fine
+    (h : ∀ num den : ℕ, num < den → FineMassProducesThrough num den) :
+    RealFineMassProduction := by
   intro γ hγ hγ1 ε hε
   obtain ⟨num, den, P, hnd, hP, hrate, hcoef⟩ := exists_rat_coefficient hγ hγ1 hε
   obtain ⟨cutoff, hc⟩ := eventually_atTop.mp (h num den hnd P)
@@ -231,5 +237,17 @@ theorem realSharpMassProduction_of_sharp
   have hnc := le_of_mul_le_mul_left key hscale
   rw [← mul_div_assoc, le_div_iff₀ hnR]
   linarith
+
+@[deprecated (since := "2026-10-20")] alias SharpMassProducesThrough := FineMassProducesThrough
+@[deprecated (since := "2026-10-20")] alias SharpMassProducesAt := FineMassProducesAt
+@[deprecated (since := "2026-10-20")] alias RealSharpMassProduction := RealFineMassProduction
+@[deprecated (since := "2026-10-20")]
+alias SharpMassProducesThrough.sharpMassProducesAt := FineMassProducesThrough.fineMassProducesAt
+@[deprecated (since := "2026-10-20")]
+alias SharpMassProducesThrough.massProducesAt := FineMassProducesThrough.massProducesAt
+@[deprecated (since := "2026-10-20")]
+alias exponentialMassProduction_of_sharp := exponentialMassProduction_of_fine
+@[deprecated (since := "2026-10-20")]
+alias realSharpMassProduction_of_sharp := realFineMassProduction_of_fine
 
 end Cslib.Circuits.Boolean.MassProduction

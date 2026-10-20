@@ -15,7 +15,7 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
 /-!
-# Parameters for sharp mass production
+# Parameters for fine mass production
 
 Fix a rational copy exponent `γ = num / den < 1` and a slack `X`. Inputs of length `n` are split
 into a prefix of `prefixWidth n ≈ (γ + (1 - γ) / (X + 1)) n` bits and a suffix of the remaining
@@ -31,13 +31,13 @@ budget of the scheduler. The field width leaves `3 log₂ (n + 2)` prefix bits u
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.MassProduction.Sharp.prefixWidth`,
-  `Cslib.Circuits.Boolean.MassProduction.Sharp.suffixWidth`: the input split.
-* `Cslib.Circuits.Boolean.MassProduction.Sharp.dimension`,
-  `Cslib.Circuits.Boolean.MassProduction.Sharp.blockWidth`,
-  `Cslib.Circuits.Boolean.MassProduction.Sharp.blocks`,
-  `Cslib.Circuits.Boolean.MassProduction.Sharp.fieldWidth`: the code geometry.
-* `Cslib.Circuits.Boolean.MassProduction.Sharp.depth`: the batch exponent.
+* `Cslib.Circuits.Boolean.MassProduction.Fine.prefixWidth`,
+  `Cslib.Circuits.Boolean.MassProduction.Fine.suffixWidth`: the input split.
+* `Cslib.Circuits.Boolean.MassProduction.Fine.dimension`,
+  `Cslib.Circuits.Boolean.MassProduction.Fine.blockWidth`,
+  `Cslib.Circuits.Boolean.MassProduction.Fine.blocks`,
+  `Cslib.Circuits.Boolean.MassProduction.Fine.fieldWidth`: the code geometry.
+* `Cslib.Circuits.Boolean.MassProduction.Fine.depth`: the batch exponent.
 
 ## References
 
@@ -48,7 +48,7 @@ budget of the scheduler. The field width leaves `3 log₂ (n + 2)` prefix bits u
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean.MassProduction.Sharp
+namespace Cslib.Circuits.Boolean.MassProduction.Fine
 
 open Filter
 
@@ -274,7 +274,7 @@ theorem two_mul_slack_le (P : ℕ) :
     2 * P * ((16 * (P + 1) + 1) ^ 2 * (16 * (P + 1) + 2)) ≤ (2 * P + 1) * (16 * (P + 1)) ^ 3 := by
   nlinarith [Nat.zero_le (P ^ 3), Nat.zero_le (P ^ 2), Nat.zero_le P, Nat.zero_le (P ^ 4)]
 
-/-- The leading-coefficient arithmetic of sharp mass production. -/
+/-- The leading-coefficient arithmetic of fine mass production. -/
 theorem mul_add_le_of_slack {P n w p den num R L O : ℕ}
     (hsuffix : 16 * (P + 1) * (den - num) * n ≤ (16 * (P + 1) + 1) * den * w)
     (hsplit : n = p + w)
@@ -447,5 +447,47 @@ theorem eventually_overhead_le (hnd : num < den) (hX : 0 < X) (P A E : ℕ) :
     _ ≤ 2 ^ (n / c) * 2 ^ (n - n / c) := Nat.mul_le_mul_right _ hn
     _ = 2 ^ n := hsplit.symm
     _ ≤ den * 2 ^ n := Nat.le_mul_of_pos_left _ (by omega)
+
+end Cslib.Circuits.Boolean.MassProduction.Fine
+
+/-! ### Deprecated names -/
+
+namespace Cslib.Circuits.Boolean.MassProduction.Sharp
+
+@[deprecated (since := "2026-10-20")] alias prefixWidth := Fine.prefixWidth
+@[deprecated (since := "2026-10-20")] alias suffixWidth := Fine.suffixWidth
+@[deprecated (since := "2026-10-20")] alias dimension := Fine.dimension
+@[deprecated (since := "2026-10-20")] alias blockWidth := Fine.blockWidth
+@[deprecated (since := "2026-10-20")] alias blocks := Fine.blocks
+@[deprecated (since := "2026-10-20")] alias fieldWidth := Fine.fieldWidth
+@[deprecated (since := "2026-10-20")] alias depth := Fine.depth
+@[deprecated (since := "2026-10-20")] alias prefixWidth_le := Fine.prefixWidth_le
+@[deprecated (since := "2026-10-20")]
+alias prefixWidth_add_suffixWidth := Fine.prefixWidth_add_suffixWidth
+@[deprecated (since := "2026-10-20")] alias mul_le_suffixWidth := Fine.mul_le_suffixWidth
+@[deprecated (since := "2026-10-20")] alias three_le_dimension := Fine.three_le_dimension
+@[deprecated (since := "2026-10-20")]
+alias dimension_le_two_pow_blockWidth := Fine.dimension_le_two_pow_blockWidth
+@[deprecated (since := "2026-10-20")] alias blockWidth_pos := Fine.blockWidth_pos
+@[deprecated (since := "2026-10-20")]
+alias dimension_mul_fieldWidth_le := Fine.dimension_mul_fieldWidth_le
+@[deprecated (since := "2026-10-20")]
+alias eventually_add_mul_log_le := Fine.eventually_add_mul_log_le
+@[deprecated (since := "2026-10-20")] alias eventually_add_depth_le := Fine.eventually_add_depth_le
+@[deprecated (since := "2026-10-20")]
+alias lt_mul_prefixWidth_add_one := Fine.lt_mul_prefixWidth_add_one
+@[deprecated (since := "2026-10-20")] alias eventually_le_blocks := Fine.eventually_le_blocks
+@[deprecated (since := "2026-10-20")]
+alias eventually_le_suffixWidth := Fine.eventually_le_suffixWidth
+@[deprecated (since := "2026-10-20")] alias two_mul_slack_le := Fine.two_mul_slack_le
+@[deprecated (since := "2026-10-20")] alias mul_add_le_of_slack := Fine.mul_add_le_of_slack
+@[deprecated (since := "2026-10-20")]
+alias eventually_mul_pow_le_two_pow_div := Fine.eventually_mul_pow_le_two_pow_div
+@[deprecated (since := "2026-10-20")]
+alias eventually_mul_two_pow_dimension_le := Fine.eventually_mul_two_pow_dimension_le
+@[deprecated (since := "2026-10-20")] alias div_le_suffixWidth := Fine.div_le_suffixWidth
+@[deprecated (since := "2026-10-20")]
+alias div_le_sub_depth_add_fieldWidth := Fine.div_le_sub_depth_add_fieldWidth
+@[deprecated (since := "2026-10-20")] alias eventually_overhead_le := Fine.eventually_overhead_le
 
 end Cslib.Circuits.Boolean.MassProduction.Sharp

@@ -8902,18 +8902,18 @@ info: 'Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le' d
 #print axioms Cslib.Circuits.Boolean.MassProduction.eventually_mul_massComplexity_le
 
 /--
-info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough' depends on axioms:
+info: 'Cslib.Circuits.Boolean.MassProduction.fineMassProducesThrough' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough
+#print axioms Cslib.Circuits.Boolean.MassProduction.fineMassProducesThrough
 
 /--
-info: 'Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt' depends on axioms:
+info: 'Cslib.Circuits.Boolean.MassProduction.fineMassProducesAt' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt
+#print axioms Cslib.Circuits.Boolean.MassProduction.fineMassProducesAt
 
 /--
 info: 'Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction' depends on axioms:
@@ -8923,11 +8923,11 @@ info: 'Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction' depends 
 #print axioms Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction
 
 /--
-info: 'Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction' depends on axioms:
+info: 'Cslib.Circuits.Boolean.MassProduction.realFineMassProduction' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction
+#print axioms Cslib.Circuits.Boolean.MassProduction.realFineMassProduction
 
 /--
 info: 'Cslib.Circuits.Boolean.MassProduction.exists_isScheduler' depends on axioms:
