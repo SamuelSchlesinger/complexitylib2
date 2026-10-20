@@ -1278,3 +1278,23 @@ on page 8 and preserved AWPP entry on page 26 were rendered and visually inspect
 lifting for arbitrary bases, numeric-preserving composition and ordered complexity/capture results
 remain open. These AI reviews do not imply human editorial approval or machine-checked prose
 equivalence. AI assistance: OpenAI Codex.
+
+### Polynomial-family wide-gap robustness (2026-10-20)
+
+- Worker `poly-wpp-20261020` added the full one-sided polynomial-family WPP/LWPP
+  characterization, including uniformly computed signed binary target lists and indexed forms,
+  at source revision `3910fa96e6b22221363c38f3b3f0f33c49d20650`.
+- Independent coordinator `coordinator-ops-20261020` reviewed the source, meaningful variable
+  target clients, and index draft against that revision. No mathematical/API findings were
+  reported. The requested prose clarification now states that the target count is computed in
+  polynomial time with unary output. The review checked the unknown accepting index, list-output
+  bounds, length-only LWPP family, negative/duplicate/empty lists, and the one-sided scope.
+- The new entry credits Hemaspaandra, Hemaspaandra, Spakowski and Watanabe (Theorems 3.1 and 3.7)
+  and Fenner--Fortnow--Kurtz. It leaves two-sided target families, oracle lowness and counting-machine
+  characterizations separate. The previous wide-gap entry now points to this result.
+- All six prescribed checks passed on the source revision. The reviewed PR41 dependency stack was
+  then integrated without changes to this source; integrated validation and final exact-head
+  coordinator approval are recorded in the PR.
+- All five new declaration anchors were checked against the pinned source. The combined PDF has
+  123 entries; rendered pages 23 and 24 were inspected for layout and clipping. This AI review is
+  not human editorial approval or a formal proof of prose equivalence.

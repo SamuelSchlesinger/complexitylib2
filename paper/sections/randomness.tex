@@ -415,11 +415,9 @@ nonzero unary-input target $f(k(x))$ at a polynomial-time unary-computable index
 is normalized to $\prod_{i\le p(|x|)}f(i)$ by multiplying $g(x)$ by the binary-integer list
 product $\prod_{i\le p(|x|),\,i\ne k(x)}f(i)$, yielding reduction closure when $k(x)=|r(x)|$.
 These verifier-based statements follow the definitions of Fenner--Fortnow--Kurtz
-and the finite-family and known-index cases of Hemaspaandra et al.; they do not
-establish counting-machine characterizations, oracle lowness, or polynomial-family
-multiple-target robustness ($\cc{Poly\text{-}LWPP}=\cc{LWPP}$ and
-$\cc{Poly\text{-}WPP}=\cc{WPP}$) when the accepting target index is not
-polynomial-time computable from the input.
+and the finite-family and known-index cases of Hemaspaandra et al. Full polynomial-family
+robustness with an unknown accepting index is stated next. Counting-machine
+characterizations and oracle lowness are separate.
 \citep{FennerFortnowKurtz1994}\citep[Definitions 2.4--2.5 and Section 3]{HemaspaandraEtAl2018}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{95}{Cslib.Complexity.SPP_subset_LWPP}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{100}{Cslib.Complexity.LWPP_subset_WPP}
@@ -443,6 +441,50 @@ polynomial-time computable from the input.
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{358}{Cslib.Complexity.mem_LWPP_of_polyTime_index}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{411}{Cslib.Complexity.PolyTimeReducible.mem_LWPP}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Int/Binary.lean}{294}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_prod}
+\end{result}
+
+
+\begin{result}
+\subsection{Polynomial-family wide-gap robustness}
+For every fixed injective encoding, allowing a polynomial number of accepting targets
+preserves the verifier-based wide-gap classes:
+\[
+\cc{Poly\text{-}WPP}=\cc{WPP},\qquad
+\cc{Poly\text{-}LWPP}=\cc{LWPP}.
+\]
+Precisely, suppose $g\in\cc{GapP}$ and $f(x)$ is a uniformly polynomial-time computable
+list of nonzero binary integers, with
+\[
+x\in A\Rightarrow g(x)\in f(x),\qquad x\notin A\Rightarrow g(x)=0.
+\]
+Then $A\in\cc{WPP}$. If the list is computed only from unary input length, the conclusion
+is $A\in\cc{LWPP}$; nonzero targets are required at every natural length, including zero.
+The list-output bound charges both the number of targets and their binary lengths.
+The accepting index is only existential and need not be polynomial-time computable.
+Negative targets and duplicates are allowed. An empty list forces rejection and contributes
+product one. Conversely, every WPP or LWPP witness gives a singleton target list.
+
+The indexed forms use a uniform FP function $f(x,i)$, or $f(n,i)$ for LWPP, and a
+number of targets $r$ computed in polynomial time with unary output, with $0\leq i<r$. They include the standard
+positive polynomial-size families of Hemaspaandra, Hemaspaandra, Spakowski and Watanabe
+by computing $r$ from input length and translating their one-based indices.
+\citep[Theorems 3.1 and 3.7]{HemaspaandraEtAl2018}
+The single target and gap are
+\[
+F(x)=\prod_{z\in f(x)}z,\qquad
+G(x)=F(x)-\prod_{z\in f(x)}(z-g(x)),
+\]
+where products retain list multiplicities. Uniform GapP membership follows by expanding
+into a Boolean-word sum of polynomial-time selected-target products times unary powers of
+$-g$; no indexed-product closure is assumed. The counting algebra credits
+Fenner--Fortnow--Kurtz.\citep{FennerFortnowKurtz1994}
+These statements do not establish the two-sided acceptance/rejection-target generalization,
+oracle lowness, or counting-machine characterizations.
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{239}{Cslib.Complexity.mem_WPP_iff_exists_polyTime_targets}
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{259}{Cslib.Complexity.mem_LWPP_iff_exists_polyTime_targets}
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{200}{Cslib.Complexity.mem_WPP_of_indexed_targets}
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{219}{Cslib.Complexity.mem_LWPP_of_indexed_targets}
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{118}{Cslib.Complexity.GapP.prod_sub_mem}
 \end{result}
 
 
