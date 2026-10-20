@@ -295,6 +295,7 @@ import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
