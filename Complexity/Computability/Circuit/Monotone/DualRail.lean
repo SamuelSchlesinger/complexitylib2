@@ -294,7 +294,7 @@ theorem ofFn_railBitString (x : BitString n) :
   rw [List.getElem_ofFn]
   exact List.getD_eq_getElem _ _ h₂
 
-theorem isCodeFrom_code_fst {σ : Signature} (c : Circuit σ n m) :
+private theorem isCodeFrom_code_fst {σ : Signature} (c : Circuit σ n m) :
     Program.IsCodeFrom σ n 0 c.code.1 :=
   Program.isSome_ofCode_iff.1 (by rw [Circuit.code, Program.ofCode_code]; rfl)
 
@@ -342,7 +342,7 @@ theorem eval_dualRail (c : Circuit Boolean.signature n m) (x : BitString n) (j :
   apply getD_railBits_true
   have := (c.outputs j).toNat_lt
   have hl := Circuit.length_code_fst c
-  simp
+  simp only [length_evalCode, List.length_ofFn]
   omega
 
 end Circuit
