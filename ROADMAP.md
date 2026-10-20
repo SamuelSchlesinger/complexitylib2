@@ -535,10 +535,13 @@ space bounds. Further class-level work needs resource certificates for the actua
   now forward-simulates successful fitting runs in the existing
   [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) with logarithmic cost
   `8 * (bitLength (r + 5) + 1) * (t + 1) * (w + 1)`, including its two register initializers
-  and final output copy/jump, from an explicitly supplied padded input. Open: the charged
-  rearrangement of a fixed length-bearing input format into this padded layout
-  ([#84](https://github.com/SamuelSchlesinger/complexitylib2/issues/84)), its composition with the
-  compiler and the bounded-universe element-distinctness cost corollary
+  and final output copy/jump, from an explicitly supplied padded input. A separate
+  [input preparer](Complexity/Computability/RAM/Input.lean) now charges the backward relocation and
+  prefix clearing from five zero scratch cells followed by a length header and the input words.
+  It reaches the exact padded register state before arbitrary appended code in logarithmic cost
+  `(24 + R) * (bitLength (R + 5) + 2) * (input.length + 1) * b` for `R ≥ 5`, given bit-length
+  bound `b` on the header and words; external input installation remains uncharged. Open: its
+  composition with the compiler and the bounded-universe element-distinctness cost corollary
   ([#81](https://github.com/SamuelSchlesinger/complexitylib2/issues/81)), and wider-fragment or
   Turing-machine simulations. The unrestricted converse
   from prescribed-width to uniform decision is false: width can supply instance-dependent advice.
