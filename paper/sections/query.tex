@@ -103,3 +103,34 @@ formalization accompanying the tromino undecidability paper.
 \declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Computability/WordRAM/Time.lean}{132}{Cslib.WordRAM.Program.DecidesInTime}
 \declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Computability/WordRAM/Compile.lean}{135}{Cslib.WordRAM.Exec.runs}
 \end{result}
+
+\begin{result}
+\subsection{Additive word-RAM simulation with padded input}
+Let $p$ be a fixed word-RAM program with $r$ named registers, using only constants, copies,
+addition, truncated subtraction, indirect loads and stores, equality and unsigned comparison,
+jumps and halting. There is an executable compiler, independent of input and word size, into
+the library's natural-number RAM with logarithmic instruction costs. If the input list $u$
+has length and entries below $2^w$, and $p$ halts on $u$ with output $v$ after $t$
+source instructions, including its final halt, the compiled program halts with the same output
+within logarithmic cost
+\[
+8\bigl(\ell(r+5)+1\bigr)(t+1)(w+1),
+\qquad \ell(m)=\lfloor\log_2\max(1,m)\rfloor+1.
+\]
+The target input is explicitly the list of $r+5$ zeros followed by $|u|$ and the entries of $u$.
+Installing this padded, length-bearing input is uncharged; the target's two register
+initialization instructions, translated instructions and final output copy and jump are charged.
+The theorem does not certify construction of the padded input from an arbitrary raw list.
+In fact, bare RAM inputs $[]$ and $[0]$ initialize identical states.
+
+This is a forward simulation of successful runs, not reflection of source overflow or
+falloff faults. Word-width access, multiplication, division, bitwise operations and shifts are
+outside the supported fragment. The source model adapts the lean-trominoes formalization;
+the target is the library's documented natural-number adaptation of Cook--Reckhow RAM.
+No Turing-machine simulation or complexity-class equivalence is asserted.
+\citep{CookReckhow1973,Tromino2025}
+\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{61}{Cslib.WordRAM.Instr.IsAdditive}
+\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{487}{Cslib.WordRAM.ToRAM.executes_compile}
+\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{519}{Cslib.WordRAM.ToRAM.paddedInput}
+\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{569}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded}
+\end{result}
