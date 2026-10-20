@@ -81,6 +81,24 @@ reachability formula. Formulas with free variables are excluded from TQBF.
 \end{result}
 
 \begin{result}
+\subsection{Generalized Geography is PSPACE-complete}
+Generalized Geography in its vertex version (a directed graph with declared vertices and a start
+vertex; players alternately move a token along arcs to unvisited declared vertices; the player
+unable to move loses; the instance is accepted when the first player wins, by backward induction)
+is PSPACE-complete under polynomial-time many-one reductions. Membership is a polynomial-time game
+verifier for the alternating characterization of PSPACE. Hardness reduces true closed formulas
+$\exists x_1\forall y_1\cdots\exists x_n\forall y_n\,\psi$ with $\psi$ in CNF (shown PSPACE-complete by
+normalizing the formulas of games; the game on them is Sipser's FORMULA-GAME) by the diamond
+construction of Sipser's proof, which adapts Schaefer's technique. Formulas with free variables are
+rejected. Schaefer's arc version of the game is not treated.\citep[Theorems 8.11, 8.14]{Sipser2013}\citep{LichtensteinSipser1980,Schaefer1978}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/TQBF/Prenex.lean}{348}{Cslib.Complexity.TQBFCNF_pspaceComplete}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/GeneralizedGeography/Membership.lean}{607}{Cslib.Complexity.GeneralizedGeography_mem_PSPACE}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/GeneralizedGeography/Reduction.lean}{631}{Cslib.Complexity.GeneralizedGeography_pspaceHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/GeneralizedGeography.lean}{55}{Cslib.Complexity.GeneralizedGeography_pspaceComplete}
+\end{result}
+
+
+\begin{result}
 \subsection{Alternating polynomial time equals polynomial space}
 \[
 \cc{AP}=\cc{PSPACE}.

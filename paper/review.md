@@ -740,3 +740,19 @@ proved) and the non-blocking follow-ups.
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 11: gap hardness, Generalized Geography, and cleanups (2026-10-19)
+
+Integrated the `gap-graphs-geography` branch through `a385efa7`, adding "Constant gaps for
+Independent Set, Clique and Vertex Cover" (`completeness.tex`) and "Generalized Geography is
+PSPACE-complete" (`space.tex`), and the reviewed cleanup ranges `bb828997..26cf1dc6` (ETH
+Hamiltonian) and `f2ede479..d1c9ea21` (learning). The two learning links whose declarations were
+renamed are repinned to `d1c9ea21`.
+
+Independent reviews of `f775b563`: correctness found the Lean correct but required citation fixes
+(Sipser 3rd ed. Theorem 8.14 for Geography; the vertex game is due to Lichtenstein–Sipser, the arc
+game to Schaefer); API approved. Delta review of `f775b563..a385efa7`: APPROVE. The two cleanup
+ranges were approved by the same delta review (statements unchanged; removed names unused).
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.

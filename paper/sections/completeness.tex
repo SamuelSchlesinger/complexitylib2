@@ -185,6 +185,24 @@ is asserted.\citep{AroraLundMotwaniSudanSzegedy1998,Dinur2007}
 \end{result}
 
 \begin{result}
+\subsection{Constant gaps for Independent Set, Clique and Vertex Cover}
+For graphs given by declared vertices and edges and a target $k$, it is NP-hard, under
+polynomial-time promise reductions, to distinguish $\alpha(G)\ge k$ from
+$\alpha(G)\le(1-\frac{1}{3\cdot 2^{77}})k$, likewise for the clique number, and to distinguish
+$\tau(G)\le k$ from $\tau(G)\ge(1+\frac{1}{3\cdot 2^{78}})k$ for the vertex cover number. Values
+are taken over declared vertices. The reductions apply Karp's occurrence graph to the MAX-3SAT gap
+(an independent set yields an assignment satisfying as many clauses); for vertex cover they pass
+through MAX-E3SAT with repeated literals allowed, whose graphs have exactly $3m$ vertices. This is
+not the FGLSS construction; the constants are explicit and far from optimal, and amplification to
+every constant is not proved.\citep{AroraLundMotwaniSudanSzegedy1998}\citep[Chapter 11]{AroraBarak09}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/MaxExactThreeSAT.lean}{170}{Cslib.Complexity.GapExactThreeSAT_npHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/IndependentSet.lean}{253}{Cslib.Complexity.GapIndependentSet_npHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/IndependentSet.lean}{261}{Cslib.Complexity.GapClique_npHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/IndependentSet.lean}{269}{Cslib.Complexity.GapVertexCover_npHard}
+\end{result}
+
+
+\begin{result}
 \subsection{PCP without random bits}
 For the same nonadaptive polynomial-time verifier model,
 \[

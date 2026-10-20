@@ -259,7 +259,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   [uniform average-case-hardness implication P = BPP](Complexity/Computability/Complexity/Classes/BPP/Derandomization.lean)
   is proved. Complete the worst-case-to-average-case amplification needed to obtain this
   conclusion from exponential worst-case circuit hardness in `E`.
-* **Further PCP consequences.** Build the FGLSS clique-hardness reduction on the existing
+* **Further PCP consequences.** Constant-factor NP-hardness of approximating Independent Set,
+  Clique and Vertex Cover is [proved](Complexity/Computability/PCP/Approximation/IndependentSet.lean)
+  via Karp's occurrence graph. Build the FGLSS clique-hardness reduction and amplification on the existing
   [gap-preserving reductions](Complexity/Computability/PCP/Approximation.lean) and certified PCP
   construction; retain the exact gap and reduction runtime.
 * **Randomized communication and information.** The `Ω(n)` bounded-error randomized disjointness
