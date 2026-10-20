@@ -238,6 +238,24 @@ theorem mem_occurrences {φ : CNF ℕ} {o : Occurrence} :
   · rintro ⟨hi, hj, hl⟩
     exact ⟨(φ[i], i), by simp [hi], (φ[i][j], j), by simp [hj], by rw [hl]⟩
 
+/-- The variables of the occurrences, in order, are the variables of the formula. -/
+theorem map_occurrences (φ : CNF ℕ) : (occurrences φ).map (fun o => o.2.2.1) = φ.vars := by
+  have hc : ∀ c : Clause ℕ × ℕ, (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
+      c.1.map Prod.fst := fun c => by
+    calc (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
+        (c.1.zipIdx.map Prod.fst).map Prod.fst := by rw [List.map_map]; rfl
+      _ = c.1.map Prod.fst := by rw [List.zipIdx_map_fst]
+  calc (occurrences φ).map (fun o => o.2.2.1)
+      = φ.zipIdx.flatMap fun c => c.1.map Prod.fst := by
+        simp only [occurrences, List.map_flatMap, List.map_map, Function.comp_def, hc]
+    _ = (φ.zipIdx.map Prod.fst).flatMap fun c => c.map Prod.fst := by rw [List.flatMap_map]
+    _ = φ.vars := by
+        rw [List.zipIdx_map_fst, CNF.vars, List.map_flatten, List.flatMap_def]
+
+/-- A formula has one occurrence for each occurrence of a variable. -/
+theorem length_occurrences (φ : CNF ℕ) : (occurrences φ).length = φ.vars.length := by
+  rw [← map_occurrences, List.length_map]
+
 theorem Occurrence.Conflict.symm {o o' : Occurrence} (h : o.Conflict o') : o'.Conflict o := by
   rcases h with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩
   · exact Or.inl ⟨h₁.symm, h₂.symm⟩
