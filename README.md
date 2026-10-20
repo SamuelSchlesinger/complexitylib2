@@ -45,10 +45,15 @@ are maintained alongside the library; it is a curated catalogue, not an exhausti
   [`NPSPACE = PSPACE`](Complexity/Computability/Complexity/Classes/Space/Savitch.lean),
   [TQBF PSPACE-completeness](Complexity/Computability/Complexity/Classes/Space/TQBF.lean),
   [`NL ⊆ P`](Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean),
-  [Sipser–Gács–Lautemann](Complexity/Computability/Complexity/Classes/PH/SipserLautemann.lean) and
-  [`BPP ⊆ P/poly`](Complexity/Computability/Circuit/Boolean/PolynomialTime.lean).
-* Interactive proofs: [`NP ⊆ IP`](Complexity/Computability/Complexity/Classes/IP.lean) and a private-coin protocol
-  for [graph non-isomorphism](Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean).
+  [`USTCON ∈ L`](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean),
+  [Toda's theorem `PH ⊆ P^#P`](Complexity/Computability/Complexity/Classes/Toda.lean),
+  [Sipser–Gács–Lautemann](Complexity/Computability/Complexity/Classes/PH/SipserLautemann.lean),
+  [`BPP ⊆ P/poly`](Complexity/Computability/Circuit/Boolean/PolynomialTime.lean) and
+  [worst-case-hardness derandomization](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean).
+* Interactive proofs: [`NP ⊆ IP`](Complexity/Computability/Complexity/Classes/IP.lean),
+  [Shamir's theorem `IP = PSPACE`](Complexity/Computability/Complexity/Classes/IP/Shamir.lean), and
+  private- and public-coin protocols for [graph non-isomorphism](Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean)
+  ([in `AM`](Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean)).
 * NP-completeness of [3-coloring](Complexity/Computability/Complexity/Problems/Coloring.lean),
   [Hamiltonian cycle](Complexity/Computability/Complexity/Problems/Hamiltonian/Undirected.lean),
   [TSP](Complexity/Computability/Complexity/Problems/TSP.lean),
