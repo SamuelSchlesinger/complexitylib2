@@ -8,6 +8,7 @@ public import Complexity.Algorithms.Reachability.BreadthFirst
 public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
+public import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength

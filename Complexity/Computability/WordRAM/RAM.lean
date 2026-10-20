@@ -562,31 +562,44 @@ private theorem represents_prologued (input : List ℕ) :
     rw [read_other _ (by dsimp [memoryBase, one]; lia) (by dsimp [memoryBase, offset]; lia)]
     exact paddedInput_read_memory input a
 
-/-- The padded-input logarithmic-cost simulation. The compiler and constant depend only on
-the source program (in fact, the constant depends only on its number of named registers).
-The input convention explicitly supplies the length and zero workspace; construction of
-that convention is not a reduction certified by this theorem. -/
-theorem haltsWithResultInTime_padded {p : Program r} (hp : p.IsAdditive)
+/-- Start the compiled simulation after an arbitrary already-executed prefix, from the
+supplied padded register layout. The prefix itself is not charged by this theorem; the
+two-instruction prologue, compiled source execution and final output are charged. This is
+the composition interface for a separately certified input-preparation program. -/
+theorem executes_compile_from_paddedInput {p : Program r} (hp : p.IsAdditive) (pre : RAM.Program)
     {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
     (h : Executes w p (State.init input) v n) :
-    RAM.HaltsWithResultInTime RAM.logCost (paddedProgram p) (paddedInput r input) v
-      (8 * (RAM.bitLength (memoryBase r) + 1) * (n + 1) * (w + 1)) := by
+    let q := (pre ++ prologue r) ++ compile (pre.length + 2) p
+    let s := RAM.State.mk pre.length (URM.Regs.ofInputs (paddedInput r input))
+    ∃ k, (RAM.run q k s).isHalted q ∧ (RAM.run q k s).regs.output = v ∧
+      RAM.time RAM.logCost q k s ≤
+        8 * (RAM.bitLength (memoryBase r) + 1) * (n + 1) * (w + 1) := by
+  let q := (pre ++ prologue r) ++ compile (pre.length + 2) p
   let σ := ((URM.Regs.ofInputs (paddedInput r input)).write (one r) 1).write
     (offset r) (memoryBase r)
-  have hfirst := Reaches.step (p := paddedProgram p) (s := RAM.State.init (paddedInput r input))
-    (i := .const (one r) 1) rfl
-  have hsecond := Reaches.step (p := paddedProgram p)
-    (s := ⟨1, (URM.Regs.ofInputs (paddedInput r input)).write (one r) 1⟩)
-    (i := .const (offset r) (memoryBase r)) rfl
-  have hstart : Reaches (paddedProgram p) (RAM.State.init (paddedInput r input)) ⟨2, σ⟩
+  have h0 : q[pre.length]? = some (.const (one r) 1) := by
+    dsimp only [q]
+    rw [List.append_assoc, List.getElem?_append_right (Nat.le_refl _)]
+    simp [prologue]
+  have h1 : q[pre.length + 1]? = some (.const (offset r) (memoryBase r)) := by
+    dsimp only [q]
+    rw [List.append_assoc, List.getElem?_append_right (Nat.le_add_right _ _)]
+    simp [prologue]
+  have hfirst := Reaches.step (p := q)
+    (s := ⟨pre.length, URM.Regs.ofInputs (paddedInput r input)⟩) h0
+  have hsecond := Reaches.step (p := q)
+    (s := ⟨pre.length + 1, (URM.Regs.ofInputs (paddedInput r input)).write (one r) 1⟩) h1
+  have hstart : Reaches q ⟨pre.length, URM.Regs.ofInputs (paddedInput r input)⟩ ⟨pre.length + 2, σ⟩
       (1 + RAM.bitLength (memoryBase r)) := by
-    simpa [RAM.State.init, RAM.Instr.exec, RAM.logCost, RAM.bitLength, σ]
+    simpa [RAM.Instr.exec, RAM.logCost, RAM.bitLength, σ, Nat.add_assoc]
       using hfirst.trans hsecond
-  obtain ⟨k, hk, hv, ht⟩ := executes_compile hp (prologue r) (represents_prologued input)
+  have hc := executes_compile hp (pre ++ prologue r) (represents_prologued input)
     (Data.Bounded.init hi) h
-  change (RAM.run (paddedProgram p) k ⟨2, σ⟩).isHalted (paddedProgram p) at hk
-  change (RAM.run (paddedProgram p) k ⟨2, σ⟩).regs.output = v at hv
-  change RAM.time RAM.logCost (paddedProgram p) k ⟨2, σ⟩ ≤
+  simp only [List.length_append, prologue, List.length_cons, List.length_nil] at hc
+  obtain ⟨k, hk, hv, ht⟩ := hc
+  change (RAM.run q k ⟨pre.length + 2, σ⟩).isHalted q at hk
+  change (RAM.run q k ⟨pre.length + 2, σ⟩).regs.output = v at hv
+  change RAM.time RAM.logCost q k ⟨pre.length + 2, σ⟩ ≤
     n * (8 * (RAM.bitLength (memoryBase r) + w + 1)) at ht
   obtain ⟨m, hm, hcost⟩ := hstart
   refine ⟨m + k, by rwa [RAM.run_add, hm], by rwa [RAM.run_add, hm], ?_⟩
@@ -600,6 +613,18 @@ theorem haltsWithResultInTime_padded {p : Program r} (hp : p.IsAdditive)
     _ ≤ (n + 1) * (8 * ((RAM.bitLength (memoryBase r) + 1) * (w + 1))) :=
       Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ hB)
     _ = _ := by ring
+
+/-- The padded-input logarithmic-cost simulation. The compiler and constant depend only on
+the source program (in fact, the constant depends only on its number of named registers).
+The input convention explicitly supplies the length and zero workspace; construction of
+that convention is not a reduction certified by this theorem. -/
+theorem haltsWithResultInTime_padded {p : Program r} (hp : p.IsAdditive)
+    {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
+    (h : Executes w p (State.init input) v n) :
+    RAM.HaltsWithResultInTime RAM.logCost (paddedProgram p) (paddedInput r input) v
+      (8 * (RAM.bitLength (memoryBase r) + 1) * (n + 1) * (w + 1)) := by
+  simpa [RAM.HaltsWithResultInTime, paddedProgram, RAM.State.init] using
+    executes_compile_from_paddedInput hp [] hi h
 
 end ToRAM
 end Cslib.WordRAM
