@@ -41,8 +41,9 @@ access is an addition followed by a load or a store. The registers they use are 
 
 ## References
 
-Allocation by a frontier, the zeroing loop and indexed access follow Erik Demaine's
-`lean-trominoes` ([MIT–ULB CompGeom Group][Tromino2025]).
+* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]; allocation by
+  a frontier, the zeroing loop and indexed access are adapted from its accompanying Lean
+  formalization.
 -/
 
 @[expose] public section

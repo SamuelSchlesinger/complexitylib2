@@ -18,9 +18,10 @@ A word-RAM algorithm is analysed for word sizes `w` of order `log n`, where `n` 
 instance [Cormen et al., Section 2.2][CLRS2009]. Two ways of making this precise are useful, and
 the first implies the second.
 
-* **Uniform decision** (`Cslib.WordRAM.DecidesInTime`), Demaine's definition: one program answers
-  correctly within the time bound at *every* word size `w ≥ bits a` that accommodates the input
-  words. This is the strong form, in which upper bounds should be proved; the classes
+* **Uniform decision** (`Cslib.WordRAM.DecidesInTime`): one program answers correctly within the
+  time bound at *every* word size `w ≥ bits a` that accommodates the input words, as in the
+  transdichotomous model of [Fredman and Willard][FredmanWillard1993]. This is the strong form,
+  in which upper bounds should be proved; the classes
   `Cslib.WordRAM.LinearTime` and `Cslib.WordRAM.PolynomialTime` take `bits a` to be a constant
   multiple of the length of the size of `a`.
 * **Decision at a given word size** (`Cslib.WordRAM.DecidesInTimeAt`): one program answers
@@ -61,7 +62,10 @@ information about it to the program.
 
 * [T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to
   Algorithms*][CLRS2009]
-* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]
+* [M. L. Fredman and D. E. Willard, *Surpassing the information theoretic bound with fusion
+  trees*][FredmanWillard1993]
+* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]; the uniform
+  decision predicate is adapted from its accompanying Lean formalization.
 -/
 
 @[expose] public section

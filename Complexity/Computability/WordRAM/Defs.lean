@@ -44,24 +44,28 @@ the flat programs of this file with the same instruction counts.
 
 ## Design notes
 
-The machine follows Erik Demaine's bounded-word RAM in `lean-trominoes` (an Apache-2.0
-formalization accompanying [the MIT–ULB CompGeom Group][Tromino2025]), with these changes:
+The definitions are adapted from the Lean formalization accompanying
+[MIT–ULB CompGeom Group][Tromino2025]. The modelling choices are these.
 
-* Words are unsigned, as in most word-RAM definitions, rather than two's-complement integers.
-  Subtraction is truncated, and division and remainder by zero follow Lean's conventions
-  `x / 0 = 0` and `x % 0 = x`; each of these conventions costs a constant number of
-  instructions to reproduce with any other, so time bounds are unaffected.
-* The bitwise operations and shifts of the standard instruction set are added
-  [Hagerup][Hagerup1998], as is an instruction reading the word size, which algorithms on the
-  word RAM may use.
-* As in Demaine's machine, overflow faults instead of wrapping around modulo `2 ^ w`, so a run
-  that succeeds never relies on wrapping. Hence a successful run of a program that does not read
-  the word size never depends on it: such a run succeeds identically at every larger word size
-  (`Cslib.WordRAM.Executes.mono`).
+* Overflow faults instead of wrapping around modulo `2 ^ w`. This formalizes the standard
+  assumption that every value an algorithm computes fits a word
+  [Cormen et al., Section 2.2][CLRS2009]: a run that succeeds never relies on wrapping. Hence a
+  successful run of a program that does not read the word size never depends on it: such a run
+  succeeds identically at every larger word size (`Cslib.WordRAM.Executes.mono`).
+* Words are unsigned, as in most word-RAM definitions [Hagerup][Hagerup1998]; the source
+  formalization uses two's-complement integers. Subtraction is truncated, and division and
+  remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`; each of these
+  conventions costs a constant number of instructions to reproduce with any other, so time
+  bounds are unaffected.
+* The instructions are the arithmetic, bitwise and shift operations of the standard word RAM
+  [Hagerup][Hagerup1998], with an instruction reading the word size, which word-RAM algorithms
+  may use [Fredman and Willard][FredmanWillard1993]. The source formalization has no bitwise
+  operations.
 * Only constants and binary operations check that the number they write fits a word. Copies,
   loads and stores move words already held by the machine, and every address held in a register
-  is a word (`Cslib.WordRAM.Data.Bounded.runs`), so checks on them could never fail on a run from
-  an input; they are omitted, which spares every program proof their side conditions.
+  is a word (`Cslib.WordRAM.Data.Bounded.runs`), so checks on them, which the source
+  formalization makes, could never fail on a run from an input; they are omitted, which spares
+  every program proof their side conditions.
 * The program counter is not required to fit a word: a program has constant length.
 * Data instructions have one semantics, `Cslib.WordRAM.Op.eval`, shared by flat and structured
   programs; runs are counted with cslib's `Relation.RelatesInSteps`.

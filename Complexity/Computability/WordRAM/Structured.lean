@@ -62,9 +62,9 @@ injectively chosen registers of a larger register file and leaves the others unt
 
 ## References
 
-The structured programs, their cost-exact semantics, register preservation and register
-embedding follow Erik Demaine's `lean-trominoes`
-([MIT–ULB CompGeom Group][Tromino2025]).
+* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]; the
+  structured programs, their cost-exact semantics, register preservation and register embedding
+  are adapted from its accompanying Lean formalization.
 -/
 
 @[expose] public section

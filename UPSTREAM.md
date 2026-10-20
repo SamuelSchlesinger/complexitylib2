@@ -60,10 +60,11 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   definitionally, with `QueryComplexity/Restriction` connecting filling to `Forces`.
   Align the remaining tree representation in `Computability/DecisionTree` with #925 and
   coordinate its certificate follow-up `D ≤ C₀ C₁`; no second numerical measure API is retained.
-* **Word RAM.** `Computability/WordRAM/*` adapt Erik Demaine's bounded-word RAM from
+* **Word RAM.** `Computability/WordRAM/*` adapt the bounded-word RAM of the Lean formalization
+  accompanying the tromino undecidability paper,
   [`edemaine/lean-trominoes`](https://github.com/edemaine/lean-trominoes) @6d5b36c1 (Apache-2.0),
-  which is not a CSLib branch; the adapted files keep him as an author. Submit them with him, and
-  first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
+  which is not a CSLib branch. Its author, Erik Demaine, is credited in the adapted files; submit
+  them with him, and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
   programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the

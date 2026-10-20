@@ -491,16 +491,16 @@ space bounds. Further class-level work needs resource certificates for the actua
 * the ordered logarithmic-space FO encoding bridge and first-order Circuit Value completeness in the
   [first continuing priority](#continuing-priorities), together with uniform circuit-family and
   counting-machine characterizations;
-* RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), ported from
-  Erik Demaine's `lean-trominoes`, has uniform [linear and polynomial time](Complexity/Computability/WordRAM/Time.lean),
+* RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
+  Lean formalization accompanying the tromino undecidability paper, has uniform [linear and polynomial time](Complexity/Computability/WordRAM/Time.lean),
   [structured programs](Complexity/Computability/WordRAM/Structured.lean) compiling with exact
   instruction counts, [allocation and arrays](Complexity/Computability/WordRAM/Allocation.lean) and
   a [linear-time element-distinctness client](Complexity/Algorithms/WordRAM/ElementDistinctness.lean).
   Open: simulations between the word RAM, the logarithmic-cost
   [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) and Turing machines (v1 proves
   `RAM.P = P` for the logarithmic-cost RAM), the converse of `DecidesInTime.at` for programs that
-  read the word size, transfer of cell-probe lower bounds, and Demaine's Horn-SAT, 2SAT, matching
-  and domino-tiling clients;
+  read the word size, transfer of cell-probe lower bounds, and that formalization's Horn-SAT, 2SAT,
+  matching and domino-tiling clients;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.

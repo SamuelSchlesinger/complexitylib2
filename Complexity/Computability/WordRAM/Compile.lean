@@ -44,8 +44,8 @@ instructions (`Cslib.WordRAM.Exec.runs`). A complete program ends with a `halt`
 
 ## References
 
-The assembly and its exact-cost correctness follow Erik Demaine's `lean-trominoes`
-([MIT–ULB CompGeom Group][Tromino2025]).
+* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]; the assembly
+  and its exact-cost correctness are adapted from its accompanying Lean formalization.
 -/
 
 @[expose] public section
