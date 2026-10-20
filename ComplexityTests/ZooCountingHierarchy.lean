@@ -107,10 +107,59 @@ example : {w : List Bool | w.tail.headD false = true} ∈ BH encBits 1 :=
 example : {w : List Bool | w.headD false = true}ᶜ ∈ BooleanHierarchy encBits :=
   compl_mem_BooleanHierarchy (Set.mem_iUnion.mpr ⟨1, head_mem_BH_one⟩)
 
-example : {w : List Bool | w.headD false = true}ᶜ ∈ coDP encBits := by
-  change {w : List Bool | w.headD false = true}ᶜᶜ ∈ DP encBits
-  rw [compl_compl, ← BH_two]
-  exact BH_mono (by decide : 1 ≤ 2) head_mem_BH_one
+example : {w : List Bool | w.headD false = true} ∈ coDP encBits := by
+  rw [← coBH_two]
+  exact BH_subset_coBH_succ 1 head_mem_BH_one
+
+example : (Set.univ : Set (List Bool)) ∈ coBH encBits 0 := by
+  simp [coBH_zero]
+
+example : coBH encBits 1 = coNP encBits := coBH_one
+example : coBH encBits 2 = coDP encBits := coBH_two
+
+private theorem head_mem_coBH_two :
+    {w : List Bool | w.headD false = true} ∈ coBH encBits 2 :=
+  BH_subset_coBH_succ 1 head_mem_BH_one
+
+example : {w : List Bool | w.headD false = true} ∈ coBH encBits 5 :=
+  coBH_mono (by decide : 2 ≤ 5) head_mem_coBH_two
+
+example : {w : List Bool | w.headD false = true} ∈ BH encBits 3 :=
+  coBH_subset_BH_succ 2 head_mem_coBH_two
+
+example : (⋃ n, coBH encBits n) = BooleanHierarchy encBits :=
+  iUnion_coBH_eq_BooleanHierarchy
+
+private theorem head_mem_NP : {w : List Bool | w.headD false = true} ∈ NP encBits :=
+  UP_subset_NP (P_subset_UP head_mem_P)
+
+example : {w : List Bool | w.headD false = true} ∩ {w | w.headD false = true} ∈ BH encBits 1 :=
+  inter_mem_BH_of_mem_NP head_mem_BH_one head_mem_NP
+
+example : {w : List Bool | w.headD false = true} \ {w | w.headD false = true} ∈ BH encBits 2 :=
+  diff_mem_BH_of_mem_NP head_mem_BH_one head_mem_NP
+
+example : {w : List Bool | w.headD false = true} ∪ {w | w.headD false = true} ∈ BH encBits 2 :=
+  union_mem_BH_of_mem_NP head_mem_BH_one head_mem_NP
+
+example : {w : List Bool | w.tail.headD false = true} ∈ coBH encBits 2 :=
+  tail_reduces_head.mem_coBH head_mem_coBH_two
+
+example : {w : List Bool | w.tail.headD false = true} ∈ BooleanHierarchy encBits :=
+  tail_reduces_head.mem_BooleanHierarchy (Set.mem_iUnion.mpr ⟨1, head_mem_BH_one⟩)
+
+example (k : ℕ) : BH encBits (k + 1) ⊆ BH encBits k ↔ coBH encBits k ⊆ BH encBits k :=
+  BH_succ_subset_iff_coBH_subset
+
+example (k : ℕ) : BH encBits k = coBH encBits k ↔ BH encBits (k + 1) = BH encBits k :=
+  BH_eq_coBH_iff_BH_succ_eq
+
+example (k : ℕ) (h : coBH encBits k ⊆ BH encBits k) :
+    BooleanHierarchy encBits = BH encBits k :=
+  BooleanHierarchy_eq_BH_of_coBH_subset h
+
+example (h : NP encBits = coNP encBits) : BooleanHierarchy encBits = NP encBits :=
+  BooleanHierarchy_eq_NP_of_NP_eq_coNP h
 
 end ComplexityTests.ZooCountingHierarchy
 
@@ -246,6 +295,97 @@ info: 'Cslib.Complexity.PolyTimeReducible.mem_BH' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.PolyTimeReducible.mem_BH
+
+/--
+info: 'Cslib.Complexity.coBH_two' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.coBH_two
+
+/--
+info: 'Cslib.Complexity.iUnion_coBH_eq_BooleanHierarchy' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.iUnion_coBH_eq_BooleanHierarchy
+
+/--
+info: 'Cslib.Complexity.inter_mem_BH_of_mem_NP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.inter_mem_BH_of_mem_NP
+
+/--
+info: 'Cslib.Complexity.diff_mem_BH_of_mem_NP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.diff_mem_BH_of_mem_NP
+
+/--
+info: 'Cslib.Complexity.union_mem_BH_of_mem_NP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.union_mem_BH_of_mem_NP
+
+/--
+info: 'Cslib.Complexity.PolyTimeReducible.mem_coBH' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PolyTimeReducible.mem_coBH
+
+/--
+info: 'Cslib.Complexity.PolyTimeReducible.mem_BooleanHierarchy' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PolyTimeReducible.mem_BooleanHierarchy
+
+/--
+info: 'Cslib.Complexity.BH_succ_subset_iff_coBH_subset' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BH_succ_subset_iff_coBH_subset
+
+/--
+info: 'Cslib.Complexity.BH_eq_coBH_iff_BH_succ_eq' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BH_eq_coBH_iff_BH_succ_eq
+
+/--
+info: 'Cslib.Complexity.BH_eq_of_coBH_subset' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BH_eq_of_coBH_subset
+
+/--
+info: 'Cslib.Complexity.coBH_eq_BH_of_coBH_subset' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.coBH_eq_BH_of_coBH_subset
+
+/--
+info: 'Cslib.Complexity.BooleanHierarchy_eq_BH_of_coBH_subset' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BooleanHierarchy_eq_BH_of_coBH_subset
+
+/--
+info: 'Cslib.Complexity.BooleanHierarchy_eq_NP_of_NP_eq_coNP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BooleanHierarchy_eq_NP_of_NP_eq_coNP
 
 /--
 info: 'Cslib.Complexity.mem_coDP_iff_union' depends on axioms:
