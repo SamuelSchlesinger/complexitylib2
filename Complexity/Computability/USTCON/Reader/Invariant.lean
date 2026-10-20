@@ -312,10 +312,6 @@ theorem inv_run (k : ℕ) : Inv I (machine.run I.encode k).state := by
 
 /-! ### The size of the states -/
 
-/-- The binary length of a number is its number of binary digits. -/
-theorem length_encNat_eq_size (x : ℕ) : (encNat x).length = Nat.size x := by
-  rw [encNat_apply, Nat.size_eq_bits_len]
-
 /-- The encoded labels of a list, each by its rank. -/
 theorem length_encList_finite_le {α : Type} [Finite α] (l : List α) :
     (encList (encFinite α) l).length ≤ l.length * (2 * Nat.card α + 1) := by

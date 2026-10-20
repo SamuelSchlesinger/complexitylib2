@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Algorithms.Reachability.Reingold
+import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 import Complexity.Foundations.Combinatorics.Expander.LowerBound
 
 /-!
@@ -18,6 +19,10 @@ component of a vertex is connected, the base graph has `λ ≤ 1 / 5`, and the d
 conditions hold for the concrete depth and walk length (inside the proof of the concrete theorem).
 The complete graph with self-loops, of spectral expansion `0`, shows the hypothesis of
 `Cslib.RotationMap.exists_neighbor_pow_eq` is satisfiable.
+
+The language `Cslib.Complexity.USTCON` is neither empty nor everything: the edge on two vertices
+connects its ends, and the empty graph on two vertices does not; `Cslib.Complexity.USTCON_mem_L`
+places it in `L`.
 -/
 
 namespace ComplexityTests.Reingold
@@ -57,6 +62,62 @@ example {n : ℕ} (G : SimpleGraph (Fin n)) [DecidableRel G.Adj] (s : Fin n × F
 -- every vertex.
 example (u v : Fin 3) : ∃ k : Fin 1 → Fin 3, ((complete (Fin 3)).pow 1).neighbor u k = v :=
   (complete (Fin 3)).exists_neighbor_pow_eq (by rw [spectralExpansion_complete]; norm_num) u v
+
+/-- The edge on two vertices, from `0` to `1`. -/
+def edgeInstance : Complexity.USTCONInstance where
+  n := 2
+  adj a b := decide (a ≠ b)
+  symm a b := by simp [ne_comm]
+  loopless a := by simp
+  s := 0
+  t := 1
+
+/-- The empty graph on two vertices, from `0` to `1`. -/
+def emptyInstance : Complexity.USTCONInstance where
+  n := 2
+  adj _ _ := false
+  symm _ _ := rfl
+  loopless _ := rfl
+  s := 0
+  t := 1
+
+example : edgeInstance ∈ Complexity.USTCON :=
+  SimpleGraph.Adj.reachable (by decide)
+
+example : emptyInstance ∉ Complexity.USTCON := by
+  intro h
+  obtain ⟨p⟩ := h
+  cases p with
+  | cons hadj _ => exact absurd hadj (by simp [emptyInstance, Complexity.USTCONInstance.graph])
+
+example : Complexity.USTCON ∈ Complexity.L Complexity.encUSTCON :=
+  Complexity.USTCON_mem_L
+
+/--
+info: 'Cslib.Complexity.USTCON_mem_L' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.USTCON_mem_L
+
+/--
+info: 'Cslib.USTCON.computableInLogSpace_decide' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.USTCON.computableInLogSpace_decide
+
+/--
+info: 'Cslib.USTCON.Reader.exists_run_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.USTCON.Reader.exists_run_eq
+
+/--
+info: 'Cslib.RotationMap.exists_iterate_reingoldEvalStep' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.exists_iterate_reingoldEvalStep
 
 /--
 info: 'Cslib.Reachability.Reingold.reachable_iff_exists_walk' depends on axioms:

@@ -371,6 +371,7 @@ public import Complexity.Computability.Complexity.Classes.Ladner.Basic
 public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
+public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 public import Complexity.Computability.Complexity.Classes.ModP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.NP.Closure
@@ -858,10 +859,12 @@ public import Complexity.Computability.TreeEval.Reader.Invariant
 public import Complexity.Computability.TreeEval.Reader.Size
 public import Complexity.Computability.TreeEval.Reader.Tuple
 public import Complexity.Computability.TreeEval.Space
+public import Complexity.Computability.USTCON.Reader.Cert
 public import Complexity.Computability.USTCON.Reader.Correct
 public import Complexity.Computability.USTCON.Reader.Defs
 public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.USTCON.Reader.Invariant
+public import Complexity.Computability.USTCON.Space
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
