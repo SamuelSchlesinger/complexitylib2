@@ -4,8 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
+import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
 import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
+import Complexity.Computability.Circuit.Boolean.Iteration.PrimeCycles
 
 /-!
 # Fixed-power circuit clients
@@ -133,6 +136,38 @@ example (c : Circuit signature 3 3) (T : ℕ) : ∃ out : Circuit signature 3 3,
       out.size ≤ 120000 * (c.size + 64) * 4 := by
   simpa using fixed_power_half_exponent c T
 
+/-! ### Hard-power counting, modular counters and prime-cycle permutations -/
+
+-- Linear-size circuit for the 2-bit modular-counter step.
+example : ∃ c : Circuit signature (2 + 2) (2 + 2),
+    c.Computes interpretation (counterStep 2) ∧ c.size ≤ 50 * 2 + 20 :=
+  counterStep_circuit 2
+
+-- Exponential lower bound for some power of the 64-bit modular counter.
+example : ∃ c : Circuit signature (64 + 64) (64 + 64),
+    c.size ≤ 50 * (64 + 1) ∧ Function.Bijective (c.eval interpretation) ∧
+    ∃ T < ModulusCounter.period 64,
+      ∀ out : Circuit signature (64 + 64) (64 + 64),
+        out.Computes interpretation (c.eval interpretation)^[T] →
+          2 ^ 64 / (1024 * (64 + 1)) < out.size :=
+  counter_power_lower_bound 64 (by decide)
+
+-- Almost all counter powers at width k = 64 are hard.
+example : (easyCounterPowers 64 (lowerBudget 64)).card * 2 ^ (2 ^ (64 - 1)) ≤
+    ModulusCounter.period 64 :=
+  almost_all_counter_powers_hard 64 (by decide)
+
+-- Least common multiple below 5 is strictly less than 4 ^ 5.
+example : lcmBelow 5 < 4 ^ 5 :=
+  lcmBelow_lt_four_pow 5 (by decide)
+
+/-- Non-vacuous concrete `PrimeCycleData` instance from the hash-class construction. -/
+noncomputable def samplePrimeCycleData : PrimeCycleData 1 3 :=
+  PrimeCycleData.ofHash 1 1 (fun _ => 0) (fun _ => by decide)
+
+example : Function.Bijective samplePrimeCycleData.step :=
+  samplePrimeCycleData.step_bijective
+
 /-! ### Axioms -/
 
 /--
@@ -218,5 +253,96 @@ info: 'Cslib.Circuits.Synthesis.word_sub' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Synthesis.word_sub
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.exists_hard_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_hard_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterStep_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterStep_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counter_power_lower_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counter_power_lower_bound
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.almost_all_counter_powers_hard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms almost_all_counter_powers_hard
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counter_powers_compute_remainders' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counter_powers_compute_remainders
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.variable_time_counter_iff_remainder' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms variable_time_counter_iff_remainder
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counter_power_lower_bound_of_exp_length' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counter_power_lower_bound_of_exp_length
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.lcmBelow_lt_four_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms lcmBelow_lt_four_pow
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.period' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.period
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.exists_hard_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.exists_hard_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.step_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.step_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.power_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.power_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycles.near_landau_lower_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycles.near_landau_lower_bound
 
 end ComplexityTests.Iteration

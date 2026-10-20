@@ -80,6 +80,7 @@ public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
 public import Complexity.Computability.Circuit.Boolean.Iteration.Active
 public import Complexity.Computability.Circuit.Boolean.Iteration.Batch
+public import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Basic
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Circuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Decode
@@ -94,9 +95,11 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.InputTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Label
 public import Complexity.Computability.Circuit.Boolean.Iteration.LabelCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.LongTime
+public import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
 public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationWord
 public import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 public import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
+public import Complexity.Computability.Circuit.Boolean.Iteration.PrimeCycles
 public import Complexity.Computability.Circuit.Boolean.Iteration.Record
 public import Complexity.Computability.Circuit.Boolean.Iteration.RecordCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.Remainder
