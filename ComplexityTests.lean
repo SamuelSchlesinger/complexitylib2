@@ -1,5 +1,6 @@
 import ComplexityTests.AWPPAmplification
 import ComplexityTests.AdaptivePPT
+import ComplexityTests.AffineController
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserCorollary
 import ComplexityTests.AffineDisperserLowerBound
