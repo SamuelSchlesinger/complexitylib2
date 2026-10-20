@@ -348,7 +348,10 @@ public import Complexity.Computability.Complexity.Classes.Alternation.Savitch
 public import Complexity.Computability.Complexity.Classes.Alternation.TQBF
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplification
+public import Complexity.Computability.Complexity.Classes.ArthurMerlin.Collapse
+public import Complexity.Computability.Complexity.Classes.ArthurMerlin.GraphNonIsomorphism
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
+public import Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.BPP.Collapse
@@ -581,6 +584,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Factorial
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search
@@ -1226,6 +1230,7 @@ public import Complexity.MachineLearning.UniformLearning.MembershipQuery
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString
+public import Complexity.Probability.BitString.AffineHash
 public import Complexity.Probability.BitString.LinearHash
 public import Complexity.Probability.BitString.LinearHash.Collisions
 public import Complexity.Probability.BitString.List

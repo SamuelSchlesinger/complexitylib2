@@ -16,7 +16,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
-import Complexity.Foundations.Combinatorics.MajorityVote
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Error reduction for MA and AM, `MA ⊆ AM` and `MA ⊆ SBP`
@@ -36,7 +36,7 @@ encoded instance.
   (`Cslib.Complexity.exists_arthurMerlinRepeat_ofFn_append_ofFn_iff`).
 
 In both cases a majority of `12 e(n)` runs errs on at most a `2 ^ (-e(n))` fraction of the random
-strings (`Cslib.Complexity.two_pow_mul_card_filter_card_filter_block_le`, from the exponential
+strings (`Cslib.BitString.two_pow_mul_card_filter_card_filter_block_le`, from the exponential
 moment bound `Cslib.card_filter_card_filter_le_le`).
 
 With error below `2 ^ (-q(n) - 2)`, a union bound over Merlin's proofs shows that the Merlin–Arthur
@@ -53,8 +53,8 @@ so `MA ⊆ SBP` [Böhler, Glaßer and Meister][BoehlerGlasserMeister2006].
 
 ## Main results
 
-* `Cslib.Complexity.two_pow_mul_card_filter_card_filter_block_le`: majority votes of `12 e`
-  blocks err on at most a `2 ^ (-e)` fraction.
+* `Cslib.BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le`: error at most `1 / 4` is
+  error at most `1 / 3`.
 * `Cslib.Complexity.IsMerlinArthurVerifier.repeatMajority`,
   `Cslib.Complexity.mem_MA_iff_exists_forall_errorExponent`: error reduction for `MA`, with the
   proof length fixed before the error.
@@ -76,69 +76,26 @@ so `MA ⊆ SBP` [Böhler, Glaßer and Meister][BoehlerGlasserMeister2006].
 
 @[expose] public section
 
+namespace Cslib.BitString
+
+open Finset
+
+/-- **Error at most `1 / 4` is error at most `1 / 3`**: if at most a quarter of the strings of `m`
+bits fail `g`, at least two thirds of them satisfy it. -/
+theorem two_mul_two_pow_le_of_four_mul_card_filter_not_le {m : ℕ}
+    (g : BitString m → Prop) [DecidablePred g] (h : 4 * #{r | ¬g r} ≤ 2 ^ m) :
+    2 * 2 ^ m ≤ 3 * #{r | g r} := by
+  have hsum : #{r | g r} + #{r | ¬g r} = 2 ^ m := by
+    rw [card_filter_add_card_filter_not, card_univ, card]
+  omega
+
+end Cslib.BitString
+
 namespace Cslib.Complexity
 
 open Finset Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
-
-/-! ### Majority votes -/
-
-/-- **Majority votes.** If at least two thirds of the strings of `m` bits satisfy `g`, then at most
-a `2 ^ (-e)` fraction of the strings of `2 R = 12 e` blocks of `m` bits have at most `R` blocks
-satisfying `g`. -/
-theorem two_pow_mul_card_filter_card_filter_block_le {m e R : ℕ} (hR : R = 6 * e)
-    (g : BitString m → Prop) [DecidablePred g] (hg : 2 * 2 ^ m ≤ 3 * #{s | g s}) :
-    2 ^ e * #{x : BitString (2 * R * m) | #{i | g (BitString.block x i)} ≤ R} ≤
-      2 ^ (2 * R * m) := by
-  have hmaj := card_filter_card_filter_le_le (univ.filter g)
-    (by simpa only [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool] using hg) R
-  rw [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool, ← pow_mul, Nat.mul_comm m] at hmaj
-  have hc : 9 ^ R * #{x : BitString (2 * R * m) | #{i | g (BitString.block x i)} ≤ R} ≤
-      8 ^ R * 2 ^ (2 * R * m) := by
-    refine (Nat.mul_le_mul_left _ ?_).trans hmaj
-    rw [← card_map BitString.blocksEquiv.toEmbedding]
-    refine card_le_card fun ω hω => ?_
-    obtain ⟨x, hx, rfl⟩ := mem_map.1 hω
-    refine mem_filter.2 ⟨mem_univ _, ?_⟩
-    simpa only [mem_filter, mem_univ, true_and, Equiv.coe_toEmbedding,
-      BitString.blocksEquiv_apply] using hx
-  have hq : 2 ^ e * 8 ^ R ≤ 9 ^ R := by
-    subst hR
-    simp only [pow_mul, ← mul_pow]
-    exact Nat.pow_le_pow_left (by norm_num) _
-  refine Nat.le_of_mul_le_mul_left ?_ (by positivity : 0 < 9 ^ R)
-  calc 9 ^ R * (2 ^ e * #{x : BitString (2 * R * m) | #{i | g (BitString.block x i)} ≤ R})
-      = 2 ^ e * (9 ^ R * #{x : BitString (2 * R * m) | #{i | g (BitString.block x i)} ≤ R}) := by
-        ring
-    _ ≤ 2 ^ e * (8 ^ R * 2 ^ (2 * R * m)) := Nat.mul_le_mul_left _ hc
-    _ = 2 ^ e * 8 ^ R * 2 ^ (2 * R * m) := by ring
-    _ ≤ 9 ^ R * 2 ^ (2 * R * m) := Nat.mul_le_mul_right _ hq
-
-/-- Error at most `1 / 4` is error at most `1 / 3`. -/
-private theorem two_mul_two_pow_le_of_four_mul_le {m : ℕ} (g : BitString m → Prop)
-    [DecidablePred g] (h : 4 * #{r | ¬g r} ≤ 2 ^ m) : 2 * 2 ^ m ≤ 3 * #{r | g r} := by
-  have hsum : #{r | g r} + #{r | ¬g r} = 2 ^ m := by
-    rw [card_filter_add_card_filter_not, card_univ, BitString.card]
-  omega
-
-/-- The number of elements of `Fin n` satisfying a test is the number of numbers below `n`
-satisfying it. -/
-private theorem countP_range_eq_card_filter (n : ℕ) (g : ℕ → Bool) :
-    (List.range n).countP g = #{j : Fin n | g j.1 = true} := by
-  rw [List.countP_eq_length_filter, ← List.toFinset_card_of_nodup (List.nodup_range.filter _)]
-  symm
-  refine card_bij (fun (j : Fin n) _ => j.1) ?_ ?_ ?_
-  · intro j hj
-    simp only [mem_filter, mem_univ, true_and, List.mem_toFinset, List.mem_filter,
-      List.mem_range] at hj ⊢
-    exact ⟨j.2, hj⟩
-  · intro j₁ _ j₂ _ h
-    exact Fin.ext h
-  · intro k hk
-    simp only [List.mem_toFinset, List.mem_filter, List.mem_range, mem_filter,
-      mem_univ, true_and] at hk ⊢
-    exact ⟨⟨k, hk.1⟩, hk.2, rfl⟩
 
 /-! ### Error reduction for `MA` -/
 
@@ -201,14 +158,14 @@ theorem IsMerlinArthurVerifier.repeatMajority {q p : Polynomial ℕ} {V : α × 
     intro ha
     obtain ⟨y, hy⟩ := (h a).1 ha
     refine ⟨y, (Nat.mul_le_mul_left _ (card_le_card fun x hx => ?_)).trans
-      (two_pow_mul_card_filter_card_filter_block_le hR
+      (BitString.two_pow_mul_card_filter_card_filter_block_le hR
         (fun s => V (a, List.ofFn y ++ List.ofFn s) = true) hy)⟩
     rw [mem_filter, merlinArthurRepeat_ofFn_append_ofFn, decide_eq_false_iff_not, not_lt] at hx
     exact mem_filter.2 ⟨mem_univ _, hx.2⟩
   · -- on a non-member, every proof is accepted only when at most `R` runs reject
     intro ha y
     refine (Nat.mul_le_mul_left _ (card_le_card fun x hx => ?_)).trans
-      (two_pow_mul_card_filter_card_filter_block_le hR
+      (BitString.two_pow_mul_card_filter_card_filter_block_le hR
         (fun s => V (a, List.ofFn y ++ List.ofFn s) = false) ((h a).2 ha y))
     rw [mem_filter, merlinArthurRepeat_ofFn_append_ofFn, decide_eq_true_iff] at hx
     have hsum := card_filter_add_card_filter_not (s := (univ : Finset (Fin (2 *
@@ -227,10 +184,10 @@ theorem IsMerlinArthurVerifierWithErrorExponent.isMerlinArthurVerifier {e q p : 
   constructor
   · intro ha
     obtain ⟨y, hy⟩ := (h a).1 ha
-    refine ⟨y, two_mul_two_pow_le_of_four_mul_le _ ?_⟩
+    refine ⟨y, BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_⟩
     simpa only [Bool.not_eq_true] using (Nat.mul_le_mul_right _ h4).trans hy
   · intro ha y
-    refine two_mul_two_pow_le_of_four_mul_le _ ?_
+    refine BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_
     simpa only [Bool.not_eq_false] using (Nat.mul_le_mul_right _ h4).trans ((h a).2 ha y)
 
 /-- **Error reduction for `MA`** [Babai][Babai1985]: a problem is in `MA` exactly when, for some
@@ -283,12 +240,6 @@ theorem computableTidilyInPolyTime_arthurMerlinRepeat {V : α × List Bool → B
   unfold arthurMerlinRepeat
   fun_prop
 
-/-- The fixed-width view of a string followed by any bits is the string. -/
-private theorem ofList_ofFn_append {m : ℕ} (x : BitString m) (w : List Bool) :
-    BitString.ofList m (List.ofFn x ++ w) = x := by
-  funext i
-  simp [BitString.ofList, List.getD_eq_getElem?_getD, List.getElem?_append_left]
-
 /-- On `2 r(n)` rows followed by `2 r(n)` replies, the parallel majority vote compares the number
 of rows accepted with their replies with `r(n)`. -/
 theorem arthurMerlinRepeat_ofFn_append_ofFn {r p q : Polynomial ℕ} {V : α × List Bool → Bool}
@@ -297,10 +248,10 @@ theorem arthurMerlinRepeat_ofFn_append_ofFn {r p q : Polynomial ℕ} {V : α × 
     arthurMerlinRepeat enc r p q V (a, List.ofFn x ++ List.ofFn y) =
       decide (r.eval (enc a).length < #{i | V (a, List.ofFn (BitString.block x i) ++
         List.ofFn (BitString.block y i)) = true}) := by
-  rw [arthurMerlinRepeat, List.drop_left' List.length_ofFn, countP_range_eq_card_filter]
+  rw [arthurMerlinRepeat, List.drop_left' List.length_ofFn, List.countP_range_eq_card_filter]
   refine congrArg (fun c => decide (r.eval (enc a).length < c))
     (congrArg card (filter_congr fun i _ => ?_))
-  rw [BitString.listRow_eq_ofFn _ i, BitString.listRow_eq_ofFn _ i, ofList_ofFn_append,
+  rw [BitString.listRow_eq_ofFn _ i, BitString.listRow_eq_ofFn _ i, BitString.ofList_ofFn_append,
     BitString.ofList_ofFn]
 
 /-- **Parallel answers.** Some replies make a strict majority of the parallel runs accept iff a
@@ -355,7 +306,7 @@ theorem IsArthurMerlinVerifier.repeatMajority {p q : Polynomial ℕ} {V : α × 
   · -- on a member, no reply is accepted only when at most `R` rows have an accepted reply
     intro ha
     refine (Nat.mul_le_mul_left _ (card_le_card fun x hx => ?_)).trans
-      (two_pow_mul_card_filter_card_filter_block_le hR
+      (BitString.two_pow_mul_card_filter_card_filter_block_le hR
         (fun s => ∃ z : Fin (q.eval (enc a).length) → Bool,
           V (a, List.ofFn s ++ List.ofFn z) = true) ((h a).1 ha))
     have hx := (mem_filter.1 hx).2
@@ -366,7 +317,7 @@ theorem IsArthurMerlinVerifier.repeatMajority {p q : Polynomial ℕ} {V : α × 
   · -- on a non-member, some reply is accepted only when at most `R` rows have none
     intro ha
     refine (Nat.mul_le_mul_left _ (card_le_card fun x hx => ?_)).trans
-      (two_pow_mul_card_filter_card_filter_block_le hR
+      (BitString.two_pow_mul_card_filter_card_filter_block_le hR
         (fun s => ∀ z : Fin (q.eval (enc a).length) → Bool,
           V (a, List.ofFn s ++ List.ofFn z) = false) ((h a).2 ha))
     have hx := (hacc x).1 (mem_filter.1 hx).2
@@ -386,10 +337,10 @@ theorem IsArthurMerlinVerifierWithErrorExponent.isArthurMerlinVerifier {e p q : 
     (Nat.pow_le_pow_right (by norm_num) (he _) : 2 ^ 2 ≤ _)
   constructor
   · intro ha
-    refine two_mul_two_pow_le_of_four_mul_le _ ?_
+    refine BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_
     simpa only [not_exists, Bool.not_eq_true] using (Nat.mul_le_mul_right _ h4).trans ((h a).1 ha)
   · intro ha
-    refine two_mul_two_pow_le_of_four_mul_le _ ?_
+    refine BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_
     simpa only [not_forall, Bool.not_eq_false] using
       (Nat.mul_le_mul_right _ h4).trans ((h a).2 ha)
 
@@ -439,7 +390,7 @@ theorem MA_subset_AM : MA enc ⊆ AM enc := by
     intro ha
     obtain ⟨y, hy⟩ := (h' a).1 ha
     rw [h4] at hy
-    refine two_mul_two_pow_le_of_four_mul_le _ ?_
+    refine BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_
     have hsub : #{r : Fin (P.eval (enc a).length) → Bool |
           ¬∃ y' : Fin (q.eval (enc a).length) → Bool, W (a, List.ofFn y' ++ List.ofFn r) = true} ≤
         #{r : Fin (P.eval (enc a).length) → Bool | W (a, List.ofFn y ++ List.ofFn r) = false} :=
@@ -455,7 +406,7 @@ theorem MA_subset_AM : MA enc ⊆ AM enc := by
         Nat.le_mul_of_pos_left _ hpos
   · -- by the union bound, at most a quarter of the random strings have an accepted reply
     intro ha
-    refine two_mul_two_pow_le_of_four_mul_le _ ?_
+    refine BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le _ ?_
     have hunion : #{r : Fin (P.eval (enc a).length) → Bool |
           ¬∀ y : Fin (q.eval (enc a).length) → Bool, W (a, List.ofFn y ++ List.ofFn r) = false} ≤
         ∑ y : Fin (q.eval (enc a).length) → Bool,

@@ -667,17 +667,10 @@ theorem offset_take (k width : ℕ) (w : List Bool) :
     List.getElem?_take]
   rw [ite_eq_left (by omega)]
 
-/-- Reading `n` bits of a word that starts with `n` given bits returns them. -/
-theorem ofList_ofFn_append {n : ℕ} (a : BitString n) (b : List Bool) :
-    BitString.ofList n (List.ofFn a ++ b) = a := by
-  funext i
-  simp [BitString.ofList, List.getD_eq_getElem?_getD,
-    List.getElem?_append_left (by simp : i.val < (List.ofFn a).length)]
-
 /-- The coefficients of a word of exactly `k * width + k` bits are its first blocks. -/
 theorem matrix_ofFn_append {k width : ℕ} (a : BitString (k * width)) (b : BitString k) :
     matrix k width (List.ofFn (Fin.append a b)) = BitString.blocksEquiv a := by
-  rw [matrix, List.ofFn_fin_append, ofList_ofFn_append]
+  rw [matrix, List.ofFn_fin_append, BitString.ofList_ofFn_append]
   rfl
 
 /-- The offsets of a word of exactly `k * width + k` bits are its last `k` bits. -/

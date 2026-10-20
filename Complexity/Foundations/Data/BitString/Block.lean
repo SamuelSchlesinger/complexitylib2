@@ -67,6 +67,11 @@ def blocksEquiv : BitString (m * k) ≃ (Fin m → BitString k) where
 @[simp] theorem blocksEquiv_apply (x : BitString (m * k)) : blocksEquiv x = block x :=
   rfl
 
+/-- Cutting the concatenation of blocks into its blocks recovers them. -/
+@[simp] theorem block_blocksEquiv_symm (z : Fin m → BitString k) :
+    block (blocksEquiv.symm z) = z :=
+  blocksEquiv.apply_symm_apply z
+
 /-- The positions of the bits of the `i`-th block of `k` bits. -/
 def blockBits (k : ℕ) (i : Fin m) : Finset (Fin (m * k)) :=
   univ.filter fun p => (finProdFinEquiv.symm p).1 = i

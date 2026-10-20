@@ -19,6 +19,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.Sampling
+import Complexity.Foundations.Data.List.Basic
 import Complexity.Probability.BitString.List
 
 /-!
@@ -210,15 +211,9 @@ def relabel (G : Graph) (keys : List ℕ) : List Bool :=
   (orderOf G.distinctVertices.length keys).flatMap fun u =>
     (orderOf G.distinctVertices.length keys).map fun v => G.adjIndex u v
 
-private theorem countP_range_eq_card (n : ℕ) (p : ℕ → Bool) :
-    (List.range n).countP p = (Finset.univ.filter fun j : Fin n => p j).card := by
-  rw [← List.map_coe_finRange_eq_range, List.countP_map, Fin.univ_def,
-    List.countP_eq_length_filter]
-  simp [Finset.filter, Finset.card, Function.comp_def]
-
 theorem rankOf_eq (n : ℕ) (keys : List ℕ) (i : Fin n) :
     rankOf n keys i = keyRank (keyAt n keys) i := by
-  rw [rankOf, countP_range_eq_card, keyRank]
+  rw [rankOf, List.countP_range_eq_card_filter, keyRank]
   congr 1
 
 theorem filter_rankOf_eq (n : ℕ) (keys : List ℕ) (r : Fin n) :
