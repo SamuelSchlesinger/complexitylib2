@@ -950,7 +950,7 @@ Independent Jetski (Gemini) reviews, run after integration:
   declarations.
 
 Defect fixes in the same batch: `9a8dc0a8` repins three USTCON links at `dec8b239` from docstring
-starts to their theorem lines, after all 419 links were checked against their pinned revisions;
+starts or an `open … in` line to their theorem lines, after all 419 links were checked against their pinned revisions;
 `7a61e7be` makes the frontier multigraph share `Cslib.Multigraph.toSimpleGraph` and proves the edge
 cuts agree; `72747d26` removes an unwarranted "sharp" in Nechiporuk's lemma and a stale FIXME.
 

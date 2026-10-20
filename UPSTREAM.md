@@ -136,8 +136,9 @@ grandfathered without an alias; this list records them for downstream users.
 * **Meaning strengthened under the old name.** On 2026-10-20 `Turing.MultiTapeNTM.DecidesInSpace`
   started to require that every branch halt (Sipser, Definition 8.1), so `NL` and `NPSPACE`
   follow the textbook convention. The former meaning is `Turing.MultiTapeNTM.RecognizesInSpace`
-  (`DecidesInSpace.recognizesInSpace`); membership proofs now also need a halting witness
-  (`DecidesInSpace.exists_runsInTime`).
+  (`DecidesInSpace.recognizesInSpace`); membership proofs now also need a per-instance halting
+  bound, the second component of `DecidesInSpace` (read back with
+  `DecidesInSpace.exists_runsInTime`).
 * **Renamed modules.** On 2026-10-20 `Circuit/Boolean/MassProduction/{Sharp,SharpParameters,
   SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
   deprecated alias, but imports of the old module paths must be updated: a module stub would have
@@ -145,9 +146,14 @@ grandfathered without an alias; this list records them for downstream users.
 * **Side effects of keeping aliases.** An alias that shares its base name with its successor makes
   the unqualified name ambiguous when both namespaces are open (for example `restrictTable`,
   `Ladner.cnfDecoder`); qualify the new name. A `def` alias does not unfold to the old body under
-  `unfold` or `simp [old]`. Since the frontier multigraph's simple graph became that of
-  `Cslib.Multigraph` (2026-10-20), `Multigraph.toSimpleGraph_adj` is ambiguous when `Cslib` and
-  `Cslib.Circuits.Frontier` are both open; use dot notation (`G.toSimpleGraph_adj`).
+  `unfold` or `simp [old]`.
+* **Two multigraph namespaces.** Since 2026-10-20 the frontier multigraph
+  (`Cslib.Circuits.Frontier.Multigraph`) defines its simple graph as that of the multigraph given by
+  its ends (`Cslib.Multigraph`), and its module publicly imports the latter. Their shared base names
+  `toSimpleGraph`, `toSimpleGraph_adj`, `edgeCut` and `mem_edgeCut` are ambiguous when both
+  namespaces are visible, for example inside `namespace Cslib.Circuits.Frontier` or with both
+  opened; use dot notation (`G.toSimpleGraph_adj`) or full names. Upstreaming the frontier
+  multigraph therefore follows `Foundations/Combinatorics/Multigraph.lean`.
 
 The [historical ledger](https://github.com/SamuelSchlesinger/complexitylib2/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
 preserves earlier integration notes and per-module follow-up ideas.
