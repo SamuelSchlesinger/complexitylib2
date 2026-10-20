@@ -39,8 +39,8 @@ the reduction is from `SAT`; it also reduces `ThreeSAT` after rejecting clauses 
 three literals.
 
 `Graph.mem_DirHamCycle_cons_iff` closes Hamiltonian paths into cycles with an arc back to a start
-vertex that no arc enters. The top of the first diamond is such a vertex, which gives
-`SAT.toDirHamCycle`.
+vertex that no arc enters. The top of the first diamond is such a vertex
+(`Diamond.mem_DirHamCycle_iff`), which gives `SAT.toDirHamCycle`.
 
 ## Main definitions
 
@@ -52,8 +52,6 @@ vertex that no arc enters. The top of the first diamond is such a vertex, which 
 
 * `Cslib.Complexity.SAT.toDirHamPath_eq`: the graph as a diamond graph.
 * `Cslib.Complexity.SAT.toDirHamPath_mem_iff`: `toDirHamPath φ ∈ DirHamPath ↔ φ ∈ SAT`.
-* `Cslib.Complexity.Graph.mem_DirHamCycle_cons_iff`: closing paths into cycles.
-* `Cslib.Complexity.Diamond.mem_DirHamCycle_iff`: Hamiltonian cycles of closed diamond graphs.
 * `Cslib.Complexity.SAT.toDirHamCycle_mem_iff`: `toDirHamCycle φ ∈ DirHamCycle ↔ φ ∈ SAT`.
 * `Cslib.Complexity.SAT.computableTidilyInPolyTime_toDirHamPath`,
   `Cslib.Complexity.SAT.computableTidilyInPolyTime_toDirHamCycle`: the reductions are
@@ -191,78 +189,6 @@ theorem mem_SAT_of_toDirHamPath_mem {φ : CNF ℕ} (h : toDirHamPath φ ∈ DirH
   (toDirHamPath_mem_iff φ).1 h
 
 end SAT
-
-namespace Graph
-
-/-- A cycle through a vertex can be rotated to start at it. -/
-private theorem exists_rotated_cons {q : List ℕ} {s : ℕ} (hs : s ∈ q) :
-    ∃ rest : List ℕ, (q : Cycle ℕ) = (s :: rest : List ℕ) ∧ (s :: rest).Nodup = q.Nodup ∧
-      ∀ v, v ∈ s :: rest ↔ v ∈ q := by
-  have hlt : q.idxOf s < q.length := List.idxOf_lt_length_iff.2 hs
-  have hrot : q.rotate (q.idxOf s) = s :: (q.drop (q.idxOf s + 1) ++ q.take (q.idxOf s)) := by
-    rw [List.rotate_eq_drop_append_take hlt.le, List.drop_eq_getElem_cons hlt,
-      List.getElem_idxOf hlt, List.cons_append]
-  refine ⟨q.drop (q.idxOf s + 1) ++ q.take (q.idxOf s), ?_, ?_, fun v => ?_⟩
-  · rw [← hrot]
-    exact Cycle.coe_eq_coe.2 ⟨_, rfl⟩
-  · rw [← hrot]
-    exact propext List.nodup_rotate
-  · rw [← hrot]
-    exact List.mem_rotate
-
-/-- Closing a Hamiltonian path with an arc back to its start. If no arc of `G` enters the declared
-vertex `s`, then adding the arc `(t, s)` creates a Hamiltonian cycle exactly when `G` has a
-Hamiltonian path from `s` to `t`. -/
-theorem mem_DirHamCycle_cons_iff {G : Graph} {s t : ℕ} (hs : s ∈ G.1)
-    (hin : ∀ u, (u, s) ∉ G.2) : (G.1, (t, s) :: G.2) ∈ DirHamCycle ↔ (G, s, t) ∈ DirHamPath := by
-  constructor
-  · rintro ⟨q, hnd, hcov, -, hch⟩
-    obtain ⟨rest, hq, hnd', hmem'⟩ := exists_rotated_cons ((hcov s).2 hs)
-    rw [hq, Cycle.chain_coe_cons] at hch
-    have hnd₀ : (s :: rest).Nodup := hnd' ▸ hnd
-    have hchain := (List.isChain_append.1 (show (s :: rest ++ [s]).IsChain _ from hch))
-    refine ⟨s :: rest, hnd₀, fun v => (hmem' v).trans (hcov v), rfl, ?_, ?_⟩
-    · -- The closing arc enters `s`, so it is the added arc.
-      have hlast := hchain.2.2 _ (List.getLast?_eq_some_getLast (List.cons_ne_nil _ _)) s rfl
-      rcases List.mem_cons.1 hlast with h | h
-      · rw [List.getLast?_eq_some_getLast (List.cons_ne_nil _ _)]
-        simp only [Prod.mk.injEq] at h
-        rw [h.1]
-      · exact (hin _ h).elim
-    · -- No other arc enters `s`, so the path uses only arcs of `G`.
-      refine hchain.1.imp_of_mem_tail_imp fun a b _ hb hab => ?_
-      rcases List.mem_cons.1 hab with h | h
-      · simp only [Prod.mk.injEq] at h
-        rw [h.2, List.tail_cons] at hb
-        exact ((List.nodup_cons.1 hnd₀).1 hb).elim
-      · exact h
-  · rintro ⟨p, hnd, hcov, hhead, hlast, hch⟩
-    obtain ⟨rest, rfl⟩ : ∃ rest, p = s :: rest := by
-      cases p with
-      | nil => simp at hhead
-      | cons a rest =>
-        simp only [List.head?_cons, Option.some.injEq] at hhead
-        exact ⟨rest, by rw [hhead]⟩
-    refine ⟨s :: rest, hnd, hcov, List.cons_ne_nil _ _, ?_⟩
-    rw [Cycle.chain_coe_cons, ← List.cons_append]
-    refine List.isChain_append.2 ⟨hch.imp fun a b h => List.mem_cons_of_mem _ h,
-      List.IsChain.singleton _, fun x hx y hy => ?_⟩
-    rw [hlast, Option.mem_def, Option.some.injEq] at hx
-    simp only [List.head?_cons, Option.mem_def, Option.some.injEq] at hy
-    rw [← hx, ← hy]
-    exact List.mem_cons_self
-
-end Graph
-
-/-- **Hamiltonian cycles of closed diamond graphs.** A well-formed closed diamond graph has a
-Hamiltonian cycle exactly when its rows can be given directions so that every clause has a detour
-in the direction of its row. -/
-theorem Diamond.mem_DirHamCycle_iff {N M : ℕ} {slots : ℕ → ℕ} {D : List Diamond.Detour}
-    (hD : Diamond.WellFormed N slots M D) :
-    Diamond.cycleGraph N slots M D ∈ DirHamCycle ↔ Diamond.Satisfiable M D :=
-  (Graph.mem_DirHamCycle_cons_iff (G := Diamond.graph N slots M D)
-    (Diamond.mem_vertices.2 (Or.inl ⟨0, Nat.zero_le _, rfl⟩))
-    Diamond.notMem_arcs_topNode_zero).trans (Diamond.mem_DirHamPath_iff hD)
 
 namespace SAT
 

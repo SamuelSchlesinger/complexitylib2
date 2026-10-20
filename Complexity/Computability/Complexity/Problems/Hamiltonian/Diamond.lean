@@ -50,6 +50,8 @@ only the slots of the detours through it makes the graph linear in the size of t
 
 * `Cslib.Complexity.Diamond.mem_DirHamPath_iff`: Hamiltonian paths of a diamond graph are
   directions of its rows satisfying every clause.
+* `Cslib.Complexity.Diamond.mem_DirHamCycle_iff`: Hamiltonian cycles of a closed diamond graph
+  likewise.
 * `Cslib.Complexity.Diamond.length_vertices`, `Cslib.Complexity.Diamond.length_arcs`: the size of a
   diamond graph.
 * `Cslib.Complexity.Diamond.computableTidilyInPolyTime_graph`,
@@ -250,6 +252,8 @@ theorem notMem_arcs_topNode_zero (u : ℕ) : (u, topNode 0) ∉ arcs N slots D :
   rcases mem_arcs.1 h with
       ⟨i, -, ⟨-, h₂ | h₂⟩ | ⟨-, h₂⟩ | ⟨a, -, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩⟩ |
       ⟨d, -, ⟨-, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩ | ⟨-, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩⟩ <;> simp at h₂
+
+@[deprecated (since := "2026-10-19")] alias not_mem_arcs_topNode_zero := notMem_arcs_topNode_zero
 
 /-- Split an arc of the diamond graph into its kinds, simplify the label equations, and close
 position constraints by `omega`. -/
@@ -606,6 +610,8 @@ theorem satisfiable_of_mem_DirHamPath (hD : WellFormed N slots M D)
   obtain ⟨d, hd, hdj, hiff⟩ := exists_detour hD hp hj
   refine ⟨d, hd, hdj, ?_⟩
   cases hb : d.2.2.2 <;> simp_all
+
+@[deprecated (since := "2026-10-19")] alias satisfiable_of_mem := satisfiable_of_mem_DirHamPath
 
 end PathToDirections
 
@@ -1069,6 +1075,15 @@ theorem mem_DirHamPath_iff (hD : WellFormed N slots M D) :
   choose! pick hpick using hdir
   exact ⟨_, isDirHamPath_hamPath (dir := dir) hD fun j hj =>
     ⟨(hpick j hj).1, (hpick j hj).2.1, (hpick j hj).2.2⟩⟩
+
+/-- **Hamiltonian cycles of closed diamond graphs.** A well-formed closed diamond graph has a
+Hamiltonian cycle exactly when its rows can be given directions so that every clause has a detour
+in the direction of its row. -/
+theorem mem_DirHamCycle_iff (hD : WellFormed N slots M D) :
+    cycleGraph N slots M D ∈ DirHamCycle ↔ Satisfiable M D :=
+  (Graph.mem_DirHamCycle_cons_iff (G := graph N slots M D)
+    (mem_vertices.2 (Or.inl ⟨0, Nat.zero_le _, rfl⟩)) notMem_arcs_topNode_zero).trans
+    (mem_DirHamPath_iff hD)
 
 /-! ### Polynomial time -/
 
