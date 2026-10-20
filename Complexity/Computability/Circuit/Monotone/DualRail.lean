@@ -67,7 +67,10 @@ def railBits (x : List Bool) : List Bool := true :: x.flatMap fun b => [b, !b]
 @[simp] theorem length_railBits (x : List Bool) : (railBits x).length = 2 * x.length + 1 := by
   induction x with
   | nil => rfl
-  | cons b x ih => simp only [railBits, List.length_cons, List.flatMap_cons] at ih ⊢; simp; omega
+  | cons b x ih =>
+    simp only [railBits, List.length_cons, List.flatMap_cons] at ih ⊢
+    simp only [List.length_append, List.length_cons, List.length_nil]
+    omega
 
 theorem railBits_append (x : List Bool) (v : Bool) :
     railBits (x ++ [v]) = railBits x ++ [v, !v] := by
@@ -78,7 +81,7 @@ theorem railBits_append (x : List Bool) (v : Bool) :
 @[simp] theorem getElem_railBits_zero (x : List Bool) (h : 0 < (railBits x).length) :
     (railBits x)[0] = true := rfl
 
-theorem getD_flatMap_pair (x : List Bool) {w : ℕ} (hw : w < x.length) :
+private theorem getD_flatMap_pair (x : List Bool) {w : ℕ} (hw : w < x.length) :
     (x.flatMap fun b => [b, !b]).getD (2 * w) false = x.getD w false ∧
       (x.flatMap fun b => [b, !b]).getD (2 * w + 1) false = !x.getD w false := by
   induction x generalizing w with
@@ -136,12 +139,12 @@ theorem dualCode_append (gates gates' : List (Boolean.Op × List ℕ)) :
     dualCode (gates ++ gates') = dualCode gates ++ dualCode gates' :=
   List.flatMap_append
 
-theorem getD_lt_of_isCode {l : List ℕ} {B j : ℕ} (hj : j < l.length) (h : ∀ i ∈ l, i < B) :
+private theorem getD_lt_of_isCode {l : List ℕ} {B j : ℕ} (hj : j < l.length) (h : ∀ i ∈ l, i < B) :
     l.getD j 0 < B := by
   rw [List.getD_eq_getElem _ _ hj]
   exact h _ (List.getElem_mem hj)
 
-theorem isCodeFrom_pair {N K : ℕ} {o₁ o₂ : Op} {l₁ l₂ : List ℕ}
+private theorem isCodeFrom_pair {N K : ℕ} {o₁ o₂ : Op} {l₁ l₂ : List ℕ}
     (h₁ : l₁.length = signature.Arity o₁) (h₂ : l₂.length = signature.Arity o₂)
     (hl₁ : ∀ i ∈ l₁, i < N + K) (hl₂ : ∀ i ∈ l₂, i < N + K) :
     Program.IsCodeFrom signature N K [(o₁, l₁), (o₂, l₂)] :=
@@ -163,19 +166,38 @@ theorem isCodeFrom_dualCode {n : ℕ} :
     rcases g with ⟨_ | _ | _ | _, args⟩ <;> simp only at hlen hw
     · exact isCodeFrom_pair rfl rfl (by simp) (by simp)
     · have h₀ := hw 0 (by omega)
-      exact isCodeFrom_pair rfl rfl (by simp [railWire] at h₀ ⊢; omega)
-        (by simp [railWire] at h₀ ⊢; omega)
+      exact isCodeFrom_pair rfl rfl (by
+          simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)
+        (by
+          simp only [railWire, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)
     · have h₀ := hw 0 (by omega)
       have h₁ := hw 1 (by omega)
-      exact isCodeFrom_pair rfl rfl (by simp [railWire] at h₀ h₁ ⊢; omega)
-        (by simp [railWire] at h₀ h₁ ⊢; omega)
+      exact isCodeFrom_pair rfl rfl (by
+          simp only [railWire, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)
+        (by
+          simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)
     · have h₀ := hw 0 (by omega)
       have h₁ := hw 1 (by omega)
-      exact isCodeFrom_pair rfl rfl (by simp [railWire] at h₀ h₁ ⊢; omega)
-        (by simp [railWire] at h₀ h₁ ⊢; omega)
+      exact isCodeFrom_pair rfl rfl (by
+          simp only [railWire, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)
+        (by
+          simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)
 
 /-- Evaluating two gates, the second reading only wires computed before the first. -/
-theorem evalCode_pair {σ : Signature} {U : Type*} (I : Interpretation σ U) (d : U) (vs : List U)
+private theorem evalCode_pair {σ : Signature} {U : Type*} (I : Interpretation σ U)
+    (d : U) (vs : List U)
     (g₁ g₂ : σ.Op × List ℕ) (h₂ : ∀ i ∈ g₂.2, i < vs.length) :
     evalCode I d vs [g₁, g₂] = vs ++ [I g₁.1 fun a => g₁.2[a.val]?.elim d (vs.getD · d),
       I g₂.1 fun a => g₂.2[a.val]?.elim d (vs.getD · d)] := by
@@ -221,7 +243,10 @@ theorem evalCode_dualCode (x : List Bool) {gates : List (Boolean.Op × List ℕ)
       have hTa := getD_railBits_true vs ha
       have hFa := getD_railBits_false vs ha
       simp only [dualGates, List.getD_cons_zero]
-      rw [evalCode_pair _ _ _ _ _ (by simp [railWire]; omega)]
+      rw [evalCode_pair _ _ _ _ _ (by
+          simp only [railWire, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)]
       simp only [List.getD_eq_getElem?_getD] at hTa hFa
       simp [interpretation, Boolean.interpretation, hTa, hFa]
     · obtain ⟨a, b, rfl⟩ := List.length_eq_two.1 hlen
@@ -232,7 +257,10 @@ theorem evalCode_dualCode (x : List Bool) {gates : List (Boolean.Op × List ℕ)
       have hTb := getD_railBits_true vs hb
       have hFb := getD_railBits_false vs hb
       simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
-      rw [evalCode_pair _ _ _ _ _ (by simp [railWire]; omega)]
+      rw [evalCode_pair _ _ _ _ _ (by
+          simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)]
       simp only [List.getD_eq_getElem?_getD] at hTa hFa hTb hFb
       simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb]
     · obtain ⟨a, b, rfl⟩ := List.length_eq_two.1 hlen
@@ -243,7 +271,10 @@ theorem evalCode_dualCode (x : List Bool) {gates : List (Boolean.Op × List ℕ)
       have hTb := getD_railBits_true vs hb
       have hFb := getD_railBits_false vs hb
       simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
-      rw [evalCode_pair _ _ _ _ _ (by simp [railWire]; omega)]
+      rw [evalCode_pair _ _ _ _ _ (by
+          simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+            List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+          omega)]
       simp only [List.getD_eq_getElem?_getD] at hTa hFa hTb hFb
       simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb]
 

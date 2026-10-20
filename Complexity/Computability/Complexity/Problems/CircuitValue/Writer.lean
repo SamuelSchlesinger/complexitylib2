@@ -7,7 +7,10 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Problems.CircuitValue.Completeness
+public import Complexity.Computability.Complexity.Classes.LogSpace
+public import Complexity.Computability.Machines.ReadMachine.Tidy
+import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
+import Mathlib.Data.List.GetD
 
 /-!
 # Writing circuits chunk by chunk in logarithmic space
@@ -40,7 +43,67 @@ in logarithmic space.
 
 namespace Cslib.Complexity.CircuitValue
 
-open Turing MultiTapeTM ComputableTidilyInSpace Circuits.Boolean.Tableau
+open Turing MultiTapeTM ComputableTidilyInSpace
+
+/-- The read address of the writer: the markers `true` of the framed input while counting, the
+input bits while copying. -/
+def writerAddr (s : ℕ × ℕ × ℕ) : Option ℕ :=
+  if s.1 = 0 then some (2 * s.2.2) else if s.1 = 2 then some (2 * s.2.2 + 1) else none
+
+/-- The encoding of the states of the writer. -/
+abbrev encWState : ℕ × ℕ × ℕ ↪ List Bool := encPair encNat (encPair encNat encNat)
+
+/-- The space budget of a state of the writer: the length of its encoding. -/
+def wBudget (s : ℕ × ℕ × ℕ) : ℕ := (encWState s).length + 1
+
+private theorem writerAddr_inSpace :
+    ComputableTidilyInSpace writerAddr encWState (encOption encNat) wBudget := by
+  have hin : (fun s => (encWState s).length) ≼ wBudget := .of_le fun _ => by
+    simp only [wBudget]; omega
+  have hph := (ComputableTidilyInSpace.fst encNat (encPair encNat encNat)).weaken hin
+  have hi := snd' ((ComputableTidilyInSpace.snd encNat (encPair encNat encNat)).weaken hin)
+  have hsome {a : ℕ × ℕ × ℕ → ℕ} (ha : ComputableTidilyInSpace a encWState encNat wBudget) :
+      ComputableTidilyInSpace (fun s => some (a s)) encWState (encOption encNat) wBudget :=
+    budget_comp_linear (of_inO (ComputableTidilyInDegree.optionSome (enc₁ := encNat)).inO_one) ha
+  have h2i := budget_natMul (budget_const (encB := encNat) 2 hin) hi
+  refine (budget_ite (budget_natEq hph (budget_const (encB := encNat) 0 hin)) (hsome h2i)
+    (budget_ite (budget_natEq hph (budget_const (encB := encNat) 2 hin))
+      (hsome (budget_natAdd h2i (budget_const 1 hin)))
+      (budget_const (encB := encOption encNat) none hin))).of_enc_eq fun s => ?_
+  simp only [writerAddr, decide_eq_true_eq]
+
+/-- The states of the writer on an input of length `n`, with `N` gates. -/
+private def WInv (n N : ℕ) (s : ℕ × ℕ × ℕ) : Prop :=
+  (s.1 = 0 ∧ s.2.1 = 0 ∧ s.2.2 ≤ n) ∨ (s.1 = 1 ∧ s.2.1 = n ∧ s.2.2 ≤ N) ∨
+    (s.1 = 2 ∧ s.2.1 = n ∧ s.2.2 ≤ n) ∨ (s.1 = 3 ∧ s.2.1 = n ∧ s.2.2 = 0)
+
+private theorem le_of_wInv {n N : ℕ} {s : ℕ × ℕ × ℕ} (h : WInv n N s) :
+    s.1 ≤ 3 ∧ s.2.1 ≤ n ∧ s.2.2 ≤ n + N := by
+  rcases h with ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ <;> omega
+
+/-- A number below a polynomial in `L` has a binary length logarithmic in `L`. -/
+theorem length_encNat_le_log {M A D L : ℕ} (h : M ≤ A * (L + 1) ^ D) :
+    (encNat M).length ≤ (Nat.size A + 2 * D + 1) * (Nat.log2 L + 1) := by
+  have hpow (a D : ℕ) : (encNat (a ^ D)).length ≤ D * (encNat a).length + 1 := by
+    induction D with
+    | zero => simp
+    | succ D ih =>
+      rw [pow_succ]
+      have := length_encNat_mul_le (a ^ D) a
+      rw [Nat.succ_mul]
+      omega
+  have hL : (encNat (L + 1)).length ≤ Nat.log2 L + 2 := by
+    rw [length_encNat_eq_size, Nat.size_le]
+    have := Nat.lt_log2_self (n := L)
+    rw [pow_succ]
+    omega
+  have h₁ := (ComputableTidilyInO.length_encNat_mono h).trans (length_encNat_mul_le _ _)
+  have h₂ := hpow (L + 1) D
+  rw [← length_encNat_eq_size]
+  have : D * (encNat (L + 1)).length ≤ D * (Nat.log2 L + 2) := Nat.mul_le_mul_left _ hL
+  nlinarith
+
+
 
 /-- **What a writer emits**: a word for each bit of the input and a word at the end while it
 counts the input, then `numChunks n` chunks and a trailer, then a word for each bit of the input
@@ -92,17 +155,17 @@ noncomputable def output (w : List Bool) : List Bool :=
 /-- The number of steps of the writer on an input of length `n`. -/
 noncomputable def rounds (n : ℕ) : ℕ := (n + 1) + (S.numChunks n + 1) + (n + 1)
 
-theorem readBit_count (w : List Bool) (i : ℕ) :
+private theorem readBit_count (w : List Bool) (i : ℕ) :
     S.machine.readBit (frame w) (0, 0, i) = decide (i < w.length) := by
   simp only [ReadMachine.readBit, machine, writerAddr, ↓reduceIte]
   exact getD_frame_two_mul w i
 
-theorem readBit_copy (w : List Bool) (n i : ℕ) :
+private theorem readBit_copy (w : List Bool) (n i : ℕ) :
     S.machine.readBit (frame w) (2, n, i) = w.getD i false := by
   simp only [ReadMachine.readBit, machine, writerAddr, OfNat.ofNat_ne_zero, ↓reduceIte]
   exact getD_frame_two_mul_add_one w i
 
-theorem flatten_map_range_getD {β : Type*} (f : Bool → List β) (w : List Bool) :
+private theorem flatten_map_range_getD {β : Type*} (f : Bool → List β) (w : List Bool) :
     ((List.range w.length).map fun i => f (w.getD i false)).flatten = w.flatMap f := by
   have h : (List.range w.length).map (fun i => w.getD i false) = w := by
     refine List.ext_getElem (by simp) fun i h₁ h₂ => ?_
@@ -168,7 +231,7 @@ theorem run_machine (w : List Bool) :
   simp [out₂, out₁, output, List.map_const']
 
 /-- The states of the writer along its run. -/
-theorem wInv_run (w : List Bool) (j : ℕ) :
+private theorem wInv_run (w : List Bool) (j : ℕ) :
     WInv w.length (S.numChunks w.length) (S.machine.run (frame w) j).state := by
   induction j with
   | zero => exact Or.inl ⟨rfl, rfl, Nat.zero_le _⟩
@@ -212,17 +275,18 @@ section Space
 abbrev encStepIn : (ℕ × ℕ × ℕ) × Bool ↪ List Bool := encPair encWState encBool
 
 /-- The halting test of the writer, within the budget of its states. -/
-theorem halt_inSpace : ComputableTidilyInSpace S.machine.halt encWState encBool wBudget := by
+private theorem halt_inSpace :
+    ComputableTidilyInSpace S.machine.halt encWState encBool wBudget := by
   have hin : (fun s => (encWState s).length) ≼ wBudget := .of_le fun _ => by
     simp only [wBudget]; omega
   have hph := (ComputableTidilyInSpace.fst encNat (encPair encNat encNat)).weaken hin
-  exact eq_inSpace hph (budget_const (encB := encNat) 3 hin)
+  exact budget_natEq hph (budget_const (encB := encNat) 3 hin)
 
 variable {S}
 
 /-- **The step of the writer**, within the budget of its states, when the number of chunks, the
 chunks and the trailer are. -/
-theorem step_inSpace
+private theorem step_inSpace
     (hN : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.numChunks p.1.2.1) encStepIn
       encNat fun p => wBudget p.1)
     (hC : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.chunk p.1.2.1 p.1.2.2)
@@ -232,7 +296,11 @@ theorem step_inSpace
     ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.step p.1 p.2) encStepIn
       (encPair encWState encBits) fun p => wBudget p.1 := by
   have hin : (fun p => (encStepIn p).length) ≼ fun p => wBudget p.1 :=
-    .of_le_linear 2 0 fun p => by simp only [length_encPair, encBool_apply, wBudget]; simp; omega
+    .of_le_linear 2 0 fun p => by
+      simp only [length_encPair, encBool_apply, wBudget]
+      simp only [encNat_apply, List.length_cons, List.length_nil, zero_add, add_zero,
+        Order.add_one_le_iff]
+      omega
   have hs := (ComputableTidilyInSpace.fst encWState encBool).weaken hin
   have hb := (ComputableTidilyInSpace.snd encWState encBool).weaken hin
   have hph := fst' hs
@@ -247,21 +315,21 @@ theorem step_inSpace
     budget_prod ha (budget_prod hb hc)
   have hc (m : ℕ) := budget_const (encB := encNat) m hin
   have hw (l : List Bool) := budget_const (encB := encBits) l hin
-  have hsucc := add_inSpace hi (hc 1)
+  have hsucc := budget_natAdd hi (hc 1)
   have hcopy := budget_finite (encC := encBits) S.copyBit hb
-  refine (budget_ite (eq_inSpace hph (hc 0))
+  refine (budget_ite (budget_natEq hph (hc 0))
     (budget_ite hb (budget_prod (hst (hc 0) (hc 0) hsucc) (hw S.countUnit))
       (budget_prod (hst (hc 1) hi (hc 0)) (hw S.countEnd)))
-    (budget_ite (eq_inSpace hph (hc 1))
-      (budget_ite (lt_inSpace hi hN) (budget_prod (hst (hc 1) hn hsucc) hC)
+    (budget_ite (budget_natEq hph (hc 1))
+      (budget_ite (budget_natLt hi hN) (budget_prod (hst (hc 1) hn hsucc) hC)
         (budget_prod (hst (hc 2) hn (hc 0)) hT))
-      (budget_ite (eq_inSpace hph (hc 2))
-        (budget_ite (lt_inSpace hi hn) (budget_prod (hst (hc 2) hn hsucc) hcopy)
+      (budget_ite (budget_natEq hph (hc 2))
+        (budget_ite (budget_natLt hi hn) (budget_prod (hst (hc 2) hn hsucc) hcopy)
           (budget_prod (hst (hc 3) hn (hc 0)) (hw [])))
         (budget_prod hs (hw []))))).of_enc_eq fun p => ?_
   simp only [step, decide_eq_true_eq]
 
-theorem tidy_machine
+private theorem tidy_machine
     (hN : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.numChunks p.1.2.1) encStepIn
       encNat fun p => wBudget p.1)
     (hC : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.chunk p.1.2.1 p.1.2.2)
@@ -281,7 +349,7 @@ theorem tidy_machine
       fun _ => le_rfl)⟩
 
 variable (S) in
-theorem stateS_le (w : List Bool) {q : (ℕ × ℕ × ℕ) × ℕ}
+private theorem stateS_le (w : List Bool) {q : (ℕ × ℕ × ℕ) × ℕ}
     (hq : WInv w.length (S.numChunks w.length) q.1) (hpos : q.2 ≤ (frame w).length + 1) :
     ReadMachine.stateS encWState wBudget q ≤
       30 * ((encNat (S.numChunks w.length + 3 * w.length + 5)).length + 1) := by
