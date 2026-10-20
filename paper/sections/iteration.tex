@@ -285,3 +285,95 @@ uniform circuit-construction runtime.\citep{Schlesinger2026IteratedFunctions}
 \declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{357}{Cslib.Circuits.Boolean.Iteration.affine_controller_polynomial}
 \declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{375}{Cslib.Circuits.Boolean.Iteration.affine_controller_variable_time}
 \end{result}
+
+\begin{result}
+\subsection{Universal-map simulation, product factors, and group-action hardwiring}
+If $\tau$ steps of $U:\beta\to\beta$ simulate one step of $F:\alpha\to\alpha$ via an encoding
+$\mathrm{enc}:\alpha\to\beta$ ($U^\tau(\mathrm{enc}(x))=\mathrm{enc}(F(x))$), then
+$U^{\tau T}(\mathrm{enc}(x))=\mathrm{enc}(F^T(x))$ for every $T\in\mathbb N$. On Boolean states,
+when $\mathrm{enc}=\mathrm{hardwired}(\mathrm{place})$ places the $n$ input bits among $m$ wires
+with constant values on the remaining wires and $\mathrm{place}(\mathrm{select}(i))=\mathrm{inl}(i)$,
+any native De Morgan circuit $u$ evaluating $U^{\tau T}$ on $\mathrm{hardwired}(\mathrm{place},x)$
+yields a circuit $d$ computing $F^T$ of size at most $|u|+2$ (charging only the two De Morgan
+constants). In particular:
+\begin{itemize}
+\item For a product map $\mathrm{prodMap}(U,P)$ on $\{0,1\}^{m+k}$, any circuit $u$ computing
+$\mathrm{prodMap}(U,P)^T$ yields circuits of size at most $|u|+2$ for $P^T$ and for $U^T$.
+\item For a group $G$ acting on $\alpha$ and a circuit $\mathrm{act}$ computing
+$\mathrm{enc}(g\cdot x)$ from $\mathrm{Fin.append}(\mathrm{enc}_G(g),\mathrm{enc}(x))$, every
+integer power $x\mapsto g^T\cdot x$ ($T\in\mathbb Z$), every natural iterate $(g\cdot -)^T$
+($T\in\mathbb N$), and the inverse permutation $(g\cdot -)^{-1}$ each have a circuit of size at
+most $|\mathrm{act}|+2$ on encoded inputs, and $(g,x)\mapsto(g,g\cdot x)$ has $t$-th iterate
+$(g,g^t\cdot x)$.
+\item For any signature $\sigma$ and carrier $V$, the universal step map
+$\mathrm{Universal.step}(I)$ on configurations holding a $G$-gate straight-line description, $n$
+input registers, $G$ work registers, and a program counter evaluates one gate per step and after step
+$G$ copies the designated output wires back to the input registers, clears the work registers, and
+resets the counter. One round of $G+1$ steps from $\mathrm{start}(\mathrm{describe}(G,c,\mathrm{pad}),x)$
+produces $\mathrm{start}(\mathrm{describe}(G,c,\mathrm{pad}),c.\mathrm{eval}(I,x))$ for any circuit
+$c$ with $|c|\le G$, so $(G+1)T$ steps run $(c.\mathrm{eval}(I))^T$; over the Boolean basis, any
+circuit $u$ evaluating $\mathrm{Universal.step}^{(G+1)T}$ on start states encoded via
+$\mathrm{hardwired}(\mathrm{place})$ gives a circuit for $(c.\mathrm{eval})^T$ of size at most
+$|u|+2$.
+\end{itemize}
+\citep{Schlesinger2026IteratedFunctions}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{71}{Cslib.Circuits.Boolean.Iteration.iterate_simulation}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{81}{Cslib.Circuits.Boolean.Iteration.hardwired}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{124}{Cslib.Circuits.Boolean.Iteration.simulation_circuit}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{143}{Cslib.Circuits.Boolean.Iteration.prodMap}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{149}{Cslib.Circuits.Boolean.Iteration.prodMap_power_circuit}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{181}{Cslib.Circuits.Boolean.Iteration.prodMap_power_circuit_left}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{226}{Cslib.Circuits.Boolean.Iteration.smul_zpow_circuit}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{247}{Cslib.Circuits.Boolean.Iteration.smul_iterate_circuit}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{260}{Cslib.Circuits.Boolean.Iteration.smul_inverse_circuit}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{274}{Cslib.Circuits.Boolean.Iteration.pairAction_iterate}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{314}{Cslib.Circuits.Boolean.Iteration.Universal.step}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{436}{Cslib.Circuits.Boolean.Iteration.Universal.step_round}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{452}{Cslib.Circuits.Boolean.Iteration.Universal.step_iterate}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean}{463}{Cslib.Circuits.Boolean.Iteration.Universal.universal_power_circuit}
+\end{result}
+
+\begin{result}
+\subsection{In-place multi-head machine bounds and sequential-squaring reduction}
+An in-place machine $M$ with $h$ heads on $n>0$ cells, finite tape alphabet $\Gamma$, and finite
+control $Q$ has $|\Gamma|^n n^h |Q|$ configurations $(w,p,q)$, with clamped head moves and writes
+ordered by head index. The forward-invariant reachable set $\mathrm{reach}(M,n)$ from initial
+configurations $\mathrm{init}(x)$ ($x\in\{0,1\}^n$) has cardinality at most $|\Gamma|^n n^h |Q|$, at
+most $2^n(t+1)$ when halting states are absorbing and every input halts within $t$ steps, and at
+most $2^n\tau$ when every $\tau>0$ steps return to $\mathrm{init}(P(x))$. Under absorbing halting,
+after $N_C=|\Gamma|^n n^h |Q|$ steps a configuration is halting if and only if the run ever halts,
+and equals the halting configuration. Given an encoding $e$ injective on $\mathrm{reach}(M,n)$, a
+step circuit $c$ on $w$-bit encodings, and an initialization circuit $\iota$, every $T$-th power on
+initial configurations has a circuit of size at most $|\iota|+40000\,\mathrm{powerBudget}(w,|c|,R,L)$
+(for $0<L\le 2^w$) and $|\iota|+120000\,\mathrm{optimizedBudget}(w,|c|,R)$ for any $R\ge|\mathrm{reach}(M,n)|$
+(specializing to $R=N_C$, $R=2^n(t+1)$, a single halting-configuration circuit at $T=N_C$, and the
+round transfer bounds when rounds of length $\tau$ compute a map $P$ whose $T$-th power requires
+more than $q$ gates). The step circuit $c$ is a hypothesis, not synthesized from $\delta$.
+
+Separately, for any squarefree modulus $M\in\mathbb N$ with Carmichael exponent
+$\lambda(M)=\mathrm{exponent}((\mathbb Z/M\mathbb Z)^\times)>0$, every residue $x\in\mathbb Z/M\mathbb Z$
+(unit or not) satisfies $x^{\lambda(M)+1}=x$, positive exponents congruent modulo $\lambda(M)$ define
+the same power map, and $T$ sequential squarings equal $x\mapsto x^{e(M,T)}$ with
+$e(M,T)=1+(2^T-1)\bmod\lambda(M)\in[1,\lambda(M)]$. No circuit synthesis for modular multiplication
+is claimed.\citep{Schlesinger2026IteratedFunctions}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{95}{Cslib.Circuits.Boolean.Iteration.InPlace.Machine}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{155}{Cslib.Circuits.Boolean.Iteration.InPlace.card_config}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{188}{Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_configs}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{208}{Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_time}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{233}{Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_round}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{244}{Cslib.Circuits.Boolean.Iteration.InPlace.iterate_card_halting}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{297}{Cslib.Circuits.Boolean.Iteration.InPlace.inplace_fixed_power}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{315}{Cslib.Circuits.Boolean.Iteration.InPlace.inplace_fixed_power_optimized}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{334}{Cslib.Circuits.Boolean.Iteration.InPlace.inplace_configs_optimized}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{347}{Cslib.Circuits.Boolean.Iteration.InPlace.inplace_time_optimized}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{362}{Cslib.Circuits.Boolean.Iteration.InPlace.inplace_halting}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{389}{Cslib.Circuits.Boolean.Iteration.InPlace.round_lower_bound_of_hard}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean}{405}{Cslib.Circuits.Boolean.Iteration.InPlace.round_bounds_of_hard}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean}{60}{Cslib.Circuits.Boolean.Iteration.SequentialSquaring.carmichael}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean}{80}{Cslib.Circuits.Boolean.Iteration.SequentialSquaring.pow_carmichael_succ}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean}{111}{Cslib.Circuits.Boolean.Iteration.SequentialSquaring.pow_eq_pow_of_modEq}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean}{127}{Cslib.Circuits.Boolean.Iteration.SequentialSquaring.reducedExponent}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean}{130}{Cslib.Circuits.Boolean.Iteration.SequentialSquaring.reducedExponent_le}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean}{138}{Cslib.Circuits.Boolean.Iteration.SequentialSquaring.iterate_square_reduced}
+\declat{077363a05aef29152639cedb3b4fc995981fe2fc}{Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean}{153}{Cslib.Circuits.Boolean.Iteration.SequentialSquaring.crypto_table_entries}
+\end{result}
