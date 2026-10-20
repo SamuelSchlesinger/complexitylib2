@@ -194,6 +194,9 @@ theorem uniform_lt_uniformError_lowDegreeHypothesis_le (f : (ι → Bool) → Bo
         congr 1
         ring
 
+@[deprecated (since := "2026-10-19")]
+alias uniform_error_lowDegreeHypothesis_gt_le := uniform_lt_uniformError_lowDegreeHypothesis_le
+
 /-- **The low-degree algorithm** [LinialMansourNisan1993], [O'Donnell, Section 3.4][ODonnell2014]:
 let `N` be the number of sets of at most `t` coordinates (at most `(n + 1) ^ t`,
 `BitString.card_filter_card_le_le_pow`). The low-degree algorithm of degree `t` from
