@@ -53,14 +53,16 @@ MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collap
 polynomial-family multiple-target robustness, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
-WPP ⊆ AWPP is proved, including signed binary-output targets. Fixed three-round AWPP
-amplification gives error at most one eighth; every fixed positive SBP gap exponent is
-available, and intersecting an SBP language with a BPP language stays in SBP.
-MA ⊆ SBP is proved with the Arthur–Merlin classes. Remaining approximate-counting milestones include SBP ⊆ AM, uniform AWPP
-amplification to input-dependent error ([#31](https://github.com/SamuelSchlesinger/complexitylib2/issues/31)), and AWPP PP-lowness.
-The [uniform counting aggregation](Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean)
-prerequisite supplies input-dependent unary powers and word sums for GapP; the full AWPP
-error-reduction theorem remains outstanding.
+WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
+amplification achieves error at most `2^(-r(x))` for every requested exponent polynomially
+bounded in encoded input length, using one GapP numerator and a length-polynomial
+dyadic denominator. The requested rate need not be computable: the construction
+uses a fixed dominating polynomial. The explicit construction uses `12q(n)` majority
+trials and denominator exponent `12q(n)p(n)`; see
+[AWPP amplification](Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean).
+Every fixed positive SBP gap exponent is available, and intersecting an SBP language
+with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
+Remaining approximate-counting milestones include SBP ⊆ AM and AWPP PP-lowness.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
@@ -164,7 +166,13 @@ of the handover. The work below remains available for subsequent, independently 
      terms/formulas and language sums. Input formulas, including constants and quantifiers,
      preserve truth. [Ordered/Interpretation](Complexity/Logics/FirstOrder/Ordered/Interpretation.lean)
      realizes forgetting the numeric expansion through the existing relational interpretation
-     API, with an isomorphism to the input. Interpreting target constants remains open.
+     API, with an isomorphism to the input.
+     **Target-constant prerequisite completed (#38):**
+     [Interpretation/Constants](Complexity/Logics/FirstOrder/Interpretation/Constants.lean)
+     adds finitely many formula-defined target constants, with explicit existence and uniqueness
+     inside the interpreted domain, and native formula/sentence truth-preserving pullback.
+     [Ordered/Constants](Complexity/Logics/FirstOrder/Ordered/Constants.lean) supplies valid
+     target `0`/`1`/`max` for every canonical structure with `n ≥ 2`.
      **Next milestones:** lexicographic tuple numbering and numeric lifting; the ordered
      logspace encoding bridge; then the projection and NL/P completeness results.
      Numeric interpretations must preserve
