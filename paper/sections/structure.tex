@@ -13,6 +13,55 @@ of cardinality zero and one are included.\citep{Fagin1974,Immerman1999}
 \end{result}
 
 \begin{result}
+\subsection{SAT completeness via order-free first-order interpretations}
+All reductions in this entry are first-order interpretations of finite relational
+structures of finite relational vocabularies without built-in order or numeric
+predicates. CNF formulas have binary
+relations $\mathrm{pos}(c,x)$ and $\mathrm{neg}(c,x)$; each element names a clause and
+a variable, and a clause related to nothing is empty. SAT, the satisfiable structures,
+has its encoded query language in NP. Every isomorphism-closed class whose query
+language is in NP and which contains every empty structure reduces to SAT by grounding
+an existential second-order definition in Tseitin style. Empty structures may differ
+on their nullary relations. For classes containing every
+empty structure, reducibility to SAT is equivalent to isomorphism closure and NP
+membership; every class reducible to SAT has its query language in NP. Without the
+empty-structure hypothesis, correctness is proved on nonempty input structures.
+\citep[Chapter 7]{Immerman1999}\citep{Fagin1974}
+
+3SAT (at most three literals per clause) and 3COL (loops allowed) are interreducible,
+and 3SAT reduces to the class of simple three-colorable graph structures;
+simplicity is guaranteed on yes-instances. SAT reduces to independent
+set on structures with at least two elements, using Karp's occurrence graph.
+Independent set, clique and vertex cover, with target size given by the cardinality
+of a unary relation, are existential second-order definable.
+\citep{Karp1972,GareyJohnson1979}
+
+These are order-free variants, not completeness assertions under the standard
+ordered projections. Positive-dimensional interpretations send the empty structure
+to the empty, satisfiable CNF structure. The SAT-to-independent-set reduction cannot
+be extended to singleton inputs with these encodings: every singleton target is a
+yes-instance, whereas an empty clause on one element is unsatisfiable. SAT-to-3SAT,
+hardness of 3SAT, 3COL, independent set, clique and vertex cover in this interpretation
+framework, and bridges to the encoded problems remain outstanding.
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/SecondOrder/Grounding.lean}{821}{Cslib.Logic.ESO.Definable.reduces_SAT}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/SecondOrder/Grounding.lean}{846}{Cslib.Logic.ESO.definable_iff_reduces_SAT}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/SecondOrder/Grounding.lean}{856}{Cslib.Logic.ESO.Definable.exists_interpretation_SAT_of_nonempty}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Computability/Complexity/Fagin/SAT.lean}{70}{Cslib.Logic.FO.cnf.queryLanguage_SAT_mem_NP}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Computability/Complexity/Fagin/SAT.lean}{82}{Cslib.Logic.FO.cnf.reduces_SAT_of_queryLanguage_mem_NP}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Computability/Complexity/Fagin/SAT.lean}{92}{Cslib.Logic.FO.cnf.exists_interpretation_SAT_of_queryLanguage_mem_NP}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Computability/Complexity/Fagin/SAT.lean}{107}{Cslib.Logic.FO.cnf.reduces_SAT_iff_isoClosed_and_queryLanguage_mem_NP}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/FirstOrder/Problems/ColoringReduction.lean}{643}{Cslib.Logic.FO.cnf.reduces_ThreeSAT_ThreeColorable}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/FirstOrder/Problems/ColoringReduction.lean}{655}{Cslib.Logic.FO.cnf.reduces_ThreeSAT_SimpleThreeColorable}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/FirstOrder/Problems/ColoringToCNF.lean}{292}{Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/FirstOrder/Problems/IndependentSetReduction.lean}{391}{Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Computability/Complexity/Fagin/SAT.lean}{100}{Cslib.Logic.FO.cnf.queryLanguage_mem_NP_of_reduces_SAT}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/FirstOrder/Problems/IndependentSetReduction.lean}{149}{Cslib.Logic.FO.cnf.not_reduces_SAT_IndependentSet}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/SecondOrder/IndependentSet.lean}{165}{Cslib.Logic.FO.sizedGraph.definable_IndependentSet}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/SecondOrder/IndependentSet.lean}{169}{Cslib.Logic.FO.sizedGraph.definable_Clique}
+\declat{ac6116f6efabc191a18554a8e063b162e46a7c11}{Complexity/Logics/SecondOrder/IndependentSet.lean}{173}{Cslib.Logic.FO.sizedGraph.definable_VertexCover}
+\end{result}
+
+\begin{result}
 \subsection{First-order model checking in logarithmic space}
 For a finite relational vocabulary and a first-order sentence $\varphi$ whose
 atomic formulas are relation symbols and equality applied to variables, the

@@ -148,6 +148,15 @@ of the handover. The work below remains available for subsequent, independently 
      appears to need an order, and SAT-hardness without order needs an empty-structure
      hypothesis.
 
+   - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
+     is proved for isomorphism-closed classes in NP containing every empty structure, with a
+     nonempty-input variant. Order-free 3SAT and 3COL are interreducible; SAT reduces to
+     independent set on universes of at least two elements, and independent set, clique and
+     vertex cover are ESO-definable. The singleton obstruction to unrestricted SAT-to-independent-set
+     reducibility is proved. SAT-to-3SAT, graph-property hardness in this framework, and bridges
+     to the separately encoded problems remain outstanding. These are order-free variants;
+     the standard ordered completeness statements above remain open.
+
    - [ ] **FO reductions and projections.** The vocabulary-parametric, relativized core is
      implemented in [ProjectionFormula](Complexity/Logics/FirstOrder/ProjectionFormula.lean) and
      [Projection](Complexity/Logics/FirstOrder/Projection.lean): selection of one literal before

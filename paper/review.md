@@ -820,3 +820,28 @@ Independent reviews:
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 15: order-free SAT and graph reductions (2026-10-20)
+
+Integrated `ac6116f6efabc191a18554a8e063b162e46a7c11` in merge `10d93bb4`.
+The new entry states the order-free model, the hypothesis containing every empty structure
+(including different nullary valuations), the nonempty corollary, and the singleton obstruction
+for SAT-to-independent-set. It does not claim the standard ordered completeness endpoints.
+
+Independent Claude correctness/API reviews covered `de4d64bb..543b3522` and milestone 2
+`543b3522..03d0253b`; the first fix delta through `6d76bedb` required further wording fixes.
+The implementation worker resolved the findings at `ac6116f6`: source attribution and terminology,
+nonexistent reference, missing impossibility theorem, generic helper placement, redundant
+hypotheses, restored main Coloring theorem interfaces, and nonvacuous tests. Samuel authorized
+Codex review and merge on 2026-10-20. The Codex coordinator's correctness/API review of
+`6d76bedb..ac6116f6` approved, with only grammar/spacing nits deferred. A separate Codex reviewer
+approved the entry against the exact source and all sixteen links; its suggested precision about
+simplicity being guaranteed on yes-instances was adopted.
+
+All six integration gates passed on `10d93bb48b5bf1749ecc3ac33bef218de9896a98`.
+AI assistance: Claude for earlier development/reviews, Codex for fixes, final reviews and index.
+Source credit remains in the modules and bibliography. These are AI reviews, not human editorial
+approval or a machine-checked equivalence between prose and Lean.
+
+The PDF built successfully without undefined references or overflow warnings; the changed page
+was rendered and visually checked. The index now contains 113 entries.
