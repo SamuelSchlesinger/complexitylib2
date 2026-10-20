@@ -183,8 +183,9 @@ def tableCode (c i F : ℕ) : List Instr :=
 
 /-- The code checking that an input is well formed, placed at the label `b`, with register `0`
 holding `0`: it counts the markers of the unary cardinality into register `0`, checks every table
-(`Cslib.Logic.Vocabulary.ModelChecker.tableCode`), and checks that the input ends after the last table. It goes
-to `T` if the input is well formed, with its cardinality in register `0`, and to `F` otherwise. -/
+(`Cslib.Logic.Vocabulary.ModelChecker.tableCode`), and checks that the input ends after the last
+table. It goes to `T` if the input is well formed, with its cardinality in register `0`, and to `F`
+otherwise. -/
 def shapeCode (b T F : ℕ) : List Instr :=
   [.read (mul (const 2) (reg 0)) (b + 1) (b + 2) F,
    .assign 0 (add (reg 0) (const 1)) b,
@@ -295,7 +296,8 @@ theorem reaches_markers {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
     · obtain ⟨regs', hreach, hlen', h0', h1', h2', hB'⟩ :=
         ih (j + 1) (regs.set 2 (j + 1)) (by omega) (by omega) (by omega)
           (by rw [List.getD_set_ne (by omega), h0]) (by rw [List.getD_set_ne (by omega), h1])
-          (List.getD_set_self (by omega)) (by simpa using hlen) (List.forall_mem_set_of_forall_mem hB (by omega))
+          (List.getD_set_self (by omega)) (by simpa using hlen)
+          (List.forall_mem_set_of_forall_mem hB (by omega))
       refine ⟨regs', ?_, by simpa using hlen', h0', h1', h2', hB'⟩
       refine Reaches.lt h₁ hB ?_
       simp only [eval_reg, eval_lenExpr h0, h2, hjL', ↓reduceIte]
@@ -784,7 +786,8 @@ theorem reaches_formulaCode {P : CounterProgram} {a : EncodedStructure} (ha : v.
     · obtain ⟨res, regs', hres, hreach, hlen, hkeep, hB'⟩ :=
         loop (a.1 - 0) 0 hn (regs.set (base + k) 0) rfl (by rw [List.length_set])
           (fun i hi => List.getD_set_ne (by omega)) (List.getD_set_self hk)
-          (List.forall_mem_set_of_forall_mem hB (Nat.zero_le _)) (fun m' hm' => absurd hm' (Nat.not_lt_zero _))
+          (List.forall_mem_set_of_forall_mem hB (Nat.zero_le _))
+          (fun m' hm' => absurd hm' (Nat.not_lt_zero _))
       refine ⟨res, regs', by rw [hres, BoundedFormula.realize_all], ?_, hlen, hkeep, hB'⟩
       refine Reaches.lt hc₀ hB ?_
       simp only [eval_const, eval_reg, h0, hn, ↓reduceIte]
