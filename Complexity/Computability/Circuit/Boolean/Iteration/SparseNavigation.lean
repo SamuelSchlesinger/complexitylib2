@@ -16,8 +16,8 @@ import Mathlib.Tactic.Linarith
 
 Two cycle labels suffice for every pair query `(x, y)` on a permutation. Because both phases are
 already reduced modulo the cycle length, modular subtraction costs only linearly many gates
-(`subtractResidues`), so full visit schedules, bounded visit counts, and first hitting times for
-sparsely edited counter permutations all have circuits of size `O((n + 1) * (r + 1))`.
+(`subtractResidues`), so full visit-schedule records and first hitting times for sparsely edited
+counter permutations have circuits of size `O((n + 1) * (r + 1))`.
 
 ## Main definitions
 
@@ -33,7 +33,7 @@ sparsely edited counter permutations all have circuits of size `O((n + 1) * (r +
   combining two cycle labels into a visit schedule.
 * `cycle_label_visit_circuit`: visit-schedule circuit from any cycle-label circuit.
 * `sparse_counter_visit_circuit`, `sparse_counter_visit_schedule`, `sparse_counter_hitting_time`:
-  `O((n + 1) * (r + 1))` circuits for visit schedules, visit counts, and first hitting times.
+  `O((n + 1) * (r + 1))` circuits for visit-schedule records and first hitting times.
 * `sparse_coordinate_visit_schedule`: coordinate transfer charging only two forward encodings.
 
 ## References
