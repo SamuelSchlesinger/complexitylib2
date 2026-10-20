@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.KahnKalaiLinial
-public import Complexity.Foundations.BooleanAnalysis.FourierRestriction
 public import Mathlib.Logic.Function.DependsOn
+import Complexity.Foundations.BooleanAnalysis.FourierRestriction
 import Complexity.Foundations.BooleanAnalysis.HammingFourier
 import Mathlib.Analysis.Complex.ExponentialBounds
 
@@ -31,8 +31,8 @@ Averaging out the coordinates outside a set `J` keeps the Fourier coefficients o
 `J` and kills the others (`BitString.fourierCoeff_expect_piecewise`), so `f` is within mean square
 distance `∑_{S ⊄ J} F̂(S) ^ 2` of a function of the coordinates in `J`, and rounding it to a sign
 gives a Boolean `J`-junta at relative Hamming distance at most that weight
-(`BitString.exists_dependsOn_hammingDist_div_le_sum`). For the set `J` of the coordinates of
-influence more than `τ`, the weight outside the subsets of `J` is at most
+(`BitString.exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq`). For the set `J`
+of the coordinates of influence more than `τ`, the weight outside the subsets of `J` is at most
 `log 3 / log A · I[F] + A / 3 · √τ · I[F]` for every `A > 1`
 (`BitString.sum_filter_not_subset_fourierCoeff_sq_le`): the sets of size `m` with `3 ^ m ≥ A`
 carry weight at most `log 3 / log A · I[F]`, and the hypercontractive bound of the
@@ -42,10 +42,8 @@ the coordinates `i ∉ J`, bounds the others. Taking `A = 9 ^ (K / ε)` and
 
 ## Main results
 
-* `Cslib.BitString.fourierCoeff_expect_piecewise`: the Fourier coefficients of the average over
-  the coordinates outside a set.
-* `Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum`: a Boolean function is close to a
-  `J`-junta when its Fourier weight is concentrated on the subsets of `J`.
+* `Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq`: a Boolean
+  function is close to a `J`-junta when its Fourier weight is concentrated on the subsets of `J`.
 * `Cslib.BitString.sum_filter_not_subset_fourierCoeff_sq_le`: the Fourier weight outside the
   subsets of the set of influential coordinates.
 * `Cslib.BitString.exists_dependsOn_hammingDist_div_le_of_totalInfluence_le`,
@@ -68,45 +66,7 @@ open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-! ### Averaging out the coordinates outside a set -/
-
-/-- **The average over the coordinates outside `J`** is the part of the Fourier expansion on the
-subsets of `J`. -/
-theorem expect_piecewise_eq_sum (f : (ι → Bool) → ℝ) (J : Finset ι) (x : ι → Bool) :
-    𝔼 z, f (J.piecewise x z) = ∑ S with S ⊆ J, fourierCoeff f S * chi ℝ S x := by
-  have h (z : ι → Bool) : f (J.piecewise x z) =
-      ∑ U, fourierCoeff f U * chi ℝ (U ∩ J) x * chi ℝ (U \ J) z := by
-    rw [← sum_fourierCoeff_mul_chi f (J.piecewise x z)]
-    exact sum_congr rfl fun U _ => by rw [chi_piecewise, mul_assoc]
-  simp only [h]
-  rw [expect_sum_comm, sum_filter]
-  refine sum_congr rfl fun U _ => ?_
-  rw [← mul_expect, expect_chi]
-  simp only [sdiff_eq_empty_iff_subset]
-  split_ifs with hU
-  · rw [inter_eq_left.2 hU, mul_one]
-  · rw [mul_zero]
-
-/-- **The Fourier coefficients of the average over the coordinates outside `J`**: averaging keeps
-the coefficients on the subsets of `J` and kills the others. -/
-theorem fourierCoeff_expect_piecewise (f : (ι → Bool) → ℝ) (J S : Finset ι) :
-    fourierCoeff (fun x => 𝔼 z, f (J.piecewise x z)) S =
-      if S ⊆ J then fourierCoeff f S else 0 := by
-  have h : (fun x => 𝔼 z, f (J.piecewise x z)) =
-      fun x => ∑ U, (if U ⊆ J then fourierCoeff f U else 0) * chi ℝ U x := by
-    funext x
-    rw [expect_piecewise_eq_sum, sum_filter]
-    exact sum_congr rfl fun U _ => by split_ifs <;> simp
-  rw [h, fourierCoeff_sum_mul_chi]
-
-/-- The mean square distance from `f` to its average over the coordinates outside `J` is the
-Fourier weight of `f` outside the subsets of `J`. -/
-theorem expect_sub_expect_piecewise_sq (f : (ι → Bool) → ℝ) (J : Finset ι) :
-    𝔼 x, (f x - 𝔼 z, f (J.piecewise x z)) ^ 2 = ∑ S with ¬S ⊆ J, fourierCoeff f S ^ 2 := by
-  rw [expect_sq_eq_sum_fourierCoeff_sq, sum_filter]
-  refine sum_congr rfl fun S _ => ?_
-  rw [fourierCoeff_sub, fourierCoeff_expect_piecewise]
-  split_ifs <;> simp
+/-! ### Juntas from spectral concentration -/
 
 /-- Rounding a real number to a sign costs at most its square distance to a sign: if `b` is the
 bit of the sign of `t`, `(signVal a - signVal b) ^ 2 / 4 ≤ (signVal a - t) ^ 2`. -/
@@ -129,7 +89,8 @@ private theorem sq_signVal_sub_signVal_decide_div_four_le (a : Bool) (t : ℝ) :
 /-- **Spectral concentration gives a junta**: a Boolean function is at relative Hamming distance
 at most `∑_{S ⊄ J} F̂(S) ^ 2` from a Boolean function of the coordinates in `J`, the sign of its
 average over the other coordinates [O'Donnell, Proposition 3.31][ODonnell2014]. -/
-theorem exists_dependsOn_hammingDist_div_le_sum (f : (ι → Bool) → Bool) (J : Finset ι) :
+theorem exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq (f : (ι → Bool) → Bool)
+    (J : Finset ι) :
     ∃ g : (ι → Bool) → Bool, DependsOn g (J : Set ι) ∧
       (hammingDist f g : ℝ) / 2 ^ Fintype.card ι ≤
         ∑ S with ¬S ⊆ J, fourierCoeff (fun x => signVal (f x)) S ^ 2 := by
@@ -224,7 +185,8 @@ theorem exists_dependsOn_hammingDist_div_le_of_totalInfluence_le (f : (ι → Bo
   rcases (hI.trans hK).lt_or_eq with hK0 | hK0
   swap
   · -- no influence: `f` is close to a constant
-    obtain ⟨g, hg, hfg⟩ := exists_dependsOn_hammingDist_div_le_sum f ∅
+    obtain ⟨g, hg, hfg⟩ :=
+      exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq f ∅
     refine ⟨∅, g, by rw [← hK0]; simp, hg, hfg.trans ?_⟩
     have h := sum_filter_not_subset_fourierCoeff_sq_le f (J := ∅) (τ := 1)
       (fun i _ => influence_signVal_le_one f i) (A := 3) (by norm_num)
@@ -248,7 +210,8 @@ theorem exists_dependsOn_hammingDist_div_le_of_totalInfluence_le (f : (ι → Bo
   have hs : 0 < s := by positivity
   set τ : ℝ := s ^ 2
   set J : Finset ι := {i | τ < influence i F}
-  obtain ⟨g, hg, hfg⟩ := exists_dependsOn_hammingDist_div_le_sum f J
+  obtain ⟨g, hg, hfg⟩ :=
+    exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq f J
   refine ⟨J, g, ?_, hg, hfg.trans ?_⟩
   · -- `J` has at most `K / τ` elements
     have hcard : #J * τ ≤ K :=

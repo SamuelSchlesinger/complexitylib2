@@ -84,12 +84,16 @@ example : totalInfluence (fun x => signVal (and₂ x)) ≤ 2 := by
   rw [expect_const univ_nonempty] at h
   linarith
 
--- A function concentrated on the subsets of all coordinates is a junta on all of them.
+-- With `J = ∅` the weight outside the subsets of `J` is the variance: every Boolean function is
+-- `Var[F]`-close to a constant.
 example (f : (ι → Bool) → Bool) :
-    ∃ g : (ι → Bool) → Bool, DependsOn g (univ : Finset ι) ∧
+    ∃ g : (ι → Bool) → Bool, DependsOn g ((∅ : Finset ι) : Set ι) ∧
       (hammingDist f g : ℝ) / 2 ^ Fintype.card ι ≤
-        ∑ S with ¬S ⊆ univ, fourierCoeff (fun x => signVal (f x)) S ^ 2 :=
-  exists_dependsOn_hammingDist_div_le_sum f univ
+        𝔼 x, (signVal (f x) - 𝔼 y, signVal (f y)) ^ 2 := by
+  obtain ⟨g, hg, hfg⟩ := exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq f ∅
+  refine ⟨g, hg, hfg.trans_eq ?_⟩
+  rw [expect_sub_expect_sq_eq_sum_fourierCoeff_sq]
+  simp only [subset_empty]
 
 /--
 info: 'Cslib.BitString.sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -122,10 +126,10 @@ info: 'Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_a
 #print axioms Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_add_log
 
 /--
-info: 'Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum
+#print axioms Cslib.BitString.exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq
 
 /--
 info: 'Cslib.BitString.sum_filter_not_subset_fourierCoeff_sq_le' depends on axioms: [propext, Classical.choice, Quot.sound]
