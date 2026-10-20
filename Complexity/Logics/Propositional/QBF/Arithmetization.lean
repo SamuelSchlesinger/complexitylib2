@@ -241,6 +241,8 @@ def degBound (x : V) : ArithQBF V → ℕ
   | .bin _ e₁ e₂ => degBound x e₁ + degBound x e₂
   | .op o v e => if v = x then 1 else o.degMul * degBound x e
 
+@[deprecated (since := "2026-10-19")] alias deg := degBound
+
 private theorem natDegree_one_sub_le (p : R[X]) : (1 - p).natDegree ≤ p.natDegree :=
   (natDegree_sub_le 1 p).trans (by rw [natDegree_one, Nat.zero_max])
 
@@ -472,6 +474,8 @@ theorem eval_boolean (σ : V → Bool) :
   simp only [Bool.cond_eq_ite] at h
   exact h
 
+@[deprecated (since := "2026-10-19")] alias eval_ite := eval_boolean
+
 /-! ### Linearization -/
 
 /-- Linearization of each variable of a list, the first one outermost. -/
@@ -499,6 +503,8 @@ theorem degBound_lins (x : V) (xs : List V) :
     by_cases hy : y = x
     · simp [hy]
     · simp [hy, Ne.symm hy, Operator.degMul]
+
+@[deprecated (since := "2026-10-19")] alias deg_lins := degBound_lins
 
 /-- Linearizing the variables of `xs` costs at most `D` per variable when every degree is at most
 `D`. -/
@@ -613,6 +619,9 @@ theorem degBound_arithmetize_eq_zero {xs : List V} {x : V} (hx : x ∉ xs) {φ :
     simp only [vars, List.mem_cons, not_or] at hφ
     simp [arithmetize, degBound_lins, hx, degBound, Ne.symm hφ.1, ih hφ.2]
 
+@[deprecated (since := "2026-10-19")] alias deg_arithmetize_eq_zero :=
+  degBound_arithmetize_eq_zero
+
 /-- **Degrees stay small.** When `xs` contains every variable of `φ`, the arithmetization has
 degree at most the size of `φ` in every variable. -/
 theorem degBound_arithmetize_le {xs : List V} {φ : QBF V} (hxs : ∀ v ∈ φ.vars, v ∈ xs) (x : V) :
@@ -659,6 +668,8 @@ theorem degBound_arithmetize_le {xs : List V} {φ : QBF V} (hxs : ∀ v ∈ φ.v
       rw [arithmetize, degBound_lins] at this
       simp only [hx, ↓reduceIte] at this ⊢
       omega
+
+@[deprecated (since := "2026-10-19")] alias deg_arithmetize_le := degBound_arithmetize_le
 
 /-- The rounds of a quantifier and of the linearizations after it cost at most
 `(2 * |xs| + 1) * size φ` for the body `φ`. -/

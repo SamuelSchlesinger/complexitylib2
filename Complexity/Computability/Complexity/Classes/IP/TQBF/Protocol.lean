@@ -102,6 +102,35 @@ open scoped ENNReal
 
 variable {V F : Type}
 
+/-! ### Deprecated aliases -/
+
+@[deprecated (since := "2026-10-19")] alias ofCoeffs := Polynomial.ofCoeffList
+@[deprecated (since := "2026-10-19")] alias evalCoeffs := Polynomial.evalCoeffList
+@[deprecated (since := "2026-10-19")] alias coeffList := Polynomial.coeffsBelow
+@[deprecated (since := "2026-10-19")] alias eval_ofCoeffs := Polynomial.eval_ofCoeffList
+@[deprecated (since := "2026-10-19")] alias coeff_ofCoeffs := Polynomial.coeff_ofCoeffList
+@[deprecated (since := "2026-10-19")] alias natDegree_ofCoeffs_le :=
+  Polynomial.natDegree_ofCoeffList_le
+@[deprecated (since := "2026-10-19")] alias ofCoeffs_coeffList :=
+  Polynomial.ofCoeffList_coeffsBelow
+@[deprecated (since := "2026-10-19")] alias length_coeffList := Polynomial.length_coeffsBelow
+@[deprecated (since := "2026-10-19")] alias run := ProbOracleComp.runWith
+@[deprecated (since := "2026-10-19")] alias acceptProb := ProbOracleComp.acceptProbWith
+@[deprecated (since := "2026-10-19")] alias run_pure := ProbOracleComp.runWith_pure
+@[deprecated (since := "2026-10-19")] alias run_bind := ProbOracleComp.runWith_bind
+@[deprecated (since := "2026-10-19")] alias run_query := ProbOracleComp.runWith_query
+@[deprecated (since := "2026-10-19")] alias run_sample := ProbOracleComp.runWith_sample
+@[deprecated (since := "2026-10-19")] alias acceptProb_pure := ProbOracleComp.acceptProbWith_pure
+@[deprecated (since := "2026-10-19")] alias acceptProb_le_one :=
+  ProbOracleComp.acceptProbWith_le_one
+@[deprecated (since := "2026-10-19")] alias acceptProb_bind := ProbOracleComp.acceptProbWith_bind
+@[deprecated (since := "2026-10-19")] alias acceptProb_query_bind :=
+  ProbOracleComp.acceptProbWith_query_bind
+@[deprecated (since := "2026-10-19")] alias acceptProb_sample_bind :=
+  ProbOracleComp.acceptProbWith_sample_bind
+@[deprecated (since := "2026-10-19")] alias acceptProb_bind_ite_le :=
+  ProbOracleComp.acceptProbWith_bind_ite_le
+
 /-! ### Queries -/
 
 /-- A query of the verifier: the subformula whose claim it is checking, and the current point. -/

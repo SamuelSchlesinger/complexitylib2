@@ -449,7 +449,7 @@ theorem tokens_arithOf : (arithOf ψ).tokens = (loopInput ψ).2 := by
 formula, the machine accepts with the probability that the token-stream verifier accepts the
 claim that the arithmetization has value `1` at the origin. -/
 theorem acceptProb_verifier_eq (hψ : ψ.Closed) (P : Prover Unit) :
-    acceptProb (verifier ψ) P = acceptProbWith (typedRespond (loopInput ψ) P.respond)
+    Complexity.acceptProb (verifier ψ) P = acceptProbWith (typedRespond (loopInput ψ) P.respond)
       (verifyAt (samplerOf (loopInput ψ)) (loopInput ψ).1.2.2 (arithOf ψ) [] 0 1) P.init := by
   have : Fact (1 < modOf (loopInput ψ)) := ⟨one_lt_modOf ψ⟩
   have hinit : init (loopInput ψ) = ((arithOf ψ).tokens ++ [],
@@ -498,7 +498,7 @@ private theorem mul_two_div_le_one_third {N p : ℕ} (hp : p ≠ 0) (h : 6 * N �
 /-- **Soundness of the verifier**: on a formula outside `TQBF`, every prover is accepted with
 probability at most `1 / 3`. -/
 theorem acceptProb_verifier_le (hψ : ψ ∉ TQBF) (P : Prover Unit) :
-    acceptProb (verifier ψ) P ≤ 1 / 3 := by
+    Complexity.acceptProb (verifier ψ) P ≤ 1 / 3 := by
   by_cases hclosed : ψ.Closed
   · rw [acceptProb_verifier_eq ψ hclosed]
     have hfalse : ψ.eval (fun _ => false) = false :=
@@ -523,7 +523,7 @@ theorem acceptProb_verifier_le (hψ : ψ ∉ TQBF) (P : Prover Unit) :
       _ ≤ modOf (loopInput ψ) := hbound.le
   · rw [verifier, decide_eq_false hclosed]
     simp only [Bool.false_eq_true, ↓reduceIte]
-    rw [acceptProb, Prover.run_pure, PMF.pure_map, PMF.pure_apply]
+    rw [Complexity.acceptProb, Prover.run_pure, PMF.pure_map, PMF.pure_apply]
     simp
 
 end Formula
@@ -642,7 +642,7 @@ private theorem agreesAt_honest (e : ArithQBF ℕ) (rest : List (ArithQBF.Kind �
 /-- **Completeness of the verifier**: on a true closed formula, the honest prover is accepted with
 probability `1`. -/
 theorem acceptProb_verifier_honestProver (hψ : ψ ∈ TQBF) :
-    acceptProb (verifier ψ) (honestProver ψ) = 1 := by
+    Complexity.acceptProb (verifier ψ) (honestProver ψ) = 1 := by
   rw [acceptProb_verifier_eq ψ hψ.1]
   set f : QueryAt (ZMod (modOf (loopInput ψ))) → List (ZMod (modOf (loopInput ψ))) :=
     fun q => decodeTyped (loopInput ψ) (honestWord ψ (queryMessage (loopInput ψ) q))
