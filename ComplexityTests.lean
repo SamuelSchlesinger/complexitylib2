@@ -52,6 +52,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
 import ComplexityTests.CountingCompleteness
 import ComplexityTests.CountingOracleEquivalence
+import ComplexityTests.CountingProducts
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
@@ -161,6 +162,8 @@ import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedFirstOrder
+import ComplexityTests.OrderedSuccessor
+import ComplexityTests.OrderedTuples
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
 import ComplexityTests.PCPApproximation
@@ -237,6 +240,7 @@ import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
+import ComplexityTests.RelativizedCounting
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
 import ComplexityTests.ResourceClasses3
@@ -244,6 +248,7 @@ import ComplexityTests.ResourceClasses4
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
+import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
@@ -275,6 +280,9 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
+import ComplexityTests.WPPBounded
+import ComplexityTests.WPPRobustness
+import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WorstCaseHardness
