@@ -35,14 +35,20 @@ circuit's inputs.
 
 ## Main definitions
 
-* `Cslib.Circuits.interpolantCost`, `Cslib.Circuits.henselCost`,
-  `Cslib.Circuits.hintDecodeCost`: the gate budgets.
+* `Cslib.Circuits.interpolantCost`, `Cslib.Circuits.henselStepCost`,
+  `Cslib.Circuits.henselCost`, `Cslib.Circuits.hintDecodeCost`: the gate budgets.
 
 ## Main results
 
 * `Cslib.Circuits.Synthesis.full_interpolantCoeffs`: the interpolant of least `Y`-degree.
 * `Cslib.Circuits.Synthesis.full_henselValue`: Newton iteration.
 * `Cslib.Circuits.Synthesis.full_hintDecode`: decoding with a hint.
+
+## References
+
+* [M. Sudan, L. Trevisan, S. Vadhan, *Pseudorandom generators without the XOR lemma*]
+  [SudanTrevisanVadhan2001]
+* [M. Sudan, *Decoding of Reed Solomon codes beyond the error-correction bound*][Sudan1997]
 -/
 
 @[expose] public section

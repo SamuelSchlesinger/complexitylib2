@@ -26,6 +26,10 @@ of length `len`, fed by available functions `g i`, costs `len + 1` gates for all
 Applied to a field, this counts field operations, with every operation that depends on at most two
 field elements, including tests and selections, charged one gate.
 
+## Main definitions
+
+* `Cslib.Circuits.Synthesis.chainValue`: the values of a chain.
+
 ## Main results
 
 * `Cslib.Circuits.Synthesis.full_unary`: one gate for an operation on one available function.
@@ -33,6 +37,11 @@ field elements, including tests and selections, charged one gate.
 * `Cslib.Circuits.Synthesis.full_sum`: `N + 1` gates for a sum of `N` available functions.
 * `Cslib.Circuits.Synthesis.full_dot`: `2 * N + 1` gates for a sum of `N` products.
 * `Cslib.Circuits.Synthesis.full_chain`: `len + 1` gates for all values of a chain.
+
+## References
+
+* [P. Bürgisser, M. Clausen, M. A. Shokrollahi, *Algebraic Complexity Theory*]
+  [BurgisserClausenShokrollahi1997]
 -/
 
 @[expose] public section

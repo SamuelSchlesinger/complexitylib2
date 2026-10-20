@@ -41,6 +41,12 @@ outputs can be made available with `size * bitBlastCost w` further gates.
   basis.
 * `Cslib.Circuits.Synthesis.bitBlast_synthesis`: the same for a synthesis bound over the full
   binary basis.
+
+## References
+
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
+* [M. Sudan, L. Trevisan, S. Vadhan, *Pseudorandom generators without the XOR lemma*]
+  [SudanTrevisanVadhan2001]
 -/
 
 @[expose] public section
