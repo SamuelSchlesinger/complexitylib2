@@ -64,6 +64,9 @@ inductive NumericFunction : ℕ → Type
   | max : NumericFunction 0
   deriving DecidableEq
 
+instance : Fintype (NumericFunction 0) :=
+  ⟨{.zero, .one, .max}, by intro c; cases c <;> simp⟩
+
 /-- Canonical order and zero-indexed binary digits. -/
 inductive NumericRelation : ℕ → Type
   /-- Weak natural order. -/
