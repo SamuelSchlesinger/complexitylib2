@@ -942,6 +942,7 @@ public import Complexity.Computability.QueryComplexity.Threshold
 public import Complexity.Computability.QueryComplexity.Yao
 public import Complexity.Computability.RAM.Cost
 public import Complexity.Computability.RAM.Defs
+public import Complexity.Computability.RAM.Input
 public import Complexity.Computability.RAM.Squaring
 public import Complexity.Computability.TreeEval.Basic
 public import Complexity.Computability.TreeEval.CookMertz
