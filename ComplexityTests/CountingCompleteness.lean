@@ -59,7 +59,17 @@ example : [[(0, true), (1, true)]] ∈ MAJSAT := by
   change 2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
 example : [[(0, true)], [(0, false)]] ∉ MAJSAT := by
   simp [MAJSAT, sharpSAT_contradiction]
+example : [[(0, true)]] ∉ MAJSAT := by
+  change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
 example : [[(0, true)], [(1, true)]] ∉ MAJSAT := by
+  change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
+example : (padMajority [] 0).vars.toFinset.card = 1 := by decide
+example : SharpSAT (padMajority [] 0) = 1 := by decide
+example : padMajority [] 0 ∉ MAJSAT := by
+  change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
+example : (padMajority [[(0, true)]] 0).vars.toFinset.card = 2 := by decide
+example : SharpSAT (padMajority [[(0, true)]] 0) = 2 := by decide
+example : padMajority [[(0, true)]] 0 ∉ MAJSAT := by
   change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
 example : padMajority [[(0, true), (1, true)]] 1 ∈ MAJSAT := by
   rw [padMajority_mem_MAJSAT_iff]; decide
