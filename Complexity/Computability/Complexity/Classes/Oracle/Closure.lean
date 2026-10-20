@@ -37,6 +37,7 @@ reduced instance requires.
 * `Cslib.Complexity.ComputableInPolyTimeWithOracle.preprocess`,
   `Cslib.Complexity.ComputableInPolyTimeWithOracle.map`,
   `Cslib.Complexity.ComputableInPolyTimeWithOracle.map_with`: pre- and postprocessing.
+* `Cslib.Complexity.ComputableInPolyTimeWithOracle.prod`: retain two oracle results.
 * `Cslib.Complexity.computableInPolyTimeWithOracle_mem`, `Cslib.Complexity.mem_PWithOracle_self`:
   one request decides the oracle language.
 * `Cslib.Complexity.PWithOracle_subset_NPWithOracle`.
@@ -86,6 +87,22 @@ theorem map {f : α → β} {g : β → γ} (hf : ComputableInPolyTimeWithOracle
   refine ⟨fun a => g <$> program a, ?_, fun a => ?_⟩
   · simpa only [OracleComp.interpret_map] using hprogram.map hg
   · rw [OracleComp.interpret_map, heq]
+    rfl
+
+/-- Compute two results sequentially against the same oracle, retaining both outputs. -/
+theorem prod {f : α → β} {g : α → γ}
+    (hf : ComputableInPolyTimeWithOracle A f input middle)
+    (hg : ComputableInPolyTimeWithOracle A g input output) :
+    ComputableInPolyTimeWithOracle A (fun a => (f a, g a)) input (encPair middle output) := by
+  obtain ⟨first, hfirst, hfirst_eq⟩ := hf
+  obtain ⟨second, hsecond, hsecond_eq⟩ := hg
+  refine ⟨fun a => do
+    let b ← first a
+    (fun c => (b, c)) <$> second a, ?_, fun a => ?_⟩
+  · simp only [OracleComp.interpret_bind, OracleComp.interpret_map]
+    exact hfirst.bind_with ((hsecond.preprocess
+      (ComputableTidilyInPolyTime.fst input middle)).map_with (by fun_prop))
+  · simp only [OracleComp.interpret_bind, OracleComp.interpret_map, hfirst_eq, hsecond_eq]
     rfl
 
 end ComputableInPolyTimeWithOracle

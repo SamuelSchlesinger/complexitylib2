@@ -461,6 +461,7 @@ public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.PP.Bit
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
+public import Complexity.Computability.Complexity.Classes.PP.Oracle
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Complexity.Classes.ParityP
 public import Complexity.Computability.Complexity.Classes.ParityP.Closure
@@ -477,6 +478,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
+public import Complexity.Computability.Complexity.Classes.SharpP.Oracle
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Power
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
