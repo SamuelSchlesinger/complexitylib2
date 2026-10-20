@@ -34,6 +34,12 @@ independent set (`SimpleGraph.isIndepSet_compl_iff_isVertexCover`), so
 `IndependentSet.toVertexCover` maps `(G, m)` to `(G, n - m)`, where `n` is the number of distinct
 declared vertices; a target `m > n` is mapped to the unsatisfiable target `n + 1` [Karp1972].
 
+The same problem as a class of finite structures, closed under isomorphism and without an
+encoding, with the target size given by a unary relation, is
+`Cslib.Logic.FO.sizedGraph.VertexCover`. There loops are ignored, edges need not be symmetric,
+and the reductions between independent set, clique and vertex cover are quantifier-free
+first-order interpretations.
+
 ## Main definitions
 
 * `Cslib.Complexity.VertexCover`.

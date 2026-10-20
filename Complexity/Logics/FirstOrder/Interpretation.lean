@@ -61,6 +61,8 @@ need no reindexing.
 * `Cslib.Logic.FO.Interpretation.mapEquiv`: isomorphic structures interpret isomorphic structures.
 * `Cslib.Logic.FO.Interpretation.idEquiv`, `Cslib.Logic.FO.Interpretation.compEquiv`: the identity
   and composite interpretations, up to isomorphism.
+* `Cslib.Logic.FO.Interpretation.relMap_comp_model`: the relations of a composite interpreted
+  structure are those of the iterated one.
 
 ## Implementation notes
 
@@ -125,6 +127,11 @@ variable {I M}
 
 theorem Model.ext {x y : I.Model M} (h : x.1 = y.1) : x = y :=
   Subtype.ext h
+
+/-- Elements of an interpreted structure are equal when all their coordinates are. -/
+@[fo_realize]
+theorem Model.ext_iff {x y : I.Model M} : x = y ↔ ∀ i, x.1 i = y.1 i :=
+  ⟨fun h _ => h ▸ rfl, fun h => Model.ext (funext h)⟩
 
 instance [Finite ι] [Finite M] : Finite (I.Model M) :=
   Subtype.finite
@@ -320,6 +327,20 @@ noncomputable def compEquiv [Finite κ] (J : Interpretation L' L'' κ)
       (J.rel R).Realize fun p => (x p.1).1 p.2
     rw [Formula.realize_relabel, ← realize_onFormula]
     rfl
+
+@[simp, fo_realize]
+theorem compEquiv_symm_apply_val_val [Finite κ] (J : Interpretation L' L'' κ)
+    (I : Interpretation L L' ι) (z : (J.comp I).Model M) (j : κ) (i : ι) :
+    (((compEquiv J I).symm z).1 j).1 i = z.1 (j, i) :=
+  rfl
+
+/-- A relation of a composite interpreted structure holds exactly when it holds in the iterated
+interpreted structure. -/
+@[fo_realize high]
+theorem relMap_comp_model [Finite κ] (J : Interpretation L' L'' κ) (I : Interpretation L L' ι)
+    {n : ℕ} (R : L''.Relations n) (x : Fin n → (J.comp I).Model M) :
+    RelMap R x ↔ RelMap R fun i => (compEquiv J I).symm (x i) :=
+  ((compEquiv J I).symm.map_rel R x).symm
 
 end Interpretation
 

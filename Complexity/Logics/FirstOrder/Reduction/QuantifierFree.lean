@@ -7,7 +7,6 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Logics.FirstOrder.Interpretation.Unit
 public import Complexity.Logics.FirstOrder.QuantifierFree
 public import Complexity.Logics.FirstOrder.Reduction
 
@@ -17,19 +16,23 @@ public import Complexity.Logics.FirstOrder.Reduction
 A class `K` of `L`-structures is **quantifier-free reducible** to a class `K'` of `L'`-structures
 (`FO.QFReduces K K'`) when it is first-order reducible to it (`FO.Reduces`) through a
 quantifier-free interpretation (`Interpretation.IsQF`): the domain and the relations of the
-interpreted structure are Boolean combinations of atomic formulas. Like first-order reducibility,
-quantifier-free reducibility is reflexive and transitive on classes closed under isomorphism,
-because the identity interpretation is quantifier-free and quantifier-free interpretations
-compose. Quantifier-free projections [Immerman and Landau, Definition 3.6][ImmermanLandau1995]
-restrict quantifier-free interpretations further, to a single input literal for each output bit.
+interpreted structure are Boolean combinations of atomic formulas of `L`. Like first-order
+reducibility, quantifier-free reducibility is reflexive on classes closed under isomorphism of a
+relational language, because the identity interpretation is quantifier-free, and transitive when
+the last class is closed under isomorphism, because quantifier-free interpretations compose.
+
+The vocabularies are parameters: no order or BIT predicate is assumed, and the dimension is any
+finite type. Quantifier-free reductions are therefore not quantifier-free projections, which
+moreover allow only a single input literal for each output bit and fix the numeric vocabulary
+[Immerman and Landau, Definitions 3.3--3.6][ImmermanLandau1995]; see
+`Complexity.Logics.FirstOrder.Projection`.
 
 A reduction through a given interpretation is proved by two kinds of arguments: syntactic side
 conditions, such as quantifier-freeness, and the semantic statement that `M ∈ K` exactly when the
 interpreted structure belongs to `K'`. For a one-dimensional interpretation whose domain formula
-always holds, `Reduces.of_unitStructure` and `QFReduces.of_unitStructure` state the semantic part
-on the input universe itself, with the relations of `Interpretation.unitStructure`, when `K'` is
-closed under isomorphism. The tactic `fo_reduction` applies these lemmas and proves the side
-conditions.
+always holds, `QFReduces.of_unitStructure` states the semantic part on the input universe itself,
+as `Reduces.of_unitStructure` does for first-order reductions. The tactic `fo_reduction` applies
+these lemmas and proves the side conditions.
 
 ## Main definitions
 
@@ -40,10 +43,8 @@ conditions.
 * `Cslib.Logic.FO.QFReduces.reduces`: quantifier-free reductions are first-order reductions.
 * `Cslib.Logic.FO.QFReduces.refl`, `Cslib.Logic.FO.QFReduces.trans`: quantifier-free
   reducibility is a preorder on classes closed under isomorphism.
-* `Cslib.Logic.FO.Interpretation.mem_iff_unitStructure`: membership of a one-dimensional
-  interpreted structure in a class closed under isomorphism.
-* `Cslib.Logic.FO.Reduces.of_unitStructure`, `Cslib.Logic.FO.QFReduces.of_unitStructure`:
-  one-dimensional reductions, stated on the input universe.
+* `Cslib.Logic.FO.QFReduces.of_unitStructure`: quantifier-free reductions through
+  one-dimensional interpretations, stated on the input universe.
 
 ## References
 
@@ -69,13 +70,6 @@ def QFReduces (K : Set (Bundled.{w} L.Structure)) (K' : Set (Bundled.{w} L'.Stru
   ∃ (ι : Type) (_ : Finite ι) (I : Interpretation L L' ι), I.IsQF ∧
     ∀ (M : Bundled.{w} L.Structure) [Finite M],
       M ∈ K ↔ Bundled.of (c := L'.Structure) (I.Model M) ∈ K'
-
-/-- A first-order reduction through a given interpretation. -/
-theorem Reduces.of_interpretation {ι : Type} [Finite ι] (I : Interpretation L L' ι)
-    (h : ∀ (M : Bundled.{w} L.Structure) [Finite M],
-      M ∈ K ↔ Bundled.of (c := L'.Structure) (I.Model M) ∈ K') :
-    Reduces K K' :=
-  ⟨ι, inferInstance, I, h⟩
 
 namespace QFReduces
 
@@ -112,38 +106,17 @@ isomorphism. -/
 theorem isoClosed (h : QFReduces K K') (hK' : IsoClosed K') : IsoClosed K :=
   h.reduces.isoClosed hK'
 
-end QFReduces
-
-/-! ### One-dimensional reductions -/
-
-/-- For a one-dimensional interpretation whose domain formula always holds, the interpreted
-structure belongs to a class closed under isomorphism exactly when the structure defined on the
-input universe does. -/
-theorem Interpretation.mem_iff_unitStructure (hK' : IsoClosed K') (I : Interpretation L L' Unit)
-    (M : Type w) [L.Structure M] [Finite M] (hdom : ∀ x : M, I.domain.Realize fun _ => x) :
-    Bundled.of (c := L'.Structure) (I.Model M) ∈ K' ↔
-      (⟨M, I.unitStructure M⟩ : Bundled.{w} L'.Structure) ∈ K' :=
-  hK' (I.unitModelEquiv M hdom)
-
-/-- A first-order reduction through a one-dimensional interpretation whose domain formula always
-holds, to a class closed under isomorphism, stated on the input universe: `M ∈ K` exactly when
-`M`, with the relations defined by the interpretation, belongs to `K'`. -/
-theorem Reduces.of_unitStructure (I : Interpretation L L' Unit)
-    (h : ∀ (M : Bundled.{w} L.Structure) [Finite M],
-      M ∈ K ↔ (⟨M, I.unitStructure M⟩ : Bundled.{w} L'.Structure) ∈ K')
-    (hK' : IsoClosed K') (hdom : ∀ (M : Type w) [L.Structure M] (x : M),
-      I.domain.Realize fun _ => x) :
-    Reduces K K' :=
-  .of_interpretation I fun M _ => (h M).trans (I.mem_iff_unitStructure hK' M (hdom M)).symm
-
 /-- A quantifier-free reduction through a one-dimensional interpretation whose domain formula
-always holds, to a class closed under isomorphism, stated on the input universe. -/
-theorem QFReduces.of_unitStructure (I : Interpretation L L' Unit)
+holds of every element of every finite structure, to a class closed under isomorphism, stated on
+the input universe. -/
+theorem of_unitStructure (I : Interpretation L L' Unit)
     (h : ∀ (M : Bundled.{w} L.Structure) [Finite M],
       M ∈ K ↔ (⟨M, I.unitStructure M⟩ : Bundled.{w} L'.Structure) ∈ K')
-    (hI : I.IsQF) (hK' : IsoClosed K') (hdom : ∀ (M : Type w) [L.Structure M] (x : M),
+    (hI : I.IsQF) (hK' : IsoClosed K') (hdom : ∀ (M : Type w) [L.Structure M] [Finite M] (x : M),
       I.domain.Realize fun _ => x) :
     QFReduces K K' :=
   .of_interpretation I (fun M _ => (h M).trans (I.mem_iff_unitStructure hK' M (hdom M)).symm) hI
+
+end QFReduces
 
 end Cslib.Logic.FO

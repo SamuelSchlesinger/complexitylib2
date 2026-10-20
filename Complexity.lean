@@ -1189,7 +1189,7 @@ public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation
 public import Complexity.Logics.FirstOrder.Interpretation.Unit
-public import Complexity.Logics.FirstOrder.Problems.IndependentSet
+public import Complexity.Logics.FirstOrder.Problems.SizedGraph
 public import Complexity.Logics.FirstOrder.Projection
 public import Complexity.Logics.FirstOrder.Projection.Graph
 public import Complexity.Logics.FirstOrder.ProjectionFormula

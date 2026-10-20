@@ -23,15 +23,19 @@ latter, so that a new reduction costs only its semantic argument.
   (`ProjectionFormula.IsQF`) and projections (`Projection.IsQF`) built from Boolean connectives,
   equality, relation symbols, the combinators of `Complexity.Logics.FirstOrder.Basic`, relabeling,
   finite conjunctions and disjunctions, pullback and composition. It searches the Aesop rule set
-  `FirstOrder`, in which closure under isomorphism of classes of structures can be registered
-  too. A concrete interpretation or projection, defined as a structure instance, is split into
-  its domain and relation definitions, with a case for each relation symbol of a concrete
-  vocabulary.
+  `FirstOrder`. A concrete interpretation or projection, defined as a structure instance, is
+  split into its domain and relation definitions, with a case for each relation symbol of a
+  concrete vocabulary.
+* `fo_iso_closed` runs the same search on closure of a class under isomorphism (`IsoClosed`),
+  whose lemmas are registered in the rule set `FirstOrder` too.
 * `fo_simp` simplifies with the simp set `fo_realize`, unfolding the realization of formulas,
   projection formulas and the relations of interpreted structures to propositions about the
   input structure. The relation and domain formulas of concrete interpretations and projections
   are unfolded by the simprocs `reduceInterpretationDomain`, `reduceInterpretationRel`,
-  `reduceProjectionNumeric` and `reduceProjectionRel`.
+  `reduceProjectionNumeric` and `reduceProjectionRel`. Composites `J.comp I` are not unfolded:
+  the relations of their interpreted structures are rewritten to those of the iterated
+  interpretation (`Interpretation.relMap_comp_model`), and the input relations of composite
+  projections are not simplified.
 * `fo_reduction I` reduces a goal `FO.QFReduces K K'` or `FO.Reduces K K'` to the semantic
   statement about the interpretation `I`, proving the side conditions it can. For a
   one-dimensional `I` whose domain formula always holds and a class `K'` closed under isomorphism,
@@ -46,7 +50,7 @@ definition of the relations are unaffected.
 
 ## Main definitions
 
-* `fo_qf`, `fo_simp`, `fo_reduction`: the tactics above.
+* `fo_qf`, `fo_iso_closed`, `fo_simp`, `fo_reduction`: the tactics above.
 * `reduceInterpretationDomain`, `reduceInterpretationRel`, `reduceProjectionNumeric`,
   `reduceProjectionRel`: simprocs unfolding concrete interpretations and projections.
 
@@ -54,9 +58,10 @@ definition of the relations are unaffected.
 
 The simprocs unfold a projection of `Interpretation` or `Projection` only when its argument
 unfolds to a structure instance, and a relation definition only when the match on the relation
-symbol reduces, so they never expose auxiliary matchers. Aesop's simplifier is disabled in `fo_qf`:
-the default simp set would rewrite the formulas whose shape the rules inspect. Relation symbols
-are split by a safe rule, as Aesop's normalisation rules may not produce several goals.
+symbol reduces, so they never expose auxiliary matchers; for quantifier-freeness, composites are
+unfolded too. Aesop's simplifier is disabled in `fo_qf`: the default simp set would rewrite the
+formulas whose shape the rules inspect. Relation symbols are split by a safe rule, as Aesop's
+normalisation rules may not produce several goals.
 
 ## References
 
@@ -70,44 +75,71 @@ open Lean Meta Elab Tactic Parser.Tactic
 
 namespace Cslib.Tactic.FirstOrder
 
+mutual
+
+/-- Unfold `e` one definition at a time until it is an application of the constructor `ctor`.
+With `stopAtComp`, composites of interpretations and projections are not unfolded. -/
+private meta partial def unfoldToInstance? (stopAtComp : Bool) (ctor : Name) (e : Expr) :
+    MetaM (Option Expr) := do
+  let e ← whnfCore e
+  if e.isAppOf ctor then return some e
+  if stopAtComp && (e.isAppOf ``Cslib.Logic.FO.Interpretation.comp ||
+      e.isAppOf ``Cslib.Logic.FO.Projection.comp) then
+    return none
+  if let some e ← reduceProjOfInstance? stopAtComp e then
+    return ← unfoldToInstance? stopAtComp ctor e
+  let some e ← unfoldDefinition? e | return none
+  unfoldToInstance? stopAtComp ctor e
+
 /-- The field of a structure instance selected by a projection, when the projection is applied to
 a term unfolding to a structure instance and the field applied to the remaining arguments reduces
 without a stuck match. Class projections are left alone. -/
-meta def reduceProjOfInstance? (e : Expr) : MetaM (Option Expr) := do
+private meta partial def reduceProjOfInstance? (stopAtComp : Bool) (e : Expr) :
+    MetaM (Option Expr) := do
   let .const fn _ := e.getAppFn | return none
   let some info ← getProjectionFnInfo? fn | return none
   if info.fromClass then return none
   let args := e.getAppArgs
   let some struct := args[info.numParams]? | return none
-  let struct ← whnfD struct
-  unless struct.isAppOf info.ctorName do return none
+  let some struct ← withDefault <| unfoldToInstance? stopAtComp info.ctorName struct
+    | return none
   let some field := struct.getAppArgs[info.numParams + info.i]? | return none
   let result ← whnfCore (mkAppN field args[info.numParams + 1:]).headBeta
   if ← isMatcherApp result then return none
   return some result
 
-/-- Unfold the domain formula of a concrete interpretation. -/
+end
+
+/-- The projections of interpretations and projections that the automation unfolds. -/
+private meta def isUnfoldedProjection (e : Expr) : Bool :=
+  e.isAppOf ``Cslib.Logic.FO.Interpretation.domain ||
+    e.isAppOf ``Cslib.Logic.FO.Interpretation.rel ||
+    e.isAppOf ``Cslib.Logic.FO.Projection.numeric || e.isAppOf ``Cslib.Logic.FO.Projection.rel
+
+/-- Unfold the domain formula of a concrete interpretation, other than a composite. -/
 dsimproc [fo_realize] reduceInterpretationDomain (Cslib.Logic.FO.Interpretation.domain _) :=
   fun e => do
-    let some e ← reduceProjOfInstance? e | return .continue
+    let some e ← reduceProjOfInstance? true e | return .continue
     return .visit e
 
-/-- Unfold a relation definition of a concrete interpretation at a relation symbol. -/
+/-- Unfold a relation definition of a concrete interpretation at a relation symbol, other than a
+composite. -/
 dsimproc [fo_realize] reduceInterpretationRel (Cslib.Logic.FO.Interpretation.rel _ _) :=
   fun e => do
-    let some e ← reduceProjOfInstance? e | return .continue
+    let some e ← reduceProjOfInstance? true e | return .continue
     return .visit e
 
-/-- Unfold the numeric interpretation of a concrete projection. -/
+/-- Unfold the numeric interpretation of a concrete projection, other than a composite. -/
 dsimproc [fo_realize] reduceProjectionNumeric (Cslib.Logic.FO.Projection.numeric _) :=
   fun e => do
-    let some e ← reduceProjOfInstance? e | return .continue
+    let some e ← reduceProjOfInstance? true e | return .continue
     return .visit e
 
-/-- Unfold a relation definition of a concrete projection at a relation symbol. -/
+/-- Unfold a relation definition of a concrete projection at a relation symbol, other than a
+composite. -/
 dsimproc [fo_realize] reduceProjectionRel (Cslib.Logic.FO.Projection.rel _ _) :=
   fun e => do
-    let some e ← reduceProjOfInstance? e | return .continue
+    let some e ← reduceProjOfInstance? true e | return .continue
     return .visit e
 
 /-! ### Quantifier-freeness -/
@@ -123,11 +155,17 @@ attribute [aesop safe apply (rule_sets := [FirstOrder])]
 attribute [aesop unsafe 50% apply (rule_sets := [FirstOrder])]
   FirstOrder.Language.BoundedFormula.IsAtomic.isQF
 
-/-- Unfold the domain and relation definitions of concrete interpretations and projections. -/
+/-- Unfold the domain and relation definitions of concrete interpretations and projections,
+composites included: their quantifier-freeness follows from that of the unfolded formulas. -/
 @[aesop norm tactic (rule_sets := [FirstOrder])]
-private meta def unfoldDefinitions : TacticM Unit := do
-  evalTactic (← `(tactic| dsimp only [reduceInterpretationDomain, reduceInterpretationRel,
-    reduceProjectionNumeric, reduceProjectionRel]))
+private meta def unfoldDefinitions : TacticM Unit := liftMetaTactic1 fun goal => do
+  let target ← instantiateMVars (← goal.getType)
+  let target' ← Meta.transform target (post := fun e => do
+    unless isUnfoldedProjection e do return .continue
+    let some e ← reduceProjOfInstance? false e | return .continue
+    return .visit e)
+  if target' == target then throwError "no interpretation or projection to unfold"
+  goal.replaceTargetDefEq target'
 
 /-- Split a relation symbol of a concrete vocabulary into its constructors. -/
 @[aesop safe tactic (rule_sets := [FirstOrder])]
@@ -144,10 +182,16 @@ private meta def casesRelationSymbol : TacticM Unit := withMainContext do
   throwError "no relation symbol of a concrete vocabulary"
 
 /-- `fo_qf` proves that a formula, interpretation, projection formula or projection built from the
-usual constructors is quantifier-free, and other side conditions of first-order reductions
-registered in the Aesop rule set `FirstOrder`, such as closure of a class under isomorphism. It
-fails if it cannot close the goal. -/
+usual constructors is quantifier-free, searching the Aesop rule set `FirstOrder`. It fails if it
+cannot close the goal. -/
 macro (name := foQF) "fo_qf" : tactic => `(tactic|
+  aesop (config := { terminal := true, enableSimp := false })
+    (rule_sets := [-default, FirstOrder]))
+
+/-- `fo_iso_closed` proves that a class of structures is closed under isomorphism from a lemma
+registered in the Aesop rule set `FirstOrder` or a hypothesis. It runs the same search as `fo_qf`
+and fails if it cannot close the goal. -/
+macro (name := foIsoClosed) "fo_iso_closed" : tactic => `(tactic|
   aesop (config := { terminal := true, enableSimp := false })
     (rule_sets := [-default, FirstOrder]))
 
@@ -169,7 +213,7 @@ attribute [fo_realize]
   Sentence.realize_imp Sentence.realize_iff
   LHom.realize_onBoundedFormula LHom.realize_onFormula LHom.realize_onSentence
   Term.realize_var Term.realize_relabel
-  Sum.elim_inl Sum.elim_inr Function.comp_apply
+  Sum.elim_inl Sum.elim_inr Function.comp_apply Unique.forall_iff PUnit.default_eq_unit
   Matrix.cons_val_zero Matrix.cons_val_one Matrix.head_cons Matrix.cons_val_fin_one
   Set.mem_ofPred_eq
   true_and and_true false_and and_false true_or or_true false_or or_false not_true_eq_false
@@ -193,15 +237,15 @@ macro_rules
 interpretation `I`, leaving the semantic statement, simplified by `fo_simp`:
 
 * `∀ M [Finite M], M ∈ K ↔ ⟨M, I.unitStructure M⟩ ∈ K'`, about the input universe itself, when
-  `I` is one-dimensional, `fo_simp` proves that its domain formula always holds and `fo_qf` proves
-  that `K'` is closed under isomorphism (from a lemma registered in the rule set `FirstOrder` or
-  a hypothesis);
+  `I` is one-dimensional, `fo_simp` proves that its domain formula holds of every element of every
+  finite structure, and `fo_iso_closed` proves that `K'` is closed under isomorphism;
 * `∀ M [Finite M], M ∈ K ↔ Bundled.of (I.Model M) ∈ K'` otherwise.
 
 For `FO.QFReduces`, quantifier-freeness of `I` is proved by `fo_qf`, or left as a goal after the
 semantic one. `fo_reduction I [h₁, h₂]` passes simp lemmas, such as membership lemmas for `K` and
-`K'`, to the simplification of the semantic goal. The interpretation is a single term; write
-`fo_reduction (J.comp I)` for a compound one. -/
+`K'`, to the simplification of the semantic goal; errors in them are reported, and a goal they do
+not change is left as it is. The interpretation is a single term; write `fo_reduction (J.comp I)`
+for a compound one. On a goal of another form, `fo_reduction` fails. -/
 syntax (name := foReduction) "fo_reduction " term:max (simpArgs)? : tactic
 
 macro_rules
@@ -210,14 +254,16 @@ macro_rules
     `(tactic| (
       first
         | (refine Cslib.Logic.FO.QFReduces.of_unitStructure $I ?sem ?qf ?iso ?dom
-           case' iso => fo_qf
-           case' dom => (intro _ _ _; fo_simp; done))
+           case' iso => fo_iso_closed
+           case' dom => (intro _ _ _ _; fo_simp; done))
         | refine Cslib.Logic.FO.QFReduces.of_interpretation $I ?sem ?qf
         | (refine Cslib.Logic.FO.Reduces.of_unitStructure $I ?sem ?iso ?dom
-           case' iso => fo_qf
-           case' dom => (intro _ _ _; fo_simp; done))
+           case' iso => fo_iso_closed
+           case' dom => (intro _ _ _ _; fo_simp; done))
         | refine Cslib.Logic.FO.Reduces.of_interpretation $I ?sem
+        | fail "fo_reduction: expected `FO.Reduces K K'` or `FO.QFReduces K K'` through this \
+            interpretation"
       try case' qf => fo_qf
-      case' sem => try fo_simp [$args,*]))
+      case' sem => simp -failIfUnchanged only [fo_realize, $args,*]))
 
 end Cslib.Tactic.FirstOrder

@@ -130,13 +130,13 @@ theorem isQF_relabel {φ : L.Formula α} (h : φ.IsQF) (g : α → β) : (φ.rel
 
 /-- A finite conjunction of quantifier-free formulas is quantifier-free. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
-theorem isQF_iInf [Finite β] {f : β → L.Formula α} (h : ∀ b, (f b).IsQF) :
+theorem isQF_iInf [Finite β] (f : β → L.Formula α) (h : ∀ b, (f b).IsQF) :
     (Formula.iInf f).IsQF :=
   BoundedFormula.IsQF.iInf f h
 
 /-- A finite disjunction of quantifier-free formulas is quantifier-free. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
-theorem isQF_iSup [Finite β] {f : β → L.Formula α} (h : ∀ b, (f b).IsQF) :
+theorem isQF_iSup [Finite β] (f : β → L.Formula α) (h : ∀ b, (f b).IsQF) :
     (Formula.iSup f).IsQF :=
   BoundedFormula.IsQF.iSup f h
 

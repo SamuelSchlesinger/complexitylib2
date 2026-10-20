@@ -20,6 +20,12 @@ in the complement of the graph on its vertices (`Graph.compl`), so complementing
 `IndependentSet` to `Clique` [Karp1972]. The verifier is `Cslib.Complexity.Graph.verifySubset` for
 adjacency, an instance of the subset-witness verifier `Cslib.Complexity.subsetVerifier`.
 
+The same problem as a class of finite structures, closed under isomorphism and without an
+encoding, with the target size given by a unary relation, is
+`Cslib.Logic.FO.sizedGraph.Clique`. There loops are ignored, edges need not be symmetric,
+and the reductions between independent set, clique and vertex cover are quantifier-free
+first-order interpretations.
+
 ## Main definitions
 
 * `Cslib.Complexity.Clique`, `Cslib.Complexity.Graph.compl`.

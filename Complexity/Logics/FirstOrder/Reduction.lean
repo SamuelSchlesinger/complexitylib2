@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Logics.FirstOrder.Interpretation
+public import Complexity.Logics.FirstOrder.Interpretation.Unit
 public import Mathlib.ModelTheory.Bundled
 
 /-!
@@ -54,6 +54,9 @@ structure is not set apart.
   classes closed under isomorphism.
 * `Cslib.Logic.FO.Reduces.isoClosed`: a class reducible to a class closed under isomorphism is
   closed under isomorphism.
+* `Cslib.Logic.IsoClosed.of_forall_imp`: closure under isomorphism from one direction.
+* `Cslib.Logic.FO.Reduces.of_unitStructure`: a reduction through a one-dimensional interpretation
+  whose domain formula always holds, stated on the input universe.
 * `Cslib.Logic.FO.Definable.of_reduces`: definability is closed under first-order reductions.
 
 ## References
@@ -78,6 +81,14 @@ structure, every structure isomorphic to it. Only finite structures are asked ab
 notions of definability and reducibility of finite structures. -/
 def IsoClosed (K : Set (Bundled.{w} L.Structure)) : Prop :=
   ∀ ⦃M N : Bundled.{w} L.Structure⦄ [Finite M], (M ≃[L] N) → (M ∈ K ↔ N ∈ K)
+
+/-- A class containing the image of each of its finite members under each isomorphism is closed
+under isomorphism. -/
+theorem IsoClosed.of_forall_imp {K : Set (Bundled.{w} L.Structure)}
+    (h : ∀ ⦃M N : Bundled.{w} L.Structure⦄ [Finite M], (M ≃[L] N) → M ∈ K → N ∈ K) :
+    IsoClosed K := fun _ N _ e =>
+  have : Finite N := Finite.of_equiv _ e.toEquiv
+  ⟨h e, h e.symm⟩
 
 end Cslib.Logic
 
@@ -170,7 +181,40 @@ theorem isoClosed {K : Set (Bundled.{w} L.Structure)} {K' : Set (Bundled.{w} L'.
   rw [hI M, hI N]
   exact hK' (I.mapEquiv e)
 
+/-- A first-order reduction through a given interpretation. -/
+theorem of_interpretation {K : Set (Bundled.{w} L.Structure)} {K' : Set (Bundled.{w} L'.Structure)}
+    {ι : Type} [Finite ι] (I : Interpretation L L' ι)
+    (h : ∀ (M : Bundled.{w} L.Structure) [Finite M],
+      M ∈ K ↔ Bundled.of (c := L'.Structure) (I.Model M) ∈ K') :
+    Reduces K K' :=
+  ⟨ι, inferInstance, I, h⟩
+
 end Reduces
+
+/-! ### One-dimensional reductions -/
+
+/-- For a one-dimensional interpretation whose domain formula always holds, the interpreted
+structure belongs to a class closed under isomorphism exactly when the structure defined on the
+input universe does. -/
+theorem Interpretation.mem_iff_unitStructure {K' : Set (Bundled.{w} L'.Structure)}
+    (hK' : IsoClosed K') (I : Interpretation L L' Unit) (M : Type w) [L.Structure M] [Finite M]
+    (hdom : ∀ x : M, I.domain.Realize fun _ => x) :
+    Bundled.of (c := L'.Structure) (I.Model M) ∈ K' ↔
+      (⟨M, I.unitStructure M⟩ : Bundled.{w} L'.Structure) ∈ K' :=
+  hK' (I.unitModelEquiv M hdom)
+
+/-- A first-order reduction through a one-dimensional interpretation whose domain formula holds of
+every element of every finite structure, to a class closed under isomorphism, stated on the input
+universe: `M ∈ K` exactly when `M`, with the relations defined by the interpretation, belongs to
+`K'`. -/
+theorem Reduces.of_unitStructure {K : Set (Bundled.{w} L.Structure)}
+    {K' : Set (Bundled.{w} L'.Structure)} (I : Interpretation L L' Unit)
+    (h : ∀ (M : Bundled.{w} L.Structure) [Finite M],
+      M ∈ K ↔ (⟨M, I.unitStructure M⟩ : Bundled.{w} L'.Structure) ∈ K')
+    (hK' : IsoClosed K') (hdom : ∀ (M : Type w) [L.Structure M] [Finite M] (x : M),
+      I.domain.Realize fun _ => x) :
+    Reduces K K' :=
+  .of_interpretation I fun M _ => (h M).trans (I.mem_iff_unitStructure hK' M (hdom M)).symm
 
 /-- **First-order definability is closed under first-order reductions**: if `K` reduces to a
 class `K'` defined by `φ`, then `K` is defined by the pullback of `φ`

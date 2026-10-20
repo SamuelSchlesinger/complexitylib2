@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Logics.FirstOrder.Problems.IndependentSet
+import Complexity.Logics.FirstOrder.Problems.SizedGraph
 import Complexity.Logics.FirstOrder.Projection.Graph
 import Complexity.Tactic.FirstOrder
 
@@ -81,7 +81,7 @@ example : ((Projection.offDiagonalComplement Language.empty).comp
   fo_qf
 
 /-- Closure under isomorphism is registered in the same rule set. -/
-example : IsoClosed Clique.{0} := by fo_qf
+example : IsoClosed Clique.{0} := by fo_iso_closed
 
 /-! ### `fo_simp` -/
 
@@ -108,6 +108,12 @@ example (x y : M) (h : (complementSize.unitStructure M).RelMap sizedGraph.adj ![
     RelMap sizedGraph.adj ![x, y] := by
   fo_simp at h
   exact h
+
+/-- The relations of a composite are those of the iterated interpretation. -/
+example (x y : (complementEdges.comp complementSize).Model M) :
+    RelMap sizedGraph.adj ![x, y] ↔
+      ¬ RelMap sizedGraph.adj ![x.1 ((), ()), y.1 ((), ())] ∧ x.1 ((), ()) ≠ y.1 ((), ()) := by
+  fo_simp
 
 /-- A bare constructor inside a formula is well typed only after unfolding the language, and
 `fo_simp` makes no progress on it; the abbreviation `sizedGraph.adj` is rewritten. -/
@@ -145,34 +151,71 @@ example (_hK : IsoClosed allStructures) : QFReduces allStructures allStructures 
     Bundled.of (c := sizedGraph.Structure) (restrictToSize.Model M) ∈ allStructures
   exact fun _ _ => Iff.rfl
 
+/-- An interpretation with a quantified relation: the edges of the complete graph on the
+vertices with a neighbour. -/
+noncomputable def hasNeighbour : Interpretation sizedGraph sizedGraph Unit where
+  domain := ⊤
+  rel
+    | .adj => Formula.iExs (Fin 1) (rel₂ sizedGraph.adj (.inl (0, ())) (.inr 0))
+    | .size => rel₁ sizedGraph.size (0, ())
+
+/-- A quantified interpretation gives a first-order reduction; for a quantifier-free reduction
+its quantifier-freeness is left open. -/
+example (_hK : IsoClosed allStructures) : Reduces allStructures allStructures := by
+  fail_if_success
+    have : QFReduces allStructures allStructures := by
+      fo_reduction hasNeighbour [allStructures, Set.mem_univ]
+  fo_reduction hasNeighbour [allStructures, Set.mem_univ]
+
+/-- Errors in the simp lemmas passed to `fo_reduction` are reported. -/
+example : QFReduces IndependentSet.{0} Clique.{0} := by
+  fail_if_success fo_reduction complementEdges [mem_IndependentSetTYPO]
+  exact qfReduces_IndependentSet_Clique
+
+/--
+error: fo_reduction: expected `FO.Reduces K K'` or `FO.QFReduces K K'` through this interpretation
+⊢ IsoClosed Clique
+-/
+#guard_msgs in
+example : IsoClosed Clique.{0} := by
+  fo_reduction complementEdges
+
 /-! ### Nonvacuity of the classes -/
 
-/-- Two vertices, both in the size relation, adjacent exactly when `edge` holds. -/
+/-- Two vertices, adjacent exactly when `edge` holds, and in the size relation exactly when
+`inSize` holds. -/
 @[instance_reducible]
-def twoVertices (edge : Prop) : sizedGraph.Structure (Fin 2) where
+def twoVertices (edge inSize : Prop) : sizedGraph.Structure (Fin 2) where
   RelMap
     | .adj, x => edge ∧ x 0 ≠ x 1
-    | .size, _ => True
+    | .size, _ => inSize
 
 private theorem eq_univ_of_ncard_eq {s : Set (Fin 2)}
     (h : s.ncard = (Set.univ : Set (Fin 2)).ncard) : s = Set.univ :=
   Set.eq_of_subset_of_ncard_le (Set.subset_univ s) h.ge
 
 /-- Without the edge, both vertices form an independent set but not a clique. -/
-example : Bundled.mk (Fin 2) (twoVertices False) ∈ IndependentSet.{0} ∧
-    Bundled.mk (Fin 2) (twoVertices False) ∉ Clique.{0} := by
-  let _ := twoVertices False
+example : Bundled.mk (Fin 2) (twoVertices False True) ∈ IndependentSet.{0} ∧
+    Bundled.mk (Fin 2) (twoVertices False True) ∉ Clique.{0} := by
+  let _ := twoVertices False True
   refine ⟨⟨Set.univ, rfl, fun _ _ _ _ _ h => h.1⟩, fun ⟨s, hs, hcl⟩ => ?_⟩
   rw [eq_univ_of_ncard_eq hs] at hcl
   exact (hcl (Set.mem_univ 0) (Set.mem_univ 1) (by decide)).1
 
 /-- With the edge, both vertices form a clique but not an independent set. -/
-example : Bundled.mk (Fin 2) (twoVertices True) ∈ Clique.{0} ∧
-    Bundled.mk (Fin 2) (twoVertices True) ∉ IndependentSet.{0} := by
-  let _ := twoVertices True
+example : Bundled.mk (Fin 2) (twoVertices True True) ∈ Clique.{0} ∧
+    Bundled.mk (Fin 2) (twoVertices True True) ∉ IndependentSet.{0} := by
+  let _ := twoVertices True True
   refine ⟨⟨Set.univ, rfl, fun _ _ _ _ h => ⟨trivial, by simpa using h⟩⟩, fun ⟨s, hs, hind⟩ => ?_⟩
   rw [eq_univ_of_ncard_eq hs] at hind
   exact hind (Set.mem_univ 0) (Set.mem_univ 1) (by decide) ⟨trivial, by decide⟩
+
+/-- With an empty size relation, the empty set covers the graph without edges but not the edge. -/
+example : Bundled.mk (Fin 2) (twoVertices False False) ∈ VertexCover.{0} ∧
+    Bundled.mk (Fin 2) (twoVertices True False) ∉ VertexCover.{0} := by
+  refine ⟨⟨∅, rfl, fun _ _ _ h => h.1.elim⟩, fun ⟨s, hs, hcov⟩ => ?_⟩
+  rw [(Set.ncard_eq_zero (Set.toFinite s)).1 (hs.trans (Set.ncard_empty _))] at hcov
+  simpa using hcov 0 1 (by decide) ⟨trivial, by decide⟩
 
 /-! ### Axioms -/
 
@@ -239,10 +282,5 @@ info: 'Cslib.Logic.FO.QFReduces.of_unitStructure' depends on axioms:
 #guard_msgs (whitespace := lax) in
 #print axioms QFReduces.of_unitStructure
 
-/--
-info: 'Cslib.Logic.FO.Projection.isQF_offDiagonalComplement' depends on axioms: [propext]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Projection.isQF_offDiagonalComplement
 
 end ComplexityTests.FirstOrderAutomation
