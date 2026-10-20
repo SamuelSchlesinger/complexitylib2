@@ -122,10 +122,7 @@ theorem mem_AWPP_of_polyTime_exponent {g : α → ℤ} {r : α → ℕ}
   let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
   have hle (a : α) : r a ≤ p.eval (enc a).length := by simpa [p] using hb a
   have hs : ComputableTidilyInPolyTime
-      (fun a => 2 ^ (p.eval (enc a).length - r a)) enc encNat :=
-    ComputableTidilyInPolyTime.binary_two_pow.comp
-      (ComputableTidilyInPolyTime.unary_sub.comp
-        (((ComputableTidilyInPolyTime.unary_eval p).comp (.encoding_length enc)).prod hr))
+      (fun a => 2 ^ (p.eval (enc a).length - r a)) enc encNat := by fun_prop
   have hsG := SharpP.natCast_mem_GapP (SharpP.of_polyTime hs)
   refine ⟨_, GapP.mul_mem hg hsG, p, fun a => ?_⟩
   have he : (2 : ℤ) ^ p.eval (enc a).length =
@@ -146,8 +143,7 @@ theorem PolyTimeReducible.mem_AWPP {β : Type} {encB : β ↪ List Bool} {B : Se
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨g, hg, p, hB⟩ := hB
   refine mem_AWPP_of_polyTime_exponent (GapP.comp_mem hg hr)
-    ((ComputableTidilyInPolyTime.unary_eval p).comp
-      ((ComputableTidilyInPolyTime.encoding_length encB).comp hr)) (fun a => ?_)
+    (r := fun a => p.eval (encB (r a)).length) (by fun_prop) (fun a => ?_)
   simpa only [Function.comp_apply, ← hAB a] using hB (r a)
 
 end Cslib.Complexity

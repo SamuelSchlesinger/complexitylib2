@@ -25,15 +25,20 @@ It does not prove the random-pair lemma or the fixed-distribution counting barri
 
 ## Main definitions
 
-* `Semifilter.IsConsistentWith`: exact agreement with a bit vector on both literal polarities.
-* `SemifilterWitness.IsExact`: exact agreement on the supplied input family.
-* `SemifilterWitness.observe`: the set observed in one witness fiber of the extended model.
+* `Cslib.Circuits.Fusion.Semifilter.IsConsistentWith`: exact agreement with a bit vector on both
+  literal polarities.
+* `Cslib.Circuits.Fusion.SemifilterWitness.IsExact`: exact agreement on the supplied input family.
+* `Cslib.Circuits.Fusion.SemifilterWitness.observe`: the set observed in one witness fiber of the
+  extended model.
 
 ## Main results
 
-* `Semifilter.IsConsistentWith.unique`: literals determine the consistent bit vector.
-* `SemifilterWitness.observe_input`: exact witnesses preserve all supplied inputs.
-* `SemifilterWitness.inter_error`: intersection errors are exactly the covering pairs.
+* `Cslib.Circuits.Fusion.Semifilter.IsConsistentWith.unique`: literals determine the consistent
+  bit vector.
+* `Cslib.Circuits.Fusion.SemifilterWitness.observe_input`: exact witnesses preserve all supplied
+  inputs.
+* `Cslib.Circuits.Fusion.SemifilterWitness.inter_error`: intersection errors are exactly the
+  covering pairs.
 
 ## References
 

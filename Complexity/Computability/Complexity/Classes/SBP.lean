@@ -26,18 +26,22 @@ members and strictly less than half the threshold on nonmembers. The threshold m
 be zero; `mem_SBP_iff_exists_pos_threshold` shows that requiring positivity is equivalent.
 These are verifier counts, without a proved nondeterministic counting-machine equivalence.
 The containments and union closure below are elementary counting-algebra consequences;
-the stronger MA and AM containments are not proved here.
+`MA ⊆ SBP` (`Cslib.Complexity.MA_subset_SBP`) and `SBP ⊆ AM` (`Cslib.Complexity.SBP_subset_AM`)
+are proved in `Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplification` and
+`Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound`.
 
 ## Main definitions
 
-* `SBP`: small bounded-error polynomial time with an input-dependent FP threshold.
+* `Cslib.Complexity.SBP`: small bounded-error polynomial time with an input-dependent FP threshold.
 
 ## Main results
 
-* `NP_subset_SBP`, `BPP_subset_SBP`, `SBP_subset_PP`.
-* `union_mem_SBP`, `PolyTimeReducible.mem_SBP`: union and many-one reduction closure.
-* `exists_SBP_gap_pow`: arbitrary fixed multiplicative gap strengthening.
-* `inter_mem_SBP_of_mem_BPP`: intersection with a BPP language.
+* `Cslib.Complexity.NP_subset_SBP`, `Cslib.Complexity.BPP_subset_SBP`,
+  `Cslib.Complexity.SBP_subset_PP`.
+* `Cslib.Complexity.union_mem_SBP`, `Cslib.Complexity.PolyTimeReducible.mem_SBP`: union and
+  many-one reduction closure.
+* `Cslib.Complexity.exists_SBP_gap_pow`: arbitrary fixed multiplicative gap strengthening.
+* `Cslib.Complexity.inter_mem_SBP_of_mem_BPP`: intersection with a BPP language.
 
 ## References
 
@@ -67,7 +71,7 @@ theorem mem_SBP_iff_exists_pos_threshold : A ∈ SBP enc ↔
   constructor
   · rintro ⟨f, hf, k, hk, hA⟩
     refine ⟨f + f + 1, SharpP.add_mem (SharpP.add_mem hf hf) SharpP.one_mem,
-      fun a => k a + k a + 1, (hk.binary_add' hk).binary_add' (.const 1),
+      fun a => k a + k a + 1, by fun_prop,
       fun a => by positivity, fun a => ?_⟩
     simp only [Pi.add_apply, Pi.one_apply]
     constructor
@@ -94,12 +98,9 @@ theorem BPP_subset_SBP : BPP enc ⊆ SBP enc := by
   obtain ⟨p, V, hV, hA⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hA 2
   have hf : (fun a => acceptCount V a (p.eval (enc a).length)) ∈ SharpP enc :=
     ⟨p, V, hV, fun _ => rfl⟩
-  have hd : ComputableTidilyInPolyTime (fun a => 2 ^ p.eval (enc a).length) enc encNat :=
-    ComputableTidilyInPolyTime.binary_two_pow.comp
-      ((ComputableTidilyInPolyTime.unary_eval p).comp (.encoding_length enc))
   refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 3) hf,
     fun a => 2 * 2 ^ p.eval (enc a).length,
-    (ComputableTidilyInPolyTime.const 2).binary_mul' hd, fun a => ?_⟩
+    by fun_prop, fun a => ?_⟩
   have hs := acceptCount_add_card_filter_eq_false (V := V) (a := a)
     (n := p.eval (enc a).length)
   have hp : 0 < 2 ^ p.eval (enc a).length := by positivity
@@ -144,7 +145,7 @@ theorem union_mem_SBP (hA : A ∈ SBP enc) (hB : B ∈ SBP enc) : A ∪ B ∈ SB
   have hfl := SharpP.mul_mem hf (SharpP.of_polyTime hl)
   have hgk := SharpP.mul_mem hg (SharpP.of_polyTime hk)
   refine ⟨_, SharpP.add_mem (SharpP.pow_mem hfl 2) (SharpP.pow_mem hgk 2),
-    fun a => (k a * l a) ^ 2, (hk.binary_mul' hl).binary_pow' (.const 2), fun a => ?_⟩
+    fun a => (k a * l a) ^ 2, by fun_prop, fun a => ?_⟩
   change (a ∈ A ∪ B → (k a * l a) ^ 2 ≤ (f a * l a) ^ 2 + (g a * k a) ^ 2) ∧
     (a ∉ A ∪ B → 2 * ((f a * l a) ^ 2 + (g a * k a) ^ 2) < (k a * l a) ^ 2)
   constructor
@@ -193,12 +194,9 @@ theorem inter_mem_SBP_of_mem_BPP (hA : A ∈ SBP enc) (hB : B ∈ BPP enc) :
   obtain ⟨q, V, hV, hB⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hB (p + 2)
   let c a := acceptCount V a (q.eval (enc a).length)
   have hc : c ∈ SharpP enc := ⟨q, V, hV, fun _ => rfl⟩
-  have hd : ComputableTidilyInPolyTime (fun a => 2 ^ q.eval (enc a).length) enc encNat :=
-    ComputableTidilyInPolyTime.binary_two_pow.comp
-      ((ComputableTidilyInPolyTime.unary_eval q).comp (.encoding_length enc))
   refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 4) (SharpP.mul_mem hf hc),
     fun a => 3 * (k a * 2 ^ q.eval (enc a).length),
-    (ComputableTidilyInPolyTime.const 3).binary_mul' (hk.binary_mul' hd), fun a => ?_⟩
+    by fun_prop, fun a => ?_⟩
   have hs := acceptCount_add_card_filter_eq_false (V := V) (a := a)
     (n := q.eval (enc a).length)
   have hc_le : c a ≤ 2 ^ q.eval (enc a).length := acceptCount_le_two_pow

@@ -235,6 +235,15 @@ where $p_+$ and $p_-$ are the two original counting-certificate polynomials.
 For $f\in\#\cc{P}$, the same unary exponent condition gives
 $x\mapsto f(x)^{r(x)}\in\#\cc{P}$: an all-rows verifier uses exactly
 $r(x)p(|x|)$ certificate bits before padding, including zero rows and zero row width.
+More generally, if $f(x,i)$ is jointly in $\#\cc{P}$ (respectively $\cc{GapP}$)
+under the pair encoding with unary index $i$, and $r(x)$ is polynomial-time with unary output,
+then $x\mapsto\prod_{i<r(x)}f(x,i)$ belongs to the same class. For a $\#\cc{P}$
+certificate polynomial $p$, the construction pads each indexed certificate to width
+$p(2|x|+1+r(x))$ and uses $r(x)$ times that width before final padding. The empty
+product is one; zero factors and signed GapP factors are allowed. The GapP proof expands
+over Boolean choices of positive and negative counts, using the uniform $\#\cc{P}$
+product and an efficiently computed parity sign. This supplies a counting-algebra
+foundation; oracle lowness is not established.
 These uniform verifier closure results support the gap amplification below.
 \citep{FennerFortnowKurtz1994}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{49}{Cslib.Complexity.SharpP.of_polyTime_length}
@@ -242,6 +251,8 @@ These uniform verifier closure results support the gap amplification below.
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{83}{Cslib.Complexity.GapP.sum_bits_mem}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{175}{Cslib.Complexity.GapP.pow_mem_polyTime}
 \declat{56e55d873fe57730bf723d7c56af0b6c16fc4d30}{Complexity/Computability/Complexity/Classes/SharpP/Power.lean}{69}{Cslib.Complexity.SharpP.pow_mem_polyTime}
+\declat{d80cc187edf729390f830cc2a44fa508168e9587}{Complexity/Computability/Complexity/Classes/SharpP/Products.lean}{92}{Cslib.Complexity.SharpP.prod_range_mem}
+\declat{d80cc187edf729390f830cc2a44fa508168e9587}{Complexity/Computability/Complexity/Classes/SharpP/Products.lean}{139}{Cslib.Complexity.GapP.prod_range_mem}
 \end{result}
 
 \begin{result}
@@ -279,7 +290,8 @@ exactly on members; no-instances may have zero or multiple witnesses. We prove
 $\cc{UP}\cup\cc{coNP}\subseteq\cc{US}\subseteq\cc{C}_{=}\cc{P}$,
 intersection closure, and polynomial-time many-one reduction closure.
 The definition follows Blass--Gurevich; these containments are elementary count
-identities. Unique-SAT completeness is not asserted here.\citep{BlassGurevich1982}
+identities. Unique-SAT completeness is recorded in the counting-completeness
+entry.\citep{BlassGurevich1982}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{46}{Cslib.Complexity.UP_subset_US}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{51}{Cslib.Complexity.coNP_subset_US}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/US.lean}{59}{Cslib.Complexity.US_subset_CeqP}
