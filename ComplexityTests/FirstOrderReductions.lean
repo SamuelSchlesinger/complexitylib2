@@ -5,6 +5,9 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Fagin.SAT
+import Complexity.Logics.FirstOrder.Problems.ColoringToCNF
+import Complexity.Logics.FirstOrder.Problems.IndependentSetReduction
+import Complexity.Logics.SecondOrder.IndependentSet
 import Complexity.Logics.FirstOrder.Problems.ColoringReduction
 import Complexity.Logics.SecondOrder.Coloring
 
@@ -15,7 +18,8 @@ Concrete CNF structures inside and outside SAT and 3SAT; the graphs of an unsati
 structure, of the empty clause and of a clause with four literals, which are not three-colorable;
 the compiled interpretation of a tagged interpretation, through `copiesEquiv`; clients of the
 headline reductions (3COL and 3SAT reduce to SAT, 3SAT reduces to 3COL, and these compose); and
-axiom guards.
+axiom guards. Milestone-two clients exercise the reverse coloring reduction, both outcomes of
+the occurrence-graph reduction on a nontrivial universe, and the ESO graph-property sentences.
 -/
 
 namespace ComplexityTests.FirstOrderReductions
@@ -171,6 +175,65 @@ example : Reduces cnf.SAT.{0} cnf.SAT.{0} :=
 example : Reduces cnf.ThreeSAT.{0} graph.SimpleThreeColorable.{0} :=
   cnf.reduces_ThreeSAT_SimpleThreeColorable
 
+/-! ### Milestone-two clients -/
+
+/-- Every clause contains a positive literal, on a nontrivial universe. -/
+@[instance_reducible]
+def positiveClauses : cnf.Structure (Fin 2) where
+  RelMap R _ := match R with
+    | .pos => True
+    | .neg => False
+
+/-- The occurrence graph of a satisfiable nontrivial structure has the requested independent set. -/
+example : letI := positiveClauses;
+    (Bundled.of (cnf.independentSetInterpretation.Model (Fin 2)) : Bundled sizedGraph.Structure) ∈
+      sizedGraph.IndependentSet := by
+  let _ := positiveClauses
+  rw [cnf.mem_independentSet_iff_satisfiable]
+  exact ⟨fun _ => True, fun _ => ⟨0, .inl ⟨trivial, trivial⟩⟩⟩
+
+/-- The contradiction has no independent set of the requested size. -/
+example : ¬(letI := contradiction;
+    (Bundled.of (cnf.independentSetInterpretation.Model (Fin 2)) : Bundled sizedGraph.Structure) ∈
+      sizedGraph.IndependentSet) := by
+  let _ := contradiction
+  rw [cnf.mem_independentSet_iff_satisfiable]
+  exact not_satisfiable_contradiction
+
+/-- The ESO sentence rejects the same concrete no-instance. -/
+example : ¬(letI := contradiction;
+    sizedGraph.independentSetSentence.Realize
+      (cnf.independentSetInterpretation.Model (Fin 2))) := by
+  let _ := contradiction
+  rw [sizedGraph.realize_independentSetSentence]
+  change (Bundled.of (cnf.independentSetInterpretation.Model (Fin 2)) :
+    Bundled sizedGraph.Structure) ∉ sizedGraph.IndependentSet
+  rw [cnf.mem_independentSet_iff_satisfiable]
+  exact not_satisfiable_contradiction
+
+/-- The graph of a satisfiable unit clause maps back to a satisfiable 3-CNF structure. -/
+example : letI := unitClause;
+    cnf.IsThreeCNF
+        (graph.cnfInterpretation.Model (cnf.coloringInterpretation.Model (Fin 1))) ∧
+      cnf.Satisfiable
+        (graph.cnfInterpretation.Model (cnf.coloringInterpretation.Model (Fin 1))) := by
+  let _ := unitClause
+  refine ⟨graph.isThreeCNF_cnfInterpretation, ?_⟩
+  rw [graph.satisfiable_cnfInterpretation_iff, cnf.colorable_coloringInterpretation_iff]
+  exact ⟨cnf.isThreeCNF_of_subsingleton, satisfiable_unitClause⟩
+
+/-- The two order-free 3SAT/3COL interpretations compose. -/
+example : Reduces cnf.ThreeSAT.{0} cnf.ThreeSAT.{0} :=
+  cnf.reduces_ThreeSAT_ThreeColorable.trans graph.reduces_ThreeColorable_ThreeSAT
+    cnf.isoClosed_ThreeSAT
+
+example : ReducesNontrivial cnf.SAT.{0} sizedGraph.IndependentSet.{0} :=
+  cnf.reducesNontrivial_SAT_IndependentSet
+
+example : ESO.Definable sizedGraph.Clique.{0} := sizedGraph.definable_Clique
+
+example : ESO.Definable sizedGraph.VertexCover.{0} := sizedGraph.definable_VertexCover
+
 /-! ### Axioms -/
 
 /--
@@ -269,5 +332,40 @@ info: 'Cslib.Logic.FO.Reduces.of_tagged' depends on axioms: [propext, Classical.
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.FO.Reduces.of_tagged
+
+/--
+info: 'Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT
+
+/--
+info: 'Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet
+
+/--
+info: 'Cslib.Logic.FO.sizedGraph.definable_IndependentSet' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.sizedGraph.definable_IndependentSet
+
+/--
+info: 'Cslib.Logic.FO.sizedGraph.definable_Clique' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.sizedGraph.definable_Clique
+
+/--
+info: 'Cslib.Logic.FO.sizedGraph.definable_VertexCover' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.sizedGraph.definable_VertexCover
 
 end ComplexityTests.FirstOrderReductions
