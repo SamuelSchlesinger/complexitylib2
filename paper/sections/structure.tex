@@ -36,6 +36,37 @@ excludes BIT.
 \end{result}
 
 \begin{result}
+\textbf{Quantifier-free reductions and their automation.}
+A class of finite structures is quantifier-free reducible to another when a
+first-order interpretation whose domain and relation formulas are quantifier-free
+maps the members of the first class into the second and the other finite
+structures outside it. Quantifier-free reducibility implies first-order
+reducibility and is reflexive on isomorphism-closed classes of a relational
+vocabulary and transitive; for a one-dimensional interpretation whose domain
+formula always holds, correctness may be stated on the input universe itself.
+The tactics \texttt{fo\_qf}, \texttt{fo\_iso\_closed}, \texttt{fo\_simp} and
+\texttt{fo\_reduction} prove quantifier-freeness and isomorphism closure and
+reduce a reduction goal to its semantic statement. As clients, independent set,
+clique and vertex cover, posed as a graph with a unary relation whose cardinality
+is the target size, are pairwise quantifier-free reducible; Karp's
+clique-to-node-cover reduction is the composite of complementing the edges off
+the diagonal and complementing the size relation. Edge relations need not be
+symmetric and loops are ignored; on simple graphs these are the usual
+problems.\citep{Karp1972,GareyJohnson1979,Immerman1999}
+
+These reductions use no order or other numeric predicates, and they are a
+different notion from the quantifier-free projections of the previous entry,
+which select a single input literal for each output relation. The structure
+classes are not connected here to the encoded NP-complete problems.
+\declat{d22fe934aa4dc99f0ccb5c0ceb992dfcd8bf5671}{Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean}{84}{Cslib.Logic.FO.QFReduces.reduces}
+\declat{d22fe934aa4dc99f0ccb5c0ceb992dfcd8bf5671}{Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean}{96}{Cslib.Logic.FO.QFReduces.trans}
+\declat{d22fe934aa4dc99f0ccb5c0ceb992dfcd8bf5671}{Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean}{112}{Cslib.Logic.FO.QFReduces.of_unitStructure}
+\declat{d22fe934aa4dc99f0ccb5c0ceb992dfcd8bf5671}{Complexity/Logics/FirstOrder/Problems/SizedGraph.lean}{231}{Cslib.Logic.FO.sizedGraph.qfReduces_IndependentSet_Clique}
+\declat{d22fe934aa4dc99f0ccb5c0ceb992dfcd8bf5671}{Complexity/Logics/FirstOrder/Problems/SizedGraph.lean}{246}{Cslib.Logic.FO.sizedGraph.qfReduces_IndependentSet_VertexCover}
+\declat{d22fe934aa4dc99f0ccb5c0ceb992dfcd8bf5671}{Complexity/Logics/FirstOrder/Problems/SizedGraph.lean}{265}{Cslib.Logic.FO.sizedGraph.qfReduces_Clique_VertexCover}
+\end{result}
+
+\begin{result}
 \subsection{Polynomial time is strictly smaller than exponential time}
 For languages of finite bit strings,
 \[

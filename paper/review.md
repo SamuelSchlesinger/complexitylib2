@@ -779,3 +779,19 @@ Independent reviews:
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 13: first-order reduction automation (2026-10-19)
+
+Integrated `d22fe934` (`fo-automation`), adding "Quantifier-free reductions and their automation"
+(`structure.tex`). The stated entry count was corrected to the number of entries in the index (110);
+earlier increments had drifted below it.
+
+Independent reviews: correctness and API reviews of `e624edf0..6682dade` found one blocking defect
+(`fo_reduction` swallowed elaboration errors in its lemma list under `try`) and API items (module
+placement, `IsoClosed.of_forall_imp`, composite support in `fo_simp`). The delta review of
+`6682dade..d22fe934` approved; its non-blocking findings (composite and higher-dimensional
+relations not simplified by `fo_reduction`, a broad failure message, test precision) are recorded in
+`ROADMAP.md` or left for follow-up.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.

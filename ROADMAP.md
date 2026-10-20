@@ -141,7 +141,14 @@ of the handover. The work below remains available for subsequent, independently 
      substitution, identity/composition isomorphisms, and quantifier-free composition. The
      [graph-complement client](Complexity/Logics/FirstOrder/Projection/Graph.lean) and tests cover
      nonvacuity, empty universes, nullary relations and the failure of two-bit conjunction to be
-     a projection. **Still outstanding:** the classical positive-dimensional full-universe
+     a projection. Quantifier-free reducibility
+     ([QFReduces](Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean)) and the tactics
+     `fo_qf`, `fo_iso_closed`, `fo_simp` and `fo_reduction`
+     ([Tactic/FirstOrder](Complexity/Tactic/FirstOrder.lean)) are implemented, with independent
+     set, clique and vertex cover as quantifier-free reducible
+     [structure classes](Complexity/Logics/FirstOrder/Problems/SizedGraph.lean); `fo_reduction`
+     does not yet simplify the relations of composite or higher-dimensional interpretations.
+     **Still outstanding:** the classical positive-dimensional full-universe
      specialization and canonical numeric preservation, projection reducibility on finite
      structure classes, and the machine-certified encoding bridge described below. Reuse
      [FO.Interpretation](Complexity/Logics/FirstOrder/Interpretation.lean) and
