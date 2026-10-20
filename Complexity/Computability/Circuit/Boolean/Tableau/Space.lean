@@ -179,8 +179,8 @@ variable {T : α → ℕ} (hT : ComputableTidilyInSpace T encIn encNat Bs)
 include hT hin
 
 omit [DecidableEq State] in
-private theorem numCols_inSpace : ComputableTidilyInSpace (fun x => numCols (T x)) encIn encNat Bs
-    :=
+private theorem numCols_inSpace :
+    ComputableTidilyInSpace (fun x => numCols (T x)) encIn encNat Bs :=
   budget_natAdd (budget_natMul (budget_const 2 hin) hT) (budget_const 1 hin)
 
 omit [DecidableEq State] in

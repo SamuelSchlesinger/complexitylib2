@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate
+-- upstream: candidate (additions to crei/tidy-universal `Encodings/Basic.lean`)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 import Mathlib.Data.List.GetD
@@ -17,11 +17,6 @@ import Mathlib.Data.List.GetD
 (`Turing.MultiTapeTM.frame`). Its bits are therefore constants or bits of `w`
 (`Turing.MultiTapeTM.getElem_frame`), which is what makes framed inputs easy to feed to circuits.
 
-## Main definitions
-
-* `Turing.MultiTapeTM.dbl`: the framed bits without the terminator.
-* `Turing.MultiTapeTM.dblT`: a finite-state transducer for these framed bits.
-
 ## Main results
 
 * `Turing.MultiTapeTM.getElem_frame`: the bit at each position of `frame w`.
@@ -32,6 +27,8 @@ import Mathlib.Data.List.GetD
   `base` iff it agrees with the markers, the bits of `w`, and the terminator.
 * `Turing.MultiTapeTM.forall_getElem?_append_iff`: a predicate agrees with the bits of `u ++ w` iff
   it agrees with `u` and with `w` shifted by `u.length`.
+* `Turing.MultiTapeTM.getD_frame_two_mul`, `Turing.MultiTapeTM.getD_frame_two_mul_add_one`:
+  indexed access to markers and input bits with default `false`.
 * `Turing.MultiTapeTM.length_flatMap_frame`: the length of a list of framed words.
 -/
 
@@ -173,29 +170,7 @@ theorem length_flatMap_frame (l : List (List Bool)) :
   | cons t l ih => simp only [List.flatMap_cons, List.length_append, length_frame, ih,
       List.map_cons, List.sum_cons]
 
-/-! ### Framed words -/
-
-/-- Each bit preceded by `true`: `frame` without its closing `false`. -/
-def dbl (l : List Bool) : List Bool := l.flatMap fun b => [true, b]
-
-theorem frame_eq_dbl (l : List Bool) : frame l = dbl l ++ [false] := rfl
-
-@[simp] theorem dbl_append (l l' : List Bool) : dbl (l ++ l') = dbl l ++ dbl l' :=
-  List.flatMap_append
-
-@[simp] theorem dbl_false : dbl [false] = [true, false] := rfl
-
-theorem dbl_flatten (L : List (List Bool)) : dbl L.flatten = (L.map dbl).flatten := by
-  induction L with
-  | nil => rfl
-  | cons l L ih => simp [ih]
-
-theorem dbl_dbl_replicate (n : ℕ) :
-    dbl (dbl (List.replicate n true)) = (List.replicate n [true, true, true, true]).flatten := by
-  induction n with
-  | zero => rfl
-  | succ n ih => simp [List.replicate_succ, dbl, ← ih]
-
+/-- With default `false`, the even marker bit tests whether the input index is in bounds. -/
 theorem getD_frame_two_mul (w : List Bool) (i : ℕ) :
     (frame w).getD (2 * i) false = decide (i < w.length) := by
   induction w generalizing i with
@@ -207,6 +182,7 @@ theorem getD_frame_two_mul (w : List Bool) (i : ℕ) :
         List.getD_cons_succ, ih]
       simp
 
+/-- With default `false`, the odd frame positions contain exactly the input bits. -/
 theorem getD_frame_two_mul_add_one (w : List Bool) (i : ℕ) :
     (frame w).getD (2 * i + 1) false = w.getD i false := by
   induction w generalizing i with
@@ -216,21 +192,5 @@ theorem getD_frame_two_mul_add_one (w : List Bool) (i : ℕ) :
     · simp [frame_cons]
     · rw [frame_cons, show 2 * (i + 1) + 1 = 2 * i + 1 + 1 + 1 by omega, List.getD_cons_succ,
         List.getD_cons_succ, ih, List.getD_cons_succ]
-
-/-- Doubles each bit after a `true`. -/
-def dblT : Transducer Bool Unit where
-  q₀ := ()
-  step _ b := ((), [true, b])
-  final _ := []
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-theorem dblT_run (l : List Bool) : dblT.run () l = dbl l := by
-  induction l with
-  | nil => rfl
-  | cons b l ih =>
-    rw [Transducer.run_cons]
-    change [true, b] ++ dblT.run () l = [true, b] ++ dbl l
-    rw [ih]
 
 end Turing.MultiTapeTM

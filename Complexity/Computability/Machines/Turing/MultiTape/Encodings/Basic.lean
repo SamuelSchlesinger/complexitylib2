@@ -100,6 +100,7 @@ instance : Finite FrameState :=
   Finite.of_surjective (fun b : Option Bool => b.elim .done fun b => if b then .marker else .bit)
     fun q => by cases q; exacts [⟨some true, rfl⟩, ⟨some false, rfl⟩, ⟨none, rfl⟩]
 
+-- vendored: expose `frameT` and `frameT_run` for `computableInLogSpace_frame`; private upstream.
 /-- Frames its input. -/
 @[expose, simps q₀ step final]
 public def frameT : Transducer Bool Unit where

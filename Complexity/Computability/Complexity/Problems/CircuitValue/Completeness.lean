@@ -13,6 +13,7 @@ public import Complexity.Computability.Circuit.Boolean.Tableau.Correct
 public import Complexity.Computability.Circuit.Boolean.Tableau.Space
 public import Complexity.Computability.Machines.ReadMachine.Tidy
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 import Mathlib.Data.List.GetD
 
 /-!
@@ -87,12 +88,12 @@ noncomputable def tableauInstance (w : List Bool) : Σ n, Circuit signature n 1 
 
 /-- Gate `i` of the tableau, as the writer emits it. -/
 noncomputable def gateChunk (n i : ℕ) : List Bool :=
-  dbl (dbl (frame (encGate (Tableau.gateCode tm n (timeBound C d n) i))))
+  doubled (doubled (frame (encGate (Tableau.gateCode tm n (timeBound C d n) i))))
 
 variable (k State) in
 /-- What the writer emits after the gates: the end of the gate list and the output wire. -/
 noncomputable def trailer (n : ℕ) : List Bool :=
-  [true, false] ++ dbl (frame (encNat (Tableau.outWire k State n (timeBound C d n)))) ++ [false]
+  [true, false] ++ doubled (frame (encNat (Tableau.outWire k State n (timeBound C d n)))) ++ [false]
 
 /-- **The encoded instance**: the length in unary, the gates and the output wire, framed twice,
 and the input. -/
@@ -103,10 +104,10 @@ theorem encCircuitValue_tableauInstance (w : List Bool) :
           (gateChunk tm C d w.length)).flatten ++ trailer k State C d w.length ++ w := by
   rw [encCircuitValue_apply]
   simp only [tableauInstance, Tableau.code_circuit, encPair_apply, encUnary_apply, encList_cons,
-    encList_nil, List.append_nil, encBits_apply, frame_eq_dbl, dbl_append, Tableau.gates,
+    encList_nil, List.append_nil, encBits_apply, frame_eq_doubled, doubled_append, Tableau.gates,
     trailer]
   have hw : List.ofFn (fun i : Fin w.length => w[i]) = w := List.ofFn_getElem
-  rw [hw, dbl_dbl_replicate]
+  rw [hw, doubled_doubled_replicate]
   have hl : encList encGate ((List.range (Tableau.numGates k State (timeBound C d w.length))).map
       (Tableau.gateCode tm w.length (timeBound C d w.length))) =
       ((List.range (Tableau.numGates k State (timeBound C d w.length))).map fun i =>
@@ -116,26 +117,13 @@ theorem encCircuitValue_tableauInstance (w : List Bool) :
     | nil => rfl
     | cons i L ih => simp [ih]
   have hc : gateChunk tm C d w.length = fun i =>
-      dbl (dbl (dbl (encGate (Tableau.gateCode tm w.length (timeBound C d w.length) i)))) ++
-        dbl (dbl [false]) := by
+      doubled (doubled (doubled
+        (encGate (Tableau.gateCode tm w.length (timeBound C d w.length) i)))) ++
+        doubled (doubled [false]) := by
     funext i
-    simp only [gateChunk, frame_eq_dbl, dbl_append]
-  rw [hl, dbl_flatten, dbl_flatten, List.map_map, List.map_map, hc]
-  simp only [frame_eq_dbl, Function.comp_def, dbl_append, List.append_assoc, dbl_false]
-
-/-- The step of the writer. Its state is a phase, the length `n` of the input and a counter:
-phase `0` counts the input, phase `1` writes the gates, phase `2` copies the input, phase `3`
-halts. -/
-noncomputable def writerStep (s : ℕ × ℕ × ℕ) (b : Bool) : (ℕ × ℕ × ℕ) × List Bool :=
-  if s.1 = 0 then
-    if b then ((0, 0, s.2.2 + 1), [true, true, true, true]) else ((1, s.2.2, 0), [true, false])
-  else if s.1 = 1 then
-    if s.2.2 < Tableau.numGates k State (timeBound C d s.2.1) then
-      ((1, s.2.1, s.2.2 + 1), gateChunk tm C d s.2.1 s.2.2)
-    else ((2, s.2.1, 0), trailer k State C d s.2.1)
-  else if s.1 = 2 then
-    if s.2.2 < s.2.1 then ((2, s.2.1, s.2.2 + 1), [b]) else ((3, s.2.1, 0), [])
-  else (s, [])
+    simp only [gateChunk, frame_eq_doubled, doubled_append]
+  rw [hl, doubled_flatten, doubled_flatten, List.map_map, List.map_map, hc]
+  simp only [frame_eq_doubled, Function.comp_def, doubled_append, List.append_assoc, doubled_false]
 
 /-- The read address of the writer: the markers `true` of the framed input while counting, the
 input bits while copying. -/
@@ -148,7 +136,21 @@ noncomputable def writer : ReadMachine (ℕ × ℕ × ℕ) where
   init := (0, 0, 0)
   halt s := decide (s.1 = 3)
   addr := writerAddr
-  step := writerStep tm C d
+  step s b :=
+    if s.1 = 0 then
+      if b then ((0, 0, s.2.2 + 1), [true, true, true, true]) else ((1, s.2.2, 0), [true, false])
+    else if s.1 = 1 then
+      if s.2.2 < Tableau.numGates k State (timeBound C d s.2.1) then
+        ((1, s.2.1, s.2.2 + 1), gateChunk tm C d s.2.1 s.2.2)
+      else ((2, s.2.1, 0), trailer k State C d s.2.1)
+    else if s.1 = 2 then
+      if s.2.2 < s.2.1 then ((2, s.2.1, s.2.2 + 1), [b]) else ((3, s.2.1, 0), [])
+    else (s, [])
+
+/-- The step of the writer. Its state is a phase, the length `n` of the input and a counter:
+phase `0` counts the input, phase `1` writes the gates, phase `2` copies the input, phase `3`
+halts. -/
+private noncomputable abbrev writerStep := (writer tm C d).step
 
 /-- The number of steps of the writer on an input of length `n`. -/
 noncomputable def writerRounds (n : ℕ) : ℕ :=
@@ -164,6 +166,7 @@ private theorem readBit_writer_copy (w : List Bool) (n i : ℕ) :
   simp only [ReadMachine.readBit, writer, writerAddr, OfNat.ofNat_ne_zero, ↓reduceIte]
   exact getD_frame_two_mul_add_one w i
 
+/-- The writer halts with the complete encoded tableau instance on the framed input. -/
 theorem run_writer (w : List Bool) :
     (writer tm C d).run (frame w) (writerRounds (k := k) (State := State) C d w.length) =
       ⟨(3, w.length, 0), encCircuitValue (tableauInstance tm C d w)⟩ := by
@@ -182,7 +185,7 @@ theorem run_writer (w : List Bool) :
     (fun j hj => ⟨rfl, by
       change writerStep tm C d (1, w.length, j) ((writer tm C d).readBit (frame w) (1, w.length, j))
         = _
-      simp only [writerStep, ↓reduceIte, hj, one_ne_zero]⟩) out le_rfl
+      simp only [writerStep, writer, ↓reduceIte, hj, one_ne_zero]⟩) out le_rfl
   have h₁' (out : List Bool) : (writer tm C d).next (frame w)
       ⟨(1, w.length, Tableau.numGates k State (timeBound C d w.length)), out⟩ =
       ⟨(2, w.length, 0), out ++ trailer k State C d w.length⟩ := by
@@ -194,13 +197,14 @@ theorem run_writer (w : List Bool) :
         ((writer tm C d).readBit (frame w)
           (1, w.length, Tableau.numGates k State (timeBound C d w.length)))).2⟩ :
       ReadMachine.Cfg (ℕ × ℕ × ℕ)) = _
-    simp only [writerStep, one_ne_zero, ↓reduceIte, lt_self_iff_false]
+    simp only [writerStep, writer, one_ne_zero, ↓reduceIte, lt_self_iff_false]
   -- copying
   have h₂ (out : List Bool) := (writer tm C d).runFrom_loop (frame w) (fun i => (2, w.length, i))
     (fun i => [w.getD i false]) (M := w.length) (fun i hi => ⟨rfl, by
       rw [readBit_writer_copy]
       change writerStep tm C d (2, w.length, i) (w.getD i false) = _
-      simp only [writerStep, OfNat.ofNat_ne_zero, ↓reduceIte, hi, OfNat.ofNat_ne_one]⟩) out le_rfl
+      simp only [writerStep, writer, OfNat.ofNat_ne_zero, ↓reduceIte, hi,
+        OfNat.ofNat_ne_one]⟩) out le_rfl
   have h₂' (out : List Bool) : (writer tm C d).next (frame w) ⟨(2, w.length, w.length), out⟩ =
       ⟨(3, w.length, 0), out⟩ := by
     rw [ReadMachine.next_of_not_halt _ _ rfl]
@@ -209,7 +213,7 @@ theorem run_writer (w : List Bool) :
       out ++ (writerStep tm C d (2, w.length, w.length)
         ((writer tm C d).readBit (frame w) (2, w.length, w.length))).2⟩ :
       ReadMachine.Cfg (ℕ × ℕ × ℕ)) = _
-    simp only [writerStep, OfNat.ofNat_ne_zero, ↓reduceIte, OfNat.ofNat_ne_one,
+    simp only [writerStep, writer, OfNat.ofNat_ne_zero, ↓reduceIte, OfNat.ofNat_ne_one,
       lt_self_iff_false, List.append_nil]
   have hcopy : ((List.range w.length).map fun i => [w.getD i false]).flatten = w := by
     have hs (l : List ℕ) (f : ℕ → Bool) : (l.map fun i => [f i]).flatten = l.map f := by
@@ -281,7 +285,7 @@ private theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpa
   have hframe : ComputableTidilyInSpace (fun g => frame (encGate g)) encGate encBits
       fun g => (encGate g).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))
-  exact budget_comp_linear dbl_inSpace (budget_comp_linear dbl_inSpace
+  exact budget_comp_linear doubled_inSpace (budget_comp_linear doubled_inSpace
     (budget_comp_linear (g := fun g => frame (encGate g)) hframe
       (gateCode_inSpace tm hn (timeBound_inSpace C d hin hn) hin hi)))
 
@@ -297,10 +301,10 @@ private theorem trailer_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n
   have hframe : ComputableTidilyInSpace (fun m => frame (encNat m)) encNat encBits
       fun m => (encNat m).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))
-  have hmid := budget_comp_linear dbl_inSpace
+  have hmid := budget_comp_linear doubled_inSpace
     (budget_comp_linear (g := fun m => frame (encNat m)) hframe ho)
   have h₁ := (budget_const (encB := encBits) [true, false] hin).append hmid
-    (g := fun x => [true, false] ++ dbl (frame (encNat (outWire k State (n x)
+    (g := fun x => [true, false] ++ doubled (frame (encNat (outWire k State (n x)
       (timeBound C d (n x)))))) (encD := encBits) fun _ => rfl
   have h₂ := (h₁.weaken (.add (.refl _) (.refl _))).append
     (budget_const (encB := encBits) [false] hin) (encD := encBits)
@@ -316,7 +320,7 @@ private theorem writerHalt_inSpace :
   have hph := (ComputableTidilyInSpace.fst encNat (encPair encNat encNat)).weaken hin
   exact budget_natEq hph (budget_const (encB := encNat) 3 hin)
 
-theorem writerAddr_inSpace :
+private theorem writerAddr_inSpace :
     ComputableTidilyInSpace writerAddr encWState (encOption encNat) wBudget := by
   have hin : (fun s => (encWState s).length) ≼ wBudget := .of_le fun _ => by
     simp only [wBudget]; omega
@@ -371,16 +375,16 @@ private theorem writerStep_inSpace :
         (budget_ite (budget_natLt hi hn) (budget_prod (hst (hc 2) hn hsucc) hbit)
           (budget_prod (hst (hc 3) hn (hc 0)) (hw [])))
         (budget_prod hs (hw []))))).of_enc_eq fun p => ?_
-  simp only [writerStep, decide_eq_true_eq]
+  simp only [writerStep, writer, decide_eq_true_eq]
 
 /-- The states of the writer on an input of length `n`, with `N` gates. -/
-def WInv (n N : ℕ) (s : ℕ × ℕ × ℕ) : Prop :=
+private def WriterInvariant (n N : ℕ) (s : ℕ × ℕ × ℕ) : Prop :=
   (s.1 = 0 ∧ s.2.1 = 0 ∧ s.2.2 ≤ n) ∨ (s.1 = 1 ∧ s.2.1 = n ∧ s.2.2 ≤ N) ∨
     (s.1 = 2 ∧ s.2.1 = n ∧ s.2.2 ≤ n) ∨ (s.1 = 3 ∧ s.2.1 = n ∧ s.2.2 = 0)
 
 /-- The states of the writer along its run. -/
-theorem wInv_run (w : List Bool) (j : ℕ) :
-    WInv w.length (numGates k State (timeBound C d w.length))
+private theorem wInv_run (w : List Bool) (j : ℕ) :
+    WriterInvariant w.length (numGates k State (timeBound C d w.length))
       ((writer tm C d).run (frame w) j).state := by
   induction j with
   | zero => exact Or.inl ⟨rfl, rfl, Nat.zero_le _⟩
@@ -389,7 +393,7 @@ theorem wInv_run (w : List Bool) (j : ℕ) :
       ← ReadMachine.run]
     generalize (writer tm C d).run (frame w) j = cfg at ih ⊢
     obtain ⟨⟨ph, nn, i⟩, out⟩ := cfg
-    simp only [WInv] at ih
+    simp only [WriterInvariant] at ih
     rcases ih with ⟨rfl, rfl, hi⟩ | ⟨rfl, rfl, hi⟩ | ⟨rfl, rfl, hi⟩ | ⟨rfl, rfl, rfl⟩
     · rw [ReadMachine.next_of_not_halt _ _ rfl, readBit_writer_count]
       rcases Nat.lt_or_ge i w.length with h | h
@@ -397,27 +401,27 @@ theorem wInv_run (w : List Bool) (j : ℕ) :
         exact Or.inl ⟨rfl, rfl, h⟩
       · simp only [decide_eq_false (Nat.not_lt.2 h)]
         exact Or.inr (Or.inl ⟨rfl, by
-          simp only [writer, writerStep, ↓reduceIte, Bool.false_eq_true]; omega, Nat.zero_le _⟩)
+          simp only [writer, ↓reduceIte, Bool.false_eq_true]; omega, Nat.zero_le _⟩)
     · rw [ReadMachine.next_of_not_halt _ _ rfl]
-      change WInv _ _ (writerStep tm C d (1, w.length, i) _).1
+      change WriterInvariant _ _ (writerStep tm C d (1, w.length, i) _).1
       rcases Nat.lt_or_ge i (numGates k State (timeBound C d w.length)) with h | h
-      · simp only [writerStep, one_ne_zero, ↓reduceIte, h]
+      · simp only [writerStep, writer, one_ne_zero, ↓reduceIte, h]
         exact Or.inr (Or.inl ⟨rfl, rfl, h⟩)
-      · simp only [writerStep, one_ne_zero, ↓reduceIte, Nat.not_lt.2 h]
+      · simp only [writerStep, writer, one_ne_zero, ↓reduceIte, Nat.not_lt.2 h]
         exact Or.inr (Or.inr (Or.inl ⟨rfl, rfl, Nat.zero_le _⟩))
     · rw [ReadMachine.next_of_not_halt _ _ rfl]
-      change WInv _ _ (writerStep tm C d (2, w.length, i) _).1
+      change WriterInvariant _ _ (writerStep tm C d (2, w.length, i) _).1
       rcases Nat.lt_or_ge i w.length with h | h
-      · simp only [writerStep, OfNat.ofNat_ne_zero, ↓reduceIte, OfNat.ofNat_ne_one, h]
+      · simp only [writerStep, writer, OfNat.ofNat_ne_zero, ↓reduceIte, OfNat.ofNat_ne_one, h]
         exact Or.inr (Or.inr (Or.inl ⟨rfl, rfl, h⟩))
-      · simp only [writerStep, OfNat.ofNat_ne_zero, ↓reduceIte, OfNat.ofNat_ne_one,
+      · simp only [writerStep, writer, OfNat.ofNat_ne_zero, ↓reduceIte, OfNat.ofNat_ne_one,
           Nat.not_lt.2 h]
         exact Or.inr (Or.inr (Or.inr ⟨rfl, rfl, rfl⟩))
     · rw [show (writer tm C d).next (frame w) ⟨(3, w.length, 0), out⟩ =
         ⟨(3, w.length, 0), out⟩ by simp [ReadMachine.next, writer]]
       exact Or.inr (Or.inr (Or.inr ⟨rfl, rfl, rfl⟩))
 
-theorem le_of_wInv {n N : ℕ} {s : ℕ × ℕ × ℕ} (h : WInv n N s) :
+private theorem le_of_wInv {n N : ℕ} {s : ℕ × ℕ × ℕ} (h : WriterInvariant n N s) :
     s.1 ≤ 3 ∧ s.2.1 ≤ n ∧ s.2.2 ≤ n + N := by
   rcases h with ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ <;> omega
 
@@ -447,11 +451,11 @@ private theorem tidy_writer : ∃ T, (writer tm C d).toStepMachine.Tidy (encPair
 variable (k State) in
 /-- A bound on the numbers held by the writer and on the position of its head, on inputs of
 length `n`. -/
-noncomputable def wMax (n : ℕ) : ℕ := numGates k State (timeBound C d n) + 3 * n + 5
+private noncomputable def wMax (n : ℕ) : ℕ := numGates k State (timeBound C d n) + 3 * n + 5
 
 omit [DecidableEq State] in
-theorem stateS_le (w : List Bool) {q : (ℕ × ℕ × ℕ) × ℕ}
-    (hq : WInv w.length (numGates k State (timeBound C d w.length)) q.1)
+private theorem stateS_le (w : List Bool) {q : (ℕ × ℕ × ℕ) × ℕ}
+    (hq : WriterInvariant w.length (numGates k State (timeBound C d w.length)) q.1)
     (hpos : q.2 ≤ (frame w).length + 1) :
     ReadMachine.stateS encWState wBudget q ≤
       30 * ((encNat (wMax k State C d w.length)).length + 1) := by
@@ -472,28 +476,6 @@ private theorem polynomiallyBounded_wMax : PolynomiallyBounded (wMax k State C d
   change PolynomiallyBounded fun n => wMax k State C d n
   simp only [wMax, numGates, blockSize, colStart, gfStart, globStart, numCols, timeBound]
   fun_prop
-
-/-- A number below a polynomial in `L` has a binary length logarithmic in `L`. -/
-theorem length_encNat_le_log {M A D L : ℕ} (h : M ≤ A * (L + 1) ^ D) :
-    (encNat M).length ≤ (Nat.size A + 2 * D + 1) * (Nat.log2 L + 1) := by
-  have hpow (a D : ℕ) : (encNat (a ^ D)).length ≤ D * (encNat a).length + 1 := by
-    induction D with
-    | zero => simp
-    | succ D ih =>
-      rw [pow_succ]
-      have := length_encNat_mul_le (a ^ D) a
-      rw [Nat.succ_mul]
-      omega
-  have hL : (encNat (L + 1)).length ≤ Nat.log2 L + 2 := by
-    rw [length_encNat_eq_size, Nat.size_le]
-    have := Nat.lt_log2_self (n := L)
-    rw [pow_succ]
-    omega
-  have h₁ := (ComputableTidilyInO.length_encNat_mono h).trans (length_encNat_mul_le _ _)
-  have h₂ := hpow (L + 1) D
-  rw [← length_encNat_eq_size]
-  have : D * (encNat (L + 1)).length ≤ D * (Nat.log2 L + 2) := Nat.mul_le_mul_left _ hL
-  nlinarith
 
 /-- **The instances are computable in logarithmic space**, from the framed input. -/
 theorem computableInLogSpace_tableauInstance :
@@ -527,7 +509,7 @@ theorem computableInLogSpace_tableauInstance :
   have hM : wMax k State C d w.length ≤ A * ((encFramed encBits w).length + 1) ^ D :=
     (hAD w.length).trans (Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by
       simp only [encFramed_apply, encBits_apply, length_frame]; omega) D))
-  have hl := length_encNat_le_log hM
+  have hl := length_encNat_le_of_le_mul_pow hM
   have hX : 1 ≤ Nat.log2 (encFramed encBits w).length + 1 := by omega
   beta_reduce
   generalize Nat.log2 (encFramed encBits w).length + 1 = X at hl hX ⊢

@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Feature
 public import Mathlib.Tactic.DeriveFintype
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # The uniform tableau circuit of a multi-tape machine
@@ -561,8 +562,8 @@ private theorem ColFeat.ofIdx_idx (f : ColFeat k) : ColFeat.ofIdx f.idx = f := b
       show ¬1 + k + 3 * (i : ℕ) + symIdx s - 1 < k by omega, ↓reduceIte, ↓reduceDIte, h₁,
       i.isLt, h₂, symOf_symIdx]
 
-private theorem gadgetIdx_lt (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b j < 16 * (fi + 1) :=
-    by
+private theorem gadgetIdx_lt (fi : ℕ) (b : Bool) (j : Fin 8) :
+    gadgetIdx fi b j < 16 * (fi + 1) := by
   have := j.isLt
   cases b <;>
     simp only [gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero,
@@ -573,16 +574,16 @@ private theorem gadgetIdx_div (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b
   cases b <;>
     simp only [gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero] <;> omega
 
-private theorem gadgetB_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetB (gadgetIdx fi b j) = b
-    := by
+private theorem gadgetB_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) :
+    gadgetB (gadgetIdx fi b j) = b := by
   have := j.isLt
   cases b <;>
     simp only [gadgetB, gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero,
       Nat.mul_add_mod_self_left, decide_eq_false_iff_not, decide_eq_true_eq, not_le, ge_iff_le,
       gt_iff_lt] <;> omega
 
-private theorem gadgetJ_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetJ (gadgetIdx fi b j) = j
-    := by
+private theorem gadgetJ_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) :
+    gadgetJ (gadgetIdx fi b j) = j := by
   have := j.isLt
   ext
   cases b <;>
@@ -760,8 +761,8 @@ private theorem gfStart_add_gadgetIdx_lt (f : GFeat State) (b : Bool) (j : Fin 8
   omega
 
 omit [DecidableEq State] in
-private theorem colStart_add_lt {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (b : Bool) (j : Fin 8)
-    :
+private theorem colStart_add_lt {c : ℕ} (hc : c < numCols T) (f : ColFeat k)
+    (b : Bool) (j : Fin 8) :
     colStart k State T + c * colWidth k + gadgetIdx f.idx b j < blockSize k State T := by
   have h₁ := gadgetIdx_lt f.idx b j
   have h₂ := f.idx_lt
@@ -790,6 +791,7 @@ theorem Loc.offset_lt {l : Loc k State} {c : ℕ} (hl : l.ColOK T c) :
   · exact colStart_add_lt hl f b j
 
 omit [DecidableEq State] in
+/-- Subtracting the input offset gives the index of a tableau gate. -/
 theorem wire_sub (n T t : ℕ) (l : Loc k State) (c : ℕ) :
     wire n T t l c - n = 2 + t * blockSize k State T + l.offset T c := by
   simp only [wire]
@@ -917,6 +919,7 @@ private theorem resolve_cur_lt {l' : Loc k State} {cs : ColSel} {g : Guard}
 end Earlier
 
 omit [DecidableEq State] in
+/-- The scan region has positive width, including for a machine with no work tapes. -/
 theorem scanWidth_pos : 0 < scanWidth k := by simp only [scanWidth]; omega
 
 omit [DecidableEq State] in
@@ -963,9 +966,8 @@ private theorem gfTerms_lt {n T t : ℕ} (ht : 1 ≤ t) {f : GFeat State} {b : B
 omit [DecidableEq State] in
 /-- The references of a term of a column feature read earlier wires than the gates of the
 feature. -/
-private theorem colTerms_lt {n T t c : ℕ} (ht : 1 ≤ t) (hc : c < numCols T) {f : ColFeat k} {b :
-    Bool}
-    {j : Fin 8} {f' : ColFeat k} {p : Ref k State × Ref k State}
+private theorem colTerms_lt {n T t c : ℕ} (ht : 1 ≤ t) (hc : c < numCols T)
+    {f : ColFeat k} {b : Bool} {j : Fin 8} {f' : ColFeat k} {p : Ref k State × Ref k State}
     (hp : p ∈ colTerms f' ∨ p = (.fls, .fls)) :
     p.1.resolve n T t c < wire (State := State) n T t (.col f b j) c ∧
       p.2.resolve n T t c < wire (State := State) n T t (.col f b j) c := by
@@ -1008,12 +1010,6 @@ private theorem colTerms_lt {n T t c : ℕ} (ht : 1 ≤ t) (hc : c < numCols T) 
       rcases hp with rfl | rfl | rfl | rfl | rfl | rfl <;>
       exact ⟨hok (by simp), hok (by simp)⟩
   · exact ⟨resolve_fls_lt, resolve_fls_lt⟩
-
-theorem getD_mem_or {α : Type*} (l : List α) (j : ℕ) (d : α) : l.getD j d ∈ l ∨ l.getD j d = d := by
-  rw [List.getD_eq_getElem?_getD]
-  rcases h : l[j]? with _ | a
-  · exact Or.inr rfl
-  · exact Or.inl (List.mem_of_getElem? h)
 
 /-- **The references of a gate read earlier wires.** -/
 private theorem resolve_table_lt {n T t c : ℕ} (ht : 1 ≤ t) {l : Loc k State} (hl : l.ColOK T c) :
@@ -1089,7 +1085,7 @@ private theorem resolve_table_lt {n T t c : ℕ} (ht : 1 ≤ t) {l : Loc k State
   · simp only [Loc.ColOK] at hl
     subst hl
     rcases b with _ | _
-    · exact gfTerms_lt ht (getD_mem_or _ _ _)
+    · exact gfTerms_lt ht (List.getD_mem_or _ _ _)
     · cases j using Fin.cases with
       | zero =>
         simp only [table, Fin.cases_zero]
@@ -1102,7 +1098,7 @@ private theorem resolve_table_lt {n T t c : ℕ} (ht : 1 ≤ t) {l : Loc k State
           simp only [Loc.offset, gadgetIdx, Bool.toNat_false, Bool.toNat_true,
             Fin.val_castSucc, Fin.val_succ] <;> omega
   · rcases b with _ | _
-    · exact colTerms_lt ht hc (getD_mem_or _ _ _)
+    · exact colTerms_lt ht hc (List.getD_mem_or _ _ _)
     · cases j using Fin.cases with
       | zero =>
         simp only [table, Fin.cases_zero]
@@ -1126,8 +1122,8 @@ private theorem symIdx_symOf {m : ℕ} (hm : m < 3) : symIdx (symOf m) = m := by
   · omega
 
 omit [DecidableEq State] in
-private theorem ScanQ.idx_ofIdx {m : ℕ} (hm : m < 3 + 3 * k) : (ScanQ.ofIdx m : ScanQ k).idx = m :=
-    by
+private theorem ScanQ.idx_ofIdx {m : ℕ} (hm : m < 3 + 3 * k) :
+    (ScanQ.ofIdx m : ScanQ k).idx = m := by
   rw [ScanQ.ofIdx]
   split_ifs with h₁ h₂
   · exact symIdx_symOf h₁
@@ -1176,8 +1172,8 @@ private theorem GFeat.idx_ofIdx {m : ℕ} (hm : m < Fintype.card (Option State) 
     split_ifs <;> simp only [OutView.index] <;> omega
 
 omit [DecidableEq State] in
-private theorem ColFeat.idx_ofIdx {m : ℕ} (hm : m < 1 + 4 * k) : (ColFeat.ofIdx m : ColFeat k).idx =
-    m := by
+private theorem ColFeat.idx_ofIdx {m : ℕ} (hm : m < 1 + 4 * k) :
+    (ColFeat.ofIdx m : ColFeat k).idx = m := by
   rw [ColFeat.ofIdx]
   split_ifs with h₁ h₂ h₃
   · simp only [ColFeat.idx]; omega
@@ -1251,8 +1247,8 @@ private theorem exists_wire_eq {n T g : ℕ} (hg₂ : 2 ≤ g) (hg : g < numGate
 /-! ### The gate list is the code of a circuit -/
 
 omit [DecidableEq State] in
-private theorem length_argsOf (op : Op) (a b : ℕ) : (argsOf op a b).length = signature.Arity op :=
-    by
+private theorem length_argsOf (op : Op) (a b : ℕ) :
+    (argsOf op a b).length = signature.Arity op := by
   cases op <;> rfl
 
 omit [DecidableEq State] in
