@@ -18,8 +18,9 @@ A generate/propagate formula defines binary carry in the least-significant-bit-f
 Comparing all sum bits defines ordinary addition on every canonical universe `Fin n`, `n ≥ 2`.
 The result is nonmodular: an out-of-range sum has no satisfying result in the universe.
 
-This is the PLUS portion of the arithmetic-definability foundation. TIMES, the Bit Sum Lemma,
-full arbitrary-base tuple BIT lifting and numeric-preserving composition remain separate.
+This is the PLUS portion of the arithmetic-definability foundation. The Bit Sum Lemma is proved
+in `Ordered.BitSum`. TIMES, full arbitrary-base tuple BIT lifting and numeric-preserving
+composition remain separate.
 
 ## Main definitions
 
