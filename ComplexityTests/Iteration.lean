@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
+import Complexity.Computability.Circuit.Boolean.Iteration.CounterBatch
 import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
 import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
@@ -167,6 +168,24 @@ noncomputable def samplePrimeCycleData : PrimeCycleData 1 3 :=
 
 example : Function.Bijective samplePrimeCycleData.step :=
   samplePrimeCycleData.step_bijective
+
+-- Batched modular-counter power for r = 2 blocks of width 2 * 2 = 4.
+example (T : ℕ) :
+    ∃ out : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)),
+      out.Computes interpretation (counterBatchPower T) ∧
+        out.size ≤ 40000 * (2 + 1) ^ 3 * (2 ^ 2 + 2) :=
+  batched_counter_power T 2 (by decide)
+
+-- Combined upper and lower bounds for batched hard counter powers at k = 64.
+example :
+    ∃ T < ModulusCounter.period 64, ∀ r, 0 < r → r ≤ 2 ^ (64 + 64) →
+      (∃ out : Circuit signature (r * (64 + 64)) (r * (64 + 64)),
+        out.Computes interpretation (counterBatchPower T) ∧
+          out.size ≤ 40000 * (64 + 1) ^ 3 * (2 ^ 64 + r)) ∧
+      ∀ c : Circuit signature (r * (64 + 64)) (r * (64 + 64)),
+        c.Computes interpretation (counterBatchPower T) →
+          lowerBudget 64 < c.size ∧ r ≤ c.size :=
+  batched_hard_counter_power 64 (by decide)
 
 /-! ### Axioms -/
 
@@ -344,5 +363,54 @@ info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycles.near_landau_lower_bound' dep
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms PrimeCycles.near_landau_lower_bound
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterRemainder_of_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterRemainder_of_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterPower_of_remainder' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterPower_of_remainder
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.batched_counter_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms batched_counter_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterPower_of_batched' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterPower_of_batched
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterBatch_size_ge_of_ne_id' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterBatch_size_ge_of_ne_id
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterBatch_lower_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterBatch_lower_bounds
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.batched_hard_counter_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms batched_hard_counter_power
 
 end ComplexityTests.Iteration

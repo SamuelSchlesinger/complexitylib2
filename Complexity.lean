@@ -82,6 +82,7 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Active
 public import Complexity.Computability.Circuit.Boolean.Iteration.AffineController
 public import Complexity.Computability.Circuit.Boolean.Iteration.Batch
 public import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
+public import Complexity.Computability.Circuit.Boolean.Iteration.CounterBatch
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Basic
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Circuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Decode
