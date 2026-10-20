@@ -1,5 +1,6 @@
 import ComplexityTests.AWPPAmplification
 import ComplexityTests.AdaptivePPT
+import ComplexityTests.AffineController
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserCorollary
 import ComplexityTests.AffineDisperserLowerBound
@@ -52,6 +53,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
 import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
+import ComplexityTests.CountingComposition
 import ComplexityTests.CountingExecution
 import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine

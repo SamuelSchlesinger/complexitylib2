@@ -79,6 +79,7 @@ public import Complexity.Computability.Circuit.Boolean.Hastad.Sharp
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
 public import Complexity.Computability.Circuit.Boolean.Iteration.Active
+public import Complexity.Computability.Circuit.Boolean.Iteration.AffineController
 public import Complexity.Computability.Circuit.Boolean.Iteration.Batch
 public import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Basic
@@ -698,6 +699,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Counting
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Certificate
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Checker
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Composition
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Execution
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Guess
@@ -738,6 +740,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ChoiceTable
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Clock
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Composition
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Equivalence
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
