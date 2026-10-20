@@ -1515,6 +1515,18 @@ the final LaTeX log has no undefined citations or overfull boxes, and the count 
 Independent coordinator `fusion-quadratic` inspected this final rendering and the explicit
 fixed-polynomial wording with no findings; exact-head approval is tracked in the PR.
 
+### Bounded-closure integration with the refreshed dependency stack
+
+PR #60 integrates independently approved PR #59 head
+`17ae942e0737495057544f6d74a8f695a85ad72b`, including the current cslib pin
+`b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`. Its bounded-closure source and tests remain
+byte-identical to `b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5`; the four pinned links and
+entry prose are unchanged. Both review histories and the dependency's documentation corrections
+are preserved. All six combined gates pass. The rebuilt PDF retains 125 entries, with no final-log
+undefined citations or overfull boxes. Page 27 was rendered and inspected by the author and
+independent coordinator `fusion-quadratic`, who found no scope or layout issues. Final exact-head
+integration approval is recorded in PR #60. This refresh introduces no new theorem scope.
+
 ## Relativized counting and majority verifiers (PR #61, 20 October 2026)
 
 Worker `relativized-counting-20261020` adds #P^A, GapP^A and PP^A using the existing strict
@@ -1548,3 +1560,17 @@ or overfull boxes. Rendered pages22 (relativized counting),28 (bounded wide-gap 
 findings. This completed revision is preserved locally while the coordinator refreshes the
 stack against the subsequently landed upstream synchronization; final publication will use
 that refreshed base and receive a fresh integration review.
+
+### Relativized-counting integration with the refreshed dependency stack
+
+PR #61 integrates independently approved PR #60 revision
+`c46186f7ca68ae941c86b1d8b0a5f9d20bb5c135` and its PR #59/#57 predecessors, including
+cslib pin `b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`. Its two class modules, oracle product
+helper and tests remain byte-identical to source `21c83869180e7e9238477d021280352addf96e30`.
+The entry prose and seven pinned declaration anchors are unchanged. All 125 predecessor entries
+and their review histories are preserved; the combined count is 126. All six combined gates pass,
+fresh MCP diagnostics for all four source/test files are clean, and the documentation configuration
+check passes. The rebuilt PDF has no undefined citations or overfull boxes. Pages 22, 28 and 9
+were rendered and inspected; independent coordinator `fusion_graph` inspected the new page 22
+with no scope or layout findings. Final exact-head integration review is recorded in PR #61.
+This dependency refresh introduces no new theorem scope.
