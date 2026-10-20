@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Deterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Composition
 
@@ -46,12 +47,6 @@ namespace Turing.MultiTapeCTM
 open Cslib MultiTapeMachine MultiTapeMachine.Composition
 
 variable {k k' k₀ k₁ : ℕ} {Symbol State State₀ State₁ : Type} {input : List Symbol}
-
-/-- Reindexing work tapes maps every transition occurrence once. -/
-theorem Nonblocking.extendTapes {machine : MultiTapeCTM k Symbol State}
-    (h : machine.Nonblocking) (e : Fin k ↪ Fin k') : Nonblocking (machine.extendTapes e) := by
-  intro state symbol work
-  simpa [MultiTapeMachine.extendTapes] using h state symbol (fun i => work (e i))
 
 /-- Output redirection does not introduce empty transition lists. -/
 theorem Nonblocking.outputToTape {machine : MultiTapeCTM k Symbol State}
