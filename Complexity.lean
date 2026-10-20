@@ -7,6 +7,7 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
 public import Complexity.Algorithms.Reachability.BreadthFirst
 public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
+public import Complexity.Algorithms.WordRAM.ElementDistinctness
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
@@ -960,6 +961,12 @@ public import Complexity.Computability.USTCON.Reader.Defs
 public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Computability.USTCON.Space
+public import Complexity.Computability.WordRAM.Allocation
+public import Complexity.Computability.WordRAM.Compile
+public import Complexity.Computability.WordRAM.Defs
+public import Complexity.Computability.WordRAM.Notation
+public import Complexity.Computability.WordRAM.Structured
+public import Complexity.Computability.WordRAM.Time
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation

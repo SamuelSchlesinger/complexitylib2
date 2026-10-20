@@ -1,0 +1,633 @@
+/-
+Copyright (c) 2026 Erik Demaine, Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Erik Demaine, Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate (based on edemaine/lean-trominoes @6d5b36c1)
+
+public import Complexity.Init
+public import Cslib.Foundations.Relation.RelatesInSteps
+
+/-!
+# Word RAMs
+
+A *word RAM* is a random-access machine whose registers and memory cells hold `w`-bit words, and
+whose every instruction costs one unit of time. Algorithms are analysed for word sizes `w` of
+order `log n`, enough for a word to address the input [Cormen et al., Section 2.2][CLRS2009]
+[Fredman and Willard][FredmanWillard1993] [Hagerup][Hagerup1998]. This is the model in which
+algorithm papers state running times. It differs from the random-access machines of Cook and
+Reckhow (`Cslib.RAM`), whose registers hold unbounded numbers and whose instructions are charged
+the lengths of their operands: here the numbers are bounded, so unit cost is sound.
+
+This file defines the machine and its runs. Time-bounded decision, with the word size tied to the
+input size, is `Cslib.WordRAM.DecidesInTime`; structured programs (`Cslib.WordRAM.Code`) compile to
+the flat programs of this file with the same instruction counts.
+
+## The model
+
+* A program (`Cslib.WordRAM.Program`) is a list of instructions over a finite register file
+  `Fin r`; besides the registers there is a memory indexed by natural numbers.
+* Registers and memory cells hold natural numbers below `2 ^ w` (`Cslib.WordRAM.Fits`).
+* The data instructions (`Cslib.WordRAM.Op`) load a constant, copy a register, apply an arithmetic
+  or bitwise operation (`Cslib.WordRAM.BinOp`), read or write the memory cell whose address is
+  held in a register, and read the word size `w`. The control instructions jump, branch on an
+  equality or unsigned comparison of two registers, and halt with the contents of a register as
+  output.
+* An instruction that would write a number of more than `w` bits into a register *faults*, and
+  so does running off the end of the program. A fault is not a result: only runs that halt
+  count. Registers and memory then hold words throughout a run, so every address is a word and
+  the memory has `2 ^ w` usable cells.
+* A run starts at instruction `0` with all registers `0`, the input length at address `0` and the
+  input words at addresses `1, …, n` (`Cslib.WordRAM.State.init`); all other cells hold `0`.
+
+## Design notes
+
+The machine follows Erik Demaine's bounded-word RAM in `lean-trominoes` (an Apache-2.0
+formalization accompanying [the MIT–ULB CompGeom Group][Tromino2025]), with these changes:
+
+* Words are unsigned, as in most word-RAM definitions, rather than two's-complement integers.
+  Subtraction is truncated, and division and remainder by zero follow Lean's conventions
+  `x / 0 = 0` and `x % 0 = x`; each of these conventions costs a constant number of
+  instructions to reproduce with any other, so time bounds are unaffected.
+* The bitwise operations and shifts of the standard instruction set are added
+  [Hagerup][Hagerup1998], as is an instruction reading the word size, which algorithms on the
+  word RAM may use.
+* As in Demaine's machine, overflow faults instead of wrapping around modulo `2 ^ w`, so a run
+  that succeeds never relies on wrapping. Hence a successful run of a program that does not read
+  the word size never depends on it: such a run succeeds identically at every larger word size
+  (`Cslib.WordRAM.Executes.mono`).
+* Only constants and binary operations check that the number they write fits a word. Copies,
+  loads and stores move words already held by the machine, and every address held in a register
+  is a word (`Cslib.WordRAM.Data.Bounded.runs`), so checks on them could never fail on a run from
+  an input; they are omitted, which spares every program proof their side conditions.
+* The program counter is not required to fit a word: a program has constant length.
+* Data instructions have one semantics, `Cslib.WordRAM.Op.eval`, shared by flat and structured
+  programs; runs are counted with cslib's `Relation.RelatesInSteps`.
+
+## Main definitions
+
+* `Cslib.WordRAM.Fits`: a number fits a `w`-bit word.
+* `Cslib.WordRAM.BinOp`, `Cslib.WordRAM.Cond`, `Cslib.WordRAM.Op`, `Cslib.WordRAM.Instr`,
+  `Cslib.WordRAM.Program`: operations, conditions, data instructions, instructions and programs.
+* `Cslib.WordRAM.Data`, `Cslib.WordRAM.State`: registers with memory, and with a program counter.
+* `Cslib.WordRAM.Op.eval`: the effect of a data instruction, `none` on a fault.
+* `Cslib.WordRAM.step`: one step of a program, which continues, halts with an output, or faults.
+* `Cslib.WordRAM.Runs`, `Cslib.WordRAM.Executes`: runs of a given number of steps, and runs that
+  halt with a given output after a given number of instructions, the `halt` included.
+* `Cslib.WordRAM.State.init`, `Cslib.WordRAM.InputFits`: the initial state on an input, and inputs
+  whose length and words fit a word.
+* `Cslib.WordRAM.run`: a computable interpreter with a step budget.
+
+## Main results
+
+* `Cslib.WordRAM.executes_iff_run`: the interpreter computes exactly the halting runs.
+* `Cslib.WordRAM.Executes.unique`: output and instruction count are determined by the program,
+  the word size and the state.
+* `Cslib.WordRAM.Data.Bounded.runs`: from an input that fits, every reachable register and memory
+  cell holds a `w`-bit word.
+* `Cslib.WordRAM.Executes.mono`: a program that does not read the word size halts in the same way
+  at every larger word size.
+
+## References
+
+* [T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to
+  Algorithms*][CLRS2009]
+* [M. L. Fredman and D. E. Willard, *Surpassing the information theoretic bound with fusion
+  trees*][FredmanWillard1993]
+* [T. Hagerup, *Sorting and searching on the word RAM*][Hagerup1998]
+* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]
+-/
+
+@[expose] public section
+
+namespace Cslib.WordRAM
+
+variable {r : ℕ}
+
+/-! ## Words -/
+
+/-- A number fits a `w`-bit word if it is below `2 ^ w`. -/
+def Fits (w v : ℕ) : Prop := v < 2 ^ w
+
+instance (w v : ℕ) : Decidable (Fits w v) := inferInstanceAs (Decidable (v < 2 ^ w))
+
+theorem fits_iff {w v : ℕ} : Fits w v ↔ v < 2 ^ w := Iff.rfl
+
+theorem Fits.mono {w w' v : ℕ} (h : Fits w v) (hw : w ≤ w') : Fits w' v :=
+  h.trans_le (Nat.pow_le_pow_right Nat.two_pos hw)
+
+theorem Fits.of_le {w u v : ℕ} (h : Fits w v) (huv : u ≤ v) : Fits w u := huv.trans_lt h
+
+@[simp]
+theorem fits_zero (w : ℕ) : Fits w 0 := Nat.two_pow_pos w
+
+theorem fits_one {w : ℕ} (hw : w ≠ 0) : Fits w 1 :=
+  Nat.one_lt_two_pow hw
+
+/-- The word size fits a word, so that a program may read it. -/
+theorem fits_self (w : ℕ) : Fits w w := Nat.lt_two_pow_self
+
+/-! ## Instructions -/
+
+/-- The binary operations of the word RAM. -/
+inductive BinOp where
+  /-- Addition. -/
+  | add
+  /-- Truncated subtraction. -/
+  | sub
+  /-- Multiplication. -/
+  | mul
+  /-- Division, rounding down. -/
+  | div
+  /-- Remainder. -/
+  | mod
+  /-- Bitwise and. -/
+  | and
+  /-- Bitwise or. -/
+  | or
+  /-- Bitwise exclusive or. -/
+  | xor
+  /-- Shift left: `x <<< y = x * 2 ^ y`. -/
+  | shiftLeft
+  /-- Shift right: `x >>> y = x / 2 ^ y`. -/
+  | shiftRight
+  deriving DecidableEq, Repr
+
+/-- The value of a binary operation on natural numbers. Subtraction is truncated, and division
+and remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. Whether the value
+fits a word is checked by the instruction that writes it. -/
+@[simp]
+def BinOp.eval : BinOp → ℕ → ℕ → ℕ
+  | .add, x, y => x + y
+  | .sub, x, y => x - y
+  | .mul, x, y => x * y
+  | .div, x, y => x / y
+  | .mod, x, y => x % y
+  | .and, x, y => x &&& y
+  | .or, x, y => x ||| y
+  | .xor, x, y => x ^^^ y
+  | .shiftLeft, x, y => x <<< y
+  | .shiftRight, x, y => x >>> y
+
+/-- The conditions on which a program branches: equality and unsigned comparison of two
+registers. -/
+inductive Cond (r : ℕ) where
+  /-- Registers `i` and `j` hold equal words. -/
+  | eq (i j : Fin r)
+  /-- Register `i` holds a smaller word than register `j`. -/
+  | lt (i j : Fin r)
+  deriving DecidableEq, Repr
+
+/-- The data instructions. Registers are named in the instruction; memory is addressed through
+the contents of a register. -/
+inductive Op (r : ℕ) where
+  /-- `const d v` sets register `d` to the constant `v`. -/
+  | const (d : Fin r) (v : ℕ)
+  /-- `copy d s` sets register `d` to the contents of register `s`. -/
+  | copy (d s : Fin r)
+  /-- `bin f d i j` sets register `d` to `f` applied to registers `i` and `j`. -/
+  | bin (f : BinOp) (d i j : Fin r)
+  /-- `load d a` sets register `d` to the memory cell whose address is in register `a`. -/
+  | load (d a : Fin r)
+  /-- `store a s` sets the memory cell whose address is in register `a` to register `s`. -/
+  | store (a s : Fin r)
+  /-- `width d` sets register `d` to the word size. -/
+  | width (d : Fin r)
+  deriving DecidableEq, Repr
+
+/-- Instructions: data instructions, jumps, conditional branches and halting. Jump and branch
+targets are instruction indices. -/
+inductive Instr (r : ℕ) where
+  /-- Execute a data instruction and proceed to the next instruction. -/
+  | op (o : Op r)
+  /-- Proceed to instruction `t`. -/
+  | jump (t : ℕ)
+  /-- Proceed to instruction `t` if `c` holds, and to the next instruction otherwise. -/
+  | branch (c : Cond r) (t : ℕ)
+  /-- Halt with the contents of register `i` as output. -/
+  | halt (i : Fin r)
+  deriving DecidableEq, Repr
+
+/-- A program over `r` registers is a list of instructions, indexed by the program counter. -/
+abbrev Program (r : ℕ) := List (Instr r)
+
+/-! ## Data and states -/
+
+/-- The data of a machine: register contents and memory. -/
+@[ext]
+structure Data (r : ℕ) where
+  /-- The contents of the registers. -/
+  regs : Fin r → ℕ
+  /-- The contents of memory, by address. -/
+  mem : ℕ → ℕ
+
+namespace Data
+
+/-- Set register `i` to `v`. -/
+def set (x : Data r) (i : Fin r) (v : ℕ) : Data r := ⟨Function.update x.regs i v, x.mem⟩
+
+/-- Set the memory cell at address `a` to `v`. -/
+def write (x : Data r) (a v : ℕ) : Data r := ⟨x.regs, Function.update x.mem a v⟩
+
+@[simp]
+theorem set_regs (x : Data r) (i : Fin r) (v : ℕ) :
+    (x.set i v).regs = Function.update x.regs i v := rfl
+
+@[simp]
+theorem set_mem (x : Data r) (i : Fin r) (v : ℕ) : (x.set i v).mem = x.mem := rfl
+
+@[simp]
+theorem write_regs (x : Data r) (a v : ℕ) : (x.write a v).regs = x.regs := rfl
+
+@[simp]
+theorem write_mem (x : Data r) (a v : ℕ) :
+    (x.write a v).mem = Function.update x.mem a v := rfl
+
+/-- Set register `i` to `v` if `v` fits a `w`-bit word, and fault otherwise. -/
+def put (w : ℕ) (x : Data r) (i : Fin r) (v : ℕ) : Option (Data r) :=
+  if Fits w v then some (x.set i v) else none
+
+theorem put_of_fits {w : ℕ} {x : Data r} {i : Fin r} {v : ℕ} (h : Fits w v) :
+    x.put w i v = some (x.set i v) := by
+  simp [put, h]
+
+theorem put_eq_some {w : ℕ} {x y : Data r} {i : Fin r} {v : ℕ} :
+    x.put w i v = some y ↔ Fits w v ∧ x.set i v = y := by
+  unfold put
+  split <;> simp_all
+
+end Data
+
+/-- A machine state: the index of the next instruction, and the data. -/
+@[ext]
+structure State (r : ℕ) where
+  /-- The program counter: the index of the next instruction. -/
+  pc : ℕ
+  /-- Register contents and memory. -/
+  data : Data r
+
+/-! ## Semantics of instructions -/
+
+/-- Whether a condition holds of the register contents. -/
+def Cond.Holds : Cond r → Data r → Prop
+  | .eq i j, x => x.regs i = x.regs j
+  | .lt i j, x => x.regs i < x.regs j
+
+instance (c : Cond r) (x : Data r) : Decidable (c.Holds x) :=
+  match c with
+  | .eq i j => inferInstanceAs (Decidable (x.regs i = x.regs j))
+  | .lt i j => inferInstanceAs (Decidable (x.regs i < x.regs j))
+
+@[simp]
+theorem Cond.holds_eq {i j : Fin r} {x : Data r} : (Cond.eq i j).Holds x ↔ x.regs i = x.regs j :=
+  Iff.rfl
+
+@[simp]
+theorem Cond.holds_lt {i j : Fin r} {x : Data r} : (Cond.lt i j).Holds x ↔ x.regs i < x.regs j :=
+  Iff.rfl
+
+/-- The effect of a data instruction at word size `w`, or `none` if it faults. Only constants
+and binary operations can produce a number that does not fit a word, and they fault when they do.
+Copying, loading and storing need no check: throughout a run, registers and memory hold words
+(`Cslib.WordRAM.Data.Bounded.runs`), so every address held in a register is a word too. -/
+def Op.eval (w : ℕ) : Op r → Data r → Option (Data r)
+  | .const d v, x => x.put w d v
+  | .copy d s, x => some (x.set d (x.regs s))
+  | .bin f d i j, x => x.put w d (f.eval (x.regs i) (x.regs j))
+  | .load d a, x => some (x.set d (x.mem (x.regs a)))
+  | .store a s, x => some (x.write (x.regs a) (x.regs s))
+  | .width d, x => some (x.set d w)
+
+/-- The outcome of a step: the next state, halting with an output, or a fault. -/
+inductive Outcome (r : ℕ) where
+  /-- The run continues in the given state. -/
+  | next (s : State r)
+  /-- The run halts with the given output. -/
+  | halt (v : ℕ)
+  /-- The run faults. -/
+  | fault
+
+/-- One step of program `p` at word size `w`: execute the instruction at the program counter.
+Running off the end of the program faults. -/
+def step (w : ℕ) (p : Program r) (s : State r) : Outcome r :=
+  match p[s.pc]? with
+  | none => .fault
+  | some (.op o) =>
+    match o.eval w s.data with
+    | some x => .next ⟨s.pc + 1, x⟩
+    | none => .fault
+  | some (.jump t) => .next ⟨t, s.data⟩
+  | some (.branch c t) => .next ⟨if c.Holds s.data then t else s.pc + 1, s.data⟩
+  | some (.halt i) => .halt (s.data.regs i)
+
+section Step
+
+variable {w : ℕ} {p : Program r} {s : State r}
+
+theorem step_op {o : Op r} {x : Data r} (hp : p[s.pc]? = some (.op o))
+    (h : o.eval w s.data = some x) :
+    step w p s = .next ⟨s.pc + 1, x⟩ := by
+  simp only [step, hp, h]
+
+theorem step_op_fault {o : Op r} (hp : p[s.pc]? = some (.op o)) (h : o.eval w s.data = none) :
+    step w p s = .fault := by
+  simp only [step, hp, h]
+
+theorem step_jump {t : ℕ} (hp : p[s.pc]? = some (.jump t)) :
+    step w p s = .next ⟨t, s.data⟩ := by
+  simp only [step, hp]
+
+theorem step_branch {c : Cond r} {t : ℕ} (hp : p[s.pc]? = some (.branch c t)) :
+    step w p s = .next ⟨if c.Holds s.data then t else s.pc + 1, s.data⟩ := by
+  simp only [step, hp]
+
+theorem step_halt {i : Fin r} (hp : p[s.pc]? = some (.halt i)) :
+    step w p s = .halt (s.data.regs i) := by
+  simp only [step, hp]
+
+end Step
+
+/-! ## Runs -/
+
+/-- One step of `p` at word size `w` leads from `s` to `t`. -/
+def Next (w : ℕ) (p : Program r) (s t : State r) : Prop := step w p s = .next t
+
+/-- `Runs w p s t n`: running `p` at word size `w` leads from `s` to `t` in exactly `n` steps,
+none of which halts or faults. -/
+abbrev Runs (w : ℕ) (p : Program r) : State r → State r → ℕ → Prop :=
+  Relation.RelatesInSteps (Next w p)
+
+/-- `Executes w p s v n`: running `p` at word size `w` from `s` halts with output `v` after
+exactly `n` instructions, the final `halt` included. A run that faults executes nothing. -/
+def Executes (w : ℕ) (p : Program r) (s : State r) (v n : ℕ) : Prop :=
+  ∃ t m, Runs w p s t m ∧ step w p t = .halt v ∧ n = m + 1
+
+/-- Run `p` at word size `w` from `s` for at most `fuel` steps: `some (v, n)` if it halts with
+output `v` after `n` instructions, and `none` if it faults or needs more steps. -/
+def run (w : ℕ) (p : Program r) : ℕ → State r → Option (ℕ × ℕ)
+  | 0, _ => none
+  | fuel + 1, s =>
+    match step w p s with
+    | .next t => (run w p fuel t).map fun vn => (vn.1, vn.2 + 1)
+    | .halt v => some (v, 1)
+    | .fault => none
+
+section Executes
+
+variable {w : ℕ} {p : Program r} {s t u : State r} {v v' m n n' : ℕ}
+
+theorem Executes.halt (h : step w p s = .halt v) : Executes w p s v 1 :=
+  ⟨s, 0, .refl s, h, rfl⟩
+
+theorem Executes.head (h : Next w p s t) (ht : Executes w p t v n) : Executes w p s v (n + 1) := by
+  obtain ⟨u, m, hr, hu, rfl⟩ := ht
+  exact ⟨u, m + 1, hr.head s t u m h, hu, rfl⟩
+
+/-- A run followed by a halting run is a halting run. -/
+theorem Executes.of_runs (h : Runs w p s t m) (ht : Executes w p t v n) :
+    Executes w p s v (m + n) := by
+  obtain ⟨u, k, hr, hu, rfl⟩ := ht
+  exact ⟨u, m + k, h.trans hr, hu, by omega⟩
+
+theorem Executes.pos (h : Executes w p s v n) : 0 < n := by
+  obtain ⟨_, _, _, _, rfl⟩ := h
+  omega
+
+theorem run_succ :
+    run w p (n + 1) s = match step w p s with
+      | .next t => (run w p n t).map fun vn => (vn.1, vn.2 + 1)
+      | .halt v => some (v, 1)
+      | .fault => none := rfl
+
+/-- The interpreter only finds halting runs. -/
+theorem Executes.of_run {fuel : ℕ} (h : run w p fuel s = some (v, n)) : Executes w p s v n := by
+  induction fuel generalizing s n with
+  | zero => simp [run] at h
+  | succ fuel ih =>
+    rw [run_succ] at h
+    split at h
+    · next t ht =>
+      obtain ⟨⟨v', k⟩, hk, hvn⟩ := Option.map_eq_some_iff.1 h
+      simp only [Prod.mk.injEq] at hvn
+      obtain ⟨rfl, rfl⟩ := hvn
+      exact (ih hk).head ht
+    · next v' hv =>
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      exact .halt hv
+    · simp at h
+
+/-- A halting run of `n` instructions is found by the interpreter with `n` steps of fuel. -/
+theorem Executes.run_eq (h : Executes w p s v n) : run w p n s = some (v, n) := by
+  obtain ⟨t, m, hr, ht, rfl⟩ := h
+  induction hr using Relation.RelatesInSteps.head_induction_on with
+  | hrefl => simp [run_succ, ht]
+  | hhead hsc _ ih =>
+    rw [run_succ, show step w p _ = .next _ from hsc]
+    dsimp only
+    rw [ih]
+    rfl
+
+/-- More fuel does not change a result of the interpreter. -/
+theorem run_mono {fuel fuel' : ℕ} {vn : ℕ × ℕ} (h : run w p fuel s = some vn)
+    (hle : fuel ≤ fuel') : run w p fuel' s = some vn := by
+  induction fuel generalizing s fuel' vn with
+  | zero => simp [run] at h
+  | succ fuel ih =>
+    obtain ⟨fuel', rfl⟩ : ∃ k, fuel' = k + 1 := ⟨fuel' - 1, by omega⟩
+    rw [run_succ] at h ⊢
+    split at h
+    · obtain ⟨vn', hk, rfl⟩ := Option.map_eq_some_iff.1 h
+      rw [ih hk (by omega)]
+      rfl
+    · exact h
+    · simp at h
+
+/-- The interpreter computes exactly the halting runs. -/
+theorem executes_iff_run : Executes w p s v n ↔ ∃ fuel, run w p fuel s = some (v, n) :=
+  ⟨fun h => ⟨n, h.run_eq⟩, fun ⟨_, h⟩ => .of_run h⟩
+
+/-- A halting run is determined by the program, the word size and the state: its output and its
+number of instructions are unique. -/
+theorem Executes.unique (h : Executes w p s v n) (h' : Executes w p s v' n') :
+    v = v' ∧ n = n' := by
+  have := (run_mono h.run_eq (le_max_left n n')).symm.trans (run_mono h'.run_eq (le_max_right n n'))
+  simpa using this
+
+/-- A state from which the step faults has no halting run. -/
+theorem not_executes_of_fault (h : step w p s = .fault) : ¬Executes w p s v n := by
+  intro he
+  have hr := he.run_eq
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero he.pos.ne'
+  simp [run_succ, h] at hr
+
+end Executes
+
+/-! ## Inputs -/
+
+/-- The initial data on an input: all registers `0`, the input length at address `0` and the
+input words at addresses `1, …, n`, all other memory `0`. Placing the input is the calling
+convention, not part of the program's cost. -/
+def Data.init (input : List ℕ) : Data r where
+  regs _ := 0
+  mem a := if a = 0 then input.length else input.getD (a - 1) 0
+
+/-- The initial state on an input: the program counter at `0`, and `Data.init input`. -/
+def State.init (input : List ℕ) : State r := ⟨0, .init input⟩
+
+@[simp]
+theorem Data.init_regs (input : List ℕ) (i : Fin r) : (Data.init input).regs i = 0 := rfl
+
+@[simp]
+theorem Data.init_mem_zero (input : List ℕ) : (Data.init input : Data r).mem 0 = input.length :=
+  rfl
+
+@[simp]
+theorem Data.init_mem_succ (input : List ℕ) (a : ℕ) :
+    (Data.init input : Data r).mem (a + 1) = input.getD a 0 := rfl
+
+/-- An input fits word size `w` if its length and all its words do. -/
+def InputFits (w : ℕ) (input : List ℕ) : Prop :=
+  Fits w input.length ∧ ∀ v ∈ input, Fits w v
+
+instance (w : ℕ) (input : List ℕ) : Decidable (InputFits w input) :=
+  inferInstanceAs (Decidable (_ ∧ _))
+
+theorem InputFits.mono {w w' : ℕ} {input : List ℕ} (h : InputFits w input) (hw : w ≤ w') :
+    InputFits w' input :=
+  ⟨h.1.mono hw, fun v hv => (h.2 v hv).mono hw⟩
+
+/-! ## Word bounds
+
+The machine holds only `w`-bit words: from an input that fits, every register and memory cell of
+every reachable state does. -/
+
+/-- All registers and memory cells hold `w`-bit words. -/
+def Data.Bounded (w : ℕ) (x : Data r) : Prop :=
+  (∀ i, Fits w (x.regs i)) ∧ ∀ a, Fits w (x.mem a)
+
+theorem Data.Bounded.init {w : ℕ} {input : List ℕ} (h : InputFits w input) :
+    (Data.init input : Data r).Bounded w := by
+  refine ⟨fun _ => fits_zero w, fun a => ?_⟩
+  rcases a with _ | a
+  · exact h.1
+  · rw [init_mem_succ, List.getD_eq_getElem?_getD]
+    cases hv : input[a]? with
+    | none => exact fits_zero w
+    | some v => exact h.2 v (List.mem_of_getElem? hv)
+
+theorem Data.Bounded.set {w : ℕ} {x : Data r} (hx : x.Bounded w) {i : Fin r} {v : ℕ}
+    (hv : Fits w v) : (x.set i v).Bounded w := by
+  refine ⟨fun j => ?_, hx.2⟩
+  rcases eq_or_ne j i with rfl | hj
+  · simpa using hv
+  · simpa [Function.update_of_ne hj] using hx.1 j
+
+theorem Data.Bounded.write {w : ℕ} {x : Data r} (hx : x.Bounded w) {a v : ℕ} (hv : Fits w v) :
+    (x.write a v).Bounded w := by
+  refine ⟨hx.1, fun b => ?_⟩
+  rcases eq_or_ne b a with rfl | hb
+  · simpa using hv
+  · simpa [Function.update_of_ne hb] using hx.2 b
+
+theorem Data.Bounded.op {w : ℕ} {x y : Data r} (hx : x.Bounded w) {o : Op r}
+    (h : o.eval w x = some y) : y.Bounded w := by
+  cases o with
+  | const | bin =>
+    obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
+    exact hx.set hv
+  | copy d s => cases h; exact hx.set (hx.1 s)
+  | load d a => cases h; exact hx.set (hx.2 _)
+  | store a s => cases h; exact hx.write (hx.1 s)
+  | width d => cases h; exact hx.set (fits_self w)
+
+/-- A step preserves word bounds. -/
+theorem Data.Bounded.step {w : ℕ} {p : Program r} {s t : State r} (hs : s.data.Bounded w)
+    (h : Next w p s t) : t.data.Bounded w := by
+  unfold Next WordRAM.step at h
+  split at h
+  · cases h
+  · next o _ =>
+    split at h
+    · next x hx => cases h; exact hs.op hx
+    · cases h
+  all_goals first | (cases h; exact hs) | cases h
+
+/-- Every state reachable from an input that fits holds only `w`-bit words. -/
+theorem Data.Bounded.runs {w : ℕ} {p : Program r} {input : List ℕ} {t : State r} {n : ℕ}
+    (h : InputFits w input) (ht : Runs w p (State.init input) t n) : t.data.Bounded w := by
+  induction ht with
+  | refl => exact Bounded.init h
+  | tail _ _ _ _ hstep ih => exact ih.step hstep
+
+/-! ## Larger word sizes
+
+Overflow faults, so a program that does not read the word size cannot tell word sizes apart on
+a run that succeeds: the same run succeeds at every larger word size. -/
+
+/-- The data instruction reads the word size: it is an `Op.width` instruction. -/
+def Op.ReadsWidth : Op r → Prop
+  | .width _ => True
+  | _ => False
+
+/-- A program reads the word size if it contains an `Op.width` instruction. -/
+def Program.ReadsWidth (p : Program r) : Prop := ∃ d, Instr.op (.width d) ∈ p
+
+theorem Op.eval_mono {w w' : ℕ} {o : Op r} {x y : Data r} (ho : ¬o.ReadsWidth)
+    (h : o.eval w x = some y) (hw : w ≤ w') : o.eval w' x = some y := by
+  cases o with
+  | const | bin =>
+    obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
+    exact Data.put_of_fits (hv.mono hw)
+  | copy | load | store => exact h
+  | width => exact absurd trivial ho
+
+theorem Next.mono {w w' : ℕ} {p : Program r} {s t : State r} (hp : ¬p.ReadsWidth)
+    (h : Next w p s t) (hw : w ≤ w') : Next w' p s t := by
+  unfold Next at h ⊢
+  cases hpc : p[s.pc]? with
+  | none => simp [WordRAM.step, hpc] at h
+  | some i =>
+    cases i with
+    | op o =>
+      have ho : ¬o.ReadsWidth := fun ho => by
+        cases o <;> simp only [Op.ReadsWidth] at ho
+        exact hp ⟨_, List.mem_of_getElem? hpc⟩
+      cases hx : o.eval w s.data with
+      | none => simp [WordRAM.step, hpc, hx] at h
+      | some x => rw [step_op hpc hx, ← step_op hpc (Op.eval_mono ho hx hw)] at h; exact h
+    | jump t => rw [step_jump hpc] at h ⊢; exact h
+    | branch c t => rw [step_branch hpc] at h ⊢; exact h
+    | halt i => simp [step_halt hpc] at h
+
+theorem step_halt_mono {w w' : ℕ} {p : Program r} {s : State r} {v : ℕ}
+    (h : step w p s = .halt v) : step w' p s = .halt v := by
+  cases hpc : p[s.pc]? with
+  | none => simp [WordRAM.step, hpc] at h
+  | some i =>
+    cases i with
+    | op o =>
+      simp only [WordRAM.step, hpc] at h
+      split at h <;> cases h
+    | jump t => simp [step_jump hpc] at h
+    | branch c t => simp [step_branch hpc] at h
+    | halt i => rw [step_halt hpc] at h ⊢; exact h
+
+theorem Runs.mono {w w' : ℕ} {p : Program r} {s t : State r} {n : ℕ} (hp : ¬p.ReadsWidth)
+    (h : Runs w p s t n) (hw : w ≤ w') : Runs w' p s t n := by
+  induction h with
+  | refl => exact .refl _
+  | tail _ _ _ _ hstep ih => exact .tail _ _ _ _ ih (hstep.mono hp hw)
+
+/-- **Word-size monotonicity.** A program that does not read the word size halts in the same way
+at every larger word size. -/
+theorem Executes.mono {w w' : ℕ} {p : Program r} {s : State r} {v n : ℕ} (hp : ¬p.ReadsWidth)
+    (h : Executes w p s v n) (hw : w ≤ w') : Executes w' p s v n :=
+  let ⟨t, m, hr, ht, hn⟩ := h
+  ⟨t, m, hr.mono hp hw, step_halt_mono ht, hn⟩
+
+end Cslib.WordRAM
+
+end
