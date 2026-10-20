@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate (to Mathlib's `Mathlib/Algebra/Polynomial/CoeffList.lean` or cslib)
+-- upstream: candidate
 
 public import Complexity.Init
 public import Mathlib.Algebra.Polynomial.CoeffList
@@ -17,7 +17,7 @@ import Mathlib.Data.List.GetD
 
 Mathlib's `Polynomial.ofCoeffList` builds a polynomial from its coefficients, the constant
 coefficient first. This file evaluates such a polynomial by Horner's rule on the list
-(`Polynomial.evalCoeffList`), bounds its degree by the length of the list, and lists the first
+(`Polynomial.evalCoeffList`), bounds its degree by the length of the list less one, lists the first
 `n` coefficients of a polynomial (`Polynomial.coeffsBelow`), which give the polynomial back when
 its degree is less than `n`. An interactive verifier receives polynomials in this form.
 
@@ -29,7 +29,7 @@ its degree is less than `n`. An interactive verifier receives polynomials in thi
 ## Main results
 
 * `Polynomial.eval_ofCoeffList`: evaluation is Horner's rule.
-* `Polynomial.natDegree_ofCoeffList_le`: the degree is less than the length of the list.
+* `Polynomial.natDegree_ofCoeffList_le`: the degree is at most the length of the list less one.
 * `Polynomial.ofCoeffList_coeffsBelow`: low coefficients determine a polynomial of small degree.
 -/
 
@@ -56,7 +56,7 @@ theorem eval_ofCoeffList {R : Type*} [CommSemiring R] (z : R) (l : List R) :
   | cons a l ih => rw [ofCoeffList_cons, eval_add, eval_C, eval_mul, eval_X, ih,
       evalCoeffList_cons]
 
-/-- The polynomial with coefficient list `l` has degree less than the length of `l`. -/
+/-- The polynomial with coefficient list `l` has degree at most `l.length - 1`. -/
 theorem natDegree_ofCoeffList_le (l : List R) : (ofCoeffList l).natDegree ≤ l.length - 1 := by
   rw [natDegree_le_iff_coeff_eq_zero]
   intro N hN

@@ -22,7 +22,7 @@ soundness [Arora and Barak, Chapter 8][AroraBarak09].
 ## Main results
 
 * `Cslib.Complexity.IsInteractiveProof.comp`: an interactive proof along a reduction.
-* `Cslib.Complexity.mem_IP_of_polyTimeReducible`: closure of `IP` under reductions.
+* `Cslib.Complexity.PolyTimeReducible.mem_IP`: closure of `IP` under reductions.
 
 ## References
 
@@ -45,7 +45,7 @@ theorem IsInteractiveProof.comp {verifier : β → WordOracleComp Operation Bool
   sound a ha := h.sound (f a) fun hb => ha ((hf a).2 hb)
 
 /-- **`IP` is closed under polynomial-time reductions.** -/
-theorem mem_IP_of_polyTimeReducible {encA : α ↪ List Bool} {encB : β ↪ List Bool} {A : Set α}
+theorem PolyTimeReducible.mem_IP {encA : α ↪ List Bool} {encB : β ↪ List Bool} {A : Set α}
     {B : Set β} (hAB : PolyTimeReducible encA encB A B) (hB : B ∈ IP encB) : A ∈ IP encA := by
   obtain ⟨f, hf, hfA⟩ := hAB
   obtain ⟨verifier, hV, hproof⟩ := hB

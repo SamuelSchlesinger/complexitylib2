@@ -24,12 +24,14 @@ This file gives the recursive form of that machine (`Cslib.Complexity.QBFProtoco
 It differs from `Cslib.Complexity.QBFProtocol.verify` in two ways: it reads the same number
 `D + 1` of coefficients in every round, so that it need not compute the degree of each body, and
 its queries also carry the tokens that follow the current subformula, so that they determine the
-remaining list of tokens of the machine. Soundness is unchanged: if the body of every operator has
-degree at most `D` in its variable, every prover is accepted on a false claim with probability at
-most `ops e * D * ε` (`Cslib.Complexity.QBFProtocol.acceptProb_verifyAt_le`), with `ops e` the
-number of operators. A prover answering with the true values and restrictions on every query
-about a subformula all of whose variables lie in a list `xs` is accepted on every true claim with
-certainty (`Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt`).
+remaining list of tokens of the machine. Its soundness bound uses the uniform degree: if the
+syntactic largest round degree `maxRoundDegree e` is at most `D`, every prover is accepted on a
+false claim with probability at most `ops e * D * ε` instead of `roundDegree e * ε`
+(`Cslib.Complexity.QBFProtocol.acceptProb_verifyAt_le`), with `ops e` the number of operators. A
+stateless prover whose replies agree with the true values and restrictions on every query about a
+subformula all of whose variables lie in a list `xs` is accepted with certainty on every true
+claim about a formula whose variables lie in `xs`
+(`Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt`).
 
 ## Main definitions
 
@@ -341,8 +343,8 @@ theorem agreesAt_honestReplyAt (e : ArithQBF ℕ) (r : ℕ → F) :
 
 /-- **Perfect completeness of the verifier on a stream of tokens.** A stateless prover whose reply
 to every query about a subformula all of whose variables lie in `xs` agrees with the honest reply
-makes the verifier accept every true claim with certainty, when the body of every operator has
-degree at most `D`. -/
+makes the verifier accept with certainty every true claim about a formula whose variables lie in
+`xs` and whose operators have bodies of degree at most `D` in their variable. -/
 theorem run_verifyAt_of_agreesAt (f : QueryAt F → List F) (xs : List ℕ)
     (hf : ∀ e' rest' r', (∀ w ∈ e'.vars, w ∈ xs) → AgreesAt D (f (e', rest', r')) e' r')
     (e : ArithQBF ℕ) (he : ∀ w ∈ e.vars, w ∈ xs) (hD : e.maxRoundDegree ≤ D)

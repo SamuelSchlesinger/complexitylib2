@@ -17,6 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Prime
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Complexity.Tactic.PolyTime
 import Mathlib.Data.List.GetD
@@ -188,25 +189,6 @@ theorem computableTidilyInPolyTime_getD_list {α γ : Type} {input : α ↪ List
   (listGetD (encA := enc) (encL := encList enc) d).comp (hL.prod hi)
 
 /-! ### The parameters -/
-
-/-- Primality by trial division. -/
-theorem decide_prime_eq (p : ℕ) : decide p.Prime =
-    (decide (2 ≤ p) && (List.range p).all fun m => decide (m < 2) || decide (p % m ≠ 0)) := by
-  rw [Bool.eq_iff_iff, decide_eq_true_iff, Nat.prime_def_lt']
-  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, List.mem_range,
-    Bool.or_eq_true, ne_eq, Nat.dvd_iff_mod_eq_zero]
-  refine and_congr_right fun _ => ⟨fun h m hm => ?_, fun h m h2 hm => ?_⟩
-  · by_cases h2 : m < 2
-    · exact Or.inl h2
-    · exact Or.inr (h m (by omega) hm)
-  · exact (h m hm).resolve_left (by omega)
-
-/-- Primality of a unary natural, by trial division. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_decide_prime :
-    ComputableTidilyInPolyTime (fun p : ℕ => decide p.Prime) encUnary encBool := by
-  simp_rw [decide_prime_eq]
-  fun_prop
 
 /-- The primes in `(a, b]`, from unary bounds. -/
 @[fun_prop]

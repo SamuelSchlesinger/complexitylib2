@@ -59,9 +59,12 @@ degrees sum to at most `(2 * |xs| + 1) * size φ ^ 2` when `xs` contains the var
 claim that it has value `1` at the origin is therefore accepted with probability `1` from a true
 formula, and with probability at most `3 * size φ ^ 3 / |F|` from a false one
 (`Cslib.Complexity.QBFProtocol.acceptProb_honest_of_mem_TQBF`,
-`Cslib.Complexity.QBFProtocol.acceptProb_le_of_notMem_TQBF`). The verifier is realized as an
-efficient machine in the model of `Cslib.Complexity.IP`, over a prime field of polynomial size with
-elements drawn from fair coins, in `Complexity.Computability.Complexity.Classes.IP.TQBF`.
+`Cslib.Complexity.QBFProtocol.acceptProb_le_of_notMem_TQBF`). The efficient machine in the
+model of `Cslib.Complexity.IP` realizes a variant of this verifier,
+`Cslib.Complexity.QBFProtocol.verifyAt`: it reads `D + 1` coefficients in every round, sends the
+remaining tokens of the formula with every query, and works over a prime field of polynomial size
+with elements drawn from fair coins, each with probability at most `2 / p`
+(`Cslib.Complexity.QBFProtocol.isOraclePPTOn_verifier`, `Cslib.Complexity.TQBF_mem_IP`).
 
 ## Main definitions
 
@@ -114,7 +117,7 @@ variable [DecidableEq V] [CommRing F] [DecidableEq F] (sampler : ProbComp F)
 
 /-- **The verifier** checking the claim that `e` has value `c` at `r`, drawing ring elements from
 `sampler`. At a binary connective the reply `[c₁, c₂, …]` gives the claimed values of the
-arguments, and at an operator binding `x` the first `deg x + 1` elements of the reply are the
+arguments, and at an operator binding `x` the first `degBound x + 1` elements of the reply are the
 coefficients of the claimed restriction of the body to `x`; missing entries count as `0`. -/
 def verify : ArithQBF V → (V → F) → F → ProbOracleComp (Spec V F) Bool
   | .var v, r, c => pure (decide (r v = c))
@@ -138,7 +141,7 @@ def verify : ArithQBF V → (V → F) → F → ProbOracleComp (Spec V F) Bool
 /-! ### Completeness -/
 
 /-- The reply of the honest prover: the values of the two arguments of a binary connective, and
-the `deg x + 1` coefficients of the restriction of the body of an operator binding `x`. -/
+the `degBound x + 1` coefficients of the restriction of the body of an operator binding `x`. -/
 noncomputable def honestReply : Query V F → List F
   | (.bin _ e₁ e₂, r) => [e₁.eval r, e₂.eval r]
   | (.op _ v e, r) => coeffsBelow (e.restrict r v) (e.degBound v + 1)

@@ -17,6 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Prime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Complexity.Computability.Probabilistic.Oracle.Composition
@@ -28,13 +29,15 @@ import Mathlib.NumberTheory.Bertrand
 The verifier of the interactive proof for `TQBF` as a program with fair coins and word messages,
 realized by a strict oracle PPT machine (`Cslib.Complexity.QBFProtocol.isOraclePPTOn_verifier`).
 On a formula `ψ` it rejects when `ψ` has a free variable. Otherwise it computes the list `xs` of
-the variables occurring in the tokens of `ψ`, the degree bound `D = 2 * size ψ`, and the greatest
-prime `p` at most `2 * B` for `B = 12 * size ψ ^ 2 * (size ψ + 1)`, found by trial division
+the variable components of all the tokens of `ψ`, with multiplicity and with `0` for the tokens
+without a variable (`Cslib.Complexity.QBFProtocol.linVars`), which contains every variable of
+`ψ`; the degree bound `D = 2 * size ψ`; and the greatest prime `p` at most `2 * B` for
+`B = 12 * size ψ ^ 2 * (size ψ + 1)`, found by trial division
 (`Cslib.Complexity.QBFProtocol.modulus`); by Bertrand's postulate `B < p`. It then runs a stack
 machine over the tokens of the arithmetization of `ψ` that linearizes the variables of `xs` after
-every quantifier (`Cslib.Complexity.QBFProtocol.loop`), one token per step
-(`Cslib.Complexity.QBFProtocol.step`), checking the claim that the arithmetization has value `1` at
-the origin over `ZMod p`:
+every quantifier (`Cslib.Complexity.QBFProtocol.Machine.loop`), one token per step
+(`Cslib.Complexity.QBFProtocol.Machine.step`), checking the claim that the arithmetization has
+value `1` at the origin over `ZMod p`:
 
 * a state holds the remaining tokens, the stack of pending claims, each a point and a value, and
   whether every check so far passed;
@@ -47,11 +50,12 @@ the origin over `ZMod p`:
 
 Points and values are rebuilt modulo `p` on the variables of `xs` whenever they are pushed, so that
 every step adds at most a polynomial amount of storage
-(`Cslib.Complexity.QBFProtocol.length_encVState_le_of_mem_support_step`).
+(`Cslib.Complexity.QBFProtocol.Machine.length_encVState_le_of_mem_support_step`).
 
 ## Main definitions
 
-* `Cslib.Complexity.QBFProtocol.step`, `Cslib.Complexity.QBFProtocol.loop`: the stack machine.
+* `Cslib.Complexity.QBFProtocol.Machine.step`, `Cslib.Complexity.QBFProtocol.Machine.loop`: the
+  stack machine.
 * `Cslib.Complexity.QBFProtocol.loopInput`: the parameters and tokens computed from a formula.
 * `Cslib.Complexity.QBFProtocol.verifier`: the verifier.
 
@@ -73,6 +77,8 @@ every step adds at most a polynomial amount of storage
 namespace Cslib.Complexity.QBFProtocol
 
 open Cslib.Logic.PL Turing.MultiTapeTM Cslib.Probability
+
+namespace Machine
 
 /-! ### States -/
 
@@ -213,59 +219,6 @@ def init (I : LoopInput) : VState := (I.2, [(I.1.1.map fun x => (x, 0), 1)], tru
 /-- The machine runs one step per token. -/
 noncomputable def loop (I : LoopInput) : WordOracleComp Unit VState :=
   OracleComp.iterate I.2.length (step I) (init I)
-
-/-! ### Parameters of a formula -/
-
-/-- The variables occurring in the tokens of a formula, with `0` for the other tokens. -/
-def linVars (ψ : QBF ℕ) : List ℕ := ψ.tokens.map Prod.snd
-
-/-- The degree bound of every round: twice the size of the formula. -/
-def degreeBound (ψ : QBF ℕ) : ℕ := 2 * ψ.tokens.length
-
-/-- The modulus must exceed `12 * size ^ 2 * (size + 1)`. -/
-def primeBound (ψ : QBF ℕ) : ℕ := 12 * ψ.tokens.length ^ 2 * (ψ.tokens.length + 1)
-
-/-- The modulus: the greatest prime at most twice the bound. -/
-def modulus (ψ : QBF ℕ) : ℕ := Nat.findGreatest Nat.Prime (2 * primeBound ψ)
-
-/-- The parameters and tokens of the machine for a formula. -/
-def loopInput (ψ : QBF ℕ) : LoopInput :=
-  ((linVars ψ, modulus ψ - 1, degreeBound ψ), ψ.tokens.flatMap (QBF.expandToken (linVars ψ)))
-
-/-- **The verifier**: reject a formula with a free variable, and otherwise run the machine on the
-arithmetization and accept when every check passed. -/
-noncomputable def verifier (ψ : QBF ℕ) : WordOracleComp Unit Bool :=
-  if decide ψ.Closed then (fun st => st.2.2) <$> loop (loopInput ψ) else pure false
-
-/-- By Bertrand's postulate, the modulus is a prime above the bound. -/
-theorem prime_modulus (ψ : QBF ℕ) : (modulus ψ).Prime ∧ primeBound ψ < modulus ψ := by
-  have hB : primeBound ψ ≠ 0 := by
-    have := QBF.tokens_ne_nil ψ
-    have : 0 < ψ.tokens.length := List.length_pos_of_ne_nil this
-    unfold primeBound
-    positivity
-  obtain ⟨q, hq, hlt, hle⟩ := Nat.exists_prime_lt_and_le_two_mul (primeBound ψ) hB
-  have hge : q ≤ modulus ψ := Nat.le_findGreatest hle hq
-  exact ⟨Nat.findGreatest_spec hle hq, hlt.trans_le hge⟩
-
-theorem lt_modulus (ψ : QBF ℕ) : primeBound ψ < modulus ψ := (prime_modulus ψ).2
-
-/-- Trial division decides primality. -/
-theorem decide_prime_eq (q : ℕ) :
-    decide q.Prime = (decide (2 ≤ q) && (List.range q).all fun d => decide (d < 2) ||
-      !decide (q % d = 0)) := by
-  rw [Bool.eq_iff_iff, decide_eq_true_iff, Bool.and_eq_true, decide_eq_true_iff,
-    List.all_eq_true, Nat.prime_def_lt']
-  refine and_congr_right fun _ => ⟨fun h d hd => ?_, fun h m hm hmq hdvd => ?_⟩
-  · rw [List.mem_range] at hd
-    by_cases h2 : d < 2
-    · simp [h2]
-    · simp only [h2, decide_false, Bool.false_or, Bool.not_eq_true', decide_eq_false_iff_not]
-      exact fun hmod => h d (not_lt.1 h2) hd (Nat.dvd_of_mod_eq_zero hmod)
-  · have := h m (List.mem_range.2 hmq)
-    simp only [show ¬m < 2 by omega, decide_false, Bool.false_or, Bool.not_eq_true',
-      decide_eq_false_iff_not] at this
-    exact this (Nat.mod_eq_zero_of_dvd hdvd)
 
 /-! ### The step in polynomial time -/
 
@@ -492,11 +445,11 @@ theorem length_encVState_le_of_mem_support_step (I : LoopInput) (st : VState) {n
   · rw [ProbOracleComp.eq_of_mem_support_pure h]
     omega
 
-/-! ### The verifier in polynomial time -/
+/-! ### The machine in polynomial time -/
 
-section VerifierPolyTime
+section LoopPolyTime
 
-open ComputableTidilyInPolyTime TQBF
+open ComputableTidilyInPolyTime
 
 private lemma init_pt : ComputableTidilyInPolyTime init encLoopInput encVState := by
   unfold init
@@ -525,6 +478,55 @@ theorem isOraclePPTOn_loop : IsOraclePPTOn encLoopInput encVState loop := by
     init_pt isOraclePPTOn_step growth_polyBounded
     fun I st _ h => length_encVState_le_of_mem_support_step I st h
 
+end LoopPolyTime
+
+end Machine
+
+open Machine
+
+/-! ### Parameters of a formula -/
+
+/-- The variable components of the tokens of a formula, in prefix order, with multiplicity and with
+`0` for the tokens without a variable. Every variable of the formula occurs in it. -/
+def linVars (ψ : QBF ℕ) : List ℕ := ψ.tokens.map Prod.snd
+
+/-- The degree bound of every round: twice the size of the formula. -/
+def degreeBound (ψ : QBF ℕ) : ℕ := 2 * ψ.tokens.length
+
+/-- The modulus must exceed `12 * size ^ 2 * (size + 1)`. -/
+def primeBound (ψ : QBF ℕ) : ℕ := 12 * ψ.tokens.length ^ 2 * (ψ.tokens.length + 1)
+
+/-- The modulus: the greatest prime at most twice the bound. -/
+def modulus (ψ : QBF ℕ) : ℕ := Nat.findGreatest Nat.Prime (2 * primeBound ψ)
+
+/-- The parameters and tokens of the machine for a formula. -/
+def loopInput (ψ : QBF ℕ) : LoopInput :=
+  ((linVars ψ, modulus ψ - 1, degreeBound ψ), ψ.tokens.flatMap (QBF.expandToken (linVars ψ)))
+
+/-- **The verifier**: reject a formula with a free variable, and otherwise run the machine on the
+arithmetization and accept when every check passed. -/
+noncomputable def verifier (ψ : QBF ℕ) : WordOracleComp Unit Bool :=
+  if decide ψ.Closed then (fun st => st.2.2) <$> loop (loopInput ψ) else pure false
+
+/-- By Bertrand's postulate, the modulus is a prime above the bound. -/
+theorem prime_modulus (ψ : QBF ℕ) : (modulus ψ).Prime ∧ primeBound ψ < modulus ψ := by
+  have hB : primeBound ψ ≠ 0 := by
+    have := QBF.tokens_ne_nil ψ
+    have : 0 < ψ.tokens.length := List.length_pos_of_ne_nil this
+    unfold primeBound
+    positivity
+  obtain ⟨q, hq, hlt, hle⟩ := Nat.exists_prime_lt_and_le_two_mul (primeBound ψ) hB
+  have hge : q ≤ modulus ψ := Nat.le_findGreatest hle hq
+  exact ⟨Nat.findGreatest_spec hle hq, hlt.trans_le hge⟩
+
+theorem lt_modulus (ψ : QBF ℕ) : primeBound ψ < modulus ψ := (prime_modulus ψ).2
+
+/-! ### The verifier in polynomial time -/
+
+section VerifierPolyTime
+
+open ComputableTidilyInPolyTime TQBF
+
 @[local fun_prop] private lemma isQuantifier_pt :
     ComputableTidilyInPolyTime QBF.Kind.isQuantifier encKind encBool := of_finite _
 
@@ -541,9 +543,7 @@ private lemma linVars_pt : ComputableTidilyInPolyTime linVars encQBF (encList en
 
 private lemma modulus_qbf_pt : ComputableTidilyInPolyTime modulus encQBF encUnary := by
   unfold modulus primeBound
-  refine findGreatest (by fun_prop) ?_
-  simp only [decide_prime_eq]
-  fun_prop
+  exact findGreatest (by fun_prop) (unary_decide_prime.comp (snd _ _))
 
 private lemma loopInput_pt : ComputableTidilyInPolyTime loopInput encQBF encLoopInput := by
   have hexpand : ComputableTidilyInPolyTime (fun p : QBF ℕ × (QBF.Kind × ℕ) =>

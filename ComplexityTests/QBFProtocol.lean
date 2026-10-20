@@ -243,11 +243,11 @@ info: 'Cslib.Complexity.PH_subset_IP' depends on axioms: [propext, Classical.cho
 #print axioms Cslib.Complexity.PH_subset_IP
 
 /--
-info: 'Cslib.Complexity.mem_IP_of_polyTimeReducible' depends on axioms:
+info: 'Cslib.Complexity.PolyTimeReducible.mem_IP' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_IP_of_polyTimeReducible
+#print axioms Cslib.Complexity.PolyTimeReducible.mem_IP
 
 /--
 info: 'Cslib.Complexity.QBFProtocol.isOraclePPTOn_verifier' depends on axioms:

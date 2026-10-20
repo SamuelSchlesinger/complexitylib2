@@ -67,6 +67,7 @@ namespace Cslib.Complexity.QBFProtocol
 
 open Cslib.Logic.PL Polynomial Turing.MultiTapeTM Cslib.Probability
 open Cslib.ProbOracleComp (runWith acceptProbWith)
+open Machine
 open scoped ENNReal
 
 variable {S : Type}
@@ -75,24 +76,24 @@ variable {S : Type}
 
 /-- The verdict of the machine after `n` steps from the state `st`. -/
 noncomputable def verdict (I : LoopInput) (st : VState) (n : ℕ) : WordOracleComp Unit Bool :=
-  (fun st => st.2.2) <$> OracleComp.iterate n (step I) st
+  (fun st => st.2.2) <$> OracleComp.iterate n (Machine.step I) st
 
 theorem verdict_succ (I : LoopInput) (st : VState) (n : ℕ) :
-    verdict I st (n + 1) = step I st >>= fun st' => verdict I st' n := by
+    verdict I st (n + 1) = Machine.step I st >>= fun st' => verdict I st' n := by
   rw [verdict, OracleComp.iterate_succ_bind, map_bind]
   rfl
 
 /-- After a failed check the machine stays put and rejects. -/
 theorem verdict_of_ok_eq_false (I : LoopInput) {st : VState} (h : st.2.2 = false) (n : ℕ) :
     verdict I st n = pure false := by
-  rw [verdict, OracleComp.iterate_eq_pure _ _ _ (by simp [step, h]), map_pure, h]
+  rw [verdict, OracleComp.iterate_eq_pure _ _ _ (by simp [Machine.step, h]), map_pure, h]
 
 /-- Without tokens the machine stays put and accepts when every check passed. -/
 theorem verdict_nil (I : LoopInput) (St : List Claim) (n : ℕ) :
     verdict I ([], St, true) n = pure true := by
-  rw [verdict, OracleComp.iterate_eq_pure _ _ _ (by simp [step]), map_pure]
+  rw [verdict, OracleComp.iterate_eq_pure _ _ _ (by simp [Machine.step]), map_pure]
 
-theorem runWith_verdict_ite (respond : Unit × List Bool → StateT S PMF (List Bool))
+private theorem runWith_verdict_ite (respond : Unit × List Bool → StateT S PMF (List Bool))
     (I : LoopInput) (rest : List (ArithQBF.Kind × ℕ)) (St : List Claim) (b : Bool) (m : ℕ)
     (s : S) :
     runWith respond (verdict I (rest, St, b) m) s =
@@ -137,8 +138,9 @@ private theorem val_natCast_of_lt {n : ℕ} (hn : n < modOf I) : ((n : ZMod (mod
 
 private theorem step_cons (t : ArithQBF.Kind × ℕ) (ts : List (ArithQBF.Kind × ℕ))
     (St : List Claim) :
-    step I (t :: ts, St, true) = stepAt t.1 (I, (t :: ts, St, true)) := by
-  simp only [step, List.isEmpty_cons, Bool.not_false, Bool.and_self, ↓reduceIte, List.headD_cons]
+    Machine.step I (t :: ts, St, true) = stepAt t.1 (I, (t :: ts, St, true)) := by
+  simp only [Machine.step, List.isEmpty_cons, Bool.not_false, Bool.and_self, ↓reduceIte,
+    List.headD_cons]
 
 private theorem runWith_ask (a : StepData) (s : S) :
     runWith respond (ask a) s =
@@ -427,7 +429,7 @@ noncomputable def arithOf : ArithQBF ℕ := ψ.arithmetize (linVars ψ)
 theorem modOf_loopInput : modOf (loopInput ψ) = modulus ψ :=
   Nat.sub_add_cancel (prime_modulus ψ).1.one_lt.le
 
-instance : Fact (modOf (loopInput ψ)).Prime := ⟨modOf_loopInput ψ ▸ (prime_modulus ψ).1⟩
+local instance : Fact (modOf (loopInput ψ)).Prime := ⟨modOf_loopInput ψ ▸ (prime_modulus ψ).1⟩
 
 theorem one_lt_modOf : 1 < modOf (loopInput ψ) :=
   (Fact.out (p := (modOf (loopInput ψ)).Prime)).one_lt
@@ -603,8 +605,8 @@ private theorem decodeTyped_honestWord (e : ArithQBF ℕ) (rest : List (ArithQBF
     exact honestReplyAt_congr _ fun w hw => h₂ w (he w hw)
   have hlen : (honestReplyAt (loopInput ψ).1.2.2 e r).length ≤ (loopInput ψ).1.2.2 + 1 := by
     have := one_le_degree ψ
-    cases e <;> simp [honestReplyAt, length_coeffsBelow]
-    omega
+    cases e <;> simp only [honestReplyAt, length_coeffsBelow, List.length_cons, List.length_nil] <;>
+      omega
   have hdec : decodeTyped (loopInput ψ) (honestWord ψ (queryMessage (loopInput ψ) (e, rest, r))) =
       ((List.range ((loopInput ψ).1.2.2 + 1)).map fun i =>
         ((honestReplyAt (loopInput ψ).1.2.2 e r).map ZMod.val).getD i 0).map Nat.cast := by

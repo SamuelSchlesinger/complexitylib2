@@ -41,7 +41,13 @@ quantifier, so it has the value of `φ` on `0`-`1` points
 (`Cslib.Logic.PL.QBF.eval_arithmetize`). When `xs` contains every variable of `φ`, all degrees are
 at most the size of `φ` (`Cslib.Logic.PL.QBF.degBound_arithmetize_le`) and the sum of the round
 degrees is at most `(2 * |xs| + 1) * size φ ^ 2` (`Cslib.Logic.PL.QBF.roundDegree_arithmetize_le`).
-Shen linearizes only the free variables of each quantified subformula; linearizing a fixed list of
+For a verifier reading the same number of coefficients in every round, the arithmetization has
+at most `(|xs| + 1) * size φ` operators (`Cslib.Logic.PL.QBF.ops_arithmetize_le`), and the body of
+each has degree at most `2 * size φ` in its variable
+(`Cslib.Logic.PL.QBF.maxRoundDegree_arithmetize_le`). Values and restrictions depend only on the
+variables of a formula (`Cslib.Logic.PL.ArithQBF.eval_congr`,
+`Cslib.Logic.PL.ArithQBF.restrict_congr`). Shen linearizes only the free variables of each
+quantified subformula; linearizing a fixed list of
 variables is simpler to compute and costs only polynomially many more rounds.
 
 ## Main definitions
@@ -51,6 +57,9 @@ variables is simpler to compute and costs only polynomially many more rounds.
   restrictions.
 * `Cslib.Logic.PL.ArithQBF.degBound`, `Cslib.Logic.PL.ArithQBF.roundDegree`: syntactic degree
   bounds.
+* `Cslib.Logic.PL.ArithQBF.ops`, `Cslib.Logic.PL.ArithQBF.maxRoundDegree`: the number of
+  operators and the largest degree of their bodies.
+* `Cslib.Logic.PL.ArithQBF.vars`: the variables of an arithmetic formula.
 * `Cslib.Logic.PL.ArithQBF.toQBF`: the formula without its linearizations.
 * `Cslib.Logic.PL.QBF.arithmetize`: the arithmetization with linearization.
 
@@ -63,8 +72,11 @@ variables is simpler to compute and costs only polynomially many more rounds.
 * `Cslib.Logic.PL.QBF.eval_arithmetize`, `Cslib.Logic.PL.QBF.eval_arithmetize_zero`: the
   arithmetization is faithful on `0`-`1` points, and a closed formula has value `1` or `0` at the
   origin.
-* `Cslib.Logic.PL.QBF.degBound_arithmetize_le`, `Cslib.Logic.PL.QBF.roundDegree_arithmetize_le`:
-  polynomial degree bounds.
+* `Cslib.Logic.PL.QBF.degBound_arithmetize_le`, `Cslib.Logic.PL.QBF.roundDegree_arithmetize_le`,
+  `Cslib.Logic.PL.QBF.ops_arithmetize_le`, `Cslib.Logic.PL.QBF.maxRoundDegree_arithmetize_le`:
+  polynomial bounds.
+* `Cslib.Logic.PL.ArithQBF.eval_congr`, `Cslib.Logic.PL.ArithQBF.restrict_congr`: dependence on
+  the variables only.
 
 ## References
 

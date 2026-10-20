@@ -212,11 +212,8 @@ def decodeReply (p D : ℕ) (word : List Bool) : List ℕ :=
   (BitString.listRows (D + 1) (width p) word).map fun row =>
     BitString.boundedBinaryValue (dyadicSize p) row % p
 
-/-- The `w` bits of `a` in binary, most significant first. -/
-def bitsOf (w a : ℕ) : List Bool := List.replicate (w - a.bits.length) false ++ a.bits.reverse
-
 /-- The reply of the honest prover for a list of residues: their bits, row after row. -/
-def encodeReply (p : ℕ) (l : List ℕ) : List Bool := l.flatMap (bitsOf (width p))
+def encodeReply (p : ℕ) (l : List ℕ) : List Bool := l.flatMap (BitString.binaryWord (width p))
 
 theorem length_decodeReply (p D : ℕ) (word : List Bool) :
     (decodeReply p D word).length = D + 1 := by
@@ -227,28 +224,19 @@ theorem lt_of_mem_decodeReply [NeZero p] {D : ℕ} {word : List Bool} {a : ℕ}
   obtain ⟨row, -, rfl⟩ := List.mem_map.1 ha
   exact Nat.mod_lt _ (NeZero.pos p)
 
-theorem length_bitsOf {w a : ℕ} (ha : a < 2 ^ w) : (bitsOf w a).length = w := by
-  have : a.bits.length ≤ w := by
-    rw [Nat.size_eq_bits_len]
-    exact Nat.size_le.2 ha
-  simp only [bitsOf, List.length_append, List.length_replicate, List.length_reverse]
-  omega
-
-theorem binaryValue_bitsOf (w a : ℕ) : BitString.binaryValue (bitsOf w a) = a := by
-  rw [bitsOf, BitString.binaryValue_replicate_false_append, BitString.binaryValue_reverse_bits]
-
 theorem lt_two_pow_width {a : ℕ} (hp : a < p) : a < 2 ^ width p :=
   hp.trans (Nat.lt_pow_succ_log_self (by norm_num) p)
 
 /-- The rows of the honest encoding of `l` are the bits of its elements. -/
 private theorem listRow_encodeReply {l : List ℕ} (hl : ∀ a ∈ l, a < p) (i : ℕ) :
     BitString.listRow (width p) i (encodeReply p l) =
-      if h : i < l.length then bitsOf (width p) l[i] else List.replicate (width p) false := by
+      if h : i < l.length then BitString.binaryWord (width p) l[i]
+      else List.replicate (width p) false := by
   induction l generalizing i with
   | nil =>
     simp [BitString.listRow, encodeReply]
   | cons a l ih =>
-    have ha := length_bitsOf (lt_two_pow_width (hl a List.mem_cons_self))
+    have ha := BitString.length_binaryWord (lt_two_pow_width (hl a List.mem_cons_self))
     have ih := ih (fun b hb => hl b (List.mem_cons_of_mem a hb))
     cases i with
     | zero =>
@@ -270,7 +258,7 @@ theorem decodeReply_encodeReply {D : ℕ} {l : List ℕ} (hl : ∀ a ∈ l, a < 
   have hlength : (encodeReply p l).length ≤ replyLimit p D := by
     have : (encodeReply p l).length = l.length * width p := by
       simp only [encodeReply, List.length_flatMap]
-      rw [List.map_congr_left fun a ha => length_bitsOf (lt_two_pow_width (hl a ha)),
+      rw [List.map_congr_left fun a ha => BitString.length_binaryWord (lt_two_pow_width (hl a ha)),
         List.map_const', List.sum_replicate, smul_eq_mul]
     rw [this, replyLimit]
     exact Nat.mul_le_mul_right _ hlen
@@ -278,8 +266,8 @@ theorem decodeReply_encodeReply {D : ℕ} {l : List ℕ} (hl : ∀ a ∈ l, a < 
   refine List.map_congr_left fun i _ => ?_
   rw [Function.comp_apply, listRow_encodeReply hl]
   split_ifs with hi
-  · rw [BitString.boundedBinaryValue_eq, binaryValue_bitsOf, Nat.min_eq_right, Nat.mod_eq_of_lt,
-      List.getD_eq_getElem _ _ hi]
+  · rw [BitString.boundedBinaryValue_eq, BitString.binaryValue_binaryWord, Nat.min_eq_right,
+      Nat.mod_eq_of_lt, List.getD_eq_getElem _ _ hi]
     · exact hl _ (List.getElem_mem hi)
     · exact (hl _ (List.getElem_mem hi)).le.trans (lt_dyadicSize p).le
   · rw [BitString.boundedBinaryValue_eq, List.getD_eq_default _ _ (not_lt.1 hi)]

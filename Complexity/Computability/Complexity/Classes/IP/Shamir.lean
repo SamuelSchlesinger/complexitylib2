@@ -20,7 +20,7 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF
 Every problem in `PSPACE` reduces to `TQBF` in polynomial time
 (`Cslib.Complexity.TQBF_pspaceHard`), `TQBF` has an interactive proof
 (`Cslib.Complexity.TQBF_mem_IP`), and `IP` is closed under polynomial-time reductions
-(`Cslib.Complexity.mem_IP_of_polyTimeReducible`), so `PSPACE ⊆ IP`. With `IP ⊆ PSPACE`
+(`Cslib.Complexity.PolyTimeReducible.mem_IP`), so `PSPACE ⊆ IP`. With `IP ⊆ PSPACE`
 (`Cslib.Complexity.IP_subset_PSPACE`) this is the theorem of Shamir [Shamir][Shamir1992], with the
 simplification of Shen [Shen][Shen1992], following Lund, Fortnow, Karloff and Nisan
 [LundFortnowKarloffNisan1992]; see [Arora and Barak, Section 8.3][AroraBarak09]. Every class of
@@ -54,7 +54,7 @@ variable {α : Type} (enc : α ↪ List Bool)
 /-- **`PSPACE ⊆ IP`** [Shamir][Shamir1992]: every problem in `PSPACE` reduces to `TQBF`, which has
 an interactive proof. -/
 theorem PSPACE_subset_IP : PSPACE enc ⊆ IP enc :=
-  fun A hA => mem_IP_of_polyTimeReducible (TQBF_pspaceHard enc A hA) TQBF_mem_IP
+  fun A hA => (TQBF_pspaceHard enc A hA).mem_IP TQBF_mem_IP
 
 /-- **`IP = PSPACE`** [Lund, Fortnow, Karloff and Nisan][LundFortnowKarloffNisan1992],
 [Shamir][Shamir1992], [Shen][Shen1992]. -/
