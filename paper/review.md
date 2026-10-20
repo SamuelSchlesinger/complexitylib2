@@ -845,3 +845,26 @@ approval or a machine-checked equivalence between prose and Lean.
 
 The PDF built successfully without undefined references or overflow warnings; the changed page
 was rendered and visually checked. The index now contains 113 entries.
+
+## Coverage batch 16: Circuit Value P-completeness (2026-10-20)
+
+Integrated `dcbc89d8316f3f53f4a77bdb188061d8618a0716` in merge `7a6434e3`.
+The replacement Circuit Value entry states logspace many-one completeness, encoded-instance
+correctness, the logarithmic work-space model, the polynomial tableau clock and exact accepting
+output. The projection-infrastructure entry now correctly leaves first-order-projection
+completeness outstanding. The index still contains 113 entries.
+
+Independent Claude correctness/API reviews approved `f42fb5cb` after the original milestone.
+The implementation worker addressed the remaining nits at `dcbc89d8`: reused the canonical
+`doubled` encoding, shared arithmetic and list/evaluation API, reduced writer exposure, and
+clarified vendored provenance. Independent Codex correctness/API and paper review of
+`f42fb5cb..dcbc89d8` approved with no findings, verifying all eight pinned links and unchanged
+main-public interfaces. Samuel authorized Codex review and merge on 2026-10-20.
+
+All six integration gates passed on `7a6434e32ef22a01e990f0d776a858a755257618`.
+AI assistance: Claude for earlier development/reviews, Codex for cleanup, final review and index.
+Mathematical credit remains with Ladner and the cited sources. These are AI reviews, not human
+editorial approval or a machine-checked equivalence between prose and Lean.
+
+The PDF built without undefined references or overflow warnings; the changed page was rendered
+and visually checked.

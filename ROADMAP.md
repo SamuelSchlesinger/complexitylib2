@@ -187,15 +187,18 @@ of the handover. The work below remains available for subsequent, independently 
      access, output representation, malformed inputs and the empty structure; the semantic APIs
      alone do not provide this resource bound.
 
-   - [ ] **Circuit Value completeness.** Membership in `P` is already
-     [proved](Complexity/Computability/Complexity/Problems/CircuitValue.lean). Prove `P`-hardness
-     under the selected FO reduction via `REACHa → MCVP → CVP`, following
+   - [x] **Circuit Value logspace completeness.** [Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean)
+     under logarithmic-space many-one reductions, via a machine-certified tableau writer.
+     The theorem covers every injective instance encoding and implies membership in L exactly
+     when P equals L for every encoding. Work space excludes read-only input and write-only
+     output, and correctness is required on encoded instances.
+
+   - [ ] **Circuit Value completeness under first-order reductions.** Prove P-hardness under
+     the standard ordered reduction via `REACHa → MCVP → CVP`, following
      [Immerman, Chapter 3, Theorem 3.26 and Exercise 3.28](https://people.cs.umass.edu/~immerman/book/ch3.pdf).
      Supply the alternating-logspace simulation of polynomial-time machines and the translation
-     from relational circuits to `encCircuitValue`. Combine the FO-to-machine bridge above with
-     `CircuitValue.mem_P` to obtain standard logarithmic-space many-one `P`-completeness.
-     Neither the reduction chain nor that bridge follows from having `FO.Reduces`;
-     polynomial-time reductions alone do not establish the desired completeness theorem.
+     from relational circuits to `encCircuitValue`. The logspace tableau theorem above does not
+     supply this stronger reduction or the ordered relational-to-machine encoding bridge.
 
    - [ ] **Uniform circuit families.** The current
      [NC/AC/TC hierarchies](Complexity/Computability/Circuit/Boolean/DepthClasses.lean) are
@@ -400,7 +403,7 @@ space bounds. Further class-level work needs resource certificates for the actua
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);
 * alternating time/space classes and bounded-alternation characterizations of `PH`, beyond the
   proved [AP = PSPACE](Complexity/Computability/Complexity/Classes/Alternation/Savitch.lean);
-* the logarithmic-space FO encoding bridge and Circuit Value completeness in the
+* the ordered logarithmic-space FO encoding bridge and first-order Circuit Value completeness in the
   [first continuing priority](#continuing-priorities), together with uniform circuit-family and
   counting-machine characterizations;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
