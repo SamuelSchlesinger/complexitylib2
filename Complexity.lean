@@ -860,6 +860,8 @@ public import Complexity.Computability.TreeEval.Reader.Tuple
 public import Complexity.Computability.TreeEval.Space
 public import Complexity.Computability.USTCON.Reader.Correct
 public import Complexity.Computability.USTCON.Reader.Defs
+public import Complexity.Computability.USTCON.Reader.Encode
+public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation

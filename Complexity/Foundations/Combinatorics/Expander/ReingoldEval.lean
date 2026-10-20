@@ -216,6 +216,26 @@ theorem iterate_reingoldEvalStep_mapVertex {V W : Type*} (φ : V → W) {base : 
     rw [Function.iterate_succ_apply, Function.iterate_succ_apply,
       reingoldEvalStep_mapVertex H e φ h, ih]
 
+/-- A step of the evaluation keeps the total number of labels below and in the frames. -/
+theorem length_lower_add_length_frames_reingoldEvalStep {V : Type*} (base : V × B → V × B)
+    (s : ReingoldEvalState V B) :
+    (reingoldEvalStep H e base s).lower.length + (reingoldEvalStep H e base s).frames.length =
+      s.lower.length + s.frames.length := by
+  obtain ⟨v, _ | ⟨b, l⟩, _ | ⟨⟨pc, a⟩, rest⟩⟩ := s
+  all_goals try rfl
+  cases pc <;> by_cases hl : l = [] <;> simp [reingoldEvalStep, hl] <;> omega
+
+/-- A step of the evaluation keeps a property of the vertex that the steps of the original graph
+keep. -/
+theorem reingoldEvalStep_vertex {V : Type*} {base : V × B → V × B} {P : V → Prop}
+    (hP : ∀ v b, P v → P (base (v, b)).1) {s : ReingoldEvalState V B} (hs : P s.vertex) :
+    P (reingoldEvalStep H e base s).vertex := by
+  obtain ⟨v, _ | ⟨b, l⟩, _ | ⟨⟨pc, a⟩, rest⟩⟩ := s
+  all_goals try exact hs
+  cases pc <;> by_cases hl : l = [] <;>
+    simp only [reingoldEvalStep, hl, ite_true, ite_false] <;>
+    first | exact hs | exact hP _ _ hs
+
 section Correct
 
 variable {V : Type u} (G : RotationMap V B)
