@@ -11,9 +11,9 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
 public import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
 public import Mathlib.Data.FinEnum
-public import Mathlib.Data.Nat.Choose.Factorization
-public import Mathlib.Data.Nat.GCD.BigOperators
 public import Mathlib.NumberTheory.Chebyshev
+import Mathlib.Data.Nat.Choose.Factorization
+import Mathlib.Data.Nat.GCD.BigOperators
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -41,10 +41,10 @@ advances `b` by `1` modulo `ℓ r` when `b < ℓ r` and fixes every other state.
   the resulting permutation is bijective, has order at least `2 ^ ((m + g) * c)` where `c` is the
   number of active classes, and has a power below its order requiring more than `q` gates whenever
   the ordered-syntax exponent for `q` gates is below `(m + g) * c`.
-* `lcmBelow` and Chebyshev bounds (`two_pow_chebyshevPsi`, `four_pow_ge_two_mul_lcmBelow`,
-  `lcmBelow_lt_four_pow`, `prod_primes_le_lcmBelow`, `prod_primes_lt_four_pow`), together with the
-  bundled `PrimeCycleData` interface (`PrimeCycleData.step_circuit`,
-  `PrimeCycleData.power_circuit`, `PrimeCycleData.exists_hard_power`).
+* `lcmBelow` and elementary upper bounds (`lcmBelow_add_dvd`, `four_pow_ge_two_mul_lcmBelow`,
+  `lcmBelow_lt_four_pow`), together with the bundled `PrimeCycleData` interface
+  (`PrimeCycleData.step_circuit`, `PrimeCycleData.power_circuit`,
+  `PrimeCycleData.exists_hard_power`).
 
 ## Main definitions
 
@@ -84,13 +84,7 @@ namespace Cslib.Circuits.Boolean.Iteration
 
 open scoped BigOperators
 
-/-! ### Chebyshev functions and least common multiples up to `n` -/
-
-/-- The second Chebyshev function `ψ(n) = ∑_{m ≤ n} Λ(m)` on natural arguments. -/
-noncomputable def chebyshevPsi (n : ℕ) : ℝ := Chebyshev.psi n
-
-/-- The first Chebyshev function `θ(n) = ∑_{p ≤ n} log p` on natural arguments. -/
-noncomputable def chebyshevTheta (n : ℕ) : ℝ := Chebyshev.theta n
+/-! ### Least common multiples up to `n` -/
 
 /-- The least common multiple `lcm(1, …, n)`. -/
 def lcmBelow (n : ℕ) : ℕ := Nat.lcmUpto n
@@ -100,22 +94,6 @@ theorem lcmBelow_pos (n : ℕ) : 0 < lcmBelow n := Nat.lcmUpto_pos n
 theorem lcmBelow_eq_prod_prime_powers (n : ℕ) :
     lcmBelow n = ∏ p ∈ Nat.primesLE n, p ^ p.log n :=
   Nat.lcmUpto_eq_prod_pow_log n
-
-theorem two_pow_chebyshevPsi (n : ℕ) :
-    chebyshevPsi n = Real.log (lcmBelow n) :=
-  Chebyshev.psi_eq_log_lcmUpto n
-
-theorem chebyshevTheta_le_chebyshevPsi (n : ℕ) :
-    chebyshevTheta n ≤ chebyshevPsi n :=
-  Chebyshev.theta_le_psi n
-
-theorem prod_primes_le_lcmBelow (n : ℕ) :
-    primorial n ≤ lcmBelow n :=
-  Nat.le_of_dvd (lcmBelow_pos n) (Nat.primorial_dvd_lcmUpto n)
-
-theorem prod_primes_lt_four_pow (n : ℕ) (hn : n ≠ 0) :
-    primorial n < 4 ^ n :=
-  primorial_lt_four_pow n hn
 
 /-- For `n ≤ m`, `lcmBelow (m + n)` divides `lcmBelow m * (m + n).choose m`. Every prime power
 `p ^ L ≤ m + n` exceeding `m` satisfies `m < p ^ L ≤ m + n`, which forces a base-`p` carry at
@@ -725,20 +703,20 @@ theorem power_circuit (T : ℕ) (cLen cRem : Circuit signature m K)
     simpa only [r, getLsbD_word] using
       (show (fun x => cRem.eval interpretation (init x) i) ∈
         wires (fun x => cRem.eval interpretation (init x)) from ⟨i, rfl⟩)
-  have hs := ModulusCounter.synthesis_addResidue s a b r ha hb hr
+  have hs := synthesis_addResidue s a b r ha hb hr
   have hcircLen := Synthesis.circuit (I := interpretation) (s := inputs (m + K)) cLen
     (fun i x => init x i) (fun i => ⟨Fin.castAdd K i, rfl⟩)
   have hcircRem := Synthesis.circuit (I := interpretation) (s := inputs (m + K)) cRem
     (fun i x => init x i) (fun i => ⟨Fin.castAdd K i, rfl⟩)
   have htotal : Synthesis interpretation (inputs (m + K))
-      (s ∪ wordWires (fun x => ModulusCounter.addResidue (a x) (b x) (r x)))
+      (s ∪ wordWires (fun x => addResidue (a x) (b x) (r x)))
       (cLen.size + cRem.size + 100 * (K + 1)) := by
     simpa only [s, wires, Set.union_assoc, Nat.zero_add] using
       (Synthesis.of_subset (I := interpretation)
         (s := inputs (m + K)) (t := inputs (m + K)) Set.Subset.rfl).union
         ((hcircLen.union hcircRem).comp hs)
   have hspec (x : BitString (m + K)) :
-      ModulusCounter.addResidue (a x) (b x) (r x) =
+      addResidue (a x) (b x) (r x) =
         BitVec.ofNat K
           (ModulusCounter.advance (D.length (PrimeCycles.classWord x)) (b x).toNat T) := by
     have ha_eq : a x = BitVec.ofNat K (D.length (PrimeCycles.classWord x)) := by
@@ -762,7 +740,7 @@ theorem power_circuit (T : ℕ) (cLen cRem : Circuit signature m K)
     simp only [hpos, ↓reduceIte, BitVec.toNat_ofNat]
     exact Nat.mod_eq_of_lt ((Nat.mod_lt T hpos).trans (D.length_lt _))
   have hwires : wires (D.step^[T]) ⊆
-      s ∪ wordWires (fun x => ModulusCounter.addResidue (a x) (b x) (r x)) := by
+      s ∪ wordWires (fun x => addResidue (a x) (b x) (r x)) := by
     rw [step, PrimeCycles.iterate_step D.length D.length_lt]
     rintro _ ⟨bit, rfl⟩
     induction bit using Fin.addCases with

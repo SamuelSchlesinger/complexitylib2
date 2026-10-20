@@ -297,11 +297,11 @@ info: 'Cslib.Circuits.Boolean.Iteration.variable_time_counter_iff_remainder' dep
 #print axioms variable_time_counter_iff_remainder
 
 /--
-info: 'Cslib.Circuits.Boolean.Iteration.counter_power_lower_bound_of_exp_length' depends on axioms:
+info: 'Cslib.Circuits.Boolean.Iteration.ModulusCounter.hard_power_exponent_capacity' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms counter_power_lower_bound_of_exp_length
+#print axioms ModulusCounter.hard_power_exponent_capacity
 
 /--
 info: 'Cslib.Circuits.Boolean.Iteration.lcmBelow_lt_four_pow' depends on axioms:

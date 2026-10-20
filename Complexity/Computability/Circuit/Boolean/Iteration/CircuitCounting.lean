@@ -160,8 +160,6 @@ theorem boolean_lineCount_le (w : ℕ) :
     _ ≤ ∑ _ : Op, (w + 1) ^ 2 := Finset.sum_le_sum fun op _ => h op
     _ = _ := by simp
 
-alias lineCount_le := boolean_lineCount_le
-
 /-- Constants, arbitrary fanout, and all designated outputs are counted in the De Morgan syntax
 budget. -/
 theorem boolean_orderedBudget_le (n m q : ℕ) :
@@ -191,8 +189,6 @@ theorem boolean_orderedBudget_le (n m q : ℕ) :
     _ ≤ ∑ _g ∈ Finset.range (q + 1), 5 ^ q * W ^ (2 * q + m) := Finset.sum_le_sum ht
     _ = _ := by simp [W]; ring
 
-alias orderedBudget_le := boolean_orderedBudget_le
-
 /-- Binary logarithmic bound on the De Morgan syntax budget when the wire budget is at most
 `2 ^ h`. -/
 theorem boolean_orderedBudget_le_pow (n m q h : ℕ) (hw : n + q + 1 ≤ 2 ^ h) :
@@ -207,22 +203,6 @@ theorem boolean_orderedBudget_le_pow (n m q h : ℕ) (hw : n + q + 1 ≤ 2 ^ h) 
       simp only [← pow_mul, ← pow_add]
       congr 1
       ring
-
-alias orderedBudget_le_pow := boolean_orderedBudget_le_pow
-
-/-- At most `signature.orderedBudget n m q` Boolean vector functions are computable with at most
-`q` gates. -/
-theorem functionsAtMost_card_le (n m q : ℕ) :
-    (Circuit.functionsAtMost interpretation n m q).card ≤ signature.orderedBudget n m q :=
-  Circuit.card_functionsAtMost_le interpretation
-
-/-- Any finite family of Boolean vector functions larger than `signature.orderedBudget n m q`
-contains a function requiring more than `q` gates. -/
-theorem exists_hard_in_family {n m q : ℕ} (family : Finset (BitString n → BitString m))
-    (large : signature.orderedBudget n m q < family.card) :
-    ∃ target ∈ family,
-      ∀ c : Circuit signature n m, c.size ≤ q → ¬c.Computes interpretation target :=
-  Circuit.exists_hard_in_family interpretation family large
 
 /-- For `k ≥ 64`, `128 * (k + 2) ^ 2 ≤ 2 ^ k`. -/
 theorem square_le_exponential (k : ℕ) (hk : 64 ≤ k) :

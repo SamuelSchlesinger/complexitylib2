@@ -11,8 +11,9 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
 public import Complexity.Computability.Circuit.Boolean.Iteration.InputTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Remainder
-public import Mathlib.Data.Nat.ModEq
+public import Complexity.Computability.Circuit.Boolean.Iteration.ResidueAdd
 public import Mathlib.NumberTheory.Chebyshev
+import Mathlib.Data.Nat.ModEq
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -33,8 +34,7 @@ ordered-syntax circuit count from `CircuitCounting.lean`, for every `k ≥ 64`:
   2 ^ k / (1024 * (k + 1))` gates (`exists_hard_counter_power`, `counter_power_lower_bound`),
   matching the `2 ^ Θ(n)` fixed-power upper bound up to the constant factor in the exponent;
 * at most a `2 ^ (-2 ^ (k - 1))` fraction of exponents below `ModulusCounter.period k` have
-  circuits of size at most `lowerBudget k` (`almost_every_counter_power`,
-  `almost_all_counter_powers_hard`);
+  circuits of size at most `lowerBudget k` (`almost_all_counter_powers_hard`);
 * computing `ModulusCounter.power T` is equivalent up to `O(k)` gates to computing the fixed-integer
   remainder `x ↦ T % x` on `k`-bit moduli (`ModulusCounter.remainder_of_power`,
   `ModulusCounter.power_of_remainder`, `counter_powers_compute_remainders`), and variable-time
@@ -72,8 +72,8 @@ ordered-syntax circuit count from `CircuitCounting.lean`, for every `k ≥ 64`:
 * `Cslib.Circuits.Boolean.Iteration.counter_powers_compute_remainders`,
   `Cslib.Circuits.Boolean.Iteration.variable_time_counter_iff_remainder`: equivalence between
   modular-counter powers and integer remainders.
-* `Cslib.Circuits.Boolean.Iteration.counter_power_lower_bound_of_exp_length`: hard powers require
-  exponentially many exponent bits.
+* `Cslib.Circuits.Boolean.Iteration.ModulusCounter.hard_power_exponent_capacity`: hard powers
+  require exponentially many exponent bits.
 
 ## References
 
@@ -338,86 +338,17 @@ theorem remainder_word (T : ℕ) (x : BitString k) :
     word (remainder T x) =
       BitVec.ofNat k (if (word x).toNat = 0 then 0 else T % (word x).toNat) := word_getLsbD _
 
-/-- Add a precomputed residue `r = T % a` to `b` modulo `a` using `(k + 1)`-bit intermediate words
-to avoid overflow. -/
-def addResidue (a b r : BitVec k) : BitVec k :=
-  let sum := b.setWidth (k + 1) + r.setWidth (k + 1)
-  if b.ult a then
-    (if sum.ult (a.setWidth (k + 1)) then sum else sum - a.setWidth (k + 1)).setWidth k
-  else b
-
 theorem addResidue_spec (a b r : BitVec k) (T : ℕ)
     (hr : 0 < a.toNat → r.toNat = T % a.toNat) :
     addResidue a b r = BitVec.ofNat k (advance a.toNat b.toNat T) := by
-  have hwide (v : BitVec k) : (v.setWidth (k + 1)).toNat = v.toNat := by
-    rw [BitVec.toNat_setWidth, Nat.mod_eq_of_lt
-      (v.isLt.trans_le (Nat.pow_le_pow_right (by decide) (Nat.le_succ k)))]
   by_cases h : b.toNat < a.toNat
   · have ha : 0 < a.toNat := by omega
     have hrlt : r.toNat < a.toNat := by rw [hr ha]; exact Nat.mod_lt _ ha
-    have hfit : b.toNat + r.toNat < 2 ^ (k + 1) := by
-      rw [pow_succ]
-      have := a.isLt
-      omega
-    have hsum : (b.setWidth (k + 1) + r.setWidth (k + 1)).toNat = b.toNat + r.toNat := by
-      rw [BitVec.toNat_add, hwide, hwide, Nat.mod_eq_of_lt hfit]
-    have hmod : (b.toNat + r.toNat) % a.toNat = (b.toNat + T) % a.toNat := by
-      rw [hr ha, Nat.add_mod_mod]
-    unfold addResidue
-    simp only [BitVec.ult, h, decide_true, ite_true, hsum, hwide, decide_eq_true_eq]
-    split_ifs with hs
-    · apply BitVec.eq_of_toNat_eq
-      rw [BitVec.toNat_setWidth, hsum]
-      simp only [advance, ha, h, and_self, ↓reduceIte, BitVec.toNat_ofNat, ← hmod,
-        Nat.mod_eq_of_lt hs]
-    · have hle : a.setWidth (k + 1) ≤ b.setWidth (k + 1) + r.setWidth (k + 1) := by
-        change (a.setWidth (k + 1)).toNat ≤ _
-        rw [hwide, hsum]
-        omega
-      have hsmall : b.toNat + r.toNat - a.toNat < a.toNat := by omega
-      apply BitVec.eq_of_toNat_eq
-      rw [BitVec.toNat_setWidth, BitVec.toNat_sub_of_le hle, hsum, hwide]
-      simp only [advance, ha, h, and_self, ↓reduceIte, BitVec.toNat_ofNat, ← hmod,
-        Nat.mod_eq_sub_mod (show a.toNat ≤ b.toNat + r.toNat by omega), Nat.mod_eq_of_lt hsmall]
+    apply BitVec.eq_of_toNat_eq
+    rw [toNat_addResidue a b r h hrlt, hr ha]
+    simp only [advance, ha, h, and_self, ↓reduceIte, BitVec.toNat_ofNat, Nat.add_mod_mod,
+      Nat.mod_eq_of_lt ((Nat.mod_lt _ ha).trans a.isLt)]
   · simp [addResidue, BitVec.ult, h, advance]
-
-/-- Synthesizing `addResidue` from available words costs at most `100 * (k + 1)` gates. -/
-theorem synthesis_addResidue {n : ℕ} (s : Set (BooleanFunction n)) (a b r : BitString n → BitVec k)
-    (ha : wordWires a ⊆ s) (hb : wordWires b ⊆ s) (hr : wordWires r ⊆ s) :
-    Synthesis interpretation s
-      (wordWires fun x => addResidue (a x) (b x) (r x)) (100 * (k + 1)) := by
-  let s0 := s ∪ {fun _ : BitString n => false}
-  have hz : (fun _ : BitString n => false) ∈ s0 := Or.inr rfl
-  have hw (v : BitString n → BitVec k) (hv : wordWires v ⊆ s) :=
-    wordWires_setWidth_subset (v := k + 1) (s := s0) (fun _ h => Or.inl (hv h)) hz
-  let sum := fun x => (b x).setWidth (k + 1) + (r x).setWidth (k + 1)
-  let aw := fun x => (a x).setWidth (k + 1)
-  have hadd := Synthesis.word_add (s := s0) _ _
-    (fun i => hw b hb ⟨i, rfl⟩) (fun i => hw r hr ⟨i, rfl⟩)
-  let s1 := s0 ∪ wordWires sum
-  have hsum (i : Fin (k + 1)) : (fun x => (sum x).getLsbD i.val) ∈ s1 := Or.inr ⟨i, rfl⟩
-  have haw (i : Fin (k + 1)) : (fun x => (aw x).getLsbD i.val) ∈ s1 :=
-    Or.inl (hw a ha ⟨i, rfl⟩)
-  have hsub := Synthesis.word_sub (s := s1) sum aw hsum haw
-  have hlt := Synthesis.word_ult (s := s1) sum aw hsum haw
-  let s2 := s1 ∪ (wordWires (fun x => sum x - aw x) ∪ {fun x => (sum x).ult (aw x)})
-  let reduced := fun x => if (sum x).ult (aw x) then sum x else sum x - aw x
-  have hred := Synthesis.word_mux (s := s2) sum (fun x => sum x - aw x)
-    (fun x => (sum x).ult (aw x)) (Or.inr (Or.inr rfl))
-    (fun i => Or.inl (hsum i)) (fun i => Or.inr (Or.inl ⟨i, rfl⟩))
-  let s3 := s2 ∪ wordWires reduced
-  have hre := wordWires_setWidth_subset (v := k) (s := s3) (value := reduced)
-    (fun _ h => Or.inr h) (Or.inl (Or.inl (Or.inl hz)))
-  have hactive := Synthesis.word_ult (s := s3) b a
-    (fun i => Or.inl (Or.inl (Or.inl (Or.inl (hb ⟨i, rfl⟩)))))
-    (fun i => Or.inl (Or.inl (Or.inl (Or.inl (ha ⟨i, rfl⟩)))))
-  have hout := Synthesis.word_mux (s := s3 ∪ {fun x => (b x).ult (a x)})
-    (fun x => (reduced x).setWidth k) b (fun x => (b x).ult (a x)) (Or.inr rfl)
-    (fun i => Or.inl (hre ⟨i, rfl⟩))
-    (fun i => Or.inl (Or.inl (Or.inl (Or.inl (Or.inl (hb ⟨i, rfl⟩))))))
-  exact ((Synthesis.const (s := s) false).trans
-    (hadd.trans ((hsub.union hlt).trans (hred.trans (hactive.trans hout))))).mono
-      Set.Subset.rfl Set.Subset.rfl (by omega)
 
 /-- A circuit for `power T` yields a circuit for `remainder T` with at most one extra gate. -/
 theorem remainder_of_power (T : ℕ) (c : Circuit signature (k + k) (k + k))
@@ -608,14 +539,8 @@ end ModulusCounter
 
 variable {k : ℕ}
 
-/-- The `k`-bit modulus word of a `2 k`-bit counter state. -/
-abbrev modulusWord (x : BitString (k + k)) : BitVec k := ModulusCounter.leftWord x
-
-/-- The `k`-bit counter value word of a `2 k`-bit counter state. -/
-abbrev stateWord (x : BitString (k + k)) : BitVec k := ModulusCounter.rightWord x
-
 /-- The modulus as a natural number. -/
-def counterModulus (x : BitString (k + k)) : ℕ := (modulusWord x).toNat
+def counterModulus (x : BitString (k + k)) : ℕ := (ModulusCounter.leftWord x).toNat
 
 /-- Single-step modular counter transition on natural numbers. -/
 def counterStepValue (a b : ℕ) : ℕ := ModulusCounter.advance a b 1
@@ -624,12 +549,12 @@ def counterStepValue (a b : ℕ) : ℕ := ModulusCounter.advance a b 1
 def counterStep (k : ℕ) : BitString (k + k) → BitString (k + k) :=
   ModulusCounter.power (k := k) 1
 
-/-- Next counter word after one step. -/
-abbrev nextCounterWord (a b : BitVec k) : BitVec k := ModulusCounter.stepValue a b
-
-/-- Coordinate bits of `nextCounterWord (modulusWord x) (stateWord x)`. -/
+/-- Coordinate bits of
+`ModulusCounter.stepValue (ModulusCounter.leftWord x) (ModulusCounter.rightWord x)`. -/
 def counterNextBits (x : BitString (k + k)) : BitString k :=
-  fun i => (nextCounterWord (modulusWord x) (stateWord x)).getLsbD i.val
+  fun i =>
+    (ModulusCounter.stepValue (ModulusCounter.leftWord x) (ModulusCounter.rightWord x)).getLsbD
+      i.val
 
 theorem counterModulus_eq_of_eq {x y : BitString (k + k)}
     (h : (fun i => x (Fin.castAdd k i)) = fun i => y (Fin.castAdd k i)) :
@@ -638,7 +563,7 @@ theorem counterModulus_eq_of_eq {x y : BitString (k + k)}
 
 theorem counterStep_preserve_modulus (x : BitString (k + k)) :
     counterModulus (counterStep k x) = counterModulus x := by
-  simp [counterModulus, counterStep, modulusWord, ModulusCounter.power]
+  simp [counterModulus, counterStep, ModulusCounter.power]
 
 theorem counterStepValue_iterate (a b T : ℕ) :
     (counterStepValue a)^[T] b = ModulusCounter.advance a b T := by
@@ -649,39 +574,27 @@ theorem counterStepValue_iterate (a b T : ℕ) :
       Nat.add_comm 1 T]
 
 theorem counterStep_iterate_toNat (T : ℕ) (x : BitString (k + k)) :
-    (stateWord ((counterStep k)^[T] x)).toNat =
-      ModulusCounter.advance (modulusWord x).toNat (stateWord x).toNat T := by
+    (ModulusCounter.rightWord ((counterStep k)^[T] x)).toNat =
+      ModulusCounter.advance
+        (ModulusCounter.leftWord x).toNat (ModulusCounter.rightWord x).toNat T := by
   rw [counterStep, ModulusCounter.iterate_power]
-  simp only [stateWord, modulusWord, ModulusCounter.power, ModulusCounter.rightWord_pack,
-    BitVec.toNat_ofNat]
+  simp only [ModulusCounter.power, ModulusCounter.rightWord_pack, BitVec.toNat_ofNat]
   exact Nat.mod_eq_of_lt (ModulusCounter.advance_lt (BitVec.isLt _) (BitVec.isLt _))
 
-/-- Two functions are distinct on a domain `S` if they disagree on at least one point of `S`. -/
-def DistinctOn {α β : Type*} (S : Set α) (f g : α → β) : Prop :=
-  ∃ x ∈ S, f x ≠ g x
-
 /-- Distinct exponents below `ModulusCounter.period k` produce distinct counter powers. -/
-theorem counter_power_DistinctOn {S T : ℕ} (hS : S < ModulusCounter.period k)
+theorem counter_power_ne {S T : ℕ} (hS : S < ModulusCounter.period k)
     (hT : T < ModulusCounter.period k) (hne : S ≠ T) :
-    DistinctOn Set.univ ((counterStep k)^[S]) ((counterStep k)^[T]) := by
-  classical
-  by_contra h
-  simp only [DistinctOn, Set.mem_univ, true_and, not_exists, not_not] at h
-  have heq : ModulusCounter.power (k := k) S = ModulusCounter.power (k := k) T := by
-    rw [← ModulusCounter.iterate_power S, ← ModulusCounter.iterate_power T]
-    exact funext h
+    (counterStep k)^[S] ≠ (counterStep k)^[T] := by
+  intro h
+  rw [counterStep, ModulusCounter.iterate_power, ModulusCounter.iterate_power] at h
   exact hne (Fin.val_eq_of_eq (ModulusCounter.powers_injective
-    (a₁ := ⟨S, hS⟩) (a₂ := ⟨T, hT⟩) heq))
-
-alias counter_powers_injective := ModulusCounter.powers_injective
+    (a₁ := ⟨S, hS⟩) (a₂ := ⟨T, hT⟩) h))
 
 theorem counter_family_card (k : ℕ) :
     (Finset.univ.image (fun T : Fin (ModulusCounter.period k) =>
       ModulusCounter.power (k := k) T.val)).card = ModulusCounter.period k := by
   rw [Finset.card_image_of_injective _ ModulusCounter.powers_injective, Finset.card_univ,
     Fintype.card_fin]
-
-alias synthesis_nextCounterWord := ModulusCounter.synthesis_stepValue
 
 /-- The single-step modular counter `counterStep k` has a De Morgan circuit of size at most
 `50 * k + 20`. -/
@@ -727,12 +640,10 @@ theorem exists_hard_counter_power (k : ℕ) (hk : 64 ≤ k) :
   by_contra hn
   exact hh out (by omega) hcomp
 
-alias exists_hard_counter_power_below := exists_hard_counter_power
-
 /-- **Matching exponential lower bound.** For every `k ≥ 64`, there is a bijective circuit `c` on
 `2 k` bits of size at most `50 * (k + 1)` with a power `c^[T]` (`T < ModulusCounter.period k`)
 requiring more than `2 ^ k / (1024 * (k + 1))` gates. -/
-theorem matching_lower_bound (k : ℕ) (hk : 64 ≤ k) :
+theorem counter_power_lower_bound (k : ℕ) (hk : 64 ≤ k) :
     ∃ c : Circuit signature (k + k) (k + k),
       c.size ≤ 50 * (k + 1) ∧ Function.Bijective (c.eval interpretation) ∧
       ∃ T < ModulusCounter.period k,
@@ -747,22 +658,16 @@ theorem matching_lower_bound (k : ℕ) (hk : 64 ≤ k) :
   rw [he, ModulusCounter.iterate_power] at hout
   exact hh out hout
 
-alias counter_power_lower_bound := matching_lower_bound
-
 /-- Exponents below `ModulusCounter.period k` whose power has a circuit of size at most `q`. -/
 noncomputable def easyCounterPowers (k q : ℕ) : Finset (Fin (ModulusCounter.period k)) := by
   classical
   exact Finset.univ.filter fun T => ModulusCounter.power (k := k) T.val ∈
     Circuit.functionsAtMost interpretation (k + k) (k + k) q
 
-alias badExponents := easyCounterPowers
-
 /-- Exponents below `ModulusCounter.period k` whose power requires more than `q` gates. -/
 noncomputable def hardCounterPowers (k q : ℕ) : Finset (Fin (ModulusCounter.period k)) := by
   classical
   exact Finset.univ \ easyCounterPowers k q
-
-alias goodExponents := hardCounterPowers
 
 theorem mem_easyCounterPowers (k q : ℕ) (T : Fin (ModulusCounter.period k)) :
     T ∈ easyCounterPowers k q ↔
@@ -786,16 +691,14 @@ theorem easyCounterPowers_card_le (k q : ℕ) :
     _ ≤ _ := (Finset.card_le_card hsub).trans
       (Circuit.card_functionsAtMost_le interpretation)
 
-alias badExponents_card_le := easyCounterPowers_card_le
-
-theorem goodExponents_card_ge (k q : ℕ) :
+theorem hardCounterPowers_card_ge (k q : ℕ) :
     ModulusCounter.period k - signature.orderedBudget (k + k) (k + k) q ≤
-      (goodExponents k q).card := by
-  have hcard : (easyCounterPowers k q).card + (goodExponents k q).card =
+      (hardCounterPowers k q).card := by
+  have hcard : (easyCounterPowers k q).card + (hardCounterPowers k q).card =
       ModulusCounter.period k := by
     classical
     have hsub : easyCounterPowers k q ⊆ Finset.univ := Finset.subset_univ _
-    rw [goodExponents, hardCounterPowers, add_comm, Finset.card_sdiff_add_card_eq_card hsub,
+    rw [hardCounterPowers, add_comm, Finset.card_sdiff_add_card_eq_card hsub,
       Finset.card_univ, Fintype.card_fin]
   have hle := easyCounterPowers_card_le k q
   omega
@@ -821,7 +724,7 @@ theorem lowerBudget_description_margin (k : ℕ) (hk : 64 ≤ k) :
 
 /-- **Almost every counter power is hard.** At most a `2 ^ (-2 ^ (k - 1))` fraction of exponents
 below `ModulusCounter.period k` have circuits of size at most `lowerBudget k`. -/
-theorem almost_every_counter_power (k : ℕ) (hk : 64 ≤ k) :
+theorem almost_all_counter_powers_hard (k : ℕ) (hk : 64 ≤ k) :
     (easyCounterPowers k (lowerBudget k)).card * 2 ^ (2 ^ (k - 1)) ≤
       ModulusCounter.period k := by
   let E := 3 * lowerBudget k + (k + 2) * (2 * lowerBudget k + (k + k) + 1)
@@ -844,19 +747,17 @@ theorem almost_every_counter_power (k : ℕ) (hk : 64 ≤ k) :
       _ ≤ _ := by simpa only [ModulusCounter.period, Nat.mul_comm] using hl
   exact Nat.le_of_mul_le_mul_right hscaled (by positivity)
 
-alias almost_all_counter_powers_hard := almost_every_counter_power
-
 /-- For `k ≥ 64`, more than half of the exponents below `ModulusCounter.period k` lie in
-`goodExponents k (lowerBudget k)`. -/
+`hardCounterPowers k (lowerBudget k)`. -/
 theorem counter_powers_average_complexity (k : ℕ) (hk : 64 ≤ k) :
-    ModulusCounter.period k < 2 * (goodExponents k (lowerBudget k)).card := by
+    ModulusCounter.period k < 2 * (hardCounterPowers k (lowerBudget k)).card := by
   have hcard : (easyCounterPowers k (lowerBudget k)).card +
-      (goodExponents k (lowerBudget k)).card = ModulusCounter.period k := by
+      (hardCounterPowers k (lowerBudget k)).card = ModulusCounter.period k := by
     classical
     have hsub : easyCounterPowers k (lowerBudget k) ⊆ Finset.univ := Finset.subset_univ _
-    rw [goodExponents, hardCounterPowers, add_comm, Finset.card_sdiff_add_card_eq_card hsub,
+    rw [hardCounterPowers, add_comm, Finset.card_sdiff_add_card_eq_card hsub,
       Finset.card_univ, Fintype.card_fin]
-  have halmost := almost_every_counter_power k hk
+  have halmost := almost_all_counter_powers_hard k hk
   have hpow : 2 < 2 ^ (2 ^ (k - 1)) := by
     have hk1 : 1 < 2 ^ (k - 1) := Nat.one_lt_two_pow (by omega)
     exact (show 2 = 2 ^ 1 by rfl) ▸ Nat.pow_lt_pow_right (by decide) hk1
@@ -884,28 +785,24 @@ def counterInput (x : BitString k) : BitString (k + k) :=
 def counterOutput (y : BitString (k + k)) : BitString k :=
   fun i => y (Fin.natAdd k i)
 
-/-- Fixed-integer remainder `x ↦ T % x` on `k`-bit strings (with `0` on modulus `0`). -/
-abbrev counterRemainder (T : ℕ) (x : BitString k) : BitString k :=
-  ModulusCounter.remainder T x
-
 @[simp] theorem counterInput_modulus_toNat (x : BitString k) :
-    (modulusWord (counterInput x)).toNat = (word x).toNat := by
-  simp [counterInput, modulusWord]
+    (ModulusCounter.leftWord (counterInput x)).toNat = (word x).toNat := by
+  simp [counterInput]
 
 @[simp] theorem counterInput_state_toNat (x : BitString k) :
-    (stateWord (counterInput x)).toNat = 0 := by
-  simp [counterInput, stateWord]
+    (ModulusCounter.rightWord (counterInput x)).toNat = 0 := by
+  simp [counterInput]
 
 theorem counterRemainder_spec (T : ℕ) (x : BitString k) :
-    counterOutput ((counterStep k)^[T] (counterInput x)) = counterRemainder T x := by
+    counterOutput ((counterStep k)^[T] (counterInput x)) = ModulusCounter.remainder T x := by
   rw [counterStep, ModulusCounter.iterate_power]
   funext i
   dsimp only [counterOutput, counterInput, ModulusCounter.power]
   rw [ModulusCounter.leftWord_pack, ModulusCounter.rightWord_pack]
   simp only [ModulusCounter.pack, Fin.append_right]
   by_cases hz : (word x).toNat = 0
-  · simp [ModulusCounter.advance, counterRemainder, ModulusCounter.remainder, hz]
-  · simp [ModulusCounter.advance, counterRemainder, ModulusCounter.remainder, hz,
+  · simp [ModulusCounter.advance, ModulusCounter.remainder, hz]
+  · simp [ModulusCounter.advance, ModulusCounter.remainder, hz,
       Nat.pos_of_ne_zero hz]
 
 /-- Computing `ModulusCounter.power T` and computing `ModulusCounter.remainder T` are equivalent up
@@ -1002,7 +899,7 @@ theorem variable_time_counter_iff_remainder (m k : ℕ) :
       rintro _ ⟨i, rfl⟩
       simpa only [r, getLsbD_word] using
         (show (fun x => c.eval interpretation (init x) i) ∈ s from Or.inr ⟨i, rfl⟩)
-    have hs := ModulusCounter.synthesis_addResidue s a b r ha hb hr
+    have hs := synthesis_addResidue s a b r ha hb hr
     have hhi (i : Fin (m + k)) : (fun x => init x i) ∈ inputs ((k + k) + m) := by
       induction i using Fin.addCases with
       | left j =>
@@ -1012,14 +909,14 @@ theorem variable_time_counter_iff_remainder (m k : ℕ) :
     have hcirc := Synthesis.circuit (I := interpretation)
       (s := inputs ((k + k) + m)) c (fun i x => init x i) hhi
     have h : Synthesis interpretation (inputs ((k + k) + m))
-        (s ∪ wordWires (fun x => ModulusCounter.addResidue (a x) (b x) (r x)))
+        (s ∪ wordWires (fun x => addResidue (a x) (b x) (r x)))
         (c.size + 100 * (k + 1)) := by
       simpa only [s, wires, Set.union_assoc, Nat.zero_add] using
         (Synthesis.of_subset (I := interpretation)
           (s := inputs ((k + k) + m)) (t := inputs ((k + k) + m)) Set.Subset.rfl).union
           (hcirc.comp hs)
     have hspec (x : BitString ((k + k) + m)) :
-        ModulusCounter.addResidue (a x) (b x) (r x) =
+        addResidue (a x) (b x) (r x) =
           BitVec.ofNat k (ModulusCounter.advance (a x).toNat (b x).toNat
             (word fun j : Fin m => x (Fin.natAdd (k + k) j)).toNat) := by
       apply ModulusCounter.addResidue_spec
@@ -1035,7 +932,7 @@ theorem variable_time_counter_iff_remainder (m k : ℕ) :
       simp only [Nat.ne_of_gt hpos, ite_false, BitVec.toNat_ofNat,
         Nat.mod_eq_of_lt ((Nat.mod_lt _ hpos).trans (a x).isLt)]
     have hout : wires (inputTimeIterate (counterStep k) m) ⊆
-        s ∪ wordWires (fun x => ModulusCounter.addResidue (a x) (b x) (r x)) := by
+        s ∪ wordWires (fun x => addResidue (a x) (b x) (r x)) := by
       rintro _ ⟨i, rfl⟩
       induction i using Fin.addCases with
       | left i =>
@@ -1078,9 +975,5 @@ theorem exists_hard_counter_power_up_to {M q : ℕ} (hM : M ≤ ModulusCounter.p
   refine ⟨T.val, T.isLt, fun out hcomp => ?_⟩
   by_contra hn
   exact hh out (by omega) hcomp
-
-alias counter_power_lower_bound_of_exp_length := ModulusCounter.hard_power_exponent_capacity
-
-alias subexponential_horizon_barrier := ModulusCounter.short_power_circuit
 
 end Cslib.Circuits.Boolean.Iteration
