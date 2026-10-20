@@ -50,9 +50,9 @@ classes remain a separate development; definability of the target classes is pro
   copies.
 * `Cslib.Logic.FO.sizedGraph.mem_IndependentSet_of_subsingleton`: structures with at most one
   element are instances with a solution.
-* `Cslib.Logic.FO.cnf.mem_independentSet_iff_satisfiable`: on a CNF structure with at least two elements,
-  the occurrence graph has an independent set of the target size exactly when the structure is
-  satisfiable.
+* `Cslib.Logic.FO.cnf.mem_independentSet_iff_satisfiable`: on a CNF structure with at least two
+  elements, the occurrence graph has an independent set of the target size exactly when the
+  structure is satisfiable.
 * `Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet`: SAT reduces to independent set on
   nontrivial structures.
 
