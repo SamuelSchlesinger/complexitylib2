@@ -275,3 +275,30 @@ count.\citep{CavalarOliveira2025}
 \declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph.lean}{98}{Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_literals}
 \declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean}{212}{Cslib.Circuits.Fusion.Graph.inequality_complexities}
 \end{result}
+
+\begin{result}
+\subsection{Linear cover complexity of random bipartite graphs}
+Fix $n$ supplied subsets of a finite carrier. The number of targets admitting
+an unrestricted semifilter cover with at most $t$ pairs is at most
+$2^{(2t+1)(n+t+1)}$. Each cover is encoded by the inclusion flags used in
+quadratic closure propagation, and decoding is proved to recover its target;
+no incompressibility or encoding hypothesis remains.
+For a uniform labelled graph $G\subseteq[N]\times[N]$, take all $2N$ rows and
+columns as supplied sets and write $\rho(G)$ for unrestricted cover complexity.
+Every graph has $\rho(G)\le N$, and
+\[
+\Pr[\rho(G)\le t]\le\frac{2^{(2t+1)(2N+t+1)}}{2^{N^2}}.
+\]
+In particular, for every $N\ge16$,
+\[
+\Pr[\lfloor N/16\rfloor<\rho(G)\le N]\ge1-2^{-N}.
+\]
+The distribution is uniform over all $2^{N^2}$ bipartite graphs, including
+empty and complete graphs. This is a finite quantitative form of the
+linear high-probability bound of Cavalar--Oliveira, not an explicit hard-graph
+construction.\citep{CavalarOliveira2025}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Encoding.lean}{139}{Cslib.Circuits.Fusion.card_small_covers_le}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Graph/Random.lean}{91}{Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_card}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Graph/Random.lean}{102}{Cslib.Circuits.Fusion.Graph.smallCoverProbability_le}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Graph/Random.lean}{139}{Cslib.Circuits.Fusion.Graph.random_cover_complexity}
+\end{result}
