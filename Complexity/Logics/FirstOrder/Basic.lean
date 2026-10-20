@@ -44,6 +44,8 @@ This file provides reusable first-order formula and sentence combinators over `F
 * `Cslib.Logic.FO.realize_cardGe_iff_le_card`, `Cslib.Logic.FO.realize_cardEqSentence`:
   characterizations of `Sentence.cardGe` and `cardEqSentence` via `Nat.card` on finite structures.
 * `Cslib.Logic.FO.realize_truthTableSentence`: satisfaction of `truthTableSentence`.
+* `Cslib.Logic.FO.relMap_pair_equiv`, `Cslib.Logic.FO.relMap_single_equiv`: isomorphisms preserve
+  binary and unary relations.
 
 ## References
 
@@ -130,6 +132,26 @@ theorem realize_rel₂ {M : Type w} [L.Structure M] {V : Type*} (v : V → M)
     (r : L.Relations 2) (u w : V) :
     (rel₂ r u w).Realize v ↔ RelMap r ![v u, v w] := by
   simp [rel₂]
+
+/-- The formula `⊤` holds, as a term. -/
+theorem formula_realize_top {M : Type w} [L.Structure M] {V : Type*} {v : V → M} :
+    (⊤ : L.Formula V).Realize v :=
+  Formula.realize_top.2 trivial
+
+/-- An isomorphism preserves a binary relation on pairs. -/
+theorem relMap_pair_equiv {M N : Type*} [L.Structure M] [L.Structure N] (e : M ≃[L] N)
+    (R : L.Relations 2) (a b : M) : RelMap R ![e a, e b] ↔ RelMap R ![a, b] := by
+  rw [← e.map_rel R ![a, b] ]
+  refine iff_of_eq (congrArg _ (funext fun i => ?_))
+  refine Fin.cases rfl (fun j => ?_) i
+  exact Fin.cases rfl (fun k => k.elim0) j
+
+/-- An isomorphism preserves a unary relation. -/
+theorem relMap_single_equiv {M N : Type*} [L.Structure M] [L.Structure N] (e : M ≃[L] N)
+    (R : L.Relations 1) (a : M) : RelMap R ![e a] ↔ RelMap R ![a] := by
+  rw [← e.map_rel R ![a] ]
+  refine iff_of_eq (congrArg _ (funext fun i => ?_))
+  exact Fin.cases rfl (fun k => k.elim0) i
 
 /-! ### Order combinators on `Fin B` -/
 

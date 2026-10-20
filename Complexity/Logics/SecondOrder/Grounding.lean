@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.FirstOrder.Problems.CNF
+public import Complexity.Logics.FirstOrder.Subformula
 public import Complexity.Logics.SecondOrder.Reduction
 import Mathlib.Tactic.FinCases
 
@@ -15,10 +16,14 @@ import Mathlib.Tactic.FinCases
 # Existential second-order definable classes reduce to SAT
 
 Every existential second-order definable class of finite structures that contains the empty
-structure is first-order reducible to the class `CNF.sat` of satisfiable CNF structures
-(`Cslib.Logic.ESO.Definable.reduces_sat`). With Fagin's theorem this says that SAT is complete for
-NP under first-order reductions, the descriptive-complexity form of the Cook–Levin theorem
-[Immerman, Chapter 7][Immerman1999]; see `Cslib.Logic.FO.CNF.reduces_sat_of_mem_NP`.
+structure is first-order reducible to the class `cnf.SAT` of satisfiable CNF structures
+(`Cslib.Logic.ESO.Definable.reduces_SAT`). With Fagin's theorem this gives the NP-completeness
+of SAT under first-order reductions, for classes containing the empty structure; see
+`Complexity.Computability.Complexity.Fagin.SAT`. This is an adaptation of the descriptive form of
+the Cook–Levin theorem [Immerman, Chapter 7][Immerman1999]: Immerman's structures are ordered and
+nonempty, and his reductions are first-order projections, while the reductions here are
+first-order interpretations, with quantifiers, of unordered structures. Neither statement implies
+the other.
 
 The reduction grounds the sentence. Let `Φ = ∃ R₁ … Rₖ, φ` and let `M` be a finite structure. For
 every subformula `ψ` of `φ` with `k` bound variables and every tuple `a ∈ Mᵏ` there is a
@@ -36,12 +41,10 @@ templates. On structures with at most one element, where tags cannot be told apa
 evaluates `Φ` directly: every relation is empty or full, so a finite disjunction of first-order
 sentences decides it (`Cslib.Logic.ESO.Sentence.subsingletonSentence`). The empty structure is
 mapped to the empty CNF structure, which is satisfiable; this is why the class must contain the
-empty structure. Immerman's structures are nonempty, so the classical statement does not see this
-case.
+empty structure.
 
 ## Main definitions
 
-* `Cslib.Logic.FO.subformulas`: the subformulas of a bounded formula.
 * `Cslib.Logic.ESO.Sentence.GroundTag`, `Cslib.Logic.ESO.Sentence.groundInterpretation`: the
   grounding of an existential second-order sentence, a tagged interpretation in CNF structures.
 * `Cslib.Logic.ESO.Sentence.subsingletonSentence`: a first-order sentence equivalent to `Φ` on
@@ -53,10 +56,12 @@ case.
   nonempty structure `M` is satisfiable exactly when `Φ` holds in `M`.
 * `Cslib.Logic.ESO.Sentence.realize_subsingletonSentence`: correctness of the sentence on
   structures with at most one element.
-* `Cslib.Logic.ESO.Definable.reduces_sat`: every existential second-order definable class
+* `Cslib.Logic.ESO.Definable.reduces_SAT`: every existential second-order definable class
   containing the empty structure is first-order reducible to SAT.
-* `Cslib.Logic.ESO.definable_iff_reduces_sat`: for classes containing the empty structure,
+* `Cslib.Logic.ESO.definable_iff_reduces_SAT`: for classes containing the empty structure,
   existential second-order definability is first-order reducibility to SAT.
+* `Cslib.Logic.ESO.Definable.exists_interpretation_SAT_of_nonempty`: every existential second-order
+  definable class is first-order reducible to SAT on the nonempty finite structures.
 
 ## References
 
@@ -70,70 +75,11 @@ universe u v w
 
 open FirstOrder Language Structure CategoryTheory
 
-/-! ### Subformulas -/
-
-namespace Cslib.Logic.FO
-
-variable {L : Language.{u, v}} {α : Type*}
-
-/-- The subformulas of a bounded formula, each with its number of bound variables. -/
-def subformulas : ∀ {n : ℕ}, L.BoundedFormula α n → Set (Σ k, L.BoundedFormula α k)
-  | n, .falsum => {⟨n, .falsum⟩}
-  | n, .equal t₁ t₂ => {⟨n, .equal t₁ t₂⟩}
-  | n, .rel R ts => {⟨n, .rel R ts⟩}
-  | n, .imp φ ψ => insert ⟨n, .imp φ ψ⟩ (subformulas φ ∪ subformulas ψ)
-  | n, .all φ => insert ⟨n, .all φ⟩ (subformulas φ)
-
-theorem self_mem_subformulas {n : ℕ} (φ : L.BoundedFormula α n) : ⟨n, φ⟩ ∈ subformulas φ := by
-  cases φ <;> simp [subformulas]
-
-theorem finite_subformulas {n : ℕ} (φ : L.BoundedFormula α n) : (subformulas φ).Finite := by
-  induction φ with
-  | falsum => exact Set.finite_singleton _
-  | equal => exact Set.finite_singleton _
-  | rel => exact Set.finite_singleton _
-  | imp _ _ ih₁ ih₂ => exact (ih₁.union ih₂).insert _
-  | all _ ih => exact ih.insert _
-
-theorem subformulas_subset {n k : ℕ} {φ : L.BoundedFormula α n} {ψ : L.BoundedFormula α k}
-    (h : ⟨k, ψ⟩ ∈ subformulas φ) : subformulas ψ ⊆ subformulas φ := by
-  induction φ with
-  | falsum | equal | rel =>
-    cases Set.mem_singleton_iff.1 h
-    exact subset_rfl
-  | imp φ₁ φ₂ ih₁ ih₂ =>
-    rcases h with h | h | h
-    · cases h
-      exact subset_rfl
-    · exact (ih₁ h).trans (Set.subset_union_left.trans (Set.subset_insert _ _))
-    · exact (ih₂ h).trans (Set.subset_union_right.trans (Set.subset_insert _ _))
-  | all φ₁ ih =>
-    rcases h with h | h
-    · cases h
-      exact subset_rfl
-    · exact (ih h).trans (Set.subset_insert _ _)
-
-variable {n k : ℕ} {φ : L.BoundedFormula α n}
-
-theorem mem_subformulas_of_imp_left {ψ χ : L.BoundedFormula α k}
-    (h : ⟨k, ψ.imp χ⟩ ∈ subformulas φ) : ⟨k, ψ⟩ ∈ subformulas φ :=
-  subformulas_subset h (Set.mem_insert_of_mem _ (.inl (self_mem_subformulas ψ)))
-
-theorem mem_subformulas_of_imp_right {ψ χ : L.BoundedFormula α k}
-    (h : ⟨k, ψ.imp χ⟩ ∈ subformulas φ) : ⟨k, χ⟩ ∈ subformulas φ :=
-  subformulas_subset h (Set.mem_insert_of_mem _ (.inr (self_mem_subformulas χ)))
-
-theorem mem_subformulas_of_all {ψ : L.BoundedFormula α (k + 1)}
-    (h : ⟨k, ψ.all⟩ ∈ subformulas φ) : ⟨k + 1, ψ⟩ ∈ subformulas φ :=
-  subformulas_subset h (Set.mem_insert_of_mem _ (self_mem_subformulas ψ))
-
-end Cslib.Logic.FO
-
 /-! ### The grounding -/
 
 namespace Cslib.Logic.ESO.Sentence
 
-open FO FO.TaggedInterpretation FO.CNF
+open FO FO.TaggedInterpretation FO.cnf
 
 variable {L : Language.{u, v}} [L.IsRelational] (Φ : ESO.Sentence L)
 
@@ -243,7 +189,7 @@ variable (Φ) in
 /-- The **grounding** of `Φ`, a tagged interpretation in CNF structures. A clause kind without
 templates has no elements. -/
 noncomputable def groundInterpretation :
-    TaggedInterpretation L CNF.language Φ.GroundTag GroundTag.Coord where
+    TaggedInterpretation L cnf Φ.GroundTag GroundTag.Coord where
   domain
     | .clause s i => if (clauseTemplates s i true).isEmpty && (clauseTemplates s i false).isEmpty
         then ⊥ else ⊤
@@ -263,34 +209,25 @@ section Clauses
 
 variable {M : Type w} [L.Structure M]
 
-omit [L.IsRelational] in
-theorem realize_top' {β : Type*} {v : β → M} : (⊤ : L.Formula β).Realize v :=
-  Formula.realize_top.2 trivial
-
 /-- The variable `X(ψ, a)`. -/
-def atom (s : Φ.Subformula) (a : Fin s.1.1 → M) : Φ.groundInterpretation.Model M :=
-  ⟨.var s, a, realize_top'⟩
+private def atom (s : Φ.Subformula) (a : Fin s.1.1 → M) : Φ.groundInterpretation.Model M :=
+  ⟨.var s, a, formula_realize_top⟩
 
 /-- The variable `V(R, b)`. -/
-def relAtom (r : Φ.Var) (b : Fin (Φ.arity r) → M) : Φ.groundInterpretation.Model M :=
-  ⟨.relVar r, b, realize_top'⟩
+private def relAtom (r : Φ.Var) (b : Fin (Φ.arity r) → M) : Φ.groundInterpretation.Model M :=
+  ⟨.relVar r, b, formula_realize_top⟩
 
-/-- An assignment satisfies the clause named by `c`. -/
-def ClauseSat (A : Φ.groundInterpretation.Model M → Prop) (c : Φ.groundInterpretation.Model M) :
-    Prop :=
-  ∃ y, (RelMap pos ![c, y] ∧ A y) ∨ (RelMap neg ![c, y] ∧ ¬A y)
-
-theorem clauseSat_iff (A : Φ.groundInterpretation.Model M → Prop)
+private theorem clauseSat_iff (A : Φ.groundInterpretation.Model M → Prop)
     (c : Φ.groundInterpretation.Model M) :
-    ClauseSat A c ↔
+    ClauseSatisfied A c ↔
       (∃ τ ∈ Φ.groundTemplates c.1 true, τ.guard.Realize c.2.1 ∧
         ∃ y hy, τ.Compat c.2.1 y ∧ A ⟨τ.target, y, hy⟩) ∨
       (∃ τ ∈ Φ.groundTemplates c.1 false, τ.guard.Realize c.2.1 ∧
         ∃ y hy, τ.Compat c.2.1 y ∧ ¬A ⟨τ.target, y, hy⟩) :=
-  satisfies_clause_iff_of_templates groundInterpretation_rel_lit A c
+  clauseSatisfied_iff_of_templates groundInterpretation_rel_lit A c
 
 omit [L.Structure M] in
-theorem term_realize {k : ℕ} [(L.sum (varLanguage Φ.arity)).Structure M]
+private theorem term_realize {k : ℕ} [(L.sum (varLanguage Φ.arity)).Structure M]
     (t : (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)) (x : Fin (k + 1) → M) :
     t.realize (Sum.elim default (Fin.init x)) = x (termCoord t) := by
   rw [realize_termVar, termCoord]
@@ -298,16 +235,17 @@ theorem term_realize {k : ℕ} [(L.sum (varLanguage Φ.arity)).Structure M]
   · exact e.elim
   · rfl
 /-- The clauses of a kind with literal templates are in the domain. -/
-theorem realize_domain_clause {k : ℕ} {ψ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty k}
+private theorem realize_domain_clause {k : ℕ}
+    {ψ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty k}
     (hs : ⟨k, ψ⟩ ∈ subformulas Φ.matrix) (i : Fin 3) (x : Fin (k + 1) → M)
     (h : ((clauseTemplates ⟨_, hs⟩ i true).isEmpty &&
       (clauseTemplates ⟨_, hs⟩ i false).isEmpty) = false := by rfl) :
     (Φ.groundInterpretation.domain (.clause ⟨_, hs⟩ i)).Realize x := by
   simp only [groundInterpretation, h, Bool.false_eq_true, ↓reduceIte]
-  exact realize_top'
+  exact formula_realize_top
 
 /-- The clause kinds without literal templates have no elements. -/
-theorem not_realize_domain_clause {k : ℕ}
+private theorem not_realize_domain_clause {k : ℕ}
     {ψ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty k}
     (hs : ⟨k, ψ⟩ ∈ subformulas Φ.matrix) (i : Fin 3) (x : Fin (k + 1) → M)
     (h : ((clauseTemplates ⟨_, hs⟩ i true).isEmpty &&
@@ -319,26 +257,26 @@ theorem not_realize_domain_clause {k : ℕ}
 variable (A : Φ.groundInterpretation.Model M → Prop)
 
 /-- Every variable names the tautology `x ∨ ¬x`. -/
-theorem clauseSat_var (s : Φ.Subformula) (a : Fin s.1.1 → M) (ha) :
-    ClauseSat A ⟨.var s, a, ha⟩ := by
+private theorem clauseSat_var (s : Φ.Subformula) (a : Fin s.1.1 → M) (ha) :
+    ClauseSatisfied A ⟨.var s, a, ha⟩ := by
   refine (clauseSat_iff A _).2 ?_
   by_cases h : A ⟨.var s, a, ha⟩
-  · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', a, ha, fun j i hj => by
+  · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, a, ha, fun j i hj => by
       cases Option.some.inj hj; rfl, h⟩
-  · exact .inr ⟨_, List.mem_singleton.2 rfl, realize_top', a, ha, fun j i hj => by
+  · exact .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, a, ha, fun j i hj => by
       cases Option.some.inj hj; rfl, h⟩
 
-theorem clauseSat_relVar (r : Φ.Var) (b : Fin (Φ.arity r) → M) (hb) :
-    ClauseSat A ⟨.relVar r, b, hb⟩ := by
+private theorem clauseSat_relVar (r : Φ.Var) (b : Fin (Φ.arity r) → M) (hb) :
+    ClauseSatisfied A ⟨.relVar r, b, hb⟩ := by
   refine (clauseSat_iff A _).2 ?_
   by_cases h : A ⟨.relVar r, b, hb⟩
-  · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', b, hb, fun j i hj => by
+  · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, b, hb, fun j i hj => by
       cases Option.some.inj hj; rfl, h⟩
-  · exact .inr ⟨_, List.mem_singleton.2 rfl, realize_top', b, hb, fun j i hj => by
+  · exact .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, b, hb, fun j i hj => by
       cases Option.some.inj hj; rfl, h⟩
 
-theorem clauseSat_top (x : Fin 0 → M) (hx) :
-    ClauseSat A ⟨.top, x, hx⟩ ↔ A (atom ⟨⟨0, Φ.matrix⟩, self_mem_subformulas _⟩ x) := by
+private theorem clauseSat_top (x : Fin 0 → M) (hx) :
+    ClauseSatisfied A ⟨.top, x, hx⟩ ↔ A (atom ⟨⟨0, Φ.matrix⟩, self_mem_subformulas _⟩ x) := by
   refine (clauseSat_iff A _).trans ?_
   constructor
   · rintro (⟨τ, hτ, -, y, hy, -, ha⟩ | ⟨τ, hτ, -⟩)
@@ -347,12 +285,13 @@ theorem clauseSat_top (x : Fin 0 → M) (hx) :
       exact ha
     · exact (List.not_mem_nil hτ).elim
   · intro h
-    exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', x, realize_top', fun j => j.elim0, h⟩
+    exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, x, formula_realize_top,
+        fun j => j.elim0, h⟩
 
 variable {k : ℕ} (x : Fin (k + 1) → M)
 
-theorem clauseSat_falsum (hs : ⟨k, .falsum⟩ ∈ subformulas Φ.matrix) (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, .falsum⟩, hs⟩ 0, x, hx⟩ ↔
+private theorem clauseSat_falsum (hs : ⟨k, .falsum⟩ ∈ subformulas Φ.matrix) (hx) :
+    ClauseSatisfied A ⟨.clause ⟨⟨k, .falsum⟩, hs⟩ 0, x, hx⟩ ↔
       ¬A (atom ⟨⟨k, .falsum⟩, hs⟩ (Fin.init x)) := by
   refine (clauseSat_iff A _).trans ?_
   constructor
@@ -362,12 +301,12 @@ theorem clauseSat_falsum (hs : ⟨k, .falsum⟩ ∈ subformulas Φ.matrix) (hx) 
       obtain rfl : y = Fin.init x := funext fun j => hc j _ rfl
       exact ha
   · intro h
-    exact .inr ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+    exact .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x, formula_realize_top,
       fun j i hj => by cases Option.some.inj hj; rfl, h⟩
 
-theorem clauseSat_equal {t₁ t₂ : (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)}
+private theorem clauseSat_equal {t₁ t₂ : (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)}
     (hs : ⟨k, .equal t₁ t₂⟩ ∈ subformulas Φ.matrix) (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, .equal t₁ t₂⟩, hs⟩ 0, x, hx⟩ ↔
+    ClauseSatisfied A ⟨.clause ⟨⟨k, .equal t₁ t₂⟩, hs⟩ 0, x, hx⟩ ↔
       (A (atom ⟨⟨k, .equal t₁ t₂⟩, hs⟩ (Fin.init x)) ↔ x (termCoord t₁) = x (termCoord t₂)) := by
   refine (clauseSat_iff A _).trans ?_
   constructor
@@ -381,15 +320,15 @@ theorem clauseSat_equal {t₁ t₂ : (L.sum (varLanguage Φ.arity)).Term (Empty 
   · intro h
     by_cases he : x (termCoord t₁) = x (termCoord t₂)
     · exact .inl ⟨_, List.mem_singleton.2 rfl, (realize_varEq _ _ _).2 he, Fin.init x,
-        realize_top', fun j i hj => by cases Option.some.inj hj; rfl, h.2 he⟩
+        formula_realize_top, fun j i hj => by cases Option.some.inj hj; rfl, h.2 he⟩
     · exact .inr ⟨_, List.mem_singleton.2 rfl,
         fun h => he ((realize_varEq _ _ _).1 h), Fin.init x,
-        realize_top', fun j i hj => by cases Option.some.inj hj; rfl, mt h.1 he⟩
+        formula_realize_top, fun j i hj => by cases Option.some.inj hj; rfl, mt h.1 he⟩
 
-theorem clauseSat_relInl {l : ℕ} {R : L.Relations l}
+private theorem clauseSat_relInl {l : ℕ} {R : L.Relations l}
     {ts : Fin l → (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)}
     (hs : ⟨k, .rel (.inl R) ts⟩ ∈ subformulas Φ.matrix) (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, .rel (.inl R) ts⟩, hs⟩ 0, x, hx⟩ ↔
+    ClauseSatisfied A ⟨.clause ⟨⟨k, .rel (.inl R) ts⟩, hs⟩ 0, x, hx⟩ ↔
       (A (atom ⟨⟨k, .rel (.inl R) ts⟩, hs⟩ (Fin.init x)) ↔
         RelMap R fun j => x (termCoord (ts j))) := by
   refine (clauseSat_iff A _).trans ?_
@@ -404,21 +343,21 @@ theorem clauseSat_relInl {l : ℕ} {R : L.Relations l}
   · intro h
     by_cases he : RelMap R fun j => x (termCoord (ts j))
     · exact .inl ⟨_, List.mem_singleton.2 rfl, Formula.realize_rel.2 he, Fin.init x,
-        realize_top', fun j i hj => by cases Option.some.inj hj; rfl, h.2 he⟩
+        formula_realize_top, fun j i hj => by cases Option.some.inj hj; rfl, h.2 he⟩
     · exact .inr ⟨_, List.mem_singleton.2 rfl,
         fun h => he (Formula.realize_rel.1 h), Fin.init x,
-        realize_top', fun j i hj => by cases Option.some.inj hj; rfl, mt h.1 he⟩
+        formula_realize_top, fun j i hj => by cases Option.some.inj hj; rfl, mt h.1 he⟩
 
 /-- The arguments of an atom of a relation variable, read from the coordinates of a clause. -/
-def relArgs {l : ℕ} (r : (varLanguage Φ.arity).Relations l)
+private def relArgs {l : ℕ} (r : (varLanguage Φ.arity).Relations l)
     (ts : Fin l → (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)) :
     Fin (Φ.arity r.1) → M :=
   fun j => x (termCoord (ts (Fin.cast r.2 j)))
 
-theorem clauseSat_relInr₀ {l : ℕ} {r : (varLanguage Φ.arity).Relations l}
+private theorem clauseSat_relInr₀ {l : ℕ} {r : (varLanguage Φ.arity).Relations l}
     {ts : Fin l → (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)}
     (hs : ⟨k, .rel (.inr r) ts⟩ ∈ subformulas Φ.matrix) (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, .rel (.inr r) ts⟩, hs⟩ 0, x, hx⟩ ↔
+    ClauseSatisfied A ⟨.clause ⟨⟨k, .rel (.inr r) ts⟩, hs⟩ 0, x, hx⟩ ↔
       (A (atom ⟨⟨k, .rel (.inr r) ts⟩, hs⟩ (Fin.init x)) → A (relAtom r.1 (relArgs x r ts))) := by
   refine (clauseSat_iff A _).trans ?_
   constructor
@@ -431,15 +370,16 @@ theorem clauseSat_relInr₀ {l : ℕ} {r : (varLanguage Φ.arity).Relations l}
       exact fun h => (ha h).elim
   · intro h
     by_cases ha : A (atom ⟨⟨k, .rel (.inr r) ts⟩, hs⟩ (Fin.init x))
-    · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', relArgs x r ts, realize_top',
+    · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, relArgs x r ts,
+          formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h ha⟩
-    · exact .inr ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+    · exact .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, ha⟩
 
-theorem clauseSat_relInr₁ {l : ℕ} {r : (varLanguage Φ.arity).Relations l}
+private theorem clauseSat_relInr₁ {l : ℕ} {r : (varLanguage Φ.arity).Relations l}
     {ts : Fin l → (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)}
     (hs : ⟨k, .rel (.inr r) ts⟩ ∈ subformulas Φ.matrix) (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, .rel (.inr r) ts⟩, hs⟩ 1, x, hx⟩ ↔
+    ClauseSatisfied A ⟨.clause ⟨⟨k, .rel (.inr r) ts⟩, hs⟩ 1, x, hx⟩ ↔
       (A (relAtom r.1 (relArgs x r ts)) → A (atom ⟨⟨k, .rel (.inr r) ts⟩, hs⟩ (Fin.init x))) := by
   refine (clauseSat_iff A _).trans ?_
   constructor
@@ -452,9 +392,10 @@ theorem clauseSat_relInr₁ {l : ℕ} {r : (varLanguage Φ.arity).Relations l}
       exact fun h => (ha h).elim
   · intro h
     by_cases ha : A (relAtom r.1 (relArgs x r ts))
-    · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+    · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h ha⟩
-    · exact .inr ⟨_, List.mem_singleton.2 rfl, realize_top', relArgs x r ts, realize_top',
+    · exact .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, relArgs x r ts,
+          formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, ha⟩
 
 section Imp
@@ -462,8 +403,8 @@ section Imp
 variable {ψ χ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty k}
   (hs : ⟨k, ψ.imp χ⟩ ∈ subformulas Φ.matrix)
 
-theorem clauseSat_imp₀ (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, ψ.imp χ⟩, hs⟩ 0, x, hx⟩ ↔
+private theorem clauseSat_imp₀ (hx) :
+    ClauseSatisfied A ⟨.clause ⟨⟨k, ψ.imp χ⟩, hs⟩ 0, x, hx⟩ ↔
       (A (atom ⟨⟨k, ψ.imp χ⟩, hs⟩ (Fin.init x)) →
         A (atom ⟨⟨k, ψ⟩, mem_subformulas_of_imp_left hs⟩ (Fin.init x)) →
         A (atom ⟨⟨k, χ⟩, mem_subformulas_of_imp_right hs⟩ (Fin.init x))) := by
@@ -482,15 +423,16 @@ theorem clauseSat_imp₀ (hx) :
   · intro h
     by_cases h₁ : A (atom ⟨⟨k, ψ.imp χ⟩, hs⟩ (Fin.init x))
     · by_cases h₂ : A (atom ⟨⟨k, ψ⟩, mem_subformulas_of_imp_left hs⟩ (Fin.init x))
-      · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+      · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x,
+            formula_realize_top,
           fun j i hj => by cases Option.some.inj hj; rfl, h h₁ h₂⟩
-      · exact .inr ⟨_, List.mem_cons_of_mem _ (List.mem_singleton.2 rfl), realize_top',
-          Fin.init x, realize_top', fun j i hj => by cases Option.some.inj hj; rfl, h₂⟩
-    · exact .inr ⟨_, List.mem_cons_self, realize_top', Fin.init x, realize_top',
+      · exact .inr ⟨_, List.mem_cons_of_mem _ (List.mem_singleton.2 rfl), formula_realize_top,
+          Fin.init x, formula_realize_top, fun j i hj => by cases Option.some.inj hj; rfl, h₂⟩
+    · exact .inr ⟨_, List.mem_cons_self, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h₁⟩
 
-theorem clauseSat_imp₁ (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, ψ.imp χ⟩, hs⟩ 1, x, hx⟩ ↔
+private theorem clauseSat_imp₁ (hx) :
+    ClauseSatisfied A ⟨.clause ⟨⟨k, ψ.imp χ⟩, hs⟩ 1, x, hx⟩ ↔
       (A (atom ⟨⟨k, ψ.imp χ⟩, hs⟩ (Fin.init x)) ∨
         A (atom ⟨⟨k, ψ⟩, mem_subformulas_of_imp_left hs⟩ (Fin.init x))) := by
   refine (clauseSat_iff A _).trans ?_
@@ -504,13 +446,13 @@ theorem clauseSat_imp₁ (hx) :
         exact .inr ha
     · exact (List.not_mem_nil hτ).elim
   · rintro (h | h)
-    · exact .inl ⟨_, List.mem_cons_self, realize_top', Fin.init x, realize_top',
+    · exact .inl ⟨_, List.mem_cons_self, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h⟩
-    · exact .inl ⟨_, List.mem_cons_of_mem _ (List.mem_singleton.2 rfl), realize_top',
-        Fin.init x, realize_top', fun j i hj => by cases Option.some.inj hj; rfl, h⟩
+    · exact .inl ⟨_, List.mem_cons_of_mem _ (List.mem_singleton.2 rfl), formula_realize_top,
+        Fin.init x, formula_realize_top, fun j i hj => by cases Option.some.inj hj; rfl, h⟩
 
-theorem clauseSat_imp₂ (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, ψ.imp χ⟩, hs⟩ 2, x, hx⟩ ↔
+private theorem clauseSat_imp₂ (hx) :
+    ClauseSatisfied A ⟨.clause ⟨⟨k, ψ.imp χ⟩, hs⟩ 2, x, hx⟩ ↔
       (A (atom ⟨⟨k, χ⟩, mem_subformulas_of_imp_right hs⟩ (Fin.init x)) →
         A (atom ⟨⟨k, ψ.imp χ⟩, hs⟩ (Fin.init x))) := by
   refine (clauseSat_iff A _).trans ?_
@@ -524,9 +466,9 @@ theorem clauseSat_imp₂ (hx) :
       exact fun h => (ha h).elim
   · intro h
     by_cases h₂ : A (atom ⟨⟨k, χ⟩, mem_subformulas_of_imp_right hs⟩ (Fin.init x))
-    · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+    · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h h₂⟩
-    · exact .inr ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+    · exact .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h₂⟩
 
 end Imp
@@ -536,8 +478,8 @@ section All
 variable {ψ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty (k + 1)}
   (hs : ⟨k, ψ.all⟩ ∈ subformulas Φ.matrix)
 
-theorem clauseSat_all₀ (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, ψ.all⟩, hs⟩ 0, x, hx⟩ ↔
+private theorem clauseSat_all₀ (hx) :
+    ClauseSatisfied A ⟨.clause ⟨⟨k, ψ.all⟩, hs⟩ 0, x, hx⟩ ↔
       (A (atom ⟨⟨k, ψ.all⟩, hs⟩ (Fin.init x)) →
         A (atom ⟨⟨k + 1, ψ⟩, mem_subformulas_of_all hs⟩ x)) := by
   refine (clauseSat_iff A _).trans ?_
@@ -551,13 +493,13 @@ theorem clauseSat_all₀ (hx) :
       exact fun h => (ha h).elim
   · intro h
     by_cases h₁ : A (atom ⟨⟨k, ψ.all⟩, hs⟩ (Fin.init x))
-    · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', x, realize_top',
+    · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h h₁⟩
-    · exact .inr ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+    · exact .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h₁⟩
 
-theorem clauseSat_all₁ (hx) :
-    ClauseSat A ⟨.clause ⟨⟨k, ψ.all⟩, hs⟩ 1, x, hx⟩ ↔
+private theorem clauseSat_all₁ (hx) :
+    ClauseSatisfied A ⟨.clause ⟨⟨k, ψ.all⟩, hs⟩ 1, x, hx⟩ ↔
       ((∀ b, A (atom ⟨⟨k + 1, ψ⟩, mem_subformulas_of_all hs⟩ (Fin.snoc (Fin.init x) b))) →
         A (atom ⟨⟨k, ψ.all⟩, hs⟩ (Fin.init x))) := by
   refine (clauseSat_iff A _).trans ?_
@@ -575,10 +517,11 @@ theorem clauseSat_all₁ (hx) :
       exact fun h => (ha (this ▸ h _)).elim
   · intro h
     by_cases h₁ : ∀ b, A (atom ⟨⟨k + 1, ψ⟩, mem_subformulas_of_all hs⟩ (Fin.snoc (Fin.init x) b))
-    · exact .inl ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.init x, realize_top',
+    · exact .inl ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.init x, formula_realize_top,
         fun j i hj => by cases Option.some.inj hj; rfl, h h₁⟩
     · obtain ⟨b, hb⟩ := not_forall.1 h₁
-      refine .inr ⟨_, List.mem_singleton.2 rfl, realize_top', Fin.snoc (Fin.init x) b, realize_top',
+      refine .inr ⟨_, List.mem_singleton.2 rfl, formula_realize_top, Fin.snoc (Fin.init x) b,
+          formula_realize_top,
         fun j i hj => ?_, hb⟩
       induction j using Fin.lastCases with
       | last => simp at hj
@@ -601,18 +544,18 @@ section Correctness
 variable {M : Type w} [L.Structure M]
 
 /-- The relations read from an assignment: `R` holds of `b` when `V(R, b)` is true. -/
-def assignmentRel (A : Φ.groundInterpretation.Model M → Prop) (r : Φ.Var) :
+private def assignmentRel (A : Φ.groundInterpretation.Model M → Prop) (r : Φ.Var) :
     Set (Fin (Φ.arity r) → M) :=
   {b | A (relAtom r b)}
 
-theorem exists_init_eq [Nonempty M] {k : ℕ} (a : Fin k → M) : ∃ x : Fin (k + 1) → M,
+private theorem exists_init_eq [Nonempty M] {k : ℕ} (a : Fin k → M) : ∃ x : Fin (k + 1) → M,
     Fin.init x = a :=
   ⟨Fin.snoc a (Classical.arbitrary M), Fin.init_snoc _ _⟩
 
 /-- **Soundness of the grounding**: under a satisfying assignment, each variable `X(ψ, a)` is true
 exactly when `ψ` holds of `a` for the relations read from the assignment. -/
-theorem atom_iff_realize [Nonempty M] {A : Φ.groundInterpretation.Model M → Prop}
-    (hA : CNF.Satisfies A) {k : ℕ} (ψ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty k)
+private theorem atom_iff_realize [Nonempty M] {A : Φ.groundInterpretation.Model M → Prop}
+    (hA : cnf.Satisfies A) {k : ℕ} (ψ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty k)
     (hs : ⟨k, ψ⟩ ∈ subformulas Φ.matrix) (a : Fin k → M) :
     A (atom ⟨⟨k, ψ⟩, hs⟩ a) ↔
       (letI := varLanguage.structure (assignmentRel A); ψ.Realize default a) := by
@@ -664,7 +607,7 @@ theorem atom_iff_realize [Nonempty M] {A : Φ.groundInterpretation.Model M → P
 
 /-- The assignment given by relations `R`: `X(ψ, a)` is true when `ψ` holds of `a`, and `V(R, b)`
 when `R` holds of `b`. -/
-def canonicalAssignment (R : ∀ i, Set (Fin (Φ.arity i) → M)) :
+private def canonicalAssignment (R : ∀ i, Set (Fin (Φ.arity i) → M)) :
     Φ.groundInterpretation.Model M → Prop
   | ⟨.var s, a, _⟩ => letI := varLanguage.structure R; s.1.2.Realize default a
   | ⟨.relVar r, b, _⟩ => b ∈ R r
@@ -672,9 +615,9 @@ def canonicalAssignment (R : ∀ i, Set (Fin (Φ.arity i) → M)) :
 
 /-- **Completeness of the grounding**: relations making the first-order part true give a
 satisfying assignment. -/
-theorem satisfies_canonicalAssignment (R : ∀ i, Set (Fin (Φ.arity i) → M))
+private theorem satisfies_canonicalAssignment (R : ∀ i, Set (Fin (Φ.arity i) → M))
     (h : letI := varLanguage.structure R; M ⊨ Φ.matrix) :
-    CNF.Satisfies (canonicalAssignment R) := by
+    cnf.Satisfies (canonicalAssignment R) := by
   let _ := varLanguage.structure R
   rintro ⟨t, x, hx⟩
   cases t with
@@ -736,11 +679,11 @@ theorem satisfies_canonicalAssignment (R : ∀ i, Set (Fin (Φ.arity i) → M))
 /-- **The grounding is correct**: the grounding of `Φ` in a nonempty structure `M` is satisfiable
 exactly when `Φ` holds in `M`. -/
 theorem satisfiable_groundInterpretation_iff [Nonempty M] :
-    CNF.Satisfiable (Φ.groundInterpretation.Model M) ↔ Φ.Realize M := by
+    cnf.Satisfiable (Φ.groundInterpretation.Model M) ↔ Φ.Realize M := by
   constructor
   · rintro ⟨A, hA⟩
     refine ⟨assignmentRel A, ?_⟩
-    have := (clauseSat_top A (Fin.elim0 : Fin 0 → M) realize_top').1 (hA _)
+    have := (clauseSat_top A (Fin.elim0 : Fin 0 → M) formula_realize_top).1 (hA _)
     have h := (atom_iff_realize hA Φ.matrix _ _).1 this
     let _ := varLanguage.structure (assignmentRel A)
     change BoundedFormula.Realize Φ.matrix default default
@@ -772,26 +715,35 @@ noncomputable def subsingletonSentence : L.Sentence :=
 variable {Φ}
 
 /-- The empty or full relations chosen by `s`. -/
-def constRel (s : Φ.Var → Bool) (i : Φ.Var) : Set (Fin (Φ.arity i) → M) :=
+private def constRel (s : Φ.Var → Bool) (i : Φ.Var) : Set (Fin (Φ.arity i) → M) :=
   if s i then Set.univ else ∅
 
-/-- The interpretation substituting `⊤` and `⊥` interprets the expansion by empty and full
-relations. -/
-def constEquiv (s : Φ.Var → Bool) :
-    letI := varLanguage.structure (constRel (M := M) s)
-    (constInterpretation Φ s).Model M ≃[L.sum (varLanguage Φ.arity)] M :=
-  letI := varLanguage.structure (constRel (M := M) s)
-  { toFun := fun x => x.1 ()
-    invFun := fun m => ⟨fun _ => m, realize_top'⟩
-    left_inv := fun _ => Interpretation.Model.ext (funext fun _ => rfl)
-    right_inv := fun _ => rfl
-    map_fun' := fun f => isEmptyElim f
-    map_rel' := fun r x => match r with
+/-- The relations defined on `M` by the interpretation substituting `⊤` and `⊥` are those of the
+expansion of `M` by the empty and full relations chosen by `s`. -/
+private def constStructureEquiv (s : Φ.Var → Bool) :
+    @Language.Equiv (L.sum (varLanguage Φ.arity)) M M ((constInterpretation Φ s).unitStructure M)
+      (@sumStructure _ _ M _ (varLanguage.structure (constRel (M := M) s))) :=
+  @Language.Equiv.mk _ M M ((constInterpretation Φ s).unitStructure M)
+    (@sumStructure _ _ M _ (varLanguage.structure (constRel (M := M) s))) (Equiv.refl M)
+    (fun f => isEmptyElim f) fun r x => match r with
       | .inl _ => Iff.rfl
       | .inr r => by
         change _ ∈ constRel s r.1 ↔ (if s r.1 then ⊤ else ⊥ : L.Formula _).Realize _
         unfold constRel
-        cases s r.1 <;> simp }
+        cases s r.1 <;> simp
+
+/-- The interpretation substituting `⊤` and `⊥` interprets the expansion by empty and full
+relations. -/
+private theorem realize_constInterpretation (s : Φ.Var → Bool) :
+    (constInterpretation Φ s).Model M ⊨ Φ.matrix ↔
+      (letI := varLanguage.structure (constRel (M := M) s); M ⊨ Φ.matrix) := by
+  have h₁ := @StrongHomClass.realize_sentence _ ((constInterpretation Φ s).Model M) M _
+    ((constInterpretation Φ s).unitStructure M) _ _ _
+    ((constInterpretation Φ s).unitModelEquiv M fun _ => formula_realize_top) Φ.matrix
+  have h₂ := @StrongHomClass.realize_sentence _ M M ((constInterpretation Φ s).unitStructure M)
+    (@sumStructure _ _ M _ (varLanguage.structure (constRel (M := M) s))) _ _ _
+    (constStructureEquiv s) Φ.matrix
+  exact h₁.trans h₂
 
 /-- **Correctness of the sentence for small structures.** -/
 theorem realize_subsingletonSentence [Subsingleton M] :
@@ -802,8 +754,7 @@ theorem realize_subsingletonSentence [Subsingleton M] :
   simp only [Interpretation.realize_onSentence]
   constructor
   · rintro ⟨s, h⟩
-    let _ := varLanguage.structure (constRel (M := M) s)
-    exact ⟨constRel s, (StrongHomClass.realize_sentence (constEquiv s) Φ.matrix).1 h⟩
+    exact ⟨constRel s, (realize_constInterpretation s).1 h⟩
   · rintro ⟨R, h⟩
     classical
     refine ⟨fun i => decide (R i).Nonempty, ?_⟩
@@ -818,29 +769,28 @@ theorem realize_subsingletonSentence [Subsingleton M] :
       · rw [decide_eq_false hne]
         exact iff_of_false (fun hz => hne ⟨z, hz⟩) id
     rw [hR] at h
-    let _ := varLanguage.structure (constRel (M := M) fun i => decide (R i).Nonempty)
-    exact (StrongHomClass.realize_sentence (constEquiv _) Φ.matrix).2 h
+    exact (realize_constInterpretation _).2 h
 
 variable (Φ) in
 /-- The reduction on structures with at most one element: a single element naming the clause
 `x` if `Φ` holds and the empty clause otherwise. -/
-noncomputable def subsingletonInterpretation : Interpretation L CNF.language Unit where
+noncomputable def subsingletonInterpretation : Interpretation L cnf Unit where
   domain := ⊤
   rel R := match R with
     | .pos => Φ.subsingletonSentence.relabel Empty.elim
     | .neg => ⊥
 
-theorem relMap_pos_subsingletonInterpretation (c y : Φ.subsingletonInterpretation.Model M) :
-    RelMap pos ![c, y] ↔ M ⊨ Φ.subsingletonSentence := by
+private theorem relMap_pos_subsingletonInterpretation (c y : Φ.subsingletonInterpretation.Model M) :
+    RelMap cnf.pos ![c, y] ↔ M ⊨ Φ.subsingletonSentence := by
   change (Φ.subsingletonSentence.relabel Empty.elim).Realize _ ↔ _
   rw [Formula.realize_relabel]
   exact iff_of_eq (congrArg (Formula.Realize Φ.subsingletonSentence) (Subsingleton.elim _ _))
 
 theorem satisfiable_subsingletonInterpretation_iff [Nonempty M] :
-    CNF.Satisfiable (Φ.subsingletonInterpretation.Model M) ↔ M ⊨ Φ.subsingletonSentence := by
+    cnf.Satisfiable (Φ.subsingletonInterpretation.Model M) ↔ M ⊨ Φ.subsingletonSentence := by
   constructor
   · rintro ⟨A, hA⟩
-    obtain ⟨y, hy | ⟨hy, -⟩⟩ := hA ⟨fun _ => Classical.arbitrary M, realize_top'⟩
+    obtain ⟨y, hy | ⟨hy, -⟩⟩ := hA ⟨fun _ => Classical.arbitrary M, formula_realize_top⟩
     · exact (relMap_pos_subsingletonInterpretation _ _).1 hy.1
     · exact hy.elim
   · intro h
@@ -864,34 +814,54 @@ first-order reducible to SAT** [Immerman, Chapter 7][Immerman1999]. The reductio
 defining sentence (`Cslib.Logic.ESO.Sentence.groundInterpretation`). The hypothesis on the empty
 structure is needed: an interpretation of positive dimension maps it to the empty CNF structure,
 which is satisfiable. -/
-theorem Definable.reduces_sat {K : Set (Bundled.{w} L.Structure)} (hK : Definable K)
-    (hempty : ∀ M : Bundled.{w} L.Structure, IsEmpty M → M ∈ K) : Reduces K CNF.sat.{w} := by
+theorem Definable.reduces_SAT {K : Set (Bundled.{w} L.Structure)} (hK : Definable K)
+    (hempty : ∀ M : Bundled.{w} L.Structure, IsEmpty M → M ∈ K) : Reduces K cnf.SAT.{w} := by
   obtain ⟨Φ, hΦ⟩ := hK
   let e := Finite.equivFin Φ.GroundTag
   have : ∀ t, Finite ((Sentence.GroundTag.Coord ∘ e.symm) t) := fun t =>
     inferInstanceAs (Finite (Sentence.GroundTag.Coord (e.symm t)))
-  refine Reduces.of_tagged CNF.isoClosed_sat CNF.copyInvariant_sat
+  refine Reduces.of_tagged cnf.isoClosed_SAT cnf.copyInvariant_SAT
     (Φ.groundInterpretation.reindex e) Φ.subsingletonInterpretation (fun M _ hM => ?_)
     (fun M _ hM => ?_)
   · rw [hΦ M]
-    change _ ↔ CNF.Satisfiable ((Φ.groundInterpretation.reindex e).Model M)
-    rw [CNF.satisfiable_iff_of_equiv (reindexEquiv _ e M),
+    change _ ↔ cnf.Satisfiable ((Φ.groundInterpretation.reindex e).Model M)
+    rw [cnf.satisfiable_iff_of_equiv (reindexEquiv _ e M),
       Sentence.satisfiable_groundInterpretation_iff]
   · rcases isEmpty_or_nonempty M with hM' | hM'
     · have : IsEmpty (Φ.subsingletonInterpretation.Model M) := ⟨fun x => isEmptyElim (x.1 ())⟩
       exact iff_of_true (hempty M hM')
-        (CNF.satisfiable_of_isEmpty (M := Φ.subsingletonInterpretation.Model M))
+        (cnf.satisfiable_of_isEmpty (M := Φ.subsingletonInterpretation.Model M))
     · rw [hΦ M]
-      change _ ↔ CNF.Satisfiable (Φ.subsingletonInterpretation.Model M)
+      change _ ↔ cnf.Satisfiable (Φ.subsingletonInterpretation.Model M)
       rw [Sentence.satisfiable_subsingletonInterpretation_iff,
         Sentence.realize_subsingletonSentence]
 
 /-- **SAT is complete for existential second-order logic under first-order reductions**: a class
 containing the empty structure is existential second-order definable exactly when it is
 first-order reducible to SAT. -/
-theorem definable_iff_reduces_sat {K : Set (Bundled.{w} L.Structure)}
+theorem definable_iff_reduces_SAT {K : Set (Bundled.{w} L.Structure)}
     (hempty : ∀ M : Bundled.{w} L.Structure, IsEmpty M → M ∈ K) :
-    Definable K ↔ Reduces K CNF.sat.{w} :=
-  ⟨fun h => h.reduces_sat hempty, fun h => CNF.definable_sat.of_reduces h⟩
+    Definable K ↔ Reduces K cnf.SAT.{w} :=
+  ⟨fun h => h.reduces_SAT hempty, fun h => cnf.definable_SAT.of_reduces h⟩
+
+omit [L.IsRelational] in
+/-- The class of empty structures is first-order definable, by `∀ x, ⊥`. -/
+theorem _root_.Cslib.Logic.FO.Definable.isEmpty :
+    FO.Definable {M : Bundled.{w} L.Structure | IsEmpty M} :=
+  ⟨∀' ⊥, fun _ _ => ⟨fun h x => h.false x, fun h => ⟨fun x => h x⟩⟩⟩
+
+/-- **Every existential second-order definable class is first-order reducible to SAT on the
+nonempty structures**: some first-order interpretation maps every nonempty finite structure inside
+SAT exactly when it is in the class. This is the form of [Immerman, Chapter 7][Immerman1999], whose
+structures are nonempty: it reduces the class with the empty structure added. -/
+theorem Definable.exists_interpretation_SAT_of_nonempty {K : Set (Bundled.{w} L.Structure)}
+    (hK : Definable K) : ∃ (ι : Type) (_ : Finite ι) (I : Interpretation L cnf ι),
+      ∀ (M : Bundled.{w} L.Structure) [Finite M] [Nonempty M],
+        M ∈ K ↔ Bundled.of (c := cnf.Structure) (I.Model M) ∈ cnf.SAT.{w} := by
+  obtain ⟨ι, hι, I, hI⟩ :=
+    (hK.union (Definable.of_fo FO.Definable.isEmpty)).reduces_SAT fun M hM => .inr hM
+  refine ⟨ι, hι, I, fun M _ _ => ?_⟩
+  rw [← hI M]
+  exact ⟨.inl, fun h => h.resolve_right (not_isEmpty_of_nonempty M)⟩
 
 end Cslib.Logic.ESO

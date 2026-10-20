@@ -492,7 +492,7 @@ theorem Reduces.of_tagged {L : Language.{u, v}} {L' : Language.{u', v'}} [L'.IsR
     (hsmall : ∀ (M : Bundled.{w} L.Structure) [Finite M], Subsingleton M →
       (M ∈ K ↔ (Bundled.of (S.Model M) : Bundled.{w} L'.Structure) ∈ K')) :
     Reduces K K' := by
-  refine ⟨_, inferInstance, I.toInterpretation S, fun M _ => ?_⟩
+  refine .of_interpretation (I.toInterpretation S) fun M _ => ?_
   rcases subsingleton_or_nontrivial M with hM | hM
   · rw [hsmall M hM]
     exact (hK' (TaggedInterpretation.subsingletonEquiv S).symm)
@@ -542,6 +542,8 @@ noncomputable def formula (w : T) : L.Formula (ι t ⊕ ι w) :=
       Formula.iInf fun j => (τ.map j).elim ⊤ fun i => varEq (Sum.inl i) (Sum.inr j))
   else ⊥
 
+/-- The formula of a template holds of the coordinates of two elements exactly when the template
+relates them. -/
 theorem realize_formula [L.Structure M] {w : T} (x : ι t → M) (y : ι w → M) :
     (τ.formula w).Realize (Sum.elim x y) ↔ τ.Holds x ⟨w, y⟩ := by
   unfold formula Holds
@@ -555,23 +557,11 @@ theorem realize_formula [L.Structure M] {w : T} (x : ι t → M) (y : ι w → M
     intro _ y' he
     exact absurd (congrArg Sigma.fst he).symm h
 
-omit [∀ t, Finite (ι t)] in
-/-- A template copying all coordinates relates `x` to the single tuple `x ∘ f`. -/
-theorem exists_compat_iff_of_total {L' : Language.{u', v'}} {I : TaggedInterpretation L L' T ι}
-    [L.Structure M] {f : ι τ.target → ι t} (hf : ∀ j, τ.map j = some (f j)) (x : ι t → M)
-    (P : I.Model M → Prop) :
-    (∃ y hy, τ.Compat x y ∧ P ⟨τ.target, y, hy⟩) ↔ ∃ hy, P ⟨τ.target, x ∘ f, hy⟩ := by
-  refine ⟨fun ⟨y, hy, hc, hp⟩ => ?_, fun ⟨hy, hp⟩ => ⟨_, hy, fun j i h => ?_, hp⟩⟩
-  · obtain rfl : y = x ∘ f := funext fun j => hc j (f j) (hf j)
-    exact ⟨hy, hp⟩
-  · rw [hf j, Option.some.injEq] at h
-    rw [← h]
-    rfl
-
 /-- The disjunction of the formulas of a list of templates. -/
 noncomputable def listFormula (l : List (Template L ι t)) (w : T) : L.Formula (ι t ⊕ ι w) :=
   Formula.iSup fun k : Fin l.length => (l.get k).formula w
 
+/-- The formula of a list of templates holds exactly when one of them relates the elements. -/
 theorem realize_listFormula [L.Structure M] (l : List (Template L ι t)) {w : T} (x : ι t → M)
     (y : ι w → M) :
     (listFormula l w).Realize (Sum.elim x y) ↔ ∃ τ ∈ l, τ.Holds x ⟨w, y⟩ := by

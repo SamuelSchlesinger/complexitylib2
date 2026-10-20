@@ -9,36 +9,45 @@ module
 
 public import Complexity.Computability.Complexity.Fagin.Converse
 public import Complexity.Logics.SecondOrder.Grounding
-import Mathlib.Tactic.FinCases
 
 /-!
-# SAT is NP-complete under first-order reductions
+# SAT is NP-complete under first-order reductions, for classes containing the empty structure
 
-The descriptive-complexity form of the Cook–Levin theorem [Immerman, Chapter 7][Immerman1999]:
-the class `CNF.sat` of satisfiable CNF structures has its query language in `NP`
-(`Cslib.Logic.FO.CNF.queryLanguage_sat_mem_NP`), and every isomorphism-closed class of finite
+The class `cnf.SAT` of satisfiable CNF structures has its query language in `NP`
+(`Cslib.Logic.FO.cnf.queryLanguage_SAT_mem_NP`). Every isomorphism-closed class of finite
 structures whose query language is in `NP` and which contains the empty structure is first-order
-reducible to it (`Cslib.Logic.FO.CNF.reduces_sat_of_mem_NP`). Conversely, a class first-order
-reducible to SAT is in `NP`, so these are exactly the classes reducible to SAT
-(`Cslib.Logic.FO.CNF.reduces_sat_iff_mem_NP`).
+reducible to it (`Cslib.Logic.FO.cnf.reduces_SAT_of_queryLanguage_mem_NP`), and conversely every
+class first-order reducible to SAT is in `NP`
+(`Cslib.Logic.FO.cnf.queryLanguage_mem_NP_of_reduces_SAT`). So the classes containing the empty
+structure that are first-order reducible to SAT are exactly the isomorphism-closed classes in `NP`
+(`Cslib.Logic.FO.cnf.reduces_SAT_iff_isoClosed_and_queryLanguage_mem_NP`). Without the hypothesis
+on the empty structure, every isomorphism-closed class in `NP` is first-order reducible to SAT on
+the nonempty finite structures
+(`Cslib.Logic.FO.cnf.exists_interpretation_SAT_of_queryLanguage_mem_NP`).
 
-The proof combines Fagin's theorem
+This adapts the descriptive form of the Cook–Levin theorem [Immerman, Chapter 7][Immerman1999].
+Immerman's structures are ordered and nonempty, and his reductions are first-order projections;
+here the structures are unordered and the reductions are first-order interpretations, with
+quantifiers. Neither statement implies the other. The hypothesis on the empty structure comes from
+the reduction: an interpretation of positive dimension maps the empty structure to the empty CNF
+structure, which is satisfiable. The proofs combine Fagin's theorem
 (`Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP`) with the grounding of
-existential second-order sentences (`Cslib.Logic.ESO.Definable.reduces_sat`).
-The hypothesis on the empty structure is that of the grounding: the classical statement concerns
-nonempty structures, and the empty structure is satisfiable.
-
-## Main definitions
-
-* `Cslib.Logic.FO.CNF.vocabulary`: the vocabulary of CNF structures, `pos` before `neg`.
+existential second-order sentences (`Cslib.Logic.ESO.Definable.reduces_SAT`). The machine-level
+Cook–Levin theorem, for the encoded problem `Cslib.Complexity.SAT` under polynomial-time
+reductions, is proved separately.
 
 ## Main results
 
-* `Cslib.Logic.FO.CNF.queryLanguage_sat_mem_NP`, `Cslib.Logic.FO.CNF.queryLanguage_threeSat_mem_NP`:
+* `Cslib.Logic.FO.cnf.queryLanguage_SAT_mem_NP`, `Cslib.Logic.FO.cnf.queryLanguage_ThreeSAT_mem_NP`:
   SAT and 3SAT are in `NP`.
-* `Cslib.Logic.FO.CNF.reduces_sat_of_mem_NP`: **SAT is NP-hard under first-order reductions**.
-* `Cslib.Logic.FO.CNF.reduces_sat_iff_mem_NP`: the classes containing the empty structure that are
-  first-order reducible to SAT are exactly the isomorphism-closed classes in `NP`.
+* `Cslib.Logic.FO.cnf.reduces_SAT_of_queryLanguage_mem_NP`: SAT is NP-hard under first-order
+  reductions, for classes containing the empty structure.
+* `Cslib.Logic.FO.cnf.exists_interpretation_SAT_of_queryLanguage_mem_NP`: SAT is NP-hard under
+  first-order reductions correct on the nonempty structures.
+* `Cslib.Logic.FO.cnf.queryLanguage_mem_NP_of_reduces_SAT`: classes reducible to SAT are in `NP`.
+* `Cslib.Logic.FO.cnf.reduces_SAT_iff_isoClosed_and_queryLanguage_mem_NP`: the classes containing
+  the empty structure that are first-order reducible to SAT are the isomorphism-closed classes in
+  `NP`.
 
 ## References
 
@@ -50,45 +59,51 @@ nonempty structures, and the empty structure is satisfiable.
 
 universe u v
 
-namespace Cslib.Logic.FO.CNF
+namespace Cslib.Logic.FO.cnf
 
 open FirstOrder Language Structure CategoryTheory Cslib.Complexity
 
-/-- The vocabulary of CNF structures: the table of `pos`, then that of `neg`. -/
-def vocabulary : Vocabulary CNF.language where
-  count := 2
-  symbol :=
-    { toFun := fun i => if i = 0 then ⟨2, pos⟩ else ⟨2, neg⟩
-      invFun := fun | ⟨_, .pos⟩ => 0 | ⟨_, .neg⟩ => 1
-      left_inv := fun i => by fin_cases i <;> rfl
-      right_inv := fun | ⟨_, .pos⟩ => rfl | ⟨_, .neg⟩ => rfl }
-
 /-- **SAT is in NP**: the encodings of the satisfiable CNF structures form a problem in `NP`. -/
-theorem queryLanguage_sat_mem_NP : vocabulary.queryLanguage sat ∈ NP encStructure :=
-  definable_sat.queryLanguage_mem_NP vocabulary
+theorem queryLanguage_SAT_mem_NP : vocabulary.queryLanguage SAT ∈ NP encStructure :=
+  definable_SAT.queryLanguage_mem_NP vocabulary
 
 /-- **3SAT is in NP.** -/
-theorem queryLanguage_threeSat_mem_NP : vocabulary.queryLanguage threeSat ∈ NP encStructure :=
-  definable_threeSat.queryLanguage_mem_NP vocabulary
+theorem queryLanguage_ThreeSAT_mem_NP : vocabulary.queryLanguage ThreeSAT ∈ NP encStructure :=
+  definable_ThreeSAT.queryLanguage_mem_NP vocabulary
 
 variable {L : Language.{u, v}} [L.IsRelational] (v : Vocabulary L)
 
-/-- **SAT is NP-hard under first-order reductions** (the Cook–Levin theorem for first-order
-reductions [Immerman, Chapter 7][Immerman1999]): every isomorphism-closed class of finite
-structures whose query language is in `NP` and which contains the empty structure is first-order
-reducible to SAT. -/
-theorem reduces_sat_of_mem_NP {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K)
+/-- **SAT is NP-hard under first-order reductions, for classes containing the empty structure**:
+every isomorphism-closed class of finite structures whose query language is in `NP` and which
+contains the empty structure is first-order reducible to SAT. -/
+theorem reduces_SAT_of_queryLanguage_mem_NP {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K)
     (hNP : v.queryLanguage K ∈ NP encStructure)
-    (hempty : ∀ M : Bundled.{0} L.Structure, IsEmpty M → M ∈ K) : Reduces K sat :=
-  (ESO.Definable.of_queryLanguage_mem_NP v hK hNP).reduces_sat hempty
+    (hempty : ∀ M : Bundled.{0} L.Structure, IsEmpty M → M ∈ K) : Reduces K SAT :=
+  (ESO.Definable.of_queryLanguage_mem_NP v hK hNP).reduces_SAT hempty
+
+/-- **SAT is NP-hard under first-order reductions correct on the nonempty structures**: for every
+isomorphism-closed class of finite structures whose query language is in `NP`, some first-order
+interpretation maps every nonempty finite structure inside SAT exactly when it is in the class.
+This is the form of [Immerman, Chapter 7][Immerman1999], whose structures are nonempty. -/
+theorem exists_interpretation_SAT_of_queryLanguage_mem_NP {K : Set (Bundled.{0} L.Structure)}
+    (hK : IsoClosed K) (hNP : v.queryLanguage K ∈ NP encStructure) :
+    ∃ (ι : Type) (_ : Finite ι) (I : Interpretation L cnf ι),
+      ∀ (M : Bundled.{0} L.Structure) [Finite M] [Nonempty M],
+        M ∈ K ↔ Bundled.of (c := cnf.Structure) (I.Model M) ∈ SAT :=
+  (ESO.Definable.of_queryLanguage_mem_NP v hK hNP).exists_interpretation_SAT_of_nonempty
+
+/-- **Classes first-order reducible to SAT are in NP.** -/
+theorem queryLanguage_mem_NP_of_reduces_SAT {K : Set (Bundled.{0} L.Structure)}
+    (h : Reduces K SAT) : v.queryLanguage K ∈ NP encStructure :=
+  (definable_SAT.of_reduces h).queryLanguage_mem_NP v
 
 /-- **The classes first-order reducible to SAT are the NP classes**: a class containing the empty
 structure is first-order reducible to SAT exactly when it is closed under isomorphism and its
 query language is in `NP`. -/
-theorem reduces_sat_iff_mem_NP {K : Set (Bundled.{0} L.Structure)}
+theorem reduces_SAT_iff_isoClosed_and_queryLanguage_mem_NP {K : Set (Bundled.{0} L.Structure)}
     (hempty : ∀ M : Bundled.{0} L.Structure, IsEmpty M → M ∈ K) :
-    Reduces K sat ↔ IsoClosed K ∧ v.queryLanguage K ∈ NP encStructure :=
-  (ESO.definable_iff_reduces_sat hempty).symm.trans
+    Reduces K SAT ↔ IsoClosed K ∧ v.queryLanguage K ∈ NP encStructure :=
+  (ESO.definable_iff_reduces_SAT hempty).symm.trans
     (ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP v)
 
-end Cslib.Logic.FO.CNF
+end Cslib.Logic.FO.cnf

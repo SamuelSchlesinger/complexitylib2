@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Logics.FirstOrder.TaggedInterpretation
+public import Complexity.Logics.FirstOrder.Encoding
+public import Complexity.Logics.FirstOrder.Interpretation.Tagged
 public import Complexity.Logics.SecondOrder.Existential
 public import Mathlib.Data.Set.Card
 import Mathlib.Tactic.FinCases
@@ -15,46 +16,49 @@ import Mathlib.Tactic.FinCases
 /-!
 # Satisfiability of CNF structures
 
-A formula in conjunctive normal form is given as a finite structure for the language
-`CNF.language` of two binary relation symbols `pos` and `neg`. Every element `c` names a clause
-and a variable: the clause named by `c` has the positive literal `x` when `pos(c, x)` holds and the
+A formula in conjunctive normal form is given as a finite structure for the vocabulary `cnf` of
+two binary relation symbols `cnf.pos` and `cnf.neg`. Every element `c` names a clause and a
+variable: the clause named by `c` has the positive literal `x` when `pos(c, x)` holds and the
 negative literal `¬x` when `neg(c, x)` holds. An element related to nothing names the empty clause.
-A structure is **satisfiable** (`CNF.Satisfiable`) when some assignment of truth values to the
+A structure is **satisfiable** (`cnf.Satisfiable`) when some assignment of truth values to the
 elements satisfies every clause, that is, when it satisfies the existential second-order sentence
 `∃ S, ∀ c, ∃ x, (pos(c, x) ∧ S x) ∨ (neg(c, x) ∧ ¬ S x)`. It is a **3-CNF** structure
-(`CNF.IsThreeCNF`) when every clause has at most three literals.
+(`cnf.IsThreeCNF`) when every clause has at most three literals.
 
 Descriptive complexity presents satisfiability as a class of finite structures in this way
 [Immerman, Chapter 7][Immerman1999]; the conventions above are fixed here. A formula with `m`
 clauses over `n` variables is presented by a structure with `max m n` elements: the clauses and the
 variables are numbered from the same elements, and the elements naming no clause of the formula
 name the tautology `x ∨ ¬x` of their own variable. The empty structure presents the empty
-formula, which is satisfiable.
+formula, which is satisfiable. The machine-level problem, on formulas of
+`Cslib.Logic.PL.CNF ℕ` encoded as lists, is `Cslib.Complexity.SAT`.
 
-The classes `CNF.sat` and `CNF.threeSat` of satisfiable structures and of satisfiable 3-CNF
+The classes `cnf.SAT` and `cnf.ThreeSAT` of satisfiable structures and of satisfiable 3-CNF
 structures are existential second-order definable, hence closed under isomorphism, and they are
-invariant under disjoint copies, so that tagged interpretations reduce to them.
+invariant under disjoint copies, so that tagged interpretations reduce to them. The vocabulary
+`cnf.vocabulary` lists the table of `pos` before that of `neg` in encoded structures.
 
 ## Main definitions
 
-* `Cslib.Logic.FO.CNF.language`: the language of CNF structures, with `CNF.pos` and `CNF.neg`.
-* `Cslib.Logic.FO.CNF.literals`: the literals of the clause named by an element.
-* `Cslib.Logic.FO.CNF.Satisfies`, `Cslib.Logic.FO.CNF.Satisfiable`: satisfying assignments and
-  satisfiability.
-* `Cslib.Logic.FO.CNF.IsThreeCNF`: every clause has at most three literals.
-* `Cslib.Logic.FO.CNF.sat`, `Cslib.Logic.FO.CNF.threeSat`: the classes SAT and 3SAT.
-* `Cslib.Logic.FO.CNF.satSentence`, `Cslib.Logic.FO.CNF.threeCNFSentence`: their defining
+* `Cslib.Logic.FO.cnf`: the vocabulary of CNF structures, with `cnf.pos` and `cnf.neg`.
+* `Cslib.Logic.FO.cnf.literals`: the literals of the clause named by an element.
+* `Cslib.Logic.FO.cnf.ClauseSatisfied`, `Cslib.Logic.FO.cnf.Satisfies`,
+  `Cslib.Logic.FO.cnf.Satisfiable`: satisfied clauses, satisfying assignments and satisfiability.
+* `Cslib.Logic.FO.cnf.IsThreeCNF`: every clause has at most three literals.
+* `Cslib.Logic.FO.cnf.SAT`, `Cslib.Logic.FO.cnf.ThreeSAT`: the classes SAT and 3SAT.
+* `Cslib.Logic.FO.cnf.satSentence`, `Cslib.Logic.FO.cnf.threeCNFSentence`: their defining
   existential second-order and first-order sentences.
+* `Cslib.Logic.FO.cnf.vocabulary`: the vocabulary of encoded CNF structures.
 
 ## Main results
 
-* `Cslib.Logic.FO.CNF.realize_satSentence`, `Cslib.Logic.FO.CNF.realize_threeCNFSentence`: the
+* `Cslib.Logic.FO.cnf.realize_satSentence`, `Cslib.Logic.FO.cnf.realize_threeCNFSentence`: the
   semantics of the defining sentences.
-* `Cslib.Logic.FO.CNF.definable_sat`, `Cslib.Logic.FO.CNF.definable_threeSat`: SAT and 3SAT are
+* `Cslib.Logic.FO.cnf.definable_SAT`, `Cslib.Logic.FO.cnf.definable_ThreeSAT`: SAT and 3SAT are
   existential second-order definable.
-* `Cslib.Logic.FO.CNF.isoClosed_sat`, `Cslib.Logic.FO.CNF.copyInvariant_sat` and their 3SAT
+* `Cslib.Logic.FO.cnf.isoClosed_SAT`, `Cslib.Logic.FO.cnf.copyInvariant_SAT` and their 3SAT
   versions.
-* `Cslib.Logic.FO.CNF.satisfies_clause_iff_of_templates`: the clauses of a CNF structure
+* `Cslib.Logic.FO.cnf.clauseSatisfied_iff_of_templates`: the clauses of a CNF structure
   interpreted by templates.
 
 ## References
@@ -66,55 +70,49 @@ invariant under disjoint copies, so that tagged interpretations reduce to them.
 
 universe u v w
 
-namespace Cslib.Logic.FO.CNF
+namespace Cslib.Logic.FO
 
 open FirstOrder Language Structure CategoryTheory
 
-/-! ### The language -/
+/-! ### The vocabulary -/
 
-/-- The relation symbols of CNF structures: the positive and the negative occurrence of a
-variable in a clause. -/
-inductive Rel : ℕ → Type
-  | pos : Rel 2
-  | neg : Rel 2
+/-- The relation symbols of CNF structures. -/
+inductive CNFRel : ℕ → Type
+  /-- The positive occurrence of a variable in a clause. -/
+  | pos : CNFRel 2
+  /-- The negative occurrence of a variable in a clause. -/
+  | neg : CNFRel 2
   deriving DecidableEq
 
-/-- The **language of CNF structures**, with two binary relation symbols. -/
-protected def language : Language :=
-  ⟨fun _ => Empty, Rel⟩
+/-- The **vocabulary of CNF structures**, with two binary relation symbols. -/
+def cnf : Language :=
+  ⟨fun _ => Empty, CNFRel⟩
   deriving IsRelational
 
+namespace cnf
+
 /-- `pos(c, x)`: the variable `x` occurs positively in the clause `c`. -/
-abbrev pos : CNF.language.Relations 2 :=
+protected abbrev pos : cnf.Relations 2 :=
   .pos
 
 /-- `neg(c, x)`: the variable `x` occurs negatively in the clause `c`. -/
-abbrev neg : CNF.language.Relations 2 :=
+protected abbrev neg : cnf.Relations 2 :=
   .neg
 
 /-- The relation symbol of the literals of a polarity: `pos` for `true`, `neg` for `false`. -/
-def lit : Bool → CNF.language.Relations 2
-  | true => pos
-  | false => neg
+def lit : Bool → cnf.Relations 2
+  | true => cnf.pos
+  | false => cnf.neg
 
 @[simp]
-theorem lit_true : lit true = pos :=
+theorem lit_true : lit true = cnf.pos :=
   rfl
 
 @[simp]
-theorem lit_false : lit false = neg :=
+theorem lit_false : lit false = cnf.neg :=
   rfl
 
-variable {M : Type*} [CNF.language.Structure M] {N : Type*} [CNF.language.Structure N]
-
-theorem comp_pair {α β : Type*} (f : α → β) (a b : α) : f ∘ ![a, b] = ![f a, f b] := by
-  funext i
-  fin_cases i <;> rfl
-
-/-- An isomorphism preserves the relations of pairs. -/
-theorem relMap_pair_equiv (e : M ≃[CNF.language] N) (R : CNF.language.Relations 2) (a b : M) :
-    RelMap R ![e a, e b] ↔ RelMap R ![a, b] := by
-  rw [← e.map_rel R ![a, b], comp_pair]
+variable {M : Type*} [cnf.Structure M] {N : Type*} [cnf.Structure N]
 
 /-! ### Satisfiability -/
 
@@ -125,18 +123,23 @@ def literals (c : M) : Set (Bool × M) :=
 theorem mem_literals {c : M} {l : Bool × M} : l ∈ literals c ↔ RelMap (lit l.1) ![c, l.2] :=
   Iff.rfl
 
-/-- An assignment **satisfies** a CNF structure when every clause has a positive literal whose
+/-- An assignment **satisfies the clause** named by `c` when the clause has a positive literal whose
 variable is true or a negative literal whose variable is false. -/
+def ClauseSatisfied (A : M → Prop) (c : M) : Prop :=
+  ∃ x, (RelMap cnf.pos ![c, x] ∧ A x) ∨ (RelMap cnf.neg ![c, x] ∧ ¬A x)
+
+/-- An assignment **satisfies** a CNF structure when it satisfies every clause. -/
 def Satisfies (A : M → Prop) : Prop :=
-  ∀ c, ∃ x, (RelMap pos ![c, x] ∧ A x) ∨ (RelMap neg ![c, x] ∧ ¬A x)
+  ∀ c, ClauseSatisfied A c
 
 /-- A CNF structure is **satisfiable** when some assignment satisfies it. -/
-def Satisfiable (M : Type*) [CNF.language.Structure M] : Prop :=
+def Satisfiable (M : Type*) [cnf.Structure M] : Prop :=
   ∃ A : M → Prop, Satisfies A
 
-theorem satisfies_iff (A : M → Prop) :
-    Satisfies A ↔ ∀ c, ∃ l ∈ literals c, (A l.2 ↔ l.1 = true) := by
-  refine forall_congr' fun c => ⟨fun ⟨x, h⟩ => ?_, fun ⟨⟨b, x⟩, hl, h⟩ => ⟨x, ?_⟩⟩
+/-- A clause is satisfied when it has a literal with the truth value of its polarity. -/
+theorem clauseSatisfied_iff (A : M → Prop) (c : M) :
+    ClauseSatisfied A c ↔ ∃ l ∈ literals c, (A l.2 ↔ l.1 = true) := by
+  refine ⟨fun ⟨x, h⟩ => ?_, fun ⟨⟨b, x⟩, hl, h⟩ => ⟨x, ?_⟩⟩
   · rcases h with h | h
     · exact ⟨(true, x), h.1, by simp [h.2]⟩
     · exact ⟨(false, x), h.1, by simp [h.2]⟩
@@ -144,23 +147,34 @@ theorem satisfies_iff (A : M → Prop) :
     · exact .inr ⟨hl, by simpa using h⟩
     · exact .inl ⟨hl, by simpa using h⟩
 
+theorem satisfies_iff (A : M → Prop) :
+    Satisfies A ↔ ∀ c, ∃ l ∈ literals c, (A l.2 ↔ l.1 = true) :=
+  forall_congr' (clauseSatisfied_iff A)
+
 /-- Satisfiability is invariant under isomorphism. -/
-theorem Satisfiable.of_equiv (e : M ≃[CNF.language] N) (h : Satisfiable M) : Satisfiable N := by
+theorem Satisfiable.of_equiv (e : M ≃[cnf] N) (h : Satisfiable M) : Satisfiable N := by
   obtain ⟨A, hA⟩ := h
   refine ⟨fun y => A (e.symm y), fun c => ?_⟩
   obtain ⟨x, hx⟩ := hA (e.symm c)
-  have hrel (R : CNF.language.Relations 2) : RelMap R ![c, e x] ↔ RelMap R ![e.symm c, x] := by
+  have hrel (R : cnf.Relations 2) : RelMap R ![c, e x] ↔ RelMap R ![e.symm c, x] := by
     rw [← relMap_pair_equiv e, e.apply_symm_apply]
   refine ⟨e x, ?_⟩
   simpa only [hrel, e.symm_apply_apply] using hx
 
-theorem satisfiable_iff_of_equiv (e : M ≃[CNF.language] N) : Satisfiable M ↔ Satisfiable N :=
+theorem satisfiable_iff_of_equiv (e : M ≃[cnf] N) : Satisfiable M ↔ Satisfiable N :=
   ⟨Satisfiable.of_equiv e, Satisfiable.of_equiv e.symm⟩
+
+/-- Every clause of a satisfiable CNF structure is nonempty. -/
+theorem Satisfiable.literals_nonempty (h : Satisfiable M) (c : M) : (literals c).Nonempty := by
+  obtain ⟨A, hA⟩ := h
+  obtain ⟨x, ⟨hx, -⟩ | ⟨hx, -⟩⟩ := hA c
+  · exact ⟨(true, x), hx⟩
+  · exact ⟨(false, x), hx⟩
 
 /-! ### 3-CNF structures -/
 
 /-- A CNF structure is a **3-CNF** structure when every clause has at most three literals. -/
-def IsThreeCNF (M : Type*) [CNF.language.Structure M] : Prop :=
+def IsThreeCNF (M : Type*) [cnf.Structure M] : Prop :=
   ∀ c : M, (literals c).encard ≤ 3
 
 /-- A clause has at most three literals exactly when it has no four distinct ones. -/
@@ -171,7 +185,7 @@ theorem encard_literals_le_three_iff (c : M) :
     show ((4 : ℕ) : ℕ∞) = ((3 : ℕ) : ℕ∞) + 1 by norm_cast, ENat.lt_natCast_add_one_iff]
   rfl
 
-theorem isThreeCNF_iff_of_equiv (e : M ≃[CNF.language] N) : IsThreeCNF M ↔ IsThreeCNF N := by
+theorem isThreeCNF_iff_of_equiv (e : M ≃[cnf] N) : IsThreeCNF M ↔ IsThreeCNF N := by
   have hlit (c : M) : literals (e c) = Prod.map id e '' literals c := by
     ext ⟨b, y⟩
     simp only [mem_literals, Set.mem_image, Prod.exists, Prod.map, id, Prod.mk.injEq]
@@ -190,23 +204,27 @@ theorem isThreeCNF_iff_of_equiv (e : M ≃[CNF.language] N) : IsThreeCNF M ↔ I
 /-! ### The classes SAT and 3SAT -/
 
 /-- **SAT**: the class of satisfiable CNF structures. -/
-def sat : Set (Bundled.{w} CNF.language.Structure) :=
+def SAT : Set (Bundled.{w} cnf.Structure) :=
   {M | Satisfiable M}
 
 /-- **3SAT**: the class of satisfiable 3-CNF structures. -/
-def threeSat : Set (Bundled.{w} CNF.language.Structure) :=
+def ThreeSAT : Set (Bundled.{w} cnf.Structure) :=
   {M | IsThreeCNF M ∧ Satisfiable M}
 
-theorem isoClosed_sat : IsoClosed sat.{w} :=
-  fun _ _ _ e => satisfiable_iff_of_equiv e
+/-- SAT is closed under isomorphism. -/
+theorem isoClosed_SAT : IsoClosed SAT.{w} :=
+  IsoClosed.of_forall_imp fun _ _ _ e => Satisfiable.of_equiv e
 
-theorem isoClosed_threeSat : IsoClosed threeSat.{w} :=
-  fun _ _ _ e => and_congr (isThreeCNF_iff_of_equiv e) (satisfiable_iff_of_equiv e)
+/-- 3SAT is closed under isomorphism. -/
+theorem isoClosed_ThreeSAT : IsoClosed ThreeSAT.{w} :=
+  IsoClosed.of_forall_imp fun _ _ _ e h =>
+    ⟨(isThreeCNF_iff_of_equiv e).1 h.1, Satisfiable.of_equiv e h.2⟩
 
 /-- The empty structure is satisfiable. -/
 theorem satisfiable_of_isEmpty [IsEmpty M] : Satisfiable M :=
   ⟨fun _ => True, fun c => isEmptyElim c⟩
 
+/-- The empty structure is a 3-CNF structure. -/
 theorem isThreeCNF_of_isEmpty [IsEmpty M] : IsThreeCNF M :=
   fun c => isEmptyElim c
 
@@ -246,6 +264,8 @@ theorem satisfiable_copies_iff [Nonempty J] : Satisfiable (Copies J M) ↔ Satis
     refine ⟨⟨j, x⟩, ?_⟩
     simpa only [Copies.relMap_copies_two, true_and] using hx
 
+/-- A positive number of disjoint copies of a CNF structure is a 3-CNF structure exactly when the
+structure is. -/
 theorem isThreeCNF_copies_iff [Nonempty J] : IsThreeCNF (Copies J M) ↔ IsThreeCNF M := by
   have hinj (j : J) : Function.Injective fun l : Bool × M => (l.1, (⟨j, l.2⟩ : Copies J M)) := by
     intro l l' h
@@ -258,10 +278,12 @@ theorem isThreeCNF_copies_iff [Nonempty J] : IsThreeCNF (Copies J M) ↔ IsThree
   · rw [literals_copies, (hinj j).encard_image]
     exact h c
 
-theorem copyInvariant_sat : CopyInvariant sat.{w} :=
+/-- SAT is invariant under copies. -/
+theorem copyInvariant_SAT : CopyInvariant SAT.{w} :=
   fun _ _ _ _ _ _ => satisfiable_copies_iff
 
-theorem copyInvariant_threeSat : CopyInvariant threeSat.{w} :=
+/-- 3SAT is invariant under copies. -/
+theorem copyInvariant_ThreeSAT : CopyInvariant ThreeSAT.{w} :=
   fun _ _ _ _ _ _ => and_congr isThreeCNF_copies_iff satisfiable_copies_iff
 
 end Copies
@@ -273,7 +295,7 @@ section Templates
 open TaggedInterpretation
 
 variable {L : Language.{u, v}} {T : Type*} {ι : T → Type*} [∀ t, Finite (ι t)]
-  {I : TaggedInterpretation L CNF.language T ι} {temps : ∀ t, Bool → List (Template L ι t)}
+  {I : TaggedInterpretation L cnf T ι} {temps : ∀ t, Bool → List (Template L ι t)}
   {M : Type w} [L.Structure M]
 
 /-- In a CNF structure interpreted by templates, the literals of a polarity of a clause are the
@@ -287,10 +309,10 @@ theorem relMap_lit_of_templates
 
 /-- In a CNF structure interpreted by templates, an assignment satisfies a clause when a template
 of a polarity applies to its coordinates and relates it to a variable with that truth value. -/
-theorem satisfies_clause_iff_of_templates
+theorem clauseSatisfied_iff_of_templates
     (hI : ∀ b ts, I.rel (lit b) ts = binaryRel (fun t w => Template.listFormula (temps t b) w) ts)
     (A : I.Model M → Prop) (c : I.Model M) :
-    (∃ y, (RelMap pos ![c, y] ∧ A y) ∨ (RelMap neg ![c, y] ∧ ¬A y)) ↔
+    ClauseSatisfied A c ↔
       (∃ τ ∈ temps c.1 true, τ.guard.Realize c.2.1 ∧
         ∃ y hy, τ.Compat c.2.1 y ∧ A ⟨τ.target, y, hy⟩) ∨
       (∃ τ ∈ temps c.1 false, τ.guard.Realize c.2.1 ∧
@@ -317,35 +339,35 @@ end Templates
 /-! ### Defining sentences -/
 
 /-- The symbol `pos` among those of the satisfiability sentence. -/
-abbrev posSym : (CNF.language.sum (ESO.varLanguage fun _ : Unit => 1)).Relations 2 :=
-  Sum.inl pos
+abbrev posSym : (cnf.sum (ESO.varLanguage fun _ : Unit => 1)).Relations 2 :=
+  Sum.inl cnf.pos
 
 /-- The symbol `neg` among those of the satisfiability sentence. -/
-abbrev negSym : (CNF.language.sum (ESO.varLanguage fun _ : Unit => 1)).Relations 2 :=
-  Sum.inl neg
+abbrev negSym : (cnf.sum (ESO.varLanguage fun _ : Unit => 1)).Relations 2 :=
+  Sum.inl cnf.neg
 
 /-- The relation variable `S` of the satisfiability sentence, the set of true variables. -/
-abbrev trueSym : (CNF.language.sum (ESO.varLanguage fun _ : Unit => 1)).Relations 1 :=
+abbrev trueSym : (cnf.sum (ESO.varLanguage fun _ : Unit => 1)).Relations 1 :=
   Sum.inr ⟨(), rfl⟩
 
 /-- The first-order part of the satisfiability sentence:
 `∀ c, ∃ x, (pos(c, x) ∧ S x) ∨ (neg(c, x) ∧ ¬ S x)`. -/
-def satMatrix : (CNF.language.sum (ESO.varLanguage fun _ : Unit => 1)).Sentence :=
+def satMatrix : (cnf.sum (ESO.varLanguage fun _ : Unit => 1)).Sentence :=
   ∀' ∃' ((posSym.boundedFormula₂ &0 &1 ⊓ trueSym.boundedFormula₁ &1) ⊔
     (negSym.boundedFormula₂ &0 &1 ⊓ ∼(trueSym.boundedFormula₁ &1)))
 
 /-- The **satisfiability sentence** `∃ S, ∀ c, ∃ x, (pos(c, x) ∧ S x) ∨ (neg(c, x) ∧ ¬ S x)`. -/
-def satSentence : ESO.Sentence CNF.language :=
+def satSentence : ESO.Sentence cnf :=
   ⟨Unit, fun _ => 1, satMatrix⟩
 
 theorem relMap_posSym (R : Unit → Set (Fin 1 → M)) (x : Fin 2 → M) :
     @RelMap _ M (@sumStructure _ _ M _ (ESO.varLanguage.structure R)) 2 posSym x ↔
-      RelMap pos x :=
+      RelMap cnf.pos x :=
   Iff.rfl
 
 theorem relMap_negSym (R : Unit → Set (Fin 1 → M)) (x : Fin 2 → M) :
     @RelMap _ M (@sumStructure _ _ M _ (ESO.varLanguage.structure R)) 2 negSym x ↔
-      RelMap neg x :=
+      RelMap cnf.neg x :=
   Iff.rfl
 
 theorem relMap_trueSym (R : Unit → Set (Fin 1 → M)) (x : Fin 1 → M) :
@@ -356,8 +378,9 @@ theorem realize_satMatrix (R : Unit → Set (Fin 1 → M)) :
     (letI := ESO.varLanguage.structure (arity := fun _ : Unit => 1) R; M ⊨ satMatrix) ↔
       Satisfies fun x => ![x] ∈ R () := by
   simp [satMatrix, Sentence.Realize, Formula.Realize, Fin.snoc, relMap_posSym, relMap_negSym,
-    relMap_trueSym, Satisfies]
+    relMap_trueSym, Satisfies, ClauseSatisfied]
 
+/-- The satisfiability sentence holds exactly in the satisfiable CNF structures. -/
 theorem realize_satSentence : satSentence.Realize M ↔ Satisfiable M := by
   change (∃ R : Unit → Set (Fin 1 → M),
     letI := ESO.varLanguage.structure (arity := fun _ : Unit => 1) R; M ⊨ satMatrix) ↔ _
@@ -366,18 +389,18 @@ theorem realize_satSentence : satSentence.Realize M ↔ Satisfiable M := by
   simpa using hA
 
 /-- **SAT is existential second-order definable.** -/
-theorem definable_sat : ESO.Definable sat.{w} :=
+theorem definable_SAT : ESO.Definable SAT.{w} :=
   ⟨satSentence, fun _ _ => realize_satSentence.symm⟩
 
 /-- The formula in the variables `c` (`Sum.inl ()`) and `x₀, …, x₃` (`Sum.inr i`) saying that the
 literals `(bs i, x i)` of the clause `c` are distinct. -/
-noncomputable def fourLiteralsFormula (bs : Fin 4 → Bool) : CNF.language.Formula (Unit ⊕ Fin 4) :=
+noncomputable def fourLiteralsFormula (bs : Fin 4 → Bool) : cnf.Formula (Unit ⊕ Fin 4) :=
   Formula.iInf (fun i => (lit (bs i)).formula₂ (.var (.inl ())) (.var (.inr i))) ⊓
     Formula.iInf fun ij : Fin 4 × Fin 4 =>
       if ij.1 ≠ ij.2 ∧ bs ij.1 = bs ij.2 then ∼(varEq (.inr ij.1) (.inr ij.2)) else ⊤
 
 /-- The **3-CNF sentence**: no clause has four distinct literals. -/
-noncomputable def threeCNFSentence : CNF.language.Sentence :=
+noncomputable def threeCNFSentence : cnf.Sentence :=
   closeAll Unit ∼(Formula.iSup fun bs : Fin 4 → Bool => Formula.iExs (Fin 4)
     (fourLiteralsFormula bs))
 
@@ -397,7 +420,7 @@ theorem realize_iExs_fourLiteralsFormula (c : M) :
     have hx : xs i = xs j := congrArg Prod.snd h
     have := hne i j
     split_ifs at this with hc
-    · exact this ((realize_varEq (L := CNF.language) _ _ _).2 hx)
+    · exact this ((realize_varEq (L := cnf) _ _ _).2 hx)
     · exact hc ⟨hij, hb⟩
   · rintro ⟨l, hlit, hinj⟩
     refine ⟨fun i => (l i).1, fun i => (l i).2, hlit, fun i j => ?_⟩
@@ -406,6 +429,7 @@ theorem realize_iExs_fourLiteralsFormula (c : M) :
       exact fun hx => h.1 (hinj (Prod.ext h.2 hx))
     · simp
 
+/-- The 3-CNF sentence holds exactly in the 3-CNF structures. -/
 theorem realize_threeCNFSentence : M ⊨ threeCNFSentence ↔ IsThreeCNF M := by
   simp only [threeCNFSentence, realize_closeAll, Formula.realize_not]
   refine ⟨fun h c => ?_, fun h v => ?_⟩
@@ -416,9 +440,10 @@ theorem realize_threeCNFSentence : M ⊨ threeCNFSentence ↔ IsThreeCNF M := by
     exact h _
 
 /-- The sentence saying that no clause is empty: `∀ c, ∃ x, pos(c, x) ∨ neg(c, x)`. -/
-def nonemptyClausesSentence : CNF.language.Sentence :=
-  ∀' ∃' (pos.boundedFormula₂ &0 &1 ⊔ neg.boundedFormula₂ &0 &1)
+def nonemptyClausesSentence : cnf.Sentence :=
+  ∀' ∃' (cnf.pos.boundedFormula₂ &0 &1 ⊔ cnf.neg.boundedFormula₂ &0 &1)
 
+/-- The sentence `nonemptyClausesSentence` holds exactly when no clause is empty. -/
 theorem realize_nonemptyClausesSentence :
     M ⊨ nonemptyClausesSentence ↔ ∀ c : M, (literals c).Nonempty := by
   simp only [nonemptyClausesSentence, Sentence.Realize, Formula.Realize,
@@ -432,20 +457,26 @@ theorem realize_nonemptyClausesSentence :
     · exact .inr (by simpa [mem_literals, Fin.snoc] using hx)
     · exact .inl (by simpa [mem_literals, Fin.snoc] using hx)
 
-/-- Every clause of a satisfiable CNF structure is nonempty. -/
-theorem Satisfiable.literals_nonempty (h : Satisfiable M) (c : M) : (literals c).Nonempty := by
-  obtain ⟨A, hA⟩ := h
-  obtain ⟨x, ⟨hx, -⟩ | ⟨hx, -⟩⟩ := hA c
-  · exact ⟨(true, x), hx⟩
-  · exact ⟨(false, x), hx⟩
-
 /-- **3-CNF structures form a first-order definable class.** -/
 theorem definable_isThreeCNF :
-    FO.Definable {M : Bundled.{w} CNF.language.Structure | IsThreeCNF M} :=
+    FO.Definable {M : Bundled.{w} cnf.Structure | IsThreeCNF M} :=
   ⟨threeCNFSentence, fun _ _ => realize_threeCNFSentence.symm⟩
 
 /-- **3SAT is existential second-order definable.** -/
-theorem definable_threeSat : ESO.Definable threeSat.{w} :=
-  (ESO.Definable.of_fo definable_isThreeCNF).inter definable_sat
+theorem definable_ThreeSAT : ESO.Definable ThreeSAT.{w} :=
+  (ESO.Definable.of_fo definable_isThreeCNF).inter definable_SAT
 
-end Cslib.Logic.FO.CNF
+/-! ### Encoded CNF structures -/
+
+/-- The vocabulary of encoded CNF structures: the table of `pos`, then that of `neg`. -/
+def vocabulary : Vocabulary cnf where
+  count := 2
+  symbol :=
+    { toFun := fun i => if i = 0 then ⟨2, cnf.pos⟩ else ⟨2, cnf.neg⟩
+      invFun := fun | ⟨_, .pos⟩ => 0 | ⟨_, .neg⟩ => 1
+      left_inv := fun i => by fin_cases i <;> rfl
+      right_inv := fun | ⟨_, .pos⟩ => rfl | ⟨_, .neg⟩ => rfl }
+
+end cnf
+
+end Cslib.Logic.FO
