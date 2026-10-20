@@ -67,6 +67,13 @@ info: 'Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode' depends on 
 #print axioms Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode
 
 /--
+info: 'Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode
+
+/--
 info: 'Cslib.Circuits.Boolean.reconstructionCost_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

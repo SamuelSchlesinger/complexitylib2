@@ -46,7 +46,8 @@ four stages, each querying the previous one:
 The stages are bit-blasted De Morgan circuits whose costs are bounded in
 `Cslib.Circuits.Boolean.HardnessAmplification.Stages`. In the ranges forced by the hypotheses the
 reconstruction cost is at most `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)`
-(`Cslib.Circuits.Boolean.reconstructionCost_le`). The smallest admissible parameters have
+(`Cslib.Circuits.Boolean.reconstructionCost_le`,
+`Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode`). The smallest admissible parameters have
 `2 ^ K = O(w / ε ^ 2)`, `3 ^ L = O((m * b) ^ (log₂ 3))`, `D = O(√(d * q))` and
 `q = poly(d, w, 1 / ε)`, so for `2 ^ b = poly(n / ε)` the reconstructed circuit has size
 polynomial in `s`, `n` and `1 / ε`, and the encoding has `O(n + log (1 / ε))` input bits when
@@ -70,6 +71,8 @@ are separate steps.
 * `Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode`: **the reconstruction theorem**.
 * `Cslib.Circuits.Boolean.reconstructionCost_le`: the reconstruction cost is at most
   `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)`.
+* `Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode`: the reconstruction theorem
+  with this polynomial bound.
 
 ## References
 
@@ -326,6 +329,57 @@ private theorem lineErrors_le {q Q a ε D δ : ℝ} (hq : 1 < q) (hQ : 1 ≤ Q) 
         field_simp
         ring
 
+/-- The ranges of the parameters forced by the hypotheses of the reconstruction theorem: the
+Sudan parameter `D` is positive and below `q`, and `d + 1 ≤ q - 1`, so there are `d + 1` distinct
+nonzero interpolation nodes. -/
+private theorem reconstruction_ranges {q d D K m : ℕ} {ε : ℝ} (hq2 : 2 ≤ q) (hε : 0 < ε)
+    (hε1 : ε ≤ 1 / 2) (hn : q < #(Sudan.monomials d D))
+    (hmargin : (2 : ℝ) ^ (K + 3) * D ≤ q * ε)
+    (herr : 6 * ((d : ℝ) + 1) * (1 / (q : ℝ) ^ m + 2 ^ (K + 4) / (q * ε) + D / (q - 1)) ≤ 1) :
+    1 ≤ D ∧ D < q ∧ d + 1 ≤ q - 1 := by
+  have hq1 : (1 : ℝ) < q := by exact_mod_cast hq2
+  have hD1 : 1 ≤ D := by
+    by_contra hD0
+    push Not at hD0
+    have : Sudan.monomials d D = {(0, 0)} := by
+      rw [Nat.lt_one_iff.1 hD0]
+      ext ⟨a, c⟩
+      simp only [Sudan.mem_monomials, mem_singleton, Prod.mk.injEq]
+      constructor
+      · rintro ⟨ha, hc, -⟩
+        exact ⟨by omega, by omega⟩
+      · rintro ⟨rfl, rfl⟩
+        simp
+    rw [this, card_singleton] at hn
+    omega
+  have hDq : D < q := by
+    have : (2 : ℝ) ^ (K + 3) * D ≤ q / 2 := by nlinarith
+    have h8 : (8 : ℝ) ≤ 2 ^ (K + 3) := by
+      calc (8 : ℝ) = 2 ^ 3 := by norm_num
+        _ ≤ 2 ^ (K + 3) := pow_le_pow_right₀ (by norm_num) (by omega)
+    have : (D : ℝ) < q := by
+      have hDpos : (0 : ℝ) ≤ D := by positivity
+      nlinarith
+    exact_mod_cast this
+  refine ⟨hD1, hDq, ?_⟩
+  have hDpos : (0 : ℝ) < D := by exact_mod_cast hD1
+  have h6 : 6 * ((d : ℝ) + 1) * (D / (q - 1)) ≤ 1 := by
+    refine le_trans (mul_le_mul_of_nonneg_left ?_ (by positivity)) herr
+    have : (0 : ℝ) ≤ 1 / (q : ℝ) ^ m := by positivity
+    have : (0 : ℝ) ≤ 2 ^ (K + 4) / (q * ε) := by positivity
+    linarith
+  have : 6 * ((d : ℝ) + 1) * D ≤ q - 1 := by
+    rw [mul_div_assoc', div_le_one (by linarith)] at h6
+    exact h6
+  have hD1' : (1 : ℝ) ≤ D := by exact_mod_cast hD1
+  have hd0 : (0 : ℝ) ≤ (d : ℝ) + 1 := by positivity
+  have : ((d : ℝ) + 1) ≤ q - 1 := by nlinarith
+  have : ((d + 1 : ℕ) : ℝ) ≤ ((q - 1 : ℕ) : ℝ) := by
+    rw [Nat.cast_sub (by omega)]
+    push_cast
+    exact this
+  exact_mod_cast this
+
 omit [DecidableEq F] in
 /-- **The reconstruction theorem** [SudanTrevisanVadhan2001]. Let `F` be a field of `q` elements
 with an encoding `enc : F ≃ BitString w`, let `h : BitString b ↪ F`, let `f` be a Boolean
@@ -373,23 +427,6 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
   obtain ⟨masks, guess, hgl⟩ := exists_glPredictor_agree enc h f C hε hagree hK hsize
   set G := glPredictor enc C masks guess
   -- the parameters
-  have hD1 : 1 ≤ D := by
-    by_contra hD0
-    push Not at hD0
-    have : Sudan.monomials d D = {(0, 0)} := by
-      rw [Nat.lt_one_iff.1 hD0]
-      ext ⟨a, c⟩
-      simp only [Sudan.mem_monomials, mem_singleton, Prod.mk.injEq]
-      constructor
-      · rintro ⟨ha, -, hac⟩
-        refine ⟨by omega, ?_⟩
-        rcases Nat.eq_zero_or_pos c with hc | hc
-        · exact hc
-        · nlinarith
-      · rintro ⟨rfl, rfl⟩
-        simp
-    rw [this, card_singleton] at hn
-    omega
   have hε1 : ε ≤ 1 / 2 := by
     have hN : (#{y | C y = hardnessEncode enc h f y} : ℝ) ≤ 2 ^ (m * w + w) := by
       have := card_le_univ (univ.filter fun y : BitString (m * w + w) =>
@@ -400,15 +437,7 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
       exact_mod_cast this
     have hpos : (0 : ℝ) < 2 ^ (m * w + w) := by positivity
     nlinarith
-  have hDq : D < q := by
-    have : (2 : ℝ) ^ (K + 3) * D ≤ q / 2 := by nlinarith
-    have h8 : (8 : ℝ) ≤ 2 ^ (K + 3) := by
-      calc (8 : ℝ) = 2 ^ 3 := by norm_num
-        _ ≤ 2 ^ (K + 3) := pow_le_pow_right₀ (by norm_num) (by omega)
-    have : (D : ℝ) < q := by
-      have hDpos : (0 : ℝ) ≤ D := by positivity
-      nlinarith
-    exact_mod_cast this
+  obtain ⟨hD1, hDq, hdq⟩ := reconstruction_ranges hq2 hε hε1 hn hmargin herr
   set Q : ℝ := (q : ℝ) ^ m with hQ_def
   have hQ : (Fintype.card (Fin m → F) : ℝ) = Q := by
     rw [Fintype.card_fun, Fintype.card_fin]
@@ -450,23 +479,7 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
   -- the interpolation nodes
   have hnodes : d + 1 ≤ Fintype.card {c : F // c ≠ 0} := by
     rw [Fintype.card_subtype_compl, Fintype.card_subtype_eq]
-    have hDpos : (0 : ℝ) < D := by exact_mod_cast hD1
-    have h6 : 6 * ((d : ℝ) + 1) * (D / (q - 1)) ≤ 1 := by
-      refine le_trans (mul_le_mul_of_nonneg_left ?_ (by positivity)) herr
-      have : (0 : ℝ) ≤ 1 / Q := by positivity
-      have : (0 : ℝ) ≤ 2 ^ (K + 4) / (q * ε) := by positivity
-      linarith
-    have : 6 * ((d : ℝ) + 1) * D ≤ q - 1 := by
-      rw [mul_div_assoc', div_le_one (by linarith)] at h6
-      exact h6
-    have hD1' : (1 : ℝ) ≤ D := by exact_mod_cast hD1
-    have hd0 : (0 : ℝ) ≤ (d : ℝ) + 1 := by positivity
-    have : ((d : ℝ) + 1) ≤ q - 1 := by nlinarith
-    have : ((d + 1 : ℕ) : ℝ) ≤ ((q - 1 : ℕ) : ℝ) := by
-      rw [Nat.cast_sub (by omega)]
-      push_cast
-      exact this
-    exact_mod_cast this
+    exact hdq
   obtain ⟨ν₀⟩ := Function.Embedding.nonempty_of_card_le (α := Fin (d + 1))
     (β := {c : F // c ≠ 0}) (by simpa using hnodes)
   let ν : Fin (d + 1) ↪ F := ν₀.trans (Function.Embedding.subtype _)
@@ -777,5 +790,54 @@ theorem reconstructionCost_le {w b m D K L s q M : ℕ} (hq : q = 2 ^ w) (hw : 1
         norm_num
 
 end Bound
+
+omit [DecidableEq F] in
+/-- **The reconstruction theorem with a polynomial bound** [SudanTrevisanVadhan2001]. Under the
+hypotheses of `complexity_le_of_agree_hardnessEncode`, with `q = |F| = 2 ^ w`, the function `f`
+has a De Morgan circuit with at most `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)` gates. -/
+theorem complexity_le_pow_of_agree_hardnessEncode (enc : F ≃ BitString w)
+    (h : BitString b ↪ F) (f : BooleanFunction (m * b)) {C : BooleanFunction (m * w + w)} {s : ℕ}
+    (hC : complexity interpretation (single C) ≤ s) {ε : ℝ} (hε : 0 < ε)
+    (hagree : (1 / 2 + ε) * 2 ^ (m * w + w) ≤ #{y | C y = hardnessEncode enc h f y})
+    {K D L : ℕ} (hK : 0 < K) (hsize : (w : ℝ) ≤ 2 * (ε / 2) ^ 2 * (2 ^ K - 1 : ℕ))
+    (hd : 1 ≤ m * (2 ^ b - 1))
+    (hn : Fintype.card F < #(Sudan.monomials (m * (2 ^ b - 1)) D))
+    (hmargin : (2 : ℝ) ^ (K + 3) * D ≤ Fintype.card F * ε)
+    (herr : 6 * ((m * (2 ^ b - 1) : ℕ) + 1 : ℝ) * (1 / (Fintype.card F : ℝ) ^ m +
+      2 ^ (K + 4) / (Fintype.card F * ε) + D / (Fintype.card F - 1)) ≤ 1)
+    (hL : m * b ≤ 2 ^ L) :
+    complexity interpretation (single f) ≤
+      2 ^ 11 * 3 ^ L * m * w ^ 2 * Fintype.card F ^ 9 * 4 ^ K * (s + 1) := by
+  refine (complexity_le_of_agree_hardnessEncode enc h f hC hε hagree hK hsize hd hn hmargin herr
+    hL).trans ?_
+  have hqw : Fintype.card F = 2 ^ w := by
+    rw [Fintype.card_congr enc]
+    simp [BitString]
+  have hq2 : 2 ≤ Fintype.card F := Fintype.one_lt_card
+  have hε1 : ε ≤ 1 / 2 := by
+    have hN : (#{y | C y = hardnessEncode enc h f y} : ℝ) ≤ 2 ^ (m * w + w) := by
+      have := card_le_univ (univ.filter fun y : BitString (m * w + w) =>
+        C y = hardnessEncode enc h f y)
+      have hc : (Fintype.card (BitString (m * w + w)) : ℝ) = 2 ^ (m * w + w) := by
+        simp [BitString]
+      rw [← hc]
+      exact_mod_cast this
+    have hpos : (0 : ℝ) < 2 ^ (m * w + w) := by positivity
+    nlinarith
+  obtain ⟨-, hDq, hdq⟩ := reconstruction_ranges hq2 hε hε1 hn hmargin herr
+  refine reconstructionCost_le hqw ?_ ?_ ?_ hDq ?_ (by omega)
+  · by_contra hw
+    rw [Nat.lt_one_iff.1 (not_le.1 hw), pow_zero] at hqw
+    omega
+  · by_contra hm
+    rw [Nat.lt_one_iff.1 (not_le.1 hm), zero_mul] at hd
+    omega
+  · have := Fintype.card_le_of_embedding h
+    simpa [BitString] using this
+  · calc #(Sudan.monomials (m * (2 ^ b - 1)) D) ≤ #(range (D + 1) ×ˢ range (D + 1)) :=
+          card_filter_le _ _
+      _ = (D + 1) * (D + 1) := by rw [card_product, card_range]
+      _ ≤ Fintype.card F * Fintype.card F := Nat.mul_le_mul hDq hDq
+      _ = Fintype.card F ^ 2 := (sq _).symm
 
 end Cslib.Circuits.Boolean
