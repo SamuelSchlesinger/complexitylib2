@@ -287,5 +287,6 @@ import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WordRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

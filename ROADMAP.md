@@ -523,6 +523,23 @@ space bounds. Further class-level work needs resource certificates for the actua
 * the ordered logarithmic-space FO encoding bridge and first-order Circuit Value completeness in the
   [first continuing priority](#continuing-priorities), together with uniform circuit-family and
   counting-machine characterizations;
+* RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
+  Lean formalization accompanying the tromino undecidability paper, has [linear and polynomial
+  instruction bounds](Complexity/Computability/WordRAM/Time.lean) uniform over all fitting widths
+  above a logarithmic lower threshold,
+  [structured programs](Complexity/Computability/WordRAM/Structured.lean) compiling with exact
+  instruction counts, [allocation and arrays](Complexity/Computability/WordRAM/Allocation.lean) and
+  a [linear-time element-distinctness client](Complexity/Algorithms/WordRAM/ElementDistinctness.lean)
+  whose promised inputs provably fit at that threshold. The generic classes alone do not supply
+  this input-fit guarantee. Open: quantitative simulations to the existing
+  [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) (which supports unit and logarithmic cost)
+  and Turing machines, starting with the additive fragment under logarithmic cost
+  ([#81](https://github.com/SamuelSchlesinger/complexitylib2/issues/81)). The unrestricted converse
+  from prescribed-width to uniform decision is false: width can supply instance-dependent advice.
+  A useful conversion must specify an input-fit guarantee, a size-based width-selection procedure
+  with computability and resource bounds, encoding conventions, and simulation overhead. Transfer
+  of cell-probe lower bounds and the source's Horn-SAT, 2SAT, matching and domino-tiling clients
+  also remain open;
 * single-tape simulation and machine-backed Kolmogorov and Nisan–Wigderson decoding results;
 * concrete list-decodable codes for Nisan–Wigderson and order-invariant descriptive-complexity
   queries.
