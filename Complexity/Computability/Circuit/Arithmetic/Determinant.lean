@@ -9,9 +9,8 @@ module
 
 public import Complexity.Computability.Circuit.Arithmetic.VP
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
-public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
+public import Complexity.Computability.Circuit.Bird
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
-import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 
 /-!
 # The determinant is in VP
@@ -54,10 +53,9 @@ obtained from a synthesis bound, not constructed by a certified uniform procedur
 * [R. S. Bird, *A simple division-free algorithm for computing determinants*][Bird2011]
 * [S. J. Berkowitz, *On computing the determinant in small parallel time using a small number of
   processors*][Berkowitz1984]
-* The private bridge lemmas copy, over every commutative ring, lemmas and proofs private to
-  Mathlib's `Mathlib/LinearAlgebra/Matrix/Determinant/Bird/Correctness.lean` (Copyright (c) 2026
-  Paul Cadman, Apache 2.0), following their integer restatement in
-  `Complexity/Computability/Circuit/Rational/Determinant.lean`.
+* The shared bridges in `Complexity/Computability/Circuit/Bird.lean` restate Paul Cadman's
+  private Mathlib correctness proofs, preserving the earlier integer and generic-ring source
+  credit there.
 -/
 
 @[expose] public section
@@ -74,46 +72,10 @@ section Bird
 
 variable {R : Type*} [CommRing R] {n : ℕ}
 
-private lemma sumFrom_eq_sum_Ico {lo : ℕ} (f : ℕ → R) :
-    BirdDet.sumFrom n lo f = ∑ k ∈ Finset.Ico lo n, f k := by
-  induction lo using BirdDet.sumFrom_induct n with
-  | step lo hlo ih =>
-    rw [BirdDet.sumFrom_step n lo f hlo, ih, ← Finset.sum_eq_sum_Ico_succ_bot hlo f]
-  | stop lo hlo => rw [BirdDet.sumFrom_stop n lo f hlo, Finset.Ico_eq_empty hlo, Finset.sum_empty]
-
-private lemma sumFrom_fin_tail (i : Fin n) (f : ℕ → R) :
-    BirdDet.sumFrom n (i.val + 1) f = ∑ k ∈ Finset.Ioi i, f k.val := by
-  rw [sumFrom_eq_sum_Ico]
-  calc _ = ∑ k ∈ (Finset.range n).filter (i.val < ·), f k := by
-         congr; ext; simp only [Finset.mem_Ico, Finset.mem_filter, Finset.mem_range]; omega
-       _ = ∑ k ∈ Finset.range n, if i.val < k then f k else 0 := by rw [Finset.sum_filter]
-       _ = ∑ k : Fin n, if i.val < k.val then f k.val else 0 := by rw [← Fin.sum_univ_eq_sum_range]
-       _ = _ := by simp [← Finset.sum_filter, Finset.filter_lt_eq_Ioi]
-
-private lemma iterate_array_spec (A : Array R) (hA : A.size = n * n) (t : ℕ) (i j : Fin n) :
-    ((BirdDet.stepEntry n A)^[t] (BirdDet.get n A)) i.val j.val =
-      (BirdDet.Spec.stepEntry (.ofArray A hA))^[t] (.ofArray A hA) i j := by
-  rw [Matrix.ofArray_eq_of_getD]
-  induction t generalizing i j with
-  | zero => simp [BirdDet.get_eq]
-  | succ t ih =>
-    simp_rw [Function.iterate_succ_apply', BirdDet.stepEntry_eq, BirdDet.Spec.stepEntry_eq,
-      sumFrom_fin_tail, ih, Matrix.of_apply, BirdDet.get_eq]
-
-private lemma birdDet_eq_birdDetSpec (A : Array R) (hA : A.size = n * n) :
-    BirdDet.birdDet n A = BirdDet.Spec.birdDet (.ofArray A hA) := by
-  cases n with
-  | zero => rw [BirdDet.birdDet_zero, BirdDet.Spec.birdDetSpec_zero]
-  | succ k =>
-    simp [BirdDet.birdDet_succ, BirdDet.Spec.birdDetSpec_succ, ← iterate_array_spec A hA k]
-
 /-- Bird's algorithm in matrix form computes the determinant over every commutative ring
-[Bird2011]. This restates `BirdDet.birdDetSpec_eq_det`, which is private to its Mathlib module. -/
-theorem det_eq_birdDetSpec (A : Matrix (Fin n) (Fin n) R) : A.det = BirdDet.Spec.birdDet A := by
-  let a := Array.ofFn fun k : Fin (n * n) => A k.divNat k.modNat
-  have ha : a.size = n * n := Array.size_ofFn
-  have he : Matrix.ofArray a ha = A := Matrix.ofArray_ofFn A
-  rw [← he, ← birdDet_eq_birdDetSpec a ha, BirdDet.det_eq_birdDet a ha]
+[Bird2011]. The shared bridge restates Mathlib's private matrix-specification theorem. -/
+theorem det_eq_birdDetSpec (A : Matrix (Fin n) (Fin n) R) : A.det = BirdDet.Spec.birdDet A :=
+  (Bird.spec_eq_det A).symm
 
 end Bird
 

@@ -256,6 +256,37 @@ These uniform verifier closure results support the gap amplification below.
 \end{result}
 
 \begin{result}
+\subsection{Relativized counting and majority verifiers}
+For every language oracle $A\subseteq\{0,1\}^*$ and fixed injective input encoding,
+$\#\cc{P}^A$ counts accepted Boolean witnesses of exactly $p(|x|)$ bits using a deterministic
+polynomial-time oracle verifier; $\cc{GapP}^A$ consists of differences of two such counts.
+The verifier uses one fixed word-query program, realized by a finite machine under one
+polynomial clock against every stateful word oracle, charging request construction and
+reply access. Only correctness of its Boolean output is specialized to the fixed,
+stateless language oracle $A$. The class $\cc{PP}^A$ uses the same verifier model and
+accepts exactly when strictly more than half the witnesses accept; ties reject. Then
+\[
+ L\in\cc{PP}^A\quad\Longleftrightarrow\quad
+ \exists g\in\cc{GapP}^A\ \forall x,\quad x\in L\longleftrightarrow g(x)>0.
+\]
+The reverse construction pads two certificates of lengths $p(|x|)$ and $q(|x|)$ with
+false tails to length $(p+q)(|x|)$, then uses one selector bit; zero lengths are allowed.
+Each ordinary class is contained in its relativized counterpart by ignoring the oracle.
+If $A\in\cc{P}$ on words encoded as themselves, certified oracle simulation gives
+$\#\cc{P}^A=\#\cc{P}$, $\cc{GapP}^A=\cc{GapP}$ and $\cc{PP}^A=\cc{PP}$.
+These are verifier statements; nondeterministic/probabilistic oracle-machine
+characterizations and approximate-counting lowness remain separate.
+\citep{FennerFortnowKurtz1994,Fortnow1997,AroraBarak09}
+\declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/SharpP/Oracle.lean}{73}{Cslib.Complexity.SharpP_subset_SharpPWithOracle}
+\declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/SharpP/Oracle.lean}{78}{Cslib.Complexity.GapP_subset_GapPWithOracle}
+\declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/SharpP/Oracle.lean}{84}{Cslib.Complexity.SharpPWithOracle_eq_SharpP}
+\declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/SharpP/Oracle.lean}{90}{Cslib.Complexity.GapPWithOracle_eq_GapP}
+\declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/PP/Oracle.lean}{66}{Cslib.Complexity.PP_subset_PPWithOracle}
+\declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/PP/Oracle.lean}{71}{Cslib.Complexity.PPWithOracle_eq_PP}
+\declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/PP/Oracle.lean}{78}{Cslib.Complexity.mem_PPWithOracle_iff_exists_GapPWithOracle}
+\end{result}
+
+\begin{result}
 \subsection{Boolean closure and unambiguous polynomial time}
 For every fixed injective encoding, $\cc{P}$, $\cc{NP}$ and $\cc{coNP}$ are
 closed under union and intersection. The odd-acceptance class $\oplus\cc{P}$
@@ -512,6 +543,46 @@ Oracle lowness and counting-machine characterizations remain separate.
 \declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{118}{Cslib.Complexity.GapP.prod_sub_mem}
 \end{result}
 
+
+\begin{result}
+\subsection{Uniform bounded wide-gap closure}
+Fix an injective instance encoding, with encoded length $|x|$. Let $A$ be a single
+jointly uniform language on pairs $(x,i)$, using the pair encoding with unary $i$,
+and let $r(x)$ be computable in polynomial time with unary output. For either
+$\mathcal C=\cc{WPP}$ or $\mathcal C=\cc{LWPP}$,
+\[
+A\in\mathcal C\quad\Longrightarrow\quad
+\begin{aligned}
+\{x:\forall i<r(x),\ (x,i)\in A\}&\in\mathcal C,\\
+\{x:\exists i<r(x),\ (x,i)\in A\}&\in\mathcal C.
+\end{aligned}
+\]
+Membership of every slice separately is not the hypothesis: the joint language
+must have one uniform witness. The count may grow with the input and may differ
+between inputs of the same length. Empty ranges give the full language for
+conjunction and the empty language for disjunction.
+
+For WPP, multiply the indexed gaps and their nonzero binary FP targets.
+For LWPP, the joint encoded length is exactly $2|x|+1+i$. If $f$ is its nonzero
+length-only target and a fixed $p\in\mathbb N[X]$ bounds $r(x)$ by $p(n)$ at length $n$,
+all possible accepting
+product targets lie in the length-only polynomial family
+\[
+T(n,k)=\prod_{i<k}f(2n+1+i),\qquad 0\leq k\leq p(n).
+\]
+Every target is nonzero, including $T(n,0)=1$. Polynomial-family robustness
+normalizes this family even though the selected index $k=r(x)$ is input-dependent.
+Complement closure gives the existential result. This is a formalized deduction
+from Fenner--Fortnow--Kurtz counting algebra and the polynomial-family robustness
+of Hemaspaandra, Hemaspaandra, Spakowski and Watanabe.
+\citep{FennerFortnowKurtz1994}\citep[Theorem 3.1]{HemaspaandraEtAl2018}
+The classes retain the verifier-based model; these results do not establish
+adaptive oracle closure or PP-lowness.
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{70}{Cslib.Complexity.forall_lt_mem_WPP}
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{96}{Cslib.Complexity.exists_lt_mem_WPP}
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{106}{Cslib.Complexity.forall_lt_mem_LWPP}
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{138}{Cslib.Complexity.exists_lt_mem_LWPP}
+\end{result}
 
 \begin{result}
 \subsection{Small bounded-error and almost-wide counting}

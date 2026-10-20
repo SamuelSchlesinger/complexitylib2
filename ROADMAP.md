@@ -54,6 +54,11 @@ multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full tw
 (Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
 accepting/rejecting binary target lists. Original targets may be zero; neither index must be
 computable ([WPP.TwoSided](Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean)).
+Uniform bounded conjunction and disjunction also preserve both classes for a single jointly
+uniform language on instances and unary indices, with any polynomial-time unary input-dependent
+bound. The LWPP proof normalizes all possible prefix targets at each length
+([WPP.Bounded](Complexity/Computability/Complexity/Classes/WPP/Bounded.lean)); it does not
+establish adaptive oracle closure.
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
 MAJSAT and permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
 collapse, and WPP/LWPP oracle lowness.
@@ -72,8 +77,10 @@ with a #P count and positive binary-output polynomial-time threshold. Intersecti
 language with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
 The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
 already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
-provide a counting-algebra foundation for future oracle simulations; AWPP PP-lowness
-remains an approximate-counting milestone.
+provide a counting-algebra foundation for future oracle simulations.
+[Relativized counting and majority verifiers](Complexity/Computability/Complexity/Classes/PP/Oracle.lean)
+now provide the positive-GapP characterization and elimination of P-decidable oracles;
+AWPP PP-lowness remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
@@ -191,8 +198,14 @@ of the handover. The work below remains available for subsequent, independently 
      [Ordered/TupleInterpretation](Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean)
      defines quantifier-free strict/weak order and the canonical full-domain constants, with
      proved unique selection and ranks `0`, `1`, `n^k - 1` for positive dimension.
-     **Next milestones:** successor and arbitrary-base BIT lifting; numeric-preserving
-     composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
+     **Full-domain successor prerequisite completed (#54):**
+     [Ordered/TupleSuccessor](Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean)
+     proves that the carry formula holds exactly at consecutive arbitrary-base lexicographic
+     ranks, with explicit zero-dimension and maximum/no-wrap boundaries. Its generic compiler
+     preserves quantifier-freeness when the supplied source successor is quantifier-free.
+     The canonical `≤`/BIT instance uses a universal adjacency formula; no unconditional
+     quantifier-free successor claim is made for this basis.
+     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
