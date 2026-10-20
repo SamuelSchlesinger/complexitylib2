@@ -30,8 +30,8 @@ false claim with probability at most `ops e * D * ε` instead of `roundDegree e 
 (`Cslib.Complexity.QBFProtocol.acceptProb_verifyAt_le`), with `ops e` the number of operators. A
 stateless prover whose replies agree with the true values and restrictions on every query about a
 subformula all of whose variables lie in a list `xs` is accepted with certainty on every true
-claim about a formula whose variables lie in `xs`
-(`Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt`).
+claim about a formula whose variables lie in `xs` and whose largest round degree
+`maxRoundDegree e` is at most `D` (`Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt`).
 
 ## Main definitions
 

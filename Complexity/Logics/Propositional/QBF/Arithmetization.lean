@@ -42,8 +42,8 @@ quantifier, so it has the value of `φ` on `0`-`1` points
 at most the size of `φ` (`Cslib.Logic.PL.QBF.degBound_arithmetize_le`) and the sum of the round
 degrees is at most `(2 * |xs| + 1) * size φ ^ 2` (`Cslib.Logic.PL.QBF.roundDegree_arithmetize_le`).
 For a verifier reading the same number of coefficients in every round, the arithmetization has
-at most `(|xs| + 1) * size φ` operators (`Cslib.Logic.PL.QBF.ops_arithmetize_le`), and the body of
-each has degree at most `2 * size φ` in its variable
+at most `(|xs| + 1) * size φ` operators (`Cslib.Logic.PL.QBF.ops_arithmetize_le`), and, when `xs`
+contains every variable of `φ`, the body of each has degree at most `2 * size φ` in its variable
 (`Cslib.Logic.PL.QBF.maxRoundDegree_arithmetize_le`). Values and restrictions depend only on the
 variables of a formula (`Cslib.Logic.PL.ArithQBF.eval_congr`,
 `Cslib.Logic.PL.ArithQBF.restrict_congr`). Shen linearizes only the free variables of each

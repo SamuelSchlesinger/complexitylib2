@@ -277,12 +277,12 @@ abbrev ReingoldBaseLabel : Type :=
 
 /-- Deprecated: the number of steps `16 ⌈log₂ n⌉ + 524`, now
 `Cslib.Reachability.Reingold.depth (Nat.clog 2 n)`. -/
-@[deprecated Reingold.depth (since := "2026-10-19")]
+@[deprecated "Use `Cslib.Reachability.Reingold.depth (Nat.clog 2 n)`." (since := "2026-10-19")]
 def reingoldDepth (n : ℕ) : ℕ :=
   Reingold.depth (Nat.clog 2 n)
 
 /-- Deprecated: the walk length, now `Cslib.Reachability.Reingold.walkLength (Nat.clog 2 n)`. -/
-@[deprecated Reingold.walkLength (since := "2026-10-19")]
+@[deprecated "Use `Cslib.Reachability.Reingold.walkLength (Nat.clog 2 n)`." (since := "2026-10-19")]
 def reingoldLength (n : ℕ) : ℕ :=
   Reingold.walkLength (Nat.clog 2 n)
 

@@ -756,3 +756,26 @@ ranges were approved by the same delta review (statements unchanged; removed nam
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 12: IP = PSPACE and USTCON ∈ L (2026-10-19)
+
+Integrated `3fd63a13` (`ip-pspace` milestone 2 and fixes) and `dec8b239` (`reingold` milestone 2 and
+fixes), adding "Interactive proofs capture polynomial space" and "Undirected connectivity is in
+logarithmic space" (`space.tex`) and correcting the three sentences that said these results were not
+yet formalized.
+
+Independent reviews:
+- IP = PSPACE: correctness and API reviews of `b18f4389..53ea22c0` approved the mathematics (IP
+  definition unchanged, simulation covers every word prover, soundness constant, closedness, full
+  polynomial-time certificate) and required four mechanical fixes. The delta review of the fixes
+  approved the API and found two docstrings stating theorems without one hypothesis each; those
+  were corrected by the coordinator in the integration follow-up, with the exact wording the
+  reviewer gave, together with deprecated theorems for two removed primality lemmas.
+- USTCON ∈ L: correctness and API reviews of `cb631cc9..9d7510ce` approved (L unchanged; correctness
+  on encoded instances only, as for every problem in L; space bound O(log m) with a closed constant;
+  in-place evaluation equals the rotation map; parameters correct). The delta review of the alias and
+  docstring round approved; the coordinator replaced two deprecation hints that suggested a
+  replacement with a different meaning.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
