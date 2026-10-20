@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.FirstOrder.Projection
 public import Mathlib.ModelTheory.Graph
+import Complexity.Tactic.FirstOrder
 
 /-!
 # Graph projections
@@ -17,7 +18,9 @@ The loop-free directed complement is a quantifier-free projection: equality of t
 selects false on the diagonal; otherwise the output is the negation of one input edge. The
 numeric interpretation is the identity, so this construction preserves any chosen relational numeric
 structure. It works for every universe, including the empty one, and needs neither order nor BIT.
-For simple graphs this is the usual graph complement.
+For simple graphs this is the usual graph complement. Both properties are proved by the automation
+of `Complexity.Tactic.FirstOrder`: `fo_qf` for quantifier-freeness and `fo_simp` for the edge
+predicate.
 
 ## Main definitions
 
@@ -47,13 +50,11 @@ def offDiagonalComplement (N : Language) : Projection N N Language.graph Languag
   rel
     | .adj =>
       .branch ((Term.var (0, ())).equal (.var (1, ()))) (.leaf (.const false))
-        (.leaf (.rel .adj (fun i => (i, ())) true))
+        (.leaf (.rel Language.adj (fun i => (i, ())) true))
 
 /-- The loop-free directed complement is quantifier-free. -/
 theorem isQF_offDiagonalComplement (N : Language) : (offDiagonalComplement N).IsQF := by
-  refine ⟨Interpretation.isQF_id N, ?_⟩
-  rintro _ ⟨⟩
-  exact ⟨(BoundedFormula.IsAtomic.equal _ _).isQF, trivial, trivial⟩
+  fo_qf
 
 /-- The output contains precisely the unequal, nonadjacent pairs. No symmetry or irreflexivity
 assumption is imposed on the input relation. -/
@@ -61,10 +62,6 @@ theorem realize_offDiagonalComplement (N : Language) {M : Type*}
     [N.Structure M] [Language.graph.Structure M] (x : Fin 2 × Unit → M) :
     ((offDiagonalComplement N).rel .adj).toFormula.Realize x ↔
       x (0, ()) ≠ x (1, ()) ∧ ¬ RelMap Language.adj (fun i => x (i, ())) := by
-  classical
-  rw [ProjectionFormula.realize_toFormula]
-  by_cases h : x (0, ()) = x (1, ()) <;>
-    simp [offDiagonalComplement, ProjectionFormula.select, InputLiteral.Realize, h,
-      Function.comp_def]
+  fo_simp
 
 end Cslib.Logic.FO.Projection
