@@ -255,6 +255,7 @@ public import Complexity.Computability.Circuit.FullArithmetic
 public import Complexity.Computability.Circuit.Fusion.Basic
 public import Complexity.Computability.Circuit.Fusion.Boolean
 public import Complexity.Computability.Circuit.Fusion.Composition
+public import Complexity.Computability.Circuit.Fusion.Conondeterministic
 public import Complexity.Computability.Circuit.Fusion.Consistency
 public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Cyclic
@@ -264,6 +265,7 @@ public import Complexity.Computability.Circuit.Fusion.Graph
 public import Complexity.Computability.Circuit.Fusion.Graph.Canonical
 public import Complexity.Computability.Circuit.Fusion.Graph.Inequality
 public import Complexity.Computability.Circuit.Fusion.Homomorphism
+public import Complexity.Computability.Circuit.Fusion.Pullback
 public import Complexity.Computability.Circuit.Fusion.Quadratic
 public import Complexity.Computability.Circuit.Fusion.Semifilter
 public import Complexity.Computability.Circuit.Fusion.Simulation
