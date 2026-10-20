@@ -267,6 +267,7 @@ public import Complexity.Computability.Circuit.Fusion.Graph.Inequality
 public import Complexity.Computability.Circuit.Fusion.Graph.Random
 public import Complexity.Computability.Circuit.Fusion.Homomorphism
 public import Complexity.Computability.Circuit.Fusion.Quadratic
+public import Complexity.Computability.Circuit.Fusion.Sampling
 public import Complexity.Computability.Circuit.Fusion.Semifilter
 public import Complexity.Computability.Circuit.Fusion.Simulation
 public import Complexity.Computability.Circuit.Fusion.SimulationContext
