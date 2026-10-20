@@ -412,20 +412,22 @@ and [cyclic characterization](Complexity/Computability/Circuit/Fusion/Cyclic/Com
 using [Oliveira's approximation-method notes (2018)](https://www.dcs.warwick.ac.uk/~igorcarb/documents/papers/approximation-method-fusion-note.pdf)
 and [Cavalar–Oliveira, ECCC TR25-033 (2025)](https://eccc.weizmann.ac.il/report/2025/033/).
 Credit the earlier results of Razborov, Karchmer, Wigderson, and Nakayama–Maruoka where used.
-The following endpoints remain outstanding; the issues carry live ownership and progress.
+The issues carry ownership and review history. Circuit bounds use the native basis with free
+constants and binary unions; the theorem index records the precise scope of each result.
 
-| Milestone | Required endpoint |
+| Milestone | Result and remaining work |
 | --- | --- |
-| [Quadratic completeness #12](https://github.com/SamuelSchlesinger/complexitylib2/issues/12) | Construct an acyclic circuit from a cover of `t` pairs using at most `t²` AND gates, and derive the source-complexity bound (TR25-033, Theorem 24). |
-| [Approximation bridge and counting barrier #13](https://github.com/SamuelSchlesinger/complexitylib2/issues/13) | Relate exact literal consistency to the existing witness API; prove the sampling lemma and fixed-distribution `8n + 8` barrier (Oliveira, Lemma 3 and Theorem 6). |
-| [Graph transfer and inequality #14](https://github.com/SamuelSchlesinger/complexitylib2/issues/14) | Formalize row/column generators, graph-to-Boolean cover transfer, and exact cover/intersection cost `n` for inequality on `2^n` vertices per side (TR25-033, Lemma 39 and Proposition 40). |
-| [Random graph covers #15](https://github.com/SamuelSchlesinger/complexitylib2/issues/15) | Give a finite inclusion-pattern counting bound and derive linear cover complexity with high probability for uniform bipartite graphs (TR25-033, Theorem 37). Depends on cover reconstruction and graph generators. |
-| [Nondeterministic complexity #16](https://github.com/SamuelSchlesinger/complexitylib2/issues/16) | Connect semi-ultrafilter covers to conondeterministic AND complexity and transfer graph bounds (TR25-033, Theorem 45 and Lemma 48). Reuse `Semifilter.IsUltra` and graph transfer. |
+| [Quadratic completeness #12](https://github.com/SamuelSchlesinger/complexitylib2/issues/12) | **Proved:** [quadratic compiler](Complexity/Computability/Circuit/Fusion/Quadratic.lean) uses exactly `t²` AND gates for a `t`-pair cover and gives the minimum source-cost bound, including arbitrary carriers, empty input families and trivial targets (TR25-033, Theorem 24; PR #19). |
+| [Approximation bridge and counting barrier #13](https://github.com/SamuelSchlesinger/complexitylib2/issues/13) | **Proved:** [exact consistency and local observation errors](Complexity/Computability/Circuit/Fusion/Consistency.lean), the [fixed pair sampler, weighted averaging and `8n + 8` certificate barrier](Complexity/Computability/Circuit/Fusion/Sampling.lean) (Oliveira, Lemma 3 and Theorem 6; PRs #20 and #22). This is a local observation bridge, not a formal equivalence of all approximation models. |
+| [Graph transfer and inequality #14](https://github.com/SamuelSchlesinger/complexitylib2/issues/14) | **Proved:** [row/column-to-literal transfer](Complexity/Computability/Circuit/Fusion/Graph.lean) for any admissible witness subclass, including semi-ultrafilters, and [exact canonical/full cover and intersection cost `n`](Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean) for inequality on `2^n` vertices per side (TR25-033, Lemmas 39/48 and Proposition 40; PR #21). |
+| [Random graph covers #15](https://github.com/SamuelSchlesinger/complexitylib2/issues/15) | [PR #23](https://github.com/SamuelSchlesinger/complexitylib2/pull/23) proves finite inclusion-pattern counting and, for `N ≥ 16`, probability at least `1 - 2⁻ᴺ` of `⌊N/16⌋ < ρ(G) ≤ N` under the uniform distribution on all labelled bipartite graphs. Awaiting integration. |
+| [Nondeterministic complexity #16](https://github.com/SamuelSchlesinger/complexitylib2/issues/16) | [PR #25](https://github.com/SamuelSchlesinger/complexitylib2/pull/25) proves the cover lower bound for universal verifiers using the existing `forallGuess` semantics. The converse construction is tracked in [#24](https://github.com/SamuelSchlesinger/complexitylib2/issues/24); the full linear characterization remains outstanding until that result is integrated (TR25-033, Theorem 45). |
 
 Keep the source models explicit: constants, zero-gate constructions, exact versus one-sided
-literal consistency, and AND versus total gate costs. The counting barrier concerns a fixed
-distribution; it is not an upper bound on unrestricted cover complexity. A conditional corollary
-assuming the main sampling or reconstruction lemma does not complete its milestone. These are
+literal consistency, and AND versus total gate costs. The counting barrier requires a capacity
+bound over every pair; it does not apply to a bound restricted to a particular circuit's gate
+pairs and is not an upper bound on unrestricted cover complexity. The sampling and reconstruction
+lemmas are proved, not assumed. These are
 formalizations of established results, not claims of new explicit superlinear circuit lower bounds.
 
 ## Machine-class milestones
