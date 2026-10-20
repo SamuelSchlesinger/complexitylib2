@@ -41,21 +41,26 @@ polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are impl
 The next counting milestones remain the nondeterministic-machine characterizations of
 `#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
 none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
-now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and PH ⊆ P^#P ⊆ P^PP are proved. Extend these
-with counting reductions and further oracle results (P^PP ⊆ P^#P is open), preserving exact
+now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
+PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
+Extend these with counting reductions and further oracle results, preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
-hierarchy, WPP and LWPP now have definitions and elementary containments/closures.
+hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
+reduction closure, unary-indexed target normalization, and finite multiple-target robustness.
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
 MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
-LWPP reduction closure and multiple-target robustness, and WPP/LWPP oracle lowness.
+polynomial-family multiple-target robustness, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Fixed three-round AWPP
 amplification gives error at most one eighth; every fixed positive SBP gap exponent is
 available, and intersecting an SBP language with a BPP language stays in SBP.
 MA ⊆ SBP is proved with the Arthur–Merlin classes. Remaining approximate-counting milestones include SBP ⊆ AM, uniform AWPP
-amplification to input-dependent error, and AWPP PP-lowness.
+amplification to input-dependent error ([#31](https://github.com/SamuelSchlesinger/complexitylib2/issues/31)), and AWPP PP-lowness.
+The [uniform counting aggregation](Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean)
+prerequisite supplies input-dependent unary powers and word sums for GapP; the full AWPP
+error-reduction theorem remains outstanding.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon

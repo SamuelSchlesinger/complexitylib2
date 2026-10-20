@@ -1151,3 +1151,62 @@ revision above, lines 142 and 149 of `Ordered/Basic.lean` and line 68 of
 `Ordered/Interpretation.lean`, and checked against `git show`. The PDF builds, and page 8
 was rendered and visually inspected. These are AI reviews, not human editorial approval
 or machine-checked prose equivalence. AI assistance: OpenAI Codex.
+## Uniform counting aggregation (PR #36, 20 October 2026)
+
+OpenAI Codex worker `awpp-amplification-20261020` extends the counting-algebra entry with
+uniform #P/GapP word sums, variable unary GapP powers, and exact certificate padding.
+Source revision `8e76ae85c0544966f2c2d074a1610d31da405c3b` passes all six project gates;
+clients exercise negative values, input-dependent counts, overlapping positive/negative
+acceptance, and exponent zero including a zero base. Named axiom guards use only the three
+permitted axioms. Early independent coordinator review found no correctness issues in the
+signed cancellation or padding; exact-revision source/API and index review is requested on
+PR #36. The index count stays 120: this extends an existing entry. The full AWPP amplification
+endpoint remains open in #31.
+
+All four declaration links were checked against the pinned Git source. The PDF builds without
+undefined references or overfull boxes, and the changed entry on page 18 was rendered and
+visually inspected. Review is AI-assisted, not human editorial approval or machine-checked
+prose equivalence.
+
+## 2026-10-20: Equality of PP and counting oracle classes
+
+Worker `counting-oracle-20261020` proved the reverse inclusion and oracle-class equality in
+source `39c2e0198d7f0db5555e7f478933789d7d772631`. The existing Toda/PP-oracle entry is
+extended; the curated result count is unchanged. The result uses the existing encoded classes,
+with one fixed deterministic program correct for every admissible oracle and arbitrary answers
+outside valid codes.
+
+Independent coordinator `/root` performed an early source/API review and checked the revised
+prose against the exact source revision. The review
+checked the shifted count `2c + (2^p - 1)`, zero random bits, strict-majority ties, the polynomial
+bit index, bounded reply consumption in open substitution, and the preimage language that
+preserves malformed-word freedom. The new claims and quantifiers matched the exact source.
+One wording correction was requested in the existing oracle description: replace “queries are
+not counted” by “no fixed query-count bound is imposed”, to avoid suggesting free query cost.
+That correction is applied.
+
+All six validation gates pass on the source revision. Tests include a nonconstant PP oracle
+client, boundary arithmetic, and admissible counting oracles disagreeing on the empty non-code
+word. Named guards for the bit representation, reverse inclusion and equality use only
+`propext`, `Classical.choice` and `Quot.sound`. All six links in the affected entry were checked
+against pinned source declarations. The PDF was rebuilt and page 16 rendered and inspected.
+
+Source credit distinguishes Gill's PP definition and Fortnow's Theorem 4.14 and Corollary 3.7
+from the direct shifted-count implementation used here. Existing source authors and references
+are preserved. Final exact-head approval and integration are recorded in PR #35. This is an AI
+review, not human editorial approval or a machine-checked equivalence between prose and Lean.
+AI assistance: OpenAI Codex at Samuel Schlesinger's request.
+
+PR #36 integration: merged current main after PR #35, preserving both counting entries and
+the unchanged index count of 120. No Lean source or test changed in this reconciliation.
+Independent exact-head approval of source and index at `35bf8a1f` is recorded in PR #36;
+the combined document and validation gates are rechecked before integration.
+
+
+PR #37 integration reconciliation incorporates reviewed PR #29 head
+`ac5b1e70` (including PRs #35 and #36). Both sets of review notes, all generated imports,
+and the counting and ordered-FO index changes are retained. No ordered-FO source or test
+changed. The combined index contains 121 entries; all six validation gates pass. The PDF
+was rebuilt. Ordered-FO page 8 is pixel-identical to its reviewed rendering; the combined
+counting pages 19, 23 and 25 were rendered and inspected. Exact integration-head review
+is tracked in PR #37.

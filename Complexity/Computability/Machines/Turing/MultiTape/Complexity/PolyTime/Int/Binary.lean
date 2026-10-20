@@ -27,8 +27,8 @@ the binary length bounds of `Int.size_natAbs_add_le` and `Int.size_natAbs_mul_le
 ## Main results
 
 * `Int.size_natAbs_add_le`, `Int.size_natAbs_sub_le`, `Int.size_natAbs_mul_le`,
-  `Int.size_natAbs_pow_le`, `Int.size_natAbs_sum_le`: binary lengths of magnitudes of sums,
-  differences, products, powers and list sums.
+  `Int.size_natAbs_pow_le`, `Int.size_natAbs_sum_le`, `Int.size_natAbs_prod_le`: binary lengths of
+  magnitudes of sums, differences, products, powers, list sums and list products.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_isNeg`, `.intBin_natAbs`: the sign and the
   binary magnitude.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_signMagnitude`, `.intBin_natCast`: integers
@@ -38,7 +38,8 @@ the binary length bounds of `Int.size_natAbs_add_le` and `Int.size_natAbs_mul_le
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_neg`, `.intBin_add`, `.intBin_sub`,
   `.intBin_mul`, `.intBin_pow`: ring operations, powers to a unary exponent.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_lt`, `.intBin_le`: comparisons.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_sum`: the sum of a list.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_sum`, `.intBin_prod`: the sum and product
+  of a list.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_add'`, `.intBin_sub'`, `.intBin_mul'`,
   `.intBin_pow'`, `.intBin_lt'`, `.intBin_le'`: composition rules for `fun_prop`.
 -/
@@ -83,6 +84,17 @@ theorem size_natAbs_sum_le {l : List ℤ} {b : ℕ} (h : ∀ z ∈ l, z.natAbs.s
   have hsum := Nat.size_sum_le (l := l.map Int.natAbs) (b := b) (by simpa using h)
   rw [List.length_map] at hsum
   exact (Nat.size_le_size (habs l)).trans hsum
+
+/-- A product of integers has a magnitude of binary length at most the sum of the binary lengths
+of the magnitudes of the factors, plus one for the empty product. -/
+theorem size_natAbs_prod_le (l : List ℤ) :
+    l.prod.natAbs.size ≤ (l.map fun z => z.natAbs.size).sum + 1 := by
+  induction l with
+  | nil => simp
+  | cons z l ih =>
+    have := size_natAbs_mul_le z l.prod
+    simp only [List.prod_cons, List.map_cons, List.sum_cons]
+    lia
 
 end Int
 
@@ -276,6 +288,21 @@ theorem intBin_sum : ComputableTidilyInPolyTime List.sum (encList encIntBin) enc
       simp only [length_encIntBin] at hmem ⊢
       lia)
   simpa only [← List.sum_eq_foldl] using h
+
+/-- The product of a list of binary integers, by a left fold of binary multiplications. -/
+@[fun_prop]
+theorem intBin_prod : ComputableTidilyInPolyTime List.prod (encList encIntBin) encIntBin := by
+  have hq := fst (encPair (encList encIntBin) encIntBin) encIntBin
+  have h := foldlWith_of_bounded_growth (encA := encIntBin) (encL := encList encIntBin)
+    (encB := encIntBin) (par := fun l : List ℤ => l) (list := fun l => l)
+    (step := fun _ s a => s * a) id' id' (const 1) (intBin_mul.comp (hq.snd'.prod (snd _ _)))
+    (growth := fun l => (encList encIntBin l).length) .self
+    (fun l s a ha => by
+      have hmem := length_le_encList_of_mem encIntBin ha
+      have := Int.size_natAbs_mul_le s a
+      simp only [length_encIntBin] at hmem ⊢
+      lia)
+  simpa only [← List.prod_eq_foldl] using h
 
 /-- Add computed binary integers, fixing their intermediate encodings for proof search. -/
 @[fun_prop]

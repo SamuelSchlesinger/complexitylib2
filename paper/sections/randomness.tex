@@ -90,18 +90,32 @@ remains separate unfinished work.\citep{Toda1991}
 
 \begin{result}
 \subsection{Toda's theorem with a PP oracle}
-\[\cc{PH}\subseteq\cc{P}^{\#\cc{P}}\subseteq\cc{P}^{\cc{PP}}.\]
+\[\cc{PH}\subseteq\cc{P}^{\#\cc{P}}=\cc{P}^{\cc{PP}}.\]
 $\cc{P}^{\cc{PP}}$ uses one polynomial-time oracle program, fixed before the oracle, correct
 against every oracle language agreeing with some PP problem on its encoded instances; off-code
-answers are arbitrary and queries are not counted. It contains $\cc{P}^A$ for every $A\in\cc{PP}$.
+answers are arbitrary and no fixed query-count bound is imposed. It contains $\cc{P}^A$ for every $A\in\cc{PP}$.
 For $f\in\#\cc{P}$, $\{(b,k)\mid k\le f(b)\}\in\cc{PP}$ via GapP, and each $\#\cc{P}$ bit request is
 answered by binary search with polynomially many PP queries, substituted into the program by open
-oracle substitution. The reverse inclusion $\cc{P}^{\cc{PP}}\subseteq\cc{P}^{\#\cc{P}}$ is not
-formalized.\citep{Toda1991}
+oracle substitution.
+
+For the reverse inclusion, let $c(b)$ count the accepting strings of a PP verifier
+using $p(n)$ random bits, where $n$ is the encoded input length. The function
+$h(b)=2c(b)+(2^{p(n)}-1)$ is in $\#\cc{P}$, and its zero-based bit $p(n)+1$
+is one exactly when $2^{p(n)}<2c(b)$. This includes zero random bits and rejects
+ties. Each PP query word $w$ is replaced by the encoded pair
+$(w,p(|w|)+1)$, requesting that single bit of $h$ without decoding $w$.
+The resulting deterministic program is fixed before the bit oracle is chosen
+and works for every oracle answering $h$ on valid pair codes, with arbitrary
+answers elsewhere. Open substitution certifies uniform polynomial time,
+including the cost of constructing requests and reading replies; it is not
+merely a query bound. The direct shifted-count proof implements the standard
+equivalence of PP and counting oracles.\citep{Toda1991,Fortnow1997}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{135}{Cslib.Complexity.PWithOracle_subset_PWithPPOracle}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{156}{Cslib.Complexity.setOf_le_mem_PP}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{359}{Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{467}{Cslib.Complexity.PH_subset_PWithPPOracle}
+\declat{39c2e0198d7f0db5555e7f478933789d7d772631}{Complexity/Computability/Complexity/Classes/PP/Bit.lean}{59}{Cslib.Complexity.exists_SharpP_testBit_of_mem_PP}
+\declat{39c2e0198d7f0db5555e7f478933789d7d772631}{Complexity/Computability/Complexity/Classes/Oracle/CountingEquivalence.lean}{92}{Cslib.Complexity.PWithPPOracle_eq_PWithSharpPOracle}
 \end{result}
 
 \begin{result}
@@ -203,6 +217,27 @@ bit length, so the numeric values may be exponential in input length.
 \citep[Theorem 3.5]{Fortnow1997}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{41}{Cslib.Complexity.SharpP.of_polyTime}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{58}{Cslib.Complexity.GapP.of_polyTime}
+
+Uniform aggregation also permits input-dependent bounds. If $r(x)$ is computed in
+polynomial time with unary output and $g\in\cc{GapP}$, then
+$x\mapsto g(x)^{r(x)}$ is in $\cc{GapP}$, including signed values and exponent zero.
+For a jointly uniform counting function $f(x,w)$ in $\#\cc{P}$ or $\cc{GapP}$
+on the encoded pair, the function
+\[
+x\longmapsto\sum_{w\in\{0,1\}^{r(x)}} f(x,w)
+\]
+belongs to the same class. Unary output ensures that the number of repeated
+factors and the word length are polynomially bounded; no polynomial bound on
+the numeric value of the resulting count is asserted. Variable certificate
+lengths are padded with false bits to preserve counts exactly. The signed-product
+verifier uses $r(x)(p_+(|x|)+p_-(|x|))$ certificate bits before final padding,
+where $p_+$ and $p_-$ are the two original counting-certificate polynomials.
+These are uniform verifier closure results, not yet the AWPP amplification theorem.
+\citep{FennerFortnowKurtz1994}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{49}{Cslib.Complexity.SharpP.of_polyTime_length}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{61}{Cslib.Complexity.SharpP.sum_bits_mem}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{83}{Cslib.Complexity.GapP.sum_bits_mem}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{175}{Cslib.Complexity.GapP.pow_mem_polyTime}
 \end{result}
 
 \begin{result}
@@ -361,7 +396,7 @@ for every modulus, and equals $\cc{Mod}_{k}\cc{P}$ for prime $k$.
 \subsection{Wide counting gaps}
 For every fixed injective encoding,
 \[
-\cc{SPP}\subseteq\cc{LWPP}\subseteq\cc{WPP}
+\cc{UP}\cup\cc{coUP}\cup\cc{FewP}\subseteq\cc{SPP}\subseteq\cc{LWPP}\subseteq\cc{WPP}
 \subseteq\cc{C}_{=}\cc{P}\cap\cc{coC}_{=}\cc{P}.
 \]
 In WPP there are a GapP function $g$ and a polynomial-time, binary-integer
@@ -369,23 +404,45 @@ function $f$, nonzero on every input, with $g(x)=f(x)$ on members and $g(x)=0$
 on nonmembers. LWPP restricts the target to $f(|x|)$, with $f$ computable from
 unary length and nonzero on every natural argument, including zero. Negative
 and exponentially large targets are allowed. Both classes are closed under
-complement, union and intersection; WPP also has polynomial-time many-one
-reduction closure. The proofs use exact-gap algebra and the FP-to-GapP bridge.
-These verifier-based statements follow the definitions of Fenner--Fortnow--Kurtz,
-as restated by Hemaspaandra et al.; they do not establish counting-machine
-characterizations, oracle lowness, or robustness under multiple target values.
-\citep{FennerFortnowKurtz1994}\citep[Definitions 2.4--2.5]{HemaspaandraEtAl2018}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{65}{Cslib.Complexity.SPP_subset_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{70}{Cslib.Complexity.LWPP_subset_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{76}{Cslib.Complexity.WPP_subset_CeqP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{82}{Cslib.Complexity.WPP_subset_coCeqP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{89}{Cslib.Complexity.compl_mem_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{97}{Cslib.Complexity.inter_mem_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{107}{Cslib.Complexity.union_mem_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{120}{Cslib.Complexity.compl_mem_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{129}{Cslib.Complexity.inter_mem_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{139}{Cslib.Complexity.union_mem_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{112}{Cslib.Complexity.PolyTimeReducible.mem_WPP}
+complement, union, intersection, set difference, symmetric difference, and
+polynomial-time many-one reductions between injectively encoded types.
+Furthermore, both classes satisfy finite multiple-target robustness: if $g\in\cc{GapP}$
+is $0$ outside $A$ and on $A$ takes a value in a fixed finite family $\{f_i\}_{i\in s}$
+of nonzero polynomial-time binary-integer targets (depending on $x$ for $\cc{WPP}$ or
+on unary length $|x|$ for $\cc{LWPP}$), then $\prod_{i\in s}f_i-\prod_{i\in s}(f_i-g)\in\cc{GapP}$
+witnesses membership with single nonzero target $\prod_{i\in s}f_i$. For $\cc{LWPP}$, a
+nonzero unary-input target $f(k(x))$ at a polynomial-time unary-computable index $k(x)\le p(|x|)$
+is normalized to $\prod_{i\le p(|x|)}f(i)$ by multiplying $g(x)$ by the binary-integer list
+product $\prod_{i\le p(|x|),\,i\ne k(x)}f(i)$, yielding reduction closure when $k(x)=|r(x)|$.
+These verifier-based statements follow the definitions of Fenner--Fortnow--Kurtz
+and the finite-family and known-index cases of Hemaspaandra et al.; they do not
+establish counting-machine characterizations, oracle lowness, or polynomial-family
+multiple-target robustness ($\cc{Poly\text{-}LWPP}=\cc{LWPP}$ and
+$\cc{Poly\text{-}WPP}=\cc{WPP}$) when the accepting target index is not
+polynomial-time computable from the input.
+\citep{FennerFortnowKurtz1994}\citep[Definitions 2.4--2.5 and Section 3]{HemaspaandraEtAl2018}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{95}{Cslib.Complexity.SPP_subset_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{100}{Cslib.Complexity.LWPP_subset_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{122}{Cslib.Complexity.FewP_subset_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{126}{Cslib.Complexity.FewP_subset_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{130}{Cslib.Complexity.WPP_subset_CeqP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{136}{Cslib.Complexity.WPP_subset_coCeqP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{143}{Cslib.Complexity.compl_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{151}{Cslib.Complexity.inter_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{161}{Cslib.Complexity.union_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{166}{Cslib.Complexity.diff_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{170}{Cslib.Complexity.symmDiff_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{175}{Cslib.Complexity.PolyTimeReducible.mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{183}{Cslib.Complexity.compl_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{192}{Cslib.Complexity.inter_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{202}{Cslib.Complexity.union_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{207}{Cslib.Complexity.diff_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{211}{Cslib.Complexity.symmDiff_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{246}{Cslib.Complexity.mem_WPP_of_finset_targets}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{284}{Cslib.Complexity.mem_LWPP_of_finset_targets}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{358}{Cslib.Complexity.mem_LWPP_of_polyTime_index}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{411}{Cslib.Complexity.PolyTimeReducible.mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Int/Binary.lean}{294}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_prod}
 \end{result}
 
 

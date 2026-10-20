@@ -48,7 +48,9 @@ import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
+import ComplexityTests.CountingAggregation
 import ComplexityTests.CountingCompleteness
+import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
@@ -270,6 +272,7 @@ import ComplexityTests.Toda
 import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
+import ComplexityTests.WPP
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WorstCaseHardness
