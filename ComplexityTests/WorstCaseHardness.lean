@@ -22,7 +22,8 @@ example : ∃ (F : Type) (_ : Field F) (_ : Fintype F), Fintype.card F = 2 ^ 35 
   rw [Fintype.card_eq_nat_card]
   exact GaloisField.card 2 35 (by norm_num)
 
-/-- A field of `2 ^ 35` elements has an encoding by `35` bits and contains a copy of `BitString 1`. -/
+/-- A field of `2 ^ 35` elements has an encoding by `35` bits and contains a copy of
+`BitString 1`. -/
 example {F : Type*} [Field F] [Fintype F] (hF : Fintype.card F = 2 ^ 35) :
     Nonempty (F ≃ BitString 35) ∧ Nonempty (BitString 1 ↪ F) := by
   refine ⟨⟨Fintype.equivOfCardEq (by simp [hF, BitString])⟩,
@@ -64,6 +65,13 @@ info: 'Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode' depends on 
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode
+
+/--
+info: 'Cslib.Circuits.Boolean.reconstructionCost_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.reconstructionCost_le
 
 /--
 info: 'Cslib.Circuits.Boolean.exists_glPredictor_agree' depends on axioms:

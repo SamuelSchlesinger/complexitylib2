@@ -10,7 +10,9 @@ module
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.Stages
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
 import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Zify
 
 /-!
 # From worst-case to average-case hardness by local list decoding
@@ -42,7 +44,19 @@ four stages, each querying the previous one:
 4. Reading off `f` from the value of `p` on the grid.
 
 The stages are bit-blasted De Morgan circuits whose costs are bounded in
-`Cslib.Circuits.Boolean.HardnessAmplification.Stages`.
+`Cslib.Circuits.Boolean.HardnessAmplification.Stages`. In the ranges forced by the hypotheses the
+reconstruction cost is at most `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)`
+(`Cslib.Circuits.Boolean.reconstructionCost_le`). The smallest admissible parameters have
+`2 ^ K = O(w / ε ^ 2)`, `3 ^ L = O((m * b) ^ (log₂ 3))`, `D = O(√(d * q))` and
+`q = poly(d, w, 1 / ε)`, so for `2 ^ b = poly(n / ε)` the reconstructed circuit has size
+polynomial in `s`, `n` and `1 / ε`, and the encoding has `O(n + log (1 / ε))` input bits when
+`m = n / b`.
+
+The theorem is nonuniform: the masks and guess of the Goldreich–Levin stage, the advice point of
+the line stage and the directions of the self-correction stage are fixed by counting arguments, and
+the circuits are obtained from synthesis bounds rather than constructed by an algorithm. Membership
+of the encoding in `E` for `f` in `E`, and the derandomization of `BPP` from worst-case hardness,
+are separate steps.
 
 ## Main definitions
 
@@ -54,6 +68,8 @@ The stages are bit-blasted De Morgan circuits whose costs are bounded in
 
 * `Cslib.Circuits.Boolean.exists_glPredictor_agree`: the Goldreich–Levin stage.
 * `Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode`: **the reconstruction theorem**.
+* `Cslib.Circuits.Boolean.reconstructionCost_le`: the reconstruction cost is at most
+  `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)`.
 
 ## References
 
@@ -511,5 +527,255 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
   refine le_trans htotal.complexity_le ?_
   simp only [reconstructionCost, ← hd_def, ← hq_def]
   omega
+
+/-! ### A polynomial bound on the reconstruction cost -/
+
+section Bound
+
+variable {w q M ℓ d K s : ℕ}
+
+private theorem bitBlastCost_le (hq : q = 2 ^ w) (hw : 1 ≤ w) :
+    bitBlastCost w ≤ 7 * w ^ 2 * q ^ 2 := by
+  have h2 : 2 ^ (2 * w) = q ^ 2 := by rw [hq, ← pow_mul, mul_comm]
+  have hq1 : 1 ≤ q ^ 2 := Nat.one_le_pow _ _ (by rw [hq]; positivity)
+  unfold bitBlastCost
+  rw [h2]
+  have hw2 : w ≤ w ^ 2 := by nlinarith
+  have h1 : w * q ^ 2 ≤ w ^ 2 * q ^ 2 := Nat.mul_le_mul_right _ hw2
+  have h3 : w ≤ w ^ 2 * q ^ 2 := hw2.trans (Nat.le_mul_of_pos_right _ hq1)
+  calc w * (q ^ 2 * (4 * w + 2) + 1) = 4 * (w ^ 2 * q ^ 2) + 2 * (w * q ^ 2) + w := by ring
+    _ ≤ 4 * (w ^ 2 * q ^ 2) + 2 * (w ^ 2 * q ^ 2) + w ^ 2 * q ^ 2 := by gcongr
+    _ = 7 * w ^ 2 * q ^ 2 := by ring
+
+private theorem kernelVecCost_le (hM : M ≤ q ^ 2) (hq : 1 ≤ q) :
+    kernelVecCost q M ≤ 64 * q ^ 5 := by
+  unfold kernelVecCost
+  have h1 : q + 1 ≤ 2 * q := by omega
+  have h2 : M + 1 ≤ 2 * q ^ 2 := by nlinarith
+  calc 8 * (q + 1) * (M + 1) ^ 2 ≤ 8 * (2 * q) * (2 * q ^ 2) ^ 2 := by gcongr
+    _ = 64 * q ^ 5 := by ring
+
+private theorem interpolantCost_le (hM : M ≤ q ^ 2) (hℓ : ℓ ≤ q) (hq : 1 ≤ q) :
+    interpolantCost q M ℓ ≤ 150 * q ^ 6 := by
+  unfold interpolantCost
+  have hk := kernelVecCost_le hM hq
+  have hℓ1 : ℓ + 1 ≤ 2 * q := by omega
+  have hq3 : q ^ 3 ≤ q ^ 6 := Nat.pow_le_pow_right hq (by norm_num)
+  have hq1 : q ≤ q ^ 6 := by
+    calc q = q ^ 1 := (pow_one q).symm
+      _ ≤ q ^ 6 := Nat.pow_le_pow_right hq (by norm_num)
+  have e1 : q * M ≤ q ^ 3 := by
+    calc q * M ≤ q * q ^ 2 := Nat.mul_le_mul_left _ hM
+      _ = q ^ 3 := by ring
+  have e2 : (ℓ + 1) * kernelVecCost q M ≤ 128 * q ^ 6 := by
+    calc (ℓ + 1) * kernelVecCost q M ≤ (2 * q) * (64 * q ^ 5) := Nat.mul_le_mul hℓ1 hk
+      _ = 128 * q ^ 6 := by ring
+  have e3 : (ℓ + 1) * (M + 1) ≤ 4 * q ^ 3 := by
+    calc (ℓ + 1) * (M + 1) ≤ (2 * q) * (2 * q ^ 2) := Nat.mul_le_mul hℓ1 (by nlinarith)
+      _ = 4 * q ^ 3 := by ring
+  have e4 : M * (2 * (ℓ + 1) + 1) ≤ 5 * q ^ 3 := by
+    calc M * (2 * (ℓ + 1) + 1) ≤ q ^ 2 * (5 * q) := Nat.mul_le_mul hM (by omega)
+      _ = 5 * q ^ 3 := by ring
+  omega
+
+private theorem henselCost_le (hM : M ≤ q ^ 2) (hd : d ≤ q) (hq : 1 ≤ q) :
+    henselCost q M d ≤ 25 * q ^ 4 := by
+  unfold henselCost henselStepCost
+  have hq2 : q ^ 2 ≤ q ^ 4 := Nat.pow_le_pow_right hq (by norm_num)
+  have hq1 : q ≤ q ^ 4 := by
+    calc q = q ^ 1 := (pow_one q).symm
+      _ ≤ q ^ 4 := Nat.pow_le_pow_right hq (by norm_num)
+  have hq3 : q ^ 3 ≤ q ^ 4 := Nat.pow_le_pow_right hq (by norm_num)
+  have e1 : d * (q * (2 * d + 3 * M + 6) + 2) ≤ 13 * q ^ 4 := by
+    calc d * (q * (2 * d + 3 * M + 6) + 2) ≤ q * (q * (2 * q + 3 * q ^ 2 + 6) + 2) := by
+          gcongr
+      _ = 2 * q ^ 3 + 3 * q ^ 4 + 6 * q ^ 2 + 2 * q := by ring
+      _ ≤ 13 * q ^ 4 := by omega
+  omega
+
+private theorem glCost_le (hw : 1 ≤ w) : glCost w K s ≤ 7 * w * 4 ^ K * (s + 1) := by
+  unfold glCost
+  set X := 2 ^ K with hX
+  have hX1 : 1 ≤ X := Nat.one_le_two_pow
+  have h4 : 4 ^ K = X ^ 2 := by rw [hX, ← pow_mul, mul_comm, pow_mul]; norm_num
+  rw [h4]
+  have e1 : (X - 1) * (s + 1) ≤ X ^ 2 * (s + 1) := by
+    refine Nat.mul_le_mul_right _ ((Nat.sub_le X 1).trans ?_)
+    nlinarith
+  have e2 : (X - 1) * (2 * (X - 1 + 2)) ≤ 2 * X ^ 2 := by
+    rw [show X - 1 + 2 = X + 1 by omega]
+    have : (X - 1) * (X + 1) ≤ X ^ 2 := by
+      zify [hX1]
+      nlinarith
+    nlinarith
+  set Y := w * X ^ 2 * (s + 1) with hY
+  have hY1 : 1 ≤ Y := Nat.one_le_iff_ne_zero.2 (by positivity)
+  have e3 : w * ((X - 1) * (s + 1) + (2 + (X - 1) * (2 * (X - 1 + 2)))) ≤
+      w * (X ^ 2 * (s + 1) + (2 + 2 * X ^ 2)) := by gcongr
+  have e4 : w * (X ^ 2 * (s + 1) + (2 + 2 * X ^ 2)) ≤ 5 * Y := by
+    have : 2 + 2 * X ^ 2 ≤ 4 * X ^ 2 * (s + 1) := by nlinarith
+    calc w * (X ^ 2 * (s + 1) + (2 + 2 * X ^ 2)) ≤ w * (X ^ 2 * (s + 1) + 4 * X ^ 2 * (s + 1)) := by
+          gcongr
+      _ = 5 * Y := by rw [hY]; ring
+  rw [show 7 * w * X ^ 2 * (s + 1) = 7 * Y by rw [hY]; ring]
+  omega
+
+/-- **The reconstruction cost is polynomial**: with `q = 2 ^ w` and the parameters in the ranges
+guaranteed by the hypotheses of `complexity_le_of_agree_hardnessEncode` (`D < q`, `d + 1 ≤ q`,
+at most `q ^ 2` monomials, `2 ^ b ≤ q`), the reconstructed circuit has at most
+`2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)` gates. -/
+theorem reconstructionCost_le {w b m D K L s q M : ℕ} (hq : q = 2 ^ w) (hw : 1 ≤ w)
+    (hm : 1 ≤ m) (hb : 2 ^ b ≤ q) (hD : D < q) (hM : M ≤ q ^ 2)
+    (hdq : m * (2 ^ b - 1) + 1 ≤ q) :
+    reconstructionCost w b m D K L s q M ≤
+      2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1) := by
+  set d := m * (2 ^ b - 1)
+  have hq1 : 1 ≤ q := by rw [hq]; exact Nat.one_le_two_pow
+  have hq2 : 2 ≤ q := by
+    rw [hq]
+    calc 2 = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ w := Nat.pow_le_pow_right (by norm_num) hw
+  have hbw : b ≤ w := by
+    rw [hq] at hb
+    exact (Nat.pow_le_pow_iff_right (by norm_num)).1 hb
+  have hbb := bitBlastCost_le hq hw
+  have hℓ : D / d ≤ q := (Nat.div_le_self D d).trans hD.le
+  have hhint : hintDecodeCost q q M (D / d) d ≤ 175 * q ^ 6 := by
+    unfold hintDecodeCost
+    have h1 := interpolantCost_le hM hℓ hq1
+    have h2 := henselCost_le hM (by omega : d ≤ q) hq1
+    have : q ^ 4 ≤ q ^ 6 := Nat.pow_le_pow_right hq1 (by norm_num)
+    omega
+  have hgl := glCost_le (K := K) (s := s) hw
+  set P := 3 ^ L
+  set E := 4 ^ K
+  have hP : 1 ≤ P := Nat.one_le_pow _ _ (by norm_num)
+  have hE : 1 ≤ E := Nat.one_le_pow _ _ (by norm_num)
+  -- the line stage
+  have hline : lineCost w q m M (D / d) d (glCost w K s) ≤
+      1260 * m * w ^ 2 * q ^ 8 + 7 * q * w * E * (s + 1) := by
+    unfold lineCost
+    set H := hintDecodeCost q q M (D / d) d
+    have hinner : (q + 5) * m + 2 + (1 + H) ≤ 180 * m * q ^ 6 := by
+      have hq6 : q + 8 ≤ 4 * q ^ 6 := by
+        have : q ≤ q ^ 6 := by
+          calc q = q ^ 1 := (pow_one q).symm
+            _ ≤ q ^ 6 := Nat.pow_le_pow_right hq1 (by norm_num)
+        have : 8 ≤ 3 * q ^ 6 := by
+          have : 2 ^ 6 ≤ q ^ 6 := Nat.pow_le_pow_left hq2 6
+          omega
+        omega
+      have a1 : (q + 5) * m + 2 + (1 + H) ≤ (q + 8) * m + H := by
+        have : (q + 8) * m = (q + 5) * m + 3 * m := by ring
+        omega
+      have a2 : (q + 8) * m ≤ 4 * q ^ 6 * m := Nat.mul_le_mul_right _ hq6
+      have a3 : H ≤ 175 * q ^ 6 * m := hhint.trans (Nat.le_mul_of_pos_right _ hm)
+      have a4 : 4 * q ^ 6 * m + 175 * q ^ 6 * m = 179 * m * q ^ 6 := by ring
+      have a5 : 179 * m * q ^ 6 ≤ 180 * m * q ^ 6 := by gcongr; norm_num
+      omega
+    calc ((q + 5) * m + 2 + (1 + H)) * bitBlastCost w + q * glCost w K s
+        ≤ (180 * m * q ^ 6) * (7 * w ^ 2 * q ^ 2) + q * (7 * w * E * (s + 1)) := by gcongr
+      _ = 1260 * m * w ^ 2 * q ^ 8 + 7 * q * w * E * (s + 1) := by ring
+  -- the self-correction stage
+  have hsc : selfCorrectCost w m d L (lineCost w q m M (D / d) d (glCost w K s)) ≤
+      2000 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+    unfold selfCorrectCost
+    have hpts : m * (P * (d + 1)) + (P * (2 * (d + 1) + 1) + (2 * P - 2)) ≤ 6 * (P * m * q) := by
+      have b1 : m * (P * (d + 1)) ≤ P * m * q := by
+        calc m * (P * (d + 1)) ≤ m * (P * q) := by gcongr
+          _ = P * m * q := by ring
+      have b2 : P * (2 * (d + 1) + 1) ≤ 3 * (P * m * q) := by
+        calc P * (2 * (d + 1) + 1) ≤ P * (3 * q) := by gcongr; omega
+          _ = 3 * (P * 1 * q) := by ring
+          _ ≤ 3 * (P * m * q) := by gcongr
+      have b3 : 2 * P ≤ 2 * (P * m * q) := by
+        have : 1 ≤ m * q := Nat.one_le_iff_ne_zero.2 (by positivity)
+        calc 2 * P = 2 * (P * 1) := by ring
+          _ ≤ 2 * (P * (m * q)) := by gcongr
+          _ = 2 * (P * m * q) := by ring
+      omega
+    calc (m * (P * (d + 1)) + (P * (2 * (d + 1) + 1) + (2 * P - 2))) * bitBlastCost w +
+          P * (d + 1) * lineCost w q m M (D / d) d (glCost w K s)
+        ≤ (6 * (P * m * q)) * (7 * w ^ 2 * q ^ 2) +
+            P * q * (1260 * m * w ^ 2 * q ^ 8 + 7 * q * w * E * (s + 1)) := by gcongr
+      _ ≤ 2000 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+          have hq9 : q ^ 3 ≤ q ^ 9 := Nat.pow_le_pow_right hq1 (by norm_num)
+          have hq9' : q ^ 2 ≤ q ^ 9 := Nat.pow_le_pow_right hq1 (by norm_num)
+          have hw1 : w ≤ w ^ 2 := by nlinarith
+          have hs : 1 ≤ s + 1 := by omega
+          have hA : (6 * (P * m * q)) * (7 * w ^ 2 * q ^ 2) ≤
+              42 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+            calc (6 * (P * m * q)) * (7 * w ^ 2 * q ^ 2) = 42 * P * m * w ^ 2 * q ^ 3 * 1 * 1 := by
+                  ring
+              _ ≤ 42 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by gcongr
+          have hB : P * q * (1260 * m * w ^ 2 * q ^ 8) ≤
+              1260 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+            calc P * q * (1260 * m * w ^ 2 * q ^ 8) = 1260 * P * m * w ^ 2 * q ^ 9 * 1 * 1 := by
+                  ring
+              _ ≤ 1260 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by gcongr
+          have hC : P * q * (7 * q * w * E * (s + 1)) ≤
+              7 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+            calc P * q * (7 * q * w * E * (s + 1)) = 7 * P * 1 * w * q ^ 2 * E * (s + 1) := by
+                  ring
+              _ ≤ 7 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by gcongr
+          have hsplit : P * q * (1260 * m * w ^ 2 * q ^ 8 + 7 * q * w * E * (s + 1)) =
+              P * q * (1260 * m * w ^ 2 * q ^ 8) + P * q * (7 * q * w * E * (s + 1)) := by ring
+          rw [hsplit]
+          have hZ : 42 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) +
+              1260 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) +
+              7 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) ≤
+              2000 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+            have : 42 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) +
+                1260 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) +
+                7 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) =
+                1309 * (P * m * w ^ 2 * q ^ 9 * E * (s + 1)) := by ring
+            rw [this, show 2000 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) =
+              2000 * (P * m * w ^ 2 * q ^ 9 * E * (s + 1)) by ring]
+            gcongr
+            norm_num
+          omega
+  -- the grid point and the output
+  have hcube : m * w * (2 ^ b * (2 * b + 2) + 1) ≤ 5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+    have : 2 ^ b * (2 * b + 2) + 1 ≤ 5 * w * q := by nlinarith
+    calc m * w * (2 ^ b * (2 * b + 2) + 1) ≤ m * w * (5 * w * q) := by gcongr
+      _ = 5 * 1 * m * w ^ 2 * q * 1 * 1 := by ring
+      _ ≤ 5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+          have hq9 : q ≤ q ^ 9 := (pow_one q).symm.le.trans (Nat.pow_le_pow_right hq1 (by norm_num))
+          gcongr
+          all_goals omega
+  have hout : 2 ^ w * (2 * w + 2) + 1 ≤ 5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+    rw [← hq]
+    have : q * (2 * w + 2) + 1 ≤ 5 * w ^ 2 * q := by
+      have hw2 : w ≤ w ^ 2 := by nlinarith
+      have h1 : w * q ≤ w ^ 2 * q := Nat.mul_le_mul_right _ hw2
+      have h2 : q ≤ w ^ 2 * q := Nat.le_mul_of_pos_left _ (by positivity)
+      have h3 : 1 ≤ w ^ 2 * q := Nat.one_le_iff_ne_zero.2 (by positivity)
+      calc q * (2 * w + 2) + 1 = 2 * (w * q) + 2 * q + 1 := by ring
+        _ ≤ 2 * (w ^ 2 * q) + 2 * (w ^ 2 * q) + w ^ 2 * q := by omega
+        _ = 5 * w ^ 2 * q := by ring
+    calc q * (2 * w + 2) + 1 ≤ 5 * w ^ 2 * q := this
+      _ = 5 * 1 * 1 * w ^ 2 * q * 1 * 1 := by ring
+      _ ≤ 5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+          have hq9 : q ≤ q ^ 9 := (pow_one q).symm.le.trans (Nat.pow_le_pow_right hq1 (by norm_num))
+          gcongr
+          all_goals omega
+  unfold reconstructionCost
+  calc m * w * (2 ^ b * (2 * b + 2) + 1) +
+        selfCorrectCost w m d L (lineCost w q m M (D / d) d (glCost w K s)) +
+        (2 ^ w * (2 * w + 2) + 1)
+      ≤ 5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) + 2000 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) +
+          5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by gcongr
+    _ ≤ 2 ^ 11 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) := by
+        have : 5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) +
+            2000 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) +
+            5 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) =
+              2010 * (P * m * w ^ 2 * q ^ 9 * E * (s + 1)) := by
+          ring
+        rw [this, show 2 ^ 11 * P * m * w ^ 2 * q ^ 9 * E * (s + 1) =
+          2048 * (P * m * w ^ 2 * q ^ 9 * E * (s + 1)) by ring]
+        gcongr
+        norm_num
+
+end Bound
 
 end Cslib.Circuits.Boolean

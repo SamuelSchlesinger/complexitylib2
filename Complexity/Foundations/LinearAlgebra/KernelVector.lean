@@ -32,7 +32,8 @@ and it is nonzero whenever the kernel is (`Cslib.LinearAlgebra.kernelVec_ne_zero
 
 Pivots are selected by the indicator `Cslib.LinearAlgebra.firstFlags b` of the first nonzero entry
 of `b`, so every step is a fixed arithmetic expression in the entries, with tests for zero and no
-other branching. Processing a row costs `O(n ^ 2)` field operations.
+other branching. Processing a row costs `O(n ^ 2)` field operations. The procedure is Gaussian
+elimination organized for straight-line evaluation, as needed to count its gates in circuits.
 
 ## Main definitions
 
@@ -45,11 +46,6 @@ other branching. Processing a row costs `O(n ^ 2)` field operations.
 
 * `Cslib.LinearAlgebra.kernelVec_mulVec`: the output lies in the kernel.
 * `Cslib.LinearAlgebra.kernelVec_ne_zero`: the output is nonzero when the kernel is nontrivial.
-
-## References
-
-* [V. Guruswami, A. Rudra, M. Sudan, *Essential Coding Theory*]
-  [GuruswamiRudraSudan2019], Appendix on algorithms for linear algebra
 -/
 
 @[expose] public section

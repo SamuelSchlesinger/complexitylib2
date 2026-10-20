@@ -21,7 +21,7 @@ be corrected *everywhere*, with few queries and fixed randomness. The basic step
 interpolates: `p x = ∑ i, λ i * p (x + ν i • v)` for the Lagrange weights `λ i` of the nodes at
 `0` (`Cslib.Code.lagrangeDecode_of_mem_reedMuller`). Each queried point is uniformly distributed
 over the directions `v`, so at every point `x` at most `(d + 1) * Δ(w, p)` directions make the
-step err (`Cslib.Code.card_lagrangeDecode_ne_le`) [Arora and Barak, Section 19.4][AroraBarak09].
+step err (`Cslib.Code.card_lagrangeDecode_ne_le`) [Arora and Barak, Chapter 19][AroraBarak09].
 
 A *majority tree* (`Cslib.Code.majTree`) of depth `L` combines `3 ^ L` independent runs by
 repeated majorities of three, `maj3 a b c = if a = b then a else c`, which is right whenever two
@@ -46,7 +46,7 @@ argument and need only equality tests to evaluate.
 
 ## References
 
-* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 19.4
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Chapter 19
 -/
 
 @[expose] public section

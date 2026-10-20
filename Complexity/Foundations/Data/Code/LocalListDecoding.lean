@@ -56,7 +56,7 @@ advice `p(z)`, correct at all but
 
 * [M. Sudan, L. Trevisan, S. Vadhan, *Pseudorandom generators without the XOR lemma*]
   [SudanTrevisanVadhan2001]
-* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 19.5
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Chapter 19
 -/
 
 @[expose] public section

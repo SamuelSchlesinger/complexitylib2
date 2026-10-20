@@ -20,7 +20,7 @@ Let `h : H ↪ F` embed a finite set `H` of size `|H|` in a field `F`. Every fun
 `lowDegreeExtension h f x = ∑ u, f u * ∏ i, L (u i) (x i)`, where `L a` is the Lagrange basis
 polynomial of the node `h a` among the nodes `h H`
 [Babai, Fortnow, Levin, Szegedy][BabaiFortnowLevinSzegedy1991],
-[Arora and Barak, Section 19.4][AroraBarak09]. It agrees with `f` on the grid
+[Arora and Barak, Chapter 19][AroraBarak09]. It agrees with `f` on the grid
 (`Cslib.Code.lowDegreeExtension_apply_embed`) and is a codeword of the Reed–Muller code of degree
 `m * (|H| - 1)` (`Cslib.Code.lowDegreeExtension_mem_reedMuller`). For `H = {0, 1}` this is the
 multilinear extension.
@@ -44,7 +44,7 @@ truth table, which is what makes encodings of functions computable in exponentia
 
 * [L. Babai, L. Fortnow, L. Levin, M. Szegedy, *Checking computations in polylogarithmic time*]
   [BabaiFortnowLevinSzegedy1991]
-* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 19.4
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Chapter 19
 -/
 
 @[expose] public section
