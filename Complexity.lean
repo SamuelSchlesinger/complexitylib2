@@ -1199,6 +1199,8 @@ public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Vote
+public import Complexity.Foundations.Data.BitString.Multiplication
+public import Complexity.Foundations.Data.BitString.Packing
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.Point
@@ -1314,6 +1316,11 @@ public import Complexity.Logics.FirstOrder.Ordered.BitSum
 public import Complexity.Logics.FirstOrder.Ordered.BitSum.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Bounds
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Columns
+public import Complexity.Logics.FirstOrder.Ordered.Packing
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor

@@ -201,23 +201,64 @@ theorem mulCarry_eq_zero {x y w k : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
     _ = 2 ^ (2 * w) := by rw [← pow_add]; congr 1; lia
     _ ≤ 2 ^ k := Nat.pow_le_pow_right (by decide) hk
 
+/-- Exact carry equations propagate the weighted-prefix invariant through a block. -/
+theorem mulPrefix_eq_of_carries {x y z j s : ℕ} (c : ℕ → ℕ)
+    (hstart : mulPrefix x y j = z % 2 ^ j + c 0 * 2 ^ j)
+    (hstep : ∀ t < s, c t + mulColumn x y (j + t) =
+      (z.testBit (j + t)).toNat + 2 * c (t + 1)) :
+    mulPrefix x y (j + s) = z % 2 ^ (j + s) + c s * 2 ^ (j + s) := by
+  have hp (t : ℕ) (ht : t ≤ s) :
+      mulPrefix x y (j + t) = z % 2 ^ (j + t) + c t * 2 ^ (j + t) := by
+    induction t with
+    | zero => simpa using hstart
+    | succ t ih =>
+      rw [show j + (t + 1) = j + t + 1 by lia]
+      calc
+        mulPrefix x y (j + t + 1) =
+            mulPrefix x y (j + t) + mulColumn x y (j + t) * 2 ^ (j + t) := mulPrefix_succ ..
+        _ = z % 2 ^ (j + t) + (c t + mulColumn x y (j + t)) * 2 ^ (j + t) := by
+          rw [ih (by lia)]; ring
+        _ = z % 2 ^ (j + t) + ((z.testBit (j + t)).toNat + 2 * c (t + 1)) * 2 ^ (j + t) := by
+          rw [hstep t (by lia)]
+        _ = z % 2 ^ (j + t + 1) + c (t + 1) * 2 ^ (j + t + 1) := by
+          rw [pow_succ, Nat.mod_mul, ← testBit_toNat]
+          ring
+  exact hp s (le_refl s)
+
 /-- Any exact zero-ended carry sequence determines ordinary multiplication. -/
 theorem mul_eq_of_columns {x y z w k : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
     (hz : z < 2 ^ k) (hk : 2 * w ≤ k) (c : ℕ → ℕ) (hzero : c 0 = 0) (hend : c k = 0)
     (hstep : ∀ i < k, c i + mulColumn x y i = (z.testBit i).toNat + 2 * c (i + 1)) :
     x * y = z := by
-  have hp (i : ℕ) (hi : i ≤ k) : mulPrefix x y i = z % 2 ^ i + c i * 2 ^ i := by
-    induction i with
+  have hp := mulPrefix_eq_of_carries (j := 0) c
+    (by simp [mulPrefix, hzero, Nat.mod_one]) (by simpa only [Nat.zero_add] using hstep)
+  simpa only [Nat.zero_add, mulPrefix_eq_mul hx hy hk, hend, Nat.zero_mul, Nat.add_zero,
+    Nat.mod_eq_of_lt hz] using hp
+
+/-- Blocks sharing their endpoint carries determine multiplication. The boundary sequence
+is global, while the interior witnesses may be chosen separately for every block. -/
+theorem mul_eq_of_blocks {x y z w k s : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
+    (hz : z < 2 ^ k) (hk : 2 * w ≤ k) (hs : 0 < s) (hks : s ∣ k)
+    (c : ℕ → ℕ) (hzero : c 0 = 0) (hend : c k = 0)
+    (hblock : ∀ q, q * s < k → ∃ a : ℕ → ℕ,
+      a 0 = c (q * s) ∧ a s = c (q * s + s) ∧
+      ∀ t < s, a t + mulColumn x y (q * s + t) =
+        (z.testBit (q * s + t)).toNat + 2 * a (t + 1)) : x * y = z := by
+  have hp (q : ℕ) (hq : q * s ≤ k) :
+      mulPrefix x y (q * s) = z % 2 ^ (q * s) + c (q * s) * 2 ^ (q * s) := by
+    induction q with
     | zero => simp [mulPrefix, hzero, Nat.mod_one]
-    | succ i ih =>
-      calc
-        mulPrefix x y (i + 1) = mulPrefix x y i + mulColumn x y i * 2 ^ i := mulPrefix_succ ..
-        _ = z % 2 ^ i + (c i + mulColumn x y i) * 2 ^ i := by rw [ih (by lia)]; ring
-        _ = z % 2 ^ i + ((z.testBit i).toNat + 2 * c (i + 1)) * 2 ^ i := by rw [hstep i (by lia)]
-        _ = z % 2 ^ (i + 1) + c (i + 1) * 2 ^ (i + 1) := by
-          rw [pow_succ, Nat.mod_mul, ← testBit_toNat]
-          ring
+    | succ q ih =>
+      rw [Nat.succ_mul] at hq ⊢
+      obtain ⟨a, ha0, has, hast⟩ := hblock q (by lia)
+      have hstart : mulPrefix x y (q * s) = z % 2 ^ (q * s) + a 0 * 2 ^ (q * s) := by
+        rw [ha0]
+        exact ih (by lia)
+      simpa only [has] using mulPrefix_eq_of_carries a hstart hast
+  have he : k / s * s = k := Nat.div_mul_cancel hks
+  have hp' := hp (k / s) (by rw [he])
+  rw [he] at hp'
   simpa only [mulPrefix_eq_mul hx hy hk, hend, Nat.zero_mul, Nat.add_zero,
-    Nat.mod_eq_of_lt hz] using hp k (le_refl k)
+    Nat.mod_eq_of_lt hz] using hp'
 
 end Cslib.BitString
