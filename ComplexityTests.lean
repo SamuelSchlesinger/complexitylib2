@@ -51,6 +51,7 @@ import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
+import ComplexityTests.CountingAmbiguity
 import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
 import ComplexityTests.CountingComposition
