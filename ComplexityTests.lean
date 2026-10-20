@@ -80,8 +80,15 @@ import ComplexityTests.FourierLearning
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
+import ComplexityTests.FusionConondeterministic
+import ComplexityTests.FusionConsistency
+import ComplexityTests.FusionConverse
 import ComplexityTests.FusionCyclic
+import ComplexityTests.FusionGraph
 import ComplexityTests.FusionHomomorphism
+import ComplexityTests.FusionQuadratic
+import ComplexityTests.FusionRandom
+import ComplexityTests.FusionSampling
 import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.GGM

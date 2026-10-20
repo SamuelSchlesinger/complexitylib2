@@ -967,3 +967,162 @@ which fixes docstring references naming no declaration. The final delta review o
 "the module", and `scripts/upstream.py` now also rewrites backticked references to existing local
 modules from `Complexity.` to `Cslib.`, so such docstrings stay correct when upstreamed. These are AI reviews, not human editorial approval or a
 machine-checked equivalence between prose and Lean. AI assistance: Jetski (Gemini).
+
+## Quadratic Fusion completeness (PR #19, 20 October 2026)
+
+OpenAI Codex worker `fusion-quadratic-20261020` added the acyclic compiler and the corresponding
+index entry, under coordinator dispatch. Independent coordinator review checked core revision
+`dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542` for API design and correctness: pointwise finite-chain
+stabilization and its round count, native circuit cost and semantics, the infinity case, and
+zero/nonzero/infinite-carrier examples. Verdict: no findings.
+
+The coordinator also compared the new index entry with the final Lean statements and definitions.
+The stated cost, free-constant convention, infinite-carrier scope and noncomputability limitation
+were accurate. One quantifier clarification was requested and applied: the cover defeats
+"every semifilter above any point of A". The three declaration links are pinned to the reviewed
+core revision, and each target line was checked against `git show`. The PDF builds without
+undefined references or overfull boxes; the new entry on page 30 and bibliography entry on
+page 42 were rendered and visually inspected. Final documentation review is requested on PR #19.
+These are AI reviews, not human editorial approval or a machine-checked proof of equivalence
+between prose and Lean.
+
+## 2026-10-20: Graph Fusion transfer and inequality complexity
+
+The new circuit-index entry describes graph-to-Boolean cover transfer (including the
+semi-ultrafilter subclass) and the exact canonical/full/intersection complexity of inequality
+on `2^n` vertices per side. It links to source revision
+`45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5`, at the exact theorem lines (98 and 212).
+The index now contains 116 entries.
+
+The coordinating Codex agent, independent of authoring worker `fusion-graph-20261020`, reviewed
+correctness/API and the changed prose against the final Lean statements. It approved the
+quantifiers, two-block Boolean representation, free-OR/constant AND-cost convention,
+semi-ultrafilter restriction, trivial-graph transfer, and zero-bit equality. The source review
+requested only the missing `Main definitions` module-doc section, which was added and re-reviewed
+at the source revision above; no remaining findings. The final PR records the reviewed document
+revision. These are AI reviews, not human editorial approval or a machine-checked prose equivalence.
+
+All six Lean gates pass; the named headline axiom guards use only `propext`, `Classical.choice`,
+and `Quot.sound`. The PDF builds without undefined citations/references. Page 30 was rendered
+and visually inspected; after pinning the links, the final rendered page is pixel-identical.
+Both new declaration links were checked against their pinned Git source and line numbers.
+Mathematical credit: Cavalar–Oliveira (2025), Lemmas 39/48 and Proposition 40. Canonical definitions
+also retain credit to Samuel Schlesinger's earlier formalization. AI assistance: OpenAI Codex.
+
+Integration reconciliation: PR #21 retains both the quadratic and graph entries after merging
+main at `f024eb43a11c80a9db843a8b354295f7bdd2d80e`; the index count is 117. The source
+declaration links remain pinned to their separately reviewed revisions. No theorem statement
+or proof changed during conflict resolution; the PDF was regenerated from both entries.
+
+## Fusion sampling and fixed-distribution barrier (2026-10-20)
+
+OpenAI Codex worker `fusion-barrier-20261020` authored the sampler and barrier and this index
+entry. Independent coordinator review checked the source mathematics, API, nonvacuous clients,
+and draft prose. The final core revision is `503ce2b0d3d0b5cc3dd3fa793aab840d07e448fa`.
+The review checked the cylinder path, uniform marginal transport, endpoint independence,
+complement estimate, the `8n+8` normalization, and weighted averaging. No mathematical or API
+findings were reported. One scope wording correction was requested and applied: the theorem
+still applies to circuit-adaptively selected weights if the capacity bound holds for every pair;
+the limitation concerns bounds restricted to the gate pairs of a particular circuit. The paper
+also now states explicitly that all three sampler components are chosen uniformly.
+
+The three new declaration links were checked against their exact source lines at the core SHA.
+The PDF rebuilt without undefined references or overfull boxes; the new entry on page 30 was
+rendered and visually inspected. The coordinator reviewed the final entry at `79d530cf`
+against core `503ce2b0` and reported no outstanding findings after the two wording corrections.
+This is AI review, not human editorial approval or a machine-checked proof of prose-to-Lean
+equivalence.
+
+Integration reconciliation: PR #22 preserves the quadratic, graph, and sampling entries after
+rebasing onto main at `2fb260fffdce0fe5eeb019b202192243d74863f4`. The index count is 118.
+The sampling source and tests are unchanged; declaration links remain pinned to `503ce2b0`.
+The PDF was regenerated without undefined references or overfull boxes, and combined pages
+30 and 31 were rendered and visually inspected. The sampling entry now appears on page 31.
+Final integration review is recorded in PR #22.
+
+## Random graph cover complexity (PR #23, 20 October 2026)
+
+OpenAI Codex worker `fusion-random-20261020` implemented finite cover descriptions and the
+quantitative random-graph theorem. The independent coordinator reviewed exact core revision
+`5eb6d9a109234ce5579765b93bb24b7cfaca6e60`: description cardinality, decoding through bounded
+closure, padding, finite-budget attainment, the row cover, the uniform probability bound, and
+nonvacuous tests. An earlier API request moved padding and finite-budget attainment into
+`Semifilter.lean` and generalized both to every admissibility predicate. Fresh review of the
+updated revision found no outstanding correctness or API findings.
+
+Independent review also checked the new index entry against those definitions and statements:
+finite encoding cardinality; uniform distribution over all labelled bipartite graphs; the strict
+lower event `floor(N/16) < rho(G)`; the upper bound `rho(G) <= N`; the `N >= 16` hypothesis and
+`1 - 2^(-N)` probability; and the absence of an explicit hard-graph construction. No findings.
+All four declaration links were checked against the pinned source revision. The PDF builds
+without undefined references or overfull boxes, and the new entry on page 31 was rendered and
+visually inspected. All six project validation gates passed again after rebasing onto the merged
+prerequisites. Final documentation review is requested on PR #23. These are AI reviews, not human
+editorial approval or a machine-checked equivalence between the prose and Lean.
+
+Integration reconciliation: PR #23 merges main at
+`fb8bcf29945ea529fd2dc5a41e302d519961ff8e`, retaining both the sampling and random-graph
+entries and both test imports. The index contains 119 entries. Neither development
+changed its Lean statements, proofs, or tests during reconciliation. All seven declaration
+links were rechecked against their pinned source revisions. The rebuilt PDF has no undefined
+references or overfull boxes; both entries appear on page 31, which was rendered and visually
+inspected. All six validation gates pass on the combined tree. Fresh coordinator review of
+this integration revision is requested in PR #23.
+
+## 2026-10-20: Semi-ultrafilter bounds for universal verifiers
+
+Worker `fusion-graph-20261020` added the universal-verifier lower bound and one curated index
+entry, bringing the count to 118. The independently authoring-free coordinating agent reviewed
+source revision `fc111b65726f9b5bc721b9c63bef8a218fcf4b35` for correctness and API design,
+including the counterexample pullback, auxiliary polarity selection, exact AND count,
+nonempty witness example and zero-auxiliary case. No findings remained. Its independent prose
+review checked arbitrary auxiliary counts, the fixed-verifier minimum, free literals/constants/OR,
+and the explicit lower-only boundary; no findings.
+
+All six Lean validation gates pass. The headline axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`. The declaration link is pinned to the source revision above,
+line 137, and was checked against `git show`. The PDF builds, and the new entry on page 31 was
+rendered and visually inspected. The converse and minimization over all verifiers remain in
+issue #24 under #16; this entry will be extended when they are proved. Final document-head
+review is recorded in PR #25. These are AI reviews, not human editorial approval or a
+machine-checked equivalence of prose and Lean. AI assistance: OpenAI Codex.
+
+Integration reconciliation: PR #25 merges main at
+`fd3f45211011471c96394e4fea256235ece028ed`, preserving the sampling and random-graph
+entries and all generated imports. The combined index has 120 entries. No theorem
+statement, proof or test changed in reconciliation; declaration links retain their reviewed
+source revisions. All six validation gates pass on the combined tree. All eight sampling,
+random-graph and universal-verifier links were rechecked against pinned source lines. The
+combined PDF was rebuilt and pages 31 and 32 were rendered and visually inspected.
+
+## 2026-10-20: Universal verifiers from semi-ultrafilter covers
+
+Worker `fusion-graph-20261020` formalized the converse and extended the existing universal-verifier
+entry; the index count remains 120. Source revision
+`f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd` adds the maximal extension, finite certificate,
+native formula compiler, Boolean verifier specialization, and minimum over all finite auxiliary
+counts and all verifiers. The coordinating agent proposed the substantive factor-five
+construction and is therefore not counted as an independent reviewer of this work.
+
+Independent reviewer `fusion-barrier-20261020`, who did not author the source, reviewed all five
+new modules and the tests for correctness and API design. The review checked the fixed empty
+rejection, equal rejected pairs, empty carrier, exact three-bit/five-AND accounting, both
+quantifier directions, extended-natural minimization and nonconstant examples. No source or
+test findings remained. Supplementary exhaustive small-carrier checks supported the certificate
+semantics but do not replace Lean proofs.
+
+The same independent reviewer checked the extended index against the final Lean statements:
+quantifiers, free literals/constants/OR, exact auxiliary and AND counts, zero cases,
+extended-natural infimum, construction/runtime limitations and source attribution. One link
+correction was requested and applied: the lower-direction link now points to the exact-length
+extraction theorem at `fc111b65726f9b5bc721b9c63bef8a218fcf4b35`, line 123. The new verifier
+and headline-bound links point to lines 66 and 131 of the source revision above. All three
+links were checked against `git show`.
+
+All six validation gates pass on the source revision; named axiom guards contain only
+`propext`, `Classical.choice` and `Quot.sound`. The PDF was rebuilt and the extended entry on
+page 32 was rendered and visually inspected. Exact-head approval and integration evidence
+are recorded in PR #28. These are AI reviews, not human editorial approval or machine-checked
+prose equivalence. AI assistance: OpenAI Codex. Mathematical credit remains Cavalar–Oliveira's
+presentation of Karchmer's characterization; the explicit factor five is the checked certificate
+deduction described above.

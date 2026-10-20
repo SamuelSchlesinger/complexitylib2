@@ -406,6 +406,31 @@ uniformity, explicitness and quantitative strength; a citation or related theore
 | 20: barriers and further methods | [Fusion API](Complexity/Computability/Circuit/Fusion/Basic.lean), [Nisan–Wigderson core](Complexity/Computability/Kolmogorov/NisanWigderson.lean) | Match the book's generator, natural-proof, fusion and indirect lower-bound results. |
 | Appendix A: mathematical prerequisites | Mathlib and `Complexity/Foundations/` | Reuse existing statements and fill dependencies as clients require them. |
 
+## Approximation and Fusion milestones
+
+These milestones extend the existing [semifilter covers](Complexity/Computability/Circuit/Fusion/Semifilter.lean)
+and [cyclic characterization](Complexity/Computability/Circuit/Fusion/Cyclic/Compiler.lean)
+using [Oliveira's approximation-method notes (2018)](https://www.dcs.warwick.ac.uk/~igorcarb/documents/papers/approximation-method-fusion-note.pdf)
+and [Cavalar–Oliveira, ECCC TR25-033 (2025)](https://eccc.weizmann.ac.il/report/2025/033/).
+Credit the earlier results of Razborov, Karchmer, Wigderson, and Nakayama–Maruoka where used.
+The issues carry ownership and review history. Circuit bounds use the native basis with free
+constants and binary unions; the theorem index records the precise scope of each result.
+
+| Milestone | Proved result and scope |
+| --- | --- |
+| [Quadratic completeness #12](https://github.com/SamuelSchlesinger/complexitylib2/issues/12) | **Proved:** [quadratic compiler](Complexity/Computability/Circuit/Fusion/Quadratic.lean) uses exactly `t²` AND gates for a `t`-pair cover and gives the minimum source-cost bound, including arbitrary carriers, empty input families and trivial targets (TR25-033, Theorem 24; PR #19). |
+| [Approximation bridge and counting barrier #13](https://github.com/SamuelSchlesinger/complexitylib2/issues/13) | **Proved:** [exact consistency and local observation errors](Complexity/Computability/Circuit/Fusion/Consistency.lean), the [fixed pair sampler, weighted averaging and `8n + 8` certificate barrier](Complexity/Computability/Circuit/Fusion/Sampling.lean) (Oliveira, Lemma 3 and Theorem 6; PRs #20 and #22). This is a local observation bridge, not a formal equivalence of all approximation models. |
+| [Graph transfer and inequality #14](https://github.com/SamuelSchlesinger/complexitylib2/issues/14) | **Proved:** [row/column-to-literal transfer](Complexity/Computability/Circuit/Fusion/Graph.lean) for any admissible witness subclass, including semi-ultrafilters, and [exact canonical/full cover and intersection cost `n`](Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean) for inequality on `2^n` vertices per side (TR25-033, Lemmas 39/48 and Proposition 40; PR #21). |
+| [Random graph covers #15](https://github.com/SamuelSchlesinger/complexitylib2/issues/15) | **Proved:** [finite inclusion-pattern counting](Complexity/Computability/Circuit/Fusion/Encoding.lean) and [random graph hardness](Complexity/Computability/Circuit/Fusion/Graph/Random.lean): for `N ≥ 16`, probability at least `1 - 2⁻ᴺ` of `⌊N/16⌋ < ρ(G) ≤ N` under the uniform distribution on all labelled bipartite graphs (TR25-033, Theorem 37; PR #23). |
+| [Conondeterministic complexity #16](https://github.com/SamuelSchlesinger/complexitylib2/issues/16) | **Proved:** [universal-verifier cover extraction](Complexity/Computability/Circuit/Fusion/Conondeterministic.lean) and the [converse compiler](Complexity/Computability/Circuit/Fusion/Converse.lean) give `ρ_ultra(f) ≤ C_forall,AND(f) ≤ 5ρ_ultra(f)`. The [extended-natural circuit measure](Complexity/Computability/Circuit/Boolean/Conondeterministic.lean) minimizes over all finite auxiliary counts and verifiers; a `t`-pair cover gives exactly `3t` auxiliary bits and `5t` AND gates, including zero and constant cases (TR25-033, Theorem 45, credited there to Karchmer; PRs #25 and #28). The explicit factor five comes from the formalized certificate construction. The graph transfer above specializes to semi-ultrafilters (Lemma 48). |
+
+Keep the source models explicit: constants, zero-gate constructions, exact versus one-sided
+literal consistency, and AND versus total gate costs. The counting barrier requires a capacity
+bound over every pair; it does not apply to a bound restricted to a particular circuit's gate
+pairs and is not an upper bound on unrestricted cover complexity. The sampling and reconstruction
+lemmas are proved, not assumed. These are
+formalizations of established results, not claims of new explicit superlinear circuit lower bounds.
+
 ## Machine-class milestones
 
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or

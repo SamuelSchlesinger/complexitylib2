@@ -225,3 +225,149 @@ non-power-of-two arity.\citep{Khrapchenko1971b,Yablonskii1954,Jukna2012}
 \decl{Complexity/Computability/Circuit/Boolean/Yablonskii.lean}{194}{Cslib.Circuits.Boolean.formulaDepth_parity_le_two_mul_clog}
 \decl{Complexity/Computability/Circuit/Boolean/KhrapchenkoDepth.lean}{88}{Cslib.Circuits.Boolean.formulaDepth_parity_two_pow}
 \end{result}
+
+\begin{result}
+\subsection{Quadratic completeness of semifilter covers}
+Let $A\subseteq U$ and let $B_1,\ldots,B_n\subseteq U$ be supplied input sets.
+A semifilter on $U\setminus A$ is an upward-closed family containing the whole
+complement and excluding the empty set. It is above a point $a\in A$ if it
+contains every $B_i\cap(U\setminus A)$ for which $a\in B_i$.
+Suppose a list of $t$ pairs of complement subsets defeats every semifilter above any point of $A$:
+for some listed pair it accepts both components but not their intersection.
+Then there is an acyclic set circuit computing $A$ from the supplied sets with
+at most $t^2$ AND gates. Binary unions and both constants are free, and fanout
+shares computed sets. Consequently the minimum AND cost is at most the square
+of the minimum unrestricted pair-cover length (with value $\infty$ if no cover exists).
+The construction works even for infinite $U$, empty input families, and trivial
+targets: each point's $t$ pair coordinates stabilize within $t$ rounds. Selecting
+free unions uses classical subset tests; no effective compiler running-time bound
+is claimed. This is the native free-constant version of Cavalar--Oliveira's
+quadratic completeness theorem, following the Fusion method.
+\citep{CavalarOliveira2025}
+\declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{226}{Cslib.Circuits.Fusion.PairCover.cost_toCircuit}
+\declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{233}{Cslib.Circuits.Fusion.PairCover.eval_toCircuit}
+\declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{258}{Cslib.Circuits.Fusion.ecomplexityFrom_le_pairCoverComplexity_sq}
+\end{result}
+
+\begin{result}
+\subsection{Graph Fusion transfer and exact inequality complexity}
+Let $V=\{0,1\}^n$, let $G\subseteq V\times V$, and supply every row and column
+as a free source. A semifilter on $G^c$ accepts the full set, rejects the empty
+set, and is upward closed. It is above an edge when it accepts the restricted
+row and column containing that edge. A cover defeats every such witness with a
+pair of accepted sets whose intersection is rejected; $\rho(G)$ is the minimum
+number of pairs. Representing a Boolean input by two $n$-bit blocks gives
+\[
+\rho(G)\le \rho(f_G;\text{positive and negative literals}).
+\]
+The inequality also holds when both sides restrict to semi-ultrafilters (every
+set or its complement is accepted), and includes trivial graphs.
+For $G_{\ne}=\{(u,v):u\ne v\}$,
+\[
+\rho_{\mathrm{can}}(G_{\ne})=\rho(G_{\ne})=D_{\cap}(G_{\ne})=n.
+\]
+Canonical semifilters are the upward closures of a complementary row and
+column, both nonempty. Here $D_{\cap}$ counts only binary intersections in
+native acyclic circuits: unions, empty/full constants, rows, columns, wiring
+and fanout are free. The equality includes $n=0$, when the graph is empty and
+all three costs are zero. This is a graph intersection bound, not a total-gate
+count.\citep{CavalarOliveira2025}
+\declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph.lean}{98}{Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_literals}
+\declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean}{212}{Cslib.Circuits.Fusion.Graph.inequality_complexities}
+\end{result}
+
+\begin{result}
+\subsection{The fixed-distribution Fusion counting barrier}
+Let $A\subseteq\{0,1\}^n$, let $v\in A$, and let $F$ be a semifilter on
+$U=\{0,1\}^n\setminus A$. Suppose $F$ accepts
+$\{u\in U:u_i=v_i\}$ for every coordinate $i$.
+There is an explicit distribution on pairs $(S,T)$ of subsets of $U$, depending
+only on $A$, which covers every such $(v,F)$ with probability at least
+$1/(8n+8)$. Covering means $F(S)$ and $F(T)$ hold but $F(S\cap T)$ does not.
+The sampler independently and uniformly chooses a coordinate or an extra
+complement case, a Boolean polarity, and a full truth table.
+
+More generally, for any finite family $(v_w,F_w)$ satisfying these hypotheses
+and nonnegative real weights $\mu_w$, there exists a pair covering total weight
+at least
+\[
+\frac{\sum_w\mu_w}{8n+8}.
+\]
+If the weights sum to one and every pair covers weight at most $d$, then
+$d>0$ and $1/d\le8n+8$. This bounds the fixed-distribution counting certificate,
+not minimum cover size or circuit complexity. The hitting pair can depend on
+the weighted family; the sampling distribution does not. The theorem applies even
+if the weights are chosen after seeing a circuit, provided the capacity bound
+holds for every pair. It does not bound certificates whose capacity constraint
+ranges only over that circuit's gate pairs.
+
+The proof adapts Oliveira's exposition of Razborov's argument through successive
+random truth-table cylinders. It needs only acceptance of matching literals,
+not exact agreement on the opposite literals, and proves the sampling lemma
+rather than assuming it. No efficient sampling bound is asserted.
+\citep{Oliveira2018Approximation,Razborov1989}
+\declat{503ce2b0d3d0b5cc3dd3fa793aab840d07e448fa}{Complexity/Computability/Circuit/Fusion/Sampling.lean}{308}{Cslib.Circuits.Fusion.le_booleanPairSample_expect}
+\declat{503ce2b0d3d0b5cc3dd3fa793aab840d07e448fa}{Complexity/Computability/Circuit/Fusion/Sampling.lean}{328}{Cslib.Circuits.Fusion.exists_pair_weight_ge}
+\declat{503ce2b0d3d0b5cc3dd3fa793aab840d07e448fa}{Complexity/Computability/Circuit/Fusion/Sampling.lean}{355}{Cslib.Circuits.Fusion.fixedDistribution_counting_bound}
+\end{result}
+
+\begin{result}
+\subsection{Linear cover complexity of random bipartite graphs}
+Fix $n$ supplied subsets of a finite carrier. The number of targets admitting
+an unrestricted semifilter cover with at most $t$ pairs is at most
+$2^{(2t+1)(n+t+1)}$. Each cover is encoded by the inclusion flags used in
+quadratic closure propagation, and decoding is proved to recover its target;
+no incompressibility or encoding hypothesis remains.
+For a uniform labelled graph $G\subseteq[N]\times[N]$, take all $2N$ rows and
+columns as supplied sets and write $\rho(G)$ for unrestricted cover complexity.
+Every graph has $\rho(G)\le N$, and
+\[
+\Pr[\rho(G)\le t]\le\frac{2^{(2t+1)(2N+t+1)}}{2^{N^2}}.
+\]
+In particular, for every $N\ge16$,
+\[
+\Pr[\lfloor N/16\rfloor<\rho(G)\le N]\ge1-2^{-N}.
+\]
+The distribution is uniform over all $2^{N^2}$ bipartite graphs, including
+empty and complete graphs. This is a finite quantitative form of the
+linear high-probability bound of Cavalar--Oliveira, not an explicit hard-graph
+construction.\citep{CavalarOliveira2025}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Encoding.lean}{139}{Cslib.Circuits.Fusion.card_small_covers_le}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Graph/Random.lean}{91}{Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_card}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Graph/Random.lean}{102}{Cslib.Circuits.Fusion.Graph.smallCoverProbability_le}
+\declat{5eb6d9a109234ce5579765b93bb24b7cfaca6e60}{Complexity/Computability/Circuit/Fusion/Graph/Random.lean}{139}{Cslib.Circuits.Fusion.Graph.random_cover_complexity}
+\end{result}
+
+\begin{result}
+\subsection{Semi-ultrafilter characterization of universal verifiers}
+Let $f:\{0,1\}^n\to\{0,1\}$ and write
+$\rho_{\mathrm{ultra}}(f)$ for pair-cover complexity with respect to its
+positive and negative literals, restricting witnesses to semi-ultrafilters.
+A semi-ultrafilter accepts every set or its complement, possibly both.
+Let $C_{\forall,\wedge}(f)\in\mathbb N\cup\{\infty\}$ be the infimum of the
+native AND cost over all finite auxiliary counts $a$, all verifiers
+$g:\{0,1\}^{n+a}\to\{0,1\}$ with $f(x)=\forall y\,g(x,y)$, and all native
+circuits implementing $g$ from the positive and negative literals of all
+$n+a$ inputs. Then, in the extended natural numbers,
+\[
+\rho_{\mathrm{ultra}}(f)\le C_{\forall,\wedge}(f)
+\le 5\rho_{\mathrm{ultra}}(f).
+\]
+More concretely, every universal verifier with $t$ binary AND gates yields a
+pair cover of length exactly $t$. Conversely, every semi-ultrafilter pair cover
+of length $t$ yields a universal verifier with exactly $3t$ auxiliary bits and
+$5t$ AND gates. Its bits label the two components and intersection of every
+pair; consistent labels extend to a semi-ultrafilter, while every false input
+supplies a consistent, pair-preserving certificate.
+
+Constants, OR gates, supplied literals, wiring and fanout are free. Both
+constructions include zero auxiliary bits, empty covers, constant functions
+and $n=0$. The measure concerns circuit cost, not verifier runtime or the cost
+of finding a cover or constructing the circuit. This proves the linear
+conondeterministic characterization credited to Karchmer; the explicit factor
+five comes from the grouped certificate construction formalized here.
+\citep{CavalarOliveira2025}
+\declat{fc111b65726f9b5bc721b9c63bef8a218fcf4b35}{Complexity/Computability/Circuit/Fusion/Conondeterministic.lean}{123}{Cslib.Circuits.Fusion.exists_pairCover_forallGuess}
+\declat{f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd}{Complexity/Computability/Circuit/Fusion/Converse.lean}{66}{Cslib.Circuits.Fusion.PairCover.exists_forallGuess}
+\declat{f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd}{Complexity/Computability/Circuit/Fusion/Converse.lean}{131}{Cslib.Circuits.Fusion.conondeterministicAndComplexity_bounds}
+\end{result}
