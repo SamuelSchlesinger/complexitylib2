@@ -38,9 +38,11 @@ milestones below remain the authority for their respective facts.
 
 The verifier-based `UP` and `CeqP` developments, basic Boolean closures, exact-count
 polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are implemented.
-The next counting milestones remain the nondeterministic-machine characterizations of
-`#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
-none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
+The forward machine-to-verifier direction is proved for `#P` and `GapP`: accepting and
+rejecting terminal counts of fixed finite-control list-choice machines under polynomial clocks
+have actual certified binary verifiers. The reverse parsimonious machine construction remains
+open, as do machine characterizations of `UP` and polynomially bounded ambiguity; none follows
+from the verifier definitions alone. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
 PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
 Extend these with counting reductions and further oracle results, preserving exact
@@ -315,11 +317,19 @@ of the handover. The work below remains available for subsequent, independently 
      and [canonical index-certificate bijection](Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean)
      now preserve accepting and rejecting counts separately, including equal-effect choices and
      early halting. Increasing a sufficient all-branches clock preserves the counts; the time
-     predicate explicitly excludes stuck states. This is the combinatorial prerequisite (#93),
-     not an efficient binary verifier. The next endpoint (#92) must certify the actual binary
-     checker in polynomial time with fixed finite control/alphabet and explicit certificate length.
-     Prove both directions of equivalence with polynomial-time machines counting accepting
-     branches and accepting-minus-rejecting branches, respectively. Reuse the
+     predicate explicitly excludes stuck states (#93). The
+     [actual binary checker](Complexity/Computability/Machines/Turing/MultiTape/Counting/Checker.lean)
+     now has a tidy polynomial-time proof through existing finite storage and the loop calculus.
+     Its exact binary/index correspondence proves
+     [both terminal counts in #P and their difference in GapP](Complexity/Computability/Complexity/Classes/SharpP/Machine.lean)
+     for every polynomial clock (#92). With fixed finite control, a fixed number of tapes and
+     Boolean alphabet, the certificate length is `b * p(|enc a|)` for a machine-dependent fixed
+     width `b > 0`; invalid codes contribute to neither verdict. This counts only branches
+     halted by the clock. `HaltsWithin` additionally supplies full termination without stuck
+     branches. Runtime is polynomial in the input/certificate pair, with the machine fixed,
+     not uniform in a supplied machine description.
+     The reverse parsimonious verifier-to-machine construction, count-preserving deterministic
+     composition and the resulting bidirectional characterizations remain open. Reuse the
      [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
      but preserve exact path multiplicities through choices, halting and padding. Do not collapse
      distinct nondeterministic branches with the same successor; existential witness equivalence
