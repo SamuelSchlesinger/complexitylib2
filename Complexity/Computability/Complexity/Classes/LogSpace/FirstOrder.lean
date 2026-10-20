@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram
 public import Complexity.Logics.FirstOrder.Encoding.Layout
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # First-order model checking in logarithmic space
@@ -182,7 +183,7 @@ def tableCode (c i F : ℕ) : List Instr :=
 
 /-- The code checking that an input is well formed, placed at the label `b`, with register `0`
 holding `0`: it counts the markers of the unary cardinality into register `0`, checks every table
-(`Cslib.Logic.Vocabulary.tableCode`), and checks that the input ends after the last table. It goes
+(`Cslib.Logic.Vocabulary.ModelChecker.tableCode`), and checks that the input ends after the last table. It goes
 to `T` if the input is well formed, with its cardinality in register `0`, and to `F` otherwise. -/
 def shapeCode (b T F : ℕ) : List Instr :=
   [.read (mul (const 2) (reg 0)) (b + 1) (b + 2) F,
@@ -256,7 +257,7 @@ theorem reaches_count {b F : ℕ}
     have hlt : regs.getD 0 0 < a.1 := by omega
     obtain ⟨regs', hreach, hlen', h0', hB'⟩ := ih (regs.set 0 (regs.getD 0 0 + 1))
       (by rw [List.getD_set_self hlen]; omega) (by rw [List.getD_set_self hlen]; omega)
-      (by simpa using hlen) (List.forall_mem_set hB (by omega))
+      (by simpa using hlen) (List.forall_mem_set_of_forall_mem hB (by omega))
     refine ⟨regs', ?_, by simpa using hlen', h0', hB'⟩
     refine Reaches.read h₀ hB ?_
     simp only [eval_mul, eval_const, eval_reg, getElem?_encStructure_two_mul hlt]
@@ -294,7 +295,7 @@ theorem reaches_markers {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
     · obtain ⟨regs', hreach, hlen', h0', h1', h2', hB'⟩ :=
         ih (j + 1) (regs.set 2 (j + 1)) (by omega) (by omega) (by omega)
           (by rw [List.getD_set_ne (by omega), h0]) (by rw [List.getD_set_ne (by omega), h1])
-          (List.getD_set_self (by omega)) (by simpa using hlen) (List.forall_mem_set hB (by omega))
+          (List.getD_set_self (by omega)) (by simpa using hlen) (List.forall_mem_set_of_forall_mem hB (by omega))
       refine ⟨regs', ?_, by simpa using hlen', h0', h1', h2', hB'⟩
       refine Reaches.lt h₁ hB ?_
       simp only [eval_reg, eval_lenExpr h0, h2, hjL', ↓reduceIte]
@@ -331,7 +332,7 @@ theorem reaches_tableCode {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
   rw [show c + 1 + 1 = c + 2 by omega] at h₂
   rw [show c + 1 + 1 + 1 = c + 3 by omega] at h₃
   rw [show c + 1 + 1 + 1 + 1 + 1 = c + 5 by omega] at h₅
-  have hB₀ : ∀ r ∈ regs.set 2 0, r ≤ B := List.forall_mem_set hB (Nat.zero_le _)
+  have hB₀ : ∀ r ∈ regs.set 2 0, r ≤ B := List.forall_mem_set_of_forall_mem hB (Nat.zero_le _)
   have h0' : (regs.set 2 0).getD 0 0 = a.1 := by rw [List.getD_set_ne (by omega), h0]
   have h1' : (regs.set 2 0).getD 1 0 = tableStart a i := by rw [List.getD_set_ne (by omega), h1]
   have h2' : (regs.set 2 0).getD 2 0 = 0 := List.getD_set_self (by omega)
@@ -359,7 +360,7 @@ theorem reaches_tableCode {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
           rw [tableStart_succ hi, heq]
         refine ⟨regs₁.set 1 (tableStart a i + 2 * a.1 ^ arityAt v i + 1), ?_,
           by simp [hlen₁], by rw [List.getD_set_ne (by omega), h0₁], fun _ => ?_,
-          List.forall_mem_set hB₁ ?_⟩
+          List.forall_mem_set_of_forall_mem hB₁ ?_⟩
         · simp only [hok, ↓reduceIte]
           refine Reaches.assign h₀ hB (hreach₁'.trans ?_)
           refine Reaches.read h₃ hB₁ ?_
@@ -470,7 +471,7 @@ theorem reaches_shapeCode {b T F : ℕ} (hP : P.CodeAt b (shapeCode v b T F))
     reaches_count h₀ h₁ hnB (a.1 - regs.getD 0 0) regs rfl (by omega) (by omega) hB
   have hstart : 2 * a.1 + 1 = tableStart a 0 := by simp [tableStart]
   have hB₁' : ∀ r ∈ regs₁.set 1 (2 * a.1 + 1), r ≤ B :=
-    List.forall_mem_set hB₁ ((two_mul_card_add_one_le_length a).trans hwB)
+    List.forall_mem_set_of_forall_mem hB₁ ((two_mul_card_add_one_le_length a).trans hwB)
   -- the tables
   obtain ⟨regs₂, hreach₂, hlen₂, h0₂, h1₂, hB₂⟩ :=
     reaches_tables htab hLB hwB (v.count - 0) 0 (regs₁.set 1 (2 * a.1 + 1)) rfl
@@ -760,7 +761,7 @@ theorem reaches_formulaCode {P : CounterProgram} {a : EncodedStructure} (ha : v.
                 (fun i hi => by
                   rw [List.getD_set_ne (by omega), hkeep₁ i (by omega), hkeepm i hi])
                 (List.getD_set_self (by rw [hlen₁, hlenm]; exact hk))
-                (List.forall_mem_set hB₁ (by omega))
+                (List.forall_mem_set_of_forall_mem hB₁ (by omega))
                 (fun m' hm' => by
                   rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp hm') with h | h
                   · exact hprev m' h
@@ -783,7 +784,7 @@ theorem reaches_formulaCode {P : CounterProgram} {a : EncodedStructure} (ha : v.
     · obtain ⟨res, regs', hres, hreach, hlen, hkeep, hB'⟩ :=
         loop (a.1 - 0) 0 hn (regs.set (base + k) 0) rfl (by rw [List.length_set])
           (fun i hi => List.getD_set_ne (by omega)) (List.getD_set_self hk)
-          (List.forall_mem_set hB (Nat.zero_le _)) (fun m' hm' => absurd hm' (Nat.not_lt_zero _))
+          (List.forall_mem_set_of_forall_mem hB (Nat.zero_le _)) (fun m' hm' => absurd hm' (Nat.not_lt_zero _))
       refine ⟨res, regs', by rw [hres, BoundedFormula.realize_all], ?_, hlen, hkeep, hB'⟩
       refine Reaches.lt hc₀ hB ?_
       simp only [eval_const, eval_reg, h0, hn, ↓reduceIte]

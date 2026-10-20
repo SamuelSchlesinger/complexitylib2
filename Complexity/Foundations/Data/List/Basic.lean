@@ -19,8 +19,9 @@ import Mathlib.Data.List.GetD
 * `List.foldr_ite_eq_of_mem`: a chain of equality tests selects the branch of a contained tag.
   Used by deterministic and probabilistic finite-control certificates.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
-* `List.getD_set_self`, `List.getD_set_ne`, `List.forall_mem_set`, `List.getD_le_of_forall_le`:
-  lists as register files, updated by `List.set` and read by `List.getD`.
+* `List.getD_set_self`, `List.getD_set_ne`, `List.forall_mem_set_of_forall_mem`,
+  `List.getD_le_of_forall_le`: lists as register files, updated by `List.set` and read by
+  `List.getD`.
 
 ## References
 
@@ -69,7 +70,7 @@ theorem List.getD_set_ne {α : Type*} {l : List α} {i j : ℕ} {x d : α} (h : 
 
 /-- A property of all the entries of a list holds of all the entries of an update by a value
 having it. -/
-theorem List.forall_mem_set {α : Type*} {p : α → Prop} {l : List α} {i : ℕ} {x : α}
+theorem List.forall_mem_set_of_forall_mem {α : Type*} {p : α → Prop} {l : List α} {i : ℕ} {x : α}
     (h : ∀ a ∈ l, p a) (hx : p x) : ∀ a ∈ l.set i x, p a := fun a ha => by
   rcases List.mem_or_eq_of_mem_set ha with ha | rfl
   · exact h a ha

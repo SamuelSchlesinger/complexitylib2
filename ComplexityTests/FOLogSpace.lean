@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
+import Complexity.Computability.Complexity.Fagin.Layout
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Output
 import ComplexityTests.FaginEncoding
 
@@ -162,6 +163,77 @@ example : ComputableInLogSpace (fun w : List Bool => w) encBits encBits :=
       exact this, rfl, by simp, by simp⟩
 
 end Copy
+
+/-! ### Counting loops, quotients and free variables -/
+
+section Pieces
+
+open Turing Turing.CounterProgram Turing.MultiTapeTM
+
+/-- Quotients and remainders; the remainder by `0` is the number itself. -/
+example : (Expr.div (.const 7) (.const 2)).eval [] = 3 := rfl
+example : (Expr.mod (.const 7) (.const 2)).eval [] = 1 := rfl
+example : (Expr.div (.const 7) (.const 0)).eval [] = 0 := rfl
+example : (Expr.mod (.const 7) (.const 0)).eval [] = 7 := rfl
+
+/-- A loop running twice, emitting `true` each time. -/
+def twiceProgram : CounterProgram where
+  code := forCode 0 0 (.const 2) 3 4 ++ [.emit true 2, .halt List.nil]
+  registers := 1
+
+/-- The loop emits `[true, true]` and exits with the counter at `2`. -/
+example (w : List Bool) :
+    ∃ regs, twiceProgram.ReachesOut w (twiceProgram.Active 5) (0, [5]) (4, regs) [true, true] ∧
+      regs = [2] := by
+  obtain ⟨regs, hreach, hr, -⟩ := reachesOut_forCode (P := twiceProgram) (w := w) (B := 5)
+    (b := 0) (u := 0) (bound := .const 2) (body := 3) (exit := 4) (N := 2)
+    (fun i hi => by
+      simp only [forCode, List.length_cons, List.length_nil] at hi
+      interval_cases i <;> rfl)
+    (fun k r => r = [k] ∧ k ≤ 2) (fun _ => [true]) (by omega)
+    (fun k r ⟨hr, hk⟩ => by subst hr; exact ⟨rfl, rfl, by simp, by simp; omega⟩)
+    (fun k hk r ⟨hr, _⟩ => ⟨[k], ReachesOut.emit (B := 5) rfl (by subst hr; simp; omega)
+      (by subst hr; exact ReachesOut.refl _), rfl, by simp; omega, by simp; omega⟩)
+    [5] (by simp) ⟨rfl, by omega⟩
+  exact ⟨regs, hreach, hr⟩
+
+/-- A loop at a vertex `x`, a formula with a free variable. -/
+def loopAt : Language.graph.Formula Unit :=
+  adj.boundedFormula₂ (Term.var (Sum.inl ())) (Term.var (Sum.inl ()))
+
+/-- The code of `loopAt` with `x` in register `1`, accepting at label `1`, rejecting at `2`. -/
+noncomputable def loopProgram : CounterProgram where
+  code := Vocabulary.ModelChecker.formulaCode graphVocabulary (fun _ : Unit => 1) 2 loopAt 0 1 2 ++
+    [.accept, .reject]
+  registers := 2
+
+/-- **The free-variable case of the compiler**: on a vertex with a loop, with `x = 0` in register
+`1`, the compiled code goes to the accepting label. -/
+example : ∃ regs, loopProgram.Reaches (encStructure ((1, [ [true] ]) : EncodedStructure))
+    (loopProgram.Running 1) (0, [1, 0]) (1, regs) := by
+  obtain ⟨res, regs, hres, hreach, -⟩ :=
+    Vocabulary.ModelChecker.reaches_formulaCode (v := graphVocabulary) (P := loopProgram)
+      (a := ((1, [ [true] ]) : EncodedStructure)) (B := 1)
+      (by decide +kernel) (le_refl 1) (fun _ : Unit => 1) 2 (by norm_num) (fun _ => by norm_num)
+      (fun _ => 0) loopAt 0 1 2 [1, 0] default
+      (codeAt_of_code_eq (pre := []) (post := [.accept, .reject]) rfl)
+      (le_of_eq rfl) rfl (by simp) (fun _ => rfl) (fun i => i.elim0)
+  have hres' : res = true := by
+    rw [hres]
+    let _ := graphVocabulary.decode ((1, [ [true] ]) : EncodedStructure)
+    change RelMap adj ![(0 : Fin 1), 0]
+    exact (Vocabulary.relMap_decode (v := graphVocabulary) ((1, [ [true] ]) : EncodedStructure) adj
+      ![0, 0]).mpr (by decide +kernel)
+  subst hres'
+  exact ⟨regs, hreach⟩
+
+/-- The prefix of the encoding through the first table ends where the next table starts. -/
+example : (graphVocabulary.encStructurePrefix edge 1).length = tableStart edge 1 :=
+  graphVocabulary.length_encStructurePrefix (by decide) (by decide)
+
+example : tableStart edge 1 = 14 := by decide
+
+end Pieces
 
 /-! ### Axioms -/
 

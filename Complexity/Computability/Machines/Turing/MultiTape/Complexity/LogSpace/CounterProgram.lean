@@ -8,7 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine
-public import Complexity.Foundations.Data.List.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
@@ -38,6 +39,7 @@ The parts of the simulation by a query machine live in the namespace
 
 * `Turing.CounterProgram.Expr`, `Turing.CounterProgram.Instr`: expressions and instructions.
 * `Turing.CounterProgram`: counter programs.
+* `Turing.CounterProgram.Config`: configurations, a label and the values of the registers.
 * `Turing.CounterProgram.step`, `Turing.CounterProgram.Reaches`: steps and reachability.
 * `Turing.CounterProgram.Running`: the configurations at running instructions, with bounded
   registers.
@@ -77,7 +79,7 @@ inductive Expr : Type where
   | mul (a b : Expr)
   /-- A quotient, `0` for the divisor `0`. -/
   | div (a b : Expr)
-  /-- A remainder. -/
+  /-- A remainder; the remainder of `a` by `0` is `a`. -/
   | mod (a b : Expr)
   deriving Inhabited
 

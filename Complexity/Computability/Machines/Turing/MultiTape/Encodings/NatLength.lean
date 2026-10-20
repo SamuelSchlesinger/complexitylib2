@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
-public import Mathlib.Data.Nat.Size
+import Mathlib.Data.Nat.Size
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
 
@@ -23,8 +23,14 @@ bounded by a polynomial in the length of the input are stored in logarithmic spa
 
 * `Turing.MultiTapeTM.length_encNat_le_log2`: numbers at most `N` have at most `log₂ N + 1`
   digits.
+* `Turing.MultiTapeTM.length_encNat_le_log2_add_two`: numbers at most `N + 1` have at most
+  `log₂ N + 2` digits.
 * `Turing.MultiTapeTM.length_encNat_le_of_le_pow`: numbers at most `(N + 1) ^ d` have at most
   `(d + 1) * (log₂ N + 1)` digits.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.4][Sipser2013]
 -/
 
 @[expose] public section

@@ -28,7 +28,6 @@ algorithm with random access to the encoding needs, such as the logarithmic-spac
 
 * `Cslib.Logic.encStructure_eq`: the encoding of an input as a concatenation of frames.
 * `Cslib.Logic.drop_tableStart`: the encoding from the start of a table on.
-
 * `Cslib.Logic.getElem?_encStructure_two_mul`, `Cslib.Logic.getElem?_encStructure_two_mul_card`:
   the markers of the cardinality.
 * `Cslib.Logic.getElem?_encStructure_tableStart_two_mul`,
