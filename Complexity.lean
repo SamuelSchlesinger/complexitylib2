@@ -688,6 +688,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Stre
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Certificate
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Guess
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
