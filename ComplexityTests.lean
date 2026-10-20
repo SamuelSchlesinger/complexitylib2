@@ -61,6 +61,7 @@ import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExpanderHitting
 import ComplexityTests.ExplicitExpanders
 import ComplexityTests.FOLogSpace
+import ComplexityTests.FOLogSpaceReduction
 import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
