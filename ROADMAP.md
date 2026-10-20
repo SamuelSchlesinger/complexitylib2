@@ -62,7 +62,8 @@ trials and denominator exponent `12q(n)p(n)`; see
 [AWPP amplification](Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean).
 Every fixed positive SBP gap exponent is available, and intersecting an SBP language
 with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
-Remaining approximate-counting milestones include SBP ⊆ AM and AWPP PP-lowness.
+The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
+already proves SBP ⊆ AM. AWPP PP-lowness remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
