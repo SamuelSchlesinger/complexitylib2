@@ -8,27 +8,22 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.BitString.LinearHash
-public import Complexity.Probability.PairwiseIndependentHash
+public import Complexity.Probability.PairwiseIndependentHash.Affine
 import Complexity.Probability.PairwiseIndependentHash.Shift
 
 /-!
 # Affine hashing of bit strings
 
-The affine maps `x ↦ A x + b` of bit strings, with a Boolean matrix `A` given by its rows and an
-offset `b` (`Cslib.BitString.LinearHash.affineHash`), form a pairwise independent hash family
-(`Cslib.BitString.LinearHash.isPairwiseIndependentHash_affineHash`): masking the two-universal
-linear family `Cslib.BitString.LinearHash.hash` with a uniformly random offset satisfies the shift
-criterion `Cslib.Probability.isPairwiseIndependentHash_add_of_surjective`. This is the family of
-the set lower bound protocol of Goldwasser and Sipser [GoldwasserSipser1986]
-[Arora and Barak, Section 8.2][AroraBarak09].
-
-In counts, for a pairwise independent family into `Y` and a set `S`, a target is missed by at most
-a quarter of the seeds when `#S ≥ 4 |Y|`, and hit by at most a quarter of them when
-`4 #S ≤ |Y|` (`Cslib.Probability.IsPairwiseIndependentHash.four_mul_card_filter_notMem_image_le`,
-`Cslib.Probability.IsPairwiseIndependentHash.four_mul_card_filter_mem_image_le`). Relabelling the
-seeds by an equivalence keeps a family pairwise independent
-(`Cslib.Probability.IsPairwiseIndependentHash.comp_equiv`), so the seeds can be read from a flat
-bit string.
+The affine maps `x ↦ A x + b` of bit strings, with a Boolean matrix `A` of `k` rows given by its
+rows and an offset `b` (`Cslib.BitString.LinearHash.affineHash`), form a pairwise independent hash
+family (`Cslib.BitString.LinearHash.isPairwiseIndependentHash_affineHash`): masking the
+two-universal linear family `Cslib.BitString.LinearHash.hash` with a uniformly random offset
+satisfies the shift criterion `Cslib.Probability.isPairwiseIndependentHash_add_of_surjective`.
+This is the family of the set lower bound protocol of Goldwasser and Sipser
+[GoldwasserSipser1986] [Arora and Barak, Section 8.2][AroraBarak09] and of the lemma of Valiant
+and Vazirani [ValiantVazirani1986]. It is the affine hash `Cslib.Probability.affineHash` over
+`Bool` (`Cslib.BitString.LinearHash.affineHash_eq_affineHash`), whose pairwise independence is
+proved over fields; `Bool` is not one, so it is proved here separately.
 
 ## Main definitions
 
@@ -36,10 +31,7 @@ bit string.
 
 ## Main results
 
-* `Cslib.Probability.IsPairwiseIndependentHash.comp_equiv`: relabelling seeds.
-* `Cslib.Probability.IsPairwiseIndependentHash.four_mul_card_filter_notMem_image_le`,
-  `Cslib.Probability.IsPairwiseIndependentHash.four_mul_card_filter_mem_image_le`: the two
-  quarter bounds of the set lower bound protocol.
+* `Cslib.BitString.LinearHash.affineHash_eq_affineHash`: it is the affine hash over `Bool`.
 * `Cslib.BitString.LinearHash.isPairwiseIndependentHash_affineHash`: affine hashing of bit strings
   is pairwise independent.
 
@@ -47,90 +39,35 @@ bit string.
 
 * [S. Goldwasser, M. Sipser, *Private coins versus public coins in interactive proof
   systems*][GoldwasserSipser1986]
+* [L. G. Valiant, V. V. Vazirani, *NP is as easy as detecting unique
+  solutions*][ValiantVazirani1986]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
 @[expose] public section
 
-namespace Cslib.Probability
-
-open Finset
-
-variable {ι ι' X Y : Type*} [Fintype ι] [Fintype Y] [DecidableEq Y] {h : ι → X → Y}
-
-namespace IsPairwiseIndependentHash
-
-/-- Relabelling the seeds by an equivalence does not change densities. -/
-private theorem dens_filter_comp_equiv [Fintype ι'] (e : ι' ≃ ι) (P : ι → Prop)
-    [DecidablePred P] : dens {i' | P (e i')} = dens {i | P i} := by
-  rw [dens_eq_card_div_card, dens_eq_card_div_card, Fintype.card_congr e]
-  congr 2
-  exact card_equiv e fun i' => by simp
-
-/-- **Relabelling seeds**: precomposing the seeds of a pairwise independent family with an
-equivalence keeps it pairwise independent. -/
-theorem comp_equiv [Fintype ι'] (hh : IsPairwiseIndependentHash h) (e : ι' ≃ ι) :
-    IsPairwiseIndependentHash fun i => h (e i) where
-  dens_filter_apply_eq x y := by
-    rw [dens_filter_comp_equiv e fun i => h i x = y]
-    exact hh.dens_filter_apply_eq x y
-  dens_filter_apply_eq_and_apply_eq hx y₁ y₂ := by
-    rw [dens_filter_comp_equiv e fun i => h i _ = y₁ ∧ h i _ = y₂]
-    exact hh.dens_filter_apply_eq_and_apply_eq hx y₁ y₂
-
-/-- **Large sets are hit**: if `#S ≥ 4 |Y|`, at most a quarter of the seeds miss a target. -/
-theorem four_mul_card_filter_notMem_image_le (hh : IsPairwiseIndependentHash h) {S : Finset X}
-    (hS : 4 * Fintype.card Y ≤ #S) (y : Y) :
-    4 * #{i | y ∉ S.image (h i)} ≤ Fintype.card ι := by
-  have hY : 0 < Fintype.card Y := Fintype.card_pos_iff.2 ⟨y⟩
-  have hne : S.Nonempty := card_pos.1 (by omega)
-  have hι : 0 < Fintype.card ι := by
-    obtain ⟨x, -⟩ := hne
-    have := hh.nonempty x y
-    exact Fintype.card_pos
-  have hd := hh.dens_filter_notMem_image_le hne y
-  rw [dens_eq_card_div_card, div_le_div_iff₀ (by exact_mod_cast hι)
-    (by exact_mod_cast hne.card_pos)] at hd
-  have hd' : #{i | y ∉ S.image (h i)} * #S ≤ Fintype.card Y * Fintype.card ι := by
-    exact_mod_cast hd
-  nlinarith
-
-/-- **Small sets are missed**: if `4 #S ≤ |Y|`, at most a quarter of the seeds hit a target. -/
-theorem four_mul_card_filter_mem_image_le (hh : IsPairwiseIndependentHash h) {S : Finset X}
-    (hS : 4 * #S ≤ Fintype.card Y) (y : Y) :
-    4 * #{i | y ∈ S.image (h i)} ≤ Fintype.card ι := by
-  have hY : 0 < Fintype.card Y := Fintype.card_pos_iff.2 ⟨y⟩
-  rcases S.eq_empty_or_nonempty with rfl | hne
-  · simp
-  have hι : 0 < Fintype.card ι := by
-    obtain ⟨x, -⟩ := hne
-    have := hh.nonempty x y
-    exact Fintype.card_pos
-  have hd := hh.dens_filter_mem_image_le S y
-  rw [dens_eq_card_div_card, div_le_div_iff₀ (by exact_mod_cast hι) (by exact_mod_cast hY)] at hd
-  have hd' : #{i | y ∈ S.image (h i)} * Fintype.card Y ≤ #S * Fintype.card ι := by
-    exact_mod_cast hd
-  nlinarith
-
-end IsPairwiseIndependentHash
-
-end Cslib.Probability
-
 namespace Cslib.BitString.LinearHash
 
 open Cslib.Probability
 
-/-- The affine map `x ↦ A x + b` of bit strings, with seed the rows of the matrix `A` and the
+/-- The affine map `x ↦ A x + b` of bit strings, with seed the `k` rows of the matrix `A` and the
 offset `b`. -/
-def affineHash {n m : ℕ} (seed : (Fin m → BitString n) × BitString m) (x : BitString n) :
-    BitString m :=
+def affineHash {k n : ℕ} (seed : (Fin k → BitString n) × BitString k) (x : BitString n) :
+    BitString k :=
   hash seed.1 x + seed.2
+
+/-- Affine hashing of bit strings is the affine hash `Cslib.Probability.affineHash` over `Bool`,
+with the rows as bit strings. -/
+theorem affineHash_eq_affineHash {k n : ℕ} (seed : (Fin k → BitString n) × BitString k)
+    (x : BitString n) :
+    affineHash seed x = Probability.affineHash (m := Fin k) (n := Fin n) (F := Bool) seed x :=
+  rfl
 
 /-- **Affine hashing of bit strings is pairwise independent**: for distinct inputs, the difference
 of the linear hashes is the linear hash of a nonzero difference, which takes every value. -/
-theorem isPairwiseIndependentHash_affineHash (n m : ℕ) :
-    IsPairwiseIndependentHash (affineHash (n := n) (m := m)) := by
-  let g : (Fin m → BitString n) →+ (BitString n → BitString m) :=
+theorem isPairwiseIndependentHash_affineHash (k n : ℕ) :
+    IsPairwiseIndependentHash (affineHash (k := k) (n := n)) := by
+  let g : (Fin k → BitString n) →+ (BitString n → BitString k) :=
     { toFun := hash
       map_zero' := by
         funext x i
