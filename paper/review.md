@@ -1298,3 +1298,22 @@ equivalence. AI assistance: OpenAI Codex.
 - All five new declaration anchors were checked against the pinned source. The combined PDF has
   123 entries; rendered pages 23 and 24 were inspected for layout and clipping. This AI review is
   not human editorial approval or a formal proof of prose equivalence.
+
+### Two-sided polynomial-target robustness (2026-10-20)
+
+- Worker `two-sided-wpp-20261020` proved both WPP/LWPP two-sided characterizations and indexed
+  forms at source `83f5e8ab8dcde006b3fb28bbd72e9ba837e23fef`, following Definition 3.8,
+  Corollary 3.11, Theorem 3.12 and Appendix A of Hemaspaandra--Hemaspaandra--Spakowski--Watanabe.
+- The existing polynomial-family robustness entry now states the full disjoint acceptance and
+  rejection family theorem. It preserves the one-sided specialization, explicit uniform binary
+  output and unary-index/count conventions, all-length LWPP disjointness, zero on either original
+  side, signed/repeated targets, unknown indices, and empty-family boundaries. The curated count
+  remains 123. Oracle lowness and counting-machine equivalences remain separate.
+- Source and tests are MCP-clean; all six prescribed gates pass. Nonvacuous tests accept zero
+  against nonzero rejection, reverse the roles, grow both signed/repeated lists, check length zero
+  and forbidden overlap, and exercise empty-family and indexed-family clients. Headline axiom
+  guards use only the standard three allowed axioms.
+- Four new declaration links were verified against the exact source. The PDF was rebuilt and
+  rendered page 24 inspected without clipping. Independent API/correctness/index review has been
+  requested from a separate coordinator; the exact-head verdict and any revisions are recorded
+  in the PR. This does not imply human editorial approval.
