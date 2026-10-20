@@ -8,6 +8,87 @@ therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `
 `ROADMAP.md` records outstanding work;
 `UPSTREAM.md` records coordination and exceptional integration decisions.
 
+## Agent roles and task ownership
+
+Each agent works as either a **coordinator** or a **worker**. Follow the role assigned by the
+human or coordinating agent; otherwise default to worker. State your role when starting work.
+Changing roles does not make an author eligible to approve their own changes.
+
+Maximize useful parallel progress: both coordinators and workers may handle multiple tasks
+and spawn subagents. Roles define responsibilities, not concurrency limits. Give each subagent
+a role and a clear scope; use separate issues for independently deliverable tasks and record
+smaller delegated subtasks in the parent issue. Keep ownership, branches, and mutable build
+outputs distinct where concurrent edits could conflict. The delegating agent remains responsible
+for tracking delegated work, keeping issue status current, and bringing results to completion.
+
+Issues are the task queue and durable record of ownership and progress. Humans, coordinators,
+and workers may create tasks. Search existing issues and PRs before creating a duplicate; use
+an existing human-created issue when it describes the work. Give each task a concrete scope,
+completion criteria, and relevant dependencies.
+
+### Workers
+
+1. Before implementation, create or claim an issue and assign it to yourself. Post a claim
+   comment identifying your agent/session, scope, and branch or worktree. Agents sharing a
+   GitHub account must use distinct agent/session IDs in comments; the assignee alone does not
+   identify the active worker. A worker may own multiple active issues; identify the responsible
+   agent for each delegated task in its issue.
+2. Report status in that issue at least hourly while actively working, and whenever you become
+   blocked, hand off, or stop. Include your agent/session ID, current state, completed work,
+   validation performed, blockers, and next step. Link the branch, commits, or draft PR so
+   another worker can resume. Report on every active issue, including delegated work; the owner
+   or its delegating agent may report, identifying whose work is covered. An idle or stopped
+   agent must not promise unattended updates.
+3. If active work has had no status report from its owner or delegating agent for **three hours**,
+   another worker may claim it. Re-read the issue and linked PR immediately before taking over,
+   post a takeover comment, update the assignment, and verify ownership before editing.
+   Preserve existing work and credit.
+   If claims overlap, ask a coordinator to resolve ownership; do not work competing versions.
+   A returning worker must check ownership before resuming. Explicitly released work is
+   available immediately.
+4. Implement, self-review, and validate according to the requirements below. Include documentation
+   changes caused by your work and assess the theorem index before submitting the PR.
+5. When ready, open a PR linked to the issue, record validation and remaining limitations, and
+   request coordinator review. Post an `awaiting review` status with the PR link in the issue.
+   Keep the issue open until the work is merged or explicitly dispositioned by a coordinator.
+   Awaiting review is a handoff, not abandoned active work: hourly worker reports and the
+   three-hour takeover rule are suspended while the PR waits in the coordinator's queue.
+6. Await coordinator review for that PR while freely progressing other tasks; do not approve or
+   merge your own PR. Address requested changes, post an `active` status when resuming,
+   restart hourly reports, and request fresh review of the updated revision. If unavailable,
+   release the task explicitly so another worker can take over.
+
+Use plain issue comments for states such as `active`, `blocked`, `available`, and
+`awaiting review`; this workflow does not depend on custom labels or automation. Blocked work
+must have a status update or be released, rather than retaining ownership indefinitely.
+
+### Coordinators
+
+**Reviewing worker PRs and approving or requesting changes is the coordinator's highest
+priority.** Keep reviews moving while planning, implementation, and documentation proceed in
+parallel. Use review subagents when helpful; do not make unrelated work wait for a serial queue.
+
+- Review the exact PR revision for correctness, API design, scope, source credit, validation,
+  and documentation. Arrange the independent reviews required below, record concrete findings,
+  and give an explicit approval or request for changes. Re-review fixes before approval.
+  If the platform prevents a formal review because agents share an account, record the verdict,
+  reviewer agent/session ID, and reviewed SHA in a PR comment; do not represent this as a
+  platform approval or bypass required maintainer approval.
+- Review existing tasks, resolve ownership or dependency conflicts, and create or split issues
+  when useful. Human-created issues belong to the same queue. Check stale active tasks and
+  unattended review requests; help workers reach a clear next step.
+- Own the consistency of `ROADMAP.md`, `paper/main.tex`, `UPSTREAM.md`, and the other project
+  documentation. Ensure completed results, open work, limitations, and upstream coordination
+  remain accurate. Workers still supply updates affected by their PRs; coordinators check their
+  integration and arrange the theorem-index review described below.
+- Keep approval distinct from integration: merge only within the authority granted by maintainers
+  and after required checks and reviews. Close completed issues on merge, and record remaining
+  work in follow-up issues and the roadmap where appropriate.
+- If implementing a task yourself, follow the worker ownership and reporting rules and obtain
+  review from another coordinator. Self-review never substitutes for independent approval.
+  Review subagents must be independent of authoring the changes they review; an authoring
+  subagent's self-review does not count as independent review.
+
 ## Working on changes
 
 Use ordinary Git branches or isolated worktrees for substantial changes. Preserve other
