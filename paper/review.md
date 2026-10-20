@@ -1035,7 +1035,9 @@ equivalence.
 
 Integration reconciliation: PR #22 preserves the quadratic, graph, and sampling entries after
 rebasing onto main at `2fb260fffdce0fe5eeb019b202192243d74863f4`. The index count is 118.
-The sampling source and tests are unchanged; declaration links remain pinned to `503ce2b0`.
+The sampling source and tests are unchanged; declaration links are pinned to the rebased core
+commit `fc0d4439550559e2773786234f13648021fa0ce0` (originally reviewed at pre-rebase
+`503ce2b0d3d0b5cc3dd3fa793aab840d07e448fa` with identical line numbers).
 The PDF was regenerated without undefined references or overfull boxes, and combined pages
 30 and 31 were rendered and visually inspected. The sampling entry now appears on page 31.
 Final integration review is recorded in PR #22.
@@ -1116,7 +1118,9 @@ quantifiers, free literals/constants/OR, exact auxiliary and AND counts, zero ca
 extended-natural infimum, construction/runtime limitations and source attribution. One link
 correction was requested and applied: the lower-direction link now points to the exact-length
 extraction theorem at `fc111b65726f9b5bc721b9c63bef8a218fcf4b35`, line 123. The new verifier
-and headline-bound links point to lines 66 and 131 of the source revision above. All three
+and headline-bound links point to lines 66 and 131 of the squash-merged main revision
+`fddf011fc21ee2b3d148dea54d07822c13d817f0` (reviewed on the branch at
+`f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd` with identical line numbers). All three
 links were checked against `git show`.
 
 All six validation gates pass on the source revision; named axiom guards contain only
