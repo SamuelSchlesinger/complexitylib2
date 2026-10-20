@@ -345,15 +345,95 @@ length-$n$ word with multiplicity one; its enumeration order need not equal the
 library's bit-string order. This formalizes the guessing part of the standard
 counting-machine construction.\citep{Valiant1979}
 The scanner invariant adapts the library's uniform-word sampler and the cslib
-source credited there. Preparing a witness length from an encoded instance,
-composing a singleton deterministic verifier, and the reverse $\#\cc{P}$ and
-$\cc{GapP}$ characterizations remain open. No efficiency claim about an arbitrary
+source credited there. The charged buffered compiler below supplies the input
+handoff. Preparing witness lengths and frames from encoded instances, assembling
+the actual verifier pipeline, and the reverse $\#\cc{P}/\cc{GapP}$ characterizations
+remain open. No efficiency claim about an arbitrary
 predicate $V$ or the external List interpreter is used.
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{206}{Turing.MultiTapeCTM.GuessMachine.haltsWithin}
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{272}{Turing.MultiTapeCTM.GuessMachine.length_of_terminal}
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{293}{Turing.MultiTapeCTM.GuessMachine.trace_bijOn}
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{328}{Turing.MultiTapeCTM.GuessMachine.branchCount_eq}
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{382}{Turing.MultiTapeCTM.GuessMachine.count_interpret_output}
+\end{result}
+
+\begin{result}
+\subsection{Exact counting under machine sequencing}
+For every shared-core list-choice machine, configuration $c$, clock $T$ and
+Boolean output predicate $V$, interpreting its shared FreeM run by lists gives
+exactly as many halted endpoints satisfying $V$ as its occurrence-labelled
+terminal-branch count. Equal configurations retain their multiplicities.
+Running endpoints are excluded, and enlarging a clock after all endpoints have
+halted preserves the complete list.
+
+A native deterministic machine embeds with one occurrence per instruction.
+At every clock its interpreted execution is a singleton containing the exact
+native configuration. Its native and counting halting clocks agree; a halted
+computation contributes zero or one according to the verdict, including when
+the clock exceeds its first halting time.
+
+The existing shared-tape sequencing compiler transfers a halting instruction
+directly to the second machine without an extra step. Suppose the first
+machine halts on every branch within $T_1$, and the second, started on every
+resulting tape configuration, halts on every branch within $T_2$. The composed
+List execution is exactly the list bind of the two phases. If both transition
+tables have a nonempty list at every running local view, the composite also
+satisfies the native all-branches bound $T_1+T_2$. This extra condition excludes
+stuck branches that an empty interpreted list would hide; the actual binary
+scanner and singleton deterministic lift satisfy it.
+
+These laws reuse the shared program calculus and native tape plumbing credited
+to Christian Reitwiessner and Samuel Schlesinger. List interpretation is a
+mathematical observation, not an efficient machine instruction. Charged buffered
+composition is recorded next. Preparing framed encoded inputs and assembling the
+polynomial-time reverse $\#\cc{P}/\cc{GapP}$ constructions remain open.
+\declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Execution.lean}{210}{Turing.MultiTapeCTM.countP_runList}
+\declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Deterministic.lean}{80}{Turing.MultiTapeCTM.haltsWithin_ofDeterministic_iff}
+\declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Deterministic.lean}{92}{Turing.MultiTapeCTM.branchCount_ofDeterministic}
+\declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Sequential.lean}{50}{Turing.MultiTapeCTM.runList_seq}
+\declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Sequential.lean}{82}{Turing.MultiTapeCTM.HaltsWithin.seq}
+\declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{73}{Turing.MultiTapeCTM.GuessMachine.nonblocking}
+\end{result}
+
+\begin{result}
+\subsection{Exact counting through a charged input buffer}
+Fix closed shared-core list-choice machines $M_0,M_1$ over the same alphabet,
+with $k_0,k_1$ work tapes, and a marker symbol. Suppose both transition tables
+have a nonempty list at every running local view. On input $x$, let $M_0$ halt
+on every branch within $T_0$, and let $M_1$, initialized separately on each
+produced word, halt on every branch within the common bound $T_1$. An actual
+compiled machine uses $k_1+k_0+2$ work tapes and has native all-branches clock
+\[
+ T=T_0+(T_0+4+T_1).
+\]
+Its complete configuration list is the list bind of the two runs, followed by
+the explicit joint tape-layout map. In particular, for every Boolean output
+predicate $V$,
+\[
+ C_{M_1\circ M_0,V}(x,T)
+   =\sum_{c\text{ in }R_{M_0}(x,T_0)} C_{M_1,V}(c.\mathrm{output},T_1),
+\]
+where $C$ counts native terminal traces and $R$ is a list of final configurations:
+each occurrence contributes separately, even when configurations coincide.
+
+The source redirects each output symbol into its buffer in the same native
+transition. Singleton deterministic preparation rewinds the buffer and marks its
+left boundary in $|w|+4$ transitions, including four for $w=[]$, without adding
+branch multiplicity. The consumer has separately reserved blank work tapes;
+source scratch and the real input-head position are retained. The bound
+$|w|\le T_0$ uses the source's initially empty output; the general growth bound
+retains the initial output length. Early halting introduces no extra choices.
+The compiler reuses the native plumbing credited to Christian Reitwiessner and
+Samuel Schlesinger and the library's probabilistic buffer construction. This
+result concerns closed machines, with no oracle channels. Witness-length/frame
+preparation, verifier instantiation, signed GapP routing and the full reverse
+counting-machine characterizations remain separate obligations.
+\declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{191}{Turing.MultiTapeCTM.comp}
+\declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{218}{Turing.MultiTapeCTM.runList_comp}
+\declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{267}{Turing.MultiTapeCTM.HaltsWithin.comp}
+\declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{282}{Turing.MultiTapeCTM.branchCount_comp}
+\declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{135}{Turing.MultiTapeCTM.Composition.runList_continuation}
+\declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Machine/Composition.lean}{152}{Turing.MultiTapeMachine.Composition.runFrom_prepare}
 \end{result}
 
 \begin{result}

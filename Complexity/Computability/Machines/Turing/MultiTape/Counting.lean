@@ -33,6 +33,7 @@ An empty list at a running configuration is stuck, not a rejecting halt.
 * `Turing.MultiTapeCTM.runBranch`: replay a list of occurrence indices.
 * `Turing.MultiTapeCTM.branches`: first-halting branches of bounded length.
 * `Turing.MultiTapeCTM.HaltsWithin`: an all-branches time bound excluding stuck states.
+* `Turing.MultiTapeCTM.Nonblocking`: no local view has an empty live transition list.
 * `Turing.MultiTapeCTM.acceptCount`, `Turing.MultiTapeCTM.rejectCount`: terminal branch counts.
 
 ## Main results
@@ -74,6 +75,19 @@ def actions (machine : MultiTapeCTM k Symbol State) (cfg : Cfg k Symbol State in
   | some state =>
     (machine.tr state cfg.inputSymbol cfg.workTapeSymbols Empty.elim).map
       MultiTapeMachine.Action.emptyOracleEquiv
+
+/-- Every running local view has a transition occurrence. This excludes stuck states even on
+unreachable configurations; a native `HaltsWithin` hypothesis only needs the reachable ones. -/
+def Nonblocking (machine : MultiTapeCTM k Symbol State) : Prop :=
+  ∀ state symbol work, machine.tr state symbol work Empty.elim ≠ []
+
+/-- A nonblocking transition table has an occurrence at every running configuration. -/
+theorem Nonblocking.actions_ne_nil {machine : MultiTapeCTM k Symbol State}
+    (h : machine.Nonblocking) (cfg : Cfg k Symbol State input) (hrun : cfg.state ≠ none) :
+    machine.actions cfg ≠ [] := by
+  cases hs : cfg.state with
+  | none => exact (hrun hs).elim
+  | some state => simpa [actions, hs] using h state cfg.inputSymbol cfg.workTapeSymbols
 
 /-- Execute one occurrence. Invalid indices and attempts to step a halted configuration fail. -/
 def step? (machine : MultiTapeCTM k Symbol State) (cfg : Cfg k Symbol State input) (index : ℕ) :
