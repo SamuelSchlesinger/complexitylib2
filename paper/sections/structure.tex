@@ -62,6 +62,36 @@ framework, and bridges to the encoded problems remain outstanding.
 \end{result}
 
 \begin{result}
+\subsection{Canonical numeric structures for ordered first-order logic}
+For every $n\ge2$, an input structure on $[n]=\{0,\ldots,n-1\}$ has a
+canonical expansion by $\le$, BIT and the constants $0$, $1$ and $\max=n-1$.
+The constants $0$ and $1$ are distinct. On arbitrary terms $s,i$, BIT has the
+exact semantics
+\[
+\operatorname{BIT}(s,i)\quad\Longleftrightarrow\quad
+\text{bit }\operatorname{val}(i)\text{ of }\operatorname{val}(s)\text{ is }1,
+\]
+where bit zero is least significant. Numeric interpretations are computed
+from the universe size, rather than supplied as input tables. Input functions,
+constants and relations retain their interpretations, and embedding any input
+formula, including quantified formulas, preserves truth under every assignment.
+The construction uses the existing first-order terms and formulas.
+
+For relational input vocabularies, forgetting the numeric expansion is a
+one-dimensional interpretation whose output is isomorphic to the input;
+its sentence pullback preserves truth. This is a semantic foundation, not yet
+the ordered interpretation or logspace bridge: interpreting target constants,
+canonical BIT lifting on base-$n$ tuples, numeric-preserving composition and
+the ordered complexity/capture results remain open.
+\citep[Section 1.2, Provisos 1.14--1.15]{Immerman1999}
+The earlier canonical-expansion interface is credited separately.
+\citep{Schlesinger2026Numerical}
+\declat{223f5289aa5809f50251aba7aced4d7e98478a78}{Complexity/Logics/FirstOrder/Ordered/Basic.lean}{142}{Cslib.Logic.FO.Ordered.realize_bit}
+\declat{223f5289aa5809f50251aba7aced4d7e98478a78}{Complexity/Logics/FirstOrder/Ordered/Basic.lean}{149}{Cslib.Logic.FO.Ordered.realize_inputFormula}
+\declat{223f5289aa5809f50251aba7aced4d7e98478a78}{Complexity/Logics/FirstOrder/Ordered/Interpretation.lean}{68}{Cslib.Logic.FO.Ordered.realize_forget_onSentence}
+\end{result}
+
+\begin{result}
 \subsection{First-order model checking in logarithmic space}
 For a finite relational vocabulary and a first-order sentence $\varphi$ whose
 atomic formulas are relation symbols and equality applied to variables, the
