@@ -24,34 +24,52 @@ rather than assuming equality only at one chosen encoding.\citep{AroraBarak09}
 \subsection{Arthur--Merlin classes}
 For every fixed injective encoding,
 \[
-\cc{NP}\cup\cc{BPP}\subseteq\cc{MA}\subseteq\cc{AM}\subseteq\Pi^p_2,\qquad
-\cc{MA}\subseteq\Sigma^p_2\cap\Pi^p_2,\qquad \cc{MA}\subseteq\cc{SBP}.
+\cc{NP}\cup\cc{BPP}\subseteq\cc{MA}\subseteq\cc{SBP}\subseteq\cc{AM}\subseteq\Pi^p_2,\qquad
+\cc{MA}\subseteq\cc{AM},\qquad \cc{MA}\subseteq\Sigma^p_2\cap\Pi^p_2,
 \]
-MA and AM are two-message public-coin classes given by deterministic polynomial-time
-verifiers reading one concatenated string: Merlin's proof of $q(n)$ bits and Arthur's
-$p(n)$ coins, in that order for MA and in the reverse order for AM, with
-$p,q\in\mathbb{N}[X]$ and exact message lengths. Completeness is at least $2/3$ and
-soundness at most $1/3$, stated as counts of random strings. Both classes are closed under
-polynomial-time many-one reductions. Majority votes reduce the error to $2^{-e(n)}$ for
-every polynomial $e$; for MA the proof length is fixed before $e$ is chosen, and for AM
-Arthur's rows are answered in parallel. The $\Sigma_2$ and $\Pi_2$ placements use
-Lautemann's covering lemma with $12p+1$ shifts after amplification; MA $\subseteq$ SBP
-counts accepted proof--coin pairs. Interactive-machine characterizations, round collapse
-$\cc{AM}[k]=\cc{AM}$ and $\cc{SBP}\subseteq\cc{AM}$ are not formalized.
-\citep{Babai1985,BabaiMoran1988,BoehlerGlasserMeister2006}\citep[Section 8.2]{AroraBarak09}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{143}{Cslib.Complexity.MA}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{170}{Cslib.Complexity.AM}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{190}{Cslib.Complexity.NP_subset_MA}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{204}{Cslib.Complexity.BPP_subset_MA}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{218}{Cslib.Complexity.PolyTimeReducible.mem_MA}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{288}{Cslib.Complexity.PolyTimeReducible.mem_AM}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{240}{Cslib.Complexity.mem_MA_iff_exists_forall_errorExponent}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{399}{Cslib.Complexity.mem_AM_iff_forall_errorExponent}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{415}{Cslib.Complexity.MA_subset_AM}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{494}{Cslib.Complexity.MA_subset_SBP}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{305}{Cslib.Complexity.MA_subset_SigmaP_two}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{318}{Cslib.Complexity.AM_subset_PiP_two}
-\declat{fbd9aed284eb6d8fbf578613886bef3229eb6efc}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{333}{Cslib.Complexity.MA_subset_SigmaP_two_inter_PiP_two}
+and graph non-isomorphism is in $\cc{AM}$. MA and AM are two-message public-coin classes given by
+deterministic polynomial-time verifiers reading one concatenated string: Merlin's proof of $q(n)$
+bits and Arthur's $p(n)$ coins, in that order for MA and in the reverse order for AM, with
+$p,q\in\mathbb{N}[X]$ and exact message lengths; completeness is at least $2/3$ and soundness at
+most $1/3$, as counts of random strings. Both classes are closed under polynomial-time many-one
+reductions; majority votes reduce the error to $2^{-e(n)}$ for every polynomial $e$ (for MA with
+the proof length fixed first), and AM is closed under polynomially bounded existential
+quantification. The set lower bound protocol of Goldwasser and Sipser is formalized for sets $S$ of
+$N(n)$-bit strings with polynomial-time certificates: a threshold $K>0$ computed in binary in
+polynomial time with $K\le|S|$ on members and $|S|\le K/2$ on non-members places the problem in
+$\cc{AM}$, via pairwise-independent affine hashing over $\mathbb{F}_2$; with no certificates this
+gives $\cc{SBP}\subseteq\cc{AM}$. For graph non-isomorphism (graphs are the simple graphs induced on
+declared vertices, encoded as vertex and edge lists with binary naturals) the set is the pairs of a
+relabelling of one adjacency matrix and an automorphism of it, of size $2n!$ or $n!$ by
+orbit--stabilizer; pairs with different numbers of vertices are accepted outright. The
+Boppana--H{\aa}stad--Zachos theorem: if $\cc{coNP}\subseteq\cc{AM}$ for every encoding, then for
+every encoding $\Sigma^p_2=\Pi^p_2=\cc{AM}$ and $\cc{PH}=\Sigma^p_2$; in particular, if graph
+isomorphism is $\cc{NP}$-complete (in the library's sense, at the vertex-and-edge-list encoding)
+then $\cc{PH}=\Sigma^p_2$. Interactive-machine characterizations, round collapse
+$\cc{AM}[k]=\cc{AM}$ and private-to-public-coin transformations are not formalized.
+\citep{Babai1985,BabaiMoran1988,GoldwasserSipser1986,BoehlerGlasserMeister2006,BoppanaHastadZachos1987}\citep[Section 8.2]{AroraBarak09}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{97}{Cslib.Complexity.MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{124}{Cslib.Complexity.AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{144}{Cslib.Complexity.NP_subset_MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{158}{Cslib.Complexity.BPP_subset_MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{172}{Cslib.Complexity.PolyTimeReducible.mem_MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{242}{Cslib.Complexity.PolyTimeReducible.mem_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{197}{Cslib.Complexity.mem_MA_iff_exists_forall_errorExponent}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{350}{Cslib.Complexity.mem_AM_iff_forall_errorExponent}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{366}{Cslib.Complexity.MA_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{445}{Cslib.Complexity.MA_subset_SBP}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{292}{Cslib.Complexity.MA_subset_SigmaP_two}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{305}{Cslib.Complexity.AM_subset_PiP_two}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{320}{Cslib.Complexity.MA_subset_SigmaP_two_inter_PiP_two}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Probability/BitString/AffineHash.lean}{131}{Cslib.BitString.LinearHash.isPairwiseIndependentHash_affineHash}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean}{262}{Cslib.Complexity.mem_AM_of_card_certifiedSet}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean}{340}{Cslib.Complexity.SBP_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean}{143}{Cslib.Complexity.GraphNonIsomorphism.PublicCoin.card_pairs}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean}{482}{Cslib.Complexity.GraphNonIsomorphism.mem_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{80}{Cslib.Complexity.mem_AM_of_exists}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{247}{Cslib.Complexity.PH_eq_SigmaP_two_of_coNP_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{253}{Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{267}{Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism}
 \end{result}
 
 
@@ -324,7 +342,7 @@ amplification. The definitions follow Watson's formulation of the class
 introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
 characterization of AWPP.\citep{BoehlerGlasserMeister2006}
 \citep[Definition 2]{Watson2012}\citep{Fenner2003}
-Counting-machine characterizations, $\cc{SBP}\subseteq\cc{AM}$,
+Counting-machine characterizations,
 uniform AWPP amplification to input-dependent error and PP-lowness remain
 outstanding. The following entry adds fixed amplification and Boolean closure.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
