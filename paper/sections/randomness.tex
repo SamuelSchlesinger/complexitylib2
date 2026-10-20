@@ -361,7 +361,7 @@ for every modulus, and equals $\cc{Mod}_{k}\cc{P}$ for prime $k$.
 \subsection{Wide counting gaps}
 For every fixed injective encoding,
 \[
-\cc{SPP}\subseteq\cc{LWPP}\subseteq\cc{WPP}
+\cc{UP}\cup\cc{coUP}\cup\cc{FewP}\subseteq\cc{SPP}\subseteq\cc{LWPP}\subseteq\cc{WPP}
 \subseteq\cc{C}_{=}\cc{P}\cap\cc{coC}_{=}\cc{P}.
 \]
 In WPP there are a GapP function $g$ and a polynomial-time, binary-integer
@@ -369,23 +369,45 @@ function $f$, nonzero on every input, with $g(x)=f(x)$ on members and $g(x)=0$
 on nonmembers. LWPP restricts the target to $f(|x|)$, with $f$ computable from
 unary length and nonzero on every natural argument, including zero. Negative
 and exponentially large targets are allowed. Both classes are closed under
-complement, union and intersection; WPP also has polynomial-time many-one
-reduction closure. The proofs use exact-gap algebra and the FP-to-GapP bridge.
-These verifier-based statements follow the definitions of Fenner--Fortnow--Kurtz,
-as restated by Hemaspaandra et al.; they do not establish counting-machine
-characterizations, oracle lowness, or robustness under multiple target values.
-\citep{FennerFortnowKurtz1994}\citep[Definitions 2.4--2.5]{HemaspaandraEtAl2018}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{65}{Cslib.Complexity.SPP_subset_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{70}{Cslib.Complexity.LWPP_subset_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{76}{Cslib.Complexity.WPP_subset_CeqP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{82}{Cslib.Complexity.WPP_subset_coCeqP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{89}{Cslib.Complexity.compl_mem_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{97}{Cslib.Complexity.inter_mem_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{107}{Cslib.Complexity.union_mem_WPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{120}{Cslib.Complexity.compl_mem_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{129}{Cslib.Complexity.inter_mem_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{139}{Cslib.Complexity.union_mem_LWPP}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/WPP.lean}{112}{Cslib.Complexity.PolyTimeReducible.mem_WPP}
+complement, union, intersection, set difference, symmetric difference, and
+polynomial-time many-one reductions between injectively encoded types.
+Furthermore, both classes satisfy finite multiple-target robustness: if $g\in\cc{GapP}$
+is $0$ outside $A$ and on $A$ takes a value in a fixed finite family $\{f_i\}_{i\in s}$
+of nonzero polynomial-time binary-integer targets (depending on $x$ for $\cc{WPP}$ or
+on unary length $|x|$ for $\cc{LWPP}$), then $\prod_{i\in s}f_i-\prod_{i\in s}(f_i-g)\in\cc{GapP}$
+witnesses membership with single nonzero target $\prod_{i\in s}f_i$. For $\cc{LWPP}$, a
+nonzero unary-input target $f(k(x))$ at a polynomial-time unary-computable index $k(x)\le p(|x|)$
+is normalized to $\prod_{i\le p(|x|)}f(i)$ by multiplying $g(x)$ by the binary-integer list
+product $\prod_{i\le p(|x|),\,i\ne k(x)}f(i)$, yielding reduction closure when $k(x)=|r(x)|$.
+These verifier-based statements follow the definitions of Fenner--Fortnow--Kurtz
+and the finite-family and known-index cases of Hemaspaandra et al.; they do not
+establish counting-machine characterizations, oracle lowness, or polynomial-family
+multiple-target robustness ($\cc{Poly\text{-}LWPP}=\cc{LWPP}$ and
+$\cc{Poly\text{-}WPP}=\cc{WPP}$) when the accepting target index is not
+polynomial-time computable from the input.
+\citep{FennerFortnowKurtz1994}\citep[Definitions 2.4--2.5 and Section 3]{HemaspaandraEtAl2018}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{95}{Cslib.Complexity.SPP_subset_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{100}{Cslib.Complexity.LWPP_subset_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{122}{Cslib.Complexity.FewP_subset_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{126}{Cslib.Complexity.FewP_subset_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{130}{Cslib.Complexity.WPP_subset_CeqP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{136}{Cslib.Complexity.WPP_subset_coCeqP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{143}{Cslib.Complexity.compl_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{151}{Cslib.Complexity.inter_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{161}{Cslib.Complexity.union_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{166}{Cslib.Complexity.diff_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{170}{Cslib.Complexity.symmDiff_mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{175}{Cslib.Complexity.PolyTimeReducible.mem_WPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{183}{Cslib.Complexity.compl_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{192}{Cslib.Complexity.inter_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{202}{Cslib.Complexity.union_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{207}{Cslib.Complexity.diff_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{211}{Cslib.Complexity.symmDiff_mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{246}{Cslib.Complexity.mem_WPP_of_finset_targets}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{284}{Cslib.Complexity.mem_LWPP_of_finset_targets}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{358}{Cslib.Complexity.mem_LWPP_of_polyTime_index}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{411}{Cslib.Complexity.PolyTimeReducible.mem_LWPP}
+\declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Int/Binary.lean}{294}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_prod}
 \end{result}
 
 
