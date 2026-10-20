@@ -263,7 +263,7 @@ private theorem listRow_encodeReply {l : List ℕ} (hl : ∀ a ∈ l, a < p) (i 
       simp
 
 /-- **Decoding inverts the honest encoding** of at most `D + 1` residues, padded with zeros. -/
-theorem decodeReply_encodeReply [NeZero p] {D : ℕ} {l : List ℕ} (hl : ∀ a ∈ l, a < p)
+theorem decodeReply_encodeReply {D : ℕ} {l : List ℕ} (hl : ∀ a ∈ l, a < p)
     (hlen : l.length ≤ D + 1) :
     decodeReply p D ((encodeReply p l).take (replyLimit p D)) =
       (List.range (D + 1)).map fun i => l.getD i 0 := by
@@ -300,7 +300,7 @@ theorem lt_of_mem_support_sampleMod [NeZero p] {n : ℕ}
   exact Nat.mod_lt _ (NeZero.pos p)
 
 /-- At most `N / p + 1` numbers below `N` have a given residue modulo `p`. -/
-private theorem card_filter_mod_eq_le [NeZero p] (N n : ℕ) :
+private theorem card_filter_mod_eq_le (N n : ℕ) :
     (Finset.univ.filter fun i : Fin N => n = i.val % p).card ≤ N / p + 1 := by
   calc (Finset.univ.filter fun i : Fin N => n = i.val % p).card
       ≤ (Finset.range (N / p + 1)).card := by
