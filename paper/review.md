@@ -1479,3 +1479,37 @@ entry on page 27 was rendered and inspected; the four pinned declaration links w
 the final LaTeX log has no undefined citations or overfull boxes, and the count is 125.
 Independent coordinator `fusion-quadratic` inspected this final rendering and the explicit
 fixed-polynomial wording with no findings; exact-head approval is tracked in the PR.
+
+## Relativized counting and majority verifiers (PR #61, 20 October 2026)
+
+Worker `relativized-counting-20261020` adds #P^A, GapP^A and PP^A using the existing strict
+oracle-program certificate and fixed polynomial-length Boolean witnesses. Source revision
+`21c83869180e7e9238477d021280352addf96e30` passes all six prescribed checks. Independent
+coordinator `/root/fusion_graph` read both new class modules, the oracle-result product rule,
+the tests and the underlying resource/counting contracts, obtained fresh clean MCP diagnostics,
+and approved the exact source/API/correctness revision with no findings.
+
+The positive-gap characterization pads certificates of lengths p and q with false tails to p+q,
+then uses one selector bit; zero lengths and exact ties are covered. Ignoring the oracle gives
+ordinary inclusions; the existing certified simulation eliminates P-decidable oracles. Clients
+use genuine membership queries, zero-width witnesses, positive/negative gaps, exact width-one
+ties, a zero gap with p=q=0, and empty/nonempty P oracles. Named axiom guards use only the three
+permitted axioms.
+
+The new index entry records the fixed program, arbitrary-stateful-oracle resource certificate,
+correctness against the stateless language oracle, exact witness accounting, strict threshold,
+and the verifier/machine-equivalence and lowness boundaries. Seven declaration anchors are
+pinned to the source revision above. Mathematical credit is given to Fenner--Fortnow--Kurtz,
+Fortnow (Lemma 3.6 and Classification 4.3), and Arora--Barak Section 3.4. The same independent
+coordinator approved the draft index with no findings and verified all seven pinned anchors
+(review comment 6297302134 in PR #61). Final PDF and integration evidence are recorded there. AI assistance: OpenAI Codex; independent AI review
+does not imply human editorial approval or machine-checked prose equivalence.
+
+The first PR #61 combined integration incorporates reviewed PR #60 head `bc424325` and
+its PR #59/#57 predecessors without changing source or tests at `21c83869`. All six combined
+gates pass. The actual curated entry count is126; the rebuilt PDF has no undefined citations
+or overfull boxes. Rendered pages22 (relativized counting),28 (bounded wide-gap closure) and9
+(tuple successor) were inspected; `/root/fusion_graph` independently inspected page22 with no
+findings. This completed revision is preserved locally while the coordinator refreshes the
+stack against the subsequently landed upstream synchronization; final publication will use
+that refreshed base and receive a fresh integration review.
