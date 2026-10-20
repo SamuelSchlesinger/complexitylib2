@@ -1263,6 +1263,7 @@ public import Complexity.Foundations.Data.Nat.Log
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
+public import Complexity.Foundations.Data.Nat.Radix
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
@@ -1327,6 +1328,8 @@ public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Bounds
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Columns
 public import Complexity.Logics.FirstOrder.Ordered.Packing
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Arithmetic
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Decode
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
