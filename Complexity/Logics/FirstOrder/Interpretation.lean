@@ -96,6 +96,12 @@ structure Interpretation (L : Language.{u, v}) (L' : Language.{u', v'}) (ι : Ty
   /-- The formula defining a relation symbol, with a block of variables for each argument. -/
   rel : ∀ {n : ℕ}, L'.Relations n → L.Formula (Fin n × ι)
 
+/-- The interpretation of dimension one with an empty domain. -/
+def Interpretation.empty (L : Language.{u, v}) (L' : Language.{u', v'}) :
+    Interpretation L L' Unit where
+  domain := ⊥
+  rel _ := ⊥
+
 /-- In a relational language a term is a variable; this is that variable. -/
 def termVar {L' : Language.{u', v'}} [L'.IsRelational] {β : Type*} : L'.Term β → β
   | .var x => x

@@ -90,7 +90,7 @@ theorem colorable_simpleGraph_mem_NP (n : ℕ) :
 simple graph, along any numbering. -/
 example {V : Type} (G : SimpleGraph V) (hG : G.Colorable 3) {m : ℕ} (e : V ≃ Fin m) :
     (letI := G.structure; graphVocabulary.encode V e) ∈ graphVocabulary.queryLanguage
-      {M | M ⊨ Theory.simpleGraph ∧ Cslib.Logic.FO.graph.Colorable 3 M} := by
+      {M | M ⊨ Theory.simpleGraph ∧ ∃ f : M → Fin 3, ∀ x y, RelMap adj ![x, y] → f x ≠ f y} := by
   let _ := G.structure
   rw [Vocabulary.mem_queryLanguage_encode (Definable.colorable_simpleGraph 3).isoClosed]
   obtain ⟨C⟩ := hG

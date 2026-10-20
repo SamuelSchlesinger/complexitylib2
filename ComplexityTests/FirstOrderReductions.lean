@@ -5,21 +5,21 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Fagin.SAT
+import Complexity.Logics.FirstOrder.Problems.ColoringReduction
 import Complexity.Logics.FirstOrder.Problems.ColoringToCNF
 import Complexity.Logics.FirstOrder.Problems.IndependentSetReduction
-import Complexity.Logics.SecondOrder.IndependentSet
-import Complexity.Logics.FirstOrder.Problems.ColoringReduction
 import Complexity.Logics.SecondOrder.Coloring
+import Complexity.Logics.SecondOrder.IndependentSet
 
 /-!
-# Tests for first-order reductions to SAT and 3COL
+# Tests for order-free reductions to SAT and 3COL
 
 Concrete CNF structures inside and outside SAT and 3SAT; the graphs of an unsatisfiable 3-CNF
 structure, of the empty clause and of a clause with four literals, which are not three-colorable;
 the compiled interpretation of a tagged interpretation, through `copiesEquiv`; clients of the
 headline reductions (3COL and 3SAT reduce to SAT, 3SAT reduces to 3COL, and these compose); and
 axiom guards. Milestone-two clients exercise the reverse coloring reduction, both outcomes of
-the occurrence-graph reduction on a nontrivial universe, and the ESO graph-property sentences.
+the occurrence-graph reduction on a nontrivial universe, and the independent-set ESO sentence.
 -/
 
 namespace ComplexityTests.FirstOrderReductions
@@ -165,13 +165,13 @@ example : ESO.Definable graph.ThreeColorable.{0} :=
   (ESO.definable_iff_reduces_SAT fun _ _ => graph.colorable_of_isEmpty).2
     (graph.definable_ThreeColorable.reduces_SAT fun _ _ => graph.colorable_of_isEmpty)
 
-/-- The classes containing the empty structure that are first-order reducible to SAT are the
+/-- The classes containing every empty structure that are first-order reducible to SAT are the
 classes in NP closed under isomorphism; SAT itself is one. -/
 example : Reduces cnf.SAT.{0} cnf.SAT.{0} :=
   (cnf.reduces_SAT_iff_isoClosed_and_queryLanguage_mem_NP cnf.vocabulary
     fun _ _ => cnf.satisfiable_of_isEmpty).2 ⟨cnf.isoClosed_SAT, cnf.queryLanguage_SAT_mem_NP⟩
 
-/-- Classical 3COL is in NP, as 3SAT reduces to it and it reduces to SAT. -/
+/-- 3SAT reduces to classical 3COL by an order-free interpretation. -/
 example : Reduces cnf.ThreeSAT.{0} graph.SimpleThreeColorable.{0} :=
   cnf.reduces_ThreeSAT_SimpleThreeColorable
 
@@ -233,6 +233,90 @@ example : ReducesNontrivial cnf.SAT.{0} sizedGraph.IndependentSet.{0} :=
 example : ESO.Definable sizedGraph.Clique.{0} := sizedGraph.definable_Clique
 
 example : ESO.Definable sizedGraph.VertexCover.{0} := sizedGraph.definable_VertexCover
+
+/-- The empty-clause coloring graph maps to an unsatisfiable 3-CNF structure. -/
+example : ¬(letI := emptyClause;
+    cnf.Satisfiable
+      (graph.cnfInterpretation.Model (cnf.coloringInterpretation.Model (Fin 1)))) := by
+  let _ := emptyClause
+  rw [graph.satisfiable_cnfInterpretation_iff, cnf.colorable_coloringInterpretation_iff]
+  exact fun h => not_satisfiable_emptyClause h.2
+
+/-- A graph with a loop, even on a singleton universe, maps to an unsatisfiable CNF structure. -/
+example : ¬(letI : Language.graph.Structure (Fin 1) := { RelMap := fun _ _ => True };
+    cnf.Satisfiable (graph.cnfInterpretation.Model (Fin 1))) := by
+  let : Language.graph.Structure (Fin 1) := { RelMap := fun _ _ => True }
+  rw [graph.satisfiable_cnfInterpretation_iff]
+  rintro ⟨f, hf⟩
+  exact hf 0 0 trivial rfl
+
+/-- The satisfiable unit clause supplies a concrete member of classical 3COL. -/
+example : letI := unitClause;
+    (Bundled.of (cnf.coloringInterpretation.Model (Fin 1)) : Bundled Language.graph.Structure) ∈
+      graph.SimpleThreeColorable := by
+  let _ := unitClause
+  exact ⟨cnf.simpleGraph_coloringInterpretation cnf.isThreeCNF_of_subsingleton
+    satisfiable_unitClause.literals_nonempty,
+    cnf.colorable_coloringInterpretation_iff.2
+      ⟨cnf.isThreeCNF_of_subsingleton, satisfiable_unitClause⟩⟩
+
+/-- An unsatisfiable formula supplies a non-member of classical 3COL. -/
+example : ¬(letI := contradiction;
+    (Bundled.of (cnf.coloringInterpretation.Model (Fin 2)) : Bundled Language.graph.Structure) ∈
+      graph.SimpleThreeColorable) := by
+  let _ := contradiction
+  exact fun h => not_satisfiable_contradiction
+    (cnf.colorable_coloringInterpretation_iff.1 h.2).2
+
+/-- The nontrivial notion is strictly weaker than unrestricted order-free reducibility. -/
+example : ReducesNontrivial cnf.SAT.{0} sizedGraph.IndependentSet.{0} ∧
+    ¬Reduces cnf.SAT.{0} sizedGraph.IndependentSet.{0} :=
+  ⟨cnf.reducesNontrivial_SAT_IndependentSet, cnf.not_reduces_SAT_IndependentSet⟩
+
+/-- Composing the occurrence graph with graph complementation gives a nontrivial reduction. -/
+example : ReducesNontrivial cnf.SAT.{0} sizedGraph.Clique.{0} :=
+  cnf.reducesNontrivial_SAT_IndependentSet.trans_reduces
+    sizedGraph.qfReduces_IndependentSet_Clique.reduces sizedGraph.isoClosed_Clique
+
+/-- Independent set exercises reflexivity and extension across the small structures. -/
+example : Reduces sizedGraph.IndependentSet.{0} sizedGraph.IndependentSet.{0} :=
+  .of_reducesNontrivial (.refl sizedGraph.isoClosed_IndependentSet)
+    (fun _ _ _ => sizedGraph.mem_IndependentSet_of_subsingleton)
+    (fun _ _ _ => sizedGraph.mem_IndependentSet_of_subsingleton)
+
+/-- The tagged palette is nonempty, so its compiled interpretation preserves nontriviality and
+can be followed by another reduction that only promises correctness on nontrivial structures. -/
+example : ReducesNontrivial cnf.ThreeSAT.{0} graph.ThreeColorable.{0} := by
+  apply ReducesNontrivial.trans_of_nontrivial
+    (cnf.coloringInterpretation.toInterpretation (Interpretation.empty cnf Language.graph))
+    ?_ (.refl graph.isoClosed_ThreeColorable) graph.isoClosed_ThreeColorable
+  apply TaggedInterpretation.nontrivial_and_mem_iff_toInterpretation
+    graph.isoClosed_ThreeColorable graph.copyInvariant_ThreeColorable
+  · intro M _ _ _
+    exact ⟨⟨.trueV, Fin.elim0, formula_realize_top⟩⟩
+  · intro M _ _
+    exact cnf.colorable_coloringInterpretation_iff.symm
+
+/-- The nonempty-structure corollary applies even to a class excluding every empty structure. -/
+example : ∃ (ι : Type) (_ : Finite ι) (I : Interpretation cnf cnf ι),
+    ∀ (M : Bundled.{0} cnf.Structure) [Finite M] [Nonempty M],
+      ¬IsEmpty M ↔ (Bundled.of (I.Model M) : Bundled cnf.Structure) ∈ cnf.SAT :=
+  (ESO.Definable.of_fo FO.Definable.isEmpty.compl).exists_interpretation_SAT_of_nonempty
+
+/-- The Fagin corollary has the same nonempty client. -/
+example : ∃ (ι : Type) (_ : Finite ι) (I : Interpretation cnf cnf ι),
+    ∀ (M : Bundled.{0} cnf.Structure) [Finite M] [Nonempty M],
+      ¬IsEmpty M ↔ (Bundled.of (I.Model M) : Bundled cnf.Structure) ∈ cnf.SAT :=
+  cnf.exists_interpretation_SAT_of_queryLanguage_mem_NP cnf.vocabulary
+    FO.Definable.isEmpty.compl.isoClosed
+    ((ESO.Definable.of_fo FO.Definable.isEmpty.compl).queryLanguage_mem_NP cnf.vocabulary)
+
+/-- Membership follows from an order-free reduction to SAT. -/
+example : cnf.vocabulary.queryLanguage cnf.ThreeSAT ∈ NP encStructure :=
+  cnf.queryLanguage_mem_NP_of_reduces_SAT cnf.vocabulary
+    (cnf.reduces_ThreeSAT_ThreeColorable.trans
+      (graph.definable_ThreeColorable.reduces_SAT fun _ _ => graph.colorable_of_isEmpty)
+      cnf.isoClosed_SAT)
 
 /-! ### Axioms -/
 
@@ -367,5 +451,47 @@ info: 'Cslib.Logic.FO.sizedGraph.definable_VertexCover' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.FO.sizedGraph.definable_VertexCover
+
+/--
+info: 'Cslib.Logic.ESO.Definable.exists_interpretation_SAT_of_nonempty' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.ESO.Definable.exists_interpretation_SAT_of_nonempty
+
+/--
+info: 'Cslib.Logic.FO.cnf.not_reduces_SAT_IndependentSet' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.cnf.not_reduces_SAT_IndependentSet
+
+/--
+info: 'Cslib.Logic.FO.cnf.mem_independentSet_iff_satisfiable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.cnf.mem_independentSet_iff_satisfiable
+
+/--
+info: 'Cslib.Logic.FO.graph.satisfiable_cnfInterpretation_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.graph.satisfiable_cnfInterpretation_iff
+
+/--
+info: 'Cslib.Logic.FO.ReducesNontrivial.of_tagged' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.ReducesNontrivial.of_tagged
+
+/--
+info: 'Cslib.Logic.FO.Reduces.of_reducesNontrivial' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Reduces.of_reducesNontrivial
 
 end ComplexityTests.FirstOrderReductions

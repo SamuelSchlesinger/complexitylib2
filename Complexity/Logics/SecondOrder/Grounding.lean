@@ -16,17 +16,17 @@ import Mathlib.Tactic.FinCases
 # Existential second-order definable classes reduce to SAT by order-free interpretations
 
 The reductions in this module use order-free first-order interpretations. Input structures have
-no built-in order or numeric predicates; these are variants of the standard ordered setting.
+no built-in order or numeric predicates; these results are order-free variants of the standard ones.
 
-Every existential second-order definable class of finite structures that contains the empty
-structure is first-order reducible to the class `cnf.SAT` of satisfiable CNF structures
+Every existential second-order definable class of finite structures that contains every empty
+structure is order-free reducible to the class `cnf.SAT` of satisfiable CNF structures
 (`Cslib.Logic.ESO.Definable.reduces_SAT`). With Fagin's theorem this gives the NP-completeness
-of SAT under first-order reductions, for classes containing the empty structure; see
+of SAT under order-free reductions, for classes containing every empty structure; see
 `Complexity.Computability.Complexity.Fagin.SAT`. This is an adaptation of the descriptive form of
 the Cook–Levin theorem [Immerman, Chapter 7][Immerman1999]: Immerman's structures are ordered and
-nonempty, and his reductions are first-order projections, while the reductions here are
-first-order interpretations, with quantifiers, of unordered structures. Neither statement implies
-the other.
+have at least two elements, and his reductions are first-order projections, while this module
+uses first-order interpretations, with quantifiers, of unordered structures. Neither statement
+implies the other.
 
 The reduction grounds the sentence. Let `Φ = ∃ R₁ … Rₖ, φ` and let `M` be a finite structure. For
 every subformula `ψ` of `φ` with `k` bound variables and every tuple `a ∈ Mᵏ` there is a
@@ -42,8 +42,8 @@ The propositional variables and clauses are of finitely many kinds, which are th
 interpretation (`Cslib.Logic.ESO.Sentence.groundInterpretation`) whose literals are defined by
 templates. On structures with at most one element, where tags cannot be told apart, the reduction
 evaluates `Φ` directly: every relation is empty or full, so a finite disjunction of first-order
-sentences decides it (`Cslib.Logic.ESO.Sentence.subsingletonSentence`). The empty structure is
-mapped to the empty CNF structure, which is satisfiable; this is why the class must contain the
+sentences decides it (`Cslib.Logic.ESO.Sentence.subsingletonSentence`). Every empty structure is
+mapped to the empty CNF structure, which is satisfiable; this is why the class must contain every
 empty structure.
 
 ## Main definitions
@@ -60,11 +60,11 @@ empty structure.
 * `Cslib.Logic.ESO.Sentence.realize_subsingletonSentence`: correctness of the sentence on
   structures with at most one element.
 * `Cslib.Logic.ESO.Definable.reduces_SAT`: every existential second-order definable class
-  containing the empty structure is first-order reducible to SAT.
-* `Cslib.Logic.ESO.definable_iff_reduces_SAT`: for classes containing the empty structure,
-  existential second-order definability is first-order reducibility to SAT.
+  containing every empty structure is order-free reducible to SAT.
+* `Cslib.Logic.ESO.definable_iff_reduces_SAT`: for classes containing every empty structure,
+  existential second-order definability is order-free reducibility to SAT.
 * `Cslib.Logic.ESO.Definable.exists_interpretation_SAT_of_nonempty`: every existential second-order
-  definable class is first-order reducible to SAT on the nonempty finite structures.
+  definable class is order-free reducible to SAT on the nonempty finite structures.
 
 ## References
 
@@ -107,7 +107,7 @@ inductive GroundTag : Type _
   | clause (s : Φ.Subformula) (i : Fin 3)
 
 /-- The kinds, as a sum type. -/
-def GroundTag.toSum : Φ.GroundTag → Φ.Subformula ⊕ Φ.Var ⊕ Unit ⊕ (Φ.Subformula × Fin 3)
+private def GroundTag.toSum : Φ.GroundTag → Φ.Subformula ⊕ Φ.Var ⊕ Unit ⊕ (Φ.Subformula × Fin 3)
   | .var s => .inl s
   | .relVar r => .inr (.inl r)
   | .top => .inr (.inr (.inl ()))
@@ -129,7 +129,7 @@ def GroundTag.Coord : Φ.GroundTag → Type
   | .top => Fin 0
   | .clause s _ => Fin (s.1.1 + 1)
 
-instance : ∀ t : Φ.GroundTag, Finite t.Coord
+instance instFiniteGroundTagCoord : ∀ t : Φ.GroundTag, Finite t.Coord
   | .var _ => inferInstanceAs (Finite (Fin _))
   | .relVar _ => inferInstanceAs (Finite (Fin _))
   | .top => inferInstanceAs (Finite (Fin _))
@@ -237,6 +237,7 @@ private theorem term_realize {k : ℕ} [(L.sum (varLanguage Φ.arity)).Structure
   rcases termVar t with e | j
   · exact e.elim
   · rfl
+
 /-- The clauses of a kind with literal templates are in the domain. -/
 private theorem realize_domain_clause {k : ℕ}
     {ψ : (L.sum (varLanguage Φ.arity)).BoundedFormula Empty k}
@@ -804,7 +805,7 @@ end Subsingleton
 
 end Cslib.Logic.ESO.Sentence
 
-/-! ### SAT is complete for existential second-order logic under first-order reductions -/
+/-! ### SAT is complete for existential second-order logic under order-free reductions -/
 
 namespace Cslib.Logic.ESO
 
@@ -812,11 +813,11 @@ open FO FO.TaggedInterpretation
 
 variable {L : Language.{u, v}} [L.IsRelational]
 
-/-- **Every existential second-order definable class containing the empty structure is
-first-order reducible to SAT** [Immerman, Chapter 7][Immerman1999]. The reduction grounds the
-defining sentence (`Cslib.Logic.ESO.Sentence.groundInterpretation`). The hypothesis on the empty
-structure is needed: an interpretation of positive dimension maps it to the empty CNF structure,
-which is satisfiable. -/
+/-- **Every existential second-order definable class containing every empty structure is
+order-free reducible to SAT** [Immerman, Chapter 7][Immerman1999]. The reduction grounds the
+defining sentence (`Cslib.Logic.ESO.Sentence.groundInterpretation`). The empty-structure hypothesis
+cannot be dropped in general: an interpretation of positive dimension maps every empty input to
+the empty CNF structure, which is satisfiable. -/
 theorem Definable.reduces_SAT {K : Set (Bundled.{w} L.Structure)} (hK : Definable K)
     (hempty : ∀ M : Bundled.{w} L.Structure, IsEmpty M → M ∈ K) : Reduces K cnf.SAT.{w} := by
   obtain ⟨Φ, hΦ⟩ := hK
@@ -839,24 +840,19 @@ theorem Definable.reduces_SAT {K : Set (Bundled.{w} L.Structure)} (hK : Definabl
       rw [Sentence.satisfiable_subsingletonInterpretation_iff,
         Sentence.realize_subsingletonSentence]
 
-/-- **SAT is complete for existential second-order logic under first-order reductions**: a class
-containing the empty structure is existential second-order definable exactly when it is
-first-order reducible to SAT. -/
+/-- **SAT is complete for existential second-order logic under order-free reductions**: a class
+containing every empty structure is existential second-order definable exactly when it is
+order-free reducible to SAT. -/
 theorem definable_iff_reduces_SAT {K : Set (Bundled.{w} L.Structure)}
     (hempty : ∀ M : Bundled.{w} L.Structure, IsEmpty M → M ∈ K) :
     Definable K ↔ Reduces K cnf.SAT.{w} :=
   ⟨fun h => h.reduces_SAT hempty, fun h => cnf.definable_SAT.of_reduces h⟩
 
-omit [L.IsRelational] in
-/-- The class of empty structures is first-order definable, by `∀ x, ⊥`. -/
-theorem _root_.Cslib.Logic.FO.Definable.isEmpty :
-    FO.Definable {M : Bundled.{w} L.Structure | IsEmpty M} :=
-  ⟨∀' ⊥, fun _ _ => ⟨fun h x => h.false x, fun h => ⟨fun x => h x⟩⟩⟩
-
-/-- **Every existential second-order definable class is first-order reducible to SAT on the
+/-- **Every existential second-order definable class is order-free reducible to SAT on the
 nonempty structures**: some first-order interpretation maps every nonempty finite structure inside
-SAT exactly when it is in the class. This is the form of [Immerman, Chapter 7][Immerman1999], whose
-structures are nonempty: it reduces the class with the empty structure added. -/
+SAT exactly when it is in the class. This is an order-free variant of
+[Immerman, Chapter 7][Immerman1999], whose structures are ordered and have at least two elements.
+The construction reduces the class with every empty structure added. -/
 theorem Definable.exists_interpretation_SAT_of_nonempty {K : Set (Bundled.{w} L.Structure)}
     (hK : Definable K) : ∃ (ι : Type) (_ : Finite ι) (I : Interpretation L cnf ι),
       ∀ (M : Bundled.{w} L.Structure) [Finite M] [Nonempty M],

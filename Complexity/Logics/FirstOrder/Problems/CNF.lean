@@ -228,6 +228,17 @@ theorem satisfiable_of_isEmpty [IsEmpty M] : Satisfiable M :=
 theorem isThreeCNF_of_isEmpty [IsEmpty M] : IsThreeCNF M :=
   fun c => isEmptyElim c
 
+/-- Every structure with at most one element is a 3-CNF structure. -/
+theorem isThreeCNF_of_subsingleton [Subsingleton M] : IsThreeCNF M := by
+  intro c
+  rw [encard_literals_le_three_iff]
+  rintro ⟨l, -, hl⟩
+  have := Fintype.ofFinite M
+  have h₁ := Fintype.card_le_of_injective l hl
+  have h₂ : Fintype.card M ≤ 1 := Fintype.card_le_one_iff_subsingleton.2 inferInstance
+  rw [Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h₁
+  omega
+
 /-! ### Copies -/
 
 section Copies

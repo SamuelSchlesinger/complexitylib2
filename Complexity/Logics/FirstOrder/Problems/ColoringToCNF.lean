@@ -20,12 +20,12 @@ no built-in order or numeric predicates; these are variants of the standard orde
 Three-colorability is a constraint satisfaction problem, and its constraints are clauses of at
 most three literals: a graph is three-colorable exactly when the 3-CNF formula with a variable
 `x(v, c)` for each vertex `v` and color `c`, a clause `x(v, 0) ∨ x(v, 1) ∨ x(v, 2)` for each vertex
-and a clause `¬x(u, c) ∨ ¬x(v, c)` for each edge `(u, v)` and color `c` is satisfiable
-[Garey and Johnson][GareyJohnson1979]. A loop at `v` gives the clauses `¬x(v, c)`, which make the
-formula unsatisfiable, as the loop makes the graph uncolorable. This construction is a tagged
+and a clause `¬x(u, c) ∨ ¬x(v, c)` for each edge `(u, v)` and color `c` is satisfiable.
+A loop at `v` gives the clauses `¬x(v, c)`, making the formula unsatisfiable, as the loop makes
+the graph uncolorable. This construction is a tagged
 interpretation (`Cslib.Logic.FO.graph.cnfInterpretation`), so 3COL, with loops allowed, is
-first-order reducible to 3SAT (`Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT`); with the
-converse `Cslib.Logic.FO.cnf.reduces_ThreeSAT_ThreeColorable`, the two classes are first-order
+order-free reducible to 3SAT (`Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT`); with the
+converse `Cslib.Logic.FO.cnf.reduces_ThreeSAT_ThreeColorable`, the two classes are order-free
 interreducible.
 
 ## Main definitions
@@ -37,7 +37,7 @@ interreducible.
 * `Cslib.Logic.FO.graph.satisfiable_cnfInterpretation_iff`: the structure is satisfiable exactly
   when the graph is three-colorable, and `Cslib.Logic.FO.graph.isThreeCNF_cnfInterpretation`: it is
   a 3-CNF structure.
-* `Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT`: **3COL is first-order reducible to
+* `Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT`: **3COL is order-free reducible to
   3SAT.**
 
 ## References
@@ -65,7 +65,7 @@ inductive ColoringClauseTag : Type
   | edge (c : Fin 3)
 
 /-- The kinds of elements, as a sum type. -/
-def ColoringClauseTag.toSum : ColoringClauseTag → Fin 3 ⊕ Unit ⊕ Fin 3
+private def ColoringClauseTag.toSum : ColoringClauseTag → Fin 3 ⊕ Unit ⊕ Fin 3
   | .var c => .inl c
   | .vertex => .inr (.inl ())
   | .edge c => .inr (.inr c)
@@ -263,7 +263,7 @@ def cnfSubsingleton : Interpretation Language.graph cnf Unit where
     | .pos => ∼(adj.formula₂ (.var (0, ())) (.var (0, ())))
     | .neg => ⊥
 
-theorem threeSat_cnfSubsingleton_iff [Finite M] [Subsingleton M] [Nonempty M] :
+theorem threeSat_cnfSubsingleton_iff [Subsingleton M] [Nonempty M] :
     (IsThreeCNF (cnfSubsingleton.Model M) ∧ Satisfiable (cnfSubsingleton.Model M)) ↔
       Colorable 3 M := by
   obtain ⟨v⟩ := ‹Nonempty M›
@@ -275,20 +275,9 @@ theorem threeSat_cnfSubsingleton_iff [Finite M] [Subsingleton M] [Nonempty M] :
     simp only [Term.realize_var]
     rw [Subsingleton.elim ((![e, e'] 0).1 ()) v]
   have hneg (e e' : cnfSubsingleton.Model M) : ¬RelMap cnf.neg ![e, e'] := id
-  have : Finite (cnfSubsingleton.Model M) := inferInstance
   have : Subsingleton (cnfSubsingleton.Model M) :=
     ⟨fun x y => Interpretation.Model.ext (Subsingleton.elim _ _)⟩
-  have h3 : IsThreeCNF (cnfSubsingleton.Model M) := by
-    intro c
-    rw [encard_literals_le_three_iff]
-    rintro ⟨l, -, hl⟩
-    have := Fintype.ofFinite (cnfSubsingleton.Model M)
-    have h₁ := Fintype.card_le_of_injective l hl
-    have h₂ : Fintype.card (cnfSubsingleton.Model M) ≤ 1 :=
-      Fintype.card_le_one_iff_subsingleton.2 inferInstance
-    rw [Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h₁
-    omega
-  rw [and_iff_right h3]
+  rw [and_iff_right (isThreeCNF_of_subsingleton (M := cnfSubsingleton.Model M))]
   constructor
   · rintro ⟨A, hA⟩
     obtain ⟨y, ⟨h, -⟩ | ⟨h, -⟩⟩ := hA ⟨fun _ => v, formula_realize_top⟩

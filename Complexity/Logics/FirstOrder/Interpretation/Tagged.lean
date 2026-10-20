@@ -11,6 +11,8 @@ public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Reduction
 public import Mathlib.Basic.Finite.Sigma
 public import Mathlib.Basic.Finite.Sum
+public import Mathlib.Data.Set.Card
+import Mathlib.SetTheory.Cardinal.NatCard
 import Mathlib.Tactic.FinCases
 
 /-!
@@ -37,7 +39,7 @@ indexed by the pairs `J` (`Cslib.Logic.FO.TaggedInterpretation.copiesEquiv`). A 
 most one element has no such pair; on it, the compiled interpretation is a given interpretation
 `S` of dimension one (`Cslib.Logic.FO.TaggedInterpretation.subsingletonEquiv`).
 
-So a tagged interpretation gives a first-order reduction to every class that is closed under
+So a tagged interpretation gives an order-free reduction to every class that is closed under
 isomorphism and under taking a positive number of disjoint copies, such as satisfiability of
 formulas in conjunctive normal form or colorability of graphs
 (`Cslib.Logic.FO.Reduces.of_tagged`).
@@ -63,7 +65,7 @@ from it, or are arbitrary.
   the compiled interpretation is a disjoint union of copies of the tagged one.
 * `Cslib.Logic.FO.TaggedInterpretation.subsingletonEquiv`: on a structure with at most one
   element, it is the given interpretation of dimension one.
-* `Cslib.Logic.FO.Reduces.of_tagged`: tagged interpretations give first-order reductions to
+* `Cslib.Logic.FO.Reduces.of_tagged`: tagged interpretations give order-free reductions to
   classes closed under isomorphism and copies.
 * `Cslib.Logic.FO.TaggedInterpretation.Template.realize_formula`: the semantics of templates.
 
@@ -210,6 +212,25 @@ theorem relMap_copies_two [L'.IsRelational] [L'.Structure N] (R : L'.Relations 2
   refine and_congr ⟨fun h => h 0 1, fun h i j => ?_⟩ (iff_of_eq (congrArg _ (funext fun i => ?_)))
   · fin_cases i <;> fin_cases j <;> simp [h]
   · fin_cases i <;> rfl
+
+/-- A unary relation in a copy holds exactly when it holds of the underlying element. -/
+theorem relMap_copies_one [L'.IsRelational] [L'.Structure N]
+    (R : L'.Relations 1) (a : Copies J N) :
+    RelMap R ![a] ↔ RelMap R ![a.val] := by
+  rw [Copies.relMap_copies]
+  refine ⟨fun h => ?_, fun h => ⟨fun i j => by fin_cases i; fin_cases j; rfl, ?_⟩⟩
+  · exact (iff_of_eq (congrArg _ (funext fun i => by fin_cases i; rfl))).1 h.2
+  · exact (iff_of_eq (congrArg _ (funext fun i => by fin_cases i; rfl))).2 h
+
+/-- The copies of a set have cardinality the number of copies times its cardinality. -/
+theorem ncard_set_val (s : Set N) :
+    {x : Copies J N | x.val ∈ s}.ncard = Nat.card J * s.ncard := by
+  rw [← Nat.card_coe_set_eq, ← Nat.card_coe_set_eq, ← Nat.card_prod]
+  exact Nat.card_congr
+    { toFun := fun x => (x.1.idx, ⟨x.1.val, x.2⟩)
+      invFun := fun p => ⟨⟨p.1, p.2.1⟩, p.2.2⟩
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl }
 
 end Copies
 
@@ -477,12 +498,27 @@ end Compile
 
 end TaggedInterpretation
 
+/-- On a structure with two distinct elements, the compiled interpretation of a tagged
+interpretation whose structures are nonempty is nontrivial: there are at least two copies. -/
+theorem TaggedInterpretation.nontrivial_toInterpretation_model
+    {L : Language.{u, v}} {L' : Language.{u', v'}} {T : Type} [Finite T]
+    {ι : T → Type} [∀ t, Finite (ι t)] (I : TaggedInterpretation L L' T ι)
+    (S : Interpretation L L' Unit) {M : Type w} [L.Structure M] [Nontrivial M]
+    [Nonempty (I.Model M)] : Nontrivial ((I.toInterpretation S).Model M) := by
+  obtain ⟨x, y, hxy⟩ := exists_pair_ne M
+  obtain ⟨e⟩ := ‹Nonempty (I.Model M)›
+  refine ⟨⟨TaggedInterpretation.ofCopies S ⟨⟨(x, y), hxy⟩, e⟩,
+    TaggedInterpretation.ofCopies S ⟨⟨(y, x), hxy.symm⟩, e⟩, fun h => hxy ?_⟩⟩
+  have := (TaggedInterpretation.ofCopies_bijective S).1 h
+  exact congrArg (fun c : Copies (TaggedInterpretation.Pairs M) (I.Model M) => c.idx.1.1) this
+
+
 /-! ### Reductions by tagged interpretations -/
 
-/-- **Tagged interpretations give first-order reductions** to classes closed under isomorphism and
+/-- **Tagged interpretations give order-free reductions** to classes closed under isomorphism and
 under copies: if the structure interpreted by `I` decides membership on the finite structures
 with two distinct elements, and the interpretation `S` of dimension one decides it on those with
-at most one element, then the compiled interpretation is a first-order reduction. -/
+at most one element, then the compiled interpretation is a order-free reduction. -/
 theorem Reduces.of_tagged {L : Language.{u, v}} {L' : Language.{u', v'}} [L'.IsRelational]
     {K : Set (Bundled.{w} L.Structure)} {K' : Set (Bundled.{w} L'.Structure)} (hK' : IsoClosed K')
     (hcopy : CopyInvariant K') {T : Type} [Finite T] {ι : T → Type} [∀ t, Finite (ι t)]
@@ -585,5 +621,6 @@ theorem relMap_binaryRel {L' : Language.{u', v'}} [L'.IsRelational]
   rcases i with i | i <;> rfl
 
 end TaggedInterpretation
+
 
 end Cslib.Logic.FO

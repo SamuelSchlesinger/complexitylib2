@@ -9,7 +9,6 @@ module
 
 public import Complexity.Logics.FirstOrder.Problems.SizedGraph
 public import Complexity.Logics.SecondOrder.Reduction
-public import Mathlib.SetTheory.Cardinal.NatCard
 
 /-!
 # Independent set, clique and vertex cover are existential second-order definable
@@ -48,32 +47,32 @@ namespace Cslib.Logic.FO.sizedGraph
 open FirstOrder Language Structure CategoryTheory ESO
 
 /-- The arities of the relation variables: a unary `S` and a binary `F`. -/
-abbrev isArity : Fin 2 → ℕ :=
+abbrev independentSetArity : Fin 2 → ℕ :=
   ![1, 2]
 
 /-- The language of the independent-set sentence. -/
-abbrev isLanguage : Language :=
-  sizedGraph.sum (varLanguage isArity)
+abbrev independentSetLanguage : Language :=
+  sizedGraph.sum (varLanguage independentSetArity)
 
 /-- The edge relation, among the symbols of the independent-set sentence. -/
-abbrev adjSym : isLanguage.Relations 2 :=
+abbrev adjSym : independentSetLanguage.Relations 2 :=
   Sum.inl sizedGraph.adj
 
 /-- The size relation, among the symbols of the independent-set sentence. -/
-abbrev sizeSym : isLanguage.Relations 1 :=
+abbrev sizeSym : independentSetLanguage.Relations 1 :=
   Sum.inl sizedGraph.size
 
 /-- The relation variable `S`, the independent set. -/
-abbrev setSym : isLanguage.Relations 1 :=
+abbrev setSym : independentSetLanguage.Relations 1 :=
   Sum.inr ⟨0, rfl⟩
 
 /-- The relation variable `F`, a bijection from `S` onto the size relation. -/
-abbrev bijSym : isLanguage.Relations 2 :=
+abbrev bijSym : independentSetLanguage.Relations 2 :=
   Sum.inr ⟨1, rfl⟩
 
 /-- The first-order part of the independent-set sentence: `F` is a bijection from `S` onto the
 size relation, and `S` is independent. -/
-def independentSetMatrix : isLanguage.Sentence :=
+def independentSetMatrix : independentSetLanguage.Sentence :=
   (∀' ∀' (bijSym.boundedFormula₂ &0 &1 ⟹
       (setSym.boundedFormula₁ &0 ⊓ sizeSym.boundedFormula₁ &1))) ⊓
     (∀' ∀' ∀' ((bijSym.boundedFormula₂ &0 &1 ⊓ bijSym.boundedFormula₂ &0 &2) ⟹
@@ -88,11 +87,11 @@ def independentSetMatrix : isLanguage.Sentence :=
 /-- The **independent-set sentence** `∃ S F, F is a bijection from S onto size ∧ S is
 independent`. -/
 def independentSetSentence : ESO.Sentence sizedGraph :=
-  ⟨Fin 2, isArity, independentSetMatrix⟩
+  ⟨Fin 2, independentSetArity, independentSetMatrix⟩
 
 variable {M : Type*} [sizedGraph.Structure M]
 
-theorem realize_independentSetMatrix (R : ∀ i, Set (Fin (isArity i) → M)) :
+theorem realize_independentSetMatrix (R : ∀ i, Set (Fin (independentSetArity i) → M)) :
     (letI := varLanguage.structure R; M ⊨ independentSetMatrix) ↔
       (∀ x y, ![x, y] ∈ R 1 → ![x] ∈ R 0 ∧ RelMap sizedGraph.size ![y]) ∧
       (∀ x y z, ![x, y] ∈ R 1 → ![x, z] ∈ R 1 → y = z) ∧
@@ -118,7 +117,7 @@ theorem realize_independentSetSentence [Finite M] :
     independentSetSentence.Realize M ↔ ∃ s : Set M,
       s.ncard = {x : M | RelMap sizedGraph.size ![x]}.ncard ∧
         s.Pairwise fun x y => ¬RelMap sizedGraph.adj ![x, y] := by
-  change (∃ R : ∀ i, Set (Fin (isArity i) → M),
+  change (∃ R : ∀ i, Set (Fin (independentSetArity i) → M),
     letI := varLanguage.structure R; M ⊨ independentSetMatrix) ↔ _
   simp only [realize_independentSetMatrix]
   constructor
@@ -132,9 +131,9 @@ theorem realize_independentSetSentence [Finite M] :
   · rintro ⟨s, hs, hind⟩
     rw [← Nat.card_coe_set_eq, ← Nat.card_coe_set_eq] at hs
     obtain ⟨g⟩ := Finite.card_eq.1 hs
-    let R : ∀ i, Set (Fin (isArity i) → M) := fun i =>
-      Fin.cases (motive := fun i => Set (Fin (isArity i) → M)) {v | v (0 : Fin 1) ∈ s}
-        (fun j => Fin.cases (motive := fun j => Set (Fin (isArity j.succ) → M))
+    let R : ∀ i, Set (Fin (independentSetArity i) → M) := fun i =>
+      Fin.cases (motive := fun i => Set (Fin (independentSetArity i) → M)) {v | v (0 : Fin 1) ∈ s}
+        (fun j => Fin.cases (motive := fun j => Set (Fin (independentSetArity j.succ) → M))
           {v | ∃ h : v (0 : Fin 2) ∈ s, (g ⟨v (0 : Fin 2), h⟩).1 = v (1 : Fin 2)}
           (fun k => k.elim0) j) i
     refine ⟨R, ?_, ?_, ?_, ?_, ?_, ?_⟩

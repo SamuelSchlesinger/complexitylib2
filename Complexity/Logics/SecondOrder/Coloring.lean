@@ -17,9 +17,8 @@ public import Mathlib.ModelTheory.Graph
 
 A structure for Mathlib's language of graphs `FirstOrder.Language.graph` is a directed graph,
 possibly with loops. It is `n`-colorable (`Cslib.Logic.FO.graph.Colorable`) when its vertices can
-be colored with `n` colors so that the two ends of every edge have different colors. This is said
-by the existential second-order
-sentence
+be colored with `n` colors so that the two ends of every edge have different colors. This is
+expressed by the existential second-order sentence
 `∃ C₀ … Cₙ₋₁, (∀ x, C₀ x ∨ ⋯ ∨ Cₙ₋₁ x) ∧ ∀ x y, E x y → ¬ (C₀ x ∧ C₀ y) ∧ ⋯ ∧ ¬ (Cₙ₋₁ x ∧ Cₙ₋₁ y)`
 with one unary relation variable for each color [Fagin, Section 1, Example 1][Fagin1974],
 [Immerman, Section 7.1][Immerman1999]. On the structure of a simple graph it says that the graph
@@ -108,7 +107,8 @@ theorem realize_colorableMatrix (R : Fin n → Set (Fin 1 → M)) :
 
 /-- A directed graph satisfies the colorability sentence exactly when it has a coloring with `n`
 colors in which the two ends of every edge have different colors. -/
-theorem realize_colorable_iff : (colorable n).Realize M ↔ FO.graph.Colorable n M := by
+theorem realize_colorable_iff :
+    (colorable n).Realize M ↔ ∃ f : M → Fin n, ∀ x y, RelMap adj ![x, y] → f x ≠ f y := by
   change (∃ R : Fin n → Set (Fin 1 → M),
     letI := varLanguage.structure (arity := fun _ : Fin n => 1) R; M ⊨ colorableMatrix n) ↔ _
   simp only [realize_colorableMatrix]
@@ -134,7 +134,8 @@ end Sentence
 /-- **Colorability is existential second-order definable**: the class of finite directed graphs
 that are `n`-colorable is a generalized spectrum [Fagin, Section 1, Example 1][Fagin1974]. -/
 theorem Definable.colorable (n : ℕ) :
-    Definable {M : Bundled.{w} Language.graph.Structure | FO.graph.Colorable n M} :=
+    Definable {M : Bundled.{w} Language.graph.Structure |
+      ∃ f : M → Fin n, ∀ x y, RelMap adj ![x, y] → f x ≠ f y} :=
   ⟨.colorable n, fun _ _ => Sentence.realize_colorable_iff.symm⟩
 
 /-- **Colorability of simple graphs is existential second-order definable**: the class of finite
@@ -143,7 +144,7 @@ ones, is the intersection of a first-order definable class with an existential s
 definable one. -/
 theorem Definable.colorable_simpleGraph (n : ℕ) :
     Definable {M : Bundled.{w} Language.graph.Structure |
-      M ⊨ Theory.simpleGraph ∧ FO.graph.Colorable n M} :=
+      M ⊨ Theory.simpleGraph ∧ ∃ f : M → Fin n, ∀ x y, RelMap adj ![x, y] → f x ≠ f y} :=
   (Definable.of_fo FO.Definable.simpleGraph).inter (Definable.colorable n)
 
 end Cslib.Logic.ESO

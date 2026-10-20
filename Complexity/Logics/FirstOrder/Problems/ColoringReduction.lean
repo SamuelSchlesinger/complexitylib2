@@ -44,7 +44,7 @@ encoded formulas and graphs, is `Cslib.Complexity.SAT.toThreeColoring`.
 * `Cslib.Logic.FO.cnf.colorable_coloringInterpretation_iff`: the graph built from a CNF
   structure is three-colorable exactly when the structure is a satisfiable 3-CNF structure.
 * `Cslib.Logic.FO.cnf.reduces_ThreeSAT_ThreeColorable`,
-  `Cslib.Logic.FO.cnf.reduces_ThreeSAT_SimpleThreeColorable`: **3SAT is first-order reducible to
+  `Cslib.Logic.FO.cnf.reduces_ThreeSAT_SimpleThreeColorable`: **3SAT is order-free reducible to
   3COL**, with loops allowed or on simple graphs.
 
 ## References
@@ -131,7 +131,7 @@ inductive ColoringTag : Type
   | gadget (g : Fin 6) (ps : Fin 3 → Bool)
 
 /-- The kinds of vertices, as a sum type. -/
-def ColoringTag.toSum : ColoringTag → Fin 3 ⊕ Bool ⊕ (Fin 6 × (Fin 3 → Bool))
+private def ColoringTag.toSum : ColoringTag → Fin 3 ⊕ Bool ⊕ (Fin 6 × (Fin 3 → Bool))
   | .trueV => .inl 0
   | .falseV => .inl 1
   | .baseV => .inl 2
@@ -152,7 +152,7 @@ abbrev ColoringTag.Coord : ColoringTag → Type
   | .lit _ => Fin 1
   | .gadget _ _ => Fin 4
 
-instance : ∀ u : ColoringTag, Finite u.Coord
+instance instFiniteColoringTagCoord : ∀ u : ColoringTag, Finite u.Coord
   | .trueV | .falseV | .baseV => inferInstanceAs (Finite (Fin 0))
   | .lit _ => inferInstanceAs (Finite (Fin 1))
   | .gadget _ _ => inferInstanceAs (Finite (Fin 4))
@@ -590,17 +590,7 @@ theorem coloringSubsingleton_rel_adj :
       cnf.neg.formula₂ (.var (0, ())) (.var (0, ()))) :=
   rfl
 
-theorem isThreeCNF_of_subsingleton [Finite M] [Subsingleton M] : IsThreeCNF M := by
-  intro c
-  rw [encard_literals_le_three_iff]
-  rintro ⟨l, -, hl⟩
-  have := Fintype.ofFinite M
-  have h₁ := Fintype.card_le_of_injective l hl
-  have h₂ : Fintype.card M ≤ 1 := Fintype.card_le_one_iff_subsingleton.2 inferInstance
-  rw [Fintype.card_fin, Fintype.card_prod, Fintype.card_bool] at h₁
-  omega
-
-theorem colorable_coloringSubsingleton_iff [Finite M] [Subsingleton M] [Nonempty M] :
+theorem colorable_coloringSubsingleton_iff [Subsingleton M] [Nonempty M] :
     graph.Colorable 3 (coloringSubsingleton.Model M) ↔ IsThreeCNF M ∧ Satisfiable M := by
   obtain ⟨e⟩ := ‹Nonempty M›
   have hv (v : coloringSubsingleton.Model M) : v.1 () = e := Subsingleton.elim _ _
@@ -648,7 +638,7 @@ theorem simpleGraph_coloringSubsingleton [Subsingleton M] [Nonempty M] (h : Sati
 
 end Subsingleton
 
-/-- **3SAT is first-order reducible to 3COL**, by the palette, variable and clause gadget
+/-- **3SAT is order-free reducible to 3COL**, by the palette, variable and clause gadget
 construction [Sipser, Chapter 7][Sipser2013], [Immerman, Chapter 7][Immerman1999]. -/
 theorem reduces_ThreeSAT_ThreeColorable : Reduces ThreeSAT.{w} graph.ThreeColorable.{w} := by
   refine Reduces.of_tagged graph.isoClosed_ThreeColorable graph.copyInvariant_ThreeColorable
@@ -660,7 +650,7 @@ theorem reduces_ThreeSAT_ThreeColorable : Reduces ThreeSAT.{w} graph.ThreeColora
       (graph.colorable_of_isEmpty (M := coloringSubsingleton.Model M))
   · exact colorable_coloringSubsingleton_iff.symm
 
-/-- **3SAT is first-order reducible to classical 3COL**, three-colorability of simple graphs: on
+/-- **3SAT is order-free reducible to classical 3COL**, three-colorability of simple graphs: on
 the members of 3SAT the graph of the reduction is symmetric and loopless. -/
 theorem reduces_ThreeSAT_SimpleThreeColorable :
     Reduces ThreeSAT.{w} graph.SimpleThreeColorable.{w} := by

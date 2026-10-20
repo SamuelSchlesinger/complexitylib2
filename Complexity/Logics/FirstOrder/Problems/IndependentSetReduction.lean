@@ -19,8 +19,8 @@ import Mathlib.Tactic.FinCases
 The reductions in this module use order-free first-order interpretations. Input structures have
 no built-in order or numeric predicates; these are variants of the standard ordered setting.
 
-Karp's reduction from satisfiability to clique, in its independent-set form
-[Karp1972], [Garey and Johnson][GareyJohnson1979], is first-order on CNF structures
+The complement of Karp's SAT-to-clique occurrence graph [Karp1972] gives an order-free
+interpretation from satisfiability to independent set on CNF structures
 of at least two elements (`Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet`). The graph
 has a vertex for each occurrence of a literal in a clause; two occurrences in the same clause are
 adjacent, and so are two occurrences of complementary literals. An independent set with one vertex
@@ -33,7 +33,7 @@ to 3SAT is needed.
 The reduction is not correct on all finite structures: every `sizedGraph` structure with at most
 one element has an independent set of its target size, and an interpretation maps a structure with
 one element to a structure with at most one element, while the empty clause on one element is an
-unsatisfiable CNF structure. So SAT is not first-order reducible to independent set in the sense of
+unsatisfiable CNF structure. So SAT is not order-free reducible to independent set in the sense of
 `Cslib.Logic.FO.Reduces`; the reduction is one on nontrivial structures
 (`Cslib.Logic.FO.ReducesNontrivial`). Hardness consequences for existential second-order definable
 classes remain a separate development; definability of the target classes is proved in
@@ -53,6 +53,8 @@ classes remain a separate development; definability of the target classes is pro
 * `Cslib.Logic.FO.cnf.mem_independentSet_iff_satisfiable`: on a CNF structure with at least two
   elements, the occurrence graph has an independent set of the target size exactly when the
   structure is satisfiable.
+* `Cslib.Logic.FO.cnf.not_reduces_SAT_IndependentSet`: the singleton obstruction to an
+  unrestricted order-free reduction.
 * `Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet`: SAT reduces to independent set on
   nontrivial structures.
 
@@ -77,28 +79,11 @@ namespace sizedGraph
 
 variable {J M : Type w} [sizedGraph.Structure M]
 
-theorem relMap_copies_one (R : sizedGraph.Relations 1) (a : Copies J M) :
-    RelMap R ![a] ↔ RelMap R ![a.val] := by
-  rw [Copies.relMap_copies]
-  refine ⟨fun h => ?_, fun h => ⟨fun i j => by fin_cases i; fin_cases j; rfl, ?_⟩⟩
-  · exact (iff_of_eq (congrArg _ (funext fun i => by fin_cases i; rfl))).1 h.2
-  · exact (iff_of_eq (congrArg _ (funext fun i => by fin_cases i; rfl))).2 h
-
-/-- An independent set of a structure, as a set with as many elements as the size relation. -/
+/-- Every structure with at most one element has an independent set of the requested size. -/
 theorem mem_IndependentSet_of_subsingleton [Subsingleton M] :
     (Bundled.of M : Bundled.{w} sizedGraph.Structure) ∈ IndependentSet := by
   rw [mem_IndependentSet]
   exact ⟨_, rfl, fun x _ y _ hxy => absurd (Subsingleton.elim (α := M) x y) hxy⟩
-
-omit [sizedGraph.Structure M] in
-theorem ncard_copies_eq (s : Set M) :
-    {x : Copies J M | x.val ∈ s}.ncard = Nat.card J * s.ncard := by
-  rw [← Nat.card_coe_set_eq, ← Nat.card_coe_set_eq, ← Nat.card_prod]
-  exact Nat.card_congr
-    { toFun := fun x => (x.1.idx, ⟨x.1.val, x.2⟩)
-      invFun := fun p => ⟨⟨p.1, p.2.1⟩, p.2.2⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl }
 
 /-- **Independent set is invariant under copies**: the largest independent sets of `J` disjoint
 copies of a graph are unions of largest independent sets of the copies. -/
@@ -107,10 +92,10 @@ theorem independentSet_copies_iff [Finite J] [Finite M] [Nonempty J] :
       (Bundled.of M : Bundled.{w} sizedGraph.Structure) ∈ IndependentSet := by
   have hsize : {x : Copies J M | RelMap sizedGraph.size ![x]}.ncard =
       Nat.card J * {x : M | RelMap sizedGraph.size ![x]}.ncard := by
-    rw [← ncard_copies_eq]
+    rw [← Copies.ncard_set_val]
     congr 1
     ext x
-    exact relMap_copies_one _ x
+    exact Copies.relMap_copies_one _ x
   simp only [mem_IndependentSet]
   have := Fintype.ofFinite J
   constructor
@@ -140,7 +125,7 @@ theorem independentSet_copies_iff [Finite J] [Finite M] [Nonempty J] :
     exact (Copies.relMap_copies_two _ _ _).2 ⟨rfl, hadj⟩
   · rintro ⟨s, hs, hind⟩
     refine ⟨{x | x.val ∈ s},
-      ((ncard_copies_eq (J := J) (M := M) s).trans (congrArg _ hs)).trans hsize.symm,
+      ((Copies.ncard_set_val (J := J) (N := M) s).trans (congrArg _ hs)).trans hsize.symm,
       fun x hx y hy hxy hadj => ?_⟩
     obtain ⟨hidx, hadj⟩ := (Copies.relMap_copies_two _ _ _).1 hadj
     refine hind hx hy (fun h => hxy ?_) hadj
@@ -148,6 +133,7 @@ theorem independentSet_copies_iff [Finite J] [Finite M] [Nonempty J] :
     obtain ⟨j, b⟩ := y
     simp_all
 
+/-- Independent set is invariant under any finite positive number of disjoint copies. -/
 theorem copyInvariant_IndependentSet : CopyInvariant IndependentSet.{w} :=
   fun _ _ _ _ _ _ => independentSet_copies_iff
 
@@ -156,6 +142,21 @@ end sizedGraph
 /-! ### The occurrence graph -/
 
 namespace cnf
+
+/-- No order-free first-order interpretation reduces SAT to independent set on all finite
+structures: a singleton empty clause is unsatisfiable, but every interpreted singleton is an
+independent-set yes-instance. -/
+theorem not_reduces_SAT_IndependentSet : ¬Reduces SAT.{w} sizedGraph.IndependentSet.{w} := by
+  rintro ⟨ι, _, I, hI⟩
+  let : cnf.Structure PUnit.{w + 1} := { RelMap := fun _ _ => False }
+  have : Subsingleton (I.Model PUnit.{w + 1}) :=
+    ⟨fun x y => Interpretation.Model.ext (Subsingleton.elim _ _)⟩
+  have : Finite (Bundled.of (c := cnf.Structure) PUnit.{w + 1}) :=
+    inferInstanceAs (Finite PUnit.{w + 1})
+  have hsat := (hI (Bundled.of PUnit.{w + 1})).2
+    (sizedGraph.mem_IndependentSet_of_subsingleton (M := I.Model PUnit.{w + 1}))
+  obtain ⟨A, hA⟩ := hsat
+  obtain ⟨x, ⟨h, _⟩ | ⟨h, _⟩⟩ := hA PUnit.unit <;> exact h
 
 open TaggedInterpretation
 
@@ -211,33 +212,33 @@ noncomputable def independentSetInterpretation :
 variable {M : Type w} [cnf.Structure M]
 
 /-- An edge from `a` to `c` given by a template of the kind of `a`. -/
-def OccEdge (a c : independentSetInterpretation.Model M) : Prop :=
+private def OccEdge (a c : independentSetInterpretation.Model M) : Prop :=
   ∃ τ ∈ occurrenceEdges a.1, τ.Holds a.2.1 c.toSigma
 
-theorem relMap_adj_iff (a c : independentSetInterpretation.Model M) :
+private theorem relMap_adj_iff (a c : independentSetInterpretation.Model M) :
     RelMap sizedGraph.adj ![a, c] ↔ OccEdge a c := by
   rw [relMap_binaryRel (F := occurrenceAdj) (fun _ => rfl), occurrenceAdj,
     Template.realize_listFormula]
   rfl
 
-theorem relMap_size_iff (a : independentSetInterpretation.Model M) :
+private theorem relMap_size_iff (a : independentSetInterpretation.Model M) :
     RelMap sizedGraph.size ![a] ↔ a.1 = .sizeV := by
   rw [relMap_model]
   change (if a.1 = OccurrenceTag.sizeV then ⊤ else ⊥ : cnf.Formula _).Realize _ ↔ _
   split_ifs with h <;> simp [h]
 
 /-- The occurrence of the literal `l` in the clause `c`. -/
-def occVertex (c : M) (l : Bool × M) (hl : l ∈ literals c) :
+private def occVertex (c : M) (l : Bool × M) (hl : l ∈ literals c) :
     independentSetInterpretation.Model M :=
   ⟨.occ l.1, ![c, l.2], by
     change ((lit l.1).formula₂ (.var 0) (.var 1)).Realize _
     simpa [mem_literals] using hl⟩
 
 /-- The size vertex of the clause `c`. -/
-def sizeVertex (c : M) : independentSetInterpretation.Model M :=
+private def sizeVertex (c : M) : independentSetInterpretation.Model M :=
   ⟨.sizeV, ![c], formula_realize_top⟩
 
-theorem occEdge_sizeVertex (c : M) (a : independentSetInterpretation.Model M) :
+private theorem occEdge_sizeVertex (c : M) (a : independentSetInterpretation.Model M) :
     OccEdge (sizeVertex c) a := by
   obtain ⟨t, d, hd⟩ := a
   cases t with
@@ -250,12 +251,12 @@ theorem occEdge_sizeVertex (c : M) (a : independentSetInterpretation.Model M) :
         fun _ _ h => by cases h⟩
 
 /-- The clause of a vertex. -/
-def vertexClause : independentSetInterpretation.Model M → M
+private def vertexClause : independentSetInterpretation.Model M → M
   | ⟨.occ _, d, _⟩ => d 0
   | ⟨.sizeV, d, _⟩ => d 0
 
 /-- Two occurrences in the same clause are adjacent. -/
-theorem occEdge_of_clause_eq {b b' : Bool} {d d' : Fin 2 → M} {hd hd'} (h : d 0 = d' 0) :
+private theorem occEdge_of_clause_eq {b b' : Bool} {d d' : Fin 2 → M} {hd hd'} (h : d 0 = d' 0) :
     OccEdge (⟨.occ b, d, hd⟩ : independentSetInterpretation.Model M) ⟨.occ b', d', hd'⟩ := by
   by_cases hb : b' = b
   · subst hb
@@ -272,7 +273,7 @@ theorem occEdge_of_clause_eq {b b' : Bool} {d d' : Fin 2 → M} {hd hd'} (h : d 
         · cases hj⟩
 
 /-- Occurrences of complementary literals are adjacent. -/
-theorem occEdge_of_complementary {b : Bool} {d d' : Fin 2 → M} {hd hd'} (h : d 1 = d' 1) :
+private theorem occEdge_of_complementary {b : Bool} {d d' : Fin 2 → M} {hd hd'} (h : d 1 = d' 1) :
     OccEdge (⟨.occ b, d, hd⟩ : independentSetInterpretation.Model M) ⟨.occ (!b), d', hd'⟩ :=
   ⟨_, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self),
     formula_realize_top, d', rfl, fun j i hj => by
@@ -282,7 +283,7 @@ theorem occEdge_of_complementary {b : Bool} {d d' : Fin 2 → M} {hd hd'} (h : d
 
 /-- The edges between occurrences join occurrences in the same clause or of complementary
 literals. -/
-theorem occEdge_cases {b b' : Bool} {d d' : Fin 2 → M} {hd hd'}
+private theorem occEdge_cases {b b' : Bool} {d d' : Fin 2 → M} {hd hd'}
     (h : OccEdge (⟨.occ b, d, hd⟩ : independentSetInterpretation.Model M) ⟨.occ b', d', hd'⟩) :
     d' 0 = d 0 ∨ (b' = !b ∧ d' 1 = d 1) := by
   obtain ⟨τ, hτ, -, y, hy, hc⟩ := h
@@ -298,7 +299,7 @@ theorem occEdge_cases {b b' : Bool} {d d' : Fin 2 → M} {hd hd'}
     cases eq_of_heq h
     exact .inr ⟨OccurrenceTag.occ.inj h₁, hc 1 1 rfl⟩
 
-theorem ncard_size :
+private theorem ncard_size :
     {x : independentSetInterpretation.Model M | RelMap sizedGraph.size ![x]}.ncard =
       Nat.card M := by
   rw [← Nat.card_coe_set_eq]
@@ -390,7 +391,7 @@ using Karp's occurrence graph [Karp1972]. -/
 theorem reducesNontrivial_SAT_IndependentSet :
     ReducesNontrivial SAT.{w} sizedGraph.IndependentSet.{w} :=
   .of_tagged sizedGraph.isoClosed_IndependentSet sizedGraph.copyInvariant_IndependentSet
-    independentSetInterpretation (fun M _ _ _ => ⟨sizeVertex (Classical.arbitrary M)⟩)
+    independentSetInterpretation
     fun _ _ _ => mem_independentSet_iff_satisfiable.symm
 
 end cnf
