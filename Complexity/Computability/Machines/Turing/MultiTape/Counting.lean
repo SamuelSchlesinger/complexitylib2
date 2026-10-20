@@ -225,6 +225,18 @@ inductive HaltsWithin (machine : MultiTapeCTM k Symbol State) :
         HaltsWithin machine fuel ((machine.actions cfg)[index].apply cfg)) :
       HaltsWithin machine (fuel + 1) cfg
 
+/-- Enlarging a sufficient clock does not add transitions after a branch halts. -/
+theorem HaltsWithin.mono {machine : MultiTapeCTM k Symbol State}
+    {cfg : Cfg k Symbol State input} {fuel larger : ℕ}
+    (h : machine.HaltsWithin fuel cfg) (hle : fuel ≤ larger) :
+    machine.HaltsWithin larger cfg := by
+  induction h generalizing larger with
+  | halt halted => exact .halt halted
+  | @step fuel cfg nonempty next ih =>
+    obtain ⟨rest, rfl⟩ := Nat.exists_eq_add_of_le hle
+    rw [show fuel + 1 + rest = (fuel + rest) + 1 by lia]
+    exact .step nonempty (fun index => ih index (Nat.le_add_right fuel rest))
+
 /-- A successful replay cannot pass the all-branches halting bound. -/
 theorem HaltsWithin.length_le {machine : MultiTapeCTM k Symbol State}
     {cfg final : Cfg k Symbol State input} {fuel : ℕ} (h : machine.HaltsWithin fuel cfg)

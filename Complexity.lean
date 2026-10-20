@@ -487,6 +487,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Characterizatio
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
+public import Complexity.Computability.Complexity.Classes.SharpP.GapMachine
 public import Complexity.Computability.Complexity.Classes.SharpP.Machine
 public import Complexity.Computability.Complexity.Classes.SharpP.Oracle
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
@@ -694,6 +695,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Spac
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Alternative
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Certificate
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Checker
@@ -705,6 +707,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Guess
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.OutputPrefix
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Sequential
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Verdict
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Verifier
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic

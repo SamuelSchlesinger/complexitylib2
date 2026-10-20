@@ -55,6 +55,7 @@ import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
 import ComplexityTests.CountingComposition
 import ComplexityTests.CountingExecution
+import ComplexityTests.CountingGapMachine
 import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine
 import ComplexityTests.CountingOracleEquivalence
