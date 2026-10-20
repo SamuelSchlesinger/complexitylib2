@@ -1746,3 +1746,29 @@ input or the end-to-end element-distinctness corollary as complete; these remain
 #81. Coordinator `fusion_barrier` independently reviewed the exact source and tests, then the
 draft prose and four anchors, without findings. Final revision/PDF approval is recorded in the
 PR review rather than implied to be human editorial approval.
+
+
+## 2026-10-20: Charged WordRAM bridge and element distinctness
+
+Worker `wordram-bridge-20261020`, assisted by OpenAI Codex, composed the actual input preparer
+from worker `ram-input-preparation-20261020` with the fixed additive-memory compiler. Source and
+boundary tests at `aec70b38fb3158a09850dc3640fba31e8e312f1e` pass all six project checks, with
+fresh MCP diagnostics clean. Independent coordinator `ram-preparation-review-20261020`
+approved that exact revision for API, correctness, nonvacuity, cost composition and tests without
+findings in issue #81, comment 6300618074. The preparation dependency preserves its original
+source commit `890862e155a0c9f87bb98eb8548bd42e19a83ef9` and final PR #87 integration.
+
+The compiler index entry now includes the charged preparation bound with its explicit constant;
+one new entry states the fixed-program logarithmic-cost element-distinctness bound of
+`2735 * (n + 1) * (Nat.log 2 (n + 1) + 1)`, with the `2448` padded-input variant. Both entries
+retain the uncharged external input convention, successful-run and bounded-universe scope, and
+absence of a Turing-machine or unrestricted encoding claim. Cook--Reckhow, direct addressing,
+the local RAM and lean-trominoes provenance are retained in source, citations and PR text.
+
+All eight declaration anchors were checked against their pinned commits. The index has 131
+entries; `latexmk` builds a 65-page PDF without undefined citations or overfull boxes. Rendered
+pages 1, 50 and 51 were inspected. Coordinator `coordinator-ops-20261020` reviewed the changed
+entries against the source, requested wording that distinguishes a compiled program from
+runtime compilation, and that wording was corrected before publication. Final exact-document
+approval is recorded in the PR; AI review is not human editorial approval or a Lean proof of
+prose equivalence.

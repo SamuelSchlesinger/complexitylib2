@@ -57,6 +57,7 @@ import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
+import ComplexityTests.ElementDistinctnessRAM
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy

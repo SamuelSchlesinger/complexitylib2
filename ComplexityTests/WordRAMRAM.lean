@@ -4,14 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.WordRAM.RAM
+import Complexity.Computability.WordRAM.RAMInput
 
 /-!
 # Word-RAM to RAM compiler boundary clients
 
 Exercise source-register aliasing on indirect accesses, all equality and strict-order outcomes,
 explicit halting with zero, and the length information lost by bare RAM input lists. These are
-clients of the executable compiler and its proved padded-input logarithmic-cost bound.
+clients of the executable compiler and its proved padded and prepared input cost bounds.
 -/
 
 namespace ComplexityTests.WordRAMRAM
@@ -65,6 +65,19 @@ example : RAM.HaltsWithResultInTime RAM.logCost (ToRAM.paddedProgram [.halt (0 :
       (input := []) (w := 0) (v := 0) (n := 1) (by decide)
       (Executes.of_run (fuel := 1) (by decide))
 
+/-- Charged preparation also works at width zero, despite its natural-number scratch values. -/
+example : RAM.HaltsWithResultInTime RAM.logCost (ToRAM.preparedProgram [.halt (0 : Fin 1)])
+    (RAM.Input.encode 5 []) 0 (212 * 2) :=
+  ToRAM.haltsWithResultInTime_prepared (p := [.halt (0 : Fin 1)]) (by decide)
+    (input := []) (w := 0) (v := 0) (n := 1) (by decide)
+    (Executes.of_run (fuel := 1) (by decide))
+
+/-- The uniform charged bound handles an indirect load after overlapping input relocation. -/
+example : RAM.HaltsWithResultInTime RAM.logCost (ToRAM.preparedProgram selfLoad)
+    (RAM.Input.encode 5 [7]) 7 (212 * 5 * 4) :=
+  ToRAM.haltsWithResultInTime_prepared (by decide) (w := 3) (by decide)
+    (Executes.of_run (fuel := 5) (by decide))
+
 /-- The forward theorem intentionally does not reflect source faults. -/
 example : run 1 [.op (.const (0 : Fin 1) 2), .halt 0] 4 (.init []) = none ∧
     targetResult [.op (.const (0 : Fin 1) 2), .halt 0] [] = (2, true) := by decide
@@ -99,5 +112,12 @@ info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded
+
+/--
+info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared
 
 end ComplexityTests.WordRAMRAM
