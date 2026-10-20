@@ -45,59 +45,59 @@ public section
 namespace Cslib.WordRAM
 
 /-- A statement of a structured word-RAM program. -/
-declare_syntax_cat wram_stmt
+declare_syntax_cat wramStmt
 
 /-- A block of statements, separated by semicolons. -/
-syntax wram_block := "[" sepBy1(wram_stmt, "; ") "]"
+syntax wramBlock := "[" sepBy1(wramStmt, "; ") "]"
 
 /-- A structured word-RAM program, written as a block of statements. -/
-scoped syntax "ram" wram_block : term
+scoped syntax "ram" wramBlock : term
 
 /-- Internal: a single statement, as a structured program. -/
-scoped syntax "ram_stmt%" wram_stmt : term
+scoped syntax "ram_stmt%" wramStmt : term
 
 /-- Set a register to a constant. -/
-syntax ident " ← " "#" term:max : wram_stmt
+syntax ident " ← " "#" term:max : wramStmt
 /-- Copy a register. -/
-syntax ident " ← " ident : wram_stmt
+syntax ident " ← " ident : wramStmt
 /-- Addition. -/
-syntax ident " ← " ident " + " ident : wram_stmt
+syntax ident " ← " ident " + " ident : wramStmt
 /-- Truncated subtraction. -/
-syntax ident " ← " ident " - " ident : wram_stmt
+syntax ident " ← " ident " - " ident : wramStmt
 /-- Multiplication. -/
-syntax ident " ← " ident " * " ident : wram_stmt
+syntax ident " ← " ident " * " ident : wramStmt
 /-- Division. -/
-syntax ident " ← " ident " / " ident : wram_stmt
+syntax ident " ← " ident " / " ident : wramStmt
 /-- Remainder. -/
-syntax ident " ← " ident " % " ident : wram_stmt
+syntax ident " ← " ident " % " ident : wramStmt
 /-- Bitwise and. -/
-syntax ident " ← " ident " &&& " ident : wram_stmt
+syntax ident " ← " ident " &&& " ident : wramStmt
 /-- Bitwise or. -/
-syntax ident " ← " ident " ||| " ident : wram_stmt
+syntax ident " ← " ident " ||| " ident : wramStmt
 /-- Bitwise exclusive or. -/
-syntax ident " ← " ident " ^^^ " ident : wram_stmt
+syntax ident " ← " ident " ^^^ " ident : wramStmt
 /-- Shift left. -/
-syntax ident " ← " ident " <<< " ident : wram_stmt
+syntax ident " ← " ident " <<< " ident : wramStmt
 /-- Shift right. -/
-syntax ident " ← " ident " >>> " ident : wram_stmt
+syntax ident " ← " ident " >>> " ident : wramStmt
 /-- Load from the memory cell whose address is in a register. -/
-syntax ident " ← " "*" ident : wram_stmt
+syntax ident " ← " "*" ident : wramStmt
 /-- Store to the memory cell whose address is in a register. -/
-syntax "*" ident " ← " ident : wram_stmt
+syntax "*" ident " ← " ident : wramStmt
 /-- A conditional on the equality of two registers. -/
-syntax "if " ident " = " ident " then " wram_block " else " wram_block : wram_stmt
+syntax "if " ident " = " ident " then " wramBlock " else " wramBlock : wramStmt
 /-- A conditional on the comparison of two registers. -/
-syntax "if " ident " < " ident " then " wram_block " else " wram_block : wram_stmt
+syntax "if " ident " < " ident " then " wramBlock " else " wramBlock : wramStmt
 /-- A loop while two registers are equal. -/
-syntax "while " ident " = " ident " do " wram_block : wram_stmt
+syntax "while " ident " = " ident " do " wramBlock : wramStmt
 /-- A loop while one register is smaller than another. -/
-syntax "while " ident " < " ident " do " wram_block : wram_stmt
+syntax "while " ident " < " ident " do " wramBlock : wramStmt
 /-- A structured program given as a term. -/
-syntax "⟪" term "⟫" : wram_stmt
+syntax "⟪" term "⟫" : wramStmt
 
 macro_rules
-  | `(ram [ $s:wram_stmt ]) => `(ram_stmt% $s)
-  | `(ram [ $s:wram_stmt; $ss;* ]) => `(Cslib.WordRAM.Code.seq (ram_stmt% $s) (ram [ $ss;* ]))
+  | `(ram [ $s:wramStmt ]) => `(ram_stmt% $s)
+  | `(ram [ $s:wramStmt; $ss;* ]) => `(Cslib.WordRAM.Code.seq (ram_stmt% $s) (ram [ $ss;* ]))
 
 macro_rules
   | `(ram_stmt% $d:ident ← #$v) => `(Cslib.WordRAM.Code.op (.const $d $v))
@@ -124,13 +124,13 @@ macro_rules
     `(Cslib.WordRAM.Code.op (.bin .shiftRight $d $i $j))
   | `(ram_stmt% $d:ident ← *$a:ident) => `(Cslib.WordRAM.Code.op (.load $d $a))
   | `(ram_stmt% *$a:ident ← $s:ident) => `(Cslib.WordRAM.Code.op (.store $a $s))
-  | `(ram_stmt% if $i:ident = $j:ident then $p:wram_block else $n:wram_block) =>
+  | `(ram_stmt% if $i:ident = $j:ident then $p:wramBlock else $n:wramBlock) =>
     `(Cslib.WordRAM.Code.branch (.eq $i $j) (ram $p) (ram $n))
-  | `(ram_stmt% if $i:ident < $j:ident then $p:wram_block else $n:wram_block) =>
+  | `(ram_stmt% if $i:ident < $j:ident then $p:wramBlock else $n:wramBlock) =>
     `(Cslib.WordRAM.Code.branch (.lt $i $j) (ram $p) (ram $n))
-  | `(ram_stmt% while $i:ident = $j:ident do $b:wram_block) =>
+  | `(ram_stmt% while $i:ident = $j:ident do $b:wramBlock) =>
     `(Cslib.WordRAM.Code.loop (.eq $i $j) (ram $b))
-  | `(ram_stmt% while $i:ident < $j:ident do $b:wram_block) =>
+  | `(ram_stmt% while $i:ident < $j:ident do $b:wramBlock) =>
     `(Cslib.WordRAM.Code.loop (.lt $i $j) (ram $b))
   | `(ram_stmt% ⟪$c⟫) => `(($c : Cslib.WordRAM.Code _))
 
