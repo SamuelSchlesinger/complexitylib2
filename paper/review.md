@@ -1514,3 +1514,114 @@ approved revision. All six preparation gates pass on the new pin. The local inde
 125 entries; the new PLUS entry on page 8 was rendered and inspected, with no undefined
 citations or overfull boxes in the final LaTeX log. Final combined counting-stack integration,
 entry-count reconciliation and exact-head PDF review remain pending before publication.
+
+## 2026-10-20: Uniform bounded Boolean closure of wide-gap classes
+
+Worker `bounded-wide-gap-20261020` adds a separate curated entry for source revision
+`b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5`. It states bounded conjunction and disjunction
+closure of WPP and LWPP for a single jointly uniform language on instances and unary indices,
+with a polynomial-time unary input-dependent bound. The LWPP target family contains every
+prefix product through a fixed length-polynomial bound; it therefore normalizes counts that
+vary between inputs of the same length. Empty ranges, signed targets, the verifier model and
+remaining adaptive-oracle/lowness boundaries are explicit. The mathematical construction is
+credited as a deduction from Fenner–Fortnow–Kurtz counting algebra and the polynomial-family
+robustness of Edith Hemaspaandra, Lane A. Hemaspaandra, Holger Spakowski and Osamu Watanabe.
+
+All six source validation gates pass and source/tests have clean MCP diagnostics. Nonconstant
+indexed-bit clients use a negative length-only target, different counts on equal-length inputs,
+growing bounds, differing prefix signs/magnitudes and empty ranges. Four headline axiom guards
+admit only `propext`, `Classical.choice` and `Quot.sound`. The four declaration links are pinned
+to the source revision, lines 70, 96, 106 and 138.
+
+Independent coordinator `fusion-quadratic` approved exact-source API/correctness/tests and the
+draft index with no findings in PR #60, comment 6297275055. Final combined-head/PDF inspection
+and CI are tracked in that PR. The added entry brings the current 124-entry stack to 125.
+AI assistance: OpenAI Codex. AI review does not imply human editorial approval or a Lean proof
+of prose equivalence.
+
+Final PR #60 integration includes PR #57 and the independently approved successor head
+`dfd28a29b4e779a944e96fe7107abd9589f574b2`. The bounded-closure source and tests remain
+byte-identical to `b0490b92`. All six gates pass on the combined tree. The rebuilt PDF's new
+entry on page 27 was rendered and inspected; the four pinned declaration links were verified,
+the final LaTeX log has no undefined citations or overfull boxes, and the count is 125.
+Independent coordinator `fusion-quadratic` inspected this final rendering and the explicit
+fixed-polynomial wording with no findings; exact-head approval is tracked in the PR.
+
+### Bounded-closure integration with the refreshed dependency stack
+
+PR #60 integrates independently approved PR #59 head
+`17ae942e0737495057544f6d74a8f695a85ad72b`, including the current cslib pin
+`b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`. Its bounded-closure source and tests remain
+byte-identical to `b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5`; the four pinned links and
+entry prose are unchanged. Both review histories and the dependency's documentation corrections
+are preserved. All six combined gates pass. The rebuilt PDF retains 125 entries, with no final-log
+undefined citations or overfull boxes. Page 27 was rendered and inspected by the author and
+independent coordinator `fusion-quadratic`, who found no scope or layout issues. Final exact-head
+integration approval is recorded in PR #60. This refresh introduces no new theorem scope.
+
+## Relativized counting and majority verifiers (PR #61, 20 October 2026)
+
+Worker `relativized-counting-20261020` adds #P^A, GapP^A and PP^A using the existing strict
+oracle-program certificate and fixed polynomial-length Boolean witnesses. Source revision
+`21c83869180e7e9238477d021280352addf96e30` passes all six prescribed checks. Independent
+coordinator `/root/fusion_graph` read both new class modules, the oracle-result product rule,
+the tests and the underlying resource/counting contracts, obtained fresh clean MCP diagnostics,
+and approved the exact source/API/correctness revision with no findings.
+
+The positive-gap characterization pads certificates of lengths p and q with false tails to p+q,
+then uses one selector bit; zero lengths and exact ties are covered. Ignoring the oracle gives
+ordinary inclusions; the existing certified simulation eliminates P-decidable oracles. Clients
+use genuine membership queries, zero-width witnesses, positive/negative gaps, exact width-one
+ties, a zero gap with p=q=0, and empty/nonempty P oracles. Named axiom guards use only the three
+permitted axioms.
+
+The new index entry records the fixed program, arbitrary-stateful-oracle resource certificate,
+correctness against the stateless language oracle, exact witness accounting, strict threshold,
+and the verifier/machine-equivalence and lowness boundaries. Seven declaration anchors are
+pinned to the source revision above. Mathematical credit is given to Fenner--Fortnow--Kurtz,
+Fortnow (Lemma 3.6 and Classification 4.3), and Arora--Barak Section 3.4. The same independent
+coordinator approved the draft index with no findings and verified all seven pinned anchors
+(review comment 6297302134 in PR #61). Final PDF and integration evidence are recorded there. AI assistance: OpenAI Codex; independent AI review
+does not imply human editorial approval or machine-checked prose equivalence.
+
+The first PR #61 combined integration incorporates reviewed PR #60 head `bc424325` and
+its PR #59/#57 predecessors without changing source or tests at `21c83869`. All six combined
+gates pass. The actual curated entry count is126; the rebuilt PDF has no undefined citations
+or overfull boxes. Rendered pages22 (relativized counting),28 (bounded wide-gap closure) and9
+(tuple successor) were inspected; `/root/fusion_graph` independently inspected page22 with no
+findings. This completed revision is preserved locally while the coordinator refreshes the
+stack against the subsequently landed upstream synchronization; final publication will use
+that refreshed base and receive a fresh integration review.
+
+### Relativized-counting integration with the refreshed dependency stack
+
+PR #61 integrates independently approved PR #60 revision
+`c46186f7ca68ae941c86b1d8b0a5f9d20bb5c135` and its PR #59/#57 predecessors, including
+cslib pin `b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`. Its two class modules, oracle product
+helper and tests remain byte-identical to source `21c83869180e7e9238477d021280352addf96e30`.
+The entry prose and seven pinned declaration anchors are unchanged. All 125 predecessor entries
+and their review histories are preserved; the combined count is 126. All six combined gates pass,
+fresh MCP diagnostics for all four source/test files are clean, and the documentation configuration
+check passes. The rebuilt PDF has no undefined citations or overfull boxes. Pages 22, 28 and 9
+were rendered and inspected; independent coordinator `fusion_graph` inspected the new page 22
+with no scope or layout findings. Final exact-head integration review is recorded in PR #61.
+This dependency refresh introduces no new theorem scope.
+
+## 2026-10-20: Final canonical-addition integration
+
+Worker `ordered-addition-20261020` integrated independently approved Boolean-hierarchy revision
+`7555a6120e593cc17369e019180a6e43f3ff0427`, including the merged successor, bounded-closure,
+oracle-counting and cleanup milestones. The addition source and tests are byte-identical to
+`49531f8754cc310d21216bc7e5a0da33499036b0`; no theorem statement or proof changed. Both review
+histories and all predecessor index entries are preserved. The combined index contains 127
+entries. Both addition declaration links were checked against their pinned source lines.
+
+The PDF was rebuilt and pages 9 (PLUS), 4 (Boolean hierarchy), 23 (oracle counting) and 29
+(bounded closure) were rendered and inspected. The final LaTeX log has no undefined references
+or overfull boxes. Independent coordinator `fusion_quadratic` checked source/test identity,
+predecessor prose preservation, the exact PLUS scope, links and all four rendered pages without
+findings. Fresh MCP diagnostics for the source and tests are clean. Final validation and exact
+revision approval are recorded in PR #66; this AI review does not imply human editorial approval.
+All six combined validation gates passed in
+`.worktrees/ops-coordinator-logs/ordered-addition-final-check.log`; the only subsequent edit
+records this validation evidence.

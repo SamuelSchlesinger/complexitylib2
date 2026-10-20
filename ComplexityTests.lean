@@ -241,6 +241,7 @@ import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
+import ComplexityTests.RelativizedCounting
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
 import ComplexityTests.ResourceClasses3
@@ -280,6 +281,7 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
+import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
