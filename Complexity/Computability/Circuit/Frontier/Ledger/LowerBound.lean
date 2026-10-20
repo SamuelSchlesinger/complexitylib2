@@ -32,7 +32,8 @@ OR, parity, or counts modulo a fixed `m`, have a ledger with `log |M| = k log |T
 (`Cslib.Circuits.Frontier.Ledger.ofAggregates`), so `k = o(n)` such gates are allowed
 (`eventually_lt_mul_card_of_aggregates`). With the layout hypothesis of coefficient one
 (`Cslib.Circuits.Frontier.layoutBound_one`) the bounds are unconditional:
-`(r - 1) s > (2 - ε) n` (`Complexity.Computability.Circuit.Frontier.Ledger.Unconditional`).
+`(r - 1) s > (2 - ε) n` (the module
+`Complexity.Computability.Circuit.Frontier.Ledger.Unconditional`).
 
 **Proof.** Erase the special gates and lay out the live network (the graph of the erased program
 with every live wire as an output), one connected component after another

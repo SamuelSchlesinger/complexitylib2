@@ -8,7 +8,8 @@ Usage:
 For each module the script
   * locates `Complexity/<Path>.lean` and the mirrored destination `<cslib>/Cslib/<Path>.lean`,
   * rewrites `import Complexity.` / `public import Complexity.` to the `Cslib.` prefix,
-    mapping `Complexity.Init` to `Cslib.Init`,
+    mapping `Complexity.Init` to `Cslib.Init`, and likewise backticked module names
+    (`` `Complexity.Foo.Bar` `` naming an existing module) in comments and docstrings,
   * drops the `-- upstream:` marker line,
   * refuses to continue if the module imports a local module whose marker is not
     `merged`/`submitted` (those must be upstreamed first, in the same stack),
@@ -31,6 +32,7 @@ UPSTREAM_LIB = "Cslib"
 IMPORT_RE = re.compile(r"^(?P<prefix>\s*(?:public\s+)?import\s+(?:all\s+)?)Complexity(?P<rest>\.\S+|)\s*$")
 MARKER_RE = re.compile(r"^--\s*upstream:\s*(?P<status>.*?)\s*$")
 TITLE_RE = re.compile(r"^#\s+(?P<title>.+?)\s*$")
+MODULE_REF_RE = re.compile(r"`Complexity(?P<rest>(?:\.[A-Z][A-Za-z0-9_']*)+)`")
 
 
 def module_to_path(module: str) -> pathlib.Path:
@@ -46,6 +48,14 @@ def marker_of(path: pathlib.Path) -> str | None:
         if m:
             return m.group("status")
     return None
+
+
+def rewrite_module_ref(m: re.Match[str]) -> str:
+    """Rewrite a backticked reference to an existing local module to its upstream name."""
+    rest = m.group("rest")
+    if ROOT.joinpath(LIB, *rest[1:].split(".")).with_suffix(".lean").exists():
+        return f"`{UPSTREAM_LIB}{rest}`"
+    return m.group(0)
 
 
 def rewrite(module: str, text: str) -> tuple[str, list[str], str | None]:
@@ -70,7 +80,7 @@ def rewrite(module: str, text: str) -> tuple[str, list[str], str | None]:
                 title = t.group("title")
         if in_doc and line.rstrip().endswith("-/"):
             in_doc = False
-        out.append(line)
+        out.append(MODULE_REF_RE.sub(rewrite_module_ref, line))
     return "\n".join(out) + "\n", local_imports, title
 
 

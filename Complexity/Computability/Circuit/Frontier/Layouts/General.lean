@@ -23,7 +23,8 @@ A connected multigraph has a spanning tree, obtained from one of its underlying 
 (`exists_spanningTree`). Laying out the spanning tree and putting back the `β₁` edges outside it
 costs at most `β₁` edges at each frontier (`exists_width_le_cycleRank_add`). So every fixed
 maximum degree has layout coefficient one (`layoutBound_one`), which yields unconditional
-circuit lower bounds for every fan-in (`Complexity.Computability.Circuit.Frontier.Unconditional`).
+circuit lower bounds for every fan-in (the module
+`Complexity.Computability.Circuit.Frontier.Unconditional`).
 
 ## Main definitions
 

@@ -955,5 +955,15 @@ starts or an `open … in` line to their theorem lines, after all 419 links were
 cuts agree; `72747d26` removes an unwarranted "sharp" in Nechiporuk's lemma and a stale FIXME.
 
 All six gates passed on `1c295e0f`. The PDF builds without undefined references; the changed
-pages were rendered and inspected. These are AI reviews, not human editorial approval or a
+pages were rendered and inspected.
+
+Follow-up rounds: an independent delta review of `6c90880b..a52ff443` approved with nits (all
+addressed in `a2d52d3f`: a `toSimpleGraph_eq` bridge and `edgeSet_toSimpleGraph`, an
+`UPSTREAM.md` bullet on the two multigraph namespaces, a test of deprecated field notation with an
+explicit argument, the scope of cslib's `Shannon.lt_complexity`, the Jukna citation in the index).
+A scan resolving every backticked declaration name against the built environment led to `8ece142a`,
+which fixes docstring references naming no declaration. The final delta review of
+`a52ff443..a2d52d3f` approved; following its suggestions, module paths cited in docstrings say
+"the module", and `scripts/upstream.py` now also rewrites backticked references to existing local
+modules from `Complexity.` to `Cslib.`, so such docstrings stay correct when upstreamed. These are AI reviews, not human editorial approval or a
 machine-checked equivalence between prose and Lean. AI assistance: Jetski (Gemini).
