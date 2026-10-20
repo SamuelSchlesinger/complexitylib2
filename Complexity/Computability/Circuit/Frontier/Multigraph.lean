@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Foundations.Combinatorics.Multigraph
 public import Mathlib.Combinatorics.Graph.Connected.EdgeCut
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
@@ -23,7 +24,12 @@ A `Multigraph V E` gives every edge two endpoints. Parallel edges are distinct e
 and the orientation of an edge plays no role: incidence, cuts and connectivity depend only on
 the unordered pair `G.ends e`. A multigraph is the spanning case of Mathlib's `Graph V E`
 (`Multigraph.toGraph`), presented with the vertices and edges as types, so that layouts are
-numberings of a type and assignments of values to the edges are functions on `E`.
+numberings of a type and assignments of values to the edges are functions on `E`. Its map
+`Multigraph.ends` presents it as a multigraph given by its ends (`Cslib.Multigraph`): the two share
+the underlying simple graph by definition, and their edge cuts agree
+(`Multigraph.coe_edgeCut_ends`). Unlike `Cslib.Multigraph.incidence`, which leaves self-loops out
+for parity arguments, `Multigraph.incidenceSet` counts a self-loop at its vertex once
+(`Multigraph.coe_incidence_ends`).
 
 A *layout* numbers the vertices `v₀, v₁, ...`, and its *frontier* at time `t` is the edge cut
 between the first `t` vertices and the rest. The *width* of a layout is the size of its largest
@@ -59,6 +65,9 @@ rank of a closed set `W` is `|E(W)| + 1 - |W|`, where `E(W)` are the edges with 
 
 * `Cslib.Circuits.Frontier.Multigraph.edgeCut_toGraph`: edge cuts are those of Mathlib's
   multigraphs.
+* `Cslib.Circuits.Frontier.Multigraph.coe_edgeCut_ends`,
+  `Cslib.Circuits.Frontier.Multigraph.coe_incidence_ends`: edge cuts and incidences of the
+  multigraph given by the ends.
 * `Cslib.Circuits.Frontier.Multigraph.card_le_card_add_one_of_connected`: a connected graph has
   at least `|V| - 1` edges, so its cycle rank `|E| + 1 - |V|` involves no truncation.
 * `Cslib.Circuits.Frontier.Multigraph.edgeCut_union_of_edgeCut_eq_empty`: closed sets do not
@@ -109,9 +118,10 @@ def Loopless : Prop :=
   ∀ e, G.src e ≠ G.tgt e
 
 /-- The simple graph underlying a multigraph: two distinct vertices are adjacent when an edge
-joins them. A multigraph is connected when this simple graph is. -/
+joins them. A multigraph is connected when this simple graph is. It is the simple graph of the
+multigraph given by the ends (`Cslib.Multigraph.toSimpleGraph`). -/
 def toSimpleGraph : SimpleGraph V :=
-  SimpleGraph.fromEdgeSet (range G.ends)
+  _root_.Cslib.Multigraph.toSimpleGraph G.ends
 
 /-- The *edge cut* of a set of vertices `L`: the edges with exactly one endpoint in `L`. -/
 def edgeCut (L : Set V) : Set E :=
@@ -139,8 +149,8 @@ theorem mem_touching {L : Set V} {e : E} : e ∈ G.touching L ↔ G.src e ∈ L 
   Iff.rfl
 
 theorem toSimpleGraph_adj {u v : V} :
-    G.toSimpleGraph.Adj u v ↔ u ≠ v ∧ ∃ e, G.ends e = s(u, v) := by
-  simp [toSimpleGraph, and_comm]
+    G.toSimpleGraph.Adj u v ↔ u ≠ v ∧ ∃ e, G.ends e = s(u, v) :=
+  _root_.Cslib.Multigraph.toSimpleGraph_adj
 
 variable (G)
 
@@ -178,7 +188,8 @@ involves no truncation. -/
 theorem card_le_card_add_one_of_connected [Finite E] (h : G.toSimpleGraph.Connected) :
     Nat.card V ≤ Nat.card E + 1 := by
   refine h.card_vert_le_card_edgeSet_add_one.trans (Nat.add_le_add_right ?_ 1)
-  rw [toSimpleGraph, SimpleGraph.edgeSet_fromEdgeSet, Nat.card_coe_set_eq]
+  rw [toSimpleGraph, _root_.Cslib.Multigraph.toSimpleGraph, SimpleGraph.edgeSet_fromEdgeSet,
+    Nat.card_coe_set_eq]
   exact (ncard_le_ncard sdiff_subset (finite_range _)).trans
     ((Nat.card_coe_set_eq _).symm.trans_le (Finite.card_range_le _))
 
@@ -218,6 +229,31 @@ def toGraph : Graph V E where
   · rintro (h | h)
     · exact ⟨G.tgt e, Or.inl ⟨h, rfl⟩⟩
     · exact ⟨G.src e, Or.inr ⟨rfl, h⟩⟩
+
+/-! ### Multigraphs given by their ends -/
+
+/-- The edge cuts are those of the multigraph given by the ends. -/
+@[simp] theorem coe_edgeCut_ends [Fintype V] [Fintype E] [DecidableEq V] (S : Finset V) :
+    (_root_.Cslib.Multigraph.edgeCut G.ends S : Set E) = G.edgeCut S := by
+  ext e
+  simp only [Finset.mem_coe, _root_.Cslib.Multigraph.mem_edgeCut, Finset.mem_compl, ends,
+    Sym2.eq_iff, mem_edgeCut]
+  constructor
+  · rintro ⟨v, hv, w, hw, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩ <;> tauto
+  · intro h
+    by_cases hs : G.src e ∈ S
+    · exact ⟨_, hs, _, fun ht => h (iff_of_true hs ht), Or.inl ⟨rfl, rfl⟩⟩
+    · exact ⟨_, by tauto, _, hs, Or.inr ⟨rfl, rfl⟩⟩
+
+/-- The incidences of the multigraph given by the ends are the incident edges other than
+self-loops. -/
+theorem coe_incidence_ends [Fintype E] [DecidableEq V] (v : V) :
+    (_root_.Cslib.Multigraph.incidence G.ends v : Set E) =
+      G.incidenceSet v ∩ {e | G.src e ≠ G.tgt e} := by
+  ext e
+  simp only [Finset.mem_coe, _root_.Cslib.Multigraph.mem_incidence, ends, Sym2.mem_iff,
+    Sym2.mk_isDiag_iff, mem_inter_iff, mem_incidenceSet, mem_ofPred_eq]
+  exact and_congr_left' (or_congr eq_comm eq_comm)
 
 /-! ### Cycle rank of a set of vertices -/
 

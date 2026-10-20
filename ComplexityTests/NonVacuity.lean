@@ -546,7 +546,7 @@ is connected, loopless and of maximum degree one, and it has a layout of width a
 example : ∃ π : Layout (Fin 2),
     (⟨fun _ => 0, fun _ => 1⟩ : Multigraph (Fin 2) Unit).width π ≤ 1 := by
   set G : Multigraph (Fin 2) Unit := ⟨fun _ => 0, fun _ => 1⟩
-  have hadj : G.toSimpleGraph.Adj 0 1 := Multigraph.toSimpleGraph_adj.mpr ⟨by decide, (), rfl⟩
+  have hadj : G.toSimpleGraph.Adj 0 1 := G.toSimpleGraph_adj.mpr ⟨by decide, (), rfl⟩
   have hconn : G.toSimpleGraph.Connected := by
     refine (SimpleGraph.connected_iff_exists_forall_reachable _).mpr ⟨0, fun v => ?_⟩
     fin_cases v
