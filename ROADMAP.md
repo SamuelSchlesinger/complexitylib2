@@ -214,9 +214,18 @@ of the handover. The work below remains available for subsequent, independently 
      formula over `≤` and BIT whose semantics on every `Fin n`, `n ≥ 2`, is exact natural-number
      addition `x + y = z`. Out-of-range sums have no satisfying result; this is not modular
      addition. It formalizes the PLUS part of Immerman's Theorem 1.17(1), using the carry
-     characterization of Proposition 1.9. TIMES and the Bit Sum Lemma remain open, as do
-     arbitrary-base tuple BIT lifting and numeric-preserving composition.
-     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
+     characterization of Proposition 1.9.
+     **Canonical Bit Sum prerequisite completed (#91):**
+     [Ordered/BitSum](Complexity/Logics/FirstOrder/Ordered/BitSum.lean) defines one native
+     formula whose semantics on every `Fin n`, `n ≥ 2`, is `y = x.bitIndices.length`, with
+     exactly one output for each input. This proves Immerman's Lemma 1.18, historically due to
+     Barrington, Immerman and Straubing, using a balanced addition-tree variant of the source's
+     packed running-sum proof. Eight bounded words encode all node bits; their native decoder
+     uses exact shifts and fixed PLUS chains, with no assumed semantic certificate or variable
+     multiplication predicate. A fixed finite disjunction handles small numerals.
+     **Next milestones:** native TIMES on every canonical `Fin n`, rejecting out-of-range
+     products; arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace
+     encoding bridge; then projections and NL/P completeness. These remain open.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
@@ -301,9 +310,16 @@ of the handover. The work below remains available for subsequent, independently 
 
    - [ ] **Counting-machine characterizations.** The current
      [#P/GapP definitions](Complexity/Computability/Complexity/Classes/SharpP.lean) use verifier
-     witness counts and differences of such counts. Prove both directions of their equivalence
-     with polynomial-time NTMs counting accepting branches and accepting-minus-rejecting branches,
-     respectively. Reuse the
+     witness counts and differences of such counts. The
+     [occurrence-labelled terminal branch semantics](Complexity/Computability/Machines/Turing/MultiTape/Counting.lean)
+     and [canonical index-certificate bijection](Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean)
+     now preserve accepting and rejecting counts separately, including equal-effect choices and
+     early halting. Increasing a sufficient all-branches clock preserves the counts; the time
+     predicate explicitly excludes stuck states. This is the combinatorial prerequisite (#93),
+     not an efficient binary verifier. The next endpoint (#92) must certify the actual binary
+     checker in polynomial time with fixed finite control/alphabet and explicit certificate length.
+     Prove both directions of equivalence with polynomial-time machines counting accepting
+     branches and accepting-minus-rejecting branches, respectively. Reuse the
      [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
      but preserve exact path multiplicities through choices, halting and padding. Do not collapse
      distinct nondeterministic branches with the same successor; existential witness equivalence

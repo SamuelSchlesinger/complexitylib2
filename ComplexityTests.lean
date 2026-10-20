@@ -51,6 +51,7 @@ import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
+import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
 import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
@@ -164,6 +165,7 @@ import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedAddition
+import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTuples
