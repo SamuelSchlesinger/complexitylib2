@@ -39,6 +39,8 @@ outputs can be made available with `size * bitBlastCost w` further gates.
   binary basis.
 * `Cslib.Circuits.Synthesis.bitBlast`: the bits of every output of a circuit over the full binary
   basis.
+* `Cslib.Circuits.Synthesis.bitBlast_synthesis`: the same for a synthesis bound over the full
+  binary basis.
 -/
 
 @[expose] public section
@@ -142,6 +144,32 @@ theorem bitBlast (enc : F ≃ BitString w) {s : Set (BooleanFunction n)} {N M : 
   refine (bitBlast_program enc c.program φ hφ).mono Set.Subset.rfl ?_ le_rfl
   rintro _ ⟨⟨o, j⟩, rfl⟩
   exact ⟨(c.outputs o, j), rfl⟩
+
+/-- **Bit-blasting a synthesis bound.** If a family `Ψ` of functions of `N` field inputs is
+synthesized over the full binary basis from the input projections with `cost` gates, and the bits
+of the functions `φ i` feeding the inputs are available, then the bits of all `Ψ o (φ ·)` can be
+made available with `cost * bitBlastCost w` De Morgan gates. -/
+theorem bitBlast_synthesis (enc : F ≃ BitString w) {N : ℕ} {ι : Type*} [Fintype ι]
+    (Ψ : ι → (Fin N → F) → F) {cost : ℕ}
+    (h : Synthesis (fullInterpretation (k := 2)) (inputs N) (Set.range Ψ) cost)
+    {s : Set (BooleanFunction n)} (φ : Fin N → (Fin n → Bool) → F)
+    (hφ : ∀ i j, bitsOf enc (φ i) j ∈ s) :
+    Synthesis interpretation s
+      (Set.range fun oj : ι × Fin w => bitsOf enc (fun x => Ψ oj.1 (fun i => φ i x)) oj.2)
+      (cost * bitBlastCost w) := by
+  classical
+  let e := Fintype.equivFin ι
+  have h' : Synthesis (fullInterpretation (k := 2)) (inputs N)
+      (Set.range fun j => Ψ (e.symm j)) cost :=
+    h.mono Set.Subset.rfl (by rintro _ ⟨j, rfl⟩; exact ⟨_, rfl⟩) le_rfl
+  obtain ⟨c, hc, hsize⟩ := h'.exists_circuit_outputs
+  refine (bitBlast enc c φ hφ).mono Set.Subset.rfl ?_ (Nat.mul_le_mul_right _ hsize)
+  rintro _ ⟨⟨o, j⟩, rfl⟩
+  refine ⟨(e o, j), ?_⟩
+  funext x
+  simp only [bitsOf]
+  rw [hc (fun i => φ i x)]
+  simp only [e.symm_apply_apply]
 
 end Synthesis
 
