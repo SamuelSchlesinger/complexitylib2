@@ -195,6 +195,23 @@ theorem ecomplexityFun_le_protocol {f : X → Y → Z} (hε : 0 ≤ ε) :
     ecomplexityFun ε f ≤ Protocol.ecomplexityFun f :=
   ecomplexity_le_protocol hε
 
+/-- Precomposing the inputs does not make a function harder: the players apply `a` and `b` to
+their inputs and run a protocol for `f`. -/
+theorem ecomplexityFun_comap_le {X' Y' : Type*} (f : X → Y → Z) (a : X' → X) (b : Y' → Y) :
+    ecomplexityFun ε (fun x y => f (a x) (b y)) ≤ ecomplexityFun ε f := by
+  refine le_ecomplexity_iff.mpr fun μ hμ => ?_
+  refine (ecomplexity_le_depth (μ := μ.map (Protocol.comap a b)) fun x _ y _ => ?_).trans ?_
+  · have h := hμ (a x) trivial (b y) trivial
+    rw [errorProb] at h ⊢
+    rw [PMF.toOuterMeasure_map_apply]
+    convert h using 3
+    ext p
+    simp only [Set.mem_preimage, Set.mem_ofPred_eq, Protocol.run_comap]
+  · refine depth_le_iff.mpr fun p hp => ?_
+    obtain ⟨p', hp', rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hp
+    rw [Protocol.depth_comap]
+    exact depth_le_depth hp'
+
 end PublicCoin
 
 /-- A private-coin protocol in which Alice, holding `x : X`, also holds `a` and Bob, holding

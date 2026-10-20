@@ -15,6 +15,45 @@ hypercontractive parameter regimes.\citep{Bonami1970,ODonnell2014}
 \end{result}
 
 \begin{result}
+\subsection{The Kahn--Kalai--Linial theorem and Talagrand's inequality}
+Let $f$ be a Boolean function on a finite cube with $n\ge1$ coordinates, read as
+the sign $F=(-1)^{f}$, with influences $\mathrm{Inf}_i[F]$ (the probability that
+flipping bit $i$ changes $f$), total influence $I[F]=\sum_i\mathrm{Inf}_i[F]$, and
+variance $\mathrm{Var}[F]$, all for the uniform measure. Then some coordinate has
+\[
+\mathrm{Inf}_i[F]\ge\frac{\mathrm{Var}[F]\,\log n}{12\,n}.
+\]
+This follows from the edge-isoperimetric form: if every influence is at most
+$\delta$, then $\mathrm{Var}[F]\log(1/\delta)\le 6\,I[F]$. If every influence is
+less than one, $\mathrm{Var}[F]\le6\sum_i\mathrm{Inf}_i[F]/\log(1/\mathrm{Inf}_i[F])$
+(Talagrand), and for every $f$,
+$\mathrm{Var}[F]\le7\sum_i\mathrm{Inf}_i[F]/(1+\log(1/\mathrm{Inf}_i[F]))$; terms with
+$\mathrm{Inf}_i[F]=0$ contribute $0$. Logarithms are natural; constants are those of the
+formal proof, not optimized. The proof applies the library's $(4/3,2)$-hypercontractive
+inequality to the derivatives $D_iF$.\citep{KahnKalaiLinial1988,Talagrand1994,ODonnell2014}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{310}{Cslib.BitString.exists_expect_sub_expect_sq_mul_log_card_div_le_influence}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{294}{Cslib.BitString.expect_sub_expect_sq_mul_log_inv_le_six_mul_totalInfluence}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{371}{Cslib.BitString.expect_sub_expect_sq_le_six_mul_sum_influence_div_log}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean}{390}{Cslib.BitString.expect_sub_expect_sq_le_seven_mul_sum_influence_div_one_add_log}
+\end{result}
+
+\begin{result}
+\subsection{Friedgut's junta theorem}
+Let $f$ be a Boolean function on a finite cube whose sign $F=(-1)^f$ has total
+influence $I[F]\le K$, and let $\varepsilon>0$. Then there are a set $J$ of at most
+$\frac{4K^3}{9\varepsilon^2}\,81^{K/\varepsilon}$ coordinates and a Boolean function
+$g$ depending only on the coordinates in $J$ with $\Pr_x[f(x)\ne g(x)]\le\varepsilon$;
+for $0<\varepsilon\le1$ one may take $|J|\le3\cdot2^{8K/\varepsilon}$. In the proof, $J$ is
+the set of coordinates of influence above an explicit threshold and $g$ is the sign of
+the average of $F$ over the other coordinates. The low-degree part of O'Donnell's
+spectral concentration statement (sets of size at most $I[F]/\varepsilon$) is not
+formalized.\citep{Friedgut1998,ODonnell2014}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/FriedgutJunta.lean}{217}{Cslib.BitString.exists_dependsOn_hammingDist_div_le_of_totalInfluence_le}
+\declat{f355a73f091795556fe6a70dc419d568d3a24df9}{Complexity/Foundations/BooleanAnalysis/FriedgutJunta.lean}{285}{Cslib.BitString.exists_card_le_three_mul_two_rpow_dependsOn_hammingDist_div_le}
+\end{result}
+
+
+\begin{result}
 \subsection{Expander-walk hitting bound}
 Let a finite undirected regular graph be represented by a rotation map with
 nonempty vertex and port sets, and let $\lambda$ be its nonconstant spectral
@@ -50,12 +89,63 @@ the sum of absolute Fourier coefficients is at most $L\le2^d$.
 For a Boolean readout, written as signs, each coefficient is an integer multiple
 of $2^{-\max(d-1,0)}$, and at most $L\,2^{\max(d-1,0)}$ coefficients are nonzero.
 Repeated queries and unreachable branches are allowed; structural size only
-weakens these upper bounds. This is a spectral statement, not a formalized
-learning algorithm.\citep{KushilevitzMansour1993,ODonnell2014}
+weakens these upper bounds. The Kushilevitz--Mansour entry below uses the
+spectral bound to learn decision trees.\citep{KushilevitzMansour1993,ODonnell2014}
 \decl{Complexity/Computability/DecisionTree/SpectralNorm.lean}{72}{Cslib.DecisionTree.sum_abs_fourierCoeff_le_leafCount}
 \decl{Complexity/Computability/DecisionTree/Granularity.lean}{84}{Cslib.DecisionTree.exists_fourierCoeff_signVal_eq_intCast_div_two_pow_depth_sub_one}
 \decl{Complexity/Computability/DecisionTree/SpectralNorm.lean}{113}{Cslib.DecisionTree.card_filter_fourierCoeff_signVal_ne_zero_le}
 \end{result}
+
+\begin{result}
+\subsection{The Linial--Mansour--Nisan low-degree learning algorithm}
+A deterministic learner receives $m$ labelled examples $(x_j,f(x_j))$ at independent uniform
+points of $\{0,1\}^n$; its error is $\Pr_x[h(x)\ne f(x)]$. Let
+$N=\#\{S\subseteq[n]:|S|\le t\}\le(n+1)^t$. The low-degree algorithm estimates each $\hat f(S)$,
+$|S|\le t$, empirically and outputs the sign of the truncated expansion. If
+$\varepsilon,\delta>0$, every target has Fourier weight at most $\varepsilon/2$ above degree $t$,
+and $m\ge\frac{4N}{\varepsilon}\ln\frac{2N}{\delta}$, then the hypothesis has error at most
+$\varepsilon$ with probability at least $1-\delta$; for $\varepsilon,\delta\in(0,1)$ such a learner is
+a PAC learner, in CSLib's sense, over the uniform realizable family. For circuits of NOT and
+unbounded fan-in AND/OR gates of depth at most $d$ (every gate counted, negations included) with
+at most $g$ gates, the degree $t=2\max(8,2s)(16s+1)^d-1$,
+$s=\max(2,\lceil\log_2\lceil4g/\varepsilon\rceil\rceil)$, i.e.\ $t=O(\log(g/\varepsilon))^{d+1}$,
+suffices. For a circuit with negations only at the inputs and standard AND/OR depth $d'$, this
+depth is at most $d'+1$ (an informal conversion). The exponent $d+1$ is weaker than LMN's $d$ and
+than the sharper $O(\log(g/\varepsilon))^{d-1}\cdot\log(1/\varepsilon)$. Only the number of examples
+is certified; the $O(Nmt)$ arithmetic cost is not machine-certified, and the quasi-polynomial
+reading for $g=\mathrm{poly}(n)$ is not formalized.
+\citep{LinialMansourNisan1993,ODonnell2014,Hoeffding1963,Valiant1984}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/LowDegree.lean}{247}{Cslib.MachineLearning.UniformLearning.lowDegreeLearner_learns}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/Basic.lean}{173}{Cslib.MachineLearning.UniformLearning.Learns.isPACLearnerFor}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/AC0.lean}{113}{Cslib.MachineLearning.UniformLearning.lowDegreeLearner_learns_lmnDegree}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/Computability/Circuit/Boolean/LMN.lean}{226}{Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes_of_depth_le}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/Foundations/BooleanAnalysis/SignApproximation.lean}{127}{Cslib.BitString.hammingDist_signRound_sum_mul_chi_div_le}
+\end{result}
+
+\begin{result}
+\subsection{The Kushilevitz--Mansour algorithm with membership queries}
+A membership-query learner is, for each random seed, a decision tree whose variables are the
+points of $\{0,1\}^n$; its query count is the tree depth. The Kushilevitz--Mansour algorithm
+estimates the bucket weights $\sum_{U\cap J=S}\hat f(U)^2$ (O'Donnell's $\mathbf W^{S\mid\bar J}$),
+which equal $\mathbb E_{x,y,z}[f(x_J,z)\chi_S(x)f(y_J,z)\chi_S(y)]$, from $m$ shared samples and
+runs the Goldreich--Levin bucket search with threshold $\theta^2/2$, $\theta=\varepsilon/(2L)$; on
+accurate estimates every $U$ with $|\hat f(U)|\ge\theta$ is found and at most $4/\theta^2$ buckets
+survive per level. If $\varepsilon,\delta>0$ and
+$m\ge\frac{512L^4}{\varepsilon^4}\ln\frac{2(n+2)2^n}{\delta}$, it learns every $f$ with
+$\sum_S|\hat f(S)|\le L$ to error $\varepsilon$ with probability at least $1-\delta$, using
+$m(2n+3)$ non-adaptive queries (informally, polynomially many in $n,L,1/\varepsilon,\log(1/\delta)$);
+in particular this holds for decision trees with at most $L$ leaves. Samples are shared across all
+buckets and the analysis takes a union bound over all $2^n$ buckets per level. Only the query
+count is certified; the running time of the search is not machine-certified.
+\citep{KushilevitzMansour1993,GoldreichLevin1989,ODonnell2014,Angluin1988}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{489}{Cslib.MachineLearning.UniformLearning.kmLearner_learns}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{548}{Cslib.MachineLearning.UniformLearning.kmLearner_learns_decisionTree}
+\declat{f2ede4794e40f4e72eab8f1acef768f582f8b76f}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{313}{Cslib.MachineLearning.UniformLearning.kmLearner_queriesAtMost}
+\declat{d1c9ea217a489a3116937a646547098c49915c9a}{Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean}{200}{Cslib.MachineLearning.UniformLearning.mul_card_bucketSearch_le_one}
+\declat{d1c9ea217a489a3116937a646547098c49915c9a}{Complexity/Foundations/BooleanAnalysis/BucketWeight.lean}{103}{Cslib.BitString.bucketWeight_eq_expect_sample}
+\declat{d1c9ea217a489a3116937a646547098c49915c9a}{Complexity/MachineLearning/UniformLearning/MembershipQuery.lean}{161}{Cslib.MachineLearning.UniformLearning.QueryLearner.learns_ofLearner_iff}
+\end{result}
+
 
 \begin{result}
 \subsection{A degree-dependent obstruction to perfect expansion}

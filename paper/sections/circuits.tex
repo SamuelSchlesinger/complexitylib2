@@ -71,9 +71,47 @@ s\ge2,\qquad s(16s+1)^d\le n.
 Thus the finite theorem gives an exponential lower bound at every fixed depth.
 Depth counts negations and size counts every gate. The exponent obtained is of
 order $n^{1/(d+1)}$, weaker than the sharp classical H\aa stad exponent
-$n^{1/(d-1)}$.\citep{FurstSaxeSipser1984,Ajtai1983,Hastad1986}
+$n^{1/(d-1)}$, which the next entry proves.\citep{FurstSaxeSipser1984,Ajtai1983,Hastad1986}
 \decl{Complexity/Computability/Circuit/Boolean/Hastad.lean}{367}{Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity}
 \end{result}
+
+\begin{result}
+\subsection{H\aa stad's theorem with the sharp exponent}
+Let $C$ be a circuit of negations and unbounded fan-in AND/OR gates of AND/OR depth at most $d$
+(the largest number of AND and OR gates on a path; negations are free, and constants are nullary
+AND/OR gates) computing parity on $n$ bits. Then $C$ has at least $2^s$ AND/OR gates whenever
+\[ s\ge2,\qquad 17s(16s+1)^{d-2}\le n \]
+($d-2$ truncated at $0$). Hence for $d\ge2$ it has at least $2^s$ gates whenever
+$(17s)^{d-1}\le n$, and at least $\tfrac12\,2^{n^{1/(d-1)}/17}$ gates once $n\ge34^{d-1}$.
+The first bound also holds when depth counts negations, and for formulas. With the
+Lecomte--Ramakrishnan upper bound $2^{O(n^{1/(d-1)})}+n$ already in the library, the exponent
+$1/(d-1)$ is optimal. The proof is the staged switching argument with stages indexed by AND/OR
+depth, a first stage switching $1$-DNFs (keeping a $1/17$ fraction of the variables), and no final
+stage: a DNF whose terms are shorter than the number of free variables cannot compute restricted
+parity.\citep{Hastad1986,Jukna2012,AroraBarak09,LecomteRamakrishnan2026}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/Hastad/Sharp.lean}{541}{Cslib.Circuits.Boolean.Unbounded.two_pow_le_card_andOr_of_computes_parity}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/Hastad/Sharp.lean}{551}{Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depthWith_le}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/Hastad/Sharp.lean}{561}{Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_pow_le}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/Hastad/Sharp.lean}{572}{Cslib.Circuits.Boolean.Unbounded.two_rpow_le_two_mul_size_of_computes_parity}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/Hastad/Sharp.lean}{608}{Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity_of_depth_le}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/Hastad/Sharp.lean}{617}{Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_formula_computes_parity_of_depthWith_le}
+\end{result}
+
+\begin{result}
+\subsection{Parity is not first-order definable}
+Let $L$ be a relational vocabulary with finitely many relation symbols, $P\in L$ unary, and
+$N_n$ an arbitrary $L$-structure on $\{0,\dots,n-1\}$ for each $n$ (numerical relations such as
+order or BIT, chosen separately per size). Write $N_n[P{:=}S]$ for $N_n$ with $P$ reinterpreted
+as $S$. No first-order sentence $\varphi$ of $L$ satisfies, for all large $n$ and all
+$S\subseteq\{0,\dots,n-1\}$, $N_n[P{:=}S]\models\varphi\iff|S|$ is even; that is, parity is not
+in FO[Arb]. In particular no sentence defines ``$|P|$ is even'' on all finite $L$-structures with
+at least $n_0$ elements. Constant symbols are not supported. The proof substitutes input bits
+and constants into the constant-depth polynomial-size formula deciding $\varphi$ and applies the
+random-restriction parity bound for formulas above.\citep{FurstSaxeSipser1984,Ajtai1983,Immerman1999}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/FirstOrder/Parity.lean}{274}{Cslib.Circuits.Boolean.ModelChecking.not_eventually_forall_realize_expansion_iff_even}
+\declat{fa8e00652d0d88d6792118a996e01f1031cbdc4f}{Complexity/Computability/Circuit/Boolean/FirstOrder/Parity.lean}{299}{Cslib.Circuits.Boolean.ModelChecking.not_forall_realize_iff_even_card}
+\end{result}
+
 
 \begin{result}
 \subsection{Razborov--Smolensky lower bounds}

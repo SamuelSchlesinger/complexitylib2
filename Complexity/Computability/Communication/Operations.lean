@@ -23,6 +23,12 @@ such as negation (`Protocol.ecomplexityFun_map_of_leftInverse`, `Protocol.ecompl
 of these follow from `Protocol.ecomplexityFun_le_of_forall`: a function is no harder than another if
 every protocol for the latter yields one of no greater depth for the former.
 
+Protocols can also be run one after another: `Protocol.bind` replaces each leaf of a protocol by a
+protocol chosen by its output, sending at most the bits of both (`Protocol.depth_bind_le`), and
+`Protocol.runAll` runs a tuple of protocols in turn and combines their outputs
+(`Protocol.run_runAll`, `Protocol.depth_runAll_le`). Relabelling is a special case of sequencing
+(`Protocol.map_eq_bind`).
+
 Together with the trivial protocol `Protocol.ecomplexityFun_le_succ`, in which Alice sends her `n`
 bits and Bob announces the value, this gives the other trivial upper bounds
 [Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997]: `n + 1` bits when Bob holds `n` bits
@@ -36,6 +42,8 @@ for Bob).
 
 * `Cslib.Communication.Protocol.swapPlayers`: exchanging the roles of Alice and Bob.
 * `Cslib.Communication.Protocol.map`: relabelling the outputs of a protocol.
+* `Cslib.Communication.Protocol.bind`, `Cslib.Communication.Protocol.runAll`: running protocols
+  one after another.
 
 ## Main results
 
@@ -129,6 +137,71 @@ def map (g : Z → Z') : Protocol X Y Z → Protocol X Y Z'
   induction p with
   | output z => rfl
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [map, ih₀, ih₁]
+
+/-! ### Sequencing protocols -/
+
+/-- Run `p`, then the protocol `q z` for the output `z` of `p`: each leaf of `p` labelled `z` is
+replaced by `q z`. -/
+def bind : Protocol X Y Z → (Z → Protocol X Y Z') → Protocol X Y Z'
+  | output z, q => q z
+  | alice send p₀ p₁, q => alice send (p₀.bind q) (p₁.bind q)
+  | bob send p₀ p₁, q => bob send (p₀.bind q) (p₁.bind q)
+
+/-- Sequencing outputs the value of the second protocol, chosen by the output of the first. -/
+@[simp] theorem run_bind (p : Protocol X Y Z) (q : Z → Protocol X Y Z') (x : X) (y : Y) :
+    (p.bind q).run x y = (q (p.run x y)).run x y := by
+  induction p with
+  | output z => rfl
+  | alice send p₀ p₁ ih₀ ih₁ => cases h : send x <;> simp [bind, h, ih₀, ih₁]
+  | bob send p₀ p₁ ih₀ ih₁ => cases h : send y <;> simp [bind, h, ih₀, ih₁]
+
+/-- Sequencing sends at most the bits of the first protocol and then those of the second. -/
+theorem depth_bind_le {p : Protocol X Y Z} {q : Z → Protocol X Y Z'} {d : ℕ}
+    (hq : ∀ z, (q z).depth ≤ d) : (p.bind q).depth ≤ p.depth + d := by
+  induction p with
+  | output z => simpa [bind] using hq z
+  | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ =>
+    simp only [bind, depth_alice, depth_bob]
+    omega
+
+/-- Relabelling the outputs is sequencing with protocols that only output. -/
+theorem map_eq_bind (g : Z → Z') (p : Protocol X Y Z) : p.map g = p.bind fun z => output (g z) := by
+  induction p with
+  | output z => rfl
+  | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp only [map, bind, ih₀, ih₁]
+
+/-- Run the protocols `ps 0`, …, `ps (k - 1)` one after another and output `g` of their
+outputs. -/
+def runAll : {k : ℕ} → (Fin k → Protocol X Y Z) → ((Fin k → Z) → Z') → Protocol X Y Z'
+  | 0, _, g => output (g Fin.elim0)
+  | _ + 1, ps, g => (ps 0).bind fun z => runAll (Fin.tail ps) fun v => g (Fin.cons z v)
+
+/-- Running the protocols one after another outputs `g` of their outputs. -/
+@[simp] theorem run_runAll {k : ℕ} (ps : Fin k → Protocol X Y Z) (g : (Fin k → Z) → Z') (x : X)
+    (y : Y) : (runAll ps g).run x y = g fun i => (ps i).run x y := by
+  induction k generalizing Z' with
+  | zero =>
+    simp only [runAll, run_output]
+    congr 1
+    funext i
+    exact i.elim0
+  | succ k ih =>
+    rw [runAll, run_bind, ih]
+    congr 1
+    funext i
+    induction i using Fin.cases <;> rfl
+
+/-- Running `k` protocols of depth at most `d` one after another sends at most `k d` bits. -/
+theorem depth_runAll_le {k : ℕ} {ps : Fin k → Protocol X Y Z} {g : (Fin k → Z) → Z'} {d : ℕ}
+    (hps : ∀ i, (ps i).depth ≤ d) : (runAll ps g).depth ≤ k * d := by
+  induction k generalizing Z' with
+  | zero => simp [runAll]
+  | succ k ih =>
+    rw [runAll]
+    refine (depth_bind_le fun z => ih (fun i => hps i.succ)).trans ?_
+    have := hps 0
+    rw [Nat.succ_mul]
+    omega
 
 /-! ### Communication complexity under these operations -/
 

@@ -556,3 +556,226 @@ b3aadb3e3a3e6199be6ac1452ffcc24b770062eff2db499cf6aa481d7271739b  paper/sections
 fb18b863ba3cee9dc5a0e6686d24d7f3028073cfc0ac3534980987a617e4cb77  references.bib
 cea453e9e2b3b390fa62131e49e6ac2498a8598a019b49806cf497d137bb3cd6  paper/main.pdf
 ```
+
+## Coverage batch 1: Arthur–Merlin classes and ETH lower bounds (2026-10-19)
+
+Integrated `fbd9aed2` (Arthur–Merlin milestone 1) and `b6f69ede` (ETH lower bounds for graph
+problems) into `main`, adding the entries "Arthur--Merlin classes" (`randomness.tex`) and
+"Exponential lower bounds for graph problems under ETH" (`completeness.tex`), and updating the
+SBP entry's outstanding list to SBP ⊆ AM only.
+
+Independent reviews of the exact commits, against their merge base `0c1dab07`:
+
+- Correctness review (statements, definitions against Babai 1985, Arora–Barak §8.2, Cygan et al.
+  Ch. 14 and Impagliazzo–Paturi–Zane; nonvacuity probes; axiom audits; paper drafts): APPROVE for
+  both, no blocking findings. Resolved wording findings: the ETH entry now gives a separate δ for
+  each problem and says the diamond reduction can have size up to Θ(m²).
+- API review (conventions, placement, duplication, bibliography): APPROVE for both. Non-blocking
+  placement and duplication findings (BitString helpers, private list lemmas) were returned to the
+  authors as follow-up commits.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no undefined
+references, and the two new entries were rendered and inspected. These are AI reviews, not human
+editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 2: sharp Håstad bound and parity outside FO (2026-10-19)
+
+Integrated `fa8e0065` (`ac0-sharp`), adding the entries "Håstad's theorem with the sharp
+exponent" and "Parity is not first-order definable" (`circuits.tex`), and pointing the existing
+random-restriction entry to the sharp exponent.
+
+Independent reviews of the exact commit against `0c1dab07`:
+
+- Correctness review (depth convention, constants, comparison with Hastad.lean, TopDown.lean and
+  ShallowSymmetric.lean, nondegeneracy of the FO[Arb] statement): the Lean is approved. Blocking
+  finding in the paper draft, resolved here: only the base bound, not every derived form, is
+  stated for negation-counting depth and for formulas. Also noted that constants are nullary
+  AND/OR gates.
+- API review: APPROVE; non-blocking duplication and helper-placement findings were returned to
+  the author as follow-up commits.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no undefined
+references. These are AI reviews, not human editorial approval or machine-checked equivalence of
+prose and Lean.
+
+## Coverage batch 3: counting completeness and Reingold's combinatorial core (2026-10-19)
+
+Integrated `74a300c2` (`counting-completeness`) and `cb631cc9` (`reingold` milestone 1), adding
+"Parsimonious Cook--Levin and complete counting problems" (`completeness.tex`) and "Undirected
+connectivity by short walks in Reingold's graph" (`space.tex`).
+
+Independent reviews of the exact commits against `0c1dab07`:
+
+- Correctness review: APPROVE for counting completeness (exact model counts against `acceptCount`,
+  unchanged satisfiability statements, class definitions used as-is, standard Karp completeness).
+  For Reingold the Lean is approved (the iff is not trivialized; the base expander is instantiated);
+  the paper draft's description of Reingold's eighth power and of the start vertex was corrected
+  here.
+- API review: APPROVE for both; non-blocking duplication, placement and naming findings were
+  returned to the authors as follow-up commits. Recorded API change: `CookLevin.eval_tableau`
+  gains the `uniqueClauses` conjunct.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no undefined
+references. These are AI reviews, not human editorial approval or machine-checked equivalence of
+prose and Lean.
+
+## Coverage batch 4: KKL and Friedgut, the QBF protocol, and randomized disjointness (2026-10-19)
+
+Integrated `f355a73f` (`kkl-friedgut`), `b18f4389` (`ip-pspace` milestone 1) and `aba42b50`
+(`disjointness` milestone 1), adding "The Kahn--Kalai--Linial theorem and Talagrand's inequality"
+and "Friedgut's junta theorem" (`analysis.tex`), "The algebraic protocol for quantified Boolean
+formulas" (`space.tex`) and "Randomized communication complexity of disjointness"
+(`communication.tex`).
+
+Independent reviews of the exact commits against `0c1dab07`:
+
+- Correctness review: APPROVE for all three (standard influence and variance definitions; Lean's
+  log and division conventions do not trivialize the statements; the prover model quantifies over
+  all stateful, adaptive, randomized strategies with no information leak; the corruption lemma and
+  amplification constants were recomputed). Wording findings resolved in the entries: Friedgut's
+  witness description is marked as the proof's, zero-influence terms are read as zero, round degree
+  and formula size are defined, the verifier is described as Shamir--Shen-style, and the
+  disjointness caveat now states how the distribution differs from Razborov's.
+- API review: APPROVE for all three; non-blocking duplication and placement findings were returned to
+  the authors. The fourth epic in this review batch (Tseitin) has one required fix outstanding and is
+  not integrated.
+
+Validation: all six gates passed on the integration revision; the PDF builds with no errors or
+undefined references. These are AI reviews, not human editorial approval or machine-checked
+equivalence of prose and Lean.
+
+## Coverage batch 5: one-way function consequences and Kabanets–Cai (2026-10-19)
+
+Integrated `ad94a1a8` (`owf-metacomplexity`), adding "One-way functions separate P and BPP from NP"
+and "Kabanets--Cai: MCSP in BPP rules out one-way functions" (`crypto.tex`).
+
+Independent correctness and API reviews of the exact commit against `0c1dab07`: APPROVE on both
+(library OWF, PRF, BPP and MCSP definitions untouched; the MCSP hypothesis is full membership in
+BPP; the distinguisher is a genuine oracle-PPT adversary; the circuit bound is uniform in the key;
+the advantage bound and BPP inverter were checked). Wording findings resolved in the entries: the
+threshold remark now states that the hypothesis covers all thresholds, sizes are "at most", and the
+error parameter's length L is defined. Non-blocking API findings were returned to the author.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 6: uniform learning, LMN and Kushilevitz–Mansour (2026-10-19)
+
+Integrated the `fourier-learning` branch through `f2ede479`, adding "The Linial--Mansour--Nisan
+low-degree learning algorithm" and "The Kushilevitz--Mansour algorithm with membership queries"
+(`analysis.tex`), and pointing the decision-tree spectral entry to the new learning entry.
+
+Independent reviews: milestone 1 (`52857f33`) correctness APPROVE; its API review required
+building on CSLib's `PACLearning` types, resolved in `b989a609`. Correctness and API reviews of
+`52857f33..f2ede479`: APPROVE (KM error bound, threshold and union bound recomputed; query model is
+standard membership queries; restructure leaves the low-degree statements unchanged; the bridge is
+CSLib's PAC event). Wording findings resolved in the entries: O'Donnell's bucket notation, PAC
+parameters in (0,1), and the informal polynomial reading of the query count.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 7: linear Hamiltonian reductions and ETH (2026-10-19)
+
+Integrated `bb828997` (on top of the integrated `b6f69ede`) and replaced the ETH entry in
+`completeness.tex` to cover directed and undirected Hamiltonian cycle and path.
+
+Independent correctness and API reviews of `b6f69ede..bb828997`: APPROVE on both (diamond theorem's
+side conditions are non-vacuous and match Sipser's geometry; the sparse reduction is correct in
+both directions; size bounds re-derived; the Directed.lean refactor keeps every public statement).
+Wording finding resolved in the entry: the bound (23k+1)m+1 is for the directed path graph only;
+the cycle and undirected graphs have their own linear bounds. Non-blocking API findings were
+returned to the author.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 8: Arthur–Merlin protocols, Tseitin, and cleanups (2026-10-19)
+
+Integrated `090dc682` (Arthur–Merlin milestone 2: set lower bound, SBP ⊆ AM, GNI ∈ AM,
+Boppana–Håstad–Zachos and the graph-isomorphism corollary), `38abf7bf` (Tseitin formulas are hard
+for resolution), and the reviewed cleanup ranges `fa8e0065..b4f8337a` (sharp Håstad),
+`74a300c2..8d8e8516` (counting completeness) and `f355a73f..813d8f38` (KKL and Friedgut). The
+Arthur–Merlin entry is replaced, a Tseitin entry is added to `proofs.tex`, the SBP and private-coin
+GNI entries are updated, and the counting entry gains its modular and exact counting sources.
+
+Independent reviews: Arthur–Merlin milestone 2 correctness and API APPROVE (set lower bound
+arithmetic, GNI counts and the BHZ argument checked; the all-encodings hypothesis follows from
+coNP ⊆ AM for bit-string languages); Tseitin correctness and API first required an explicit
+threshold in the headline, and the delta review approved the fix and the restructure; the three
+cleanup ranges were approved by a delta review (statements unchanged, deprecated aliases correct).
+Entry wording follows the reviewers' notes (encoding of the GI corollary, connectivity and
+unnormalized edge expansion in the Tseitin bounds).
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 9: monotone depth of bipartite matching (2026-10-19)
+
+Integrated `85a17075` (disjointness milestone 2 and milestone-1 cleanups), adding "Monotone depth of
+bipartite perfect matching" (`communication.tex`). Existing disjointness links stay pinned to
+`aba42b50`, where they resolve.
+
+Independent correctness and API reviews of `aba42b50..85a17075`: APPROVE (matching function, KW
+game, gadgets, symmetry argument and constants checked; milestone-1 headline statements unchanged
+under the renames). The entry states the bipartite scope and the intermediate reduction, as the
+reviewer suggested. Non-blocking findings were returned to the author.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 10: class collapses and counting containments (2026-10-19)
+
+Integrated `38bfe757` (`class-corollaries`), adding "SAT in BPP collapses the hierarchy"
+(`structure.tex`) and "Toda's theorem with a PP oracle", "Easy oracles and the Valiant--Vazirani
+collapse" and "FewP is in SPP" (`randomness.tex`), and pointing the bounded-ambiguity entry to the
+FewP containment.
+
+Independent correctness and API reviews of `f91c5eda`: the Lean was approved (P^PP is the standard
+class; the binary search, oracle lowness, PromiseP hypothesis and FewP gap function were checked);
+two blocking documentation findings: FewP ⊆ SPP was credited to the wrong papers and a docstring
+claimed an equality where an inclusion was proved. The delta review of `f91c5eda..38bfe757`
+approved both fixes (Köbler–Schöning–Toda–Torán 1992 verified against Crossref; the equality is now
+proved) and the non-blocking follow-ups.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 11: gap hardness, Generalized Geography, and cleanups (2026-10-19)
+
+Integrated the `gap-graphs-geography` branch through `a385efa7`, adding "Constant gaps for
+Independent Set, Clique and Vertex Cover" (`completeness.tex`) and "Generalized Geography is
+PSPACE-complete" (`space.tex`), and the reviewed cleanup ranges `bb828997..26cf1dc6` (ETH
+Hamiltonian) and `f2ede479..d1c9ea21` (learning). The two learning links whose declarations were
+renamed are repinned to `d1c9ea21`.
+
+Independent reviews of `f775b563`: correctness found the Lean correct but required citation fixes
+(Sipser 3rd ed. Theorem 8.14 for Geography; the vertex game is due to Lichtenstein–Sipser, the arc
+game to Schaefer); API approved. Delta review of `f775b563..a385efa7`: APPROVE. The two cleanup
+ranges were approved by the same delta review (statements unchanged; removed names unused).
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 12: IP = PSPACE and USTCON ∈ L (2026-10-19)
+
+Integrated `3fd63a13` (`ip-pspace` milestone 2 and fixes) and `dec8b239` (`reingold` milestone 2 and
+fixes), adding "Interactive proofs capture polynomial space" and "Undirected connectivity is in
+logarithmic space" (`space.tex`) and correcting the three sentences that said these results were not
+yet formalized.
+
+Independent reviews:
+- IP = PSPACE: correctness and API reviews of `b18f4389..53ea22c0` approved the mathematics (IP
+  definition unchanged, simulation covers every word prover, soundness constant, closedness, full
+  polynomial-time certificate) and required four mechanical fixes. The delta review of the fixes
+  approved the API and found two docstrings stating theorems without one hypothesis each; those
+  were corrected by the coordinator in the integration follow-up, with the exact wording the
+  reviewer gave, together with deprecated theorems for two removed primality lemmas.
+- USTCON ∈ L: correctness and API reviews of `cb631cc9..9d7510ce` approved (L unchanged; correctness
+  on encoded instances only, as for every problem in L; space bound O(log m) with a closed constant;
+  in-place evaluation equals the rotation map; parameters correct). The delta review of the alias and
+  docstring round approved; the coordinator replaced two deprecation hints that suggested a
+  replacement with a different meaning.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.

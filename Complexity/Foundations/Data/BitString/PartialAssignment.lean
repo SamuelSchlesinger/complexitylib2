@@ -178,6 +178,15 @@ theorem fill_update_of_ne_none (hi : ρ i ≠ none) (x : ι → Bool) (c : Bool)
     simp [fill, hb]
   · simp [fill, update_of_ne hj]
 
+/-- Changing a free coordinate changes the filled input there. -/
+theorem fill_update_of_eq_none (hi : ρ i = none) (x : ι → Bool) (c : Bool) :
+    ρ.fill (update x i c) = update (ρ.fill x) i c := by
+  funext j
+  by_cases hj : j = i
+  · subst hj
+    simp [fill, hi]
+  · simp [fill, update_of_ne hj]
+
 /-- Fix the coordinates of `S` to their values in `a`. -/
 def assign (ρ : PartialAssignment ι) (S : Finset ι) (a : ι → Bool) : PartialAssignment ι :=
   S.piecewise (fun i => some (a i)) ρ

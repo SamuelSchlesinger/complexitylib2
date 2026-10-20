@@ -17,6 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Combinatorics.Lautemann
 import Complexity.Foundations.Combinatorics.MajorityVote
+import Complexity.Foundations.Data.List.OfFn
 
 /-!
 # The Sipser–Lautemann theorem
@@ -390,22 +391,6 @@ theorem trialSeed_append {m : ℕ} {u r : List Bool} (hu : u.length = witnessLen
     Bool.add_eq_xor, listToSeed, listToShifts, BitString.block_apply, BitString.ofList,
     finProdFinEquiv_apply_val]
 
-private theorem countP_range_eq_card_filter (n : ℕ) (pred : ℕ → Bool) :
-    (List.range n).countP pred = (univ.filter fun j : Fin n => pred j.1 = true).card := by
-  rw [List.countP_eq_length_filter, ← List.toFinset_card_of_nodup (List.nodup_range.filter _)]
-  symm
-  refine Finset.card_bij (fun (j : Fin n) _ => j.1) ?_ ?_ ?_
-  · intro j hj
-    simp only [mem_filter, mem_univ, true_and, List.mem_toFinset, List.mem_filter,
-      List.mem_range] at hj ⊢
-    exact ⟨j.2, hj⟩
-  · intro j₁ _ j₂ _ h
-    exact Fin.ext h
-  · intro k hk
-    simp only [List.mem_toFinset, List.mem_filter, List.mem_range, mem_filter,
-      mem_univ, true_and] at hk ⊢
-    exact ⟨⟨k, hk.1⟩, hk.2, rfl⟩
-
 /-- On a combined certificate `u ++ r` with `u.length = witnessLen (p.eval (enc a).length)`,
 `shiftAccepts` agrees with `majorityAccepts` on the `i`-th shifted seed. -/
 theorem shiftAccepts_append_iff {enc : α ↪ List Bool} {p : Polynomial ℕ}
@@ -417,7 +402,7 @@ theorem shiftAccepts_append_iff {enc : α ↪ List Bool} {p : Polynomial ℕ}
         (listToSeed (p.eval (enc a).length) r + listToShifts (p.eval (enc a).length) u i) := by
   unfold shiftAccepts majorityAccepts
   dsimp only
-  rw [decide_eq_true_iff, countP_range_eq_card_filter]
+  rw [decide_eq_true_iff, List.countP_range_eq_card_filter]
   refine Iff.of_eq (congrArg (halfRuns (p.eval (enc a).length) < ·) (congrArg Finset.card ?_))
   ext j
   simp only [mem_filter, mem_univ, true_and, trialSeed_append hu i j]

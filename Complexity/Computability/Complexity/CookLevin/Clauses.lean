@@ -31,6 +31,7 @@ multiplicity. These certificates assemble into the complete reduction in `CookLe
 * `Cslib.Complexity.CookLevin.computableTidilyInPolyTime_initClauses`.
 * `Cslib.Complexity.CookLevin.computableTidilyInPolyTime_acceptClauses`.
 * `Cslib.Complexity.CookLevin.computableTidilyInPolyTime_sitClauses`.
+* `Cslib.Complexity.CookLevin.computableTidilyInPolyTime_uniqueClauses`.
 * `Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses`.
 * `Cslib.Complexity.CookLevin.computableTidilyInPolyTime_inputClauses`.
 * `Cslib.Complexity.CookLevin.computableTidilyInPolyTime_readClauses`.
@@ -92,6 +93,13 @@ theorem computableTidilyInPolyTime_sitClauses :
     ComputableTidilyInPolyTime (sitClauses (k := k) (State := State)) encUnary
       (encList (encList (encPair encVar encBool))) := by
   fun_prop [sitClauses]
+
+/-- Build the uniqueness clauses at a unary time, with the finite machine data fixed. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_uniqueClauses [DecidableEq State] :
+    ComputableTidilyInPolyTime (uniqueClauses (k := k) (State := State)) encUnary
+      (encList (encList (encPair encVar encBool))) := by
+  fun_prop [uniqueClauses]
 
 /-- Build input-symbol clauses from computed input, certificate length, time and position. -/
 @[fun_prop]

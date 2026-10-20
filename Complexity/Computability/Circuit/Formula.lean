@@ -79,6 +79,8 @@ depth `⌈log₂ k⌉` above them, the usual way to replace a gate of unbounded 
 * `Cslib.Circuits.Formula.leafSize_le_pow_depth`, `Cslib.Circuits.Formula.leafSize_le`: leaf size
   under bounded fan-in.
 * `Cslib.Circuits.Formula.size_lt_pow_depth`: size under bounded fan-in.
+* `Cslib.Circuits.Formula.depth_bind_le`, `Cslib.Circuits.Formula.size_bind_le`: depth and size
+  after substitution.
 * `Cslib.Circuits.Formula.size_balanced_add_one`, `Cslib.Circuits.Formula.depthWith_balanced_le`:
   a balanced tree over `k ≥ 1` formulas adds `k - 1` nodes and `⌈log₂ k⌉` levels.
 * `Cslib.Circuits.Formula.Computes.toCircuit`, `Cslib.Circuits.Formula.size_toCircuit`,
@@ -573,6 +575,31 @@ theorem leafSize_bind_le {s : Fin n → Formula σ m} (hs : ∀ i, (s i).leafSiz
   | gate op args ih =>
     rw [gate_bind, leafSize_gate, leafSize_gate]
     exact Finset.sum_le_sum fun j _ => ih j
+
+/-- Substituting formulas of depth at most `c` for the inputs raises the depth by at most `c`. -/
+theorem depth_bind_le {s : Fin n → Formula σ m} {c : ℕ} (hs : ∀ i, (s i).depth ≤ c)
+    (F : Formula σ n) : (F.bind s).depth ≤ F.depth + c := by
+  induction F with
+  | input i => simpa using hs i
+  | gate op args ih =>
+    rw [gate_bind, depth_gate, depth_gate]
+    have : (Finset.univ.sup fun j => ((args j).bind s).depth) ≤
+        (Finset.univ.sup fun j => (args j).depth) + c :=
+      Finset.sup_le fun j _ => (ih j).trans (Nat.add_le_add_right
+        (Finset.le_sup (f := fun j => (args j).depth) (Finset.mem_univ j)) c)
+    omega
+
+/-- Substituting formulas of at most `c` operation nodes for the inputs adds at most `c` nodes for
+each leaf. -/
+theorem size_bind_le {s : Fin n → Formula σ m} {c : ℕ} (hs : ∀ i, (s i).size ≤ c)
+    (F : Formula σ n) : (F.bind s).size ≤ F.size + F.leafSize * c := by
+  induction F with
+  | input i => simpa using hs i
+  | gate op args ih =>
+    rw [gate_bind, size_gate, size_gate, leafSize_gate, Finset.sum_mul]
+    have := Finset.sum_le_sum fun j (_ : j ∈ Finset.univ) => ih j
+    rw [Finset.sum_add_distrib] at this
+    omega
 
 /-- The formula reading input `f i` where `F` reads input `i`. -/
 def rename (f : Fin n → Fin m) (F : Formula σ n) : Formula σ m :=

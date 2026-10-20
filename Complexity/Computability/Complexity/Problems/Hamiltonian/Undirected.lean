@@ -108,6 +108,14 @@ private theorem mem_triple {G : Graph} {v x : ℕ} :
     obtain rfl | rfl | rfl : r = 0 ∨ r = 1 ∨ r = 2 := by omega
     exacts [Or.inl rfl, Or.inr (Or.inl rfl), Or.inr (Or.inr rfl)]
 
+/-- The split graph lists three vertices for each declared vertex. -/
+theorem length_split_fst (G : Graph) : G.split.1.length = 3 * G.1.length := by
+  simp [split, List.length_flatMap, mul_comm]
+
+/-- The split graph lists two edges for each declared vertex and one for each arc. -/
+theorem length_split_snd (G : Graph) : G.split.2.length = 2 * G.1.length + G.2.length := by
+  simp [split, List.length_flatMap, mul_comm]
+
 /-- The declared vertices of the split graph are the gadget vertices of declared vertices. -/
 theorem mem_split_fst_iff {G : Graph} {x : ℕ} :
     x ∈ G.split.1 ↔ ∃ v ∈ G.1, ∃ r < 3, x = G.splitVertex v r := by

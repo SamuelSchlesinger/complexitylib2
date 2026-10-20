@@ -14,7 +14,7 @@ public import Complexity.Computability.Complexity.Problems.USAT
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Languages.Probabilistic.Iteration
-public import Complexity.Probability.BitString.LinearHash
+public import Complexity.Probability.BitString.AffineHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.UniformNat
 import Complexity.Computability.Complexity.CookLevin.Completeness
@@ -60,8 +60,8 @@ injective `Cslib.Complexity.splitVarToNat`.
 For the last point, the solutions of `φ` give a set `S` of bit strings of length `n`, of some size
 `s ≥ 1`. With `k = goodRows φ = ⌊log₂ s⌋ + 2` equations, `2 ^ k` lies between `2 s` and `4 s`,
 so by the lemma of Valiant and Vazirani for the pairwise independent affine hash family
-(`ValiantVazirani.isPairwiseIndependentHash_hash`; the family is `Cslib.Probability.affineHash`
-over `Bool`, `ValiantVazirani.hash_eq_affineHash`),
+(`Cslib.BitString.LinearHash.isPairwiseIndependentHash_affineHash`; the family is
+`Cslib.Probability.affineHash` over `Bool`, `Cslib.BitString.LinearHash.affineHash_eq_affineHash`),
 `Cslib.Probability.IsPairwiseIndependentHash.three_sixteenths_le_dens_filter_card_filter_eq_one`
 exactly one solution satisfies the equations with probability at least `3 / 16`; the reduced
 formula is then uniquely satisfiable (`ValiantVazirani.reduceWith_mem_USAT`).
@@ -315,38 +315,16 @@ theorem eq_add_sum_of_step {z f : ℕ → Bool} {c : Bool} {n : ℕ} (h0 : z 0 =
     rw [hstep j (by omega), ih (by omega), Finset.sum_range_succ, ← add_assoc]
     rfl
 
-/-- The affine hash `x ↦ A x + b` of bit strings, with seed a matrix `A` of `k` rows and an
-offset `b`: `Cslib.Probability.affineHash` over `Bool` (`hash_eq_affineHash`), with the rows as
-bit strings. -/
-def hash {k n : ℕ} (p : (Fin k → BitString n) × BitString k) (x : BitString n) : BitString k :=
-  BitString.LinearHash.hash p.1 x + p.2
+@[deprecated BitString.LinearHash.affineHash (since := "2026-10-19")]
+alias hash := BitString.LinearHash.affineHash
 
-/-- The hash is the affine hash over `Bool`. Its pairwise independence
-(`Cslib.Probability.isPairwiseIndependentHash_affineHash`) is proved over fields, and `Bool` is
-not one, so `isPairwiseIndependentHash_hash` proves it separately. -/
-theorem hash_eq_affineHash {k n : ℕ} (p : (Fin k → BitString n) × BitString k)
-    (x : BitString n) :
-    hash p x = Probability.affineHash (m := Fin k) (n := Fin n) (F := Bool) p x :=
-  rfl
+@[deprecated BitString.LinearHash.affineHash_eq_affineHash (since := "2026-10-19")]
+alias hash_eq_affineHash := BitString.LinearHash.affineHash_eq_affineHash
 
-/-- **The affine hash family of bit strings is pairwise independent**: for distinct inputs, the
-rows reach every difference of hash values. -/
-theorem isPairwiseIndependentHash_hash (k n : ℕ) :
-    Probability.IsPairwiseIndependentHash (hash (k := k) (n := n)) := by
-  let g : (Fin k → BitString n) →+ (BitString n → BitString k) :=
-    { toFun := BitString.LinearHash.hash
-      map_zero' := by ext; simp [BitString.LinearHash.hash]
-      map_add' := fun _ _ => by ext; simp [BitString.LinearHash.hash, add_dotProduct] }
-  refine Probability.isPairwiseIndependentHash_add_of_surjective g fun x₁ x₂ hx c => ?_
-  obtain ⟨j, hj⟩ := Function.ne_iff.1 hx
-  refine ⟨fun i => Pi.single j (c i), funext fun i => ?_⟩
-  change (Pi.single j (c i) ⬝ᵥ x₁) - (Pi.single j (c i) ⬝ᵥ x₂) = c i
-  rw [single_dotProduct, single_dotProduct]
-  generalize x₁ j = a at hj ⊢
-  generalize x₂ j = b at hj ⊢
-  generalize c i = d
-  revert a b d
-  decide
+@[deprecated BitString.LinearHash.isPairwiseIndependentHash_affineHash (since := "2026-10-19")]
+alias isPairwiseIndependentHash_hash := BitString.LinearHash.isPairwiseIndependentHash_affineHash
+
+open BitString.LinearHash (affineHash isPairwiseIndependentHash_affineHash)
 
 /-- The variables `vars` read off an assignment of the original variables. -/
 def point (vars : List ℕ) (σ : ℕ → Bool) : BitString vars.length := fun j => σ vars[j]
@@ -362,8 +340,8 @@ def auxValue (vars : List ℕ) (k : ℕ) (w : List Bool) (σ : ℕ → Bool) (i 
 theorem auxValue_length (vars : List ℕ) (k : ℕ) (w : List Bool) (σ : ℕ → Bool)
     (i : Fin k) :
     auxValue vars k w σ i vars.length =
-      hash (matrix k vars.length w, offset k vars.length w) (point vars σ) i := by
-  rw [auxValue, hash, Pi.add_apply, add_comm, ← Fin.sum_univ_eq_sum_range]
+      affineHash (matrix k vars.length w, offset k vars.length w) (point vars σ) i := by
+  rw [auxValue, affineHash, Pi.add_apply, add_comm, ← Fin.sum_univ_eq_sum_range]
   simp only [Fin.is_lt, dite_true, Fin.eta]
   rfl
 
@@ -379,7 +357,7 @@ theorem eq_auxValue_of_eval {σ : Var → Bool} {vars : List ℕ} {k : ℕ} {w :
 /-- A satisfying assignment of the equations hashes its point to zero. -/
 theorem hash_point_eq_zero_of_eval {σ : Var → Bool} {vars : List ℕ} {k : ℕ} {w : List Bool}
     (h : (hashCNF vars k w).eval σ = true) :
-    hash (matrix k vars.length w, offset k vars.length w) (point vars (σ ∘ .inl)) = 0 := by
+    affineHash (matrix k vars.length w, offset k vars.length w) (point vars (σ ∘ .inl)) = 0 := by
   funext i
   rw [← auxValue_length, ← eq_auxValue_of_eval h i le_rfl]
   exact ((eval_hashCNF σ vars k w).1 h i).2.1
@@ -387,7 +365,7 @@ theorem hash_point_eq_zero_of_eval {σ : Var → Bool} {vars : List ℕ} {k : �
 /-- An assignment of the original variables whose point hashes to zero extends, by the forced
 auxiliary values, to a satisfying assignment of the equations. -/
 theorem eval_hashCNF_extend {vars : List ℕ} {k : ℕ} {w : List Bool} {σ : ℕ → Bool}
-    (h : hash (matrix k vars.length w, offset k vars.length w) (point vars σ) = 0) :
+    (h : affineHash (matrix k vars.length w, offset k vars.length w) (point vars σ) = 0) :
     (hashCNF vars k w).eval (Sum.elim σ fun p =>
       if hp : p.1 < k then auxValue vars k w σ ⟨p.1, hp⟩ p.2 else false) = true := by
   refine (eval_hashCNF _ vars k w).2 fun i => ⟨?_, ?_, fun j hj => ?_⟩
@@ -402,20 +380,9 @@ theorem eval_hashCNF_extend {vars : List ℕ} {k : ℕ} {w : List Bool} {σ : �
 
 /-! ### Variables of the reduced formula -/
 
-/-- A variable of a formula is the variable of a literal of one of its clauses. -/
-theorem mem_vars_iff {V : Type*} {φ : CNF V} {u : V} :
-    u ∈ φ.vars ↔ ∃ c ∈ φ, ∃ b, (u, b) ∈ c := by
-  simp only [CNF.vars, List.mem_map, List.mem_flatten, Prod.exists]
-  constructor
-  · rintro ⟨_, b, ⟨c, hc, hl⟩, rfl⟩
-    exact ⟨c, hc, b, hl⟩
-  · rintro ⟨c, hc, b, hl⟩
-    exact ⟨u, b, ⟨c, hc, hl⟩, rfl⟩
+@[deprecated (since := "2026-10-19")] alias mem_vars_iff := CNF.mem_vars
 
-/-- Relabelling renames the variables, occurrence by occurrence. -/
-theorem vars_relabel {V W : Type*} (f : V → W) (φ : CNF V) :
-    (φ.relabel f).vars = φ.vars.map f := by
-  simp [CNF.vars, CNF.relabel, Clause.relabel, List.map_flatten, Function.comp_def]
+@[deprecated (since := "2026-10-19")] alias vars_relabel := CNF.vars_relabel
 
 /-- The clauses of a step only mention its three variables. -/
 theorem mem_vars_stepClauses {bit : Bool} {next prev x u : Var}
@@ -429,7 +396,7 @@ variable `inr (i, j)` with `j ≤ vars.length`. -/
 theorem mem_vars_rowClauses {vars : List ℕ} {i : ℕ} {row : List Bool} {c : Bool} {u : Var}
     (h : u ∈ (rowClauses vars i row c).vars) :
     (∃ v ∈ vars, u = .inl v) ∨ ∃ j ≤ vars.length, u = .inr (i, j) := by
-  simp only [rowClauses, mem_vars_iff, List.mem_cons, List.mem_flatMap] at h
+  simp only [rowClauses, CNF.mem_vars, List.mem_cons, List.mem_flatMap] at h
   obtain ⟨cl, hcl, b, hb⟩ := h
   rcases hcl with rfl | rfl | ⟨⟨v, j⟩, hp, hcl⟩
   · simp only [List.mem_cons, Prod.mk.injEq, List.not_mem_nil, or_false] at hb
@@ -438,7 +405,7 @@ theorem mem_vars_rowClauses {vars : List ℕ} {i : ℕ} {row : List Bool} {c : B
     exact .inr ⟨_, le_rfl, hb.1⟩
   · obtain ⟨hj, hvj⟩ := List.mem_zipIdx' hp
     have hv : v ∈ vars := hvj ▸ List.getElem_mem hj
-    rcases mem_vars_stepClauses (mem_vars_iff.2 ⟨cl, hcl, b, hb⟩) with rfl | rfl | rfl
+    rcases mem_vars_stepClauses (CNF.mem_vars.2 ⟨cl, hcl, b, hb⟩) with rfl | rfl | rfl
     · exact .inr ⟨j + 1, hj, rfl⟩
     · exact .inr ⟨j, hj.le, rfl⟩
     · exact .inl ⟨_, hv, rfl⟩
@@ -448,10 +415,10 @@ variable `inr (i, j)` with `i < k` and `j ≤ vars.length`. -/
 theorem mem_vars_hashCNF {vars : List ℕ} {k : ℕ} {w : List Bool} {u : Var}
     (h : u ∈ (hashCNF vars k w).vars) :
     (∃ v ∈ vars, u = .inl v) ∨ ∃ i < k, ∃ j ≤ vars.length, u = .inr (i, j) := by
-  simp only [hashCNF, mem_vars_iff, List.mem_flatMap] at h
+  simp only [hashCNF, CNF.mem_vars, List.mem_flatMap] at h
   obtain ⟨cl, ⟨⟨row, i⟩, hp, hcl⟩, b, hb⟩ := h
   obtain ⟨hi, -⟩ := mem_zipIdx_listRows.1 hp
-  rcases mem_vars_rowClauses (mem_vars_iff.2 ⟨cl, hcl, b, hb⟩) with h | ⟨j, hj, rfl⟩
+  rcases mem_vars_rowClauses (CNF.mem_vars.2 ⟨cl, hcl, b, hb⟩) with h | ⟨j, hj, rfl⟩
   · exact .inl h
   · exact .inr ⟨i, hi, j, hj, rfl⟩
 
@@ -497,7 +464,7 @@ open Classical in
 zero. -/
 def Isolates (φ : CNF ℕ) {k : ℕ} (p : (Fin k → BitString φ.vars.length) × BitString k) :
     Prop :=
-  ((solutions φ).filter fun x => hash p x = 0).card = 1
+  ((solutions φ).filter fun x => affineHash p x = 0).card = 1
 
 /-- **Isolation gives unique satisfiability.** If exactly one satisfying assignment of `φ` hashes
 to zero under the equations read from `w`, then `φ` with these equations is uniquely
@@ -508,7 +475,7 @@ theorem reduceWith_mem_USAT {φ : CNF ℕ} {k : ℕ} {w : List Bool}
   classical
   obtain ⟨x₀, hx₀⟩ := Finset.card_eq_one.1 h
   have hmem : x₀ ∈ (solutions φ).filter fun x =>
-      hash (matrix k φ.vars.length w, offset k φ.vars.length w) x = 0 :=
+      affineHash (matrix k φ.vars.length w, offset k φ.vars.length w) x = 0 :=
     hx₀ ▸ Finset.mem_singleton_self x₀
   obtain ⟨hsol, hhash⟩ := Finset.mem_filter.1 hmem
   obtain ⟨σ, hσ, rfl⟩ := mem_solutions.1 hsol
@@ -526,16 +493,16 @@ theorem reduceWith_mem_USAT {φ : CNF ℕ} {k : ℕ} {w : List Bool}
   -- the point of `τ` is a solution hashing to zero, hence it is the point of `σ`
   have hpoint : point φ.vars ((τ ∘ splitVarToNat) ∘ Sum.inl) = point φ.vars σ := by
     have : point φ.vars ((τ ∘ splitVarToNat) ∘ Sum.inl) ∈ (solutions φ).filter fun x =>
-        hash (matrix k φ.vars.length w, offset k φ.vars.length w) x = 0 :=
+        affineHash (matrix k φ.vars.length w, offset k φ.vars.length w) x = 0 :=
       Finset.mem_filter.2 ⟨mem_solutions.2 ⟨_, hφ, rfl⟩, hash_point_eq_zero_of_eval hH⟩
     rw [hx₀] at this
     exact Finset.mem_singleton.1 this
-  obtain ⟨u, hu, rfl⟩ := List.mem_map.1 ((vars_relabel _ _) ▸ hvψ)
+  obtain ⟨u, hu, rfl⟩ := List.mem_map.1 ((CNF.vars_relabel _ _) ▸ hvψ)
   rw [splitVarToNat_injective.extend_apply]
   change (τ ∘ splitVarToNat) u = σ' u
   rw [CNF.vars, List.flatten_append, List.map_append, List.mem_append] at hu
   rcases hu with hu | hu
-  · rw [← CNF.vars, vars_relabel] at hu
+  · rw [← CNF.vars, CNF.vars_relabel] at hu
     obtain ⟨v, hv, rfl⟩ := List.mem_map.1 hu
     obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hv
     exact congrFun hpoint ⟨j, hj⟩
@@ -591,7 +558,8 @@ theorem three_sixteenths_le_dens {φ : CNF ℕ} (hφ : φ.Satisfiable) :
         Isolates φ p) := by
   classical
   have hY : Fintype.card (BitString (goodRows φ)) = 2 ^ goodRows φ := by simp
-  convert (isPairwiseIndependentHash_hash _ _).three_sixteenths_le_dens_filter_card_filter_eq_one 0
+  have hpi := isPairwiseIndependentHash_affineHash (goodRows φ) φ.vars.length
+  convert hpi.three_sixteenths_le_dens_filter_card_filter_eq_one 0
     (hY ▸ two_pow_goodRows_le hφ) (hY ▸ two_mul_card_solutions_le φ) using 3
   exact Iff.rfl
 
@@ -678,17 +646,13 @@ theorem offset_take (k width : ℕ) (w : List Bool) :
     List.getElem?_take]
   rw [ite_eq_left (by omega)]
 
-/-- Reading `n` bits of a word that starts with `n` given bits returns them. -/
-theorem ofList_ofFn_append {n : ℕ} (a : BitString n) (b : List Bool) :
-    BitString.ofList n (List.ofFn a ++ b) = a := by
-  funext i
-  simp [BitString.ofList, List.getD_eq_getElem?_getD,
-    List.getElem?_append_left (by simp : i.val < (List.ofFn a).length)]
+@[deprecated BitString.ofList_ofFn_append (since := "2026-10-19")]
+alias ofList_ofFn_append := BitString.ofList_ofFn_append
 
 /-- The coefficients of a word of exactly `k * width + k` bits are its first blocks. -/
 theorem matrix_ofFn_append {k width : ℕ} (a : BitString (k * width)) (b : BitString k) :
     matrix k width (List.ofFn (Fin.append a b)) = BitString.blocksEquiv a := by
-  rw [matrix, List.ofFn_fin_append, ofList_ofFn_append]
+  rw [matrix, List.ofFn_fin_append, BitString.ofList_ofFn_append]
   rfl
 
 /-- The offsets of a word of exactly `k * width + k` bits are its last `k` bits. -/
@@ -895,15 +859,6 @@ def queryAnyStep (s : List (List Bool) × Bool) : WordQueryComp Unit (List (List
 def queryAny (words : List (List Bool)) : WordQueryComp Unit Bool :=
   Prod.snd <$> OracleComp.iterate words.length queryAnyStep (words, false)
 
-private theorem interpret_iterate {ι κ : Type} {spec : OracleSpec.{0, 0} ι}
-    {target : OracleSpec.{0, 0} κ} (handler : (q : ι) → OracleComp target (spec q)) {σ : Type}
-    (n : ℕ) (step : σ → OracleComp spec σ) (s : σ) :
-    OracleComp.interpret handler (OracleComp.iterate n step s) =
-      OracleComp.iterate n (fun s => OracleComp.interpret handler (step s)) s := by
-  induction n with
-  | zero => rfl
-  | succ n ih => simp only [OracleComp.iterate_succ, OracleComp.interpret_bind, ih]
-
 private theorem interpret_queryAnyStep (s : List (List Bool) × Bool) :
     OracleComp.interpret ProbOracleComp.query (queryAnyStep s) =
       if s.1.isEmpty then pure s else
@@ -918,7 +873,7 @@ and reads one reply bit, and the list shrinks. -/
 theorem isOraclePPTOn_queryAny :
     IsOraclePPTOn (encList encBits) encBool
       (fun words => OracleComp.interpret ProbOracleComp.query (queryAny words)) := by
-  simp only [queryAny, OracleComp.interpret_map, interpret_iterate]
+  simp only [queryAny, OracleComp.interpret_map, OracleComp.interpret_iterate]
   refine IsOraclePPTOn.map (IsOraclePPTOn.iterate_of_bounded_growth
     (stateEncoding := encPair (encList encBits) encBool) (by fun_prop) (by fun_prop) ?_
     (growth := 0) ?_) (by fun_prop)

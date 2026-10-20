@@ -46,8 +46,7 @@ or antitone Boolean function on `n` coordinates with variance `σ²` has total i
   `Cslib.BitString.fourierCoeff_singleton_nonpos_of_antitone`: the sign of the degree-one
   coefficients of a monotone or antitone function.
 * `Cslib.BitString.sum_fourierCoeff_singleton_sq_le`: the degree-one weight is at most the
-  variance; `Cslib.BitString.expect_sub_expect_sq_signVal_le_one`: a Boolean function has variance
-  at most one.
+  variance.
 * `Cslib.BitString.sum_influence_sq_le_of_monotone`: the squared influences of a monotone function
   sum to at most its variance.
 * `Cslib.BitString.totalInfluence_le_sqrt_card_mul_of_monotone`,
@@ -137,12 +136,6 @@ theorem sum_fourierCoeff_singleton_sq_le (g : (ι → Bool) → ℝ) :
         refine sum_le_sum_of_subset_of_nonneg (fun S hS => ?_) fun _ _ _ => sq_nonneg _
         obtain ⟨i, -, rfl⟩ := mem_image.1 hS
         exact mem_filter.2 ⟨mem_univ _, singleton_ne_empty i⟩
-
-/-- The variance of a Boolean function read as signs is at most one. -/
-theorem expect_sub_expect_sq_signVal_le_one (f : (ι → Bool) → Bool) :
-    𝔼 x, (signVal (f x) - 𝔼 y, signVal (f y)) ^ 2 ≤ 1 := by
-  rw [expect_sub_expect_sq_eq_sum_fourierCoeff_sq, ← sum_fourierCoeff_sq_signVal f]
-  exact sum_le_sum_of_subset_of_nonneg (filter_subset _ _) fun _ _ _ => sq_nonneg _
 
 /-- By Cauchy–Schwarz, the degree-one coefficients sum to at most `√(n σ²)` in absolute value. -/
 private theorem abs_sum_fourierCoeff_singleton_le (g : (ι → Bool) → ℝ) :

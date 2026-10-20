@@ -33,6 +33,55 @@ theorem.\citep[Section 8.5]{Sipser2013}
 \end{result}
 
 \begin{result}
+\subsection{Undirected connectivity by short walks in Reingold's graph}
+For every simple graph $G$ on $\{0,\dots,n-1\}$ and all vertices $s,t$, $t$ is reachable from $s$
+if and only if some walk of length $T(n)=4(2\lceil\log_2 n\rceil+65\,\ell(n))$ in the
+$257^8$-regular graph $G_{\ell(n)}$, starting at a fixed vertex over the slot $(s,s)$, ends over a
+slot of $t$, where $\ell(n)=16\lceil\log_2 n\rceil+524$. Here $G_0$ is the slot graph of $G$ (each
+vertex replaced by a cycle of $n$ slots, slot $(v,w)$ joined to $(w,v)$ when $v\sim w$), padded
+with self-loops to $257^8$ labels, and $G_{i+1}=((G_i\mathbin{\textcircled{\scriptsize z}}H)^2)$ with labels renamed, for
+the arithmetic zig-zag base $H$ over $\mathbb{Z}/257$ with $\lambda(H)\le 1/5$. The generic
+statement assumes $\lambda(H)\le1/5$, at least half self-loops at each vertex,
+$2|V|^2|B|^2 5^\ell\le 5\cdot 6^\ell$ and $|V||B|^\ell 4^T\le 5^T$. Each step turns a spectral gap
+$\gamma$ into at least $\min(6\gamma/5,1/5)$ (Reingold takes the eighth power of $G\mathbin{\textcircled{\scriptsize z}}H$
+and obtains $\lambda\mapsto\max(\lambda^2,1/2)$; the constant differs, the $O(\log n)$ depth does
+not), a connected component with half self-loops has gap at least $1/(2N^2|B|^2)$, and walks of
+length $t$ connect every pair once $\lambda^t(N-1)<1$. This is the combinatorial part of the proof
+of $\mathrm{USTCON}\in\cc{L}$; the class-level theorem is the next entry.\citep[Definition 3.1, Lemmas 3.2--3.3, Theorem 4.1]{Reingold2008}\citep[Section 21.4]{AroraBarak09}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Algorithms/Reachability/Reingold.lean}{223}{Cslib.Reachability.reachable_iff_exists_reingoldGraph}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Reingold.lean}{428}{Cslib.RotationMap.reachable_iff_exists_root_neighbor_pow_reingold}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Reingold.lean}{318}{Cslib.RotationMap.min_pow_le_one_sub_spectralExpansion_reingold}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Connected.lean}{135}{Cslib.RotationMap.spectralExpansion_le_of_preconnected}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Connected.lean}{182}{Cslib.RotationMap.exists_neighbor_pow_eq}
+\end{result}
+
+\begin{result}
+\subsection{Undirected connectivity is in logarithmic space}
+\[\mathrm{USTCON}\in\cc{L}.\]
+Instances are simple graphs on $\{0,\dots,n-1\}$ given by a symmetric adjacency matrix with zero
+diagonal and two vertices $s,t$, encoded by the unary header $1^n01^s01^t0$ followed by the matrix
+row by row; the instance is accepted when $t$ is reachable from $s$. $\cc{L}$ is the library's class:
+a deterministic binary multi-tape machine with finitely many states computes the decision within
+space $c(\lfloor\log_2 m\rfloor+1)$ on encodings of length $m$, the input and output not charged; as
+for every problem in $\cc{L}$, correctness is required only on encodings of instances, and
+recognizing encodings is not part of the statement. The decider walks in Reingold's graph $G_\ell$
+(depth $16a+524$, walk length $4(2a+65(16a+524))$ for $a$ the binary length of $n$,
+$257^8$-regular) along the base-$257^8$ digits of every counter below $257^{8T}$, evaluating the
+rotation map in place with one program counter and one label per level and reading the matrix only
+at a step of the slot graph. The transformation is a variant of Reingold's Definition 3.1 with the
+square of the zig-zag product instead of the eighth power; the constants are far from optimal. The
+encoding is the adjacency matrix, not the edge-list encoding of the library's other graph problems;
+$\cc{SL}$ is not defined, so $\cc{SL}=\cc{L}$ is not stated.\citep[Theorem 4.1 and the proof of
+Lemma 3.4]{Reingold2008}\citep[Section 21.4]{AroraBarak09}
+\declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean}{45}{Cslib.Complexity.USTCON_mem_L}
+\declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Computability/USTCON/Space.lean}{92}{Cslib.USTCON.computableInLogSpace_decide}
+\declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Foundations/Combinatorics/Expander/ReingoldEval.lean}{367}{Cslib.RotationMap.exists_iterate_reingoldEvalStep}
+\declat{dec8b23917c21660cf5f8eec81831f2636f9e21b}{Complexity/Algorithms/Reachability/Reingold.lean}{213}{Cslib.Reachability.Reingold.reachable_iff_exists_walk_of_le_two_pow}
+\end{result}
+
+
+
+\begin{result}
 \subsection{Savitch's theorem for polynomial space}
 \[
 \cc{NPSPACE}=\cc{PSPACE}.
@@ -56,6 +105,24 @@ reachability formula. Formulas with free variables are excluded from TQBF.
 \end{result}
 
 \begin{result}
+\subsection{Generalized Geography is PSPACE-complete}
+Generalized Geography in its vertex version (a directed graph with declared vertices and a start
+vertex; players alternately move a token along arcs to unvisited declared vertices; the player
+unable to move loses; the instance is accepted when the first player wins, by backward induction)
+is PSPACE-complete under polynomial-time many-one reductions. Membership is a polynomial-time game
+verifier for the alternating characterization of PSPACE. Hardness reduces true closed formulas
+$\exists x_1\forall y_1\cdots\exists x_n\forall y_n\,\psi$ with $\psi$ in CNF (shown PSPACE-complete by
+normalizing the formulas of games; the game on them is Sipser's FORMULA-GAME) by the diamond
+construction of Sipser's proof, which adapts Schaefer's technique. Formulas with free variables are
+rejected. Schaefer's arc version of the game is not treated.\citep[Theorems 8.11, 8.14]{Sipser2013}\citep{LichtensteinSipser1980,Schaefer1978}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/TQBF/Prenex.lean}{348}{Cslib.Complexity.TQBFCNF_pspaceComplete}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/GeneralizedGeography/Membership.lean}{607}{Cslib.Complexity.GeneralizedGeography_mem_PSPACE}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/GeneralizedGeography/Reduction.lean}{631}{Cslib.Complexity.GeneralizedGeography_pspaceHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/Complexity/Classes/Space/GeneralizedGeography.lean}{55}{Cslib.Complexity.GeneralizedGeography_pspaceComplete}
+\end{result}
+
+
+\begin{result}
 \subsection{Alternating polynomial time equals polynomial space}
 \[
 \cc{AP}=\cc{PSPACE}.
@@ -74,10 +141,71 @@ an equality of abstract game predicates.\citep{ChandraKozenStockmeyer1981}
 IP uses a private-coin verifier realized by one fair-coin oracle machine and a
 polynomial clock valid against every stateful prover. Provers may be randomized
 and computationally unbounded; completeness is at least $2/3$ and soundness at
-most $1/3$. The converse $\cc{PSPACE}\subseteq\cc{IP}$ is not yet formalized here.
+most $1/3$. The converse $\cc{PSPACE}\subseteq\cc{IP}$ is the entry ``Interactive proofs capture
+polynomial space'' below.
 \citep[Chapter 8]{AroraBarak09}
 \decl{Complexity/Computability/Complexity/Classes/IP/PSPACE.lean}{620}{Cslib.Complexity.IP_subset_PSPACE}
 \end{result}
+
+\begin{result}
+\subsection{The algebraic protocol for quantified Boolean formulas}
+Let $\varphi$ be a closed quantified Boolean formula with $|\varphi|$ syntax nodes, and let
+$E$ be its arithmetization over a commutative ring, with Shen's linearization operator
+applied to every variable of a list $xs$ after every quantifier. Then $E(0)=1$ if $\varphi$
+is true and $E(0)=0$ if it is false. If $xs$ contains the variables of $\varphi$, every
+syntactic degree bound of $E$ is at most $|\varphi|$, and the round degree (the sum of these
+bounds over the operator nodes) is at most $(2|xs|+1)|\varphi|^2$. A Shamir--Shen-style
+verifier checks the claim $E(0)=1$ by recursion on $E$: at a binary connective the prover
+sends the two values, and at $\exists x$, $\forall x$ or $L_x$ it sends the univariate
+restriction, truncated to the degree bound, and the verifier draws a random point. The
+honest prover is accepted with probability $1$ on every true claim. Over an integral
+domain, if the sampler gives each element probability at most $\varepsilon$, every
+stateful, adaptive, randomized prover is accepted on a false claim with probability at
+most (round degree)$\cdot\varepsilon$. For TQBF with uniform samples from a finite field
+$F$, false closed formulas are accepted with probability at most $3|\varphi|^3/|F|$. The
+verifier is an abstract typed oracle program with exact sampling; its realization in the IP
+machine model is the next entry.
+\citep{LundFortnowKarloffNisan1992,Shamir1992,Shen1992}\citep[Chapter 8]{AroraBarak09}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{485}{Cslib.Logic.PL.QBF.eval_arithmetize}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{491}{Cslib.Logic.PL.QBF.eval_arithmetize_zero}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{523}{Cslib.Logic.PL.QBF.deg_arithmetize_le}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{590}{Cslib.Logic.PL.QBF.roundDegree_arithmetize_le}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{338}{Cslib.Complexity.QBFProtocol.acceptProb_honest_verify}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{347}{Cslib.Complexity.QBFProtocol.acceptProb_verify_le}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{464}{Cslib.Complexity.QBFProtocol.acceptProb_honest_of_mem_TQBF}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{471}{Cslib.Complexity.QBFProtocol.acceptProb_le_of_notMem_TQBF}
+\end{result}
+
+\begin{result}
+\subsection{Interactive proofs capture polynomial space}
+\[
+\cc{IP}=\cc{PSPACE},\qquad \cc{coNP}\subseteq\cc{PH}\subseteq\cc{IP},
+\]
+for every encoding of instances. TQBF (closed quantified Boolean formulas over $\mathbb N$-indexed
+variables, not necessarily prenex) has an interactive proof with completeness $1$ and soundness
+error $1/3$ against every stateful randomized prover, in the library's IP model: private fair coins,
+one oracle machine with a polynomial clock. On a formula with $s$ syntax nodes the verifier rejects
+formulas with a free variable, arithmetizes with Shen's linearization of every variable occurring in
+the tokens after every quantifier, chooses the greatest prime $p\le 24s^2(s+1)$ by trial division
+(above $12s^2(s+1)$ by Bertrand's postulate), and runs a Shamir--Shen-style protocol as a stack
+machine over the tokens, reading $2s+1$ coefficients per round, with field elements drawn from fair
+coins with point masses at most $2/p$. Soundness transfers from typed provers to word provers by an
+exact simulation. With the existing PSPACE-completeness of TQBF and the closure of IP under
+polynomial-time (Karp) reductions, $\cc{PSPACE}\subseteq\cc{IP}$; with the existing
+$\cc{IP}\subseteq\cc{PSPACE}$, equality follows. The linearized variables are not deduplicated,
+which costs only polynomially more rounds.
+\citep{LundFortnowKarloffNisan1992,Shamir1992,Shen1992}\citep[Section 8.3]{AroraBarak09}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/Shamir.lean}{61}{Cslib.Complexity.IP_eq_PSPACE}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/Shamir.lean}{56}{Cslib.Complexity.PSPACE_subset_IP}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/Shamir.lean}{69}{Cslib.Complexity.coNP_subset_IP}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/Shamir.lean}{65}{Cslib.Complexity.PH_subset_IP}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/TQBF.lean}{674}{Cslib.Complexity.TQBF_mem_IP}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/TQBF.lean}{665}{Cslib.Complexity.QBFProtocol.isInteractiveProof_verifier}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/TQBF/Verifier.lean}{561}{Cslib.Complexity.QBFProtocol.isOraclePPTOn_verifier}
+\declat{3fd63a13d327ff97b9b4586f6bb28febe6268cc2}{Complexity/Computability/Complexity/Classes/IP/Reduction.lean}{48}{Cslib.Complexity.PolyTimeReducible.mem_IP}
+\end{result}
+
+
 
 \begin{result}
 \subsection{Graph non-isomorphism has a private-coin interactive proof}
@@ -85,7 +213,7 @@ Graph non-isomorphism belongs to IP. The strict polynomial-time fair-coin verifi
 has perfect completeness and soundness at most $(17/32)^2<1/3$ after two rounds.
 It samples relabelings by sorting random vertex keys; this avoids assuming exact
 uniform sampling of a permutation from a fixed number of fair bits. The result is
-for private coins and does not establish the public-coin AM protocol.
+for private coins; the public-coin AM protocol is in the Arthur--Merlin entry.
 \citep{GoldreichMicaliWigderson1991}
 \decl{Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean}{563}{Cslib.Complexity.GraphNonIsomorphism.isInteractiveProof_verifier}
 \decl{Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean}{603}{Cslib.Complexity.GraphNonIsomorphism.mem_IP}

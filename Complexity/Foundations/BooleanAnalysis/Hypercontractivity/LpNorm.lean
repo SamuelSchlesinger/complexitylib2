@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Foundations.BooleanAnalysis.Influence
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Data.Fintype.Pi
@@ -29,6 +30,9 @@ bits in `κ` (`BitString.lpNorm_sumElim`): the `p`-th moment over the product of
 iterated `p`-th moment. On the cube over no coordinates, a single point, it is the absolute
 value (`BitString.lpNorm_of_isEmpty`).
 
+The derivative of a Boolean function read as signs takes the values `0` and `±1`, so its `L^p`
+norm is the `p`-th root of the influence (`BitString.lpNorm_derivative_signVal`).
+
 ## Main definitions
 
 * `Cslib.BitString.lpNorm`: the `L^p` norm `‖f‖_p` of a real function on the cube.
@@ -39,6 +43,8 @@ value (`BitString.lpNorm_of_isEmpty`).
   the `p`-th absolute moment, and `‖f‖_2` is the root mean square.
 * `Cslib.BitString.lpNorm_sumElim`: the norm over a disjoint union of coordinates is the
   iterated norm.
+* `Cslib.BitString.lpNorm_derivative_signVal`: the `L^p` norm of the derivative of a Boolean
+  function is the `p`-th root of the influence.
 
 ## References
 
@@ -117,5 +123,27 @@ theorem lpNorm_of_isEmpty [IsEmpty ι] {p : ℝ} (hp : p ≠ 0) (f : (ι → Boo
   have h : (fun y : ι → Bool => |f y| ^ p) = fun _ => |f x| ^ p :=
     funext fun y => by rw [Subsingleton.elim y x]
   rw [lpNorm, h, Fintype.expect_const, Real.rpow_rpow_inv (abs_nonneg _) hp]
+
+/-! ### The derivative of a Boolean function -/
+
+omit [Fintype ι] in
+/-- A power of the absolute value of the derivative of a Boolean function, read as signs, is the
+absolute value: the derivative takes the values `0` and `±1`. -/
+theorem abs_derivative_signVal_rpow (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) {p : ℝ}
+    (hp : p ≠ 0) :
+    |derivative i (fun x => signVal (f x)) x| ^ p = |derivative i (fun x => signVal (f x)) x| := by
+  simp only [derivative]
+  cases f (Function.update x i false) <;> cases f (Function.update x i true) <;>
+    norm_num [Real.zero_rpow hp]
+
+/-- The `L^p` norm of the derivative of a Boolean function, read as signs, is the `p`-th root of
+the influence. -/
+theorem lpNorm_derivative_signVal (f : (ι → Bool) → Bool) (i : ι) {p : ℝ} (hp : p ≠ 0) :
+    lpNorm p (derivative i fun x => signVal (f x)) =
+      influence i (fun x => signVal (f x)) ^ p⁻¹ := by
+  rw [lpNorm, influence]
+  congr 1
+  refine expect_congr rfl fun x _ => ?_
+  rw [abs_derivative_signVal_rpow f i x hp, sq_derivative_signVal]
 
 end Cslib.BitString

@@ -27,6 +27,8 @@ uniform seeds. State types need not be finite. These are semantic laws; efficien
 * `Cslib.OracleComp.iterate_map`: a representation commuting with each step commutes with the loop.
 * `Cslib.OracleComp.run_interpret_iterate`: stateful interpretation threads one shared hidden state
   through the loop.
+* `Cslib.OracleComp.interpret_iterate`: replacing every call by a program iterates the replaced
+  steps.
 * `Cslib.ProbComp.iterate_invariant`: supported transitions preserve the final invariant.
 * `Cslib.ProbComp.iterate_failure_le`, `iterate_failure_toReal_le_mul`: local failure bounds
   accumulate additively across adaptive rounds.
@@ -79,6 +81,17 @@ theorem iterate_map {Other : Type v} (count : ℕ) (step : State → OracleComp 
   induction count with
   | zero => simp
   | succ count ih => simp only [iterate_succ, ih, bind_map_left, map_bind, hstep]
+
+/-- Replacing every call of a loop by a program over another interface iterates the replaced
+steps. -/
+theorem interpret_iterate {κ : Type w} {target : OracleSpec.{w, v} κ}
+    (handler : (q : ι) → OracleComp target (spec q)) (count : ℕ)
+    (step : State → OracleComp spec State) (initial : State) :
+    interpret handler (iterate count step initial) =
+      iterate count (fun state => interpret handler (step state)) initial := by
+  induction count with
+  | zero => rfl
+  | succ count ih => simp only [iterate_succ, interpret_bind, ih]
 
 /-- Interpreting a loop with a stateful handler is a loop on the joint program and handler state.
 The hidden state is retained between iterations, including effects of the last transition. -/

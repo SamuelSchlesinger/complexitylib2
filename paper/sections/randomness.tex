@@ -21,6 +21,59 @@ rather than assuming equality only at one chosen encoding.\citep{AroraBarak09}
 \end{result}
 
 \begin{result}
+\subsection{Arthur--Merlin classes}
+For every fixed injective encoding,
+\[
+\cc{NP}\cup\cc{BPP}\subseteq\cc{MA}\subseteq\cc{SBP}\subseteq\cc{AM}\subseteq\Pi^p_2,\qquad
+\cc{MA}\subseteq\cc{AM},\qquad \cc{MA}\subseteq\Sigma^p_2\cap\Pi^p_2,
+\]
+and graph non-isomorphism is in $\cc{AM}$. MA and AM are two-message public-coin classes given by
+deterministic polynomial-time verifiers reading one concatenated string: Merlin's proof of $q(n)$
+bits and Arthur's $p(n)$ coins, in that order for MA and in the reverse order for AM, with
+$p,q\in\mathbb{N}[X]$ and exact message lengths; completeness is at least $2/3$ and soundness at
+most $1/3$, as counts of random strings. Both classes are closed under polynomial-time many-one
+reductions; majority votes reduce the error to $2^{-e(n)}$ for every polynomial $e$ (for MA with
+the proof length fixed first), and AM is closed under polynomially bounded existential
+quantification. The set lower bound protocol of Goldwasser and Sipser is formalized for sets $S$ of
+$N(n)$-bit strings with polynomial-time certificates: a threshold $K>0$ computed in binary in
+polynomial time with $K\le|S|$ on members and $|S|\le K/2$ on non-members places the problem in
+$\cc{AM}$, via pairwise-independent affine hashing over $\mathbb{F}_2$; with no certificates this
+gives $\cc{SBP}\subseteq\cc{AM}$. For graph non-isomorphism (graphs are the simple graphs induced on
+declared vertices, encoded as vertex and edge lists with binary naturals) the set is the pairs of a
+relabelling of one adjacency matrix and an automorphism of it, of size $2n!$ or $n!$ by
+orbit--stabilizer; pairs with different numbers of vertices are accepted outright. The
+Boppana--H{\aa}stad--Zachos theorem: if $\cc{coNP}\subseteq\cc{AM}$ for every encoding, then for
+every encoding $\Sigma^p_2=\Pi^p_2=\cc{AM}$ and $\cc{PH}=\Sigma^p_2$; in particular, if graph
+isomorphism is $\cc{NP}$-complete (in the library's sense, at the vertex-and-edge-list encoding)
+then $\cc{PH}=\Sigma^p_2$. Interactive-machine characterizations, round collapse
+$\cc{AM}[k]=\cc{AM}$ and private-to-public-coin transformations are not formalized.
+\citep{Babai1985,BabaiMoran1988,GoldwasserSipser1986,BoehlerGlasserMeister2006,BoppanaHastadZachos1987}\citep[Section 8.2]{AroraBarak09}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{97}{Cslib.Complexity.MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{124}{Cslib.Complexity.AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{144}{Cslib.Complexity.NP_subset_MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{158}{Cslib.Complexity.BPP_subset_MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{172}{Cslib.Complexity.PolyTimeReducible.mem_MA}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin.lean}{242}{Cslib.Complexity.PolyTimeReducible.mem_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{197}{Cslib.Complexity.mem_MA_iff_exists_forall_errorExponent}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{350}{Cslib.Complexity.mem_AM_iff_forall_errorExponent}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{366}{Cslib.Complexity.MA_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Amplification.lean}{445}{Cslib.Complexity.MA_subset_SBP}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{292}{Cslib.Complexity.MA_subset_SigmaP_two}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{305}{Cslib.Complexity.AM_subset_PiP_two}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/PH.lean}{320}{Cslib.Complexity.MA_subset_SigmaP_two_inter_PiP_two}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Probability/BitString/AffineHash.lean}{131}{Cslib.BitString.LinearHash.isPairwiseIndependentHash_affineHash}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean}{262}{Cslib.Complexity.mem_AM_of_card_certifiedSet}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean}{340}{Cslib.Complexity.SBP_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean}{143}{Cslib.Complexity.GraphNonIsomorphism.PublicCoin.card_pairs}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean}{482}{Cslib.Complexity.GraphNonIsomorphism.mem_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{80}{Cslib.Complexity.mem_AM_of_exists}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{247}{Cslib.Complexity.PH_eq_SigmaP_two_of_coNP_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{253}{Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM}
+\declat{090dc682a0507c9c14a0b919bb0f2ff399d643e8}{Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean}{267}{Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism}
+\end{result}
+
+
+\begin{result}
 \subsection{Toda's theorem}
 \[
 \cc{PH}\subseteq\cc{P}^{\#\cc{P}}.
@@ -34,6 +87,40 @@ parameter. The nondeterministic-machine characterization of $\#\cc{P}$
 remains separate unfinished work.\citep{Toda1991}
 \decl{Complexity/Computability/Complexity/Classes/Toda.lean}{121}{Cslib.Complexity.PH_subset_PWithSharpPOracle}
 \end{result}
+
+\begin{result}
+\subsection{Toda's theorem with a PP oracle}
+\[\cc{PH}\subseteq\cc{P}^{\#\cc{P}}\subseteq\cc{P}^{\cc{PP}}.\]
+$\cc{P}^{\cc{PP}}$ uses one polynomial-time oracle program, fixed before the oracle, correct
+against every oracle language agreeing with some PP problem on its encoded instances; off-code
+answers are arbitrary and queries are not counted. It contains $\cc{P}^A$ for every $A\in\cc{PP}$.
+For $f\in\#\cc{P}$, $\{(b,k)\mid k\le f(b)\}\in\cc{PP}$ via GapP, and each $\#\cc{P}$ bit request is
+answered by binary search with polynomially many PP queries, substituted into the program by open
+oracle substitution. The reverse inclusion $\cc{P}^{\cc{PP}}\subseteq\cc{P}^{\#\cc{P}}$ is not
+formalized.\citep{Toda1991}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{135}{Cslib.Complexity.PWithOracle_subset_PWithPPOracle}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{156}{Cslib.Complexity.setOf_le_mem_PP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{359}{Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{467}{Cslib.Complexity.PH_subset_PWithPPOracle}
+\end{result}
+
+\begin{result}
+\subsection{Easy oracles and the Valiant--Vazirani collapse}
+For an oracle language $A\in\cc{P}$, $\cc{P}^A=\cc{P}$, $\cc{NP}^A=\cc{NP}$ and $\cc{RP}^A=\cc{RP}$, and
+$\cc{RP}$ relative to a promise problem in PromiseP (under a decodable encoding) is $\cc{RP}$.
+Hence, by Valiant--Vazirani, if PromiseUSAT (yes: uniquely satisfiable; no: unsatisfiable CNF
+formulas) has a polynomial-time solver then $\cc{NP}=\cc{RP}$ for every encoding; so does
+$\mathrm{USAT}\in\cc{P}$, a weaker form since UNSAT reduces to USAT.\citep{ValiantVazirani1986,BlassGurevich1982,AroraBarak09}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PolyTime.lean}{127}{Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PolyTime.lean}{143}{Cslib.Complexity.PWithOracle_eq_P}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PolyTime.lean}{149}{Cslib.Complexity.NPWithOracle_eq_NP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{62}{Cslib.Complexity.RPWithOracle_eq_RP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{90}{Cslib.Complexity.RPWithPromiseOracle_eq_RP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{98}{Cslib.Complexity.NP_eq_RP_of_PromiseUSAT_mem_PromiseP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{105}{Cslib.Complexity.NP_eq_RP_of_USAT_mem_P}
+\end{result}
+
+
 
 \begin{result}
 \subsection{Adleman's theorem}
@@ -181,7 +268,7 @@ SPP has these closures and complement closure. The elementary proofs reuse the
 count algebra: FewP union adds ambiguity bounds and intersection multiplies them;
 SPP complement subtracts its gap from one and intersection multiplies gaps.
 These are verifier-based results; neither a machine characterization nor the
-stronger FewP--SPP containment is established by this entry.
+stronger FewP--SPP containment is established by this entry; it is the next entry.
 The FewP definition follows Allender--Rubinstein and the explicit acceptance-set
 formulation of Borchert--Hemaspaandra--Rothe; the SPP definition and UP inclusion
 follow Fenner--Fortnow--Kurtz and Fortnow's survey.
@@ -196,6 +283,19 @@ follow Fenner--Fortnow--Kurtz and Fortnow's survey.
 \declat{2f492c03c060ed95662dd942ef7feca1bebda7aa}{Complexity/Computability/Complexity/Classes/SPP.lean}{77}{Cslib.Complexity.SPP_subset_CeqP}
 \declat{2f492c03c060ed95662dd942ef7feca1bebda7aa}{Complexity/Computability/Complexity/Classes/SPP.lean}{87}{Cslib.Complexity.SPP_subset_coCeqP}
 \end{result}
+
+\begin{result}
+\subsection{FewP is in SPP}
+\[\cc{FewP}\subseteq\cc{SPP}.\]
+With at most $q(n)$ accepted certificates, the increasing listings of accepted certificate sets of
+even and of odd size in $q(n)$ flagged slots are counted by polynomial-time verifiers
+($E,O\in\#\cc{P}$), and $1+O-E\in\cc{GapP}$ is the characteristic function; the count is an
+induction on slots. These are the verifier-based classes.
+\citep{KoeblerSchoeningTodaToran1992,FennerFortnowKurtz1994}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/SPP/FewP.lean}{188}{Cslib.Complexity.SortedSubsets.signedSum_eq}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/SPP/FewP.lean}{366}{Cslib.Complexity.FewP_subset_SPP}
+\end{result}
+
 
 \begin{result}
 \subsection{Modular counting}
@@ -289,8 +389,8 @@ amplification. The definitions follow Watson's formulation of the class
 introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
 characterization of AWPP.\citep{BoehlerGlasserMeister2006}
 \citep[Definition 2]{Watson2012}\citep{Fenner2003}
-Counting-machine characterizations, $\cc{MA}\subseteq\cc{SBP}\subseteq\cc{AM}$,
-Uniform AWPP amplification to input-dependent error and PP-lowness remain
+Counting-machine characterizations,
+uniform AWPP amplification to input-dependent error and PP-lowness remain
 outstanding. The following entry adds fixed amplification and Boolean closure.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{90}{Cslib.Complexity.BPP_subset_SBP}

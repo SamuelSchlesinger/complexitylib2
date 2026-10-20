@@ -58,6 +58,8 @@ spectral expansion at most `1 - h(G)² / (4 d²)`.
 
 * `Cslib.RotationMap.secondEigenvalue_le_iff`, `Cslib.RotationMap.le_edgeExpansion_iff`: the
   characterizations of `λ₂(G)` and `h(G)`.
+* `Cslib.RotationMap.edgeExpansion_mul_card_div_three_le_card_interedges`: at least
+  `h(G) |V| / 3` edges leave every set of between a third and two thirds of the vertices.
 * `Cslib.RotationMap.abs_secondEigenvalue_le_spectralExpansion`: `|λ₂(G)| ≤ λ(G)`.
 * `Cslib.RotationMap.spectralExpansion_eq_secondEigenvalue_of_nonneg`: `λ(G) = λ₂(G)` when the
   walk operator is positive semidefinite.
@@ -312,6 +314,22 @@ theorem edgeExpansion_le_card : G.edgeExpansion ≤ Fintype.card D := by
   rw [card_singleton, Nat.cast_one, mul_one] at h
   rw [card_singleton, one_mul] at h'
   exact h.trans (Nat.cast_le.2 (by omega))
+
+/-- At least `h(G) |V| / 3` edges leave every set of between a third and two thirds of the
+vertices: the set, or its complement, has at most half and at least a third of the vertices. -/
+theorem edgeExpansion_mul_card_div_three_le_card_interedges {S : Finset V}
+    (h₁ : Fintype.card V ≤ 3 * #S) (h₂ : 3 * #S ≤ 2 * Fintype.card V) :
+    G.edgeExpansion * Fintype.card V / 3 ≤ #(G.interedges S Sᶜ) := by
+  have hc := card_add_card_compl S
+  rcases le_or_gt (2 * #S) (Fintype.card V) with h | h
+  · have hS : (Fintype.card V : ℝ) ≤ 3 * #S := by exact_mod_cast h₁
+    have := G.edgeExpansion_mul_card_le h
+    nlinarith [G.edgeExpansion_nonneg]
+  · have hle : 2 * #Sᶜ ≤ Fintype.card V := by omega
+    have hS : (Fintype.card V : ℝ) ≤ 3 * #Sᶜ := by exact_mod_cast (show _ ≤ _ by omega)
+    have := G.edgeExpansion_mul_card_le hle
+    rw [compl_compl, card_interedges_comm] at this
+    nlinarith [G.edgeExpansion_nonneg]
 
 end EdgeExpansion
 

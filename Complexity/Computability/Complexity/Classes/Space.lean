@@ -47,7 +47,8 @@ tape write-only [Sipser, Section 8.0][Sipser2013].
 * `Cslib.Complexity.PSPACE`: deterministic polynomial space.
 * `Cslib.Complexity.NPSPACE`: nondeterministic polynomial space.
 * `Cslib.Complexity.PSPACEHard`, `Cslib.Complexity.PSPACEComplete`: hardness and completeness
-  under polynomial-time reductions.
+  under polynomial-time reductions, the instances of `Cslib.Complexity.PolyTimeHard` and
+  `Cslib.Complexity.PolyTimeComplete` for `PSPACE`.
 
 ## Main results
 
@@ -116,17 +117,23 @@ theorem PSPACE_subset_NPSPACE : PSPACE enc ⊆ NPSPACE enc := by
 
 /-- Every problem in `PSPACE`, with any encoding of its instances, reduces to `B` in polynomial
 time. -/
-def PSPACEHard {β : Type*} (encB : β ↪ List Bool) (B : Set β) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ PSPACE enc → PolyTimeReducible enc encB A B
+abbrev PSPACEHard {β : Type*} (encB : β ↪ List Bool) (B : Set β) : Prop :=
+  PolyTimeHard @PSPACE encB B
 
 /-- `B` is in `PSPACE` and every problem in `PSPACE` reduces to it. -/
-def PSPACEComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop :=
-  B ∈ PSPACE encB ∧ PSPACEHard encB B
+abbrev PSPACEComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop :=
+  PolyTimeComplete @PSPACE encB B
+
+theorem polyTimeHard_PSPACE_iff {β : Type*} {encB : β ↪ List Bool} {B : Set β} :
+    PolyTimeHard @PSPACE encB B ↔ PSPACEHard encB B := Iff.rfl
+
+theorem polyTimeComplete_PSPACE_iff {β : Type} {encB : β ↪ List Bool} {B : Set β} :
+    PolyTimeComplete @PSPACE encB B ↔ PSPACEComplete encB B := Iff.rfl
 
 /-- `PSPACE`-hardness transfers along a polynomial-time reduction. -/
 theorem PSPACEHard.trans {β γ : Type*} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
     {B : Set β} {C : Set γ} (hB : PSPACEHard encB B) (hBC : PolyTimeReducible encB encC B C) :
     PSPACEHard encC C :=
-  fun enc A hA => (hB enc A hA).trans hBC
+  PolyTimeHard.trans hB hBC
 
 end Cslib.Complexity

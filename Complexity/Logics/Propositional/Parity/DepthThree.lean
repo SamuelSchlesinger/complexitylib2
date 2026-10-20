@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.CNF.Coding
+public import Complexity.Logics.Propositional.CNF.Parity
 import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
@@ -152,43 +153,6 @@ theorem CNF.two_rpow_le_length_of_any_eval_eq_parity (hn : 1 ≤ n) {k : ℕ} (h
   rw [card_isolatedInputs_parity hn, Nat.cast_pow, Nat.cast_ofNat, mul_comm (Fs.length : ℝ)] at h
   rw [Real.rpow_sub_one two_ne_zero]
   exact div_two_le_of_two_pow_sub_one_mul_le hn h
-
-/-- The clause excluding the pattern of `y` on `B`: it holds when the input differs from `y` at
-some position of `B`. -/
-noncomputable def Clause.exclude (B : Finset (Fin n)) (y : BitString n) : Clause (Fin n) :=
-  B.toList.map fun i => (i, !y i)
-
-theorem Clause.eval_exclude_eq_true_iff (B : Finset (Fin n)) (y x : BitString n) :
-    (Clause.exclude B y).eval x = true ↔ ∃ i ∈ B, x i ≠ y i := by
-  simp [Clause.exclude, Clause.eval_eq_true_iff, Bool.eq_not_iff]
-
-@[simp] theorem Clause.length_exclude (B : Finset (Fin n)) (y : BitString n) :
-    (Clause.exclude B y).length = #B := by
-  simp [Clause.exclude]
-
-/-- A formula in conjunctive normal form saying that the parity of the bits in `B` is `c`: a
-clause excludes each pattern on `B` of the other parity. -/
-noncomputable def CNF.parityOnEq (B : Finset (Fin n)) (c : Bool) : CNF (Fin n) :=
-  ({y : BitString n | (∀ i ∉ B, y i = false) ∧ parityOn B y ≠ c} : Finset _).toList.map
-    (Clause.exclude B)
-
-theorem CNF.eval_parityOnEq_eq_true_iff (B : Finset (Fin n)) (c : Bool) (x : BitString n) :
-    (CNF.parityOnEq B c).eval x = true ↔ parityOn B x = c := by
-  simp only [CNF.parityOnEq, CNF.eval_map_eq_true_iff, mem_toList, mem_filter, mem_univ,
-    true_and, Clause.eval_exclude_eq_true_iff, and_imp]
-  constructor
-  · intro h
-    by_contra hne
-    -- the pattern of `x` on `B` is excluded
-    have hpar : parityOn B (fun i => if i ∈ B then x i else false) = parityOn B x :=
-      parityOn_congr fun j hj => by simp [hj]
-    obtain ⟨i, hi, hxi⟩ := h (fun i => if i ∈ B then x i else false)
-      (fun i hi => by simp [hi]) (hpar ▸ hne)
-    simp [hi] at hxi
-  · intro hx y _ hy
-    by_contra h
-    push Not at h
-    exact hy ((parityOn_congr h).symm.trans hx)
 
 /-- **Parity is an OR of `2 ^ (n / k - 1)` formulas of width `k` in conjunctive normal form** when
 `k` divides `n`, after [Paturi, Pudlák and Zane, Lemma 4][PaturiPudlakZane1999]: split the variables

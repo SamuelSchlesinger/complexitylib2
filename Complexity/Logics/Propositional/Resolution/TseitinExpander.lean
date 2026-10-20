@@ -1,0 +1,162 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Foundations.Combinatorics.Expander.Multigraph
+public import Complexity.Logics.Propositional.Resolution.Tseitin
+import Complexity.Foundations.Combinatorics.Expander.Existence
+
+/-!
+# Tseitin formulas on expanders are hard for resolution
+
+A rotation map `G` (`Cslib.RotationMap`) is a multigraph with an edge for each pair of a dart and
+its reversal (`Cslib.RotationMap.edgeEnds`), and its edge expansion `h(G)` bounds the expansion
+`e(G)` of Ben-Sasson and Wigderson: `h(G) |V| / 3 ≤ e(G)`
+(`Cslib.RotationMap.edgeExpansion_mul_card_div_three_le_minBalancedCut`). If `h(G) > 0`, the
+multigraph is connected, and Tseitin formulas on it need resolution refutations of width at least
+`h(G) |V| / 3` (`Cslib.Logic.PL.Tseitin.edgeExpansion_le_of_refutableInWidth_rotationMap`) and,
+when `|D| + 2 ≤ h(G) |V| / 3`, of at least `exp ((h(G) |V| / 3 - |D| - 2)² / (8 |V| |D|))` lines
+(`Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize_rotationMap`).
+
+Constant-degree expanders (`Cslib.RotationMap.expander`) have `120` labels and edge expansion at
+least `1 / 6000` (`Cslib.RotationMap.le_edgeExpansion_expander`). Their Tseitin formulas with a
+single charged vertex form **a family, with explicit constants, of unsatisfiable formulas with
+`O(n)` variables and clauses of constant width whose resolution refutations have `2 ^ Ω(n)`
+lines** (`Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le`) [Urquhart][Urquhart1987]
+[Ben-Sasson and Wigderson][BenSassonWigderson2001]. The expanders, and so the formulas, are
+obtained non-constructively, from a counting argument (`Expander/Existence.lean`).
+
+## Main results
+
+* `Cslib.Logic.PL.Tseitin.edgeExpansion_le_of_refutableInWidth_rotationMap`,
+  `Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize_rotationMap`: the width and size lower bounds
+  for Tseitin formulas on rotation maps, in terms of edge expansion.
+* `Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le`: for every `n ≥ 4392000`, an
+  unsatisfiable formula with at most `120 n` variables and `2 ^ 120 · n` clauses of width at most
+  `120` needs resolution refutations of `exp (n / (960 · 36000²))` lines.
+
+## References
+
+* [A. Urquhart, *Hard examples for resolution*][Urquhart1987]
+* [E. Ben-Sasson, A. Wigderson, *Short proofs are narrow—resolution made
+  simple*][BenSassonWigderson2001]
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*, Chapter 18][Jukna2012]
+-/
+
+@[expose] public section
+
+namespace Cslib.Logic.PL
+
+open Finset
+
+namespace Tseitin
+
+variable {V D : Type*} [Fintype V] [DecidableEq V] [Fintype D] [DecidableEq D]
+  (G : RotationMap V D)
+
+/-- **The width lower bound for Tseitin formulas on rotation maps**
+[Ben-Sasson and Wigderson][BenSassonWigderson2001]: if `h(G) > 0`, every resolution
+refutation of a Tseitin formula on `G` has width at least `h(G) |V| / 3`. -/
+theorem edgeExpansion_le_of_refutableInWidth_rotationMap (hG : 0 < G.edgeExpansion)
+    {χ : V → Bool} {w : ℕ} (h : (CNF.tseitinFormula G.edgeEnds χ).RefutableInWidth w) :
+    G.edgeExpansion * Fintype.card V / 3 ≤ w := by
+  have hc := G.connected_toSimpleGraph_of_edgeExpansion_pos hG
+  rw [← G.toSimpleGraph_edgeEnds] at hc
+  exact G.edgeExpansion_mul_card_div_three_le_minBalancedCut.trans
+    (by exact_mod_cast minBalancedCut_le_of_refutableInWidth hc h)
+
+/-- **The size lower bound for Tseitin formulas on rotation maps**
+[Ben-Sasson and Wigderson, Corollary 3.6][BenSassonWigderson2001]: if
+`|D| + 2 ≤ h(G) |V| / 3`, every resolution refutation of a Tseitin formula on `G` has at least
+`exp ((h(G) |V| / 3 - |D| - 2)² / (8 |V| |D|))` lines. -/
+theorem exp_le_of_refutableInSize_rotationMap
+    (hG : Fintype.card D + 2 ≤ G.edgeExpansion * Fintype.card V / 3) {χ : V → Bool} {s : ℕ}
+    (hs : (CNF.tseitinFormula G.edgeEnds χ).RefutableInSize s) :
+    Real.exp ((G.edgeExpansion * Fintype.card V / 3 - Fintype.card D - 2) ^ 2 /
+      (8 * Fintype.card V * Fintype.card D)) ≤ s := by
+  have hh : 0 < G.edgeExpansion := by
+    by_contra h
+    have : G.edgeExpansion = 0 := le_antisymm (not_lt.1 h) G.edgeExpansion_nonneg
+    rw [this, zero_mul, zero_div] at hG
+    linarith [(Fintype.card D).cast_nonneg (α := ℝ)]
+  have hc := G.connected_toSimpleGraph_of_edgeExpansion_pos hh
+  rw [← G.toSimpleGraph_edgeEnds] at hc
+  have he := G.edgeExpansion_mul_card_div_three_le_minBalancedCut
+  have hke : Fintype.card D + 2 ≤ Multigraph.minBalancedCut G.edgeEnds := by
+    exact_mod_cast hG.trans he
+  have hsize := exp_le_of_refutableInSize (N := Fintype.card V * Fintype.card D) hc
+    G.card_incidence_edgeEnds_le (by rw [Fintype.card_coe]; exact G.card_edges_le) hke hs
+  refine le_trans (Real.exp_le_exp.2 ?_) hsize
+  push_cast
+  rw [mul_assoc]
+  gcongr
+  linarith
+
+end Tseitin
+
+/-! ### Hard formulas -/
+
+namespace CNF
+
+/-- **Unsatisfiable formulas with `O(n)` variables and clauses of constant width need resolution
+refutations of `2 ^ Ω(n)` lines** [Urquhart][Urquhart1987]
+[Ben-Sasson and Wigderson][BenSassonWigderson2001] [Jukna, Chapter 18][Jukna2012]. For every
+`n ≥ 4392000` there is an unsatisfiable formula with at most `120 n` variables and at most
+`2 ^ 120 · n` clauses, of width at most `120`, whose resolution refutations all have at least
+`exp (n / (960 · 36000²))` lines. It is the Tseitin formula, with a single charged vertex, of a
+`120`-regular expander on `n` vertices (`Cslib.RotationMap.expander`), whose existence is proved
+non-constructively. -/
+theorem exists_forall_refutableInSize_exp_le :
+    ∀ n ≥ 4392000, ∃ m ≤ 120 * n, ∃ φ : CNF (Fin m),
+      φ.length ≤ 2 ^ 120 * n ∧ (∀ c ∈ φ, c.width ≤ 120) ∧ ¬ φ.Satisfiable ∧
+      ∀ s, φ.RefutableInSize s → Real.exp (n / (960 * 36000 ^ 2)) ≤ s := by
+  intro n hn
+  have : NeZero n := ⟨by omega⟩
+  have : Nontrivial (Fin n) := Fin.nontrivial_iff_two_le.2 (by omega)
+  set G := RotationMap.expander (Fin n)
+  let f : Fin (Fintype.card G.edges) ≃ G.edges := (Fintype.equivFin G.edges).symm
+  let ends := G.edgeEnds ∘ f
+  let χ : Fin n → Bool := fun v => decide (v = 0)
+  have hdeg (v : Fin n) : #(Multigraph.incidence ends v) ≤ 120 := by
+    rw [Multigraph.card_incidence_comp]
+    simpa using G.card_incidence_edgeEnds_le v
+  have hm : Fintype.card G.edges ≤ 120 * n := by
+    rw [Fintype.card_coe, mul_comm]
+    simpa using G.card_edges_le
+  refine ⟨_, hm, tseitinFormula ends χ, ?_, fun c hc => ?_, not_satisfiable_tseitinFormula ?_,
+    fun s hs => ?_⟩
+  · simpa [mul_comm] using length_tseitinFormula_le (χ := χ) hdeg
+  · exact (List.toFinset_card_le c).trans (length_le_of_mem_tseitinFormula hdeg hc)
+  · simp [χ, parityOn, filter_eq']
+  -- the edge expansion is at least `1 / 6000`, so `e(G) ≥ n / 18000`
+  have hh := RotationMap.le_edgeExpansion_expander (Fin n)
+  have he : (n : ℝ) / 18000 ≤ Multigraph.minBalancedCut ends := by
+    rw [Multigraph.minBalancedCut_comp]
+    have := G.edgeExpansion_mul_card_div_three_le_minBalancedCut
+    simp only [Fintype.card_fin] at this
+    nlinarith [(n.cast_nonneg : (0 : ℝ) ≤ n)]
+  have hn' : (4392000 : ℝ) ≤ n := by exact_mod_cast hn
+  have hke : 120 + 2 ≤ Multigraph.minBalancedCut ends := by
+    have : (122 : ℝ) ≤ Multigraph.minBalancedCut ends := by linarith
+    exact_mod_cast this
+  have hG : (Multigraph.toSimpleGraph ends).Connected := by
+    rw [Multigraph.toSimpleGraph_comp, G.toSimpleGraph_edgeEnds]
+    exact G.connected_toSimpleGraph_of_edgeExpansion_pos (by linarith)
+  have hsize := Tseitin.exp_le_of_refutableInSize hG hdeg (by simpa using hm) hke hs
+  refine le_trans (Real.exp_le_exp.2 ?_) hsize
+  -- `e(G) - 122 ≥ n / 36000`
+  have hx : (n : ℝ) / 36000 ≤ (Multigraph.minBalancedCut ends : ℝ) - 120 - 2 := by linarith
+  have hsq := pow_le_pow_left₀ (by positivity) hx 2
+  have hnpos : (0 : ℝ) < n := by linarith
+  rw [div_le_div_iff₀ (by positivity) (by positivity)]
+  push_cast
+  nlinarith
+
+end CNF
+
+end Cslib.Logic.PL

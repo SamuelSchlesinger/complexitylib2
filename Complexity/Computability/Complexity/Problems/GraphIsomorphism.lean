@@ -38,6 +38,9 @@ vertices.
 ## Main results
 
 * `Cslib.Complexity.mem_GraphIsomorphism_iff`: isomorphism through positions.
+* `Cslib.Complexity.length_distinctVertices_eq_of_mem_GraphIsomorphism`,
+  `Cslib.Complexity.mem_GraphIsomorphism_iff_exists_perm`: isomorphic graphs have equally many
+  vertices, and are then related by a permutation of positions.
 * `Cslib.Complexity.GraphIsomorphism.isVerifier`, `Cslib.Complexity.GraphIsomorphism.mem_NP`:
   `GraphIsomorphism ∈ NP (encPair encGraph encGraph)`.
 
@@ -113,6 +116,26 @@ theorem mem_GraphIsomorphism_iff {x : Graph × Graph} : x ∈ GraphIsomorphism �
     obtain ⟨j, rfl⟩ := x.1.vertexEquiv.surjective v
     simp only [Equiv.trans_apply, Equiv.symm_apply_apply]
     rw [Graph.induced_adj_vertexEquiv, Graph.induced_adj_vertexEquiv, hσ]
+
+/-- Isomorphic graphs have equally many distinct vertices. -/
+theorem length_distinctVertices_eq_of_mem_GraphIsomorphism {G₀ G₁ : Graph}
+    (h : (G₀, G₁) ∈ GraphIsomorphism) :
+    G₁.distinctVertices.length = G₀.distinctVertices.length := by
+  obtain ⟨σ, -⟩ := mem_GraphIsomorphism_iff.1 h
+  exact (Fin.equiv_iff_eq.1 ⟨σ⟩).symm
+
+/-- Graphs with equally many distinct vertices are isomorphic exactly when a permutation of the
+positions of the first carries its adjacency to the adjacency of the second. -/
+theorem mem_GraphIsomorphism_iff_exists_perm {G₀ G₁ : Graph}
+    (h : G₁.distinctVertices.length = G₀.distinctVertices.length) :
+    (G₀, G₁) ∈ GraphIsomorphism ↔ ∃ τ : Equiv.Perm (Fin G₀.distinctVertices.length),
+      ∀ i j, G₁.adjIndex (τ i) (τ j) = G₀.adjIndex i j := by
+  rw [mem_GraphIsomorphism_iff]
+  constructor
+  · rintro ⟨σ, hσ⟩
+    exact ⟨σ.trans (finCongr h), fun i j => hσ i j⟩
+  · rintro ⟨τ, hτ⟩
+    exact ⟨τ.trans (finCongr h.symm), fun i j => hτ i j⟩
 
 namespace GraphIsomorphism
 
@@ -201,7 +224,7 @@ theorem isVerifier :
   set n := G.distinctVertices.length
   constructor
   · rintro ⟨σ, hσ⟩
-    have hcard : H.distinctVertices.length = n := by simpa using (Fintype.card_congr σ).symm
+    have hcard : H.distinctVertices.length = n := (Fin.equiv_iff_eq.1 ⟨σ⟩).symm
     let f : ℕ → ℕ := fun i => if h : i < n then σ ⟨i, h⟩ else 0
     have hfσ : ∀ i (h : i < n), f i = σ ⟨i, h⟩ := fun i h => by simp [f, h]
     have hf : ∀ i < n, f i < n := fun i h => (hfσ i h).trans_lt

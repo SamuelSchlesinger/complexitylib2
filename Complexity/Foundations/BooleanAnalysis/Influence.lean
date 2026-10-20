@@ -71,6 +71,9 @@ of bits whose flip changes the value, the *average sensitivity* (`BitString.tota
   character.
 * `Cslib.BitString.totalInfluence_le_mul_expect_sq`: the total influence is at most the number of
   coordinates times the mean square.
+* `Cslib.BitString.expect_sub_expect_sq_signVal_le_one`,
+  `Cslib.BitString.influence_signVal_le_one`: a Boolean function read as signs has variance and
+  influences at most one.
 
 ## References
 
@@ -276,5 +279,18 @@ theorem totalInfluence_le_mul_expect_sq (f : (ι → Bool) → ℝ) :
   rw [totalInfluence_eq_sum_card_mul_fourierCoeff_sq, expect_sq_eq_sum_fourierCoeff_sq, mul_sum]
   refine sum_le_sum fun S _ => mul_le_mul_of_nonneg_right ?_ (sq_nonneg _)
   exact_mod_cast card_le_univ S
+
+/-- The variance of a Boolean function read as signs is at most one. -/
+theorem expect_sub_expect_sq_signVal_le_one (f : (ι → Bool) → Bool) :
+    𝔼 x, (signVal (f x) - 𝔼 y, signVal (f y)) ^ 2 ≤ 1 := by
+  rw [expect_sub_expect_sq_eq_sum_fourierCoeff_sq, ← sum_fourierCoeff_sq_signVal f]
+  exact sum_le_sum_of_subset_of_nonneg (filter_subset _ _) fun _ _ _ => sq_nonneg _
+
+/-- The influence of a coordinate on a Boolean function read as signs is at most one. -/
+theorem influence_signVal_le_one (f : (ι → Bool) → Bool) (i : ι) :
+    influence i (fun x => signVal (f x)) ≤ 1 := by
+  refine (influence_le_expect_sq i _).trans_eq ?_
+  simp only [sq, signVal_mul_self]
+  exact expect_const univ_nonempty 1
 
 end Cslib.BitString
