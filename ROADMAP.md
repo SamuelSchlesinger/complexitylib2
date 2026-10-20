@@ -189,8 +189,14 @@ of the handover. The work below remains available for subsequent, independently 
      [Ordered/TupleInterpretation](Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean)
      defines quantifier-free strict/weak order and the canonical full-domain constants, with
      proved unique selection and ranks `0`, `1`, `n^k - 1` for positive dimension.
-     **Next milestones:** successor and arbitrary-base BIT lifting; numeric-preserving
-     composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
+     **Full-domain successor prerequisite completed (#54):**
+     [Ordered/TupleSuccessor](Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean)
+     proves that the carry formula holds exactly at consecutive arbitrary-base lexicographic
+     ranks, with explicit zero-dimension and maximum/no-wrap boundaries. Its generic compiler
+     preserves quantifier-freeness when the supplied source successor is quantifier-free.
+     The canonical `≤`/BIT instance uses a universal adjacency formula; no unconditional
+     quantifier-free successor claim is made for this basis.
+     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full

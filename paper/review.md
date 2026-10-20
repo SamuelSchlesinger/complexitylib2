@@ -1415,3 +1415,35 @@ counting-algebra entry is extended, preserving the 124-entry count and the tuple
 robustness entries. The PDF was rebuilt without undefined citations or overfull boxes;
 rendered pages 20 (products), 9 (tuples) and 25 (two-sided robustness) were inspected.
 The two new source anchors retain the independently checked source revision above.
+
+## 2026-10-20: Non-wrapping successor on full tuple universes
+
+Worker `ordered-successor-20261020` extends the existing tuple entry for source revision
+`72b80bbaccd792d6ee9e7858d0f23a40ed3f3f57`; the curated count remains 124. The coordinatewise
+carry condition is proved equivalent to exact rank increment for arbitrary bases. The native
+compiler preserves quantifier-freeness conditional on its supplied source successor. The canonical
+instance in the library's `≤`/BIT basis uses one universal adjacency quantifier in each carry
+alternative; the index makes this scope explicit. Dimension-zero and maximum/no-wrap boundaries
+are stated. BIT lifting, arithmetic definability and numeric-preserving composition remain open.
+
+All six gates pass on the source revision, and source/tests are MCP-clean. Clients cover base-three
+carry/non-carry, multiple carried digits, base-five carry, skipped ranks, maximum/no-wrap and zero
+dimension. A distinct input language with an actual atomic successor relation supplies a nonvacuous
+client for conditional quantifier-free compilation. The three named headline axiom guards use only
+`propext`, `Classical.choice` and `Quot.sound`. The two new index links are pinned to the source
+revision above, lines 263 and 185, and checked against the declarations. The source basis and
+full-domain assumption were checked against Immerman's Remark 1.32 and Exercise 1.33(2).
+
+Independent coordinator `fusion_barrier` approved the exact source revision above after reviewing
+API, correctness, tests and the draft index against the primary source. No findings remained;
+fresh MCP diagnostics for both new files were clean. Exact final integration/PDF review is tracked
+in PR #59. AI assistance: OpenAI Codex. These reviews do not imply human editorial approval or
+machine-checked prose equivalence.
+
+PR #59 preserves the source and tests while integrating PR #57 head
+`ae7a65d0add5b89d234ba8274e04dfde09562955`, including the reviewed indexed-product stack.
+All six gates pass on the combined tree. The rebuilt index has 124 entries; page 9 (successor),
+page 14 (preserved SL) and page 21 (preserved counting products) were rendered and inspected. The
+final LaTeX log has no undefined citations or overfull boxes. Independent coordinator
+`fusion_barrier` inspected the final successor page with no findings; exact integration-head
+approval is recorded in PR #59.
