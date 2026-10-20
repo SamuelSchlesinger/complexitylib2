@@ -176,7 +176,7 @@ abbrev OccurrenceTag.Coord : OccurrenceTag → Type
   | .occ _ => Fin 2
   | .sizeV => Fin 1
 
-instance : ∀ t : OccurrenceTag, Finite t.Coord
+instance instFiniteOccurrenceTagCoord : ∀ t : OccurrenceTag, Finite t.Coord
   | .occ _ => inferInstanceAs (Finite (Fin 2))
   | .sizeV => inferInstanceAs (Finite (Fin 1))
 

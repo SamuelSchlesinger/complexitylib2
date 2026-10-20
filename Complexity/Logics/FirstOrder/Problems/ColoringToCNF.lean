@@ -79,7 +79,7 @@ abbrev ColoringClauseTag.Coord : ColoringClauseTag → Type
   | .vertex => Fin 1
   | .edge _ => Fin 2
 
-instance : ∀ t : ColoringClauseTag, Finite t.Coord
+instance instFiniteColoringClauseTagCoord : ∀ t : ColoringClauseTag, Finite t.Coord
   | .var _ => inferInstanceAs (Finite (Fin 1))
   | .vertex => inferInstanceAs (Finite (Fin 1))
   | .edge _ => inferInstanceAs (Finite (Fin 2))
