@@ -31,7 +31,12 @@ any polynomial in unit time (`Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logC
 
 A program computes a function within time `T` (`Cslib.RAM.ComputesInTime`) when on every input it
 halts with the value of the function in the output register `0` (`Cslib.RAM.HaltsWithResult`)
-after a run of time at most `T`.
+after a run of time at most `T`. The time bound is a function of the input tuple, with no chosen
+string encoding or input-length measure. Input loading and output extraction are free. For
+example, the empty program returns its first preloaded input in time `0` under either measure.
+The bit-length bound above therefore retains the initial-size term: it cannot in general be
+replaced by a bound in execution time alone. These costs adapt Cook and Reckhow's conventions;
+no Turing-machine simulation or equality of polynomial-time language classes is proved here.
 
 The length of a number is `Cslib.RAM.bitLength n = ⌊log₂ n⌋ + 1`, its number of binary digits with
 `0` written as one digit: it is `max n.size 1`, Mathlib's `Nat.size n` except at `0`
@@ -309,7 +314,9 @@ def HaltsWithResultInTime (cost : Instr → URM.Regs → ℕ) (p : Program) (inp
 
 /-- `p` computes the function `f` of `k` arguments within time `T` under `cost`: on every input
 `x` it halts with `f x` in the output register `0` within time `T x`. As for URMs
-(`Cslib.URM.Computes`), the arguments are the inputs in registers `0, …, k - 1`. -/
+(`Cslib.URM.Computes`), the arguments are the inputs in registers `0, …, k - 1`.
+Initialization and output extraction are uncharged; `T` is indexed by the input tuple, not by a
+specified string-encoding length. -/
 def ComputesInTime (cost : Instr → URM.Regs → ℕ) (k : ℕ) (p : Program)
     (f T : (Fin k → ℕ) → ℕ) : Prop :=
   ∀ x : Fin k → ℕ, HaltsWithResultInTime cost p (List.ofFn x) (f x) (T x)

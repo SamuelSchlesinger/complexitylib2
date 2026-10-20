@@ -1,12 +1,13 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LinearSpaceArith
 public import Complexity.Computability.TreeEval.Reader.Correct
 public import Complexity.Computability.TreeEval.Reader.Arith
 
@@ -22,11 +23,20 @@ gate determines the gate.
 
 * `Cslib.TreeEval.Instance`: an instance of some value length and height.
 * `Cslib.TreeEval.encInstance`: the encoding of instances.
+
+## Main results
+
+* `Cslib.TreeEval.ell_lt_length_encNat_length_encInstance`: for `1 ≤ I.height`, the value length
+  `I.ell` is strictly below the binary length of `(encInstance I).length`.
+* `Cslib.TreeEval.height_lt_length_encNat_length_encInstance`: for `1 ≤ I.ell`, the height
+  `I.height` is strictly below the binary length of `(encInstance I).length`.
 -/
 
 @[expose] public section
 
 namespace Cslib.TreeEval
+
+open Turing MultiTapeTM
 
 /-- A Tree Evaluation instance of some value length and height. -/
 structure Instance where
@@ -81,5 +91,34 @@ theorem encode_injective {I J : Instance} (h : I.tree.encode = J.tree.encode) : 
 def encInstance : Instance ↪ List Bool := ⟨fun I => I.tree.encode, fun _ _ => encode_injective⟩
 
 @[simp] theorem encInstance_apply (I : Instance) : encInstance I = I.tree.encode := rfl
+
+theorem length_encInstance (I : Instance) :
+    (encInstance I).length = I.ell + I.height + 2 + bodyLength I.ell I.height := by
+  simp
+
+/-- Every encoded instance has at least the two delimiter zeroes of the header. -/
+theorem two_le_length_encInstance (I : Instance) : 2 ≤ (encInstance I).length := by
+  rw [length_encInstance]; omega
+
+/-- For `1 ≤ I.height`, the value length `I.ell` is strictly less than the binary length of the
+encoded instance length. -/
+theorem ell_lt_length_encNat_length_encInstance {I : Instance} (hH : 1 ≤ I.height) :
+    I.ell < (encNat (encInstance I).length).length := by
+  rw [length_encNat_eq_size, Nat.lt_size]
+  rcases Nat.eq_zero_or_pos I.ell with hℓ | hℓ
+  · have := two_le_length_encInstance I
+    rw [hℓ, pow_zero]
+    omega
+  · have := two_pow_ell_le_bodyLength hℓ hH
+    rw [length_encInstance]
+    omega
+
+/-- For `1 ≤ I.ell`, the height `I.height` is strictly less than the binary length of the encoded
+instance length. -/
+theorem height_lt_length_encNat_length_encInstance {I : Instance} (hℓ : 1 ≤ I.ell) :
+    I.height < (encNat (encInstance I).length).length := by
+  rw [length_encNat_eq_size, Nat.lt_size, length_encInstance]
+  have := two_pow_height_le_bodyLength hℓ I.height
+  omega
 
 end Cslib.TreeEval

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary
+import Mathlib.Algebra.BigOperators.Group.List.Basic
 
 /-!
 # Polynomial-time arithmetic on binary integers
@@ -352,5 +353,21 @@ theorem intBin_le' {α : Type} {input : α ↪ List Bool} {left right : α → �
     (hright : ComputableTidilyInPolyTime right input encIntBin) :
     ComputableTidilyInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
   intBin_le.comp (hleft.prod hright)
+
+/-- Multiply a uniformly computed family of binary integers over a computed unary range. -/
+@[fun_prop]
+theorem intBin_prod_range {α : Type} {enc : α ↪ List Bool}
+    {f : α × ℕ → ℤ} {r : α → ℕ}
+    (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
+    (hr : ComputableTidilyInPolyTime r enc encUnary) :
+    ComputableTidilyInPolyTime (fun a => ∏ i ∈ Finset.range (r a), f (a, i)) enc encIntBin := by
+  have hl : ComputableTidilyInPolyTime
+      (fun a => (List.range (r a)).map fun i => f (a, i)) enc (encList encIntBin) :=
+    ComputableTidilyInPolyTime.mapWithInput (ComputableTidilyInPolyTime.range.comp hr) hf
+  convert ComputableTidilyInPolyTime.intBin_prod.comp hl using 1
+  funext a
+  have he : (List.range (r a)).toFinset = Finset.range (r a) := by ext; simp
+  simpa only [he, Function.comp_apply] using
+    List.prod_toFinset (fun i => f (a, i)) (l := List.range (r a)) List.nodup_range
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
