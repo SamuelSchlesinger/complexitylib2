@@ -312,7 +312,6 @@ theorem realize_domainAt (t : T) (c : Coord T ι → M) :
     (I.domainAt t).Realize c ↔ c p ≠ c q ∧ (∀ t', c (tag t') = if t' = t then c q else c p) ∧
       (∀ σ : Σ t', ι t', σ.1 ≠ t → c (data σ) = c p) ∧
         (I.domain t).Realize fun i => c (data ⟨t, i⟩) := by
-  classical
   simp only [domainAt, Formula.realize_inf, Formula.realize_not, realize_varEq,
     Formula.realize_iInf, Formula.realize_relabel, Function.comp_def, and_assoc]
   refine and_congr Iff.rfl (and_congr ?_ (and_congr ?_ Iff.rfl))
@@ -413,14 +412,12 @@ theorem coords_data_mk (a b : M) (t : T) (x : ι t → M) (hx : (I.domain t).Rea
 omit [Finite T] [∀ t, Finite (ι t)] in
 theorem coords_tag_eq_iff {a b : M} (h : a ≠ b) (e : I.Model M) (t : T) :
     coords a b e (tag t) = b ↔ t = e.1 := by
-  classical
   simp only [coords]
   split_ifs with ht <;> simp [ht, h]
 
 omit [Finite T] [∀ t, Finite (ι t)] in
 theorem coords_injective {a b a' b' : M} (h : a ≠ b) {e e' : I.Model M}
     (heq : coords a b e = coords a' b' e') : a = a' ∧ b = b' ∧ e = e' := by
-  classical
   have ha : a = a' := congrFun heq Coord.p
   have hb : b = b' := congrFun heq Coord.q
   subst ha hb
@@ -437,7 +434,6 @@ theorem coords_injective {a b a' b' : M} (h : a ≠ b) {e e' : I.Model M}
 
 theorem realize_domainAt_coords (a b : M) (h : a ≠ b) (e : I.Model M) :
     (I.domainAt e.1).Realize (coords a b e) := by
-  classical
   refine (realize_domainAt _ _).2 ⟨h, fun t' => ?_, fun ⟨t', i⟩ ht => ?_, ?_⟩
   · simp only [coords]
   · simp only [coords, ht, dite_false]
@@ -451,7 +447,6 @@ noncomputable def ofCopies [Nontrivial M] (x : Copies (Pairs M) (I.Model M)) :
 
 theorem ofCopies_bijective [Nontrivial M] :
     Function.Bijective (ofCopies (I := I) (M := M) S) := by
-  classical
   constructor
   · rintro ⟨⟨⟨a, b⟩, h⟩, e⟩ ⟨⟨⟨a', b'⟩, h'⟩, e'⟩ heq
     obtain ⟨rfl, rfl, rfl⟩ := coords_injective h (congrArg Subtype.val heq)
@@ -479,7 +474,6 @@ noncomputable def copiesEquiv [L'.IsRelational] [Nontrivial M] :
   toEquiv := Equiv.ofBijective _ (ofCopies_bijective S)
   map_fun' f := isEmptyElim f
   map_rel' {n} R xs := by
-    classical
     change ((I.toInterpretation S).rel R).Realize (fun x => coords (xs x.1).idx.1.1
       (xs x.1).idx.1.2 (xs x.1).val x.2) ↔ _
     rw [realize_toInterpretation_rel_of_nontrivial, realize_relAt, Copies.relMap_copies,

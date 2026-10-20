@@ -107,6 +107,31 @@ The earlier canonical-expansion interface is credited separately.
 \end{result}
 
 \begin{result}
+\subsection{Exact canonical addition from order and BIT}
+There is one native first-order formula $\operatorname{PLUS}(x,y,z)$ over
+$\le$ and BIT, independent of the universe size, such that for every canonical
+structure on $[n]=\{0,\ldots,n-1\}$ with $n\ge2$ and every assignment,
+\[
+\operatorname{PLUS}(x,y,z)\quad\Longleftrightarrow\quad
+\operatorname{val}(x)+\operatorname{val}(y)=\operatorname{val}(z).
+\]
+The equality is ordinary natural-number addition. No hypothesis that the sum
+fits is required: whenever $\operatorname{val}(x)+\operatorname{val}(y)\ge n$,
+the formula rejects every candidate $z\in[n]$. Input vocabularies may include
+functions, constants and relations; their interpretations do not affect this
+numeric formula. BIT is indexed from the least significant bit.
+
+This formalizes the PLUS part of Immerman's arithmetic-definability theorem,
+using his generate/propagate carry characterization with the bit orientation
+reversed.\citep[Proposition 1.9 and Theorem 1.17(1)]{Immerman1999}
+The formal proof reuses the library's propagation characterization and Lean's
+bit-vector carry and addition theorems. TIMES, the Bit Sum Lemma, unrestricted
+arbitrary-base tuple BIT lifting and numeric-preserving composition remain open.
+\declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{142}{Cslib.Logic.FO.Ordered.realize_addition}
+\declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{162}{Cslib.Logic.FO.Ordered.not_realize_addition_of_le}
+\end{result}
+
+\begin{result}
 \subsection{Lexicographic tuple order, successor and canonical constants}
 For every base $n\ge2$ and dimension $k\ge0$, the full tuple universe
 $[n]^k$ is in bijection with $[n^k]$ through the rank
