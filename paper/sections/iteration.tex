@@ -164,3 +164,98 @@ The $m$ time bits pass through unchanged to the iteration stage. Both state
 coordinate conversions are charged once, independently of $m$.
 \decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{147}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_variable_time}
 \end{result}
+
+\begin{result}
+\subsection{Cycle-spectrum reduction, canonical hitting-time identities, and in-forest path duality}
+Let $f:\alpha\to\alpha$ be a map on a finite type $\alpha$ of cardinality $N=|\alpha|$, with
+transient depth $\tau(x)=\mathrm{transientDepth}(f,x)$ and eventual cycle length
+$\ell(x)=\mathrm{cycleLength}(f,x)\in\{1,\dots,N\}$.
+\begin{itemize}
+\item \textbf{Cycle-spectrum reduction and divisibility test.}
+For every state $x$, $a\ge\tau(x)$, and $q\in\mathbb N$, $f^{a+\ell(x)q}(x)=f^a(x)$.
+Consequently every exponent $T\ge N$ reduces modulo $\ell(x)$ via
+\[
+f^T(x)=f^{N+(T-N)\bmod\ell(x)}(x),\qquad N+(T-N)\bmod\ell(x)<2N.
+\]
+For every candidate $\ell\in\mathbb N$, $f^{N+\ell}(x)=f^N(x)$ holds if and only if
+$\ell(x)\mid\ell$. Among any finite candidate set $S\subseteq\mathbb N_{>0}$ containing
+$\ell(x)$---in particular the cycle spectrum $\Sigma(f)=\{\ell(y):y\in\alpha\}$---the period
+$\ell(x)$ is the least element $\ell\in S$ satisfying $f^{N+\ell}(x)=f^N(x)$. When $f$ is
+injective, $\tau(x)=0$, $\ell(x)$ is the minimal period of $x$, the return test simplifies to
+$f^\ell(x)=x\iff\ell(x)\mid\ell$, and for every permutation $\sigma\in\mathrm{Sym}(\alpha)$,
+$\sigma^{-1}(x)=\sigma^{\ell(\sigma,x)-1}(x)$.
+\item \textbf{Canonical hitting-time and phase identities.}
+When $\alpha$ carries a linear order, let $c(x)=\mathrm{canonicalCycle}(f,x)$ be the least state
+on the eventual cycle of $x$ and $\kappa(x)=\mathrm{canonicalTime}(f,x)$ the first time $t$ with
+$f^t(x)=c(x)$. For every non-periodic state $x\notin\mathrm{periodicPts}(f)$,
+$\kappa(f(x))+1=\kappa(x)$. Past the transient depth ($T\ge\tau(x)$), for every $a\in\mathbb N$,
+\[
+f^T(x)=f^a(c(x))\iff a+\kappa(x)\equiv T\pmod{\ell(x)}.
+\]
+\item \textbf{Min-max duality for required paths in in-forests.}
+Let $\sigma:\alpha\to\mathrm{Option}\,\alpha$ be an acyclic partial successor map on a finite
+type $\alpha$ ($\mathrm{iter}(\sigma,k,v)\ne\mathrm{some}\,v$ for all $v$ and $k>0$) and
+$r:\alpha\to\mathbb N$ a vertex length requirement. A directed path $p=(u,L)$ of $L>0$ partial
+iterates from $u$ ending at $v$ is \emph{required} if $L\ge r(v)$, and lies within a vertex subset
+$S\subseteq\alpha$ if all $L$ of its vertices belong to $S$. For every finite subset
+$S\subseteq\alpha$, there exist a hitting set $H\subseteq S$ meeting every required path in $S$
+and a vertex-disjoint packing $P$ of required paths in $S$ with $|P|=|H|$; moreover $|P'|\le|H'|$
+for every packing $P'$ and hitting set $H'$, so the minimum hitting set and maximum disjoint
+packing in $S$ have equal cardinality.
+\end{itemize}
+\citep{Schlesinger2026IteratedFunctions}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{71}{Cslib.FunctionalGraph.iterate_add_cycleLength_mul}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{97}{Cslib.FunctionalGraph.iterate_eq_card_add_mod}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{109}{Cslib.FunctionalGraph.card_add_mod_lt}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{123}{Cslib.FunctionalGraph.cycle_test_iff}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{130}{Cslib.FunctionalGraph.cycleSpectrum}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{142}{Cslib.FunctionalGraph.spectrum_test}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{151}{Cslib.FunctionalGraph.cycleSpectrum_test}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{174}{Cslib.FunctionalGraph.injective_cycle_test_iff}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{180}{Cslib.FunctionalGraph.injective_spectrum_test}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{188}{Cslib.FunctionalGraph.perm_symm_eq_iterate}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{206}{Cslib.FunctionalGraph.canonicalTime_apply}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean}{229}{Cslib.FunctionalGraph.iterate_eq_canonical_iff}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean}{81}{Cslib.FunctionalGraph.ForestDuality.FPath}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean}{109}{Cslib.FunctionalGraph.ForestDuality.Covers}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean}{113}{Cslib.FunctionalGraph.ForestDuality.Packing}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean}{118}{Cslib.FunctionalGraph.ForestDuality.Acyclic}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean}{123}{Cslib.FunctionalGraph.ForestDuality.packing_card_le_cover}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean}{174}{Cslib.FunctionalGraph.ForestDuality.exists_cover_packing}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean}{235}{Cslib.FunctionalGraph.ForestDuality.forest_duality}
+\end{result}
+
+\begin{result}
+\subsection{Semantic correctness of the six-step distinguished-point procedure}
+For any type $\alpha$, map $f:\alpha\to\alpha$, distinguished predicate $H:\alpha\to\mathrm{Prop}$,
+walk length $K\in\mathbb N$, exponent $T\in\mathbb N$, payload map $z:\alpha\to\alpha$, and residue
+table $R:\mathbb N\to\mathbb N$, the procedure $\mathrm{distinguishedPower}(f,H,K,T,z,R,x)$ returns
+$f^T(x)$ directly when $T<K$, and for $T\ge K$ executes:
+\begin{enumerate}
+\item a $(K+1)$-stage prefix scan from $x$ recording the first index $d\le K$ and state $c=f^d(x)$
+satisfying $H(c)$ if any, and ending at $u=f^K(x)$;
+\item a $K$-stage forward correction applying $f$ for $K-d$ steps to $z(c)$ (so that
+$f^{K-d}(f^{T-K}(f^d(x)))=f^T(x)$);
+\item a $K$-stage period walk from $u$ in a separate register recording the least positive return
+time $1\le\lambda\le K$ with $f^\lambda(u)=u$;
+\item a $K$-stage cycle walk advancing $u$ by $\min(R(\lambda),K)$ steps; and
+\item selection of the corrected checkpoint value when the scan hit $H$ and the cycle-walk value
+otherwise.
+\end{enumerate}
+Whenever every repeat-free $(K+1)$-state prefix meets $H$, $z(h)=f^{T-K}(h)$ for all $h$
+satisfying $H(h)$, and $R(\lambda)=(T-K)\bmod\lambda$ for all $1\le\lambda\le K$,
+$\mathrm{distinguishedPower}(f,H,K,T,z,R,x)=f^T(x)$ for every $x\in\alpha$.
+This result is purely combinatorial and semantic; it does not by itself assert Boolean circuit
+gate bounds or uniform preprocessing algorithms for constructing $H$, $z$, or $R$ (native circuit
+bounds for fixed powers are proved separately in \texttt{Iteration.lean}).
+\citep{Schlesinger2026IteratedFunctions}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{73}{Cslib.FunctionalGraph.shifted_payload}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{117}{Cslib.FunctionalGraph.scan}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{180}{Cslib.FunctionalGraph.scan_spec}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{205}{Cslib.FunctionalGraph.correction_run}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{242}{Cslib.FunctionalGraph.periodWalk}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{301}{Cslib.FunctionalGraph.periodWalk_spec}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{316}{Cslib.FunctionalGraph.walk_run}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{340}{Cslib.FunctionalGraph.distinguishedPower}
+\declat{453227db2a7290b1fc9ee2a0b12b4788c6b79ad4}{Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean}{353}{Cslib.FunctionalGraph.distinguishedPower_correct}
+\end{result}
