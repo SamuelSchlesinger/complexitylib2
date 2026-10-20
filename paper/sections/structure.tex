@@ -92,8 +92,8 @@ the target language is relational with the specified additional constants.
 For every canonical expansion with $n\ge2$, equality to the source terms defines
 target $0$, $1$ and $\max$ with values $0$, $1$ and $n-1$.
 
-Canonical BIT lifting on base-$n$ tuples, numeric-preserving composition and
-the ordered logspace/capture results remain open.
+Native full-tuple BIT is proved below. Numeric-preserving composition and the
+ordered logspace/capture results remain open.
 \citep[Section 1.2, Provisos 1.14--1.15, Definition 1.26 and Proposition 3.5]{Immerman1999}
 The earlier canonical-expansion interface is credited separately.
 \citep{Schlesinger2026Numerical}
@@ -125,9 +125,8 @@ This formalizes the PLUS part of Immerman's arithmetic-definability theorem,
 using his generate/propagate carry characterization with the bit orientation
 reversed.\citep[Proposition 1.9 and Theorem 1.17(1)]{Immerman1999}
 The formal proof reuses the library's propagation characterization and Lean's
-bit-vector carry and addition theorems. Bit Sum and TIMES are proved below;
-unrestricted arbitrary-base tuple BIT lifting and numeric-preserving composition
-remain open.
+bit-vector carry and addition theorems. Bit Sum, TIMES and full-tuple BIT are
+proved below; numeric-preserving composition remains open.
 \declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{142}{Cslib.Logic.FO.Ordered.realize_addition}
 \declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{162}{Cslib.Logic.FO.Ordered.not_realize_addition_of_le}
 \end{result}
@@ -156,8 +155,8 @@ native decoder uses fixed chains of PLUS formulas and exact binary shifts;
 no multiplication relation or semantic certificate is assumed. The supporting
 shift formula has exact semantics $z=x\cdot2^e$ and rejects every candidate
 when the product is outside $[n]$. A fixed finite disjunction covers small
-inputs. The native TIMES formula below reuses this result; arbitrary-base tuple
-BIT lifting and numeric-preserving composition remain open.
+inputs. The native TIMES and full-tuple BIT formulas below reuse this result;
+numeric-preserving composition remains open.
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{328}{Cslib.Logic.FO.Ordered.bitSum}
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{335}{Cslib.Logic.FO.Ordered.realize_bitSum}
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{348}{Cslib.Logic.FO.Ordered.existsUnique_bitSum}
@@ -188,7 +187,7 @@ each block, with both endpoints matched to the global words. Exact native PLUS,
 shifts and Bit Sum check the column equations. All witness bounds are proved for
 every $n\ge257$, and one fixed finite disjunction covers smaller inputs.
 The formula assumes no multiplication relation or semantic certificate.
-Arbitrary-base tuple BIT lifting and numeric-preserving composition remain open.
+Native full-tuple BIT is proved below; numeric-preserving composition remains open.
 \declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{282}{Cslib.Logic.FO.Ordered.multiplication}
 \declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{290}{Cslib.Logic.FO.Ordered.realize_multiplication}
 \declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{310}{Cslib.Logic.FO.Ordered.not_realize_multiplication_of_le}
@@ -234,8 +233,9 @@ claim is made for this basis.
 
 This completes the full-domain order, constant and successor prerequisites of
 Immerman's Remark 1.32 and Exercise 1.33(1--2), with the stated source-basis convention.
-Canonical BIT lifting, numeric-preserving composition and the ordered complexity/capture
-endpoints remain open. No automatic BIT definition for a restricted tuple domain is claimed.
+Native full-tuple BIT is proved next. Numeric-preserving composition and the ordered
+complexity/capture endpoints remain open. No automatic BIT definition for a restricted
+tuple domain is claimed.
 \citep[Remark 1.32 and Exercise 1.33]{Immerman1999}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{52}{Cslib.Logic.FO.Ordered.lexEquiv}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{93}{Cslib.Logic.FO.Ordered.lexRank_lt_iff_lex}
@@ -244,6 +244,45 @@ endpoints remain open. No automatic BIT definition for a restricted tuple domain
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{142}{Cslib.Logic.FO.Ordered.lexRank_tupleConstants_value}
 \declat{72b80bbaccd792d6ee9e7858d0f23a40ed3f3f57}{Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean}{263}{Cslib.Logic.FO.Ordered.realize_tupleSucc}
 \declat{72b80bbaccd792d6ee9e7858d0f23a40ed3f3f57}{Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean}{185}{Cslib.Logic.FO.Ordered.isQF_tupleSuccOf}
+\end{result}
+
+\begin{result}
+\subsection{Native BIT on arbitrary-base full tuple universes}
+For every fixed dimension $k\ge0$, there is a native first-order formula
+$\operatorname{TBIT}_k(x,y)$ over canonical $\le$ and BIT such that, for every
+source size $n\ge2$ and all $x,y\in[n]^k$,
+\[
+\operatorname{TBIT}_k(x,y)\quad\Longleftrightarrow\quad
+\text{bit }\operatorname{rank}(y)\text{ of }\operatorname{rank}(x)\text{ is }1.
+\]
+The ranks use the preceding first-coordinate-most-significant base-$n$
+numbering, and bit zero is least significant. The formula's syntax depends only
+on $k$, not on $n$ or the interpretation of the input vocabulary. There is no
+power-of-two restriction on $n$. Both ranks may exceed $n-1$: the index is
+compared as a whole word, never reduced modulo the source size. Every index
+with $2^{\operatorname{rank}(y)}>\operatorname{rank}(x)$ is rejected.
+For $k=0$ the formula is explicitly false, agreeing with both ranks being zero;
+no canonical numeric target structure on a singleton is asserted.
+
+For $n>8$, the construction witnesses a binary radix $B=2^e$, $e>0$, with
+$B^3<n$. Seven radix digits encode $n$ by decoding $\max$ and adding one;
+$7k$ digits encode each tuple rank. Exact native affine arithmetic and word
+multiplication perform radix conversion, with zero final carries and quotients
+rejecting overflow. All digit witnesses and intermediate scalar sums fit in
+$[n]$, including at non-power-of-two sizes. A fixed finite disjunction covers
+$2\le n\le8$; no formula-size efficiency bound is claimed.
+
+This proves the full-domain BIT lifting in
+\href{https://people.cs.umass.edu/~immerman/book/ch0_1_2.pdf\#page=37}{Remark~1.32
+and Exercise~1.33(3)}.\citep{Immerman1999}
+The explicit radix construction uses the proved native PLUS/TIMES formulas;
+it is an implementation of the exercise, not a claimed transcription of its
+hint. Numeric-preserving interpretation composition remains open. The source's
+full-tuple hypothesis is essential: no native BIT definition for arbitrary
+restricted tuple domains is asserted.
+\declat{92915665afb129fbdbe0051fcb4a56c4b994be96}{Complexity/Logics/FirstOrder/Ordered/TupleBit.lean}{218}{Cslib.Logic.FO.Ordered.tupleBit}
+\declat{92915665afb129fbdbe0051fcb4a56c4b994be96}{Complexity/Logics/FirstOrder/Ordered/TupleBit.lean}{226}{Cslib.Logic.FO.Ordered.realize_tupleBit}
+\declat{92915665afb129fbdbe0051fcb4a56c4b994be96}{Complexity/Logics/FirstOrder/Ordered/TupleBit.lean}{243}{Cslib.Logic.FO.Ordered.not_realize_tupleBit_of_lt}
 \end{result}
 
 \begin{result}
