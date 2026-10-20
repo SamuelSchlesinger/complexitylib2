@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 public import Mathlib.Data.List.OfFn
 public import Mathlib.Data.List.GetD
+public import Mathlib.Data.Nat.Size
 
 /-!
 # Undirected s–t connectivity
@@ -39,6 +40,8 @@ machine reading its input by address can parse by counting.
 * `Cslib.Complexity.USTCONInstance.getD_encode_n`, `.getD_encode_s`, `.getD_encode_t`,
   `.getD_encode_matrix`: the bits of the header and of the matrix in the encoding.
 * `Cslib.Complexity.USTCONInstance.encode_injective`: the encoding is injective.
+* `Cslib.Complexity.USTCONInstance.size_n_le_log2`: the number of vertices has logarithmically many
+  binary digits in the length of the encoding.
 
 ## References
 
@@ -69,6 +72,10 @@ structure USTCONInstance where
 namespace USTCONInstance
 
 variable (I : USTCONInstance)
+
+/-- An instance has a vertex, its source. -/
+theorem n_pos : 0 < I.n :=
+  Fin.pos I.s
 
 /-- The simple graph of an instance: `a` and `b` are adjacent when the entry of the row `a` and the
 column `b` of the adjacency matrix is set. -/
@@ -123,6 +130,14 @@ row by row. -/
 def encode : List Bool :=
   List.replicate I.n true ++ false :: (List.replicate I.s true ++ false ::
     (List.replicate I.t true ++ false :: I.matrix))
+
+/-- The number of vertices is at most the length of the encoding. -/
+theorem n_le_length_encode : I.n ≤ I.encode.length := by
+  simp [encode]
+
+/-- The number of binary digits of `n` is logarithmic in the length of the encoding. -/
+theorem size_n_le_log2 : Nat.size I.n ≤ Nat.log2 I.encode.length + 1 :=
+  Nat.size_le.2 (I.n_le_length_encode.trans_lt Nat.lt_log2_self)
 
 /-- Within a unary block followed by `false`, the bits are set before the end of the block. -/
 private theorem getD_replicate_append_false_of_le {m i : ℕ} (l : List Bool) (h : i ≤ m) :

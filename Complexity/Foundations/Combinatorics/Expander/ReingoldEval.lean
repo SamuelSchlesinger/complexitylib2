@@ -13,7 +13,9 @@ public import Complexity.Foundations.Combinatorics.Expander.Reingold
 # Evaluating Reingold's rotation maps in place
 
 The rotation map of the `ℓ`-th graph `G_ℓ` of Reingold's transformation can be evaluated with
-a constant number of labels of extra memory per level [Reingold, Lemma 3.4][Reingold2008]. A
+a constant number of labels of extra memory per level, as in the proof of
+[Reingold, Lemma 3.4][Reingold2008]. Reingold's step takes the eighth power of `G ⓩ H` and keeps
+sixteen labels of `H` in a label of `G_ℓ`; the step here takes the square and keeps four. A
 vertex of `G_m` is a vertex `v` of `G` followed by `m` labels `r₀, …, r_{m-1}`
 (`Cslib.RotationMap.ReingoldVertex.toList`), and its rotation along a label `a` changes these
 registers in place: a step of `G_m = ((G_{m-1} ⓩ H) ^ 2).relabel e.symm` is a step of `H` from the
@@ -38,7 +40,7 @@ at the far end, the frame popped (`exists_iterate_reingoldEvalStep`).
   the final permutation of a step of the transformation, on the labels.
 * `Cslib.RotationMap.ReingoldPc`, `Cslib.RotationMap.ReingoldEvalState`,
   `Cslib.RotationMap.reingoldEvalStep`: the evaluation with an explicit stack.
-* `Cslib.RotationMap.ReingoldEvalState.atBase`: whether the next step is a step of the original
+* `Cslib.RotationMap.ReingoldEvalState.atRoot`: whether the next step is a step of the original
   graph.
 
 ## Main results
@@ -107,7 +109,8 @@ become the label `![(j₁', i₁'), (j₀', i₀')]` at the far end of the step 
 def reingoldFinish (a : B) : B :=
   e.symm ![((e a 1).2, (e a 1).1), ((e a 0).2, (e a 0).1)]
 
-/-- **A step of the transformation on the registers** [Reingold, Lemma 3.4][Reingold2008]: the
+/-- **A step of the transformation on the registers**, as in the proof of
+[Reingold, Lemma 3.4][Reingold2008] (with the square instead of the eighth power): the
 rotation of `((G ⓩ H) ^ 2).relabel e.symm` at the vertex `(y, c)` along the label `a` is a step of
 `H` from `c`, a rotation of `G` at `y`, two steps of `H`, a rotation of `G` and a step of `H`, with
 the labels of `H` kept in `a`, followed by the final permutation of `a`. -/
@@ -137,21 +140,21 @@ structure ReingoldEvalState (V B : Type*) where
   /-- The frames of the levels being evaluated, the innermost first. -/
   frames : List (ReingoldPc × B)
 
-/-- **A step of the evaluation** of the rotation maps of the transformation, with `base` the
+/-- **A step of the evaluation** of the rotation maps of the transformation, with `rotG` the
 rotation map of the original graph. The level of the top frame is the number of labels below it,
 and the label `b` just below it is its last coordinate. A step of `H` acts on `b` and the label of
-the frame; a rotation of the level below is a step of `base` on the vertex and `b` at level `1`,
+the frame; a rotation of the level below is a step of `rotG` on the vertex and `b` at level `1`,
 and otherwise pushes a frame for the level below with the label `b`; the final permutation pops the
 frame and puts its label below the frame of the level above. -/
-def reingoldEvalStep {V : Type*} (base : V × B → V × B) :
+def reingoldEvalStep {V : Type*} (rotG : V × B → V × B) :
     ReingoldEvalState V B → ReingoldEvalState V B
   | ⟨v, b :: l, (pc, a) :: rest⟩ =>
     match pc with
     | .call₀ =>
-      if l = [] then ⟨(base (v, b)).1, [(base (v, b)).2], (.zag₀, a) :: rest⟩
+      if l = [] then ⟨(rotG (v, b)).1, [(rotG (v, b)).2], (.zag₀, a) :: rest⟩
       else ⟨v, l, (.zig₀, b) :: (.zag₀, a) :: rest⟩
     | .call₁ =>
-      if l = [] then ⟨(base (v, b)).1, [(base (v, b)).2], (.zag₁, a) :: rest⟩
+      if l = [] then ⟨(rotG (v, b)).1, [(rotG (v, b)).2], (.zag₁, a) :: rest⟩
       else ⟨v, l, (.zig₀, b) :: (.zag₁, a) :: rest⟩
     | .finish => ⟨v, reingoldFinish e a :: b :: l, rest⟩
     | .zig₀ => ⟨v, (reingoldHStep H e .zig₀ (b, a)).1 :: l,
@@ -174,7 +177,7 @@ def mapVertex (φ : V → W) (s : ReingoldEvalState V B) : ReingoldEvalState W B
 
 /-- Whether the next step of the evaluation is a step of the original graph: a rotation of the
 level below at level `1`. -/
-def atBase (s : ReingoldEvalState V B) : Bool :=
+def atRoot (s : ReingoldEvalState V B) : Bool :=
   match s.lower, s.frames with
   | [_], (.call₀, _) :: _ => true
   | [_], (.call₁, _) :: _ => true
@@ -184,32 +187,32 @@ end ReingoldEvalState
 
 /-- A step of the evaluation depends on the rotation map of the original graph only at a step of
 the original graph, and there only at the vertex and the label below the frame. -/
-theorem reingoldEvalStep_congr {V : Type*} {base base' : V × B → V × B}
+theorem reingoldEvalStep_congr {V : Type*} {rotG rotG' : V × B → V × B}
     {s : ReingoldEvalState V B}
-    (h : s.atBase = true → ∀ b, s.lower = [b] → base (s.vertex, b) = base' (s.vertex, b)) :
-    reingoldEvalStep H e base s = reingoldEvalStep H e base' s := by
+    (h : s.atRoot = true → ∀ b, s.lower = [b] → rotG (s.vertex, b) = rotG' (s.vertex, b)) :
+    reingoldEvalStep H e rotG s = reingoldEvalStep H e rotG' s := by
   obtain ⟨v, _ | ⟨b, _ | ⟨b', l⟩⟩, _ | ⟨⟨pc, a⟩, rest⟩⟩ := s
   all_goals first
     | rfl
-    | (cases pc <;> simp_all [reingoldEvalStep, ReingoldEvalState.atBase])
+    | (cases pc <;> simp_all [reingoldEvalStep, ReingoldEvalState.atRoot])
 
 /-- **Renaming the vertices** commutes with the evaluation, when the rotation maps agree through the
 renaming. -/
-theorem reingoldEvalStep_mapVertex {V W : Type*} (φ : V → W) {base : V × B → V × B}
-    {base' : W × B → W × B} (h : ∀ v b, base' (φ v, b) = Prod.map φ id (base (v, b)))
+theorem reingoldEvalStep_mapVertex {V W : Type*} (φ : V → W) {rotG : V × B → V × B}
+    {rotG' : W × B → W × B} (h : ∀ v b, rotG' (φ v, b) = Prod.map φ id (rotG (v, b)))
     (s : ReingoldEvalState V B) :
-    reingoldEvalStep H e base' (s.mapVertex φ) = (reingoldEvalStep H e base s).mapVertex φ := by
+    reingoldEvalStep H e rotG' (s.mapVertex φ) = (reingoldEvalStep H e rotG s).mapVertex φ := by
   obtain ⟨v, _ | ⟨b, l⟩, _ | ⟨⟨pc, a⟩, rest⟩⟩ := s
   all_goals try rfl
   cases pc <;> by_cases hl : l = [] <;>
     simp [reingoldEvalStep, ReingoldEvalState.mapVertex, h, hl]
 
 /-- Renaming the vertices commutes with runs of the evaluation. -/
-theorem iterate_reingoldEvalStep_mapVertex {V W : Type*} (φ : V → W) {base : V × B → V × B}
-    {base' : W × B → W × B} (h : ∀ v b, base' (φ v, b) = Prod.map φ id (base (v, b)))
+theorem iterate_reingoldEvalStep_mapVertex {V W : Type*} (φ : V → W) {rotG : V × B → V × B}
+    {rotG' : W × B → W × B} (h : ∀ v b, rotG' (φ v, b) = Prod.map φ id (rotG (v, b)))
     (N : ℕ) (s : ReingoldEvalState V B) :
-    (reingoldEvalStep H e base')^[N] (s.mapVertex φ) =
-      ((reingoldEvalStep H e base)^[N] s).mapVertex φ := by
+    (reingoldEvalStep H e rotG')^[N] (s.mapVertex φ) =
+      ((reingoldEvalStep H e rotG)^[N] s).mapVertex φ := by
   induction N generalizing s with
   | zero => rfl
   | succ N ih =>
@@ -217,19 +220,20 @@ theorem iterate_reingoldEvalStep_mapVertex {V W : Type*} (φ : V → W) {base : 
       reingoldEvalStep_mapVertex H e φ h, ih]
 
 /-- A step of the evaluation keeps the total number of labels below and in the frames. -/
-theorem length_lower_add_length_frames_reingoldEvalStep {V : Type*} (base : V × B → V × B)
+theorem length_lower_add_length_frames_reingoldEvalStep {V : Type*} (rotG : V × B → V × B)
     (s : ReingoldEvalState V B) :
-    (reingoldEvalStep H e base s).lower.length + (reingoldEvalStep H e base s).frames.length =
+    (reingoldEvalStep H e rotG s).lower.length + (reingoldEvalStep H e rotG s).frames.length =
       s.lower.length + s.frames.length := by
   obtain ⟨v, _ | ⟨b, l⟩, _ | ⟨⟨pc, a⟩, rest⟩⟩ := s
   all_goals try rfl
-  cases pc <;> by_cases hl : l = [] <;> simp [reingoldEvalStep, hl] <;> omega
+  cases pc <;> by_cases hl : l = [] <;>
+    simp only [reingoldEvalStep, hl, ↓reduceIte, List.length_cons, List.length_nil] <;> omega
 
 /-- A step of the evaluation keeps a property of the vertex that the steps of the original graph
 keep. -/
-theorem reingoldEvalStep_vertex {V : Type*} {base : V × B → V × B} {P : V → Prop}
-    (hP : ∀ v b, P v → P (base (v, b)).1) {s : ReingoldEvalState V B} (hs : P s.vertex) :
-    P (reingoldEvalStep H e base s).vertex := by
+theorem reingoldEvalStep_vertex {V : Type*} {rotG : V × B → V × B} {P : V → Prop}
+    (hP : ∀ v b, P v → P (rotG (v, b)).1) {s : ReingoldEvalState V B} (hs : P s.vertex) :
+    P (reingoldEvalStep H e rotG s).vertex := by
   obtain ⟨v, _ | ⟨b, l⟩, _ | ⟨⟨pc, a⟩, rest⟩⟩ := s
   all_goals try exact hs
   cases pc <;> by_cases hl : l = [] <;>
@@ -360,10 +364,11 @@ where
     rw [e₁, hN₁, e₂, e₃, hN₂, e₄, e₅, hrot]
     rfl
 
-/-- **The evaluation computes the rotation map** [Reingold, Lemma 3.4][Reingold2008]: from a frame
-for level `m ≥ 1`, freshly pushed with the label `a` above the registers of a vertex `x` of `G_m`,
-the evaluation reaches the registers of the rotation `(x', a')` of `G_m` at `(x, a)`, with the label
-`a'` at the far end below the frames, and the frame popped. -/
+/-- **The evaluation computes the rotation map**, as in the proof of
+[Reingold, Lemma 3.4][Reingold2008]: from a frame for level `m ≥ 1`, freshly pushed with the label
+`a` above the registers of a vertex `x` of `G_m`, the evaluation reaches the registers of the
+rotation `(x', a')` of `G_m` at `(x, a)`, with the label `a'` at the far end below the frames, and
+the frame popped. -/
 theorem exists_iterate_reingoldEvalStep {m : ℕ} (hm : m ≠ 0) (x : ReingoldVertex V B m) (a : B)
     (rest : List (ReingoldPc × B)) :
     ∃ N, (reingoldEvalStep H e G.rot)^[N] ⟨(x.toList).1, (x.toList).2, (.zig₀, a) :: rest⟩ =

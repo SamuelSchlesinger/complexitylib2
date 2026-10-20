@@ -47,7 +47,7 @@ abbrev depthOf : ℕ := depth (Nat.size I.n)
 /-- The walk length for the instance. -/
 abbrev lenOf : ℕ := walkLength (Nat.size I.n)
 
-/-- **The bounds on the states**: numbers below `n`, the depth, the walk length and `B ^ T`, the
+/-- **The bounds on the states**: numbers at most `n`, the depth, the walk length and `B ^ T`, the
 slot below `n`, and at most `D + 1` labels and frames. -/
 structure Bounds (q : State) : Prop where
   cnt : q.cnt ≤ I.n
@@ -98,18 +98,15 @@ def Inv (q : State) : Prop :=
 
 variable {I}
 
-/-- An instance has a vertex. -/
-theorem n_pos : 0 < I.n :=
-  Fin.pos I.s
-
 /-- The slot graph keeps the slots below `n`. -/
-theorem baseRotN_lt {n : ℕ} {v : ℕ × ℕ} (h₁ : v.1 < n) (h₂ : v.2 < n) (b : Label) (bit : Bool) :
-    (baseRotN n v b bit).1.1 < n ∧ (baseRotN n v b bit).1.2 < n := by
-  unfold baseRotN
+private theorem slotRotN_lt {n : ℕ} {v : ℕ × ℕ} (h₁ : v.1 < n) (h₂ : v.2 < n) (b : Label)
+    (bit : Bool) :
+    (slotRotN n v b bit).1.1 < n ∧ (slotRotN n v b bit).1.2 < n := by
+  unfold slotRotN
   split_ifs <;> simp only <;> omega
 
 /-- The digits left after one more step. -/
-theorem div_pow_sub_succ {c T j : ℕ} (hj : j ≠ 0) (hjT : j ≤ T) :
+private theorem div_pow_sub_succ {c T j : ℕ} (hj : j ≠ 0) (hjT : j ≤ T) :
     c / numLabels ^ (T - j) / numLabels = c / numLabels ^ (T - (j - 1)) := by
   rw [Nat.div_div_eq_div_mul, ← pow_succ, show T - j + 1 = T - (j - 1) by omega]
 
@@ -117,16 +114,16 @@ theorem div_pow_sub_succ {c T j : ℕ} (hj : j ≠ 0) (hjT : j ≤ T) :
 
 /-- Close a bound on a field of an explicit state. -/
 local macro "bound_tac" : tactic =>
-  `(tactic| first | (dsimp only; omega) | (simp; omega) | simp)
+  `(tactic| first | (dsimp only; omega) | simp)
 
 /-- The bit read in the header of the number of vertices. -/
-theorem readBit_hdrN {i : ℕ} (hi : i ≤ I.n) :
+private theorem readBit_hdrN {i : ℕ} (hi : i ≤ I.n) :
     machine.readBit I.encode { init with cnt := i } = decide (i < I.n) := by
   rw [readBit_of_addr (A := i) rfl, USTCONInstance.getD_encode_n _ hi]
 
-theorem inv_hdrN {i : ℕ} (hi : i ≤ I.n) :
+private theorem inv_hdrN {i : ℕ} (hi : i ≤ I.n) :
     Inv I (step { init with cnt := i } (machine.readBit I.encode { init with cnt := i })).1 := by
-  have hn := n_pos (I := I)
+  have hn := I.n_pos
   rw [readBit_hdrN hi]
   by_cases hlt : i < I.n
   · simp only [step, init, hlt, decide_true, ite_true]
@@ -136,10 +133,10 @@ theorem inv_hdrN {i : ℕ} (hi : i ≤ I.n) :
     simp only [step, init, lt_irrefl, decide_false, Bool.false_eq_true, ite_false]
     exact ⟨by constructor <;> bound_tac, rfl, Nat.zero_le _⟩
 
-theorem inv_hdrS {i : ℕ} (hi : i ≤ I.s) :
+private theorem inv_hdrS {i : ℕ} (hi : i ≤ I.s) :
     Inv I (step { init with ctl := .hdrS, n := I.n, cnt := i }
       (machine.readBit I.encode { init with ctl := .hdrS, n := I.n, cnt := i })).1 := by
-  have hn := n_pos (I := I)
+  have hn := I.n_pos
   have hs := I.s.isLt
   rw [readBit_of_addr (A := I.n + 1 + i) rfl, USTCONInstance.getD_encode_s _ hi]
   by_cases hlt : i < I.s
@@ -150,10 +147,10 @@ theorem inv_hdrS {i : ℕ} (hi : i ≤ I.s) :
     simp only [step, init, lt_irrefl, decide_false, Bool.false_eq_true, ite_false]
     exact ⟨by constructor <;> bound_tac, rfl, Nat.zero_le _⟩
 
-theorem inv_hdrT {i : ℕ} (hi : i ≤ I.t) :
+private theorem inv_hdrT {i : ℕ} (hi : i ≤ I.t) :
     Inv I (step { init with ctl := .hdrT, n := I.n, s := I.s, cnt := i }
       (machine.readBit I.encode { init with ctl := .hdrT, n := I.n, s := I.s, cnt := i })).1 := by
-  have hn := n_pos (I := I)
+  have hn := I.n_pos
   have hs := I.s.isLt
   have ht := I.t.isLt
   rw [readBit_of_addr (A := I.n + 1 + I.s + 1 + i) rfl, USTCONInstance.getD_encode_t _ hi]
@@ -170,11 +167,11 @@ theorem inv_hdrT {i : ℕ} (hi : i ≤ I.t) :
     · simp only [depthOf, depth]; ring
     · simp only [lenOf, walkLength, depth]; ring
 
-theorem inv_size {m d l : ℕ} (hm : m ≤ I.n) (hd : d + 16 * Nat.size m = depthOf I)
+private theorem inv_size {m d l : ℕ} (hm : m ≤ I.n) (hd : d + 16 * Nat.size m = depthOf I)
     (hl : l + 4168 * Nat.size m = lenOf I) :
     Inv I (step { headerState I with cnt := m, depth := d, len := l }
       (machine.readBit I.encode { headerState I with cnt := m, depth := d, len := l })).1 := by
-  have hn := n_pos (I := I)
+  have hn := I.n_pos
   have hs := I.s.isLt
   have ht := I.t.isLt
   rw [readBit_of_addr_none rfl]
@@ -186,7 +183,8 @@ theorem inv_size {m d l : ℕ} (hm : m ≤ I.n) (hd : d + 16 * Nat.size m = dept
     simp only [step, headerState, init, hm₀.ne', ite_false]
     refine ⟨by constructor <;> bound_tac, rfl, ?_, ?_⟩ <;> dsimp only <;> omega
 
-theorem inv_start {q : State} (hb : Bounds I q) (hc : q.ctl = .start) (hp : WalkParams I q) :
+private theorem inv_start {q : State} (hb : Bounds I q) (hc : q.ctl = .start)
+    (hp : WalkParams I q) :
     Inv I (step q (machine.readBit I.encode q)).1 := by
   obtain ⟨hn, hs, ht, hd, hl⟩ := hp
   have hsn := I.s.isLt
@@ -196,7 +194,7 @@ theorem inv_start {q : State} (hb : Bounds I q) (hc : q.ctl = .start) (hp : Walk
     by dsimp only; omega, by dsimp only; omega, by simp, by simp⟩,
     ⟨hn, hs, ht, hd, hl⟩, by simp [hs], by simp, rfl, rfl, hl⟩
 
-theorem inv_fill {q : State} (hb : Bounds I q) (hc : q.ctl = .fill) (hp : WalkParams I q)
+private theorem inv_fill {q : State} (hb : Bounds I q) (hc : q.ctl = .fill) (hp : WalkParams I q)
     (hv : q.ev.vertex = ((I.s : ℕ), (I.s : ℕ))) (hlow : q.ev.lower.length ≤ depthOf I)
     (hfr : q.ev.frames = []) (hw : q.w = q.c) (hj : q.j = lenOf I) :
     Inv I (step q (machine.readBit I.encode q)).1 := by
@@ -211,7 +209,7 @@ theorem inv_fill {q : State} (hb : Bounds I q) (hc : q.ctl = .fill) (hp : WalkPa
     refine ⟨⟨hb.cnt, hb.n, hb.s, hb.t, hb.depth, hb.len, hb.c, hb.w, hb.j, hb.v₁, hb.v₂, ?_,
       hb.frames⟩, hp', hv, ?_, hfr, hw, hj⟩ <;> simp only [List.length_cons] <;> omega
 
-theorem inv_next {q : State} (hb : Bounds I q) (hc : q.ctl = .next) (hp : WalkParams I q)
+private theorem inv_next {q : State} (hb : Bounds I q) (hc : q.ctl = .next) (hp : WalkParams I q)
     (hlow : q.ev.lower.length = depthOf I) (hfr : q.ev.frames = [])
     (hw : q.w = q.c / numLabels ^ (lenOf I - q.j)) :
     Inv I (step q (machine.readBit I.encode q)).1 := by
@@ -228,7 +226,7 @@ theorem inv_next {q : State} (hb : Bounds I q) (hc : q.ctl = .next) (hp : WalkPa
     simp only [hw]
     exact div_pow_sub_succ hj hjT
 
-theorem inv_eval {q : State} (hb : Bounds I q) (hc : q.ctl = .eval) (hp : WalkParams I q)
+private theorem inv_eval {q : State} (hb : Bounds I q) (hc : q.ctl = .eval) (hp : WalkParams I q)
     (hlen : q.ev.lower.length + q.ev.frames.length = depthOf I + 1) (hj : q.j < lenOf I)
     (hw : q.w = q.c / numLabels ^ (lenOf I - q.j)) :
     Inv I (step q (machine.readBit I.encode q)).1 := by
@@ -239,15 +237,15 @@ theorem inv_eval {q : State} (hb : Bounds I q) (hc : q.ctl = .eval) (hp : WalkPa
       by simp [hlow], by simp⟩, hp, by simp [hlow], rfl, hw⟩
   · simp only [step, hc, hfr, ite_false]
     have hsum := length_lower_add_length_frames_reingoldEvalStep base baseEquiv
-      (evalBase q.n (machine.readBit I.encode q)) q.ev
+      (slotRot q.n (machine.readBit I.encode q)) q.ev
     have hv := reingoldEvalStep_vertex base baseEquiv
       (P := fun v : ℕ × ℕ ↦ v.1 < I.n ∧ v.2 < I.n)
-      (base := evalBase q.n (machine.readBit I.encode q))
-      (fun v b hv ↦ by rw [hp.1]; exact baseRotN_lt hv.1 hv.2 _ _) (s := q.ev) ⟨hb.v₁, hb.v₂⟩
+      (rotG := slotRot q.n (machine.readBit I.encode q))
+      (fun v b hv ↦ by rw [hp.1]; exact slotRotN_lt hv.1 hv.2 _ _) (s := q.ev) ⟨hb.v₁, hb.v₂⟩
     refine ⟨⟨hb.cnt, hb.n, hb.s, hb.t, hb.depth, hb.len, hb.c, hb.w, hb.j, hv.1, hv.2,
       by dsimp only; omega, by dsimp only; omega⟩, hp, by dsimp only; omega, hj, hw⟩
 
-theorem inv_check {q : State} (hb : Bounds I q) (hc : q.ctl = .check) (hp : WalkParams I q)
+private theorem inv_check {q : State} (hb : Bounds I q) (hc : q.ctl = .check) (hp : WalkParams I q)
     (hw : q.w = q.c / numLabels ^ lenOf I) :
     Inv I (step q (machine.readBit I.encode q)).1 := by
   rw [readBit_of_addr_none (by simp [addr, hc])]
@@ -288,7 +286,7 @@ theorem inv_step {q : State} (h : Inv I q) (hd : q.ctl ≠ .done) :
 
 /-- The initial state satisfies the invariant. -/
 theorem inv_init : Inv I init := by
-  have hn := n_pos (I := I)
+  have hn := I.n_pos
   exact ⟨⟨Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _,
     Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, hn, hn, Nat.zero_le _, Nat.zero_le _⟩, rfl⟩
 
@@ -309,7 +307,7 @@ theorem inv_run (k : ℕ) : Inv I (machine.run I.encode k).state := by
 /-! ### The size of the states -/
 
 /-- The encoded labels of a list, each by its rank. -/
-theorem length_encList_finite_le {α : Type} [Finite α] (l : List α) :
+private theorem length_encList_finite_le {α : Type} [Finite α] (l : List α) :
     (encList (encFinite α) l).length ≤ l.length * (2 * Nat.card α + 1) := by
   rw [length_encList]
   induction l with
@@ -320,28 +318,28 @@ theorem length_encList_finite_le {α : Type} [Finite α] (l : List α) :
     nlinarith
 
 /-- The counters have at most `65 T + 1` binary digits, as `B ≤ 2 ^ 65`. -/
-theorem size_le_of_le_pow {x T : ℕ} (h : x ≤ numLabels ^ T) : Nat.size x ≤ 65 * T + 1 := by
+private theorem size_le_of_le_pow {x T : ℕ} (h : x ≤ numLabels ^ T) : Nat.size x ≤ 65 * T + 1 := by
   refine (Nat.size_le_size h).trans (Nat.size_le.2 ?_)
   calc numLabels ^ T ≤ (2 ^ 65) ^ T := Nat.pow_le_pow_left (by norm_num [numLabels]) T
     _ = 2 ^ (65 * T) := (pow_mul _ _ _).symm
     _ < 2 ^ (65 * T + 1) := Nat.pow_lt_pow_right (by norm_num) (by omega)
 
 /-- There are ten control states. -/
-theorem card_ctl : Nat.card Ctl = 10 := by
+private theorem card_ctl : Nat.card Ctl = 10 := by
   rw [Nat.card_eq_fintype_card]
   rfl
 
 /-- There are seven program counters. -/
-theorem card_pc : Nat.card ReingoldPc = 7 := by
+private theorem card_pc : Nat.card ReingoldPc = 7 := by
   rw [Nat.card_eq_fintype_card]
   rfl
 
 /-- There are `257 ^ 8` labels. -/
-theorem natCard_label : Nat.card Label = 257 ^ 8 := by
+private theorem natCard_label : Nat.card Label = 257 ^ 8 := by
   rw [Nat.card_eq_fintype_card, card_label]
 
 /-- There are `7 · 257 ^ 8` frames. -/
-theorem card_frame : Nat.card (ReingoldPc × Label) = 7 * 257 ^ 8 := by
+private theorem card_frame : Nat.card (ReingoldPc × Label) = 7 * 257 ^ 8 := by
   rw [Nat.card_prod, card_pc, natCard_label]
 
 /-- The constant of the size of the states. -/
@@ -386,19 +384,11 @@ theorem length_encState_le_of_bounds {q : State} (hb : Bounds I q) :
   apply Nat.mul_le_mul_left
   nlinarith
 
-/-- The number of vertices is at most the length of the encoding. -/
-theorem n_le_length_encode : I.n ≤ I.encode.length := by
-  simp [USTCONInstance.encode]
-
-/-- The number of binary digits of `n` is logarithmic in the length of the encoding. -/
-theorem size_n_le_log2 : Nat.size I.n ≤ Nat.log2 I.encode.length + 1 :=
-  Nat.size_le.2 (n_le_length_encode.trans_lt Nat.lt_log2_self)
-
 /-- **The states along the run have logarithmically many bits.** -/
 theorem length_encState_run_le (k : ℕ) :
     (encState (machine.run I.encode k).state).length ≤
       stateConst * (Nat.log2 I.encode.length + 2) :=
   (length_encState_le_of_bounds (inv_run k).1).trans
-    (Nat.mul_le_mul_left _ (by have := size_n_le_log2 (I := I); omega))
+    (Nat.mul_le_mul_left _ (by have := I.size_n_le_log2; omega))
 
 end Cslib.USTCON.Reader

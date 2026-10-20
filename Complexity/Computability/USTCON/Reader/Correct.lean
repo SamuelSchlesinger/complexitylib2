@@ -16,15 +16,16 @@ import Mathlib.Data.Nat.Size
 
 On the encoding of an instance `I`, the read machine `Cslib.USTCON.Reader.machine` halts with the
 output `[true]` if `t` is reachable from `s` and `[false]` otherwise
-(`Cslib.USTCON.Reader.exists_run_eq`).
+(`Cslib.USTCON.Reader.exists_run_eq`). Correctness is claimed only on encodings of instances, as
+computability with respect to an encoding requires; recognising which bit strings are encodings is
+not formalised.
 
 The proof follows the phases of the machine. The header is counted bit by bit, and the halvings of
 `n` give the depth and the walk length of Reingold's graph for `a = Nat.size n`. A walk starts at
 the vertex over the slot `(s, s)` with all labels zero, and each step evaluates the rotation map in
-place:
-the evaluation on slots written as pairs of numbers follows the evaluation on `Fin n × Fin n`
+place: the evaluation on slots written as pairs of numbers follows the evaluation on `Fin n × Fin n`
 (`Cslib.RotationMap.iterate_reingoldEvalStep_mapVertex`), whose step of the original graph is the
-rotation map of the regular rotation map of the instance (`Cslib.USTCON.Reader.baseRotN_val`),
+rotation map of the regular rotation map of the instance (`Cslib.USTCON.Reader.slotRotN_val`),
 reading the adjacency matrix, so it computes the rotation map of Reingold's graph
 (`Cslib.RotationMap.exists_iterate_reingoldEvalStep`). The labels of the walk of the counter `c`
 are the digits of `c` in base `257 ^ 8`, and every sequence of labels is the sequence of digits of
@@ -34,7 +35,7 @@ over a slot of `t`, which is reachability of `t` by
 
 ## Main results
 
-* `Cslib.USTCON.Reader.baseRotN_val`: the step of the slot graph on pairs of numbers.
+* `Cslib.USTCON.Reader.slotRotN_val`: the step of the slot graph on pairs of numbers.
 * `Cslib.USTCON.Reader.exists_run_eq`: the machine decides undirected connectivity.
 
 ## References
@@ -50,35 +51,15 @@ open Cslib.RotationMap Cslib.Reachability.Reingold Cslib.Complexity
 
 /-! ### The step of the slot graph -/
 
-/-- The successor of `finRotate`, in values. -/
-theorem val_finRotate {n : ℕ} (i : Fin n) :
-    (finRotate n i : ℕ) = if (i : ℕ) + 1 = n then 0 else (i : ℕ) + 1 := by
-  obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero i.pos.ne'
-  rw [coe_finRotate]
-  split_ifs with h₁ h₂ h₂ <;> simp_all [Fin.ext_iff]
-
-/-- The predecessor of `finRotate`, in values. -/
-theorem val_finRotate_symm {n : ℕ} (i : Fin n) :
-    ((finRotate n).symm i : ℕ) = if (i : ℕ) = 0 then n - 1 else (i : ℕ) - 1 := by
-  obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero i.pos.ne'
-  split_ifs with h
-  · have hi : i = 0 := Fin.ext h
-    subst hi
-    have : (finRotate (m + 1)).symm 0 = Fin.last m := by
-      rw [Equiv.symm_apply_eq, finRotate_last]
-    rw [this, Fin.val_last]
-    rfl
-  · exact coe_finRotate_symm_of_ne_zero (Fin.ext_iff.not.2 h)
-
 /-- The slots of `Fin n × Fin n` as pairs of numbers. -/
 def slotVal {n : ℕ} (v : Fin n × Fin n) : ℕ × ℕ :=
   ((v.1 : ℕ), (v.2 : ℕ))
 
 /-- **The step of the slot graph on pairs of numbers**: given the entry of the adjacency matrix at
-the slot, `baseRotN` is the rotation map of the regular rotation map of the instance, read through
+the slot, `slotRotN` is the rotation map of the regular rotation map of the instance, read through
 the values of the slots. -/
-theorem baseRotN_val (I : USTCONInstance) (v : Fin I.n × Fin I.n) (b : Label) :
-    baseRotN I.n (slotVal v) b (I.adj v.1 v.2) =
+theorem slotRotN_val (I : USTCONInstance) (v : Fin I.n × Fin I.n) (b : Label) :
+    slotRotN I.n (slotVal v) b (I.adj v.1 v.2) =
       Prod.map slotVal id ((input I.graph).rot (v, b)) := by
   obtain ⟨v₁, v₂⟩ := v
   have hrot (d : SlotLabel) : (input I.graph).rot ((v₁, v₂), slotLabel d) =
@@ -90,7 +71,7 @@ theorem baseRotN_val (I : USTCONInstance) (v : Fin I.n × Fin I.n) (b : Label) :
     fun h ↦ by simpa using slotLabel.injective h
   have hne₃ : slotLabel (.inr ((), (), true)) ≠ slotLabel (.inr ((), (), false)) :=
     fun h ↦ by simpa using slotLabel.injective h
-  unfold baseRotN
+  unfold slotRotN
   by_cases h₁ : b = slotLabel (.inl ())
   · subst h₁
     rw [ite_eq_left rfl, hrot]
@@ -243,9 +224,10 @@ theorem reaches_size (q : State) (m d l : ℕ) :
 
 /-! ### Evaluating the rotation map -/
 
-/-- The first time a run reaches a set of fixed points is the time it reaches the point there it
-ends at. -/
-theorem exists_iterate_eq_forall_not {α : Type*} (f : α → α) (P : α → Prop)
+/-- If a run ends after `N` steps at a point `b` with the property `P`, and the points with the
+property `P` are fixed, then the run first meets `P` at some step `k`, where it is already at
+`b`. -/
+private theorem exists_iterate_eq_forall_not {α : Type*} (f : α → α) (P : α → Prop)
     (hfix : ∀ a, P a → f a = a) {a b : α} {N : ℕ} (hN : f^[N] a = b) (hb : P b) :
     ∃ k, f^[k] a = b ∧ ∀ i < k, ¬P (f^[i] a) := by
   classical
@@ -257,7 +239,7 @@ theorem exists_iterate_eq_forall_not {α : Type*} (f : α → α) (P : α → Pr
     Function.iterate_fixed (hfix _ hk)]
 
 /-- The evaluation stays put when no frame is left. -/
-theorem reingoldEvalStep_of_frames_eq_nil {V : Type*} (base' : V × Label → V × Label)
+private theorem reingoldEvalStep_of_frames_eq_nil {V : Type*} (base' : V × Label → V × Label)
     (s : ReingoldEvalState V Label) (h : s.frames = []) :
     reingoldEvalStep base baseEquiv base' s = s := by
   obtain ⟨v, _ | ⟨b, l⟩, frames⟩ := s <;> subst h <;> rfl
@@ -265,14 +247,14 @@ theorem reingoldEvalStep_of_frames_eq_nil {V : Type*} (base' : V × Label → V 
 variable (I) in
 /-- The step of the slot graph of the instance on pairs of numbers, reading the adjacency matrix
 from the encoding. -/
-noncomputable def inputBase (p : (ℕ × ℕ) × Label) : (ℕ × ℕ) × Label :=
-  baseRotN I.n p.1 p.2 (I.encode.getD (I.n + I.s + I.t + 3 + (p.1.1 * I.n + p.1.2)) false)
+private noncomputable def inputRot (p : (ℕ × ℕ) × Label) : (ℕ × ℕ) × Label :=
+  slotRotN I.n p.1 p.2 (I.encode.getD (I.n + I.s + I.t + 3 + (p.1.1 * I.n + p.1.2)) false)
 
 /-- The step of the slot graph read from the encoding is the rotation map of the regular rotation
 map of the instance. -/
-theorem inputBase_slotVal (v : Fin I.n × Fin I.n) (b : Label) :
-    inputBase I (slotVal v, b) = Prod.map slotVal id ((input I.graph).rot (v, b)) := by
-  rw [inputBase, ← baseRotN_val]
+private theorem inputRot_slotVal (v : Fin I.n × Fin I.n) (b : Label) :
+    inputRot I (slotVal v, b) = Prod.map slotVal id ((input I.graph).rot (v, b)) := by
+  rw [inputRot, ← slotRotN_val]
   congr 1
   exact USTCONInstance.getD_encode_matrix I v.1 v.2
 
@@ -304,10 +286,10 @@ theorem reaches_eval (q : State) (hc : q.ctl = .eval) (hn : q.n = I.n) (hs : q.s
   rw [ite_eq_right (by simpa [ReingoldEvalState.mapVertex] using hne),
     Function.iterate_succ_apply']
   congr 2
-  rw [← reingoldEvalStep_mapVertex base baseEquiv slotVal (base' := inputBase I)
-    (fun v b ↦ inputBase_slotVal v b)]
+  rw [← reingoldEvalStep_mapVertex base baseEquiv slotVal (rotG' := inputRot I)
+    (fun v b ↦ inputRot_slotVal v b)]
   refine reingoldEvalStep_congr base baseEquiv fun hbase b _ ↦ ?_
-  simp only [evalBase, inputBase]
+  simp only [slotRot, inputRot]
   congr 1
   rw [readBit_of_addr (A := I.n + I.s + I.t + 3 +
     (((f^[i] s₀).mapVertex slotVal).vertex.1 * I.n + ((f^[i] s₀).mapVertex slotVal).vertex.2))]
@@ -326,7 +308,7 @@ noncomputable def walkFrom {m : ℕ} :
       (w / numLabels) j
 
 /-- The walk along the digits of `w` is the walk along the labels `labelOfNat (w / B ^ i)`. -/
-theorem walkFrom_eq {m : ℕ} (x : ReingoldVertex (Fin I.n × Fin I.n) Label m) (w j : ℕ) :
+private theorem walkFrom_eq {m : ℕ} (x : ReingoldVertex (Fin I.n × Fin I.n) Label m) (w j : ℕ) :
     walkFrom I x w j = ((reingold base baseEquiv (input I.graph) m).pow j).neighbor x
       fun i ↦ labelOfNat (w / numLabels ^ (i : ℕ)) := by
   induction j generalizing x w with
@@ -339,7 +321,7 @@ theorem walkFrom_eq {m : ℕ} (x : ReingoldVertex (Fin I.n × Fin I.n) Label m) 
       simp only [Fin.tail, Fin.val_succ, pow_succ', Nat.div_div_eq_div_mul]
 
 /-- The depth of Reingold's graph is positive. -/
-theorem depth_ne_zero (a : ℕ) : depth a ≠ 0 := by
+private theorem depth_ne_zero (a : ℕ) : depth a ≠ 0 := by
   simp [depth]
 
 /-- **The steps of a walk**: from the next step with the registers of `x`, the digits `w` and `j`
@@ -393,7 +375,7 @@ theorem reaches_walk {m : ℕ} (hm : m ≠ 0) (q : State) (hc : q.ctl = .next) (
           w := w / numLabels
           j := j } := by
       refine .single (by simp) ?_
-      rw [readBit_of_addr_none (by simp [addr, ReingoldEvalState.atBase,
+      rw [readBit_of_addr_none (by simp [addr, ReingoldEvalState.atRoot,
         ReingoldEvalState.mapVertex])]
       simp [step, ReingoldEvalState.mapVertex]
     have h₄ := ih { q with
@@ -481,19 +463,19 @@ theorem outputs_single {q q' : State} {b : Bool} (hh : q.ctl ≠ .done)
 
 /-- At the end of a walk whose counter has more digits than the walk length, the machine
 rejects. -/
-theorem outputs_check_overflow (Q : State) (hc : Q.ctl = .check) (hw : Q.w ≠ 0) :
+private theorem outputs_check_overflow (Q : State) (hc : Q.ctl = .check) (hw : Q.w ≠ 0) :
     Outputs I Q false :=
   outputs_single (q' := { Q with ctl := .done }) (by simp [hc])
     (by rw [readBit_of_addr_none (by simp [addr, hc])]; simp [step, hc, hw]) rfl
 
 /-- At the end of a walk over a slot of `t`, the machine accepts. -/
-theorem outputs_check_success (Q : State) (hc : Q.ctl = .check) (hw : Q.w = 0)
+private theorem outputs_check_success (Q : State) (hc : Q.ctl = .check) (hw : Q.w = 0)
     (ht : Q.ev.vertex.1 = Q.t) : Outputs I Q true :=
   outputs_single (q' := { Q with ctl := .done }) (by simp [hc])
     (by rw [readBit_of_addr_none (by simp [addr, hc])]; simp [step, hc, hw, ht]) rfl
 
 /-- At the end of a walk elsewhere, the machine starts the walk of the next counter. -/
-theorem reaches_check_next (Q : State) (hc : Q.ctl = .check) (hw : Q.w = 0)
+private theorem reaches_check_next (Q : State) (hc : Q.ctl = .check) (hw : Q.w = 0)
     (ht : Q.ev.vertex.1 ≠ Q.t) : Reaches I Q { Q with c := Q.c + 1, ctl := .start } :=
   .single (by simp [hc])
     (by rw [readBit_of_addr_none (by simp [addr, hc])]; simp [step, hc, hw, ht])
@@ -555,7 +537,7 @@ theorem outputs_start {m T : ℕ} (hm : m ≠ 0) :
 /-! ### Every sequence of labels is a counter -/
 
 /-- **Every sequence of `T` labels is the sequence of the digits of a counter below `B ^ T`.** -/
-theorem exists_labelOfNat_eq (T : ℕ) (k : Fin T → Label) :
+private theorem exists_labelOfNat_eq (T : ℕ) (k : Fin T → Label) :
     ∃ c < numLabels ^ T, (fun i : Fin T ↦ labelOfNat (c / numLabels ^ (i : ℕ))) = k := by
   induction T with
   | zero => exact ⟨0, by norm_num, funext fun i ↦ i.elim0⟩
@@ -581,11 +563,11 @@ theorem exists_labelOfNat_eq (T : ℕ) (k : Fin T → Label) :
 /-! ### The decision -/
 
 /-- The depth computed from the header is `depth (Nat.size n)`. -/
-theorem depth_eq (a : ℕ) : 524 + 16 * a = depth a := by
+private theorem depth_eq (a : ℕ) : 524 + 16 * a = depth a := by
   simp only [depth]; ring
 
 /-- The walk length computed from the header is `walkLength (Nat.size n)`. -/
-theorem walkLength_eq (a : ℕ) : 136240 + 4168 * a = walkLength a := by
+private theorem walkLength_eq (a : ℕ) : 136240 + 4168 * a = walkLength a := by
   simp only [walkLength, depth]; ring
 
 open scoped Classical in

@@ -38,7 +38,7 @@ of the walk length, and two lists of `O(log n)` labels and program counters, so 
 ## Main definitions
 
 * `Cslib.USTCON.Reader.labelOfNat`: the label of a digit.
-* `Cslib.USTCON.Reader.baseRotN`: the rotation map of the regular rotation map of the input graph,
+* `Cslib.USTCON.Reader.slotRotN`: the rotation map of the regular rotation map of the input graph,
   on the slots as pairs of numbers, given the entry of the adjacency matrix.
 * `Cslib.USTCON.Reader.Ctl`, `Cslib.USTCON.Reader.State`: the control and the memory.
 * `Cslib.USTCON.Reader.step`, `Cslib.USTCON.Reader.addr`: the step and the address read.
@@ -79,7 +79,7 @@ noncomputable def labelOfNat (x : ℕ) : Label :=
 of numbers below `n`, given the entry `bit` of the adjacency matrix at the slot: the edge of the
 graph exchanges the ends of an edge if `bit` is set, the edges of the cycle of the slots move to the
 next or the previous slot, and every other label is a self-loop. -/
-def baseRotN (n : ℕ) (v : ℕ × ℕ) (b : Label) (bit : Bool) : (ℕ × ℕ) × Label :=
+def slotRotN (n : ℕ) (v : ℕ × ℕ) (b : Label) (bit : Bool) : (ℕ × ℕ) × Label :=
   if b = slotLabel (.inl ()) then (if bit then (v.2, v.1) else v, b)
   else if b = slotLabel (.inr ((), (), false)) then
     ((v.1, if v.2 + 1 = n then 0 else v.2 + 1), slotLabel (.inr ((), (), true)))
@@ -137,8 +137,8 @@ structure State where
   ev : ReingoldEvalState (ℕ × ℕ) Label
 
 /-- The step of the evaluation with the entry `bit` of the adjacency matrix. -/
-def evalBase (n : ℕ) (bit : Bool) (p : (ℕ × ℕ) × Label) : (ℕ × ℕ) × Label :=
-  baseRotN n p.1 p.2 bit
+def slotRot (n : ℕ) (bit : Bool) (p : (ℕ × ℕ) × Label) : (ℕ × ℕ) × Label :=
+  slotRotN n p.1 p.2 bit
 
 /-- **A step**, given the bit read. -/
 noncomputable def step (q : State) (b : Bool) : State × List Bool :=
@@ -170,7 +170,7 @@ noncomputable def step (q : State) (b : Bool) : State × List Bool :=
   | .eval =>
     if q.ev.frames = [] then
       ({ q with ev := { q.ev with lower := q.ev.lower.tail }, ctl := .next }, [])
-    else ({ q with ev := reingoldEvalStep base baseEquiv (evalBase q.n b) q.ev }, [])
+    else ({ q with ev := reingoldEvalStep base baseEquiv (slotRot q.n b) q.ev }, [])
   | .check =>
     if q.w ≠ 0 then ({ q with ctl := .done }, [false])
     else if q.ev.vertex.1 = q.t then ({ q with ctl := .done }, [true])
@@ -185,7 +185,7 @@ def addr (q : State) : Option ℕ :=
   | .hdrS => some (q.n + 1 + q.cnt)
   | .hdrT => some (q.n + 1 + q.s + 1 + q.cnt)
   | .eval =>
-    if q.ev.atBase then some (q.n + q.s + q.t + 3 + (q.ev.vertex.1 * q.n + q.ev.vertex.2))
+    if q.ev.atRoot then some (q.n + q.s + q.t + 3 + (q.ev.vertex.1 * q.n + q.ev.vertex.2))
     else none
   | _ => none
 
