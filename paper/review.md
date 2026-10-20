@@ -795,3 +795,28 @@ relations not simplified by `fo_reduction`, a broad failure message, test precis
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 14: worst-case hardness, the alias sweep and FO model checking in L (2026-10-19)
+
+Integrated `8cfc8e81` (`stv`), `b1293417` (`standards-sweep`) and `a1c2cb1d` (`fo-logspace`
+milestone 1), adding "Derandomization from worst-case hardness" (`randomness.tex`, with the
+preceding entry's closing sentence updated) and "First-order model checking in logarithmic space"
+(`structure.tex`). The sweep has no paper impact; its grandfathered changes are listed in
+`UPSTREAM.md`.
+
+Independent reviews:
+- Worst-case hardness: correctness and API reviews of the milestone-1 range (fixes reviewed), then
+  of `6477f06f` (milestone-1 fixes and milestone 2): APPROVE. Correctness confirmed the headline is
+  the Impagliazzo–Wigderson theorem for eventual hardness in cslib's De Morgan model with
+  E = DTIME(2^O(n)) on bit words, that the field arithmetic and the encoding in E are proved
+  rather than computed, and that the schedule constants match. The delta review of the API cleanup
+  `6477f06f..8cfc8e81` approved; headline statements are unchanged apart from namespace.
+- Alias sweep: the delta review of `2110aa5a..6d1941cf` required one fix (a deprecated `abbrev`
+  so that instances resolve on the old type name) and recommended the missed aliases; the delta
+  review of `6d1941cf..b1293417` approved, checking each old statement against `@Old.Name`.
+- FO model checking in L: correctness and API reviews of `fd3cf84a`, then delta reviews of
+  `fd3cf84a..ad887c0f` and `ad887c0f..a1c2cb1d`: APPROVE. The entry states that order, BIT and
+  constants are not covered.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.

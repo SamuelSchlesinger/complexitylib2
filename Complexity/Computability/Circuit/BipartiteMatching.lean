@@ -29,7 +29,10 @@ possible edges says whether the graph has a perfect matching. It is monotone
 Relabelling the left and the right vertices along bijections preserves perfect matchings
 (`BipartiteMatching.hasPerfectMatching_comp_iff`). A graph has no perfect matching when a set of
 left vertices has fewer neighbours (`BipartiteMatching.not_hasPerfectMatching_of_card_lt`), the easy
-direction of Hall's theorem.
+direction of Hall's theorem; Hall's theorem itself, from Mathlib's
+`Finset.all_card_le_biUnion_card_iff_existsInjective'`, says that a perfect matching exists exactly
+when every set of left vertices has at least as many neighbours
+(`BipartiteMatching.hasPerfectMatching_iff_forall_card_le`).
 
 ## Main definitions
 

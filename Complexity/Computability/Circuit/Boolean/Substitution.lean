@@ -10,6 +10,10 @@ module
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Foundations.Data.BitString.PartialAssignment
+public import Mathlib.Basic.Real.Basic
+import Complexity.Foundations.Data.BitString.Basic
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Tactic.Linarith
 
 /-!
 # Substituting variables and constants for inputs
@@ -25,6 +29,11 @@ the bits `r`: substituting it computes `x ↦ f (Fin.append x r)`. A restriction
 assignment) is the substitution that replaces each bit by itself or by a constant
 (`BitString.PartialAssignment.substitute_toSubstitution`).
 
+Fixing inputs that a target function ignores keeps the agreement on average: if `g` agrees with a
+function of its first `n` inputs on a `δ` fraction of all inputs, then for some fixing of the other
+inputs the resulting function, two gates larger, agrees with it on a `δ` fraction of the inputs
+(`Cslib.Circuits.Boolean.exists_complexity_le_of_agree_prefix`).
+
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.substitute`, `Cslib.Circuits.Boolean.appendInputs`.
@@ -34,6 +43,7 @@ assignment) is the substitution that replaces each bit by itself or by a constan
 ## Main results
 
 * `Cslib.Circuits.Boolean.complexity_substitute_le`: a substitution costs at most two gates.
+* `Cslib.Circuits.Boolean.exists_complexity_le_of_agree_prefix`: fixing ignored inputs.
 -/
 
 @[expose] public section
@@ -111,6 +121,77 @@ def appendInputs {p : ℕ} (r : Fin p → Bool) : Fin (n + p) → Fin n ⊕ Bool
     substitute (appendInputs r) x = Fin.append x r := by
   funext j
   refine Fin.addCases (fun i => ?_) (fun i => ?_) j <;> simp [substitute, appendInputs]
+
+open Finset in
+/-- **Fixing ignored inputs.** If `g` on `N` inputs agrees with a function `E` of its first `n`
+inputs on more than `δ * 2 ^ N` inputs, then fixing the other `N - n` inputs suitably
+(`appendInputs`) gives a function on `n` inputs, of complexity at most two more, that agrees with
+`E` on more than `δ * 2 ^ n` inputs: some fixing does at least as well as the average. -/
+theorem exists_complexity_le_of_agree_prefix (hle : n ≤ N) (E : BooleanFunction n)
+    (g : BooleanFunction N) {δ : ℝ}
+    (hagree : δ * 2 ^ N < #{y | g y = E fun i => y (Fin.castLE hle i)}) :
+    ∃ C : BooleanFunction n, complexity interpretation (single C) ≤
+      complexity interpretation (single g) + 2 ∧ δ * 2 ^ n < #{x | C x = E x} := by
+  classical
+  set p := N - n
+  have hN : n + p = N := Nat.add_sub_cancel' hle
+  -- fixing the last `p` inputs to `z`, through `appendInputs`
+  let ρ : BitString p → Fin N → Fin n ⊕ Bool := fun z k => appendInputs z (Fin.cast hN.symm k)
+  have hρ : ∀ z x, substitute (ρ z) x = fun k => Fin.append x z (Fin.cast hN.symm k) :=
+    fun z x => funext fun k => congrFun (substitute_appendInputs z x) (Fin.cast hN.symm k)
+  have hleft : ∀ (x : BitString n) (z : BitString p) (i : Fin n),
+      Fin.append x z (Fin.cast hN.symm (Fin.castLE hle i)) = x i := fun x z i => by
+    rw [show Fin.cast hN.symm (Fin.castLE hle i) = Fin.castAdd p i from Fin.ext rfl,
+      Fin.append_left]
+  -- the agreement splits over the fixings
+  have hsplit : #{y | g y = E fun i => y (Fin.castLE hle i)} =
+      ∑ z : BitString p, #{x | g (substitute (ρ z) x) = E x} := by
+    rw [← card_sigma]
+    refine card_nbij' (fun y => ⟨fun j => y (Fin.cast hN (Fin.natAdd n j)),
+      fun i => y (Fin.castLE hle i)⟩) (fun q => fun k => Fin.append q.2 q.1 (Fin.cast hN.symm k))
+      (fun y hy => ?_) (fun q hq => ?_) (fun y _ => ?_) (fun q _ => ?_)
+    · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq, coe_sigma,
+        Set.mem_sigma_iff, mem_coe, hρ] at hy ⊢
+      have hy' : (fun k => Fin.append (fun i => y (Fin.castLE hle i))
+          (fun j => y (Fin.cast hN (Fin.natAdd n j))) (Fin.cast hN.symm k)) = y := by
+        funext k
+        obtain ⟨k', rfl⟩ : ∃ k', k = Fin.cast hN k' := ⟨Fin.cast hN.symm k, by simp⟩
+        refine Fin.addCases (fun i => ?_) (fun j => ?_) k'
+        · simp only [Fin.cast_cast, Fin.cast_eq_self, Fin.append_left]
+          rfl
+        · simp only [Fin.cast_cast, Fin.cast_eq_self, Fin.append_right]
+      rw [hy']
+      exact hy
+    · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq, coe_sigma,
+        Set.mem_sigma_iff, mem_coe, hρ] at hq ⊢
+      rw [show (fun i => Fin.append q.2 q.1 (Fin.cast hN.symm (Fin.castLE hle i))) = q.2 from
+        funext (hleft q.2 q.1)]
+      exact hq
+    · funext k
+      obtain ⟨k', rfl⟩ : ∃ k', k = Fin.cast hN k' := ⟨Fin.cast hN.symm k, by simp⟩
+      refine Fin.addCases (fun i => ?_) (fun j => ?_) k'
+      · simp only [Fin.cast_cast, Fin.cast_eq_self, Fin.append_left]
+        rfl
+      · simp only [Fin.cast_cast, Fin.cast_eq_self, Fin.append_right]
+    · obtain ⟨z, x⟩ := q
+      simp only [Sigma.mk.injEq]
+      refine ⟨funext fun j => ?_, heq_of_eq (funext (hleft x z))⟩
+      simp only [Fin.cast_cast, Fin.cast_eq_self, Fin.append_right]
+  -- some fixing carries at least the average agreement
+  have hex : ∃ z : BitString p, δ * 2 ^ n < #{x | g (substitute (ρ z) x) = E x} := by
+    by_contra hall
+    push Not at hall
+    have hsum : (#{y | g y = E fun i => y (Fin.castLE hle i)} : ℝ) ≤
+        ∑ _z : BitString p, δ * 2 ^ n := by
+      rw [hsplit, Nat.cast_sum]
+      exact sum_le_sum fun z _ => hall z
+    rw [sum_const, card_univ, nsmul_eq_mul] at hsum
+    have hcard : (Fintype.card (BitString p) : ℝ) * (δ * 2 ^ n) = δ * 2 ^ N := by
+      rw [BitString.card, Nat.cast_pow, Nat.cast_ofNat]
+      rw [mul_left_comm, ← pow_add, ← hN, add_comm]
+    linarith
+  obtain ⟨z, hz⟩ := hex
+  exact ⟨fun x => g (substitute (ρ z) x), complexity_substitute_le (ρ z) g, hz⟩
 
 end Cslib.Circuits.Boolean
 

@@ -59,6 +59,7 @@ import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExpanderHitting
 import ComplexityTests.ExplicitExpanders
+import ComplexityTests.FOLogSpace
 import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
@@ -259,4 +260,5 @@ import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

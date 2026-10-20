@@ -23,7 +23,7 @@ This is the family of the set lower bound protocol of Goldwasser and Sipser
 [GoldwasserSipser1986] [Arora and Barak, Section 8.2][AroraBarak09] and of the lemma of Valiant
 and Vazirani [ValiantVazirani1986]. It is the affine hash `Cslib.Probability.affineHash` over
 `Bool` (`Cslib.BitString.LinearHash.affineHash_eq_affineHash`), whose pairwise independence is
-proved over fields; `Bool` is not one, so it is proved here separately.
+proved over fields; Mathlib has no `Field Bool` instance, so it is proved here separately.
 
 ## Main definitions
 

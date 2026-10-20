@@ -129,18 +129,18 @@ info: 'Cslib.Logic.PL.CNF.exp_le_of_refutableInSize' depends on axioms:
 #print axioms Cslib.Logic.PL.CNF.exp_le_of_refutableInSize
 
 /--
-info: 'Cslib.Logic.PL.Tseitin.edgeExpansion_le_of_refutableInWidth_rotationMap' depends on
+info: 'Cslib.Logic.PL.Tseitin.edgeExpansion_mul_card_div_three_le_of_refutableInWidth' depends on
 axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Tseitin.edgeExpansion_le_of_refutableInWidth_rotationMap
+#print axioms Cslib.Logic.PL.Tseitin.edgeExpansion_mul_card_div_three_le_of_refutableInWidth
 
 /--
-info: 'Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize_rotationMap' depends on axioms:
+info: 'Cslib.Logic.PL.Tseitin.exp_edgeExpansion_le_of_refutableInSize' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize_rotationMap
+#print axioms Cslib.Logic.PL.Tseitin.exp_edgeExpansion_le_of_refutableInSize
 
 /--
 info: 'Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le' depends on axioms:

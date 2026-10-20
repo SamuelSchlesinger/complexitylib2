@@ -475,7 +475,7 @@ theorem computableTidilyInPolyTime_next :
       (hl : ComputableTidilyInPolyTime l encQ (encList encNat)) :
       ComputableTidilyInPolyTime
         (fun p => decide ((arc p.1.1 (choice p.2)).2 ∈ l p)) encQ encBool := by
-    simp only [decide_mem_eq_any]
+    simp only [List.decide_mem_eq_any]
     exact anyWithInput hl ((decide_eq encNat).comp ((snd _ _).prod (hw.comp (fst _ _))))
   have hlegal : ComputableTidilyInPolyTime
       (fun p : (Graph × Play) × List Bool => legal p.1.1 p.1.2.2.2.1 p.1.2.2.2.2 (choice p.2))

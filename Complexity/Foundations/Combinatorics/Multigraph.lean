@@ -18,7 +18,7 @@ public import Mathlib.Order.Lattice.Nat
 A multigraph on the vertices `V` with edges `E`, parallel edges and self-loops allowed, is given
 here by the map `ends : E → Sym2 V` sending each edge to its unordered pair of ends; a self-loop
 has equal ends. Assignments of values to the edges are then functions on `E`, as in Tseitin
-formulas (`Complexity/Logics/Propositional/Tseitin.lean`), and relabelling the edges along an
+formulas (`Cslib.Logic.PL.CNF.tseitinFormula`), and relabelling the edges along an
 equivalence changes none of the quantities below (`Multigraph.card_incidence_comp`,
 `Multigraph.minBalancedCut_comp`, ...).
 
@@ -71,7 +71,8 @@ theorem toSimpleGraph_comp (f : E' ≃ E) : toSimpleGraph (ends ∘ f) = toSimpl
 
 variable [Fintype E] [DecidableEq V]
 
-/-- The edges at `v` other than self-loops. -/
+/-- The edges at `v` other than self-loops. A self-loop at `v` is left out: it would count twice
+towards the parity of the edges at `v`, as in Tseitin formulas, and so not at all. -/
 def incidence (v : V) : Finset E :=
   {e | v ∈ ends e ∧ ¬(ends e).IsDiag}
 

@@ -15,7 +15,6 @@ public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Probability.BitString.AffineHash
-public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.UniformNat
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
