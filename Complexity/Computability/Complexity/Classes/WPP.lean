@@ -7,8 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Complexity.Classes.FewP
 public import Complexity.Computability.Complexity.Classes.SPP
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
+import Complexity.Computability.Complexity.Classes.SPP.FewP
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
@@ -20,8 +23,26 @@ target; LWPP restricts that target to depend on input length. We follow
 [Fenner–Fortnow–Kurtz][FennerFortnowKurtz1994] definitions. Targets use binary integers
 `encIntBin`; the length argument of LWPP uses unary `encUnary`, so an exponentially large
 numeric target is permitted. These are verifier-based counting classes, without a proved
-nondeterministic-machine characterization. The basic containments and Boolean closures below
-are algebraic consequences; oracle lowness and robustness are not claimed.
+nondeterministic-machine characterization.
+
+In addition to the basic containments (`SPP ⊆ LWPP ⊆ WPP`, `UP ⊆ FewP ⊆ LWPP ⊆ WPP`, and
+`WPP ⊆ C=P ∩ coC=P`) and Boolean closures (complement, intersection, union, difference, and
+symmetric difference), we prove two robustness properties from
+[Hemaspaandra et al., Section 3][HemaspaandraEtAl2018]:
+* **Finite multiple-target robustness** (`mem_WPP_of_finset_targets`,
+  `mem_LWPP_of_finset_targets`): if a `GapP` function takes `0` on nonmembers and one of a fixed
+  finite family of nonzero polynomial-time targets on members, then interpolating the product
+  `∏ i ∈ s, f i - ∏ i ∈ s, (f i - g)` collapses the accepting targets to the single nonzero
+  product `∏ i ∈ s, f i`.
+* **Polynomial-time unary-indexed target normalization and reduction closure**
+  (`mem_LWPP_of_polyTime_index`, `PolyTimeReducible.mem_LWPP`): if the target is `f (k a)` for a
+  unary-computable index `k : α → ℕ` (such as the encoded output length of a polynomial-time
+  many-one reduction), multiplying the gap by the product of `f i` over all `i ≤ p(|a|)` with
+  `i ≠ k a` normalizes the target to `∏_{i ≤ p(|a|)} f i`, which depends only on the input length.
+
+Oracle lowness of `WPP` and `LWPP` and polynomial-family multiple-target robustness
+(`Poly-LWPP = LWPP` and `Poly-WPP = WPP`, where the accepting target index is not polynomial-time
+computable from the input) are not proved here.
 
 ## Main definitions
 
@@ -30,10 +51,18 @@ are algebraic consequences; oracle lowness and robustness are not claimed.
 
 ## Main results
 
-* `SPP_subset_LWPP`, `LWPP_subset_WPP`, `WPP_subset_CeqP`, `WPP_subset_coCeqP`.
-* `compl_mem_WPP`, `inter_mem_WPP`, `union_mem_WPP`: Boolean closure.
-* `compl_mem_LWPP`, `inter_mem_LWPP`, `union_mem_LWPP`: length-dependent Boolean closure.
-* `PolyTimeReducible.mem_WPP`: polynomial-time reduction closure.
+* `SPP_subset_LWPP`, `LWPP_subset_WPP`, `UP_subset_LWPP`, `UP_subset_WPP`,
+  `coUP_subset_LWPP`, `coUP_subset_WPP`, `FewP_subset_LWPP`, `FewP_subset_WPP`,
+  `WPP_subset_CeqP`, `WPP_subset_coCeqP`.
+* `compl_mem_WPP`, `inter_mem_WPP`, `union_mem_WPP`, `diff_mem_WPP`, `symmDiff_mem_WPP`:
+  Boolean closure of `WPP`.
+* `compl_mem_LWPP`, `inter_mem_LWPP`, `union_mem_LWPP`, `diff_mem_LWPP`, `symmDiff_mem_LWPP`:
+  length-dependent Boolean closure of `LWPP`.
+* `mem_WPP_of_finset_targets`, `mem_LWPP_of_finset_targets`: finite multiple-target robustness.
+* `mem_LWPP_of_polyTime_index`: normalization of a polynomial-time unary-indexed target to a
+  length-dependent target.
+* `PolyTimeReducible.mem_WPP`, `PolyTimeReducible.mem_LWPP`: polynomial-time many-one reduction
+  closure.
 
 ## References
 
@@ -47,6 +76,7 @@ are algebraic consequences; oracle lowness and robustness are not claimed.
 namespace Cslib.Complexity
 
 open Turing.MultiTapeTM
+open scoped symmDiff
 
 variable {α β : Type} {enc : α ↪ List Bool} {A B : Set α}
 
@@ -71,6 +101,30 @@ theorem LWPP_subset_WPP : LWPP enc ⊆ WPP enc := by
   rintro A ⟨g, hg, f, hf, hn, hr, hA⟩
   exact ⟨g, hg, fun a => f (enc a).length,
     hf.comp (.encoding_length enc), fun a => hn _, hr, hA⟩
+
+/-- Unambiguous polynomial time is contained in `LWPP` via `SPP`. -/
+theorem UP_subset_LWPP : UP enc ⊆ LWPP enc :=
+  UP_subset_SPP.trans SPP_subset_LWPP
+
+/-- Unambiguous polynomial time is contained in `WPP`. -/
+theorem UP_subset_WPP : UP enc ⊆ WPP enc :=
+  UP_subset_LWPP.trans LWPP_subset_WPP
+
+/-- `coUP` is contained in `LWPP` via `SPP`. -/
+theorem coUP_subset_LWPP : coUP enc ⊆ LWPP enc :=
+  coUP_subset_SPP.trans SPP_subset_LWPP
+
+/-- `coUP` is contained in `WPP`. -/
+theorem coUP_subset_WPP : coUP enc ⊆ WPP enc :=
+  coUP_subset_LWPP.trans LWPP_subset_WPP
+
+/-- Polynomially bounded ambiguity `FewP` is contained in `LWPP` via `FewP ⊆ SPP`. -/
+theorem FewP_subset_LWPP : FewP enc ⊆ LWPP enc :=
+  FewP_subset_SPP.trans SPP_subset_LWPP
+
+/-- Polynomially bounded ambiguity `FewP` is contained in `WPP`. -/
+theorem FewP_subset_WPP : FewP enc ⊆ WPP enc :=
+  FewP_subset_LWPP.trans LWPP_subset_WPP
 
 /-- Subtraction of the target gives a zero test for WPP membership. -/
 theorem WPP_subset_CeqP : WPP enc ⊆ CeqP enc := by
@@ -108,6 +162,15 @@ theorem union_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∪ B ∈ WP
   simpa [Set.compl_inter] using
     compl_mem_WPP (inter_mem_WPP (compl_mem_WPP hA) (compl_mem_WPP hB))
 
+/-- `WPP` is closed under set difference. -/
+theorem diff_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A \ B ∈ WPP enc :=
+  inter_mem_WPP hA (compl_mem_WPP hB)
+
+/-- `WPP` is closed under symmetric difference. -/
+theorem symmDiff_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∆ B ∈ WPP enc := by
+  rw [Set.symmDiff_def]
+  exact union_mem_WPP (diff_mem_WPP hA hB) (diff_mem_WPP hB hA)
+
 /-- Polynomial-time precomposition preserves the target and the exact gap. -/
 theorem PolyTimeReducible.mem_WPP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ WPP encB) : A ∈ WPP enc := by
@@ -139,5 +202,218 @@ theorem inter_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∩ B ∈
 theorem union_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∪ B ∈ LWPP enc := by
   simpa [Set.compl_inter] using
     compl_mem_LWPP (inter_mem_LWPP (compl_mem_LWPP hA) (compl_mem_LWPP hB))
+
+/-- `LWPP` is closed under set difference. -/
+theorem diff_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A \ B ∈ LWPP enc :=
+  inter_mem_LWPP hA (compl_mem_LWPP hB)
+
+/-- `LWPP` is closed under symmetric difference. -/
+theorem symmDiff_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∆ B ∈ LWPP enc := by
+  rw [Set.symmDiff_def]
+  exact union_mem_LWPP (diff_mem_LWPP hA hB) (diff_mem_LWPP hB hA)
+
+/-! ### Finite multiple-target robustness -/
+
+private theorem finset_prod_intBin {ι : Type*} (s : Finset ι) {f : ι → α → ℤ}
+    (hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin) :
+    ComputableTidilyInPolyTime (fun a => ∏ i ∈ s, f i a) enc encIntBin := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+    exact (ComputableTidilyInPolyTime.const 1).of_enc_eq fun _ => congrArg encIntBin (by simp)
+  | insert i s hi ih =>
+    have hmul := (hf i (Finset.mem_insert_self i s)).intBin_mul'
+      (ih fun j hj => hf j (Finset.mem_insert_of_mem hj))
+    exact hmul.of_enc_eq fun a => congrArg encIntBin (Finset.prod_insert hi)
+
+private theorem finset_prod_mem_GapP {ι : Type*} (s : Finset ι) {f : ι → α → ℤ}
+    (hf : ∀ i ∈ s, f i ∈ GapP enc) : (fun a => ∏ i ∈ s, f i a) ∈ GapP enc := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+    exact GapP.one_mem
+  | insert i s hi ih =>
+    have hmul := GapP.mul_mem (hf i (Finset.mem_insert_self i s))
+      (ih fun j hj => hf j (Finset.mem_insert_of_mem hj))
+    convert hmul using 1
+    ext a
+    exact Finset.prod_insert hi
+
+/-- **Finite multiple-target robustness for `WPP`:** a `GapP` function that takes `0` outside `A`
+and one of a fixed finite family of nonzero polynomial-time targets on `A` witnesses `A ∈ WPP`
+(the fixed-`Finset` case of the product interpolation in
+[Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018]). -/
+theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} {f : ι → α → ℤ}
+    (hg : g ∈ GapP enc)
+    (hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin)
+    (hn : ∀ i ∈ s, ∀ a, f i a ≠ 0)
+    (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i a)
+    (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i a) : A ∈ WPP enc := by
+  let F : α → ℤ := fun a => ∏ i ∈ s, f i a
+  let P : α → ℤ := fun a => ∏ i ∈ s, (f i a - g a)
+  have hF : ComputableTidilyInPolyTime F enc encIntBin := finset_prod_intBin s hf
+  have hFn (a : α) : F a ≠ 0 := Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi a
+  have hP : P ∈ GapP enc :=
+    finset_prod_mem_GapP s fun i hi => GapP.sub_mem' (GapP.of_polyTime (hf i hi)) hg
+  have hP_zero {a : α} (hz : g a = 0) : P a = F a := by
+    simp [P, F, hz]
+  have hP_mem {a : α} (hmem : ∃ i ∈ s, g a = f i a) : P a = 0 := by
+    obtain ⟨i, hi, hgi⟩ := hmem
+    exact Finset.prod_eq_zero hi (by lia)
+  refine ⟨F - P, GapP.sub_mem' (GapP.of_polyTime hF) hP, F, hF, hFn, fun a => ?_, fun a => ?_⟩
+  · rcases hr a with hz | hmem
+    · exact Or.inl (by simp [hP_zero hz])
+    · exact Or.inr (by simp [hP_mem hmem])
+  · rw [hA a]
+    constructor
+    · intro hmem
+      simp [hP_mem hmem]
+    · intro hFP
+      rcases hr a with hz | hmem
+      · exfalso
+        apply hFn a
+        have : F a - P a = 0 := by simp [hP_zero hz]
+        have hEq : F a - P a = F a := hFP
+        lia
+      · exact hmem
+
+/-- **Finite multiple-target robustness for `LWPP`:** a `GapP` function that takes `0` outside `A`
+and one of a fixed finite family of nonzero length-dependent polynomial-time targets on `A`
+witnesses `A ∈ LWPP` (the fixed-`Finset` case of the product interpolation in
+[Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018]). -/
+theorem mem_LWPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} {f : ι → ℕ → ℤ}
+    (hg : g ∈ GapP enc)
+    (hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) encUnary encIntBin)
+    (hn : ∀ i ∈ s, ∀ n, f i n ≠ 0)
+    (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i (enc a).length)
+    (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i (enc a).length) : A ∈ LWPP enc := by
+  let F : ℕ → ℤ := fun n => ∏ i ∈ s, f i n
+  let P : α → ℤ := fun a => ∏ i ∈ s, (f i (enc a).length - g a)
+  have hF : ComputableTidilyInPolyTime F encUnary encIntBin := finset_prod_intBin s hf
+  have hFn (n : ℕ) : F n ≠ 0 := Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi n
+  have hP : P ∈ GapP enc :=
+    finset_prod_mem_GapP s fun i hi =>
+      GapP.sub_mem' (GapP.of_polyTime ((hf i hi).comp (.encoding_length enc))) hg
+  have hP_zero {a : α} (hz : g a = 0) : P a = F (enc a).length := by
+    simp [P, F, hz]
+  have hP_mem {a : α} (hmem : ∃ i ∈ s, g a = f i (enc a).length) : P a = 0 := by
+    obtain ⟨i, hi, hgi⟩ := hmem
+    exact Finset.prod_eq_zero hi (by lia)
+  refine ⟨(fun a => F (enc a).length) - P,
+    GapP.sub_mem' (GapP.of_polyTime (hF.comp (.encoding_length enc))) hP,
+    F, hF, hFn, fun a => ?_, fun a => ?_⟩
+  · rcases hr a with hz | hmem
+    · exact Or.inl (by simp [hP_zero hz])
+    · exact Or.inr (by simp [hP_mem hmem])
+  · rw [hA a]
+    constructor
+    · intro hmem
+      simp [hP_mem hmem]
+    · intro hFP
+      rcases hr a with hz | hmem
+      · exfalso
+        apply hFn (enc a).length
+        have : F (enc a).length - P a = 0 := by simp [hP_zero hz]
+        have hEq : F (enc a).length - P a = F (enc a).length := hFP
+        lia
+      · exact hmem
+
+/-! ### Unary-indexed target normalization and `LWPP` reduction closure -/
+
+private theorem prod_map_ne_zero {γ : Type*} {f : γ → ℤ} {l : List γ}
+    (h : ∀ x ∈ l, f x ≠ 0) : (l.map f).prod ≠ 0 := by
+  induction l with
+  | nil => simp
+  | cons x l ih =>
+    simp only [List.map_cons, List.prod_cons]
+    exact mul_ne_zero (h x (by simp)) (ih fun y hy => h y (by simp [hy]))
+
+private theorem mul_prod_filter_range_ne (f : ℕ → ℤ) {K m : ℕ} (hm : m < K) :
+    f m * (((List.range K).filter (fun i => decide (i ≠ m))).map f).prod =
+      ((List.range K).map f).prod := by
+  induction K with
+  | zero => lia
+  | succ K ih =>
+    rw [List.range_succ, List.filter_append, List.map_append, List.prod_append,
+      List.map_append, List.prod_append]
+    rcases Nat.lt_succ_iff_lt_or_eq.mp hm with hlt | rfl
+    · have hne : decide (K ≠ m) = true := decide_eq_true (by lia)
+      simp only [List.filter_cons, hne, ↓reduceIte, List.filter_nil, List.map_cons, List.map_nil,
+        List.prod_cons, List.prod_nil, mul_one]
+      rw [← mul_assoc, ih hlt]
+    · have hfilt : (List.range m).filter (fun i => decide (i ≠ m)) = List.range m :=
+        List.filter_eq_self.mpr fun i hi => decide_eq_true (Nat.ne_of_lt (List.mem_range.mp hi))
+      simp only [hfilt, List.filter_cons, ne_eq, not_true_eq_false, decide_false,
+        Bool.false_eq_true, ↓reduceIte, List.filter_nil, List.map_nil, List.prod_nil, mul_one,
+        List.map_cons, List.prod_cons]
+      ring
+
+/-- **Unary-indexed target normalization for `LWPP`:** if a `GapP` function takes `0` outside `A`
+and `f (k a)` on `A`, where `f : ℕ → ℤ` is a nonzero unary-input polynomial-time target and
+`k : α → ℕ` is computable in polynomial time in unary, then multiplying the gap by the
+`FP`-computable product of `f i` over `i ≤ p(|a|)` with `i ≠ k a` normalizes the target to depend
+only on
+`(enc a).length` [Fenner–Fortnow–Kurtz][FennerFortnowKurtz1994];
+[Hemaspaandra et al., Section 3][HemaspaandraEtAl2018]. -/
+theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α → ℕ}
+    (hg : g ∈ GapP enc)
+    (hf : ComputableTidilyInPolyTime f encUnary encIntBin)
+    (hn : ∀ n, f n ≠ 0)
+    (hk : ComputableTidilyInPolyTime k enc encUnary)
+    (hr : ∀ a, g a = 0 ∨ g a = f (k a))
+    (hA : ∀ a, a ∈ A ↔ g a = f (k a)) : A ∈ LWPP enc := by
+  obtain ⟨c, d, hb⟩ := hk.polyBounded.exists_le
+  let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
+  have hlt (a : α) : k a < p.eval (enc a).length + 1 := by
+    have : k a ≤ p.eval (enc a).length := by simpa [p] using hb a
+    lia
+  let bound (n : ℕ) : ℕ := p.eval n + 1
+  have hbound : ComputableTidilyInPolyTime bound encUnary encUnary :=
+    ComputableTidilyInPolyTime.unary_add.comp
+      ((ComputableTidilyInPolyTime.unary_eval p).prod (.const 1))
+  let F (n : ℕ) : ℤ := ((List.range (bound n)).map f).prod
+  have hF : ComputableTidilyInPolyTime F encUnary encIntBin :=
+    ComputableTidilyInPolyTime.intBin_prod.comp
+      ((ComputableTidilyInPolyTime.map hf).comp
+        (ComputableTidilyInPolyTime.range.comp hbound))
+  have hFn (n : ℕ) : F n ≠ 0 := prod_map_ne_zero fun _ _ => hn _
+  let h (a : α) : ℤ :=
+    (((List.range (bound (enc a).length)).filter (fun i => decide (i ≠ k a))).map f).prod
+  have hlist : ComputableTidilyInPolyTime
+      (fun a : α => List.range (bound (enc a).length)) enc (encList encUnary) :=
+    (ComputableTidilyInPolyTime.range.comp hbound).comp (.encoding_length enc)
+  have htest : ComputableTidilyInPolyTime
+      (fun x : α × ℕ => decide (x.2 ≠ k x.1)) (encPair enc encUnary) encBool :=
+    (ComputableTidilyInPolyTime.bool_not.comp
+      ((ComputableTidilyInPolyTime.decide_eq encUnary).comp
+        ((ComputableTidilyInPolyTime.snd enc encUnary).prod
+          (hk.comp (ComputableTidilyInPolyTime.fst enc encUnary))))).of_enc_eq
+      fun x => congrArg encBool (by simp)
+  have hh : ComputableTidilyInPolyTime h enc encIntBin :=
+    ComputableTidilyInPolyTime.intBin_prod.comp
+      ((ComputableTidilyInPolyTime.map hf).comp
+        (ComputableTidilyInPolyTime.filterWithInput hlist htest))
+  have hmul (a : α) : f (k a) * h a = F (enc a).length :=
+    mul_prod_filter_range_ne f (hlt a)
+  refine ⟨g * h, GapP.mul_mem hg (GapP.of_polyTime hh), F, hF, hFn, fun a => ?_, fun a => ?_⟩
+  · rcases hr a with hz | hfk
+    · exact Or.inl (by simp [hz])
+    · exact Or.inr (by simp [hfk, hmul a])
+  · rw [hA a]
+    rcases hr a with hz | hfk
+    · simp [hz, (hFn (enc a).length).symm, (hn (k a)).symm]
+    · simp [hfk, hmul a]
+
+/-- **Polynomial-time many-one reductions preserve `LWPP`**
+[Fenner–Fortnow–Kurtz][FennerFortnowKurtz1994];
+[Hemaspaandra et al., Section 3][HemaspaandraEtAl2018]: the target `f |r(a)|` has unary-computable
+index `k a = |r(a)|`, which `mem_LWPP_of_polyTime_index` normalizes to a function of `|a|`. -/
+theorem PolyTimeReducible.mem_LWPP {encB : β ↪ List Bool} {B : Set β}
+    (h : PolyTimeReducible enc encB A B) (hB : B ∈ LWPP encB) : A ∈ LWPP enc := by
+  obtain ⟨r, hr, hAB⟩ := h
+  obtain ⟨g, hg, f, hf, hn, hgr, hB⟩ := hB
+  exact mem_LWPP_of_polyTime_index (GapP.comp_mem hg hr) hf hn
+    ((ComputableTidilyInPolyTime.encoding_length encB).comp hr)
+    (fun a => hgr (r a)) (fun a => (hAB a).trans (hB (r a)))
 
 end Cslib.Complexity
