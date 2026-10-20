@@ -169,7 +169,7 @@ private theorem card_seeds_mem_mem (A : Finset (Fin m → F)) {t t' : F} (htt : 
     rw [mem_coe, mem_offDiag]
     refine ⟨hxu.2.2.1, hxu.2.2.2, fun heq => hxu.2.1 ?_⟩
     have heq' : x + t • u = x + t' • u := heq
-    show u = 0
+    change u = 0
     rw [← hdir x u, heq', sub_self, smul_zero]
   · obtain ⟨y, y'⟩ := yy
     rw [mem_coe, mem_offDiag] at hyy
@@ -476,7 +476,8 @@ theorem exists_card_lineListDecode_ne_le {d D : ℕ} (hd : 1 ≤ d)
             refine ⟨⟨by rw [lead_smul, inv_mul_cancel₀ hl], ?_⟩, hb⟩
             rw [lineAgree_smul A _ _ (inv_ne_zero hl)]
             exact hD
-          · simp only [S₃, coe_filter, mem_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hxz hxz'
+          · simp only [S₃, coe_filter, mem_filter, mem_univ, true_and,
+              Set.mem_ofPred_eq] at hxz hxz'
             obtain ⟨⟨hne, -, -⟩, hx⟩ := hxz
             obtain ⟨⟨hne', -, -⟩, hx'⟩ := hxz'
             subst hx

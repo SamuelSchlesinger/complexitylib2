@@ -18,7 +18,8 @@ Let `h : H ↪ F` embed a finite set `H` of size `|H|` in a field `F`. Every fun
 `f : (Fin m → H) → F` on the grid `H ^ m` is the restriction of a polynomial of degree less than
 `|H|` in each variable: the *low-degree extension*
 `lowDegreeExtension h f x = ∑ u, f u * ∏ i, L (u i) (x i)`, where `L a` is the Lagrange basis
-polynomial of the node `h a` among the nodes `h H` [Babai, Fortnow, Levin, Szegedy][BabaiFortnowLevinSzegedy1991],
+polynomial of the node `h a` among the nodes `h H`
+[Babai, Fortnow, Levin, Szegedy][BabaiFortnowLevinSzegedy1991],
 [Arora and Barak, Section 19.4][AroraBarak09]. It agrees with `f` on the grid
 (`Cslib.Code.lowDegreeExtension_apply_embed`) and is a codeword of the Reed–Muller code of degree
 `m * (|H| - 1)` (`Cslib.Code.lowDegreeExtension_mem_reedMuller`). For `H = {0, 1}` this is the

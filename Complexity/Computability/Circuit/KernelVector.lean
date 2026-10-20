@@ -93,7 +93,7 @@ theorem full_firstFlags (b : Fin n → (Fin N → F) → F) (hb : ∀ i, b i ∈
     | zero => simp [chainValue, prefixZero]
     | succ i ih =>
       have hi' : i < n := hi
-      show op i (chainValue 1 op g i x) (g i x) = _
+      change op i (chainValue 1 op g i x) (g i x) = _
       rw [ih (Nat.le_of_succ_le hi), prefixZero_succ _ hi]
       simp only [op, g, dite_eq_left hi']
   have hsel := family (I := fullInterpretation (k := 2))
@@ -126,7 +126,7 @@ theorem full_nonzero (v : Fin n → (Fin N → F) → F) (hv : ∀ l, v l ∈ s)
     | zero => simp [chainValue]
     | succ i ih =>
       have hi' : i < n := hi
-      show op i (chainValue 0 op g i x) (g i x) = _
+      change op i (chainValue 0 op g i x) (g i x) = _
       rw [ih (Nat.le_of_succ_le hi)]
       simp only [op, g, dite_eq_left hi']
       by_cases hvi : v ⟨i, hi⟩ x = 0
@@ -141,7 +141,7 @@ theorem full_nonzero (v : Fin n → (Fin N → F) → F) (hv : ∀ l, v l ∈ s)
         exact fun h' => hvi (h' ⟨i, hi⟩ (Nat.lt_succ_self i))
   refine hchain.mono Set.Subset.rfl (Set.singleton_subset_iff.2 ⟨Fin.last n, ?_⟩) le_rfl
   funext x
-  show chainValue 0 op g (Fin.last n : ℕ) x = _
+  change chainValue 0 op g (Fin.last n : ℕ) x = _
   rw [Fin.val_last, hval n le_rfl x]
   congr 1
   exact propext ⟨fun h => funext fun l => h l l.2, fun h l _ => congrFun h l⟩

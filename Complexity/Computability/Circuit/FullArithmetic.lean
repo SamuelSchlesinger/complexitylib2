@@ -22,9 +22,9 @@ functions over an additive commutative monoid costs `N + 1` gates, one of them f
 zero (`Synthesis.full_sum`), and a sum of `N` products of available functions over a semiring costs
 `2 * N + 1` gates (`Synthesis.full_dot`). A *chain* `v 0 = c`, `v (i + 1) = op i (v i) (g i x)`
 of length `len`, fed by available functions `g i`, costs `len + 1` gates for all of its values
-(`Synthesis.full_chain`); chains compute prefix tests such as the first nonzero entry of a vector. Applied to a field, this counts field operations, with every
-operation that depends on at most two field elements, including tests and selections, charged one
-gate.
+(`Synthesis.full_chain`); chains compute prefix tests such as the first nonzero entry of a vector.
+Applied to a field, this counts field operations, with every operation that depends on at most two
+field elements, including tests and selections, charged one gate.
 
 ## Main results
 

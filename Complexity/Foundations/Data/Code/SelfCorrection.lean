@@ -152,10 +152,11 @@ def majTree : (L : ℕ) → (Fin (3 ^ L) → α) → α
 /-- **Amplification by majority trees.** If at most a `ρ` fraction of the outcomes `ω` have
 `val ω ≠ y`, then at most a `(3 * ρ) ^ (2 ^ L) / 3` fraction of the tuples of `3 ^ L` outcomes
 make the majority tree miss `y`. -/
-theorem card_majTree_ne_le {Ω : Type*} [Fintype Ω] [DecidableEq Ω] (val : Ω → α) (y : α)
+theorem card_majTree_ne_le {Ω : Type*} [Fintype Ω] (val : Ω → α) (y : α)
     {ρ : ℝ} (hρ : (#{ω | val ω ≠ y} : ℝ) ≤ ρ * Fintype.card Ω) (L : ℕ) :
     (#{V : Fin (3 ^ L) → Ω | majTree L (val ∘ V) ≠ y} : ℝ) ≤
       (3 * ρ) ^ (2 ^ L) / 3 * Fintype.card Ω ^ (3 ^ L) := by
+  classical
   induction L with
   | zero =>
     have : #{V : Fin (3 ^ 0) → Ω | majTree 0 (val ∘ V) ≠ y} = #{ω | val ω ≠ y} := by
@@ -232,11 +233,12 @@ theorem card_majTree_ne_le {Ω : Type*} [Fintype Ω] [DecidableEq Ω] (val : Ω 
 each `x` in a set `S` of at most `2 ^ (2 ^ L)` inputs, miss `target x` on at most a `ρ` fraction of
 its outcomes, with `3 * ρ ≤ 1 / 2`. Then some tuple of `3 ^ L` outcomes makes the majority tree
 right at every `x ∈ S`. -/
-theorem exists_forall_majTree_eq {X Ω : Type*} [Fintype Ω] [DecidableEq Ω] [Nonempty Ω]
+theorem exists_forall_majTree_eq {X Ω : Type*} [Fintype Ω] [Nonempty Ω]
     (S : Finset X) (val : X → Ω → α) (target : X → α) {ρ : ℝ}
     (hρ : ∀ x ∈ S, (#{ω | val x ω ≠ target x} : ℝ) ≤ ρ * Fintype.card Ω)
     (h3 : 3 * ρ ≤ 1 / 2) {L : ℕ} (hS : #S ≤ 2 ^ (2 ^ L)) :
     ∃ V : Fin (3 ^ L) → Ω, ∀ x ∈ S, majTree L (val x ∘ V) = target x := by
+  classical
   by_contra hcon
   push Not at hcon
   have hρ0 : 0 ≤ ρ := by

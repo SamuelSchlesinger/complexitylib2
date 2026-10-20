@@ -47,7 +47,8 @@ operation.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.bitSynthesis_glPredictor`, `Cslib.Circuits.Boolean.BitSynthesis.lineListDecode`,
+* `Cslib.Circuits.Boolean.bitSynthesis_glPredictor`,
+  `Cslib.Circuits.Boolean.BitSynthesis.lineListDecode`,
   `Cslib.Circuits.Boolean.BitSynthesis.selfCorrect`: the costs of the three stages.
 
 ## References
@@ -185,7 +186,7 @@ theorem bitSynthesis_glPredictor (enc : F ≃ BitString w) {C : BooleanFunction 
       simp only [single_apply]
       congr 1
       funext k
-      show Fin.append xb (fun k _ => r k) k v = _
+      change Fin.append xb (fun k _ => r k) k v = _
       rw [append_apply]
     have h1 : Synthesis interpretation S₁
         {fun v => C (Fin.append (bitsOfPoint enc fun i => φ i v) r)} sC :=
@@ -202,8 +203,8 @@ theorem bitSynthesis_glPredictor (enc : F ≃ BitString w) {C : BooleanFunction 
       {bitsOf enc (fun v => glPredictor enc C masks guess fun i => φ i v) j}
       (#T * (sC + 1) + (2 + #T * (2 * (#T + 2)))) := by
     intro j
-    have hvotes := Synthesis.biUnion (I := interpretation) (s := S₁) T (fun t => {V j t}) (fun _ => sC + 1)
-      fun t _ => hvote _ _
+    have hvotes := Synthesis.biUnion (I := interpretation) (s := S₁) T (fun t => {V j t})
+      (fun _ => sC + 1) fun t _ => hvote _ _
     set S₂ := S₁ ∪ ⋃ t ∈ T, {V j t}
     have hmaj := synthesis_atLeast (s := S₂) (k := #T) (j := #T / 2 + 1)
       (fun l => if h : l < #T then V j (T.equivFin.symm ⟨l, h⟩) else fun _ => false)
@@ -212,7 +213,7 @@ theorem bitSynthesis_glPredictor (enc : F ≃ BitString w) {C : BooleanFunction 
         exact Set.mem_union_right _ (Set.mem_biUnion (T.equivFin.symm ⟨l, hl⟩).2 rfl))
       (by omega)
     refine (hvotes.trans hmaj).mono Set.Subset.rfl (Set.singleton_subset_iff.2 ?_) ?_
-    · show _ = _
+    · change _ = _
       funext v
       rw [← strictMajorityOn_eq_atLeast T (V j) v]
       simp only [bitsOf, glPredictor, Equiv.apply_symm_apply, Crypto.GoldreichLevin.candidate,

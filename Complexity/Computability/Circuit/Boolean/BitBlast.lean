@@ -149,7 +149,7 @@ theorem bitBlast (enc : F ≃ BitString w) {s : Set (BooleanFunction n)} {N M : 
 synthesized over the full binary basis from the input projections with `cost` gates, and the bits
 of the functions `φ i` feeding the inputs are available, then the bits of all `Ψ o (φ ·)` can be
 made available with `cost * bitBlastCost w` De Morgan gates. -/
-theorem bitBlast_synthesis (enc : F ≃ BitString w) {N : ℕ} {ι : Type*} [Fintype ι]
+theorem bitBlast_synthesis (enc : F ≃ BitString w) {N : ℕ} {ι : Type*} [Finite ι]
     (Ψ : ι → (Fin N → F) → F) {cost : ℕ}
     (h : Synthesis (fullInterpretation (k := 2)) (inputs N) (Set.range Ψ) cost)
     {s : Set (BooleanFunction n)} (φ : Fin N → (Fin n → Bool) → F)
@@ -158,6 +158,7 @@ theorem bitBlast_synthesis (enc : F ≃ BitString w) {N : ℕ} {ι : Type*} [Fin
       (Set.range fun oj : ι × Fin w => bitsOf enc (fun x => Ψ oj.1 (fun i => φ i x)) oj.2)
       (cost * bitBlastCost w) := by
   classical
+  have := Fintype.ofFinite ι
   let e := Fintype.equivFin ι
   have h' : Synthesis (fullInterpretation (k := 2)) (inputs N)
       (Set.range fun j => Ψ (e.symm j)) cost :=

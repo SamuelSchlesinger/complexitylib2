@@ -164,7 +164,7 @@ private theorem full_henselSeq (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → (Fi
       rcases Fin.eq_castSucc_or_eq_last i with ⟨i, rfl⟩ | rfl
       · exact Set.mem_union_left _ ⟨i, rfl⟩
       · refine Set.mem_union_right _ (funext fun x => ?_)
-        show henselSeq (Sudan.bivariateOf M fun m => c m x) (τ x) (a x) (lam x) (k + 1) =
+        change henselSeq (Sudan.bivariateOf M fun m => c m x) (τ x) (a x) (lam x) (k + 1) =
           -W x / lam x
         rw [henselSeq, henselCoeff]
         simp only [W, V, A, h, eval_henselTrunc, Sudan.evalEval_bivariateOf, mul_assoc]
