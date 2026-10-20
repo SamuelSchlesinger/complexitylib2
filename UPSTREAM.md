@@ -133,10 +133,21 @@ grandfathered without an alias; this list records them for downstream users.
     predicates `IsNatural`, `IsLarge`, `IsUseful`, `IsCircuitTest`, `truthTableGenerator` and their
     lemmas, moved into the `NaturalProof` namespace; 12 Ladner helpers (among them `boolDecoder`,
     `natDecoder`, `ofBits`, `dropFalsesT`); `BakerGillSolovay.unaryLanguage` and three lemmas.
+* **Meaning strengthened under the old name.** On 2026-10-20 `Turing.MultiTapeNTM.DecidesInSpace`
+  started to require that every branch halt (Sipser, Definition 8.1), so `NL` and `NPSPACE`
+  follow the textbook convention. The former meaning is `Turing.MultiTapeNTM.RecognizesInSpace`
+  (`DecidesInSpace.recognizesInSpace`); membership proofs now also need a halting witness
+  (`DecidesInSpace.exists_runsInTime`).
+* **Renamed modules.** On 2026-10-20 `Circuit/Boolean/MassProduction/{Sharp,SharpParameters,
+  SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
+  deprecated alias, but imports of the old module paths must be updated: a module stub would have
+  no upstream counterpart, so none is kept.
 * **Side effects of keeping aliases.** An alias that shares its base name with its successor makes
   the unqualified name ambiguous when both namespaces are open (for example `restrictTable`,
   `Ladner.cnfDecoder`); qualify the new name. A `def` alias does not unfold to the old body under
-  `unfold` or `simp [old]`.
+  `unfold` or `simp [old]`. Since the frontier multigraph's simple graph became that of
+  `Cslib.Multigraph` (2026-10-20), `Multigraph.toSimpleGraph_adj` is ambiguous when `Cslib` and
+  `Cslib.Circuits.Frontier` are both open; use dot notation (`G.toSimpleGraph_adj`).
 
 The [historical ledger](https://github.com/SamuelSchlesinger/complexitylib2/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
 preserves earlier integration notes and per-module follow-up ideas.

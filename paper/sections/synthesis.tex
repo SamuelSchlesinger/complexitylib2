@@ -27,9 +27,9 @@ nonconstant-gate cost at most
 \]
 The cutoff depends on $\gamma,\varepsilon$, not on $f,k$. Here NOT, AND and OR
 each cost one and constants cost zero, unlike the total-gate convention used in
-other entries. The coefficient is optimal only at $\gamma=0$, where a single
-copy of most functions already needs $(1-o(1))2^n/n$ gates; no matching lower
-bound is claimed for $\gamma>0$. The construction is nonuniform and supplies no
+other entries. The coefficient is optimal at $\gamma=0$, where a single copy of
+most functions already needs $(1-o(1))2^n/n$ nonconstant gates\citep{Shannon1949};
+no matching lower bound is claimed for $\gamma>0$. The construction is nonuniform and supplies no
 certified runtime for choosing its tables.\citep{Schlesinger2026MassProduction}
 \declat{2357cdd84d08ece1f218530f7c587d3c0f87467e}{Complexity/Computability/Circuit/Boolean/MassProduction/Fine.lean}{364}{Cslib.Circuits.Boolean.MassProduction.realFineMassProduction}
 \end{result}

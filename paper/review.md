@@ -918,3 +918,42 @@ approval or a machine-checked equivalence between prose and Lean.
 
 The PDF built without undefined references or overflow warnings; the changed page was
 rendered and visually checked.
+
+## Batch 19: halting space deciders, fine mass production and defect fixes (2026-10-20)
+
+Integrated at Samuel's request before review: `495e5ea6`/`cd8ba181` (merge `6c90880b`), which make
+`Turing.MultiTapeNTM.DecidesInSpace` require every branch to halt so that `NL` and `NPSPACE`
+follow Sipser's Definition 8.1, keep the former predicate as `RecognizesInSpace`, and generalize
+`NL ⊆ P` and Savitch to recognizers; and `2357cdd8`/`4cde4948` (merge `8fc0cf63`), which rename
+"sharp" mass production to "fine", since no matching lower bound exists for γ > 0. The NL and
+Savitch entries (`space.tex`) and the mass-production entry (`synthesis.tex`) changed; the index
+still contains 115 entries.
+
+Independent Jetski (Gemini) reviews, run after integration:
+- Space deciders, correctness/API/paper review of `41ba45c1..cd8ba181`: request changes,
+  documentation only. Blocking: the claim that a per-instance step bound is equivalent to every
+  branch halting holds only for machines with finitely many states (König), not for the general
+  definition. Non-blocking: "no stronger" overclaimed for logspace recognizers; ROADMAP wording;
+  a genuinely branching decider test; named projections instead of `.1`; the in-place
+  strengthening of `DecidesInSpace` accepted as a literature-matching fix, to be recorded as a
+  breaking change; the paper should state the formal convention and stuck paths. All addressed in
+  `c4bd6312` and this commit; the breaking change is listed in `UPSTREAM.md`.
+- Fine renaming, rename/API/correctness/paper review of `41ba45c1..4cde4948`: approve after one
+  fix. Blocking: the paper said the coefficient is optimal *only* at γ = 0, implying
+  non-optimality for γ > 0; now "optimal at γ = 0 … no matching lower bound is claimed", with
+  Shannon credited. The γ = 0 claim was checked for this cost model (bounded fan-in, constants
+  free, `massComplexity_mono` for k ≥ 1). Non-blocking: deprecated field notation (now deprecated
+  theorems on the old type), attribution via Jukna Theorem 1.14, the constant of `MassProducesAt`,
+  section headings, and module stubs. Following the review, no `deprecated_module` stubs are kept
+  (they would have no upstream counterpart); the renamed modules are listed in `UPSTREAM.md`.
+  Addressed in `1c295e0f` and this commit. The pin list in `main.tex` now names renamed or changed
+  declarations.
+
+Defect fixes in the same batch: `9a8dc0a8` repins three USTCON links at `dec8b239` from docstring
+starts to their theorem lines, after all 419 links were checked against their pinned revisions;
+`7a61e7be` makes the frontier multigraph share `Cslib.Multigraph.toSimpleGraph` and proves the edge
+cuts agree; `72747d26` removes an unwarranted "sharp" in Nechiporuk's lemma and a stale FIXME.
+
+All six gates passed on `1c295e0f`. The PDF builds without undefined references; the changed
+pages were rendered and inspected. These are AI reviews, not human editorial approval or a
+machine-checked equivalence between prose and Lean. AI assistance: Jetski (Gemini).
