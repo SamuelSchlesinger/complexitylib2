@@ -25,6 +25,7 @@ public import Complexity.Computability.Circuit.Arithmetic.Waring
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Basic
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Compilation
 public import Complexity.Computability.Circuit.BipartiteMatching
+public import Complexity.Computability.Circuit.Bird
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
@@ -1290,6 +1291,7 @@ public import Complexity.Logics.FirstOrder.Interpretation.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation.Rank
 public import Complexity.Logics.FirstOrder.Interpretation.Tagged
 public import Complexity.Logics.FirstOrder.Interpretation.Unit
+public import Complexity.Logics.FirstOrder.Ordered.Addition
 public import Complexity.Logics.FirstOrder.Ordered.Basic
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
