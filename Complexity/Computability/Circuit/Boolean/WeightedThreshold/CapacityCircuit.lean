@@ -25,10 +25,10 @@ wires are counted through their aggregated coefficients, so cancelling input wei
 create an input-reading block.
 
 More generally, when the gates are partitioned into `B` consecutive runs along single input
-directions (`DirectionRuns`), run `i` with `rᵢ` input-reading gates has at most `2 ^ rᵢ` pieces
-as a function of its shared directional projection (`piecesAtMost_evalFrom`), so it forms a
-single one-dimensional block with at most `2 ^ rᵢ - 1` changes and capacity cost at most
-`4 · 2 ^ rᵢ`. This yields the single-direction bound `2 ^ n < 16 * K ^ 2 * 2 ^ |inputGates|` (C2)
+directions (`DirectionRuns`), for each fixed valuation of the gates in preceding runs, run `i`
+with `rᵢ` input-reading gates has at most `2 ^ rᵢ` pieces as a function of its shared directional
+projection (`piecesAtMost_evalFrom`), forming a one-dimensional block with at most `2 ^ rᵢ - 1`
+changes and cost at most `4 · 2 ^ rᵢ`. This yields `2 ^ n < 16 * K ^ 2 * 2 ^ |inputGates|` (C2)
 and the `B`-run bound `2 ^ n < 4 * K ^ 2 * 4 ^ B * 2 ^ |inputGates|` (C3), alongside the
 multilevel threshold transition bound `2 ^ n < 4 * K ^ 2 * max 1 (4 * T)` (C2′).
 
@@ -53,7 +53,7 @@ wire is not part of this readout.
   `Cslib.Circuits.Boolean.WeightedThreshold.lt_two_mul_add_two_mul_inputGates`: the C1 bounds.
 * `Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_evalFrom`,
   `Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_evalFrom`: Lemma 2 (at most `2 ^ r`
-  pieces and `2 ^ r - 1` changes for a directional run of `r` active gates).
+  pieces and `2 ^ r - 1` changes for a directional run of `r` active gates with fixed prior gates).
 * `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction`,
   `Cslib.Circuits.Boolean.WeightedThreshold.lt_of_direction`: the C2 single-direction bounds.
 * `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_runs`,
