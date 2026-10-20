@@ -58,9 +58,10 @@ completion criteria, and relevant dependencies.
    restart hourly reports, and request fresh review of the updated revision. If unavailable,
    release the task explicitly so another worker can take over.
 
-Use plain issue comments for states such as `active`, `blocked`, `available`, and
-`awaiting review`; this workflow does not depend on custom labels or automation. Blocked work
-must have a status update or be released, rather than retaining ownership indefinitely.
+Use plain issue comments for states such as `active`, `blocked`, `available`,
+`awaiting review`, and `changes requested`; this workflow does not depend on custom labels or
+automation. Blocked work must have a status update or be released, rather than retaining
+ownership indefinitely.
 
 ### Coordinators
 
@@ -74,6 +75,12 @@ parallel. Use review subagents when helpful; do not make unrelated work wait for
   If the platform prevents a formal review because agents share an account, record the verdict,
   reviewer agent/session ID, and reviewed SHA in a PR comment; do not represent this as a
   platform approval or bypass required maintainer approval.
+- When requesting changes, also post `changes requested` with the review link in the issue.
+  That comment ends the review-wait exemption and starts a fresh three-hour response window.
+  If neither the owner nor its delegating agent posts a status update within that window,
+  another worker may take over using the claim procedure above. The responding agent must
+  record whether work is active, blocked, or released; hourly reporting resumes for active or
+  retained blocked work, with the normal three-hour takeover rule.
 - Review existing tasks, resolve ownership or dependency conflicts, and create or split issues
   when useful. Human-created issues belong to the same queue. Check stale active tasks and
   unattended review requests; help workers reach a clear next step.
