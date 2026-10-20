@@ -47,8 +47,8 @@ The stages are bit-blasted De Morgan circuits whose costs are bounded in
 `Cslib.Circuits.Boolean.HardnessAmplification.Stages`. In the ranges forced by the hypotheses the
 reconstruction cost is at most `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)`
 (`Cslib.Circuits.Boolean.reconstructionCost_le`,
-`Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode`). The smallest admissible parameters have
-`2 ^ K = O(w / ε ^ 2)`, `3 ^ L = O((m * b) ^ (log₂ 3))`, `D = O(√(d * q))` and
+`Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode`). The smallest admissible
+parameters have `2 ^ K = O(w / ε ^ 2)`, `3 ^ L = O((m * b) ^ (log₂ 3))`, `D = O(√(d * q))` and
 `q = poly(d, w, 1 / ε)`, so for `2 ^ b = poly(n / ε)` the reconstructed circuit has size
 polynomial in `s`, `n` and `1 / ε`, and the encoding has `O(n + log (1 / ε))` input bits when
 `m = n / b`.
@@ -794,7 +794,8 @@ end Bound
 omit [DecidableEq F] in
 /-- **The reconstruction theorem with a polynomial bound** [SudanTrevisanVadhan2001]. Under the
 hypotheses of `complexity_le_of_agree_hardnessEncode`, with `q = |F| = 2 ^ w`, the function `f`
-has a De Morgan circuit with at most `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)` gates. -/
+has a De Morgan circuit with at most `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)`
+gates. -/
 theorem complexity_le_pow_of_agree_hardnessEncode (enc : F ≃ BitString w)
     (h : BitString b ↪ F) (f : BooleanFunction (m * b)) {C : BooleanFunction (m * w + w)} {s : ℕ}
     (hC : complexity interpretation (single C) ≤ s) {ε : ℝ} (hε : 0 < ε)
