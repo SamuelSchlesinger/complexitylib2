@@ -25,6 +25,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 ## Main results
 
 * `Cslib.BitString.ofList_ofFn`, `Cslib.BitString.ofFn_ofList`: representation round trips.
+* `Cslib.BitString.ofFn_ofList_eq_take`: the fixed-width view pads with `false` or truncates.
 * `Cslib.BitString.listRows_eq_ofFn`: agreement with the finite block representation.
 * `Cslib.BitString.ofFn_blocksEquiv_symm`: packing fixed-width rows is list concatenation.
 
@@ -53,6 +54,17 @@ theorem ofFn_ofList {n : ℕ} {word : List Bool} (hlen : word.length = n) :
   apply List.ext_getElem (by simp)
   intro i hi hi'
   simp [ofList, List.getD, List.getElem?_eq_getElem hi']
+
+/-- Reading a word into a bit string pads it with `false` or truncates it. -/
+theorem ofFn_ofList_eq_take (n : ℕ) (word : List Bool) :
+    List.ofFn (ofList n word) = (word ++ List.replicate n false).take n := by
+  refine List.ext_getElem (by simp) fun i hi _ => ?_
+  simp only [List.length_ofFn] at hi
+  simp only [List.getElem_ofFn, List.getElem_take, ofList, List.getD_eq_getElem?_getD,
+    List.getElem_append]
+  split_ifs with hw
+  · simp [List.getElem?_eq_getElem hw]
+  · simp [List.getElem?_eq_none (by omega : word.length ≤ i)]
 
 /-- Packing fixed-width rows in the block representation is ordinary list concatenation. -/
 theorem ofFn_blocksEquiv_symm {count width : ℕ} (rows : Fin count → BitString width) :

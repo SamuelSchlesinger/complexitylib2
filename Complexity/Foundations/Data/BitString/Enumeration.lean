@@ -26,6 +26,8 @@ be polynomial in `n`.
 
 * `Cslib.BitString.mem_enum`, `Cslib.BitString.length_enum`, `Cslib.BitString.nodup_enum`:
   the enumeration contains each bit string exactly once and has `2 ^ n` entries.
+* `Cslib.BitString.enum_eq_ofFn`, `Cslib.BitString.enumList_eq_ofFn`: the enumeration lists the
+  bit strings in the order of their numbers `Cslib.BitString.equivFin`.
 
 ## References
 
@@ -94,5 +96,30 @@ theorem length_of_mem_enumList {count : ℕ} {word : List Bool}
   intro h
   subst count
   exact List.mem_map.mpr ⟨word.get, mem_enum _ _, List.ofFn_get word⟩
+
+/-- **The enumeration is in the order of `equivFin`**: binary order, least significant bit
+first. -/
+theorem enum_eq_ofFn (k : ℕ) : enum k = List.ofFn (equivFin k).symm := by
+  induction k with
+  | zero => exact List.ext_getElem (by simp) fun _ _ _ => Subsingleton.elim _ _
+  | succ k ih =>
+    rw [enum, ih, List.flatMap, List.map_ofFn, List.ofFn_congr (pow_succ 2 k), List.ofFn_mul]
+    congr 1
+    refine List.ofFn_inj.mpr (funext fun i => ?_)
+    have hcons (b : Bool) (j : ℕ) (hj : b.toNat = j) (h : (i : ℕ) * 2 + j < 2 ^ k * 2) :
+        Fin.cons b ((equivFin k).symm i) =
+          (equivFin (k + 1)).symm (Fin.cast (pow_succ 2 k).symm ⟨i * 2 + j, h⟩) := by
+      refine (Equiv.eq_symm_apply _).2 (Fin.ext ?_)
+      rw [val_equivFin_cons, Equiv.apply_symm_apply, Fin.val_cast]
+      change _ = (i : ℕ) * 2 + j
+      omega
+    simp only [Function.comp_apply, List.ofFn_succ, List.ofFn_zero, Fin.val_zero, Fin.val_succ]
+    rw [hcons false 0 rfl, hcons true 1 rfl]
+
+/-- The word enumeration lists the bits of the strings in the order of `equivFin`. -/
+theorem enumList_eq_ofFn (k : ℕ) :
+    enumList k = List.ofFn fun i => List.ofFn ((equivFin k).symm i) := by
+  rw [enumList, enum_eq_ofFn, List.map_ofFn]
+  rfl
 
 end Cslib.BitString
