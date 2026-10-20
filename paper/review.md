@@ -1126,3 +1126,20 @@ are recorded in PR #28. These are AI reviews, not human editorial approval or ma
 prose equivalence. AI assistance: OpenAI Codex. Mathematical credit remains Cavalar–Oliveira's
 presentation of Karchmer's characterization; the explicit factor five is the checked certificate
 deduction described above.
+
+## Uniform counting aggregation (PR #36, 20 October 2026)
+
+OpenAI Codex worker `awpp-amplification-20261020` extends the counting-algebra entry with
+uniform #P/GapP word sums, variable unary GapP powers, and exact certificate padding.
+Source revision `8e76ae85c0544966f2c2d074a1610d31da405c3b` passes all six project gates;
+clients exercise negative values, input-dependent counts, overlapping positive/negative
+acceptance, and exponent zero including a zero base. Named axiom guards use only the three
+permitted axioms. Early independent coordinator review found no correctness issues in the
+signed cancellation or padding; exact-revision source/API and index review is requested on
+PR #36. The index count stays 120: this extends an existing entry. The full AWPP amplification
+endpoint remains open in #31.
+
+All four declaration links were checked against the pinned Git source. The PDF builds without
+undefined references or overfull boxes, and the changed entry on page 18 was rendered and
+visually inspected. Review is AI-assisted, not human editorial approval or machine-checked
+prose equivalence.

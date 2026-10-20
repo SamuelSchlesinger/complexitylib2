@@ -203,6 +203,27 @@ bit length, so the numeric values may be exponential in input length.
 \citep[Theorem 3.5]{Fortnow1997}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{41}{Cslib.Complexity.SharpP.of_polyTime}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{58}{Cslib.Complexity.GapP.of_polyTime}
+
+Uniform aggregation also permits input-dependent bounds. If $r(x)$ is computed in
+polynomial time with unary output and $g\in\cc{GapP}$, then
+$x\mapsto g(x)^{r(x)}$ is in $\cc{GapP}$, including signed values and exponent zero.
+For a jointly uniform counting function $f(x,w)$ in $\#\cc{P}$ or $\cc{GapP}$
+on the encoded pair, the function
+\[
+x\longmapsto\sum_{w\in\{0,1\}^{r(x)}} f(x,w)
+\]
+belongs to the same class. Unary output ensures that the number of repeated
+factors and the word length are polynomially bounded; no polynomial bound on
+the numeric value of the resulting count is asserted. Variable certificate
+lengths are padded with false bits to preserve counts exactly. The signed-product
+verifier uses $r(x)(p_+(|x|)+p_-(|x|))$ certificate bits before final padding,
+where $p_+$ and $p_-$ are the two original counting-certificate polynomials.
+These are uniform verifier closure results, not yet the AWPP amplification theorem.
+\citep{FennerFortnowKurtz1994}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{49}{Cslib.Complexity.SharpP.of_polyTime_length}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{61}{Cslib.Complexity.SharpP.sum_bits_mem}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{83}{Cslib.Complexity.GapP.sum_bits_mem}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{175}{Cslib.Complexity.GapP.pow_mem_polyTime}
 \end{result}
 
 \begin{result}
