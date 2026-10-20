@@ -37,11 +37,12 @@ least `γ` with probability at most `2 exp (-m γ² / 2)`
 By the union bound, all `N` estimates are within `γ = √(ε / (2 N))` of their coefficients except
 with probability at most `2 N exp (-m ε / (4 N))`, and then rounding the truncated expansion
 misclassifies at most a fraction `N γ² + W = ε / 2 + W` of the points, where `W` is the Fourier
-weight of `f` above degree `t` (`BitString.hammingDist_signRound_sum_mul_chi_div_le`): this is
-[O'Donnell, Theorem 3.29][ODonnell2014] for the family of sets of at most `t` coordinates. So if
-`W ≤ ε / 2`, the hypothesis has error above `ε` with probability at most
-`2 N exp (-m ε / (4 N))` (`UniformLearning.uniform_error_lowDegreeHypothesis_gt_le`), which is at
-most `δ` once `m ≥ (4 N / ε) log (2 N / δ)` (`UniformLearning.lowDegreeLearner_learns`).
+weight of `f` above degree `t` (`BitString.hammingDist_signRound_sum_mul_chi_div_le`, by rounding
+to the sign as in [O'Donnell, Proposition 3.31][ODonnell2014]). So if `W ≤ ε / 2`, the hypothesis
+has error above `ε` with probability at most `2 N exp (-m ε / (4 N))`
+(`UniformLearning.uniform_lt_uniformError_lowDegreeHypothesis_le`), which is at most `δ` once
+`m ≥ (4 N / ε) log (2 N / δ)` (`UniformLearning.lowDegreeLearner_learns`). The whole argument is
+[O'Donnell, Theorem 3.29][ODonnell2014] for the family of sets of at most `t` coordinates.
 
 **Cost.** The algorithm uses `m` examples, computes `N` empirical coefficients, each an average of
 `m` characters `χ_S(x_j)` of sets of at most `t` coordinates, so `O (N m t)` arithmetic operations
@@ -60,8 +61,8 @@ only the number of examples.
 
 * `Cslib.MachineLearning.UniformLearning.uniform_abs_empiricalCoeff_sub_ge_le`: estimating one
   Fourier coefficient.
-* `Cslib.MachineLearning.UniformLearning.uniform_error_lowDegreeHypothesis_gt_le`: the failure
-  probability of the low-degree algorithm.
+* `Cslib.MachineLearning.UniformLearning.uniform_lt_uniformError_lowDegreeHypothesis_le`: the
+  failure probability of the low-degree algorithm.
 * `Cslib.MachineLearning.UniformLearning.lowDegreeLearner_learns`: the low-degree algorithm learns
   the functions with Fourier weight at most `ε / 2` above degree `t` from
   `(4 N / ε) log (2 N / δ)` examples.
@@ -123,7 +124,7 @@ theorem uniform_abs_empiricalCoeff_sub_ge_le (f : (ι → Bool) → Bool) (S : F
 signs, on the sets of more than `t` coordinates is at most `ε / 2`, then from `m` uniform random
 examples the low-degree hypothesis of degree `t` has error above `ε` with probability at most
 `2 N exp (-m ε / (4 N))`, where `N` is the number of sets of at most `t` coordinates. -/
-theorem uniform_error_lowDegreeHypothesis_gt_le (f : (ι → Bool) → Bool) (t m : ℕ) {ε : ℝ}
+theorem uniform_lt_uniformError_lowDegreeHypothesis_le (f : (ι → Bool) → Bool) (t m : ℕ) {ε : ℝ}
     (hε : 0 ≤ ε)
     (hf : ∑ S with t < #S, fourierCoeff (fun x => signVal (f x)) S ^ 2 ≤ ε / 2) :
     (PMF.uniformOfFintype (Fin m → ι → Bool)).toOuterMeasure
@@ -206,7 +207,7 @@ theorem lowDegreeLearner_learns {t m : ℕ} {ε δ : ℝ} (hε : 0 < ε) (hδ : 
     Learns (lowDegreeLearner ι t m) C ε δ := by
   rw [learns_iff]
   intro f hf
-  refine (uniform_error_lowDegreeHypothesis_gt_le f t m hε.le (hC f hf)).trans
+  refine (uniform_lt_uniformError_lowDegreeHypothesis_le f t m hε.le (hC f hf)).trans
     (ENNReal.ofReal_le_ofReal ?_)
   set N : ℝ := (#{S : Finset ι | #S ≤ t} : ℝ)
   have hN : 0 < N := Nat.cast_pos.2 (card_filter_card_le_pos t)

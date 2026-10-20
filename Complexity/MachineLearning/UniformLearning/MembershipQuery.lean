@@ -22,8 +22,10 @@ is a family of such decision trees indexed by random seeds drawn from a distribu
 run (`UniformLearning.QueryLearner.QueriesAtMost`). It *learns* a concept class with error `ε` and
 confidence `1 - δ` (`UniformLearning.QueryLearner.Learns`) if, for every target in the class, the
 hypothesis has error above `ε` under the uniform distribution (`UniformLearning.uniformError`) with
-probability at most `δ` over the seed. Membership queries subsume random examples, as a learner
-can query uniformly random points. This is learning under the uniform distribution with queries
+probability at most `δ` over the seed. Membership queries subsume random examples: querying
+uniformly random points simulates a learner from uniform random examples, which learns exactly
+the same classes (`UniformLearning.QueryLearner.learns_ofLearner_iff`). This is learning under the
+uniform distribution with queries
 [O'Donnell, Definition 3.27][ODonnell2014]; the query model has no counterpart in `PACLearning`,
 whose learners see only labelled samples.
 
@@ -41,12 +43,16 @@ queries as it lists points (`UniformLearning.QueryLearner.depth_ofNonadaptive_le
   membership queries.
 * `Cslib.MachineLearning.UniformLearning.QueryLearner.ofNonadaptive`: the learner querying given
   points.
+* `Cslib.MachineLearning.UniformLearning.QueryLearner.ofLearner`: the query learner simulating a
+  learner from random examples.
 
 ## Main results
 
 * `Cslib.MachineLearning.UniformLearning.QueryLearner.eval_ofNonadaptive`,
   `Cslib.MachineLearning.UniformLearning.QueryLearner.depth_ofNonadaptive_le`: the hypothesis and
   the query count of a non-adaptive learner.
+* `Cslib.MachineLearning.UniformLearning.QueryLearner.learns_ofLearner_iff`: membership queries
+  subsume random examples.
 
 ## References
 
@@ -58,7 +64,7 @@ queries as it lists points (`UniformLearning.QueryLearner.depth_ofNonadaptive_le
 
 namespace Cslib.MachineLearning.UniformLearning
 
-open PACLearning
+open PACLearning Cslib.Probability
 open scoped ENNReal
 
 variable {ι Ω : Type*}
@@ -129,6 +135,37 @@ theorem depth_ofNonadaptive_le (points : Ω → List (ι → Bool))
     (hyp : ((ι → Bool) → Bool) → Ω → (ι → Bool) → Bool) (ω : Ω) :
     (ofNonadaptive points hyp ω).depth ≤ (points ω).length :=
   DecisionTree.depth_queryAll_le _ _ _
+
+section OfLearner
+
+variable {m : ℕ}
+
+/-- The membership-query learner simulating the learner `A` from random examples: it queries the
+target at `m` uniformly random points and runs `A` on the resulting examples. -/
+def ofLearner (A : Learner (ι → Bool) Bool m) : QueryLearner ι (Fin m → ι → Bool) :=
+  ofNonadaptive (fun x => List.ofFn x) fun g x => A (examples g x)
+
+/-- Run on the target `f`, the simulating learner outputs the hypothesis of `A` on the examples
+of `f` at its seed. -/
+theorem eval_ofLearner (A : Learner (ι → Bool) Bool m) (f : (ι → Bool) → Bool)
+    (x : Fin m → ι → Bool) : (ofLearner A x).eval f = A (examples f x) :=
+  eval_ofNonadaptive (fun x _ _ h => congrArg A (funext fun j => by
+    rw [examples_apply, examples_apply, h (x j) (List.mem_ofFn.2 ⟨j, rfl⟩)])) f x
+
+/-- The simulating learner makes `m` queries. -/
+theorem queriesAtMost_ofLearner (A : Learner (ι → Bool) Bool m) : (ofLearner A).QueriesAtMost m :=
+  fun x => (depth_ofNonadaptive_le _ _ x).trans_eq List.length_ofFn
+
+/-- **Membership queries subsume random examples**: with uniform seeds, the learner simulating `A`
+learns exactly the classes that `A` learns from uniform random examples. -/
+theorem learns_ofLearner_iff [DecidableEq ι] {A : Learner (ι → Bool) Bool m}
+    {C : ConceptClass (ι → Bool) Bool} {ε δ : ℝ} :
+    (ofLearner A).Learns (PMF.uniformOfFintype (Fin m → ι → Bool)) C ε δ ↔
+      UniformLearning.Learns A C ε δ := by
+  rw [learns_iff, UniformLearning.learns_iff]
+  simp only [eval_ofLearner]
+
+end OfLearner
 
 end QueryLearner
 

@@ -7,10 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.DecisionTree.SpectralNorm
+public import Complexity.Computability.DecisionTree.Leaves
 public import Complexity.MachineLearning.UniformLearning.LowDegree
 public import Complexity.MachineLearning.UniformLearning.MembershipQuery
 public import Complexity.Foundations.BooleanAnalysis.BucketWeight
+import Complexity.Computability.DecisionTree.SpectralNorm
 import Complexity.Probability.Concentration
 import Complexity.Probability.PMF
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -24,24 +25,24 @@ import Mathlib.Tactic.Positivity
 
 The **Kushilevitz–Mansour algorithm** [KushilevitzMansour1993]
 [O'Donnell, Section 3.5][ODonnell2014] learns, with membership queries, every Boolean function of
-small spectral norm `∑_S |f̂(S)|` (`UniformLearning.spectralNormClass`); for instance every
-function computed by a small decision tree (`UniformLearning.decisionTreeClass`). It finds the
-large Fourier coefficients by the bucket search of Goldreich and Levin [GoldreichLevin1989]: the
-bucket of a set `S ⊆ J` is the family of the sets `U` with `U ∩ J = S`, and its weight is the
-bucket weight `W^{S | J}` (`BitString.bucketWeight`). Starting from the bucket of all sets, the
-search adds the coordinates one at a time, splitting each surviving bucket `S` of `J` into the
-buckets `S` and `insert i S` of `insert i J`, and keeps the buckets whose estimated weight is at
-least `θ² / 2` (`UniformLearning.bucketSearch`). A set `U` with `|f̂(U)| ≥ θ` contributes `θ²` to
-each of its buckets and is never discarded (`UniformLearning.inter_mem_bucketSearch`), while every
-surviving bucket weighs at least `θ² / 4`, so at most `4 / θ²` buckets survive at each level
-(`UniformLearning.card_bucketSearch_le`).
+small spectral norm `∑_S |f̂(S)|` (`UniformLearning.spectralNormClass`); for instance every function
+computed by a small decision tree (`UniformLearning.decisionTreeClass`). It finds the large Fourier
+coefficients by the bucket search of Goldreich and Levin [GoldreichLevin1989]: the bucket of a set
+`S ⊆ J` is the family of the sets `U` with `U ∩ J = S`, and its weight is the bucket weight
+(`BitString.bucketWeight`, O'Donnell's `W^{S | J̄}` with `J̄` the complement of `J`). Starting from
+the bucket of all sets, the search adds the coordinates one at a time, splitting each surviving
+bucket `S` of `J` into the buckets `S` and `insert i S` of `insert i J`, and keeps the buckets whose
+estimated weight is at least `θ² / 2` (`UniformLearning.bucketSearch`). A set `U` with `|f̂(U)| ≥ θ`
+contributes `θ²` to each of its buckets and is never discarded
+(`UniformLearning.inter_mem_bucketSearch`), while every surviving bucket weighs at least `θ² / 4`,
+so at most `4 / θ²` buckets survive at each level (`UniformLearning.mul_card_bucketSearch_le_one`).
 
 The weights are estimated from samples `(x, y, z)` of three independent uniform points, as the
 average of `f (x, z) χ_S(x) f (y, z) χ_S(y)` (`UniformLearning.bucketEstimate`,
-`BitString.expect_bucketWeight_sample`), where `(x, z)` takes the coordinates in `J` from `x` and
-the others from `z`. Here the same `m` samples serve every bucket of every level, so the queries
-are non-adaptive: the learner queries `f` at `x` and at the points `(x, z)`, `(y, z)` of every
-sample and every level, `m (2 n + 3)` queries for `n` coordinates
+`BitString.bucketWeight_eq_expect_sample`), where `(x, z)` takes the coordinates in `J` from `x` and
+the others from `z`. Here the same `m` samples serve every bucket of every level, so the queries are
+non-adaptive: the learner queries `f` at `x` and at the points `(x, z)`, `(y, z)` of every sample
+and every level, `m (2 n + 3)` queries for `n` coordinates
 (`UniformLearning.kmLearner_queriesAtMost`), and then runs the search on the answers. The analysis
 takes a union bound over all `2 ^ n` buckets of each level, which costs a factor `n` in the number
 of samples compared with fresh samples for each weighing. The hypothesis is the sign of the
@@ -79,19 +80,23 @@ certified by a machine model.
   coefficients of the samples.
 * `Cslib.MachineLearning.UniformLearning.kmHypothesis`,
   `Cslib.MachineLearning.UniformLearning.kmLearner`: the Kushilevitz–Mansour algorithm.
+* `Cslib.MachineLearning.UniformLearning.KMAccurate`: accurate samples.
 
 ## Main results
 
 * `Cslib.MachineLearning.UniformLearning.inter_mem_bucketSearch`,
-  `Cslib.MachineLearning.UniformLearning.card_bucketSearch_le`: the bucket search finds the heavy
-  sets and keeps few buckets.
+  `Cslib.MachineLearning.UniformLearning.mul_card_bucketSearch_le_one`: the bucket search finds the
+  heavy sets and keeps few buckets.
 * `Cslib.MachineLearning.UniformLearning.uniformError_kmHypothesis_le`: the error on accurate
   samples.
 * `Cslib.MachineLearning.UniformLearning.uniform_not_accurate_le`: the samples are accurate with
   high probability.
-* `Cslib.MachineLearning.UniformLearning.kmLearner_learns`: the Kushilevitz–Mansour theorem.
-* `Cslib.MachineLearning.UniformLearning.kmLearner_learns_decisionTree`: learning decision trees
-  with membership queries.
+* `Cslib.MachineLearning.UniformLearning.kmLearner_learns`,
+  `Cslib.MachineLearning.UniformLearning.kmLearner_learns_and_queriesAtMost`: the
+  Kushilevitz–Mansour theorem.
+* `Cslib.MachineLearning.UniformLearning.kmLearner_learns_decisionTree`,
+  `Cslib.MachineLearning.UniformLearning.kmLearner_learns_decisionTree_and_queriesAtMost`: learning
+  decision trees with membership queries.
 
 ## References
 
@@ -192,7 +197,7 @@ variable [Fintype ι]
 /-- **Few buckets survive**: if the estimates at the level of the coordinates of `l` are within
 `θ² / 4` of the bucket weights of a Boolean function, then the search over `l` with threshold
 `θ² / 2` keeps at most `4 / θ²` buckets. -/
-theorem card_bucketSearch_le (f : (ι → Bool) → Bool) {θ : ℝ} (est : Finset ι → Finset ι → ℝ)
+theorem mul_card_bucketSearch_le_one (f : (ι → Bool) → Bool) {θ : ℝ} (est : Finset ι → Finset ι → ℝ)
     (l : List ι)
     (hW : ∀ S, |est l.toFinset S - bucketWeight (fun x => signVal (f x)) l.toFinset S| <
       θ ^ 2 / 4) :
@@ -317,17 +322,22 @@ theorem kmLearner_queriesAtMost (θ : ℝ) :
 
 /-! ### The analysis -/
 
+/-- The samples `ω` are *accurate* for `f` at precision `γ`: every bucket estimate at every level
+of the search over all coordinates, and every sample coefficient, is within `γ` of its value. -/
+def KMAccurate (f : (ι → Bool) → Bool) (γ : ℝ)
+    (ω : Fin m → (ι → Bool) × (ι → Bool) × (ι → Bool)) : Prop :=
+  (∀ J ∈ searchLevels (univ : Finset ι).toList, ∀ S,
+      |bucketEstimate f ω J S - bucketWeight (fun x => signVal (f x)) J S| < γ) ∧
+    ∀ S, |sampleCoeff f ω S - fourierCoeff (fun x => signVal (f x)) S| < γ
+
 /-- **The Kushilevitz–Mansour algorithm on accurate samples.** Let the spectral norm of `f`, read
-as signs, be at most `L`, and let `θ > 0`. If every bucket estimate at every level of the search
-and every sample coefficient is within `θ² / 4` of its value, then the hypothesis has error at
-most `θ² / 4 + θ L`. -/
+as signs, be at most `L`, and let `θ > 0`. If the samples are accurate at precision `θ² / 4`, then
+the hypothesis has error at most `θ² / 4 + θ L`. -/
 theorem uniformError_kmHypothesis_le (f : (ι → Bool) → Bool) {L θ : ℝ} (hθ : 0 < θ)
     (hL : ∑ S, |fourierCoeff (fun x => signVal (f x)) S| ≤ L)
-    (ω : Fin m → (ι → Bool) × (ι → Bool) × (ι → Bool))
-    (hW : ∀ J ∈ searchLevels (univ : Finset ι).toList, ∀ S,
-      |bucketEstimate f ω J S - bucketWeight (fun x => signVal (f x)) J S| < θ ^ 2 / 4)
-    (hc : ∀ S, |sampleCoeff f ω S - fourierCoeff (fun x => signVal (f x)) S| < θ ^ 2 / 4) :
+    (ω : Fin m → (ι → Bool) × (ι → Bool) × (ι → Bool)) (hω : KMAccurate f (θ ^ 2 / 4) ω) :
     uniformError f (kmHypothesis f θ ω) ≤ θ ^ 2 / 4 + θ * L := by
+  obtain ⟨hW, hc⟩ := hω
   set F : (ι → Bool) → ℝ := fun x => signVal (f x)
   set T := kmCandidates f θ ω
   have huniv : ((univ : Finset ι).toList).toFinset = univ := toList_toFinset _
@@ -336,7 +346,7 @@ theorem uniformError_kmHypothesis_le (f : (ι → Bool) → Bool) {L θ : ℝ} (
     have h := toFinset_mem_searchLevels (univ : Finset ι).toList
     rwa [huniv] at h
   have hcard : θ ^ 2 / 4 * #T ≤ 1 :=
-    card_bucketSearch_le f _ _ fun S => by
+    mul_card_bucketSearch_le_one f _ _ fun S => by
       rw [huniv]
       exact hW univ hlev S
   -- every set with a coefficient of absolute value at least `θ` is found
@@ -380,14 +390,12 @@ private theorem abs_signVal_mul_chi_mul_le_one (a b : Bool) (S : Finset ι) (x y
   rw [abs_mul, abs_mul, abs_mul, abs_signVal, abs_signVal, abs_chi, abs_chi]
   norm_num
 
-/-- **The samples are accurate with high probability**: from `m` samples, some bucket estimate at
-some level of the search, or some sample coefficient, is off by at least `θ² / 4` with probability
-at most `2 (n + 2) 2 ^ n exp (-m θ⁴ / 32)` for `n` coordinates. -/
+/-- **The samples are accurate with high probability**: `m` samples fail to be accurate at
+precision `θ² / 4` with probability at most `2 (n + 2) 2 ^ n exp (-m θ⁴ / 32)` for `n`
+coordinates. -/
 theorem uniform_not_accurate_le (f : (ι → Bool) → Bool) (θ : ℝ) (m : ℕ) :
     (PMF.uniformOfFintype (Fin m → (ι → Bool) × (ι → Bool) × (ι → Bool))).toOuterMeasure
-      {ω | ¬ ((∀ J ∈ searchLevels (univ : Finset ι).toList, ∀ S,
-          |bucketEstimate f ω J S - bucketWeight (fun x => signVal (f x)) J S| < θ ^ 2 / 4) ∧
-        ∀ S, |sampleCoeff f ω S - fourierCoeff (fun x => signVal (f x)) S| < θ ^ 2 / 4)} ≤
+      {ω | ¬ KMAccurate f (θ ^ 2 / 4) ω} ≤
       ENNReal.ofReal (2 * (Fintype.card ι + 2) * 2 ^ Fintype.card ι *
         Real.exp (-(m * θ ^ 4) / 32)) := by
   set F : (ι → Bool) → ℝ := fun x => signVal (f x)
@@ -412,7 +420,7 @@ theorem uniform_not_accurate_le (f : (ι → Bool) → Bool) (θ : ℝ) (m : ℕ
       (fun p : (ι → Bool) × (ι → Bool) × (ι → Bool) =>
         F (J.piecewise p.1 p.2.2) * chi ℝ S p.1 * (F (J.piecewise p.2.1 p.2.2) * chi ℝ S p.2.1))
       (fun p => abs_signVal_mul_chi_mul_le_one _ _ S _ _) hm hγ
-    rw [expect_bucketWeight_sample, hexp] at h
+    rw [← bucketWeight_eq_expect_sample, hexp] at h
     exact h
   -- one sample coefficient
   have hcoeff (S : Finset ι) :
@@ -434,15 +442,13 @@ theorem uniform_not_accurate_le (f : (ι → Bool) → Bool) (θ : ℝ) (m : ℕ
     rw [length_searchLevels, length_toList, card_univ] at this
     exact_mod_cast this
   have hsub : {ω : Fin m → (ι → Bool) × (ι → Bool) × (ι → Bool) |
-      ¬ ((∀ J ∈ searchLevels (univ : Finset ι).toList, ∀ S,
-          |bucketEstimate f ω J S - bucketWeight F J S| < θ ^ 2 / 4) ∧
-        ∀ S, |sampleCoeff f ω S - fourierCoeff F S| < θ ^ 2 / 4)} ⊆
+      ¬ KMAccurate f (θ ^ 2 / 4) ω} ⊆
       (⋃ J ∈ A, ⋃ S ∈ (univ : Finset (Finset ι)),
         {ω | θ ^ 2 / 4 ≤ |bucketEstimate f ω J S - bucketWeight F J S|}) ∪
       ⋃ S ∈ (univ : Finset (Finset ι)),
         {ω | θ ^ 2 / 4 ≤ |sampleCoeff f ω S - fourierCoeff F S|} := by
     intro ω hω
-    simp only [Set.mem_ofPred_eq, not_and_or, not_forall, not_lt] at hω
+    simp only [Set.mem_ofPred_eq, KMAccurate, not_and_or, not_forall, not_lt] at hω
     rcases hω with ⟨J, hJ, S, hS⟩ | ⟨S, hS⟩
     · exact Or.inl (Set.mem_biUnion (List.mem_toFinset.2 hJ)
         (Set.mem_biUnion (mem_univ S) hS))
@@ -508,13 +514,10 @@ theorem kmLearner_learns {L ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ) {m : ℕ}
   have hθ : 0 < θ := by positivity
   -- on accurate samples the error is at most `ε`
   have hsub : {ω : Fin m → (ι → Bool) × (ι → Bool) × (ι → Bool) |
-      ε < uniformError f (kmHypothesis f θ ω)} ⊆
-      {ω | ¬ ((∀ J ∈ searchLevels (univ : Finset ι).toList, ∀ S,
-          |bucketEstimate f ω J S - bucketWeight (fun x => signVal (f x)) J S| < θ ^ 2 / 4) ∧
-        ∀ S, |sampleCoeff f ω S - fourierCoeff (fun x => signVal (f x)) S| < θ ^ 2 / 4)} := by
+      ε < uniformError f (kmHypothesis f θ ω)} ⊆ {ω | ¬ KMAccurate f (θ ^ 2 / 4) ω} := by
     intro ω hω hgood
     have hω' : ε < uniformError f (kmHypothesis f θ ω) := hω
-    have h := uniformError_kmHypothesis_le f hθ hf ω hgood.1 hgood.2
+    have h := uniformError_kmHypothesis_le f hθ hf ω hgood
     have hθL : θ * L = ε / 2 := by simp only [θ]; field_simp
     have hθ2 : θ ^ 2 / 4 ≤ ε / 16 := by
       have : θ ^ 2 = ε ^ 2 / (4 * L ^ 2) := by simp only [θ]; ring
@@ -554,5 +557,27 @@ theorem kmLearner_learns_decisionTree {L : ℕ} {ε δ : ℝ} (hε : 0 < ε) (h�
   subst hf
   exact (DecisionTree.sum_abs_fourierCoeff_signVal_le_leafCount id t).trans
     (by exact_mod_cast hL)
+
+/-- **The Kushilevitz–Mansour theorem with its query count**: under the hypotheses of
+`kmLearner_learns`, the algorithm learns the functions of spectral norm at most `L` with
+`m (2 n + 3)` membership queries for `n` coordinates. -/
+theorem kmLearner_learns_and_queriesAtMost {L ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ) {m : ℕ}
+    (hm : 512 * L ^ 4 / ε ^ 4 *
+      Real.log (2 * (Fintype.card ι + 2) * 2 ^ Fintype.card ι / δ) ≤ m) :
+    (kmLearner ι m (ε / (2 * L))).Learns (PMF.uniformOfFintype _) (spectralNormClass ι L) ε δ ∧
+      (kmLearner ι m (ε / (2 * L))).QueriesAtMost (m * (2 * Fintype.card ι + 3)) :=
+  ⟨kmLearner_learns hε hδ hm, kmLearner_queriesAtMost _⟩
+
+/-- **Learning decision trees with membership queries, with the query count**: under the
+hypotheses of `kmLearner_learns_decisionTree`, the algorithm learns the functions computed by
+decision trees with at most `L` leaves with `m (2 n + 3)` membership queries for `n`
+coordinates. -/
+theorem kmLearner_learns_decisionTree_and_queriesAtMost {L : ℕ} {ε δ : ℝ} (hε : 0 < ε)
+    (hδ : 0 < δ) {m : ℕ}
+    (hm : 512 * (L : ℝ) ^ 4 / ε ^ 4 *
+      Real.log (2 * (Fintype.card ι + 2) * 2 ^ Fintype.card ι / δ) ≤ m) :
+    (kmLearner ι m (ε / (2 * L))).Learns (PMF.uniformOfFintype _) (decisionTreeClass ι L) ε δ ∧
+      (kmLearner ι m (ε / (2 * L))).QueriesAtMost (m * (2 * Fintype.card ι + 3)) :=
+  ⟨kmLearner_learns_decisionTree hε hδ hm, kmLearner_queriesAtMost _⟩
 
 end Cslib.MachineLearning.UniformLearning
