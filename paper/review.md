@@ -1013,3 +1013,29 @@ Integration reconciliation: PR #21 retains both the quadratic and graph entries 
 main at `f024eb43a11c80a9db843a8b354295f7bdd2d80e`; the index count is 117. The source
 declaration links remain pinned to their separately reviewed revisions. No theorem statement
 or proof changed during conflict resolution; the PDF was regenerated from both entries.
+
+## Fusion sampling and fixed-distribution barrier (2026-10-20)
+
+OpenAI Codex worker `fusion-barrier-20261020` authored the sampler and barrier and this index
+entry. Independent coordinator review checked the source mathematics, API, nonvacuous clients,
+and draft prose. The final core revision is `503ce2b0d3d0b5cc3dd3fa793aab840d07e448fa`.
+The review checked the cylinder path, uniform marginal transport, endpoint independence,
+complement estimate, the `8n+8` normalization, and weighted averaging. No mathematical or API
+findings were reported. One scope wording correction was requested and applied: the theorem
+still applies to circuit-adaptively selected weights if the capacity bound holds for every pair;
+the limitation concerns bounds restricted to the gate pairs of a particular circuit. The paper
+also now states explicitly that all three sampler components are chosen uniformly.
+
+The three new declaration links were checked against their exact source lines at the core SHA.
+The PDF rebuilt without undefined references or overfull boxes; the new entry on page 30 was
+rendered and visually inspected. The coordinator reviewed the final entry at `79d530cf`
+against core `503ce2b0` and reported no outstanding findings after the two wording corrections.
+This is AI review, not human editorial approval or a machine-checked proof of prose-to-Lean
+equivalence.
+
+Integration reconciliation: PR #22 preserves the quadratic, graph, and sampling entries after
+rebasing onto main at `2fb260fffdce0fe5eeb019b202192243d74863f4`. The index count is 118.
+The sampling source and tests are unchanged; declaration links remain pinned to `503ce2b0`.
+The PDF was regenerated without undefined references or overfull boxes, and combined pages
+30 and 31 were rendered and visually inspected. The sampling entry now appears on page 31.
+Final integration review is recorded in PR #22.
