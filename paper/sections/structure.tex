@@ -62,6 +62,51 @@ framework, and bridges to the encoded problems remain outstanding.
 \end{result}
 
 \begin{result}
+\subsection{Canonical numeric structures and constant-aware interpretations}
+For every $n\ge2$, an input structure on $[n]=\{0,\ldots,n-1\}$ has a
+canonical expansion by $\le$, BIT and the constants $0$, $1$ and $\max=n-1$.
+The constants $0$ and $1$ are distinct. On arbitrary terms $s,i$, BIT has the
+exact semantics
+\[
+\operatorname{BIT}(s,i)\quad\Longleftrightarrow\quad
+\text{bit }\operatorname{val}(i)\text{ of }\operatorname{val}(s)\text{ is }1,
+\]
+where bit zero is least significant. Numeric interpretations are computed
+from the universe size, rather than supplied as input tables. Input functions,
+constants and relations retain their interpretations, and embedding any input
+formula, including quantified formulas, preserves truth under every assignment.
+The construction uses the existing first-order terms and formulas.
+
+For relational input vocabularies, forgetting the numeric expansion is a
+one-dimensional interpretation whose output is isomorphic to the input;
+its sentence pullback preserves truth.
+
+More generally, let $I$ be a relational interpretation of finite dimension and
+let finitely many target constants be specified by source formulas. If each
+formula selects exactly one tuple inside the interpreted domain, the resulting
+structure with constants admits formula and sentence pullback preserving truth
+under every free-variable assignment. This existence/uniqueness condition is an
+explicit hypothesis; definitions with no value or multiple values are not
+assigned defaults. Source languages may already contain functions and constants;
+the target language is relational with the specified additional constants.
+For every canonical expansion with $n\ge2$, equality to the source terms defines
+target $0$, $1$ and $\max$ with values $0$, $1$ and $n-1$.
+
+Canonical BIT lifting on base-$n$ tuples, numeric-preserving composition and
+the ordered logspace/capture results remain open.
+\citep[Section 1.2, Provisos 1.14--1.15, Definition 1.26 and Proposition 3.5]{Immerman1999}
+The earlier canonical-expansion interface is credited separately.
+\citep{Schlesinger2026Numerical}
+\declat{223f5289aa5809f50251aba7aced4d7e98478a78}{Complexity/Logics/FirstOrder/Ordered/Basic.lean}{142}{Cslib.Logic.FO.Ordered.realize_bit}
+\declat{223f5289aa5809f50251aba7aced4d7e98478a78}{Complexity/Logics/FirstOrder/Ordered/Basic.lean}{149}{Cslib.Logic.FO.Ordered.realize_inputFormula}
+\declat{223f5289aa5809f50251aba7aced4d7e98478a78}{Complexity/Logics/FirstOrder/Ordered/Interpretation.lean}{68}{Cslib.Logic.FO.Ordered.realize_forget_onSentence}
+\declat{d5382b56b3be600056b71729e34a40aac1faf3f7}{Complexity/Logics/FirstOrder/Interpretation/Constants.lean}{103}{Cslib.Logic.FO.Interpretation.WithConstants.realize_onFormula}
+\declat{d5382b56b3be600056b71729e34a40aac1faf3f7}{Complexity/Logics/FirstOrder/Interpretation/Constants.lean}{138}{Cslib.Logic.FO.Interpretation.WithConstants.realize_onSentence}
+\declat{d5382b56b3be600056b71729e34a40aac1faf3f7}{Complexity/Logics/FirstOrder/Ordered/Constants.lean}{52}{Cslib.Logic.FO.Ordered.constants_valid}
+\declat{d5382b56b3be600056b71729e34a40aac1faf3f7}{Complexity/Logics/FirstOrder/Ordered/Constants.lean}{66}{Cslib.Logic.FO.Ordered.constants_value_val}
+\end{result}
+
+\begin{result}
 \subsection{First-order model checking in logarithmic space}
 For a finite relational vocabulary and a first-order sentence $\varphi$ whose
 atomic formulas are relation symbols and equality applied to variables, the

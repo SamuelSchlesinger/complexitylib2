@@ -1,3 +1,4 @@
+import ComplexityTests.AWPPAmplification
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserCorollary
@@ -75,6 +76,7 @@ import ComplexityTests.FiniteFieldUnitSum
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.FirstOrderAutomation
+import ComplexityTests.FirstOrderConstants
 import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
@@ -158,6 +160,7 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
 import ComplexityTests.PCPApproximation

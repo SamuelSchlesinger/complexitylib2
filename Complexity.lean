@@ -368,6 +368,7 @@ public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
 public import Complexity.Computability.Complexity.AffineDisperser.Program
 public import Complexity.Computability.Complexity.Classes.AWPP
+public import Complexity.Computability.Complexity.Classes.AWPP.Amplification
 public import Complexity.Computability.Complexity.Classes.AWPP.Closure
 public import Complexity.Computability.Complexity.Classes.AWPP.WPP
 public import Complexity.Computability.Complexity.Classes.Alternation
@@ -1277,10 +1278,14 @@ public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.FirstOrder.Encoding.Layout
 public import Complexity.Logics.FirstOrder.Interpretation
+public import Complexity.Logics.FirstOrder.Interpretation.Constants
 public import Complexity.Logics.FirstOrder.Interpretation.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation.Rank
 public import Complexity.Logics.FirstOrder.Interpretation.Tagged
 public import Complexity.Logics.FirstOrder.Interpretation.Unit
+public import Complexity.Logics.FirstOrder.Ordered.Basic
+public import Complexity.Logics.FirstOrder.Ordered.Constants
+public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
 public import Complexity.Logics.FirstOrder.Problems.ColoringReduction
