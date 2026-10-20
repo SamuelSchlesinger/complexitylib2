@@ -22,10 +22,12 @@ The core form `FineMassProducesThrough` allows `2 ^ (⌊γ n⌋ + 1)` copies, in
 positive copy counts. The real-rate statement `RealFineMassProduction` quantifies over real
 `0 ≤ γ < 1` and additive errors `ε > 0`, with copy counts at most `2 ^ (γ n)`.
 
-*Fine* refers to the explicit leading coefficient `1 / (1 - γ)`, as opposed to the constant
-`4 den` of `MassProducesAt`; it does not claim optimality. One copy of most functions already
-needs `(1 - o(1)) 2 ^ n / n` gates [Shannon1949], so the coefficient is optimal at `γ = 0`, but
-no matching lower bound is claimed for `γ > 0`.
+*Fine* refers to the explicit leading coefficient `1 / (1 - γ)`, as opposed to the unspecified
+constant of `MassProducesAt` (`4 den` via `FineMassProducesThrough.massProducesAt`); it does not
+claim optimality. One copy of most functions already needs `(1 - o(1)) 2 ^ n / n` nonconstant
+gates, by the counting argument of [Shannon1949] for gate circuits
+[Jukna, Theorem 1.14][Jukna2012] (in cslib, `Cslib.Circuits.Boolean.Shannon.lt_complexity`), so the
+coefficient is optimal at `γ = 0`; no matching lower bound is claimed for `γ > 0`.
 
 The core form implies the other two (`FineMassProducesThrough.fineMassProducesAt`,
 `realFineMassProduction_of_fine`) and, at precision one, the exponential-range theorem with
@@ -53,6 +55,7 @@ They are bounds on circuit cost, not on the running time of any circuit construc
 * Adapted from `MassProduction/Nonuniform/{SharpTheorem,RealParameters,RealTheorem}.lean` in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 * [C. E. Shannon, *The Synthesis of Two-Terminal Switching Circuits*][Shannon1949]
+* [Stasys Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012], Theorem 1.14
 -/
 
 @[expose] public section
@@ -238,13 +241,30 @@ theorem realFineMassProduction_of_fine
   rw [← mul_div_assoc, le_div_iff₀ hnR]
   linarith
 
+/-! ### Deprecated names -/
+
 @[deprecated (since := "2026-10-20")] alias SharpMassProducesThrough := FineMassProducesThrough
 @[deprecated (since := "2026-10-20")] alias SharpMassProducesAt := FineMassProducesAt
 @[deprecated (since := "2026-10-20")] alias RealSharpMassProduction := RealFineMassProduction
+
+set_option linter.deprecated false in
+/-- Deprecated: use `FineMassProducesThrough.fineMassProducesAt`. Stated on the old name, so that
+field notation on hypotheses of the old type keeps working. -/
+@[deprecated FineMassProducesThrough.fineMassProducesAt (since := "2026-10-20")]
+theorem SharpMassProducesThrough.sharpMassProducesAt (h : SharpMassProducesThrough num den) :
+    SharpMassProducesAt num den :=
+  FineMassProducesThrough.fineMassProducesAt h
+
+set_option linter.deprecated false in
+/-- Deprecated: use `FineMassProducesThrough.massProducesAt`. Stated on the old name, so that
+field notation on hypotheses of the old type keeps working. -/
+@[deprecated FineMassProducesThrough.massProducesAt (since := "2026-10-20")]
+theorem SharpMassProducesThrough.massProducesAt (hnd : num < den)
+    (h : SharpMassProducesThrough num den) : MassProducesAt num den :=
+  FineMassProducesThrough.massProducesAt hnd h
+
 @[deprecated (since := "2026-10-20")]
-alias SharpMassProducesThrough.sharpMassProducesAt := FineMassProducesThrough.fineMassProducesAt
-@[deprecated (since := "2026-10-20")]
-alias SharpMassProducesThrough.massProducesAt := FineMassProducesThrough.massProducesAt
+alias FineMassProducesThrough.sharpMassProducesAt := FineMassProducesThrough.fineMassProducesAt
 @[deprecated (since := "2026-10-20")]
 alias exponentialMassProduction_of_sharp := exponentialMassProduction_of_fine
 @[deprecated (since := "2026-10-20")]

@@ -364,6 +364,8 @@ eventually every positive number of copies at most `2 ^ (γ n)` costs at most
 theorem realFineMassProduction : RealFineMassProduction :=
   realFineMassProduction_of_fine fun _ _ hnd => fineMassProducesThrough hnd
 
+/-! ### Deprecated names -/
+
 @[deprecated (since := "2026-10-20")]
 alias sharpMassProducesThrough_of_bounds := fineMassProducesThrough_of_bounds
 @[deprecated (since := "2026-10-20")] alias sharpMassProducesThrough := fineMassProducesThrough
