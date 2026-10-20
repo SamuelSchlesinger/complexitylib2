@@ -125,9 +125,9 @@ This formalizes the PLUS part of Immerman's arithmetic-definability theorem,
 using his generate/propagate carry characterization with the bit orientation
 reversed.\citep[Proposition 1.9 and Theorem 1.17(1)]{Immerman1999}
 The formal proof reuses the library's propagation characterization and Lean's
-bit-vector carry and addition theorems. The Bit Sum prerequisite is proved below;
-TIMES, unrestricted arbitrary-base tuple BIT lifting and numeric-preserving
-composition remain open.
+bit-vector carry and addition theorems. Bit Sum and TIMES are proved below;
+unrestricted arbitrary-base tuple BIT lifting and numeric-preserving composition
+remain open.
 \declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{142}{Cslib.Logic.FO.Ordered.realize_addition}
 \declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{162}{Cslib.Logic.FO.Ordered.not_realize_addition_of_le}
 \end{result}
@@ -156,12 +156,43 @@ native decoder uses fixed chains of PLUS formulas and exact binary shifts;
 no multiplication relation or semantic certificate is assumed. The supporting
 shift formula has exact semantics $z=x\cdot2^e$ and rejects every candidate
 when the product is outside $[n]$. A fixed finite disjunction covers small
-inputs. TIMES, arbitrary-base tuple BIT lifting and numeric-preserving
-composition remain open.
+inputs. The native TIMES formula below reuses this result; arbitrary-base tuple
+BIT lifting and numeric-preserving composition remain open.
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{328}{Cslib.Logic.FO.Ordered.bitSum}
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{335}{Cslib.Logic.FO.Ordered.realize_bitSum}
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{348}{Cslib.Logic.FO.Ordered.existsUnique_bitSum}
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitArithmetic.lean}{234}{Cslib.Logic.FO.Ordered.realize_shiftLeft}
+\end{result}
+
+\begin{result}
+\subsection{Exact canonical multiplication from order and BIT}
+There is one native first-order formula $\operatorname{TIMES}(x,y,z)$ over
+canonical $\le$ and BIT, independent of the universe size, such that for every
+canonical structure on $[n]$ with $n\ge2$ and every assignment,
+\[
+\operatorname{TIMES}(x,y,z)\quad\Longleftrightarrow\quad
+\operatorname{val}(x)\operatorname{val}(y)=\operatorname{val}(z).
+\]
+The product is the ordinary natural-number product. There is no hypothesis that
+it fits: if the product is at least $n$, every candidate $z\in[n]$ is rejected.
+If the product is below $n$, exactly one output satisfies the formula. This works
+for non-power-of-two universe sizes and arbitrary interpretations of the input
+vocabulary; BIT is indexed from the least significant bit.
+
+Together with PLUS, this proves the arithmetic-definability endpoint of
+Immerman's Theorem~1.17(1), using the Bit Sum Lemma credited to Barrington,
+Immerman and Straubing.\citep{Immerman1999,BarringtonImmermanStraubing1990}
+The construction is a carry-table variant of the source's packed short sums:
+eight global words store block-boundary carries and sixteen local words verify
+each block, with both endpoints matched to the global words. Exact native PLUS,
+shifts and Bit Sum check the column equations. All witness bounds are proved for
+every $n\ge257$, and one fixed finite disjunction covers smaller inputs.
+The formula assumes no multiplication relation or semantic certificate.
+Arbitrary-base tuple BIT lifting and numeric-preserving composition remain open.
+\declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{282}{Cslib.Logic.FO.Ordered.multiplication}
+\declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{290}{Cslib.Logic.FO.Ordered.realize_multiplication}
+\declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{310}{Cslib.Logic.FO.Ordered.not_realize_multiplication_of_le}
+\declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{317}{Cslib.Logic.FO.Ordered.existsUnique_multiplication}
 \end{result}
 
 \begin{result}

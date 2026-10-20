@@ -223,9 +223,18 @@ of the handover. The work below remains available for subsequent, independently 
      packed running-sum proof. Eight bounded words encode all node bits; their native decoder
      uses exact shifts and fixed PLUS chains, with no assumed semantic certificate or variable
      multiplication predicate. A fixed finite disjunction handles small numerals.
-     **Next milestones:** native TIMES on every canonical `Fin n`, rejecting out-of-range
-     products; arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace
-     encoding bridge; then projections and NL/P completeness. These remain open.
+     **Canonical multiplication completed (#102):**
+     [Ordered/Multiplication](Complexity/Logics/FirstOrder/Ordered/Multiplication.lean) defines
+     one native TIMES formula with exact ordinary-product semantics `x * y = z` on every
+     canonical `Fin n`, `n ≥ 2`. Every candidate is rejected on overflow. This completes the
+     PLUS/TIMES endpoint of Immerman's Theorem 1.17(1), using the proved native Bit Sum and
+     a carry-table variant of the source's packed short sums. Eight words store global
+     boundary carries; sixteen words store each local block. Both block endpoints agree with
+     the global words, all decoders constrain high bits, and the final carry vanishes from the
+     input-width bound. The witnesses fit for arbitrary universe sizes; a fixed finite branch
+     handles small inputs. No multiplication relation or semantic certificate is assumed.
+     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the
+     ordered logspace encoding bridge; then projections and NL/P completeness. These remain open.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
