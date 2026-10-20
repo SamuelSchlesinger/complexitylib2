@@ -73,8 +73,7 @@ theorem exists_spanningTree [Finite V] (hG : G.toSimpleGraph.Connected) :
   -- Every edge of the spanning tree is the pair of ends of an edge of `G`.
   have hends (s : T.edgeSet) : ∃ e, G.ends e = s.1 := by
     have hs := SimpleGraph.edgeSet_mono hTG s.2
-    rw [toSimpleGraph, _root_.Cslib.Multigraph.toSimpleGraph,
-      SimpleGraph.edgeSet_fromEdgeSet] at hs
+    rw [toSimpleGraph_eq, _root_.Cslib.Multigraph.edgeSet_toSimpleGraph] at hs
     exact hs.1
   choose g hg using hends
   have hginj : g.Injective := fun s s' h => Subtype.ext ((hg s).symm.trans (h ▸ hg s'))

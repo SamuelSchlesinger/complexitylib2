@@ -37,8 +37,8 @@ every computation path (upstream `Turing.MultiTapeNTM.RunsInTime`). A path may s
 before `t` steps; it does not accept, as a branch of a textbook machine that has no move rejects.
 The bound `t` may depend arbitrarily on the instance. For machines with finitely many states, as
 in `NL` and `NPSPACE`, there are finitely many actions, so the machine branches finitely and by
-König's lemma this is equivalent to every branch halting; with infinitely many states it is
-stronger. The terminology follows Sipser's for deterministic machines,
+König's lemma this is equivalent to every branch halting; with infinitely many states it can
+be strictly stronger. The terminology follows Sipser's for deterministic machines,
 which *recognize* a language when they may loop and *decide* it when they halt on every input.
 
 `Turing.MultiTapeNTM.DecidableInPolyTime` asks for one machine with a binary alphabet and finitely

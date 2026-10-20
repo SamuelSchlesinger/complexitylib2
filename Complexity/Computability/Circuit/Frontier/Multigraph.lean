@@ -65,9 +65,10 @@ rank of a closed set `W` is `|E(W)| + 1 - |W|`, where `E(W)` are the edges with 
 
 * `Cslib.Circuits.Frontier.Multigraph.edgeCut_toGraph`: edge cuts are those of Mathlib's
   multigraphs.
-* `Cslib.Circuits.Frontier.Multigraph.coe_edgeCut_ends`,
-  `Cslib.Circuits.Frontier.Multigraph.coe_incidence_ends`: edge cuts and incidences of the
-  multigraph given by the ends.
+* `Cslib.Circuits.Frontier.Multigraph.toSimpleGraph_eq`,
+  `Cslib.Circuits.Frontier.Multigraph.coe_edgeCut_ends`,
+  `Cslib.Circuits.Frontier.Multigraph.coe_incidence_ends`: the simple graph, edge cuts and
+  incidences of the multigraph given by the ends.
 * `Cslib.Circuits.Frontier.Multigraph.card_le_card_add_one_of_connected`: a connected graph has
   at least `|V| - 1` edges, so its cycle rank `|E| + 1 - |V|` involves no truncation.
 * `Cslib.Circuits.Frontier.Multigraph.edgeCut_union_of_edgeCut_eq_empty`: closed sets do not
@@ -148,6 +149,10 @@ theorem mem_edgeCut {L : Set V} {e : E} : e ∈ G.edgeCut L ↔ ¬(G.src e ∈ L
 theorem mem_touching {L : Set V} {e : E} : e ∈ G.touching L ↔ G.src e ∈ L ∨ G.tgt e ∈ L :=
   Iff.rfl
 
+/-- The simple graph of a multigraph is that of the multigraph given by its ends. -/
+theorem toSimpleGraph_eq : G.toSimpleGraph = _root_.Cslib.Multigraph.toSimpleGraph G.ends :=
+  rfl
+
 theorem toSimpleGraph_adj {u v : V} :
     G.toSimpleGraph.Adj u v ↔ u ≠ v ∧ ∃ e, G.ends e = s(u, v) :=
   _root_.Cslib.Multigraph.toSimpleGraph_adj
@@ -188,8 +193,7 @@ involves no truncation. -/
 theorem card_le_card_add_one_of_connected [Finite E] (h : G.toSimpleGraph.Connected) :
     Nat.card V ≤ Nat.card E + 1 := by
   refine h.card_vert_le_card_edgeSet_add_one.trans (Nat.add_le_add_right ?_ 1)
-  rw [toSimpleGraph, _root_.Cslib.Multigraph.toSimpleGraph, SimpleGraph.edgeSet_fromEdgeSet,
-    Nat.card_coe_set_eq]
+  rw [toSimpleGraph_eq, _root_.Cslib.Multigraph.edgeSet_toSimpleGraph, Nat.card_coe_set_eq]
   exact (ncard_le_ncard sdiff_subset (finite_range _)).trans
     ((Nat.card_coe_set_eq _).symm.trans_le (Finite.card_range_le _))
 

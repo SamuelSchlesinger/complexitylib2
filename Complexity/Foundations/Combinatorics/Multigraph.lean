@@ -38,6 +38,7 @@ of resolution refutations of Tseitin formulas.
 
 ## Main results
 
+* `Cslib.Multigraph.edgeSet_toSimpleGraph`: the edges of the underlying simple graph.
 * `Cslib.Multigraph.connected_toSimpleGraph_iff`: connectivity as a cut condition.
 * `Cslib.Multigraph.le_minBalancedCut_iff`: the characterization of `e(G)`.
 
@@ -64,6 +65,10 @@ variable {ends} in
 theorem toSimpleGraph_adj {u v : V} :
     (toSimpleGraph ends).Adj u v ↔ u ≠ v ∧ ∃ e, ends e = s(u, v) := by
   rw [toSimpleGraph, SimpleGraph.fromEdgeSet_adj, Set.mem_range, and_comm]
+
+/-- The edges of the underlying simple graph are the ends of edges other than self-loops. -/
+theorem edgeSet_toSimpleGraph : (toSimpleGraph ends).edgeSet = Set.range ends \ {e | e.IsDiag} :=
+  SimpleGraph.edgeSet_fromEdgeSet _
 
 /-- Relabelling the edges does not change the underlying simple graph. -/
 theorem toSimpleGraph_comp (f : E' ≃ E) : toSimpleGraph (ends ∘ f) = toSimpleGraph ends := by

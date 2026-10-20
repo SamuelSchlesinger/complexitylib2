@@ -26,8 +26,9 @@ positive copy counts. The real-rate statement `RealFineMassProduction` quantifie
 constant of `MassProducesAt` (`4 den` via `FineMassProducesThrough.massProducesAt`); it does not
 claim optimality. One copy of most functions already needs `(1 - o(1)) 2 ^ n / n` nonconstant
 gates, by the counting argument of [Shannon1949] for gate circuits
-[Jukna, Theorem 1.14][Jukna2012] (in cslib, `Cslib.Circuits.Boolean.Shannon.lt_complexity`), so the
-coefficient is optimal at `γ = 0`; no matching lower bound is claimed for `γ > 0`.
+[Jukna, Theorem 1.14][Jukna2012] (cslib's `Cslib.Circuits.Boolean.Shannon.lt_complexity` gives one
+such function, counting constant gates, of which at most two are needed), so the coefficient is
+optimal at `γ = 0`; no matching lower bound is claimed for `γ > 0`.
 
 The core form implies the other two (`FineMassProducesThrough.fineMassProducesAt`,
 `realFineMassProduction_of_fine`) and, at precision one, the exponential-range theorem with
