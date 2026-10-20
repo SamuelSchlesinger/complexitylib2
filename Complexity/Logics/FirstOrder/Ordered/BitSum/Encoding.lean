@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Logics.FirstOrder.Ordered.BitArithmetic
+public import Complexity.Logics.FirstOrder.Ordered.Packing
 public import Complexity.Foundations.Data.BitString.SumTree
 import Mathlib.Tactic.Linarith
 
@@ -59,11 +59,7 @@ noncomputable def treeAddress {α : Type*} (m j b q a : (language L).Term α) :
 /-- Read an address in eight fixed-width words. The eight scales are syntactic literals. -/
 noncomputable def packedBit {α : Type*} (h : (language L).Term α)
     (w : Fin 8 → (language L).Term α) (a : (language L).Term α) : (language L).Formula α :=
-  Formula.iSup fun r : Fin 8 => Formula.iExs (Fin 2)
-    (scaleEq L r.val (h.relabel Sum.inl) (.var (.inr 0)) ⊓
-     addEq L (.var (.inr 0)) (.var (.inr 1)) (a.relabel Sum.inl) ⊓
-     (le L (h.relabel Sum.inl) (.var (.inr 1))).not ⊓
-     bit L ((w r).relabel Sum.inl) (.var (.inr 1)))
+  Ordered.packedBit L h w a
 
 /-- Decode the whole node value, explicitly zeroing all bits above its level. -/
 noncomputable def nodeValue {α : Type*} (m h : (language L).Term α)
@@ -151,17 +147,8 @@ theorem realize_packedBit (h : (language L).Term α) (w : Fin 8 → (language L)
     (a : (language L).Term α) (v : α → Fin n) :
     (packedBit L h w a).Realize v ↔ ∃ r : Fin 8, ∃ b : Fin n,
       r.val * (h.realize v).val + b.val = (a.realize v).val ∧
-        b.val < (h.realize v).val ∧ ((w r).realize v).val.testBit b.val = true := by
-  simp only [packedBit, Formula.realize_iSup, Formula.realize_iExs, Formula.realize_inf,
-    realize_scaleEq, realize_addEq, Formula.realize_not, realize_le, realize_bit,
-    Term.realize_var, Term.realize_relabel, Function.comp_def, Sum.elim_inl, Sum.elim_inr,
-    not_le, and_assoc]
-  constructor
-  · rintro ⟨r, u, h0, h1, h2, h3⟩
-    exact ⟨r, u 1, by lia, h2, h3⟩
-  · rintro ⟨r, b, ha, hb, hw⟩
-    have ho : r.val * (h.realize v).val < n := by have := (a.realize v).isLt; lia
-    exact ⟨r, ![⟨_, ho⟩, b], rfl, ha, hb, hw⟩
+        b.val < (h.realize v).val ∧ ((w r).realize v).val.testBit b.val = true :=
+  Ordered.realize_packedBit h w a v
 
 @[fo_realize]
 theorem realize_nodeValue (m h : (language L).Term α) (w : Fin 8 → (language L).Term α)
