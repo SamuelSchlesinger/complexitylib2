@@ -1772,3 +1772,27 @@ entries against the source, requested wording that distinguishes a compiled prog
 runtime compilation, and that wording was corrected before publication. Final exact-document
 approval is recorded in the PR; AI review is not human editorial approval or a Lean proof of
 prose equivalence.
+
+## 2026-10-20: Native BIT on arbitrary-base full tuple universes (#112)
+
+Worker `ordered-times-20261020`, assisted by OpenAI Codex, adds a curated entry for
+`92915665afb129fbdbe0051fcb4a56c4b994be96`: one native formula for each fixed dimension
+realizes BIT of full lexicographic tuple ranks on every canonical `Fin n`, `n ≥ 2`.
+The entry records arbitrary-base semantics, full-word indices, high-index rejection, false
+zero dimension, exact witness arithmetic and the fixed small-universe branch. It makes no
+formula-size efficiency claim, no restricted-domain claim and no completed composition claim.
+The preceding numeric entries now point to the completed full-tuple BIT result; their existing
+statements and source anchors are preserved. Mathematical credit remains Immerman's Remark
+1.32 / Exercise 1.33(3), with a direct link to printed page 25 / PDF page 37.
+
+Independent design reviews and the arithmetic checkpoint review are recorded in issue #112;
+that checkpoint approval is not final-source or index approval. Exact full-source correctness,
+API and index review, six-gate validation and rendered CI-artifact review are tracked in the
+linked PR. This AI review workflow does not imply human editorial approval or machine-checked
+equivalence of prose and Lean. Generated PDFs are not committed.
+
+Author validation at source 92915665: all six repository gates passed; fresh focused MCP
+checks and the headline axiom guard are clean. The local index builds without undefined
+references or overfull boxes, contains 138 result environments at this pre-integration base,
+and its new rendered page 12 and three pinned declaration anchors have been checked.
+Independent final prose/artifact review is still required; the PR records its verdict.

@@ -18,8 +18,9 @@ corresponding source terms. These definitions satisfy the existence/uniqueness r
 every canonical `Fin n` structure with `n ≥ 2`. Thus the native constant-aware pullback applies
 to all formulas of the input relational vocabulary expanded by these three target constants.
 
-This supplies target constants in the semantic interpretation API. Canonical tuple BIT lifting,
-numeric-preserving composition and the ordered logspace/capture results remain open.
+This supplies target constants in the semantic interpretation API. Native full-tuple BIT is
+constructed separately in `Ordered.TupleBit`. Numeric-preserving composition and the ordered
+logspace/capture results remain open.
 
 ## Main definitions
 

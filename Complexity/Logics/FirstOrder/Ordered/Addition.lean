@@ -19,8 +19,8 @@ Comparing all sum bits defines ordinary addition on every canonical universe `Fi
 The result is nonmodular: an out-of-range sum has no satisfying result in the universe.
 
 This is the PLUS portion of the arithmetic-definability foundation. The Bit Sum Lemma is proved
-in `Ordered.BitSum`. TIMES, full arbitrary-base tuple BIT lifting and numeric-preserving
-composition remain separate.
+in `Ordered.BitSum`; native TIMES and full-tuple BIT are constructed in
+`Ordered.Multiplication` and `Ordered.TupleBit`. Numeric-preserving composition remains open.
 
 ## Main definitions
 

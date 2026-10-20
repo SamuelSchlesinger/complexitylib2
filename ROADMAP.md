@@ -235,16 +235,25 @@ of the handover. The work below remains available for subsequent, independently 
      the global words, all decoders constrain high bits, and the final carry vanishes from the
      input-width bound. The witnesses fit for arbitrary universe sizes; a fixed finite branch
      handles small inputs. No multiplication relation or semantic certificate is assumed.
-     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the
-     ordered logspace encoding bridge; then projections and NL/P completeness. These remain open.
-     Numeric interpretations must preserve
-     canonical BIT for arbitrary base `n`, and composition must preserve that certificate
-     (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
-     tuple universe in every dimension still needs Exercise 1.33(3); base-`n` tuples
-     cannot simply be identified with concatenated binary strings. The full-domain hypothesis
-     matters: the paragraph after Exercise 1.33 warns that canonical BIT on an arbitrary
-     definable restricted domain need not be first-order definable. Restricted-domain numeric
-     preservation therefore requires its own explicit definitions and certificate.
+     **Full-tuple BIT lifting completed (#112):**
+     [Ordered/TupleBit](Complexity/Logics/FirstOrder/Ordered/TupleBit.lean) supplies an actual
+     native formula for every fixed dimension `k`, with exact `lexRank x`/`lexRank y` BIT
+     semantics on every canonical `Fin n`, `n ≥ 2`. It handles arbitrary bases, indices larger
+     than the source universe, high-index rejection and explicitly false dimension zero.
+     Native affine word arithmetic, multiplication and radix conversion represent the source
+     cardinality in seven digits and each tuple rank in `7k` digits. The formula witnesses a
+     positive binary radix with its cube below `n`; no out-of-domain scalar or supplied numeric
+     certificate is assumed. A fixed finite disjunction covers sizes two through eight.
+     This proves the full-domain BIT endpoint of Immerman's Exercise 1.33(3), with no
+     formula-size efficiency claim.
+     **Next milestones:** numeric-preserving composition; the ordered logspace encoding bridge;
+     then projections and NL/P completeness. These remain open. Compose the explicit native
+     full-tuple numeric definitions while preserving their canonical semantics (Immerman,
+     Remark 1.32); base-`n` tuples cannot simply be identified with concatenated binary strings.
+     The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical
+     BIT on an arbitrary definable restricted domain need not be first-order definable.
+     Restricted-domain numeric preservation therefore requires its own explicit definitions
+     and certificate.
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
