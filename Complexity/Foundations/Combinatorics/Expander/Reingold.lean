@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.Expander.Connected
+public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 
 /-!
 # Reingold's transformation
@@ -34,7 +35,8 @@ Each vertex of `G_ℓ` lies over a vertex of `G`, its `root`.
 (`min_le_one_sub_spectralExpansion_reingoldStep`). After `ℓ` steps the gap is at least
 `min ((6 / 5) ^ ℓ γ) (1 / 5)` (`min_pow_le_one_sub_spectralExpansion_reingold`). Reingold takes
 the eighth power of `G ⓩ H`, for a `D`-regular base graph on `D ^ 16` vertices with
-`λ(H) ≤ 1 / 2`, and obtains `λ ↦ max (λ ^ 2) (1 / 2)` [Reingold, Lemma 3.2][Reingold2008]; taking
+`λ(H) ≤ 1 / 2`, and obtains `λ ↦ max (λ ^ 2) (1 / 2)` in the proof of
+[Reingold, Lemma 3.2][Reingold2008]; taking
 the square, with the base graph of the zig-zag tower, the gap grows by the factor `6 / 5` instead,
 which changes only the constant in the number of steps.
 
@@ -55,10 +57,8 @@ every vertex over the component as soon as `|V| |B| ^ ℓ 4 ^ T ≤ 5 ^ T`
 
 * `Cslib.RotationMap.reingoldStep`: one step `((G ⓩ H) ^ 2).relabel e.symm` of the
   transformation.
-* `Cslib.RotationMap.ReingoldVertex`, `Cslib.RotationMap.reingold`: the graphs `G_ℓ` and their
-  vertices.
-* `Cslib.RotationMap.ReingoldVertex.root`, `Cslib.RotationMap.ReingoldVertex.mk`: the vertex of
-  `G` under a vertex of `G_ℓ`, and a vertex of `G_ℓ` over a given vertex of `G`.
+* `Cslib.RotationMap.reingold`: the graphs `G_ℓ`, on the iterated products
+  `Cslib.RotationMap.ReingoldVertex V B ℓ`.
 
 ## Main results
 
@@ -89,120 +89,19 @@ open scoped BigOperators
 
 universe u
 
-/-- The vertices of the `ℓ`-th graph of Reingold's transformation of a graph on `V` with labels
-`B`: the product `(⋯ (V × B) × ⋯) × B` with `ℓ` factors `B`, nested to the left, as each step pairs
-a vertex of the previous graph with a vertex of the zig-zag base graph. -/
-def ReingoldVertex (V B : Type u) : ℕ → Type u
-  | 0 => V
-  | ℓ + 1 => ReingoldVertex V B ℓ × B
-
-namespace ReingoldVertex
-
-variable {V W X B : Type u}
-
-/-- The vertices of the transformation are finite when those of the graph and its labels are. -/
-instance instFintype [Fintype V] [Fintype B] : ∀ ℓ, Fintype (ReingoldVertex V B ℓ)
-  | 0 => inferInstanceAs (Fintype V)
-  | ℓ + 1 =>
-    have := instFintype ℓ
-    inferInstanceAs (Fintype (ReingoldVertex V B ℓ × B))
-
-/-- Equality of vertices of the transformation is decidable when it is for the graph and its
-labels. -/
-instance instDecidableEq [DecidableEq V] [DecidableEq B] : ∀ ℓ, DecidableEq (ReingoldVertex V B ℓ)
-  | 0 => inferInstanceAs (DecidableEq V)
-  | ℓ + 1 =>
-    have := instDecidableEq ℓ
-    inferInstanceAs (DecidableEq (ReingoldVertex V B ℓ × B))
-
-/-- The `ℓ`-th graph of the transformation has `|V| |B| ^ ℓ` vertices. -/
-@[simp]
-theorem card [Fintype V] [Fintype B] (ℓ : ℕ) :
-    Fintype.card (ReingoldVertex V B ℓ) = Fintype.card V * Fintype.card B ^ ℓ := by
-  induction ℓ with
-  | zero => exact (mul_one _).symm
-  | succ ℓ ih =>
-    change Fintype.card (ReingoldVertex V B ℓ × B) = _
-    rw [Fintype.card_prod, ih, pow_succ, mul_assoc]
-
-/-- The vertex of the original graph that a vertex of the `ℓ`-th graph lies over: its first
-coordinate. -/
-def root : {ℓ : ℕ} → ReingoldVertex V B ℓ → V
-  | 0, v => v
-  | ℓ + 1, p => root (ℓ := ℓ) (Prod.fst (β := B) p)
-
-/-- The root of a vertex of the `(ℓ + 1)`-st graph is the root of its first coordinate. -/
-@[simp]
-theorem root_succ {ℓ : ℕ} (p : ReingoldVertex V B ℓ × B) :
-    root (ℓ := ℓ + 1) p = root p.1 :=
-  rfl
-
-/-- The vertex `(⋯ (v, b) ⋯, b)` of the `ℓ`-th graph, over `v`. -/
-def mk (v : V) (b : B) : (ℓ : ℕ) → ReingoldVertex V B ℓ
-  | 0 => v
-  | ℓ + 1 => (mk v b ℓ, b)
-
-/-- `mk v b ℓ` lies over `v`. -/
-@[simp]
-theorem root_mk (v : V) (b : B) (ℓ : ℕ) : (mk v b ℓ).root = v := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact ih
-
-/-- Replace the root of a vertex of the `ℓ`-th graph, keeping its other coordinates. -/
-def setRoot : {ℓ : ℕ} → ReingoldVertex V B ℓ → W → ReingoldVertex W B ℓ
-  | 0, _, w => w
-  | ℓ + 1, p, w =>
-    (setRoot (ℓ := ℓ) (Prod.fst (β := B) p) w, Prod.snd (α := ReingoldVertex V B ℓ) p)
-
-/-- Replacing the root by `w` gives a vertex over `w`. -/
-@[simp]
-theorem root_setRoot {ℓ : ℕ} (x : ReingoldVertex V B ℓ) (w : W) : (x.setRoot w).root = w := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact ih _
-
-/-- Replacing the root by itself does nothing. -/
-@[simp]
-theorem setRoot_root {ℓ : ℕ} (x : ReingoldVertex V B ℓ) : x.setRoot x.root = x := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact Prod.ext (ih _) rfl
-
-/-- Apply a map of the vertices of the original graph to the root. -/
-def map (φ : V → W) : (ℓ : ℕ) → ReingoldVertex V B ℓ → ReingoldVertex W B ℓ
-  | 0 => φ
-  | ℓ + 1 => Prod.map (map φ ℓ) id
-
-/-- Mapping the root of a vertex with replaced root. -/
-@[simp]
-theorem map_setRoot (φ : V → W) {ℓ : ℕ} (x : ReingoldVertex X B ℓ) (v : V) :
-    map φ ℓ (x.setRoot v) = x.setRoot (φ v) := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact Prod.ext (ih _) rfl
-
-/-- The root of a mapped vertex is the image of its root. -/
-@[simp]
-theorem root_map (φ : V → W) {ℓ : ℕ} (x : ReingoldVertex V B ℓ) : (map φ ℓ x).root = φ x.root := by
-  induction ℓ with
-  | zero => rfl
-  | succ ℓ ih => exact ih _
-
-end ReingoldVertex
 
 variable {B : Type u} {E : Type*} (H : RotationMap B E) (e : B ≃ (Fin 2 → E × E))
 
-/-- **One step of Reingold's transformation** [Reingold, Definition 3.1][Reingold2008]
-[Arora and Barak, Section 21.4][AroraBarak09]: the square of the zig-zag product of a `B`-regular
-graph `G` with the graph `H` on `B`, whose labels `Fin 2 → E × E` are renamed back to `B` by
-`e.symm`. -/
+/-- **One step of Reingold's transformation**, a variant of [Reingold, Definition 3.1][Reingold2008]
+[Arora and Barak, Section 21.4][AroraBarak09] with the square instead of the eighth power: the
+square of the zig-zag product of a `B`-regular graph `G` with the graph `H` on `B`, whose labels
+`Fin 2 → E × E` are renamed back to `B` by `e.symm`. -/
 def reingoldStep {V : Type*} (G : RotationMap V B) : RotationMap (V × B) B :=
   ((G.zigzag H).pow 2).relabel e.symm
 
-/-- **Reingold's transformation** [Reingold, Definition 3.1][Reingold2008]: `reingold H e G ℓ` is
-the graph `G_ℓ` obtained from `G₀ = G` by `ℓ` steps `G_{i + 1} = ((G_i ⓩ H) ^ 2).relabel e.symm`.
--/
+/-- **Reingold's transformation**, a variant of [Reingold, Definition 3.1][Reingold2008] with the
+square instead of the eighth power: `reingold H e G ℓ` is the graph `G_ℓ` obtained from `G₀ = G`
+by `ℓ` steps `G_{i + 1} = ((G_i ⓩ H) ^ 2).relabel e.symm`. -/
 def reingold {V : Type u} (G : RotationMap V B) : (ℓ : ℕ) → RotationMap (ReingoldVertex V B ℓ) B
   | 0 => G
   | ℓ + 1 => reingoldStep H e (reingold G ℓ)
@@ -233,18 +132,6 @@ theorem Hom.reingold_apply {V W : Type u} {G : RotationMap V B} {G' : RotationMa
   | succ ℓ ih => exact Prod.ext (ih x.1) rfl
 
 section Projection
-
-variable {V W D' : Type*}
-
-/-- If every edge of `G'` joins vertices whose images under `π` are reachable from each other in
-`G`, so does every walk. -/
-theorem reachable_neighbor_pow_of_forall {D : Type*} (G : RotationMap V D)
-    (G' : RotationMap W D') (π : W → V)
-    (hπ : ∀ x i, G.toSimpleGraph.Reachable (π x) (π (G'.neighbor x i))) :
-    ∀ (t : ℕ) (x : W) (k : Fin t → D'),
-      G.toSimpleGraph.Reachable (π x) (π ((G'.pow t).neighbor x k))
-  | 0, _, _ => .refl _
-  | t + 1, x, k => (hπ x (k 0)).trans (reachable_neighbor_pow_of_forall G G' π hπ t _ _)
 
 /-- Every edge of `G_ℓ` joins two vertices over vertices of `G` reachable from each other. -/
 theorem reachable_root_neighbor_reingold {V : Type u} (G : RotationMap V B) :

@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle.Interaction
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.QueryBounds
@@ -94,6 +95,11 @@ noncomputable def run (program : WordOracleComp Operation α) (s : P.State) :
     (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) P.respond)
       program).run s
 
+/-- `Prover.run` is the run against the prover as a stateful oracle with word queries and
+replies. -/
+theorem run_eq_runWith (program : WordOracleComp Operation α) (s : P.State) :
+    P.run program s = ProbOracleComp.runWith P.respond program s := rfl
+
 @[simp] theorem run_pure (a : α) (s : P.State) :
     P.run (pure a : WordOracleComp Operation α) s = PMF.pure (a, s) := rfl
 
@@ -132,6 +138,12 @@ variable {Operation α : Type}
 noncomputable def acceptProb (verifier : WordOracleComp Operation Bool) (P : Prover Operation) :
     ENNReal :=
   (P.run verifier P.init).map Prod.fst true
+
+/-- The acceptance probability is that of the verifier against the prover as a stateful oracle,
+from its initial state. -/
+theorem acceptProb_eq_acceptProbWith (verifier : WordOracleComp Operation Bool)
+    (P : Prover Operation) :
+    acceptProb verifier P = ProbOracleComp.acceptProbWith P.respond verifier P.init := rfl
 
 /-- The acceptance probability sums the masses of the accepting outcomes over final states. -/
 theorem acceptProb_eq_tsum (verifier : WordOracleComp Operation Bool) (P : Prover Operation) :

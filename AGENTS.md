@@ -106,6 +106,10 @@ lake exe checkInitImports
 - `set_option maxHeartbeats` / `maxRecDepth` overrides need a justifying comment.
 - Never put `[simp]` on machine step functions or transition tables (goals explode).
 - Non-terminal `simp` only as `simp only`; definitions as terms, not `by` blocks, where possible.
+- As in Mathlib, renaming, moving or removing a public declaration that is already on `main`
+  leaves a deprecated alias at the old full name, `@[deprecated (since := "YYYY-MM-DD")] alias
+  oldName := newName` (or a `@[deprecated]` theorem when the statement changes shape). Private
+  declarations and declarations introduced in the same unmerged branch need no alias.
 - `ComplexityTests/Axioms.lean` audits all declarations stored in imported `Complexity` modules
   for dependencies beyond `propext`, `Classical.choice` and `Quot.sound` and keeps its existing
   named guards. Add named `#print axioms` guards for an epic's headline theorems to the epic's

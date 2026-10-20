@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Tactic.FirstOrder.Init
 public import Mathlib.ModelTheory.Semantics
 
 /-!
@@ -60,6 +61,8 @@ need no reindexing.
 * `Cslib.Logic.FO.Interpretation.mapEquiv`: isomorphic structures interpret isomorphic structures.
 * `Cslib.Logic.FO.Interpretation.idEquiv`, `Cslib.Logic.FO.Interpretation.compEquiv`: the identity
   and composite interpretations, up to isomorphism.
+* `Cslib.Logic.FO.Interpretation.relMap_comp_model`: the relations of a composite interpreted
+  structure are those of the iterated one.
 
 ## Implementation notes
 
@@ -125,6 +128,11 @@ variable {I M}
 theorem Model.ext {x y : I.Model M} (h : x.1 = y.1) : x = y :=
   Subtype.ext h
 
+/-- Elements of an interpreted structure are equal when all their coordinates are. -/
+@[fo_realize]
+theorem Model.ext_iff {x y : I.Model M} : x = y ↔ ∀ i, x.1 i = y.1 i :=
+  ⟨fun h _ => h ▸ rfl, fun h => Model.ext (funext h)⟩
+
 instance [Finite ι] [Finite M] : Finite (I.Model M) :=
   Subtype.finite
 
@@ -135,6 +143,7 @@ defining formula holds of their coordinates. -/
 instance : L'.Structure (I.Model M) where
   RelMap R x := (I.rel R).Realize fun p => (x p.1).1 p.2
 
+@[fo_realize]
 theorem relMap_model {n : ℕ} (R : L'.Relations n) (x : Fin n → I.Model M) :
     RelMap R x ↔ (I.rel R).Realize fun p => (x p.1).1 p.2 :=
   Iff.rfl
@@ -232,7 +241,7 @@ noncomputable def onFormula (φ : L'.Formula α) : L.Formula (α × ι) :=
 /-- **The pullback of a formula** holds of the coordinates of some elements of the interpreted
 structure exactly when the formula holds of these elements
 [Immerman, Proposition 3.5 and Remark 3.6][Immerman1999]. -/
-@[simp]
+@[simp, fo_realize]
 theorem realize_onFormula (φ : L'.Formula α) (v : α → I.Model M) :
     (I.onFormula φ).Realize (fun p => (v p.1).1 p.2) ↔ φ.Realize v := by
   rw [onFormula, Formula.realize_relabel]
@@ -251,7 +260,7 @@ noncomputable def onSentence (φ : L'.Sentence) : L.Sentence :=
 variable (M) in
 /-- **The pullback of a sentence** holds in `M` exactly when the sentence holds in the structure
 interpreted by `I` in `M` [Immerman, Proposition 3.5][Immerman1999]. -/
-@[simp]
+@[simp, fo_realize]
 theorem realize_onSentence (φ : L'.Sentence) : M ⊨ I.onSentence φ ↔ I.Model M ⊨ φ := by
   rw [onSentence, Sentence.Realize, Formula.realize_relabel, Sentence.Realize,
     ← realize_onFormula φ default]
@@ -318,6 +327,20 @@ noncomputable def compEquiv [Finite κ] (J : Interpretation L' L'' κ)
       (J.rel R).Realize fun p => (x p.1).1 p.2
     rw [Formula.realize_relabel, ← realize_onFormula]
     rfl
+
+@[simp, fo_realize]
+theorem compEquiv_symm_apply_val_val [Finite κ] (J : Interpretation L' L'' κ)
+    (I : Interpretation L L' ι) (z : (J.comp I).Model M) (j : κ) (i : ι) :
+    (((compEquiv J I).symm z).1 j).1 i = z.1 (j, i) :=
+  rfl
+
+/-- A relation of a composite interpreted structure holds exactly when it holds in the iterated
+interpreted structure. -/
+@[fo_realize high]
+theorem relMap_comp_model [Finite κ] (J : Interpretation L' L'' κ) (I : Interpretation L L' ι)
+    {n : ℕ} (R : L''.Relations n) (x : Fin n → (J.comp I).Model M) :
+    RelMap R x ↔ RelMap R fun i => (compEquiv J I).symm (x i) :=
+  ((compEquiv J I).symm.map_rel R x).symm
 
 end Interpretation
 

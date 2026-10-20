@@ -17,8 +17,8 @@ The power `b ^ ⌈log_b n⌉` overshoots `n` by less than a factor `b` (`Nat.pow
 `m ^ ⌈log_b n⌉`, which is at most `(b ^ ⌈log_b m⌉) ^ ⌈log_b n⌉ = (b ^ ⌈log_b n⌉) ^ ⌈log_b m⌉`, is
 at most `b ^ ⌈log_b m⌉ * n ^ ⌈log_b m⌉` (`Nat.pow_clog_le_pow_clog_mul_pow_clog`): a factor `m`
 applied `⌈log_b n⌉` times is polynomial in `n`. This is how the size of an iterated construction
-stays polynomial after logarithmically many rounds. Similarly `2 ^ (⌊log₂ n⌋ + 1)` is at most
-`2 (n + 1)` (`Nat.two_pow_log2_succ_le`).
+stays polynomial after logarithmically many rounds. Similarly `2 ^ (⌊log₂ n⌋ + 1)` and
+`2 ^ ⌈log₂ n⌉` are at most `2 (n + 1)` (`Nat.two_pow_log2_succ_le`, `Nat.two_pow_clog_two_le`).
 
 ## Main results
 
@@ -26,6 +26,7 @@ stays polynomial after logarithmically many rounds. Similarly `2 ^ (⌊log₂ n�
 * `Nat.pow_clog_le_pow_clog_mul_pow_clog`: `m ^ ⌈log_b n⌉ ≤ b ^ ⌈log_b m⌉ * n ^ ⌈log_b m⌉` for
   `n ≠ 0`.
 * `Nat.two_pow_log2_succ_le`: `2 ^ (⌊log₂ n⌋ + 1) ≤ 2 (n + 1)`.
+* `Nat.two_pow_clog_two_le`: `2 ^ ⌈log₂ n⌉ ≤ 2 (n + 1)`, also for `n = 0`.
 -/
 
 @[expose] public section
@@ -57,5 +58,11 @@ theorem two_pow_log2_succ_le (n : ℕ) : 2 ^ (Nat.log2 n + 1) ≤ 2 * (n + 1) :=
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · simp
   · exact Nat.mul_le_mul_left 2 ((Nat.log2_self_le hn.ne').trans (Nat.le_succ n))
+
+/-- `2 ^ ⌈log₂ n⌉` is at most `2 (n + 1)`, also for `n = 0`. -/
+theorem two_pow_clog_two_le (n : ℕ) : 2 ^ clog 2 n ≤ 2 * (n + 1) := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simp
+  · exact (pow_clog_le_mul Nat.one_lt_two hn.ne').trans (by omega)
 
 end Nat

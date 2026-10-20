@@ -12,7 +12,7 @@ public import Complexity.Foundations.Data.BitString.List
 import Complexity.Computability.Complexity.Classes.SharpP
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Foundations.Combinatorics.MajorityVote
+import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Foundations.Data.List.OfFn
 
 /-!
@@ -41,8 +41,6 @@ is `Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent`.
 ## Main results
 
 * `Cslib.BitString.listRows_ofFn`: the rows of a word of `k * m` bits are its blocks.
-* `Cslib.BitString.two_pow_mul_card_filter_card_filter_block_le`: majority votes of `12 e` blocks
-  err on at most a `2 ^ (-e)` fraction.
 * `Cslib.Complexity.DecidesWithBoundedError.repeatMajority`: `12 q(n)` majority votes reduce the
   error to `2 ^ (-q(n))`.
 * `Cslib.Complexity.computableTidilyInPolyTime_repeatMajority`: majority votes take polynomial
@@ -64,37 +62,6 @@ namespace Cslib.BitString
 theorem listRows_ofFn {k m : ℕ} (x : BitString (k * m)) :
     listRows k m (List.ofFn x) = List.ofFn fun i => List.ofFn (block x i) := by
   rw [listRows_eq_ofFn, ofList_ofFn]
-
-open Finset in
-/-- **Majority votes of blocks.** If at least two thirds of the strings of `m` bits satisfy `g`,
-then at most a `2 ^ (-e)` fraction of the strings of `2 R = 12 e` blocks of `m` bits have at most
-`R` blocks satisfying `g`: the exponential-moment bound `Cslib.card_filter_card_filter_le_le`, with
-`2 * 8 ^ 6 ≤ 9 ^ 6`. -/
-theorem two_pow_mul_card_filter_card_filter_block_le {m e R : ℕ} (hR : R = 6 * e)
-    (g : BitString m → Prop) [DecidablePred g] (hg : 2 * 2 ^ m ≤ 3 * #{s | g s}) :
-    2 ^ e * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R} ≤ 2 ^ (2 * R * m) := by
-  have hmaj := card_filter_card_filter_le_le (univ.filter g)
-    (by simpa only [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool] using hg) R
-  rw [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool, ← pow_mul, Nat.mul_comm m] at hmaj
-  have hc : 9 ^ R * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R} ≤
-      8 ^ R * 2 ^ (2 * R * m) := by
-    refine (Nat.mul_le_mul_left _ ?_).trans hmaj
-    rw [← card_map blocksEquiv.toEmbedding]
-    refine card_le_card fun ω hω => ?_
-    obtain ⟨x, hx, rfl⟩ := mem_map.1 hω
-    refine mem_filter.2 ⟨mem_univ _, ?_⟩
-    simpa only [mem_filter, mem_univ, true_and, Equiv.coe_toEmbedding, blocksEquiv_apply] using hx
-  have hq : 2 ^ e * 8 ^ R ≤ 9 ^ R := by
-    subst hR
-    simp only [pow_mul, ← mul_pow]
-    exact Nat.pow_le_pow_left (by norm_num) _
-  refine Nat.le_of_mul_le_mul_left ?_ (by positivity : 0 < 9 ^ R)
-  calc 9 ^ R * (2 ^ e * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R})
-      = 2 ^ e * (9 ^ R * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R}) := by
-        ring
-    _ ≤ 2 ^ e * (8 ^ R * 2 ^ (2 * R * m)) := Nat.mul_le_mul_left _ hc
-    _ = 2 ^ e * 8 ^ R * 2 ^ (2 * R * m) := by ring
-    _ ≤ 9 ^ R * 2 ^ (2 * R * m) := Nat.mul_le_mul_right _ hq
 
 end Cslib.BitString
 

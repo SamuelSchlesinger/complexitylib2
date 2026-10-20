@@ -70,10 +70,6 @@ theorem chi_update_not_of_mem {R : Type*} [CommRing R] [DecidableEq ι] {T : Fin
   rw [chi_update_of_mem hi, h]
   cases x i <;> simp
 
-/-- A real character has absolute value one. -/
-theorem abs_chi (T : Finset ι) (x : ι → Bool) : |chi ℝ T x| = 1 := by
-  rcases mul_self_eq_one_iff.1 (chi_mul_self (R := ℝ) T x) with h | h <;> simp [h]
-
 section LinearOrder
 
 variable [LinearOrder ι]

@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.Collapse
+import Complexity.Computability.Complexity.Classes.ArthurMerlin.GraphNonIsomorphism
+import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound
 import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Factorial
 
 /-! Concrete clients for the Arthur–Merlin classes: nonempty classes, satisfiable error-exponent
 conditions, reductions, and axiom guards for the headline inclusions. -/
@@ -90,7 +94,16 @@ example : {w : List Bool | ∃ v : List Bool, v.length = (1 : Polynomial ℕ).ev
   refine mem_AM_of_exists (MA_subset_AM (BPP_subset_MA (P_subset_BPP ?_))) 1
   exact ⟨fun y => y.1.headD false, by fun_prop, fun _ => Iff.rfl⟩
 
-example : (3 : ℕ).factorial = 6 := rfl
+/-- The threshold `2 n!` of the protocol for graph non-isomorphism, computed in binary. -/
+example : ComputableTidilyInPolyTime (fun n : ℕ => 2 * n.factorial) encUnary encNat :=
+  (ComputableTidilyInPolyTime.const 2).binary_mul' ComputableTidilyInPolyTime.binary_factorial
+
+/-- The hypothesis of the graph-isomorphism collapse follows from a reduction of `SAT` to graph
+isomorphism. -/
+example (h : PolyTimeReducible encCNF (encPair encGraph encGraph) SAT GraphIsomorphism) :
+    PH encBits = SigmaP 2 encBits :=
+  PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism
+    ⟨GraphIsomorphism.mem_NP, CookLevin.SAT_npHard.trans h⟩
 
 /-! ### Axiom guards -/
 
@@ -217,5 +230,19 @@ info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism' depends
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism
+
+/--
+info: 'Cslib.Complexity.PiP_two_subset_SigmaP_two_of_coNP_subset_AM' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.PiP_two_subset_SigmaP_two_of_coNP_subset_AM
+
+/--
+info: 'Cslib.Complexity.PiP_two_eq_SigmaP_two_of_coNP_subset_AM' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.PiP_two_eq_SigmaP_two_of_coNP_subset_AM
 
 end ComplexityTests.ArthurMerlin

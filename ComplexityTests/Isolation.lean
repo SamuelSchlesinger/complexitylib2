@@ -77,7 +77,8 @@ example : ¬CNF.Satisfiable (reduce ([[(0, true)]], [false, true, true, false]))
     simp [CNF.eval, Clause.eval, Literal.eval, h₀, h₁, h₃] at hσ
 
 /-- The affine hash family of bit strings is pairwise independent. -/
-example : IsPairwiseIndependentHash (hash (k := 2) (n := 3)) := isPairwiseIndependentHash_hash 2 3
+example : IsPairwiseIndependentHash (BitString.LinearHash.affineHash (k := 2) (n := 3)) :=
+  BitString.LinearHash.isPairwiseIndependentHash_affineHash 2 3
 
 open Classical in
 /-- The success bound for the satisfiable formula `x₀`: at least a `3 / 128` fraction of the
@@ -98,8 +99,8 @@ example (m : ℕ) (hm : randomBits [[(0, true)]] ≤ m) :
 
 /-- The hash family is the affine hash over `Bool`. -/
 example (p : (Fin 2 → BitString 3) × BitString 2) (x : BitString 3) :
-    hash p x = affineHash (m := Fin 2) (n := Fin 3) (F := Bool) p x :=
-  hash_eq_affineHash p x
+    BitString.LinearHash.affineHash p x = affineHash (m := Fin 2) (n := Fin 3) (F := Bool) p x :=
+  BitString.LinearHash.affineHash_eq_affineHash p x
 
 /-- Words of three bits represent `5`. -/
 example : ∃ u : Fin 3 → Bool, BitString.binaryValue (List.ofFn u) = 5 :=

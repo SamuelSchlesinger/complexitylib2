@@ -40,38 +40,45 @@ pseudorandom function from a random one:
 
 * The *restriction* of a keyed family computable in polynomial time to the `2 ^ m` inputs of
   length `n` whose first `n - m` bits are `false`, read through the first output bit
-  (`Cslib.Crypto.restriction`), has a circuit with at most `c (3 n + 2) ^ c + 2` gates for a
-  constant `c` (`Cslib.Crypto.exists_complexity_restriction_le`).
+  (`Cslib.Crypto.KabanetsCai.restriction`), has a circuit with at most `c (3 n + 2) ^ c + 2`
+  gates for a constant `c` (`Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le`).
 * A random function restricts to a uniformly random truth table
-  (`Cslib.Crypto.uniformOfFintype_map_restrictTable`), and at most `2 ^ (2 ^ m / 4)` of the
-  `2 ^ (2 ^ m)` truth tables have circuits with `2 ^ m / (5 m)` gates
-  (`Cslib.MCSP.ncard_setOf_mem_le`, `Cslib.Crypto.toReal_map_restrictTable_mem_le`).
+  (`Cslib.Crypto.KabanetsCai.uniformOfFintype_map_restrictTable`), and at most
+  `2 ^ (2 ^ m / 4)` of the `2 ^ (2 ^ m)` truth tables have circuits with at most
+  `⌊2 ^ m / (5 m)⌋` gates (`Cslib.MCSP.ncard_setOf_mem_le`,
+  `Cslib.Crypto.KabanetsCai.toReal_map_restrictTable_mem_le`).
 
-The distinguisher (`Cslib.Crypto.mcspDistinguisher`) takes `m = d ⌈log₂ n⌉` for `d = c + 2`,
-queries the oracle on the `2 ^ m ≤ (2 n) ^ d` words above, assembles the first bits of the replies
-into a truth table, and runs the bounded-error MCSP decider at threshold `2 ^ m / (5 m)`. For large
-`n` this threshold is at least the circuit size of every restriction of the family, so the decider
-accepts the pseudorandom table with probability at least `2 / 3`, and a random table with
-probability at most `1 / 3 + 2 ^ (2 ^ m / 4) / 2 ^ (2 ^ m)`. The distinguisher is a uniform strict
-oracle PPT adversary in the model of `Cslib.Crypto.PseudorandomFunction`
-(`Cslib.Crypto.isOraclePPT_mcspDistinguisher`), and its advantage is at least `1 / 4` for all large
-`n`, which is not negligible.
+The distinguisher (`Cslib.Crypto.KabanetsCai.mcspDistinguisher`) takes `m = d ⌈log₂ n⌉` for
+`d = c + 2`, queries the oracle on the `2 ^ m ≤ (2 n) ^ d` words above, assembles the first bits
+of the replies into a truth table, and runs the bounded-error MCSP decider at threshold
+`⌊2 ^ m / (5 m)⌋`. For large `n` this threshold is at least the circuit size of every restriction
+of the family, so the decider accepts the pseudorandom table with probability at least `2 / 3`,
+and a random table with probability at most `1 / 3 + 2 ^ (2 ^ m / 4) / 2 ^ (2 ^ m)`. The
+distinguisher is a uniform strict oracle PPT adversary in the model of
+`Cslib.Crypto.PseudorandomFunction` (`Cslib.Crypto.KabanetsCai.isOraclePPT_mcspDistinguisher`),
+and its advantage is at least `1 / 4` for all large `n`, which is not negligible.
 
 MCSP is the language `Cslib.MCSP` of instances `(T, s)` whose truth table `T` of `2 ^ m` bits has
 a De Morgan circuit with at most `s` gates (all gates counted), encoded by the table followed by
 `s` in binary (`Cslib.MCSP.encInstance`); `BPP` is `Cslib.Complexity.BPP` for this encoding. The
-decider is only run at thresholds `⌊2 ^ m / (5 m)⌋`.
+hypothesis is that MCSP is in `BPP` at all thresholds; the distinguisher only runs the decider at
+thresholds `⌊2 ^ m / (5 m)⌋`. The parts of the distinguisher live in the namespace
+`Cslib.Crypto.KabanetsCai`.
 
 ## Main definitions
 
-* `Cslib.Crypto.mcspRun`: run a bounded-error decider for MCSP on fresh coins.
-* `Cslib.Crypto.mcspDistinguisher`: the oracle adversary built from an MCSP decider.
+* `Cslib.Crypto.KabanetsCai.mcspRun`: run a bounded-error decider for MCSP on fresh coins.
+* `Cslib.Crypto.KabanetsCai.mcspDistinguisher`: the oracle adversary built from an MCSP decider.
 
 ## Main results
 
-* `Cslib.Crypto.toReal_map_restrictTable_mem_le`: few restrictions of a random function have small
-  circuits.
-* `Cslib.Crypto.isOraclePPT_mcspDistinguisher`: the distinguisher is uniform strict oracle PPT.
+* `Cslib.Crypto.KabanetsCai.toReal_map_restrictTable_mem_le`: few restrictions of a random
+  function have small circuits.
+* `Cslib.Crypto.KabanetsCai.isOraclePPT_mcspDistinguisher`: the distinguisher is uniform strict
+  oracle PPT.
+* `Cslib.Crypto.KabanetsCai.eval_prfRealGame_mcspDistinguisher`,
+  `Cslib.Crypto.KabanetsCai.eval_prfIdealGame_mcspDistinguisher`: in both games the decider runs
+  on the truth table of a restriction.
 * `Cslib.Crypto.not_pseudorandomFunction_of_MCSP_mem_BPP`: if MCSP is in `BPP`, there are no
   pseudorandom functions.
 * `Cslib.Crypto.not_oneWay_of_MCSP_mem_BPP`, `Cslib.Crypto.not_oneWay_of_MCSP_mem_P`:
@@ -91,17 +98,18 @@ open Probability Turing.MultiTapeTM ComputableTidilyInPolyTime Complexity Circui
   Circuits.Boolean
 open scoped BigOperators
 
+namespace KabanetsCai
+
 /-! ### Few random restrictions have small circuits -/
 
 open scoped Classical in
 /-- **Few restrictions of a random function have small circuits.** For `16 ≤ m ≤ n`, the
 restriction of a uniformly random function from `n` bits to `n` bits to `m` inputs has a circuit
-with `2 ^ m / (5 m)` gates with probability at most `2 ^ (2 ^ m / 4) / 2 ^ (2 ^ m)`. -/
+with at most `⌊2 ^ m / (5 m)⌋` gates with probability at most `2 ^ (2 ^ m / 4) / 2 ^ (2 ^ m)`. -/
 theorem toReal_map_restrictTable_mem_le {n m : ℕ} (hn : 0 < n) (hm : m ≤ n) (hm16 : 16 ≤ m) :
     ((PMF.uniformOfFintype (BitString n → BitString n)).map (fun table =>
       decide ((⟨m, MCSP.truthTable m (restrictTable n m hn table), 2 ^ m / (5 * m)⟩ :
         MCSP.Instance) ∈ MCSP)) true).toReal ≤ 2 ^ (2 ^ m / 4) / 2 ^ 2 ^ m := by
-  classical
   have hcomp : (fun table : BitString n → BitString n =>
       decide ((⟨m, MCSP.truthTable m (restrictTable n m hn table), 2 ^ m / (5 * m)⟩ :
         MCSP.Instance) ∈ MCSP)) =
@@ -215,18 +223,15 @@ theorem interpret_mcspDistinguisher (d : ℕ) (oracle : List Bool → List Bool)
 
 /-! ### The distinguisher is uniform strict oracle PPT -/
 
-/-- `2 ^ ⌈log₂ n⌉` is at most `2 (n + 1)`, also for `n = 0`. -/
-theorem two_pow_clog_le (n : ℕ) : 2 ^ Nat.clog 2 n ≤ 2 * (n + 1) := by
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  · simp
-  · exact (Nat.pow_clog_le_mul one_lt_two hn.ne').trans (by omega)
-
+/-- The arity is computed in unary from the unary parameter. -/
+@[fun_prop]
 theorem computableTidilyInPolyTime_tableArity (d : ℕ) :
     ComputableTidilyInPolyTime (tableArity d) encUnary encUnary := by
   unfold tableArity
   have := unary_clog_const 2
   fun_prop
 
+/-- The table size `2 ^ m` is computed in unary from the unary parameter. -/
 theorem computableTidilyInPolyTime_two_pow_tableArity (d : ℕ) :
     ComputableTidilyInPolyTime (fun n => 2 ^ tableArity d n) encUnary encUnary := by
   have := unary_pow_clog_const (input := encUnary) (size := fun n => n) id' (2 ^ d) 2
@@ -250,7 +255,7 @@ theorem computableTidilyInPolyTime_tableQueries (d : ℕ) :
       simp only [length_encPair, encUnary_apply, List.length_replicate, encBits_apply]
       omega
     set L := (encPair encUnary encBits (n, aux)).length
-    have hpow : 2 ^ Nat.clog 2 n ≤ 2 * (L + 1) := (two_pow_clog_le n).trans (by omega)
+    have hpow : 2 ^ Nat.clog 2 n ≤ 2 * (L + 1) := (Nat.two_pow_clog_two_le n).trans (by omega)
     have hclog : Nat.clog 2 n ≤ 2 * (L + 1) := Nat.lt_two_pow_self.le.trans hpow
     refine Nat.mul_le_mul ?_ ?_
     · rw [tableArity, mul_comm, pow_mul]
@@ -364,6 +369,10 @@ theorem eventually_tableArity (c : ℕ) :
 /-- A probability, as a real number, is at most one. -/
 private theorem toReal_apply_le_one {α : Type*} (q : PMF α) (a : α) : (q a).toReal ≤ 1 :=
   ENNReal.toReal_le_of_le_ofReal zero_le_one (by simpa using q.coe_le_one a)
+
+end KabanetsCai
+
+open KabanetsCai
 
 /-- **MCSP in `BPP` rules out pseudorandom functions.** If a bounded-error polynomial-time
 decider for MCSP exists, then every keyed family computable in polynomial time is distinguished

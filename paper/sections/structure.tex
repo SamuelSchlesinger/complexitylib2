@@ -86,6 +86,16 @@ The circuit hypothesis is nonuniform.\citep{KarpLipton1980}
 \end{result}
 
 \begin{result}
+\subsection{SAT in BPP collapses the hierarchy}
+If $\mathrm{SAT}\in\cc{BPP}$ (in particular if $\cc{NP}\subseteq\cc{BPP}$ for every encoding),
+then $\cc{PH}=\Sigma^p_2$ for every encoding: Adleman's theorem gives SAT polynomial-size
+circuits and the Karp--Lipton collapse applies.\citep{Adleman1978,KarpLipton1980}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/BPP/KarpLipton.lean}{50}{Cslib.Complexity.PH_eq_SigmaP_two_of_SAT_mem_BPP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/BPP/KarpLipton.lean}{56}{Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_BPP}
+\end{result}
+
+
+\begin{result}
 \subsection{Plain Kolmogorov complexity is uncomputable}
 Let $K(x)$ be the minimum bit-string description length of $x\in\mathbb N$
 under the library's universal partial-computable description method. Then

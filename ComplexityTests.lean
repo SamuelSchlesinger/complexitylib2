@@ -29,6 +29,7 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.ClassClosure
+import ComplexityTests.ClassCorollaries
 import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
@@ -69,6 +70,7 @@ import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteFieldUnitSum
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
+import ComplexityTests.FirstOrderAutomation
 import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
@@ -80,6 +82,7 @@ import ComplexityTests.FusionHomomorphism
 import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.GGM
+import ComplexityTests.GapGraphsGeography
 import ComplexityTests.GeneratorPadding
 import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor

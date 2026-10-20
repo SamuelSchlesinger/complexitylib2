@@ -17,7 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Combinatorics.Lautemann
 import Complexity.Foundations.Combinatorics.MajorityVote
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.OfFn
 
 /-!
 # The Sipser–Lautemann theorem

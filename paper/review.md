@@ -723,3 +723,59 @@ reviewer suggested. Non-blocking findings were returned to the author.
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 10: class collapses and counting containments (2026-10-19)
+
+Integrated `38bfe757` (`class-corollaries`), adding "SAT in BPP collapses the hierarchy"
+(`structure.tex`) and "Toda's theorem with a PP oracle", "Easy oracles and the Valiant--Vazirani
+collapse" and "FewP is in SPP" (`randomness.tex`), and pointing the bounded-ambiguity entry to the
+FewP containment.
+
+Independent correctness and API reviews of `f91c5eda`: the Lean was approved (P^PP is the standard
+class; the binary search, oracle lowness, PromiseP hypothesis and FewP gap function were checked);
+two blocking documentation findings: FewP ⊆ SPP was credited to the wrong papers and a docstring
+claimed an equality where an inclusion was proved. The delta review of `f91c5eda..38bfe757`
+approved both fixes (Köbler–Schöning–Toda–Torán 1992 verified against Crossref; the equality is now
+proved) and the non-blocking follow-ups.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 11: gap hardness, Generalized Geography, and cleanups (2026-10-19)
+
+Integrated the `gap-graphs-geography` branch through `a385efa7`, adding "Constant gaps for
+Independent Set, Clique and Vertex Cover" (`completeness.tex`) and "Generalized Geography is
+PSPACE-complete" (`space.tex`), and the reviewed cleanup ranges `bb828997..26cf1dc6` (ETH
+Hamiltonian) and `f2ede479..d1c9ea21` (learning). The two learning links whose declarations were
+renamed are repinned to `d1c9ea21`.
+
+Independent reviews of `f775b563`: correctness found the Lean correct but required citation fixes
+(Sipser 3rd ed. Theorem 8.14 for Geography; the vertex game is due to Lichtenstein–Sipser, the arc
+game to Schaefer); API approved. Delta review of `f775b563..a385efa7`: APPROVE. The two cleanup
+ranges were approved by the same delta review (statements unchanged; removed names unused).
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 12: IP = PSPACE and USTCON ∈ L (2026-10-19)
+
+Integrated `3fd63a13` (`ip-pspace` milestone 2 and fixes) and `dec8b239` (`reingold` milestone 2 and
+fixes), adding "Interactive proofs capture polynomial space" and "Undirected connectivity is in
+logarithmic space" (`space.tex`) and correcting the three sentences that said these results were not
+yet formalized.
+
+Independent reviews:
+- IP = PSPACE: correctness and API reviews of `b18f4389..53ea22c0` approved the mathematics (IP
+  definition unchanged, simulation covers every word prover, soundness constant, closedness, full
+  polynomial-time certificate) and required four mechanical fixes. The delta review of the fixes
+  approved the API and found two docstrings stating theorems without one hypothesis each; those
+  were corrected by the coordinator in the integration follow-up, with the exact wording the
+  reviewer gave, together with deprecated theorems for two removed primality lemmas.
+- USTCON ∈ L: correctness and API reviews of `cb631cc9..9d7510ce` approved (L unchanged; correctness
+  on encoded instances only, as for every problem in L; space bound O(log m) with a closed constant;
+  in-place evaluation equals the rotation map; parameters correct). The delta review of the alias and
+  docstring round approved; the coordinator replaced two deprecation hints that suggested a
+  replacement with a different meaning.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.

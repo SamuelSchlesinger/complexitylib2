@@ -20,14 +20,23 @@ in the complement of the graph on its vertices (`Graph.compl`), so complementing
 `IndependentSet` to `Clique` [Karp1972]. The verifier is `Cslib.Complexity.Graph.verifySubset` for
 adjacency, an instance of the subset-witness verifier `Cslib.Complexity.subsetVerifier`.
 
+The same problem as a class of finite structures, closed under isomorphism and without an
+encoding, with the target size given by a unary relation, is
+`Cslib.Logic.FO.sizedGraph.Clique`. There loops are ignored, edges need not be symmetric,
+and the reductions between independent set, clique and vertex cover are quantifier-free
+first-order interpretations.
+
 ## Main definitions
 
 * `Cslib.Complexity.Clique`, `Cslib.Complexity.Graph.compl`.
+* `Cslib.Complexity.Graph.cliqueNum`: the clique number.
 * `Cslib.Complexity.Clique.verifier`.
 
 ## Main results
 
 * `Cslib.Complexity.Graph.compl_mem_Clique_iff`: `(G.compl, m) ∈ Clique ↔ (G, m) ∈ IndependentSet`.
+* `Cslib.Complexity.Graph.le_cliqueNum_iff`, `Cslib.Complexity.Graph.cliqueNum_compl`: the clique
+  number is the largest target of `Clique`, and that of the complement is the independence number.
 * `Cslib.Complexity.Graph.computableTidilyInPolyTime_compl`: complementing a graph on its declared
   vertices is polynomial-time.
 * `Cslib.Complexity.Clique.mem_NP`: `Clique ∈ NP (encPair encGraph encNat)`.
@@ -154,5 +163,43 @@ theorem Clique_npHard : NPHard (encPair encGraph encNat) Clique :=
 /-- **`Clique` is NP-complete.** -/
 theorem Clique_npComplete : NPComplete (encPair encGraph encNat) Clique :=
   ⟨Clique.mem_NP, Clique_npHard⟩
+
+/-! ### The clique number -/
+
+namespace Graph
+
+/-- The **clique number** of a graph: the largest number of declared vertices that are pairwise
+adjacent. -/
+noncomputable def cliqueNum (G : Graph) : ℕ := sSup {k | (G, k) ∈ Clique}
+
+variable {G : Graph} {k k' : ℕ}
+
+/-- Fewer vertices of a clique form a clique. -/
+theorem mem_Clique_of_le (h : (G, k) ∈ Clique) (hk : k' ≤ k) : (G, k') ∈ Clique := by
+  obtain ⟨S, hSV, hS⟩ := h
+  have hc : S.card = k := hS.card_eq
+  obtain ⟨T, hTS, hT⟩ := Finset.exists_subset_card_eq (hc ▸ hk)
+  exact ⟨T, fun v hv => hSV v (hTS hv), ⟨hS.isClique.subset (Finset.coe_subset.2 hTS), hT⟩⟩
+
+/-- A clique has at most as many vertices as the distinct declared vertices. -/
+theorem le_card_of_mem_Clique (h : (G, k) ∈ Clique) : k ≤ G.1.toFinset.card := by
+  obtain ⟨S, hSV, hS⟩ := h
+  have hc : S.card = k := hS.card_eq
+  rw [← hc]
+  exact Finset.card_le_card fun v hv => List.mem_toFinset.2 (hSV v hv)
+
+/-- **The clique number is the largest target of `Clique`.** -/
+theorem le_cliqueNum_iff : k ≤ G.cliqueNum ↔ (G, k) ∈ Clique := by
+  have hbdd : BddAbove {k | (G, k) ∈ Clique} := ⟨_, fun _ => le_card_of_mem_Clique⟩
+  have h0 : (G, 0) ∈ Clique := ⟨∅, by simp, ⟨by simp, rfl⟩⟩
+  exact ⟨fun hk => mem_Clique_of_le (Nat.sSup_mem ⟨0, h0⟩ hbdd) hk,
+    fun hk => le_csSup hbdd hk⟩
+
+/-- **Cliques of the complement are independent sets**: the clique number of the complement on
+the declared vertices is the independence number. -/
+theorem cliqueNum_compl (G : Graph) : G.compl.cliqueNum = G.indepNum := by
+  simp only [cliqueNum, indepNum, compl_mem_Clique_iff]
+
+end Graph
 
 end Cslib.Complexity

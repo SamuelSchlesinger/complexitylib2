@@ -103,10 +103,24 @@ theorem rot_map (φ : Hom G G') (v : V) (i : D) :
 theorem neighbor_map (φ : Hom G G') (v : V) (i : D) : G'.neighbor (φ v) i = φ (G.neighbor v i) :=
   congrArg Prod.fst (φ.rot_map v i)
 
+/-- Homomorphisms with the same map of the vertices are equal. -/
+@[ext]
+theorem ext {φ ψ : Hom G G'} (h : ∀ v, φ v = ψ v) : φ = ψ :=
+  DFunLike.ext _ _ h
+
 /-- The identity homomorphism. -/
 protected def id (G : RotationMap V D) : Hom G G where
   toFun := id
   rot_map' _ _ := rfl
+
+/-- The identity homomorphism is the identity map. -/
+@[simp]
+theorem coe_id (G : RotationMap V D) : ⇑(Hom.id G) = id :=
+  rfl
+
+/-- The identity homomorphism fixes every vertex. -/
+theorem id_apply (G : RotationMap V D) (v : V) : Hom.id G v = v :=
+  rfl
 
 /-- The composition of homomorphisms. -/
 def comp (ψ : Hom G' G'') (φ : Hom G G') : Hom G G'' where
@@ -256,6 +270,16 @@ theorem Hom.reachable_apply_iff (φ : Hom G G') (hφ : Function.Injective φ) {u
   refine ⟨fun h ↦ ?_, φ.reachable_map⟩
   obtain ⟨v', huv', hv'⟩ := φ.exists_reachable_apply_eq h
   exact hφ hv' ▸ huv'
+
+/-- If every edge of `G'` joins vertices whose images under `π` are reachable from each other in
+`G`, so does every walk. -/
+theorem reachable_neighbor_pow_of_forall {D' : Type*} (G : RotationMap V D)
+    (G' : RotationMap W D') (π : W → V)
+    (hπ : ∀ x i, G.toSimpleGraph.Reachable (π x) (π (G'.neighbor x i))) :
+    ∀ (t : ℕ) (x : W) (k : Fin t → D'),
+      G.toSimpleGraph.Reachable (π x) (π ((G'.pow t).neighbor x k))
+  | 0, _, _ => .refl _
+  | t + 1, x, k => (hπ x (k 0)).trans (reachable_neighbor_pow_of_forall G G' π hπ t _ _)
 
 variable (G)
 

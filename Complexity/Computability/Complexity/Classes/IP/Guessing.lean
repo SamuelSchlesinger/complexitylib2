@@ -101,10 +101,6 @@ theorem acceptProb_guessingRound (message : Bool → ProbComp (List Bool)) (P : 
   rw [ENNReal.div_eq_inv_mul, mul_add]
   norm_num
 
-private theorem tsum_mul_le_one {β : Type} (μ : PMF β) {f : β → ENNReal} (hf : ∀ b, f b ≤ 1) :
-    ∑' b, μ b * f b ≤ 1 :=
-  (ENNReal.tsum_le_tsum fun b => mul_le_of_le_one_right' (hf b)).trans_eq μ.tsum_coe
-
 /-- **Soundness of a guessing round.** If the expectation of every `[0, 1]`-valued function under
 the messages for `true` exceeds that under the messages for `false` by at most `δ`, then every
 prover is accepted with probability at most `(1 + δ) / 2`. -/
@@ -127,7 +123,7 @@ theorem acceptProb_guessingRound_le {message : Bool → ProbComp (List Bool)} {�
         simp only [mul_add]
     _ ≤ 1 + δ := by
         gcongr
-        exact tsum_mul_le_one _ fun m => P.guessProb_add_le_one _ m
+        exact PMF.tsum_mul_le_of_forall_le _ fun m => P.guessProb_add_le_one _ m
 
 /-- **Soundness one half.** If the messages for the two secret bits have the same law, every
 prover is accepted with probability at most `1 / 2`. -/

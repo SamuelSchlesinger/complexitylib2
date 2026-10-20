@@ -58,7 +58,7 @@ noncomputable def iid (μ : PMF α) : (k : ℕ) → PMF (Fin k → α)
   | k + 1 => μ.bind fun a => (iid μ k).map (Fin.cons a)
 
 /-- A tuple of independent draws has the product of the masses of its coordinates. -/
-theorem iid_apply (μ : PMF α) : ∀ {k : ℕ} (v : Fin k → α), iid μ k v = ∏ i, μ (v i)
+@[simp] theorem iid_apply (μ : PMF α) : ∀ {k : ℕ} (v : Fin k → α), iid μ k v = ∏ i, μ (v i)
   | 0, v => by
     rw [iid, Fin.prod_univ_zero, Subsingleton.elim v Fin.elim0, PMF.pure_apply_self]
   | k + 1, v => by
