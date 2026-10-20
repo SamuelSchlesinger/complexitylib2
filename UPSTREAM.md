@@ -64,14 +64,14 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   accompanying the tromino undecidability paper,
   [`edemaine/lean-trominoes`](https://github.com/edemaine/lean-trominoes) @6d5b36c1 (Apache-2.0),
   which is not a CSLib branch. The adapted files retain the source's copyright notice
-  (lean-trominoes contributors) and credit Erik Demaine, the author of every commit to the source
-  files, in their `Authors:` lines; confirm this attribution with him, submit the files with him,
+  (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in their
+  `Authors:` lines; confirm the attribution with him and submit the files with him,
   and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
   programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
-  deviations from the source. The logarithmic-cost `Computability/RAM` (Cook–Reckhow) remains a
-  separate candidate.
+  deviations from the source. The unbounded-register `Computability/RAM`, inspired by
+  Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
   #871–#875 requested composition above configuration level; use `TransformsTapes`-style specs.
