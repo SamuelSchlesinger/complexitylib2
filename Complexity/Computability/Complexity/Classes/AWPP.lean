@@ -22,7 +22,8 @@ We use the constant-error, power-of-two characterization of AWPP from
 [Fenner][Fenner2003]: a GapP function divided by `2 ^ p(n)` lies in `[2/3, 1]` on
 members and `[0, 1/3]` on nonmembers. Integer inequalities avoid division and rounding.
 The counting functions are verifier-based; a nondeterministic counting-machine
-characterization, arbitrary error reduction and PP-lowness are not proved here.
+characterization and PP-lowness are not proved here. Uniform error reduction is proved in
+`AWPP/Amplification.lean`.
 
 ## Main definitions
 
