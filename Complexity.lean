@@ -1331,6 +1331,8 @@ public import Complexity.Logics.FirstOrder.Ordered.BitArithmetic
 public import Complexity.Logics.FirstOrder.Ordered.BitSum
 public import Complexity.Logics.FirstOrder.Ordered.BitSum.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Constants
+public import Complexity.Logics.FirstOrder.Ordered.FullTuple
+public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Composition
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
@@ -1343,6 +1345,7 @@ public import Complexity.Logics.FirstOrder.Ordered.Radix.Conversion
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Decode
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Multiplication
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
+public import Complexity.Logics.FirstOrder.Ordered.Tuple.Flatten
 public import Complexity.Logics.FirstOrder.Ordered.TupleBit
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor

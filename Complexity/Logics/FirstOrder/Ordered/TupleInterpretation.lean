@@ -21,8 +21,9 @@ define canonical zero, one and maximum as target constants through the existing 
 interpretation API. Their ranks are exactly `0`, `1` and `n ^ k - 1`.
 
 The interpreted universe here consists of all tuples. Successor and BIT lifting are supplied
-separately in `Ordered.TupleSuccessor` and `Ordered.TupleBit`; numeric-preserving composition
-remains open. These results do not infer numeric predicates for arbitrary restricted domains.
+separately in `Ordered.TupleSuccessor` and `Ordered.TupleBit`; canonical interpretations and their
+composition are in `Ordered.FullTuple` and `Ordered.FullTuple.Composition`. These results do not
+infer numeric predicates for arbitrary restricted domains.
 
 ## Main definitions
 
