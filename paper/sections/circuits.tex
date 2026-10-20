@@ -261,15 +261,18 @@ values computes a two-sided $K$-rectangle-free function $f$ on $n$ bits, then
 For standard real-weight threshold programs, write $S_j\subseteq[n]$ for the
 set of original inputs on which gate $j$ has a nonzero aggregated coefficient
 and $I(p)=\{j:S_j\ne\emptyset\}$. For any coordinate split $U\subseteq[n]$ and
-subsets $A\subseteq U$, $B\subseteq U^c$ of coordinates fixed to false, median
-cuts extract a rectangle $P\times Q$ on which the entire gate-evaluation vector
-is constant, with
+subsets $A\subseteq U$, $B\subseteq U^c$, there exists a rectangle $P\times Q$
+(constructed by fixing the coordinates in $A$ and $B$ to false in the internal
+cut invariant and applying median cuts to the remaining active gates) on which
+the entire gate-evaluation vector is constant, with
 \[
 2^{|U|-|A|}\le |P|\,2^{|\{j:\,S_j\cap U\not\subseteq A\}|},
 \qquad
-2^{|U^c|-|B|}\le |Q|\,2^{|\{j:\,S_j\cap U^c\not\subseteq B\}|}.
+2^{|U^c|-|B|}\le |Q|\,2^{|\{j:\,S_j\cap U^c\not\subseteq B\}|};
 \]
-Taking $A=B=\emptyset$ gives the cut lemma; when $f$ is two-sided
+the public theorem statement returns the constant gate-evaluation vector and
+these cardinality bounds without exposing the fixed-coordinate condition on $P$
+and $Q$. Taking $A=B=\emptyset$ gives the cut lemma; when $f$ is two-sided
 $K$-rectangle-free with $K\le 2^k$, every split $U$ satisfies
 $|U|<|\{j:S_j\cap U\ne\emptyset\}|+k$ or
 $|U^c|<|\{j:S_j\cap U^c\ne\emptyset\}|+k$, and a balanced split yields
@@ -277,10 +280,12 @@ $n\le 2(|I(p)|+k)$. When every gate has $|S_j|\le 2$, connected components of
 the input-support graph yield a non-crossing split for any $L\le n-|I(p)|$
 with $|U|=|\{j:\emptyset\ne S_j\subseteq U\}|+L$, implying $n<|I(p)|+2L$
 whenever $K\le 2^L$. More generally, if $F\subseteq[n]$ and pairwise disjoint
-blocks $\mathcal B$ cover $[n]\setminus F$ so that every gate satisfies
-$S_j\subseteq F$ or $S_j\setminus F\subseteq b$ for some $b\in\mathcal B$, and
-every block $b\in\mathcal B$ has excess $|b|-e_b\le M$ where
-$e_b=|\{j:S_j\not\subseteq F\wedge S_j\setminus F\subseteq b\}|$, then
+blocks $\mathcal B$ partition $[n]\setminus F$ (so every block $b\in\mathcal B$
+is disjoint from $F$, $b\subseteq[n]\setminus F$, and
+$[n]\setminus F\subseteq\bigcup_{b\in\mathcal B}b$) such that every gate
+satisfies $S_j\subseteq F$ or $S_j\setminus F\subseteq b$ for some
+$b\in\mathcal B$, and every block $b\in\mathcal B$ has excess $|b|-e_b\le M$
+where $e_b=|\{j:S_j\not\subseteq F\wedge S_j\setminus F\subseteq b\}|$, then
 $n<|F|+|I(p)|+M+2k$ whenever $K\le 2^k$. Single-output circuit corollaries hold
 whenever the output wire selects a gate. As above, the rectangle-freeness
 hypothesis on both fibers is required and real arithmetic is semantic rather
