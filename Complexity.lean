@@ -692,8 +692,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Counting
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Certificate
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Checker
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Deterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Execution
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Guess
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Program
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration

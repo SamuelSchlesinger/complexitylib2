@@ -27,6 +27,7 @@ has one outcome. An empty choice list interprets to no outcomes.
 ## Main results
 
 * `Turing.MultiTapeCTM.interpret_chooseOccurrence`: List interpretation recovers the exact list.
+* `Turing.MultiTapeCTM.chooseOccurrence_map`: mapping preserves the occurrence query program.
 * `Turing.MultiTapeCTM.interpret_runProgram_succ`: one actual transition unfolds by list bind.
 
 These are programs in the existing `PFunctor.FreeM` calculus, not a second branch semantics or
@@ -47,6 +48,21 @@ abbrev occurrenceSpec : OracleSpec ℕ := Fin
 /-- Select a list entry by its occurrence index, preserving equal entries at distinct positions. -/
 def chooseOccurrence {α : Type} (choices : List α) : OracleComp occurrenceSpec α :=
   (fun index => choices[index]) <$> OracleComp.query choices.length
+
+/-- Mapping changes each response value without adding or identifying occurrence queries. -/
+theorem chooseOccurrence_map {α β : Type} (f : α → β) (choices : List α) :
+    chooseOccurrence (f <$> choices) = f <$> chooseOccurrence choices := by
+  change PFunctor.FreeM.liftBind (P := ⟨ℕ, Fin⟩) (choices.map f).length
+      (fun index => pure ((choices.map f)[index])) =
+    PFunctor.FreeM.liftBind (P := ⟨ℕ, Fin⟩) choices.length
+      (fun index => pure (f choices[index]))
+  congr 1
+  · simp
+  · apply Function.hfunext
+    · simp
+    · intro left right h
+      have hval : left.val = right.val := Fin.val_eq_val_of_heq h
+      simp [hval]
 
 /-- Enumerating responses recovers the original list, including its order and multiplicities. -/
 theorem interpret_chooseOccurrence {α : Type} (choices : List α) :
