@@ -64,6 +64,7 @@ public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hamming
 public import Complexity.Computability.Circuit.Boolean.HardCore
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification
+public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.Schedule
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.Stages
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.WorstCase
 public import Complexity.Computability.Circuit.Boolean.Hastad
@@ -1122,6 +1123,7 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape
+public import Complexity.Foundations.FieldTheory.Finite.BinaryField
 public import Complexity.Foundations.FieldTheory.Finite.UnitSum
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
