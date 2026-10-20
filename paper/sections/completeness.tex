@@ -165,8 +165,8 @@ has written exactly $[\mathsf{true}]$ after $T$ steps. The construction is unifo
 each gate is computed from its number within work space linear in the binary
 lengths of $m$, $T$ and the number, and a read machine writes the gates in turn. It
 works directly on multi-tape configurations, with no conversion to single-tape or
-oblivious machines. Monotone circuit value, the NC consequences and the
-first-order-reduction formulation are not formalized here.
+oblivious machines. Monotone Circuit Value is addressed in the next entry. The NC
+consequences and first-order-reduction formulation remain outstanding.
 \citep{Ladner1975,AroraBarak09,Papadimitriou94}
 \declat{dcbc89d8316f3f53f4a77bdb188061d8618a0716}{Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean}{556}{Cslib.Complexity.CircuitValue.logSpaceComplete}
 \declat{dcbc89d8316f3f53f4a77bdb188061d8618a0716}{Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean}{551}{Cslib.Complexity.CircuitValue.logSpaceHard}
@@ -176,6 +176,29 @@ first-order-reduction formulation are not formalized here.
 \declat{dcbc89d8316f3f53f4a77bdb188061d8618a0716}{Complexity/Computability/Circuit/Boolean/Tableau/Correct.lean}{744}{Cslib.Circuits.Boolean.Tableau.eval_circuit}
 \declat{dcbc89d8316f3f53f4a77bdb188061d8618a0716}{Complexity/Computability/Circuit/Boolean/Tableau/Space.lean}{342}{Cslib.Circuits.Boolean.Tableau.gateCode_inSpace}
 \declat{dcbc89d8316f3f53f4a77bdb188061d8618a0716}{Complexity/Computability/Complexity/Problems/CircuitValue.lean}{106}{Cslib.Complexity.CircuitValue.mem_P}
+\end{result}
+
+\begin{result}
+\subsection{Monotone Circuit Value}
+Monotone Circuit Value is $\cc{P}$-complete under logarithmic-space many-one
+reductions. Instances are well-formed circuits over constants and binary AND/OR,
+with one output and an explicit input assignment, encoded by
+\lean{encMonotoneCircuitValue}. Every problem in $\cc{P}$, for every injective
+instance encoding, reduces to this problem. Consequently Monotone Circuit Value
+belongs to $\cc{L}$ exactly when $\cc{P}=\cc{L}$ for every instance encoding.
+
+The reduction writes the dual-rail translation of a polynomial-time decider's
+tableau. Each original gate becomes two monotone gates; the inputs are a true
+bit followed by each original bit and its negation. The resource proof uses a
+shared streaming writer. General Circuit Value also reduces to Monotone Circuit
+Value, through its decider's tableau. No planarity restriction is established.
+\citep{Goldschlager1977}
+\declat{a060a8434ffb243af65ccad54a30b3a663ce9a07}{Complexity/Computability/Complexity/Problems/MonotoneCircuitValue/Completeness.lean}{314}{Cslib.Complexity.MonotoneCircuitValue.logSpaceComplete}
+\declat{a060a8434ffb243af65ccad54a30b3a663ce9a07}{Complexity/Computability/Complexity/Problems/MonotoneCircuitValue/Completeness.lean}{263}{Cslib.Complexity.MonotoneCircuitValue.computableInLogSpace_dualTableauInstance}
+\declat{a060a8434ffb243af65ccad54a30b3a663ce9a07}{Complexity/Computability/Complexity/Problems/MonotoneCircuitValue/Completeness.lean}{318}{Cslib.Complexity.MonotoneCircuitValue.circuitValue_logSpaceReducible}
+\declat{a060a8434ffb243af65ccad54a30b3a663ce9a07}{Complexity/Computability/Complexity/Problems/MonotoneCircuitValue/Completeness.lean}{323}{Cslib.Complexity.MonotoneCircuitValue.mem_L_iff_forall_P_eq_L}
+\declat{a060a8434ffb243af65ccad54a30b3a663ce9a07}{Complexity/Computability/Circuit/Monotone/DualRail.lean}{335}{Cslib.Circuits.Monotone.eval_dualRail}
+\declat{a060a8434ffb243af65ccad54a30b3a663ce9a07}{Complexity/Computability/Circuit/Monotone/DualRail.lean}{324}{Cslib.Circuits.Monotone.size_dualRail}
 \end{result}
 
 \begin{result}

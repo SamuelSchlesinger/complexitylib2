@@ -197,6 +197,12 @@ of the handover. The work below remains available for subsequent, independently 
      when P equals L for every encoding. Work space excludes read-only input and write-only
      output, and correctness is required on encoded instances.
 
+   - [x] **Monotone Circuit Value logspace completeness.**
+     [Monotone Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/MonotoneCircuitValue/Completeness.lean)
+     under logarithmic-space many-one reductions, using a dual-rail tableau and a shared
+     streaming writer. General Circuit Value reduces to it. No planarity restriction or
+     first-order completeness theorem is established by this construction.
+
    - [ ] **Circuit Value completeness under first-order reductions.** Prove P-hardness under
      the standard ordered reduction via `REACHa → MCVP → CVP`, following
      [Immerman, Chapter 3, Theorem 3.26 and Exercise 3.28](https://people.cs.umass.edu/~immerman/book/ch3.pdf).

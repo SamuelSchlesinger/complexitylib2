@@ -894,3 +894,27 @@ machine-checked equivalence between prose and Lean. The index now contains 114 e
 
 The PDF built without undefined references or overflow warnings; both affected entries were
 rendered together and visually checked.
+
+## Coverage batch 18: Monotone Circuit Value P-completeness (2026-10-20)
+
+Integrated `a060a8434ffb243af65ccad54a30b3a663ce9a07` in merge `a6f23928`.
+The new entry states logarithmic-space many-one completeness for AND/OR circuits with
+constants, explicit input assignments and one output. It records the dual-rail gate count,
+the shared streaming writer, and the absence of a planarity restriction. The preceding
+Circuit Value entry now points to this result. The index contains 115 entries.
+
+Independent Codex correctness/API/paper review of `dcbc89d8..bd019669` approved the
+mathematics and paper, requesting two API/style fixes: make a generic implementation
+helper private and use `simp only` in a non-terminal simplification. The delta review of
+`bd019669..a060a843` approved all three scopes with no findings. It explicitly approved
+the mechanical repinning of all six declaration links; their lines were verified against
+the reviewed revision. The shared writer preserves existing Circuit Value endpoints.
+
+All six integration gates passed on `a6f2392875e85b32eec060c0bf6dac522347e4f0`.
+AI assistance: Claude for the earlier WIP, Codex for completion, fixes, independent reviews
+and index, as authorized by Samuel on 2026-10-20. Goldschlager's mathematical source credit
+is retained; its bibliographic DOI was verified. These are AI reviews, not human editorial
+approval or a machine-checked equivalence between prose and Lean.
+
+The PDF built without undefined references or overflow warnings; the changed page was
+rendered and visually checked.
