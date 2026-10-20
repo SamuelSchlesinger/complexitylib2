@@ -255,6 +255,7 @@ public import Complexity.Computability.Circuit.FullArithmetic
 public import Complexity.Computability.Circuit.Fusion.Basic
 public import Complexity.Computability.Circuit.Fusion.Boolean
 public import Complexity.Computability.Circuit.Fusion.Composition
+public import Complexity.Computability.Circuit.Fusion.Consistency
 public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Cyclic
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Closure
