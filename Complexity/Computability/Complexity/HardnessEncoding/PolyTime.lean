@@ -24,20 +24,18 @@ unary padding `p`, every loop of the program runs over at most `p ^ O(1)` elemen
 decider of `L`, computable in time `2 ^ O(n)`, is called on words of length at most `⌊log₂ p⌋`
 (`Cslib.HardnessEncoding.computableTidilyInPolyTime_paddedProgram`). With the padding
 `p = 2 ^ |y|` the program runs in time `2 ^ O(|y|)`, so the encoded language of a language in `E`
-is in `E` (`Cslib.HardnessEncoding.encodedLanguage_mem_E`).
+is in `E` (`Cslib.HardnessEncoding.encodedLanguage_mem_E`, by
+`Cslib.Complexity.setOf_mem_E_of_computableTidilyInPolyTime_pad`).
 
 ## Main definitions
 
 * `Cslib.HardnessEncoding.paddedProgram`: the program with the length parameter read from a
   padding.
-* `Cslib.Circuits.Boolean.encodedLanguage`: the language whose slices are the encoded slices.
 
 ## Main results
 
 * `Cslib.HardnessEncoding.computableTidilyInPolyTime_paddedProgram`: the padded program is
   polynomial-time.
-* `Cslib.Complexity.setOf_mem_E_of_computableTidilyInPolyTime_pad`: a problem decided by a
-  polynomial-time machine on the input padded to length `2 ^ n` is in `E`.
 * `Cslib.HardnessEncoding.encodedLanguage_mem_E`: **the encoding of a language in `E` is in `E`**.
 
 ## References
@@ -52,7 +50,7 @@ is in `E` (`Cslib.HardnessEncoding.encodedLanguage_mem_E`).
 
 namespace Cslib.HardnessEncoding
 
-open Turing.MultiTapeTM ComputableTidilyInPolyTime Cslib.AffineDisperser Cslib.Circuits.Boolean
+open Turing.MultiTapeTM ComputableTidilyInPolyTime Cslib.AffineDisperser
 
 /-! ### Field arithmetic -/
 
@@ -150,14 +148,14 @@ theorem computableTidilyInPolyTime_lagrangeVal' {α : Type} {input : α ↪ List
 
 /-- The input of a term: the table, the width, the block length and the number of blocks; the
 nodes and the coordinates of the point; and the accepted input. -/
-abbrev encTermIn : ((((List (List (List Bool)) × ℕ) × ℕ) × ℕ) ×
+private abbrev encTermIn : ((((List (List (List Bool)) × ℕ) × ℕ) × ℕ) ×
     ((List (List Bool) × List (List Bool)) × List Bool)) ↪ List Bool :=
   encPair (encPair (encPair (encPair encTable encUnary) encUnary) encUnary)
     (encPair (encPair (encList encBits) (encList encBits)) encBits)
 
 /-- **A term of the extension is polynomial-time**: a fold over the `M` blocks whose states are
 field elements. -/
-theorem computableTidilyInPolyTime_termVal : ComputableTidilyInPolyTime
+private theorem computableTidilyInPolyTime_termVal : ComputableTidilyInPolyTime
     (fun p : (((List (List (List Bool)) × ℕ) × ℕ) × ℕ) ×
         ((List (List Bool) × List (List Bool)) × List Bool) =>
       termVal p.1.1.1.1 p.1.1.1.2 p.1.1.2 p.1.2 p.2.1.1 p.2.1.2 p.2.2) encTermIn encBits := by
@@ -170,15 +168,15 @@ theorem computableTidilyInPolyTime_termVal : ComputableTidilyInPolyTime
       (fun q : ((((((List (List (List Bool)) × ℕ) × ℕ) × ℕ) ×
           ((List (List Bool) × List (List Bool)) × List Bool)) × List Bool) × ℕ) =>
         fieldMul q.1.1.1.1.1.1 q.1.2 (lagrangeVal q.1.1.1.1.1.1 q.1.1.1.1.1.2 q.1.1.2.1.1
-          (blockOf q.1.1.1.1.2 q.1.1.2.2 q.2) (q.1.1.2.1.2.getD q.2 [])))
+          (BitString.listBlock q.1.1.1.1.2 q.1.1.2.2 q.2) (q.1.1.2.1.2.getD q.2 [])))
       (encPair (encPair encTermIn encBits) encUnary) encBits := by
-    unfold blockOf
+    unfold BitString.listBlock
     fun_prop
   have h := foldlWithInput_of_bounded_growth (encIn := encTermIn) (encA := encUnary)
     (encL := encList encUnary) (encB := encBits)
     (list := fun p => List.range p.1.2) (init := fun _ => [true])
     (step := fun p acc i => fieldMul p.1.1.1.1 acc (lagrangeVal p.1.1.1.1 p.1.1.1.2 p.2.1.1
-      (blockOf p.1.1.2 p.2.2 i) (p.2.1.2.getD i [])))
+      (BitString.listBlock p.1.1.2 p.2.2 i) (p.2.1.2.getD i [])))
     (by fun_prop) ⟨by fun_prop, hstep, inferInstance, inferInstance⟩
     (growth := fun p => p.1.1.1.1.length) ⟨hlen.polyBounded, fun p state value _ => by
       simp [length_fieldMul]⟩
@@ -218,15 +216,6 @@ theorem computableTidilyInPolyTime_ldeVal' {α : Type} {input : α ↪ List Bool
   unfold ldeVal
   fun_prop
 
-/-- The parity of selected bits, as a composition rule. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_dotBits' {α : Type} {input : α ↪ List Bool}
-    {a r : α → List Bool} (ha : ComputableTidilyInPolyTime a input encBits)
-    (hr : ComputableTidilyInPolyTime r input encBits) :
-    ComputableTidilyInPolyTime (fun x => dotBits (a x) (r x)) input encBool := by
-  unfold dotBits
-  fun_prop
-
 /-! ### The padded program -/
 
 /-- The length parameter read from a unary padding `p`: `min |y| ⌊log₂ p⌋`. -/
@@ -238,7 +227,7 @@ def paddedProgram (M : ℕ) (gL : List Bool → Bool) (x : List Bool × ℕ) : B
   encodedProgram M gL x.1 (padLength x)
 
 /-- The padding bounds `2 ^ ℓ` for the length parameter `ℓ`. -/
-theorem two_pow_padLength_le (x : List Bool × ℕ) : 2 ^ padLength x ≤ x.2 + 1 := by
+private theorem two_pow_padLength_le (x : List Bool × ℕ) : 2 ^ padLength x ≤ x.2 + 1 := by
   rcases Nat.eq_zero_or_pos x.2 with h | h
   · simp [padLength, h]
   · calc 2 ^ padLength x ≤ 2 ^ Nat.log 2 x.2 :=
@@ -247,7 +236,7 @@ theorem two_pow_padLength_le (x : List Bool × ℕ) : 2 ^ padLength x ≤ x.2 + 
       _ ≤ x.2 + 1 := Nat.le_succ _
 
 /-- Exponentials of multiples of the length parameter are polynomial in the padded input. -/
-theorem polyBounded_two_pow_mul_padLength (c : ℕ) :
+private theorem polyBounded_two_pow_mul_padLength (c : ℕ) :
     PolyBounded (fun x : List Bool × ℕ => (encPair encBits encUnary x).length)
       fun x => 2 ^ (c * padLength x) := by
   refine PolyBounded.of_forall_le 1 c fun x => ?_
@@ -265,9 +254,9 @@ theorem computableTidilyInPolyTime_padLength :
   have := unary_log_two
   fun_prop
 
-/-- **The padded program is polynomial-time**, for a decider of `L` computable in time
-`2 ^ O(n)`: every loop runs over at most `p ^ O(1)` elements for the padding `p`, the modulus is
-found among `2 ^ (w + 1) ≤ 2 p + 2` codes, and the decider is called on words of length at most
+/-- **The padded program is polynomial-time**, for any function `gL` on bit words computable in
+time `2 ^ O(n)`: every loop runs over at most `p ^ O(1)` elements for the padding `p`, the modulus
+is found among `2 ^ (w + 1) ≤ 2 p + 2` codes, and `gL` is called on words of length at most
 `⌊log₂ p⌋`. -/
 theorem computableTidilyInPolyTime_paddedProgram (M : ℕ) {gL : List Bool → Bool} {k : ℕ}
     (hgL : ComputableTidilyInO gL encBits encBool (fun y => 2 ^ (k * y.length))
@@ -337,77 +326,9 @@ theorem computableTidilyInPolyTime_paddedProgram (M : ℕ) {gL : List Bool → B
 
 end Cslib.HardnessEncoding
 
-namespace Cslib.Complexity
-
-open Turing.MultiTapeTM
-
-/-- **Padding to exponential length.** If `Ψ` is polynomial-time on pairs of a bit word and a
-unary number, then the words `y` with `Ψ (y, 2 ^ |y|)` form a problem in `E`: writing the padding
-takes time `O(4 ^ |y|)`, and `Ψ` runs in time polynomial in `2 ^ |y|`. -/
-theorem setOf_mem_E_of_computableTidilyInPolyTime_pad {Ψ : List Bool × ℕ → Bool}
-    (hΨ : ComputableTidilyInPolyTime Ψ (encPair encBits encUnary) encBool) :
-    {y : List Bool | Ψ (y, 2 ^ y.length) = true} ∈ E encBits := by
-  obtain ⟨t, s, ht, hs, h⟩ := hΨ
-  obtain ⟨c, d, hcd⟩ := (ht.add hs).exists_le
-  have hΨO : ComputableTidilyInO Ψ (encPair encBits encUnary) encBool (fun x => t x + s x)
-      fun x => t x + s x :=
-    .of_bounds h 1 (fun _ => by omega) (fun _ => by omega)
-      fun x => (h.length_le x).trans (by omega)
-  -- the padding `y ↦ (y, 2 ^ |y|)`
-  have hgO : ComputableTidilyInO (fun y : List Bool => (y, 2 ^ y.length)) encBits
-      (encPair encBits encUnary) (fun y => 3 * 4 ^ y.length) fun y => 3 * 4 ^ y.length := by
-    have h₁ := (ComputableTidilyInO.of_linear
-      (.of_eq (f := fun y : List Bool => y) (encMid := encBits) fun _ => rfl)).prod
-      (ComputableTidilyInO.unary_two_pow.comp ComputableTidilyInO.lengthUnary)
-    refine h₁.mono_le (fun y => ?_) fun y => ?_
-    · have h2 : y.length + 1 ≤ 2 ^ y.length := Nat.lt_two_pow_self
-      have h4 : 4 ^ y.length = 2 ^ y.length * 2 ^ y.length := by
-        rw [← mul_pow]
-        norm_num
-      simp only [encBits_apply]
-      nlinarith
-    · have h2 : y.length + 1 ≤ 2 ^ y.length := Nat.lt_two_pow_self
-      have h4 : 4 ^ y.length = 2 ^ y.length * 2 ^ y.length := by
-        rw [← mul_pow]
-        norm_num
-      simp only [encBits_apply]
-      nlinarith
-  have hcomp := hΨO.comp hgO
-  refine mem_E_iff.2 ⟨d + 2, DTIME_mono_of_le_mul_add (C := c * 4 ^ d + 3)
-    (t₁ := fun n => 3 * 4 ^ n + c * (2 ^ (n + 2)) ^ d) (fun n => ?_)
-    (setOf_mem_DTIME_of_computableTidilyInO hcomp fun y => ?_)⟩
-  · -- the time bound is `2 ^ O(n)`
-    have h4 : 4 ^ n ≤ 2 ^ ((d + 2) * n) := by
-      rw [show (4 : ℕ) = 2 ^ 2 by norm_num, ← pow_mul]
-      exact Nat.pow_le_pow_right (by norm_num) (by nlinarith)
-    have h2 : (2 ^ (n + 2)) ^ d ≤ 4 ^ d * 2 ^ ((d + 2) * n) := by
-      calc (2 ^ (n + 2)) ^ d = 4 ^ d * 2 ^ (d * n) := by
-            rw [← pow_mul, show (n + 2) * d = 2 * d + d * n by ring, pow_add, pow_mul]
-            norm_num
-        _ ≤ 4 ^ d * 2 ^ ((d + 2) * n) :=
-            Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) (by nlinarith))
-    calc 3 * 4 ^ n + c * (2 ^ (n + 2)) ^ d ≤ 3 * 2 ^ ((d + 2) * n) +
-          c * (4 ^ d * 2 ^ ((d + 2) * n)) := by gcongr
-      _ = (c * 4 ^ d + 3) * 2 ^ ((d + 2) * n) := by ring
-      _ ≤ _ := Nat.le_add_right _ _
-  · -- the runtime of the composition
-    simp only [encBits_apply]
-    have hlen : (encPair encBits encUnary (y, 2 ^ y.length)).length + 1 ≤ 2 ^ (y.length + 2) := by
-      simp only [length_encPair, encBits_apply, encUnary_apply, List.length_replicate]
-      rw [pow_add]
-      have : y.length + 1 ≤ 2 ^ y.length := Nat.lt_two_pow_self
-      omega
-    have h1 := hcd (y, 2 ^ y.length)
-    have h2 := Nat.mul_le_mul_left c (Nat.pow_le_pow_left hlen d)
-    change 3 * 4 ^ y.length + (t (y, 2 ^ y.length) + s (y, 2 ^ y.length)) ≤
-      3 * 4 ^ y.length + c * (2 ^ (y.length + 2)) ^ d
-    omega
-
-end Cslib.Complexity
-
 namespace Cslib.HardnessEncoding
 
-open Turing.MultiTapeTM Cslib.Complexity Cslib.Circuits.Boolean
+open Turing.MultiTapeTM Cslib.Complexity
 
 /-- **The encoding of a language in `E` is in `E`**: the encoded language of `L`, whose slice at
 length `N` encodes the slice of `L` at length `M ⌊N / (4 (M + 1))⌋` over the explicit binary field,

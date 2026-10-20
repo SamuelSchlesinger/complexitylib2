@@ -20,7 +20,7 @@ theorems of the development. -/
 
 namespace ComplexityTests.WorstCaseHardness
 
-open Cslib Cslib.Circuits Cslib.Circuits.Boolean Cslib.Code Finset Filter
+open Cslib Cslib.Circuits Cslib.Circuits.Boolean Cslib.Code Cslib.HardnessEncoding Finset Filter
 
 /-- Fields of `2 ^ 35` elements exist. -/
 example : ∃ (F : Type) (_ : Field F) (_ : Fintype F), Fintype.card F = 2 ^ 35 := by
@@ -63,6 +63,8 @@ example {F : Type*} [Field F] [Fintype F] (hF : Fintype.card F = 2 ^ 35)
   · rw [hF]
     norm_num
 
+-- The hypotheses mention `2 ^ (256 * 35 + 35)` and `2 ^ 22`; `norm_num` evaluates these powers,
+-- whose exponents exceed the default threshold of `256`.
 set_option exponentiation.threshold 10000 in
 /-- **A larger instance.** The parameter hypotheses also hold for a function on `256` bits read as
 `m = 256` blocks of one bit, so that the Reed–Muller degree is `d = 256`, over a field of `2 ^ 35`
@@ -95,7 +97,7 @@ example {F : Type*} [Field F] [Fintype F] (hF : Fintype.card F = 2 ^ 35)
 /-! ### Milestone 2: the explicit field, membership in `E` and the hardness transfer -/
 
 /-- The explicit binary field of degree `4` has `16` elements. -/
-example : Fintype.card (BinaryField 4) = 16 := BinaryField.card_eq (by norm_num)
+example : Fintype.card (BinaryField 4) = 16 := BinaryField.card (by norm_num)
 
 /-- **Membership in `E` applies**: the encoding of a problem in `P` (the explicit affine
 disperser) is in `E`. -/
@@ -268,11 +270,11 @@ info: 'Cslib.HardnessEncoding.computableTidilyInPolyTime_paddedProgram' depends 
 #print axioms Cslib.HardnessEncoding.computableTidilyInPolyTime_paddedProgram
 
 /--
-info: 'Cslib.Circuits.Boolean.eventually_isAverageCaseHard_encodedSlice' depends on axioms:
+info: 'Cslib.HardnessEncoding.eventually_isAverageCaseHard_encodedSlice' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.eventually_isAverageCaseHard_encodedSlice
+#print axioms Cslib.HardnessEncoding.eventually_isAverageCaseHard_encodedSlice
 
 /--
 info: 'Cslib.HardnessEncoding.isMulTable_fieldTable' depends on axioms:
@@ -280,5 +282,26 @@ info: 'Cslib.HardnessEncoding.isMulTable_fieldTable' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.HardnessEncoding.isMulTable_fieldTable
+
+/--
+info: 'Cslib.Complexity.BPP_subset_P_of_eventually_two_pow_le_complexity' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.BPP_subset_P_of_eventually_two_pow_le_complexity
+
+/--
+info: 'Cslib.Complexity.setOf_mem_E_of_computableTidilyInPolyTime_pad' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.setOf_mem_E_of_computableTidilyInPolyTime_pad
+
+/--
+info: 'Cslib.BinaryField.card' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BinaryField.card
 
 end ComplexityTests.WorstCaseHardness

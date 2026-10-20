@@ -23,8 +23,8 @@ single out `p` among the polynomials that agree with `g` on the line.
 
 The decoder `Cslib.Code.lineListDecode g d D z a x` parametrizes the line by
 `t ↦ x + t • v`, where `v` is `z - x` scaled so that its first nonzero entry is `1`
-(`Cslib.Code.firstNonzero`); then `z = x + c • v` for `c` the first nonzero entry of `z - x`.
-It runs Sudan decoding with the hint `a` at `c` on the restriction of `g` to the line
+(`Cslib.LinearAlgebra.firstNonzero`); then `z = x + c • v` for `c` the first nonzero entry of
+`z - x`. It runs Sudan decoding with the hint `a` at `c` on the restriction of `g` to the line
 (`Cslib.Code.hintDecode`). The direction `v` and the received word depend only on `x` and the line,
 not on the position of `z` on it, so the hint position `c` is uniformly distributed over `F ∖ {0}`
 given the line.
@@ -42,7 +42,6 @@ advice `p(z)`, correct at all but
 
 ## Main definitions
 
-* `Cslib.Code.firstNonzero`: the first nonzero entry of a vector.
 * `Cslib.Code.lineAgree`: the number of points of a line in a set.
 * `Cslib.Code.lineListDecode`: the local list decoder with advice.
 
@@ -66,42 +65,6 @@ namespace Cslib.Code
 open Finset Polynomial Cslib.LinearAlgebra
 
 variable {F : Type*} [Field F] [Fintype F] [DecidableEq F] {m : ℕ}
-
-/-! ### Normalized directions -/
-
-/-- The first nonzero entry of a vector, or zero for the zero vector. -/
-noncomputable def firstNonzero (u : Fin m → F) : F := ∑ i, firstFlags u i * u i
-
-omit [Fintype F] in
-/-- The first nonzero entry vanishes only for the zero vector. -/
-theorem firstNonzero_eq_zero_iff {u : Fin m → F} : firstNonzero u = 0 ↔ u = 0 := by
-  rcases sum_firstFlags_smul_eq u u with ⟨hu, hsum⟩ | ⟨j, hj, -, hsum⟩
-  · simp only [smul_eq_mul] at hsum
-    exact ⟨fun _ => hu, fun _ => hsum⟩
-  · simp only [smul_eq_mul] at hsum
-    rw [firstNonzero, hsum]
-    exact ⟨fun h => absurd h hj, fun h => absurd (congrFun h j) hj⟩
-
-omit [Fintype F] in
-/-- Scaling by a nonzero constant does not move the first nonzero entry. -/
-private theorem firstFlags_smul {c : F} (hc : c ≠ 0) (u : Fin m → F) :
-    firstFlags (c • u) = firstFlags u := by
-  funext i
-  simp [firstFlags, hc]
-
-omit [Fintype F] in
-/-- Scaling a vector scales its first nonzero entry. -/
-theorem firstNonzero_smul (c : F) (u : Fin m → F) : firstNonzero (c • u) = c * firstNonzero u := by
-  rcases eq_or_ne c 0 with rfl | hc
-  · simp [firstNonzero, firstFlags]
-  · simp only [firstNonzero, firstFlags_smul hc, Pi.smul_apply, smul_eq_mul, mul_sum]
-    exact sum_congr rfl fun i _ => by ring
-
-omit [Fintype F] in
-/-- A nonzero vector `u` is `firstNonzero u` times its normalization `(firstNonzero u)⁻¹ • u`. -/
-theorem firstNonzero_smul_inv_smul {u : Fin m → F} (hu : u ≠ 0) :
-    firstNonzero u • (firstNonzero u)⁻¹ • u = u := by
-  rw [smul_smul, mul_inv_cancel₀ (firstNonzero_eq_zero_iff.not.2 hu), one_smul]
 
 /-! ### Random lines sample well -/
 

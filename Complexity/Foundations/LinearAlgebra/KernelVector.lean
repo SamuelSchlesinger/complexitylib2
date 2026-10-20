@@ -38,6 +38,7 @@ elimination organized for straight-line evaluation, as needed to count its gates
 ## Main definitions
 
 * `Cslib.LinearAlgebra.firstFlags`: the indicator of the first nonzero entry.
+* `Cslib.LinearAlgebra.firstNonzero`: the first nonzero entry of a vector, as a value.
 * `Cslib.LinearAlgebra.kernelStep`: process one row.
 * `Cslib.LinearAlgebra.kernelBasis`: process all rows, starting from the unit vectors.
 * `Cslib.LinearAlgebra.kernelVec`: the first nonzero vector of the final family.
@@ -110,6 +111,38 @@ theorem sum_firstFlags_smul_eq {M : Type*} [AddCommMonoid M] [Module F M] (b : F
     rw [hflags, Finset.sum_eq_single j (fun i _ hij => by rw [Pi.single_eq_of_ne hij, zero_smul])
       (fun h => absurd (mem_univ j) h), Pi.single_eq_same, one_smul]
 
+/-! ### The first nonzero entry as a value -/
+
+/-- The first nonzero entry of a vector, or zero for the zero vector. -/
+def firstNonzero (u : Fin n → F) : F := ∑ i, firstFlags u i * u i
+
+/-- The first nonzero entry vanishes only for the zero vector. -/
+theorem firstNonzero_eq_zero_iff {u : Fin n → F} : firstNonzero u = 0 ↔ u = 0 := by
+  rcases sum_firstFlags_smul_eq u u with ⟨hu, hsum⟩ | ⟨j, hj, -, hsum⟩
+  · simp only [smul_eq_mul] at hsum
+    exact ⟨fun _ => hu, fun _ => hsum⟩
+  · simp only [smul_eq_mul] at hsum
+    rw [firstNonzero, hsum]
+    exact ⟨fun h => absurd h hj, fun h => absurd (congrFun h j) hj⟩
+
+/-- Scaling by a nonzero constant does not move the first nonzero entry. -/
+private theorem firstFlags_smul {c : F} (hc : c ≠ 0) (u : Fin n → F) :
+    firstFlags (c • u) = firstFlags u := by
+  funext i
+  simp [firstFlags, hc]
+
+/-- Scaling a vector scales its first nonzero entry. -/
+theorem firstNonzero_smul (c : F) (u : Fin n → F) : firstNonzero (c • u) = c * firstNonzero u := by
+  rcases eq_or_ne c 0 with rfl | hc
+  · simp [firstNonzero, firstFlags]
+  · simp only [firstNonzero, firstFlags_smul hc, Pi.smul_apply, smul_eq_mul, mul_sum]
+    exact sum_congr rfl fun i _ => mul_left_comm _ _ _
+
+/-- A nonzero vector `u` is `firstNonzero u` times its normalization `(firstNonzero u)⁻¹ • u`. -/
+theorem firstNonzero_smul_inv_smul {u : Fin n → F} (hu : u ≠ 0) :
+    firstNonzero u • (firstNonzero u)⁻¹ • u = u := by
+  rw [smul_smul, mul_inv_cancel₀ (firstNonzero_eq_zero_iff.not.2 hu), one_smul]
+
 /-! ### Elimination -/
 
 /-- The values `a ⬝ N i` of the row `a` on the vectors of the family. -/
@@ -126,17 +159,17 @@ def kernelStep (a : Fin n → F) (N : Fin n → Fin n → F) (i : Fin n) : Fin n
   N i - (rowValues a N i / (a ⬝ᵥ pivotVec a N)) • pivotVec a N
 
 /-- The family after processing the first `k` rows of `A`, starting from the unit vectors. -/
-def kernelBasisUpTo (A : Fin r → Fin n → F) : ℕ → Fin n → Fin n → F
+def kernelBasisUpTo (A : Matrix (Fin r) (Fin n) F) : ℕ → Fin n → Fin n → F
   | 0 => fun i => Pi.single i 1
   | k + 1 =>
     if h : k < r then kernelStep (A ⟨k, h⟩) (kernelBasisUpTo A k) else kernelBasisUpTo A k
 
 /-- The family after processing all rows of `A`; its span is the kernel of `A`. -/
-def kernelBasis (A : Fin r → Fin n → F) : Fin n → Fin n → F := kernelBasisUpTo A r
+def kernelBasis (A : Matrix (Fin r) (Fin n) F) : Fin n → Fin n → F := kernelBasisUpTo A r
 
 /-- **A kernel vector.** The first nonzero vector of `kernelBasis A`, or zero if all of them are
 zero. -/
-def kernelVec (A : Fin r → Fin n → F) : Fin n → F :=
+def kernelVec (A : Matrix (Fin r) (Fin n) F) : Fin n → F :=
   ∑ i, firstFlags (fun i => if kernelBasis A i = 0 then (0 : F) else 1) i • kernelBasis A i
 
 /-! ### Correctness -/
@@ -193,7 +226,7 @@ theorem SpansKernel.kernelStep {R : Set (Fin n → F)} {N : Fin n → Fin n → 
     rw [this, zero_smul, sub_zero]
 
 /-- After processing the first `k` rows, the family spans their common kernel. -/
-theorem spansKernel_kernelBasisUpTo (A : Fin r → Fin n → F) (k : ℕ) :
+theorem spansKernel_kernelBasisUpTo (A : Matrix (Fin r) (Fin n) F) (k : ℕ) :
     SpansKernel {a | ∃ l : Fin r, (l : ℕ) < k ∧ a = A l} (kernelBasisUpTo A k) := by
   induction k with
   | zero =>
@@ -226,7 +259,7 @@ theorem spansKernel_kernelBasisUpTo (A : Fin r → Fin n → F) (k : ℕ) :
         exact ⟨l, by omega, rfl⟩
 
 /-- The final family spans the kernel of `A`. -/
-theorem spansKernel_kernelBasis (A : Fin r → Fin n → F) :
+theorem spansKernel_kernelBasis (A : Matrix (Fin r) (Fin n) F) :
     SpansKernel (Set.range A) (kernelBasis A) := by
   have hset : {a | ∃ l : Fin r, (l : ℕ) < r ∧ a = A l} = Set.range A :=
     Set.ext fun a => ⟨fun ⟨l, _, hl⟩ => ⟨l, hl.symm⟩, fun ⟨l, hl⟩ => ⟨l, l.2, hl.symm⟩⟩

@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.Schedule
 public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomial
 public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
+public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Enumeration
 import Mathlib.Algebra.CharP.Two
 import Mathlib.FieldTheory.Finite.Basic
@@ -17,7 +18,7 @@ import Mathlib.FieldTheory.Finite.Basic
 /-!
 # The worst-case-to-average-case encoding as a program on bit lists
 
-The encoded slices `Cslib.Circuits.Boolean.encodedSlice L M` of a language `L` are computed by a
+The encoded slices `Cslib.HardnessEncoding.encodedSlice L M` of a language `L` are computed by a
 program on bit lists (`Cslib.HardnessEncoding.encodedProgram`) that makes `2 ^ (M b)` queries to a
 decider of `L` and otherwise only does arithmetic in the explicit binary field `Cslib.BinaryField`
 of degree `w = 4 b`, in coordinates:
@@ -33,7 +34,8 @@ of degree `w = 4 b`, in coordinates:
 * the low-degree extension of the truth table at a point is the sum, over the inputs `z` accepted
   by the decider, of the products over the blocks of `z` of the Lagrange basis polynomials
   (`Cslib.HardnessEncoding.ldeVal`), and the output is the parity of the bits of that value
-  selected by the last `w` input bits (`Cslib.HardnessEncoding.dotBits`).
+  selected by the last `w` input bits (`Cslib.AffineDisperser.traceBit`, the parity of the
+  coordinates selected by a bit list).
 
 On every input `y`, with the length parameter `|y|`, the program computes the encoded slice of `L`
 at length `|y|` (`Cslib.HardnessEncoding.encodedProgram_eq`).
@@ -62,7 +64,7 @@ at length `|y|` (`Cslib.HardnessEncoding.encodedProgram_eq`).
 
 namespace Cslib.HardnessEncoding
 
-open Finset Polynomial Cslib.AffineDisperser Cslib.Circuits.Boolean
+open Finset Polynomial Cslib.AffineDisperser Cslib.Circuits Cslib.Circuits.Boolean
 open Cslib.BitString (listXor)
 
 /-! ### The program -/
@@ -94,15 +96,13 @@ def lagrangeVal (tab : List (List (List Bool))) (w : ℕ) (E : List (List Bool))
     (a t : List Bool) : List Bool :=
   fieldMul tab (lagrangeNum tab w E a t) (fieldInv tab w (lagrangeNum tab w E a a))
 
-/-- Block `i` of `b` bits of a word. -/
-def blockOf (b : ℕ) (z : List Bool) (i : ℕ) : List Bool := (z.drop (i * b)).take b
-
 /-- The product over the blocks `i < M` of `z` of the Lagrange basis polynomial of block `i` at
 the point `xs i`. -/
 def termVal (tab : List (List (List Bool))) (w b M : ℕ) (E xs : List (List Bool))
     (z : List Bool) : List Bool :=
   (List.range M).foldl
-    (fun acc i => fieldMul tab acc (lagrangeVal tab w E (blockOf b z i) (xs.getD i []))) [true]
+    (fun acc i =>
+      fieldMul tab acc (lagrangeVal tab w E (BitString.listBlock b z i) (xs.getD i []))) [true]
 
 /-- **The low-degree extension at a point, in coordinates**: the sum of the terms of the inputs
 `pts` accepted by the truth table. -/
@@ -110,20 +110,16 @@ def ldeVal (tab : List (List (List Bool))) (w b M : ℕ) (E pts xs : List (List 
     List Bool :=
   listXor w (pts.map (termVal tab w b M E xs))
 
-/-- The parity of the bits of `a` selected by `r`. -/
-def dotBits (a r : List Bool) : Bool := (a.zipWith and r).foldl xor false
-
 /-- **The encoding program** with block length `b`: on the input `y`, the parity of the bits,
 selected by the last `w = 4 b` bits of `y`, of the low-degree extension over the binary field of
 degree `w` of the truth table of `gL` on `M b` bits, at the point whose coordinates are the first
 `M` blocks of `w` bits of `y`. -/
 def encodedProgramAt (M : ℕ) (gL : List Bool → Bool) (y : List Bool) (b : ℕ) : Bool :=
   if b = 0 then false else
-    dotBits
+    traceBit ((y.drop (M * (4 * b))).take (4 * b))
       (ldeVal (fieldTable (4 * b)) (4 * b) b M (BitString.enumList b)
         ((BitString.enumList (M * b)).filter fun z => gL (z.take (M * b)))
         ((List.range M).map fun i => (y.drop (i * (4 * b))).take (4 * b)))
-      ((y.drop (M * (4 * b))).take (4 * b))
 
 /-- **The encoding program** with length parameter `ℓ`: block length `blockLength M ℓ`. -/
 def encodedProgram (M : ℕ) (gL : List Bool → Bool) (y : List Bool) (ℓ : ℕ) : Bool :=
@@ -132,12 +128,12 @@ def encodedProgram (M : ℕ) (gL : List Bool → Bool) (y : List Bool) (ℓ : �
 /-! ### The explicit binary field in coordinates -/
 
 /-- The coefficient list of the modulus is the coefficient list of `leastIrreducible w`. -/
-theorem polyOfBits_modulusBits {w : ℕ} (hw : w ≠ 0) :
+private theorem polyOfBits_modulusBits {w : ℕ} (hw : w ≠ 0) :
     polyOfBits (modulusBits w) = leastIrreducible w := by
   rw [modulusBits, polyOfBits_bits, polyOfCode_leastIrreducibleCode hw le_rfl]
 
 /-- The coefficient list of the modulus has length `w + 1` and ends with a one. -/
-theorem exists_modulusBits_eq {w : ℕ} (hw : w ≠ 0) :
+private theorem exists_modulusBits_eq {w : ℕ} (hw : w ≠ 0) :
     ∃ l : List Bool, modulusBits w = l ++ [true] ∧ l.length = w := by
   have hne : leastIrreducibleCode (2 ^ (w + 1)) w ≠ 0 := by
     intro h
@@ -207,7 +203,7 @@ theorem fieldOfBits_fieldInv (hw : 2 ≤ w) (a : List Bool) :
   have htab := isMulTable_fieldTable hw0
   rw [fieldInv, fieldOfBits_fieldMul htab, fieldOfBits_powerPred htab, ← pow_add,
     show w - 2 + 1 = w - 1 by omega]
-  have hq : Fintype.card (BinaryField w) = 2 ^ w := BinaryField.card_eq hw0
+  have hq : Fintype.card (BinaryField w) = 2 ^ w := BinaryField.card hw0
   have he : 2 ^ (w - 1) - 1 + (2 ^ (w - 1) - 1) = 2 ^ w - 2 := by
     have h1 : 2 ^ w = 2 * 2 ^ (w - 1) := by
       rw [← pow_succ', Nat.sub_add_cancel (by omega : 1 ≤ w)]
@@ -231,31 +227,6 @@ theorem fieldOfBits_fieldInv (hw : 2 ≤ w) (a : List Bool) :
     exact FiniteField.pow_card_sub_one_eq_one x hx
 
 /-! ### Correctness -/
-
-/-- A fold of products, skipping the elements with `c x`, multiplies the selected factors. -/
-theorem fieldOfBits_foldl_ite (hw : w ≠ 0) {X : Type*} (c : X → Prop) [DecidablePred c]
-    (f : X → List Bool) (l : List X) (init : List Bool) :
-    fieldOfBits (𝔅 hw)
-        (l.foldl (fun acc x => if c x then acc else fieldMul (fieldTable w) acc (f x)) init) =
-      fieldOfBits (𝔅 hw) init *
-        ((l.filter fun x => !decide (c x)).map fun x => fieldOfBits (𝔅 hw) (f x)).prod := by
-  induction l generalizing init with
-  | nil => simp
-  | cons x l ih =>
-    rw [List.foldl_cons, ih, List.filter_cons]
-    by_cases hx : c x
-    · simp [hx]
-    · simp only [hx, ↓reduceIte, decide_false, Bool.not_false, List.map_cons, List.prod_cons,
-        fieldOfBits_fieldMul (isMulTable_fieldTable hw)]
-      ring
-
-/-- A fold of products multiplies all the factors. -/
-theorem fieldOfBits_foldl_fieldMul (hw : w ≠ 0) {X : Type*} (f : X → List Bool) (l : List X)
-    (init : List Bool) :
-    fieldOfBits (𝔅 hw) (l.foldl (fun acc x => fieldMul (fieldTable w) acc (f x)) init) =
-      fieldOfBits (𝔅 hw) init * (l.map fun x => fieldOfBits (𝔅 hw) (f x)).prod := by
-  have := fieldOfBits_foldl_ite hw (fun _ : X => False) f l init
-  simpa using this
 
 /-- The embedded bit string is the element with its bits as coordinates. -/
 theorem embed_eq_fieldOfBits (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a : BitString b) :
@@ -282,8 +253,8 @@ theorem fieldOfBits_lagrangeNum (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a : Bi
   classical
   rw [lagrangeNum, BitString.enumList, List.foldl_map]
   simp only [List.ofFn_inj]
-  rw [fieldOfBits_foldl_ite hw (· = a), fieldOfBits_one, one_mul, ← List.prod_toFinset _
-    ((BitString.nodup_enum b).filter _)]
+  rw [fieldOfBits_foldl_ite (isMulTable_fieldTable hw) (· = a), fieldOfBits_one, one_mul,
+    ← List.prod_toFinset _ ((BitString.nodup_enum b).filter _)]
   have hset : ((BitString.enum b).filter fun x => !decide (x = a)).toFinset = univ.erase a := by
     ext x
     simp
@@ -307,21 +278,6 @@ theorem fieldOfBits_lagrangeVal (hw : 2 ≤ w) {b : ℕ} (hbw : b ≤ w) (a : Bi
   refine Finset.prod_congr rfl fun a' _ => ?_
   rw [Lagrange.basisDivisor, eval_mul, eval_C, eval_sub, eval_X, eval_C, mul_comm]
 
-/-- Block `i` of the list of a bit string is the list of its block `i`. -/
-theorem blockOf_ofFn {M b : ℕ} (z : BitString (M * b)) (i : Fin M) :
-    blockOf b (List.ofFn z) i = List.ofFn (BitString.block z i) := by
-  have hi : (i + 1) * b ≤ M * b := Nat.mul_le_mul_right _ i.2
-  refine List.ext_getElem (by
-    simp only [blockOf, List.length_take, List.length_drop, List.length_ofFn]
-    rw [Nat.add_mul] at hi
-    omega) fun j h₁ h₂ => ?_
-  simp only [blockOf, List.getElem_take, List.getElem_drop, List.getElem_ofFn,
-    BitString.block_apply]
-  congr 1
-  ext
-  simp only [finProdFinEquiv_apply_val]
-  ring
-
 /-- **A term of the extension**: `termVal` computes the product over the blocks of `z` of the
 Lagrange basis polynomials at the coordinates of the point. -/
 theorem fieldOfBits_termVal (hw : 2 ≤ w) {M b : ℕ} (hbw : b ≤ w) (xs : List (List Bool))
@@ -331,10 +287,10 @@ theorem fieldOfBits_termVal (hw : 2 ≤ w) {M b : ℕ} (hbw : b ≤ w) (xs : Lis
       ∏ i : Fin M, (Lagrange.basis univ (BinaryField.embed (by omega : w ≠ 0) hbw)
         (BitString.block z i)).eval (fieldOfBits (𝔅 (by omega : w ≠ 0)) (xs.getD i [])) := by
   have hw0 : w ≠ 0 := by omega
-  rw [termVal, fieldOfBits_foldl_fieldMul hw0, fieldOfBits_one, one_mul,
+  rw [termVal, fieldOfBits_foldl_fieldMul (isMulTable_fieldTable hw0), fieldOfBits_one, one_mul,
     ← List.prod_toFinset _ List.nodup_range, List.toFinset_range, Finset.prod_range]
   refine Finset.prod_congr rfl fun i _ => ?_
-  rw [blockOf_ofFn, fieldOfBits_lagrangeVal hw]
+  rw [BitString.listBlock_ofFn, fieldOfBits_lagrangeVal hw]
 
 /-- **The program computes the low-degree extension**: `ldeVal` on the accepted inputs of a
 decider `gL` of `L` is the extension of the truth table of `L` on `M b` bits at the point with
@@ -369,7 +325,8 @@ theorem fieldOfBits_ldeVal (hw : 2 ≤ w) {M b : ℕ} (hbw : b ≤ w) {L : Langu
 
 /-- The coordinates of block `i` of the input are its bits: the program reads the point of the
 encoding. -/
-theorem fieldOfBits_drop_take (hw : w ≠ 0) {M : ℕ} {y : List Bool} {Y : BitString (M * w + w)}
+private theorem fieldOfBits_drop_take (hw : w ≠ 0) {M : ℕ} {y : List Bool}
+    {Y : BitString (M * w + w)}
     (hY : ∀ k, Y k = y.getD k false) (i : Fin M) :
     fieldOfBits (𝔅 hw) ((y.drop (i * w)).take w) =
       pointOfBits (BinaryField.equivBits hw) (fun k => Y (Fin.castAdd w k)) i := by
@@ -383,7 +340,7 @@ theorem fieldOfBits_drop_take (hw : w ≠ 0) {M : ℕ} {y : List Bool} {Y : BitS
   ring
 
 /-- The last `w` bits of the input, as a list. -/
-theorem drop_take_eq_ofFn {M : ℕ} {y : List Bool} {Y : BitString (M * w + w)}
+private theorem drop_take_eq_ofFn {M : ℕ} {y : List Bool} {Y : BitString (M * w + w)}
     (hY : ∀ k, Y k = y.getD k false) (hle : M * w + w ≤ y.length) :
     (y.drop (M * w)).take w = List.ofFn fun j => Y (Fin.natAdd (M * w) j) := by
   refine List.ext_getElem (by
@@ -393,15 +350,19 @@ theorem drop_take_eq_ofFn {M : ℕ} {y : List Bool} {Y : BitString (M * w + w)}
     List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (by rw [List.length_ofFn] at h₂; omega)]
   rfl
 
-/-- `dotBits` is the dot product of the bits of the field element with the selecting bits. -/
-theorem dotBits_eq (hw : w ≠ 0) {a : List Bool} (ha : a.length = w) (r : BitString w) :
-    dotBits a (List.ofFn r) = BinaryField.equivBits hw (fieldOfBits (𝔅 hw) a) ⬝ᵥ r := by
-  rw [BitString.dotProduct_eq_foldl, dotBits]
-  congr 2
-  refine List.ext_getElem (by simp [ha]) fun j h₁ h₂ => ?_
-  rw [List.getElem_ofFn, equivBits_fieldOfBits, List.getD_eq_getElem?_getD,
-    List.getElem?_eq_getElem h₁]
-  rfl
+/-- The parity selected by the last `w` bits is the dot product of the bits of the field element
+with them. -/
+private theorem traceBit_eq (hw : w ≠ 0) {a : List Bool} (ha : a.length = w) (r : BitString w) :
+    traceBit (List.ofFn r) a = BinaryField.equivBits hw (fieldOfBits (𝔅 hw) a) ⬝ᵥ r := by
+  rw [BitString.dotProduct_eq_foldl, traceBit]
+  congr 1
+  refine List.ext_getElem (by simp) fun j h₁ h₂ => ?_
+  simp only [List.length_map, List.length_range, List.length_ofFn] at h₁
+  rw [List.getElem_map, List.getElem_range, List.getElem_zipWith, List.getElem_ofFn,
+    List.getElem_ofFn, equivBits_fieldOfBits, List.getD_eq_getElem?_getD,
+    List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (by omega),
+    List.getElem?_eq_getElem (by simpa using h₁)]
+  simp only [Option.getD_some, List.getElem_ofFn]
 
 /-- **The program computes the encoded slices**: on every input `y`, with a decider `gL` of `L`
 and the length parameter `|y|`, the program returns the encoded slice of `L` at length `|y|`. -/
@@ -426,7 +387,7 @@ theorem encodedProgram_eq {L : Language Bool} {gL : List Bool → Bool}
         (y.drop (i * (4 * blockLength M y.length))).take (4 * blockLength M y.length))).length =
       4 * blockLength M y.length := by
     rw [ldeVal, BitString.length_listXor]
-  rw [hardnessEncode, drop_take_eq_ofFn hY hle, dotBits_eq hw0 hlen,
+  rw [hardnessEncode, drop_take_eq_ofFn hY hle, traceBit_eq hw0 hlen,
     fieldOfBits_ldeVal hw (by omega) hgL]
   congr 3
   funext i

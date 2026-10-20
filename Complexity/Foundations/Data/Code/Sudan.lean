@@ -53,6 +53,8 @@ factoring bivariate polynomials in polynomial time; no running time is formalize
 ## Main definitions
 
 * `Cslib.Code.Sudan.monomials`: the monomials of bounded weighted degree.
+* `Cslib.Code.Sudan.bivariateOf`: the bivariate polynomial with given coefficients on a set of
+  monomials.
 * `Cslib.Code.Sudan.IsInterpolant`: the bivariate interpolants of a received word.
 * `Cslib.Code.sudan`: Sudan's list decoder.
 
@@ -182,8 +184,8 @@ theorem evalEval_bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → F) (x
 variable {α w : ι → F} {k D : ℕ} {Q : F[X][Y]}
 
 /-- Evaluating `Q(X, P(X))` at `x` evaluates `Q` at `(x, P(x))`. -/
-theorem _root_.Polynomial.eval_eval_eq_evalEval (Q : F[X][Y]) (P : F[X]) (x : F) :
-    (Q.eval P).eval x = Q.evalEval x (P.eval x) := by
+theorem _root_.Polynomial.eval_eval_eq_evalEval {R : Type*} [CommSemiring R] (Q : R[X][Y])
+    (P : R[X]) (x : R) : (Q.eval P).eval x = Q.evalEval x (P.eval x) := by
   rw [← map_evalRingHom_eval, eval_map]
   exact (hom_eval₂ Q (RingHom.id _) (evalRingHom x) P).trans (by rw [RingHom.comp_id]; rfl)
 

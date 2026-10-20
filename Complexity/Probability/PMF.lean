@@ -29,6 +29,9 @@ of the whole experiment (`exists_bind_apply_le`).
   uniform.
 * `Cslib.Probability.PMF.uniformOfFintype_bind_map_fst_equiv`,
   `Cslib.Probability.PMF.uniformOfFintype_bind_bind_fst_equiv`: resampling along an equivalence.
+* `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype`,
+  `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype_toReal`: the uniform probability of an
+  event is the fraction of its members.
 * `Cslib.Probability.PMF.bind_apply_of_forall`, `Cslib.Probability.PMF.exists_bind_apply_le`:
   two-stage experiments.
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
@@ -364,8 +367,7 @@ theorem toOuterMeasure_uniformOfFintype_toReal [Fintype α] [Nonempty α] (event
     [DecidablePred (· ∈ event)] :
     ((uniformOfFintype α).toOuterMeasure event).toReal =
       (Finset.univ.filter (· ∈ event)).card / Fintype.card α := by
-  rw [toOuterMeasure_apply_toReal]
-  simp only [uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast]
-  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv]
+  rw [toOuterMeasure_uniformOfFintype, ENNReal.toReal_mul, ENNReal.toReal_inv,
+    ENNReal.toReal_natCast, ENNReal.toReal_natCast, div_eq_mul_inv]
 
 end Cslib.Probability.PMF

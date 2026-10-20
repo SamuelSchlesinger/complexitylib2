@@ -25,16 +25,16 @@ This module encodes the slices of `L` with the reconstruction theorem of Sudan, 
 Vadhan (`Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode`) along a concrete
 schedule of parameters, and proves that the encoded language is average-case hard for circuits
 of size `2 ^ ⌊N / c⌋` at all large lengths `N`
-(`Cslib.Circuits.Boolean.eventually_isAverageCaseHard_encodedSlice`).
+(`Cslib.HardnessEncoding.eventually_isAverageCaseHard_encodedSlice`).
 
-**The schedule.** Let `M = ⌈40 / γ⌉ + 1` (`Cslib.Circuits.Boolean.blockFactor`). At length `N`,
-the block length is `b = ⌊N / (4 (M + 1))⌋` (`Cslib.Circuits.Boolean.blockLength`); the slice of
+**The schedule.** Let `M = ⌈40 / γ⌉ + 1` (`Cslib.HardnessEncoding.blockFactor`). At length `N`,
+the block length is `b = ⌊N / (4 (M + 1))⌋` (`Cslib.HardnessEncoding.blockLength`); the slice of
 `L` at length `n = M b` is encoded over the explicit binary field of degree `w = 4 b`
 (`Cslib.BinaryField`), with `b`-bit blocks embedded as polynomials of degree less than `b`. The
 encoding has `(M + 1) w ≤ N` input bits; the remaining input bits are ignored
-(`Cslib.Circuits.Boolean.encodedSlice`), and the encoded slices form the encoded language
-(`Cslib.Circuits.Boolean.encodedLanguage`). For the hardness `s = 2 ^ σ`, `σ = ⌊N / c⌋` with
-`c = 200 (M + 1)` (`Cslib.Circuits.Boolean.hardnessDivisor`), the parameters of the
+(`Cslib.HardnessEncoding.encodedSlice`), and the encoded slices form the encoded language
+(`Cslib.HardnessEncoding.encodedLanguage`). For the hardness `s = 2 ^ σ`, `σ = ⌊N / c⌋` with
+`c = 200 (M + 1)` (`Cslib.HardnessEncoding.hardnessDivisor`), the parameters of the
 reconstruction are `K = 2 σ + ⌊log₂ w⌋ + 2` masks, the Sudan parameter `D = 2 ^ (3 b - ⌊b / 4⌋)`
 and majority trees of depth `L = ⌊log₂ (M b)⌋ + 1`.
 
@@ -44,25 +44,25 @@ fraction gives, after fixing the ignored bits
 the same agreement with the encoding, and the reconstruction
 theorem turns it into a circuit for the slice of `L` at length `M b` with at most
 `2 ^ 27 * M ^ 3 * b ^ 6 * 2 ^ (36 b + 5 σ) < 2 ^ (40 b) ≤ 2 ^ (γ M b)` gates, for large `b`
-(`Cslib.Circuits.Boolean.isAverageCaseHard_encodedSlice_of`): a contradiction.
+(`Cslib.HardnessEncoding.isAverageCaseHard_encodedSlice_of`): a contradiction.
 
 The hardness is eventual: it holds at all large lengths `N`, from worst-case hardness at all large
-lengths `n`. Worst-case hardness at infinitely many lengths gives average-case hardness only at the
-corresponding infinitely many encoded lengths, which is not what
+lengths `n`. The schedule only uses the hard lengths `M b`, multiples of `M`; with a suitable
+modification of the schedule, worst-case hardness at infinitely many lengths gives average-case
+hardness at infinitely many encoded lengths, which is not what
 `Cslib.Complexity.P_eq_BPP_of_isAverageCaseHard` assumes.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.blockFactor`, `Cslib.Circuits.Boolean.hardnessDivisor`,
-  `Cslib.Circuits.Boolean.blockLength`: the schedule.
-* `Cslib.Circuits.Boolean.encodedSlice`: the encoded slice at length `N`.
-* `Cslib.Circuits.Boolean.encodedLanguage`: the language of the encoded slices.
+* `Cslib.HardnessEncoding.blockFactor`, `Cslib.HardnessEncoding.hardnessDivisor`,
+  `Cslib.HardnessEncoding.blockLength`: the schedule.
+* `Cslib.HardnessEncoding.encodedSlice`: the encoded slice at length `N`.
+* `Cslib.HardnessEncoding.encodedLanguage`: the language of the encoded slices.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.exists_complexity_le_of_agree_prefix`: fixing ignored input bits.
-* `Cslib.Circuits.Boolean.isAverageCaseHard_encodedSlice_of`: hardness at one length.
-* `Cslib.Circuits.Boolean.eventually_isAverageCaseHard_encodedSlice`: **exponential worst-case
+* `Cslib.HardnessEncoding.isAverageCaseHard_encodedSlice_of`: hardness at one length.
+* `Cslib.HardnessEncoding.eventually_isAverageCaseHard_encodedSlice`: **exponential worst-case
   hardness gives exponential average-case hardness**.
 
 ## References
@@ -75,9 +75,9 @@ corresponding infinitely many encoded lengths, which is not what
 
 @[expose] public section
 
-namespace Cslib.Circuits.Boolean
+namespace Cslib.HardnessEncoding
 
-open Finset Filter Cslib.Code
+open Finset Filter Cslib.Code Cslib.Circuits Cslib.Circuits.Boolean
 
 /-! ### The schedule -/
 
@@ -115,91 +115,6 @@ noncomputable def encodedLanguage (L : Language Bool) (M : ℕ) : Language Bool 
 theorem slice_encodedLanguage (L : Language Bool) (M N : ℕ) :
     (encodedLanguage L M).slice N = encodedSlice L M N :=
   Language.slice_ofSlices _ N
-
-/-! ### Fixing ignored input bits -/
-
-/-- The input of `N` bits with prefix `x` and suffix `z`. -/
-private def joinBits {N Ne : ℕ} (hle : Ne ≤ N) (x : BitString Ne) (z : BitString (N - Ne)) :
-    BitString N :=
-  fun k => if h : (k : ℕ) < Ne then x ⟨k, h⟩ else z ⟨k - Ne, by omega⟩
-
-/-- **Fixing ignored input bits.** If `g` on `N` bits agrees with a function `E` of the first `Ne`
-input bits on more than `δ * 2 ^ N` inputs, then fixing the remaining bits suitably gives a
-function on `Ne` bits, of complexity at most two more, agreeing with `E` on more than
-`δ * 2 ^ Ne` inputs. -/
-theorem exists_complexity_le_of_agree_prefix {N Ne : ℕ} (hle : Ne ≤ N) (E : BooleanFunction Ne)
-    (g : BooleanFunction N) {δ : ℝ}
-    (hagree : δ * 2 ^ N < #{y | g y = E fun i => y (Fin.castLE hle i)}) :
-    ∃ C : BooleanFunction Ne, complexity interpretation (single C) ≤
-      complexity interpretation (single g) + 2 ∧ δ * 2 ^ Ne < #{x | C x = E x} := by
-  classical
-  -- the agreement splits over the suffixes
-  have hsplit : #{y | g y = E fun i => y (Fin.castLE hle i)} =
-      ∑ z : BitString (N - Ne), #{x | g (joinBits hle x z) = E x} := by
-    rw [← card_sigma]
-    refine card_nbij' (fun y => ⟨fun k : Fin (N - Ne) => y ⟨Ne + k, by omega⟩,
-      fun i => y (Fin.castLE hle i)⟩) (fun p => joinBits hle p.2 p.1) (fun y hy => ?_)
-      (fun p hp => ?_) (fun y _ => ?_) (fun p _ => ?_)
-    · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq, coe_sigma, Set.mem_sigma_iff,
-        mem_coe] at hy ⊢
-      have : joinBits hle (fun i => y (Fin.castLE hle i))
-          (fun k : Fin (N - Ne) => y ⟨Ne + k, by omega⟩) = y := by
-        funext k
-        simp only [joinBits]
-        split_ifs with h
-        · rfl
-        · congr 1
-          ext
-          simp only
-          omega
-      rw [this]
-      exact hy
-    · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq, coe_sigma, Set.mem_sigma_iff,
-        mem_coe] at hp ⊢
-      have : (fun i => joinBits hle p.2 p.1 (Fin.castLE hle i)) = p.2 := by
-        funext i
-        simp [joinBits, i.2]
-      rw [this]
-      exact hp
-    · funext k
-      simp only [joinBits]
-      split_ifs with h
-      · rfl
-      · congr 1
-        ext
-        simp only
-        omega
-    · obtain ⟨z, x⟩ := p
-      simp only [Sigma.mk.injEq]
-      refine ⟨?_, ?_⟩
-      · funext k
-        simp [joinBits]
-      · refine heq_of_eq (funext fun i => ?_)
-        simp [joinBits, i.2]
-  -- some suffix carries at least the average agreement
-  have hex : ∃ z : BitString (N - Ne), δ * 2 ^ Ne < #{x | g (joinBits hle x z) = E x} := by
-    by_contra hall
-    push Not at hall
-    have hsum : (#{y | g y = E fun i => y (Fin.castLE hle i)} : ℝ) ≤
-        ∑ _z : BitString (N - Ne), δ * 2 ^ Ne := by
-      rw [hsplit, Nat.cast_sum]
-      exact sum_le_sum fun z _ => hall z
-    rw [sum_const, card_univ, nsmul_eq_mul] at hsum
-    have hcard : (Fintype.card (BitString (N - Ne)) : ℝ) * (δ * 2 ^ Ne) = δ * 2 ^ N := by
-      simp only [BitString, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin, Nat.cast_pow,
-        Nat.cast_ofNat]
-      rw [mul_left_comm, ← pow_add, Nat.sub_add_cancel hle]
-    linarith
-  obtain ⟨z, hz⟩ := hex
-  -- the hardwiring substitution
-  let ρ : Fin N → Fin Ne ⊕ Bool := fun k =>
-    if h : (k : ℕ) < Ne then .inl ⟨k, h⟩ else .inr (z ⟨k - Ne, by omega⟩)
-  have hsub : ∀ x, substitute ρ x = joinBits hle x z := fun x => by
-    funext k
-    simp only [substitute, ρ, joinBits]
-    split_ifs <;> rfl
-  refine ⟨fun x => g (substitute ρ x), complexity_substitute_le ρ g, ?_⟩
-  simpa only [hsub] using hz
 
 /-! ### The numeric hypotheses of the reconstruction -/
 
@@ -406,7 +321,8 @@ private theorem errors_le {M b σ : ℕ} (hM : 1 ≤ M) (hb : 1 ≤ b)
         mul_le_mul_of_nonneg_left hsum (by positivity)
     _ = 1 := by field_simp; ring
 
-/-- The final size bound `2 ^ 11 * 3 ^ L * M * w ^ 2 * q ^ 9 * 4 ^ K * (s + 3) < 2 ^ (40 b)`. -/
+/-- The final size bound: for the circuit size `s = 2 ^ σ + 2` after fixing the ignored bits,
+`2 ^ 11 * 3 ^ L * M * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1) < 2 ^ (40 b)`. -/
 private theorem final_lt {M b σ : ℕ} (hM : 1 ≤ M) (hb : 1 ≤ b)
     (hF : 2 ^ 27 * M ^ 3 * b ^ 6 ≤ 2 ^ (b / 4)) (h5σ : 5 * σ ≤ b) :
     2 ^ 11 * 3 ^ (Nat.log 2 (M * b) + 1) * M * (4 * b) ^ 2 * (2 ^ (4 * b)) ^ 9 *
@@ -482,12 +398,12 @@ theorem isAverageCaseHard_encodedSlice_of {L : Language Bool} {M N σ : ℕ} (hM
     (s := 2 ^ σ + 2) (hC.trans (by omega)) (ε := 1 / ((2 ^ σ : ℕ) : ℝ)) (by positivity)
     hCagree.le (K := 2 * σ + Nat.log 2 (4 * b) + 2) (D := 2 ^ (3 * b - b / 4))
     (L := Nat.log 2 (M * b) + 1) (by omega) (masks_size (two_pow_masks_ge σ b)) hd1
-    (by rw [BinaryField.card_eq hw0]; exact card_lt_card_monomials hM hb hA)
-    (by rw [BinaryField.card_eq hw0]; exact margin_le hb hB h3σ)
-    (by rw [BinaryField.card_eq hw0]; exact errors_le hM hb hD' hE h3σ)
+    (by rw [BinaryField.card hw0]; exact card_lt_card_monomials hM hb hA)
+    (by rw [BinaryField.card hw0]; exact margin_le hb hB h3σ)
+    (by rw [BinaryField.card hw0]; exact errors_le hM hb hD' hE h3σ)
     (Nat.lt_pow_succ_log_self (by norm_num) (M * b)).le
   -- the bound contradicts the worst-case hardness
-  rw [BinaryField.card_eq hw0] at hrec
+  rw [BinaryField.card hw0] at hrec
   exact absurd hhard (not_le.2 (hrec.trans_lt (final_lt hM hb hF h5σ)))
 
 /-! ### Hardness at all large lengths -/
@@ -558,4 +474,4 @@ theorem eventually_isAverageCaseHard_encodedSlice {L : Language Bool} {γ : ℝ}
   simp only [hardnessDivisor, ← hM_def, blockLength] at h1 h2 ⊢
   nlinarith
 
-end Cslib.Circuits.Boolean
+end Cslib.HardnessEncoding
