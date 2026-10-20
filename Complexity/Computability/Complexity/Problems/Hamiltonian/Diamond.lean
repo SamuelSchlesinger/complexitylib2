@@ -1079,7 +1079,8 @@ theorem mem_DirHamPath_iff (hD : WellFormed N slots M D) :
 /-- **Hamiltonian cycles of closed diamond graphs.** A well-formed closed diamond graph has a
 Hamiltonian cycle exactly when its rows can be given directions so that every clause has a detour
 in the direction of its row. -/
-theorem mem_DirHamCycle_iff (hD : WellFormed N slots M D) :
+theorem mem_DirHamCycle_iff {N M : ℕ} {slots : ℕ → ℕ} {D : List Detour}
+    (hD : WellFormed N slots M D) :
     cycleGraph N slots M D ∈ DirHamCycle ↔ Satisfiable M D :=
   (Graph.mem_DirHamCycle_cons_iff (G := graph N slots M D)
     (mem_vertices.2 (Or.inl ⟨0, Nat.zero_le _, rfl⟩)) notMem_arcs_topNode_zero).trans

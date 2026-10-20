@@ -453,6 +453,54 @@ theorem card_filter_check {E C : ℕ} (hE : 2 * (n * n) + 1 ≤ E) (hC : n * n +
     simp only [Equiv.ofBijective_apply]
     exact congrFun (decodeMap_code (by omega) _ _) i
 
+/-! ### Deprecated names
+
+Matrices are relabelled by `Matrix.reindex`, and permutations of injective maps are
+`Equiv.ofBijective`. -/
+
+/-- Deprecated: relabelling a matrix by a permutation, now `Matrix.reindex τ τ`. -/
+@[deprecated Matrix.reindex +typeChanged (since := "2026-10-19")]
+abbrev relabelMatrix (τ : Equiv.Perm (Fin n)) (M : Fin n → Fin n → Bool) : Fin n → Fin n → Bool :=
+  Matrix.reindex τ τ M
+
+/-- Deprecated: the permutation of an injective map of `Fin n`, now `Equiv.ofBijective`. -/
+@[deprecated Equiv.ofBijective +typeChanged (since := "2026-10-19")]
+noncomputable abbrev permOfInjective (f : Fin n → Fin n) (hf : Function.Injective f) :
+    Equiv.Perm (Fin n) :=
+  Equiv.ofBijective f (Finite.injective_iff_bijective.1 hf)
+
+set_option linter.deprecated false in
+@[deprecated reindex_mul (since := "2026-10-19")]
+theorem relabelMatrix_mul (σ τ : Equiv.Perm (Fin n)) (M : Fin n → Fin n → Bool) :
+    relabelMatrix (σ * τ) M = relabelMatrix σ (relabelMatrix τ M) :=
+  reindex_mul σ τ M
+
+set_option linter.deprecated false in
+@[deprecated reindex_one (since := "2026-10-19")]
+theorem relabelMatrix_one (M : Fin n → Fin n → Bool) : relabelMatrix 1 M = M :=
+  reindex_one M
+
+set_option linter.deprecated false in
+@[deprecated reindex_eq_iff (since := "2026-10-19")]
+theorem relabelMatrix_eq_iff {τ : Equiv.Perm (Fin n)} {A M : Fin n → Fin n → Bool} :
+    relabelMatrix τ A = M ↔ ∀ i j, M (τ i) (τ j) = A i j :=
+  reindex_eq_iff
+
+set_option linter.deprecated false in
+@[deprecated card_filter_reindex_eq (since := "2026-10-19")]
+theorem card_filter_relabelMatrix_eq {A M : Fin n → Fin n → Bool} (hM : M ∈ orbit A) :
+    #{σ : Equiv.Perm (Fin n) | relabelMatrix σ M = M} =
+      #{τ : Equiv.Perm (Fin n) | relabelMatrix τ A = M} := by
+  convert card_filter_reindex_eq hM <;> exact Iff.rfl
+
+set_option linter.deprecated false in
+@[deprecated reindex_decodeMatrix (since := "2026-10-19")]
+theorem relabelMatrix_decodeMatrix {E : ℕ} {adj : Bool → ℕ → ℕ → Bool} {u v : List Bool}
+    (h : check n E adj u v = true) :
+    relabelMatrix (permOfInjective _ (injective_decodeMap_left h)) (decodeMatrix n u) =
+      decodeMatrix n u :=
+  reindex_decodeMatrix h
+
 end PublicCoin
 
 open PublicCoin

@@ -9,8 +9,8 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.SignApproximation
 public import Complexity.MachineLearning.UniformLearning.Basic
+public import Complexity.Probability.Concentration
 import Complexity.Foundations.BooleanAnalysis.LowDegree
-import Complexity.Probability.Concentration
 import Complexity.Probability.PMF
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Tactic.FieldSimp
@@ -84,6 +84,14 @@ open BitString Finset PACLearning Cslib.Probability
 open scoped BigOperators ENNReal
 
 variable {ι : Type*} {m : ℕ}
+
+@[deprecated PMF.uniform_abs_sum_div_sub_expect_ge_le +typeChanged (since := "2026-10-19")]
+theorem uniform_abs_sum_div_sub_expect_ge_le {α : Type*} [Fintype α] [Nonempty α] (s : α → ℝ)
+    (hs : ∀ a, s a ∈ Set.Icc (-1 : ℝ) 1) (hm : 0 < m) {γ : ℝ} (hγ : 0 ≤ γ) :
+    (PMF.uniformOfFintype (Fin m → α)).toOuterMeasure
+      {ω | γ ≤ |(∑ j, s (ω j)) / m - 𝔼 a, s a|} ≤
+        ENNReal.ofReal (2 * Real.exp (-(m * γ ^ 2) / 2)) :=
+  PMF.uniform_abs_sum_div_sub_expect_ge_le s (fun a => abs_le.2 (hs a)) hm hγ
 
 /-! ### The algorithm -/
 
