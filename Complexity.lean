@@ -364,6 +364,7 @@ public import Complexity.Computability.Complexity.Classes.IP.OptimalProver
 public import Complexity.Computability.Complexity.Classes.IP.PSPACE
 public import Complexity.Computability.Complexity.Classes.IP.Repetition
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
+public import Complexity.Computability.Complexity.Classes.IP.TQBF
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Tokens
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Verifier

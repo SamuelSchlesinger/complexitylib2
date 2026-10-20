@@ -59,9 +59,9 @@ degrees sum to at most `(2 * |xs| + 1) * size φ ^ 2` when `xs` contains the var
 claim that it has value `1` at the origin is therefore accepted with probability `1` from a true
 formula, and with probability at most `3 * size φ ^ 3 / |F|` from a false one
 (`Cslib.Complexity.QBFProtocol.acceptProb_honest_of_mem_TQBF`,
-`Cslib.Complexity.QBFProtocol.acceptProb_le_of_notMem_TQBF`). Realizing the verifier as an
-efficient machine in the model of `Cslib.Complexity.IP`, with a field of polynomial size and field
-elements drawn from fair coins, is not done here.
+`Cslib.Complexity.QBFProtocol.acceptProb_le_of_notMem_TQBF`). The verifier is realized as an
+efficient machine in the model of `Cslib.Complexity.IP`, over a prime field of polynomial size with
+elements drawn from fair coins, in `Complexity.Computability.Complexity.Classes.IP.TQBF`.
 
 ## Main definitions
 

@@ -62,6 +62,11 @@ theorem runWith_bind (program : ProbOracleComp spec α) (next : α → ProbOracl
   simp only [runWith, OracleComp.interpret_bind, StateT.run_bind]
   rfl
 
+theorem runWith_map (f : α → β) (program : ProbOracleComp spec α) (s : State) :
+    runWith oracle (f <$> program) s = (runWith oracle program s).map (Prod.map f id) := by
+  simp only [runWith, OracleComp.interpret_map, StateT.run_map]
+  rfl
+
 theorem runWith_query (q : Query) (s : State) :
     runWith oracle (query (spec := spec) q) s = oracle q s := by
   simp only [runWith, interpret_query]

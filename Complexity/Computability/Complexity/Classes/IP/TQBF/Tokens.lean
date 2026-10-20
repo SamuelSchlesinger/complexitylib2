@@ -29,7 +29,7 @@ degree at most `D` in its variable, every prover is accepted on a false claim wi
 most `ops e * D * ε` (`Cslib.Complexity.QBFProtocol.acceptProb_verifyAt_le`), with `ops e` the
 number of operators. A prover answering with the true values and restrictions on every query
 about a subformula all of whose variables lie in a list `xs` is accepted on every true claim with
-certainty (`Cslib.Complexity.QBFProtocol.run_verifyAt_of_eq_honestReplyAt`).
+certainty (`Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt`).
 
 ## Main definitions
 
@@ -44,7 +44,7 @@ certainty (`Cslib.Complexity.QBFProtocol.run_verifyAt_of_eq_honestReplyAt`).
 * `Cslib.Logic.PL.ArithQBF.tokens_append_inj`: tokens in prefix order determine the formula.
 * `Cslib.Logic.PL.QBF.tokens_arithmetize`: the tokens of the arithmetization.
 * `Cslib.Complexity.QBFProtocol.acceptProb_verifyAt_le`: soundness.
-* `Cslib.Complexity.QBFProtocol.run_verifyAt_of_eq_honestReplyAt`: perfect completeness.
+* `Cslib.Complexity.QBFProtocol.run_verifyAt_of_agreesAt`: perfect completeness.
 
 ## References
 
@@ -323,11 +323,28 @@ noncomputable def honestReplyAt (e : ArithQBF ℕ) (r : ℕ → F) : List F :=
   | .op _ v e => coeffsBelow (e.restrict r v) (D + 1)
   | _ => []
 
-/-- **Perfect completeness of the verifier on a stream of tokens.** A stateless prover replying
-honestly to every query about a subformula all of whose variables lie in `xs` makes the verifier
-accept every true claim with certainty, when the body of every operator has degree at most `D`. -/
-theorem run_verifyAt_of_eq_honestReplyAt (f : QueryAt F → List F) (xs : List ℕ)
-    (hf : ∀ e' rest' r', (∀ w ∈ e'.vars, w ∈ xs) → f (e', rest', r') = honestReplyAt D e' r')
+/-- A reply agrees with the honest reply to a query about `e` at `r` on what the verifier reads:
+the first two entries for a binary connective, the first `D + 1` for an operator. -/
+def AgreesAt (l : List F) (e : ArithQBF ℕ) (r : ℕ → F) : Prop :=
+  match e with
+  | .bin _ e₁ e₂ => l.getD 0 0 = e₁.eval r ∧ l.getD 1 0 = e₂.eval r
+  | .op _ v e => l.take (D + 1) = coeffsBelow (e.restrict r v) (D + 1)
+  | _ => True
+
+omit [DecidableEq F] in
+theorem agreesAt_honestReplyAt (e : ArithQBF ℕ) (r : ℕ → F) :
+    AgreesAt D (honestReplyAt D e r) e r := by
+  cases e with
+  | bin o e₁ e₂ => exact ⟨rfl, rfl⟩
+  | op o v e => exact List.take_of_length_le (by rw [honestReplyAt, length_coeffsBelow])
+  | _ => trivial
+
+/-- **Perfect completeness of the verifier on a stream of tokens.** A stateless prover whose reply
+to every query about a subformula all of whose variables lie in `xs` agrees with the honest reply
+makes the verifier accept every true claim with certainty, when the body of every operator has
+degree at most `D`. -/
+theorem run_verifyAt_of_agreesAt (f : QueryAt F → List F) (xs : List ℕ)
+    (hf : ∀ e' rest' r', (∀ w ∈ e'.vars, w ∈ xs) → AgreesAt D (f (e', rest', r')) e' r')
     (e : ArithQBF ℕ) (he : ∀ w ∈ e.vars, w ∈ xs) (hD : e.maxRoundDegree ≤ D)
     (rest : List (ArithQBF.Kind × ℕ)) (r : ℕ → F) (s : Unit) :
     runWith (fun q s => PMF.pure (f q, s)) (verifyAt sampler D e rest r (e.eval r)) s =
@@ -341,23 +358,22 @@ theorem run_verifyAt_of_eq_honestReplyAt (f : QueryAt F → List F) (xs : List �
     rw [ArithQBF.maxRoundDegree, max_le_iff] at hD
     have he₁ : ∀ w ∈ e₁.vars, w ∈ xs := fun w hw => he w (List.mem_append_left _ hw)
     have he₂ : ∀ w ∈ e₂.vars, w ∈ xs := fun w hw => he w (List.mem_append_right _ hw)
-    rw [verifyAt, ProbOracleComp.runWith_bind, ProbOracleComp.runWith_query, hf _ _ _ he]
-    simp only [honestReplyAt, PMF.pure_bind, List.getD_cons_zero, List.getD_cons_succ,
-      ArithQBF.eval_bin, ↓reduceIte]
+    obtain ⟨h₁, h₂⟩ := hf (.bin o e₁ e₂) rest r he
+    rw [verifyAt, ProbOracleComp.runWith_bind, ProbOracleComp.runWith_query]
+    simp only [PMF.pure_bind, h₁, h₂, ArithQBF.eval_bin, ↓reduceIte]
     rw [ProbOracleComp.runWith_bind, ih₁ he₁ hD.1, PMF.pure_bind]
     exact ih₂ he₂ hD.2 _ r
   | op o v e ih =>
     rw [ArithQBF.maxRoundDegree, max_le_iff] at hD
     have he' : ∀ w ∈ e.vars, w ∈ xs := fun w hw => he w (List.mem_cons_of_mem v hw)
-    rw [verifyAt, ProbOracleComp.runWith_bind, ProbOracleComp.runWith_query, hf _ _ _ he]
-    have hlist : (coeffsBelow (e.restrict r v) (D + 1)).take (D + 1) =
-        coeffsBelow (e.restrict r v) (D + 1) :=
-      List.take_of_length_le (by rw [length_coeffsBelow])
+    have hlist : (f (.op o v e, rest, r)).take (D + 1) = coeffsBelow (e.restrict r v) (D + 1) :=
+      hf (.op o v e) rest r he
+    rw [verifyAt, ProbOracleComp.runWith_bind, ProbOracleComp.runWith_query]
     have hval (z : F) : evalCoeffList z (coeffsBelow (e.restrict r v) (D + 1)) =
         e.eval (Function.update r v z) := by
       rw [← eval_ofCoeffList, ofCoeffList_coeffsBelow (Nat.lt_succ_of_le
         ((e.natDegree_restrict_le r v).trans hD.1)), ArithQBF.eval_restrict]
-    simp only [honestReplyAt, PMF.pure_bind, hlist, hval, ArithQBF.eval_op, ↓reduceIte]
+    simp only [PMF.pure_bind, hlist, hval, ArithQBF.eval_op, ↓reduceIte]
     rw [ProbOracleComp.runWith_bind, ProbOracleComp.runWith_sample, PMF.bind_map]
     simp only [Function.comp_def, ih he' hD.2]
     exact PMF.bind_const _ _
