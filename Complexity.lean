@@ -377,9 +377,15 @@ public import Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism
 public import Complexity.Computability.Complexity.Classes.IP.Guessing
 public import Complexity.Computability.Complexity.Classes.IP.OptimalProver
 public import Complexity.Computability.Complexity.Classes.IP.PSPACE
+public import Complexity.Computability.Complexity.Classes.IP.Reduction
 public import Complexity.Computability.Complexity.Classes.IP.Repetition
+public import Complexity.Computability.Complexity.Classes.IP.Shamir
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
+public import Complexity.Computability.Complexity.Classes.IP.TQBF
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
+public import Complexity.Computability.Complexity.Classes.IP.TQBF.Tokens
+public import Complexity.Computability.Complexity.Classes.IP.TQBF.Verifier
+public import Complexity.Computability.Complexity.Classes.IP.TQBF.Words
 public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
@@ -511,6 +517,7 @@ public import Complexity.Computability.Complexity.Problems.SubsetSum
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
 public import Complexity.Computability.Complexity.Problems.TQBF
+public import Complexity.Computability.Complexity.Problems.TQBF.Closed
 public import Complexity.Computability.Complexity.Problems.TSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Problems.USAT
@@ -599,6 +606,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Factorial
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Prime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
@@ -1159,6 +1167,7 @@ public import Complexity.Foundations.Data.Nat.Log
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
+public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape
@@ -1186,6 +1195,7 @@ public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Languages.Probabilistic.Oracle
+public import Complexity.Languages.Probabilistic.Oracle.Interaction
 public import Complexity.Languages.Probabilistic.Oracle.Simulation
 public import Complexity.Languages.Probabilistic.Oracle.Support
 public import Complexity.Languages.Probabilistic.Oracle.Transcript

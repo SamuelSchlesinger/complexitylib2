@@ -33,6 +33,8 @@ than an evaluated one, so it is not reused.
 * `Cslib.Logic.PL.QBF`: the formulas.
 * `Cslib.Logic.PL.QBF.eval`: the value of a formula under an assignment.
 * `Cslib.Logic.PL.QBF.freeVars`, `Cslib.Logic.PL.QBF.Closed`.
+* `Cslib.Logic.PL.QBF.vars`, `Cslib.Logic.PL.QBF.size`: the variables, free or bound, and the number
+  of nodes.
 
 ## Main results
 
@@ -209,6 +211,40 @@ theorem eval_all_of_notMem_freeVars (hv : v ∉ φ.freeVars) (σ : V → Bool) :
     (all v φ).eval σ = φ.eval σ := by
   rw [eval_all, eval_update_of_notMem_freeVars hv, eval_update_of_notMem_freeVars hv,
     Bool.and_self]
+
+/-! ### Variables and size -/
+
+/-- The variables of a formula, free or bound, with multiplicity, in prefix order. -/
+def vars : QBF V → List V
+  | .var v => [v]
+  | .top => []
+  | .bot => []
+  | .not φ => vars φ
+  | .and φ ψ => vars φ ++ vars ψ
+  | .or φ ψ => vars φ ++ vars ψ
+  | .ex v φ => v :: vars φ
+  | .all v φ => v :: vars φ
+
+/-- The number of nodes of a formula. -/
+def size : QBF V → ℕ
+  | .var _ => 1
+  | .top => 1
+  | .bot => 1
+  | .not φ => size φ + 1
+  | .and φ ψ => size φ + size ψ + 1
+  | .or φ ψ => size φ + size ψ + 1
+  | .ex _ φ => size φ + 1
+  | .all _ φ => size φ + 1
+
+omit [DecidableEq V] in
+theorem one_le_size (φ : QBF V) : 1 ≤ φ.size := by
+  cases φ <;> simp only [size] <;> omega
+
+omit [DecidableEq V] in
+theorem length_vars_le_size (φ : QBF V) : φ.vars.length ≤ φ.size := by
+  induction φ <;>
+    simp only [vars, size, List.length_nil, List.length_append, List.length_cons] <;>
+    omega
 
 /-! ### Closed formulas -/
 
