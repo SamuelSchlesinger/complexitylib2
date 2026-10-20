@@ -21,8 +21,9 @@ its order agrees with Mathlib's `Pi.Lex`. No power-of-two restriction or binary 
 is used. The standard canonical constants use `n ≥ 2`, and the tuple for one needs positive
 dimension. The zero-dimensional universe still has one element.
 
-This numbers the full tuple universe. It does not construct first-order tuple BIT formulas,
-numeric-preserving interpretation composition, or numeric predicates on restricted domains.
+This numbers the full tuple universe; native tuple BIT is constructed in `Ordered.TupleBit`.
+Numeric-preserving interpretation composition and numeric predicates on restricted domains
+require separate constructions.
 
 ## Main definitions
 
@@ -41,7 +42,7 @@ numeric-preserving interpretation composition, or numeric predicates on restrict
 ## References
 
 * [N. Immerman, *Descriptive Complexity*][Immerman1999], Remark 1.32 and Exercise 1.33(1),
-  with the full-domain hypothesis. The BIT lifting obligation in Exercise 1.33(3) remains open.
+  with the full-domain hypothesis. `Ordered.TupleBit` supplies Exercise 1.33(3).
 -/
 
 @[expose] public section

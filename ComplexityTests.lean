@@ -1,5 +1,6 @@
 import ComplexityTests.AWPPAmplification
 import ComplexityTests.AdaptivePPT
+import ComplexityTests.AffineController
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserCorollary
 import ComplexityTests.AffineDisperserLowerBound
@@ -174,6 +175,7 @@ import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedSuccessor
+import ComplexityTests.OrderedTupleBit
 import ComplexityTests.OrderedTuples
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
@@ -298,6 +300,7 @@ import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness

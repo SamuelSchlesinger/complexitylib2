@@ -79,6 +79,7 @@ public import Complexity.Computability.Circuit.Boolean.Hastad.Sharp
 public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
 public import Complexity.Computability.Circuit.Boolean.Iteration.Active
+public import Complexity.Computability.Circuit.Boolean.Iteration.AffineController
 public import Complexity.Computability.Circuit.Boolean.Iteration.Batch
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Basic
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.Circuit
@@ -186,10 +187,13 @@ public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activity
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.ActivityBounds
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Capacity
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Components
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Cut
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.InnerProduct
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
 public import Complexity.Computability.Circuit.Boolean.Word
@@ -1275,6 +1279,7 @@ public import Complexity.Foundations.Data.Nat.Log
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
+public import Complexity.Foundations.Data.Nat.Radix
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
@@ -1339,7 +1344,13 @@ public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Bounds
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Columns
 public import Complexity.Logics.FirstOrder.Ordered.Packing
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Arithmetic
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Bit
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Conversion
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Decode
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Multiplication
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
+public import Complexity.Logics.FirstOrder.Ordered.TupleBit
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
 public import Complexity.Logics.FirstOrder.Problems.CNF

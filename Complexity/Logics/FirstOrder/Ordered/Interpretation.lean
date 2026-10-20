@@ -20,7 +20,8 @@ input. Its pullback therefore preserves every input sentence, including quantifi
 
 No new interpretation syntax is introduced. This bridge does not interpret target constants,
 prove canonical numeric preservation on tuples, or supply ordered reductions. Those require
-further definitions and, for arbitrary-base tuple BIT, the numeric lifting theorem.
+further definitions. Native full-tuple BIT is constructed separately in `Ordered.TupleBit`;
+numeric-preserving interpretation composition remains open.
 
 ## Main definitions
 
