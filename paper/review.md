@@ -689,3 +689,23 @@ returned to the author.
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 8: Arthur–Merlin protocols, Tseitin, and cleanups (2026-10-19)
+
+Integrated `090dc682` (Arthur–Merlin milestone 2: set lower bound, SBP ⊆ AM, GNI ∈ AM,
+Boppana–Håstad–Zachos and the graph-isomorphism corollary), `38abf7bf` (Tseitin formulas are hard
+for resolution), and the reviewed cleanup ranges `fa8e0065..b4f8337a` (sharp Håstad),
+`74a300c2..8d8e8516` (counting completeness) and `f355a73f..813d8f38` (KKL and Friedgut). The
+Arthur–Merlin entry is replaced, a Tseitin entry is added to `proofs.tex`, the SBP and private-coin
+GNI entries are updated, and the counting entry gains its modular and exact counting sources.
+
+Independent reviews: Arthur–Merlin milestone 2 correctness and API APPROVE (set lower bound
+arithmetic, GNI counts and the BHZ argument checked; the all-encodings hypothesis follows from
+coNP ⊆ AM for bit-string languages); Tseitin correctness and API first required an explicit
+threshold in the headline, and the delta review approved the fix and the restructure; the three
+cleanup ranges were approved by a delta review (statements unchanged, deprecated aliases correct).
+Entry wording follows the reviewers' notes (encoding of the GI corollary, connectivity and
+unnormalized edge expansion in the Tseitin bounds).
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
