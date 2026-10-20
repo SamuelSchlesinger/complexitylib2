@@ -164,3 +164,52 @@ The $m$ time bits pass through unchanged to the iteration stage. Both state
 coordinate conversions are charged once, independently of $m$.
 \decl{Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean}{147}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_variable_time}
 \end{result}
+
+\begin{result}
+\subsection{Sparse-counter navigation, visit schedules, and hitting times}
+For any self-map $f:\alpha\to\alpha$ on a finite linearly ordered state space
+and states $x,y\in\alpha$, if $d$ is the first time with $f^d(x)=y$ and $p$ is
+the minimal period of $y$, then $f^t(x)=y$ if and only if $t=d+kp$ for some
+$k\in\mathbb N$ (with $p=0$ giving a single visit at $d$), and the number of
+visits in $\{0,\dots,T\}$ equals $0$ when $T<d$, $1$ when $T\ge d$ and $p=0$,
+and $\lfloor(T-d)/p\rfloor+1$ when $T\ge d$ and $p>0$.
+
+On $W_n$, a visit-schedule record has width $1+(n+1)+(n+1)$ bits: a
+reachability bit, an $(n+1)$-bit first hitting time $d<2^n$, and an $(n+1)$-bit
+return period $p\le 2^n$. Given any circuit $L$ computing the canonical cycle
+label on $W_n$, a circuit on $2n$ inputs computes the visit-schedule record for
+input pairs $(x,y)$ using at most $2|L|+200(n+3)$ native De Morgan gates. In
+particular, for every permutation $f$ of $W_n$, there is a circuit on $2n$
+inputs of size at most
+\[
+1200(n+3)(|D(f,c)|+1)
+\]
+computing the visit-schedule record (which characterizes all visit times
+$f^t(x)=y$ and their count up to any deadline $T$), as well as a circuit with
+$1+(n+1)$ outputs of the same size bound computing the reachability flag and
+first hitting time $d<2^n$. If $f,g,e$ are permutations of $W_n$ with
+$e(g(x))=e(x)+1$ and $E$ computes $e$, then a circuit of size at most
+\[
+2|E|+1200(n+3)(|D(f,g)|+1)
+\]
+computes the visit-schedule record for $f$; only the forward coordinate circuit
+$E$ (evaluated on both input states) is needed, not an inverse circuit
+$E^{-1}$. The bounded visit count is a mathematical function of the output
+schedule bits and $T$, not an additional circuit taking $T$ as input, and chart
+selection remains nonuniform.\citep{Schlesinger2026IteratedFunctions}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean}{276}{Cslib.FunctionalGraph.visit_schedule_of_first}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean}{305}{Cslib.FunctionalGraph.visit_schedule}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean}{324}{Cslib.FunctionalGraph.arithmeticProgressionCount_spec}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean}{368}{Cslib.FunctionalGraph.visit_count_of_first}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean}{122}{Cslib.Circuits.Boolean.Iteration.subtractResidues}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean}{126}{Cslib.Circuits.Boolean.Iteration.toNat_subtractResidues}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean}{145}{Cslib.Circuits.Boolean.Iteration.synthesis_subtractResidues}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{74}{Cslib.Circuits.Boolean.Iteration.visitScheduleContains}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{84}{Cslib.Circuits.Boolean.Iteration.visitScheduleCount_spec}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{175}{Cslib.Circuits.Boolean.Iteration.cycleLabelVisits_spec}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{238}{Cslib.Circuits.Boolean.Iteration.cycle_label_visit_circuit}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{261}{Cslib.Circuits.Boolean.Iteration.sparse_counter_visit_circuit}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{273}{Cslib.Circuits.Boolean.Iteration.sparse_counter_visit_schedule}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{294}{Cslib.Circuits.Boolean.Iteration.sparse_counter_hitting_time}
+\declat{cbd017d87bcb3a2632cd8267bfb66b7b023d6b69}{Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean}{328}{Cslib.Circuits.Boolean.Iteration.sparse_coordinate_visit_schedule}
+\end{result}
