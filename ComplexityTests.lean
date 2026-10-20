@@ -80,6 +80,7 @@ import ComplexityTests.FourierLearning
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
+import ComplexityTests.FusionConondeterministic
 import ComplexityTests.FusionConsistency
 import ComplexityTests.FusionCyclic
 import ComplexityTests.FusionGraph
