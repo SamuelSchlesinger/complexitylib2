@@ -359,6 +359,7 @@ public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.BPP.Collapse
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
+public import Complexity.Computability.Complexity.Classes.BPP.KarpLipton
 public import Complexity.Computability.Complexity.Classes.BPP.Reduction
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy
 public import Complexity.Computability.Complexity.Classes.CeqP
@@ -401,6 +402,8 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Counting
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
+public import Complexity.Computability.Complexity.Classes.Oracle.PP
+public import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
 public import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 public import Complexity.Computability.Complexity.Classes.Oracle.Space
 public import Complexity.Computability.Complexity.Classes.Oracle.TQBF
@@ -426,6 +429,7 @@ public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.RP.Closure
 public import Complexity.Computability.Complexity.Classes.SBP
 public import Complexity.Computability.Complexity.Classes.SPP
+public import Complexity.Computability.Complexity.Classes.SPP.FewP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
@@ -448,6 +452,7 @@ public import Complexity.Computability.Complexity.Classes.Toda.Isolation
 public import Complexity.Computability.Complexity.Classes.UP
 public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
+public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 public import Complexity.Computability.Complexity.Classes.WPP
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses

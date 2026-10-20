@@ -41,8 +41,8 @@ polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are impl
 The next counting milestones remain the nondeterministic-machine characterizations of
 `#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
 none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
-now have verifier-based definitions and basic closure/containment developments. Extend these
-with stronger fewness containments, counting reductions and oracle results, preserving exact
+now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and PH ⊆ P^#P ⊆ P^PP are proved. Extend these
+with counting reductions and further oracle results (P^PP ⊆ P^#P is open), preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions and elementary containments/closures.
@@ -263,8 +263,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   [gap-preserving reductions](Complexity/Computability/PCP/Approximation.lean) and certified PCP
   construction; retain the exact gap and reduction runtime.
 * **Randomized communication and information.** The `Ω(n)` bounded-error randomized disjointness
-  lower bound is [proved](Complexity/Computability/Communication/Disjointness.lean); derive
-  Raz–Wigderson's monotone depth bound for matching from it. Develop
+  lower bound is [proved](Complexity/Computability/Communication/Disjointness.lean); Raz–Wigderson's
+  monotone depth bound is [proved](Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean)
+  for bipartite matching (general graphs remain). Develop
   information complexity and its reductions to streaming and sketching lower bounds.
 * **List decoding.** Extend [Sudan's Reed–Solomon list-decoding theorem](Complexity/Foundations/Data/Code/Sudan.lean)
   to Guruswami–Sudan list decoding. Keep interpolation, list-size/agreement guarantees and

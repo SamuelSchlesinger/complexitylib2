@@ -31,6 +31,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 * `Cslib.BitString.exists_take_ofFn_iff`, `Cslib.BitString.forall_take_ofFn_iff`: quantifying over
   longer strings through their prefixes.
 * `Cslib.BitString.listRows_eq_ofFn`: agreement with the finite block representation.
+* `Cslib.BitString.listRows_succ_append`: the rows of a word whose first row is given.
 * `Cslib.BitString.ofFn_blocksEquiv_symm`: packing fixed-width rows is list concatenation.
 
 ## References
@@ -163,5 +164,15 @@ theorem listRows_eq_ofFn (count width : ℕ) (word : List Bool) :
   intro row hleft hright
   simpa only [listRows, List.getElem_map, List.getElem_range, List.getElem_ofFn] using
     listRow_eq_ofFn width ⟨row, by simpa using hright⟩ word
+
+/-- The rows of a word starting with a full row `u` are `u` followed by the rows of the rest. -/
+theorem listRows_succ_append (count width : ℕ) {u : List Bool} (hu : u.length = width)
+    (v : List Bool) : listRows (count + 1) width (u ++ v) = u :: listRows count width v := by
+  simp only [listRows, List.range_succ_eq_map, List.map_cons, List.map_map]
+  congr 1
+  · simp [listRow, ← hu]
+  · refine List.map_congr_left fun row _ => ?_
+    simp only [Function.comp_apply, listRow, Nat.succ_mul, ← List.drop_drop, Nat.add_comm _ width]
+    rw [← hu, List.drop_left]
 
 end Cslib.BitString

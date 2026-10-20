@@ -709,3 +709,34 @@ unnormalized edge expansion in the Tseitin bounds).
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 9: monotone depth of bipartite matching (2026-10-19)
+
+Integrated `85a17075` (disjointness milestone 2 and milestone-1 cleanups), adding "Monotone depth of
+bipartite perfect matching" (`communication.tex`). Existing disjointness links stay pinned to
+`aba42b50`, where they resolve.
+
+Independent correctness and API reviews of `aba42b50..85a17075`: APPROVE (matching function, KW
+game, gadgets, symmetry argument and constants checked; milestone-1 headline statements unchanged
+under the renames). The entry states the bipartite scope and the intermediate reduction, as the
+reviewer suggested. Non-blocking findings were returned to the author.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 10: class collapses and counting containments (2026-10-19)
+
+Integrated `38bfe757` (`class-corollaries`), adding "SAT in BPP collapses the hierarchy"
+(`structure.tex`) and "Toda's theorem with a PP oracle", "Easy oracles and the Valiant--Vazirani
+collapse" and "FewP is in SPP" (`randomness.tex`), and pointing the bounded-ambiguity entry to the
+FewP containment.
+
+Independent correctness and API reviews of `f91c5eda`: the Lean was approved (P^PP is the standard
+class; the binary search, oracle lowness, PromiseP hypothesis and FewP gap function were checked);
+two blocking documentation findings: FewP ⊆ SPP was credited to the wrong papers and a docstring
+claimed an equality where an inclusion was proved. The delta review of `f91c5eda..38bfe757`
+approved both fixes (Köbler–Schöning–Toda–Torán 1992 verified against Crossref; the equality is now
+proved) and the non-blocking follow-ups.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
