@@ -505,6 +505,7 @@ public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 public import Complexity.Computability.Complexity.Classes.WPP
+public import Complexity.Computability.Complexity.Classes.WPP.Bounded
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
 public import Complexity.Computability.Complexity.Classes.WPP.TwoSided
 public import Complexity.Computability.Complexity.Classes.ZPP
@@ -1294,6 +1295,7 @@ public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
+public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
 public import Complexity.Logics.FirstOrder.Problems.ColoringReduction

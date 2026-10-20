@@ -162,6 +162,7 @@ import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedFirstOrder
+import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTuples
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
@@ -279,6 +280,7 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
+import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
