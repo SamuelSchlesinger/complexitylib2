@@ -554,6 +554,43 @@ adaptive oracle closure or PP-lowness.
 \end{result}
 
 \begin{result}
+\subsection{Truth-table closure of wide-gap classes}
+Fix injectively encoded input and query types. A polynomial-time truth-table
+reduction consists of a query count $r(x)$ computed in polynomial time with unary
+output, a total jointly polynomial-time generator $q(x,i)$ with unary $i$, and a
+polynomial-time Boolean combiner $d(x,w)$. All queries are fixed independently of
+the answers. For either $\mathcal C=\cc{WPP}$ or $\mathcal C=\cc{LWPP}$,
+\[
+B\in\mathcal C\quad\Longrightarrow\quad
+\bigl\{x:d\bigl(x,(\mathbf1_B(q(x,i)))_{i<r(x)}\bigr)=1\bigr\}\in\mathcal C.
+\]
+The generator is defined at every unary index; only indices below $r(x)$ are used.
+The count and individual query lengths may vary between inputs of the same
+encoded length. With no queries, the combiner receives the empty word and may
+still depend on $x$. More generally, the same conclusion holds for any single
+jointly uniform indexed language $A(x,i)$ in the class, without an explicit query
+reduction.
+
+The WPP proof adapts Spakowski--Thakur--Tripathi's selected-factor counting
+argument.\citep[Theorem 5.6(a)]{SpakowskiThakurTripathi2005}
+For LWPP, many-one closure first normalizes the varying query lengths for the
+joint family. The possible prefix-product targets for varying $r(x)$ are then
+normalized by polynomial-family robustness, as in the bounded-closure result
+above. This LWPP proof is a deduction from Fenner--Fortnow--Kurtz counting algebra
+and Hemaspaandra--Hemaspaandra--Spakowski--Watanabe robustness.
+\citep{FennerFortnowKurtz1994,HemaspaandraEtAl2018}
+The results concern the encoded verifier classes and nonadaptive batch reduction
+interface. They do not prove adaptive WPP closure, the source's separate
+UP-oracle containment, or oracle lowness; the source's Theorem 5.9 gives a
+relativized obstruction to adaptive WPP closure.
+\declat{5df0e7da9798d62d5506dc90e4cb3c2f381b82d9}{Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean}{189}{Cslib.Complexity.PolyTimeTruthTableReducible.mem_WPP}
+\declat{5df0e7da9798d62d5506dc90e4cb3c2f381b82d9}{Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean}{202}{Cslib.Complexity.PolyTimeTruthTableReducible.mem_LWPP}
+\declat{5df0e7da9798d62d5506dc90e4cb3c2f381b82d9}{Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean}{132}{Cslib.Complexity.truthTable_mem_WPP}
+\declat{5df0e7da9798d62d5506dc90e4cb3c2f381b82d9}{Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean}{151}{Cslib.Complexity.truthTable_mem_LWPP}
+\declat{5df0e7da9798d62d5506dc90e4cb3c2f381b82d9}{Complexity/Computability/Complexity/Reduction/TruthTable.lean}{48}{Cslib.Complexity.PolyTimeTruthTableReducible}
+\end{result}
+
+\begin{result}
 \subsection{Small bounded-error and almost-wide counting}
 For every fixed injective encoding,
 \[

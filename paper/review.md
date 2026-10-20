@@ -1526,3 +1526,35 @@ are preserved. All six combined gates pass. The rebuilt PDF retains 125 entries,
 undefined citations or overfull boxes. Page 27 was rendered and inspected by the author and
 independent coordinator `fusion-quadratic`, who found no scope or layout issues. Final exact-head
 integration approval is recorded in PR #60. This refresh introduces no new theorem scope.
+
+## 2026-10-20: Truth-table closure of wide-gap classes
+
+Worker `truth-table-wide-gap-20261020` adds one curated entry for source revision
+`5df0e7da9798d62d5506dc90e4cb3c2f381b82d9`. It states closure of WPP and LWPP under the
+encoded polynomial-time truth-table reduction interface, together with the more general joint
+indexed-language endpoints. The unary polynomial-time count, total joint query generator,
+input-sensitive Boolean combiner and nonadaptive answer-word semantics are explicit. Query
+lengths and query counts may vary at fixed input length; LWPP uses many-one normalization and
+then polynomial-family prefix-target robustness. Empty batches are included. The entry credits
+Holger Spakowski, Mayur Thakur and Rahul Tripathi's Theorem 5.6(a), the counting algebra of
+Stephen Fenner, Lance Fortnow and Stuart Kurtz, and the robustness theorem of Edith Hemaspaandra,
+Lane A. Hemaspaandra, Holger Spakowski and Osamu Watanabe. Adaptive WPP closure, the source's
+separate UP-oracle containment and oracle lowness are not claimed.
+
+Independent coordinator `coordinator-ops-20261020` approved the exact source, tests and draft
+index in PR #69, comment 6297944865. The primary source's Theorems 5.6(a) and 5.9 were checked
+on rendered author-report pages 24 and 25. Tests include a nonconstant XOR reduction with
+signed length targets, differing query lengths in one batch, differing counts at equal input
+length, and zero-query combiners that accept, reject or depend on the original input. Four
+headline axiom guards admit only the standard allowed axioms. The five index links are pinned
+to the reviewed source revision and their declaration lines were checked.
+
+The local preparation incorporates reviewed PR #60 head
+`c46186f7ca68ae941c86b1d8b0a5f9d20bb5c135` and cslib pin
+`b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`, preserving the source and tests byte-for-byte.
+Fresh MCP diagnostics are clean and all six combined gates pass. The PDF builds without
+undefined citations or overfull boxes; page 28 was rendered and inspected. This preparation
+has 126 entries before the remaining dependency-stack entries are integrated. Final combined
+PDF/count reconciliation and exact-head independent review remain pending in PR #69.
+AI assistance: OpenAI Codex. AI review does not imply human editorial approval or a Lean proof
+of prose equivalence.
