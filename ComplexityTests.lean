@@ -58,6 +58,7 @@ import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine
 import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
+import ComplexityTests.CountingVerifier
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization

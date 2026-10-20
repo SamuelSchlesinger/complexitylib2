@@ -23,8 +23,9 @@ The clock counts native transitions. Only branches halted by that clock are coun
 `HaltsWithin` hypothesis additionally guarantees that every branch halts without getting stuck,
 and makes both counts stable at larger clocks. No all-branch halting assumption is needed merely
 to count bounded terminal branches. The machine, finite control, number of tapes and block width
-are fixed before the input is supplied. The reverse verifier-to-machine construction and the full
-bidirectional #P/GapP machine characterizations remain separate work.
+are fixed before the input is supplied. `Classes.SharpP.Characterization` supplies the reverse
+verifier construction and the bidirectional #P characterization. The signed reverse GapP
+construction remains separate work.
 
 ## Main results
 

@@ -229,4 +229,15 @@ theorem countP_runList (machine : MultiTapeCTM k Symbol State) (verdict : List S
       congr 1
       apply List.ext_getElem <;> simp
 
+/-- When all branches halt, counting output occurrences is exactly the native terminal count. -/
+theorem HaltsWithin.branchCount_eq_countP {machine : MultiTapeCTM k Symbol State}
+    {fuel : ℕ} {cfg : Cfg k Symbol State input} (h : machine.HaltsWithin fuel cfg)
+    (verdict : List Symbol → Bool) :
+    machine.branchCount verdict fuel cfg = (machine.runList fuel cfg).countP
+      (fun final => verdict final.output) := by
+  rw [← countP_runList]
+  apply List.countP_congr
+  intro final hfinal
+  simp [h.halted_of_mem_runList hfinal]
+
 end Turing.MultiTapeCTM
