@@ -1000,7 +1000,7 @@ public import Complexity.Foundations.BooleanAnalysis.HadamardTester
 public import Complexity.Foundations.BooleanAnalysis.HammingFourier
 public import Complexity.Foundations.BooleanAnalysis.HarmonicMean
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity
-public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Influence
+public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Derivative
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Tensorization
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.TwoPoint

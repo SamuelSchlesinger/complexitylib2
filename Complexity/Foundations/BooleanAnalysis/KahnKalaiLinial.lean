@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity
-import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Influence
 import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
