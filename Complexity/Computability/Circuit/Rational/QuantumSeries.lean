@@ -216,7 +216,8 @@ theorem embDomain_succ_smul_geometricPowers :
   apply SummableFamily.ext
   rintro (_ | n)
   · simp [hx]
-  · -- FIXME: smul_eq_mul introduces type confusion between HahnModule and HahnSeries.
+  · -- `smul_eq_mul` is excluded: it would rewrite the `HahnModule` action as multiplication of
+    -- `HahnSeries`, mixing up the two types.
     simp [embDomain_apply, of_symm_smul_of_eq_mul, geometricPowers_of_orderTop_pos hx, pow_succ',
       -smul_eq_mul]
 

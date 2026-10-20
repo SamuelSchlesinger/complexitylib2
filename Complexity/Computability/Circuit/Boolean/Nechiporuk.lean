@@ -219,8 +219,8 @@ private theorem four_mul_card_unaryClosure_le (harity : ∀ op, σ.Arity op ≤ 
       exact (show 4 * _ ≤ 8 by omega).trans (le_max_left _ _)
     · exact ih j hj
 
-/-- **Nechiporuk's lemma**, sharp form: a formula over a basis of fan-in at most two with `l ≥ 1`
-leaves labelled by bits of `Y` has at most `16 ^ l / 4` subfunctions on `Y`. -/
+/-- **Nechiporuk's lemma**, refined constant: a formula over a basis of fan-in at most two with
+`l ≥ 1` leaves labelled by bits of `Y` has at most `16 ^ l / 4` subfunctions on `Y`. -/
 theorem four_mul_card_subfunctions_le (harity : ∀ op, σ.Arity op ≤ 2) (I : Interpretation σ Bool)
     (F : Formula σ n) {Y : Finset (Fin n)} (hl : F.leafSizeIn Y ≠ 0) :
     4 * #(subfunctions (F.eval I) Y) ≤ 16 ^ F.leafSizeIn Y := by
