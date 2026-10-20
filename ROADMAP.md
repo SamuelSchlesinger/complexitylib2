@@ -318,6 +318,11 @@ of the handover. The work below remains available for subsequent, independently 
      predicate explicitly excludes stuck states. This is the combinatorial prerequisite (#93),
      not an efficient binary verifier. The next endpoint (#92) must certify the actual binary
      checker in polynomial time with fixed finite control/alphabet and explicit certificate length.
+     The [binary-guess scanner](Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean)
+     supplies one terminal branch per Boolean word of the input length, with an exact `n + 1`
+     clock and singleton halt. Its shared FreeM/List execution preserves each word's multiplicity.
+     For the reverse direction, construct and charge witness-length preparation and singleton
+     deterministic verifier composition; the scanner alone does not establish that direction.
      Prove both directions of equivalence with polynomial-time machines counting accepting
      branches and accepting-minus-rejecting branches, respectively. Reuse the
      [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
