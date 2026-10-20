@@ -464,9 +464,12 @@ space bounds. Further class-level work needs resource certificates for the actua
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
   linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
-* Reingold's theorem: [USTCON ∈ L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
-  is proved for the adjacency-matrix encoding; an edge-list variant by a logspace reduction, a
-  definition of SL with SL = L, and sharing the unary-header injectivity lemma with TreeEval remain;
+* Reingold's theorem: [USTCON ∈ L and SL = L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
+  are proved for the adjacency-matrix encoding (with `SL` defined by logspace many-one reducibility
+  to `USTCON`, completeness of `USTCON` for `SL` and `L`, and the unary-header injectivity lemma
+  shared with `TreeEval` in [List/Basic.lean](Complexity/Foundations/Data/List/Basic.lean)); a
+  symmetric-Turing-machine model of `SL` and an edge-list variant of `USTCON` by a logspace
+  reduction remain;
 * `NL = coNL`, building on logspace composition, `NL ⊆ P` and Savitch; `PH ⊆ PSPACE` is
   already proved by evaluating quantified predicates in
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);
