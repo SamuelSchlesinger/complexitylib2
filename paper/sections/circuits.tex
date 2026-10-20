@@ -249,6 +249,70 @@ semantic rather than algorithmically certified.\citep{Schlesinger2026Algebraic}
 \end{result}
 
 \begin{result}
+For programs over the real-weight scalar-activation basis (where each gate
+applies an arbitrary scalar activation $\sigma_j:\mathbb R\to\{0,1\}$ to its
+weighted sum and standard threshold gates embed via $t\mapsto\mathbf 1[\theta\le t]$),
+if each input-reading gate $j\in I(p)$ has activation changing at most $T_j$
+times along nondecreasing sequences and a fixed Boolean readout of the gate
+values computes a two-sided $K$-rectangle-free function $f$ on $n$ bits, then
+\[
+2^n < 4K^2\prod_{j\in I(p)}\max(1,4T_j).
+\]
+For standard real-weight threshold programs, write $S_j\subseteq[n]$ for the
+set of original inputs on which gate $j$ has a nonzero aggregated coefficient
+and $I(p)=\{j:S_j\ne\emptyset\}$. For any coordinate split $U\subseteq[n]$ and
+subsets $A\subseteq U$, $B\subseteq U^c$ of coordinates fixed to false, median
+cuts extract a rectangle $P\times Q$ on which the entire gate-evaluation vector
+is constant, with
+\[
+2^{|U|-|A|}\le |P|\,2^{|\{j:\,S_j\cap U\not\subseteq A\}|},
+\qquad
+2^{|U^c|-|B|}\le |Q|\,2^{|\{j:\,S_j\cap U^c\not\subseteq B\}|}.
+\]
+Taking $A=B=\emptyset$ gives the cut lemma; when $f$ is two-sided
+$K$-rectangle-free with $K\le 2^k$, every split $U$ satisfies
+$|U|<|\{j:S_j\cap U\ne\emptyset\}|+k$ or
+$|U^c|<|\{j:S_j\cap U^c\ne\emptyset\}|+k$, and a balanced split yields
+$n\le 2(|I(p)|+k)$. When every gate has $|S_j|\le 2$, connected components of
+the input-support graph yield a non-crossing split for any $L\le n-|I(p)|$
+with $|U|=|\{j:\emptyset\ne S_j\subseteq U\}|+L$, implying $n<|I(p)|+2L$
+whenever $K\le 2^L$. More generally, if $F\subseteq[n]$ and pairwise disjoint
+blocks $\mathcal B$ cover $[n]\setminus F$ so that every gate satisfies
+$S_j\subseteq F$ or $S_j\setminus F\subseteq b$ for some $b\in\mathcal B$, and
+every block $b\in\mathcal B$ has excess $|b|-e_b\le M$ where
+$e_b=|\{j:S_j\not\subseteq F\wedge S_j\setminus F\subseteq b\}|$, then
+$n<|F|+|I(p)|+M+2k$ whenever $K\le 2^k$. Single-output circuit corollaries hold
+whenever the output wire selects a gate. As above, the rectangle-freeness
+hypothesis on both fibers is required and real arithmetic is semantic rather
+than algorithmically certified.\citep{Schlesinger2026Algebraic}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{60}{Cslib.ChangesAtMost.map}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{66}{Cslib.Circuits.Boolean.WeightedThreshold.ActivationOp}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{86}{Cslib.Circuits.Boolean.WeightedThreshold.ofWeightedThreshold}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{154}{Cslib.Circuits.Boolean.WeightedThreshold.activationInputGates}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{231}{Cslib.Circuits.Boolean.WeightedThreshold.activationBlockDecomposition}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{247}{Cslib.Circuits.Boolean.WeightedThreshold.cost_activationBlockDecomposition}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{267}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_activations}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean}{279}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_activations}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{72}{Cslib.Circuits.Boolean.WeightedThreshold.inputSupport}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{167}{Cslib.Circuits.Boolean.WeightedThreshold.exists_median}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{451}{Cslib.Circuits.Boolean.WeightedThreshold.exists_rectangle_of_cut_with_fixed}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{466}{Cslib.Circuits.Boolean.WeightedThreshold.exists_rectangle_of_cut}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{484}{Cslib.Circuits.Boolean.WeightedThreshold.exists_rectangle_of_split}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{549}{Cslib.Circuits.Boolean.WeightedThreshold.lt_of_split}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{565}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_split}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{580}{Cslib.Circuits.Boolean.WeightedThreshold.le_two_mul_add}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean}{597}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_le_two_mul_add}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{77}{Cslib.Circuits.Boolean.WeightedThreshold.supportGraph}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{236}{Cslib.Circuits.Boolean.WeightedThreshold.exists_split_of_inputSupport_card_le_two}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{320}{Cslib.Circuits.Boolean.WeightedThreshold.lt_of_inputSupport_card_le_two}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{349}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_inputSupport_card_le_two}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{365}{Cslib.Circuits.Boolean.WeightedThreshold.exists_subset_sum_ge}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{409}{Cslib.Circuits.Boolean.WeightedThreshold.residualGates}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{481}{Cslib.Circuits.Boolean.WeightedThreshold.lt_of_blocks}
+\declat{46d03882437efe8d2c6aa5cc4b95a1f1a8dd1838}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean}{584}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_blocks}
+\end{result}
+
+\begin{result}
 \subsection{Exact parity formula depth at powers of two}
 Let $d(f)$ be minimum De Morgan formula depth, counting binary AND/OR gates
 and making negations free. For $n\ge1$,
