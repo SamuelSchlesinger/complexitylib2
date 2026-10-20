@@ -69,6 +69,11 @@ def guessMachine : MultiTapeCTM 0 Bool Unit where
 
 namespace GuessMachine
 
+/-- Every scanner local view has two bit occurrences or one final halt occurrence. -/
+theorem nonblocking : guessMachine.Nonblocking := by
+  intro state symbol work
+  cases symbol <;> simp [guessMachine]
+
 /-- The scanner at a position in the input, with its current output prefix. -/
 def config (input : List Bool) (state : Option Unit) (index : ℕ) (output : List Bool)
     (h : index ≤ input.length) : Cfg 0 Bool Unit input where
