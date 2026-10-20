@@ -180,13 +180,23 @@ of the handover. The work below remains available for subsequent, independently 
      inside the interpreted domain, and native formula/sentence truth-preserving pullback.
      [Ordered/Constants](Complexity/Logics/FirstOrder/Ordered/Constants.lean) supplies valid
      target `0`/`1`/`max` for every canonical structure with `n ≥ 2`.
-     **Next milestones:** lexicographic tuple numbering and numeric lifting; the ordered
-     logspace encoding bridge; then the projection and NL/P completeness results.
+     **Full-domain tuple-order prerequisite completed (#43):**
+     [Ordered/Tuple](Complexity/Logics/FirstOrder/Ordered/Tuple.lean) gives the arbitrary-base
+     lexicographic rank bijection and exact first-difference order, reusing the existing
+     colexicographic index by coordinate reversal.
+     [Ordered/TupleInterpretation](Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean)
+     defines quantifier-free strict/weak order and the canonical full-domain constants, with
+     proved unique selection and ranks `0`, `1`, `n^k - 1` for positive dimension.
+     **Next milestones:** successor and arbitrary-base BIT lifting; numeric-preserving
+     composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
-     (Immerman, Remark 1.32). A general constructor supplying numeric definitions for every
-     tuple dimension still needs the lifting theorem of Exercise 1.33; base-`n` tuples cannot
-     simply be identified with concatenated binary strings.
+     (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
+     tuple universe in every dimension still needs Exercise 1.33(3); base-`n` tuples
+     cannot simply be identified with concatenated binary strings. The full-domain hypothesis
+     matters: the paragraph after Exercise 1.33 warns that canonical BIT on an arbitrary
+     definable restricted domain need not be first-order definable. Restricted-domain numeric
+     preservation therefore requires its own explicit definitions and certificate.
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
