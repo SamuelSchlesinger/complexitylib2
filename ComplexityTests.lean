@@ -173,6 +173,7 @@ import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
 import ComplexityTests.OrderedFirstOrder
+import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTupleBit
