@@ -33,6 +33,8 @@ state is a separate obligation of a higher-level composition compiler.
   complete program is unchanged, up to embedding its control states.
 * `Turing.MultiTapeMachine.run_interpret_runConfigFrom_seq`: the joint distribution of a
   sequential run is the monadic composition of the two phases.
+* `Turing.MultiTapeMachine.interpret_runConfigFrom_seq_list`: exact List bind, including repeated
+  equal configurations, under the two phase halting bounds.
 * `Turing.MultiTapeMachine.toTM_seq`: the deterministic compiler is exactly upstream's `seq`.
 
 ## References
@@ -171,6 +173,62 @@ theorem toTM_seq (first : MultiTapeMachine k Symbol State₀ Empty Id)
     cases second.tr state symbol work Empty.elim with
     | step action symbol move => rfl
     | query oracle next => exact oracle.elim
+
+/-- List interpretation of sequencing is exact list bind, retaining repeated equal endpoints.
+The phase bounds are actual halting bounds. Excluding stuck branches is a separate obligation,
+since an empty interpreted choice has no endpoints. -/
+theorem interpret_runConfigFrom_seq_list (oracle : (q : Query) → List (spec q))
+    (cfg : Config k Symbol State₀ Oracle input) (firstTime secondTime : ℕ)
+    (hfirst : ∀ result ∈ OracleComp.interpret oracle
+      (first.runConfigFrom choose query firstTime cfg), result.tapes.state = none)
+    (hsecond : ∀ result ∈ OracleComp.interpret oracle
+      (first.runConfigFrom choose query firstTime cfg),
+      ∀ final ∈ OracleComp.interpret oracle
+        (second.runConfigFrom choose query secondTime (start second result)),
+        final.tapes.state = none) :
+    OracleComp.interpret oracle ((first.seq second).runConfigFrom choose query
+      (firstTime + secondTime) (left second cfg)) =
+      (OracleComp.interpret oracle (first.runConfigFrom choose query firstTime cfg)).flatMap
+        (fun result => (OracleComp.interpret oracle
+          (second.runConfigFrom choose query secondTime (start second result))).map right) := by
+  induction firstTime generalizing cfg with
+  | zero =>
+    have hhalt := hfirst cfg (by simp)
+    simp only [Nat.zero_add, runConfigFrom_zero, OracleComp.interpret_pure,
+      List.pure_def, List.flatMap_singleton]
+    rw [left_halted second cfg hhalt, Sequential.runConfigFrom_right first second choose hchoose,
+      OracleComp.interpret_map]
+    rfl
+  | succ firstTime ih =>
+    by_cases hhalt : cfg.tapes.state = none
+    · have hsecond' := hsecond cfg (by simp [hhalt])
+      simp only [runConfigFrom_halted first choose query _ cfg hhalt, OracleComp.interpret_pure,
+        List.pure_def, List.flatMap_singleton]
+      rw [left_halted second cfg hhalt, Sequential.runConfigFrom_right first second choose hchoose,
+        OracleComp.interpret_map, Nat.add_comm (firstTime + 1) secondTime,
+        interpret_runConfigFrom_add_of_halted_list second choose query oracle _
+          secondTime (firstTime + 1) hsecond']
+      rfl
+    · have hsplit : firstTime + 1 = 1 + firstTime := by lia
+      have hstep : firstTime + 1 + secondTime = 1 + (firstTime + secondTime) := by lia
+      rw [hstep, runConfigFrom_add,
+        Sequential.runConfigFrom_one first second choose hchoose query cfg hhalt,
+        OracleComp.interpret_bind, OracleComp.interpret_map]
+      change List.flatMap _ (List.map _ _) = _
+      rw [List.flatMap_map, hsplit, runConfigFrom_add, OracleComp.interpret_bind]
+      change List.flatMap _ _ = List.flatMap _ (List.flatMap _ _)
+      rw [List.flatMap_assoc]
+      apply List.flatMap_congr
+      intro next hnext
+      apply ih
+      · intro final hfinal
+        apply hfirst final
+        rw [hsplit, runConfigFrom_add, OracleComp.interpret_bind]
+        exact List.mem_flatMap.mpr ⟨next, hnext, hfinal⟩
+      · intro final hfinal
+        apply hsecond final
+        rw [hsplit, runConfigFrom_add, OracleComp.interpret_bind]
+        exact List.mem_flatMap.mpr ⟨next, hnext, hfinal⟩
 
 /-- Sequential halting bounds add even when the first stopping time depends on random choices.
 The equality retains the final configuration and the interpreter's private state. -/

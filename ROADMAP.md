@@ -340,12 +340,17 @@ of the handover. The work below remains available for subsequent, independently 
      The [binary-guess scanner](Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean)
      supplies one terminal branch per Boolean word of the input length, with an exact `n + 1`
      clock and singleton halt. Its shared FreeM/List execution preserves each word's multiplicity.
-     Witness-length preparation from the encoded instance and singleton deterministic verifier
-     composition still need actual constructions and charged bounds; the scanner alone does not
-     establish the reverse direction.
-     The reverse parsimonious verifier-to-machine construction, count-preserving deterministic
-     composition and the resulting bidirectional characterizations remain open. Reuse the
-     [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
+     The [List/native execution bridge](Complexity/Computability/Machines/Turing/MultiTape/Counting/Execution.lean),
+     [singleton deterministic lift](Complexity/Computability/Machines/Turing/MultiTape/Counting/Deterministic.lean)
+     and [shared-tape sequencing laws](Complexity/Computability/Machines/Turing/MultiTape/Counting/Sequential.lean)
+     now preserve exact occurrence multiplicities and add actual all-branches clocks (#110).
+     The sequencing bound explicitly assumes nonempty transition lists at every local view;
+     the actual scanner and singleton lift satisfy this condition. This is shared-tape
+     sequencing, without preparing or resetting a continuation's input.
+     Witness-length and frame preparation from the encoded instance, charged buffered verifier
+     composition, the signed GapP routing and the resulting bidirectional characterizations
+     remain open in [#106](https://github.com/SamuelSchlesinger/complexitylib2/issues/106).
+     Reuse the [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
      but preserve exact path multiplicities through choices, halting and padding. Do not collapse
      distinct nondeterministic branches with the same successor; existential witness equivalence
      is insufficient.
@@ -415,11 +420,13 @@ Jukna coverage below is an additional target beyond the V1 port:
   growth. Carry over the remaining extractor developments, recording each endpoint's hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
-  The exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
-  and [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
-  (including the single-direction, direction-run, and multilevel threshold capacity corollaries)
-  are proved. Port v1's remaining gate-count consequences (mixed activation costs, cut/component/excess
-  bounds) and explicit source-reduction family.
+  The exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean),
+  [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
+  (including the single-direction, direction-run, and multilevel threshold capacity corollaries),
+  [mixed-activation capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean),
+  [median-cut rectangle and cut bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean),
+  and [fan-in-two component and block-excess bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean)
+  are proved. Port v1's explicit source-reduction family.
   Further manuscript work includes scalar enumerative coding, pending-bias simulation,
   entropy and asymptotic activity bounds, geometric cutting, integer-summary counting,
   and quadratic-potential representations.

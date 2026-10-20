@@ -28,6 +28,8 @@ of either handler.
 
 * `Turing.MultiTapeMachine.run_interpret_runConfigFrom_add_of_halted`: extra fuel has no effect
   once every supported run has halted.
+* `Turing.MultiTapeMachine.interpret_runConfigFrom_add_of_halted_list`: the corresponding
+  occurrence-preserving equality for List interpretation.
 * `Turing.MultiTapeMachine.HaltsWithin.mono`: a halting bound remains valid when increased.
 
 ## References
@@ -76,6 +78,26 @@ theorem run_interpret_runConfigFrom_add_of_halted {OracleState : Type} {input : 
   apply Probability.PMF.bind_congr_on_support
   rintro ⟨final, s'⟩ hfinal
   simp [runConfigFrom_halted machine choose query _ final (hhalt _ hfinal)]
+
+/-- Enumerating finite responses preserves every endpoint occurrence after halting.
+Unlike a probability interpretation, a List interpreter may have no outcomes; this equality
+does not itself assert that the machine cannot get stuck. -/
+theorem interpret_runConfigFrom_add_of_halted_list {input : List Symbol}
+    (oracle : (q : Query) → List (spec q))
+    (cfg : Config k Symbol State Oracle input) (fuel padding : ℕ)
+    (hhalt : ∀ final ∈ OracleComp.interpret oracle
+      (machine.runConfigFrom choose query fuel cfg), final.tapes.state = none) :
+    OracleComp.interpret oracle (machine.runConfigFrom choose query (fuel + padding) cfg) =
+      OracleComp.interpret oracle (machine.runConfigFrom choose query fuel cfg) := by
+  rw [runConfigFrom_add, OracleComp.interpret_bind]
+  change List.flatMap _ _ = _
+  calc
+    _ = (OracleComp.interpret oracle
+        (machine.runConfigFrom choose query fuel cfg)).flatMap (fun final => [final]) := by
+      apply List.flatMap_congr
+      intro final hfinal
+      simp [runConfigFrom_halted machine choose query _ final (hhalt final hfinal)]
+    _ = _ := by simp
 
 variable {machine choose query}
 

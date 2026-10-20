@@ -53,6 +53,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
 import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
+import ComplexityTests.CountingExecution
 import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine
 import ComplexityTests.CountingOracleEquivalence
@@ -295,6 +296,7 @@ import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
