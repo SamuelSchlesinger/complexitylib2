@@ -16,14 +16,12 @@ import Complexity.Computability.Complexity.Reduction
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Crypto.Negligible.Basic
-import Complexity.Probability.PMF
 
 /-!
 # One-way functions separate P from NP
 
 If one-way functions exist then `P ≠ NP` [Goldreich, Chapter 2][Goldreich2001],
-[Katz and Lindell, Section 8.1][KatzLindell2020]. For a function `f` computable in polynomial
+[Katz and Lindell, Exercise 8.11][KatzLindell2020]. For a function `f` computable in polynomial
 time, the *preimage-prefix problem* (`Cslib.Crypto.preimagePrefix`) asks, given `n` in unary, an
 image `y` and a word `u`, whether some input `x` of length `n` that starts with `u` satisfies
 `f x = y`. It is in `NP`, with the missing bits of `x` as certificate
@@ -51,16 +49,21 @@ randomized version, for a decision procedure in `BPP`, is in
 
 ## Main results
 
-* `Cslib.Crypto.preimagePrefix_mem_NP`: the preimage-prefix problem of a polynomial-time
-  function is in `NP`.
+* `Cslib.Crypto.isVerifier_preimagePrefixVerifier`, `Cslib.Crypto.preimagePrefix_mem_NP`: the
+  preimage-prefix problem of a polynomial-time function is in `NP`.
 * `Cslib.Crypto.apply_preimageSearch`, `Cslib.Crypto.preimageSearch_congr`: with correct answers
   the search finds a preimage, and only the answers to its own `n` queries matter.
+* `Cslib.Crypto.computableTidilyInPolyTime_preimageSearch`,
+  `Cslib.Crypto.computableTidilyInPolyTime_preimageSearch_of_input`: the search is polynomial-time
+  when the decision procedure is.
 * `Cslib.Crypto.exists_inverse_of_preimagePrefix_mem_P`: if it is in `P`, a deterministic
   polynomial-time algorithm finds a preimage of every image.
 * `Cslib.Crypto.not_oneWay_of_lengthInverse`: an efficient deterministic inverter that is told
-  the input length refutes one-wayness.
+  the input length refutes one-wayness (`Cslib.Crypto.not_oneWay_of_inverse` for inverters
+  certified on the pair encoding).
 * `Cslib.Crypto.OneWay.preimagePrefix_notMem_P`, `Cslib.Crypto.OneWay.P_ne_NP`,
-  `Cslib.Crypto.OneWay.SAT_notMem_P`: one-way functions imply `P ≠ NP`.
+  `Cslib.Crypto.OneWay.SAT_notMem_P`, `Cslib.Crypto.not_oneWay_of_SAT_mem_P`: one-way functions
+  imply `P ≠ NP`.
 
 ## References
 
@@ -95,7 +98,7 @@ def preimagePrefixVerifier (f : List Bool → List Bool)
   decide (p.1.2.2.length ≤ p.1.1) && f (p.1.2.2 ++ p.2.take (p.1.1 - p.1.2.2.length)) == p.1.2.1
 
 /-- The unary length is at most as long as the encoded instance. -/
-theorem le_length_encPreimagePrefix (p : ℕ × List Bool × List Bool) :
+private theorem le_length_encPreimagePrefix (p : ℕ × List Bool × List Bool) :
     p.1 ≤ (encPreimagePrefix p).length := by
   simp only [length_encPair, encUnary_apply, List.length_replicate, encBits_apply]
   omega
@@ -123,6 +126,7 @@ theorem isVerifier_preimagePrefixVerifier (f : List Bool → List Bool) :
       omega
 
 /-- The verifier is polynomial-time when `f` is. -/
+@[fun_prop]
 theorem computableTidilyInPolyTime_preimagePrefixVerifier
     (hf : ComputableTidilyInPolyTime f encBits encBits) :
     ComputableTidilyInPolyTime (preimagePrefixVerifier f) (encPair encPreimagePrefix encBits)
@@ -150,6 +154,7 @@ procedure `D` for the preimage-prefix problem: `q.1` steps of `preimageSearchSte
 def preimageSearch (D : ℕ × List Bool × List Bool → Bool) (q : ℕ × List Bool) : List Bool :=
   (preimageSearchStep D q)^[q.1] []
 
+/-- The search extends the prefix by one bit at each step. -/
 theorem length_iterate_preimageSearchStep (D : ℕ × List Bool × List Bool → Bool)
     (q : ℕ × List Bool) (i : ℕ) : ((preimageSearchStep D q)^[i] []).length = i := by
   induction i with
@@ -177,7 +182,7 @@ theorem preimageSearchStep_mem {D : ℕ × List Bool × List Bool → Bool}
   · exact (hD _).2 hb
 
 /-- **Search to decision.** With a decision procedure for the preimage-prefix problem, the search
-finds a preimage of every image, of the same length as the sampled input. -/
+for a preimage of length `x.length` of `f x` finds a preimage of `f x`. -/
 theorem apply_preimageSearch {D : ℕ × List Bool × List Bool → Bool}
     (hD : ∀ p, p ∈ preimagePrefix f ↔ D p = true) (x : List Bool) :
     f (preimageSearch D (x.length, f x)) = f x := by
@@ -237,6 +242,7 @@ theorem computableTidilyInPolyTime_preimageSearch_of_input {γ : Type} {encIn : 
   · simp [preimageSearchStep]
 
 /-- **The search is polynomial-time** when the decision procedure is. -/
+@[fun_prop]
 theorem computableTidilyInPolyTime_preimageSearch {D : ℕ × List Bool × List Bool → Bool}
     (hD : ComputableTidilyInPolyTime D encPreimagePrefix encBool) :
     ComputableTidilyInPolyTime (preimageSearch D) (encPair encUnary encBits) encBits :=
@@ -256,25 +262,12 @@ theorem exists_inverse_of_preimagePrefix_mem_P (h : preimagePrefix f ∈ P encPr
 /-! ### One-way functions -/
 
 /-- **Efficient inversion refutes one-wayness.** A deterministic polynomial-time algorithm that,
-told the length of the input, finds a preimage of every image, inverts with probability one. -/
+told the length of the input, finds a preimage of every image, inverts with probability one. This
+is `Cslib.Crypto.not_oneWay_of_inverse` for an inverter certified on the pair encoding. -/
 theorem not_oneWay_of_lengthInverse (inverse : ℕ × List Bool → List Bool)
     (hinverse : ComputableTidilyInPolyTime inverse (encPair encUnary encBits) encBits)
-    (h : ∀ x, f (inverse (x.length, f x)) = f x) : ¬ OneWay f := by
-  intro hf
-  have hPPT : IsPPT encBits (fun n y => pure (inverse (n, y))) := hinverse.isPPTOn.isPPT
-  have heval (n : ℕ) :
-      ProbComp.eval (inversionGame f (fun n y => pure (inverse (n, y))) n) = PMF.pure true := by
-    have hgame : ProbComp.eval (inversionGame f (fun n y => pure (inverse (n, y))) n) =
-        (BitString.uniformList n).map fun x => f (inverse (n, f x)) == f x := by
-      simp [inversionGame]
-    rw [hgame, ← PMF.bind_pure_comp, PMF.bind_congr_on_support _ _ (fun _ => PMF.pure true)
-      fun x hx => by
-        rw [Function.comp_apply, ← BitString.length_of_mem_support_uniformList hx, h,
-          beq_self_eq_true],
-      PMF.bind_const]
-  apply not_negligible_const (c := 1) one_ne_zero
-  simpa only [Game.succProbability, heval, PMF.pure_apply_self, ENNReal.toNNReal_one] using
-    hf.inversion_negligible _ hPPT
+    (h : ∀ x, f (inverse (x.length, f x)) = f x) : ¬ OneWay f :=
+  not_oneWay_of_inverse f (fun n y => inverse (n, y)) hinverse.isPPTOn.isPPT h
 
 /-- **One-way functions have hard preimage-prefix problems**: the preimage-prefix problem of a
 one-way function is not in `P`. -/

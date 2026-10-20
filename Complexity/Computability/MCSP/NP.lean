@@ -102,18 +102,14 @@ def verifier (p : Instance × List Bool) : Bool :=
 `BitString.equivFin`. -/
 private theorem binaryValue_reverse_ofFn {n : ℕ} (y : BitString n) :
     BitString.binaryValue (List.ofFn y).reverse = BitString.equivFin n y := by
-  have hbit (b : Bool) : ((finTwoEquiv.symm b : Fin 2) : ℕ) = b.toNat := by cases b <;> rfl
   induction n with
   | zero => rfl
   | succ n ih =>
     rw [List.ofFn_succ, List.reverse_cons, BitString.binaryValue_snoc, ih fun i => y i.succ]
-    simp only [BitString.equivFin, Equiv.trans_apply, finFunctionFinEquiv_apply,
-      Fin.sum_univ_succ, Equiv.arrowCongr_apply, Function.comp_apply, Equiv.refl_symm,
-      Equiv.refl_apply, hbit, Fin.val_zero, pow_zero, Nat.mul_one, Fin.val_succ, pow_succ,
-      Finset.mul_sum]
-    rw [Nat.add_comm]
-    congr 1
-    exact Finset.sum_congr rfl fun i _ => by ring
+    have h := BitString.val_equivFin_cons (y 0) (Fin.tail y)
+    rw [Fin.cons_self_tail] at h
+    rw [h, Nat.add_comm]
+    rfl
 
 /-- The verifier reads the function of an instance from its truth table. -/
 theorem tableValue_ofFn (x : Instance) (y : BitString x.arity) :

@@ -29,6 +29,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
   ignore bits beyond their width.
 * `Cslib.BitString.exists_take_ofFn_iff`, `Cslib.BitString.forall_take_ofFn_iff`: quantifying over
   longer strings through their prefixes.
+* `Cslib.BitString.ofFn_ofList_eq_take`: the fixed-width view pads with `false` or truncates.
 * `Cslib.BitString.listRows_eq_ofFn`: agreement with the finite block representation.
 * `Cslib.BitString.listRows_succ_append`: the rows of a word whose first row is given.
 * `Cslib.BitString.ofFn_blocksEquiv_symm`: packing fixed-width rows is list concatenation.
@@ -93,6 +94,17 @@ length `k` satisfying `g` iff every string of `k` bits does. -/
 theorem forall_take_ofFn_iff {k K : ℕ} (h : k ≤ K) {g : List Bool → Prop} :
     (∀ y : BitString K, g ((List.ofFn y).take k)) ↔ ∀ y : BitString k, g (List.ofFn y) := by
   simpa only [not_exists, not_not] using (exists_take_ofFn_iff h (g := fun w => ¬g w)).not
+
+/-- Reading a word into a bit string pads it with `false` or truncates it. -/
+theorem ofFn_ofList_eq_take (n : ℕ) (word : List Bool) :
+    List.ofFn (ofList n word) = (word ++ List.replicate n false).take n := by
+  refine List.ext_getElem (by simp) fun i hi _ => ?_
+  simp only [List.length_ofFn] at hi
+  simp only [List.getElem_ofFn, List.getElem_take, ofList, List.getD_eq_getElem?_getD,
+    List.getElem_append]
+  split_ifs with hw
+  · simp [List.getElem?_eq_getElem hw]
+  · simp [List.getElem?_eq_none (by omega : word.length ≤ i)]
 
 /-- Packing fixed-width rows in the block representation is ordinary list concatenation. -/
 theorem ofFn_blocksEquiv_symm {count width : ℕ} (rows : Fin count → BitString width) :

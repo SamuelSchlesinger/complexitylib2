@@ -33,7 +33,8 @@ of the whole experiment (`exists_bind_apply_le`).
   two-stage experiments.
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
   adapted from the cslib `crypto` branch at `5ff69ca`.
-* `Cslib.Probability.PMF.bind_apply_mono_on_support`: compare two continuations at one outcome.
+* `Cslib.Probability.PMF.bind_apply_mono_on_support`,
+  `Cslib.Probability.PMF.le_bind_apply_on_support`: compare continuations at one outcome.
 * `Cslib.Probability.PMF.toOuterMeasure_bind_failure_le`,
   `toOuterMeasure_bind_failure_toReal_le`: compose failure bounds without independence,
   adapted from the cslib `crypto` branch at `5ff69ca`.
@@ -288,6 +289,17 @@ does the experiment. -/
 theorem bind_apply_of_forall (μ : PMF α) {f : α → PMF β} {b : β} {c : ℝ≥0∞}
     (h : ∀ a, f a b = c) : μ.bind f b = c := by
   simp only [PMF.bind_apply, h, ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
+
+/-- A lower bound on an outcome's probability for every possible first-stage result bounds its
+probability in the whole experiment. -/
+theorem le_bind_apply_on_support (μ : PMF α) {f : α → PMF β} {b : β} {c : ℝ≥0∞}
+    (h : ∀ a ∈ μ.support, c ≤ f a b) : c ≤ μ.bind f b := by
+  rw [PMF.bind_apply]
+  calc c = ∑' a, μ a * c := by rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
+    _ ≤ ∑' a, μ a * f a b := ENNReal.tsum_le_tsum fun a => by
+        by_cases ha : a ∈ μ.support
+        · exact mul_le_mul_right (h a ha) _
+        · simp [(PMF.apply_eq_zero_iff μ a).2 ha]
 
 /-- Increasing an outcome's probability on every possible first-stage result increases its
 probability in the whole experiment. The sample spaces may be infinite. -/

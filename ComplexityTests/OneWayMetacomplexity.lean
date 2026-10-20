@@ -17,7 +17,7 @@ deciders; one-wayness and `MCSP ∈ BPP` are open and are not instantiated. -/
 
 namespace ComplexityTests.OneWayMetacomplexity
 
-open Turing.MultiTapeTM Cslib Cslib.Crypto Cslib.Complexity
+open Turing.MultiTapeTM Cslib Cslib.Crypto Cslib.Crypto.KabanetsCai Cslib.Complexity
 
 -- The preimage-prefix problem of a concrete polynomial-time function is in `NP`.
 example : preimagePrefix (fun x => x ++ x) ∈ NP encPreimagePrefix :=
@@ -53,13 +53,22 @@ theorem preimagePrefix_const_mem_P :
     simpa using hle
   · simp only [Bool.and_eq_true, List.isEmpty_iff, decide_eq_true_eq] at h
     obtain ⟨rfl, hu⟩ := h
-    exact ⟨u ++ List.replicate (n - u.length) false, by simp; omega, List.prefix_append _ _, rfl⟩
+    refine ⟨u ++ List.replicate (n - u.length) false, ?_, List.prefix_append _ _, rfl⟩
+    simp only [List.length_append, List.length_replicate]
+    omega
 
 -- The randomized inverter applies once the preimage-prefix problem is in `BPP`.
 example : ∃ inverter : Inverter, Probability.IsPPT encBits inverter ∧
     ∀ n, 1 / 2 ≤ Game.succProbability
       (ProbComp.eval (inversionGame (fun _ => ([] : List Bool)) inverter n)) :=
   exists_inverter_of_preimagePrefix_mem_BPP (P_subset_BPP preimagePrefix_const_mem_P)
+
+-- Closure of `BPP` under reductions applies to a concrete reduction into a problem in `BPP`.
+example : {b : Bool | b = true} ∈ BPP encBool :=
+  PolyTimeReducible.mem_BPP
+    ⟨fun b => if b then (0, [], []) else (0, [true], []), ComputableTidilyInPolyTime.of_finite _,
+      fun b => by cases b <;> simp [preimagePrefix]⟩
+    (P_subset_BPP preimagePrefix_const_mem_P)
 
 -- Against a deterministic oracle, `queryTable` collects the first reply bits, `false` for an
 -- empty reply.
@@ -140,6 +149,13 @@ info: 'Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP' depends on axioms:
 #print axioms Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP
 
 /--
+info: 'Cslib.Crypto.OneWay.not_NP_subset_BPP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.not_NP_subset_BPP
+
+/--
 info: 'Cslib.Crypto.OneWay.SAT_notMem_BPP' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -147,18 +163,32 @@ info: 'Cslib.Crypto.OneWay.SAT_notMem_BPP' depends on axioms:
 #print axioms Cslib.Crypto.OneWay.SAT_notMem_BPP
 
 /--
-info: 'Cslib.Crypto.exists_complexity_restriction_le' depends on axioms:
+info: 'Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.exists_complexity_restriction_le
+#print axioms Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le
 
 /--
-info: 'Cslib.Crypto.isOraclePPT_mcspDistinguisher' depends on axioms:
+info: 'Cslib.Crypto.KabanetsCai.uniformOfFintype_map_restrictTable' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isOraclePPT_mcspDistinguisher
+#print axioms Cslib.Crypto.KabanetsCai.uniformOfFintype_map_restrictTable
+
+/--
+info: 'Cslib.Crypto.KabanetsCai.toReal_map_restrictTable_mem_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.KabanetsCai.toReal_map_restrictTable_mem_le
+
+/--
+info: 'Cslib.Crypto.KabanetsCai.isOraclePPT_mcspDistinguisher' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.KabanetsCai.isOraclePPT_mcspDistinguisher
 
 /--
 info: 'Cslib.Crypto.not_pseudorandomFunction_of_MCSP_mem_BPP' depends on axioms:
