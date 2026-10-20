@@ -244,4 +244,5 @@ import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy
