@@ -89,6 +89,21 @@ theorem card_zigzagTowerVertex (B : Type u) [Fintype B] (n : ℕ) :
     Fintype.card (ZigzagTowerVertex B n) = Fintype.card B ^ (n + 1) := by
   rw [ReingoldVertex.card, pow_succ, mul_comm]
 
+/-- Deprecated: the vertices of the tower are finite by
+`Cslib.RotationMap.ReingoldVertex.instFintype`. -/
+@[deprecated ReingoldVertex.instFintype +typeChanged (since := "2026-10-19"), instance_reducible]
+def ZigzagTowerVertex.instFintype {B : Type u} [Fintype B] (n : ℕ) :
+    Fintype (ZigzagTowerVertex B n) :=
+  ReingoldVertex.instFintype n
+
+/-- Deprecated: equality of vertices of the tower is decidable by
+`Cslib.RotationMap.ReingoldVertex.instDecidableEq`. -/
+@[deprecated ReingoldVertex.instDecidableEq +typeChanged (since := "2026-10-19"),
+  instance_reducible]
+def ZigzagTowerVertex.instDecidableEq {B : Type u} [DecidableEq B] (n : ℕ) :
+    DecidableEq (ZigzagTowerVertex B n) :=
+  ReingoldVertex.instDecidableEq n
+
 /-- The graphs of the tower grow without bound: if the base graph has at least two vertices, then
 the `(n + 1)`-st graph of the tower has more than `n` vertices. -/
 theorem lt_card_zigzagTowerVertex {B : Type u} [Fintype B] (hB : 1 < Fintype.card B) (n : ℕ) :
