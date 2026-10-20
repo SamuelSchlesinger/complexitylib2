@@ -32,35 +32,37 @@ The proof is a randomized reduction from disjointness, whose randomized complexi
 (`PublicCoin.le_mul_ecomplexityFun_disjointness_add_of_le`), to this game [RazWigderson1992],
 [Kushilevitz and Nisan, Chapter 10][KushilevitzNisan1997], here with gadgets for bipartite graphs.
 Let Alice and Bob hold sets `x, y ⊆ [m]` and fix `i₀ ∈ [m]`. Every `i` has a left vertex `bᵢ` and
-right vertices `aᵢ`, `cᵢ` (`RWVertex`, with `m + e` further left vertices and `e` further right
-ones to reach `n`). Alice's graph is a perfect matching that matches `bᵢ` to `aᵢ` when `i ∈ x` and
-to `cᵢ` otherwise (`aliceGraph`). Bob's graph omits exactly the edges from the vertices `bᵢ` with
-`i = i₀` or `i ∈ y` to the right vertices other than the `cⱼ` with `j ≠ i₀` and `j ∈ y`; the
-former outnumber the latter by one, so it has no perfect matching (`bobGraph`,
-`not_hasPerfectMatching_bobGraph`). The edges of Alice's graph missing from Bob's lie at
-`bᵢ₀` and at the `bᵢ` with `i ∈ x ∩ y` (`exists_of_aliceGraph_of_bobGraph`). With shared random
-bits the players relabel the vertices by a uniformly random pair of permutations, run a protocol
-for the game, and Bob answers that the sets are disjoint when the edge found is at `bᵢ₀` and `i₀`
-is not in both sets (`bobAnswer`, `oneRun`). On disjoint sets the answer is always right. If some
-`ℓ ≠ i₀` is in both sets, exchanging the edges of Alice's matching at `bᵢ₀` and `bℓ` preserves both
-graphs, so the edge found is at `bᵢ₀` for at most half of the relabellings
-(`two_mul_card_filter_run_oneRun_le`). Answering that the sets are disjoint only when `k`
-independent runs all say so errs with probability at most `2 ^ (-k)`, with `k (c + 1)` bits for a
-protocol of `c` bits (`solves_reduction`,
+right vertices `aᵢ`, `cᵢ` (`RazWigderson.Vertex`, with `m + e` further left vertices and `e` further
+right ones to reach `n`). Alice's graph is a perfect matching that matches `bᵢ` to `aᵢ` when `i ∈ x`
+and to `cᵢ` otherwise (`RazWigderson.aliceGraph`). Bob's graph omits exactly the edges from the
+vertices `bᵢ` with `i = i₀` or `i ∈ y` to the right vertices other than the `cⱼ` with `j ≠ i₀` and
+`j ∈ y`; the former outnumber the latter by one, so it has no perfect matching
+(`RazWigderson.bobGraph`, `RazWigderson.not_hasPerfectMatching_bobGraph`). The edges of Alice's
+graph missing from Bob's lie at `bᵢ₀` and at the `bᵢ` with `i ∈ x ∩ y`
+(`RazWigderson.exists_of_aliceGraph_of_bobGraph`). With shared random bits the players relabel the
+vertices by a uniformly random pair of permutations, run a protocol for the game, and Bob answers
+that the sets are disjoint when the edge found is at `bᵢ₀` and `i₀` is not in both sets
+(`RazWigderson.bobAnswer`, `RazWigderson.oneRun`). On disjoint sets the answer is always right. If
+some `ℓ ≠ i₀` is in both sets, exchanging the edges of Alice's matching at `bᵢ₀` and `bℓ` preserves
+both graphs, so the edge found is at `bᵢ₀` for at most half of the relabellings
+(`RazWigderson.two_mul_card_filter_run_oneRun_le`). Answering that the sets are disjoint only when
+`k` independent runs all say so errs with probability at most `2 ^ (-k)`, with `k (c + 1)` bits for
+a protocol of `c` bits (`RazWigderson.solves_reduction`,
 `ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching`). Taking `k = 6` and
 `m = n / 2` gives the bound. The constants are not optimized.
 
 ## Main definitions
 
-* `Cslib.Circuits.BipartiteMatching.aliceGraph`, `Cslib.Circuits.BipartiteMatching.bobGraph`:
-  the graphs of the reduction.
-* `Cslib.Circuits.BipartiteMatching.reduction`: the public-coin protocol for disjointness.
+* `Cslib.Circuits.BipartiteMatching.RazWigderson.aliceGraph`,
+  `Cslib.Circuits.BipartiteMatching.RazWigderson.bobGraph`: the graphs of the reduction.
+* `Cslib.Circuits.BipartiteMatching.RazWigderson.reduction`: the public-coin protocol for
+  disjointness.
 
 ## Main results
 
-* `Cslib.Circuits.BipartiteMatching.two_mul_card_filter_run_oneRun_le`: the symmetry of the
-  reduction.
-* `Cslib.Circuits.BipartiteMatching.solves_reduction`: its error.
+* `Cslib.Circuits.BipartiteMatching.RazWigderson.two_mul_card_filter_run_oneRun_le`: the symmetry
+  of the reduction.
+* `Cslib.Circuits.BipartiteMatching.RazWigderson.solves_reduction`: its error.
 * `Cslib.Circuits.ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching`: the
   Raz–Wigderson reduction.
 * `Cslib.Circuits.le_mul_ecomplexity_bipartitePerfectMatching_add`: the monotone
@@ -81,7 +83,7 @@ namespace Cslib.Circuits
 
 open Cslib.Communication Finset Probability
 
-namespace BipartiteMatching
+namespace BipartiteMatching.RazWigderson
 
 variable {m e : ℕ}
 
@@ -90,7 +92,7 @@ variable {m e : ℕ}
 /-- The vertices of the graphs of the reduction, on each side: two copies of `Fin m` and `e` extra
 vertices. On the left, `inl (inl i)` is the vertex `bᵢ` of the gadget of `i`; on the right,
 `inl (inl i)` and `inl (inr i)` are its vertices `aᵢ` and `cᵢ`. -/
-abbrev RWVertex (m e : ℕ) : Type :=
+abbrev Vertex (m e : ℕ) : Type :=
   (Fin m ⊕ Fin m) ⊕ Fin e
 
 /-- Exchange `inl i` and `inr i` exactly when the bit `x i` is zero. -/
@@ -98,44 +100,46 @@ def swapIf (x : BitString m) : Fin m ⊕ Fin m → Fin m ⊕ Fin m
   | .inl i => cond (x i) (.inl i) (.inr i)
   | .inr i => cond (x i) (.inr i) (.inl i)
 
+/-- Exchanging twice gives back the vertex. -/
 theorem swapIf_involutive (x : BitString m) : Function.Involutive (swapIf x) := by
   rintro (i | i) <;> cases h : x i <;> simp [swapIf, h]
 
 /-- Alice's perfect matching: the gadget vertex `bᵢ` is matched to `aᵢ` when `i` is in her set and
 to `cᵢ` otherwise, the other copy of `Fin m` takes the remaining vertices, and the extra vertices
 are matched to themselves. -/
-def aliceMatching (x : BitString m) : Equiv.Perm (RWVertex m e) :=
+def aliceMatching (x : BitString m) : Equiv.Perm (Vertex m e) :=
   Equiv.sumCongr (Function.Involutive.toPerm (swapIf x) (swapIf_involutive x)) (Equiv.refl _)
 
+/-- Alice matches `bᵢ` to `aᵢ` when `x i` is one and to `cᵢ` otherwise. -/
 @[simp] theorem aliceMatching_inl_inl (x : BitString m) (i : Fin m) :
     aliceMatching (e := e) x (.inl (.inl i)) = .inl (cond (x i) (.inl i) (.inr i)) :=
   rfl
 
 /-- Alice's graph: the edges of her perfect matching. -/
-def aliceGraph (x : BitString m) (p : RWVertex m e × RWVertex m e) : Bool :=
+def aliceGraph (x : BitString m) (p : Vertex m e × Vertex m e) : Bool :=
   decide (p.2 = aliceMatching x p.1)
 
 /-- The left vertices of Bob's Hall violator: the gadget vertices `bᵢ` with `i = i₀` or `i` in his
 set. -/
-def hallSet (i₀ : Fin m) (y : BitString m) : RWVertex m e → Bool
+def hallSet (i₀ : Fin m) (y : BitString m) : Vertex m e → Bool
   | .inl (.inl i) => decide (i = i₀) || y i
   | _ => false
 
 /-- Their neighbours in Bob's graph: the gadget vertices `cⱼ` with `j ≠ i₀` in his set. -/
-def coverSet (i₀ : Fin m) (y : BitString m) : RWVertex m e → Bool
+def coverSet (i₀ : Fin m) (y : BitString m) : Vertex m e → Bool
   | .inl (.inr j) => !decide (j = i₀) && y j
   | _ => false
 
 /-- Bob's graph: all edges except those from `hallSet` to right vertices outside `coverSet`. -/
-def bobGraph (i₀ : Fin m) (y : BitString m) (p : RWVertex m e × RWVertex m e) : Bool :=
+def bobGraph (i₀ : Fin m) (y : BitString m) (p : Vertex m e × Vertex m e) : Bool :=
   !hallSet i₀ y p.1 || coverSet i₀ y p.2
 
-/-- Bob's answer to an edge found by the Karchmer–Wigderson protocol: whether it is the edge of
-the gadget of `i₀` at the vertex removed from his cover, `bᵢ₀` when `i₀` is not in his set and `cᵢ₀`
-when it is. -/
-def bobAnswer (i₀ : Fin m) (y : BitString m) (p : RWVertex m e × RWVertex m e) : Bool :=
+/-- Bob's answer to an edge found by the Karchmer–Wigderson protocol, `true` meaning that the sets
+are disjoint: whether the edge starts at `bᵢ₀` and, when `i₀` is in his set, ends at `cᵢ₀`. -/
+def bobAnswer (i₀ : Fin m) (y : BitString m) (p : Vertex m e × Vertex m e) : Bool :=
   decide (p.1 = .inl (.inl i₀)) && (!y i₀ || decide (p.2 = .inl (.inr i₀)))
 
+/-- Alice's graph has a perfect matching: her matching. -/
 theorem hasPerfectMatching_aliceGraph (x : BitString m) :
     HasPerfectMatching (aliceGraph (e := e) x) :=
   ⟨aliceMatching x, fun v => by simp [aliceGraph]⟩
@@ -144,8 +148,8 @@ theorem hasPerfectMatching_aliceGraph (x : BitString m) :
 contains all its neighbours. -/
 theorem not_hasPerfectMatching_bobGraph (i₀ : Fin m) (y : BitString m) :
     ¬HasPerfectMatching (bobGraph (e := e) i₀ y) := by
-  let b : Fin m ↪ RWVertex m e := ⟨fun i => .inl (.inl i), fun i j h => by simpa using h⟩
-  let c : Fin m ↪ RWVertex m e := ⟨fun i => .inl (.inr i), fun i j h => by simpa using h⟩
+  let b : Fin m ↪ Vertex m e := ⟨fun i => .inl (.inl i), fun i j h => by simpa using h⟩
+  let c : Fin m ↪ Vertex m e := ⟨fun i => .inl (.inr i), fun i j h => by simpa using h⟩
   set B := (univ : Finset (Fin m)).filter fun j => j ≠ i₀ ∧ y j = true
   have hA : (univ : Finset (Fin m)).filter (fun i => i = i₀ ∨ y i = true) = insert i₀ B := by
     ext i
@@ -167,7 +171,7 @@ theorem not_hasPerfectMatching_bobGraph (i₀ : Fin m) (y : BitString m) :
 /-- The edges of Alice's graph missing from Bob's graph are the edges of her matching at `bᵢ` for
 `i = i₀` and for `i` in both sets. -/
 theorem exists_of_aliceGraph_of_bobGraph {x y : BitString m} {i₀ : Fin m}
-    {p : RWVertex m e × RWVertex m e} (hA : aliceGraph x p = true) (hB : bobGraph i₀ y p = false) :
+    {p : Vertex m e × Vertex m e} (hA : aliceGraph x p = true) (hB : bobGraph i₀ y p = false) :
     ∃ i, p = (.inl (.inl i), aliceMatching x (.inl (.inl i))) ∧
       (i = i₀ ∨ x i = true ∧ y i = true) := by
   obtain ⟨u, w⟩ := p
@@ -193,7 +197,7 @@ theorem exists_of_aliceGraph_of_bobGraph {x y : BitString m} {i₀ : Fin m}
 
 /-- Bob answers that the sets are disjoint exactly on the edge at `bᵢ₀`, unless `i₀` is in both
 sets. -/
-theorem bobAnswer_aliceMatching (i₀ i : Fin m) (x y : BitString m) :
+private theorem bobAnswer_aliceMatching (i₀ i : Fin m) (x y : BitString m) :
     bobAnswer i₀ y (.inl (.inl i), aliceMatching (e := e) x (.inl (.inl i))) =
       (decide (i = i₀) && !(x i₀ && y i₀)) := by
   by_cases h : i = i₀
@@ -201,26 +205,19 @@ theorem bobAnswer_aliceMatching (i₀ i : Fin m) (x y : BitString m) :
     cases hx : x i <;> cases hy : y i <;> simp [bobAnswer, hx, hy]
   · simp [bobAnswer, h]
 
-/-- A function agreeing at `a` and `b` is invariant under exchanging them. -/
-private theorem apply_swap_eq {α β : Type*} [DecidableEq α] {f : α → β} {a b : α}
-    (h : f a = f b) (z : α) : f (Equiv.swap a b z) = f z := by
-  rw [Equiv.swap_apply_def]
-  split_ifs with h₁ h₂
-  · rw [h₁, h]
-  · rw [h₂, h]
-  · rfl
-
-/-- **The symmetry of the reduction.** Exchanging the edges of Alice's matching at `bᵢ₀` and `bℓ`,
-for `ℓ` in both sets, preserves both graphs. -/
-theorem aliceGraph_swap_swap {x : BitString m} {i₀ ℓ : Fin m} (u w : RWVertex m e) :
+/-- **The symmetry of the reduction.** Exchanging the edges of Alice's matching at `bᵢ₀` and `bℓ`
+preserves her graph. -/
+private theorem aliceGraph_swap_swap {x : BitString m} {i₀ ℓ : Fin m} (u w : Vertex m e) :
     aliceGraph x (Equiv.swap (.inl (.inl i₀)) (.inl (.inl ℓ)) u,
         Equiv.swap (aliceMatching x (.inl (.inl i₀))) (aliceMatching x (.inl (.inl ℓ))) w) =
       aliceGraph x (u, w) := by
   simp only [aliceGraph, Equiv.swap_apply_apply, Equiv.Perm.mul_apply, Equiv.apply_eq_iff_eq,
     Equiv.Perm.inv_eq_iff_eq]
 
-theorem bobGraph_swap_swap {x y : BitString m} {i₀ ℓ : Fin m} (hx : x ℓ = true)
-    (hy : y ℓ = true) (u w : RWVertex m e) :
+/-- Exchanging the edges of Alice's matching at `bᵢ₀` and `bℓ`, for `ℓ` in both sets, preserves
+Bob's graph. -/
+private theorem bobGraph_swap_swap {x y : BitString m} {i₀ ℓ : Fin m} (hx : x ℓ = true)
+    (hy : y ℓ = true) (u w : Vertex m e) :
     bobGraph i₀ y (Equiv.swap (.inl (.inl i₀)) (.inl (.inl ℓ)) u,
         Equiv.swap (aliceMatching x (.inl (.inl i₀))) (aliceMatching x (.inl (.inl ℓ))) w) =
       bobGraph i₀ y (u, w) := by
@@ -229,7 +226,7 @@ theorem bobGraph_swap_swap {x y : BitString m} {i₀ ℓ : Fin m} (hx : x ℓ = 
   have h₂ : coverSet (e := e) i₀ y (aliceMatching x (.inl (.inl i₀))) =
       coverSet (e := e) i₀ y (aliceMatching x (.inl (.inl ℓ))) := by
     cases h : x i₀ <;> simp [coverSet, hx, h]
-  simp only [bobGraph, apply_swap_eq h₁, apply_swap_eq h₂]
+  simp only [bobGraph, Equiv.apply_swap_eq_self h₁, Equiv.apply_swap_eq_self h₂]
 
 /-! ### The randomized protocol -/
 
@@ -238,28 +235,30 @@ variable {n k : ℕ}
 /-- The relabellings of the graphs of the reduction: a permutation of the left and one of the right
 vertices. -/
 abbrev Relabeling (m e : ℕ) : Type :=
-  Equiv.Perm (RWVertex m e) × Equiv.Perm (RWVertex m e)
+  Equiv.Perm (Vertex m e) × Equiv.Perm (Vertex m e)
 
-/-- A named instance keeps the instances on tuples of relabellings small. -/
+/-- The relabellings form a finite type. Declaring the instance directly keeps the instance terms
+for tuples of relabellings below the size limit of instance synthesis. -/
 instance (m e : ℕ) : Fintype (Relabeling m e) :=
   instFintypeProd _ _
 
 /-- The pair of vertices named by an input bit of `bipartitePerfectMatching n`, identifying the
 vertices of the reduction with `Fin n` along `h` and relabelling them by `σ`. -/
-def relabel (h : RWVertex m e ≃ Fin n) (σ : Relabeling m e) (k : Fin (n * n)) :
-    RWVertex m e × RWVertex m e :=
+def relabel (h : Vertex m e ≃ Fin n) (σ : Relabeling m e) (k : Fin (n * n)) :
+    Vertex m e × Vertex m e :=
   (σ.1.symm (h.symm (finProdFinEquiv.symm k).1), σ.2.symm (h.symm (finProdFinEquiv.symm k).2))
 
 /-- One run of the reduction: the players relabel their graphs by `σ`, run the protocol `p` for the
 monotone Karchmer–Wigderson game of bipartite perfect matching on them, and Bob answers on the edge
 it finds. -/
-def oneRun (p : KWProtocol (Fin (n * n))) (h : RWVertex m e ≃ Fin n) (i₀ : Fin m)
+def oneRun (p : KWProtocol (Fin (n * n))) (h : Vertex m e ≃ Fin n) (i₀ : Fin m)
     (σ : Relabeling m e) : Protocol (BitString m) (BitString m) Bool :=
   (p.comap (fun x k => aliceGraph x (relabel h σ k)) fun y k => bobGraph i₀ y (relabel h σ k)).bind
     fun k => .bob (fun y => bobAnswer i₀ y (relabel h σ k)) (.output false) (.output true)
 
-variable {p : KWProtocol (Fin (n * n))} {h : RWVertex m e ≃ Fin n} {i₀ : Fin m}
+variable {p : KWProtocol (Fin (n * n))} {h : Vertex m e ≃ Fin n} {i₀ : Fin m}
 
+/-- A run outputs Bob's answer on the edge found by `p`, relabelled back. -/
 theorem run_oneRun (σ : Relabeling m e) (x y : BitString m) :
     (oneRun p h i₀ σ).run x y = bobAnswer i₀ y (relabel h σ
       (p.run (fun k => aliceGraph x (relabel h σ k)) fun k => bobGraph i₀ y (relabel h σ k))) := by
@@ -267,13 +266,14 @@ theorem run_oneRun (σ : Relabeling m e) (x y : BitString m) :
     Protocol.run_output]
   cases bobAnswer i₀ y _ <;> rfl
 
+/-- A run sends one more bit than `p`. -/
 theorem depth_oneRun_le (σ : Relabeling m e) : (oneRun p h i₀ σ).depth ≤ p.depth + 1 := by
   refine (Protocol.depth_bind_le (d := 1) fun _ => ?_).trans ?_
   · simp
   · rw [Protocol.depth_comap]
 
-private theorem graph_relabel (h : RWVertex m e ≃ Fin n) (σ : Relabeling m e)
-    (G : RWVertex m e × RWVertex m e → Bool) :
+private theorem graph_relabel (h : Vertex m e ≃ Fin n) (σ : Relabeling m e)
+    (G : Vertex m e × Vertex m e → Bool) :
     graph (fun k => G (relabel h σ k)) =
       fun q => G ((h.symm.trans σ.1.symm) q.1, (h.symm.trans σ.2.symm) q.2) := by
   funext q
@@ -281,13 +281,14 @@ private theorem graph_relabel (h : RWVertex m e ≃ Fin n) (σ : Relabeling m e)
 
 /-- The relabelled graphs are an instance of the monotone Karchmer–Wigderson game of bipartite
 perfect matching: Alice's has a perfect matching and Bob's has none. -/
-theorem bipartitePerfectMatching_aliceGraph (h : RWVertex m e ≃ Fin n) (σ : Relabeling m e)
+theorem bipartitePerfectMatching_aliceGraph (h : Vertex m e ≃ Fin n) (σ : Relabeling m e)
     (x : BitString m) :
     bipartitePerfectMatching n (fun k => aliceGraph x (relabel h σ k)) = true := by
   rw [bipartitePerfectMatching_eq_true_iff, graph_relabel]
   exact (hasPerfectMatching_comp_iff _ _ _).mpr (hasPerfectMatching_aliceGraph x)
 
-theorem bipartitePerfectMatching_bobGraph (h : RWVertex m e ≃ Fin n) (σ : Relabeling m e)
+/-- Bob's relabelled graph has no perfect matching. -/
+theorem bipartitePerfectMatching_bobGraph (h : Vertex m e ≃ Fin n) (σ : Relabeling m e)
     (y : BitString m) :
     bipartitePerfectMatching n (fun k => bobGraph i₀ y (relabel h σ k)) = false := by
   rw [Bool.eq_false_iff]
@@ -300,7 +301,7 @@ variable (hp : p.Solves ExceedsAt {x | bipartitePerfectMatching n x = true}
 include hp
 
 /-- A run answers `true` exactly on the edge of the gadget of `i₀`, unless `i₀` is in both sets. -/
-theorem exists_run_oneRun (σ : Relabeling m e) (x y : BitString m) :
+private theorem exists_run_oneRun (σ : Relabeling m e) (x y : BitString m) :
     ∃ i, (i = i₀ ∨ x i = true ∧ y i = true) ∧
       (oneRun p h i₀ σ).run x y = (decide (i = i₀) && !(x i₀ && y i₀)) := by
   have hv := hp _ (bipartitePerfectMatching_aliceGraph h σ x) _
@@ -310,7 +311,7 @@ theorem exists_run_oneRun (σ : Relabeling m e) (x y : BitString m) :
   rw [run_oneRun, hi, bobAnswer_aliceMatching]
 
 /-- On disjoint sets every run answers `true`. -/
-theorem run_oneRun_of_disjointness {x y : BitString m} (hxy : disjointness x y = true)
+private theorem run_oneRun_of_disjointness {x y : BitString m} (hxy : disjointness x y = true)
     (σ : Relabeling m e) : (oneRun p h i₀ σ).run x y = true := by
   obtain ⟨i, hi, hrun⟩ := exists_run_oneRun hp σ x y
   simp only [disjointness, decide_eq_true_eq] at hxy
@@ -319,7 +320,7 @@ theorem run_oneRun_of_disjointness {x y : BitString m} (hxy : disjointness x y =
   simp
 
 /-- If `i₀` is in both sets, every run answers `false`. -/
-theorem run_oneRun_of_mem {x y : BitString m} (hx : x i₀ = true) (hy : y i₀ = true)
+private theorem run_oneRun_of_mem {x y : BitString m} (hx : x i₀ = true) (hy : y i₀ = true)
     (σ : Relabeling m e) : (oneRun p h i₀ σ).run x y = false := by
   obtain ⟨i, -, hrun⟩ := exists_run_oneRun hp σ x y
   rw [hrun, hx, hy]
@@ -373,14 +374,14 @@ omit hp
 
 /-- `k` runs of the reduction with independent relabellings; the answer is that the sets are
 disjoint when every run says so. -/
-def repeatedRun (p : KWProtocol (Fin (n * n))) (h : RWVertex m e ≃ Fin n) (i₀ : Fin m)
+def repeatedRun (p : KWProtocol (Fin (n * n))) (h : Vertex m e ≃ Fin n) (i₀ : Fin m)
     (σs : Fin k → Relabeling m e) : Protocol (BitString m) (BitString m) Bool :=
   Protocol.runAll (fun i => oneRun p h i₀ (σs i)) fun v => decide (∀ i, v i = true)
 
 /-- **The Raz–Wigderson reduction**: a public-coin protocol for disjointness from a protocol `p`
 for the monotone Karchmer–Wigderson game of bipartite perfect matching, running it `k` times on
 uniformly random relabellings of the graphs of the reduction. -/
-noncomputable def reduction (p : KWProtocol (Fin (n * n))) (h : RWVertex m e ≃ Fin n)
+noncomputable def reduction (p : KWProtocol (Fin (n * n))) (h : Vertex m e ≃ Fin n)
     (i₀ : Fin m) (k : ℕ) : PublicCoin (BitString m) (BitString m) Bool :=
   (PMF.uniformOfFintype (Fin k → Relabeling m e)).map (repeatedRun p h i₀)
 
@@ -389,15 +390,6 @@ theorem depth_reduction_le : (reduction p h i₀ k).depth ≤ k * (p.depth + 1) 
   refine PublicCoin.depth_le_iff.mpr fun q hq => ?_
   obtain ⟨σs, -, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hq
   exact_mod_cast Protocol.depth_runAll_le fun i => depth_oneRun_le (σs i)
-
-/-- The probability of an event under the uniform distribution on a finite type, as a count. -/
-private theorem toOuterMeasure_uniformOfFintype_toReal {α : Type*} [Fintype α] [Nonempty α]
-    (s : Set α) [DecidablePred (· ∈ s)] :
-    ((PMF.uniformOfFintype α).toOuterMeasure s).toReal =
-      #(univ.filter (· ∈ s)) / Fintype.card α := by
-  rw [Probability.PMF.toOuterMeasure_apply_toReal]
-  simp only [PMF.uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast]
-  rw [← sum_filter, sum_const, nsmul_eq_mul, div_eq_mul_inv]
 
 include hp in
 /-- **The error of the reduction**: it decides disjointness with error at most `2 ^ (-k)`, for
@@ -410,7 +402,7 @@ theorem solves_reduction (hk : 0 < k) :
   classical
   intro x _ y _
   rw [PublicCoin.errorProb, reduction, PMF.toOuterMeasure_map_apply,
-    toOuterMeasure_uniformOfFintype_toReal]
+    Probability.PMF.toOuterMeasure_uniformOfFintype_toReal]
   set bad := (univ : Finset (Fin k → Relabeling m e)).filter
     (· ∈ repeatedRun p h i₀ ⁻¹' {q | ¬disjointness x y = q.run x y})
   have hbad : #bad * 2 ^ k ≤ Fintype.card (Relabeling m e) ^ k := by
@@ -453,9 +445,9 @@ theorem solves_reduction (hk : 0 < k) :
     one_mul]
   exact_mod_cast hbad
 
-end BipartiteMatching
+end BipartiteMatching.RazWigderson
 
-open BipartiteMatching
+open BipartiteMatching BipartiteMatching.RazWigderson
 
 /-- **The Raz–Wigderson reduction** [RazWigderson1992]: if the monotone Karchmer–Wigderson game of
 bipartite perfect matching on `K_{n,n}` has a protocol sending `c` bits and `2 m ≤ n` with `0 < m`,
@@ -473,7 +465,7 @@ theorem ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching 
     exact le_top
   | coe c =>
     obtain ⟨p, hp, hpc⟩ := Protocol.ecomplexity_le_iff.mp hc.le
-    have hcard : Fintype.card (RWVertex m (n - 2 * m)) = n := by
+    have hcard : Fintype.card (Vertex m (n - 2 * m)) = n := by
       simp only [Fintype.card_sum, Fintype.card_fin]
       omega
     refine (PublicCoin.ecomplexity_le_depth (solves_reduction hp

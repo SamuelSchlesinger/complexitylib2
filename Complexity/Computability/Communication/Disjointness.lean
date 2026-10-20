@@ -27,22 +27,21 @@ We follow Razborov's corruption argument [Razborov1992],
 The hard distribution `Disjointness.hardDist` lives on pairs of subsets of `2 m + 1` points. It
 draws a uniformly random partition `(i, Tx, Ty)` of the points into a point and two sets of `m`
 points (`Disjointness.parts`) and uniformly random subsets `x ⊆ Tx` and `y ⊆ Ty`, and outputs the
-disjoint
-pair `(x, y)` or, with probability `1 / 2`, the pair `(x ∪ {i}, y ∪ {i})`, which meets in exactly
-`i`. Razborov's distribution instead draws sets of size about `n / 4` and gives the disjoint pairs
-probability `3 / 4`. Given the partition, the two sets are independent, so on a rectangle `A × B`
-the disjoint pairs have mass the average of `a₀ b₀` over the partitions, where `a₀` and `b₀` are
-the fractions of the subsets of `Tx` in `A` and of `Ty` in `B`, and the intersecting pairs have
+disjoint pair `(x, y)` or, with probability `1 / 2`, the pair `(x ∪ {i}, y ∪ {i})`, which meets in
+exactly `i`. Razborov's distribution instead draws sets of size about `n / 4` and gives the disjoint
+pairs probability `3 / 4`. Given the partition, the two sets are independent, so on a rectangle
+`A × B` the disjoint pairs have mass the average of `a₀ b₀` over the partitions, where `a₀` and `b₀`
+are the fractions of the subsets of `Tx` in `A` and of `Ty` in `B`, and the intersecting pairs have
 mass the average of `a₁ b₁`, where `a₁` and `b₁` are the fractions of the subsets of `Tx ∪ {i}`
-containing `i` in `A` and of `Ty ∪ {i}` in `B`. Call the partition bad for `A` if
-`a₁ < a₀ / 3`. Once `Ty` is fixed, `i` is a uniformly random point outside `Ty` and `b₀` is fixed,
-and a family of subsets of the complement of `Ty` for which many points are bad is small
-(`Finset.four_mul_sum_card_filter_notMem_le`, proved by Markov's inequality and counting subsets
-of a cube). So the partitions bad for `A` or, symmetrically, for `B` carry at most half of the
-mass of the disjoint pairs, up to an exponentially small error, while on the others
-`a₁ b₁ ≥ a₀ b₀ / 9`. This is *Razborov's corruption lemma* (`Disjointness.corrupted_hardDist`): on
-every rectangle the intersecting pairs carry at least `1 / 18` of the mass of the disjoint pairs, up
-to `(27 / 32) ^ r / 2` when `48 r ≤ m + 1`.
+containing `i` in `A` and of `Ty ∪ {i}` in `B`. Call the partition bad for `A` if `a₁ < a₀ / 3`.
+Once `Ty` is fixed, `i` is a uniformly random point outside `Ty` and `b₀` is fixed, and a family of
+subsets of the complement of `Ty` for which many points are bad is small
+(`Finset.four_mul_sum_card_filter_notMem_le`, proved by Markov's inequality and counting subsets of
+a cube). So the partitions bad for `A` or, symmetrically, for `B` carry at most half of the mass of
+the disjoint pairs, up to an exponentially small error, while on the others `a₁ b₁ ≥ a₀ b₀ / 9`.
+This is *Razborov's corruption lemma* (`Disjointness.corrupted_hardDist`): on every rectangle the
+intersecting pairs carry at least `1 / 18` of the mass of the disjoint pairs, up to
+`(27 / 32) ^ r / 2` when `48 r ≤ m + 1`.
 
 By the corruption bound (`Corrupted.mul_sub_le_of_ecomplexityFun_le`), public-coin protocols with
 error `1 / 64` send at least `((m + 1) / 48 - 29) / 5` bits
@@ -100,6 +99,7 @@ parts of sizes `1`, `m` and `m`. -/
 def parts (m : ℕ) : Finset (U × Finset U × Finset U) :=
   {T | T.1 ∉ T.2.1 ∧ T.1 ∉ T.2.2 ∧ Disjoint T.2.1 T.2.2 ∧ #T.2.1 = m ∧ #T.2.2 = m}
 
+/-- Membership in `parts`. -/
 theorem mem_parts {T : U × Finset U × Finset U} :
     T ∈ parts U m ↔
       T.1 ∉ T.2.1 ∧ T.1 ∉ T.2.2 ∧ Disjoint T.2.1 T.2.2 ∧ #T.2.1 = m ∧ #T.2.2 = m := by
@@ -156,6 +156,8 @@ theorem sum_parts_swap {M : Type*} [AddCommMonoid M]
     obtain ⟨h1, h2, h3, h4, h5⟩ := mem_parts.mp hT
     exact mem_parts.mpr ⟨h2, h1, h3.symm, h5, h4⟩
 
+/-- There are `(m + 1) C(2 m + 1, m)` partitions: a set `Ty` of `m` points and one of the `m + 1`
+points outside it. -/
 theorem card_parts (hU : Fintype.card U = 2 * m + 1) :
     #(parts U m) = #(powersetCard m (univ : Finset U)) * (m + 1) := by
   rw [card_eq_sum_ones, sum_parts hU]
@@ -166,6 +168,7 @@ theorem card_parts (hU : Fintype.card U = 2 * m + 1) :
   congr 1
   omega
 
+/-- There is a partition. -/
 theorem card_parts_pos (hU : Fintype.card U = 2 * m + 1) :
     0 < #(parts U m) := by
   rw [card_parts hU, card_powersetCard, card_univ, hU]
@@ -329,29 +332,30 @@ variable (m) in
 partition `(i, Tx, Ty)` from `parts` and a fair coin produce it, where on heads the
 pair is a uniformly random pair of subsets of `Tx` and `Ty`, and on tails it is such a pair with
 `i` added to both sets. -/
-noncomputable def weight (q : Finset U × Finset U) : ℝ :=
+noncomputable def hardWeight (q : Finset U × Finset U) : ℝ :=
   (∑ T ∈ parts U m,
     ((if q.1 ⊆ T.2.1 then 1 else 0) * (if q.2 ⊆ T.2.2 then 1 else 0) +
       (if T.1 ∈ q.1 ∧ q.1 ⊆ T.2.2ᶜ then 1 else 0) * (if T.1 ∈ q.2 ∧ q.2 ⊆ T.2.1ᶜ then 1 else 0))) /
     (2 * #(parts U m) * 4 ^ m)
 
-theorem weight_nonneg (q : Finset U × Finset U) : 0 ≤ weight m q := by
-  unfold weight
+/-- The weights are nonnegative. -/
+theorem hardWeight_nonneg (q : Finset U × Finset U) : 0 ≤ hardWeight m q := by
+  unfold hardWeight
   refine div_nonneg (sum_nonneg fun T _ => ?_) (by positivity)
   split_ifs <;> norm_num
 
 /-- On disjoint pairs the weight counts the partitions placing the sets inside `Tx` and `Ty`;
 on intersecting pairs, those placing them inside `Tx ∪ {i}` and `Ty ∪ {i}` with `i` common. -/
-private theorem ite_weight (x y : Finset U) :
-    (if decide (Disjoint x y) = true then weight m (x, y) else 0) =
+private theorem ite_hardWeight (x y : Finset U) :
+    (if decide (Disjoint x y) = true then hardWeight m (x, y) else 0) =
         (∑ T ∈ parts U m,
           (if x ⊆ T.2.1 then 1 else 0) * (if y ⊆ T.2.2 then 1 else 0)) /
           (2 * #(parts U m) * 4 ^ m) ∧
-      (if decide (Disjoint x y) = true then 0 else weight m (x, y)) =
+      (if decide (Disjoint x y) = true then 0 else hardWeight m (x, y)) =
         (∑ T ∈ parts U m,
           (if T.1 ∈ x ∧ x ⊆ T.2.2ᶜ then 1 else 0) * (if T.1 ∈ y ∧ y ⊆ T.2.1ᶜ then 1 else 0)) /
           (2 * #(parts U m) * 4 ^ m) := by
-  unfold weight
+  unfold hardWeight
   by_cases h : Disjoint x y
   · simp only [h, decide_true, ↓reduceIte]
     refine ⟨?_, ?_⟩
@@ -407,19 +411,19 @@ private theorem sum_sum_ite_mul_ite (A B : Finset (Finset U)) (p : U × Finset U
         rw [← sum_mul_sum, sum_boole, sum_boole]
 
 /-- The weight of the disjoint pairs in a rectangle. -/
-private theorem sum_sum_ite_weight (A B : Finset (Finset U)) :
-    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then weight m (x, y) else 0) =
+private theorem sum_sum_ite_hardWeight (A B : Finset (Finset U)) :
+    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then hardWeight m (x, y) else 0) =
       (∑ T ∈ parts U m, ((low A T.2.1 : ℝ) * low B T.2.2)) /
         (2 * #(parts U m) * 4 ^ m) := by
-  simp only [fun x y => (ite_weight (m := m) x y).1]
+  simp only [fun x y => (ite_hardWeight (m := m) x y).1]
   exact sum_sum_ite_mul_ite A B (fun T x => x ⊆ T.2.1) (fun T y => y ⊆ T.2.2) _
 
 /-- The weight of the intersecting pairs in a rectangle. -/
-private theorem sum_sum_ite_weight' (A B : Finset (Finset U)) :
-    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then 0 else weight m (x, y)) =
+private theorem sum_sum_ite_hardWeight' (A B : Finset (Finset U)) :
+    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then 0 else hardWeight m (x, y)) =
       (∑ T ∈ parts U m, ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1)) /
         (2 * #(parts U m) * 4 ^ m) := by
-  simp only [fun x y => (ite_weight (m := m) x y).2]
+  simp only [fun x y => (ite_hardWeight (m := m) x y).2]
   exact sum_sum_ite_mul_ite A B (fun T x => T.1 ∈ x ∧ x ⊆ T.2.2ᶜ)
     (fun T y => T.1 ∈ y ∧ y ⊆ T.2.1ᶜ) _
 
@@ -453,18 +457,18 @@ private theorem high_univ {i : U} {s : Finset U} (hi : i ∉ s) :
   omega
 
 /-- Half of the weight lies on disjoint pairs. -/
-private theorem sum_sum_ite_weight_univ (hU : Fintype.card U = 2 * m + 1) :
+private theorem sum_sum_ite_hardWeight_univ (hU : Fintype.card U = 2 * m + 1) :
     ∑ x : Finset U, ∑ y : Finset U,
-        (if decide (Disjoint x y) = true then weight m (x, y) else 0) = 1 / 2 ∧
+        (if decide (Disjoint x y) = true then hardWeight m (x, y) else 0) = 1 / 2 ∧
       ∑ x : Finset U, ∑ y : Finset U,
-        (if decide (Disjoint x y) = true then 0 else weight m (x, y)) = 1 / 2 := by
+        (if decide (Disjoint x y) = true then 0 else hardWeight m (x, y)) = 1 / 2 := by
   have hP : (0 : ℝ) < #(parts U m) := by
     exact_mod_cast card_parts_pos hU
   have hcompl {s : Finset U} (hs : #s = m) : #sᶜ - 1 = m := by
     rw [card_compl, hU, hs]
     omega
   refine ⟨?_, ?_⟩
-  · rw [sum_sum_ite_weight]
+  · rw [sum_sum_ite_hardWeight]
     rw [sum_congr rfl fun T hT => by
       rw [low_univ, low_univ, (mem_parts.mp hT).2.2.2.1,
         (mem_parts.mp hT).2.2.2.2]]
@@ -473,7 +477,7 @@ private theorem sum_sum_ite_weight_univ (hU : Fintype.card U = 2 * m + 1) :
     push_cast
     rw [show (4 : ℝ) ^ m = 2 ^ m * 2 ^ m by rw [← mul_pow]; norm_num]
     ring
-  · rw [sum_sum_ite_weight']
+  · rw [sum_sum_ite_hardWeight']
     rw [sum_congr rfl fun T hT => by
       obtain ⟨h1, h2, -, h4, h5⟩ := mem_parts.mp hT
       rw [high_univ h2, high_univ h1, hcompl h4, hcompl h5]]
@@ -483,14 +487,15 @@ private theorem sum_sum_ite_weight_univ (hU : Fintype.card U = 2 * m + 1) :
     rw [show (4 : ℝ) ^ m = 2 ^ m * 2 ^ m by rw [← mul_pow]; norm_num]
     ring
 
-theorem sum_weight (hU : Fintype.card U = 2 * m + 1) :
-    ∑ q : Finset U × Finset U, weight m q = 1 := by
-  obtain ⟨h1, h2⟩ := sum_sum_ite_weight_univ hU
+/-- The weights add up to one, so they form a distribution (`hardDist`). -/
+theorem sum_hardWeight (hU : Fintype.card U = 2 * m + 1) :
+    ∑ q : Finset U × Finset U, hardWeight m q = 1 := by
+  obtain ⟨h1, h2⟩ := sum_sum_ite_hardWeight_univ hU
   rw [Fintype.sum_prod_type]
-  calc ∑ x : Finset U, ∑ y : Finset U, weight m (x, y)
+  calc ∑ x : Finset U, ∑ y : Finset U, hardWeight m (x, y)
       = ∑ x : Finset U, ∑ y : Finset U,
-          ((if decide (Disjoint x y) = true then weight m (x, y) else 0) +
-            (if decide (Disjoint x y) = true then 0 else weight m (x, y))) := by
+          ((if decide (Disjoint x y) = true then hardWeight m (x, y) else 0) +
+            (if decide (Disjoint x y) = true then 0 else hardWeight m (x, y))) := by
         refine sum_congr rfl fun x _ => sum_congr rfl fun y _ => ?_
         split_ifs <;> simp
     _ = 1 := by
@@ -507,13 +512,14 @@ the pair `(x ∪ {i}, y ∪ {i})`, which meets in exactly `i`. Razborov draws su
 a cube (`Finset.four_mul_sum_card_filter_notMem_le`). -/
 noncomputable def hardDist (hU : Fintype.card U = 2 * m + 1) :
     PMF (Finset U × Finset U) :=
-  PMF.ofFintype (fun q => ENNReal.ofReal (weight m q)) (by
-    rw [← ENNReal.ofReal_sum_of_nonneg fun q _ => weight_nonneg q,
-      sum_weight hU, ENNReal.ofReal_one])
+  PMF.ofFintype (fun q => ENNReal.ofReal (hardWeight m q)) (by
+    rw [← ENNReal.ofReal_sum_of_nonneg fun q _ => hardWeight_nonneg q,
+      sum_hardWeight hU, ENNReal.ofReal_one])
 
+/-- The masses of `hardDist` are the weights `hardWeight`. -/
 theorem hardDist_apply_toReal (hU : Fintype.card U = 2 * m + 1)
-    (q : Finset U × Finset U) : (hardDist m hU q).toReal = weight m q := by
-  rw [hardDist, PMF.ofFintype_apply, ENNReal.toReal_ofReal (weight_nonneg q)]
+    (q : Finset U × Finset U) : (hardDist m hU q).toReal = hardWeight m q := by
+  rw [hardDist, PMF.ofFintype_apply, ENNReal.toReal_ofReal (hardWeight_nonneg q)]
 
 /-- Under `hardDist`, the sets are disjoint with probability `1 / 2`. -/
 theorem hardDist_toOuterMeasure_disjoint (hU : Fintype.card U = 2 * m + 1) :
@@ -521,7 +527,7 @@ theorem hardDist_toOuterMeasure_disjoint (hU : Fintype.card U = 2 * m + 1) :
       {q | decide (Disjoint q.1 q.2) = true}).toReal = 1 / 2 := by
   rw [Probability.PMF.toOuterMeasure_apply_toReal, Fintype.sum_prod_type]
   simp only [Set.mem_ofPred_eq, hardDist_apply_toReal]
-  exact (sum_sum_ite_weight_univ hU).1
+  exact (sum_sum_ite_hardWeight_univ hU).1
 
 /-- **Razborov's corruption lemma** for `hardDist` [Razborov1992]: on every rectangle
 `A × B` of pairs of subsets of `2 m + 1` points, the intersecting pairs carry at least `1 / 18`
@@ -532,7 +538,7 @@ theorem corrupted_hardDist (hU : Fintype.card U = 2 * m + 1) {r : ℕ}
       ((27 / 32) ^ r / 2) := by
   intro A B
   simp only [hardDist_apply_toReal]
-  rw [sum_sum_ite_weight, sum_sum_ite_weight']
+  rw [sum_sum_ite_hardWeight, sum_sum_ite_hardWeight']
   have h := sum_low_mul_low_le hU A B hr
   have hP : (0 : ℝ) < #(parts U m) := by
     exact_mod_cast card_parts_pos hU
