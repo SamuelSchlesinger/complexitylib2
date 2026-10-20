@@ -69,7 +69,9 @@ achieves multiplicative gap `2^r(x)` for every polynomially bounded requested ex
 with a #P count and positive binary-output polynomial-time threshold. Intersecting an SBP
 language with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
 The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
-already proves SBP ⊆ AM. AWPP PP-lowness remains an approximate-counting milestone.
+already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
+provide a counting-algebra foundation for future oracle simulations; AWPP PP-lowness
+remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
@@ -480,9 +482,12 @@ space bounds. Further class-level work needs resource certificates for the actua
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
   linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
-* Reingold's theorem: [USTCON ∈ L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
-  is proved for the adjacency-matrix encoding; an edge-list variant by a logspace reduction, a
-  definition of SL with SL = L, and sharing the unary-header injectivity lemma with TreeEval remain;
+* Reingold's theorem: [USTCON ∈ L and SL = L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
+  are proved for the adjacency-matrix encoding (with `SL` defined by logspace many-one reducibility
+  to `USTCON`, completeness of `USTCON` for `SL` and `L`, and the unary-header injectivity lemma
+  shared with `TreeEval` in [List/Basic.lean](Complexity/Foundations/Data/List/Basic.lean)); a
+  symmetric-Turing-machine model of `SL` and an edge-list variant of `USTCON` by a logspace
+  reduction remain;
 * `NL = coNL`, building on logspace composition, `NL ⊆ P` and Savitch; `PH ⊆ PSPACE` is
   already proved by evaluating quantified predicates in
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);

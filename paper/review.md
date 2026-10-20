@@ -1385,3 +1385,33 @@ including current main and PR #46. Tuple source and tests remain unchanged. All 
 the combined tree. The curated index has 124 entries; the rebuilt PDF's tuple page 9 and preserved
 two-sided counting page 25 were rendered and inspected. No undefined citations or overfull boxes
 were introduced. The final integration revision is submitted for fresh coordinator approval.
+
+## Uniform indexed counting products (PR #53, 20 October 2026)
+
+Worker `indexed-products-20261020` proves uniform indexed products for jointly uniform #P
+and GapP families on the pair of an encoded input and unary natural index. Source revision
+`d80cc187edf729390f830cc2a44fa508168e9587` passes all six project checks. The #P verifier
+uses rows padded with false bits to width `p(2|x|+1+r(x))`; the pre-padding total is `r(x)`
+times that width. The GapP proof uses Boolean expansion, the certified #P product theorem,
+a binary polynomial-time sign and the existing uniform word-sum closure. No general indexed
+product closure is assumed.
+
+Tests instantiate varying quadratic certificate lengths, empty products including zero
+factors, zero-width rejection, indexed negative factors and exact cancellation between
+explicit overlapping positive/negative #P counts. Named axiom guards contain only the three
+permitted axioms. Both new declaration links have been checked against pinned Git source.
+The existing counting-algebra entry is extended; this adds no curated entry. The prose states
+the joint uniformity and unary-bound requirements, the explicit certificate accounting and
+the still-open oracle-lowness boundary. Mathematical source credit remains Fenner–Fortnow–Kurtz.
+The independent parent coordinator reviewed the exact source, tests and draft index with no
+correctness, API or prose findings, and independently verified MCP diagnostics, all six gate
+results and both pinned declaration links. Final combined PDF evidence and exact-head approval
+are recorded in PR #53 before integration. AI assistance: OpenAI Codex; AI review is not human
+editorial approval or a machine-checked equivalence between prose and Lean.
+
+PR #53 integrates the reviewed PR #51 head `defa850c` (including PR #52) without changing
+its indexed-product source or tests. All six gates pass on the combined tree. The existing
+counting-algebra entry is extended, preserving the 124-entry count and the tuple/two-sided
+robustness entries. The PDF was rebuilt without undefined citations or overfull boxes;
+rendered pages 20 (products), 9 (tuples) and 25 (two-sided robustness) were inspected.
+The two new source anchors retain the independently checked source revision above.
