@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Space
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Foundations.Data.BitString.Enumeration
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 import Mathlib.Data.Nat.Size
 import Mathlib.Tactic.Linarith
 
@@ -99,14 +100,6 @@ logarithmic in `n` and linear in `s`, with a constant depending only on `k` and 
 noncomputable def coreLengthBound (k : ℕ) (State : Type) (n s : ℕ) : ℕ :=
   (8 + 2 * Nat.card (Option State) + 200 * k) * (Nat.log2 n + s + 1)
 
-/-- The binary length of a number at most `n + 1` is at most `log₂ n + 2`. -/
-private theorem length_encNat_le_log2 {pos n : ℕ} (h : pos ≤ n + 1) :
-    (encNat pos).length ≤ Nat.log2 n + 2 := by
-  rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_le]
-  have := Nat.lt_log2_self (n := n)
-  rw [pow_succ]
-  omega
-
 /-- **Reachable views have short codes**: under a space bound `s`, the code of every view reachable
 from the initial view has length at most `coreLengthBound k State n s`. -/
 theorem length_coreCode_le (hs : ntm.RunsInSpace input s) {finite : FiniteCfg k Bool State}
@@ -120,7 +113,7 @@ theorem length_coreCode_le (hs : ntm.RunsInSpace input s) {finite : FiniteCfg k 
         (by have := spaceUsed_workTapes_le hs h tape; nlinarith)
   have hcontrol := length_encFinite_lt finite.state
   have hpos : (encNat finite.inputPos.val).length ≤ Nat.log2 input.length + 2 :=
-    length_encNat_le_log2 (by
+    length_encNat_le_log2_add_two (by
       have hlt := finite.inputPos.isLt
       have hlen : finite.input.length = input.length := congrArg List.length hrep.input
       omega)

@@ -383,7 +383,7 @@ theorem not_pseudorandomFunction_of_MCSP_mem_BPP (h : MCSP ∈ BPP MCSP.encInsta
   classical
   intro hprf
   obtain ⟨p, V, hV, hdec⟩ := h
-  obtain ⟨c, hc⟩ := exists_complexity_restriction_le hprf.polyTime
+  obtain ⟨c, hc⟩ := KabanetsCai.exists_complexity_restriction_le hprf.polyTime
   have hnegl := hprf.secure _ (isOraclePPT_mcspDistinguisher (p := p) (c + 2) hV)
   refine not_negligible_const (c := 1 / 4) (by norm_num) (negligible_of_eventually_le hnegl ?_)
   filter_upwards [eventually_tableArity c] with n ⟨hn, hm16, hmn, hsize⟩
@@ -404,17 +404,18 @@ theorem not_pseudorandomFunction_of_MCSP_mem_BPP (h : MCSP ∈ BPP MCSP.encInsta
         1 / 3 + 1 / 12 := by
     rw [eval_prfIdealGame_mcspDistinguisher hn hmn, PMF.toReal_uniformOfFintype_bind_apply]
     set g : (BitString n → BitString n) → Bool := fun table =>
-      decide ((⟨m, MCSP.truthTable m (restrictTable n m hn table), 2 ^ m / (5 * m)⟩ :
-        MCSP.Instance) ∈ MCSP)
+      decide ((⟨m, MCSP.truthTable m (KabanetsCai.restrictTable n m hn table),
+        2 ^ m / (5 * m)⟩ : MCSP.Instance) ∈ MCSP)
     have hterm (table : BitString n → BitString n) :
-        (ProbComp.eval (mcspRun p V ⟨m, MCSP.truthTable m (restrictTable n m hn table),
-          2 ^ m / (5 * m)⟩) true).toReal ≤ (PMF.pure (g table) true).toReal + 1 / 3 := by
-      by_cases hx : (⟨m, MCSP.truthTable m (restrictTable n m hn table), 2 ^ m / (5 * m)⟩ :
-          MCSP.Instance) ∈ MCSP
+        (ProbComp.eval (mcspRun p V ⟨m,
+          MCSP.truthTable m (KabanetsCai.restrictTable n m hn table), 2 ^ m / (5 * m)⟩)
+            true).toReal ≤ (PMF.pure (g table) true).toReal + 1 / 3 := by
+      by_cases hx : (⟨m, MCSP.truthTable m (KabanetsCai.restrictTable n m hn table),
+          2 ^ m / (5 * m)⟩ : MCSP.Instance) ∈ MCSP
       · have : g table = true := decide_eq_true hx
         rw [this, PMF.pure_apply_self, ENNReal.toReal_one]
         linarith [toReal_apply_le_one (ProbComp.eval (mcspRun p V ⟨m,
-          MCSP.truthTable m (restrictTable n m hn table), 2 ^ m / (5 * m)⟩)) true]
+          MCSP.truthTable m (KabanetsCai.restrictTable n m hn table), 2 ^ m / (5 * m)⟩)) true]
       · have : g table = false := decide_eq_false hx
         rw [this, PMF.pure_apply_of_ne _ _ Bool.false_ne_true.symm, ENNReal.toReal_zero,
           zero_add]
@@ -430,8 +431,9 @@ theorem not_pseudorandomFunction_of_MCSP_mem_BPP (h : MCSP ∈ BPP MCSP.encInsta
       rw [div_le_iff₀ (by positivity)]
       have : (12 : ℝ) * 2 ^ (2 ^ m / 4) ≤ 2 ^ 2 ^ m := by exact_mod_cast hnat
       linarith
-    calc 𝔼 table, (ProbComp.eval (mcspRun p V ⟨m, MCSP.truthTable m (restrictTable n m hn table),
-          2 ^ m / (5 * m)⟩) true).toReal
+    calc 𝔼 table, (ProbComp.eval (mcspRun p V ⟨m,
+          MCSP.truthTable m (KabanetsCai.restrictTable n m hn table), 2 ^ m / (5 * m)⟩)
+            true).toReal
         ≤ 𝔼 table, ((PMF.pure (g table) true).toReal + 1 / 3) :=
           Finset.expect_le_expect fun table _ => hterm table
       _ = ((PMF.uniformOfFintype (BitString n → BitString n)).map g true).toReal + 1 / 3 := by
@@ -457,5 +459,58 @@ theorem not_oneWay_of_MCSP_mem_BPP (h : MCSP ∈ BPP MCSP.encInstance) (f : List
 theorem not_oneWay_of_MCSP_mem_P (h : MCSP ∈ P MCSP.encInstance) (f : List Bool → List Bool) :
     ¬ OneWay f :=
   not_oneWay_of_MCSP_mem_BPP (P_subset_BPP h) f
+
+@[deprecated (since := "2026-10-19")]
+alias computableTidilyInPolyTime_tableArity := KabanetsCai.computableTidilyInPolyTime_tableArity
+
+@[deprecated (since := "2026-10-19")]
+alias computableTidilyInPolyTime_tableInstance :=
+  KabanetsCai.computableTidilyInPolyTime_tableInstance
+
+@[deprecated (since := "2026-10-19")]
+alias computableTidilyInPolyTime_tableQueries := KabanetsCai.computableTidilyInPolyTime_tableQueries
+
+@[deprecated (since := "2026-10-19")]
+alias computableTidilyInPolyTime_two_pow_tableArity :=
+  KabanetsCai.computableTidilyInPolyTime_two_pow_tableArity
+
+@[deprecated (since := "2026-10-19")]
+alias eval_prfIdealGame_mcspDistinguisher := KabanetsCai.eval_prfIdealGame_mcspDistinguisher
+
+@[deprecated (since := "2026-10-19")]
+alias eval_prfRealGame_mcspDistinguisher := KabanetsCai.eval_prfRealGame_mcspDistinguisher
+
+@[deprecated (since := "2026-10-19")]
+alias eventually_tableArity := KabanetsCai.eventually_tableArity
+
+@[deprecated (since := "2026-10-19")]
+alias interpret_mcspDistinguisher := KabanetsCai.interpret_mcspDistinguisher
+
+@[deprecated (since := "2026-10-19")]
+alias isOraclePPT_mcspDistinguisher := KabanetsCai.isOraclePPT_mcspDistinguisher
+
+@[deprecated (since := "2026-10-19")] alias isPPTOn_mcspRun := KabanetsCai.isPPTOn_mcspRun
+
+@[deprecated (since := "2026-10-19")] alias mcspDistinguisher := KabanetsCai.mcspDistinguisher
+
+@[deprecated (since := "2026-10-19")] alias mcspRun := KabanetsCai.mcspRun
+
+@[deprecated (since := "2026-10-19")] alias tableArity := KabanetsCai.tableArity
+
+@[deprecated (since := "2026-10-19")] alias tableInstance := KabanetsCai.tableInstance
+
+@[deprecated (since := "2026-10-19")]
+alias tableInstance_map_tableQueries := KabanetsCai.tableInstance_map_tableQueries
+
+@[deprecated (since := "2026-10-19")] alias toReal_eval_mcspRun := KabanetsCai.toReal_eval_mcspRun
+
+@[deprecated (since := "2026-10-19")]
+alias toReal_eval_mcspRun_le_one_third := KabanetsCai.toReal_eval_mcspRun_le_one_third
+
+@[deprecated (since := "2026-10-19")]
+alias toReal_map_restrictTable_mem_le := KabanetsCai.toReal_map_restrictTable_mem_le
+
+@[deprecated (since := "2026-10-19")]
+alias two_thirds_le_toReal_eval_mcspRun := KabanetsCai.two_thirds_le_toReal_eval_mcspRun
 
 end Cslib.Crypto

@@ -39,7 +39,7 @@ form whose terms have fewer than `s` literals (`exists_dnf_of_shallow`), and the
 shows that at most a `2 ^ (-s)` fraction of the extensions of the restriction fail to make it
 shallow (`two_pow_mul_card_filter_not_shallow_le`). Drawing a restriction with fewer free bits by
 first drawing one with more free bits and then an extension of it
-(`PartialAssignment.sum_card_filter_extensions`), at most a `G / 2 ^ s` fraction of the
+(`PartialAssignment.mul_card_filter_withFree_le`), at most a `G / 2 ^ s` fraction of the
 restrictions leaving `n / (16 s + 1) ^ j` bits free make some gate of depth at most `j` deep, where
 `G` is the number of those gates (`two_pow_mul_card_filter_exists_not_shallow_le`). With fewer than
 `2 ^ s` gates, some restriction makes the output shallow, while the restricted parity needs to query
@@ -60,8 +60,6 @@ every free bit. The counted form also bounds the Fourier tails of small circuits
 * `Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_not_shallow_le_of_ne_not`: the
   switching lemma for a conjunction or disjunction of functions of decision tree depth at most
   `k`, leaving a `1 / (16 k + 1)` fraction of the free bits.
-* `Cslib.BitString.PartialAssignment.mul_card_filter_withFree_le`: two stages of restrictions,
-  counted.
 * `Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shallow_le`: random
   restrictions make small circuits of constant depth shallow.
 * `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity`: Håstad's theorem for
@@ -81,63 +79,6 @@ every free bit. The counted form also bounds the Fourier tails of small circuits
 -/
 
 @[expose] public section
-
-namespace Cslib.BitString.PartialAssignment
-
-open Finset
-
-variable {n : ℕ}
-
-/-- **Two stages of restrictions, counted.** Drawing a restriction with `ℓ'` free bits by first
-drawing one with `ℓ ≥ ℓ'` free bits and then an extension of it: if at most a `G / c` fraction of
-the restrictions with `ℓ` free bits satisfy `B`, and for each other one at most an `H / c` fraction
-of its extensions with `ℓ'` free bits satisfy `B'`, then at most a `(G + H) / c` fraction of the
-restrictions with `ℓ'` free bits satisfy `B'`. -/
-theorem mul_card_filter_withFree_le {c G H G' ℓ ℓ' : ℕ} (hℓ'ℓ : ℓ' ≤ ℓ) (hℓn : ℓ ≤ n)
-    {B B' : PartialAssignment (Fin n) → Prop} [DecidablePred B] [DecidablePred B']
-    (h₁ : c * #{ρ ∈ withFree (Fin n) ℓ | B ρ} ≤ G * #(withFree (Fin n) ℓ))
-    (h₂ : ∀ ρ ∈ withFree (Fin n) ℓ, ¬ B ρ →
-      c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} ≤ H * #(ρ.extensions ℓ'))
-    (hG : G + H ≤ G') :
-    c * #{ρ ∈ withFree (Fin n) ℓ' | B' ρ} ≤ G' * #(withFree (Fin n) ℓ') := by
-  set W := withFree (Fin n) ℓ
-  set F := (n - ℓ').choose (ℓ - ℓ')
-  have hF : 0 < F := Nat.choose_pos (by omega)
-  set T := ℓ.choose ℓ' * 2 ^ (ℓ - ℓ')
-  have hT : ∀ ρ ∈ W, #(ρ.extensions ℓ') = T := fun ρ hρ => by
-    rw [card_extensions, mem_withFree.1 hρ]
-  -- each restriction with `ℓ` free bits has few bad extensions, unless it satisfies `B`
-  have hper : ∀ ρ ∈ W, c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} ≤
-      (if B ρ then c else 0) * T + H * T := fun ρ hρ => by
-    by_cases hb : B ρ
-    · simp only [hb, ↓reduceIte]
-      rw [← hT ρ hρ]
-      exact (Nat.mul_le_mul_left _ (card_filter_le _ _)).trans (Nat.le_add_right _ _)
-    · simp only [hb, ↓reduceIte, zero_mul, zero_add]
-      rw [← hT ρ hρ]
-      exact h₂ ρ hρ hb
-  -- double counting the extensions, with and without the condition
-  have hdc := sum_card_filter_extensions B' hℓ'ℓ
-  have hall := sum_card_filter_extensions (ι := Fin n) (fun _ => True) hℓ'ℓ
-  simp only [filter_true] at hall
-  rw [Fintype.card_fin] at hdc hall
-  rw [sum_congr rfl hT, sum_const, smul_eq_mul] at hall
-  refine Nat.le_of_mul_le_mul_right (?_ : _ * F ≤ _ * F) hF
-  calc c * #{ρ ∈ withFree (Fin n) ℓ' | B' ρ} * F
-      = ∑ ρ ∈ W, c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} := by
-        rw [mul_assoc, ← hdc, mul_sum]
-    _ ≤ ∑ ρ ∈ W, ((if B ρ then c else 0) * T + H * T) := sum_le_sum hper
-    _ = c * #{ρ ∈ W | B ρ} * T + #W * H * T := by
-        rw [sum_add_distrib, ← sum_mul, sum_ite, sum_const_zero, add_zero, sum_const,
-          smul_eq_mul, sum_const, smul_eq_mul]
-        ring
-    _ ≤ G * #W * T + #W * H * T := by gcongr
-    _ = (G + H) * #(withFree (Fin n) ℓ') * F := by
-        rw [mul_assoc _ #(withFree (Fin n) ℓ'), ← hall]
-        ring
-    _ ≤ G' * #(withFree (Fin n) ℓ') * F := by gcongr
-
-end Cslib.BitString.PartialAssignment
 
 namespace Cslib.Circuits.Boolean
 
@@ -260,6 +201,9 @@ theorem card_filter_not_shallow_le_of_ne_not {op : Op} (hop : op ≠ .not) {k : 
   rw [this, complexity_comp_of_injective (by cases b <;> decide)]
   simpa only [PartialAssignment.fill_fill_of_extends hext] using not_lt.1 hdeep
 
+@[deprecated (since := "2026-10-19")]
+alias card_filter_not_shallow_le_of_andOr := card_filter_not_shallow_le_of_ne_not
+
 /-- **The switching step for one operation.** If the arguments of an operation are shallow under
 `ρ`, few extensions of `ρ` leave it deep. -/
 theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString n → Bool}
@@ -306,6 +250,10 @@ theorem two_pow_mul_card_filter_not_shallow_le_of_ne_not {op : Op} (hop : op ≠
     2 ^ s * #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
       #(ρ.extensions ℓ) :=
   two_pow_mul_le_card_extensions (card_filter_not_shallow_le_of_ne_not hop h ℓ s) hsℓ hℓ
+
+@[deprecated (since := "2026-10-19")]
+alias two_pow_mul_card_filter_not_shallow_le_of_andOr :=
+  two_pow_mul_card_filter_not_shallow_le_of_ne_not
 
 /-- **The switching fraction for one operation**: if the arguments of an operation are shallow
 under `ρ`, at most a `2 ^ (-s)` fraction of the extensions of `ρ` with `ℓ` free bits leave it

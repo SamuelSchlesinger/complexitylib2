@@ -102,7 +102,7 @@ theorem signVal_mul_self (b : Bool) : signVal b * signVal b = 1 := by
   cases b <;> simp
 
 /-- A sign has absolute value one. -/
-theorem abs_signVal (b : Bool) : |signVal b| = 1 := by
+@[simp] theorem abs_signVal (b : Bool) : |signVal b| = 1 := by
   cases b <;> simp
 
 /-- The product of two signs records whether the bits agree. -/
@@ -222,7 +222,7 @@ theorem chi_eq_signVal_parityOn (S : Finset ι) (x : ι → Bool) :
   rw [chi_eq_neg_one_pow_parityOn, signVal_eq_neg_one_pow]
 
 /-- A real character has absolute value one. -/
-theorem abs_chi (T : Finset ι) (x : ι → Bool) : |chi ℝ T x| = 1 := by
+@[simp] theorem abs_chi (T : Finset ι) (x : ι → Bool) : |chi ℝ T x| = 1 := by
   rw [chi_eq_signVal_parityOn, abs_signVal]
 
 /-- The character of `S` is the trivial additive character exactly when `S` is empty. -/

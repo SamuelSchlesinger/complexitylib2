@@ -27,6 +27,8 @@ Combinators keep a computation within a fixed space budget.
 * `Turing.MultiTapeTM.ComputableTidilyInSpace.budget_natAdd`,
   `Turing.MultiTapeTM.ComputableTidilyInSpace.budget_cons` and their siblings: arithmetic and list
   operations on values computed within a fixed budget stay within it.
+* `Turing.MultiTapeTM.ComputableTidilyInSpace.dispatch`: a case distinction on the element of a
+  fixed list at a computed index.
 -/
 
 @[expose] public section
@@ -127,6 +129,25 @@ theorem natAdd :
     ComputableTidilyInSpace (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat
       fun p => (encPair encNat encNat p).length + 1 :=
   of_inO ComputableTidilyInO.natAdd
+
+/-- **Dispatching on the element of a fixed list at a computed index**: if `F x` is computed in
+linear space for every `x`, and the index is computed in linear space, then so is
+`F (l.getD (i a) d) a`. A finite case distinction, as on the instruction at the current label of
+a program. -/
+theorem dispatch {κ : Type*} (l : List κ) (d : κ) (F : κ → α → β)
+    (hF : ∀ x, ComputableTidilyInSpace (F x) encIn encB fun a => (encIn a).length) {i : α → ℕ}
+    (hi : ComputableTidilyInSpace i encIn encNat fun a => (encIn a).length) :
+    ComputableTidilyInSpace (fun a => F (l.getD (i a) d) a) encIn encB
+      fun a => (encIn a).length := by
+  induction l generalizing i with
+  | nil => simpa using hF d
+  | cons x l ih =>
+    have hz : ComputableTidilyInSpace (fun a => decide (i a = 0)) encIn encBool
+        fun a => (encIn a).length := budget_comp_lin natIsZero (.refl _) hi
+    have hpred : ComputableTidilyInSpace (fun a => i a - 1) encIn encNat
+        fun a => (encIn a).length := budget_comp_lin natPred linear_succ hi
+    refine (budget_ite hz (hF x) (ih hpred)).of_enc_eq fun a => ?_
+    rcases i a with _ | c <;> simp
 
 /-- A step of division: subtract the divisor from the remainder and count, while it fits. -/
 def divStep (s : ℕ × ℕ × ℕ) : ℕ × ℕ × ℕ :=

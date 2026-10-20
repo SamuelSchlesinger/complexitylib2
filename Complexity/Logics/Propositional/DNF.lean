@@ -54,6 +54,13 @@ theorem Term.eval_eq_true_iff (σ : V → Bool) (t : Term V) :
     t.eval σ = true ↔ ∀ l ∈ t, σ l.1 = l.2 := by
   simp [Term.eval, Literal.eval]
 
+/-- Flipping a variable that a term does not mention does not change its value. -/
+theorem Term.eval_update_of_forall_ne [DecidableEq V] {t : Term V} {i : V}
+    (hi : ∀ l ∈ t, l.1 ≠ i) (x : V → Bool) (b : Bool) :
+    t.eval (Function.update x i b) = t.eval x := by
+  rw [Bool.eq_iff_iff, Term.eval_eq_true_iff, Term.eval_eq_true_iff]
+  exact forall₂_congr fun l hl => by rw [Function.update_of_ne (hi l hl)]
+
 @[simp] theorem Term.eval_nil (σ : V → Bool) : Term.eval σ [] = true := rfl
 
 @[simp] theorem Term.eval_cons (σ : V → Bool) (l : Literal V) (t : Term V) :

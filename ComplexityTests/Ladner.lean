@@ -57,7 +57,7 @@ example : capPow 7 3 0 = 0 := by decide
 example : decodeCNF (encCNF [[(3, true)], []]) = [[(3, true)], []] := decodeCNF_encCNF _
 
 /-- The empty word decodes to the empty formula. -/
-example : decodeCNF [] = [] := by simp [decodeCNF, cnfDecoder, Decoder.list]
+example : decodeCNF [] = [] := by simp [decodeCNF, Complexity.cnfDecoder, Decoder.list]
 
 /-- A satisfying certificate among the words with indices below `3`. -/
 example : bruteSAT 3 [[(5, false)]] = true := by decide

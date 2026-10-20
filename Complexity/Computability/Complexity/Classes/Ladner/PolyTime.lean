@@ -8,9 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
+public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Complexity.Classes.Hierarchy
-import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
@@ -35,7 +35,7 @@ indices below `n` as certificates (`Cslib.Complexity.Ladner.bruteSAT_iff`). Ever
 value is polynomial in `n`, and the polynomial-time calculus certifies the composite.
 
 The certificate rests on general tools: a total decoder for formulas
-(`Cslib.Complexity.Ladner.cnfDecoder`, built from `Turing.MultiTapeTM.Decoder.nat` and
+(`Cslib.Complexity.cnfDecoder`, built from `Turing.MultiTapeTM.Decoder.nat` and
 `Turing.MultiTapeTM.Decoder.bool`), capped powers on unary numbers
 (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`), the universal function with its
 number of steps in unary (`Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`), and
@@ -43,7 +43,6 @@ the words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`).
 
 ## Main definitions
 
-* `Cslib.Complexity.Ladner.cnfDecoder`: the total decoder of formulas.
 * `Cslib.Complexity.Ladner.capPow`: powers capped at a bound.
 * `Cslib.Complexity.Ladner.padCheckAt`, `Cslib.Complexity.Ladner.padCheck`: the formula padded in a
   word, if any.
@@ -75,19 +74,19 @@ open Cslib.Logic.PL
 
 /-! ### Decoding formulas -/
 
-/-- Formulas in conjunctive normal form are decoded along their encoding. -/
-def cnfDecoder : Decoder encCNF := .list (.list (.pair .nat .bool))
+@[deprecated (since := "2026-10-19")] alias cnfDecoder := Complexity.cnfDecoder
 
 /-- The formula decoded from a word. -/
-def decodeCNF (w : List Bool) : CNF ℕ := cnfDecoder.decode w
+def decodeCNF (w : List Bool) : CNF ℕ := Complexity.cnfDecoder.decode w
 
 @[simp]
-theorem decodeCNF_encCNF (φ : CNF ℕ) : decodeCNF (encCNF φ) = φ := cnfDecoder.decode_enc φ
+theorem decodeCNF_encCNF (φ : CNF ℕ) : decodeCNF (encCNF φ) = φ :=
+  Complexity.cnfDecoder.decode_enc φ
 
 @[fun_prop]
 theorem computableTidilyInPolyTime_decodeCNF :
     ComputableTidilyInPolyTime decodeCNF encBits encCNF :=
-  let ⟨_, _, h⟩ := cnfDecoder.computable
+  let ⟨_, _, h⟩ := Complexity.cnfDecoder.computable
   h.computableTidilyInPolyTime
 
 /-! ### Capped powers -/

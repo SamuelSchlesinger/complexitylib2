@@ -28,6 +28,7 @@ string and every other block from the second (`BitString.block_piecewise`).
 * `Cslib.BitString.blocksEquiv`: cutting a string into its blocks; its inverse reads bit `p` of
   the string in its block (`BitString.blocksEquiv_symm_apply`).
 * `Cslib.BitString.blockBits`: the positions of the bits of a block.
+* `Cslib.BitString.listBlock`: a block of a bit list (`BitString.listBlock_ofFn`).
 
 ## Main results
 
@@ -97,5 +98,22 @@ theorem block_piecewise (i : Fin m) (x z : BitString (m * k)) (j : Fin m) :
     simp only [block, ↓reduceIte, Finset.piecewise_eq_of_mem _ _ _ hmem]
   · have hmem' : finProdFinEquiv (j, b) ∉ blockBits k i := by simp [mem_blockBits, hj]
     simp only [block, hj, ↓reduceIte, Finset.piecewise_eq_of_notMem _ _ _ hmem']
+
+/-- Block `i` of `k` bits of a bit list: the `k` bits from position `i * k` on. -/
+def listBlock (k : ℕ) (z : List Bool) (i : ℕ) : List Bool := (z.drop (i * k)).take k
+
+/-- Block `i` of the list of a bit string is the list of its block `i`. -/
+theorem listBlock_ofFn (z : BitString (m * k)) (i : Fin m) :
+    listBlock k (List.ofFn z) i = List.ofFn (block z i) := by
+  have hi : (i + 1) * k ≤ m * k := Nat.mul_le_mul_right _ i.2
+  refine List.ext_getElem (by
+    simp only [listBlock, List.length_take, List.length_drop, List.length_ofFn]
+    rw [Nat.add_mul] at hi
+    omega) fun j h₁ h₂ => ?_
+  simp only [listBlock, List.getElem_take, List.getElem_drop, List.getElem_ofFn, block_apply]
+  congr 1
+  ext
+  simp only [finProdFinEquiv_apply_val]
+  rw [Nat.mul_comm, Nat.add_comm]
 
 end Cslib.BitString
