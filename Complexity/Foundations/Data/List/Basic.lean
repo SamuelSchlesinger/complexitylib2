@@ -18,6 +18,7 @@ public import Mathlib.Data.List.Basic
 * `List.foldr_ite_eq_of_mem`: a chain of equality tests selects the branch of a contained tag.
   Used by deterministic and probabilistic finite-control certificates.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
+* `List.decide_mem_eq_any`: membership as a scan of the list.
 
 ## References
 
@@ -51,3 +52,10 @@ theorem List.length_flatMap_le {α β : Type*} {l : List α} {f : α → List β
     have hl := ih fun b hb => h b (List.mem_cons_of_mem _ hb)
     rw [List.flatMap_cons, List.length_append, List.length_cons, Nat.succ_mul]
     omega
+
+/-- Membership in a list as a scan of the list, the form in which polynomial-time membership tests
+are certified. -/
+theorem List.decide_mem_eq_any {α : Type*} [DecidableEq α] (a : α) (l : List α) :
+    decide (a ∈ l) = l.any fun u => decide (u = a) := by
+  rw [Bool.eq_iff_iff, decide_eq_true_eq, List.any_eq_true]
+  simp

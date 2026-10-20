@@ -38,9 +38,6 @@ example : wordsProofSystem.Simulates wordsProofSystem := ProofSystem.PSimulates.
 
 /-! ### The proof system of the `SAT` verifier -/
 
-/-- Formulas in conjunctive normal form are decoded along their encoding. -/
-private def cnfDecoder : Decoder encCNF := .list (.list (.pair .nat .bool))
-
 /-- `(x₀ ∨ ¬x₁) ∧ x₁`. -/
 private def φ : CNF ℕ := [[(0, true), (1, false)], [(1, true)]]
 
