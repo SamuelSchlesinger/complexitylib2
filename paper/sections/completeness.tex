@@ -29,21 +29,30 @@ satisfying assignments form a $\oplus\cc{P}$-complete problem; unique satisfiabi
 $\cc{US}$-complete; a count not divisible by $k$ is $\cc{Mod}_k\cc{P}$-complete and its
 complement $\cc{coMod}_k\cc{P}$-complete, for every modulus $k$ (including the degenerate
 moduli $0$ and $1$ of the total definition); pairs $(\varphi,m)$, $m$ in binary, with
-$\#\varphi\ge m$ form a $\cc{PP}$-complete problem, and those with $\#\varphi=m$ a
+$\#\varphi\ge m$, as well as $\mathrm{MAJSAT}$ (CNF formulas $\varphi$ satisfied by strictly
+more than half of the $2^{|\mathrm{vars}(\varphi)|}$ assignments to their occurring variables,
+$2^{|\mathrm{vars}(\varphi)|} < 2\cdot\#\varphi$, via an odd/even variable-relabelling and
+selector-clause padding construction), form $\cc{PP}$-complete problems; and pairs with
+$\#\varphi=m$ form a
 $\cc{C_{=}P}$-complete problem whose complement is $\cc{coC_{=}P}$-complete. All classes are the
-library's verifier-based definitions; MAJSAT itself is not treated.
-\citep{Valiant1979}\citep[Chapter 18]{Papadimitriou94}\citep{PapadimitriouZachos1983}\citep{BlassGurevich1982}\citep{Gill1977}\citep{CaiHemachandra1990,BeigelGillHertrampf1990,Wagner1986}\citep{Fortnow1997}
+library's verifier-based definitions, and variable counts range over the variables occurring in
+$\varphi$.
+\citep{Valiant1979}\citep[Chapter 18]{Papadimitriou94}\citep{PapadimitriouZachos1983}\citep{BlassGurevich1982}\citep{Gill1977}\citep{Simon1975}\citep{CaiHemachandra1990,BeigelGillHertrampf1990,Wagner1986}\citep{Fortnow1997}
 \declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Parsimonious.lean}{340}{Cslib.Complexity.CookLevin.modelCount_tableau}
 \declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Parsimonious.lean}{364}{Cslib.Complexity.CookLevin.modelCount_reduce}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/SharpSAT.lean}{170}{Cslib.Complexity.SharpSAT.mem_SharpP}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/SharpSAT.lean}{204}{Cslib.Complexity.SharpSAT.computableTidilyInPolyTime_card_vars}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/SharpSAT.lean}{216}{Cslib.Complexity.SharpSAT.mem_SharpP}
 \declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Counting.lean}{58}{Cslib.Complexity.CookLevin.SharpSAT_sharpPComplete}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{115}{Cslib.Complexity.ParitySAT_parityPComplete}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{120}{Cslib.Complexity.USAT_usComplete}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{125}{Cslib.Complexity.ModSAT_modPComplete}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{129}{Cslib.Complexity.compl_ModSAT_coModPComplete}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{154}{Cslib.Complexity.SharpSATAtLeast_ppComplete}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{172}{Cslib.Complexity.SharpSATExact_ceqPComplete}
-\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{188}{Cslib.Complexity.compl_SharpSATExact_coCeqPComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{154}{Cslib.Complexity.ParitySAT_parityPComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{159}{Cslib.Complexity.USAT_usComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{164}{Cslib.Complexity.ModSAT_modPComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{168}{Cslib.Complexity.compl_ModSAT_coModPComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{193}{Cslib.Complexity.SharpSATAtLeast_ppComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{240}{Cslib.Complexity.MAJSAT_mem_PP}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{514}{Cslib.Complexity.padMajority_mem_MAJSAT_iff}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{539}{Cslib.Complexity.MAJSAT_ppComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{211}{Cslib.Complexity.SharpSATExact_ceqPComplete}
+\declat{3f273bbfa63b964c32474cd341e253ddcf466fb0}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{227}{Cslib.Complexity.compl_SharpSATExact_coCeqPComplete}
 \end{result}
 
 
