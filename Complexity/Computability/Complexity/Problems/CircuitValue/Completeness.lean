@@ -18,7 +18,7 @@ import Mathlib.Data.List.GetD
 /-!
 # The circuit value problem is `P`-complete
 
-**Ladner's theorem** [Ladner1975]: the circuit value problem is `P`-complete under
+Ladner proved [Ladner1975] that the circuit value problem is `P`-complete under
 logarithmic-space many-one reductions [Arora and Barak, Section 6.7][AroraBarak09],
 [Papadimitriou, Theorem 8.1][Papadimitriou94].
 
@@ -67,58 +67,6 @@ copies the input.
 namespace Cslib.Complexity
 
 open Turing MultiTapeTM Circuits Circuits.Boolean
-
-/-! ### Framed words -/
-
-/-- Each bit preceded by `true`: `frame` without its closing `false`. -/
-def dbl (l : List Bool) : List Bool := l.flatMap fun b => [true, b]
-
-theorem frame_eq_dbl (l : List Bool) : frame l = dbl l ++ [false] := rfl
-
-@[simp] theorem dbl_append (l l' : List Bool) : dbl (l ++ l') = dbl l ++ dbl l' :=
-  List.flatMap_append
-
-@[simp] theorem dbl_false : dbl [false] = [true, false] := rfl
-
-theorem dbl_flatten (L : List (List Bool)) : dbl L.flatten = (L.map dbl).flatten := by
-  induction L with
-  | nil => rfl
-  | cons l L ih => simp [ih]
-
-theorem dbl_dbl_replicate (n : ℕ) :
-    dbl (dbl (List.replicate n true)) = (List.replicate n [true, true, true, true]).flatten := by
-  induction n with
-  | zero => rfl
-  | succ n ih => simp [List.replicate_succ, dbl, ← ih]
-
-theorem getD_frame_two_mul (w : List Bool) (i : ℕ) :
-    (frame w).getD (2 * i) false = decide (i < w.length) := by
-  induction w generalizing i with
-  | nil => rcases i with _ | i <;> simp [frame_nil, List.getD_eq_getElem?_getD]
-  | cons b w ih =>
-    rcases i with _ | i
-    · simp [frame_cons]
-    · rw [frame_cons, show 2 * (i + 1) = 2 * i + 1 + 1 by omega, List.getD_cons_succ,
-        List.getD_cons_succ, ih]
-      simp
-
-theorem getD_frame_two_mul_add_one (w : List Bool) (i : ℕ) :
-    (frame w).getD (2 * i + 1) false = w.getD i false := by
-  induction w generalizing i with
-  | nil => rcases i with _ | i <;> simp [frame_nil, List.getD_eq_getElem?_getD]
-  | cons b w ih =>
-    rcases i with _ | i
-    · simp [frame_cons]
-    · rw [frame_cons, show 2 * (i + 1) + 1 = 2 * i + 1 + 1 + 1 by omega, List.getD_cons_succ,
-        List.getD_cons_succ, ih, List.getD_cons_succ]
-
-theorem getElem?_frame_two_mul (w : List Bool) (i : ℕ) :
-    ((frame w)[2 * i]?).getD false = decide (i < w.length) := by
-  rw [← List.getD_eq_getElem?_getD, getD_frame_two_mul]
-
-theorem getElem?_frame_two_mul_add_one (w : List Bool) (i : ℕ) :
-    ((frame w)[2 * i + 1]?).getD false = (w[i]?).getD false := by
-  rw [← List.getD_eq_getElem?_getD, getD_frame_two_mul_add_one, List.getD_eq_getElem?_getD]
 
 namespace CircuitValue
 
@@ -206,12 +154,12 @@ noncomputable def writer : ReadMachine (ℕ × ℕ × ℕ) where
 noncomputable def writerRounds (n : ℕ) : ℕ :=
   (n + 1) + (Tableau.numGates k State (timeBound C d n) + 1) + (n + 1)
 
-theorem readBit_writer_count (w : List Bool) (i : ℕ) :
+private theorem readBit_writer_count (w : List Bool) (i : ℕ) :
     (writer tm C d).readBit (frame w) (0, 0, i) = decide (i < w.length) := by
   simp only [ReadMachine.readBit, writer, writerAddr, ↓reduceIte]
   exact getD_frame_two_mul w i
 
-theorem readBit_writer_copy (w : List Bool) (n i : ℕ) :
+private theorem readBit_writer_copy (w : List Bool) (n i : ℕ) :
     (writer tm C d).readBit (frame w) (2, n, i) = w.getD i false := by
   simp only [ReadMachine.readBit, writer, writerAddr, OfNat.ofNat_ne_zero, ↓reduceIte]
   exact getD_frame_two_mul_add_one w i
@@ -304,26 +252,6 @@ open ComputableTidilyInSpace Tableau
 variable {k : ℕ} {State : Type} [Fintype State] [DecidableEq State]
   (tm : MultiTapeTM k Bool State) (C d : ℕ)
 
-/-- Doubles each bit after a `true`. -/
-def dblT : Transducer Bool Unit where
-  q₀ := ()
-  step _ b := ((), [true, b])
-  final _ := []
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-theorem dblT_run (l : List Bool) : dblT.run () l = dbl l := by
-  induction l with
-  | nil => rfl
-  | cons b l ih =>
-    rw [Transducer.run_cons]
-    change [true, b] ++ dblT.run () l = [true, b] ++ dbl l
-    rw [ih]
-
-theorem dbl_inSpace :
-    ComputableTidilyInSpace dbl encBits encBits fun l => (encBits l).length :=
-  of_inO (.of_linear (dblT.computableTidilyInLinearTimeAndSpace fun l => (dblT_run l).symm))
-
 /-- The encoding of the states of the writer. -/
 abbrev encWState : ℕ × ℕ × ℕ ↪ List Bool := encPair encNat (encPair encNat encNat)
 
@@ -336,18 +264,18 @@ variable {α : Type} {encIn : α ↪ List Bool} {Bs : α → ℕ}
   (hin : (fun x => (encIn x).length) ≼ Bs)
 include hin
 
-theorem timeBound_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs) :
+private theorem timeBound_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => timeBound C d (n x)) encIn encNat Bs :=
-  add_inSpace (add_inSpace (mul_inSpace (budget_const C hin)
-    (pow_inSpace (add_inSpace hn (budget_const 1 hin)) hin d)) hn) (budget_const 1 hin)
+  budget_natAdd (budget_natAdd (budget_natMul (budget_const C hin)
+    (budget_natPow (budget_natAdd hn (budget_const 1 hin)) hin d)) hn) (budget_const 1 hin)
 
 omit [DecidableEq State] in
-theorem numGates_inSpace {T : α → ℕ} (hT : ComputableTidilyInSpace T encIn encNat Bs) :
+private theorem numGates_inSpace {T : α → ℕ} (hT : ComputableTidilyInSpace T encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => numGates k State (T x)) encIn encNat Bs :=
-  add_inSpace (budget_const 2 hin) (mul_inSpace (add_inSpace hT (budget_const 1 hin))
+  budget_natAdd (budget_const 2 hin) (budget_natMul (budget_natAdd hT (budget_const 1 hin))
     (blockSize_inSpace (k := k) (State := State) hT hin))
 
-theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs)
+private theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs)
     (hi : ComputableTidilyInSpace i encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => gateChunk tm C d (n x) (i x)) encIn encBits Bs := by
   have hframe : ComputableTidilyInSpace (fun g => frame (encGate g)) encGate encBits
@@ -358,14 +286,14 @@ theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpace n enc
       (gateCode_inSpace tm hn (timeBound_inSpace C d hin hn) hin hi)))
 
 omit [DecidableEq State] in
-theorem trailer_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs) :
+private theorem trailer_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => trailer k State C d (n x)) encIn encBits Bs := by
   have hT := timeBound_inSpace C d hin hn
   have ho : ComputableTidilyInSpace (fun x => outWire k State (n x) (timeBound C d (n x)))
       encIn encNat Bs :=
-    add_inSpace (add_inSpace (add_inSpace hn (budget_const 2 hin))
-      (mul_inSpace hT (blockSize_inSpace (k := k) (State := State) hT hin)))
-      (add_inSpace (gfStart_inSpace (k := k) (State := State) hT hin) (budget_const _ hin))
+    budget_natAdd (budget_natAdd (budget_natAdd hn (budget_const 2 hin))
+      (budget_natMul hT (blockSize_inSpace (k := k) (State := State) hT hin)))
+      (budget_natAdd (gfStart_inSpace (k := k) (State := State) hT hin) (budget_const _ hin))
   have hframe : ComputableTidilyInSpace (fun m => frame (encNat m)) encNat encBits
       fun m => (encNat m).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))
@@ -381,12 +309,12 @@ theorem trailer_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n encIn e
 
 end Components
 
-theorem writerHalt_inSpace :
+private theorem writerHalt_inSpace :
     ComputableTidilyInSpace (writer tm C d).halt encWState encBool wBudget := by
   have hin : (fun s => (encWState s).length) ≼ wBudget := .of_le fun _ => by
     simp only [wBudget]; omega
   have hph := (ComputableTidilyInSpace.fst encNat (encPair encNat encNat)).weaken hin
-  exact eq_inSpace hph (budget_const (encB := encNat) 3 hin)
+  exact budget_natEq hph (budget_const (encB := encNat) 3 hin)
 
 theorem writerAddr_inSpace :
     ComputableTidilyInSpace writerAddr encWState (encOption encNat) wBudget := by
@@ -397,14 +325,14 @@ theorem writerAddr_inSpace :
   have hsome {a : ℕ × ℕ × ℕ → ℕ} (ha : ComputableTidilyInSpace a encWState encNat wBudget) :
       ComputableTidilyInSpace (fun s => some (a s)) encWState (encOption encNat) wBudget :=
     budget_comp_linear (of_inO (ComputableTidilyInDegree.optionSome (enc₁ := encNat)).inO_one) ha
-  have h2i := mul_inSpace (budget_const (encB := encNat) 2 hin) hi
-  refine (budget_ite (eq_inSpace hph (budget_const (encB := encNat) 0 hin)) (hsome h2i)
-    (budget_ite (eq_inSpace hph (budget_const (encB := encNat) 2 hin))
-      (hsome (add_inSpace h2i (budget_const 1 hin)))
+  have h2i := budget_natMul (budget_const (encB := encNat) 2 hin) hi
+  refine (budget_ite (budget_natEq hph (budget_const (encB := encNat) 0 hin)) (hsome h2i)
+    (budget_ite (budget_natEq hph (budget_const (encB := encNat) 2 hin))
+      (hsome (budget_natAdd h2i (budget_const 1 hin)))
       (budget_const (encB := encOption encNat) none hin))).of_enc_eq fun s => ?_
   simp only [writerAddr, decide_eq_true_eq]
 
-theorem writerStep_inSpace :
+private theorem writerStep_inSpace :
     ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => writerStep tm C d p.1 p.2)
       (encPair encWState encBool) (encPair encWState encBits) fun p => wBudget p.1 := by
   have hin : (fun p => (encPair encWState encBool p).length) ≼ fun p => wBudget p.1 :=
@@ -427,20 +355,20 @@ theorem writerStep_inSpace :
     budget_prod ha (budget_prod hb hc)
   have hc (m : ℕ) := budget_const (encB := encNat) m hin
   have hw (l : List Bool) := budget_const (encB := encBits) l hin
-  have hsucc := add_inSpace hi (hc 1)
+  have hsucc := budget_natAdd hi (hc 1)
   have hN := numGates_inSpace (k := k) (State := State) hin (timeBound_inSpace C d hin hn)
   have hbit : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => [p.2])
       (encPair encWState encBool) encBits fun p => wBudget p.1 := hb.of_enc_eq fun _ => rfl
-  refine (budget_ite (eq_inSpace hph (hc 0))
+  refine (budget_ite (budget_natEq hph (hc 0))
     (budget_ite hb (budget_prod (hst (hc 0) (hc 0) hsucc) (hw [true, true, true, true]))
       (budget_prod (hst (hc 1) hi (hc 0)) (hw [true, false])))
-    (budget_ite (eq_inSpace hph (hc 1))
-      (budget_ite (lt_inSpace hi hN)
+    (budget_ite (budget_natEq hph (hc 1))
+      (budget_ite (budget_natLt hi hN)
         (budget_prod (hst (hc 1) hn hsucc) (gateChunk_inSpace tm C d hin hn hi))
         (budget_prod (hst (hc 2) hn (hc 0))
           (trailer_inSpace (k := k) (State := State) C d hin hn)))
-      (budget_ite (eq_inSpace hph (hc 2))
-        (budget_ite (lt_inSpace hi hn) (budget_prod (hst (hc 2) hn hsucc) hbit)
+      (budget_ite (budget_natEq hph (hc 2))
+        (budget_ite (budget_natLt hi hn) (budget_prod (hst (hc 2) hn hsucc) hbit)
           (budget_prod (hst (hc 3) hn (hc 0)) (hw [])))
         (budget_prod hs (hw []))))).of_enc_eq fun p => ?_
   simp only [writerStep, decide_eq_true_eq]
@@ -504,7 +432,7 @@ open Tableau
 variable {k : ℕ} {State : Type} [Fintype State] [DecidableEq State]
   (tm : MultiTapeTM k Bool State) (C d : ℕ)
 
-theorem tidy_writer : ∃ T, (writer tm C d).toStepMachine.Tidy (encPair encWState encNat)
+private theorem tidy_writer : ∃ T, (writer tm C d).toStepMachine.Tidy (encPair encWState encNat)
     (ReadMachine.stateT encWState T wBudget) (ReadMachine.stateS encWState wBudget) := by
   obtain ⟨T₁, h₁⟩ := writerHalt_inSpace tm C d
   obtain ⟨T₂, h₂⟩ := writerAddr_inSpace
@@ -540,7 +468,7 @@ theorem stateS_le (w : List Bool) {q : (ℕ × ℕ × ℕ) × ℕ}
   omega
 
 omit [DecidableEq State] in
-theorem polynomiallyBounded_wMax : PolynomiallyBounded (wMax k State C d) := by
+private theorem polynomiallyBounded_wMax : PolynomiallyBounded (wMax k State C d) := by
   change PolynomiallyBounded fun n => wMax k State C d n
   simp only [wMax, numGates, blockSize, colStart, gfStart, globStart, numCols, timeBound]
   fun_prop
@@ -613,30 +541,6 @@ end LogSpace
 
 /-! ### `P`-completeness -/
 
-/-- Frames its input. -/
-def frameTr : Transducer Bool Unit where
-  q₀ := ()
-  step _ b := ((), [true, b])
-  final _ := [false]
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-theorem frameTr_run (l : List Bool) : frameTr.run () l = frame l := by
-  induction l with
-  | nil => rfl
-  | cons b l ih =>
-    rw [Transducer.run_cons, frame_cons]
-    change [true, b] ++ frameTr.run () l = _
-    rw [ih]
-    rfl
-
-/-- **Framing an encoded instance** takes no work space. -/
-theorem computableInLogSpace_frame {α : Type} (enc : α ↪ List Bool) :
-    ComputableInLogSpace (fun a => enc a) enc (encFramed encBits) := by
-  have h := frameTr.computableTidilyInTimeAndSpace (encOut := encFramed encBits)
-    (f := fun a => enc a) fun a => by rw [encFramed_apply, encBits_apply, frameTr_run]
-  exact ⟨_, 0, h.computableInTimeAndSpace.mono (fun _ => le_rfl) fun _ => Nat.zero_le _⟩
-
 /-- **Every problem in `P` reduces to the circuit value problem in logarithmic space**: an
 instance is mapped to the tableau circuit of a polynomial-time decider on inputs of the length of
 the encoded instance, with the encoded instance as its input. -/
@@ -665,7 +569,7 @@ theorem logSpaceReducible_of_mem_P {α : Type} {enc : α ↪ List Bool} {A : Set
 theorem logSpaceHard : LogSpaceHard @P encCircuitValue CircuitValue :=
   fun _ _ hA => logSpaceReducible_of_mem_P hA
 
-/-- **Ladner's theorem: the circuit value problem is `P`-complete under logarithmic-space
+/-- **The circuit value problem is `P`-complete under logarithmic-space
 reductions** [Ladner1975], [Arora and Barak, Section 6.7][AroraBarak09]. -/
 theorem logSpaceComplete : LogSpaceComplete @P encCircuitValue CircuitValue :=
   ⟨mem_P, logSpaceHard⟩

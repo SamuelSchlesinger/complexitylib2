@@ -200,6 +200,18 @@ def LogSpaceComplete (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) 
     (B : Set β) : Prop :=
   B ∈ C encB ∧ LogSpaceHard C encB B
 
+/-- Logspace hardness transfers along a logspace reduction. -/
+theorem LogSpaceHard.trans {D : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+    (hB : LogSpaceHard D encB B) (hBC : LogSpaceReducible encB encC B C) :
+    LogSpaceHard D encC C :=
+  fun enc A hA => (hB enc A hA).trans hBC
+
+/-- A class with a logspace-hard problem in `L` is contained in `L`, for every encoding. -/
+theorem LogSpaceHard.subset_L {D : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+    (hB : LogSpaceHard D encB B) (hL : B ∈ L encB) (enc : α ↪ List Bool) :
+    D enc ⊆ L enc :=
+  fun _ hA => (hB enc _ hA).mem_L hL
+
 /-- Hardness under logspace reductions implies hardness under polynomial-time reductions. -/
 theorem LogSpaceHard.polyTimeHard {C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
     (h : LogSpaceHard C encB B) : PolyTimeHard C encB B :=

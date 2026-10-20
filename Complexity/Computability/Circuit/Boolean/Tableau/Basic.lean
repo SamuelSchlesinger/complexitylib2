@@ -82,7 +82,7 @@ universe v
 
 /-- A list of gates is the code of a program when every entry has the arity of its operation and
 reads only the inputs and the gates before it. -/
-theorem isCodeFrom_of_getElem {σ : Signature.{v}} {n k : ℕ} {gates : List (σ.Op × List ℕ)}
+private theorem isCodeFrom_of_getElem {σ : Signature.{v}} {n k : ℕ} {gates : List (σ.Op × List ℕ)}
     (h : ∀ j (hj : j < gates.length), gates[j].2.length = σ.Arity gates[j].1 ∧
       ∀ i ∈ gates[j].2, i < n + k + j) :
     IsCodeFrom σ n k gates := by
@@ -442,13 +442,13 @@ def gadgetJ (m : ℕ) : Fin 8 := ⟨m % 8, Nat.mod_lt _ (by norm_num)⟩
 
 /-! ### Decoding inverts the layout -/
 
-theorem symOf_symIdx (s : Option Bool) : symOf (symIdx s) = s := by
+private theorem symOf_symIdx (s : Option Bool) : symOf (symIdx s) = s := by
   rcases s with _ | _ | _ <;> rfl
 
-theorem symIdx_lt (s : Option Bool) : symIdx s < 3 := by
+private theorem symIdx_lt (s : Option Bool) : symIdx s < 3 := by
   rcases s with _ | _ | _ <;> simp [symIdx]
 
-theorem ScanQ.ofIdx_idx (q : ScanQ k) : ScanQ.ofIdx q.idx = q := by
+private theorem ScanQ.ofIdx_idx (q : ScanQ k) : ScanQ.ofIdx q.idx = q := by
   rcases q with s | ⟨i, s⟩
   · simp [ScanQ.idx, ScanQ.ofIdx, symIdx_lt, symOf_symIdx]
   · have hs := symIdx_lt s
@@ -457,12 +457,12 @@ theorem ScanQ.ofIdx_idx (q : ScanQ k) : ScanQ.ofIdx q.idx = q := by
     simp only [ScanQ.idx, ScanQ.ofIdx, show ¬3 + 3 * (i : ℕ) + symIdx s < 3 by omega,
       ↓reduceIte, h₁, i.isLt, ↓reduceDIte, h₂, symOf_symIdx]
 
-theorem ScanQ.idx_lt (q : ScanQ k) : q.idx < 3 + 3 * k := by
+private theorem ScanQ.idx_lt (q : ScanQ k) : q.idx < 3 + 3 * k := by
   rcases q with s | ⟨i, s⟩ <;> simp only [ScanQ.idx] <;> have := symIdx_lt s
   · omega
   · have := i.isLt; omega
 
-theorem ScanLoc.ofIdx_idx (l : ScanLoc k) : ScanLoc.ofIdx l.idx = l := by
+private theorem ScanLoc.ofIdx_idx (l : ScanLoc k) : ScanLoc.ofIdx l.idx = l := by
   rcases l with i | _ | q | q
   · simp [ScanLoc.idx, ScanLoc.ofIdx]
   · simp [ScanLoc.idx, ScanLoc.ofIdx]
@@ -476,17 +476,17 @@ theorem ScanLoc.ofIdx_idx (l : ScanLoc k) : ScanLoc.ofIdx l.idx = l := by
       show (k + 2 + 2 * q.idx - (k + 1)) / 2 = q.idx by omega, ScanQ.ofIdx_idx]
     rfl
 
-theorem ScanLoc.idx_lt (l : ScanLoc k) : l.idx < scanWidth k := by
+private theorem ScanLoc.idx_lt (l : ScanLoc k) : l.idx < scanWidth k := by
   rcases l with i | _ | q | q <;> simp only [ScanLoc.idx, scanWidth]
   · have := i.isLt; omega
   · omega
   · have := q.idx_lt; omega
   · have := q.idx_lt; omega
 
-theorem attrIdx_lt (v : Attr k State) : attrIdx v < Fintype.card (Attr k State) :=
+private theorem attrIdx_lt (v : Attr k State) : attrIdx v < Fintype.card (Attr k State) :=
   (Fintype.equivFin (Attr k State) v).isLt
 
-theorem GlobLoc.idx_lt (l : GlobLoc k State) : l.idx < globWidth k State := by
+private theorem GlobLoc.idx_lt (l : GlobLoc k State) : l.idx < globWidth k State := by
   rcases l with ⟨j, i⟩ | ⟨v, j⟩ <;> simp only [GlobLoc.idx, globWidth]
   · have := j.isLt
     have := i.isLt
@@ -501,7 +501,7 @@ theorem GlobLoc.idx_lt (l : GlobLoc k State) : l.idx < globWidth k State := by
         Fintype.card (Attr k State) * (numSit k State + 1) := Nat.mul_le_mul_right _ h₂
     omega
 
-theorem GlobLoc.ofIdx_idx (l : GlobLoc k State) : GlobLoc.ofIdx l.idx = l := by
+private theorem GlobLoc.ofIdx_idx (l : GlobLoc k State) : GlobLoc.ofIdx l.idx = l := by
   rcases l with ⟨j, i⟩ | ⟨v, j⟩
   · have hlt : (j : ℕ) * (k + 1) + i < numSit k State * (k + 1) := by
       have := (GlobLoc.sit (State := State) j i).idx_lt
@@ -529,14 +529,14 @@ theorem GlobLoc.ofIdx_idx (l : GlobLoc k State) : GlobLoc.ofIdx l.idx = l := by
     congr
     exact (Fintype.equivFin (Attr k State)).symm_apply_apply v
 
-theorem GFeat.idx_lt (f : GFeat State) : f.idx < Fintype.card (Option State) + 4 := by
+private theorem GFeat.idx_lt (f : GFeat State) : f.idx < Fintype.card (Option State) + 4 := by
   rcases f with q | o
   · have := (Fintype.equivFin (Option State) q).isLt
     simp only [GFeat.idx]
     omega
   · rcases o with _ | (_ | _) | _ <;> simp [GFeat.idx, OutView.index]
 
-theorem GFeat.ofIdx_idx (f : GFeat State) : GFeat.ofIdx f.idx = f := by
+private theorem GFeat.ofIdx_idx (f : GFeat State) : GFeat.ofIdx f.idx = f := by
   rcases f with q | o
   · simp only [GFeat.idx, GFeat.ofIdx, Fin.is_lt, ↓reduceDIte, Fin.eta, Equiv.symm_apply_apply]
   · rw [GFeat.ofIdx]
@@ -544,13 +544,13 @@ theorem GFeat.ofIdx_idx (f : GFeat State) : GFeat.ofIdx f.idx = f := by
     · exact absurd h (by simp only [GFeat.idx]; omega)
     · rcases o with _ | (_ | _) | _ <;> simp [GFeat.idx, OutView.index, outViewOf]
 
-theorem ColFeat.idx_lt (f : ColFeat k) : f.idx < 1 + 4 * k := by
+private theorem ColFeat.idx_lt (f : ColFeat k) : f.idx < 1 + 4 * k := by
   rcases f with _ | i | ⟨i, s⟩ <;> simp only [ColFeat.idx]
   · omega
   · have := i.isLt; omega
   · have := i.isLt; have := symIdx_lt s; omega
 
-theorem ColFeat.ofIdx_idx (f : ColFeat k) : ColFeat.ofIdx f.idx = f := by
+private theorem ColFeat.ofIdx_idx (f : ColFeat k) : ColFeat.ofIdx f.idx = f := by
   rcases f with _ | i | ⟨i, s⟩
   · rfl
   · simp [ColFeat.idx, ColFeat.ofIdx]
@@ -561,25 +561,28 @@ theorem ColFeat.ofIdx_idx (f : ColFeat k) : ColFeat.ofIdx f.idx = f := by
       show ¬1 + k + 3 * (i : ℕ) + symIdx s - 1 < k by omega, ↓reduceIte, ↓reduceDIte, h₁,
       i.isLt, h₂, symOf_symIdx]
 
-theorem gadgetIdx_lt (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b j < 16 * (fi + 1) := by
+private theorem gadgetIdx_lt (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b j < 16 * (fi + 1) :=
+    by
   have := j.isLt
   cases b <;>
     simp only [gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero,
       gt_iff_lt] <;> omega
 
-theorem gadgetIdx_div (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b j / 16 = fi := by
+private theorem gadgetIdx_div (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b j / 16 = fi := by
   have := j.isLt
   cases b <;>
     simp only [gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero] <;> omega
 
-theorem gadgetB_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetB (gadgetIdx fi b j) = b := by
+private theorem gadgetB_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetB (gadgetIdx fi b j) = b
+    := by
   have := j.isLt
   cases b <;>
     simp only [gadgetB, gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero,
       Nat.mul_add_mod_self_left, decide_eq_false_iff_not, decide_eq_true_eq, not_le, ge_iff_le,
       gt_iff_lt] <;> omega
 
-theorem gadgetJ_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetJ (gadgetIdx fi b j) = j := by
+private theorem gadgetJ_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetJ (gadgetIdx fi b j) = j
+    := by
   have := j.isLt
   ext
   cases b <;>
@@ -749,7 +752,7 @@ private theorem mul_add_lt_mul {c w W i : ℕ} (hc : c < W) (hi : i < w) : c * w
     _ ≤ W * w := Nat.mul_le_mul_right _ hc
 
 omit [DecidableEq State] in
-theorem gfStart_add_gadgetIdx_lt (f : GFeat State) (b : Bool) (j : Fin 8) :
+private theorem gfStart_add_gadgetIdx_lt (f : GFeat State) (b : Bool) (j : Fin 8) :
     gfStart k State T + gadgetIdx f.idx b j < colStart k State T := by
   have h₁ := gadgetIdx_lt f.idx b j
   have h₂ := f.idx_lt
@@ -757,7 +760,8 @@ theorem gfStart_add_gadgetIdx_lt (f : GFeat State) (b : Bool) (j : Fin 8) :
   omega
 
 omit [DecidableEq State] in
-theorem colStart_add_lt {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (b : Bool) (j : Fin 8) :
+private theorem colStart_add_lt {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (b : Bool) (j : Fin 8)
+    :
     colStart k State T + c * colWidth k + gadgetIdx f.idx b j < blockSize k State T := by
   have h₁ := gadgetIdx_lt f.idx b j
   have h₂ := f.idx_lt
@@ -792,7 +796,7 @@ theorem wire_sub (n T t : ℕ) (l : Loc k State) (c : ℕ) :
   omega
 
 omit [DecidableEq State] in
-theorem div_mod_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T c) :
+private theorem div_mod_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T c) :
     (wire n T t l c - n - 2) / blockSize k State T = t ∧
       (wire n T t l c - n - 2) % blockSize k State T = l.offset T c := by
   have h := Loc.offset_lt hl
@@ -855,7 +859,7 @@ theorem gateCode_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T 
 
 omit [DecidableEq State] in
 /-- Every position lies within its block, for a column of the window. -/
-theorem Loc.offset_lt_of_lt {l : Loc k State} {c : ℕ} (hc : c < numCols T) :
+private theorem Loc.offset_lt_of_lt {l : Loc k State} {c : ℕ} (hc : c < numCols T) :
     l.offset T c < blockSize k State T := by
   rcases l with l | l | ⟨f, b, j⟩ | ⟨f, b, j⟩
   · exact Loc.offset_lt (l := .scan l) hc
@@ -864,7 +868,7 @@ theorem Loc.offset_lt_of_lt {l : Loc k State} {c : ℕ} (hc : c < numCols T) :
   · exact Loc.offset_lt (l := .col f b j) hc
 
 omit [DecidableEq State] in
-theorem Loc.ColOK.lt {l : Loc k State} {c : ℕ} (hl : l.ColOK T c) : c < numCols T := by
+private theorem Loc.ColOK.lt {l : Loc k State} {c : ℕ} (hl : l.ColOK T c) : c < numCols T := by
   rcases l with l | l | ⟨f, b, j⟩ | ⟨f, b, j⟩ <;> simp only [Loc.ColOK] at hl <;>
     first | exact hl | (subst hl; simp [numCols])
 
@@ -873,20 +877,20 @@ section Earlier
 variable {n T t c : ℕ} {l : Loc k State}
 
 omit [DecidableEq State] in
-theorem resolve_fls_lt : (Ref.fls : Ref k State).resolve n T t c < wire n T t l c := by
+private theorem resolve_fls_lt : (Ref.fls : Ref k State).resolve n T t c < wire n T t l c := by
   simp only [Ref.resolve, wire]; omega
 
 omit [DecidableEq State] in
-theorem resolve_tru_lt : (Ref.tru : Ref k State).resolve n T t c < wire n T t l c := by
+private theorem resolve_tru_lt : (Ref.tru : Ref k State).resolve n T t c < wire n T t l c := by
   simp only [Ref.resolve, wire]; omega
 
 omit [DecidableEq State] in
-theorem resolve_inp_lt : (Ref.inp : Ref k State).resolve n T t c < wire n T t l c := by
+private theorem resolve_inp_lt : (Ref.inp : Ref k State).resolve n T t c < wire n T t l c := by
   simp only [Ref.resolve, wire]; split_ifs <;> omega
 
 omit [DecidableEq State] in
 /-- A reference to the previous block reads an earlier wire. -/
-theorem resolve_prev_lt (ht : 1 ≤ t) {l' : Loc k State} {cs : ColSel} {g : Guard}
+private theorem resolve_prev_lt (ht : 1 ≤ t) {l' : Loc k State} {cs : ColSel} {g : Guard}
     (h : g.test n T c = true → cs.apply T c < numCols T) :
     (Ref.node true l' cs g).resolve n T t c < wire n T t l c := by
   simp only [Ref.resolve, ↓reduceIte]
@@ -900,7 +904,7 @@ theorem resolve_prev_lt (ht : 1 ≤ t) {l' : Loc k State} {cs : ColSel} {g : Gua
 
 omit [DecidableEq State] in
 /-- A reference to an earlier position of the current block reads an earlier wire. -/
-theorem resolve_cur_lt {l' : Loc k State} {cs : ColSel} {g : Guard}
+private theorem resolve_cur_lt {l' : Loc k State} {cs : ColSel} {g : Guard}
     (h : g.test n T c = true → l'.offset T (cs.apply T c) < l.offset T c) :
     (Ref.node false l' cs g).resolve n T t c < wire n T t l c := by
   simp only [Ref.resolve, Bool.false_eq_true, ↓reduceIte]
@@ -916,17 +920,17 @@ omit [DecidableEq State] in
 theorem scanWidth_pos : 0 < scanWidth k := by simp only [scanWidth]; omega
 
 omit [DecidableEq State] in
-theorem scan_offset_lt_globStart {c : ℕ} (hc : c < numCols T) (l : ScanLoc k) :
+private theorem scan_offset_lt_globStart {c : ℕ} (hc : c < numCols T) (l : ScanLoc k) :
     c * scanWidth k + l.idx < globStart k T := mul_add_lt_mul hc l.idx_lt
 
 omit [DecidableEq State] in
-theorem globStart_le_gfStart : globStart k T ≤ gfStart k State T := Nat.le_add_right _ _
+private theorem globStart_le_gfStart : globStart k T ≤ gfStart k State T := Nat.le_add_right _ _
 
 omit [DecidableEq State] in
-theorem gfStart_le_colStart : gfStart k State T ≤ colStart k State T := Nat.le_add_right _ _
+private theorem gfStart_le_colStart : gfStart k State T ≤ colStart k State T := Nat.le_add_right _ _
 
 omit [DecidableEq State] in
-theorem attr_offset_lt (v : Attr k State) (j : Fin (numSit k State + 1)) :
+private theorem attr_offset_lt (v : Attr k State) (j : Fin (numSit k State + 1)) :
     globStart k T + (GlobLoc.attr v j).idx < gfStart k State T := by
   have := (GlobLoc.attr v j).idx_lt
   simp only [gfStart]
@@ -935,7 +939,7 @@ theorem attr_offset_lt (v : Attr k State) (j : Fin (numSit k State + 1)) :
 omit [DecidableEq State] in
 /-- The references of a term of a global feature read earlier wires than the gates of the
 feature. -/
-theorem gfTerms_lt {n T t : ℕ} (ht : 1 ≤ t) {f : GFeat State} {b : Bool} {j : Fin 8}
+private theorem gfTerms_lt {n T t : ℕ} (ht : 1 ≤ t) {f : GFeat State} {b : Bool} {j : Fin 8}
     {f' : GFeat State} {p : Ref k State × Ref k State} (hp : p ∈ gfTerms f' ∨ p = (.fls, .fls)) :
     p.1.resolve n T t 0 < wire (k := k) n T t (.gf f b j) 0 ∧
       p.2.resolve n T t 0 < wire (k := k) n T t (.gf f b j) 0 := by
@@ -959,7 +963,8 @@ theorem gfTerms_lt {n T t : ℕ} (ht : 1 ≤ t) {f : GFeat State} {b : Bool} {j 
 omit [DecidableEq State] in
 /-- The references of a term of a column feature read earlier wires than the gates of the
 feature. -/
-theorem colTerms_lt {n T t c : ℕ} (ht : 1 ≤ t) (hc : c < numCols T) {f : ColFeat k} {b : Bool}
+private theorem colTerms_lt {n T t c : ℕ} (ht : 1 ≤ t) (hc : c < numCols T) {f : ColFeat k} {b :
+    Bool}
     {j : Fin 8} {f' : ColFeat k} {p : Ref k State × Ref k State}
     (hp : p ∈ colTerms f' ∨ p = (.fls, .fls)) :
     p.1.resolve n T t c < wire (State := State) n T t (.col f b j) c ∧
@@ -1011,7 +1016,7 @@ theorem getD_mem_or {α : Type*} (l : List α) (j : ℕ) (d : α) : l.getD j d �
   · exact Or.inl (List.mem_of_getElem? h)
 
 /-- **The references of a gate read earlier wires.** -/
-theorem resolve_table_lt {n T t c : ℕ} (ht : 1 ≤ t) {l : Loc k State} (hl : l.ColOK T c) :
+private theorem resolve_table_lt {n T t c : ℕ} (ht : 1 ≤ t) {l : Loc k State} (hl : l.ColOK T c) :
     (table tm l).2.1.resolve n T t c < wire n T t l c ∧
       (table tm l).2.2.resolve n T t c < wire n T t l c := by
   have hc := hl.lt
@@ -1113,7 +1118,7 @@ theorem resolve_table_lt {n T t c : ℕ} (ht : 1 ≤ t) {l : Loc k State} (hl : 
 /-! ### Every gate sits at a position -/
 
 omit [DecidableEq State] in
-theorem symIdx_symOf {m : ℕ} (hm : m < 3) : symIdx (symOf m) = m := by
+private theorem symIdx_symOf {m : ℕ} (hm : m < 3) : symIdx (symOf m) = m := by
   rcases m with _ | _ | _ | m
   · rfl
   · rfl
@@ -1121,7 +1126,8 @@ theorem symIdx_symOf {m : ℕ} (hm : m < 3) : symIdx (symOf m) = m := by
   · omega
 
 omit [DecidableEq State] in
-theorem ScanQ.idx_ofIdx {m : ℕ} (hm : m < 3 + 3 * k) : (ScanQ.ofIdx m : ScanQ k).idx = m := by
+private theorem ScanQ.idx_ofIdx {m : ℕ} (hm : m < 3 + 3 * k) : (ScanQ.ofIdx m : ScanQ k).idx = m :=
+    by
   rw [ScanQ.ofIdx]
   split_ifs with h₁ h₂
   · exact symIdx_symOf h₁
@@ -1131,7 +1137,7 @@ theorem ScanQ.idx_ofIdx {m : ℕ} (hm : m < 3 + 3 * k) : (ScanQ.ofIdx m : ScanQ 
   · exact absurd (by omega) h₂
 
 omit [DecidableEq State] in
-theorem ScanLoc.idx_ofIdx {m : ℕ} (hm : m < scanWidth k) :
+private theorem ScanLoc.idx_ofIdx {m : ℕ} (hm : m < scanWidth k) :
     (ScanLoc.ofIdx m : ScanLoc k).idx = m := by
   simp only [scanWidth] at hm
   rw [ScanLoc.ofIdx]
@@ -1146,7 +1152,7 @@ theorem ScanLoc.idx_ofIdx {m : ℕ} (hm : m < scanWidth k) :
     omega
 
 omit [DecidableEq State] in
-theorem GlobLoc.idx_ofIdx {m : ℕ} (hm : m < globWidth k State) :
+private theorem GlobLoc.idx_ofIdx {m : ℕ} (hm : m < globWidth k State) :
     (GlobLoc.ofIdx m : GlobLoc k State).idx = m := by
   simp only [globWidth] at hm
   rw [GlobLoc.ofIdx]
@@ -1161,7 +1167,7 @@ theorem GlobLoc.idx_ofIdx {m : ℕ} (hm : m < globWidth k State) :
     exact absurd ((Nat.div_lt_iff_lt_mul (by omega)).2 this) h₂
 
 omit [DecidableEq State] in
-theorem GFeat.idx_ofIdx {m : ℕ} (hm : m < Fintype.card (Option State) + 4) :
+private theorem GFeat.idx_ofIdx {m : ℕ} (hm : m < Fintype.card (Option State) + 4) :
     (GFeat.ofIdx m : GFeat State).idx = m := by
   rw [GFeat.ofIdx]
   split_ifs with h
@@ -1170,7 +1176,8 @@ theorem GFeat.idx_ofIdx {m : ℕ} (hm : m < Fintype.card (Option State) + 4) :
     split_ifs <;> simp only [OutView.index] <;> omega
 
 omit [DecidableEq State] in
-theorem ColFeat.idx_ofIdx {m : ℕ} (hm : m < 1 + 4 * k) : (ColFeat.ofIdx m : ColFeat k).idx = m := by
+private theorem ColFeat.idx_ofIdx {m : ℕ} (hm : m < 1 + 4 * k) : (ColFeat.ofIdx m : ColFeat k).idx =
+    m := by
   rw [ColFeat.ofIdx]
   split_ifs with h₁ h₂ h₃
   · simp only [ColFeat.idx]; omega
@@ -1181,7 +1188,7 @@ theorem ColFeat.idx_ofIdx {m : ℕ} (hm : m < 1 + 4 * k) : (ColFeat.ofIdx m : Co
   · exact absurd (by omega) h₃
 
 omit [DecidableEq State] in
-theorem gadgetIdx_decode (m : ℕ) : gadgetIdx (m / 16) (gadgetB m) (gadgetJ m) = m := by
+private theorem gadgetIdx_decode (m : ℕ) : gadgetIdx (m / 16) (gadgetB m) (gadgetJ m) = m := by
   simp only [gadgetIdx, gadgetB, gadgetJ]
   by_cases h : 8 ≤ m % 16 <;>
     simp only [h, decide_true, decide_false, Bool.toNat_true, Bool.toNat_false, mul_one, mul_zero,
@@ -1189,7 +1196,7 @@ theorem gadgetIdx_decode (m : ℕ) : gadgetIdx (m / 16) (gadgetB m) (gadgetJ m) 
 
 omit [DecidableEq State] in
 /-- **Every gate after the constants sits at a position** of a block. -/
-theorem exists_wire_eq {n T g : ℕ} (hg₂ : 2 ≤ g) (hg : g < numGates k State T) :
+private theorem exists_wire_eq {n T g : ℕ} (hg₂ : 2 ≤ g) (hg : g < numGates k State T) :
     ∃ t ≤ T, ∃ (l : Loc k State) (c : ℕ), l.ColOK T c ∧ wire n T t l c - n = g := by
   have hB : 0 < blockSize k State T := by
     have := Loc.offset_lt_of_lt (k := k) (State := State) (l := .scan .nx) (T := T) (c := 0)
@@ -1244,14 +1251,15 @@ theorem exists_wire_eq {n T g : ℕ} (hg₂ : 2 ≤ g) (hg : g < numGates k Stat
 /-! ### The gate list is the code of a circuit -/
 
 omit [DecidableEq State] in
-theorem length_argsOf (op : Op) (a b : ℕ) : (argsOf op a b).length = signature.Arity op := by
+private theorem length_argsOf (op : Op) (a b : ℕ) : (argsOf op a b).length = signature.Arity op :=
+    by
   cases op <;> rfl
 
 omit [DecidableEq State] in
-theorem mem_argsOf {op : Op} {a b i : ℕ} (h : i ∈ argsOf op a b) : i = a ∨ i = b := by
+private theorem mem_argsOf {op : Op} {a b i : ℕ} (h : i ∈ argsOf op a b) : i = a ∨ i = b := by
   cases op <;> simp_all [argsOf]
 
-theorem length_gateAt (n T t c : ℕ) (l : Loc k State) :
+private theorem length_gateAt (n T t c : ℕ) (l : Loc k State) :
     (gateAt tm n T t c l).2.length = signature.Arity (gateAt tm n T t c l).1 := by
   unfold gateAt
   split_ifs
@@ -1259,7 +1267,7 @@ theorem length_gateAt (n T t c : ℕ) (l : Loc k State) :
   · exact length_argsOf _ _ _
 
 /-- A gate at a position reads earlier wires. -/
-theorem lt_of_mem_gateAt {n T t c : ℕ} {l : Loc k State} (hl : l.ColOK T c) {i : ℕ}
+private theorem lt_of_mem_gateAt {n T t c : ℕ} {l : Loc k State} (hl : l.ColOK T c) {i : ℕ}
     (hi : i ∈ (gateAt tm n T t c l).2) : i < wire n T t l c := by
   unfold gateAt at hi
   split_ifs at hi with ht
