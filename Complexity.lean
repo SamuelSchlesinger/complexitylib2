@@ -463,6 +463,7 @@ public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.PP.Bit
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
+public import Complexity.Computability.Complexity.Classes.PP.Oracle
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Complexity.Classes.ParityP
 public import Complexity.Computability.Complexity.Classes.ParityP.Closure
@@ -479,6 +480,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
+public import Complexity.Computability.Complexity.Classes.SharpP.Oracle
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Power
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
@@ -505,6 +507,7 @@ public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 public import Complexity.Computability.Complexity.Classes.WPP
+public import Complexity.Computability.Complexity.Classes.WPP.Bounded
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
 public import Complexity.Computability.Complexity.Classes.WPP.TwoSided
 public import Complexity.Computability.Complexity.Classes.ZPP
@@ -1300,6 +1303,7 @@ public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
+public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
 public import Complexity.Logics.FirstOrder.Problems.ColoringReduction
