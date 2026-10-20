@@ -79,6 +79,12 @@ def inputStructure (I : Projection N N' L L' ι) (M : Type*)
     [N.Structure M] [L.Structure M] [L'.IsRelational] : L'.Structure (I.numeric.Model M) where
   RelMap R x := (I.rel R).toFormula.Realize fun p => (x p.1).1 p.2
 
+@[fo_realize]
+theorem relMap_inputStructure [L'.IsRelational] (I : Projection N N' L L' ι) {M : Type*}
+    [N.Structure M] [L.Structure M] {n : ℕ} (R : L'.Relations n) (x : Fin n → I.numeric.Model M) :
+    (I.inputStructure M).RelMap R x ↔ (I.rel R).toFormula.Realize fun p => (x p.1).1 p.2 :=
+  Iff.rfl
+
 /-- The numeric model with projected input relations agrees with the ordinary interpretation
 of the sum vocabularies. This connects projection semantics to the existing interpretation API. -/
 def modelEquiv [N'.IsRelational] [L'.IsRelational]
@@ -192,6 +198,13 @@ structure IsQF (I : Projection N N' L L' ι) : Prop where
   /-- The numeric guards in each output input-relation definition are quantifier-free. -/
   rel : ∀ {n} (R : L'.Relations n), (I.rel R).IsQF
 
+-- A concrete projection is split into its numeric interpretation and relation definitions only
+-- when no lemma about its construction applies. The fields of a hypothesis prove those of an
+-- abstract one.
+attribute [aesop safe 10 apply (rule_sets := [FirstOrder])] IsQF.mk
+attribute [aesop safe 20 apply (rule_sets := [FirstOrder])] IsQF.numeric IsQF.rel
+
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.toInterpretation {I : Projection N N' L L' ι} (hI : I.IsQF) :
     I.toInterpretation.IsQF := by
   refine ⟨hI.numeric.domain.onBoundedFormula _, ?_⟩
@@ -199,6 +212,7 @@ theorem IsQF.toInterpretation {I : Projection N N' L L' ι} (hI : I.IsQF) :
   · exact (hI.numeric.rel R).onBoundedFormula _
   · exact (hI.rel R).toFormula
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.onLiteral {I : Projection N N' L L' ι} (hI : I.IsQF)
     (l : InputLiteral L' α) : (I.onLiteral l).IsQF := by
   cases l with
@@ -208,15 +222,18 @@ theorem IsQF.onLiteral {I : Projection N N' L L' ι} (hI : I.IsQF)
     · exact (hI.rel R).relabel _
     · exact ((hI.rel R).relabel _).not
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.onFormula [Finite ι] [N'.IsRelational] {I : Projection N N' L L' ι}
     (hI : I.IsQF) {p : ProjectionFormula N' L' α} (hp : p.IsQF) : (I.onFormula p).IsQF :=
   hp.subst _ _ (fun _ h => hI.numeric.onFormula h) hI.onLiteral
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isQF_id (N L : Language) : (Projection.id N L).IsQF :=
   ⟨Interpretation.isQF_id N, fun _ => trivial⟩
 
 /-- Quantifier-free relativized projections compose. Requiring both numeric interpretations to
 be quantifier-free prevents the substitution from introducing quantified numeric tests. -/
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.comp [Finite ι] [Finite κ] [N'.IsRelational]
     {J : Projection N' N'' L' L'' κ} {I : Projection N N' L L' ι}
     (hJ : J.IsQF) (hI : I.IsQF) : (J.comp I).IsQF :=

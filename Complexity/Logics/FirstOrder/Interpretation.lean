@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Tactic.FirstOrder.Init
 public import Mathlib.ModelTheory.Semantics
 
 /-!
@@ -135,6 +136,7 @@ defining formula holds of their coordinates. -/
 instance : L'.Structure (I.Model M) where
   RelMap R x := (I.rel R).Realize fun p => (x p.1).1 p.2
 
+@[fo_realize]
 theorem relMap_model {n : ℕ} (R : L'.Relations n) (x : Fin n → I.Model M) :
     RelMap R x ↔ (I.rel R).Realize fun p => (x p.1).1 p.2 :=
   Iff.rfl
@@ -232,7 +234,7 @@ noncomputable def onFormula (φ : L'.Formula α) : L.Formula (α × ι) :=
 /-- **The pullback of a formula** holds of the coordinates of some elements of the interpreted
 structure exactly when the formula holds of these elements
 [Immerman, Proposition 3.5 and Remark 3.6][Immerman1999]. -/
-@[simp]
+@[simp, fo_realize]
 theorem realize_onFormula (φ : L'.Formula α) (v : α → I.Model M) :
     (I.onFormula φ).Realize (fun p => (v p.1).1 p.2) ↔ φ.Realize v := by
   rw [onFormula, Formula.realize_relabel]
@@ -251,7 +253,7 @@ noncomputable def onSentence (φ : L'.Sentence) : L.Sentence :=
 variable (M) in
 /-- **The pullback of a sentence** holds in `M` exactly when the sentence holds in the structure
 interpreted by `I` in `M` [Immerman, Proposition 3.5][Immerman1999]. -/
-@[simp]
+@[simp, fo_realize]
 theorem realize_onSentence (φ : L'.Sentence) : M ⊨ I.onSentence φ ↔ I.Model M ⊨ φ := by
   rw [onSentence, Sentence.Realize, Formula.realize_relabel, Sentence.Realize,
     ← realize_onFormula φ default]
